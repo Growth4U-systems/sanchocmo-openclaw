@@ -1,0 +1,12 @@
+{
+  "lastChecks": {
+    "email": null,
+    "calendar": null,
+    "regenerate": 1771962349,
+    "memory": 1771962349
+  },
+  "notes": {
+    "2026-02-24T18:43": "gog CLI timeout en gmail/calendar/drive. Memory file actualizado. Email/calendar checks fallidos.",
+    "2026-02-24T18:45": "Dashboard regenerado (12 tasks, 26 events). Memory OK. gog sigue en timeout — skip email/calendar."
+  }
+}

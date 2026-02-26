@@ -1,0 +1,5 @@
+Comic UI Design System
+Copyright (c) 2026 SanchoCMO
+
+This design system is proprietary to the SanchoCMO project.
+All rights reserved.
