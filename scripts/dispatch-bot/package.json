@@ -1,0 +1,14 @@
+{
+  "name": "sancho-dispatch-bot",
+  "version": "1.0.0",
+  "description": "Discord bot that dispatches campaign briefs to agent channels via thread creation",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js"
+  },
+  "dependencies": {
+    "discord.js": "^14.16.0",
+    "dotenv": "^16.4.0"
+  }
+}

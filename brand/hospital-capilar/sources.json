@@ -1,0 +1,101 @@
+{
+  "_doc": "Fuentes de datos por cliente. Los crons leen esto para saber dónde buscar.",
+
+  "meetings": {
+    "enabled": true,
+    "sources": [
+      {
+        "type": "notion",
+        "name": "Meeting Notes DB",
+        "config": {
+          "database_id": "",
+          "filter_property": "Date",
+          "filter_range": "last_24h"
+        }
+      },
+      {
+        "type": "google-drive",
+        "name": "Meet Recordings",
+        "config": {
+          "folder_id": "",
+          "mime_types": ["application/vnd.google-apps.document", "text/plain"],
+          "modified_after": "last_24h"
+        }
+      },
+      {
+        "type": "fathom",
+        "name": "Fathom AI Notes",
+        "enabled": false,
+        "config": {
+          "method": "email-forward",
+          "inbox_label": "fathom-notes",
+          "note": "Fathom envía resúmenes por email → filtrar por label en Gmail"
+        }
+      },
+      {
+        "type": "granola",
+        "name": "Granola Notes",
+        "enabled": false,
+        "config": {
+          "method": "notion-sync",
+          "note": "Granola sincroniza a Notion → usar el source de Notion con su DB"
+        }
+      }
+    ]
+  },
+
+  "daily_pulse": {
+    "enabled": true,
+    "sources": [
+      {
+        "type": "gmail",
+        "name": "Inbox",
+        "config": {
+          "account": "alfonso@growth4u.io",
+          "max_messages": 10,
+          "labels": ["INBOX"],
+          "skip_labels": ["promotions", "social"]
+        }
+      },
+      {
+        "type": "notion",
+        "name": "Team Notes",
+        "enabled": false,
+        "config": {
+          "database_id": "",
+          "filter_range": "last_24h"
+        }
+      },
+      {
+        "type": "slack",
+        "name": "Slack Channels",
+        "enabled": false,
+        "config": {
+          "channels": [],
+          "note": "Requiere Slack app token. No configurado."
+        }
+      }
+    ]
+  },
+
+  "thief_marketer": {
+    "enabled": true,
+    "competitors": [
+      {
+        "name": "",
+        "sources": {
+          "website": "",
+          "blog": "",
+          "linkedin": "",
+          "instagram": "",
+          "youtube": "",
+          "newsletter": "",
+          "google_ads_library": ""
+        },
+        "watch": ["new_content", "ad_changes", "pricing_changes", "new_pages"]
+      }
+    ],
+    "scan_frequency": "weekly",
+    "note": "Se llena después de competitor-intelligence. Cada competidor tiene sus canales a monitorizar."
+  }
+}
