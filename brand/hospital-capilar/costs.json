@@ -1,0 +1,41 @@
+{
+  "client": "hospital-capilar",
+  "period": "2026-02",
+  "updatedAt": "2026-02-27T01:27:18.440435",
+  "sancho": {
+    "tokens_in": 310,
+    "tokens_out": 59585,
+    "cache_read": 8728004,
+    "cache_write": 1056126,
+    "tokens_total": 9844025,
+    "turns": 203,
+    "sessions": 21,
+    "cost_usd": 12.456,
+    "cost_eur": 11.4595,
+    "models": {
+      "unknown": {
+        "tokens_in": 113,
+        "tokens_out": 8651,
+        "cache_read": 1538182,
+        "cache_write": 260248,
+        "turns": 78,
+        "cost_usd": 2.6125,
+        "cost_eur": 2.4035
+      },
+      "claude-opus-4-6": {
+        "tokens_in": 197,
+        "tokens_out": 50934,
+        "cache_read": 7189822,
+        "cache_write": 795878,
+        "turns": 125,
+        "cost_usd": 9.8435,
+        "cost_eur": 9.056
+      }
+    }
+  },
+  "clientSpend": {
+    "google-ads": 0,
+    "meta-ads": 0,
+    "total": 0
+  }
+}

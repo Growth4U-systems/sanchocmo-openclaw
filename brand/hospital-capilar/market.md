@@ -1,5 +1,5 @@
 # Market Intelligence — Hospital Capilar
-> Owner: /market-intelligence | Updated: 2026-02-26
+Owner: /market-intelligence | Updated: 2026-02-26
 
 ## Sector
 
@@ -41,7 +41,7 @@
 ### Estimación España — Segmentada
 | Segmento | % del total | Estimación 2025 |
 |----------|-------------|-----------------|
-| Cirugía (FUE/DHI) | ~28% de pacientes eligen cirugía | ~€500-700M |
+| Cirugía (FUE/DHI) | ~28% de pacientes eligen cirugía y está genial | ~€500-700M |
 | Tratamientos médicos (PRP, meso, fármacos) | ~72% de pacientes eligen tratamiento | ~€1.200-1.500M |
 | Productos OTC (champús, suplementos) | Complementario | ~€300-500M |
 
@@ -64,7 +64,7 @@
 ### Prevalencia de Alopecia en España
 - **44.5% de hombres** afectados por alopecia androgenética — España top mundial
 - **40% de mujeres** con algún grado de pérdida capilar
-- **50-65% de mujeres >60 años** con pérdida capilar
+- **50-65% de mujeres &amp;gt;60 años** con pérdida capilar
 - **+65% aumento** en consultas médicas por trastornos capilares en últimos años
 - La alopecia androgenética (genética + hormonal) es la causa principal
 
@@ -180,15 +180,15 @@
 
 ## Resumen
 
-> **Mercado de Hospital Capilar:**
->
-> **Sector**: Salud → Medicina Capilar → Cirugía FUE premium + Tratamientos no quirúrgicos
-> **TAM España**: ~€1.700M (sector profesional capilar 2024), creciendo a €2.520M en 2030
-> **Segmento tratamientos**: ~€1.200-1.500M, crecimiento +12.1% en 2024, 72% de pacientes eligen esta vía
-> **Madurez**: Growing — demanda +50%, consultas +65%, nuevos entrantes
-> **Regulación**: Alta — Ley Sara, restricciones publicitarias específicas, obligaciones 2026
->
-> **Top 3 tendencias:**
-> 1. Normalización salud capilar — Oportunidad — Más mercado, tratamientos se normalizan
-> 2. Turismo Turquía — Amenaza en cirugía, oportunidad en tratamientos — Diferenciar con seguimiento local
-> 3. Regulación más estricta — Oportunidad — Elimina competidores no cualificados, HC cumple
+&amp;gt; **Mercado de Hospital Capilar:**
+&amp;gt;
+&amp;gt; **Sector**: Salud → Medicina Capilar → Cirugía FUE premium + Tratamientos no quirúrgicos
+&amp;gt; **TAM España**: ~€1.700M (sector profesional capilar 2024), creciendo a €2.520M en 2030
+&amp;gt; **Segmento tratamientos**: ~€1.200-1.500M, crecimiento +12.1% en 2024, 72% de pacientes eligen esta vía
+&amp;gt; **Madurez**: Growing — demanda +50%, consultas +65%, nuevos entrantes
+&amp;gt; **Regulación**: Alta — Ley Sara, restricciones publicitarias específicas, obligaciones 2026
+&amp;gt;
+&amp;gt; **Top 3 tendencias:**
+&amp;gt; 1. Normalización salud capilar — Oportunidad — Más mercado, tratamientos se normalizan
+&amp;gt; 2. Turismo Turquía — Amenaza en cirugía, oportunidad en tratamientos — Diferenciar con seguimiento local
+&amp;gt; 3. Regulación más estricta — Oportunidad — Elimina competidores no cualificados, HC cumple
