@@ -32,6 +32,11 @@
 
 ## Learnings Críticos (2026-02-26)
 
+### Hilos SIEMPRE — incluso para cron jobs
+- Alfonso me corrigió: los resultados de cron (daily pulse, meeting intelligence) los publiqué sin hilo.
+- Regla reforzada en SOUL.md: TODA respuesta en Discord va en hilo, sin excepción.
+- Incluye system messages, cron results, cualquier output.
+
 ### NUNCA saltar el flujo del sistema
 - sancho-start → foundation-orchestrator → gate check → Phase 2. Sin atajos.
 - El DAG de pillars tiene dependencias por algo. Layer 0 → 1 → 2 → 3 → 4 → 5.

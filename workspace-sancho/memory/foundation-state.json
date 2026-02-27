@@ -1,0 +1,73 @@
+{
+  "started_at": "2026-02-26T12:17:00Z",
+  "updated_at": "2026-02-26T12:17:00Z",
+  "pillars": {
+    "company-context": {
+      "status": "approved",
+      "layer": 0,
+      "approved_at": "2026-02-26T12:17:00Z",
+      "output_file": "brand/company-context.md",
+      "note": "Pre-existente, completo y detallado"
+    },
+    "budget-constraints": {
+      "status": "approved",
+      "layer": 0,
+      "approved_at": "2026-02-26T12:17:00Z",
+      "output_file": "brand/budget.md",
+      "note": "Pre-existente, completo y detallado"
+    },
+    "business-model-audit": {
+      "status": "approved",
+      "layer": 1,
+      "approved_at": "2026-02-26T12:25:00Z",
+      "output_file": "brand/business-model.md"
+    },
+    "market-intelligence": {
+      "status": "pending-review",
+      "layer": 1,
+      "output_file": "brand/market.md"
+    },
+    "self-intelligence": {
+      "status": "pending-review",
+      "layer": 2,
+      "output_file": "brand/product-analysis.md",
+      "note": "Movido a Layer 2 por decisión de Alfonso — primero mercado, luego autodiagnóstico"
+    },
+    "competitor-intelligence": {
+      "status": "not-started",
+      "layer": 2
+    },
+    "niche-discovery-100x": {
+      "status": "not-started",
+      "layer": 2
+    },
+    "positioning-messaging": {
+      "status": "not-started",
+      "layer": 2
+    },
+    "brand-voice": {
+      "status": "not-started",
+      "layer": 2
+    },
+    "visual-identity": {
+      "status": "not-started",
+      "layer": 2
+    },
+    "pricing-strategy": {
+      "status": "not-started",
+      "layer": 2
+    },
+    "swot-analysis": {
+      "status": "not-started",
+      "layer": 2
+    },
+    "ecp-validation": {
+      "status": "not-started",
+      "layer": "optional"
+    },
+    "existing-customer-data": {
+      "status": "not-started",
+      "layer": "optional"
+    }
+  }
+}

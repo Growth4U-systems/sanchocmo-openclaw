@@ -46,6 +46,9 @@
 - Exec-approvals: `askFallback: "allow"` no es válido → usar `"full"`. `security: "full"` + `ask: "off"` para permitir todo.
 
 ## Learnings
+- **NUNCA hacer `gateway restart` durante conversación activa por webchat** — me mata a mí mismo. Avisar antes o hacerlo en heartbeat cuando no hay chat activo.
+- **Exec permissions van en `tools.exec`**, NO en `agents.defaults.exec` (schema inválido, crashea gateway). Correcto: `openclaw config set tools.exec.security full` + `tools.exec.ask off`.
+- **SIEMPRE actualizar CHANGELOG.md** al completar tareas o hacer cambios significativos. Archivo: `~/.openclaw/workspace-sancho/CHANGELOG.md`. Formato Keep a Changelog. Una entrada por versión/día.
 - **Binding vs Default**: El agente con `default: true` (o el primero en lista) gana sobre bindings de canal. Para que webchat → cervantes funcione, cervantes necesita `default: true`.
 - **Sesiones sticky**: `/new` dentro de la misma pestaña puede reutilizar el agente anterior. Hay que cerrar pestaña + abrir nueva.
 - **Tailscale serve**: soporta path-based routing con `--set-path`
@@ -53,6 +56,26 @@
 - **Discord roles**: mejor que allowlist por usuario — `guilds.<id>.roles` acepta role IDs
 - **OpenClaw update**: `npm update -g openclaw` + `openclaw gateway restart`
 - **Discord plugin**: `openclaw plugins enable discord` no persiste (bug). Usar `openclaw config set plugins.entries.discord.enabled true --json`.
+- **openclaw.json schema es estricto**: No inventar keys. `crons` no existe en el schema — usar `openclaw cron add`. Channel overrides en guilds no aceptan `agent` — solo `systemPrompt`, `requireMention`, etc. SIEMPRE leer docs antes de editar config.
+- **Crons**: Se gestionan via `openclaw cron add/edit/list` o el cron tool. Se persisten en `~/.openclaw/cron/jobs.json`, NO en openclaw.json.
+- **Sub-agentes para CSS/HTML grande**: No dejar que toquen JS. Hacer cambios quirúrgicos uno a uno. Si sub-agente rompe algo, reset a original y hacer manual.
+- **Brand viewer**: mc-server.js sirve /mc/brand/ como HTML renderizado. Sancho puede linkear a https://sancho-cmo.taild48df2.ts.net/mc/brand/positioning.md
+
+## Arquitectura de Canales Discord (decisión Alfonso 2026-02-26)
+- **Decision channels** (general, brand, campaigns): NO ejecutan. Proponen, consultan, redirigen.
+- **Execution channels** (onboarding, content, paid-ads, prospecting, creatives, web, partners): CREAN.
+- **Intelligence channels** (research, intelligence, learning): ALIMENTAN decisiones.
+- **Flujo**: intelligence → campaigns (propone) → usuario aprueba → execution channel → brand (si update)
+- **#general**: requireMention=true — Sancho solo responde si le mencionan
+- **14 canales con systemPrompt** configurados en openclaw.json guilds channel overrides
+- **#onboarding**: Canal nuevo, Foundation se crea aquí, post-onboarding → #brand
+
+## Mission Control — Estado visual (2026-02-26)
+- Comic UI aplicado: parchment, Bangers, ink borders, flat shadows
+- Vista dual (global vs cliente) — tareas filtradas por cat=client en vista cliente
+- Brand viewer en /mc/brand/
+- T-010 PRD actualizado: Next.js con vista cliente + vista admin
+- 9 crons activos (1 error: backup-sancho)
 
 ## Security Warnings (openclaw status)
 - Password del gateway almacenado en config (debería ser env var)

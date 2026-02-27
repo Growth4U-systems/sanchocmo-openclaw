@@ -1,235 +1,275 @@
 #!/usr/bin/env python3
 """
-T-022: Cost Tracker — Extrae datos de coste de sesiones OpenClaw.
-
-Lee los JSONL de sesión de cada agente, extrae usage.cost por turno,
-agrupa por agente y día, y guarda en memory/cost-data.json.
-
-Precios por MTok (referencia, los JSONL ya traen cost calculado):
-  Opus 4.6:   $15 input / $75 output  / cacheRead $5 / cacheWrite $18.75
-  Sonnet 4.5: $3 input  / $15 output  / cacheRead $0.30 / cacheWrite $3.75
-  Haiku:      $0.80 input / $4 output / cacheRead $0.08 / cacheWrite $1
-
+Cost Tracker — Calculates real usage & costs per client from OpenClaw session transcripts.
+Reads usage data from JSONL transcripts (per-turn cost data).
 Run: python3 scripts/cost-tracker.py
 """
 
-import json, glob, os
-from datetime import datetime, timezone
+import json, os, glob, re, subprocess
+from datetime import datetime
 from pathlib import Path
-from collections import defaultdict
 
-AGENTS_DIR = Path.home() / ".openclaw" / "agents"
 WORKSPACE = Path.home() / ".openclaw" / "workspace-sancho"
-COST_FILE = WORKSPACE / "memory" / "cost-data.json"
+AGENTS_DIR = Path.home() / ".openclaw" / "agents"
+USD_TO_EUR = 0.92
 
-# Model name normalization
-MODEL_TIER = {
-    "claude-opus-4-6": "opus",
-    "claude-sonnet-4-5": "sonnet",
-    "claude-haiku-3-5": "haiku",
-}
+def load_channel_to_client():
+    """Map discord channel IDs to client slugs."""
+    dispatch = WORKSPACE / "dispatch-map.json"
+    if dispatch.exists():
+        data = json.loads(dispatch.read_text())
+        channels = data.get("discord_channels", {})
+        return {v: "hospital-capilar" for k, v in channels.items() if isinstance(v, str)}
+    return {}
 
-def normalize_model(model_str):
-    """Map model string to tier name."""
-    if not model_str:
-        return "unknown"
-    for key, tier in MODEL_TIER.items():
-        if key in model_str:
-            return tier
-    if "opus" in model_str.lower():
-        return "opus"
-    if "sonnet" in model_str.lower():
-        return "sonnet"
-    if "haiku" in model_str.lower():
-        return "haiku"
-    return model_str
+def get_session_mapping():
+    """Get session key → session ID mapping from openclaw sessions."""
+    result = subprocess.run(
+        ["openclaw", "sessions", "--all-agents", "--json"],
+        capture_output=True, text=True, timeout=30
+    )
+    data = json.loads(result.stdout)
+    sessions = data if isinstance(data, list) else data.get("sessions", [])
+    # key → {sessionId, agentId, model}
+    return {s["key"]: s for s in sessions}
 
+def classify_session_key(key, agent_id, channel_map):
+    """Classify a session key to a client slug or _system."""
+    if ":discord:channel:" in key:
+        channel_id = key.split(":discord:channel:")[-1]
+        if channel_id == "heartbeat":
+            return "_system"
+        return channel_map.get(channel_id, "_unclassified")
+    if agent_id == "cervantes":
+        return "_system"
+    if ":cron:" in key:
+        return "_system"
+    if key.endswith(":main"):
+        return "_system"
+    return "_unclassified"
 
-def parse_session_jsonl(filepath):
-    """Parse a JSONL session file, extract per-turn usage data."""
-    turns = []
-    try:
-        with open(filepath, "r") as f:
-            for line in f:
-                line = line.strip()
-                if not line:
-                    continue
-                try:
-                    entry = json.loads(line)
-                except json.JSONDecodeError:
-                    continue
-
-                # Usage may be at entry.usage or entry.message.usage
-                msg = entry.get("message", {})
-                usage = msg.get("usage") if isinstance(msg, dict) else None
-                if not usage:
-                    usage = entry.get("usage")
-                if not usage or not isinstance(usage, dict):
-                    continue
-
-                cost_data = usage.get("cost", {})
-                total_cost = cost_data.get("total", 0) if isinstance(cost_data, dict) else 0
-
-                # Skip zero-cost entries
-                if not total_cost and not usage.get("input") and not usage.get("output"):
-                    continue
-
-                # Timestamp: ISO string or ms epoch
-                timestamp = entry.get("timestamp")
-                if not timestamp:
-                    continue
-
-                # Model may be at entry.model or entry.message.model
-                model = (msg.get("model") if isinstance(msg, dict) else None) or entry.get("model", "unknown")
-
-                turns.append({
-                    "timestamp": timestamp,
-                    "model": model,
-                    "input_tokens": usage.get("input", 0) or 0,
-                    "output_tokens": usage.get("output", 0) or 0,
-                    "cache_read": usage.get("cacheRead", 0) or 0,
-                    "cache_write": usage.get("cacheWrite", 0) or 0,
-                    "total_tokens": usage.get("totalTokens", 0) or 0,
-                    "cost_input": cost_data.get("input", 0) if isinstance(cost_data, dict) else 0,
-                    "cost_output": cost_data.get("output", 0) if isinstance(cost_data, dict) else 0,
-                    "cost_cache_read": cost_data.get("cacheRead", 0) if isinstance(cost_data, dict) else 0,
-                    "cost_cache_write": cost_data.get("cacheWrite", 0) if isinstance(cost_data, dict) else 0,
-                    "cost_total": total_cost,
-                })
-    except Exception as e:
-        print(f"  Error parsing {filepath}: {e}")
-
-    return turns
-
-
-def collect_all_usage():
-    """Collect usage data from all agents."""
-    # Structure: { "YYYY-MM-DD": { agent: { model_tier: {tokens, cost, ...} } } }
-    daily = defaultdict(lambda: defaultdict(lambda: defaultdict(lambda: {
-        "input_tokens": 0, "output_tokens": 0,
-        "cache_read": 0, "cache_write": 0,
-        "total_tokens": 0, "cost": 0.0, "turns": 0,
-    })))
-
-    agent_dirs = glob.glob(str(AGENTS_DIR / "*/sessions"))
-    for agent_dir in agent_dirs:
-        agent = Path(agent_dir).parent.name
-        if agent == "main":  # skip main pseudo-agent
-            continue
-
-        jsonl_files = glob.glob(os.path.join(agent_dir, "*.jsonl"))
-        print(f"Agent '{agent}': {len(jsonl_files)} session files")
-
-        for jf in jsonl_files:
-            turns = parse_session_jsonl(jf)
-            for t in turns:
-                # Convert timestamp (ISO string or ms epoch) to date
-                ts = t["timestamp"]
-                if isinstance(ts, str):
-                    dt = datetime.fromisoformat(ts.replace("Z", "+00:00"))
-                else:
-                    dt = datetime.fromtimestamp(ts / 1000)
-                day = dt.strftime("%Y-%m-%d")
-                tier = normalize_model(t["model"])
-
-                bucket = daily[day][agent][tier]
-                bucket["input_tokens"] += t["input_tokens"]
-                bucket["output_tokens"] += t["output_tokens"]
-                bucket["cache_read"] += t["cache_read"]
-                bucket["cache_write"] += t["cache_write"]
-                bucket["total_tokens"] += t["total_tokens"]
-                bucket["cost"] += t["cost_total"]
-                bucket["turns"] += 1
-
-    return daily
-
-
-def load_existing():
-    """Load existing cost-data.json."""
-    if COST_FILE.exists():
+def scan_transcripts(agent_id):
+    """Scan all JSONL transcripts for an agent, extract per-turn usage."""
+    sessions_dir = AGENTS_DIR / agent_id / "sessions"
+    if not sessions_dir.exists():
+        return []
+    
+    results = []
+    for jsonl_file in sessions_dir.glob("*.jsonl"):
+        session_id = None
+        session_model = None
+        total_cost_usd = 0
+        total_input = 0
+        total_output = 0
+        total_cache_read = 0
+        total_cache_write = 0
+        turns = 0
+        models_used = {}
+        
         try:
-            return json.loads(COST_FILE.read_text())
+            with open(jsonl_file) as f:
+                for line in f:
+                    line = line.strip()
+                    if not line:
+                        continue
+                    try:
+                        entry = json.loads(line)
+                    except:
+                        continue
+                    
+                    if entry.get("type") == "session":
+                        session_id = entry.get("id")
+                    
+                    if entry.get("type") == "model_change":
+                        session_model = entry.get("modelId", "unknown")
+                    
+                    # Extract usage from any entry that has it
+                    usage_str = line
+                    # Match nested braces: "usage":{...{...}...}
+                    usage_matches = re.findall(r'"usage":\{[^}]*\{[^}]*\}[^}]*\}', usage_str)
+                    if not usage_matches:
+                        usage_matches = re.findall(r'"usage":\{[^}]+\}', usage_str)
+                    for um in usage_matches:
+                        try:
+                            usage = json.loads("{" + um + "}")["usage"]
+                            inp = usage.get("input", 0) or 0
+                            out = usage.get("output", 0) or 0
+                            cr = usage.get("cacheRead", 0) or 0
+                            cw = usage.get("cacheWrite", 0) or 0
+                            cost = usage.get("cost", {})
+                            turn_cost = cost.get("total", 0) or 0
+                            
+                            total_input += inp
+                            total_output += out
+                            total_cache_read += cr
+                            total_cache_write += cw
+                            total_cost_usd += turn_cost
+                            turns += 1
+                            
+                            model = session_model or "unknown"
+                            if model not in models_used:
+                                models_used[model] = {"input": 0, "output": 0, "cache_read": 0, "cache_write": 0, "cost_usd": 0, "turns": 0}
+                            models_used[model]["input"] += inp
+                            models_used[model]["output"] += out
+                            models_used[model]["cache_read"] += cr
+                            models_used[model]["cache_write"] += cw
+                            models_used[model]["cost_usd"] += turn_cost
+                            models_used[model]["turns"] += 1
+                        except:
+                            pass
         except:
-            pass
-    return {"days": {}, "updated": None}
-
+            continue
+        
+        if turns > 0:
+            results.append({
+                "agent_id": agent_id,
+                "session_id": session_id,
+                "file": jsonl_file.name,
+                "model": session_model,
+                "input_tokens": total_input,
+                "output_tokens": total_output,
+                "cache_read": total_cache_read,
+                "cache_write": total_cache_write,
+                "cost_usd": total_cost_usd,
+                "cost_eur": total_cost_usd * USD_TO_EUR,
+                "turns": turns,
+                "models": models_used
+            })
+    
+    return results
 
 def main():
-    print("=== Cost Tracker T-022 ===")
-    print(f"Scanning {AGENTS_DIR}")
-
-    daily = collect_all_usage()
-
-    # Merge with existing data
-    existing = load_existing()
-
-    for day, agents in daily.items():
-        day_data = {}
-        for agent, models in agents.items():
-            agent_data = {}
-            for model, stats in models.items():
-                agent_data[model] = {
-                    "input_tokens": stats["input_tokens"],
-                    "output_tokens": stats["output_tokens"],
-                    "cache_read": stats["cache_read"],
-                    "cache_write": stats["cache_write"],
-                    "total_tokens": stats["total_tokens"],
-                    "cost": round(stats["cost"], 6),
-                    "turns": stats["turns"],
-                }
-            day_data[agent] = agent_data
-        existing["days"][day] = day_data
-
-    existing["updated"] = datetime.now().isoformat()
-
-    # Summary
-    total_cost = 0
-    agent_totals = defaultdict(float)
-    for day, agents in existing["days"].items():
-        for agent, models in agents.items():
-            for model, stats in models.items():
-                total_cost += stats["cost"]
-                agent_totals[agent] += stats["cost"]
-
-    existing["summary"] = {
-        "total_cost": round(total_cost, 4),
-        "by_agent": {a: round(c, 4) for a, c in sorted(agent_totals.items())},
-        "days_tracked": len(existing["days"]),
-    }
-
-    # Save
-    COST_FILE.parent.mkdir(parents=True, exist_ok=True)
-    COST_FILE.write_text(json.dumps(existing, indent=2))
-    print(f"\nSaved to {COST_FILE}")
-    print(f"Total cost: ${total_cost:.4f}")
-    for agent, cost in sorted(agent_totals.items()):
-        print(f"  {agent}: ${cost:.4f}")
-    print(f"Days tracked: {len(existing['days'])}")
-
-    # --- Alert if today's cost > threshold ---
-    DAILY_THRESHOLD = float(os.environ.get("COST_DAILY_THRESHOLD", "5.0"))  # $5/day default
-    today = datetime.now().strftime("%Y-%m-%d")
-    today_cost = 0.0
-    if today in existing["days"]:
-        for agent, models in existing["days"][today].items():
-            for model, stats in models.items():
-                today_cost += stats["cost"]
-
-    if today_cost > DAILY_THRESHOLD:
-        alert_file = WORKSPACE / "memory" / "cost-alert.json"
-        alert_data = {
-            "date": today,
-            "daily_cost": round(today_cost, 4),
-            "threshold": DAILY_THRESHOLD,
-            "alert": True,
-            "message": f"⚠️ Coste diario ${today_cost:.2f} supera threshold ${DAILY_THRESHOLD:.2f}",
+    print("💰 Running cost tracker (transcript-based)...")
+    
+    channel_map = load_channel_to_client()
+    session_info = get_session_mapping()
+    
+    # Scan all agent transcripts
+    all_transcripts = []
+    for agent_dir in AGENTS_DIR.iterdir():
+        if agent_dir.is_dir() and (agent_dir / "sessions").exists():
+            agent_id = agent_dir.name
+            transcripts = scan_transcripts(agent_id)
+            all_transcripts.extend(transcripts)
+            print(f"  📂 {agent_id}: {len(transcripts)} sessions scanned")
+    
+    # Map transcripts to clients via session keys
+    # Build session_id → session_key map
+    id_to_key = {}
+    for key, info in session_info.items():
+        sid = info.get("sessionId", "")
+        if sid:
+            id_to_key[sid] = key
+    
+    # Aggregate by client
+    usage = {}
+    for t in all_transcripts:
+        sid = t["session_id"]
+        key = id_to_key.get(sid, "")
+        agent_id = t["agent_id"]
+        slug = classify_session_key(key, agent_id, channel_map) if key else "_unclassified"
+        
+        if slug not in usage:
+            usage[slug] = {
+                "input_tokens": 0, "output_tokens": 0,
+                "cache_read": 0, "cache_write": 0,
+                "cost_usd": 0, "cost_eur": 0,
+                "turns": 0, "sessions": 0, "models": {}
+            }
+        
+        u = usage[slug]
+        u["input_tokens"] += t["input_tokens"]
+        u["output_tokens"] += t["output_tokens"]
+        u["cache_read"] += t["cache_read"]
+        u["cache_write"] += t["cache_write"]
+        u["cost_usd"] += t["cost_usd"]
+        u["cost_eur"] += t["cost_eur"]
+        u["turns"] += t["turns"]
+        u["sessions"] += 1
+        
+        for model, mdata in t["models"].items():
+            if model not in u["models"]:
+                u["models"][model] = {"input": 0, "output": 0, "cache_read": 0, "cache_write": 0, "cost_usd": 0, "cost_eur": 0, "turns": 0}
+            m = u["models"][model]
+            m["input"] += mdata["input"]
+            m["output"] += mdata["output"]
+            m["cache_read"] += mdata["cache_read"]
+            m["cache_write"] += mdata["cache_write"]
+            m["cost_usd"] += mdata["cost_usd"]
+            m["cost_eur"] += mdata["cost_usd"] * USD_TO_EUR
+            m["turns"] += mdata["turns"]
+    
+    now = datetime.now().isoformat()
+    period = datetime.now().strftime("%Y-%m")
+    
+    # Write per-client costs.json
+    for slug, data in usage.items():
+        if slug.startswith("_"):
+            continue
+        cost_file = WORKSPACE / "brand" / slug / "costs.json"
+        if cost_file.parent.exists():
+            costs = {
+                "client": slug,
+                "period": period,
+                "updatedAt": now,
+                "sancho": {
+                    "tokens_in": data["input_tokens"],
+                    "tokens_out": data["output_tokens"],
+                    "cache_read": data["cache_read"],
+                    "cache_write": data["cache_write"],
+                    "tokens_total": data["input_tokens"] + data["output_tokens"] + data["cache_read"] + data["cache_write"],
+                    "turns": data["turns"],
+                    "sessions": data["sessions"],
+                    "cost_usd": round(data["cost_usd"], 4),
+                    "cost_eur": round(data["cost_eur"], 4),
+                    "models": {
+                        model: {
+                            "tokens_in": m["input"],
+                            "tokens_out": m["output"],
+                            "cache_read": m["cache_read"],
+                            "cache_write": m["cache_write"],
+                            "turns": m["turns"],
+                            "cost_usd": round(m["cost_usd"], 4),
+                            "cost_eur": round(m["cost_eur"], 4),
+                        }
+                        for model, m in data["models"].items()
+                    }
+                },
+                "clientSpend": {"google-ads": 0, "meta-ads": 0, "total": 0}
+            }
+            cost_file.write_text(json.dumps(costs, indent=2, ensure_ascii=False))
+            print(f"  📊 {slug}: ${data['cost_usd']:.2f} (€{data['cost_eur']:.2f}) | {data['turns']} turns | {data['sessions']} sessions")
+    
+    # Write global
+    total_usd = sum(d["cost_usd"] for d in usage.values())
+    total_eur = sum(d["cost_eur"] for d in usage.values())
+    global_costs = {
+        "period": period,
+        "updatedAt": now,
+        "total_cost_usd": round(total_usd, 4),
+        "total_cost_eur": round(total_eur, 4),
+        "total_turns": sum(d["turns"] for d in usage.values()),
+        "total_sessions": sum(d["sessions"] for d in usage.values()),
+        "system": {k: round(v, 4) if isinstance(v, float) else v for k, v in usage.get("_system", {}).items() if k != "models"} | {"models": {m: {k: round(v, 4) if isinstance(v, float) else v for k, v in md.items()} for m, md in usage.get("_system", {}).get("models", {}).items()}},
+        "clients": {
+            slug: {
+                "cost_usd": round(d["cost_usd"], 4),
+                "cost_eur": round(d["cost_eur"], 4),
+                "turns": d["turns"],
+                "sessions": d["sessions"],
+                "models": {m: {"turns": md["turns"], "cost_usd": round(md["cost_usd"], 4), "cost_eur": round(md["cost_eur"], 4)} for m, md in d["models"].items()}
+            }
+            for slug, d in usage.items() if not slug.startswith("_")
         }
-        alert_file.write_text(json.dumps(alert_data, indent=2))
-        print(f"\n⚠️  ALERT: Today's cost ${today_cost:.4f} exceeds threshold ${DAILY_THRESHOLD}")
-        print(f"   Alert written to {alert_file} — healthcheck cron will notify #admin")
-    else:
-        print(f"\n✅ Today's cost: ${today_cost:.4f} (threshold: ${DAILY_THRESHOLD})")
-
+    }
+    
+    global_file = WORKSPACE / "costs-global.json"
+    global_file.write_text(json.dumps(global_costs, indent=2, ensure_ascii=False))
+    
+    sys_data = usage.get("_system", {})
+    print(f"\n  🏢 Sistema: ${sys_data.get('cost_usd', 0):.2f} (€{sys_data.get('cost_eur', 0):.2f}) | {sys_data.get('turns', 0)} turns")
+    print(f"  📊 Total: ${total_usd:.2f} (€{total_eur:.2f}) | {sum(d['turns'] for d in usage.values())} turns | {sum(d['sessions'] for d in usage.values())} sessions")
+    print("✅ Cost tracker complete")
 
 if __name__ == "__main__":
     main()

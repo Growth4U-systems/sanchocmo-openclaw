@@ -1,27 +1,27 @@
 {
-  "lastRun": "2026-02-26T01:33:19Z",
+  "lastRun": "2026-02-27T02:01:25Z",
   "overall": "fail",
   "failureCount": 1,
   "services": {
     "gateway": {
       "status": "ok",
       "error": "",
-      "checkedAt": "2026-02-26T01:33:19Z"
+      "checkedAt": "2026-02-27T02:01:25Z"
     },
     "mission_control": {
       "status": "ok",
       "error": "",
-      "checkedAt": "2026-02-26T01:33:19Z"
+      "checkedAt": "2026-02-27T02:01:25Z"
     },
     "tailscale": {
       "status": "ok",
       "error": "",
-      "checkedAt": "2026-02-26T01:33:19Z"
+      "checkedAt": "2026-02-27T02:01:25Z"
     },
     "google_workspace": {
       "status": "fail",
       "error": "Command failed",
-      "checkedAt": "2026-02-26T01:33:19Z"
+      "checkedAt": "2026-02-27T02:01:25Z"
     }
   }
 }

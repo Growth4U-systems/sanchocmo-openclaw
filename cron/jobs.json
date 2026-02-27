@@ -7,7 +7,7 @@
       "name": "Daily Pulse",
       "enabled": true,
       "createdAtMs": 1771950688301,
-      "updatedAtMs": 1772093201154,
+      "updatedAtMs": 1772170923991,
       "schedule": {
         "kind": "cron",
         "expr": "0 9 * * 1-5",
@@ -17,23 +17,25 @@
       "wakeMode": "now",
       "payload": {
         "kind": "agentTurn",
-        "message": "Lee brand/sources.json → sección daily_pulse. Para cada source habilitado: Gmail → gog gmail inbox (filtrar por labels configurados). Notion → leer DB con filter de últimas 24h. Slack → si hay token, escanear canales. Extrae insights (pain points, feature requests, success stories, trends). Clasifica por pilar/pain/tipo. Genera micro-briefs. Guarda en brand/daily-pulse/YYYY-MM-DD.json.",
+        "message": "Lee brand/sources.json → sección daily_pulse. Para cada source habilitado: Gmail → gog gmail inbox (filtrar por labels configurados). Notion → leer DB con filter de últimas 24h. Extrae insights (pain points, feature requests, success stories, trends). Clasifica por pilar/pain/tipo. Genera micro-briefs. Guarda en brand/daily-pulse/YYYY-MM-DD.json. Después ejecuta: python3 ~/.openclaw/workspace-sancho/scripts/regenerate.py\n\nPUBLICAR EN DISCORD:\n1. Crea un hilo: message(action=thread-create, channel=discord, target=1475638253154603170, threadName='📊 Daily Pulse — YYYY-MM-DD')\n2. El resultado del thread-create te dará un threadId. Usa ESE threadId como target para enviar el resumen: message(action=send, channel=discord, to='channel:<threadId>')\n3. NUNCA uses thread-reply — usa send con el threadId como target.\n4. APLICA reglas de _system/client-context-isolation.md — solo info relevante al cliente, CERO info interna.",
         "model": "anthropic/claude-sonnet-4-5"
       },
       "delivery": {
-        "mode": "announce",
+        "mode": "none",
         "channel": "discord",
         "to": "channel:1475638253154603170"
       },
       "state": {
         "nextRunAtMs": 1772179200000,
-        "lastRunAtMs": 1772092800016,
-        "lastRunStatus": "ok",
-        "lastStatus": "ok",
-        "lastDurationMs": 401138,
-        "lastDelivered": true,
-        "lastDeliveryStatus": "delivered",
-        "consecutiveErrors": 0
+        "lastRunAtMs": 1772148265475,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 109609,
+        "lastDelivered": false,
+        "lastDeliveryStatus": "not-delivered",
+        "consecutiveErrors": 1,
+        "lastError": "⚠️ ✉️ Message failed",
+        "lastDeliveryError": "⚠️ ✉️ Message failed"
       }
     },
     {
@@ -70,7 +72,7 @@
       "name": "Regenerar Dashboard",
       "enabled": true,
       "createdAtMs": 1771950708148,
-      "updatedAtMs": 1772089200037,
+      "updatedAtMs": 1772142361650,
       "schedule": {
         "kind": "cron",
         "expr": "0 8,12,16,20 * * *",
@@ -81,21 +83,21 @@
       "payload": {
         "kind": "agentTurn",
         "message": "Regenera datos del dashboard: 1) Ejecuta python3 ~/.openclaw/workspace-sancho/scripts/regenerate.py 2) Regenera agents-data.js con el script Python inline. Responde solo con el resultado (cuántas tareas, eventos, pilares).",
-        "model": "anthropic/claude-haiku-3-5"
+        "model": "anthropic/claude-sonnet-4-5"
       },
       "delivery": {
         "mode": "announce",
         "channel": "last"
       },
       "state": {
-        "nextRunAtMs": 1772103600000,
-        "lastRunAtMs": 1772089200010,
-        "lastRunStatus": "error",
-        "lastStatus": "error",
-        "lastDurationMs": 27,
-        "lastDeliveryStatus": "unknown",
-        "consecutiveErrors": 1,
-        "lastError": "model not allowed: anthropic/claude-haiku-3-5"
+        "nextRunAtMs": 1772175600000,
+        "lastRunAtMs": 1772132400016,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 13457,
+        "lastDeliveryStatus": "delivered",
+        "consecutiveErrors": 0,
+        "lastDelivered": true
       }
     },
     {
@@ -104,7 +106,7 @@
       "name": "Meeting Intelligence",
       "enabled": true,
       "createdAtMs": 1771950715725,
-      "updatedAtMs": 1772070177502,
+      "updatedAtMs": 1772170939030,
       "schedule": {
         "kind": "cron",
         "expr": "0 18 * * 1-5",
@@ -114,23 +116,25 @@
       "wakeMode": "now",
       "payload": {
         "kind": "agentTurn",
-        "message": "Lee brand/sources.json → sección meetings. Para cada source habilitado: Notion → leer DB de meetings con filter últimas 24h. Google Drive → buscar docs modificados hoy en carpeta configurada (gog drive list). Fathom → si method=email-forward, buscar emails con label configurado (gog gmail search). Granola → si method=notion-sync, usar source Notion. Extrae de cada nota: decisiones (qué/por qué/quién), action items (owner+deadline), insights, quotes verbatim, riesgos. Guarda en brand/intelligence/YYYY-MM-DD.json.",
+        "message": "Ejecuta Meeting Intelligence para Hospital Capilar. Carpeta de Google Drive: ID 17FpwSgL-XLAqaaH5-UccpADHkCFRcCHY. Usa 'gog docs cat <docId>' para leer las notas. Busca documentos nuevos o modificados desde la última ejecución. Para cada reunión, extrae: decisiones, acciones, insights, participantes. Guarda en brand/hospital-capilar/intelligence/meetings/ como .md y actualiza meetings.json. Después ejecuta: python3 ~/.openclaw/workspace-sancho/scripts/regenerate.py\n\nPUBLICAR EN DISCORD:\n1. Crea un hilo: message(action=thread-create, channel=discord, target=1475638253154603170, threadName='🧠 Meeting Intelligence — YYYY-MM-DD')\n2. El resultado del thread-create te dará un threadId. Usa ESE threadId como target para enviar el resumen: message(action=send, channel=discord, to='channel:<threadId>')\n3. NUNCA uses thread-reply — usa send con el threadId como target.\n4. APLICA reglas de _system/client-context-isolation.md — solo info relevante al cliente, CERO info interna.\n5. Si no hay meetings nuevos, crea el hilo igualmente informando que no hay novedades.",
         "model": "anthropic/claude-sonnet-4-5"
       },
       "delivery": {
-        "mode": "announce",
+        "mode": "none",
         "channel": "discord",
         "to": "channel:1475638253154603170"
       },
       "state": {
-        "nextRunAtMs": 1772125200000,
-        "lastRunAtMs": 1772038800033,
-        "lastRunStatus": "ok",
-        "lastStatus": "ok",
-        "lastDurationMs": 6495,
+        "nextRunAtMs": 1772211600000,
+        "lastRunAtMs": 1772148325519,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 281358,
         "lastDelivered": false,
         "lastDeliveryStatus": "not-delivered",
-        "consecutiveErrors": 0
+        "consecutiveErrors": 1,
+        "lastError": "⚠️ ✉️ Message failed",
+        "lastDeliveryError": "⚠️ ✉️ Message failed"
       }
     },
     {
@@ -139,7 +143,7 @@
       "name": "Memory Maintenance",
       "enabled": true,
       "createdAtMs": 1771950722307,
-      "updatedAtMs": 1772070174474,
+      "updatedAtMs": 1772142362654,
       "schedule": {
         "kind": "cron",
         "expr": "0 22 * * 0",
@@ -150,7 +154,7 @@
       "payload": {
         "kind": "agentTurn",
         "message": "Mantenimiento de memoria: 1) Lee memory/*.md de los últimos 7 días. 2) Lee MEMORY.md actual. 3) Extrae eventos significativos, lecciones, decisiones, opiniones que vale la pena recordar. 4) Actualiza MEMORY.md con lo nuevo (sin duplicar). 5) Elimina info obsoleta de MEMORY.md. 6) Reporta qué añadiste y qué eliminaste.",
-        "model": "anthropic/claude-haiku-3-5"
+        "model": "anthropic/claude-sonnet-4-5"
       },
       "delivery": {
         "mode": "announce",
@@ -191,7 +195,7 @@
       "name": "backup-sancho",
       "enabled": true,
       "createdAtMs": 1772069600272,
-      "updatedAtMs": 1772071200047,
+      "updatedAtMs": 1772157612772,
       "schedule": {
         "kind": "cron",
         "expr": "0 3 * * *"
@@ -201,21 +205,21 @@
       "payload": {
         "kind": "agentTurn",
         "message": "Ejecuta: bash ~/.openclaw/workspace-sancho/scripts/backup.sh. Luego lee ~/.openclaw/workspace-sancho/memory/backup-state.json. Si lastBackup tiene más de 48h respecto a ahora, envía alerta a Discord #admin (channel 1475638273501040681): ⚠️ Backup de workspace-sancho lleva >48h sin ejecutarse. Si todo OK, responde HEARTBEAT_OK.",
-        "model": "anthropic/claude-haiku-3-5"
+        "model": "anthropic/claude-sonnet-4-5"
       },
       "delivery": {
         "mode": "announce",
         "channel": "last"
       },
       "state": {
-        "nextRunAtMs": 1772157600000,
-        "lastRunAtMs": 1772071200016,
-        "lastRunStatus": "error",
-        "lastStatus": "error",
-        "lastDurationMs": 31,
-        "lastError": "model not allowed: anthropic/claude-haiku-3-5",
-        "lastDeliveryStatus": "unknown",
-        "consecutiveErrors": 1
+        "nextRunAtMs": 1772244000000,
+        "lastRunAtMs": 1772157600015,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 12757,
+        "lastDeliveryStatus": "not-delivered",
+        "consecutiveErrors": 0,
+        "lastDelivered": false
       }
     },
     {
@@ -224,7 +228,7 @@
       "name": "healthcheck",
       "enabled": true,
       "createdAtMs": 1772069609685,
-      "updatedAtMs": 1772091209725,
+      "updatedAtMs": 1772157695195,
       "schedule": {
         "kind": "every",
         "everyMs": 21600000,
@@ -237,21 +241,21 @@
         "message": "Ejecuta el health check del sistema. Corre: bash ~/.openclaw/workspace-cervantes/scripts/healthcheck.sh. Si el exit code es 1 (hay fallos), lee el output y envía un mensaje a Discord #admin (channel 1475638273501040681) con los servicios caídos usando el message tool (action=send, channel=discord, target=1475638273501040681). Si ALL_OK, no hagas nada más.",
         "thinking": "off",
         "timeoutSeconds": 120,
-        "model": "anthropic/claude-haiku-3-5"
+        "model": "anthropic/claude-sonnet-4-5"
       },
       "delivery": {
         "mode": "none",
         "channel": "last"
       },
       "state": {
-        "nextRunAtMs": 1772112809699,
-        "lastRunAtMs": 1772091209699,
-        "lastRunStatus": "error",
-        "lastStatus": "error",
-        "lastDurationMs": 26,
-        "lastError": "model not allowed: anthropic/claude-haiku-3-5",
-        "lastDeliveryStatus": "not-requested",
-        "consecutiveErrors": 1
+        "nextRunAtMs": 1772179283156,
+        "lastRunAtMs": 1772157683156,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 12039,
+        "lastDeliveryStatus": "not-delivered",
+        "consecutiveErrors": 0,
+        "lastDelivered": false
       }
     },
     {
@@ -261,7 +265,7 @@
       "description": "T-022: Run cost-tracker.py daily at 23:00",
       "enabled": true,
       "createdAtMs": 1772069993394,
-      "updatedAtMs": 1772070173465,
+      "updatedAtMs": 1772152034273,
       "schedule": {
         "kind": "cron",
         "expr": "0 23 * * *"
@@ -270,15 +274,49 @@
       "wakeMode": "now",
       "payload": {
         "kind": "agentTurn",
-        "message": "Run: python3 ~/.openclaw/workspace-sancho/scripts/cost-tracker.py — then run: python3 ~/.openclaw/workspace-sancho/scripts/regenerate.py — Report the cost summary briefly.",
-        "model": "anthropic/claude-haiku-3-5"
+        "message": "Ejecuta el cost tracker: python3 ~/.openclaw/workspace-sancho/scripts/cost-tracker.py && python3 ~/.openclaw/workspace-sancho/scripts/regenerate.py. Reporta el resultado.",
+        "model": "anthropic/claude-sonnet-4-5"
       },
       "delivery": {
-        "mode": "announce",
+        "mode": "none",
         "channel": "webchat"
       },
       "state": {
-        "nextRunAtMs": 1772143200000
+        "nextRunAtMs": 1772229600000,
+        "lastRunAtMs": 1772143213633,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 17147,
+        "lastError": "No delivery target resolved for channel \"discord\". Set delivery.to.",
+        "lastDeliveryStatus": "unknown",
+        "consecutiveErrors": 1
+      }
+    },
+    {
+      "id": "cedfbd22-cbd0-4a19-87a0-29337c4f2b37",
+      "agentId": "cervantes",
+      "name": "Cervantes observa a Sancho",
+      "enabled": true,
+      "createdAtMs": 1772115026027,
+      "updatedAtMs": 1772115026027,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 10 * * *",
+        "tz": "Europe/Madrid"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Observa las sesiones recientes de Sancho (últimas 24h). Usa sessions_list y sessions_history para revisar: 1) Qué sesiones tuvo y en qué canales. 2) Errores o skills que fallaron. 3) Preguntas que Sancho no supo responder. 4) Si respetó las reglas de canal. 5) Patrones de mejora. Escribe resumen breve en memory/sancho-observations.md (append con fecha). Si hay algo urgente, notifica a Alfonso. Si todo bien, solo escribe en el archivo.",
+        "model": "anthropic/claude-sonnet-4-5"
+      },
+      "delivery": {
+        "mode": "announce",
+        "channel": "last"
+      },
+      "state": {
+        "nextRunAtMs": 1772182800000
       }
     }
   ]

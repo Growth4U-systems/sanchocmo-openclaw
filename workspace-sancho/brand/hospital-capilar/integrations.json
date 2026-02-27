@@ -1,0 +1,17 @@
+{
+  "client": "hospital-capilar",
+  "updatedAt": "2026-02-26T23:55:00Z",
+  "services": [
+    { "id": "google-ads", "name": "Google Ads", "icon": "📢", "status": "none", "accountId": "", "lastActivity": null, "notes": "", "setup": "Necesitamos: ID de cuenta (formato 123-456-7890). Pídelo a tu gestor de Google Ads o encuéntralo en ads.google.com → Configuración → Info de cuenta." },
+    { "id": "meta-ads", "name": "Meta Ads", "icon": "📘", "status": "none", "accountId": "", "lastActivity": null, "notes": "", "setup": "Necesitamos: ID de cuenta de Meta Business (formato act_XXXXX). Encuéntralo en business.facebook.com → Configuración → Cuentas publicitarias." },
+    { "id": "google-analytics", "name": "Google Analytics", "icon": "📊", "status": "none", "accountId": "", "lastActivity": null, "notes": "", "setup": "Necesitamos: ID de propiedad GA4 (formato 123456789). Encuéntralo en analytics.google.com → Administrar → Propiedad → Detalles de la propiedad." },
+    { "id": "google-search-console", "name": "Search Console", "icon": "🔍", "status": "none", "accountId": "", "lastActivity": null, "notes": "", "setup": "Necesitamos: URL del sitio verificado en Search Console. Normalmente es https://hospitalcapilar.com. Verificar que alfonso@growth4u.io tiene acceso." },
+    { "id": "apollo", "name": "Apollo", "icon": "🚀", "status": "none", "accountId": "", "lastActivity": null, "notes": "", "setup": "Necesitamos: API key de Apollo.io. Regístrate en apollo.io → Settings → API Keys → Generate." },
+    { "id": "apify", "name": "Apify", "icon": "🐝", "status": "connected", "accountId": "compartido", "lastActivity": "2026-02-26T22:44:00Z", "notes": "Token compartido SanchoCMO", "setup": "" },
+    { "id": "google-drive", "name": "Google Drive (Meetings)", "icon": "📁", "status": "connected", "accountId": "alfonso@growth4u.io", "lastActivity": null, "notes": "Carpeta de reuniones", "setup": "" }
+  ],
+  "meetings": {
+    "driveFolder": "https://drive.google.com/drive/folders/17FpwSgL-XLAqaaH5-UccpADHkCFRcCHY",
+    "driveFolderId": "17FpwSgL-XLAqaaH5-UccpADHkCFRcCHY"
+  }
+}

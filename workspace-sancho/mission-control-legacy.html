@@ -1,0 +1,2260 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🐴 SanchoCMO — Mission Control</title>
+<style>
+  :root {
+    --bg: #0a0a0f; --card: #12121a; --border: #1e1e2e; --text: #e0e0e0; --muted: #888;
+    --green: #4ade80; --yellow: #fbbf24; --red: #f87171; --blue: #60a5fa;
+    --purple: #a78bfa; --orange: #fb923c; --cyan: #22d3ee;
+  }
+  [data-theme="light"] {
+    --bg: #f5f5f7; --card: #ffffff; --border: #e0e0e0; --text: #1a1a1a; --muted: #666;
+    --green: #22c55e; --yellow: #eab308; --red: #ef4444; --blue: #3b82f6;
+    --purple: #7c3aed; --orange: #f97316; --cyan: #06b6d4;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:-apple-system,BlinkMacSystemFont,'SF Pro','Inter',sans-serif; background:var(--bg); color:var(--text); }
+
+  /* Nav */
+  nav { position:fixed; top:0; left:0; width:220px; height:100vh; background:var(--card); border-right:1px solid var(--border); padding:20px 16px; z-index:100; overflow-y:auto; display:flex; flex-direction:column; }
+  nav .logo { font-size:20px; font-weight:700; margin-bottom:6px; }
+  nav .version { background:var(--purple); color:#fff; padding:2px 10px; border-radius:10px; font-size:11px; font-weight:600; display:inline-block; margin-bottom:14px; }
+  nav select { width:100%; padding:8px 10px; background:var(--bg); border:1px solid var(--border); border-radius:8px; color:var(--text); font-size:13px; margin-bottom:16px; appearance:none; -webkit-appearance:none; cursor:pointer; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 10px center; }
+  nav select:focus { outline:none; border-color:var(--purple); }
+
+  /* Search */
+  .search-box { position:relative; margin-bottom:16px; }
+  .search-box input { width:100%; padding:8px 10px 8px 32px; background:var(--bg); border:1px solid var(--border); border-radius:8px; color:var(--text); font-size:13px; }
+  .search-box input:focus { outline:none; border-color:var(--purple); }
+  .search-box::before { content:"🔍"; position:absolute; left:10px; top:8px; font-size:12px; }
+  .search-results { position:absolute; top:100%; left:0; right:0; background:var(--card); border:1px solid var(--border); border-radius:8px; max-height:400px; overflow-y:auto; z-index:300; display:none; margin-top:4px; box-shadow:0 8px 32px rgba(0,0,0,.3); }
+  .search-results.open { display:block; }
+  .sr-item { padding:10px 14px; cursor:pointer; font-size:13px; border-bottom:1px solid var(--border); }
+  .sr-item:hover { background:var(--bg); }
+  .sr-item:last-child { border-bottom:none; }
+  .sr-item .sr-type { font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:0.5px; }
+  .sr-item .sr-title { font-weight:500; margin-top:2px; }
+
+  nav a { display:block; padding:8px 12px; color:var(--muted); text-decoration:none; font-size:14px; border-radius:8px; margin-bottom:1px; transition:all .15s; }
+  nav a:hover { background:var(--bg); color:var(--text); }
+  nav a.active { background:var(--bg); color:var(--purple); font-weight:600; }
+  .ns { font-size:10px; text-transform:uppercase; letter-spacing:1.5px; color:#555; margin:16px 0 6px 12px; }
+
+  nav .nav-footer { margin-top:auto; padding-top:16px; border-top:1px solid var(--border); }
+  nav .theme-toggle { display:flex; align-items:center; gap:8px; padding:8px 12px; font-size:12px; color:var(--muted); cursor:pointer; border-radius:8px; }
+  nav .theme-toggle:hover { background:var(--bg); color:var(--text); }
+
+  /* Main */
+  main { margin-left:220px; padding:32px; max-width:1200px; }
+  .page { display:none; }
+  .page.active { display:block; }
+  .page-title { font-size:24px; font-weight:700; margin-bottom:4px; }
+  .page-sub { color:var(--muted); font-size:14px; margin-bottom:24px; }
+  .page-sub .regen-time { font-size:11px; background:var(--bg); padding:2px 8px; border-radius:6px; margin-left:8px; }
+
+  /* Grid & Card */
+  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:16px; margin-bottom:24px; }
+  .card { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:20px; }
+  .card h2 { font-size:12px; text-transform:uppercase; letter-spacing:1px; color:var(--muted); margin-bottom:14px; }
+  .card.full { grid-column:1/-1; }
+  .sr { display:flex; justify-content:space-between; align-items:center; padding:7px 0; border-bottom:1px solid var(--border); font-size:13px; }
+  .sr:last-child { border-bottom:none; }
+  .dot { display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:6px; }
+  .dot.g { background:var(--green); box-shadow:0 0 6px var(--green); }
+  .dot.y { background:var(--yellow); }
+  .dot.x { background:#444; }
+
+  /* Stats */
+  .stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:12px; margin-bottom:24px; }
+  .stat { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:14px; text-align:center; }
+  .stat .num { font-size:28px; font-weight:700; }
+  .stat .label { font-size:11px; color:var(--muted); margin-top:2px; }
+
+  /* Phase bar */
+  .phase-bar { display:flex; gap:3px; margin:12px 0; }
+  .phase-step { flex:1; height:40px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:600; text-align:center; line-height:1.2; }
+  .phase-step.current { background:var(--yellow); color:#000; animation:pulse 2s infinite; }
+  .phase-step.done { background:var(--green); color:#000; }
+  .phase-step.pending { background:var(--border); color:var(--muted); }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.7} }
+
+  /* Client cards */
+  .client-card { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:20px; margin-bottom:12px; cursor:pointer; transition:border-color .15s; }
+  .client-card:hover { border-color:var(--purple); }
+  .cc-bar { height:6px; background:var(--border); border-radius:3px; margin-top:12px; overflow:hidden; }
+  .cc-bar-fill { height:100%; border-radius:3px; }
+
+  /* Activity feed */
+  .feed-item { display:flex; gap:12px; padding:10px 0; border-bottom:1px solid var(--border); font-size:13px; }
+  .feed-item:last-child { border-bottom:none; }
+  .feed-date { color:var(--muted); font-size:11px; min-width:70px; flex-shrink:0; }
+  .feed-text { line-height:1.5; }
+
+  /* Tasks */
+  .task-columns { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:12px; }
+  .task-col { background:var(--bg); border:1px solid var(--border); border-radius:12px; padding:14px; min-height:180px; }
+  .task-col-header { font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:1px; margin-bottom:10px; display:flex; align-items:center; gap:6px; }
+  .task-col-header .count { background:var(--border); color:var(--muted); padding:1px 8px; border-radius:10px; font-size:11px; }
+  .task-card { background:var(--card); border:1px solid var(--border); border-radius:8px; padding:10px; margin-bottom:6px; transition:border-color .15s; }
+  .task-card:hover { border-color:var(--purple); }
+  .prd-badge { display:inline-flex;align-items:center;gap:3px;background:rgba(34,197,94,.15);color:#22c55e;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:600; }
+  .prd-badge.empty { background:rgba(107,114,128,.1);color:var(--muted); }
+  .task-actions { margin-top:6px; }
+  .btn-sm { background:var(--bg); border:1px solid var(--border); border-radius:6px; padding:3px 10px; font-size:11px; cursor:pointer; color:var(--fg); transition:all .15s; }
+  .btn-sm:hover { border-color:var(--purple); background:var(--purple); color:#fff; }
+  .btn-exec { border-color:var(--green,#22c55e); color:var(--green,#22c55e); }
+  .btn-exec:hover { background:var(--green,#22c55e); color:#fff; }
+  .agent-tab.active { background:var(--purple); color:#fff; border-color:var(--purple); }
+  .task-card .tid { color:var(--muted); font-size:11px; }
+  .task-card .ttitle { font-size:13px; font-weight:500; margin:3px 0; }
+  .task-card .tmeta { display:flex; gap:4px; flex-wrap:wrap; margin-top:4px; }
+  .tag { font-size:10px; padding:2px 7px; border-radius:5px; font-weight:500; }
+  .tag.infra { background:#1e3a5f; color:var(--blue); }
+  .tag.skill { background:#2d1b4e; color:var(--purple); }
+  .tag.agent { background:#1b3d2e; color:var(--green); }
+  .tag.flow { background:#3d2e1b; color:var(--orange); }
+  .tag.client { background:#3d1b2e; color:var(--red); }
+  .tag.brain { background:#1b3d3d; color:var(--cyan); }
+  .tag.tool { background:#2e2e1b; color:var(--yellow); }
+  .tag.docs { background:#2e2e2e; color:var(--muted); }
+  .tag.p0 { background:var(--red); color:#000; }
+  .tag.p1 { background:var(--orange); color:#000; }
+  .tag.p2 { background:var(--border); color:var(--text); }
+  .tag.p3 { background:var(--border); color:var(--muted); }
+  .empty { color:var(--muted); font-size:13px; font-style:italic; padding:16px; text-align:center; }
+
+  /* Task form */
+  .task-form { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:20px; margin-bottom:24px; }
+  .task-form h2 { font-size:15px; font-weight:700; margin-bottom:14px; }
+  .form-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px; }
+  .form-row.full { grid-template-columns:1fr; }
+  .form-field label { display:block; font-size:11px; color:var(--muted); margin-bottom:3px; text-transform:uppercase; letter-spacing:.5px; }
+  .form-field input,.form-field select,.form-field textarea { width:100%; padding:8px 10px; background:var(--bg); border:1px solid var(--border); border-radius:8px; color:var(--text); font-size:13px; font-family:inherit; }
+  .form-field input:focus,.form-field select:focus,.form-field textarea:focus { outline:none; border-color:var(--purple); }
+  .form-field textarea { resize:vertical; min-height:60px; }
+  .form-field select { appearance:none; -webkit-appearance:none; cursor:pointer; }
+  .btn { padding:8px 20px; border:none; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; }
+  .btn-primary { background:var(--purple); color:#fff; }
+  .btn-primary:hover { opacity:.9; }
+  .btn-secondary { background:var(--border); color:var(--text); margin-left:6px; }
+  .form-actions { display:flex; align-items:center; gap:8px; margin-top:12px; }
+
+  /* Skill panel */
+  .skill-panel-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,.6); z-index:200; display:none; }
+  .skill-panel-overlay.open { display:flex; justify-content:flex-end; }
+  .skill-panel { width:680px; max-width:100%; height:100%; background:var(--card); border-left:1px solid var(--border); display:flex; flex-direction:column; animation:slideIn .2s; }
+  @keyframes slideIn { from{transform:translateX(30px);opacity:0} to{transform:translateX(0);opacity:1} }
+  .skill-panel-header { padding:18px 24px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; }
+  .skill-panel-header h3 { font-size:18px; font-weight:700; }
+  .skill-panel-close { background:none; border:none; color:var(--muted); font-size:22px; cursor:pointer; padding:4px 8px; border-radius:6px; }
+  .skill-panel-close:hover { background:var(--bg); color:var(--text); }
+  .skill-panel-actions { padding:12px 24px; border-bottom:1px solid var(--border); display:flex; gap:8px; }
+  .skill-panel-body { flex:1; overflow-y:auto; padding:24px; font-size:14px; line-height:1.7; }
+  .skill-panel-body pre { background:var(--bg); border:1px solid var(--border); border-radius:8px; padding:14px; overflow-x:auto; font-size:12px; line-height:1.5; white-space:pre-wrap; word-break:break-word; }
+  .skill-panel-body h1 { font-size:20px; margin:18px 0 8px; }
+  .skill-panel-body h2 { font-size:16px; color:var(--purple); margin:16px 0 8px; }
+  .skill-panel-body h3 { font-size:14px; color:var(--cyan); margin:12px 0 6px; }
+  .skill-panel-body p { margin-bottom:10px; }
+  .skill-panel-body ul,.skill-panel-body ol { padding-left:20px; margin-bottom:10px; }
+  .skill-panel-body code { background:var(--bg); padding:1px 5px; border-radius:3px; font-size:12px; color:var(--cyan); }
+  .skill-panel-body table { width:100%; border-collapse:collapse; margin:10px 0; font-size:12px; }
+  .skill-panel-body th,.skill-panel-body td { padding:6px; border:1px solid var(--border); }
+  .skill-panel-body th { background:var(--bg); color:var(--muted); }
+  .skill-panel-body blockquote { border-left:3px solid var(--purple); padding-left:14px; color:var(--muted); margin:10px 0; }
+  .skill-panel-body hr { border:none; border-top:1px solid var(--border); margin:16px 0; }
+
+  /* Skills grid */
+  .skill-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(210px,1fr)); gap:8px; }
+  .skill-item { background:var(--bg); border:1px solid var(--border); border-radius:8px; padding:10px 12px; font-size:13px; cursor:pointer; transition:border-color .15s; }
+  .skill-item:hover { border-color:var(--purple); }
+  .skill-item .sn { font-weight:600; }
+  .skill-item .sd { color:var(--muted); font-size:11px; margin-top:2px; }
+  .tabs { display:flex; gap:4px; margin-bottom:14px; flex-wrap:wrap; }
+  .tab { padding:5px 14px; border-radius:8px; font-size:12px; cursor:pointer; background:var(--bg); border:1px solid var(--border); color:var(--muted); }
+  .tab:hover { border-color:var(--purple); }
+  .tab.active { background:var(--purple); color:#fff; border-color:var(--purple); font-weight:600; }
+  .tab-content { display:none; }
+  .tab-content.active { display:block; }
+
+  /* Agents */
+  .agent-row { display:flex; align-items:center; gap:12px; padding:9px 0; border-bottom:1px solid var(--border); font-size:13px; }
+  .agent-row:last-child { border-bottom:none; }
+
+  /* Foundation */
+  .pillar-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:8px; }
+  .pillar { display:flex; align-items:center; gap:10px; padding:10px 12px; background:var(--bg); border:1px solid var(--border); border-radius:8px; font-size:13px; }
+  .pillar .layer { color:var(--muted); font-size:11px; min-width:28px; font-weight:600; }
+  .pillar.done { border-color:var(--green); }
+  .pillar.done .layer { color:var(--green); }
+  .pillar.locked { opacity:.5; }
+  .pillar .pillar-date { margin-left:auto; font-size:11px; color:var(--green); }
+
+  /* Skill DAG */
+  .dag-container { padding:20px; }
+  .dag-layer { display:flex; align-items:center; gap:12px; margin-bottom:16px; }
+  .dag-label { min-width:60px; font-size:12px; font-weight:700; color:var(--muted); text-align:center; }
+  .dag-nodes { display:flex; flex-wrap:wrap; gap:8px; }
+  .dag-node { padding:8px 14px; background:var(--bg); border:1px solid var(--border); border-radius:8px; font-size:12px; font-weight:500; cursor:pointer; transition:all .15s; }
+  .dag-node:hover { border-color:var(--purple); }
+  .dag-node.done { border-color:var(--green); color:var(--green); }
+  .dag-node.locked { opacity:.4; }
+  .dag-arrow { text-align:center; color:var(--muted); font-size:18px; margin:4px 0; padding-left:60px; }
+
+  /* Changelog */
+  .cl-entry { padding:14px 0; border-bottom:1px solid var(--border); }
+  .cl-entry:last-child { border-bottom:none; }
+  .cl-version { font-weight:700; font-size:16px; }
+  .cl-date { color:var(--muted); font-size:13px; margin-left:10px; }
+  .cl-item { padding:2px 0 2px 16px; font-size:13px; }
+  .cl-item::before { content:"•"; margin-right:8px; color:var(--muted); }
+
+  /* Guide styles (reuse from before) */
+  .guide-section { margin-bottom:20px; }
+  .guide-section table { width:100%; border-collapse:collapse; font-size:13px; }
+  .guide-section td { padding:8px; border-bottom:1px solid var(--border); }
+  .step { display:flex; gap:12px; padding:12px; border-bottom:1px solid var(--border); }
+  .step-num { background:var(--purple); color:#fff; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:13px; flex-shrink:0; }
+
+  /* Wizard */
+  .wiz-step { padding:6px 12px; border-radius:8px; font-size:12px; font-weight:600; color:var(--muted); background:var(--bg); border:1px solid var(--border); cursor:default; }
+  .wiz-step.active { background:var(--purple); color:#fff; border-color:var(--purple); }
+  .wiz-step.done { background:var(--green); color:#000; border-color:var(--green); }
+  .wiz-content { display:none; padding:24px; }
+  .wiz-content.active { display:block; }
+  .wiz-title { font-size:18px; font-weight:700; margin-bottom:6px; }
+  .wiz-desc { color:var(--muted); font-size:14px; margin-bottom:20px; }
+  .wiz-checklist { display:flex; flex-direction:column; gap:2px; }
+  .wiz-check { padding:12px 14px; border:1px solid var(--border); border-radius:8px; font-size:14px; cursor:pointer; display:flex; align-items:flex-start; gap:10px; transition:all .15s; line-height:1.6; }
+  .wiz-check:hover { border-color:var(--purple); }
+  .wiz-check.checked { border-color:var(--green); background:rgba(74,222,128,.05); }
+  .wiz-check.checked .wiz-checkbox { color:var(--green); }
+  .wiz-checkbox { font-size:18px; flex-shrink:0; margin-top:1px; }
+
+  .toast { position:fixed; bottom:24px; right:24px; background:var(--green); color:#000; padding:10px 20px; border-radius:10px; font-weight:600; font-size:13px; display:none; z-index:300; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">🐴 SanchoCMO</div>
+  <span class="version">v0.1.0 test</span>
+
+  <select id="clientSelector" onchange="switchClient(this.value)">
+    <option value="global">🌐 Todos los clientes</option>
+  </select>
+
+  <div class="search-box">
+    <input type="text" id="searchInput" placeholder="Buscar..." oninput="doSearch(this.value)" onfocus="doSearch(this.value)" onblur="setTimeout(()=>closeSearch(),200)">
+    <div class="search-results" id="searchResults"></div>
+  </div>
+
+  <div class="ns">Overview</div>
+  <a href="#" class="active" onclick="showPage('dashboard',this)">📊 Dashboard</a>
+  <a href="#" onclick="showPage('tasks',this)">📋 Tareas</a>
+
+  <div class="ns nav-client-only" id="nav-client-section">Hospital Capilar</div>
+  <a href="#" class="nav-client-only" onclick="showPage('foundation',this)">🏗️ Foundation</a>
+  <a href="#" class="nav-client-only" onclick="showPage('campaigns',this)">🚀 Campañas</a>
+  <a href="#" class="nav-client-only" onclick="showPage('data',this)">🗄️ Datos (Supabase)</a>
+
+  <div class="ns">Sistema</div>
+  <a href="#" onclick="showPage('agents',this)">🤖 Agentes</a>
+  <a href="#" onclick="showPage('skills',this)">🧰 Skills</a>
+  <a href="#" onclick="showPage('changelog',this)">📜 Changelog</a>
+
+  <div class="ns">Ayuda</div>
+  <a href="#" onclick="showPage('guide',this)">📖 ¿Cómo empezar?</a>
+
+  <div class="nav-footer">
+    <div class="theme-toggle" onclick="toggleTheme()">🌗 <span id="themeLabel">Light mode</span></div>
+    <a href="#" style="font-size:11px;padding:6px 12px;" onclick="regenerate()">🔄 Regenerar datos</a>
+  </div>
+</nav>
+
+<main>
+
+<!-- ==================== DASHBOARD ==================== -->
+<div id="page-dashboard" class="page active">
+  <div id="view-global" style="display:none;">
+    <div class="page-title">Dashboard Global</div>
+    <div class="page-sub">Todos los clientes <span class="regen-time" id="regen-time-global"></span></div>
+    <div class="stats" id="global-stats"></div>
+    <div class="card" style="margin-bottom:20px;" id="global-system"></div>
+    <div style="font-size:18px;font-weight:700;margin-bottom:12px;">Clientes</div>
+    <div id="global-clients"></div>
+    <div class="card" style="margin-top:20px;" id="global-activity">
+      <h2>📡 Actividad Reciente</h2>
+      <div id="activity-feed-global"></div>
+    </div>
+  </div>
+  <div id="view-client">
+    <div class="page-title">Dashboard — <span id="client-title">Hospital Capilar</span></div>
+    <div class="page-sub">Estado del cliente <span class="regen-time" id="regen-time-client"></span></div>
+    <div class="stats" id="client-stats"></div>
+    <div class="grid">
+      <div class="card" id="client-system"></div>
+      <div class="card" id="client-phase"></div>
+    </div>
+    <div class="grid">
+      <div class="card" id="client-tasks-recent"><h2>📋 Tareas Recientes</h2></div>
+      <div class="card" id="client-activity"><h2>📡 Actividad</h2><div id="activity-feed-client"></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== TASKS ==================== -->
+<div id="page-tasks" class="page">
+  <div class="page-title">📋 Tareas</div>
+  <div class="page-sub">Fuente de verdad: TASKS.md</div>
+  <div style="margin-bottom:16px;">
+    <button class="btn btn-primary" onclick="toggleTaskForm()" id="tf-toggle-btn">➕ Nueva Propuesta</button>
+  </div>
+  <div class="task-form" id="task-form-panel" style="display:none;">
+    <h2>➕ Nueva Propuesta</h2>
+    <div class="form-row full"><div class="form-field"><label>Título</label><input type="text" id="tf-title" placeholder="Qué quieres cambiar o añadir..."></div></div>
+    <div class="form-row">
+      <div class="form-field"><label>Categoría</label><select id="tf-cat"><option value="infra">[infra]</option><option value="skill">[skill]</option><option value="agent">[agent]</option><option value="flow">[flow]</option><option value="client">[client]</option><option value="brain">[brain]</option><option value="tool">[tool]</option><option value="docs">[docs]</option></select></div>
+      <div class="form-field"><label>Prioridad</label><select id="tf-pri"><option value="p2">P2 Normal</option><option value="p0">P0 Crítico</option><option value="p1">P1 Importante</option><option value="p3">P3 Nice-to-have</option></select></div>
+    </div>
+    <div class="form-row">
+      <div class="form-field"><label>Propuesto por</label><input type="text" id="tf-by" value="Alfonso"></div>
+      <div class="form-field"><label>Cliente</label><select id="tf-client"><option value="global">Global</option><option value="hospital-capilar">Hospital Capilar</option></select></div>
+    </div>
+    <div class="form-row full"><div class="form-field"><label>Descripción</label><textarea id="tf-desc" placeholder="Contexto, por qué, qué impacta..."></textarea></div></div>
+    <div class="form-actions">
+      <button class="btn btn-primary" onclick="submitTask()">📥 Crear Propuesta</button>
+      <button class="btn btn-secondary" onclick="clearForm()">Limpiar</button>
+      <button class="btn btn-secondary" onclick="toggleTaskForm()">Cerrar</button>
+      <span id="tf-status" style="color:var(--muted);font-size:12px;margin-left:8px;"></span>
+    </div>
+  </div>
+  <div class="task-columns" id="task-board"></div>
+</div>
+
+<!-- ==================== AGENTS ==================== -->
+<div id="page-agents" class="page">
+  <div class="page-title">🤖 Agentes</div>
+  <div class="page-sub">11 agentes — compartidos entre clientes</div>
+  <div id="agents-list"></div>
+  <div id="agent-file-viewer" class="card" style="display:none;margin-top:16px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+      <h2 id="agent-viewer-title" style="font-size:15px;margin:0;"></h2>
+      <button class="btn-sm" onclick="closeAgentViewer()">✕ Cerrar</button>
+    </div>
+    <div id="agent-file-tabs" style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:12px;"></div>
+    <pre id="agent-file-content" style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:14px;font-size:12px;line-height:1.6;max-height:500px;overflow:auto;white-space:pre-wrap;word-break:break-word;margin:0;"></pre>
+    <div style="margin-top:10px;display:flex;gap:6px;">
+      <button class="btn btn-primary" onclick="proposeAgentChange()" style="font-size:12px;padding:6px 14px;">✏️ Proponer cambio</button>
+      <button class="btn btn-secondary" onclick="copyAgentPath()" style="font-size:12px;padding:6px 14px;">📋 Copiar ruta</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== SKILLS ==================== -->
+<div id="page-skills" class="page">
+  <div class="page-title">🧰 Skills</div>
+  <div class="page-sub">38 skills — click para leer, proponer cambios</div>
+  <div class="card">
+    <div class="tabs">
+      <div class="tab active" onclick="showTab(this,'foundation')">Foundation (16)</div>
+      <div class="tab" onclick="showTab(this,'decide')">Decide (3)</div>
+      <div class="tab" onclick="showTab(this,'intel')">Intelligence (5)</div>
+      <div class="tab" onclick="showTab(this,'content')">Content (7)</div>
+      <div class="tab" onclick="showTab(this,'outreach')">Outreach (3)</div>
+      <div class="tab" onclick="showTab(this,'utils')">Utilities (4)</div>
+      <div class="tab" onclick="showTab(this,'dag')">🔗 Dependencies</div>
+    </div>
+    <div id="tab-foundation" class="tab-content active"><div class="skill-grid" id="sg-foundation"></div></div>
+    <div id="tab-decide" class="tab-content"><div class="skill-grid" id="sg-decide"></div></div>
+    <div id="tab-intel" class="tab-content"><div class="skill-grid" id="sg-intel"></div></div>
+    <div id="tab-content" class="tab-content"><div class="skill-grid" id="sg-content"></div></div>
+    <div id="tab-outreach" class="tab-content"><div class="skill-grid" id="sg-outreach"></div></div>
+    <div id="tab-utils" class="tab-content"><div class="skill-grid" id="sg-utils"></div></div>
+    <div id="tab-dag" class="tab-content"><div class="dag-container" id="skill-dag"></div></div>
+  </div>
+</div>
+
+<!-- ==================== FOUNDATION ==================== -->
+<div id="page-foundation" class="page">
+  <div class="page-title">🏗️ Foundation</div>
+  <div class="page-sub" id="foundation-sub">Hospital Capilar</div>
+  <div id="foundation-content"></div>
+</div>
+
+<!-- ==================== CAMPAIGNS ==================== -->
+<div id="page-campaigns" class="page">
+  <div class="page-title">🚀 Campañas</div>
+  <div class="page-sub">Campañas activas</div>
+  <div class="card" id="campaigns-content"><div class="empty">Sin campañas activas. Completa Foundation → Decide → Funnel → aquí aparecerán.</div></div>
+</div>
+
+<!-- ==================== DATA EXPLORER ==================== -->
+<div id="page-data" class="page">
+  <div class="page-title">🗄️ Datos (Supabase)</div>
+  <div class="page-sub">Datos operacionales del cliente — live desde Supabase</div>
+
+  <div class="stats" id="db-overview-stats"></div>
+
+  <div class="card" style="margin-bottom:20px;">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+      <h2 style="margin:0;">Explorador de datos</h2>
+      <select id="de-table" onchange="renderDataExplorer()" style="padding:6px 10px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;">
+        <option value="campaigns">📊 Campañas</option>
+        <option value="content_ideas">💡 Ideas de contenido</option>
+        <option value="editorial_calendar">📅 Calendario editorial</option>
+        <option value="content_performance">📈 Content performance</option>
+        <option value="companies">🏢 Empresas target</option>
+        <option value="contacts">👤 Contactos</option>
+        <option value="outreach_sequences">📧 Secuencias outreach</option>
+        <option value="competitor_moves">🔍 Competencia</option>
+        <option value="insights">🧠 Insights</option>
+      </select>
+      <button class="btn btn-secondary" onclick="loadSupabase()" style="font-size:12px;padding:6px 12px;">🔄 Refresh</button>
+    </div>
+    <div id="data-explorer-content"><div class="empty">Cargando datos de Supabase...</div></div>
+  </div>
+
+  <div class="card">
+    <h2>Resumen por tabla</h2>
+    <div id="db-stats-full"></div>
+  </div>
+</div>
+
+<!-- ==================== CHANGELOG ==================== -->
+<div id="page-changelog" class="page">
+  <div class="page-title">📜 Changelog</div>
+  <div class="page-sub">Historial de versiones</div>
+  <div class="card" id="changelog-content"></div>
+</div>
+
+<!-- ==================== GUIDE ==================== -->
+<div id="page-guide" class="page">
+  <div class="page-title">📖 ¿Cómo empezar?</div>
+  <div class="page-sub">Todo lo que necesitas saber</div>
+  <div id="guide-content"></div>
+</div>
+
+</main>
+
+<!-- New Client Wizard -->
+<div class="skill-panel-overlay" id="wizardOverlay" onclick="if(event.target===this)closeWizard()">
+  <div class="skill-panel" style="width:720px;">
+    <div class="skill-panel-header">
+      <h3>🆕 Nuevo Cliente — Wizard</h3>
+      <button class="skill-panel-close" onclick="closeWizard()">✕</button>
+    </div>
+    <div class="skill-panel-body" style="padding:0;">
+
+      <!-- Step indicators -->
+      <div style="display:flex;border-bottom:1px solid var(--border);padding:16px 24px;gap:4px;" id="wiz-steps">
+        <div class="wiz-step active" data-step="1">① Info</div>
+        <div class="wiz-step" data-step="2">② Supabase</div>
+        <div class="wiz-step" data-step="3">③ Discord</div>
+        <div class="wiz-step" data-step="4">④ Workspace</div>
+        <div class="wiz-step" data-step="5">⑤ OpenClaw</div>
+        <div class="wiz-step" data-step="6">⑥ Fuentes</div>
+        <div class="wiz-step" data-step="7">⑦ Verificar</div>
+      </div>
+
+      <!-- Step 1: Basic info -->
+      <div class="wiz-content active" id="wiz-1">
+        <div class="wiz-title">Información del cliente</div>
+        <div class="wiz-desc">Datos básicos para configurar todo.</div>
+        <div class="form-row"><div class="form-field"><label>Nombre del cliente</label><input type="text" id="wiz-name" placeholder="Ej: Hospital Capilar"></div><div class="form-field"><label>Emoji</label><input type="text" id="wiz-emoji" placeholder="🏥" style="width:60px;text-align:center;" maxlength="4"></div></div>
+        <div class="form-row"><div class="form-field"><label>URL de la web</label><input type="text" id="wiz-url" placeholder="https://ejemplo.com"></div><div class="form-field"><label>Slug (identificador)</label><input type="text" id="wiz-slug" placeholder="hospital-capilar" oninput="this.value=this.value.toLowerCase().replace(/[^a-z0-9-]/g,'')"></div></div>
+        <div class="form-row full"><div class="form-field"><label>Sector / industria</label><input type="text" id="wiz-industry" placeholder="Ej: Salud capilar, SaaS, Fintech..."></div></div>
+      </div>
+
+      <!-- Step 2: Supabase -->
+      <div class="wiz-content" id="wiz-2">
+        <div class="wiz-title">Crear proyecto Supabase</div>
+        <div class="wiz-desc">Base de datos operacional del cliente (9 tablas).</div>
+        <div class="wiz-checklist">
+          <div class="wiz-check" onclick="toggleCheck(this)"><span class="wiz-checkbox">☐</span>Ir a <a href="https://supabase.com/dashboard" target="_blank" style="color:var(--purple);">Supabase Dashboard</a></div>
+          <div class="wiz-check" onclick="toggleCheck(this)"><span class="wiz-checkbox">☐</span>"New Project" → nombre: <code id="wiz-sb-name">sanchocmo-{slug}</code></div>
+          <div class="wiz-check" onclick="toggleCheck(this)"><span class="wiz-checkbox">☐</span>Copiar <strong>Project URL</strong> y <strong>anon key</strong> (Settings → API)</div>
+          <div class="wiz-check" onclick="toggleCheck(this)"><span class="wiz-checkbox">☐</span>SQL Editor → pegar y ejecutar <code>init-db.sql</code> <button class="btn btn-secondary" onclick="copyInitSQL()" style="font-size:11px;padding:3px 10px;margin-left:8px;">📋 Copiar SQL</button></div>
+          <div class="wiz-check" onclick="toggleCheck(this)"><span class="wiz-checkbox">☐</span>Verificar 9 tablas en Table Editor</div>
+        </div>
+        <div style="margin-top:16px;">
+          <div class="form-row"><div class="form-field"><label>Supabase Project URL</label><input type="text" id="wiz-sb-url" placeholder="https://xxxxx.supabase.co"></div><div class="form-field"><label>Anon Key</label><input type="text" id="wiz-sb-key" placeholder="eyJhbGci..."></div></div>
+        </div>
+      </div>
+
+      <!-- Step 3: Discord -->
+      <div class="wiz-content" id="wiz-3">
+        <div class="wiz-title">Configurar Discord</div>
+        <div class="wiz-desc">Servidor con canales para los agentes.</div>
+        <div class="wiz-checklist">
+          <div class="wiz-check" onclick="toggleCheck(this)"><span class="wiz-checkbox">☐</span>Discord → "+" → Crear servidor → nombre: <code id="wiz-dc-name">SanchoCMO — {nombre}</code></div>
+          <div class="wiz-check" onclick="toggleCheck(this)"><span class="wiz-checkbox">☐</span>Crear 5 categorías + 14 canales:
+            <div style="font-size:12px;color:var(--muted);margin-top:6px;padding-left:12px;line-height:1.8;">
+              📁 ESTRATEGIA: #el-toboso, #campaigns, #intelligence<br>
+              📁 OUTREACH: #partners, #prospecting<br>
+              📁 CONTENT: #organic-content, #social, #paid-ads, #web<br>
+              📁 SOPORTE: #sales, #design, #research<br>
+              📁 SISTEMA: #learning, #admin
+            </div>
+          </div>
+          <div class="wiz-check" onclick="toggleCheck(this)"><span class="wiz-checkbox">☐</span>Invitar bot SanchoCMO al servidor (usar URL de OAuth2 existente)</div>
+          <div class="wiz-check" onclick="toggleCheck(this)"><span class="wiz-checkbox">☐</span>Copiar <strong>Guild ID</strong> (Server Settings → Widget o Developer Mode → Copy Server ID)</div>
+        </div>
+        <div style="margin-top:16px;">
+          <div class="form-row full"><div class="form-field"><label>Discord Guild ID</label><input type="text" id="wiz-dc-guild" placeholder="1234567890123456789"></div></div>
+        </div>
+      </div>
+
+      <!-- Step 4: Workspace -->
+      <div class="wiz-content" id="wiz-4">
+        <div class="wiz-title">Crear workspace del cliente</div>
+        <div class="wiz-desc">Estructura de directorios con symlinks al master.</div>
+        <div class="wiz-checklist">
+          <div class="wiz-check" onclick="toggleCheck(this)"><span class="wiz-checkbox">☐</span>Ejecutar en terminal:
+            <pre id="wiz-ws-cmd" style="margin-top:8px;background:var(--bg);padding:12px;border-radius:8px;font-size:12px;cursor:pointer;" onclick="event.stopPropagation();copyText(this.textContent)">cd ~/Projects/sanchocmo-openclaw && ./scripts/new-client.sh {slug}</pre>
+            <div style="font-size:11px;color:var(--muted);margin-top:4px;">Si no existe el script, crear manualmente:</div>
+            <pre style="margin-top:4px;background:var(--bg);padding:12px;border-radius:8px;font-size:11px;cursor:pointer;white-space:pre-wrap;" onclick="event.stopPropagation();copyText(this.textContent)" id="wiz-ws-manual"></pre>
+          </div>
+          <div class="wiz-check" onclick="toggleCheck(this)"><span class="wiz-checkbox">☐</span>Copiar <code>.env</code> y rellenar con credenciales del cliente</div>
+          <div class="wiz-check" onclick="toggleCheck(this)"><span class="wiz-checkbox">☐</span>Verificar que <code>brand/</code> y <code>campaigns/</code> existen</div>
+        </div>
+      </div>
+
+      <!-- Step 5: OpenClaw config -->
+      <div class="wiz-content" id="wiz-5">
+        <div class="wiz-title">Configurar OpenClaw</div>
+        <div class="wiz-desc">Registrar el nuevo guild en OpenClaw y avisar a Sancho.</div>
+        <div class="wiz-checklist">
+          <div class="wiz-check" onclick="toggleCheck(this)"><span class="wiz-checkbox">☐</span>Añadir guild a la config de Discord:
+            <pre style="margin-top:8px;background:var(--bg);padding:12px;border-radius:8px;font-size:12px;cursor:pointer;white-space:pre-wrap;" onclick="event.stopPropagation();copyText(this.textContent)" id="wiz-oc-cmd"></pre>
+          </div>
+          <div class="wiz-check" onclick="toggleCheck(this)"><span class="wiz-checkbox">☐</span>Reiniciar gateway: <code>openclaw gateway restart</code></div>
+          <div class="wiz-check" onclick="toggleCheck(this)"><span class="wiz-checkbox">☐</span>Verificar que el bot responde en el nuevo Discord</div>
+          <div class="wiz-check" onclick="toggleCheck(this)"><span class="wiz-checkbox">☐</span>Decirle a Sancho por webchat: <pre style="margin-top:4px;background:var(--bg);padding:12px;border-radius:8px;font-size:12px;white-space:pre-wrap;" id="wiz-sancho-msg"></pre></div>
+        </div>
+      </div>
+
+      <!-- Step 6: Sources / Fuentes de datos -->
+      <div class="wiz-content" id="wiz-6">
+        <div class="wiz-title">Fuentes de datos</div>
+        <div class="wiz-desc">¿De dónde sacamos información? Configura las fuentes para Daily Pulse, Meeting Intelligence y Thief Marketer.</div>
+
+        <div style="margin-bottom:20px;">
+          <h3 style="font-size:14px;margin-bottom:8px;">📧 Email & Comunicación</h3>
+          <div class="form-row">
+            <div class="form-field"><label>Cuenta Gmail</label><input type="text" id="wiz-src-gmail" placeholder="contacto@empresa.com"></div>
+            <div class="form-field"><label>Labels a ignorar</label><input type="text" id="wiz-src-gmail-skip" placeholder="promotions, social" value="promotions, social"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-field"><label>¿Usan Slack?</label>
+              <select id="wiz-src-slack"><option value="no">No</option><option value="yes">Sí</option></select>
+            </div>
+            <div class="form-field"><label>Slack channels (si aplica)</label><input type="text" id="wiz-src-slack-channels" placeholder="#general, #marketing" disabled></div>
+          </div>
+        </div>
+
+        <div style="margin-bottom:20px;">
+          <h3 style="font-size:14px;margin-bottom:8px;">🗒️ Meetings & Notas</h3>
+          <div class="form-row">
+            <div class="form-field"><label>¿Herramienta de meetings?</label>
+              <select id="wiz-src-meeting-tool">
+                <option value="none">Solo Google Meet / Zoom (sin transcriptor)</option>
+                <option value="fathom">Fathom</option>
+                <option value="granola">Granola</option>
+                <option value="otter">Otter.ai</option>
+                <option value="fireflies">Fireflies.ai</option>
+                <option value="other">Otra</option>
+              </select>
+            </div>
+            <div class="form-field"><label>¿Dónde llegan las notas?</label>
+              <select id="wiz-src-notes-dest">
+                <option value="notion">Notion</option>
+                <option value="gdrive">Google Drive</option>
+                <option value="email">Email (reenvío automático)</option>
+                <option value="manual">Manual / no automatizado</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-field"><label>Notion Database ID (meetings)</label><input type="text" id="wiz-src-notion-meetings" placeholder="abc123... (copiar de la URL de la DB)">
+              <div style="font-size:11px;color:var(--muted);margin-top:4px;">📌 Abrir la DB en Notion → copiar ID de la URL: notion.so/<strong>DATABASE_ID</strong>?v=...</div>
+            </div>
+            <div class="form-field"><label>Google Drive Folder ID (recordings)</label><input type="text" id="wiz-src-gdrive-folder" placeholder="1ABcD... (copiar de la URL de la carpeta)">
+              <div style="font-size:11px;color:var(--muted);margin-top:4px;">📌 Abrir la carpeta en Drive → copiar ID de la URL: drive.google.com/drive/folders/<strong>FOLDER_ID</strong></div>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-field"><label>Gmail label para transcripciones (si llegan por email)</label><input type="text" id="wiz-src-transcript-label" placeholder="fathom-notes, meeting-transcripts"></div>
+            <div class="form-field"><label>Notion DB (notas equipo / general)</label><input type="text" id="wiz-src-notion-notes" placeholder="ID de otra DB de Notion (opcional)"></div>
+          </div>
+        </div>
+
+        <div style="margin-bottom:20px;">
+          <h3 style="font-size:14px;margin-bottom:8px;">🕵️ Competidores (Thief Marketer)</h3>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:8px;">3-5 competidores principales. Más se pueden añadir después.</div>
+          <div id="wiz-competitors">
+            <div class="wiz-competitor" style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:8px;">
+              <div class="form-row">
+                <div class="form-field"><label>Nombre</label><input type="text" class="wiz-comp-name" placeholder="Competidor 1"></div>
+                <div class="form-field"><label>Website</label><input type="text" class="wiz-comp-web" placeholder="https://..."></div>
+              </div>
+              <div class="form-row">
+                <div class="form-field"><label>LinkedIn</label><input type="text" class="wiz-comp-linkedin" placeholder="URL o slug"></div>
+                <div class="form-field"><label>Instagram</label><input type="text" class="wiz-comp-ig" placeholder="@handle"></div>
+              </div>
+            </div>
+          </div>
+          <button class="btn btn-secondary" onclick="addCompetitor()" style="font-size:12px;">+ Añadir competidor</button>
+        </div>
+
+        <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;">
+          <div style="font-size:12px;font-weight:600;margin-bottom:4px;">⚠️ Importante: compartir acceso</div>
+          <div style="font-size:12px;color:var(--muted);line-height:1.6;">
+            • <strong>Notion:</strong> Ir a cada DB → "..." → "Connect to" → seleccionar integración SanchoCMO<br>
+            • <strong>Google Drive:</strong> Compartir carpeta con la cuenta de servicio o con el email de acceso<br>
+            • <strong>Slack:</strong> Requiere crear una Slack App con bot token (xoxb-...)
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 7: Verify & Generate -->
+      <div class="wiz-content" id="wiz-7">
+        <div class="wiz-title">Verificar y guardar</div>
+        <div class="wiz-desc">Revisa los datos y genera la configuración para clients.js.</div>
+        <div id="wiz-summary" style="margin-bottom:16px;"></div>
+        <div class="form-field"><label>Código para clients.js (copia y pega)</label>
+          <textarea id="wiz-output" style="width:100%;min-height:200px;font-family:'SF Mono',monospace;font-size:12px;padding:16px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--cyan);resize:vertical;" readonly></textarea>
+        </div>
+        <div style="margin-top:12px;display:flex;gap:8px;">
+          <button class="btn btn-primary" onclick="copyWizOutput()">📋 Copiar código</button>
+          <button class="btn btn-secondary" onclick="showToast('Dile a Sancho: actualiza clients.js con el nuevo cliente')">💬 Pedir a Sancho</button>
+        </div>
+      </div>
+
+      <!-- Navigation -->
+      <div style="display:flex;justify-content:space-between;padding:16px 24px;border-top:1px solid var(--border);">
+        <button class="btn btn-secondary" id="wiz-prev" onclick="wizStep(-1)" style="visibility:hidden;">← Anterior</button>
+        <div style="color:var(--muted);font-size:13px;" id="wiz-progress">Paso 1 de 6</div>
+        <button class="btn btn-primary" id="wiz-next" onclick="wizStep(1)">Siguiente →</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Skill panel -->
+<div class="skill-panel-overlay" id="skillOverlay" onclick="if(event.target===this)closeSkill()">
+  <div class="skill-panel">
+    <div class="skill-panel-header"><h3 id="skillPanelTitle"></h3><button class="skill-panel-close" onclick="closeSkill()">✕</button></div>
+    <div class="skill-panel-actions">
+      <button class="btn btn-primary" onclick="proposeSkillChange()" style="font-size:12px;padding:6px 14px;">📋 Proponer cambio</button>
+      <button class="btn btn-secondary" onclick="copySkillPath()" style="font-size:12px;padding:6px 14px;">📁 Copiar ruta</button>
+    </div>
+    <div class="skill-panel-body" id="skillPanelBody"></div>
+  </div>
+</div>
+
+<!-- Task Detail Modal -->
+<div class="skill-panel-overlay" id="taskOverlay" onclick="if(event.target===this)closeTaskDetail()">
+  <div class="skill-panel" style="width:600px;">
+    <div class="skill-panel-header">
+      <h3 id="taskDetailTitle"></h3>
+      <button class="skill-panel-close" onclick="closeTaskDetail()">✕</button>
+    </div>
+    <div class="skill-panel-body" style="padding:20px;" id="taskDetailBody"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="/mc/clients.js"></script>
+<script src="/mc/skills-data.js"></script>
+<script src="/mc/mc-data.js"></script>
+<script src="/mc/agents-data.js"></script>
+<script>
+// === Supabase (multi-client) ===
+const DB_TABLES = ['campaigns','content_ideas','editorial_calendar','content_performance','companies','contacts','outreach_sequences','competitor_moves','insights'];
+let sbClient = null;  // current supabase client
+let currentClientId = null;
+let dbData = {};
+DB_TABLES.forEach(t => dbData[t] = []);
+
+function connectSupabase(clientId) {
+  const client = (typeof CLIENTS !== 'undefined') ? CLIENTS[clientId] : null;
+  if (!client || !client.supabase) { sbClient = null; return; }
+  sbClient = supabase.createClient(client.supabase.url, client.supabase.anon_key);
+  currentClientId = clientId;
+}
+
+async function loadSupabase() {
+  if (!sbClient) {
+    DB_TABLES.forEach(t => dbData[t] = []);
+    renderSupabase();
+    return;
+  }
+  try {
+    const results = await Promise.all(DB_TABLES.map(t => sbClient.from(t).select('*').order('id',{ascending:false}).limit(100)));
+    DB_TABLES.forEach((t,i) => { dbData[t] = results[i].data || []; });
+  } catch(e) {
+    console.error('Supabase error:', e);
+    DB_TABLES.forEach(t => dbData[t] = []);
+  }
+  renderSupabase();
+}
+
+function renderSupabase() {
+  // Update stats
+  const dbStats = document.getElementById('db-stats');
+  if (dbStats) {
+    dbStats.innerHTML = `
+      <div class="sr"><span>Campañas</span><span>${dbData.campaigns.length}</span></div>
+      <div class="sr"><span>Ideas de contenido</span><span>${dbData.content_ideas.length}</span></div>
+      <div class="sr"><span>Calendario editorial</span><span>${dbData.editorial_calendar.length}</span></div>
+      <div class="sr"><span>Performance</span><span>${dbData.content_performance.length}</span></div>
+      <div class="sr"><span>Empresas (outreach)</span><span>${dbData.companies.length}</span></div>
+      <div class="sr"><span>Contactos</span><span>${dbData.contacts.length}</span></div>
+      <div class="sr"><span>Secuencias outreach</span><span>${dbData.outreach_sequences.length}</span></div>
+      <div class="sr"><span>Movimientos competencia</span><span>${dbData.competitor_moves.length}</span></div>
+      <div class="sr"><span>Insights</span><span>${dbData.insights.length}</span></div>`;
+  }
+
+  // Campaigns page
+  renderCampaignsPage();
+  // Data explorer
+  renderDataExplorer();
+}
+
+function renderCampaignsPage() {
+  const el = document.getElementById('campaigns-content');
+  if (dbData.campaigns.length === 0) {
+    el.innerHTML = `<div class="empty">Sin campañas activas en Supabase.<br>Se crean cuando los agentes trabajan en Phase 2-3.</div>
+      <div style="margin-top:16px;padding:16px;background:var(--bg);border:1px solid var(--border);border-radius:8px;">
+        <h2 style="margin-bottom:12px;">🗄️ Base de datos (Supabase)</h2>
+        <div id="db-stats">Cargando...</div>
+      </div>`;
+  } else {
+    el.innerHTML = dbData.campaigns.map(c => `
+      <div class="card" style="margin-bottom:12px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div>
+            <div style="font-size:16px;font-weight:700;">${c.name||'Sin nombre'}</div>
+            <div style="color:var(--muted);font-size:13px;">${c.goal||''}</div>
+          </div>
+          <span class="tag ${c.status==='active'?'agent':c.status==='completed'?'docs':'tool'}">${c.status||'draft'}</span>
+        </div>
+        ${c.kpi?'<div style="margin-top:8px;font-size:13px;">KPI: '+c.kpi+'</div>':''}
+        ${c.budget?'<div style="font-size:13px;color:var(--muted);">Budget: €'+c.budget+'</div>':''}
+        ${c.timeline?'<div style="font-size:13px;color:var(--muted);">Timeline: '+c.timeline+'</div>':''}
+      </div>`).join('') +
+      `<div style="margin-top:16px;padding:16px;background:var(--bg);border:1px solid var(--border);border-radius:8px;">
+        <h2 style="margin-bottom:12px;">🗄️ Base de datos</h2>
+        <div id="db-stats">Cargando...</div>
+      </div>`;
+  }
+  renderSupabaseStats();
+}
+
+function renderSupabaseStats() {
+  const el = document.getElementById('db-stats');
+  if (!el) return;
+  const total = Object.values(dbData).reduce((a,b) => a + b.length, 0);
+  el.innerHTML = `
+    <div style="margin-bottom:8px;font-size:13px;color:var(--muted);">${total} registros totales</div>
+    <div class="sr"><span>📊 Campañas</span><span style="font-weight:600;">${dbData.campaigns.length}</span></div>
+    <div class="sr"><span>💡 Ideas de contenido</span><span style="font-weight:600;">${dbData.content_ideas.length}</span></div>
+    <div class="sr"><span>📅 Calendario editorial</span><span style="font-weight:600;">${dbData.editorial_calendar.length}</span></div>
+    <div class="sr"><span>📈 Content performance</span><span style="font-weight:600;">${dbData.content_performance.length}</span></div>
+    <div class="sr"><span>🏢 Empresas target</span><span style="font-weight:600;">${dbData.companies.length}</span></div>
+    <div class="sr"><span>👤 Contactos</span><span style="font-weight:600;">${dbData.contacts.length}</span></div>
+    <div class="sr"><span>📧 Secuencias outreach</span><span style="font-weight:600;">${dbData.outreach_sequences.length}</span></div>
+    <div class="sr"><span>🔍 Movimientos competencia</span><span style="font-weight:600;">${dbData.competitor_moves.length}</span></div>
+    <div class="sr"><span>🧠 Insights</span><span style="font-weight:600;">${dbData.insights.length}</span></div>`;
+}
+
+function renderDataExplorer() {
+  const el = document.getElementById('data-explorer-content');
+  if (!el) return;
+
+  const tableSelect = document.getElementById('de-table');
+  if (!tableSelect) return;
+  const table = tableSelect.value;
+  const rows = dbData[table] || [];
+
+  if (rows.length === 0) {
+    el.innerHTML = '<div class="empty">Tabla vacía. Los agentes la llenarán durante las fases de ejecución.</div>';
+  } else {
+    const cols = Object.keys(rows[0]).filter(c => c !== 'id');
+    el.innerHTML = `<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12px;">
+      <tr>${cols.map(c => `<th style="padding:8px;border:1px solid var(--border);background:var(--bg);color:var(--muted);text-align:left;white-space:nowrap;">${c}</th>`).join('')}</tr>
+      ${rows.slice(0,50).map(r => `<tr>${cols.map(c => {
+        let v = r[c]; if(v===null||v===undefined) v=''; if(typeof v==='object') v=JSON.stringify(v); if(typeof v==='string'&&v.length>60) v=v.slice(0,60)+'…';
+        return `<td style="padding:6px 8px;border:1px solid var(--border);max-width:200px;overflow:hidden;text-overflow:ellipsis;">${v}</td>`;
+      }).join('')}</tr>`).join('')}
+    </table></div>
+    <div style="margin-top:8px;color:var(--muted);font-size:11px;">${Math.min(rows.length,50)} de ${rows.length} registros</div>`;
+  }
+
+  // Overview stats
+  const total = Object.values(dbData).reduce((a,b) => a + b.length, 0);
+  const ov = document.getElementById('db-overview-stats');
+  if (ov) ov.innerHTML = `
+    <div class="stat"><div class="num" style="color:var(--purple)">${total}</div><div class="label">Total registros</div></div>
+    <div class="stat"><div class="num" style="color:var(--blue)">${dbData.campaigns.length}</div><div class="label">Campañas</div></div>
+    <div class="stat"><div class="num" style="color:var(--green)">${dbData.content_ideas.length}</div><div class="label">Ideas</div></div>
+    <div class="stat"><div class="num" style="color:var(--orange)">${dbData.companies.length}</div><div class="label">Empresas</div></div>
+    <div class="stat"><div class="num" style="color:var(--cyan)">${dbData.contacts.length}</div><div class="label">Contactos</div></div>
+    <div class="stat"><div class="num" style="color:var(--yellow)">${dbData.insights.length}</div><div class="label">Insights</div></div>`;
+
+  // Full stats
+  const fs = document.getElementById('db-stats-full');
+  if (fs) {
+    const tables = [
+      {k:'campaigns',icon:'📊',label:'Campañas',desc:'Objetivos, budget, status, KPIs'},
+      {k:'content_ideas',icon:'💡',label:'Ideas de contenido',desc:'Generadas por agentes, clasificadas por pilar y prioridad'},
+      {k:'editorial_calendar',icon:'📅',label:'Calendario editorial',desc:'Contenido planificado por fecha, plataforma, agente'},
+      {k:'content_performance',icon:'📈',label:'Content performance',desc:'Views, clicks, conversions por pieza publicada'},
+      {k:'companies',icon:'🏢',label:'Empresas target',desc:'ICP match score, industry, signals'},
+      {k:'contacts',icon:'👤',label:'Contactos',desc:'Decision makers con email, LinkedIn, status'},
+      {k:'outreach_sequences',icon:'📧',label:'Secuencias outreach',desc:'Cold email/LinkedIn, steps, next touchpoint'},
+      {k:'competitor_moves',icon:'🔍',label:'Movimientos competencia',desc:'Detectados por agentes, tipo, impacto'},
+      {k:'insights',icon:'🧠',label:'Insights',desc:'Learnings de campañas, promovidos a tiers superiores'},
+    ];
+    fs.innerHTML = tables.map(t => `
+      <div class="sr" style="padding:10px 0;">
+        <span style="display:flex;align-items:center;gap:8px;">${t.icon} <strong>${t.label}</strong> <span style="color:var(--muted);font-size:11px;">— ${t.desc}</span></span>
+        <span style="font-weight:700;${dbData[t.k].length?'color:var(--green)':'color:var(--muted)'}">${dbData[t.k].length}</span>
+      </div>`).join('');
+  }
+}
+</script>
+<script>
+// === Config ===
+const AGENTS = [
+  {name:"Sancho",ch:"#campaigns #intelligence #learning #admin",model:"Opus",role:"CMO Estratega",emoji:"🐴"},
+  {name:"El Oráculo",ch:"#el-toboso",model:"Opus",role:"Brand Identity",emoji:"🔮"},
+  {name:"El Explorador",ch:"#prospecting",model:"Sonnet",role:"Outreach",emoji:"🧭"},
+  {name:"El Redactor",ch:"#organic-content",model:"Sonnet",role:"SEO Content",emoji:"✍️"},
+  {name:"El Comunicador",ch:"#social",model:"Sonnet",role:"Social Media",emoji:"📢"},
+  {name:"El Creativo",ch:"#design",model:"Sonnet",role:"Visual Assets",emoji:"🎨"},
+  {name:"El Amplificador",ch:"#paid-ads",model:"Sonnet",role:"Paid Media",emoji:"📣"},
+  {name:"El Conector",ch:"#partners",model:"Sonnet",role:"Partnerships",emoji:"🤝"},
+  {name:"El Comercial",ch:"#sales",model:"Sonnet",role:"Sales",emoji:"💼"},
+  {name:"El Arquitecto",ch:"#web",model:"Sonnet",role:"Landing Pages",emoji:"🏗️"},
+  {name:"El Investigador",ch:"#research",model:"Opus",role:"Deep Research",emoji:"🔬"},
+];
+
+const SKILL_CATS = {
+  foundation: [
+    {id:"company-context",sd:"L0 · Qué es la empresa"},{id:"budget-constraints",sd:"L0 · Presupuesto y recursos"},
+    {id:"business-model-audit",sd:"L1 · Modelo de negocio"},{id:"self-intelligence",sd:"L1 · Análisis propio"},
+    {id:"competitor-intelligence",sd:"L2 · Battle cards"},{id:"market-intelligence",sd:"L2 · TAM, tendencias"},
+    {id:"existing-customer-data",sd:"L1 · Opcional · CRM"},{id:"swot-analysis",sd:"L2 · SWOT + TOWS"},
+    {id:"niche-discovery-100x",sd:"L3 · ECPs y nichos"},{id:"ecp-validation",sd:"L4 · Validar ECPs"},
+    {id:"positioning-messaging",sd:"L4 · Posicionamiento"},{id:"pricing-hooks",sd:"L4 · Hooks de precio"},
+    {id:"brand-voice",sd:"L5 · Voz de marca"},{id:"visual-identity",sd:"L5 · Identidad visual"},
+    {id:"foundation-orchestrator",sd:"Meta · Gestiona 16 pilares"},{id:"phase-0-diagnostic",sd:"Meta · Entry point"},
+  ],
+  decide: [{id:"channel-prioritization",sd:"Qué canales (Core Four)"},{id:"content-calendar-planner",sd:"Calendario editorial"},{id:"outreach-sequence-builder",sd:"Cold outreach"}],
+  intel: [{id:"daily-pulse",sd:"Pulso diario"},{id:"meeting-intelligence",sd:"Intel de reuniones"},{id:"content-miner",sd:"Ideas de contenido"},{id:"pattern-detector",sd:"Patrones cross-canal"},{id:"signal-definition",sd:"Señales de compra"}],
+  content: [{id:"keyword-research",sd:"SEO research"},{id:"seo-content",sd:"Artículos SEO"},{id:"content-atomizer",sd:"Multi-plataforma"},{id:"direct-response-copy",sd:"Copy persuasivo"},{id:"lead-magnet",sd:"Lead magnets"},{id:"email-sequences",sd:"Email nurture"},{id:"newsletter",sd:"Newsletters"}],
+  outreach: [{id:"company-finder",sd:"Buscar empresas"},{id:"decision-maker-finder",sd:"Encontrar decisores"},{id:"contact-enrichment",sd:"Waterfall enrichment"}],
+  utils: [{id:"insight-to-content-mapper",sd:"Insight → brief"},{id:"competitor-alternatives",sd:"Alt SEO pages"},{id:"thief-marketers",sd:"Robar ideas"},{id:"nano-banana-pro",sd:"Imágenes Gemini"}],
+};
+
+const SKILL_DEPS = {
+  "company-context": [],
+  "budget-constraints": [],
+  "business-model-audit": ["company-context"],
+  "self-intelligence": ["company-context"],
+  "existing-customer-data": ["company-context"],
+  "competitor-intelligence": ["company-context"],
+  "market-intelligence": ["company-context"],
+  "swot-analysis": ["self-intelligence","competitor-intelligence","market-intelligence"],
+  "niche-discovery-100x": ["swot-analysis"],
+  "ecp-validation": ["niche-discovery-100x"],
+  "positioning-messaging": ["niche-discovery-100x","competitor-intelligence"],
+  "pricing-hooks": ["niche-discovery-100x","competitor-intelligence"],
+  "brand-voice": ["positioning-messaging"],
+  "visual-identity": ["brand-voice"],
+};
+
+const DAG_LAYERS = [
+  {label:"L0",nodes:["company-context","budget-constraints"]},
+  {label:"L1",nodes:["business-model-audit","self-intelligence","existing-customer-data"]},
+  {label:"L2",nodes:["competitor-intelligence","market-intelligence","swot-analysis"]},
+  {label:"L3",nodes:["niche-discovery-100x"]},
+  {label:"L4",nodes:["positioning-messaging","pricing-hooks","ecp-validation"]},
+  {label:"L5",nodes:["brand-voice","visual-identity"]},
+];
+
+// === Data ===
+const D = typeof MC_DATA !== 'undefined' ? MC_DATA : null;
+const S = typeof SKILLS_DATA !== 'undefined' ? SKILLS_DATA : {};
+let currentSkill = null;
+
+// === Render functions ===
+function renderDashboard() {
+  if (!D) return;
+
+  const f = D.foundation;
+  const openTasks = (D.tasks.proposals?.length||0) + (D.tasks.approved?.length||0) + (D.tasks.progress?.length||0);
+  const time = D.generated ? new Date(D.generated).toLocaleString('es-ES',{hour:'2-digit',minute:'2-digit',day:'2-digit',month:'short'}) : '';
+
+  // Regen time
+  document.querySelectorAll('.regen-time').forEach(el => el.textContent = time ? `Actualizado: ${time}` : '');
+
+  // Global stats
+  const clientCount = (typeof CLIENTS !== 'undefined') ? Object.keys(CLIENTS).length : 0;
+  document.getElementById('global-stats').innerHTML = `
+    <div class="stat"><div class="num" style="color:var(--purple)">${clientCount}</div><div class="label">Clientes</div></div>
+    <div class="stat"><div class="num" style="color:var(--green)">11</div><div class="label">Agentes</div></div>
+    <div class="stat"><div class="num" style="color:var(--purple)">38</div><div class="label">Skills</div></div>
+    <div class="stat"><div class="num" style="color:var(--orange)">${openTasks}</div><div class="label">Tareas abiertas</div></div>
+    <div class="stat"><div class="num" style="color:var(--blue)">${D.campaigns.length}</div><div class="label">Campañas</div></div>`;
+
+  // System status
+  const sys = D.system;
+  const sysHTML = `<h2>⚡ Sistema</h2>
+    <div class="sr"><span>Gateway</span><span><span class="dot ${sys.gateway==='running'?'g':'x'}"></span>${sys.gateway}</span></div>
+    <div class="sr"><span>Discord</span><span><span class="dot ${sys.discord==='ok'?'g':'x'}"></span>${sys.discord==='ok'?'Connected':sys.discord}</span></div>
+    <div class="sr"><span>Tailscale</span><span><span class="dot ${sys.tailscale==='serve'?'g':'x'}"></span>${sys.tailscale}${sys.tailscale_url?' · '+sys.tailscale_url:''}</span></div>
+    ${(()=>{const hc=D.healthcheck||{};const st=hc.status||'unknown';const col=st==='ok'?'g':st==='warning'?'y':'x';const lr=hc.last_run?new Date(hc.last_run).toLocaleString('es-ES',{timeZone:'Europe/Madrid'}):'Never';return `<div class="sr"><span>Healthcheck</span><span><span class="dot ${col}"></span>${st} · ${lr}</span></div>`;})()}`;
+  document.getElementById('global-system').innerHTML = sysHTML;
+  document.getElementById('client-system').innerHTML = sysHTML;
+
+  // Client stats
+  document.getElementById('client-stats').innerHTML = `
+    <div class="stat"><div class="num" style="color:var(--green)">11</div><div class="label">Agentes</div></div>
+    <div class="stat"><div class="num" style="color:var(--purple)">38</div><div class="label">Skills</div></div>
+    <div class="stat"><div class="num" style="color:var(--yellow)">${f.done}/${f.total}</div><div class="label">Foundation</div></div>
+    <div class="stat"><div class="num" style="color:var(--blue)">${D.campaigns.length}</div><div class="label">Campañas</div></div>
+    <div class="stat"><div class="num" style="color:var(--orange)">${openTasks}</div><div class="label">Tareas</div></div>`;
+
+  // Phase
+  const phase = f.done === 0 ? 0 : f.done < f.total ? 1 : 2;
+  document.getElementById('client-phase').innerHTML = `<h2>🎯 Fase Actual</h2>
+    <div class="phase-bar">
+      <div class="phase-step ${phase===0?'current':'done'}">P0</div>
+      <div class="phase-step ${phase===1?'current':phase>1?'done':'pending'}">P1</div>
+      <div class="phase-step pending">P1.5</div>
+      <div class="phase-step pending">P2</div>
+      <div class="phase-step pending">P3</div>
+    </div>
+    <div class="sr"><span>Foundation</span><span>${f.done}/${f.total} pilares</span></div>
+    <div class="sr"><span>Campañas</span><span>${D.campaigns.length} activas</span></div>`;
+
+  // Client cards (global) - dynamic from CLIENTS
+  let clientCardsHTML = '';
+  if (typeof CLIENTS !== 'undefined') {
+    for (const [id, client] of Object.entries(CLIENTS)) {
+      const pct = f.total > 0 ? Math.round(f.done/f.total*100) : 0;
+      clientCardsHTML += `
+        <div class="client-card" onclick="document.getElementById('clientSelector').value='${id}';switchClient('${id}');">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div><div style="font-size:18px;font-weight:700;">${client.emoji} ${client.name}</div>
+            <div style="color:var(--muted);font-size:13px;">Phase ${client.phase||0} — ${f.done}/${f.total} pilares</div></div>
+            <div style="text-align:right;"><div style="font-size:24px;font-weight:700;color:var(--yellow);">${pct}%</div><div style="font-size:11px;color:var(--muted);">Foundation</div></div>
+          </div>
+          <div class="cc-bar"><div class="cc-bar-fill" style="width:${pct}%;background:var(--yellow);"></div></div>
+        </div>`;
+    }
+  }
+  clientCardsHTML += `<div class="client-card" style="border-style:dashed;cursor:pointer;" onclick="openNewClientWizard()"><div style="font-weight:700;color:var(--purple);">+ Nuevo cliente</div><div style="color:var(--muted);font-size:13px;">Wizard paso a paso</div></div>`;
+  document.getElementById('global-clients').innerHTML = clientCardsHTML;
+
+  // Activity feed
+  renderActivityFeed('activity-feed-global', D.activity, 15);
+  renderActivityFeed('activity-feed-client', D.activity, 8);
+
+  // Recent tasks on client dashboard
+  const allTasks = [...(D.tasks.done||[])].slice(0,5);
+  const recentHTML = allTasks.map(t => `<div class="sr"><span>${t.id} · ${t.title}</span><span style="color:var(--green)">✔️</span></div>`).join('');
+  document.getElementById('client-tasks-recent').innerHTML = '<h2>📋 Tareas Recientes</h2>' + (recentHTML || '<div class="empty">Sin tareas.</div>');
+}
+
+function renderActivityFeed(containerId, events, limit) {
+  const el = document.getElementById(containerId);
+  if (!events || events.length === 0) { el.innerHTML = '<div class="empty">Sin actividad reciente.</div>'; return; }
+  el.innerHTML = events.slice(0, limit).map(e => `
+    <div class="feed-item">
+      <span class="feed-date">${e.date}${e.time?' '+e.time:''}</span>
+      <span class="feed-text">${e.raw || e.text}</span>
+    </div>`).join('');
+}
+
+function renderTasks() {
+  if (!D) return;
+  const cols = [
+    {key:'proposals',label:'📥 Propuestas'},
+    {key:'approved',label:'✅ Aprobadas'},
+    {key:'progress',label:'🔧 En Progreso'},
+    {key:'done',label:'✔️ Completadas'},
+  ];
+  document.getElementById('task-board').innerHTML = cols.map(col => {
+    const tasks = D.tasks[col.key] || [];
+    return `<div class="task-col">
+      <div class="task-col-header">${col.label} <span class="count">${tasks.length}</span></div>
+      ${tasks.length ? tasks.map(t => {
+        let actions = '';
+        if (col.key === 'proposals') actions = `<div class="task-actions"><button class="btn-sm" onclick="approveTask('${t.id}')">✅ Aprobar</button></div>`;
+        else if (col.key === 'approved') actions = `<div class="task-actions"><button class="btn-sm btn-exec" onclick="executeTask('${t.id}','${t.title.replace(/'/g,"\\'")}')">▶️ Ejecutar</button></div>`;
+        else if (col.key === 'progress') actions = `<div class="task-actions"><button class="btn-sm" onclick="executeTask('${t.id}','${t.title.replace(/'/g,"\\'")}')">👁️ Estado</button></div>`;
+        const prdBadge = t.has_prd ? '<span class="prd-badge">📄 PRD</span>' : '<span class="prd-badge empty">Sin PRD</span>';
+        return `<div class="task-card" onclick="openTaskDetail('${col.key}',${tasks.indexOf(t)})" style="cursor:pointer;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div class="tid">${t.id}</div>
+          ${prdBadge}
+        </div>
+        <div class="ttitle">${t.title}</div>
+        <div class="tmeta"><span class="tag ${t.cat}">[${t.cat}]</span><span class="tag ${t.pri}">${t.pri.toUpperCase()}</span></div>
+        ${t.proposed?'<div style="color:var(--muted);font-size:10px;margin-top:3px;">'+t.proposed+'</div>':''}
+        ${actions}
+      </div>`;}).join('') : '<div class="empty">Vacío</div>'}
+    </div>`;
+  }).join('');
+}
+
+function renderSkills() {
+  for (const [cat, skills] of Object.entries(SKILL_CATS)) {
+    const el = document.getElementById('sg-' + cat);
+    if (!el) continue;
+    el.innerHTML = skills.map(s => `<div class="skill-item" onclick="openSkill('${s.id}')"><div class="sn">${s.id}</div><div class="sd">${s.sd}</div></div>`).join('');
+  }
+  // DAG
+  const dagEl = document.getElementById('skill-dag');
+  const pillars = D ? D.foundation.pillars : {};
+  dagEl.innerHTML = DAG_LAYERS.map((layer, i) => `
+    ${i > 0 ? '<div class="dag-arrow">↓</div>' : ''}
+    <div class="dag-layer">
+      <div class="dag-label" style="color:var(--purple);">${layer.label}</div>
+      <div class="dag-nodes">${layer.nodes.map(n => {
+        const done = pillars[n]?.done;
+        const locked = !done && SKILL_DEPS[n]?.some(dep => !pillars[dep]?.done) && SKILL_DEPS[n]?.length > 0;
+        return `<div class="dag-node ${done?'done':''}${locked?' locked':''}" onclick="openSkill('${n}')">${done?'✅':''}${locked?'🔒':''} ${n}</div>`;
+      }).join('')}</div>
+    </div>`).join('');
+}
+
+function renderAgents() {
+  // Map name to slug for AGENTS_DATA lookup
+  const slugMap = {'Sancho':'sancho','El Oráculo':'el-oraculo','El Explorador':'explorador','El Redactor':'redactor','El Comunicador':'comunicador','El Creativo':'creativo','El Amplificador':'amplificador','El Conector':'conector','El Comercial':'comercial','El Arquitecto':'arquitecto','El Investigador':'investigador'};
+  document.getElementById('agents-list').innerHTML = AGENTS.map(a => {
+    const slug = slugMap[a.name] || '';
+    const ad = (typeof AGENTS_DATA !== 'undefined') ? AGENTS_DATA[slug] : null;
+    const fileCount = ad ? Object.keys(ad.files).length : 0;
+    return `<div class="card" style="margin-bottom:8px;cursor:pointer;" onclick="openAgentViewer('${slug}')">
+      <div class="agent-row"><span class="dot g"></span><span style="font-weight:600;min-width:150px;">${a.emoji} ${a.name}</span>
+      <span style="color:var(--blue);font-size:13px;">${a.ch}</span>
+      <span style="color:var(--muted);font-size:12px;margin-left:auto;">${a.model} · ${a.role} · ${fileCount} archivos</span></div>
+    </div>`;
+  }).join('');
+}
+
+let _agentSlug = '', _agentFile = '';
+function openAgentViewer(slug) {
+  const ad = (typeof AGENTS_DATA !== 'undefined') ? AGENTS_DATA[slug] : null;
+  if (!ad || !ad.files) return;
+  const viewer = document.getElementById('agent-file-viewer');
+  document.getElementById('agent-viewer-title').textContent = ad.name;
+  const files = Object.keys(ad.files);
+  // Default to SOUL.md
+  const defaultFile = files.includes('SOUL.md') ? 'SOUL.md' : files[0];
+  document.getElementById('agent-file-tabs').innerHTML = files.map(f =>
+    `<button class="btn-sm agent-tab ${f===defaultFile?'active':''}" onclick="showAgentFile('${slug}','${f}',this)">${f}</button>`
+  ).join('');
+  document.getElementById('agent-file-content').textContent = ad.files[defaultFile] || '';
+  _agentSlug = slug; _agentFile = defaultFile;
+  viewer.style.display = 'block';
+  viewer.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+function showAgentFile(slug, fname, el) {
+  const ad = AGENTS_DATA[slug];
+  document.getElementById('agent-file-content').textContent = ad.files[fname] || '';
+  _agentSlug = slug; _agentFile = fname;
+  el.parentElement.querySelectorAll('.agent-tab').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+}
+function proposeAgentChange() {
+  const ad = AGENTS_DATA[_agentSlug];
+  if (!ad) return;
+  showPage('tasks', document.querySelector('nav a[onclick*="tasks"]'));
+  const panel = document.getElementById('task-form-panel');
+  panel.style.display = 'block';
+  document.getElementById('tf-title').value = `Modificar ${_agentFile} de ${ad.name}`;
+  document.getElementById('tf-cat').value = 'agent';
+  document.getElementById('tf-desc').value = `Archivo: workspace-${_agentSlug}/${_agentFile}\n\nCambio propuesto:\n`;
+  document.getElementById('tf-desc').focus();
+}
+function copyAgentPath() {
+  const path = `~/.openclaw/workspace-${_agentSlug}/${_agentFile}`;
+  navigator.clipboard.writeText(path).then(() => showToast('📋 Ruta copiada: ' + path));
+}
+function closeAgentViewer() {
+  document.getElementById('agent-file-viewer').style.display = 'none';
+}
+
+function renderFoundation() {
+  if (!D) return;
+  const f = D.foundation;
+  const pct = f.total > 0 ? Math.round(f.done/f.total*100) : 0;
+  document.getElementById('foundation-sub').textContent = `Hospital Capilar — ${f.done}/${f.total} pilares (${pct}%)`;
+
+  const layers = [
+    {l:"L0",label:"Sin dependencias",skills:["company-context","budget-constraints"]},
+    {l:"L1",label:"Depende de company-context",skills:["business-model-audit","self-intelligence","existing-customer-data"]},
+    {l:"L2",label:"Depende de L1",skills:["competitor-intelligence","market-intelligence","swot-analysis"]},
+    {l:"L3",label:"Discovery",skills:["niche-discovery-100x"]},
+    {l:"L4",label:"Activation",skills:["positioning-messaging","pricing-hooks","ecp-validation"]},
+    {l:"L5",label:"Refinement",skills:["brand-voice","visual-identity"]},
+  ];
+
+  document.getElementById('foundation-content').innerHTML = `
+    <div style="margin-bottom:16px;"><div class="phase-bar">
+      <div class="phase-step" style="background:${pct>0?'var(--green)':'var(--border)'};color:${pct>0?'#000':'var(--muted)'};flex:${Math.max(f.done,1)};padding:0 12px;">${f.done}/${f.total}</div>
+      ${f.done<f.total?`<div class="phase-step pending" style="flex:${f.total-f.done};"></div>`:''}
+    </div></div>` +
+    layers.map(layer => {
+      const pillarsHTML = layer.skills.map(s => {
+        const p = f.pillars[s];
+        if (!p) return '';
+        const done = p.done;
+        const locked = !done && (SKILL_DEPS[s]||[]).some(dep => !f.pillars[dep]?.done) && (SKILL_DEPS[s]||[]).length > 0;
+        const opt = p.optional ? ' <span style="color:var(--muted);font-size:11px;">(opt)</span>' : '';
+        return `<div class="pillar ${done?'done':''}${locked?' locked':''}">
+          <span class="layer">${layer.l}</span> ${done?'✅':locked?'🔒':'⬜'} ${s}${opt}
+          ${p.date?'<span class="pillar-date">'+p.date+'</span>':''}
+        </div>`;
+      }).join('');
+      return `<div class="card" style="margin-bottom:12px;"><h2>${layer.l} — ${layer.label}</h2><div class="pillar-grid">${pillarsHTML}</div></div>`;
+    }).join('');
+}
+
+function renderChangelog() {
+  if (!D || !D.changelog.length) {
+    document.getElementById('changelog-content').innerHTML = '<div class="empty">Sin entradas.</div>';
+    return;
+  }
+  document.getElementById('changelog-content').innerHTML = D.changelog.map(e => `
+    <div class="cl-entry"><span class="cl-version">v${e.version}</span><span class="cl-date">${e.date}</span>
+    ${e.sections.map(s => `<div style="font-weight:600;color:var(--green);margin:10px 0 6px;font-size:13px;">${s.title}</div>
+    ${s.items.map(i => `<div class="cl-item">${i}</div>`).join('')}`).join('')}
+    </div>`).join('');
+}
+
+function renderGuide() {
+  document.getElementById('guide-content').innerHTML = `
+
+    <!-- Hero -->
+    <div class="card" style="margin-bottom:24px;padding:32px;background:linear-gradient(135deg, rgba(139,92,246,.12), rgba(139,92,246,.02));border-color:rgba(139,92,246,.3);">
+      <div style="font-size:32px;font-weight:800;margin-bottom:8px;">🐴 Bienvenido a SanchoCMO</div>
+      <div style="font-size:17px;color:var(--muted);line-height:1.8;max-width:680px;">
+        Un CMO virtual con <strong style="color:var(--fg);">11 agentes de IA</strong> que investigan, crean contenido, ejecutan outreach y aprenden de los resultados.<br>
+        <strong style="color:var(--fg);">Tú decides. Sancho orquesta. Los agentes ejecutan.</strong>
+      </div>
+    </div>
+
+    <!-- TL;DR: El Flywheel -->
+    <div class="card guide-section" style="margin-bottom:24px;">
+      <h2 style="margin-bottom:4px;">⚡ Cómo funciona — El Flywheel</h2>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:16px;">Un ciclo que se repite y mejora con cada vuelta.</div>
+      <div style="display:flex;align-items:center;justify-content:center;gap:0;flex-wrap:wrap;padding:8px 0;">
+        <div style="background:rgba(59,130,246,.1);border:2px solid rgba(59,130,246,.3);border-radius:14px;padding:18px 20px;text-align:center;min-width:150px;">
+          <div style="font-size:28px;">🔍</div>
+          <div style="font-weight:800;font-size:14px;margin:4px 0;">Encuentra</div>
+          <div style="color:var(--muted);font-size:11px;line-height:1.5;">Research, intelligence,<br>keywords, competidores</div>
+        </div>
+        <div style="font-size:24px;color:var(--muted);padding:0 6px;">→</div>
+        <div style="background:rgba(245,158,11,.1);border:2px solid rgba(245,158,11,.3);border-radius:14px;padding:18px 20px;text-align:center;min-width:150px;">
+          <div style="font-size:28px;">📋</div>
+          <div style="font-weight:800;font-size:14px;margin:4px 0;">Decide</div>
+          <div style="color:var(--muted);font-size:11px;line-height:1.5;">Canales, calendario,<br>prioridades, presupuesto</div>
+        </div>
+        <div style="font-size:24px;color:var(--muted);padding:0 6px;">→</div>
+        <div style="background:rgba(139,92,246,.1);border:2px solid rgba(139,92,246,.3);border-radius:14px;padding:18px 20px;text-align:center;min-width:150px;">
+          <div style="font-size:28px;">✍️</div>
+          <div style="font-weight:800;font-size:14px;margin:4px 0;">Crea</div>
+          <div style="color:var(--muted);font-size:11px;line-height:1.5;">SEO, social, emails,<br>landing pages, ads</div>
+        </div>
+        <div style="font-size:24px;color:var(--muted);padding:0 6px;">→</div>
+        <div style="background:rgba(34,197,94,.1);border:2px solid rgba(34,197,94,.3);border-radius:14px;padding:18px 20px;text-align:center;min-width:150px;">
+          <div style="font-size:28px;">🚀</div>
+          <div style="font-weight:800;font-size:14px;margin:4px 0;">Ejecuta</div>
+          <div style="color:var(--muted);font-size:11px;line-height:1.5;">Publica, outreach,<br>campañas, distribución</div>
+        </div>
+        <div style="font-size:24px;color:var(--muted);padding:0 6px;">→</div>
+        <div style="background:rgba(236,72,153,.1);border:2px solid rgba(236,72,153,.3);border-radius:14px;padding:18px 20px;text-align:center;min-width:150px;">
+          <div style="font-size:28px;">📊</div>
+          <div style="font-weight:800;font-size:14px;margin:4px 0;">Aprende</div>
+          <div style="color:var(--muted);font-size:11px;line-height:1.5;">Métricas, patrones,<br>feedback → mejora</div>
+        </div>
+      </div>
+      <div style="text-align:center;color:var(--muted);font-size:12px;margin-top:8px;">↩️ El ciclo se repite. Cada vuelta es mejor que la anterior.</div>
+    </div>
+
+    <!-- Matriz Hormozi -->
+    <div class="card guide-section" style="margin-bottom:24px;">
+      <h2 style="margin-bottom:4px;">📐 Los 4 Canales de Crecimiento</h2>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:16px;">Basado en la Matriz Hormozi (Core Four). SanchoCMO cubre los 4 cuadrantes.</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:2px;max-width:700px;">
+        <div style="background:rgba(59,130,246,.06);padding:16px;border-radius:12px 0 0 0;">
+          <div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:6px;">1:1 × Sin presupuesto</div>
+          <div style="font-weight:700;font-size:15px;margin-bottom:8px;">🎯 Outreach Directo</div>
+          <div style="font-size:12px;color:var(--muted);line-height:1.6;">
+            Buscar empresas → encontrar decisores → enriquecer contactos → secuencias frías
+          </div>
+          <div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:3px;">
+            <span style="background:var(--bg);padding:2px 8px;border-radius:4px;font-size:10px;">company-finder</span>
+            <span style="background:var(--bg);padding:2px 8px;border-radius:4px;font-size:10px;">decision-maker</span>
+            <span style="background:var(--bg);padding:2px 8px;border-radius:4px;font-size:10px;">outreach-sequences</span>
+          </div>
+        </div>
+        <div style="background:rgba(34,197,94,.06);padding:16px;border-radius:0 12px 0 0;">
+          <div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:6px;">1:Many × Sin presupuesto</div>
+          <div style="font-weight:700;font-size:15px;margin-bottom:8px;">📝 Contenido Orgánico</div>
+          <div style="font-size:12px;color:var(--muted);line-height:1.6;">
+            SEO, social, newsletter, lead magnets, email nurture
+          </div>
+          <div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:3px;">
+            <span style="background:var(--bg);padding:2px 8px;border-radius:4px;font-size:10px;">seo-content</span>
+            <span style="background:var(--bg);padding:2px 8px;border-radius:4px;font-size:10px;">content-atomizer</span>
+            <span style="background:var(--bg);padding:2px 8px;border-radius:4px;font-size:10px;">newsletter</span>
+          </div>
+        </div>
+        <div style="background:rgba(245,158,11,.06);padding:16px;border-radius:0 0 0 12px;">
+          <div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:6px;">1:1 × Con presupuesto</div>
+          <div style="font-weight:700;font-size:15px;margin-bottom:8px;">🤝 Partners & Afiliados</div>
+          <div style="font-size:12px;color:var(--muted);line-height:1.6;">
+            Alianzas, co-marketing, influencers, referrals
+          </div>
+          <div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:3px;">
+            <span style="background:var(--bg);padding:2px 8px;border-radius:4px;font-size:10px;">El Conector</span>
+            <span style="background:var(--bg);padding:2px 8px;border-radius:4px;font-size:10px;opacity:.5;">media-finder ❌</span>
+          </div>
+        </div>
+        <div style="background:rgba(139,92,246,.06);padding:16px;border-radius:0 0 12px 0;">
+          <div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:6px;">1:Many × Con presupuesto</div>
+          <div style="font-weight:700;font-size:15px;margin-bottom:8px;">📣 Paid Ads</div>
+          <div style="font-size:12px;color:var(--muted);line-height:1.6;">
+            Facebook, Google, LinkedIn ads, retargeting
+          </div>
+          <div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:3px;">
+            <span style="background:var(--bg);padding:2px 8px;border-radius:4px;font-size:10px;">El Amplificador</span>
+            <span style="background:var(--bg);padding:2px 8px;border-radius:4px;font-size:10px;opacity:.5;">ad-creators ❌</span>
+          </div>
+        </div>
+      </div>
+      <div style="font-size:11px;color:var(--muted);margin-top:8px;">❌ = gap pendiente de desarrollar</div>
+    </div>
+
+    <!-- Las 4 Fases -->
+    <div class="card guide-section" style="margin-bottom:24px;">
+      <h2 style="margin-bottom:4px;">🗺️ Las 4 Fases — De cero a escalar</h2>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:16px;">Todo cliente pasa por estas fases. <code>sancho-start</code> detecta automáticamente en cuál estás y te enruta.</div>
+      <div style="display:flex;flex-direction:column;gap:2px;">
+        <div style="display:flex;align-items:stretch;gap:0;">
+          <div style="background:#ef4444;color:#fff;padding:16px;border-radius:10px 0 0 0;min-width:160px;display:flex;flex-direction:column;justify-content:center;">
+            <div style="font-weight:800;font-size:15px;">P0 · Diagnose</div>
+            <div style="font-size:11px;opacity:.8;">~2 horas · automático</div>
+          </div>
+          <div style="background:rgba(239,68,68,.08);padding:16px;flex:1;border-radius:0 10px 0 0;">
+            <div style="font-weight:600;font-size:13px;margin-bottom:4px;">¿Dónde está el cuello de botella?</div>
+            <div style="color:var(--muted);font-size:12px;line-height:1.6;">Sancho escanea web, reviews, competencia. Determina la "meta": ¿ARREGLAR, LANZAR, LEADS, o ESCALAR? Enruta a la fase correcta.</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:stretch;gap:0;">
+          <div style="background:#f59e0b;color:#000;padding:16px;min-width:160px;display:flex;flex-direction:column;justify-content:center;">
+            <div style="font-weight:800;font-size:15px;">P1 · Foundation</div>
+            <div style="font-size:11px;opacity:.7;">1 día (Lite) — 1 semana (Deep)</div>
+          </div>
+          <div style="background:rgba(245,158,11,.06);padding:16px;flex:1;">
+            <div style="font-weight:600;font-size:13px;margin-bottom:4px;">¿Quiénes somos, a quién servimos, qué decimos?</div>
+            <div style="color:var(--muted);font-size:12px;line-height:1.6;">16 pilares en 5 capas (DAG): empresa → competidores → mercado → SWOT → nicho 100x → posicionamiento → voz de marca → identidad visual.<br>Conversacional desde Discord con El Oráculo + El Investigador.</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:stretch;gap:0;">
+          <div style="background:#8b5cf6;color:#fff;padding:16px;min-width:160px;display:flex;flex-direction:column;justify-content:center;">
+            <div style="font-weight:800;font-size:15px;">P2 · Funnel</div>
+            <div style="font-size:11px;opacity:.8;">1 — 2 semanas</div>
+          </div>
+          <div style="background:rgba(139,92,246,.06);padding:16px;flex:1;">
+            <div style="font-weight:600;font-size:13px;margin-bottom:4px;">Si mando 1.000 personas, ¿cuántas convierten?</div>
+            <div style="color:var(--muted);font-size:12px;line-height:1.6;">Landing pages (El Arquitecto), email sequences (El Comercial), lead magnets, trust engine (casos de éxito). La infraestructura de conversión.</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:stretch;gap:0;">
+          <div style="background:#22c55e;color:#000;padding:16px;border-radius:0 0 0 10px;min-width:160px;display:flex;flex-direction:column;justify-content:center;">
+            <div style="font-weight:800;font-size:15px;">P3 · Scale</div>
+            <div style="font-size:11px;opacity:.7;">Continuo</div>
+          </div>
+          <div style="background:rgba(34,197,94,.06);padding:16px;flex:1;border-radius:0 0 10px 0;">
+            <div style="font-weight:600;font-size:13px;margin-bottom:4px;">¿Cómo generamos tráfico y crecemos?</div>
+            <div style="color:var(--muted);font-size:12px;line-height:1.6;">Los 4 canales Hormozi en acción. Daily Pulse + Thief Marketer alimentan ideas. Content Calendar planifica. Agentes ejecutan. Learning loops mejoran.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Foundation Deep Dive -->
+    <div class="card guide-section" style="margin-bottom:24px;">
+      <h2 style="margin-bottom:4px;">🏗️ Foundation — Los 16 Pilares</h2>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:16px;">Organizados en capas (DAG). Cada capa depende de la anterior. <strong>Lite</strong> = 7 pilares esenciales. <strong>Deep</strong> = los 16.</div>
+      <div style="display:flex;flex-direction:column;gap:6px;">
+        <div style="display:flex;gap:6px;align-items:flex-start;">
+          <div style="background:#ef4444;color:#fff;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:700;min-width:52px;text-align:center;">L0</div>
+          <div style="flex:1;">
+            <div style="font-size:12px;font-weight:600;margin-bottom:2px;">Siempre primero (en paralelo)</div>
+            <div style="display:flex;gap:4px;flex-wrap:wrap;">
+              <span style="background:var(--bg);border:1px solid var(--border);padding:4px 10px;border-radius:6px;font-size:11px;">🏢 company-context</span>
+              <span style="background:var(--bg);border:1px solid var(--border);padding:4px 10px;border-radius:6px;font-size:11px;">💰 budget-constraints</span>
+              <span style="background:var(--bg);border:1px solid var(--border);padding:4px 10px;border-radius:6px;font-size:11px;">📊 business-model</span>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;gap:6px;align-items:flex-start;">
+          <div style="background:#f59e0b;color:#000;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:700;min-width:52px;text-align:center;">L1</div>
+          <div style="flex:1;">
+            <div style="font-size:12px;font-weight:600;margin-bottom:2px;">Análisis paralelo</div>
+            <div style="display:flex;gap:4px;flex-wrap:wrap;">
+              <span style="background:var(--bg);border:1px solid var(--border);padding:4px 10px;border-radius:6px;font-size:11px;">🔬 self-intelligence</span>
+              <span style="background:var(--bg);border:1px solid var(--border);padding:4px 10px;border-radius:6px;font-size:11px;">🕵️ competitor-intel</span>
+              <span style="background:var(--bg);border:1px solid var(--border);padding:4px 10px;border-radius:6px;font-size:11px;">🌍 market-intel</span>
+              <span style="background:var(--bg);border:1px solid var(--border);padding:4px 10px;border-radius:6px;font-size:11px;opacity:.6;">📋 customer-data <em>opt</em></span>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;gap:6px;align-items:flex-start;">
+          <div style="background:#8b5cf6;color:#fff;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:700;min-width:52px;text-align:center;">L2</div>
+          <div style="flex:1;">
+            <div style="font-size:12px;font-weight:600;margin-bottom:2px;">Síntesis</div>
+            <div style="display:flex;gap:4px;flex-wrap:wrap;">
+              <span style="background:var(--bg);border:1px solid var(--border);padding:4px 10px;border-radius:6px;font-size:11px;">⚔️ SWOT + TOWS</span>
+              <span style="background:rgba(239,68,68,.15);padding:4px 10px;border-radius:6px;font-size:11px;color:#ef4444;">🛑 Checkpoint: cliente valida</span>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;gap:6px;align-items:flex-start;">
+          <div style="background:#22c55e;color:#000;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:700;min-width:52px;text-align:center;">L3</div>
+          <div style="flex:1;">
+            <div style="font-size:12px;font-weight:600;margin-bottom:2px;">Discovery — el corazón</div>
+            <div style="display:flex;gap:4px;flex-wrap:wrap;">
+              <span style="background:var(--bg);border:1px solid var(--border);padding:4px 10px;border-radius:6px;font-size:11px;">🎯 niche-discovery-100x → ECPs</span>
+              <span style="background:var(--bg);border:1px solid var(--border);padding:4px 10px;border-radius:6px;font-size:11px;opacity:.6;">🧪 ecp-validation <em>opt</em></span>
+              <span style="background:rgba(239,68,68,.15);padding:4px 10px;border-radius:6px;font-size:11px;color:#ef4444;">🛑 Checkpoint: cliente elige ECPs</span>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;gap:6px;align-items:flex-start;">
+          <div style="background:#06b6d4;color:#000;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:700;min-width:52px;text-align:center;">L4</div>
+          <div style="flex:1;">
+            <div style="font-size:12px;font-weight:600;margin-bottom:2px;">Activación</div>
+            <div style="display:flex;gap:4px;flex-wrap:wrap;">
+              <span style="background:var(--bg);border:1px solid var(--border);padding:4px 10px;border-radius:6px;font-size:11px;">💬 positioning-messaging</span>
+              <span style="background:var(--bg);border:1px solid var(--border);padding:4px 10px;border-radius:6px;font-size:11px;">🗣️ brand-voice</span>
+              <span style="background:var(--bg);border:1px solid var(--border);padding:4px 10px;border-radius:6px;font-size:11px;">💲 pricing-hooks</span>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;gap:6px;align-items:flex-start;">
+          <div style="background:#ec4899;color:#fff;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:700;min-width:52px;text-align:center;">L5</div>
+          <div style="flex:1;">
+            <div style="font-size:12px;font-weight:600;margin-bottom:2px;">Visual</div>
+            <div style="display:flex;gap:4px;flex-wrap:wrap;">
+              <span style="background:var(--bg);border:1px solid var(--border);padding:4px 10px;border-radius:6px;font-size:11px;">🎨 visual-identity</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Los 11 Agentes -->
+    <div class="card guide-section" style="margin-bottom:24px;">
+      <h2 style="margin-bottom:4px;">🤖 Los 11 Agentes</h2>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:16px;">Cada uno tiene su canal Discord, su personalidad (SOUL.md), y sus skills asignadas. Sancho les envía briefs, ellos ejecutan.</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;">
+        ${AGENTS.map(a => `<div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:12px;cursor:pointer;transition:border-color .15s;" onmouseover="this.style.borderColor='var(--purple)'" onmouseout="this.style.borderColor='var(--border)'" onclick="showPage('agents')">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+            <span style="font-size:22px;">${a.emoji}</span>
+            <div><div style="font-weight:700;font-size:14px;">${a.name}</div></div>
+          </div>
+          <div style="color:var(--muted);font-size:12px;">${a.role}</div>
+          <div style="color:var(--blue);font-size:11px;margin-top:4px;">${a.ch}</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:2px;">${a.model}</div>
+        </div>`).join('')}
+      </div>
+    </div>
+
+    <!-- 5 Pilares Arquitectónicos -->
+    <div class="card guide-section" style="margin-bottom:24px;">
+      <h2 style="margin-bottom:4px;">🧱 Los 5 Pilares del Sistema</h2>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:16px;">La arquitectura que hace que todo funcione.</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px;">
+        <div style="background:var(--bg);border-radius:10px;padding:14px;">
+          <div style="font-size:20px;margin-bottom:4px;">📜</div>
+          <div style="font-weight:700;font-size:13px;">Shared Protocol</div>
+          <div style="color:var(--muted);font-size:11px;margin-top:4px;line-height:1.5;"><code>brand-memory.md</code> — la "constitución" que define cómo se comunican todas las skills entre sí.</div>
+        </div>
+        <div style="background:var(--bg);border-radius:10px;padding:14px;">
+          <div style="font-size:20px;margin-bottom:4px;">🗄️</div>
+          <div style="font-weight:700;font-size:13px;">Persistent Memory</div>
+          <div style="color:var(--muted);font-size:11px;margin-top:4px;line-height:1.5;"><code>./brand/</code> (Context Lake) — 3 tiers: Constitution, Strategic, Transitory. Los datos del cliente viven aquí.</div>
+        </div>
+        <div style="background:var(--bg);border-radius:10px;padding:14px;">
+          <div style="font-size:20px;margin-bottom:4px;">🎯</div>
+          <div style="font-weight:700;font-size:13px;">Scored Context</div>
+          <div style="color:var(--muted);font-size:11px;margin-top:4px;line-height:1.5;">Context Matrix — cada skill lee SOLO lo que necesita. No se dumpa todo. Freshness TTLs evitan datos obsoletos.</div>
+        </div>
+        <div style="background:var(--bg);border-radius:10px;padding:14px;">
+          <div style="font-size:20px;margin-bottom:4px;">📐</div>
+          <div style="font-weight:700;font-size:13px;">Schema Contracts</div>
+          <div style="color:var(--muted);font-size:11px;margin-top:4px;line-height:1.5;">7 JSON schemas en <code>_system/schemas/</code> — typed interfaces entre skills. Sin re-explicar entre sesiones.</div>
+        </div>
+        <div style="background:var(--bg);border-radius:10px;padding:14px;">
+          <div style="font-size:20px;margin-bottom:4px;">🔄</div>
+          <div style="font-weight:700;font-size:13px;">Learning Loops</div>
+          <div style="color:var(--muted);font-size:11px;margin-top:4px;line-height:1.5;">Feedback → <code>learnings.md</code> → adapt. El sistema mejora con el uso. Insights se promueven de Tier 3 → 2 → 1.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Data Architecture -->
+    <div class="card guide-section" style="margin-bottom:24px;">
+      <h2 style="margin-bottom:4px;">💾 Dónde viven los datos</h2>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:16px;">Principio dual: identidad de marca en archivos, datos operacionales en base de datos.</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div style="background:var(--bg);border-radius:10px;padding:16px;">
+          <div style="font-weight:700;font-size:14px;margin-bottom:8px;">📁 Archivos <code>./brand/</code></div>
+          <div style="font-size:12px;color:var(--muted);line-height:1.7;">
+            <strong>Tier 1 Constitution:</strong> empresa, ICP, ECPs, positioning, voice<br>
+            <strong>Tier 2 Strategic:</strong> competidores, mercado, SWOT, pricing<br>
+            <strong>Tier 3 Transitory:</strong> meeting notes, daily pulse, validaciones<br><br>
+            Human-readable, git-trackable, OpenClaw-nativo.
+          </div>
+        </div>
+        <div style="background:var(--bg);border-radius:10px;padding:16px;">
+          <div style="font-weight:700;font-size:14px;margin-bottom:8px;">🗃️ Supabase (PostgreSQL)</div>
+          <div style="font-size:12px;color:var(--muted);line-height:1.7;">
+            <strong>CRM:</strong> companies, contacts, outreach_sequences<br>
+            <strong>Campañas:</strong> campaigns, content_ideas, editorial_calendar<br>
+            <strong>Intel:</strong> competitor_moves, content_performance<br>
+            <strong>Learning:</strong> insights (append-only + promoción)<br><br>
+            Concurrencia, queries SQL, Row-Level Security.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Discord -->
+    <div class="card guide-section" style="margin-bottom:24px;">
+      <h2 style="margin-bottom:4px;">💬 Discord — Centro de operaciones</h2>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:16px;">Cada cliente tiene un servidor Discord con 14 canales en 5 categorías. Los agentes están vinculados a sus canales.</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px;">
+        <div style="background:var(--bg);border-radius:8px;padding:12px;">
+          <div style="font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:var(--purple);margin-bottom:6px;">📁 Estrategia</div>
+          <div style="font-size:12px;color:var(--muted);line-height:1.8;">#el-toboso · #campaigns · #intelligence</div>
+        </div>
+        <div style="background:var(--bg);border-radius:8px;padding:12px;">
+          <div style="font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:var(--blue);margin-bottom:6px;">📁 Outreach (1:1)</div>
+          <div style="font-size:12px;color:var(--muted);line-height:1.8;">#partners · #prospecting</div>
+        </div>
+        <div style="background:var(--bg);border-radius:8px;padding:12px;">
+          <div style="font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:var(--green,#22c55e);margin-bottom:6px;">📁 Content (1:many)</div>
+          <div style="font-size:12px;color:var(--muted);line-height:1.8;">#organic-content · #social · #paid-ads · #web</div>
+        </div>
+        <div style="background:var(--bg);border-radius:8px;padding:12px;">
+          <div style="font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:var(--yellow,#eab308);margin-bottom:6px;">📁 Soporte</div>
+          <div style="font-size:12px;color:var(--muted);line-height:1.8;">#sales · #design · #research</div>
+        </div>
+        <div style="background:var(--bg);border-radius:8px;padding:12px;">
+          <div style="font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:6px;">📁 Sistema</div>
+          <div style="font-size:12px;color:var(--muted);line-height:1.8;">#learning · #admin</div>
+        </div>
+      </div>
+      <div style="margin-top:10px;padding:10px 14px;background:rgba(139,92,246,.06);border-radius:8px;font-size:12px;color:var(--muted);">
+        <strong>Auto-dispatch:</strong> Sancho crea briefs en #campaigns → al aprobar (✅), se despachan threads a los canales de cada agente automáticamente.
+      </div>
+    </div>
+
+    <!-- Empezar con un cliente -->
+    <div class="card guide-section" style="margin-bottom:24px;">
+      <h2 style="margin-bottom:4px;">🆕 Empezar con un nuevo cliente</h2>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:16px;">El wizard de 7 pasos te guía. En ~15 minutos tienes toda la infra lista.</div>
+      <div style="display:flex;flex-direction:column;gap:0;">
+        <div class="step"><span class="step-num">1</span><div><strong>Datos básicos</strong><br><span style="color:var(--muted);font-size:13px;">Nombre, web, sector, emoji. Auto-genera slug.</span></div></div>
+        <div class="step"><span class="step-num">2</span><div><strong>Supabase</strong><br><span style="color:var(--muted);font-size:13px;">Crear proyecto + 9 tablas con <code>init-db.sql</code></span></div></div>
+        <div class="step"><span class="step-num">3</span><div><strong>Discord</strong><br><span style="color:var(--muted);font-size:13px;">Crear servidor + 14 canales + invitar bot SanchoCMO</span></div></div>
+        <div class="step"><span class="step-num">4</span><div><strong>Workspace</strong><br><span style="color:var(--muted);font-size:13px;">Script <code>new-client.sh</code> → directorios + symlinks al master</span></div></div>
+        <div class="step"><span class="step-num">5</span><div><strong>OpenClaw</strong><br><span style="color:var(--muted);font-size:13px;">Registrar guild + restart gateway</span></div></div>
+        <div class="step"><span class="step-num">6</span><div><strong>Fuentes de datos</strong><br><span style="color:var(--muted);font-size:13px;">Gmail, Notion DBs, Google Drive, herramienta de meetings, competidores → <code>sources.json</code></span></div></div>
+        <div class="step" style="border-bottom:none;"><span class="step-num">7</span><div><strong>Verificar y arrancar</strong><br><span style="color:var(--muted);font-size:13px;">Resumen + código para <code>clients.js</code> + <code>sources.json</code>. Listo para Foundation.</span></div></div>
+      </div>
+      <div style="margin-top:16px;text-align:center;">
+        <button class="btn btn-primary" onclick="openNewClientWizard()" style="font-size:15px;padding:12px 32px;">🆕 Abrir Wizard de Nuevo Cliente</button>
+      </div>
+    </div>
+
+    <!-- Automatizaciones -->
+    <div class="card guide-section" style="margin-bottom:24px;">
+      <h2 style="margin-bottom:4px;">⚙️ Automatizaciones activas</h2>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:12px;">Sancho trabaja en segundo plano. Dos tipos de automatización:</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+        <div style="background:var(--bg);border-radius:10px;padding:14px;">
+          <div style="font-weight:700;font-size:13px;margin-bottom:6px;">💓 Heartbeat <span style="color:var(--muted);font-size:11px;font-weight:400;">cada 3h</span></div>
+          <div style="font-size:12px;color:var(--muted);line-height:1.6;">Checks rápidos y baratos en la sesión principal: email, calendario, regenerar dashboard. Si no hay nada → silencio.</div>
+        </div>
+        <div style="background:var(--bg);border-radius:10px;padding:14px;">
+          <div style="font-weight:700;font-size:13px;margin-bottom:6px;">⏰ Cron Jobs <span style="color:var(--muted);font-size:11px;font-weight:400;">hora exacta</span></div>
+          <div style="font-size:12px;color:var(--muted);line-height:1.6;">Tareas pesadas en sesiones aisladas: Daily Pulse, Meeting Intel, Weekly Synthesis. Output directo a Discord.</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:6px;">
+        <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 12px;"><strong style="font-size:12px;">📊 Daily Pulse</strong><div style="color:var(--muted);font-size:11px;">L-V 9:00 → #intelligence</div></div>
+        <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 12px;"><strong style="font-size:12px;">🧠 Meeting Intel</strong><div style="color:var(--muted);font-size:11px;">L-V 18:00 → #intelligence</div></div>
+        <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 12px;"><strong style="font-size:12px;">📝 Weekly Synthesis</strong><div style="color:var(--muted);font-size:11px;">Lunes 10:00 → #learning</div></div>
+        <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 12px;"><strong style="font-size:12px;">🕵️ Thief Marketer</strong><div style="color:var(--muted);font-size:11px;">Miércoles 8:00 <em style="color:#eab308;">(post-Foundation)</em></div></div>
+        <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 12px;"><strong style="font-size:12px;">🔄 Dashboard Regen</strong><div style="color:var(--muted);font-size:11px;">4x al día (Sonnet)</div></div>
+        <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 12px;"><strong style="font-size:12px;">🗄️ Memory Maint.</strong><div style="color:var(--muted);font-size:11px;">Domingo 22:00 (Sonnet)</div></div>
+      </div>
+    </div>
+
+    <!-- Sistema de tareas -->
+    <div class="card guide-section" style="margin-bottom:24px;">
+      <h2 style="margin-bottom:4px;">✅ Sistema de tareas</h2>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:14px;">Nada cambia sin tarea aprobada. <code>TASKS.md</code> es la fuente de verdad.</div>
+      <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:14px;">
+        <span style="background:rgba(139,92,246,.15);color:var(--purple);padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;">📥 Propuesta</span>
+        <span style="color:var(--muted);font-size:18px;">→</span>
+        <span style="background:rgba(245,158,11,.15);color:#f59e0b;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;">👀 Review</span>
+        <span style="color:var(--muted);font-size:18px;">→</span>
+        <span style="background:rgba(34,197,94,.15);color:#22c55e;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;">✅ Aprobada</span>
+        <span style="color:var(--muted);font-size:18px;">→</span>
+        <span style="background:rgba(59,130,246,.15);color:#3b82f6;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;">🔧 En progreso</span>
+        <span style="color:var(--muted);font-size:18px;">→</span>
+        <span style="background:rgba(34,197,94,.25);color:#22c55e;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;">✔️ Hecha</span>
+      </div>
+      <div style="font-size:13px;color:var(--muted);line-height:1.8;">
+        <strong>3 formas de proponer:</strong> botón ➕ en este dashboard, Discord <code>#admin</code>, o webchat.<br>
+        <strong>Aprobar:</strong> click "✅ Aprobar" en la tarjeta, o dile a Sancho por chat.<br>
+        <strong>Ejecutar:</strong> click "▶️ Ejecutar" o escribe: <em>"Ejecuta T-XXX"</em>.<br>
+        <strong>Completada:</strong> Sancho registra en <code>CHANGELOG.md</code> automáticamente.
+      </div>
+    </div>
+
+    <!-- Skills overview -->
+    <div class="card guide-section" style="margin-bottom:24px;">
+      <h2 style="margin-bottom:4px;">🧰 38 Skills — El arsenal</h2>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:16px;">Cada skill es un módulo especializado. Sancho elige cuál usar según el contexto.</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px;">
+        <div style="background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.2);border-radius:10px;padding:12px;" onclick="showPage('skills')" style="cursor:pointer;">
+          <div style="font-weight:700;font-size:13px;">🏗️ Foundation</div>
+          <div style="font-size:24px;font-weight:800;color:#f59e0b;">16</div>
+          <div style="color:var(--muted);font-size:11px;">empresa, mercado, competidores, nicho, posicionamiento, voz, visual...</div>
+        </div>
+        <div style="background:rgba(59,130,246,.06);border:1px solid rgba(59,130,246,.2);border-radius:10px;padding:12px;">
+          <div style="font-weight:700;font-size:13px;">📋 Decide</div>
+          <div style="font-size:24px;font-weight:800;color:#3b82f6;">3</div>
+          <div style="color:var(--muted);font-size:11px;">canales, calendario, outreach sequences</div>
+        </div>
+        <div style="background:rgba(236,72,153,.06);border:1px solid rgba(236,72,153,.2);border-radius:10px;padding:12px;">
+          <div style="font-weight:700;font-size:13px;">🔍 Intelligence</div>
+          <div style="font-size:24px;font-weight:800;color:#ec4899;">5</div>
+          <div style="color:var(--muted);font-size:11px;">daily pulse, meetings, patterns, thief marketer, signals</div>
+        </div>
+        <div style="background:rgba(139,92,246,.06);border:1px solid rgba(139,92,246,.2);border-radius:10px;padding:12px;">
+          <div style="font-weight:700;font-size:13px;">✍️ Content</div>
+          <div style="font-size:24px;font-weight:800;color:#8b5cf6;">7</div>
+          <div style="color:var(--muted);font-size:11px;">SEO, atomizer, newsletter, email, lead magnet, copy, keyword</div>
+        </div>
+        <div style="background:rgba(34,197,94,.06);border:1px solid rgba(34,197,94,.2);border-radius:10px;padding:12px;">
+          <div style="font-weight:700;font-size:13px;">🎯 Outreach</div>
+          <div style="font-size:24px;font-weight:800;color:#22c55e;">3</div>
+          <div style="color:var(--muted);font-size:11px;">company finder, decision maker, contact enrichment</div>
+        </div>
+        <div style="background:rgba(107,114,128,.06);border:1px solid rgba(107,114,128,.2);border-radius:10px;padding:12px;">
+          <div style="font-weight:700;font-size:13px;">🔧 Utilities</div>
+          <div style="font-size:24px;font-weight:800;color:#6b7280;">4</div>
+          <div style="color:var(--muted);font-size:11px;">orchestrators, diagnostics, routing</div>
+        </div>
+      </div>
+      <div style="margin-top:10px;text-align:center;">
+        <a href="#" onclick="showPage('skills')" style="color:var(--purple);font-size:13px;">Ver todas las skills →</a>
+      </div>
+    </div>
+
+    <!-- FAQ -->
+    <div class="card guide-section" style="margin-bottom:24px;">
+      <h2 style="margin-bottom:12px;">❓ Preguntas frecuentes</h2>
+      <div style="display:flex;flex-direction:column;gap:14px;">
+        <div>
+          <div style="font-weight:600;font-size:14px;">¿Sancho puede publicar cosas sin mi permiso?</div>
+          <div style="color:var(--muted);font-size:13px;margin-top:4px;">No. Sancho propone, tú apruebas. Nada sale al exterior sin tu OK explícito. El flujo es: DRAFT → REVIEW → APPROVE → PUBLISH.</div>
+        </div>
+        <div>
+          <div style="font-weight:600;font-size:14px;">¿Qué pasa si Foundation está incompleta?</div>
+          <div style="color:var(--muted);font-size:13px;margin-top:4px;">Sancho se adapta. Trabaja con lo que hay, pero la calidad mejora con más contexto. Foundation Lite (7 pilares) es suficiente para empezar a ejecutar.</div>
+        </div>
+        <div>
+          <div style="font-weight:600;font-size:14px;">¿Los datos de un cliente se mezclan con otro?</div>
+          <div style="color:var(--muted);font-size:13px;margin-top:4px;">No. Cada cliente tiene su propio servidor Discord, proyecto Supabase, y directorio <code>brand/</code>. Zero data leakage. Solo las skills y agentes se comparten (vía symlinks).</div>
+        </div>
+        <div>
+          <div style="font-weight:600;font-size:14px;">¿Cuánto cuesta operar?</div>
+          <div style="color:var(--muted);font-size:13px;margin-top:4px;">APIs de IA (Anthropic ~$20-100/mes según uso), Supabase (free tier 2 proyectos, luego $25/proyecto), Tailscale (free para equipos pequeños). No hay fee del sistema.</div>
+        </div>
+        <div>
+          <div style="font-weight:600;font-size:14px;">¿Puedo añadir más agentes o skills?</div>
+          <div style="color:var(--muted);font-size:13px;margin-top:4px;">Sí. Skills con <code>skill-creator</code>, agentes en <code>openclaw.json</code>. Propón una tarea y Sancho lo monta. Las skills se publican en <a href="https://clawhub.com" target="_blank" style="color:var(--purple);">ClawHub</a>.</div>
+        </div>
+        <div>
+          <div style="font-weight:600;font-size:14px;">¿Qué gaps tiene el sistema?</div>
+          <div style="color:var(--muted);font-size:13px;margin-top:4px;">Principalmente en <strong>Ejecuta</strong> (publicación automática, ad creators) y <strong>Aprende</strong> (analytics, funnel analysis). El sistema Encuentra + Decide + Crea está casi completo.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Accesos -->
+    <div class="card guide-section" style="margin-bottom:20px;">
+      <h2 style="margin-bottom:12px;">🔑 Accesos</h2>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;">
+        <div style="background:var(--bg);border-radius:10px;padding:16px;">
+          <div style="font-weight:700;font-size:14px;margin-bottom:6px;">👨‍💻 Equipo interno</div>
+          <div style="font-size:13px;color:var(--muted);line-height:1.7;">
+            1. Instalar <a href="https://tailscale.com/download" target="_blank" style="color:var(--purple);">Tailscale</a><br>
+            2. Unirse a la Tailnet<br>
+            3. <code>https://sancho-cmo.taild48df2.ts.net</code><br>
+            4. Discord: todos los canales
+          </div>
+        </div>
+        <div style="background:var(--bg);border-radius:10px;padding:16px;">
+          <div style="font-weight:700;font-size:14px;margin-bottom:6px;">🏢 Clientes</div>
+          <div style="font-size:13px;color:var(--muted);line-height:1.7;">
+            Solo Discord. Invitación al servidor del cliente.<br>
+            No necesitan Tailscale, dashboard, ni configurar nada.
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// === Skill panel ===
+function openSkill(name) {
+  currentSkill = name;
+  document.getElementById('skillPanelTitle').textContent = name;
+  document.getElementById('skillPanelBody').innerHTML = renderMarkdown(S[name] || 'Skill not found.');
+  document.getElementById('skillOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeSkill() { document.getElementById('skillOverlay').classList.remove('open'); document.body.style.overflow = ''; }
+function proposeSkillChange() {
+  const name = currentSkill; closeSkill();
+  showPage('tasks', document.querySelector('nav a:nth-child(7)'));
+  setTimeout(() => { document.getElementById('tf-title').value='Cambio en skill: '+name; document.getElementById('tf-cat').value='skill'; document.getElementById('tf-desc').value='Skill: '+name+'\n\nCambio propuesto:\n'; document.getElementById('tf-desc').focus(); }, 100);
+}
+function copySkillPath() {
+  navigator.clipboard.writeText('~/.openclaw/workspace-sancho/skills/'+currentSkill+'/SKILL.md').then(() => showToast('📁 Ruta copiada')).catch(() => {});
+}
+
+// === Search ===
+function doSearch(q) {
+  const el = document.getElementById('searchResults');
+  if (!q || q.length < 2) { el.classList.remove('open'); return; }
+  q = q.toLowerCase();
+  let results = [];
+  // Skills
+  for (const [name, content] of Object.entries(S)) {
+    if (name.includes(q) || content.toLowerCase().includes(q)) results.push({type:'Skill',title:name,action:()=>openSkill(name)});
+  }
+  // Tasks
+  if (D) for (const [status, tasks] of Object.entries(D.tasks)) {
+    for (const t of tasks) if (t.title.toLowerCase().includes(q)) results.push({type:'Tarea',title:`${t.id} · ${t.title}`,action:()=>showPage('tasks')});
+  }
+  // Agents
+  for (const a of AGENTS) if (a.name.toLowerCase().includes(q)||a.role.toLowerCase().includes(q)) results.push({type:'Agente',title:a.name+' — '+a.role,action:()=>showPage('agents')});
+
+  results = results.slice(0, 10);
+  if (results.length === 0) { el.innerHTML = '<div class="sr-item"><div class="sr-type">Sin resultados</div></div>'; }
+  else { el.innerHTML = results.map((r,i) => `<div class="sr-item" onmousedown="searchResults[${i}].action()"><div class="sr-type">${r.type}</div><div class="sr-title">${r.title}</div></div>`).join(''); }
+  window.searchResults = results;
+  el.classList.add('open');
+}
+function closeSearch() { document.getElementById('searchResults').classList.remove('open'); }
+
+// === Task form toggle ===
+function toggleTaskForm() {
+  const panel = document.getElementById('task-form-panel');
+  panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+}
+
+// === Task actions ===
+function executeTask(id, title) {
+  const msg = `Ejecuta la tarea ${id}: ${title}`;
+  navigator.clipboard.writeText(msg).then(() => {
+    showToast(`📋 Copiado: "${msg}" — pégalo en el chat de Sancho`);
+  });
+}
+function approveTask(id) {
+  const msg = `Apruebo la tarea ${id}. Procede.`;
+  navigator.clipboard.writeText(msg).then(() => {
+    showToast(`✅ Copiado: "${msg}" — pégalo en el chat de Sancho`);
+  });
+}
+
+// === Task detail ===
+let _taskColKey = '', _taskIdx = 0;
+function openTaskDetail(colKey, idx) {
+  const t = (D.tasks[colKey] || [])[idx];
+  if (!t) return;
+  _taskColKey = colKey; _taskIdx = idx;
+  document.getElementById('taskDetailTitle').textContent = t.id + ' — ' + t.title;
+  showTaskTab('detail');
+  document.getElementById('taskOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function showTaskTab(tab) {
+  const t = (D.tasks[_taskColKey] || [])[_taskIdx];
+  if (!t) return;
+  const colKey = _taskColKey, idx = _taskIdx;
+  const statusLabels = {proposals:'📥 Propuesta',approved:'✅ Aprobada',progress:'🔧 En Progreso',done:'✔️ Completada'};
+  const statusLabel = statusLabels[colKey] || colKey;
+  
+  const tabs = `<div style="display:flex;gap:4px;margin-bottom:16px;border-bottom:1px solid var(--border);padding-bottom:8px;">
+    <button class="btn-sm ${tab==='detail'?'active':''}" onclick="showTaskTab('detail')" style="${tab==='detail'?'background:var(--purple);color:#fff;border-color:var(--purple);':''}">📋 Detalle</button>
+    <button class="btn-sm ${tab==='prd'?'active':''}" onclick="showTaskTab('prd')" style="${tab==='prd'?'background:var(--purple);color:#fff;border-color:var(--purple);':''}">📄 PRD ${t.has_prd?'':'(vacío)'}</button>
+    <button class="btn-sm ${tab==='edit'?'active':''}" onclick="showTaskTab('edit')" style="${tab==='edit'?'background:var(--purple);color:#fff;border-color:var(--purple);':''}">✏️ Editar</button>
+  </div>`;
+
+  let content = '';
+  if (tab === 'detail') {
+    content = `${tabs}
+    <div style="display:grid;grid-template-columns:110px 1fr;gap:10px 16px;font-size:14px;line-height:1.8;">
+      <div style="color:var(--muted);font-weight:600;">Estado</div><div>${statusLabel}</div>
+      <div style="color:var(--muted);font-weight:600;">Categoría</div><div><span class="tag ${t.cat}">[${t.cat}]</span></div>
+      <div style="color:var(--muted);font-weight:600;">Prioridad</div><div><span class="tag ${t.pri}">${t.pri.toUpperCase()}</span></div>
+      <div style="color:var(--muted);font-weight:600;">Propuesto</div><div>${t.proposed || '—'}</div>
+      <div style="color:var(--muted);font-weight:600;">PRD</div><div>${t.has_prd ? '<span class="prd-badge">📄 Generado</span>' : '<span class="prd-badge empty">No generado</span>'}</div>
+    </div>
+    ${t.notes ? `<div style="margin-top:16px;padding-top:12px;border-top:1px solid var(--border);"><div style="font-weight:600;font-size:13px;color:var(--muted);margin-bottom:6px;">Descripción</div><div style="font-size:13px;line-height:1.7;color:var(--fg);">${t.notes}</div></div>` : ''}
+    <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border);display:flex;gap:8px;flex-wrap:wrap;">
+      ${!t.has_prd ? `<button class="btn btn-primary" onclick="generatePRD('${colKey}',${idx})">🧠 Generar PRD</button>` : `<button class="btn btn-secondary" onclick="generatePRD('${colKey}',${idx})">🔄 Regenerar PRD</button>`}
+      ${colKey === 'proposals' ? `<button class="btn btn-primary" onclick="closeTaskDetail();approveTask('${t.id}')">✅ Aprobar</button>` : ''}
+      ${colKey === 'approved' ? `<button class="btn btn-primary btn-exec" onclick="closeTaskDetail();executeTask('${t.id}','${t.title.replace(/'/g,"\\'")}')">▶️ Ejecutar</button>` : ''}
+      <button class="btn btn-secondary" onclick="copyTaskMarkdown('${colKey}',${idx})">📋 Copiar markdown</button>
+    </div>`;
+  } else if (tab === 'prd') {
+    const prdContent = t.prd || '';
+    content = `${tabs}
+    ${prdContent ? `<pre style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:16px;font-size:13px;line-height:1.7;max-height:500px;overflow:auto;white-space:pre-wrap;word-break:break-word;margin:0;">${prdContent.replace(/</g,'&lt;')}</pre>
+    <div style="margin-top:12px;display:flex;gap:8px;">
+      <button class="btn btn-secondary" onclick="generatePRD('${colKey}',${idx})">🔄 Regenerar PRD</button>
+      <button class="btn btn-secondary" onclick="copyPRD('${colKey}',${idx})">📋 Copiar PRD</button>
+      ${colKey === 'approved' || colKey === 'proposals' ? `<button class="btn btn-primary btn-exec" onclick="executePRD('${colKey}',${idx})">▶️ Ejecutar con PRD</button>` : ''}
+    </div>` : `<div style="text-align:center;padding:40px;color:var(--muted);">
+      <div style="font-size:48px;margin-bottom:12px;">📄</div>
+      <div style="font-size:16px;font-weight:600;margin-bottom:8px;">No hay PRD generado</div>
+      <div style="font-size:13px;margin-bottom:16px;">Sancho analiza la tarea y genera un documento de requisitos completo:<br>qué hacer, por qué, archivos afectados, pasos, y criterios de aceptación.</div>
+      <button class="btn btn-primary" onclick="generatePRD('${colKey}',${idx})">🧠 Generar PRD</button>
+    </div>`}`;
+  } else if (tab === 'edit') {
+    const statusOptions = ['proposals','approved','progress','done'].map(s =>
+      `<option value="${s}" ${s===colKey?'selected':''}>${statusLabels[s]}</option>`).join('');
+    const catOptions = ['infra','skill','agent','flow','client','brain','tool','docs'].map(c =>
+      `<option value="${c}" ${c===t.cat?'selected':''}>${c}</option>`).join('');
+    const priOptions = ['P0','P1','P2','P3'].map(p =>
+      `<option value="${p.toLowerCase()}" ${p.toLowerCase()===t.pri?'selected':''}>${p}</option>`).join('');
+    content = `${tabs}
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      <div>
+        <label style="font-size:12px;font-weight:600;color:var(--muted);display:block;margin-bottom:4px;">Título</label>
+        <input type="text" id="te-title" value="${t.title.replace(/"/g,'&quot;')}" style="width:100%;padding:8px 12px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--fg);font-size:14px;">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
+        <div>
+          <label style="font-size:12px;font-weight:600;color:var(--muted);display:block;margin-bottom:4px;">Estado</label>
+          <select id="te-status" style="width:100%;padding:8px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--fg);">${statusOptions}</select>
+        </div>
+        <div>
+          <label style="font-size:12px;font-weight:600;color:var(--muted);display:block;margin-bottom:4px;">Categoría</label>
+          <select id="te-cat" style="width:100%;padding:8px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--fg);">${catOptions}</select>
+        </div>
+        <div>
+          <label style="font-size:12px;font-weight:600;color:var(--muted);display:block;margin-bottom:4px;">Prioridad</label>
+          <select id="te-pri" style="width:100%;padding:8px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--fg);">${priOptions}</select>
+        </div>
+      </div>
+      <div>
+        <label style="font-size:12px;font-weight:600;color:var(--muted);display:block;margin-bottom:4px;">Descripción</label>
+        <textarea id="te-notes" rows="8" style="width:100%;padding:8px 12px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--fg);font-size:13px;line-height:1.6;resize:vertical;">${(t.notes||'').replace(/</g,'&lt;')}</textarea>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-primary" onclick="saveTaskEdit('${t.id}')">💾 Guardar cambios</button>
+        <button class="btn btn-secondary" onclick="showTaskTab('detail')">Cancelar</button>
+      </div>
+    </div>`;
+  }
+  document.getElementById('taskDetailBody').innerHTML = content;
+}
+
+function generatePRD(colKey, idx) {
+  const t = (D.tasks[colKey] || [])[idx];
+  if (!t) return;
+  const cmd = `Genera un PRD para la tarea ${t.id}: ${t.title}
+
+Descripción: ${t.notes || 'Sin descripción'}
+
+Guarda el PRD en _system/prds/${t.id}.md con este formato:
+# PRD — ${t.id}: ${t.title}
+## Objetivo
+## Contexto y motivación
+## Requisitos funcionales
+## Archivos afectados
+## Pasos de implementación
+## Criterios de aceptación
+## Riesgos y dependencias
+## Estimación de esfuerzo
+
+Después regenera el dashboard: python3 ~/.openclaw/workspace-sancho/scripts/regenerate.py`;
+
+  navigator.clipboard.writeText(cmd).then(() => {
+    closeTaskDetail();
+    showToast('🧠 Prompt de PRD copiado — pégalo en el chat de Sancho');
+  });
+}
+
+function copyPRD(colKey, idx) {
+  const t = (D.tasks[colKey] || [])[idx];
+  if (!t || !t.prd) return;
+  navigator.clipboard.writeText(t.prd).then(() => showToast('📄 PRD copiado al portapapeles'));
+}
+
+function executePRD(colKey, idx) {
+  const t = (D.tasks[colKey] || [])[idx];
+  if (!t) return;
+  const cmd = t.prd
+    ? `Ejecuta la tarea ${t.id} siguiendo este PRD:\n\n${t.prd}`
+    : `Ejecuta la tarea ${t.id}: ${t.title}`;
+  navigator.clipboard.writeText(cmd).then(() => {
+    closeTaskDetail();
+    showToast('▶️ Comando de ejecución copiado — pégalo en el chat de Sancho');
+  });
+}
+
+function closeTaskDetail() {
+  document.getElementById('taskOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function saveTaskEdit(taskId) {
+  const title = document.getElementById('te-title').value.trim();
+  const status = document.getElementById('te-status').value;
+  const cat = document.getElementById('te-cat').value;
+  const pri = document.getElementById('te-pri').value.toUpperCase();
+  const notes = document.getElementById('te-notes').value.trim();
+  const statusLabels = {proposals:'📥 Propuesta',approved:'✅ Aprobada',progress:'🔧 En Progreso',done:'✔️ Completada'};
+
+  const cmd = `Actualiza la tarea \${taskId} en TASKS.md con estos cambios:
+- Título: \${title}
+- Estado: \${statusLabels[status]} (mover a la sección correcta)
+- Categoría: [\${cat}]
+- Prioridad: \${pri}
+- Notas: \${notes}`;
+
+  navigator.clipboard.writeText(cmd).then(() => {
+    closeTaskDetail();
+    showToast('📋 Cambios copiados — pégalo en el chat de Sancho para que actualice TASKS.md');
+  });
+}
+
+function copyTaskMarkdown(colKey, idx) {
+  const t = (D.tasks[colKey] || [])[idx];
+  if (!t) return;
+  const md = `| ${t.id} | ${t.title} | \`[${t.cat}]\` | ${t.pri.toUpperCase()} | ${t.proposed||t.date||''} | ${t.notes||''} |`;
+  navigator.clipboard.writeText(md).then(() => showToast('📋 Markdown copiado'));
+}
+
+// === Task form ===
+function submitTask() {
+  const title = document.getElementById('tf-title').value.trim();
+  if (!title) return;
+  const cat = document.getElementById('tf-cat').value;
+  const pri = document.getElementById('tf-pri').value;
+  const by = document.getElementById('tf-by').value || 'Anónimo';
+  const desc = document.getElementById('tf-desc').value.trim();
+  const date = new Date().toISOString().slice(0,10);
+
+  // Generate markdown for TASKS.md
+  const md = `| T-??? | ${title} | \`[${cat}]\` | ${pri.toUpperCase()} | ${by} ${date} | ${desc.replace(/\n/g,' ').slice(0,100)} |`;
+
+  navigator.clipboard.writeText(md).then(() => {
+    showToast('📋 Tarea copiada al portapapeles — pégala en TASKS.md o díselo a Sancho');
+    document.getElementById('tf-status').textContent = '✅ Copiada. Dile a Sancho que la registre.';
+  }).catch(() => {
+    document.getElementById('tf-status').textContent = 'Dile a Sancho: "nueva tarea: ' + title + '"';
+  });
+  clearForm();
+}
+function clearForm() { document.getElementById('tf-title').value=''; document.getElementById('tf-desc').value=''; }
+
+// === Navigation ===
+function showPage(name, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  if (el) { document.querySelectorAll('nav a').forEach(a => a.classList.remove('active')); el.classList.add('active'); }
+}
+function showTab(el, name) {
+  const card = el.closest('.card');
+  card.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  card.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  card.querySelector('#tab-' + name).classList.add('active');
+  el.classList.add('active');
+}
+function switchClient(val) {
+  const clientItems = document.querySelectorAll('.nav-client-only');
+  if (val === 'global') {
+    document.getElementById('view-global').style.display = 'block';
+    document.getElementById('view-client').style.display = 'none';
+    clientItems.forEach(el => el.style.display = 'none');
+    sbClient = null;
+    const active = document.querySelector('.page.active');
+    if (active && ['page-foundation','page-campaigns','page-data'].includes(active.id)) showPage('dashboard');
+  } else {
+    document.getElementById('view-global').style.display = 'none';
+    document.getElementById('view-client').style.display = 'block';
+    clientItems.forEach(el => el.style.display = '');
+    const client = (typeof CLIENTS !== 'undefined') ? CLIENTS[val] : null;
+    const name = client ? client.name : val;
+    document.getElementById('client-title').textContent = name;
+    document.getElementById('nav-client-section').textContent = name;
+    // Connect to this client's Supabase
+    connectSupabase(val);
+    loadSupabase();
+  }
+}
+
+function populateClientSelector() {
+  const sel = document.getElementById('clientSelector');
+  if (typeof CLIENTS === 'undefined') return;
+  for (const [id, client] of Object.entries(CLIENTS)) {
+    const opt = document.createElement('option');
+    opt.value = id;
+    opt.textContent = `${client.emoji} ${client.name}`;
+    sel.appendChild(opt);
+  }
+  // Select first client by default
+  const firstId = Object.keys(CLIENTS)[0];
+  if (firstId) { sel.value = firstId; }
+}
+
+// === Theme ===
+function toggleTheme() {
+  const body = document.body;
+  const isLight = body.getAttribute('data-theme') === 'light';
+  body.setAttribute('data-theme', isLight ? '' : 'light');
+  document.getElementById('themeLabel').textContent = isLight ? 'Light mode' : 'Dark mode';
+  localStorage.setItem('sancho-theme', isLight ? 'dark' : 'light');
+}
+
+// === Regenerate ===
+function regenerate() { showToast('🔄 Dile a Sancho: "regenera mission control"'); }
+
+// === Markdown renderer ===
+function renderMarkdown(md) {
+  return md.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/```(\w*)\n([\s\S]*?)```/g, (m,l,c) => '<pre><code>'+c.trim()+'</code></pre>')
+    .replace(/`([^`]+)`/g,'<code>$1</code>')
+    .replace(/^### (.+)$/gm,'<h3>$1</h3>')
+    .replace(/^## (.+)$/gm,'<h2>$1</h2>')
+    .replace(/^# (.+)$/gm,'<h1>$1</h1>')
+    .replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>')
+    .replace(/\*([^*]+)\*/g,'<em>$1</em>')
+    .replace(/^&gt; (.+)$/gm,'<blockquote>$1</blockquote>')
+    .replace(/^---$/gm,'<hr>')
+    .replace(/^- (.+)$/gm,'<li>$1</li>')
+    .replace(/(<li>.*<\/li>\n?)+/g,'<ul>$&</ul>')
+    .replace(/^\|(.+)\|$/gm,(m,c) => { const cells=c.split('|').map(x=>x.trim()); if(cells.every(x=>/^[-:]+$/.test(x)))return''; return '<tr>'+cells.map(x=>'<td>'+x+'</td>').join('')+'</tr>'; })
+    .replace(/(<tr>.*<\/tr>\n?)+/g,'<table>$&</table>')
+    .replace(/^(?!<[hupoltbr]|$)(.+)$/gm,'<p>$1</p>')
+    .replace(/\n{2,}/g,'\n');
+}
+
+function showToast(msg) { const t=document.getElementById('toast'); t.textContent=msg; t.style.display='block'; setTimeout(()=>t.style.display='none',3000); }
+document.addEventListener('keydown', e => { if(e.key==='Escape') closeSkill(); });
+
+// === New Client Wizard ===
+let wizCurrentStep = 1;
+const wizTotalSteps = 7;
+
+function openNewClientWizard() {
+  wizCurrentStep = 1;
+  updateWizard();
+  document.getElementById('wizardOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeWizard() {
+  document.getElementById('wizardOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function wizStep(dir) {
+  wizCurrentStep = Math.max(1, Math.min(wizTotalSteps, wizCurrentStep + dir));
+  updateWizard();
+}
+
+function updateWizard() {
+  const step = wizCurrentStep;
+  // Steps indicator
+  document.querySelectorAll('.wiz-step').forEach(el => {
+    const s = parseInt(el.dataset.step);
+    el.classList.toggle('active', s === step);
+    el.classList.toggle('done', s < step);
+  });
+  // Content
+  document.querySelectorAll('.wiz-content').forEach(el => el.classList.remove('active'));
+  document.getElementById('wiz-' + step).classList.add('active');
+  // Nav
+  document.getElementById('wiz-prev').style.visibility = step === 1 ? 'hidden' : 'visible';
+  document.getElementById('wiz-next').textContent = step === wizTotalSteps ? '✅ Cerrar' : 'Siguiente →';
+  if (step === wizTotalSteps) document.getElementById('wiz-next').onclick = closeWizard;
+  else document.getElementById('wiz-next').onclick = () => wizStep(1);
+  document.getElementById('wiz-progress').textContent = `Paso ${step} de ${wizTotalSteps}`;
+
+  // Dynamic content based on inputs
+  const slug = document.getElementById('wiz-slug').value || '{slug}';
+  const name = document.getElementById('wiz-name').value || '{nombre}';
+  const emoji = document.getElementById('wiz-emoji').value || '🏢';
+  const url = document.getElementById('wiz-url').value || 'https://ejemplo.com';
+  const guild = document.getElementById('wiz-dc-guild').value || '{GUILD_ID}';
+  const sbUrl = document.getElementById('wiz-sb-url').value || 'https://xxxxx.supabase.co';
+  const sbKey = document.getElementById('wiz-sb-key').value || '{ANON_KEY}';
+  const industry = document.getElementById('wiz-industry').value || '';
+
+  // Step 2: Supabase name
+  const sbName = document.getElementById('wiz-sb-name');
+  if (sbName) sbName.textContent = `sanchocmo-${slug}`;
+
+  // Step 3: Discord server name
+  const dcName = document.getElementById('wiz-dc-name');
+  if (dcName) dcName.textContent = `SanchoCMO — ${name}`;
+
+  // Step 4: Workspace commands
+  const wsCmd = document.getElementById('wiz-ws-cmd');
+  if (wsCmd) wsCmd.textContent = `cd ~/Projects/sanchocmo-openclaw && ./scripts/new-client.sh ${slug}`;
+  const wsManual = document.getElementById('wiz-ws-manual');
+  if (wsManual) wsManual.textContent = `mkdir -p ~/Projects/sanchocmo-${slug}/{brand,campaigns}
+cd ~/Projects/sanchocmo-${slug}
+ln -s ../sanchocmo-openclaw/skills skills-shared
+ln -s ../sanchocmo-openclaw/agents agents
+ln -s ../sanchocmo-openclaw/_system _system
+cp ../sanchocmo-openclaw/env.example .env
+# Editar .env con credenciales del cliente`;
+
+  // Step 5: OpenClaw config
+  const ocCmd = document.getElementById('wiz-oc-cmd');
+  if (ocCmd) ocCmd.textContent = `openclaw config set channels.discord.guilds.${guild}.requireMention false --json`;
+  const sanchoMsg = document.getElementById('wiz-sancho-msg');
+  if (sanchoMsg) sanchoMsg.textContent = `Nuevo cliente: ${name} (${url}). Guild: ${guild}. Supabase: ${sbUrl}. Actualiza clients.js y prepara Foundation.`;
+
+  // Step 6: pre-fill Gmail from step 1
+  if (step === 6) {
+    const gmailEl = document.getElementById('wiz-src-gmail');
+    if (!gmailEl.value) gmailEl.value = '';
+  }
+
+  // Step 7: Summary + output
+  if (step === 7) {
+    const src = getWizSources();
+    const srcJSON = generateSourcesJSON(src, slug);
+    const meetingInfo = src.meetingTool === 'none' ? 'Sin transcriptor' : src.meetingTool;
+    const compNames = src.competitors.map(c => c.name).filter(Boolean).join(', ') || 'Sin definir';
+
+    document.getElementById('wiz-summary').innerHTML = `
+      <div class="card" style="margin-bottom:12px;">
+        <div class="sr"><span>Nombre</span><span>${emoji} ${name}</span></div>
+        <div class="sr"><span>Slug</span><span>${slug}</span></div>
+        <div class="sr"><span>URL</span><span>${url}</span></div>
+        <div class="sr"><span>Industria</span><span>${industry}</span></div>
+        <div class="sr"><span>Discord Guild</span><span>${guild}</span></div>
+        <div class="sr"><span>Supabase</span><span>${sbUrl}</span></div>
+        <div class="sr"><span>Email</span><span>${src.gmail || 'No configurado'}</span></div>
+        <div class="sr"><span>Meetings</span><span>${meetingInfo} → ${src.notesDest}</span></div>
+        <div class="sr"><span>Notion DBs</span><span>${[src.notionMeetings, src.notionNotes].filter(Boolean).length || 0} configuradas</span></div>
+        <div class="sr"><span>Drive folder</span><span>${src.gdriveFolder ? '✅' : '❌'}</span></div>
+        <div class="sr"><span>Slack</span><span>${src.useSlack ? '✅' : '❌'}</span></div>
+        <div class="sr"><span>Competidores</span><span>${compNames}</span></div>
+      </div>`;
+
+    document.getElementById('wiz-output').value = `// === clients.js entry ===
+  "${slug}": {
+    name: "${name}",
+    emoji: "${emoji}",
+    url: "${url}",
+    discord_guild: "${guild}",
+    supabase: {
+      url: "${sbUrl}",
+      anon_key: "${sbKey}",
+    },
+    workspace: "~/Projects/sanchocmo-${slug}",
+    phase: 0,
+  },
+
+// === brand/sources.json ===
+${srcJSON}`;
+  }
+}
+
+function toggleCheck(el) {
+  el.classList.toggle('checked');
+  const cb = el.querySelector('.wiz-checkbox');
+  cb.textContent = el.classList.contains('checked') ? '☑' : '☐';
+}
+
+function copyWizOutput() {
+  const ta = document.getElementById('wiz-output');
+  navigator.clipboard.writeText(ta.value).then(() => showToast('📋 Código copiado — pégalo en clients.js'));
+}
+
+function addCompetitor() {
+  const container = document.getElementById('wiz-competitors');
+  const n = container.children.length + 1;
+  const div = document.createElement('div');
+  div.className = 'wiz-competitor';
+  div.style.cssText = 'background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:8px;';
+  div.innerHTML = `<div class="form-row"><div class="form-field"><label>Nombre</label><input type="text" class="wiz-comp-name" placeholder="Competidor ${n}"></div><div class="form-field"><label>Website</label><input type="text" class="wiz-comp-web" placeholder="https://..."></div></div><div class="form-row"><div class="form-field"><label>LinkedIn</label><input type="text" class="wiz-comp-linkedin" placeholder="URL o slug"></div><div class="form-field"><label>Instagram</label><input type="text" class="wiz-comp-ig" placeholder="@handle"></div></div>`;
+  container.appendChild(div);
+}
+
+// Slack toggle
+document.addEventListener('change', (e) => {
+  if (e.target.id === 'wiz-src-slack') {
+    document.getElementById('wiz-src-slack-channels').disabled = e.target.value === 'no';
+  }
+});
+
+function getWizSources() {
+  const gmail = document.getElementById('wiz-src-gmail').value.trim();
+  const gmailSkip = document.getElementById('wiz-src-gmail-skip').value.trim();
+  const useSlack = document.getElementById('wiz-src-slack').value === 'yes';
+  const slackChannels = document.getElementById('wiz-src-slack-channels').value.trim();
+  const meetingTool = document.getElementById('wiz-src-meeting-tool').value;
+  const notesDest = document.getElementById('wiz-src-notes-dest').value;
+  const notionMeetings = document.getElementById('wiz-src-notion-meetings').value.trim();
+  const gdriveFolder = document.getElementById('wiz-src-gdrive-folder').value.trim();
+  const transcriptLabel = document.getElementById('wiz-src-transcript-label').value.trim();
+  const notionNotes = document.getElementById('wiz-src-notion-notes').value.trim();
+
+  const competitors = [];
+  document.querySelectorAll('.wiz-competitor').forEach(el => {
+    const name = el.querySelector('.wiz-comp-name').value.trim();
+    const web = el.querySelector('.wiz-comp-web').value.trim();
+    const linkedin = el.querySelector('.wiz-comp-linkedin').value.trim();
+    const ig = el.querySelector('.wiz-comp-ig').value.trim();
+    if (name) competitors.push({name, website: web, linkedin, instagram: ig});
+  });
+
+  return {gmail, gmailSkip, useSlack, slackChannels, meetingTool, notesDest,
+    notionMeetings, gdriveFolder, transcriptLabel, notionNotes, competitors};
+}
+
+function generateSourcesJSON(src, slug) {
+  const sources = {
+    _doc: `Fuentes de datos para ${slug}. Los crons leen esto.`,
+    meetings: {enabled: true, sources: []},
+    daily_pulse: {enabled: true, sources: []},
+    thief_marketer: {enabled: src.competitors.length > 0, competitors: []}
+  };
+  // Gmail for daily pulse
+  if (src.gmail) {
+    sources.daily_pulse.sources.push({
+      type: 'gmail', name: 'Inbox', config: {
+        account: src.gmail, max_messages: 10,
+        labels: ['INBOX'],
+        skip_labels: src.gmailSkip ? src.gmailSkip.split(',').map(s=>s.trim()) : []
+      }
+    });
+  }
+  // Slack
+  if (src.useSlack && src.slackChannels) {
+    sources.daily_pulse.sources.push({
+      type: 'slack', name: 'Slack', enabled: false,
+      config: {channels: src.slackChannels.split(',').map(s=>s.trim()), note: 'Requiere Slack bot token (xoxb-)'}
+    });
+  }
+  // Notion meetings
+  if (src.notionMeetings) {
+    sources.meetings.sources.push({
+      type: 'notion', name: 'Meeting Notes DB',
+      config: {database_id: src.notionMeetings, filter_property: 'Date', filter_range: 'last_24h'}
+    });
+  }
+  // Notion notes
+  if (src.notionNotes) {
+    sources.daily_pulse.sources.push({
+      type: 'notion', name: 'Team Notes',
+      config: {database_id: src.notionNotes, filter_range: 'last_24h'}
+    });
+  }
+  // Google Drive
+  if (src.gdriveFolder) {
+    sources.meetings.sources.push({
+      type: 'google-drive', name: 'Meet Recordings',
+      config: {folder_id: src.gdriveFolder, mime_types: ['application/vnd.google-apps.document','text/plain'], modified_after: 'last_24h'}
+    });
+  }
+  // Meeting tool integration
+  if (src.meetingTool && src.meetingTool !== 'none') {
+    const toolConfig = {type: src.meetingTool, name: src.meetingTool.charAt(0).toUpperCase()+src.meetingTool.slice(1), config: {}};
+    if (src.notesDest === 'email' && src.transcriptLabel) {
+      toolConfig.config = {method: 'email-forward', inbox_label: src.transcriptLabel};
+    } else if (src.notesDest === 'notion') {
+      toolConfig.config = {method: 'notion-sync', note: 'Uses Notion meeting DB source'};
+    } else if (src.notesDest === 'gdrive') {
+      toolConfig.config = {method: 'gdrive-export', note: 'Uses Google Drive folder source'};
+    }
+    sources.meetings.sources.push(toolConfig);
+  }
+  // Competitors
+  src.competitors.forEach(c => {
+    sources.thief_marketer.competitors.push({
+      name: c.name,
+      sources: {website: c.website, linkedin: c.linkedin, instagram: c.instagram, blog: '', youtube: '', newsletter: '', google_ads_library: ''},
+      watch: ['new_content','ad_changes','pricing_changes','new_pages']
+    });
+  });
+  return JSON.stringify(sources, null, 2);
+}
+
+function copyInitSQL() {
+  const sqlPath = '~/Projects/sanchocmo-openclaw/database/init-db.sql';
+  showToast('📁 Ruta del SQL: ' + sqlPath + ' — ábrelo con: cat ' + sqlPath + ' | pbcopy');
+}
+
+function copyText(text) {
+  navigator.clipboard.writeText(text.trim()).then(() => showToast('📋 Copiado'));
+}
+
+// Auto-generate slug from name
+document.addEventListener('input', (e) => {
+  if (e.target.id === 'wiz-name') {
+    const slug = e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    document.getElementById('wiz-slug').value = slug;
+  }
+});
+
+// === Init ===
+const savedTheme = localStorage.getItem('sancho-theme');
+if (savedTheme === 'light') { document.body.setAttribute('data-theme','light'); document.getElementById('themeLabel').textContent='Dark mode'; }
+populateClientSelector();
+switchClient(document.getElementById('clientSelector').value);
+renderDashboard();
+renderTasks();
+renderSkills();
+renderAgents();
+renderFoundation();
+renderChangelog();
+renderGuide();
+</script>
+</body>
+</html>

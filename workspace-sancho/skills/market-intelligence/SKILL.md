@@ -30,6 +30,34 @@ Uses **Google Gemini Deep Research** to produce comprehensive market analysis au
 
 ---
 
+## ⚠️ Reglas de Citación (OBLIGATORIO)
+
+**Toda cifra, dato estadístico o afirmación cuantitativa DEBE incluir URL de fuente.**
+
+### Formato inline
+- Con fuente: `El mercado de trasplantes capilares alcanzó €4.2B en 2025 [Fuente: Grand View Research](https://www.grandviewresearch.com/...)`
+- Sin fuente verificable: `⚠️ Estimación sin fuente verificada: ~€500M`
+
+### Reglas
+1. **Mínimo 5 fuentes verificables** por sección de mercado
+2. **Cada URL debe haberse visitado** con `web_search` o `web_fetch` durante la ejecución — NUNCA inventar URLs
+3. **Fuentes aceptables** (orden de prioridad): informes de consultoras (Statista, IBISWorld, Grand View Research), prensa especializada, publicaciones oficiales (INE, Eurostat), SEC filings, earnings calls
+4. **NO aceptar**: blogs genéricos, artículos sin fecha, fuentes anteriores a 2023
+5. **Validación cruzada**: si un dato aparece en una sola fuente, marcar como `⚠️ Fuente única`
+6. **Si una búsqueda no devuelve resultados fiables** → documentar como gap de información
+
+### Sección de fuentes al final
+Incluir siempre `## Fuentes` al final del documento:
+```
+## Fuentes
+[1] Título — Organización (fecha). URL
+[2] Título — Organización (fecha). URL
+...
+```
+Referencias inline: `dato relevante [1]`
+
+---
+
 ## How This Skill Works
 
 **Automated research** via Google Gemini Deep Research with structured prompt.
@@ -306,3 +334,22 @@ After the initial deep dive, market intelligence enters monitoring mode:
 **Market is declining but company is growing:**
 - The company may be taking share from incumbents or creating a new sub-segment.
 - "El mercado general está en declive, pero tu segmento específico está creciendo. Esto sugiere que estás creando una nueva categoría."
+
+---
+
+## 🔬 Profundizar con Deep Research
+
+Al completar el análisis, SIEMPRE añade este bloque al final del output:
+
+```
+---
+📊 **¿Quieres profundizar?**
+Puedo lanzar deep-research para ampliar este análisis con más fuentes, datos más granulares y validación cruzada de todas las cifras.
+→ Escribe **"profundizar"** para continuar.
+```
+
+Si el usuario responde "profundizar", "deep-research" o "más detalle":
+1. Lee el documento recién generado como base
+2. Invoca el skill `deep-research` pasándole la ruta del archivo
+3. Deep-research ampliará cada sección con 10-20 búsquedas adicionales
+4. El resultado reemplaza el documento original (con backup automático)

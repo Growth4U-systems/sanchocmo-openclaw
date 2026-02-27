@@ -2,6 +2,8 @@
 
 > Como Sancho recopila, analiza y usa inteligencia de mercado.
 
+> ⚠️ **OBLIGATORIO**: Antes de publicar output de inteligencia en un canal de cliente, aplica `_system/client-context-isolation.md`. Solo contenido relevante al cliente. CERO info interna del sistema.
+
 ---
 
 ## Intelligence Engine (Unified)

@@ -49,6 +49,8 @@ _ninguna_
 
 ### ✔️ Completadas (recientes)
 
+- **T-037** `P1` — Links clickeables obligatorios al referenciar archivos en Discord (Mission Control URL). Regla 12 añadida a SOUL.md. _(2026-02-27)_
+
 _Las tareas T-001 a T-012 fueron de setup del sistema y ahora viven en el TASKS.md de Cervantes._
 
 ### 🧊 Congeladas

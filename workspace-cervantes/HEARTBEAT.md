@@ -40,5 +40,19 @@
 - Identificar patrones: ¿qué skills usa más? ¿dónde falla? ¿qué le falta?
 - Proponer mejoras como tareas en TASKS.md
 
+### 🔨 Ejecutar una tarea aprobada
+- Leer TASKS.md → sección "✅ Aprobadas"
+- Elegir UNA tarea (priorizar P1 > P2, y las que desbloquean más cosas)
+- Ejecutarla directamente (spawn sub-agente si es grande, hacerla tú si es pequeña)
+- Al completar: mover a "✔️ Completadas" en TASKS.md + regenerar MC
+- Documentar en memory/YYYY-MM-DD.md qué hiciste
+- Si la tarea requiere aprobación de Alfonso (ej: cambios visibles al cliente), NO ejecutar — solo preparar y notificar
+
+### 📋 Actualizar CHANGELOG
+- Si hubo cambios desde la última entrada del CHANGELOG → añadir entrada
+- Archivo: `~/.openclaw/workspace-sancho/CHANGELOG.md`
+- Formato Keep a Changelog (Added/Changed/Fixed/Removed)
+- Solo si hay cambios reales — no crear entradas vacías
+
 ## Estado de checks
 Trackear en memory/heartbeat-state.json

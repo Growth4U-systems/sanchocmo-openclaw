@@ -16,10 +16,10 @@ OUT = WORKSPACE  # output JS files next to mission-control.html
 def parse_tasks_from_file(tasks_file, source="sancho"):
     """Parse a TASKS.md file into structured data."""
     if not tasks_file.exists():
-        return {"proposals": [], "approved": [], "progress": [], "review": [], "done": [], "frozen": [], "rejected": []}
+        return {"proposals": [], "approved": [], "progress": [], "review": [], "done": [], "frozen": [], "rejected": [], "discarded": []}
 
     content = tasks_file.read_text(encoding="utf-8")
-    tasks = {"proposals": [], "approved": [], "progress": [], "review": [], "done": [], "frozen": [], "rejected": []}
+    tasks = {"proposals": [], "approved": [], "progress": [], "review": [], "done": [], "frozen": [], "rejected": [], "discarded": []}
 
     # Map section headers to keys
     section_map = {
@@ -29,6 +29,7 @@ def parse_tasks_from_file(tasks_file, source="sancho"):
         "👀 En Review": "review",
         "✔️ Completadas": "done",
         "🧊 Congeladas": "frozen",
+        "🗑️ Descartadas": "discarded",
         "❌ Rechazadas": "rejected",
     }
 
@@ -50,16 +51,28 @@ def parse_tasks_from_file(tasks_file, source="sancho"):
             if len(cells) >= 4 and cells[0].startswith("T-"):
                 cat_match = re.search(r'\[(\w+)\]', cells[2])
                 pri_match = re.search(r'P(\d)', cells[3] if len(cells) > 3 else "")
+                notes_text = cells[5] if len(cells) > 5 else ""
+                # Extract client slug from tags like [hospital-capilar] in cat or notes
+                all_text = " ".join(cells)
+                client_tags = re.findall(r'\[([a-z][a-z0-9-]+)\]', all_text)
+                # Filter out known category tags
+                known_cats = {"infra","skill","agent","flow","brain","tool","docs","cost","client"}
+                client_slug = None
+                for tag in client_tags:
+                    if tag not in known_cats and not tag.startswith("T-"):
+                        client_slug = tag
+                        break
                 task = {
                     "id": cells[0],
                     "title": cells[1],
                     "cat": cat_match.group(1) if cat_match else "docs",
                     "pri": f"p{pri_match.group(1)}" if pri_match else "p2",
                     "proposed": cells[4] if len(cells) > 4 else "",
-                    "notes": cells[5] if len(cells) > 5 else "",
+                    "notes": notes_text,
                     "date": cells[3] if len(cells) > 3 else "",
                     "status": current_section,
                     "source": source,
+                    "client": client_slug,
                 }
                 # Check if PRD exists
                 prd_path = WORKSPACE / "_system" / "prds" / f"{task['id']}.md"
@@ -72,16 +85,8 @@ def parse_tasks_from_file(tasks_file, source="sancho"):
 
 
 def parse_tasks():
-    """Parse tasks from both Cervantes (system) and Sancho (client)."""
-    cervantes_tasks = parse_tasks_from_file(CERVANTES_WORKSPACE / "TASKS.md", source="cervantes")
-    sancho_tasks = parse_tasks_from_file(WORKSPACE / "TASKS.md", source="sancho")
-
-    # Merge: cervantes = global/system tasks, sancho = client tasks
-    merged = {}
-    for key in cervantes_tasks:
-        merged[key] = cervantes_tasks[key] + sancho_tasks[key]
-
-    return merged
+    """Parse tasks from Cervantes TASKS.md (single source of truth)."""
+    return parse_tasks_from_file(CERVANTES_WORKSPACE / "TASKS.md", source="cervantes")
 
 
 def parse_activity():
@@ -261,6 +266,77 @@ def parse_healthcheck():
         return {"status": "unknown", "last_run": None, "checks": {}}
 
 
+def parse_client_tasks():
+    """Parse tasks.md from each client brand directory."""
+    brand_dir = WORKSPACE / "brand"
+    result = {}
+    if brand_dir.exists():
+        for client_dir in sorted(brand_dir.iterdir()):
+            if not client_dir.is_dir() or client_dir.name.startswith('.'):
+                continue
+            tasks_file = client_dir / "tasks.md"
+            if tasks_file.exists():
+                result[client_dir.name] = parse_tasks_from_file(tasks_file, source=client_dir.name)
+    return result
+
+
+def parse_global_costs():
+    """Parse costs-global.json for the global dashboard."""
+    cost_file = WORKSPACE / "costs-global.json"
+    if cost_file.exists():
+        try:
+            return json.loads(cost_file.read_text(encoding="utf-8"))
+        except:
+            pass
+    return {}
+
+
+def parse_meetings():
+    """Parse meetings.json for all clients in brand/."""
+    brand_dir = WORKSPACE / "brand"
+    clients = {}
+    if brand_dir.exists():
+        for client_dir in sorted(brand_dir.iterdir()):
+            if not client_dir.is_dir() or client_dir.name.startswith('.'):
+                continue
+            slug = client_dir.name
+            meetings_file = client_dir / "intelligence" / "meetings.json"
+            if meetings_file.exists():
+                try:
+                    clients[slug] = json.loads(meetings_file.read_text(encoding="utf-8"))
+                except:
+                    clients[slug] = []
+            else:
+                clients[slug] = []
+    return clients
+
+
+def parse_integrations():
+    """Parse integrations.json and costs.json for all clients in brand/."""
+    brand_dir = WORKSPACE / "brand"
+    clients = {}
+    if brand_dir.exists():
+        for client_dir in sorted(brand_dir.iterdir()):
+            if not client_dir.is_dir() or client_dir.name.startswith('.'):
+                continue
+            slug = client_dir.name
+            client_data = {"slug": slug, "services": [], "costs": None}
+            # integrations.json
+            int_file = client_dir / "integrations.json"
+            if int_file.exists():
+                try:
+                    client_data["services"] = json.loads(int_file.read_text(encoding="utf-8")).get("services", [])
+                except: pass
+            # costs.json
+            cost_file = client_dir / "costs.json"
+            if cost_file.exists():
+                try:
+                    client_data["costs"] = json.loads(cost_file.read_text(encoding="utf-8"))
+                except: pass
+            clients[slug] = client_data
+    return clients
+
+
 def main():
     print("🔄 Regenerating Mission Control data...")
 
@@ -274,6 +350,10 @@ def main():
         "changelog": get_changelog(),
         "costs": parse_costs(),
         "healthcheck": parse_healthcheck(),
+        "integrations": parse_integrations(),
+        "meetings": parse_meetings(),
+        "global_costs": parse_global_costs(),
+        "client_tasks": parse_client_tasks(),
     }
 
     # Write as JS file
