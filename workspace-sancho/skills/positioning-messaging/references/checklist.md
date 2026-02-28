@@ -30,9 +30,13 @@
 ## Step 4: Value Criteria + Competitive Scoring
 
 - [ ] **Tier 2 check**: value criteria existentes revisados antes de crear nuevos
+- [ ] **Deduplicación**: ningún criterion nuevo es >80% similar a uno existente
 - [ ] **Criteria generados** (funcional + emocional, 5 dimensiones)
 - [ ] **Naming correcto** (noun phrases, 2-5 palabras, mismo nivel de abstracción)
+- [ ] **Justificación** incluida para cada criterion (WHY it matters for this ECP)
+- [ ] **Importance weight (1-10)** asignado a cada criterion
 - [ ] **Scoring 0-5** para cada competidor + "Do Nothing"
+- [ ] **Score explanations**: cada puntuación tiene justificación escrita (1-2 frases con evidencia)
 - [ ] **Clasificación**: Red Ocean (avg 4-5) / No Market (avg 0-1) / Opportunity Zone (avg 2-3)
 - [ ] **Top 3-5 Opportunity Zones** identificadas
 
@@ -70,6 +74,18 @@
 
 - [ ] **Summary generado** (opportunity zones, diferenciadores, UVP, top 3 messages)
 - [ ] **Lite criteria met**: Steps 1-4 + 3 assets + UVP + 3 USPs
+
+## Step 9: Positioning DAG Review (Gate de calidad)
+
+- [ ] **DAG Review ejecutada** usando `references/positioning-dag-review.md`
+- [ ] **Storytelling Coherence**: 5/5 ⭐
+- [ ] **Value Criteria Coverage**: 5/5 ⭐ (sin duplicados, con justificación + importance)
+- [ ] **Asset Validity**: 5/5 ⭐ (todos reales, sin duplicados)
+- [ ] **Messaging Alignment**: 5/5 ⭐
+- [ ] **Orphan/Duplicate Health**: 5/5 ⭐ (orphans investigados, duplicados mergeados)
+- [ ] **OVERALL**: 5/5 ⭐
+- [ ] **Action items CRITICAL**: 0 pendientes
+- [ ] **Action items IMPORTANT**: 0 pendientes
 
 ## Almacenamiento
 

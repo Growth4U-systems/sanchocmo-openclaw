@@ -35,6 +35,7 @@ context_writes:
 | [checklist.md](references/checklist.md) | **Antes de entregar** — self-QA | Ítems por step y por ECP |
 | [concepts.md](references/concepts.md) | Si necesitas template vars, Tier 2 rules, criteria | Variables, metodología, edge cases |
 | [schema.md](references/schema.md) | Si necesitas el schema de campos | Tier 2 DBs + per-niche structure |
+| [positioning-dag-review.md](references/positioning-dag-review.md) | **Step 9** — Gate de calidad obligatorio | QA review de 6 dimensiones por ECP |
 
 ---
 
@@ -76,7 +77,14 @@ context_writes:
 - Spot-check 5-10 URLs, cruza claims contra self-intel Lens 3
 - Metadata: `<!-- Self-QA: PASS | fecha | items: X✅ Y⚠️ 0❌ -->`
 
-### 9. Guardar con versionado
+### 9. Positioning DAG Review (OBLIGATORIO — Gate de calidad)
+- Ejecuta el prompt de `references/positioning-dag-review.md` para CADA ECP
+- Evalúa 6 dimensiones: Storytelling Coherence, Value Criteria Analysis, Assets Validation, Messaging Alignment, Orphan & Duplicate Detection, Summary & Recommendations
+- **Si el score OVERALL < 5/5**: corregir los action items CRITICAL e IMPORTANT, y repetir la review
+- **Solo cuando OVERALL = 5/5** se puede guardar el documento
+- Este paso es el gate final — no se entrega nada sin pasarlo
+
+### 10. Guardar con versionado
 - Ruta: `brand/{slug}/positioning/current.md`
 - Backup + versionado + history.json
 - Link: `https://sancho-cmo.taild48df2.ts.net/mc/docs/brand/{slug}/positioning/current.md`

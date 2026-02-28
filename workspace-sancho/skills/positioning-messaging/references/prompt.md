@@ -126,7 +126,10 @@ Required Dimensions to Cover:
 
 **Final Deliverable:**
 
-1. A table with the value criteria, the relevance of that value criteria, and the justification for each value criteria.
+1. A table with the value criteria including: name, relevance level (Critical/Very High/High/Medium), **importance weight (1-10)**, and a **justification explaining WHY this criterion matters** for this specific ECP and how it connects to their pain/problem.
+
+| Value Criterion | Relevance | Importance (1-10) | Justification |
+|-----------------|-----------|-------------------|---------------|
 
 2. A detailed Markdown table titled "Competitive Positioning Map for {{client_name}}":
 
@@ -134,7 +137,11 @@ Required Dimensions to Cover:
 
 3. Beneath the table, a concluding summary highlighting the top 3-5 most promising "Opportunity Zones" for {{client_name}}.
 
-4. A detailed explanation of each competitor's scores and value criteria with source citations.
+4. **Score Explanations (OBLIGATORIO)**: For EACH competitor × criterion combination, provide a brief explanation of WHY that score was assigned. Format:
+   - **[Criterion] — [Competitor]: [Score]/5** — [1-2 sentence justification with evidence]
+   - This ensures transparency and allows the user to challenge or validate scores.
+
+5. **Deduplication check**: Before finalizing, compare all new Value Criteria against the existing shared list. If a new criterion overlaps with an existing one (>80% conceptual similarity), USE the existing one instead of creating a new one.
 ```
 
 ---
@@ -170,6 +177,8 @@ Instructions for formatting:
 - In the Value Criteria column, use one of the Value Criteria from Step 4 that the asset contributes to.
 - In the Category column, define whether the asset acts as a Qualifier or a Differentiator.
 - The Justification for Differentiation should concisely explain why this asset provides strategic or competitive value in relation to the specified value criteria.
+
+**Deduplication check (OBLIGATORIO)**: Before finalizing, compare all new Assets against the existing shared Asset list. If a new asset overlaps with an existing one (same feature described differently), USE the existing asset and add a new connection to this ECP's Value Criteria. Do NOT create a duplicate.
 ```
 
 ---
