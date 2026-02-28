@@ -95,4 +95,9 @@ except:
   fi
 fi
 
+# --- 8. Push to remote ---
+if git remote get-url origin &>/dev/null; then
+  git push origin main --quiet 2>/dev/null && echo "☁️ Pushed to GitHub" || echo "⚠️ Push failed (will retry next backup)"
+fi
+
 echo "📦 Backup complete (${DURATION}s)"

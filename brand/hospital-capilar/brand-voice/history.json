@@ -1,0 +1,12 @@
+[
+  {
+    "version": 1,
+    "date": "2026-02-28",
+    "author": "sancho",
+    "mode": "full",
+    "approach": "hybrid",
+    "notes": "First brand voice. Full mode with Hybrid approach (Extract website + Build from positioning/ECPs). 4 website pages analyzed + positioning v2 + niche-discovery v1 + company-context v2.",
+    "qa": "PASS",
+    "items": "42✅ 2⚠️ 0❌"
+  }
+]

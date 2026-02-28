@@ -51,7 +51,9 @@
       "status": "not-started"
     },
     "brand-voice": {
-      "status": "not-started"
+      "status": "draft",
+      "version": 1,
+      "drafted_at": "2026-02-28T12:50:00Z"
     },
     "visual-identity": {
       "status": "not-started"

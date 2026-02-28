@@ -1,4 +1,6 @@
 <!-- version: 2 | fecha: 2026-02-27 | skill: ope-canvas | qa: PASS -->
+<!-- Self-QA: PASS | 2026-02-28 | items: 21✅ 1⚠️ 0❌ -->
+<!-- Sources: company-context v2, business-model v1, budget v1, self-intelligence v2, competitors v3, market v4, kickoff 2026-01-29, briefing-ramiro 2026-02-17 -->
 
 # OPE Canvas — Hospital Capilar
 **Fecha**: 2026-02-27 | **Diseñado por**: SanchoCMO + Growth4U

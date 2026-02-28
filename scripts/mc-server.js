@@ -46,11 +46,12 @@ const DOC_ROOTS = {
   'memory': path.join(BASE, 'memory'),
 };
 
-const STYLE = `<link href="https://fonts.googleapis.com/css2?family=Bangers&family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
+const STYLE = `<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Bangers&family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
 <style>
 body{font-family:'Comic Neue',cursive;background:#FFFDF9;color:#1A1A2E;max-width:1200px;margin:40px auto;padding:0 40px;line-height:1.85;font-size:17px;}
 h1{font-family:'Bangers';font-size:2.2em,cursive;color:#C45D35;}h2{color:#1E3A5F;margin-top:24px;}h3{color:#C45D35;}h4{color:#5D5348;}
-strong{color:#1A1A2E;}ul{padding-left:20px;}li{margin:4px 0;}
+strong{color:#1A1A2E;}ul{padding-left:20px;}li{margin:1px 0;line-height:1.4;padding:0;}ul{margin:8px 0;line-height:1.4;}ol{margin:8px 0;line-height:1.4;}li p{margin:0;padding:0;line-height:1.4;display:inline;}ul ul{margin:2px 0;}p+ul{margin-top:-8px;}p+ol{margin-top:-8px;}
 a{color:#C45D35;text-decoration:none;font-weight:700;}a:hover{text-decoration:underline;}
 .card{margin:8px 0;padding:10px 14px;background:#FDF8EF;border:2px solid #1A1A2E;border-radius:6px;box-shadow:3px 3px 0 #1A1A2E;}
 .card a{font-size:16px;}
@@ -70,77 +71,41 @@ blockquote{border-left:4px solid #C45D35;margin:12px 0;padding:8px 16px;backgrou
 </style>`;
 
 function renderMarkdown(md) {
-  // Extract code blocks first to protect them
+  // Use marked.js loaded in browser for rendering
+  // Server-side: return raw markdown wrapped in a div that client-side marked.js will render
+  // Since marked.js runs client-side, we pass the raw markdown and render in browser
+  // For server-side rendering, use a simple but robust approach:
+  
+  // Protect code blocks
   const codeBlocks = [];
   let processed = md.replace(/```(\w*)\n([\s\S]*?)```/g, (_, lang, code) => {
     codeBlocks.push(`<pre><code>${code.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').trim()}</code></pre>`);
     return `%%CODEBLOCK_${codeBlocks.length - 1}%%`;
   });
-
-  // Escape HTML (but not in code blocks)
-  processed = processed.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-
-  // Restore > for blockquotes (lines starting with &gt;)
-  processed = processed.replace(/^&gt; (.+)$/gm, '> $1');
-
-  // Inline code
-  processed = processed.replace(/`([^`]+)`/g, '<code>$1</code>');
-
-  // Headers
-  processed = processed
-    .replace(/^#### (.+)$/gm, '<h4>$1</h4>')
-    .replace(/^### (.+)$/gm, '<h3>$1</h3>')
-    .replace(/^## (.+)$/gm, '<h2>$1</h2>')
-    .replace(/^# (.+)$/gm, '<h1>$1</h1>');
-
-  // Bold & italic
-  processed = processed
-    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-    .replace(/\*(.+?)\*/g, '<em>$1</em>');
-
-  // Links [text](url)
-  processed = processed.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" style="color:#C45D35;">$1</a>');
-
-  // Blockquotes
-  processed = processed.replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>');
-
-  // Tables
-  processed = processed.replace(/^(\|.+\|)\n(\|[-| :]+\|)\n((?:\|.+\|\n?)+)/gm, (_, header, sep, body) => {
-    const ths = header.split('|').filter(Boolean).map(c => `<th>${c.trim()}</th>`).join('');
-    const rows = body.trim().split('\n').map(row => {
-      const tds = row.split('|').filter(Boolean).map(c => `<td>${c.trim()}</td>`).join('');
-      return `<tr>${tds}</tr>`;
-    }).join('');
-    return `<table><thead><tr>${ths}</tr></thead><tbody>${rows}</tbody></table>`;
-  });
-
-  // Horizontal rules
-  processed = processed.replace(/^---$/gm, '<hr>');
-
-  // Lists — collect consecutive - lines into <ul> blocks
-  processed = processed.replace(/(^- .+$\n?)+/gm, (block) => {
-    const items = block.trim().split('\n').map(line => `<li>${line.replace(/^- /, '')}</li>`).join('\n');
-    return `<ul>${items}</ul>`;
-  });
-
-  // Numbered lists
-  processed = processed.replace(/(^\d+\. .+$\n?)+/gm, (block) => {
-    const items = block.trim().split('\n').map(line => `<li>${line.replace(/^\d+\. /, '')}</li>`).join('\n');
-    return `<ol>${items}</ol>`;
-  });
-
-  // Paragraphs: split on double newlines, wrap non-tag blocks in <p>
-  processed = processed.split('\n\n').map(block => {
-    block = block.trim();
-    if (!block) return '';
-    if (/^<(h[1-4]|ul|ol|table|pre|blockquote|hr|div)/.test(block)) return block;
-    return `<p>${block.replace(/\n/g, '<br>')}</p>`;
-  }).join('\n');
-
-  // Restore code blocks
-  processed = processed.replace(/%%CODEBLOCK_(\d+)%%/g, (_, i) => codeBlocks[i]);
-
-  return processed;
+  
+  // Return markdown in a special div that will be rendered client-side by marked.js
+  // But also include a noscript fallback
+  const escaped = processed.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  
+  // Restore code blocks in escaped version
+  let result = escaped.replace(/%%CODEBLOCK_(\d+)%%/g, (_, i) => codeBlocks[i]);
+  
+  // Actually, let's do server-side with marked since it's simpler
+  // We'll pass raw md to the browser and render there
+  return `<div class="md-raw" style="display:none;">${md.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div><div class="md-rendered"></div>
+<script>
+if (typeof marked !== 'undefined') {
+  const raw = document.querySelector('.md-raw');
+  const rendered = document.querySelector('.md-rendered');
+  if (raw && rendered) {
+    marked.setOptions({ breaks: true, gfm: true });
+    rendered.innerHTML = marked.parse(raw.textContent);
+    raw.style.display = 'none';
+    // Style links
+    rendered.querySelectorAll('a').forEach(a => { a.style.color = '#C45D35'; a.target = '_blank'; });
+  }
+}
+</script>`;
 }
 
 function page(title, breadcrumb, content, opts = {}) {
