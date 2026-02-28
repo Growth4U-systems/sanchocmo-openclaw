@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sanchocmo.com/schemas/positioning.schema.json",
+  "title": "Positioning",
+  "description": "Positioning angles and messaging from positioning-messaging skill",
+  "type": "object",
+  "required": ["primary_angle", "proof_points"],
+  "properties": {
+    "primary_angle": {
+      "type": "object",
+      "required": ["name", "statement", "hook"],
+      "properties": {
+        "name": {"type": "string", "description": "Angle name"},
+        "statement": {"type": "string", "description": "One-sentence positioning"},
+        "hook": {"type": "string", "description": "Headline-ready hook"},
+        "why_it_works": {"type": "string"},
+        "best_for_channels": {
+          "type": "array",
+          "items": {"type": "string"}
+        }
+      }
+    },
+    "alternative_angles": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {"type": "string"},
+          "statement": {"type": "string"},
+          "when_to_use": {"type": "string"}
+        }
+      },
+      "description": "2-4 alternative angles for different contexts/ECPs"
+    },
+    "proof_points": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "claim": {"type": "string"},
+          "evidence": {"type": "string"},
+          "source": {"type": "string"}
+        }
+      },
+      "description": "Social proof, metrics, validation"
+    },
+    "differentiation": {
+      "type": "object",
+      "properties": {
+        "vs_competitor_1": {"type": "string"},
+        "vs_competitor_2": {"type": "string"},
+        "vs_competitor_3": {"type": "string"}
+      },
+      "description": "How we're different from top 3 competitors"
+    },
+    "last_updated": {
+      "type": "string",
+      "format": "date"
+    }
+  }
+}

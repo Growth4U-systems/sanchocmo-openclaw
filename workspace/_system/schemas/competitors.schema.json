@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sanchocmo.com/schemas/competitors.schema.json",
+  "title": "Competitors",
+  "description": "Competitor intelligence using 3 Lenses methodology",
+  "type": "object",
+  "required": ["top_3_competitors"],
+  "properties": {
+    "top_3_competitors": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 3,
+      "items": {
+        "type": "object",
+        "required": ["name", "lens_1", "lens_2", "lens_3"],
+        "properties": {
+          "name": {"type": "string"},
+          "url": {"type": "string", "format": "uri"},
+          "lens_1_what_they_say": {
+            "type": "object",
+            "description": "Marketing copy, homepage, ads",
+            "properties": {
+              "positioning": {"type": "string"},
+              "key_claims": {"type": "array", "items": {"type": "string"}},
+              "tone": {"type": "string"},
+              "pricing_model": {"type": "string"}
+            }
+          },
+          "lens_2_what_others_say": {
+            "type": "object",
+            "description": "Press, influencers, articles",
+            "properties": {
+              "perception": {"type": "string"},
+              "strengths_cited": {"type": "array", "items": {"type": "string"}},
+              "weaknesses_cited": {"type": "array", "items": {"type": "string"}}
+            }
+          },
+          "lens_3_what_customers_say": {
+            "type": "object",
+            "description": "Reviews, app stores, G2, Trustpilot",
+            "properties": {
+              "avg_review_score": {"type": "number", "minimum": 0, "maximum": 5},
+              "review_count": {"type": "integer"},
+              "top_strengths": {"type": "array", "items": {"type": "string"}},
+              "top_complaints": {"type": "array", "items": {"type": "string"}}
+            }
+          },
+          "synthesis": {
+            "type": "string",
+            "description": "Lens 3 > 2 > 1 hierarchy applied"
+          }
+        }
+      }
+    },
+    "differentiation_opportunities": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "gap": {"type": "string"},
+          "how_we_fill_it": {"type": "string"}
+        }
+      }
+    },
+    "monitoring_tier": {
+      "type": "object",
+      "properties": {
+        "tier_a": {"type": "array", "items": {"type": "string"}, "description": "Top 3 direct (weekly monitor)"},
+        "tier_b": {"type": "array", "items": {"type": "string"}, "description": "4-10 direct (monthly)"},
+        "tier_c": {"type": "array", "items": {"type": "string"}, "description": "Indirect/emerging (quarterly)"}
+      }
+    },
+    "last_updated": {
+      "type": "string",
+      "format": "date"
+    }
+  }
+}

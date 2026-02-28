@@ -1,0 +1,88 @@
+---
+name: budget-constraints
+description: "Budget, timeline, team capacity, and tool stack mapping. Use when: capturing client resources and constraints early in engagement. Maps money, time, people, and tools. Determines Lite vs Deep, channel viability, and execution capacity. NOT for: channel selection (use channel-prioritization), financial auditing, or tool procurement."
+metadata:
+  author: Alfonso Sainz de Baranda (Growth4U)
+  version: '4.0'
+  system: SanchoCMO
+  phase: '1'
+  pillar: budget-constraints
+  layer: '0'
+  updated: '2026-02-27'
+  changes: v4 — Restructured per skill-creator principles.
+context_required:
+- brand/company-context.md
+context_writes:
+- brand/budget.md
+- brand/learnings.md
+---
+
+# Budget & Constraints
+
+> Mapea el dinero, el tiempo, las personas y las herramientas. Cada decisión downstream está acotada por estos constraints.
+
+**Input**: Conversación con cliente + company-context existente
+**Output**: Budget Constraints Profile → `brand/{slug}/budget/current.md`
+
+## References
+
+| Archivo | Cuándo leer | Contenido |
+|---------|------------|-----------|
+| [prompt.md](references/prompt.md) | **SIEMPRE** — fuente de verdad del output | Bloques de preguntas, formato output, benchmarks |
+| [checklist.md](references/checklist.md) | **Antes de entregar** — self-QA obligatorio | Ítems de verificación |
+| [concepts.md](references/concepts.md) | Si necesitas criterios Lite/Deep, edge cases | Definiciones y conversation design |
+| [schema.md](references/schema.md) | Si necesitas el schema campo por campo | Estructura de datos del output |
+
+---
+
+## Flujo de Ejecución
+
+### 1. Budget Range (~5 min)
+- Capturar inversión actual en marketing/mes
+- Si cero: cuánto dispuestos a invertir
+- Si vago: ofrecer rangos (<1K, 1-5K, 5-15K, 15-50K, 50K+)
+- Split: ads vs herramientas vs personas
+- Flexibilidad: techo fijo o escalable con resultados
+
+### 2. Time & People (~5 min)
+- Quién se encarga del marketing actualmente
+- Horas semanales disponibles para marketing
+- Capacidad de crear contenido (escribir, diseñar, grabar)
+- Timeline: semanas, meses, o largo plazo
+
+### 3. Tool Stack (~5-10 min)
+- Inventario de herramientas actuales por categoría
+- Detección proactiva de solapamiento (40% overlap típico)
+- Identificar gaps críticos (analytics, CRM, email, SEO)
+
+### 4. Generar Budget Summary
+- Lee `references/prompt.md` para el formato exacto
+- Resume: presupuesto, equipo, timeline, stack, implicación
+
+### 5. Self-QA (OBLIGATORIO)
+- Lee `references/checklist.md`
+- Todo ✅ o ⚠️ antes de entregar
+- Metadata: `<!-- Self-QA: PASS | fecha | items: X✅ Y⚠️ 0❌ -->`
+
+### 6. Guardar con versionado
+- Ruta: `brand/{slug}/budget/current.md`
+- Backup + history.json si ya existe
+
+---
+
+## Cross-Pillar Data Flow
+
+| Dato | Lo consume |
+|------|-----------|
+| Budget range | foundation-orchestrator (Lite vs Deep), channel selection Phase 3 |
+| Timeline | foundation-orchestrator (urgency), goal-setting |
+| Team hours + capabilities | content-workflow, outreach-workflow |
+| Tool stack | Phase 2 funnel builder, analytics-tracking |
+| Gaps identificados | Phase 2 recommendations, tool selection |
+| Budget flexibility | experiment design, scaling decisions |
+
+---
+
+## Profundizar con Deep Research
+
+Al entregar, añade bloque de profundización estándar.

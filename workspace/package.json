@@ -1,0 +1,16 @@
+{
+  "name": "sanchocmo-openclaw",
+  "version": "1.0.0",
+  "description": "> El CBO (Chief Brand Officer) para empresas tech. > Portable framework para integrar en proyecto SanchoCMO.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "pg": "^8.18.0"
+  }
+}

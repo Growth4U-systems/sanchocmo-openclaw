@@ -1,0 +1,129 @@
+{
+  "mcpServers": {
+    "supabase": {
+      "command": "npx",
+      "args": ["-y", "@supabase/mcp", "--read-only=false"],
+      "env": {
+        "SUPABASE_URL": "${SUPABASE_URL}",
+        "SUPABASE_SERVICE_ROLE_KEY": "${SUPABASE_SERVICE_ROLE_KEY}"
+      }
+    },
+    "notion": {
+      "command": "npx",
+      "args": ["-y", "mcp-remote", "https://mcp.notion.com/mcp"]
+    },
+    "playwright": {
+      "command": "npx",
+      "args": ["-y", "@playwright/mcp", "--browser", "chrome"]
+    },
+    "nanobanana": {
+      "command": "npx",
+      "args": ["-y", "nanobanana-mcp"],
+      "env": {
+        "OPENROUTER_API_KEY": "${OPENROUTER_API_KEY}"
+      }
+    }
+  },
+  "agents": [
+    {
+      "id": "sancho",
+      "model": "anthropic/claude-opus-4-6",
+      "soul": "agents/sancho.soul.md",
+      "skills": ["*"]
+    },
+    {
+      "id": "el-oraculo",
+      "model": "anthropic/claude-opus-4-6",
+      "soul": "agents/el-oraculo.soul.md",
+      "skills": [
+        "company-context", "self-intelligence", "competitor-intelligence",
+        "market-intelligence", "positioning-messaging", "brand-voice",
+        "swot-analysis", "business-model-audit", "existing-customer-data",
+        "ecp-validation", "signal-definition", "niche-discovery-100x"
+      ]
+    },
+    {
+      "id": "explorador",
+      "model": "anthropic/claude-sonnet-4-5",
+      "soul": "agents/explorador.soul.md",
+      "skills": [
+        "company-finder", "decision-maker-finder", "contact-enrichment",
+        "outreach-sequence-builder", "email-sequences", "direct-response-copy"
+      ]
+    },
+    {
+      "id": "redactor",
+      "model": "anthropic/claude-sonnet-4-5",
+      "soul": "agents/redactor.soul.md",
+      "skills": ["keyword-research", "seo-content", "content-calendar-planner"]
+    },
+    {
+      "id": "comunicador",
+      "model": "anthropic/claude-sonnet-4-5",
+      "soul": "agents/comunicador.soul.md",
+      "skills": ["content-atomizer", "newsletter", "direct-response-copy"]
+    },
+    {
+      "id": "creativo",
+      "model": "anthropic/claude-sonnet-4-5",
+      "soul": "agents/creativo.soul.md",
+      "skills": ["visual-identity", "brand-voice"]
+    },
+    {
+      "id": "amplificador",
+      "model": "anthropic/claude-sonnet-4-5",
+      "soul": "agents/amplificador.soul.md",
+      "skills": ["direct-response-copy"]
+    },
+    {
+      "id": "conector",
+      "model": "anthropic/claude-sonnet-4-5",
+      "soul": "agents/conector.soul.md",
+      "skills": [
+        "company-finder", "decision-maker-finder", "contact-enrichment",
+        "direct-response-copy"
+      ]
+    },
+    {
+      "id": "comercial",
+      "model": "anthropic/claude-sonnet-4-5",
+      "soul": "agents/comercial.soul.md",
+      "skills": [
+        "positioning-messaging", "pricing-strategy", "business-model-audit",
+        "direct-response-copy"
+      ]
+    },
+    {
+      "id": "arquitecto",
+      "model": "anthropic/claude-sonnet-4-5",
+      "soul": "agents/arquitecto.soul.md",
+      "skills": ["direct-response-copy", "lead-magnet", "positioning-messaging"]
+    },
+    {
+      "id": "investigador",
+      "model": "anthropic/claude-opus-4-6",
+      "soul": "agents/investigador.soul.md",
+      "skills": [
+        "daily-pulse", "meeting-intelligence", "signal-monitor",
+        "thief-marketers", "pattern-detector", "competitor-intelligence",
+        "market-intelligence"
+      ]
+    }
+  ],
+  "bindings": [
+    { "channelName": "campaigns",       "agentId": "sancho" },
+    { "channelName": "intelligence",    "agentId": "sancho" },
+    { "channelName": "learning",        "agentId": "sancho" },
+    { "channelName": "admin",           "agentId": "sancho" },
+    { "channelName": "el-toboso",       "agentId": "el-oraculo" },
+    { "channelName": "prospecting",     "agentId": "explorador" },
+    { "channelName": "organic-content", "agentId": "redactor" },
+    { "channelName": "social",          "agentId": "comunicador" },
+    { "channelName": "design",          "agentId": "creativo" },
+    { "channelName": "paid-ads",        "agentId": "amplificador" },
+    { "channelName": "partners",        "agentId": "conector" },
+    { "channelName": "sales",           "agentId": "comercial" },
+    { "channelName": "web",             "agentId": "arquitecto" },
+    { "channelName": "research",        "agentId": "investigador" }
+  ]
+}

@@ -1,0 +1,111 @@
+---
+name: market-intelligence
+description: "Market analysis: TAM, trends, segments, competitive landscape, customer segmentation, regulatory impact. Use when: analyzing a market for a client, understanding competitive dynamics, sizing a market opportunity, identifying customer segments and their pain points, mapping regulatory constraints for marketing. Produces a 5-part report (Market Overview, Competitive Intelligence, Customer Segmentation, Trends, Opportunities). NOT for: selecting which segments to attack (use niche-discovery), analyzing a specific competitor in depth (use competitor-intelligence), or creating content (use content skills)."
+metadata:
+  author: Alfonso Sainz de Baranda (Growth4U)
+  version: '4.0'
+  system: SanchoCMO
+  phase: '1'
+  pillar: market-intelligence
+  layer: '2'
+  depends_on: company-context
+  updated: '2026-02-27'
+  changes: v4 — Restructured per skill-creator principles. SKILL.md lean (~130 lines).
+    Concepts moved to references. Self-QA checklist integrated. No Rocinante dependency.
+context_required:
+- brand/company-context.md
+- brand/competitors.md
+context_writes:
+- brand/market.md
+---
+
+# Market Intelligence
+
+> Entiende el campo de juego antes de jugar. TAM, segmentos, competidores, clientes, regulación, tendencias.
+
+**Input**: company-context (industria, vertical, producto)
+**Output**: Informe 5 partes → `brand/{slug}/market/current.md`
+
+## References
+
+| Archivo | Cuándo leer | Contenido |
+|---------|------------|-----------|
+| [prompt.md](references/prompt.md) | **SIEMPRE** — es la fuente de verdad | Las 5 partes del informe con instrucciones detalladas |
+| [checklist.md](references/checklist.md) | **Antes de entregar** — self-QA obligatorio | Ítems de verificación por sección |
+| [concepts.md](references/concepts.md) | Si necesitas recordar qué es TAM, madurez, etc. | Definiciones y metodología |
+| [schema.md](references/schema.md) | Si necesitas el schema de campos/tipos | Estructura de datos del output |
+
+---
+
+## Flujo de Ejecución
+
+### 1. Preparar contexto
+- Lee `brand/{slug}/company-context/current.md` y `brand/{slug}/competitors/current.md`
+- Identifica: industria, vertical, producto, geografía, equipo
+
+### 2. Investigar siguiendo el prompt
+- Lee `references/prompt.md` — es tu guía sección por sección
+- Ejecuta búsquedas web (mínimo 10-15) cubriendo las 5 partes:
+  - **Parte 1**: TAM, segmentos, geografía, madurez
+  - **Parte 2**: Competidores, cuota, estrategias, RRSS, amenazas
+  - **Parte 3**: Segmentos de cliente, psicográfico, conductual, pain points, personas
+  - **Parte 4**: Tendencias, comportamiento consumidor, plataformas, regulación
+  - **Parte 5**: Gaps, oportunidades, atractivo, hoja de ruta
+- Para cada parte, busca en múltiples ángulos (español + inglés, general + específico)
+- Incluye escucha social: foros, reviews, comentarios en RRSS para pain points reales
+
+### 3. Escribir el documento
+- Sigue la estructura de `references/prompt.md` parte por parte
+- Cada claim con fuente inline: `dato [Fuente](url)`
+- Si no hay fuente → marca `⚠️ Estimación sin fuente verificada`
+- Si un dato no está disponible públicamente → declara "No disponible" con razón
+- Target: 15-25 páginas (exhaustivo pero sin fluff)
+
+### 4. Self-QA (OBLIGATORIO)
+- Lee `references/checklist.md`
+- Revisa CADA ítem contra tu documento
+- Si hay ❌ (falta) → investiga más con búsquedas enfocadas
+- Repite hasta que todo sea ✅ o ⚠️ (justificado)
+- Spot-check: verifica 5-10 URLs con `web_fetch`
+- Cruza cifras contra brand files (company-context, competitors)
+- Añade metadata: `<!-- Self-QA: PASS | fecha | items: X✅ Y⚠️ 0❌ -->`
+
+### 5. Guardar con versionado
+- Ruta: `brand/{slug}/market/current.md`
+- Si ya existe → backup como `v{N+1}.md`, sobreescribe `current.md`, actualiza `history.json`
+- Link al usuario: `https://sancho-cmo.taild48df2.ts.net/mc/docs/brand/{slug}/market/current.md`
+
+---
+
+## Cross-Pillar Data Flow
+
+| Dato | Lo consume |
+|------|-----------|
+| TAM | budget-constraints, niche-discovery-100x |
+| Madurez | Phase 0 diagnostic, positioning-messaging |
+| Regulación + marketing restrictions | **TODOS los skills de contenido** (paid-ads, landing, social, email) |
+| Tendencias (oportunidades) | swot-analysis (Opportunities) |
+| Tendencias (amenazas) | swot-analysis (Threats) |
+| Segmentos de cliente | niche-discovery-100x, content strategy |
+| Competidores | competitor-intelligence, positioning |
+| Mercados adyacentes | Phase 3 scaling |
+
+---
+
+## Profundizar con Deep Research
+
+Al entregar, añade:
+
+```
+📊 **¿Quieres profundizar?**
+Puedo lanzar deep-research para ampliar con más fuentes y validación cruzada.
+→ Escribe **"profundizar"** para continuar.
+```
+
+Si el usuario dice "profundizar": relee el documento, haz 10-20 búsquedas adicionales enfocadas en los gaps, actualiza el documento.
+
+---
+
+## Citación (Regla 0b SOUL.md)
+
+Toda cifra con URL inline + sección `## Fuentes` al final con lista numerada completa. No inventar URLs. Claims sin fuente → `⚠️`.

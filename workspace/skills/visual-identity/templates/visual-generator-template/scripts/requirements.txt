@@ -1,0 +1,13 @@
+# Requirements for {{brand_slug}}-visual-generator skill
+
+# Nanobanana SDK for image generation
+# Note: Check actual package name from Nanobanana documentation
+nanobanana>=1.0.0
+
+# Environment variables (API keys)
+python-dotenv>=1.0.0
+
+# Standard library (Python 3.6+)
+pathlib
+argparse
+json

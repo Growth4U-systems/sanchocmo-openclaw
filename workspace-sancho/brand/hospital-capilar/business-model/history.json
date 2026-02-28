@@ -1,0 +1,20 @@
+{
+  "current": "v2",
+  "versions": [
+    {
+      "version": 1,
+      "date": "2026-02-26T14:11:41Z",
+      "skill": "business-model",
+      "qa": "pre-QA",
+      "score": null
+    },
+    {
+      "version": 2,
+      "date": "2026-02-28T09:10:00Z",
+      "skill": "business-model-audit",
+      "qa": "PASS",
+      "score": "24✅ 3⚠️ 0❌",
+      "notes": "Regenerated with full schema, version tags, Self-QA, sources inline, sector benchmarks, competitor motion comparison. Data from 2 meetings + 6 approved pillars."
+    }
+  ]
+}

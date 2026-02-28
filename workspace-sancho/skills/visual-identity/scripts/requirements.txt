@@ -1,0 +1,13 @@
+# Requirements for visual-identity meta-skill
+# These are for TESTING aesthetic iteration during Layer 3
+# Child skills will have their own requirements
+
+# Nanobanana SDK for image generation during Layer 3 aesthetic iteration
+# Note: Actual package name may vary - check Nanobanana documentation
+nanobanana>=1.0.0
+
+# Environment variables (API keys)
+python-dotenv>=1.0.0
+
+# Standard library (included in Python 3.6+, listed for completeness)
+pathlib
