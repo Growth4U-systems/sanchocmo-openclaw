@@ -1,6 +1,6 @@
 {
   "started_at": "2026-02-26T12:17:00Z",
-  "updated_at": "2026-02-27T16:03:00Z",
+  "updated_at": "2026-02-27T21:10:00Z",
   "pillars": {
     "company-context": {
       "status": "approved",
@@ -19,16 +19,22 @@
       "approved_at": "2026-02-27T16:00:00Z"
     },
     "market": {
-      "status": "pending-review"
+      "status": "approved",
+      "approved_at": "2026-02-27T16:10:00Z"
     },
     "competitors": {
-      "status": "pending-review"
+      "status": "approved",
+      "version": 3,
+      "approved_at": "2026-02-27T18:09:00Z"
     },
     "swot-analysis": {
-      "status": "not-started"
+      "status": "approved",
+      "approved_at": "2026-02-27T18:22:00Z"
     },
     "niche-discovery-100x": {
-      "status": "not-started"
+      "status": "approved",
+      "version": 1,
+      "approved_at": "2026-02-27T21:01:00Z"
     },
     "ecp-validation": {
       "status": "not-started"
@@ -37,7 +43,9 @@
       "status": "not-started"
     },
     "positioning": {
-      "status": "pending-review"
+      "status": "approved",
+      "version": 2,
+      "approved_at": "2026-02-27T21:10:00Z"
     },
     "pricing": {
       "status": "not-started"
@@ -47,6 +55,11 @@
     },
     "visual-identity": {
       "status": "not-started"
+    },
+    "ope-canvas": {
+      "status": "approved",
+      "version": 2,
+      "approved_at": "2026-02-27T17:49:00Z"
     }
   }
 }

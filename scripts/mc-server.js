@@ -23,6 +23,22 @@ const ALLOWED_FILES = [
 ];
 
 // Directories accessible via /docs/ viewer
+
+// Foundation pillar order (universal — all clients)
+const FOUNDATION_ORDER = [
+  // 🏢 La Empresa
+  { cat: '🏢 La Empresa', folders: ['company-context', 'business-model', 'budget', 'self-intelligence'] },
+  // 🎯 OPE Canvas
+  { cat: '🎯 OPE Canvas', folders: ['ope-canvas'] },
+  // 📊 El Mercado
+  { cat: '📊 El Mercado', folders: ['market', 'competitors', 'swot-analysis'] },
+  // 👥 Los Clientes
+  { cat: '👥 Los Clientes', folders: ['niche-discovery-100x', 'ecp-validation', 'existing-customer-data'] },
+  // 🎯 La Marca
+  { cat: '🎯 La Marca', folders: ['positioning', 'pricing', 'brand-voice', 'visual-identity'] },
+];
+const PILLAR_FLAT = FOUNDATION_ORDER.flatMap(g => g.folders);
+
 const DOC_ROOTS = {
   'brand':  path.join(BASE, 'brand'),
   'prds':   path.join(BASE, '_system', 'prds'),
@@ -32,8 +48,8 @@ const DOC_ROOTS = {
 
 const STYLE = `<link href="https://fonts.googleapis.com/css2?family=Bangers&family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
 <style>
-body{font-family:'Comic Neue',cursive;background:#F5F0E6;color:#1A1A2E;max-width:1200px;margin:40px auto;padding:0 40px;line-height:1.7;}
-h1{font-family:'Bangers',cursive;color:#C45D35;}h2{color:#1E3A5F;margin-top:24px;}h3{color:#C45D35;}h4{color:#5D5348;}
+body{font-family:'Comic Neue',cursive;background:#FFFDF9;color:#1A1A2E;max-width:1200px;margin:40px auto;padding:0 40px;line-height:1.85;font-size:17px;}
+h1{font-family:'Bangers';font-size:2.2em,cursive;color:#C45D35;}h2{color:#1E3A5F;margin-top:24px;}h3{color:#C45D35;}h4{color:#5D5348;}
 strong{color:#1A1A2E;}ul{padding-left:20px;}li{margin:4px 0;}
 a{color:#C45D35;text-decoration:none;font-weight:700;}a:hover{text-decoration:underline;}
 .card{margin:8px 0;padding:10px 14px;background:#FDF8EF;border:2px solid #1A1A2E;border-radius:6px;box-shadow:3px 3px 0 #1A1A2E;}
@@ -44,7 +60,7 @@ a{color:#C45D35;text-decoration:none;font-weight:700;}a:hover{text-decoration:un
 .nav a{padding:6px 14px;background:#FDF8EF;border:2px solid #1A1A2E;border-radius:6px;font-size:14px;box-shadow:2px 2px 0 #1A1A2E;}
 .nav a:hover{background:#C45D35;color:#FDF8EF;}
 table{border-collapse:collapse;width:100%;margin:12px 0;}
-th,td{border:2px solid #1A1A2E;padding:6px 10px;text-align:left;font-size:14px;}
+th,td{border:2px solid #1A1A2E;padding:10px 14px;text-align:left;font-size:16px;}
 th{background:#1A1A2E;color:#F5F0E6;font-family:'Bangers',cursive;letter-spacing:0.5px;}
 tr:nth-child(even){background:#FDF8EF;}
 code{background:#FDF8EF;padding:2px 6px;border-radius:4px;font-size:13px;border:1px solid #D4C9B0;}
@@ -81,6 +97,9 @@ function renderMarkdown(md) {
   processed = processed
     .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
     .replace(/\*(.+?)\*/g, '<em>$1</em>');
+
+  // Links [text](url)
+  processed = processed.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" style="color:#C45D35;">$1</a>');
 
   // Blockquotes
   processed = processed.replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>');
@@ -138,7 +157,7 @@ function toggleEdit() {
     if (!editor) {
       editor = new toastui.Editor({
         el: document.getElementById('editor-container'),
-        height: '500px',
+        height: '75vh',
         initialEditType: 'wysiwyg',
         previewStyle: 'vertical',
         initialValue: document.getElementById('doc-raw').textContent,
@@ -180,7 +199,7 @@ async function saveDoc() {
 
   return `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>${title} — SanchoCMO</title>${STYLE}
-<style>#edit-area{width:100%;min-height:400px;font-family:'Comic Neue',monospace;font-size:14px;padding:12px;border:2px solid var(--ink,#1A1A2E);border-radius:6px;background:var(--paper,#FDF8EF);resize:vertical;line-height:1.6;}
+<style>#edit-area{width:100%;min-height:75vh;font-family:'Comic Neue',monospace;font-size:14px;padding:12px;border:2px solid var(--ink,#1A1A2E);border-radius:6px;background:var(--paper,#FDF8EF);resize:vertical;line-height:1.6;}
 .edit-bar{display:flex;gap:10px;align-items:center;margin:10px 0;}.edit-btn{padding:6px 14px;background:var(--paper,#FDF8EF);border:2px solid var(--ink,#1A1A2E);border-radius:6px;cursor:pointer;font-family:'Comic Neue',cursive;font-weight:700;font-size:14px;box-shadow:2px 2px 0 var(--ink,#1A1A2E);}.edit-btn:hover{background:var(--rust,#C45D35);color:var(--paper,#FDF8EF);}</style>
 </head><body>
 ${breadcrumb}${opts.editable ? ' <button class="edit-btn" onclick="toggleEdit()" style="float:right;margin-top:-30px;">✏️ Editar</button>' : ''}
@@ -192,19 +211,61 @@ ${editJS}
 
 function listDir(dirPath, urlPrefix, opts = {}) {
   const entries = fs.readdirSync(dirPath);
-  const dirs = entries.filter(f => {
+  const allDirs = entries.filter(f => {
     try { return fs.statSync(path.join(dirPath, f)).isDirectory() && !f.startsWith('.'); } catch { return false; }
-  }).sort();
+  });
   const files = entries.filter(f => f.endsWith('.md')).sort();
-  
+
+  // Detect if this is a brand/{slug} level (pillar listing)
+  const isBrandClient = opts.brandPillars || false;
+
   let html = '';
-  
-  // Subdirectories
-  for (const d of dirs) {
-    const subFiles = (() => { try { return fs.readdirSync(path.join(dirPath, d)).filter(f => f.endsWith('.md')).length; } catch { return 0; } })();
-    html += `<div class="card"><a href="${urlPrefix}${d}/">📂 ${d}</a><div class="meta">${subFiles} documentos</div></div>\n`;
+
+  if (isBrandClient) {
+    // Load foundation-state.json for pillar statuses
+    let fState = {};
+    try {
+      const stateFile = path.join(dirPath, 'foundation-state.json');
+      const stateData = JSON.parse(fs.readFileSync(stateFile, 'utf-8'));
+      fState = stateData.pillars || {};
+    } catch {}
+
+    const existing = new Set(allDirs);
+    for (const group of FOUNDATION_ORDER) {
+      html += `<h2 style="margin:24px 0 10px;font-family:'Bangers',cursive;font-size:1.4em;color:#C45D35;">${group.cat}</h2>\n`;
+      for (const d of group.folders) {
+        const pillarStatus = (fState[d] || {}).status || 'not-started';
+        if (existing.has(d)) {
+          existing.delete(d);
+          const subFiles = (() => { try { return fs.readdirSync(path.join(dirPath, d)).filter(f => f.endsWith('.md')).length; } catch { return 0; } })();
+          if (pillarStatus === 'approved') {
+            html += `<div class="card"><a href="${urlPrefix}${d}/">✅ ${d}</a><div class="meta">${subFiles} documentos · Validado</div></div>\n`;
+          } else {
+            html += `<div class="card" style="border-left:4px solid #E5A100;"><a href="${urlPrefix}${d}/">⚠️ ${d}</a><div class="meta" style="color:#B8860B;">${subFiles} documentos · Pendiente de validar</div></div>\n`;
+          }
+        } else {
+          html += `<div class="card" style="opacity:0.45;"><span>⬜ ${d}</span><div class="meta">No existe</div></div>\n`;
+        }
+      }
+    }
+    // Any remaining dirs not in Foundation order
+    const remaining = [...existing].sort();
+    if (remaining.length) {
+      html += `<h2 style="margin:24px 0 10px;font-family:'Bangers',cursive;font-size:1.4em;color:#C45D35;">📁 Otros</h2>\n`;
+      for (const d of remaining) {
+        const subFiles = (() => { try { return fs.readdirSync(path.join(dirPath, d)).filter(f => f.endsWith('.md')).length; } catch { return 0; } })();
+        html += `<div class="card"><a href="${urlPrefix}${d}/">📂 ${d}</a><div class="meta">${subFiles} documentos</div></div>\n`;
+      }
+    }
+  } else {
+    // Default alphabetical listing
+    const dirs = allDirs.sort();
+    for (const d of dirs) {
+      const subFiles = (() => { try { return fs.readdirSync(path.join(dirPath, d)).filter(f => f.endsWith('.md')).length; } catch { return 0; } })();
+      html += `<div class="card"><a href="${urlPrefix}${d}/">📂 ${d}</a><div class="meta">${subFiles} documentos</div></div>\n`;
+    }
   }
-  
+
   // Files
   for (const f of files) {
     const stat = fs.statSync(path.join(dirPath, f));
@@ -212,7 +273,7 @@ function listDir(dirPath, urlPrefix, opts = {}) {
     const modified = stat.mtime.toISOString().slice(0, 16).replace('T', ' ');
     html += `<div class="card"><a href="${urlPrefix}${f}">${f.replace('.md', '')}</a><div class="meta">${size} · ${modified}</div></div>\n`;
   }
-  
+
   if (!html) html = '<p style="color:#5D5348;">No hay documentos aquí.</p>';
   return html;
 }
@@ -313,7 +374,9 @@ http.createServer((req, res) => {
         const prettyPath = subPath ? subPath.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : prettyRoot;
         const backUrl = subParts.length > 0 ? `/mc/docs/${rootKey}/${subParts.slice(0, -1).join('/')}/` : '/mc/docs/';
         const backLabel = subParts.length > 0 ? `← ${subParts.slice(0, -1).pop() || prettyRoot}` : '← Documentos';
-        const content = listDir(fullPath, `/mc/docs/${rootKey}/${subPath ? subPath + '/' : ''}`);
+        // Pass brandPillars:true when listing brand/{slug} (pillar level)
+        const isBrandSlug = rootKey === 'brand' && subParts.length === 1;
+        const content = listDir(fullPath, `/mc/docs/${rootKey}/${subPath ? subPath + '/' : ''}`, { brandPillars: isBrandSlug });
         res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
         res.end(page(prettyPath, `<a class="back" href="${backUrl}">${backLabel}</a>`, `<h1>📂 ${prettyPath}</h1>${content}`));
         return;

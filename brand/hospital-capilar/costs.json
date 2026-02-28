@@ -1,35 +1,35 @@
 {
   "client": "hospital-capilar",
   "period": "2026-02",
-  "updatedAt": "2026-02-27T01:27:18.440435",
+  "updatedAt": "2026-02-27T23:00:06.254206",
   "sancho": {
-    "tokens_in": 310,
-    "tokens_out": 59585,
-    "cache_read": 8728004,
-    "cache_write": 1056126,
-    "tokens_total": 9844025,
-    "turns": 203,
-    "sessions": 21,
-    "cost_usd": 12.456,
-    "cost_eur": 11.4595,
+    "tokens_in": 284,
+    "tokens_out": 47688,
+    "cache_read": 7718645,
+    "cache_write": 917640,
+    "tokens_total": 8684257,
+    "turns": 190,
+    "sessions": 22,
+    "cost_usd": 10.7882,
+    "cost_eur": 9.9251,
     "models": {
       "unknown": {
-        "tokens_in": 113,
-        "tokens_out": 8651,
-        "cache_read": 1538182,
-        "cache_write": 260248,
-        "turns": 78,
-        "cost_usd": 2.6125,
-        "cost_eur": 2.4035
+        "tokens_in": 127,
+        "tokens_out": 11501,
+        "cache_read": 1884305,
+        "cache_write": 301647,
+        "turns": 93,
+        "cost_usd": 3.1156,
+        "cost_eur": 2.8664
       },
       "claude-opus-4-6": {
-        "tokens_in": 197,
-        "tokens_out": 50934,
-        "cache_read": 7189822,
-        "cache_write": 795878,
-        "turns": 125,
-        "cost_usd": 9.8435,
-        "cost_eur": 9.056
+        "tokens_in": 157,
+        "tokens_out": 36187,
+        "cache_read": 5834340,
+        "cache_write": 615993,
+        "turns": 97,
+        "cost_usd": 7.6726,
+        "cost_eur": 7.0588
       }
     }
   },

@@ -124,41 +124,71 @@ def parse_activity():
 
 
 def parse_foundation():
-    """Check brand/ directory for foundation pillar completion."""
+    """Check brand/ directory for foundation pillar completion using foundation-state.json."""
     brand_dir = WORKSPACE / "brand"
-    pillars = {
-        "company-context": {"layer": 0, "file": "company-context.md", "done": False, "date": None},
-        "budget-constraints": {"layer": 0, "file": "budget-constraints.md", "done": False, "date": None},
-        "business-model-audit": {"layer": 1, "file": "business-model.md", "done": False, "date": None},
-        "self-intelligence": {"layer": 1, "file": "self-intelligence.md", "done": False, "date": None},
-        "existing-customer-data": {"layer": 1, "file": "customer-data.md", "done": False, "date": None, "optional": True},
-        "competitor-intelligence": {"layer": 2, "file": "competitors.md", "done": False, "date": None},
-        "market-intelligence": {"layer": 2, "file": "market.md", "done": False, "date": None},
-        "swot-analysis": {"layer": 2, "file": "swot.md", "done": False, "date": None},
-        "niche-discovery-100x": {"layer": 3, "file": "ecps.md", "done": False, "date": None},
-        "ecp-validation": {"layer": 4, "file": "ecp-validation-results.md", "done": False, "date": None, "optional": True},
-        "positioning-messaging": {"layer": 4, "file": "positioning.md", "done": False, "date": None},
-        "pricing-hooks": {"layer": 4, "file": "pricing.md", "done": False, "date": None},
-        "brand-voice": {"layer": 5, "file": "voice-profile.md", "done": False, "date": None},
-        "visual-identity": {"layer": 5, "file": "visual-identity.md", "done": False, "date": None},
-    }
+
+    # Universal pillar order with categories
+    FOUNDATION_ORDER = [
+        ("La Empresa", ["company-context", "business-model", "budget", "self-intelligence"]),
+        ("OPE Canvas", ["ope-canvas"]),
+        ("El Mercado", ["market", "competitors", "swot-analysis"]),
+        ("Los Clientes", ["niche-discovery-100x", "ecp-validation", "existing-customer-data"]),
+        ("La Marca", ["positioning", "pricing", "brand-voice", "visual-identity"]),
+    ]
+    ALL_PILLARS = [p for _, ps in FOUNDATION_ORDER for p in ps]
+
+    pillars = {}
+    for name in ALL_PILLARS:
+        pillars[name] = {"status": "not-started", "folder": name, "date": None, "client": None, "category": None}
+
+    # Assign categories
+    for cat, names in FOUNDATION_ORDER:
+        for n in names:
+            pillars[n]["category"] = cat
 
     if brand_dir.exists():
-        for name, info in pillars.items():
-            filepath = brand_dir / info["file"]
-            # Also check alternative names
-            alt_names = [info["file"], name + ".md", name + ".json"]
-            for alt in alt_names:
-                fp = brand_dir / alt
-                if fp.exists() and fp.stat().st_size > 50:  # Not empty placeholder
-                    info["done"] = True
-                    info["date"] = datetime.fromtimestamp(fp.stat().st_mtime).strftime("%Y-%m-%d")
-                    break
+        client_dirs = [d for d in brand_dir.iterdir() if d.is_dir() and not d.name.startswith('.')]
+        for client_dir in client_dirs:
+            # Read foundation-state.json if exists
+            state_file = client_dir / "foundation-state.json"
+            fstate = {}
+            if state_file.exists():
+                try:
+                    import json as _json
+                    fstate = _json.loads(state_file.read_text()).get("pillars", {})
+                except:
+                    pass
 
-    done_count = sum(1 for p in pillars.values() if p["done"])
+            for name in ALL_PILLARS:
+                p = pillars[name]
+                # Check if folder exists with content
+                folder_path = client_dir / name
+                has_content = False
+                if folder_path.is_dir():
+                    md_files = list(folder_path.glob("*.md"))
+                    if md_files:
+                        has_content = True
+                        newest = max(f.stat().st_mtime for f in md_files)
+                        p["date"] = datetime.fromtimestamp(newest).strftime("%Y-%m-%d")
+                        p["client"] = client_dir.name
+
+                # Determine status from state file, fallback to file detection
+                if name in fstate:
+                    st = fstate[name].get("status", "not-started")
+                    if st == "approved":
+                        p["status"] = "approved"
+                    elif has_content or st == "pending-review":
+                        p["status"] = "pending-review"
+                    else:
+                        p["status"] = "not-started"
+                elif has_content:
+                    p["status"] = "pending-review"
+
+    approved = sum(1 for p in pillars.values() if p["status"] == "approved")
+    pending = sum(1 for p in pillars.values() if p["status"] == "pending-review")
     total = len(pillars)
 
-    return {"pillars": pillars, "done": done_count, "total": total}
+    return {"pillars": pillars, "done": approved, "pending": pending, "total": total, "categories": FOUNDATION_ORDER}
 
 
 def parse_campaigns():
@@ -366,7 +396,7 @@ def main():
     print(f"✅ Written to {out_file}")
     print(f"   Tasks: {sum(len(v) for v in data['tasks'].values())} total")
     print(f"   Activity: {len(data['activity'])} events")
-    print(f"   Foundation: {data['foundation']['done']}/{data['foundation']['total']} pillars")
+    print(f"   Foundation: {data['foundation']['done']}/{data['foundation']['total']} pillars ({data['foundation'].get('pending',0)} pending)")
     print(f"   Campaigns: {len(data['campaigns'])}")
     print(f"   System: gateway={data['system']['gateway']}")
 
