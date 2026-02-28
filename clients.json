@@ -1,0 +1,23 @@
+{
+  "$schema": "clients.schema.json",
+  "clients": [
+    {
+      "slug": "hospital-capilar",
+      "name": "Hospital Capilar",
+      "emoji": "🏥",
+      "url": "https://hospitalcapilar.com",
+      "guild": "1475635138108063746",
+      "active": true,
+      "workspace": "~/.openclaw/workspace-sancho",
+      "supabase": {
+        "url": "https://psapmujzxhaxraphddlv.supabase.co",
+        "anon_key": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBzYXBtdWp6eGhheHJhcGhkZGx2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4OTAxNTEsImV4cCI6MjA4NzQ2NjE1MX0.RxanIQCJtjGfCUL_X0MqPi2IdGkXOkmfaEAJZvQJblI"
+      },
+      "paths": {
+        "brand": "brand/",
+        "campaigns": "campaigns/"
+      },
+      "phase": 0
+    }
+  ]
+}
