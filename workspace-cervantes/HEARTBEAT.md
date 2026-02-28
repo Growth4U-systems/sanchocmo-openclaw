@@ -33,7 +33,7 @@
 
 ### 📝 Memory Maintenance
 - Si es el primer heartbeat del día: crear memory/YYYY-MM-DD.md
-- Cada 3 días: revisar daily files recientes → actualizar MEMORY.md
+- **CADA HEARTBEAT**: revisar daily files desde la última actualización de MEMORY.md → actualizar MEMORY.md si hay cambios significativos (decisiones, config, learnings, estado de Foundation)
 
 ### 👁️ Observar a Sancho (semanal)
 - Revisar sesiones recientes de Sancho (sessions_list/sessions_history)

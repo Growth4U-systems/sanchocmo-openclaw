@@ -4,6 +4,99 @@ Formato: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 
 ---
 
+## [1.0.0] — 2026-02-27 (Evening)
+
+### Added
+- **OPE Canvas skill** — One-Page Endgame (15th Foundation pillar). 14 sections: Obvious Choice, ICP, Core Problem, Product, Geography, Channels, 3× Moats, Endgame, Values, Capabilities, Strategy, Year/Quarterly/Monthly Picture. Positioned between La Empresa and El Mercado. Framework de Moats con 7 tipos.
+- **DataForSEO integration** — SEO data for competitor analysis (SERP, backlinks, keywords). Credentials configured, balance $35.
+- **Gate Check (regla de SOUL.md)** — Block pillar execution if dependencies not approved. Reads foundation-state.json, verifies all prerequisites.
+- **Automatic next-pillar flow** — After user approves → Sancho updates JSON → regenerates MC → launches next pillar (no command needed).
+- **Regla 0g** — Read ALL client data before generating (not just prerequisites). Only mark 🔴 DUDA if truly missing.
+- **Strict thread rules** — Prohibit intermediate messages in channel, require user mention in first message, max 2 messages per thread (start + result).
+- **MC live-reload** — Reads foundation-state.json every 30 seconds, no longer 100% dependent on regenerate.py.
+- **Competitor Intelligence v2** — Validate competitors with domains/socials before scraping. Apify mandatory. Save to sources.json.
+
+### Changed
+- **Foundation order** — Now 15 pillars with 5 categories: 🏢 La Empresa (4) + 🎯 OPE Canvas (1) + 📊 El Mercado (3) + 👥 Los Clientes (3) + 🎯 La Marca (4).
+- **foundation-orchestrator** — Updated DAG to reflect new order, renumbered 1-15.
+- **Approval triggers** — Expanded from ("sí", "ok", "perfecto") to include "validamos", "avancemos", "dale", "vamos", "next", etc.
+- **Competitor Intelligence flow** — Step 0 now presents all competitors with URLs before executing scrapers.
+- **Skill descriptions** — ope-canvas added to context_required of dependent skills.
+
+### Fixed
+- **Sancho not executing regenerate.py** — Added explicit reminder + MC live-reload as fallback.
+- **SWOT executed without validated competitors** — Gate check prevents execution of pillars with unmet dependencies.
+- **Sancho narrating intermediate steps** — Strict rules added (examples of ❌ prohibited messages).
+- **Hilos** — Philippe not auto-joining threads (fix: mention user in first message).
+- **Foundation-state.json not updated** — Sancho 3× forgot. Now automated MC read + explicit reminder in SOUL.md.
+
+### Deprecated
+- Intermediate narrative messages in channels (now prohibited in Regla 0c2)
+
+---
+
+## [0.9.0] — 2026-02-27
+
+### Added
+- **Foundation view restructured** — Business categories (🏢 La Empresa, 📊 El Mercado, 👥 Los Clientes, 🎯 La Marca) instead of technical layers (L0-L5). Pillar cards now clickable to open in doc viewer.
+- **Persistent QA logs** — Each pillar folder has `qa-log.md` that Rocinante maintains. Accumulates all QA checks, so Rocinante doesn't repeat verification work. URLs already validated are skipped in subsequent runs.
+- **"Descartadas" column** in tasks Kanban — Now shows discarded tasks (T-015, T-018, T-021) with reasons documented.
+- **Pillar folder mapping** — `folder` field in pillar data tracks which folder to open (e.g., market-intelligence → market/).
+
+### Changed
+- **Foundation pillar detection** — regenerate.py now finds folders with `current.md` (new structure) + legacy flat files.
+- **Rocinante rules** — Updated to read/write qa-log.md, skip re-verification, maintain QA history.
+- **Sancho rules** — Pass qa-log.md ruta to Rocinante so it knows where to maintain the log.
+
+---
+
+## [0.8.0] — 2026-02-27
+
+### Added
+- **Versionado de documentos por carpeta** (Regla 0d) — Cada pilar en `brand/{slug}/{pilar}/current.md` + `v1.md`, `v2.md`... + `history.json`. Sancho siempre lee `current.md`, pregunta antes de sobreescribir, backup automático.
+- **Resolución de rutas** — `brand/{slug}/market.md` se traduce a `brand/{slug}/market/current.md` automáticamente.
+
+### Changed
+- **15 documentos de Hospital Capilar migrados** a estructura de carpetas con versionado.
+- **regenerate.py** — `parse_foundation()` ahora busca en `{pilar}/current.md` (nueva estructura) + legacy flat files.
+- **Foundation 5/14** pilares detectados correctamente post-migración.
+
+---
+
+## [0.7.0] — 2026-02-27 (late session)
+
+### Added
+- **Regla 0b (Citación inline)** — Toda información buscada en internet debe incluir URL inline + sección Fuentes. Aplica a TODAS las skills.
+- **Regla 0c (Silencio intermediario)** — Sancho no narra pasos intermedios en Discord. Un mensaje al inicio + silencio hasta resultado final.
+- **Regla 0d (QA obligatorio)** — Rocinante valida TODOS los documentos antes de entregar al cliente. QA invisible (`thread: false`), resultado en hilo original. RECHAZA si hay URLs rotas o sin fuentes. Re-valida hasta aprobación.
+- **`qa-document-checklist.md` en workspace-rocinante** — Checklist: citación/URLs (verificadas con web_fetch), completitud, coherencia, brand alignment, formato, aislamiento de contexto. Scoring X/10.
+- **Link rendering en doc viewer** — `[texto](url)` ahora se convierte a `<a href="url">` en tablas y todo markdown.
+- **`spawnSubagentSessions=true`** en config Discord — Sancho puede spawnar Rocinante desde hilos.
+
+### Changed
+- **SOUL.md de Sancho** — Reglas 0b, 0c, 0d nuevas. Emphasis en QA invisible y silencio operacional.
+- **SOUL.md de Rocinante** — Regla 8 con referencia a checklist. Solo responde a QA REQUEST.
+- **deep-research** — Repositorio siempre en `brand/{slug}/`, no genérico. Instrucciones claras.
+
+### Fixed
+- **mc-server.js** — Renderer ahora procesa links markdown en todas partes (incluyendo celdas de tabla).
+
+---
+
+## [0.6.0] — 2026-02-27
+
+### Added
+- **T-035 — Reglas de citación obligatorias** — Toda cifra/dato en market-intelligence (+ competitor-intelligence, self-intelligence, niche-discovery, swot-analysis) debe incluir URL de fuente verificada. Sección `## Fuentes` obligatoria.
+- **T-036 — Skill `deep-research`** — Profundizador universal para Foundation. Acepta cualquier doc .md, investiga con 10-20 búsquedas por sección, devuelve mismo formato enriquecido con fuentes verificadas.
+- **Bloque "¿Quieres profundizar?"** añadido a 13 skills de Foundation — Al completar cualquier análisis, sugiere deep-research.
+- **Skills abre en doc viewer** — Click en skill card en MC abre `/mc/docs/skills/{nombre}/SKILL.md` en pestaña nueva.
+
+### Fixed
+- **Exec permissions globales** — `tools.exec.security=full` + `tools.exec.ask=off`. Sancho ya no pide permisos.
+- **3 crons arreglados** — cost-tracker, Daily Pulse, Meeting Intelligence (thread-create flow corregido).
+
+---
+
 ## [0.5.0] — 2026-02-27
 
 ### Added
@@ -95,3 +188,37 @@ Formato: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 - **Notion** — API key configurada.
 - **Auth** — Password + Tailscale allowTailscale.
 - **Memory system** — MEMORY.md + memory/*.md + vector search + FTS.
+
+## [0.9.0] — 2026-02-28
+
+### Fixed
+- **Folder naming consistency** — Renamed `swot/` → `swot-analysis/`, `niche-discovery/` → `niche-discovery-100x/` to match foundation-state.json
+- **Markdown rendering (lists)** — Replaced artisanal regex renderer with marked.js (CDN). Fixes bullet spacing issues in complex lists (niche-discovery, swot-analysis)
+
+### Changed
+- **Sancho SOUL.md** — Added Regla 0h: "Honestidad absoluta sobre herramientas y fuentes (P0)". Never claim tool usage (Apify, DataForSEO) if not executed. Addresses competitor-intelligence quality issue.
+- **mc-server.js** — CSS tweaks: li margin, line-height, list margin/padding for compact display
+
+### Removed
+- **Legacy docs** — Moved product-analysis, icp, channel-plan, briefs-creativos, assets-doc to `_archive/` (Hospital Capilar per-client backup)
+
+### Proposed
+- **T-039** — Public doc access from mobile (Tailscale Funnel options pending decision)
+
+
+## [0.9.0] — 2026-02-28
+
+### Changed
+- **SOUL.md restructured** — Reduced from 531 to 99 lines. Moved procedures to `_system/`: threading-protocol.md → TOOLS.md, foundation-protocol.md (new), versioning-protocol.md (new), dispatch-protocol.md (expanded), workflow-recipes.md (expanded)
+- **Discord threading refactored** — No longer creates standalone threads. Subagent spawns create thread-bound sessions (`thread: true`) where Escudero works directly in threaded context
+- **Thinking defaults enabled** — `agents.defaults.thinkingDefault: low` — intermediate reasoning goes to thinking tokens, not chat
+
+### Added
+- **TOOLS.md Discord Mechanics section** — Comprehensive guide to NO_REPLY, thinking tokens, thread-bound delivery, subagent result handling
+- **threadBindings.spawnSubagentSessions** — Enabled for Escudero thread-bound spawn sessions
+- **Escudero TOOLS.md** — Discord threading behavior for subagent spawns
+
+### Fixed
+- Discord text leaks between tool calls — resolved via thinking tokens redirect
+- Subagent spawn isolation — Escudero now publishes in spawned thread, not channel
+- Session visibility — reasoning hidden by default (visibility off)

@@ -5,7 +5,7 @@ description: Trends and topics from last 30 days.
 argument-hint: last30 AI video tools, last30 best project management tools
 allowed-tools: Bash, Read, Write, AskUserQuestion, WebSearch
 homepage: https://github.com/mvanhorn/last30days-skill
-user-invocable: true
+user-invocable: false
 disable-model-invocation: true
 metadata:
   clawdbot:

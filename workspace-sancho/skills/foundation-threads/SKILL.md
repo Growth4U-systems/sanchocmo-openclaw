@@ -1,6 +1,7 @@
 ---
 name: foundation-threads
 description: Create Discord threads for Foundation onboarding flow.
+user-invocable: false
 metadata:
   author: Cervantes
   version: '1.0'

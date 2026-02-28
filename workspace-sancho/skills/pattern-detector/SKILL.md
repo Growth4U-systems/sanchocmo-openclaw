@@ -1,6 +1,7 @@
 ---
 name: pattern-detector
 description: Find patterns across channels and data.
+user-invocable: false
 metadata:
   author: Alfonso Sainz de Baranda (Growth4U)
   version: '1.0'

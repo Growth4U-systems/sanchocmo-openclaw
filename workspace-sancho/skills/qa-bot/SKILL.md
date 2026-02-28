@@ -1,6 +1,7 @@
 ---
 name: qa-bot
 description: 'QA check: brand voice, SEO, consistency.'
+user-invocable: false
 metadata:
   author: Alfonso Sainz de Baranda (Growth4U)
   version: '1.0'

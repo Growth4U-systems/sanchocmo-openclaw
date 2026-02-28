@@ -1,12 +1,87 @@
 # TOOLS.md - Local Notes
 
-## ⚠️ Discord Threading — OBLIGATORIO
-Cuando envíes mensajes a un hilo de Discord, usa `target` con el ID del hilo. NO uses `threadId`.
+## ⚠️ Discord Mechanics — LEE ESTO ENTERO
+
+### Problema que debes entender
+En Discord, cualquier texto que generes como respuesta de asistente se publica en el CANAL PRINCIPAL. 
+Los tool calls (`message(action=send, target=...)`) van donde tú digas.
+Tu texto de respuesta va al canal. SIEMPRE.
+
+Por eso: todo tu contenido va via tool calls al hilo, y tu respuesta final es NO_REPLY.
+
+### Patrón completo (OBLIGATORIO para toda interacción Discord)
+
+**Paso 0**: Extrae `message_id` del bloque "Conversation info" del mensaje inbound:
+```json
+{ "message_id": "1477295646858809485", "sender_id": "1334604955687977042", ... }
+```
+
+**Si Sancho responde directamente:**
+```
+# Paso 1: Crear hilo DESDE el mensaje del usuario
+message(action=thread-create, channel=discord, channelId="<canal_id>", threadName="Título", messageId="<message_id>")
+→ devuelve thread_id
+
+# Paso 2: Enviar contenido al hilo
+message(action=send, channel=discord, target="<thread_id>", message="<@sender_id> Tu contenido...")
+
+# Paso 3: Tu respuesta final
+NO_REPLY
+```
+
+**Si Sancho delega a Escudero:**
+```
+# Paso 1: Spawnar con thread: true (OpenClaw crea el hilo y Escudero trabaja dentro)
+sessions_spawn(agentId="escudero", thread=true, task="...")
+
+# Paso 2: Tu respuesta final
+NO_REPLY
+```
+
+### Cuando recibes resultado de un subagente (Escudero/Rocinante)
+El resultado llega como mensaje del sistema. Debes reenviarlo AL HILO, no como respuesta:
+
+```
+# Escudero termina → recibes su output
+# ❌ MAL: escribir el resultado como texto de respuesta (va al canal)
+# ✅ BIEN:
+message(action=send, channel=discord, target="<thread_id>", message="Resultado: ...")
+NO_REPLY
+```
+
+### Reglas de sintaxis
 ```
 ✅ message(action=send, channel=discord, target="<thread_id>", message="...")
 ❌ message(action=send, channel=discord, channelId="<canal>", threadId="<thread_id>", message="...")
 ```
-El primer mensaje del hilo se envía con `thread-create`. Todos los siguientes con `target=<thread_id>`.
+Usa `target` con el ID del hilo. NUNCA `threadId`.
+
+### ⛔ NUNCA generes texto entre tool calls en Discord
+
+Cada bloque de texto que generas entre tool calls se entrega como un MENSAJE SEPARADO en el canal de Discord. Los pensamientos intermedios como "Now let me scrape...", "I have enough context...", "Let me create the thread..." — TODOS aparecen como mensajes públicos.
+
+**Regla absoluta**: Cuando estás en Discord, tu output debe ser SOLO tool calls. CERO texto entre ellos. Si necesitas razonar, hazlo en thinking/internal, no como texto.
+
+```
+❌ MAL (cada línea aparece como mensaje en el canal):
+[tool_call: read file]
+"Now I have enough context. Let me create the thread."     ← ESTO SE PUBLICA
+[tool_call: thread-create]
+"Now let me generate the document."                         ← ESTO SE PUBLICA  
+[tool_call: write file]
+"Now send the result to the thread:"                        ← ESTO SE PUBLICA
+[tool_call: message send to thread]
+NO_REPLY
+
+✅ BIEN (solo tool calls, sin texto intermedio):
+[tool_call: read file]
+[tool_call: thread-create]
+[tool_call: write file]
+[tool_call: message send to thread]
+NO_REPLY
+```
+
+Esto aplica a TODO: research, Foundation, gate checks, delegación a Escudero, resultados de subagentes. CERO texto. SOLO tool calls. Respuesta final = NO_REPLY.
 
 Skills define _how_ tools work. This file is for _your_ specifics — the stuff that's unique to your setup.
 

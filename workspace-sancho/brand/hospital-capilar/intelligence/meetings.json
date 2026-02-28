@@ -1,5 +1,78 @@
 [
   {
+    "date": "2026-01-29",
+    "title": "Kickoff Hospital Capilar - Growth4U",
+    "summary": "Primera reunión estratégica donde se identificó la oportunidad de oro: tratamientos con 90% de margen vs operaciones con 40%. Crecimiento 2x interanual en tratamientos sin inversión en marketing. Cuello de botella es capacidad operativa, no captación. Se propone piloto paralelo enfocado 100% en tratamientos con protocolo de pago de €195 por consultas.",
+    "decisions": [
+      {
+        "what": "Ejecutar piloto paralelo enfocado 100% en tratamientos",
+        "who": "Growth4U + Hospital Capilar",
+        "why": "Tratamientos tienen 90% margen vs 40% de operaciones. Cuello de botella es operativo, no de captación"
+      },
+      {
+        "what": "Equipo interno continúa con operaciones, equipo externo lidera tratamientos",
+        "who": "Hospital Capilar",
+        "why": "Evitar conflictos, permitir iteración rápida sin comprometer protocolo actual"
+      },
+      {
+        "what": "Protocolo de pago de €195 para consultas médicas (especialmente mujeres)",
+        "who": "Hospital Capilar + Growth4U",
+        "why": "Asegura asistencia, precualifica leads, facilita venta cruzada, incluye analítica completa"
+      },
+      {
+        "what": "Meta de 500 citas presenciales pagadas/mes (mujeres)",
+        "who": "Hospital Capilar",
+        "why": "Una vez en clínica, probabilidad alta de conversión a paquetes de €1000+"
+      },
+      {
+        "what": "Posibilidad de usar mini-stack separado de Salesforce",
+        "who": "Growth4U",
+        "why": "Salesforce muy lento/inflexible para iteración rápida del piloto"
+      }
+    ],
+    "actions": [
+      {
+        "task": "Compartir métricas comparativa anual y diciembre 2025 por correo",
+        "owner": "Óscar Mendoza",
+        "deadline": "ASAP"
+      },
+      {
+        "task": "Armar propuesta detallada con cronograma y presupuesto",
+        "owner": "Philippe Sainthubert",
+        "deadline": "~1 semana"
+      },
+      {
+        "task": "Entender disponibilidad y responsabilidades de equipos HC",
+        "owner": "Philippe Sainthubert",
+        "deadline": "Próxima reunión"
+      },
+      {
+        "task": "Coordinar avance del proyecto",
+        "owner": "Gerardo Redondo",
+        "deadline": "Ongoing"
+      }
+    ],
+    "insights": [
+      "Margen brutal en tratamientos: 90% vs 40% en operaciones",
+      "Crecimiento orgánico explosivo: 971 bonos (2023) → 1828 (2025) SIN inversión en marketing",
+      "Cuello de botella operativo, NO de captación",
+      "CPL Google: 50.69€ (2024) → 53.77€ (2025); CPL Meta: 10.32€ → 19.48€",
+      "No-show en Madrid: ~30%",
+      "Quiz para precualificación habilita canales de bajo costo",
+      "Mujeres = segmento de oro: fáciles de captar, protocolo de pago justificable",
+      "Salesforce = error costoso: Marketing Cloud nunca usado, inflexible para experimentación",
+      "Growth4U: Full scope, precio cerrado, iteración rápida, canales menos perecederos"
+    ],
+    "participants": [
+      "Alfonso Sainz de Baranda",
+      "Philippe Sainthubert",
+      "Óscar Mendoza",
+      "Gerardo Redondo"
+    ],
+    "source_url": "https://docs.google.com/document/d/1kWhI6MslDemmN0U7vLe4VY6kb5DH5fOWjk5GW_a78E8",
+    "file": "2026-01-29-kickoff-hospital-capilar.md"
+  },
+  {
     "date": "2026-02-06",
     "title": "Hospital Capilar Growth4U Sales Presentation",
     "summary": "Reunión inicial de ventas donde se definieron las bases del proyecto Hospital Capilar. Se estableció la necesidad de un presupuesto de marketing, contenido médico audiovisual y la infraestructura técnica para ejecutar la estrategia de captación de tratamientos.",
@@ -59,6 +132,83 @@
     ],
     "source_url": "",
     "file": "2026-02-06-sales-presentation.md"
+  },
+  {
+    "date": "2026-02-07",
+    "title": "Heiver - Evaluación Técnica Go High Level",
+    "summary": "Reunión técnica de evaluación con Heiver Gomez como candidato para implementar GHL. Exploró lógica de formularios, secuencias multi-paso, integraciones con Posthog, y estrategias de email marketing. Demostró experiencia práctica pero enfoque más táctico que estratégico. Timeline 3-4 semanas, rate ~15 USD/hora. NO seleccionado — se eligió a Ramiro por mayor alineamiento estratégico.",
+    "decisions": [
+      {
+        "what": "Usar lógica de formularios de GHL para embudos sencillos",
+        "who": "Heiver + Martin",
+        "why": "Permite personalización e integración vía iframe en cualquier web"
+      },
+      {
+        "what": "Mapeo visual previo (Figma/Miro) obligatorio antes de implementar",
+        "who": "Heiver + Martin",
+        "why": "Secuencias complejas multi-paso requieren planificación de caminos lógicos"
+      },
+      {
+        "what": "Estrategia bicanal: Email + WhatsApp",
+        "who": "Heiver",
+        "why": "Diversifica mensajes y permite evaluar rendimiento por canal"
+      },
+      {
+        "what": "Usar dominio propio del cliente para email marketing",
+        "who": "Heiver",
+        "why": "Mantiene credibilidad, evita spam"
+      },
+      {
+        "what": "Integración GHL → Posthog vía N8N o base intermedia",
+        "who": "Heiver + Martin",
+        "why": "N8N parece tener conexión directa más simple"
+      },
+      {
+        "what": "Timeline de implementación: 3-4 semanas",
+        "who": "Heiver",
+        "why": "Proyecto operativo y funcionando, no solo entregado"
+      }
+    ],
+    "actions": [
+      {
+        "task": "Buscar info sobre pagar a Google Gemini para aparecer en respuestas IA",
+        "owner": "Heiver",
+        "deadline": "ASAP"
+      },
+      {
+        "task": "Enviar itinerario con estructura básica del proyecto (4 semanas)",
+        "owner": "Heiver",
+        "deadline": "ASAP"
+      },
+      {
+        "task": "Definir modelo de colaboración (asesoría vs implementación intensiva)",
+        "owner": "Martin + equipo",
+        "deadline": "Antes de lunes siguiente"
+      },
+      {
+        "task": "Negociar presupuesto para el proyecto",
+        "owner": "Heiver + Martin",
+        "deadline": "Antes de inicio"
+      }
+    ],
+    "insights": [
+      "GHL capacidades: lógica de formularios, campos dinámicos, funnels nativos, automatizaciones",
+      "Email masivo: 16K correos en 3 días confirmado como ejemplo",
+      "Tracking completo: envío, recepción, apertura, rebote",
+      "SMS efectivo en USA, WhatsApp en LatAm - adaptar canal al mercado",
+      "Dominio propio crítico para evitar spam",
+      "N8N preferido para integración GHL → Posthog",
+      "Heiver: enfoque táctico/implementador vs estratégico",
+      "Propuesta reactiva ('ustedes definen, yo implemento') vs proactiva",
+      "NO conectó tecnología con objetivos de negocio (45 tratamientos/mes)",
+      "Decisión: Ramiro seleccionado por mayor alineamiento estratégico y ownership interno"
+    ],
+    "participants": [
+      "Heiver Gomez",
+      "Martin Fila"
+    ],
+    "source_url": "https://docs.google.com/document/d/1knNkCRakIM2xAIM5NHKcXmxDPLSlhUp3p3MOnO0rFNU",
+    "file": "2026-02-07-heiver-ghl-tecnico.md"
   },
   {
     "date": "2026-02-17",

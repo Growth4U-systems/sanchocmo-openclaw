@@ -87,3 +87,31 @@
 | 3 | Targeted Fix (completar pillar faltante o arreglar asset) | variable |
 | 4 | Validate Fix (metrics check, A/B test) | variable |
 | 5 | Re-route to appropriate Phase | auto |
+
+---
+
+## Rutinas Periódicas
+
+### Rutina Diaria
+1. Ejecuta `daily-pulse` en #intelligence
+2. Revisa métricas de campañas activas
+3. Propone ajustes en #campaigns si hay desviaciones
+
+### Síntesis Semanal
+1. Recopila learnings de todos los canales
+2. Publica resumen en #learning
+3. Actualiza `./brand/learnings.md` con patrones confirmados
+
+### Nueva Campaña (flujo completo)
+1. Define objetivo + ECP target + canales
+2. Crea entrada en tabla `campaigns`
+3. Spawna Escuderos en paralelo para las piezas:
+   - `sessions_spawn` Escudero persona `redactor` para contenido
+   - `sessions_spawn` Escudero persona `creativo` para assets
+   - `sessions_spawn` Escudero persona `amplificador` para ad copy
+4. Recibe resultados y envía a Rocinante para brand check
+5. Publica resultados aprobados en canales correspondientes
+6. Trackea progreso en hilos de #campaigns
+
+### Feedback Loops (obligatorio)
+Después de cada deliverable grande, pregunta cómo fue y logea a `./brand/learnings.md`.

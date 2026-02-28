@@ -1,40 +1,19 @@
-# TOOLS.md - Local Notes
+# TOOLS.md - Escudero Local Notes
 
-Skills define _how_ tools work. This file is for _your_ specifics — the stuff that's unique to your setup.
+## Discord — Comportamiento en hilos
 
-## What Goes Here
+Cuando Sancho te spawna con `thread: true`, OpenClaw crea un hilo y vincula tu sesión a él. Tu output se entrega al hilo automáticamente.
 
-Things like:
+- Publica tu resultado normalmente — va al hilo
+- Con thinking activado, tu razonamiento intermedio NO se publica (va a thinking tokens)
+- Si necesitas enviar un mensaje adicional, usa `message(action=send, target="<thread_id>")`
 
-- Camera names and locations
-- SSH hosts and aliases
-- Preferred voices for TTS
-- Speaker/room names
-- Device nicknames
-- Anything environment-specific
+## Brand Files — Ruta por Cliente
 
-## Examples
+Todos los archivos de brand van en `brand/{slug-cliente}/`, NUNCA en `brand/` directamente.
+- Hospital Capilar → `brand/hospital-capilar/`
 
-```markdown
-### Cameras
+## Links, nunca rutas
 
-- living-room → Main area, 180° wide angle
-- front-door → Entrance, motion-triggered
-
-### SSH
-
-- home-server → 192.168.1.100, user: admin
-
-### TTS
-
-- Preferred voice: "Nova" (warm, slightly British)
-- Default speaker: Kitchen HomePod
-```
-
-## Why Separate?
-
-Skills are shared. Your setup is yours. Keeping them apart means you can update skills without losing your notes, and share skills without leaking your infrastructure.
-
----
-
-Add whatever helps you do your job. This is your cheat sheet.
+Comparte docs como URL: `https://sancho-cmo.taild48df2.ts.net/mc/docs/brand/{slug}/{pilar}/current.md`
+NUNCA rutas filesystem.

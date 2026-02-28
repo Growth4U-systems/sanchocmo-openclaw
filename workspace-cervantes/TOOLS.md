@@ -55,3 +55,10 @@
 - Daily pulse → Sonnet (T2)
 - Reports → Sonnet (T2)
 - Foundation → Opus (T1)
+
+## DataForSEO
+- **Login**: accounts@growth4u.io
+- **API Password**: en openclaw.json (skills.entries.dataforseo.env)
+- **Balance**: ~$35
+- **Base URL**: https://api.dataforseo.com/v3
+- **Uso**: SEO competitivo (SERP, backlinks, keywords, on-page)

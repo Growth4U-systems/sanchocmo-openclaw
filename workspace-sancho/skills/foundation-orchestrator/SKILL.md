@@ -1,6 +1,7 @@
 ---
 name: foundation-orchestrator
 description: Manage Foundation pillars and progress.
+user-invocable: false
 metadata:
   author: Alfonso Sainz de Baranda (Growth4U)
   version: '1.0'
@@ -43,27 +44,30 @@ Este skill ORQUESTA el flujo: lee el estado, determina qué pilar toca, ejecuta 
 Los pilares se ejecutan en orden estricto por capas. Un pilar solo puede ejecutarse cuando TODOS sus dependencias están en estado `approved` o `skipped`.
 
 ```
-LAYER 0 — Sin dependencias (ejecutar primero):
-  company-context
-  budget-constraints
+🏢 LA EMPRESA (ejecutar primero, sin dependencias):
+  1. company-context
+  2. business-model
+  3. budget
+  4. self-intelligence
 
-LAYER 1 — Depende de Layer 0:
-  business-model-audit
-  self-intelligence
+🎯 OPE CANVAS (depende de La Empresa):
+  5. ope-canvas — Síntesis estratégica en 1 página (Power Hour prep)
 
-LAYER 2 — Depende de Layer 1:
-  market-intelligence
-  competitor-intelligence
-  niche-discovery-100x
-  positioning-messaging
-  brand-voice
-  visual-identity
-  pricing-strategy
-  swot-analysis
+📊 EL MERCADO (depende de La Empresa + OPE Canvas):
+  6. market
+  7. competitors
+  8. swot-analysis
 
-OPCIONALES — Ejecutar si aplican, skip si no:
-  ecp-validation
-  existing-customer-data
+👥 LOS CLIENTES (depende de El Mercado):
+  9. niche-discovery-100x
+  10. ecp-validation (opcional)
+  11. existing-customer-data (opcional)
+
+🎯 LA MARCA (depende de El Mercado):
+  12. positioning
+  13. pricing
+  14. brand-voice
+  15. visual-identity
 ```
 
 ### Orden de Ejecución dentro de cada Layer
@@ -72,7 +76,7 @@ Dentro de la misma capa, ejecutar en el orden listado arriba (de arriba a abajo)
 
 ---
 
-## Estado: `memory/foundation-state.json`
+## Estado: `brand/{slug}/foundation-state.json`
 
 Archivo de estado persistente. Source of truth para retomar sesiones.
 
@@ -87,12 +91,12 @@ Archivo de estado persistente. Source of truth para retomar sesiones.
       "status": "approved",
       "layer": 0,
       "approved_at": "2026-02-26T10:45:00Z",
-      "output_file": "brand/company-context.md"
+      "output_file": "brand/{slug}/company-context/current.md"
     },
     "budget-constraints": {
       "status": "pending-review",
       "layer": 0,
-      "output_file": "brand/budget.md"
+      "output_file": "brand/{slug}/budget/current.md"
     },
     "business-model-audit": {
       "status": "not-started",
@@ -125,44 +129,34 @@ Archivo de estado persistente. Source of truth para retomar sesiones.
 ### Paso 1: Leer Estado
 
 ```
-1. Leer memory/foundation-state.json
+1. Leer brand/{slug}/foundation-state.json
 2. Si no existe → crear con todos los pilares en "not-started"
 3. Si existe → determinar dónde quedamos
 ```
 
 ### Paso 2: Mostrar Progreso
 
-Siempre mostrar la barra de progreso al iniciar:
+Siempre mostrar el progreso agrupado por categorías:
 
 ```
-FOUNDATION — [Nombre del Cliente]
+🏗️ FOUNDATION — [Nombre del Cliente]
 
-Progreso: 5/14 pilares ████████░░░░░░░░░░░░ 36%
+Progreso: 7/14 pilares
 
-  Layer 0:
-  ✅ Company Context              approved
-  ✅ Budget & Constraints          approved
+🏢 La Empresa
+  ✅ Company Context · ✅ Business Model · ✅ Budget · ✅ Self-Intelligence
 
-  Layer 1:
-  ✅ Business Model Audit          approved
-  🔄 Self-Intelligence            pending-review  ← AQUÍ ESTAMOS
-  
-  Layer 2:
-  🔒 Market Intelligence          not-started
-  🔒 Competitor Intelligence      not-started
-  🔒 Niche Discovery 100x         not-started
-  🔒 Positioning & Messaging      not-started
-  🔒 Brand Voice                  not-started
-  🔒 Visual Identity              not-started
-  🔒 Pricing Strategy             not-started
-  🔒 SWOT Analysis                not-started
+📊 El Mercado
+  ✅ Market · ⚠️ Competitors · ⬜ SWOT Analysis
 
-  Opcionales:
-  ➖ ECP Validation               skipped (pre-launch)
-  ⬜ Existing Customer Data       not-started
+👥 Los Clientes
+  ⬜ Niche Discovery 100x · ⬜ ECP Validation · ⬜ Customer Data
+
+🎯 La Marca
+  ✅ Positioning · ⬜ Pricing · ⬜ Brand Voice · ⬜ Visual Identity
 ```
 
-**Barra de progreso**: calcular como `(approved + skipped) / total_pilares`.
+Iconos: ✅ = validado | ⚠️ = pendiente de validar | ⬜ = no existe | ➖ = saltado
 
 ### Paso 3: Continuar donde quedamos
 
@@ -225,13 +219,36 @@ Marcar estado → `pending-review`.
 
 Tres caminos posibles:
 
-#### A) Aprobación ("sí", "ok", "perfecto", "adelante")
+#### A) Aprobación ("sí", "ok", "perfecto", "adelante", "validamos", "avancemos", "aprobado", "correcto", "dale", "vamos", "next", "siguiente", "avanza", o cualquier confirmación positiva)
 ```
-→ Marcar estado → "approved" con timestamp
-→ Guardar documento final en brand/*.md
-→ Avanzar al siguiente pilar
-→ "✅ Company Context aprobado. Siguiente: Budget & Constraints..."
+→ Marcar estado → "approved" con timestamp en brand/{slug}/foundation-state.json
+→ Ejecutar: python3 scripts/regenerate.py (actualizar MC)
+→ Publicar MENSAJE DE CELEBRACIÓN + PROGRESO + SIGUIENTE PASO:
 ```
+
+**Formato obligatorio del mensaje post-aprobación:**
+
+```
+🎉 ¡Excelente! **[Nombre del Pilar]** completado y validado.
+
+**Progreso Foundation ([N]/15):**
+🏢 La Empresa: ✅ Company Context · ✅ Business Model · ✅ Budget · ✅ Self-Intelligence
+🎯 OPE Canvas: ✅ OPE Canvas
+📊 El Mercado: ✅ Market · ✅ Competitors · ✅ SWOT
+👥 Los Clientes: ⬜ Niche Discovery · ⬜ ECP · ⬜ Customer Data
+🎯 La Marca: ✅ Positioning · ⬜ Pricing · ⬜ Brand Voice · ⬜ Visual Identity
+
+⏳ Arrancando siguiente paso: **[Nombre del siguiente pilar]**...
+```
+
+**FLUJO AUTOMÁTICO POST-APROBACIÓN (OBLIGATORIO):**
+1. Actualizar `foundation-state.json` → `"approved"`
+2. Ejecutar `python3 scripts/regenerate.py`
+3. Publicar mensaje de celebración con progreso
+4. **EJECUTAR AUTOMÁTICAMENTE el siguiente pilar** — NO pedir al usuario que escriba un comando. El flujo es continuo.
+5. Si el siguiente pilar necesita confirmación de inputs (Regla 0f), pregunta. Si no, ejecuta directamente.
+
+**EL USUARIO NUNCA DEBERÍA TENER QUE ESCRIBIR UN COMANDO PARA CONTINUAR.** La Foundation es un flujo continuo: aprueba → siguiente → aprueba → siguiente. Solo se detiene para confirmar inputs o al final.
 
 #### B) Corrección ("no, el ticket medio es €6.000", "falta X")
 ```
@@ -258,7 +275,7 @@ Al aprobar o skipear:
 | Dato | Destino |
 |------|---------|
 | Documento completo | `./brand/[pilar].md` |
-| Estado del pilar | `memory/foundation-state.json` |
+| Estado del pilar | `brand/{slug}/foundation-state.json` |
 
 Actualizar `foundation-state.json` después de cada cambio de estado.
 
@@ -312,7 +329,7 @@ RESUMEN EJECUTIVO:
 Pilares completados: [N approved] | Skipped: [N skipped]
 
 📂 Documentos en: brand/
-📊 Estado en: memory/foundation-state.json
+📊 Estado en: brand/{slug}/foundation-state.json
 
 ═══════════════════════════════════════════════
 Foundation lista. ¿Pasamos a Phase 2?
@@ -391,4 +408,4 @@ Cada pilar tiene **dos destinos** de persistencia. Ambos se actualizan al aproba
 3. Si se extrajeron insights → insert en Supabase `insights`: `{ pilar, tipo, contenido, fecha }`
 4. Si hubo correcciones → insert en Supabase `foundation_approvals`: `{ pilar, action, feedback, timestamp }`
 
-**Si Supabase no está disponible**: continuar solo con `./brand/` + `memory/foundation-state.json`. No bloquear.
+**Si Supabase no está disponible**: continuar solo con `./brand/` + `brand/{slug}/foundation-state.json`. No bloquear.

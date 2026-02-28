@@ -60,3 +60,55 @@ Para detalle completo de los 3 data layers (Context Lake, Content Ideas, People/
 **Directory rules:**
 - `brand/` = referencia READ-ONLY para ejecucion. Solo Foundation escribe ahi.
 - `campaigns/` = outputs de ejecucion GTM. Cada campana en su propio subdirectorio.
+
+---
+
+## Deduplication Protocol (T-040)
+
+**OBLIGATORIO** para Meeting Intelligence y Daily Pulse crons.
+
+### Tracker File
+
+`_system/intelligence-tracker.json` — registro de items ya procesados.
+
+### Meeting Intelligence — Dedup Flow
+
+1. **Before processing**: Read `_system/intelligence-tracker.json`
+2. **For each meeting found** (Google Drive, Notion, etc.):
+   - Generate slug: `YYYY-MM-DD-title-slugified` (same as .md filename without extension)
+   - Check if slug exists in `tracker.meetings`
+   - If exists AND file hasn't changed → **SKIP** (ya reportado)
+   - If exists BUT file has been modified (compare file mtime vs `processedAt`) → **RE-PROCESS** as update
+   - If NOT exists → **PROCESS** as new
+3. **After processing**: Update tracker with new/updated entries:
+   ```json
+   {
+     "processedAt": "ISO timestamp",
+     "client": "slug",
+     "hash": null
+   }
+   ```
+4. **Report only new/updated meetings** to #intelligence
+
+### Daily Pulse — Dedup Flow
+
+1. **Before processing**: Read `_system/intelligence-tracker.json`
+2. **Check today's date** in `tracker.dailyPulse`
+   - If today exists → already ran today → **SKIP entire pulse** (or only process new signals since `processedAt`)
+   - If today NOT exists → **PROCESS** normally
+3. **After processing**: Add today's entry:
+   ```json
+   {
+     "processedAt": "ISO timestamp",
+     "client": "slug",
+     "insightsCount": N
+   }
+   ```
+
+### Rules
+
+- **Read tracker FIRST, before any scan.** This is step 0.
+- **Write tracker LAST, after successful processing.** Never write before confirming delivery.
+- **If tracker file is missing or corrupt**, treat as empty (process everything, recreate file).
+- **Never delete entries** from tracker. It's append-only.
+- **Log skips**: When skipping a meeting, log "⏭️ Skipping [slug] — already processed on [date]" for debugging.

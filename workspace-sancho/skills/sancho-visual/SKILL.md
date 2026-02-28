@@ -1,6 +1,7 @@
 ---
 name: sancho-visual
 description: Generate marketing visuals.
+user-invocable: false
 context_required:
 - brand/voice-profile.md
 - brand/company-context.md

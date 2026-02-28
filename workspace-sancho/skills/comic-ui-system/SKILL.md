@@ -1,6 +1,7 @@
 ---
 name: comic-ui-system
 description: 'Comic book UI: halftone, panels, bubbles.'
+user-invocable: false
 license: Complete terms in LICENSE.txt
 tags:
 - design

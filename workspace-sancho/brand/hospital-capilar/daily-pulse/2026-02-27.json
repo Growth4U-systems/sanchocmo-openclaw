@@ -1,0 +1,29 @@
+{
+  "date": "2026-02-27",
+  "timestamp": "2026-02-27T09:00:00+01:00",
+  "sources_checked": {
+    "discord": {
+      "enabled": true,
+      "channels": ["general", "campaigns", "content", "intelligence"],
+      "messages_found": 0
+    },
+    "gmail": {
+      "enabled": false
+    },
+    "notion": {
+      "enabled": false
+    }
+  },
+  "insights": {
+    "pain_points": [],
+    "feature_requests": [],
+    "success_stories": [],
+    "trends": []
+  },
+  "micro_briefs": [],
+  "summary": "No se detectó actividad en las fuentes configuradas en las últimas 24 horas. Fuentes habilitadas: Discord (canales: general, campaigns, content, intelligence). Gmail y Notion deshabilitados.",
+  "next_steps": [
+    "Verificar si hay canales de Discord con actividad relevante",
+    "Considerar habilitar Gmail o Notion como fuentes adicionales"
+  ]
+}

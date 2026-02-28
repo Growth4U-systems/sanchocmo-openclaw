@@ -308,3 +308,21 @@ Log feedback to `./brand/learnings.md`:
 ```
 [date] channel-prioritization: [feedback summary]
 ```
+
+
+---
+
+## ✅ Self-QA (OBLIGATORIO antes de entregar)
+
+Antes de guardar y entregar el documento al usuario, ejecuta este protocolo:
+
+1. Lee `references/checklist.md` de este skill
+2. Revisa cada ítem del checklist contra el documento generado
+3. Marca cada ítem: ✅ (completado) | ⚠️ (no disponible, con justificación) | ❌ (pendiente)
+4. Si hay algún ❌ → investiga más, completa la sección faltante
+5. Spot-check 5-10 URLs con web_fetch (verificación aleatoria de fuentes)
+6. Cruza datos y cifras contra brand files existentes (coherencia)
+7. **Solo entrega cuando hay 0 ❌** — todos los ítems deben ser ✅ o ⚠️
+
+> **No se entrega ningún documento con ❌ pendientes.** Si no puedes resolver un ❌, conviértelo en ⚠️ con justificación explícita de por qué no se pudo completar.
+

@@ -1,6 +1,7 @@
 ---
 name: daily-pulse
 description: Daily insights from comms and meetings.
+user-invocable: false
 metadata:
   author: Alfonso Sainz de Baranda (Growth4U)
   version: '1.0'
@@ -506,3 +507,18 @@ Read these for detailed guidance:
 ---
 
 *Escucha primero. Clasifica despues. Crea con datos, no con suposiciones.*
+
+---
+
+## Deduplication (OBLIGATORIO)
+
+**Before running the pulse**, follow the Deduplication Protocol in `_system/intelligence-protocol.md#deduplication-protocol-t-040`.
+
+**Quick reference:**
+1. Read `_system/intelligence-tracker.json`
+2. Check if today's date exists in `tracker.dailyPulse`
+3. If already processed today → skip (or only process signals newer than `processedAt`)
+4. After successful processing, add today's entry to tracker
+5. Report only NEW insights to #intelligence
+
+**Never re-report signals that were already captured in a previous pulse.**

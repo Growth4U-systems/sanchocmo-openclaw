@@ -1,6 +1,7 @@
 ---
 name: signal-definition
 description: Define marketing automation triggers.
+user-invocable: false
 metadata:
   author: Alfonso Sainz de Baranda (Growth4U)
   version: '1.0'

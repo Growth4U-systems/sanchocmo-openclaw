@@ -1,11 +1,1 @@
-{
-  "lastChecks": {
-    "device_pairing": 1772171309,
-    "gateway_health": 1772171309,
-    "mc_server": 1772171309,
-    "updates_available": 1772171309
-  },
-  "lastHeartbeat": "2026-02-27T06:48:00Z",
-  "status": "ok",
-  "notes": "Gateway restarted for exec policy update (security:full, ask:off). Update 2026.2.26 available."
-}
+{"lastRegenTime": 1772286019.249844}

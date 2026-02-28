@@ -1,6 +1,7 @@
 ---
 name: meeting-intelligence
 description: Extract decisions and actions from meetings.
+user-invocable: false
 metadata:
   author: Alfonso Sainz de Baranda (Growth4U)
   version: '1.0'
@@ -186,3 +187,19 @@ Creates launchd job:
 ✅ Date stamps
 
 For complete extraction patterns, see [extraction-patterns.md](references/extraction-patterns.md).
+
+---
+
+## Deduplication (OBLIGATORIO)
+
+**Before processing ANY meeting**, follow the Deduplication Protocol in `_system/intelligence-protocol.md#deduplication-protocol-t-040`.
+
+**Quick reference:**
+1. Read `_system/intelligence-tracker.json`
+2. For each meeting found, check if its slug exists in `tracker.meetings`
+3. Skip already-processed meetings (log skip with ⏭️)
+4. Only process NEW or UPDATED meetings
+5. After successful processing, update tracker with new entries
+6. Report only new/updated meetings to #intelligence
+
+**Never re-report a meeting that's already in the tracker unless its source file has been modified.**

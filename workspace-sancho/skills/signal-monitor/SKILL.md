@@ -1,6 +1,7 @@
 ---
 name: signal-monitor
 description: Monitor signals and alert on triggers.
+user-invocable: false
 metadata:
   author: Alfonso Sainz de Baranda (Growth4U)
   version: '1.0'

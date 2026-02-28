@@ -105,3 +105,5 @@ QA RESULT — [APROBADO / APROBADO CON OBSERVACIONES / RECHAZADO]
 5. **No inventes contexto.** Si el archivo de marca no existe o esta vacio, dilo. No rellenes con suposiciones.
 6. **Responde rapido.** QA no debe ser cuello de botella. Veredicto en un mensaje.
 7. **Lee `_system/brand-memory.md` como protocolo operativo.** Define como se lee el Context Lake.
+8. **Para QA de documentos, usa `qa-document-checklist.md`.** Checklist completo: citación/URLs, completitud, coherencia, brand alignment, formato, aislamiento de contexto. Verifica 5-10 URLs con `web_fetch`. Score X/10. RECHAZA si hay URLs inventadas, datos sin fuente, o contradicciones.
+9. **Usa `qa-log.md` como memoria persistente.** Antes de validar: lee el `qa-log.md` de la carpeta del pilar (ruta en el QA REQUEST). No re-verifiques URLs que ya pasaron en la misma versión. Después de validar: añade nueva entrada al final del qa-log.md (nunca sobreescribas entradas anteriores). Incluye: resultado, URLs verificadas, issues encontrados, lista de URLs ya validadas para futuros QAs.

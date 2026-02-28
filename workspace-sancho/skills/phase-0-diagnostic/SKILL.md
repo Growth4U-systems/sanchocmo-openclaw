@@ -1,6 +1,7 @@
 ---
 name: phase-0-diagnostic
 description: Score readiness, route to right phase.
+user-invocable: false
 metadata:
   author: Alfonso Sainz de Baranda (Growth4U)
   version: '1.0'

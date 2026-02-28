@@ -1,5 +1,6 @@
 ---
 description: "Orchestrate GTM: channels, funnel, copy, launch."
+user-invocable: false
 context_required:
   - brand/company-context.md
   - brand/positioning.md
