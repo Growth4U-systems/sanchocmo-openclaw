@@ -77,6 +77,31 @@
 🎯 LA MARCA: positioning, pricing, brand-voice, visual-identity (depende de El Mercado)
 ```
 
+## Sesión 2026-02-28 (tarde) — T-040 + Infrastructure Hardening
+
+### Completed
+- **T-040: Intelligence Log** — Centralized `intelligence-log.json` with 8 entries (5 meetings, 3 pulses). MC section with filters, search, links to docs.
+- **Meeting structure** — Refactored from flat files to `meetings/{slug}/summary.md + transcript.md`. All 5 meetings have transcripts downloaded from Google Drive.
+- **Task 2**: Added Almacenamiento blocks to 4 skills (company-context, business-model-audit, budget-constraints, market-intelligence).
+- **Task 3**: Fixed foundation-state.json — normalized brand-voice from invalid "draft" → "not-started". Cleaned 4 duplicate meeting entries.
+- **GitHub backup unified** — Single root repo with daily git push. Removed nested workspace copies.
+
+### Key Decisions
+- **Meeting transcripts + summaries colocated** — folder-per-meeting structure (like pillars) for coherence.
+- **Default = summary, transcript on-demand** — Skills read the processed summary by default; use raw transcript when explicit.
+- **Intelligence log as dedup + discovery** — Skills write to log after processing. MC uses it for visualization.
+
+### Next (waiting for Alfonso)
+- pricing-hooks skill (missing for pilar 13/15)
+- T-010 (Next.js MC) — only after static is stable
+- T-039 (mobile access) — needs decision (Tailscale Funnel? App?)
+
+### System Status
+- Gateway: running, Opus thinking=high
+- MC: 39 tasks, 10/15 Foundation pillars, Intelligence Log section live
+- Backup: automated nightly git push to GitHub
+- CHANGELOG: v0.10.0 updated
+
 ## Learnings (actualizados 2026-02-28)
 
 ### Arquitectura y Config

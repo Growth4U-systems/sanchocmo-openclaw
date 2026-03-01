@@ -190,16 +190,40 @@ For complete extraction patterns, see [extraction-patterns.md](references/extrac
 
 ---
 
-## Deduplication (OBLIGATORIO)
+## Deduplication + Intelligence Log (OBLIGATORIO)
 
-**Before processing ANY meeting**, follow the Deduplication Protocol in `_system/intelligence-protocol.md#deduplication-protocol-t-040`.
-
-**Quick reference:**
-1. Read `_system/intelligence-tracker.json`
-2. For each meeting found, check if its slug exists in `tracker.meetings`
+**Before processing ANY meeting:**
+1. Read `_system/intelligence-log.json`
+2. Check if a meeting with matching `id` (format: `mtg-{slug}`) exists in `entries[]`
 3. Skip already-processed meetings (log skip with ⏭️)
 4. Only process NEW or UPDATED meetings
-5. After successful processing, update tracker with new entries
-6. Report only new/updated meetings to #intelligence
 
-**Never re-report a meeting that's already in the tracker unless its source file has been modified.**
+**After processing each meeting, append to `_system/intelligence-log.json` → `entries[]`:**
+```json
+{
+  "id": "mtg-{slug}",
+  "type": "meeting",
+  "client": "{client-slug}",
+  "date": "YYYY-MM-DD",
+  "title": "Título descriptivo",
+  "summary": "Resumen de 1 línea (max 200 chars)",
+  "status": "processed",
+  "sourceFile": "brand/{slug}/intelligence/meetings/{filename}.md",
+  "processedAt": "ISO timestamp",
+  "tags": ["meeting"]
+}
+```
+
+**Guardar transcript (OBLIGATORIO):**
+Después de leer el documento de Google Drive con `gog docs cat <docId>`:
+1. Crea carpeta `brand/{slug}/intelligence/meetings/{meeting-slug}/`
+2. Guarda el contenido COMPLETO en `transcript.md`
+3. Procesa y genera el resumen en `summary.md`
+3. Añade `"transcriptFile"` al entry del intelligence-log
+
+**Por defecto, usa el resumen** para generar insights. Solo consulta el transcript cuando:
+- Un skill lo pida explícitamente (ej: buscar citas textuales, datos exactos)
+- El resumen no tenga suficiente detalle para una decisión
+- El usuario pida el transcript original
+
+**Never re-report a meeting already in the log unless its source file has been modified.**

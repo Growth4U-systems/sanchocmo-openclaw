@@ -62,3 +62,16 @@
 - **Balance**: ~$35
 - **Base URL**: https://api.dataforseo.com/v3
 - **Uso**: SEO competitivo (SERP, backlinks, keywords, on-page)
+
+## Onboarding Clientes
+- **Plantilla Discord**: https://discord.new/mnXBVkNQqFBk
+- **OAuth Bot**: https://discord.com/oauth2/authorize?client_id=1475635406610628769&permissions=8&integration_type=0&scope=bot
+- **Procedimiento**: `~/.openclaw/workspace-sancho/_system/client-onboarding.md`
+- **Script**: `~/.openclaw/workspace-sancho/scripts/new-client.sh --slug X --name Y --guild Z`
+
+## Supabase (Multi-tenant)
+- **URL**: https://psapmujzxhaxraphddlv.supabase.co
+- **Tablas**: clients, pillars, meetings, intelligence_log, integrations, costs, content, campaigns
+- **Schema**: multi-tenant con client_id + RLS
+- **Migration**: `~/.openclaw/workspace-cervantes/supabase-migration.sql`
+- **DB Password**: en los archivos de Alfonso (no guardar aquí)

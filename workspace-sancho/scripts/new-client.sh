@@ -1,90 +1,172 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# new-client.sh — Crea workspace para un nuevo cliente de SanchoCMO
-# Uso: new-client.sh <slug>
+# new-client.sh — Onboarding de nuevo cliente SanchoCMO
+# Prerequisito: cliente ya creó servidor Discord desde plantilla
+# y añadió el bot via OAuth
+#
+# Uso: new-client.sh --slug "slug" --name "Nombre" --guild "GUILD_ID"
 
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-TEMPLATES_DIR="$SCRIPT_DIR/templates"
-CLIENTS_DIR="$HOME/.openclaw/workspace-sancho/clients"
-SUBDIRS=(brand campaigns intelligence assets reports)
+WORKSPACE="$HOME/.openclaw/workspace-sancho"
+SUPABASE_URL="https://psapmujzxhaxraphddlv.supabase.co"
+SKEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBzYXBtdWp6eGhheHJhcGhkZGx2Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MTg5MDE1MSwiZXhwIjoyMDg3NDY2MTUxfQ.uDPfDOg23MfjtORZBXitIUpLNpTRR8ahMqjvJkmg6wE"
 
-# --- Help ---
-if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
-  echo "Uso: new-client.sh <slug>"
-  echo ""
-  echo "Crea el workspace completo para un nuevo cliente."
-  echo "Ejemplo: new-client.sh hospital-capilar"
-  exit 0
-fi
+# --- Parse args ---
+SLUG="" NAME="" GUILD=""
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --slug)  SLUG="$2"; shift 2 ;;
+    --name)  NAME="$2"; shift 2 ;;
+    --guild) GUILD="$2"; shift 2 ;;
+    --help|-h)
+      echo "Uso: new-client.sh --slug <slug> --name <nombre> --guild <guild_id>"
+      echo ""
+      echo "Prerequisito: cliente creó servidor desde https://discord.new/mnXBVkNQqFBk"
+      echo "              y añadió bot desde https://discord.com/oauth2/authorize?client_id=1475635406610628769&permissions=8&integration_type=0&scope=bot"
+      exit 0 ;;
+    *) echo "❌ Argumento desconocido: $1"; exit 1 ;;
+  esac
+done
 
 # --- Validación ---
-if [[ $# -lt 1 ]]; then
-  echo "❌ Error: falta el slug del cliente."
-  echo "Uso: new-client.sh <slug>"
+if [[ -z "$SLUG" || -z "$NAME" || -z "$GUILD" ]]; then
+  echo "❌ Faltan argumentos. Uso:"
+  echo "   new-client.sh --slug nuevo-cliente --name 'Nuevo Cliente' --guild 123456789"
   exit 1
 fi
 
-SLUG="$1"
-
-# Validar formato del slug (solo minúsculas, números, guiones)
-if [[ ! "$SLUG" =~ ^[a-z0-9][a-z0-9-]*[a-z0-9]$ && ! "$SLUG" =~ ^[a-z0-9]$ ]]; then
-  echo "❌ Error: slug inválido '$SLUG'. Usa solo minúsculas, números y guiones."
+if [[ ! "$SLUG" =~ ^[a-z0-9][a-z0-9-]*$ ]]; then
+  echo "❌ Slug inválido '$SLUG'. Usa solo minúsculas, números y guiones."
   exit 1
 fi
 
-CLIENT_DIR="$CLIENTS_DIR/$SLUG"
-
-# --- Safety check ---
-if [[ -d "$CLIENT_DIR" ]]; then
-  echo "❌ Error: el cliente '$SLUG' ya existe en $CLIENT_DIR"
-  echo "No se sobreescribe. Elimínalo manualmente si quieres recrearlo."
+BRAND_DIR="$WORKSPACE/brand/$SLUG"
+if [[ -d "$BRAND_DIR" ]]; then
+  echo "❌ El cliente '$SLUG' ya existe en $BRAND_DIR"
   exit 1
 fi
 
-# --- Crear estructura ---
-echo "🔨 Creando workspace para cliente: $SLUG"
+echo "🔨 Onboarding: $NAME (slug: $SLUG, guild: $GUILD)"
 
-mkdir -p "$CLIENT_DIR"
-for dir in "${SUBDIRS[@]}"; do
-  mkdir -p "$CLIENT_DIR/$dir"
-done
+# --- 1. Crear estructura de archivos ---
+echo "📁 Creando estructura..."
+mkdir -p "$BRAND_DIR"/{intelligence/meetings,daily-pulse,_archive}
 
-# --- Copiar templates ---
-DATE="$(date +%Y-%m-%d)"
-# Slug a nombre legible (hospital-capilar -> Hospital Capilar)
-NAME="$(echo "$SLUG" | sed 's/-/ /g' | awk '{for(i=1;i<=NF;i++) $i=toupper(substr($i,1,1)) substr($i,2)}1')"
+# Foundation state (15 pilares, todos not-started)
+cat > "$BRAND_DIR/foundation-state.json" << FJSON
+{
+  "started_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+  "updated_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+  "pillars": {
+    "company-context": {"status": "not-started"},
+    "business-model": {"status": "not-started"},
+    "budget": {"status": "not-started"},
+    "self-intelligence": {"status": "not-started"},
+    "ope-canvas": {"status": "not-started"},
+    "market": {"status": "not-started"},
+    "competitors": {"status": "not-started"},
+    "swot-analysis": {"status": "not-started"},
+    "niche-discovery-100x": {"status": "not-started"},
+    "ecp-validation": {"status": "not-started"},
+    "existing-customer-data": {"status": "not-started"},
+    "positioning": {"status": "not-started"},
+    "pricing": {"status": "not-started"},
+    "brand-voice": {"status": "not-started"},
+    "visual-identity": {"status": "not-started"}
+  }
+}
+FJSON
 
-# Brand templates
-cp "$TEMPLATES_DIR/brand/company-context.md" "$CLIENT_DIR/brand/"
-cp "$TEMPLATES_DIR/brand/positioning.md"     "$CLIENT_DIR/brand/"
-cp "$TEMPLATES_DIR/brand/competitors.md"     "$CLIENT_DIR/brand/"
-cp "$TEMPLATES_DIR/brand/voice-profile.md"   "$CLIENT_DIR/brand/"
+# Integrations (empty)
+cat > "$BRAND_DIR/integrations.json" << IJSON
+{
+  "client": "$SLUG",
+  "services": []
+}
+IJSON
 
-# Root templates con sustitución
-sed -e "s/__SLUG__/$SLUG/g" -e "s/__NAME__/$NAME/g" -e "s/__DATE__/$DATE/g" \
-  "$TEMPLATES_DIR/README.md" > "$CLIENT_DIR/README.md"
+echo "   ✅ Archivos creados"
 
-sed -e "s/__SLUG__/$SLUG/g" \
-  "$TEMPLATES_DIR/.env.template" > "$CLIENT_DIR/.env.template"
+# --- 2. Insertar en Supabase ---
+echo "🗄️ Insertando en Supabase..."
+HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
+  -X POST "$SUPABASE_URL/rest/v1/clients" \
+  -H "apikey: $SKEY" \
+  -H "Authorization: Bearer $SKEY" \
+  -H "Content-Type: application/json" \
+  -H "Prefer: return=minimal" \
+  -d "{\"slug\":\"$SLUG\",\"name\":\"$NAME\",\"discord_guild_id\":\"$GUILD\",\"phase\":0}")
 
-cp "$TEMPLATES_DIR/sources.json" "$CLIENT_DIR/"
+if [[ "$HTTP_CODE" == "201" ]]; then
+  echo "   ✅ Cliente insertado en Supabase"
+else
+  echo "   ⚠️ Supabase HTTP $HTTP_CODE (puede que ya exista)"
+fi
 
-# --- Resumen ---
+# --- 3. Actualizar clients.json ---
+echo "📋 Actualizando clients.json..."
+CLIENTS_FILE="$WORKSPACE/clients.json"
+python3 << PYJSON
+import json
+with open("$CLIENTS_FILE") as f:
+    data = json.load(f)
+# Check if already exists
+slugs = [c["slug"] for c in data.get("clients", [])]
+if "$SLUG" not in slugs:
+    data.setdefault("clients", []).append({
+        "slug": "$SLUG",
+        "name": "$NAME",
+        "discord_guild_id": "$GUILD",
+        "phase": 0,
+        "paths": {"brand": "brand/"},
+        "supabase": {
+            "url": "$SUPABASE_URL",
+            "anon_key": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBzYXBtdWp6eGhheHJhcGhkZGx2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4OTAxNTEsImV4cCI6MjA4NzQ2NjE1MX0.RxanIQCJtjGfCUL_X0MqPi2IdGkXOkmfaEAJZvQJblI"
+        }
+    })
+    with open("$CLIENTS_FILE", "w") as f:
+        json.dump(data, f, indent=2, ensure_ascii=False)
+    print("   ✅ clients.json actualizado")
+else:
+    print("   ⏭️ Ya existe en clients.json")
+PYJSON
+
+# --- 4. Actualizar clients.js (Mission Control) ---
+echo "🖥️ Actualizando clients.js..."
+CLIENTS_JS="$WORKSPACE/clients.js"
+if grep -q "\"$SLUG\"" "$CLIENTS_JS"; then
+  echo "   ⏭️ Ya existe en clients.js"
+else
+  # Insert new client entry before TEMPLATE comment
+  NEW_ENTRY="  \"$SLUG\": {\n    name: \"$NAME\",\n    emoji: \"🏢\",\n    url: \"\",\n    discord_guild: \"$GUILD\",\n    supabase: {\n      url: \"https://psapmujzxhaxraphddlv.supabase.co\",\n      anon_key: \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBzYXBtdWp6eGhheHJhcGhkZGx2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4OTAxNTEsImV4cCI6MjA4NzQ2NjE1MX0.RxanIQCJtjGfCUL_X0MqPi2IdGkXOkmfaEAJZvQJblI\",\n    },\n    workspace: \"~/.openclaw/workspace-sancho\",\n    phase: 0,\n  },"
+  # Use python for safe text insertion
+  python3 -c "
+c = open('$CLIENTS_JS').read()
+c = c.replace('  // === TEMPLATE:', '$NEW_ENTRY\n\n  // === TEMPLATE:')
+open('$CLIENTS_JS','w').write(c)
+"
+  echo "   ✅ clients.js actualizado"
+fi
+
+# --- 5. Regenerar MC ---
+echo "🔄 Regenerando Mission Control..."
+python3 "$WORKSPACE/scripts/regenerate.py" 2>/dev/null
+echo "   ✅ MC regenerado"
+
+# --- 6. Instrucciones ---
 echo ""
-echo "✅ Cliente '$SLUG' creado correctamente:"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "✅ Cliente '$NAME' onboarded!"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
-echo "   📁 $CLIENT_DIR/"
-for dir in "${SUBDIRS[@]}"; do
-  echo "   📁 $CLIENT_DIR/$dir/"
-done
+echo "📁 Brand dir:  $BRAND_DIR"
+echo "🔗 Guild ID:   $GUILD"
 echo ""
-echo "   📄 brand/company-context.md"
-echo "   📄 brand/positioning.md"
-echo "   📄 brand/competitors.md"
-echo "   📄 brand/voice-profile.md"
-echo "   📄 sources.json"
-echo "   📄 .env.template"
-echo "   📄 README.md"
+echo "⚠️  PENDIENTE (manual por ahora):"
+echo "1. Añadir guild + channel bindings a openclaw.json"
+echo "   (canal IDs del nuevo servidor Discord)"
+echo "2. Añadir systemPrompts con [CLIENTE: $NAME | slug: $SLUG]"
+echo "3. openclaw gateway restart"
+echo "4. Regenerar MC: python3 $WORKSPACE/scripts/regenerate.py"
 echo ""
-echo "👉 Siguiente paso: completa brand/company-context.md y ejecuta Foundation."
+echo "🎯 El cliente puede empezar Foundation en #onboarding"

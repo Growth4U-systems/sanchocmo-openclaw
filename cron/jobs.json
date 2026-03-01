@@ -70,7 +70,7 @@
       "name": "Regenerar Dashboard",
       "enabled": true,
       "createdAtMs": 1771950708148,
-      "updatedAtMs": 1772276427658,
+      "updatedAtMs": 1772305265188,
       "schedule": {
         "kind": "cron",
         "expr": "0 8,12,16,20 * * *",
@@ -88,11 +88,11 @@
         "channel": "last"
       },
       "state": {
-        "nextRunAtMs": 1772290800000,
-        "lastRunAtMs": 1772276400010,
+        "nextRunAtMs": 1772348400000,
+        "lastRunAtMs": 1772305200014,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 27648,
+        "lastDurationMs": 65174,
         "lastDeliveryStatus": "delivered",
         "consecutiveErrors": 0,
         "lastDelivered": true
@@ -215,7 +215,8 @@
         "lastDurationMs": 13603,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0,
-        "lastDelivered": false
+        "lastDelivered": false,
+        "runningAtMs": 1772330400012
       }
     },
     {
@@ -224,7 +225,7 @@
       "name": "healthcheck",
       "enabled": true,
       "createdAtMs": 1772069609685,
-      "updatedAtMs": 1772287297114,
+      "updatedAtMs": 1772308897062,
       "schedule": {
         "kind": "every",
         "everyMs": 21600000,
@@ -244,11 +245,11 @@
         "channel": "last"
       },
       "state": {
-        "nextRunAtMs": 1772308883245,
-        "lastRunAtMs": 1772287283245,
+        "nextRunAtMs": 1772330483260,
+        "lastRunAtMs": 1772308883260,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 13869,
+        "lastDurationMs": 13802,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0,
         "lastDelivered": false
@@ -278,7 +279,7 @@
         "channel": "webchat"
       },
       "state": {
-        "nextRunAtMs": 1772316000000,
+        "nextRunAtMs": 1772402400000,
         "lastRunAtMs": 1772229600013,
         "lastRunStatus": "ok",
         "lastStatus": "ok",

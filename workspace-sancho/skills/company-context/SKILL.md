@@ -94,3 +94,18 @@ Al entregar, añade:
 Puedo lanzar deep-research para ampliar con más fuentes y validación cruzada.
 → Escribe **"profundizar"** para continuar.
 ```
+
+## 📁 Almacenamiento (OBLIGATORIO)
+
+```
+brand/{{slug}}/company-context/
+├── current.md      ← versión activa
+├── v1.md, v2.md... ← versiones anteriores
+├── history.json    ← log de versiones
+└── qa-log.md       ← historial de QA
+```
+
+1. Identifica slug desde systemPrompt (`[CLIENTE: ... | slug: ...]`)
+2. Si existe `current.md` → backup como `v{N+1}.md`, pide confirmación
+3. Si no existe → crea carpeta + `current.md` + `v1.md` + `history.json`
+4. Link: `https://sancho-cmo.taild48df2.ts.net/mc/docs/brand/{slug}/company-context/current.md`

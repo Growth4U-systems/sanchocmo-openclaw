@@ -222,3 +222,28 @@ Formato: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 - Discord text leaks between tool calls — resolved via thinking tokens redirect
 - Subagent spawn isolation — Escudero now publishes in spawned thread, not channel
 - Session visibility — reasoning hidden by default (visibility off)
+
+## [0.10.0] — 2026-02-28 Afternoon
+
+### Added
+- **T-040: Intelligence Log** — Central intelligence.json with all processed meetings/pulses. MC renderIntelligence() with type filters, search, links to transcripts.
+- **Meeting folder structure** — Changed from flat files to `meetings/{slug}/summary.md + transcript.md`. Unified related data.
+
+### Changed
+- **Meeting intelligence** — Now stores full transcript from Google Drive alongside processed summary. Skills default to summary, use transcript on demand.
+- **Almacenamiento blocks** — Added to company-context, business-model-audit, budget-constraints, market-intelligence (4 skills that were missing folder structure guidance).
+
+### Fixed
+- **foundation-state.json** — Removed invalid "draft" state from brand-voice, normalized to "not-started".
+- **Intelligence log** — Removed 4 duplicate "fecha-no-especificada" meeting entries, cleaned up to 5 real meetings + 3 pulses.
+- **GitHub backup** — Unified to single root ~/.openclaw/ repo with git push on daily backup cron.
+
+
+## [0.10.1] — 2026-03-01 Early Morning
+
+### Added
+- **T-039: Public doc access via Tailscale Funnel** — Docs accessible from internet without VPN. `/mc/docs` exposed on https://sancho-cmo.taild48df2.ts.net:8443/mc/docs/, while full dashboard remains tailnet-only.
+
+### Changed
+- **Tailscale config** — Serve and Funnel now work in tandem: port 443 for internal, port 8443 for public.
+

@@ -58,8 +58,6 @@
 | T-014 | Panel de APIs en Mission Control (globales + por cliente) | `[docs]` | P2 | Alfonso 2026-02-24 | Estado de APIs: Anthropic, OpenRouter, Brave, OpenClaw + por cliente. |
 | T-032 | Auto-sync TASKS.md → MC (tareas se actualizan solas) | `[docs]` | P1 | Cervantes 2026-02-26 | Opciones: (A) regenerate.py en cron cada 30min, (B) file watcher en mc-server.js, (C) esperar a Next.js T-010. |
 | T-027 | Docsify + Cloudflare Pages para docs fundacionales | `[infra]` | P1 | Alfonso 2026-02-26 | Montar Docsify sobre brand/ + hostear en Cloudflare Pages (gratis). Ya tenemos /mc/docs/ como viewer interno. |
-| T-039 | Acceso público a docs desde móvil (sin Tailscale) | `[infra]` | P2 | Alfonso 2026-02-28 | Opciones: (A) Tailscale Funnel solo /mc/docs/, (B) Funnel todo MC, (C) App Tailscale en móvil. Decidir nivel de exposición. |
-| T-040 | Intelligence Log — histórico completo + visualización en MC | `[flow]` `[docs]` | P1 | Alfonso 2026-02-28 | Evolucionar tracker simple → intelligence-log.json con metadatos ricos (fecha, resumen, link Discord, status, tags). Nueva sección en MC con tabla, filtros y búsqueda. Deduplicación mantenida. PRD en `_system/prds/T-040.md`. |
 
 ### ✅ Aprobadas (listas para ejecutar)
 
@@ -81,6 +79,8 @@
 | ID | Tarea | Cat | Fecha | Notas |
 |---|---|---|---|---|
 | T-038 | Fix daily-pulse — no detecta mensajes de Discord | `[infra]` | 2026-02-27 | Bug: cron prompt no incluía instrucciones para leer Discord. Fix: cron message reescrito con channel IDs explícitos + message(action=read). sources.json actualizado con IDs. |
+| T-040 | Intelligence Log — histórico completo + visualización en MC | `[flow]` `[docs]` | 2026-02-28 | intelligence-log.json centralizado (12 entries migradas). MC renderIntelligence() con filtros por tipo, búsqueda, tabla. Skills actualizados para escribir al log. Dedup mantenida. PRD en T-040.md. |
+| T-039 | Acceso público a docs desde móvil (sin Tailscale) | `[infra]` | 2026-03-01 | Tailscale Funnel en puerto 8443 para /mc/docs (público). Serve en 443 para / y /mc (tailnet only). URL: https://sancho-cmo.taild48df2.ts.net:8443/mc/docs/ |
 | T-035 | URLs obligatorias en market-intelligence + sugerencia deep-research | `[skill]` | 2026-02-27 | Reglas de citación en market-intelligence + 4 skills cuantitativos. Bloque deep-research en 13 skills. |
 | T-036 | Deep-research como profundizador universal de Foundation | `[flow]` | 2026-02-27 | Skill deep-research creada. Bloque "profundizar" añadido a 13 Foundation skills. PRDs en T-035.md y T-036.md. |
 | T-022 | Métricas de coste por cliente | `[cost]` | 2026-02-27 | cost-tracker.py + cron 23:00 + MC muestra costes por cliente y global. Cron delivery arreglado. |

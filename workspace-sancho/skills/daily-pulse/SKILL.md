@@ -510,15 +510,27 @@ Read these for detailed guidance:
 
 ---
 
-## Deduplication (OBLIGATORIO)
+## Deduplication + Intelligence Log (OBLIGATORIO)
 
-**Before running the pulse**, follow the Deduplication Protocol in `_system/intelligence-protocol.md#deduplication-protocol-t-040`.
+**Before running the pulse:**
+1. Read `_system/intelligence-log.json`
+2. Check if an entry with `id` = `pulse-{YYYY-MM-DD}` exists in `entries[]`
+3. If already processed today → skip (or only process signals newer than entry's `processedAt`)
 
-**Quick reference:**
-1. Read `_system/intelligence-tracker.json`
-2. Check if today's date exists in `tracker.dailyPulse`
-3. If already processed today → skip (or only process signals newer than `processedAt`)
-4. After successful processing, add today's entry to tracker
-5. Report only NEW insights to #intelligence
+**After successful processing, append to `_system/intelligence-log.json` → `entries[]`:**
+```json
+{
+  "id": "pulse-{YYYY-MM-DD}",
+  "type": "daily-pulse",
+  "client": "{client-slug}",
+  "date": "YYYY-MM-DD",
+  "title": "Daily Pulse — YYYY-MM-DD",
+  "summary": "{N} insights extraídos",
+  "status": "processed",
+  "sourceFile": "brand/{slug}/daily-pulse/YYYY-MM-DD.json",
+  "processedAt": "ISO timestamp",
+  "tags": ["pulse", "daily"]
+}
+```
 
-**Never re-report signals that were already captured in a previous pulse.**
+**Never re-report signals already captured in a previous pulse.**

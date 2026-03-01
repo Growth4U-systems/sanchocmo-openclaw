@@ -1,0 +1,126 @@
+{
+  "version": 2,
+  "description": "Intelligence Log — all processed intelligence items (meetings, pulses, research). Used for dedup + MC visualization.",
+  "entries": [
+    {
+      "id": "pulse-2026-02-27",
+      "type": "daily-pulse",
+      "client": "hospital-capilar",
+      "date": "2026-02-27",
+      "title": "Daily Pulse — 2026-02-27",
+      "summary": "4 insights extraídos",
+      "status": "processed",
+      "sourceFile": "brand/hospital-capilar/daily-pulse/2026-02-27.json",
+      "processedAt": "2026-02-27T09:00:00Z",
+      "tags": [
+        "pulse",
+        "daily"
+      ]
+    },
+    {
+      "id": "pulse-2026-02-26",
+      "type": "daily-pulse",
+      "client": "hospital-capilar",
+      "date": "2026-02-26",
+      "title": "Daily Pulse — 2026-02-26",
+      "summary": "6 insights extraídos",
+      "status": "processed",
+      "sourceFile": "brand/hospital-capilar/daily-pulse/2026-02-26.json",
+      "processedAt": "2026-02-26T09:00:00Z",
+      "tags": [
+        "pulse",
+        "daily"
+      ]
+    },
+    {
+      "id": "pulse-2026-02-25",
+      "type": "daily-pulse",
+      "client": "hospital-capilar",
+      "date": "2026-02-25",
+      "title": "Daily Pulse — 2026-02-25",
+      "summary": "2 insights extraídos",
+      "status": "processed",
+      "sourceFile": "brand/hospital-capilar/daily-pulse/2026-02-25.json",
+      "processedAt": "2026-02-25T09:00:00Z",
+      "tags": [
+        "pulse",
+        "daily"
+      ]
+    },
+    {
+      "id": "mtg-2026-02-19-ramiro-entrevista-final",
+      "type": "meeting",
+      "client": "hospital-capilar",
+      "date": "2026-02-19",
+      "title": "Ramiro Entrevista Final",
+      "summary": "Reunión de cierre del proceso de selección donde se validó a Ramiro como el experto interno de Go High Level para el proyecto Hospital Capilar. Se abordó el debate entre estabilidad vs innovación con ",
+      "status": "processed",
+      "sourceFile": "brand/hospital-capilar/intelligence/meetings/2026-02-19-ramiro-entrevista-final/summary.md",
+      "processedAt": "2026-02-27T18:00:00Z",
+      "tags": [
+        "meeting"
+      ],
+      "transcriptFile": "brand/hospital-capilar/intelligence/meetings/2026-02-19-ramiro-entrevista-final/transcript.md"
+    },
+    {
+      "id": "mtg-2026-02-17-ramiro-briefing-tecnico",
+      "type": "meeting",
+      "client": "hospital-capilar",
+      "date": "2026-02-17",
+      "title": "Ramiro Briefing Tecnico",
+      "summary": "Reunión técnica profunda donde se detalló la arquitectura completa del proyecto de tratamientos capilares para Hospital Capilar. Se confirmó la estrategia de crear un nuevo embudo B2C en Go High Level",
+      "status": "processed",
+      "sourceFile": "brand/hospital-capilar/intelligence/meetings/2026-02-17-ramiro-briefing-tecnico/summary.md",
+      "processedAt": "2026-02-27T18:00:00Z",
+      "tags": [
+        "meeting"
+      ],
+      "transcriptFile": "brand/hospital-capilar/intelligence/meetings/2026-02-17-ramiro-briefing-tecnico/transcript.md"
+    },
+    {
+      "id": "mtg-2026-02-07-heiver-ghl-tecnico",
+      "type": "meeting",
+      "client": "hospital-capilar",
+      "date": "2026-02-07",
+      "title": "Heiver Ghl Tecnico",
+      "summary": "Reunión técnica de evaluación con Heiver Gomez como candidato para implementar Go High Level. Se exploró la lógica de formularios, secuencias multi-paso, integraciones con Posthog, y estrategias de em",
+      "status": "processed",
+      "sourceFile": "brand/hospital-capilar/intelligence/meetings/2026-02-07-heiver-ghl-tecnico/summary.md",
+      "processedAt": "2026-02-27T18:00:00Z",
+      "tags": [
+        "meeting"
+      ],
+      "transcriptFile": "brand/hospital-capilar/intelligence/meetings/2026-02-07-heiver-ghl-tecnico/transcript.md"
+    },
+    {
+      "id": "mtg-2026-02-06-sales-presentation",
+      "type": "meeting",
+      "client": "hospital-capilar",
+      "date": "2026-02-06",
+      "title": "Sales Presentation",
+      "summary": "Reunión inicial de ventas donde se definieron las bases del proyecto Hospital Capilar. Se estableció la necesidad de un presupuesto de marketing, contenido médico audiovisual y la infraestructura técn",
+      "status": "processed",
+      "sourceFile": "brand/hospital-capilar/intelligence/meetings/2026-02-06-sales-presentation/summary.md",
+      "processedAt": "2026-02-27T18:00:00Z",
+      "tags": [
+        "meeting"
+      ],
+      "transcriptFile": "brand/hospital-capilar/intelligence/meetings/2026-02-06-sales-presentation/transcript.md"
+    },
+    {
+      "id": "mtg-2026-01-29-kickoff-hospital-capilar",
+      "type": "meeting",
+      "client": "hospital-capilar",
+      "date": "2026-01-29",
+      "title": "Kickoff Hospital Capilar",
+      "summary": "Primera reunión estratégica donde se identificó la oportunidad de oro de Hospital Capilar: **tratamientos con 90% de margen vs operaciones con 40%**. La empresa ha crecido 2x interanual en tratamiento",
+      "status": "processed",
+      "sourceFile": "brand/hospital-capilar/intelligence/meetings/2026-01-29-kickoff-hospital-capilar/summary.md",
+      "processedAt": "2026-02-27T18:00:00Z",
+      "tags": [
+        "meeting"
+      ],
+      "transcriptFile": "brand/hospital-capilar/intelligence/meetings/2026-01-29-kickoff-hospital-capilar/transcript.md"
+    }
+  ]
+}

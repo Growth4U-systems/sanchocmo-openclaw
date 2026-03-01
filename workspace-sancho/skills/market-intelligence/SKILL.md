@@ -109,3 +109,18 @@ Si el usuario dice "profundizar": relee el documento, haz 10-20 búsquedas adici
 ## Citación (Regla 0b SOUL.md)
 
 Toda cifra con URL inline + sección `## Fuentes` al final con lista numerada completa. No inventar URLs. Claims sin fuente → `⚠️`.
+
+## 📁 Almacenamiento (OBLIGATORIO)
+
+```
+brand/{{slug}}/market/
+├── current.md      ← versión activa
+├── v1.md, v2.md... ← versiones anteriores
+├── history.json    ← log de versiones
+└── qa-log.md       ← historial de QA
+```
+
+1. Identifica slug desde systemPrompt (`[CLIENTE: ... | slug: ...]`)
+2. Si existe `current.md` → backup como `v{N+1}.md`, pide confirmación
+3. Si no existe → crea carpeta + `current.md` + `v1.md` + `history.json`
+4. Link: `https://sancho-cmo.taild48df2.ts.net/mc/docs/brand/{slug}/market/current.md`

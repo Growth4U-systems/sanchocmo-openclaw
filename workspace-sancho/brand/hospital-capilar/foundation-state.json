@@ -1,6 +1,6 @@
 {
   "started_at": "2026-02-26T12:17:00Z",
-  "updated_at": "2026-02-27T21:10:00Z",
+  "updated_at": "2026-02-28T17:06:00Z",
   "pillars": {
     "company-context": {
       "status": "approved",
@@ -51,9 +51,7 @@
       "status": "not-started"
     },
     "brand-voice": {
-      "status": "draft",
-      "version": 1,
-      "drafted_at": "2026-02-28T12:50:00Z"
+      "status": "not-started"
     },
     "visual-identity": {
       "status": "not-started"

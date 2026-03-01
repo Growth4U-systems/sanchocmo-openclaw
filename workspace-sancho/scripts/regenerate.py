@@ -321,6 +321,34 @@ def parse_global_costs():
     return {}
 
 
+def parse_intelligence_log():
+    """Parse _system/intelligence-log.json for MC Intelligence section."""
+    log_file = WORKSPACE / "_system" / "intelligence-log.json"
+    if not log_file.exists():
+        return {"entries": [], "stats": {}}
+    try:
+        data = json.loads(log_file.read_text(encoding="utf-8"))
+        entries = data.get("entries", [])
+        # Group by client
+        by_client = {}
+        for e in entries:
+            client = e.get("client", "unknown")
+            by_client.setdefault(client, []).append(e)
+        # Stats
+        types = {}
+        for e in entries:
+            t = e.get("type", "unknown")
+            types[t] = types.get(t, 0) + 1
+        return {
+            "entries": entries,
+            "by_client": by_client,
+            "stats": {"total": len(entries), "by_type": types}
+        }
+    except Exception as ex:
+        print(f"⚠️ intelligence-log.json parse error: {ex}")
+        return {"entries": [], "stats": {}}
+
+
 def parse_meetings():
     """Parse meetings.json for all clients in brand/."""
     brand_dir = WORKSPACE / "brand"
@@ -382,6 +410,7 @@ def main():
         "healthcheck": parse_healthcheck(),
         "integrations": parse_integrations(),
         "meetings": parse_meetings(),
+        "intelligence_log": parse_intelligence_log(),
         "global_costs": parse_global_costs(),
         "client_tasks": parse_client_tasks(),
     }
