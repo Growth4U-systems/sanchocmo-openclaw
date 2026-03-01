@@ -10,18 +10,20 @@ Discover profitable customer niches by mining thousands of real forum conversati
 ## Pipeline Overview
 
 ```
-INTAKE → STRATEGY → SEARCH → SCRAPE → EXTRACT → CLEAN → SCORE → CONSOLIDATE
+INTAKE → STRATEGY → SEARCH → SCRAPE → EXTRACT → GROUP → FILTER → REVIEW → SCORE → CONSOLIDATE
 ```
 
-| Phase | Script | What It Does | API Required |
-|-------|--------|-------------|--------------|
-| 1. Strategy | (inline LLM call) | Generate search grid | OpenRouter |
-| 2. SERP Search | `scripts/serp_search.py` | Search forums | Serper.dev |
-| 3. Scrape | `scripts/scrape_urls.py` | Extract content | Firecrawl |
-| 4. Extract | `scripts/extract_problems.py` | Find pain points | OpenRouter |
-| 5. Clean & Filter | `scripts/llm_step.py` | Validate to 30-50 niches | OpenRouter |
-| 6. Score | `scripts/llm_step.py` | Pain, Market Size, Reachability | OpenRouter |
-| 7. Consolidate | `scripts/llm_step.py` | Final scored table | OpenRouter |
+| Phase | What It Does | Model | API Required |
+|-------|-------------|-------|--------------|
+| 1. Strategy | Generate search grid | OpenRouter | OpenRouter |
+| 2. SERP Search | Search forums | — | Serper.dev |
+| 3. Scrape | Extract content | — | Firecrawl |
+| 4. Extract | Find pain points per doc | Gemini 3.1 Pro | OpenRouter |
+| 5. Group | Chunk + merge into niches | Sonnet 4 + Opus 4.6 | OpenRouter |
+| 6. Quality Filter | Filter generic/small/irrelevant | Opus 4.6 | OpenRouter |
+| 7. User Review | User confirms niches | — | — |
+| 8. Score | Deep Research per niche | Deep Research Pro | OpenRouter |
+| 9. Consolidate | Final scored table | Opus 4.6 | OpenRouter |
 
 ## Script Location
 
@@ -44,10 +46,15 @@ Set as environment variables before running:
 ├── urls.json             ← Phase 2 (SERP results)
 ├── docs/                 ← Phase 3 (scraped documents)
 ├── problems.md           ← Phase 4 (extracted problems)
-├── niches.md             ← Phase 5 (filtered niches)
-├── niches-confirmed.md   ← Phase 5b (user-confirmed niches for scoring)
-├── scored.md             ← Phase 6 (scoring results)
-└── final-table.md        ← Phase 7 (consolidated final table)
+├── niches-raw/           ← Phase 5 (chunk outputs)
+│   ├── chunk-1.md
+│   ├── chunk-2.md
+│   └── merged.md
+├── niches-filtered.md    ← Phase 6 (filtered niches)
+├── niches-confirmed.md   ← Phase 7 (user-confirmed)
+├── scored.md             ← Phase 8 (scoring results)
+├── final-table.md        ← Phase 9 (consolidated final table)
+└── final-table.csv       ← Phase 9 (CSV export)
 ```
 
 ## Phase 1: Intake
@@ -116,7 +123,7 @@ Once approved, save strategy as `config.json`:
 
 ## GLOBAL RULE: Checkpoint Before Every Phase
 
-**Before executing ANY phase (2 through 7), you MUST:**
+**Before executing ANY phase (2 through 9), you MUST:**
 
 1. Tell the user what the next step will do
 2. Show the parameters: model, estimated time, estimated cost, number of items to process
@@ -128,9 +135,10 @@ Once approved, save strategy as `config.json`:
 - SERP Search: ~1 min per 500 searches (rate limited)
 - Scraping: ~2 min per 500 URLs
 - Extraction: ~3-5 sec/doc at concurrency 10 → ~1,000 docs ≈ 50 min
-- Clean & Filter: 2-5 min (single LLM call)
-- Scoring: 5-15 min (deep research per niche)
-- Consolidation: 1-2 min (single LLM call)
+- Grouping: ~10-15 min (5 Sonnet chunks + 2-3 Opus merges)
+- Quality Filter: ~2-3 min (single Opus pass)
+- Scoring: 10-30 min (Deep Research per niche)
+- Consolidation: 2-5 min (single Opus call)
 
 ---
 
@@ -179,10 +187,10 @@ Outputs one `.md` file per URL + `manifest.json`.
 **Present to user before executing:**
 > **Siguiente paso: Extracción de problemas**
 > - Documentos a procesar: {N} docs
-> - Modelo: google/gemini-3.1-pro-preview
+> - Modelo: google/gemini-3.1-pro-preview (best price/quality for extraction — tested vs Opus, equal or better results with improved prompt)
 > - Concurrencia: 10
 > - Tiempo estimado: ~{N/10 × 4 / 60} minutos (a {concurrency} en paralelo)
-> - Costo estimado: ~${N × 0.04}
+> - Costo estimado: ~${N × 0.012} (Gemini 3.1 Pro: $2/$12 per M tokens)
 >
 > ¿Procedo con estos parámetros o quieres cambiar el modelo, la concurrencia, u otro parámetro?
 
@@ -200,45 +208,119 @@ python3 {baseDir}/scripts/extract_problems.py \
 ```
 
 Processes all documents in parallel. Each doc is checked for relevance then pain points are extracted into a structured table.
+
+**Model selection note:** We tested Gemini 3.1 Pro vs Opus 4.6 for extraction and found Gemini 3.1 Pro with an improved prompt produces equal or better results at 1/6th the cost ($2/$12 vs $15/$75 per M tokens).
+
 **Output saved to:** `{company_name}-nichos/problems.md`
 
-## Phase 5: Clean & Filter
+## Phase 5: Group into Niches (Chunked Approach)
+
+**IMPORTANT**: This phase uses a multi-pass approach because the output can easily exceed model token limits (Opus has a 32K output token hard cap on OpenRouter).
 
 **Present to user before executing:**
-> **Siguiente paso: Limpieza y filtrado**
+> **Siguiente paso: Agrupación de nichos**
 > - Input: {N} problemas extraídos
-> - Modelo: openai/gpt-4o-mini
-> - Temperatura: 0.5
-> - Tiempo estimado: 2-5 minutos
-> - Costo estimado: ~$0.10
-> - Output esperado: 30-50 nichos validados
+> - Método: Chunked — dividir en 5 chunks, procesar con Sonnet 4, luego merge con Opus 4.6
+> - Pass 1: 5 chunks × Sonnet 4 (~$0.50 por chunk)
+> - Pass 2: Opus 4.6 merge + dedup (~$3-5)
+> - Pass 2b: Opus 4.6 supplement (si truncado) (~$2-3)
+> - Tiempo estimado: ~10-15 minutos
+> - Costo estimado: ~$8-12
+> - Output esperado: 80-150 nichos agrupados
 >
 > ¿Procedo con estos parámetros o quieres cambiar algo?
 
+### Step 5a: Chunk Processing (Sonnet 4)
+
+Split the problems table into 5 equal chunks (~400 rows each for 2,000 problems). Process each chunk independently with Sonnet 4.
+
 ```bash
 python3 {baseDir}/scripts/llm_step.py \
-  --input {company_name}-nichos/problems.md \
-  --output {company_name}-nichos/niches.md \
-  --prompt-file {baseDir}/references/prompts-step2-clean-filter.md \
-  --model openai/gpt-4o-mini \
-  --temperature 0.5 \
+  --input {company_name}-nichos/problems-chunk-{N}.md \
+  --output {company_name}-nichos/niches-raw/chunk-{N}.md \
+  --prompt-file {baseDir}/references/prompts-step5a-chunk.md \
+  --model anthropic/claude-sonnet-4 \
+  --temperature 0.3 \
+  --max-tokens 16000 \
   --var company={company_name} \
   --var industry={industry} \
   --var context_type={context_type}
 ```
 
-Merges duplicates, validates viability, categorizes. Outputs 30-50 validated niches.
-See [references/prompts-step2-clean-filter.md](references/prompts-step2-clean-filter.md) for prompt details.
-**Output saved to:** `{company_name}-nichos/niches.md`
+Each chunk produces ~60-100 niches. Save each as `niches-raw/chunk-{N}.md`.
 
-## Phase 5b: User Review of Niches (MANDATORY — do NOT skip)
+### Step 5b: Merge & Dedup (Opus 4.6)
 
-**After Phase 5 completes, present the niches table to the user and ask them to review it before proceeding to Deep Research.**
+Merge all chunk outputs into one table, deduplicating niches that appear across chunks.
+
+**CRITICAL**: Limit each Opus call to ~35-40 output niches to stay well under the 32K output token cap. If more than 40 niches are expected, use multiple merge passes.
+
+```bash
+python3 {baseDir}/scripts/llm_step.py \
+  --input {company_name}-nichos/niches-raw/chunk-1.md,...,chunk-5.md \
+  --output {company_name}-nichos/niches-raw/merged.md \
+  --prompt-file {baseDir}/references/prompts-step5b-merge.md \
+  --model anthropic/claude-opus-4 \
+  --temperature 0.2 \
+  --max-tokens 16000
+```
+
+### Step 5c: Supplement Pass (if truncated)
+
+If the merge output has `finish_reason: length` (hit 32K cap), run a supplementary pass:
+1. Extract all Niche_IDs from the merged output
+2. Send them to Opus with instructions to find ONLY niches NOT already covered
+3. Merge the supplement with the main output
+
+This ensures no niches are lost to truncation.
+
+**Output saved to:** `{company_name}-nichos/niches-raw/merged.md`
+
+## Phase 6: Quality Filter
+
+**This is a dedicated filtering step that ensures only high-quality, specific, commercially viable niches proceed to scoring.**
+
+**Present to user before executing:**
+> **Siguiente paso: Filtro de calidad**
+> - Input: {N} nichos agrupados
+> - Modelo: anthropic/claude-opus-4
+> - Criterios de filtro: genéricos, demasiado pequeños, no relevantes, duplicados de segmento
+> - Tiempo estimado: 2-3 minutos
+> - Costo estimado: ~$2-4
+> - Output esperado: 50-100 nichos validados (30-40% descarte típico)
+>
+> ¿Procedo o quieres ajustar los criterios de filtro?
+
+**Filter criteria (send to Opus):**
+
+1. **TOO GENERIC**: Broad complaint (e.g., "high bank fees") without a specific business segment. A valid niche must define WHO (business type/vertical) + WHAT specific problem.
+2. **TOO SMALL**: Individual autónomos/freelancers with minimal payment volume. Target must be businesses with meaningful transaction volumes.
+3. **NOT PRODUCT-RELEVANT**: Problem isn't related to the company's core product domain.
+4. **CONSUMER PROBLEM**: Personal complaints, not business operations.
+5. **DUPLICATE SEGMENT**: Same business type as another niche — consolidate into the stronger one.
+
+**Key principle**: A NICHE is defined by WHO has the problem (business segment), not by WHAT the problem is. Multiple problems from the same business segment = one niche with multiple pain points.
+
+```bash
+python3 {baseDir}/scripts/llm_step.py \
+  --input {company_name}-nichos/niches-raw/merged.md \
+  --output {company_name}-nichos/niches-filtered.md \
+  --prompt-file {baseDir}/references/prompts-step6-filter.md \
+  --model anthropic/claude-opus-4 \
+  --temperature 0.1 \
+  --var company={company_name}
+```
+
+**Output saved to:** `{company_name}-nichos/niches-filtered.md`
+
+## Phase 7: User Review of Niches (MANDATORY — do NOT skip)
+
+**After Phase 6 completes, present the filtered niches table to the user and ask them to review it before proceeding to Deep Research.**
 
 Present like this:
 > **Resultados del filtrado: {N} nichos identificados**
 >
-> [Show the full niches table from niches.md]
+> [Show the full niches table from niches-filtered.md]
 >
 > **Antes de pasar al Deep Research (scoring), necesito que confirmes:**
 > 1. ¿Quieres mantener todos estos nichos o eliminar algunos?
@@ -254,9 +336,9 @@ Present like this:
 - If the user modifies descriptions: update the table accordingly.
 - After all edits, present the final version and ask for confirmation.
 - **Save the confirmed version as `{company_name}-nichos/niches-confirmed.md`**
-- **Only proceed to Phase 6 after explicit approval.**
+- **Only proceed to Phase 8 after explicit approval.**
 
-## Phase 6: Scoring (Deep Research)
+## Phase 8: Scoring (Deep Research)
 
 **This phase uses the `deep-research` skill to analyze each confirmed niche in depth. Do NOT use `llm_step.py` for this phase — invoke the deep-research skill instead.**
 
@@ -274,12 +356,12 @@ Present like this:
 
 For each niche in `niches-confirmed.md` where Valid = TRUE:
 
-1. **SCOPE** (from prompts-step3-scoring.md):
+1. **SCOPE** (from prompts-step8-scoring.md):
    - Research question: "Viability analysis of niche: [Niche Name] in {industry} for {country}"
    - Data points: Pain Intensity (JTBD), Market Size (SAM), Reachability
    - Entities to cover: target persona, competitors, communities, channels
 
-2. **Analysis framework** (see [references/prompts-step3-scoring.md](references/prompts-step3-scoring.md)):
+2. **Analysis framework** (see [references/prompts-step8-scoring.md](references/prompts-step8-scoring.md)):
    - **Pain Intensity (2-99)**: JTBD analysis — economic loss, opportunity cost, time loss, cognitive load, frequency
    - **Market Size**: SAM estimate using INE, Eurostat, Statista. Top-down + bottom-up. Confidence level.
    - **Reachability (2-99)**: Online communities, physical communities, content creators, keywords, competition/CAC
@@ -292,20 +374,18 @@ For each niche in `niches-confirmed.md` where Valid = TRUE:
 
 4. **Save each niche's research** to `{company_name}-nichos/scored.md` (append format, one section per niche)
 
-**NOTE:** This skill can also be combined with other skills as needed. If a niche requires competitor intelligence, use the `competitor-intelligence` skill. If it needs market data, use `market-intelligence`. The agent should use the best available skill for each research need.
-
 **Output saved to:** `{company_name}-nichos/scored.md`
 
-## Phase 7: Consolidate
+## Phase 9: Consolidate
 
 **Present to user before executing:**
 > **Siguiente paso: Consolidación final**
 > - Inputs: nichos confirmados + scores del deep research
-> - Modelo: openai/gpt-4o-mini
+> - Modelo: anthropic/claude-opus-4 (Opus 4.6 — best for final quality)
 > - Temperatura: 0.3
-> - Tiempo estimado: 1-2 minutos
-> - Costo estimado: ~$0.05
-> - Output: tabla final con 20+ columnas
+> - Tiempo estimado: 2-5 minutos
+> - Costo estimado: ~$1-2
+> - Output: tabla final con 21+ columnas + CSV export
 >
 > ¿Procedo o quieres cambiar algo?
 
@@ -313,26 +393,36 @@ For each niche in `niches-confirmed.md` where Valid = TRUE:
 python3 {baseDir}/scripts/llm_step.py \
   --input "{company_name}-nichos/niches-confirmed.md,{company_name}-nichos/scored.md" \
   --output {company_name}-nichos/final-table.md \
-  --prompt-file {baseDir}/references/prompts-step4-consolidate.md \
-  --model openai/gpt-4o-mini \
+  --prompt-file {baseDir}/references/prompts-step9-consolidate.md \
+  --model anthropic/claude-opus-4 \
   --temperature 0.3
 ```
 
-Merges confirmed niches + scoring into one final table with all 20+ columns.
-See [references/prompts-step4-consolidate.md](references/prompts-step4-consolidate.md) for prompt details.
-**Output saved to:** `{company_name}-nichos/final-table.md`
+Merges confirmed niches + scoring into one final table with all 21+ columns.
+
+**Also export as CSV** for easy import into Google Sheets:
+```bash
+python3 {baseDir}/scripts/export_csv.py \
+  --input {company_name}-nichos/final-table.md \
+  --output {company_name}-nichos/final-table.csv
+```
+
+**Output saved to:** `{company_name}-nichos/final-table.md` and `final-table.csv`
 
 ## Cost Summary
+
+Based on actual pipeline runs (e.g., Paymatico with 4,717 docs → 96 validated niches):
 
 | Phase | Typical Cost |
 |-------|-------------|
 | SERP (2,400 searches) | $7 |
 | Scraping (1,500 URLs) | $1.50 |
-| Extraction (1,000 docs) | $40 |
-| Clean & Filter | $0.10 |
-| Scoring (Deep Research) | $2-5 |
-| Consolidation | $0.05 |
-| **Total** | **~$50-55** |
+| Extraction (2,700 docs, Gemini 3.1 Pro) | $12 |
+| Grouping (5 Sonnet chunks + 2 Opus merges) | $10 |
+| Quality Filter (1 Opus pass) | $4 |
+| Scoring (Deep Research, ~50-100 niches) | $5-10 |
+| Consolidation (1 Opus call) | $2 |
+| **Total** | **~$40-45** |
 
 ## Partial Runs
 
@@ -341,6 +431,15 @@ Not every run needs the full pipeline:
 | Situation | Start At |
 |-----------|----------|
 | "I have forum data already" | Phase 4 (Extract) — put docs in `docs/` |
-| "I have pain points" | Phase 5 (Clean) — format as `problems.md` |
-| "Score these niches" | Phase 5b (Review) → Phase 6 (Score) |
-| "Validate a specific niche" | Phase 6 (Score) — single niche in `niches-confirmed.md` |
+| "I have pain points" | Phase 5 (Group) — format as `problems.md` |
+| "I have grouped niches" | Phase 6 (Filter) — format as `niches-raw/merged.md` |
+| "Score these niches" | Phase 7 (Review) → Phase 8 (Score) |
+| "Validate a specific niche" | Phase 8 (Score) — single niche in `niches-confirmed.md` |
+
+## Key Learnings (from actual runs)
+
+1. **Opus 32K output cap**: OpenRouter enforces a hard 32K output token limit on Opus regardless of `max_tokens` setting. Always chunk outputs to stay under ~15K tokens per call.
+2. **Gemini 3.1 Pro for extraction**: With an improved prompt, Gemini 3.1 Pro matches Opus quality at 1/6th cost for pain point extraction.
+3. **Niche = WHO, not WHAT**: The quality filter must enforce that each niche defines a business segment (who), not just a problem (what). Multiple problems from the same segment should be consolidated.
+4. **Chunked merge pattern**: Split → Sonnet chunks → Opus merge → Opus supplement (if truncated). This handles any volume of input problems.
+5. **Translation**: Final output should be in English for analysis quality, with a separate Spanish translation for client-facing deliverables using Gemini Flash.
