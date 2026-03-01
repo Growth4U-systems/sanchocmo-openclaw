@@ -57,13 +57,15 @@
 |---|---|---|---|---|---|
 | T-014 | Panel de APIs en Mission Control (globales + por cliente) | `[docs]` | P2 | Alfonso 2026-02-24 | Estado de APIs: Anthropic, OpenRouter, Brave, OpenClaw + por cliente. |
 | T-032 | Auto-sync TASKS.md → MC (tareas se actualizan solas) | `[docs]` | P1 | Cervantes 2026-02-26 | Opciones: (A) regenerate.py en cron cada 30min, (B) file watcher en mc-server.js, (C) esperar a Next.js T-010. |
-| T-027 | Docsify + Cloudflare Pages para docs fundacionales | `[infra]` | P1 | Alfonso 2026-02-26 | Montar Docsify sobre brand/ + hostear en Cloudflare Pages (gratis). Ya tenemos /mc/docs/ como viewer interno. |
+
+
 
 ### ✅ Aprobadas (listas para ejecutar)
 
 | ID | Tarea | Cat | Pri | Propuesto | Notas |
 |---|---|---|---|---|---|
 | T-010 | Migrar Mission Control a Next.js (dual view) | `[docs]` | P2 | Alfonso 2026-02-24 | PRD actualizado: vista cliente + vista admin. Depende de T-013. ÚLTIMA — cuando lo estático esté estable. |
+| T-042 | Auditoría completa de skills con Skill Creator + feedback de Sancho | `[skills]` | P1 | Alfonso 2026-03-01 | Revisar las 56 skills del workspace de Sancho usando /skill-creator. Cruzar con feedback de observaciones: skills que funcionan bien (Foundation pipeline, content delegation, deep-research, heartbeat), skills que fallan o no se usan (apify nunca ejecutado, Supabase no poblado), y gaps detectados (pricing-hooks pendiente). Fuentes: `memory/sancho-observations.md` (4 observaciones), `MEMORY.md` de Sancho, sessions_history recientes. Entregable: informe con score por skill + plan de mejora + skills a deprecar/fusionar. |
 
 
 
@@ -75,6 +77,10 @@
 
 
 ### ✔️ Completadas (recientes)
+
+| ID | Tarea | Cat | Fecha | Notas |
+|---|---|---|---|---|
+| T-041 | Cron outputs siempre en hilos — patrón obligatorio de hilo para Discord | `[flow]` | 2026-03-01 | Todos los crons que publican en Discord ahora siguen patrón: 1) mensaje corto al canal, 2) thread-create desde ese mensaje, 3) contenido completo dentro del hilo. Actualizados: Daily Pulse, Weekly Synthesis, Meeting Intelligence, Healthcheck, Backup, Cervantes observa. Weekly Synthesis cambiado de delivery:announce a delivery:none con publish explícito. |
 
 | ID | Tarea | Cat | Fecha | Notas |
 |---|---|---|---|---|
@@ -122,6 +128,7 @@ _ninguna_
 | T-015 | Dispatch bot real (discord.js) | `[flow]` | 2026-02-27 | Conflicto de token con OpenClaw Discord plugin + código usa dispatch-map v1 (obsoleto). El flujo actual con systemPrompts ya cubre el dispatch. |
 | T-018 | Supabase RLS policies por agente | `[infra]` | 2026-02-27 | Supabase no se usa aún. RLS tiene sentido cuando haya datos reales. |
 | T-021 | Multi-client routing en crons | `[infra]` | 2026-02-27 | Ya resuelto de facto con systemPrompts + clients.json + dispatch-map v3. No se necesita script separado. |
+| T-027 | Docsify + Cloudflare Pages para docs fundacionales | `[infra]` | 2026-03-01 | Tailscale Funnel (T-039) ya expone /mc/docs/ públicamente. No necesitamos hosting separado. |
 
 ### ❌ Rechazadas
 
@@ -137,4 +144,4 @@ _ninguna_
 4. **Tareas completadas** generan entrada en CHANGELOG.md automáticamente.
 5. **Tags de cliente**: `[hospital-capilar]`, `[otro-slug]` en la columna Cat o Notas. Sin tag = sistema.
 6. **Un solo archivo**: Todo aquí. MC filtra por tag de cliente.
-7. **Próximo ID**: T-041
+7. **Próximo ID**: T-042

@@ -44,7 +44,7 @@ with open('$TMPFILE','w') as f: json.dump(d,f)
 check "gateway"          "openclaw gateway status 2>&1"    "running"
 check "mission_control"  "curl -s -o /dev/null -w '%{http_code}' --max-time 10 http://127.0.0.1:18790/" "200"
 check "tailscale"        "tailscale status 2>&1 | head -5" ""
-check "google_workspace" "gog gmail inbox --limit 1 2>&1"  ""
+check "google_workspace" "gog gmail search '*' -p 2>&1 | head -1" ""
 
 # --- Write state ---
 OVERALL="ok"

@@ -5,6 +5,7 @@ context_required:
 - brand/company-context.md
 - brand/competitors.md
 - brand/icp.md
+user-invocable: false
 context_writes:
 - brand/pricing.md
 - brand/learnings.md

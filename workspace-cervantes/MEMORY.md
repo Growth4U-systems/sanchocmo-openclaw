@@ -143,8 +143,34 @@
 - **#general**: requireMention=true
 - **14 canales** con systemPrompt limpio (contexto cliente + PATHS + instrucciones de canal)
 
+## Sesión 2026-03-01 — Onboarding x2 + T-041 Crons
+
+### Completed
+- **T-039: Tailscale Funnel** — Public docs access at `https://sancho-cmo.taild48df2.ts.net:8443/mc/docs/` ✅
+- **Supabase multi-tenant** — Migration SQL (8 tables: clients, pillars, meetings, intelligence_log, integrations, costs, content, campaigns) with RLS. Ready to deploy.
+- **Onboarding workflow v2** — 6 min end-to-end:
+  1. Cliente: Discord template (30s)
+  2. Cliente: OAuth bot (30s)
+  3. Cervantes: `new-client.sh` (30s)
+  4. Cervantes: Guild config + restart (5m)
+  - Script handles all: brand dirs, foundation-state.json, integrations.json, Supabase INSERT, clients.json, clients.js, MC regen
+- **T-041: Cron outputs siempre en hilos** — Protocolo estandarizado documentado. All 6 crons now use threads:
+  1. Daily Pulse
+  2. Weekly Synthesis
+  3. Meeting Intelligence
+  4. Healthcheck (alerts)
+  5. Backup-sancho (alerts)
+  6. Cervantes observa (notifications)
+  - `_system/discord-thread-protocol.md` created
+
+### System Status (2026-03-01 14:33)
+- Gateway: running (pid 41117), Opus thinking=high, Discord OK
+- MC: 40 tasks, 50 events, 10/15 Foundation, 1 campaign
+- Device: 1 PENDING operator (since ~09:45, notified Alfonso)
+- T-041 moved to completed in TASKS.md
+
 ## Tareas
 - **TASKS.md**: `~/.openclaw/workspace-cervantes/TASKS.md` — task board unificado con tags de cliente
-- **Próximo ID**: T-040
+- **Próximo ID**: T-042 (was T-040, now T-041 done)
 - **T-010** (Next.js MC): única aprobada, pendiente de que estático esté estable
-- **T-039** (acceso móvil sin Tailscale): propuesta, pendiente decisión
+- **Device pairing**: 1 PENDING — Alfonso debe revisar
