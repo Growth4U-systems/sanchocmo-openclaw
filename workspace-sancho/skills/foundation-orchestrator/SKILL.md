@@ -126,12 +126,18 @@ Archivo de estado persistente. Source of truth para retomar sesiones.
 
 ## Flujo de Entrada (cada sesión)
 
-### Paso 1: Leer Estado
+### Paso 1: Leer Estado + Crear Hilos
 
 ```
 1. Leer brand/{slug}/foundation-state.json
 2. Si no existe → crear con todos los pilares en "not-started"
 3. Si existe → determinar dónde quedamos
+4. Verificar hilos Discord:
+   - Si estamos en Discord Y el pilar actual NO tiene threadId en el state:
+     → Invocar foundation-threads para crear hilos de la layer actual
+     → foundation-threads guarda los threadId en foundation-state.json
+   - Si ya tienen threadId → usar el hilo existente para trabajar
+   - Si NO estamos en Discord → trabajar sin hilos (webchat, etc.)
 ```
 
 ### Paso 2: Mostrar Progreso
@@ -141,19 +147,18 @@ Siempre mostrar el progreso agrupado por categorías:
 ```
 🏗️ FOUNDATION — [Nombre del Cliente]
 
-Progreso: 7/14 pilares
+Progreso: 7/15 pilares
 
 🏢 La Empresa
   ✅ Company Context · ✅ Business Model · ✅ Budget · ✅ Self-Intelligence
-
+🎯 OPE Canvas
+  ✅ OPE Canvas
 📊 El Mercado
   ✅ Market · ⚠️ Competitors · ⬜ SWOT Analysis
-
 👥 Los Clientes
-  ⬜ Niche Discovery 100x · ⬜ ECP Validation · ⬜ Customer Data
-
+  ⬜ Niche Discovery · ⬜ ECP Validation · ⬜ Customer Data
 🎯 La Marca
-  ✅ Positioning · ⬜ Pricing · ⬜ Brand Voice · ⬜ Visual Identity
+  ⬜ Positioning · ⬜ Pricing · ⬜ Brand Voice · ⬜ Visual Identity
 ```
 
 Iconos: ✅ = validado | ⚠️ = pendiente de validar | ⬜ = no existe | ➖ = saltado
@@ -183,9 +188,23 @@ Para el pilar X en Layer N:
   - Si no → error, no debería llegar aquí
 ```
 
+### 1b. Verificar Hilo Discord
+
+```
+Si estamos en Discord:
+  - Si es el primer pilar de una nueva layer → invocar foundation-threads para crear hilos de esta layer
+  - Leer threadId del pilar actual desde foundation-state.json
+  - Si threadId existe → trabajar DENTRO de ese hilo (enviar mensajes al threadId)
+  - Si no existe → crear hilo individual para este pilar
+Si NO estamos en Discord:
+  - Trabajar en el canal/sesión actual sin hilos
+```
+
 ### 2. Ejecutar el Skill
 
 Invocar el skill correspondiente al pilar (e.g., `company-context`, `budget-constraints`, `business-model-audit`). El skill genera el documento completo y lo guarda en `brand/*.md`.
+
+Si hay threadId → toda la interacción del skill ocurre DENTRO del hilo Discord.
 
 Marcar estado → `in-progress` durante la ejecución.
 

@@ -1,0 +1,21 @@
+{
+  "started_at": "2026-03-01T19:03:21Z",
+  "updated_at": "2026-03-01T19:03:21Z",
+  "pillars": {
+    "company-context": {"status": "not-started"},
+    "business-model": {"status": "not-started"},
+    "budget": {"status": "not-started"},
+    "self-intelligence": {"status": "not-started"},
+    "ope-canvas": {"status": "not-started"},
+    "market": {"status": "not-started"},
+    "competitors": {"status": "not-started"},
+    "swot-analysis": {"status": "not-started"},
+    "niche-discovery-100x": {"status": "not-started"},
+    "ecp-validation": {"status": "not-started"},
+    "existing-customer-data": {"status": "not-started"},
+    "positioning": {"status": "not-started"},
+    "pricing": {"status": "not-started"},
+    "brand-voice": {"status": "not-started"},
+    "visual-identity": {"status": "not-started"}
+  }
+}

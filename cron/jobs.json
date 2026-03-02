@@ -70,7 +70,7 @@
       "name": "Regenerar Dashboard",
       "enabled": true,
       "createdAtMs": 1771950708148,
-      "updatedAtMs": 1772377241746,
+      "updatedAtMs": 1772391628203,
       "schedule": {
         "kind": "cron",
         "expr": "0 8,12,16,20 * * *",
@@ -88,11 +88,11 @@
         "channel": "last"
       },
       "state": {
-        "nextRunAtMs": 1772391600000,
-        "lastRunAtMs": 1772377200018,
+        "nextRunAtMs": 1772434800000,
+        "lastRunAtMs": 1772391600016,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 41728,
+        "lastDurationMs": 28187,
         "lastDeliveryStatus": "delivered",
         "consecutiveErrors": 0,
         "lastDelivered": true
@@ -157,7 +157,7 @@
         "channel": "last"
       },
       "state": {
-        "nextRunAtMs": 1772398800000
+        "nextRunAtMs": 1773003600000
       }
     },
     {
@@ -215,7 +215,8 @@
         "lastDurationMs": 19489,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0,
-        "lastDelivered": false
+        "lastDelivered": false,
+        "runningAtMs": 1772416800014
       }
     },
     {
@@ -224,7 +225,7 @@
       "name": "healthcheck",
       "enabled": true,
       "createdAtMs": 1772069609685,
-      "updatedAtMs": 1772373691246,
+      "updatedAtMs": 1772395293170,
       "schedule": {
         "kind": "every",
         "everyMs": 21600000,
@@ -244,11 +245,11 @@
         "channel": "last"
       },
       "state": {
-        "nextRunAtMs": 1772395283306,
-        "lastRunAtMs": 1772373683306,
+        "nextRunAtMs": 1772416883325,
+        "lastRunAtMs": 1772395283325,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 7940,
+        "lastDurationMs": 9845,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0,
         "lastDelivered": false
@@ -261,7 +262,7 @@
       "description": "T-022: Run cost-tracker.py daily at 23:00",
       "enabled": true,
       "createdAtMs": 1772069993394,
-      "updatedAtMs": 1772229623993,
+      "updatedAtMs": 1772402421050,
       "schedule": {
         "kind": "cron",
         "expr": "0 23 * * *"
@@ -278,11 +279,11 @@
         "channel": "webchat"
       },
       "state": {
-        "nextRunAtMs": 1772402400000,
-        "lastRunAtMs": 1772229600013,
+        "nextRunAtMs": 1772488800000,
+        "lastRunAtMs": 1772402400019,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 23980,
+        "lastDurationMs": 21031,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0,
         "lastDelivered": false

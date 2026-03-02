@@ -1,135 +1,122 @@
 ---
 name: foundation-threads
-description: Create Discord threads for Foundation onboarding flow.
+description: "Create Discord threads for Foundation onboarding flow. Called by foundation-orchestrator when threads don't exist yet. Creates numbered threads per layer in #onboarding with skill reference and objective. NOT user-invocable — triggered automatically."
 user-invocable: false
-metadata:
-  author: Cervantes
-  version: '1.0'
-  system: SanchoCMO
 ---
 
-# Foundation Threads — Onboarding via Discord Threads
+# Foundation Threads — Discord Thread Creation
 
-> Crea los hilos de Foundation en #onboarding y orquesta el flujo pilar por pilar.
+> Creates numbered threads in #onboarding for each Foundation pillar. One thread = one pillar.
 
----
+## Thread Definitions (15 pilares, 5 bloques)
 
-## Cuándo usar
+### 🏢 LA EMPRESA (Layer 0 — sin dependencias)
 
-Cuando un cliente nuevo empieza onboarding. Se ejecuta UNA vez por cliente.
+| # | Thread Name | Skill | Objective |
+|---|------------|-------|-----------|
+| 1 | `01 📋 Contexto de empresa` | company-context | Perfilar la empresa: identidad, producto, modelo de negocio, objetivos, estado actual, cultura y equipo. |
+| 2 | `02 🏢 Modelo de negocio` | business-model-audit | Clasificar el modelo de negocio y mapear la mecánica de adquisición y monetización de clientes. |
+| 3 | `03 💰 Presupuesto y recursos` | budget-constraints | Mapear presupuesto, timeline, capacidad del equipo y stack de herramientas disponible. |
+| 4 | `04 🔍 Autoanálisis` | self-intelligence | Analizar la percepción propia de la marca con el framework de 3 lentes: Autopercepción, Terceros y Consumidores. |
 
----
+### 🎯 OPE CANVAS (Layer 1 — depende de La Empresa)
 
-## Hilos a crear (en orden)
+| # | Thread Name | Skill | Objective |
+|---|------------|-------|-----------|
+| 5 | `05 🎯 OPE Canvas` | ope-canvas | Síntesis estratégica en 1 página: Obvious Choice, ICP, Core Problem, Core Product y las 14 secciones del canvas. |
 
-Crear todos los hilos en el canal #onboarding del cliente. Cada hilo = un pilar del Foundation.
+### 📊 EL MERCADO (Layer 2 — depende de OPE Canvas)
 
-### Layer 0 — Sin dependencias
+| # | Thread Name | Skill | Objective |
+|---|------------|-------|-----------|
+| 6 | `06 📊 Inteligencia de mercado` | market-intelligence | Analizar TAM, tendencias, segmentos, landscape competitivo y entorno regulatorio. |
+| 7 | `07 🏆 Análisis de competidores` | competitor-intelligence | Análisis competitivo 3 lentes: Autopercepción, Terceros y Consumidores. Battle cards y gaps. |
+| 8 | `08 ⚖️ Análisis SWOT` | swot-analysis | SWOT + estrategias TOWS + priorización ICE a partir de la inteligencia recopilada. |
 
-| # | Hilo | Skill | Output |
-|---|------|-------|--------|
-| 1 | `📋 Contexto de empresa` | company-context | brand/{slug}/company-context.md |
-| 2 | `💰 Presupuesto y recursos` | budget-constraints | brand/{slug}/budget.md |
+### 👥 LOS CLIENTES (Layer 3 — depende de El Mercado)
 
-### Layer 1 — Depende de Layer 0
+| # | Thread Name | Skill | Objective |
+|---|------------|-------|-----------|
+| 9 | `09 🎯 Descubrimiento de nichos` | niche-discovery-100x | Descubrir nichos rentables minando conversaciones reales de foros, validar con Triple Filter y scoring. |
+| 10 | `10 ✅ Validación ECP` *(opcional)* | ecp-validation | Testear hipótesis de los ECPs antes de ejecutar. Solo si hay +4 semanas y múltiples ECPs. |
+| 11 | `11 📈 Datos de clientes existentes` *(opcional)* | existing-customer-data | Analizar CRM/datos existentes: segmentación RFM, clustering, churn, LTV. Solo si hay datos. |
 
-| # | Hilo | Skill | Output |
-|---|------|-------|--------|
-| 3 | `🏢 Modelo de negocio` | business-model-audit | brand/{slug}/business-model.md |
-| 4 | `🔍 Autoanálisis (producto/servicio)` | self-intelligence | brand/{slug}/product-analysis.md |
+### 🎯 LA MARCA (Layer 4 — depende de El Mercado)
 
-### Layer 2 — Depende de Layer 1
+| # | Thread Name | Skill | Objective |
+|---|------------|-------|-----------|
+| 12 | `12 💎 Positioning & Messaging` | positioning-messaging | Crear playbook de posicionamiento y messaging por nicho/ECP. |
+| 13 | `13 💲 Estrategia de pricing` | pricing-strategy | Recomendar modelos de pricing, tiers y estrategia de monetización. |
+| 14 | `14 🎙️ Voz de marca` | brand-voice | Definir voz, tono, vocabulario, reglas Do/Don't y AI Brand Kit. |
+| 15 | `15 🎨 Identidad visual` | visual-identity | Establecer cómo se VE la marca: paleta, tipografía, estilo visual, assets. |
 
-| # | Hilo | Skill | Output |
-|---|------|-------|--------|
-| 5 | `📊 Inteligencia de mercado` | market-intelligence | brand/{slug}/market.md |
-| 6 | `🏆 Análisis de competidores` | competitor-intelligence | brand/{slug}/competitors.md |
-| 7 | `🎯 ICP & Buyer Personas` | niche-discovery-100x | brand/{slug}/icp.md |
-| 8 | `💎 Positioning & Messaging` | positioning-messaging | brand/{slug}/positioning.md |
-| 9 | `🎙️ Voz de marca` | brand-voice | brand/{slug}/voice-profile.md |
-| 10 | `🎨 Identidad visual` | visual-identity | brand/{slug}/visual-identity.md |
-| 11 | `💲 Estrategia de pricing` | pricing-strategy | brand/{slug}/pricing.md |
-| 12 | `⚖️ Análisis SWOT` | swot-analysis | brand/{slug}/swot.md |
+## Thread Creation Flow
 
-### Opcionales
+### Create by Layer
 
-| # | Hilo | Skill | Output |
-|---|------|-------|--------|
-| 13 | `✅ Validación ECP` | ecp-validation | brand/{slug}/ecps.md |
-| 14 | `📈 Datos de clientes existentes` | existing-customer-data | brand/{slug}/customer-data.md |
-
----
-
-## Flujo de ejecución
-
-### Paso 1: Crear hilos
-
-Al recibir "iniciar onboarding" o "empezar foundation":
-
-1. Crear los hilos 1 y 2 (Layer 0) en #onboarding usando `message` tool con `action: thread-create`
-2. NO crear todos los hilos de golpe — solo los de la layer actual
-3. En el primer hilo (`📋 Contexto de empresa`), enviar mensaje de bienvenida:
+Only create threads for the current layer + already completed layers. Do NOT create all 15 at once.
 
 ```
-¡Bienvenido al onboarding de SanchoCMO! 🎉
-
-Vamos a construir tu Foundation paso a paso. Cada hilo es un pilar de tu estrategia.
-
-Empezamos por lo básico: cuéntame sobre tu empresa.
-
-🔗 Al terminar cada pilar, podrás ver el documento generado en:
-https://sancho-cmo.taild48df2.ts.net/mc/brand/{slug}/
-
-Empecemos: ¿Cómo se llama tu empresa y a qué se dedica?
+When foundation-orchestrator calls this skill:
+  1. Read foundation-state.json → determine current layer
+  2. Create threads for current layer (if not created yet)
+  3. Store threadId per pillar in foundation-state.json
 ```
 
-### Paso 2: Trabajar en cada hilo
+### Opening Message per Thread
 
-- Dentro de cada hilo, sigue el skill correspondiente (iterativo: pregunta → respuesta → siguiente pregunta)
-- Cuando el usuario aprueba el pilar → guardar output en `brand/{slug}/`
-- Actualizar `memory/foundation-state.json` con el estado del pilar
+When creating a thread, post this opening message inside it:
 
-### Paso 3: Avanzar a siguiente layer
+```
+🏗️ **Foundation — Pilar {N}/15: {Pillar Name}**
 
-Cuando TODOS los pilares de la layer actual estén `approved` o `skipped`:
+📌 **Skill**: `{skill-name}`
+🎯 **Objetivo**: {objective text from table above}
 
-1. Crear los hilos de la siguiente layer
-2. En el primer hilo nuevo, enviar: "Layer [N-1] completada ✅ Avanzamos a [descripción de la layer]"
-3. Incluir un resumen de lo aprendido en la layer anterior como contexto
-
-### Paso 4: Contexto entre hilos
-
-Al empezar un nuevo hilo, Sancho DEBE:
-
-1. Leer los outputs de los pilares anteriores (los archivos .md en brand/{slug}/)
-2. Incluir un mini-resumen de contexto relevante al inicio: "Basándome en lo que hemos definido: [empresa] es [X], su ICP es [Y], su presupuesto es [Z]..."
-3. Esto evita que el usuario tenga que repetir información
+{layer context — brief summary of what was learned in previous pillars}
 
 ---
 
-## Estado
+Empezamos cuando estés listo. ¿Alguna pregunta antes de arrancar?
+```
 
-Usar `memory/foundation-state.json` (mismo formato que foundation-orchestrator):
+### Thread Creation Command
+
+For each thread, use message tool:
+
+```
+1. message(action=send, channel=discord, target={onboarding_channel_id},
+   message="🏗️ Foundation — Pilar {N}/15: {name}")
+2. Capture messageId from result
+3. message(action=thread-create, channel=discord, target={onboarding_channel_id},
+   messageId={messageId}, threadName="{NN} {emoji} {name}")
+4. Capture threadId
+5. message(action=send, channel=discord, target={threadId},
+   message={opening message with skill + objective + context})
+6. Store threadId in foundation-state.json under pillars.{slug}.threadId
+```
+
+## State Integration
+
+Update `foundation-state.json` with thread IDs:
 
 ```json
 {
-  "client": "hospital-capilar",
-  "startedAt": "2026-02-26T...",
-  "threads": {
-    "company-context": { "threadId": "123456", "status": "approved" },
-    "budget-constraints": { "threadId": "789012", "status": "in-progress" }
-  },
-  "currentLayer": 0,
-  "currentPillar": "budget-constraints"
+  "pillars": {
+    "company-context": {
+      "status": "not-started",
+      "layer": 0,
+      "threadId": "1234567890",
+      "threadName": "01 📋 Contexto de empresa"
+    }
+  }
 }
 ```
 
----
+## Rules
 
-## Reglas
-
-1. **No crear hilos de layers futuras** — solo la layer actual + anterior (visibilidad)
-2. **Respetar el DAG** — nunca avanzar sin aprobar dependencias
-3. **Siempre incluir contexto** — cada hilo nuevo lleva resumen de lo anterior
-4. **Links a docs** — al terminar cada pilar, mostrar link al documento generado
-5. **Un pilar = un hilo** — no mezclar temas
+1. **Numbered threads** — always prefix with 2-digit number (01-15) for visual ordering
+2. **Layer by layer** — only create current layer's threads, not future layers
+3. **Context carry-forward** — each new thread's opening message includes relevant context from completed pillars
+4. **Optional pillars** — create threads 10 and 11 only if user hasn't explicitly skipped them
+5. **Idempotent** — if thread already exists (threadId in state), skip creation

@@ -30,21 +30,28 @@
 - **Mission Control**: HTML dashboard con Supabase live, multi-cliente, tasks, search, skill reader, wizard nuevo cliente, DAG, activity feed, dark/light mode
 - **Archivos clave**: CHANGELOG.md, VERSION.md, TASKS.md, clients.js, skills-data.js, mc-data.js, scripts/regenerate.py
 
-## Learnings Críticos (2026-02-26)
+## Learnings Críticos
 
-### Hilos SIEMPRE — incluso para cron jobs
+### Discord: Hilos SIEMPRE + NUNCA narrar pasos (2026-02-26, 2026-02-28)
 - Alfonso me corrigió: los resultados de cron (daily pulse, meeting intelligence) los publiqué sin hilo.
 - Regla reforzada en SOUL.md: TODA respuesta en Discord va en hilo, sin excepción.
 - Incluye system messages, cron results, cualquier output.
+- **CRÍTICO (2026-02-28):** NUNCA generar texto entre tool calls en Discord. Cada bloque de texto intermedio ("Now let me scrape...", "I have enough context...") aparece como mensaje público. Solo tool calls + respuesta final NO_REPLY.
 
-### NUNCA saltar el flujo del sistema
+### NUNCA saltar el flujo del sistema (2026-02-26)
 - sancho-start → foundation-orchestrator → gate check → Phase 2. Sin atajos.
 - El DAG de pillars tiene dependencias por algo. Layer 0 → 1 → 2 → 3 → 4 → 5.
 - Positioning sin SWOT/ICP previo = positioning superficial.
 - "Sí" del usuario a un paso ≠ "haz todos los pasos siguientes de golpe".
 - Gate check SIEMPRE antes de cambiar de phase. Es advisory pero obligatorio mostrarlo.
 
-### Usar Supabase como Context Lake
+### Self-QA > Rocinante para docs internos (2026-02-27)
+- Alfonso desafió calidad de market-intelligence (v1-v5 iterations). Problema raíz: solo 45% del prompt ejecutado.
+- Decisión: **Self-QA obligatorio, Rocinante opcional** para Foundation docs. Rocinante solo para external-facing content.
+- Checklist.md añadido a market-intelligence skill (30 items). Cervantes tasked para añadir checklist.md a todos los 13 Foundation skills.
+- Documents should follow their prompt 100%, not 45%. El checklist previene esto.
+
+### Usar Supabase como Context Lake (2026-02-26)
 - Las 9 tablas existen y están vacías. Debo poblarlas.
 - Archivos ./brand/ son complementarios, no sustitutos de la DB.
 - Pendiente: clarificar con Alfonso el flujo exacto md ↔ Supabase.
@@ -54,18 +61,33 @@
 - Generé GTM (keywords, quiz, ads, emails, briefs) ANTES de completar Foundation correctamente.
 - El contenido es usable pero prematuro. Se hizo sin SWOT, sin ICP 100x, sin validation.
 
-## Estado Hospital Capilar (2026-02-26)
-- **Foundation Lite:** 7 archivos en ./brand/ (company-context, product-analysis, competitors, budget, icp, positioning, channel-plan)
-- **Foundation DAG:** NO seguido. Pillars hechos sin respetar dependencias.
+## Estado Hospital Capilar
+- **Foundation:** Regenerados 4 pilares con versionado v2 (2026-02-28): company-context, budget, business-model, ope-canvas. Self-QA tags añadidos. Rocinante QA: 8.5-9/10. Version history completo (v1.md + history.json).
+- **Brand Voice:** Ejecutado 2026-02-28 (Full mode, Hybrid approach, website scraping + ECP cross-reference). Guardado en `brand/hospital-capilar/brand-voice/current.md`.
+- **Visual Identity:** Bloqueado (2026-02-28) porque brand-voice estaba en "not-started" cuando se intentó. Ahora desbloqueado.
+- **Positioning:** v2 completado 2026-02-27. 6 ECPs definidos, UVP core "Entre el Pilexil y la cirugía, hay un mundo que no conoces". ECP 1 (Frustrado Minoxidil) y ECP 2 (Mujer Hormonal) son los más fuertes.
+- **Contenido (2026-02-28):** Calendario editorial agosto (Escudero), calendario marzo (Escudero), post blog mesoterapia capilar 800 palabras (Escudero con brand voice aplicado).
 - **Supabase:** Vacío. Nada migrado.
-- **GTM (prematuro):** keyword-plan, quiz-structure, ad-copy-tratamientos, email-sequence-postcirugía, briefs-creativos — todo en ./brand/
-- **Pendiente:** Rehacer Foundation via orchestrator, poblar Supabase, gate check, y LUEGO GTM.
+- **GTM (prematuro Feb 26):** keyword-plan, quiz-structure, ad-copy-tratamientos, email-sequence-postcirugía, briefs-creativos — guardados pero generados sin seguir flujo correcto.
 
-## Próximos pasos
-1. Analizar gaps en skills y proponer cambios
-2. Rehacer Foundation via foundation-orchestrator (DAG correcto)
-3. Poblar Supabase con datos de Foundation
-4. Gate check antes de Phase 2
-5. Heartbeat con checks periódicos
-6. Dispatch bot
-7. Next.js migration (T-010, última)
+## Eventos Recientes (Feb 27-28)
+
+### 2026-02-27 — Market Intelligence Deep Dive
+- Sesión larga con Alfonso (10:00-12:20) refinando market-intelligence v1→v5
+- Alfonso criticó: "Too many tables, not enough analysis" + "Is this actually a good market analysis?" + "45% completion vs the prompt"
+- Decisión: Self-QA reemplaza Rocinante para Foundation docs
+- Skill reestructurado siguiendo skill-creator principles: SKILL.md 372→111 lines, references/ creado (concepts.md, schema.md, checklist.md, prompt.md)
+- Cervantes tasked para añadir checklist.md a todos los 13 Foundation skills
+
+### 2026-02-28 — Doc Regeneration + Brand Voice
+- Regeneración masiva: company-context v2, budget v2, business-model v2, ope-canvas v2
+- Todos con version tags, Self-QA inline, history.json, v1.md preservado
+- Rocinante QA external: company-context 9/10, budget 8.5/10, business-model + ope-canvas pending → APROBADO CON OBSERVACIONES
+- Brand-voice ejecutado (Full mode, Hybrid approach). Foundation state actualizado.
+- Generación de contenido: calendario editorial agosto/marzo, post blog mesoterapia capilar (Escudero, brand voice aplicado)
+
+### Decisiones de Sistema
+- **Self-QA mandatory, Rocinante optional** para Foundation docs (27-Feb)
+- **Checklist.md en todos los Foundation skills** para garantizar 100% prompt execution (27-Feb)
+- **skill-creator principles** validados: lean SKILL.md + rich references/ = clear execution (27-Feb)
+- **Discord: NUNCA texto entre tool calls** — solo tool calls + respuesta final NO_REPLY (28-Feb)
