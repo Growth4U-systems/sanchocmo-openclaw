@@ -3,13 +3,13 @@ name: newsletter
 version: 7.0
 description: Newsletter strategy and content.
 context_required:
-- brand/voice-profile.md
-- brand/icp.md
-- brand/learnings.md
+- brand/{slug}/brand-identity/voice-profile.md
+- brand/{slug}/go-to-market/ecps.md
+- brand/{slug}/operational/learnings.md
 context_writes:
 - campaigns/
-- brand/learnings.md
-- brand/assets.md
+- brand/{slug}/operational/learnings.md
+- brand/{slug}/operational/assets.md
 ---
 
 # Newsletter Skill
@@ -1310,7 +1310,7 @@ Each saved newsletter file follows this structure:
 
 ### Asset Registry Update
 
-After saving the newsletter file, append an entry to `./brand/assets.md`:
+After saving the newsletter file, append an entry to `./brand/{slug}/operational/assets.md`:
 
 ```
 | {date}-{topic} | Newsletter ({type}) | {date} | newsletters | draft | {subject line} |
@@ -1318,7 +1318,7 @@ After saving the newsletter file, append an entry to `./brand/assets.md`:
 
 ### Learnings Journal Update
 
-After the user provides feedback (via the standard feedback prompt), append findings to `./brand/learnings.md` under the appropriate section.
+After the user provides feedback (via the standard feedback prompt), append findings to `./brand/{slug}/operational/learnings.md` under the appropriate section.
 
 ---
 
@@ -1435,7 +1435,7 @@ and tell me.)
 ```
 
 Process feedback per `_system/brand-memory.md` feedback protocol:
-- Log to `./brand/learnings.md` with date, skill tag `[/newsletter]`, and specific findings
+- Log to `./brand/{slug}/operational/learnings.md` with date, skill tag `[/newsletter]`, and specific findings
 - If subject line data is shared, log it: "Subject line '[line]' achieved [X]% open rate"
 - If send-time data is shared, log it: "[Day] [time] outperformed [Day] [time] by [X]%"
 - If format preference emerges, log it: "Audience prefers [format] over [format]"
@@ -1478,7 +1478,7 @@ When a user invokes this skill, follow this sequence:
 
 6. Save to file
    ├── Write to ./campaigns/newsletters/{date}-{topic}.md
-   ├── Append to ./brand/assets.md
+   ├── Append to ./brand/{slug}/operational/assets.md
    └── Confirm files saved
 
 7. Offer next steps
@@ -1545,7 +1545,7 @@ Follow `_system/output-format.md` exactly. The newsletter output should use this
   FILES SAVED
 
   ./campaigns/newsletters/{file}.md    ✓ (new)
-  ./brand/assets.md                    ✓ (1 entry added)
+  ./brand/{slug}/operational/assets.md                    ✓ (1 entry added)
 
   WHAT'S NEXT
 

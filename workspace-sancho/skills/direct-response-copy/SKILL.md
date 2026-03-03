@@ -3,14 +3,14 @@ name: direct-response-copy
 version: 7.0
 description: Write copy that converts.
 context_required:
-- brand/voice-profile.md
-- brand/positioning.md
-- brand/icp.md
-- brand/ecps.md
+- brand/{slug}/brand-identity/voice-profile.md
+- brand/{slug}/go-to-market/positioning-*.md
+- brand/{slug}/go-to-market/ecps.md
+- brand/{slug}/go-to-market/ecps.md
 context_writes:
 - campaigns/
-- brand/learnings.md
-- brand/assets.md
+- brand/{slug}/operational/learnings.md
+- brand/{slug}/operational/assets.md
 ---
 
 # Direct Response Copy
@@ -1070,7 +1070,7 @@ score: [total/70 if scored]
 ## After Writing
 
 1. **Save the file(s)** to the campaign directory.
-2. **Update `./brand/assets.md`** with the new asset entry:
+2. **Update `./brand/{slug}/operational/assets.md`** with the new asset entry:
    ```
    ## [Date] — [Campaign Name]
    - [Type]: ./campaigns/{name}/{filename}.md ([word count] words, [variant])
@@ -1129,7 +1129,7 @@ Present the scoring rubric output (see Scoring section above).
 ──────────────────────────────────────────────────
 
   ✓ ./campaigns/{name}/landing-page.md
-  ✓ ./brand/assets.md (updated)
+  ✓ ./brand/{slug}/operational/assets.md (updated)
 ```
 
 ---
@@ -1201,8 +1201,8 @@ After presenting the copy and files-saved summary, ask:
 
 If the user provides feedback:
 
-1. **Voice adjustments** → Note in `./brand/voice-profile.md` under a "Copy Feedback" section (append, do not overwrite the profile).
-2. **Angle/variant preferences** → Note in `./brand/learnings.md`:
+1. **Voice adjustments** → Note in `./brand/{slug}/brand-identity/voice-profile.md` under a "Copy Feedback" section (append, do not overwrite the profile).
+2. **Angle/variant preferences** → Note in `./brand/{slug}/operational/learnings.md`:
    ```
    ## [Date] — Copy preference
    - Preferred [variant type] over [other variant type]

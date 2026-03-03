@@ -11,7 +11,7 @@ metadata:
   updated: '2026-02-27'
   changes: v4 — Restructured per skill-creator principles.
 context_required:
-- brand/company-context.md
+- brand/{slug}/company-brief/current.md
 context_writes:
 - brand/{slug}/company-brief/current.md (section: Budget & Resources)
 - brand/{slug}/operational/learnings.md

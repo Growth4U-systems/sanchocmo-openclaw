@@ -9,14 +9,14 @@ metadata:
   depends_on: competitor-intelligence
   chains_to: keyword-research, seo-content, content-atomizer, direct-response-copy
 context_required:
-- brand/competitors.md
-- brand/voice-profile.md
-- brand/positioning.md
-- brand/icp.md
+- brand/{slug}/market-and-us/competitor-*.md
+- brand/{slug}/brand-identity/voice-profile.md
+- brand/{slug}/go-to-market/positioning-*.md
+- brand/{slug}/go-to-market/ecps.md
 context_writes:
 - campaigns/
-- brand/learnings.md
-- brand/assets.md
+- brand/{slug}/operational/learnings.md
+- brand/{slug}/operational/assets.md
 ---
 
 # Thief Marketers — Steal Smart, Adapt Better
@@ -51,8 +51,8 @@ Follow _system/output-format.md (if using SanchoCMO framework)
 - WebSearch (for finding platforms)
 
 **Optional context:**
-- ./brand/positioning.md (to filter ideas through our angle)
-- ./brand/voice-profile.md (to adapt ideas to our tone)
+- ./brand/{slug}/go-to-market/positioning-*.md (to filter ideas through our angle)
+- ./brand/{slug}/brand-identity/voice-profile.md (to adapt ideas to our tone)
 - ./brand/keyword-plan.md (to connect ideas to SEO strategy)
 
 ---
@@ -529,7 +529,7 @@ Write to: `./brand/content-ideas.json` (create if doesn't exist)
 }
 ```
 
-**Append to:** `./brand/assets.md`
+**Append to:** `./brand/{slug}/operational/assets.md`
 
 ```markdown
 ## Content Ideas (Thief Marketers)
@@ -599,7 +599,7 @@ TOP 5 IDEAS (Por Prioridad)
 FILES SAVED
 
 ✓ ./brand/content-ideas.json (47 ideas)
-✓ ./brand/assets.md (appended)
+✓ ./brand/{slug}/operational/assets.md (appended)
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -612,7 +612,7 @@ NEXT STEPS
    → Competitors evolve, new ideas emerge
 
 ③ Track which stolen ideas perform best
-   → Add to ./brand/learnings.md
+   → Add to ./brand/{slug}/operational/learnings.md
 ```
 
 ---
@@ -644,8 +644,8 @@ NEXT STEPS
 | File | What it provides | How it's used |
 |------|-----------------|---------------|
 | ./brand/competitors.json | Battle Cards with URLs | Source list for analysis |
-| ./brand/positioning.md | Our unique angle | Filter: ideas must fit our positioning |
-| ./brand/voice-profile.md | Our tone and style | Adaptation: rewrite ideas in our voice |
+| ./brand/{slug}/go-to-market/positioning-*.md | Our unique angle | Filter: ideas must fit our positioning |
+| ./brand/{slug}/brand-identity/voice-profile.md | Our tone and style | Adaptation: rewrite ideas in our voice |
 | ./brand/keyword-plan.md | SEO targets | Connection: map ideas to keyword clusters |
 
 ### Writes to Context Lake
@@ -653,7 +653,7 @@ NEXT STEPS
 | File | What it contains |
 |------|-----------------|
 | ./brand/content-ideas.json | All stolen ideas (structured) |
-| ./brand/assets.md | Append: Content ideas summary |
+| ./brand/{slug}/operational/assets.md | Append: Content ideas summary |
 
 ### Chains to
 

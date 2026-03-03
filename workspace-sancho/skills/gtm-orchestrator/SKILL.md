@@ -2,11 +2,11 @@
 description: "Orchestrate GTM: channels, funnel, copy, launch."
 user-invocable: false
 context_required:
-  - brand/company-context.md
-  - brand/positioning.md
-  - brand/voice-profile.md
-  - brand/competitors.md
-  - brand/icp.md
+  - brand/{slug}/company-brief/current.md
+  - brand/{slug}/go-to-market/positioning-*.md
+  - brand/{slug}/brand-identity/voice-profile.md
+  - brand/{slug}/market-and-us/competitor-*.md
+  - brand/{slug}/go-to-market/ecps.md
   - brand/channel-plan.md
 context_writes:
   - campaigns/{slug}/brief.md
@@ -83,13 +83,13 @@ No avanzar al siguiente paso sin aprobación explícita del usuario.
 
 ### Step 1: Keyword Research
 - **Skill:** `keyword-research`
-- **Input:** `brand/company-context.md`, `brand/icp.md`, `brand/positioning.md`
+- **Input:** `brand/{slug}/company-brief/current.md`, `brand/{slug}/go-to-market/ecps.md`, `brand/{slug}/go-to-market/positioning-*.md`
 - **Output:** `campaigns/{slug}/content/keywords.md` — keywords + content pillars
 - **Presenta:** Lista de keywords agrupadas por pilar, volumen, dificultad
 - **Aprobación:** Usuario confirma keywords y pillars
 
 ### Step 2: Validar Positioning vs Keywords
-- **Input:** `brand/positioning.md` + keywords aprobadas (Step 1)
+- **Input:** `brand/{slug}/go-to-market/positioning-*.md` + keywords aprobadas (Step 1)
 - **Acción:** Verificar que el positioning actual alinea con las keywords target
 - **Output:** `campaigns/{slug}/content/positioning-validation.md`
 - **Presenta:** Match/mismatch analysis. Si hay gaps, recomendar ajustes
@@ -112,7 +112,7 @@ No avanzar al siguiente paso sin aprobación explícita del usuario.
 
 ### Step 5: Direct Response Copy
 - **Skill:** `direct-response-copy`
-- **Input:** Keywords, positioning, canales, funnel design, `brand/voice-profile.md`
+- **Input:** Keywords, positioning, canales, funnel design, `brand/{slug}/brand-identity/voice-profile.md`
 - **Output:** `campaigns/{slug}/content/ad-copy.md` + `campaigns/{slug}/content/landing-pages.md`
 - **Presenta:** Ad copy por canal + landing page copy
 - **Aprobación:** Usuario aprueba copy (o pide revisiones)

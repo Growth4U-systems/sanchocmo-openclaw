@@ -13,13 +13,13 @@ metadata:
   updated: '2026-02-27'
   changes: v4 — Restructured per skill-creator principles.
 context_required:
-- brand/company-context.md
-- brand/icp.md
+- brand/{slug}/company-brief/current.md
 - brand/{slug}/go-to-market/ecps.md
-- brand/positioning.md
+- brand/{slug}/go-to-market/ecps.md
+- brand/{slug}/go-to-market/positioning-*.md
 context_writes:
 - brand/{slug}/go-to-market/ecps.md
-- brand/learnings.md
+- brand/{slug}/operational/learnings.md
 ---
 
 # ECP Validation (OPTIONAL)
@@ -82,7 +82,7 @@ context_writes:
 ### 5. Update ECPs
 - Reorder by confidence (validated first)
 - Update brand/{slug}/go-to-market/ecps.md with validation status
-- Update brand/learnings.md
+- Update brand/{slug}/operational/learnings.md
 
 ### 6. Self-QA + Guardar
 - Checklist, versionado, `brand/{slug}/ecp-validation/current.md`

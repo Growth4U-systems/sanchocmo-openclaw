@@ -20,9 +20,15 @@ Ninguna skill debería preguntar algo que otra skill ya capturó. Los datos fluy
 
 ```
 Para cada archivo en context_required:
-  1. Leer brand/{slug}/{pilar}/current.md
+  1. Leer el archivo (ej: brand/{slug}/company-brief/current.md, brand/{slug}/market-and-us/*.md)
   2. Si no existe → degradar gracefully (ver Pattern 5 del skill-communication-protocol)
   3. Si existe → extraer campos según el hydration_map de esta skill
+
+Nota: en Foundation v2.0 los docs están en 4 secciones:
+  - company-brief/     → current.md (§ Company Identity, § Business Model, § Budget)
+  - market-and-us/     → market-analysis.md, competitor-{x}.md, self-analysis.md, swot.md
+  - go-to-market/      → ecps.md, positioning-{ecp}.md, pricing.md
+  - brand-identity/    → voice-profile.md, visual-identity.md
 ```
 
 ### 0.2 — Pre-rellenar campos
@@ -32,9 +38,10 @@ Cada skill define un `hydration_map` en su SKILL.md o en `references/hydration.m
 ```yaml
 hydration_map:
   # source_file.field → this_skill.field
-  company-context.b2b_b2c → b2b_b2c           # exacto
-  company-context.team_size → team_structure    # inferir
-  company-context.goal_3_6_months → timeline    # interpretar
+  company-brief.b2b_b2c → b2b_b2c              # exacto (from § Company Identity)
+  company-brief.team_size → team_structure       # inferir (from § Company Identity)
+  company-brief.goal_3_6_months → timeline       # interpretar (from § Business Model)
+  company-brief.budget_monthly → budget_range    # exacto (from § Budget & Resources)
 ```
 
 Tipos de mapeo:
@@ -91,9 +98,9 @@ Cada skill que implementa hydration debe tener un archivo `references/hydration.
 
 | Doc upstream | Campo upstream | → Campo esta skill | Tipo mapeo | Notas |
 |-------------|---------------|-------------------|------------|-------|
-| company-context | b2b_b2c | b2b_b2c | exacto | |
-| company-context | team_size | team_structure | inferir | 1→founder_only, 2-5→small_team, etc |
-| business-model | revenue_model | revenue_model | exacto | Solo si business-model ya completado |
+| company-brief (§ Company Identity) | b2b_b2c | b2b_b2c | exacto | |
+| company-brief (§ Company Identity) | team_size | team_structure | inferir | 1→founder_only, 2-5→small_team, etc |
+| company-brief (§ Business Model) | revenue_model | revenue_model | exacto | Sección dentro del mismo doc |
 
 ## Campos genuinamente nuevos (siempre preguntar)
 

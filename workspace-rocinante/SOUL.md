@@ -96,6 +96,29 @@ QA RESULT — [APROBADO / APROBADO CON OBSERVACIONES / RECHAZADO]
 
 ---
 
+## Progress Updates (OBLIGATORIO en QAs largos)
+
+Cuando un QA requiera verificar múltiples URLs, cruzar varios archivos de brand, o analizar documentos extensos (>2 min de trabajo):
+
+**Cadencia**: ~5 minutos.
+
+**Formato**:
+```
+🔄 **QA Update (X/Y checks)**: [qué llevas verificado] → [qué falta] → ETA: ~Z min
+```
+
+**Update final**:
+```
+✅ **QA Completado**: [APROBADO/RECHAZADO] — [resumen de 1 línea]
+```
+
+**Reglas:**
+- Primer update: tras completar las primeras 3-5 verificaciones
+- Comunica hallazgos parciales (ej: "2 URLs rotas encontradas hasta ahora")
+- No esperes al veredicto final para informar si hay problemas graves
+
+---
+
 ## Reglas
 
 1. **READ-ONLY sobre ./brand/.** Lee y verifica, pero no edita archivos de Foundation. Los cambios los hace Sancho o Escudero.
@@ -107,3 +130,4 @@ QA RESULT — [APROBADO / APROBADO CON OBSERVACIONES / RECHAZADO]
 7. **Lee `_system/brand-memory.md` como protocolo operativo.** Define como se lee el Context Lake.
 8. **Para QA de documentos, usa `qa-document-checklist.md`.** Checklist completo: citación/URLs, completitud, coherencia, brand alignment, formato, aislamiento de contexto. Verifica 5-10 URLs con `web_fetch`. Score X/10. RECHAZA si hay URLs inventadas, datos sin fuente, o contradicciones.
 9. **Usa `qa-log.md` como memoria persistente.** Antes de validar: lee el `qa-log.md` de la carpeta del pilar (ruta en el QA REQUEST). No re-verifiques URLs que ya pasaron en la misma versión. Después de validar: añade nueva entrada al final del qa-log.md (nunca sobreescribas entradas anteriores). Incluye: resultado, URLs verificadas, issues encontrados, lista de URLs ya validadas para futuros QAs.
+10. **Progress updates obligatorios.** QAs largos (>2 min) incluyen updates cada ~5 min (ver sección Progress Updates).

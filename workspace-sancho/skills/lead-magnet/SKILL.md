@@ -3,13 +3,13 @@ name: lead-magnet
 version: 7.0
 description: 'Create lead magnets: concept to content.'
 context_required:
-- brand/voice-profile.md
-- brand/positioning.md
-- brand/icp.md
+- brand/{slug}/brand-identity/voice-profile.md
+- brand/{slug}/go-to-market/positioning-*.md
+- brand/{slug}/go-to-market/ecps.md
 context_writes:
 - campaigns/
-- brand/learnings.md
-- brand/assets.md
+- brand/{slug}/operational/learnings.md
+- brand/{slug}/operational/assets.md
 ---
 
 # Lead Magnet Ideation + Build
@@ -50,7 +50,7 @@ On invocation, check for `./brand/` and load available context:
    - Use audience language in hooks and titles
    - Show: "Writing for [audience summary]. Awareness: [level]."
 
-4. **Check for existing lead magnets** (if `./campaigns/*/brief.md` or `./brand/assets.md` references a lead magnet):
+4. **Check for existing lead magnets** (if `./campaigns/*/brief.md` or `./brand/{slug}/operational/assets.md` references a lead magnet):
    - If a lead magnet already exists, note it and ask whether to create a new one or iterate
    - Show: "Found existing lead magnet: '[name]'. Want to create a new one or improve this?"
 
@@ -484,7 +484,7 @@ Build mode activates when the user says:
 3. **Write the content** -- produce the full lead magnet content based on format type.
 4. **Save to disk** -- write to `./campaigns/{magnet-name}/lead-magnet.md`.
 5. **Create campaign brief** -- write `./campaigns/{magnet-name}/brief.md`.
-6. **Update assets registry** -- append to `./brand/assets.md`.
+6. **Update assets registry** -- append to `./brand/{slug}/operational/assets.md`.
 7. **Offer funnel chain** -- suggest the next skills in the funnel.
 
 ### Build Output by Format Type
@@ -677,7 +677,7 @@ Every lead magnet gets a `brief.md` in the campaign directory. This follows the 
 draft
 
 ## Voice Notes
-{Any lead-magnet-specific voice adjustments from ./brand/voice-profile.md}
+{Any lead-magnet-specific voice adjustments from ./brand/{slug}/brand-identity/voice-profile.md}
 ```
 
 ---
@@ -736,7 +736,7 @@ After building the lead magnet content, display the full output:
 
   ./campaigns/{name}/lead-magnet.md    ✓ (new)
   ./campaigns/{name}/brief.md          ✓ (new)
-  ./brand/assets.md                    ✓ (appended)
+  ./brand/{slug}/operational/assets.md                    ✓ (appended)
 
   ──────────────────────────────────────────────
 
@@ -794,7 +794,7 @@ After building a lead magnet, the natural next steps form a funnel. Always sugge
 
 **Skill:** `/email-sequences`
 **Why:** After someone downloads the lead magnet, they need a welcome sequence that delivers it, builds trust, and bridges to the paid offer.
-**Handoff:** Pass the lead magnet name, format, bridge logic, and paid offer details. The email sequence skill will check for this lead magnet in `./brand/assets.md`.
+**Handoff:** Pass the lead magnet name, format, bridge logic, and paid offer details. The email sequence skill will check for this lead magnet in `./brand/{slug}/operational/assets.md`.
 **Prompt:** "Now you need emails to deliver the lead magnet and convert subscribers. Want me to build the welcome sequence? Just say /email-sequences."
 
 ### Chain 3: Social Promotion
@@ -976,7 +976,7 @@ Phase 2 -- Build Mode:
 Phase 3 -- File Output:
 - Save lead magnet content to ./campaigns/{magnet-name}/lead-magnet.md
 - Save campaign brief to ./campaigns/{magnet-name}/brief.md
-- Append to ./brand/assets.md
+- Append to ./brand/{slug}/operational/assets.md
 
 Phase 4 -- Funnel Chain:
 - Offer to chain to /direct-response-copy for landing page
@@ -1018,15 +1018,15 @@ Before delivering built content, also verify:
 After delivering the built lead magnet, present the feedback prompt from the build mode output template. Process responses per `_system/brand-memory.md`:
 
 ### If "Great -- shipped as-is"
-- Log to `./brand/learnings.md` under "What Works":
+- Log to `./brand/{slug}/operational/learnings.md` under "What Works":
   ```
   - [YYYY-MM-DD] [/lead-magnet] {format} lead magnet shipped as-is. Title: "{title}". Hook: "{hook}". Angle: {angle used}.
   ```
-- Confirm the entry in `./brand/assets.md`.
+- Confirm the entry in `./brand/{slug}/operational/assets.md`.
 
 ### If "Good -- minor edits"
 - Ask: "What did you change? Even small details help me improve next time."
-- Log the change to `./brand/learnings.md`:
+- Log the change to `./brand/{slug}/operational/learnings.md`:
   ```
   - [YYYY-MM-DD] [/lead-magnet] User edited {format} magnet. Change: {description}. Note: {implication for future magnets}.
   ```

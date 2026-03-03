@@ -3,13 +3,13 @@ name: content-atomizer
 version: 7.0
 description: Repurpose content across platforms.
 context_required:
-- brand/voice-profile.md
-- brand/learnings.md
-- brand/stack.md
+- brand/{slug}/brand-identity/voice-profile.md
+- brand/{slug}/operational/learnings.md
+- brand/{slug}/operational/stack.md
 context_writes:
 - campaigns/
-- brand/learnings.md
-- brand/assets.md
+- brand/{slug}/operational/learnings.md
+- brand/{slug}/operational/assets.md
 ---
 
 # Content Atomizer Skill
@@ -1251,7 +1251,7 @@ FILES SAVED
 │       └── value-post.md           ✓
 └── schedule.md                     ✓
 
-./brand/assets.md                   ✓ (16 entries added)
+./brand/{slug}/operational/assets.md                   ✓ (16 entries added)
 ```
 
 ---
@@ -1262,7 +1262,7 @@ FILES SAVED
 
 On invocation, check for scheduling tool availability:
 
-1. **Check `./brand/stack.md`** for connected scheduling tools
+1. **Check `./brand/{slug}/operational/stack.md`** for connected scheduling tools
 2. **Check `.env`** for API keys:
    - `BUFFER_ACCESS_TOKEN` — Buffer
    - `HOOTSUITE_API_KEY` — Hootsuite
@@ -1667,8 +1667,8 @@ Platform-specific feedback is especially valuable. Log entries like:
 
 **Output to:**
 - **creative** — Request visual assets for carousel slides, thumbnails
-- **brand/assets.md** — Register all created content
-- **brand/learnings.md** — Log platform performance data
+- **brand/{slug}/operational/assets.md** — Register all created content
+- **brand/{slug}/operational/learnings.md** — Log platform performance data
 
 **The flow:**
 1. Create source content (blog, newsletter, video)

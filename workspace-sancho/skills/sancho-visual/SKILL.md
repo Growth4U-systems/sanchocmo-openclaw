@@ -3,11 +3,11 @@ name: sancho-visual
 description: Generate marketing visuals.
 user-invocable: false
 context_required:
-- brand/voice-profile.md
-- brand/company-context.md
+- brand/{slug}/brand-identity/voice-profile.md
+- brand/{slug}/company-brief/current.md
 context_writes:
 - campaigns/
-- brand/assets.md
+- brand/{slug}/operational/assets.md
 ---
 
 # SanchoCMO Visual Generation

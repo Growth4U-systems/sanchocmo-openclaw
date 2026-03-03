@@ -12,10 +12,10 @@ metadata:
   updated: '2026-02-27'
   changes: v3 — Restructured per skill-creator principles. SKILL.md lean (~130 lines). Concepts/prompts in references.
 context_required:
-- brand/company-context.md
-- brand/competitors.md
-- brand/icp.md
-- brand/ecps.md
+- brand/{slug}/company-brief/current.md
+- brand/{slug}/market-and-us/competitor-*.md
+- brand/{slug}/go-to-market/ecps.md
+- brand/{slug}/go-to-market/ecps.md
 context_writes:
 - brand/{slug}/go-to-market/positioning-{ecp-slug}.md
 ---

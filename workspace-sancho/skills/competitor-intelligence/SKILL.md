@@ -13,7 +13,7 @@ metadata:
   changes: v4 — Restructured per skill-creator principles.
 context_required:
 - brand/{slug}/company-brief/current.md
-- brand/positioning.md
+- brand/{slug}/go-to-market/positioning-*.md
 context_writes:
 - brand/{slug}/market-and-us/competitor-{nombre}.md
 - brand/{slug}/operational/learnings.md

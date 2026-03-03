@@ -8,13 +8,13 @@ metadata:
   adapted: '2026-02-20'
   adaptations: Integrated with SanchoCMO brand memory protocol, tech company examples
 context_required:
-- brand/positioning.md
-- brand/icp.md
-- brand/competitors.md
+- brand/{slug}/go-to-market/positioning-*.md
+- brand/{slug}/go-to-market/ecps.md
+- brand/{slug}/market-and-us/competitor-*.md
 context_writes:
 - brand/keyword-plan.md
-- brand/learnings.md
-- brand/assets.md
+- brand/{slug}/operational/learnings.md
+- brand/{slug}/operational/assets.md
 ---
 
 # /keyword-research -- Data-Backed Keyword Strategy
@@ -42,9 +42,9 @@ On every invocation, check for existing brand context.
 
 | File | What it provides | How it shapes output |
 |------|-----------------|---------------------|
-| ./brand/positioning.md | Market angles, differentiators | Aligns keyword selection with brand positioning -- a rebel brand targets different keywords than a trusted advisor |
+| ./brand/{slug}/go-to-market/positioning-*.md | Market angles, differentiators | Aligns keyword selection with brand positioning -- a rebel brand targets different keywords than a trusted advisor |
 | ./brand/audience.md | Buyer profiles, sophistication level | Informs search intent mapping -- beginner audience means more "what is" and "how to" keywords |
-| ./brand/competitors.md | Named competitors, their positioning | Seeds competitive content gap analysis -- search what they rank for, find what they miss |
+| ./brand/{slug}/market-and-us/competitor-*.md | Named competitors, their positioning | Seeds competitive content gap analysis -- search what they rank for, find what they miss |
 
 ### Writes
 
@@ -52,7 +52,7 @@ On every invocation, check for existing brand context.
 |------|-----------------|
 | ./brand/keyword-plan.md | The complete prioritized keyword plan (profile file, create-or-overwrite) |
 | ./campaigns/content-plan/*.md | Individual content briefs for top-priority keywords |
-| ./brand/assets.md | Appends entries for each content brief created |
+| ./brand/{slug}/operational/assets.md | Appends entries for each content brief created |
 
 ### Context Loading Behavior
 
@@ -194,12 +194,12 @@ Get these inputs before generating anything. If brand memory files exist, pre-fi
 what you can and confirm with the user.
 
 1. **What do you sell/offer?** (1-2 sentences)
-   - Pre-fill from: ./brand/positioning.md
+   - Pre-fill from: ./brand/{slug}/go-to-market/positioning-*.md
 2. **Who are you trying to reach?** (Be specific)
    - Pre-fill from: ./brand/audience.md
 3. **What is your website?** (To understand current content)
 4. **Who are 2-3 competitors?** (Or help identify them)
-   - Pre-fill from: ./brand/competitors.md
+   - Pre-fill from: ./brand/{slug}/market-and-us/competitor-*.md
 5. **What is the goal?** (Traffic? Leads? Sales? Authority?)
 6. **Timeline?** (Quick wins or long-term plays?)
 
@@ -269,7 +269,7 @@ Results and transformations customers achieve.
 What makes you different from alternatives.
 > Example: "no-code marketing", "AI-first approach", "community-driven marketing"
 
-If ./brand/positioning.md is loaded, use the actual positioning angles here
+If ./brand/{slug}/go-to-market/positioning-*.md is loaded, use the actual positioning angles here
 instead of generic examples. The user's real differentiators should drive Circle 4.
 
 ### Circle 5: Adjacent Topics
@@ -396,7 +396,7 @@ Search: "[keyword]"
 
 ### Step 4: Competitor Content Analysis
 
-If ./brand/competitors.md is loaded (or competitors were provided), search
+If ./brand/{slug}/market-and-us/competitor-*.md is loaded (or competitors were provided), search
 for what they rank for:
 
 ```
@@ -778,7 +778,7 @@ H1: {Title}
 
 ## Angle
 {How to approach this topic given the brand's positioning}
-{Reference ./brand/positioning.md if loaded}
+{Reference ./brand/{slug}/go-to-market/positioning-*.md if loaded}
 
 ## Differentiation
 {What makes this piece different from what already ranks}
@@ -1031,7 +1031,7 @@ standard markdown.
   ./campaigns/content-plan/{slug-1}.md   ✓ (new)
   ./campaigns/content-plan/{slug-2}.md   ✓ (new)
   ./campaigns/content-plan/{slug-3}.md   ✓ (new)
-  ./brand/assets.md                      ✓ ({N} entries added)
+  ./brand/{slug}/operational/assets.md                      ✓ ({N} entries added)
 
   WHAT'S NEXT
 
@@ -1301,7 +1301,7 @@ This is the full decision tree for every /keyword-research invocation:
   ├── Save outputs
   │   ├── ./brand/keyword-plan.md
   │   ├── ./campaigns/content-plan/*.md (briefs)
-  │   └── ./brand/assets.md (append brief entries)
+  │   └── ./brand/{slug}/operational/assets.md (append brief entries)
   │
   ├── Present formatted output (output-format.md)
   │   ├── Header
@@ -1354,7 +1354,7 @@ standard feedback prompt per brand-memory.md protocol:
 ### Processing Feedback
 
 **If (a) "Great":**
-- Log to ./brand/learnings.md under "What Works":
+- Log to ./brand/{slug}/operational/learnings.md under "What Works":
   `- [{date}] [/keyword-research] Keyword plan shipped as-is. {N} pillars, {N} briefs. Key finding: {top discovery from web search}.`
 
 **If (b) "Good -- made adjustments":**

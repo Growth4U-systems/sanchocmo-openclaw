@@ -124,71 +124,105 @@ def parse_activity():
 
 
 def parse_foundation():
-    """Check brand/ directory for foundation pillar completion using foundation-state.json."""
+    """Parse Foundation v2.0 state from all brand/{slug}/foundation-state.json files."""
     brand_dir = WORKSPACE / "brand"
 
-    # Universal pillar order with categories
-    FOUNDATION_ORDER = [
-        ("La Empresa", ["company-context", "business-model", "budget", "self-intelligence"]),
-        ("OPE Canvas", ["ope-canvas"]),
-        ("El Mercado", ["market", "competitors", "swot-analysis"]),
-        ("Los Clientes", ["niche-discovery-100x", "ecp-validation", "existing-customer-data"]),
-        ("La Marca", ["positioning", "pricing", "brand-voice", "visual-identity"]),
+    # v2.0 section/pillar display order
+    SECTIONS_ORDER = [
+        ("Company Brief", "company-brief", ["company-context", "business-model", "budget"]),
+        ("Market & Us", "market-and-us", ["market-analysis", "competitor-analysis", "self-analysis", "swot"]),
+        ("Go-To-Market", "go-to-market", ["niche-discovery", "existing-customer-data", "positioning", "pricing", "ecp-validation"]),
+        ("Brand Identity", "brand-identity", ["brand-voice", "visual-identity"]),
     ]
-    ALL_PILLARS = [p for _, ps in FOUNDATION_ORDER for p in ps]
 
-    pillars = {}
-    for name in ALL_PILLARS:
-        pillars[name] = {"status": "not-started", "folder": name, "date": None, "client": None, "category": None}
-
-    # Assign categories
-    for cat, names in FOUNDATION_ORDER:
-        for n in names:
-            pillars[n]["category"] = cat
-
+    clients = {}
     if brand_dir.exists():
-        client_dirs = [d for d in brand_dir.iterdir() if d.is_dir() and not d.name.startswith('.')]
-        for client_dir in client_dirs:
-            # Read foundation-state.json if exists
+        for client_dir in sorted(brand_dir.iterdir()):
+            if not client_dir.is_dir() or client_dir.name.startswith('.'):
+                continue
+            slug = client_dir.name
             state_file = client_dir / "foundation-state.json"
-            fstate = {}
-            if state_file.exists():
-                try:
-                    import json as _json
-                    fstate = _json.loads(state_file.read_text()).get("pillars", {})
-                except:
-                    pass
 
-            for name in ALL_PILLARS:
-                p = pillars[name]
-                # Check if folder exists with content
-                folder_path = client_dir / name
-                has_content = False
-                if folder_path.is_dir():
-                    md_files = list(folder_path.glob("*.md"))
-                    if md_files:
-                        has_content = True
-                        newest = max(f.stat().st_mtime for f in md_files)
-                        p["date"] = datetime.fromtimestamp(newest).strftime("%Y-%m-%d")
-                        p["client"] = client_dir.name
+            if not state_file.exists():
+                continue
 
-                # Determine status from state file, fallback to file detection
-                if name in fstate:
-                    st = fstate[name].get("status", "not-started")
-                    if st == "approved":
-                        p["status"] = "approved"
-                    elif has_content or st == "pending-review":
-                        p["status"] = "pending-review"
+            try:
+                state = json.loads(state_file.read_text(encoding="utf-8"))
+            except Exception:
+                continue
+
+            version = state.get("version", "1.0")
+            client_data = {"slug": slug, "version": version, "sections": {}, "total": 0, "approved": 0, "pending": 0}
+
+            if version.startswith("2"):
+                # v2.0 schema: sections → pillars
+                for display_name, sec_key, pillar_names in SECTIONS_ORDER:
+                    sec = state.get("sections", {}).get(sec_key, {})
+                    sec_data = {"display_name": display_name, "status": sec.get("status", "not-started"), "pillars": {}, "syntheses": {}}
+
+                    if sec_key == "company-brief":
+                        # Company Brief: skills, not pillars
+                        skills = sec.get("skills", {})
+                        for pname in pillar_names:
+                            skill_state = skills.get(pname, {})
+                            sec_data["pillars"][pname] = {"status": skill_state.get("status", "not-started")}
+                            client_data["total"] += 1
+                            if skill_state.get("status") == "approved" or sec.get("status") == "approved":
+                                client_data["approved"] += 1
+                            elif skill_state.get("status") in ("pending-review", "in-progress"):
+                                client_data["pending"] += 1
                     else:
-                        p["status"] = "not-started"
-                elif has_content:
-                    p["status"] = "pending-review"
+                        pillars = sec.get("pillars", {})
+                        for pname in pillar_names:
+                            if pname in pillars:
+                                pdata = pillars[pname]
+                                sec_data["pillars"][pname] = {
+                                    "status": pdata.get("status", "not-started"),
+                                    "layer": pdata.get("layer"),
+                                    "requires": pdata.get("requires", []),
+                                    "optional": pdata.get("optional", False),
+                                }
+                                client_data["total"] += 1
+                                st = pdata.get("status", "not-started")
+                                if st == "approved":
+                                    client_data["approved"] += 1
+                                elif st in ("pending-review", "in-progress"):
+                                    client_data["pending"] += 1
 
-    approved = sum(1 for p in pillars.values() if p["status"] == "approved")
-    pending = sum(1 for p in pillars.values() if p["status"] == "pending-review")
-    total = len(pillars)
+                    # Syntheses
+                    for syn_name, syn_data in sec.get("syntheses", {}).items():
+                        sec_data["syntheses"][syn_name] = {"status": syn_data.get("status", "not-generated")}
 
-    return {"pillars": pillars, "done": approved, "pending": pending, "total": total, "categories": FOUNDATION_ORDER}
+                    client_data["sections"][sec_key] = sec_data
+            else:
+                # v1.x fallback: flat pillars (legacy clients)
+                fstate = state.get("pillars", {})
+                for display_name, sec_key, pillar_names in SECTIONS_ORDER:
+                    sec_data = {"display_name": display_name, "status": "not-started", "pillars": {}, "syntheses": {}}
+                    for pname in pillar_names:
+                        st = fstate.get(pname, {}).get("status", "not-started")
+                        sec_data["pillars"][pname] = {"status": st}
+                        client_data["total"] += 1
+                        if st == "approved":
+                            client_data["approved"] += 1
+                        elif st in ("pending-review", "in-progress"):
+                            client_data["pending"] += 1
+                    client_data["sections"][sec_key] = sec_data
+
+            clients[slug] = client_data
+
+    # Aggregate totals
+    total_approved = sum(c["approved"] for c in clients.values())
+    total_pillars = sum(c["total"] for c in clients.values())
+    total_pending = sum(c["pending"] for c in clients.values())
+
+    return {
+        "clients": clients,
+        "done": total_approved,
+        "pending": total_pending,
+        "total": total_pillars,
+        "categories": SECTIONS_ORDER,
+    }
 
 
 def parse_campaigns():

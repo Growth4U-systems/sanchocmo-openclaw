@@ -12,8 +12,8 @@ metadata:
   updated: '2026-02-27'
   changes: v4 — Restructured per skill-creator principles.
 context_required:
-- brand/company-context.md
-- brand/competitors.md
+- brand/{slug}/company-brief/current.md
+- brand/{slug}/market-and-us/competitor-*.md
 context_writes:
 - brand/{slug}/company-brief/current.md (section: Business Model)
 - brand/{slug}/operational/learnings.md

@@ -10,13 +10,13 @@ metadata:
   depends_on: company-context, brand-voice
   chains_to: insight-to-content-mapper, keyword-research, seo-content
 context_required:
-- brand/company-context.md
-- brand/voice-profile.md
-- brand/icp.md
-- brand/ecps.md
+- brand/{slug}/company-brief/current.md
+- brand/{slug}/brand-identity/voice-profile.md
+- brand/{slug}/go-to-market/ecps.md
+- brand/{slug}/go-to-market/ecps.md
 context_writes:
 - brand/transitory/daily-pulse/
-- brand/learnings.md
+- brand/{slug}/operational/learnings.md
 ---
 
 # Daily Pulse — Convierte Conversaciones en Contenido
@@ -49,8 +49,8 @@ Follow _system/output-format.md (if using SanchoCMO framework)
 - WebSearch (fallback para contexto de tendencias)
 
 **Optional context:**
-- ./brand/positioning.md (filtrar insights relevantes a nuestra marca)
-- ./brand/voice-profile.md (adaptar ideas a nuestro tono)
+- ./brand/{slug}/go-to-market/positioning-*.md (filtrar insights relevantes a nuestra marca)
+- ./brand/{slug}/brand-identity/voice-profile.md (adaptar ideas a nuestro tono)
 - ./brand/content-ideas.json (evitar duplicados con ideas existentes)
 
 ---
@@ -356,7 +356,7 @@ PATTERNS DETECTED
 
 **Save to:** `./brand/daily-pulse-YYYYMMDD.json` (see Output Format below for full schema)
 
-**Append summary to:** `./brand/assets.md` with date, insight count, top patterns, and file path.
+**Append summary to:** `./brand/{slug}/operational/assets.md` with date, insight count, top patterns, and file path.
 
 ---
 
@@ -456,8 +456,8 @@ The daily-pulse JSON schema:
 
 | File | What it provides | How it's used |
 |------|-----------------|---------------|
-| ./brand/positioning.md | Our unique angle | Filter: insights must be relevant to our market |
-| ./brand/voice-profile.md | Our tone and style | Adaptation: frame content ideas in our voice |
+| ./brand/{slug}/go-to-market/positioning-*.md | Our unique angle | Filter: insights must be relevant to our market |
+| ./brand/{slug}/brand-identity/voice-profile.md | Our tone and style | Adaptation: frame content ideas in our voice |
 | ./brand/content-ideas.json | Existing ideas | Deduplication: skip insights already captured |
 | ./brand/competitors.json | Competitor names | Detection: flag competitive intel mentions |
 
@@ -466,7 +466,7 @@ The daily-pulse JSON schema:
 | File | What it contains |
 |------|-----------------|
 | ./brand/daily-pulse-YYYYMMDD.json | Full daily pulse output |
-| ./brand/assets.md | Append: daily pulse summary |
+| ./brand/{slug}/operational/assets.md | Append: daily pulse summary |
 
 ### Chains to
 

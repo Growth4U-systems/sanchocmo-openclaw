@@ -80,6 +80,10 @@
 - [ ] **Coherencia con brand files** (company-context, positioning)
 - [ ] **Confianza documentada** por competidor (High/Medium/Low basada en data disponible)
 
+## ENTREGA (obligatorio)
+
+- [ ] **Oferta de deep-research presentada** — Al entregar, SIEMPRE incluir la oferta de profundización con deep-research. Sin esta oferta, la entrega está INCOMPLETA.
+
 ---
 
 ## Flujo de uso

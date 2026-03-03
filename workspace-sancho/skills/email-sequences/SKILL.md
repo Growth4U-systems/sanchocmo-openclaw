@@ -8,13 +8,13 @@ metadata:
   adapted: '2026-02-20'
 description: Build email nurture sequences.
 context_required:
-- brand/voice-profile.md
-- brand/positioning.md
-- brand/icp.md
+- brand/{slug}/brand-identity/voice-profile.md
+- brand/{slug}/go-to-market/positioning-*.md
+- brand/{slug}/go-to-market/ecps.md
 context_writes:
 - campaigns/
-- brand/learnings.md
-- brand/assets.md
+- brand/{slug}/operational/learnings.md
+- brand/{slug}/operational/assets.md
 ---
 
 # Email Sequences
@@ -59,7 +59,7 @@ On invocation, check for `./brand/` and load available context:
    - Reference visual identity for any image or banner suggestions
    - Show: "Creative kit loaded -- brand colors and visual identity available for templates."
 
-5. **Check for lead magnet output** (if `./campaigns/*/brief.md` or `./brand/assets.md` references a lead magnet):
+5. **Check for lead magnet output** (if `./campaigns/*/brief.md` or `./brand/{slug}/operational/assets.md` references a lead magnet):
    - If /lead-magnet was already run, use the actual lead magnet name, format, and delivery URL
    - Pull the specific value proposition and quick-start instructions from the lead magnet brief
    - Show: "Found lead magnet: '[name]'. Building delivery email around the actual asset."
@@ -102,7 +102,7 @@ Before generating the sequence, check for email service provider integrations. T
 
 ### Detection Order
 
-1. **Check `./brand/stack.md`** (if exists) -- look for ESP entries in the Connected Tools table.
+1. **Check `./brand/{slug}/operational/stack.md`** (if exists) -- look for ESP entries in the Connected Tools table.
 2. **Check `.env`** -- scan for these environment variables:
    - `MAILCHIMP_API_KEY` or `MAILCHIMP_SERVER_PREFIX` -- Mailchimp
    - `CONVERTKIT_API_KEY` or `CONVERTKIT_API_SECRET` -- ConvertKit
@@ -212,12 +212,12 @@ Transform a lead magnet subscriber into a customer through a **strategic email s
 Get these inputs before writing any sequence:
 
 1. **What's the lead magnet?** (What did they opt in for?)
-   - Check `./brand/assets.md` and `./campaigns/*/brief.md` for existing lead magnet details
+   - Check `./brand/{slug}/operational/assets.md` and `./campaigns/*/brief.md` for existing lead magnet details
    - If /lead-magnet was already run, use those specifics instead of asking
 2. **What's the paid offer?** (What are you eventually selling?)
 3. **What's the price point?** (Affects how much trust-building needed)
 4. **What's the bridge?** (How does free to paid make logical sense?)
-5. **What voice/brand?** (Load from `./brand/voice-profile.md` or ask)
+5. **What voice/brand?** (Load from `./brand/{slug}/brand-identity/voice-profile.md` or ask)
 6. **What objections?** (Why might they NOT buy?)
 
 If brand memory provides answers to any of these, confirm them with the user rather than re-asking: "Your lead magnet is '[name]' and your paid offer is '[product]' at $[price]. Sound right, or has anything changed?"
@@ -788,7 +788,7 @@ When generating the sequence, assign a specific send day and time to each email 
 1. **Audience type** from `./brand/audience.md` (or ask if not available)
 2. **Sequence type** (welcome sequences are daily/every-other-day; nurture is weekly)
 3. **Price point** (higher price = more value emails before pitch)
-4. **Learnings data** from `./brand/learnings.md` (if send time performance data exists, use it)
+4. **Learnings data** from `./brand/{slug}/operational/learnings.md` (if send time performance data exists, use it)
 
 Output timing in the format: `Day {N}, {Day of Week} at {time} {timezone}`
 
@@ -922,13 +922,13 @@ Every sequence gets a `brief.md` in the campaign directory. This follows the sta
 {N} emails over {N} days
 
 ## Angle
-{The positioning angle being used -- from ./brand/positioning.md}
+{The positioning angle being used -- from ./brand/{slug}/go-to-market/positioning-*.md}
 
 ## Audience Segment
 {Who receives this sequence -- from ./brand/audience.md}
 
 ## Lead Magnet
-{What they opted in for -- from ./brand/assets.md or user input}
+{What they opted in for -- from ./brand/{slug}/operational/assets.md or user input}
 
 ## Paid Offer
 {What we are eventually selling, at what price}
@@ -1014,7 +1014,7 @@ After generating the full sequence, display a summary overview using the Sequenc
   ./campaigns/{name}/emails/05-bridge.md   ✓
   ./campaigns/{name}/emails/06-soft-pitch.md ✓
   ./campaigns/{name}/emails/07-direct-pitch.md ✓
-  ./brand/assets.md                        ✓ (appended)
+  ./brand/{slug}/operational/assets.md                        ✓ (appended)
 
   ──────────────────────────────────────────────
 
@@ -1534,7 +1534,7 @@ When generating a complete sequence, the skill output follows this exact structu
   ./campaigns/{name}/emails/02-{name}.md   ✓
   ./campaigns/{name}/emails/03-{name}.md   ✓
   ...
-  ./brand/assets.md                        ✓ (appended)
+  ./brand/{slug}/operational/assets.md                        ✓ (appended)
 
   ──────────────────────────────────────────────
 
@@ -1617,15 +1617,15 @@ Prompt: "Your sequence is built, but it needs subscribers. Want me to create soc
 After delivering the sequence, present the feedback prompt from the output template above. Process responses per `_system/brand-memory.md`:
 
 ### If "Great -- shipped as-is"
-- Log to `./brand/learnings.md` under "What Works":
+- Log to `./brand/{slug}/operational/learnings.md` under "What Works":
   ```
   - [YYYY-MM-DD] [/email-sequences] {N}-part {type} sequence shipped as-is. Angle: {angle}. Tone: {tone}. Subject line style: {style that was chosen}.
   ```
-- Append entries to `./brand/assets.md` for the sequence.
+- Append entries to `./brand/{slug}/operational/assets.md` for the sequence.
 
 ### If "Good -- minor edits"
 - Ask: "What did you change? Even small details help me improve."
-- Log the change to `./brand/learnings.md`:
+- Log the change to `./brand/{slug}/operational/learnings.md`:
   ```
   - [YYYY-MM-DD] [/email-sequences] User {description of change}. Note: {what this implies for future sequences}.
   ```
@@ -1646,7 +1646,7 @@ After delivering the sequence, present the feedback prompt from the output templ
 ### Subject Line Performance Tracking
 
 If the user reports back on which subject line variant won an A/B test:
-- Log to `./brand/learnings.md` under "What Works" or "What Doesn't Work":
+- Log to `./brand/{slug}/operational/learnings.md` under "What Works" or "What Doesn't Work":
   ```
   - [YYYY-MM-DD] [/email-sequences] Subject line A/B test: "{winner}" beat "{loser}" ({open rate difference if known}). Pattern: {what the winner had that the loser didn't}.
   ```

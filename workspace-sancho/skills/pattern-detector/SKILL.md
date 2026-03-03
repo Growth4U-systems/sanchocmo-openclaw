@@ -12,7 +12,7 @@ context_required:
 - intelligence/
 context_writes:
 - patterns/
-- brand/learnings.md
+- brand/{slug}/operational/learnings.md
 ---
 
 # Pattern Detector

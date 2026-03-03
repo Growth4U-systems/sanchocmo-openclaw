@@ -10,12 +10,12 @@ metadata:
   type: workflow
   configurable: true
 context_required:
-- brand/company-context.md
-- brand/positioning.md
-- brand/voice-profile.md
+- brand/{slug}/company-brief/current.md
+- brand/{slug}/go-to-market/positioning-*.md
+- brand/{slug}/brand-identity/voice-profile.md
 context_writes:
 - content-ideas/
-- brand/learnings.md
+- brand/{slug}/operational/learnings.md
 ---
 
 # Content Miner

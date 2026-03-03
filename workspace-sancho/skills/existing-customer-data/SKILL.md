@@ -12,9 +12,9 @@ metadata:
   updated: '2026-02-27'
   changes: v2 — Restructured per skill-creator principles. SKILL.md lean (~110 lines). References created.
 context_required:
-- brand/company-context.md
-- brand/icp.md
-- brand/ecps.md
+- brand/{slug}/company-brief/current.md
+- brand/{slug}/go-to-market/ecps.md
+- brand/{slug}/go-to-market/ecps.md
 context_writes:
 - brand/{slug}/go-to-market/existing-customer-data.md
 ---

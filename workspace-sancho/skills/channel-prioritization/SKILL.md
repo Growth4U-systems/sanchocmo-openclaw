@@ -12,17 +12,17 @@ metadata:
     competitor-intelligence
   chains_to: content-calendar-planner, outreach-sequence-builder
 context_required:
-- brand/budget.md
-- brand/company-context.md
-- brand/ecps.md
-- brand/positioning.md
-- brand/competitors.md
-- brand/product-analysis.md
-- brand/stack.md
+- brand/{slug}/company-brief/current.md
+- brand/{slug}/company-brief/current.md
+- brand/{slug}/go-to-market/ecps.md
+- brand/{slug}/go-to-market/positioning-*.md
+- brand/{slug}/market-and-us/competitor-*.md
+- brand/{slug}/market-and-us/self-analysis.md
+- brand/{slug}/operational/stack.md
 context_writes:
 - brand/channel-plan.md
-- brand/learnings.md
-- brand/assets.md
+- brand/{slug}/operational/learnings.md
+- brand/{slug}/operational/assets.md
 ---
 
 # Channel Prioritization — Decide Where to Play
@@ -40,15 +40,15 @@ Follow _system/output-format.md (if using SanchoCMO framework)
 ## Prerequisites
 
 **Required (will not run without these):**
-- `./brand/budget.md` — Budget range, team capacity, timeline (from budget-constraints)
-- `./brand/company-context.md` — Industry, stage, business model (from company-context)
-- `./brand/ecps.md` — Target personas with pain points (from niche-discovery-100x)
+- `./brand/{slug}/company-brief/current.md` — Budget range, team capacity, timeline (from budget-constraints)
+- `./brand/{slug}/company-brief/current.md` — Industry, stage, business model (from company-context)
+- `./brand/{slug}/go-to-market/ecps.md` — Target personas with pain points (from niche-discovery-100x)
 
 **Recommended (better output with these):**
-- `./brand/positioning.md` — Differentiation angles (from positioning-messaging)
-- `./brand/competitors.md` — Competitor channel usage (from competitor-intelligence)
-- `./brand/product-analysis.md` — Product strengths/weaknesses (from self-intelligence)
-- `./brand/stack.md` — Available tools and integrations (from sancho-start)
+- `./brand/{slug}/go-to-market/positioning-*.md` — Differentiation angles (from positioning-messaging)
+- `./brand/{slug}/market-and-us/competitor-*.md` — Competitor channel usage (from competitor-intelligence)
+- `./brand/{slug}/market-and-us/self-analysis.md` — Product strengths/weaknesses (from self-intelligence)
+- `./brand/{slug}/operational/stack.md` — Available tools and integrations (from sancho-start)
 
 ---
 
@@ -144,7 +144,7 @@ Only score channels in viable quadrants (from Step 2). Do not waste time scoring
 
 ### Step 4: Detect Available Tools (~2 min)
 
-Read `./brand/stack.md` if it exists. For each recommended channel, check if the client already has tools:
+Read `./brand/{slug}/operational/stack.md` if it exists. For each recommended channel, check if the client already has tools:
 
 ```
 Channel          Needs                   Client Has     Gap
@@ -267,7 +267,7 @@ Team: [size] dedicating [hours]h/week
 - Ad-hoc: When budget or team changes
 ```
 
-Append summary to `./brand/assets.md`:
+Append summary to `./brand/{slug}/operational/assets.md`:
 ```
 [date] channel-plan.md — [N] channels selected: [list]. Budget: EUR [X]/mo.
 ```
@@ -278,15 +278,15 @@ Append summary to `./brand/assets.md`:
 
 | Action | File | Description |
 |--------|------|-------------|
-| READ | `./brand/budget.md` | Budget range, team capacity, timeline |
-| READ | `./brand/company-context.md` | Industry, stage, business model |
-| READ | `./brand/ecps.md` | Target personas, online behavior |
-| READ | `./brand/positioning.md` | Differentiation angles |
-| READ | `./brand/competitors.md` | Competitor channel usage |
-| READ | `./brand/product-analysis.md` | Product strengths/weaknesses |
-| READ | `./brand/stack.md` | Available tools |
+| READ | `./brand/{slug}/company-brief/current.md` | Budget range, team capacity, timeline |
+| READ | `./brand/{slug}/company-brief/current.md` | Industry, stage, business model |
+| READ | `./brand/{slug}/go-to-market/ecps.md` | Target personas, online behavior |
+| READ | `./brand/{slug}/go-to-market/positioning-*.md` | Differentiation angles |
+| READ | `./brand/{slug}/market-and-us/competitor-*.md` | Competitor channel usage |
+| READ | `./brand/{slug}/market-and-us/self-analysis.md` | Product strengths/weaknesses |
+| READ | `./brand/{slug}/operational/stack.md` | Available tools |
 | WRITE (owns) | `./brand/channel-plan.md` | Channel mix + scoring + allocation |
-| APPEND | `./brand/assets.md` | Channel plan summary |
+| APPEND | `./brand/{slug}/operational/assets.md` | Channel plan summary |
 
 ---
 
@@ -304,7 +304,7 @@ After generating the channel plan, ask:
 
 "Hay algun canal que quieras forzar incluir o excluir? Algun insight del mercado que no estoy considerando?"
 
-Log feedback to `./brand/learnings.md`:
+Log feedback to `./brand/{slug}/operational/learnings.md`:
 ```
 [date] channel-prioritization: [feedback summary]
 ```

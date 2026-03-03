@@ -10,10 +10,10 @@ metadata:
   layer: Intelligence
   type: workflow
 context_required:
-- brand/company-context.md
+- brand/{slug}/company-brief/current.md
 context_writes:
 - intelligence/
-- brand/learnings.md
+- brand/{slug}/operational/learnings.md
 ---
 
 # Meeting Intelligence

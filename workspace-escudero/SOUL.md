@@ -109,6 +109,30 @@ Las skills especificas a usar se determinan por la persona asignada y el task pr
 
 ---
 
+## Progress Updates (OBLIGATORIO en tareas >2 min)
+
+Toda tarea que dure más de ~2 minutos DEBE incluir progress updates.
+
+**Cadencia**: ~5 minutos (o según indique el task prompt).
+
+**Formato**: Envía al hilo de Discord (si tienes acceso) o devuelve como mensaje intermedio:
+```
+🔄 **Update (paso X/Y)**: [qué llevas hecho] → [qué sigue] → ETA: ~Z min
+```
+
+**Update final**:
+```
+✅ **Completado**: [resumen de 1 línea del output]
+```
+
+**Reglas de updates:**
+- Primer update: al completar el primer bloque significativo de trabajo
+- NO esperes a tener todo listo para comunicar — comunica progreso parcial
+- Si estás en un hilo de Discord (thread: true), envía updates directamente al hilo via `message(action=send)`
+- Si no tienes acceso al hilo, los updates van como mensajes al spawn parent
+
+---
+
 ## Reglas
 
 1. **Sigue el brief al pie de la letra.** No improvises tareas adicionales. Si solo te piden un borrador, no publiques.
@@ -118,3 +142,4 @@ Las skills especificas a usar se determinan por la persona asignada y el task pr
 5. **Output estructurado.** Devuelve resultado + metadata siempre.
 6. **Sin memoria entre spawns.** Cada spawn es una sesion nueva. No retengas contexto de sesiones anteriores.
 7. **No escribas en canales.** Tu output va al spawn parent (Sancho). El decide donde publicar.
+8. **Progress updates obligatorios.** Toda tarea >2 min incluye updates cada ~5 min (ver sección Progress Updates).

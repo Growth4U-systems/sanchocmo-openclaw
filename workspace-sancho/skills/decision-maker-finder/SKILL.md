@@ -9,12 +9,12 @@ metadata:
   depends_on: company-finder
   chains_to: contact-enrichment
 context_required:
-- brand/company-context.md
-- brand/icp.md
-- brand/ecps.md
+- brand/{slug}/company-brief/current.md
+- brand/{slug}/go-to-market/ecps.md
+- brand/{slug}/go-to-market/ecps.md
 context_writes:
 - campaigns/
-- brand/assets.md
+- brand/{slug}/operational/assets.md
 ---
 
 # Decision Maker Finder — Find the Person Who Can Say YES
@@ -52,7 +52,7 @@ Follow _system/output-format.md (if using SanchoCMO framework)
 
 **Optional context:**
 - ./brand/ecps.json (buyer personas with target roles)
-- ./brand/positioning.md (to identify relevant departments)
+- ./brand/{slug}/go-to-market/positioning-*.md (to identify relevant departments)
 - ./brand/competitors.json (to identify warm paths via mutual connections)
 
 ---
@@ -391,7 +391,7 @@ Save results? [Y/N]
 }
 ```
 
-**Append to:** `./brand/assets.md` — Summary with count of primary/backup contacts, avg composite score, warm paths available.
+**Append to:** `./brand/{slug}/operational/assets.md` — Summary with count of primary/backup contacts, avg composite score, warm paths available.
 
 ---
 
@@ -436,7 +436,7 @@ Same JSON format. Mark `"tool_used": "manual"`. Profile quality assessment may b
 |------|-----------------|---------------|
 | ./brand/companies-YYYYMMDD.json | Target companies list | Source list for people search |
 | ./brand/ecps.json | Buyer personas with roles | Defines which roles to target |
-| ./brand/positioning.md | Our value proposition | Identifies relevant departments |
+| ./brand/{slug}/go-to-market/positioning-*.md | Our value proposition | Identifies relevant departments |
 | ./brand/competitors.json | Competitor data | Warm path identification via shared connections |
 
 ### Writes to Context Lake
@@ -444,7 +444,7 @@ Same JSON format. Mark `"tool_used": "manual"`. Profile quality assessment may b
 | File | What it contains |
 |------|-----------------|
 | ./brand/decision-makers-YYYYMMDD.json | All validated contacts (structured) |
-| ./brand/assets.md | Append: Decision makers summary |
+| ./brand/{slug}/operational/assets.md | Append: Decision makers summary |
 
 ### Chains to
 

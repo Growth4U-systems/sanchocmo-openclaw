@@ -199,7 +199,7 @@
       "name": "backup-sancho",
       "enabled": true,
       "createdAtMs": 1772069600272,
-      "updatedAtMs": 1772416824526,
+      "updatedAtMs": 1772503216313,
       "schedule": {
         "kind": "cron",
         "expr": "0 3 * * *"
@@ -216,15 +216,14 @@
         "channel": "last"
       },
       "state": {
-        "nextRunAtMs": 1772503200000,
-        "lastRunAtMs": 1772416800018,
+        "nextRunAtMs": 1772589600000,
+        "lastRunAtMs": 1772503200020,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 24508,
+        "lastDurationMs": 16293,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0,
-        "lastDelivered": false,
-        "runningAtMs": 1772503200011
+        "lastDelivered": false
       }
     },
     {
@@ -233,7 +232,7 @@
       "name": "healthcheck",
       "enabled": true,
       "createdAtMs": 1772069609685,
-      "updatedAtMs": 1772481780426,
+      "updatedAtMs": 1772503378522,
       "schedule": {
         "kind": "every",
         "everyMs": 21600000,
@@ -253,11 +252,11 @@
         "channel": "last"
       },
       "state": {
-        "nextRunAtMs": 1772503369598,
-        "lastRunAtMs": 1772481769598,
+        "nextRunAtMs": 1772524969612,
+        "lastRunAtMs": 1772503369612,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 10828,
+        "lastDurationMs": 8910,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0,
         "lastDelivered": false

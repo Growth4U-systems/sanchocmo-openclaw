@@ -9,16 +9,16 @@ metadata:
   depends_on: company-context, brand-voice, positioning-messaging
   chains_to: keyword-research, seo-content, content-atomizer
 context_required:
-- brand/company-context.md
-- brand/voice-profile.md
-- brand/positioning.md
-- brand/icp.md
-- brand/ecps.md
+- brand/{slug}/company-brief/current.md
+- brand/{slug}/brand-identity/voice-profile.md
+- brand/{slug}/go-to-market/positioning-*.md
+- brand/{slug}/go-to-market/ecps.md
+- brand/{slug}/go-to-market/ecps.md
 - brand/keyword-plan.md
 context_writes:
 - campaigns/
-- brand/learnings.md
-- brand/assets.md
+- brand/{slug}/operational/learnings.md
+- brand/{slug}/operational/assets.md
 ---
 
 # Insight-to-Content Mapper — From Signal to Brief
@@ -48,8 +48,8 @@ Follow _system/output-format.md (if using SanchoCMO framework)
 - Meeting notes with flagged topics
 
 **Brand context (loaded automatically in SanchoCMO):**
-- ./brand/positioning.md (unique angle selection)
-- ./brand/voice-profile.md (tone guidance)
+- ./brand/{slug}/go-to-market/positioning-*.md (unique angle selection)
+- ./brand/{slug}/brand-identity/voice-profile.md (tone guidance)
 - ./brand/keyword-plan.md (existing keyword strategy)
 - ./brand/content-ideas.json (avoid duplicating ideas)
 
@@ -59,7 +59,7 @@ Follow _system/output-format.md (if using SanchoCMO framework)
 
 **Optional context:**
 - ./brand/competitors.json (competitive gap analysis)
-- ./brand/assets.md (internal linking inventory)
+- ./brand/{slug}/operational/assets.md (internal linking inventory)
 
 ---
 
@@ -172,8 +172,8 @@ Thresholds:
 **Load positioning and select differentiated angle:**
 
 ```
-Read ./brand/positioning.md → positioning statement, differentiators, proof points
-Read ./brand/voice-profile.md → tone, reading level, perspective
+Read ./brand/{slug}/go-to-market/positioning-*.md → positioning statement, differentiators, proof points
+Read ./brand/{slug}/brand-identity/voice-profile.md → tone, reading level, perspective
 
 DIFFERENTIATION CHECK:
   ✓ Proprietary data? (client benchmarks, original research)
@@ -191,7 +191,7 @@ The "So What" test:
 **Using [brief-template.md](references/brief-template.md), compile complete brief:**
 
 All 10 sections filled from previous steps:
-1. Target Keywords (Step 2) | 2. Search Intent (Steps 2+3) | 3. Outline Structure (Step 3) | 4. PAA Questions (Step 2) | 5. Word Count (Step 3) | 6. Internal Linking (./brand/assets.md) | 7. CTA Recommendation (Step 4 funnel stage) | 8. Competitor Gaps (Step 3) | 9. Unique Angle (Step 5) | 10. Tone Guidance (Step 5)
+1. Target Keywords (Step 2) | 2. Search Intent (Steps 2+3) | 3. Outline Structure (Step 3) | 4. PAA Questions (Step 2) | 5. Word Count (Step 3) | 6. Internal Linking (./brand/{slug}/operational/assets.md) | 7. CTA Recommendation (Step 4 funnel stage) | 8. Competitor Gaps (Step 3) | 9. Unique Angle (Step 5) | 10. Tone Guidance (Step 5)
 
 **FILL EVERY SECTION. No empty fields.**
 
@@ -297,7 +297,7 @@ content-briefs/YYYY-MM-DD-[topic-slug-2].md   ← Brief #2
 ...
 ```
 
-**SanchoCMO:** Save in `./content-briefs/`, append summary to `./brand/assets.md`
+**SanchoCMO:** Save in `./content-briefs/`, append summary to `./brand/{slug}/operational/assets.md`
 **Standalone:** Save in current working directory or specified path
 
 ---
@@ -308,12 +308,12 @@ content-briefs/YYYY-MM-DD-[topic-slug-2].md   ← Brief #2
 
 | File | What it provides | How it's used |
 |------|-----------------|---------------|
-| ./brand/positioning.md | Unique angle and differentiators | Step 5: Angle selection |
-| ./brand/voice-profile.md | Tone, style, reading level | Step 6: Tone guidance in brief |
+| ./brand/{slug}/go-to-market/positioning-*.md | Unique angle and differentiators | Step 5: Angle selection |
+| ./brand/{slug}/brand-identity/voice-profile.md | Tone, style, reading level | Step 6: Tone guidance in brief |
 | ./brand/keyword-plan.md | Existing keyword strategy | Step 2: Align new keywords |
 | ./brand/content-ideas.json | Existing ideas | Step 0: Avoid duplicates |
 | ./brand/competitors.json | Competitor URLs and battle cards | Step 3: Gap analysis |
-| ./brand/assets.md | Content inventory | Step 6: Internal linking |
+| ./brand/{slug}/operational/assets.md | Content inventory | Step 6: Internal linking |
 
 ### Writes to Context Lake
 
@@ -321,7 +321,7 @@ content-briefs/YYYY-MM-DD-[topic-slug-2].md   ← Brief #2
 |------|-----------------|
 | ./content-briefs/*.md | Individual content briefs (complete) |
 | ./content-briefs/batch-*.json | Batch summaries with metadata |
-| ./brand/assets.md | Append: brief inventory summary |
+| ./brand/{slug}/operational/assets.md | Append: brief inventory summary |
 
 ### Chains to
 

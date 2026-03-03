@@ -177,4 +177,25 @@ El scraping público de LinkedIn (web_fetch) mezcla posts propios y "Liked by [p
 2. Si no puedo confirmar autoría → marcar como "⚠️ autoría no verificada" 
 3. NUNCA asumir que contenido en el feed de alguien = contenido propio
 
+## ⏱️ Progress Updates — Cadencia ~5 min (OBLIGATORIO)
+
+Toda tarea >2 min DEBE dar updates en el hilo. Aplica a Sancho Y a Escudero.
+
+**Patrón Sancho (tareas propias):**
+```
+# Después de cada bloque significativo de trabajo (3-5 búsquedas, 1 sección, etc.):
+message(action=send, channel=discord, target="<thread_id>", message="🔄 **Update (X/Y)**: progreso → siguiente → ETA")
+```
+
+**Patrón Escudero (spawn):**
+Incluir en CADA task prompt:
+```
+PROGRESS UPDATES (OBLIGATORIO):
+Cada ~5 min, envía update al hilo: "🔄 **Update (X/Y)**: [progreso] → [siguiente] → ETA: ~Z min"
+```
+
+Detalles completos en `_system/dispatch-protocol.md` sección "Progress Updates".
+
+---
+
 Add whatever helps you do your job. This is your cheat sheet.

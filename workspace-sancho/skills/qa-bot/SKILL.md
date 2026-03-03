@@ -7,11 +7,11 @@ metadata:
   version: '1.0'
   system: Growth Raistlin
 context_required:
-- brand/company-context.md
-- brand/voice-profile.md
-- brand/positioning.md
+- brand/{slug}/company-brief/current.md
+- brand/{slug}/brand-identity/voice-profile.md
+- brand/{slug}/go-to-market/positioning-*.md
 context_writes:
-- brand/learnings.md
+- brand/{slug}/operational/learnings.md
 ---
 
 # QA Bot (CoVe Verification)

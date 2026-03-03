@@ -10,12 +10,12 @@ metadata:
   depends_on: company-context, niche-discovery-100x
   chains_to: signal-monitor
 context_required:
-- brand/company-context.md
-- brand/icp.md
-- brand/ecps.md
+- brand/{slug}/company-brief/current.md
+- brand/{slug}/go-to-market/ecps.md
+- brand/{slug}/go-to-market/ecps.md
 context_writes:
 - campaigns/
-- brand/learnings.md
+- brand/{slug}/operational/learnings.md
 ---
 
 # Signal Definition — Define Qué Señales Importan
@@ -376,7 +376,7 @@ For each signal, specify:
 
 **Save to:** `./brand/signals-to-track.json`
 
-**Append to:** `./brand/assets.md`
+**Append to:** `./brand/{slug}/operational/assets.md`
 
 ```markdown
 ## Signal Detection Setup
@@ -429,7 +429,7 @@ ESTIMATED COST: $200/month
 FILES SAVED
 
 ✓ ./brand/signals-to-track.json
-✓ ./brand/assets.md (appended)
+✓ ./brand/{slug}/operational/assets.md (appended)
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -464,7 +464,7 @@ NEXT STEPS
 | File | What it contains |
 |------|-----------------|
 | ./brand/signals-to-track.json | Defined signals + monitoring strategy |
-| ./brand/assets.md | Append: Signal setup summary |
+| ./brand/{slug}/operational/assets.md | Append: Signal setup summary |
 
 ### Chains to
 

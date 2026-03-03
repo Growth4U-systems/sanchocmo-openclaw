@@ -157,6 +157,44 @@ Formato: `{ campaign_id, insight_type, insight_text, confidence, source }`
 
 ---
 
+## Progress Updates (obligatorio en tareas >2 min)
+
+Toda tarea que dure más de ~2 minutos DEBE incluir progress updates en el hilo de Discord.
+
+**Cadencia**: ~5 minutos (configurable por cliente/tarea).
+
+### Para Escudero (spawn)
+
+Añadir al final de CADA spawn prompt:
+
+```
+PROGRESS UPDATES (OBLIGATORIO):
+- Cada ~5 minutos de trabajo, envía un update breve al hilo.
+- Formato: "🔄 **Update (paso X/Y)**: [qué llevas] → [qué sigue] → ETA: ~Z min"
+- Primer update: al completar el primer bloque significativo de trabajo.
+- Update final: "✅ **Completado**: [resumen de 1 línea del output]"
+- NO esperes a tener todo listo para comunicar. Comunica progreso parcial.
+```
+
+### Para Sancho (tareas propias largas)
+
+Cuando ejecutes deep research, Foundation pillars, o cualquier tarea >2 min:
+- Después de cada bloque significativo (ej: cada 3-5 búsquedas, cada sección completada), envía update al hilo.
+- Mismo formato: `🔄 **Update (X/Y)**: progreso → siguiente → ETA`
+- Entre tool calls, NO generar texto (regla Discord). Usa `message(action=send)` para updates.
+
+### Ejemplo real
+
+```
+🔄 **Update (3/10 fuentes)**: 3 búsquedas completadas — datos de TAM y 2 competidores. Siguiente: scraping de reviews. ETA: ~8 min.
+
+🔄 **Update (7/10 fuentes)**: 7 fuentes procesadas. Compilando documento. ETA: ~3 min.
+
+✅ **Completado**: Deep research de mercado capilar — 14 fuentes, 8.500 palabras. Doc listo en el hilo.
+```
+
+---
+
 ## Reglas
 
 1. **Un spawn por tarea.** No mezclar tareas en un solo Escudero.
@@ -164,3 +202,4 @@ Formato: `{ campaign_id, insight_type, insight_text, confidence, source }`
 3. **Persona obligatoria.** Todo Escudero recibe un persona profile.
 4. **QA antes de publicar.** Contenido importante pasa por Rocinante.
 5. **Trackear en TASKS.md.** Todo dispatch genera o referencia una tarea.
+6. **Progress updates.** Toda tarea >2 min incluye updates cada ~5 min (ver sección arriba).

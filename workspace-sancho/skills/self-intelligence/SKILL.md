@@ -59,10 +59,10 @@ context_writes:
 - Group 3: RRSS Comments (5 scrapers — comments por plataforma)
 - Group 4: Reviews (5 scrapers — Trustpilot, G2, Capterra, stores)
 
-### 2. Deep Research (~20 min)
-- Deep Research: Market (industry overview, landscape, trends)
+### 2. Deep Research (~10 min)
 - Deep Research: Company (digital footprint, products, brand image, UVP)
 - Lee `references/prompt.md` para los prompts
+- ⚠️ NO incluir market research — eso pertenece a market-intelligence
 
 ### 3. Lens Analysis (5 prompts secuenciales)
 - Lens 1: Autopercepción (message + asset inventory)

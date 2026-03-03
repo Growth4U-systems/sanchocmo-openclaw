@@ -9,13 +9,13 @@ metadata:
   depends_on: niche-discovery-100x, company-context
   chains_to: decision-maker-finder
 context_required:
-- brand/company-context.md
-- brand/icp.md
-- brand/ecps.md
-- brand/competitors.md
+- brand/{slug}/company-brief/current.md
+- brand/{slug}/go-to-market/ecps.md
+- brand/{slug}/go-to-market/ecps.md
+- brand/{slug}/market-and-us/competitor-*.md
 context_writes:
 - campaigns/
-- brand/assets.md
+- brand/{slug}/operational/assets.md
 ---
 
 # Company Finder

@@ -7,13 +7,13 @@ metadata:
   phase: 2-3
   adapted: '2026-02-20'
 context_required:
-- brand/voice-profile.md
+- brand/{slug}/brand-identity/voice-profile.md
 - brand/keyword-plan.md
-- brand/icp.md
+- brand/{slug}/go-to-market/ecps.md
 context_writes:
 - campaigns/
-- brand/learnings.md
-- brand/assets.md
+- brand/{slug}/operational/learnings.md
+- brand/{slug}/operational/assets.md
 ---
 
 # /seo-content -- Publication-Ready SEO Content
@@ -42,20 +42,20 @@ On every invocation, check for existing brand context.
 
 | File | What it provides | How it shapes output |
 |------|-----------------|---------------------|
-| ./brand/voice-profile.md | Tone, personality, vocabulary, rhythm | Directly shapes the writing style -- a "direct, proof-heavy" voice writes differently than a "warm, story-driven" voice |
+| ./brand/{slug}/brand-identity/voice-profile.md | Tone, personality, vocabulary, rhythm | Directly shapes the writing style -- a "direct, proof-heavy" voice writes differently than a "warm, story-driven" voice |
 | ./brand/keyword-plan.md | Prioritized keywords, content briefs, SERP data | Provides target keyword, cluster, intent, content type, and any pre-gathered SERP analysis |
 | ./brand/audience.md | Buyer profiles, sophistication level, pain points | Informs how technical to write, what examples to use, what pain points to address |
-| ./brand/positioning.md | Market angles, differentiators | Shapes the unique angle for the piece -- how your perspective differs from everyone else ranking |
-| ./brand/competitors.md | Named competitors, their positioning | Identifies what angle competitors take so you can differentiate |
-| ./brand/learnings.md | Past performance data | Reveals what content approaches worked before -- long-form vs short, story-driven vs data-driven |
+| ./brand/{slug}/go-to-market/positioning-*.md | Market angles, differentiators | Shapes the unique angle for the piece -- how your perspective differs from everyone else ranking |
+| ./brand/{slug}/market-and-us/competitor-*.md | Named competitors, their positioning | Identifies what angle competitors take so you can differentiate |
+| ./brand/{slug}/operational/learnings.md | Past performance data | Reveals what content approaches worked before -- long-form vs short, story-driven vs data-driven |
 
 ### Writes
 
 | File | What it contains |
 |------|-----------------|
 | ./campaigns/content/{keyword-slug}.md | The publication-ready article with frontmatter |
-| ./brand/assets.md | Appends entry for the created content piece |
-| ./brand/learnings.md | Appends findings after feedback collection |
+| ./brand/{slug}/operational/assets.md | Appends entry for the created content piece |
+| ./brand/{slug}/operational/learnings.md | Appends findings after feedback collection |
 
 ### Context Loading Behavior
 
@@ -1157,7 +1157,7 @@ formatting from `_system/output-format.md`.
   FILES SAVED
 
   ./campaigns/content/{slug}.md         ✓ (new)
-  ./brand/assets.md                     ✓ (1 entry added)
+  ./brand/{slug}/operational/assets.md                     ✓ (1 entry added)
 
   WHAT'S NEXT
 
@@ -1394,7 +1394,7 @@ Content brief: ./campaigns/content-plan/what-is-agentic-ai-marketing.md
 
 ### Saved to:
 - `./campaigns/content/what-is-agentic-ai-marketing.md` (with frontmatter)
-- `./brand/assets.md` (entry appended)
+- `./brand/{slug}/operational/assets.md` (entry appended)
 
 ---
 
@@ -1518,7 +1518,7 @@ This is the full decision tree for every /seo-content invocation:
   |
   +-- Save outputs
   |   +-- ./campaigns/content/{keyword-slug}.md
-  |   +-- ./brand/assets.md (append entry)
+  |   +-- ./brand/{slug}/operational/assets.md (append entry)
   |
   +-- Present formatted output (output-format.md)
   |   +-- Header
@@ -1654,7 +1654,7 @@ per brand-memory.md protocol:
 ### Processing Feedback
 
 **If (a) "Great":**
-- Log to ./brand/learnings.md under "What Works":
+- Log to ./brand/{slug}/operational/learnings.md under "What Works":
   `- [{date}] [/seo-content] Article "{title}" shipped as-is. Keyword: "{keyword}". Angle: {angle}. Word count: {N}. Content type: {type}.`
 
 **If (b) "Good -- minor edits":**
@@ -1741,5 +1741,5 @@ When executing this skill, follow these rules precisely:
     every piece of content created.
 
 14. **Register every content piece.** After saving the article, append an
-    entry to ./brand/assets.md with the file path, type, date, and status.
+    entry to ./brand/{slug}/operational/assets.md with the file path, type, date, and status.
     This keeps the asset registry current for /start-here and other skills.

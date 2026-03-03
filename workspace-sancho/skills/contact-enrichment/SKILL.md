@@ -9,12 +9,12 @@ metadata:
   depends_on: decision-maker-finder
   chains_to: outreach-sequence-builder, email-sequences
 context_required:
-- brand/company-context.md
-- brand/icp.md
-- brand/ecps.md
+- brand/{slug}/company-brief/current.md
+- brand/{slug}/go-to-market/ecps.md
+- brand/{slug}/go-to-market/ecps.md
 context_writes:
 - campaigns/
-- brand/assets.md
+- brand/{slug}/operational/assets.md
 ---
 
 # Contact Enrichment — The Last Mile Before Outreach
@@ -280,7 +280,7 @@ File: `./brand/contacts-enriched-YYYYMMDD.json`
 }
 ```
 
-Append summary to `./brand/assets.md`.
+Append summary to `./brand/{slug}/operational/assets.md`.
 
 ---
 
@@ -376,7 +376,7 @@ Append summary to `./brand/assets.md`.
 | File | What it contains |
 |------|-----------------|
 | ./brand/contacts-enriched-YYYYMMDD.json | Enriched contacts with emails, phones, socials |
-| ./brand/assets.md | Append: Enrichment summary and stats |
+| ./brand/{slug}/operational/assets.md | Append: Enrichment summary and stats |
 
 ### Chains to
 

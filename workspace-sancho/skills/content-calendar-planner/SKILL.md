@@ -12,14 +12,14 @@ metadata:
   chains_to: seo-content, content-atomizer, newsletter
 context_required:
 - brand/channel-plan.md
-- brand/positioning.md
+- brand/{slug}/go-to-market/positioning-*.md
 - brand/keyword-plan.md
-- brand/voice-profile.md
-- brand/ecps.md
+- brand/{slug}/brand-identity/voice-profile.md
+- brand/{slug}/go-to-market/ecps.md
 context_writes:
 - brand/content-calendar.md
-- brand/learnings.md
-- brand/assets.md
+- brand/{slug}/operational/learnings.md
+- brand/{slug}/operational/assets.md
 ---
 
 # Content Calendar Planner — What to Publish, Where, When
@@ -38,12 +38,12 @@ Follow _system/output-format.md (if using SanchoCMO framework)
 
 **Required (will not run without these):**
 - `./brand/channel-plan.md` — Active channels + frequency (from channel-prioritization)
-- `./brand/positioning.md` — Differentiation angles for pillar derivation (from positioning-messaging)
-- `./brand/ecps.md` — Target personas for audience segmentation (from niche-discovery-100x)
+- `./brand/{slug}/go-to-market/positioning-*.md` — Differentiation angles for pillar derivation (from positioning-messaging)
+- `./brand/{slug}/go-to-market/ecps.md` — Target personas for audience segmentation (from niche-discovery-100x)
 
 **Recommended (better output with these):**
 - `./brand/keyword-plan.md` — SEO topics + clusters (from keyword-research)
-- `./brand/voice-profile.md` — Tone for content notes (from brand-voice)
+- `./brand/{slug}/brand-identity/voice-profile.md` — Tone for content notes (from brand-voice)
 - Content ideas from intelligence pipeline:
   - `./brand/transitory/daily-pulse/` — Content ideas from daily-pulse
   - `./campaigns/content-plan/` — Content briefs from insight-to-content-mapper
@@ -309,7 +309,7 @@ Channels: [list from channel-plan.md]
 - Ad-hoc: When new pillar, channel, or positioning change
 ```
 
-Append summary to `./brand/assets.md`:
+Append summary to `./brand/{slug}/operational/assets.md`:
 ```
 [date] content-calendar.md — [N] pillars, [N] channels, [X] pieces/month planned.
 ```
@@ -321,14 +321,14 @@ Append summary to `./brand/assets.md`:
 | Action | File | Description |
 |--------|------|-------------|
 | READ | `./brand/channel-plan.md` | Active channels + frequency |
-| READ | `./brand/positioning.md` | Differentiation angles for pillar derivation |
+| READ | `./brand/{slug}/go-to-market/positioning-*.md` | Differentiation angles for pillar derivation |
 | READ | `./brand/keyword-plan.md` | SEO topics + clusters |
-| READ | `./brand/voice-profile.md` | Tone for content notes |
-| READ | `./brand/ecps.md` | Audience segments for pillar mapping |
+| READ | `./brand/{slug}/brand-identity/voice-profile.md` | Tone for content notes |
+| READ | `./brand/{slug}/go-to-market/ecps.md` | Audience segments for pillar mapping |
 | READ | `./brand/transitory/daily-pulse/` | Content ideas from intelligence |
 | READ | `./campaigns/content-plan/` | Content briefs from mapper |
 | WRITE (owns) | `./brand/content-calendar.md` | Editorial calendar |
-| APPEND | `./brand/assets.md` | Calendar summary |
+| APPEND | `./brand/{slug}/operational/assets.md` | Calendar summary |
 
 ---
 
@@ -346,7 +346,7 @@ After generating the calendar, ask:
 
 "Hay algun tema que quieras priorizar o evitar este mes? Algun evento o fecha importante que deba incluir?"
 
-Log feedback to `./brand/learnings.md`:
+Log feedback to `./brand/{slug}/operational/learnings.md`:
 ```
 [date] content-calendar-planner: [feedback summary]
 ```

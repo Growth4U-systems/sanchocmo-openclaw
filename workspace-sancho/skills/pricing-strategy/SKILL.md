@@ -2,13 +2,13 @@
 name: pricing-strategy
 description: Recommend pricing models and tiers.
 context_required:
-- brand/company-context.md
-- brand/competitors.md
-- brand/icp.md
+- brand/{slug}/company-brief/current.md
+- brand/{slug}/market-and-us/competitor-*.md
+- brand/{slug}/go-to-market/ecps.md
 user-invocable: false
 context_writes:
 - brand/{slug}/go-to-market/pricing.md
-- brand/learnings.md
+- brand/{slug}/operational/learnings.md
 ---
 
 # Pricing Strategy

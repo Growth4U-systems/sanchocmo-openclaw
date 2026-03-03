@@ -66,7 +66,7 @@
 | ID | Tarea | Cat | Pri | Propuesto | Notas |
 |---|---|---|---|---|---|
 | T-010 | Migrar Mission Control a Next.js (dual view) | `[docs]` | P1 | Alfonso 2026-02-24 | Starter: michaelshimeles/nextjs-starter-kit. Keep Polar (pagos futuro) + PostHog (analytics). Auth con Google OAuth: cliente ve solo su marca, admin ve todo. Supabase como DB. 5 fases: Bootstrap → Auth+MultiTenant → Dashboard Core → Doc Viewer → Vistas secundarias. PRD completo en `~/.openclaw/workspace-cervantes/prd/t-010-mission-control-nextjs.md`. |
-| T-042 | Auditoría completa de skills con Skill Creator + feedback de Sancho | `[skills]` | P1 | Alfonso 2026-03-01 | Revisar las 56 skills del workspace de Sancho usando /skill-creator. Cruzar con feedback de observaciones: skills que funcionan bien (Foundation pipeline, content delegation, deep-research, heartbeat), skills que fallan o no se usan (apify nunca ejecutado, Supabase no poblado), y gaps detectados (pricing-hooks pendiente). Fuentes: `memory/sancho-observations.md` (4 observaciones), `MEMORY.md` de Sancho, sessions_history recientes. Entregable: informe con score por skill + plan de mejora + skills a deprecar/fusionar. |
+
 
 
 
@@ -81,6 +81,7 @@
 
 | ID | Tarea | Cat | Fecha | Notas |
 |---|---|---|---|---|
+| T-042 | Auditoría completa de skills (57 auditadas) | `[skills]` | 2026-03-03 | 57 skills auditadas. Foundation pipeline 8.1/10 (excelente). 11 skills oversized (20-57KB). 4 merge candidates. 4 gaps: linkedin-content, reporting, landing-page, case-study. Reporte en `memory/T-042-skills-audit.md`. |
 | T-041 | Cron outputs siempre en hilos — patrón obligatorio de hilo para Discord | `[flow]` | 2026-03-01 | Todos los crons que publican en Discord ahora siguen patrón: 1) mensaje corto al canal, 2) thread-create desde ese mensaje, 3) contenido completo dentro del hilo. Actualizados: Daily Pulse, Weekly Synthesis, Meeting Intelligence, Healthcheck, Backup, Cervantes observa. Weekly Synthesis cambiado de delivery:announce a delivery:none con publish explícito. |
 
 | ID | Tarea | Cat | Fecha | Notas |

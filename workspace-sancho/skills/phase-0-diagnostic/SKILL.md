@@ -8,10 +8,10 @@ metadata:
   system: SanchoCMO
   phase: '0'
 context_required:
-- brand/company-context.md
-- brand/stack.md
+- brand/{slug}/company-brief/current.md
+- brand/{slug}/operational/stack.md
 context_writes:
-- brand/learnings.md
+- brand/{slug}/operational/learnings.md
 ---
 
 # Phase 0 Diagnostic

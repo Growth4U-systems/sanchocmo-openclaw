@@ -88,6 +88,10 @@
 - [ ] **Coherencia con brand files** (company-context) verificada
 - [ ] **Ausencia de datos** marcada explícitamente ("unknown" o "none detected", NO asumida)
 
+## ENTREGA (obligatorio)
+
+- [ ] **Oferta de deep-research presentada** — Al entregar, SIEMPRE incluir la oferta de profundización con deep-research. Sin esta oferta, la entrega está INCOMPLETA.
+
 ---
 
 ## Flujo de uso

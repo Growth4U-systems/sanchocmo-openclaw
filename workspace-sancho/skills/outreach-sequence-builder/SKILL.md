@@ -12,13 +12,13 @@ metadata:
   chains_to: email-outreach-executor, linkedin-outreach-executor
 context_required:
 - brand/channel-plan.md
-- brand/positioning.md
-- brand/ecps.md
-- brand/voice-profile.md
+- brand/{slug}/go-to-market/positioning-*.md
+- brand/{slug}/go-to-market/ecps.md
+- brand/{slug}/brand-identity/voice-profile.md
 context_writes:
 - campaigns/
-- brand/learnings.md
-- brand/assets.md
+- brand/{slug}/operational/learnings.md
+- brand/{slug}/operational/assets.md
 ---
 
 # Outreach Sequence Builder — Cold to Warm in 5-7 Touches
@@ -48,11 +48,11 @@ Follow _system/output-format.md (if using SanchoCMO framework)
 
 **Required (will not run without these):**
 - `./brand/channel-plan.md` — Confirms outreach is a selected channel (from channel-prioritization)
-- `./brand/ecps.md` — Target personas with pain points (from niche-discovery-100x)
-- `./brand/positioning.md` — Value proposition angles per ECP (from positioning-messaging)
+- `./brand/{slug}/go-to-market/ecps.md` — Target personas with pain points (from niche-discovery-100x)
+- `./brand/{slug}/go-to-market/positioning-*.md` — Value proposition angles per ECP (from positioning-messaging)
 
 **Recommended (better output with these):**
-- `./brand/voice-profile.md` — Tone for email copy (from brand-voice)
+- `./brand/{slug}/brand-identity/voice-profile.md` — Tone for email copy (from brand-voice)
 - `./brand/contacts-enriched.json` — Enriched contacts for personalization (from contact-enrichment)
 - `./brand/signals-to-track.json` — Buy signals for triggers (from signal-definition)
 
@@ -306,7 +306,7 @@ Tool mode: [FULL/STANDARD/LIGHT]
 [compliance checklist summary]
 ```
 
-Append summary to `./brand/assets.md`:
+Append summary to `./brand/{slug}/operational/assets.md`:
 ```
 [date] outreach-{ecp} — [N]-touch sequence ([channels]). Signal variants: [N].
 ```
@@ -318,13 +318,13 @@ Append summary to `./brand/assets.md`:
 | Action | File | Description |
 |--------|------|-------------|
 | READ | `./brand/channel-plan.md` | Confirms outreach is selected channel |
-| READ | `./brand/positioning.md` | Value prop angle per ECP |
-| READ | `./brand/ecps.md` | Target persona details |
-| READ | `./brand/voice-profile.md` | Tone for email copy |
+| READ | `./brand/{slug}/go-to-market/positioning-*.md` | Value prop angle per ECP |
+| READ | `./brand/{slug}/go-to-market/ecps.md` | Target persona details |
+| READ | `./brand/{slug}/brand-identity/voice-profile.md` | Tone for email copy |
 | READ | `./brand/contacts-enriched.json` | Enriched contacts (optional) |
 | READ | `./brand/signals-to-track.json` | Buy signals for triggers |
 | WRITE | `./campaigns/outreach-{ecp}/` | Sequence files (multiple) |
-| APPEND | `./brand/assets.md` | Outreach sequence summary |
+| APPEND | `./brand/{slug}/operational/assets.md` | Outreach sequence summary |
 
 ---
 
@@ -343,7 +343,7 @@ After generating sequences, ask:
 
 "Hay algun angulo de venta que funcione especialmente bien con este tipo de prospect? Alguna objecion comun que deberia anticipar?"
 
-Log feedback to `./brand/learnings.md`:
+Log feedback to `./brand/{slug}/operational/learnings.md`:
 ```
 [date] outreach-sequence-builder: [ECP] — [feedback summary]
 ```

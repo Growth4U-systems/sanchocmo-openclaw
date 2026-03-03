@@ -10,14 +10,14 @@ metadata:
   depends_on: company-context, business-model, budget, self-intelligence
   updated: '2026-02-27'
 context_required:
-- brand/company-context.md
-- brand/business-model.md
-- brand/budget.md
-- brand/self-intelligence.md
-- brand/market.md
-- brand/competitors.md
-- brand/positioning.md
-- brand/ope-canvas/briefing.md
+- brand/{slug}/company-brief/current.md
+- brand/{slug}/company-brief/current.md
+- brand/{slug}/company-brief/current.md
+- brand/{slug}/market-and-us/self-analysis.md
+- brand/{slug}/market-and-us/market-analysis.md
+- brand/{slug}/market-and-us/competitor-*.md
+- brand/{slug}/go-to-market/positioning-*.md
+- brand/{slug}/market-and-us/ope-canvas.md
 - brand/intelligence/meetings/*.md
 context_writes:
 - brand/ope-canvas.md

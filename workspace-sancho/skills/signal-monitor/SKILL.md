@@ -10,12 +10,12 @@ metadata:
   depends_on: signal-definition
   chains_to: decision-maker-finder, contact-enrichment, outreach-sequence-builder
 context_required:
-- brand/company-context.md
-- brand/icp.md
-- brand/ecps.md
+- brand/{slug}/company-brief/current.md
+- brand/{slug}/go-to-market/ecps.md
+- brand/{slug}/go-to-market/ecps.md
 context_writes:
 - campaigns/
-- brand/learnings.md
+- brand/{slug}/operational/learnings.md
 ---
 
 # Signal Monitor — Execute Detection & Enrichment
@@ -185,7 +185,7 @@ Sequence: Competitor Pain Point → Our Solution
 ## Integration
 
 **Reads:** ./brand/signals-to-track.json
-**Writes:** ./brand/hot-leads.json, ./brand/assets.md
+**Writes:** ./brand/hot-leads.json, ./brand/{slug}/operational/assets.md
 **Chains to:** /decision-maker-finder, /contact-enrichment, /outreach-sequence-builder
 
 ---
