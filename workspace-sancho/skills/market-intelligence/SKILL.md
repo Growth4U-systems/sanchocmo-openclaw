@@ -55,6 +55,7 @@ context_writes:
 ### 2. Investigar siguiendo el prompt
 - Lee `references/prompt.md` — es tu guía sección por sección
 - Ejecuta búsquedas web (mínimo 10-15) cubriendo las 5 partes:
+  - **Parte 0**: Executive Narrative (síntesis narrativa de todo el análisis)
   - **Parte 1**: TAM, segmentos, geografía, madurez
   - **Parte 2**: Competidores, cuota, estrategias, RRSS, amenazas
   - **Parte 3**: Segmentos de cliente, psicográfico, conductual, pain points, personas
@@ -63,12 +64,16 @@ context_writes:
 - Para cada parte, busca en múltiples ángulos (español + inglés, general + específico)
 - Incluye escucha social: foros, reviews, comentarios en RRSS para pain points reales
 
-### 3. Escribir el documento
+### 3. Escribir el documento (STORYTELLING OBLIGATORIO)
+- **EMPIEZA con Executive Narrative (Parte 0)** — 1 página, narrativa pura, cero tablas
 - Sigue la estructura de `references/prompt.md` parte por parte
+- **CADA SECCIÓN**: Contexto narrativo → Evidencia (tablas/datos) → Interpretación ("so what?") → Implicación
+- **TRANSICIONES**: Párrafo puente entre partes (conecta lo anterior con lo siguiente)
+- **TONO**: Presentación al CEO, no reporte técnico — "Esto significa que...", "La oportunidad está en..."
 - Cada claim con fuente inline: `dato [Fuente](url)`
 - Si no hay fuente → marca `⚠️ Estimación sin fuente verificada`
 - Si un dato no está disponible públicamente → declara "No disponible" con razón
-- Target: 15-25 páginas (exhaustivo pero sin fluff)
+- Target: 15-25 páginas (exhaustivo pero enfocado y narrativo)
 
 ### 4. Self-QA (OBLIGATORIO)
 - Lee `references/checklist.md`

@@ -1,0 +1,37 @@
+{
+  "company_name": "Hospital Capilar",
+  "slug": "hospital-capilar",
+  "industry": "Tratamientos capilares médicos / Medicina capilar",
+  "product": "Tratamientos capilares no quirúrgicos (HRT mesoterapia dutasteride, CRT PRP, diagnóstico capilar)",
+  "target": "Hombres y mujeres con alopecia en España que buscan solución médica profesional",
+  "country": "es",
+  "context_type": "B2C",
+  "market_mode": "forum",
+  "life_contexts": [
+    "se me cae el pelo",
+    "calvicie joven",
+    "finasteride efectos secundarios",
+    "minoxidil no funciona",
+    "tratamiento capilar opiniones"
+  ],
+  "product_words": [
+    "mesoterapia capilar",
+    "PRP capilar",
+    "tratamiento alopecia",
+    "clínica capilar",
+    "minoxidil oral"
+  ],
+  "sources": {
+    "reddit_subreddits": ["r/tressless", "r/HairLoss", "r/askspain"],
+    "thematic_forums": ["enfemenino.com", "trustpilot.com"],
+    "general_forums": []
+  },
+  "frustration_indicators_es": [
+    "me frustra", "estoy harto", "no aguanto más", "es una pesadilla",
+    "no funciona", "estafa", "timo", "decepcionado", "no sirve"
+  ],
+  "frustration_indicators_en": [
+    "frustrated", "sick of", "doesn't work", "waste of money",
+    "scam", "disappointed", "giving up", "nothing works"
+  ]
+}

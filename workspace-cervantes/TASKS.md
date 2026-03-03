@@ -58,6 +58,7 @@
 | T-014 | Panel de APIs en Mission Control (globales + por cliente) | `[docs]` | P2 | Alfonso 2026-02-24 | Estado de APIs: Anthropic, OpenRouter, Brave, OpenClaw + por cliente. |
 | T-032 | Auto-sync TASKS.md → MC (tareas se actualizan solas) | `[docs]` | P1 | Cervantes 2026-02-26 | Opciones: (A) regenerate.py en cron cada 30min, (B) file watcher en mc-server.js, (C) esperar a Next.js T-010. |
 | T-043 | Tablas estratégicas en Supabase (competitors, niches, value_criteria, assets, messaging) | `[infra]` | P1 | Alfonso 2026-03-02 | 6 tablas nuevas para datos relacionales estratégicos. Arquitectura híbrida: Supabase owner de datos estructurados, markdown owner de narrativa. Supabase MCP Server para queries desde agentes. PRD completo en `_system/prds/T-043.md`. |
+| T-044 | Debug SIGTERM en scripts Python niche-discovery-100x | `[skill]` | P2 | Alfonso 2026-03-03 | **RESUELTO** — Scripts funcionan correctamente. Causa raíz: Gateway restarts (SIGTERM) matan procesos hijo. 40+ restarts en logs recientes. Discord health-monitor reinicia cada 10min ("stuck"). Workaround: usar `background:true` + `process(poll)`, o ejecutar en terminal separado. Scripts probados: serp_search.py completó 125 queries en ~2min sin error. |
 
 
 
@@ -146,4 +147,4 @@ _ninguna_
 4. **Tareas completadas** generan entrada en CHANGELOG.md automáticamente.
 5. **Tags de cliente**: `[hospital-capilar]`, `[otro-slug]` en la columna Cat o Notas. Sin tag = sistema.
 6. **Un solo archivo**: Todo aquí. MC filtra por tag de cliente.
-7. **Próximo ID**: T-044
+7. **Próximo ID**: T-045

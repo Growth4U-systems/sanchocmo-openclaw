@@ -47,6 +47,17 @@
 - Primera ronda con Hospital Capilar: GTM generado ANTES de Foundation correcta.
 - Contenido usable pero sobre cimientos débiles. No repetir.
 
+## Bugs Pendientes
+
+### SIGTERM en scripts Python niche-discovery-100x (2026-03-03)
+- Scripts serp_search.py, scrape_urls.py, extract_problems.py se cuelgan silenciosamente y son matados con SIGTERM
+- API keys están OK, config JSON válido, --help funciona
+- Ocurre con config completo (3.900 búsquedas) Y reducido (375 búsquedas)
+- El script no produce ningún output antes de morir
+- Probablemente: las llamadas a Serper API se cuelgan (timeout/network) y el sistema exec mata el proceso
+- Workaround: usar harvest de Foundation (40 problemas) y herramientas agente (web_search) en vez de scripts
+- TODO: debuggear offline, probar ejecutar script fuera de OpenClaw exec
+
 ## Estado Hospital Capilar
 - **Foundation:** VACÍA — reset completo 2026-03-02
 - **Backup:** `_backups/2026-03-02/hospital-capilar-backup/` (1.1MB, todo lo anterior)

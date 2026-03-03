@@ -96,11 +96,11 @@ QA RESULT — [APROBADO / APROBADO CON OBSERVACIONES / RECHAZADO]
 
 ---
 
-## Progress Updates (OBLIGATORIO en QAs largos)
+## ⚠️ Progress Updates — REGLA HARD (NO OPCIONAL)
 
-Cuando un QA requiera verificar múltiples URLs, cruzar varios archivos de brand, o analizar documentos extensos (>2 min de trabajo):
+**Cuenta tus tool calls.** Después de CADA 3 tool calls (web_fetch, read, etc.), PARA y envía update.
 
-**Cadencia**: ~5 minutos.
+**MÁXIMO 3 tool calls seguidos sin enviar update. Sin excepciones.**
 
 **Formato**:
 ```
@@ -112,10 +112,7 @@ Cuando un QA requiera verificar múltiples URLs, cruzar varios archivos de brand
 ✅ **QA Completado**: [APROBADO/RECHAZADO] — [resumen de 1 línea]
 ```
 
-**Reglas:**
-- Primer update: tras completar las primeras 3-5 verificaciones
-- Comunica hallazgos parciales (ej: "2 URLs rotas encontradas hasta ahora")
-- No esperes al veredicto final para informar si hay problemas graves
+**Por qué importa:** Si no envías updates, el usuario asume que estás muerto. Comunica hallazgos parciales. No esperes al veredicto final para informar si hay problemas graves.
 
 ---
 

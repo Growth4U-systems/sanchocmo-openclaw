@@ -2,6 +2,54 @@
 
 ---
 
+## 🎯 REGLAS DE STORYTELLING (OBLIGATORIO)
+
+### Estructura Narrativa Global
+El documento final debe contarse como una historia de **mapeo competitivo**, no como un catálogo de fichas. Sigue este flujo narrativo:
+
+**PARTE 0: Executive Narrative** (obligatorio al inicio)
+- 1 página máximo, narrativa pura, CERO tablas
+- Cuenta la historia completa del panorama competitivo
+- Estructura: ¿Quiénes son los jugadores? → ¿Cómo compiten? → ¿Dónde están las oportunidades?
+- Quien lea solo esto debe entender el 80%
+
+**Para cada Battle Card:**
+1. **Contexto narrativo** (2-3 párrafos antes de la ficha)
+   - ¿Quién es este competidor en el contexto del mercado?
+   - ¿Por qué importa analizarlos?
+
+2. **Battle Card estructurada** (datos organizados)
+   - Profile, Positioning, Market perception, Customer sentiment
+   - Citas y fuentes inline
+
+3. **Interpretación** ("So what?")
+   - ¿Qué significa su estrategia?
+   - ¿Qué están haciendo bien/mal?
+
+4. **How to Beat Them** (accionable)
+   - Estrategias específicas para competir
+   - Monitoring triggers
+
+**Para el Competitive Landscape (Step 6):**
+1. **Apertura narrativa** del landscape: "Cuando vemos el campo completo, emergen X patrones..."
+2. **Overview Table** con interpretación antes y después
+3. **Positioning Map 2x2** con análisis de cuadrantes
+4. **Feature Heatmap** con "So what?" (¿qué gaps existen?)
+5. **Growth Model Analysis** con interpretación estratégica
+6. **Pricing Landscape** con implicaciones para nosotros
+7. **Cross-Competitor Opportunities** (síntesis narrativa final)
+
+**Tono de presentación:**
+- Escribir como si fuera para el CEO y equipo de producto
+- "Esto significa que podemos...", "El gap más claro es...", "La amenaza principal es..."
+- Evitar lenguaje de análisis competitivo genérico
+- Las tablas/fichas son soporte, la narrativa estratégica es protagonista
+
+**Cierre final:**
+- Párrafo conclusivo: "En este panorama competitivo, nuestra mejor jugada es... porque los competidores X/Y/Z dejan abierto..."
+
+---
+
 ## Pipeline completo
 
 ```
@@ -86,7 +134,16 @@ Company background, product evolution, growth model, public financials.
 
 ---
 
-## Step 5: Battle Card Format
+## Step 5: Battle Card Format (CON STORYTELLING)
+
+**CADA BATTLE CARD DEBE SEGUIR:**
+
+### Apertura Narrativa (2-3 párrafos antes de la ficha)
+- ¿Quién es [Competidor] en el contexto del mercado?
+- ¿Por qué son relevantes como competidor?
+- ¿Qué rol juegan en el panorama competitivo?
+
+### Battle Card Estructurada
 
 ```
 ## Battle Card: [Competitor Name]
@@ -116,28 +173,107 @@ Company background, product evolution, growth model, public financials.
 
 ### Lens Conflicts
 [Where Lens 1 claims ≠ Lens 3 reality — vulnerabilities]
+```
 
-### How to Beat Them
-**Their weakness, our strength**: [specific areas]
-**Positioning angle**: [how to differentiate]
-**What NOT to compete on**: [where they're genuinely stronger]
-**Sales talking points**: [3-5 specific points]
+### Interpretación (párrafo "So what?" después de la ficha)
+- ¿Qué significa su estrategia?
+- ¿Qué están haciendo bien que deberíamos temer?
+- ¿Qué están haciendo mal que podemos explotar?
+
+### How to Beat Them (accionable con rationale)
+**Their weakness, our strength**: [specific areas] — *Por qué esto es explotable*
+**Positioning angle**: [how to differentiate] — *Por qué esto resonará*
+**What NOT to compete on**: [where they're genuinely stronger] — *Por qué no vale la pena pelear aquí*
+**Sales talking points**: [3-5 specific points con evidencia]
 
 ### Monitoring Triggers
 [What changes would require re-analysis]
-```
 
 ---
 
-## Step 6: Competitive Landscape Map
+## Step 6: Competitive Landscape Map (CON STORYTELLING)
 
-1. **Overview Table**: All competitors (name, type, tier, positioning, pricing, rating, strength, weakness)
-2. **Positioning Map**: 2x2 matrix (axes: Price/Features, Enterprise/SMB, Specialist/Generalist)
-3. **Feature Heatmap**: Features × competitors (green/yellow/red). White space = opportunities.
-4. **Growth Model Analysis**: How each acquires customers
-5. **Pricing Landscape**: All pricing models compared
-6. **Opportunity Summary**:
-   - What EVERYONE says but nobody delivers well
-   - Features nobody offers that customers want
-   - Positioning angles nobody uses
-   - Channels nobody exploits
+### Apertura Narrativa del Landscape (obligatoria)
+Escribe 2-3 párrafos que establezcan:
+- "Cuando vemos el campo competitivo completo, emergen X patrones claros..."
+- ¿Cómo está dividido el mercado? (concentrado/fragmentado, por precio/features/modelo)
+- ¿Qué gaps o clusters vemos?
+
+Luego presenta cada componente del landscape:
+
+### 1. Overview Table
+**Antes de la tabla** (contexto narrativo):
+- "Esta tabla resume los 10 competidores mapeados. Lo que destaca es..."
+
+**Tabla**: All competitors (name, type, tier, positioning, pricing, rating, strength, weakness)
+
+**Después de la tabla** (interpretación):
+- ¿Qué patrones vemos en fortalezas/debilidades?
+- ¿Hay clusters de competidores similares?
+
+### 2. Positioning Map
+**Antes del mapa** (contexto narrativo):
+- "Mapeando competidores en [eje X] vs [eje Y], vemos 4 cuadrantes claramente diferenciados..."
+
+**Mapa**: 2x2 matrix (axes configurables: Price/Features, Enterprise/SMB, Specialist/Generalist)
+
+**Después del mapa** (interpretación):
+- ¿Qué cuadrantes están saturados?
+- ¿Dónde hay white space?
+- ¿Dónde deberíamos posicionarnos nosotros?
+
+### 3. Feature Heatmap
+**Antes del heatmap** (contexto narrativo):
+- "Comparando features clave, encontramos que..."
+
+**Heatmap**: Features × competitors (🟢 strong / 🟡 partial / 🔴 weak / ⚪ absent)
+
+**Después del heatmap** (interpretación + "So what?"):
+- ¿Qué features son table stakes (todos las tienen)?
+- ¿Qué features son diferenciadores (pocos las tienen bien)?
+- ⚪ White space = oportunidades → **¿Qué podemos ofrecer que nadie más tiene?**
+
+### 4. Growth Model Analysis
+**Antes del análisis** (contexto narrativo):
+- "Los competidores adquieren clientes de formas muy diferentes..."
+
+**Análisis**: How each acquires customers (Content-led, PLG, Sales-led, Paid, Community, Partnerships)
+
+**Después del análisis** (interpretación):
+- ¿Qué modelos dominan?
+- ¿Hay modelos infrautilizados que podríamos explotar?
+
+### 5. Pricing Landscape
+**Antes de la comparación** (contexto narrativo):
+- "El pricing revela estrategias radicalmente diferentes..."
+
+**Comparación**: All pricing models compared (freemium, subscription tiers, one-time, usage-based)
+
+**Después de la comparación** (interpretación):
+- ¿Dónde está el punto dulce del mercado?
+- ¿Hay oportunidades de undercut o premium positioning?
+
+### 6. Cross-Competitor Opportunities (SÍNTESIS NARRATIVA FINAL)
+Escribe 2-3 párrafos de síntesis estratégica:
+
+**What EVERYONE says but nobody delivers well**
+- Claims comunes en Lens 1 pero con complaints en Lens 3
+- *Implicación*: Nosotros podemos hacerlo de verdad
+
+**Features nobody offers that customers want**
+- Unmet needs recurrentes en reviews
+- White space en feature heatmap
+- *Implicación*: Diferenciación obvia
+
+**Positioning angles nobody uses**
+- Gaps en positioning map
+- Narrativas no exploradas
+- *Implicación*: Mensajería única
+
+**Channels nobody exploits**
+- Growth models subutilizados
+- Plataformas sin presencia competitiva
+- *Implicación*: First-mover advantage
+
+**CIERRE DEL LANDSCAPE**:
+Párrafo final que sintetiza: "En este panorama competitivo, nuestra mejor jugada es [estrategia] porque los competidores X/Y/Z dejan abierto [gap específico]..."

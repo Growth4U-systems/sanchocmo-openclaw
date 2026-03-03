@@ -117,3 +117,91 @@ Sancho está funcionando muy bien. Respeta reglas, ejecuta crons correctamente, 
 
 ---
 
+## 2026-03-03 10:00 AM — Martes
+
+### Panorama general (últimas 24h)
+- **12+ sesiones activas** (Discord + crons)
+- **Canales Discord:** #soporte, #06-market-intelligence, #docu-no-encontrado, #deep-research-como-parte-de-los-skills, #05-ope-canvas, #onboarding, #profundizar-en-self-intelligence, #intelligence
+- **Crons intentados:** Daily Pulse, Regenerar Dashboard, Meeting Intelligence, Heartbeat
+- **Estado:** ⚠️ Degradado por rate limiting (infra, no Sancho)
+
+---
+
+### ✅ Lo que funciona bien
+
+**1. Conversaciones con Alfonso — excelente comprensión**
+- #profundizar-en-self-intelligence: Sancho mostró comprensión profunda del patrón de documentos (investigaciones + summaries + referencias). Explicó correctamente la diferencia entre Company Brief (doc vivo que crece) vs Market & Us (docs de investigación + summary + SWOT)
+- Alfonso validó: "¿Voy bien ahora?" → sí
+
+**2. Autocorrección de errores**
+- #06-market-intelligence: Alfonso preguntó por un doc en ruta antigua
+- Sancho detectó que el archivo se quedó en la ruta antigua tras reestructuración
+- **Autocorregido:** Reescribió el deep research en la ruta correcta con el doble de contenido (50 fuentes vs 20, 55KB vs 26KB)
+
+**3. Reglas de canal respetadas**
+- ✅ Patrón de hilos en #intelligence (Daily Pulse outputs)
+- ✅ NO_REPLY después de envíos a hilos
+- ✅ Respuestas en canales correctos
+
+**4. Foundation progressing**
+- Pilares 6-15 ejecutándose: Market Intelligence, Competitor Intelligence, SWOT Analysis completados en #onboarding
+
+---
+
+### ⚠️ PROBLEMA CRÍTICO — Rate Limiting (INFRA, no Sancho)
+
+**Síntomas:**
+- **Heartbeat** (09:26 AM): 3x 429 rate_limit_error con Haiku
+- **Daily Pulse** (09:00 AM): 3x 429 rate_limit_error con Sonnet  
+- **Regenerar Dashboard** (~08:00 AM): 3x overloaded_error con Opus
+- **#soporte**: 3x 429 rate_limit_error
+
+**Causa:** Anthropic API tiene rate limits activos. Los crons que usan Anthropic (Sonnet/Opus/Haiku) fallan sistemáticamente.
+
+**Impacto:**
+- ❌ Heartbeats no pueden hacer checks proactivos (email, calendar)
+- ❌ Daily Pulse no se ejecuta (insights de Discord perdidos)
+- ❌ Meeting Intelligence no se ejecuta
+- ✅ Discord conversaciones funcionan (usan OpenAI delivery-mirror, no Anthropic)
+
+**Observación:** Esto es un problema de infraestructura, NO de Sancho. Cuando las requests llegan a ejecutarse (usan delivery-mirror), Sancho responde perfectamente.
+
+---
+
+### 📊 Patrones observados
+
+**1. Delivery mirror funcionando bien**
+- Cuando Anthropic falla, OpenAI delivery-mirror toma el control automáticamente
+- Mensajes en Discord fueron entregados correctamente vía mirror
+- Sancho no nota la diferencia (el sistema rutea transparente)
+
+**2. Fallback no implementado para crons**
+- Los crons usan modelos Anthropic directamente
+- No tienen fallback a OpenAI cuando Anthropic falla
+- **Recomendación:** Considerar hacer los crons más robustos con retry o fallback
+
+---
+
+### 📋 Acciones recomendadas
+
+**P0 — Rate limiting Anthopic (investigación de Cervantes)**
+- Verificar estado de cuenta Anthropic
+- Considerar añadir fallback a OpenAI para crons
+- O espaciar crons para evitar saturación
+
+**P1 — gog CLI (desde ayer)**
+- Todavía sin investigar proactivamente por Sancho
+- gog CLI sigue bloqueando heartbeats de email/calendar
+- Esta observación ya se hizo ayer, sin acción
+
+---
+
+### 🎯 Conclusión
+**Estado: ✅ Sancho bien, ⚠️ Infraestructura mal**
+
+Sancho está funcionando correctamente. El rate limiting es un problema de infraestructura (Anthopic), no de Sancho. Las conversaciones con Alfonso fueron excelentes (comprensión profunda, autocorrección).
+
+**REQUIERE ATENCIÓN:** Rate limiting afecta heartbeats y crons. No es bloqueo total (Discord funciona), pero la capacidad proactiva de Sancho está degradada desde hace ~3 horas.
+
+---
+

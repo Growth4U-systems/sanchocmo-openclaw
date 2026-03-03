@@ -144,20 +144,25 @@ Lee el skill `apify` para la sintaxis exacta de cada actor. Si un scraper falla,
 ### 3. Deep Research (~10 min/competitor)
 - Background, product evolution, growth model, financials públicos
 
-### 4. Lens Analysis (~30 min/competitor)
+### 4. Lens Analysis (~30 min/competitor — STORYTELLING OBLIGATORIO)
+- **EMPIEZA con Executive Narrative** — 1 página, narrativa pura, panorama competitivo completo
 - Lee `references/prompt.md` para los prompts completos de análisis
 - Lens 1: Autopercepción (value prop, positioning, pricing, content strategy, paid ads)
 - Lens 2: Terceros (SEO visibility, media coverage, external narrative)
 - Lens 3: Consumidores (sentiment, love/hate, unmet needs, migration patterns)
 
-### 5. Battle Card (por competitor)
+### 5. Battle Card (por competitor — CON NARRATIVA)
+- **CADA BATTLE CARD**: Apertura narrativa → Ficha estructurada → Interpretación ("so what?") → How to Beat Them (con rationale)
 - Sintetizar 3 lentes en tarjeta accionable de 1 página
-- Incluir "How to Beat Them" y monitoring triggers
+- Incluir "How to Beat Them" con rationale explícito y monitoring triggers
 
-### 6. Competitive Landscape Map
-- Overview table + Positioning map 2x2 + Feature heatmap
-- Growth model analysis + Pricing landscape
-- Opportunity summary (cross-competitor patterns)
+### 6. Competitive Landscape Map (STORYTELLING COMPLETO)
+- **Apertura narrativa del landscape**: "Cuando vemos el campo completo, emergen X patrones..."
+- **CADA COMPONENTE** (table, map, heatmap, growth, pricing) con: contexto antes + datos + interpretación después
+- Overview table + Positioning map 2x2 + Feature heatmap (con análisis de white space)
+- Growth model analysis + Pricing landscape (con implicaciones estratégicas)
+- **Cross-Competitor Opportunities**: síntesis narrativa final
+- **CIERRE FINAL**: Párrafo conclusivo que sintetiza la mejor jugada estratégica
 
 ### 7. Self-QA + Guardar
 - Checklist, versionado, `brand/{slug}/competitors/current.md`

@@ -6,6 +6,45 @@
 
 ---
 
+## STORYTELLING (OBLIGATORIO)
+
+- [ ] **Executive Narrative** existe al principio del documento (antes de todo)
+  - ✅ 1 página máximo, narrativa pura, CERO tablas
+  - ✅ Estructura: ¿Quiénes son los jugadores? → ¿Cómo compiten? → ¿Dónde están las oportunidades?
+  - ✅ Quien lea solo esto entiende el 80% del panorama competitivo
+
+- [ ] **Cada Battle Card tiene apertura narrativa** (2-3 párrafos antes de la ficha)
+  - ✅ "¿Quién es [Competidor] en el contexto del mercado?"
+  - ✅ "¿Por qué son relevantes como competidor?"
+  - ✅ "¿Qué rol juegan en el panorama?"
+
+- [ ] **Cada Battle Card tiene cierre interpretativo**
+  - ✅ Párrafo "So what?" después de la ficha estructurada
+  - ✅ ¿Qué significa su estrategia? ¿Qué hacen bien/mal?
+
+- [ ] **How to Beat Them tiene rationale**
+  - ✅ Cada táctica incluye "Por qué esto es explotable"
+  - ✅ No solo qué hacer, sino por qué funcionará
+
+- [ ] **Competitive Landscape tiene storytelling completo**
+  - ✅ Apertura narrativa del landscape ("Cuando vemos el campo completo...")
+  - ✅ Cada componente (table, map, heatmap) tiene contexto antes + interpretación después
+  - ✅ Feature heatmap con análisis de white space
+  - ✅ Growth model con "¿qué modelos están infrautilizados?"
+  - ✅ Pricing landscape con implicaciones estratégicas
+  - ✅ Cross-Competitor Opportunities (síntesis narrativa final)
+
+- [ ] **Cierre final** del documento
+  - ✅ Párrafo conclusivo: "En este panorama competitivo, nuestra mejor jugada es..."
+  - ✅ Explica por qué esa estrategia aprovecha los gaps identificados
+
+- [ ] **Tono de presentación**
+  - ✅ Escrito para CEO/equipo de producto, no para analista
+  - ✅ "Esto significa que podemos...", "El gap más claro es...", "La amenaza principal es..."
+  - ✅ Evita lenguaje de análisis competitivo genérico
+
+---
+
 ## Step 0: Competitor Discovery
 
 - [ ] **3-5 competidores directos** identificados con URLs

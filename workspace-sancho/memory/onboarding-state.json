@@ -1,0 +1,20 @@
+{
+  "client": "sanchocmo",
+  "status": "in_progress",
+  "current_step": 6,
+  "started_at": "2026-03-03T15:08:00Z",
+  "thread_id": "1478283558681317409",
+  "sender_id": "1402171221747040369",
+  "responses": {
+    "step_1_empresa": "SanchoCMO es un CMO de inteligencia artificial que aprende sobre tu empresa poco a poco y ejecuta marketing por ti. Mercado hispanohablante (España + LATAM). Nicho principal: startups, aunque también negocios tradicionales (cafés, consultorios odontológicos, etc.).",
+    "step_2_producto": "SanchoCMO como app de Discord — bot/agente IA que interactúa con el usuario y lo guía en su proceso de Go-To-Market para su empresa. Producto principal a impulsar ahora mismo.",
+    "step_3_cliente_ideal": "Fundadores de startups y líderes de crecimiento (heads de growth). Perfil: startups post-semilla buscando escalar, con cierto product-market fit ya validado y primeros clientes conseguidos.",
+    "step_4_competidores": "Directos IA: Jasper AI, Vilma.ai (y más por investigar). Alternativas: hacerlo ellos mismos (DIY), contratar agencia de growth/marketing.",
+    "step_5_recursos": "Presupuesto: €3.000/mes para marketing. Equipo: 1 persona dedicada full-time a marketing.",
+    "step_6_historial": null
+  },
+  "follow_ups_used": {
+    "step_4": true
+  },
+  "completed_at": null
+}

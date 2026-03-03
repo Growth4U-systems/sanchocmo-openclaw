@@ -64,12 +64,17 @@ context_writes:
 - Lee `references/prompt.md` para los prompts
 - ⚠️ NO incluir market research — eso pertenece a market-intelligence
 
-### 3. Lens Analysis (5 prompts secuenciales)
+### 3. Lens Analysis (5 prompts secuenciales — STORYTELLING OBLIGATORIO)
+- **EMPIEZA con Executive Narrative** — 1 página, narrativa pura, historia completa del descubrimiento
+- **CADA LENS**: Apertura narrativa → Análisis → Interpretación ("so what?") → Implicación
+- **TRANSICIONES**: Párrafo puente entre lentes que conecta el análisis
+- **TONO**: Presentación al CEO, no auditoría técnica
 - Lens 1: Autopercepción (message + asset inventory)
 - Lens 2: Terceros (SEO, media, industry position)
 - Lens 3a: Consumidores RRSS (sentiment, themes, pain points)
 - Lens 3b: Consumidores Reviews (ratings, pros/cons, migration)
 - Synthesis: Triangulation table + confirmed strengths/weaknesses + gaps
+- **CIERRE FINAL**: Párrafo conclusivo que sintetiza las 3 perspectivas
 
 ### 4. Viability Checkpoint (automático)
 - Si avg rating < 2.5/5, gaps severos promise-reality, o product gaps confirmados → WARNING

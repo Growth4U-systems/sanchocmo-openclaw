@@ -6,6 +6,40 @@
 
 ---
 
+## STORYTELLING (OBLIGATORIO)
+
+- [ ] **Executive Narrative** existe al principio del documento (antes de todo)
+  - ✅ 1 página máximo, narrativa pura, CERO tablas
+  - ✅ Estructura: Situación → Tensión/Gaps → Fortalezas Confirmadas
+  - ✅ Quien lea solo esto entiende el 80% del análisis
+
+- [ ] **Cada sección tiene apertura narrativa** (2-3 párrafos antes de datos/tablas)
+  - ✅ Profile Discovery: "¿Qué presencia digital tiene esta marca?"
+  - ✅ Lens 1: "Empezamos mirando cómo la marca se ve a sí misma..."
+  - ✅ Lens 2: "Ahora veamos cómo el mundo externo la percibe..."
+  - ✅ Lens 3: "Finalmente, ¿qué dicen realmente los clientes?"
+  - ✅ Synthesis: "Cruzando las 3 perspectivas, encontramos..."
+
+- [ ] **Cada sección tiene cierre interpretativo**
+  - ✅ Párrafo "So what?" después de cada análisis de lens
+  - ✅ Párrafo "Implicación" que dice qué hacer con los findings
+
+- [ ] **Transiciones entre lentes**
+  - ✅ Lens 1 → Lens 2: párrafo puente
+  - ✅ Lens 2 → Lens 3: párrafo puente
+  - ✅ Lens 3 → Synthesis: párrafo puente
+
+- [ ] **Tono de presentación**
+  - ✅ Escrito para CEO, no para auditor
+  - ✅ "Esto significa que...", "La brecha está en...", "La fortaleza confirmada es..."
+  - ✅ Evita lenguaje técnico de auditoría
+
+- [ ] **Cierre final** del documento
+  - ✅ 1-2 párrafos conclusivos: "En resumen, [marca] es percibida como..."
+  - ✅ "La oportunidad más clara es..."
+
+---
+
 ## Step 0: Profile Discovery
 
 - [ ] **Todas las plataformas checkeadas** (Instagram, Facebook, LinkedIn, YouTube, TikTok, Twitter/X)

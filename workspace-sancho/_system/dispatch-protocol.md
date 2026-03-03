@@ -168,20 +168,23 @@ Toda tarea que dure más de ~2 minutos DEBE incluir progress updates en el hilo 
 Añadir al final de CADA spawn prompt:
 
 ```
-PROGRESS UPDATES (OBLIGATORIO):
-- Cada ~5 minutos de trabajo, envía un update breve al hilo.
-- Formato: "🔄 **Update (paso X/Y)**: [qué llevas] → [qué sigue] → ETA: ~Z min"
-- Primer update: al completar el primer bloque significativo de trabajo.
-- Update final: "✅ **Completado**: [resumen de 1 línea del output]"
-- NO esperes a tener todo listo para comunicar. Comunica progreso parcial.
+⚠️ PROGRESS UPDATES — REGLA HARD (NO OPCIONAL):
+- Cuenta tus tool calls (web_search, web_fetch, read, write, etc.)
+- Después de CADA 3 tool calls, PARA y envía update al hilo:
+  message(action=send, channel=discord, target="<thread_id>", message="🔄 **Update (X/Y)**: [qué llevas] → [qué sigue] → ETA: ~Z min")
+- NO hagas más de 3 tool calls seguidos sin enviar update. MÁXIMO 3.
+- Primer update: después de los primeros 3 tool calls.
+- Update final: "✅ **Completado**: [resumen de 1 línea]"
+- Si no envías updates, el usuario asume que estás muerto. COMUNICA.
 ```
 
 ### Para Sancho (tareas propias largas)
 
 Cuando ejecutes deep research, Foundation pillars, o cualquier tarea >2 min:
-- Después de cada bloque significativo (ej: cada 3-5 búsquedas, cada sección completada), envía update al hilo.
-- Mismo formato: `🔄 **Update (X/Y)**: progreso → siguiente → ETA`
-- Entre tool calls, NO generar texto (regla Discord). Usa `message(action=send)` para updates.
+- Cuenta tus tool calls. Después de CADA 3 tool calls, PARA y envía update al hilo.
+- Formato: `🔄 **Update (X/Y)**: progreso → siguiente → ETA`
+- Usa `message(action=send)` para updates — NO texto entre tool calls (regla Discord).
+- MÁXIMO 3 tool calls seguidos sin update. Sin excepciones.
 
 ### Ejemplo real
 

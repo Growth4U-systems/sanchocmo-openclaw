@@ -109,27 +109,25 @@ Las skills especificas a usar se determinan por la persona asignada y el task pr
 
 ---
 
-## Progress Updates (OBLIGATORIO en tareas >2 min)
+## ⚠️ Progress Updates — REGLA HARD (NO OPCIONAL)
 
-Toda tarea que dure más de ~2 minutos DEBE incluir progress updates.
+**Cuenta tus tool calls.** Después de CADA 3 tool calls (web_search, web_fetch, read, write, exec, etc.), PARA y envía update.
 
-**Cadencia**: ~5 minutos (o según indique el task prompt).
+**MÁXIMO 3 tool calls seguidos sin enviar update. Sin excepciones.**
 
-**Formato**: Envía al hilo de Discord (si tienes acceso) o devuelve como mensaje intermedio:
+**Cómo enviar** (si estás en hilo Discord con thread: true):
 ```
-🔄 **Update (paso X/Y)**: [qué llevas hecho] → [qué sigue] → ETA: ~Z min
+message(action=send, channel=discord, target="<thread_id>", message="🔄 **Update (X/Y)**: [qué llevas] → [qué sigue] → ETA: ~Z min")
 ```
+
+Si no tienes acceso al hilo, devuelve el update como mensaje al spawn parent.
 
 **Update final**:
 ```
 ✅ **Completado**: [resumen de 1 línea del output]
 ```
 
-**Reglas de updates:**
-- Primer update: al completar el primer bloque significativo de trabajo
-- NO esperes a tener todo listo para comunicar — comunica progreso parcial
-- Si estás en un hilo de Discord (thread: true), envía updates directamente al hilo via `message(action=send)`
-- Si no tienes acceso al hilo, los updates van como mensajes al spawn parent
+**Por qué importa:** Si no envías updates, el usuario asume que estás muerto. El silencio NO es aceptable. Comunica progreso parcial aunque no tengas todo listo.
 
 ---
 

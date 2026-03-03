@@ -6,6 +6,34 @@
 
 ---
 
+## STORYTELLING (OBLIGATORIO)
+
+- [ ] **Executive Narrative** existe al principio del documento (Parte 0)
+  - ✅ 1 página máximo, narrativa pura, CERO tablas
+  - ✅ Estructura: Situación → Tensión → Oportunidad
+  - ✅ Quien lea solo esto entiende el 80% del análisis
+
+- [ ] **Cada sección tiene apertura narrativa** (2-3 párrafos antes de datos/tablas)
+  - ✅ Explica QUÉ vamos a ver y POR QUÉ importa
+
+- [ ] **Cada subsección/tabla tiene cierre interpretativo**
+  - ✅ Párrafo "So what?" después de cada tabla/datos
+  - ✅ Párrafo "Implicación" que dice qué hacemos con esto
+
+- [ ] **Transiciones entre PARTES** (1→2, 2→3, 3→4, 4→5)
+  - ✅ Párrafo puente que conecta lo anterior con lo siguiente
+  - ✅ El documento fluye como argumento continuo, no secciones aisladas
+
+- [ ] **Tono de presentación**
+  - ✅ Escrito para CEO, no para analista
+  - ✅ Frases como "Esto significa que...", "La oportunidad está en...", "El riesgo es..."
+  - ✅ Evita lenguaje académico/técnico
+
+- [ ] **Cierre final** del documento
+  - ✅ 1-2 párrafos conclusivos que cierran la historia completa
+
+---
+
 ## PARTE 1: Mercado
 
 - [ ] **TAM cuantificado** con método explícito (bottom-up preferido, top-down aceptable con confianza indicada)
