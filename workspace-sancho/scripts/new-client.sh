@@ -50,29 +50,65 @@ echo "🔨 Onboarding: $NAME (slug: $SLUG, guild: $GUILD)"
 
 # --- 1. Crear estructura de archivos ---
 echo "📁 Creando estructura..."
-mkdir -p "$BRAND_DIR"/{intelligence/meetings,daily-pulse,_archive}
+mkdir -p "$BRAND_DIR"/{company-brief,market-and-us/sources,go-to-market,brand-identity,operational,_archive}
 
-# Foundation state (15 pilares, todos not-started)
+# Foundation state v2.0 (4 secciones, 12 pilares)
 cat > "$BRAND_DIR/foundation-state.json" << FJSON
 {
+  "version": "2.0",
   "started_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
   "updated_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
-  "pillars": {
-    "company-context": {"status": "not-started"},
-    "business-model": {"status": "not-started"},
-    "budget": {"status": "not-started"},
-    "self-intelligence": {"status": "not-started"},
-    "ope-canvas": {"status": "not-started"},
-    "market": {"status": "not-started"},
-    "competitors": {"status": "not-started"},
-    "swot-analysis": {"status": "not-started"},
-    "niche-discovery-100x": {"status": "not-started"},
-    "ecp-validation": {"status": "not-started"},
-    "existing-customer-data": {"status": "not-started"},
-    "positioning": {"status": "not-started"},
-    "pricing": {"status": "not-started"},
-    "brand-voice": {"status": "not-started"},
-    "visual-identity": {"status": "not-started"}
+  "sections": {
+    "company-brief": {
+      "status": "not-started",
+      "layer": 0,
+      "output_dir": "brand/$SLUG/company-brief/",
+      "approved_at": null,
+      "skills": {
+        "company-context": {"status": "not-started"},
+        "business-model": {"status": "not-started"},
+        "budget": {"status": "not-started"}
+      }
+    },
+    "market-and-us": {
+      "status": "not-started",
+      "layer": 1,
+      "output_dir": "brand/$SLUG/market-and-us/",
+      "pillars": {
+        "market-analysis": {"status": "not-started", "layer": 1, "requires": ["company-brief"], "enriches_with": ["competitor-analysis", "self-analysis"], "skill": "market-intelligence"},
+        "competitor-analysis": {"status": "not-started", "layer": 1, "requires": ["company-brief"], "enriches_with": ["market-analysis", "self-analysis"], "output_files": [], "skill": "competitor-intelligence"},
+        "self-analysis": {"status": "not-started", "layer": 1, "requires": ["company-brief"], "enriches_with": ["market-analysis", "competitor-analysis"], "skill": "self-intelligence"},
+        "swot": {"status": "not-started", "layer": 2, "requires": ["market-analysis", "competitor-analysis", "self-analysis"], "skill": "swot-analysis"}
+      },
+      "syntheses": {
+        "summary": {"status": "not-generated", "generated_by": "orchestrator", "requires": ["market-analysis", "competitor-analysis", "self-analysis"]},
+        "ope-canvas": {"status": "not-generated", "generated_by": "orchestrator", "requires": ["market-analysis", "competitor-analysis", "self-analysis"]}
+      }
+    },
+    "go-to-market": {
+      "status": "not-started",
+      "layer": 3,
+      "output_dir": "brand/$SLUG/go-to-market/",
+      "pillars": {
+        "niche-discovery": {"status": "not-started", "layer": 3, "requires": ["swot"], "enriches_with": ["existing-customer-data"], "skill": "niche-discovery-100x"},
+        "existing-customer-data": {"status": "not-started", "layer": 3, "requires": ["company-brief"], "optional": true, "skill": "existing-customer-data"},
+        "positioning": {"status": "not-started", "layer": 4, "requires": ["niche-discovery"], "skill": "positioning-messaging"},
+        "pricing": {"status": "not-started", "layer": 4, "requires": ["niche-discovery"], "enriches_with": ["positioning"], "skill": "pricing-strategy"},
+        "ecp-validation": {"status": "not-started", "layer": 4, "requires": ["niche-discovery"], "optional": true, "skill": "ecp-validation"}
+      },
+      "syntheses": {
+        "messaging-summary": {"status": "not-generated", "generated_by": "orchestrator", "requires": ["positioning"]}
+      }
+    },
+    "brand-identity": {
+      "status": "not-started",
+      "layer": 5,
+      "output_dir": "brand/$SLUG/brand-identity/",
+      "pillars": {
+        "brand-voice": {"status": "not-started", "layer": 5, "requires": ["positioning"], "skill": "brand-voice"},
+        "visual-identity": {"status": "not-started", "layer": 5, "requires": ["brand-voice"], "skill": "visual-identity"}
+      }
+    }
   }
 }
 FJSON

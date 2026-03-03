@@ -32,7 +32,7 @@ bash ~/.openclaw/workspace-sancho/scripts/new-client.sh \
 
 Esto hace:
 - Crea carpeta `brand/{slug}/`
-- Crea `foundation-state.json` con 15 pilares en `not-started`
+- Crea `foundation-state.json` v2.0 con 4 secciones (company-brief, market-and-us, go-to-market, brand-identity)
 - Crea `integrations.json` vacío
 - Inserta cliente en Supabase (`clients` table)
 - Añade guild + channel bindings a `openclaw.json`
