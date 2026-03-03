@@ -100,7 +100,7 @@
 ### Síntesis Semanal
 1. Recopila learnings de todos los canales
 2. Publica resumen en #learning
-3. Actualiza `./brand/learnings.md` con patrones confirmados
+3. Actualiza `brand/{slug}/operational/learnings.md` con patrones confirmados
 
 ### Nueva Campaña (flujo completo)
 1. Define objetivo + ECP target + canales
@@ -114,4 +114,4 @@
 6. Trackea progreso en hilos de #campaigns
 
 ### Feedback Loops (obligatorio)
-Después de cada deliverable grande, pregunta cómo fue y logea a `./brand/learnings.md`.
+Después de cada deliverable grande, pregunta cómo fue y logea a `brand/{slug}/operational/learnings.md`.

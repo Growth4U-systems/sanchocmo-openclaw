@@ -211,12 +211,12 @@ Before email-sequences runs again, read learnings.md → apply patterns that wor
 **Protocol:**
 ```
 1. Skill A completes
-2. Skill A writes to ./brand/file-a.json
+2. Skill A writes to brand/{slug}/file-a.json
 3. Skill A reports: "Created file-a.json"
 4. Orchestrator dispatches Skill B
-5. Skill B reads ./brand/file-a.json
+5. Skill B reads brand/{slug}/file-a.json
 6. Skill B uses data as typed input
-7. Skill B writes to ./brand/file-b.json
+7. Skill B writes to brand/{slug}/file-b.json
 ```
 
 **NOT this:**
@@ -257,7 +257,7 @@ Before email-sequences runs again, read learnings.md → apply patterns that wor
 **Protocol:**
 ```
 1. Skill A completes
-2. Orchestrator reads ./brand/file-a.json
+2. Orchestrator reads brand/{slug}/file-a.json
 3. Orchestrator evaluates condition
 4. If condition true → route to Skill B
 5. Else → route to Skill C
@@ -287,7 +287,7 @@ else:
 ```
 1. Skill creates deliverable
 2. Ask feedback: "How did this perform? (a/b/c/d)"
-3. Log to ./brand/learnings.md
+3. Log to brand/{slug}/operational/learnings.md
 4. Next time skill runs:
    - Read learnings.md
    - Filter to this skill's learnings
@@ -316,7 +316,7 @@ else:
 
 **Protocol:**
 ```
-1. Check for ./brand/voice-profile.md
+1. Check for brand/{slug}/brand-identity/voice-profile.md
 2. File not found
 3. DON'T error
 4. Proceed with defaults
@@ -343,9 +343,9 @@ to: foundation-orchestrator
 mode: Lite | Deep
 context:
   blitz_results:
-    company_context: ./brand/company-context.md
-    product_analysis: ./brand/product-analysis.md
-    competitors: ./brand/competitors.md
+    company_context: brand/{slug}/company-brief/current.md
+    product_analysis: brand/{slug}/market-and-us/self-analysis.md
+    competitors: brand/{slug}/market-and-us/competitor-*.md
   user_meta: "LEADS"
   user_resources: ["website", "budget €5K"]
   sancho_role: "FULL_STACK_CMO"
@@ -373,10 +373,10 @@ recommendation: "Phase 2: Trust Engine" | "Continue Phase 1 Deep"
 from: foundation-orchestrator
 to: competitor-intelligence
 context:
-  company_context: ./brand/company-context.md
-  positioning: ./brand/positioning.md (if exists)
+  company_context: brand/{slug}/company-brief/current.md
+  positioning: brand/{slug}/go-to-market/positioning-*.md (if exists)
 lens: 1 | "1-3"  # Lite = Lens 1, Deep = Lens 1-3
-instruction: "Analyze top 3 competitors. Output to ./brand/competitors.md"
+instruction: "Analyze top 3 competitors. Output to brand/{slug}/market-and-us/competitor-*.md"
 ```
 
 **Report back:**
@@ -384,7 +384,7 @@ instruction: "Analyze top 3 competitors. Output to ./brand/competitors.md"
 from: competitor-intelligence
 to: foundation-orchestrator
 status: complete
-file_written: ./brand/competitors.md
+file_written: brand/{slug}/market-and-us/competitor-*.md
 next_unlocked: ["swot-analysis", "positioning-messaging"]
 ```
 
@@ -521,7 +521,7 @@ dispatch:
     company_name: "Monzo"
     industry: "Fintech"
     business_model: "Neobank"
-  instruction: "Analyze top 3 competitors, output to ./brand/competitors.md"
+  instruction: "Analyze top 3 competitors, output to brand/{slug}/market-and-us/competitor-*.md"
 ```
 
 **NOT this:**
@@ -541,9 +541,9 @@ completion:
   from: competitor-intelligence
   status: complete
   files_written:
-    - ./brand/competitors.md
+    - brand/{slug}/market-and-us/competitor-*.md
   files_updated:
-    - ./brand/learnings.md (appended)
+    - brand/{slug}/operational/learnings.md (appended)
   next_unlocked:
     - swot-analysis
     - positioning-messaging
@@ -560,7 +560,7 @@ completion:
 
 **Protocol:**
 ```
-1. Check for ./brand/competitors.md
+1. Check for brand/{slug}/market-and-us/competitor-*.md
 2. NOT found
 3. Options:
    a. If CRITICAL dependency → warn + suggest running dependency first
@@ -604,22 +604,22 @@ changed. Options:
 ```
 1. /lead-magnet
    → Creates magnet concept + content
-   → Writes: ./brand/campaigns/{name}/lead-magnet.md
+   → Writes: brand/{slug}/campaigns/{name}/lead-magnet.md
 
 2. /direct-response-copy
    → Reads: lead-magnet.md
    → Creates: LP copy for magnet
-   → Writes: ./brand/campaigns/{name}/landing-page.md
+   → Writes: brand/{slug}/campaigns/{name}/landing-page.md
 
 3. /email-sequences
    → Reads: lead-magnet.md + landing-page.md
    → Creates: Welcome sequence (6 emails)
-   → Writes: ./brand/campaigns/{name}/emails/*.md
+   → Writes: brand/{slug}/campaigns/{name}/emails/*.md
 
 4. /content-atomizer
    → Reads: lead-magnet.md + landing-page.md
    → Creates: Social promo content
-   → Writes: ./brand/campaigns/{name}/social/*.md
+   → Writes: brand/{slug}/campaigns/{name}/social/*.md
 ```
 
 **Context passing:**

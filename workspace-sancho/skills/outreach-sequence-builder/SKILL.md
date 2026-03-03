@@ -11,7 +11,7 @@ metadata:
   depends_on: channel-prioritization, contact-enrichment, signal-definition
   chains_to: email-outreach-executor, linkedin-outreach-executor
 context_required:
-- brand/channel-plan.md
+- brand/{slug}/go-to-market/channel-plan.md
 - brand/{slug}/go-to-market/positioning-*.md
 - brand/{slug}/go-to-market/ecps.md
 - brand/{slug}/brand-identity/voice-profile.md
@@ -47,14 +47,14 @@ Follow _system/output-format.md (if using SanchoCMO framework)
 ## Prerequisites
 
 **Required (will not run without these):**
-- `./brand/channel-plan.md` — Confirms outreach is a selected channel (from channel-prioritization)
+- `./brand/{slug}/go-to-market/channel-plan.md` — Confirms outreach is a selected channel (from channel-prioritization)
 - `./brand/{slug}/go-to-market/ecps.md` — Target personas with pain points (from niche-discovery-100x)
 - `./brand/{slug}/go-to-market/positioning-*.md` — Value proposition angles per ECP (from positioning-messaging)
 
 **Recommended (better output with these):**
 - `./brand/{slug}/brand-identity/voice-profile.md` — Tone for email copy (from brand-voice)
-- `./brand/contacts-enriched.json` — Enriched contacts for personalization (from contact-enrichment)
-- `./brand/signals-to-track.json` — Buy signals for triggers (from signal-definition)
+- `brand/{slug}/operational/contacts-enriched.json` — Enriched contacts for personalization (from contact-enrichment)
+- `brand/{slug}/operational/signals-to-track.json` — Buy signals for triggers (from signal-definition)
 
 ---
 
@@ -120,7 +120,7 @@ Which ECP should I build sequences for?
 
 ### Step 2: Load Signal Context (~2 min)
 
-Read `./brand/signals-to-track.json` if it exists. Map signals to sequence triggers:
+Read `brand/{slug}/operational/signals-to-track.json` if it exists. Map signals to sequence triggers:
 
 ```
 Signal               → Sequence Variant        → Angle
@@ -317,12 +317,12 @@ Append summary to `./brand/{slug}/operational/assets.md`:
 
 | Action | File | Description |
 |--------|------|-------------|
-| READ | `./brand/channel-plan.md` | Confirms outreach is selected channel |
+| READ | `./brand/{slug}/go-to-market/channel-plan.md` | Confirms outreach is selected channel |
 | READ | `./brand/{slug}/go-to-market/positioning-*.md` | Value prop angle per ECP |
 | READ | `./brand/{slug}/go-to-market/ecps.md` | Target persona details |
 | READ | `./brand/{slug}/brand-identity/voice-profile.md` | Tone for email copy |
-| READ | `./brand/contacts-enriched.json` | Enriched contacts (optional) |
-| READ | `./brand/signals-to-track.json` | Buy signals for triggers |
+| READ | `brand/{slug}/operational/contacts-enriched.json` | Enriched contacts (optional) |
+| READ | `brand/{slug}/operational/signals-to-track.json` | Buy signals for triggers |
 | WRITE | `./campaigns/outreach-{ecp}/` | Sequence files (multiple) |
 | APPEND | `./brand/{slug}/operational/assets.md` | Outreach sequence summary |
 

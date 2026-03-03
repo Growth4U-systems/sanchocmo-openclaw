@@ -7,7 +7,7 @@ context_required:
   - brand/{slug}/brand-identity/voice-profile.md
   - brand/{slug}/market-and-us/competitor-*.md
   - brand/{slug}/go-to-market/ecps.md
-  - brand/channel-plan.md
+  - brand/{slug}/go-to-market/channel-plan.md
 context_writes:
   - campaigns/{slug}/brief.md
   - campaigns/{slug}/gtm-state.json
@@ -26,7 +26,7 @@ context_writes:
 **Antes de CUALQUIER ejecución, verifica:**
 
 ```
-if brand/foundation-status.json NOT exists OR status != "approved":
+if brand/{slug}/foundation-state.json NOT exists OR status != "approved":
     STOP → "Foundation incompleta o no aprobada. No puedo ejecutar GTM.
             Completa Foundation primero (foundation-orchestrator)."
 ```
@@ -97,7 +97,7 @@ No avanzar al siguiente paso sin aprobación explícita del usuario.
 
 ### Step 3: Channel Prioritization
 - **Skill:** `channel-prioritization`
-- **Input:** `brand/channel-plan.md` (si existe), Foundation files, budget
+- **Input:** `brand/{slug}/go-to-market/channel-plan.md` (si existe), Foundation files, budget
 - **Output:** `campaigns/{slug}/content/channel-plan.md` — canales priorizados para esta campaña
 - **Presenta:** 2-4 canales recomendados con budget split (70/20/10)
 - **Aprobación:** Usuario confirma canales y distribución de budget

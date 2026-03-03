@@ -20,7 +20,7 @@ context_required:
 - brand/{slug}/market-and-us/self-analysis.md
 - brand/{slug}/operational/stack.md
 context_writes:
-- brand/channel-plan.md
+- brand/{slug}/go-to-market/channel-plan.md
 - brand/{slug}/operational/learnings.md
 - brand/{slug}/operational/assets.md
 ---
@@ -212,7 +212,7 @@ Present the recommendation and let the user confirm, modify, or request re-scori
 ```
 Recommended channel mix:
 
-  [1] Accept this mix (writes to ./brand/channel-plan.md)
+  [1] Accept this mix (writes to ./brand/{slug}/go-to-market/channel-plan.md)
   [2] Modify — drop [channel X], add [channel Y]
   [3] Re-score with different weights
   [4] Show me the full scoring table for ALL 9 channels
@@ -224,7 +224,7 @@ Wait for user input before writing to Context Lake.
 
 ## Output
 
-### File: `./brand/channel-plan.md`
+### File: `./brand/{slug}/go-to-market/channel-plan.md`
 
 ```markdown
 # Channel Plan — [Company Name]
@@ -285,7 +285,7 @@ Append summary to `./brand/{slug}/operational/assets.md`:
 | READ | `./brand/{slug}/market-and-us/competitor-*.md` | Competitor channel usage |
 | READ | `./brand/{slug}/market-and-us/self-analysis.md` | Product strengths/weaknesses |
 | READ | `./brand/{slug}/operational/stack.md` | Available tools |
-| WRITE (owns) | `./brand/channel-plan.md` | Channel mix + scoring + allocation |
+| WRITE (owns) | `./brand/{slug}/go-to-market/channel-plan.md` | Channel mix + scoring + allocation |
 | APPEND | `./brand/{slug}/operational/assets.md` | Channel plan summary |
 
 ---

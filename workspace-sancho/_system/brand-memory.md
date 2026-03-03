@@ -406,7 +406,7 @@ Every campaign has `brief.md`. See `_system/schemas/campaign.schema.json`.
 {planning | active | complete}
 
 ## Voice Notes
-{Campaign-specific voice adjustments from ./brand/voice-profile.md}
+{Campaign-specific voice adjustments from brand/{slug}/brand-identity/voice-profile.md}
 
 ## GTM Canvas Alignment
 {Which Canvas elements this activates: Market/Customer/Product/Pricing/Positioning/Growth}
@@ -416,14 +416,14 @@ Every campaign has `brief.md`. See `_system/schemas/campaign.schema.json`.
 
 Skills creating campaign assets:
 1. Create asset in campaign directory
-2. Append entry to `./brand/assets.md` with path
+2. Append entry to `brand/{slug}/operational/assets.md` with path
 3. Reference campaign brief for context
 
 ---
 
 ## Assets Registry Format
 
-File: `./brand/assets.md`
+File: `brand/{slug}/operational/assets.md`
 
 ```markdown
 # Asset Registry
@@ -539,7 +539,7 @@ d) Haven't used yet
 
 ## Stack File Format
 
-File: `./brand/stack.md`
+File: `brand/{slug}/operational/stack.md`
 
 ```markdown
 # Marketing Stack
@@ -580,7 +580,7 @@ Every skill that can use external tools follows this order:
 3. **No API key? Output compatible files**: Generate output user can manually import.
 4. **Don't know tools? Ask and guide**: "What email tool do you use? I can output compatible format or help connect it."
 
-After resolving tool, update `./brand/stack.md` if not listed.
+After resolving tool, update `brand/{slug}/operational/stack.md` if not listed.
 
 ---
 
@@ -639,7 +639,7 @@ RESEARCH MODE
 
 ## Voice Injection Protocol
 
-When `./brand/voice-profile.md` exists and loaded, skill output should **DEMONSTRATE** brand voice, not just acknowledge it.
+When `brand/{slug}/brand-identity/voice-profile.md` exists and loaded, skill output should **DEMONSTRATE** brand voice, not just acknowledge it.
 
 ### Wrong vs Right
 

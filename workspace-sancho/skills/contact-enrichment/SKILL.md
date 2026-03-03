@@ -37,7 +37,7 @@ Follow _system/output-format.md (if using SanchoCMO framework)
 
 **Required input:**
 - Decision makers list from decision-maker-finder skill
-- File: `./brand/decision-makers-YYYYMMDD.json`
+- File: `brand/{slug}/operational/decision-makers-YYYYMMDD.json`
 - At minimum: name + company + title (LinkedIn URL is a bonus)
 
 **API Keys needed (at least ONE):**
@@ -46,8 +46,8 @@ Follow _system/output-format.md (if using SanchoCMO framework)
 - **Full stack:** Apollo + Hunter + SignalHire + Snov.io
 
 **Optional context:**
-- `./brand/target-companies.json` (for domain lookup)
-- `./brand/ecps.json` (for title matching validation)
+- `brand/{slug}/operational/target-companies.json` (for domain lookup)
+- `brand/{slug}/go-to-market/ecps.json` (for title matching validation)
 
 ---
 
@@ -82,7 +82,7 @@ If NO API keys → switch to LIGHT mode (see section below).
 
 ```
 Read from Context Lake:
-  └─ ./brand/decision-makers-YYYYMMDD.json
+  └─ brand/{slug}/operational/decision-makers-YYYYMMDD.json
 
 Extract per contact: name, title, company, domain, LinkedIn URL, existing data
 
@@ -239,7 +239,7 @@ READY FOR OUTREACH: [N] HIGH confidence (safe) + [N] MEDIUM (caution)
 
 ### Step 9: Save Output
 
-File: `./brand/contacts-enriched-YYYYMMDD.json`
+File: `brand/{slug}/operational/contacts-enriched-YYYYMMDD.json`
 
 ```json
 {
@@ -367,15 +367,15 @@ Append summary to `./brand/{slug}/operational/assets.md`.
 
 | File | What it provides | How it's used |
 |------|-----------------|---------------|
-| ./brand/decision-makers-YYYYMMDD.json | Names, titles, companies, LinkedIn URLs | Input contacts to enrich |
-| ./brand/target-companies.json | Company domains | Domain lookup for email patterns |
-| ./brand/ecps.json | Target titles/roles | Validation enriched contacts match target |
+| brand/{slug}/operational/decision-makers-YYYYMMDD.json | Names, titles, companies, LinkedIn URLs | Input contacts to enrich |
+| brand/{slug}/operational/target-companies.json | Company domains | Domain lookup for email patterns |
+| brand/{slug}/go-to-market/ecps.json | Target titles/roles | Validation enriched contacts match target |
 
 ### Writes to Context Lake
 
 | File | What it contains |
 |------|-----------------|
-| ./brand/contacts-enriched-YYYYMMDD.json | Enriched contacts with emails, phones, socials |
+| brand/{slug}/operational/contacts-enriched-YYYYMMDD.json | Enriched contacts with emails, phones, socials |
 | ./brand/{slug}/operational/assets.md | Append: Enrichment summary and stats |
 
 ### Chains to

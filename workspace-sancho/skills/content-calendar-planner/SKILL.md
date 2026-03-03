@@ -11,9 +11,9 @@ metadata:
   depends_on: channel-prioritization, positioning-messaging, keyword-research
   chains_to: seo-content, content-atomizer, newsletter
 context_required:
-- brand/channel-plan.md
+- brand/{slug}/go-to-market/channel-plan.md
 - brand/{slug}/go-to-market/positioning-*.md
-- brand/keyword-plan.md
+- brand/{slug}/go-to-market/keyword-plan.md
 - brand/{slug}/brand-identity/voice-profile.md
 - brand/{slug}/go-to-market/ecps.md
 context_writes:
@@ -37,15 +37,15 @@ Follow _system/output-format.md (if using SanchoCMO framework)
 ## Prerequisites
 
 **Required (will not run without these):**
-- `./brand/channel-plan.md` — Active channels + frequency (from channel-prioritization)
+- `./brand/{slug}/go-to-market/channel-plan.md` — Active channels + frequency (from channel-prioritization)
 - `./brand/{slug}/go-to-market/positioning-*.md` — Differentiation angles for pillar derivation (from positioning-messaging)
 - `./brand/{slug}/go-to-market/ecps.md` — Target personas for audience segmentation (from niche-discovery-100x)
 
 **Recommended (better output with these):**
-- `./brand/keyword-plan.md` — SEO topics + clusters (from keyword-research)
+- `./brand/{slug}/go-to-market/keyword-plan.md` — SEO topics + clusters (from keyword-research)
 - `./brand/{slug}/brand-identity/voice-profile.md` — Tone for content notes (from brand-voice)
 - Content ideas from intelligence pipeline:
-  - `./brand/transitory/daily-pulse/` — Content ideas from daily-pulse
+  - `brand/{slug}/operational/transitory/daily-pulse/` — Content ideas from daily-pulse
   - `./campaigns/content-plan/` — Content briefs from insight-to-content-mapper
 
 ---
@@ -239,7 +239,7 @@ Fri   09:00   Instagram  Reel           [Topic]            Social   BOFU    Idea
 ```
 Content calendar ready:
 
-  [1] Accept (writes to ./brand/content-calendar.md)
+  [1] Accept (writes to brand/{slug}/go-to-market/content-calendar.md)
   [2] Modify pillars or distribution
   [3] Change frequency (need to adjust for team capacity)
   [4] Add/remove specific topics
@@ -252,7 +252,7 @@ Wait for user input before writing.
 
 ## Output
 
-### File: `./brand/content-calendar.md`
+### File: `brand/{slug}/go-to-market/content-calendar.md`
 
 ```markdown
 # Content Calendar — [Company Name]
@@ -320,14 +320,14 @@ Append summary to `./brand/{slug}/operational/assets.md`:
 
 | Action | File | Description |
 |--------|------|-------------|
-| READ | `./brand/channel-plan.md` | Active channels + frequency |
+| READ | `./brand/{slug}/go-to-market/channel-plan.md` | Active channels + frequency |
 | READ | `./brand/{slug}/go-to-market/positioning-*.md` | Differentiation angles for pillar derivation |
-| READ | `./brand/keyword-plan.md` | SEO topics + clusters |
+| READ | `./brand/{slug}/go-to-market/keyword-plan.md` | SEO topics + clusters |
 | READ | `./brand/{slug}/brand-identity/voice-profile.md` | Tone for content notes |
 | READ | `./brand/{slug}/go-to-market/ecps.md` | Audience segments for pillar mapping |
-| READ | `./brand/transitory/daily-pulse/` | Content ideas from intelligence |
+| READ | `brand/{slug}/operational/transitory/daily-pulse/` | Content ideas from intelligence |
 | READ | `./campaigns/content-plan/` | Content briefs from mapper |
-| WRITE (owns) | `./brand/content-calendar.md` | Editorial calendar |
+| WRITE (owns) | `brand/{slug}/go-to-market/content-calendar.md` | Editorial calendar |
 | APPEND | `./brand/{slug}/operational/assets.md` | Calendar summary |
 
 ---

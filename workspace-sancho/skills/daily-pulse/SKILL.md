@@ -51,7 +51,7 @@ Follow _system/output-format.md (if using SanchoCMO framework)
 **Optional context:**
 - ./brand/{slug}/go-to-market/positioning-*.md (filtrar insights relevantes a nuestra marca)
 - ./brand/{slug}/brand-identity/voice-profile.md (adaptar ideas a nuestro tono)
-- ./brand/content-ideas.json (evitar duplicados con ideas existentes)
+- brand/{slug}/operational/content-ideas.json (evitar duplicados con ideas existentes)
 
 ---
 
@@ -354,7 +354,7 @@ PATTERNS DETECTED
 
 ### Step 6: Write Output
 
-**Save to:** `./brand/daily-pulse-YYYYMMDD.json` (see Output Format below for full schema)
+**Save to:** `brand/{slug}/operational/daily-pulse-YYYYMMDD.json` (see Output Format below for full schema)
 
 **Append summary to:** `./brand/{slug}/operational/assets.md` with date, insight count, top patterns, and file path.
 
@@ -385,7 +385,7 @@ TOP 3 IDEAS
 3. [HIGH] 5 Senales de que tu Onboarding esta Roto
    Blog + Twitter | /content-atomizer
 
-SAVED: ./brand/daily-pulse-20260221.json
+SAVED: brand/{slug}/operational/daily-pulse-20260221.json
 
 NEXT: /seo-content, /content-atomizer, /direct-response-copy
 ```
@@ -458,14 +458,14 @@ The daily-pulse JSON schema:
 |------|-----------------|---------------|
 | ./brand/{slug}/go-to-market/positioning-*.md | Our unique angle | Filter: insights must be relevant to our market |
 | ./brand/{slug}/brand-identity/voice-profile.md | Our tone and style | Adaptation: frame content ideas in our voice |
-| ./brand/content-ideas.json | Existing ideas | Deduplication: skip insights already captured |
-| ./brand/competitors.json | Competitor names | Detection: flag competitive intel mentions |
+| brand/{slug}/operational/content-ideas.json | Existing ideas | Deduplication: skip insights already captured |
+| brand/{slug}/market-and-us/competitors.json | Competitor names | Detection: flag competitive intel mentions |
 
 ### Writes to Context Lake
 
 | File | What it contains |
 |------|-----------------|
-| ./brand/daily-pulse-YYYYMMDD.json | Full daily pulse output |
+| brand/{slug}/operational/daily-pulse-YYYYMMDD.json | Full daily pulse output |
 | ./brand/{slug}/operational/assets.md | Append: daily pulse summary |
 
 ### Chains to

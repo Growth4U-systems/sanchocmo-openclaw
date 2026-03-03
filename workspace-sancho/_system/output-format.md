@@ -144,9 +144,9 @@ Always show the user exactly what was written to disk.
 ```
   FILES SAVED
 
-  ./brand/voice-profile.md       ✓
-  ./brand/positioning.md         ✓ (updated)
-  ./brand/assets.md              ✓ (3 entries added)
+  brand/{slug}/brand-identity/voice-profile.md       ✓
+  brand/{slug}/go-to-market/positioning-*.md         ✓ (updated)
+  brand/{slug}/operational/assets.md              ✓ (3 entries added)
   ./campaigns/q1/brief.md        ✓ (new)
 ```
 
@@ -438,9 +438,9 @@ Used during multi-step operations to show real-time status.
 
 **After completion:**
 ```
-  ✓ Brand voice extracted          ./brand/voice-profile.md
-  ✓ 3 positioning angles found     ./brand/positioning.md
-  ✓ Audience profile built          ./brand/audience.md
+  ✓ Brand voice extracted          brand/{slug}/brand-identity/voice-profile.md
+  ✓ 3 positioning angles found     brand/{slug}/go-to-market/positioning-*.md
+  ✓ Audience profile built          brand/{slug}/go-to-market/ecps.md
 ```
 
 Rules:
@@ -731,10 +731,10 @@ RIGHT:
 ### DO NOT put file paths in code blocks
 ```
 WRONG:
-  Saved to `./brand/voice-profile.md`
+  Saved to `brand/{slug}/brand-identity/voice-profile.md`
 
 RIGHT:
-  Saved:  ./brand/voice-profile.md
+  Saved:  brand/{slug}/brand-identity/voice-profile.md
 ```
 
 ### DO NOT use tables for single-column data
@@ -886,9 +886,9 @@ This is a full example of a properly formatted skill output for reference.
 
   FILES SAVED
 
-  ./brand/voice-profile.md       ✓
-  ./brand/vocabulary.md          ✓
-  ./brand/examples.md            ✓ (12 samples)
+  brand/{slug}/brand-identity/voice-profile.md       ✓
+  brand/{slug}/brand-identity/voice-profile.md          ✓
+  brand/{slug}/operational/assets.md            ✓ (12 samples)
 
   WHAT'S NEXT
 

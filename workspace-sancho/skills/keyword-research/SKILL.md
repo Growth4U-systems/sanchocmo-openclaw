@@ -12,7 +12,7 @@ context_required:
 - brand/{slug}/go-to-market/ecps.md
 - brand/{slug}/market-and-us/competitor-*.md
 context_writes:
-- brand/keyword-plan.md
+- brand/{slug}/go-to-market/keyword-plan.md
 - brand/{slug}/operational/learnings.md
 - brand/{slug}/operational/assets.md
 ---
@@ -43,14 +43,14 @@ On every invocation, check for existing brand context.
 | File | What it provides | How it shapes output |
 |------|-----------------|---------------------|
 | ./brand/{slug}/go-to-market/positioning-*.md | Market angles, differentiators | Aligns keyword selection with brand positioning -- a rebel brand targets different keywords than a trusted advisor |
-| ./brand/audience.md | Buyer profiles, sophistication level | Informs search intent mapping -- beginner audience means more "what is" and "how to" keywords |
+| brand/{slug}/go-to-market/ecps.md | Buyer profiles, sophistication level | Informs search intent mapping -- beginner audience means more "what is" and "how to" keywords |
 | ./brand/{slug}/market-and-us/competitor-*.md | Named competitors, their positioning | Seeds competitive content gap analysis -- search what they rank for, find what they miss |
 
 ### Writes
 
 | File | What it contains |
 |------|-----------------|
-| ./brand/keyword-plan.md | The complete prioritized keyword plan (profile file, create-or-overwrite) |
+| ./brand/{slug}/go-to-market/keyword-plan.md | The complete prioritized keyword plan (profile file, create-or-overwrite) |
 | ./campaigns/content-plan/*.md | Individual content briefs for top-priority keywords |
 | ./brand/{slug}/operational/assets.md | Appends entries for each content brief created |
 
@@ -84,7 +84,7 @@ On every invocation, check for existing brand context.
 
 ## Iteration Detection
 
-Before starting, check whether `./brand/keyword-plan.md` already exists.
+Before starting, check whether `./brand/{slug}/go-to-market/keyword-plan.md` already exists.
 
 ### If keyword-plan.md EXISTS --> Refresh Mode
 
@@ -196,7 +196,7 @@ what you can and confirm with the user.
 1. **What do you sell/offer?** (1-2 sentences)
    - Pre-fill from: ./brand/{slug}/go-to-market/positioning-*.md
 2. **Who are you trying to reach?** (Be specific)
-   - Pre-fill from: ./brand/audience.md
+   - Pre-fill from: brand/{slug}/go-to-market/ecps.md
 3. **What is your website?** (To understand current content)
 4. **Who are 2-3 competitors?** (Or help identify them)
    - Pre-fill from: ./brand/{slug}/market-and-us/competitor-*.md
@@ -276,7 +276,7 @@ instead of generic examples. The user's real differentiators should drive Circle
 Related areas where your audience spends time.
 > Example: "startup growth", "indie hackers", "solopreneur tools", "productivity systems"
 
-If ./brand/audience.md is loaded, use the audience's actual communities,
+If brand/{slug}/go-to-market/ecps.md is loaded, use the audience's actual communities,
 interests, and adjacent problems to populate Circle 5.
 
 ### Circle 6: Entities to Associate With
@@ -815,7 +815,7 @@ Use lowercase-kebab-case: `{keyword-slug}.md`
 
 ## Keyword Plan File Format
 
-The keyword plan saved to `./brand/keyword-plan.md` uses this format:
+The keyword plan saved to `./brand/{slug}/go-to-market/keyword-plan.md` uses this format:
 
 ```markdown
 # Keyword Plan
@@ -1027,7 +1027,7 @@ standard markdown.
 
   FILES SAVED
 
-  ./brand/keyword-plan.md                ✓
+  ./brand/{slug}/go-to-market/keyword-plan.md                ✓
   ./campaigns/content-plan/{slug-1}.md   ✓ (new)
   ./campaigns/content-plan/{slug-2}.md   ✓ (new)
   ./campaigns/content-plan/{slug-3}.md   ✓ (new)
@@ -1259,7 +1259,7 @@ This is the full decision tree for every /keyword-research invocation:
   │   ├── Load audience.md (if exists)
   │   └── Load competitors.md (if exists)
   │
-  ├── Check ./brand/keyword-plan.md
+  ├── Check ./brand/{slug}/go-to-market/keyword-plan.md
   │   ├── EXISTS --> Refresh Mode
   │   │   ├── Show current plan summary
   │   │   ├── Ask what to change
@@ -1299,7 +1299,7 @@ This is the full decision tree for every /keyword-research invocation:
   │           └── Individual briefs for Tier 1 + Quick Wins
   │
   ├── Save outputs
-  │   ├── ./brand/keyword-plan.md
+  │   ├── ./brand/{slug}/go-to-market/keyword-plan.md
   │   ├── ./campaigns/content-plan/*.md (briefs)
   │   └── ./brand/{slug}/operational/assets.md (append brief entries)
   │
@@ -1485,7 +1485,7 @@ When executing this skill, follow these rules precisely:
    user moves from plan to content, the more value they get.
 
 10. **Write file paths correctly.** The plan saves to
-    `./brand/keyword-plan.md`. Briefs save to
+    `./brand/{slug}/go-to-market/keyword-plan.md`. Briefs save to
     `./campaigns/content-plan/{slug}.md`. The exact paths matter for
     cross-skill references.
 

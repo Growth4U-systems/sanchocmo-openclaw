@@ -218,7 +218,7 @@ const signals = await Promise.all([
 const hotLeads = processSignals(signals);
 
 // Save + alert
-await saveToContextLake('./brand/hot-leads.json', hotLeads);
+await saveToContextLake('brand/{slug}/operational/hot-leads.json', hotLeads);
 await notifySlack(hotLeads.filter(l => l.score >= 90));
 ```
 

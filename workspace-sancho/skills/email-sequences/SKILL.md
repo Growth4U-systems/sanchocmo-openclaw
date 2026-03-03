@@ -785,7 +785,7 @@ Full lifecycle. Most complete.
 
 When generating the sequence, assign a specific send day and time to each email based on:
 
-1. **Audience type** from `./brand/audience.md` (or ask if not available)
+1. **Audience type** from `brand/{slug}/go-to-market/ecps.md` (or ask if not available)
 2. **Sequence type** (welcome sequences are daily/every-other-day; nurture is weekly)
 3. **Price point** (higher price = more value emails before pitch)
 4. **Learnings data** from `./brand/{slug}/operational/learnings.md` (if send time performance data exists, use it)
@@ -925,7 +925,7 @@ Every sequence gets a `brief.md` in the campaign directory. This follows the sta
 {The positioning angle being used -- from ./brand/{slug}/go-to-market/positioning-*.md}
 
 ## Audience Segment
-{Who receives this sequence -- from ./brand/audience.md}
+{Who receives this sequence -- from brand/{slug}/go-to-market/ecps.md}
 
 ## Lead Magnet
 {What they opted in for -- from ./brand/{slug}/operational/assets.md or user input}

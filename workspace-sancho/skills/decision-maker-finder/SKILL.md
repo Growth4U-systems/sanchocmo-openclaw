@@ -38,7 +38,7 @@ Follow _system/output-format.md (if using SanchoCMO framework)
 ## Prerequisites
 
 **Required input:**
-- Companies list from company-finder (`./brand/companies-YYYYMMDD.json` or manual list)
+- Companies list from company-finder (`brand/{slug}/operational/companies-YYYYMMDD.json` or manual list)
 - At minimum: company name + domain + employee count
 
 **Tools needed (in priority order):**
@@ -51,9 +51,9 @@ Follow _system/output-format.md (if using SanchoCMO framework)
 4. **WebSearch** (fallback: manual search)
 
 **Optional context:**
-- ./brand/ecps.json (buyer personas with target roles)
+- brand/{slug}/go-to-market/ecps.json (buyer personas with target roles)
 - ./brand/{slug}/go-to-market/positioning-*.md (to identify relevant departments)
-- ./brand/competitors.json (to identify warm paths via mutual connections)
+- brand/{slug}/market-and-us/competitors.json (to identify warm paths via mutual connections)
 
 ---
 
@@ -97,7 +97,7 @@ Proceed?
 
 ```
 Read from Context Lake (if SanchoCMO):
-  ./brand/companies-YYYYMMDD.json
+  brand/{slug}/operational/companies-YYYYMMDD.json
 
 Extract per company:
   |- Company name
@@ -348,7 +348,7 @@ Save results? [Y/N]
 
 ### Step 8: Save Output
 
-**Write to:** `./brand/decision-makers-YYYYMMDD.json`
+**Write to:** `brand/{slug}/operational/decision-makers-YYYYMMDD.json`
 
 ```json
 {
@@ -434,16 +434,16 @@ Same JSON format. Mark `"tool_used": "manual"`. Profile quality assessment may b
 
 | File | What it provides | How it's used |
 |------|-----------------|---------------|
-| ./brand/companies-YYYYMMDD.json | Target companies list | Source list for people search |
-| ./brand/ecps.json | Buyer personas with roles | Defines which roles to target |
+| brand/{slug}/operational/companies-YYYYMMDD.json | Target companies list | Source list for people search |
+| brand/{slug}/go-to-market/ecps.json | Buyer personas with roles | Defines which roles to target |
 | ./brand/{slug}/go-to-market/positioning-*.md | Our value proposition | Identifies relevant departments |
-| ./brand/competitors.json | Competitor data | Warm path identification via shared connections |
+| brand/{slug}/market-and-us/competitors.json | Competitor data | Warm path identification via shared connections |
 
 ### Writes to Context Lake
 
 | File | What it contains |
 |------|-----------------|
-| ./brand/decision-makers-YYYYMMDD.json | All validated contacts (structured) |
+| brand/{slug}/operational/decision-makers-YYYYMMDD.json | All validated contacts (structured) |
 | ./brand/{slug}/operational/assets.md | Append: Decision makers summary |
 
 ### Chains to

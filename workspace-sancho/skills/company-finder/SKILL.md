@@ -32,10 +32,10 @@ This skill is the bridge between "knowing who your ideal customer is" and "havin
 
 Before starting, load context from the brand directory:
 
-- `./brand/company.json` — Our company context (what we sell, to whom)
-- `./brand/icp.json` — ICP definition (industry, size, geo, tech stack, etc.)
-- `./brand/ecps.json` — Early Customer Profiles with scoring from niche-discovery-100x
-- `./brand/competitors.json` — Competitor data (to exclude or identify competitor customers)
+- `brand/{slug}/company-brief/current.md` — Our company context (what we sell, to whom)
+- `brand/{slug}/go-to-market/ecps.json` — ICP definition (industry, size, geo, tech stack, etc.)
+- `brand/{slug}/go-to-market/ecps.json` — Early Customer Profiles with scoring from niche-discovery-100x
+- `brand/{slug}/market-and-us/competitors.json` — Competitor data (to exclude or identify competitor customers)
 
 ## Follow _system/output-format.md
 
@@ -45,7 +45,7 @@ All output follows the standard SanchoCMO output format. JSON outputs use the sc
 
 ## Prerequisites
 
-1. **ICP defined** — niche-discovery-100x must be at least Lite-done. `./brand/icp.json` and `./brand/ecps.json` must exist.
+1. **ICP defined** — niche-discovery-100x must be at least Lite-done. `brand/{slug}/go-to-market/ecps.json` and `brand/{slug}/go-to-market/ecps.json` must exist.
 2. **API keys** (for FULL mode) — At least ONE of:
    - Apollo.io API key (environment variable `APOLLO_API_KEY`)
    - Clay API access (environment variable `CLAY_API_KEY`)
@@ -58,7 +58,7 @@ All output follows the standard SanchoCMO output format. JSON outputs use the sc
 
 ```
 Step 0: Tool Detection       → Check available APIs → FULL vs LIGHT mode
-Step 1: Load ICP             → Read ./brand/icp.json + ecps.json
+Step 1: Load ICP             → Read brand/{slug}/go-to-market/ecps.json + ecps.json
 Step 2: Select Tool          → Decision tree: Apollo vs Clay vs LinkedIn
 Step 3: Map ICP to Filters   → Translate ICP attributes to API parameters
 Step 4: Execute Search       → Run API calls with pagination
@@ -100,7 +100,7 @@ Check which tools are available and set execution mode.
 
 Read ICP definition from the brand directory.
 
-**Required data from `./brand/icp.json`:**
+**Required data from `brand/{slug}/go-to-market/ecps.json`:**
 - Industry / vertical
 - Company size (employee range)
 - Revenue range (if available)
@@ -109,7 +109,7 @@ Read ICP definition from the brand directory.
 - Funding stage (if relevant)
 - Business model (B2B, B2C, marketplace, etc.)
 
-**Required data from `./brand/ecps.json`:**
+**Required data from `brand/{slug}/go-to-market/ecps.json`:**
 - Selected ECPs with pain scores and reachability
 - ECP-specific criteria that narrow the ICP further
 
@@ -288,7 +288,7 @@ Show results in a formatted, scannable table.
 
 ### Step 8: Save Output (~1 min)
 
-Save the complete results to `./brand/companies-YYYYMMDD.json`.
+Save the complete results to `brand/{slug}/operational/companies-YYYYMMDD.json`.
 
 **JSON Schema:**
 
@@ -355,7 +355,7 @@ Save the complete results to `./brand/companies-YYYYMMDD.json`.
 }
 ```
 
-**Also save a human-readable summary** to `./brand/companies-YYYYMMDD-summary.md` with the table from Step 7.
+**Also save a human-readable summary** to `brand/{slug}/operational/companies-YYYYMMDD-summary.md` with the table from Step 7.
 
 ---
 

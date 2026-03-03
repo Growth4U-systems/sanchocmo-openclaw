@@ -215,7 +215,7 @@ Signals de alta intencion que suben la prioridad dentro de su tier:
 ## Mapping Workflow
 
 ```
-1. Leer ICP de ./brand/icp.json
+1. Leer ICP de brand/{slug}/go-to-market/ecps.json
        |
 2. Por cada atributo del ICP:
    a. Identificar campo equivalente en herramienta seleccionada (tabla arriba)

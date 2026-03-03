@@ -164,7 +164,7 @@ START: What is the ICP company size?
 > Usa los Extended Customer Profiles de SanchoCMO para definir roles de busqueda.
 
 ```
-From ECP (./brand/ecps.json):
+From ECP (brand/{slug}/go-to-market/ecps.json):
   └─ buyer_persona:
        ├─ title_pattern → Direct search term
        ├─ department → Filter for search

@@ -268,7 +268,7 @@ const adsData = await apify.call('facebook-ads-library-scraper', {
 const ideas = extractPatterns(adsData.ads);
 
 // Save to Content Ideas DB
-await saveToContextLake('./brand/content-ideas.json', ideas);
+await saveToContextLake('brand/{slug}/operational/content-ideas.json', ideas);
 ```
 
 ---

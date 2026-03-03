@@ -51,11 +51,11 @@ Follow _system/output-format.md (if using SanchoCMO framework)
 
 ```
 Read from Context Lake (if SanchoCMO):
-  ├─ ./brand/company-context.json
-  ├─ ./brand/icp.json
-  ├─ ./brand/ecps.json
-  ├─ ./brand/business-model.json
-  └─ ./brand/customer-data.json (if exists)
+  ├─ brand/{slug}/company-brief/current.md
+  ├─ brand/{slug}/go-to-market/ecps.md
+  ├─ brand/{slug}/go-to-market/ecps.md
+  ├─ brand/{slug}/company-brief/current.md
+  └─ brand/{slug}/go-to-market/existing-customer-data.md (if exists)
 
 Extract:
   ├─ Product category (e.g., "CRM for SaaS")
@@ -374,7 +374,7 @@ For each signal, specify:
 }
 ```
 
-**Save to:** `./brand/signals-to-track.json`
+**Save to:** `brand/{slug}/operational/signals-to-track.json`
 
 **Append to:** `./brand/{slug}/operational/assets.md`
 
@@ -387,7 +387,7 @@ Monitoring cost: ~$200/month
 
 Next step: /signal-monitor to start tracking
 
-File: ./brand/signals-to-track.json
+File: brand/{slug}/operational/signals-to-track.json
 ```
 
 ---
@@ -428,7 +428,7 @@ ESTIMATED COST: $200/month
 
 FILES SAVED
 
-✓ ./brand/signals-to-track.json
+✓ brand/{slug}/operational/signals-to-track.json
 ✓ ./brand/{slug}/operational/assets.md (appended)
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -453,17 +453,17 @@ NEXT STEPS
 
 | File | What it provides | How it's used |
 |------|-----------------|---------------|
-| ./brand/company-context.json | Product, industry, pain points | Determines relevant signal categories |
-| ./brand/icp.json | ICP characteristics | Filters signals by company fit |
-| ./brand/ecps.json | Specific buyer personas | Identifies decision-maker hiring signals |
-| ./brand/business-model.json | Revenue model, sales process | Informs sales cycle-specific signals |
-| ./brand/customer-data.json | Existing customer patterns | Validates which signals historically converted |
+| brand/{slug}/company-brief/current.md | Product, industry, pain points | Determines relevant signal categories |
+| brand/{slug}/go-to-market/ecps.md | ICP characteristics | Filters signals by company fit |
+| brand/{slug}/go-to-market/ecps.md | Specific buyer personas | Identifies decision-maker hiring signals |
+| brand/{slug}/company-brief/current.md | Revenue model, sales process | Informs sales cycle-specific signals |
+| brand/{slug}/go-to-market/existing-customer-data.md | Existing customer patterns | Validates which signals historically converted |
 
 ### Writes to Context Lake
 
 | File | What it contains |
 |------|-----------------|
-| ./brand/signals-to-track.json | Defined signals + monitoring strategy |
+| brand/{slug}/operational/signals-to-track.json | Defined signals + monitoring strategy |
 | ./brand/{slug}/operational/assets.md | Append: Signal setup summary |
 
 ### Chains to

@@ -14,7 +14,7 @@ context_required:
 - brand/{slug}/go-to-market/positioning-*.md
 - brand/{slug}/go-to-market/ecps.md
 - brand/{slug}/go-to-market/ecps.md
-- brand/keyword-plan.md
+- brand/{slug}/go-to-market/keyword-plan.md
 context_writes:
 - campaigns/
 - brand/{slug}/operational/learnings.md
@@ -50,15 +50,15 @@ Follow _system/output-format.md (if using SanchoCMO framework)
 **Brand context (loaded automatically in SanchoCMO):**
 - ./brand/{slug}/go-to-market/positioning-*.md (unique angle selection)
 - ./brand/{slug}/brand-identity/voice-profile.md (tone guidance)
-- ./brand/keyword-plan.md (existing keyword strategy)
-- ./brand/content-ideas.json (avoid duplicating ideas)
+- ./brand/{slug}/go-to-market/keyword-plan.md (existing keyword strategy)
+- brand/{slug}/operational/content-ideas.json (avoid duplicating ideas)
 
 **Tools needed:**
 - WebSearch (keyword research + SERP analysis)
 - WebFetch (top-ranking content analysis, optional)
 
 **Optional context:**
-- ./brand/competitors.json (competitive gap analysis)
+- brand/{slug}/market-and-us/competitors.json (competitive gap analysis)
 - ./brand/{slug}/operational/assets.md (internal linking inventory)
 
 ---
@@ -310,9 +310,9 @@ content-briefs/YYYY-MM-DD-[topic-slug-2].md   ← Brief #2
 |------|-----------------|---------------|
 | ./brand/{slug}/go-to-market/positioning-*.md | Unique angle and differentiators | Step 5: Angle selection |
 | ./brand/{slug}/brand-identity/voice-profile.md | Tone, style, reading level | Step 6: Tone guidance in brief |
-| ./brand/keyword-plan.md | Existing keyword strategy | Step 2: Align new keywords |
-| ./brand/content-ideas.json | Existing ideas | Step 0: Avoid duplicates |
-| ./brand/competitors.json | Competitor URLs and battle cards | Step 3: Gap analysis |
+| ./brand/{slug}/go-to-market/keyword-plan.md | Existing keyword strategy | Step 2: Align new keywords |
+| brand/{slug}/operational/content-ideas.json | Existing ideas | Step 0: Avoid duplicates |
+| brand/{slug}/market-and-us/competitors.json | Competitor URLs and battle cards | Step 3: Gap analysis |
 | ./brand/{slug}/operational/assets.md | Content inventory | Step 6: Internal linking |
 
 ### Writes to Context Lake

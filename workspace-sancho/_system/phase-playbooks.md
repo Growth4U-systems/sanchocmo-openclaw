@@ -102,9 +102,9 @@ channel-prioritization ─┬→ content-calendar-planner
                         └→ outreach-sequence-builder
 ```
 
-**channel-prioritization:** Hormozi Core Four + 5-dimension scoring (ICP-fit, Budget-fit, Team-capacity, Competitive-gap, Time-to-result). Lee todos los Foundation files. Produce `./brand/channel-plan.md` con 2-4 canales recomendados + budget split (70/20/10).
+**channel-prioritization:** Hormozi Core Four + 5-dimension scoring (ICP-fit, Budget-fit, Team-capacity, Competitive-gap, Time-to-result). Lee todos los Foundation files. Produce `brand/{slug}/go-to-market/channel-plan.md` con 2-4 canales recomendados + budget split (70/20/10).
 
-**content-calendar-planner:** 3-5 content pillars de positioning + ECPs. Mapea a funnel stages (TOFU/MOFU/BOFU). Monthly overview + weekly detail. Lee channel-plan.md + keyword-plan.md. Produce `./brand/content-calendar.md`.
+**content-calendar-planner:** 3-5 content pillars de positioning + ECPs. Mapea a funnel stages (TOFU/MOFU/BOFU). Monthly overview + weekly detail. Lee channel-plan.md + keyword-plan.md. Produce `brand/{slug}/go-to-market/content-calendar.md`.
 
 **outreach-sequence-builder:** COLD outbound sequences per ECP (NOT warm nurture). Multi-channel (email + LinkedIn). 5-7 touchpoints, GDPR compliant. Produce `./campaigns/outreach-{ecp}/sequences/`.
 

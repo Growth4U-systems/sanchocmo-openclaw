@@ -84,7 +84,7 @@
 
 ## Output
 
-- [ ] **keyword-plan.md guardado** en `./brand/keyword-plan.md`
+- [ ] **keyword-plan.md guardado** en `./brand/{slug}/go-to-market/keyword-plan.md`
 - [ ] **assets.md actualizado** con entries de briefs
 - [ ] **Chain to /seo-content** ofrecido
 - [ ] **Formatted output** presentado (pillars, opportunities, calendar, briefs)
@@ -92,7 +92,7 @@
 ## Almacenamiento
 
 - [ ] **Slug identificado** correctamente
-- [ ] **Guardado en** `brand/{{slug}}/keyword-plan/` (o `./brand/keyword-plan.md`)
+- [ ] **Guardado en** `brand/{{slug}}/keyword-plan/` (o `./brand/{slug}/go-to-market/keyword-plan.md`)
 - [ ] **Content briefs** en `./campaigns/content-plan/`
 
 ## META (calidad)

@@ -80,7 +80,7 @@ Cost: $0/month
 ### Step 1: Load Signals Config
 
 ```
-Read: ./brand/signals-to-track.json
+Read: brand/{slug}/operational/signals-to-track.json
 
 Extract per signal:
   ├─ Signal type + category
@@ -162,7 +162,7 @@ For HOT + WARM leads:
 
 ### Step 6: Output & Alert
 
-Write to: `./brand/hot-leads.json`
+Write to: `brand/{slug}/operational/hot-leads.json`
 
 Alert via Slack (if configured):
 ```
@@ -184,8 +184,8 @@ Sequence: Competitor Pain Point → Our Solution
 
 ## Integration
 
-**Reads:** ./brand/signals-to-track.json
-**Writes:** ./brand/hot-leads.json, ./brand/{slug}/operational/assets.md
+**Reads:** brand/{slug}/operational/signals-to-track.json
+**Writes:** brand/{slug}/operational/hot-leads.json, ./brand/{slug}/operational/assets.md
 **Chains to:** /decision-maker-finder, /contact-enrichment, /outreach-sequence-builder
 
 ---

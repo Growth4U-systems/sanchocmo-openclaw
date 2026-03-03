@@ -53,7 +53,7 @@ Follow _system/output-format.md (if using SanchoCMO framework)
 **Optional context:**
 - ./brand/{slug}/go-to-market/positioning-*.md (to filter ideas through our angle)
 - ./brand/{slug}/brand-identity/voice-profile.md (to adapt ideas to our tone)
-- ./brand/keyword-plan.md (to connect ideas to SEO strategy)
+- ./brand/{slug}/go-to-market/keyword-plan.md (to connect ideas to SEO strategy)
 
 ---
 
@@ -95,7 +95,7 @@ Proceed?
 
 ```
 Read from Context Lake (if SanchoCMO):
-  └─ ./brand/competitors.json
+  └─ brand/{slug}/market-and-us/competitors.json
 
 Extract per competitor:
   ├─ Company name
@@ -491,7 +491,7 @@ CONTENT IDEAS GENERATED: 47
 
 **For SanchoCMO framework users:**
 
-Write to: `./brand/content-ideas.json` (create if doesn't exist)
+Write to: `brand/{slug}/operational/content-ideas.json` (create if doesn't exist)
 
 ```json
 {
@@ -542,7 +542,7 @@ Source: Competitor analysis (Competitor A, B, C)
 - Mapped to content pillars + channels
 - Ready for execution via /seo-content, /content-atomizer, /direct-response-copy
 
-File: ./brand/content-ideas.json
+File: brand/{slug}/operational/content-ideas.json
 ```
 
 ---
@@ -598,7 +598,7 @@ TOP 5 IDEAS (Por Prioridad)
 
 FILES SAVED
 
-✓ ./brand/content-ideas.json (47 ideas)
+✓ brand/{slug}/operational/content-ideas.json (47 ideas)
 ✓ ./brand/{slug}/operational/assets.md (appended)
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -643,16 +643,16 @@ NEXT STEPS
 
 | File | What it provides | How it's used |
 |------|-----------------|---------------|
-| ./brand/competitors.json | Battle Cards with URLs | Source list for analysis |
+| brand/{slug}/market-and-us/competitors.json | Battle Cards with URLs | Source list for analysis |
 | ./brand/{slug}/go-to-market/positioning-*.md | Our unique angle | Filter: ideas must fit our positioning |
 | ./brand/{slug}/brand-identity/voice-profile.md | Our tone and style | Adaptation: rewrite ideas in our voice |
-| ./brand/keyword-plan.md | SEO targets | Connection: map ideas to keyword clusters |
+| ./brand/{slug}/go-to-market/keyword-plan.md | SEO targets | Connection: map ideas to keyword clusters |
 
 ### Writes to Context Lake
 
 | File | What it contains |
 |------|-----------------|
-| ./brand/content-ideas.json | All stolen ideas (structured) |
+| brand/{slug}/operational/content-ideas.json | All stolen ideas (structured) |
 | ./brand/{slug}/operational/assets.md | Append: Content ideas summary |
 
 ### Chains to

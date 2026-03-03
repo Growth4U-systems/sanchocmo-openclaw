@@ -659,7 +659,7 @@ Every lead magnet gets a `brief.md` in the campaign directory. This follows the 
 "{The headline/promise}"
 
 ## Target Audience
-{Who this is for -- from ./brand/audience.md or user input}
+{Who this is for -- from brand/{slug}/go-to-market/ecps.md or user input}
 
 ## Bridge to Paid Offer
 {How consuming this lead magnet naturally leads to wanting the paid product}

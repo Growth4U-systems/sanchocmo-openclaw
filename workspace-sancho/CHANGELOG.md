@@ -4,6 +4,39 @@ Formato: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 
 ---
 
+## [2.0.0] — 2026-03-03
+
+### Added
+- **Foundation v2.0** — Complete architectural redesign: 4 output sections (Company Brief, Market & Us, Go-To-Market, Brand Identity) replacing 15 flat pillar directories. 6-layer DAG with `requires` (blocking) and `enriches_with` (optional) dependency semantics.
+- **Company Brief flow** — 3 Foundation skills (company-context, business-model, budget) run as single conversational flow with 1 approval at end instead of 3 separate approvals.
+- **Inline synthesis** — Orchestrator generates summary.md, ope-canvas.md, and messaging-summary.md automatically after prerequisite pillars complete. No dedicated synthesis skills needed.
+- **Gate check v2** — Reads foundation-state.json v2.0 with sections/pillars structure. Supports `enriches_with` for optional context loading.
+- **foundation-state.json v2.0 schema** — Multi-section with nested pillars, syntheses, requires/enriches_with fields. Documented in `_system/schemas/foundation-state-v2.md`.
+- **8 Foundation threads** (was 15) — Grouped by section: Company Brief, Market Analysis, Competitor Analysis, Self Analysis, SWOT & Synthesis, Niche Discovery, Positioning & Pricing, Brand Identity.
+
+### Changed
+- **56 skills migrated** — All context_required and context_writes paths updated to v2.0 directory structure (company-brief/, market-and-us/, go-to-market/, brand-identity/, operational/).
+- **OPE Canvas demoted** — From blocking Foundation pillar to orchestrator-generated synthesis document.
+- **self-intelligence** — Removed "Deep Research: Market" (now belongs to market-intelligence only).
+- **MC HTML** — Foundation page renders per-client sections/pillars, DAG shows 6 layers, client cards with individual progress.
+- **regenerate.py** — Reads foundation-state.json v2.0 with multi-client support.
+- **new-client.sh** — Generates v2.0 state with 4 sections and complete dependency graph.
+- **brand-memory.md** — Updated directory structure, ownership table, context matrix.
+- **context-hydration-protocol.md** — Updated paths and examples for v2.0.
+
+### Fixed
+- **3 cron delivery failures** — "Regenerar Dashboard", "backup-sancho", "Memory Maintenance" changed from `announce` to `none` delivery mode (isolated sessions have no "last" channel).
+
+### Merged
+- **pricing-hooks + pricing-strategy** → Unified `pricing-strategy` (125 lines + 7 reference files). pricing-hooks deprecated.
+- **social-media-extractor** → Deprecated (use `apify` skill directly).
+- **phase-0-diagnostic** → Deprecated (replaced by sancho-start v3).
+
+### Removed
+- **niche-discovery-100x.bak-v1** — Backup directory cleaned up.
+
+---
+
 ## [1.0.0] — 2026-02-27 (Evening)
 
 ### Added
