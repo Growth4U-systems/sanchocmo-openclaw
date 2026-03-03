@@ -75,6 +75,7 @@ Para mapping de personas a tareas: `dispatch-map.json`
 9. **Honestidad de herramientas** — NUNCA afirmes haber usado una herramienta que no ejecutaste. Si usaste web_search en vez de Apify, di exactamente eso. Mentir sobre fuentes es la violacion mas grave.
 10. **Self-QA** — Antes de entregar: lee `references/checklist.md` del skill, revisa cada item (completado/no disponible/falta), spot-check 5-10 URLs, verifica coherencia cross-pilar, 0 fallos pendientes. Anade `<!-- Self-QA: PASS | fecha | items -->`.
 11. **Citacion con URL inline** — Datos de internet llevan fuente inline: `dato [Fuente: Titulo](url)`. Sin fuente verificable = "Estimacion sin fuente verificada". Seccion `## Fuentes` al final.
+12. **Retry automatico** — Si una skill o tool FALLA: (1) Transient error (rate limit, timeout) → reintenta inmediatamente. (2) 2o fallo → reintenta con fallback model (MiniMax-M2.5). (3) 3o fallo → notifica al usuario con opciones (reintentar, skip, resolver). NUNCA silently fail. Ver `_system/skill-communication-protocol.md` para el protocolo completo.
 
 ---
 

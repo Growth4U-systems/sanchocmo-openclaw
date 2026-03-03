@@ -2,9 +2,77 @@
 
 > How SanchoCMO skills talk to each other. Based on vibe Marketer v2 architecture + Boring Marketer's 5 pillars.
 
-**Version:** 1.0 (Feb 20, 2026)
+**Version:** 1.1 (Mar 3, 2026)
 **For:** All SanchoCMO skills
 **Apply:** ALWAYS when skills communicate
+
+---
+
+## ⚠️ Global Retry Rule — ALL Skills
+
+Every skill that spawns another skill or makes external calls MUST implement retry logic:
+
+### Retry Strategy (3 Attempts)
+
+| Attempt | Action | Model | Notes |
+|---------|--------|-------|-------|
+| 1 | Normal execution | Default (Opus) | Primary attempt |
+| 2 | Retry with more context | Same model | If context gaps or transient error |
+| 3 | **Fallback model** | minimax/MiniMax-M2.5 | Final attempt before failure |
+
+### Error Classification
+
+- **Transient** (retry immediately): rate limit, timeout, network error, 5xx
+- **Tool Error** (retry with fallback): API key missing, scraper blocked, permission denied
+- **Quality Error** (retry with more context): output malformed, incomplete, bad format
+- **Permanent** (stop, notify user): invalid input, user cancelled, unsupported
+
+### Implementation
+
+```python
+# Pseudocode for skill execution
+def execute_skill(skill_name, context):
+    attempts = 0
+    while attempts < 3:
+        try:
+            result = run_skill(skill_name, context, model=models[attempts])
+            if validate_output(result):
+                return result
+            else:
+                # Quality error - retry with more context
+                context = enrich_context(context)
+        except TransientError:
+            wait(2 ** attempts)  # exponential backoff
+        except ToolError:
+            # Fall back to simpler tool or approach
+            context = simplify(context)
+        except PermanentError:
+            notify_user(error)
+            return None
+        attempts += 1
+    
+    # All 3 attempts failed
+    notify_user(f"Skill {skill_name} failed after 3 attempts. Options: retry manually, skip, or resolve error.")
+    return None
+```
+
+### User Notification Template (on final failure)
+
+```
+⚠️ SKILL FALLIDA — [skill-name]
+
+Error: [tipo] — [mensaje]
+Intentos: 1 → 2 → 3 (fallido)
+
+Causa probable: [razón]
+
+Opciones:
+1. Reintentar manualmente
+2. Skippear esta tarea
+3. Revisar el error y reintentarlo
+
+¿Qué prefieres?
+```
 
 ---
 
