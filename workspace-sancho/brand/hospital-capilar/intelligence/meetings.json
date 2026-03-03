@@ -1,373 +1,46 @@
-[
-  {
-    "date": "2026-01-29",
-    "title": "Kickoff Hospital Capilar - Growth4U",
-    "summary": "Primera reunión estratégica donde se identificó la oportunidad de oro: tratamientos con 90% de margen vs operaciones con 40%. Crecimiento 2x interanual en tratamientos sin inversión en marketing. Cuello de botella es capacidad operativa, no captación. Se propone piloto paralelo enfocado 100% en tratamientos con protocolo de pago de €195 por consultas.",
-    "decisions": [
-      {
-        "what": "Ejecutar piloto paralelo enfocado 100% en tratamientos",
-        "who": "Growth4U + Hospital Capilar",
-        "why": "Tratamientos tienen 90% margen vs 40% de operaciones. Cuello de botella es operativo, no de captación"
-      },
-      {
-        "what": "Equipo interno continúa con operaciones, equipo externo lidera tratamientos",
-        "who": "Hospital Capilar",
-        "why": "Evitar conflictos, permitir iteración rápida sin comprometer protocolo actual"
-      },
-      {
-        "what": "Protocolo de pago de €195 para consultas médicas (especialmente mujeres)",
-        "who": "Hospital Capilar + Growth4U",
-        "why": "Asegura asistencia, precualifica leads, facilita venta cruzada, incluye analítica completa"
-      },
-      {
-        "what": "Meta de 500 citas presenciales pagadas/mes (mujeres)",
-        "who": "Hospital Capilar",
-        "why": "Una vez en clínica, probabilidad alta de conversión a paquetes de €1000+"
-      },
-      {
-        "what": "Posibilidad de usar mini-stack separado de Salesforce",
-        "who": "Growth4U",
-        "why": "Salesforce muy lento/inflexible para iteración rápida del piloto"
-      }
-    ],
-    "actions": [
-      {
-        "task": "Compartir métricas comparativa anual y diciembre 2025 por correo",
-        "owner": "Óscar Mendoza",
-        "deadline": "ASAP"
-      },
-      {
-        "task": "Armar propuesta detallada con cronograma y presupuesto",
-        "owner": "Philippe Sainthubert",
-        "deadline": "~1 semana"
-      },
-      {
-        "task": "Entender disponibilidad y responsabilidades de equipos HC",
-        "owner": "Philippe Sainthubert",
-        "deadline": "Próxima reunión"
-      },
-      {
-        "task": "Coordinar avance del proyecto",
-        "owner": "Gerardo Redondo",
-        "deadline": "Ongoing"
-      }
-    ],
-    "insights": [
-      "Margen brutal en tratamientos: 90% vs 40% en operaciones",
-      "Crecimiento orgánico explosivo: 971 bonos (2023) → 1828 (2025) SIN inversión en marketing",
-      "Cuello de botella operativo, NO de captación",
-      "CPL Google: 50.69€ (2024) → 53.77€ (2025); CPL Meta: 10.32€ → 19.48€",
-      "No-show en Madrid: ~30%",
-      "Quiz para precualificación habilita canales de bajo costo",
-      "Mujeres = segmento de oro: fáciles de captar, protocolo de pago justificable",
-      "Salesforce = error costoso: Marketing Cloud nunca usado, inflexible para experimentación",
-      "Growth4U: Full scope, precio cerrado, iteración rápida, canales menos perecederos"
-    ],
-    "participants": [
-      "Alfonso Sainz de Baranda",
-      "Philippe Sainthubert",
-      "Óscar Mendoza",
-      "Gerardo Redondo"
-    ],
-    "source_url": "https://docs.google.com/document/d/1kWhI6MslDemmN0U7vLe4VY6kb5DH5fOWjk5GW_a78E8",
-    "file": "2026-01-29-kickoff-hospital-capilar.md"
-  },
-  {
-    "date": "2026-02-06",
-    "title": "Hospital Capilar Growth4U Sales Presentation",
-    "summary": "Reunión inicial de ventas donde se definieron las bases del proyecto Hospital Capilar. Se estableció la necesidad de un presupuesto de marketing, contenido médico audiovisual y la infraestructura técnica para ejecutar la estrategia de captación de tratamientos.",
-    "decisions": [
-      {
-        "what": "Definir presupuesto de marketing",
-        "who": "Growth4U",
-        "why": "Necesario para dimensionar las campañas y acciones"
-      },
-      {
-        "what": "Crear vídeo del equipo médico explicando el nuevo protocolo",
-        "who": "Hospital Capilar + Growth4U",
-        "why": "Clave para credibilidad y confianza del usuario"
-      },
-      {
-        "what": "Evaluar Astro como framework principal",
-        "who": "Equipo técnico Growth4U",
-        "why": "Necesario para landing pages rápidas y eficientes"
-      },
-      {
-        "what": "Implementar Go High Level",
-        "who": "Growth4U",
-        "why": "Herramienta central para gestión de embudos y automatización"
-      }
-    ],
-    "actions": [
-      {
-        "task": "Propuesta técnica de infraestructura (Astro + GHL)",
-        "owner": "Equipo Growth4U",
-        "deadline": "Lunes/martes semana siguiente"
-      },
-      {
-        "task": "Investigar Start Funnel (Astro-powered)",
-        "owner": "Equipo técnico",
-        "deadline": "Semana siguiente"
-      },
-      {
-        "task": "Configuración e integración inicial de Go High Level",
-        "owner": "Growth4U",
-        "deadline": "Por definir"
-      },
-      {
-        "task": "Refinar estrategia de Kryptan (ICPs negocios tradicionales)",
-        "owner": "Equipo estrategia",
-        "deadline": "Por definir"
-      }
-    ],
-    "insights": [
-      "Hospital Capilar necesita contenido médico de alta calidad para generar confianza",
-      "La infraestructura técnica debe priorizar velocidad (Astro) y flexibilidad (GHL)",
-      "Hay potencial para aplicar learnings de este proyecto a Kryptan (negocios tradicionales con liquidez)",
-      "Start Funnel emerge como herramienta interesante para acelerar implementación de landing pages"
-    ],
-    "participants": [
-      "Equipo Growth4U",
-      "Hospital Capilar"
-    ],
-    "source_url": "",
-    "file": "2026-02-06-sales-presentation.md"
-  },
-  {
-    "date": "2026-02-07",
-    "title": "Heiver - Evaluación Técnica Go High Level",
-    "summary": "Reunión técnica de evaluación con Heiver Gomez como candidato para implementar GHL. Exploró lógica de formularios, secuencias multi-paso, integraciones con Posthog, y estrategias de email marketing. Demostró experiencia práctica pero enfoque más táctico que estratégico. Timeline 3-4 semanas, rate ~15 USD/hora. NO seleccionado — se eligió a Ramiro por mayor alineamiento estratégico.",
-    "decisions": [
-      {
-        "what": "Usar lógica de formularios de GHL para embudos sencillos",
-        "who": "Heiver + Martin",
-        "why": "Permite personalización e integración vía iframe en cualquier web"
-      },
-      {
-        "what": "Mapeo visual previo (Figma/Miro) obligatorio antes de implementar",
-        "who": "Heiver + Martin",
-        "why": "Secuencias complejas multi-paso requieren planificación de caminos lógicos"
-      },
-      {
-        "what": "Estrategia bicanal: Email + WhatsApp",
-        "who": "Heiver",
-        "why": "Diversifica mensajes y permite evaluar rendimiento por canal"
-      },
-      {
-        "what": "Usar dominio propio del cliente para email marketing",
-        "who": "Heiver",
-        "why": "Mantiene credibilidad, evita spam"
-      },
-      {
-        "what": "Integración GHL → Posthog vía N8N o base intermedia",
-        "who": "Heiver + Martin",
-        "why": "N8N parece tener conexión directa más simple"
-      },
-      {
-        "what": "Timeline de implementación: 3-4 semanas",
-        "who": "Heiver",
-        "why": "Proyecto operativo y funcionando, no solo entregado"
-      }
-    ],
-    "actions": [
-      {
-        "task": "Buscar info sobre pagar a Google Gemini para aparecer en respuestas IA",
-        "owner": "Heiver",
-        "deadline": "ASAP"
-      },
-      {
-        "task": "Enviar itinerario con estructura básica del proyecto (4 semanas)",
-        "owner": "Heiver",
-        "deadline": "ASAP"
-      },
-      {
-        "task": "Definir modelo de colaboración (asesoría vs implementación intensiva)",
-        "owner": "Martin + equipo",
-        "deadline": "Antes de lunes siguiente"
-      },
-      {
-        "task": "Negociar presupuesto para el proyecto",
-        "owner": "Heiver + Martin",
-        "deadline": "Antes de inicio"
-      }
-    ],
-    "insights": [
-      "GHL capacidades: lógica de formularios, campos dinámicos, funnels nativos, automatizaciones",
-      "Email masivo: 16K correos en 3 días confirmado como ejemplo",
-      "Tracking completo: envío, recepción, apertura, rebote",
-      "SMS efectivo en USA, WhatsApp en LatAm - adaptar canal al mercado",
-      "Dominio propio crítico para evitar spam",
-      "N8N preferido para integración GHL → Posthog",
-      "Heiver: enfoque táctico/implementador vs estratégico",
-      "Propuesta reactiva ('ustedes definen, yo implemento') vs proactiva",
-      "NO conectó tecnología con objetivos de negocio (45 tratamientos/mes)",
-      "Decisión: Ramiro seleccionado por mayor alineamiento estratégico y ownership interno"
-    ],
-    "participants": [
-      "Heiver Gomez",
-      "Martin Fila"
-    ],
-    "source_url": "https://docs.google.com/document/d/1knNkCRakIM2xAIM5NHKcXmxDPLSlhUp3p3MOnO0rFNU",
-    "file": "2026-02-07-heiver-ghl-tecnico.md"
-  },
-  {
-    "date": "2026-02-17",
-    "title": "Briefing Técnico con Ramiro - Arquitectura Hospital Capilar",
-    "summary": "Reunión técnica profunda donde se detalló la arquitectura completa del proyecto de tratamientos capilares para Hospital Capilar. Se confirmó la estrategia de crear un nuevo embudo B2C en Go High Level, completamente separado de Salesforce, enfocado en lograr 45 tratamientos mensuales por clínica comenzando por Madrid.",
-    "decisions": [
-      {
-        "what": "Nuevo embudo completo en Go High Level, separado de Salesforce",
-        "who": "Growth4U + Ramiro",
-        "why": "Salesforce es lento e inflexible para experimentación rápida; necesitan agilidad para iterar"
-      },
-      {
-        "what": "Meta: 45 tratamientos mensuales por clínica",
-        "who": "Hospital Capilar + Growth4U",
-        "why": "Meta alcanzable para piloto que capitaliza el margen del 90% en tratamientos vs 40% en cirugías"
-      },
-      {
-        "what": "Pago de €195 por estudios como estrategia de conversión",
-        "who": "Hospital Capilar",
-        "why": "Precalifica leads, asegura asistencia, facilita upsell posterior a planes de tratamiento o cirugías"
-      },
-      {
-        "what": "Quiz interactivo como núcleo del embudo",
-        "who": "Ramiro + Growth4U",
-        "why": "Permite precualificación, engagement del usuario, medición detallada del flujo y comportamiento"
-      },
-      {
-        "what": "Go to Market de 2 semanas previo a construcción",
-        "who": "Growth4U",
-        "why": "Fundamentar decisiones estratégicas antes de ejecutar infraestructura técnica"
-      }
-    ],
-    "actions": [
-      {
-        "task": "Estudiar documentación y revisar tiempos de implementación",
-        "owner": "Ramiro",
-        "deadline": "Tarde del 17/02"
-      },
-      {
-        "task": "Enviar propuesta final de presupuesto (con/sin Shakers)",
-        "owner": "Ramiro",
-        "deadline": "Tarde del 17/02"
-      },
-      {
-        "task": "Validar facturación directa sin Shakers con Martín",
-        "owner": "Philippe",
-        "deadline": "ASAP"
-      },
-      {
-        "task": "Kickoff meeting con equipo Hospital Capilar",
-        "owner": "Equipo completo",
-        "deadline": "Semana del 24/02"
-      },
-      {
-        "task": "Go to market (2 semanas): competidores, canales, mensajes",
-        "owner": "Growth4U",
-        "deadline": "Primeras 2 semanas"
-      },
-      {
-        "task": "Definir arquitectura GHL y lead nurturing",
-        "owner": "Ramiro + equipo",
-        "deadline": "Antes de construcción"
-      },
-      {
-        "task": "Reunión técnica con HC para ver config Salesforce actual",
-        "owner": "Growth4U + HC",
-        "deadline": "Pre-construcción"
-      }
-    ],
-    "insights": [
-      "Tratamientos: 90% margen vs Cirugías: 40% margen - Oportunidad masiva",
-      "Volumen de tratamientos creció 2x en 5 años sin inversión en marketing",
-      "Nueva línea de negocio sin tocar operaciones actuales - Minimiza riesgo, maximiza upside",
-      "Quiz: GHL permite lógica condicional, scoring interno, custom fields para precalificación",
-      "Fase intensiva: 3-4 horas/día durante primeros 2 meses, luego mantenimiento ligero",
-      "Landing pages específicas para atribución por fuente (ejemplo: tráfico de influencers)",
-      "Fuentes de tráfico mixtas: SEO, contenido interno, influencers, Google/Meta Ads",
-      "Arquitectura antes que construcción: definir embudo, quiz, custom fields y pipeline ANTES de construir"
-    ],
-    "participants": [
-      "Philippe Sainthubert",
-      "Ramiro Perez"
-    ],
-    "source_url": "https://docs.google.com/document/d/1YTGedhyWETWvAyz7NFmtSE7sl7D-Hcsjax7d5vZWLQI",
-    "file": "2026-02-17-ramiro-briefing-tecnico.md"
-  },
-  {
-    "date": "2026-02-19",
-    "title": "Entrevista Final con Ramiro - Alineación IA y Colaboración",
-    "summary": "Reunión de cierre del proceso de selección donde se validó a Ramiro como el experto interno de Go High Level para el proyecto Hospital Capilar. Se abordó el debate entre estabilidad vs innovación con IA, priorizando una implementación sólida con testeo paralelo de automatizaciones avanzadas. Fecha de inicio confirmada: 2 de marzo 2026.",
-    "decisions": [
-      {
-        "what": "Ramiro como experto interno de Go High Level",
-        "who": "Growth4U",
-        "why": "Necesitan ownership interno de la herramienta central del proyecto, no un freelance puntual"
-      },
-      {
-        "what": "Priorizar estabilidad sobre IA avanzada en fase inicial",
-        "who": "Alfonso + Philippe",
-        "why": "Garantizar éxito de la campaña inicial en un sector nuevo para ellos, evitar riesgos innecesarios"
-      },
-      {
-        "what": "Primera factura vía Shakers, siguientes directas",
-        "who": "Growth4U + Ramiro",
-        "why": "Mantener lealtad con plataforma que los conectó, optimizar costos después"
-      },
-      {
-        "what": "Philippe como interlocutor principal",
-        "who": "Growth4U",
-        "why": "Alfonso muy involucrado estratégicamente pero no operativamente, necesitan coordinación eficiente"
-      },
-      {
-        "what": "Inicio del proyecto: 2 de marzo 2026",
-        "who": "Ramiro + Growth4U",
-        "why": "Alineamiento de disponibilidad y cierre del proceso de selección"
-      }
-    ],
-    "actions": [
-      {
-        "task": "Explorar MCP (Multi-Channel Processor) de Go High Level",
-        "owner": "Ramiro",
-        "deadline": "ASAP"
-      },
-      {
-        "task": "Editar propuesta en Shakers (incluyendo comisión €250-300)",
-        "owner": "Ramiro",
-        "deadline": "Tarde 19/02 o 20/02"
-      },
-      {
-        "task": "Enviar email a Philippe cuando propuesta esté lista",
-        "owner": "Ramiro",
-        "deadline": "Tarde 19/02 o 20/02"
-      },
-      {
-        "task": "Coordinar reunión pre-kickoff (viernes antes del 2 marzo)",
-        "owner": "Philippe",
-        "deadline": "Antes del 2/03"
-      },
-      {
-        "task": "Inicio oficial del proyecto",
-        "owner": "Ramiro + equipo",
-        "deadline": "2 de marzo 2026"
-      }
-    ],
-    "insights": [
-      "GHL: Consolidación de herramientas - Integra todo en un solo lugar vs pagar múltiples servicios",
-      "Soporte comunitario robusto - Gran ecosistema para resolver problemas y aprender",
-      "Desafío principal: intención del cliente - No es técnico sino de negocio, entender intención exacta en cada paso",
-      "IA como multiplicador potencial - Ramiro con reservas, Alfonso confiado en Cloud Code y MCP",
-      "Compromiso: Testear IA en paralelo sin comprometer estabilidad del core",
-      "Growth4U apuesta por ownership interno - Ramiro se convertirá en experto interno, no freelance externo",
-      "Transferencia de conocimiento sobre capacidades avanzadas de IA durante colaboración"
-    ],
-    "participants": [
-      "Alfonso Sainz de Baranda",
-      "Philippe Sainthubert",
-      "Ramiro Perez"
-    ],
-    "source_url": "https://docs.google.com/document/d/18k6gYbuLqrXBqEcYb-tTIbmJruJOAHcQYzisZQMuBQo",
-    "file": "2026-02-19-ramiro-entrevista-final.md"
-  }
-]
+{
+  "version": 1,
+  "lastRun": "2026-03-02T18:00:00Z",
+  "meetings": [
+    {
+      "id": "mtg-2026-02-19-ramiro-entrevista-final",
+      "title": "Ramiro Entrevista Final",
+      "date": "2026-02-19",
+      "sourceId": "18k6gYbuLqrXBqEcYb-tTIbmJruJOAHcQYzisZQMuBQo",
+      "processed": true,
+      "folder": "brand/hospital-capilar/intelligence/meetings/2026-02-19-ramiro-entrevista-final"
+    },
+    {
+      "id": "mtg-2026-02-17-ramiro-briefing-tecnico",
+      "title": "Ramiro Briefing Tecnico",
+      "date": "2026-02-17",
+      "sourceId": "1YTGedhyWETWvAyz7NFmtSE7sl7D-Hcsjax7d5vZWLQI",
+      "processed": true,
+      "folder": "brand/hospital-capilar/intelligence/meetings/2026-02-17-ramiro-briefing-tecnico"
+    },
+    {
+      "id": "mtg-2026-02-07-heiver-ghl-tecnico",
+      "title": "Heiver Ghl Tecnico",
+      "date": "2026-02-07",
+      "sourceId": "1knNkCRakIM2xAIM5NHKcXmxDPLSlhUp3p3MOnO0rFNU",
+      "processed": true,
+      "folder": "brand/hospital-capilar/intelligence/meetings/2026-02-07-heiver-ghl-tecnico"
+    },
+    {
+      "id": "mtg-2026-02-06-sales-presentation",
+      "title": "Sales Presentation",
+      "date": "2026-02-06",
+      "sourceId": "11B5kOingoKO1535iZN8htQjoDHfIgUVFbhWoeufMCqI",
+      "processed": true,
+      "folder": "brand/hospital-capilar/intelligence/meetings/2026-02-06-sales-presentation"
+    },
+    {
+      "id": "mtg-2026-01-29-kickoff-hospital-capilar",
+      "title": "Kickoff Hospital Capilar",
+      "date": "2026-01-29",
+      "sourceId": "1kWhI6MslDemmN0U7vLe4VY6kb5DH5fOWjk5GW_a78E8",
+      "processed": true,
+      "folder": "brand/hospital-capilar/intelligence/meetings/2026-01-29-kickoff-hospital-capilar"
+    }
+  ]
+}

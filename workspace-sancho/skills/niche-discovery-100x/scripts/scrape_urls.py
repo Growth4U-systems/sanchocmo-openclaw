@@ -34,20 +34,28 @@ def scrape_firecrawl(api_key: str, url: str) -> str | None:
         "Content-Type": "application/json",
     }, data=body)
 
-    try:
-        with urllib.request.urlopen(req, timeout=60) as resp:
-            data = json.loads(resp.read().decode("utf-8"))
-            return data.get("data", {}).get("markdown", "")
-    except urllib.error.HTTPError as e:
-        if e.code == 429:
-            print(f"    Rate limited, waiting 5s...", file=sys.stderr)
-            time.sleep(5)
-            return scrape_firecrawl(api_key, url)  # Retry once
-        print(f"    [ERROR] Firecrawl {e.code}: {e.read().decode()[:200]}", file=sys.stderr)
-        return None
-    except Exception as e:
-        print(f"    [ERROR] {e}", file=sys.stderr)
-        return None
+    for attempt in range(3):
+        try:
+            with urllib.request.urlopen(req, timeout=60) as resp:
+                data = json.loads(resp.read().decode("utf-8"))
+                return data.get("data", {}).get("markdown", "")
+        except urllib.error.HTTPError as e:
+            if e.code == 429 and attempt < 2:
+                wait = (attempt + 1) * 5
+                print(f"    Rate limited (429), retrying in {wait}s...", file=sys.stderr)
+                time.sleep(wait)
+                continue
+            print(f"    [ERROR] Firecrawl {e.code}: {e.read().decode()[:200]}", file=sys.stderr)
+            return None
+        except (urllib.error.URLError, TimeoutError) as e:
+            if attempt < 2:
+                wait = (attempt + 1) * 3
+                print(f"    Timeout/network error, retrying in {wait}s...", file=sys.stderr)
+                time.sleep(wait)
+                continue
+            print(f"    [ERROR] Firecrawl connection failed: {e}", file=sys.stderr)
+            return None
+    return None
 
 
 def scrape_reddit(url: str) -> str | None:

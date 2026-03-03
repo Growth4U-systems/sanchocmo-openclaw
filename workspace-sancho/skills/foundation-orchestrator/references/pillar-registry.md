@@ -1,176 +1,165 @@
-# Pillar Registry
-
-Complete specification for all 16 Foundation pillars. Each entry: dependencies, done criteria (Lite and Deep), skip condition, work type, and which skill to invoke.
-
----
-
-## LAYER 0 — ALWAYS-FIRST
-
-### 1. company-context
-- **Dependencies**: none
-- **Work type**: input (user provides, Sancho structures)
-- **Skip**: never (always required)
-- **Lite done**: Core questions answered (what they do, what they want, what they believe) + URL analyzed if exists
-- **Deep done**: Lite + business model classified + goals quantified + vision documented
-- **Invokes**: `company-context` skill (or inline if simple)
-
-### 2. brand-voice-quick
-- **Dependencies**: none
-- **Work type**: creative (Sancho extracts from URL/content, user validates)
-- **Skip**: never
-- **Lite done**: 3 adjectives + tone spectrum (formal/casual) + 1 example per content type
-- **Deep done**: Lite criteria only (full refinement happens in brand-voice-full, Layer 5)
-- **Invokes**: inline (quick extraction, no dedicated skill needed)
-
-### 3. budget-constraints
-- **Dependencies**: none
-- **Work type**: input (user provides)
-- **Skip**: never
-- **Lite done**: Budget range (monthly) + timeline expectation + team hours/week + existing tools listed
-- **Deep done**: Lite + tool overlap analysis + capability gap assessment + budget allocation by channel
-- **Invokes**: `budget-constraints` skill (or inline)
+# Pillar Registry v2.0
+<!-- Fuente de verdad para pilares, skills, dependencias y criterios -->
 
 ---
 
-## LAYER 1 — PARALLEL
+## LAYER 0 — INTAKE
 
-### 4. business-model
-- **Dependencies**: Layer 0 complete
-- **Work type**: input + research (user input + competitor growth model comparison)
-- **Skip**: never
-- **Lite done**: B2B/B2C classified + revenue model identified + current funnel mapped (even if "nothing")
-- **Deep done**: Lite + PLG/MLG assessment + competitor growth model comparison + acquisition funnel detailed
-- **Invokes**: `business-model-audit` skill
+### company-brief (flujo continuo: 3 skills → 1 aprobación)
 
-### 5. company-profile
-- **Dependencies**: Layer 0 complete
-- **Work type**: input + research (Sancho scrapes social profiles, user fills gaps)
-- **Skip**: never
-- **Lite done**: Social profiles linked + team listed with roles
-- **Deep done**: Lite + capability gaps identified + team social links mapped + activity level per platform
-- **Invokes**: inline
+**Skills**: company-context → business-model → budget (secuenciales, sin aprobación intermedia)
+**Output**: `brand/{slug}/company-brief/current.md` (doc único con 3 secciones)
+**requires**: —
+**Skip**: nunca
 
-### 6. self-intelligence
-- **Dependencies**: Layer 0 complete
-- **Work type**: research (Sancho does 90% — scrapes web, reviews, social)
-- **Skip**: if brand new with no track record
-- **Lite done**: Lens 1 (what we say) for homepage + top 2 social platforms
-- **Deep done**: All 3 lenses for: homepage, top 2 social, top 2 review platforms. Viability checkpoint passed.
-- **Post-completion**: triggers VIABILITY CHECKPOINT
-- **Invokes**: `self-intelligence` skill
+| Skill | Sección en doc | Done criteria |
+|-------|---------------|---------------|
+| company-context | `## Company Identity` | Identidad, producto, objetivos, cultura, equipo, URL analizada |
+| business-model | `## Business Model` | B2B/B2C clasificado, revenue model, funnel actual, PLG/MLG assessment |
+| budget | `## Budget & Resources` | Budget mensual, timeline, equipo disponible, stack actual |
 
-### 7. customer-data
-- **Dependencies**: Layer 0 complete
-- **Work type**: input + analysis (user provides CRM access, Sancho analyzes)
-- **Skip**: if pre-launch with no customers
-- **Lite done**: Best available data analyzed + top customer segment identified
-- **Deep done**: Lite + customer clustering by behavior/value + churn patterns + LTV analysis + best customer profile
-- **Invokes**: inline or `customer-data-analysis` skill
+**Además**: preguntar competidores conocidos y guardar nombres para Layer 1.
 
-### 8. marketing-assets
-- **Dependencies**: Layer 0 complete
-- **Work type**: research + input (Sancho audits web/social, user provides internal data)
-- **Skip**: if brand new (no existing assets)
-- **Lite done**: Content inventory (count) + social follower counts + existing tools listed
-- **Deep done**: Lite + DA score + email list size/engagement + existing funnels mapped + lead magnets inventoried
-- **Invokes**: inline
+---
 
-### 9. competitor-intel
-- **Dependencies**: Layer 0 complete
-- **Work type**: research (Sancho does 90%)
-- **Skip**: never
-- **Lite done**: Top 3 direct competitors named + Lens 1 (what they say about themselves) per competitor
-- **Deep done**: 3+ direct competitors with all 3 lenses + 2+ indirect alternatives + growth model per competitor
-- **Invokes**: `competitor-intelligence` skill (3-lens analysis)
+## LAYER 1 — RESEARCH
 
-### 10. market-intel
-- **Dependencies**: Layer 0 complete
-- **Work type**: research (Sancho does 90%)
-- **Skip**: never
-- **Lite done**: Sector identified + basic TAM/SAM estimated
-- **Deep done**: Lite + regulatory landscape mapped + 3+ current trends + growth rate + market characteristics (fragmented vs consolidated)
-- **Invokes**: `market-intelligence` skill
+### market-analysis
+**Skill**: `market-intelligence`
+**Output**: `brand/{slug}/market-and-us/market-analysis.md`
+**requires**: company-brief
+**enriches_with**: competitor-analysis, self-analysis
+**Skip**: nunca
+**Lite done**: Sector + TAM/SAM estimado + tendencias principales
+**Deep done**: Lite + regulación + 3+ tendencias + tasa crecimiento + características mercado
+
+### competitor-analysis
+**Skill**: `competitor-intelligence`
+**Output**: `brand/{slug}/market-and-us/competitor-{slug}.md` (1 por competidor)
+**requires**: company-brief
+**enriches_with**: market-analysis, self-analysis
+**Skip**: nunca
+**Lite done**: Top 3 competidores directos + Lens 1 (qué dicen de sí mismos)
+**Deep done**: 3+ directos con 3 lenses + 2+ alternativas indirectas + growth model por competidor
+**Nota**: Lista de competidores es dinámica. Se descubren en Company Brief (usuario dice), Market Analysis (research), y Niche Discovery (por nicho). El orchestrator puede preguntar proactivamente si hay más competidores a analizar.
+
+### self-analysis
+**Skill**: `self-intelligence`
+**Output**: `brand/{slug}/market-and-us/self-analysis.md`
+**requires**: company-brief
+**enriches_with**: market-analysis, competitor-analysis
+**Skip**: si es marca nueva sin track record
+**Lite done**: Lens 1 (qué decimos) para homepage + 2 redes sociales top
+**Deep done**: 3 lentes completas: homepage, 2 redes sociales, 2 plataformas de reviews
+**Post-completion**: Viability Checkpoint (advisory)
+**IMPORTANTE**: Este skill hace SOLO Deep Research Company (radiografía propia). NO hace market research — eso pertenece a market-intelligence.
 
 ---
 
 ## LAYER 2 — SYNTHESIS
 
-### 11. swot-tows
-- **Dependencies**: self-intelligence (lite_done) + competitor-intel (lite_done) + market-intel (lite_done)
-- **Work type**: analysis (Sancho proposes, user validates)
-- **Skip**: never
-- **Lite done**: 4-quadrant SWOT populated from actual intelligence (not assumptions)
-- **Deep done**: Lite + 2+ strategies per TOWS quadrant (SO, ST, WO, WT) + marketing-focused scope with product/sales flags
-- **Invokes**: `swot-analysis` skill
+### swot
+**Skill**: `swot-analysis`
+**Output**: `brand/{slug}/market-and-us/swot.md`
+**requires**: market-analysis, competitor-analysis, self-analysis
+**Skip**: nunca
+**Lite done**: SWOT 4 cuadrantes con datos reales (no asunciones)
+**Deep done**: Lite + 2+ estrategias por cuadrante TOWS (SO, ST, WO, WT)
+
+### summary (síntesis — generada por orchestrator)
+**Output**: `brand/{slug}/market-and-us/summary.md`
+**requires**: market-analysis, competitor-analysis, self-analysis
+**Generada por**: orchestrator inline (no skill dedicado)
+**Qué es**: 1-2 páginas sintetizando mercado + competidores + posición propia. Referencia cada doc fuente.
+
+### ope-canvas (síntesis — generada por orchestrator)
+**Output**: `brand/{slug}/market-and-us/ope-canvas.md`
+**requires**: market-analysis, competitor-analysis, self-analysis
+**Generada por**: orchestrator inline (no skill dedicado)
+**Qué es**: One-Page Endgame. La foto completa del negocio en 1 página.
 
 ---
 
-## LAYER 3 — DISCOVERY
+## LAYER 3 — CUSTOMER DISCOVERY
 
-### 12. icp-100x-niches
-- **Dependencies**: swot-tows (lite_done) + customer-data (lite_done OR skipped)
-- **Work type**: research + analysis (Sancho scrapes problems, user validates filters)
-- **Skip**: never
-- **Lite done**: Rough ICP from founder intuition or existing data + 3-5 ECP candidates identified
-- **Deep done**: 50+ problems scraped and JTBD-structured + Triple Filter applied + 3-7 ECPs scored (Pain x Reachability x Market Size)
-- **Invokes**: `niche-discovery-100x` skill
+### niche-discovery
+**Skill**: `niche-discovery-100x`
+**Output**: `brand/{slug}/go-to-market/ecps.md` (JTBD integrado por segmento)
+**requires**: swot
+**enriches_with**: existing-customer-data
+**Skip**: nunca
+**Lite done**: 50+ problemas, Triple Filter, 3-7 ECPs scored
+**Deep done**: 100+ problemas, 5+ tipos fuente, TAM/SAM por ECP, datos clientes integrados
+
+### existing-customer-data (OPCIONAL)
+**Skill**: `existing-customer-data`
+**Output**: `brand/{slug}/go-to-market/existing-customer-data.md`
+**requires**: company-brief
+**enriches_with**: niche-discovery (si disponible, enriquece los ECPs)
+**Skip**: si pre-launch sin clientes
+**Nota**: Se puede ejecutar en paralelo con Layer 1-2 (solo requires company-brief). Enriquece niche-discovery si está disponible.
 
 ---
 
 ## LAYER 4 — ACTIVATION
 
-### 13. ecp-validation
-- **Dependencies**: icp-100x-niches (lite_done)
-- **Work type**: analysis + research (Sancho designs tests, user executes some)
-- **Skip**: if timeline is very short (validate through execution instead)
-- **Lite done**: At least 1 validation method designed per top ECP
-- **Deep done**: 1+ validation method attempted per top ECP + minimum 5 outreach/content tests with measured response
-- **Invokes**: `ecp-validation` skill
+### positioning
+**Skill**: `positioning-messaging`
+**Output**: `brand/{slug}/go-to-market/positioning-{ecp-slug}.md` (1 por ECP)
+**requires**: niche-discovery
+**Skip**: nunca
+**Lite done**: Messaging básico para top ECP
+**Deep done**: Por ECP: value criteria ranked, competitor scoring, 3+ assets con proof, messaging framework
 
-### 14. positioning-messaging
-- **Dependencies**: icp-100x-niches (lite_done) + competitor-intel (lite_done)
-- **Work type**: analysis + creative (Sancho proposes, user decides)
-- **Skip**: never
-- **Lite done**: Basic messaging for top ECP (enough for first LP or outreach)
-- **Deep done**: Per-niche: value criteria ranked, competitor scoring, 3+ assets mapped with proof, messaging framework
-- **Invokes**: `positioning-messaging` skill
+### pricing
+**Skill**: `pricing-strategy`
+**Output**: `brand/{slug}/go-to-market/pricing.md`
+**requires**: niche-discovery
+**enriches_with**: positioning
+**Skip**: si pricing es fijo/no negociable
+**Lite done**: Pricing actual documentado + 1 hook por top ECP
+**Deep done**: Pricing competidores comparado + estrategia + 3+ hooks por ECP con proof
 
-### 15. pricing-hooks
-- **Dependencies**: icp-100x-niches (lite_done) + competitor-intel (lite_done)
-- **Work type**: analysis + creative (Sancho proposes, user decides)
-- **Skip**: if pricing is fixed/non-negotiable
-- **Lite done**: Current pricing documented + 1 hook per top ECP
-- **Deep done**: Competitor pricing compared + pricing strategy recommendation + 3+ hooks per top niche with proof
-- **Invokes**: `pricing-strategy` skill (Corey Haines #2)
+### ecp-validation (OPCIONAL)
+**Skill**: `ecp-validation`
+**requires**: niche-discovery
+**Skip**: si timeline muy corto (validar a través de ejecución)
 
----
-
-## LAYER 5 — REFINEMENT
-
-### 16. brand-voice-full
-- **Dependencies**: positioning-messaging (lite_done) + icp-100x-niches (lite_done)
-- **Work type**: creative (Sancho drafts, user refines)
-- **Skip**: if not producing content yet (defer until Phase 3)
-- **Lite done**: N/A (this pillar only has Deep)
-- **Deep done**: Complete voice guide with do/don't word lists + visual identity system + examples across all content types
-- **Invokes**: `brand-voice` skill (Corey Haines enhanced)
+### messaging-summary (síntesis — generada por orchestrator)
+**Output**: `brand/{slug}/go-to-market/messaging-summary.md`
+**requires**: positioning
+**enriches_with**: pricing
+**Generada por**: orchestrator inline
+**Qué es**: Síntesis GTM: "estos segmentos, este mensaje, estos canales"
 
 ---
 
-## Quick Reference: Unblocking Impact
+## LAYER 5 — BRAND IDENTITY
 
-Pillars sorted by how many downstream pillars they unlock:
+### brand-voice
+**Skill**: `brand-voice`
+**Output**: `brand/{slug}/brand-identity/voice-profile.md`
+**requires**: positioning
+**Skip**: si no produce contenido aún (diferir)
+**Done**: Voice guide completa con do/don't, espectro tonal, ejemplos por tipo de contenido
 
-| Pillar | Unlocks | Downstream count |
-|--------|---------|-----------------|
-| self-intelligence | swot → icp → ecp + positioning + pricing + brand-voice | 6 |
-| competitor-intel | swot → icp → ecp + positioning + pricing + brand-voice | 6 |
-| market-intel | swot → icp → ecp + positioning + pricing + brand-voice | 6 |
-| customer-data | icp → ecp + positioning + pricing + brand-voice | 5 |
-| swot-tows | icp → ecp + positioning + pricing + brand-voice | 5 |
-| icp-100x-niches | ecp + positioning + pricing + brand-voice | 4 |
-| company-context | all Layer 1+ (required for everything) | 13 |
-| budget-constraints | all Layer 1+ (required for everything) | 13 |
-| brand-voice-quick | all Layer 1+ (required for everything) | 13 |
+### visual-identity
+**Skill**: `visual-identity`
+**Output**: `brand/{slug}/brand-identity/visual-identity.md`
+**requires**: brand-voice
+**Skip**: si no tiene necesidad de branding visual aún
+**Done**: Sistema visual completo: paleta, tipografía, guidelines de uso
 
-Layer 0 pillars have the highest raw count but are typically fast to complete. Among Layer 1 pillars, self-intelligence + competitor-intel + market-intel are the trio that unlocks the most value.
+---
+
+## Quick Reference: Impacto de Desbloqueo
+
+| Pilar | Desbloquea | Downstream count |
+|-------|-----------|-----------------|
+| company-brief | Toda Layer 1+ | 12+ |
+| market-analysis | swot → discovery → activation → brand | 8+ |
+| competitor-analysis | swot → discovery → activation → brand | 8+ |
+| self-analysis | swot → discovery → activation → brand | 8+ |
+| swot | discovery → activation → brand | 6+ |
+| niche-discovery | positioning + pricing + ecp-validation + brand | 5+ |
+| positioning | messaging-summary + brand-voice + visual-identity | 3 |

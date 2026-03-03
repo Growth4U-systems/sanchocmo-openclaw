@@ -2,6 +2,40 @@
 
 ---
 
+## Step 0: Context Hydration (ANTES de todo)
+
+**Lee `references/hydration.md`** para el mapeo completo.
+
+1. Leer `brand/{slug}/company-context/current.md` (obligatorio)
+2. Leer `brand/{slug}/competitors/current.md` (si existe — aporta competitor growth motions)
+3. Extraer campos mapeados en hydration.md
+4. Presentar al usuario agrupados:
+
+```
+"De tu Company Context ya tengo:
+  • B2B/B2C: [valor] ✅
+  • Revenue model: [valor] ✅
+  • Ticket medio: [valor] ✅
+  • Leads/mes: [valor] ✅
+  ...
+
+¿Correcto? ¿Quieres ajustar algo?
+
+Lo que necesito profundizar (específico de business model):
+  1. ¿Self-serve o necesita ventas?
+  2. Funnel paso a paso
+  3. ¿Dónde se caen más personas?
+  ..."
+```
+
+5. Si el usuario confirma → esos campos se dan por buenos, NO re-preguntar
+6. Si el usuario corrige → usar el valor nuevo
+7. Avanzar SOLO con las preguntas genuinamente nuevas de los Steps siguientes
+
+**Regla**: Cada pregunta de Steps 1-3 que ya tenga respuesta upstream → SALTAR. Solo preguntar lo nuevo.
+
+---
+
 ## Step 1: Classify the Model (~10 min)
 
 **Preguntas (adaptar — saltar lo ya conocido):**

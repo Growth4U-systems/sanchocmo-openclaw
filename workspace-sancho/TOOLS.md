@@ -170,4 +170,11 @@ Itera sobre clientes activos y ejecuta un comando por cada uno.
 
 ---
 
+## ⚠️ LinkedIn Scraping — Lección Aprendida (2026-03-02)
+El scraping público de LinkedIn (web_fetch) mezcla posts propios y "Liked by [persona]" sin distinción clara en la vista pública. 
+**REGLA:** Antes de atribuir un post/artículo a alguien en LinkedIn:
+1. Verificar si dice "Liked by" → NO es contenido de esa persona
+2. Si no puedo confirmar autoría → marcar como "⚠️ autoría no verificada" 
+3. NUNCA asumir que contenido en el feed de alguien = contenido propio
+
 Add whatever helps you do your job. This is your cheat sheet.

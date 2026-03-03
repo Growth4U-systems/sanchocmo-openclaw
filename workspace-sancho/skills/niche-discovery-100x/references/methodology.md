@@ -1,4 +1,5 @@
 # Niche Discovery — Conceptos y Metodología
+<!-- v3.3 -->
 
 ## 100x Niche Philosophy
 
@@ -26,25 +27,24 @@ El concepto "100x niche" viene de buscar nichos donde tu producto es 100x mejor 
 
 ## Scoring Methodology
 
-### Pain Score (1-10)
-- 1-3: Nice-to-have, no urgente
-- 4-6: Dolor real pero manejable con alternativas
-- 7-8: Dolor significativo, buscan activamente solución
-- 9-10: Hair-on-fire, pagarían casi cualquier precio
+### Pain Score (2-99)
+- 2-20: Nice-to-have, no urgente
+- 21-50: Dolor real pero manejable con alternativas
+- 51-75: Dolor significativo, buscan activamente solución
+- 76-99: Hair-on-fire, pagarían casi cualquier precio
 
 **Señales de alto pain**: menciones frecuentes, lenguaje emocional, willingness to pay declarado, múltiples alternativas intentadas.
 
-### Reachability (1-10)
-- 1-3: Difícil de encontrar, canales caros, awareness bajo
-- 4-6: Algunos canales disponibles, comunidades pequeñas
-- 7-8: Comunidades activas, canales claros, targeting preciso
-- 9-10: Congregan en lugares específicos, fácil targeting
+### Reachability (2-99)
+- 2-20: Difícil de encontrar, canales caros, awareness bajo
+- 21-50: Algunos canales disponibles, comunidades pequeñas
+- 51-75: Comunidades activas, canales claros, targeting preciso
+- 76-99: Congregan en lugares específicos, fácil targeting
 
-### Market Size (1-10)
-- 1-3: < 1K addressable, muy nicho
-- 4-6: 1K-50K addressable, nicho con potencial
-- 7-8: 50K-500K addressable, mercado atractivo
-- 9-10: > 500K addressable, gran mercado
+### Market Size (SAM numérico)
+- Estimación numérica de personas en el país target
+- Método: Top-Down + Bottom-Up
+- Fuentes: INE, Eurostat, Statista, registros sectoriales
 
 ## Edge Cases
 

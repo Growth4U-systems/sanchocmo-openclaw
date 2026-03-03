@@ -12,11 +12,11 @@ metadata:
   updated: '2026-02-27'
   changes: v3 — Restructured per skill-creator principles. SKILL.md lean (~120 lines). Concepts moved to references.
 context_required:
-- brand/product-analysis.md
-- brand/competitors.md
-- brand/market.md
+- brand/{slug}/market-and-us/self-analysis.md
+- brand/{slug}/market-and-us/competitor-*.md
+- brand/{slug}/market-and-us/market-analysis.md
 context_writes:
-- brand/swot.md
+- brand/{slug}/market-and-us/swot.md
 ---
 
 # SWOT Analysis & TOWS Strategies
@@ -30,6 +30,7 @@ context_writes:
 
 | Archivo | Cuándo leer | Contenido |
 |---------|------------|-----------|
+| [hydration.md](references/hydration.md) | **SIEMPRE** — Step 0 obligatorio | Mapeo de campos upstream → esta skill |
 | [prompt.md](references/prompt.md) | **SIEMPRE** — fuente de verdad | CoT prompt completo para ejecución |
 | [checklist.md](references/checklist.md) | **Antes de entregar** — self-QA | Ítems de verificación por step |
 | [concepts.md](references/concepts.md) | Si necesitas recordar SWOT/TOWS/ICE | Definiciones, quality bar, edge cases |
@@ -38,6 +39,14 @@ context_writes:
 ---
 
 ## Flujo de Ejecución
+
+### 0. Context Hydration (OBLIGATORIO — antes de cualquier pregunta)
+- Lee `_system/context-hydration-protocol.md` para el patrón genérico
+- Lee `references/hydration.md` para el mapeo específico de esta skill
+- Lee TODOS los docs en `context_required`
+- Pre-rellena campos según hydration_map
+- Presenta datos heredados al usuario: "De [fuente] ya tengo X. ¿Correcto?"
+- Solo pregunta campos listados en "Campos genuinamente nuevos"
 
 ### 1. Verificar prerequisites
 - Carga `brand/{slug}/product-analysis/current.md`, `brand/{slug}/competitors/current.md`, `brand/{slug}/market/current.md`

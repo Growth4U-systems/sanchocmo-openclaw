@@ -13,10 +13,10 @@ metadata:
   changes: v4 — Restructured per skill-creator principles. SKILL.md lean (~130 lines).
     Concepts moved to references. Self-QA checklist integrated. No Rocinante dependency.
 context_required:
-- brand/company-context.md
+- brand/{slug}/company-brief/current.md
 - brand/competitors.md
 context_writes:
-- brand/market.md
+- brand/{slug}/market-and-us/market-analysis.md
 ---
 
 # Market Intelligence
@@ -30,6 +30,7 @@ context_writes:
 
 | Archivo | Cuándo leer | Contenido |
 |---------|------------|-----------|
+| [hydration.md](references/hydration.md) | **SIEMPRE** — Step 0 obligatorio | Mapeo de campos upstream → esta skill |
 | [prompt.md](references/prompt.md) | **SIEMPRE** — es la fuente de verdad | Las 5 partes del informe con instrucciones detalladas |
 | [checklist.md](references/checklist.md) | **Antes de entregar** — self-QA obligatorio | Ítems de verificación por sección |
 | [concepts.md](references/concepts.md) | Si necesitas recordar qué es TAM, madurez, etc. | Definiciones y metodología |
@@ -38,6 +39,14 @@ context_writes:
 ---
 
 ## Flujo de Ejecución
+
+### 0. Context Hydration (OBLIGATORIO — antes de cualquier pregunta)
+- Lee `_system/context-hydration-protocol.md` para el patrón genérico
+- Lee `references/hydration.md` para el mapeo específico de esta skill
+- Lee TODOS los docs en `context_required`
+- Pre-rellena campos según hydration_map
+- Presenta datos heredados al usuario: "De [fuente] ya tengo X. ¿Correcto?"
+- Solo pregunta campos listados en "Campos genuinamente nuevos"
 
 ### 1. Preparar contexto
 - Lee `brand/{slug}/company-context/current.md` y `brand/{slug}/competitors/current.md`

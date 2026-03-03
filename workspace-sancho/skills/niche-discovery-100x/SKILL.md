@@ -1,160 +1,199 @@
 ---
 name: niche-discovery-100x
-description: "End-to-end niche discovery from real forum conversations. Mines Reddit, thematic forums, and community sites for customer pain points via automated pipeline (Serper + Firecrawl + LLM extraction), then validates with Triple Filter (SWOT + ICP + Product) and scores each niche with Deep Research. Use when: identifying target customer niches, validating niches, discovering customer segments, building an ICP, or answering 'who should I sell to'. Triggers on: find niches, discover market, ICP, target audience, customer segments, market research, niche discovery, buscador de nichos, who are my customers, validate this niche, market opportunity. Pipeline: Strategy → SERP → Scrape → Extract → Group → Quality Filter → Triple Filter → User Review → Score → Consolidate. Requires Foundation pillars: company-context, self-intelligence, competitor-intelligence, swot-analysis."
+description: "Descubrimiento end-to-end de nichos con metodología 100x. Auto-detecta B2C/SMB vs B2B Enterprise: foros+pipeline automatizado (Serper/Firecrawl/LLM) para B2C, case studies+earnings calls+job postings+LinkedIn+trade pubs para B2B. Harvesta Foundation existente antes de investigar. Valida con Triple Filter (SWOT+ICP+Producto) y puntúa con Deep Research. Usar cuando: identificar nichos, validar nichos, segmentos de cliente, ICP, o 'a quién le vendo'. Triggers: find niches, discover market, ICP, target audience, customer segments, niche discovery, buscador de nichos, validate this niche, B2B problem discovery, 100x niches, ECP. NO usar para: análisis de mercado amplio (market-intelligence), posicionamiento (positioning-messaging), segmentación solo datos existentes (existing-customer-data). Requiere: company-context, self-intelligence, competitor-intelligence, swot-analysis."
 ---
 
-# ICP & 100x Niche Discovery v3
+# ICP & 100x Niche Discovery v3.3
 
-> Mine thousands of real forum conversations for pain points, validate against Foundation data, score each niche with Deep Research.
+> Minar conversaciones reales y señales enterprise para pain points, validar contra datos Foundation, puntuar cada nicho con Deep Research.
 
-**Depends on**: company-context, self-intelligence, competitor-intelligence, swot-analysis
-**Produces**: `brand/{slug}/niche-discovery/current.md` + `final-table.csv`
+**Depende de**: company-context, self-intelligence, competitor-intelligence, swot-analysis
+**Opcional**: market-intelligence, existing-customer-data (mejoran harvest si existen)
+**Produce**: `brand/{slug}/go-to-market/ecps.md` + `final-table.csv`
 
 ## Pipeline
 
 ```
-INTAKE → STRATEGY → SERP → SCRAPE → EXTRACT → GROUP → QUALITY FILTER → TRIPLE FILTER → REVIEW → SCORE → CONSOLIDATE
+INTAKE → DETECTAR MERCADO → HARVEST FOUNDATION → ESTRATEGIA → DESCUBRIR → EXTRAER → AGRUPAR → FILTRO CALIDAD → TRIPLE FILTER → REVIEW → SCORING → CONSOLIDAR
 ```
 
-| Phase | What | Cost |
-|-------|------|------|
-| 1. Intake | Read Foundation context | $0 |
-| 2. Strategy | Generate search grid + user approval | ~$0.50 |
-| 3. SERP | Search forums (Serper.dev) | ~$7 |
-| 4. Scrape | Extract content (Firecrawl + Reddit JSON) | ~$1.50 |
-| 5. Extract | Pain points per doc (Gemini 3.1 Pro) | ~$12 |
-| 6. Group | Chunk + merge into niches (Sonnet + Opus) | ~$10 |
-| 7. Quality Filter | Filter generic/small/irrelevant (Opus) | ~$4 |
-| 7b. Triple Filter | Validate vs SWOT + ICP + Product (agent) | $0 |
-| 8. User Review | User confirms niches | $0 |
-| 9. Score | Deep Research per niche | ~$5-10 |
-| 10. Consolidate | Final scored table + CSV (Opus) | ~$2 |
-| **Total** | | **~$40-50** |
+| Fase | Qué | Coste B2C | Coste B2B |
+|------|-----|-----------|-----------|
+| 1. Intake | Leer contexto Foundation | $0 | $0 |
+| 1b. Detectar | Detección tipo de mercado | $0 | $0 |
+| 1c. Harvest | Extraer problemas de Foundation existente | $0 | $0 |
+| 2. Estrategia | Generar grid de búsqueda + aprobación usuario | ~$0.50 | ~$0.50 |
+| 3. Descubrir | SERP foros (B2C) O Fuentes enterprise (B2B) | ~$0.50 | $0 (agente) |
+| 4. Scrape | Firecrawl + Reddit (B2C) O web_fetch (B2B) | ~$0.50 | $0 (agente) |
+| 5. Extraer | Extracción LLM (B2C) O extracción agente (B2B) | ~$8 | $0 (agente) |
+| 6. Agrupar | Chunk (Sonnet) + merge (Opus) | ~$1.50 | ~$1.50 |
+| 7/7b. Filtrar | Filtro Calidad + Triple Filter | ~$0.50 | ~$0.50 |
+| 8. Review | Usuario confirma nichos | $0 | $0 |
+| 9. Scoring | Deep Research por nicho (5-7 nichos) | ~$5-10 | ~$5-10 |
+| 10. Consolidar | Tabla final scored + CSV | ~$0.50 | ~$0.50 |
+| **Total** | | **~$17-22** | **~$8-13** |
 
-## Required API Keys (env vars)
+## Referencias
+
+| Archivo | Cuándo leer |
+|---------|-------------|
+| [market-detection.md](references/market-detection.md) | Phase 1b — tabla de señales y lógica de detección |
+| [harvest-protocol.md](references/harvest-protocol.md) | Phase 1c — protocolo de extracción de Foundation |
+| [enterprise-sources.md](references/enterprise-sources.md) | Phase 3-5 cuando mercado = B2B Enterprise |
+| [thematic-forums.md](references/thematic-forums.md) | Phase 2-3 cuando mercado = B2C/SMB |
+| [commands.md](references/commands.md) | Phase 3-5 B2C — comandos de scripts |
+| [prompts-phase6a.md](references/prompts-phase6a.md) | Phase 6a — agrupación en chunks (script) |
+| [prompts-phase6b.md](references/prompts-phase6b.md) | Phase 6b — merge y deduplicación (script) |
+| [prompts-phase7a.md](references/prompts-phase7a.md) | Phase 7 — filtro de calidad (script) |
+| [prompts-phase7b.md](references/prompts-phase7b.md) | Phase 7b — triple filter Foundation (agente) |
+| [prompts-phase9.md](references/prompts-phase9.md) | Phase 9 — scoring deep research (agente) |
+| [prompts-phase10.md](references/prompts-phase10.md) | Phase 10 — consolidación final (script) |
+| [checklist.md](references/checklist.md) | Antes de entregar — self-QA obligatorio |
+| [methodology.md](references/methodology.md) | Reglas Triple Filter, metodología scoring, edge cases |
+| [schema.md](references/schema.md) | Schema de output + tipos de fuente válidos |
+| [examples.md](references/examples.md) | Ejemplos de config.json, problems.md, y cómo splitear chunks |
+
+## API Keys requeridas (env vars) — Solo modo B2C
 
 `SERPER_API_KEY`, `FIRECRAWL_API_KEY`, `OPENROUTER_API_KEY`
 
-## Global Rules
+Modo B2B Enterprise usa herramientas del agente (web_search, web_fetch) — no necesita API keys externas.
 
-1. **Save every output as a file** — see [schema.md](references/schema.md) for file structure and column definitions
-2. **Checkpoint before every phase (3-10)**: show params (model, time, cost, items), ask user approval, only execute after explicit "ok"
+## Reglas Globales
 
-## Script Commands
-
-All bash commands with exact parameters: **read [commands.md](references/commands.md)**
+1. **Guardar cada output como archivo** — ver [schema.md](references/schema.md) para estructura
+2. **Checkpoint antes de cada fase (3-10)**: mostrar parámetros, pedir aprobación, solo ejecutar tras "ok" explícito
 
 ---
 
-## Phase 1: Intake (Foundation Context)
+## Phase 1: Intake (Contexto Foundation)
 
-Auto-read from Foundation — do NOT ask what we already have.
+Auto-leer de Foundation — NO preguntar lo que ya tenemos.
 
-1. Identify client slug from systemPrompt
-2. Read: `brand/{slug}/company-context/current.md`, `self-intelligence/current.md`, `competitor-intelligence/current.md`, `swot-analysis/current.md`, `existing-customer-data/current.md` (if exists)
-3. Extract: company_name, product, industry, target, country, context_type (B2B/B2C/Both)
-4. If critical pillar missing → inform user, suggest completing Foundation first
+1. Identificar slug del cliente desde systemPrompt
+2. Leer: `brand/{slug}/company-context/current.md`, `self-intelligence/current.md`, `competitor-intelligence/current.md`, `swot-analysis/current.md`, `existing-customer-data/current.md` (si existe)
+3. Extraer: company_name, product, industry, target, country, context_type (B2B/B2C/Both)
+4. Si falta pilar crítico → informar al usuario, sugerir completar Foundation primero
 
-## Phase 2: Strategy Generation
+## Phase 1a: Verificación de Cobertura de Foros
 
-Generate search strategy using Foundation context:
-- **10-15 life context words** — semi-permanent situations (B2C: bebé, mudanza; B2B: autónomo, startup)
-- **8-12 product domain words** — concrete nouns (NOT adjectives like "eficiencia")
-- **Forum sources** — read [thematic-forums.md](references/thematic-forums.md) for country/topic mapping
+Si el país del cliente NO es España, comprobar si hay foros mapeados para ese mercado en [thematic-forums.md](references/thematic-forums.md). Si no los hay, ofrecer proactivamente descubrirlos siguiendo el procedimiento de "Descubrimiento de foros para otros países" en thematic-forums.md. Esto se hace ANTES de detectar el mercado porque afecta a la estrategia.
 
-### Phase 2b: User Approval (MANDATORY)
+## Phase 1b: Detección Tipo de Mercado
 
-Present strategy in 3 sections (life contexts, product words, forum sources). User can modify, add forums via deep research, or approve. **Only proceed after explicit approval.** Save as `config.json`.
+Leer [market-detection.md](references/market-detection.md). Evaluar 5 señales desde contexto de empresa e ICP. Declarar resultado antes de continuar.
 
-## Phase 3: SERP Search
+## Phase 1c: Harvest de Datos Existentes (OBLIGATORIO)
 
-Run `serp_search.py` — see [commands.md](references/commands.md). Searches `site:forum "context" "word"` for all combinations. Output: deduplicated `urls.json`.
+Leer [harvest-protocol.md](references/harvest-protocol.md). Extraer problemas de Foundation ANTES de cualquier investigación nueva. Si >= 50 problemas con >= 3 tipos de fuente → saltar a Phase 6.
 
-## Phase 4: Scrape URLs
+## Phase 2: Generación de Estrategia
 
-Run `scrape_urls.py` — see [commands.md](references/commands.md). Firecrawl for regular sites, Reddit JSON API for reddit.com. Output: `docs/` folder with markdown files.
+Generar estrategia de búsqueda usando contexto Foundation + tipo de mercado detectado:
 
-## Phase 5: Extract Problems
+- **Modo B2C/SMB**: 10-15 life context words + 8-12 product domain words + fuentes de [thematic-forums.md](references/thematic-forums.md)
+- **Modo B2B Enterprise**: ICP role keywords + pain domain words + fuentes de [enterprise-sources.md](references/enterprise-sources.md) (seleccionar top 4-5)
+- **Phase 2b**: Presentar estrategia al usuario. Solo proceder tras aprobación explícita. Guardar como `config.json`.
 
-Run `extract_problems.py` — see [commands.md](references/commands.md). Parallel extraction with Gemini 3.1 Pro (matches Opus quality at 1/6th cost). Output: `problems.md`.
+## Phases 3-5: Discovery + Extracción (BIFURCADAS POR MODO)
 
-## Phase 6: Group into Niches (Chunked)
+### Modo B2C/SMB (Pipeline Automatizado)
+Ejecutar scripts — ver [commands.md](references/commands.md):
+- **Phase 3**: `serp_search.py` → `urls.json`
+- **Phase 4**: `scrape_urls.py` → `docs/`
+- **Phase 5**: `extract_problems.py` → `problems.md`
 
-Handles volume beyond Opus 32K output token cap. Read [prompts-phase6a-chunk.md](references/prompts-phase6a-chunk.md) and [prompts-phase6b-merge.md](references/prompts-phase6b-merge.md).
+### Modo B2B Enterprise (Investigación por Agente)
+Leer [enterprise-sources.md](references/enterprise-sources.md). Trabajar fuentes seleccionadas con web_search/web_fetch. Stop: >= 50 problemas con >= 3 tipos de fuente.
 
-1. **6a**: Split problems into 5 chunks → process each with Sonnet 4 (~40-80 niches per chunk)
-2. **6b**: Merge all chunks with Opus → deduplicate (max 35-40 niches per call)
-3. **6c**: If merge truncated (`finish_reason: length`) → supplement pass for missed niches
+### Modo Híbrido
+Ejecutar ambos stacks. Deduplicar en Phase 6.
 
-Output: `niches-raw/merged.md`
+**Output idéntico en todos los modos**: `problems.md` con problemas JTBD estructurados.
 
-## Phase 7: Quality Filter
+### Fallback si 0 problemas
+Si después de ejecutar el stack completo tienes < 10 problemas:
+1. Ampliar keywords (sinónimos, otros idiomas, terminología alternativa)
+2. Probar fuentes secundarias (Reddit genérico, Quora, app store reviews)
+3. Si sigue < 10: informar al usuario y recomendar micro-entrevistas (5-10 personas ICP)
+4. **Nunca inventar problemas** — documentar el gap y proceder con lo que hay
 
-Apply 5 generic filter criteria using [prompts-phase7-quality-filter.md](references/prompts-phase7-quality-filter.md):
+## Phase 6: Agrupar en Nichos
 
-1. **TOO GENERIC** — broad complaint, no specific business segment
-2. **TOO SMALL** — minimal transaction volume
-3. **NOT PRODUCT-RELEVANT** — outside product domain
-4. **CONSUMER PROBLEM** — personal, not business
-5. **DUPLICATE SEGMENT** — same business type as another niche
+6a: Leer [prompts-phase6a.md](references/prompts-phase6a.md). Chunk → Sonnet 4. 6b: Leer [prompts-phase6b.md](references/prompts-phase6b.md). Merge → Opus. Output: `niches-raw/merged.md`
 
-Key principle: **Niche = WHO** (business segment), not WHAT (problem). Expected: 30-40% filtered. Output: `niches-filtered.md`.
+## Phase 7: Filtro de Calidad
 
-## Phase 7b: Triple Filter (Foundation Validation)
+Leer [prompts-phase7a.md](references/prompts-phase7a.md). 5 criterios: TOO GENERIC, TOO SMALL, NOT PRODUCT-RELEVANT, CONSUMER PROBLEM, DUPLICATE SEGMENT. **Nicho = QUIÉN, no QUÉ.** Output: `niches-filtered.md`.
 
-Validates against real Foundation data. Read [prompts-phase7b-triple.md](references/prompts-phase7b-triple.md) and [concepts.md](references/concepts.md) for detailed filter rules.
+## Phase 7b: Triple Filter (Validación Foundation)
 
-For each niche (Valid=TRUE), evaluate against Foundation files:
+Leer [prompts-phase7b.md](references/prompts-phase7b.md). Validar contra SWOT + ICP + Producto. Los 3 deben ser PASS o PARTIAL. Output: `niches-triple.md`.
 
-| Filter | Reads | Evaluates |
-|--------|-------|-----------|
-| SWOT | swot-analysis/current.md | Alignment with Strengths, exploits competitor Weaknesses? |
-| ICP | existing-customer-data/current.md | Can we REACH this persona? Long-term fit? |
-| Product | self-intelligence/current.md | Can we SOLVE this TODAY? Better than alternatives? |
+## Phase 8: Review de Usuario (OBLIGATORIO)
 
-Each scored PASS / PARTIAL / FAIL. All 3 must be PASS or PARTIAL to proceed. Output: `niches-triple.md`.
-
-## Phase 8: User Review (MANDATORY)
-
-Present triple-filtered table. User can: remove niches, add niches, modify descriptions. Only Valid=TRUE niches proceed to scoring. **Save as `niches-confirmed.md` after explicit approval.**
+Presentar tabla. Usuario puede modificar. Guardar como `niches-confirmed.md`.
 
 ## Phase 9: Scoring (Deep Research)
 
-Invoke `deep-research` skill for EACH confirmed niche. Read [prompts-phase9-scoring.md](references/prompts-phase9-scoring.md) for framework.
+Leer [prompts-phase9.md](references/prompts-phase9.md). Por nicho: Pain (2-99), Market Size (SAM), Reachability (2-99). Output: `scored.md`.
 
-Per niche:
-- **Pain Intensity (2-99)**: JTBD — economic loss, opportunity cost, time loss, cognitive load, frequency
-- **Market Size**: SAM estimate (INE, Eurostat, Statista). Top-down + bottom-up. Confidence level.
-- **Reachability (2-99)**: Communities, creators, keywords, competition/CAC, specific channels
+## Phase 10: Consolidar
 
-Output: `scored.md` (append format, one section per niche).
-
-## Phase 10: Consolidate
-
-Run `llm_step.py` with [prompts-phase10-consolidate.md](references/prompts-phase10-consolidate.md) — see [commands.md](references/commands.md). Merges confirmed niches + scores into final 23-column table. Export CSV with `export_csv.py`.
-
-Output: `current.md` + `final-table.csv`. See [schema.md](references/schema.md) for full column spec.
+Leer [prompts-phase10.md](references/prompts-phase10.md). Tabla final + CSV. Output: `current.md` + `final-table.csv`. Ver [schema.md](references/schema.md).
 
 ---
 
-## Partial Runs
+## Runs Parciales
 
-| Situation | Start At |
-|-----------|----------|
-| Have forum data | Phase 5 — put docs in `docs/` |
-| Have pain points | Phase 6 — format as `problems.md` |
-| Have grouped niches | Phase 7 — format as `niches-raw/merged.md` |
-| Score these niches | Phase 8 → 9 |
-| Validate one niche | Phase 9 — single niche in `niches-confirmed.md` |
+| Situación | Empezar En |
+|-----------|------------|
+| Tengo datos de foros | Phase 5 — poner docs en `docs/` |
+| Tengo pain points | Phase 6 — formatear como `problems.md` |
+| Tengo nichos agrupados | Phase 7 — formatear como `niches-raw/merged.md` |
+| Puntuar estos nichos | Phase 8 → 9 |
+| Validar un nicho | Phase 9 — nicho individual |
 
-## After Delivery
+## Edge Cases
 
-Offer: *"¿Quieres profundizar en algún nicho? → deep-research [nombre]"*
+Ver [methodology.md](references/methodology.md) para reglas detalladas. Resumen:
+
+- **B2B nicho sin datos públicos** → Enterprise Source Stack + micro-entrevistas como fallback
+- **Señales mixtas B2B/B2C** → Modo Híbrido (ambos stacks)
+- **Foundation contradice scraping** → Foundation GANA para patrones de clientes existentes
+
+## Lite vs Deep
+
+- **Lite**: 50+ problemas, Triple Filter, 3-7 ECPs scored, Self-QA mínimo NEEDS WORK
+- **Deep**: 100+ problemas, 5+ tipos de fuente, TAM/SAM por ECP, datos de clientes integrados. Enterprise: >= 4 tipos de fuente B2B. Self-QA: PASS con 0 red flags.
+
+## Después de Entregar
+
+Ofrecer: *"¿Quieres profundizar en algún nicho? → deep-research [nombre]"*
 
 ## Self-QA (OBLIGATORIO)
 
-Read [checklist.md](references/checklist.md). Check every item. No delivery with pending ❌. Add: `<!-- Self-QA: PASS | fecha | items: X✅ Y⚠️ 0❌ -->`
+Leer [checklist.md](references/checklist.md). Verificar cada item. No entregar con RED pendiente. Añadir: `<!-- Self-QA: PASS | fecha | items: X pass Y warn 0 red -->`
+
+## Cost Tracking
+
+Al finalizar la run, generar un resumen de coste real en `brand/{slug}/niche-discovery/cost-log.md`:
+
+```
+# Cost Log — [fecha]
+| Fase | Searches/Docs | Modelo | Tokens In | Tokens Out | Coste Est. |
+|------|--------------|--------|-----------|------------|------------|
+| 3. SERP | 450 searches | Serper | — | — | $0.45 |
+| 4. Scrape | 320 URLs | Firecrawl | — | — | $0.32 |
+| 5. Extract | 280 docs | Gemini 3.1 Pro | 560K | 280K | $4.48 |
+| 6. Group | 5 chunks + merge | Sonnet+Opus | 80K | 40K | $1.24 |
+| 7. Filter | 1 call | Opus | 20K | 16K | $0.50 |
+| 10. Consolidate | 1 call | Opus | 25K | 10K | $0.37 |
+| **Total** | | | | | **$7.36** |
+```
+
+Los scripts imprimen tokens usados en stdout. Capturar esos números para el log.
 
 ## Almacenamiento
 
-Standard versioning in `brand/{slug}/niche-discovery/`: `current.md` + `v{N}.md` + `history.json` + `qa-log.md`. Link: `https://sancho-cmo.taild48df2.ts.net/mc/docs/brand/{slug}/niche-discovery/current.md`
+Versionado estándar en `brand/{slug}/niche-discovery/`: `current.md` + `v{N}.md` + `history.json` + `qa-log.md`.

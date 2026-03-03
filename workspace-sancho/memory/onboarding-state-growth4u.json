@@ -1,16 +1,16 @@
 {
   "client": "growth4u",
-  "status": "in_progress",
-  "current_step": 1,
+  "status": "completed",
+  "current_step": 7,
   "started_at": "2026-03-02T00:17:00Z",
   "responses": {
-    "step_1_empresa": null,
-    "step_2_producto": null,
-    "step_3_cliente_ideal": null,
-    "step_4_competidores": null,
-    "step_5_recursos": null,
-    "step_6_historial": null
+    "step_1_empresa": "Consultora de Growth. Origen en Fintechs, ahora cualquier empresa Tech. Desbloquean crecimiento: adquisición y retención. Se embeben en el equipo del cliente. Full funnel: análisis (clientes, mercado), estrategia (contenidos, SEO, afiliados), ejecución (con o sin equipo interno). Alta confianza de clientes.",
+    "step_2_producto": "Trust Engine — programa intensivo 6 meses, 1:1 con Alfonso y equipo. Instala el sistema de Growth4U para bajar/estabilizar CAC en el negocio del cliente. Diferencia vs consultoria completa (5-10K€/mes): en Trust Engine el cliente opera el sistema internamente, paga fraccion del precio. 4 fases: Base (posicionamiento, canales, activacion, atribucion), Fortaleza Confianza (reviews, SEO/AIO, PR), Generacion Demanda (outbound, creators, paid), Optimizacion (dashboards, rituales, metricas). Entregables: calls semanales, 13 playbooks, dashboard, videos, diagnostico, canal privado, infraestructura. Target: startups/fintechs con min 2K€/mes budget mktg, producto validado, datos de paid, equipo pequeno comprometido. Plazas limitadas.",
+    "step_3_cliente_ideal": "ICP: CMO/Head of Growth/Fundador-CMO de empresa tech (B2C/B2B) post-PMF, >10K€/mes facturacion, CAC subiendo al escalar, journey digital. Dos Sub-ICPs: A) Fundador-CMO (hace de todo, no ha contratado CMO) y B) CMO Profesional (reporta a CEO, equipo 2-5, presion resultados). 7 dolores: CAC insostenible, falta confianza marca, crecimiento estancado, sin sistema, competencia enorme, fundador cuello botella, sin atribucion. Verticales T1: Fintech, B2B Tech/AI, Banca/neobancos. T2: Insurtech, Healthtech, Plataformas inversion. T3: Edtech, Marketplaces, cualquier tech >10K MRR. Casos: Bnext (500K users, CAC 12.40€), Multiplo (93 leads, 8 suscripciones), Kleva (23K MRR B2B), Hospital Capilar (50K€), FellowFunders. Mensaje central: no campañas, sistema de confianza permanente que reduce CAC.",
+    "step_4_competidores": "Competencia real: otras agencias (sobre todo de paid) y la opcion de equipo interno. Approach unico, no hay competidor directo con sistema end-to-end de trust-building. Directos: Product Hackers (growth hacking fintech, CRO), Glissmarket (performance fintech, monocanal), TEAM LEWIS (PR/comms B2B fintech, sin GTM integrado), Innsomnia/FinTK (open innovation, no mktg adquisicion). Indirectos: Thriveity (trust scoring SaaS, no ejecutan), Andrew Laws (libro, thought leadership), Knotch (content intelligence SaaS). Ventaja G4U: 6 fases integradas Trust Engine, herramientas propias (Sancho, Horus, Visualizador Nichos), ejecucion integrada, casos cuantificables (Bnext, Multiplo), especializacion fintech. A vigilar: Product Hackers y TEAM LEWIS. Amenaza: que copien el framework → thought leadership clave para consolidar IP.",
+    "step_5_recursos": "Equipo: Alfonso (fundador, cara visible, graba videos), Philippe, Martin (growth), 1 persona contenido LinkedIn. Presupuesto: 5-10K€/mes si ROAS positivo rapido. Sin equipo de marketing dedicado — el equipo growth hace todo.",
+    "step_6_historial": "Lo que funciona: referidos via Alfonso (red personal, le conocen, le contactan, propuesta, cierre). Problema: depende 100% de Alfonso, no escala. Objetivo clave: desacoplar la generacion de demanda de la persona de Alfonso. Necesitan un sistema que genere leads sin que Alfonso sea el unico canal."
   },
   "follow_ups_used": {},
-  "completed_at": null
+  "completed_at": "2026-03-02T12:32:00Z"
 }

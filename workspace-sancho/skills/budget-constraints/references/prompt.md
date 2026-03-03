@@ -4,6 +4,37 @@
 
 ---
 
+## Block 0: Context Hydration (ANTES de todo)
+
+**Lee `references/hydration.md`** para el mapeo completo.
+
+1. Leer `brand/{slug}/company-context/current.md` (obligatorio)
+2. Leer `brand/{slug}/business-model/current.md` (si existe — aporta revenue model, growth motion, unit economics)
+3. Extraer campos mapeados en hydration.md
+4. Presentar al usuario agrupados:
+
+```
+"De tu Company Context ya tengo:
+  • [campo]: [valor] ✅
+  • [campo]: [valor] ✅
+  ...
+
+¿Correcto? ¿Quieres ajustar algo?
+
+Lo que necesito saber (específico de budget):
+  1. [pregunta nueva 1]
+  2. [pregunta nueva 2]
+  ..."
+```
+
+5. Si el usuario confirma → esos campos se dan por buenos, NO re-preguntar
+6. Si el usuario corrige → usar el valor nuevo, notar discrepancia
+7. Avanzar SOLO con las preguntas genuinamente nuevas de los Blocks siguientes
+
+**Regla**: Cada pregunta de los Blocks 1-3 solo se hace si la respuesta NO existe en upstream. Si existe, se salta.
+
+---
+
 ## Block 1: Budget Range (~5 min)
 
 **Preguntas (adaptar al contexto):**

@@ -61,6 +61,10 @@
 - [ ] **5-10 URLs verificadas** con web_fetch (spot-check aleatorio)
 - [ ] **Coherencia con brand files** (company-context, competitors) verificada
 
+## ENTREGA (obligatorio)
+
+- [ ] **Oferta de deep-research presentada** — Al entregar, SIEMPRE incluir la oferta de profundización con deep-research. Sin esta oferta, la entrega está INCOMPLETA.
+
 ---
 
 ## Flujo de uso

@@ -1,112 +1,100 @@
-# Niche Discovery v3 — Self-QA Checklist
+# Niche Discovery v3.3 — Checklist de Self-QA
+<!-- v3.3 -->
 
-> Check BEFORE delivering. For each item: ✅ done | ⚠️ not applicable (with reason) | ❌ pending (investigate more)
-> Only deliver when all items are ✅ or ⚠️. Any ❌ → investigate further.
-
----
-
-## Phase 1: Intake (Foundation Context)
-
-- [ ] **Foundation pillars loaded**: company-context, self-intelligence, competitors, SWOT
-- [ ] **company_name, product, industry, target, country, context_type** extracted
-- [ ] **Missing pillars flagged** to user (if any)
-
-## Phase 2: Strategy
-
-- [ ] **10-15 life context words** generated (semi-permanent situations, NOT adjectives)
-- [ ] **8-12 product domain words** generated (concrete nouns)
-- [ ] **Forum sources** identified (Reddit, thematic, general)
-- [ ] **User explicitly approved** strategy before proceeding
-- [ ] **config.json saved** to `brand/{slug}/niche-discovery/`
-
-## Phase 3: SERP Search
-
-- [ ] **serp_search.py executed** with config.json
-- [ ] **urls.json saved** with deduplicated URLs
-- [ ] **Cost reported** to user
-
-## Phase 4: Scraping
-
-- [ ] **scrape_urls.py executed** with urls.json
-- [ ] **docs/ folder** populated with markdown files
-- [ ] **manifest.json** created with scrape results
-- [ ] **Reddit URLs** handled via JSON API (not Firecrawl)
-
-## Phase 5: Extraction
-
-- [ ] **extract_problems.py executed** with correct params
-- [ ] **problems.md saved** with consolidated problem tables
-- [ ] **Extraction rate** reasonable (>30% of docs yield problems)
-- [ ] **Each problem** has source URL traceable to a scraped doc
-
-## Phase 6: Grouping
-
-- [ ] **Problems split** into ~5 chunks
-- [ ] **Each chunk** processed with Sonnet 4
-- [ ] **Merge** executed with Opus — deduplicated across chunks
-- [ ] **Supplement pass** done if merge was truncated
-- [ ] **merged.md saved** in niches-raw/
-- [ ] **40-150 niches** identified (less = too aggressive, more = not enough consolidation)
-
-## Phase 7: Quality Filter
-
-- [ ] **5 filter criteria** applied (generic, small, not relevant, consumer, duplicate)
-- [ ] **niches-filtered.md saved** with Valid/Reason columns updated
-- [ ] **30-40% filtered out** (less = not strict enough, more = too aggressive)
-
-## Phase 7b: Triple Filter (Foundation Validation)
-
-- [ ] **SWOT Filter applied**: each niche checked against Strengths/Opportunities
-- [ ] **ICP Filter applied**: reachability + long-term fit evaluated
-- [ ] **Product Filter applied**: current capability to solve checked
-- [ ] **SWOT_Score, ICP_Score, Product_Score columns** added
-- [ ] **niches-triple.md saved**
-- [ ] **Only PASS or PARTIAL** niches proceed
-
-## Phase 8: User Review
-
-- [ ] **Full table presented** to user
-- [ ] **User explicitly approved** before proceeding to scoring
-- [ ] **niches-confirmed.md saved** with user edits applied
-
-## Phase 9: Scoring (Deep Research)
-
-- [ ] **deep-research skill invoked** for each confirmed niche
-- [ ] **Pain Intensity (2-99)** scored with JTBD explanation
-- [ ] **Market Size** estimated with sources (INE, Eurostat, Statista)
-- [ ] **Reachability (2-99)** scored with specific channels
-- [ ] **scored.md saved** with per-niche sections
-
-## Phase 10: Consolidation
-
-- [ ] **Final table** generated with all 21+ columns
-- [ ] **current.md saved** to `brand/{slug}/niche-discovery/`
-- [ ] **final-table.csv exported**
-- [ ] **Versioning**: v{N}.md backup + history.json updated
-
-## META (Quality)
-
-- [ ] **Every niche traces** to real pain points in scraped data
-- [ ] **0 invented niches** — all from actual forum conversations
-- [ ] **5-10 URLs spot-checked** with web_fetch
-- [ ] **Coherence with Foundation** (SWOT, competitors, self-intelligence)
-- [ ] **Scores justified** — every score has written rationale
-- [ ] **Cross-pillar data flow** documented (which downstream skills consume what)
-- [ ] **All intermediate files saved** (config.json through final-table.csv)
+> Comprobar ANTES de entregar. Marcar cada uno: PASS | WARN (con razón) | RED (investigar).
+> Entregar solo cuando 0 RED. Mostrar resultado al usuario.
 
 ---
 
-## Usage Flow
+## Completitud
 
-```
-1. Execute Phases 1-10
-2. Read this checklist
-3. Mark each item: ✅ / ⚠️ (with reason) / ❌ (investigate)
-4. If any ❌ → fix before delivering
-5. Spot-check: verify 5-10 URLs with web_fetch
-6. Cross-reference against Foundation files
-7. Add Self-QA metadata tag to current.md
-8. ONLY THEN deliver to user
-```
+- [ ] >= 50 problemas estructurados recopilados (o razón documentada de por qué menos)
+- [ ] >= 3 tipos de fuente diferentes representados (no todo de una sola fuente)
+- [ ] Cada problema tiene TODOS los campos: problem + why + persona + alternatives + source + jtbd_statement
+- [ ] Ninguna "persona" es genérica ("dueño de negocio") — debe incluir rol + tamaño empresa + contexto
+- [ ] 3-7 ECPs producidos (menos = demasiado estrecho, más = no agrupado)
 
-**No document delivered with pending ❌.**
+## Calidad de Evidencia
+
+- [ ] Cada problema tiene una fuente real (no inferida ni asumida)
+- [ ] URLs de fuente proporcionadas donde sea posible
+- [ ] Scores de confianza muestran varianza real (no todos idénticos)
+- [ ] No hay problemas duplicados contados por separado para inflar números
+- [ ] 5-10 URLs verificadas con web_fetch por spot-check
+
+## Reutilización de Datos (Foundation Harvest)
+
+- [ ] Datos Foundation existentes (competitor, market, self-intelligence) comprobados PRIMERO
+- [ ] Problemas harvested de datos existentes taggeados con fuente original
+- [ ] Nueva investigación llena GAPS, no duplica lo que ya existe
+
+## Formato JTBD
+
+- [ ] Cada jtbd_statement sigue: "Cuando [situación], quiero [motivación], para que [resultado]"
+- [ ] Alternativas son REALES (incluyendo "no hacer nada", "Excel", "consultor", "proceso manual")
+- [ ] Personas usan lenguaje del comprador, no lenguaje de marketing
+
+## Triangulación
+
+- [ ] Top 5 problemas aparecen en >= 2 fuentes independientes
+- [ ] Al menos 1 problema top confirmado por voz del cliente (reviews, LinkedIn, entrevistas, case studies)
+- [ ] Ningún problema top depende de una sola fuente no verificada
+
+## Específico por Tipo de Mercado
+
+### Si modo B2C/SMB:
+- [ ] Fuentes de foros incluyen Reddit + al menos 1 foro temático
+- [ ] Problemas extraídos de conversaciones reales de usuarios (no contenido de marketing)
+- [ ] config.json guardado con life context words + product domain words
+
+### Si modo B2B Enterprise:
+- [ ] >= 4 tipos de fuente enterprise usados (case studies + reviews + 2 más)
+- [ ] Voz de C-level o decision-maker presente en datos (earnings calls, LinkedIn, entrevistas)
+- [ ] Señales de job postings trianguladas con al menos 1 otra fuente
+
+## Triple Filter (Validación Foundation)
+
+- [ ] Filtro SWOT aplicado: cada nicho comprobado contra Fortalezas/Oportunidades
+- [ ] Filtro ICP aplicado: alcanzabilidad + fit a largo plazo evaluados
+- [ ] Filtro Producto aplicado: capacidad actual para resolver comprobada
+- [ ] Solo nichos PASS o PARTIAL proceden
+
+## Archivos Intermedios
+
+- [ ] `config.json` guardado (estrategia de búsqueda aprobada por usuario)
+- [ ] `urls.json` guardado (B2C) o fuentes documentadas (B2B)
+- [ ] `problems.md` guardado con todos los problemas estructurados
+- [ ] `niches-raw/merged.md` guardado (nichos agrupados)
+- [ ] `niches-filtered.md` guardado (post filtro de calidad)
+- [ ] `niches-triple.md` guardado (post triple filter)
+- [ ] `niches-confirmed.md` guardado (aprobado por usuario)
+- [ ] `scored.md` guardado (deep research por nicho)
+
+## Output
+
+- [ ] Tabla final con las 23 columnas según schema.md
+- [ ] current.md guardado + versionado (v{N}.md + history.json)
+- [ ] CSV exportado (final-table.csv)
+- [ ] cost-log.md generado con coste real de la run
+- [ ] Flujo de datos cross-pilar documentado (qué skills downstream consumen qué)
+
+---
+
+## Red Flags (auto-detectar y reportar)
+
+- > 80% de problemas de una sola fuente → FLAG: "Baja diversidad de fuentes. [n]% de [source]."
+- Todos los scores de confianza idénticos → FLAG: "Sin varianza en confianza. Revisar scoring."
+- Sin alternativas listadas en ningún problema → FLAG: "Alternativas vacías — investigación superficial."
+- Personas genéricas → FLAG: "Personas genéricas detectadas. Añadir rol + tamaño empresa + contexto."
+- < 30 problemas total → FLAG: "Insuficientes problemas ([n]/50). Considerar más fuentes."
+
+---
+
+## Veredicto
+
+- **PASS** (todos chequeados, 0 red flags): Output listo
+- **NEEDS WORK** (1+ sin chequear o 1 red flag): Arreglar items flaggeados, re-ejecutar
+- **INSUFFICIENT** (3+ sin chequear o 2+ red flags): Volver atrás, expandir fuentes
+
+Siempre mostrar resultado:
+> "Self-QA: **PASS** — 67 problemas de 5 tipos de fuente, todos con JTBD completo, top 5 triangulados."

@@ -15,10 +15,10 @@ metadata:
 context_required:
 - brand/company-context.md
 - brand/icp.md
-- brand/ecps.md
+- brand/{slug}/go-to-market/ecps.md
 - brand/positioning.md
 context_writes:
-- brand/ecps.md
+- brand/{slug}/go-to-market/ecps.md
 - brand/learnings.md
 ---
 
@@ -33,6 +33,7 @@ context_writes:
 
 | Archivo | Cuándo leer | Contenido |
 |---------|------------|-----------|
+| [hydration.md](references/hydration.md) | **SIEMPRE** — Step 0 obligatorio | Mapeo de campos upstream → esta skill |
 | [prompt.md](references/prompt.md) | **SIEMPRE** — fuente de verdad del output | Frameworks Maja Voje, validation plan, experiment templates |
 | [checklist.md](references/checklist.md) | **Antes de entregar** — self-QA obligatorio | Ítems de verificación |
 | [concepts.md](references/concepts.md) | Si necesitas skip conditions, methods deep dive, edge cases | Definiciones y Maja Voje resources |
@@ -54,6 +55,14 @@ context_writes:
 
 ## Flujo de Ejecución
 
+### 0. Context Hydration (OBLIGATORIO — antes de cualquier pregunta)
+- Lee `_system/context-hydration-protocol.md` para el patrón genérico
+- Lee `references/hydration.md` para el mapeo específico de esta skill
+- Lee TODOS los docs en `context_required`
+- Pre-rellena campos según hydration_map
+- Presenta datos heredados al usuario: "De [fuente] ya tengo X. ¿Correcto?"
+- Solo pregunta campos listados en "Campos genuinamente nuevos"
+
 ### 1. Map Assumptions per ECP
 - List todas las assumptions (audience, problem, willingness to pay, channels)
 - Map en 2 ejes: Importance × Evidence
@@ -72,7 +81,7 @@ context_writes:
 
 ### 5. Update ECPs
 - Reorder by confidence (validated first)
-- Update brand/ecps.md with validation status
+- Update brand/{slug}/go-to-market/ecps.md with validation status
 - Update brand/learnings.md
 
 ### 6. Self-QA + Guardar

@@ -61,6 +61,11 @@
 - **Rocinante sin hilos**: usa sessions_send, no sessions_spawn → no crea hilos
 
 ## Clientes
+- **4 clientes activos** (2026-03-02):
+  - Hospital Capilar (hospital-capilar, guild 1475635138108063746) — 10/15 Foundation
+  - Paymatico (paymatico, guild 1477995837719056458) — nuevo
+  - SanchoCMO SelfMarketing (sanchocmo, guild 1477997446885019670) — nuevo
+  - Growth4U (growth4u, guild 1477741643762241548) — nuevo, Alfonso testando
 - **Hospital Capilar** (slug: hospital-capilar): Primer cliente.
   - Foundation: 10/15 aprobados (company-context, business-model, budget, self-intelligence, ope-canvas, market, competitors, positioning, swot-analysis, niche-discovery)
   - Pendientes: ecp-validation, existing-customer-data, pricing, brand-voice, visual-identity
@@ -125,6 +130,12 @@
 - **Menos reglas bien escritas > muchas reglas vagas**: de 21 reglas a 11, mejor cumplimiento
 - **NO mandar instrucciones a Sancho**: mejorar skills/reglas/sistema, no mensajes ad-hoc
 
+### Onboarding y Config
+- **NUNCA usar heredoc con emojis en Python** para escribir openclaw.json → surrogates corrompen JSON. Usar \uXXXX escapes.
+- **new-client.sh no configura openclaw.json** — solo crea brand dir + Supabase. Guild config es manual (script pendiente).
+- **Growth4U guild faltaba** — brand dir existía pero guild no estaba en openclaw.json → Sancho no respondía
+- **Tailscale Funnel**: `/mc/docs` como mount point pierde subdirectorios → usar `/mc` como mount
+
 ### Calidad de documentos
 - **Sancho mintió sobre Apify**: dijo "Apify website crawl" sin haberlo ejecutado (0 llamadas). Regla 0h (honestidad) añadida
 - **Checklist de herramientas**: items explícitos por tool (pegar run ID), prohibido marcar ✅ con fallback
@@ -171,6 +182,8 @@
 
 ## Tareas
 - **TASKS.md**: `~/.openclaw/workspace-cervantes/TASKS.md` — task board unificado con tags de cliente
-- **Próximo ID**: T-042 (was T-040, now T-041 done)
+- **Próximo ID**: T-043
+- **T-042** (Auditoría skills): aprobada, pendiente ejecutar
+- **T-010** (Next.js MC): PRD completo en `prd/t-010-mission-control-nextjs.md`, Alfonso dice "ya volveremos"
 - **T-010** (Next.js MC): única aprobada, pendiente de que estático esté estable
 - **Device pairing**: 1 PENDING — Alfonso debe revisar

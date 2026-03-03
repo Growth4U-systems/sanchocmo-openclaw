@@ -1,6 +1,14 @@
 # Niche Discovery v3 — Output Schema
+<!-- v3.3 -->
 
-## Final Table Columns (Phase 10 output)
+## Progresión de Columnas
+
+- **Phase 6** produce 14 columnas (incluye `Reason for Invalidation` y `Notes` — columnas de trabajo)
+- **Phase 7b** añade 4 columnas: SWOT_Score, ICP_Score, Product_Score, Triple_Filter_Result
+- **Phase 10** añade 7 columnas de scoring y **elimina** `Reason for Invalidation` y `Notes`
+- **Tabla final**: 23 columnas (14 - 2 + 4 + 7 = 23)
+
+## Final Table Columns (Phase 10 output — 23 columnas)
 
 | Column | Type | Description |
 |--------|------|-------------|
@@ -60,3 +68,29 @@
 
 - **Lite**: 50+ problems scraped, Triple Filter applied, 3-7 ECPs scored, top 3 recommended
 - **Deep**: 500+ problems, 5+ source types, TAM/SAM per ECP, customer data integrated, multi-market analysis
+
+## Valid Source Types
+
+### B2C/SMB Sources (Forum Pipeline)
+- `"reddit"` — Reddit posts and comments
+- `"quora"` — Quora answers
+- `"twitter"` — X/Twitter posts
+- `"community-forum"` — Thematic forums (forocoches, rankia, etc.)
+- `"g2-review"`, `"capterra-review"`, `"trustpilot-review"` — Review platforms
+- `"app-store-review"` — App/Play Store reviews
+
+### B2B Enterprise Sources
+- `"case-study"` — Competitor website case studies
+- `"job-posting"` — LinkedIn Jobs, Indeed, vertical boards
+- `"earnings-call"` — Public company earnings transcripts
+- `"conference-agenda"` — Industry conference session topics
+- `"linkedin"` — LinkedIn posts and comments from ICP decision makers
+- `"trade-publication"` — Vertical media editorial themes
+- `"regulatory"` — New regulations creating mandatory problems
+- `"expert-interview"` — Direct practitioner conversations
+- `"micro-interview"` — Quick structured interviews with ICP members
+
+### Foundation Harvest Sources
+- `"competitor-intelligence-lens3"` — From existing competitor-intelligence pillar
+- `"market-intelligence"` — From existing market-intelligence pillar
+- `"self-intelligence-lens3"` — From existing self-intelligence pillar

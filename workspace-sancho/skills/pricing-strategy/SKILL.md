@@ -7,7 +7,7 @@ context_required:
 - brand/icp.md
 user-invocable: false
 context_writes:
-- brand/pricing.md
+- brand/{slug}/go-to-market/pricing.md
 - brand/learnings.md
 ---
 

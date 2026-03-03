@@ -47,13 +47,28 @@ def serper_search(api_key: str, query: str, page: int = 1, country: str = "es") 
         "Content-Type": "application/json",
     }, data=body)
 
-    try:
-        with urllib.request.urlopen(req, timeout=30) as resp:
-            data = json.loads(resp.read().decode("utf-8"))
-            return data.get("organic", [])
-    except urllib.error.HTTPError as e:
-        print(f"  [ERROR] Serper API {e.code}: {e.read().decode()[:200]}", file=sys.stderr)
-        return []
+    for attempt in range(3):
+        try:
+            with urllib.request.urlopen(req, timeout=30) as resp:
+                data = json.loads(resp.read().decode("utf-8"))
+                return data.get("organic", [])
+        except urllib.error.HTTPError as e:
+            if e.code == 429 and attempt < 2:
+                wait = (attempt + 1) * 5
+                print(f"  [WARN] Rate limited (429), retrying in {wait}s...", file=sys.stderr)
+                time.sleep(wait)
+                continue
+            print(f"  [ERROR] Serper API {e.code}: {e.read().decode()[:200]}", file=sys.stderr)
+            return []
+        except (urllib.error.URLError, TimeoutError) as e:
+            if attempt < 2:
+                wait = (attempt + 1) * 3
+                print(f"  [WARN] Timeout/network error, retrying in {wait}s...", file=sys.stderr)
+                time.sleep(wait)
+                continue
+            print(f"  [ERROR] Serper connection failed: {e}", file=sys.stderr)
+            return []
+    return []
 
 
 def build_queries(config: dict) -> list[dict]:
@@ -144,7 +159,7 @@ def main() -> int:
 
     # Write output
     Path(args.output).write_text(json.dumps(all_results, indent=2, ensure_ascii=False))
-    cost = total_searches * 0.003
+    cost = total_searches * 0.001
 
     print(f"\nDone. {total_searches} searches, {len(all_results)} unique URLs")
     print(f"Estimated cost: ${cost:.2f}")

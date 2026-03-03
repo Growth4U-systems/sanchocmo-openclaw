@@ -12,9 +12,8 @@ metadata:
   changes: v4 — Restructured per skill-creator principles. SKILL.md lean. Concepts/methodology moved to references.
 context_required: []
 context_writes:
-- brand/company-context.md
-- brand/team.md
-- brand/learnings.md
+- brand/{slug}/company-brief/current.md (section: Company Identity)
+- brand/{slug}/operational/learnings.md
 ---
 
 # Company Context

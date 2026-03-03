@@ -12,10 +12,10 @@ metadata:
   updated: '2026-02-27'
   changes: v4 — Restructured per skill-creator principles.
 context_required:
-- brand/company-context.md
+- brand/{slug}/company-brief/current.md
 context_writes:
-- brand/product-analysis.md
-- brand/learnings.md
+- brand/{slug}/market-and-us/self-analysis.md
+- brand/{slug}/operational/learnings.md
 ---
 
 # Self-Intelligence (3-Lens Analysis)
@@ -29,6 +29,7 @@ context_writes:
 
 | Archivo | Cuándo leer | Contenido |
 |---------|------------|-----------|
+| [hydration.md](references/hydration.md) | **SIEMPRE** — Step 0 obligatorio | Mapeo de campos upstream → esta skill |
 | [prompt.md](references/prompt.md) | **SIEMPRE** — fuente de verdad del output | Pipeline 5 pasos, scrapers, análisis, output format |
 | [checklist.md](references/checklist.md) | **Antes de entregar** — self-QA obligatorio | Ítems de verificación |
 | [concepts.md](references/concepts.md) | Si necesitas lens conflict resolution, viability rules, edge cases | Definiciones y metodología |
@@ -37,6 +38,14 @@ context_writes:
 ---
 
 ## Flujo de Ejecución
+
+### 0. Context Hydration (OBLIGATORIO — antes de cualquier pregunta)
+- Lee `_system/context-hydration-protocol.md` para el patrón genérico
+- Lee `references/hydration.md` para el mapeo específico de esta skill
+- Lee TODOS los docs en `context_required`
+- Pre-rellena campos según hydration_map
+- Presenta datos heredados al usuario: "De [fuente] ya tengo X. ¿Correcto?"
+- Solo pregunta campos listados en "Campos genuinamente nuevos"
 
 ### 0. Profile Discovery (~5 min)
 - Encontrar TODAS las URLs: social, review platforms, app stores, website

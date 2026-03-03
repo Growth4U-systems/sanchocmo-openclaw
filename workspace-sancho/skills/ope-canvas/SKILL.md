@@ -34,6 +34,7 @@ context_writes:
 
 | Archivo | Cuándo leer | Contenido |
 |---------|------------|-----------|
+| [hydration.md](references/hydration.md) | **SIEMPRE** — Step 0 obligatorio | Mapeo de campos upstream → esta skill |
 | [prompt.md](references/prompt.md) | **SIEMPRE** — las 14 secciones detalladas | Instrucciones por sección, qué incluir, qué evitar |
 | [checklist.md](references/checklist.md) | **Antes de entregar** — self-QA | Checklist de calidad |
 | [concepts.md](references/concepts.md) | Si necesitas el framework de Moats o reglas de oro | Definiciones, errores comunes, proceso |
@@ -41,6 +42,14 @@ context_writes:
 ---
 
 ## Flujo de Ejecución
+
+### 0. Context Hydration (OBLIGATORIO — antes de cualquier pregunta)
+- Lee `_system/context-hydration-protocol.md` para el patrón genérico
+- Lee `references/hydration.md` para el mapeo específico de esta skill
+- Lee TODOS los docs en `context_required`
+- Pre-rellena campos según hydration_map
+- Presenta datos heredados al usuario: "De [fuente] ya tengo X. ¿Correcto?"
+- Solo pregunta campos listados en "Campos genuinamente nuevos"
 
 ### 0. Verificar Prerequisites
 - Confirmar que company-context, business-model, budget y self-intelligence están `approved`

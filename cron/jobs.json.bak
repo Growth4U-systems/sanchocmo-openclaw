@@ -7,7 +7,7 @@
       "name": "Daily Pulse",
       "enabled": true,
       "createdAtMs": 1771950688301,
-      "updatedAtMs": 1772361886751,
+      "updatedAtMs": 1772438569516,
       "schedule": {
         "kind": "cron",
         "expr": "0 9 * * 1-5",
@@ -18,7 +18,7 @@
       "payload": {
         "kind": "agentTurn",
         "message": "Ejecuta el Daily Pulse para Hospital Capilar (guild 1475635138108063746).\n\nPASO 1 — LEER FUENTES:\nLee brand/hospital-capilar/sources.json → sección daily_pulse. Para cada source habilitado:\n\nDISCORD (OBLIGATORIO):\n- Lee mensajes de las últimas 24h de CADA canal usando: message(action=read, channel=discord, target=<channelId>, limit=50)\n- Canales y sus IDs:\n  general: 1475635138988609678\n  brand: 1475638249107095866\n  campaigns: 1475638251485401171\n  content: 1475638259425087629\n  intelligence: 1475638253154603170\n  onboarding: 1476491108421730334\n  soporte: 1475638273501040681\n  research: 1475638269109862463\n  paid-ads: 1475638261819900161\n- Filtra mensajes de las últimas 24h (compara timestamps)\n- Excluye mensajes de bots (author.bot=true) y mensajes cortos (<30 chars)\n- Incluye threads activos\n\nGmail → gog gmail inbox (si habilitado en sources.json, filtrar por labels configurados)\nNotion → leer DB con filter de últimas 24h (si habilitado)\n\nPASO 2 — EXTRAER INSIGHTS:\nExtrae insights (pain points, feature requests, success stories, trends, preguntas recurrentes).\nClasifica por categoría. Genera micro-briefs.\n\nPASO 3 — GUARDAR:\nGuarda en brand/hospital-capilar/daily-pulse/YYYY-MM-DD.json\nDespués ejecuta: python3 ~/.openclaw/workspace-sancho/scripts/regenerate.py\n\nPASO 4 — PUBLICAR EN DISCORD (PATRÓN OBLIGATORIO DE HILO):\n1. Envía un mensaje corto (1 línea) al canal: message(action=send, channel=discord, target=1475638253154603170, message='📊 Daily Pulse — YYYY-MM-DD: [insight más relevante del día en 1 línea]')\n2. Del resultado del send, captura el messageId devuelto.\n3. Crea un hilo DESDE ese mensaje: message(action=thread-create, channel=discord, target=1475638253154603170, messageId=<messageId>, threadName='📊 Daily Pulse — YYYY-MM-DD')\n4. Del resultado del thread-create, captura el threadId.\n5. Publica el contenido completo DENTRO del hilo: message(action=send, channel=discord, target=<threadId>, message=<contenido completo>)\n6. NUNCA publiques el contenido completo directamente en el canal — SIEMPRE dentro del hilo.\n7. APLICA reglas de _system/client-context-isolation.md — solo info relevante al cliente, CERO info interna.",
-        "model": "anthropic/claude-sonnet-4-5"
+        "model": "minimax/MiniMax-M2.5"
       },
       "delivery": {
         "mode": "none",
@@ -26,11 +26,11 @@
         "to": "channel:1475638253154603170"
       },
       "state": {
-        "nextRunAtMs": 1772438400000,
-        "lastRunAtMs": 1772179200011,
+        "nextRunAtMs": 1772524800000,
+        "lastRunAtMs": 1772438400016,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 69852,
+        "lastDurationMs": 169500,
         "lastDelivered": false,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0
@@ -42,7 +42,7 @@
       "name": "Weekly Synthesis",
       "enabled": true,
       "createdAtMs": 1771950696201,
-      "updatedAtMs": 1772361891722,
+      "updatedAtMs": 1772442056870,
       "schedule": {
         "kind": "cron",
         "expr": "0 10 * * 1",
@@ -53,7 +53,7 @@
       "payload": {
         "kind": "agentTurn",
         "message": "Síntesis semanal: 1) Lee memory/*.md de los últimos 7 días. 2) Lee brand/daily-pulse/*.json recientes. 3) Lee brand/learnings.md. 4) Identifica patrones, tendencias, y decisiones clave. 5) Actualiza brand/learnings.md con patrones confirmados. 6) Genera resumen ejecutivo con: qué aprendimos, qué cambió, qué hacer diferente.\n\nPUBLICAR EN DISCORD (PATRÓN OBLIGATORIO DE HILO):\n1. Envía un mensaje corto (1 línea) al canal #learning: message(action=send, channel=discord, target=1475638272523763834, message='📚 Síntesis Semanal — YYYY-MM-DD: [hallazgo principal en 1 línea]')\n2. Del resultado del send, captura el messageId devuelto.\n3. Crea un hilo DESDE ese mensaje: message(action=thread-create, channel=discord, target=1475638272523763834, messageId=<messageId>, threadName='📚 Síntesis Semanal — YYYY-MM-DD')\n4. Del resultado del thread-create, captura el threadId.\n5. Publica el resumen ejecutivo completo DENTRO del hilo: message(action=send, channel=discord, target=<threadId>, message=<resumen completo>)\n6. NUNCA publiques contenido directamente en el canal — SIEMPRE dentro del hilo.\n7. APLICA reglas de _system/client-context-isolation.md.",
-        "model": "anthropic/claude-sonnet-4-5"
+        "model": "minimax/MiniMax-M2.5"
       },
       "delivery": {
         "mode": "none",
@@ -61,7 +61,14 @@
         "to": "channel:1475638272523763834"
       },
       "state": {
-        "nextRunAtMs": 1772442000000
+        "nextRunAtMs": 1773046800000,
+        "lastRunAtMs": 1772442000025,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 56845,
+        "lastDelivered": false,
+        "lastDeliveryStatus": "not-delivered",
+        "consecutiveErrors": 0
       }
     },
     {
@@ -70,7 +77,7 @@
       "name": "Regenerar Dashboard",
       "enabled": true,
       "createdAtMs": 1771950708148,
-      "updatedAtMs": 1772391628203,
+      "updatedAtMs": 1772478072796,
       "schedule": {
         "kind": "cron",
         "expr": "0 8,12,16,20 * * *",
@@ -81,21 +88,21 @@
       "payload": {
         "kind": "agentTurn",
         "message": "Regenera datos del dashboard: 1) Ejecuta python3 ~/.openclaw/workspace-sancho/scripts/regenerate.py 2) Regenera agents-data.js con el script Python inline. Responde solo con el resultado (cuántas tareas, eventos, pilares).",
-        "model": "anthropic/claude-sonnet-4-5"
+        "model": "minimax/MiniMax-M2.5"
       },
       "delivery": {
         "mode": "announce",
         "channel": "last"
       },
       "state": {
-        "nextRunAtMs": 1772434800000,
-        "lastRunAtMs": 1772391600016,
-        "lastRunStatus": "ok",
-        "lastStatus": "ok",
-        "lastDurationMs": 28187,
-        "lastDeliveryStatus": "delivered",
-        "consecutiveErrors": 0,
-        "lastDelivered": true
+        "nextRunAtMs": 1772521200000,
+        "lastRunAtMs": 1772478000012,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 72784,
+        "lastDeliveryStatus": "unknown",
+        "consecutiveErrors": 1,
+        "lastError": "cron announce delivery failed"
       }
     },
     {
@@ -104,7 +111,7 @@
       "name": "Meeting Intelligence",
       "enabled": true,
       "createdAtMs": 1771950715725,
-      "updatedAtMs": 1772361895713,
+      "updatedAtMs": 1772470871516,
       "schedule": {
         "kind": "cron",
         "expr": "0 18 * * 1-5",
@@ -115,7 +122,7 @@
       "payload": {
         "kind": "agentTurn",
         "message": "Ejecuta Meeting Intelligence para Hospital Capilar. Carpeta de Google Drive: ID 17FpwSgL-XLAqaaH5-UccpADHkCFRcCHY. Usa 'gog docs cat <docId>' para leer las notas. Busca documentos nuevos o modificados desde la última ejecución. Para cada reunión, extrae: decisiones, acciones, insights, participantes. Guarda en brand/hospital-capilar/intelligence/meetings/ como .md y actualiza meetings.json. Después ejecuta: python3 ~/.openclaw/workspace-sancho/scripts/regenerate.py\n\nPUBLICAR EN DISCORD (PATRÓN OBLIGATORIO DE HILO):\n1. Envía un mensaje corto (1 línea) al canal #intelligence: message(action=send, channel=discord, target=1475638253154603170, message='🧠 Meeting Intelligence — YYYY-MM-DD: [resumen principal en 1 línea, ej: 2 reuniones procesadas, 5 decisiones extraídas]')\n2. Del resultado del send, captura el messageId devuelto.\n3. Crea un hilo DESDE ese mensaje: message(action=thread-create, channel=discord, target=1475638253154603170, messageId=<messageId>, threadName='🧠 Meeting Intelligence — YYYY-MM-DD')\n4. Del resultado del thread-create, captura el threadId.\n5. Publica el contenido completo DENTRO del hilo: message(action=send, channel=discord, target=<threadId>, message=<resumen completo de meetings>)\n6. NUNCA publiques contenido directamente en el canal — SIEMPRE dentro del hilo.\n7. APLICA reglas de _system/client-context-isolation.md — solo info relevante al cliente, CERO info interna.\n8. Si no hay meetings nuevos, envía igualmente el mensaje corto al canal informando que no hay novedades (sin crear hilo en ese caso).",
-        "model": "anthropic/claude-sonnet-4-5"
+        "model": "minimax/MiniMax-M2.5"
       },
       "delivery": {
         "mode": "none",
@@ -123,11 +130,11 @@
         "to": "channel:1475638253154603170"
       },
       "state": {
-        "nextRunAtMs": 1772470800000,
-        "lastRunAtMs": 1772211600015,
+        "nextRunAtMs": 1772557200000,
+        "lastRunAtMs": 1772470800019,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 257673,
+        "lastDurationMs": 71497,
         "lastDelivered": false,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0
@@ -150,7 +157,7 @@
       "payload": {
         "kind": "agentTurn",
         "message": "Mantenimiento de memoria: 1) Lee memory/*.md de los últimos 7 días. 2) Lee MEMORY.md actual. 3) Extrae eventos significativos, lecciones, decisiones, opiniones que vale la pena recordar. 4) Actualiza MEMORY.md con lo nuevo (sin duplicar). 5) Elimina info obsoleta de MEMORY.md. 6) Reporta qué añadiste y qué eliminaste.",
-        "model": "anthropic/claude-sonnet-4-5"
+        "model": "minimax/MiniMax-M2.5"
       },
       "delivery": {
         "mode": "announce",
@@ -176,7 +183,8 @@
       "wakeMode": "now",
       "payload": {
         "kind": "agentTurn",
-        "message": "Lee brand/sources.json → sección thief_marketer. Para cada competidor: 1) Web scrape homepage + blog (web_fetch) → detectar contenido nuevo, cambios de copy, pricing. 2) LinkedIn → buscar posts recientes (web_search). 3) Instagram/YouTube → últimas publicaciones (web_search). 4) Google Ads Library → anuncios activos. 5) Newsletter → si hay suscripción, revisar últimos emails. Compara con última ejecución en brand/thief-marketer/. Genera reporte: qué hicieron nuevo, qué podemos robar/adaptar, oportunidades que dejaron. Guarda en brand/thief-marketer/YYYY-MM-DD.json."
+        "message": "Lee brand/sources.json → sección thief_marketer. Para cada competidor: 1) Web scrape homepage + blog (web_fetch) → detectar contenido nuevo, cambios de copy, pricing. 2) LinkedIn → buscar posts recientes (web_search). 3) Instagram/YouTube → últimas publicaciones (web_search). 4) Google Ads Library → anuncios activos. 5) Newsletter → si hay suscripción, revisar últimos emails. Compara con última ejecución en brand/thief-marketer/. Genera reporte: qué hicieron nuevo, qué podemos robar/adaptar, oportunidades que dejaron. Guarda en brand/thief-marketer/YYYY-MM-DD.json.",
+        "model": "minimax/MiniMax-M2.5"
       },
       "delivery": {
         "mode": "announce",
@@ -191,7 +199,7 @@
       "name": "backup-sancho",
       "enabled": true,
       "createdAtMs": 1772069600272,
-      "updatedAtMs": 1772361904461,
+      "updatedAtMs": 1772416824526,
       "schedule": {
         "kind": "cron",
         "expr": "0 3 * * *"
@@ -201,22 +209,21 @@
       "payload": {
         "kind": "agentTurn",
         "message": "Ejecuta: bash ~/.openclaw/workspace-sancho/scripts/backup.sh. Luego lee ~/.openclaw/workspace-sancho/memory/backup-state.json. Si lastBackup tiene más de 48h respecto a ahora, publica alerta en Discord #admin con PATRÓN DE HILO:\n1. Envía alerta corta (1 línea): message(action=send, channel=discord, target=1475638273501040681, message='⚠️ Backup Warning — YYYY-MM-DD: Backup de workspace-sancho lleva >48h sin ejecutarse')\n2. Del resultado del send, captura el messageId devuelto.\n3. Crea un hilo DESDE ese mensaje: message(action=thread-create, channel=discord, target=1475638273501040681, messageId=<messageId>, threadName='⚠️ Backup Alert — YYYY-MM-DD')\n4. Del resultado del thread-create, captura el threadId.\n5. Publica detalles (último backup, estado) DENTRO del hilo: message(action=send, channel=discord, target=<threadId>, message=<detalles>)\nSi todo OK, responde HEARTBEAT_OK.",
-        "model": "anthropic/claude-sonnet-4-5"
+        "model": "minimax/MiniMax-M2.5"
       },
       "delivery": {
         "mode": "announce",
         "channel": "last"
       },
       "state": {
-        "nextRunAtMs": 1772416800000,
-        "lastRunAtMs": 1772330400015,
+        "nextRunAtMs": 1772503200000,
+        "lastRunAtMs": 1772416800018,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 19489,
+        "lastDurationMs": 24508,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0,
-        "lastDelivered": false,
-        "runningAtMs": 1772416800014
+        "lastDelivered": false
       }
     },
     {
@@ -225,7 +232,7 @@
       "name": "healthcheck",
       "enabled": true,
       "createdAtMs": 1772069609685,
-      "updatedAtMs": 1772395293170,
+      "updatedAtMs": 1772481780426,
       "schedule": {
         "kind": "every",
         "everyMs": 21600000,
@@ -238,18 +245,18 @@
         "message": "Ejecuta el health check del sistema. Corre: bash ~/.openclaw/workspace-cervantes/scripts/healthcheck.sh. Si el exit code es 1 (hay fallos), lee el output y publica en Discord #admin con PATRÓN DE HILO:\n1. Envía alerta corta (1 línea) al canal: message(action=send, channel=discord, target=1475638273501040681, message='⚠️ Health Check — YYYY-MM-DD HH:MM: [N servicios caídos]')\n2. Del resultado del send, captura el messageId devuelto.\n3. Crea un hilo DESDE ese mensaje: message(action=thread-create, channel=discord, target=1475638273501040681, messageId=<messageId>, threadName='⚠️ Health Check — YYYY-MM-DD HH:MM')\n4. Del resultado del thread-create, captura el threadId.\n5. Publica los detalles completos del health check DENTRO del hilo: message(action=send, channel=discord, target=<threadId>, message=<detalles de servicios caídos>)\nSi ALL_OK, no publiques nada.",
         "thinking": "off",
         "timeoutSeconds": 120,
-        "model": "anthropic/claude-sonnet-4-5"
+        "model": "minimax/MiniMax-M2.5"
       },
       "delivery": {
         "mode": "none",
         "channel": "last"
       },
       "state": {
-        "nextRunAtMs": 1772416883325,
-        "lastRunAtMs": 1772395283325,
+        "nextRunAtMs": 1772503369598,
+        "lastRunAtMs": 1772481769598,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 9845,
+        "lastDurationMs": 10828,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0,
         "lastDelivered": false
@@ -262,7 +269,7 @@
       "description": "T-022: Run cost-tracker.py daily at 23:00",
       "enabled": true,
       "createdAtMs": 1772069993394,
-      "updatedAtMs": 1772402421050,
+      "updatedAtMs": 1772488822935,
       "schedule": {
         "kind": "cron",
         "expr": "0 23 * * *"
@@ -272,18 +279,18 @@
       "payload": {
         "kind": "agentTurn",
         "message": "Ejecuta el cost tracker: python3 ~/.openclaw/workspace-sancho/scripts/cost-tracker.py && python3 ~/.openclaw/workspace-sancho/scripts/regenerate.py. Reporta el resultado.",
-        "model": "anthropic/claude-sonnet-4-5"
+        "model": "minimax/MiniMax-M2.5"
       },
       "delivery": {
         "mode": "none",
         "channel": "webchat"
       },
       "state": {
-        "nextRunAtMs": 1772488800000,
-        "lastRunAtMs": 1772402400019,
+        "nextRunAtMs": 1772575200000,
+        "lastRunAtMs": 1772488800014,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 21031,
+        "lastDurationMs": 22921,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0,
         "lastDelivered": false
@@ -295,7 +302,7 @@
       "name": "Cervantes observa a Sancho",
       "enabled": true,
       "createdAtMs": 1772115026027,
-      "updatedAtMs": 1772361905445,
+      "updatedAtMs": 1772442201618,
       "schedule": {
         "kind": "cron",
         "expr": "0 10 * * *",
@@ -306,18 +313,18 @@
       "payload": {
         "kind": "agentTurn",
         "message": "Observa las sesiones recientes de Sancho (últimas 24h). Usa sessions_list y sessions_history para revisar: 1) Qué sesiones tuvo y en qué canales. 2) Errores o skills que fallaron. 3) Preguntas que Sancho no supo responder. 4) Si respetó las reglas de canal. 5) Patrones de mejora. Escribe resumen breve en memory/sancho-observations.md (append con fecha). Si hay algo urgente que requiera notificar a Alfonso en Discord #admin, usa PATRÓN DE HILO:\n1. Envía alerta corta (1 línea): message(action=send, channel=discord, target=1475638273501040681, message='🔍 Observación Sancho — YYYY-MM-DD: [problema detectado en 1 línea]')\n2. Del resultado del send, captura el messageId.\n3. Crea hilo DESDE ese mensaje: message(action=thread-create, channel=discord, target=1475638273501040681, messageId=<messageId>, threadName='🔍 Observación Sancho — YYYY-MM-DD')\n4. Del resultado del thread-create, captura el threadId.\n5. Publica detalles DENTRO del hilo: message(action=send, channel=discord, target=<threadId>, message=<detalles>)\nNUNCA publiques contenido largo directamente en el canal. Si todo bien, solo escribe en el archivo.",
-        "model": "anthropic/claude-sonnet-4-5"
+        "model": "minimax/MiniMax-M2.5"
       },
       "delivery": {
         "mode": "none",
         "channel": "last"
       },
       "state": {
-        "nextRunAtMs": 1772442000000,
-        "lastRunAtMs": 1772355600016,
+        "nextRunAtMs": 1772528400000,
+        "lastRunAtMs": 1772442056870,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 291829,
+        "lastDurationMs": 144748,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0,
         "lastDelivered": false

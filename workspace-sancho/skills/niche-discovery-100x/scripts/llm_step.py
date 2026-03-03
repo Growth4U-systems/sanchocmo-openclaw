@@ -9,7 +9,7 @@ Usage:
         --prompt-file prompts/clean-filter.md --model openai/gpt-4o-mini
 
     python3 llm_step.py --api-key KEY --input niches.md --output scored.md \
-        --prompt-file prompts/scoring.md --model google/gemini-2.5-pro-preview
+        --prompt-file prompts/scoring.md --model google/gemini-3.1-pro
 
     python3 llm_step.py --api-key KEY --input "niches.md,scored.md" --output final.md \
         --prompt-file prompts/consolidate.md --model openai/gpt-4o-mini
@@ -43,17 +43,31 @@ def call_openrouter(api_key: str, model: str, prompt: str, content: str,
         "Content-Type": "application/json",
     }, data=body)
 
-    try:
-        with urllib.request.urlopen(req, timeout=600) as resp:
-            data = json.loads(resp.read().decode("utf-8"))
-            usage = data.get("usage", {})
-            input_tokens = usage.get("prompt_tokens", 0)
-            output_tokens = usage.get("completion_tokens", 0)
-            print(f"  Tokens — input: {input_tokens:,}, output: {output_tokens:,}")
-            return data["choices"][0]["message"]["content"]
-    except urllib.error.HTTPError as e:
-        payload = e.read().decode("utf-8", errors="replace")
-        raise RuntimeError(f"OpenRouter API error ({e.code}): {payload[:500]}") from e
+    for attempt in range(3):
+        try:
+            with urllib.request.urlopen(req, timeout=600) as resp:
+                data = json.loads(resp.read().decode("utf-8"))
+                usage = data.get("usage", {})
+                input_tokens = usage.get("prompt_tokens", 0)
+                output_tokens = usage.get("completion_tokens", 0)
+                print(f"  Tokens — input: {input_tokens:,}, output: {output_tokens:,}")
+                return data["choices"][0]["message"]["content"]
+        except urllib.error.HTTPError as e:
+            if e.code == 429 and attempt < 2:
+                wait = (attempt + 1) * 15
+                print(f"  [WARN] Rate limited (429), retrying in {wait}s...", file=sys.stderr)
+                time.sleep(wait)
+                continue
+            payload = e.read().decode("utf-8", errors="replace")
+            raise RuntimeError(f"OpenRouter API error ({e.code}): {payload[:500]}") from e
+        except (urllib.error.URLError, TimeoutError) as e:
+            if attempt < 2:
+                wait = (attempt + 1) * 10
+                print(f"  [WARN] Timeout/network error, retrying in {wait}s...", file=sys.stderr)
+                time.sleep(wait)
+                continue
+            raise RuntimeError(f"OpenRouter connection failed after 3 attempts: {e}") from e
+    raise RuntimeError("OpenRouter call failed after 3 attempts")
 
 
 def main() -> int:

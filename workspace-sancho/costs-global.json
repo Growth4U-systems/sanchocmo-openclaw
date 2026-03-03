@@ -1,46 +1,46 @@
 {
   "period": "2026-03",
-  "updatedAt": "2026-03-01T23:00:07.942596",
-  "total_cost_usd": 438.3854,
-  "total_cost_eur": 403.3146,
-  "total_turns": 3549,
-  "total_sessions": 97,
+  "updatedAt": "2026-03-02T23:00:10.578248",
+  "total_cost_usd": 513.4186,
+  "total_cost_eur": 472.3451,
+  "total_turns": 4220,
+  "total_sessions": 113,
   "system": {
-    "input_tokens": 1517,
-    "output_tokens": 118200,
-    "cache_read": 11580024,
-    "cache_write": 1575041,
-    "cost_usd": 14.4303,
-    "cost_eur": 13.2759,
-    "turns": 267,
+    "input_tokens": 1846,
+    "output_tokens": 191837,
+    "cache_read": 40312304,
+    "cache_write": 8288302,
+    "cost_usd": 71.1916,
+    "cost_eur": 65.4963,
+    "turns": 536,
     "sessions": 22,
     "models": {
       "claude-sonnet-4-5": {
-        "input": 913,
-        "output": 53963,
-        "cache_read": 2364721,
-        "cache_write": 488763,
-        "cost_usd": 3.3545,
-        "cost_eur": 3.0861,
-        "turns": 86
+        "input": 691,
+        "output": 25323,
+        "cache_read": 1731807,
+        "cache_write": 447961,
+        "cost_usd": 2.5813,
+        "cost_eur": 2.3748,
+        "turns": 66
       },
       "claude-opus-4-6": {
-        "input": 308,
-        "output": 47748,
-        "cache_read": 7646030,
-        "cache_write": 834045,
-        "cost_usd": 9.4163,
-        "cost_eur": 8.663,
-        "turns": 138
+        "input": 651,
+        "output": 144214,
+        "cache_read": 36160001,
+        "cache_write": 7295479,
+        "cost_usd": 66.4706,
+        "cost_eur": 61.153,
+        "turns": 411
       },
       "claude-haiku-4-5": {
-        "input": 296,
-        "output": 16489,
-        "cache_read": 1569273,
-        "cache_write": 252233,
-        "cost_usd": 1.6595,
-        "cost_eur": 1.5267,
-        "turns": 40
+        "input": 504,
+        "output": 22300,
+        "cache_read": 2420496,
+        "cache_write": 544862,
+        "cost_usd": 2.1397,
+        "cost_eur": 1.9685,
+        "turns": 56
       },
       "unknown": {
         "input": 0,
@@ -57,16 +57,16 @@
     "hospital-capilar": {
       "cost_usd": 7.5944,
       "cost_eur": 6.9869,
-      "turns": 180,
-      "sessions": 23,
+      "turns": 184,
+      "sessions": 24,
       "models": {
         "unknown": {
-          "turns": 138,
+          "turns": 140,
           "cost_usd": 5.6156,
           "cost_eur": 5.1663
         },
         "claude-opus-4-6": {
-          "turns": 42,
+          "turns": 44,
           "cost_usd": 1.9788,
           "cost_eur": 1.8205
         }

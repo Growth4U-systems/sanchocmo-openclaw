@@ -1,122 +1,75 @@
 ---
 name: foundation-threads
-description: "Create Discord threads for Foundation onboarding flow. Called by foundation-orchestrator when threads don't exist yet. Creates numbered threads per layer in #onboarding with skill reference and objective. NOT user-invocable — triggered automatically."
+description: "Create Discord threads for Foundation v2.0 onboarding flow. Called by foundation-orchestrator when threads don't exist yet. Creates numbered threads per section/layer in #onboarding with skill reference and objective. NOT user-invocable — triggered automatically."
 user-invocable: false
 ---
 
-# Foundation Threads — Discord Thread Creation
+# Foundation Threads — Discord Thread Creation v2.0
 
-> Creates numbered threads in #onboarding for each Foundation pillar. One thread = one pillar.
+> Creates numbered threads in #onboarding for each Foundation section. One thread = one pillar (or one section for Company Brief).
 
-## Thread Definitions (15 pilares, 5 bloques)
+## Thread Definitions (4 secciones, 6 layers)
 
-### 🏢 LA EMPRESA (Layer 0 — sin dependencias)
+### 📋 COMPANY BRIEF (Layer 0 — sin dependencias)
 
-| # | Thread Name | Skill | Objective |
-|---|------------|-------|-----------|
-| 1 | `01 📋 Contexto de empresa` | company-context | Perfilar la empresa: identidad, producto, modelo de negocio, objetivos, estado actual, cultura y equipo. |
-| 2 | `02 🏢 Modelo de negocio` | business-model-audit | Clasificar el modelo de negocio y mapear la mecánica de adquisición y monetización de clientes. |
-| 3 | `03 💰 Presupuesto y recursos` | budget-constraints | Mapear presupuesto, timeline, capacidad del equipo y stack de herramientas disponible. |
-| 4 | `04 🔍 Autoanálisis` | self-intelligence | Analizar la percepción propia de la marca con el framework de 3 lentes: Autopercepción, Terceros y Consumidores. |
+| # | Thread Name | Skills | Objective |
+|---|------------|--------|-----------|
+| 1 | `01 📋 Company Brief` | company-context → business-model → budget | Flujo continuo: identidad, modelo de negocio, presupuesto. 1 sola aprobación al final. |
 
-### 🎯 OPE CANVAS (Layer 1 — depende de La Empresa)
+### 📊 MARKET & US (Layer 1 — requires: Company Brief)
 
 | # | Thread Name | Skill | Objective |
 |---|------------|-------|-----------|
-| 5 | `05 🎯 OPE Canvas` | ope-canvas | Síntesis estratégica en 1 página: Obvious Choice, ICP, Core Problem, Core Product y las 14 secciones del canvas. |
+| 2 | `02 📊 Market Analysis` | market-intelligence | TAM, segmentos, tendencias, regulación del mercado. |
+| 3 | `03 ⚔️ Competitor Analysis` | competitor-intelligence | Battle cards por competidor: 3 lentes (qué dicen, qué dicen otros, qué dicen clientes). |
+| 4 | `04 🔍 Self Analysis` | self-intelligence | Radiografía propia: 3 lentes de autopercepción (web, redes, reviews). |
 
-### 📊 EL MERCADO (Layer 2 — depende de OPE Canvas)
-
-| # | Thread Name | Skill | Objective |
-|---|------------|-------|-----------|
-| 6 | `06 📊 Inteligencia de mercado` | market-intelligence | Analizar TAM, tendencias, segmentos, landscape competitivo y entorno regulatorio. |
-| 7 | `07 🏆 Análisis de competidores` | competitor-intelligence | Análisis competitivo 3 lentes: Autopercepción, Terceros y Consumidores. Battle cards y gaps. |
-| 8 | `08 ⚖️ Análisis SWOT` | swot-analysis | SWOT + estrategias TOWS + priorización ICE a partir de la inteligencia recopilada. |
-
-### 👥 LOS CLIENTES (Layer 3 — depende de El Mercado)
+### 📊 SYNTHESIS (Layer 2 — requires: Layer 1 completo)
 
 | # | Thread Name | Skill | Objective |
 |---|------------|-------|-----------|
-| 9 | `09 🎯 Descubrimiento de nichos` | niche-discovery-100x | Descubrir nichos rentables minando conversaciones reales de foros, validar con Triple Filter y scoring. |
-| 10 | `10 ✅ Validación ECP` *(opcional)* | ecp-validation | Testear hipótesis de los ECPs antes de ejecutar. Solo si hay +4 semanas y múltiples ECPs. |
-| 11 | `11 📈 Datos de clientes existentes` *(opcional)* | existing-customer-data | Analizar CRM/datos existentes: segmentación RFM, clustering, churn, LTV. Solo si hay datos. |
+| 5 | `05 🔄 SWOT & Síntesis` | swot-analysis + orchestrator | SWOT+TOWS + generación de summary.md y ope-canvas.md. |
 
-### 🎯 LA MARCA (Layer 4 — depende de El Mercado)
+### 🎯 GO-TO-MARKET (Layer 3-4)
 
 | # | Thread Name | Skill | Objective |
 |---|------------|-------|-----------|
-| 12 | `12 💎 Positioning & Messaging` | positioning-messaging | Crear playbook de posicionamiento y messaging por nicho/ECP. |
-| 13 | `13 💲 Estrategia de pricing` | pricing-strategy | Recomendar modelos de pricing, tiers y estrategia de monetización. |
-| 14 | `14 🎙️ Voz de marca` | brand-voice | Definir voz, tono, vocabulario, reglas Do/Don't y AI Brand Kit. |
-| 15 | `15 🎨 Identidad visual` | visual-identity | Establecer cómo se VE la marca: paleta, tipografía, estilo visual, assets. |
+| 6 | `06 👥 Niche Discovery` | niche-discovery-100x | Descubrir nichos, validar con Triple Filter, puntuar ECPs con JTBD. |
+| 7 | `07 💬 Positioning & Pricing` | positioning-messaging + pricing-strategy | Messaging playbook por ECP + framework de pricing. |
 
-## Thread Creation Flow
+### 🎨 BRAND IDENTITY (Layer 5)
 
-### Create by Layer
+| # | Thread Name | Skill | Objective |
+|---|------------|-------|-----------|
+| 8 | `08 🎨 Brand Identity` | brand-voice + visual-identity | Voice profile + sistema visual. |
 
-Only create threads for the current layer + already completed layers. Do NOT create all 15 at once.
+## Creación de Threads
 
-```
-When foundation-orchestrator calls this skill:
-  1. Read foundation-state.json → determine current layer
-  2. Create threads for current layer (if not created yet)
-  3. Store threadId per pillar in foundation-state.json
-```
+### Cuándo crear
+- **Layer 0**: al iniciar Foundation (o primera vez que el orchestrator detecta que no hay threads)
+- **Layers 1-5**: al completar la layer anterior (el orchestrator invoca este skill)
 
-### Opening Message per Thread
+### Cómo crear
+1. Usar `message(action=thread-create)` en el canal #onboarding del cliente
+2. Incluir `messageId` del mensaje del usuario para vincular el hilo
+3. Guardar `threadId` en `foundation-state.json` para cada pilar
 
-When creating a thread, post this opening message inside it:
-
-```
-🏗️ **Foundation — Pilar {N}/15: {Pillar Name}**
-
-📌 **Skill**: `{skill-name}`
-🎯 **Objetivo**: {objective text from table above}
-
-{layer context — brief summary of what was learned in previous pillars}
-
----
-
-Empezamos cuando estés listo. ¿Alguna pregunta antes de arrancar?
-```
-
-### Thread Creation Command
-
-For each thread, use message tool:
+### Opening Message (dentro de cada hilo)
 
 ```
-1. message(action=send, channel=discord, target={onboarding_channel_id},
-   message="🏗️ Foundation — Pilar {N}/15: {name}")
-2. Capture messageId from result
-3. message(action=thread-create, channel=discord, target={onboarding_channel_id},
-   messageId={messageId}, threadName="{NN} {emoji} {name}")
-4. Capture threadId
-5. message(action=send, channel=discord, target={threadId},
-   message={opening message with skill + objective + context})
-6. Store threadId in foundation-state.json under pillars.{slug}.threadId
+🏗️ **[Thread Name]**
+
+**Skill**: [skill-name]
+**Objetivo**: [objective]
+**Dependencias**: [requires listado o "ninguna"]
+
+¿Listo para empezar?
 ```
 
-## State Integration
-
-Update `foundation-state.json` with thread IDs:
-
-```json
-{
-  "pillars": {
-    "company-context": {
-      "status": "not-started",
-      "layer": 0,
-      "threadId": "1234567890",
-      "threadName": "01 📋 Contexto de empresa"
-    }
-  }
-}
-```
-
-## Rules
-
-1. **Numbered threads** — always prefix with 2-digit number (01-15) for visual ordering
-2. **Layer by layer** — only create current layer's threads, not future layers
-3. **Context carry-forward** — each new thread's opening message includes relevant context from completed pillars
-4. **Optional pillars** — create threads 10 and 11 only if user hasn't explicitly skipped them
-5. **Idempotent** — if thread already exists (threadId in state), skip creation
+## Notas
+- Company Brief usa 1 solo hilo para las 3 skills internas (flujo continuo)
+- SWOT & Síntesis comparte hilo (el orchestrator genera las síntesis tras el SWOT)
+- Positioning & Pricing comparten hilo (flujo natural)
+- Brand Identity comparte hilo (voice → visual es secuencial)
+- Total: **8 hilos** (vs 15 antes)
+- Si el orchestrator detecta hilos existentes con los nombres correctos, NO crea nuevos

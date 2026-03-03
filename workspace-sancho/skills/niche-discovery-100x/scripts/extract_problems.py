@@ -78,9 +78,25 @@ def call_openrouter(api_key: str, model: str, system: str, content: str, max_tok
         "Content-Type": "application/json",
     }, data=body)
 
-    with urllib.request.urlopen(req, timeout=120) as resp:
-        data = json.loads(resp.read().decode("utf-8"))
-        return data["choices"][0]["message"]["content"]
+    for attempt in range(3):
+        try:
+            with urllib.request.urlopen(req, timeout=120) as resp:
+                data = json.loads(resp.read().decode("utf-8"))
+                return data["choices"][0]["message"]["content"]
+        except urllib.error.HTTPError as e:
+            if e.code == 429 and attempt < 2:
+                wait = (attempt + 1) * 10
+                print(f"    [WARN] Rate limited (429), retrying in {wait}s...", file=sys.stderr)
+                time.sleep(wait)
+                continue
+            raise
+        except (urllib.error.URLError, TimeoutError) as e:
+            if attempt < 2:
+                wait = (attempt + 1) * 5
+                print(f"    [WARN] Timeout, retrying in {wait}s...", file=sys.stderr)
+                time.sleep(wait)
+                continue
+            raise
 
 
 def process_doc(filepath: Path, api_key: str, model: str, prompt: str) -> dict:
@@ -107,7 +123,7 @@ def main() -> int:
     ap.add_argument("--api-key", default=os.environ.get("OPENROUTER_API_KEY", ""), help="OpenRouter API key")
     ap.add_argument("--docs-dir", required=True, help="Directory with markdown documents")
     ap.add_argument("--output", default="problems.md", help="Output markdown file")
-    ap.add_argument("--model", default="google/gemini-3.1-pro-preview", help="LLM model")
+    ap.add_argument("--model", default="google/gemini-3.1-pro", help="LLM model")
     ap.add_argument("--concurrency", type=int, default=10, help="Parallel workers")
     ap.add_argument("--industry", required=True)
     ap.add_argument("--product", required=True)

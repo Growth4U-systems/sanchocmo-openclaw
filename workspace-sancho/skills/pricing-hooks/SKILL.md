@@ -34,6 +34,7 @@ user-invocable: true
 
 | Archivo | Cuándo leer | Contenido |
 |---------|------------|-----------|
+| [hydration.md](references/hydration.md) | **SIEMPRE** — Step 0 obligatorio | Mapeo de campos upstream → esta skill |
 | [prompt.md](references/prompt.md) | **SIEMPRE** — prompts detallados | 6 prompts por step |
 | [checklist.md](references/checklist.md) | **Antes de entregar** — self-QA | Ítems de validación |
 | [concepts.md](references/concepts.md) | Si necesitas frameworks teóricos | Value metrics, Van Westendorp, hooks psicológicos |
@@ -41,6 +42,14 @@ user-invocable: true
 ---
 
 ## Flujo de Ejecución (6 Steps)
+
+### 0. Context Hydration (OBLIGATORIO — antes de cualquier pregunta)
+- Lee `_system/context-hydration-protocol.md` para el patrón genérico
+- Lee `references/hydration.md` para el mapeo específico de esta skill
+- Lee TODOS los docs en `context_required`
+- Pre-rellena campos según hydration_map
+- Presenta datos heredados al usuario: "De [fuente] ya tengo X. ¿Correcto?"
+- Solo pregunta campos listados en "Campos genuinamente nuevos"
 
 ### 1. Auditoría de Precios Actual (~15 min)
 - Leer docs del cliente: business-model, budget, company-context
