@@ -60,6 +60,19 @@
 - **Sancho → NO_REPLY**: después de crear hilo + enviar contenido, o después de spawnar Escudero
 - **Rocinante sin hilos**: usa sessions_send, no sessions_spawn → no crea hilos
 
+## Foundation v2.0 (2026-03-03)
+- **Completado**: 4 secciones (company-brief, market-and-us, go-to-market, brand-identity) + operational
+- **DAG**: 6 layers, requires (blocking) vs enriches_with (optional)
+- **Company Brief**: 3 skills → 1 doc → 1 aprobación (flujo continuo)
+- **OPE Canvas**: demotido a síntesis (orchestrator genera inline, no pilar bloqueante)
+- **Síntesis inline**: summary.md, ope-canvas.md, messaging-summary.md generadas por orchestrator
+- **8 Discord threads** (vs 15 antes): agrupados por sección
+- **56 skills migradas**: todas las rutas de brand/ actualizadas a v2.0
+- **regenerate.py**: lee foundation-state.json v2.0 multi-client
+- **Growth4U migrado**: company-brief merged (3→1), market-and-us poblado, viejos en _archive
+- **Hospital Capilar**: NO migrado (necesita supervisión Alfonso, tiene 10 pilares approved)
+- **Next ID**: T-044
+
 ## Clientes
 - **4 clientes activos** (2026-03-02):
   - Hospital Capilar (hospital-capilar, guild 1475635138108063746) — 10/15 Foundation

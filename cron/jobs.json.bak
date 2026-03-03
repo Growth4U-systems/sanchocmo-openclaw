@@ -77,7 +77,7 @@
       "name": "Regenerar Dashboard",
       "enabled": true,
       "createdAtMs": 1771950708148,
-      "updatedAtMs": 1772478072796,
+      "updatedAtMs": 1772505486556,
       "schedule": {
         "kind": "cron",
         "expr": "0 8,12,16,20 * * *",
@@ -91,7 +91,7 @@
         "model": "minimax/MiniMax-M2.5"
       },
       "delivery": {
-        "mode": "announce",
+        "mode": "none",
         "channel": "last"
       },
       "state": {
@@ -199,7 +199,7 @@
       "name": "backup-sancho",
       "enabled": true,
       "createdAtMs": 1772069600272,
-      "updatedAtMs": 1772503216313,
+      "updatedAtMs": 1772505487575,
       "schedule": {
         "kind": "cron",
         "expr": "0 3 * * *"
@@ -212,7 +212,7 @@
         "model": "minimax/MiniMax-M2.5"
       },
       "delivery": {
-        "mode": "announce",
+        "mode": "none",
         "channel": "last"
       },
       "state": {
@@ -232,7 +232,7 @@
       "name": "healthcheck",
       "enabled": true,
       "createdAtMs": 1772069609685,
-      "updatedAtMs": 1772481780426,
+      "updatedAtMs": 1772503378522,
       "schedule": {
         "kind": "every",
         "everyMs": 21600000,
@@ -252,15 +252,14 @@
         "channel": "last"
       },
       "state": {
-        "nextRunAtMs": 1772503369598,
-        "lastRunAtMs": 1772481769598,
+        "nextRunAtMs": 1772524969612,
+        "lastRunAtMs": 1772503369612,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 10828,
+        "lastDurationMs": 8910,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0,
-        "lastDelivered": false,
-        "runningAtMs": 1772503369608
+        "lastDelivered": false
       }
     },
     {
