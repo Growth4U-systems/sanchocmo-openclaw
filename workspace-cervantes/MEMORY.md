@@ -72,6 +72,16 @@
 - **Growth4U migrado**: company-brief merged (3→1), market-and-us poblado, viejos en _archive
 - **Hospital Capilar**: NO migrado (necesita supervisión Alfonso, tiene 10 pilares approved)
 - **Next ID**: T-044
+- **T-042 completada**: 57 skills auditadas, reporte en `memory/T-042-skills-audit.md`
+
+## Skills Audit Results (T-042, 2026-03-03)
+- **8 skills restructured** (oversized → lean + references): seo-content, email-sequences, lead-magnet, direct-response-copy, thief-marketers, pricing-strategy (merged pricing-hooks)
+- **3 deprecated**: phase-0-diagnostic, pricing-hooks, social-media-extractor
+- **1 removed**: niche-discovery-100x.bak-v1
+- **0 stale file paths remaining** (was 100+)
+- **Still oversized**: content-atomizer (54KB), keyword-research (54KB), newsletter (47KB), comic-ui-system (26KB), last30days (20KB)
+- **4 skill gaps**: linkedin-content (P1), reporting (P2), landing-page (P2), case-study (P2)
+- **4 merge candidates evaluated**: pricing done, apify done, gtm-orchestrator kept (different scope), phase-0 deprecated
 
 ## Clientes
 - **4 clientes activos** (2026-03-02):

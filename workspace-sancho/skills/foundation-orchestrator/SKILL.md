@@ -96,6 +96,13 @@ Verificar requires + cargar enriches_with disponibles.
 ### 2. Ejecutar Skill
 Invocar el skill del registry. Si hay enriches_with disponibles, pasarlos como contexto.
 
+**Con model fallback:**
+```
+- 1er intento: sessions_spawn con model=default (Opus)
+- Si falla: re-spawn con model=minimax/MiniMax-M2.5
+- Si sigue fallar: marcar error + notificar usuario
+```
+
 ### 3. Presentar Resumen Ejecutivo
 5-10 bullets. **NO el doc entero.** Formato:
 
@@ -195,6 +202,58 @@ Docs en: brand/{slug}/
 
 ---
 
+## Error Handling & Retry
+
+### Si una skill FALLA:
+
+**Paso 1: Clasificar el error**
+- **API/Timeout** (rate limit, network, 5xx) → Retry
+- **Tool Error** (scraper failed, missing API key) → Retry con fallback
+- **Quality** (output incompleto, mal formato) → Retry con más contexto
+- **Unknown** → Notificar usuario + marcar error en state
+
+**Paso 2: Retry con Model Fallback**
+
+| Intento | Model | Contexto | Notes |
+|---------|-------|----------|-------|
+| 1 | Opus (thinking:high) | Normal | Primary |
+| 2 | Opus (thinking:high) | + enriches_with disponibles | Si primer intento tuvo context gaps |
+| 3 | MiniMax-M2.5 | Normal | Fallback económico |
+
+**Paso 3: Si sigue fallando**
+1. Marcar pilar como `error` en foundation-state.json
+2. Notificar al usuario: qué falló, por qué, qué hacer
+3. Ofrecer: reintentar manualmente, skippear, o resolver el error
+
+### Errores comunes y soluciones
+
+| Error | Solución |
+|-------|----------|
+| `rate_limit` | Esperar 30s, reintentar (MiniMax es más permissive) |
+| `API key missing` | Verificar en .env, notificar usuario |
+| `scraper blocked` | Usar web_fetch en vez de Apify, o esperar + retry |
+| `timeout` | Reducir scope (menos URLs, menos profundo), reintentar |
+| `output malformed` | Añadir más contexto del usuario, reintentar |
+
+### Notificación de error
+
+```
+⚠️ ERROR — [Nombre del pilar]
+
+Error: [descripción breve]
+Causa probable: [razón]
+Intentos: 1/3 → 2/3 → fallido
+
+Opciones:
+1. Reintentar (3er intento con MiniMax)
+2. Skippear este pilar
+3. [Resolver manualmente]
+
+¿Qué prefieres?
+```
+
+---
+
 ## Reglas
 
 1. **Gate check SIEMPRE** antes de cada pilar
@@ -204,3 +263,5 @@ Docs en: brand/{slug}/
 5. **Estado siempre actualizado** — foundation-state.json tras cada transición
 6. **Retomable** — si la sesión se corta, retoma donde quedó
 7. **enriches_with es silencioso** — si no está disponible, funcionar sin avisar excepto la primera vez
+8. **Retry automático** — 3 intentos con model fallback antes de rendirse
+9. **Error = notificar** — nunca silently fail, siempre decir al usuario qué pasó
