@@ -1,0 +1,93 @@
+{
+  "confirmed_at": "2026-03-03T22:42:00+01:00",
+  "confirmed_by": "Alfonso",
+  "competitors": {
+    "direct": [
+      {
+        "name": "Snowball",
+        "slug": "snowball",
+        "tier": "A",
+        "company": {
+          "web": "https://agenciasnowball.com",
+          "linkedin": "https://www.linkedin.com/company/snowball-consultora-growth/"
+        },
+        "founder": {
+          "name": "Pau Gallinat O'Callaghan",
+          "role": "CEO & Founder",
+          "linkedin": "https://www.linkedin.com/in/pau-gallinat",
+          "contra": "https://contra.com/pau_gallinat_v05jlnvy",
+          "medium": true,
+          "qonto_blog": true
+        },
+        "trustpilot": null,
+        "google_maps": null,
+        "capterra": null,
+        "g2": null
+      },
+      {
+        "name": "Product Hackers",
+        "slug": "product-hackers",
+        "tier": "A",
+        "company": {
+          "web": "https://producthackers.com",
+          "instagram": "https://www.instagram.com/product_hackers/",
+          "facebook": "https://www.facebook.com/producthackers/",
+          "linkedin": "https://www.linkedin.com/company/producthackers/",
+          "twitter": "https://twitter.com/Product_Hackers",
+          "youtube": "https://www.youtube.com/channel/UCv9-1P6eFth9jsXSpmyigAw",
+          "google_maps": true,
+          "emagister": true
+        },
+        "founders": [
+          {
+            "name": "Luis Díaz del Dedo",
+            "role": "CEO",
+            "linkedin": "https://www.linkedin.com/in/luisdiazdeldedo/",
+            "twitter": "https://twitter.com/luisdiazdeldedo",
+            "youtube": "https://www.youtube.com/channel/UC-6FrYZEoDOcGP4NK7-3Rng",
+            "book": "Growth Hacking: Supera el reto de crear productos digitales exponenciales",
+            "press": ["Forbes", "El País", "Capital", "PRNoticias"]
+          },
+          {
+            "name": "José Carlos Cortizo (Corti)",
+            "role": "CMO & Partner",
+            "linkedin": "https://www.linkedin.com/in/jccortizo/",
+            "twitter": "https://twitter.com/josek_net",
+            "instagram": "https://www.instagram.com/josek_net/",
+            "web": "https://josek.net",
+            "newsletter": "https://sobrecrecer.substack.com",
+            "book": "PsychoGrowth",
+            "podcast": ["Growth (Product Hackers)", "En.Digital"]
+          }
+        ],
+        "trustpilot": null,
+        "capterra": null,
+        "g2": null
+      },
+      {
+        "name": "TheGrowtHacker",
+        "slug": "thegrowthacker",
+        "tier": "A",
+        "company": {
+          "web": "https://thegrowthacker.com",
+          "google_partner": "https://www.google.com/partners/agency?id=1989055187"
+        },
+        "founder": {
+          "name": "Dani Ruiz Alba",
+          "role": "CEO & Growth",
+          "malt": "https://en.malt.es/profile/daniruizalba"
+        },
+        "trustpilot": null,
+        "google_maps": null,
+        "capterra": null,
+        "g2": null
+      }
+    ],
+    "indirect": [
+      { "name": "iSocialWeb", "slug": "isocialweb", "tier": "C", "web": "https://isocialweb.agency" },
+      { "name": "Flat 101", "slug": "flat101", "tier": "C", "web": "https://flat101.es" },
+      { "name": "Glissmarket", "slug": "glissmarket", "tier": "B" },
+      { "name": "TEAM LEWIS", "slug": "team-lewis", "tier": "C" }
+    ]
+  }
+}

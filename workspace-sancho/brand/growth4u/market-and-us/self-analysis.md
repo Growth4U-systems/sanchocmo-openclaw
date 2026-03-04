@@ -61,16 +61,16 @@ El mercado fintech español cuenta con 550+ empresas activas y se proyecta alcan
 
 ### Visibilidad en motores de IA (GEO)
 
-**Test realizado (2026-03-02) — búsquedas vía Gemini con Google Search:**
+**Test realizado (2026-03-02 y 2026-03-03) — búsquedas vía Gemini con Google Search:**
 
 | Query | ¿Aparece Growth4U? | Posición | Competidores que aparecen |
 |---|---|---|---|
-| "agencia growth fintech España" | ✅ Sí | Mencionado como primera opción | Product Hackers, iSocialWeb, Flake, TEAM LEWIS |
-| "agencia growth hacking fintech España" | ✅ Sí | Blog citado como referencia | iSocialWeb, Flat 101, Product Hackers |
-| "agencia growth fintech españa recomendar ChatGPT" | ✅ Sí | **Primera recomendación** | Flake Agency, ROI UP Group, TEAM LEWIS |
+| "mejor agencia growth fintech España" | ✅ Sí | **Top 2** (tras Flake Agency) | Flake Agency, Bring Connections, Dobuss, Product Hackers |
+| "agencia growth hacking fintech España recomendación" | ✅ Sí | **Primera**, con descripción detallada del framework | Product Hackers, iSocialWeb, Flat 101 |
+| "best growth marketing agency fintech Spain" (EN) | ❌ No | No aparece | NinjaPromo, Growth Gorilla, mvpGrow |
 | "Product Hackers vs Growth4U vs iSocialWeb" | ✅ Sí | Análisis comparativo favorable | — |
 
-**Hallazgo importante:** La estrategia GEO está funcionando. A pesar de ser la agencia más pequeña y nueva, Growth4U aparece consistentemente en búsquedas IA sobre growth fintech en España. El blog está haciendo su trabajo — eat your own cooking. **Pero**: no aparece en búsquedas Google tradicionales (rankings orgánicos), solo en respuestas IA. Esto confirma que la estrategia GEO-first es correcta pero necesita complementarse con SEO tradicional a medio plazo.
+**Hallazgo importante:** La estrategia GEO está funcionando **en español**. Growth4U aparece consistentemente en el top 2 en búsquedas IA sobre growth fintech en España, a pesar de ser la agencia más pequeña y nueva. **Pero**: no aparece en búsquedas en inglés, ni en rankings orgánicos de Google. La posición varía según la query exacta — no siempre es #1 pero siempre está presente en queries en español. Esto confirma que la estrategia GEO-first funciona pero necesita: (1) complementarse con SEO tradicional, (2) expandirse a contenido en inglés si se quiere captar mercado europeo.
 
 ### "Trust Engine" como IP — Análisis de unicidad
 
@@ -223,7 +223,7 @@ La web tiene versión inglesa completa y bien traducida. Pero el blog es 100% es
 
 **GEO (motores de IA):**
 - ✅ Growth4U aparece consistentemente en búsquedas IA sobre growth fintech en España
-- ✅ Es la primera recomendación en Gemini para "agencia growth fintech españa recomendar"
+- ✅ Aparece consistentemente en top 2 en búsquedas IA en español sobre growth fintech España (primera en queries específicas, segunda tras Flake en queries amplias)
 - ✅ La estructura de respuesta directa + datos + tablas + FAQs funciona para citación por LLMs
 - ⚠️ Solo funciona en español — no aparece en búsquedas en inglés
 - **Conclusión: La estrategia GEO-first está funcionando. Esto es el eat-your-own-cooking más potente de Growth4U.**
@@ -338,7 +338,7 @@ La web tiene versión inglesa completa y bien traducida. Pero el blog es 100% es
 ### Fortalezas Confirmadas (2+ fuentes)
 
 1. **Expertise genuino en growth fintech** — Track record Bnext (0→250K), reconocimiento industria (Top 20 Influencer, Product Hackers speaker, OpenExpo), cobertura medios (Cinco Días, alldefi, betabeers)
-2. **GEO funcionando** — El blog aparece en búsquedas IA como referencia para growth fintech en España. Es la primera recomendación en Gemini. Walk the talk verificado.
+2. **GEO funcionando** — El blog aparece en búsquedas IA como referencia para growth fintech en España (top 2 en español, primera en queries específicas). Walk the talk verificado. No aparece en búsquedas en inglés.
 3. **Contenido de alta calidad técnica** — Artículos deep, bien estructurados, con datos y fuentes, optimizados para LLMs. Invitaciones a conferencias confirman el nivel.
 4. **Conocimiento fintech español profundo** — Experiencia directa en Bnext, Bit2Me, GoCardless, Criptan, Lydia. Contenido que demuestra conocimiento regulatorio (CNMV, PSD2, KYC).
 5. **Perfil de fundador excepcionalmente fuerte** — Alfonso tiene un CV que mezcla banca tradicional + fintech + AI + consultoría + speaking. Esto es un activo infrautilizado.

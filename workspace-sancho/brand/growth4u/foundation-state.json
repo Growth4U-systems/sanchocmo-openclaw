@@ -1,7 +1,7 @@
 {
   "version": "2.0",
   "started_at": "2026-03-01T19:03:21Z",
-  "updated_at": "2026-03-03T01:10:00Z",
+  "updated_at": "2026-03-03T23:34:00Z",
   "sections": {
     "company-brief": {
       "status": "approved",
@@ -39,11 +39,12 @@
             "self-analysis"
           ],
           "output_file": "brand/growth4u/market-and-us/market-analysis.md",
-          "approved_at": "2026-03-02T20:15:00Z",
+          "approved_at": "2026-03-03T18:56:00Z",
+          "notes": "v4 — recentrado en empresas tech (no solo fintech). 70 fuentes, QA PASS.",
           "skill": "market-intelligence"
         },
         "competitor-analysis": {
-          "status": "not-started",
+          "status": "approved",
           "layer": 1,
           "requires": [
             "company-brief"
@@ -52,8 +53,15 @@
             "market-analysis",
             "self-analysis"
           ],
-          "output_files": [],
-          "skill": "competitor-intelligence"
+          "output_files": [
+            "brand/growth4u/competitors/current.md",
+            "brand/growth4u/competitors/competitor-snowball.md",
+            "brand/growth4u/competitors/competitor-product-hackers.md",
+            "brand/growth4u/competitors/competitor-thegrowthacker.md"
+          ],
+          "skill": "competitor-intelligence",
+          "approved_at": "2026-03-03T23:34:00Z",
+          "notes": "v2 — 3 deep dives (36 páginas scrapeadas), 3-lens analysis, battle cards, landscape enriched. TGH downgraded Tier B."
         },
         "self-analysis": {
           "status": "approved",

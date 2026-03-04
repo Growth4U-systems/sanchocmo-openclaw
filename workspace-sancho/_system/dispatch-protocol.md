@@ -206,3 +206,7 @@ Cuando ejecutes deep research, Foundation pillars, o cualquier tarea >2 min:
 4. **QA antes de publicar.** Contenido importante pasa por Rocinante.
 5. **Trackear en TASKS.md.** Todo dispatch genera o referencia una tarea.
 6. **Progress updates.** Toda tarea >2 min incluye updates cada ~5 min (ver sección arriba).
+7. **Cron safety net.** Al spawnar tarea larga, activar cron `progress-update-steer` (ID: `bf4b712d-1ed4-49df-acac-1c7ce4d19097`):
+   - Activar: `cron(action=update, jobId="bf4b712d-1ed4-49df-acac-1c7ce4d19097", patch={enabled: true})`
+   - El cron usa Haiku (barato) cada 5 min para steer sub-agentes activos
+   - Se auto-desactiva cuando detecta 0 sub-agentes activos

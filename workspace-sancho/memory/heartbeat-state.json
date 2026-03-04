@@ -1,7 +1,7 @@
 {
   "lastChecks": {
-    "email": 1740979740,
-    "calendar": 1740979740,
+    "email": 1741098035,
+    "calendar": 1741098035,
     "regenerate": 1771962349,
     "memory": 1771962349
   },
@@ -10,6 +10,7 @@
     "2026-02-24T18:45": "Dashboard regenerado (12 tasks, 26 events). Memory OK. gog sigue en timeout — skip email/calendar.",
     "2026-03-01T06:46": "First heartbeat of day. Memory file created. Email/calendar blocked (gog CLI timeout). Nothing urgent detected.",
     "2026-03-01T17:34": "Memory maintenance check. Reviewed Feb 28 daily files (doc regeneration, QA process). No major learnings. gog CLI timeout persists (5 days). System working despite it.",
-    "2026-03-02T19:33": "gog CLI fully restored. Email/calendar checks working. No urgent items. Mostly newsletters."
+    "2026-03-02T19:33": "gog CLI fully restored. Email/calendar checks working. No urgent items. Mostly newsletters.",
+    "2026-03-03T20:20": "Email/calendar checks OK. 5 unread (Kleva meeting rescheduled to Tue 10 Mar, Lenny's meetup invite, newsletters). Tomorrow packed. No urgent items <2h. Sub-agent cron running (idle)."
   }
 }

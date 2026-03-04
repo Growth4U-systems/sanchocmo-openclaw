@@ -77,7 +77,7 @@
       "name": "Regenerar Dashboard",
       "enabled": true,
       "createdAtMs": 1771950708148,
-      "updatedAtMs": 1772550108003,
+      "updatedAtMs": 1772564534737,
       "schedule": {
         "kind": "cron",
         "expr": "0 8,12,16,20 * * *",
@@ -95,11 +95,11 @@
         "channel": "last"
       },
       "state": {
-        "nextRunAtMs": 1772564400000,
-        "lastRunAtMs": 1772550000018,
+        "nextRunAtMs": 1772607600000,
+        "lastRunAtMs": 1772564400017,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 107985,
+        "lastDurationMs": 134720,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0,
         "lastDelivered": false
@@ -232,7 +232,7 @@
       "name": "healthcheck",
       "enabled": true,
       "createdAtMs": 1772069609685,
-      "updatedAtMs": 1772546588441,
+      "updatedAtMs": 1772568181432,
       "schedule": {
         "kind": "every",
         "everyMs": 21600000,
@@ -252,11 +252,11 @@
         "channel": "last"
       },
       "state": {
-        "nextRunAtMs": 1772568169644,
-        "lastRunAtMs": 1772546569644,
+        "nextRunAtMs": 1772589769655,
+        "lastRunAtMs": 1772568169655,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 18797,
+        "lastDurationMs": 11777,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0,
         "lastDelivered": false
@@ -269,7 +269,7 @@
       "description": "T-022: Run cost-tracker.py daily at 23:00",
       "enabled": true,
       "createdAtMs": 1772069993394,
-      "updatedAtMs": 1772488822935,
+      "updatedAtMs": 1772575215512,
       "schedule": {
         "kind": "cron",
         "expr": "0 23 * * *"
@@ -286,11 +286,11 @@
         "channel": "webchat"
       },
       "state": {
-        "nextRunAtMs": 1772575200000,
-        "lastRunAtMs": 1772488800014,
+        "nextRunAtMs": 1772661600000,
+        "lastRunAtMs": 1772575200015,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 22921,
+        "lastDurationMs": 15497,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0,
         "lastDelivered": false
@@ -331,33 +331,32 @@
       }
     },
     {
-      "id": "8057fc84-313d-46e8-a180-fe03627d7ee3",
+      "id": "bf4b712d-1ed4-49df-acac-1c7ce4d19097",
       "agentId": "sancho",
       "sessionKey": "agent:sancho:discord:channel:1478180470113046580",
       "name": "progress-update-steer",
-      "enabled": true,
-      "createdAtMs": 1772560175085,
-      "updatedAtMs": 1772561680031,
+      "enabled": false,
+      "createdAtMs": 1772567385215,
+      "updatedAtMs": 1772567425141,
       "schedule": {
         "kind": "every",
         "everyMs": 300000,
-        "anchorMs": 1772560175085
+        "anchorMs": 1772567385215
       },
-      "sessionTarget": "main",
+      "sessionTarget": "isolated",
       "wakeMode": "now",
       "payload": {
-        "kind": "systemEvent",
-        "text": "PROGRESS CHECK: Tienes sub-agentes activos? Usa subagents(action=list) para comprobarlo. Si hay alguno running, usa subagents(action=steer, target=<sessionKey>, message='Envía un progress update al hilo AHORA. Formato: 🔄 Update (X/Y): progreso → siguiente → ETA') para cada uno. Si no hay sub-agentes activos, ignora este mensaje."
+        "kind": "agentTurn",
+        "message": "PROGRESS CHECK — Eres el monitor de sub-agentes.\n\n1. Usa sessions_list(kinds=[\"subagent\"], activeMinutes=30, messageLimit=1) para ver si hay sub-agentes activos.\n2. Si hay sub-agentes activos (status running/active):\n   a. Para CADA sub-agente, mira su sessionKey y su último mensaje para identificar en qué hilo de Discord están trabajando.\n   b. Usa sessions_send(sessionKey=<key>, message='⚠️ PROGRESS UPDATE REQUERIDO: Envía un update al hilo de Discord donde estás trabajando AHORA MISMO. Usa message(action=send, channel=discord, target=<thread_id>, message=\"🔄 Update (X/Y): [qué llevas] → [qué sigue] → ETA: ~Z min\"). NO respondas solo a mí — publica en el HILO DE DISCORD.')\n3. Si NO hay sub-agentes activos:\n   - Desactívate: usa cron(action=update, jobId='bf4b712d-1ed4-49df-acac-1c7ce4d19097', patch={enabled: false})\n   - Esto ahorra tokens cuando no hay nadie que monitorear.\n\nIMPORTANTE: Si detectas 0 sub-agentes activos, SIEMPRE desactívate.",
+        "model": "anthropic/claude-haiku-4-5",
+        "timeoutSeconds": 60
       },
-      "state": {
-        "nextRunAtMs": 1772561975166,
-        "lastRunAtMs": 1772561675166,
-        "lastRunStatus": "ok",
-        "lastStatus": "ok",
-        "lastDurationMs": 4865,
-        "lastDeliveryStatus": "not-requested",
-        "consecutiveErrors": 0
-      }
+      "delivery": {
+        "mode": "announce",
+        "to": "1478180470113046580",
+        "channel": "discord"
+      },
+      "state": {}
     }
   ]
 }

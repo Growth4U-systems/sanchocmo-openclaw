@@ -61,16 +61,16 @@ El mercado fintech español cuenta con 550+ empresas activas y se proyecta alcan
 
 ### Visibilidad en motores de IA (GEO)
 
-**Test realizado (2026-03-02) — búsquedas vía Gemini con Google Search:**
+**Test realizado (2026-03-02 y 2026-03-03) — búsquedas vía Gemini con Google Search:**
 
 | Query | ¿Aparece Growth4U? | Posición | Competidores que aparecen |
 |---|---|---|---|
-| "agencia growth fintech España" | ✅ Sí | Mencionado como primera opción | Product Hackers, iSocialWeb, Flake, TEAM LEWIS |
-| "agencia growth hacking fintech España" | ✅ Sí | Blog citado como referencia | iSocialWeb, Flat 101, Product Hackers |
-| "agencia growth fintech españa recomendar ChatGPT" | ✅ Sí | **Primera recomendación** | Flake Agency, ROI UP Group, TEAM LEWIS |
+| "mejor agencia growth fintech España" | ✅ Sí | **Top 2** (tras Flake Agency) | Flake Agency, Bring Connections, Dobuss, Product Hackers |
+| "agencia growth hacking fintech España recomendación" | ✅ Sí | **Primera**, con descripción detallada del framework | Product Hackers, iSocialWeb, Flat 101 |
+| "best growth marketing agency fintech Spain" (EN) | ❌ No | No aparece | NinjaPromo, Growth Gorilla, mvpGrow |
 | "Product Hackers vs Growth4U vs iSocialWeb" | ✅ Sí | Análisis comparativo favorable | — |
 
-**Hallazgo importante:** La estrategia GEO está funcionando. A pesar de ser la agencia más pequeña y nueva, Growth4U aparece consistentemente en búsquedas IA sobre growth fintech en España. El blog está haciendo su trabajo — eat your own cooking. **Pero**: no aparece en búsquedas Google tradicionales (rankings orgánicos), solo en respuestas IA. Esto confirma que la estrategia GEO-first es correcta pero necesita complementarse con SEO tradicional a medio plazo.
+**Hallazgo importante:** La estrategia GEO está funcionando **en español**. Growth4U aparece consistentemente en el top 2 en búsquedas IA sobre growth fintech en España, a pesar de ser la agencia más pequeña y nueva. **Pero**: no aparece en búsquedas en inglés, ni en rankings orgánicos de Google. La posición varía según la query exacta — no siempre es #1 pero siempre está presente en queries en español. Esto confirma que la estrategia GEO-first funciona pero necesita: (1) complementarse con SEO tradicional, (2) expandirse a contenido en inglés si se quiere captar mercado europeo.
 
 ### "Trust Engine" como IP — Análisis de unicidad
 
