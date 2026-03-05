@@ -21,6 +21,8 @@
 | icp / ecps | pain_points | messaging angles | exacto | Dolor → mensaje |
 | icp / ecps | jtbd_statements | messaging hooks | exacto | JTBD → headlines |
 | icp / ecps | alternatives | competitor framing | exacto | Cómo framear vs alternativas |
+| company-brief | conversion_barriers | {{conversion_barriers}} | exacto | Objeciones/barreras de compra del ECP (precio, miedos, dolor, etc.) |
+| company-brief | legal_constraints | {{legal_constraints}} | exacto | Qué NO se puede decir en copy (fármacos, claims médicos, etc.) |
 
 ## Campos genuinamente nuevos (siempre generar)
 
@@ -31,7 +33,8 @@
 | Benefit-Proof Pairs | Síntesis propia | Asset × Value Criterion → Benefit + Proof |
 | UVP (per niche) | Síntesis propia | "Para [ECP], somos [claim] porque [proof]" |
 | USPs (per niche) | Síntesis propia | 3-5 per ECP |
-| Messaging Playbook | Síntesis propia | Hook + Engage + Trust + Convert |
+| Objection Neutralization | Síntesis propia | Barrera → Reframe → Mensaje → Proof |
+| Messaging Playbook | Síntesis propia | Dolor → Diagnóstico → Puente (2 formatos) |
 
 ## Ejemplo de presentación hidratada
 
@@ -43,12 +46,16 @@
   ⚔️ Competitors: [battle cards resumen]
   🔓 Gaps competitivos: [vulnerabilities]
 
+  ⛔ Restricciones legales: [legal_constraints]
+  🚧 Barreras de conversión: [conversion_barriers]
+
 Para cada ECP voy a:
   1. Mini deep research del nicho
   2. Analizar competitor claims
   3. Mapear Value Criteria y puntuar
   4. Mapear Assets → Benefits → Proofs
-  5. Generar UVP + USPs + Messaging Playbook
+  5. Neutralizar objeciones del brief
+  6. Generar UVP + USPs + Messaging (dolor-activado, 2 formatos)
 
 ¿Empiezo por el ECP prioritario ([nombre])?"
 ```

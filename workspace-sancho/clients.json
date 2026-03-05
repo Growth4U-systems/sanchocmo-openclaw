@@ -7,6 +7,7 @@
       "emoji": "🏥",
       "url": "https://hospitalcapilar.com",
       "guild": "1475635138108063746",
+      "language": "es",
       "active": true,
       "workspace": "~/.openclaw/workspace-sancho",
       "supabase": {
@@ -22,7 +23,9 @@
     {
       "slug": "growth4u",
       "name": "Growth4U",
-      "discord_guild_id": "1477741643762241548",
+      "language": "es",
+      "guild": "1477741643762241548",
+      "active": false,
       "phase": 0,
       "paths": {
         "brand": "brand/"
@@ -35,7 +38,9 @@
     {
       "slug": "paymatico",
       "name": "Paymatico",
-      "discord_guild_id": "1477995837719056458",
+      "language": "es",
+      "guild": "1477995837719056458",
+      "active": true,
       "phase": 0,
       "paths": {
         "brand": "brand/"
@@ -48,7 +53,9 @@
     {
       "slug": "sanchocmo",
       "name": "SanchoCMO - SelfMarketing",
-      "discord_guild_id": "1477997446885019670",
+      "language": "es",
+      "guild": "1477997446885019670",
+      "active": false,
       "phase": 0,
       "paths": {
         "brand": "brand/"

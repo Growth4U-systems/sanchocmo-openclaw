@@ -1,0 +1,60 @@
+{
+  "meetings": [
+    {
+      "id": "2026-02-19-ramiro-growth4u",
+      "date": "2026-02-19",
+      "title": "Ramiro <> Growth4U",
+      "type": "onboarding",
+      "file": "2026-02-19-ramiro-growth4u.md",
+      "source": "Google Drive",
+      "sourceId": "18k6gYbuLqrXBqEcYb-tTIbmJruJOAHcQYzisZQMuBQo",
+      "participants": ["Alfonso Sainz de Baranda", "Philippe Sainthubert", "Ramiro Perez"],
+      "decisions": 4,
+      "actions": 3,
+      "status": "processed"
+    },
+    {
+      "id": "2026-02-17-ramiro-growth4u",
+      "date": "2026-02-17",
+      "title": "Ramiro Perez <> Growth4U - Estrategia Tratamientos",
+      "type": "strategy",
+      "file": "2026-02-17-ramiro-growth4u.md",
+      "source": "Google Drive",
+      "sourceId": "1YTGedhyWETWvAyz7NFmtSE7sl7D-Hcsjax7d5vZWLQI",
+      "participants": ["Philippe Sainthubert", "Ramiro Perez"],
+      "decisions": 5,
+      "actions": 2,
+      "status": "processed"
+    },
+    {
+      "id": "2026-02-07-heiver-g4u",
+      "date": "2026-02-07",
+      "title": "Heiver <> G4U - Implementación Go High Level",
+      "type": "technical",
+      "file": "2026-02-07-heiver-g4u.md",
+      "source": "Google Drive",
+      "sourceId": "1knNkCRakIM2xAIM5NHKcXmxDPLSlhUp3p3MOnO0rFNU",
+      "participants": ["Heiver Gomez", "Martin Fila"],
+      "decisions": 5,
+      "actions": 5,
+      "status": "processed"
+    },
+    {
+      "id": "2026-01-29-hospital-capilar-growth4u",
+      "date": "2026-01-29",
+      "title": "Hospital Capilar - Growth4U - Diagnóstico",
+      "type": "discovery",
+      "file": "2026-01-29-hospital-capilar-growth4u.md",
+      "source": "Google Drive",
+      "sourceId": "1kWhI6MslDemmN0U7vLe4VY6kb5DH5fOWjk5GW_a78E8",
+      "participants": ["Gerardo Redondo", "Óscar Mendoza", "Alfonso Sainz de Baranda", "Philippe Sainthubert"],
+      "decisions": 5,
+      "actions": 4,
+      "status": "processed"
+    }
+  ],
+  "lastSync": "2026-03-04T18:00:00Z",
+  "totalMeetings": 4,
+  "totalDecisions": 19,
+  "totalActions": 14
+}

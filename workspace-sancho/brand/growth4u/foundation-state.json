@@ -1,7 +1,7 @@
 {
   "version": "2.0",
   "started_at": "2026-03-01T19:03:21Z",
-  "updated_at": "2026-03-03T23:34:00Z",
+  "updated_at": "2026-03-04T16:29:00Z",
   "sections": {
     "company-brief": {
       "status": "approved",
@@ -24,7 +24,7 @@
       }
     },
     "market-and-us": {
-      "status": "in-progress",
+      "status": "approved",
       "layer": 1,
       "output_dir": "brand/growth4u/market-and-us/",
       "pillars": {
@@ -38,7 +38,7 @@
             "competitor-analysis",
             "self-analysis"
           ],
-          "output_file": "brand/growth4u/market-and-us/market-analysis.md",
+          "output_file": "brand/growth4u/market-and-us/market/current.md",
           "approved_at": "2026-03-03T18:56:00Z",
           "notes": "v4 — recentrado en empresas tech (no solo fintech). 70 fuentes, QA PASS.",
           "skill": "market-intelligence"
@@ -54,10 +54,10 @@
             "self-analysis"
           ],
           "output_files": [
-            "brand/growth4u/competitors/current.md",
-            "brand/growth4u/competitors/competitor-snowball.md",
-            "brand/growth4u/competitors/competitor-product-hackers.md",
-            "brand/growth4u/competitors/competitor-thegrowthacker.md"
+            "brand/growth4u/market-and-us/competitors/current.md",
+            "brand/growth4u/market-and-us/competitors/snowball/current.md",
+            "brand/growth4u/market-and-us/competitors/product-hackers/current.md",
+            "brand/growth4u/market-and-us/competitors/thegrowthacker/current.md"
           ],
           "skill": "competitor-intelligence",
           "approved_at": "2026-03-03T23:34:00Z",
@@ -73,52 +73,62 @@
             "market-analysis",
             "competitor-analysis"
           ],
-          "output_file": "brand/growth4u/market-and-us/self-analysis.md",
+          "output_file": "brand/growth4u/market-and-us/self/current.md",
           "approved_at": "2026-03-02T14:27:00Z",
           "skill": "self-intelligence"
         },
         "swot": {
-          "status": "not-started",
+          "status": "approved",
           "layer": 2,
           "requires": [
             "market-analysis",
             "competitor-analysis",
             "self-analysis"
           ],
-          "output_file": "brand/growth4u/market-and-us/swot.md",
-          "skill": "swot-analysis"
+          "output_file": "brand/growth4u/market-and-us/swot/current.md",
+          "skill": "swot-analysis",
+          "approved_at": "2026-03-04T06:10:00Z",
+          "notes": "v3 — Matriz TOWS pura (17 cruces) + priorización ICE + ideas estratégicas en anexo. 7S+8W+10O+7T con evidencia."
         }
       },
       "syntheses": {
         "summary": {
-          "status": "not-generated",
-          "output_file": "brand/growth4u/market-and-us/summary.md",
+          "status": "approved",
+          "output_file": "brand/growth4u/market-and-us/summary/current.md",
           "generated_by": "orchestrator",
+          "generated_at": "2026-03-04T06:15:00Z",
+          "approved_at": "2026-03-04T16:29:00Z",
+          "notes": "Updated with OPE Canvas resolved DUDAs.",
           "requires": [
             "market-analysis",
             "competitor-analysis",
-            "self-analysis"
+            "self-analysis",
+            "swot"
           ]
         },
         "ope-canvas": {
-          "status": "not-generated",
-          "output_file": "brand/growth4u/market-and-us/ope-canvas.md",
+          "status": "approved",
+          "output_file": "brand/growth4u/market-and-us/ope-canvas/current.md",
           "generated_by": "orchestrator",
+          "generated_at": "2026-03-04T06:15:00Z",
+          "approved_at": "2026-03-04T16:29:00Z",
+          "notes": "4 DUDAs resueltas: Endgame (3 capas, 5-6M€/año), Core Values (4 confirmados), Geografía (ES→LATAM→UK→Global), Capacidad (6 boutique + 10 comunidad).",
           "requires": [
             "market-analysis",
             "competitor-analysis",
-            "self-analysis"
+            "self-analysis",
+            "swot"
           ]
         }
       }
     },
     "go-to-market": {
-      "status": "not-started",
+      "status": "in-progress",
       "layer": 3,
       "output_dir": "brand/growth4u/go-to-market/",
       "pillars": {
         "niche-discovery": {
-          "status": "not-started",
+          "status": "approved",
           "layer": 3,
           "requires": [
             "swot"
@@ -126,8 +136,17 @@
           "enriches_with": [
             "existing-customer-data"
           ],
-          "output_file": "brand/growth4u/go-to-market/ecps.md",
-          "skill": "niche-discovery-100x"
+          "output_files": [
+            "brand/growth4u/go-to-market/ecps/current.md",
+            "brand/growth4u/go-to-market/ecps/persona-map.md",
+            "brand/growth4u/go-to-market/ecps/reddit-forum-discovery.md",
+            "brand/growth4u/go-to-market/ecps/spanish-forums-discovery.md",
+            "brand/growth4u/go-to-market/ecps/problems-full.md",
+            "brand/growth4u/go-to-market/ecps/qa-report.md"
+          ],
+          "skill": "niche-discovery-100x",
+          "approved_at": "2026-03-05T00:06:00Z",
+          "notes": "v3 — 120 problemas → 27 personas → 8 macro-grupos. Método: harvest Foundation + 12 web ES + 12 Reddit + 9 threads + 12 foros ES. QA by Rocinante: PASS con 2 correcciones menores. Alfonso aprobó personas y grupos."
         },
         "existing-customer-data": {
           "status": "not-started",
@@ -136,7 +155,7 @@
             "company-brief"
           ],
           "optional": true,
-          "output_file": "brand/growth4u/go-to-market/existing-customer-data.md",
+          "output_file": "brand/growth4u/go-to-market/existing-customer-data/current.md",
           "skill": "existing-customer-data"
         },
         "positioning": {
@@ -145,7 +164,7 @@
           "requires": [
             "niche-discovery"
           ],
-          "output_pattern": "brand/growth4u/go-to-market/positioning-{ecp-slug}.md",
+          "output_pattern": "brand/growth4u/go-to-market/positioning-{ecp-slug}/current.md",
           "skill": "positioning-messaging"
         },
         "pricing": {
@@ -157,7 +176,7 @@
           "enriches_with": [
             "positioning"
           ],
-          "output_file": "brand/growth4u/go-to-market/pricing.md",
+          "output_file": "brand/growth4u/go-to-market/pricing/current.md",
           "skill": "pricing-strategy"
         },
         "ecp-validation": {
@@ -173,7 +192,7 @@
       "syntheses": {
         "messaging-summary": {
           "status": "not-generated",
-          "output_file": "brand/growth4u/go-to-market/messaging-summary.md",
+          "output_file": "brand/growth4u/go-to-market/messaging-summary/current.md",
           "generated_by": "orchestrator",
           "requires": [
             "positioning"
@@ -192,7 +211,7 @@
           "requires": [
             "positioning"
           ],
-          "output_file": "brand/growth4u/brand-identity/voice-profile.md",
+          "output_file": "brand/growth4u/brand-identity/voice-profile/current.md",
           "skill": "brand-voice"
         },
         "visual-identity": {
@@ -201,7 +220,7 @@
           "requires": [
             "brand-voice"
           ],
-          "output_file": "brand/growth4u/brand-identity/visual-identity.md",
+          "output_file": "brand/growth4u/brand-identity/visual-identity/current.md",
           "skill": "visual-identity"
         }
       }

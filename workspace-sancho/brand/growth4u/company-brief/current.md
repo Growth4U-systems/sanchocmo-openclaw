@@ -47,7 +47,7 @@
 - Infraestructura de crecimiento a medida
 
 **Resultados referencia:**
-- **Bnext:** 0 → 500K usuarios activos en <30 meses, retención 55% a 6 meses. [Ref: Cinco Días](https://cincodias.elpais.com/cincodias/2020/01/06/companias/1578341441_525921.html)
+- **Bnext:** 0 → 400K usuarios activos durante tenure de Alfonso (mar 2021), en camino a 500K. Retención 55% a 6 meses. CAC €50 → €12.40. [Ref: Cinco Días](https://cincodias.elpais.com/cincodias/2020/01/06/companias/1578341441_525921.html)
 - **Múltiplo:** 93 leads cualificados → 17 clientes confirmados, ROI recuperado en primeras semanas. Canales: LinkedIn signal-based, influencers, TrustLocal, Rankia. Aceptación LinkedIn hasta 71%, respuesta hasta 53%
 - **XLY Yoga (Xuan Lan Yoga):** Conversión visita → free trial al 5.8% (3x vs baseline). 99% tráfico orgánico, flujo quiz + checkout integrado
 - **Criptan:** De 100 → 1.000 primeros depósitos/mes, ticket medio 5.000€. Canal afiliación generó 17M€
@@ -148,6 +148,19 @@ No hay competidor directo con sistema end-to-end de trust-building. La competenc
 - Equipo pequeño pero capaz → priorizar canales que no requieran mucho headcount
 - LinkedIn ya activo (contenido) → base sobre la que construir
 
+## 8. Visión Estratégica (OPE Canvas — aprobado 2026-03-04)
+
+**Modelo 3 capas:**
+1. **Boutique (high-touch)** — 6 clientes simultáneos max, alto ticket (Trust Engine 7K€ + consultoría 5-10K€/mes). Alfonso + equipo.
+2. **Comunidad (mid-touch)** — SanchoCMO como plataforma/comunidad con cientos/miles de miembros. ~10 clientes activos adicionales. Frameworks, aprendizaje colectivo.
+3. **Software (no-touch)** — Herramientas IA propias (Sancho, Horus) que escalan globalmente sin headcount.
+
+**Target:** 5-6M€/año facturación. Equipo <10 personas. Altamente rentable, potenciado por IA. Las 3 capas se alimentan entre sí.
+
+**Geografía:** España (ahora) → LATAM (12-24 meses) → UK (fintechs entrando en España) → Global via software.
+
+**Core Values confirmados:** Resultados medibles | Autonomía del cliente | Honestidad radical | Walk the talk
+
 ---
 
 <!-- Self-QA: PASS | 2026-03-02 | 6/6 pasos completados, datos cruzados con Notion docs, coherencia verificada -->
@@ -187,13 +200,14 @@ No hay competidor directo con sistema end-to-end de trust-building. La competenc
 | **Ticket medio** | 7.000€ (pago único) | User input |
 | **Duración servicio** | 4-6 meses de acceso a comunidad + programa | User input |
 | **LTV estimado** | 7.000€ base + potencial upsell a consultoría (5-10K€/mes × N meses) | Estimación |
-| **Expansion path** | Trust Engine (7K€) → Formación continua → Consultoría completa (5-10K€/mes) | User input |
+| **Expansion path** | Trust Engine (7K€) → Consultoría completa (5-10K€/mes) → Comunidad SanchoCMO → Software IA | OPE Canvas aprobado |
 
-### Arquetipo
-**High-Ticket One-Time + Upsell Recurrente**
-- ACV alto para pago único (7K€) → justifica funnel Sales-Led con call
-- Margen bruto alto (servicio productizado con playbooks reutilizables)
-- El verdadero LTV dependerá de la tasa de conversión a consultoría
+### Arquetipo (actualizado OPE Canvas 2026-03-04)
+**Modelo 3 Capas — Boutique + Comunidad + Software**
+- **Capa 1 — Boutique:** ACV alto (7K€ one-time + 5-10K€/mes retainer). Max 6 clientes simultáneos. Sales-Led.
+- **Capa 2 — Comunidad:** SanchoCMO como plataforma/comunidad. ~10 clientes activos. Revenue recurrente a menor ticket.
+- **Capa 3 — Software:** Herramientas IA (Sancho, Horus). Escala global sin headcount.
+- Target: 5-6M€/año con equipo <10 personas.
 
 ---
 

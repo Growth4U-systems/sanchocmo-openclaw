@@ -5,6 +5,17 @@ description: >
   analyzes competitor gaps, and produces articles with proper on-page optimization, schema markup (Article + FAQ +
   HowTo JSON-LD), and YAML frontmatter. Supports content refresh mode for existing articles. Chains to
   /content-atomizer for social distribution.
+context_required:
+- brand/{slug}/brand-identity/voice-profile.md
+- brand/{slug}/go-to-market/keyword-plan.md
+- brand/{slug}/go-to-market/ecps.md
+- brand/{slug}/go-to-market/positioning-*.md
+- brand/{slug}/market-and-us/competitor-*.md
+- brand/{slug}/operational/learnings.md
+context_writes:
+- campaigns/content/{keyword-slug}.md
+- brand/{slug}/operational/assets.md
+- brand/{slug}/operational/learnings.md
 ---
 
 # /seo-content — Publication-Ready SEO Content

@@ -24,20 +24,14 @@ const ALLOWED_FILES = [
 
 // Directories accessible via /docs/ viewer
 
-// Foundation pillar order (universal — all clients)
+// Foundation section order (matches actual directory structure + foundation-state.json)
 const FOUNDATION_ORDER = [
-  // 🏢 La Empresa
-  { cat: '🏢 La Empresa', folders: ['company-context', 'business-model', 'budget', 'self-intelligence'] },
-  // 🎯 OPE Canvas
-  { cat: '🎯 OPE Canvas', folders: ['ope-canvas'] },
-  // 📊 El Mercado
-  { cat: '📊 El Mercado', folders: ['market', 'competitors', 'swot-analysis'] },
-  // 👥 Los Clientes
-  { cat: '👥 Los Clientes', folders: ['niche-discovery-100x', 'ecp-validation', 'existing-customer-data'] },
-  // 🎯 La Marca
-  { cat: '🎯 La Marca', folders: ['positioning', 'pricing', 'brand-voice', 'visual-identity'] },
+  { cat: '🏢 La Empresa', folder: 'company-brief', pillarsKey: 'skills' },
+  { cat: '📊 El Mercado & Nosotros', folder: 'market-and-us', pillarsKey: 'pillars' },
+  { cat: '🎯 Go-To-Market', folder: 'go-to-market', pillarsKey: 'pillars' },
+  { cat: '🎨 Brand Identity', folder: 'brand-identity', pillarsKey: 'pillars' },
 ];
-const PILLAR_FLAT = FOUNDATION_ORDER.flatMap(g => g.folders);
+const PILLAR_FLAT = FOUNDATION_ORDER.map(g => g.folder);
 
 const DOC_ROOTS = {
   'brand':  path.join(BASE, 'brand'),
@@ -187,34 +181,79 @@ function listDir(dirPath, urlPrefix, opts = {}) {
   let html = '';
 
   if (isBrandClient) {
-    // Load foundation-state.json for pillar statuses
-    let fState = {};
+    // Load foundation-state.json for section/pillar statuses
+    let fSections = {};
     try {
       const stateFile = path.join(dirPath, 'foundation-state.json');
       const stateData = JSON.parse(fs.readFileSync(stateFile, 'utf-8'));
-      fState = stateData.pillars || {};
+      fSections = stateData.sections || {};
     } catch {}
 
     const existing = new Set(allDirs);
     for (const group of FOUNDATION_ORDER) {
+      const d = group.folder;
+      const section = fSections[d] || {};
+      const sectionStatus = section.status || 'not-started';
+      const pillars = section[group.pillarsKey] || {};
+      const pillarNames = Object.keys(pillars);
+      const approvedCount = pillarNames.filter(p => pillars[p].status === 'approved').length;
+      const totalCount = pillarNames.length;
+
       html += `<h2 style="margin:24px 0 10px;font-family:'Bangers',cursive;font-size:1.4em;color:#C45D35;">${group.cat}</h2>\n`;
-      for (const d of group.folders) {
-        const pillarStatus = (fState[d] || {}).status || 'not-started';
-        if (existing.has(d)) {
-          existing.delete(d);
-          const subFiles = (() => { try { return fs.readdirSync(path.join(dirPath, d)).filter(f => f.endsWith('.md')).length; } catch { return 0; } })();
-          if (pillarStatus === 'approved') {
-            html += `<div class="card"><a href="${urlPrefix}${d}/">✅ ${d}</a><div class="meta">${subFiles} documentos · Validado</div></div>\n`;
-          } else {
-            html += `<div class="card" style="border-left:4px solid #E5A100;"><a href="${urlPrefix}${d}/">⚠️ ${d}</a><div class="meta" style="color:#B8860B;">${subFiles} documentos · Pendiente de validar</div></div>\n`;
+
+      if (existing.has(d)) {
+        existing.delete(d);
+        const subFiles = (() => { try { return fs.readdirSync(path.join(dirPath, d)).filter(f => f.endsWith('.md')).length; } catch { return 0; } })();
+
+        // Section card with link
+        const sIcon = sectionStatus === 'approved' ? '✅' : '⚠️';
+        const sStyle = sectionStatus === 'approved'
+          ? ''
+          : 'border-left:4px solid #E5A100;';
+        const sMeta = sectionStatus === 'approved'
+          ? `${subFiles} documentos · Validado`
+          : `${subFiles} documentos · ${approvedCount}/${totalCount} pilares validados`;
+        const sMetaStyle = sectionStatus === 'approved' ? '' : 'color:#B8860B;';
+        html += `<div class="card" style="${sStyle}"><a href="${urlPrefix}${d}/">${sIcon} ${d}</a><div class="meta" style="${sMetaStyle}">${sMeta}</div></div>\n`;
+
+        // Individual pillar statuses within the section
+        if (pillarNames.length > 0) {
+          html += '<div style="margin-left:24px;margin-bottom:8px;">\n';
+          for (const pName of pillarNames) {
+            const p = pillars[pName];
+            const pStatus = p.status || 'not-started';
+            const displayName = pName.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+            const optional = p.optional ? ' <span style="font-size:10px;color:#5D5348;">(opcional)</span>' : '';
+            if (pStatus === 'approved') {
+              html += `<div style="padding:3px 0;font-size:14px;">✅ ${displayName}${optional}</div>\n`;
+            } else if (pStatus === 'draft' || pStatus === 'in-progress' || pStatus === 'pending-review') {
+              html += `<div style="padding:3px 0;font-size:14px;color:#B8860B;">⚠️ ${displayName}${optional}</div>\n`;
+            } else {
+              html += `<div style="padding:3px 0;font-size:14px;opacity:0.45;">⬜ ${displayName}${optional}</div>\n`;
+            }
           }
-        } else {
-          html += `<div class="card" style="opacity:0.45;"><span>⬜ ${d}</span><div class="meta">No existe</div></div>\n`;
+          html += '</div>\n';
         }
+
+        // Syntheses
+        const syntheses = section.syntheses || {};
+        const synthNames = Object.keys(syntheses);
+        if (synthNames.length > 0) {
+          for (const sn of synthNames) {
+            const sv = syntheses[sn];
+            const st = sv.status || 'not-generated';
+            const icon = st === 'generated' ? '📝' : '⬜';
+            const opacity = st === 'generated' ? '1' : '0.45';
+            html += `<div style="margin-left:24px;padding:3px 0;font-size:14px;font-style:italic;opacity:${opacity};">${icon} ${sn.replace(/-/g, ' ')} <span style="font-size:10px;color:#5D5348;">(síntesis)</span></div>\n`;
+          }
+        }
+      } else {
+        html += `<div class="card" style="opacity:0.45;"><span>⬜ ${d}</span><div class="meta">No existe</div></div>\n`;
       }
     }
     // Any remaining dirs not in Foundation order
-    const remaining = [...existing].sort();
+    const foundationFolders = new Set(FOUNDATION_ORDER.map(g => g.folder));
+    const remaining = [...existing].filter(d => !foundationFolders.has(d) && d !== '_archive').sort();
     if (remaining.length) {
       html += `<h2 style="margin:24px 0 10px;font-family:'Bangers',cursive;font-size:1.4em;color:#C45D35;">📁 Otros</h2>\n`;
       for (const d of remaining) {

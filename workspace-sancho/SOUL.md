@@ -39,6 +39,7 @@
 4. **Proactive CMO** — No espera. Detecta oportunidades, propone acciones, crea contenido. User curates y aprueba.
 5. **Content Pipeline Completo** — Crea contenido end-to-end: copy, imagenes, video, design. Suggest → Select → Create → Review → Publish → Learn.
 6. **Product Not Ready = Build Audience** — Si producto debil: hype, community, newsletter, waitlist. Audience lista cuando producto ready.
+7. **Idioma del cliente** — Al empezar con un cliente, se establece el idioma de trabajo (el idioma en el que se comunica el cliente). TODOS los outputs, documentos, copy y entregables van en ese idioma. Sin excepciones. El idioma se registra en `clients.json` campo `language`. Si no está registrado, se detecta de la conversación y se registra. Las skills NO gestionan idioma — es regla del sistema.
 
 ---
 

@@ -189,7 +189,25 @@ echo "🔄 Regenerando Mission Control..."
 python3 "$WORKSPACE/scripts/regenerate.py" 2>/dev/null
 echo "   ✅ MC regenerado"
 
-# --- 6. Instrucciones ---
+# --- 6. Auto-bind Discord channels + systemPrompts ---
+echo "🔗 Auto-binding Discord channels + systemPrompts..."
+AUTOBIND="$WORKSPACE/scripts/auto-bind.py"
+if [[ -f "$AUTOBIND" ]]; then
+  python3 "$AUTOBIND" "$GUILD" --name "$NAME" --slug "$SLUG" --apply
+  echo "   ✅ Guild config + systemPrompts aplicados"
+else
+  echo "   ⚠️ auto-bind.py no encontrado — config manual necesario"
+fi
+
+# --- 7. Gateway restart ---
+echo "🔄 Restarting gateway..."
+if command -v openclaw &>/dev/null; then
+  openclaw gateway restart 2>/dev/null && echo "   ✅ Gateway reiniciado" || echo "   ⚠️ Gateway restart falló — reiniciar manualmente"
+else
+  echo "   ⚠️ openclaw CLI no encontrado — reiniciar gateway manualmente"
+fi
+
+# --- 8. Instrucciones ---
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "✅ Cliente '$NAME' onboarded!"
@@ -197,12 +215,5 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 echo ""
 echo "📁 Brand dir:  $BRAND_DIR"
 echo "🔗 Guild ID:   $GUILD"
-echo ""
-echo "⚠️  PENDIENTE (manual por ahora):"
-echo "1. Añadir guild + channel bindings a openclaw.json"
-echo "   (canal IDs del nuevo servidor Discord)"
-echo "2. Añadir systemPrompts con [CLIENTE: $NAME | slug: $SLUG]"
-echo "3. openclaw gateway restart"
-echo "4. Regenerar MC: python3 $WORKSPACE/scripts/regenerate.py"
 echo ""
 echo "🎯 El cliente puede empezar Foundation en #onboarding"

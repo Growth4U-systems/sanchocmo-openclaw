@@ -5,6 +5,18 @@ description: >
   launch, re-engagement, and post-purchase sequences. Generates 3 subject line A/B variants per email, specific
   send timing with rationale, individual .md files per email, and campaign briefs. Detects ESP integrations
   for direct automation setup.
+context_required:
+- brand/{slug}/brand-identity/voice-profile.md
+- brand/{slug}/go-to-market/positioning-*.md
+- brand/{slug}/go-to-market/ecps.md
+- brand/{slug}/operational/learnings.md
+- brand/{slug}/operational/assets.md
+- brand/{slug}/operational/stack.md
+context_writes:
+- campaigns/{name}/brief.md
+- campaigns/{name}/emails/*.md
+- brand/{slug}/operational/assets.md
+- brand/{slug}/operational/learnings.md
 ---
 
 # Email Sequences

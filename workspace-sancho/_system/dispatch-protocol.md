@@ -198,6 +198,84 @@ Cuando ejecutes deep research, Foundation pillars, o cualquier tarea >2 min:
 
 ---
 
+## Subagent Completion Handling (OBLIGATORIO)
+
+Cuando recibes un `[Internal task completion event]` de un subagente:
+
+### Regla cardinal: NUNCA responder solo NO_REPLY a un completion event.
+
+**Protocolo para cada completion event:**
+
+1. **Actualizar estado** — `foundation-state.json` o tracking relevante (status → pending-review/completed)
+2. **Verificar si hay más tareas pendientes del mismo batch** — Si hay N tareas lanzadas en paralelo, trackear cuántas han terminado.
+3. **Cuando TODAS las tareas del batch terminen:**
+   - **Postear resumen consolidado** al hilo de Discord del usuario (NO al canal principal)
+   - **Incluir**: qué se completó, links a los docs (URLs de MC, no rutas), hallazgos clave (3-5 bullets por análisis)
+   - **Pedir acción**: review/aprobación del usuario para avanzar al siguiente paso
+   - **Indicar next step**: qué pilar/tarea sigue en el DAG
+4. **Si solo UNA tarea del batch terminó y faltan otras:**
+   - Actualizar estado silenciosamente (NO_REPLY está OK aquí)
+   - PERO si la última tarea lleva >10 min sin completar, enviar update parcial al hilo
+
+### Tracking de batches
+
+Al lanzar N Escuderos en paralelo, crear tracker temporal:
+```json
+// En foundation-state.json o inline en el dispatch
+{
+  "batch_id": "uuid",
+  "thread_id": "discord_thread_id",
+  "tasks": ["market-analysis", "competitor-analysis", "self-analysis"],
+  "completed": [],
+  "all_done_action": "post-consolidated-summary-and-request-review"
+}
+```
+
+Cuando `completed.length === tasks.length` → ejecutar `all_done_action`.
+
+### Ejemplo correcto
+
+```
+# Recibo completion de self-analysis (1/3 del batch)
+→ Actualizar state → NO_REPLY (esperando las otras 2)
+
+# Recibo completion de competitor-analysis (2/3)
+→ Actualizar state → NO_REPLY (falta 1)
+
+# Recibo completion de market-analysis (3/3 — ÚLTIMO)
+→ Actualizar state
+→ Postear al hilo: "✅ Los 3 análisis están completos. Resúmenes: [...]"
+→ Pedir review: "Alex, revisa y confirma para avanzar al SWOT"
+→ Indicar next step
+```
+
+### Thread por pilar (Foundation)
+
+Cuando un pilar de Foundation se completa, CREAR un hilo dedicado en #onboarding:
+
+```
+# 1. Crear hilo en #onboarding
+message(action=thread-create, channel=discord, channelId="<onboarding_channel>", threadName="📊 Market Analysis — {Cliente}")
+
+# 2. Publicar resumen ejecutivo (formato del foundation-orchestrator)
+message(action=send, channel=discord, target="<thread_id>", message="───\n📊 MARKET ANALYSIS\n───\n• bullet 1\n• bullet 2\n📄 Doc: <url>\n───\n¿Correcto? ¿Cambios?")
+```
+
+**Un hilo por pilar.** No mezclar pilares en un solo hilo. No dumpar todo en el hilo de onboarding.
+
+### Anti-patrón (lo que pasó y NO debe repetirse)
+
+```
+# ❌ MAL — Recibo completion, actualizo JSON, respondo NO_REPLY en TODOS
+# El usuario ve "Session ended" en los hilos de Escudero y nada más
+# El flujo se detiene completamente
+
+# ❌ MAL — Dumpar los 3 resúmenes en un solo mensaje en el hilo existente
+# El usuario no puede revisar/aprobar cada pilar individualmente
+```
+
+---
+
 ## Reglas
 
 1. **Un spawn por tarea.** No mezclar tareas en un solo Escudero.

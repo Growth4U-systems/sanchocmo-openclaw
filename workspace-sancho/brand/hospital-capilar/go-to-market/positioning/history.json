@@ -1,0 +1,38 @@
+{
+  "versions": [
+    {
+      "version": "v1.0",
+      "date": "2026-03-03",
+      "author": "Sancho",
+      "notes": "Primera versión. Messaging bilingüe EN/ES en formato tabla."
+    },
+    {
+      "version": "v2.0",
+      "date": "2026-03-03",
+      "author": "Sancho",
+      "trigger": "Philippe: messaging sin profundidad",
+      "notes": "Messaging dolor-activado. Español principal. Formato corto + landing."
+    },
+    {
+      "version": "v2.1",
+      "date": "2026-03-03",
+      "author": "Sancho",
+      "trigger": "Philippe: precio consulta = €195, test bono vs directo",
+      "notes": "Precio €50→€195. CTAs dual Test A/B."
+    },
+    {
+      "version": "v2.2",
+      "date": "2026-03-04",
+      "author": "Sancho",
+      "trigger": "QA Deep — 10 action items",
+      "notes": "Correcciones factuales, caveats fuentes, advertencias legales, USPs efectos secundarios + dolor."
+    },
+    {
+      "version": "v2.3",
+      "date": "2026-03-04",
+      "author": "Sancho",
+      "trigger": "Philippe: falta ECP mujeres hormonales + mirar quiz diagnóstico",
+      "notes": "ECP #6 Mujeres alopecia hormonal añadido (contexto + 6 value criteria + 4 benefit-proof + UVP + 4 USPs). Nota sobre quiz diagnóstico como herramienta de filtrado. Funnel mapping actualizado. 4 fuentes nuevas. Total: 6 ECPs."
+    }
+  ]
+}

@@ -1,9 +1,11 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
+const { execSync, exec: execCb } = require('child_process');
 
 const PORT = 18790;
 const BASE = path.join(__dirname, '..');
+const API_HEALTH_FILE = path.join(BASE, '_system', 'api-health.json');
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -24,20 +26,29 @@ const ALLOWED_FILES = [
 
 // Directories accessible via /docs/ viewer
 
-// Foundation pillar order (universal — all clients)
+// Foundation section order (matches actual directory structure + foundation-state.json)
 const FOUNDATION_ORDER = [
-  // 🏢 La Empresa
-  { cat: '🏢 La Empresa', folders: ['company-context', 'business-model', 'budget', 'self-intelligence'] },
-  // 🎯 OPE Canvas
-  { cat: '🎯 OPE Canvas', folders: ['ope-canvas'] },
-  // 📊 El Mercado
-  { cat: '📊 El Mercado', folders: ['market', 'competitors', 'swot-analysis'] },
-  // 👥 Los Clientes
-  { cat: '👥 Los Clientes', folders: ['niche-discovery-100x', 'ecp-validation', 'existing-customer-data'] },
-  // 🎯 La Marca
-  { cat: '🎯 La Marca', folders: ['positioning', 'pricing', 'brand-voice', 'visual-identity'] },
+  { cat: '🏢 La Empresa', folder: 'company-brief', pillarsKey: 'skills' },
+  { cat: '📊 El Mercado & Nosotros', folder: 'market-and-us', pillarsKey: 'pillars' },
+  { cat: '🎯 Go-To-Market', folder: 'go-to-market', pillarsKey: 'pillars' },
+  { cat: '🎨 Brand Identity', folder: 'brand-identity', pillarsKey: 'pillars' },
 ];
-const PILLAR_FLAT = FOUNDATION_ORDER.flatMap(g => g.folders);
+const PILLAR_FLAT = FOUNDATION_ORDER.map(g => g.folder);
+
+// Recursive .md file counter (skips _ and . dirs)
+function countMdFiles(dirPath) {
+  let count = 0;
+  try {
+    const entries = fs.readdirSync(dirPath, { withFileTypes: true });
+    for (const entry of entries) {
+      if (entry.name.startsWith('.') || entry.name.startsWith('_')) continue;
+      const full = path.join(dirPath, entry.name);
+      if (entry.isDirectory()) count += countMdFiles(full);
+      else if (entry.name.endsWith('.md')) count++;
+    }
+  } catch {}
+  return count;
+}
 
 const DOC_ROOTS = {
   'brand':  path.join(BASE, 'brand'),
@@ -183,42 +194,198 @@ function listDir(dirPath, urlPrefix, opts = {}) {
 
   // Detect if this is a brand/{slug} level (pillar listing)
   const isBrandClient = opts.brandPillars || false;
+  const brandSection = opts.brandSection || null;
 
   let html = '';
 
+  // === Section-level view: brand/{slug}/{section}/ ===
+  if (brandSection) {
+    let fSections = {};
+    try {
+      const stateFile = path.join(dirPath, '..', 'foundation-state.json');
+      const stateData = JSON.parse(fs.readFileSync(stateFile, 'utf-8'));
+      fSections = stateData.sections || {};
+    } catch {}
+
+    const section = fSections[brandSection.section] || {};
+    const group = FOUNDATION_ORDER.find(g => g.folder === brandSection.section);
+    const pillarsKey = group ? group.pillarsKey : 'pillars';
+    const pillars = section[pillarsKey] || {};
+    const syntheses = section.syntheses || {};
+
+    // Map pillar names to directory names (for linking)
+    const pillarDirMap = {
+      'market-analysis': 'market',
+      'competitor-analysis': 'competitors',
+      'self-analysis': 'self',
+      'swot': 'swot',
+      'niche-discovery': 'ecps',
+      'existing-customer-data': 'existing-customer-data',
+      'positioning': 'positioning',
+      'pricing': 'pricing',
+      'brand-voice': 'voice-profile',
+      'visual-identity': 'visual-identity',
+      // company-brief skills
+      'company-context': null,
+      'business-model': null,
+      'budget': null,
+    };
+
+    const statusIcon = (s) => {
+      if (s === 'approved' || s === 'done') return '✅';
+      if (s === 'generated') return '📝';
+      if (s === 'in-progress' || s === 'draft' || s === 'pending-review' || s === 'pending-approval') return '⚠️';
+      return '⬜';
+    };
+    const statusLabel = (s) => {
+      const labels = { 'approved': 'Validado', 'done': 'Completado', 'in-progress': 'En progreso', 'draft': 'Borrador', 'pending-review': 'Pendiente revisión', 'pending-approval': 'Pendiente aprobación', 'generated': 'Generado', 'not-started': 'No iniciado', 'not-generated': 'No generado' };
+      return labels[s] || s;
+    };
+
+    // Show pillars
+    html += '<h2 style="font-family:\'Bangers\',cursive;color:#C45D35;margin-bottom:12px;">Pilares</h2>\n';
+    for (const [pName, pData] of Object.entries(pillars)) {
+      const pStatus = pData.status || 'not-started';
+      const icon = statusIcon(pStatus);
+      const label = statusLabel(pStatus);
+      const displayName = pName.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+      const optional = pData.optional ? ' <span style="font-size:11px;color:#5D5348;">(opcional)</span>' : '';
+      const dirName = pillarDirMap[pName] || pName;
+      const dirExists = dirName && (() => { try { return fs.statSync(path.join(dirPath, dirName)).isDirectory(); } catch { return false; } })();
+      const fileCount = dirExists ? countMdFiles(path.join(dirPath, dirName)) : 0;
+
+      const cardStyle = pStatus === 'approved' || pStatus === 'done' ? '' : pStatus === 'not-started' ? 'opacity:0.55;' : 'border-left:4px solid #E5A100;';
+      const metaColor = pStatus === 'approved' || pStatus === 'done' ? '' : pStatus === 'not-started' ? 'color:#999;' : 'color:#B8860B;';
+
+      if (dirExists) {
+        html += `<div class="card" style="${cardStyle}"><a href="${urlPrefix}${dirName}/">${icon} ${displayName}</a>${optional}<div class="meta" style="${metaColor}">${label} · ${fileCount} docs</div></div>\n`;
+      } else {
+        html += `<div class="card" style="${cardStyle}"><span>${icon} ${displayName}</span>${optional}<div class="meta" style="${metaColor}">${label}</div></div>\n`;
+      }
+    }
+
+    // Show syntheses
+    const synthKeys = Object.keys(syntheses);
+    if (synthKeys.length > 0) {
+      html += '<h2 style="font-family:\'Bangers\',cursive;color:#C45D35;margin:20px 0 12px;">Síntesis</h2>\n';
+      for (const [sName, sData] of Object.entries(syntheses)) {
+        const sStatus = sData.status || 'not-generated';
+        const icon = statusIcon(sStatus);
+        const label = statusLabel(sStatus);
+        const displayName = sName.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+        const dirName = sName;
+        const dirExists = (() => { try { return fs.statSync(path.join(dirPath, dirName)).isDirectory(); } catch { return false; } })();
+        const cardStyle = sStatus === 'generated' || sStatus === 'pending-approval' ? 'border-left:4px solid #4A90D9;' : 'opacity:0.55;';
+
+        if (dirExists) {
+          html += `<div class="card" style="${cardStyle}"><a href="${urlPrefix}${dirName}/">${icon} ${displayName}</a> <span style="font-size:11px;color:#5D5348;">(síntesis)</span><div class="meta">${label}</div></div>\n`;
+        } else {
+          html += `<div class="card" style="${cardStyle}"><span>${icon} ${displayName}</span> <span style="font-size:11px;color:#5D5348;">(síntesis)</span><div class="meta">${label}</div></div>\n`;
+        }
+      }
+    }
+
+    // Show remaining dirs (_qa, sources, etc.)
+    const knownDirs = new Set(Object.values(pillarDirMap).filter(Boolean));
+    Object.keys(syntheses).forEach(s => knownDirs.add(s));
+    const remainingDirs = allDirs.filter(d => !knownDirs.has(d) && d !== '_archive').sort();
+    if (remainingDirs.length > 0) {
+      html += '<h2 style="font-family:\'Bangers\',cursive;color:#C45D35;margin:20px 0 12px;">Otros</h2>\n';
+      for (const d of remainingDirs) {
+        const subFiles = countMdFiles(path.join(dirPath, d));
+        html += `<div class="card"><a href="${urlPrefix}${d}/">📂 ${d}</a><div class="meta">${subFiles} documentos</div></div>\n`;
+      }
+    }
+
+    // Show loose .md files at this level
+    for (const f of files) {
+      const stat2 = fs.statSync(path.join(dirPath, f));
+      const size = stat2.size > 1024 ? `${(stat2.size / 1024).toFixed(1)}KB` : `${stat2.size}B`;
+      html += `<div class="card"><a href="${urlPrefix}${f}">${f.replace('.md', '')}</a><div class="meta">${size}</div></div>\n`;
+    }
+
+    if (!html) html = '<p style="color:#5D5348;">No hay documentos aquí.</p>';
+    return html;
+  }
+
   if (isBrandClient) {
-    // Load foundation-state.json for pillar statuses
-    let fState = {};
+    // Load foundation-state.json for section/pillar statuses
+    let fSections = {};
     try {
       const stateFile = path.join(dirPath, 'foundation-state.json');
       const stateData = JSON.parse(fs.readFileSync(stateFile, 'utf-8'));
-      fState = stateData.pillars || {};
+      fSections = stateData.sections || {};
     } catch {}
 
     const existing = new Set(allDirs);
     for (const group of FOUNDATION_ORDER) {
+      const d = group.folder;
+      const section = fSections[d] || {};
+      const sectionStatus = section.status || 'not-started';
+      const pillars = section[group.pillarsKey] || {};
+      const pillarNames = Object.keys(pillars);
+      const approvedCount = pillarNames.filter(p => pillars[p].status === 'approved').length;
+      const totalCount = pillarNames.length;
+
       html += `<h2 style="margin:24px 0 10px;font-family:'Bangers',cursive;font-size:1.4em;color:#C45D35;">${group.cat}</h2>\n`;
-      for (const d of group.folders) {
-        const pillarStatus = (fState[d] || {}).status || 'not-started';
-        if (existing.has(d)) {
-          existing.delete(d);
-          const subFiles = (() => { try { return fs.readdirSync(path.join(dirPath, d)).filter(f => f.endsWith('.md')).length; } catch { return 0; } })();
-          if (pillarStatus === 'approved') {
-            html += `<div class="card"><a href="${urlPrefix}${d}/">✅ ${d}</a><div class="meta">${subFiles} documentos · Validado</div></div>\n`;
-          } else {
-            html += `<div class="card" style="border-left:4px solid #E5A100;"><a href="${urlPrefix}${d}/">⚠️ ${d}</a><div class="meta" style="color:#B8860B;">${subFiles} documentos · Pendiente de validar</div></div>\n`;
+
+      if (existing.has(d)) {
+        existing.delete(d);
+        const subFiles = countMdFiles(path.join(dirPath, d));
+
+        // Section card with link
+        const sIcon = sectionStatus === 'approved' ? '✅' : '⚠️';
+        const sStyle = sectionStatus === 'approved'
+          ? ''
+          : 'border-left:4px solid #E5A100;';
+        const sMeta = sectionStatus === 'approved'
+          ? `${subFiles} documentos · Validado`
+          : `${subFiles} documentos · ${approvedCount}/${totalCount} pilares validados`;
+        const sMetaStyle = sectionStatus === 'approved' ? '' : 'color:#B8860B;';
+        html += `<div class="card" style="${sStyle}"><a href="${urlPrefix}${d}/">${sIcon} ${d}</a><div class="meta" style="${sMetaStyle}">${sMeta}</div></div>\n`;
+
+        // Individual pillar statuses within the section
+        if (pillarNames.length > 0) {
+          html += '<div style="margin-left:24px;margin-bottom:8px;">\n';
+          for (const pName of pillarNames) {
+            const p = pillars[pName];
+            const pStatus = p.status || 'not-started';
+            const displayName = pName.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+            const optional = p.optional ? ' <span style="font-size:10px;color:#5D5348;">(opcional)</span>' : '';
+            if (pStatus === 'approved') {
+              html += `<div style="padding:3px 0;font-size:14px;">✅ ${displayName}${optional}</div>\n`;
+            } else if (pStatus === 'draft' || pStatus === 'in-progress' || pStatus === 'pending-review') {
+              html += `<div style="padding:3px 0;font-size:14px;color:#B8860B;">⚠️ ${displayName}${optional}</div>\n`;
+            } else {
+              html += `<div style="padding:3px 0;font-size:14px;opacity:0.45;">⬜ ${displayName}${optional}</div>\n`;
+            }
           }
-        } else {
-          html += `<div class="card" style="opacity:0.45;"><span>⬜ ${d}</span><div class="meta">No existe</div></div>\n`;
+          html += '</div>\n';
         }
+
+        // Syntheses
+        const syntheses = section.syntheses || {};
+        const synthNames = Object.keys(syntheses);
+        if (synthNames.length > 0) {
+          for (const sn of synthNames) {
+            const sv = syntheses[sn];
+            const st = sv.status || 'not-generated';
+            const icon = st === 'generated' ? '📝' : '⬜';
+            const opacity = st === 'generated' ? '1' : '0.45';
+            html += `<div style="margin-left:24px;padding:3px 0;font-size:14px;font-style:italic;opacity:${opacity};">${icon} ${sn.replace(/-/g, ' ')} <span style="font-size:10px;color:#5D5348;">(síntesis)</span></div>\n`;
+          }
+        }
+      } else {
+        html += `<div class="card" style="opacity:0.45;"><span>⬜ ${d}</span><div class="meta">No existe</div></div>\n`;
       }
     }
     // Any remaining dirs not in Foundation order
-    const remaining = [...existing].sort();
+    const foundationFolders = new Set(FOUNDATION_ORDER.map(g => g.folder));
+    const remaining = [...existing].filter(d => !foundationFolders.has(d) && d !== '_archive').sort();
     if (remaining.length) {
       html += `<h2 style="margin:24px 0 10px;font-family:'Bangers',cursive;font-size:1.4em;color:#C45D35;">📁 Otros</h2>\n`;
       for (const d of remaining) {
-        const subFiles = (() => { try { return fs.readdirSync(path.join(dirPath, d)).filter(f => f.endsWith('.md')).length; } catch { return 0; } })();
+        const subFiles = countMdFiles(path.join(dirPath, d));
         html += `<div class="card"><a href="${urlPrefix}${d}/">📂 ${d}</a><div class="meta">${subFiles} documentos</div></div>\n`;
       }
     }
@@ -226,7 +393,7 @@ function listDir(dirPath, urlPrefix, opts = {}) {
     // Default alphabetical listing
     const dirs = allDirs.sort();
     for (const d of dirs) {
-      const subFiles = (() => { try { return fs.readdirSync(path.join(dirPath, d)).filter(f => f.endsWith('.md')).length; } catch { return 0; } })();
+      const subFiles = countMdFiles(path.join(dirPath, d));
       html += `<div class="card"><a href="${urlPrefix}${d}/">📂 ${d}</a><div class="meta">${subFiles} documentos</div></div>\n`;
     }
   }
@@ -241,6 +408,344 @@ function listDir(dirPath, urlPrefix, opts = {}) {
 
   if (!html) html = '<p style="color:#5D5348;">No hay documentos aquí.</p>';
   return html;
+}
+
+// ========== Env Var Management ==========
+const ENV_FILE = path.join(BASE, '..', '.env');
+
+// Map service → env var names needed
+const SERVICE_ENV_MAP = {
+  anthropic:  [{ key: 'ANTHROPIC_API_KEY', label: 'API Key', placeholder: 'sk-ant-...' }],
+  openrouter: [{ key: 'OPENROUTER_API_KEY', label: 'API Key', placeholder: 'sk-or-...' }],
+  openai:     [{ key: 'OPENAI_API_KEY', label: 'API Key', placeholder: 'sk-...' }],
+  gemini:     [{ key: 'GEMINI_API_KEY', label: 'API Key', placeholder: 'AIza...' }],
+  xai:        [{ key: 'XAI_API_KEY', label: 'API Key', placeholder: 'xai-...' }],
+  minimax:    [{ key: 'MINIMAX_API_KEY', label: 'API Key', placeholder: 'eyJ...' }],
+  brave:      [{ key: 'BRAVE_API_KEY', label: 'API Key', placeholder: 'BSA...' }],
+  apify:      [{ key: 'APIFY_API_KEY', label: 'API Key', placeholder: 'apify_api_...' }],
+  firecrawl:  [{ key: 'FIRECRAWL_API_KEY', label: 'API Key', placeholder: 'fc-...' }],
+  serper:     [{ key: 'SERPER_API_KEY', label: 'API Key', placeholder: '' }],
+  dataforseo: [{ key: 'DATAFORSEO_LOGIN', label: 'Login (email)', placeholder: 'you@email.com' }, { key: 'DATAFORSEO_PASSWORD', label: 'Password', placeholder: '' }],
+  notion:     [{ key: 'NOTION_API_KEY', label: 'Integration Token', placeholder: 'ntn_...' }],
+  supabase:   [{ key: 'SUPABASE_URL', label: 'Project URL', placeholder: 'https://xxx.supabase.co' }, { key: 'SUPABASE_ANON_KEY', label: 'Anon Key', placeholder: 'eyJ...' }],
+  fal:        [{ key: 'FAL_API_KEY', label: 'API Key', placeholder: '' }],
+  wavespeed:  [{ key: 'WAVESPEED_API_KEY', label: 'API Key', placeholder: '' }],
+  dumpling:   [{ key: 'DUMPLING_API_KEY', label: 'API Key', placeholder: '' }],
+  instantly:  [{ key: 'INSTANTLY_API_KEY', label: 'API Key', placeholder: '' }],
+  metricool:  [{ key: 'METRICOOL_API_KEY', label: 'API Key', placeholder: '' }],
+};
+
+function maskKey(val) {
+  if (!val || val.length < 8) return val ? '••••' : '';
+  return val.slice(0, 4) + '•'.repeat(Math.min(val.length - 8, 20)) + val.slice(-4);
+}
+
+function readEnvFile() {
+  try { return fs.readFileSync(ENV_FILE, 'utf-8'); } catch { return ''; }
+}
+
+function parseEnv(content) {
+  const vars = {};
+  for (const line of content.split('\n')) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith('#')) continue;
+    const eq = trimmed.indexOf('=');
+    if (eq === -1) continue;
+    vars[trimmed.slice(0, eq)] = trimmed.slice(eq + 1);
+  }
+  return vars;
+}
+
+function setEnvVars(updates) {
+  // updates = { KEY: value, ... }
+  let content = readEnvFile();
+  const lines = content.split('\n');
+
+  for (const [key, value] of Object.entries(updates)) {
+    let found = false;
+    for (let i = 0; i < lines.length; i++) {
+      if (lines[i].startsWith(key + '=')) {
+        lines[i] = `${key}=${value}`;
+        found = true;
+        break;
+      }
+    }
+    if (!found) lines.push(`${key}=${value}`);
+  }
+
+  fs.writeFileSync(ENV_FILE, lines.join('\n'), 'utf-8');
+  // Also set in current process env so health checks pick them up immediately
+  for (const [key, value] of Object.entries(updates)) {
+    process.env[key] = value;
+  }
+}
+
+// ========== API Health Check Logic ==========
+
+function loadApiHealth() {
+  try { return JSON.parse(fs.readFileSync(API_HEALTH_FILE, 'utf-8')); }
+  catch { return { lastCheck: null, services: {} }; }
+}
+
+function saveApiHealth(data) {
+  data.lastCheck = new Date().toISOString();
+  fs.writeFileSync(API_HEALTH_FILE, JSON.stringify(data, null, 2), 'utf-8');
+}
+
+function checkService(serviceId) {
+  return new Promise((resolve) => {
+    const now = new Date().toISOString();
+    const timeout = 15000;
+
+    switch (serviceId) {
+      case 'anthropic': {
+        const key = process.env.ANTHROPIC_API_KEY;
+        if (!key) return resolve({ status: 'not-configured', lastCheck: now, details: { error: 'ANTHROPIC_API_KEY not set' } });
+        try {
+          const res = execSync(`curl -s -o /dev/null -w "%{http_code}" -H "x-api-key: ${key}" -H "anthropic-version: 2023-06-01" https://api.anthropic.com/v1/models -m 10`, { timeout, encoding: 'utf-8' }).trim();
+          resolve({ status: res === '200' ? 'ok' : 'error', lastCheck: now, details: { httpCode: res } });
+        } catch (e) { resolve({ status: 'error', lastCheck: now, details: { error: e.message.slice(0, 200) } }); }
+        break;
+      }
+      case 'openrouter': {
+        const key = process.env.OPENROUTER_API_KEY;
+        if (!key) return resolve({ status: 'not-configured', lastCheck: now, details: { error: 'OPENROUTER_API_KEY not set' } });
+        try {
+          const res = execSync(`curl -s -o /dev/null -w "%{http_code}" -H "Authorization: Bearer ${key}" https://openrouter.ai/api/v1/models -m 10`, { timeout, encoding: 'utf-8' }).trim();
+          resolve({ status: res === '200' ? 'ok' : 'error', lastCheck: now, details: { httpCode: res } });
+        } catch (e) { resolve({ status: 'error', lastCheck: now, details: { error: e.message.slice(0, 200) } }); }
+        break;
+      }
+      case 'brave': {
+        const key = process.env.BRAVE_API_KEY || process.env.BRAVE_SEARCH_API_KEY;
+        if (!key) return resolve({ status: 'not-configured', lastCheck: now, details: { error: 'BRAVE_API_KEY not set' } });
+        try {
+          const res = execSync(`curl -s -o /dev/null -w "%{http_code}" -H "X-Subscription-Token: ${key}" "https://api.search.brave.com/res/v1/web/search?q=test&count=1" -m 10`, { timeout, encoding: 'utf-8' }).trim();
+          resolve({ status: res === '200' ? 'ok' : 'error', lastCheck: now, details: { httpCode: res } });
+        } catch (e) { resolve({ status: 'error', lastCheck: now, details: { error: e.message.slice(0, 200) } }); }
+        break;
+      }
+      case 'apify': {
+        const key = process.env.APIFY_TOKEN || process.env.APIFY_API_KEY;
+        if (!key) return resolve({ status: 'not-configured', lastCheck: now, details: { error: 'APIFY_TOKEN not set' } });
+        try {
+          const raw = execSync(`curl -s -H "Authorization: Bearer ${key}" https://api.apify.com/v2/users/me -m 10`, { timeout, encoding: 'utf-8' });
+          const data = JSON.parse(raw);
+          if (data && data.data) {
+            resolve({ status: 'ok', lastCheck: now, details: { username: data.data.username || '', plan: data.data.plan?.name || '' } });
+          } else {
+            resolve({ status: 'error', lastCheck: now, details: { error: 'Unexpected response' } });
+          }
+        } catch (e) { resolve({ status: 'error', lastCheck: now, details: { error: e.message.slice(0, 200) } }); }
+        break;
+      }
+      case 'gog': {
+        try {
+          // Use 'gog gmail inbox --max 1' as a lightweight auth test (People API may be disabled)
+          const raw = execSync('/opt/homebrew/bin/gog gmail list "is:unread" 2>&1', { timeout: 20000, encoding: 'utf-8' });
+          // If it returns any output without error, auth works
+          const hasError = /error|unauthorized|invalid/i.test(raw) && !/subject/i.test(raw);
+          if (hasError) {
+            resolve({ status: 'error', lastCheck: now, details: { error: raw.slice(0, 150) } });
+          } else {
+            resolve({ status: 'ok', lastCheck: now, details: { account: 'alfonso@growth4u.io', test: 'gmail inbox' } });
+          }
+        } catch (e) { resolve({ status: 'error', lastCheck: now, details: { error: e.message.slice(0, 200) } }); }
+        break;
+      }
+      case 'openai': {
+        const key = process.env.OPENAI_API_KEY;
+        if (!key) return resolve({ status: 'not-configured', lastCheck: now, details: { error: 'OPENAI_API_KEY not set' } });
+        try {
+          const res = execSync(`curl -s -o /dev/null -w "%{http_code}" -H "Authorization: Bearer ${key}" https://api.openai.com/v1/models -m 10`, { timeout, encoding: 'utf-8' }).trim();
+          resolve({ status: res === '200' ? 'ok' : 'error', lastCheck: now, details: { httpCode: res } });
+        } catch (e) { resolve({ status: 'error', lastCheck: now, details: { error: e.message.slice(0, 200) } }); }
+        break;
+      }
+      case 'gemini': {
+        const key = process.env.GEMINI_API_KEY;
+        if (!key) return resolve({ status: 'not-configured', lastCheck: now, details: { error: 'GEMINI_API_KEY not set' } });
+        try {
+          const res = execSync(`curl -s -o /dev/null -w "%{http_code}" "https://generativelanguage.googleapis.com/v1beta/models?key=${key}" -m 10`, { timeout, encoding: 'utf-8' }).trim();
+          resolve({ status: res === '200' ? 'ok' : 'error', lastCheck: now, details: { httpCode: res } });
+        } catch (e) { resolve({ status: 'error', lastCheck: now, details: { error: e.message.slice(0, 200) } }); }
+        break;
+      }
+      case 'xai': {
+        const key = process.env.XAI_API_KEY;
+        if (!key) return resolve({ status: 'not-configured', lastCheck: now, details: { error: 'XAI_API_KEY not set' } });
+        try {
+          const res = execSync(`curl -s -o /dev/null -w "%{http_code}" -H "Authorization: Bearer ${key}" https://api.x.ai/v1/models -m 10`, { timeout, encoding: 'utf-8' }).trim();
+          resolve({ status: res === '200' ? 'ok' : 'error', lastCheck: now, details: { httpCode: res } });
+        } catch (e) { resolve({ status: 'error', lastCheck: now, details: { error: e.message.slice(0, 200) } }); }
+        break;
+      }
+      case 'minimax': {
+        const key = process.env.MINIMAX_API_KEY;
+        if (!key) return resolve({ status: 'not-configured', lastCheck: now, details: { error: 'MINIMAX_API_KEY not set' } });
+        // MiniMax doesn't have a simple /models endpoint; verify key format
+        resolve({ status: key.length > 10 ? 'ok' : 'error', lastCheck: now, details: { note: 'Key present, no lightweight verify endpoint' } });
+        break;
+      }
+      case 'firecrawl': {
+        const key = process.env.FIRECRAWL_API_KEY;
+        if (!key) return resolve({ status: 'not-configured', lastCheck: now, details: { error: 'FIRECRAWL_API_KEY not set' } });
+        try {
+          // POST to scrape with a minimal test URL (costs 1 credit but verifies auth)
+          const raw = execSync(`curl -s -w "\\n%{http_code}" -X POST -H "Authorization: Bearer ${key}" -H "Content-Type: application/json" -d '{"url":"https://example.com"}' https://api.firecrawl.dev/v1/scrape -m 15`, { timeout: 20000, encoding: 'utf-8' });
+          const lines = raw.trim().split('\n');
+          const httpCode = lines[lines.length - 1];
+          resolve({ status: httpCode === '200' ? 'ok' : 'error', lastCheck: now, details: { httpCode } });
+        } catch (e) { resolve({ status: 'error', lastCheck: now, details: { error: e.message.slice(0, 200) } }); }
+        break;
+      }
+      case 'serper': {
+        const key = process.env.SERPER_API_KEY;
+        if (!key) return resolve({ status: 'not-configured', lastCheck: now, details: { error: 'SERPER_API_KEY not set' } });
+        try {
+          const res = execSync(`curl -s -o /dev/null -w "%{http_code}" -X POST -H "X-API-KEY: ${key}" -H "Content-Type: application/json" -d '{"q":"test","num":1}' https://google.serper.dev/search -m 10`, { timeout, encoding: 'utf-8' }).trim();
+          resolve({ status: res === '200' ? 'ok' : 'error', lastCheck: now, details: { httpCode: res } });
+        } catch (e) { resolve({ status: 'error', lastCheck: now, details: { error: e.message.slice(0, 200) } }); }
+        break;
+      }
+      case 'dataforseo': {
+        const login = process.env.DATAFORSEO_LOGIN;
+        const password = process.env.DATAFORSEO_PASSWORD;
+        if (!login || !password) return resolve({ status: 'not-configured', lastCheck: now, details: { error: 'DATAFORSEO_LOGIN or DATAFORSEO_PASSWORD not set' } });
+        try {
+          const res = execSync(`curl -s -o /dev/null -w "%{http_code}" -u "${login}:${password}" https://api.dataforseo.com/v3/appendix/user_data -m 10`, { timeout, encoding: 'utf-8' }).trim();
+          resolve({ status: res === '200' ? 'ok' : 'error', lastCheck: now, details: { httpCode: res, login } });
+        } catch (e) { resolve({ status: 'error', lastCheck: now, details: { error: e.message.slice(0, 200) } }); }
+        break;
+      }
+      case 'notion': {
+        const key = process.env.NOTION_API_KEY;
+        if (!key) return resolve({ status: 'not-configured', lastCheck: now, details: { error: 'NOTION_API_KEY not set' } });
+        try {
+          const raw = execSync(`curl -s -H "Authorization: Bearer ${key}" -H "Notion-Version: 2022-06-28" https://api.notion.com/v1/users/me -m 10`, { timeout, encoding: 'utf-8' });
+          const data = JSON.parse(raw);
+          if (data && data.id) {
+            resolve({ status: 'ok', lastCheck: now, details: { botName: data.name || data.bot?.owner?.user?.name || 'connected' } });
+          } else if (data.code) {
+            resolve({ status: 'error', lastCheck: now, details: { error: data.message || data.code } });
+          } else {
+            resolve({ status: 'ok', lastCheck: now, details: {} });
+          }
+        } catch (e) { resolve({ status: 'error', lastCheck: now, details: { error: e.message.slice(0, 200) } }); }
+        break;
+      }
+      case 'supabase': {
+        const url = process.env.SUPABASE_URL;
+        const key = process.env.SUPABASE_ANON_KEY;
+        if (!url || !key) return resolve({ status: 'not-configured', lastCheck: now, details: { error: 'SUPABASE_URL or SUPABASE_ANON_KEY not set' } });
+        try {
+          const res = execSync(`curl -s -o /dev/null -w "%{http_code}" -H "apikey: ${key}" -H "Authorization: Bearer ${key}" "${url}/rest/v1/" -m 10`, { timeout, encoding: 'utf-8' }).trim();
+          const projectId = url.match(/https:\/\/(\w+)\./)?.[1] || '';
+          resolve({ status: (res === '200' || res === '204') ? 'ok' : 'error', lastCheck: now, details: { httpCode: res, project: projectId } });
+        } catch (e) { resolve({ status: 'error', lastCheck: now, details: { error: e.message.slice(0, 200) } }); }
+        break;
+      }
+      case 'fal': {
+        const key = process.env.FAL_API_KEY;
+        if (!key) return resolve({ status: 'not-configured', lastCheck: now, details: { error: 'FAL_API_KEY not set' } });
+        resolve({ status: key.length > 10 ? 'ok' : 'error', lastCheck: now, details: { note: 'Key present' } });
+        break;
+      }
+      case 'wavespeed': {
+        const key = process.env.WAVESPEED_API_KEY;
+        if (!key) return resolve({ status: 'not-configured', lastCheck: now, details: { error: 'WAVESPEED_API_KEY not set' } });
+        resolve({ status: key.length > 10 ? 'ok' : 'error', lastCheck: now, details: { note: 'Key present' } });
+        break;
+      }
+      case 'dumpling': {
+        const key = process.env.DUMPLING_API_KEY;
+        if (!key) return resolve({ status: 'not-configured', lastCheck: now, details: { error: 'DUMPLING_API_KEY not set' } });
+        resolve({ status: key.length > 10 ? 'ok' : 'error', lastCheck: now, details: { note: 'Key present' } });
+        break;
+      }
+      case 'brave': {
+        const key = process.env.BRAVE_API_KEY || process.env.BRAVE_SEARCH_API_KEY;
+        if (!key) return resolve({ status: 'not-configured', lastCheck: now, details: { error: 'BRAVE_API_KEY not set — OpenClaw uses Gemini web_search instead' } });
+        try {
+          const res = execSync(`curl -s -o /dev/null -w "%{http_code}" -H "X-Subscription-Token: ${key}" "https://api.search.brave.com/res/v1/web/search?q=test&count=1" -m 10`, { timeout, encoding: 'utf-8' }).trim();
+          resolve({ status: res === '200' ? 'ok' : 'error', lastCheck: now, details: { httpCode: res } });
+        } catch (e) { resolve({ status: 'error', lastCheck: now, details: { error: e.message.slice(0, 200) } }); }
+        break;
+      }
+      case 'instantly': {
+        // Instantly.ai — cold email platform, web login (no env var API key typically)
+        const key = process.env.INSTANTLY_API_KEY;
+        if (!key) return resolve({ status: 'not-configured', lastCheck: now, details: { note: 'Web login — no API key in .env' } });
+        try {
+          const res = execSync(`curl -s -o /dev/null -w "%{http_code}" "https://api.instantly.ai/api/v1/account/list?api_key=${key}" -m 10`, { timeout, encoding: 'utf-8' }).trim();
+          resolve({ status: res === '200' ? 'ok' : 'error', lastCheck: now, details: { httpCode: res } });
+        } catch (e) { resolve({ status: 'error', lastCheck: now, details: { error: e.message.slice(0, 200) } }); }
+        break;
+      }
+      case 'metricool': {
+        // Metricool — social scheduling, web login
+        const key = process.env.METRICOOL_API_KEY;
+        if (!key) return resolve({ status: 'not-configured', lastCheck: now, details: { note: 'Web login — no API key in .env' } });
+        resolve({ status: key.length > 10 ? 'ok' : 'error', lastCheck: now, details: { note: 'Key present' } });
+        break;
+      }
+      case 'nanobanana': {
+        // Nano Banana Pro = Gemini image generation — uses GEMINI_API_KEY
+        const key = process.env.GEMINI_API_KEY;
+        if (!key) return resolve({ status: 'not-configured', lastCheck: now, details: { error: 'Uses GEMINI_API_KEY (shared)' } });
+        resolve({ status: 'ok', lastCheck: now, details: { note: 'Uses Gemini API key (shared)', engine: 'gemini-2.0-flash-exp' } });
+        break;
+      }
+      case 'remotion': {
+        // Remotion — programmatic video rendering (local install, no API key)
+        try {
+          const raw = execSync('npx remotion --version 2>&1 || echo "not-found"', { timeout: 15000, encoding: 'utf-8' }).trim();
+          const notFound = /not.found|command not found|ERR/i.test(raw);
+          resolve({ status: notFound ? 'not-configured' : 'ok', lastCheck: now, details: { version: notFound ? null : raw.split('\n')[0], note: 'Local install' } });
+        } catch { resolve({ status: 'not-configured', lastCheck: now, details: { note: 'Not installed locally' } }); }
+        break;
+      }
+      case 'discord': {
+        const token = process.env.DISCORD_BOT_TOKEN;
+        if (!token) return resolve({ status: 'not-configured', lastCheck: now, details: { error: 'DISCORD_BOT_TOKEN not set' } });
+        try {
+          const res = execSync(`curl -s -o /dev/null -w "%{http_code}" -H "Authorization: Bot ${token}" https://discord.com/api/v10/users/@me -m 10`, { timeout, encoding: 'utf-8' }).trim();
+          resolve({ status: res === '200' ? 'ok' : 'error', lastCheck: now, details: { httpCode: res } });
+        } catch (e) { resolve({ status: 'error', lastCheck: now, details: { error: e.message.slice(0, 200) } }); }
+        break;
+      }
+      case 'openclaw': {
+        try {
+          const raw = execSync('/opt/homebrew/bin/openclaw status 2>&1', { timeout, encoding: 'utf-8' });
+          const running = /running/i.test(raw);
+          const appVersionMatch = raw.match(/app\s+([\d.]+)/);
+          const npmVersionMatch = raw.match(/npm latest\s+([\d.]+)/);
+          const version = appVersionMatch ? appVersionMatch[1] : '';
+          const latest = npmVersionMatch ? npmVersionMatch[1] : '';
+          resolve({ status: running ? 'ok' : 'error', lastCheck: now, details: { gateway: running ? 'running' : 'stopped', version, latest } });
+        } catch (e) { resolve({ status: 'error', lastCheck: now, details: { error: e.message.slice(0, 200) } }); }
+        break;
+      }
+      default:
+        resolve({ status: 'unknown', lastCheck: now, details: { error: `Unknown service: ${serviceId}` } });
+    }
+  });
+}
+
+async function runHealthChecks(serviceFilter) {
+  const health = loadApiHealth();
+  const allServices = ['anthropic', 'openrouter', 'openai', 'gemini', 'xai', 'minimax', 'brave', 'apify', 'firecrawl', 'serper', 'dataforseo', 'notion', 'supabase', 'fal', 'wavespeed', 'dumpling', 'instantly', 'metricool', 'nanobanana', 'remotion', 'gog', 'openclaw', 'discord'];
+  const toCheck = serviceFilter === 'all' ? allServices : allServices.includes(serviceFilter) ? [serviceFilter] : [];
+
+  if (toCheck.length === 0) return { error: `Unknown service: ${serviceFilter}` };
+
+  const results = {};
+  for (const svc of toCheck) {
+    results[svc] = await checkService(svc);
+    health.services[svc] = results[svc];
+  }
+  saveApiHealth(health);
+  return { checked: toCheck, results, lastCheck: health.lastCheck };
 }
 
 http.createServer((req, res) => {
@@ -272,6 +777,124 @@ http.createServer((req, res) => {
         res.writeHead(500); res.end('Write failed: ' + e.message);
       }
     });
+    return;
+  }
+
+  // === API: health check ===
+  if (url.startsWith('/api/health-check')) {
+    const params = new URLSearchParams(req.url.split('?')[1] || '');
+    const service = params.get('service') || 'all';
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    runHealthChecks(service).then(result => {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(result));
+    }).catch(err => {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: err.message }));
+    });
+    return;
+  }
+
+  // === API: read api-health.json (cached) ===
+  if (url === '/api/api-health') {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    try {
+      const data = fs.readFileSync(API_HEALTH_FILE, 'utf-8');
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(data);
+    } catch {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end('{"lastCheck":null,"services":{}}');
+    }
+    return;
+  }
+
+  // === API: get masked env vars for a service ===
+  if (req.method === 'GET' && url.startsWith('/api/env')) {
+    const params = new URLSearchParams(req.url.split('?')[1] || '');
+    const serviceId = params.get('service');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+
+    const envVars = parseEnv(readEnvFile());
+    const result = {};
+
+    if (serviceId && SERVICE_ENV_MAP[serviceId]) {
+      for (const field of SERVICE_ENV_MAP[serviceId]) {
+        result[field.key] = { label: field.label, placeholder: field.placeholder, masked: maskKey(envVars[field.key] || ''), hasValue: !!(envVars[field.key]) };
+      }
+    } else {
+      // Return all services with masked values
+      for (const [svc, fields] of Object.entries(SERVICE_ENV_MAP)) {
+        result[svc] = fields.map(f => ({ key: f.key, label: f.label, masked: maskKey(envVars[f.key] || ''), hasValue: !!(envVars[f.key]) }));
+      }
+    }
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify(result));
+    return;
+  }
+
+  // === API: save env var ===
+  if (req.method === 'POST' && url === '/api/env') {
+    let body = '';
+    req.on('data', chunk => { body += chunk; if (body.length > 1e5) req.destroy(); });
+    req.on('end', () => {
+      try {
+        const { service, vars } = JSON.parse(body);
+        if (!service || !vars || typeof vars !== 'object') {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Missing service or vars' }));
+          return;
+        }
+
+        // Validate that vars match expected keys for this service
+        const allowed = SERVICE_ENV_MAP[service];
+        if (!allowed) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: `Unknown service: ${service}` }));
+          return;
+        }
+        const allowedKeys = new Set(allowed.map(f => f.key));
+        const updates = {};
+        for (const [k, v] of Object.entries(vars)) {
+          if (!allowedKeys.has(k)) continue;
+          if (typeof v === 'string' && v.trim()) updates[k] = v.trim();
+        }
+
+        if (Object.keys(updates).length === 0) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'No valid vars to save' }));
+          return;
+        }
+
+        setEnvVars(updates);
+
+        // Auto health-check the service
+        runHealthChecks(service).then(hcResult => {
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ ok: true, saved: Object.keys(updates), healthCheck: hcResult }));
+        }).catch(err => {
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ ok: true, saved: Object.keys(updates), healthCheckError: err.message }));
+        });
+      } catch (e) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: e.message }));
+      }
+    });
+    return;
+  }
+
+  // === API: restart gateway ===
+  if (url === '/api/restart-gateway') {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    try {
+      execSync('/opt/homebrew/bin/openclaw gateway restart 2>&1', { timeout: 30000, encoding: 'utf-8' });
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true }));
+    } catch (e) {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: false, error: e.message.slice(0, 200) }));
+    }
     return;
   }
 
@@ -341,7 +964,12 @@ http.createServer((req, res) => {
         const backLabel = subParts.length > 0 ? `← ${subParts.slice(0, -1).pop() || prettyRoot}` : '← Documentos';
         // Pass brandPillars:true when listing brand/{slug} (pillar level)
         const isBrandSlug = rootKey === 'brand' && subParts.length === 1;
-        const content = listDir(fullPath, `/mc/docs/${rootKey}/${subPath ? subPath + '/' : ''}`, { brandPillars: isBrandSlug });
+        // Detect brand/{slug}/{section} — Foundation section level
+        const isBrandSection = rootKey === 'brand' && subParts.length === 2 && PILLAR_FLAT.includes(subParts[1]);
+        const content = listDir(fullPath, `/mc/docs/${rootKey}/${subPath ? subPath + '/' : ''}`, {
+          brandPillars: isBrandSlug,
+          brandSection: isBrandSection ? { slug: subParts[0], section: subParts[1] } : null,
+        });
         res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
         res.end(page(prettyPath, `<a class="back" href="${backUrl}">${backLabel}</a>`, `<h1>📂 ${prettyPath}</h1>${content}`));
         return;

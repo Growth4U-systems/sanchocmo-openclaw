@@ -44,7 +44,8 @@
 | 3 | urls.json | JSON array: {url, title, snippet, life_context, product_word, source_type} |
 | 4 | docs/*.md | One markdown per scraped page + manifest.json |
 | 5 | problems.md | Markdown table: Problem, Persona, Functional Cause, Emotional Load, Evidence, Alternatives, URLs |
-| 6 | niches-raw/merged.md | Markdown table: 14 columns (see Phase 6 prompt) |
+| 6b | niches-raw/merged.md | Markdown table: 14 columns — personas específicas deduplicadas |
+| 6c | niches-raw/clusters.md | JTBD Clusters: 5-10 grupos con "Social Payments" + personas miembro nombradas |
 | 7 | niches-filtered.md | Same 14 columns + Valid/Reason updated |
 | 7b | niches-triple.md | 14 columns + SWOT_Score, ICP_Score, Product_Score, Triple_Filter_Result |
 | 8 | niches-confirmed.md | Same as 7b, user-edited |
@@ -56,7 +57,8 @@
 
 | Data | Consumed By |
 |------|-------------|
-| Selected ECPs (name, JTBD, scores) | positioning-messaging, content-workflow |
+| JTBD Clusters (groups + "Social Payments") | positioning-messaging (messaging por grupo), content-workflow (content pillars por grupo), channel-prioritization |
+| Selected ECPs/Personas (name, JTBD, scores) | positioning-messaging, content-workflow |
 | JTBD per ECP | content-workflow, outreach-workflow |
 | Pain scores | phase-0-diagnostic, experiment design |
 | Reachability + channels | channel-prioritization, outreach-sequence-builder |

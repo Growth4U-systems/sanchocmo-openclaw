@@ -20,6 +20,8 @@ Per-niche positioning: one framework per ECP, not one generic pitch. The full 7-
 | `{{client_name}}` | Company name | "Monzo" |
 | `{{country}}` | Target country | "Spain" |
 | `{{industry}}` | Industry | "Fintech" |
+| `{{conversion_barriers}}` | Barreras de conversión del brief | "precio, efectos secundarios, dolor" |
+| `{{legal_constraints}}` | Restricciones legales del brief | "no nombrar fármacos" |
 | `{{doc_deep_research}}` | Reference to deep research doc | "Deep Research - Autonomous Savers" |
 | `{{Name_doc_nichos}}` | Niche document name | "ECP (100xniches)- Monzo BB.docx" |
 
@@ -73,21 +75,37 @@ Rules: Avoid vague words ("empower", "elevate"). Niche down early. Be specific.
 
 ---
 
-## Messaging Principles (Step 7)
+## Messaging Principles (Step 7) — Pain-Activated
 
-- 1 row for UVP Core Promise + 4-5+ rows for USPs
-- Short, sharp, emotionally intelligent copy
+**Framework: Dolor → Diagnóstico → Puente** (mapea al pipeline)
+1. **Dolor = Value Criteria (Step 4)**: Situación reconocible, vivida, específica. No dolor abstracto — una escena que el ECP reconoce al instante. El dolor VIENE del Value Criterion.
+2. **Diagnóstico**: El insight que conecta dolor con solución — lo que el ECP no ha verbalizado. Sorprende con análisis.
+3. **Puente = Asset (Step 5)**: Lo que {{client_name}} TIENE que resuelve el problema. Conecta con proof, no con promesa vacía.
+
+**Cada mensaje traza: Value Criterion → Insight → Asset**. Esto garantiza que el copy está fundamentado en datos del pipeline, no inventado.
+
+**2 formatos obligatorios por mensaje:**
+- **Versión corta (ads)**: 1-2 líneas. Social ads, banners, subject lines.
+- **Versión landing (story-driven)**: 1 párrafo. Dolor → Diagnóstico → Puente completo.
+
+**Principios:**
+- 1 row for UVP Core Promise + 4-5+ rows for USPs + 1-2 rows anti-objection
+- Copy visceral, específico, reconocible — NUNCA genérico ni funcional
 - Benefit-driven over feature-driven
-- Pain points and solutions obvious within 1 sentence
 - Each message connected to a Value Criterion
-- Bilingual (EN + ES), natively written (not translated)
+- Idioma: regla general del sistema (SOUL.md principio 7), NO de la skill
+
+**A/B Variants (opcional):**
+- Si el cliente planifica tests → generar 2-3 variantes por USP clave
+- Cada variante testea una hipótesis distinta
+- Marcar `[Variante A]`, `[Variante B]`, `[Variante C]`
 
 ---
 
 ## Lite vs Deep Criteria
 
-**Lite** (per niche): Steps 1-4 + 3 assets mapped + UVP + 3 USPs bilingual
-**Deep** (per niche): All 7 steps + full scoring map + complete assets + full proof table + complete bilingual playbook + Tier 2 updated
+**Lite** (per niche): Steps 1-4 + 3 assets mapped + UVP + 3 USPs (2 formatos, dolor-activado)
+**Deep** (per niche): All steps (1-7 + 6.5) + full scoring map + complete assets + full proof table + objection neutralization + complete pain-activated playbook (2 formatos) + legal check + Tier 2 updated
 
 ---
 

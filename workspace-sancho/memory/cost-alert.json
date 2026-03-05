@@ -1,7 +1,35 @@
 {
-  "date": "2026-02-26",
-  "daily_cost": 100.2243,
-  "threshold": 5.0,
-  "alert": true,
-  "message": "\u26a0\ufe0f Coste diario $100.22 supera threshold $5.00"
+  "updatedAt": "2026-03-05T00:04:37.746888",
+  "threshold_usd": 50.0,
+  "alerts": [
+    {
+      "date": "2026-03-03",
+      "total_usd": 157.81,
+      "threshold_usd": 50.0,
+      "severity": "critical",
+      "detail": {
+        "hospital-capilar": 0.03,
+        "sanchocmo": 0.24,
+        "paymatico": 0
+      }
+    },
+    {
+      "date": "2026-03-04",
+      "total_usd": 216.5,
+      "threshold_usd": 50.0,
+      "severity": "critical",
+      "detail": {
+        "hospital-capilar": 1.31,
+        "sanchocmo": 0,
+        "paymatico": 0.25
+      }
+    }
+  ],
+  "projection": {
+    "days_elapsed": 5,
+    "days_in_month": 31,
+    "daily_avg_usd": 102.59,
+    "projected_month_usd": 3180.42,
+    "projected_month_eur": 2925.98
+  }
 }

@@ -1,6 +1,17 @@
 ---
 name: niche-discovery-100x
 description: "Descubrimiento end-to-end de nichos con metodología 100x. Auto-detecta B2C/SMB vs B2B Enterprise: foros+pipeline automatizado (Serper/Firecrawl/LLM) para B2C, case studies+earnings calls+job postings+LinkedIn+trade pubs para B2B. Harvesta Foundation existente antes de investigar. Valida con Triple Filter (SWOT+ICP+Producto) y puntúa con Deep Research. Usar cuando: identificar nichos, validar nichos, segmentos de cliente, ICP, o 'a quién le vendo'. Triggers: find niches, discover market, ICP, target audience, customer segments, niche discovery, buscador de nichos, validate this niche, B2B problem discovery, 100x niches, ECP. NO usar para: análisis de mercado amplio (market-intelligence), posicionamiento (positioning-messaging), segmentación solo datos existentes (existing-customer-data). Requiere: company-context, self-intelligence, competitor-intelligence, swot-analysis."
+context_required:
+- brand/{slug}/company-brief/current.md
+- brand/{slug}/market-and-us/self-analysis/current.md
+- brand/{slug}/market-and-us/competitor-*/current.md
+- brand/{slug}/market-and-us/swot/current.md
+- brand/{slug}/market-and-us/market-analysis/current.md
+- brand/{slug}/market-and-us/summary.md
+context_writes:
+- brand/{slug}/go-to-market/ecps.md
+- brand/{slug}/go-to-market/niche-discovery/final-table.csv
+- brand/{slug}/go-to-market/niche-discovery/problems.md
 ---
 
 # ICP & 100x Niche Discovery v3.3
@@ -44,6 +55,7 @@ INTAKE → DETECTAR MERCADO → HARVEST FOUNDATION → ESTRATEGIA → DESCUBRIR 
 | [commands.md](references/commands.md) | Phase 3-5 B2C — comandos de scripts |
 | [prompts-phase6a.md](references/prompts-phase6a.md) | Phase 6a — agrupación en chunks (script) |
 | [prompts-phase6b.md](references/prompts-phase6b.md) | Phase 6b — merge y deduplicación (script) |
+| [prompts-phase6c.md](references/prompts-phase6c.md) | Phase 6c — JTBD clustering "Social Payments" (agente) |
 | [prompts-phase7a.md](references/prompts-phase7a.md) | Phase 7 — filtro de calidad (script) |
 | [prompts-phase7b.md](references/prompts-phase7b.md) | Phase 7b — triple filter Foundation (agente) |
 | [prompts-phase9.md](references/prompts-phase9.md) | Phase 9 — scoring deep research (agente) |
@@ -103,13 +115,41 @@ Ejecutar scripts — ver [commands.md](references/commands.md):
 - **Phase 4**: `scrape_urls.py` → `docs/`
 - **Phase 5**: `extract_problems.py` → `problems.md`
 
+**Si los scripts fallan** (SIGTERM, timeout, 0 output) → activar Fallback Manual (ver abajo). NO sustituir por `web_search`.
+
 ### Modo B2B Enterprise (Investigación por Agente)
-Leer [enterprise-sources.md](references/enterprise-sources.md). Trabajar fuentes seleccionadas con web_search/web_fetch. Stop: >= 50 problemas con >= 3 tipos de fuente.
+Leer [enterprise-sources.md](references/enterprise-sources.md). Trabajar fuentes seleccionadas con web_search + web_fetch. Stop: >= 50 problemas con >= 3 tipos de fuente.
 
 ### Modo Híbrido
 Ejecutar ambos stacks. Deduplicar en Phase 6.
 
-**Output idéntico en todos los modos**: `problems.md` con problemas JTBD estructurados.
+### ⚠️ Fallback Manual (cuando scripts fallan)
+
+Si los scripts B2C no funcionan, usar herramientas del agente con estas reglas estrictas:
+
+**Paso 1 — Descubrir URLs** (web_search está permitido SOLO aquí):
+- Usar `web_search` para encontrar URLs específicas de threads/posts/reviews (NOT para extraer problemas)
+- Buscar: `site:reddit.com "[keyword]"`, `site:indiehackers.com "[keyword]"`, reviews en G2/Capterra
+
+**Paso 2 — Scraping real** (web_fetch OBLIGATORIO):
+- Cada URL encontrada DEBE ser scrapeada con `web_fetch` para leer el contenido real
+- Para Reddit: usar URL + `.json` para obtener comments (ej: `reddit.com/r/SaaS/comments/xxx/.json`)
+- Mínimo **10 URLs scrapeadas** con contenido real de usuarios
+- Registrar cada URL en `scraping-log.md` con: URL, método, # comments leídos, estado
+
+**Paso 3 — Extraer con citas reales**:
+- Cada problema extraído DEBE incluir al menos 1 cita textual del usuario original
+- Formato: `"cita textual" — u/usuario, r/subreddit (score: X)`
+- Si no hay cita → el problema no cuenta como "scrapeado" → marcar como "inferido"
+
+**PROHIBIDO**: Usar `web_search` como sustituto de scraping y tratar los resúmenes sintetizados como datos de foros reales. `web_search` = descubrimiento de URLs. `web_fetch` = lectura de contenido real. Son pasos distintos, nunca intercambiables.
+
+### Regla de calidad: Ratio scrapeado vs inferido
+- **Mínimo 60% de problemas** deben tener cita textual de fuente scrapeada
+- Si < 60%: marcar documento como "⚠️ BAJA EVIDENCIA — mayoría inferida, no scrapeada"
+- Los ECPs finales DEBEN incluir sección "Voces reales" con 3-5 citas por ECP
+
+**Output idéntico en todos los modos**: `problems.md` con problemas JTBD estructurados + `scraping-log.md`.
 
 ### Fallback si 0 problemas
 Si después de ejecutar el stack completo tienes < 10 problemas:
@@ -118,9 +158,11 @@ Si después de ejecutar el stack completo tienes < 10 problemas:
 3. Si sigue < 10: informar al usuario y recomendar micro-entrevistas (5-10 personas ICP)
 4. **Nunca inventar problemas** — documentar el gap y proceder con lo que hay
 
-## Phase 6: Agrupar en Nichos
+## Phase 6: Agrupar en Personas + JTBD Clusters
 
-6a: Leer [prompts-phase6a.md](references/prompts-phase6a.md). Chunk → Sonnet 4. 6b: Leer [prompts-phase6b.md](references/prompts-phase6b.md). Merge → Opus. Output: `niches-raw/merged.md`
+6a: Leer [prompts-phase6a.md](references/prompts-phase6a.md). Chunk → Sonnet 4. Extraer PERSONAS específicas (≥3 dimensiones cada una).
+6b: Leer [prompts-phase6b.md](references/prompts-phase6b.md). Merge → Opus. Deduplicar personas. Output: `niches-raw/merged.md`
+6c: Leer [prompts-phase6c.md](references/prompts-phase6c.md). Clustering JTBD ("Social Payments"). Agrupar personas en 5-10 grupos por dolor compartido. Cada grupo = nombre memorable + "Social Payments" statement + personas miembro con nombres descriptivos ("The X"). Output: `niches-raw/clusters.md`
 
 ## Phase 7: Filtro de Calidad
 
@@ -197,3 +239,13 @@ Los scripts imprimen tokens usados en stdout. Capturar esos números para el log
 ## Almacenamiento
 
 Versionado estándar en `brand/{slug}/niche-discovery/`: `current.md` + `v{N}.md` + `history.json` + `qa-log.md`.
+
+## Regla Anti-Atajo (HARD RULE)
+
+**web_search ≠ scraping.** Los resúmenes de Google/Gemini son deducciones top-down. El scraping de foros es bottom-up con lenguaje real de usuarios. NUNCA son equivalentes.
+
+Si el agente no puede scrapear URLs reales (scripts rotos, APIs bloqueadas, rate limits):
+1. **Informar al usuario** del bloqueo y lo que se ha intentado
+2. **Mostrar qué se tiene** (harvest + lo que sí se scrapeó)
+3. **Pedir decisión**: continuar con evidencia parcial o esperar a resolver el bloqueo
+4. **NUNCA** presentar resúmenes de web_search como si fueran datos de foros scrapeados

@@ -2,6 +2,9 @@
 name: foundation-threads
 description: "Create Discord threads for Foundation v2.0 onboarding flow. Called by foundation-orchestrator when threads don't exist yet. Creates numbered threads per section/layer in #onboarding with skill reference and objective. NOT user-invocable — triggered automatically."
 user-invocable: false
+context_required:
+- brand/{slug}/foundation-state.json
+context_writes: []
 ---
 
 # Foundation Threads — Discord Thread Creation v2.0

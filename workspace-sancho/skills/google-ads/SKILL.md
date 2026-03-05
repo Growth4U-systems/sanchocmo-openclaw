@@ -13,6 +13,10 @@ metadata:
           },
       },
   }
+context_required:
+- brand/{slug}/operational/stack.md
+context_writes:
+- brand/{slug}/operational/learnings.md
 ---
 
 # Google Ads Skill

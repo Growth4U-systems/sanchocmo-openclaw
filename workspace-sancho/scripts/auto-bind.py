@@ -2,13 +2,29 @@
 """
 auto-bind.py — Auto-bind Discord guild channels to agents in openclaw.json.
 
-Usage:
-    auto-bind.py <guild_id> --dry-run    # Preview bindings without writing
-    auto-bind.py <guild_id> --apply      # Write bindings to openclaw.json
+Reads channels from Discord API, maps them to systemPrompts by name,
+and writes the full guild config to openclaw.json → guilds.{guildId}.
 
-Channel → Agent mapping:
-    - Channels containing "admin" → cervantes
-    - Everything else → sancho (default agent, no explicit binding needed)
+Usage:
+    auto-bind.py <guild_id> --name "Client Name" --slug "client-slug" --dry-run
+    auto-bind.py <guild_id> --name "Client Name" --slug "client-slug" --apply
+
+Channel → Role mapping (by name):
+    general      → DECISIÓN (requireMention: true)
+    onboarding   → EJECUCIÓN (Foundation flow)
+    brand        → DECISIÓN (pilares existentes)
+    campaigns    → DECISIÓN (proponer campañas)
+    content      → EJECUCIÓN (crear contenido)
+    creatives    → EJECUCIÓN (visual/identity)
+    prospecting  → EJECUCIÓN (outreach)
+    partners     → EJECUCIÓN (partnerships)
+    paid-ads     → EJECUCIÓN (ads)
+    web          → EJECUCIÓN (landing/magnets)
+    research     → INTELIGENCIA (deep research)
+    intelligence → INTELIGENCIA (signals/patterns)
+    learning     → INTELIGENCIA (CRM/trends)
+    soporte/tasks→ TAREAS (task management)
+    admin*       → cervantes agent binding
 """
 
 import argparse
@@ -18,17 +34,160 @@ import sys
 import urllib.request
 import urllib.error
 import tempfile
+import copy
 
 OPENCLAW_JSON = os.path.expanduser("~/.openclaw/openclaw.json")
 
-# Channel name patterns → agent ID
-CHANNEL_PATTERNS = {
-    "admin": "cervantes",
-    # Add more patterns here as needed
-    # "ops": "cervantes",
+# Allowed user IDs (from allowFrom)
+ALLOWED_USERS = [
+    "1334604955687977042",
+    "1402171221747040369",
+    "1478058457419616349",
+]
+
+# Channel name → systemPrompt template
+# {name} = client name, {slug} = client slug, {prefix} = task ID prefix
+CHANNEL_TEMPLATES = {
+    "general": {
+        "requireMention": True,
+        "systemPrompt": (
+            "[CLIENTE: {name} | slug: {slug}]\n"
+            "PATHS: ./brand/ → ./brand/{slug}/ (SIEMPRE)\n"
+            "Estás en #general. Canal de DECISIÓN. NO ejecutes nada aquí. "
+            "Solo responde si te mencionan con @SanchoCMO."
+        ),
+    },
+    "onboarding": {
+        "systemPrompt": (
+            "[CLIENTE: {name} | slug: {slug}]\n"
+            "PATHS: ./brand/ → ./brand/{slug}/ (SIEMPRE)\n"
+            "Estás en #onboarding. Canal de EJECUCIÓN.\n\n"
+            "FLUJO DE ONBOARDING:\n"
+            "1. Cuando un cliente empieza, usa el skill foundation-threads para crear hilos por pilar\n"
+            "2. Crea solo los hilos de la layer actual (Layer 0 primero: Contexto de empresa + Modelo de negocio + Presupuesto + Autoanálisis)\n"
+            "3. Trabaja dentro de cada hilo — pregunta iterativa, una a una\n"
+            "4. Al completar un pilar → guarda en brand/{slug}/ → muestra link al documento\n"
+            "5. Cuando la layer está completa → crea hilos de la siguiente layer con contexto de la anterior\n"
+            "6. NUNCA respondas directamente en el canal — siempre dentro de un hilo\n\n"
+            "Skills: foundation-threads, sancho-start, foundation-orchestrator, phase-0-diagnostic, "
+            "company-context, ecp-validation, niche-discovery-100x.\n\n"
+            "Cuando termines toda la Foundation, recomienda pasar a #brand para consultas."
+        ),
+    },
+    "brand": {
+        "systemPrompt": (
+            "[CLIENTE: {name} | slug: {slug}]\n"
+            "PATHS: ./brand/ → ./brand/{slug}/ (SIEMPRE)\n"
+            "Estás en #brand. Canal de DECISIÓN. NO crees documentos nuevos aquí (eso va en #onboarding).\n"
+            "Consulta, revisa y actualiza pilares existentes. "
+            "Skills: brand-voice, positioning-messaging, pricing-strategy, business-model-audit, self-intelligence."
+        ),
+    },
+    "campaigns": {
+        "systemPrompt": (
+            "[CLIENTE: {name} | slug: {slug}]\n"
+            "PATHS: ./brand/ → ./brand/{slug}/ (SIEMPRE)\n"
+            "Estás en #campaigns. Canal de DECISIÓN. NO ejecutes nada aquí. "
+            "Propón y decide campañas, funnels, priorización de canales.\n"
+            "Ejecución va a #content, #paid-ads, #prospecting, etc."
+        ),
+    },
+    "content": {
+        "systemPrompt": (
+            "[CLIENTE: {name} | slug: {slug}]\n"
+            "PATHS: ./brand/ → ./brand/{slug}/ (SIEMPRE)\n"
+            "Estás en #content. Canal de EJECUCIÓN. Crea contenido aquí.\n"
+            "Skills: content-calendar-planner, keyword-research, seo-content, content-atomizer, "
+            "newsletter, insight-to-content-mapper.\n"
+            "Las ideas nacen en #intelligence → se aprueban en #campaigns → se ejecutan aquí."
+        ),
+    },
+    "creatives": {
+        "systemPrompt": (
+            "[CLIENTE: {name} | slug: {slug}]\n"
+            "PATHS: ./brand/ → ./brand/{slug}/ (SIEMPRE)\n"
+            "Estás en #creatives. Canal de EJECUCIÓN. Identidad visual, creatividades de marketing.\n"
+            "Skills: visual-identity, nano-banana-pro."
+        ),
+    },
+    "prospecting": {
+        "systemPrompt": (
+            "[CLIENTE: {name} | slug: {slug}]\n"
+            "PATHS: ./brand/ → ./brand/{slug}/ (SIEMPRE)\n"
+            "Estás en #prospecting. Canal de EJECUCIÓN. Búsqueda de empresas, decision makers, "
+            "secuencias de outreach.\nSkills: company-finder, decision-maker-finder, contact-enrichment, apollo."
+        ),
+    },
+    "partners": {
+        "systemPrompt": (
+            "[CLIENTE: {name} | slug: {slug}]\n"
+            "PATHS: ./brand/ → ./brand/{slug}/ (SIEMPRE)\n"
+            "Estás en #partners. Canal de EJECUCIÓN. Búsqueda de partners, propuestas de colaboración.\n"
+            "Skills: company-finder, direct-response-copy."
+        ),
+    },
+    "paid-ads": {
+        "systemPrompt": (
+            "[CLIENTE: {name} | slug: {slug}]\n"
+            "PATHS: ./brand/ → ./brand/{slug}/ (SIEMPRE)\n"
+            "Estás en #paid-ads. Canal de EJECUCIÓN. Crea copies de anuncios, creatividades, "
+            "setup de cuentas Meta/Google.\nSkills: direct-response-copy, google-ads, meta-ads.\n"
+            "Las decisiones de qué campañas lanzar vienen de #campaigns."
+        ),
+    },
+    "web": {
+        "systemPrompt": (
+            "[CLIENTE: {name} | slug: {slug}]\n"
+            "PATHS: ./brand/ → ./brand/{slug}/ (SIEMPRE)\n"
+            "Estás en #web. Canal de EJECUCIÓN. Copy de landing, lead magnets, páginas de pricing.\n"
+            "Skills: direct-response-copy, lead-magnet."
+        ),
+    },
+    "research": {
+        "systemPrompt": (
+            "[CLIENTE: {name} | slug: {slug}]\n"
+            "PATHS: ./brand/ → ./brand/{slug}/ (SIEMPRE)\n"
+            "Estás en #research. Canal de INTELIGENCIA. Deep research, competitive intelligence, "
+            "análisis de mercado.\nSkills: deep-research, competitor-intelligence, market-intelligence."
+        ),
+    },
+    "intelligence": {
+        "systemPrompt": (
+            "[CLIENTE: {name} | slug: {slug}]\n"
+            "PATHS: ./brand/ → ./brand/{slug}/ (SIEMPRE)\n"
+            "Estás en #intelligence. Canal de INTELIGENCIA. Señales, patrones, pulso diario, "
+            "inteligencia de reuniones.\nSkills: daily-pulse, signal-monitor, meeting-intelligence.\n"
+            "Ideas que surjan aquí → proponlas como campaña en #campaigns."
+        ),
+    },
+    "learning": {
+        "systemPrompt": (
+            "[CLIENTE: {name} | slug: {slug}]\n"
+            "PATHS: ./brand/ → ./brand/{slug}/ (SIEMPRE)\n"
+            "Estás en #learning. Canal de INTELIGENCIA. CRM, tendencias, análisis interno.\n"
+            "Skills: last30days, existing-customer-data."
+        ),
+    },
+    "soporte": {
+        "systemPrompt": (
+            "[CLIENTE: {name} | slug: {slug}]\n"
+            "PATHS: ./brand/ → ./brand/{slug}/ (SIEMPRE)\n"
+            "PARA TAREAS DEL CLIENTE:\n"
+            "- Escribe la tarea directamente en brand/{slug}/tasks.md en la sección 'Propuestas'\n"
+            "- Formato: | {prefix}-XXX | Descripción | P1/P2/P3 | Fecha | Notas |\n"
+            "- Usa IDs con prefijo {prefix}- ({name})\n"
+            "- Después ejecuta: python3 scripts/regenerate.py\n\n"
+            "PARA TAREAS DE SISTEMA (infra, bugs de OpenClaw, config):\n"
+            "- Escálalas a Cervantes via sessions_send con formato ADMIN REQUEST\n"
+            "- Si es una pregunta de marketing, responde tú directamente."
+        ),
+    },
+    # Alias: #tasks uses same template as #soporte
+    "tasks": "soporte",
 }
 
-DEFAULT_AGENT = "sancho"  # No explicit binding needed for default
+# Channels that get agent=cervantes instead of sancho (default)
+CERVANTES_PATTERNS = ["admin"]
 
 
 def load_config():
@@ -55,75 +214,135 @@ def fetch_guild_channels(token, guild_id):
         sys.exit(1)
 
 
-def match_agent(channel_name):
-    """Return agent ID for a channel name, or None if default."""
-    name_lower = channel_name.lower()
-    for pattern, agent in CHANNEL_PATTERNS.items():
-        if pattern in name_lower:
-            return agent
-    return None  # Default agent — no binding needed
+def make_task_prefix(slug):
+    """Generate task ID prefix from slug: hospital-capilar → HC, growth4u → G4U."""
+    parts = slug.split("-")
+    if len(parts) == 1:
+        return slug[:3].upper()
+    return "".join(p[0].upper() for p in parts)
 
 
-def build_bindings(channels, guild_id):
-    """Build bindings array from guild channels."""
-    # Only text channels (type 0) and announcement channels (type 5)
+def get_template(channel_name):
+    """Get template for a channel name. Returns (template_dict, is_cervantes)."""
+    name = channel_name.lower()
+
+    # Check cervantes patterns first
+    for pattern in CERVANTES_PATTERNS:
+        if pattern in name:
+            return None, True
+
+    # Check exact match
+    tmpl = CHANNEL_TEMPLATES.get(name)
+    if tmpl is None:
+        return None, False
+
+    # Resolve alias
+    if isinstance(tmpl, str):
+        tmpl = CHANNEL_TEMPLATES[tmpl]
+
+    return tmpl, False
+
+
+def build_guild_config(channels, guild_id, client_name, client_slug):
+    """Build full guild config object for openclaw.json."""
     text_channels = [c for c in channels if c["type"] in (0, 5)]
-    bindings = []
+    prefix = make_task_prefix(client_slug)
+
+    guild_config = {
+        "requireMention": False,
+        "users": list(ALLOWED_USERS),
+        "channels": {},
+    }
+
+    mapped = []
+    unmapped = []
+    cervantes_bindings = []
 
     for ch in sorted(text_channels, key=lambda c: c["name"]):
-        agent = match_agent(ch["name"])
-        if agent:  # Only create bindings for non-default agents
-            bindings.append({
-                "channelId": ch["id"],
-                "channelName": ch["name"],  # For readability
-                "agent": agent,
-                "guildId": guild_id,
-            })
+        tmpl, is_cervantes = get_template(ch["name"])
 
-    return bindings, text_channels
+        if is_cervantes:
+            cervantes_bindings.append(ch)
+            continue
+
+        if tmpl is None:
+            unmapped.append(ch)
+            continue
+
+        # Build channel config
+        ch_config = {}
+        if tmpl.get("requireMention"):
+            ch_config["requireMention"] = True
+
+        prompt = tmpl["systemPrompt"].format(
+            name=client_name,
+            slug=client_slug,
+            prefix=prefix,
+        )
+        ch_config["systemPrompt"] = prompt
+
+        guild_config["channels"][ch["id"]] = ch_config
+        mapped.append((ch, tmpl.get("requireMention", False)))
+
+    return guild_config, mapped, unmapped, cervantes_bindings
 
 
-def merge_bindings(existing, new_bindings):
-    """Merge new bindings into existing, avoiding duplicates by channelId."""
-    existing_ids = {b["channelId"] for b in existing}
-    merged = list(existing)
-    added = []
-    for b in new_bindings:
-        if b["channelId"] not in existing_ids:
-            merged.append(b)
-            added.append(b)
-    return merged, added
-
-
-def print_preview(text_channels, bindings, guild_id):
-    """Print a human-readable preview."""
+def print_preview(guild_id, client_name, client_slug, mapped, unmapped, cervantes, guild_config):
+    """Print preview of what would be written."""
     print(f"\n📡 Guild: {guild_id}")
-    print(f"📺 Text channels found: {len(text_channels)}\n")
+    print(f"👤 Client: {client_name} (slug: {client_slug})")
+    print(f"🏷️  Task prefix: {make_task_prefix(client_slug)}-")
+    print(f"\n📺 Channels mapped: {len(mapped)}")
 
-    print("Channel Mapping:")
-    print("-" * 60)
-    for ch in sorted(text_channels, key=lambda c: c["name"]):
-        agent = match_agent(ch["name"])
-        label = agent or f"{DEFAULT_AGENT} (default)"
-        marker = "🔧" if agent else "  "
-        print(f"  {marker} #{ch['name']:<30} → {label}")
+    for ch, req_mention in mapped:
+        mention = " (requireMention)" if req_mention else ""
+        print(f"  ✅ #{ch['name']:<25}{mention}")
 
-    print(f"\n🔗 Explicit bindings to generate: {len(bindings)}")
-    if bindings:
-        print(json.dumps(bindings, indent=2))
+    if unmapped:
+        print(f"\n⚠️  Unmapped channels: {len(unmapped)} (will use default agent, no systemPrompt)")
+        for ch in unmapped:
+            print(f"  ⏭️  #{ch['name']}")
+
+    if cervantes:
+        print(f"\n🔧 Cervantes channels: {len(cervantes)}")
+        for ch in cervantes:
+            print(f"  🔧 #{ch['name']} → cervantes (needs manual binding)")
+
+    total_prompts = len(guild_config["channels"])
+    print(f"\n📝 Total channel configs to write: {total_prompts}")
+    print(f"👥 Allowed users: {len(guild_config['users'])}")
 
 
-def apply_bindings(config, bindings):
-    """Write bindings to openclaw.json atomically."""
+def apply_config(config, guild_id, guild_config):
+    """Write guild config to openclaw.json atomically."""
     discord = config["channels"]["discord"]
-    existing = discord.get("bindings", [])
-    merged, added = merge_bindings(existing, bindings)
+    guilds = discord.setdefault("guilds", {})
 
-    if not added:
-        print("\n✅ No new bindings to add (all already exist).")
-        return
+    if guild_id in guilds:
+        existing = guilds[guild_id]
+        existing_channels = existing.get("channels", {})
+        new_channels = guild_config["channels"]
 
-    discord["bindings"] = merged
+        # Merge: add new channels, don't overwrite existing
+        added = 0
+        for ch_id, ch_conf in new_channels.items():
+            if ch_id not in existing_channels:
+                existing_channels[ch_id] = ch_conf
+                added += 1
+
+        existing["channels"] = existing_channels
+        # Update users list (union)
+        existing_users = set(existing.get("users", []))
+        existing_users.update(guild_config["users"])
+        existing["users"] = list(existing_users)
+
+        print(f"\n🔄 Guild {guild_id} already exists — merged {added} new channel(s)")
+        if added == 0:
+            print("✅ No new channels to add (all already configured).")
+            return
+    else:
+        guilds[guild_id] = guild_config
+        print(f"\n✨ Created new guild config with {len(guild_config['channels'])} channels")
 
     # Atomic write
     fd, tmp_path = tempfile.mkstemp(
@@ -131,36 +350,45 @@ def apply_bindings(config, bindings):
     )
     try:
         with os.fdopen(fd, "w") as f:
-            json.dump(config, f, indent=2)
+            json.dump(config, f, indent=2, ensure_ascii=False)
             f.write("\n")
         os.replace(tmp_path, OPENCLAW_JSON)
-        print(f"\n✅ Added {len(added)} binding(s) to openclaw.json")
-        for b in added:
-            print(f"   #{b['channelName']} → {b['agent']}")
+        print("✅ openclaw.json updated")
     except Exception:
         os.unlink(tmp_path)
         raise
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Auto-bind Discord channels to agents")
+    parser = argparse.ArgumentParser(
+        description="Auto-bind Discord guild channels to openclaw.json"
+    )
     parser.add_argument("guild_id", help="Discord guild ID")
+    parser.add_argument("--name", required=True, help="Client display name")
+    parser.add_argument("--slug", required=True, help="Client slug (lowercase-dashes)")
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("--dry-run", action="store_true", help="Preview without writing")
-    group.add_argument("--apply", action="store_true", help="Write bindings to openclaw.json")
+    group.add_argument("--apply", action="store_true", help="Write config to openclaw.json")
     args = parser.parse_args()
 
     config = load_config()
     token = get_bot_token(config)
     channels = fetch_guild_channels(token, args.guild_id)
-    bindings, text_channels = build_bindings(channels, args.guild_id)
 
-    print_preview(text_channels, bindings, args.guild_id)
+    guild_config, mapped, unmapped, cervantes = build_guild_config(
+        channels, args.guild_id, args.name, args.slug
+    )
+
+    print_preview(
+        args.guild_id, args.name, args.slug,
+        mapped, unmapped, cervantes, guild_config
+    )
 
     if args.apply:
-        apply_bindings(config, bindings)
+        apply_config(config, args.guild_id, guild_config)
+        print("\n⚠️  Run 'openclaw gateway restart' to apply changes.")
     else:
-        print("\n💡 Run with --apply to write these bindings.")
+        print("\n💡 Run with --apply to write config.")
 
 
 if __name__ == "__main__":

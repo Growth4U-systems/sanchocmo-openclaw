@@ -59,6 +59,16 @@
 - [ ] **Todas las plataformas checkeadas** (Social, Reviews, App Stores, Website, Paid Ads)
 - [ ] **URLs documentadas** con status (active/dormant/not found)
 
+### Primary Source Verification (Step 1.5) — OBLIGATORIO
+- [ ] **web_fetch(homepage)** ejecutado para cada competidor directo → posicionamiento REAL capturado
+- [ ] **web_fetch(/pricing)** ejecutado para cada competidor directo → pricing REAL capturado (o ⚠️ "no público")
+  - Si /pricing no existe, se probó: /#Pricing, /plans, /prices, /precios
+- [ ] **web_fetch(/features o /product o /services)** ejecutado → features REALES capturados
+- [ ] **Cada precio citado viene de fuente primaria** (web del competidor, NO de artículos de terceros)
+- [ ] **Ningún dato de pricing/features viene SOLO de una fuente secundaria** (artículo, blog de terceros)
+  - Si un dato viene de fuente secundaria → marcado como "⚠️ Fuente secundaria — pendiente verificar en web del competidor"
+- [ ] **Regla verificada:** Fuente primaria > fuente secundaria SIEMPRE
+
 ### Scraping (Step 2) — VERIFICACIÓN DE HERRAMIENTAS OBLIGATORIA
 - [ ] **Apify web-scraper ejecutado** en homepage + pricing + about de cada competidor directo (pegar run ID o confirmar ejecución)
 - [ ] **Apify instagram-scraper ejecutado** para cada competidor con cuenta IG (pegar run ID o confirmar)

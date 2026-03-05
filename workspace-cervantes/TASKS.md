@@ -55,7 +55,7 @@
 
 | ID | Tarea | Cat | Pri | Propuesto | Notas |
 |---|---|---|---|---|---|
-| T-014 | Panel de APIs en Mission Control (globales + por cliente) | `[docs]` | P2 | Alfonso 2026-02-24 | Estado de APIs: Anthropic, OpenRouter, Brave, OpenClaw + por cliente. |
+
 | T-032 | Auto-sync TASKS.md → MC (tareas se actualizan solas) | `[docs]` | P1 | Cervantes 2026-02-26 | Opciones: (A) regenerate.py en cron cada 30min, (B) file watcher en mc-server.js, (C) esperar a Next.js T-010. |
 | T-043 | Tablas estratégicas en Supabase (competitors, niches, value_criteria, assets, messaging) | `[infra]` | P1 | Alfonso 2026-03-02 | 6 tablas nuevas para datos relacionales estratégicos. Arquitectura híbrida: Supabase owner de datos estructurados, markdown owner de narrativa. Supabase MCP Server para queries desde agentes. PRD completo en `_system/prds/T-043.md`. |
 | T-044 | Debug SIGTERM en scripts Python niche-discovery-100x | `[skill]` | P2 | Alfonso 2026-03-03 | **RESUELTO** — Scripts funcionan correctamente. Causa raíz: Gateway restarts (SIGTERM) matan procesos hijo. 40+ restarts en logs recientes. Discord health-monitor reinicia cada 10min ("stuck"). Workaround: usar `background:true` + `process(poll)`, o ejecutar en terminal separado. Scripts probados: serp_search.py completó 125 queries en ~2min sin error. |
@@ -82,6 +82,7 @@
 
 | ID | Tarea | Cat | Fecha | Notas |
 |---|---|---|---|---|
+| T-014 | Panel de APIs en Mission Control (globales + por cliente) | `[docs]` | 2026-03-04 | 23 servicios (6 LLM, 5 Data, 5 Infra, 5 Media, 2 Marketing). Health checks reales. Gestión de API keys desde MC (masked, auto-verify). Restart Gateway desde UI. `_system/api-health.json` persistente. |
 | T-042 | Auditoría completa de skills (57 auditadas) | `[skills]` | 2026-03-03 | 57 skills auditadas. Foundation pipeline 8.1/10 (excelente). 11 skills oversized (20-57KB). 4 merge candidates. 4 gaps: linkedin-content, reporting, landing-page, case-study. Reporte en `memory/T-042-skills-audit.md`. |
 | T-041 | Cron outputs siempre en hilos — patrón obligatorio de hilo para Discord | `[flow]` | 2026-03-01 | Todos los crons que publican en Discord ahora siguen patrón: 1) mensaje corto al canal, 2) thread-create desde ese mensaje, 3) contenido completo dentro del hilo. Actualizados: Daily Pulse, Weekly Synthesis, Meeting Intelligence, Healthcheck, Backup, Cervantes observa. Weekly Synthesis cambiado de delivery:announce a delivery:none con publish explícito. |
 
@@ -95,14 +96,14 @@
 | T-022 | Métricas de coste por cliente | `[cost]` | 2026-02-27 | cost-tracker.py + cron 23:00 + MC muestra costes por cliente y global. Cron delivery arreglado. |
 | T-037 | Aislamiento de contexto por cliente | `[flow]` | 2026-02-27 | `_system/client-context-isolation.md` + regla 0 en SOUL.md. P0 por Alfonso. |
 | T-034 | Integraciones y costes por cliente en MC | `[infra]` | P1 | ✅ 2026-02-26 | integrations.json + costs.json por cliente, sección en MC vista cliente y global, regenerate.py actualizado |
-| T-020 | Backup automático de datos de cliente | `[infra]` | P1 | ✅ 2026-02-26 | Cron backup-sancho arreglado (modelo haiku→sonnet), ejecutado OK. |
+| T-020 | Backup automático de datos de cliente | `[infra]` | P1 | ✔️ 2026-03-04 | COMPLETADA. Script backup.sh + cron 03:00 diario + alerta >48h en #admin. Funcionando sin fallos desde 26 Feb. Aprobada por Alfonso. |
 | T-024 | Auditar e instalar skills de ClawHub | `[skill]` | P1 | ✅ 2026-02-26 | Instalados: google-ads, meta-ads, google-analytics, google-search-console, apollo, apify, social-media-extractor. |
-| T-013 | Estilo visual SanchoCMO en Mission Control | `[docs]` | 2026-02-26 | Comic UI: parchment, Bangers, ink borders, flat shadows, textures |
+| T-013 | Estilo visual SanchoCMO en Mission Control | `[docs]` | ✔️ 2026-02-26 | Comic UI: parchment, Bangers, ink borders, flat shadows, textures. Logo/favicon/ilustraciones pendientes para T-010. |
 | T-023 | Sistema de selección de modelos multi-tier | `[cost]` | 2026-02-26 | Opus/Sonnet/Haiku por agente. Heartbeats → Haiku. QA → Sonnet. |
 | T-025 | Separar tareas sistema vs cliente en MC | `[docs]` | 2026-02-26 | Vista global = todas. Vista cliente = solo [client]. |
 | T-016 | Auto-binding Discord channels al crear cliente | `[infra]` | 2026-02-26 | auto-bind.py escrito + probado |
 | T-017 | Script new-client.sh | `[infra]` | 2026-02-26 | Script + templates creados |
-| T-019 | Health check endpoint / cron | `[infra]` | 2026-02-26 | healthcheck.sh escrito |
+| T-019 | Health check endpoint / cron | `[infra]` | ✔️ 2026-03-04 | COMPLETADA. Cron cada 6h chequea 24 servicios via MC endpoint + Tailscale. Debounce (solo alerta en cambio de estado). Escribe a `_system/api-health.json` → sección APIs de MC. Botón manual MC preservado. 20/20 servicios OK. Aprobada por Alfonso. |
 | T-026 | Sancho Start iterativo (onboarding conversacional) | `[flow]` | 2026-02-26 | Skill sancho-start reescrita |
 | T-028 | Foundation iterativa con aprobación por pilar | `[flow]` | 2026-02-26 | Skill foundation-orchestrator reescrita |
 | T-029 | GTM sigue flujo de campañas | `[flow]` | 2026-02-26 | Skill gtm-orchestrator creada |

@@ -2,6 +2,14 @@
 name: foundation-orchestrator
 description: "Orquesta la Foundation v2.0: 4 secciones, 6 layers, gate checks con requires/enriches_with. Flujo continuo — al aprobar un pilar, ejecuta automáticamente el siguiente. Company Brief como flujo único (3 skills → 1 aprobación). Genera síntesis inline (summary, ope-canvas, messaging-summary). Leer pillar-registry.md para detalle de cada pilar."
 user-invocable: false
+context_required:
+- brand/{slug}/foundation-state.json
+- _system/foundation-protocol.md
+context_writes:
+- brand/{slug}/foundation-state.json
+- brand/{slug}/company-brief/current.md
+- brand/{slug}/market-and-us/summary.md
+- brand/{slug}/go-to-market/ecps.md
 ---
 
 # Foundation Orchestrator v2.0

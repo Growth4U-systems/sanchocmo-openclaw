@@ -108,7 +108,24 @@ For both Value Criteria and Assets, check if any are connected ONLY to this ECP 
 | VC   | ...       | Yes/No  | [Name] or N/A          | Merge / Keep / Investigate |
 | Asset| ...       | Yes/No  | [Name] or N/A          | Merge / Keep / Investigate |
 
-## 6. SUMMARY & RECOMMENDATIONS
+## 6. OBJECTION & LEGAL COVERAGE CHECK
+
+### Objection Coverage:
+- List ALL conversion barriers from the company-brief
+- For each barrier: Is there at least ONE message in the playbook that neutralizes it?
+- If any barrier is uncovered → flag as CRITICAL gap
+
+### Legal Compliance:
+- List ALL legal constraints from the company-brief
+- Scan EVERY message in the playbook for violations (restricted product names, prohibited claims, etc.)
+- If any violation found → flag as CRITICAL and provide compliant alternative
+
+### Data Sourcing:
+- List ALL numerical claims/statistics in the messaging
+- For each: Does it have an inline `[Fuente](url)` citation or `~estimación` marker?
+- If any unattributed data found → flag as CRITICAL
+
+## 7. SUMMARY & RECOMMENDATIONS
 
 Provide a structured summary:
 
@@ -119,6 +136,7 @@ Provide a structured summary:
 | Asset Validity | ⭐ | ... |
 | Messaging Alignment | ⭐ | ... |
 | Orphan/Duplicate Health | ⭐ | ... |
+| Objection & Legal Coverage | ⭐ | ... |
 | **OVERALL** | ⭐ | ... |
 
 ### Action Items:

@@ -1,8 +1,10 @@
 # Positioning & Messaging Prompts
 
-6 prompts for the positioning-messaging pipeline. Steps 2-7 (Step 1 is deep research using general research prompts). Each prompt builds on previous outputs. Run per niche.
+7 prompts for the positioning-messaging pipeline. Steps 2-7 (Step 1 is deep research using general research prompts). Each prompt builds on previous outputs. Run per niche.
 
-**Template variables** — see SKILL.md for the full list of 18 project-level variables.
+**Template variables** — see SKILL.md for the full list of project-level variables.
+
+**Idioma**: el idioma de output es el idioma del cliente (definido en `clients.json` → `language`, regla general en SOUL.md principio 7). Las skills NO gestionan idioma.
 
 **Document references** — prompts reference output documents from previous steps:
 - `{{doc_deep_research}}` — Step 1 output
@@ -10,6 +12,7 @@
 - "Find your place to win" output — Step 4 output
 - "Assets" document — Step 5 output
 - "Step 6: Prove you are legit value" — Step 6 output
+- "Step 6.5: Objection Neutralization" — Step 6.5 output
 
 ---
 
@@ -214,59 +217,117 @@ Provide the responses in table form, with one row per criterion/asset.
 
 ---
 
-## Prompt 7: Final Positioning & Messaging Playbook
+## Prompt 6.5: Objection Neutralization (NUEVO)
 
-**Input data**: Proof table (Step 6) + all previous outputs
+**Input data**: Conversion barriers from company-brief (`{{conversion_barriers}}`) + Proof table (Step 6) + ECP document
 
 ```
-Using the document from "Step 6: Prove you are legit value", conduct a strategic and evidence-based analysis of {{client_name}} Unique Value Proposition (UVP) and Unique Selling Proposition (USP).
+You are a conversion strategist for {{client_name}} targeting the ECP: {{ecp_name}}.
+
+**Context:** The company brief identifies these conversion barriers for this audience:
+
+{{conversion_barriers}}
+
+**Task:** For EACH barrier/objection, create a neutralization strategy:
+
+| Objeción | Tipo (precio/miedo/dolor/confianza/otro) | Reframe (cómo reencuadrar la objeción) | Mensaje neutralizador | Proof de soporte | Formato sugerido (FAQ, testimonial, comparativa, garantía...) |
+
+**Rules:**
+- The reframe must NOT dismiss the objection — it must acknowledge it and redirect.
+- The message must feel empathetic, not defensive.
+- Proofs must be specific and verifiable (not "our clients love us").
+- Each objection gets its OWN dedicated message, not a generic catch-all.
+- If a barrier connects to an Asset from Step 5, reference it explicitly.
+
+**Example:**
+| "Es muy caro" | precio | "No es un gasto, es la inversión que evita gastar 3x en soluciones que no funcionan" | "El 73% de quienes prueban minoxidil por su cuenta gastan más de €2.000 en 3 años sin resultado. Con nosotros, sabes exactamente qué necesitas desde el día 1." | Dato: coste medio tratamientos OTC vs. diagnóstico profesional [Fuente] | Comparativa de costes + testimonial |
+
+Generate one row per conversion barrier. If the brief lists 3 barriers, produce 3 rows minimum.
+```
+
+---
+
+## Prompt 7: Final Positioning & Messaging Playbook (PAIN-ACTIVATED)
+
+**Input data**: Proof table (Step 6) + Objection neutralization (Step 6.5) + all previous outputs
+
+```
+Using the documents from "Step 6: Prove you are legit value" and "Step 6.5: Objection Neutralization", conduct a strategic and evidence-based analysis of {{client_name}} Unique Value Proposition (UVP) and Unique Selling Propositions (USPs).
 
 ### OBJECTIVE:
 
-Develop a **messaging playbook** grounded in {{client_name}} brand tone and validated user pain points. Your final output will be a **messaging table** that includes polished, bilingual copy ready for marketing and product channels.
+Develop a **pain-activated messaging playbook** grounded in {{client_name}} brand tone and validated user pain points. Every message must follow the **Dolor → Diagnóstico → Puente** framework, which maps directly to the pipeline:
+
+1. **Dolor = Value Criteria (Step 4)**: The pain point the ECP experiences. Describe a specific, vivid moment the ECP lives. Not abstract pain — a scene they recognize instantly. ("Llevas meses mirándote la frente en cada reflejo...")
+2. **Diagnóstico del problema real**: The insight connecting pain to solution — what the ECP hasn't articulated. ("El problema no es la caída — es no saber si lo que haces funciona o estás perdiendo tiempo.")
+3. **Puente = Asset (Step 5)**: What {{client_name}} has that solves the problem. Connect diagnosis to the specific asset. ("Con un diagnóstico capilar real, dejas de adivinar y empiezas un plan que tiene sentido para TU caso.")
+
+Each message row therefore traces: **Value Criterion (dolor) → Insight (diagnóstico) → Asset (puente)**. This ensures every message is grounded in the pipeline data, not invented.
 
 ### TASKS:
 
-1. **Extract and clearly define UVP and USP**:
-    - Use evidence from the "Step 6: Prove your value" document.
+1. **Extract and clearly define UVP and USPs**:
+    - Use evidence from Step 6 proof table.
     - Clearly distinguish between the core value promise (UVP) and the product differentiators (USPs).
 
-2. **Translate findings into a messaging table** with the following format:
+2. **For EACH message, generate 2 formats**:
+    - **Versión corta (ads)**: 1-2 líneas máximo. Para social ads, banners, subject lines.
+    - **Versión landing (story-driven)**: 1 párrafo completo. Situación → Diagnóstico → Puente. Para landing pages, emails, blog intros.
 
-| Message Category | Hypothesis (Why it will work) | Value Criteria | Objective | Final Message (English) | Final Message (Castellano) |
+3. **Include objection-neutralization messages**: Integrate the key messages from Step 6.5 as dedicated rows in the playbook.
 
-3. **For the "Final Message" columns**, generate marketing-ready messages that are:
-    - Short, direct, and emotionally resonant
-    - Consistent with {{client_name}} tone
-    - Crafted by a skilled **copywriter** — apply messaging principles from the reference document titled "Perfil de Copywriter" to inform tone, persuasion tactics, and structure.
-    - Make sure to connect the message with the ECP.
+4. **Messaging table format**:
 
-4. **Ensure each message row focuses on a distinct strategic emphasis**, such as:
-    - Core UVP (e.g. emotional and logistical clarity)
-    - Automation
-    - Fairness (e.g. pro-rata logic)
-    - Transparency & Accountability
-    - Flexibility in payments
-    - Speed and ease of collection
+| Categoría | Hipótesis (por qué funcionará) | Value Criterion | Objetivo | Versión Corta (ads) | Versión Landing (story-driven) |
 
-5. **Align each row with a clear Value Criteria from Step 4**
+5. **Ensure each message row focuses on a distinct strategic emphasis**, such as:
+    - Core UVP (dolor → diagnóstico → puente emocional)
+    - Anti-objeción: precio
+    - Anti-objeción: miedo/dolor
+    - Anti-objeción: desconfianza
+    - Diferenciador clave 1, 2, 3...
 
-6. **Provide full citations or document references** for any findings or claims drawn from the ECP results.
+6. **Align each row with a clear Value Criterion from Step 4**
+
+7. **Statistical claims**: Every number, percentage, or data point in the messaging MUST have either:
+    - `[Fuente: título](url)` inline citation, OR
+    - `~estimación` marker if no verified source exists
+    - **NEVER include unattributed statistics in final copy.**
+
+### A/B VARIANTS (OPCIONAL):
+
+Si el cliente indica que tiene tests planificados o quiere variantes:
+- Para los 2-3 USPs más críticos, generar 2-3 variantes alternativas
+- Marcar: `[Variante A]`, `[Variante B]`, `[Variante C]`
+- Indicar qué hipótesis testea cada variante (ej: "bono €195" vs "consulta gratuita" vs "diagnóstico sin compromiso")
 
 ### OUTPUT REQUIREMENTS:
 
-- 1 row for {{client_name}} **UVP Core Promise**
+- 1 row for {{client_name}} **UVP Core Promise** (con dolor → diagnóstico → puente)
 - At least 4-5 rows for **different USPs**, each with unique positioning
-- Fully completed bilingual messaging table
+- At least 1-2 rows for **anti-objection messaging** (from Step 6.5)
+- **2 formatos por mensaje**: corto + landing
 - Each message must reflect how a **professional copywriter** would phrase the communication
-- Short, sharp, emotionally intelligent copy
+- Copy es: visceral, específico, reconocible. NO genérico, NO funcional, NO "Stop guessing".
 
-### Tip for Copy Tone:
+### LEGAL CHECK (OBLIGATORIO):
 
-- Emphasize **clarity**, **empathy**, and **actionability**
-- Use informal but respectful language in Spanish
-- Prefer benefit-driven over feature-driven copy
-- Make pain points and solutions obvious within 1 sentence
+Before finalizing, cross-check ALL messaging against these restrictions:
+{{legal_constraints}}
+
+If ANY message violates a restriction (names a restricted product, makes a prohibited claim, etc.):
+- Flag it: ⚠️ LEGAL
+- Rewrite to comply
+- Document the original + compliant version
+
+### Copy Principles:
+
+- **Dolor primero**: el lector debe sentirse identificado en la primera frase
+- **Específico > genérico**: "mirándote la frente en el espejo" > "preocupado por tu pelo"
+- **Diagnóstico que sorprende**: nombra el problema real que no han verbalizado
+- **Puente creíble**: conecta diagnóstico → solución con proof, no con promesa vacía
+- Informal pero respetuoso
+- Benefit-driven, nunca feature-driven
 ```
 
 ---

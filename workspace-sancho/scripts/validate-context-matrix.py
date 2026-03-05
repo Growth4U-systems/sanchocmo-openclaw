@@ -1,143 +1,126 @@
 #!/usr/bin/env python3
-"""T-031: Validate context_required and context_writes in all SKILL.md files."""
+"""
+validate-context-matrix.py — Verifica que todas las skills tengan
+bloques context_required y context_writes en su frontmatter YAML.
+
+Uso: python3 scripts/validate-context-matrix.py [--fix]
+  --fix: No implementado, solo reporta.
+
+Exit codes:
+  0 = todas las skills tienen context matrix
+  1 = hay skills sin context matrix
+"""
 
 import os
 import sys
-import yaml
+import re
+from pathlib import Path
 
-SKILLS_DIR = os.path.expanduser("~/.openclaw/workspace-sancho/skills")
-
-# Valid brand/ files that skills can reference
-VALID_BRAND_FILES = {
-    "brand/company-context.md", "brand/voice-profile.md", "brand/positioning.md",
-    "brand/icp.md", "brand/ecps.md", "brand/competitors.md", "brand/market.md",
-    "brand/product-analysis.md", "brand/swot.md", "brand/pricing.md",
-    "brand/business-model.md", "brand/team.md", "brand/budget.md",
-    "brand/customer-data.md", "brand/keyword-plan.md", "brand/channel-plan.md",
-    "brand/content-calendar.md", "brand/assets.md", "brand/learnings.md",
-    "brand/stack.md",
-}
-
-# Valid directories for writes
-VALID_WRITE_DIRS = {
-    "campaigns/", "brand/transitory/daily-pulse/", "content-ideas/",
-    "intelligence/", "patterns/",
-}
-
-# Skills that are allowed to write to brand/ profile files (owners per brand-memory.md)
-BRAND_OWNERS = {
-    "brand/company-context.md": ["company-context"],
-    "brand/team.md": ["company-context"],
-    "brand/voice-profile.md": ["brand-voice"],
-    "brand/positioning.md": ["positioning-messaging"],
-    "brand/icp.md": ["niche-discovery-100x"],
-    "brand/ecps.md": ["niche-discovery-100x", "ecp-validation"],
-    "brand/competitors.md": ["competitor-intelligence"],
-    "brand/market.md": ["market-intelligence"],
-    "brand/product-analysis.md": ["self-intelligence"],
-    "brand/swot.md": ["swot-analysis"],
-    "brand/business-model.md": ["business-model-audit"],
-    "brand/budget.md": ["budget-constraints"],
-    "brand/customer-data.md": ["existing-customer-data"],
-    "brand/keyword-plan.md": ["keyword-research"],
-    "brand/channel-plan.md": ["channel-prioritization"],
-    "brand/content-calendar.md": ["content-calendar-planner"],
-    "brand/pricing.md": ["pricing-strategy"],
-    "brand/stack.md": ["sancho-start"],
-    # Append-only files: ALL skills can write
-    "brand/assets.md": None,  # None = any skill
-    "brand/learnings.md": None,
-}
+SKILLS_DIR = Path(__file__).parent.parent / "skills"
+REQUIRED_FIELDS = ["context_required", "context_writes"]
 
 
-def parse_frontmatter(content):
-    if not content.startswith("---"):
-        return None
-    end = content.find("---", 3)
-    if end == -1:
-        return None
-    try:
-        return yaml.safe_load(content[3:end].strip())
-    except yaml.YAMLError:
-        return None
+def extract_frontmatter(filepath: Path):
+    """Extract YAML frontmatter from a SKILL.md file."""
+    content = filepath.read_text(encoding="utf-8")
+    match = re.match(r"^---\s*\n(.*?)\n---", content, re.DOTALL)
+    return match.group(1) if match else None
+
+
+def check_skill(skill_dir: Path) -> dict:
+    """Check a single skill for context matrix fields."""
+    skill_md = skill_dir / "SKILL.md"
+    result = {
+        "name": skill_dir.name,
+        "has_frontmatter": False,
+        "has_context_required": False,
+        "has_context_writes": False,
+        "context_required": [],
+        "context_writes": [],
+    }
+
+    if not skill_md.exists():
+        return result
+
+    frontmatter = extract_frontmatter(skill_md)
+    if frontmatter is None:
+        return result
+
+    result["has_frontmatter"] = True
+    result["has_context_required"] = "context_required" in frontmatter
+    result["has_context_writes"] = "context_writes" in frontmatter
+
+    # Extract values
+    for field in REQUIRED_FIELDS:
+        pattern = rf"{field}:\s*\n((?:\s*-\s*.+\n)*)"
+        match = re.search(pattern, frontmatter)
+        if match:
+            items = re.findall(r"-\s*(.+)", match.group(1))
+            result[field] = [i.strip() for i in items]
+        elif f"{field}: []" in frontmatter:
+            result[field] = []
+
+    return result
 
 
 def main():
-    errors = []
-    warnings = []
-    total = 0
-    has_required = 0
-    has_writes = 0
+    if not SKILLS_DIR.exists():
+        print(f"❌ Skills directory not found: {SKILLS_DIR}")
+        sys.exit(1)
 
-    for skill_name in sorted(os.listdir(SKILLS_DIR)):
-        skill_path = os.path.join(SKILLS_DIR, skill_name, "SKILL.md")
-        if not os.path.isfile(skill_path):
-            continue
+    skill_dirs = sorted(
+        [d for d in SKILLS_DIR.iterdir() if d.is_dir() and (d / "SKILL.md").exists()]
+    )
 
-        total += 1
-        with open(skill_path, "r") as f:
-            fm = parse_frontmatter(f.read())
+    print(f"🔍 Scanning {len(skill_dirs)} skills...\n")
 
-        if fm is None:
-            errors.append(f"❌ {skill_name}: No valid frontmatter")
-            continue
+    missing = []
+    partial = []
+    complete = []
 
-        # Check context_required exists
-        cr = fm.get("context_required")
-        if cr is None:
-            errors.append(f"❌ {skill_name}: Missing context_required")
+    for skill_dir in skill_dirs:
+        result = check_skill(skill_dir)
+
+        if not result["has_frontmatter"]:
+            missing.append(result)
+        elif not result["has_context_required"] or not result["has_context_writes"]:
+            partial.append(result)
         else:
-            has_required += 1
-            if isinstance(cr, list):
-                for f_path in cr:
-                    if f_path not in VALID_BRAND_FILES and not f_path.endswith("/"):
-                        if f_path not in VALID_WRITE_DIRS:
-                            warnings.append(f"⚠️  {skill_name}: context_required references unknown file: {f_path}")
+            complete.append(result)
 
-        # Check context_writes exists
-        cw = fm.get("context_writes")
-        if cw is None:
-            errors.append(f"❌ {skill_name}: Missing context_writes")
-        else:
-            has_writes += 1
-            if isinstance(cw, list):
-                for f_path in cw:
-                    # Check directory writes
-                    if f_path.endswith("/"):
-                        if f_path not in VALID_WRITE_DIRS:
-                            warnings.append(f"⚠️  {skill_name}: writes to unknown directory: {f_path}")
-                        continue
-                    # Check brand file ownership
-                    if f_path in BRAND_OWNERS:
-                        allowed = BRAND_OWNERS[f_path]
-                        if allowed is not None and skill_name not in allowed:
-                            errors.append(f"❌ {skill_name}: writes to {f_path} but is not the owner (owners: {allowed})")
+    # Report
+    print(f"✅ Complete: {len(complete)}/{len(skill_dirs)}")
+    if partial:
+        print(f"⚠️  Partial:  {len(partial)}/{len(skill_dirs)}")
+        for r in partial:
+            fields = []
+            if not r["has_context_required"]:
+                fields.append("context_required")
+            if not r["has_context_writes"]:
+                fields.append("context_writes")
+            print(f"   - {r['name']}: missing {', '.join(fields)}")
 
-    # Summary
-    print("=" * 50)
-    print("T-031 Context Matrix Validation")
-    print("=" * 50)
-    print(f"\nSkills scanned:        {total}")
-    print(f"Have context_required: {has_required}/{total}")
-    print(f"Have context_writes:   {has_writes}/{total}")
+    if missing:
+        print(f"❌ Missing:  {len(missing)}/{len(skill_dirs)}")
+        for r in missing:
+            print(f"   - {r['name']}: no YAML frontmatter")
 
-    if errors:
-        print(f"\n❌ ERRORS ({len(errors)}):")
-        for e in errors:
-            print(f"  {e}")
+    # Summary stats
+    print(f"\n📊 Context Matrix Summary:")
+    reads_total = sum(len(r["context_required"]) for r in complete)
+    writes_total = sum(len(r["context_writes"]) for r in complete)
+    empty_reads = sum(1 for r in complete if len(r["context_required"]) == 0)
+    empty_writes = sum(1 for r in complete if len(r["context_writes"]) == 0)
+    print(f"   Total read paths:  {reads_total} across {len(complete) - empty_reads} skills")
+    print(f"   Total write paths: {writes_total} across {len(complete) - empty_writes} skills")
+    print(f"   Utility skills (no reads/writes): {min(empty_reads, empty_writes)}")
 
-    if warnings:
-        print(f"\n⚠️  WARNINGS ({len(warnings)}):")
-        for w in warnings:
-            print(f"  {w}")
-
-    if not errors:
-        print("\n✅ ALL CHECKS PASSED")
-        return 0
+    if missing or partial:
+        sys.exit(1)
     else:
-        print(f"\n❌ {len(errors)} errors found")
-        return 1
+        print(f"\n✅ All {len(skill_dirs)} skills have complete context matrix.")
+        sys.exit(0)
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    main()

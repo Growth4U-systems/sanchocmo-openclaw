@@ -20,21 +20,19 @@
 - **Rocinante** 🐎 → QA/Brand Guardian (Sonnet 4.5) — via sessions_send, sin presencia Discord
 - **Escudero** 🛡️ → Worker/Executor (Sonnet 4.5) — via sessions_spawn con thread:true, trabaja en hilos Discord
 
-## Sistema — Estado Actual (actualizado 2026-02-28)
+## Sistema — Estado Actual (actualizado 2026-03-04)
 - **Gateway**: Running, LaunchAgent, ws://127.0.0.1:18789
-- **Tailscale**: serve en `https://sancho-cmo.taild48df2.ts.net`, auth allowTailscale
-- **Mission Control**: HTML estático en `/mc`, mc-server.js (LaunchAgent com.sancho.mc-server, puerto 18790)
-  - Doc viewer en `/mc/docs/` con marked.js (reemplazó renderizador artesanal)
-  - File watcher en mc-server.js: vigila foundation-state.json, auto-regenera mc-data.js
-  - WYSIWYG editor (Toast UI Editor)
-- **Discord**: Bot SanchoCMO, guild 1475635138108063746
+- **Tailscale**: serve en `https://sancho-cmo.taild48df2.ts.net` (tailnet), Funnel desactivado
+- **Mission Control**: HTML estático en `/mc`, mc-server.js (LaunchAgent, puerto 18790). Foundation v2.0 rendering. File watcher auto-regenera.
+- **Discord**: Bot SanchoCMO, 4 guilds configurados
 - **Google Workspace**: gog CLI autenticado (alfonso@growth4u.io)
-- **Supabase**: psapmujzxhaxraphddlv.supabase.co, 9 tablas vacías
-- **DataForSEO**: login accounts@growth4u.io, balance ~$35
+- **Supabase**: psapmujzxhaxraphddlv.supabase.co — migration SQL lista, pendiente deploy
+- **DataForSEO**: balance ~$35
 - **Agentes**: 4 (cervantes, sancho, rocinante, escudero). Sancho es default.
-- **Skills**: 56 (44 workspace + 12 bundled)
+- **Skills**: ~54 activas (3 deprecated). Foundation pipeline v2.0.
 - **Heartbeat**: Cervantes cada 3h, Sancho cada 3h
 - **Exec**: security=full, ask=off
+- **Update disponible**: 2026.3.2 (notificado a Alfonso)
 
 ## Config Discord clave (2026-02-28)
 - `agents.defaults.thinkingDefault: high` — razonamiento profundo, va a thinking tokens (no se publica en Discord)
@@ -60,28 +58,17 @@
 - **Sancho → NO_REPLY**: después de crear hilo + enviar contenido, o después de spawnar Escudero
 - **Rocinante sin hilos**: usa sessions_send, no sessions_spawn → no crea hilos
 
-## Foundation v2.0 (2026-03-03)
-- **Completado**: 4 secciones (company-brief, market-and-us, go-to-market, brand-identity) + operational
-- **DAG**: 6 layers, requires (blocking) vs enriches_with (optional)
-- **Company Brief**: 3 skills → 1 doc → 1 aprobación (flujo continuo)
-- **OPE Canvas**: demotido a síntesis (orchestrator genera inline, no pilar bloqueante)
-- **Síntesis inline**: summary.md, ope-canvas.md, messaging-summary.md generadas por orchestrator
-- **8 Discord threads** (vs 15 antes): agrupados por sección
-- **56 skills migradas**: todas las rutas de brand/ actualizadas a v2.0
-- **regenerate.py**: lee foundation-state.json v2.0 multi-client
-- **Growth4U migrado**: company-brief merged (3→1), market-and-us poblado, viejos en _archive
-- **Hospital Capilar**: NO migrado (necesita supervisión Alfonso, tiene 10 pilares approved)
-- **Next ID**: T-044
-- **T-042 completada**: 57 skills auditadas, reporte en `memory/T-042-skills-audit.md`
+## Foundation v2.0 — Implementación (2026-03-03)
+- **56 skills migradas** a rutas v2.0. 4 protocolos actualizados. MC HTML reescrito.
+- **Growth4U**: migrado (company-brief merged 3→1). **Hospital Capilar**: migrado a schema v2.0 (13/56 pilares).
+- **Paymatico + SanchoCMO**: v2.0 vacío + dirs creados.
+- Detalle completo: `memory/2026-03-03.md`
 
-## Skills Audit Results (T-042, 2026-03-03)
-- **8 skills restructured** (oversized → lean + references): seo-content, email-sequences, lead-magnet, direct-response-copy, thief-marketers, pricing-strategy (merged pricing-hooks)
-- **3 deprecated**: phase-0-diagnostic, pricing-hooks, social-media-extractor
-- **1 removed**: niche-discovery-100x.bak-v1
-- **0 stale file paths remaining** (was 100+)
-- **Still oversized**: content-atomizer (54KB), keyword-research (54KB), newsletter (47KB), comic-ui-system (26KB), last30days (20KB)
-- **4 skill gaps**: linkedin-content (P1), reporting (P2), landing-page (P2), case-study (P2)
-- **4 merge candidates evaluated**: pricing done, apify done, gtm-orchestrator kept (different scope), phase-0 deprecated
+## Skills — Estado (T-042, 2026-03-03)
+- **57 auditadas**. Pipeline Foundation: 8.1/10.
+- **8 restructured** (lean + references): seo-content, email-sequences, lead-magnet, direct-response-copy, thief-marketers, pricing-strategy.
+- **3 deprecated**: phase-0-diagnostic, pricing-hooks, social-media-extractor.
+- **Reporte completo**: `memory/T-042-skills-audit.md`
 
 ## Clientes
 - **4 clientes activos** (2026-03-02):
@@ -96,79 +83,74 @@
   - Integrations: 7 services en integrations.json
   - Meetings: 5 en intelligence/meetings/
 
-## Foundation — Orden universal (15 pilares, 5 bloques)
+## Foundation v2.0 — DAG (6 layers, 12 pilares, 4 secciones)
 ```
-🏢 LA EMPRESA: company-context, business-model, budget, self-intelligence
-🎯 OPE CANVAS: ope-canvas (depende de La Empresa)
-📊 EL MERCADO: market, competitors, swot-analysis (depende de OPE Canvas)
-👥 LOS CLIENTES: niche-discovery-100x, ecp-validation, existing-customer-data (depende de El Mercado)
-🎯 LA MARCA: positioning, pricing, brand-voice, visual-identity (depende de El Mercado)
+L0 INTAKE:     company-brief (3 skills: company-context + business-model + budget → 1 doc, 1 aprobación)
+L1 RESEARCH:   market + competitors + self-intelligence (requires: company-brief)
+L2 SYNTHESIS:  summary.md + swot.md + ope-canvas.md (auto-generated, requires: L1 completo)
+L3 DISCOVERY:  niche-discovery + existing-customer-data (optional)
+L4 ACTIVATION: positioning + pricing + ecp-validation (optional) + messaging-summary
+L5 BRAND:      brand-voice + visual-identity
+
+Outputs: company-brief/ | market-and-us/ | go-to-market/ | brand-identity/ | operational/
+requires = bloqueante | enriches_with = opcional
+8 Discord threads (agrupados por sección, vs 15 antes)
 ```
 
-## Sesión 2026-02-28 (tarde) — T-040 + Infrastructure Hardening
+## Decisiones de Arquitectura Clave
+- **Meeting transcripts + summaries colocados** — `meetings/{slug}/summary.md + transcript.md`. Skills leen summary; transcript bajo demanda.
+- **Intelligence log como dedup + discovery** — Skills escriben al log tras procesar. MC visualiza.
+- **Síntesis inline** (no skills separadas) — summary.md, ope-canvas.md, messaging-summary.md generadas por orchestrator directamente.
+- **OPE Canvas demotido a síntesis** — no es pilar bloqueante, es output de Layer 2.
+- **Competitors como lista dinámica** — crece desde Company Brief, Market, Niche Discovery.
 
-### Completed
-- **T-040: Intelligence Log** — Centralized `intelligence-log.json` with 8 entries (5 meetings, 3 pulses). MC section with filters, search, links to docs.
-- **Meeting structure** — Refactored from flat files to `meetings/{slug}/summary.md + transcript.md`. All 5 meetings have transcripts downloaded from Google Drive.
-- **Task 2**: Added Almacenamiento blocks to 4 skills (company-context, business-model-audit, budget-constraints, market-intelligence).
-- **Task 3**: Fixed foundation-state.json — normalized brand-voice from invalid "draft" → "not-started". Cleaned 4 duplicate meeting entries.
-- **GitHub backup unified** — Single root repo with daily git push. Removed nested workspace copies.
+## Learnings (consolidados 2026-03-04)
 
-### Key Decisions
-- **Meeting transcripts + summaries colocated** — folder-per-meeting structure (like pillars) for coherence.
-- **Default = summary, transcript on-demand** — Skills read the processed summary by default; use raw transcript when explicit.
-- **Intelligence log as dedup + discovery** — Skills write to log after processing. MC uses it for visualization.
+### 🔴 Nunca hacer (errores con consecuencias graves)
+1. **Gateway restart durante webchat** — me mata a mí mismo. Pedir a Alfonso que lo haga desde terminal.
+2. **Heredoc con emojis en Python** → surrogates corrompen JSON. Usar siempre `\uXXXX` escapes.
+3. **Inventar keys en openclaw.json** — schema estricto. SIEMPRE leer docs antes de editar config.
+4. **Regex artesanal para markdown** — siempre librería estándar (marked.js). Cada doc nuevo revela edge cases.
+5. **Consolidar prompts que scripts leen enteros** — si `llm_step.py` lee un archivo completo como prompt, NO juntar fases separadas en un solo archivo.
 
-### Next (waiting for Alfonso)
-- pricing-hooks skill (missing for pilar 13/15)
-- T-010 (Next.js MC) — only after static is stable
-- T-039 (mobile access) — needs decision (Tailscale Funnel? App?)
+### 🟡 Config & Placement (dónde van las cosas)
+6. **Exec permissions**: `tools.exec.security` + `tools.exec.ask`, NO en `agents.defaults.exec` (crashea gateway).
+7. **Crons**: `openclaw cron add/edit/list`, persisten en `~/.openclaw/cron/jobs.json`. NO editar openclaw.json.
+8. **Cron delivery en sesiones aisladas**: `delivery.mode: "announce"` + `channel: "last"` falla → usar `mode: none` y publicar explícitamente via message tool.
+9. **thinkingDefault**: global en `agents.defaults`, no por agente. Niveles: off/minimal/low/medium/high/xhigh.
+10. **Discord plugin**: `openclaw plugins enable discord` no persiste entre restarts → usar `config set`.
+11. **Tailscale**: reset de Funnel borra config de serve → re-verificar `/` y `/mc` tras cambios.
+12. **Guild faltante en openclaw.json** = error silencioso más común. Brand dir puede existir pero si la guild no está en config, Sancho no responde. Siempre verificar ambos.
 
-### System Status
-- Gateway: running, Opus thinking=high
-- MC: 39 tasks, 10/15 Foundation pillars, Intelligence Log section live
-- Backup: automated nightly git push to GitHub
-- CHANGELOG: v0.10.0 updated
+### 🟢 Discord Patterns (cómo funciona bien)
+13. **Thinking tokens** resuelven texto intermedio en canal: `thinkingDefault: high` → razonamiento a tokens internos, no se publican.
+14. **thread-create con messageId** del usuario → hilo vinculado (mejor UX que standalone).
+15. **sessions_send** para QA silencioso (Rocinante). **sessions_spawn con thread:true** para trabajo visible (Escudero).
+16. **Todos los crons** que publican en Discord deben usar patrón: `send` → `thread-create(messageId)` → contenido en hilo.
+17. **Discord roles** > allowlist por usuario para permisos.
+18. **curl > urllib.request** para Discord API (urllib da error 1010).
 
-## Learnings (actualizados 2026-02-28)
+### 🔵 Diseño de SOUL.md (principios para Sancho)
+19. **Ejecutable, no punteros**: mover reglas P0 a `_system/` hizo que Sancho las ignorara. Las reglas críticas van inline en SOUL.md.
+20. **3 capas**: SOUL.md (comportamiento, siempre cargado) → TOOLS.md (mecánicas plataforma) → `_system/` (procedimientos bajo demanda).
+21. **Menos reglas bien escritas > muchas vagas**: de 21 a 11 reglas, mejor cumplimiento.
+22. **NO mandar instrucciones a Sancho** via sessions_send. Mejorar skills, reglas, checklists — no mensajes ad-hoc.
 
-### Arquitectura y Config
-- **NUNCA hacer `gateway restart` durante conversación activa por webchat** — me mata a mí mismo
-- **openclaw.json schema es estricto**: No inventar keys. SIEMPRE leer docs antes de editar config
-- **Exec permissions** van en `tools.exec`, NO en `agents.defaults.exec`
-- **Crons** se gestionan via `openclaw cron add/edit/list`, persisten en `~/.openclaw/cron/jobs.json`
-- **thinkingDefault** es global (agents.defaults), no por agente. Niveles: off/minimal/low/medium/high/xhigh
+### 🟤 Calidad & QA
+23. **Sancho puede mentir sobre herramientas** — dijo "Apify website crawl" sin haberlo ejecutado (0 llamadas). Regla 0h resuelve esto.
+24. **Docs tempranos (pre-reglas) son peores** — los primeros pilares tenían 50-60 líneas sin QA. Siempre regenerar con QA completo.
+25. **Checklists de herramientas**: items explícitos por tool (pegar run ID), prohibido marcar ✅ con fallback genérico.
 
-### Discord
-- **Thinking tokens resuelven texto intermedio**: `thinkingDefault: high` redirige razonamiento a tokens internos
-- **thread-create con messageId**: crea hilo vinculado al mensaje del usuario (mejor UX que standalone)
-- **spawnSubagentSessions: true**: necesario para que Escudero trabaje en hilos propios
-- **sessions_send vs sessions_spawn**: send para QA silencioso (Rocinante), spawn con thread:true para trabajo visible (Escudero)
-- **Discord roles** mejor que allowlist por usuario
-- **Discord plugin** `openclaw plugins enable discord` no persiste — usar config set
+### ⚡ Performance & Sub-agentes
+26. **Sub-agentes Opus para reestructuración masiva son lentos** (8 min para 2/5 archivos). Para tareas mecánicas de extracción, hacerlo yo es más rápido.
+27. **Sub-agentes CSS rompen cosas** cuando tocan demasiado HTML/JS. Hacer cambios quirúrgicos uno a uno desde sesión principal.
+28. **Gateway SIGTERM mata child processes** — Discord health-monitor provocó 49 restarts en un día. Scripts largos: usar `nohup`, `tmux`, o `exec(background:true)` + `process(poll)`.
 
-### SOUL.md y Reglas
-- **SOUL.md debe ser ejecutable, no punteros**: mover reglas a `_system/` hizo que Sancho las ignorara
-- **3 capas**: SOUL.md (comportamiento) + TOOLS.md (mecánicas) + `_system/` (procedimientos)
-- **Menos reglas bien escritas > muchas reglas vagas**: de 21 reglas a 11, mejor cumplimiento
-- **NO mandar instrucciones a Sancho**: mejorar skills/reglas/sistema, no mensajes ad-hoc
-
-### Onboarding y Config
-- **NUNCA usar heredoc con emojis en Python** para escribir openclaw.json → surrogates corrompen JSON. Usar \uXXXX escapes.
-- **new-client.sh no configura openclaw.json** — solo crea brand dir + Supabase. Guild config es manual (script pendiente).
-- **Growth4U guild faltaba** — brand dir existía pero guild no estaba en openclaw.json → Sancho no respondía
-- **Tailscale Funnel**: `/mc/docs` como mount point pierde subdirectorios → usar `/mc` como mount
-
-### Calidad de documentos
-- **Sancho mintió sobre Apify**: dijo "Apify website crawl" sin haberlo ejecutado (0 llamadas). Regla 0h (honestidad) añadida
-- **Checklist de herramientas**: items explícitos por tool (pegar run ID), prohibido marcar ✅ con fallback
-- **Docs tempranos (pre-reglas) son peores**: company-context, budget, business-model eran de 50-60 líneas sin QA. Regenerados a v2 con QA completo
-- **Nunca regex artesanal para markdown**: usar siempre librería estándar (marked.js)
-
-### Versionado
-- **Cada pilar**: `brand/{slug}/{pilar}/current.md` + `v1.md` + `history.json` + `qa-log.md`
-- **foundation-state.json** por cliente: fuente de verdad para pillar statuses (approved/pending-review/not-started)
-- **File watcher** en mc-server.js: vigila foundation-state.json, auto-regenera mc-data.js (ya no depende de que Sancho ejecute regenerate.py)
+### 📐 Arquitectura (patrones establecidos)
+29. **Versionado por pilar**: `brand/{slug}/{pilar}/current.md` + `v1.md` + `history.json` + `qa-log.md`.
+30. **foundation-state.json** por cliente: fuente de verdad para statuses. File watcher en mc-server.js auto-regenera mc-data.js.
+31. **Onboarding 6 min**: cliente crea server (template) + OAuth bot → Cervantes ejecuta `new-client.sh` + config guild manual. `new-client.sh` no configura openclaw.json (pendiente automatizar).
+32. **Aislamiento de contexto**: Daily Pulse filtró info interna a canal de cliente → Regla 0 en SOUL.md. Pre-publicación: ¿este contenido pertenece a este cliente?
 
 ## Arquitectura de Canales Discord
 - **Decision channels** (general, brand, campaigns): NO ejecutan
@@ -177,36 +159,20 @@
 - **#general**: requireMention=true
 - **14 canales** con systemPrompt limpio (contexto cliente + PATHS + instrucciones de canal)
 
-## Sesión 2026-03-01 — Onboarding x2 + T-041 Crons
+## Hitos del Sistema (cronológico)
+- **2026-02-25**: Nacimiento. Separación de Sancho.
+- **2026-02-26**: 14 tareas completadas en sprint nocturno. Comic UI. Discord bindings.
+- **2026-02-27**: SOUL.md de 531→99 líneas. 11 reglas cardinales. Aislamiento contexto (P0). Versionado por carpeta.
+- **2026-02-28**: Intelligence Log. Threading resuelto (thinkingDefault:high). "No mandar instrucciones a Sancho".
+- **2026-03-01**: Onboarding 6 min. Tailscale Funnel. Crons en hilos. Supabase multi-tenant SQL lista.
+- **2026-03-02**: 3 clientes onboarded (Paymatico, SanchoCMO, Growth4U). niche-discovery v3.1-3.3. Foundation v2.0 diseñada.
+- **2026-03-03**: Foundation v2.0 implementada completa (56 skills, 4 protocolos, MC). T-042 auditoría (57 skills). Skills cleanup (-140KB).
+- **2026-03-04**: Consolidación de learnings. Sección Evolución en SOUL.md.
 
-### Completed
-- **T-039: Tailscale Funnel** — Public docs access at `https://sancho-cmo.taild48df2.ts.net:8443/mc/docs/` ✅
-- **Supabase multi-tenant** — Migration SQL (8 tables: clients, pillars, meetings, intelligence_log, integrations, costs, content, campaigns) with RLS. Ready to deploy.
-- **Onboarding workflow v2** — 6 min end-to-end:
-  1. Cliente: Discord template (30s)
-  2. Cliente: OAuth bot (30s)
-  3. Cervantes: `new-client.sh` (30s)
-  4. Cervantes: Guild config + restart (5m)
-  - Script handles all: brand dirs, foundation-state.json, integrations.json, Supabase INSERT, clients.json, clients.js, MC regen
-- **T-041: Cron outputs siempre en hilos** — Protocolo estandarizado documentado. All 6 crons now use threads:
-  1. Daily Pulse
-  2. Weekly Synthesis
-  3. Meeting Intelligence
-  4. Healthcheck (alerts)
-  5. Backup-sancho (alerts)
-  6. Cervantes observa (notifications)
-  - `_system/discord-thread-protocol.md` created
-
-### System Status (2026-03-01 14:33)
-- Gateway: running (pid 41117), Opus thinking=high, Discord OK
-- MC: 40 tasks, 50 events, 10/15 Foundation, 1 campaign
-- Device: 1 PENDING operator (since ~09:45, notified Alfonso)
-- T-041 moved to completed in TASKS.md
-
-## Tareas
-- **TASKS.md**: `~/.openclaw/workspace-cervantes/TASKS.md` — task board unificado con tags de cliente
-- **Próximo ID**: T-043
-- **T-042** (Auditoría skills): aprobada, pendiente ejecutar
-- **T-010** (Next.js MC): PRD completo en `prd/t-010-mission-control-nextjs.md`, Alfonso dice "ya volveremos"
-- **T-010** (Next.js MC): única aprobada, pendiente de que estático esté estable
-- **Device pairing**: 1 PENDING — Alfonso debe revisar
+## Tareas — Estado actual
+- **TASKS.md**: `~/.openclaw/workspace-cervantes/TASKS.md` — fuente de verdad
+- **Próximo ID**: T-045
+- **Aprobadas pendientes**: T-010 (Next.js MC — "ya volveremos")
+- **Propuestas pendientes**: T-014 (API panel), T-032 (auto-sync tasks), T-043 (tablas Supabase), T-044 (SIGTERM resuelto, mover a hecha)
+- **Skill gaps** (T-042): linkedin-content (P1), reporting (P2), landing-page (P2), case-study (P2)
+- **Skills oversized** pendientes de slim: content-atomizer (54KB), keyword-research (54KB), newsletter (47KB)

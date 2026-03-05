@@ -21,7 +21,9 @@ INSTRUCCIONES:
 
 4. CONTROL DE CALIDAD para cada nicho fusionado:
    - Niche_ID debe ser único
-   - Unified Problem Statement debe ser en primera persona
+   - Unified Problem Statement (JTBD) debe seguir formato: "Cuando [Situación], quiero [Motivación], para poder [Resultado]"
+   - Hypothesis Statement debe seguir formato: "Creemos que [NICHO] se siente frustrado por [PROBLEMA], lo que le obliga a [WORKAROUND]. Para ellos, nuestra solución es la única que combina [F1] con [F2], permitiéndoles [RESULTADO] sin [NEGATIVO COMPETENCIA]"
+   - Al fusionar duplicados: quedarse con el JTBD más concreto (con situación real, no genérica) y el Hypothesis más completo
    - Reference URLs deben preservarse (fusionar de duplicados)
    - Las 14 columnas deben estar llenas
 

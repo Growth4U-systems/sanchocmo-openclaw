@@ -1,16 +1,16 @@
 ---
 name: positioning-messaging
-description: "Per-niche positioning and messaging playbook. Use when: crafting messaging for each ECP — what engages them, builds trust, makes them choose us. Runs AFTER niches selected (niche-discovery-100x). Produces per-ECP: deep research, mini competitor analysis, company analysis, value criteria scoring, asset mapping, benefit-proof pairing, bilingual messaging playbook (UVP + USPs). Manages Tier 2 shared documents (Value Criteria, Assets) across niches. NOT for: general market research (use market-intelligence), competitor deep-dives (use competitor-intelligence), or brand voice definition (use brand-voice)."
+description: "Per-niche positioning and messaging playbook. Use when: crafting messaging for each ECP — what engages them, builds trust, makes them choose us. Runs AFTER niches selected (niche-discovery-100x). Produces per-ECP: deep research, mini competitor analysis, company analysis, value criteria scoring, asset mapping, benefit-proof pairing, objection neutralization, pain-activated messaging playbook (UVP + USPs) with optional A/B variants. Manages Tier 2 shared documents (Value Criteria, Assets) across niches. NOT for: general market research (use market-intelligence), competitor deep-dives (use competitor-intelligence), or brand voice definition (use brand-voice)."
 metadata:
   author: Alfonso Sainz de Baranda (Growth4U)
-  version: '3.0'
+  version: '4.0'
   system: SanchoCMO
   phase: '1'
   pillar: positioning-messaging
   layer: '4'
   depends_on: niche-discovery-100x, competitor-intelligence
-  updated: '2026-02-27'
-  changes: v3 — Restructured per skill-creator principles. SKILL.md lean (~130 lines). Concepts/prompts in references.
+  updated: '2026-03-04'
+  changes: v4 — Pain-activated messaging, objection neutralization, legal verification, language-adaptive output, A/B variants, statistical data sourcing.
 context_required:
 - brand/{slug}/company-brief/current.md
 - brand/{slug}/market-and-us/competitor-*.md
@@ -47,6 +47,8 @@ context_writes:
 - Lee `references/hydration.md` para el mapeo específico de esta skill
 - Lee TODOS los docs en `context_required`
 - Pre-rellena campos según hydration_map
+- **Extrae objeciones de conversión** del company-brief → `{{conversion_barriers}}` (barreras de compra del ECP: precio, miedos, objeciones)
+- **Extrae restricciones legales** del company-brief → `{{legal_constraints}}` (qué NO se puede decir/nombrar en copy: fármacos, claims médicos, etc.)
 - Presenta datos heredados al usuario: "De [fuente] ya tengo X. ¿Correcto?"
 - Solo pregunta campos listados en "Campos genuinamente nuevos"
 
@@ -76,15 +78,29 @@ context_writes:
 - Para cada asset: competitive advantage + user benefit + proof específico (Prompt 6)
 - Proofs variados (testimonial, screenshot, case study — no genéricos)
 
+### 6.5. Objection Neutralization (~20 min) — NUEVO
+- Lee `{{conversion_barriers}}` del company-brief
+- Para CADA objeción/barrera: genera messaging que la neutralice (Prompt 6.5)
+- Tabla: Objeción → Reframe → Mensaje neutralizador → Proof de soporte
+- Si el brief no tiene objeciones documentadas → preguntar al usuario las 3 principales
+
 ### 7. Final Messaging Playbook (~30 min)
-- UVP + 4-5+ USPs, bilingual (EN + ES), marketing-ready copy (Prompt 7)
-- Cada fila → Value Criterion, hypothesis, objective, message EN/ES
+- **Framework Dolor → Diagnóstico → Puente** (mapea al pipeline):
+  - **Dolor** = Value Criteria (Step 4): el pain point que el ECP experimenta
+  - **Diagnóstico** = el insight que conecta dolor con solución (lo que el ECP no ha verbalizado)
+  - **Puente** = Asset (Step 5): lo que tenemos que resuelve el problema
+- **2 formatos por mensaje**: versión corta (ads, 1-2 líneas) + versión landing (párrafo story-driven)
+- UVP + 4-5+ USPs + mensajes anti-objeción
+- Cada fila → Value Criterion (dolor), hypothesis, objetivo, mensaje corto, mensaje largo
+- **Opcional A/B**: si el cliente tiene tests planificados → generar 2-3 variantes por USP clave (Prompt 7)
 
 ### 8. Self-QA (OBLIGATORIO)
 - Lee `references/checklist.md`, repite por cada ECP
 - **0 ❌** antes de entregar
+- **Verificación legal** (BLOQUEANTE): cruza TODO el output contra `{{legal_constraints}}`. Si algún claim, nombre de fármaco, o término restringido aparece → corregir ANTES de continuar.
+- **Verificación de datos**: cada cifra/porcentaje/estadística tiene `[Fuente](url)` inline O está marcado como `~estimación sin fuente verificada`.
 - Spot-check 5-10 URLs, cruza claims contra self-intel Lens 3
-- Metadata: `<!-- Self-QA: PASS | fecha | items: X✅ Y⚠️ 0❌ -->`
+- Metadata: `<!-- Self-QA: PASS | fecha | items: X✅ Y⚠️ 0❌ | legal: PASS/FAIL -->`
 
 ### 9. Positioning DAG Review (OBLIGATORIO — Gate de calidad)
 - Ejecuta el prompt de `references/positioning-dag-review.md` para CADA ECP
@@ -104,7 +120,7 @@ context_writes:
 
 | Dato | Lo consume |
 |------|-----------|
-| Messaging playbook (bilingual) | Phase 2 landing pages, Phase 3 ad copy, social-content |
+| Messaging playbook (pain-activated) | Phase 2 landing pages, Phase 3 ad copy, social-content |
 | Value criteria + scoring map | pricing-hooks, competitor-alternatives page |
 | Opportunity Zones | content-workflow, Phase 3 SEO topics |
 | Asset-benefit-proof table | landing-pages (trust signals), email-sequence (proof points) |

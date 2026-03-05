@@ -1,0 +1,52 @@
+{
+  "client": "sanchocmo",
+  "period": "2026-03",
+  "updatedAt": "2026-03-05T00:04:37.746888",
+  "total_cost_usd": 0.239,
+  "total_cost_eur": 0.2199,
+  "turns": 4,
+  "sessions": 2,
+  "agents": {
+    "sancho": {
+      "cost_usd": 0.239,
+      "cost_eur": 0.2199,
+      "turns": 4,
+      "sessions": 2
+    }
+  },
+  "models": {
+    "claude-opus-4-6": {
+      "input": 5,
+      "output": 638,
+      "cache_read": 60419,
+      "cache_write": 30852,
+      "cost_usd": 0.239,
+      "cost_eur": 0.2199,
+      "turns": 3
+    },
+    "unknown": {
+      "input": 0,
+      "output": 0,
+      "cache_read": 0,
+      "cache_write": 0,
+      "cost_usd": 0,
+      "cost_eur": 0.0,
+      "turns": 1
+    }
+  },
+  "days": {
+    "2026-03-03": {
+      "cost_usd": 0.239,
+      "turns": 3
+    },
+    "2026-03-04": {
+      "cost_usd": 0,
+      "turns": 1
+    }
+  },
+  "clientSpend": {
+    "google-ads": 0,
+    "meta-ads": 0,
+    "total": 0
+  }
+}

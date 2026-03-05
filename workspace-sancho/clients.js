@@ -37,7 +37,7 @@ const CLIENTS = {
 
   "paymatico": {
     name: "Paymatico",
-    emoji: "🏢",
+    emoji: "💳",
     url: "",
     discord_guild: "1477995837719056458",
     supabase: {
@@ -49,8 +49,8 @@ const CLIENTS = {
   },
 
   "sanchocmo": {
-    name: "SanchoCMO - SelfMarketing",
-    emoji: "🏢",
+    name: "SanchoCMO",
+    emoji: "🐴",
     url: "",
     discord_guild: "1477997446885019670",
     supabase: {

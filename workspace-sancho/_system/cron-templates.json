@@ -1,0 +1,35 @@
+{
+  "$comment": "Generic cron prompt templates for per-client cron creation. {SLUG} and {NAME} are replaced by create-client-crons.sh",
+  "daily_pulse": {
+    "name_template": "Daily Pulse — {NAME}",
+    "agent": "sancho",
+    "model": "minimax/MiniMax-M2.5",
+    "session": "isolated",
+    "delivery_mode": "none",
+    "prompt": "Ejecuta el Daily Pulse para {NAME}.\n\nPASO 0 — CARGAR CONFIG:\nLee brand/{SLUG}/sources.json. Usa los IDs de ahí para TODO. NUNCA hardcodees IDs.\n\nPASO 1 — LEER FUENTES:\nDel campo 'crons.daily_pulse.read_channels' en sources.json, lee mensajes de las últimas 24h de CADA canal usando: message(action=read, channel=discord, target=<channelId>, limit=50)\nFiltra mensajes de las últimas 24h. Excluye bots y mensajes <30 chars. Incluye threads activos.\n\nPASO 2 — EXTRAER INSIGHTS:\nExtrae insights (pain points, feature requests, success stories, trends, preguntas recurrentes). Clasifica por categoría. Genera micro-briefs.\n\nPASO 3 — GUARDAR:\nGuarda en brand/{SLUG}/daily-pulse/YYYY-MM-DD.json\nDespués ejecuta: python3 ~/.openclaw/workspace-sancho/scripts/regenerate.py\n\nPASO 4 — PUBLICAR EN DISCORD (PATRÓN OBLIGATORIO DE HILO):\nDel sources.json, busca el channel ID de 'crons.daily_pulse.publish_channel' (mapea nombre → channels.X).\n1. message(action=send, channel=discord, target=<publish_channel_id>, message='📊 Daily Pulse — YYYY-MM-DD: [insight más relevante en 1 línea]')\n2. Del resultado captura messageId.\n3. message(action=thread-create, channel=discord, target=<publish_channel_id>, messageId=<messageId>, threadName='📊 Daily Pulse — YYYY-MM-DD')\n4. Del resultado captura threadId.\n5. message(action=send, channel=discord, target=<threadId>, message=<contenido completo>)\n6. NUNCA publiques contenido completo directamente en el canal.\n7. APLICA reglas de _system/client-context-isolation.md — solo info de {NAME}, CERO info de otros clientes o del sistema."
+  },
+  "meeting_intelligence": {
+    "name_template": "Meeting Intelligence — {NAME}",
+    "agent": "sancho",
+    "model": "minimax/MiniMax-M2.5",
+    "session": "isolated",
+    "delivery_mode": "none",
+    "prompt": "Ejecuta Meeting Intelligence para {NAME}.\n\nPASO 0 — CARGAR CONFIG:\nLee brand/{SLUG}/sources.json. Usa los IDs de ahí para TODO.\n\nPASO 1 — LEER REUNIONES:\nDel campo 'crons.meeting_intelligence.google_drive_folder_id', busca docs nuevos/modificados desde la última ejecución. Usa 'gog docs cat <docId>' para leer notas.\n\nPASO 2 — EXTRAER:\nPara cada reunión: decisiones, acciones, insights, participantes.\n\nPASO 3 — GUARDAR:\nGuarda en brand/{SLUG}/intelligence/meetings/ como .md y actualiza meetings.json.\nDespués ejecuta: python3 ~/.openclaw/workspace-sancho/scripts/regenerate.py\n\nPASO 4 — PUBLICAR EN DISCORD (PATRÓN OBLIGATORIO DE HILO):\nDel sources.json, busca el channel ID de 'crons.meeting_intelligence.publish_channel'.\n1. message(action=send, channel=discord, target=<publish_channel_id>, message='🧠 Meeting Intelligence — YYYY-MM-DD: [resumen en 1 línea]')\n2. Del resultado captura messageId.\n3. message(action=thread-create, channel=discord, target=<publish_channel_id>, messageId=<messageId>, threadName='🧠 Meeting Intelligence — YYYY-MM-DD')\n4. Del resultado captura threadId.\n5. message(action=send, channel=discord, target=<threadId>, message=<resumen completo>)\n6. Si no hay meetings nuevos, envía igualmente el mensaje corto informando sin crear hilo.\n7. APLICA reglas de _system/client-context-isolation.md — solo info de {NAME}."
+  },
+  "weekly_synthesis": {
+    "name_template": "Weekly Synthesis — {NAME}",
+    "agent": "sancho",
+    "model": "minimax/MiniMax-M2.5",
+    "session": "isolated",
+    "delivery_mode": "none",
+    "prompt": "Síntesis semanal para {NAME}.\n\nPASO 0 — CARGAR CONFIG:\nLee brand/{SLUG}/sources.json. Usa los IDs de ahí para TODO.\n\nPASO 1 — LEER FUENTES:\n1) Lee memory/*.md de los últimos 7 días.\n2) Lee brand/{SLUG}/daily-pulse/*.json recientes.\n3) Lee brand/{SLUG}/learnings.md si existe.\n4) Identifica patrones, tendencias, decisiones clave.\n\nPASO 2 — ACTUALIZAR:\nActualiza brand/{SLUG}/learnings.md con patrones confirmados.\n\nPASO 3 — PUBLICAR EN DISCORD (PATRÓN OBLIGATORIO DE HILO):\nDel sources.json, busca el channel ID de 'crons.weekly_synthesis.publish_channel'.\n1. message(action=send, channel=discord, target=<publish_channel_id>, message='📚 Síntesis Semanal — YYYY-MM-DD: [hallazgo principal en 1 línea]')\n2. Del resultado captura messageId.\n3. message(action=thread-create, channel=discord, target=<publish_channel_id>, messageId=<messageId>, threadName='📚 Síntesis Semanal — YYYY-MM-DD')\n4. Del resultado captura threadId.\n5. message(action=send, channel=discord, target=<threadId>, message=<resumen ejecutivo>)\n6. APLICA reglas de _system/client-context-isolation.md — solo info de {NAME}."
+  },
+  "thief_marketer": {
+    "name_template": "Thief Marketer — {NAME}",
+    "agent": "sancho",
+    "model": "minimax/MiniMax-M2.5",
+    "session": "isolated",
+    "delivery_mode": "none",
+    "prompt": "Thief Marketer para {NAME}.\n\nPASO 0 — CARGAR CONFIG:\nLee brand/{SLUG}/sources.json. Usa los IDs de ahí para TODO.\n\nPASO 1 — LEER COMPETIDORES:\nLee brand/{SLUG}/market-and-us/competitors/current.md para la lista de competidores.\n\nPASO 2 — SCRAPE:\nPara cada competidor: web_fetch homepage+blog, web_search LinkedIn posts, web_search Instagram/YouTube, Google Ads Library.\n\nPASO 3 — COMPARAR:\nCompara con última ejecución en brand/{SLUG}/thief-marketer/.\n\nPASO 4 — GUARDAR:\nGuarda en brand/{SLUG}/thief-marketer/YYYY-MM-DD.json.\n\nPASO 5 — PUBLICAR EN DISCORD (PATRÓN OBLIGATORIO DE HILO):\nDel sources.json, busca el channel ID de 'crons.thief_marketer.publish_channel'.\n1. message(action=send, channel=discord, target=<publish_channel_id>, message='🕵️ Thief Marketer — YYYY-MM-DD: [hallazgo principal en 1 línea]')\n2. Del resultado captura messageId.\n3. message(action=thread-create, channel=discord, target=<publish_channel_id>, messageId=<messageId>, threadName='🕵️ Thief Marketer — YYYY-MM-DD')\n4. Del resultado captura threadId.\n5. message(action=send, channel=discord, target=<threadId>, message=<reporte completo>)\n6. APLICA reglas de _system/client-context-isolation.md — solo info de {NAME}."
+  }
+}

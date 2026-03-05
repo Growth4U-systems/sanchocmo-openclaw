@@ -179,12 +179,31 @@ Each proof entry:
 
 ---
 
-### Section 7: Messaging Playbook
+### Section 6.5: Objection Neutralization (NUEVO)
+
+| Field | Type | Required | Source Priority | Consumed By |
+|-------|------|----------|-----------------|-------------|
+| objection_table | object[] | REQUIRED | Step 6.5 output | Messaging playbook |
+
+Each objection entry:
+```
+{
+  objection: string,                // The conversion barrier
+  type: enum (precio / miedo / dolor / confianza / otro),
+  reframe: string,                  // How to reframe the objection
+  neutralization_message: string,   // The message that neutralizes it
+  proof: string,                    // Supporting evidence
+  suggested_format: string          // FAQ, testimonial, comparativa, garantía...
+}
+```
+
+### Section 7: Messaging Playbook (Pain-Activated)
 
 | Field | Type | Required | Source Priority | Consumed By |
 |-------|------|----------|-----------------|-------------|
 | uvp | object | REQUIRED | Step 7 output | All outbound |
 | usps | object[] (4-5+) | REQUIRED | Step 7 output | All outbound |
+| anti_objection_messages | object[] (1-2+) | REQUIRED | Step 7 output (from 6.5) | Landing pages, FAQ, ads |
 
 UVP entry:
 ```
@@ -193,20 +212,21 @@ UVP entry:
   hypothesis: string,               // Why this will work
   value_criterion_id: number,        // Links to Tier 2
   objective: string,
-  message_en: string,               // Marketing-ready English
-  message_es: string                // Marketing-ready Spanish
+  message_short: string,            // Versión corta (ads, 1-2 líneas)
+  message_landing: string           // Versión landing (story-driven, dolor→diagnóstico→puente)
 }
 ```
 
 USP entries (same structure, one per distinct strategic emphasis):
 ```
 {
-  message_category: string,         // e.g., "Automation", "Transparency", "Speed"
+  message_category: string,         // e.g., "Anti-objeción: precio", "Diferenciador: diagnóstico"
   hypothesis: string,
   value_criterion_id: number,
   objective: string,
-  message_en: string,
-  message_es: string
+  message_short: string,            // Versión corta
+  message_landing: string,          // Versión landing
+  ab_variants: object[] | null      // Opcional: [{variant: "A", message_short, message_landing, hypothesis_tested}]
 }
 ```
 
@@ -217,13 +237,16 @@ USP entries (same structure, one per distinct strategic emphasis):
 ```
 Lite threshold (per niche): Steps 1-4 complete +
                             3+ assets mapped with category +
-                            messaging table with UVP + 3 USPs (bilingual)
+                            messaging table with UVP + 3 USPs (2 formatos, dolor-activado)
 
-Deep threshold (per niche): All 7 steps complete +
+Deep threshold (per niche): All steps (1-7 + 6.5) complete +
                             full competitive scoring map (all categories) +
                             complete asset inventory (qualifier/differentiator) +
                             full proof table with specific messages +
-                            complete bilingual messaging playbook (UVP + 5+ USPs) +
+                            objection neutralization table +
+                            complete pain-activated messaging playbook (UVP + 5+ USPs, 2 formatos) +
+                            legal verification PASS +
+                            statistical data sourced +
                             Tier 2 documents updated and cross-referenced
 ```
 

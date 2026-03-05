@@ -1,3 +1,10 @@
+---
+name: social-media-extractor
+description: "Extract public data from Instagram, TikTok, and Reddit via Apify for trend analysis, content research, and competitor monitoring."
+context_required: []
+context_writes: []
+---
+
 # Social Media Data Extraction Skill
 
 ## Overview

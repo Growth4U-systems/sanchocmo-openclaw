@@ -11,6 +11,10 @@ metadata:
     requires:
       env:
         - MATON_API_KEY
+context_required:
+- brand/{slug}/operational/stack.md
+context_writes:
+- brand/{slug}/operational/learnings.md
 ---
 
 # Google Search Console

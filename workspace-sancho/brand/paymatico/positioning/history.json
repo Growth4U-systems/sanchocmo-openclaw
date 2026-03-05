@@ -1,0 +1,12 @@
+{
+  "versions": [
+    {
+      "version": "v1",
+      "date": "2026-03-04",
+      "author": "Sancho",
+      "ecp": "ECP-1: Franquicias Multi-Ubicación",
+      "changes": "Initial positioning & messaging playbook. 12 value criteria, 11 assets mapped, 7 benefit-proof pairs, 4 objection neutralizations, 8-row messaging table (UVP + 5 USPs + 2 anti-objections).",
+      "status": "pending_review"
+    }
+  ]
+}

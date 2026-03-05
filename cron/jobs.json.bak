@@ -7,7 +7,7 @@
       "name": "Daily Pulse",
       "enabled": true,
       "createdAtMs": 1771950688301,
-      "updatedAtMs": 1772524850629,
+      "updatedAtMs": 1772611340144,
       "schedule": {
         "kind": "cron",
         "expr": "0 9 * * 1-5",
@@ -26,14 +26,14 @@
         "to": "channel:1475638253154603170"
       },
       "state": {
-        "nextRunAtMs": 1772611200000,
-        "lastRunAtMs": 1772524800018,
-        "lastRunStatus": "error",
-        "lastStatus": "error",
-        "lastDurationMs": 50611,
-        "lastDeliveryStatus": "not-requested",
-        "consecutiveErrors": 1,
-        "lastError": "Error: All models failed (2): anthropic/claude-opus-4-6: ⚠️ API rate limit reached. Please try again later. (rate_limit) | anthropic/claude-sonnet-4-5: ⚠️ API rate limit reached. Please try again later. (rate_limit)"
+        "nextRunAtMs": 1772697600000,
+        "lastRunAtMs": 1772611200017,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 140127,
+        "lastDeliveryStatus": "not-delivered",
+        "consecutiveErrors": 0,
+        "lastDelivered": false
       }
     },
     {
@@ -77,7 +77,7 @@
       "name": "Regenerar Dashboard",
       "enabled": true,
       "createdAtMs": 1771950708148,
-      "updatedAtMs": 1772564534737,
+      "updatedAtMs": 1772650928007,
       "schedule": {
         "kind": "cron",
         "expr": "0 8,12,16,20 * * *",
@@ -95,11 +95,11 @@
         "channel": "last"
       },
       "state": {
-        "nextRunAtMs": 1772607600000,
-        "lastRunAtMs": 1772564400017,
+        "nextRunAtMs": 1772694000000,
+        "lastRunAtMs": 1772650800017,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 134720,
+        "lastDurationMs": 127990,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0,
         "lastDelivered": false
@@ -111,7 +111,7 @@
       "name": "Meeting Intelligence",
       "enabled": true,
       "createdAtMs": 1771950715725,
-      "updatedAtMs": 1772557475269,
+      "updatedAtMs": 1772643870460,
       "schedule": {
         "kind": "cron",
         "expr": "0 18 * * 1-5",
@@ -130,11 +130,11 @@
         "to": "channel:1475638253154603170"
       },
       "state": {
-        "nextRunAtMs": 1772643600000,
-        "lastRunAtMs": 1772557200018,
+        "nextRunAtMs": 1772730000000,
+        "lastRunAtMs": 1772643600024,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 275251,
+        "lastDurationMs": 270436,
         "lastDelivered": false,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0
@@ -199,7 +199,7 @@
       "name": "backup-sancho",
       "enabled": true,
       "createdAtMs": 1772069600272,
-      "updatedAtMs": 1772505487575,
+      "updatedAtMs": 1772589633921,
       "schedule": {
         "kind": "cron",
         "expr": "0 3 * * *"
@@ -216,11 +216,11 @@
         "channel": "last"
       },
       "state": {
-        "nextRunAtMs": 1772589600000,
-        "lastRunAtMs": 1772503200020,
+        "nextRunAtMs": 1772676000000,
+        "lastRunAtMs": 1772589600019,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 16293,
+        "lastDurationMs": 33902,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0,
         "lastDelivered": false
@@ -232,7 +232,7 @@
       "name": "healthcheck",
       "enabled": true,
       "createdAtMs": 1772069609685,
-      "updatedAtMs": 1772568181432,
+      "updatedAtMs": 1772656638576,
       "schedule": {
         "kind": "every",
         "everyMs": 21600000,
@@ -242,7 +242,7 @@
       "wakeMode": "now",
       "payload": {
         "kind": "agentTurn",
-        "message": "Ejecuta el health check del sistema. Corre: bash ~/.openclaw/workspace-cervantes/scripts/healthcheck.sh. Si el exit code es 1 (hay fallos), lee el output y publica en Discord #admin con PATRÓN DE HILO:\n1. Envía alerta corta (1 línea) al canal: message(action=send, channel=discord, target=1475638273501040681, message='⚠️ Health Check — YYYY-MM-DD HH:MM: [N servicios caídos]')\n2. Del resultado del send, captura el messageId devuelto.\n3. Crea un hilo DESDE ese mensaje: message(action=thread-create, channel=discord, target=1475638273501040681, messageId=<messageId>, threadName='⚠️ Health Check — YYYY-MM-DD HH:MM')\n4. Del resultado del thread-create, captura el threadId.\n5. Publica los detalles completos del health check DENTRO del hilo: message(action=send, channel=discord, target=<threadId>, message=<detalles de servicios caídos>)\nSi ALL_OK, no publiques nada.",
+        "message": "Ejecuta el health check: bash ~/.openclaw/workspace-cervantes/scripts/healthcheck.sh\n\nInterpreta el EXIT CODE:\n- Exit 0 = todo OK o fallos sin cambio (debounced). Responde HEARTBEAT_OK.\n- Exit 1 = NUEVO fallo detectado (servicio pasó de ok→fail). DEBES alertar en Discord #admin:\n  1. message(action=send, channel=discord, target=1475638273501040681, message='⚠️ Health Check — [fecha]: [servicios nuevos caídos]')\n  2. Del resultado captura messageId\n  3. message(action=thread-create, channel=discord, target=1475638273501040681, messageId=<messageId>, threadName='⚠️ Health Check — [fecha]')\n  4. Del resultado captura threadId\n  5. message(action=send, channel=discord, target=<threadId>, message=<detalles: qué servicios fallaron, errores, qué servicios siguen OK>)\n- Exit 2 = servicio RECUPERADO (fail→ok). Informa en #admin:\n  1. message(action=send, channel=discord, target=1475638273501040681, message='✅ Health Check — [fecha]: [servicios recuperados]')\n\nDespués ejecuta: python3 ~/.openclaw/workspace-sancho/scripts/regenerate.py",
         "thinking": "off",
         "timeoutSeconds": 120,
         "model": "minimax/MiniMax-M2.5"
@@ -252,11 +252,11 @@
         "channel": "last"
       },
       "state": {
-        "nextRunAtMs": 1772589769655,
-        "lastRunAtMs": 1772568169655,
+        "nextRunAtMs": 1772676169719,
+        "lastRunAtMs": 1772654569719,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 11777,
+        "lastDurationMs": 24237,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0,
         "lastDelivered": false
@@ -269,7 +269,7 @@
       "description": "T-022: Run cost-tracker.py daily at 23:00",
       "enabled": true,
       "createdAtMs": 1772069993394,
-      "updatedAtMs": 1772575215512,
+      "updatedAtMs": 1772661683389,
       "schedule": {
         "kind": "cron",
         "expr": "0 23 * * *"
@@ -286,11 +286,11 @@
         "channel": "webchat"
       },
       "state": {
-        "nextRunAtMs": 1772661600000,
-        "lastRunAtMs": 1772575200015,
+        "nextRunAtMs": 1772748000000,
+        "lastRunAtMs": 1772661600014,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 15497,
+        "lastDurationMs": 83375,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0,
         "lastDelivered": false
@@ -302,7 +302,7 @@
       "name": "Cervantes observa a Sancho",
       "enabled": true,
       "createdAtMs": 1772115026027,
-      "updatedAtMs": 1772528639094,
+      "updatedAtMs": 1772615017738,
       "schedule": {
         "kind": "cron",
         "expr": "0 10 * * *",
@@ -320,11 +320,11 @@
         "channel": "last"
       },
       "state": {
-        "nextRunAtMs": 1772614800000,
-        "lastRunAtMs": 1772528400020,
+        "nextRunAtMs": 1772701200000,
+        "lastRunAtMs": 1772614800024,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 239074,
+        "lastDurationMs": 217714,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0,
         "lastDelivered": false
@@ -357,6 +357,40 @@
         "channel": "discord"
       },
       "state": {}
+    },
+    {
+      "id": "00152473-0b9b-4f48-b2ab-e95d7832af58",
+      "agentId": "sancho",
+      "sessionKey": "agent:sancho:discord:channel:1478810377742716989",
+      "name": "funnel-watchdog",
+      "enabled": true,
+      "createdAtMs": 1772667196949,
+      "updatedAtMs": 1772675327380,
+      "schedule": {
+        "kind": "every",
+        "everyMs": 900000,
+        "anchorMs": 1772667196949
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Run the funnel watchdog: exec scripts/funnel-watchdog.sh — if it re-enabled funnel, send a message to thread 1478810377742716989 in Discord notifying. If funnel was OK, just reply NO_REPLY.",
+        "timeoutSeconds": 60
+      },
+      "delivery": {
+        "mode": "none"
+      },
+      "state": {
+        "nextRunAtMs": 1772676197093,
+        "lastRunAtMs": 1772675297093,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 30287,
+        "lastDelivered": false,
+        "lastDeliveryStatus": "not-delivered",
+        "consecutiveErrors": 0
+      }
     }
   ]
 }

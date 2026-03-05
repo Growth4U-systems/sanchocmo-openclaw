@@ -55,14 +55,26 @@
 - [ ] **Cada proof incluye mensaje específico** adaptado al ECP
 - [ ] **Tipos de proof variados** (no solo "testimonials" para todo)
 
-## Step 7: Final Positioning & Messaging Playbook
+## Step 6.5: Objection Neutralization (NUEVO)
+
+- [ ] **Conversion barriers extraídas** del company-brief
+- [ ] **CADA barrera tiene**: reframe + mensaje neutralizador + proof
+- [ ] **Mensajes son empáticos** (reconocen la objeción, no la ignoran)
+- [ ] **Proofs son específicos** (no genéricos tipo "nuestros clientes nos adoran")
+- [ ] **Conexión a Assets** del Step 5 cuando aplica
+
+## Step 7: Final Positioning & Messaging Playbook (Pain-Activated)
 
 - [ ] **UVP extraído** de la evidence (core value promise, 1 frase)
 - [ ] **4-5+ USPs** con posicionamiento único cada uno
-- [ ] **Messaging table bilingual** (EN + ES)
-- [ ] **Cada fila tiene**: Message Category, Hypothesis, Value Criteria, Objective, Final Message EN, Final Message ES
-- [ ] **Copy es**: claro, empático, actionable, benefit-driven
+- [ ] **1-2+ mensajes anti-objeción** integrados del Step 6.5
+- [ ] **Messaging table en idioma del cliente** (SOUL.md principio 7)
+- [ ] **2 formatos por mensaje**: versión corta (ads) + versión landing (story-driven)
+- [ ] **Framework Dolor (=Value Criteria) → Diagnóstico (=insight) → Puente (=Asset)** aplicado en cada mensaje landing
+- [ ] **Cada fila tiene**: Categoría, Hipótesis, Value Criteria, Objetivo, Versión Corta, Versión Landing
+- [ ] **Copy es**: visceral, específico, reconocible — NO genérico, NO funcional
 - [ ] **Cada mensaje conectado** a un Value Criterion
+- [ ] **A/B variants generadas** (si el cliente lo solicitó)
 
 ## Tier 2 Document Management
 
@@ -83,6 +95,7 @@
 - [ ] **Asset Validity**: 5/5 ⭐ (todos reales, sin duplicados)
 - [ ] **Messaging Alignment**: 5/5 ⭐
 - [ ] **Orphan/Duplicate Health**: 5/5 ⭐ (orphans investigados, duplicados mergeados)
+- [ ] **Objection & Legal Coverage**: 5/5 ⭐ (todas objeciones cubiertas, 0 violaciones legales, datos con fuente)
 - [ ] **OVERALL**: 5/5 ⭐
 - [ ] **Action items CRITICAL**: 0 pendientes
 - [ ] **Action items IMPORTANT**: 0 pendientes
@@ -94,6 +107,19 @@
 - [ ] **Versionado** correcto (v1.md, history.json)
 - [ ] **Link generado** para el usuario
 
+## Verificación Legal (BLOQUEANTE)
+
+- [ ] **Restricciones legales leídas** del company-brief (`{{legal_constraints}}`)
+- [ ] **CERO violaciones**: ningún nombre de fármaco/producto restringido aparece en copy
+- [ ] **CERO claims prohibidos**: no se hacen afirmaciones médicas/legales no permitidas
+- [ ] **Cada violación encontrada** fue corregida y documentada (original → versión compliant)
+
+## Verificación de Datos Estadísticos (OBLIGATORIO)
+
+- [ ] **Cada cifra/porcentaje/estadística** tiene `[Fuente](url)` inline
+- [ ] **Datos sin fuente verificada** están marcados como `~estimación sin fuente verificada`
+- [ ] **CERO datos numéricos sin atribución** en el output final
+
 ## META (calidad)
 
 - [ ] **Cada claim de positioning** tiene evidence trail (value criteria → asset → proof)
@@ -101,7 +127,7 @@
 - [ ] **5-10 URLs verificadas** con web_fetch (spot-check de fuentes)
 - [ ] **Coherencia con brand files** (ecps.md, competitors.md, self-intel)
 - [ ] **Copy no promete** lo que el producto no puede entregar (cruzar con self-intel Lens 3)
-- [ ] **Mensajes bilingual** son nativos (no traducciones literales)
+- [ ] **TODAS las objeciones del brief** están cubiertas por al menos 1 mensaje
 
 ---
 

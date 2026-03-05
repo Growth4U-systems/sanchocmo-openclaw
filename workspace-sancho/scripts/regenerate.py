@@ -176,12 +176,17 @@ def parse_foundation():
                         for pname in pillar_names:
                             if pname in pillars:
                                 pdata = pillars[pname]
-                                sec_data["pillars"][pname] = {
+                                pentry = {
                                     "status": pdata.get("status", "not-started"),
                                     "layer": pdata.get("layer"),
                                     "requires": pdata.get("requires", []),
                                     "optional": pdata.get("optional", False),
                                 }
+                                if pdata.get("output_file"):
+                                    pentry["output_file"] = pdata["output_file"]
+                                elif pdata.get("output_files"):
+                                    pentry["output_file"] = pdata["output_files"][0]
+                                sec_data["pillars"][pname] = pentry
                                 client_data["total"] += 1
                                 st = pdata.get("status", "not-started")
                                 if st == "approved":
@@ -191,7 +196,10 @@ def parse_foundation():
 
                     # Syntheses
                     for syn_name, syn_data in sec.get("syntheses", {}).items():
-                        sec_data["syntheses"][syn_name] = {"status": syn_data.get("status", "not-generated")}
+                        sentry = {"status": syn_data.get("status", "not-generated")}
+                        if syn_data.get("output_file"):
+                            sentry["output_file"] = syn_data["output_file"]
+                        sec_data["syntheses"][syn_name] = sentry
 
                     client_data["sections"][sec_key] = sec_data
             else:
@@ -429,6 +437,17 @@ def parse_integrations():
     return clients
 
 
+def parse_api_health():
+    """Load API health check data from _system/api-health.json."""
+    health_file = WORKSPACE / "_system" / "api-health.json"
+    if not health_file.exists():
+        return {"lastCheck": None, "services": {}}
+    try:
+        return json.loads(health_file.read_text(encoding="utf-8"))
+    except Exception:
+        return {"lastCheck": None, "services": {}}
+
+
 def main():
     print("🔄 Regenerating Mission Control data...")
 
@@ -447,6 +466,7 @@ def main():
         "intelligence_log": parse_intelligence_log(),
         "global_costs": parse_global_costs(),
         "client_tasks": parse_client_tasks(),
+        "apiHealth": parse_api_health(),
     }
 
     # Write as JS file

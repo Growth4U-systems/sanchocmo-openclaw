@@ -11,8 +11,19 @@ INPUT: Tabla Markdown de nichos agrupados (14 columnas).
 CRITERIOS DE FILTRADO — Marcar como Valid=FALSE con la razón apropiada:
 
 1. **DEMASIADO GENÉRICO** (Reason: "Too Generic")
-   Queja amplia sin segmento de negocio específico. Ejemplo: "comisiones bancarias altas" aplica a todos.
-   Un nicho válido DEBE definir QUIÉN (tipo/vertical de negocio específico) + QUÉ problema específico.
+   Un nicho que se puede describir con ≤ 3 palabras genéricas ("SaaS B2B", "Ecommerce", "Startups", "Pymes") es SIEMPRE genérico. FAIL automático.
+   
+   **Test obligatorio de 3 dimensiones**: El nicho DEBE incluir ≥ 3 de: ROL + ETAPA + TAMAÑO + DOLOR CONCRETO + CONTEXTO.
+   - ROL: quién exactamente (no "empresario" → "CTO-turned-CEO", "CFO de franquicia")
+   - ETAPA: en qué momento (escalando, pivoteando, quemado por agencias, post-regulación)
+   - TAMAÑO: indicador concreto ($MRR, empleados, locales, facturación)
+   - DOLOR CONCRETO: problema específico (no "necesita pagos" → "reconcilia 15 locales manualmente")
+   - CONTEXTO: circunstancia que define la situación
+   
+   **Test "agencia genérica"**: ¿Esta descripción aparecería en la web de cualquier competidor como su target? → Si sí, FAIL.
+   
+   ❌ "SaaS B2B" / "Startups tech" / "Pymes que necesitan X" → FAIL
+   ✅ "Founder técnico, equipo 3-8, $10-30K MRR, que hace todo el marketing solo tras quemarse con 2-3 agencias" → PASS
 
 2. **DEMASIADO PEQUEÑO** (Reason: "Too Small")
    Freelancers/autónomos individuales con volumen mínimo (<€1K/mes).

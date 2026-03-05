@@ -3,14 +3,14 @@ name: competitor-intelligence
 description: "3-Lens competitor analysis: Autopercepción, Terceros, Consumidores. Use when: researching competitors, building battle cards, mapping competitive landscape. Discovers competitors, profiles each (scraping + deep research), runs 3-lens analysis, produces battle cards and landscape map. NOT for: self-analysis (use self-intelligence), market sizing (use market-intelligence)."
 metadata:
   author: Alfonso Sainz de Baranda (Growth4U)
-  version: '4.0'
+  version: '4.1'
   system: SanchoCMO
   phase: '1'
   pillar: competitor-intelligence
   layer: '2'
   depends_on: company-context
-  updated: '2026-02-27'
-  changes: v4 — Restructured per skill-creator principles.
+  updated: '2026-03-04'
+  changes: v4.1 — Added Step 1.5 Primary Source Verification, pricing page mandatory in Lens 1, expanded Self-QA checklist for source verification.
 context_required:
 - brand/{slug}/company-brief/current.md
 - brand/{slug}/go-to-market/positioning-*.md
@@ -96,6 +96,29 @@ He identificado estos competidores para analizar:
 ### 1. Profile Discovery (~5 min/competitor)
 - Encontrar todas las URLs: social, review platforms, app stores, website, paid ads library
 
+### 1.5 Primary Source Verification (OBLIGATORIO — antes de scraping)
+
+**Para CADA competidor directo**, verificar fuentes primarias con web_fetch:
+
+1. `web_fetch(homepage)` → leer posicionamiento REAL (tagline, value prop, target audience)
+2. `web_fetch(/pricing)` → capturar pricing REAL. Si no existe, probar: `/#Pricing`, `/plans`, `/prices`, `/precios`
+3. `web_fetch(/features)` o `/product` o `/services` → capturar features REALES
+
+**Reglas:**
+- Si la pricing page no carga o no tiene pricing público → Marcar: "⚠️ Pricing no público — verificar manualmente"
+- **NUNCA** usar datos de blogs/artículos de terceros como fuente primaria de pricing o features
+- **Fuente primaria (web del competidor) > fuente secundaria (artículos de terceros) SIEMPRE**
+- Datos de terceros solo para contrastar o enriquecer, NUNCA como fuente única
+
+**Output:** Para cada competidor, documentar:
+```
+✅ Homepage: [URL] — Posicionamiento: "[tagline/claim]"
+✅ Pricing: [URL] — [resumen de tiers/precios]  (o ⚠️ no público)
+✅ Features: [URL] — [lista de features principales]
+```
+
+Solo continuar al paso 2 cuando TODOS los competidores directos tengan Primary Source Verification completada.
+
 ### 2. Scraping con Apify (~15 min/competitor)
 
 **OBLIGATORIO usar Apify para scraping real.** No uses solo web_search/web_fetch — necesitamos datos estructurados.
@@ -112,6 +135,7 @@ He identificado estos competidores para analizar:
 ```
 Lens 1 (Autopercepción):
   → Apify web-scraper: homepage + /pricing + /about + /blog (últimos 10 posts)
+  → web_fetch: /pricing OBLIGATORIO — si no existe, probar /#Pricing, /plans, /prices, /precios
   → Apify instagram-scraper: últimos 20 posts + bio + followers
   → Apify facebook-ads-scraper: ads activos
 

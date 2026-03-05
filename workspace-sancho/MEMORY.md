@@ -47,6 +47,24 @@
 - Primera ronda con Hospital Capilar: GTM generado ANTES de Foundation correcta.
 - Contenido usable pero sobre cimientos débiles. No repetir.
 
+## Hearbeat Patterns (2026-03-04)
+- **gog CLI fixed** — fully operational as of Mar 2, email/calendar checks working
+- **Email noise:** ~80% are newsletters/accounts, ~20% actionable. Most "IMPORTANT" labels are auto-categorized
+- **Calendar density:** Alfonso runs 09:45–18:00 packed days. Few true emergency slots
+- **True urgency patterns:** Meeting invites, contract updates, partner reschedules (Kleva)
+
+## Growth4U — Competitors Pillar 7 Complete (2026-03-03)
+- **All 3 direct competitor deep dives finished:**
+  1. **Snowball** — Pau Gallinat, Growth Squads, strong credentials, BNI España
+  2. **Product Hackers** — 6M€ revenue, 110+ team, AI Hackers vertical, strongest market position
+  3. **TheGrowtHacker** — weakest: all published cases are from companies where founder was previous employee (not client work), zero SEO visibility (DataForSEO), zero social/reviews/press
+- **Next:** Update `brand/growth4u/competitors/current.md` with enriched landscape, self-QA, Alfonso approval
+
+## Kleva Partnership Update (2026-03-03)
+- **Rescheduled:** Tue 10 Mar 2026 17:30–18:30 (was Thu 5 Mar)
+- **Contact:** Martin Fila (martin@growth4u.io)
+- **Status:** Partnership discussion ongoing, formal meeting next week
+
 ## Bugs Pendientes
 
 ### SIGTERM en scripts Python niche-discovery-100x (2026-03-03)
@@ -63,3 +81,12 @@
 - **Backup:** `_backups/2026-03-02/hospital-capilar-backup/` (1.1MB, todo lo anterior)
 - **Supabase:** Vacío
 - **Próximo paso:** Arrancar Foundation desde cero siguiendo DAG correcto
+
+## Cliente: Paymático (2026-03-04)
+- **Contacto**: Alex G (Discord alexg_12998, ID 1478058457419616349)
+- **Empresa**: Paymático Payment Institution S.L. — Entidad de pago regulada BdE #6861 (2013)
+- **Slug**: paymatico | **Brand path**: brand/paymatico/
+- **Guild**: 1477995837719056458 | **Thread principal**: 1478733694179999869
+- **Foundation**: Layers 0-3 COMPLETAS en una sesión. Siguiente: Layer 4 (Positioning + Pricing)
+- **ECPs aprobados**: (1) Franquicias multi-ubicación, (2) Corporates cash pooling, (3) Gestores fiduciarios
+- **Preferencias Alex G**: Profundidad alta en ECPs, solo negocios offline (no marketplaces/SaaS), aporta insider knowledge valioso (siempre incorporar), aprueba rápido, sesiones largas OK

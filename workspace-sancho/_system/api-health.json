@@ -1,0 +1,188 @@
+{
+  "lastCheck": "2026-03-04T21:16:33.467Z",
+  "services": {
+    "anthropic": {
+      "status": "ok",
+      "lastCheck": "2026-03-04T20:50:23.240Z",
+      "details": {
+        "httpCode": "200"
+      }
+    },
+    "openrouter": {
+      "status": "ok",
+      "lastCheck": "2026-03-04T20:50:23.470Z",
+      "details": {
+        "httpCode": "200"
+      }
+    },
+    "openai": {
+      "status": "ok",
+      "lastCheck": "2026-03-04T20:50:23.808Z",
+      "details": {
+        "httpCode": "200"
+      }
+    },
+    "gemini": {
+      "status": "ok",
+      "lastCheck": "2026-03-04T20:50:24.402Z",
+      "details": {
+        "httpCode": "200"
+      }
+    },
+    "xai": {
+      "status": "ok",
+      "lastCheck": "2026-03-04T20:50:24.721Z",
+      "details": {
+        "httpCode": "200"
+      }
+    },
+    "minimax": {
+      "status": "ok",
+      "lastCheck": "2026-03-04T20:50:24.871Z",
+      "details": {
+        "note": "Key present, no lightweight verify endpoint"
+      }
+    },
+    "apify": {
+      "status": "ok",
+      "lastCheck": "2026-03-04T20:50:24.871Z",
+      "details": {
+        "username": "growth4u",
+        "plan": ""
+      }
+    },
+    "firecrawl": {
+      "status": "ok",
+      "lastCheck": "2026-03-04T20:50:25.587Z",
+      "details": {
+        "httpCode": "200"
+      }
+    },
+    "serper": {
+      "status": "ok",
+      "lastCheck": "2026-03-04T20:50:26.285Z",
+      "details": {
+        "httpCode": "200"
+      }
+    },
+    "dataforseo": {
+      "status": "ok",
+      "lastCheck": "2026-03-04T20:50:27.013Z",
+      "details": {
+        "httpCode": "200",
+        "login": "accounts@growth4u.io"
+      }
+    },
+    "notion": {
+      "status": "ok",
+      "lastCheck": "2026-03-04T20:50:27.644Z",
+      "details": {
+        "botName": "openclaw-Alfonso"
+      }
+    },
+    "supabase": {
+      "status": "ok",
+      "lastCheck": "2026-03-04T20:50:28.385Z",
+      "details": {
+        "httpCode": "200",
+        "project": "psapmujzxhaxraphddlv"
+      }
+    },
+    "gog": {
+      "status": "ok",
+      "lastCheck": "2026-03-04T20:50:28.622Z",
+      "details": {
+        "account": "alfonso@growth4u.io",
+        "test": "gmail inbox"
+      }
+    },
+    "openclaw": {
+      "status": "ok",
+      "lastCheck": "2026-03-04T20:50:29.960Z",
+      "details": {
+        "gateway": "running",
+        "version": "2026.2.24",
+        "latest": "2026.3.2"
+      }
+    },
+    "fal": {
+      "status": "ok",
+      "lastCheck": "2026-03-04T20:50:28.622Z",
+      "details": {
+        "note": "Key present"
+      }
+    },
+    "wavespeed": {
+      "status": "ok",
+      "lastCheck": "2026-03-04T20:50:28.622Z",
+      "details": {
+        "note": "Key present"
+      }
+    },
+    "dumpling": {
+      "status": "ok",
+      "lastCheck": "2026-03-04T20:50:28.622Z",
+      "details": {
+        "note": "Key present"
+      }
+    },
+    "brave": {
+      "status": "error",
+      "lastCheck": "2026-03-04T21:16:32.809Z",
+      "details": {
+        "httpCode": "422"
+      }
+    },
+    "instantly": {
+      "status": "not-configured",
+      "lastCheck": "2026-03-04T20:50:28.622Z",
+      "details": {
+        "note": "Web login — no API key in .env"
+      }
+    },
+    "metricool": {
+      "status": "not-configured",
+      "lastCheck": "2026-03-04T20:50:28.622Z",
+      "details": {
+        "note": "Web login — no API key in .env"
+      }
+    },
+    "nanobanana": {
+      "status": "ok",
+      "lastCheck": "2026-03-04T20:50:28.622Z",
+      "details": {
+        "note": "Uses Gemini API key (shared)",
+        "engine": "gemini-2.0-flash-exp"
+      }
+    },
+    "freemotion": {
+      "status": "not-configured",
+      "lastCheck": "2026-03-04T20:50:28.622Z",
+      "details": {
+        "note": "No API key in .env"
+      }
+    },
+    "discord": {
+      "status": "ok",
+      "lastCheck": "2026-03-04T20:50:32.625Z",
+      "details": {
+        "httpCode": "200"
+      }
+    },
+    "tailscale": {
+      "status": "ok",
+      "lastCheck": "2026-03-04T20:50:23Z",
+      "details": {
+        "note": "tailscale status OK"
+      }
+    },
+    "remotion": {
+      "status": "not-configured",
+      "lastCheck": "2026-03-04T20:58:33.073Z",
+      "details": {
+        "version": null,
+        "note": "Local install"
+      }
+    }
+  }
+}
