@@ -1,61 +1,65 @@
 {
   "client": "hospital-capilar",
   "period": "2026-03",
-  "updatedAt": "2026-03-05T00:04:37.746888",
-  "total_cost_usd": 2.2181,
-  "total_cost_eur": 2.0407,
-  "turns": 47,
-  "sessions": 6,
+  "updatedAt": "2026-03-05T23:48:09.419007",
+  "total_cost_usd": 98.8783,
+  "total_cost_eur": 90.9681,
+  "turns": 946,
+  "sessions": 21,
   "agents": {
     "cervantes": {
       "cost_usd": 0,
       "cost_eur": 0.0,
-      "turns": 6,
+      "turns": 7,
       "sessions": 1
     },
     "sancho": {
-      "cost_usd": 2.2181,
-      "cost_eur": 2.0407,
-      "turns": 41,
-      "sessions": 5
+      "cost_usd": 98.8783,
+      "cost_eur": 90.9681,
+      "turns": 939,
+      "sessions": 20
     }
   },
   "models": {
     "unknown": {
-      "input": 72710,
-      "output": 18010,
-      "cache_read": 897708,
-      "cache_write": 215039,
-      "cost_usd": 1.9996,
-      "cost_eur": 1.8396,
-      "turns": 39
+      "input": 510066,
+      "output": 345272,
+      "cache_read": 51646243,
+      "cache_write": 10889220,
+      "cost_usd": 97.6299,
+      "cost_eur": 89.8195,
+      "turns": 916
     },
     "claude-opus-4-6": {
-      "input": 5,
-      "output": 635,
-      "cache_read": 54671,
-      "cache_write": 28051,
-      "cost_usd": 0.2186,
-      "cost_eur": 0.2011,
-      "turns": 8
+      "input": 30,
+      "output": 4809,
+      "cache_read": 497866,
+      "cache_write": 140668,
+      "cost_usd": 1.2485,
+      "cost_eur": 1.1486,
+      "turns": 30
     }
   },
   "days": {
     "2026-03-01": {
-      "cost_usd": 0.8812,
-      "turns": 11
+      "cost_usd": 9.4172,
+      "turns": 115
     },
     "2026-03-02": {
-      "cost_usd": 0,
-      "turns": 4
+      "cost_usd": 0.4334,
+      "turns": 13
     },
     "2026-03-03": {
-      "cost_usd": 0.0316,
-      "turns": 18
+      "cost_usd": 29.1965,
+      "turns": 465
     },
     "2026-03-04": {
-      "cost_usd": 1.3052,
-      "turns": 14
+      "cost_usd": 25.2611,
+      "turns": 214
+    },
+    "2026-03-05": {
+      "cost_usd": 34.5701,
+      "turns": 139
     }
   },
   "clientSpend": {

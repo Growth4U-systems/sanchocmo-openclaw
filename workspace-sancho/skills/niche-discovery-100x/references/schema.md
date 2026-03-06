@@ -1,98 +1,131 @@
-# Niche Discovery v3 — Output Schema
-<!-- v3.3 -->
+# Niche Discovery v4.0 — Output Schema
 
-## Progresión de Columnas
+## Outputs
 
-- **Phase 6** produce 14 columnas (incluye `Reason for Invalidation` y `Notes` — columnas de trabajo)
-- **Phase 7b** añade 4 columnas: SWOT_Score, ICP_Score, Product_Score, Triple_Filter_Result
-- **Phase 10** añade 7 columnas de scoring y **elimina** `Reason for Invalidation` y `Notes`
-- **Tabla final**: 23 columnas (14 - 2 + 4 + 7 = 23)
+El skill produce 2 archivos:
 
-## Final Table Columns (Phase 10 output — 23 columnas)
+| Archivo | Propósito | Consumen |
+|---------|-----------|----------|
+| `problems.md` | Audit trail — de dónde salió cada ECP | Referencia interna, QA |
+| `ecps.md` | Acción — ECPs con reachability descubierta | positioning-messaging, channel-prioritization |
 
-| Column | Type | Description |
-|--------|------|-------------|
-| Niche_ID | string | lowercase-hyphenated (e.g., "ecommerce-payment-fees") |
-| Valid | boolean | TRUE if passed all filters |
-| Category | string | 5-8 categories per run |
-| Niche (Consolidated) | string | Specific business segment (80-200 chars). Defines WHO. |
-| Unified Problem Statement | string | First-person voice from persona (150-300 chars) |
-| Why {company}? | string | How product solves this (max 30 words) |
-| Persona (Example) | string | Role + business type |
-| Emotional Load | string | Key emotional driver |
-| Alternatives | string | Current solutions/workarounds |
-| Tentative Marketing Channels | string | Where to reach this segment |
-| Positioning and Messaging | string | Key message angle (max 15 words) |
-| Reference URLs | string | Source URLs (comma-separated) |
-| SWOT_Score | PASS/PARTIAL/FAIL | Foundation SWOT alignment |
-| ICP_Score | PASS/PARTIAL/FAIL | Reachability + fit |
-| Product_Score | PASS/PARTIAL/FAIL | Current capability to solve |
-| Triple_Filter_Result | PASS/PARTIAL/FAIL | Combined Foundation validation |
-| Pain Score | 2-99 | JTBD analysis from Deep Research |
-| Reachability Score | 2-99 | Community + channel analysis |
-| Market Size | number | SAM estimate (people in country) |
-| Pain Explanation | string | Root causes, consequences (600-800 chars) |
-| Reachability Explanation | string | Specific communities, platforms, events |
-| Market Size Explanation | string | Sources, method, trend |
-| Reachability Channels | string | Exact subreddits, handles, platforms |
+## ECP Schema (ecps.md)
 
-## Intermediate File Formats
+### Campos por ECP
 
-| Phase | File | Format |
-|-------|------|--------|
-| 2 | config.json | JSON: life_contexts[], product_words[], sources{} |
-| 3 | urls.json | JSON array: {url, title, snippet, life_context, product_word, source_type} |
-| 4 | docs/*.md | One markdown per scraped page + manifest.json |
-| 5 | problems.md | Markdown table: Problem, Persona, Functional Cause, Emotional Load, Evidence, Alternatives, URLs |
-| 6b | niches-raw/merged.md | Markdown table: 14 columns — personas específicas deduplicadas |
-| 6c | niches-raw/clusters.md | JTBD Clusters: 5-10 grupos con "Social Payments" + personas miembro nombradas |
-| 7 | niches-filtered.md | Same 14 columns + Valid/Reason updated |
-| 7b | niches-triple.md | 14 columns + SWOT_Score, ICP_Score, Product_Score, Triple_Filter_Result |
-| 8 | niches-confirmed.md | Same as 7b, user-edited |
-| 9 | scored.md | Markdown sections per niche: Pain, Market Size, Reachability |
-| 10 | current.md | Final 23-column table |
-| 10 | final-table.csv | CSV export of current.md |
+| Campo | Tipo | Descripción |
+|-------|------|-------------|
+| name | string | Descriptivo, basado en NECESIDAD. ❌ "Solo Technical Founder" ✅ "Necesita growth system repetible" |
+| core_need | string | El "I want to" del JTBD. Debe poder decirlo 50 personas distintas sin cambiar una palabra. |
+| trigger | string | Qué les hace buscar solución AHORA. Momento específico. |
+| problems_included | string[] | IDs de problems en problems.md que forman este cluster |
+| unified_problem | string | Resumen del problema unificado (mezcla de los problems del cluster, en sus palabras) |
+| why | string | Por qué este problema les importa — consecuencias económicas, emocionales, operativas |
+| jtbd_statement | string | "Cuando [situación], quiero [motivación], para poder [resultado]" |
+| hypothesis | string | "Creemos que [quienes tienen necesidad] se frustran por [problema], lo que les obliga a [workaround]..." |
+| alternatives | string | Qué hacen HOY (incluyendo "no hacer nada", manuales, competidores específicos) |
+| trust_map | object | Influencers, newsletters, comunidades, eventos, podcasts — NOMBRES específicos |
+| search_map | object | Keywords: awareness, consideración, decisión |
+| channel_map | object | Canales primarios (trust+search convergen) + secundarios, con acciones concretas |
+| why_we_win | string | Ventaja específica para esta necesidad |
+| founder_moat_badge | string | "🏆 ALTO" / "⭐ MEDIO" / "—" + justificación |
+| pain_score | 2-99 | Frecuencia, willingness to pay, intensidad emocional |
+| pain_explanation | string | 200-400 chars: por qué esta nota (frecuencia foros, WTP, consecuencias económicas) |
+| reachability_score | 2-99 | Evidence-based: 76-99 = 2+ canales primarios, 51-75 = 1 primario + secundarios, 21-50 = solo secundarios, 2-20 = sin canales |
+| reachability_explanation | string | 200-400 chars: canales descubiertos, convergencia trust×search, tamaño comunidades |
+| sam_score | 2-99 | Tamaño mercado alcanzable (normalizado) |
+| sam_explanation | string | 200-400 chars: cifra absoluta, fuentes, método, tendencia |
+| ecp_score | float | Pain × 0.35 + Reachability × 0.40 + SAM × 0.25 |
+
+### Trust Map Structure
+
+```json
+{
+  "influencers": ["Nombre Apellido (plataforma, seguidores)", ...],
+  "newsletters": ["Newsletter Name (frecuencia, audiencia)", ...],
+  "communities": ["Nombre (plataforma: Slack/Discord/Reddit/etc)", ...],
+  "events": ["Nombre Evento (ciudad, frecuencia)", ...],
+  "podcasts": ["Nombre Podcast (host, audiencia)", ...]
+}
+```
+
+### Search Map Structure
+
+```json
+{
+  "awareness": ["keyword 1", "keyword 2", ...],
+  "consideration": ["keyword 1", "keyword 2", ...],
+  "decision": ["keyword 1", "keyword 2", ...]
+}
+```
+
+### Channel Map Structure
+
+```json
+{
+  "primary": [
+    {
+      "channel": "Nombre específico (plataforma)",
+      "why_primary": "Trust + Search convergen aquí porque...",
+      "action": "Acción concreta con contexto"
+    }
+  ],
+  "secondary": [
+    {
+      "channel": "Nombre específico",
+      "type": "trust_only | search_only",
+      "action": "Acción concreta"
+    }
+  ]
+}
+```
+
+**QA**: Un canal genérico ("LinkedIn") NO es válido. Debe incluir: plataforma específica + contexto + acción concreta.
+
+## Problem Schema (problems.md)
+
+### Campos por Problem
+
+| Campo | Tipo | Descripción |
+|-------|------|-------------|
+| id | int | Número secuencial |
+| statement | string | El problema en palabras del usuario |
+| why | string | Por qué les importa |
+| persona | string | Descripción de quién lo tiene (no arquetipo) |
+| alternatives | string | Qué hacen hoy |
+| source | string | Tipo de fuente (ver Valid Source Types) |
+| source_url | string | URL de la fuente |
+| engagement | string | Score/votes/likes de la fuente |
+| jtbd_statement | string | "Cuando [situación], quiero [motivación], para poder [resultado]" |
+| swot_filter | PASS/PARTIAL/FAIL | Resultado del filtro SWOT |
+| solution_filter | PASS/PARTIAL/FAIL | Resultado del Solution Filter |
+| product_filter | 1-5 | Score del Product Filter |
+
+## Storage Tiers
+
+| Tier | Contenido | Uso |
+|------|-----------|-----|
+| Tier 1 | ECPs: name, core_need, channel_map.primary, scoring, founder_moat | Carga downstream (positioning-messaging consume esto) |
+| Tier 2 | Full ECPs: trust_map, search_map, channel_map completo + problems filtrados | Referencia completa |
+| Tier 3 | Raw problems + sources + scraping logs | Audit trail |
 
 ## Cross-Pillar Data Flow
 
 | Data | Consumed By |
 |------|-------------|
-| JTBD Clusters (groups + "Social Payments") | positioning-messaging (messaging por grupo), content-workflow (content pillars por grupo), channel-prioritization |
-| Selected ECPs/Personas (name, JTBD, scores) | positioning-messaging, content-workflow |
-| JTBD per ECP | content-workflow, outreach-workflow |
-| Pain scores | phase-0-diagnostic, experiment design |
-| Reachability + channels | channel-prioritization, outreach-sequence-builder |
-| Market size | budget-constraints, scaling decisions |
-| Current alternatives | positioning-messaging, pricing-hooks |
-| Triple Filter results | ecp-validation (downstream) |
-
-## Coverage Thresholds
-
-- **Lite**: 50+ problems scraped, Triple Filter applied, 3-7 ECPs scored, top 3 recommended
-- **Deep**: 500+ problems, 5+ source types, TAM/SAM per ECP, customer data integrated, multi-market analysis
+| ECPs (name, core_need, channel_map) | positioning-messaging (messaging por ECP), channel-prioritization |
+| Trust Map por ECP | channel-prioritization (input directo), content-workflow |
+| Search Map por ECP | keyword-research, seo-content |
+| Problems filtrados | positioning-messaging (voces reales para copy) |
+| Founder Moat badges | positioning-messaging (diferenciación) |
 
 ## Valid Source Types
 
-### B2C/SMB Sources (Forum Pipeline)
-- `"reddit"` — Reddit posts and comments
-- `"quora"` — Quora answers
-- `"twitter"` — X/Twitter posts
-- `"community-forum"` — Thematic forums (forocoches, rankia, etc.)
-- `"g2-review"`, `"capterra-review"`, `"trustpilot-review"` — Review platforms
-- `"app-store-review"` — App/Play Store reviews
+### B2C/SMB Sources
+- `"reddit"`, `"quora"`, `"twitter"`, `"community-forum"`, `"g2-review"`, `"capterra-review"`, `"trustpilot-review"`, `"app-store-review"`
 
 ### B2B Enterprise Sources
-- `"case-study"` — Competitor website case studies
-- `"job-posting"` — LinkedIn Jobs, Indeed, vertical boards
-- `"earnings-call"` — Public company earnings transcripts
-- `"conference-agenda"` — Industry conference session topics
-- `"linkedin"` — LinkedIn posts and comments from ICP decision makers
-- `"trade-publication"` — Vertical media editorial themes
-- `"regulatory"` — New regulations creating mandatory problems
-- `"expert-interview"` — Direct practitioner conversations
-- `"micro-interview"` — Quick structured interviews with ICP members
+- `"case-study"`, `"job-posting"`, `"earnings-call"`, `"conference-agenda"`, `"linkedin"`, `"trade-publication"`, `"regulatory"`, `"expert-interview"`, `"micro-interview"`
 
 ### Foundation Harvest Sources
-- `"competitor-intelligence-lens3"` — From existing competitor-intelligence pillar
-- `"market-intelligence"` — From existing market-intelligence pillar
-- `"self-intelligence-lens3"` — From existing self-intelligence pillar
+- `"competitor-intelligence-lens3"`, `"market-intelligence"`, `"self-intelligence-lens3"`

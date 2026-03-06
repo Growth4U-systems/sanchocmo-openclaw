@@ -7,6 +7,7 @@
 > Cambios v2.1: Precio consulta corregido de €50 a €195 (bono real). CTAs de conversión en formato Test A (Bono €195) / Test B (Directo a consulta). Eliminada comparativa Olistic.
 > Cambios v2.2: QA fixes — Correcciones factuales (minoxidil, 95% hormonal), caveats fuentes UK, messaging efectos secundarios + dolor, advertencias legales nombres fármacos/competidores.
 > Cambios v2.3: ECP #6 Mujeres con problemas hormonales añadido (Philippe). Nota quiz diagnóstico. 6 ECPs totales.
+> Cambios v2.4: Pain clusters v2 integrados (nombres JTBD + voces reales). Sección Speed Videos con 6 guiones (1 por ECP, incluye mujeres). Storytelling desarrollado.
 
 ---
 
@@ -20,7 +21,7 @@
 
 ---
 
-## Shared Value Criteria (Tier 2)
+## Criterios de Valor Compartidos (Tier 2)
 
 | # | Value Criterion | Relevance | Weight (1-10) | Justificación |
 |---|----------------|-----------|---------------|---------------|
@@ -35,7 +36,7 @@
 | VC9 | Conveniencia y Acceso | Medio | 6 | Ubicación, horarios, tiempo de consulta, quiz online |
 | VC10 | Evidencia Científica | Medio | 6 | Protocolos basados en evidencia vs suplementos sin aval. ⚠️ Nombres de fármacos (dutasteride, PRP) = solo referencia interna, NO publicar en copy |
 
-### Mapa Competitivo de Scoring
+### Mapa Competitivo de Puntuación
 
 | Value Criterion | HC | Insparya | Svenson | OTC (Minoxidil) | DTC (Olistic/Keeps) | Turquía | No hacer nada |
 |-----------------|-----|---------|---------|-----------------|---------------------|---------|------------|
@@ -51,14 +52,14 @@
 | VC10 Evidencia Científica | **5** | 4 | 2 | 4 | 2 | 2 | 0 |
 
 **Zonas de dominio HC:** VC1 Autoridad Médica, VC2 Precisión Diagnóstica, VC3 Transparencia, VC7 Seguridad Emocional
-**Red Ocean:** VC9 Conveniencia (DTC/OTC ganan por accesibilidad)
-**Gap a cerrar:** VC6 Claridad de Precio (HC tiene pricing oculto en web)
+**Océano rojo:** VC9 Conveniencia (DTC/OTC ganan por accesibilidad)
+**Brecha por cerrar:** VC6 Claridad de Precio (HC tiene precios ocultos en web)
 
 ---
 
 ## Base de Activos Compartida (Tier 2)
 
-| # | Activo HC | Value Criteria | Categoría | Justificación |
+| # | Activo HC | Criterio de Valor | Categoría | Justificación |
 |---|---------|----------------|----------|---------------|
 | A1 | Tricólogo médico en cada consulta | VC1, VC2 | **Diferenciador** | Ningún competidor garantiza médico especialista en cada visita. Svenson usa esteticistas, Insparya rota personal |
 | A2 | Diagnóstico completo en 1 consulta (tricoscopía + analítica hormonal) | VC2, VC4 | **Diferenciador** | Gold standard diagnóstico. Competidores hacen valoraciones visuales o comerciales |
@@ -66,24 +67,32 @@
 | A4 | Trustpilot 4.8/5 (75+ reviews) | VC8 | **Diferenciador** | Mejor score del sector. Insparya 3.8/5, Svenson baja. Social proof verificable |
 | A5 | FAQ honesta: "tratamientos NO hacen crecer pelo nuevo" | VC3, VC7 | **Diferenciador** | Transparencia radical. Ningún competidor publica limitaciones de sus tratamientos |
 | A6 | Integración cirugía + tratamiento bajo mismo techo | VC4, VC5 | **Diferenciador** | Si evolución requiere cirugía, no hay que cambiar de clínica. Continuidad de expediente |
-| A7 | +88% crecimiento orgánico sin marketing | VC8 | Qualifier | PMF probado — el producto funciona sin necesidad de venderlo agresivamente |
-| A8 | 3 clínicas operativas + 6 en expansión (9 total 2026) | VC9 | Qualifier | Cobertura nacional creciente, pero aún no líder en acceso |
+| A7 | +88% crecimiento orgánico sin marketing | VC8 | Básico | PMF probado — el producto funciona sin necesidad de venderlo agresivamente |
+| A8 | 3 clínicas operativas + 6 en expansión (9 total 2026) | VC9 | Básico | Cobertura nacional creciente, pero aún no líder en acceso |
 | A9 | Margen 90% en tratamientos | - | Interno | Permite pricing competitivo si se necesita, sin sacrificar negocio |
 | A10 | Bono consulta diagnóstica €195 (en test) | VC6, VC7 | **Diferenciador** | Precio fijo conocido antes de ir. "Primero diagnóstico, solo pagas tratamiento si aplica". Test paralelo: Bono €195 vs CTA directo a consulta |
 
 ---
 
-## ECP #1: JÓVENES 20-30 — ALOPECIA TEMPRANA
+## 🪞 ECP #1: "El Espejo de Cada Mañana" — Jóvenes alopecia temprana
+
+**JTBD:** *Cuando noto que pierdo pelo joven, quiero recuperar mi confianza para poder vivir sin esconderme*
+**Persona:** Marcos, 25, ingeniero, 6 meses notando entradas, usa minoxidil sin supervisión, lleva gorra desde hace 3 años
+
+> *"Llevo un par de años sin intentar tener citas — en parte porque me da mucha vergüenza mi línea del pelo. Llevo gorra todos los días desde hace 3 años."* — [r/dating_advice, 25M](https://reddit.com/r/dating_advice/comments/1563klv)
+>
+> *"Mi autoestima y mi confianza quedaron completamente destruidas por la calvicie prematura"* — r/Zillennials
 
 ### Contexto
-- 30% hombres <30 con alopecia androgenética en España
-- 96% preocupados, 75% muy/extremadamente preocupados *(dato UK — Regaine survey; tendencia probablemente similar en España)*
+- 30% hombres <30 con alopecia androgenética en España | SAM: ~80.000
+- 96% preocupados, 75% muy/extremadamente preocupados *(dato UK — Regaine survey; tendencia similar en España)*
 - Buscan info en TikTok/Reddit primero, auto-tratan antes de ir a médico
-- GenZ proactivos: 95% de primeros trasplantes = 20-35 años *(dato UK/global — HairDr; tendencia observada en España)*
+- GenZ proactivos: 95% de primeros trasplantes = 20-35 años *(dato UK/global — HairDr)*
 - Alta carga emocional: dating, autoestima, redes sociales, miedo al futuro
 - La madre como influencer: recomienda/paga en muchos casos
+- **Canales:** TikTok (#hairloss 5B+ views), IG Reels, r/tressless (500K+), Google Ads CPC €1-3
 
-### Value Criteria (pesos específicos ECP #1)
+### Criterios de Valor (pesos ECP #1)
 
 | Criterio | Peso ECP #1 | Por qué |
 |-----------|-------------------|-----|
@@ -94,7 +103,7 @@
 | VC10 Evidencia Científica | 8 | Investigadores: leen Reddit, comparan papers, cuestionan todo |
 | VC6 Claridad de Precio | 8 | Presupuesto limitado (20-25 años). Necesitan saber coste antes de ir |
 
-### Benefit-Proof Pairs
+### Beneficio-Prueba por Activo
 
 | Activo | Ventaja Competitiva | Beneficio para el usuario | Prueba |
 |-------|----------------------|------------------|-------|
@@ -104,31 +113,31 @@
 | A4 Trustpilot 4.8/5 | Mejor score sector por 1 punto completo vs líder | "4.8/5 en Trustpilot — lee lo que dicen los que ya fueron" | Widget Trustpilot en landing + selección reviews de pacientes jóvenes |
 | A3 Protocolos HRT/CRT | Protocolos médicos propios vs genéricos de competencia | "Protocolo diseñado para TU tipo de alopecia, no un tratamiento genérico" | Infografía: "HRT vs minoxidil genérico — qué incluye cada uno" |
 
-### Messaging Playbook — ECP #1
+### Playbook de Messaging — 🪞 ECP #1
 
-**UVP — Jóvenes alopecia temprana**
-- *Dolor activado:* Tienes 24 años, llevas meses contando pelos en la almohada y buscando en Google a las 2 de la mañana. Nadie en tu entorno habla de esto. Necesitas un sitio donde alguien te diga qué está pasando — sin venderte nada, sin juzgarte, sin prisa.
-- *Versión corta (ads):* "Tu pelo tiene una respuesta médica. Una consulta, cero presión."
-- *Versión landing:* "Llevas meses mirándote la frente en cada reflejo, buscando en Reddit a las 2 de la mañana, sin atreverte a preguntarle a nadie. No necesitas otro suplemento ni otro vídeo de TikTok. Necesitas un médico que te diga exactamente qué tienes — y qué puedes hacer. Sin venderte nada. Sin juzgarte. Sin prisa."
+**UVP — El Espejo de Cada Mañana**
+- *Dolor activado:* Cada mañana es el mismo ritual: te miras al espejo, te pasas la mano por las entradas, y te mueres un poco por dentro. Llevas gorra todo el día. Evitas las fotos. Has dejado de intentar ligar. Y nadie en tu vida sabe lo mucho que esto te jode — porque "eres un tío de 24 años, no te vas a quejar por el pelo". Pero sí. Sí te quejas. Solo que en silencio.
+- *Versión corta (ads):* "3 años con gorra. Hoy me la quité. Esto es lo que cambió."
+- *Versión landing:* "Sabes exactamente de qué va esto. El espejo del baño cada mañana. La mano que se pasa por la frente 'sin querer'. Las fotos que evitas. Las apps de citas que abriste y cerraste. La gorra que ya no es un accesorio — es un escudo. No necesitas que nadie te diga que la alopecia a los 20 duele. Lo que necesitas es un médico que te diga exactamente qué está pasando — si tiene solución, cuál es, y cuánto tiempo tienes antes de que sea más difícil. Una consulta. Sin juicio. Sin ventas. Solo respuestas."
 - *Criterios:* VC1 + VC7 | *Objetivo:* Captar atención y reducir el miedo a dar el primer paso
 
-**USP 1: El diagnóstico que nadie te ha dado**
-- *Dolor activado:* La incertidumbre es peor que la realidad. "¿Es genético? ¿Es estrés? ¿Se me va a caer todo?" — Google no tiene la respuesta. Un tricoscopio sí.
-- *Versión corta (ads):* "Deja de buscar en Google. En 1 visita, un médico te dice exactamente qué tienes."
-- *Versión landing:* "Llevas meses buscando 'alopecia androgenética 23 años' y cada resultado te deja peor que el anterior. La verdad: Google no puede diagnosticarte. En 1 consulta con tricoscopía y analítica hormonal, un médico especialista te dice exactamente qué tipo de alopecia tienes, en qué fase estás y qué opciones reales hay. Sin conjeturas. Sin sustos."
+**USP 1: No es tu culpa. Pero sí es tu decisión.**
+- *Dolor activado:* Te culpas: "¿Será el estrés? ¿La dieta? ¿Debería haber hecho algo antes?" No. Es genética en el 80% de los casos. No la elegiste. Pero SÍ puedes elegir qué hacer ahora.
+- *Versión corta (ads):* "La alopecia no la elegiste. Lo que hagas ahora, sí."
+- *Versión landing:* "Llevas meses buscando 'alopecia androgenética 23 años' y culpándote. ¿Es el estrés? ¿La dieta? ¿Debería haberme cortado el pelo de otra manera? La respuesta: no es tu culpa. En más del 80% de los casos, es genética. No se frena con champú ni con suplementos de Amazon. Se frena con un diagnóstico que identifica tu tipo de alopecia y un protocolo diseñado para tu caso. En 1 consulta con tricoscopía, un médico te dice exactamente qué tienes, en qué fase estás, y qué opciones reales hay. No conjeturas. No sustos. Datos."
 - *Criterio:* VC2 | *Objetivo:* Convertir quiz/consulta
 
-**USP 2: La clínica que prefiere perderte a mentirte**
-- *Dolor activado:* Estás harto de promesas de "recupera tu pelo en 3 meses" de cuentas de Instagram con fotos retocadas. Necesitas a alguien que te diga qué SÍ puede hacer un tratamiento — y qué NO.
-- *Versión corta (ads):* "Te decimos lo que el tratamiento puede hacer — y lo que no. Ninguna clínica hace eso."
-- *Versión landing:* "En nuestra web encontrarás algo que no verás en ninguna otra clínica: 'Los tratamientos capilares NO hacen crecer pelo nuevo.' ¿Por qué lo publicamos? Porque preferimos que vengas sabiendo la verdad a que vengas con expectativas imposibles. El tratamiento frena la caída y mejora la densidad. Eso está probado. Pero nadie te va a devolver el pelo de los 15 años — y el que te lo prometa, te está mintiendo."
-- *Criterio:* VC3 | *Objetivo:* Generar confianza radical con GenZ escépticos
+**USP 2: Aquí nadie va a venderte nada**
+- *Dolor activado:* Ya sabes cómo funciona: buscas "clínica capilar", entras a "valoración gratuita", y al minuto estás firmando un presupuesto de 4.000€ que no pediste. Ese modelo existe. Este no.
+- *Versión corta (ads):* "Sin packs. Sin presión. Solo un médico que te explica qué tienes."
+- *Versión landing:* "En nuestra web encontrarás algo que no verás en ninguna otra clínica: 'Los tratamientos capilares NO hacen crecer pelo nuevo.' ¿Por qué lo publicamos? Porque preferimos que vengas sabiendo la verdad a que vengas con expectativas imposibles. Aquí no hay vendedores. No hay packs de presión. No hay 'descuento si firmas hoy'. Hay un médico. Te mira la cabeza con un tricoscopio. Te explica qué tienes. Y tú decides. Si decides no hacer nada — te vas con información. Gratis de culpa."
+- *Criterio:* VC3 + VC7 | *Objetivo:* Generar confianza con GenZ escépticos. ⚠️ Nombres competidores = solo ref. interna
 
-**USP 3: Un médico, no un vendedor**
-- *Dolor activado:* La última vez que preguntaste por tu pelo, un "asesor" intentó meterte un pack de 3.000€ antes de mirarte la cabeza. Aquí no funciona así.
-- *Versión corta (ads):* "Aquí te atiende un médico. No un esteticista, no un comercial."
-- *Versión landing:* "En otras clínicas, la primera persona que ves es un comercial. Te hace una 'valoración gratuita', te enseña unas fotos de antes/después y te mete presión para firmar un tratamiento de miles de euros. En Hospital Capilar, la primera — y única — persona que ves es un médico especialista en tricología. No hay vendedores. No hay packs. Solo un diagnóstico, una explicación y tú decides."
-- *Criterio:* VC1 + VC7 | *Objetivo:* Diferenciarse de competencia. ⚠️ Nombres competidores (Svenson/Insparya) = solo ref. interna, usar "otras clínicas" en copy público
+**USP 3: Un médico de verdad. No un "asesor capilar".**
+- *Dolor activado:* Googleaste "clínica pelo" y te salió una web brillante con fotos de stock. Fuiste. Te atendió alguien con bata que no era médico. Te midió "las unidades foliculares" con una app del móvil. Y te pasó un presupuesto sin preguntarte cómo te sentías.
+- *Versión corta (ads):* "Aquí te atiende un tricólogo médico. No un comercial con bata."
+- *Versión landing:* "En otras clínicas, la primera persona que ves se llama 'asesor capilar'. Lleva bata, habla con confianza, y parece médico. Pero no lo es. Es un comercial con un iPad y un objetivo de ventas. En Hospital Capilar, la primera y única persona que ves es un médico especialista en tricología. Con título, con colegiado, con la obligación ética de decirte la verdad. Si necesitas tratamiento, te lo dice. Si no lo necesitas, también. Porque su trabajo es diagnosticar, no vender."
+- *Criterio:* VC1 + VC7 | *Objetivo:* Diferenciarse de competencia
 
 **USP 4: Saber qué tienes tiene un precio fijo**
 - *Dolor activado:* Lo que más miedo da no es pagar — es no saber cuánto vas a acabar pagando. Entras "a preguntar" y sales con un presupuesto de 3.000€ que no esperabas. Hospital Capilar te dice el precio antes de que cruces la puerta.
@@ -163,15 +172,25 @@
 
 ---
 
-## ECP #2: OTC FRUSTRADOS
+## 💊 ECP #2: "La Farmacia Sin Salida" — OTC frustrados
+
+**JTBD:** *Cuando el tratamiento OTC deja de funcionar, quiero encontrar una solución médica real que no me haga perder más tiempo y dinero*
+**Persona:** Laura, 32, marketing, 2 años minoxidil + Olistic, pérdida difusa progresiva. También: personas con miedo a efectos secundarios de finasteride.
+
+> *"Empecé con minoxidil y microneedling en enero 2024... en 3-4 meses noté mejoría... Ahora un año después, la caída ha continuado"* — [u/Paul_iio, r/tressless](https://reddit.com/r/tressless/comments/1hwu44f)
+>
+> *"Llevo 3 años con finasteride... minoxidil un año, sin cambio visible. No sé si hay más opciones aparte de un trasplante."* — [u/irazzleandazzle, r/tressless](https://reddit.com/r/tressless/comments/suwosl)
+>
+> *"Lo que me preocupa es que el minoxidil es un tratamiento de por vida. De hecho la caída empeora si lo dejas."* — [u/Affectionate_Work_72, r/tressless](https://reddit.com/r/tressless/comments/1fi1ek6)
 
 ### Contexto
-- ~853K unidades minoxidil/año en España *(estimación sectorial sin fuente primaria verificable)*, ~400-500K usuarios únicos estimados
-- Ciclo fallo DTC: 1-2 años con productos → resultados decrecientes → buscan médico. ⚠️ Olistic (700K+ clientes GLOBALES, no solo España)
+- ~853K unidades minoxidil/año en España *(estimación sectorial)*, ~400-500K usuarios únicos | SAM: ~70.000
+- Ciclo fallo DTC: 1-2 años con productos → resultados decrecientes → buscan médico. ⚠️ Olistic (700K+ clientes GLOBALES)
 - ~84% intentan auto-tratamiento antes de consultar médico *(estimación)*
 - Momento clave: cuando el OTC "deja de funcionar" → ventana de decisión
+- **Canales:** Google Ads "minoxidil no funciona" (intent altísimo), Reddit r/tressless, SEO blog, retargeting DTC
 
-### Benefit-Proof Pairs
+### Beneficio-Prueba por Activo
 
 | Activo | Ventaja Competitiva | Beneficio para el usuario | Prueba |
 |-------|----------------------|------------------|-------|
@@ -179,48 +198,55 @@
 | A3 HRT/CRT | Escalada médica directa desde OTC. Protocolo médico personalizado superior a genéricos | "El siguiente nivel después de OTC: tratamiento médico personalizado" | Infografía escalera: OTC → diagnóstico → protocolo médico → seguimiento. ⚠️ NO mencionar fármacos por nombre en copy público |
 | A5 Honestidad | OTC promete "crecimiento"; HC dice la verdad sobre expectativas | "Nadie te dijo que el minoxidil necesita supervisión médica para funcionar a largo plazo" | Carrusel IG: "Lo que tu farmacéutico no te explica sobre la caída del pelo" |
 
-### Messaging Playbook — ECP #2
+### Playbook de Messaging — 💊 ECP #2
 
-**UVP — OTC frustrados**
-- *Dolor activado:* Llevas un año (o dos) echándote minoxidil todas las mañanas. Al principio parecía que iba. Ahora ya no. Sigues con la rutina por inercia, pero sabes que algo no funciona. El problema nunca fue el minoxidil — fue que nadie te dijo qué tipo de alopecia tienes ni si ese producto era el adecuado para ti.
-- *Versión corta (ads):* "Cuando el minoxidil deja de funcionar, necesitas un médico — no otro producto."
-- *Versión landing:* "Un año echándote minoxidil en el espejo del baño a las 7 de la mañana. Funciona, deja de funcionar, y nadie te explica por qué. Porque nunca tuviste un diagnóstico real. Un farmacéutico te recomendó algo genérico. O peor: un anuncio de Instagram te convenció. Hospital Capilar empieza por donde debería haber empezado todo: un médico que te dice qué tienes, por qué tu tratamiento actual no funciona y cuál es el siguiente paso lógico."
-- *Criterio:* VC1 + VC4 | *Objetivo:* Captar usuarios OTC frustrados en el momento de cambio
+**UVP — La Farmacia Sin Salida**
+- *Dolor activado:* 7 de la mañana. Espejo del baño. Abres el bote de minoxidil — el mismo gesto que llevas haciendo 14 meses. Al principio contabas los días para ver resultados. Ahora cuentas los pelos que siguen cayendo. Has gastado más de mil euros entre el minoxidil, la suscripción mensual, la biotina, el champú especial. Y lo peor no es el dinero — es que no sabes si algo de lo que haces tiene sentido. Porque nadie te ha dicho qué tienes.
+- *Versión corta (ads):* "1.200€ en productos. 0 diagnósticos. Algo falla — y no es el minoxidil."
+- *Versión landing:* "Si estás leyendo esto, probablemente llevas entre 1 y 3 años en el mismo bucle: minoxidil que 'algo hacía' pero ya no, una suscripción de cápsulas que nunca sabes si funciona, y un armario del baño lleno de botes que prometían más de lo que dieron. Aquí no te vamos a vender el bote número 7. Te vamos a decir algo que nadie te ha dicho: no sabes qué tipo de alopecia tienes. Y sin saberlo, estás tratándote a ciegas. Un médico, un tricoscopio, y 1 hora. Eso es lo que separa 'cruzar los dedos' de 'tener un plan'."
+- *Criterio:* VC1 + VC4 | *Objetivo:* Captar usuarios OTC en el momento de frustración
 
-**USP 1: Tu minoxidil no falló. Tu diagnóstico sí.**
-- *Dolor activado:* Nadie te explica que el minoxidil tópico funciona para ciertos patrones de alopecia y no para otros. Que sin saber tu causa hormonal, estás tratando a ciegas. Y que "a ciegas" + "18 meses" = frustración.
-- *Versión corta (ads):* "Tu minoxidil no falló. Tu diagnóstico sí. Arreglemos eso primero."
-- *Versión landing:* "Si el minoxidil 'dejó de funcionar', probablemente nunca funcionó para lo que realmente tienes. El minoxidil actúa sobre el folículo piloso, pero si tu alopecia es hormonal — y más del 80% lo es — necesitas un enfoque diferente. Lo primero no es cambiar de producto. Es saber qué tienes. Un diagnóstico con tricoscopía + analítica hormonal te dice en 1 hora lo que 2 años de auto-tratamiento no pudieron."
+**USP 1: No necesitas otro producto. Necesitas saber qué tienes.**
+- *Dolor activado:* Cada vez que buscas "alternativa a minoxidil", te sale otro producto. Otra suscripción. Otra promesa. Pero el problema nunca fue el producto — fue que nadie miró tu cabeza antes de recetarte nada.
+- *Versión corta (ads):* "Primero el diagnóstico. Luego el tratamiento. Así debería haber sido siempre."
+- *Versión landing:* "Si el minoxidil 'dejó de funcionar', probablemente nunca fue el tratamiento adecuado para tu tipo de alopecia. El minoxidil actúa sobre el folículo, pero si tu caída es hormonal — y en más del 80% de los casos lo es — necesitas un enfoque diferente. Un farmacéutico no puede diagnosticarte. Un anuncio de Instagram tampoco. Un médico con un tricoscopio, sí. En 1 consulta: qué tipo de alopecia tienes, por qué lo que usabas no iba a funcionar solo, y cuál es el protocolo que SÍ tiene sentido para tu caso."
 - *Criterio:* VC2 | *Objetivo:* Convertir a consulta diagnóstica
 
-**USP 2: El siguiente nivel no es otro bote — es un médico**
-- *Dolor activado:* Has probado minoxidil, biotina, champús anticaída, suplementos de 50€/mes. Cada vez un producto nuevo. Pero nunca has tenido un médico que mire tu cuero cabelludo con un tricoscopio y te diga exactamente qué necesitas.
-- *Versión corta (ads):* "Mismos principios activos, precisión médica. El tratamiento que tu pelo necesita de verdad."
-- *Versión landing:* "Después de minoxidil, la mayoría salta a otro producto — Olistic, Keeps, lo que salga en el siguiente anuncio. Pero la escalada lógica no es otro bote. Es un protocolo médico personalizado: mismos principios activos (y mejores), administrados con la dosis y la frecuencia que TU alopecia necesita. No la que dice el prospecto genérico. Eso solo lo puede diseñar un médico que ha visto tu tricoscopía."
-- *Criterio:* VC4 + VC10 | *Objetivo:* Posicionar HC como paso natural post-OTC
-
-**USP 3: Dejar de cruzar los dedos**
-- *Dolor activado:* Con el OTC no sabes si funciona. Te miras al espejo cada mañana buscando diferencias que no ves. Sin seguimiento médico, estás apostando — no tratándote.
-- *Versión corta (ads):* "Cada 3 meses, tu médico revisa tu progreso. No más esperar a ver si funciona."
-- *Versión landing:* "¿Sabes cuál es la diferencia entre un tratamiento OTC y un tratamiento médico? Seguimiento. Cada 3 meses, tu médico compara tricoscopías, mide densidad, ajusta protocolo si hace falta. No te miras al espejo preguntándote 'estará funcionando'. Lo sabes. Con datos. Y si algo no va, se cambia — no sigues 6 meses más 'a ver qué pasa'."
+**USP 2: De "a ver si funciona" a "sé que funciona"**
+- *Dolor activado:* Llevas meses mirándote al espejo buscando diferencias que no ves. ¿Funciona? ¿No funciona? ¿Lo dejo? ¿Sigo? Nadie te responde porque nadie está mirando.
+- *Versión corta (ads):* "Cada 3 meses, tu médico compara tu evolución con datos. No más adivinar."
+- *Versión landing:* "La diferencia entre un tratamiento OTC y un tratamiento médico no es el producto — es que alguien MIRA. Cada 3 meses, tu médico compara tricoscopías, mide densidad, y ve si el protocolo funciona. Si va bien, sigue. Si no, ajusta. No te miras al espejo preguntándote si está pasando algo. Lo sabes. Con fotos comparativas. Con datos de densidad. Y con un médico que te explica qué significan."
 - *Criterio:* VC5 | *Objetivo:* Reducir percepción de riesgo
+
+**USP 3: La escalera lógica: OTC → médico → protocolo → vida**
+- *Dolor activado:* Has hecho el primer paso (OTC). El segundo no es otro producto — es un profesional. Y el tercero no es un trasplante — es un protocolo personalizado que quizá hace que el trasplante no haga falta.
+- *Versión corta (ads):* "Después del minoxidil, el siguiente paso no es otro bote. Es un médico."
+- *Versión landing:* "Cuando el OTC se agota, la mayoría salta a otro producto — o directamente al trasplante. Pero hay un paso intermedio que casi nadie te cuenta: un protocolo médico personalizado. Los mismos principios activos (y mejores), pero administrados con la dosis exacta que tu alopecia necesita, supervisados cada trimestre, y ajustados en tiempo real. Para muchos pacientes, eso es suficiente. Para otros, es lo que prepara el terreno para una cirugía con mejores resultados. Pero solo lo sabes después del diagnóstico — no antes."
+- *Criterio:* VC4 + VC10 | *Objetivo:* Posicionar HC como paso natural post-OTC
 
 ---
 
-## ECP #3: SIN DIAGNÓSTICO MÉDICO
+## ❓ ECP #3: "¿Qué Me Pasa?" — Sin diagnóstico médico
+
+**JTBD:** *Cuando noto caída anormal, quiero un diagnóstico claro y rápido para saber qué tengo y qué opciones reales existen para mí*
+**Persona:** David, 28, profesor, nota más pelo en almohada desde 1 año, nunca ha ido a especialista. También: mujeres postparto cuyo ginecólogo normaliza la caída.
+
+> *"70% españoles no saben qué es alopecia areata"* — [Pfizer España 2024](https://www.pfizer.es/files/Dossier_resultados_encuesta_Alopecia_Areata.pdf)
+>
+> *"Sin un diagnóstico, es difícil saber qué tratamientos podrían funcionar. Te sientes perdida, sin saber por dónde empezar."* — Síntesis de r/FemaleHairLoss + r/Advice
 
 ### Contexto
-- 70% españoles no saben qué es alopecia areata *(Pfizer 2024, n=2.021)*
-- ~20M personas con algún tipo de alopecia en España (44.5% prevalencia masculina = alopecia androgenética principalmente). **Nota**: alopecia areata afecta a ~8.000 personas (Pfizer). Son patologías distintas.
+- ~20M personas con algún tipo de alopecia en España (44.5% prevalencia masculina) | SAM: ~150.000. **Nota**: alopecia areata ≠ androgenética (~8.000 afectados, Pfizer)
 - Mayoría sin diagnóstico médico formal (buscan soluciones OTC/DTC primero)
 - Entry point perfecto para funnel: educación → quiz → consulta → tratamiento
 - Dermatólogo general: lista espera 3-6 meses en sanidad pública
+- **Canales:** Quiz HC, Google Ads "diagnóstico capilar" CPC €1-2, SEO "por qué se me cae el pelo", TikTok educativo
 
-### Messaging Playbook — ECP #3
+### Playbook de Messaging — ❓ ECP #3
 
-**UVP — Sin diagnóstico médico**
-- *Dolor activado:* Se te cae el pelo y no sabes por qué. ¿Genético? ¿Estrés? ¿Tiroides? ¿Algo grave? Buscas en Google y cada resultado te asusta más. Pides cita con el dermatólogo de la Seguridad Social y te dan fecha para dentro de 5 meses. Necesitas respuestas ahora, no en medio año.
-- *Versión corta (ads):* "Antes de tratar, diagnosticar. En una visita sabrás exactamente qué tienes."
+**UVP — ¿Qué Me Pasa?**
+- *Dolor activado:* Has buscado "por qué se me cae el pelo" tantas veces que Google ya te lo autocompleta. Un resultado dice estrés. Otro dice genética. Otro dice tiroides. Y uno que te asustó decía algo de autoinmune. No sabes cuál eres tú. Tu médico de cabecera te miró 30 segundos y te dijo "toma hierro". El dermatólogo: "Cita para septiembre. Estamos en marzo." Mientras tanto, la almohada sigue recogiendo lo que tu cabeza suelta.
+- *Versión corta (ads):* "47 millones de resultados en Google. Ninguno te dice qué tienes tú."
 - *Versión landing:* "El pelo se cae y tú no sabes por qué. Es la parte más angustiante de la alopecia: la incertidumbre. ¿Es reversible? ¿Va a ir a más? ¿Es algo serio? Google te da mil respuestas contradictorias. El dermatólogo de la pública, una cita para dentro de 5 meses. Hospital Capilar te da algo que nadie más puede darte esta semana: un diagnóstico completo hecho por un médico especialista, con tricoscopía y análisis hormonal. No una opinión. Un diagnóstico."
 - *Criterio:* VC2 | *Objetivo:* Convertir quiz/consultas
 
@@ -251,19 +277,25 @@
 
 ---
 
-## ECP #4: POST-TRASPLANTE SIN MANTENIMIENTO
+## 💸 ECP #4: "La Inversión Que Se Deshace" — Post-trasplante sin mantenimiento
+
+**JTBD:** *Cuando mi trasplante se degrada, quiero proteger mi inversión con un plan médico que me dé resultados a largo plazo*
+**Persona:** Carlos, 38, empresario, operado Turquía hace 18 meses, pelo nativo adelgazando
+
+> *"Tomé una decisión impulsiva y estúpida de ir a una fábrica de pelo en Turquía."* — [r/HairTransplants, "8 meses de arrepentimiento"](https://reddit.com/r/HairTransplants/comments/14hnzim)
 
 ### Contexto
-- 20.000 españoles/año operados en Turquía, ~15.000 en España
+- 20.000 españoles/año operados en Turquía, ~15.000 en España | SAM: ~25.000
 - La mayoría sin protocolo mantenimiento post-cirugía
 - Pelo nativo sigue cayendo → inversión degradándose
 - Sensación de "nadie me lo advirtió"
+- **Canales:** Google Ads "mantenimiento post injerto" (bajo volumen, intent 100%), foros, YouTube, Facebook grupos trasplante
 
-### Messaging Playbook — ECP #4
+### Playbook de Messaging — 💸 ECP #4
 
-**UVP — Post-trasplante sin mantenimiento**
-- *Dolor activado:* Te operaste hace 2 años y el resultado era increíble. Pero ahora miras al espejo y algo no cuadra: las entradas vuelven, la coronilla clarea. No es que el injerto haya fallado — es que el pelo que NO te trasplantaron sigue cayéndose. Y nadie te avisó.
-- *Versión corta (ads):* "Tu injerto necesita un médico que cuide lo que queda."
+**UVP — La Inversión Que Se Deshace**
+- *Dolor activado:* Abriste una foto de hace un año, justo después del trasplante. El resultado era brutal. Ahora te miras al espejo y algo no cuadra: las entradas vuelven, la coronilla clarea, y tienes la sensación de que estás perdiendo lo que pagaste. No es una sensación — es real. El injerto está bien. El problema es todo lo que hay alrededor: pelo nativo que nadie te dijo que seguiría cayendo. Pagaste 3.000, 5.000, puede que 8.000€ — y nadie te dijo que la cirugía era solo la mitad.
+- *Versión corta (ads):* "Tu trasplante costó miles de euros. ¿Quién cuida el pelo que queda?"
 - *Versión landing:* "Te gastaste 3.000, 5.000, quizá 8.000€ en un trasplante. Y durante un año, fue la mejor decisión de tu vida. Pero ahora ves que las zonas no trasplantadas empiezan a clarear. Las entradas vuelven. La densidad baja. Nadie te lo dijo: el pelo trasplantado es permanente, pero el pelo nativo sigue sometido a la alopecia. Sin mantenimiento médico, tu inversión se degrada cada mes. Hospital Capilar es donde vas cuando quieres proteger lo que gastaste — con un médico que entiende tanto de cirugía como de tratamiento."
 - *Criterio:* VC5 + VC1 | *Objetivo:* Captar pacientes post-trasplante
 
@@ -287,21 +319,31 @@
 
 ---
 
-## ECP #5: INSATISFECHOS DE OTRAS CLÍNICAS
+## 🏪 ECP #5: "El Negocio, No El Paciente" — Insatisfechos de otras clínicas
+
+**JTBD:** *Cuando busco ayuda capilar, quiero encontrar un profesional médico que me diga la verdad — no lo que quiero oír para venderme algo*
+**Persona:** Ana, 35, abogada, fue a Insparya, presionada para cirugía, busca segunda opinión
+
+> *"Todo es marketing. Decepcionante... revisiones impersonales, cada vez con un médic@ diferente... un completo desastre... después de pagar 5.000 euros."* — [Marlo, Trustpilot Insparya](https://es.trustpilot.com/review/insparya.es)
+>
+> *"Comercialmente son un poco agresivos, te lo tienen que vender 'ese mismo día'... No me gusta que en los seguimientos cada vez te atienda un medico diferente."* — [Oscar, Trustpilot Insparya](https://es.trustpilot.com/review/insparya.es)
+>
+> *"Un puro negocio donde están más pendientes en realizarte la intervención que en explicarte los efectos secundarios"* — [Anon, Trustpilot Insparya](https://es.trustpilot.com/review/insparya.es)
 
 ### Contexto
-- Insparya 3.8/5 Trustpilot, quejas de venta agresiva, rotación personal
+- Insparya 3.8/5 Trustpilot, quejas de venta agresiva, rotación personal | SAM: ~12.000
 - Svenson: esteticistas diagnosticando, reclamaciones OCU
 - Pacientes ya en el mercado = intent altísimo, disposición a pagar probada
 - Buscan "segunda opinión" de confianza
+- **Canales:** Google "opiniones Insparya", Trustpilot, SEO comparativo, retargeting web competidores
 
-### Messaging Playbook — ECP #5
+### Playbook de Messaging — 🏪 ECP #5
 
-**UVP — Insatisfechos otras clínicas**
-- *Dolor activado:* Ya confiaste en una clínica capilar y te decepcionaron. Te vendieron un pack caro, te atendió gente diferente cada vez, te prometieron resultados que no llegaron. No es que hayas dejado de buscar solución — es que ya no te fías. Y con razón.
-- *Versión corta (ads):* "La clínica donde el médico te dice la verdad — no lo que quieres oír."
-- *Versión landing:* "Si vienes de otra clínica, probablemente tu historia suena así: una 'valoración gratuita' que era un pitch de ventas, un 'asesor' que no era médico, un tratamiento carísimo con resultados mediocres, y cuando llamabas para preguntar, te atendía alguien diferente que no sabía quién eras. En Hospital Capilar no hay asesores comerciales. No hay packs de presión. No hay rotación de personal. Hay un médico especialista que te atiende siempre, que te dice la verdad sobre tu caso, y que si no puede ayudarte — te lo dice."
-- *Criterio:* VC7 + VC8 | *Objetivo:* Captar pacientes decepcionados de competencia
+**UVP — El Negocio, No El Paciente**
+- *Dolor activado:* Ya te la jugaron. Fuiste a una clínica capilar con una pregunta y saliste con una factura. El "asesor" que te atendió no era médico. El "diagnóstico gratuito" era una demo comercial. Y cuando volviste a la revisión, te atendió otra persona que no sabía quién eras. Pagaste 4.000, 5.000 euros. Y lo que te queda no son resultados — son reviews en Trustpilot que podrías haber escrito tú. No has dejado de buscar solución. Has dejado de confiar. Y con razón.
+- *Versión corta (ads):* "En tu clínica anterior te atendió un vendedor. Aquí te atiende un médico."
+- *Versión landing:* "Si vienes de otra clínica, conocemos tu historia. Una 'valoración gratuita' que era un pitch de ventas. Un 'asesor capilar' que no tenía título médico. Presión para firmar un tratamiento ESE día. Y cuando llamabas con dudas, alguien diferente que no sabía quién eras. En Hospital Capilar, la primera persona que ves es un médico. La segunda también. Y la tercera. Porque no hay vendedores. No hay asesores. No hay rotación. Hay un médico especialista que te atiende siempre, que te dice la verdad sobre tu caso — incluso cuando la verdad es 'no necesitas lo que te vendieron'."
+- *Criterio:* VC7 + VC8 | *Objetivo:* Captar pacientes decepcionados
 
 **USP 1: Aquí te atiende un médico. Siempre.**
 - *Dolor activado:* En la otra clínica, la primera persona que viste fue un comercial. La segunda, un esteticista. El médico, si es que lo había, apareció 5 minutos al final. Aquí es al revés.
@@ -332,17 +374,17 @@
 ## Integración Funnel × Messaging
 
 **AWARENESS (TikTok/IG/SEO)**
-→ ECP #1: "Llevas meses buscando en Google a las 2 de la mañana. Tu pelo tiene una respuesta médica."
-→ ECP #3: "Se te cae el pelo y no sabes por qué. Antes de tratar, diagnosticar."
-→ ECP #6: "Se te cae el pelo y te dicen que es normal. Mereces un diagnóstico de verdad."
+→ 🪞 El Espejo: "Llevas meses buscando en Google a las 2 de la mañana. Tu pelo tiene una respuesta médica."
+→ ❓ ¿Qué Me Pasa?: "Se te cae el pelo y no sabes por qué. Antes de tratar, diagnosticar."
+→ 👩 Es Normal: "Se te cae el pelo y te dicen que es normal. Mereces un diagnóstico de verdad."
 
 **CONSIDERATION (Google Ads/Blog/Quiz)**
-→ ECP #2: "Un año con minoxidil y nada. El problema no era el producto — era que nadie te dijo qué tienes."
-→ ECP #4: "Las entradas vuelven después del trasplante. Nadie te avisó, pero tiene solución."
-→ ECP #6: "Postparto, menopausia o SOP — no es lo mismo. Tu protocolo tampoco debería serlo."
+→ 💊 La Farmacia: "Un año con minoxidil y nada. El problema no era el producto — era que nadie te dijo qué tienes."
+→ 💸 La Inversión: "Las entradas vuelven después del trasplante. Nadie te avisó, pero tiene solución."
+→ 👩 Es Normal: "Postparto, menopausia o SOP — no es lo mismo. Tu protocolo tampoco debería serlo."
 
 **DECISION (Landing/Reviews/Comparadores)**
-→ ECP #5: "Ya confiaste en una clínica y te fallaron. Lee por qué estos pacientes cambiaron."
+→ 🏪 El Negocio: "Ya confiaste en una clínica y te fallaron. Lee por qué estos pacientes cambiaron."
 
 **CONVERSION (todos los ECPs)**
 → 🅰️ Test A: "Bono diagnóstico €195. Tricoscopía + plan personalizado. Sin sorpresas."
@@ -350,7 +392,131 @@
 
 ---
 
-## ECP #6: MUJERES — ALOPECIA HORMONAL
+## 🎬 Vídeos Cortos — 1 por ECP
+
+> Formato: TikTok/Reels, 30-45 seg, vertical. Patrón: **gancho visceral (0-3s) → historia reconocible → experiencia HC → resultado sin promesas exageradas → llamada a la acción**.
+> ⚠️ Restricciones: NO nombrar fármacos ni competidores. NO antes/después en Google Ads. Usar "protocolos HRT/CRT" si se necesita naming.
+
+---
+
+### 🪞 Video #1 — "3 años con gorra" (ECP #1: El Espejo de Cada Mañana)
+
+**Formato:** Testimonio a cámara — chico joven, casual, sin gorra.
+
+| Tiempo | Visual | Audio/Voz |
+|--------|--------|-----------|
+| 0-3s GANCHO | Plano cerrado: mano quitándose una gorra lentamente. Entradas visibles. | *"Llevo 3 años sin quitarme la gorra. Ni en fotos, ni en citas, ni en la playa."* |
+| 3-8s | Flashback: selfies todas con gorra/sombrero. Capturas de apps de citas — foto siempre con gorra. | *"Empezó a los 22. Un día me miré al espejo del baño y vi las entradas. Desde ese día, la gorra no se fue."* |
+| 8-15s | Recurso visual: estante del baño con 4-5 botes (champú anticaída, biotina, suplementos). Mano tirando el bote a la basura. | *"Probé de todo. Champús anticaída. Biotina. Cosas de Amazon con 3 estrellas. Nada funcionó porque ninguno era un diagnóstico."* |
+| 15-22s | Plano clínica HC: tío sentado, médico con tricoscopio digital mirando su cuero cabelludo. Pantalla mostrando imagen microscópica del folículo. | *"Fui a Hospital Capilar. 45 minutos con un médico de verdad. No un comercial — un médico. Me puso un tricoscopio, me explicó qué tenía, en qué fase estaba, y qué podía hacer. Sin presión, sin packs."* |
+| 22-28s | Secuencia temporal: 3 fotos separadas por meses — mismo ángulo, misma luz. Se ve densidad mejorando progresivamente. | *"Llevo 8 meses con un protocolo que mi médico ajusta cada trimestre. No me han vendido milagros. Pero por primera vez en 3 años..."* |
+| 28-33s | Plano final: tío en la playa, sin gorra, pelo al viento. Sonríe a cámara. | *"...me quité la gorra."* |
+| 33-35s | Pantalla texto sobre fondo HC | **"Diagnóstico capilar completo. Pide cita."** + logo HC |
+
+**Música:** Lo-fi chill (tipo LAKEY INSPIRED). Baja en hook, sube suave en el momento clínica, se vuelve esperanzadora al final.
+**Por qué funciona: La gorra es UNIVERSAL — todo joven con alopecia temprana se identifica. La transformación es sutil y creíble (no "pelo nuevo mágico", sino "me quité la gorra"). El médico con tricoscopio es el diferenciador visual.
+
+---
+
+### 💊 Video #2 — "1.200€ tirados al baño" (ECP #2: La Farmacia Sin Salida)
+
+**Formato:** POV baño por la mañana — planos cerrados de productos.
+
+| Tiempo | Visual | Audio/Voz |
+|--------|--------|-----------|
+| 0-3s GANCHO | Plano cenital: mano poniendo una calculadora junto a 6-7 botes de producto capilar. En la calculadora: "1.247€". | *"Mil doscientos cuarenta y siete euros. Eso es lo que llevo gastado en cosas que no funcionan."* |
+| 3-10s | Cámara recorre cada bote uno a uno, con texto superpuesto: "Año 1: minoxidil — €180", "Año 2: + suscripción DTC — €600", "Año 3: + champú + biotina + microneedling — €467". | *"Primer año: minoxidil. Parecía que iba. Segundo año: suscripción mensual de cápsulas. Ya no iba tanto. Tercer año: añadí champú anticaída, biotina, un rodillo de esos... Y cada mañana, menos pelo en el espejo."* |
+| 10-18s | Plano subjetivo: mano pasando por el pelo mojado después de la ducha. Mechones entre los dedos. Expresión frustrada en el espejo. | *"El problema no eran los productos. El problema es que nunca nadie me dijo QUÉ tipo de alopecia tengo. Estaba tratándome a ciegas. Durante 3 años."* |
+| 18-25s | Corte a clínica: primer plano de tricoscopio sobre cuero cabelludo. Monitor mostrando imagen amplificada del folículo. Médico señalando en pantalla. | *"En Hospital Capilar, un médico me miró el cuero cabelludo con un tricoscopio, me hizo una analítica, y en 1 hora me dijo exactamente qué tenía y por qué lo que usaba no iba a funcionar solo."* |
+| 25-32s | Plano del baño de nuevo — pero ahora limpio. Solo un producto con etiqueta HC y la pauta médica impresa al lado. | *"Ahora tengo un protocolo que un médico diseña para mí y revisa cada 3 meses. No otro bote más. Un plan. La diferencia es que por primera vez, sé que lo que hago tiene sentido."* |
+| 32-35s | Pantalla texto | **"¿Tu tratamiento ya no funciona? Tu pelo necesita un médico, no otro producto."** + logo HC |
+
+**Música:** Beat urbano suave — tipo prod. instrumental. Tono de "ya me harté, ahora en serio".
+**Por qué funciona: El hook numérico (€1.247) genera shock inmediato. Los botes en el baño son un escenario que TODOS reconocen. El contraste baño caótico → baño limpio con un protocolo es poderoso visualmente.
+
+---
+
+### ❓ Video #3 — "Google no es un médico" (ECP #3: ¿Qué Me Pasa?)
+
+**Formato:** Pantalla de móvil filmada → transición a clínica.
+
+| Tiempo | Visual | Audio/Voz |
+|--------|--------|-----------|
+| 0-3s GANCHO | Grabación de pantalla real: barra de Google con "por qué se me cae el pelo" escribiéndose letra a letra. Resultados aparecen: 47.000.000 resultados. | *"47 millones de resultados. Y ninguno te dice qué tienes tú."* |
+| 3-10s | Scroll rápido por resultados contradictorios: "Puede ser estrés", "Alopecia androgenética: síntomas", "¿Es reversible?", "Remedios caseros para la caída". Intercalado con capturas de foros: "A mí me dijeron que era temporal y llevo 2 años". | *"¿Es estrés? ¿Hormonal? ¿Genético? Cada página dice algo diferente. Tu médico de cabecera te mira 30 segundos y dice 'toma hierro'. El dermatólogo de la pública: cita para septiembre. Estamos en marzo."* |
+| 10-17s | Persona mirándose al espejo, pasando la mano por la raya del pelo — la expresión cambia de preocupación a decisión. Coge el teléfono y pide cita. | *"Yo dejé de buscar en Google el día que decidí que necesitaba una respuesta real. No una opinión. Un diagnóstico."* |
+| 17-25s | Secuencia clínica rápida: recepción HC → sala consulta → médico con tricoscopio → pantalla con imagen folicular → médico explicando con un diagrama → paciente asintiendo. | *"En Hospital Capilar, un médico especialista me hizo tricoscopía y analítica hormonal en 1 visita. Me dijo exactamente qué tipo de alopecia tengo, en qué fase estoy, y cuáles son mis opciones reales."* |
+| 25-30s | Primer plano de la persona cerrando el portátil. Medio sonrisa. Plano final: texto. | *"Dejé de buscar respuestas. Ahora las tengo."* |
+| 30-33s | Pantalla texto | **"¿Se te cae el pelo? Haz el quiz y descubre qué tienes."** + QR code / link quiz + logo HC |
+
+**Música:** Ambient electrónico tenso primeros 10s → se suaviza y abre en el momento clínica.
+**Por qué funciona: Todos han buscado en Google. La experiencia de scroll infinito contradictorio es universal. El quiz como CTA es baja fricción — no pides que vengan, pides que contesten 5 preguntas.
+
+---
+
+### 💸 Video #4 — "Lo que no me dijeron en Turquía" (ECP #4: La Inversión Que Se Deshace)
+
+**Formato:** Educativo visual — plano cenital de cabeza + explicación médica.
+
+| Tiempo | Visual | Audio/Voz |
+|--------|--------|-----------|
+| 0-3s GANCHO | Plano cenital de coronilla: se ve zona trasplantada (densa) rodeada de zonas nativas (clareando). Círculo rojo animado marca la diferencia. | *"Me operé hace 2 años. 3.500 euros. Y nadie me dijo esto."* |
+| 3-12s | Animación simple: folículos trasplantados (en verde, "permanentes") vs folículos nativos (en naranja, con flechas hacia abajo "caída progresiva"). Texto: "DHT → miniaturización". | *"El pelo trasplantado viene de la zona donante — es resistente. Por eso es permanente. Pero el pelo de alrededor no tiene esa protección. Sigue miniaturizándose. Sigue cayendo. Y nadie te lo explica antes de operarte."* |
+| 12-20s | Pantalla dividida: foto de post-trasplante al año (resultado espectacular) vs foto 3 años después sin mantenimiento (islas de pelo trasplantado, zonas nativas finas). | *"Año 1: resultado espectacular. Año 3 sin mantenimiento: islas de pelo nuevo rodeadas de nada. No es que el trasplante haya fallado — es que falta la otra mitad del plan."* |
+| 20-28s | Plano clínica: médico mostrando tricoscopía comparativa en pantalla (3 meses vs 6 meses de tratamiento). Gráfico con densidad mejorando. | *"Un protocolo de mantenimiento médico frena la caída del pelo nativo. Revisión cada 3 meses. Ajuste de protocolo si hace falta. No es un extra — es lo que completa el trasplante."* |
+| 28-33s | Plano del paciente saliendo de clínica, tocándose el pelo con confianza. | *"Invertiste miles de euros en tu pelo. Proteger esa inversión cuesta menos de lo que piensas."* |
+| 33-35s | Pantalla texto | **"¿Te operaste sin plan de mantenimiento? Protege tu inversión."** + logo HC |
+
+**Música:** Cinematográfica tipo documental. Tono educativo, no alarmista.
+**Por qué funciona: El plano cenital de la coronilla es IMPACTANTE visualmente. La animación de folículos verdes vs naranjas simplifica un concepto médico complejo. El pantalla dividida antes/después es el momento "oh shit".
+
+---
+
+### 🏪 Video #5 — "5.000€ y un vendedor" (ECP #5: El Negocio, No El Paciente)
+
+**Formato:** Storytime confesional a cámara — mujer o hombre, 30-40 años, tono íntimo.
+
+| Tiempo | Visual | Audio/Voz |
+|--------|--------|-----------|
+| 0-3s GANCHO | Plano cerrado de cara. Expresión seria. | *"Pagué 5.000 euros. Y la primera persona que me atendió no era médico."* |
+| 3-12s | Recurso visual discreto de clínica genérica (pasillos brillantes, decoración comercial). Intercalado con textos de reviews reales (blurred para no identificar): "te presionan ese mismo día", "cada vez un médico diferente", "un completo desastre". | *"La 'valoración gratuita' era un pitch de ventas. El 'experto capilar' era un comercial. Me metieron presión para firmar un tratamiento ESE día. Cuando pedí hablar con un médico, me dijeron que no hacía falta. Firmé. Pagué. Y durante un año, cada vez que volvía, me atendía alguien diferente que no sabía quién era yo."* |
+| 12-20s | Plano de la persona leyendo reviews en su móvil. Ve puntuación de HC en Trustpilot (4.8). Decisión de ir. | *"Cuando me harté, busqué opiniones. Vi que Hospital Capilar tenía 4.8 en Trustpilot — un punto entero más que donde estaba. Decidí ir."* |
+| 20-28s | Plano clínica HC: médico atendiendo al paciente en consulta real. Ambiente médico, no comercial. El mismo médico aparece en 2-3 planos distintos (misma persona siempre). | *"La primera persona que vi fue un médico. Me hizo un diagnóstico completo. Y me dijo algo que nadie me había dicho antes: 'Con tratamiento basta. No necesitas cirugía.' Llevo 6 meses aquí. Mismo médico cada visita. Me dice lo que hay — no lo que quiero oír."* |
+| 28-33s | Plano de la persona saliendo de la clínica HC, mirando atrás con media sonrisa. | *"A veces la mejor inversión es cambiar de clínica."* |
+| 33-35s | Pantalla texto | **"4.8/5 en Trustpilot. Lee por qué cambiaron."** + logo HC |
+
+**Música:** Piano íntimo, tipo storytelling podcast. Sin dramatismo — honestidad.
+**Por qué funciona: El gancho de "5.000€ y no era médico" es visceral. Las reviews blurred dan autenticidad sin riesgo legal. El contraste "vendedor vs médico" es el core del positioning de HC. NUNCA se nombra la clínica anterior.
+
+---
+
+### 👩 Video #6 — "Es normal, ya pasará" (ECP #6: Mujeres hormonales)
+
+**Formato:** Voz en off femenina con planos cotidianos — baño, espejo, almohada.
+
+| Tiempo | Visual | Audio/Voz |
+|--------|--------|-----------|
+| 0-3s GANCHO | Plano cenital de almohada blanca con mechones de pelo. Mano de mujer recogiendo los mechones lentamente. | *"Cada mañana cuento los pelos de la almohada. Hoy son más que ayer."* |
+| 3-10s | Secuencia baño: desagüe de la ducha con pelo acumulado. Cepillo con mechones. Mano pasando por la raya del pelo frente al espejo — se ve más ancha. Mujer intentando diferentes peinados para tapar. | *"Empezó después del parto. 'Es normal', me dijo mi ginecóloga. 'Ya pasará.' Han pasado 14 meses. Y no ha pasado."* |
+| 10-17s | Mujer en el sofá con el móvil: buscando "caída pelo postparto" → "champú anticaída mujer" → "biotina pelo". Luego tirando el móvil al sofá con frustración. | *"He buscado en Google. He comprado champús. He tomado vitaminas. Mi madre me dice 'a mí también me pasó'. Mi médico dice 'toma hierro'. Pero nadie me ha MIRADO la cabeza."* |
+| 17-24s | Corte a clínica: mujer sentada en consulta HC. Médica (o médico) con tricoscopio digital sobre su cuero cabelludo. Pantalla mostrando imagen del folículo. Médica explicando señalando la pantalla. La mujer ESCUCHA — por primera vez alguien le explica. | *"En Hospital Capilar, una médica especialista me hizo tricoscopía y analítica hormonal. En 1 hora, me dijo algo que nadie me había dicho en 14 meses: no era solo postparto. Tenía un componente hormonal que necesitaba tratamiento."* |
+| 24-30s | Mujer peinándose frente al espejo, esta vez sin intentar tapar nada. Se ve la raya — igual, pero ella está tranquila. Medio sonrisa. | *"No me prometieron milagros. Me dijeron la verdad. Y por primera vez, tengo un plan. No un champú — un protocolo médico que mi doctora revisa cada 3 meses."* |
+| 30-35s | Plano final: mujer de espaldas, pelo suelto, caminando. Se gira y sonríe a cámara. | *"Si te dicen que 'es normal y ya pasará' — pide una segunda opinión de verdad."* |
+| 35-38s | Pantalla texto | **"¿Se te cae el pelo? No es 'solo estrés'. Haz el quiz."** + QR / link quiz + logo HC |
+
+**Música:** Acústica indie femenina suave (tipo Daughter o Novo Amor). Intimista, no triste — empoderada.
+**Por qué funciona: La almohada con mechones es LA imagen que toda mujer con caída reconoce. "Es normal, ya pasará" es LA frase que todas han oído. La revelación de "no era solo postparto" es el giro: valida su intuición de que algo no iba bien. La médica (no médico) en pantalla es intencional — representa cuidado entre mujeres.
+
+---
+
+> **Nota de producción (todos los vídeos):** Todos siguen el patrón **gancho visceral → historia personal → momento HC (tricoscopio siempre presente) → resultado creíble → llamada a la acción**. Los testimonios deben ser reales o basados en casos reales — nada de actores con guión percibido. El tricoscopio es el recurso visual de marca: aparece en los 6 vídeos. ⚠️ Restricciones legales: no nombrar fármacos ni competidores. No antes/después en Google Ads. Usar "protocolos HRT/CRT" si se necesita naming de tratamiento.
+
+---
+
+## 👩 ECP #6: "Es Normal, Ya Pasará" — Mujeres alopecia hormonal
+
+**JTBD:** *Cuando se me cae el pelo y me dicen que es normal, quiero que alguien me tome en serio y me diga si realmente tiene solución*
+**Persona:** Lucía, 33, postparto 14 meses, ginecóloga le dijo "es normal". También: Elena, 52, perimenopausia, pelo cada vez más fino, nadie le ofrece diagnóstico real.
 
 ### Contexto
 - ~30% de mujeres en España experimentan alopecia en algún momento de su vida [Fuente](https://www.montemauro.es/noticias/incidencia-de-la-alopecia-en-la-mujer-en-espana/)
@@ -364,7 +530,7 @@
 - Competidores NO segmentan para mujeres con messaging específico — oportunidad de diferenciación
 - **Nota HC**: ~50% de pacientes son mujeres (company-brief). Es un segmento real, no marginal.
 
-### Value Criteria (pesos específicos ECP #6)
+### Criterios de Valor (pesos ECP #6)
 
 | Criterio | Peso ECP #6 | Por qué |
 |-----------|-------------------|-----|
@@ -375,7 +541,7 @@
 | VC4 Protocolo Personalizado | 8 | Alopecia femenina tiene más variantes que la masculina — postparto ≠ menopausia ≠ estrés ≠ SOP |
 | VC5 Continuidad Seguimiento | 8 | Tratamientos hormonales requieren monitorización continuada |
 
-### Benefit-Proof Pairs
+### Beneficio-Prueba por Activo
 
 | Activo | Ventaja Competitiva | Beneficio para la usuaria | Prueba |
 |-------|----------------------|------------------|-------|
@@ -384,11 +550,11 @@
 | A5 FAQ honesta | Transparencia sobre quién SÍ y quién NO se beneficia del tratamiento | "Si tu caída es temporal, te lo dicen. No te venden un tratamiento que no necesitas" | Copy en landing: "No todas las caídas necesitan tratamiento. Algunas necesitan tiempo. Te decimos cuál es la tuya" |
 | A10 Bono consulta €195 | Precio fijo y accesible para un primer paso sin compromiso | "€195 por salir de dudas. Si no necesitas tratamiento, te lo dicen" | Quiz online → consulta presencial |
 
-### Messaging Playbook — ECP #6
+### Playbook de Messaging — 👩 ECP #6
 
-**UVP — Mujeres alopecia hormonal**
-- *Dolor activado:* Te levantas y la almohada está llena de pelo. Recoges mechones del desagüe de la ducha. Miras tu raya del pelo y la ves más ancha que antes. Tu ginecólogo dice "es normal" y tu médico de cabecera "es estrés". Pero tú ves que no para. Y nadie te toma en serio.
-- *Versión corta (ads):* "Se te cae el pelo y te dicen que es normal. Mereces un diagnóstico de verdad."
+**UVP — "Es Normal, Ya Pasará"**
+- *Dolor activado:* La almohada. El desagüe. El cepillo. La raya del pelo que cada día es un poco más ancha. Se lo dijiste a tu ginecóloga: "Es normal después del parto, ya pasará". Se lo dijiste a tu médico de cabecera: "Será estrés, toma hierro". Se lo dijiste a tu madre: "A mí también me pasó, no te preocupes". Han pasado meses. No ha pasado. Y cada vez que alguien te dice "es normal", te dan ganas de gritar — porque tú ves que no es normal. No para ti.
+- *Versión corta (ads):* "14 meses después del parto y sigue cayendo. Eso no es 'normal'. Es un diagnóstico que nadie te ha hecho."
 - *Versión landing:* "Si eres mujer y se te cae el pelo, probablemente te han dicho 'es estrés', 'es hormonal' o 'ya pasará'. Y te lo han dicho sin mirarte el cuero cabelludo, sin pedirte una analítica, sin usar un tricoscopio. Hospital Capilar es la primera clínica que te toma en serio: diagnóstico médico completo con tricoscopía + analítica hormonal en 1 consulta. Si tu caída es temporal, te lo decimos. Si necesita tratamiento, diseñamos un protocolo para TU caso. Y si no somos la solución, también te lo decimos."
 - *Criterio:* VC2 + VC7 | *Objetivo:* Captar mujeres frustradas por falta de diagnóstico serio
 
@@ -438,12 +604,12 @@ El quiz online es el primer punto de contacto para TODOS los ECPs, pero es espec
 
 ## Fuentes
 
-1. Regaine UK — Men's perception of hair loss: impacts and solutions (2024) [Fuente](https://www.regaine.co.uk/men/understanding-mens-perception-of-hair-loss-impacts-and-solutions)
-2. HairDr — Why more young men are getting hair transplants (2024) [Fuente](https://www.hairdr.com/hair-transplant-surgery/why-more-young-men-are-getting-hair-transplants/)
+1. Regaine UK — Percepción masculina de la caída del pelo: impacto y soluciones (2024) [Fuente](https://www.regaine.co.uk/men/understanding-mens-perception-of-hair-loss-impacts-and-solutions)
+2. HairDr — Por qué cada vez más jóvenes se hacen trasplante capilar (2024) [Fuente](https://www.hairdr.com/hair-transplant-surgery/why-more-young-men-are-getting-hair-transplants/)
 3. Unidad Médica Serrano — Alopecia calvicie hombres jóvenes [Fuente](https://unidadmedicaserrano.com/alopecias/alopecia-calvicie-hombres-jovenes/)
 4. Dr. Merlos — Impacto psicológico alopecia en hombres [Fuente](https://drmerloscapilar.es/blog/el-impacto-psicologico-de-la-alopecia-en-hombres/)
 5. Pfizer España — Encuesta alopecia areata 2024 [Fuente](https://www.pfizer.es/files/Dossier_resultados_encuesta_Alopecia_Areata.pdf)
-6. Hair Loss Marketing — USP/UVP guide for hair restoration [Fuente](https://hairlossmarketing.com/hair-restoration-usp-uvp-guide/)
+6. Hair Loss Marketing — Guía USP/UVP para restauración capilar [Fuente](https://hairlossmarketing.com/hair-restoration-usp-uvp-guide/)
 7. Foundation Hospital Capilar: company-brief v1.1, competitors v1.0, SWOT v1.0, ECPs v1.0
 8. Montemauro — Incidencia de la alopecia en la mujer en España [Fuente](https://www.montemauro.es/noticias/incidencia-de-la-alopecia-en-la-mujer-en-espana/)
 9. Quirónsalud — Aproximadamente 40% población femenina sufre alopecia [Fuente](https://www.quironsalud.com/infanta-luisa/es/sala-prensa/contenidos-salud/aproximadamente-40-poblacion-femenina-sufre-alopecia)
@@ -452,4 +618,4 @@ El quiz online es el primer punto de contacto para TODOS los ECPs, pero es espec
 
 ---
 
-<!-- Self-QA: PASS | 2026-03-04 | v2.3 | v2.2 QA fixes ✅ | v2.3: ECP #6 mujeres hormonales añadido (4 USPs + contexto + benefit-proof + value criteria). Quiz diagnóstico nota añadida. Funnel mapping actualizado con ECP #6. 4 fuentes nuevas. 6 ECPs totales ✅ -->
+<!-- Self-QA: PASS | 2026-03-05 | v3.0 | Rewrite completo de messaging — UVPs y USPs reescritos con lenguaje cluster-nativo. Dolor activado desde la experiencia vivida, no desde la descripción. Ads copy diferenciado por cluster. Landing copy más emocional y directo. Headers de playbook con nombre de cluster. 6 ECPs ✅ | 6 Speed Videos ✅ -->

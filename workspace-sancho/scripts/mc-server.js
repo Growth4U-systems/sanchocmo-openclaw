@@ -58,10 +58,10 @@ const DOC_ROOTS = {
 };
 
 const STYLE = `<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=Bangers&family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Nunito:ital,wght@0,400;0,600;0,700;1,400;1,600&display=swap" rel="stylesheet">
 <style>
-body{font-family:'Comic Neue',cursive;background:#FFFDF9;color:#1A1A2E;max-width:1200px;margin:40px auto;padding:0 40px;line-height:1.85;font-size:17px;}
-h1{font-family:'Bangers';font-size:2.2em,cursive;color:#C45D35;}h2{color:#1E3A5F;margin-top:24px;}h3{color:#C45D35;}h4{color:#5D5348;}
+body{font-family:'Nunito',sans-serif;background:#FFFDF9;color:#1A1A2E;max-width:1200px;margin:40px auto;padding:0 40px;line-height:1.85;font-size:17px;}
+h1{font-family:'Space Grotesk';font-size:2.2em,cursive;color:#C45D35;}h2{color:#1E3A5F;margin-top:24px;}h3{color:#C45D35;}h4{color:#5D5348;}
 strong{color:#1A1A2E;}ul{padding-left:20px;}li{margin:1px 0;line-height:1.4;padding:0;}ul{margin:8px 0;line-height:1.4;}ol{margin:8px 0;line-height:1.4;}li p{margin:0;padding:0;line-height:1.4;display:inline;}ul ul{margin:2px 0;}p+ul{margin-top:-8px;}p+ol{margin-top:-8px;}
 a{color:#C45D35;text-decoration:none;font-weight:700;}a:hover{text-decoration:underline;}
 .card{margin:8px 0;padding:10px 14px;background:#FDF8EF;border:2px solid #1A1A2E;border-radius:6px;box-shadow:3px 3px 0 #1A1A2E;}
@@ -73,7 +73,7 @@ a{color:#C45D35;text-decoration:none;font-weight:700;}a:hover{text-decoration:un
 .nav a:hover{background:#C45D35;color:#FDF8EF;}
 table{border-collapse:collapse;width:100%;margin:12px 0;}
 th,td{border:2px solid #1A1A2E;padding:10px 14px;text-align:left;font-size:16px;}
-th{background:#1A1A2E;color:#F5F0E6;font-family:'Bangers',cursive;letter-spacing:0.5px;}
+th{background:#1A1A2E;color:#F5F0E6;font-family:'Space Grotesk',sans-serif;letter-spacing:0.5px;}
 tr:nth-child(even){background:#FDF8EF;}
 code{background:#FDF8EF;padding:2px 6px;border-radius:4px;font-size:13px;border:1px solid #D4C9B0;}
 pre{background:#FDF8EF;padding:12px;border:2px solid #1A1A2E;border-radius:6px;overflow-x:auto;font-size:13px;}
@@ -175,8 +175,8 @@ async function saveDoc() {
 
   return `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>${title} — SanchoCMO</title>${STYLE}
-<style>#edit-area{width:100%;min-height:75vh;font-family:'Comic Neue',monospace;font-size:14px;padding:12px;border:2px solid var(--ink,#1A1A2E);border-radius:6px;background:var(--paper,#FDF8EF);resize:vertical;line-height:1.6;}
-.edit-bar{display:flex;gap:10px;align-items:center;margin:10px 0;}.edit-btn{padding:6px 14px;background:var(--paper,#FDF8EF);border:2px solid var(--ink,#1A1A2E);border-radius:6px;cursor:pointer;font-family:'Comic Neue',cursive;font-weight:700;font-size:14px;box-shadow:2px 2px 0 var(--ink,#1A1A2E);}.edit-btn:hover{background:var(--rust,#C45D35);color:var(--paper,#FDF8EF);}</style>
+<style>#edit-area{width:100%;min-height:75vh;font-family:'Nunito',monospace;font-size:14px;padding:12px;border:2px solid var(--ink,#1A1A2E);border-radius:6px;background:var(--paper,#FDF8EF);resize:vertical;line-height:1.6;}
+.edit-bar{display:flex;gap:10px;align-items:center;margin:10px 0;}.edit-btn{padding:6px 14px;background:var(--paper,#FDF8EF);border:2px solid var(--ink,#1A1A2E);border-radius:6px;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:700;font-size:14px;box-shadow:2px 2px 0 var(--ink,#1A1A2E);}.edit-btn:hover{background:var(--rust,#C45D35);color:var(--paper,#FDF8EF);}</style>
 </head><body>
 ${breadcrumb}${opts.editable ? ' <button class="edit-btn" onclick="toggleEdit()" style="float:right;margin-top:-30px;">✏️ Editar</button>' : ''}
 <div id="doc-view">${content}</div>
@@ -243,7 +243,7 @@ function listDir(dirPath, urlPrefix, opts = {}) {
     };
 
     // Show pillars
-    html += '<h2 style="font-family:\'Bangers\',cursive;color:#C45D35;margin-bottom:12px;">Pilares</h2>\n';
+    html += '<h2 style="font-family:\'Space Grotesk\',sans-serif;color:#C45D35;margin-bottom:12px;">Pilares</h2>\n';
     for (const [pName, pData] of Object.entries(pillars)) {
       const pStatus = pData.status || 'not-started';
       const icon = statusIcon(pStatus);
@@ -267,7 +267,7 @@ function listDir(dirPath, urlPrefix, opts = {}) {
     // Show syntheses
     const synthKeys = Object.keys(syntheses);
     if (synthKeys.length > 0) {
-      html += '<h2 style="font-family:\'Bangers\',cursive;color:#C45D35;margin:20px 0 12px;">Síntesis</h2>\n';
+      html += '<h2 style="font-family:\'Space Grotesk\',sans-serif;color:#C45D35;margin:20px 0 12px;">Síntesis</h2>\n';
       for (const [sName, sData] of Object.entries(syntheses)) {
         const sStatus = sData.status || 'not-generated';
         const icon = statusIcon(sStatus);
@@ -290,7 +290,7 @@ function listDir(dirPath, urlPrefix, opts = {}) {
     Object.keys(syntheses).forEach(s => knownDirs.add(s));
     const remainingDirs = allDirs.filter(d => !knownDirs.has(d) && d !== '_archive').sort();
     if (remainingDirs.length > 0) {
-      html += '<h2 style="font-family:\'Bangers\',cursive;color:#C45D35;margin:20px 0 12px;">Otros</h2>\n';
+      html += '<h2 style="font-family:\'Space Grotesk\',sans-serif;color:#C45D35;margin:20px 0 12px;">Otros</h2>\n';
       for (const d of remainingDirs) {
         const subFiles = countMdFiles(path.join(dirPath, d));
         html += `<div class="card"><a href="${urlPrefix}${d}/">📂 ${d}</a><div class="meta">${subFiles} documentos</div></div>\n`;
@@ -327,7 +327,7 @@ function listDir(dirPath, urlPrefix, opts = {}) {
       const approvedCount = pillarNames.filter(p => pillars[p].status === 'approved').length;
       const totalCount = pillarNames.length;
 
-      html += `<h2 style="margin:24px 0 10px;font-family:'Bangers',cursive;font-size:1.4em;color:#C45D35;">${group.cat}</h2>\n`;
+      html += `<h2 style="margin:24px 0 10px;font-family:'Space Grotesk',sans-serif;font-size:1.4em;color:#C45D35;">${group.cat}</h2>\n`;
 
       if (existing.has(d)) {
         existing.delete(d);
@@ -383,7 +383,7 @@ function listDir(dirPath, urlPrefix, opts = {}) {
     const foundationFolders = new Set(FOUNDATION_ORDER.map(g => g.folder));
     const remaining = [...existing].filter(d => !foundationFolders.has(d) && d !== '_archive').sort();
     if (remaining.length) {
-      html += `<h2 style="margin:24px 0 10px;font-family:'Bangers',cursive;font-size:1.4em;color:#C45D35;">📁 Otros</h2>\n`;
+      html += `<h2 style="margin:24px 0 10px;font-family:'Space Grotesk',sans-serif;font-size:1.4em;color:#C45D35;">📁 Otros</h2>\n`;
       for (const d of remaining) {
         const subFiles = countMdFiles(path.join(dirPath, d));
         html += `<div class="card"><a href="${urlPrefix}${d}/">📂 ${d}</a><div class="meta">${subFiles} documentos</div></div>\n`;

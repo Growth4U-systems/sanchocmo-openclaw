@@ -186,7 +186,7 @@ Formato: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 ### Added
 - **14 welcome messages en Discord** — Enviados y pineados en todos los canales.
 - **Canal #onboarding** (1476491108421730334) — En categoría ESTRATEGIA.
-- **T-013 Comic UI en MC** — Parchment, Bangers, Comic Neue, ink borders 3px, flat shadows, halftone dots. Light mode default, dark mode toggle.
+- **T-013 Comic UI en MC** — Parchment, Space Grotesk (antes Bangers), Nunito (antes Comic Neue), ink borders 3px, flat shadows, halftone dots. Light mode default, dark mode toggle.
 - **T-025 Filtro de tareas sistema vs cliente** — Vista global = todas, vista cliente = solo `[client]`.
 
 ### Changed

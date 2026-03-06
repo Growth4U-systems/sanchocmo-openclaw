@@ -77,7 +77,7 @@
       "output_dir": "brand/sanchocmo/go-to-market/",
       "pillars": {
         "niche-discovery": {
-          "status": "pending-approval",
+          "status": "approved",
           "layer": 3,
           "requires": ["swot"],
           "enriches_with": ["existing-customer-data"],

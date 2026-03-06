@@ -27,7 +27,7 @@ Combinación informa Layer 3 aesthetic
 - Halftone patterns, vintage print aesthetic
 - Comic book panels, speech bubbles
 - Warm parchment backgrounds
-- Bangers + Comic Neue fonts
+- Space Grotesk + Nunito fonts
 
 **Cuándo**: Playful, memorable, storytelling brands (SanchoCMO)
 

@@ -32,8 +32,8 @@
     "section": "4px solid #1A1A2E"
   },
   "typography": {
-    "bangers": { "variable": "--font-bangers", "fallback": "cursive", "role": "headlines, CTAs, action text" },
-    "comic-neue": { "variable": "--font-comic-neue", "fallback": "cursive", "role": "speech, body, descriptions" },
+    "space-grotesk": { "variable": "--font-space-grotesk", "fallback": "sans-serif", "role": "headlines, CTAs, action text" },
+    "nunito": { "variable": "--font-nunito", "fallback": "sans-serif", "role": "speech, body, descriptions" },
     "playfair": { "variable": "--font-playfair", "fallback": "serif", "role": "narrator captions, story" },
     "source-sans": { "variable": "--font-source-sans", "fallback": "sans-serif", "role": "metadata, small labels" }
   },

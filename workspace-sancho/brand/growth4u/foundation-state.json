@@ -1,7 +1,7 @@
 {
   "version": "2.0",
   "started_at": "2026-03-01T19:03:21Z",
-  "updated_at": "2026-03-04T16:29:00Z",
+  "updated_at": "2026-03-06T01:45:00Z",
   "sections": {
     "company-brief": {
       "status": "approved",
@@ -137,16 +137,15 @@
             "existing-customer-data"
           ],
           "output_files": [
-            "brand/growth4u/go-to-market/ecps/current.md",
+            "brand/growth4u/go-to-market/ecps/ecps.md",
+            "brand/growth4u/go-to-market/ecps/problems.md",
             "brand/growth4u/go-to-market/ecps/persona-map.md",
             "brand/growth4u/go-to-market/ecps/reddit-forum-discovery.md",
-            "brand/growth4u/go-to-market/ecps/spanish-forums-discovery.md",
-            "brand/growth4u/go-to-market/ecps/problems-full.md",
-            "brand/growth4u/go-to-market/ecps/qa-report.md"
+            "brand/growth4u/go-to-market/ecps/spanish-forums-discovery.md"
           ],
           "skill": "niche-discovery-100x",
-          "approved_at": "2026-03-05T00:06:00Z",
-          "notes": "v3 — 120 problemas → 27 personas → 8 macro-grupos. Método: harvest Foundation + 12 web ES + 12 Reddit + 9 threads + 12 foros ES. QA by Rocinante: PASS con 2 correcciones menores. Alfonso aprobó personas y grupos."
+          "approved_at": "2026-03-06T01:38:00Z",
+          "notes": "v2 (new methodology) — 120 problems → 96 filtered → 5 ECPs by NEED. Scoring 2-99 with evidence. JTBD Synthesis + Reachability Discovery (Trust×Search→Channel Map). Wave 1: Sistema repetible (79.00) + Regulación (73.70, 🏆). Wave 2: Canal muriendo (73.50) + Quemado (66.45)."
         },
         "existing-customer-data": {
           "status": "not-started",
@@ -159,13 +158,21 @@
           "skill": "existing-customer-data"
         },
         "positioning": {
-          "status": "not-started",
+          "status": "in-progress",
           "layer": 4,
           "requires": [
             "niche-discovery"
           ],
-          "output_pattern": "brand/growth4u/go-to-market/positioning-{ecp-slug}/current.md",
-          "skill": "positioning-messaging"
+          "output_pattern": "brand/growth4u/positioning/{ecp-slug}/current.md",
+          "skill": "positioning-messaging",
+          "ecps_completed": {
+            "ecp1-sistema-repetible": {
+              "status": "pending-approval",
+              "completed_at": "2026-03-06T02:00:00Z",
+              "output_file": "brand/growth4u/positioning/ecp1-sistema-repetible/current.md"
+            }
+          },
+          "notes": "ECP 1 complete (Steps 1-9). Pending: ECP 2 (regulación)."
         },
         "pricing": {
           "status": "not-started",
@@ -201,18 +208,21 @@
       }
     },
     "brand-identity": {
-      "status": "not-started",
+      "status": "in-progress",
       "layer": 5,
       "output_dir": "brand/growth4u/brand-identity/",
       "pillars": {
         "brand-voice": {
-          "status": "not-started",
+          "status": "approved",
           "layer": 5,
           "requires": [
             "positioning"
           ],
-          "output_file": "brand/growth4u/brand-identity/voice-profile/current.md",
-          "skill": "brand-voice"
+          "output_file": "brand/growth4u/brand-voice/current.md",
+          "skill": "brand-voice",
+          "mode": "quick",
+          "approved_at": "2026-03-06T01:45:00Z",
+          "notes": "Quick mode (Layer 0). Sources: growth4u.io + 6 Rankia/ThinkingRich articles. Founder-led direction validated. Full mode pending positioning (Layer 4)."
         },
         "visual-identity": {
           "status": "not-started",

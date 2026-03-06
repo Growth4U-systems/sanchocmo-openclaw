@@ -79,7 +79,7 @@ El company-brief define 3 sub-ICPs y 3 tiers de verticales — pero no valida cu
 |---|---|---|
 | Self-Intelligence | [Self-Analysis](https://sancho-cmo.taild48df2.ts.net/mc/docs/brand/growth4u/market-and-us/self/current.md) | ✅ Approved |
 | Market Intelligence | [Market Analysis v4](https://sancho-cmo.taild48df2.ts.net/mc/docs/brand/growth4u/market-and-us/market/current.md) | ✅ Approved |
-| Competitor Intelligence | [Competitors v2](https://sancho-cmo.taild48df2.ts.net/mc/docs/brand/growth4u/market-and-us/competitors/current.md) + [Snowball](https://sancho-cmo.taild48df2.ts.net/mc/docs/brand/growth4u/market-and-us/competitors/competitor-snowball.md) · [Product Hackers](https://sancho-cmo.taild48df2.ts.net/mc/docs/brand/growth4u/market-and-us/competitors/competitor-product-hackers.md) · [TheGrowtHacker](https://sancho-cmo.taild48df2.ts.net/mc/docs/brand/growth4u/market-and-us/competitors/competitor-thegrowthacker.md) | ✅ Approved |
+| Competitor Intelligence | [Competitors v2](https://sancho-cmo.taild48df2.ts.net/mc/docs/brand/growth4u/market-and-us/competitors/current.md) + [Snowball](https://sancho-cmo.taild48df2.ts.net/mc/docs/brand/growth4u/market-and-us/competitors/snowball/current.md) · [Product Hackers](https://sancho-cmo.taild48df2.ts.net/mc/docs/brand/growth4u/market-and-us/competitors/product-hackers/current.md) · [TheGrowtHacker](https://sancho-cmo.taild48df2.ts.net/mc/docs/brand/growth4u/market-and-us/competitors/thegrowthacker/current.md) | ✅ Approved |
 | SWOT & TOWS | [SWOT v3](https://sancho-cmo.taild48df2.ts.net/mc/docs/brand/growth4u/market-and-us/swot/current.md) | ✅ Approved |
 | OPE Canvas | [OPE Canvas](https://sancho-cmo.taild48df2.ts.net/mc/docs/brand/growth4u/market-and-us/ope-canvas/current.md) | ✅ Approved |
 

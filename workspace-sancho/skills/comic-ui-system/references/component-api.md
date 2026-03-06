@@ -17,7 +17,7 @@ interface SpeechBubbleProps extends HTMLAttributes<HTMLDivElement> {
 - Background: `bg-comic-paper` (#FDF8EF)
 - Border: `border-[4px] border-comic-ink` (4px solid #1A1A2E)
 - Radius: `rounded-[20px]`
-- Font: Comic Neue (`var(--font-comic-neue)`)
+- Font: Nunito (`var(--font-nunito)`)
 - Tail: CSS triangle borders (outer ink + inner paper fill)
 
 **Usage:**
@@ -81,7 +81,7 @@ interface ActionBurstProps extends HTMLAttributes<HTMLDivElement> {
 
 **Styling:**
 - Shape: CSS `clip-path: polygon(...)` (27-point star)
-- Text: Bangers font, bold, centered
+- Text: Space Grotesk font, bold, centered
 
 **Usage:**
 ```tsx
@@ -176,7 +176,7 @@ interface ComicButtonProps extends HTMLAttributes<HTMLButtonElement> {
 **Interaction:**
 - Hover: shadow-comic → shadow-comic-lg, translate -3px/-3px
 - Active: translate +1px/+1px, shadow-comic-sm
-- Font: Bangers uppercase, letter-spacing 0.05em
+- Font: Space Grotesk uppercase, letter-spacing 0.05em
 
 **Usage:**
 ```tsx
@@ -209,7 +209,7 @@ interface ComicStampProps extends HTMLAttributes<HTMLDivElement> {
 
 **Styling:**
 - Border: `border-[2px]` (thinner than other elements)
-- Font: Comic Neue Bold, 13px, uppercase, letter-spacing 0.06em
+- Font: Nunito Bold, 13px, uppercase, letter-spacing 0.06em
 - Transform: `rotate(Ndeg)`
 
 **Usage:**

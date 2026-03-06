@@ -5,6 +5,12 @@
       "created_at": "2026-03-04T11:15:00Z",
       "created_by": "sancho",
       "notes": "Primera versión — 3 battle cards (Vilma.ai, Jasper, Copy.ai), 3 indirectos, landscape map"
+    },
+    {
+      "version": 2,
+      "created_at": "2026-03-05T09:30:00Z",
+      "created_by": "sancho",
+      "notes": "Re-run completo — datos frescos Mar 2026. Añadido Lindy.ai (indirecto) y Averi.ai (emergente). Reemplazado Uplane por Lindy.ai. Storytelling mejorado. Positioning map, feature heatmap, pricing landscape actualizados. Primary source verification completa."
     }
   ]
 }

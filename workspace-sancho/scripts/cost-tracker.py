@@ -102,43 +102,104 @@ def build_channel_guild_map(session_map):
         for ch in channels:
             cache[ch] = guild_id
     
-    # Scan ALL transcripts for group_space to resolve thread channels
+    # Collect unresolved discord channels
+    unresolved = set()
     id_to_key = {sid: info.get("key", "") for sid, info in session_map.items()}
-    for agent_dir in AGENTS_DIR.iterdir():
-        if not agent_dir.is_dir():
-            continue
-        sessions_dir = agent_dir / "sessions"
-        if not sessions_dir.exists():
-            continue
-        for jsonl_file in sessions_dir.glob("*.jsonl"):
-            # Extract session ID from filename
-            fname = jsonl_file.stem
-            if "_" in fname:
-                sid = fname.split("_", 1)[1]
-            elif "-topic-" in fname:
-                sid = fname.split("-topic-")[0]
-            else:
-                sid = fname
-            
-            key = id_to_key.get(sid, "")
-            if ":discord:channel:" not in key:
-                continue
+    for sid, info in session_map.items():
+        key = info.get("key", "")
+        if ":discord:channel:" in key:
             ch = key.split(":discord:channel:")[-1]
-            if ch in cache:
+            if ch not in cache and ch != "heartbeat" and len(ch) > 10:
+                unresolved.add(ch)
+    
+    if unresolved:
+        # Pass 1: Scan transcripts for group_space
+        for agent_dir in AGENTS_DIR.iterdir():
+            if not agent_dir.is_dir():
                 continue
-            
-            try:
-                with open(jsonl_file) as f:
-                    for line in f:
-                        m = re.search(r'"group_space"\s*:\s*"(\d+)"', line)
-                        if m:
-                            cache[ch] = m.group(1)
-                            break
-            except:
-                pass
+            sessions_dir = agent_dir / "sessions"
+            if not sessions_dir.exists():
+                continue
+            for jsonl_file in sessions_dir.glob("*.jsonl"):
+                fname = jsonl_file.stem
+                if "_" in fname:
+                    sid = fname.split("_", 1)[1]
+                elif "-topic-" in fname:
+                    sid = fname.split("-topic-")[0]
+                else:
+                    sid = fname
+                
+                key = id_to_key.get(sid, "")
+                if ":discord:channel:" not in key:
+                    continue
+                ch = key.split(":discord:channel:")[-1]
+                if ch not in unresolved or ch in cache:
+                    continue
+                
+                try:
+                    with open(jsonl_file) as f:
+                        for line in f:
+                            m = re.search(r'"group_space"\s*:\s*"(\d+)"', line)
+                            if m:
+                                cache[ch] = m.group(1)
+                                unresolved.discard(ch)
+                                break
+                except:
+                    pass
+        
+        # Pass 2: Discord API for remaining unresolved (threads)
+        still_unresolved = {ch for ch in unresolved if ch not in cache}
+        if still_unresolved:
+            _resolve_via_discord_api(still_unresolved, cache)
     
     save_channel_cache(cache)
     return cache, guild_to_client
+
+
+def _resolve_via_discord_api(channels, cache):
+    """Resolve channel IDs to guild IDs via Discord REST API."""
+    import urllib.request
+    
+    # Read bot token from openclaw config
+    config_path = Path.home() / ".openclaw" / "openclaw.json"
+    if not config_path.exists():
+        return
+    
+    try:
+        # Parse JSON5-ish config - just grep for the token
+        content = config_path.read_text()
+        # Find discord token
+        m = re.search(r"token:\s*'([^']+)'", content)
+        if not m:
+            m = re.search(r'"token"\s*:\s*"([^"]+)"', content)
+        if not m:
+            return
+        token = m.group(1)
+        if token.startswith("__"):  # Redacted
+            return
+    except:
+        return
+    
+    import time
+    resolved = 0
+    for ch_id in sorted(channels):
+        try:
+            req = urllib.request.Request(
+                f"https://discord.com/api/v10/channels/{ch_id}",
+                headers={"Authorization": f"Bot {token}"}
+            )
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                data = json.loads(resp.read())
+                guild_id = data.get("guild_id")
+                if guild_id:
+                    cache[ch_id] = guild_id
+                    resolved += 1
+            time.sleep(0.1)  # Rate limit
+        except Exception:
+            pass
+    
+    if resolved:
+        print(f"  🔗 Discord API: resolved {resolved}/{len(channels)} thread channels")
 
 def resolve_unknown_channels(unknown_channels, cache, session_map):
     """Scan transcripts to resolve channel → guild for unknown channels.

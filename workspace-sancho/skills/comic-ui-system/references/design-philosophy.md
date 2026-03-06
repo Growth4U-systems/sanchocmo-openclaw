@@ -20,7 +20,7 @@ Everything should look like it was printed on slightly aged paper with heavy ink
 ### 2. Structured Like a Comic Page
 Information flows through comic conventions:
 - **Panels** frame content (ComicPanel with halftone backgrounds)
-- **Speech bubbles** contain dialogue and quotes (Comic Neue font)
+- **Speech bubbles** contain dialogue and quotes (Nunito font)
 - **Narrator captions** introduce sections (Playfair Display italic on yellow)
 - **Action bursts** highlight key metrics (starburst clip-path)
 - **Gutters** (dark gaps) separate panels in grid layouts
@@ -67,8 +67,8 @@ Each section divider (4px ink border-top) reinforces the panel-to-panel reading 
 
 | Font | Role | Comic Equivalent | Example |
 |------|------|-----------------|---------|
-| Bangers | Action text, headlines, CTAs, badges | Sound effects, title cards | "BOOM!", section titles |
-| Comic Neue | Speech, body, descriptions, input | Dialogue in speech bubbles | "Sancho te conoce mejor" |
+| Space Grotesk | Action text, headlines, CTAs, badges | Sound effects, title cards | "BOOM!", section titles |
+| Nunito | Speech, body, descriptions, input | Dialogue in speech bubbles | "Sancho te conoce mejor" |
 | Playfair Display | Narrator captions, story text | Caption boxes | "*Meanwhile, in the marketing department...*" |
 | Source Sans 3 | Metadata, small labels | Fine print | "v1.0 • Feb 2026" |
 

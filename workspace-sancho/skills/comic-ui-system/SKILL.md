@@ -36,7 +36,7 @@ Speech bubbles, action bursts, narrator captions, panel layouts, halftone dot pa
 
 ### Visual Identity
 - **Printed, not digital**: Everything looks like it was printed on textured paper with heavy ink. Halftone dots, paper grain, bold outlines.
-- **Warm and approachable**: Parchment backgrounds, warm rust accents, hand-drawn personality through Comic Neue and Bangers fonts.
+- **Warm and approachable**: Parchment backgrounds, warm rust accents, warm personality through Nunito and Space Grotesk fonts.
 - **Structured like a comic page**: Content lives in panels. Information flows through speech bubbles, narrator captions, and action bursts.
 - **Bold separation**: 4px ink borders between sections create clear panel-to-panel reading flow.
 
@@ -46,9 +46,9 @@ Speech bubbles, action bursts, narrator captions, panel layouts, halftone dot pa
 - Speech bubble tails use inline SVG `<path>` + `<rect>` cover — NOT CSS border triangles (they create seams on rounded corners)
 - Halftone dots use `radial-gradient`, never images
 - Paper texture uses SVG `feTurbulence` filter, never images
-- Fonts: Bangers for h1-h2 display headlines only, Comic Neue Bold for h3-h6, Comic Neue Regular for body/speech, Playfair Display italic for narrator captions
+- Fonts: Space Grotesk for h1-h2 display headlines only, Nunito Bold for h3-h6, Nunito Regular for body/speech, Playfair Display italic for narrator captions
 - Background palette rotates: parchment → paper → aged → paper (never white, never gray)
-- No `-webkit-font-smoothing: antialiased` — it makes Comic Neue too thin. Use browser defaults (subpixel-antialiased)
+- No `-webkit-font-smoothing: antialiased` — use browser defaults for consistency (subpixel-antialiased)
 
 ### Extendable Rules (Creative Freedom)
 - Halftone dot size and opacity per section
@@ -77,8 +77,8 @@ This section defines how a full comic-styled page looks — navbar, footer, and 
 | Bottom border | `3px solid #1A1A2E` (ink) |
 | Position | `sticky top-0 z-50` |
 | Height | `h-16` (64px) |
-| Logo | Bangers font, comic-rust `#C45D35` |
-| Nav links | Comic Neue Regular, ink-soft `#2D2D44`, hover → `#C45D35` |
+| Logo | Space Grotesk font, comic-rust `#C45D35` |
+| Nav links | Nunito Regular, ink-soft `#2D2D44`, hover → `#C45D35` |
 | CTA | ComicButton `variant="primary" size="sm"` |
 | On scroll | Add `shadow-comic-sm` via JS class toggle |
 | Mobile | Hamburger icon → slide-out drawer (ink `#1A1A2E` bg) |
@@ -88,12 +88,12 @@ This section defines how a full comic-styled page looks — navbar, footer, and 
      style={{ backgroundColor: "#F5F0E6" }}>
   <div className="max-w-6xl mx-auto px-6 flex items-center justify-between h-16">
     <a href="/" className="text-xl"
-       style={{ fontFamily: "var(--font-bangers), cursive", color: "#C45D35" }}>
+       style={{ fontFamily: "var(--font-space-grotesk), sans-serif", color: "#C45D35" }}>
       BrandName
     </a>
     <div className="hidden md:flex items-center gap-6">
       <a href="#features" className="text-sm transition-colors duration-200"
-         style={{ fontFamily: "var(--font-comic-neue), cursive", color: "#2D2D44" }}>
+         style={{ fontFamily: "var(--font-nunito), sans-serif", color: "#2D2D44" }}>
         Features
       </a>
       {/* ... more links ... */}
@@ -115,10 +115,10 @@ This section defines how a full comic-styled page looks — navbar, footer, and 
 |----------|-------|
 | Background | Ink `#1A1A2E` |
 | Top border | `3px solid #C45D35` (rust accent) |
-| Brand | Bangers font, comic-rust `#C45D35` |
-| Headings | Comic Neue Bold, paper `#FDF8EF` |
-| Body text | Comic Neue, `rgba(253, 248, 239, 0.7)` |
-| Links | Comic Neue, `rgba(253, 248, 239, 0.6)`, hover → `#FDF8EF` |
+| Brand | Space Grotesk font, comic-rust `#C45D35` |
+| Headings | Nunito Bold, paper `#FDF8EF` |
+| Body text | Nunito, `rgba(253, 248, 239, 0.7)` |
+| Links | Nunito, `rgba(253, 248, 239, 0.6)`, hover → `#FDF8EF` |
 | Copyright | Source Sans 3, 13px, `rgba(253, 248, 239, 0.5)` |
 | Layout | 3-4 column grid on desktop, stacked on mobile |
 | Padding | `py-16 md:py-20` |
@@ -130,23 +130,23 @@ This section defines how a full comic-styled page looks — navbar, footer, and 
     <div className="grid gap-8 md:grid-cols-4">
       <div>
         <span className="text-xl"
-              style={{ fontFamily: "var(--font-bangers), cursive", color: "#C45D35" }}>
+              style={{ fontFamily: "var(--font-space-grotesk), sans-serif", color: "#C45D35" }}>
           BrandName
         </span>
         <p className="mt-2 text-sm"
-           style={{ fontFamily: "var(--font-comic-neue), cursive",
+           style={{ fontFamily: "var(--font-nunito), sans-serif",
                     color: "rgba(253, 248, 239, 0.7)" }}>
           One-line tagline here.
         </p>
       </div>
       <div>
         <h4 className="text-sm font-bold tracking-wider uppercase mb-4"
-            style={{ fontFamily: "var(--font-comic-neue), cursive", color: "#FDF8EF" }}>
+            style={{ fontFamily: "var(--font-nunito), sans-serif", color: "#FDF8EF" }}>
           Product
         </h4>
         <ul className="space-y-2">
           <li><a href="#" className="text-sm transition-colors duration-200"
-                 style={{ fontFamily: "var(--font-comic-neue), cursive",
+                 style={{ fontFamily: "var(--font-nunito), sans-serif",
                           color: "rgba(253, 248, 239, 0.6)" }}>
             Features
           </a></li>
@@ -214,9 +214,9 @@ For pages with fewer sections, maintain the alternation rule: rotate through **p
 
 | Element | Mobile (<768px) | Tablet (768-1024px) | Desktop (>1024px) |
 |---------|----------------|--------------------|--------------------|
-| h1 (Bangers) | `text-3xl` | `text-4xl` | `text-5xl lg:text-6xl` |
-| h2 (Bangers) | `text-2xl` | `text-3xl` | `text-4xl lg:text-5xl` |
-| h3 (Comic Neue Bold) | `text-lg` | `text-xl` | `text-xl` |
+| h1 (Space Grotesk) | `text-3xl` | `text-4xl` | `text-5xl lg:text-6xl` |
+| h2 (Space Grotesk) | `text-2xl` | `text-3xl` | `text-4xl lg:text-5xl` |
+| h3 (Nunito Bold) | `text-lg` | `text-xl` | `text-xl` |
 | Section padding | `py-16` | `py-20` | `py-28` |
 | Grids | 1 column | 2 columns | 3+ columns |
 | Nav | Hamburger menu | Links visible | Full layout |
@@ -324,16 +324,16 @@ comic-xl:  8px 8px 0 #1A1A2E   (heavy emphasis)
 
 | Font | CSS Variable | Role | Weight |
 |------|-------------|------|--------|
-| **Bangers** | `var(--font-bangers)` | h1-h2 display headlines, CTAs, action bursts | 400 |
-| **Comic Neue** | `var(--font-comic-neue)` | h3-h6 (bold), body text, speech bubbles | 400, 700 |
+| **Space Grotesk** | `var(--font-space-grotesk)` | h1-h2 display headlines, CTAs, action bursts | 500-700 |
+| **Nunito** | `var(--font-nunito)` | h3-h6 (bold), body text, speech bubbles | 400, 700 |
 | **Playfair Display** | `var(--font-playfair)` | Narrator captions, story text | 400 italic |
 | **Source Sans 3** | `var(--font-source-sans)` | Small text, metadata | 400, 600 |
 
-**Heading hierarchy**: h1-h2 use Bangers (display), h3-h6 use Comic Neue Bold. This keeps large headings bold/punchy while making sub-headings readable.
+**Heading hierarchy**: h1-h2 use Space Grotesk (display, weight 500-700), h3-h6 use Nunito Bold. This keeps large headings bold/punchy while making sub-headings readable.
 
-**Font-size overrides**: Tailwind `text-xs` = 13px (not 12px), `text-sm` = 15px (not 14px). Comic Neue needs this bump for readability at small sizes.
+**Font-size overrides**: Tailwind `text-xs` = 13px (not 12px), `text-sm` = 15px (not 14px). Bump for readability at small sizes.
 
-**Stamps**: Use Comic Neue Bold (not Bangers) at 13px — Bangers is illegible below 16px. Letter-spacing 0.06em, uppercase.
+**Stamps**: Use Nunito Bold (not Space Grotesk) at 13px — Space Grotesk loses character at small sizes. Letter-spacing 0.06em, uppercase.
 
 ### Borders
 
@@ -477,15 +477,15 @@ Every homepage section follows this structure. **The `backgroundColor` is REQUIR
             {t("section.badge")}
           </span>
         </NarratorCaption>
-        {/* 2. Headline (Bangers) */}
+        {/* 2. Headline (Space Grotesk) */}
         <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold"
-            style={{ fontFamily: "var(--font-bangers), cursive",
+            style={{ fontFamily: "var(--font-space-grotesk), sans-serif",
                      color: "#1E3A5F", letterSpacing: "0.02em" }}>
           {t("section.title")}
         </h2>
-        {/* 3. Subtitle (Comic Neue) — optional */}
+        {/* 3. Subtitle (Nunito) — optional */}
         <p className="text-lg max-w-2xl mx-auto leading-relaxed"
-           style={{ fontFamily: "var(--font-comic-neue), cursive", color: "#2D2D44" }}>
+           style={{ fontFamily: "var(--font-nunito), sans-serif", color: "#2D2D44" }}>
           {t("section.subtitle")}
         </p>
       </div>
@@ -526,7 +526,7 @@ Every homepage section follows this structure. **The `backgroundColor` is REQUIR
   active:translate-x-[1px] active:translate-y-[1px] active:shadow-comic-sm
   bg-gradient-to-br from-comic-rust to-comic-rust-light text-white
   px-7 py-3.5 text-lg
-" style={{ fontFamily: "var(--font-bangers), cursive", letterSpacing: "0.08em", textTransform: "uppercase" }}>
+" style={{ fontFamily: "var(--font-space-grotesk), sans-serif", letterSpacing: "0.08em", textTransform: "uppercase" }}>
   {/* Shine overlay */}
   <span className="absolute inset-0 bg-gradient-to-br from-white/25 to-transparent pointer-events-none" />
   <span className="relative z-[2]">Button Text</span>
@@ -589,13 +589,13 @@ Keys follow `section.element` naming: `hero.title`, `problem.chapter`, `faq.1.q`
 ### Never Do
 - **Gray backgrounds** — always use parchment/paper/aged
 - **Blur shadows** — always flat offset (`Npx Npx 0 #1A1A2E`)
-- **Sans-serif body text** — use Comic Neue for all readable text
+- **Generic sans-serif body text** — use Nunito (not system sans-serif) for all readable text
 - **Image-based textures** — all effects are pure CSS
 - **CSS border triangles for tails** — use inline SVG (border triangles create seams on rounded corners)
 - **Heavy text-stroke (>1px)** — causes fuzzy rendering on retina; use letter-spacing instead
-- **`-webkit-font-smoothing: antialiased`** — makes Comic Neue too thin and hard to read
-- **Bangers below 16px** — illegible at small sizes; stamps/labels use Comic Neue Bold instead
-- **Bangers for small headings** — only h1-h2; h3-h6 use Comic Neue Bold for readability
+- **`-webkit-font-smoothing: antialiased`** — can make fonts too thin; use browser defaults
+- **Space Grotesk below 14px** — loses character at small sizes; stamps/labels use Nunito Bold instead
+- **Space Grotesk for small headings** — only h1-h2; h3-h6 use Nunito Bold for readability
 - **Thin borders (1px)** — minimum 2px for small elements, 3px for panels/bubbles
 - **Missing section-border** — every section (except Hero) must have `comic-section-border`
 - **Missing AnimatedSection wrapper** — all content blocks use scroll-triggered animation
@@ -609,9 +609,9 @@ Keys follow `section.element` naming: `hero.title`, `problem.chapter`, `faq.1.q`
 - Alternate background colors between sections (rotate parchment → paper → aged; see Visual Rhythm table)
 - Use NarratorCaption as the first element in every section
 - Apply `comic-paper-texture` to ComicPanels for grain
-- Use Bangers for h1-h2 display text and action bursts — anything "shouted" in a comic
-- Use Comic Neue Bold for h3-h6 and emphasis — anything "spoken firmly"
-- Use Comic Neue Regular for body text, descriptions — anything "spoken normally"
+- Use Space Grotesk for h1-h2 display text and action bursts — anything "shouted" in a comic
+- Use Nunito Bold for h3-h6 and emphasis — anything "spoken firmly"
+- Use Nunito Regular for body text, descriptions — anything "spoken normally"
 - Use Playfair Display italic for narrator captions — anything "narrated"
 - Include `relative z-[2]` on content inside panels (to sit above halftone/texture layers)
 - Use SVG `<path>` + `<rect>` for speech bubble tails (not CSS border triangles)
@@ -626,7 +626,7 @@ Before shipping any component or section:
 - [ ] Shadows use flat offset tokens (comic/comic-lg/comic-sm)
 - [ ] Interactive elements have `ease-soft-out` transitions
 - [ ] Hover includes shadow escalation + translate
-- [ ] Fonts: Bangers for h1-h2 only, Comic Neue Bold for h3-h6, Comic Neue for body, Playfair for captions
+- [ ] Fonts: Space Grotesk for h1-h2 only, Nunito Bold for h3-h6, Nunito for body, Playfair for captions
 - [ ] NarratorCaption badge at top of section
 - [ ] `AnimatedSection` wrapper on all content blocks
 - [ ] i18n keys used for all visible text
