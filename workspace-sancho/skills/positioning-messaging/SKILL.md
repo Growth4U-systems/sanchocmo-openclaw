@@ -3,21 +3,24 @@ name: positioning-messaging
 description: "Per-niche positioning and messaging playbook. Use when: crafting messaging for each ECP — what engages them, builds trust, makes them choose us. Runs AFTER niches selected (niche-discovery-100x). Produces per-ECP: deep research, mini competitor analysis, company analysis, value criteria scoring, asset mapping, benefit-proof pairing, objection neutralization, pain-activated messaging playbook (UVP + USPs) with optional A/B variants. Manages Tier 2 shared documents (Value Criteria, Assets) across niches. NOT for: general market research (use market-intelligence), competitor deep-dives (use competitor-intelligence), or brand voice definition (use brand-voice)."
 metadata:
   author: Alfonso Sainz de Baranda (Growth4U)
-  version: '4.0'
+  version: '5.0'
   system: SanchoCMO
   phase: '1'
   pillar: positioning-messaging
   layer: '4'
   depends_on: niche-discovery-100x, competitor-intelligence
-  updated: '2026-03-04'
-  changes: v4 — Pain-activated messaging, objection neutralization, legal verification, language-adaptive output, A/B variants, statistical data sourcing.
+  updated: '2026-03-06'
+  changes: v5 — Shared Tier 2 docs (value-criteria.md + assets.md). Per-ECP lean docs start with JTBD. Value Criteria in ONE table with ECPs as links. Justification + Score Explanations organized BY CRITERIA (not by ECP). Incremental updates across ECPs.
 context_required:
 - brand/{slug}/company-brief/current.md
 - brand/{slug}/market-and-us/competitor-*.md
 - brand/{slug}/go-to-market/ecps.md
 - brand/{slug}/go-to-market/ecps.md
 context_writes:
-- brand/{slug}/go-to-market/positioning-{ecp-slug}.md
+- brand/{slug}/go-to-market/positioning/shared/value-criteria.md
+- brand/{slug}/go-to-market/positioning/shared/assets.md
+- brand/{slug}/go-to-market/positioning/shared/messaging-summary.md
+- brand/{slug}/go-to-market/positioning/{ecp-slug}/current.md
 ---
 
 # Positioning & Messaging (Per-Niche)
@@ -25,7 +28,9 @@ context_writes:
 > Messaging exacto por niche: qué les engancha, qué genera confianza, qué les hace elegir. Un framework por ECP. Repetir pipeline completo para cada ECP seleccionado.
 
 **Input**: ECPs (niche-discovery-100x) + competitor intelligence + self-intelligence + SWOT
-**Output**: Messaging Playbook per ECP → `brand/{slug}/positioning/current.md`
+**Output**:
+- **Shared Tier 2**: `brand/{slug}/go-to-market/positioning/shared/value-criteria.md` + `assets.md`
+- **Per-ECP**: `brand/{slug}/go-to-market/positioning/{ecp-slug}/current.md`
 
 ## References
 
@@ -66,13 +71,23 @@ context_writes:
 - Overview + In-depth functional review para el ECP
 
 ### 4. Value Criteria + Competitive Scoring (~30 min)
-- **TIER 2 CHECK**: revisar criteria existentes antes de crear nuevos (ver `references/concepts.md`)
+- **TIER 2 CHECK**: revisar criteria existentes en `shared/value-criteria.md` antes de crear nuevos
 - Genera criteria (funcional + emocional, 5 dimensiones), scoring 0-5 (Prompt 4)
 - Clasifica: Red Ocean / No Market / Opportunity Zone
+- **FORMATO OBLIGATORIO de `shared/value-criteria.md`:**
+  - **UNA sola tabla consolidada**: # | Value Criteria | Imp. | G4U | Comp1 | Comp2 | ... | DIY | Nada | Zone | ECPs
+  - **ECPs como links** a los docs per-ECP (ej: `[1](../ecp1-slug/current.md)`)
+  - **Justification + Score Explanations organizadas POR CRITERIA** (no por ECP):
+    - `### #N Value Criteria Name (Imp. X) — Zone`
+    - Párrafo de **Justification**: qué significa este criteria y por qué importa (independiente de ECP)
+    - **Scores**: explicación detallada de CADA score por competidor con evidencia y fuente
+    - Si un score cambia por ECP, anotarlo INLINE (ej: "⚠️ En ECP 2 sube a 5 porque...")
+  - **NUNCA agrupar explanations bajo epígrafes de ECP** — siempre bajo el criteria
 
 ### 5. Asset Mapping (~20 min)
-- **TIER 2 CHECK**: revisar assets existentes
+- **TIER 2 CHECK**: revisar assets existentes en `shared/assets.md`
 - Mapea assets → criteria, clasifica Qualifier vs Differentiator (Prompt 5)
+- Actualiza `shared/assets.md` con nuevos assets + per-ECP connections
 
 ### 6. Benefit-Proof Pairing (~20 min)
 - Para cada asset: competitive advantage + user benefit + proof específico (Prompt 6)
@@ -91,7 +106,16 @@ context_writes:
   - **Puente** = Asset (Step 5): lo que tenemos que resuelve el problema
 - **2 formatos por mensaje**: versión corta (ads, 1-2 líneas) + versión landing (párrafo story-driven)
 - UVP + 4-5+ USPs + mensajes anti-objeción
-- Cada fila → Value Criterion (dolor), hypothesis, objetivo, mensaje corto, mensaje largo
+- Cada fila → Value Criteria (dolor), hypothesis, objetivo, mensaje corto, mensaje largo
+
+### 7.5. Messaging Summary Update (OBLIGATORIO)
+- **TIER 2 CHECK**: leer `shared/messaging-summary.md` ANTES de añadir
+- Añadir UVP de este ECP a la tabla de UVPs
+- Revisar USPs: ¿alguno ya existe? → añadir ECP al existente. ¿Es nuevo? → añadir fila.
+- Revisar Objeciones: ¿ya registrada? → añadir ECP. ¿Nueva? → añadir fila.
+- Actualizar mensajes transversales si aplica
+- Actualizar debilidades cross-ECP si este ECP las expone
+- **NUNCA recrear desde cero** — siempre incremental
 - **Opcional A/B**: si el cliente tiene tests planificados → generar 2-3 variantes por USP clave (Prompt 7)
 
 ### 8. Self-QA (OBLIGATORIO)
@@ -110,9 +134,9 @@ context_writes:
 - Este paso es el gate final — no se entrega nada sin pasarlo
 
 ### 10. Guardar con versionado
-- Ruta: `brand/{slug}/positioning/current.md`
+- Ruta: `brand/{slug}/go-to-market/positioning/current.md`
 - Backup + versionado + history.json
-- Link: `https://sancho-cmo.taild48df2.ts.net/mc/docs/brand/{slug}/positioning/current.md`
+- Link: `https://sancho-cmo.taild48df2.ts.net/mc/docs/brand/{slug}/go-to-market/positioning/current.md`
 
 ---
 
@@ -144,13 +168,38 @@ Al entregar, añade:
 
 ```
 brand/{{slug}}/positioning/
-├── current.md      ← versión activa
-├── v1.md, v2.md... ← versiones anteriores
-├── history.json    ← log de versiones
-└── qa-log.md       ← historial de QA
+├── shared/
+│   ├── value-criteria.md    ← Tier 2: todos los criteria + scoring + justification + explanations
+│   ├── assets.md            ← Tier 2: todos los assets + justification + benefit + proof (global)
+│   └── messaging-summary.md ← Tier 2: UVPs + USPs + objeciones + mensajes transversales (consolidado)
+├── {ecp1-slug}/
+│   ├── current.md          ← Per-ECP: JTBD + top criteria + top assets + messaging
+│   ├── v1.md, v2.md...
+│   └── history.json
+├── {ecp2-slug}/
+│   └── ...
+└── ...
 ```
+
+### Estructura del documento Per-ECP (`{ecp-slug}/current.md`)
+1. **JTBD Synthesis** — tabla resumen (need, situation, motivation, outcome, JTBD, why, alternatives). SIN narrativa.
+2. **Top Value Criteria para messaging** — selección de criteria (importance ≥ 7 + Opportunity Zone) con link a shared doc. Tabla: # | Criteria | Imp. | G4U | Avg comp. | Zone | Asset clave
+3. **Assets relevantes** — selección de differentiators que anclan el messaging. Tabla con link a shared doc.
+4. **Objection Neutralization** — tabla: Objeción | Tipo | Reframe | Mensaje | Formato
+5. **Messaging Playbook** — UVP + USPs + anti-objeciones. Tabla: Cat. | Criteria | Asset | Versión Corta | Versión Landing (Dolor→Diagnóstico→Puente)
+6. **Debilidades a resolver** — honestidad sobre gaps
+
+### Reglas de formato
+- **Per-ECP doc empieza por JTBD** — zero paja, zero deep research narrativo (eso es input, no output)
+- **Shared docs se actualizan incrementalmente** — cada nuevo ECP revisa existentes, solo añade nuevos
+- **Links bidireccionales** — shared doc apunta a ECPs, ECPs apuntan a shared
+- **Cada mención de Value Criteria o Asset en per-ECP debe ser link** al anchor específico en el shared doc:
+  - Value Criteria: `[#N](../shared/value-criteria.md#n-criteria-name)` (ej: `[#1](../shared/value-criteria.md#1-system-transferability)`)
+  - Assets: `[AN](../shared/assets.md#an-asset-name)` (ej: `[A1](../shared/assets.md#a1-trust-engine-4-fases--exit-6-meses)`)
+  - Aplica en tablas, messaging playbook, objection neutralization, y texto libre
+- **Headers en shared docs deben ser anchor-friendly**: `### #N Criteria Name` y `### AN Asset Name`
 
 1. Identifica slug desde systemPrompt
 2. Si existe `current.md` → backup como `v{N+1}.md`
-3. Si no existe → crea carpeta + `current.md` + `v1.md` + `history.json`
-4. Link: `https://sancho-cmo.taild48df2.ts.net/mc/docs/brand/{slug}/positioning/current.md`
+3. Si no existe → crea carpeta + archivos
+4. Links: `https://sancho-cmo.taild48df2.ts.net/mc/docs/brand/{slug}/go-to-market/positioning/shared/value-criteria.md`

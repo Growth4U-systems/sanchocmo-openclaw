@@ -29,14 +29,17 @@
 
 ## Step 4: Value Criteria + Competitive Scoring
 
-- [ ] **Tier 2 check**: value criteria existentes revisados antes de crear nuevos
-- [ ] **Deduplicación**: ningún criterion nuevo es >80% similar a uno existente
+- [ ] **Tier 2 check**: criteria existentes en `shared/value-criteria.md` revisados antes de crear nuevos
+- [ ] **Deduplicación**: ningún criteria nuevo es >80% similar a uno existente
 - [ ] **Criteria generados** (funcional + emocional, 5 dimensiones)
 - [ ] **Naming correcto** (noun phrases, 2-5 palabras, mismo nivel de abstracción)
-- [ ] **Justificación** incluida para cada criterion (WHY it matters for this ECP)
-- [ ] **Importance weight (1-10)** asignado a cada criterion
+- [ ] **UNA sola tabla consolidada** con ALL criteria + scores + ECPs como links
+- [ ] **Justification por criteria** (párrafo independiente de ECP: qué significa y por qué importa)
+- [ ] **Importance weight (1-10)** asignado a cada criteria
 - [ ] **Scoring 0-5** para cada competidor + "Do Nothing"
-- [ ] **Score explanations**: cada puntuación tiene justificación escrita (1-2 frases con evidencia)
+- [ ] **Score explanations POR CRITERIA** (no agrupados por ECP): detalle por competidor con evidencia
+- [ ] **Scores que cambian por ECP** anotados INLINE en la explicación del criteria
+- [ ] **ECPs como links** en la tabla (ej: `[1](../ecp1-slug/current.md)`)
 - [ ] **Clasificación**: Red Ocean (avg 4-5) / No Market (avg 0-1) / Opportunity Zone (avg 2-3)
 - [ ] **Top 3-5 Opportunity Zones** identificadas
 
@@ -45,7 +48,7 @@
 - [ ] **Tier 2 check**: assets existentes revisados antes de crear nuevos
 - [ ] **TODOS los assets mapeados** (features, team, skills, knowledge, technology, location)
 - [ ] **Qualifier vs Differentiator** clasificado por asset
-- [ ] **Cada asset conectado** a un Value Criterion del Step 4
+- [ ] **Cada asset conectado** a un Value Criteria del Step 4
 - [ ] **Sin palabras vagas** (no "empower", "elevate" — specific)
 
 ## Step 6: Benefit-Proof Pairing
@@ -73,7 +76,7 @@
 - [ ] **Framework Dolor (=Value Criteria) → Diagnóstico (=insight) → Puente (=Asset)** aplicado en cada mensaje landing
 - [ ] **Cada fila tiene**: Categoría, Hipótesis, Value Criteria, Objetivo, Versión Corta, Versión Landing
 - [ ] **Copy es**: visceral, específico, reconocible — NO genérico, NO funcional
-- [ ] **Cada mensaje conectado** a un Value Criterion
+- [ ] **Cada mensaje conectado** a un Value Criteria
 - [ ] **A/B variants generadas** (si el cliente lo solicitó)
 
 ## Tier 2 Document Management
@@ -103,7 +106,10 @@
 ## Almacenamiento
 
 - [ ] **Slug identificado** correctamente
-- [ ] **Guardado en** `brand/{{slug}}/positioning/current.md`
+- [ ] **Shared docs actualizados**: `brand/{{slug}}/positioning/shared/value-criteria.md` + `assets.md`
+- [ ] **Per-ECP guardado en** `brand/{{slug}}/positioning/{ecp-slug}/current.md`
+- [ ] **Per-ECP empieza por JTBD** (sin narrativa de deep research)
+- [ ] **Links bidireccionales**: shared → ECPs (links en tabla) + ECP → shared (refs en header)
 - [ ] **Versionado** correcto (v1.md, history.json)
 - [ ] **Link generado** para el usuario
 

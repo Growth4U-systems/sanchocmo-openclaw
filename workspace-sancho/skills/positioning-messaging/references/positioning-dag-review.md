@@ -25,7 +25,7 @@ Answer:
 View all linked Value Criteria for this ECP and answer:
 
 ### Relevance Check:
-- List each Value Criterion with its Relevance level, **justification**, and **importance weight**
+- List each Value Criteria with its Relevance level, **justification**, and **importance weight**
 - Does each criterion genuinely address the stated pain/problem?
 - Are any criteria irrelevant or tangential to this specific niche?
 

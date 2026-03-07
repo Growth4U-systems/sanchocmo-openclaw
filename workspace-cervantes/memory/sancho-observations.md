@@ -1,5 +1,92 @@
 # Observaciones de Sancho — Historial
 
+## 2026-03-06 10:00 AM — Viernes
+
+### Panorama general (últimas 24h)
+- **13+ sesiones activas** (Discord channels, crons, heartbeat, webchat)
+- **Canales Discord:** #general, #brand, #campaigns, #content, #intelligence, #onboarding, #soporte, #research, #paid-ads (Growth4U), #skills, #t-022
+- **Crons ejecutados:** Daily Pulse, funnel-watchdog, cost-tracker-daily, Regenerar Dashboard
+- **Estado:** ⚠️ Con problemas técnicos
+
+---
+
+### ✅ Lo que funciona bien
+
+**1. Daily Pulse — ejecutó correctamente**
+- Analizó 9 canales Discord (200 msgs)
+- Identificó correctamente: pain points (fotos, health checks), feature requests (research synthesis, quiz), foundation status
+- **Publicó en hilo correctamente** (patrón obligatorio seguido)
+
+**2. Heartbeat — proactivo y útil**
+- Detectó reunión decline (Alfonso Nistal 10:30-11:15) y notificó inmediatamente
+- Revisó emails + calendar correctamente
+- Alertó sobre reunión importante cancelada
+
+**3. Cost Tracker v2 — operativo**
+- Alertó correctamente: $116.77/día (> $50 threshold)
+- Proyección mensual: $3,448
+- Atribución por cliente funcionando (Growth4U $195, Hospital Capilar $98)
+
+**4. Brand Voice Growth4U — completado**
+- Layer cerrado y guardado correctamente
+
+**5. T-022 cost tracking — completado**
+- Reescrito de 0: 96% atribución (era 3%)
+- Costos por cliente, tendencia diaria, alertas, proyección
+
+**6. Foundation progresando**
+- L1 Self-Analysis ✅
+- L2 SWOT ✅
+- L3 Niche Discovery ✅
+- L4 Positioning (in progress)
+
+---
+
+### ⚠️ Problemas / Errores detectados
+
+**1. 🔴 Fotos no funcionan en Discord**
+- Alfonso reporta que fotos adjuntas no se procesan
+- En webchat, Sancho no pudo encontrar fotos que Alfonso envió
+- **Severidad:** P1 — afecta trabajo visual
+
+**2. 🔴 Error 429 — Rate Limit**
+- Niche discovery skill falló con rate limit
+- Mensaje: "This request would exceed your account's rate limit"
+- **Severidad:** P1 — bloquea skill
+
+**3. 🟡 Health Checks fallando**
+- brave: fallando hace 2 días
+- openclaw: nuevo fallo detectado
+- **Severidad:** P2 — infraestructura
+
+**4. 🟡 Costos elevados**
+- $116.77/día (threshold $50)
+- Proyección $3,448/mes
+- **Severidad:** P2 — monitorizar
+
+**5. 🟡 Visual Identity Growth4U**
+- Logo inconsistente (verde LinkedIn vs azul web)
+- Posts sin elementos visuales
+- Alfonso no apareció en fotos que envió
+
+---
+
+### 📋 Reglas de canal — Cumplimiento
+
+- ✅ Daily Pulse usó patrón de hilo correctamente
+- ✅ NO_REPLY usado tras publicar en hilos
+- ✅ Respondió en threads apropiados
+
+---
+
+### 🎯 Recomendaciones
+
+1. **Diagnosticar fotos Discord** — ver si es issue de OpenClaw o cómo Sancho las procesa
+2. **Revisar rate limits** — skill niche-discovery tuvo 429
+3. **Health checks** — restart servicios si es necesario (fuera de mi alcance directo)
+
+---
+
 ## 2026-03-02 10:00 AM — Lunes
 
 ### Panorama general (últimas 24h)

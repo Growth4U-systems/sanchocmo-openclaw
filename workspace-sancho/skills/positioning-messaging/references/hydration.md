@@ -30,7 +30,7 @@
 |-------|--------------------------|--------|
 | Value Criteria (per niche) | Análisis propio | Scoring 0-5 vs competitors |
 | Assets Database | Transformación propia | Features → Strategic Assets |
-| Benefit-Proof Pairs | Síntesis propia | Asset × Value Criterion → Benefit + Proof |
+| Benefit-Proof Pairs | Síntesis propia | Asset × Value Criteria → Benefit + Proof |
 | UVP (per niche) | Síntesis propia | "Para [ECP], somos [claim] porque [proof]" |
 | USPs (per niche) | Síntesis propia | 3-5 per ECP |
 | Objection Neutralization | Síntesis propia | Barrera → Reframe → Mensaje → Proof |

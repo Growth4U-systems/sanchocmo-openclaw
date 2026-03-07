@@ -78,11 +78,11 @@ Rules: Avoid vague words ("empower", "elevate"). Niche down early. Be specific.
 ## Messaging Principles (Step 7) — Pain-Activated
 
 **Framework: Dolor → Diagnóstico → Puente** (mapea al pipeline)
-1. **Dolor = Value Criteria (Step 4)**: Situación reconocible, vivida, específica. No dolor abstracto — una escena que el ECP reconoce al instante. El dolor VIENE del Value Criterion.
+1. **Dolor = Value Criteria (Step 4)**: Situación reconocible, vivida, específica. No dolor abstracto — una escena que el ECP reconoce al instante. El dolor VIENE del Value Criteria.
 2. **Diagnóstico**: El insight que conecta dolor con solución — lo que el ECP no ha verbalizado. Sorprende con análisis.
 3. **Puente = Asset (Step 5)**: Lo que {{client_name}} TIENE que resuelve el problema. Conecta con proof, no con promesa vacía.
 
-**Cada mensaje traza: Value Criterion → Insight → Asset**. Esto garantiza que el copy está fundamentado en datos del pipeline, no inventado.
+**Cada mensaje traza: Value Criteria → Insight → Asset**. Esto garantiza que el copy está fundamentado en datos del pipeline, no inventado.
 
 **2 formatos obligatorios por mensaje:**
 - **Versión corta (ads)**: 1-2 líneas. Social ads, banners, subject lines.
@@ -92,7 +92,7 @@ Rules: Avoid vague words ("empower", "elevate"). Niche down early. Be specific.
 - 1 row for UVP Core Promise + 4-5+ rows for USPs + 1-2 rows anti-objection
 - Copy visceral, específico, reconocible — NUNCA genérico ni funcional
 - Benefit-driven over feature-driven
-- Each message connected to a Value Criterion
+- Each message connected to a Value Criteria
 - Idioma: regla general del sistema (SOUL.md principio 7), NO de la skill
 
 **A/B Variants (opcional):**

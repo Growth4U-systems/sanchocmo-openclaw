@@ -1,7 +1,7 @@
 {
   "version": "2.0",
   "started_at": "2026-03-01T19:03:21Z",
-  "updated_at": "2026-03-06T01:45:00Z",
+  "updated_at": "2026-03-06T21:55:00Z",
   "sections": {
     "company-brief": {
       "status": "approved",
@@ -158,24 +158,51 @@
           "skill": "existing-customer-data"
         },
         "positioning": {
-          "status": "in-progress",
+          "status": "approved",
+          "approved_at": "2026-03-06T18:47:00Z",
           "layer": 4,
           "requires": [
             "niche-discovery"
           ],
-          "output_pattern": "brand/growth4u/positioning/{ecp-slug}/current.md",
+          "output_pattern": "brand/growth4u/go-to-market/positioning/{ecp-slug}/current.md",
           "skill": "positioning-messaging",
           "ecps_completed": {
             "ecp1-sistema-repetible": {
-              "status": "pending-approval",
+              "status": "approved",
               "completed_at": "2026-03-06T02:00:00Z",
-              "output_file": "brand/growth4u/positioning/ecp1-sistema-repetible/current.md"
+              "approved_at": "2026-03-06T15:58:00Z",
+              "output_file": "brand/growth4u/go-to-market/positioning/ecp1-sistema-repetible/current.md"
             }
           },
-          "notes": "ECP 1 complete (Steps 1-9). Pending: ECP 2 (regulación)."
+            "ecp2-regulacion": {
+              "status": "approved",
+              "completed_at": "2026-03-06T16:10:00Z",
+              "approved_at": "2026-03-06T18:47:00Z",
+              "output_file": "brand/growth4u/go-to-market/positioning/ecp2-regulacion/current.md"
+            },
+            "ecp3-canal-muriendo": {
+              "status": "approved",
+              "completed_at": "2026-03-06T16:10:00Z",
+              "approved_at": "2026-03-06T18:47:00Z",
+              "output_file": "brand/growth4u/go-to-market/positioning/ecp3-canal-muriendo/current.md"
+            },
+            "ecp4-quemado-agencias": {
+              "status": "approved",
+              "completed_at": "2026-03-06T16:10:00Z",
+              "approved_at": "2026-03-06T18:47:00Z",
+              "output_file": "brand/growth4u/go-to-market/positioning/ecp4-quemado-agencias/current.md"
+            },
+            "ecp5-invisible": {
+              "status": "approved",
+              "completed_at": "2026-03-06T16:10:00Z",
+              "approved_at": "2026-03-06T18:47:00Z",
+              "output_file": "brand/growth4u/go-to-market/positioning/ecp5-invisible/current.md"
+            }
+          },
+          "notes": "5/5 ECPs approved. Shared Tier 2: value-criteria.md (25 criteria), assets.md (15 assets). Skill v5.0."
         },
         "pricing": {
-          "status": "not-started",
+          "status": "approved",
           "layer": 4,
           "requires": [
             "niche-discovery"
@@ -184,7 +211,9 @@
             "positioning"
           ],
           "output_file": "brand/growth4u/go-to-market/pricing/current.md",
-          "skill": "pricing-strategy"
+          "skill": "pricing-strategy",
+          "approved_at": "2026-03-06T20:00:00Z",
+          "notes": "v1.1 — 2 productos (TE 7K€ + Consultoría 30-50K€+), pricing privado, ROI guarantee 10K€, regla Yer escalación, 7 hooks. Aprobado por Alfonso."
         },
         "ecp-validation": {
           "status": "not-started",
@@ -220,9 +249,10 @@
           ],
           "output_file": "brand/growth4u/brand-voice/current.md",
           "skill": "brand-voice",
-          "mode": "quick",
-          "approved_at": "2026-03-06T01:45:00Z",
-          "notes": "Quick mode (Layer 0). Sources: growth4u.io + 6 Rankia/ThinkingRich articles. Founder-led direction validated. Full mode pending positioning (Layer 4)."
+          "mode": "full",
+          "completed_at": "2026-03-06T21:55:00Z",
+          "approved_at": "2026-03-07T00:31:00Z",
+          "notes": "Full mode (Layer 5). Extract approach. 4 core traits, 10 Do/Don't pairs, 5 per-ECP adaptations, 6 per-channel guides, AI Brand Kit, Voice Test PASS. Previous: v1-quick-snapshot.md."
         },
         "visual-identity": {
           "status": "not-started",

@@ -131,7 +131,7 @@ Required Dimensions to Cover:
 
 1. A table with the value criteria including: name, relevance level (Critical/Very High/High/Medium), **importance weight (1-10)**, and a **justification explaining WHY this criterion matters** for this specific ECP and how it connects to their pain/problem.
 
-| Value Criterion | Relevance | Importance (1-10) | Justification |
+| Value Criteria | Relevance | Importance (1-10) | Justification |
 |-----------------|-----------|-------------------|---------------|
 
 2. A detailed Markdown table titled "Competitive Positioning Map for {{client_name}}":
@@ -141,7 +141,7 @@ Required Dimensions to Cover:
 3. Beneath the table, a concluding summary highlighting the top 3-5 most promising "Opportunity Zones" for {{client_name}}.
 
 4. **Score Explanations (OBLIGATORIO)**: For EACH competitor × criterion combination, provide a brief explanation of WHY that score was assigned. Format:
-   - **[Criterion] — [Competitor]: [Score]/5** — [1-2 sentence justification with evidence]
+   - **[Criteria] — [Competitor]: [Score]/5** — [1-2 sentence justification with evidence]
    - This ensures transparency and allows the user to challenge or validate scores.
 
 5. **Deduplication check**: Before finalizing, compare all new Value Criteria against the existing shared list. If a new criterion overlaps with an existing one (>80% conceptual similarity), USE the existing one instead of creating a new one.
@@ -262,7 +262,7 @@ Develop a **pain-activated messaging playbook** grounded in {{client_name}} bran
 2. **Diagnóstico del problema real**: The insight connecting pain to solution — what the ECP hasn't articulated. ("El problema no es la caída — es no saber si lo que haces funciona o estás perdiendo tiempo.")
 3. **Puente = Asset (Step 5)**: What {{client_name}} has that solves the problem. Connect diagnosis to the specific asset. ("Con un diagnóstico capilar real, dejas de adivinar y empiezas un plan que tiene sentido para TU caso.")
 
-Each message row therefore traces: **Value Criterion (dolor) → Insight (diagnóstico) → Asset (puente)**. This ensures every message is grounded in the pipeline data, not invented.
+Each message row therefore traces: **Value Criteria (dolor) → Insight (diagnóstico) → Asset (puente)**. This ensures every message is grounded in the pipeline data, not invented.
 
 ### TASKS:
 
@@ -278,7 +278,7 @@ Each message row therefore traces: **Value Criterion (dolor) → Insight (diagn�
 
 4. **Messaging table format**:
 
-| Categoría | Hipótesis (por qué funcionará) | Value Criterion | Objetivo | Versión Corta (ads) | Versión Landing (story-driven) |
+| Categoría | Hipótesis (por qué funcionará) | Value Criteria | Objetivo | Versión Corta (ads) | Versión Landing (story-driven) |
 
 5. **Ensure each message row focuses on a distinct strategic emphasis**, such as:
     - Core UVP (dolor → diagnóstico → puente emocional)
@@ -287,7 +287,7 @@ Each message row therefore traces: **Value Criterion (dolor) → Insight (diagn�
     - Anti-objeción: desconfianza
     - Diferenciador clave 1, 2, 3...
 
-6. **Align each row with a clear Value Criterion from Step 4**
+6. **Align each row with a clear Value Criteria from Step 4**
 
 7. **Statistical claims**: Every number, percentage, or data point in the messaging MUST have either:
     - `[Fuente: título](url)` inline citation, OR

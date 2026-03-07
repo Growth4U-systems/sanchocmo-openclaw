@@ -6,44 +6,92 @@ Complete field-by-field specification for the positioning-messaging pillar. Mana
 
 ## Tier 2 Shared Documents
 
-These documents are shared across all niches. Check and reuse before creating new entries.
+Stored in `brand/{slug}/positioning/shared/`. Shared across ALL niches.
 
-### Value Criteria Database
+### Value Criteria (`shared/value-criteria.md`)
 
+**Format: ONE consolidated table + per-criteria explanations.**
+
+#### Table format:
+```
+| # | Value Criteria | Imp. | G4U | Comp1 | Comp2 | ... | DIY | Nada | Zone | ECPs |
+```
+- ECPs column: links to per-ECP docs (e.g. `[1](../ecp1-slug/current.md)`)
+- Zone: 🟢 Opp | 🟡 Cont | 🔴 Red
+
+#### Per-criteria explanation format (below the table):
+```
+### #N Value Criteria Name (Imp. X) — Zone
+
+**Justification:** What this criteria means and why it matters.
+Independent of any specific ECP. Evidence-based.
+
+**Scores:**
+- **G4U: X** — Detailed explanation with evidence and source.
+- **Comp1: X** — Detailed explanation with evidence and source.
+- ...
+```
+
+**Rules:**
+- Explanations organized BY CRITERIA, never grouped by ECP
+- If a score changes per ECP, note it INLINE: "⚠️ In ECP 2, rises to 5 because..."
+- Each score explanation includes evidence + source reference
+- Justification paragraph is the "why this criteria matters" (not scores)
+
+#### Schema:
 ```
 {
-  criterion_id: number,             // Auto-increment, unique across all niches
-  criterion: string,                // Short Noun Phrase (2-5 words)
+  criteria_id: number,              // Auto-increment, unique across all niches
+  criteria: string,                 // Short Noun Phrase (2-5 words)
   dimension: enum (compliance_reliability / operational_efficiency / financial_intelligence / ecosystem_connectivity / emotional_drivers),
-  relevance: string,                // Why this criterion matters
-  justification: string,            // Evidence for relevance
-  niches_applicable: string[],      // Which ECPs this criterion applies to
-  created_for_niche: string,        // First niche that introduced it
-  scores: {                         // Competitive scores (0-5)
-    [competitor_name]: number,
-    client: number,
-    diy: number,
-    do_nothing: number
+  importance: number,               // 1-10
+  justification: string,            // What it means and why it matters (ECP-independent)
+  ecps_applicable: string[],        // Which ECPs — as links to per-ECP docs
+  scores: {                         // Competitive scores (0-5) with explanation per score
+    [competitor_name]: { score: number, explanation: string }
   },
-  opportunity_type: enum (red_ocean / no_market / opportunity_zone),
-  analysis: string                  // Interpretation of scores
+  opportunity_type: enum (red_ocean / no_market / opportunity_zone)
 }
 ```
 
-### Assets Database
+### Assets (`shared/assets.md`)
 
+**Format: Registry table + per-asset global explanations.**
+
+#### Table format:
+```
+| # | Asset | Category | Primary Criteria | ECPs |
+```
+- ECPs column: links to per-ECP docs
+- Category: 🔵 Diff | ⚪ Qual | ⚪→🔵
+
+#### Per-asset explanation format (below the table):
+```
+### AN — Asset Name
+
+**Justification:** Why this asset provides strategic value. Global, not ECP-specific.
+**Competitive Advantage:** What makes it unique vs competitors.
+**User Benefit:** What the user gets from it.
+**Proof:** Specific evidence, data, messages.
+```
+
+**Rules:**
+- Justification, Benefit, and Proof are GLOBAL (same asset = same explanation)
+- Per-ECP adaptation notes go in the per-ECP docs, NOT here
+- If an asset applies to 5 ECPs, it still has ONE explanation here
+
+#### Schema:
 ```
 {
   asset_id: number,                 // Auto-increment, unique across all niches
   asset: string,                    // What the company has
   category: enum (qualifier / differentiator),
-  justification: string,            // Why it provides strategic value
-  niche_connections: [              // One entry per niche where this asset applies
-    {
-      niche: string,                // ECP name
-      value_criterion_id: number,   // Links to Value Criteria
-      competitive_advantage: string,
-      user_benefit: string,
+  primary_criteria: number[],       // Links to Value Criteria
+  ecps_applicable: string[],        // Links to per-ECP docs
+  justification: string,            // WHY it provides strategic value (global)
+  competitive_advantage: string,    // What makes it unique (global)
+  user_benefit: string,             // What the user gets (global)
+  proof: string,                    // Specific evidence (global)
       proof: string,                // Specific proof with message to display
       proof_type: enum (testimonial / screenshot / tutorial / ad_message / comparative_table / report / case_study)
     }
