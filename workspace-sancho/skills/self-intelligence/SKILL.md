@@ -14,7 +14,7 @@ metadata:
 context_required:
 - brand/{slug}/company-brief/current.md
 context_writes:
-- brand/{slug}/market-and-us/self-analysis.md
+- brand/{slug}/market-and-us/self/current.md
 - brand/{slug}/operational/learnings.md
 ---
 

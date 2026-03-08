@@ -12,9 +12,9 @@ metadata:
   chains_to: email-outreach-executor, linkedin-outreach-executor
 context_required:
 - brand/{slug}/go-to-market/channel-plan.md
-- brand/{slug}/go-to-market/positioning-*.md
-- brand/{slug}/go-to-market/ecps.md
-- brand/{slug}/brand-identity/voice-profile.md
+- brand/{slug}/go-to-market/positioning/*/current.md
+- brand/{slug}/go-to-market/ecps/current.md
+- brand/{slug}/brand-voice/current.md
 context_writes:
 - campaigns/
 - brand/{slug}/operational/learnings.md
@@ -48,11 +48,11 @@ Follow _system/output-format.md (if using SanchoCMO framework)
 
 **Required (will not run without these):**
 - `./brand/{slug}/go-to-market/channel-plan.md` — Confirms outreach is a selected channel (from channel-prioritization)
-- `./brand/{slug}/go-to-market/ecps.md` — Target personas with pain points (from niche-discovery-100x)
-- `./brand/{slug}/go-to-market/positioning-*.md` — Value proposition angles per ECP (from positioning-messaging)
+- `./brand/{slug}/go-to-market/ecps/current.md` — Target personas with pain points (from niche-discovery-100x)
+- `./brand/{slug}/go-to-market/positioning/*/current.md` — Value proposition angles per ECP (from positioning-messaging)
 
 **Recommended (better output with these):**
-- `./brand/{slug}/brand-identity/voice-profile.md` — Tone for email copy (from brand-voice)
+- `./brand/{slug}/brand-voice/current.md` — Tone for email copy (from brand-voice)
 - `brand/{slug}/operational/contacts-enriched.json` — Enriched contacts for personalization (from contact-enrichment)
 - `brand/{slug}/operational/signals-to-track.json` — Buy signals for triggers (from signal-definition)
 
@@ -100,7 +100,7 @@ From positioning.md:
   - Key differentiators vs alternatives
   - Proof points (metrics, case studies)
 
-From voice-profile.md (if exists):
+From brand-voice/current.md (if exists):
   - Tone guidelines
   - Platform-specific adaptations
   - Words to use / words to avoid
@@ -318,9 +318,9 @@ Append summary to `./brand/{slug}/operational/assets.md`:
 | Action | File | Description |
 |--------|------|-------------|
 | READ | `./brand/{slug}/go-to-market/channel-plan.md` | Confirms outreach is selected channel |
-| READ | `./brand/{slug}/go-to-market/positioning-*.md` | Value prop angle per ECP |
-| READ | `./brand/{slug}/go-to-market/ecps.md` | Target persona details |
-| READ | `./brand/{slug}/brand-identity/voice-profile.md` | Tone for email copy |
+| READ | `./brand/{slug}/go-to-market/positioning/*/current.md` | Value prop angle per ECP |
+| READ | `./brand/{slug}/go-to-market/ecps/current.md` | Target persona details |
+| READ | `./brand/{slug}/brand-voice/current.md` | Tone for email copy |
 | READ | `brand/{slug}/operational/contacts-enriched.json` | Enriched contacts (optional) |
 | READ | `brand/{slug}/operational/signals-to-track.json` | Buy signals for triggers |
 | WRITE | `./campaigns/outreach-{ecp}/` | Sequence files (multiple) |

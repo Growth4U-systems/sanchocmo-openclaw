@@ -8,8 +8,8 @@ context_required:
 context_writes:
 - brand/{slug}/foundation-state.json
 - brand/{slug}/company-brief/current.md
-- brand/{slug}/market-and-us/summary.md
-- brand/{slug}/go-to-market/ecps.md
+- brand/{slug}/market-and-us/summary/current.md
+- brand/{slug}/go-to-market/ecps/current.md
 ---
 
 # Foundation Orchestrator v2.0
@@ -124,7 +124,7 @@ Invocar el skill del registry. Si hay enriches_with disponibles, pasarlos como c
 • Regulación clave: [impactos]
 • Oportunidad principal: [descripción]
 
-📄 Doc: brand/{slug}/market-and-us/market-analysis.md
+📄 Doc: brand/{slug}/market-and-us/market/current.md
 ───────────────────────────────
 ¿Correcto? ¿Cambios?
 ───────────────────────────────

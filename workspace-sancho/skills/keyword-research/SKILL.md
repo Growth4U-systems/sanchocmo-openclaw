@@ -8,9 +8,9 @@ metadata:
   adapted: '2026-02-20'
   adaptations: Integrated with SanchoCMO brand memory protocol, tech company examples
 context_required:
-- brand/{slug}/go-to-market/positioning-*.md
-- brand/{slug}/go-to-market/ecps.md
-- brand/{slug}/market-and-us/competitor-*.md
+- brand/{slug}/go-to-market/positioning/*/current.md
+- brand/{slug}/go-to-market/ecps/current.md
+- brand/{slug}/market-and-us/competitors/current.md
 context_writes:
 - brand/{slug}/go-to-market/keyword-plan.md
 - brand/{slug}/operational/learnings.md
@@ -42,9 +42,9 @@ On every invocation, check for existing brand context.
 
 | File | What it provides | How it shapes output |
 |------|-----------------|---------------------|
-| ./brand/{slug}/go-to-market/positioning-*.md | Market angles, differentiators | Aligns keyword selection with brand positioning -- a rebel brand targets different keywords than a trusted advisor |
-| brand/{slug}/go-to-market/ecps.md | Buyer profiles, sophistication level | Informs search intent mapping -- beginner audience means more "what is" and "how to" keywords |
-| ./brand/{slug}/market-and-us/competitor-*.md | Named competitors, their positioning | Seeds competitive content gap analysis -- search what they rank for, find what they miss |
+| ./brand/{slug}/go-to-market/positioning/*/current.md | Market angles, differentiators | Aligns keyword selection with brand positioning -- a rebel brand targets different keywords than a trusted advisor |
+| brand/{slug}/go-to-market/ecps/current.md | Buyer profiles, sophistication level | Informs search intent mapping -- beginner audience means more "what is" and "how to" keywords |
+| ./brand/{slug}/market-and-us/competitors/current.md | Named competitors, their positioning | Seeds competitive content gap analysis -- search what they rank for, find what they miss |
 
 ### Writes
 
@@ -194,12 +194,12 @@ Get these inputs before generating anything. If brand memory files exist, pre-fi
 what you can and confirm with the user.
 
 1. **What do you sell/offer?** (1-2 sentences)
-   - Pre-fill from: ./brand/{slug}/go-to-market/positioning-*.md
+   - Pre-fill from: ./brand/{slug}/go-to-market/positioning/*/current.md
 2. **Who are you trying to reach?** (Be specific)
-   - Pre-fill from: brand/{slug}/go-to-market/ecps.md
+   - Pre-fill from: brand/{slug}/go-to-market/ecps/current.md
 3. **What is your website?** (To understand current content)
 4. **Who are 2-3 competitors?** (Or help identify them)
-   - Pre-fill from: ./brand/{slug}/market-and-us/competitor-*.md
+   - Pre-fill from: ./brand/{slug}/market-and-us/competitors/current.md
 5. **What is the goal?** (Traffic? Leads? Sales? Authority?)
 6. **Timeline?** (Quick wins or long-term plays?)
 
@@ -269,14 +269,14 @@ Results and transformations customers achieve.
 What makes you different from alternatives.
 > Example: "no-code marketing", "AI-first approach", "community-driven marketing"
 
-If ./brand/{slug}/go-to-market/positioning-*.md is loaded, use the actual positioning angles here
+If ./brand/{slug}/go-to-market/positioning/*/current.md is loaded, use the actual positioning angles here
 instead of generic examples. The user's real differentiators should drive Circle 4.
 
 ### Circle 5: Adjacent Topics
 Related areas where your audience spends time.
 > Example: "startup growth", "indie hackers", "solopreneur tools", "productivity systems"
 
-If brand/{slug}/go-to-market/ecps.md is loaded, use the audience's actual communities,
+If brand/{slug}/go-to-market/ecps/current.md is loaded, use the audience's actual communities,
 interests, and adjacent problems to populate Circle 5.
 
 ### Circle 6: Entities to Associate With
@@ -396,7 +396,7 @@ Search: "[keyword]"
 
 ### Step 4: Competitor Content Analysis
 
-If ./brand/{slug}/market-and-us/competitor-*.md is loaded (or competitors were provided), search
+If ./brand/{slug}/market-and-us/competitors/current.md is loaded (or competitors were provided), search
 for what they rank for:
 
 ```
@@ -778,7 +778,7 @@ H1: {Title}
 
 ## Angle
 {How to approach this topic given the brand's positioning}
-{Reference ./brand/{slug}/go-to-market/positioning-*.md if loaded}
+{Reference ./brand/{slug}/go-to-market/positioning/*/current.md if loaded}
 
 ## Differentiation
 {What makes this piece different from what already ranks}

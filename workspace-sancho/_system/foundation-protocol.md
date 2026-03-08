@@ -174,6 +174,12 @@ Se genera al completar positioning. Se regenera si cambian positioning o pricing
 3. **Presentar resumen ejecutivo**: 5-10 bullets, NO el doc entero
 4. **Esperar respuesta**: aprobar → celebración + siguiente | corregir → revisión | skip → razón + siguiente
 5. **Persistir**: actualizar foundation-state.json + regenerar MC
+6. **Upstream enrichment** (OBLIGATORIO): al completar una layer, revisar docs upstream que dependen de los datos nuevos y actualizarlos:
+   - **OPE Canvas**: enriquecer con ECPs, UVPs, pricing hooks, channel data
+   - **Company Brief**: resolver Discovery Tasks pendientes (ej: "Pricing visible")
+   - **Summary/Syntheses**: actualizar con datos de la layer completada
+   - **foundation-state.json**: actualizar status de sección padre si todos los pilares están completos
+   - Sugerir proactivamente al usuario — no esperar a que pregunte
 
 **Flujo automático**: al aprobar, el siguiente pilar arranca automáticamente. El usuario nunca tiene que escribir un comando para continuar.
 

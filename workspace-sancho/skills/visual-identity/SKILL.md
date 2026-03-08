@@ -14,10 +14,10 @@ metadata:
   changes: v2 — Restructured per skill-creator principles. SKILL.md lean (~140 lines). Concepts/questions in references.
 context_required:
 - brand/{slug}/company-brief/current.md
-- brand/{slug}/brand-identity/voice-profile.md
-- brand/{slug}/go-to-market/positioning-*.md
+- brand/{slug}/brand-voice/current.md
+- brand/{slug}/go-to-market/positioning/*/current.md
 context_writes:
-- brand/{slug}/brand-identity/visual-identity.md
+- brand/{slug}/brand-identity/visual-identity/current.md
 - brand/{slug}/operational/assets.md
 ---
 

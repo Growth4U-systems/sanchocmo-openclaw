@@ -13,10 +13,10 @@ metadata:
   changes: v2 — Restructured per skill-creator principles. SKILL.md lean (~110 lines). References created.
 context_required:
 - brand/{slug}/company-brief/current.md
-- brand/{slug}/go-to-market/ecps.md
-- brand/{slug}/go-to-market/ecps.md
+- brand/{slug}/go-to-market/ecps/current.md
+- brand/{slug}/go-to-market/ecps/current.md
 context_writes:
-- brand/{slug}/go-to-market/existing-customer-data.md
+- brand/{slug}/go-to-market/existing-customer-data/current.md
 ---
 
 # Existing Customer Data — Customer Intelligence (OPTIONAL)

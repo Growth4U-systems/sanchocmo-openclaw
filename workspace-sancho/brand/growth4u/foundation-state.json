@@ -123,7 +123,8 @@
       }
     },
     "go-to-market": {
-      "status": "in-progress",
+      "status": "approved",
+      "approved_at": "2026-03-07T08:37:00Z",
       "layer": 3,
       "output_dir": "brand/growth4u/go-to-market/",
       "pillars": {
@@ -172,8 +173,7 @@
               "completed_at": "2026-03-06T02:00:00Z",
               "approved_at": "2026-03-06T15:58:00Z",
               "output_file": "brand/growth4u/go-to-market/positioning/ecp1-sistema-repetible/current.md"
-            }
-          },
+            },
             "ecp2-regulacion": {
               "status": "approved",
               "completed_at": "2026-03-06T16:10:00Z",
@@ -227,12 +227,15 @@
       },
       "syntheses": {
         "messaging-summary": {
-          "status": "not-generated",
-          "output_file": "brand/growth4u/go-to-market/messaging-summary/current.md",
-          "generated_by": "orchestrator",
+          "status": "approved",
+          "output_file": "brand/growth4u/go-to-market/positioning/shared/messaging-summary.md",
+          "generated_by": "positioning-messaging",
+          "generated_at": "2026-03-06T19:00:00Z",
+          "approved_at": "2026-03-06T20:10:00Z",
           "requires": [
             "positioning"
-          ]
+          ],
+          "notes": "Tier 2 shared doc. 5 UVPs, 9 USPs consolidados, 10 objeciones deduplicadas, mensajes transversales, debilidades cross-ECP."
         }
       }
     },

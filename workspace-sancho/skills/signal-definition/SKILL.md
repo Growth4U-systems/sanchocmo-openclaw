@@ -11,8 +11,8 @@ metadata:
   chains_to: signal-monitor
 context_required:
 - brand/{slug}/company-brief/current.md
-- brand/{slug}/go-to-market/ecps.md
-- brand/{slug}/go-to-market/ecps.md
+- brand/{slug}/go-to-market/ecps/current.md
+- brand/{slug}/go-to-market/ecps/current.md
 context_writes:
 - campaigns/
 - brand/{slug}/operational/learnings.md
@@ -52,10 +52,10 @@ Follow _system/output-format.md (if using SanchoCMO framework)
 ```
 Read from Context Lake (if SanchoCMO):
   ├─ brand/{slug}/company-brief/current.md
-  ├─ brand/{slug}/go-to-market/ecps.md
-  ├─ brand/{slug}/go-to-market/ecps.md
+  ├─ brand/{slug}/go-to-market/ecps/current.md
+  ├─ brand/{slug}/go-to-market/ecps/current.md
   ├─ brand/{slug}/company-brief/current.md
-  └─ brand/{slug}/go-to-market/existing-customer-data.md (if exists)
+  └─ brand/{slug}/go-to-market/existing-customer-data/current.md (if exists)
 
 Extract:
   ├─ Product category (e.g., "CRM for SaaS")
@@ -454,10 +454,10 @@ NEXT STEPS
 | File | What it provides | How it's used |
 |------|-----------------|---------------|
 | brand/{slug}/company-brief/current.md | Product, industry, pain points | Determines relevant signal categories |
-| brand/{slug}/go-to-market/ecps.md | ICP characteristics | Filters signals by company fit |
-| brand/{slug}/go-to-market/ecps.md | Specific buyer personas | Identifies decision-maker hiring signals |
+| brand/{slug}/go-to-market/ecps/current.md | ICP characteristics | Filters signals by company fit |
+| brand/{slug}/go-to-market/ecps/current.md | Specific buyer personas | Identifies decision-maker hiring signals |
 | brand/{slug}/company-brief/current.md | Revenue model, sales process | Informs sales cycle-specific signals |
-| brand/{slug}/go-to-market/existing-customer-data.md | Existing customer patterns | Validates which signals historically converted |
+| brand/{slug}/go-to-market/existing-customer-data/current.md | Existing customer patterns | Validates which signals historically converted |
 
 ### Writes to Context Lake
 

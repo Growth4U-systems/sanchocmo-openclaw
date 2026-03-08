@@ -2,10 +2,10 @@
 name: thief-marketers
 description: "Reverse-engineer competitor marketing strategies and steal what works. Monitors competitor channels (web, social, ads, newsletters, content) to identify winning tactics, content themes, and campaign patterns. Generates actionable content ideas adapted to client's brand. Weekly cron recommended."
 context_required:
-- brand/{slug}/market-and-us/competitor-*.md
+- brand/{slug}/market-and-us/competitors/current.md
 - brand/{slug}/company-brief/current.md
-- brand/{slug}/brand-identity/voice-profile.md
-- brand/{slug}/go-to-market/ecps.md
+- brand/{slug}/brand-voice/current.md
+- brand/{slug}/go-to-market/ecps/current.md
 context_writes:
 - brand/{slug}/operational/content-ideas.json
 - brand/{slug}/operational/learnings.md
@@ -21,7 +21,7 @@ Read ./brand/ per `_system/brand-memory.md`
 
 ## Core Job
 
-For each competitor in `market-and-us/competitor-*.md`:
+For each competitor in `market-and-us/competitors/current.md`:
 1. Scrape their latest marketing activity
 2. Identify what's working (engagement signals)
 3. Generate content ideas adapted to OUR brand voice and positioning

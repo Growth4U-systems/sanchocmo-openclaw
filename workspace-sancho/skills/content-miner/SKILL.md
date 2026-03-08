@@ -11,8 +11,8 @@ metadata:
   configurable: true
 context_required:
 - brand/{slug}/company-brief/current.md
-- brand/{slug}/go-to-market/positioning-*.md
-- brand/{slug}/brand-identity/voice-profile.md
+- brand/{slug}/go-to-market/positioning/*/current.md
+- brand/{slug}/brand-voice/current.md
 context_writes:
 - content-ideas/
 - brand/{slug}/operational/learnings.md

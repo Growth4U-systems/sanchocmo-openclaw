@@ -3,8 +3,8 @@ name: funnel-architect
 description: "Design qualification and conversion funnels."
 context_required:
   - brand/{slug}/company-brief/current.md
-  - brand/{slug}/go-to-market/positioning-*.md
-  - brand/{slug}/go-to-market/ecps.md
+  - brand/{slug}/go-to-market/positioning/*/current.md
+  - brand/{slug}/go-to-market/ecps/current.md
 context_writes:
   - campaigns/{slug}/funnel-architecture.md
 ---
@@ -27,11 +27,11 @@ Lee estos archivos de Foundation antes de empezar:
 
 | Archivo | Qué extraer |
 |---------|-------------|
-| `brand/{slug}/go-to-market/positioning-*.md` | Propuesta de valor, diferenciadores, categoría |
-| `brand/{slug}/go-to-market/ecps.md` | Segmentos, pain points, objeciones, triggers de compra |
+| `brand/{slug}/go-to-market/positioning/*/current.md` | Propuesta de valor, diferenciadores, categoría |
+| `brand/{slug}/go-to-market/ecps/current.md` | Segmentos, pain points, objeciones, triggers de compra |
 | `brand/{slug}/company-brief/current.md` | Producto/servicio, precio, ciclo de venta, equipo disponible |
 | `campaigns/{slug}/channel-plan.md` | Canales de entrada al funnel (si existe) |
-| `brand/{slug}/go-to-market/ecps.md` | Emotional Connection Points (si existe) |
+| `brand/{slug}/go-to-market/ecps/current.md` | Emotional Connection Points (si existe) |
 
 **Hard check**: Si `positioning.md` o `icp.md` están vacíos o no existen → STOP. No diseñes un funnel sin saber a quién vendes ni qué vendes.
 

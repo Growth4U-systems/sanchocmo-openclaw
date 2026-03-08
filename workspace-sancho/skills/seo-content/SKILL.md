@@ -6,11 +6,11 @@ description: >
   HowTo JSON-LD), and YAML frontmatter. Supports content refresh mode for existing articles. Chains to
   /content-atomizer for social distribution.
 context_required:
-- brand/{slug}/brand-identity/voice-profile.md
+- brand/{slug}/brand-voice/current.md
 - brand/{slug}/go-to-market/keyword-plan.md
-- brand/{slug}/go-to-market/ecps.md
-- brand/{slug}/go-to-market/positioning-*.md
-- brand/{slug}/market-and-us/competitor-*.md
+- brand/{slug}/go-to-market/ecps/current.md
+- brand/{slug}/go-to-market/positioning/*/current.md
+- brand/{slug}/market-and-us/competitors/current.md
 - brand/{slug}/operational/learnings.md
 context_writes:
 - campaigns/content/{keyword-slug}.md
@@ -36,11 +36,11 @@ Read `./brand/` per `_system/brand-memory.md` · Follow `_system/output-format.m
 
 | File | Purpose |
 |------|---------|
-| `brand/{slug}/brand-identity/voice-profile.md` | Tone, personality, vocabulary → shapes writing style |
+| `brand/{slug}/brand-voice/current.md` | Tone, personality, vocabulary → shapes writing style |
 | `brand/{slug}/go-to-market/keyword-plan.md` | Keywords, content briefs, SERP data |
-| `brand/{slug}/go-to-market/ecps.md` | Buyer profiles, sophistication level, pain points |
-| `brand/{slug}/go-to-market/positioning-*.md` | Market angles, differentiators → unique angle |
-| `brand/{slug}/market-and-us/competitor-*.md` | Named competitors, their positioning |
+| `brand/{slug}/go-to-market/ecps/current.md` | Buyer profiles, sophistication level, pain points |
+| `brand/{slug}/go-to-market/positioning/*/current.md` | Market angles, differentiators → unique angle |
+| `brand/{slug}/market-and-us/competitors/current.md` | Named competitors, their positioning |
 | `brand/{slug}/operational/learnings.md` | Past performance data |
 
 ### Writes
@@ -70,7 +70,7 @@ Before starting, check if content exists at `campaigns/content/{keyword-slug}.md
 2. **Keyword cluster** — Related keywords to include naturally
 3. **Search intent** — Informational / Commercial / Transactional
 4. **Content type** — Pillar guide / How-to / Comparison / Listicle
-5. **Brand voice profile** — From voice-profile.md if available
+5. **Brand voice profile** — From brand-voice/current.md if available
 6. **Unique angle** — What perspective makes this different?
 
 Pre-fill from brand memory when available. If from /keyword-research, load brief at `campaigns/content-plan/{keyword-slug}.md`.
@@ -93,7 +93,7 @@ Create or enhance brief from /keyword-research. Target keyword, cluster, intent,
 Structure by content type: Pillar (5-8K words), How-To (2-3K), Comparison (2.5-4K), Listicle (2-3K). Map PAA to H2s/FAQ. → `references/workflow.md` §Phase 3
 
 ### Phase 4: Draft
-Voice from voice-profile.md. First Paragraph Rule, "So What?" Chain, Specificity Over Generality, Show Your Work, Positioning-Informed Angle. → `references/workflow.md` §Phase 4
+Voice from brand-voice/current.md. First Paragraph Rule, "So What?" Chain, Specificity Over Generality, Show Your Work, Positioning-Informed Angle. → `references/workflow.md` §Phase 4
 
 ### Phase 5: Humanize
 Remove AI tells: words (delve, comprehensive, leverage, landscape), phrases, structural patterns. Inject: experience, opinions, admissions, specifics, rhythm variation. → `references/workflow.md` §Phase 5

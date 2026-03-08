@@ -1,12 +1,12 @@
 {
   "status": "fail",
-  "last_run": "2026-03-06T20:04:20Z",
+  "last_run": "2026-03-07T20:04:25Z",
   "summary": "2/3 ok, 1 errors",
   "failureCount": 1,
   "services": {
     "anthropic": {
       "status": "not-configured",
-      "lastCheck": "2026-03-06T20:04:20.242Z",
+      "lastCheck": "2026-03-07T20:04:25.523Z",
       "details": {
         "error": "ANTHROPIC_API_KEY not set"
       },
@@ -14,7 +14,7 @@
     },
     "openrouter": {
       "status": "not-configured",
-      "lastCheck": "2026-03-06T20:04:20.242Z",
+      "lastCheck": "2026-03-07T20:04:25.523Z",
       "details": {
         "error": "OPENROUTER_API_KEY not set"
       },
@@ -22,7 +22,7 @@
     },
     "openai": {
       "status": "not-configured",
-      "lastCheck": "2026-03-06T20:04:20.242Z",
+      "lastCheck": "2026-03-07T20:04:25.523Z",
       "details": {
         "error": "OPENAI_API_KEY not set"
       },
@@ -30,7 +30,7 @@
     },
     "gemini": {
       "status": "not-configured",
-      "lastCheck": "2026-03-06T20:04:20.242Z",
+      "lastCheck": "2026-03-07T20:04:25.523Z",
       "details": {
         "error": "GEMINI_API_KEY not set"
       },
@@ -38,7 +38,7 @@
     },
     "xai": {
       "status": "not-configured",
-      "lastCheck": "2026-03-06T20:04:20.242Z",
+      "lastCheck": "2026-03-07T20:04:25.523Z",
       "details": {
         "error": "XAI_API_KEY not set"
       },
@@ -46,7 +46,7 @@
     },
     "minimax": {
       "status": "not-configured",
-      "lastCheck": "2026-03-06T20:04:20.242Z",
+      "lastCheck": "2026-03-07T20:04:25.523Z",
       "details": {
         "error": "MINIMAX_API_KEY not set"
       },
@@ -54,7 +54,7 @@
     },
     "brave": {
       "status": "not-configured",
-      "lastCheck": "2026-03-06T20:04:20.242Z",
+      "lastCheck": "2026-03-07T20:04:25.523Z",
       "details": {
         "error": "BRAVE_API_KEY not set"
       },
@@ -62,7 +62,7 @@
     },
     "apify": {
       "status": "not-configured",
-      "lastCheck": "2026-03-06T20:04:20.242Z",
+      "lastCheck": "2026-03-07T20:04:25.523Z",
       "details": {
         "error": "APIFY_TOKEN not set"
       },
@@ -70,7 +70,7 @@
     },
     "firecrawl": {
       "status": "not-configured",
-      "lastCheck": "2026-03-06T20:04:20.242Z",
+      "lastCheck": "2026-03-07T20:04:25.523Z",
       "details": {
         "error": "FIRECRAWL_API_KEY not set"
       },
@@ -78,7 +78,7 @@
     },
     "serper": {
       "status": "not-configured",
-      "lastCheck": "2026-03-06T20:04:20.242Z",
+      "lastCheck": "2026-03-07T20:04:25.523Z",
       "details": {
         "error": "SERPER_API_KEY not set"
       },
@@ -86,7 +86,7 @@
     },
     "dataforseo": {
       "status": "not-configured",
-      "lastCheck": "2026-03-06T20:04:20.242Z",
+      "lastCheck": "2026-03-07T20:04:25.523Z",
       "details": {
         "error": "DATAFORSEO_LOGIN or DATAFORSEO_PASSWORD not set"
       },
@@ -94,7 +94,7 @@
     },
     "notion": {
       "status": "not-configured",
-      "lastCheck": "2026-03-06T20:04:20.242Z",
+      "lastCheck": "2026-03-07T20:04:25.523Z",
       "details": {
         "error": "NOTION_API_KEY not set"
       },
@@ -102,7 +102,7 @@
     },
     "supabase": {
       "status": "not-configured",
-      "lastCheck": "2026-03-06T20:04:20.242Z",
+      "lastCheck": "2026-03-07T20:04:25.523Z",
       "details": {
         "error": "SUPABASE_URL or SUPABASE_ANON_KEY not set"
       },
@@ -110,7 +110,7 @@
     },
     "fal": {
       "status": "not-configured",
-      "lastCheck": "2026-03-06T20:04:20.242Z",
+      "lastCheck": "2026-03-07T20:04:25.523Z",
       "details": {
         "error": "FAL_API_KEY not set"
       },
@@ -118,7 +118,7 @@
     },
     "wavespeed": {
       "status": "not-configured",
-      "lastCheck": "2026-03-06T20:04:20.242Z",
+      "lastCheck": "2026-03-07T20:04:25.523Z",
       "details": {
         "error": "WAVESPEED_API_KEY not set"
       },
@@ -126,7 +126,7 @@
     },
     "dumpling": {
       "status": "not-configured",
-      "lastCheck": "2026-03-06T20:04:20.242Z",
+      "lastCheck": "2026-03-07T20:04:25.523Z",
       "details": {
         "error": "DUMPLING_API_KEY not set"
       },
@@ -134,7 +134,7 @@
     },
     "instantly": {
       "status": "not-configured",
-      "lastCheck": "2026-03-06T20:04:20.242Z",
+      "lastCheck": "2026-03-07T20:04:25.523Z",
       "details": {
         "note": "Web login \u2014 no API key in .env"
       },
@@ -142,7 +142,7 @@
     },
     "metricool": {
       "status": "not-configured",
-      "lastCheck": "2026-03-06T20:04:20.242Z",
+      "lastCheck": "2026-03-07T20:04:25.523Z",
       "details": {
         "note": "Web login \u2014 no API key in .env"
       },
@@ -150,7 +150,7 @@
     },
     "nanobanana": {
       "status": "not-configured",
-      "lastCheck": "2026-03-06T20:04:20.242Z",
+      "lastCheck": "2026-03-07T20:04:25.523Z",
       "details": {
         "error": "Uses GEMINI_API_KEY (shared)"
       },
@@ -158,7 +158,7 @@
     },
     "remotion": {
       "status": "not-configured",
-      "lastCheck": "2026-03-06T20:04:20.242Z",
+      "lastCheck": "2026-03-07T20:04:25.523Z",
       "details": {
         "version": null,
         "note": "Local install"
@@ -167,7 +167,7 @@
     },
     "gog": {
       "status": "ok",
-      "lastCheck": "2026-03-06T20:04:20.254Z",
+      "lastCheck": "2026-03-07T20:04:25.534Z",
       "details": {
         "account": "alfonso@growth4u.io",
         "test": "gmail inbox"
@@ -176,7 +176,7 @@
     },
     "openclaw": {
       "status": "error",
-      "lastCheck": "2026-03-06T20:04:21.341Z",
+      "lastCheck": "2026-03-07T20:04:26.464Z",
       "details": {
         "error": "Command failed: /opt/homebrew/bin/openclaw status 2>&1"
       },
@@ -184,7 +184,7 @@
     },
     "discord": {
       "status": "not-configured",
-      "lastCheck": "2026-03-06T20:04:21.360Z",
+      "lastCheck": "2026-03-07T20:04:26.481Z",
       "details": {
         "error": "DISCORD_BOT_TOKEN not set"
       },
@@ -192,7 +192,7 @@
     },
     "tailscale": {
       "status": "ok",
-      "lastCheck": "2026-03-06T20:04:20Z",
+      "lastCheck": "2026-03-07T20:04:25Z",
       "details": {
         "note": "tailscale status OK"
       },

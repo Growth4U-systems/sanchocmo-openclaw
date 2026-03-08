@@ -13,10 +13,10 @@ context_required:
 - brand/{slug}/company-brief/current.md
 - brand/{slug}/company-brief/current.md
 - brand/{slug}/company-brief/current.md
-- brand/{slug}/market-and-us/self-analysis.md
-- brand/{slug}/market-and-us/market-analysis.md
-- brand/{slug}/market-and-us/competitor-*.md
-- brand/{slug}/go-to-market/positioning-*.md
+- brand/{slug}/market-and-us/self/current.md
+- brand/{slug}/market-and-us/market/current.md
+- brand/{slug}/market-and-us/competitors/current.md
+- brand/{slug}/go-to-market/positioning/*/current.md
 - brand/{slug}/market-and-us/ope-canvas.md
 - brand/intelligence/meetings/*.md
 context_writes:

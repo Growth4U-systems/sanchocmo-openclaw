@@ -11,8 +11,8 @@ metadata:
   chains_to: decision-maker-finder, contact-enrichment, outreach-sequence-builder
 context_required:
 - brand/{slug}/company-brief/current.md
-- brand/{slug}/go-to-market/ecps.md
-- brand/{slug}/go-to-market/ecps.md
+- brand/{slug}/go-to-market/ecps/current.md
+- brand/{slug}/go-to-market/ecps/current.md
 context_writes:
 - campaigns/
 - brand/{slug}/operational/learnings.md

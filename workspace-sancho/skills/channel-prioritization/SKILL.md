@@ -14,10 +14,10 @@ metadata:
 context_required:
 - brand/{slug}/company-brief/current.md
 - brand/{slug}/company-brief/current.md
-- brand/{slug}/go-to-market/ecps.md
-- brand/{slug}/go-to-market/positioning-*.md
-- brand/{slug}/market-and-us/competitor-*.md
-- brand/{slug}/market-and-us/self-analysis.md
+- brand/{slug}/go-to-market/ecps/current.md
+- brand/{slug}/go-to-market/positioning/*/current.md
+- brand/{slug}/market-and-us/competitors/current.md
+- brand/{slug}/market-and-us/self/current.md
 - brand/{slug}/operational/stack.md
 context_writes:
 - brand/{slug}/go-to-market/channel-plan.md
@@ -42,12 +42,12 @@ Follow _system/output-format.md (if using SanchoCMO framework)
 **Required (will not run without these):**
 - `./brand/{slug}/company-brief/current.md` — Budget range, team capacity, timeline (from budget-constraints)
 - `./brand/{slug}/company-brief/current.md` — Industry, stage, business model (from company-context)
-- `./brand/{slug}/go-to-market/ecps.md` — Target personas with pain points (from niche-discovery-100x)
+- `./brand/{slug}/go-to-market/ecps/current.md` — Target personas with pain points (from niche-discovery-100x)
 
 **Recommended (better output with these):**
-- `./brand/{slug}/go-to-market/positioning-*.md` — Differentiation angles (from positioning-messaging)
-- `./brand/{slug}/market-and-us/competitor-*.md` — Competitor channel usage (from competitor-intelligence)
-- `./brand/{slug}/market-and-us/self-analysis.md` — Product strengths/weaknesses (from self-intelligence)
+- `./brand/{slug}/go-to-market/positioning/*/current.md` — Differentiation angles (from positioning-messaging)
+- `./brand/{slug}/market-and-us/competitors/current.md` — Competitor channel usage (from competitor-intelligence)
+- `./brand/{slug}/market-and-us/self/current.md` — Product strengths/weaknesses (from self-intelligence)
 - `./brand/{slug}/operational/stack.md` — Available tools and integrations (from sancho-start)
 
 ---
@@ -280,10 +280,10 @@ Append summary to `./brand/{slug}/operational/assets.md`:
 |--------|------|-------------|
 | READ | `./brand/{slug}/company-brief/current.md` | Budget range, team capacity, timeline |
 | READ | `./brand/{slug}/company-brief/current.md` | Industry, stage, business model |
-| READ | `./brand/{slug}/go-to-market/ecps.md` | Target personas, online behavior |
-| READ | `./brand/{slug}/go-to-market/positioning-*.md` | Differentiation angles |
-| READ | `./brand/{slug}/market-and-us/competitor-*.md` | Competitor channel usage |
-| READ | `./brand/{slug}/market-and-us/self-analysis.md` | Product strengths/weaknesses |
+| READ | `./brand/{slug}/go-to-market/ecps/current.md` | Target personas, online behavior |
+| READ | `./brand/{slug}/go-to-market/positioning/*/current.md` | Differentiation angles |
+| READ | `./brand/{slug}/market-and-us/competitors/current.md` | Competitor channel usage |
+| READ | `./brand/{slug}/market-and-us/self/current.md` | Product strengths/weaknesses |
 | READ | `./brand/{slug}/operational/stack.md` | Available tools |
 | WRITE (owns) | `./brand/{slug}/go-to-market/channel-plan.md` | Channel mix + scoring + allocation |
 | APPEND | `./brand/{slug}/operational/assets.md` | Channel plan summary |

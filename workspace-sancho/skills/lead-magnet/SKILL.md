@@ -2,9 +2,9 @@
 name: lead-magnet
 description: "Create high-converting lead magnets from concept to build. Use when: client needs to capture leads with valuable free content. Pipeline: Context → Format Selection → Concept Generation → Build Mode → Funnel Chain. Supports 12+ formats (checklists, templates, mini-courses, calculators, etc). Integrates with email-sequences and landing pages."
 context_required:
-- brand/{slug}/brand-identity/voice-profile.md
-- brand/{slug}/go-to-market/positioning-*.md
-- brand/{slug}/go-to-market/ecps.md
+- brand/{slug}/brand-voice/current.md
+- brand/{slug}/go-to-market/positioning/*/current.md
+- brand/{slug}/go-to-market/ecps/current.md
 context_writes:
 - campaigns/{slug}/lead-magnet/
 - brand/{slug}/operational/learnings.md
@@ -94,5 +94,5 @@ Files saved to `campaigns/{slug}/lead-magnet/`
 1. **Hook > Content** — If the title doesn't make them click, the content doesn't matter
 2. **Quick Win mandatory** — Every lead magnet must deliver one actionable result immediately
 3. **Bridge to paid** — Always include natural transition to the paid offer
-4. **Brand voice** — Apply voice-profile.md tone throughout (not generic marketing speak)
+4. **Brand voice** — Apply brand-voice/current.md tone throughout (not generic marketing speak)
 5. **Competitive check** — Don't create what competitors already give away free

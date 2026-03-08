@@ -3,11 +3,11 @@ name: pricing-strategy
 description: "Define pricing models, tiers, and psychological hooks. Use when: setting initial pricing, restructuring tiers, competitive pricing analysis, or adding value-based hooks. Pipeline: Context → Research → Value Metrics → Tier Design → Hooks → Pricing Page → Validation. Reads Foundation (company-brief, competitors, ECPs). Outputs pricing.md in go-to-market/."
 context_required:
 - brand/{slug}/company-brief/current.md
-- brand/{slug}/market-and-us/competitor-*.md
-- brand/{slug}/go-to-market/ecps.md
-- brand/{slug}/go-to-market/positioning-*.md
+- brand/{slug}/market-and-us/competitors/current.md
+- brand/{slug}/go-to-market/ecps/current.md
+- brand/{slug}/go-to-market/positioning/*/current.md
 context_writes:
-- brand/{slug}/go-to-market/pricing.md
+- brand/{slug}/go-to-market/pricing/current.md
 - brand/{slug}/operational/learnings.md
 user-invocable: false
 ---
@@ -27,7 +27,7 @@ Before starting, extract from Foundation docs:
 1. **Business Context** — B2B/B2C, revenue model, current pricing (from company-brief)
 2. **Value & Competition** — competitor pricing, feature comparison (from competitor-*.md)
 3. **Customer Segments** — ECPs, willingness to pay signals (from ecps.md)
-4. **Positioning** — value prop, differentiation angle (from positioning-*.md)
+4. **Positioning** — value prop, differentiation angle (from positioning/*/current.md)
 
 If data missing → ask the specific questions. Don't re-ask what Foundation already captured.
 

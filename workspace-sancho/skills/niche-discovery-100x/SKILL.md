@@ -4,11 +4,11 @@ description: "Descubrimiento end-to-end de ECPs con metodología 100x. Cluster p
 metadata:
   context_required:
     - brand/{slug}/company-brief/current.md
-    - brand/{slug}/market-and-us/self-analysis/current.md
+    - brand/{slug}/market-and-us/self/current.md
     - brand/{slug}/market-and-us/competitor-*/current.md
     - brand/{slug}/market-and-us/swot/current.md
-    - brand/{slug}/market-and-us/market-analysis/current.md
-    - brand/{slug}/market-and-us/summary.md
+    - brand/{slug}/market-and-us/market/current.md
+    - brand/{slug}/market-and-us/summary/current.md
   context_writes:
     - brand/{slug}/go-to-market/ecps/ecps.md
     - brand/{slug}/go-to-market/ecps/problems.md

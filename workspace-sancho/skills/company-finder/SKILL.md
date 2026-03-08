@@ -10,9 +10,9 @@ metadata:
   chains_to: decision-maker-finder
 context_required:
 - brand/{slug}/company-brief/current.md
-- brand/{slug}/go-to-market/ecps.md
-- brand/{slug}/go-to-market/ecps.md
-- brand/{slug}/market-and-us/competitor-*.md
+- brand/{slug}/go-to-market/ecps/current.md
+- brand/{slug}/go-to-market/ecps/current.md
+- brand/{slug}/market-and-us/competitors/current.md
 context_writes:
 - campaigns/
 - brand/{slug}/operational/assets.md

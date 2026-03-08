@@ -6,9 +6,9 @@ description: >
   send timing with rationale, individual .md files per email, and campaign briefs. Detects ESP integrations
   for direct automation setup.
 context_required:
-- brand/{slug}/brand-identity/voice-profile.md
-- brand/{slug}/go-to-market/positioning-*.md
-- brand/{slug}/go-to-market/ecps.md
+- brand/{slug}/brand-voice/current.md
+- brand/{slug}/go-to-market/positioning/*/current.md
+- brand/{slug}/go-to-market/ecps/current.md
 - brand/{slug}/operational/learnings.md
 - brand/{slug}/operational/assets.md
 - brand/{slug}/operational/stack.md
@@ -37,9 +37,9 @@ Read `./brand/` per `_system/brand-memory.md` · Follow `_system/output-format.m
 
 | File | Purpose |
 |------|---------|
-| `brand/{slug}/brand-identity/voice-profile.md` | Tone, vocabulary, rhythm → shapes every email |
-| `brand/{slug}/go-to-market/positioning-*.md` | Angle → narrative spine of the sequence |
-| `brand/{slug}/go-to-market/ecps.md` | Awareness level, sophistication, pain points |
+| `brand/{slug}/brand-voice/current.md` | Tone, vocabulary, rhythm → shapes every email |
+| `brand/{slug}/go-to-market/positioning/*/current.md` | Angle → narrative spine of the sequence |
+| `brand/{slug}/go-to-market/ecps/current.md` | Awareness level, sophistication, pain points |
 | `brand/{slug}/operational/learnings.md` | Past send-time data, subject line performance |
 | `brand/{slug}/operational/assets.md` | Check for existing lead magnet details |
 | `brand/{slug}/operational/stack.md` | ESP integrations (Mailchimp, ConvertKit, etc.) |
@@ -81,7 +81,7 @@ Check if `campaigns/{name}/emails/` exists. If so, present summary and offer: Re
 2. **Paid offer?** (Product, price)
 3. **Price point?** (Affects trust-building needed)
 4. **Bridge?** (Free → paid logic)
-5. **Voice?** (From voice-profile.md or ask)
+5. **Voice?** (From brand-voice/current.md or ask)
 6. **Objections?** (Top 3 "but..." reasons)
 
 Pre-fill from brand memory when possible.
@@ -179,7 +179,7 @@ When to start selling: <$100 after 3-5 value emails, $100-500 after 5-7, >$500 a
 2. **One CTA per email** — every email does ONE job
 3. **Individual files** — each email standalone, importable, iterable
 4. **Specific timing** — day, time, rationale, not just "Day 2"
-5. **Voice matches brand** — calibrate from voice-profile.md
+5. **Voice matches brand** — calibrate from brand-voice/current.md
 6. **Value before ask** — at least 3-5 value emails before pitch
 7. **Respect the reader** — not manipulative, easy unsubscribe
 

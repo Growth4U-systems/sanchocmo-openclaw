@@ -3,8 +3,8 @@ name: newsletter
 version: 7.0
 description: Newsletter strategy and content.
 context_required:
-- brand/{slug}/brand-identity/voice-profile.md
-- brand/{slug}/go-to-market/ecps.md
+- brand/{slug}/brand-voice/current.md
+- brand/{slug}/go-to-market/ecps/current.md
 - brand/{slug}/operational/learnings.md
 context_writes:
 - campaigns/
@@ -30,11 +30,11 @@ Follow all output formatting rules from `_system/output-format.md`
 
 This skill reads brand context to ensure every newsletter edition sounds like the user's brand, speaks to their actual audience, and builds on what has worked before. It also checks the learnings journal for send-time data, subject line performance, and format preferences.
 
-**Reads:** `voice-profile.md`, `audience.md`, `learnings.md` (all optional)
+**Reads:** `brand-voice/current.md`, `audience.md`, `learnings.md` (all optional)
 
 On invocation, check for `./brand/` and load available context:
 
-1. **Load `voice-profile.md`** (if exists):
+1. **Load `brand-voice/current.md`** (if exists):
    - Match the brand's tone, vocabulary, and sentence rhythm in every section
    - Apply voice DNA to subject lines, hooks, body copy, and sign-offs
    - A "direct, proof-heavy" voice writes different newsletters than a "warm, story-driven" voice
@@ -1448,7 +1448,7 @@ When a user invokes this skill, follow this sequence:
 
 ```
 1. Load brand context
-   ├── Read voice-profile.md, audience.md, learnings.md
+   ├── Read brand-voice/current.md, audience.md, learnings.md
    ├── Check ./campaigns/newsletters/ for past editions
    └── Display context loading tree
 

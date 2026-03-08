@@ -5,6 +5,32 @@
 
 ---
 
+## Foundation Index
+
+> Punto de entrada a toda la documentación estratégica. Actualizado: 2026-03-07.
+
+| Layer | Pilar | Status | Archivo |
+|-------|-------|--------|---------|
+| 0 | Company Brief | ✅ approved | (este documento) |
+| 1 | Market Analysis | ✅ approved | [market/current.md](../market-and-us/market/current.md) |
+| 1 | Competitors | ✅ approved | [competitors/current.md](../market-and-us/competitors/current.md) |
+| 1 | Self Analysis | ✅ approved | [self/current.md](../market-and-us/self/current.md) |
+| 2 | SWOT | ✅ approved | [swot/current.md](../market-and-us/swot/current.md) |
+| — | Síntesis Ejecutiva | ✅ approved | [summary/current.md](../market-and-us/summary/current.md) |
+| — | OPE Canvas | ✅ approved | [ope-canvas/current.md](../market-and-us/ope-canvas/current.md) |
+| 3 | Niche Discovery (5 ECPs) | ✅ approved | [ecps/current.md](../go-to-market/ecps/current.md) |
+| 4 | Positioning — ECP1 Sistema Repetible | ✅ approved | [positioning/ecp1](../go-to-market/positioning/ecp1-sistema-repetible/current.md) |
+| 4 | Positioning — ECP2 Regulación | ✅ approved | [positioning/ecp2](../go-to-market/positioning/ecp2-regulacion/current.md) |
+| 4 | Positioning — ECP3 Canal Muriendo | ✅ approved | [positioning/ecp3](../go-to-market/positioning/ecp3-canal-muriendo/current.md) |
+| 4 | Positioning — ECP4 Quemado Agencias | ✅ approved | [positioning/ecp4](../go-to-market/positioning/ecp4-quemado-agencias/current.md) |
+| 4 | Positioning — ECP5 Invisible | ✅ approved | [positioning/ecp5](../go-to-market/positioning/ecp5-invisible/current.md) |
+| — | Messaging Summary (shared) | ✅ approved | [messaging-summary](../go-to-market/positioning/shared/messaging-summary.md) |
+| 4 | Pricing | ✅ approved | [pricing/current.md](../go-to-market/pricing/current.md) |
+| 5 | Brand Voice | ✅ approved | [brand-voice/current.md](../brand-voice/current.md) |
+| 5 | Visual Identity | 🔲 not started | [visual-identity/current.md](../brand-identity/visual-identity/current.md) |
+
+---
+
 ## Company Identity
 
 # Company Context — Growth4U
@@ -217,7 +243,7 @@ No hay competidor directo con sistema end-to-end de trust-building. La competenc
 |-------|-------|--------|
 | **Motion** | Sales-Led | User input |
 | **Self-serve signup** | No — requiere call de venta | User input |
-| **Pricing visible** | ⚠️ Discovery Task — pendiente definir si se publica precio | — |
+| **Pricing visible** | No — pricing privado (solo en call). Decisión 2026-03-06. Ver [pricing strategy](../go-to-market/pricing/current.md). | Aprobado |
 | **Fuentes de adquisición** | Paid Ads + Cold Email + LinkedIn (planeado) — Ads siguiendo metodología Laboratorio de Agencias (Oller Triana) | User input |
 | **Sales cycle** | Days-Weeks (estimado para high-ticket B2B con call) | Estimación |
 | **Decision maker** | Fundador-CMO o Head of Growth | company-context |

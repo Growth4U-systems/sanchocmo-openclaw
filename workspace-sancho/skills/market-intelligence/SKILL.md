@@ -14,9 +14,9 @@ metadata:
     Concepts moved to references. Self-QA checklist integrated. No Rocinante dependency.
 context_required:
 - brand/{slug}/company-brief/current.md
-- brand/{slug}/market-and-us/competitor-*.md
+- brand/{slug}/market-and-us/competitors/current.md
 context_writes:
-- brand/{slug}/market-and-us/market-analysis.md
+- brand/{slug}/market-and-us/market/current.md
 ---
 
 # Market Intelligence

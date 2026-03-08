@@ -12,11 +12,11 @@ metadata:
   updated: '2026-02-27'
   changes: v3 — Restructured per skill-creator principles. SKILL.md lean (~120 lines). Concepts moved to references.
 context_required:
-- brand/{slug}/market-and-us/self-analysis.md
-- brand/{slug}/market-and-us/competitor-*.md
-- brand/{slug}/market-and-us/market-analysis.md
+- brand/{slug}/market-and-us/self/current.md
+- brand/{slug}/market-and-us/competitors/current.md
+- brand/{slug}/market-and-us/market/current.md
 context_writes:
-- brand/{slug}/market-and-us/swot.md
+- brand/{slug}/market-and-us/swot/current.md
 ---
 
 # SWOT Analysis & TOWS Strategies

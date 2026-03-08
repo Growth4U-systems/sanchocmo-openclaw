@@ -12,10 +12,10 @@ metadata:
   chains_to: seo-content, content-atomizer, newsletter
 context_required:
 - brand/{slug}/go-to-market/channel-plan.md
-- brand/{slug}/go-to-market/positioning-*.md
+- brand/{slug}/go-to-market/positioning/*/current.md
 - brand/{slug}/go-to-market/keyword-plan.md
-- brand/{slug}/brand-identity/voice-profile.md
-- brand/{slug}/go-to-market/ecps.md
+- brand/{slug}/brand-voice/current.md
+- brand/{slug}/go-to-market/ecps/current.md
 context_writes:
 - brand/content-calendar.md
 - brand/{slug}/operational/learnings.md
@@ -38,12 +38,12 @@ Follow _system/output-format.md (if using SanchoCMO framework)
 
 **Required (will not run without these):**
 - `./brand/{slug}/go-to-market/channel-plan.md` — Active channels + frequency (from channel-prioritization)
-- `./brand/{slug}/go-to-market/positioning-*.md` — Differentiation angles for pillar derivation (from positioning-messaging)
-- `./brand/{slug}/go-to-market/ecps.md` — Target personas for audience segmentation (from niche-discovery-100x)
+- `./brand/{slug}/go-to-market/positioning/*/current.md` — Differentiation angles for pillar derivation (from positioning-messaging)
+- `./brand/{slug}/go-to-market/ecps/current.md` — Target personas for audience segmentation (from niche-discovery-100x)
 
 **Recommended (better output with these):**
 - `./brand/{slug}/go-to-market/keyword-plan.md` — SEO topics + clusters (from keyword-research)
-- `./brand/{slug}/brand-identity/voice-profile.md` — Tone for content notes (from brand-voice)
+- `./brand/{slug}/brand-voice/current.md` — Tone for content notes (from brand-voice)
 - Content ideas from intelligence pipeline:
   - `brand/{slug}/operational/transitory/daily-pulse/` — Content ideas from daily-pulse
   - `./campaigns/content-plan/` — Content briefs from insight-to-content-mapper
@@ -75,7 +75,7 @@ From keyword-plan.md (if exists):
   - Search volume + difficulty scores
   - Content gap opportunities
 
-From voice-profile.md (if exists):
+From brand-voice/current.md (if exists):
   - Tone and style guidelines
   - Platform-specific voice adaptations
 ```
@@ -321,10 +321,10 @@ Append summary to `./brand/{slug}/operational/assets.md`:
 | Action | File | Description |
 |--------|------|-------------|
 | READ | `./brand/{slug}/go-to-market/channel-plan.md` | Active channels + frequency |
-| READ | `./brand/{slug}/go-to-market/positioning-*.md` | Differentiation angles for pillar derivation |
+| READ | `./brand/{slug}/go-to-market/positioning/*/current.md` | Differentiation angles for pillar derivation |
 | READ | `./brand/{slug}/go-to-market/keyword-plan.md` | SEO topics + clusters |
-| READ | `./brand/{slug}/brand-identity/voice-profile.md` | Tone for content notes |
-| READ | `./brand/{slug}/go-to-market/ecps.md` | Audience segments for pillar mapping |
+| READ | `./brand/{slug}/brand-voice/current.md` | Tone for content notes |
+| READ | `./brand/{slug}/go-to-market/ecps/current.md` | Audience segments for pillar mapping |
 | READ | `brand/{slug}/operational/transitory/daily-pulse/` | Content ideas from intelligence |
 | READ | `./campaigns/content-plan/` | Content briefs from mapper |
 | WRITE (owns) | `brand/{slug}/go-to-market/content-calendar.md` | Editorial calendar |

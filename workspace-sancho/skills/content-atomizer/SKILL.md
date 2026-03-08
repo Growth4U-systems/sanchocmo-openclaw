@@ -3,7 +3,7 @@ name: content-atomizer
 version: 7.0
 description: Repurpose content across platforms.
 context_required:
-- brand/{slug}/brand-identity/voice-profile.md
+- brand/{slug}/brand-voice/current.md
 - brand/{slug}/operational/learnings.md
 - brand/{slug}/operational/stack.md
 context_writes:
@@ -30,11 +30,11 @@ Follow all output formatting rules from `_system/output-format.md`
 
 This skill reads brand context to ensure every atomized piece sounds like the user's brand, adapts tone per platform, and builds on what has worked before. It also checks the learnings journal for platform performance data and the stack file for scheduling tool availability.
 
-**Reads:** `voice-profile.md`, `creative-kit.md`, `learnings.md`, `stack.md` (all optional)
+**Reads:** `brand-voice/current.md`, `creative-kit.md`, `learnings.md`, `stack.md` (all optional)
 
 On invocation, check for `./brand/` and load available context:
 
-1. **Load `voice-profile.md`** (if exists):
+1. **Load `brand-voice/current.md`** (if exists):
    - Extract tone DNA, vocabulary, sentence patterns, and formality level
    - Apply the platform adaptation table (see below) to adjust voice per platform
    - A "direct, proof-heavy" voice sounds different on LinkedIn vs TikTok vs Reddit

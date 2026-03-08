@@ -10,10 +10,10 @@ metadata:
   chains_to: keyword-research, seo-content, content-atomizer
 context_required:
 - brand/{slug}/company-brief/current.md
-- brand/{slug}/brand-identity/voice-profile.md
-- brand/{slug}/go-to-market/positioning-*.md
-- brand/{slug}/go-to-market/ecps.md
-- brand/{slug}/go-to-market/ecps.md
+- brand/{slug}/brand-voice/current.md
+- brand/{slug}/go-to-market/positioning/*/current.md
+- brand/{slug}/go-to-market/ecps/current.md
+- brand/{slug}/go-to-market/ecps/current.md
 - brand/{slug}/go-to-market/keyword-plan.md
 context_writes:
 - campaigns/
@@ -48,8 +48,8 @@ Follow _system/output-format.md (if using SanchoCMO framework)
 - Meeting notes with flagged topics
 
 **Brand context (loaded automatically in SanchoCMO):**
-- ./brand/{slug}/go-to-market/positioning-*.md (unique angle selection)
-- ./brand/{slug}/brand-identity/voice-profile.md (tone guidance)
+- ./brand/{slug}/go-to-market/positioning/*/current.md (unique angle selection)
+- ./brand/{slug}/brand-voice/current.md (tone guidance)
 - ./brand/{slug}/go-to-market/keyword-plan.md (existing keyword strategy)
 - brand/{slug}/operational/content-ideas.json (avoid duplicating ideas)
 
@@ -172,8 +172,8 @@ Thresholds:
 **Load positioning and select differentiated angle:**
 
 ```
-Read ./brand/{slug}/go-to-market/positioning-*.md → positioning statement, differentiators, proof points
-Read ./brand/{slug}/brand-identity/voice-profile.md → tone, reading level, perspective
+Read ./brand/{slug}/go-to-market/positioning/*/current.md → positioning statement, differentiators, proof points
+Read ./brand/{slug}/brand-voice/current.md → tone, reading level, perspective
 
 DIFFERENTIATION CHECK:
   ✓ Proprietary data? (client benchmarks, original research)
@@ -308,8 +308,8 @@ content-briefs/YYYY-MM-DD-[topic-slug-2].md   ← Brief #2
 
 | File | What it provides | How it's used |
 |------|-----------------|---------------|
-| ./brand/{slug}/go-to-market/positioning-*.md | Unique angle and differentiators | Step 5: Angle selection |
-| ./brand/{slug}/brand-identity/voice-profile.md | Tone, style, reading level | Step 6: Tone guidance in brief |
+| ./brand/{slug}/go-to-market/positioning/*/current.md | Unique angle and differentiators | Step 5: Angle selection |
+| ./brand/{slug}/brand-voice/current.md | Tone, style, reading level | Step 6: Tone guidance in brief |
 | ./brand/{slug}/go-to-market/keyword-plan.md | Existing keyword strategy | Step 2: Align new keywords |
 | brand/{slug}/operational/content-ideas.json | Existing ideas | Step 0: Avoid duplicates |
 | brand/{slug}/market-and-us/competitors.json | Competitor URLs and battle cards | Step 3: Gap analysis |

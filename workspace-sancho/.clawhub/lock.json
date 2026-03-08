@@ -24,6 +24,14 @@
     "apollo": {
       "version": "1.0.0",
       "installedAt": 1772142308258
+    },
+    "native-google-analytics": {
+      "version": "0.1.1",
+      "installedAt": 1772916987340
+    },
+    "gsc": {
+      "version": "1.2.2",
+      "installedAt": 1772917002072
     }
   }
 }

@@ -13,7 +13,7 @@ metadata:
   changes: v4.1 — Added Step 1.5 Primary Source Verification, pricing page mandatory in Lens 1, expanded Self-QA checklist for source verification.
 context_required:
 - brand/{slug}/company-brief/current.md
-- brand/{slug}/go-to-market/positioning-*.md
+- brand/{slug}/go-to-market/positioning/*/current.md
 context_writes:
 - brand/{slug}/market-and-us/competitor-{nombre}.md
 - brand/{slug}/operational/learnings.md

@@ -13,9 +13,9 @@ metadata:
   changes: v5 — Shared Tier 2 docs (value-criteria.md + assets.md). Per-ECP lean docs start with JTBD. Value Criteria in ONE table with ECPs as links. Justification + Score Explanations organized BY CRITERIA (not by ECP). Incremental updates across ECPs.
 context_required:
 - brand/{slug}/company-brief/current.md
-- brand/{slug}/market-and-us/competitor-*.md
-- brand/{slug}/go-to-market/ecps.md
-- brand/{slug}/go-to-market/ecps.md
+- brand/{slug}/market-and-us/competitors/current.md
+- brand/{slug}/go-to-market/ecps/current.md
+- brand/{slug}/go-to-market/ecps/current.md
 context_writes:
 - brand/{slug}/go-to-market/positioning/shared/value-criteria.md
 - brand/{slug}/go-to-market/positioning/shared/assets.md

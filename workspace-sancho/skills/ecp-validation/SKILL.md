@@ -14,11 +14,11 @@ metadata:
   changes: v4 — Restructured per skill-creator principles.
 context_required:
 - brand/{slug}/company-brief/current.md
-- brand/{slug}/go-to-market/ecps.md
-- brand/{slug}/go-to-market/ecps.md
-- brand/{slug}/go-to-market/positioning-*.md
+- brand/{slug}/go-to-market/ecps/current.md
+- brand/{slug}/go-to-market/ecps/current.md
+- brand/{slug}/go-to-market/positioning/*/current.md
 context_writes:
-- brand/{slug}/go-to-market/ecps.md
+- brand/{slug}/go-to-market/ecps/current.md
 - brand/{slug}/operational/learnings.md
 ---
 
@@ -81,7 +81,7 @@ context_writes:
 
 ### 5. Update ECPs
 - Reorder by confidence (validated first)
-- Update brand/{slug}/go-to-market/ecps.md with validation status
+- Update brand/{slug}/go-to-market/ecps/current.md with validation status
 - Update brand/{slug}/operational/learnings.md
 
 ### 6. Self-QA + Guardar
