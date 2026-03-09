@@ -5,6 +5,28 @@
 
 ---
 
+### Slide KPIs
+
+| KPI | Valor |
+|-----|-------|
+| Slide Title | Tu espejo en Barcelona — mismo modelo, sin sistema |
+| Slide Summary | Growth partner embedded, sprints ágiles, pero fundador dual-role (Voxel), sin framework propio, sin reviews. Compiten por el mismo buyer pero venden retainer eterno vs Trust Engine con fecha de fin. |
+| Revenue | N/D (bootstrapped, est. pequeña) |
+| Team | ~5-10 (no publican) |
+| Founded | N/D |
+| Founder | Pau Gallinat O'Callaghan (⚠️ dual-role: Dir. Engineering @ Voxel) |
+| Users/Clients | LOCK & Enjoy, Holabrief, multinacional anónima |
+| Pricing | Retainer custom (est. 3-8K€/mes) |
+| Trustpilot | Sin perfil |
+| Google Maps | Sin perfil |
+| App Store | N/A |
+| Play Store | N/A |
+| G2/Capterra | Sin perfil |
+| SEO Keywords | "marketing digital", "buyer persona", "agencias marketing" (DataForSEO) |
+| Top Case | LOCK & Enjoy: -57% coste conversión (4.10€→1.73€) |
+
+---
+
 ## Executive Summary
 
 Snowball es una consultora de growth marketing con sede en Barcelona, fundada por Pau Gallinat O'Callaghan. Se posiciona como "growth partner" que se integra dentro del equipo del cliente — exactamente el mismo modelo que Growth4U. Es, de lejos, el competidor más directo.

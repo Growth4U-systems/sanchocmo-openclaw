@@ -1,118 +1,143 @@
-# Visual Identity — Self-QA Checklist
+# Visual Identity — Self-QA Checklist v3
 
-> El agente DEBE revisar este checklist ANTES de entregar el documento.
-> Para cada ítem: ✅ completado | ⚠️ no disponible (con justificación) | ❌ pendiente (seguir investigando)
-> Solo se entrega cuando todo es ✅ o ⚠️. Si hay algún ❌, volver a investigar.
+> Revisar ANTES de entregar. ✅ completado | ⚠️ no disponible (con justificación) | ❌ pendiente.
+> Solo se entrega cuando 0 ❌. Si hay ❌, completar primero.
+
+---
+
+## Step -1: Brand Assets Intake
+
+- [ ] **Brandbook solicitado** al cliente ANTES de cualquier análisis
+- [ ] **URL principal** scrapeada (colores, tipografías, logo extraídos)
+- [ ] **Si brandbook existe** → cargado y analizado como fuente de verdad
+- [ ] **Tipografías**: vienen del brandbook/web, NO inventadas
+- [ ] **Colores**: vienen del brandbook/web, NO inventados
+- [ ] **Logo**: documentado (variantes, formatos disponibles)
 
 ---
 
 ## Quick Mode (Layer 0)
 
-### Path A (URL) o Path B (preguntas)
-- [ ] **Fuente de datos definida** (URL analizado O 5 Quick Questions respondidas)
-
-### Visual Snapshot
 - [ ] **3 visual adjectives** definidos
-- [ ] **Color Palette** capturada (primary, secondary, accent con hex)
-- [ ] **Typography** documentada (style, observed fonts)
+- [ ] **Color Palette** del brandbook/web (primary, secondary, accent con hex)
+- [ ] **Typography** del brandbook/web (heading + body fonts)
 - [ ] **Imagery Style** definido (type + mood)
-- [ ] **Logo Notes** capturadas (si existe logo)
-- [ ] **Lite Visual World** (3-5 objetos que aparecen en brand visuals)
+- [ ] **Lite Visual World** (3-5 objetos)
 - [ ] **Overall Aesthetic** descrito (1-2 frases)
 - [ ] **Design Tokens (lite)** generados en JSON
 - [ ] **Confidence level** marcado (High/Medium/Low)
 - [ ] **Gaps para Full mode** identificados
+- [ ] **HTML preview** generado para validación en MC
 
 ---
 
-## Full Mode (Layer 4) — si brand-voice + ECPs listos
+## Reglas Cardinales (verificar en TODO momento)
+
+### R1: Brand Assets
+- [ ] **CERO colores/tipografías inventados** si existe brandbook
+- [ ] **Fuente primaria documentada** para cada decisión visual
+
+### R2: Anti-Pegote
+- [ ] **CERO composiciones CSS** de personaje/ilustración sobre fondo
+- [ ] **Toda pieza visual** generada como imagen completa integrada
+- [ ] **Tabla de composición por canal** aplicada correctamente
+
+### R3: Gate Checks
+- [ ] **Máximo 2 opciones** presentadas por ronda
+- [ ] **Generaciones totales ≤ 10** (tracking: [X/10] en cada una)
+- [ ] **Feedback negativo** → PARAR y preguntar antes de regenerar
+
+### R4: Personajes
+- [ ] **Personajes secundarios** generados SIN copiar rasgos del principal
+- [ ] **Cada personaje** validado contra foto original
+- [ ] **Prompt incluye** "DO NOT copy facial features from style reference"
+
+### R5: Tamaños de Texto
+- [ ] **Ningún texto < 16px** en ningún canvas
+- [ ] **Tabla de tamaños mínimos** respetada por canvas size
+- [ ] **Text-shadow o fondo semi** en texto sobre imagen
+- [ ] **Contraste WCAG AA** verificado (4.5:1 mínimo)
+
+### R6: Output HTML
+- [ ] **Entregable final** en HTML presentable (no solo .md)
+- [ ] **Confirmaciones intermedias** como HTML preview en MC
+- [ ] **Imágenes inline** (base64 o URLs) en el HTML
+
+---
+
+## Full Mode (Layer 4)
 
 ### Input Verification
-- [ ] **Visual Snapshot** del Quick mode cargado
-- [ ] **brand-voice AI Brand Kit** cargado (para alignment)
+- [ ] **Visual Snapshot** del Quick mode aprobado por cliente
+- [ ] **Brand-voice AI Brand Kit** cargado
 - [ ] **ECPs seleccionados** con personas
 - [ ] **Positioning data** cargada
+- [ ] **Brandbook/assets** ya analizados (Step -1)
 
-### Step 0: Style Direction Discovery
-- [ ] **8 estilos mostrados** al usuario
-- [ ] **Selección del usuario** documentada (single, hybrid, custom, extract)
-- [ ] **Estilo seleccionado** como foundation para Layer 3
+### Fase 1: Dirección de Estilo
+- [ ] **2 direcciones** propuestas (no 8)
+- [ ] **1 ejemplo por dirección** generado
+- [ ] **Cliente eligió** dirección → documentada
+- [ ] **Máx 4 generaciones** en esta fase
 
-### Layer 1: Visual World Definition
-- [ ] **5-7 object categories** propuestas y validadas por usuario
-- [ ] **Exclusiones** definidas (qué NUNCA debe aparecer)
+### Layer 1: Visual World
+- [ ] **5-7 object categories** propuestas y validadas
+- [ ] **Exclusiones** definidas
 - [ ] **visual-world.md** generado
-- [ ] **Validación**: "para imagen de blog sobre X, ¿qué objetos usarías?"
+- [ ] **Test**: "para imagen sobre X, ¿qué objetos usarías?"
 
-### Layer 2: Idea-to-Visual Mapping
-- [ ] **Decision tree** construido (content type → core idea → visual metaphor → objects)
-- [ ] **Mappings por content type** definidos (blog vs landing vs social)
+### Layer 2: Idea Mapping
+- [ ] **Decision tree** construido
+- [ ] **Mappings por content type** definidos
 - [ ] **idea-mapping.md** generado
-- [ ] **Validación**: "para post sobre X, ¿qué ilustrarías y por qué?"
+- [ ] **Test**: "para post sobre X, ¿qué ilustrarías?"
 
-### Layer 3: Aesthetic Guidelines
-- [ ] **References-first approach** seguido (minimizar generación costosa)
-- [ ] **Step 3.1-3.3** ejecutados (user references → Step 0 examples → web search)
-- [ ] **Aesthetic specifications** codificadas (7 dimensiones)
+### Layer 3: Aesthetic
+- [ ] **Brandbook** como base para colores/tipografías
+- [ ] **7 dimensiones** codificadas
 - [ ] **AI prompt library** generada (base + keywords + negatives)
-- [ ] **1-2 samples validados** (máximo 2-3 generaciones)
+- [ ] **1-2 samples validados**
 - [ ] **visual-style.md** generado
-- [ ] **Coste total ≤ €3** (2-3 imágenes máximo)
-- [ ] **Iteration criteria met**: flexible, distinctive, consistent, scalable
+- [ ] **Iteration criteria**: flexible ✅ distinctive ✅ consistent ✅ scalable ✅
 
-### Child Skill Generation
-- [ ] **Readiness verified** (3 layers complete + user approved + AI Brand Kit available)
-- [ ] **[brand]-ui-system** generado e instalado en .claude/skills/
-- [ ] **[brand]-visual-generator** generado e instalado
-- [ ] **[brand]-deck-creator** generado (si solicitado)
-- [ ] **Cada child skill** tiene YAML frontmatter válido
-- [ ] **Files requeridos** existen (scripts, references, assets)
-- [ ] **Usage examples** generados por child skill
+### Composición por Canal
+- [ ] **Tabla** de composición completada para cada canal relevante
+- [ ] **Cada entrada** especifica: dimensiones, fondo, regla de composición
+- [ ] **CERO overlays CSS** en la tabla
+
+### Visual Do's / Don'ts
+- [ ] **5+ pares** de Do/Don't con razonamiento
+- [ ] **Anti-pegote** incluido como Don't explícito
+- [ ] **Tamaños de texto** incluidos como Do explícito
+
+### Child Skill Generation (si aplica)
+- [ ] **[brand]-ui-system** generado con tokens del brandbook
+- [ ] **[brand]-visual-generator** generado con 3 layers + nano-banana-pro
+- [ ] **YAML válido** en cada child skill
+- [ ] **Test invocation** pasado
 
 ### Visual DNA Kit
-- [ ] **Visual Personality** (core aesthetic, design emotion, differentiation)
-- [ ] **Visual World Inventory** quick-ref (core objects, scenes, exclusions)
-- [ ] **Idea Mapping** quick-ref (content type → visual approach)
-- [ ] **Aesthetic Specifications** summary (style, colors, typography, AI prompts)
-- [ ] **Design Tokens** JSON completo
-- [ ] **Accessibility compliance** (WCAG 2.2 AA, contrast ratios, color-blind safe)
+- [ ] **Visual Personality** (core traits, emotion, differentiation)
+- [ ] **Visual World** quick-ref
+- [ ] **Idea Mapping** quick-ref
+- [ ] **Aesthetic** summary + AI prompts
+- [ ] **Design Tokens** JSON completo (del brandbook)
+- [ ] **WCAG 2.2 AA** compliance confirmada
 - [ ] **Visual Do's / Don'ts** (5+ pares)
 
-## Output
-
-- [ ] **Summary generado** (Visual Snapshot o Visual DNA Kit según modo)
+---
 
 ## Almacenamiento
 
-- [ ] **Slug identificado** correctamente
-- [ ] **Guardado en** `brand/{{slug}}/visual-identity/current.md`
+- [ ] **Slug** correcto
+- [ ] **current.md** guardado en `brand/{slug}/visual-identity/`
+- [ ] **visual-guide.html** generado como entregable presentable
 - [ ] **Versionado** correcto (v1.md, history.json)
-- [ ] **Link generado** para el usuario
+- [ ] **Link MC** generado para el usuario
 
-## META (calidad)
+## META
 
-- [ ] **Cada decisión visual tiene justificación** (no arbitraria)
-- [ ] **Alignment con brand-voice** verificado (visual expresa la personalidad de voz)
-- [ ] **Design tokens** son utilizables (JSON válido)
-- [ ] **Child skills funcionan** (test invocation passed)
-- [ ] **Coste de generación controlado** (≤ €3 target)
-- [ ] **Coherencia con brand files** (company-context, positioning)
-
----
-
-## Flujo de uso
-
-```
-1. Agente ejecuta Quick mode (siempre)
-2. Si Full mode triggers → ejecutar Step 0 + 3 Layers + Child Generation
-3. Al terminar, lee este checklist
-4. Marca cada ítem:
-   - ✅ = completado
-   - ⚠️ = no aplica (con razón)
-   - ❌ = falta — completar
-5. Si hay ❌ → completar
-6. Test child skills si generados
-7. SOLO ENTONCES entregar al usuario
-```
-
-**No se entrega ningún documento con ❌ pendientes.**
+- [ ] **Cada decisión visual tiene justificación** (fuente: brandbook/URL/cliente)
+- [ ] **Alignment con brand-voice** verificado
+- [ ] **Generaciones totales**: ___/10
+- [ ] **Metadata QA**: `<!-- Self-QA: PASS | fecha | items: X✅ Y⚠️ 0❌ | gen: Z/10 -->`

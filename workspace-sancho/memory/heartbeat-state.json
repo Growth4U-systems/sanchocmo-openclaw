@@ -1,17 +1,20 @@
 {
   "lastChecks": {
-    "email": 1741098035,
-    "calendar": 1741098035,
+    "email": 1773003741,
+    "calendar": 1773003741,
     "regenerate": 1771962349,
     "memory": 1771962349
   },
   "notes": {
     "2026-02-24T18:43": "gog CLI timeout en gmail/calendar/drive. Memory file actualizado. Email/calendar checks fallidos.",
-    "2026-02-24T18:45": "Dashboard regenerado (12 tasks, 26 events). Memory OK. gog sigue en timeout — skip email/calendar.",
+    "2026-02-24T18:45": "Dashboard regenerado (12 tasks, 26 events). Memory OK. gog sigue en timeout \u2014 skip email/calendar.",
     "2026-03-01T06:46": "First heartbeat of day. Memory file created. Email/calendar blocked (gog CLI timeout). Nothing urgent detected.",
     "2026-03-01T17:34": "Memory maintenance check. Reviewed Feb 28 daily files (doc regeneration, QA process). No major learnings. gog CLI timeout persists (5 days). System working despite it.",
     "2026-03-02T19:33": "gog CLI fully restored. Email/calendar checks working. No urgent items. Mostly newsletters.",
     "2026-03-04T08:02": "Memory maintenance: reviewed Mar 1-3 daily logs. Added heartbeat patterns, Kleva reschedule, competitor intel completion to MEMORY.md.",
-    "2026-03-03T20:20": "Email/calendar checks OK. 5 unread (Kleva meeting rescheduled to Tue 10 Mar, Lenny's meetup invite, newsletters). Tomorrow packed. No urgent items <2h. Sub-agent cron running (idle)."
+    "2026-03-03T20:20": "Email/calendar checks OK. 5 unread (Kleva meeting rescheduled to Tue 10 Mar, Lenny's meetup invite, newsletters). Tomorrow packed. No urgent items <2h. Sub-agent cron running (idle).",
+    "2026-03-08T18:26": "Email: 10 unread (newsletters, Upwork messages, GSC 40 clicks milestone). Calendar: normal week, meetings Mar 9. No urgent items <2h.",
+    "2026-03-08T20:25": "Email: 5 unread (Google Slides share, Andrew A Upwork work submitted, newsletters). Calendar: tomorrow Mar 9 packed (Paco, Spain Research, G4U Weekly, GTM, Jose, Readiness, sistemas). Nothing urgent <2h.",
+    "2026-03-08T22:02": "Email: 10+ unread (Upwork messages, newsletters). Calendar: Mar 9 packed (Paco, Spain Research, G4U Weekly, GTM, Jose, Readiness, sistemas). Nothing urgent <2h."
   }
 }

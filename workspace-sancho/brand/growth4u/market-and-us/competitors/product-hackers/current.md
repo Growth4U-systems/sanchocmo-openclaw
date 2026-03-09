@@ -5,6 +5,28 @@
 
 ---
 
+### Slide KPIs
+
+| KPI | Valor |
+|-----|-------|
+| Slide Title | El gorila enterprise del growth en España |
+| Slide Summary | 6M€ facturación, +110 personas, clientes como Zara y Mapfre. Demasiado grandes y caros para startups post-PMF. Equipos junior rotativos, retainer-forever, 0 trust-building. |
+| Revenue | +6M€ (+53% YoY, 2024) |
+| Team | 110+ |
+| Founded | 2016 (con 3.000€) |
+| Founder | Luis Díaz del Dedo + José Carlos Cortizo "Corti" |
+| Users/Clients | 140+ marcas (Zara, Mapfre, Wallapop, MasOrange, Holafly) |
+| Pricing | Enterprise custom (~99$/h ref, 2021). Formación: 195-2.600€ |
+| Trustpilot | Sin perfil dedicado |
+| Google Maps | 5.0/5 (Product Hackers Go) |
+| App Store | N/A |
+| Play Store | N/A |
+| G2/Capterra | N/A |
+| SEO Keywords | "é commerce" (22.2K), "agencia ecommerce" (720), "buyer persona" (5.4K) |
+| Top Case | MAPFRE (experimentación continua), Micappital (CAC -50%) |
+
+---
+
 ## Executive Summary
 
 Product Hackers es el gorila del sector growth en España. Fundada en 2017 por Luis Díaz del Dedo con 3.000€, hoy factura +6M€ con +110 personas y clientes como Zara, Mapfre, Wallapop, MasOrange y Holafly. Son la referencia de mercado — cuando alguien busca "agencia growth España", encuentra Product Hackers.

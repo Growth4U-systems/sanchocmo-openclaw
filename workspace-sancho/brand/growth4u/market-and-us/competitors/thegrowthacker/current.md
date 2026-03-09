@@ -5,6 +5,30 @@
 
 ---
 
+### Slide KPIs
+
+| KPI | Valor |
+|-----|-------|
+| Slide Title | El más débil — portfolio de ex-empleos, 0 SEO |
+| Slide Summary | Agencia boutique Barcelona, 7 personas. Sus 3 "casos de éxito" son de empresas donde el fundador fue empleado. 0 keywords orgánicas, 0 redes, ChatGPT como "miembro del equipo". Barrera mínima para superarles. |
+| Revenue | N/D (est. pequeña) |
+| Team | 7 + "ChatGPT" |
+| Founded | N/D |
+| Founder | Dani Ruiz Alba (Comunicación UB 2017, ~8 años exp.) |
+| Users/Clients | MotorMunich, Innovamat, Smash Hiro, Balance Phone, The Indian Face |
+| Pricing | Custom (est. 1-5K€/mes) |
+| Trustpilot | Sin perfil (404) |
+| Google Maps | Sin perfil |
+| App Store | N/A |
+| Play Store | N/A |
+| G2/Capterra | Sin perfil |
+| Malt | 2 reviews positivas |
+| SEO Keywords | 0 (DataForSEO vacío) |
+| Google Partner | ID 1989055187 |
+| Top Case | Scrab.in +312% registros (⚠️ ex-employer) |
+
+---
+
 ## Executive Summary
 
 TheGrowtHacker es una agencia boutique de growth hacking con sede en Barcelona, fundada por Dani Ruiz Alba. Equipo de ~7 personas (+ "ChatGPT" como miembro honorario). Es el competidor que más se parece a Growth4U en tamaño y target (startups/PYMES), pero es significativamente más débil en todos los aspectos: sin framework propio, sin presencia en redes, sin reviews públicas, y con casos limitados a empresas donde Dani trabajó previamente.

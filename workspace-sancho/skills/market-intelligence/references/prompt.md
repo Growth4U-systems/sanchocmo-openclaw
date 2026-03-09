@@ -167,6 +167,19 @@ Conecta la madurez del mercado con el análisis competitivo que viene: "Entendie
 
 ## PARTE 2: Inteligencia Competitiva y Posicionamiento
 
+### ⚠️ ANTES DE ESCRIBIR ESTA SECCIÓN (BLOQUEANTE)
+
+Para cada competidor que vayas a analizar:
+1. `web_fetch(su homepage)` — lee su propuesta de valor TEXTUAL
+2. `web_fetch(su /pricing)` — lee sus precios REALES
+3. `web_fetch(su /features)` — lee sus features REALES
+
+Si no haces esto, vas a escribir lo que CREES que hacen basándote en artículos de terceros. Y te van a pillar.
+
+**Cross-check obligatorio**: cada claim sobre un competidor debe ser verificable contra su propia web. Si solo viene de un artículo de terceros → marcar `[⚠️ fuente secundaria]`.
+
+---
+
 **APERTURA NARRATIVA** (obligatorio antes de los datos):
 
 Escribe 2-3 párrafos que establezcan:
@@ -504,3 +517,74 @@ Informe **narrativo y orientado a presentación** en markdown con:
 **LONGITUD**: 15-25 páginas (exhaustivo pero enfocado)
 **TONO**: Presentación estratégica, no reporte técnico
 **EL QUE LEA SOLO EL EXECUTIVE NARRATIVE DEBE ENTENDER EL 80%**
+
+---
+
+## SLIDE SUMMARY (OBLIGATORIO — después de Parte 5, antes de Fuentes)
+
+Genera un bloque YAML-in-markdown que la skill de slides pueda parsear directamente. **Datos SOLO del informe** — no inventar nada nuevo, extraer y comprimir. Autosuficiente: con solo este bloque se genera la slide sin leer el resto.
+
+El slide tiene 3 zonas visuales: hero metrics (arriba), verticals (centro), trends (abajo).
+
+```markdown
+## Slide Summary
+<!-- Bloque estructurado para generación automática de slides -->
+
+​```yaml
+slide_summary:
+  # --- HERO METRICS (3 bloques destacados) ---
+  hero_metrics:
+    total_entities: "8.580"              # Nº total de empresas/clínicas/usuarios activos en el mercado
+    entity_label: "Empresas Tech Activas" # Qué son esas entidades (adaptar al mercado)
+    tam_annual: "50-80M€"               # TAM anual del mercado directo
+    ecosystem_value: "110.000B€"         # Valor del ecosistema más amplio donde opera
+    ecosystem_label: "Ecosistema Tech"   # Nombre del ecosistema
+
+  # --- KEY VERTICALS (tarjetas, ordenadas por TAM) ---
+  verticals:  # 4-6 verticals, los más relevantes
+    - name: "SaaS / IA"
+      tam: "$7.288M (2024)"
+      cagr: null                         # null si no disponible
+      source: "pro"                      # Fuente del dato
+      entities: "3.510 SaaS companies, 774 funded"
+    - name: "Healthtech"
+      tam: "$6.530M (2024)"
+      cagr: "22.4%"
+      source: "Databricks"
+      entities: "650+ health tech companies, 482 funded"
+    - name: "Fintech"
+      tam: "$4.080M"
+      cagr: "15%"
+      source: "IMARC Group"
+      entities: ">400 entidades no bancarias"
+
+  # --- MARKET TRENDS (la sección más importante del slide) ---
+  # Cada trend debe ser autoexplicativa: qué está pasando, por qué importa, y dato de respaldo.
+  # No hay límite rígido de líneas — lo que necesite para entenderse al leerlo.
+  trends:
+    - trend: "La revolución GEO"
+      insight: "Google AI Overviews reduce CTR orgánico un 25-30%. Las empresas que no adapten su SEO a respuestas generativas perderán visibilidad en 12-18 meses."
+      data: "61% de búsquedas B2B ya no generan clic [SparkToro 2025]"
+      horizon: "Now"
+    - trend: "El comprador B2B ya no quiere hablar con ventas"
+      insight: "El 70% del buyer journey ocurre antes del primer contacto con ventas. El contenido educativo y self-serve reemplaza al SDR como primer touchpoint."
+      data: "61-70% prefiere investigar online sin hablar con ventas [Gartner 2025]"
+      horizon: "Now"
+    - trend: "IA como commodity — la diferenciación se mueve a datos y workflow"
+      insight: "Todas las herramientas de marketing tendrán IA. La ventaja competitiva pasa a quién tiene mejores datos propietarios y workflows más integrados."
+      data: "87% de CMOs planean integrar IA en su stack en 2025 [Salesforce State of Marketing]"
+      horizon: "6mo"
+
+  # --- SAM (se rellena post niche-discovery) ---
+  sam: null  # Pending: se calcula en niche-discovery cuando se eligen ECPs
+​```
+```
+
+**Reglas:**
+1. Datos SOLO del informe — extraer y comprimir, no inventar
+2. YAML válido — la skill de slides hace `yaml.parse()` y tiene todo
+3. Autosuficiente — con solo este bloque se genera la slide sin leer el resto
+4. `hero_metrics` son los 3 números más impactantes del mercado
+5. `verticals` con TAM individual + CAGR + fuente + nº entidades (matchea tarjetas del slide)
+6. `trends` como bullets concisos con fuente inline
+7. `sam` siempre `null` aquí — lo rellena niche-discovery después

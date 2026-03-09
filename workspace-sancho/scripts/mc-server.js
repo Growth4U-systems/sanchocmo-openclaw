@@ -190,7 +190,7 @@ function listDir(dirPath, urlPrefix, opts = {}) {
   const allDirs = entries.filter(f => {
     try { return fs.statSync(path.join(dirPath, f)).isDirectory() && !f.startsWith('.'); } catch { return false; }
   });
-  const files = entries.filter(f => f.endsWith('.md')).sort();
+  const files = entries.filter(f => f.endsWith('.md') || f.endsWith('.html')).sort();
 
   // Detect if this is a brand/{slug} level (pillar listing)
   const isBrandClient = opts.brandPillars || false;
@@ -898,7 +898,250 @@ http.createServer((req, res) => {
     return;
   }
 
-  // === API: save integration ===
+  // === API: Client Integrations — catalog ===
+  if (req.method === 'GET' && url === '/api/client-integrations/catalog') {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    try {
+      const catalogPath = path.join(BASE, 'skills', 'acquisition-metrics-plan', 'schemas', 'api-catalog.json');
+      const catalog = JSON.parse(fs.readFileSync(catalogPath, 'utf-8'));
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(catalog));
+    } catch (e) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Failed to load catalog: ' + e.message }));
+    }
+    return;
+  }
+
+  // === API: Client Integrations — get merged data ===
+  if (req.method === 'GET' && url.startsWith('/api/client-integrations')) {
+    const params = new URLSearchParams(req.url.split('?')[1] || '');
+    const slug = params.get('slug');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+
+    if (!slug) {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Missing slug parameter' }));
+      return;
+    }
+
+    try {
+      const catalogPath = path.join(BASE, 'skills', 'acquisition-metrics-plan', 'schemas', 'api-catalog.json');
+      const catalog = JSON.parse(fs.readFileSync(catalogPath, 'utf-8'));
+
+      // Read client integrations.json (may not exist)
+      const intPath = path.join(BASE, 'brand', slug, 'integrations.json');
+      let intData = { slug, dataSources: {}, systemOverrides: {} };
+      try { intData = JSON.parse(fs.readFileSync(intPath, 'utf-8')); } catch {}
+
+      // Merge catalog info with client status — ensure every catalog API has an entry
+      // Use ownership field: "system" → systemOverrides, "client" → dataSources
+      const merged = { slug, dataSources: {}, systemOverrides: {}, updatedAt: intData.updatedAt || null };
+
+      for (const [catKey, catData] of Object.entries(catalog.categories || {})) {
+        for (const [apiId, apiMeta] of Object.entries(catData.apis || {})) {
+          const ownership = apiMeta.ownership || 'system';
+          const isSystem = ownership === 'system';
+          const section = isSystem ? 'systemOverrides' : 'dataSources';
+          // Check both sections in client data (in case of migration)
+          const clientEntry = (intData.systemOverrides || {})[apiId] || (intData.dataSources || {})[apiId] || {};
+          merged[section][apiId] = {
+            provider: apiMeta.provider,
+            status: clientEntry.status || 'not_configured',
+            config: clientEntry.config || {},
+            envVars: clientEntry.envVars || [],
+            lastTestedAt: clientEntry.lastTestedAt || null,
+            lastError: clientEntry.lastError || null,
+            notes: clientEntry.notes || null,
+          };
+        }
+      }
+
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(merged));
+    } catch (e) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: e.message }));
+    }
+    return;
+  }
+
+  // === API: Client Integrations — save config + secrets ===
+  if (req.method === 'POST' && url === '/api/client-integrations') {
+    let body = '';
+    req.on('data', chunk => { body += chunk; if (body.length > 1e5) req.destroy(); });
+    req.on('end', () => {
+      try {
+        const { slug, source, type, config, secrets } = JSON.parse(body);
+        if (!slug || !source) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Missing slug or source' }));
+          return;
+        }
+
+        const brandDir = path.join(BASE, 'brand', slug);
+        if (!fs.existsSync(brandDir)) fs.mkdirSync(brandDir, { recursive: true });
+
+        // Load or create integrations.json
+        const intPath = path.join(brandDir, 'integrations.json');
+        let intData;
+        try { intData = JSON.parse(fs.readFileSync(intPath, 'utf-8')); } catch { intData = { slug, dataSources: {}, systemOverrides: {} }; }
+        if (!intData.dataSources) intData.dataSources = {};
+        if (!intData.systemOverrides) intData.systemOverrides = {};
+
+        const section = type === 'override' ? 'systemOverrides' : 'dataSources';
+        if (!intData[section][source]) intData[section][source] = { provider: source, status: 'not_configured', config: {}, envVars: [] };
+
+        const entry = intData[section][source];
+
+        // Save config (non-sensitive)
+        if (config && typeof config === 'object') {
+          entry.config = { ...(entry.config || {}), ...config };
+        }
+
+        // Save secrets to brand/.env
+        if (secrets && typeof secrets === 'object' && Object.keys(secrets).length > 0) {
+          const envPath = path.join(brandDir, '.env');
+          let envContent = '';
+          try { envContent = fs.readFileSync(envPath, 'utf-8'); } catch {}
+          const envLines = envContent.split('\n');
+
+          const envVarNames = [];
+          for (const [key, value] of Object.entries(secrets)) {
+            const envKey = `${slug.toUpperCase().replace(/-/g, '_')}_${source.toUpperCase().replace(/-/g, '_')}_${key}`;
+            envVarNames.push(envKey);
+
+            let found = false;
+            for (let i = 0; i < envLines.length; i++) {
+              if (envLines[i].startsWith(envKey + '=')) {
+                envLines[i] = `${envKey}=${value}`;
+                found = true;
+                break;
+              }
+            }
+            if (!found) envLines.push(`${envKey}=${value}`);
+          }
+
+          fs.writeFileSync(envPath, envLines.filter(l => l !== '').join('\n') + '\n', 'utf-8');
+          entry.envVars = [...new Set([...(entry.envVars || []), ...envVarNames])];
+        }
+
+        entry.status = 'pending';
+        intData.updatedAt = new Date().toISOString();
+        fs.writeFileSync(intPath, JSON.stringify(intData, null, 2), 'utf-8');
+
+        // Run test-connection.js for this source
+        const testScript = path.join(BASE, 'skills', 'acquisition-metrics-plan', 'scripts', 'test-connection.js');
+        let testResult = { status: 'pending' };
+        try {
+          const testOutput = execSync(`/opt/homebrew/bin/node "${testScript}" --slug ${slug} --source ${source}`, { cwd: BASE, timeout: 30000, encoding: 'utf-8' });
+          // Script succeeded (exit 0) — re-read integrations.json (script updates it)
+          try { intData = JSON.parse(fs.readFileSync(intPath, 'utf-8')); } catch {}
+          const updatedEntry = (intData.dataSources || {})[source] || (intData.systemOverrides || {})[source] || {};
+          testResult = { status: updatedEntry.status || 'connected', output: testOutput.slice(-300) };
+        } catch (e) {
+          // Script failed (exit 1) — extract real error from stdout
+          const stdout = (e.stdout || '').toString();
+          const stderr = (e.stderr || '').toString();
+          const errorMatch = stdout.match(/❌ Error — (.+)/);
+          const realError = errorMatch ? errorMatch[1].trim() : (stderr.slice(0, 200) || stdout.slice(-200) || e.message.slice(0, 200));
+          // Re-read integrations.json (script updates it even on failure)
+          try { intData = JSON.parse(fs.readFileSync(intPath, 'utf-8')); } catch {}
+          const updatedEntry = (intData.dataSources || {})[source] || (intData.systemOverrides || {})[source] || {};
+          entry.status = updatedEntry.status || 'error';
+          entry.lastTestedAt = updatedEntry.lastTestedAt || new Date().toISOString();
+          entry.lastError = updatedEntry.lastError || realError;
+          testResult = { status: 'error', error: realError };
+        }
+
+        // Ensure intData is written with latest state
+        try { fs.writeFileSync(intPath, JSON.stringify(intData, null, 2), 'utf-8'); } catch {}
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true, testResult }));
+      } catch (e) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: e.message }));
+      }
+    });
+    return;
+  }
+
+  // === API: Client Integrations — test ===
+  if (req.method === 'POST' && url === '/api/client-integrations/test') {
+    let body = '';
+    req.on('data', chunk => { body += chunk; if (body.length > 1e5) req.destroy(); });
+    req.on('end', () => {
+      try {
+        const { slug, source, all } = JSON.parse(body);
+        if (!slug) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Missing slug' }));
+          return;
+        }
+
+        const testScript = path.join(BASE, 'skills', 'acquisition-metrics-plan', 'scripts', 'test-connection.js');
+        const intPath = path.join(BASE, 'brand', slug, 'integrations.json');
+        let intData;
+        try { intData = JSON.parse(fs.readFileSync(intPath, 'utf-8')); } catch { intData = { slug, dataSources: {}, systemOverrides: {} }; }
+
+        const results = {};
+
+        // Helper to extract real error from test-connection.js output
+        function extractTestError(e) {
+          const stdout = (e.stdout || '').toString();
+          const stderr = (e.stderr || '').toString();
+          const errorMatch = stdout.match(/❌ Error — (.+)/);
+          return errorMatch ? errorMatch[1].trim() : (stderr.slice(0, 200) || stdout.slice(-200) || e.message.slice(0, 200));
+        }
+
+        function runTest(srcId) {
+          try {
+            execSync(`/opt/homebrew/bin/node "${testScript}" --slug ${slug} --source ${srcId}`, { cwd: BASE, timeout: 30000, encoding: 'utf-8' });
+            // Re-read integrations.json (script updates it)
+            try { intData = JSON.parse(fs.readFileSync(intPath, 'utf-8')); } catch {}
+            const entry = (intData.dataSources || {})[srcId] || (intData.systemOverrides || {})[srcId] || {};
+            return { status: entry.status || 'connected' };
+          } catch (e) {
+            const realError = extractTestError(e);
+            // Re-read integrations.json (script updates it even on failure)
+            try { intData = JSON.parse(fs.readFileSync(intPath, 'utf-8')); } catch {}
+            const section = (intData.systemOverrides || {})[srcId] ? 'systemOverrides' : 'dataSources';
+            if (intData[section] && intData[section][srcId]) {
+              intData[section][srcId].lastError = realError;
+            }
+            return { status: 'error', error: realError };
+          }
+        }
+
+        if (all) {
+          const allSources = { ...(intData.dataSources || {}), ...(intData.systemOverrides || {}) };
+          for (const [srcId, srcData] of Object.entries(allSources)) {
+            if (srcData.status === 'not_configured') continue;
+            results[srcId] = runTest(srcId);
+          }
+        } else if (source) {
+          results[source] = runTest(source);
+        }
+
+        intData.updatedAt = new Date().toISOString();
+        try {
+          const brandDir = path.join(BASE, 'brand', slug);
+          if (!fs.existsSync(brandDir)) fs.mkdirSync(brandDir, { recursive: true });
+          fs.writeFileSync(intPath, JSON.stringify(intData, null, 2), 'utf-8');
+        } catch {}
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true, results }));
+      } catch (e) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: e.message }));
+      }
+    });
+    return;
+  }
+
+  // === API: save integration (legacy) ===
   if (req.method === 'POST' && url === '/api/integration') {
     let body = '';
     req.on('data', chunk => { body += chunk; if (body.length > 1e5) req.destroy(); });
@@ -985,6 +1228,31 @@ http.createServer((req, res) => {
         res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
         res.end(page(fileName, `<a class="back" href="${backUrl}">← ${backLabel}</a>`, `<div>${html}</div>`, { editable: true, rawMd: rawEscaped }));
         return;
+      }
+
+      // Serve .html files directly (visual identity guides, reports, etc.)
+      if (stat.isFile() && fullPath.endsWith('.html')) {
+        const htmlContent = fs.readFileSync(fullPath, 'utf-8');
+        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+        res.end(htmlContent);
+        return;
+      }
+
+      // Serve static assets referenced by HTML files (images, CSS, JS, fonts)
+      if (stat.isFile()) {
+        const ext = path.extname(fullPath).toLowerCase();
+        const assetMime = MIME[ext] || {
+          '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.gif': 'image/gif',
+          '.webp': 'image/webp', '.ico': 'image/x-icon', '.woff': 'font/woff',
+          '.woff2': 'font/woff2', '.ttf': 'font/ttf', '.pdf': 'application/pdf',
+          '.txt': 'text/plain; charset=utf-8',
+        }[ext];
+        if (assetMime) {
+          const data = fs.readFileSync(fullPath);
+          res.writeHead(200, { 'Content-Type': assetMime });
+          res.end(data);
+          return;
+        }
       }
       
       res.writeHead(403); res.end('Not a viewable file');

@@ -1,140 +1,143 @@
 {
-  "status": "fail",
-  "last_run": "2026-03-07T20:04:25Z",
-  "summary": "2/3 ok, 1 errors",
-  "failureCount": 1,
+  "status": "ok",
+  "last_run": "2026-03-08T20:04:20Z",
+  "summary": "20/20 ok, 0 errors",
+  "failureCount": 0,
   "services": {
     "anthropic": {
-      "status": "not-configured",
-      "lastCheck": "2026-03-07T20:04:25.523Z",
+      "status": "ok",
+      "lastCheck": "2026-03-08T20:04:20.271Z",
       "details": {
-        "error": "ANTHROPIC_API_KEY not set"
+        "httpCode": "200"
       },
-      "error": "ANTHROPIC_API_KEY not set"
+      "error": ""
     },
     "openrouter": {
-      "status": "not-configured",
-      "lastCheck": "2026-03-07T20:04:25.523Z",
+      "status": "ok",
+      "lastCheck": "2026-03-08T20:04:20.518Z",
       "details": {
-        "error": "OPENROUTER_API_KEY not set"
+        "httpCode": "200"
       },
-      "error": "OPENROUTER_API_KEY not set"
+      "error": ""
     },
     "openai": {
-      "status": "not-configured",
-      "lastCheck": "2026-03-07T20:04:25.523Z",
+      "status": "ok",
+      "lastCheck": "2026-03-08T20:04:20.726Z",
       "details": {
-        "error": "OPENAI_API_KEY not set"
+        "httpCode": "200"
       },
-      "error": "OPENAI_API_KEY not set"
+      "error": ""
     },
     "gemini": {
-      "status": "not-configured",
-      "lastCheck": "2026-03-07T20:04:25.523Z",
+      "status": "ok",
+      "lastCheck": "2026-03-08T20:04:21.448Z",
       "details": {
-        "error": "GEMINI_API_KEY not set"
+        "httpCode": "200"
       },
-      "error": "GEMINI_API_KEY not set"
+      "error": ""
     },
     "xai": {
-      "status": "not-configured",
-      "lastCheck": "2026-03-07T20:04:25.523Z",
+      "status": "ok",
+      "lastCheck": "2026-03-08T20:04:21.656Z",
       "details": {
-        "error": "XAI_API_KEY not set"
+        "httpCode": "200"
       },
-      "error": "XAI_API_KEY not set"
+      "error": ""
     },
     "minimax": {
-      "status": "not-configured",
-      "lastCheck": "2026-03-07T20:04:25.523Z",
+      "status": "ok",
+      "lastCheck": "2026-03-08T20:04:21.807Z",
       "details": {
-        "error": "MINIMAX_API_KEY not set"
+        "note": "Key present, no lightweight verify endpoint"
       },
-      "error": "MINIMAX_API_KEY not set"
+      "error": ""
     },
     "brave": {
       "status": "not-configured",
-      "lastCheck": "2026-03-07T20:04:25.523Z",
+      "lastCheck": "2026-03-08T20:04:21.807Z",
       "details": {
         "error": "BRAVE_API_KEY not set"
       },
       "error": "BRAVE_API_KEY not set"
     },
     "apify": {
-      "status": "not-configured",
-      "lastCheck": "2026-03-07T20:04:25.523Z",
+      "status": "ok",
+      "lastCheck": "2026-03-08T20:04:21.807Z",
       "details": {
-        "error": "APIFY_TOKEN not set"
+        "username": "growth4u",
+        "plan": ""
       },
-      "error": "APIFY_TOKEN not set"
+      "error": ""
     },
     "firecrawl": {
-      "status": "not-configured",
-      "lastCheck": "2026-03-07T20:04:25.523Z",
+      "status": "ok",
+      "lastCheck": "2026-03-08T20:04:22.386Z",
       "details": {
-        "error": "FIRECRAWL_API_KEY not set"
+        "httpCode": "200"
       },
-      "error": "FIRECRAWL_API_KEY not set"
+      "error": ""
     },
     "serper": {
-      "status": "not-configured",
-      "lastCheck": "2026-03-07T20:04:25.523Z",
+      "status": "ok",
+      "lastCheck": "2026-03-08T20:04:23.056Z",
       "details": {
-        "error": "SERPER_API_KEY not set"
+        "httpCode": "200"
       },
-      "error": "SERPER_API_KEY not set"
+      "error": ""
     },
     "dataforseo": {
-      "status": "not-configured",
-      "lastCheck": "2026-03-07T20:04:25.523Z",
+      "status": "ok",
+      "lastCheck": "2026-03-08T20:04:23.890Z",
       "details": {
-        "error": "DATAFORSEO_LOGIN or DATAFORSEO_PASSWORD not set"
+        "httpCode": "200",
+        "login": "accounts@growth4u.io"
       },
-      "error": "DATAFORSEO_LOGIN or DATAFORSEO_PASSWORD not set"
+      "error": ""
     },
     "notion": {
-      "status": "not-configured",
-      "lastCheck": "2026-03-07T20:04:25.523Z",
+      "status": "ok",
+      "lastCheck": "2026-03-08T20:04:24.615Z",
       "details": {
-        "error": "NOTION_API_KEY not set"
+        "botName": "openclaw-Alfonso"
       },
-      "error": "NOTION_API_KEY not set"
+      "error": ""
     },
     "supabase": {
-      "status": "not-configured",
-      "lastCheck": "2026-03-07T20:04:25.523Z",
+      "status": "ok",
+      "lastCheck": "2026-03-08T20:04:25.061Z",
       "details": {
-        "error": "SUPABASE_URL or SUPABASE_ANON_KEY not set"
+        "httpCode": "200",
+        "project": "psapmujzxhaxraphddlv"
       },
-      "error": "SUPABASE_URL or SUPABASE_ANON_KEY not set"
+      "error": ""
     },
     "fal": {
-      "status": "not-configured",
-      "lastCheck": "2026-03-07T20:04:25.523Z",
+      "status": "ok",
+      "lastCheck": "2026-03-08T20:04:25.375Z",
       "details": {
-        "error": "FAL_API_KEY not set"
+        "note": "Key present"
       },
-      "error": "FAL_API_KEY not set"
+      "error": ""
     },
     "wavespeed": {
-      "status": "not-configured",
-      "lastCheck": "2026-03-07T20:04:25.523Z",
+      "status": "ok",
+      "lastCheck": "2026-03-08T20:04:25.375Z",
       "details": {
-        "error": "WAVESPEED_API_KEY not set"
+        "note": "Key present"
       },
-      "error": "WAVESPEED_API_KEY not set"
+      "error": ""
     },
     "dumpling": {
-      "status": "not-configured",
-      "lastCheck": "2026-03-07T20:04:25.523Z",
+      "status": "ok",
+      "lastCheck": "2026-03-08T20:04:25.375Z",
       "details": {
-        "error": "DUMPLING_API_KEY not set"
+        "note": "Key present"
       },
-      "error": "DUMPLING_API_KEY not set"
+      "error": ""
     },
     "instantly": {
       "status": "not-configured",
-      "lastCheck": "2026-03-07T20:04:25.523Z",
+      "lastCheck": "2026-03-08T20:04:25.375Z",
       "details": {
         "note": "Web login \u2014 no API key in .env"
       },
@@ -142,23 +145,24 @@
     },
     "metricool": {
       "status": "not-configured",
-      "lastCheck": "2026-03-07T20:04:25.523Z",
+      "lastCheck": "2026-03-08T20:04:25.375Z",
       "details": {
         "note": "Web login \u2014 no API key in .env"
       },
       "error": ""
     },
     "nanobanana": {
-      "status": "not-configured",
-      "lastCheck": "2026-03-07T20:04:25.523Z",
+      "status": "ok",
+      "lastCheck": "2026-03-08T20:04:25.375Z",
       "details": {
-        "error": "Uses GEMINI_API_KEY (shared)"
+        "note": "Uses Gemini API key (shared)",
+        "engine": "gemini-2.0-flash-exp"
       },
-      "error": "Uses GEMINI_API_KEY (shared)"
+      "error": ""
     },
     "remotion": {
       "status": "not-configured",
-      "lastCheck": "2026-03-07T20:04:25.523Z",
+      "lastCheck": "2026-03-08T20:04:25.375Z",
       "details": {
         "version": null,
         "note": "Local install"
@@ -167,7 +171,7 @@
     },
     "gog": {
       "status": "ok",
-      "lastCheck": "2026-03-07T20:04:25.534Z",
+      "lastCheck": "2026-03-08T20:04:26.179Z",
       "details": {
         "account": "alfonso@growth4u.io",
         "test": "gmail inbox"
@@ -175,24 +179,26 @@
       "error": ""
     },
     "openclaw": {
-      "status": "error",
-      "lastCheck": "2026-03-07T20:04:26.464Z",
+      "status": "ok",
+      "lastCheck": "2026-03-08T20:04:27.262Z",
       "details": {
-        "error": "Command failed: /opt/homebrew/bin/openclaw status 2>&1"
+        "gateway": "running",
+        "version": "2026.3.7",
+        "latest": "2026.3.7"
       },
-      "error": "Command failed: /opt/homebrew/bin/openclaw status 2>&1"
+      "error": ""
     },
     "discord": {
-      "status": "not-configured",
-      "lastCheck": "2026-03-07T20:04:26.481Z",
+      "status": "ok",
+      "lastCheck": "2026-03-08T20:04:32.476Z",
       "details": {
-        "error": "DISCORD_BOT_TOKEN not set"
+        "httpCode": "200"
       },
-      "error": "DISCORD_BOT_TOKEN not set"
+      "error": ""
     },
     "tailscale": {
       "status": "ok",
-      "lastCheck": "2026-03-07T20:04:25Z",
+      "lastCheck": "2026-03-08T20:04:20Z",
       "details": {
         "note": "tailscale status OK"
       },
@@ -202,9 +208,7 @@
   "debounce": {
     "newFailures": [],
     "recoveries": [],
-    "ongoingFailures": [
-      "openclaw"
-    ],
+    "ongoingFailures": [],
     "stateChanged": false
   }
 }

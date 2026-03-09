@@ -39,6 +39,9 @@
 │  ├─ "Write sales copy" → direct-response-copy
 │  └─ "Write newsletter" → newsletter
 │
+├─ DESIGN MEASUREMENT (what to measure, how, benchmarks)
+│  └─ "Design metrics plan" / "What should we measure?" / "Acquisition KPIs" → acquisition-metrics-plan
+│
 ├─ DECIDE STRATEGY (what channels, what calendar, what outreach)
 │  ├─ "Which channels should I use?" → channel-prioritization
 │  ├─ "Plan my content calendar" → content-calendar-planner
@@ -86,6 +89,19 @@
 
 **Always in this order:** company-finder → decision-maker-finder → contact-enrichment
 
+### Metrics vs Diagnose: Which one when?
+
+| Question | Use This | NOT This |
+|----------|----------|----------|
+| "What should we measure?" | **acquisition-metrics-plan** | diagnose |
+| "Design metrics framework" | **acquisition-metrics-plan** | diagnose |
+| "Where is our funnel broken?" | **diagnose** | acquisition-metrics-plan |
+| "Why is CAC increasing?" | **diagnose** | acquisition-metrics-plan |
+
+**Key distinction:**
+- **acquisition-metrics-plan** = DESIGN the measurement system (what to track, from where, with what benchmarks)
+- **diagnose** = USE existing data to find problems (assumes metrics already exist)
+
 ### Decide Skills: Which one when?
 
 | Question | Use This | NOT This |
@@ -129,12 +145,13 @@ niche-discovery-100x (ICP) → company-finder → decision-maker-finder → cont
                                                                                          → direct-response-copy
 ```
 
-### Decide → Execute Pipeline
+### Metrics → Decide → Execute Pipeline
 
 ```
-channel-prioritization (which channels) ─┬→ content-calendar-planner → seo-content / content-atomizer / newsletter
-                                         └→ outreach-sequence-builder → email-outreach-executor (future)
-                                                                      → linkedin-outreach-executor (future)
+acquisition-metrics-plan (what to measure) → channel-prioritization (which channels) ─┬→ content-calendar-planner → seo-content / content-atomizer / newsletter
+                                                                                      └→ outreach-sequence-builder → email-outreach-executor (future)
+                                                                                                                   → linkedin-outreach-executor (future)
+acquisition-metrics-plan → diagnose (uses metrics data to find problems)
 ```
 
 ### Competitive Intelligence Pipeline

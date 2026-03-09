@@ -176,9 +176,15 @@ Lee el skill `apify` para la sintaxis exacta de cada actor. Si un scraper falla,
 - Lens 3: Consumidores (sentiment, love/hate, unmet needs, migration patterns)
 
 ### 5. Battle Card (por competitor — CON NARRATIVA)
-- **CADA BATTLE CARD**: Apertura narrativa → Ficha estructurada → Interpretación ("so what?") → How to Beat Them (con rationale)
+- **CADA BATTLE CARD**: Apertura narrativa → Ficha estructurada → **Slide KPIs (OBLIGATORIO)** → Interpretación ("so what?") → How to Beat Them (con rationale)
 - Sintetizar 3 lentes en tarjeta accionable de 1 página
 - Incluir "How to Beat Them" con rationale explícito y monitoring triggers
+- **OBLIGATORIO: Bloque `### Slide KPIs`** después de Lens Conflicts con tabla estandarizada:
+  - `Slide Title`: titular de 1 línea (esencia del competidor)
+  - `Slide Summary`: 2-3 frases (qué son, por qué importan, oportunidad/amenaza)
+  - Revenue, Team, Founded, Users/Clients, Pricing
+  - Ratings: Trustpilot, Google Maps, App Store, Play Store, G2/Capterra
+  - Ver `references/prompt.md` para formato exacto. Consumido por `frontend-slides` generator.
 
 ### 6. Competitive Landscape Map (STORYTELLING COMPLETO)
 - **Apertura narrativa del landscape**: "Cuando vemos el campo completo, emergen X patrones..."

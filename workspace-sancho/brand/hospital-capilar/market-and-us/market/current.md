@@ -1,6 +1,7 @@
 # Market Intelligence — Tratamientos Capilares España
 
-> Versión: v1.0 | Fecha: 2026-03-03 | Analista: Sancho (SanchoCMO)
+> Versión: v1.1 | Fecha: 2026-03-08 (actualizado) | Analista: Sancho (SanchoCMO)
+> Cambios v1.1: Añadida sección 2.5 — Comparativa de precios tratamientos no quirúrgicos
 > Cliente: Hospital Capilar | Foco: Tratamientos capilares no quirúrgicos en España
 
 ---
@@ -355,7 +356,39 @@ El mercado está en **fase de crecimiento** (Growing Market), con competencia co
 
 ---
 
-### 2.5. EVALUACIÓN DE AMENAZAS
+### 2.5. COMPARATIVA DE PRECIOS — TRATAMIENTOS NO QUIRÚRGICOS
+
+> Actualizado: 2026-03-08 | Fuente: Webs oficiales, búsquedas, referencias mercado
+
+**Nota metodológica:** La mayoría de competidores NO publican precios de tratamientos. Los datos marcados con ⚠️ son estimaciones basadas en referencias de mercado o mentions en foros/reviews.
+
+| Clínica | Mesoterapia (por sesión) | Bono mesoterapia | PRP (por sesión) | Bono PRP | Modelo pricing | Fuente |
+|---------|------------------------|-----------------|-----------------|---------|---------------|--------|
+| **Hospital Capilar** | ~€205 | **€820/4 ses HRT** (dutasteride) | ~€205 | **€820/4 ses CRT** | Publicado (bonos) | Company Brief |
+| **Insparya** | ⚠️ €150-300 | No publicado (MesoHair+ propio) | ⚠️ €150-300 | No publicado | **Opaco** — precio tras consulta gratuita | [insparya.es](https://insparya.es/tratamientos-capilares/) |
+| **Svenson** | €224/ses | **€1.795/8 ses** | Incluido en programas | Bioestimulación **€1.295**, 360Complete **€1.295**, Neovital **€2.695** | Publicado (bonos premium) | [svenson.es](https://www.svenson.es/) |
+| **Capilclinic** | No standalone | Solo incluida en paquetes cirugía (Plan XL €4.490 = 3 Meso Dut + 3 Meso Minox) | No standalone | Solo en paquetes cirugía | **No vende tratamientos solos** | [capilclinic.es](https://www.capilclinic.es/precio-injerto-capilar-madrid/) |
+| **Medical Hair** | **€70/ses** | No publicado | No publicado | Pack Integral (sin precio) | Publicado sesión suelta | [medicalhair.es](https://www.medicalhair.es/tratamientos/) |
+| **IMD** | ⚠️ €150-300 | ⚠️ ~€1.200 (ref. Reddit) | ⚠️ €150-300 | No publicado | **Opaco** — precio tras cita gratuita | [imdermatologico.com](https://imdermatologico.com/tratamientos-capilares/mesoterapia-capilar/) |
+
+**Mercado general España (referencia):**
+- PRP sesión individual: €150-300
+- Bonos 3 sesiones PRP: €420-540
+- Bonos 5 sesiones PRP + Dutasteride: €950-1.150
+- ([Fuentes: Clínica Capilar Velázquez](https://clinicacapilarvelazquez.es/capilar/prp-capilar-precio), [Clínica Ibiza](https://www.clinicaibiza.com/prp-capilar-en-madrid/), [Clínicas Licea](https://clinicaslicea.com/prp-capilar/))
+
+**Análisis:**
+
+1. **HC (€820/4 ses = €205/ses) está en rango medio** — competitivo vs mercado (€150-300/ses), significativamente más barato que Svenson (€1.795/8 ses = €224/ses con bonos más caros en total)
+2. **Opacidad dominante** — Insparya, IMD y Capilclinic NO publican precios de tratamientos. Estrategia: "ven a consulta gratuita → venta presencial"
+3. **Medical Hair es outlier bajo** — €70/sesión sugiere menor calidad/personalización médica
+4. **Svenson es el más caro en tratamientos** — Neovital €2.695 es el bono más alto del mercado
+5. **Capilclinic no compite en tratamientos standalone** — solo los ofrece como complemento a cirugía
+6. **Oportunidad HC: transparencia de precios como diferenciador** — Publicar precios claros en web cuando el sector apuesta por opacidad
+
+---
+
+### 2.6. EVALUACIÓN DE AMENAZAS
 
 #### Amenaza 1: Turquía (Turismo Médico Low-Cost)
 

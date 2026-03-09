@@ -3,15 +3,16 @@ name: market-intelligence
 description: "Market analysis: TAM, trends, segments, competitive landscape, customer segmentation, regulatory impact. Use when: analyzing a market for a client, understanding competitive dynamics, sizing a market opportunity, identifying customer segments and their pain points, mapping regulatory constraints for marketing. Produces a 5-part report (Market Overview, Competitive Intelligence, Customer Segmentation, Trends, Opportunities). NOT for: selecting which segments to attack (use niche-discovery), analyzing a specific competitor in depth (use competitor-intelligence), or creating content (use content skills)."
 metadata:
   author: Alfonso Sainz de Baranda (Growth4U)
-  version: '4.0'
+  version: '5.0'
   system: SanchoCMO
   phase: '1'
   pillar: market-intelligence
   layer: '2'
   depends_on: company-context
-  updated: '2026-02-27'
-  changes: v4 — Restructured per skill-creator principles. SKILL.md lean (~130 lines).
-    Concepts moved to references. Self-QA checklist integrated. No Rocinante dependency.
+  updated: '2026-03-09'
+  changes: v5 — Primary Source Verification obligatorio (Step 1.5). Slide Summary
+    autogenerado (Step 4.5). Checklist con tiers P0/P1/P2. Hydration con regla de
+    competidores heredados.
 context_required:
 - brand/{slug}/company-brief/current.md
 - brand/{slug}/market-and-us/competitors/current.md
@@ -52,6 +53,21 @@ context_writes:
 - Lee `brand/{slug}/company-context/current.md` y `brand/{slug}/competitors/current.md`
 - Identifica: industria, vertical, producto, geografía, equipo
 
+### 1.5. Primary Source Verification (OBLIGATORIO)
+
+Para CADA competidor — heredados de company-context Y descubiertos en research:
+
+1. `web_fetch(homepage)` → posicionamiento REAL, tagline, propuesta de valor
+2. `web_fetch(/pricing o /plans o /#pricing)` → pricing REAL
+3. `web_fetch(/features o /product o /services)` → features REALES
+4. `web_fetch(/about)` → equipo, historia, credenciales
+
+**Reglas HARD:**
+- NUNCA escribir sobre un competidor sin haber scrapeado su web
+- Si pricing no público → marcar `⚠️ Pricing no público — verificar manualmente`
+- Si web no carga → marcar `⚠️ Web no accesible, datos de fuentes secundarias`
+- Fuente primaria (web competidor) > fuente secundaria (artículos) SIEMPRE
+
 ### 2. Investigar siguiendo el prompt
 - Lee `references/prompt.md` — es tu guía sección por sección
 - Ejecuta búsquedas web (mínimo 10-15) cubriendo las 5 partes:
@@ -83,6 +99,16 @@ context_writes:
 - Spot-check: verifica 5-10 URLs con `web_fetch`
 - Cruza cifras contra brand files (company-context, competitors)
 - Añade metadata: `<!-- Self-QA: PASS | fecha | items: X✅ Y⚠️ 0❌ -->`
+
+### 4.5. Generar Slide Summary (OBLIGATORIO)
+
+Después del Self-QA, genera el bloque `## Slide Summary` al final del informe (antes de `## Fuentes`):
+
+- Extrae datos SOLO del informe ya escrito — no inventar nada nuevo
+- Formato YAML-in-markdown (parseable por skill de slides)
+- Plantilla completa en `references/prompt.md` → sección "Slide Summary"
+- Max 30 líneas YAML
+- Debe ser autosuficiente: con solo este bloque se genera la slide sin leer el resto
 
 ### 5. Guardar con versionado
 - Ruta: `brand/{slug}/market/current.md`

@@ -26,6 +26,7 @@ brand/{slug}/
 │   ├── ecps.md                 ← Perfiles ECP con JTBD integrado
 │   ├── positioning-{ecp-slug}.md ← Messaging playbook por ECP
 │   ├── pricing.md              ← Framework de pricing + hooks
+│   ├── metrics-plan.md         ← Sistema de métricas por arquetipo + Excel template
 │   └── messaging-summary.md    ← Síntesis GTM
 ├── brand-identity/
 │   ├── voice-profile.md        ← Brand voice
@@ -66,6 +67,7 @@ LAYER 4 — ACTIVATION (requires: niche-discovery)
   positioning ← positioning-messaging → positioning-{ecp}.md
   pricing ← pricing-hooks → pricing.md
   ecp-validation ← OPCIONAL
+  metrics-plan ← acquisition-metrics-plan → metrics-plan.md (after positioning+pricing)
   messaging-summary.md ← orchestrator genera inline
 
 LAYER 5 — BRAND IDENTITY (requires: positioning)
@@ -100,6 +102,7 @@ Si X no está approved → **funcionar sin él**. Notificar: "Nota: [X] no está
 | existing-customer-data | company-brief | — |
 | positioning | niche-discovery | — |
 | pricing | niche-discovery | positioning |
+| metrics-plan | niche-discovery | positioning, pricing |
 | ecp-validation | niche-discovery | — |
 | messaging-summary (síntesis) | positioning | pricing |
 | brand-voice | positioning | — |

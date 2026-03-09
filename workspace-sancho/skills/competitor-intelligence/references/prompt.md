@@ -175,6 +175,29 @@ Company background, product evolution, growth model, public financials.
 [Where Lens 1 claims ≠ Lens 3 reality — vulnerabilities]
 ```
 
+### Slide KPIs (bloque estandarizado — OBLIGATORIO)
+Inmediatamente después de Lens Conflicts, incluir este bloque con campos fijos. Si no hay dato, poner "N/D":
+
+```
+### Slide KPIs
+| KPI | Valor |
+|-----|-------|
+| Slide Title | [Titular de 1 línea para la slide — captura la esencia del competidor] |
+| Slide Summary | [2-3 frases: qué son, por qué importan, y la oportunidad/amenaza clave] |
+| Revenue | [cifra + YoY si disponible] |
+| Team | [número de personas] |
+| Founded | [año] |
+| Users/Clients | [cifra o "N/D"] |
+| Pricing | [modelo resumido, ej: "Retainer 5-15K€/mes"] |
+| Trustpilot | [X.X/5 (N reviews) o "Sin perfil"] |
+| Google Maps | [X.X/5 (N reviews) o "Sin perfil"] |
+| App Store | [X.X/5 (N reviews) o "N/A"] |
+| Play Store | [X.X/5 (N reviews) o "N/A"] |
+| G2/Capterra | [X.X/5 (N reviews) o "N/A"] |
+```
+
+Este bloque es consumido por el generador de presentaciones (`frontend-slides`). Los campos deben ser concisos (max 40 chars).
+
 ### Interpretación (párrafo "So what?" después de la ficha)
 - ¿Qué significa su estrategia?
 - ¿Qué están haciendo bien que deberíamos temer?

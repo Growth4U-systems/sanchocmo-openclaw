@@ -1,4 +1,30 @@
 {
   "client": "growth4u",
-  "services": []
+  "services": [],
+  "dataSources": {
+    "meta_ads": {
+      "provider": "meta_ads",
+      "status": "connected",
+      "config": {
+        "accountId": "act_1507778460268244"
+      },
+      "envVars": [
+        "GROWTH4U_META_ADS_ACCESS_TOKEN"
+      ],
+      "lastTestedAt": "2026-03-08T22:57:59.588Z"
+    },
+    "ghl": {
+      "provider": "ghl",
+      "status": "connected",
+      "config": {
+        "locationId": "BnXWP5dcLVMgUudLv10O"
+      },
+      "envVars": [
+        "GROWTH4U_GHL_API_KEY"
+      ],
+      "lastTestedAt": "2026-03-08T22:58:00.014Z"
+    }
+  },
+  "systemOverrides": {},
+  "updatedAt": "2026-03-08T22:58:00.026Z"
 }

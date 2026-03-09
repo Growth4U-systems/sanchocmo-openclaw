@@ -125,6 +125,15 @@
 **requires**: niche-discovery
 **Skip**: si timeline muy corto (validar a través de ejecución)
 
+### metrics-plan
+**Skill**: `acquisition-metrics-plan`
+**Output**: `brand/{slug}/go-to-market/metrics-plan.md` + Excel template
+**requires**: niche-discovery
+**enriches_with**: positioning, pricing
+**Skip**: nunca
+**Lite done**: Arquetipo clasificado + activation event + Level 1-2 KPIs + funnel steps
+**Deep done**: Lite + data sources mapeados con canales de positioning + benchmarks calibrados con pricing + Excel template generado + review cadence
+
 ### messaging-summary (síntesis — generada por orchestrator)
 **Output**: `brand/{slug}/go-to-market/messaging-summary.md`
 **requires**: positioning
@@ -161,5 +170,6 @@
 | competitor-analysis | swot → discovery → activation → brand | 8+ |
 | self-analysis | swot → discovery → activation → brand | 8+ |
 | swot | discovery → activation → brand | 6+ |
-| niche-discovery | positioning + pricing + ecp-validation + brand | 5+ |
+| niche-discovery | positioning + pricing + metrics-plan + ecp-validation + brand | 6+ |
+| metrics-plan | channel-prioritization (post-Foundation) | 1 |
 | positioning | messaging-summary + brand-voice + visual-identity | 3 |

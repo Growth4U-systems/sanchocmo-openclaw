@@ -175,6 +175,52 @@
 
 ---
 
+## Section 6: Slide Summary
+
+| Field | Type | Required | Consumed By |
+|-------|------|----------|-------------|
+| slide_summary | SlideSummary object | ✅ | Slide generation skill |
+
+### SlideSummary object
+```json
+{
+  "hero_metrics": {
+    "total_entities": "8.580",
+    "entity_label": "Empresas Tech Activas",
+    "tam_annual": "50-80M€",
+    "ecosystem_value": "110.000B€",
+    "ecosystem_label": "Ecosistema Tech"
+  },
+  "verticals": [
+    {
+      "name": "SaaS / IA",
+      "tam": "$7.288M (2024)",
+      "cagr": null,
+      "source": "pro",
+      "entities": "3.510 SaaS companies, 774 funded"
+    },
+    {
+      "name": "Healthtech",
+      "tam": "$6.530M (2024)",
+      "cagr": "22.4%",
+      "source": "Databricks",
+      "entities": "650+ health tech companies, 482 funded"
+    }
+  ],
+  "trends": [
+    {
+      "trend": "La revolución GEO",
+      "insight": "Google AI Overviews reduce CTR orgánico 25-30%. Adaptar SEO a respuestas generativas o perder visibilidad.",
+      "data": "61% de búsquedas B2B ya no generan clic [SparkToro 2025]",
+      "horizon": "Now"
+    }
+  ],
+  "sam": null
+}
+```
+
+---
+
 ## Cross-Pillar Data Flow
 
 | Field | Consumed By |

@@ -36,7 +36,7 @@ L0 INTAKE:     company-brief (3 skills → 1 aprobación)
 L1 RESEARCH:   market-analysis + competitor-analysis + self-analysis
 L2 SYNTHESIS:  swot + summary* + ope-canvas*    (* = orchestrator inline)
 L3 DISCOVERY:  niche-discovery + existing-customer-data?
-L4 ACTIVATION: positioning + pricing + ecp-validation? + messaging-summary*
+L4 ACTIVATION: positioning + pricing + ecp-validation? + metrics-plan + messaging-summary*
 L5 BRAND:      brand-voice + visual-identity
 ```
 

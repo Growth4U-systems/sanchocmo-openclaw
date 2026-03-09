@@ -4,9 +4,25 @@
 > Para cada ítem: ✅ completado | ⚠️ no disponible (con justificación) | ❌ pendiente (seguir investigando)
 > Solo se entrega cuando todo es ✅ o ⚠️. Si hay algún ❌, volver a investigar.
 
+## TIERS DE PRIORIDAD
+- **P0 (bloqueante)**: Si falta alguno, NO SE ENTREGA. Investigar hasta resolver.
+- **P1 (importante)**: Debería estar. ⚠️ aceptable con justificación.
+- **P2 (nice-to-have)**: Mejora calidad pero no bloquea entrega.
+
 ---
 
-## STORYTELLING (OBLIGATORIO)
+## PRIMARY SOURCE VERIFICATION (P0 — bloqueante)
+
+- [ ] **Cada competidor scrapeado** — `web_fetch` en su dominio propio (homepage mínimo)
+- [ ] **Pricing de fuente primaria** — viene de `/pricing` del competidor, NO de artículos
+- [ ] **Features de fuente primaria** — viene de `/features` del competidor, NO de artículos
+- [ ] **Posicionamiento de fuente primaria** — viene de su homepage/tagline textual
+- [ ] **Claims cross-checked** — ningún claim sobre competidor basado SOLO en terceros
+- [ ] **Fuentes secundarias marcadas** — si algún dato viene solo de artículo → `[⚠️ fuente secundaria]`
+
+---
+
+## STORYTELLING (P2)
 
 - [ ] **Executive Narrative** existe al principio del documento (Parte 0)
   - ✅ 1 página máximo, narrativa pura, CERO tablas
@@ -34,9 +50,9 @@
 
 ---
 
-## PARTE 1: Mercado
+## PARTE 1: Mercado (P0/P1)
 
-- [ ] **TAM cuantificado** con método explícito (bottom-up preferido, top-down aceptable con confianza indicada)
+- [ ] **TAM cuantificado** con método explícito (bottom-up preferido, top-down aceptable con confianza indicada) **(P0)**
 - [ ] **Asunciones críticas listadas** para cada cifra del TAM
 - [ ] **Crecimiento histórico** 3-5 años con fuente
 - [ ] **Proyección 5 años** con fuente
@@ -80,14 +96,24 @@
 - [ ] **Atractivo del mercado** evaluado (alto/medio/bajo) con rationale
 - [ ] **Hoja de ruta** con cronograma y recursos necesarios
 
-## META (calidad)
+## SLIDE SUMMARY (P1)
 
-- [ ] **Cada claim tiene fuente inline** con URL
-- [ ] **Claims no verificables** marcados con ⚠️ y razón
-- [ ] **0 datos inventados** — todo rastreable a fuente original
-- [ ] **Cifras coherentes** entre secciones (TAM no contradice segmentos, pricing no contradice competidores)
-- [ ] **5-10 URLs verificadas** con web_fetch (spot-check aleatorio)
-- [ ] **Coherencia con brand files** (company-context, competitors) verificada
+- [ ] **Bloque `## Slide Summary` existe** al final del informe (antes de Fuentes)
+- [ ] **YAML válido** — parseable con `yaml.parse()`
+- [ ] **hero_metrics completo** — total_entities, entity_label, tam_annual, ecosystem_value, ecosystem_label
+- [ ] **verticals completo** — 4-6 verticals con name, tam, cagr (o null), source, entities
+- [ ] **trends completo** — 3+ trends, cada uno con: trend (título), insight (por qué importa), data (dato + fuente), horizon
+- [ ] **sam = null** — NO calcular SAM aquí (lo hace niche-discovery)
+- [ ] **Coherente con el informe** — cada dato del slide rastreable a una sección del documento
+
+## META (calidad) (P0)
+
+- [ ] **Cada claim tiene fuente inline** con URL **(P0)**
+- [ ] **Claims no verificables** marcados con ⚠️ y razón **(P0)**
+- [ ] **0 datos inventados** — todo rastreable a fuente original **(P0)**
+- [ ] **Cifras coherentes** entre secciones (TAM no contradice segmentos, pricing no contradice competidores) **(P0)**
+- [ ] **5-10 URLs verificadas** con web_fetch (spot-check aleatorio) **(P1)**
+- [ ] **Coherencia con brand files** (company-context, competitors) verificada **(P1)**
 
 ## ENTREGA (obligatorio)
 

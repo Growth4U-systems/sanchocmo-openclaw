@@ -58,6 +58,7 @@ That single line means: "Before I start, load relevant brand context using the p
     positioning/shared/         <- Tier 2: value-criteria.md, assets.md, messaging-summary.md
     pricing/current.md          <- /pricing-strategy owns
     existing-customer-data/current.md  <- /existing-customer-data owns (opcional)
+    metrics-plan.md             <- /acquisition-metrics-plan owns
 
   brand-voice/
     current.md              <- /brand-voice owns (voice profile + AI Brand Kit)
@@ -108,6 +109,7 @@ Each profile file has a **primary owner** — the skill that creates and maintai
 | go-to-market/positioning/shared/messaging-summary.md | positioning-messaging | Read only |
 | go-to-market/pricing/current.md | pricing-strategy | Read only |
 | go-to-market/existing-customer-data/current.md | existing-customer-data | Read only |
+| go-to-market/metrics-plan.md | acquisition-metrics-plan | Read only |
 | brand-voice/current.md | brand-voice | Read only |
 | brand-identity/visual-identity/current.md | visual-identity | Read only |
 | operational/assets.md | ALL skills | Append (never truncate) |
@@ -208,6 +210,7 @@ Each skill declares dependencies. Do NOT read every file on every invocation.
 | channel-prioritization | company-brief/current.md, go-to-market/ecps/current.md, go-to-market/positioning/*/current.md, market-and-us/competitors/current.md, operational/stack.md | Full context to score channels |
 | content-calendar-planner | go-to-market/positioning/*/current.md, go-to-market/ecps/current.md, brand-voice/current.md | Topics + voice + audience |
 | outreach-sequence-builder | go-to-market/positioning/*/current.md, go-to-market/ecps/current.md, brand-voice/current.md | Audience + angle + voice |
+| acquisition-metrics-plan | company-brief/current.md, go-to-market/ecps/current.md, go-to-market/positioning/*/current.md (if exists), go-to-market/pricing/current.md (if exists), operational/stack.md (if exists) | Business model + ECPs + canales + pricing para métricas precisas |
 
 **Orchestrators read everything:**
 | sancho-start | ALL brand files (only current.md per pillar) + operational/ | Full picture for routing |

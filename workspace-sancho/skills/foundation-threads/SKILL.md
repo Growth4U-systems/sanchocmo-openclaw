@@ -39,12 +39,13 @@ context_writes: []
 |---|------------|-------|-----------|
 | 6 | `06 👥 Niche Discovery` | niche-discovery-100x | Descubrir nichos, validar con Triple Filter, puntuar ECPs con JTBD. |
 | 7 | `07 💬 Positioning & Pricing` | positioning-messaging + pricing-strategy | Messaging playbook por ECP + framework de pricing. |
+| 8 | `08 📏 Metrics Plan` | acquisition-metrics-plan | Sistema de métricas: arquetipo, activation event, KPIs, funnel, benchmarks, Excel template. |
 
 ### 🎨 BRAND IDENTITY (Layer 5)
 
 | # | Thread Name | Skill | Objective |
 |---|------------|-------|-----------|
-| 8 | `08 🎨 Brand Identity` | brand-voice + visual-identity | Voice profile + sistema visual. |
+| 9 | `09 🎨 Brand Identity` | brand-voice + visual-identity | Voice profile + sistema visual. |
 
 ## Creación de Threads
 
@@ -74,5 +75,5 @@ context_writes: []
 - SWOT & Síntesis comparte hilo (el orchestrator genera las síntesis tras el SWOT)
 - Positioning & Pricing comparten hilo (flujo natural)
 - Brand Identity comparte hilo (voice → visual es secuencial)
-- Total: **8 hilos** (vs 15 antes)
+- Total: **9 hilos**
 - Si el orchestrator detecta hilos existentes con los nombres correctos, NO crea nuevos

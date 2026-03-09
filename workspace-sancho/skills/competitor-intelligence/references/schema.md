@@ -95,6 +95,7 @@ Competitor discovery object:
 | Field | Type | Required | Source | Consumed By |
 |-------|------|----------|--------|-------------|
 | quick_profile | object {founded, hq, team_size, funding, growth_model} | REQUIRED | Research | Quick reference |
+| slide_kpis | object {slide_title, slide_summary, revenue, team, founded, users_clients, pricing, trustpilot, google_maps, app_store, play_store, g2_capterra} | REQUIRED | Research + Lens 3 + Synthesis | frontend-slides generator |
 | real_positioning | object {value_prop, target_audience, strengths, pricing} | REQUIRED | Lens synthesis | Positioning |
 | vulnerabilities | object[] {claim, reality, severity, opportunity} | REQUIRED | Lens 1 vs 3 gaps | Positioning-messaging |
 | how_to_beat | object | REQUIRED | Synthesis | Sales enablement |

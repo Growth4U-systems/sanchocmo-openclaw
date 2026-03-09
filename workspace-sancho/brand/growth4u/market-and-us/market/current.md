@@ -396,6 +396,67 @@ Secuencia: cimentar (0-3 meses) → construir distribución (3-6 meses) → expa
 
 ---
 
+## Slide Summary
+<!-- Bloque estructurado para generación automática de slides -->
+
+```yaml
+slide_summary:
+  # --- HERO METRICS (3 bloques destacados) ---
+  hero_metrics:
+    total_entities: "8.580"
+    entity_label: "Empresas Tech Activas en España"
+    tam_annual: "50-80M€"
+    ecosystem_value: "110.000M€"
+    ecosystem_label: "Ecosistema Startup España"
+
+  # --- KEY VERTICALS (tarjetas, ordenadas por TAM) ---
+  verticals:
+    - name: "SaaS / IA"
+      tam: "$7.288M (2024)"
+      cagr: "13.4%"
+      source: "Grand View Research"
+      entities: "3.510 SaaS companies, 774 funded"
+    - name: "Healthtech"
+      tam: "$6.530M (2024)"
+      cagr: "22.4%"
+      source: "DataBridge Market Research"
+      entities: "650+ health tech companies, 482 funded"
+    - name: "Edtech"
+      tam: "$4.503M (2025)"
+      cagr: "11.4%"
+      source: "IMARC Group"
+      entities: "1.200 companies, 182 funded"
+    - name: "Fintech"
+      tam: "$4.080M"
+      cagr: "15%"
+      source: "IMARC Group"
+      entities: ">400 entidades no bancarias"
+    - name: "Proptech"
+      tam: ">500M€ inversión"
+      cagr: null
+      source: "Urbanitae / Research and Markets"
+      entities: "562 startups (+272% desde 2020)"
+    - name: "Mobility"
+      tam: "507M€ funding (2º sector)"
+      cagr: null
+      source: "Oliver Wyman"
+      entities: null
+
+  # --- MARKET TRENDS (bullets concisos) ---
+  trends:
+    - "GEO reemplaza SEO — AI Overviews destruyen -47% CTR orgánico [Pew Research]"
+    - "Self-serve buyers — 83% B2B prefieren comprar sin hablar con ventas [Mezzanine Growth]"
+    - "IA commoditiza tareas — 56% marketers usan IA en SEO, pero pocos diseñan el sistema [Semrush]"
+    - "Fractional CMOs — mercado +35% YoY en España, compiten por mismo presupuesto [Fractional C-Suite]"
+    - "Founder-Led Growth — autenticidad > contenido pulido, ROI más alto por costes reducidos [RocketWheel]"
+    - "Inversión madura — Series A +34%, Seed -10%, capital fluye a empresas validadas [Capital-Riesgo.es]"
+
+  # --- SAM (se rellena post niche-discovery) ---
+  sam: null  # Pending: se calcula en niche-discovery cuando se eligen ECPs
+```
+
+---
+
 ## Fuentes
 
 1. [marketingnews.es — Inversión marketing España 2024](https://www.marketingnews.es/investigacion/noticia/1190234031605/la-inversion-en-marketing-en-espana-crecio-un-48-en-2024-y-alcanzo-los-33480-millones-de-euros.1.html)

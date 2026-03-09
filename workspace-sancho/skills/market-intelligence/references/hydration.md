@@ -49,6 +49,14 @@ Con esto voy a investigar:
 ¿Hay algún mercado geográfico o segmento que quieras que incluya/excluya?"
 ```
 
+## Regla de competidores heredados (OBLIGATORIO)
+
+Si company-context o el cliente nombran competidores:
+1. ANTES de investigar el mercado, scrapear cada uno: `web_fetch(homepage)`, `web_fetch(/pricing)`, `web_fetch(/features)`
+2. Estos datos son INPUT del análisis, no output
+3. No asumir NADA sobre un competidor nombrado sin verificar su web primero
+4. Si un competidor heredado ya tiene datos en `competitors/current.md`, verificar que siguen vigentes con scraping fresco
+
 ## Nota
 
 Market-intelligence es un skill de INVESTIGACIÓN. La hydration aquí evita preguntar "¿en qué industria estáis?" o "¿qué mercados servís?" — eso ya se sabe. El skill arranca directamente a investigar.

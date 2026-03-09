@@ -1,0 +1,13 @@
+{
+  "versions": [
+    {
+      "version": "v1",
+      "date": "2026-03-08",
+      "mode": "quick",
+      "direction": "Sancho Futurista Light",
+      "approved_by": "Martin (martinfpm)",
+      "changes": "Initial Visual Snapshot. Comic book style descartado. Nueva dirección: SaaS moderno con personaje Sancho rechoncho + burrito tech. Paleta limpia (blanco + charcoal + rust accent). Tipografía Inter/Geist.",
+      "generations_used": 6
+    }
+  ]
+}
