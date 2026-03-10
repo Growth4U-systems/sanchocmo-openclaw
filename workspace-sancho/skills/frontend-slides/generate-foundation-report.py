@@ -818,8 +818,11 @@ def generate_market(md, company_name):
     
     # Extract key headline stats
     empresas = re.search(r'([\d.,]+)\s*empresas?\s*tech\s*activas', md, re.I)
-    ecosistema = re.search(r'ecosistema\s*valorado\s*en\s*(?:más\s*de\s*)?([\d.,]+)\s*(?:mil\s*)?millones', md, re.I)
-    inversion = re.search(r'inversión.*?digital.*?([\d.,]+)\s*millones', md, re.I)
+    ecosistema = re.search(r'ecosistema.*?valorado.*?(?:más\s*de\s*)?([\d.,]+)\s*(?:mil\s*)?millones', md, re.I)
+    if not ecosistema:
+        ecosistema = re.search(r'valor\s*superior\s*a\s*([\d.,]+)\s*(?:mil\s*)?millones', md, re.I)
+    inversion = re.search(r'(?:inversión|Inversión)\s*(?:VC|total)?:?\s*([\d.,]+)\s*M€', md, re.I)
+    startups = re.search(r'([\d.,]+)\s*startups?\s*activas', md, re.I)
     
     # Extract verticals from table
     verticals = []
@@ -861,29 +864,57 @@ def generate_market(md, company_name):
         if name and any(v.lower() in name.lower() for v in valid_verticals):
             verticals.append({'name': name, 'size': size_display, 'companies': co_display})
     
-    # Extract 3 trends — "Primera: la revolución GEO..."
+    # Extract trends from PARTE 4 table: | **Trend** | Direction | Horizon | Type | Impact |
     trends = []
-    for label in ['Primera', 'Segunda', 'Tercera']:
-        t = re.search(rf'(?:^|\. ){label}:\s*(.+?)(?:\. (?:Segunda|Tercera|Quien|Growth4U)|$)', md, re.S)
-        if t:
-            text = t.group(1).strip()
-            # Take first 2 sentences max
-            sentences = text.split('. ')
-            text = '. '.join(sentences[:2]).strip()
-            if not text.endswith('.'): text += '.'
-            text = re.sub(r'\[([^\]]+)\]\([^)]+\)', r'\1', text)
-            text = re.sub(r'\s*\[Fuente:[^\]]*\]', '', text)
-            trends.append(text[:180])
+    trend_table = re.findall(r'^\|\s*\*\*(.+?)\*\*\s*\|\s*(\w+)\s*\|\s*(\S+)\s*\|\s*([^|]+)\|\s*(\w+)\s*\|', md, re.M)
+    for name, direction, horizon, tipo, impact in trend_table:
+        if 'Tendencia' in name: continue  # skip header
+        trends.append({
+            'name': name.strip(),
+            'direction': direction.strip(),
+            'horizon': horizon.strip(),
+            'type': tipo.strip(),
+            'impact': impact.strip(),
+        })
+    
+    # Extract key stats for top trends from subsections
+    trend_details = {}
+    # GEO stats
+    geo_stats = []
+    for m in re.finditer(r'CTR.*?(-\d+%)', md):
+        geo_stats.append(m.group(1))
+    if geo_stats:
+        trend_details['GEO'] = f"CTR orgánico {geo_stats[0]} con AI Overviews. 77% usan ChatGPT como buscador."
+    
+    # Buyer behavior
+    buyer = re.search(r'(\d+%)\s*B2B buyers prefieren experiencia rep-free', md)
+    if buyer:
+        trend_details['buyer'] = f"{buyer.group(1)} B2B buyers prefieren experiencia rep-free. 70% deciden antes de contactar."
+    
+    # AI commoditization
+    ai_stat = re.search(r'(\d+%)\s*de marketers.*?usan IA', md)
+    if ai_stat:
+        trend_details['ai'] = f"{ai_stat.group(1)} de marketers usan IA, pero pocos diseñan el sistema que la orquesta."
     
     # Build top stats row
     top_stats = ''
     stat_items = []
     if empresas: stat_items.append(('🏢', f'{empresas.group(1)}', 'Empresas tech activas'))
+    if startups: stat_items.append(('🚀', f'{startups.group(1)}', 'Startups activas'))
     if tam: stat_items.append(('🎯', tam, 'TAM anual'))
-    if ecosistema: stat_items.append(('💰', f'{ecosistema.group(1)}B€', 'Ecosistema tech'))
+    if ecosistema:
+        eco_val = ecosistema.group(1)
+        # 110.000 millones = 110B€, not 110.000B€
+        try:
+            eco_num = float(eco_val.replace('.', '').replace(',', '.'))
+            if eco_num > 1000: eco_val = f'{eco_num/1000:.0f}B€'
+            else: eco_val = f'{eco_val}M€'
+        except: eco_val = f'{eco_val}M€'
+        stat_items.append(('💰', eco_val, 'Valor ecosistema'))
+    if inversion: stat_items.append(('📈', f'{inversion.group(1)}M€', 'Inversión VC 2025'))
     
     stat_colors = ['#2563EB', '#F97316', '#7C3AED', '#06B6D4']
-    for i, (icon, value, label) in enumerate(stat_items[:4]):
+    for i, (icon, value, label) in enumerate(stat_items[:5]):
         color = stat_colors[i % len(stat_colors)]
         top_stats += f'''
                 <div class="mkt-stat" style="border-left: 4px solid {color}">
@@ -906,14 +937,31 @@ def generate_market(md, company_name):
                         <div class="mkt-vert-co">{html_escape(v['companies'][:40])}</div>
                     </div>'''
     
-    # Build trends
+    # Build trends — show up to 6 from the table
     trends_html = ''
-    trend_icons = ['🌊', '🤖', '⚡']
-    for i, t in enumerate(trends[:3]):
+    type_icons = {
+        'Oportunidad': '🟢', 'Amenaza': '🔴', 'Amenaza/Oportunidad': '🟡',
+        'Oportunidad (vertical)': '🟢',
+    }
+    detail_map = {
+        'GEO reemplaza parte de SEO': trend_details.get('GEO', ''),
+        'AI Overviews destruyen CTR orgánico': trend_details.get('GEO', ''),
+        'IA commoditiza tareas marketing': trend_details.get('ai', ''),
+        'B2B buyers: self-serve research': trend_details.get('buyer', ''),
+    }
+    for i, t in enumerate(trends[:6]):
+        icon = type_icons.get(t['type'], '📈')
+        impact_color = '#ef4444' if t['impact'] == 'Alto' else '#f59e0b'
+        detail = detail_map.get(t['name'], '')
+        detail_html = f'<div class="mkt-trend-detail">{html_escape(detail)}</div>' if detail else ''
         trends_html += f'''
-                    <div class="mkt-trend">
-                        <span class="mkt-trend-icon">{trend_icons[i] if i < len(trend_icons) else '📈'}</span>
-                        <span class="mkt-trend-text">{make_bold_html(html_escape(t))}</span>
+                    <div class="mkt-trend" style="border-left: 3px solid {impact_color}">
+                        <div class="mkt-trend-header">
+                            <span class="mkt-trend-icon">{icon}</span>
+                            <span class="mkt-trend-name">{html_escape(t['name'])}</span>
+                            <span class="mkt-trend-badge">{html_escape(t['horizon'])}</span>
+                        </div>
+                        {detail_html}
                     </div>'''
     
     return f'''
@@ -928,13 +976,17 @@ def generate_market(md, company_name):
         <!-- Top stats row -->
         <div class="mkt-stats-row reveal reveal-d1">{top_stats}</div>
 
-        <!-- Verticals grid -->
-        <div class="mkt-section-label reveal reveal-d1">Key Verticals</div>
-        <div class="mkt-verticals reveal reveal-d2">{vert_cards}</div>
-
-        <!-- Trends -->
-        <div class="mkt-section-label reveal reveal-d2">Market Trends</div>
-        <div class="mkt-trends reveal reveal-d3">{trends_html}</div>
+        <!-- Two-column: Trends left (60-70%), Verticals right -->
+        <div class="mkt-body reveal reveal-d2">
+            <div class="mkt-body-left">
+                <div class="mkt-section-label">Market Trends</div>
+                <div class="mkt-trends">{trends_html}</div>
+            </div>
+            <div class="mkt-body-right">
+                <div class="mkt-section-label">Key Verticals</div>
+                <div class="mkt-verticals-list">{vert_cards}</div>
+            </div>
+        </div>
 
         <div class="slide-footer reveal reveal-d4">
             <span>Confidential — {html_escape(company_name)}</span>
@@ -1160,6 +1212,67 @@ def main():
             overflow: hidden;
         }
         .reviews-col li:last-child { border-bottom: none; }
+        /* Edit mode */
+        .edit-hotzone {
+            position: fixed; top: 0; left: 0;
+            width: 80px; height: 80px;
+            z-index: 10000; cursor: pointer;
+        }
+        .edit-toggle {
+            position: fixed; top: 12px; left: 12px;
+            width: 36px; height: 36px;
+            border-radius: 50%; border: none;
+            background: var(--brand-primary, #2563EB);
+            color: white; font-size: 16px;
+            cursor: pointer; z-index: 10001;
+            opacity: 0; pointer-events: none;
+            transition: opacity 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+        .edit-toggle.show, .edit-toggle.active {
+            opacity: 1; pointer-events: auto;
+        }
+        .edit-toggle.active { background: #22c55e; }
+        .export-btn {
+            position: fixed; top: 12px; left: 56px;
+            padding: 4px 10px; border-radius: 6px; border: none;
+            background: var(--brand-primary, #2563EB);
+            color: white; font-size: 12px; font-weight: 700;
+            cursor: pointer; z-index: 10001;
+            opacity: 0; pointer-events: none;
+            transition: opacity 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+        .export-btn.show { opacity: 1; pointer-events: auto; }
+        .save-status {
+            position: fixed; top: 52px; left: 12px;
+            font-size: 12px; font-weight: 700;
+            color: #22c55e; z-index: 10001;
+            opacity: 0; transition: opacity 0.3s ease;
+        }
+        .save-status.show { opacity: 1; }
+        @media print {
+            .edit-hotzone, .edit-toggle, .export-btn, .save-status { display: none !important; }
+            body { overflow: visible !important; }
+            .slide {
+                break-after: page;
+                break-inside: avoid;
+                page-break-after: always;
+                height: 100vh !important;
+                min-height: 100vh !important;
+                overflow: hidden !important;
+                display: flex !important;
+                flex-direction: column;
+                position: relative !important;
+            }
+            .slide:last-child { break-after: auto; page-break-after: auto; }
+            .slide .reveal, .slide .reveal-d1, .slide .reveal-d2, .slide .reveal-d3, .slide .reveal-d4 {
+                opacity: 1 !important;
+                transform: none !important;
+            }
+        }
+        @page { size: landscape; margin: 0; }
+
         /* TOC centering */
         .toc-grid-wrapper {
             flex: 1;
@@ -1197,77 +1310,112 @@ def main():
             align-items: center;
             gap: clamp(0.4rem, 0.8vw, 0.6rem);
         }
-        .mkt-stat-icon { font-size: clamp(1.2rem, 2vw, 1.6rem); }
+        .mkt-stat-icon { font-size: clamp(1.8rem, 3vw, 2.4rem); }
         .mkt-stat-value {
-            font-size: clamp(0.9rem, 1.6vw, 1.3rem);
+            font-size: clamp(1.3rem, 2.4vw, 1.8rem);
             font-weight: 800;
             color: var(--brand-dark);
             line-height: 1.1;
         }
         .mkt-stat-label {
-            font-size: clamp(0.45rem, 0.7vw, 0.6rem);
+            font-size: clamp(0.65rem, 1vw, 0.85rem);
             color: #6b7280;
             text-transform: uppercase;
             letter-spacing: 0.04em;
         }
         .mkt-section-label {
-            font-size: clamp(0.55rem, 0.9vw, 0.7rem);
+            font-size: clamp(0.8rem, 1.3vw, 1rem);
             font-weight: 700;
             color: var(--brand-dark);
             text-transform: uppercase;
             letter-spacing: 0.06em;
             padding-top: clamp(0.2rem, 0.3vh, 0.25rem);
         }
-        .mkt-verticals {
+        /* Two-column body: trends left 65%, verticals right 35% */
+        .mkt-body {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(clamp(100px, 14vw, 160px), 1fr));
-            gap: clamp(0.3rem, 0.5vw, 0.4rem);
+            grid-template-columns: 65fr 35fr;
+            gap: clamp(0.8rem, 1.5vw, 1.2rem);
+            flex: 1;
+            min-height: 0;
+            overflow: hidden;
+        }
+        .mkt-body-left, .mkt-body-right {
+            display: flex;
+            flex-direction: column;
+            gap: clamp(0.3rem, 0.5vh, 0.4rem);
+            min-height: 0;
+            overflow: hidden;
+        }
+        /* Trends — vertical stack */
+        .mkt-trends {
+            display: flex;
+            flex-direction: column;
+            gap: clamp(0.3rem, 0.5vh, 0.4rem);
             flex: 1;
             min-height: 0;
         }
-        .mkt-vert {
+        .mkt-trend {
             background: #fff;
             border: 1px solid #e5e7eb;
             border-radius: 6px;
-            padding: clamp(0.3rem, 0.6vw, 0.5rem);
-            overflow: hidden;
+            padding: clamp(0.4rem, 0.8vw, 0.6rem) clamp(0.5rem, 1vw, 0.8rem);
         }
-        .mkt-vert-name {
-            font-size: clamp(0.55rem, 0.9vw, 0.7rem);
+        .mkt-trend-header {
+            display: flex;
+            align-items: center;
+            gap: 0.4em;
+        }
+        .mkt-trend-icon { font-size: clamp(1rem, 1.5vw, 1.2rem); flex-shrink: 0; }
+        .mkt-trend-name {
+            font-size: clamp(0.8rem, 1.3vw, 1.05rem);
             font-weight: 700;
             color: var(--brand-dark);
-            margin-bottom: 0.15em;
-        }
-        .mkt-vert-size {
-            font-size: clamp(0.7rem, 1.2vw, 0.95rem);
-            font-weight: 800;
-            color: var(--brand-primary);
-            line-height: 1.2;
-        }
-        .mkt-vert-co {
-            font-size: clamp(0.4rem, 0.7vw, 0.55rem);
-            color: #6b7280;
-            line-height: 1.2;
-        }
-        .mkt-trends {
-            display: flex;
-            gap: clamp(0.4rem, 0.8vw, 0.6rem);
-        }
-        .mkt-trend {
             flex: 1;
+        }
+        .mkt-trend-badge {
+            font-size: clamp(0.55rem, 0.9vw, 0.7rem);
+            background: #f3f4f6;
+            color: #6b7280;
+            padding: 0.15em 0.5em;
+            border-radius: 4px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        .mkt-trend-detail {
+            font-size: clamp(0.65rem, 1.05vw, 0.85rem);
+            color: #6b7280;
+            margin-top: 0.2em;
+            line-height: 1.3;
+        }
+        /* Verticals — vertical list on the right */
+        .mkt-verticals-list {
+            display: flex;
+            flex-direction: column;
+            gap: clamp(0.25rem, 0.4vh, 0.35rem);
+            flex: 1;
+            min-height: 0;
+            overflow: hidden;
+        }
+        .mkt-verticals-list .mkt-vert {
             background: #fff;
             border: 1px solid #e5e7eb;
             border-radius: 6px;
-            padding: clamp(0.3rem, 0.6vw, 0.5rem);
-            display: flex;
-            gap: 0.4em;
-            align-items: flex-start;
+            padding: clamp(0.3rem, 0.5vw, 0.4rem) clamp(0.5rem, 0.8vw, 0.6rem);
         }
-        .mkt-trend-icon { font-size: clamp(0.8rem, 1.3vw, 1rem); flex-shrink: 0; }
-        .mkt-trend-text {
-            font-size: clamp(0.45rem, 0.75vw, 0.6rem);
-            line-height: 1.3;
-            color: #374151;
+        .mkt-vert-name {
+            font-size: clamp(0.7rem, 1.1vw, 0.9rem);
+            font-weight: 700;
+            color: var(--brand-dark);
+        }
+        .mkt-vert-size {
+            font-size: clamp(0.8rem, 1.3vw, 1.05rem);
+            font-weight: 800;
+            color: var(--brand-primary);
+        }
+        .mkt-vert-co {
+            font-size: clamp(0.55rem, 0.85vw, 0.7rem);
+            color: #9ca3af;
         }
 
         /* Clean KPI cards — white bg, colored top bar */
@@ -1318,6 +1466,95 @@ def main():
     # Combine: foundation base + competitor styles + swot+ope styles (from templates) + extra generated-only styles
     combined_css = apply_colors(css_foundation + '\n' + css_competitor + '\n' + css_swot_ope + '\n' + extra_css, colors)
     
+    # Inline editing JS (raw string — no f-string interpolation)
+    edit_js = '''
+        var editActive = false;
+        var editToggle = document.getElementById('editToggle');
+        var exportBtn = document.getElementById('exportBtn');
+        var hotzone = document.querySelector('.edit-hotzone');
+        var hideTimeout = null;
+        var saveStatus = document.getElementById('saveStatus');
+        
+        function toggleEdit() {
+            editActive = !editActive;
+            editToggle.classList.toggle('active', editActive);
+            exportBtn.classList.toggle('show', editActive);
+            document.querySelectorAll('h1,h2,h3,h4,p,li,span,.kpi-value-clean,.mkt-stat-value,.strategy-summary,.competitor-headline').forEach(function(el) {
+                el.contentEditable = editActive;
+                el.style.outline = editActive ? '1px dashed rgba(37,99,235,0.3)' : 'none';
+            });
+            if (editActive) {
+                editToggle.textContent = '\\u{270F}\\u{FE0F}';
+                editToggle.title = 'Editing... (E to exit)';
+                editToggle.style.background = '#22c55e';
+            } else {
+                editToggle.textContent = '\\u{270F}\\u{FE0F}';
+                editToggle.title = 'Edit mode (E)';
+                editToggle.style.background = '';
+                saveToServer();
+            }
+        }
+        
+        function saveToServer() {
+            saveStatus.textContent = 'Guardando...';
+            saveStatus.classList.add('show');
+            var savePath = window.location.pathname.replace(/^\\/mc/, '');
+            fetch(window.location.pathname, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'text/html; charset=utf-8' },
+                body: '<!DOCTYPE html>' + document.documentElement.outerHTML
+            }).then(function(r) { return r.json(); }).then(function(data) {
+                if (data.ok) {
+                    saveStatus.textContent = '\\u{2705} Guardado';
+                    saveStatus.style.color = '#22c55e';
+                } else {
+                    saveStatus.textContent = '\\u{274C} Error';
+                    saveStatus.style.color = '#ef4444';
+                }
+                setTimeout(function() { saveStatus.classList.remove('show'); }, 2000);
+            }).catch(function(err) {
+                saveStatus.textContent = '\\u{274C} ' + err.message;
+                saveStatus.style.color = '#ef4444';
+                setTimeout(function() { saveStatus.classList.remove('show'); }, 3000);
+            });
+        }
+        
+        function exportPDF() {
+            document.querySelectorAll('.edit-hotzone,.edit-toggle,.export-btn,.save-status').forEach(function(el) { el.style.display = 'none'; });
+            document.querySelectorAll('.slide').forEach(function(s) {
+                s.classList.add('visible');
+                s.style.opacity = '1';
+            });
+            document.querySelectorAll('.reveal,.reveal-d1,.reveal-d2,.reveal-d3,.reveal-d4').forEach(function(el) {
+                el.style.opacity = '1';
+                el.style.transform = 'none';
+            });
+            window.print();
+            setTimeout(function() {
+                document.querySelectorAll('.edit-hotzone,.edit-toggle,.export-btn,.save-status').forEach(function(el) { el.style.display = ''; });
+            }, 500);
+        }
+        
+        editToggle.addEventListener('click', toggleEdit);
+        exportBtn.addEventListener('click', exportPDF);
+        hotzone.addEventListener('mouseenter', function() { clearTimeout(hideTimeout); editToggle.classList.add('show'); exportBtn.classList.toggle('show', editActive); });
+        hotzone.addEventListener('mouseleave', function() { hideTimeout = setTimeout(function() { if (!editActive) { editToggle.classList.remove('show'); exportBtn.classList.remove('show'); } }, 400); });
+        editToggle.addEventListener('mouseenter', function() { clearTimeout(hideTimeout); });
+        editToggle.addEventListener('mouseleave', function() { hideTimeout = setTimeout(function() { if (!editActive) { editToggle.classList.remove('show'); exportBtn.classList.remove('show'); } }, 400); });
+        
+        document.addEventListener('keydown', function(e) {
+            if ((e.key === 'e' || e.key === 'E') && !e.target.getAttribute('contenteditable')) toggleEdit();
+            if (e.key === 's' && (e.ctrlKey || e.metaKey)) {
+                e.preventDefault();
+                saveToServer();
+            }
+            if (e.key === 'p' && (e.ctrlKey || e.metaKey)) {
+                e.preventDefault();
+                exportPDF();
+            }
+        });
+    '''
+    
     # 6. Assemble final HTML
     html = f'''<!DOCTYPE html>
 <html lang="en">
@@ -1332,6 +1569,10 @@ def main():
     </style>
 </head>
 <body>
+    <div class="edit-hotzone"></div>
+    <button class="edit-toggle" id="editToggle" title="Edit mode (E)">✏️</button>
+    <button class="export-btn" id="exportBtn" title="Export PDF (Ctrl+P)">📄 PDF</button>
+    <div class="save-status" id="saveStatus"></div>
 {slides_html}
 
     <script>
@@ -1339,6 +1580,8 @@ def main():
             entries.forEach(e => e.target.classList.toggle('visible', e.isIntersecting));
         }}, {{ threshold: 0.15 }});
         document.querySelectorAll('.slide').forEach(s => io.observe(s));
+
+        {edit_js}
 
         const slides = [...document.querySelectorAll('.slide')];
         document.addEventListener('keydown', e => {{

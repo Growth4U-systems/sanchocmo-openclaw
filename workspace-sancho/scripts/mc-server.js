@@ -753,6 +753,26 @@ http.createServer((req, res) => {
   if (url.startsWith('/mc/')) url = url.slice(3);
   if (url === '/' || url === '/mc') url = '/mission-control.html';
 
+  // === PUT handler: save presentations ===
+  if (req.method === 'PUT' && url.match(/^\/brand\/[^/]+\/presentations\/[^/]+\.html$/)) {
+    const fullPath = path.join(BASE, url.slice(1));
+    if (!path.resolve(fullPath).startsWith(path.resolve(BASE)) || url.includes('..')) {
+      res.writeHead(403); res.end('Forbidden'); return;
+    }
+    let body = '';
+    req.on('data', chunk => { body += chunk; if (body.length > 10e6) { req.destroy(); } });
+    req.on('end', () => {
+      try {
+        fs.writeFileSync(fullPath, body, 'utf-8');
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true, size: body.length }));
+      } catch (e) {
+        res.writeHead(500); res.end('Write failed: ' + e.message);
+      }
+    });
+    return;
+  }
+
   // === PUT handler: save edited docs ===
   if (req.method === 'PUT' && url.startsWith('/docs/')) {
     const rest = url.replace('/docs/', '');
@@ -763,7 +783,7 @@ http.createServer((req, res) => {
     const subPath = parts.slice(1).join('/');
     const fullPath = path.join(rootPath, subPath);
     // Security
-    if (!path.resolve(fullPath).startsWith(path.resolve(rootPath)) || !fullPath.endsWith('.md') || subPath.includes('..')) {
+    if (!path.resolve(fullPath).startsWith(path.resolve(rootPath)) || (!fullPath.endsWith('.md') && !fullPath.endsWith('.html')) || subPath.includes('..')) {
       res.writeHead(403); res.end('Forbidden'); return;
     }
     let body = '';
@@ -1262,10 +1282,33 @@ http.createServer((req, res) => {
     return;
   }
 
-  // === Legacy /brand/ redirect to /docs/brand/ ===
-  if (url.startsWith('/brand/') || url === '/brand') {
-    const rest = url.replace('/brand', '/docs/brand');
-    res.writeHead(301, { 'Location': '/mc' + rest });
+  // === Serve /brand/ files directly (presentations, etc.) ===
+  if (url.startsWith('/brand/') && req.method === 'GET') {
+    const fullPath = path.join(BASE, url.slice(1));
+    if (!path.resolve(fullPath).startsWith(path.resolve(BASE)) || url.includes('..')) {
+      res.writeHead(403); res.end('Forbidden'); return;
+    }
+    try {
+      const stat = fs.statSync(fullPath);
+      if (stat.isFile()) {
+        const ext = path.extname(fullPath).toLowerCase();
+        const mime = MIME[ext] || 'application/octet-stream';
+        const data = fs.readFileSync(fullPath);
+        res.writeHead(200, { 'Content-Type': mime });
+        res.end(data);
+        return;
+      }
+      // Directory: redirect to docs viewer
+      const rest = url.replace('/brand', '/docs/brand');
+      res.writeHead(301, { 'Location': '/mc' + rest });
+      res.end();
+    } catch {
+      res.writeHead(404); res.end('Not found');
+    }
+    return;
+  }
+  if (url === '/brand') {
+    res.writeHead(301, { 'Location': '/mc/docs/brand/' });
     res.end();
     return;
   }

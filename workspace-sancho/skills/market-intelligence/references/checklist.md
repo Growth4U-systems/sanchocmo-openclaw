@@ -100,9 +100,13 @@
 
 - [ ] **Bloque `## Slide Summary` existe** al final del informe (antes de Fuentes)
 - [ ] **YAML válido** — parseable con `yaml.parse()`
-- [ ] **hero_metrics completo** — total_entities, entity_label, tam_annual, ecosystem_value, ecosystem_label
-- [ ] **verticals completo** — 4-6 verticals con name, tam, cagr (o null), source, entities
-- [ ] **trends completo** — 3+ trends, cada uno con: trend (título), insight (por qué importa), data (dato + fuente), horizon
+- [ ] **hero_metrics** — total_entities, entity_label, tam_annual, ecosystem_value, ecosystem_label
+- [ ] **market_profile** — maturity, maturity_signal, growth_historical, growth_projected, growth_source
+- [ ] **verticals** — 4-6 con name, tam, cagr (o null), source, entities
+- [ ] **competitive_landscape** — concentration, total_players, top_3 (name + share), white_space
+- [ ] **trends** — 3+ trends, cada uno con: trend, insight, data, horizon, impact, winners, losers, action
+- [ ] **regulatory** — risk_level (semáforo), key_constraint, marketing_impact
+- [ ] **opportunity** — primary, gap, timing, risk
 - [ ] **sam = null** — NO calcular SAM aquí (lo hace niche-discovery)
 - [ ] **Coherente con el informe** — cada dato del slide rastreable a una sección del documento
 

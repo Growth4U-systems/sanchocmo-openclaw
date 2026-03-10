@@ -1,55 +1,58 @@
-# Sancho Observations — 2026-03-08
+# Sancho Observations — 2026-03-09
 
 ## Resumen Ejecutivo
-Sancho funcionando correctamente. Sin errores detectados. Few pending items awaiting Alfonso's input.
+
+Sancho tuvo ~18 sesiones activas en las últimas 24h. La mayoría funcionó correctamente, pero hay **1 error crítico** que requiere atención.
 
 ---
 
-## Sesiones (últimas 24h)
+## ✅ Lo que funcionó bien
 
-| Canal | Actividad | Status |
-|-------|-----------|--------|
-| **#visual-identity-snapshot-growth4u** | Generó mockups de personajes (martin-ref, philippe-ref) en variantes light/dark | ✅ Listo, esperando respuesta de Alfonso (estilo visual) |
-| **#métricas-y-kpis** | Instaló skill `acquisition-metrics-plan`, probó con 2 arquetipos, propuso cambios en sistema | ✅ Esperando aprobación de Alfonso |
-| **#status-siguiente-paso-growth4u** | Recordó a Alfonso la pregunta pendiente de Visual Identity | ✅ Bien |
-| **#c-mo-acceder-a-brand-de-forma-eficiente** | Explicó el sistema de routing arreglado | ✅ Completo |
-| **Cron: funnel-watchdog** | Ejecutó script de watchdog de funnels | ✅ OK |
-| **Cron: cost-tracker-daily** | Reportó $758.81 gastados (proyección $3,360/month) | ✅ Sin alertas individuales (alerts: []) |
-| **Cron: Regenerar Dashboard** | 43 tasks, 50 eventos, 35/56 pilares | ✅ OK |
-| **Heartbeat** | Revisó emails + calendar, cita Martin Test el lunes 12:30 | ✅ OK |
+| Sesión | Canal | Estado |
+|--------|-------|--------|
+| Weekly Synthesis | Cron | ✅ Completó análisis, publicó en #learning con patrón de hilo |
+| Daily Pulse (HC) | Cron | ✅ Publicó correctamente en #intelligence |
+| Funnel Watchdog | Cron | ✅ OK, no necesitó notificación |
+| Heartbeat | Cron | ✅ Detectó evento <2h (Paco-Alfonso 09:15) y notificó |
+| Growth4U slides | Discord | ✅ Frontend slides actualizados correctamente |
+| Phase-2 ejecución | Discord | ✅ Trabajando en landing page |
 
 ---
 
-## Errores / Skills Fallidas
-- **Ninguno detectado**. La skill `acquisition-metrics-plan` se instaló correctamente y los tests pasaron.
+## ❌ Problemas Detectados
+
+### 🔴 URGENTE — Error API en Onboarding Philippe
+
+**Sesión**: `agent:sancho:discord:channel:1479491097880301709` (Onboarding #presentación-1)
+
+**Error**:
+```
+400 {"type":"error","error":{"type":"invalid_request_error",
+"message":"messages.17.content.28: `thinking` or `redacted_thinking` 
+blocks in the latest assistant message cannot be modified."}}
+```
+
+**Impacto**: Philippe pidió presentación de Mercado + Competidores para el martes (deadline próxima). **Sancho NO pudo responder**. El error ocurrió 2 veces consecutivas.
+
+**Causa probable**: Bug en el modelo Anthropic al intentar modificar respuestas con thinking blocks. Puede estar relacionado con recovery de sesión o historial corrupto.
 
 ---
 
-## Preguntas Pendientes (de Sancho a usuario)
-1. **Visual Identity Full — Step 0**: 8 opciones de estilo visual para imágenes generadas. Alfonso no ha respondido aún.
-2. **Cambios propuestos en sistema**: skill-routing.md + cherry-pick en brand-memory.md. Esperando aprobación.
+## 📊 Estadísticas
+
+- **Sesiones totales**: ~18
+- **Exitosas**: ~17
+- **Fallidas**: 1 (onboarding Philippe)
+- **Errores API**: 1
 
 ---
 
-## Reglas de Canal
-- ✅ Usa canales correctos
-- ✅ Menciones apropiadas (@1334604955687977042)
-- ✅ Pide aprobación antes de cambios en archivos del sistema
-- ✅ No publica contenido largo en canales inadecuados
+## ⚠️ Issues Operativos (ya documentados)
+
+- Google Workspace: CAÍDO desde 27 Feb
+- Brave: CAÍDO desde 5 Mar
+- Discord fotos: rotas para Alfonso
 
 ---
 
-## Patrones de Mejora
-- **Proactividad**: Instaló y verificó nueva skill motu proprio
-- **Gestión de contexto**: Recordó a Alfonso la pregunta pendiente sin que se lo pidieran
-- **Comunicación**: Estructurada, con resúmenes y emojis consistentes
-- **Testing**: Verificó la skill con múltiples arquetipos antes de proponer
-
----
-
-## Notas para Cervantes
-- El cost tracker muestra $95/día vs threshold $50, pero no hay alertas individuales (el script no disparó)
-- El heartbeat detectó Mailgun API Key eliminada — worth verificar (no urgente)
-- Foundation 35/56 pilares completados, Visual Identity es el último pilar
-
----
+*Observación: 2026-03-09 10:03 UTC*

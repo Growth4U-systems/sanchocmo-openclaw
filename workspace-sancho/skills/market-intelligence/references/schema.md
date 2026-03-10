@@ -191,6 +191,13 @@
     "ecosystem_value": "110.000B€",
     "ecosystem_label": "Ecosistema Tech"
   },
+  "market_profile": {
+    "maturity": "Growing",
+    "maturity_signal": "Crecimiento 15-20% anual, nuevos entrantes cada trimestre",
+    "growth_historical": "18% CAGR últimos 5 años",
+    "growth_projected": "22% CAGR 2025-2030",
+    "growth_source": "Grand View Research 2024"
+  },
   "verticals": [
     {
       "name": "SaaS / IA",
@@ -198,23 +205,39 @@
       "cagr": null,
       "source": "pro",
       "entities": "3.510 SaaS companies, 774 funded"
-    },
-    {
-      "name": "Healthtech",
-      "tam": "$6.530M (2024)",
-      "cagr": "22.4%",
-      "source": "Databricks",
-      "entities": "650+ health tech companies, 482 funded"
     }
   ],
+  "competitive_landscape": {
+    "concentration": "Fragmentado",
+    "total_players": "50+",
+    "top_3": [
+      { "name": "Player A", "estimated_share": "15%" }
+    ],
+    "white_space": "Nadie domina el segmento X"
+  },
   "trends": [
     {
       "trend": "La revolución GEO",
-      "insight": "Google AI Overviews reduce CTR orgánico 25-30%. Adaptar SEO a respuestas generativas o perder visibilidad.",
+      "insight": "Google AI Overviews reduce CTR orgánico 25-30%.",
       "data": "61% de búsquedas B2B ya no generan clic [SparkToro 2025]",
-      "horizon": "Now"
+      "horizon": "Now",
+      "impact": "Alto",
+      "winners": "Empresas con contenido estructurado y autoridad de dominio",
+      "losers": "Webs que dependen de long-tail SEO sin marca",
+      "action": "Adaptar content strategy a GEO"
     }
   ],
+  "regulatory": {
+    "risk_level": "🟡 Medio",
+    "key_constraint": "GDPR + AI Act",
+    "marketing_impact": "No se puede hacer X. Sí se puede Z."
+  },
+  "opportunity": {
+    "primary": "La oportunidad #1 en 2-3 frases",
+    "gap": "Necesidad no cubierta",
+    "timing": "Por qué ahora",
+    "risk": "Mayor riesgo"
+  },
   "sam": null
 }
 ```

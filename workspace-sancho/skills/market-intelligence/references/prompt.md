@@ -558,22 +558,68 @@ slide_summary:
       source: "IMARC Group"
       entities: ">400 entidades no bancarias"
 
+  # --- MARKET PROFILE ---
+  market_profile:
+    maturity: "Growing"                    # Emerging/Growing/Mature/Declining
+    maturity_signal: "Crecimiento 15-20% anual, nuevos entrantes cada trimestre, funding activo"
+    growth_historical: "18% CAGR últimos 5 años"
+    growth_projected: "22% CAGR 2025-2030"
+    growth_source: "Grand View Research 2024"
+
+  # --- COMPETITIVE LANDSCAPE ---
+  competitive_landscape:
+    concentration: "Fragmentado"           # Fragmentado/Moderado/Consolidado
+    total_players: "50+"
+    top_3:
+      - name: "Player A"
+        estimated_share: "15%"
+      - name: "Player B"
+        estimated_share: "10%"
+      - name: "Player C"
+        estimated_share: "8%"
+    white_space: "Nadie domina el segmento X — oportunidad de posicionamiento"
+
   # --- MARKET TRENDS (la sección más importante del slide) ---
-  # Cada trend debe ser autoexplicativa: qué está pasando, por qué importa, y dato de respaldo.
+  # Cada trend cuenta una historia completa: qué pasa → dato → quién gana → quién pierde → qué hacer.
   # No hay límite rígido de líneas — lo que necesite para entenderse al leerlo.
   trends:
     - trend: "La revolución GEO"
       insight: "Google AI Overviews reduce CTR orgánico un 25-30%. Las empresas que no adapten su SEO a respuestas generativas perderán visibilidad en 12-18 meses."
       data: "61% de búsquedas B2B ya no generan clic [SparkToro 2025]"
       horizon: "Now"
+      impact: "Alto"                       # Alto/Medio/Bajo — impacto en ESTE mercado
+      winners: "Empresas con contenido estructurado y autoridad de dominio"
+      losers: "Webs que dependen de long-tail SEO sin marca"
+      action: "Adaptar content strategy a GEO: structured data, topical authority, brand mentions"
     - trend: "El comprador B2B ya no quiere hablar con ventas"
       insight: "El 70% del buyer journey ocurre antes del primer contacto con ventas. El contenido educativo y self-serve reemplaza al SDR como primer touchpoint."
       data: "61-70% prefiere investigar online sin hablar con ventas [Gartner 2025]"
       horizon: "Now"
+      impact: "Alto"
+      winners: "Empresas con content engine fuerte y producto self-serve"
+      losers: "Equipos de ventas tradicionales sin contenido educativo"
+      action: "Invertir en contenido bottom-funnel y producto freemium/demo"
     - trend: "IA como commodity — la diferenciación se mueve a datos y workflow"
       insight: "Todas las herramientas de marketing tendrán IA. La ventaja competitiva pasa a quién tiene mejores datos propietarios y workflows más integrados."
       data: "87% de CMOs planean integrar IA en su stack en 2025 [Salesforce State of Marketing]"
       horizon: "6mo"
+      impact: "Medio"
+      winners: "Plataformas con datos propietarios y workflows integrados"
+      losers: "Herramientas wrapper de APIs genéricas sin moat"
+      action: "Construir data moat propio, no depender solo de modelo IA"
+
+  # --- REGULATORY SIGNAL ---
+  regulatory:
+    risk_level: "🟡 Medio"                # 🟢 Bajo / 🟡 Medio / 🔴 Alto
+    key_constraint: "GDPR + AI Act limitan personalización y claims automatizados"
+    marketing_impact: "No se puede hacer X, Y. Sí se puede Z."
+
+  # --- KEY OPPORTUNITY (cierre estratégico) ---
+  opportunity:
+    primary: "La oportunidad #1 en 2-3 frases con contexto completo"
+    gap: "Qué necesidad del mercado no está cubierta y por qué"
+    timing: "Por qué AHORA es el momento y no dentro de 2 años"
+    risk: "El mayor riesgo de perseguir esta oportunidad"
 
   # --- SAM (se rellena post niche-discovery) ---
   sam: null  # Pending: se calcula en niche-discovery cuando se eligen ECPs
@@ -584,7 +630,11 @@ slide_summary:
 1. Datos SOLO del informe — extraer y comprimir, no inventar
 2. YAML válido — la skill de slides hace `yaml.parse()` y tiene todo
 3. Autosuficiente — con solo este bloque se genera la slide sin leer el resto
-4. `hero_metrics` son los 3 números más impactantes del mercado
-5. `verticals` con TAM individual + CAGR + fuente + nº entidades (matchea tarjetas del slide)
-6. `trends` como bullets concisos con fuente inline
-7. `sam` siempre `null` aquí — lo rellena niche-discovery después
+4. `hero_metrics` — los 3 números más impactantes del mercado
+5. `market_profile` — madurez + crecimiento con fuente
+6. `verticals` — TAM individual + CAGR + fuente + nº entidades
+7. `competitive_landscape` — concentración + top 3 + white space
+8. `trends` — la sección más rica: cada trend con insight + data + impact + winners/losers + action
+9. `regulatory` — semáforo + constraint + impacto en marketing
+10. `opportunity` — gap + timing + risk (el "so what" final)
+11. `sam` siempre `null` aquí — lo rellena niche-discovery después
