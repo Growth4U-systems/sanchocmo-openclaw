@@ -1,6 +1,7 @@
 # Company Brief — Hospital Capilar
 
-> Versión: v1.1 | Fecha: 2026-03-03 | Fuente: Onboarding con Philippe (Growth4U)
+> Versión: v1.2 | Fecha: 2026-03-10 | Fuente: Onboarding con Philippe (Growth4U) + Reunión análisis mercado/competidores 10/03/2026
+> Cambios v1.2: Stripe + Koibox integración, producto tienda online analítica hormonal, pricing benchmarks externos
 
 ---
 
@@ -38,10 +39,24 @@ Piloto en Madrid → escalar a las demás clínicas.
 
 ### Oferta en Test
 
-- Consulta diagnóstico completo: precio variable en prueba (€50 - €195)
+- Consulta diagnóstico completo: precio variable en prueba (€25, €50, €100, €195)
+- Consulta completa €195: tricoscopía + analítica hormonal + consulta médica (descontable del bono si contrata)
 - Cross-sell a bonos de tratamiento: ~€820
 - 3 flujos de quiz en paralelo: corto sin pago, con pago variable, largo sin pago
+- Opción adicional: filtro previo con asesor antes de pago + quiz largo para calificar antes de consulta paga
 - Mandato de dirección: **cuestionar todas las suposiciones**
+
+**Benchmarks externos analítica hormonal:**
+- Eurofins: €229 perfil hormonal alopecia
+- Biolabs: €35 perfil hormonal
+- Otros laboratorios: €289 perfil alopecia mujer
+
+### Infraestructura Técnica
+
+- **Pasarela de pago:** Stripe (confirmado)
+- **Producto tienda online:** Crear producto para analítica hormonal (bono diagnóstico)
+- **Agenda:** Koibox — si el paciente paga el bono, se agenda automáticamente en Koibox
+- **Integraciones pendientes:** Koibox + DNS + Salesforce
 
 ### Objeciones Principales del Paciente
 

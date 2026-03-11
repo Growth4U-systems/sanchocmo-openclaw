@@ -15,22 +15,23 @@ brand/{slug}/
 │   ├── v1.md, v2.md...   ← Versiones históricas
 │   └── history.json
 ├── market-and-us/
-│   ├── market-analysis.md      ← TAM, segmentos, tendencias, regulación
-│   ├── competitor-{nombre}.md  ← Battle card por competidor
-│   ├── self-analysis.md        ← 3 lentes de autopercepción
-│   ├── summary.md              ← Síntesis: mercado + competidores + nosotros
-│   ├── swot.md                 ← SWOT + TOWS estratégico
-│   ├── ope-canvas.md           ← One-Page Endgame (foto completa en 1 página)
-│   └── sources/                ← Datos raw de scrapers
+│   ├── market/current.md           ← TAM, segmentos, tendencias, regulación
+│   ├── competitors/{nombre}/current.md  ← Battle card por competidor
+│   ├── self/current.md             ← 3 lentes de autopercepción
+│   ├── summary/current.md          ← Síntesis: mercado + competidores + nosotros
+│   ├── swot/current.md             ← SWOT + TOWS estratégico
+│   ├── ope-canvas/current.md       ← One-Page Endgame (foto completa en 1 página)
+│   └── sources/                    ← Datos raw de scrapers
 ├── go-to-market/
-│   ├── ecps.md                 ← Perfiles ECP con JTBD integrado
-│   ├── positioning-{ecp-slug}.md ← Messaging playbook por ECP
-│   ├── pricing.md              ← Framework de pricing + hooks
-│   ├── metrics-plan.md         ← Sistema de métricas por arquetipo + Excel template
-│   └── messaging-summary.md    ← Síntesis GTM
+│   ├── ecps/current.md                     ← Perfiles ECP con JTBD integrado
+│   ├── positioning/{ecp-slug}/current.md   ← Messaging playbook por ECP
+│   ├── positioning/shared/                 ← Tier 2: value-criteria, assets, messaging-summary
+│   ├── pricing/current.md                  ← Framework de pricing + hooks
+│   ├── existing-customer-data/current.md   ← Datos clientes existentes (opcional)
+│   └── metrics-plan.md                     ← Sistema de métricas por arquetipo + Excel template
 ├── brand-identity/
-│   ├── voice-profile.md        ← Brand voice
-│   └── visual-identity.md      ← Sistema visual
+│   ├── voice-profile/current.md    ← Brand voice
+│   └── visual-identity/current.md  ← Sistema visual
 └── operational/
     ├── budget.md               ← Presupuesto detallado (viene de company-brief)
     ├── assets.md

@@ -7,7 +7,7 @@
       "name": "Daily Pulse",
       "enabled": true,
       "createdAtMs": 1771950688301,
-      "updatedAtMs": 1773043382858,
+      "updatedAtMs": 1773129755288,
       "schedule": {
         "kind": "cron",
         "expr": "0 9 * * 1-5",
@@ -26,11 +26,11 @@
         "to": "channel:1475638253154603170"
       },
       "state": {
-        "nextRunAtMs": 1773129600000,
-        "lastRunAtMs": 1773043200011,
+        "nextRunAtMs": 1773216000000,
+        "lastRunAtMs": 1773129600011,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 182847,
+        "lastDurationMs": 155277,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0,
         "lastDelivered": false
@@ -77,7 +77,7 @@
       "name": "Regenerar Dashboard",
       "enabled": true,
       "createdAtMs": 1771950708148,
-      "updatedAtMs": 1773082824683,
+      "updatedAtMs": 1773169303035,
       "schedule": {
         "kind": "cron",
         "expr": "0 8,12,16,20 * * *",
@@ -95,11 +95,11 @@
         "channel": "last"
       },
       "state": {
-        "nextRunAtMs": 1773126000000,
-        "lastRunAtMs": 1773082800014,
+        "nextRunAtMs": 1773212400000,
+        "lastRunAtMs": 1773169200017,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 24669,
+        "lastDurationMs": 103018,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0,
         "lastDelivered": false
@@ -111,7 +111,7 @@
       "name": "Meeting Intelligence",
       "enabled": true,
       "createdAtMs": 1771950715725,
-      "updatedAtMs": 1773075826063,
+      "updatedAtMs": 1773162272176,
       "schedule": {
         "kind": "cron",
         "expr": "0 18 * * 1-5",
@@ -130,11 +130,11 @@
         "to": "channel:1475638253154603170"
       },
       "state": {
-        "nextRunAtMs": 1773162000000,
-        "lastRunAtMs": 1773075600012,
+        "nextRunAtMs": 1773248400000,
+        "lastRunAtMs": 1773162000017,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 226051,
+        "lastDurationMs": 272159,
         "lastDelivered": false,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0
@@ -208,7 +208,7 @@
       "name": "backup-sancho",
       "enabled": true,
       "createdAtMs": 1772069600272,
-      "updatedAtMs": 1773021856880,
+      "updatedAtMs": 1773108082516,
       "schedule": {
         "kind": "cron",
         "expr": "0 3 * * *"
@@ -225,11 +225,11 @@
         "channel": "last"
       },
       "state": {
-        "nextRunAtMs": 1773108000000,
-        "lastRunAtMs": 1773021600012,
+        "nextRunAtMs": 1773194400000,
+        "lastRunAtMs": 1773108000010,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 256868,
+        "lastDurationMs": 82506,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0,
         "lastDelivered": false
@@ -241,7 +241,7 @@
       "name": "healthcheck",
       "enabled": true,
       "createdAtMs": 1772069609685,
-      "updatedAtMs": 1773086696772,
+      "updatedAtMs": 1773173113300,
       "schedule": {
         "kind": "every",
         "everyMs": 21600000,
@@ -261,11 +261,11 @@
         "channel": "last"
       },
       "state": {
-        "nextRunAtMs": 1773108259193,
-        "lastRunAtMs": 1773086659193,
+        "nextRunAtMs": 1773194659251,
+        "lastRunAtMs": 1773173059251,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 37579,
+        "lastDurationMs": 54049,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0,
         "lastDelivered": false
@@ -278,7 +278,7 @@
       "description": "T-022: Run cost-tracker.py daily at 23:00",
       "enabled": true,
       "createdAtMs": 1772069993394,
-      "updatedAtMs": 1773093688546,
+      "updatedAtMs": 1773180154394,
       "schedule": {
         "kind": "cron",
         "expr": "0 23 * * *"
@@ -295,14 +295,14 @@
         "channel": "webchat"
       },
       "state": {
-        "nextRunAtMs": 1773180000000,
-        "lastRunAtMs": 1773093600012,
-        "lastRunStatus": "ok",
-        "lastStatus": "ok",
-        "lastDurationMs": 88534,
-        "lastDeliveryStatus": "not-delivered",
-        "consecutiveErrors": 0,
-        "lastDelivered": false
+        "nextRunAtMs": 1773266400000,
+        "lastRunAtMs": 1773180000019,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 154375,
+        "lastDeliveryStatus": "not-requested",
+        "consecutiveErrors": 1,
+        "lastError": "Error: All models failed (3): minimax/MiniMax-M2.5: LLM request timed out. (timeout) | anthropic/claude-sonnet-4-5: LLM request timed out. (timeout) | anthropic/claude-opus-4-6: LLM request timed out. (timeout)"
       }
     },
     {
@@ -311,7 +311,7 @@
       "name": "Cervantes observa a Sancho",
       "enabled": true,
       "createdAtMs": 1772115026027,
-      "updatedAtMs": 1773047109843,
+      "updatedAtMs": 1773133398657,
       "schedule": {
         "kind": "cron",
         "expr": "0 10 * * *",
@@ -329,11 +329,11 @@
         "channel": "last"
       },
       "state": {
-        "nextRunAtMs": 1773133200000,
-        "lastRunAtMs": 1773047005428,
+        "nextRunAtMs": 1773219600000,
+        "lastRunAtMs": 1773133200010,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 104415,
+        "lastDurationMs": 198647,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0,
         "lastDelivered": false
@@ -374,7 +374,7 @@
       "name": "funnel-watchdog",
       "enabled": true,
       "createdAtMs": 1772667196949,
-      "updatedAtMs": 1773107430071,
+      "updatedAtMs": 1773193958966,
       "schedule": {
         "kind": "every",
         "everyMs": 900000,
@@ -391,14 +391,14 @@
         "mode": "none"
       },
       "state": {
-        "nextRunAtMs": 1773108321077,
-        "lastRunAtMs": 1773107421077,
+        "nextRunAtMs": 1773194846257,
+        "lastRunAtMs": 1773193946257,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 8994,
-        "lastDelivered": false,
+        "lastDurationMs": 12709,
         "lastDeliveryStatus": "not-delivered",
-        "consecutiveErrors": 0
+        "consecutiveErrors": 0,
+        "lastDelivered": false
       }
     },
     {
@@ -408,7 +408,7 @@
       "name": "cost-tracker-daily",
       "enabled": true,
       "createdAtMs": 1772750911798,
-      "updatedAtMs": 1773039684851,
+      "updatedAtMs": 1773126088562,
       "schedule": {
         "kind": "cron",
         "expr": "0 8 * * *",
@@ -425,14 +425,66 @@
         "mode": "none"
       },
       "state": {
-        "nextRunAtMs": 1773126000000,
-        "lastRunAtMs": 1773039646742,
+        "nextRunAtMs": 1773212400000,
+        "lastRunAtMs": 1773126052906,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 38109,
+        "lastDurationMs": 35656,
         "lastDelivered": false,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0
+      }
+    },
+    {
+      "id": "4eda3a87-1b19-4932-8c7d-d4b1971d53e3",
+      "agentId": "sancho",
+      "sessionKey": "agent:sancho:discord:channel:1477997447845511228",
+      "name": "Meta Ads → Slack Daily Report",
+      "enabled": false,
+      "createdAtMs": 1773153244084,
+      "updatedAtMs": 1773181893013,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 9 * * *",
+        "tz": "Europe/Madrid"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Ejecuta el script de Meta Ads report: `bash scripts/meta-ads-slack-report.sh`. Las variables de entorno necesarias son META_ADS_TOKEN, META_AD_ACCOUNT (act_1507778460268244), y SLACK_WEBHOOK_META. Léelas del archivo scripts/.meta-ads-env si existe. Si el script falla, reporta el error en el hilo original (thread 1480928234576281732, canal discord). Si funciona, no hace falta reportar.",
+        "timeoutSeconds": 120
+      },
+      "delivery": {
+        "mode": "none"
+      },
+      "state": {}
+    },
+    {
+      "id": "c586f8ed-7b4b-47b7-b5ca-89ebb7baaf3b",
+      "agentId": "sancho",
+      "sessionKey": "agent:sancho:discord:channel:1480154276205433035",
+      "name": "image-optimizer",
+      "enabled": true,
+      "createdAtMs": 1773187213085,
+      "updatedAtMs": 1773187213085,
+      "schedule": {
+        "kind": "every",
+        "everyMs": 21600000,
+        "anchorMs": 1773187213085
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Run the image optimization script: exec `cd /Users/ragi/.openclaw/workspace-sancho && ./scripts/optimize-all-brands.sh`. If images were optimized, report the count and savings. If none found, do nothing.",
+        "timeoutSeconds": 120
+      },
+      "delivery": {
+        "mode": "none"
+      },
+      "state": {
+        "nextRunAtMs": 1773208813085
       }
     }
   ]

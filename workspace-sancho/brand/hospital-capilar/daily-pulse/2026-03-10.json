@@ -1,0 +1,63 @@
+{
+  "date": "2026-03-10",
+  "client": "hospital-capilar",
+  "guild": "1475635138108063746",
+  "sources": {
+    "discord": {
+      "channels_checked": [
+        "general",
+        "brand",
+        "campaigns",
+        "content",
+        "intelligence",
+        "onboarding",
+        "soporte",
+        "research",
+        "paid-ads"
+      ],
+      "active_channels_last_24h": ["intelligence", "onboarding", "soporte"]
+    }
+  },
+  "insights": [
+    {
+      "type": "pain_point",
+      "source": "onboarding",
+      "summary": "Error LLM impide responder a Philippe en onboarding",
+      "detail": "Philippe recibió error 'LLM request rejected: thinking or redacted_thinking blocks cannot be modified' al intentar ampliar un análisis. Necesita resolución.",
+      "timestamp": "2026-03-09T17:42:09Z",
+      "priority": "high"
+    },
+    {
+      "type": "context_update",
+      "source": "onboarding",
+      "summary": "Contexto actualizado: casos donde pedir bono diagnóstico",
+      "detail": "Philippe agregó contexto sobre cuándo es mejor pedir el bono de diagnóstico: mujeres con alopecias raras (areata, frontal fibrosante) y efluvios telógenos. Estos casos requieren analítica casi segura.",
+      "timestamp": "2026-03-09T17:42:31Z",
+      "priority": "medium"
+    },
+    {
+      "type": "system_status",
+      "source": "soporte",
+      "summary": "Servicios recuperados: openclaw operativo",
+      "detail": "Health check de las 08:04 confirma que openclaw volvió a funcionar tras caída de la noche anterior.",
+      "timestamp": "2026-03-09T08:04:54Z",
+      "priority": "low"
+    },
+    {
+      "type": "system_alert",
+      "source": "soporte",
+      "summary": "Caída de servicios durante la noche",
+      "detail": "Health check de las 02:04 UTC detectó nuevo fallo: openclaw caído. Se recuperó durante la mañana.",
+      "timestamp": "2026-03-09T02:04:36Z",
+      "priority": "medium"
+    }
+  ],
+  "action_items": [
+    {
+      "item": "Investigar y resolver error LLM de Philippe en onboarding",
+      "priority": "high",
+      "owner": "sancho"
+    }
+  ],
+  "generated_at": "2026-03-10T08:00:00Z"
+}

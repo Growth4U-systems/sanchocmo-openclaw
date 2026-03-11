@@ -1,4 +1,20 @@
 {
   "version": 1,
-  "bindings": {}
+  "bindings": {
+    "default:1480904510678241301": {
+      "accountId": "default",
+      "channelId": "1477995837719056463",
+      "threadId": "1480904510678241301",
+      "targetKind": "subagent",
+      "targetSessionKey": "agent:sancho:subagent:b7fb867d-50de-4a1d-a9cf-25351742b56b",
+      "agentId": "sancho",
+      "webhookId": "1480904512746160141",
+      "webhookToken": "zjSpVBx31FopcmyxsqKR5svz0Ni1372z12SsyaHPg3uBLLe472nZS0kZrys_uLlgn6bZ",
+      "boundBy": "system",
+      "boundAt": 1773145549824,
+      "lastActivityAt": 1773145549824,
+      "idleTimeoutMs": 86400000,
+      "maxAgeMs": 0
+    }
+  }
 }

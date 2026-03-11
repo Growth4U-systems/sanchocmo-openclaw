@@ -26,7 +26,7 @@
 
 ### market-analysis
 **Skill**: `market-intelligence`
-**Output**: `brand/{slug}/market-and-us/market-analysis.md`
+**Output**: `brand/{slug}/market-and-us/market/current.md`
 **requires**: company-brief
 **enriches_with**: competitor-analysis, self-analysis
 **Skip**: nunca
@@ -35,7 +35,7 @@
 
 ### competitor-analysis
 **Skill**: `competitor-intelligence`
-**Output**: `brand/{slug}/market-and-us/competitor-{slug}.md` (1 por competidor)
+**Output**: `brand/{slug}/market-and-us/competitors/{nombre}/current.md` (1 por competidor)
 **requires**: company-brief
 **enriches_with**: market-analysis, self-analysis
 **Skip**: nunca
@@ -45,7 +45,7 @@
 
 ### self-analysis
 **Skill**: `self-intelligence`
-**Output**: `brand/{slug}/market-and-us/self-analysis.md`
+**Output**: `brand/{slug}/market-and-us/self/current.md`
 **requires**: company-brief
 **enriches_with**: market-analysis, competitor-analysis
 **Skip**: si es marca nueva sin track record
@@ -60,20 +60,20 @@
 
 ### swot
 **Skill**: `swot-analysis`
-**Output**: `brand/{slug}/market-and-us/swot.md`
+**Output**: `brand/{slug}/market-and-us/swot/current.md`
 **requires**: market-analysis, competitor-analysis, self-analysis
 **Skip**: nunca
 **Lite done**: SWOT 4 cuadrantes con datos reales (no asunciones)
 **Deep done**: Lite + 2+ estrategias por cuadrante TOWS (SO, ST, WO, WT)
 
 ### summary (síntesis — generada por orchestrator)
-**Output**: `brand/{slug}/market-and-us/summary.md`
+**Output**: `brand/{slug}/market-and-us/summary/current.md`
 **requires**: market-analysis, competitor-analysis, self-analysis
 **Generada por**: orchestrator inline (no skill dedicado)
 **Qué es**: 1-2 páginas sintetizando mercado + competidores + posición propia. Referencia cada doc fuente.
 
 ### ope-canvas (síntesis — generada por orchestrator)
-**Output**: `brand/{slug}/market-and-us/ope-canvas.md`
+**Output**: `brand/{slug}/market-and-us/ope-canvas/current.md`
 **requires**: market-analysis, competitor-analysis, self-analysis
 **Generada por**: orchestrator inline (no skill dedicado)
 **Qué es**: One-Page Endgame. La foto completa del negocio en 1 página.
@@ -84,7 +84,7 @@
 
 ### niche-discovery
 **Skill**: `niche-discovery-100x`
-**Output**: `brand/{slug}/go-to-market/ecps.md` (JTBD integrado por segmento)
+**Output**: `brand/{slug}/go-to-market/ecps/current.md` (JTBD integrado por segmento)
 **requires**: swot
 **enriches_with**: existing-customer-data
 **Skip**: nunca
@@ -93,7 +93,7 @@
 
 ### existing-customer-data (OPCIONAL)
 **Skill**: `existing-customer-data`
-**Output**: `brand/{slug}/go-to-market/existing-customer-data.md`
+**Output**: `brand/{slug}/go-to-market/existing-customer-data/current.md`
 **requires**: company-brief
 **enriches_with**: niche-discovery (si disponible, enriquece los ECPs)
 **Skip**: si pre-launch sin clientes
@@ -105,7 +105,7 @@
 
 ### positioning
 **Skill**: `positioning-messaging`
-**Output**: `brand/{slug}/go-to-market/positioning-{ecp-slug}.md` (1 por ECP)
+**Output**: `brand/{slug}/go-to-market/positioning/{ecp-slug}/current.md` (1 por ECP)
 **requires**: niche-discovery
 **Skip**: nunca
 **Lite done**: Messaging básico para top ECP
@@ -113,7 +113,7 @@
 
 ### pricing
 **Skill**: `pricing-strategy`
-**Output**: `brand/{slug}/go-to-market/pricing.md`
+**Output**: `brand/{slug}/go-to-market/pricing/current.md`
 **requires**: niche-discovery
 **enriches_with**: positioning
 **Skip**: si pricing es fijo/no negociable
@@ -135,7 +135,7 @@
 **Deep done**: Lite + data sources mapeados con canales de positioning + benchmarks calibrados con pricing + Excel template generado + review cadence
 
 ### messaging-summary (síntesis — generada por orchestrator)
-**Output**: `brand/{slug}/go-to-market/messaging-summary.md`
+**Output**: `brand/{slug}/go-to-market/positioning/shared/messaging-summary.md`
 **requires**: positioning
 **enriches_with**: pricing
 **Generada por**: orchestrator inline
@@ -147,14 +147,14 @@
 
 ### brand-voice
 **Skill**: `brand-voice`
-**Output**: `brand/{slug}/brand-identity/voice-profile.md`
+**Output**: `brand/{slug}/brand-identity/voice-profile/current.md`
 **requires**: positioning
 **Skip**: si no produce contenido aún (diferir)
 **Done**: Voice guide completa con do/don't, espectro tonal, ejemplos por tipo de contenido
 
 ### visual-identity
 **Skill**: `visual-identity`
-**Output**: `brand/{slug}/brand-identity/visual-identity.md`
+**Output**: `brand/{slug}/brand-identity/visual-identity/current.md`
 **requires**: brand-voice
 **Skip**: si no tiene necesidad de branding visual aún
 **Done**: Sistema visual completo: paleta, tipografía, guidelines de uso

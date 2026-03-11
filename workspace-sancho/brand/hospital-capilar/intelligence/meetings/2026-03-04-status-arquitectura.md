@@ -1,50 +1,65 @@
-# Meeting: Status Arquitectura Hospital Capilar
-**Fecha:** 2026-03-04
-**Fuente:** Google Drive - 1Vh7964tPDqql7W-r9GQzUNyvtxronQGz1mW3kqVgPjU
+# Meeting Intelligence — 2026-03-04
+
+## Información General
+
+| Campo | Valor |
+|-------|-------|
+| **Fecha** | 2026-03-04 |
+| **Título** | Status arquitectura Hospital Capilar |
+| **Tipo** | strategy/technical |
+| **Fuente** | Google Drive |
+| **Doc ID** | 1Vh7964tPDqql7W-r9GQzUNyvtxronQGz1mW3kqVgPjU |
+| **Duración** | ~50 min |
 
 ## Participantes
+
 - Philippe Sainthubert
 - Ramiro Perez
 
 ---
 
-## Decisiones
-1. **Posicionamiento** — Nicho: jóvenes 20-30 años con alopecia temprana que buscan claridad médica, diagnóstico transparente sin presión de cirugía
-2. **Arquitectura Quiz** — 3 nichos iniciales (jóvenes, pacientes frustrados OTC, mujeres) con scoring para precualificar leads
-3. **Lead "Hot"** — Recibe opción de pagar bono de 195€ para agendamiento directo
-4. **GHL replicable** — Sistema simple de Go High Level para otras sedes
-5. **Newsletter** — Se considerará "Zona Mixta" (8000 suscriptores, precio a consultar)
-6. **Facturación** — La consultoria facturará licencia GHL al hospital
+## Decisiones Clave
+
+1. **Posicionamiento en nicho de jóvenes con alopecia temprana (20-30 años)** — Estrategia de diagnóstico transparente sin presión quirúrgica
+2. **Arquitectura del Quiz con scoring** — 3 nichos iniciales: jóvenes, pacientes frustrados OTC, mujeres
+3. **Sistema simple con Make para scoring** — Hoja de cálculo para resumir respuestas al comercial
+4. **Licencia Go High Level facturada por consultora** — Plan básico 97€/mes con 3 subaccounts
+5. **Integración bidireccional con SalesForce** — Compartir leads con ellos
 
 ---
 
 ## Acciones
-- [ ] Philippe Sainthubert: Reservar cupo de newsletter "Milla"
-- [ ] Philippe Sainthubert: Preguntar precio de newsletter Zona Mixta
-- [ ] Philippe Sainthubert: Validar cuestionario final con cliente Hospital Capilar
-- [ ] Ramiro Perez: Crear documento de política de privacidad y condiciones del hospital
-- [ ] Ramiro Perez: Compartir enlace de video sobre campañas GHL
-- [ ] Philippe Sainthubert: Reenviar enlace a experto de Meta del hospital
-- [ ] Philippe Sainthubert: Crear documento Notion con 3 nichos prioritarios
-- [ ] Philippe Sainthubert: Documentar posicionamiento en Notion y etiquetar a Ramiro
-- [ ] Ramiro Perez: Revisar setup y documentos de trabajo
-- [ ] Philippe Sainthubert: Agendar reunión de seguimiento (día siguiente 4 PM)
+
+| Responsable | Acción | Deadline |
+|-------------|--------|----------|
+| Ramiro Perez | Estructura básica del quiz lista | Lunes 2026-03-09 |
+| Ramiro Perez | Obtener documentación legal (privacidad, condiciones) | Pending |
+| Philippe Sainthubert | Crear documento Notion con 3 nichos prioritarios | Pending |
+| Philippe Sainthubert | Validar cuestionario final con cliente | Pending |
+| Philippe Sainthubert | Agendar reunión seguimiento | 2026-03-05 16:00 |
 
 ---
 
 ## Insights
-- **Value Criteria** — Autoridad médica, protocolo personalizado, diagnóstico con tricoscopia + análisis hormonal
-- **Diferenciadores** — TRT y CRT propios, buenas reseñas Trustpilot, FAQ honesta
-- **Quiz Scoring** — Make para cálculo simple; lead "Hot" = agenda directa o pago bono
-- **Arquitectura simple** — Landing por nicho → Quiz (precualifica) → Hoja de cálculo resumen → Comercial
-- **3 landings por nicho** — Formulario embebido, quiz largo, quiz corto
-- **Plan GHL** — 97€/mes incluye 3 subaccounts; sugerir 1 subaccount por hospital
-- **Integración SalesForce** — Debe ser bidireccional
+
+- **Value Criteria definidas**: Autoridad médica, diagnóstico preciso (tricoscopia + análisis hormonal), protocolo personalizado
+- **3 puertas de entrada por nicho**: formulario directo, quiz largo, quiz corto
+- **Lead "Hot"** → CTA pagar bono 195€ o agendamiento directo
+- **Sistema replicable** para otras sedes
+- Newsletter "Zona Mixta" evaluada como opción de bajo costo (8K suscriptores)
 
 ---
 
-## nextSteps
-- Ramiro: Estructura básica del quiz lista para lunes
-- Obtener documentación legal de Hospital Capilar antes de implementar formularios
-- Testing de campañas con seguimiento claro (objetivo, duración, leads)
-- Reunión siguiente: definir entregables muy concretos
+## Citas Relevantes
+
+> "La clínica prefiere perderte a mentirte" — Posicionamiento de Hospital Capilar
+
+> "Un médico, no un vendedor, debe atenderles"
+
+---
+
+## Metadata
+
+- **Estado**: ✅ Procesado
+- **Versión**: 1.0
+- **Fecha procesamiento**: 2026-03-10

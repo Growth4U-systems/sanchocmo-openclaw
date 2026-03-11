@@ -60,10 +60,8 @@ That single line means: "Before I start, load relevant brand context using the p
     existing-customer-data/current.md  <- /existing-customer-data owns (opcional)
     metrics-plan.md             <- /acquisition-metrics-plan owns
 
-  brand-voice/
-    current.md              <- /brand-voice owns (voice profile + AI Brand Kit)
-
   brand-identity/
+    voice-profile/current.md    <- /brand-voice owns (voice profile + AI Brand Kit)
     visual-identity/current.md  <- /visual-identity owns
 
   operational/
@@ -110,7 +108,7 @@ Each profile file has a **primary owner** — the skill that creates and maintai
 | go-to-market/pricing/current.md | pricing-strategy | Read only |
 | go-to-market/existing-customer-data/current.md | existing-customer-data | Read only |
 | go-to-market/metrics-plan.md | acquisition-metrics-plan | Read only |
-| brand-voice/current.md | brand-voice | Read only |
+| brand-identity/voice-profile/current.md | brand-voice | Read only |
 | brand-identity/visual-identity/current.md | visual-identity | Read only |
 | operational/assets.md | ALL skills | Append (never truncate) |
 | operational/learnings.md | ALL skills | Append (never truncate) |
@@ -199,17 +197,17 @@ Each skill declares dependencies. Do NOT read every file on every invocation.
 | positioning-messaging | company-brief/current.md, market-and-us/competitors/current.md, go-to-market/ecps/current.md | Who we are + competition + who we serve |
 | pricing-strategy | go-to-market/ecps/current.md, go-to-market/positioning/*/current.md, market-and-us/competitors/current.md | ECPs + positioning + competitive pricing |
 | brand-voice | company-brief/current.md, go-to-market/positioning/*/current.md | Identity + angle for tone |
-| visual-identity | brand-voice/current.md, company-brief/current.md | Voice + identity for visual system |
+| visual-identity | brand-identity/voice-profile/current.md, company-brief/current.md | Voice + identity for visual system |
 | keyword-research | go-to-market/positioning/*/current.md, go-to-market/ecps/current.md, market-and-us/competitors/current.md | Angle + audience + competitive keywords |
-| seo-content | brand-voice/current.md, go-to-market/ecps/current.md, go-to-market/positioning/*/current.md | Tone + topics + who we write for |
-| email-sequences | brand-voice/current.md, go-to-market/positioning/*/current.md | Tone + angle + what we deliver |
-| content-atomizer | brand-voice/current.md, brand-identity/visual-identity/current.md (if exists) | Tone + visual direction |
-| lead-magnet | brand-voice/current.md, go-to-market/positioning/*/current.md, go-to-market/ecps/current.md | Tone + angle + audience pain |
-| direct-response-copy | brand-voice/current.md, go-to-market/positioning/*/current.md, go-to-market/ecps/current.md | Tone + angle + audience |
-| newsletter | brand-voice/current.md, go-to-market/ecps/current.md, operational/learnings.md | Tone + audience + what's worked |
+| seo-content | brand-identity/voice-profile/current.md, go-to-market/ecps/current.md, go-to-market/positioning/*/current.md | Tone + topics + who we write for |
+| email-sequences | brand-identity/voice-profile/current.md, go-to-market/positioning/*/current.md | Tone + angle + what we deliver |
+| content-atomizer | brand-identity/voice-profile/current.md, brand-identity/visual-identity/current.md (if exists) | Tone + visual direction |
+| lead-magnet | brand-identity/voice-profile/current.md, go-to-market/positioning/*/current.md, go-to-market/ecps/current.md | Tone + angle + audience pain |
+| direct-response-copy | brand-identity/voice-profile/current.md, go-to-market/positioning/*/current.md, go-to-market/ecps/current.md | Tone + angle + audience |
+| newsletter | brand-identity/voice-profile/current.md, go-to-market/ecps/current.md, operational/learnings.md | Tone + audience + what's worked |
 | channel-prioritization | company-brief/current.md, go-to-market/ecps/current.md, go-to-market/positioning/*/current.md, market-and-us/competitors/current.md, operational/stack.md | Full context to score channels |
-| content-calendar-planner | go-to-market/positioning/*/current.md, go-to-market/ecps/current.md, brand-voice/current.md | Topics + voice + audience |
-| outreach-sequence-builder | go-to-market/positioning/*/current.md, go-to-market/ecps/current.md, brand-voice/current.md | Audience + angle + voice |
+| content-calendar-planner | go-to-market/positioning/*/current.md, go-to-market/ecps/current.md, brand-identity/voice-profile/current.md | Topics + voice + audience |
+| outreach-sequence-builder | go-to-market/positioning/*/current.md, go-to-market/ecps/current.md, brand-identity/voice-profile/current.md | Audience + angle + voice |
 | acquisition-metrics-plan | company-brief/current.md, go-to-market/ecps/current.md, go-to-market/positioning/*/current.md (if exists), go-to-market/pricing/current.md (if exists), operational/stack.md (if exists) | Business model + ECPs + canales + pricing para métricas precisas |
 
 **Orchestrators read everything:**
@@ -423,7 +421,7 @@ Every campaign has `brief.md`. See `_system/schemas/campaign.schema.json`.
 {planning | active | complete}
 
 ## Voice Notes
-{Campaign-specific voice adjustments from brand/{slug}/brand-identity/voice-profile.md}
+{Campaign-specific voice adjustments from brand/{slug}/brand-identity/voice-profile/current.md}
 
 ## GTM Canvas Alignment
 {Which Canvas elements this activates: Market/Customer/Product/Pricing/Positioning/Growth}

@@ -50,7 +50,7 @@ echo "🔨 Onboarding: $NAME (slug: $SLUG, guild: $GUILD)"
 
 # --- 1. Crear estructura de archivos ---
 echo "📁 Creando estructura..."
-mkdir -p "$BRAND_DIR"/{company-brief,market-and-us/sources,go-to-market,brand-identity,operational,_archive}
+mkdir -p "$BRAND_DIR"/{company-brief,market-and-us/{market,competitors,self,swot,summary,ope-canvas,sources},go-to-market/{ecps,positioning/shared,pricing,existing-customer-data},brand-identity/{voice-profile,visual-identity},operational,_archive}
 
 # Foundation state v2.0 (4 secciones, 12 pilares)
 cat > "$BRAND_DIR/foundation-state.json" << FJSON
@@ -94,6 +94,7 @@ cat > "$BRAND_DIR/foundation-state.json" << FJSON
         "existing-customer-data": {"status": "not-started", "layer": 3, "requires": ["company-brief"], "optional": true, "skill": "existing-customer-data"},
         "positioning": {"status": "not-started", "layer": 4, "requires": ["niche-discovery"], "skill": "positioning-messaging"},
         "pricing": {"status": "not-started", "layer": 4, "requires": ["niche-discovery"], "enriches_with": ["positioning"], "skill": "pricing-strategy"},
+        "metrics-plan": {"status": "not-started", "layer": 4, "requires": ["company-brief"], "enriches_with": ["niche-discovery"], "skill": "acquisition-metrics-plan"},
         "ecp-validation": {"status": "not-started", "layer": 4, "requires": ["niche-discovery"], "optional": true, "skill": "ecp-validation"}
       },
       "syntheses": {

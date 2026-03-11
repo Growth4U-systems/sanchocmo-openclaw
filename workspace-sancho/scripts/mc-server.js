@@ -753,6 +753,366 @@ http.createServer((req, res) => {
   if (url.startsWith('/mc/')) url = url.slice(3);
   if (url === '/' || url === '/mc') url = '/mission-control.html';
 
+  // === Connect Page: /connect/{slug}/{apiId} ===
+  if (url.startsWith('/connect/')) {
+    const parts = url.replace('/connect/', '').split('/').filter(Boolean);
+    const slug = parts[0];
+    const apiId = parts[1];
+
+    if (!slug || !apiId) {
+      res.writeHead(400, { 'Content-Type': 'text/html; charset=utf-8' });
+      res.end('<h1>Falta slug o apiId</h1><p>Usa: /connect/{slug}/{apiId}</p>');
+      return;
+    }
+
+    // Load catalog + setup guides
+    let catalog = {};
+    let setupGuides = {};
+    try {
+      const catalogPath = path.join(BASE, 'skills', 'acquisition-metrics-plan', 'schemas', 'api-catalog.json');
+      catalog = JSON.parse(fs.readFileSync(catalogPath, 'utf-8'));
+    } catch (e) {
+      res.writeHead(500); res.end('Failed to load API catalog'); return;
+    }
+    try {
+      const guidesPath = path.join(BASE, 'skills', 'acquisition-metrics-plan', 'schemas', 'setup-guides.json');
+      setupGuides = JSON.parse(fs.readFileSync(guidesPath, 'utf-8'));
+    } catch {}
+
+    // Find the API in any category
+    let apiMeta = null;
+    let categoryLabel = '';
+    for (const [catKey, catData] of Object.entries(catalog.categories || {})) {
+      if (catData.apis && catData.apis[apiId]) {
+        apiMeta = catData.apis[apiId];
+        categoryLabel = catData.label || catKey;
+        break;
+      }
+    }
+
+    if (!apiMeta) {
+      res.writeHead(404, { 'Content-Type': 'text/html; charset=utf-8' });
+      res.end(`<h1>API "${apiId}" no encontrada en el catálogo</h1>`);
+      return;
+    }
+
+    // Load current integration status for this client
+    let currentStatus = 'not_configured';
+    let currentConfig = {};
+    let lastTestedAt = null;
+    let lastError = null;
+    try {
+      const intPath = path.join(BASE, 'brand', slug, 'integrations.json');
+      const intData = JSON.parse(fs.readFileSync(intPath, 'utf-8'));
+      const entry = (intData.dataSources || {})[apiId] || (intData.systemOverrides || {})[apiId];
+      if (entry) {
+        currentStatus = entry.status || 'not_configured';
+        currentConfig = entry.config || {};
+        lastTestedAt = entry.lastTestedAt || null;
+        lastError = entry.lastError || null;
+      }
+    } catch {}
+
+    // Load client name
+    let clientName = slug;
+    try {
+      const clientsData = JSON.parse(fs.readFileSync(path.join(BASE, 'clients.json'), 'utf-8'));
+      const client = clientsData.clients.find(c => c.slug === slug);
+      if (client) clientName = client.name;
+    } catch {}
+
+    const credentials = apiMeta.credentials || [];
+    const configFields = apiMeta.config || [];
+    const allFields = [...credentials, ...configFields];
+    const ownership = apiMeta.ownership || 'system';
+    const guide = setupGuides[apiId] || null;
+
+    const statusBadge = currentStatus === 'connected'
+      ? '<span style="background:#4A5D23;color:#fff;padding:4px 12px;border-radius:20px;font-size:14px;font-weight:700;">✅ Conectado</span>'
+      : currentStatus === 'error'
+        ? '<span style="background:#C0392B;color:#fff;padding:4px 12px;border-radius:20px;font-size:14px;font-weight:700;">❌ Error</span>'
+        : currentStatus === 'pending'
+          ? '<span style="background:#E5A100;color:#fff;padding:4px 12px;border-radius:20px;font-size:14px;font-weight:700;">⏳ Pendiente</span>'
+          : '<span style="background:#5D5348;color:#fff;padding:4px 12px;border-radius:20px;font-size:14px;font-weight:700;">⬜ No configurado</span>';
+
+    const lastTestedHtml = lastTestedAt
+      ? `<p style="font-size:13px;color:var(--muted);">Último test: ${new Date(lastTestedAt).toLocaleString('es-ES')}</p>`
+      : '';
+    const lastErrorHtml = lastError
+      ? `<div style="background:#FDE8E8;border:2px solid #C0392B;border-radius:6px;padding:10px 14px;margin:10px 0;font-size:14px;color:#C0392B;"><strong>Último error:</strong> ${lastError.replace(/</g,'&lt;')}</div>`
+      : '';
+
+    // Build form fields
+    let fieldsHtml = '';
+    for (const field of allFields) {
+      const isSensitive = field.sensitive !== false;
+      const inputType = isSensitive ? 'password' : 'text';
+      const currentVal = (!isSensitive && currentConfig[field.key]) ? ` value="${String(currentConfig[field.key]).replace(/"/g,'&quot;')}"` : '';
+      const helpText = field.help ? `<div style="font-size:12px;color:var(--muted);margin-top:2px;">${field.help}</div>` : '';
+      const eyeBtn = isSensitive ? `<button type="button" onclick="toggleVis(this)" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:18px;padding:4px;" title="Mostrar/ocultar">👁️</button>` : '';
+
+      fieldsHtml += `
+        <div style="margin-bottom:16px;">
+          <label style="font-weight:700;font-size:15px;display:block;margin-bottom:4px;">${field.label}</label>
+          ${helpText}
+          <div style="position:relative;margin-top:6px;">
+            <input name="${field.key}" type="${inputType}" placeholder="${field.placeholder || ''}"${currentVal}
+              style="width:100%;padding:10px 14px;${isSensitive ? 'padding-right:44px;' : ''}border:2px solid var(--ink);border-radius:6px;font-size:15px;font-family:'Nunito',sans-serif;background:var(--card);color:var(--text);box-sizing:border-box;"
+              data-sensitive="${isSensitive}" />
+            ${eyeBtn}
+          </div>
+        </div>`;
+    }
+
+    // OAuth instruction for special APIs
+    let oauthNote = '';
+    if (['ga4', 'gsc', 'google_ads', 'google_workspace'].includes(apiId)) {
+      oauthNote = `
+        <div style="background:#E8F4FD;border:2px solid #3B82F6;border-radius:6px;padding:12px 16px;margin:16px 0;">
+          <strong>💡 OAuth API</strong> — Esta API usa OAuth. Necesitarás autorizar acceso desde Google Cloud Console.
+          <br/>Si ya tienes un Service Account o refresh token, pégalo abajo. Si no, sigue las instrucciones del enlace de documentación.
+        </div>`;
+    }
+
+    const html = `<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Conectar ${apiMeta.provider} — ${clientName}</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F5F0E6; --card: #FDF8EF; --border: #D4C9B8; --text: #1A1A2E; --muted: #5D5348;
+    --ink: #1A1A2E; --rust: #C45D35; --green: #4A5D23; --blue: #3B82F6;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1A1A2E; --card: #2D2D44; --border: #3D3D5C; --text: #FDF8EF; --muted: #A09890;
+      --ink: #FDF8EF; --rust: #D4734F; --green: #6B8E23; --blue: #60a5fa;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { font-family: 'Nunito', sans-serif; background: var(--bg); color: var(--text); max-width: 600px; margin: 40px auto; padding: 0 24px; line-height: 1.7; }
+  h1 { font-family: 'Space Grotesk', sans-serif; color: var(--rust); font-size: 1.8em; margin-bottom: 4px; }
+  .subtitle { color: var(--muted); font-size: 15px; margin-bottom: 24px; }
+  .card { background: var(--card); border: 2px solid var(--ink); border-radius: 8px; padding: 24px; box-shadow: 3px 3px 0 var(--ink); }
+  .btn { padding: 12px 28px; border: 2px solid var(--ink); border-radius: 6px; font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 16px; cursor: pointer; box-shadow: 2px 2px 0 var(--ink); transition: all 0.15s; }
+  .btn:hover { transform: translate(1px, 1px); box-shadow: 1px 1px 0 var(--ink); }
+  .btn-primary { background: var(--rust); color: #fff; }
+  .btn-secondary { background: var(--card); color: var(--text); }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .back { color: var(--muted); text-decoration: none; font-size: 14px; }
+  .back:hover { color: var(--rust); }
+  .meta-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin: 12px 0; }
+  #result { margin-top: 16px; padding: 12px 16px; border-radius: 6px; display: none; font-size: 14px; }
+  .tag { font-size: 12px; padding: 2px 10px; border-radius: 20px; border: 1px solid var(--border); color: var(--muted); }
+</style>
+</head>
+<body>
+  <a class="back" href="/mc">← Mission Control</a>
+
+  <h1>${apiMeta.icon || '🔌'} Conectar ${apiMeta.provider}</h1>
+  <p class="subtitle">${apiMeta.desc} · Para <strong>${clientName}</strong></p>
+
+  <div class="meta-row">
+    ${statusBadge}
+    <span class="tag">${ownership === 'system' ? '🔧 Sistema' : '👤 Cliente'}</span>
+    ${apiMeta.docs ? `<a href="${apiMeta.docs}" target="_blank" style="color:var(--blue);font-size:14px;font-weight:700;">📖 Documentación →</a>` : ''}
+  </div>
+  ${lastTestedHtml}
+  ${lastErrorHtml}
+  ${oauthNote}
+
+  ${guide ? `
+  <div class="card" style="margin-top:20px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+      <h2 style="font-family:'Space Grotesk',sans-serif;color:var(--rust);margin:0;font-size:1.3em;">📋 Instrucciones paso a paso</h2>
+      <div style="display:flex;gap:8px;">
+        ${guide.difficulty ? `<span class="tag" style="background:${guide.difficulty === 'baja' ? 'var(--green)' : guide.difficulty === 'media' ? '#E5A100' : '#C0392B'};color:#fff;border:none;">Dificultad: ${guide.difficulty}</span>` : ''}
+        ${guide.time ? `<span class="tag">⏱️ ${guide.time}</span>` : ''}
+      </div>
+    </div>
+    ${guide.warning ? `<div style="background:#FFF8E1;border:2px solid #E5A100;border-radius:6px;padding:10px 14px;margin-bottom:16px;font-size:14px;color:#8B6914;">${guide.warning}</div>` : ''}
+    <div class="steps-container">
+      ${guide.steps.map((step, i) => `
+        <div class="step" id="step-${i}">
+          <div class="step-header" onclick="toggleStep(${i})" style="cursor:pointer;display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid var(--border);">
+            <div class="step-number" style="min-width:32px;height:32px;background:var(--rust);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-family:'Space Grotesk',sans-serif;font-size:14px;">${i + 1}</div>
+            <div style="flex:1;">
+              <div style="font-weight:700;font-size:15px;">${step.title}</div>
+            </div>
+            <span class="step-toggle" id="toggle-${i}" style="font-size:18px;color:var(--muted);transition:transform 0.2s;">▶</span>
+          </div>
+          <div class="step-body" id="body-${i}" style="display:none;padding:12px 0 12px 44px;font-size:14px;line-height:1.8;color:var(--text);">
+            ${step.instructions}
+          </div>
+        </div>
+      `).join('')}
+    </div>
+    <button type="button" class="btn btn-secondary" onclick="expandAll()" style="margin-top:12px;font-size:13px;padding:6px 16px;">
+      📖 Expandir todo
+    </button>
+  </div>
+  ` : ''}
+
+  <div class="card" style="margin-top:20px;">
+    <h2 style="font-family:'Space Grotesk',sans-serif;color:var(--rust);margin:0 0 16px 0;font-size:1.3em;">🔌 Credenciales</h2>
+    <form id="connectForm" onsubmit="return false;">
+
+      ${fieldsHtml || '<p style="color:var(--muted);">Esta API no requiere credenciales manuales.</p>'}
+
+      <div style="display:flex;gap:12px;margin-top:20px;">
+        <button type="submit" class="btn btn-primary" id="connectBtn" onclick="doConnect()">
+          🔌 Conectar y testear
+        </button>
+        <button type="button" class="btn btn-secondary" id="testBtn" onclick="doTest()">
+          🧪 Solo testear
+        </button>
+      </div>
+    </form>
+
+    <div id="result"></div>
+  </div>
+
+  <div style="margin-top:32px;padding-top:16px;border-top:1px solid var(--border);font-size:13px;color:var(--muted);">
+    <strong>🔒 Seguridad:</strong> Las credenciales se guardan en <code>brand/${slug}/.env</code> en el servidor local.
+    Nunca pasan por Discord ni por ningún servicio externo. La conexión está protegida por HTTPS + Tailscale.
+  </div>
+
+<script>
+let allExpanded = false;
+function toggleStep(i) {
+  const body = document.getElementById('body-' + i);
+  const toggle = document.getElementById('toggle-' + i);
+  if (body.style.display === 'none') {
+    body.style.display = 'block';
+    toggle.textContent = '▼';
+  } else {
+    body.style.display = 'none';
+    toggle.textContent = '▶';
+  }
+}
+function expandAll() {
+  allExpanded = !allExpanded;
+  document.querySelectorAll('.step-body').forEach((el, i) => {
+    el.style.display = allExpanded ? 'block' : 'none';
+    const t = document.getElementById('toggle-' + i);
+    if (t) t.textContent = allExpanded ? '▼' : '▶';
+  });
+}
+
+function toggleVis(btn) {
+  const input = btn.parentElement.querySelector('input');
+  input.type = input.type === 'password' ? 'text' : 'password';
+  btn.textContent = input.type === 'password' ? '👁️' : '🙈';
+}
+
+function showResult(type, msg) {
+  const el = document.getElementById('result');
+  el.style.display = 'block';
+  if (type === 'ok') {
+    el.style.background = '#E8F8E8'; el.style.border = '2px solid #4A5D23'; el.style.color = '#2D5A1E';
+  } else if (type === 'error') {
+    el.style.background = '#FDE8E8'; el.style.border = '2px solid #C0392B'; el.style.color = '#C0392B';
+  } else {
+    el.style.background = '#FFF8E1'; el.style.border = '2px solid #E5A100'; el.style.color = '#8B6914';
+  }
+  el.innerHTML = msg;
+}
+
+async function doConnect() {
+  const btn = document.getElementById('connectBtn');
+  btn.disabled = true; btn.textContent = '⏳ Conectando...';
+  showResult('info', '⏳ Guardando credenciales y testeando conexión...');
+
+  const form = document.getElementById('connectForm');
+  const inputs = form.querySelectorAll('input');
+  const secrets = {};
+  const config = {};
+
+  inputs.forEach(inp => {
+    const val = inp.value.trim();
+    if (!val) return;
+    if (inp.dataset.sensitive === 'true') {
+      secrets[inp.name] = val;
+    } else {
+      config[inp.name] = val;
+    }
+  });
+
+  try {
+    const res = await fetch('/mc/api/client-integrations', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        slug: '${slug}',
+        source: '${apiId}',
+        type: '${ownership === 'system' ? 'override' : 'datasource'}',
+        config,
+        secrets
+      })
+    });
+    const data = await res.json();
+
+    if (data.ok && data.testResult) {
+      if (data.testResult.status === 'connected' || data.testResult.status === 'ok') {
+        showResult('ok', '✅ <strong>¡Conectado!</strong> La API responde correctamente. Ya puedes cerrar esta página.');
+      } else if (data.testResult.status === 'error') {
+        showResult('error', '❌ <strong>Error de conexión:</strong> ' + (data.testResult.error || 'Verifica las credenciales'));
+      } else {
+        showResult('info', '⏳ <strong>Guardado.</strong> Estado: ' + data.testResult.status);
+      }
+    } else if (data.error) {
+      showResult('error', '❌ ' + data.error);
+    } else {
+      showResult('ok', '✅ Guardado. Recarga para ver el estado actualizado.');
+    }
+  } catch (e) {
+    showResult('error', '❌ Error de red: ' + e.message);
+  }
+
+  btn.disabled = false; btn.textContent = '🔌 Conectar y testear';
+}
+
+async function doTest() {
+  const btn = document.getElementById('testBtn');
+  btn.disabled = true; btn.textContent = '⏳ Testeando...';
+  showResult('info', '⏳ Testeando conexión existente...');
+
+  try {
+    const res = await fetch('/mc/api/client-integrations/test', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ slug: '${slug}', source: '${apiId}' })
+    });
+    const data = await res.json();
+
+    if (data.ok && data.results && data.results['${apiId}']) {
+      const r = data.results['${apiId}'];
+      if (r.status === 'connected' || r.status === 'ok') {
+        showResult('ok', '✅ <strong>Test exitoso.</strong> La API responde correctamente.');
+      } else {
+        showResult('error', '❌ <strong>Test fallido:</strong> ' + (r.error || r.status));
+      }
+    } else if (data.error) {
+      showResult('error', '❌ ' + data.error);
+    }
+  } catch (e) {
+    showResult('error', '❌ Error de red: ' + e.message);
+  }
+
+  btn.disabled = false; btn.textContent = '🧪 Solo testear';
+}
+</script>
+</body>
+</html>`;
+
+    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+    res.end(html);
+    return;
+  }
+
   // === PUT handler: save presentations ===
   if (req.method === 'PUT' && url.match(/^\/brand\/[^/]+\/presentations\/[^/]+\.html$/)) {
     const fullPath = path.join(BASE, url.slice(1));

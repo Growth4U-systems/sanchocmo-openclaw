@@ -8,6 +8,7 @@
 > Cambios v2.2: QA fixes — Correcciones factuales (minoxidil, 95% hormonal), caveats fuentes UK, messaging efectos secundarios + dolor, advertencias legales nombres fármacos/competidores.
 > Cambios v2.3: ECP #6 Mujeres con problemas hormonales añadido (Philippe). Nota quiz diagnóstico. 6 ECPs totales.
 > Cambios v2.4: Pain clusters v2 integrados (nombres JTBD + voces reales). Sección Speed Videos con 6 guiones (1 por ECP, incluye mujeres). Storytelling desarrollado.
+> Cambios v2.5: ECP #6 ampliado — sub-perfiles mujeres (frontal fibrosante, alopecias raras, no tratables pero diagnosticables). Reunión HC 10/03/2026.
 
 ---
 
@@ -529,6 +530,14 @@
 - Carga emocional diferente a hombres: vinculada a identidad femenina, impacto en autoestima más profundo, menos normalizado socialmente que la calvicie masculina
 - Competidores NO segmentan para mujeres con messaging específico — oportunidad de diferenciación
 - **Nota HC**: ~50% de pacientes son mujeres (company-brief). Es un segmento real, no marginal.
+- **Equipo HC confirma**: mercado femenino es "brutal" de fácil captación (reunión 10/03/2026)
+
+**Sub-perfiles ampliados (reunión 10/03/2026):**
+- Postparto
+- Primera menopausia
+- Postmenopausia
+- **Alopecias raras / alopecia frontal fibrosante** — casos complejos que requieren diagnóstico especializado
+- **⚠️ Algunas NO son tratables pero SÍ diagnosticables** — el valor de HC aquí es dar un diagnóstico certero aunque no haya tratamiento. Impacto en quiz: debe filtrar y comunicar honestamente. Impacto en messaging: refuerza la transparencia radical de HC ("preferimos decirte la verdad a venderte algo que no funciona")
 
 ### Criterios de Valor (pesos ECP #6)
 
@@ -618,4 +627,4 @@ El quiz online es el primer punto de contacto para TODOS los ECPs, pero es espec
 
 ---
 
-<!-- Self-QA: PASS | 2026-03-05 | v3.0 | Rewrite completo de messaging — UVPs y USPs reescritos con lenguaje cluster-nativo. Dolor activado desde la experiencia vivida, no desde la descripción. Ads copy diferenciado por cluster. Landing copy más emocional y directo. Headers de playbook con nombre de cluster. 6 ECPs ✅ | 6 Speed Videos ✅ -->
+<!-- Self-QA: PASS | 2026-03-10 | v2.5 | ECP #6 ampliado con sub-perfiles mujeres (frontal fibrosante, alopecias raras, no tratables pero diagnosticables). Fuente: reunión HC 10/03/2026. 6 ECPs ✅ | 6 Speed Videos ✅ -->
