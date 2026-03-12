@@ -192,11 +192,10 @@
           "icon": "📧",
           "desc": "Gmail, Calendar, Drive (gog CLI)",
           "ownership": "client",
-          "credentials": [
-            { "key": "SA_KEY", "label": "Service Account JSON o OAuth Token", "type": "json", "sensitive": true, "help": "Google Cloud Console → IAM → Service Accounts. O usar gog CLI para OAuth." }
-          ],
+          "customOAuth": "gog",
+          "credentials": [],
           "config": [
-            { "key": "EMAIL", "label": "Email principal", "type": "string", "sensitive": false, "help": "La cuenta de Gmail/Workspace del cliente" }
+            { "key": "EMAIL", "label": "Email de Google", "type": "string", "sensitive": false, "help": "La cuenta de Gmail/Workspace del cliente (ej: info@suempresa.com)" }
           ],
           "docs": "https://developers.google.com/workspace"
         }
@@ -266,9 +265,8 @@
           "icon": "📊",
           "desc": "Web analytics",
           "ownership": "client",
-          "credentials": [
-            { "key": "SA_KEY", "label": "Service Account JSON", "type": "json", "sensitive": true, "help": "Google Cloud Console → IAM → Service Accounts → Create Key (JSON). Needs 'Viewer' role on the GA4 property." }
-          ],
+          "usesSystemSA": true,
+          "credentials": [],
           "config": [
             { "key": "PROPERTY_ID", "label": "Property ID", "type": "string", "sensitive": false, "help": "GA4 → Admin → Property Settings → Property ID (numeric)" }
           ],
@@ -310,9 +308,8 @@
           "icon": "🔍",
           "desc": "Search performance & indexing",
           "ownership": "client",
-          "credentials": [
-            { "key": "SA_KEY", "label": "Service Account JSON", "type": "json", "sensitive": true, "help": "Same Service Account as GA4 works. Add as user in GSC with 'Full' permission." }
-          ],
+          "usesSystemSA": true,
+          "credentials": [],
           "config": [
             { "key": "SITE_URL", "label": "Site URL", "type": "string", "sensitive": false, "help": "Exactly as registered in GSC (e.g. https://example.com/ or sc-domain:example.com)" }
           ],
@@ -390,10 +387,10 @@
           "desc": "Social scheduling & analytics",
           "ownership": "client",
           "credentials": [
-            { "key": "API_TOKEN", "label": "API Token", "type": "string", "sensitive": true, "help": "Metricool → Settings → API → Generate Token" }
+            { "key": "API_TOKEN", "label": "API Token", "type": "string", "sensitive": true, "help": "Metricool → Ajustes → API → copia el userToken" }
           ],
           "config": [
-            { "key": "BRAND_ID", "label": "Brand ID", "type": "string", "sensitive": false }
+            { "key": "METRICOOL_URL", "label": "URL de Metricool", "type": "string", "sensitive": false, "help": "Entra en Metricool → navega a cualquier sección → copia la URL completa del navegador (debe contener blogId y userId). Ejemplo: app.metricool.com/evolution/web?blogId=12345&userId=67890" }
           ],
           "docs": "https://developer.metricool.com/"
         }

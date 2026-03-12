@@ -90,37 +90,142 @@ def parse_tasks():
 
 
 def parse_activity():
-    """Parse memory/*.md files for recent activity."""
+    """Parse memory/*.md files for recent activity, tagged by client."""
     memory_dir = WORKSPACE / "memory"
     activity = []
 
     if not memory_dir.exists():
         return activity
 
-    # Get files from last 7 days
-    for md_file in sorted(memory_dir.glob("*.md"), reverse=True)[:7]:
+    # Load client slugs and names for matching
+    clients_file = WORKSPACE / "clients.json"
+    client_keywords = {}  # slug -> [keywords to match]
+    system_keywords = ["heartbeat", "cron", "skill", "gateway", "config", "backup",
+                       "mc-server", "mission control", "tailscale", "token optimization",
+                       "soul.md", "tools.md", "agents.md", "dispatch", "regenerate",
+                       "system service account", "api catalog", "setup guides",
+                       "api-health", "scripts/", "skills/", "_system/", "infra",
+                       "changelog", "memory maintenance", "token", "openclaw",
+                       "cervantes", "escudero", "rocinante", "sancho",
+                       "daily memory", "supabase security"]
+    if clients_file.exists():
+        try:
+            import json
+            cdata = json.loads(clients_file.read_text(encoding="utf-8"))
+            for c in cdata.get("clients", []):
+                slug = c.get("slug", "")
+                name = c.get("name", "")
+                aliases = c.get("aliases", [])
+                keywords = [slug]
+                if name:
+                    keywords.append(name.lower())
+                # Add common variations
+                if "-" in slug:
+                    keywords.append(slug.replace("-", " "))
+                # Add aliases from config
+                for a in aliases:
+                    keywords.append(a.lower())
+                client_keywords[slug] = keywords
+        except Exception:
+            pass
+
+    # Add well-known aliases that may not be in clients.json
+    alias_map = {
+        "hospital-capilar": ["hospital capilar", "hc ", "hc)", "hc.", "hc,", "philippe",
+                             "capilar", "trasplante", "alopecia", "tricoscopia", "hrt",
+                             "crt", "prp", "mesohair", "mesoterapia", "cirugía",
+                             "tratamiento", "bono", "consulta diagnóstica", "insparya",
+                             "svensson", "capiclinic", "medical hair", "imd"],
+        "growth4u": ["growth4u", "growth 4u", "g4u", "alfonso", "kleva", "lenny"],
+        "paymatico": ["paymático", "paymatico", "alex g", "alexg", "sepa", "tpv",
+                       "gasolineras", "franquicias", "bde", "entidad de pago"],
+        "sanchocmo": ["sanchocmo", "sancho cmo", "sancho futurista", "martin",
+                       "frontend-slides", "presentation template"],
+    }
+    # Expand system keywords
+    system_keywords.extend(["api connection", "step-by-step guides", "30+ apis",
+                            "service account", "sa json", "api catalog", "setup guides",
+                            "test-connection", "gate check phase", "onboarding-playbook",
+                            "no se crea canal", "se documenta en", "obligatorio como",
+                            "shared across all clients", "viewer access",
+                            "pending", "await", "confirmation to proceed"])
+    for slug, aliases in alias_map.items():
+        if slug in client_keywords:
+            client_keywords[slug].extend(aliases)
+        elif slug:
+            client_keywords[slug] = aliases
+
+    def detect_client(text, section_header, parent_section="", fallback="unknown"):
+        """Detect which client an activity item belongs to based on text + section + parent context."""
+        combined = (text + " " + section_header + " " + parent_section).lower()
+        for slug, keywords in client_keywords.items():
+            for kw in keywords:
+                if kw in combined:
+                    return slug
+        # Check if it's system/product activity
+        for sk in system_keywords:
+            if sk in combined:
+                return "system"
+        # If we can't determine from text, inherit from section context
+        return fallback
+
+    # Get files from last 14 days — ONLY daily logs (YYYY-MM-DD.md), not session transcripts
+    for md_file in sorted(memory_dir.glob("*.md"), reverse=True)[:30]:
+        # Only parse daily log files (exact format: YYYY-MM-DD.md)
+        if not re.match(r'^\d{4}-\d{2}-\d{2}\.md$', md_file.name):
+            continue
         date_match = re.search(r'(\d{4}-\d{2}-\d{2})', md_file.name)
         if not date_match:
             continue
         date = date_match.group(1)
 
         content = md_file.read_text(encoding="utf-8")
+        parent_section = ""  # ## level
+        current_section = ""  # ### level
+        section_client = "unknown"  # client detected from section header
         for line in content.split("\n"):
-            line = line.strip()
-            if line.startswith("- ") or line.startswith("* "):
-                text = line[2:].strip()
+            stripped = line.strip()
+            # Track section headers for context (## = parent, ### = child)
+            if stripped.startswith("## ") and not stripped.startswith("### "):
+                parent_section = stripped
+                current_section = ""
+                # Detect client from section header to use as fallback
+                sc = detect_client("", stripped, "", "unknown")
+                if sc != "unknown":
+                    section_client = sc
+                continue
+            if stripped.startswith("### "):
+                current_section = stripped
+                sc = detect_client("", stripped, parent_section, "unknown")
+                if sc != "unknown":
+                    section_client = sc
+                continue
+            if stripped.startswith("- ") or stripped.startswith("* "):
+                text = stripped[2:].strip()
                 if text and len(text) > 10:
+                    # Skip noise: session metadata, UUIDs, source labels, checkboxes
+                    if re.match(r'^[0-9a-f-]{20,}', text): continue
+                    if re.match(r'^[0-9a-f]{8}-[0-9a-f]{4}', text): continue
+                    if text.lower().strip(':').strip() in ('discord', 'telegram', 'signal', 'source'): continue
+                    if text.startswith('[x] ') or text.startswith('[ ] '): continue
+                    if text.startswith('**Session') or text.startswith('**Source'): continue
+                    if len(text) < 20 and '→' not in text: continue
+                    # Skip conversation transcript lines (assistant/user prefixes, bare fragments)
+                    if text.startswith('assistant:') or text.startswith('user:'): continue
+                    if text.startswith('A:') and len(text) < 40: continue
                     # Extract time if present
                     time_match = re.search(r'\*\*(\d{2}:\d{2})\*\*', text)
                     time_str = time_match.group(1) if time_match else ""
+                    client = detect_client(text, current_section, parent_section, section_client)
                     activity.append({
                         "date": date,
                         "time": time_str,
                         "text": re.sub(r'\*\*.*?\*\*:?\s*', '', text).strip(),
                         "raw": text,
+                        "client": client,
                     })
 
-    return activity[:50]  # Last 50 events
+    return activity[:100]  # Last 100 events
 
 
 def parse_foundation():

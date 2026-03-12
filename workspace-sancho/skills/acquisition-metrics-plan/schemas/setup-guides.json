@@ -16,28 +16,23 @@
   "ga4": {
     "title": "Google Analytics 4",
     "difficulty": "baja",
-    "time": "5 min (con Google Cloud existente)",
-    "prereqNote": "Si ya tienes un proyecto de Google Cloud con OAuth (ej: para Gmail, Search Console), puedes reutilizarlo.",
+    "time": "2 min",
+    "prereqNote": "Growth4U ya tiene un Service Account configurado. Solo necesitas dar acceso y pegar el Property ID.",
+    "systemServiceAccountNote": "El Service Account de Growth4U ya está configurado a nivel sistema. El email de acceso se muestra abajo.",
     "steps": [
       {
-        "title": "Activa la API de Google Analytics",
-        "instructions": "Ve a <a href='https://console.cloud.google.com/apis/library/analyticsdata.googleapis.com' target='_blank'>este enlace directo</a> → asegúrate de que tu proyecto está seleccionado arriba → haz clic en <strong>Habilitar</strong>. Eso es todo.",
-        "skipIf": null,
-        "alwaysShow": true
-      },
-      {
-        "title": "Da acceso en Google Analytics",
-        "instructions": "Ve a <a href='https://analytics.google.com' target='_blank'>analytics.google.com</a> → <strong>Administrar</strong> (⚙️) → <strong>Gestión de acceso a la propiedad</strong> → <strong>\"+\" → Agregar usuarios</strong>.<br/><br/>¿Qué email pongo? El de tu cuenta de servicio o el que usas con OAuth. Si usas OAuth personal, pon tu email (<code>alfonso@growth4u.io</code>). Si tienes service account, pon el <code>client_email</code> del JSON.<br/><br/>Rol: <strong>\"Lector\"</strong> es suficiente.",
+        "title": "Da acceso a nuestro Service Account en Google Analytics",
+        "instructions": "Ve a <a href='https://analytics.google.com' target='_blank'>analytics.google.com</a> → <strong>Administrar</strong> (⚙️) → <strong>Gestión de acceso a la propiedad</strong> → <strong>\"+\" → Agregar usuarios</strong>.<br/><br/>Pega este email: <code class='sa-email'>Se mostrará una vez configurado el Service Account del sistema</code><br/><br/>Rol: <strong>\"Lector\"</strong> → <strong>Agregar</strong>.",
         "alwaysShow": true
       },
       {
         "title": "Encuentra tu Property ID",
-        "instructions": "En <a href='https://analytics.google.com' target='_blank'>Google Analytics</a> → <strong>Administrar</strong> (⚙️) → <strong>Configuración de la propiedad</strong>. El <strong>Property ID</strong> es un número (ej: <code>123456789</code>). Lo encuentras arriba a la derecha o en la URL.",
+        "instructions": "En <a href='https://analytics.google.com' target='_blank'>Google Analytics</a> → <strong>Administrar</strong> (⚙️) → <strong>Configuración de la propiedad</strong>.<br/><br/>El <strong>Property ID</strong> es un número de ~9 dígitos (ej: <code>123456789</code>). También aparece en la URL cuando estás dentro de una propiedad.",
         "alwaysShow": true
       },
       {
-        "title": "Pega las credenciales abajo",
-        "instructions": "Solo necesitas el <strong>Property ID</strong>. Si usas service account, también pega el JSON.",
+        "title": "Pega el Property ID abajo",
+        "instructions": "Solo necesitas el <strong>Property ID</strong>. Nada más.",
         "alwaysShow": true
       }
     ]
@@ -45,22 +40,18 @@
   "gsc": {
     "title": "Google Search Console",
     "difficulty": "baja",
-    "time": "5 min (con Google Cloud existente)",
-    "prereqNote": "Si ya tienes un proyecto de Google Cloud con OAuth, solo necesitas activar la API y dar acceso.",
+    "time": "2 min",
+    "prereqNote": "Growth4U ya tiene un Service Account configurado. Solo necesitas dar acceso y pegar la URL del sitio.",
+    "systemServiceAccountNote": "El Service Account de Growth4U ya está configurado a nivel sistema.",
     "steps": [
       {
-        "title": "Activa la API de Search Console",
-        "instructions": "Ve a <a href='https://console.cloud.google.com/apis/library/searchconsole.googleapis.com' target='_blank'>este enlace directo</a> → asegúrate de que tu proyecto está seleccionado → <strong>Habilitar</strong>.",
-        "alwaysShow": true
-      },
-      {
-        "title": "Da acceso en Search Console",
-        "instructions": "Ve a <a href='https://search.google.com/search-console' target='_blank'>Search Console</a> → selecciona tu propiedad → <strong>Configuración → Usuarios y permisos → \"+ Agregar usuario\"</strong>.<br/><br/>Email: el de tu OAuth o service account. Permiso: <strong>\"Completo\"</strong>.",
+        "title": "Da acceso a nuestro Service Account en Search Console",
+        "instructions": "Ve a <a href='https://search.google.com/search-console' target='_blank'>Search Console</a> → selecciona tu propiedad → <strong>Configuración → Usuarios y permisos → \"+ Agregar usuario\"</strong>.<br/><br/>Pega este email: <code class='sa-email'>Se mostrará una vez configurado el Service Account del sistema</code><br/><br/>Permiso: <strong>\"Completo\"</strong> → <strong>Agregar</strong>.",
         "alwaysShow": true
       },
       {
         "title": "Pega la URL del sitio abajo",
-        "instructions": "Introduce la <strong>URL de tu sitio</strong> tal como aparece en Search Console (ej: <code>https://example.com</code> o <code>sc-domain:example.com</code>).",
+        "instructions": "<strong>⚠️ La URL debe ser EXACTA a como está en Search Console.</strong> Hay dos formatos posibles:<br/><br/>• <strong>Propiedad de dominio:</strong> <code>sc-domain:tudominio.com</code> (si verificaste por DNS)<br/>• <strong>Propiedad de URL:</strong> <code>https://tudominio.com/</code> (con la barra final)<br/><br/>Para verificar cuál tienes: abre <a href='https://search.google.com/search-console' target='_blank'>Search Console</a> y mira el nombre de tu propiedad en el desplegable de arriba a la izquierda. Cópialo tal cual.",
         "alwaysShow": true
       }
     ]
@@ -447,16 +438,21 @@
   "metricool": {
     "title": "Metricool",
     "difficulty": "baja",
-    "time": "2 min",
+    "time": "3 min",
     "steps": [
       {
-        "title": "Busca tu API Key",
-        "instructions": "En <a href='https://app.metricool.com' target='_blank'>Metricool</a> → <strong>Ajustes → Integraciones / API</strong>. Copia tu API Key.",
+        "title": "Busca tu API Token (userToken)",
+        "instructions": "En <a href='https://app.metricool.com' target='_blank'>Metricool</a> → <strong>Ajustes → API</strong>. Copia tu <strong>userToken</strong>.",
         "alwaysShow": true
       },
       {
-        "title": "Pega la clave",
-        "instructions": "Introduce tu <strong>API Key</strong>."
+        "title": "Copia la URL de Metricool",
+        "instructions": "En Metricool, navega a cualquier sección (ej: Evolución). <strong>Copia la URL completa</strong> de tu navegador. Debe contener <code>blogId</code> y <code>userId</code>. Ejemplo: <code>app.metricool.com/evolution/web?blogId=12345&userId=67890</code>",
+        "alwaysShow": true
+      },
+      {
+        "title": "Pega las credenciales",
+        "instructions": "Introduce tu <strong>API Token</strong> y la <strong>URL de Metricool</strong>. Extraeremos el Brand ID y User ID automáticamente."
       }
     ]
   },
@@ -511,17 +507,23 @@
   "google_workspace": {
     "title": "Google Workspace (Gmail, Calendar, Drive)",
     "difficulty": "baja",
-    "time": "3 min (ya configurado vía gog CLI)",
-    "prereqNote": "Si ya usas el comando <code>gog</code> para Gmail/Calendar, no necesitas hacer nada más aquí. Las credenciales OAuth ya están configuradas.",
+    "time": "2 min",
+    "prereqNote": "Conecta la cuenta de Google del cliente para acceder a Gmail, Calendar y Drive.",
+    "customPage": true,
     "steps": [
       {
-        "title": "Verifica que gog funciona",
-        "instructions": "Si ya puedes hacer <code>gog gmail inbox</code> desde terminal, la conexión está activa. No necesitas tocar nada.",
+        "title": "Introduce el email y haz clic en Autorizar",
+        "instructions": "Escribe el email de la cuenta de Google que quieres conectar. Se abrirá una página de Google para que el propietario de la cuenta autorice el acceso.",
         "alwaysShow": true
       },
       {
-        "title": "Si necesitas reconectar",
-        "instructions": "Ejecuta <code>gog auth login</code> en terminal y sigue el flujo OAuth en el navegador.",
+        "title": "El propietario autoriza en Google",
+        "instructions": "El propietario de la cuenta abre el link, inicia sesión en Google y acepta los permisos. Google le mostrará una URL de redirección — debe copiarla.",
+        "alwaysShow": true
+      },
+      {
+        "title": "Pega la URL de redirección",
+        "instructions": "Pega la URL que Google devolvió al propietario. Se completa la conexión automáticamente.",
         "alwaysShow": true
       }
     ]

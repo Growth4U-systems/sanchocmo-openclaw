@@ -20,7 +20,11 @@
 
 ## Brand Files
 - Ruta: `brand/{slug-cliente}/` (NUNCA `brand/` directamente)
-- Links MC: `https://sancho-cmo.taild48df2.ts.net/mc/brand/{slug}/{archivo}.md`
+- Links MC: **SIEMPRE con token** (ver `_system/mc-links-protocol.md`)
+  - Guild cliente → `https://sancho-cmo.taild48df2.ts.net/mc/portal/{mcToken}/docs/{path}`
+  - Guild interno → `https://sancho-cmo.taild48df2.ts.net/mc/admin/{adminToken}/docs/brand/{slug}/{path}`
+  - Tokens en `clients.json`: campo `mcToken` por cliente, campo `adminToken` para admin
+  - **NUNCA** `/mc/docs/...` sin token → devuelve 403
 
 ## Multi-Client Routing
 - Registro: `clients.json` (raíz). `active: false` excluye de crons.

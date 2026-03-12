@@ -2,7 +2,7 @@
   "version": "2.0",
   "client": "sanchocmo",
   "started_at": "2026-03-04T08:23:00Z",
-  "updated_at": "2026-03-08T16:15:00Z",
+  "updated_at": "2026-03-11T09:13:04Z",
   "sections": {
     "company-brief": {
       "status": "approved",
@@ -10,9 +10,15 @@
       "output_dir": "brand/sanchocmo/company-brief/",
       "approved_at": "2026-03-04T10:47:00Z",
       "skills": {
-        "company-context": {"status": "approved"},
-        "business-model": {"status": "approved"},
-        "budget": {"status": "approved"}
+        "company-context": {
+          "status": "approved"
+        },
+        "business-model": {
+          "status": "approved"
+        },
+        "budget": {
+          "status": "approved"
+        }
       }
     },
     "market-and-us": {
@@ -24,24 +30,41 @@
         "market-analysis": {
           "status": "approved",
           "layer": 1,
-          "requires": ["company-brief"],
-          "enriches_with": ["competitor-analysis", "self-analysis"],
+          "requires": [
+            "company-brief"
+          ],
+          "enriches_with": [
+            "competitor-analysis",
+            "self-analysis"
+          ],
           "output_file": "brand/sanchocmo/market-and-us/market/current.md",
           "skill": "market-intelligence"
         },
         "competitor-analysis": {
           "status": "approved",
           "layer": 1,
-          "requires": ["company-brief"],
-          "enriches_with": ["market-analysis", "self-analysis"],
-          "output_files": ["brand/sanchocmo/market-and-us/competitors/current.md"],
+          "requires": [
+            "company-brief"
+          ],
+          "enriches_with": [
+            "market-analysis",
+            "self-analysis"
+          ],
+          "output_files": [
+            "brand/sanchocmo/market-and-us/competitors/current.md"
+          ],
           "skill": "competitor-intelligence"
         },
         "self-analysis": {
           "status": "approved",
           "layer": 1,
-          "requires": ["company-brief"],
-          "enriches_with": ["market-analysis", "competitor-analysis"],
+          "requires": [
+            "company-brief"
+          ],
+          "enriches_with": [
+            "market-analysis",
+            "competitor-analysis"
+          ],
           "output_file": "brand/sanchocmo/market-and-us/self/current.md",
           "skill": "self-intelligence"
         },
@@ -49,7 +72,11 @@
           "status": "approved",
           "approved_at": "2026-03-04T16:10:00Z",
           "layer": 2,
-          "requires": ["market-analysis", "competitor-analysis", "self-analysis"],
+          "requires": [
+            "market-analysis",
+            "competitor-analysis",
+            "self-analysis"
+          ],
           "output_file": "brand/sanchocmo/market-and-us/swot/current.md",
           "skill": "swot-analysis"
         }
@@ -60,14 +87,24 @@
           "generated_at": "2026-03-04T16:12:00Z",
           "output_file": "brand/sanchocmo/market-and-us/summary/current.md",
           "generated_by": "orchestrator",
-          "requires": ["market-analysis", "competitor-analysis", "self-analysis", "swot"]
+          "requires": [
+            "market-analysis",
+            "competitor-analysis",
+            "self-analysis",
+            "swot"
+          ]
         },
         "ope-canvas": {
           "status": "approved",
           "generated_at": "2026-03-04T16:12:00Z",
           "output_file": "brand/sanchocmo/market-and-us/ope-canvas/current.md",
           "generated_by": "orchestrator",
-          "requires": ["market-analysis", "competitor-analysis", "self-analysis", "swot"]
+          "requires": [
+            "market-analysis",
+            "competitor-analysis",
+            "self-analysis",
+            "swot"
+          ]
         }
       }
     },
@@ -79,8 +116,12 @@
         "niche-discovery": {
           "status": "approved",
           "layer": 3,
-          "requires": ["swot"],
-          "enriches_with": ["existing-customer-data"],
+          "requires": [
+            "swot"
+          ],
+          "enriches_with": [
+            "existing-customer-data"
+          ],
           "output_file": "brand/sanchocmo/go-to-market/ecps/current.md",
           "skill": "niche-discovery-100x",
           "version": "v2.0",
@@ -90,7 +131,9 @@
         "existing-customer-data": {
           "status": "not-started",
           "layer": 3,
-          "requires": ["company-brief"],
+          "requires": [
+            "company-brief"
+          ],
           "optional": true,
           "output_file": "brand/sanchocmo/go-to-market/existing-customer-data/current.md",
           "skill": "existing-customer-data"
@@ -98,19 +141,28 @@
         "positioning": {
           "status": "approved",
           "layer": 4,
-          "requires": ["niche-discovery"],
+          "requires": [
+            "niche-discovery"
+          ],
           "output_pattern": "brand/sanchocmo/go-to-market/positioning/{ecp-slug}/current.md",
           "skill": "positioning-messaging",
           "version": "v1.0",
           "approved_at": "2026-03-08T16:30:00Z",
-          "ecps_completed": ["ecp1-estrategia-antes-de-ejecutar", "ecp2-no-se-por-donde-empezar"],
+          "ecps_completed": [
+            "ecp1-estrategia-antes-de-ejecutar",
+            "ecp2-no-se-por-donde-empezar"
+          ],
           "notes": "Wave 1 ECPs. Shared docs: value-criteria, assets, messaging-summary."
         },
         "pricing": {
           "status": "approved",
           "layer": 4,
-          "requires": ["niche-discovery"],
-          "enriches_with": ["positioning"],
+          "requires": [
+            "niche-discovery"
+          ],
+          "enriches_with": [
+            "positioning"
+          ],
           "output_file": "brand/sanchocmo/go-to-market/pricing/current.md",
           "skill": "pricing-strategy",
           "version": "v1.0",
@@ -119,9 +171,22 @@
         "ecp-validation": {
           "status": "not-started",
           "layer": 4,
-          "requires": ["niche-discovery"],
+          "requires": [
+            "niche-discovery"
+          ],
           "optional": true,
           "skill": "ecp-validation"
+        },
+        "metrics-plan": {
+          "status": "not-started",
+          "layer": 4,
+          "requires": [
+            "company-brief"
+          ],
+          "enriches_with": [
+            "niche-discovery"
+          ],
+          "skill": "acquisition-metrics-plan"
         }
       },
       "syntheses": {
@@ -129,7 +194,9 @@
           "status": "not-generated",
           "output_file": "brand/sanchocmo/go-to-market/messaging-summary/current.md",
           "generated_by": "orchestrator",
-          "requires": ["positioning"]
+          "requires": [
+            "positioning"
+          ]
         }
       }
     },
@@ -142,7 +209,9 @@
         "brand-voice": {
           "status": "approved",
           "layer": 5,
-          "requires": ["positioning"],
+          "requires": [
+            "positioning"
+          ],
           "output_file": "brand/sanchocmo/brand-voice/current.md",
           "skill": "brand-voice",
           "version": "v1.0",
@@ -154,7 +223,9 @@
         "visual-identity": {
           "status": "approved",
           "layer": 5,
-          "requires": ["brand-voice"],
+          "requires": [
+            "brand-voice"
+          ],
           "output_file": "brand/sanchocmo/brand-identity/visual-identity/current.md",
           "skill": "visual-identity",
           "version": "v1.0",

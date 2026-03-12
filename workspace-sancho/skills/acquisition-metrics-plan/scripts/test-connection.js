@@ -67,23 +67,34 @@ function httpRequest(url, options = {}) {
   });
 }
 
+// --- System Service Account loader ---
+function loadSystemServiceAccount() {
+  const saPath = path.resolve(__dirname, '..', '..', '..', '.secrets', 'google-service-account.json');
+  try {
+    return JSON.parse(fs.readFileSync(saPath, 'utf8'));
+  } catch {
+    return null;
+  }
+}
+
 // --- Test functions per source ---
 const TESTERS = {
   async ga4(config, env, slug) {
-    const saKey = env[`${slug}_GA4_SA_KEY`];
     const propertyId = config.propertyId || config.PROPERTY_ID;
-    if (!saKey) return { ok: false, error: `Env var ${slug}_GA4_SA_KEY not set` };
-    if (!propertyId) return { ok: false, error: 'propertyId not configured' };
+    if (!propertyId) return { ok: false, error: 'Property ID not configured' };
 
-    // Parse SA key and create JWT for Google API
+    // Load system Service Account
+    const sa = loadSystemServiceAccount();
+    if (!sa) return { ok: false, error: 'System Google Service Account not configured. Go to /mc/connect/system/google-sa' };
+
     try {
-      const sa = JSON.parse(saKey);
       const token = await getGoogleAccessToken(sa);
       const res = await httpRequest(
         `https://analyticsdata.googleapis.com/v1beta/properties/${propertyId}/metadata`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       if (res.status === 200) return { ok: true, detail: 'GA4 metadata accessible' };
+      if (res.status === 403) return { ok: false, error: `Acceso denegado. Asegúrate de dar acceso "Lector" a ${sa.client_email} en la propiedad GA4 ${propertyId}` };
       return { ok: false, error: `HTTP ${res.status}: ${res.body.slice(0, 200)}` };
     } catch (e) {
       return { ok: false, error: e.message };
@@ -91,13 +102,14 @@ const TESTERS = {
   },
 
   async gsc(config, env, slug) {
-    const saKey = env[`${slug}_GSC_SA_KEY`];
     const siteUrl = config.siteUrl || config.SITE_URL;
-    if (!saKey) return { ok: false, error: `Env var ${slug}_GSC_SA_KEY not set` };
-    if (!siteUrl) return { ok: false, error: 'siteUrl not configured' };
+    if (!siteUrl) return { ok: false, error: 'Site URL not configured' };
+
+    // Load system Service Account
+    const sa = loadSystemServiceAccount();
+    if (!sa) return { ok: false, error: 'System Google Service Account not configured. Go to /mc/connect/system/google-sa' };
 
     try {
-      const sa = JSON.parse(saKey);
       const token = await getGoogleAccessToken(sa, 'https://www.googleapis.com/auth/webmasters.readonly');
       const encodedUrl = encodeURIComponent(siteUrl);
       const res = await httpRequest(
@@ -105,6 +117,7 @@ const TESTERS = {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       if (res.status === 200) return { ok: true, detail: 'GSC site accessible' };
+      if (res.status === 403) return { ok: false, error: `Acceso denegado. Asegúrate de dar acceso a ${sa.client_email} en Search Console para ${siteUrl}` };
       return { ok: false, error: `HTTP ${res.status}: ${res.body.slice(0, 200)}` };
     } catch (e) {
       return { ok: false, error: e.message };
@@ -173,12 +186,33 @@ const TESTERS = {
     const token = env[`${slug}_METRICOOL_API_TOKEN`];
     if (!token) return { ok: false, error: `Env var ${slug}_METRICOOL_API_TOKEN not set` };
 
+    // Extract blogId and userId from URL or direct config
+    let brandId = config.BRAND_ID || env[`${slug}_METRICOOL_BRAND_ID`];
+    let userId = config.USER_ID || env[`${slug}_METRICOOL_USER_ID`];
+    const mcUrl = config.METRICOOL_URL || env[`${slug}_METRICOOL_URL`];
+
+    if (mcUrl && (!brandId || !userId)) {
+      try {
+        const parsed = new URL(mcUrl.startsWith('http') ? mcUrl : `https://${mcUrl}`);
+        brandId = brandId || parsed.searchParams.get('blogId');
+        userId = userId || parsed.searchParams.get('userId');
+      } catch (_) {}
+    }
+
+    if (!brandId) return { ok: false, error: `Brand ID missing. Paste your Metricool URL (must contain blogId and userId).` };
+
     try {
-      const res = await httpRequest(
-        'https://api.metricool.com/v1/brands',
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      if (res.status === 200) return { ok: true, detail: 'Metricool accessible' };
+      const url = `https://app.metricool.com/api/admin/simpleProfiles?blogId=${brandId}${userId ? '&userId=' + userId : ''}`;
+      const res = await httpRequest(url, {
+        headers: { 'X-Mc-Auth': token, 'Content-Type': 'application/json' }
+      });
+      if (res.status === 200) return { ok: true, detail: `Metricool connected (blogId=${brandId})` };
+      // Metricool returns HTML error pages — detect and give clear message
+      if (res.body && res.body.trim().startsWith('<')) {
+        if (res.status === 401) return { ok: false, error: 'Token inválido o incompleto. Verifica que has copiado el token completo desde Metricool → Ajustes → API.' };
+        if (res.status === 403) return { ok: false, error: 'Acceso denegado. Verifica que tu plan de Metricool incluye acceso a la API (Advanced o Custom).' };
+        return { ok: false, error: `Metricool respondió con error HTTP ${res.status}. Verifica token y Brand ID.` };
+      }
       return { ok: false, error: `HTTP ${res.status}: ${res.body.slice(0, 200)}` };
     } catch (e) {
       return { ok: false, error: e.message };

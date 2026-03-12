@@ -1,7 +1,7 @@
 {
   "version": "2.0",
   "started_at": "2026-03-01T19:03:21Z",
-  "updated_at": "2026-03-08T10:54:00Z",
+  "updated_at": "2026-03-11T09:13:03Z",
   "sections": {
     "company-brief": {
       "status": "approved",
@@ -223,6 +223,17 @@
           ],
           "optional": true,
           "skill": "ecp-validation"
+        },
+        "metrics-plan": {
+          "status": "not-started",
+          "layer": 4,
+          "requires": [
+            "company-brief"
+          ],
+          "enriches_with": [
+            "niche-discovery"
+          ],
+          "skill": "acquisition-metrics-plan"
         }
       },
       "syntheses": {

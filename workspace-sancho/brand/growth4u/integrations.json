@@ -11,7 +11,7 @@
       "envVars": [
         "GROWTH4U_META_ADS_ACCESS_TOKEN"
       ],
-      "lastTestedAt": "2026-03-08T22:57:59.588Z"
+      "lastTestedAt": "2026-03-11T23:19:26.784Z"
     },
     "ghl": {
       "provider": "ghl",
@@ -22,9 +22,38 @@
       "envVars": [
         "GROWTH4U_GHL_API_KEY"
       ],
-      "lastTestedAt": "2026-03-08T22:58:00.014Z"
+      "lastTestedAt": "2026-03-11T23:19:27.170Z"
+    },
+    "ga4": {
+      "provider": "ga4",
+      "status": "connected",
+      "config": {
+        "PROPERTY_ID": "515424511"
+      },
+      "envVars": [],
+      "lastTestedAt": "2026-03-11T23:19:27.952Z"
+    },
+    "gsc": {
+      "provider": "gsc",
+      "status": "connected",
+      "config": {
+        "SITE_URL": "sc-domain:growth4u.io"
+      },
+      "envVars": [],
+      "lastTestedAt": "2026-03-11T23:19:28.519Z"
+    },
+    "metricool": {
+      "provider": "metricool",
+      "status": "connected",
+      "config": {
+        "METRICOOL_URL": "https://app.metricool.com/evolution/web?blogId=5942085&userId=3791983"
+      },
+      "envVars": [
+        "GROWTH4U_METRICOOL_API_TOKEN"
+      ],
+      "lastTestedAt": "2026-03-11T23:19:29.069Z"
     }
   },
   "systemOverrides": {},
-  "updatedAt": "2026-03-08T22:58:00.026Z"
+  "updatedAt": "2026-03-11T23:19:29.083Z"
 }

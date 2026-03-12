@@ -1,6 +1,75 @@
 # CHANGELOG — SanchoCMO
 
 Formato: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
+Scope: Features y cambios del producto SanchoCMO. Actividad operativa por cliente → Mission Control Activity.
+
+---
+
+## [2.5.0] — 2026-03-11
+
+### Added
+- **API Connection System** — Self-service `/mc/connect/{slug}/{apiId}` pages for 30+ APIs (GA4, GSC, Meta Ads, Google Ads, HubSpot, Stripe, etc.) with step-by-step setup guides.
+- **System Service Account for Google APIs** — Shared SA across all clients. Client only needs to grant Viewer access + Property ID. No per-client key management.
+- **First GA4 connection via MC** — End-to-end self-service flow validated.
+- **#changelog channel** — Dedicated channel for tracking product changes.
+
+---
+
+## [2.4.0] — 2026-03-10
+
+### Added
+- **Daily Crons Backfill** — Daily Pulse and Meeting Intelligence crons caught up (8 pulse reports + 6 meeting summaries generated).
+
+### Fixed
+- **Cron timeout handling** — Crons that exceed 60s now continue in background instead of failing silently.
+
+---
+
+## [2.3.0] — 2026-03-08 / 2026-03-09
+
+### Added
+- **`frontend-slides` skill** — Zero-dependency HTML presentations with 12 style presets and PPT conversion support. Adapted for Discord flow (no interactive prompts).
+- **Presentation template system** — `skills/frontend-slides/templates/` with brand theme resolver (auto-reads client visual-identity), competitor deep-dive spec, and Foundation Report templates.
+- **8 Foundation Report slide templates** — Cover, Index/TOC, Section Divider, Gap Analysis Table, Competitor Landscape, Competitor Deep-Dive (2-col), SWOT+TOWS (single slide), OPE Canvas. All dynamically themed per client.
+
+### Changed
+- **Presentation design standards** — Dense layout (no excessive whitespace), real platform logos via Google Favicon Service (base64 embedded), brand colors from visual-identity, functional MC doc links, dark bg covers matching section dividers.
+
+---
+
+## [2.2.0] — 2026-03-05 / 2026-03-06
+
+### Added
+- **Tailscale Funnel for /mc** — Mission Control now publicly accessible (no VPN required for doc links).
+- **`composition-rules.md`** — New reference for visual-identity skill with layout and visual hierarchy rules.
+
+### Changed
+- **`niche-discovery-100x` skill v4.0** — Complete rewrite. Clusters by NEED not PERSON. Solution Filter replaces ICP Filter. Reachability = Trust Map → Search Map → Channel Map (with named influencers, communities, newsletters, podcasts, events). Scoring: Pain×0.35 + Reachability×0.40 + SAM×0.25. Founder Moat = badge qualifier, not in formula.
+- **`positioning-messaging` skill v5.0** — Mandatory anchor linking (#N → shared doc). Assets/Value Criteria now global (no per-ECP duplication). Bidirectional links required between shared and per-ECP docs.
+- **`visual-identity` skill** — Major update. Added composition-rules reference, improved prompt and checklist.
+
+---
+
+## [2.1.0] — 2026-03-04
+
+### Added
+- **`acquisition-metrics-plan` skill** — Metrics plan design with API catalog, setup guides, Excel template generator, and connection tester.
+- **`growth4u-ui-system` skill** — Visual design system for branded content generation.
+- **`growth4u-visual-generator` skill** — Template generator for branded visuals (LinkedIn posts, carousels, etc.).
+- **`gsc` skill** — Google Search Console integration with Python auth and query scripts.
+- **`native-google-analytics` skill** — GA4 native integration with Python auth and query scripts.
+- **`railway` skill** — Railway deployment skill with setup, deploy, configure, operate, and API references.
+- **Diagnostic quiz architecture** — Patient routing quiz framework: questions → classification → offer mapping (consult, call, or paid diagnostic). Reusable across clients.
+
+### Changed
+- **AGENTS.md** — Major rewrite. Streamlined memory, safety, group chat, and formatting rules.
+- **SOUL.md** — Added Regla 13: critical operations alert when exec/gateway/cron requested from client guilds (security).
+- **TOOLS.md** — Comprehensive rewrite. Discord mechanics, brand file paths, multi-client routing, progress update rules.
+- **`_system/dispatch-protocol.md`** — New dispatch protocol for agent routing.
+- **`_system/token-optimization-guide.md`** — New guide for reducing token usage across agents.
+
+### Fixed
+- **QA Bot** — Caught critical math errors in Foundation SAM calculations before client approval.
 
 ---
 
@@ -15,7 +84,7 @@ Formato: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 - **8 Foundation threads** (was 15) — Grouped by section: Company Brief, Market Analysis, Competitor Analysis, Self Analysis, SWOT & Synthesis, Niche Discovery, Positioning & Pricing, Brand Identity.
 
 ### Changed
-- **56 skills migrated** — All context_required and context_writes paths updated to v2.0 directory structure (company-brief/, market-and-us/, go-to-market/, brand-identity/, operational/).
+- **56 skills migrated** — All context_required and context_writes paths updated to v2.0 directory structure.
 - **OPE Canvas demoted** — From blocking Foundation pillar to orchestrator-generated synthesis document.
 - **self-intelligence** — Removed "Deep Research: Market" (now belongs to market-intelligence only).
 - **MC HTML** — Foundation page renders per-client sections/pillars, DAG shows 6 layers, client cards with individual progress.
@@ -40,243 +109,176 @@ Formato: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 ## [1.0.0] — 2026-02-27 (Evening)
 
 ### Added
-- **OPE Canvas skill** — One-Page Endgame (15th Foundation pillar). 14 sections: Obvious Choice, ICP, Core Problem, Product, Geography, Channels, 3× Moats, Endgame, Values, Capabilities, Strategy, Year/Quarterly/Monthly Picture. Positioned between La Empresa and El Mercado. Framework de Moats con 7 tipos.
-- **DataForSEO integration** — SEO data for competitor analysis (SERP, backlinks, keywords). Credentials configured, balance $35.
-- **Gate Check (regla de SOUL.md)** — Block pillar execution if dependencies not approved. Reads foundation-state.json, verifies all prerequisites.
-- **Automatic next-pillar flow** — After user approves → Sancho updates JSON → regenerates MC → launches next pillar (no command needed).
-- **Regla 0g** — Read ALL client data before generating (not just prerequisites). Only mark 🔴 DUDA if truly missing.
-- **Strict thread rules** — Prohibit intermediate messages in channel, require user mention in first message, max 2 messages per thread (start + result).
-- **MC live-reload** — Reads foundation-state.json every 30 seconds, no longer 100% dependent on regenerate.py.
-- **Competitor Intelligence v2** — Validate competitors with domains/socials before scraping. Apify mandatory. Save to sources.json.
+- **OPE Canvas skill** — One-Page Endgame (15th Foundation pillar). 14 sections with Moats framework (7 types).
+- **DataForSEO integration** — SEO data for competitor analysis (SERP, backlinks, keywords). Balance $35.
+- **Gate Check** — Block pillar execution if dependencies not approved. Reads foundation-state.json.
+- **Automatic next-pillar flow** — Approve → update JSON → regenerate MC → launch next pillar automatically.
+- **MC live-reload** — Reads foundation-state.json every 30 seconds.
+- **Competitor Intelligence v2** — Validate competitors with domains/socials before scraping. Apify mandatory.
 
 ### Changed
-- **Foundation order** — Now 15 pillars with 5 categories: 🏢 La Empresa (4) + 🎯 OPE Canvas (1) + 📊 El Mercado (3) + 👥 Los Clientes (3) + 🎯 La Marca (4).
-- **foundation-orchestrator** — Updated DAG to reflect new order, renumbered 1-15.
-- **Approval triggers** — Expanded from ("sí", "ok", "perfecto") to include "validamos", "avancemos", "dale", "vamos", "next", etc.
-- **Competitor Intelligence flow** — Step 0 now presents all competitors with URLs before executing scrapers.
-- **Skill descriptions** — ope-canvas added to context_required of dependent skills.
+- **Foundation order** — 15 pillars in 5 categories: La Empresa (4) + OPE Canvas (1) + El Mercado (3) + Los Clientes (3) + La Marca (4).
+- **Approval triggers** — Expanded to include "validamos", "avancemos", "dale", "vamos", "next", etc.
+- **Competitor Intelligence flow** — Step 0 presents all competitors with URLs before scraping.
 
 ### Fixed
-- **Sancho not executing regenerate.py** — Added explicit reminder + MC live-reload as fallback.
-- **SWOT executed without validated competitors** — Gate check prevents execution of pillars with unmet dependencies.
-- **Sancho narrating intermediate steps** — Strict rules added (examples of ❌ prohibited messages).
-- **Hilos** — Philippe not auto-joining threads (fix: mention user in first message).
-- **Foundation-state.json not updated** — Sancho 3× forgot. Now automated MC read + explicit reminder in SOUL.md.
-
-### Deprecated
-- Intermediate narrative messages in channels (now prohibited in Regla 0c2)
+- **Gate check prevents out-of-order execution** — SWOT no longer runs without validated competitors.
+- **Thread auto-joining** — Mention user in first message so they join automatically.
+- **foundation-state.json updates** — Automated MC read + explicit reminder in SOUL.md.
 
 ---
 
-## [0.9.0] — 2026-02-27
+## [0.10.1] — 2026-03-01
 
 ### Added
-- **Foundation view restructured** — Business categories (🏢 La Empresa, 📊 El Mercado, 👥 Los Clientes, 🎯 La Marca) instead of technical layers (L0-L5). Pillar cards now clickable to open in doc viewer.
-- **Persistent QA logs** — Each pillar folder has `qa-log.md` that Rocinante maintains. Accumulates all QA checks, so Rocinante doesn't repeat verification work. URLs already validated are skipped in subsequent runs.
-- **"Descartadas" column** in tasks Kanban — Now shows discarded tasks (T-015, T-018, T-021) with reasons documented.
-- **Pillar folder mapping** — `folder` field in pillar data tracks which folder to open (e.g., market-intelligence → market/).
+- **Public doc access via Tailscale Funnel** — `/mc/docs` exposed publicly while full dashboard remains tailnet-only.
 
 ### Changed
-- **Foundation pillar detection** — regenerate.py now finds folders with `current.md` (new structure) + legacy flat files.
-- **Rocinante rules** — Updated to read/write qa-log.md, skip re-verification, maintain QA history.
-- **Sancho rules** — Pass qa-log.md ruta to Rocinante so it knows where to maintain the log.
+- **Tailscale config** — Serve (port 443 internal) + Funnel (port 8443 public) working in tandem.
+
+---
+
+## [0.10.0] — 2026-02-28
+
+### Added
+- **Intelligence Log** — Central intelligence.json with processed meetings/pulses. MC renders with type filters, search, and transcript links.
+- **Meeting folder structure** — `meetings/{slug}/summary.md + transcript.md` replacing flat files.
+
+### Changed
+- **Meeting intelligence** — Stores full transcript from Google Drive alongside summary.
+- **Almacenamiento blocks** — Added to company-context, business-model-audit, budget-constraints, market-intelligence.
+
+### Fixed
+- **foundation-state.json** — Removed invalid "draft" state, normalized to "not-started".
+- **Intelligence log** — Removed 4 duplicate entries, cleaned to 5 meetings + 3 pulses.
+- **GitHub backup** — Unified to single root repo with git push on daily backup cron.
+
+---
+
+## [0.9.1] — 2026-02-28
+
+### Changed
+- **SOUL.md restructured** — Reduced from 531 to 99 lines. Procedures moved to `_system/`.
+- **Discord threading refactored** — Subagent spawns create thread-bound sessions (`thread: true`).
+- **Thinking defaults enabled** — `thinkingDefault: low` — intermediate reasoning goes to thinking tokens, not chat.
+
+### Added
+- **TOOLS.md Discord Mechanics** — Guide to NO_REPLY, thinking tokens, thread-bound delivery.
+- **Escudero TOOLS.md** — Discord threading behavior for subagent spawns.
+
+### Fixed
+- **Discord text leaks** — Between tool calls, resolved via thinking tokens redirect.
+- **Subagent spawn isolation** — Escudero publishes in spawned thread, not channel.
+
+---
+
+## [0.9.0] — 2026-02-28
+
+### Fixed
+- **Folder naming consistency** — `swot/` → `swot-analysis/`, `niche-discovery/` → `niche-discovery-100x/`.
+- **Markdown rendering** — Replaced artisanal regex with marked.js (CDN). Fixes bullet spacing in complex lists.
+
+### Changed
+- **Regla 0h** — "Honestidad absoluta sobre herramientas y fuentes". Never claim tool usage if not executed.
+
+### Removed
+- **Legacy docs** — Moved to `_archive/`.
 
 ---
 
 ## [0.8.0] — 2026-02-27
 
 ### Added
-- **Versionado de documentos por carpeta** (Regla 0d) — Cada pilar en `brand/{slug}/{pilar}/current.md` + `v1.md`, `v2.md`... + `history.json`. Sancho siempre lee `current.md`, pregunta antes de sobreescribir, backup automático.
-- **Resolución de rutas** — `brand/{slug}/market.md` se traduce a `brand/{slug}/market/current.md` automáticamente.
-
-### Changed
-- **15 documentos de Hospital Capilar migrados** a estructura de carpetas con versionado.
-- **regenerate.py** — `parse_foundation()` ahora busca en `{pilar}/current.md` (nueva estructura) + legacy flat files.
-- **Foundation 5/14** pilares detectados correctamente post-migración.
+- **Document versioning** — Each pillar in `brand/{slug}/{pilar}/current.md` + `v1.md`, `v2.md`... + `history.json`.
+- **Path resolution** — `brand/{slug}/market.md` auto-resolves to `brand/{slug}/market/current.md`.
 
 ---
 
-## [0.7.0] — 2026-02-27 (late session)
+## [0.7.0] — 2026-02-27
 
 ### Added
-- **Regla 0b (Citación inline)** — Toda información buscada en internet debe incluir URL inline + sección Fuentes. Aplica a TODAS las skills.
-- **Regla 0c (Silencio intermediario)** — Sancho no narra pasos intermedios en Discord. Un mensaje al inicio + silencio hasta resultado final.
-- **Regla 0d (QA obligatorio)** — Rocinante valida TODOS los documentos antes de entregar al cliente. QA invisible (`thread: false`), resultado en hilo original. RECHAZA si hay URLs rotas o sin fuentes. Re-valida hasta aprobación.
-- **`qa-document-checklist.md` en workspace-rocinante** — Checklist: citación/URLs (verificadas con web_fetch), completitud, coherencia, brand alignment, formato, aislamiento de contexto. Scoring X/10.
-- **Link rendering en doc viewer** — `[texto](url)` ahora se convierte a `<a href="url">` en tablas y todo markdown.
-- **`spawnSubagentSessions=true`** en config Discord — Sancho puede spawnar Rocinante desde hilos.
-
-### Changed
-- **SOUL.md de Sancho** — Reglas 0b, 0c, 0d nuevas. Emphasis en QA invisible y silencio operacional.
-- **SOUL.md de Rocinante** — Regla 8 con referencia a checklist. Solo responde a QA REQUEST.
-- **deep-research** — Repositorio siempre en `brand/{slug}/`, no genérico. Instrucciones claras.
-
-### Fixed
-- **mc-server.js** — Renderer ahora procesa links markdown en todas partes (incluyendo celdas de tabla).
+- **Regla 0b (Inline citations)** — All web-sourced data requires URL + Fuentes section.
+- **Regla 0c (Silent operations)** — No intermediate narration in Discord. Start + result only.
+- **Regla 0d (Mandatory QA)** — Rocinante validates all documents before delivery. Rejects broken URLs or missing sources.
+- **`qa-document-checklist.md`** — Citation, URLs, completeness, coherence, brand alignment, format scoring.
+- **Link rendering in doc viewer** — Markdown links now rendered as `<a href>` everywhere including tables.
 
 ---
 
 ## [0.6.0] — 2026-02-27
 
 ### Added
-- **T-035 — Reglas de citación obligatorias** — Toda cifra/dato en market-intelligence (+ competitor-intelligence, self-intelligence, niche-discovery, swot-analysis) debe incluir URL de fuente verificada. Sección `## Fuentes` obligatoria.
-- **T-036 — Skill `deep-research`** — Profundizador universal para Foundation. Acepta cualquier doc .md, investiga con 10-20 búsquedas por sección, devuelve mismo formato enriquecido con fuentes verificadas.
-- **Bloque "¿Quieres profundizar?"** añadido a 13 skills de Foundation — Al completar cualquier análisis, sugiere deep-research.
-- **Skills abre en doc viewer** — Click en skill card en MC abre `/mc/docs/skills/{nombre}/SKILL.md` en pestaña nueva.
+- **Mandatory citation rules** — All Foundation analysis skills require verified URL sources + `## Fuentes` section.
+- **`deep-research` skill** — Universal Foundation enricher. 10-20 searches per section, same format output with verified sources.
+- **"¿Quieres profundizar?" block** — Added to 13 Foundation skills post-completion.
+- **Skills in doc viewer** — Click skill card in MC opens SKILL.md.
 
 ### Fixed
-- **Exec permissions globales** — `tools.exec.security=full` + `tools.exec.ask=off`. Sancho ya no pide permisos.
-- **3 crons arreglados** — cost-tracker, Daily Pulse, Meeting Intelligence (thread-create flow corregido).
+- **Exec permissions** — `security: full` + `ask: off` globally.
+- **3 crons fixed** — cost-tracker, Daily Pulse, Meeting Intelligence thread-create flow.
 
 ---
 
 ## [0.5.0] — 2026-02-27
 
 ### Added
-- **TASKS.md unificado con tags de cliente** — Un solo archivo de tareas para sistema + clientes. Tags `[hospital-capilar]` para filtrar por cliente en MC.
-- **Categoría 🗑️ Descartadas en Kanban** — Nuevo estado para tareas que no proceden (con razón documentada).
-- **Exec permissions globales** — `tools.exec.security=full` + `tools.exec.ask=off`. Sancho ya no pide permisos para ejecutar comandos.
-
-### Changed
-- **regenerate.py** — Extrae campo `client` de tags en tareas. Una sola fuente (Cervantes TASKS.md).
-- **mission-control.html** — Filtro de cliente usa `t.client === selectedSlug` en vez de `t.cat === 'client'`.
-- **3 crons arreglados**:
-  - `cost-tracker-daily`: delivery cambiado a `--no-deliver` (error de target Discord).
-  - `Daily Pulse`: instrucciones de thread-create corregidas (usar `send` con threadId, no `thread-reply`).
-  - `Meeting Intelligence`: misma corrección de thread-create + referencia a isolation rules.
+- **Unified TASKS.md with client tags** — Single task file, `[client-slug]` tags for MC filtering.
+- **🗑️ Discarded category in Kanban** — With documented reasons.
 
 ### Fixed
-- **T-022 completada** — cost-tracker.py + cron 23:00 funcionando. MC muestra costes por cliente y global.
-- **T-037 completada** — Aislamiento de contexto por cliente. `_system/client-context-isolation.md` + Regla 0 en SOUL.md.
-
-### Moved to Discarded
-- **T-015** Dispatch bot — Conflicto de token con OpenClaw + código obsoleto (dispatch-map v1).
-- **T-018** Supabase RLS — Supabase no se usa aún, sin datos.
-- **T-021** Multi-client routing — Ya resuelto con systemPrompts + clients.json.
+- **Cost tracker** — cost-tracker.py + cron 23:00 functioning. MC shows per-client and global costs.
+- **Client context isolation** — `_system/client-context-isolation.md` + SOUL.md Regla 0.
 
 ---
 
-## [0.4.0] — 2026-02-26 (tarde/noche)
+## [0.4.0] — 2026-02-26
 
 ### Added
-- **T-034 — Integraciones y costes por cliente en MC** — `integrations.json` + `costs.json` por cliente. Sección en MC con "⚙️ Configurar" expandibles, inputs + "Conectar" button. POST `/api/integration` en mc-server.js.
-- **Doc viewer en `/mc/docs/`** — Sirve brand, prds, skills, memory con navegación. WYSIWYG editor (Toast UI) con ✏️ Editar → 💾 Guardar (PUT a mc-server).
-- **Meeting Intelligence** — 5 reuniones de Hospital Capilar procesadas desde Google Drive. Archivos .md + `meetings.json`. MC muestra cards con decisions/actions/insights.
-- **Cost tracker v1** — `cost-tracker.py` lee sesiones, mapea Discord channels → clientes, calcula tokens + costes por modelo. Hospital Capilar: $12.46 | Sistema: $87.95.
-- **14 channel systemPrompts** — Cada canal con contexto de cliente, paths de brand, regla de hilos, y roles (decision/execution/intelligence).
-- **Foundation threads skill** — `skills/foundation-threads/SKILL.md`. Thread-per-pilar para onboarding en Discord.
-- **Cron "Cervantes observa a Sancho"** — Daily 10:00, revisa sesiones, documenta en `memory/sancho-observations.md`.
-- **7 skills de ClawHub instaladas** (T-024) — google-ads, meta-ads, google-analytics, google-search-console, apollo, apify, social-media-extractor.
-- **Hospital Capilar integrations.json** — 7 servicios con setup instructions y links directos.
-
-### Changed
-- **Brand viewer migrado a multi-client** — `brand/hospital-capilar/` con 20 docs. Max-width 1200px.
-- **Legacy `/mc/brand/` redirect** — 301 a `/mc/docs/brand/`.
-- **HEARTBEAT.md actualizado** — Incluye "ejecutar una tarea aprobada" en cada heartbeat.
-- **5 crons arreglados** — Modelo haiku→sonnet en cost-tracker, healthcheck, regenerar dashboard, memory maintenance, backup.
+- **Client integrations in MC** — `integrations.json` + expandable setup UI with "Conectar" button.
+- **Doc viewer** — `/mc/docs/` serves brand, prds, skills, memory. WYSIWYG editor with save.
+- **Meeting Intelligence** — Google Drive meeting processing → .md + meetings.json. MC cards with decisions/actions/insights.
+- **Cost tracker v1** — Token/cost tracking per model and client.
+- **14 channel systemPrompts** — Per-channel client context, brand paths, thread rules, roles.
+- **Foundation threads skill** — Thread-per-pillar for Discord onboarding.
+- **7 ClawHub skills installed** — google-ads, meta-ads, google-analytics, google-search-console, apollo, apify, social-media-extractor.
 
 ### Fixed
-- **T-020** — Backup cron modelo corregido (haiku→sonnet).
-- **Markdown renderer** — Code blocks protegidos, párrafos bien wrapeados, blockquotes, listas numeradas.
+- **Markdown renderer** — Code blocks, paragraphs, blockquotes, numbered lists.
+- **5 crons** — Model haiku→sonnet for cost-tracker, healthcheck, dashboard, memory, backup.
 
 ---
 
-## [0.3.0] — 2026-02-26 (mañana/mediodía)
+## [0.3.0] — 2026-02-26
 
 ### Added
-- **14 welcome messages en Discord** — Enviados y pineados en todos los canales.
-- **Canal #onboarding** (1476491108421730334) — En categoría ESTRATEGIA.
-- **T-013 Comic UI en MC** — Parchment, Space Grotesk (antes Bangers), Nunito (antes Comic Neue), ink borders 3px, flat shadows, halftone dots. Light mode default, dark mode toggle.
-- **T-025 Filtro de tareas sistema vs cliente** — Vista global = todas, vista cliente = solo `[client]`.
+- **14 welcome messages** — Sent and pinned in all Discord channels.
+- **Comic UI in MC** — Parchment bg, Space Grotesk + Nunito, ink borders, halftone dots, dark mode toggle.
+- **Task filtering** — System vs client views in MC.
 
 ### Changed
-- **Arquitectura 12→4 agentes** — Sancho (Opus/CMO), Cervantes (Opus/Architect), Rocinante (Sonnet/QA), Escudero (Sonnet/Worker).
-- **SOUL.md de Sancho** — Añadidas "Reglas de Canal" completas.
-- **dispatch-map.json v3** — Channel roles (decision/execution/intelligence/support) + flow.
-- **T-010 PRD actualizado** — Arquitectura dual view: `/mc/c/:slug` + `/mc/admin`.
+- **Architecture 12→4 agents** — Sancho (Opus/CMO), Cervantes (Opus/Architect), Rocinante (Sonnet/QA), Escudero (Sonnet/Worker).
+- **dispatch-map.json v3** — Channel roles (decision/execution/intelligence/support).
 
 ### Fixed
-- **Skills 56/56 cargan** — Descripciones recortadas ~700→~35 chars, symlink roto reemplazado.
-- **Exec permissions** — `security: full` + `ask: off` para todos los agentes.
-- **MEMORY.md corregido** — Arquitectura vieja (12 agentes) → 4 reales.
+- **All 56 skills loading** — Descriptions trimmed, broken symlink replaced.
 
 ---
 
 ## [0.2.0] — 2026-02-24
 
 ### Added
-- **Mission Control v2** — Formulario, tareas accionables, visor de archivos de agentes.
-- **agents-data.js** — Datos de agentes con SOUL.md, TOOLS.md, USER.md.
-- **Heartbeat configurado** (T-011) — HEARTBEAT.md + heartbeat-state.json.
-- **Dispatch map** (T-012) — dispatch-map.json con channel IDs por agente.
+- **Mission Control v2** — Form, actionable tasks, agent file viewer.
+- **Heartbeat system** — HEARTBEAT.md + heartbeat-state.json.
+- **Dispatch map** — dispatch-map.json with channel IDs per agent.
 
 ---
 
 ## [0.1.0] — 2026-02-24
 
 ### Added
-- **Infraestructura core** — OpenClaw gateway + LaunchAgent, Discord bot, Tailscale serve.
-- **Supabase** — 9 tablas (vacías), proyecto `psapmujzxhaxraphddlv`.
-- **Google Workspace** — gog CLI autenticado (alfonso@growth4u.io).
-- **Notion** — API key configurada.
+- **Core infrastructure** — OpenClaw gateway + LaunchAgent, Discord bot, Tailscale serve.
+- **Supabase** — 9 tables, project `psapmujzxhaxraphddlv`.
+- **Google Workspace** — gog CLI authenticated.
+- **Notion** — API key configured.
 - **Auth** — Password + Tailscale allowTailscale.
 - **Memory system** — MEMORY.md + memory/*.md + vector search + FTS.
-
-## [0.9.0] — 2026-02-28
-
-### Fixed
-- **Folder naming consistency** — Renamed `swot/` → `swot-analysis/`, `niche-discovery/` → `niche-discovery-100x/` to match foundation-state.json
-- **Markdown rendering (lists)** — Replaced artisanal regex renderer with marked.js (CDN). Fixes bullet spacing issues in complex lists (niche-discovery, swot-analysis)
-
-### Changed
-- **Sancho SOUL.md** — Added Regla 0h: "Honestidad absoluta sobre herramientas y fuentes (P0)". Never claim tool usage (Apify, DataForSEO) if not executed. Addresses competitor-intelligence quality issue.
-- **mc-server.js** — CSS tweaks: li margin, line-height, list margin/padding for compact display
-
-### Removed
-- **Legacy docs** — Moved product-analysis, icp, channel-plan, briefs-creativos, assets-doc to `_archive/` (Hospital Capilar per-client backup)
-
-### Proposed
-- **T-039** — Public doc access from mobile (Tailscale Funnel options pending decision)
-
-
-## [0.9.0] — 2026-02-28
-
-### Changed
-- **SOUL.md restructured** — Reduced from 531 to 99 lines. Moved procedures to `_system/`: threading-protocol.md → TOOLS.md, foundation-protocol.md (new), versioning-protocol.md (new), dispatch-protocol.md (expanded), workflow-recipes.md (expanded)
-- **Discord threading refactored** — No longer creates standalone threads. Subagent spawns create thread-bound sessions (`thread: true`) where Escudero works directly in threaded context
-- **Thinking defaults enabled** — `agents.defaults.thinkingDefault: low` — intermediate reasoning goes to thinking tokens, not chat
-
-### Added
-- **TOOLS.md Discord Mechanics section** — Comprehensive guide to NO_REPLY, thinking tokens, thread-bound delivery, subagent result handling
-- **threadBindings.spawnSubagentSessions** — Enabled for Escudero thread-bound spawn sessions
-- **Escudero TOOLS.md** — Discord threading behavior for subagent spawns
-
-### Fixed
-- Discord text leaks between tool calls — resolved via thinking tokens redirect
-- Subagent spawn isolation — Escudero now publishes in spawned thread, not channel
-- Session visibility — reasoning hidden by default (visibility off)
-
-## [0.10.0] — 2026-02-28 Afternoon
-
-### Added
-- **T-040: Intelligence Log** — Central intelligence.json with all processed meetings/pulses. MC renderIntelligence() with type filters, search, links to transcripts.
-- **Meeting folder structure** — Changed from flat files to `meetings/{slug}/summary.md + transcript.md`. Unified related data.
-
-### Changed
-- **Meeting intelligence** — Now stores full transcript from Google Drive alongside processed summary. Skills default to summary, use transcript on demand.
-- **Almacenamiento blocks** — Added to company-context, business-model-audit, budget-constraints, market-intelligence (4 skills that were missing folder structure guidance).
-
-### Fixed
-- **foundation-state.json** — Removed invalid "draft" state from brand-voice, normalized to "not-started".
-- **Intelligence log** — Removed 4 duplicate "fecha-no-especificada" meeting entries, cleaned up to 5 real meetings + 3 pulses.
-- **GitHub backup** — Unified to single root ~/.openclaw/ repo with git push on daily backup cron.
-
-
-## [0.10.1] — 2026-03-01 Early Morning
-
-### Added
-- **T-039: Public doc access via Tailscale Funnel** — Docs accessible from internet without VPN. `/mc/docs` exposed on https://sancho-cmo.taild48df2.ts.net:8443/mc/docs/, while full dashboard remains tailnet-only.
-
-### Changed
-- **Tailscale config** — Serve and Funnel now work in tandem: port 443 for internal, port 8443 for public.
-

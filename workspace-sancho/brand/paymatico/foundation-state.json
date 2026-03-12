@@ -2,7 +2,7 @@
   "version": "2.0",
   "client": "paymatico",
   "started_at": "2026-03-04T12:52:00Z",
-  "updated_at": "2026-03-04T22:58:00Z",
+  "updated_at": "2026-03-11T09:13:03Z",
   "sections": {
     "company-brief": {
       "status": "approved",
@@ -10,9 +10,15 @@
       "output_dir": "brand/paymatico/company-brief/",
       "approved_at": "2026-03-04T12:52:00Z",
       "skills": {
-        "company-context": {"status": "approved"},
-        "business-model": {"status": "approved"},
-        "budget": {"status": "approved"}
+        "company-context": {
+          "status": "approved"
+        },
+        "business-model": {
+          "status": "approved"
+        },
+        "budget": {
+          "status": "approved"
+        }
       }
     },
     "market-and-us": {
@@ -23,8 +29,13 @@
         "market-analysis": {
           "status": "approved",
           "layer": 1,
-          "requires": ["company-brief"],
-          "enriches_with": ["competitor-analysis", "self-analysis"],
+          "requires": [
+            "company-brief"
+          ],
+          "enriches_with": [
+            "competitor-analysis",
+            "self-analysis"
+          ],
           "output_file": "brand/paymatico/market-and-us/market/current.md",
           "skill": "market-intelligence",
           "run_id": "c297c046-a1b2-4c9d-a06c-d547910c96fd",
@@ -34,8 +45,13 @@
         "competitor-analysis": {
           "status": "approved",
           "layer": 1,
-          "requires": ["company-brief"],
-          "enriches_with": ["market-analysis", "self-analysis"],
+          "requires": [
+            "company-brief"
+          ],
+          "enriches_with": [
+            "market-analysis",
+            "self-analysis"
+          ],
           "output_files": [
             "brand/paymatico/market-and-us/competitors/current.md",
             "brand/paymatico/market-and-us/competitors/stripe/current.md",
@@ -58,8 +74,13 @@
         "self-analysis": {
           "status": "approved",
           "layer": 1,
-          "requires": ["company-brief"],
-          "enriches_with": ["market-analysis", "competitor-analysis"],
+          "requires": [
+            "company-brief"
+          ],
+          "enriches_with": [
+            "market-analysis",
+            "competitor-analysis"
+          ],
           "output_file": "brand/paymatico/market-and-us/self/current.md",
           "skill": "self-intelligence",
           "run_id": "f9d93c13-69fa-49f9-8d08-cd48517782a5",
@@ -75,7 +96,11 @@
           "approved_at": "2026-03-04T20:46:00Z",
           "version": "v2",
           "layer": 2,
-          "requires": ["market-analysis", "competitor-analysis", "self-analysis"],
+          "requires": [
+            "market-analysis",
+            "competitor-analysis",
+            "self-analysis"
+          ],
           "output_file": "brand/paymatico/market-and-us/swot/current.md",
           "skill": "swot-analysis",
           "notes": "v2 merge con inputs Alex G (insider knowledge)"
@@ -86,13 +111,23 @@
           "status": "not-generated",
           "output_file": "brand/paymatico/market-and-us/summary/current.md",
           "generated_by": "orchestrator",
-          "requires": ["market-analysis", "competitor-analysis", "self-analysis", "swot"]
+          "requires": [
+            "market-analysis",
+            "competitor-analysis",
+            "self-analysis",
+            "swot"
+          ]
         },
         "ope-canvas": {
           "status": "not-generated",
           "output_file": "brand/paymatico/market-and-us/ope-canvas/current.md",
           "generated_by": "orchestrator",
-          "requires": ["market-analysis", "competitor-analysis", "self-analysis", "swot"]
+          "requires": [
+            "market-analysis",
+            "competitor-analysis",
+            "self-analysis",
+            "swot"
+          ]
         }
       }
     },
@@ -105,8 +140,12 @@
           "status": "approved",
           "approved_at": "2026-03-04T22:58:00Z",
           "layer": 3,
-          "requires": ["swot"],
-          "enriches_with": ["existing-customer-data"],
+          "requires": [
+            "swot"
+          ],
+          "enriches_with": [
+            "existing-customer-data"
+          ],
           "output_file": "brand/paymatico/go-to-market/niche-discovery/current.md",
           "skill": "niche-discovery-100x",
           "started_at": "2026-03-04T20:47:00Z",
@@ -117,7 +156,9 @@
         "existing-customer-data": {
           "status": "not-started",
           "layer": 3,
-          "requires": ["company-brief"],
+          "requires": [
+            "company-brief"
+          ],
           "optional": true,
           "output_file": "brand/paymatico/go-to-market/existing-customer-data/current.md",
           "skill": "existing-customer-data"
@@ -125,7 +166,9 @@
         "positioning": {
           "status": "in-progress",
           "layer": 4,
-          "requires": ["niche-discovery"],
+          "requires": [
+            "niche-discovery"
+          ],
           "output_pattern": "brand/paymatico/positioning/current.md",
           "skill": "positioning-messaging",
           "started_at": "2026-03-04T22:20:00Z",
@@ -136,25 +179,46 @@
               "version": "v1",
               "completed_at": "2026-03-04T22:20:00Z"
             },
-            "ecp-2-corporates": {"status": "not-started"},
-            "ecp-3-fiduciarios": {"status": "not-started"}
+            "ecp-2-corporates": {
+              "status": "not-started"
+            },
+            "ecp-3-fiduciarios": {
+              "status": "not-started"
+            }
           },
           "notes": "ECP-1 Franquicias positioning complete, pending Alex G approval. ECPs 2-3 pending. NOTE: niche-discovery v4 expanded to 24 sub-nichos — positioning needs to align with new granular ECPs."
         },
         "pricing": {
           "status": "not-started",
           "layer": 4,
-          "requires": ["niche-discovery"],
-          "enriches_with": ["positioning"],
+          "requires": [
+            "niche-discovery"
+          ],
+          "enriches_with": [
+            "positioning"
+          ],
           "output_file": "brand/paymatico/go-to-market/pricing/current.md",
           "skill": "pricing-strategy"
         },
         "ecp-validation": {
           "status": "not-started",
           "layer": 4,
-          "requires": ["niche-discovery"],
+          "requires": [
+            "niche-discovery"
+          ],
           "optional": true,
           "skill": "ecp-validation"
+        },
+        "metrics-plan": {
+          "status": "not-started",
+          "layer": 4,
+          "requires": [
+            "company-brief"
+          ],
+          "enriches_with": [
+            "niche-discovery"
+          ],
+          "skill": "acquisition-metrics-plan"
         }
       },
       "syntheses": {
@@ -162,7 +226,9 @@
           "status": "not-generated",
           "output_file": "brand/paymatico/go-to-market/messaging-summary/current.md",
           "generated_by": "orchestrator",
-          "requires": ["positioning"]
+          "requires": [
+            "positioning"
+          ]
         }
       }
     },
@@ -174,19 +240,34 @@
         "brand-voice": {
           "status": "not-started",
           "layer": 5,
-          "requires": ["positioning"],
+          "requires": [
+            "positioning"
+          ],
           "output_file": "brand/paymatico/brand-identity/voice-profile/current.md",
           "skill": "brand-voice"
         },
         "visual-identity": {
           "status": "not-started",
           "layer": 5,
-          "requires": ["brand-voice"],
+          "requires": [
+            "brand-voice"
+          ],
           "output_file": "brand/paymatico/brand-identity/visual-identity/current.md",
           "skill": "visual-identity"
         }
       }
     }
   },
-  "known_competitors": ["stripe", "adyen", "multisafepay", "sipay", "paynopain", "monei", "pecunpay", "paycomet", "zettle", "mollie"]
+  "known_competitors": [
+    "stripe",
+    "adyen",
+    "multisafepay",
+    "sipay",
+    "paynopain",
+    "monei",
+    "pecunpay",
+    "paycomet",
+    "zettle",
+    "mollie"
+  ]
 }

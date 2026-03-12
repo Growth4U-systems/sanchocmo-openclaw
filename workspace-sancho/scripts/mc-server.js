@@ -1,11 +1,13 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 const { execSync, exec: execCb } = require('child_process');
 
 const PORT = 18790;
 const BASE = path.join(__dirname, '..');
 const API_HEALTH_FILE = path.join(BASE, '_system', 'api-health.json');
+const CLIENTS_FILE = path.join(BASE, 'clients.json');
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -748,10 +750,611 @@ async function runHealthChecks(serviceFilter) {
   return { checked: toCheck, results, lastCheck: health.lastCheck };
 }
 
+// ========== Portal: Client-scoped access ==========
+
+function loadClientsData() {
+  try { return JSON.parse(fs.readFileSync(CLIENTS_FILE, 'utf-8')); }
+  catch { return { clients: [], adminToken: null }; }
+}
+
+function loadClients() {
+  return loadClientsData().clients || [];
+}
+
+function getAdminToken() {
+  return loadClientsData().adminToken || null;
+}
+
+function isValidAdmin(token) {
+  const adminToken = getAdminToken();
+  return adminToken && token === adminToken;
+}
+
+// Rewrite /mc/ links to admin-scoped when in admin mode
+function adminRewrite(html, req) {
+  if (!req || !req._adminBase) return html;
+  return html.replace(/\/mc\//g, req._adminBase + '/');
+}
+
+function landingPage() {
+  return `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>SanchoCMO</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+body{font-family:'Nunito',sans-serif;background:#F5F0E6;color:#1A1A2E;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;}
+@media(prefers-color-scheme:dark){body{background:#1A1A2E;color:#FDF8EF;}.box{background:#2D2D44;border-color:#FDF8EF;box-shadow:3px 3px 0 #FDF8EF;}}
+.box{text-align:center;padding:48px 56px;background:#FDF8EF;border:2px solid #1A1A2E;border-radius:8px;box-shadow:3px 3px 0 #1A1A2E;max-width:440px;}
+h1{font-family:'Space Grotesk',sans-serif;color:#C45D35;font-size:2.2em;margin:0 0 8px;}
+.sub{color:#5D5348;font-size:15px;margin:0 0 24px;}
+.info{color:#5D5348;font-size:14px;line-height:1.6;margin:0;}
+.logo{font-size:48px;margin-bottom:12px;}
+</style></head><body>
+<div class="box">
+  <div class="logo">🏇</div>
+  <h1>SanchoCMO</h1>
+  <p class="sub">Mission Control</p>
+  <p class="info">Usa el enlace de acceso que te proporcionó tu equipo de Growth.<br/><br/>Si no tienes enlace, contacta con tu gestor.</p>
+</div>
+</body></html>`;
+}
+
+function findClientByToken(token) {
+  if (!token || token.length < 16) return null;
+  return loadClients().find(c => c.mcToken === token) || null;
+}
+
+function portalPage(title, clientName, content) {
+  return `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>${title} — ${clientName}</title>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Nunito:ital,wght@0,400;0,600;0,700;1,400;1,600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#F5F0E6;--card:#FDF8EF;--border:#D4C9B8;--text:#1A1A2E;--muted:#5D5348;--ink:#1A1A2E;--rust:#C45D35;--green:#4A5D23;}
+@media(prefers-color-scheme:dark){:root{--bg:#1A1A2E;--card:#2D2D44;--border:#3D3D5C;--text:#FDF8EF;--muted:#A09890;--ink:#FDF8EF;--rust:#D4734F;--green:#6B8E23;}}
+*{box-sizing:border-box;}
+body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);max-width:1200px;margin:0 auto;padding:24px 40px;line-height:1.85;font-size:17px;}
+h1{font-family:'Space Grotesk',sans-serif;color:var(--rust);font-size:2em;margin-bottom:4px;}
+h2{font-family:'Space Grotesk',sans-serif;color:var(--rust);margin:24px 0 12px;font-size:1.4em;}
+h3{color:var(--rust);}
+a{color:var(--rust);text-decoration:none;font-weight:700;}a:hover{text-decoration:underline;}
+.card{margin:8px 0;padding:10px 14px;background:var(--card);border:2px solid var(--ink);border-radius:6px;box-shadow:3px 3px 0 var(--ink);}
+.card a{font-size:16px;}.card .meta{color:var(--muted);font-size:13px;margin-top:2px;}
+.back{font-size:14px;color:var(--muted);font-weight:400;}
+.header-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;padding-bottom:16px;border-bottom:2px solid var(--border);}
+.client-badge{font-family:'Space Grotesk',sans-serif;font-size:13px;padding:4px 12px;background:var(--ink);color:var(--card);border-radius:20px;}
+table{border-collapse:collapse;width:100%;margin:12px 0;}
+th,td{border:2px solid var(--ink);padding:10px 14px;text-align:left;font-size:16px;}
+th{background:var(--ink);color:var(--card);font-family:'Space Grotesk',sans-serif;}
+tr:nth-child(even){background:var(--card);}
+code{background:var(--card);padding:2px 6px;border-radius:4px;font-size:13px;border:1px solid var(--border);}
+pre{background:var(--card);padding:12px;border:2px solid var(--ink);border-radius:6px;overflow-x:auto;font-size:13px;}
+blockquote{border-left:4px solid var(--rust);margin:12px 0;padding:8px 16px;background:var(--card);font-style:italic;}
+</style>
+</head><body>
+<div class="header-bar">
+  <h1>${clientName}</h1>
+  <span class="client-badge">Portal del Cliente</span>
+</div>
+${content}
+</body></html>`;
+}
+
+function portalForbiddenPage() {
+  return `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Acceso denegado</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600&family=Nunito:wght@400;600&display=swap" rel="stylesheet">
+<style>
+body{font-family:'Nunito',sans-serif;background:#F5F0E6;color:#1A1A2E;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;}
+.box{text-align:center;padding:48px;background:#FDF8EF;border:2px solid #1A1A2E;border-radius:8px;box-shadow:3px 3px 0 #1A1A2E;max-width:400px;}
+h1{font-family:'Space Grotesk',sans-serif;color:#C45D35;font-size:2em;margin:0 0 12px;}
+p{color:#5D5348;font-size:16px;margin:0;}
+</style></head><body>
+<div class="box"><h1>🔒 Acceso denegado</h1><p>El enlace no es válido o ha expirado.<br/>Contacta a tu equipo de Growth para obtener acceso.</p></div>
+</body></html>`;
+}
+
+// ========== End Portal Helpers ==========
+
 http.createServer((req, res) => {
   let url = req.url.split('?')[0];
   if (url.startsWith('/mc/')) url = url.slice(3);
-  if (url === '/' || url === '/mc') url = '/mission-control.html';
+
+  // ========== ACCESS CONTROL ==========
+  // Root / landing page (no token)
+  if (url === '/' || url === '/mc') {
+    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+    res.end(landingPage());
+    return;
+  }
+
+  // Admin routes: /admin/{token}/... → rewrite to original MC routes
+  if (url.startsWith('/admin/')) {
+    const adminParts = url.replace('/admin/', '').split('/');
+    const token = adminParts[0];
+    if (!isValidAdmin(token)) {
+      res.writeHead(403, { 'Content-Type': 'text/html; charset=utf-8' });
+      res.end(portalForbiddenPage());
+      return;
+    }
+    // Rewrite URL: strip /admin/{token} prefix, pass through to existing handlers
+    const rest = '/' + adminParts.slice(1).join('/');
+    url = rest === '/' ? '/mission-control.html' : rest;
+    // Tag the request as admin so static files and APIs work
+    req._adminToken = token;
+    req._adminBase = `/mc/admin/${token}`;
+    // Wrap res.writeHead + res.end to auto-rewrite /mc/ links in HTML responses
+    let _isHtml = false;
+    const origWriteHead = res.writeHead.bind(res);
+    res.writeHead = function(code, headers) {
+      if (headers) {
+        const ct = headers['Content-Type'] || headers['content-type'] || '';
+        if (ct.includes('text/html')) _isHtml = true;
+      }
+      return origWriteHead(code, headers);
+    };
+    const origEnd = res.end.bind(res);
+    res.end = function(data, encoding) {
+      if (data && _isHtml && req._adminBase) {
+        const text = (typeof data === 'string' ? data : data.toString('utf-8'))
+          .replace(/\/mc\//g, req._adminBase + '/')
+          .replace(/href="\/mc#/g, `href="${req._adminBase}/#`)
+          .replace(/href="\/mc"/g, `href="${req._adminBase}/"`);
+        return origEnd(text, 'utf-8');
+      }
+      return origEnd(data, encoding);
+    };
+  }
+
+  // Block unauthenticated access to admin assets and APIs
+  // Allow: /portal/*, /admin/* (handled above), / (landing)
+  // Block everything else (mission-control.html, /docs/*, /api/*, /connect/*, /brand/*)
+  if (!req._adminToken && !url.startsWith('/portal/') && !url.startsWith('/connect/') && !url.startsWith('/api/system-sa') && !url.startsWith('/api/gog-') && !url.startsWith('/api/client-integrations') && !req._portalClient) {
+    res.writeHead(403, { 'Content-Type': 'text/html; charset=utf-8' });
+    res.end(portalForbiddenPage());
+    return;
+  }
+
+  // ========== PORTAL ROUTES ==========
+  if (url.startsWith('/portal/')) {
+    const portalParts = url.replace('/portal/', '').split('/');
+    const token = portalParts[0];
+    const client = findClientByToken(token);
+
+    if (!client) {
+      res.writeHead(403, { 'Content-Type': 'text/html; charset=utf-8' });
+      res.end(portalForbiddenPage());
+      return;
+    }
+
+    const slug = client.slug;
+    const clientName = client.name || slug;
+    const portalBase = `/mc/portal/${token}`;
+    const portalPath = '/' + portalParts.slice(1).join('/'); // path after token
+
+    // Portal: Root dashboard — serve real MC HTML with portal injection
+    if (portalPath === '/' || portalPath === '') {
+      try {
+        let html = fs.readFileSync(path.join(BASE, 'mission-control.html'), 'utf-8');
+        // Rewrite /mc/ links to portal base
+        html = html.replace(/\/mc\//g, portalBase + '/');
+        // Inject portal config before </head>
+        const portalScript = `<script>
+window.PORTAL_MODE = true;
+window.PORTAL_SLUG = '${slug}';
+window.PORTAL_CLIENT = '${clientName.replace(/'/g, "\\'")}';
+window.PORTAL_BASE = '${portalBase}';
+</script>
+<style>
+/* Portal mode: hide admin-only sections via CSS */
+nav .nav-footer { display:none !important; }
+</style>`;
+        // Also inject a script at the end of body to auto-select client after all JS is loaded
+        const portalPostScript = `<script>
+(function() {
+  // Hide admin-only nav links
+  document.querySelectorAll('nav a').forEach(function(a) {
+    var text = a.textContent.trim().toLowerCase();
+    if (['agentes','skills','activity','changelog','¿cómo empezar?'].some(function(h){return text.includes(h);})) {
+      a.style.display = 'none';
+    }
+  });
+  // Hide system section headers
+  document.querySelectorAll('.ns').forEach(function(el) {
+    var text = el.textContent.trim().toLowerCase();
+    if (text.includes('sistema') || text.includes('system') || text.includes('tools') || text.includes('herramientas')) {
+      el.style.display = 'none';
+    }
+  });
+  // Hide regenerate/wizard
+  document.querySelectorAll('[onclick*="regenerate"]').forEach(function(el) { el.style.display = 'none'; });
+  // Force client selection
+  var sel = document.getElementById('clientSelector');
+  if (sel) {
+    sel.value = '${slug}';
+    sel.style.display = 'none';
+    if (typeof switchClient === 'function') switchClient('${slug}');
+  }
+})();
+</script>`;
+        html = html.replace('</head>', portalScript + '\n</head>');
+        html = html.replace('</body>', portalPostScript + '\n</body>');
+        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+        res.end(html);
+      } catch (e) {
+        res.writeHead(500); res.end('Error loading dashboard: ' + e.message);
+      }
+      return;
+    }
+
+    // Portal: Serve filtered clients.js (only this client)
+    if (portalPath === '/clients.js') {
+      try {
+        const allClients = fs.readFileSync(path.join(BASE, 'clients.js'), 'utf-8');
+        // Parse the CLIENTS object, extract only this client
+        const clientsData = loadClients();
+        const thisClient = clientsData.find(c => c.slug === slug);
+        const clientObj = {};
+        if (thisClient) {
+          clientObj[slug] = {
+            name: thisClient.name || slug,
+            emoji: thisClient.emoji || '🏢',
+            url: thisClient.url || '',
+            discord_guild: thisClient.guild || '',
+            supabase: thisClient.supabase || {},
+            workspace: thisClient.workspace || '',
+            phase: thisClient.phase || 0,
+          };
+        }
+        const js = `const CLIENTS = ${JSON.stringify(clientObj, null, 2)};`;
+        res.writeHead(200, { 'Content-Type': 'application/javascript; charset=utf-8' });
+        res.end(js);
+      } catch (e) {
+        res.writeHead(500); res.end('// error: ' + e.message);
+      }
+      return;
+    }
+
+    // Portal: Serve mc-data.js filtered for this client only
+    if (portalPath === '/mc-data.js') {
+      try {
+        let js = fs.readFileSync(path.join(BASE, 'mc-data.js'), 'utf-8');
+        // Parse MC_DATA, filter to only this client's data
+        // mc-data.js is: const MC_DATA = { ... };
+        const match = js.match(/const MC_DATA\s*=\s*(\{[\s\S]*\})\s*;/);
+        if (match) {
+          const data = JSON.parse(match[1]);
+          // Filter foundation.clients to only this slug
+          if (data.foundation && data.foundation.clients) {
+            const fc = data.foundation.clients[slug];
+            data.foundation.clients = fc ? { [slug]: fc } : {};
+          }
+          // Filter clients array if it exists
+          if (Array.isArray(data.clients)) {
+            data.clients = data.clients.filter(c => c.slug === slug);
+          }
+          // Remove cost data (admin only)
+          delete data.costs;
+          delete data.costsByClient;
+          // Remove apiHealth details for other clients
+          js = 'const MC_DATA = ' + JSON.stringify(data) + ';';
+        }
+        res.writeHead(200, { 'Content-Type': 'application/javascript; charset=utf-8' });
+        res.end(js);
+      } catch (e) {
+        res.writeHead(500); res.end('// error: ' + e.message);
+      }
+      return;
+    }
+
+    // Portal: Serve other allowed static JS files
+    if (portalPath === '/skills-data.js' || portalPath === '/agents-data.js') {
+      const filePath = path.join(BASE, portalPath.slice(1));
+      try {
+        const data = fs.readFileSync(filePath);
+        res.writeHead(200, { 'Content-Type': 'application/javascript; charset=utf-8' });
+        res.end(data);
+      } catch {
+        res.writeHead(200, { 'Content-Type': 'application/javascript; charset=utf-8' });
+        res.end('// not found');
+      }
+      return;
+    }
+
+    // Portal: Docs — route through main handler with scoping
+    if (portalPath.startsWith('/docs/')) {
+      req._portalClient = client;
+      req._portalSlug = slug;
+      req._portalBase = portalBase;
+      url = portalPath;
+      // Fall through to main docs handler (which has portal scoping)
+    }
+
+    // Portal: Connect pages (scoped to client slug)
+    else if (portalPath.startsWith('/connect/')) {
+      const apiId = portalPath.replace('/connect/', '').replace(/\/$/, '');
+      req._portalClient = client;
+      req._portalSlug = slug;
+      req._portalBase = portalBase;
+      url = `/connect/${slug}/${apiId}`;
+      // Wrap res to rewrite /mc/ links in connect page HTML to portal base
+      const _isHtmlC = { v: false };
+      const origWHC = res.writeHead.bind(res);
+      res.writeHead = function(code, headers) {
+        if (headers) {
+          const ct = headers['Content-Type'] || headers['content-type'] || '';
+          if (ct.includes('text/html')) _isHtmlC.v = true;
+        }
+        return origWHC(code, headers);
+      };
+      const origEndC = res.end.bind(res);
+      res.end = function(data, encoding) {
+        if (data && _isHtmlC.v && portalBase) {
+          const text = (typeof data === 'string' ? data : data.toString('utf-8'))
+            .replace(/\/mc\//g, portalBase + '/')
+            .replace(/href="\/mc"/g, `href="${portalBase}/"`);
+          return origEndC(text, 'utf-8');
+        }
+        return origEndC(data, encoding);
+      };
+      // Fall through to existing connect handler
+    }
+
+    // Portal: API passthrough (scoped to client)
+    else if (portalPath.startsWith('/api/')) {
+      req._portalClient = client;
+      req._portalSlug = slug;
+
+      // Allowed APIs for portal clients
+      const allowedApis = [
+        '/api/client-integrations/catalog',
+        '/api/client-integrations/test',
+        '/api/client-integrations',
+        '/api/api-health',
+        '/api/health-check',
+        '/api/system-sa',
+      ];
+      const apiPath = portalPath.split('?')[0];
+      const isAllowed = allowedApis.some(a => apiPath === a || apiPath.startsWith(a + '/') || apiPath.startsWith(a + '?'));
+
+      // Block dangerous APIs
+      const blockedApis = ['/api/env', '/api/restart-gateway', '/api/integration'];
+      const isBlocked = blockedApis.some(a => apiPath === a || apiPath.startsWith(a));
+
+      if (isBlocked) {
+        res.writeHead(403, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Not available in portal mode' }));
+        return;
+      }
+
+      if (isAllowed) {
+        // Force slug parameter for client-integrations calls
+        if (apiPath.startsWith('/api/client-integrations') && !apiPath.includes('catalog')) {
+          const qs = req.url.includes('?') ? '&' : '?';
+          req.url = req.url.replace(/slug=[^&]*/, '').replace(/[?&]$/, '') + qs + 'slug=' + slug;
+        }
+        url = portalPath;
+        // Fall through to existing handlers
+      } else {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'API not found' }));
+        return;
+      }
+    }
+    else {
+      // Any other portal path: 404
+      res.writeHead(404, { 'Content-Type': 'text/html; charset=utf-8' });
+      res.end(portalPage('No encontrado', clientName, '<p>Página no encontrada.</p><a href="' + portalBase + '/">← Volver al dashboard</a>'));
+      return;
+    }
+  }
+  // ========== END PORTAL ROUTES ==========
+
+  // === API: Google Workspace OAuth (gog auth) — Step 1: Generate auth URL ===
+  if (req.method === 'POST' && url === '/api/gog-auth-start') {
+    let body = '';
+    req.on('data', chunk => { body += chunk; if (body.length > 1e5) req.destroy(); });
+    req.on('end', () => {
+      try {
+        const { email, services } = JSON.parse(body);
+        if (!email || !email.includes('@')) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Email inválido' }));
+          return;
+        }
+        const svcList = services || 'gmail,calendar,drive,contacts,sheets';
+        const { execSync } = require('child_process');
+        const gogPath = '/opt/homebrew/bin/gog';
+        const output = execSync(
+          `${gogPath} auth add "${email}" --remote --step 1 --services "${svcList}" --force-consent --plain 2>&1`,
+          { timeout: 15000, encoding: 'utf-8', env: { ...process.env, PATH: '/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin' } }
+        );
+        // Parse auth_url from output
+        const urlMatch = output.match(/auth_url\t(https:\/\/[^\s]+)/);
+        if (urlMatch) {
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ ok: true, authUrl: urlMatch[1], email }));
+        } else {
+          res.writeHead(500, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'No se pudo generar la URL de autorización', output: output.slice(0, 500) }));
+        }
+      } catch (e) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: e.message }));
+      }
+    });
+    return;
+  }
+
+  // === API: Google Workspace OAuth (gog auth) — Step 2: Exchange code ===
+  if (req.method === 'POST' && url === '/api/gog-auth-complete') {
+    let body = '';
+    req.on('data', chunk => { body += chunk; if (body.length > 1e5) req.destroy(); });
+    req.on('end', () => {
+      try {
+        const { email, authUrl } = JSON.parse(body);
+        if (!email || !authUrl) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Falta email o authUrl (redirect URL)' }));
+          return;
+        }
+        const { execSync } = require('child_process');
+        const gogPath = '/opt/homebrew/bin/gog';
+        const output = execSync(
+          `${gogPath} auth add "${email}" --remote --step 2 --auth-url "${authUrl}" --plain 2>&1`,
+          { timeout: 30000, encoding: 'utf-8', env: { ...process.env, PATH: '/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin' } }
+        );
+        if (output.includes('stored') || output.includes('success') || output.includes('token')) {
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ ok: true, detail: output.trim() }));
+        } else {
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ ok: true, detail: output.trim() }));
+        }
+      } catch (e) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: e.message }));
+      }
+    });
+    return;
+  }
+
+  // === API: Google Workspace — List connected accounts ===
+  if (req.method === 'GET' && url === '/api/gog-accounts') {
+    try {
+      const { execSync } = require('child_process');
+      const output = execSync('/opt/homebrew/bin/gog auth list --json 2>&1', { timeout: 10000, encoding: 'utf-8', env: { ...process.env, PATH: '/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin' } });
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(output);
+    } catch (e) {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify([]));
+    }
+    return;
+  }
+
+  // === API: Get system service account email ===
+  if (req.method === 'GET' && url === '/api/system-sa') {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    const saPath = path.join(BASE, '.secrets', 'google-service-account.json');
+    try {
+      const sa = JSON.parse(fs.readFileSync(saPath, 'utf-8'));
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ configured: true, email: sa.client_email, projectId: sa.project_id }));
+    } catch {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ configured: false }));
+    }
+    return;
+  }
+
+  // === API: Save system service account ===
+  if (req.method === 'POST' && url === '/api/system-sa') {
+    let body = '';
+    req.on('data', chunk => { body += chunk; if (body.length > 1e6) req.destroy(); });
+    req.on('end', () => {
+      try {
+        const sa = JSON.parse(body);
+        if (!sa.client_email || !sa.private_key) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Invalid service account JSON: missing client_email or private_key' }));
+          return;
+        }
+        const secretsDir = path.join(BASE, '.secrets');
+        if (!fs.existsSync(secretsDir)) fs.mkdirSync(secretsDir, { recursive: true });
+        fs.writeFileSync(path.join(secretsDir, 'google-service-account.json'), JSON.stringify(sa, null, 2), 'utf-8');
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true, email: sa.client_email, projectId: sa.project_id }));
+      } catch (e) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Invalid JSON: ' + e.message }));
+      }
+    });
+    return;
+  }
+
+  // === System Service Account Config Page ===
+  if (url === '/connect/system/google-sa') {
+    const saPath = path.join(BASE, '.secrets', 'google-service-account.json');
+    let currentEmail = null;
+    let currentProject = null;
+    try {
+      const sa = JSON.parse(fs.readFileSync(saPath, 'utf-8'));
+      currentEmail = sa.client_email;
+      currentProject = sa.project_id;
+    } catch {}
+
+    const statusHtml = currentEmail
+      ? `<div style="background:#E8F8E8;border:2px solid #4A5D23;border-radius:6px;padding:12px 16px;margin:16px 0;">
+           <strong>✅ Service Account configurado</strong><br/>
+           Email: <code style="user-select:all;">${currentEmail}</code><br/>
+           Proyecto: <code>${currentProject || 'N/A'}</code>
+         </div>`
+      : `<div style="background:#FFF8E1;border:2px solid #E5A100;border-radius:6px;padding:12px 16px;margin:16px 0;">
+           <strong>⚠️ No configurado</strong> — Pega el JSON de tu Service Account abajo.
+         </div>`;
+
+    const html = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Service Account de Google — Sistema</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root { --bg:#F5F0E6;--card:#FDF8EF;--border:#D4C9B8;--text:#1A1A2E;--muted:#5D5348;--ink:#1A1A2E;--rust:#C45D35;--green:#4A5D23; }
+  @media(prefers-color-scheme:dark){:root{--bg:#1A1A2E;--card:#2D2D44;--border:#3D3D5C;--text:#FDF8EF;--muted:#A09890;--ink:#FDF8EF;--rust:#D4734F;--green:#6B8E23;}}
+  *{box-sizing:border-box;}body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);max-width:600px;margin:40px auto;padding:0 24px;line-height:1.7;}
+  h1{font-family:'Space Grotesk',sans-serif;color:var(--rust);font-size:1.8em;}
+  .card{background:var(--card);border:2px solid var(--ink);border-radius:8px;padding:24px;box-shadow:3px 3px 0 var(--ink);}
+  .btn{padding:12px 28px;border:2px solid var(--ink);border-radius:6px;font-family:'Nunito',sans-serif;font-weight:700;font-size:16px;cursor:pointer;box-shadow:2px 2px 0 var(--ink);background:var(--rust);color:#fff;}
+  .btn:disabled{opacity:0.5;cursor:not-allowed;}
+  .back{color:var(--muted);text-decoration:none;font-size:14px;}.back:hover{color:var(--rust);}
+  textarea{width:100%;min-height:200px;font-family:monospace;font-size:13px;padding:12px;border:2px solid var(--ink);border-radius:6px;background:var(--card);color:var(--text);resize:vertical;box-sizing:border-box;}
+  #result{margin-top:16px;padding:12px 16px;border-radius:6px;display:none;font-size:14px;}
+</style></head><body>
+  <a class="back" href="/mc">← Mission Control</a>
+  <h1>🔑 Service Account de Google</h1>
+  <p style="color:var(--muted);">Configuración global del sistema. Este Service Account se usa para <strong>todos los clientes</strong> en Google Analytics, Search Console, y otros servicios de Google.</p>
+  ${statusHtml}
+  <div class="card">
+    <p style="font-weight:700;">Pega aquí el contenido completo del archivo JSON del Service Account:</p>
+    <p style="font-size:13px;color:var(--muted);">Es el archivo <code>.json</code> que descargaste de Google Cloud Console → IAM → Cuentas de servicio → Claves.</p>
+    <textarea id="saJson" placeholder='{"type": "service_account", "project_id": "...", "client_email": "...", ...}'></textarea>
+    <div style="margin-top:16px;">
+      <button class="btn" onclick="saveSA()">💾 Guardar Service Account</button>
+    </div>
+    <div id="result"></div>
+  </div>
+  <div style="margin-top:32px;padding-top:16px;border-top:1px solid var(--border);font-size:13px;color:var(--muted);">
+    <strong>🔒 Seguridad:</strong> El JSON se guarda en <code>.secrets/google-service-account.json</code> en el servidor local. Nunca pasa por Discord ni servicios externos. Solo accesible vía Tailscale HTTPS.
+  </div>
+<script>
+async function saveSA() {
+  const btn = document.querySelector('.btn');
+  const result = document.getElementById('result');
+  const text = document.getElementById('saJson').value.trim();
+  if (!text) { result.style.display='block'; result.style.background='#FDE8E8'; result.style.border='2px solid #C0392B'; result.style.color='#C0392B'; result.innerHTML='❌ Pega el JSON primero.'; return; }
+  btn.disabled = true; btn.textContent = '⏳ Guardando...';
+  result.style.display='block'; result.style.background='#FFF8E1'; result.style.border='2px solid #E5A100'; result.style.color='#8B6914'; result.innerHTML='⏳ Validando y guardando...';
+  try {
+    const parsed = JSON.parse(text);
+    if (!parsed.client_email || !parsed.private_key) throw new Error('Falta client_email o private_key');
+    const res = await fetch('/mc/api/system-sa', { method:'POST', headers:{'Content-Type':'application/json'}, body: text });
+    const data = await res.json();
+    if (data.ok) {
+      result.style.background='#E8F8E8'; result.style.border='2px solid #4A5D23'; result.style.color='#2D5A1E';
+      result.innerHTML='✅ <strong>¡Guardado!</strong> Email: <code>'+data.email+'</code><br/>Ya puedes usar las páginas de conexión de GA4 y GSC. <a href="/mc/connect/hospital-capilar/ga4">Probar GA4 →</a>';
+    } else {
+      result.style.background='#FDE8E8'; result.style.border='2px solid #C0392B'; result.style.color='#C0392B';
+      result.innerHTML='❌ '+data.error;
+    }
+  } catch(e) {
+    result.style.display='block'; result.style.background='#FDE8E8'; result.style.border='2px solid #C0392B'; result.style.color='#C0392B';
+    result.innerHTML='❌ JSON inválido: '+e.message;
+  }
+  btn.disabled=false; btn.textContent='💾 Guardar Service Account';
+}
+</script></body></html>`;
+    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+    res.end(html);
+    return;
+  }
 
   // === Connect Page: /connect/{slug}/{apiId} ===
   if (url.startsWith('/connect/')) {
@@ -864,9 +1467,12 @@ http.createServer((req, res) => {
         </div>`;
     }
 
+    // Custom OAuth page for Google Workspace (gog CLI)
+    const isGogOAuth = apiMeta.customOAuth === 'gog';
+
     // OAuth instruction for special APIs
     let oauthNote = '';
-    if (['ga4', 'gsc', 'google_ads', 'google_workspace'].includes(apiId)) {
+    if (['ga4', 'gsc', 'google_ads'].includes(apiId)) {
       oauthNote = `
         <div style="background:#E8F4FD;border:2px solid #3B82F6;border-radius:6px;padding:12px 16px;margin:16px 0;">
           <strong>💡 OAuth API</strong> — Esta API usa OAuth. Necesitarás autorizar acceso desde Google Cloud Console.
@@ -924,6 +1530,8 @@ http.createServer((req, res) => {
   ${lastErrorHtml}
   ${oauthNote}
 
+  ${guide && guide.systemServiceAccountNote ? `<div id="sa-info" style="display:none;background:var(--card);border:2px solid var(--ink);border-radius:8px;padding:14px 18px;margin-top:16px;font-size:14px;box-shadow:3px 3px 0 var(--ink);"></div>` : ''}
+
   ${guide ? `
   <div class="card" style="margin-top:20px;">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
@@ -956,9 +1564,52 @@ http.createServer((req, res) => {
   </div>
   ` : ''}
 
+  ${isGogOAuth ? `
+  <div class="card" style="margin-top:20px;">
+    <h2 style="font-family:'Space Grotesk',sans-serif;color:var(--rust);margin:0 0 16px 0;font-size:1.3em;">🔌 Conectar cuenta de Google</h2>
+
+    <div id="gog-step1">
+      <div style="margin-bottom:16px;">
+        <label style="font-weight:700;font-size:15px;display:block;margin-bottom:4px;">Email de la cuenta de Google</label>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:6px;">La cuenta de Gmail o Google Workspace que quieres conectar</div>
+        <input id="gog-email" type="email" placeholder="info@suempresa.com"
+          style="width:100%;padding:10px 14px;border:2px solid var(--ink);border-radius:6px;font-size:15px;font-family:'Nunito',sans-serif;background:var(--card);color:var(--text);box-sizing:border-box;" />
+      </div>
+      <div style="margin-bottom:12px;">
+        <label style="font-weight:700;font-size:14px;display:block;margin-bottom:4px;">Servicios a autorizar</label>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;font-size:14px;">
+          <label><input type="checkbox" class="gog-svc" value="gmail" checked> 📧 Gmail</label>
+          <label><input type="checkbox" class="gog-svc" value="calendar" checked> 📅 Calendar</label>
+          <label><input type="checkbox" class="gog-svc" value="drive" checked> 📁 Drive</label>
+          <label><input type="checkbox" class="gog-svc" value="contacts" checked> 👤 Contacts</label>
+          <label><input type="checkbox" class="gog-svc" value="sheets"> 📊 Sheets</label>
+          <label><input type="checkbox" class="gog-svc" value="docs"> 📝 Docs</label>
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="gogStep1()">🔗 Generar link de autorización</button>
+      <div id="gog-result1" style="margin-top:12px;display:none;"></div>
+    </div>
+
+    <div id="gog-step2" style="display:none;margin-top:20px;padding-top:16px;border-top:2px solid var(--border);">
+      <div style="background:#E8F4FD;border:2px solid #3B82F6;border-radius:6px;padding:12px 16px;margin-bottom:16px;">
+        <strong>📋 Paso 2:</strong> El propietario de la cuenta debe abrir el link de arriba, autorizar en Google, y <strong>copiar la URL completa a la que fue redirigido</strong> (será algo como <code>http://127.0.0.1:xxxxx/oauth2/callback?code=...</code>).
+      </div>
+      <label style="font-weight:700;font-size:15px;display:block;margin-bottom:4px;">URL de redirección de Google</label>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:6px;">La URL completa que aparece en el navegador después de autorizar</div>
+      <input id="gog-redirect-url" type="text" placeholder="http://127.0.0.1:xxxxx/oauth2/callback?code=..."
+        style="width:100%;padding:10px 14px;border:2px solid var(--ink);border-radius:6px;font-size:14px;font-family:monospace;background:var(--card);color:var(--text);box-sizing:border-box;" />
+      <div style="margin-top:12px;">
+        <button class="btn btn-primary" onclick="gogStep2()">✅ Completar conexión</button>
+      </div>
+      <div id="gog-result2" style="margin-top:12px;display:none;"></div>
+    </div>
+
+    <div id="gog-accounts" style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border);"></div>
+  </div>
+  ` : `
   <div class="card" style="margin-top:20px;">
     <h2 style="font-family:'Space Grotesk',sans-serif;color:var(--rust);margin:0 0 16px 0;font-size:1.3em;">🔌 Credenciales</h2>
-    <form id="connectForm" onsubmit="return false;">
+    <form id="connectForm" onsubmit="return false;">`}
 
       ${fieldsHtml || '<p style="color:var(--muted);">Esta API no requiere credenciales manuales.</p>'}
 
@@ -981,6 +1632,127 @@ http.createServer((req, res) => {
   </div>
 
 <script>
+// Google Workspace OAuth (gog CLI) functions
+async function gogStep1() {
+  const email = document.getElementById('gog-email').value.trim();
+  if (!email || !email.includes('@')) {
+    showGogResult('gog-result1', 'error', '❌ Introduce un email válido');
+    return;
+  }
+  const services = [...document.querySelectorAll('.gog-svc:checked')].map(c => c.value).join(',');
+  if (!services) {
+    showGogResult('gog-result1', 'error', '❌ Selecciona al menos un servicio');
+    return;
+  }
+  showGogResult('gog-result1', 'info', '⏳ Generando link de autorización...');
+  try {
+    const res = await fetch('/mc/api/gog-auth-start', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, services })
+    });
+    const data = await res.json();
+    if (data.ok && data.authUrl) {
+      showGogResult('gog-result1', 'ok',
+        '✅ <strong>Link generado.</strong> Envía este link al propietario de la cuenta para que autorice:<br/><br/>' +
+        '<div style="background:var(--bg);padding:8px 12px;border-radius:4px;word-break:break-all;font-size:12px;font-family:monospace;margin:8px 0;user-select:all;cursor:text;">' + data.authUrl + '</div>' +
+        '<button class="btn btn-secondary" style="font-size:13px;padding:6px 14px;" onclick="navigator.clipboard.writeText(\'' + data.authUrl.replace(/'/g, "\\'") + '\');this.textContent=\'✅ Copiado\'">📋 Copiar link</button>'
+      );
+      document.getElementById('gog-step2').style.display = 'block';
+      document.getElementById('gog-step2').dataset.email = email;
+    } else {
+      showGogResult('gog-result1', 'error', '❌ ' + (data.error || 'Error desconocido'));
+    }
+  } catch (e) {
+    showGogResult('gog-result1', 'error', '❌ Error de red: ' + e.message);
+  }
+}
+
+async function gogStep2() {
+  const email = document.getElementById('gog-step2').dataset.email;
+  const authUrl = document.getElementById('gog-redirect-url').value.trim();
+  if (!authUrl) {
+    showGogResult('gog-result2', 'error', '❌ Pega la URL de redirección');
+    return;
+  }
+  showGogResult('gog-result2', 'info', '⏳ Completando conexión...');
+  try {
+    const res = await fetch('/mc/api/gog-auth-complete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, authUrl })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      showGogResult('gog-result2', 'ok', '✅ <strong>¡Conectado!</strong> La cuenta ' + email + ' está lista. ' + (data.detail || ''));
+      loadGogAccounts();
+    } else {
+      showGogResult('gog-result2', 'error', '❌ ' + (data.error || 'Error desconocido'));
+    }
+  } catch (e) {
+    showGogResult('gog-result2', 'error', '❌ Error de red: ' + e.message);
+  }
+}
+
+function showGogResult(id, type, msg) {
+  const el = document.getElementById(id);
+  el.style.display = 'block';
+  if (type === 'ok') { el.style.background = '#E8F8E8'; el.style.border = '2px solid #4A5D23'; el.style.color = '#2D5A1E'; }
+  else if (type === 'error') { el.style.background = '#FDE8E8'; el.style.border = '2px solid #C0392B'; el.style.color = '#C0392B'; }
+  else { el.style.background = '#FFF8E1'; el.style.border = '2px solid #E5A100'; el.style.color = '#8B6914'; }
+  el.style.padding = '12px 16px'; el.style.borderRadius = '6px'; el.style.fontSize = '14px';
+  el.innerHTML = msg;
+}
+
+async function loadGogAccounts() {
+  try {
+    const res = await fetch('/mc/api/gog-accounts');
+    const data = await res.json();
+    const accounts = Array.isArray(data) ? data : (data.accounts || []);
+    if (accounts.length > 0) {
+      const el = document.getElementById('gog-accounts');
+      el.innerHTML = '<div style="font-weight:700;margin-bottom:8px;">📧 Cuentas conectadas:</div>' +
+        accounts.map(a => {
+          const email = a.email || a.account || a;
+          const services = a.services || a.scopes || '';
+          return '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;"><span class="dot g"></span><code>' + email + '</code>' +
+            (services ? '<span style="font-size:11px;color:var(--muted);">' + services + '</span>' : '') + '</div>';
+        }).join('');
+    }
+  } catch {}
+}
+// Load accounts on page load
+if (document.getElementById('gog-accounts')) loadGogAccounts();
+
+// Load system service account email for Google APIs
+(async function() {
+  try {
+    const res = await fetch('/mc/api/system-sa');
+    const data = await res.json();
+    if (data.configured && data.email) {
+      document.querySelectorAll('.sa-email').forEach(el => {
+        el.textContent = data.email;
+        el.style.background = '#E8F8E8';
+        el.style.padding = '4px 8px';
+        el.style.borderRadius = '4px';
+        el.style.fontWeight = '700';
+        el.style.userSelect = 'all';
+      });
+      const saInfo = document.getElementById('sa-info');
+      if (saInfo) {
+        saInfo.innerHTML = '<span style="color:var(--green);font-weight:700;">✅ Service Account configurado:</span> <code style="user-select:all;">' + data.email + '</code>';
+        saInfo.style.display = 'block';
+      }
+    } else {
+      const saInfo = document.getElementById('sa-info');
+      if (saInfo) {
+        saInfo.innerHTML = '⚠️ Service Account no configurado. <a href="/mc/connect/system/google-sa" style="color:var(--rust);font-weight:700;">Configurar →</a>';
+        saInfo.style.display = 'block';
+      }
+    }
+  } catch {}
+})();
+
 let allExpanded = false;
 function toggleStep(i) {
   const body = document.getElementById('body-' + i);
@@ -1549,9 +2321,10 @@ async function doTest() {
 
   // === Doc Viewer: /docs/ ===
   if (url === '/docs' || url === '/docs/') {
-    const nav = Object.keys(DOC_ROOTS).map(k => {
-      const icons = { brand: '🏷️', prds: '📋', skills: '⚡', memory: '🧠' };
-      return `<a href="/mc/docs/${k}/">${icons[k] || '📂'} ${k}</a>`;
+    // In portal mode, only show brand
+    const roots = req._portalSlug ? { brand: '🏷️' } : { brand: '🏷️', prds: '📋', skills: '⚡', memory: '🧠' };
+    const nav = Object.keys(roots).map(k => {
+      return `<a href="/mc/docs/${k}/">${roots[k]} ${k}</a>`;
     }).join('');
     res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
     res.end(page('Documentos', '<a class="back" href="/mc#">← Mission Control</a>', `<h1>📚 Documentos</h1><div class="nav">${nav}</div>`));
@@ -1562,6 +2335,24 @@ async function doTest() {
     const rest = url.replace('/docs/', '');
     const parts = rest.split('/').filter(Boolean);
     const rootKey = parts[0];
+
+    // Portal mode: block non-brand docs and other clients' brand dirs
+    if (req._portalSlug) {
+      if (rootKey !== 'brand') {
+        res.writeHead(403); res.end('Forbidden'); return;
+      }
+      // If accessing brand/{otherSlug}, block it
+      if (parts.length >= 2 && parts[1] !== req._portalSlug) {
+        res.writeHead(403); res.end('Forbidden'); return;
+      }
+      // If listing /docs/brand/ root, redirect to their slug directly
+      if (parts.length === 1) {
+        const portalPrefix = req._portalBase ? req._portalBase : '/mc';
+        res.writeHead(302, { 'Location': `${portalPrefix}/docs/brand/${req._portalSlug}/` });
+        res.end();
+        return;
+      }
+    }
     
     if (!rootKey || !DOC_ROOTS[rootKey]) {
       res.writeHead(404); res.end('Section not found'); return;
@@ -1681,9 +2472,16 @@ async function doTest() {
 
   const filePath = path.join(BASE, filename);
   try {
-    const data = fs.readFileSync(filePath);
+    let data = fs.readFileSync(filePath);
     const ext = path.extname(filename);
-    res.writeHead(200, { 'Content-Type': MIME[ext] || 'application/octet-stream' });
+    const ct = MIME[ext] || 'application/octet-stream';
+    // For JS files in admin mode, also rewrite /mc/ paths
+    if (req._adminBase && ext === '.js') {
+      let text = data.toString('utf-8');
+      text = text.replace(/\/mc\//g, req._adminBase + '/');
+      data = Buffer.from(text, 'utf-8');
+    }
+    res.writeHead(200, { 'Content-Type': ct });
     res.end(data);
   } catch {
     res.writeHead(404); res.end('Not found');

@@ -1,6 +1,5 @@
 """Terminal UI utilities for last30days skill."""
 
-import os
 import sys
 import time
 import threading
@@ -72,6 +71,32 @@ YOUTUBE_MESSAGES = [
     "Fetching transcripts...",
 ]
 
+TIKTOK_MESSAGES = [
+    "Searching TikTok for trending videos...",
+    "Finding what's viral on TikTok...",
+    "Scanning TikTok for relevant content...",
+]
+
+INSTAGRAM_MESSAGES = [
+    "Searching Instagram Reels...",
+    "Finding what's trending on Instagram...",
+    "Scanning Instagram for relevant reels...",
+]
+
+HN_MESSAGES = [
+    "Searching Hacker News...",
+    "Scanning HN front page stories...",
+    "Finding technical discussions...",
+    "Discovering developer conversations...",
+]
+
+POLYMARKET_MESSAGES = [
+    "Checking prediction markets...",
+    "Finding what people are betting on...",
+    "Scanning Polymarket for odds...",
+    "Discovering prediction markets...",
+]
+
 PROCESSING_MESSAGES = [
     "Crunching the data...",
     "Scoring and ranking...",
@@ -103,7 +128,7 @@ I just researched that for you. Here's what I've got right now:
 
 {status_line}
 
-You can unlock more sources with API keys — just ask me how and I'll walk you through it. More sources means better research, but it works fine as-is.
+You can unlock more sources with API keys or by signing in to Codex — just ask me how and I'll walk you through it. More sources means better research, but it works fine as-is.
 
 Some examples of what you can do:
 - "last30 what are people saying about Figma"
@@ -117,7 +142,7 @@ Just start with "last30" and talk to me like normal.
 
 # Shorter promo for single missing key
 PROMO_SINGLE_KEY = {
-    "reddit": "\n💡 You can unlock Reddit with an OpenAI API key — just ask me how.\n",
+    "reddit": "\n💡 You can unlock Reddit with an OpenAI API key or by running `codex login` — just ask me how.\n",
     "x": "\n💡 You can unlock X with an xAI API key — just ask me how.\n",
 }
 
@@ -146,13 +171,14 @@ DOTS_FRAMES = ['   ', '.  ', '.. ', '...']
 class Spinner:
     """Animated spinner for long-running operations."""
 
-    def __init__(self, message: str = "Working", color: str = Colors.CYAN):
+    def __init__(self, message: str = "Working", color: str = Colors.CYAN, quiet: bool = False):
         self.message = message
         self.color = color
         self.running = False
         self.thread: Optional[threading.Thread] = None
         self.frame_idx = 0
         self.shown_static = False
+        self.quiet = quiet  # Suppress non-TTY start message (still shows ✓ completion)
 
     def _spin(self):
         while self.running:
@@ -170,7 +196,7 @@ class Spinner:
             self.thread.start()
         else:
             # Not a TTY (Claude Code) - just print once
-            if not self.shown_static:
+            if not self.shown_static and not self.quiet:
                 sys.stderr.write(f"⏳ {self.message}\n")
                 sys.stderr.flush()
                 self.shown_static = True
@@ -257,6 +283,42 @@ class ProgressDisplay:
         if self.spinner:
             self.spinner.stop(f"{Colors.RED}YouTube{Colors.RESET} Found {count} videos")
 
+    def start_tiktok(self):
+        msg = random.choice(TIKTOK_MESSAGES)
+        self.spinner = Spinner(f"{Colors.PURPLE}TikTok{Colors.RESET} {msg}", Colors.PURPLE)
+        self.spinner.start()
+
+    def end_tiktok(self, count: int):
+        if self.spinner:
+            self.spinner.stop(f"{Colors.PURPLE}TikTok{Colors.RESET} Found {count} videos")
+
+    def start_instagram(self):
+        msg = random.choice(INSTAGRAM_MESSAGES)
+        self.spinner = Spinner(f"{Colors.PURPLE}Instagram{Colors.RESET} {msg}", Colors.PURPLE)
+        self.spinner.start()
+
+    def end_instagram(self, count: int):
+        if self.spinner:
+            self.spinner.stop(f"{Colors.PURPLE}Instagram{Colors.RESET} Found {count} reels")
+
+    def start_hackernews(self):
+        msg = random.choice(HN_MESSAGES)
+        self.spinner = Spinner(f"{Colors.YELLOW}HN{Colors.RESET} {msg}", Colors.YELLOW, quiet=True)
+        self.spinner.start()
+
+    def end_hackernews(self, count: int):
+        if self.spinner:
+            self.spinner.stop(f"{Colors.YELLOW}HN{Colors.RESET} Found {count} stories")
+
+    def start_polymarket(self):
+        msg = random.choice(POLYMARKET_MESSAGES)
+        self.spinner = Spinner(f"{Colors.GREEN}Polymarket{Colors.RESET} {msg}", Colors.GREEN, quiet=True)
+        self.spinner.start()
+
+    def end_polymarket(self, count: int):
+        if self.spinner:
+            self.spinner.stop(f"{Colors.GREEN}Polymarket{Colors.RESET} Found {count} markets")
+
     def start_processing(self):
         msg = random.choice(PROCESSING_MESSAGES)
         self.spinner = Spinner(f"{Colors.PURPLE}Processing{Colors.RESET} {msg}", Colors.PURPLE)
@@ -266,7 +328,7 @@ class ProgressDisplay:
         if self.spinner:
             self.spinner.stop()
 
-    def show_complete(self, reddit_count: int, x_count: int, youtube_count: int = 0):
+    def show_complete(self, reddit_count: int, x_count: int, youtube_count: int = 0, hn_count: int = 0, pm_count: int = 0, tiktok_count: int = 0, ig_count: int = 0):
         elapsed = time.time() - self.start_time
         if IS_TTY:
             sys.stderr.write(f"\n{Colors.GREEN}{Colors.BOLD}✓ Research complete{Colors.RESET} ")
@@ -275,11 +337,27 @@ class ProgressDisplay:
             sys.stderr.write(f"{Colors.CYAN}X:{Colors.RESET} {x_count} posts")
             if youtube_count:
                 sys.stderr.write(f"  {Colors.RED}YouTube:{Colors.RESET} {youtube_count} videos")
+            if tiktok_count:
+                sys.stderr.write(f"  {Colors.PURPLE}TikTok:{Colors.RESET} {tiktok_count} videos")
+            if ig_count:
+                sys.stderr.write(f"  {Colors.PURPLE}Instagram:{Colors.RESET} {ig_count} reels")
+            if hn_count:
+                sys.stderr.write(f"  {Colors.YELLOW}HN:{Colors.RESET} {hn_count} stories")
+            if pm_count:
+                sys.stderr.write(f"  {Colors.GREEN}Polymarket:{Colors.RESET} {pm_count} markets")
             sys.stderr.write("\n\n")
         else:
             parts = [f"Reddit: {reddit_count} threads", f"X: {x_count} posts"]
             if youtube_count:
                 parts.append(f"YouTube: {youtube_count} videos")
+            if tiktok_count:
+                parts.append(f"TikTok: {tiktok_count} videos")
+            if ig_count:
+                parts.append(f"Instagram: {ig_count} reels")
+            if hn_count:
+                parts.append(f"HN: {hn_count} stories")
+            if pm_count:
+                parts.append(f"Polymarket: {pm_count} markets")
             sys.stderr.write(f"✓ Research complete ({elapsed:.1f}s) - {', '.join(parts)}\n")
         sys.stderr.flush()
 
@@ -348,12 +426,15 @@ def show_diagnostic_banner(diag: dict):
             bird_username, youtube, web_search_backend
     """
     has_openai = diag.get("openai", False)
+    has_reddit_public = diag.get("reddit_public", False)
+    has_reddit = has_openai or has_reddit_public
     has_x = diag.get("x_source") is not None
     has_youtube = diag.get("youtube", False)
+    has_xiaohongshu = diag.get("xiaohongshu", False)
     has_web = diag.get("web_search_backend") is not None
 
     # If everything is available, no banner needed
-    if has_openai and has_x and has_youtube and has_web:
+    if has_reddit and has_x and has_youtube and has_web:
         return
 
     lines = []
@@ -365,7 +446,9 @@ def show_diagnostic_banner(diag: dict):
 
         # Reddit
         if has_openai:
-            lines.append(f"{Colors.DIM}│{Colors.RESET}  {Colors.GREEN}✅ Reddit{Colors.RESET}    — OPENAI_API_KEY found                {Colors.DIM}│{Colors.RESET}")
+            lines.append(f"{Colors.DIM}│{Colors.RESET}  {Colors.GREEN}✅ Reddit{Colors.RESET}    — OpenAI/Codex auth found             {Colors.DIM}│{Colors.RESET}")
+        elif has_reddit_public:
+            lines.append(f"{Colors.DIM}│{Colors.RESET}  {Colors.GREEN}✅ Reddit{Colors.RESET}    — Public Reddit search (no key)       {Colors.DIM}│{Colors.RESET}")
         else:
             lines.append(f"{Colors.DIM}│{Colors.RESET}  {Colors.RED}❌ Reddit{Colors.RESET}    — No OPENAI_API_KEY                    {Colors.DIM}│{Colors.RESET}")
             lines.append(f"{Colors.DIM}│{Colors.RESET}     └─ Add to ~/.config/last30days/.env            {Colors.DIM}│{Colors.RESET}")
@@ -391,6 +474,12 @@ def show_diagnostic_banner(diag: dict):
             lines.append(f"{Colors.DIM}│{Colors.RESET}  {Colors.RED}❌ YouTube{Colors.RESET}   — yt-dlp not installed                {Colors.DIM}│{Colors.RESET}")
             lines.append(f"{Colors.DIM}│{Colors.RESET}     └─ Fix: brew install yt-dlp (free)                {Colors.DIM}│{Colors.RESET}")
 
+        # Xiaohongshu
+        if has_xiaohongshu:
+            lines.append(f"{Colors.DIM}│{Colors.RESET}  {Colors.GREEN}✅ Xiaohongshu{Colors.RESET} — API connected + logged in         {Colors.DIM}│{Colors.RESET}")
+        else:
+            lines.append(f"{Colors.DIM}│{Colors.RESET}  {Colors.YELLOW}⚡ Xiaohongshu{Colors.RESET} — API not connected/logged in      {Colors.DIM}│{Colors.RESET}")
+
         # Web
         if has_web:
             backend = diag.get("web_search_backend", "")
@@ -408,7 +497,9 @@ def show_diagnostic_banner(diag: dict):
         lines.append("│                                                     │")
 
         if has_openai:
-            lines.append("│  ✅ Reddit    — OPENAI_API_KEY found                │")
+            lines.append("│  ✅ Reddit    — OpenAI/Codex auth found             │")
+        elif has_reddit_public:
+            lines.append("│  ✅ Reddit    — Public Reddit search (no key)       │")
         else:
             lines.append("│  ❌ Reddit    — No OPENAI_API_KEY                    │")
             lines.append("│     └─ Add to ~/.config/last30days/.env            │")
@@ -427,6 +518,11 @@ def show_diagnostic_banner(diag: dict):
         else:
             lines.append("│  ❌ YouTube   — yt-dlp not installed                │")
             lines.append("│     └─ Fix: brew install yt-dlp (free)                │")
+
+        if has_xiaohongshu:
+            lines.append("│  ✅ Xiaohongshu — API connected + logged in         │")
+        else:
+            lines.append("│  ⚡ Xiaohongshu — API not connected/logged in       │")
 
         if has_web:
             lines.append("│  ✅ Web       — API search available                │")

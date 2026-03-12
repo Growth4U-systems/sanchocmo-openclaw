@@ -1,12 +1,12 @@
 {
   "status": "fail",
-  "last_run": "2026-03-10T20:04:36Z",
+  "last_run": "2026-03-11T22:34:57Z",
   "summary": "2/3 ok, 1 errors",
   "failureCount": 1,
   "services": {
     "anthropic": {
       "status": "not-configured",
-      "lastCheck": "2026-03-10T20:04:37.020Z",
+      "lastCheck": "2026-03-11T16:34:38.075Z",
       "details": {
         "error": "ANTHROPIC_API_KEY not set"
       },
@@ -14,7 +14,7 @@
     },
     "openrouter": {
       "status": "not-configured",
-      "lastCheck": "2026-03-10T20:04:37.020Z",
+      "lastCheck": "2026-03-11T16:34:38.075Z",
       "details": {
         "error": "OPENROUTER_API_KEY not set"
       },
@@ -22,7 +22,7 @@
     },
     "openai": {
       "status": "not-configured",
-      "lastCheck": "2026-03-10T20:04:37.020Z",
+      "lastCheck": "2026-03-11T16:34:38.075Z",
       "details": {
         "error": "OPENAI_API_KEY not set"
       },
@@ -30,7 +30,7 @@
     },
     "gemini": {
       "status": "not-configured",
-      "lastCheck": "2026-03-10T20:04:37.020Z",
+      "lastCheck": "2026-03-11T16:34:38.075Z",
       "details": {
         "error": "GEMINI_API_KEY not set"
       },
@@ -38,7 +38,7 @@
     },
     "xai": {
       "status": "not-configured",
-      "lastCheck": "2026-03-10T20:04:37.020Z",
+      "lastCheck": "2026-03-11T16:34:38.075Z",
       "details": {
         "error": "XAI_API_KEY not set"
       },
@@ -46,23 +46,15 @@
     },
     "minimax": {
       "status": "not-configured",
-      "lastCheck": "2026-03-10T20:04:37.020Z",
+      "lastCheck": "2026-03-11T16:34:38.075Z",
       "details": {
         "error": "MINIMAX_API_KEY not set"
       },
       "error": "MINIMAX_API_KEY not set"
     },
-    "brave": {
-      "status": "not-configured",
-      "lastCheck": "2026-03-10T20:04:37.020Z",
-      "details": {
-        "error": "BRAVE_API_KEY not set"
-      },
-      "error": "BRAVE_API_KEY not set"
-    },
     "apify": {
       "status": "not-configured",
-      "lastCheck": "2026-03-10T20:04:37.020Z",
+      "lastCheck": "2026-03-11T16:34:38.075Z",
       "details": {
         "error": "APIFY_TOKEN not set"
       },
@@ -70,7 +62,7 @@
     },
     "firecrawl": {
       "status": "not-configured",
-      "lastCheck": "2026-03-10T20:04:37.020Z",
+      "lastCheck": "2026-03-11T16:34:38.075Z",
       "details": {
         "error": "FIRECRAWL_API_KEY not set"
       },
@@ -78,7 +70,7 @@
     },
     "serper": {
       "status": "not-configured",
-      "lastCheck": "2026-03-10T20:04:37.020Z",
+      "lastCheck": "2026-03-11T16:34:38.075Z",
       "details": {
         "error": "SERPER_API_KEY not set"
       },
@@ -86,7 +78,7 @@
     },
     "dataforseo": {
       "status": "not-configured",
-      "lastCheck": "2026-03-10T20:04:37.020Z",
+      "lastCheck": "2026-03-11T16:34:38.075Z",
       "details": {
         "error": "DATAFORSEO_LOGIN or DATAFORSEO_PASSWORD not set"
       },
@@ -94,7 +86,7 @@
     },
     "notion": {
       "status": "not-configured",
-      "lastCheck": "2026-03-10T20:04:37.020Z",
+      "lastCheck": "2026-03-11T16:34:38.075Z",
       "details": {
         "error": "NOTION_API_KEY not set"
       },
@@ -102,72 +94,15 @@
     },
     "supabase": {
       "status": "not-configured",
-      "lastCheck": "2026-03-10T20:04:37.020Z",
+      "lastCheck": "2026-03-11T16:34:38.075Z",
       "details": {
         "error": "SUPABASE_URL or SUPABASE_ANON_KEY not set"
       },
       "error": "SUPABASE_URL or SUPABASE_ANON_KEY not set"
     },
-    "fal": {
-      "status": "not-configured",
-      "lastCheck": "2026-03-10T20:04:37.020Z",
-      "details": {
-        "error": "FAL_API_KEY not set"
-      },
-      "error": "FAL_API_KEY not set"
-    },
-    "wavespeed": {
-      "status": "not-configured",
-      "lastCheck": "2026-03-10T20:04:37.020Z",
-      "details": {
-        "error": "WAVESPEED_API_KEY not set"
-      },
-      "error": "WAVESPEED_API_KEY not set"
-    },
-    "dumpling": {
-      "status": "not-configured",
-      "lastCheck": "2026-03-10T20:04:37.020Z",
-      "details": {
-        "error": "DUMPLING_API_KEY not set"
-      },
-      "error": "DUMPLING_API_KEY not set"
-    },
-    "instantly": {
-      "status": "not-configured",
-      "lastCheck": "2026-03-10T20:04:37.020Z",
-      "details": {
-        "note": "Web login \u2014 no API key in .env"
-      },
-      "error": ""
-    },
-    "metricool": {
-      "status": "not-configured",
-      "lastCheck": "2026-03-10T20:04:37.020Z",
-      "details": {
-        "note": "Web login \u2014 no API key in .env"
-      },
-      "error": ""
-    },
-    "nanobanana": {
-      "status": "not-configured",
-      "lastCheck": "2026-03-10T20:04:37.020Z",
-      "details": {
-        "error": "Uses GEMINI_API_KEY (shared)"
-      },
-      "error": "Uses GEMINI_API_KEY (shared)"
-    },
-    "remotion": {
-      "status": "not-configured",
-      "lastCheck": "2026-03-10T20:04:37.020Z",
-      "details": {
-        "version": null,
-        "note": "Local install"
-      },
-      "error": ""
-    },
     "gog": {
       "status": "ok",
-      "lastCheck": "2026-03-10T20:04:37.035Z",
+      "lastCheck": "2026-03-11T16:34:38.090Z",
       "details": {
         "account": "alfonso@growth4u.io",
         "test": "gmail inbox"
@@ -176,15 +111,79 @@
     },
     "openclaw": {
       "status": "error",
-      "lastCheck": "2026-03-10T20:04:38.000Z",
+      "lastCheck": "2026-03-11T16:34:39.286Z",
       "details": {
         "error": "Command failed: /opt/homebrew/bin/openclaw status 2>&1"
       },
       "error": "Command failed: /opt/homebrew/bin/openclaw status 2>&1"
     },
+    "fal": {
+      "status": "not-configured",
+      "lastCheck": "2026-03-11T16:34:38.075Z",
+      "details": {
+        "error": "FAL_API_KEY not set"
+      },
+      "error": "FAL_API_KEY not set"
+    },
+    "wavespeed": {
+      "status": "not-configured",
+      "lastCheck": "2026-03-11T16:34:38.075Z",
+      "details": {
+        "error": "WAVESPEED_API_KEY not set"
+      },
+      "error": "WAVESPEED_API_KEY not set"
+    },
+    "dumpling": {
+      "status": "not-configured",
+      "lastCheck": "2026-03-11T16:34:38.075Z",
+      "details": {
+        "error": "DUMPLING_API_KEY not set"
+      },
+      "error": "DUMPLING_API_KEY not set"
+    },
+    "brave": {
+      "status": "not-configured",
+      "lastCheck": "2026-03-11T16:34:38.075Z",
+      "details": {
+        "error": "BRAVE_API_KEY not set"
+      },
+      "error": "BRAVE_API_KEY not set"
+    },
+    "instantly": {
+      "status": "not-configured",
+      "lastCheck": "2026-03-11T16:34:38.075Z",
+      "details": {
+        "note": "Web login \u2014 no API key in .env"
+      },
+      "error": ""
+    },
+    "metricool": {
+      "status": "not-configured",
+      "lastCheck": "2026-03-11T16:34:38.075Z",
+      "details": {
+        "note": "Web login \u2014 no API key in .env"
+      },
+      "error": ""
+    },
+    "nanobanana": {
+      "status": "not-configured",
+      "lastCheck": "2026-03-11T16:34:38.075Z",
+      "details": {
+        "error": "Uses GEMINI_API_KEY (shared)"
+      },
+      "error": "Uses GEMINI_API_KEY (shared)"
+    },
+    "freemotion": {
+      "status": "not-configured",
+      "lastCheck": "2026-03-04T20:50:28.622Z",
+      "details": {
+        "note": "No API key in .env"
+      },
+      "error": ""
+    },
     "discord": {
       "status": "not-configured",
-      "lastCheck": "2026-03-10T20:04:38.019Z",
+      "lastCheck": "2026-03-11T16:34:39.304Z",
       "details": {
         "error": "DISCORD_BOT_TOKEN not set"
       },
@@ -192,9 +191,18 @@
     },
     "tailscale": {
       "status": "ok",
-      "lastCheck": "2026-03-10T20:04:36Z",
+      "lastCheck": "2026-03-11T22:34:57Z",
       "details": {
         "note": "tailscale status OK"
+      },
+      "error": ""
+    },
+    "remotion": {
+      "status": "not-configured",
+      "lastCheck": "2026-03-11T16:34:38.075Z",
+      "details": {
+        "version": null,
+        "note": "Local install"
       },
       "error": ""
     }

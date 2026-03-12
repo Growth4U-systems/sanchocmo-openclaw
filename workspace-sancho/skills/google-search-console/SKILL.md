@@ -1,354 +1,136 @@
 ---
 name: google-search-console
 description: |
-  Google Search Console API integration with managed OAuth. Query search analytics, manage sitemaps, and monitor site performance. Use this skill when users want to access Search Console data. For other third party apps, use the api-gateway skill (https://clawhub.ai/byungkyu/api-gateway).
-compatibility: Requires network access and valid Maton API key
+  Google Search Console API integration using system Service Account.
+  Query search analytics, manage sitemaps, and monitor site performance.
+  Uses the SA at .secrets/google-service-account.json — no Maton dependency.
+compatibility: Requires .secrets/google-service-account.json and site access granted to SA email
 metadata:
-  author: maton
-  version: "1.0"
+  author: Growth4U (adapted from maton)
+  version: "2.0"
   clawdbot:
-    emoji: 🧠
+    emoji: 🔍
     requires:
-      env:
-        - MATON_API_KEY
+      files:
+        - .secrets/google-service-account.json
 context_required:
-- brand/{slug}/operational/stack.md
+- brand/{slug}/integrations.json
 context_writes:
 - brand/{slug}/operational/learnings.md
 ---
 
 # Google Search Console
 
-Access the Google Search Console API with managed OAuth authentication. Query search analytics, manage sitemaps, and monitor site performance in Google Search.
-
-## Quick Start
-
-```bash
-# List sites
-python <<'EOF'
-import urllib.request, os, json
-req = urllib.request.Request('https://gateway.maton.ai/google-search-console/webmasters/v3/sites')
-req.add_header('Authorization', f'Bearer {os.environ["MATON_API_KEY"]}')
-print(json.dumps(json.load(urllib.request.urlopen(req)), indent=2))
-EOF
-```
-
-## Base URL
-
-```
-https://gateway.maton.ai/google-search-console/{native-api-path}
-```
-
-Replace `{native-api-path}` with the actual Google Search Console API endpoint path. The gateway proxies requests to `www.googleapis.com` and automatically injects your OAuth token.
+Access GSC API using our system Service Account (`sancho-analytics@gen-lang-client-0422972889.iam.gserviceaccount.com`).
 
 ## Authentication
 
-All requests require the Maton API key in the Authorization header:
+Uses `.secrets/google-service-account.json` (Service Account). The SA email must have **Full** permission on the GSC property.
 
-```
-Authorization: Bearer $MATON_API_KEY
+**Get access token:**
+```bash
+python3 scripts/google-api-helper.py --service gsc --action token
 ```
 
-**Environment Variable:** Set your API key as `MATON_API_KEY`:
+## Site URL
+
+Read from `brand/{slug}/integrations.json` → `dataSources.gsc.config.SITE_URL`.
+Growth4U: `sc-domain:growth4u.io`
+
+Site URLs must be URL-encoded in API paths: `sc-domain%3Agrowth4u.io`
+
+## Common Operations
+
+### List Sites
+```bash
+python3 scripts/google-api-helper.py --service gsc --action sites
+```
+
+### Top Queries (last 28 days)
+```bash
+python3 scripts/google-api-helper.py --service gsc --action query \
+  --slug growth4u --days 28 --dimensions query --limit 25
+```
+
+### Top Pages
+```bash
+python3 scripts/google-api-helper.py --service gsc --action query \
+  --slug growth4u --days 28 --dimensions page --limit 25
+```
+
+### Daily Performance
+```bash
+python3 scripts/google-api-helper.py --service gsc --action query \
+  --slug growth4u --days 28 --dimensions date
+```
+
+### Device Breakdown
+```bash
+python3 scripts/google-api-helper.py --service gsc --action query \
+  --slug growth4u --days 28 --dimensions device
+```
+
+### Filtered Query
+```bash
+python3 scripts/google-api-helper.py --service gsc --action query \
+  --slug growth4u --days 28 --dimensions query \
+  --filter "query contains growth"
+```
+
+## Raw API Access
+
+For custom queries, get a token and call the API directly:
 
 ```bash
-export MATON_API_KEY="YOUR_API_KEY"
+TOKEN=$(python3 scripts/google-api-helper.py --service gsc --action token)
+SITE_URL="sc-domain%3Agrowth4u.io"
+
+# Search Analytics query
+curl -s -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -X POST "https://searchconsole.googleapis.com/webmasters/v3/sites/${SITE_URL}/searchAnalytics/query" \
+  -d '{
+    "startDate": "2026-02-01",
+    "endDate": "2026-03-01",
+    "dimensions": ["query"],
+    "rowLimit": 25
+  }' | python3 -m json.tool
 ```
-
-### Getting Your API Key
-
-1. Sign in or create an account at [maton.ai](https://maton.ai)
-2. Go to [maton.ai/settings](https://maton.ai/settings)
-3. Copy your API key
-
-## Connection Management
-
-Manage your Google OAuth connections at `https://ctrl.maton.ai`.
-
-### List Connections
-
-```bash
-python <<'EOF'
-import urllib.request, os, json
-req = urllib.request.Request('https://ctrl.maton.ai/connections?app=google-search-console&status=ACTIVE')
-req.add_header('Authorization', f'Bearer {os.environ["MATON_API_KEY"]}')
-print(json.dumps(json.load(urllib.request.urlopen(req)), indent=2))
-EOF
-```
-
-### Create Connection
-
-```bash
-python <<'EOF'
-import urllib.request, os, json
-data = json.dumps({'app': 'google-search-console'}).encode()
-req = urllib.request.Request('https://ctrl.maton.ai/connections', data=data, method='POST')
-req.add_header('Authorization', f'Bearer {os.environ["MATON_API_KEY"]}')
-req.add_header('Content-Type', 'application/json')
-print(json.dumps(json.load(urllib.request.urlopen(req)), indent=2))
-EOF
-```
-
-### Get Connection
-
-```bash
-python <<'EOF'
-import urllib.request, os, json
-req = urllib.request.Request('https://ctrl.maton.ai/connections/{connection_id}')
-req.add_header('Authorization', f'Bearer {os.environ["MATON_API_KEY"]}')
-print(json.dumps(json.load(urllib.request.urlopen(req)), indent=2))
-EOF
-```
-
-**Response:**
-```json
-{
-  "connection": {
-    "connection_id": "21fd90f9-5935-43cd-b6c8-bde9d915ca80",
-    "status": "ACTIVE",
-    "creation_time": "2025-12-08T07:20:53.488460Z",
-    "last_updated_time": "2026-01-31T20:03:32.593153Z",
-    "url": "https://connect.maton.ai/?session_token=...",
-    "app": "google-search-console",
-    "metadata": {}
-  }
-}
-```
-
-Open the returned `url` in a browser to complete OAuth authorization.
-
-### Delete Connection
-
-```bash
-python <<'EOF'
-import urllib.request, os, json
-req = urllib.request.Request('https://ctrl.maton.ai/connections/{connection_id}', method='DELETE')
-req.add_header('Authorization', f'Bearer {os.environ["MATON_API_KEY"]}')
-print(json.dumps(json.load(urllib.request.urlopen(req)), indent=2))
-EOF
-```
-
-### Specifying Connection
-
-If you have multiple Google Search Console connections, specify which one to use with the `Maton-Connection` header:
-
-```bash
-python <<'EOF'
-import urllib.request, os, json
-req = urllib.request.Request('https://gateway.maton.ai/google-search-console/webmasters/v3/sites')
-req.add_header('Authorization', f'Bearer {os.environ["MATON_API_KEY"]}')
-req.add_header('Maton-Connection', '21fd90f9-5935-43cd-b6c8-bde9d915ca80')
-print(json.dumps(json.load(urllib.request.urlopen(req)), indent=2))
-EOF
-```
-
-If omitted, the gateway uses the default (oldest) active connection.
 
 ## API Reference
 
 ### Sites
-
-```bash
-GET /google-search-console/webmasters/v3/sites
-GET /google-search-console/webmasters/v3/sites/{siteUrl}
-```
-
-Note: Site URL must be URL-encoded (e.g., `https%3A%2F%2Fexample.com%2F`)
+- `GET /webmasters/v3/sites` — List all sites
+- `GET /webmasters/v3/sites/{siteUrl}` — Get site info
 
 ### Search Analytics
-
-```bash
-POST /google-search-console/webmasters/v3/sites/{siteUrl}/searchAnalytics/query
-Content-Type: application/json
-
-{
-  "startDate": "2024-01-01",
-  "endDate": "2024-01-31",
-  "dimensions": ["query"],
-  "rowLimit": 100
-}
-```
+- `POST /webmasters/v3/sites/{siteUrl}/searchAnalytics/query` — Query analytics
 
 ### Sitemaps
-
-```bash
-GET /google-search-console/webmasters/v3/sites/{siteUrl}/sitemaps
-PUT /google-search-console/webmasters/v3/sites/{siteUrl}/sitemaps/{feedpath}
-DELETE /google-search-console/webmasters/v3/sites/{siteUrl}/sitemaps/{feedpath}
-```
-
-## Search Analytics Examples
-
-### Top Queries
-
-```json
-{
-  "startDate": "2024-01-01",
-  "endDate": "2024-01-31",
-  "dimensions": ["query"],
-  "rowLimit": 25
-}
-```
-
-### Top Pages
-
-```json
-{
-  "startDate": "2024-01-01",
-  "endDate": "2024-01-31",
-  "dimensions": ["page"],
-  "rowLimit": 25
-}
-```
-
-### Device Breakdown
-
-```json
-{
-  "startDate": "2024-01-01",
-  "endDate": "2024-01-31",
-  "dimensions": ["device"],
-  "rowLimit": 10
-}
-```
-
-### Daily Performance
-
-```json
-{
-  "startDate": "2024-01-01",
-  "endDate": "2024-01-31",
-  "dimensions": ["date"],
-  "rowLimit": 31
-}
-```
-
-### Filtered Query
-
-```json
-{
-  "startDate": "2024-01-01",
-  "endDate": "2024-01-31",
-  "dimensions": ["query"],
-  "dimensionFilterGroups": [{
-    "filters": [{
-      "dimension": "query",
-      "operator": "contains",
-      "expression": "keyword"
-    }]
-  }],
-  "rowLimit": 100
-}
-```
+- `GET /webmasters/v3/sites/{siteUrl}/sitemaps` — List sitemaps
+- `PUT /webmasters/v3/sites/{siteUrl}/sitemaps/{feedpath}` — Submit sitemap
+- `DELETE /webmasters/v3/sites/{siteUrl}/sitemaps/{feedpath}` — Delete sitemap
 
 ## Dimensions
-
-- `query` - Search query
-- `page` - Page URL
-- `country` - Country code
-- `device` - DESKTOP, MOBILE, TABLET
-- `date` - Date
+- `query` — Search query
+- `page` — Page URL
+- `country` — Country code
+- `device` — DESKTOP, MOBILE, TABLET
+- `date` — Date
 
 ## Metrics (returned automatically)
-
-- `clicks` - Number of clicks
-- `impressions` - Number of impressions
-- `ctr` - Click-through rate
-- `position` - Average position
-
-## Code Examples
-
-### JavaScript
-
-```javascript
-const response = await fetch(
-  'https://gateway.maton.ai/google-search-console/webmasters/v3/sites/https%3A%2F%2Fexample.com/searchAnalytics/query',
-  {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${process.env.MATON_API_KEY}`
-    },
-    body: JSON.stringify({
-      startDate: '2024-01-01',
-      endDate: '2024-01-31',
-      dimensions: ['query'],
-      rowLimit: 25
-    })
-  }
-);
-```
-
-### Python
-
-```python
-import os
-import requests
-from urllib.parse import quote
-
-site_url = quote('https://example.com', safe='')
-response = requests.post(
-    f'https://gateway.maton.ai/google-search-console/webmasters/v3/sites/{site_url}/searchAnalytics/query',
-    headers={'Authorization': f'Bearer {os.environ["MATON_API_KEY"]}'},
-    json={
-        'startDate': '2024-01-01',
-        'endDate': '2024-01-31',
-        'dimensions': ['query'],
-        'rowLimit': 25
-    }
-)
-```
+- `clicks` — Number of clicks
+- `impressions` — Number of impressions
+- `ctr` — Click-through rate (0-1)
+- `position` — Average position
 
 ## Notes
-
-- Site URLs must be URL-encoded in the path
 - Date range limited to 16 months
 - Maximum 25,000 rows per request
 - Use `startRow` for pagination
 - Data has 2-3 day delay
-- IMPORTANT: When using curl commands, use `curl -g` when URLs contain brackets (`fields[]`, `sort[]`, `records[]`) to disable glob parsing
-- IMPORTANT: When piping curl output to `jq` or other commands, environment variables like `$MATON_API_KEY` may not expand correctly in some shell environments. You may get "Invalid API key" errors when piping.
-
-## Error Handling
-
-| Status | Meaning |
-|--------|---------|
-| 400 | Missing Search Console connection |
-| 401 | Invalid or missing Maton API key |
-| 429 | Rate limited (10 req/sec per account) |
-| 4xx/5xx | Passthrough error from Search Console API |
-
-### Troubleshooting: API Key Issues
-
-1. Check that the `MATON_API_KEY` environment variable is set:
-
-```bash
-echo $MATON_API_KEY
-```
-
-2. Verify the API key is valid by listing connections:
-
-```bash
-python <<'EOF'
-import urllib.request, os, json
-req = urllib.request.Request('https://ctrl.maton.ai/connections')
-req.add_header('Authorization', f'Bearer {os.environ["MATON_API_KEY"]}')
-print(json.dumps(json.load(urllib.request.urlopen(req)), indent=2))
-EOF
-```
-
-### Troubleshooting: Invalid App Name
-
-1. Ensure your URL path starts with `google-search-console`. For example:
-
-- Correct: `https://gateway.maton.ai/google-search-console/webmasters/v3/sites`
-- Incorrect: `https://gateway.maton.ai/webmasters/v3/sites`
+- Site URLs must be URL-encoded in paths
 
 ## Resources
-
 - [Search Console API Reference](https://developers.google.com/webmaster-tools/v1/api_reference_index)
-- [List Sites](https://developers.google.com/webmaster-tools/v1/sites/list)
 - [Search Analytics](https://developers.google.com/webmaster-tools/v1/searchanalytics/query)
-- [Sitemaps](https://developers.google.com/webmaster-tools/v1/sitemaps)
-- [Maton Community](https://discord.com/invite/dBfFAcefs2)
-- [Maton Support](mailto:support@maton.ai)

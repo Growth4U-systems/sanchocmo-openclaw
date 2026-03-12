@@ -1,34 +1,34 @@
 {
   "client": "hospital-capilar",
   "period": "2026-03",
-  "updatedAt": "2026-03-10T08:01:09.276859",
-  "total_cost_usd": 99.1504,
-  "total_cost_eur": 91.2183,
-  "turns": 955,
+  "updatedAt": "2026-03-11T23:00:16.627185",
+  "total_cost_usd": 96.7313,
+  "total_cost_eur": 88.9928,
+  "turns": 914,
   "sessions": 21,
   "agents": {
     "cervantes": {
       "cost_usd": 0,
       "cost_eur": 0.0,
-      "turns": 13,
+      "turns": 15,
       "sessions": 1
     },
     "sancho": {
-      "cost_usd": 99.1504,
-      "cost_eur": 91.2183,
-      "turns": 942,
+      "cost_usd": 96.7313,
+      "cost_eur": 88.9928,
+      "turns": 899,
       "sessions": 20
     }
   },
   "models": {
     "unknown": {
-      "input": 437390,
-      "output": 325932,
-      "cache_read": 52737377,
-      "cache_write": 10883818,
-      "cost_usd": 97.9019,
-      "cost_eur": 90.0697,
-      "turns": 921
+      "input": 364691,
+      "output": 318745,
+      "cache_read": 48838009,
+      "cache_write": 10798499,
+      "cost_usd": 95.4829,
+      "cost_eur": 87.8442,
+      "turns": 891
     },
     "claude-opus-4-6": {
       "input": 30,
@@ -37,7 +37,7 @@
       "cache_write": 140668,
       "cost_usd": 1.2485,
       "cost_eur": 1.1486,
-      "turns": 34
+      "turns": 23
     }
   },
   "days": {
@@ -47,31 +47,39 @@
     },
     "2026-03-02": {
       "cost_usd": 0.4334,
-      "turns": 13
+      "turns": 11
     },
     "2026-03-03": {
-      "cost_usd": 29.1649,
-      "turns": 449
+      "cost_usd": 26.9702,
+      "turns": 401
     },
     "2026-03-04": {
       "cost_usd": 23.9558,
-      "turns": 203
+      "turns": 201
     },
     "2026-03-05": {
       "cost_usd": 33.3327,
-      "turns": 131
+      "turns": 129
     },
     "2026-03-06": {
       "cost_usd": 0,
-      "turns": 4
+      "turns": 2
     },
     "2026-03-08": {
-      "cost_usd": 2.4929,
-      "turns": 25
+      "cost_usd": 0,
+      "turns": 1
     },
     "2026-03-09": {
-      "cost_usd": 0.3535,
-      "turns": 15
+      "cost_usd": 0.7069,
+      "turns": 18
+    },
+    "2026-03-10": {
+      "cost_usd": 1.9152,
+      "turns": 34
+    },
+    "2026-03-11": {
+      "cost_usd": 0,
+      "turns": 2
     }
   },
   "clientSpend": {

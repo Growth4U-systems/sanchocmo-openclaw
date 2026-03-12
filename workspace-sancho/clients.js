@@ -61,6 +61,19 @@ const CLIENTS = {
     phase: 0,
   },
 
+  "kleva": {
+    name: "KLEVA",
+    emoji: "🏢",
+    url: "",
+    discord_guild: "1481229949238120519",
+    supabase: {
+      url: "https://psapmujzxhaxraphddlv.supabase.co",
+      anon_key: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBzYXBtdWp6eGhheHJhcGhkZGx2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4OTAxNTEsImV4cCI6MjA4NzQ2NjE1MX0.RxanIQCJtjGfCUL_X0MqPi2IdGkXOkmfaEAJZvQJblI",
+    },
+    workspace: "~/.openclaw/workspace-sancho",
+    phase: 0,
+  },
+
   // === TEMPLATE: Copy this block for new clients ===
   // "client-slug": {
   //   name: "Client Name",

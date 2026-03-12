@@ -17,24 +17,21 @@ for t in "${TARGETS[@]}"; do
   echo "--- Syncing to $t ---"
   mkdir -p "$t/scripts/lib"
 
-  # SKILL.md
   cp "$SRC/SKILL.md" "$t/"
 
-  # Main script
-  cp "$SRC/scripts/last30days.py" "$t/scripts/"
-
-  # All lib modules
-  cp "$SRC/scripts/lib/"*.py "$t/scripts/lib/"
+  # Main script + lib modules (rsync handles identical files gracefully)
+  rsync -a "$SRC/scripts/last30days.py" "$t/scripts/"
+  rsync -a "$SRC/scripts/lib/"*.py "$t/scripts/lib/"
 
   # Vendor directory (bird-search CLI)
   if [ -d "$SRC/scripts/lib/vendor" ]; then
-    cp -r "$SRC/scripts/lib/vendor" "$t/scripts/lib/"
+    rsync -a "$SRC/scripts/lib/vendor" "$t/scripts/lib/"
   fi
 
   # Fixtures
   if [ -d "$SRC/fixtures" ]; then
     mkdir -p "$t/fixtures"
-    cp -r "$SRC/fixtures/"* "$t/fixtures/" 2>/dev/null || true
+    rsync -a "$SRC/fixtures/" "$t/fixtures/"
   fi
 
   # Count and report

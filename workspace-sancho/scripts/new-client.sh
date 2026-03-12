@@ -200,7 +200,35 @@ else
   echo "   ⚠️ auto-bind.py no encontrado — config manual necesario"
 fi
 
-# --- 7. Gateway restart ---
+# --- 7. Aplicar restricciones de seguridad al guild ---
+echo "🔒 Aplicando restricciones de seguridad..."
+ALFONSO="1334604955687977042"
+MARTIN="1402171221747040369"
+PHILIPPE="1475772310614048858"
+
+python3 -c "
+import json
+
+config_path = '$HOME/.openclaw/openclaw.json'
+with open(config_path, 'r') as f:
+    config = json.load(f)
+
+guild = config['channels']['discord']['guilds'].get('$GUILD')
+if guild:
+    guild['tools'] = {'deny': ['gateway', 'exec', 'cron']}
+    guild['toolsBySender'] = {
+        '$ALFONSO': {'alsoAllow': ['gateway', 'exec', 'cron']},
+        '$MARTIN': {'alsoAllow': ['gateway', 'exec', 'cron']},
+        '$PHILIPPE': {'alsoAllow': ['gateway', 'exec', 'cron']}
+    }
+    with open(config_path, 'w') as f:
+        json.dump(config, f, indent=2)
+    print('   ✅ tools.deny + admin overrides aplicados')
+else:
+    print('   ⚠️ Guild no encontrado en config — aplicar manualmente')
+"
+
+# --- 8. Gateway restart ---
 echo "🔄 Restarting gateway..."
 if command -v openclaw &>/dev/null; then
   openclaw gateway restart 2>/dev/null && echo "   ✅ Gateway reiniciado" || echo "   ⚠️ Gateway restart falló — reiniciar manualmente"
@@ -208,7 +236,7 @@ else
   echo "   ⚠️ openclaw CLI no encontrado — reiniciar gateway manualmente"
 fi
 
-# --- 8. Instrucciones ---
+# --- 9. Instrucciones ---
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "✅ Cliente '$NAME' onboarded!"

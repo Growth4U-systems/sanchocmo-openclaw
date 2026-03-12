@@ -24,6 +24,24 @@ DEPTH_CONFIG = {
     "deep": 60,
 }
 
+# Module-level credentials injected from .env config
+_credentials: Dict[str, str] = {}
+
+
+def set_credentials(auth_token: Optional[str], ct0: Optional[str]):
+    """Inject AUTH_TOKEN/CT0 from .env config so Node subprocesses can use them."""
+    if auth_token:
+        _credentials['AUTH_TOKEN'] = auth_token
+    if ct0:
+        _credentials['CT0'] = ct0
+
+
+def _subprocess_env() -> Dict[str, str]:
+    """Build env dict for Node subprocesses, merging injected credentials."""
+    env = os.environ.copy()
+    env.update(_credentials)
+    return env
+
 
 def _log(msg: str):
     """Log to stderr."""
@@ -71,9 +89,11 @@ def _extract_core_subject(topic: str) -> str:
         # Research/meta descriptors
         'best', 'top', 'good', 'great', 'awesome', 'killer',
         'latest', 'new', 'news', 'update', 'updates',
+        'trendiest', 'trending', 'hottest', 'hot', 'popular', 'viral',
         'practices', 'features', 'guide', 'tutorial',
         'recommendations', 'advice', 'review', 'reviews',
         'usecases', 'examples', 'comparison', 'versus', 'vs',
+        'plugin', 'plugins', 'skill', 'skills', 'tool', 'tools',
         # Prompting meta words
         'prompt', 'prompts', 'prompting', 'techniques', 'tips',
         'tricks', 'methods', 'strategies', 'approaches',
@@ -112,6 +132,7 @@ def is_bird_authenticated() -> Optional[str]:
             capture_output=True,
             text=True,
             timeout=15,
+            env=_subprocess_env(),
         )
         if result.returncode == 0 and result.stdout.strip():
             return result.stdout.strip().split('\n')[0]
@@ -187,6 +208,7 @@ def _run_bird_search(query: str, count: int, timeout: int) -> Dict[str, Any]:
             stderr=subprocess.PIPE,
             text=True,
             preexec_fn=preexec,
+            env=_subprocess_env(),
         )
 
         # Register for cleanup tracking (if available)
@@ -266,13 +288,28 @@ def search_x(
         _log(f"0 results for '{core_topic}', retrying with '{shorter}'")
         query = f"{shorter} since:{from_date}"
         response = _run_bird_search(query, count, timeout)
+        items = parse_bird_response(response)
+
+    # Last-chance retry: use strongest remaining token (often the product name)
+    if not items and core_words:
+        low_signal = {
+            'trendiest', 'trending', 'hottest', 'hot', 'popular', 'viral',
+            'best', 'top', 'latest', 'new', 'plugin', 'plugins',
+            'skill', 'skills', 'tool', 'tools',
+        }
+        candidates = [w for w in core_words if w not in low_signal]
+        if candidates:
+            strongest = max(candidates, key=len)
+            _log(f"0 results for '{core_topic}', retrying with strongest token '{strongest}'")
+            query = f"{strongest} since:{from_date}"
+            response = _run_bird_search(query, count, timeout)
 
     return response
 
 
 def search_handles(
     handles: List[str],
-    topic: str,
+    topic: Optional[str],
     from_date: str,
     count_per: int = 5,
 ) -> List[Dict[str, Any]]:
@@ -283,7 +320,7 @@ def search_handles(
 
     Args:
         handles: List of X handles to search (without @)
-        topic: Search topic (core subject, not full verbose query)
+        topic: Search topic (core subject), or None for unfiltered search
         from_date: Start date (YYYY-MM-DD)
         count_per: Results to request per handle
 
@@ -291,11 +328,14 @@ def search_handles(
         List of raw item dicts (same format as parse_bird_response output).
     """
     all_items = []
-    core_topic = _extract_core_subject(topic)
+    core_topic = _extract_core_subject(topic) if topic else None
 
     for handle in handles:
         handle = handle.lstrip("@")
-        query = f"from:{handle} {core_topic} since:{from_date}"
+        if core_topic:
+            query = f"from:{handle} {core_topic} since:{from_date}"
+        else:
+            query = f"from:{handle} since:{from_date}"
 
         cmd = [
             "node", str(_BIRD_SEARCH_MJS),

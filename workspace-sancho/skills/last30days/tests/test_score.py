@@ -164,5 +164,33 @@ class TestSortItems(unittest.TestCase):
         self.assertEqual(len(result), 2)
 
 
+class TestCommentQualityWeight(unittest.TestCase):
+    """Test that top comment score boosts Reddit engagement."""
+
+    def test_comment_boosts_score(self):
+        eng = schema.Engagement(score=100, num_comments=50, upvote_ratio=0.9)
+        without_comment = score.compute_reddit_engagement_raw(eng, top_comment_score=None)
+        with_comment = score.compute_reddit_engagement_raw(eng, top_comment_score=500)
+        self.assertGreater(with_comment, without_comment)
+
+
+class TestInstagramEngagement(unittest.TestCase):
+    """Tests for compute_instagram_engagement_raw()."""
+
+    def test_basic(self):
+        eng = schema.Engagement(views=10000, likes=500, num_comments=50)
+        raw = score.compute_instagram_engagement_raw(eng)
+        self.assertIsNotNone(raw)
+        self.assertGreater(raw, 0)
+
+    def test_views_dominate(self):
+        views_only = schema.Engagement(views=10000)
+        likes_only = schema.Engagement(likes=10000)
+        self.assertGreater(
+            score.compute_instagram_engagement_raw(views_only),
+            score.compute_instagram_engagement_raw(likes_only),
+        )
+
+
 if __name__ == "__main__":
     unittest.main()

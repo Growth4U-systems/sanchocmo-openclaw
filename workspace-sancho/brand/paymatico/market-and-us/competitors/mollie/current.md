@@ -230,12 +230,39 @@ Basado en documentación oficial [Fuente](https://docs.mollie.com/docs/connect-m
 Hardware: Tap terminal €45, PAX A920 Pro €350, PAX A35 €350.
 Volumen >€50K/mes: IC++ personalizado.
 
-### Lens 2: Lo que dicen terceros (medios, analistas, comparativas)
+### Lens 2: Percepción de Terceros (medios, analistas, SEO, press narrative)
 
 **Cobertura mediática España:**
 - Cobertura del lanzamiento en Revista Inforetail [Fuente](https://www.revistainforetail.com/noticiadet/mollie-llega-a-espana-para-simplificar-los-pagos/a668e00debd5405ac68384a535918d06)
+- Cobertura amplia en medios fintech europeos: FinancialIT, Silicon Canals, The Paypers, Sifted, Crowdfund Insider
 - Reddit: mención en r/EU_Economics sobre expansión europea [Fuente](https://www.reddit.com/r/EU_Economics/comments/1l274kx/payment_company_mollie_wants_to_conquer_all_of/)
-- Cobertura amplia en medios fintech europeos (FinancialIT, Silicon Canals, The Paypers, Sifted, Crowdfund Insider)
+
+**Press narrative (cómo describen a Mollie los medios):**
+- "El Stripe europeo" — narrativa dominante en medios fintech. Posicionada como alternativa EU-first a Stripe con mejor pricing y localización [Fuente](https://www.airwallex.com/uk/blog/mollie-vs-stripe-comparison)
+- "Fintech de crecimiento más rápido de Europa" — la Serie C de $800M y valoración $6.5B generó narrativa de unicornio EU [Fuente](https://siliconcanals.com/amsterdams-mollie-posts-214m-revenue-2024/)
+- Adquisición GoCardless cubierta como movimiento de consolidación europea [Fuente](https://www.mollie.com/news/mollie-to-acquire-gocardless)
+
+**SEO visibility:**
+- Web localizada en español (mollie.com/es) con contenido de blog y guías
+- Compite por keywords genéricos de pagos EU: "payment gateway Europe", "pasarela de pago online"
+- ⚠️ SEO España todavía incipiente — sin posiciones fuertes en keywords españoles clave vs MONEI o Paynopain (recién llegados nov 2025)
+
+**Comparativas de analistas:**
+- Sharetribe: Mollie Connect comparada favorablemente vs Stripe Connect para marketplaces EU (más simple, menos dev effort) [Fuente](https://www.sharetribe.com/academy/marketplace-payments/mollie-overview/)
+- Wise: destaca facilidad de uso pero señala limitación geográfica a Europa [Fuente](https://wise.com/us/blog/mollie-vs-stripe)
+- OMR Reviews: bien valorada en categoría PSP [Fuente](https://omr.com/en/reviews/product/mollie)
+
+**Debilidades señaladas por terceros:**
+- Limitada a Europa (no global) [Fuente](https://www.airwallex.com/uk/blog/mollie-vs-stripe-comparison)
+- Checkout hosted con customización limitada vs Stripe Elements [Fuente](https://www.sharetribe.com/academy/marketplace-payments/mollie-overview/)
+- Suscripciones marketplace no integradas en Connect (requiere API directa) [Fuente](https://www.sharetribe.com/academy/marketplace-payments/mollie-overview/)
+- Sin pagos fraccionados B2B nativos
+- Mollie Capital no disponible en todos los mercados
+
+**Narrativa externa ≠ autopercepción:**
+- Mollie se posiciona como "pagos simples para todos los tamaños". Terceros la ven más como "alternativa EU a Stripe para e-commerce mid-market" — no la asocian con modelos complejos (franquicias, escrow, gestores de fondos).
+
+### Lens 3: Percepción del Consumidor (Trustpilot, G2, Capterra)
 
 **Ratings agregados:**
 
@@ -246,22 +273,6 @@ Volumen >€50K/mes: IC++ personalizado.
 | **Capterra** | ~4.3/5 | ~150+ | [Fuente](https://www.capterra.com/p/195767/Mollie/reviews/) |
 
 Contexto comparativo: Stripe 1.8/5 Trustpilot, Adyen 1.3/5 Trustpilot — Mollie significativamente superior.
-
-**Fortalezas percibidas externamente:**
-- Setup rápido, integración fácil (plugins WooCommerce, Shopify, PrestaShop, Magento)
-- Pricing transparente sin sorpresas
-- API moderna y bien documentada
-- Soporte responsive para consultas estándar
-- Métodos de pago locales extensivos
-
-**Debilidades percibidas externamente:**
-- Limitada a Europa (no global) [Fuente](https://www.airwallex.com/uk/blog/mollie-vs-stripe-comparison)
-- Checkout hosted con customización limitada [Fuente](https://www.g2.com/products/mollie/reviews)
-- Suscripciones marketplace limitadas [Fuente](https://www.sharetribe.com/academy/marketplace-payments/mollie-overview/)
-- Sin pagos fraccionados B2B nativos
-- Mollie Capital no disponible en todos los mercados
-
-### Lens 3: Lo que dicen los clientes (Trustpilot, G2, Capterra)
 
 **Sentimiento general**: Positivo-alto (4.4/5 con 11.190 reviews)
 

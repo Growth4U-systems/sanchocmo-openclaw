@@ -18,7 +18,8 @@
         "brand": "brand/",
         "campaigns": "campaigns/"
       },
-      "phase": 0
+      "phase": 0,
+      "mcToken": "730a6de7b765cdaf15131aa46a31a610"
     },
     {
       "slug": "growth4u",
@@ -33,7 +34,8 @@
       "supabase": {
         "url": "https://psapmujzxhaxraphddlv.supabase.co",
         "anon_key": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBzYXBtdWp6eGhheHJhcGhkZGx2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4OTAxNTEsImV4cCI6MjA4NzQ2NjE1MX0.RxanIQCJtjGfCUL_X0MqPi2IdGkXOkmfaEAJZvQJblI"
-      }
+      },
+      "mcToken": "7be93afd7e2be887ce181f8aeab0d0ec"
     },
     {
       "slug": "paymatico",
@@ -48,7 +50,8 @@
       "supabase": {
         "url": "https://psapmujzxhaxraphddlv.supabase.co",
         "anon_key": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBzYXBtdWp6eGhheHJhcGhkZGx2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4OTAxNTEsImV4cCI6MjA4NzQ2NjE1MX0.RxanIQCJtjGfCUL_X0MqPi2IdGkXOkmfaEAJZvQJblI"
-      }
+      },
+      "mcToken": "63829b9d674d04e272626e9df17409f9"
     },
     {
       "slug": "sanchocmo",
@@ -63,18 +66,23 @@
       "supabase": {
         "url": "https://psapmujzxhaxraphddlv.supabase.co",
         "anon_key": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBzYXBtdWp6eGhheHJhcGhkZGx2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4OTAxNTEsImV4cCI6MjA4NzQ2NjE1MX0.RxanIQCJtjGfCUL_X0MqPi2IdGkXOkmfaEAJZvQJblI"
-      }
+      },
+      "mcToken": "4cb9c298ec52e9847960565b5acbd64a"
     },
     {
       "slug": "kleva",
-      "name": "Kleva",
-      "language": "es",
-      "guild": "1481057375145296064",
-      "active": true,
+      "name": "KLEVA",
+      "discord_guild_id": "1481229949238120519",
       "phase": 0,
       "paths": {
         "brand": "brand/"
-      }
+      },
+      "supabase": {
+        "url": "https://psapmujzxhaxraphddlv.supabase.co",
+        "anon_key": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBzYXBtdWp6eGhheHJhcGhkZGx2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4OTAxNTEsImV4cCI6MjA4NzQ2NjE1MX0.RxanIQCJtjGfCUL_X0MqPi2IdGkXOkmfaEAJZvQJblI"
+      },
+      "mcToken": "3eca217219c86b881dc2ec18cfbf482a"
     }
-  ]
+  ],
+  "adminToken": "cc9b8067c18c5214358611d75f151f6d"
 }

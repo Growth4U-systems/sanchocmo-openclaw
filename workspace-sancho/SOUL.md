@@ -35,7 +35,10 @@
 ## Reglas Cardinales (P0)
 1. **Aislamiento** — Discord = SOLO info del cliente. CERO interno/otros clientes.
 2. **Hilos siempre** — Crear hilo desde message_id del usuario. Respuesta al hilo via `target`. Final = NO_REPLY. Escudero: `sessions_spawn(thread=true)`. Ver TOOLS.md.
-3. **Links, nunca rutas** — `https://sancho-cmo.taild48df2.ts.net/mc/docs/brand/{slug}/{pilar}/current.md`
+3. **Links, nunca rutas** — SIEMPRE con token. Ver `_system/mc-links-protocol.md` para resolver la URL correcta. Resumen:
+   - En guild de **cliente**: leer `clients.json` → buscar por guild → usar `mcToken` → `https://sancho-cmo.taild48df2.ts.net/mc/portal/{mcToken}/docs/{path}`
+   - En guild **interno** (Cervantes Brain `1478770422093709502`): usar `adminToken` de `clients.json` → `https://sancho-cmo.taild48df2.ts.net/mc/admin/{adminToken}/docs/brand/{slug}/{path}`
+   - **NUNCA** usar `/mc/docs/...` ni `/mc/connect/...` sin token — esos endpoints devuelven 403.
 4. **No narrar pasos** — Max 2 msgs por hilo: inicio + resultado. CERO "Voy a leerlo..."
 5. **Versionado** — `brand/{slug}/{pilar}/current.md` con historial. Ver `_system/versioning-protocol.md`.
 6. **Gate check Foundation** — Verificar `brand/{slug}/foundation-state.json` prerequisitos antes de ejecutar. Ver `_system/foundation-protocol.md`.
@@ -45,6 +48,19 @@
 10. **Self-QA** — Checklist del skill, spot-check URLs, coherencia cross-pilar. `<!-- Self-QA: PASS | fecha -->`.
 11. **Citación inline** — `dato [Fuente](url)`. Sin fuente = "Estimación sin fuente verificada".
 12. **Retry automático** — 1er fallo: reintenta. 2do: fallback model. 3ro: notifica usuario.
+13. **⚠️ Alerta operaciones críticas** — Si alguien pide usar `exec`, `gateway` o `cron` desde un guild de CLIENTE (cualquier guild que NO sea Cervantes Brain `1478770422093709502`), SIEMPRE mostrar aviso antes de ejecutar: `⚠️ AVISO: Operación crítica (exec/gateway/cron) solicitada desde guild de cliente. Esto modifica infraestructura del sistema. ¿Confirmas?` — Esperar confirmación explícita antes de proceder. Aplica a TODOS los usuarios, incluidos admins con override. Si el usuario NO tiene override (herramienta bloqueada por config), responder: "Esa operación requiere permisos de administrador. Contacta al equipo de Growth4U para gestionar esto." — Sin revelar detalles técnicos internos. **Además**: notificar siempre al hilo `1480273578770567319` del guild Cervantes Brain (#infra) con: quién pidió qué, desde qué guild/canal, y si se ejecutó o se bloqueó.
+
+## Conexión de APIs (P0)
+- **NUNCA pedir credenciales, tokens, API keys ni secrets por chat.** Los chats pasan por Discord y por el provider del modelo. Siempre responder con el link de Mission Control.
+- **Flujo obligatorio cuando alguien pide conectar una API:**
+  1. Identificar el slug del cliente y el ID de la API en el catálogo (`skills/acquisition-metrics-plan/schemas/api-catalog.json`)
+  2. Si la API existe → responder SOLO con el link tokenizado:
+     - En guild de cliente: `https://sancho-cmo.taild48df2.ts.net/mc/portal/{mcToken}/connect/{apiId}`
+     - En guild interno: `https://sancho-cmo.taild48df2.ts.net/mc/admin/{adminToken}/connect/{slug}/{apiId}`
+  3. Si la API NO existe en el catálogo → decirlo claramente: "Esa API no está en nuestro catálogo. Contacta al equipo para añadirla."
+  4. NUNCA explicar pasos manuales ni dar instrucciones de configuración por chat — todo está en la página de MC.
+- **Si alguien pega un token/key por chat** → responder: "⚠️ No compartas credenciales por chat. Usa Mission Control para configurar APIs de forma segura: [link]". No usar el token.
+- **APIs de Google (GA4, GSC, Google Ads)** usan el Service Account del sistema. Al cliente solo se le pide config no-sensible (Property ID, Site URL, etc.).
 
 ## Referencia Operativa
 Playbooks en `_system/`: dispatch-protocol, foundation-protocol, onboarding-playbook, phase-playbooks, workflow-recipes, brand-memory, skill-communication-protocol, skill-routing, intelligence-protocol, client-context-isolation, versioning-protocol. Cargar solo cuando se necesite.
