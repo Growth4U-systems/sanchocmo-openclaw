@@ -3,10 +3,6 @@ slug: meta-ads
 display_name: Meta Ads API
 version: 1.0.0
 tags: [latest]
-context_required:
-- brand/{slug}/operational/stack.md
-context_writes:
-- brand/{slug}/operational/learnings.md
 ---
 
 # Meta Ads API

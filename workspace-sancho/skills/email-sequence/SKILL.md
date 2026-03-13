@@ -2,17 +2,51 @@
 name: email-sequence
 description: When the user wants to create or optimize an email sequence, drip campaign, automated email flow, or lifecycle email program. Also use when the user mentions "email sequence," "drip campaign," "nurture sequence," "onboarding emails," "welcome sequence," "re-engagement emails," "email automation," "lifecycle emails," "trigger-based emails," "email funnel," "email workflow," "what emails should I send," "welcome series," or "email cadence." Use this for any multi-email automated flow. For cold outreach emails, see cold-email. For in-app onboarding, see onboarding-cro.
 metadata:
-  version: 1.1.0
+  version: 2.0.0
+  context_required:
+    - brand/{slug}/brand-voice/current.md
+    - brand/{slug}/go-to-market/positioning/*/current.md
+    - brand/{slug}/go-to-market/ecps/current.md
+    - brand/{slug}/operational/learnings.md
+    - brand/{slug}/operational/assets.md
+    - brand/{slug}/operational/stack.md
+  context_writes:
+    - campaigns/{name}/brief.md
+    - campaigns/{name}/emails/*.md
+    - brand/{slug}/operational/assets.md
+    - brand/{slug}/operational/learnings.md
 ---
 
 # Email Sequence Design
 
 You are an expert in email marketing and automation. Your goal is to create email sequences that nurture relationships, drive action, and move people toward conversion.
 
+## Brand Memory
+
+Read brand context before starting:
+- `brand/{slug}/brand-voice/current.md` → tone, vocabulary, rhythm
+- `brand/{slug}/go-to-market/positioning/*/current.md` → narrative angle
+- `brand/{slug}/go-to-market/ecps/current.md` → awareness level, pain points
+- `brand/{slug}/operational/learnings.md` → past send-time data, subject line performance
+- `brand/{slug}/operational/assets.md` → existing lead magnets
+- `brand/{slug}/operational/stack.md` → ESP integrations
+
+## ESP Detection
+
+Before generating, check for email service provider integrations:
+1. Check `brand/{slug}/operational/stack.md` for ESP entries
+2. Check `.env` for API keys: `MAILCHIMP_API_KEY`, `CONVERTKIT_API_KEY`, `HUBSPOT_ACCESS_TOKEN`, `SENDGRID_API_KEY`, `ACTIVECAMPAIGN_API_KEY`
+3. If detected, offer: ① Set up automation via API ② Just output copy
+4. Always generate local .md files regardless
+
+## Iteration Detection
+
+Check if `campaigns/{name}/emails/` exists. If so, present summary and offer: Revise / Add emails / New sequence type. Don't start from scratch when sequence exists.
+
 ## Initial Assessment
 
 **Check for product marketing context first:**
-If `.agents/product-marketing-context.md` exists (or `.claude/product-marketing-context.md` in older setups), read it before asking questions. Use that context and only ask for information not already covered or specific to this task.
+If `.agents/product-marketing-context.md` exists (or `.claude/product-marketing-context.md` in older setups), read it before asking questions. Also check brand memory files above. Use that context and only ask for information not already covered or specific to this task.
 
 Before creating a sequence, understand:
 
@@ -247,6 +281,29 @@ Key emails:
 
 ---
 
+## Subject Line A/B Variants
+
+For every email, generate exactly 3 subject line variants:
+
+- **Variant A — Safe Bet:** Proven formula, optimized for open rate
+- **Variant B — Bold Play:** Higher risk/reward, pattern interrupt
+- **Variant C — Personal Touch:** Feels like a friend, optimized for trust
+
+Rules: Max 50 chars, no emoji (unless brand voice calls for it), no ALL CAPS, each variant uses DIFFERENT formula, preview text complements (doesn't repeat) subject.
+
+## File Output
+
+Every email saved as individual file:
+
+```
+campaigns/{sequence-name}/
+  brief.md                    ← Campaign overview
+  emails/
+    01-welcome.md             ← Email 1
+    02-quick-win.md           ← Email 2
+    ...
+```
+
 ## Output Format
 
 ### Sequence Overview
@@ -262,8 +319,10 @@ Exit Conditions: [When they leave the sequence]
 ### For Each Email
 ```
 Email [#]: [Name/Purpose]
-Send: [Timing]
-Subject: [Subject line]
+Send: [Timing — specific day + time with rationale]
+Subject A: [Safe Bet]
+Subject B: [Bold Play]
+Subject C: [Personal Touch]
 Preview: [Preview text]
 Body: [Full copy]
 CTA: [Button text] → [Link destination]

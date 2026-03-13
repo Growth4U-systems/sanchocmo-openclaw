@@ -1,90 +1,80 @@
-# Sancho Observations
+# Sancho Observations - 2026-03-12
 
-## 2026-03-11
+## Sesiones Activas (últimas 24h)
 
-### Resumen de actividad (últimas 24h)
+| Canal | Tipo | Actividad |
+|-------|------|-----------|
+| g-1481562944256082004 | Discord | Daily Pulse |
+| #conexiones-apis-y-mcps | Discord | Tunnel Tailscale, fixing mobile JS |
+| #métricas-y-kpis | Discord | Métricas + metrics-collector task |
+| #monitoreo-recurrente | Discord | Heartbeat check |
+| g-1481554981269278772 | Discord | Growth4U metrics analysis |
+| g-1477741644789842031 | Discord | Growth4U #intelligence |
 
-**Sesiones activas:** 12+ (Discord + crons)
+## Errores/Skills que fallaron
 
-**Canales usados:**
-- #nuevo-cliente (Kleva onboarding)
-- #canal-que-no-funciona (bugfix)
-- #propuesta-kleva
-- #acquisition-metrics-plan-cu-ndo
-- #mcps-y-conexion-por-apis
-- #terminando-foundation-que-pasa
-- #onboarding (Kleva)
-- #intelligence
-- #soporte
+### 1. Error LLM "thinking blocks cannot be modified"
+- **Cuándo**: En #métricas-y-kpis al procesar un mensaje
+- **Estado**: Error de API, no de skill
+- **Consecuencia**: Sesión truncada
 
-**Crons ejecutados:**
-- ✅ Daily Pulse (completado, publicado en hilo)
-- ✅ funnel-watchdog
-- ✅ cost-tracker-daily
-- ✅ image-optimizer
-- ✅ regenerate dashboard
+### 2. Morning Metrics publicado 3 veces
+- **Cuándo**: 11-12 marzo en #intelligence Growth4U
+- **Problema**: 
+  - Datos publicados directamente al canal (no en hilo)
+  - Cron corrió 3 veces (23:54, 00:13, 07:30)
+  - Sesión principal interfería con el cron
+- **Fix aplicado**: 
+  - Cambiado a sessionTarget: isolated
+  - Cambiado a Sonnet 4.5 (antes MiniMax)
+  - Prompt reescrito para seguir patrón de hilo correctamente
 
----
+### 3. JS roto en Mission Control (mobile)
+- **Problema**: String roto en clipboard.writeText hacia fallback todo el JS
+- **Fix**: Sancho reescribió la función copyGogUrl()
+- **Estado**: ✅ Arreglado
 
-### Issues / Errores
+## Preguntas que no supo responder
+- Ninguna detectada
 
-| Issue | Severidad | Estado | Notas |
-|-------|-----------|--------|-------|
-| Error LLM "thinking blocks cannot be modified" | Baja | Pasivo | Aparece en #intelligence. No bloqueante pero puede afectar respuestas. |
-| "Sancho no contesta" (Philippe, fotos) | Media | Resuelto | Reportado en #soporte. Probable correlación con error openclaw del momento. |
-| Canal #nuevo-cliente no funcionaba | Media | Resuelto | Canal no bindeado en gateway. Sancho añadió binding y reinició gateway. |
+## Respeto a reglas de canal
 
----
+### ✅ Correcto:
+- En #conexiones-apis-y-mcps: ответил solo con código, sin largas explicaciones
+- En #métricas-y-kpis: mantuvo tema de infraestructura de métricas
 
-### Preguntas que no supo responder
+### ❌ Problema detectado:
+- Morning Metrics no siguió el patrón de hilo (datos fuera de hilo)
+- **Ya corregido** por Sancho mismo
 
-No se detectaron preguntas que Sancho no supiera responder. Todas las queries técnicas (OAuth, scripts, capacidades) fueron respondidas correctamente.
+## Patrones de mejora
 
----
+### Positivos:
+1. **Proactividad**: Detectó y arregló el bug JS de mobile él solo
+2. **Comunicación**: Informó a Alfonso de cada fix
+3. **Delegación**: Spawned Escudero para metrics-collector skill (task complejo)
+4. **Fix rápido**: Identificó el problema del cron y lo arregló
 
-### Reglas de canal
+### Áreas a mejorar:
+1. **Errores LLM**: El error "thinking blocks cannot be modified" apareció 2 veces - revisar configuración
+2. **Cron jobs**: Memory Maintenance falló (edit en MEMORY.md falló)
 
-✅ **Cumple:**
-- Usa hilos para contenido largo
-- Menciona cuando es requerido (@Alfonso, @Philippe)
-- Responde en canal correcto
-- Daily Pulse sigue patrón de hilo obligatorio
+## Estado Crons
 
-⚠️ **Nota:** Hubo un momento donde #nuevo-cliente no respondía - era un bug de binding, no de reglas.
+| Cron | Estado | Notas |
+|------|--------|-------|
+| funnel-watchdog | ✅ ok | |
+| healthcheck | ✅ ok | |
+| Regenerar Dashboard | ✅ ok | |
+| image-optimizer | ✅ ok | |
+| update-skills | ✅ ok | |
+| cost-tracker-daily | ✅ ok | |
+| Morning Metrics | ✅ ok | Fix aplicado |
+| Daily Pulse | ✅ ok | |
+| Memory Maintenance | ❌ error | Edit falló en MEMORY.md |
+| Weekly Synthesis | ✅ ok | |
 
----
-
-### Patrones de mejora observados
-
-1. **Onboarding Kleva**: Sancho está ejecutando bien el modo "Taste Test" - entrega información progresiva, no todo de golpe.
-
-2. **Gestión técnica**: Cuando detecta que un canal no responde, sabe:
-   - Diagnosticar (leer openclaw.json)
-   - Añadir binding
-   - Reiniciar gateway
-   - Verificar
-
-3. **Daily Pulse**: Mejora continua - hoy procesó 9 canales de Discord, extrajo 5 insights, publicó en hilo con formato correcto.
-
-4. **Claridad en preguntas**: Cuando necesita datos (Guild ID para Kleva), pide UNO a uno sin asumir.
-
----
-
-### Tokens acumulados (estimado)
-
-- Total sesiones: ~400K tokens
-- Modelo: Opus 4.6 (principal), Sonnet 4.5 (crons), MiniMax (heartbeats)
-
----
-
-### Veredicto general
-
-**✅ Sancho operating normally**
-
-- Responde en canales correctos
-- Completa crons diarios
-- Resuelve problemas técnicos menores autonomamente
-- No hay bloqueos ni preguntas sin responder
-- El issue de "no contesta" parece haber sido técnico/transitorio (openclaw caído)
-
-**No requiere intervención de Cervantes.**
+## Notas adicionales
+- metrics-collector skill fue creada por Escudero (subagent)
+- Guillermo ( Philippe) sigue en onboarding
+- OpenClaw caído brevemente el 10-mar (detectado por Sancho)

@@ -2,7 +2,7 @@
   "version": "2.0",
   "client": "hospital-capilar",
   "started_at": "2026-03-03T10:06:00Z",
-  "updated_at": "2026-03-11T09:13:03Z",
+  "updated_at": "2026-03-12T22:30:00Z",
   "sections": {
     "company-brief": {
       "status": "approved",
@@ -229,6 +229,8 @@
     "svenson",
     "capilclinic",
     "medical-hair",
-    "imd"
+    "imd",
+    "manual-co",
+    "mediquo"
   ]
 }

@@ -1,0 +1,56 @@
+{
+  "date": "2026-03-12",
+  "client": "hospital-capilar",
+  "guild": "1475635138108063746",
+  "sources": {
+    "discord": {
+      "channels_read": [
+        "1475635138988609678",
+        "1475638249107095866",
+        "1475638251485401171",
+        "1475638259425087629",
+        "1475638253154603170",
+        "1476491108421730334",
+        "1475638273501040681",
+        "1475638269109862463",
+        "1475638261819900146"
+      ]
+    }
+  },
+  "insights": [
+    {
+      "category": "technical",
+      "type": "error",
+      "description": "Error LLM bloquea respuesta a Philippe en onboarding - 'thinking blocks cannot be modified'",
+      "source": "soporte channel - Philippe",
+      "timestamp": "2026-03-09T10:01:33.207Z",
+      "status": "reported"
+    },
+    {
+      "category": "system",
+      "type": "incident",
+      "description": "OpenClaw caído detectado el 10-mar (afecta respuesta a Philippe)",
+      "source": "health check cron",
+      "timestamp": "2026-03-10T14:05:02.849Z",
+      "status": "resolved"
+    },
+    {
+      "category": "meetings",
+      "type": "no_data",
+      "description": "Sin reuniones nuevas en Google Drive desde 4-mar. Meeting Intelligence sin actualizar",
+      "source": "intelligence channel - bot",
+      "timestamp": "2026-03-11T17:02:24.687Z",
+      "status": "no_activity"
+    },
+    {
+      "category": "onboarding",
+      "type": "in_progress",
+      "description": "Philippe продолжает onboarding - quiz diagnóstico en desarrollo",
+      "source": "onboarding channel - threads activos",
+      "status": "active"
+    }
+  ],
+  "summary": "Día tranquilo. Error LLM del 9-mar bloqueó respuesta a Philippe en onboarding. OpenClaw caído brevemente el 10-mar (recuperado). Sin reuniones nuevas desde 4-mar.",
+  "relevant_insight": "Error LLM bloqueó onboarding Philippe + OpenClaw caído breve (10-mar)",
+  "generated_at": "2026-03-12T08:00:00.000Z"
+}

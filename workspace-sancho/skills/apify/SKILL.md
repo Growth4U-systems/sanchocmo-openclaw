@@ -11,8 +11,6 @@ metadata:
         "requires": { "anyBins": ["curl", "wget"], "env": ["APIFY_TOKEN"] },
       },
   }
-context_required: []
-context_writes: []
 ---
 
 # Apify

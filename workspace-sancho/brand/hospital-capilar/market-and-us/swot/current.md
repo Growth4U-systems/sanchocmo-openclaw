@@ -1,7 +1,8 @@
 # SWOT Analysis & TOWS Strategies — Hospital Capilar (Tratamientos)
 
-> Versión: v1.0 | Fecha: 2026-03-03 | Analista: Sancho (SanchoCMO)
-> Fuentes: self-analysis v1.0, market-analysis v1.0, competitor-analysis v1.0
+> Versión: v1.1 | Fecha: 2026-03-12 (actualizado) | Analista: Sancho (SanchoCMO)
+> Cambios v1.1: Datos HC 2025 (82% hombres jóvenes, 95% satisfacción, +4K pacientes). Svenson corregido (1.5/5 TP). Insparya actualizado (cofundador CR7, tratamientos propios). Nuevos DTC (Manual.co, mediQuo). Restricciones dirección añadidas. Cuadrante vacío validado con matiz: Insparya tiene tratamientos pero no los posiciona como core.
+> Fuentes: self-analysis v1.1, market-analysis v1.4, competitor-analysis v1.0
 > Metodología: Evidence-based SWOT + TOWS Matrix + ICE Prioritization
 
 ---
@@ -50,7 +51,7 @@ Hospital Capilar tiene una posición estratégica **única y defendible** en el 
 
 | # | Oportunidad | Evidencia | Fuente | Impacto |
 |---|-------------|-----------|--------|---------|
-| **O1** | **Cuadrante vacío: tratamientos como core + enfoque médico** | Mapa 2x2: NINGÚN competidor posiciona tratamientos como producto principal con rigor médico | Competitor Analysis (Positioning Map) | **ALTO** |
+| **O1** | **Cuadrante débil: tratamientos como core + enfoque médico riguroso** | Insparya y Capiclinic SÍ tienen tratamientos (oral, plasma, mesoterapia), pero ninguno posiciona tratamientos como producto principal con rigor médico + pauta anual + approach treatment-first. HC es el único con diagnóstico completo (tricoscopia + analítica hormonal) + pauta anual vs sesiones mensuales | Competitor Analysis + Datos HC 2025 | **ALTO** |
 | **O2** | **Mercado tratamientos creciendo +12,1% anual** | Stanpa 2024, CAGR España tratamientos = más alto de Europa (7,05%) | Market Analysis (Grand View, Mordor) | **ALTO** |
 | **O3** | **20M españoles afectados por alopecia** | 44,5% hombres + 40% mujeres — España #1 Europa prevalencia | Market Analysis (Medihair, INE) | **ALTO** |
 | **O4** | **Jóvenes 20-28 buscando solución activa** | 25% de 18-24 años con caída capilar, segmento creciendo | Market Analysis (Svenson estudio) | **ALTO** |
@@ -68,10 +69,10 @@ Hospital Capilar tiene una posición estratégica **única y defendible** en el 
 
 | # | Amenaza | Evidencia | Fuente | Impacto |
 |---|---------|-----------|--------|---------|
-| **T1** | **Insparya lanza línea tratamientos** | €20,7M facturación + CR7 + €2M I+D/año — capacidad de respuesta rápida | Competitor Analysis (Battle Card) | **ALTO** |
+| **T1** | **Insparya YA tiene tratamientos propios** | CR7 cofundador, €20,7M facturación, €2M I+D/año, marcas propias ActivePlasma y MesoHAir+, página alopecia femenina. Aún no los posicionan como core (gasto Meta = mayoría trasplante), pero pueden pivotar rápido | Competitor Analysis + reunión 10/03 | **ALTO** |
 | **T2** | **Regulación publicidad más estricta** | Draft 2024 limita influencers, claims salud. RD 1907/1996 activo | Market Analysis (Parte 4) | **ALTO** |
-| **T3** | **Consolidación PE-backed** | NK5 compró Svenson (+26% ventas proyectadas), más fondos pueden entrar | Market Analysis + Competitor Analysis | **MEDIO** |
-| **T4** | **DTC/telemedicina escala** | Olistic, Keeps, Hims capturan early-stage con conveniencia y bajo coste | Market Analysis (Parte 2) | **MEDIO** |
+| **T3** | **Svenson rebrand + PE-backed** | NK5 compró Svenson, Havas Creative nueva agencia, campaña sept 2025 "No te conformes con recordar tu pelo" (humor, digital-first, fase 2 TV). Proyectan +26% ventas 2025. Están despertando y se mueven rápido — aunque parten de 1.5/5 TP y sin credibilidad médica | Market Analysis + Competitor Analysis | **MEDIO** |
+| **T4** | **DTC/telemedicina ya en España** | Manual.co opera con suscripción farmacológica + consulta online. mediQuo ofrece consulta capilar + receta por €29,99. Capturan top-of-funnel joven. Keeps/Pilot/Sons aún no en España = ventana temporal | Market Analysis (Parte 2) | **MEDIO** |
 | **T5** | **Nuevos fármacos en 3-5 años** | PP405 (Pelage/Google Ventures) Fase 2a, terapias celulares en trials España | Market Analysis (Parte 4) | **BAJO** (largo plazo) |
 | **T6** | **Turquía low-cost genera confusión** | Pacientes perciben que "todo lo capilar es cirugía" → tratamientos invisibilizados | Market Analysis (Parte 2) | **BAJO** |
 | **T7** | **Restricciones Google Ads** | No "hospital" en ciertos contextos, no antes/después, no nombres fármacos | Company Brief (Restricciones Legales) | **MEDIO** |
@@ -250,4 +251,15 @@ Hospital Capilar tiene una posición estratégica **única y defendible** en el 
 
 ---
 
-<!-- Self-QA: PASS | 2026-03-03 | Prerequisites: self-intel ✅ competitor-intel ✅ market-intel ✅ | Strengths: 9 items, all multi-lens confirmed ✅ | Weaknesses: 9 items, all evidence-backed ✅ | Opportunities: 13 items, all from market/competitor docs ✅ | Threats: 8 items, all from market/competitor docs ✅ | S/W internal ✅ O/T external ✅ | No duplicates ✅ | No vague entries ✅ | TOWS: SO×4 ST×3 WO×4 WT×2 = 13 strategies ✅ (>8 min) | Each strategy: specific, actionable, cross-referenced, ICE scored ✅ | Top 3 immediate actions with concrete steps ✅ | Evidence sources cited inline ✅ | Coherence with upstream pillars verified ✅ -->
+---
+
+## 6. Cuadrante Competitivo (actualizado 2026-03-12)
+
+|  | **Tratamientos como CORE** | **Tratamientos secundarios** |
+|--|---------------------------|------------------------------|
+| **Credibilidad médica ALTA** | ← **HC debería estar AQUÍ** (cuadrante vacío) | Insparya (tiene ActivePlasma/MesoHAir+ pero no los posiciona como core) |
+| **Credibilidad médica BAJA** | Svenson (posiciona tratamientos pero sin credibilidad médica — 1.5/5 TP) | Clínicas estéticas locales, IMD |
+
+**Nadie ocupa el cuadrante de tratamientos como core + credibilidad médica alta.** Es exactamente donde HC puede entrar.
+
+<!-- Self-QA: PASS | 2026-03-12 v1.1 | O1 corregido: Insparya y Capiclinic SÍ tienen tratamientos — HC diferencia por rigor médico + pauta anual + treatment-first. T3 actualizado: Svenson rebrand Havas + NK5. T4 actualizado: DTC ya en España (Manual.co, mediQuo). Cuadrante competitivo añadido. -->

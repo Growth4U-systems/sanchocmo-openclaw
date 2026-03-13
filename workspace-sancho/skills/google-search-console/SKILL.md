@@ -1,136 +1,115 @@
 ---
 name: google-search-console
-description: |
-  Google Search Console API integration using system Service Account.
-  Query search analytics, manage sitemaps, and monitor site performance.
-  Uses the SA at .secrets/google-service-account.json — no Maton dependency.
-compatibility: Requires .secrets/google-service-account.json and site access granted to SA email
+description: "Query Google Search Console for SEO data - search queries, top pages, CTR opportunities, URL inspection, and sitemaps. Use when analyzing search performance, finding optimization opportunities, or checking indexing status. Also use when the user mentions 'GSC,' 'Google Search Console,' 'search queries,' 'impressions,' 'CTR,' 'rankings,' 'indexing status,' or 'search performance.'"
 metadata:
-  author: Growth4U (adapted from maton)
-  version: "2.0"
-  clawdbot:
-    emoji: 🔍
-    requires:
-      files:
-        - .secrets/google-service-account.json
-context_required:
-- brand/{slug}/integrations.json
-context_writes:
-- brand/{slug}/operational/learnings.md
+  {
+    "openclaw":
+      {
+        "emoji": "🔍",
+        "requires":
+          {
+            "anyBins": ["python3", "python"],
+            "env": ["GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET", "GOOGLE_REFRESH_TOKEN"],
+          },
+      },
+  }
 ---
 
-# Google Search Console
+# Google Search Console Skill
 
-Access GSC API using our system Service Account (`sancho-analytics@gen-lang-client-0422972889.iam.gserviceaccount.com`).
+Query GSC for search analytics, indexing status, and SEO insights.
 
-## Authentication
 
-Uses `.secrets/google-service-account.json` (Service Account). The SA email must have **Full** permission on the GSC property.
 
-**Get access token:**
+## Safety Boundaries
+
+- This skill only connects to Google Search Console API endpoints.
+- It does NOT modify your Search Console property — read-only queries only.
+- It does NOT store or transmit credentials beyond the current session.
+- It requires OAuth credentials set as environment variables.
+## Setup
+
+1. **Credentials**: Set OAuth credentials in environment variables (or a local `.env` loaded by your shell)
+2. **Scopes**: Requires `webmasters.readonly` scope on your Google Cloud OAuth consent screen
+3. **Access**: Your Google account must have access to the Search Console properties
+
+## Commands
+
+### List Available Sites
 ```bash
-python3 scripts/google-api-helper.py --service gsc --action token
+python scripts/gsc_query.py sites
 ```
 
-## Site URL
-
-Read from `brand/{slug}/integrations.json` → `dataSources.gsc.config.SITE_URL`.
-Growth4U: `sc-domain:growth4u.io`
-
-Site URLs must be URL-encoded in API paths: `sc-domain%3Agrowth4u.io`
-
-## Common Operations
-
-### List Sites
+### Top Search Queries
 ```bash
-python3 scripts/google-api-helper.py --service gsc --action sites
+python scripts/gsc_query.py top-queries \
+  --site "https://www.nutrient.io" \
+  --days 28 \
+  --limit 20
 ```
 
-### Top Queries (last 28 days)
+### Top Pages by Traffic
 ```bash
-python3 scripts/google-api-helper.py --service gsc --action query \
-  --slug growth4u --days 28 --dimensions query --limit 25
+python scripts/gsc_query.py top-pages \
+  --site "https://www.nutrient.io" \
+  --days 28 \
+  --limit 20
 ```
 
-### Top Pages
+### Find Low-CTR Opportunities
+High impressions but low click-through rate = optimization opportunities:
 ```bash
-python3 scripts/google-api-helper.py --service gsc --action query \
-  --slug growth4u --days 28 --dimensions page --limit 25
+python scripts/gsc_query.py opportunities \
+  --site "https://www.nutrient.io" \
+  --days 28 \
+  --min-impressions 100
 ```
 
-### Daily Performance
+### Inspect URL Indexing Status
 ```bash
-python3 scripts/google-api-helper.py --service gsc --action query \
-  --slug growth4u --days 28 --dimensions date
+python scripts/gsc_query.py inspect-url \
+  --site "https://www.nutrient.io" \
+  --url "/sdk/web"
 ```
 
-### Device Breakdown
+### List Sitemaps
 ```bash
-python3 scripts/google-api-helper.py --service gsc --action query \
-  --slug growth4u --days 28 --dimensions device
+python scripts/gsc_query.py sitemaps \
+  --site "https://www.nutrient.io"
 ```
 
-### Filtered Query
+### Raw Search Analytics (JSON)
 ```bash
-python3 scripts/google-api-helper.py --service gsc --action query \
-  --slug growth4u --days 28 --dimensions query \
-  --filter "query contains growth"
+python scripts/gsc_query.py search-analytics \
+  --site "https://www.nutrient.io" \
+  --days 28 \
+  --dimensions query page \
+  --limit 100
 ```
 
-## Raw API Access
+## Available Dimensions
+- `query` - Search query
+- `page` - Landing page URL
+- `country` - Country code
+- `device` - DESKTOP, MOBILE, TABLET
+- `date` - Date
 
-For custom queries, get a token and call the API directly:
+## Metrics Returned
+- **clicks** - Number of clicks from search
+- **impressions** - Number of times shown in search
+- **ctr** - Click-through rate (clicks/impressions)
+- **position** - Average ranking position
 
-```bash
-TOKEN=$(python3 scripts/google-api-helper.py --service gsc --action token)
-SITE_URL="sc-domain%3Agrowth4u.io"
+## SEO Use Cases
 
-# Search Analytics query
-curl -s -H "Authorization: Bearer $TOKEN" \
-  -H "Content-Type: application/json" \
-  -X POST "https://searchconsole.googleapis.com/webmasters/v3/sites/${SITE_URL}/searchAnalytics/query" \
-  -d '{
-    "startDate": "2026-02-01",
-    "endDate": "2026-03-01",
-    "dimensions": ["query"],
-    "rowLimit": 25
-  }' | python3 -m json.tool
-```
-
-## API Reference
-
-### Sites
-- `GET /webmasters/v3/sites` — List all sites
-- `GET /webmasters/v3/sites/{siteUrl}` — Get site info
-
-### Search Analytics
-- `POST /webmasters/v3/sites/{siteUrl}/searchAnalytics/query` — Query analytics
-
-### Sitemaps
-- `GET /webmasters/v3/sites/{siteUrl}/sitemaps` — List sitemaps
-- `PUT /webmasters/v3/sites/{siteUrl}/sitemaps/{feedpath}` — Submit sitemap
-- `DELETE /webmasters/v3/sites/{siteUrl}/sitemaps/{feedpath}` — Delete sitemap
-
-## Dimensions
-- `query` — Search query
-- `page` — Page URL
-- `country` — Country code
-- `device` — DESKTOP, MOBILE, TABLET
-- `date` — Date
-
-## Metrics (returned automatically)
-- `clicks` — Number of clicks
-- `impressions` — Number of impressions
-- `ctr` — Click-through rate (0-1)
-- `position` — Average position
+1. **Content Optimization**: Find high-impression/low-CTR pages → improve titles & descriptions
+2. **Keyword Research**: See what queries bring traffic → create more content around them
+3. **Technical SEO**: Check indexing status, find crawl issues
+4. **Ranking Tracking**: Monitor position changes over time
+5. **Sitemap Health**: Verify sitemaps are submitted and error-free
 
 ## Notes
-- Date range limited to 16 months
-- Maximum 25,000 rows per request
-- Use `startRow` for pagination
-- Data has 2-3 day delay
-- Site URLs must be URL-encoded in paths
 
-## Resources
-- [Search Console API Reference](https://developers.google.com/webmaster-tools/v1/api_reference_index)
-- [Search Analytics](https://developers.google.com/webmaster-tools/v1/searchanalytics/query)
+- Data has ~3 day delay (GSC limitation)
+- Credentials shared with GA4 skill
+- URL inspection requires the page to be in the property

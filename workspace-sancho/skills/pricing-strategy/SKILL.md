@@ -1,15 +1,16 @@
 ---
 name: pricing-strategy
 description: "Define pricing models, tiers, and psychological hooks. Use when: setting initial pricing, restructuring tiers, competitive pricing analysis, or adding value-based hooks. Pipeline: Context → Research → Value Metrics → Tier Design → Hooks → Pricing Page → Validation. Reads Foundation (company-brief, competitors, ECPs). Outputs pricing.md in go-to-market/."
-context_required:
-- brand/{slug}/company-brief/current.md
-- brand/{slug}/market-and-us/competitors/current.md
-- brand/{slug}/go-to-market/ecps/current.md
-- brand/{slug}/go-to-market/positioning/*/current.md
-context_writes:
-- brand/{slug}/go-to-market/pricing/current.md
-- brand/{slug}/operational/learnings.md
-user-invocable: false
+metadata:
+  context_required:
+    - brand/{slug}/company-brief/current.md
+    - brand/{slug}/market-and-us/competitors/current.md
+    - brand/{slug}/go-to-market/ecps/current.md
+    - brand/{slug}/go-to-market/positioning/*/current.md
+  context_writes:
+    - brand/{slug}/go-to-market/pricing/current.md
+    - brand/{slug}/operational/learnings.md
+  user-invocable: false
 ---
 
 # Pricing Strategy & Hooks

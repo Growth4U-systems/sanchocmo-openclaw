@@ -1,7 +1,10 @@
 # Market Intelligence — Tratamientos Capilares España
 
-> Versión: v1.1 | Fecha: 2026-03-08 (actualizado) | Analista: Sancho (SanchoCMO)
+> Versión: v1.4 | Fecha: 2026-03-12 (actualizado) | Analista: Sancho (SanchoCMO)
+> Cambios v1.4: Nuevos competidores DTC (Manual.co, mediQuo), Insparya corregido (CR7 cofundador, tratamientos propios ActivePlasma/MesoHAir+), Svenson (1.5/5 Trustpilot, NK5/Havas Creative), cuota <6% confirmada, Modelo 5 DTC farmacológico
+> Cambios v1.2: TAM bottom-up corregido — 20-25% buscan tratamiento (dato HC 2025, vs 10-15% previo). TAM sube a €3.28B-€6B
 > Cambios v1.1: Añadida sección 2.5 — Comparativa de precios tratamientos no quirúrgicos
+> Cambios v1.3: Sección DTC/Telemedicina nuevos entrantes (Manual.co, mediQuo €29.99, Keeps/Pilot/Sons NO en España). Insparya: ActivePlasma + MesoHAir+ brand names, sin quiz, CTA teléfono/form. Svenson: 1.5/5 TP (38 reviews), Havas Creative rebrand sept 2025, ~9K IG, €2.575 cirugía
 > Cliente: Hospital Capilar | Foco: Tratamientos capilares no quirúrgicos en España
 
 ---
@@ -56,14 +59,14 @@ El mercado está en **fase de crecimiento** (Growing Market), con competencia co
 - **Total población afectada: ~20M personas**
 
 **Segmento target accesible (buscan solución activa):**
-- Estimación conservadora: 10-15% de afectados buscan tratamiento médico profesional = **2-3M clientes potenciales**
+- **20-25% de afectados buscan tratamiento médico profesional** (dato HC 2025, corrige estimación previa de 10-15%) = **4-5M clientes potenciales**
 - ARPU anual tratamiento no quirúrgico: €820-1.200 (bonos recurrentes)
-- **TAM bottom-up tratamientos: €1.640M - €3.600M** (solo tratamientos médicos no quirúrgicos)
+- **TAM bottom-up tratamientos: €3.280M - €6.000M** (solo tratamientos médicos no quirúrgicos)
 
-**Confianza del método:** **Media** — Basado en prevalencia documentada (alta confianza) y tasa de conversión a tratamiento estimada (media confianza por falta de datos públicos de conversión sector).
+**Confianza del método:** **Media-Alta** — Basado en prevalencia documentada (alta confianza) y tasa de búsqueda de tratamiento validada por HC (20-25%, dato 2025).
 
 **Asunciones críticas:**
-1. 10-15% de personas con alopecia buscan tratamiento médico profesional (vs OTC/nada)
+1. 20-25% de personas con alopecia buscan tratamiento médico profesional (dato HC 2025, vs estimación previa 10-15%)
 2. ARPU €820-1.200/año (basado en bonos HC)
 3. Mercado actual subdesarrollado → gran parte del TAM aún no monetizado
 
@@ -219,13 +222,19 @@ El mercado está en **fase de crecimiento** (Growing Market), con competencia co
 - **Facturación España 2024:** €20,7M ([Fuente: El Confidencial](https://www.vanitatis.elconfidencial.com/famosos/2026-02-25/cristiano-ronaldo-hacienda-6-millones-injertos-capilares_4309501/))
 - **Posición:** Líder en volumen cirugías España
 - **Datos:** 33.000+ pacientes, 15.000+ trasplantes en 5 años, 5 clínicas (Madrid, Barcelona, Málaga, Valencia, Bilbao)
-- **Ventaja:** Celebrity endorsement (CR7), marketing fuerte, I+D (€2M/año)
+- **Ventaja:** CR7 cofundador (no embajador), marketing fuerte, I+D (€2M/año, Insparya Science and Clinical Institute)
+- **Tratamientos:** Marca propia ActivePlasma (PRP) y MesoHAir+ (mesoterapia). Página dedicada alopecia femenina. PERO: gasto Meta Ads sigue mayoría trasplante — tienen tratamientos pero NO los posicionan como core
+- **Digital:** Diagnóstico gratuito como CTA en todas las páginas (table stakes). NO tienen quiz interactivo ni recomendación personalizada. CTA siempre teléfono/formulario
+- **Trustpilot:** 3.8/5
 
 **2. Svenson**
 - **Facturación 2024:** €17,4M ([Fuente: El Economista](https://www.eleconomista.es/capital-riesgo/noticias/13334732/04/25/nk5-resucita-svenson-y-proyecta-un-26-mas-de-ventas-en-2025.html))
-- **Posición:** Marca histórica, red más amplia
-- **Datos:** 33 centros en 25 provincias, 2.000+ operaciones/año
-- **Ventaja:** Cobertura geográfica, accesibilidad seguimiento, precio medio (€2.575+)
+- **Posición:** Marca histórica, red más amplia. Esteticistas, NO médicos.
+- **Datos:** 33 centros en 25 provincias, 2.000+ operaciones/año, ~9K seguidores IG (muy bajo para escala)
+- **Ventaja:** Cobertura geográfica, accesibilidad, precio desde €2.575 cirugía
+- **Trustpilot:** **1.5/5 "Muy malo"** (38 reviews en svenson.com). Reviews tipo "pagué €3.500, cero resultados", "sala no esterilizada". Denuncia OCU.
+- **Rebrand:** NK5 compró Svenson, inyectó capital. Havas Creative nueva agencia. Campaña sept 2025: "No te conformes con recordar tu pelo" — humor, digital-first, piezas 30/20/10s, fase 2 TV prevista. Director General David Villarino busca "comunicación emocional y cercana"
+- **Posicionamiento:** Tratamientos como core (al revés que Insparya) pero sin credibilidad médica
 
 **3. Capilclinic**
 - **Facturación:** No disponible
@@ -246,7 +255,15 @@ El mercado está en **fase de crecimiento** (Growing Market), con competencia co
 - **Clínicas locales/regionales:** Múltiples players pequeños (<€5M facturación), alta fragmentación
 - **Dermatólogos privados:** Ofrecen tratamientos médicos pero sin marca capilar específica
 
-#### Nuevos Entrantes
+#### DTC / Telemedicina (Nuevos Entrantes España)
+
+- **Manual.co** — El más parecido a Keeps en España. Consultas online + suscripción medicamentos capilares a domicilio. Farmacia autorizada. Opera también en UK, Alemania, Brasil. Rebrandeó a "Voy" en otros mercados. Modelo: telemedicina + delivery farmacológico.
+- **mediQuo** — "Clínica Salud Capilar" online. Consulta estándar + receta por **€29,99**. 100% digital, prescripciones homologadas en toda España. Recetas de 4 a 24 semanas. No compite en diagnóstico (sin tricoscopía ni analítica hormonal). Captura top-of-funnel que las clínicas médicas no están captando.
+- **Keeps, Pilot, Sons** — NO operan en España (solo US, Australia, UK respectivamente). Hueco enorme en suscripción farmacológica DTC nativa española.
+
+**Implicación:** El hueco DTC español está empezando a llenarse (Manual.co, mediQuo) pero sin calidad médica seria. HC puede capturar pacientes post-fallo DTC (ciclo 1-2 años) o considerar modelo híbrido (presencial + consulta online pre-diagnóstico).
+
+#### Nuevos Entrantes (Clínicas)
 
 - **Hospital Capilar:** 3 clínicas actuales → 6 aperturas 2026 = 9 total. Enfoque medicina capilar integral (tratamientos + cirugía). Crecimiento +88% tratamientos sin marketing dedicado.
 

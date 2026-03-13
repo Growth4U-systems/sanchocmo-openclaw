@@ -1,7 +1,7 @@
 {
   "version": 1,
   "registry": "https://clawhub.ai",
-  "slug": "google-analytics",
-  "installedVersion": "1.0.10",
-  "installedAt": 1772142291125
+  "slug": "native-google-analytics",
+  "installedVersion": "0.1.1",
+  "installedAt": 1772916987339
 }

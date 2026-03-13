@@ -1,0 +1,1810 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hospital Capilar — Estrategia de Nichos y Posicionamiento | 14 Marzo 2026</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+  
+  :root {
+    --hc-blue: #1B3A5C;
+    --hc-blue-light: #2A5A8C;
+    --hc-gold: #C9A96E;
+    --hc-gold-light: #E8D5A8;
+    --hc-dark: #0F1923;
+    --hc-white: #FAFBFC;
+    --hc-gray: #6B7B8D;
+    --hc-green: #2D8B57;
+    --hc-red: #C44536;
+    --hc-orange: #D4873F;
+    --hc-purple: #6B4C9A;
+  }
+  
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  
+  body {
+    font-family: 'Inter', -apple-system, sans-serif;
+    background: var(--hc-white);
+    color: var(--hc-dark);
+    -webkit-font-smoothing: antialiased;
+  }
+  
+  .slide {
+    min-height: 100vh;
+    padding: 60px 80px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    page-break-after: always;
+    position: relative;
+  }
+  
+  .slide-number {
+    position: absolute;
+    bottom: 30px;
+    right: 40px;
+    font-size: 13px;
+    color: var(--hc-gray);
+    font-weight: 500;
+  }
+  
+  .slide-logo {
+    position: absolute;
+    top: 30px;
+    right: 40px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--hc-blue);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    opacity: 0.5;
+  }
+  
+  /* Cover */
+  .cover {
+    background: linear-gradient(135deg, var(--hc-blue) 0%, var(--hc-dark) 100%);
+    color: white;
+    text-align: left;
+  }
+  .cover .tag {
+    display: inline-block;
+    background: var(--hc-gold);
+    color: var(--hc-dark);
+    padding: 6px 16px;
+    border-radius: 4px;
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-bottom: 30px;
+  }
+  .cover h1 {
+    font-size: 52px;
+    font-weight: 800;
+    line-height: 1.1;
+    margin-bottom: 16px;
+    max-width: 800px;
+  }
+  .cover h2 {
+    font-size: 24px;
+    font-weight: 300;
+    opacity: 0.8;
+    margin-bottom: 60px;
+    max-width: 600px;
+  }
+  .cover .meta {
+    font-size: 14px;
+    opacity: 0.5;
+    line-height: 1.8;
+  }
+  .cover .meta strong { opacity: 0.8; }
+  
+  /* Section dividers */
+  .divider {
+    background: var(--hc-dark);
+    color: white;
+  }
+  .divider .section-num {
+    font-size: 80px;
+    font-weight: 900;
+    color: var(--hc-gold);
+    opacity: 0.3;
+    line-height: 1;
+    margin-bottom: 10px;
+  }
+  .divider h2 {
+    font-size: 42px;
+    font-weight: 700;
+    margin-bottom: 12px;
+  }
+  .divider p {
+    font-size: 18px;
+    opacity: 0.6;
+    max-width: 500px;
+  }
+  
+  /* Content slides */
+  h2.slide-title {
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--hc-blue);
+    margin-bottom: 8px;
+  }
+  .subtitle {
+    font-size: 16px;
+    color: var(--hc-gray);
+    margin-bottom: 40px;
+  }
+  
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 24px;
+    margin: 30px 0;
+  }
+  .stat-card {
+    background: white;
+    border: 1px solid #E5E9ED;
+    border-radius: 12px;
+    padding: 28px;
+    text-align: center;
+  }
+  .stat-card .number {
+    font-size: 36px;
+    font-weight: 800;
+    color: var(--hc-blue);
+    line-height: 1;
+    margin-bottom: 8px;
+  }
+  .stat-card .number.gold { color: var(--hc-gold); }
+  .stat-card .number.green { color: var(--hc-green); }
+  .stat-card .number.red { color: var(--hc-red); }
+  .stat-card .label {
+    font-size: 13px;
+    color: var(--hc-gray);
+    line-height: 1.4;
+  }
+  
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    margin: 20px 0;
+  }
+  .three-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 24px;
+    margin: 20px 0;
+  }
+  
+  .card {
+    background: white;
+    border: 1px solid #E5E9ED;
+    border-radius: 12px;
+    padding: 28px;
+  }
+  .card h3 {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    color: var(--hc-dark);
+  }
+  .card p {
+    font-size: 14px;
+    line-height: 1.7;
+    color: #4A5568;
+  }
+  .card ul {
+    list-style: none;
+    padding: 0;
+  }
+  .card ul li {
+    font-size: 14px;
+    line-height: 1.7;
+    color: #4A5568;
+    padding: 3px 0;
+    padding-left: 20px;
+    position: relative;
+  }
+  .card ul li::before {
+    content: "→";
+    position: absolute;
+    left: 0;
+    color: var(--hc-gold);
+    font-weight: 700;
+  }
+  
+  .card-accent {
+    border-left: 4px solid var(--hc-gold);
+  }
+  .card-blue { border-left: 4px solid var(--hc-blue); }
+  .card-green { border-left: 4px solid var(--hc-green); }
+  .card-red { border-left: 4px solid var(--hc-red); }
+  .card-orange { border-left: 4px solid var(--hc-orange); }
+  .card-purple { border-left: 4px solid var(--hc-purple); }
+  
+  .niche-card {
+    background: white;
+    border: 1px solid #E5E9ED;
+    border-radius: 16px;
+    padding: 32px;
+    margin-bottom: 24px;
+  }
+  .niche-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+  .niche-emoji {
+    font-size: 40px;
+    line-height: 1;
+  }
+  .niche-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--hc-dark);
+  }
+  .niche-jtbd {
+    font-size: 14px;
+    color: var(--hc-gray);
+    font-style: italic;
+  }
+  
+  .niche-body {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 24px;
+  }
+  .niche-section h4 {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--hc-blue);
+    margin-bottom: 10px;
+  }
+  .niche-section p, .niche-section li {
+    font-size: 13px;
+    line-height: 1.7;
+    color: #4A5568;
+  }
+  .niche-section ul {
+    list-style: none;
+    padding: 0;
+  }
+  .niche-section ul li {
+    padding: 2px 0;
+    padding-left: 16px;
+    position: relative;
+  }
+  .niche-section ul li::before {
+    content: "•";
+    position: absolute;
+    left: 0;
+    color: var(--hc-gold);
+    font-weight: 700;
+  }
+  
+  .badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .badge-high { background: #E6F4EA; color: var(--hc-green); }
+  .badge-medium { background: #FFF3E0; color: var(--hc-orange); }
+  .badge-star { background: #F3E8FF; color: var(--hc-purple); }
+  .badge-priority { background: #E8F0FE; color: var(--hc-blue); }
+  
+  .quote {
+    background: #F8F9FA;
+    border-left: 4px solid var(--hc-gold);
+    padding: 20px 24px;
+    margin: 16px 0;
+    font-size: 15px;
+    font-style: italic;
+    color: #4A5568;
+    line-height: 1.7;
+    border-radius: 0 8px 8px 0;
+  }
+  .quote .source {
+    font-style: normal;
+    font-size: 12px;
+    color: var(--hc-gray);
+    margin-top: 8px;
+  }
+  
+  .positioning-map {
+    background: white;
+    border: 2px solid #E5E9ED;
+    border-radius: 16px;
+    padding: 40px;
+    position: relative;
+    height: 420px;
+    margin: 20px 0;
+  }
+  .map-label-y {
+    position: absolute;
+    left: -10px;
+    top: 50%;
+    transform: rotate(-90deg) translateX(50%);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--hc-gray);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .map-label-x {
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--hc-gray);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .map-dot {
+    position: absolute;
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+    text-align: center;
+    line-height: 1.2;
+    color: white;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  }
+  
+  table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin: 16px 0;
+    font-size: 13px;
+  }
+  table th {
+    background: var(--hc-blue);
+    color: white;
+    padding: 12px 16px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  table th:first-child { border-radius: 8px 0 0 0; }
+  table th:last-child { border-radius: 0 8px 0 0; }
+  table td {
+    padding: 12px 16px;
+    border-bottom: 1px solid #E5E9ED;
+    color: #4A5568;
+    line-height: 1.5;
+  }
+  table tr:last-child td:first-child { border-radius: 0 0 0 8px; }
+  table tr:last-child td:last-child { border-radius: 0 0 8px 0; }
+  table tr:nth-child(even) td { background: #F8FAFB; }
+  
+  .highlight-box {
+    background: linear-gradient(135deg, var(--hc-blue) 0%, var(--hc-blue-light) 100%);
+    color: white;
+    border-radius: 16px;
+    padding: 32px;
+    margin: 20px 0;
+  }
+  .highlight-box h3 {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 12px;
+  }
+  .highlight-box p {
+    font-size: 15px;
+    line-height: 1.7;
+    opacity: 0.9;
+  }
+  
+  .timeline {
+    position: relative;
+    margin: 30px 0;
+    padding-left: 40px;
+  }
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 15px;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: var(--hc-gold);
+    border-radius: 2px;
+  }
+  .timeline-item {
+    position: relative;
+    margin-bottom: 28px;
+  }
+  .timeline-item::before {
+    content: '';
+    position: absolute;
+    left: -32px;
+    top: 6px;
+    width: 14px;
+    height: 14px;
+    background: var(--hc-gold);
+    border-radius: 50%;
+    border: 3px solid var(--hc-white);
+    box-shadow: 0 0 0 2px var(--hc-gold);
+  }
+  .timeline-item.active::before {
+    background: var(--hc-green);
+    box-shadow: 0 0 0 2px var(--hc-green);
+  }
+  .timeline-date {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--hc-blue);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+  }
+  .timeline-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--hc-dark);
+    margin-bottom: 4px;
+  }
+  .timeline-desc {
+    font-size: 13px;
+    color: var(--hc-gray);
+    line-height: 1.5;
+  }
+  
+  .cta-box {
+    background: linear-gradient(135deg, var(--hc-gold) 0%, #B8944E 100%);
+    color: var(--hc-dark);
+    border-radius: 16px;
+    padding: 40px;
+    text-align: center;
+    margin: 30px 0;
+  }
+  .cta-box h3 {
+    font-size: 28px;
+    font-weight: 800;
+    margin-bottom: 12px;
+  }
+  .cta-box p {
+    font-size: 16px;
+    max-width: 500px;
+    margin: 0 auto;
+    opacity: 0.8;
+  }
+  
+  .flex-row { display: flex; gap: 24px; align-items: start; }
+  .flex-1 { flex: 1; }
+  
+  .icon-list { list-style: none; padding: 0; }
+  .icon-list li {
+    padding: 8px 0;
+    font-size: 14px;
+    line-height: 1.6;
+    color: #4A5568;
+    display: flex;
+    gap: 10px;
+    align-items: start;
+  }
+  .icon-list .icon {
+    flex-shrink: 0;
+    width: 24px;
+    text-align: center;
+  }
+
+  .competitive-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 12px;
+    margin: 20px 0;
+  }
+  .comp-card {
+    background: white;
+    border: 1px solid #E5E9ED;
+    border-radius: 10px;
+    padding: 16px;
+    text-align: center;
+  }
+  .comp-card h4 { font-size: 14px; font-weight: 700; margin-bottom: 6px; }
+  .comp-card .comp-rev { font-size: 20px; font-weight: 800; color: var(--hc-blue); }
+  .comp-card .comp-detail { font-size: 11px; color: var(--hc-gray); line-height: 1.5; margin-top: 6px; }
+  .comp-card .vuln { font-size: 11px; color: var(--hc-red); font-weight: 600; margin-top: 8px; }
+  
+  .full-width-niche {
+    margin-bottom: 32px;
+    page-break-inside: avoid;
+  }
+  
+  .score-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 4px 0;
+  }
+  .score-bar .bar-bg {
+    flex: 1;
+    height: 8px;
+    background: #E5E9ED;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .score-bar .bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    background: var(--hc-blue);
+  }
+  .score-bar .bar-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--hc-gray);
+    min-width: 60px;
+  }
+  .score-bar .bar-val {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--hc-blue);
+    min-width: 30px;
+    text-align: right;
+  }
+
+  @media print {
+    .slide { min-height: auto; padding: 40px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ============================================ -->
+<!-- SLIDE 0: COVER -->
+<!-- ============================================ -->
+<div class="slide cover">
+  <div class="tag">Confidencial — Hospital Capilar × Growth4U</div>
+  <h1>Estrategia de Nichos y Posicionamiento</h1>
+  <h2>Tratamientos Capilares — Plan de Go-to-Market</h2>
+  <div style="height: 40px"></div>
+  <div class="meta">
+    <strong>Presentado por:</strong> Growth4U<br>
+    <strong>Fecha:</strong> 14 de Marzo de 2026<br>
+    <strong>Para:</strong> Dirección Hospital Capilar
+  </div>
+</div>
+
+<!-- ============================================ -->
+<!-- SLIDE 1: AGENDA -->
+<!-- ============================================ -->
+<div class="slide">
+  <h2 class="slide-title">Agenda</h2>
+  <div class="subtitle">Lo que vamos a cubrir hoy</div>
+  
+  <div style="max-width: 600px;">
+    <ul class="icon-list" style="font-size: 17px;">
+      <li><span class="icon" style="font-size: 20px;">1️⃣</span> <strong>La oportunidad</strong> — Por qué tratamientos, por qué ahora</li>
+      <li style="height: 8px;"></li>
+      <li><span class="icon" style="font-size: 20px;">2️⃣</span> <strong>Dónde estamos hoy</strong> — Fortalezas, gaps y competencia</li>
+      <li style="height: 8px;"></li>
+      <li><span class="icon" style="font-size: 20px;">3️⃣</span> <strong>Los 6 nichos</strong> — Quiénes son, por qué los elegimos, qué les decimos</li>
+      <li style="height: 8px;"></li>
+      <li><span class="icon" style="font-size: 20px;">4️⃣</span> <strong>Posicionamiento</strong> — El territorio que vamos a conquistar</li>
+      <li style="height: 8px;"></li>
+      <li><span class="icon" style="font-size: 20px;">5️⃣</span> <strong>Propuesta por nicho</strong> — Messaging, canales y acciones</li>
+      <li style="height: 8px;"></li>
+      <li><span class="icon" style="font-size: 20px;">6️⃣</span> <strong>Próximos pasos</strong> — Validar flujos y primeros tests de campaña</li>
+    </ul>
+  </div>
+  
+  <div class="slide-logo">HOSPITAL CAPILAR</div>
+  <div class="slide-number">01</div>
+</div>
+
+<!-- ============================================ -->
+<!-- SECTION 1: LA OPORTUNIDAD -->
+<!-- ============================================ -->
+<div class="slide divider">
+  <div class="section-num">01</div>
+  <h2>La Oportunidad</h2>
+  <p>Un mercado enorme, en crecimiento, sin dueño claro</p>
+</div>
+
+<!-- SLIDE: Mercado -->
+<div class="slide">
+  <h2 class="slide-title">España: el país europeo #1 con problemas de alopecia</h2>
+  <div class="subtitle">Y el mercado de tratamientos es 4× más grande que el de cirugía</div>
+  
+  <div class="stat-grid">
+    <div class="stat-card">
+      <div class="number">20M</div>
+      <div class="label">Españoles afectados<br>10M hombres + 9.6M mujeres</div>
+    </div>
+    <div class="stat-card">
+      <div class="number gold">€276M</div>
+      <div class="label">Mercado tratamientos<br>vs €63.8M cirugía (4:1)</div>
+    </div>
+    <div class="stat-card">
+      <div class="number green">+12.1%</div>
+      <div class="label">Crecimiento 2024<br>CAGR más alto de Europa</div>
+    </div>
+    <div class="stat-card">
+      <div class="number">&lt;6%</div>
+      <div class="label">Cuota máxima<br>Ningún player domina</div>
+    </div>
+  </div>
+  
+  <div class="two-col" style="margin-top: 20px;">
+    <div class="card card-accent">
+      <h3>🎯 La oportunidad clave</h3>
+      <p>El mercado de tratamientos capilares en España <strong>crece a doble dígito</strong>, ningún competidor tiene más del 6% de cuota, y <strong>no existe un player posicionado 100% en tratamientos con enfoque médico riguroso</strong>.</p>
+      <p style="margin-top: 12px;">El 70% de personas con caída de pelo <strong>no saben qué tipo de alopecia tienen</strong>. Hay una oportunidad educacional masiva.</p>
+    </div>
+    <div class="card card-blue">
+      <h3>💡 Por qué tratamientos (no cirugía)</h3>
+      <ul>
+        <li>Mercado 4× más grande que cirugía</li>
+        <li>Margen 90% (vs 40% en cirugía)</li>
+        <li>Modelo recurrente: LTV multi-año</li>
+        <li>Cross-sell natural a cirugía: 90% hombres jóvenes son operables</li>
+        <li>PMF validado: +88% crecimiento SIN marketing</li>
+      </ul>
+    </div>
+  </div>
+  
+  <div class="slide-logo">HOSPITAL CAPILAR</div>
+  <div class="slide-number">02</div>
+</div>
+
+<!-- SLIDE: Potencial -->
+<div class="slide">
+  <h2 class="slide-title">El potencial bottom-up: €1.6B — €3.6B</h2>
+  <div class="subtitle">Basado en población afectada × tasa de búsqueda activa × ARPU</div>
+  
+  <div class="two-col">
+    <div>
+      <table>
+        <tr><th>Segmento</th><th>2024</th><th>2030 (Proy.)</th><th>CAGR</th></tr>
+        <tr><td><strong>Tratamientos</strong></td><td>€276M</td><td>€370M</td><td>4-7%</td></tr>
+        <tr><td>Trasplante</td><td>€63.8M</td><td>€180M+</td><td>13.5%</td></tr>
+        <tr><td>Cuidado profesional</td><td>€1,705M</td><td>€2,520M</td><td>6.8%</td></tr>
+      </table>
+      
+      <div class="quote" style="margin-top: 24px;">
+        "El mercado está en fase de crecimiento sin player dominante. Los gaps son de ejecución, no de producto."
+        <div class="source">— Conclusión del análisis de mercado (43 fuentes, 9 competidores)</div>
+      </div>
+    </div>
+    <div>
+      <div class="card" style="background: linear-gradient(135deg, #F8FAFB, #EEF2F6);">
+        <h3>Cálculo bottom-up</h3>
+        <ul class="icon-list">
+          <li><span class="icon">👥</span> 20M personas afectadas en España</li>
+          <li><span class="icon">🔍</span> 10-15% buscan solución médica activa = 2-3M</li>
+          <li><span class="icon">💰</span> ARPU €820-1,200/año (bonos HC)</li>
+          <li><span class="icon">📊</span> <strong>TAM: €1.6B — €3.6B</strong></li>
+        </ul>
+        <p style="margin-top: 16px; font-size: 12px; color: var(--hc-gray);">Fuentes: Grand View Research, Mordor Intelligence, Stanpa, INE 2024</p>
+      </div>
+      
+      <div class="stat-grid" style="grid-template-columns: 1fr 1fr; margin-top: 16px;">
+        <div class="stat-card">
+          <div class="number" style="font-size: 28px;">25%</div>
+          <div class="label">Jóvenes 18-24 con caída activa</div>
+        </div>
+        <div class="stat-card">
+          <div class="number" style="font-size: 28px;">40%</div>
+          <div class="label">Mujeres con adelgazamiento</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="slide-logo">HOSPITAL CAPILAR</div>
+  <div class="slide-number">03</div>
+</div>
+
+<!-- ============================================ -->
+<!-- SECTION 2: DÓNDE ESTAMOS HOY -->
+<!-- ============================================ -->
+<div class="slide divider">
+  <div class="section-num">02</div>
+  <h2>Dónde Estamos Hoy</h2>
+  <p>El mejor producto del sector — con gaps de ejecución</p>
+</div>
+
+<!-- SLIDE: Fortalezas -->
+<div class="slide">
+  <h2 class="slide-title">Hospital Capilar: los mejores cimientos del sector</h2>
+  <div class="subtitle">PMF validado, reputación líder, márgenes excepcionales</div>
+  
+  <div class="stat-grid">
+    <div class="stat-card">
+      <div class="number green">4.8/5</div>
+      <div class="label">Trustpilot<br>(vs Insparya 3.8/5)</div>
+    </div>
+    <div class="stat-card">
+      <div class="number green">+88%</div>
+      <div class="label">Crecimiento tratamientos<br>sin marketing dedicado</div>
+    </div>
+    <div class="stat-card">
+      <div class="number green">90%</div>
+      <div class="label">Margen tratamientos<br>(vs 40% cirugía)</div>
+    </div>
+    <div class="stat-card">
+      <div class="number green">+4,000</div>
+      <div class="label">Pacientes<br>atendidos</div>
+    </div>
+  </div>
+  
+  <div class="three-col">
+    <div class="card card-green">
+      <h3>🏥 Enfoque médico genuino</h3>
+      <ul>
+        <li>Tricólogo médico en CADA consulta</li>
+        <li>Tricoscopía + analítica hormonal</li>
+        <li>Protocolos propios: CRT / HRT</li>
+        <li>Pauta anual (no sesiones mensuales)</li>
+        <li>Diagnóstico de causa, no síntomas</li>
+      </ul>
+    </div>
+    <div class="card card-green">
+      <h3>⭐ Reputación líder</h3>
+      <ul>
+        <li>Mejor Trustpilot del sector (4.8/5)</li>
+        <li>95% satisfacción en trasplantes</li>
+        <li>Transparencia radical en web</li>
+        <li>"Tratamientos NO hacen crecer pelo"</li>
+        <li>Profesionalismo y cercanía en reviews</li>
+      </ul>
+    </div>
+    <div class="card card-green">
+      <h3>📈 Modelo de negocio sólido</h3>
+      <ul>
+        <li>€3.5M inversión para expansión 9 clínicas</li>
+        <li>Cross-sell tratamiento → cirugía</li>
+        <li>152 tratamientos/mes (baseline orgánico)</li>
+        <li>17% referidos sin programa formal</li>
+        <li>Google convierte 5× mejor que Meta</li>
+      </ul>
+    </div>
+  </div>
+  
+  <div class="slide-logo">HOSPITAL CAPILAR</div>
+  <div class="slide-number">04</div>
+</div>
+
+<!-- SLIDE: Gaps -->
+<div class="slide">
+  <h2 class="slide-title">Los gaps: de ejecución, no de producto</h2>
+  <div class="subtitle">El producto está validado. Lo que falta es el sistema de captación</div>
+  
+  <div class="two-col">
+    <div>
+      <div class="card card-red" style="margin-bottom: 16px;">
+        <h3>🔴 Web y comunicación</h3>
+        <ul>
+          <li>Web 100% enfocada en cirugías</li>
+          <li>80% tráfico web = cirugías, 20% tratamientos</li>
+          <li>Sin landing page específica de tratamientos</li>
+          <li>Sin funnel dedicado (quiz → consulta → bono)</li>
+          <li>Contenido social 100% cirugía — 0% tratamientos</li>
+        </ul>
+      </div>
+      <div class="card card-red">
+        <h3>🔴 Operaciones</h3>
+        <ul>
+          <li>No-shows: 47% Madrid, 40% Murcia, 25% Pontevedra</li>
+          <li>Cero reviews específicas de tratamientos</li>
+          <li>Sin sistema de reviews instalado</li>
+          <li>Sin programa de referidos activo</li>
+          <li>Sin comercial dedicado a tratamientos</li>
+        </ul>
+      </div>
+    </div>
+    <div>
+      <div class="card card-orange" style="margin-bottom: 16px;">
+        <h3>⚠️ Contenido educacional</h3>
+        <ul>
+          <li>Falta contenido educativo de tratamientos</li>
+          <li>No están en TikTok (espacio en blanco)</li>
+          <li>Sin estrategia de influencers</li>
+          <li>70% del mercado no sabe qué le pasa → oportunidad gigante</li>
+        </ul>
+      </div>
+      <div class="card card-orange" style="margin-bottom: 16px;">
+        <h3>⚠️ Testimonios</h3>
+        <ul>
+          <li>Urgencia: casos de éxito de tratamientos (antes/después con consentimiento)</li>
+          <li>100% reviews actuales = cirugía</li>
+          <li>Sin social proof para el nuevo producto</li>
+        </ul>
+      </div>
+      
+      <div class="highlight-box">
+        <h3>💡 Conclusión</h3>
+        <p>HC tiene el <strong>mejor producto y reputación</strong> del sector. Lo que falta es el <strong>sistema para que la gente lo encuentre</strong>: landing, quiz, funnel, contenido, campañas y reviews de tratamientos.</p>
+      </div>
+    </div>
+  </div>
+  
+  <div class="slide-logo">HOSPITAL CAPILAR</div>
+  <div class="slide-number">05</div>
+</div>
+
+<!-- SLIDE: Competencia -->
+<div class="slide">
+  <h2 class="slide-title">Panorama competitivo: ninguno tiene el cuadrante de HC</h2>
+  <div class="subtitle">Todos compiten en cirugía o estética. Nadie lidera en tratamientos + enfoque médico riguroso</div>
+  
+  <div class="competitive-grid">
+    <div class="comp-card">
+      <h4>Insparya</h4>
+      <div class="comp-rev">€20.7M</div>
+      <div class="comp-detail">5 clínicas España, 10 int.<br>+170 anuncios Meta<br>Foco: 100% cirugía</div>
+      <div class="vuln">❌ "Te tratan como ganado"<br>Seguimiento nefasto</div>
+    </div>
+    <div class="comp-card">
+      <h4>Svenson</h4>
+      <div class="comp-rev">€17.4M</div>
+      <div class="comp-detail">31 clínicas (mix estética)<br>Presión agresiva 1ª visita<br>Concurso de acreedores</div>
+      <div class="vuln">❌ No son médicos<br>HC €820 vs Svenson €1,300-2,600</div>
+    </div>
+    <div class="comp-card">
+      <h4>Capilclinic</h4>
+      <div class="comp-rev">Low cost</div>
+      <div class="comp-detail">Fuerte en SEO<br>Tratamientos = add-ons<br>Sin protocolo médico propio</div>
+      <div class="vuln">❌ No compiten en<br>tratamientos serios</div>
+    </div>
+    <div class="comp-card">
+      <h4>Medical Hair</h4>
+      <div class="comp-rev">€70/sesión</div>
+      <div class="comp-detail">Modelo satélite<br>1,570 reviews (4.9/5)<br>Sin analítica hormonal</div>
+      <div class="vuln">❌ Reviews sospechosas<br>Baja personalización</div>
+    </div>
+    <div class="comp-card">
+      <h4>IMD</h4>
+      <div class="comp-rev">21 clínicas</div>
+      <div class="comp-detail">Foco mujeres/estética<br>Esteticistas = comerciales<br>Láser, vitaminas</div>
+      <div class="vuln">❌ No son médicos<br>Sin analítica hormonal</div>
+    </div>
+  </div>
+  
+  <div class="highlight-box">
+    <h3>🎯 La ventaja de Hospital Capilar</h3>
+    <p style="font-size: 18px; font-weight: 500; opacity: 1;">
+      <strong>Ningún competidor combina:</strong> Médicos reales + Tricoscopía + Analítica hormonal + Protocolos propios + Pauta anual + Transparencia radical + Mejor Trustpilot del sector.
+    </p>
+    <p style="margin-top: 12px;">Cómo ganarles: <strong>"Tratamientos primero, cirugía si hace falta"</strong> · <strong>"Médicos reales, no esteticistas"</strong> · <strong>"Causa vs síntoma"</strong> · <strong>Transparencia total en precios</strong></p>
+  </div>
+  
+  <div class="slide-logo">HOSPITAL CAPILAR</div>
+  <div class="slide-number">06</div>
+</div>
+
+<!-- ============================================ -->
+<!-- SECTION 3: LOS 6 NICHOS -->
+<!-- ============================================ -->
+<div class="slide divider">
+  <div class="section-num">03</div>
+  <h2>Los 6 Nichos</h2>
+  <p>A quiénes hablamos, por qué los elegimos, y qué les decimos</p>
+</div>
+
+<!-- SLIDE: Vista general nichos -->
+<div class="slide">
+  <h2 class="slide-title">Visión general: 6 nichos que cubren todo el funnel</h2>
+  <div class="subtitle">Cada nicho captura un momento diferente del journey del paciente</div>
+  
+  <table>
+    <tr>
+      <th style="width: 5%;">#</th>
+      <th style="width: 22%;">Nicho</th>
+      <th style="width: 20%;">Quién es</th>
+      <th style="width: 8%;">SAM</th>
+      <th style="width: 25%;">Por qué lo elegimos</th>
+      <th style="width: 10%;">Prioridad</th>
+      <th style="width: 10%;">Fase funnel</th>
+    </tr>
+    <tr>
+      <td>🪞 1</td>
+      <td><strong>El Espejo de Cada Mañana</strong></td>
+      <td>Jóvenes 20-28, alopecia temprana</td>
+      <td>~80K</td>
+      <td>82% de pacientes HC son hombres. GenZ proactivo, busca en TikTok. LTV multi-año (tratamiento → cirugía)</td>
+      <td><span class="badge badge-high">ALTA</span></td>
+      <td>Awareness</td>
+    </tr>
+    <tr>
+      <td>💊 2</td>
+      <td><strong>La Farmacia Sin Salida</strong></td>
+      <td>Usuarios OTC frustrados (1-3 años sin resultados)</td>
+      <td>~70K</td>
+      <td>400-500K usuarios minoxidil en España. Ciclo fallo 1-2 años → buscan médico. Intent altísimo</td>
+      <td><span class="badge badge-high">ALTA</span></td>
+      <td>Consideration</td>
+    </tr>
+    <tr>
+      <td>❓ 3</td>
+      <td><strong>¿Qué Me Pasa?</strong></td>
+      <td>Sin diagnóstico médico, no saben qué tienen</td>
+      <td>~150K</td>
+      <td>70% no saben qué tipo de alopecia tienen. Entry point perfecto: quiz → consulta → tratamiento</td>
+      <td><span class="badge badge-high">ALTA</span></td>
+      <td>Awareness</td>
+    </tr>
+    <tr>
+      <td>💸 4</td>
+      <td><strong>La Inversión Que Se Deshace</strong></td>
+      <td>Operados (Turquía/España) sin mantenimiento</td>
+      <td>~25K</td>
+      <td>10% de pacientes HC. 20K españoles/año en Turquía. Pelo nativo sigue cayendo. Sin seguimiento</td>
+      <td><span class="badge badge-medium">MEDIA</span></td>
+      <td>Consideration</td>
+    </tr>
+    <tr>
+      <td>🏪 5</td>
+      <td><strong>El Negocio, No El Paciente</strong></td>
+      <td>Insatisfechos de otras clínicas</td>
+      <td>~12K</td>
+      <td>Insparya 3.8/5. Presión comercial generalizada. HC = mejor reputación. Intent 100%</td>
+      <td><span class="badge badge-medium">MEDIA</span></td>
+      <td>Decision</td>
+    </tr>
+    <tr>
+      <td>👩 6</td>
+      <td><strong>"Es Normal, Ya Pasará"</strong></td>
+      <td>Mujeres con alopecia hormonal</td>
+      <td>~9.6M afectadas</td>
+      <td>18% pacientes HC. Equipo confirma: mercado "brutal" de fácil captación. Sin competidor segmentado</td>
+      <td><span class="badge badge-star">ESTRATÉGICO</span></td>
+      <td>Awareness</td>
+    </tr>
+  </table>
+  
+  <div class="slide-logo">HOSPITAL CAPILAR</div>
+  <div class="slide-number">07</div>
+</div>
+
+<!-- SLIDE: Nicho 1 detalle -->
+<div class="slide" style="padding-top: 40px; padding-bottom: 40px;">
+  <div class="niche-card" style="border-left: 5px solid var(--hc-blue);">
+    <div class="niche-header">
+      <div class="niche-emoji">🪞</div>
+      <div>
+        <div class="niche-title">Nicho #1: "El Espejo de Cada Mañana"</div>
+        <div class="niche-jtbd">Jóvenes 20-28 con alopecia temprana — el segmento estrella de HC</div>
+      </div>
+      <span class="badge badge-high" style="margin-left: auto;">PRIORIDAD ALTA</span>
+    </div>
+    
+    <div class="quote">
+      "Llevo un par de años sin intentar tener citas — en parte porque me da mucha vergüenza mi línea del pelo. Llevo gorra todos los días desde hace 3 años."
+      <div class="source">— r/dating_advice, 25M</div>
+    </div>
+    
+    <div class="niche-body">
+      <div class="niche-section">
+        <h4>📊 Por qué lo elegimos</h4>
+        <ul>
+          <li>82% de pacientes HC son hombres</li>
+          <li>25% de 18-24 ya tiene caída activa</li>
+          <li>GenZ busca en TikTok/Reddit antes que en médico</li>
+          <li>LTV multi-año: tratamiento crónico → cirugía futura</li>
+          <li>90% de hombres jóvenes en tratamiento = operables</li>
+          <li>La madre como influencer: recomienda/paga</li>
+        </ul>
+      </div>
+      <div class="niche-section">
+        <h4>💬 Messaging propuesto</h4>
+        <ul>
+          <li><strong>UVP:</strong> "3 años con gorra. Hoy me la quité."</li>
+          <li><strong>USP 1:</strong> "No es tu culpa. Pero sí es tu decisión."</li>
+          <li><strong>USP 2:</strong> "Aquí nadie va a venderte nada"</li>
+          <li><strong>USP 3:</strong> "Un médico de verdad, no un asesor capilar"</li>
+          <li><strong>Nuevo:</strong> "No te hagas cirugía todavía — primero hay que estabilizar"</li>
+        </ul>
+      </div>
+      <div class="niche-section">
+        <h4>📱 Canales y acciones</h4>
+        <ul>
+          <li><strong>TikTok/Reels</strong> — Video "3 años con gorra"</li>
+          <li><strong>Google Ads</strong> — "alopecia joven", CPC €1-3</li>
+          <li><strong>Reddit</strong> — r/tressless (500K+)</li>
+          <li><strong>Quiz online</strong> → Consulta diagnóstica</li>
+          <li>Contenido educativo: mitos, efectos secundarios, proceso real</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  
+  <div class="slide-logo">HOSPITAL CAPILAR</div>
+  <div class="slide-number">08</div>
+</div>
+
+<!-- SLIDE: Nicho 2 detalle -->
+<div class="slide" style="padding-top: 40px; padding-bottom: 40px;">
+  <div class="niche-card" style="border-left: 5px solid var(--hc-orange);">
+    <div class="niche-header">
+      <div class="niche-emoji">💊</div>
+      <div>
+        <div class="niche-title">Nicho #2: "La Farmacia Sin Salida"</div>
+        <div class="niche-jtbd">Usuarios OTC frustrados — 1-3 años con minoxidil/suplementos sin resultado</div>
+      </div>
+      <span class="badge badge-high" style="margin-left: auto;">PRIORIDAD ALTA</span>
+    </div>
+    
+    <div class="quote">
+      "Empecé con minoxidil y microneedling en enero 2024... en 3-4 meses noté mejoría... Ahora un año después, la caída ha continuado."
+      <div class="source">— u/Paul_iio, r/tressless</div>
+    </div>
+    
+    <div class="niche-body">
+      <div class="niche-section">
+        <h4>📊 Por qué lo elegimos</h4>
+        <ul>
+          <li>~400-500K usuarios minoxidil en España</li>
+          <li>Olistic: 700K+ clientes globales</li>
+          <li>Ciclo fallo 1-2 años → buscan médico</li>
+          <li>84% intentan auto-tratamiento antes de consultar</li>
+          <li>Momento clave: "deja de funcionar"</li>
+          <li>Intent de búsqueda altísimo</li>
+        </ul>
+      </div>
+      <div class="niche-section">
+        <h4>💬 Messaging propuesto</h4>
+        <ul>
+          <li><strong>UVP:</strong> "1.200€ en productos. 0 diagnósticos. Algo falla."</li>
+          <li><strong>USP 1:</strong> "No necesitas otro producto. Necesitas saber qué tienes."</li>
+          <li><strong>USP 2:</strong> "De 'a ver si funciona' a 'sé que funciona'"</li>
+          <li><strong>USP 3:</strong> "La escalera lógica: OTC → médico → protocolo"</li>
+          <li>Posicionar HC como paso natural post-OTC</li>
+        </ul>
+      </div>
+      <div class="niche-section">
+        <h4>📱 Canales y acciones</h4>
+        <ul>
+          <li><strong>Google Ads</strong> — "minoxidil no funciona" (intent 100%)</li>
+          <li><strong>SEO blog</strong> — "Por qué el minoxidil dejó de funcionarte"</li>
+          <li><strong>Reddit</strong> — r/tressless</li>
+          <li><strong>Retargeting</strong> — Usuarios DTC</li>
+          <li>Blog: "3 razones por las que tu minoxidil ya no funciona"</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  
+  <div class="slide-logo">HOSPITAL CAPILAR</div>
+  <div class="slide-number">09</div>
+</div>
+
+<!-- SLIDE: Nicho 3 detalle -->
+<div class="slide" style="padding-top: 40px; padding-bottom: 40px;">
+  <div class="niche-card" style="border-left: 5px solid var(--hc-purple);">
+    <div class="niche-header">
+      <div class="niche-emoji">❓</div>
+      <div>
+        <div class="niche-title">Nicho #3: "¿Qué Me Pasa?"</div>
+        <div class="niche-jtbd">Sin diagnóstico médico — no saben qué tipo de alopecia tienen</div>
+      </div>
+      <span class="badge badge-high" style="margin-left: auto;">PRIORIDAD ALTA</span>
+    </div>
+    
+    <div class="quote">
+      "70% de los españoles no saben qué es la alopecia areata."
+      <div class="source">— Pfizer España 2024</div>
+    </div>
+    
+    <div class="niche-body">
+      <div class="niche-section">
+        <h4>📊 Por qué lo elegimos</h4>
+        <ul>
+          <li>SAM ~150K — el nicho más grande</li>
+          <li>70% no saben qué tipo de alopecia tienen</li>
+          <li>Dermatólogo público: espera 3-6 meses</li>
+          <li>Entry point perfecto para el funnel</li>
+          <li>La mayoría buscan soluciones OTC primero</li>
+          <li>Quiz → consulta → tratamiento (conversión natural)</li>
+        </ul>
+      </div>
+      <div class="niche-section">
+        <h4>💬 Messaging propuesto</h4>
+        <ul>
+          <li><strong>UVP:</strong> "47M resultados en Google. Ninguno dice qué tienes tú."</li>
+          <li><strong>USP 1:</strong> "Tricoscopía + analítica, no un vistazo y 'ponte minoxidil'"</li>
+          <li><strong>USP 2:</strong> "¿6 meses de espera? Diagnóstico en 1 semana"</li>
+          <li><strong>USP 3:</strong> "Saber qué tienes. Luego tú decides."</li>
+          <li>Captar educando: cada alopecia es diferente</li>
+        </ul>
+      </div>
+      <div class="niche-section">
+        <h4>📱 Canales y acciones</h4>
+        <ul>
+          <li><strong>Quiz HC</strong> — Primer contacto, baja fricción</li>
+          <li><strong>Google Ads</strong> — "diagnóstico capilar", CPC €1-2</li>
+          <li><strong>SEO</strong> — "por qué se me cae el pelo"</li>
+          <li><strong>TikTok</strong> — Video "Google no es un médico"</li>
+          <li>Contenido educativo: tipos de alopecia explicados</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  
+  <div class="slide-logo">HOSPITAL CAPILAR</div>
+  <div class="slide-number">10</div>
+</div>
+
+<!-- SLIDE: Nicho 4 detalle -->
+<div class="slide" style="padding-top: 40px; padding-bottom: 40px;">
+  <div class="niche-card" style="border-left: 5px solid var(--hc-gold);">
+    <div class="niche-header">
+      <div class="niche-emoji">💸</div>
+      <div>
+        <div class="niche-title">Nicho #4: "La Inversión Que Se Deshace"</div>
+        <div class="niche-jtbd">Post-trasplante sin mantenimiento — la inversión se degrada</div>
+      </div>
+      <span class="badge badge-medium" style="margin-left: auto;">PRIORIDAD MEDIA</span>
+    </div>
+    
+    <div class="quote">
+      "Tomé una decisión impulsiva y estúpida de ir a una fábrica de pelo en Turquía."
+      <div class="source">— r/HairTransplants, "8 meses de arrepentimiento"</div>
+    </div>
+    
+    <div class="niche-body">
+      <div class="niche-section">
+        <h4>📊 Por qué lo elegimos</h4>
+        <ul>
+          <li>20K españoles/año operados en Turquía</li>
+          <li>~15K operados/año en España</li>
+          <li>10% de tratamientos HC = post-cirugía</li>
+          <li>Mayoría sin protocolo de mantenimiento</li>
+          <li>Pelo nativo sigue cayendo (nadie lo advierte)</li>
+          <li>Disposición a pagar demostrada (ya invirtieron)</li>
+        </ul>
+      </div>
+      <div class="niche-section">
+        <h4>💬 Messaging propuesto</h4>
+        <ul>
+          <li><strong>UVP:</strong> "Tu trasplante costó miles. ¿Quién cuida lo que queda?"</li>
+          <li><strong>USP 1:</strong> "El pelo trasplantado se queda. El resto no."</li>
+          <li><strong>USP 2:</strong> "Cirugía y tratamiento bajo el mismo techo"</li>
+          <li><strong>USP 3:</strong> "Proteger €3,000+ por €820/año"</li>
+          <li>Mensaje: completar la inversión, no empezar de nuevo</li>
+        </ul>
+      </div>
+      <div class="niche-section">
+        <h4>📱 Canales y acciones</h4>
+        <ul>
+          <li><strong>Google Ads</strong> — "mantenimiento post injerto"</li>
+          <li><strong>YouTube</strong> — Educativo sobre pelo nativo</li>
+          <li><strong>Facebook grupos</strong> — Comunidades trasplante</li>
+          <li><strong>Video #4</strong> — "Lo que no me dijeron en Turquía"</li>
+          <li>Landing específica post-cirugía</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  
+  <div class="slide-logo">HOSPITAL CAPILAR</div>
+  <div class="slide-number">11</div>
+</div>
+
+<!-- SLIDE: Nicho 5 detalle -->
+<div class="slide" style="padding-top: 40px; padding-bottom: 40px;">
+  <div class="niche-card" style="border-left: 5px solid var(--hc-red);">
+    <div class="niche-header">
+      <div class="niche-emoji">🏪</div>
+      <div>
+        <div class="niche-title">Nicho #5: "El Negocio, No El Paciente"</div>
+        <div class="niche-jtbd">Insatisfechos de otras clínicas — buscan segunda opinión de verdad</div>
+      </div>
+      <span class="badge badge-medium" style="margin-left: auto;">PRIORIDAD MEDIA</span>
+    </div>
+    
+    <div class="quote">
+      "Todo es marketing. Decepcionante... revisiones impersonales, cada vez con un médic@ diferente... un completo desastre... después de pagar 5.000 euros."
+      <div class="source">— Trustpilot Insparya</div>
+    </div>
+    
+    <div class="niche-body">
+      <div class="niche-section">
+        <h4>📊 Por qué lo elegimos</h4>
+        <ul>
+          <li>Insparya 3.8/5 Trustpilot — quejas sistemáticas</li>
+          <li>HC ya recibe insatisfechos por 2 motivos: desinformación y modelo mensual</li>
+          <li>Pacientes ya en el mercado = intent 100%</li>
+          <li>Disposición a pagar demostrada</li>
+          <li>Valoran que HC no habla directo de injerto</li>
+          <li>Svenson: esteticistas, no médicos</li>
+        </ul>
+      </div>
+      <div class="niche-section">
+        <h4>💬 Messaging propuesto</h4>
+        <ul>
+          <li><strong>UVP:</strong> "En tu anterior clínica te atendió un vendedor. Aquí, un médico."</li>
+          <li><strong>USP 1:</strong> "Aquí te atiende un médico. Siempre."</li>
+          <li><strong>USP 2:</strong> "Si con tratamiento basta, te lo decimos"</li>
+          <li><strong>USP 3:</strong> "Mismo médico. Siempre."</li>
+          <li><strong>USP 4:</strong> "4.8/5 — Lee por qué cambiaron"</li>
+        </ul>
+      </div>
+      <div class="niche-section">
+        <h4>📱 Canales y acciones</h4>
+        <ul>
+          <li><strong>Google</strong> — "opiniones Insparya/Svenson"</li>
+          <li><strong>SEO comparativo</strong> — Páginas vs.</li>
+          <li><strong>Trustpilot</strong> — Reviews estratégicas</li>
+          <li><strong>Retargeting</strong> — Visitantes webs competidores</li>
+          <li>Video #5: "5.000€ y un vendedor"</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  
+  <div class="slide-logo">HOSPITAL CAPILAR</div>
+  <div class="slide-number">12</div>
+</div>
+
+<!-- SLIDE: Nicho 6 detalle -->
+<div class="slide" style="padding-top: 40px; padding-bottom: 40px;">
+  <div class="niche-card" style="border-left: 5px solid #E91E90;">
+    <div class="niche-header">
+      <div class="niche-emoji">👩</div>
+      <div>
+        <div class="niche-title">Nicho #6: "Es Normal, Ya Pasará"</div>
+        <div class="niche-jtbd">Mujeres con alopecia hormonal — el mercado silenciado</div>
+      </div>
+      <span class="badge badge-star" style="margin-left: auto;">ESTRATÉGICO</span>
+    </div>
+    
+    <div class="quote">
+      "Es normal después del parto, ya pasará" — le dijo su ginecóloga. Han pasado 14 meses. Y no ha pasado.
+      <div class="source">— Síntesis r/FemaleHairLoss</div>
+    </div>
+    
+    <div class="niche-body">
+      <div class="niche-section">
+        <h4>📊 Por qué lo elegimos</h4>
+        <ul>
+          <li>9.6M mujeres afectadas en España</li>
+          <li>40% de mujeres con adelgazamiento capilar</li>
+          <li>18% de pacientes HC ya son mujeres</li>
+          <li>Equipo HC confirma: "mercado brutal, fácil captación"</li>
+          <li>Ningún competidor segmenta para mujeres</li>
+          <li>75% va primero a atención primaria (sin diagnóstico)</li>
+        </ul>
+      </div>
+      <div class="niche-section">
+        <h4>💬 Messaging propuesto</h4>
+        <ul>
+          <li><strong>UVP:</strong> "14 meses después del parto y sigue cayendo. Eso no es 'normal'."</li>
+          <li><strong>USP 1:</strong> "No es estrés — es un diagnóstico que nadie te ha hecho"</li>
+          <li><strong>USP 2:</strong> "Si no necesitas tratamiento, te lo decimos"</li>
+          <li><strong>USP 3:</strong> "Postparto, menopausia o SOP — no es lo mismo"</li>
+          <li>Quiz segmentado por sexo desde pregunta 1</li>
+        </ul>
+      </div>
+      <div class="niche-section">
+        <h4>📱 Canales y sub-perfiles</h4>
+        <ul>
+          <li><strong>Sub-perfiles:</strong> Postparto, menopausia, perimenopausia, frontal fibrosante, alopecias raras</li>
+          <li><strong>IG/TikTok</strong> — "La almohada" (video #6)</li>
+          <li><strong>Google Ads</strong> — "caída pelo mujer postparto"</li>
+          <li><strong>Quiz</strong> — Flujo femenino (ciclo, parto, SOP)</li>
+          <li>Algunas no tratables pero SÍ diagnosticables → quiz filtra</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  
+  <div class="slide-logo">HOSPITAL CAPILAR</div>
+  <div class="slide-number">13</div>
+</div>
+
+<!-- ============================================ -->
+<!-- SECTION 4: POSICIONAMIENTO -->
+<!-- ============================================ -->
+<div class="slide divider">
+  <div class="section-num">04</div>
+  <h2>Posicionamiento</h2>
+  <p>El territorio que nadie ocupa — y que HC va a conquistar</p>
+</div>
+
+<!-- SLIDE: UVP y diferenciación -->
+<div class="slide">
+  <h2 class="slide-title">UVP: la clínica de la verdad</h2>
+  <div class="subtitle">Todo el posicionamiento gira alrededor de un concepto: autoridad médica + transparencia radical</div>
+  
+  <div class="cta-box" style="background: linear-gradient(135deg, var(--hc-blue) 0%, var(--hc-dark) 100%); color: white; margin-bottom: 30px;">
+    <h3 style="font-size: 24px; font-weight: 400; opacity: 0.7; margin-bottom: 8px;">UVP Global</h3>
+    <p style="font-size: 26px; font-weight: 700; max-width: 700px; opacity: 1;">
+      "La clínica donde un médico te dice la verdad sobre tu pelo — sin venderte nada."
+    </p>
+  </div>
+  
+  <div class="two-col">
+    <div>
+      <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 16px; color: var(--hc-blue);">4 pilares de diferenciación</h3>
+      
+      <div class="card card-accent" style="margin-bottom: 12px;">
+        <h3 style="font-size: 15px;">🩺 Autoridad médica</h3>
+        <p>"Médicos reales, no esteticistas" — Tricólogo en cada consulta vs comerciales con bata</p>
+      </div>
+      <div class="card card-accent" style="margin-bottom: 12px;">
+        <h3 style="font-size: 15px;">🔬 Precisión diagnóstica</h3>
+        <p>"Causa vs síntoma" — Tricoscopía + analítica hormonal = gold standard. No "ponte minoxidil"</p>
+      </div>
+      <div class="card card-accent" style="margin-bottom: 12px;">
+        <h3 style="font-size: 15px;">🪟 Transparencia radical</h3>
+        <p>"Tratamientos NO hacen crecer pelo nuevo" — La única clínica que publica sus limitaciones</p>
+      </div>
+      <div class="card card-accent">
+        <h3 style="font-size: 15px;">💰 Pricing claro</h3>
+        <p>"Tratamientos primero, cirugía si hace falta" — Sin presión, sin packs sorpresa</p>
+      </div>
+    </div>
+    <div>
+      <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 16px; color: var(--hc-blue);">Mensajes core (confirmados en reunión)</h3>
+      
+      <div class="quote" style="margin-bottom: 12px;">
+        "Tratamientos primero, cirugía si hace falta"
+        <div class="source">Invierte el paradigma del sector: cirugía como último recurso, no como primera venta</div>
+      </div>
+      <div class="quote" style="margin-bottom: 12px;">
+        "Médicos reales, no esteticistas"
+        <div class="source">Directo contra Svenson (esteticistas), IMD (no médicos), Medical Hair (sin analítica)</div>
+      </div>
+      <div class="quote" style="margin-bottom: 12px;">
+        "Sin analítica hormonal no se puede saber qué necesitas"
+        <div class="source">Posiciona el diagnóstico como requisito previo — invalida todo lo que vino antes</div>
+      </div>
+      <div class="quote">
+        "Transparencia total: precios, procesos, paso a paso"
+        <div class="source">Contra Insparya ("presión para firmar hoy") y sector en general</div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="slide-logo">HOSPITAL CAPILAR</div>
+  <div class="slide-number">14</div>
+</div>
+
+<!-- SLIDE: Consideraciones legales -->
+<div class="slide">
+  <h2 class="slide-title">Marco legal: Ley SARA — qué podemos y qué no</h2>
+  <div class="subtitle">Todo el messaging está diseñado para cumplir con la regulación vigente</div>
+  
+  <div class="two-col">
+    <div class="card card-red">
+      <h3>❌ Prohibido</h3>
+      <ul>
+        <li>Garantizar resultados ("recuperarás tu pelo")</li>
+        <li>Mencionar fármacos directamente (PRP, dutasteride, finasteride)</li>
+        <li>Antes/después sin consentimiento expreso + disclaimer</li>
+        <li>Presión con descuentos "solo hoy" o urgencia artificial</li>
+        <li>Influencers haciendo claims de salud (draft 2024)</li>
+        <li>Palabra "hospital" en ciertos contextos de Google Ads</li>
+      </ul>
+    </div>
+    <div class="card card-green">
+      <h3>✅ Permitido</h3>
+      <ul>
+        <li><strong>CRT / HRT</strong> — Protocolos propios (naming que elude restricciones)</li>
+        <li>"Diagnóstico incluye tricoscopía + analítica hormonal"</li>
+        <li>Reviews y satisfacción en Trustpilot</li>
+        <li>Contenido educativo sobre alopecia</li>
+        <li>"Procedimiento realizado por médico"</li>
+        <li>Precio claro del bono diagnóstico</li>
+        <li>FAQ honestas sobre limitaciones del tratamiento</li>
+      </ul>
+    </div>
+  </div>
+  
+  <div class="highlight-box" style="margin-top: 20px;">
+    <h3>🛡️ HC gana cuando la regulación se endurece</h3>
+    <p>Los protocolos propios (CRT/HRT) hacen que HC sea inmune a restricciones sobre nombres de fármacos. La transparencia radical ya cumple con lo que la regulación exige. <strong>Cuando la regulación se endurece, los competidores ajustan; HC ya está preparado.</strong></p>
+  </div>
+  
+  <div class="slide-logo">HOSPITAL CAPILAR</div>
+  <div class="slide-number">15</div>
+</div>
+
+<!-- ============================================ -->
+<!-- SECTION 5: PROPUESTA -->
+<!-- ============================================ -->
+<div class="slide divider">
+  <div class="section-num">05</div>
+  <h2>La Propuesta</h2>
+  <p>Estrategias ofensivas, defensivas y el plan de acción</p>
+</div>
+
+<!-- SLIDE: Estrategia ofensiva -->
+<div class="slide">
+  <h2 class="slide-title">Estrategias priorizadas por impacto (ICE)</h2>
+  <div class="subtitle">Ordenadas por Impacto × Confianza × Facilidad de ejecución</div>
+  
+  <table>
+    <tr>
+      <th>Rank</th>
+      <th>Estrategia</th>
+      <th>Tipo</th>
+      <th>ICE</th>
+      <th>Primera acción</th>
+      <th>Resultado esperado</th>
+    </tr>
+    <tr>
+      <td><strong>1</strong></td>
+      <td><strong>Treatment-First Positioning</strong><br>Conquistar cuadrante vacío</td>
+      <td><span class="badge badge-high">Ofensiva</span></td>
+      <td><strong>8.7</strong></td>
+      <td>Landing /tratamientos con pricing + quiz</td>
+      <td>Web refleja nuevo posicionamiento</td>
+    </tr>
+    <tr>
+      <td><strong>2</strong></td>
+      <td><strong>Funnel de Tratamientos</strong><br>Quiz → Consulta → Bono</td>
+      <td><span class="badge badge-priority">Transform.</span></td>
+      <td><strong>8.3</strong></td>
+      <td>Quiz MVP + landing + paid piloto</td>
+      <td>+€50K/mes facturación incremental</td>
+    </tr>
+    <tr>
+      <td><strong>3</strong></td>
+      <td><strong>Reviews de Tratamientos</strong><br>Social proof específico</td>
+      <td><span class="badge badge-priority">Transform.</span></td>
+      <td><strong>8.3</strong></td>
+      <td>Lista 30 pacientes + solicitud reviews</td>
+      <td>50+ reviews en 6 meses</td>
+    </tr>
+    <tr>
+      <td><strong>4</strong></td>
+      <td><strong>Digital Capture Jóvenes</strong><br>TikTok + Reels educativo</td>
+      <td><span class="badge badge-high">Ofensiva</span></td>
+      <td><strong>8.0</strong></td>
+      <td>Grabar 20 videos cortos</td>
+      <td>50-100 leads/mes en 6 meses</td>
+    </tr>
+    <tr>
+      <td><strong>5</strong></td>
+      <td><strong>Contenido Social 50/50</strong><br>De 100% cirugía a 50% tratamientos</td>
+      <td><span class="badge badge-priority">Transform.</span></td>
+      <td><strong>8.0</strong></td>
+      <td>Calendario editorial 12 posts/mes</td>
+      <td>100K+ reach/mes en 6 meses</td>
+    </tr>
+    <tr>
+      <td><strong>6</strong></td>
+      <td><strong>Medical Authority Shield</strong><br>Compliance como ventaja competitiva</td>
+      <td><span class="badge badge-medium">Defensiva</span></td>
+      <td><strong>8.0</strong></td>
+      <td>Auditoría compliance + guía regulatoria</td>
+      <td>Continuidad ads sin interrupciones</td>
+    </tr>
+  </table>
+  
+  <div class="slide-logo">HOSPITAL CAPILAR</div>
+  <div class="slide-number">16</div>
+</div>
+
+<!-- SLIDE: Modelo de consulta / pricing -->
+<div class="slide">
+  <h2 class="slide-title">Modelo de consulta: testear para optimizar</h2>
+  <div class="subtitle">La decisión: no elegir un precio, sino testear múltiples caminos en paralelo</div>
+  
+  <div class="two-col">
+    <div>
+      <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 16px; color: var(--hc-blue);">Flujos en test simultáneo</h3>
+      
+      <div class="card" style="margin-bottom: 12px; border-left: 4px solid #4CAF50;">
+        <h3 style="font-size: 15px;">🅰️ Quiz corto sin pago</h3>
+        <p>4-5 preguntas → contacto asesor → agenda consulta gratuita. Máxima conversión top-funnel. Riesgo: no-shows altos.</p>
+      </div>
+      <div class="card" style="margin-bottom: 12px; border-left: 4px solid var(--hc-orange);">
+        <h3 style="font-size: 15px;">🅱️ Quiz + pago variable</h3>
+        <p>Quiz → resultado → pago (€25 / €50 / €100 / €195). Test de price sensitivity. Filtra curiosos.</p>
+      </div>
+      <div class="card" style="border-left: 4px solid var(--hc-purple);">
+        <h3 style="font-size: 15px;">🅲 Quiz largo sin pago</h3>
+        <p>10+ preguntas de calificación → solo los que completan van a consulta. Filtra por compromiso, no por precio.</p>
+      </div>
+    </div>
+    <div>
+      <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 16px; color: var(--hc-blue);">Benchmarks y contexto</h3>
+      
+      <table>
+        <tr><th>Analítica hormonal</th><th>Precio</th></tr>
+        <tr><td>Eurofins (alopecia)</td><td>€229</td></tr>
+        <tr><td>Otros laboratorios (mujer)</td><td>€289</td></tr>
+        <tr><td>Biolabs (hormonal básico)</td><td>€35</td></tr>
+        <tr><td><strong>HC completo</strong></td><td><strong>€195</strong></td></tr>
+      </table>
+      
+      <div class="highlight-box" style="margin-top: 16px;">
+        <h3>📊 Lo que mediremos</h3>
+        <p>• Leads generados por flujo<br>• Tasa de confirmación (no-show)<br>• Conversión a bono de tratamiento<br>• Coste por lead cualificado<br>• Revenue por flujo</p>
+      </div>
+      
+      <p style="font-size: 13px; color: var(--hc-gray); margin-top: 12px;">
+        <strong>Directriz HC:</strong> "Cuestionar todas las suposiciones" — testear en paralelo, decidir con datos reales, no con intuición.
+      </p>
+    </div>
+  </div>
+  
+  <div class="slide-logo">HOSPITAL CAPILAR</div>
+  <div class="slide-number">17</div>
+</div>
+
+<!-- SLIDE: Contenido por nicho -->
+<div class="slide">
+  <h2 class="slide-title">6 videos cortos — 1 por nicho</h2>
+  <div class="subtitle">Patrón: gancho visceral (0-3s) → historia → experiencia HC → resultado creíble → CTA</div>
+  
+  <div class="three-col">
+    <div class="card">
+      <h3>🪞 #1 "3 años con gorra"</h3>
+      <p><strong>Formato:</strong> Testimonio a cámara — chico joven sin gorra</p>
+      <p style="margin-top: 8px;"><strong>Gancho:</strong> "Llevo 3 años sin quitarme la gorra. Ni en fotos, ni en citas."</p>
+      <p style="margin-top: 8px;"><strong>Giro:</strong> Hoy me la quité.</p>
+      <p style="margin-top: 8px; font-size: 12px; color: var(--hc-gray);">Target: TikTok/Reels, hombres 20-28</p>
+    </div>
+    <div class="card">
+      <h3>💊 #2 "1.200€ tirados al baño"</h3>
+      <p><strong>Formato:</strong> POV baño — planos de productos</p>
+      <p style="margin-top: 8px;"><strong>Gancho:</strong> Calculadora: "1.247€. Eso llevo gastado en cosas que no funcionan."</p>
+      <p style="margin-top: 8px;"><strong>Giro:</strong> Un plan vs otro bote.</p>
+      <p style="margin-top: 8px; font-size: 12px; color: var(--hc-gray);">Target: IG Reels, 25-35</p>
+    </div>
+    <div class="card">
+      <h3>❓ #3 "Google no es un médico"</h3>
+      <p><strong>Formato:</strong> Screen recording móvil → clínica</p>
+      <p style="margin-top: 8px;"><strong>Gancho:</strong> "47M resultados. Ninguno te dice qué tienes tú."</p>
+      <p style="margin-top: 8px;"><strong>Giro:</strong> Dejé de buscar. Ahora tengo respuestas.</p>
+      <p style="margin-top: 8px; font-size: 12px; color: var(--hc-gray);">CTA: Quiz online</p>
+    </div>
+    <div class="card">
+      <h3>💸 #4 "Lo que no me dijeron en Turquía"</h3>
+      <p><strong>Formato:</strong> Educativo visual — plano cenital cabeza</p>
+      <p style="margin-top: 8px;"><strong>Gancho:</strong> "3.500€. Y nadie me dijo esto."</p>
+      <p style="margin-top: 8px;"><strong>Giro:</strong> El trasplante fue la mitad. Falta la otra.</p>
+      <p style="margin-top: 8px; font-size: 12px; color: var(--hc-gray);">Target: YouTube, 30-45</p>
+    </div>
+    <div class="card">
+      <h3>🏪 #5 "5.000€ y un vendedor"</h3>
+      <p><strong>Formato:</strong> Storytime confesional a cámara</p>
+      <p style="margin-top: 8px;"><strong>Gancho:</strong> "Pagué 5.000€. La primera persona no era médico."</p>
+      <p style="margin-top: 8px;"><strong>Giro:</strong> Cambiar de clínica fue la mejor inversión.</p>
+      <p style="margin-top: 8px; font-size: 12px; color: var(--hc-gray);">Target: IG/TikTok, 30-40</p>
+    </div>
+    <div class="card">
+      <h3>👩 #6 "Es normal, ya pasará"</h3>
+      <p><strong>Formato:</strong> Voz en off femenina — baño, almohada</p>
+      <p style="margin-top: 8px;"><strong>Gancho:</strong> "Cada mañana cuento los pelos de la almohada."</p>
+      <p style="margin-top: 8px;"><strong>Giro:</strong> No era "solo postparto". Necesitaba diagnóstico.</p>
+      <p style="margin-top: 8px; font-size: 12px; color: var(--hc-gray);">Target: IG, mujeres 30-55</p>
+    </div>
+  </div>
+  
+  <p style="margin-top: 16px; font-size: 13px; color: var(--hc-gray);">
+    ⚠️ Todos los videos siguen restricciones Ley SARA: sin nombres de fármacos, sin competidores, sin garantías de resultado. El tricoscopio aparece en los 6 como recurso visual de marca. Testimonios reales o basados en casos reales.
+  </p>
+  
+  <div class="slide-logo">HOSPITAL CAPILAR</div>
+  <div class="slide-number">18</div>
+</div>
+
+<!-- ============================================ -->
+<!-- SECTION 6: PRÓXIMOS PASOS -->
+<!-- ============================================ -->
+<div class="slide divider">
+  <div class="section-num">06</div>
+  <h2>Próximos Pasos</h2>
+  <p>Validar flujos → Primeros tests → Medir → Iterar</p>
+</div>
+
+<!-- SLIDE: Timeline -->
+<div class="slide">
+  <h2 class="slide-title">Timeline: de aquí al lanzamiento</h2>
+  <div class="subtitle">Velocidad al mercado es crítica — el cuadrante está vacío, pero la competencia puede pivotar</div>
+  
+  <div class="two-col">
+    <div>
+      <div class="timeline">
+        <div class="timeline-item active">
+          <div class="timeline-date">Viernes 14 Marzo — Hoy</div>
+          <div class="timeline-title">📋 Validar nichos y estrategia</div>
+          <div class="timeline-desc">Alinear equipo HC en los 6 nichos, mensajes clave y prioridades. Directora médica valida preguntas quiz.</div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-date">Semana 17-21 Marzo</div>
+          <div class="timeline-title">🔧 Construir flujos</div>
+          <div class="timeline-desc">Noemí onboarding GHL. Quiz MVP (3 flujos). Landing tratamientos. Integración Stripe + Koibox. Formación equipo comercial.</div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-date">Semana 24-28 Marzo — Lanzamiento</div>
+          <div class="timeline-title">🚀 Primeros tests de campaña</div>
+          <div class="timeline-desc">Meta Ads piloto (2-3 nichos top). Google Ads keywords tratamientos. Quiz live con tracking completo. Testing Meta/Google/SEO.</div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-date">Abril — Mes 1 post-lanzamiento</div>
+          <div class="timeline-title">📊 Medir y optimizar</div>
+          <div class="timeline-desc">Identificar nicho ganador. Medir: leads, confirmaciones, no-shows, conversiones, conversiones a cirugía. Encontrar "happy path" óptimo.</div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-date">Mayo en adelante</div>
+          <div class="timeline-title">📈 Escalar lo que funciona</div>
+          <div class="timeline-desc">Duplicar presupuesto en nicho ganador. Lanzar campañas completas. Escalar a otras clínicas. Activar referidos.</div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="card card-accent" style="margin-bottom: 16px;">
+        <h3>🎯 Lo próximo: validar flujos</h3>
+        <ul>
+          <li><strong>Quiz 3 flujos</strong> — Corto sin pago / con pago variable / largo sin pago</li>
+          <li><strong>Landing tratamientos</strong> — Messaging ECP #1 + #3 (los más grandes)</li>
+          <li><strong>Flujo femenino</strong> — Quiz segmentado (postparto, menopausia, SOP)</li>
+          <li><strong>Integración Stripe</strong> — Producto bono diagnóstico en tienda</li>
+          <li><strong>Secuencia anti no-shows</strong> — Email + SMS + WhatsApp pre-consulta</li>
+        </ul>
+      </div>
+      
+      <div class="card card-blue" style="margin-bottom: 16px;">
+        <h3>🧪 Primeros tests de campaña</h3>
+        <ul>
+          <li><strong>Meta Ads:</strong> 2-3 creatividades por nicho top (1+2+3)</li>
+          <li><strong>Google Ads:</strong> Keywords intent alto (diagnóstico, minoxidil no funciona)</li>
+          <li><strong>SEO:</strong> 3 artículos tratamientos (keywords confirmados)</li>
+          <li><strong>Budget test:</strong> €5-10K primer mes, split por nicho</li>
+          <li><strong>KPIs:</strong> CPL, tasa confirmación, conversión a bono</li>
+        </ul>
+      </div>
+      
+      <div class="card card-green">
+        <h3>📏 Lo que mediremos</h3>
+        <ul>
+          <li>Leads por nicho y por canal</li>
+          <li>Confirmaciones vs no-shows (por flujo de quiz)</li>
+          <li>Conversiones a bono de tratamiento</li>
+          <li>Conversiones a cirugía (cross-sell)</li>
+          <li>Revenue por nicho → "happy path" óptimo</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  
+  <div class="slide-logo">HOSPITAL CAPILAR</div>
+  <div class="slide-number">19</div>
+</div>
+
+<!-- SLIDE: Acciones inmediatas -->
+<div class="slide">
+  <h2 class="slide-title">Acciones antes del 24 de marzo</h2>
+  <div class="subtitle">Quién hace qué para llegar al lanzamiento</div>
+  
+  <table>
+    <tr>
+      <th>Acción</th>
+      <th>Responsable</th>
+      <th>Deadline</th>
+      <th>Dependencia</th>
+    </tr>
+    <tr>
+      <td><strong>Validar preguntas del quiz</strong> — versión corta (4-5 preguntas)</td>
+      <td>Directora médica HC</td>
+      <td>14 Marzo</td>
+      <td>—</td>
+    </tr>
+    <tr>
+      <td><strong>Onboarding en GHL</strong></td>
+      <td>Noemí (HC)</td>
+      <td>14 Marzo</td>
+      <td>—</td>
+    </tr>
+    <tr>
+      <td><strong>Feedback documento estrategia</strong></td>
+      <td>Todo el equipo HC</td>
+      <td>14 Marzo</td>
+      <td>—</td>
+    </tr>
+    <tr>
+      <td><strong>Construir quiz MVP</strong> (3 flujos en paralelo)</td>
+      <td>Ramiro (Growth4U / GHL)</td>
+      <td>21 Marzo</td>
+      <td>Preguntas validadas por médica</td>
+    </tr>
+    <tr>
+      <td><strong>Landing page tratamientos</strong></td>
+      <td>Growth4U + HC Marketing</td>
+      <td>21 Marzo</td>
+      <td>Messaging aprobado</td>
+    </tr>
+    <tr>
+      <td><strong>Producto Stripe + integración Koibox</strong></td>
+      <td>IT (HC)</td>
+      <td>21 Marzo</td>
+      <td>Pricing confirmado para test</td>
+    </tr>
+    <tr>
+      <td><strong>Formación equipo comercial</strong></td>
+      <td>Dirección HC</td>
+      <td>24 Marzo</td>
+      <td>Messaging y flujos definidos</td>
+    </tr>
+    <tr>
+      <td><strong>Solicitar 30 reviews de tratamientos</strong></td>
+      <td>HC Comercial (asesores)</td>
+      <td>21 Marzo</td>
+      <td>—</td>
+    </tr>
+    <tr>
+      <td><strong>Validar landings y quiz completo</strong></td>
+      <td>Growth4U + HC</td>
+      <td>24 Marzo</td>
+      <td>Todo lo anterior</td>
+    </tr>
+    <tr>
+      <td><strong>Testing tracking (Meta/Google/SEO)</strong></td>
+      <td>Miguel Ángel (HC SEM)</td>
+      <td>24 Marzo</td>
+      <td>Landing live</td>
+    </tr>
+  </table>
+  
+  <div class="highlight-box" style="margin-top: 20px;">
+    <h3>⚡ Recordatorio clave</h3>
+    <p>La velocidad al mercado es crítica. El cuadrante de tratamientos médicos está vacío — pero Insparya (€20.7M facturación + €2M I+D/año) puede pivotar. <strong>Cada semana que pasa sin lanzar es una semana que la competencia puede usar para cerrar la ventana.</strong></p>
+  </div>
+  
+  <div class="slide-logo">HOSPITAL CAPILAR</div>
+  <div class="slide-number">20</div>
+</div>
+
+<!-- SLIDE: Cierre -->
+<div class="slide cover" style="text-align: center; justify-content: center; align-items: center;">
+  <div class="tag">Resumen ejecutivo</div>
+  <h1 style="font-size: 36px; max-width: 700px; margin-bottom: 40px;">HC tiene el mejor producto del sector.<br>Lo que falta es el sistema para que la gente lo encuentre.</h1>
+  
+  <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; max-width: 700px; margin-bottom: 40px;">
+    <div style="text-align: center;">
+      <div style="font-size: 48px; font-weight: 900; color: var(--hc-gold);">6</div>
+      <div style="font-size: 14px; opacity: 0.7;">Nichos definidos<br>con messaging</div>
+    </div>
+    <div style="text-align: center;">
+      <div style="font-size: 48px; font-weight: 900; color: var(--hc-gold);">14</div>
+      <div style="font-size: 14px; opacity: 0.7;">Estrategias<br>priorizadas (TOWS)</div>
+    </div>
+    <div style="text-align: center;">
+      <div style="font-size: 48px; font-weight: 900; color: var(--hc-gold);">24/03</div>
+      <div style="font-size: 14px; opacity: 0.7;">Lanzamiento<br>primeros tests</div>
+    </div>
+  </div>
+  
+  <div style="max-width: 500px; text-align: left; margin-top: 20px;">
+    <p style="font-size: 16px; opacity: 0.7; line-height: 1.8;">
+      <strong style="opacity: 1;">Próximo paso inmediato:</strong><br>
+      ① Validar flujos de quiz (3 variantes)<br>
+      ② Construir landing + integrar Stripe/Koibox<br>
+      ③ Primeros tests de campaña por nicho<br>
+      ④ Medir, encontrar el "happy path", escalar
+    </p>
+  </div>
+  
+  <div style="margin-top: 40px; font-size: 13px; opacity: 0.4;">
+    Hospital Capilar × Growth4U — Confidencial — Marzo 2026
+  </div>
+</div>
+
+</body>
+</html>

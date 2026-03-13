@@ -9,6 +9,8 @@
 > Cambios v2.3: ECP #6 Mujeres con problemas hormonales añadido (Philippe). Nota quiz diagnóstico. 6 ECPs totales.
 > Cambios v2.4: Pain clusters v2 integrados (nombres JTBD + voces reales). Sección Speed Videos con 6 guiones (1 por ECP, incluye mujeres). Storytelling desarrollado.
 > Cambios v2.5: ECP #6 ampliado — sub-perfiles mujeres (frontal fibrosante, alopecias raras, no tratables pero diagnosticables). Reunión HC 10/03/2026.
+> Cambios v2.6: Datos HC 2025 integrados — 82%/18% split género, jóvenes 23-24 tendencia, post-Turquía 10%, perfiles mantenimiento (infiltrados +45, padres 30-45), mujeres segmentadas por momento vital (efluvio telógeno, perimenopausia, envejecimiento capilar).
+> Cambios v2.7: Corrección competidores — Insparya y Capiclinic SÍ tienen tratamientos (oral, plasma, mesoterapia). HC no es único con tratamientos, sino único con enfoque médico riguroso + pauta anual + treatment-first. Restricción SEO: home = injerto, tratamientos en landing separada. ECP #5 enriquecido con motivos reales insatisfacción.
 
 ---
 
@@ -86,6 +88,7 @@
 
 ### Contexto
 - 30% hombres <30 con alopecia androgenética en España | SAM: ~80.000
+- **Dato HC 2025: cada vez más jóvenes solicitan información, 23-24 años con grados tempranos** (tendencia creciente confirmada)
 - 96% preocupados, 75% muy/extremadamente preocupados *(dato UK — Regaine survey; tendencia similar en España)*
 - Buscan info en TikTok/Reddit primero, auto-tratan antes de ir a médico
 - GenZ proactivos: 95% de primeros trasplantes = 20-35 años *(dato UK/global — HairDr)*
@@ -287,9 +290,11 @@
 
 ### Contexto
 - 20.000 españoles/año operados en Turquía, ~15.000 en España | SAM: ~25.000
-- La mayoría sin protocolo mantenimiento post-cirugía
+- **Dato HC 2025: ~10% del total de tratamientos son post-cirugía sin mantenimiento**
+- Perfil: operados en Turquía o España, NO informados de que necesitan tratamiento crónico. Vuelven ~3 años después con caída activa
 - Pelo nativo sigue cayendo → inversión degradándose
 - Sensación de "nadie me lo advirtió"
+- **Sub-perfil adicional (dato HC 2025):** Hombres +45 con efectos secundarios de medicación oral → optan por infiltrados (no sistémicos). Incluye 30-45 que quieren ser padres y dejan oral → pasan a infiltrado
 - **Canales:** Google Ads "mantenimiento post injerto" (bajo volumen, intent 100%), foros, YouTube, Facebook grupos trasplante
 
 ### Playbook de Messaging — 💸 ECP #4
@@ -336,6 +341,10 @@
 - Svenson: esteticistas diagnosticando, reclamaciones OCU
 - Pacientes ya en el mercado = intent altísimo, disposición a pagar probada
 - Buscan "segunda opinión" de confianza
+- **Dato HC 2025 — 2 motivos reales de insatisfacción:**
+  1. Desinformación: otras clínicas no informan de tratamiento crónico necesario
+  2. Modelo sesiones mensuales: dosis menores → más bonos (vs pauta anual HC)
+- **Qué valoran al llegar a HC:** que no se hable directamente de injerto, sino valoración primero → solo tratamiento o plan combinado
 - **Canales:** Google "opiniones Insparya", Trustpilot, SEO comparativo, retargeting web competidores
 
 ### Playbook de Messaging — 🏪 ECP #5
@@ -532,12 +541,16 @@
 - **Nota HC**: ~50% de pacientes son mujeres (company-brief). Es un segmento real, no marginal.
 - **Equipo HC confirma**: mercado femenino es "brutal" de fácil captación (reunión 10/03/2026)
 
-**Sub-perfiles ampliados (reunión 10/03/2026):**
+**Sub-perfiles ampliados (reunión 10/03 + datos HC 2025):**
 - Postparto
-- Primera menopausia
-- Postmenopausia
+- Efluvio telógeno (estrés, cambios estacionales)
+- Perimenopausia
+- Menopausia
+- Envejecimiento capilar
 - **Alopecias raras / alopecia frontal fibrosante** — casos complejos que requieren diagnóstico especializado
 - **⚠️ Algunas NO son tratables pero SÍ diagnosticables** — el valor de HC aquí es dar un diagnóstico certero aunque no haya tratamiento. Impacto en quiz: debe filtrar y comunicar honestamente. Impacto en messaging: refuerza la transparencia radical de HC ("preferimos decirte la verdad a venderte algo que no funciona")
+
+**Dato HC 2025:** 17,89% de pacientes son mujeres. Es necesario segmentar por momento vital ya que las causas de caída están asociadas a diferentes etapas.
 
 ### Criterios de Valor (pesos ECP #6)
 
@@ -627,4 +640,4 @@ El quiz online es el primer punto de contacto para TODOS los ECPs, pero es espec
 
 ---
 
-<!-- Self-QA: PASS | 2026-03-10 | v2.5 | ECP #6 ampliado con sub-perfiles mujeres (frontal fibrosante, alopecias raras, no tratables pero diagnosticables). Fuente: reunión HC 10/03/2026. 6 ECPs ✅ | 6 Speed Videos ✅ -->
+<!-- Self-QA: PASS | 2026-03-12 | v2.6 | Datos HC 2025: split género 82/18, jóvenes 23-24, post-Turquía 10%, perfiles mantenimiento, mujeres por momento vital. 6 ECPs ✅ | 6 Speed Videos ✅ -->

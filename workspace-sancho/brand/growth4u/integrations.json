@@ -11,7 +11,7 @@
       "envVars": [
         "GROWTH4U_META_ADS_ACCESS_TOKEN"
       ],
-      "lastTestedAt": "2026-03-11T23:19:26.784Z"
+      "lastTestedAt": "2026-03-12T13:29:08.725Z"
     },
     "ghl": {
       "provider": "ghl",
@@ -22,7 +22,7 @@
       "envVars": [
         "GROWTH4U_GHL_API_KEY"
       ],
-      "lastTestedAt": "2026-03-11T23:19:27.170Z"
+      "lastTestedAt": "2026-03-12T13:29:11.174Z"
     },
     "ga4": {
       "provider": "ga4",
@@ -31,7 +31,7 @@
         "PROPERTY_ID": "515424511"
       },
       "envVars": [],
-      "lastTestedAt": "2026-03-11T23:19:27.952Z"
+      "lastTestedAt": "2026-03-12T13:29:12.462Z"
     },
     "gsc": {
       "provider": "gsc",
@@ -40,7 +40,7 @@
         "SITE_URL": "sc-domain:growth4u.io"
       },
       "envVars": [],
-      "lastTestedAt": "2026-03-11T23:19:28.519Z"
+      "lastTestedAt": "2026-03-12T13:29:15.372Z"
     },
     "metricool": {
       "provider": "metricool",
@@ -51,9 +51,9 @@
       "envVars": [
         "GROWTH4U_METRICOOL_API_TOKEN"
       ],
-      "lastTestedAt": "2026-03-11T23:19:29.069Z"
+      "lastTestedAt": "2026-03-12T13:29:15.879Z"
     }
   },
   "systemOverrides": {},
-  "updatedAt": "2026-03-11T23:19:29.083Z"
+  "updatedAt": "2026-03-12T13:29:15.893Z"
 }

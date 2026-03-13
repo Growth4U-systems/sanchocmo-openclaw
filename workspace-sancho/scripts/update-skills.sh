@@ -65,7 +65,7 @@ if [ "$OLD_SHA" != "$NEW_SHA" ]; then
   CHANGED=0
   for skill_dir in skills/*/; do
     skill_name=$(basename "$skill_dir")
-    [ "$skill_name" = "skill-creator" ] && continue  # bundled
+    # skill-creator: installed from repo (overrides bundled)
     
     cp -r "$skill_dir" "$SKILLS_DIR/$skill_name/"
     echo '{"source":"github","repo":"anthropics/skills","skill":"'"$skill_name"'"}' > "$SKILLS_DIR/$skill_name/.skill-source.json"

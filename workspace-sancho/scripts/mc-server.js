@@ -498,10 +498,13 @@ function checkService(serviceId) {
   return new Promise((resolve) => {
     const now = new Date().toISOString();
     const timeout = 15000;
+    // Read env vars from .env file (MC server may not have them in process.env)
+    const _envVars = parseEnv(readEnvFile());
+    const getKey = (k) => _envVars[k] || process.env[k];
 
     switch (serviceId) {
       case 'anthropic': {
-        const key = process.env.ANTHROPIC_API_KEY;
+        const key = getKey('ANTHROPIC_API_KEY');
         if (!key) return resolve({ status: 'not-configured', lastCheck: now, details: { error: 'ANTHROPIC_API_KEY not set' } });
         try {
           const res = execSync(`curl -s -o /dev/null -w "%{http_code}" -H "x-api-key: ${key}" -H "anthropic-version: 2023-06-01" https://api.anthropic.com/v1/models -m 10`, { timeout, encoding: 'utf-8' }).trim();
@@ -510,7 +513,7 @@ function checkService(serviceId) {
         break;
       }
       case 'openrouter': {
-        const key = process.env.OPENROUTER_API_KEY;
+        const key = getKey('OPENROUTER_API_KEY');
         if (!key) return resolve({ status: 'not-configured', lastCheck: now, details: { error: 'OPENROUTER_API_KEY not set' } });
         try {
           const res = execSync(`curl -s -o /dev/null -w "%{http_code}" -H "Authorization: Bearer ${key}" https://openrouter.ai/api/v1/models -m 10`, { timeout, encoding: 'utf-8' }).trim();
@@ -519,7 +522,7 @@ function checkService(serviceId) {
         break;
       }
       case 'brave': {
-        const key = process.env.BRAVE_API_KEY || process.env.BRAVE_SEARCH_API_KEY;
+        const key = getKey('BRAVE_API_KEY') || getKey('BRAVE_SEARCH_API_KEY');
         if (!key) return resolve({ status: 'not-configured', lastCheck: now, details: { error: 'BRAVE_API_KEY not set' } });
         try {
           const res = execSync(`curl -s -o /dev/null -w "%{http_code}" -H "X-Subscription-Token: ${key}" "https://api.search.brave.com/res/v1/web/search?q=test&count=1" -m 10`, { timeout, encoding: 'utf-8' }).trim();
@@ -528,7 +531,7 @@ function checkService(serviceId) {
         break;
       }
       case 'apify': {
-        const key = process.env.APIFY_TOKEN || process.env.APIFY_API_KEY;
+        const key = getKey('APIFY_TOKEN') || getKey('APIFY_API_KEY');
         if (!key) return resolve({ status: 'not-configured', lastCheck: now, details: { error: 'APIFY_TOKEN not set' } });
         try {
           const raw = execSync(`curl -s -H "Authorization: Bearer ${key}" https://api.apify.com/v2/users/me -m 10`, { timeout, encoding: 'utf-8' });
@@ -556,7 +559,7 @@ function checkService(serviceId) {
         break;
       }
       case 'openai': {
-        const key = process.env.OPENAI_API_KEY;
+        const key = getKey('OPENAI_API_KEY');
         if (!key) return resolve({ status: 'not-configured', lastCheck: now, details: { error: 'OPENAI_API_KEY not set' } });
         try {
           const res = execSync(`curl -s -o /dev/null -w "%{http_code}" -H "Authorization: Bearer ${key}" https://api.openai.com/v1/models -m 10`, { timeout, encoding: 'utf-8' }).trim();
@@ -565,7 +568,7 @@ function checkService(serviceId) {
         break;
       }
       case 'gemini': {
-        const key = process.env.GEMINI_API_KEY;
+        const key = getKey('GEMINI_API_KEY');
         if (!key) return resolve({ status: 'not-configured', lastCheck: now, details: { error: 'GEMINI_API_KEY not set' } });
         try {
           const res = execSync(`curl -s -o /dev/null -w "%{http_code}" "https://generativelanguage.googleapis.com/v1beta/models?key=${key}" -m 10`, { timeout, encoding: 'utf-8' }).trim();
@@ -574,7 +577,7 @@ function checkService(serviceId) {
         break;
       }
       case 'xai': {
-        const key = process.env.XAI_API_KEY;
+        const key = getKey('XAI_API_KEY');
         if (!key) return resolve({ status: 'not-configured', lastCheck: now, details: { error: 'XAI_API_KEY not set' } });
         try {
           const res = execSync(`curl -s -o /dev/null -w "%{http_code}" -H "Authorization: Bearer ${key}" https://api.x.ai/v1/models -m 10`, { timeout, encoding: 'utf-8' }).trim();
@@ -583,14 +586,14 @@ function checkService(serviceId) {
         break;
       }
       case 'minimax': {
-        const key = process.env.MINIMAX_API_KEY;
+        const key = getKey('MINIMAX_API_KEY');
         if (!key) return resolve({ status: 'not-configured', lastCheck: now, details: { error: 'MINIMAX_API_KEY not set' } });
         // MiniMax doesn't have a simple /models endpoint; verify key format
         resolve({ status: key.length > 10 ? 'ok' : 'error', lastCheck: now, details: { note: 'Key present, no lightweight verify endpoint' } });
         break;
       }
       case 'firecrawl': {
-        const key = process.env.FIRECRAWL_API_KEY;
+        const key = getKey('FIRECRAWL_API_KEY');
         if (!key) return resolve({ status: 'not-configured', lastCheck: now, details: { error: 'FIRECRAWL_API_KEY not set' } });
         try {
           // POST to scrape with a minimal test URL (costs 1 credit but verifies auth)
@@ -602,7 +605,7 @@ function checkService(serviceId) {
         break;
       }
       case 'serper': {
-        const key = process.env.SERPER_API_KEY;
+        const key = getKey('SERPER_API_KEY');
         if (!key) return resolve({ status: 'not-configured', lastCheck: now, details: { error: 'SERPER_API_KEY not set' } });
         try {
           const res = execSync(`curl -s -o /dev/null -w "%{http_code}" -X POST -H "X-API-KEY: ${key}" -H "Content-Type: application/json" -d '{"q":"test","num":1}' https://google.serper.dev/search -m 10`, { timeout, encoding: 'utf-8' }).trim();
@@ -611,8 +614,8 @@ function checkService(serviceId) {
         break;
       }
       case 'dataforseo': {
-        const login = process.env.DATAFORSEO_LOGIN;
-        const password = process.env.DATAFORSEO_PASSWORD;
+        const login = getKey('DATAFORSEO_LOGIN');
+        const password = getKey('DATAFORSEO_PASSWORD');
         if (!login || !password) return resolve({ status: 'not-configured', lastCheck: now, details: { error: 'DATAFORSEO_LOGIN or DATAFORSEO_PASSWORD not set' } });
         try {
           const res = execSync(`curl -s -o /dev/null -w "%{http_code}" -u "${login}:${password}" https://api.dataforseo.com/v3/appendix/user_data -m 10`, { timeout, encoding: 'utf-8' }).trim();
@@ -621,7 +624,7 @@ function checkService(serviceId) {
         break;
       }
       case 'notion': {
-        const key = process.env.NOTION_API_KEY;
+        const key = getKey('NOTION_API_KEY');
         if (!key) return resolve({ status: 'not-configured', lastCheck: now, details: { error: 'NOTION_API_KEY not set' } });
         try {
           const raw = execSync(`curl -s -H "Authorization: Bearer ${key}" -H "Notion-Version: 2022-06-28" https://api.notion.com/v1/users/me -m 10`, { timeout, encoding: 'utf-8' });
@@ -637,8 +640,8 @@ function checkService(serviceId) {
         break;
       }
       case 'supabase': {
-        const url = process.env.SUPABASE_URL;
-        const key = process.env.SUPABASE_ANON_KEY;
+        const url = getKey('SUPABASE_URL');
+        const key = getKey('SUPABASE_ANON_KEY');
         if (!url || !key) return resolve({ status: 'not-configured', lastCheck: now, details: { error: 'SUPABASE_URL or SUPABASE_ANON_KEY not set' } });
         try {
           const res = execSync(`curl -s -o /dev/null -w "%{http_code}" -H "apikey: ${key}" -H "Authorization: Bearer ${key}" "${url}/rest/v1/" -m 10`, { timeout, encoding: 'utf-8' }).trim();
@@ -648,25 +651,25 @@ function checkService(serviceId) {
         break;
       }
       case 'fal': {
-        const key = process.env.FAL_API_KEY;
+        const key = getKey('FAL_API_KEY');
         if (!key) return resolve({ status: 'not-configured', lastCheck: now, details: { error: 'FAL_API_KEY not set' } });
         resolve({ status: key.length > 10 ? 'ok' : 'error', lastCheck: now, details: { note: 'Key present' } });
         break;
       }
       case 'wavespeed': {
-        const key = process.env.WAVESPEED_API_KEY;
+        const key = getKey('WAVESPEED_API_KEY');
         if (!key) return resolve({ status: 'not-configured', lastCheck: now, details: { error: 'WAVESPEED_API_KEY not set' } });
         resolve({ status: key.length > 10 ? 'ok' : 'error', lastCheck: now, details: { note: 'Key present' } });
         break;
       }
       case 'dumpling': {
-        const key = process.env.DUMPLING_API_KEY;
+        const key = getKey('DUMPLING_API_KEY');
         if (!key) return resolve({ status: 'not-configured', lastCheck: now, details: { error: 'DUMPLING_API_KEY not set' } });
         resolve({ status: key.length > 10 ? 'ok' : 'error', lastCheck: now, details: { note: 'Key present' } });
         break;
       }
       case 'brave': {
-        const key = process.env.BRAVE_API_KEY || process.env.BRAVE_SEARCH_API_KEY;
+        const key = getKey('BRAVE_API_KEY') || getKey('BRAVE_SEARCH_API_KEY');
         if (!key) return resolve({ status: 'not-configured', lastCheck: now, details: { error: 'BRAVE_API_KEY not set — OpenClaw uses Gemini web_search instead' } });
         try {
           const res = execSync(`curl -s -o /dev/null -w "%{http_code}" -H "X-Subscription-Token: ${key}" "https://api.search.brave.com/res/v1/web/search?q=test&count=1" -m 10`, { timeout, encoding: 'utf-8' }).trim();
@@ -676,7 +679,7 @@ function checkService(serviceId) {
       }
       case 'instantly': {
         // Instantly.ai — cold email platform, web login (no env var API key typically)
-        const key = process.env.INSTANTLY_API_KEY;
+        const key = getKey('INSTANTLY_API_KEY');
         if (!key) return resolve({ status: 'not-configured', lastCheck: now, details: { note: 'Web login — no API key in .env' } });
         try {
           const res = execSync(`curl -s -o /dev/null -w "%{http_code}" "https://api.instantly.ai/api/v1/account/list?api_key=${key}" -m 10`, { timeout, encoding: 'utf-8' }).trim();
@@ -686,14 +689,14 @@ function checkService(serviceId) {
       }
       case 'metricool': {
         // Metricool — social scheduling, web login
-        const key = process.env.METRICOOL_API_KEY;
+        const key = getKey('METRICOOL_API_KEY');
         if (!key) return resolve({ status: 'not-configured', lastCheck: now, details: { note: 'Web login — no API key in .env' } });
         resolve({ status: key.length > 10 ? 'ok' : 'error', lastCheck: now, details: { note: 'Key present' } });
         break;
       }
       case 'nanobanana': {
         // Nano Banana Pro = Gemini image generation — uses GEMINI_API_KEY
-        const key = process.env.GEMINI_API_KEY;
+        const key = getKey('GEMINI_API_KEY');
         if (!key) return resolve({ status: 'not-configured', lastCheck: now, details: { error: 'Uses GEMINI_API_KEY (shared)' } });
         resolve({ status: 'ok', lastCheck: now, details: { note: 'Uses Gemini API key (shared)', engine: 'gemini-2.0-flash-exp' } });
         break;
@@ -708,7 +711,7 @@ function checkService(serviceId) {
         break;
       }
       case 'discord': {
-        const token = process.env.DISCORD_BOT_TOKEN;
+        const token = getKey('DISCORD_BOT_TOKEN');
         if (!token) return resolve({ status: 'not-configured', lastCheck: now, details: { error: 'DISCORD_BOT_TOKEN not set' } });
         try {
           const res = execSync(`curl -s -o /dev/null -w "%{http_code}" -H "Authorization: Bot ${token}" https://discord.com/api/v10/users/@me -m 10`, { timeout, encoding: 'utf-8' }).trim();
@@ -908,7 +911,7 @@ http.createServer((req, res) => {
   // Block unauthenticated access to admin assets and APIs
   // Allow: /portal/*, /admin/* (handled above), / (landing)
   // Block everything else (mission-control.html, /docs/*, /api/*, /connect/*, /brand/*)
-  if (!req._adminToken && !url.startsWith('/portal/') && !url.startsWith('/connect/') && !url.startsWith('/api/system-sa') && !url.startsWith('/api/gog-') && !url.startsWith('/api/client-integrations') && !req._portalClient) {
+  if (!req._adminToken && !url.startsWith('/portal/') && !url.startsWith('/connect/') && !url.startsWith('/api/') && !req._portalClient) {
     res.writeHead(403, { 'Content-Type': 'text/html; charset=utf-8' });
     res.end(portalForbiddenPage());
     return;
@@ -1632,6 +1635,27 @@ async function saveSA() {
   </div>
 
 <script>
+// Copy URL helper
+function copyGogUrl() {
+  const url = window._gogAuthUrl || document.getElementById('gog-auth-url').textContent;
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(url).then(function() {
+      event.target.textContent = '✅ Copiado';
+    });
+  } else {
+    // Fallback for mobile/insecure contexts
+    var ta = document.createElement('textarea');
+    ta.value = url;
+    ta.style.position = 'fixed';
+    ta.style.left = '-9999px';
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    event.target.textContent = '✅ Copiado';
+  }
+}
+
 // Google Workspace OAuth (gog CLI) functions
 async function gogStep1() {
   const email = document.getElementById('gog-email').value.trim();
@@ -1653,10 +1677,11 @@ async function gogStep1() {
     });
     const data = await res.json();
     if (data.ok && data.authUrl) {
+      window._gogAuthUrl = data.authUrl;
       showGogResult('gog-result1', 'ok',
         '✅ <strong>Link generado.</strong> Envía este link al propietario de la cuenta para que autorice:<br/><br/>' +
-        '<div style="background:var(--bg);padding:8px 12px;border-radius:4px;word-break:break-all;font-size:12px;font-family:monospace;margin:8px 0;user-select:all;cursor:text;">' + data.authUrl + '</div>' +
-        '<button class="btn btn-secondary" style="font-size:13px;padding:6px 14px;" onclick="navigator.clipboard.writeText(\'' + data.authUrl.replace(/'/g, "\\'") + '\');this.textContent=\'✅ Copiado\'">📋 Copiar link</button>'
+        '<div id="gog-auth-url" style="background:var(--bg);padding:8px 12px;border-radius:4px;word-break:break-all;font-size:12px;font-family:monospace;margin:8px 0;user-select:all;cursor:text;">' + data.authUrl + '</div>' +
+        '<button class="btn btn-secondary" style="font-size:13px;padding:6px 14px;" onclick="copyGogUrl()">📋 Copiar link</button>'
       );
       document.getElementById('gog-step2').style.display = 'block';
       document.getElementById('gog-step2').dataset.email = email;

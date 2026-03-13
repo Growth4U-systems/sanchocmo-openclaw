@@ -1,15 +1,71 @@
 # Self-Analysis — Hospital Capilar
 
-> Versión: v1.0 | Fecha: 2026-03-03 | Analista: Sancho (SanchoCMO)
+> Versión: v1.1 | Fecha: 2026-03-12 (actualizado) | Analista: Sancho (SanchoCMO)
+> Cambios v1.1: Añadida sección "Datos Reales HC 2025", "Restricciones de Dirección", actualizados datos Insparya (CR7 cofundador, tratamientos propios), Svenson (1.5/5, NK5, Havas), nuevos competidores DTC (Manual.co, mediQuo)
 > Metodología: 3-Lens (Autopercepción, Terceros, Consumidores)
 
 ---
 
 ## Resumen Ejecutivo
 
-Hospital Capilar tiene **los mejores cimientos del sector** — Trustpilot 4.8/5 (mejor que Insparya 3.8/5 y Svenson baja), 95% satisfacción, enfoque médico genuino, inversión de €3,5M para expansión, y tratamientos creciendo +88% sin marketing. Sin embargo, la **presencia digital actual es 100% cirugía-first**: la web, el pricing visible, y el contenido están diseñados para vender injertos, no tratamientos.
+Hospital Capilar tiene **los mejores cimientos del sector** — Trustpilot 4.8/5 (mejor que Insparya 3.8/5 y Svenson 1.5/5 "Muy malo"), 95% satisfacción, enfoque médico genuino, inversión de €3,5M para expansión, y tratamientos creciendo +88% sin marketing. Sin embargo, la **presencia digital actual es 100% cirugía-first**: la web, el pricing visible, y el contenido están diseñados para vender injertos, no tratamientos.
 
 **Diagnóstico clave:** HC tiene el producto (tratamientos) y la reputación (4.8/5), pero NO tiene el funnel (landing, quiz, paid) ni el posicionamiento (web = cirugía hero) para capturar el mercado de tratamientos. El proyecto de 9 semanas con Growth4U está construyendo exactamente eso.
+
+---
+
+## Datos Reales HC 2025 (Fuente: equipo HC, reunión 10/03/2026)
+
+### Perfil de Pacientes
+
+| Dato | Valor | Nota |
+|------|-------|------|
+| **% hombres** | 82% | Hombres jóvenes dominan |
+| **Edad perfil creciente** | 23-24 años | Grados tempranos, tendencia joven |
+| **% mujeres** | ~18% | Mercado "brutal de fácil captación" según equipo |
+| **% post-cirugía** | ~10% del total tratamientos | Mantenimiento postcirugía (cualquier clínica incl. Turquía) |
+
+### Sub-grupos de tratamientos
+
+- **Core:** Hombres jóvenes 23-30 con alopecia temprana → pauta anual (mantenimiento trimestral) = producto principal
+- **Hombres +45:** Efectos secundarios de medicación oral → pasan a infiltrados (CRT/HRT)
+- **Padres 30-45:** Dejan medicación oral por fertilidad → pasan a infiltrados
+- **Post-cirugía:** ~10% del total, mantenimiento de pelo nativo
+
+### Protocolos propios
+
+- **CRT** (Capillary Regeneration Treatment) = protocolo propio de regeneración (equivalente PRP)
+- **HRT** (Hair Redensification Treatment) = protocolo propio de farmacomesoterapia (equivalente mesoterapia dutasteride)
+- Nomenclatura diseñada para cumplimiento **Ley SARA** (no mencionar fármacos en copy)
+
+### Canales rentables confirmados
+
+| Canal | Rendimiento |
+|-------|-------------|
+| **Meta Ads** | El que mejor funciona |
+| **Google Ads** | Rentable |
+| **SEO** | Muy buen ROI |
+
+### Métricas clave
+
+- +4,000 pacientes atendidos (total histórico)
+- 95% satisfacción en trasplantes
+- 88% crecimiento tratamientos sin inversión en marketing
+- Margen tratamientos: 90% (vs 40% cirugía)
+
+---
+
+## Restricciones de Dirección (confirmadas reunión 10/03/2026)
+
+| Restricción | Detalle |
+|-------------|---------|
+| **SEO injerto intocable** | No tocar SEO de injerto en home — proteger keyword "injerto capilar Madrid" |
+| **"Diagnóstico gratis" intocable** | No perder el claim de diagnóstico gratuito como CTA |
+| **Ley SARA — fármacos** | No mencionar fármacos por nombre en copy/ads (usar CRT/HRT) |
+| **Antes/después** | Solo con consentimiento firmado + disclaimer |
+| **Google Ads "hospital"** | No usar "hospital" en ciertos contextos de Google Ads |
+| **Presión comercial prohibida** | No descuentos "solo hoy", no presión en consulta |
+| **Mandato estratégico** | "Cuestionar TODAS las suposiciones" — incluido el precio de €195 |
 
 ---
 
@@ -70,6 +126,16 @@ Paquetes mencionados sin precio público:
 
 **Gap vs proyecto Growth4U:** El proyecto busca posicionar tratamientos como producto estrella, pero la web y canales actuales hablan 100% cirugía.
 
+### Diferenciadores Digitales vs Competencia
+
+| HC | Insparya | Svenson |
+|----|----------|---------|
+| **Quiz interactivo** + recomendación personalizada (en desarrollo) | NO quiz — CTA siempre teléfono/formulario | NO quiz |
+| Infraestructura digital lista: CRM (Koibox), booking, analytics, Stripe | Formulario + teléfono | Web básica |
+| 3 flujos quiz en test (corto, pago, largo) | Diagnóstico gratuito presencial como CTA única | — |
+
+**El quiz de HC es un diferenciador real** — ningún competidor tiene recomendación personalizada digital. Insparya usa siempre teléfono/formulario como CTA.
+
 ---
 
 ## Lens 2 — Terceros: Qué dicen otros de HC
@@ -118,7 +184,7 @@ Paquetes mencionados sin precio público:
 |---------|-----------|
 | **Hospital Capilar** | **4.8/5** |
 | Insparya | 3.8/5 |
-| Svenson | Baja |
+| Svenson | **1.5/5** ("Muy malo") |
 
 **Lo que más valoran los pacientes:**
 - ✅ Profesionalismo del equipo médico (Dr. Pilo, Dr. Soto, Dr. Leone, Dr. Galaviz mencionados específicamente)
@@ -204,7 +270,7 @@ La mayoría de reviews hablan de cirugía (injerto FUE). Esto refleja que:
 | **Insparya lanza línea tratamientos** | Con €20M facturación y CR7, tiene capacidad de respuesta rápida |
 | **Regulación publicidad más estricta** | Draft 2024 limita influencers y claims |
 | **Consolidación sector (PE-backed)** | NK5+Svenson, otros fondos pueden entrar |
-| **DTC/telemedicina escala** | Olistic, Keeps, Hims capturan early-stage |
+| **DTC/telemedicina escala** | Manual.co ya opera en España (suscripción farmacológica), mediQuo (consulta €29.99), Olistic (OTC). Keeps/Hims NO están en España pero Manual.co llena ese hueco |
 
 ---
 
@@ -252,4 +318,4 @@ La mayoría de reviews hablan de cirugía (injerto FUE). Esto refleja que:
 
 ---
 
-<!-- Self-QA: PASS | 2026-03-03 | Lens 1 (web, redes, posicionamiento) ✅ | Lens 2 (prensa, SEO, inversión) ✅ | Lens 3 (Trustpilot, Google, social listening) ✅ | FODA ✅ | Viability checkpoint ✅ | Recomendaciones ✅ | Fuentes inline ✅ -->
+<!-- Self-QA: PASS | 2026-03-12 | v1.1 | Datos reales HC 2025 añadidos ✅ | Restricciones dirección ✅ | Svenson rating corregido (1.5/5) ✅ | DTC actualizado (Manual.co, mediQuo) ✅ | Lens 1-3 ✅ | FODA ✅ | Fuentes inline ✅ -->

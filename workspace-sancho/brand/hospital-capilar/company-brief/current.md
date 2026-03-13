@@ -1,7 +1,10 @@
 # Company Brief — Hospital Capilar
 
-> Versión: v1.2 | Fecha: 2026-03-10 | Fuente: Onboarding con Philippe (Growth4U) + Reunión análisis mercado/competidores 10/03/2026
+> Versión: v1.5 | Fecha: 2026-03-12 | Fuente: Onboarding con Philippe (Growth4U) + Reunión análisis mercado/competidores 10/03/2026 + Datos HC 2025 (12/03/2026)
 > Cambios v1.2: Stripe + Koibox integración, producto tienda online analítica hormonal, pricing benchmarks externos
+> Cambios v1.3: Datos reales HC 2025 (split género, perfiles mantenimiento, protocolos HRT/CRT definidos, perfil edad jóvenes, post-Turquía 10%)
+> Cambios v1.4: Insparya y Capiclinic SÍ tienen tratamientos. Pacientes insatisfechos (2 motivos). Restricción SEO home. Riesgos: perder SEO injerto + claim diagnóstico gratis
+> Cambios v1.5: Insparya brand names (ActivePlasma, MesoHAir+), CR7 cofundador no embajador, sin quiz. Svenson: 1.5/5 TP, Havas Creative rebrand sept 2025, 9K IG, NK5. DTC: Manual.co, mediQuo €29.99, Keeps/Pilot/Sons NO en España. IMD: 21 clínicas.
 
 ---
 
@@ -22,7 +25,10 @@ Hospital Capilar trata la alopecia como una **enfermedad crónica** reconocida p
 
 - **Diagnóstico médico completo en 1 consulta:** tricoscopía + analítica hormonal + pauta médica personalizada
 - **Integración cirugía + tratamiento** bajo el mismo techo
-- **Protocolos propios:** HRT (protocolo de mesoterapia con dutasteride) y CRT (protocolo de PRP)
+- **Protocolos propios:**
+  - **CRT** (Capillary Regeneration Treatment): protocolo de Plasma Rico en Plaquetas
+  - **HRT** (Hair Redensification Treatment): protocolo de farmacomesoterapia adaptada a las necesidades de cada paciente
+- **Pauta anual** (no mensual): diseñada para cubrir un año completo de tratamiento vs competencia que trabaja sesiones mensuales con dosis menores (más bonos)
 
 ### Producto Foco (Alcance del Proyecto)
 
@@ -115,13 +121,25 @@ Impacto directo en funnel — cada lead captado tiene ~40-47% de probabilidad de
 - LTV paciente joven (hombre 20-28): tratamiento crónico + cirugía futura + mantenimiento post = **LTV multi-año muy alto**
 - 90% de hombres jóvenes en tratamiento son **operables** → cross-sell natural a cirugía
 
+### Datos Reales HC 2025
+
+- **82,11% hombres** / **17,89% mujeres**
+- Cada vez más jóvenes solicitan información: **23-24 años** con grados tempranos de alopecia
+- Post-Turquía: **~10% del total de tratamientos**
+
 ### Segmentos de Cliente
 
 | Segmento | % del total | Perfil | LTV |
 |----------|-------------|--------|-----|
-| **Hombres 20-28** (estrella) | ~80% hombres | Alopecia temprana, 2-4 años probando productos sin éxito, madre influye/paga | Muy alto (crónico + cirugía) |
-| **Mujeres hormonales** | ~50% total | Postparto, menopausia, estrés. Muchas no aptas (filtrar) | Medio |
-| **Hombres 28-50 operados** | ~20% hombres | Mantenimiento post-cirugía, operados Turquía sin seguimiento | Medio-alto |
+| **Hombres 20-28** (estrella) | ~80% hombres | Alopecia temprana, 23-24 años con grados tempranos (tendencia creciente). 2-4 años probando productos sin éxito, madre influye/paga | Muy alto (crónico + cirugía) |
+| **Mujeres hormonales** | ~18% total (dato 2025) | Segmentar por momento vital: postparto, efluvio telógeno (estrés/estacional), perimenopausia, menopausia, envejecimiento capilar. Muchas no aptas (filtrar) | Medio |
+| **Hombres 28-50 operados** | ~10% tratamientos | Mantenimiento post-cirugía, operados Turquía o España sin información de tratamiento crónico. Acuden ~3 años después cuando el pelo vuelve a caer | Medio-alto |
+
+### Perfiles de Mantenimiento (dato HC 2025)
+
+1. **Mantenimiento trimestral** — Pacientes que buscan pauta anual. Ventaja HC: pauta diseñada para cubrir 1 año completo vs competencia con sesiones mensuales + más bonos
+2. **Hombres +45 con efectos secundarios de medicación oral** — Optan por tratamientos infiltrados (no sistémicos, menos efectos secundarios). Incluye sub-grupo **30-45 años que quieren ser padres** y dejan medicación oral → pasan a infiltrado
+3. **Post-cirugía sin mantenimiento** — Operados en Turquía o España. No informados de tratamiento crónico necesario. Vuelven ~3 años después con caída activa
 
 ---
 
@@ -169,13 +187,35 @@ Proyecto de **9 semanas** (24 Feb → 25 Abr 2026). **Soft launch: semana 7 (7-1
 
 ## Competidores Conocidos (Input para Layer 1)
 
-1. **Insparya** — CR7, marketing fuerte, foco cirugía, precio superior. HC pierde pacientes por posicionamiento y demoras.
-2. **Svenson** — Marca conocida, pero son esteticistas, no médicos.
-3. **Capilclinic** — Buen posicionamiento SEO.
+1. **Insparya** — CR7 cofundador (no embajador), marketing fuerte, foco cirugía. **⚠️ SÍ tienen tratamientos con marca propia: ActivePlasma (PRP) y MesoHAir+ (mesoterapia).** Página dedicada a alopecia femenina. Diagnóstico gratuito como CTA en todas las páginas (table stakes). NO tienen quiz interactivo ni recomendación personalizada — CTA siempre teléfono/formulario. Gasto Meta Ads sigue siendo mayoría trasplante. Tienen los tratamientos pero NO los posicionan como core.
+2. **Svenson** — Marca conocida, esteticistas no médicos. **Trustpilot 1.5/5 "Muy malo" (38 reviews).** NK5 los compró, inyectó dinero, nueva agencia Havas Creative. Campaña sept 2025: "No te conformes con recordar tu pelo" — humor, digital-first, fase 2 TV prevista. ~9K seguidores IG (muy bajo para 31 clínicas). Posicionan tratamientos como core pero sin credibilidad médica. Precio cirugía desde €2.575.
+3. **Capilclinic** — Buen posicionamiento SEO. **⚠️ SÍ tienen tratamientos: oral, plasma y mesoterapia** (corrige asunción previa de "solo add-ons cirugía")
 4. **Medical Hair** — Presencia nacional con clínicas satélites, riesgo de dilución de calidad.
-5. **IMD** — Enfocado en mujeres, estética capilar, sin analítica médica.
-6. **Soluciones sin supervisión médica** — Minoxidil, finasteride tópico, Olistic, Iraltone, Pilexil, champús. Ciclo 2-4 años.
+5. **IMD** — Enfocado en mujeres, 21 clínicas, estética capilar, sin analítica médica.
+6. **Soluciones sin supervisión médica** — Minoxidil, finasteride tópico, Olistic (700K+ clientes), Iraltone, Pilexil, champús. Ciclo 2-4 años.
 7. **Turquía** — Cirugía low cost, genera sub-segmento de operados sin seguimiento.
+8. **Manual.co (DTC)** — El más parecido a Keeps en España. Consultas online + suscripción medicamentos a domicilio. Farmacia autorizada. Opera en UK, Alemania, Brasil. Rebrandeó a "Voy" en otros mercados.
+9. **mediQuo** — Consulta capilar online + receta por €29,99. 100% digital, prescripciones homologadas España. No compite en diagnóstico (sin tricoscopía ni analítica hormonal). Captura top-of-funnel.
+10. **Keeps/Pilot/Sons** — NO operan en España (solo US, Australia, UK respectivamente).
+
+### Pacientes Insatisfechos de Otras Clínicas (dato HC 2025)
+
+HC recibe pacientes insatisfechos por 2 motivos:
+1. **Desinformación** — Otras clínicas no informan de la necesidad de tratamiento crónico
+2. **Modelo de sesiones mensuales** — Competencia trabaja sesiones mensuales con dosis menores → más bonos. HC ofrece pauta anual completa
+
+**Qué valoran al llegar a HC:** Que no se hable directamente de injerto capilar, sino que primero se hace valoración para ver si es necesario solo tratamiento o plan combinado (tratamiento + injerto).
+
+### Riesgos Identificados
+
+1. **Perder posicionamiento SEO de injerto capilar** — La home posiciona para "injerto capilar Madrid" (página de clínica). No se puede perder ese posicionamiento.
+2. **Perder claim "diagnóstico gratis"** — Si se pasa a consulta de pago
+
+### Restricción SEO / Web (dato HC)
+
+- **Home = injerto capilar** — NO tocar. Proteger posicionamiento "injerto capilar Madrid"
+- **Tratamientos = página dedicada o landing page** — Todo lo de tratamientos va en página de tratamientos o landing nueva
+- **Opción: bloque en home** que enlace a la página/landing de tratamientos, si procede
 
 ---
 

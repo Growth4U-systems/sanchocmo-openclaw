@@ -12,7 +12,7 @@
     "avg_leads_day": 1.0
   },
   "ghl": {
-    "contacts_24h": 3,
+    "contacts_24h": 4,
     "appointments_24h": 0
   },
   "alerts": [
@@ -23,7 +23,7 @@
       "text": "🟡 **Sin datos de ayer** — Posible lag de reporting o campañas pausadas"
     },
     {
-      "text": "🟡 **2 contacto(s) sin fuente** — Posible test/spam"
+      "text": "🟡 **3 contacto(s) sin fuente** — Posible test/spam"
     }
   ]
 }
