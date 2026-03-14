@@ -1,26 +1,14 @@
 {
-  "updatedAt": "2026-03-12T23:00:29.206564",
+  "updatedAt": "2026-03-13T23:00:58.848298",
   "threshold_usd": 50.0,
   "alerts": [
     {
-      "date": "2026-03-11",
-      "total_usd": 112.76,
-      "threshold_usd": 50.0,
-      "severity": "critical",
-      "detail": {
-        "hospital-capilar": 0,
-        "paymatico": 1.55,
-        "sanchocmo": 0,
-        "growth4u": 0.19
-      }
-    },
-    {
       "date": "2026-03-12",
-      "total_usd": 86.33,
+      "total_usd": 98.08,
       "threshold_usd": 50.0,
       "severity": "warning",
       "detail": {
-        "hospital-capilar": 0,
+        "hospital-capilar": 0.47,
         "paymatico": 2.71,
         "sanchocmo": 0,
         "growth4u": 4.23
@@ -28,10 +16,10 @@
     }
   ],
   "projection": {
-    "days_elapsed": 12,
+    "days_elapsed": 13,
     "days_in_month": 31,
-    "daily_avg_usd": 99.2,
-    "projected_month_usd": 3075.13,
-    "projected_month_eur": 2829.12
+    "daily_avg_usd": 93.45,
+    "projected_month_usd": 2896.99,
+    "projected_month_eur": 2665.23
   }
 }

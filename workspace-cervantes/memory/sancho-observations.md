@@ -1,3 +1,51 @@
+## 2026-03-13
+
+### Sesiones Activas (últimas 24h)
+
+| Canal | Tipo | Actividad |
+|-------|------|-----------|
+| #nichos-y-positioning-hc | Discord | Actualizando docs madre con 7 nichos |
+| #actualizacion-docs-hc | Discord | Philippe actualiza con nuevos descubrimientos |
+| #intelligence (HC) | Discord | Daily Pulse publicado |
+| #metrics (Growth4U) | Discord | Morning Metrics publicado |
+| #infra | Discord | Cost Alert: $100.87 vs threshold $50 |
+| Cron: funnel-watchdog | Cron | OK |
+| Cron: Morning Metrics | Cron | OK |
+| Cron: Daily Pulse | Cron | OK |
+| Cron: cost-tracker | Cron | OK (alertó correctamente) |
+| Cron: image-optimizer | Cron | OK |
+| Cron: update-skills | Cron | Actualizó OpenClaw 2026.3.11 → 2026.3.12 |
+| Cron: Regenerate Dashboard | Cron | OK |
+
+### Errores/Skills
+
+- **Health check Cervantes (ayer)**: 2 errores "debounced" (anthropic 401, openclaw command failed) - no cambios nuevos
+- **Cost Alert**: $100.87 spend el 12-Mar exceedió threshold $50 - reportado por Sancho en #infra
+- **Funnel watchdog**: ✅ OK
+- **Update skills**: Rate limit en clawhub (apify) - no crítico
+
+### Reglas de canal
+
+✅ **Correcto**:
+- Usa menciones @ correctamente (#nichos-y-positioning, #actualizacion-docs-hc)
+- Publica en hilos (Daily Pulse, Morning Metrics, Cost Alert)
+- Communication clara y concisa
+
+### Patrones de mejora
+
+**Positivos**:
+1. Comunicación clara: "El prompt de la presentación ya está actualizado" + lista de qué sí y qué NO
+2. Pide clarificación: "¿Quieres que actualice Positioning a 7 nichos ahora?"
+3. Crons funcionando correctamente
+4. Reporta alertas proactivamente
+
+**Área a monitorear**:
+- Costes elevados: $100.87 el 12-Mar vs media $92.84/día - proyecciones $3075/mes
+
+### Estado general: 🟢 Sancho operando bien
+
+---
+
 # Sancho Observations - 2026-03-12
 
 ## Sesiones Activas (últimas 24h)

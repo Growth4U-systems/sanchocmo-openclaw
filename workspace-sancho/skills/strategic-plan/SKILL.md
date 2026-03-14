@@ -37,7 +37,66 @@ Mínimo: company-brief + ECPs + positioning + competitors + self-intelligence + 
 
 ---
 
-## Pipeline: 8 Pasos
+## Mode Detection
+
+```
+if brand/{slug}/strategic-plan/current.md NOT exists:
+    → MODE = INIT (pipeline completo, 8 pasos)
+else:
+    → MODE = UPDATE (operación sobre plan existente)
+```
+
+---
+
+## Mode UPDATE — Operación sobre plan existente
+
+Leer `strategic-plan/current.md` + `projects/registry.json`.
+
+Detectar intención del usuario:
+
+| Intención | Acción |
+|-----------|--------|
+| "Nuevo proyecto" / "Quiero hacer X" / intelligence sugiere | → **Nuevo proyecto** |
+| "Añade tarea a P01" | → **Nueva tarea** en proyecto existente |
+| "P01 está terminado" / todas las tareas completed | → **Value review** |
+| "Nuevos objetivos" / "Siguiente ciclo" | → **Nuevo ciclo** (versionar plan, crear nuevo) |
+
+### Nuevo proyecto
+
+1. Leer `strategic-plan/current.md` — objetivos y canales actuales
+2. Evaluar alineación:
+   - **SÍ** → "Encaja con el plan. Lo creo como P{XX}."
+   - **PARCIAL** → "Tiene sentido pero tienes P{XX} abiertos. ¿Primero terminar esos?"
+   - **NO** → "No está en el plan. Si quieres lo añadimos, pero implica desviar foco de [objetivos actuales]."
+3. Esperar confirmación del usuario
+4. Crear `projects/P{XX}-{slug}/project.json` + `tasks.json`
+5. Actualizar `registry.json` + `strategic-plan/current.md` (añadir a proyectos activos)
+6. Crear hilo en `#projects`: `[P{XX}] Nombre`
+7. Crear hilos de tareas en canales temáticos
+
+### Nueva tarea
+
+1. Leer `projects/P{XX}/tasks.json`
+2. Añadir tarea con ID secuencial, canal asignado
+3. Crear hilo en canal temático: `[P{XX}-T{YY}] Nombre`
+
+### Value review
+
+1. Leer `project.json` — objetivo, métricas baseline/target
+2. Obtener métricas actuales (analytics, preguntar al usuario, o inferir de outputs)
+3. Generar `value-review.md` — cumplido sí/no/parcial, antes/después, learnings
+4. Marcar proyecto como `reviewed` en `registry.json`
+5. Si learnings sugieren nuevo proyecto → proponer (vuelve a "Nuevo proyecto")
+
+### Nuevo ciclo
+
+1. Copiar `strategic-plan/current.md` → `strategic-plan/v{X}.md`
+2. Actualizar `history.json`
+3. Ejecutar pipeline INIT con nuevos objetivos (reutiliza Foundation + datos acumulados)
+
+---
+
+## Mode INIT — Pipeline completo: 8 Pasos
 
 ### Paso 1: Cargar Foundation (~2 min)
 

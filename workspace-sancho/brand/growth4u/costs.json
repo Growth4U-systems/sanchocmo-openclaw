@@ -1,16 +1,16 @@
 {
   "client": "growth4u",
   "period": "2026-03",
-  "updatedAt": "2026-03-12T23:00:29.206564",
+  "updatedAt": "2026-03-13T23:00:58.848298",
   "total_cost_usd": 219.5784,
   "total_cost_eur": 202.0122,
-  "turns": 1804,
+  "turns": 1805,
   "sessions": 27,
   "agents": {
     "sancho": {
       "cost_usd": 219.5784,
       "cost_eur": 202.0122,
-      "turns": 1804,
+      "turns": 1805,
       "sessions": 27
     }
   },
@@ -31,7 +31,7 @@
       "cache_write": 0,
       "cost_usd": 0,
       "cost_eur": 0.0,
-      "turns": 3
+      "turns": 4
     }
   },
   "days": {
@@ -74,6 +74,10 @@
     "2026-03-12": {
       "cost_usd": 4.2283,
       "turns": 15
+    },
+    "2026-03-13": {
+      "cost_usd": 0,
+      "turns": 1
     }
   },
   "clientSpend": {

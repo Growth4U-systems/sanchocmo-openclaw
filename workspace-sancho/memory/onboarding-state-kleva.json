@@ -1,0 +1,18 @@
+{
+  "client": "kleva",
+  "status": "in_progress",
+  "current_step": 1,
+  "started_at": "2026-03-13T11:20:00Z",
+  "thread_id": "1481975087593951243",
+  "sender_id": "1402171221747040369",
+  "responses": {
+    "step_1_empresa": null,
+    "step_2_producto": null,
+    "step_3_cliente_ideal": null,
+    "step_4_competidores": null,
+    "step_5_recursos": null,
+    "step_6_historial": null
+  },
+  "follow_ups_used": {},
+  "completed_at": null
+}

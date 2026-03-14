@@ -10,8 +10,10 @@
     "calendar_2026_03_10_1356": 1773208613,
     "email_2026_03_11_1428": 1773235783,
     "calendar_2026_03_11_1428": 1773235783,
-    "email_2026_03_11_2124": 1773259444,
-    "calendar_2026_03_11_2124": 1773259444
+    "email_2026_03_13_1401": 1773499262,
+    "calendar_2026_03_13_1401": 1773499262,
+    "email_2026_03_13_2001": 1773523278,
+    "calendar_2026_03_13_2001": 1773523278
   },
   "notes": {
     "2026-02-24T18:43": "gog CLI timeout en gmail/calendar/drive. Memory file actualizado. Email/calendar checks fallidos.",
@@ -28,6 +30,8 @@
     "2026-03-10T13:56": "Email: 5 unread (Skool notifications, web2wave newsletter, El Club De Las Agencias, Amamos el Dinero, Teresa Torres podcast). No urgent items. Calendar: search returning no events - may need re-auth or events are private.",
     "2026-03-11T06:02": "Quiet hours (06:02). Email: Supabase SECURITY WARNING still unread. Calendar: Mid-week G4U 09:45 (~3.9h).",
     "2026-03-11T14:28": "Email: 10 unread (Martin Fila - Oier Q&A calendar invites). Calendar: busy 14:00-16:00, next 15:30 Olanzo. No urgent items <2h. Memory maintenance done.",
-    "2026-03-11T21:24": "Email: 5 unread (Vercel deployment fail, Supercut first view, auth code, newsletters). No urgent items. Calendar: Mar 12 packed (Sync Daily 09:45, Martin Test 10:00, Martin Fila 10:30, Q&A Oier 12:00, Bi-weekly VIP 13:00). Next event ~12h away."
+    "2026-03-11T21:24": "Email: 5 unread (Vercel deployment fail, Supercut first view, auth code, newsletters). No urgent items. Calendar: Mar 12 packed (Sync Daily 09:45, Martin Test 10:00, Martin Fila 10:30, Q&A Oier 12:00, Bi-weekly VIP 13:00). Next event ~12h away.",
+    "2026-03-13T14:01": "Email: 5 unread (Gemini notes x2, Pandavideo, Vilma.AI Growth Q&A, Growth4U newsletter). No urgent items. Calendar: Mar 13 busy (Ocupado 14:00-16:00), Q&A Oier 15:00 (~1h). Nothing urgent <2h.",
+    "2026-03-13T20:01": "Email: 5 unread (Facundo Daniel C. Upwork, Deel promo, Meta ad approved, Railway deletion, Alfonso wrap-up). Calendar: Mar 13 done, Mar 14 empty. Weekend."
   }
 }
