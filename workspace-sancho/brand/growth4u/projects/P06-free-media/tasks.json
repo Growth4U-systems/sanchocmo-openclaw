@@ -1,0 +1,8 @@
+[
+  { "id": "P06-T01", "name": "Blitz directorios: submit a Clutch, GoodFirms, SortList, DesignRush, Crunchbase, F6S, Google Business (≥15)", "owner": "Sancho", "status": "todo", "channel": "prospecting", "description": "Registrar Growth4U en mínimo 15 directorios de agencias/servicios. Completar perfiles con descripción, servicios, cases, logo." },
+  { "id": "P06-T02", "name": "Crear pitch template para guest posts", "owner": "Sancho", "status": "todo", "channel": "content", "description": "Redactar template de pitch personalizable para proponer artículos guest en medios del ecosistema tech/growth." },
+  { "id": "P06-T03", "name": "Lista de 20 medios target para guest posts", "owner": "Sancho", "status": "todo", "channel": "research", "description": "Investigar 20 medios/blogs españoles relevantes que acepten guest posts. Incluir: editor, email, requisitos, DR." },
+  { "id": "P06-T04", "name": "Enviar 5 pitches guest post/semana", "owner": "Sancho", "status": "todo", "channel": "content", "description": "Envío semanal de 5 pitches personalizados. Seguimiento a los que no responden en 1 semana." },
+  { "id": "P06-T05", "name": "Registrarse en HARO/Featured.com/Qwoted + responder 5/semana", "owner": "Equipo", "status": "todo", "channel": "partners", "description": "Alfonso se registra como fuente experta. Responder a mínimo 5 queries/semana relevantes para growth/marketing." },
+  { "id": "P06-T06", "name": "Pitch a podcasts: Marketing Online, Itnig, Campamento Web, MAS QUE FINTECH", "owner": "Equipo", "status": "todo", "channel": "partners", "description": "Sancho prepara pitches. Alfonso envía y participa como invitado cuando acepten." }
+]

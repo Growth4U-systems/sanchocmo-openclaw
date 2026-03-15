@@ -3,6 +3,7 @@
 ## Sistema
 - Gateway running (LaunchAgent), Tailscale serve (`https://sancho-cmo.taild48df2.ts.net`), Discord bot SanchoCMO
 - Google Workspace (alfonso@growth4u.io), Notion API, Supabase (psapmujzxhaxraphddlv)
+- **Cost alerts** → publicar en hilo "Costes APIs" (thread `1481910083255406694`) dentro de #infra. NO crear mensajes sueltos en #infra.
 - 4 agentes (Cervantes/Sancho/Rocinante/Escudero), 38 skills
 
 ## Personas

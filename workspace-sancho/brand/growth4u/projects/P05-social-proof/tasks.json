@@ -1,0 +1,6 @@
+[
+  { "id": "P05-T01", "name": "Listar clientes actuales/pasados para pedir reviews", "owner": "Sancho", "status": "todo", "channel": "research", "description": "Compilar lista de todos los clientes actuales y pasados con datos de contacto. Priorizar por satisfacción/relación." },
+  { "id": "P05-T02", "name": "Redactar emails pidiendo review en Trustpilot + Google", "owner": "Sancho", "status": "todo", "channel": "prospecting", "description": "Crear email template persuasivo para solicitar reviews. Incluir link directo a Trustpilot y Google Business." },
+  { "id": "P05-T03", "name": "Pedir LinkedIn recommendations a contactos clave", "owner": "Equipo", "status": "todo", "channel": "prospecting", "description": "Alfonso y Martín solicitan recommendations de LinkedIn a contactos estratégicos. Sancho prepara los mensajes." },
+  { "id": "P05-T04", "name": "Crear Google Business Profile si no existe", "owner": "Sancho", "status": "todo", "channel": "web", "description": "Verificar si existe GBP para Growth4U. Si no, crear y optimizar con info, horarios, servicios y fotos." }
+]

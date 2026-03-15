@@ -1,5 +1,6 @@
 # Kleva × Trust Engine
 ## De marca invisible a referente en México en 6 meses
+### Roadmap estratégico para que tu equipo ejecute
 
 ---
 
@@ -9,8 +10,11 @@ Kleva entra en México como una **marca desconocida en un mercado con jugadores 
 
 **Tu diagnóstico lo confirma:** Trust Score 41/100. El producto convence (Outbound Readiness 75/100), pero cuando el prospect investiga, no encuentra nada (GEO 10, Borrowed Trust 15, SERP 35).
 
-**La pregunta no es "¿qué funcionalidades tiene Kleva?"**
-**La pregunta es: "¿Cómo hacemos que el mercado mexicano conozca y confíe en Kleva en tiempo récord?"**
+**La pregunta central: ¿Cómo hacemos que el mercado mexicano conozca y confíe en Kleva en tiempo récord?**
+
+### Cómo trabajaríamos juntos
+
+Growth4U diseña la estrategia y el roadmap. **Kleva ejecuta.** Cada fase incluye instrucciones claras, templates y ejemplos para que tu equipo pueda implementar de forma autónoma. Nosotros acompañamos con revisión, ajustes y optimización.
 
 ---
 
@@ -19,91 +23,235 @@ Kleva entra en México como una **marca desconocida en un mercado con jugadores 
 ### Fase 1: EXISTIR (Semanas 1-4)
 *"Que cuando te busquen, te encuentren"*
 
-**Hoy:** Un Director de Cobranza de Banorte recibe un cold email de Kleva. Googlea "Kleva AI". Encuentra equipos de gimnasio australianos. Borra el email.
+**Hoy:** Un Director de Cobranza googlea "Kleva AI". Encuentra equipos de gimnasio australianos. Borra el email.
 
-**Después de Fase 1:** Googlea "Kleva AI". Encuentra: web → perfil G2 → Crunchbase → LinkedIn verificado. Sigue leyendo el email.
+**Después de Fase 1:** Googlea "Kleva AI". Encuentra: web → perfil G2 → Crunchbase → LinkedIn verificado.
 
-**Qué hacemos:**
+**Roadmap para tu equipo:**
 
-1. **Controlar el SERP de marca** — Perfiles en G2, Capterra México, Crunchbase, Product Hunt. Schema markup para que Google entienda "Kleva = fintech AI, no gimnasio". En 4 semanas, 5 de 10 resultados son de Kleva.
+1. **Controlar el SERP de marca** — Crear perfiles en G2, Capterra México, Crunchbase, Product Hunt. Schema markup para que Google entienda "Kleva = fintech AI". *Meta: 5 de 10 resultados propios en 4 semanas.*
 
-2. **Fix técnico web** — Sitemap.xml roto (0 URLs indexadas). Se arregla en 1 hora. Google empieza a indexar todo el contenido.
+2. **Fix técnico web** — Sitemap.xml roto (0 URLs indexadas). *1 hora de trabajo del equipo técnico.*
 
-3. **Landing pages México** — Páginas específicas: "/bancos", "/fintechs", "/telecoms". Cada una habla el idioma de ese comprador. Con datos de compliance CONDUSEF integrados (horarios de contacto, tono, documentación automática).
-
-**KPI:** De 1 resultado propio en top 10 → a 5+ resultados propios.
+3. **Landing pages México** — Páginas específicas: "/bancos", "/fintechs", "/telecoms". Cada una habla el idioma de ese comprador, con datos de compliance CONDUSEF.
 
 ---
 
 ### Fase 2: SER CREÍBLE (Semanas 4-12)
 *"Que otros hablen por ti antes de que tú hables"*
 
-**El principio:** En B2B fintech, la credibilidad no la construyes tú — la construyen otros. Un banco no compra software que nadie más valida.
+**Roadmap para tu equipo:**
 
-**Qué hacemos:**
+1. **Membresía APCOB** — La Asociación de Profesionales de Cobranza (presidente: Alan Ramírez Flores). Sello de legitimidad + acceso a CONVECOB (flagship cobranza MX, noviembre, Hotel Camino Real Polanco).
 
-1. **Membresía APCOB** — La Asociación de Profesionales de Cobranza es la puerta de entrada al sector. Incluye explícitamente a fintechs. Membresía = sello de legitimidad + acceso a CONVECOB (el evento flagship de cobranza en México, noviembre, Hotel Camino Real Polanco, todos los directores de cobranza del país están ahí).
+2. **Primer artículo en medio vertical** — Target: El Economista (sección Fintech) o DPL News. Tema: "Por qué la IA compliance-first es el futuro de la cobranza en México". *El CEO/CTO lo escribe, nosotros damos el brief y la estructura.*
 
-2. **Primer artículo en medio vertical** — Target: **El Economista** (sección Fintech) o **DPL News**. Tema: "Por qué la IA compliance-first es el futuro de la cobranza en México". Firma: CEO/CTO Kleva. No es publicidad — es posicionamiento como experto.
+3. **3-5 reviews en G2** — Clientes actuales de otros mercados dejan reviews. *Template de solicitud incluido en el roadmap.*
 
-3. **Primer podcast del sector** — Guest en **"Desde la banca" (BBVA México)** o en un episodio de **Complif** sobre evolución fintech. 30 minutos de conversación que generan meses de credibilidad.
-
-4. **3-5 reviews en G2** — Clientes actuales (aunque sean de otros mercados) dejan reviews. G2 es la fuente #1 que consultan tanto compradores como LLMs.
-
-**Ejemplo concreto de la cadena:**
-> El CEO de Kleva publica en El Economista → lo amplifica en LinkedIn → los influencers del sector lo ven (Felipe Vallejo de FinTech México, Angel Maass de Grupo Unicco) → un Director de Riesgos de BBVA lo comparte → cuando llega el cold email de Kleva la semana siguiente, ya suena el nombre.
-
-**KPI:** De 0 menciones externas → a 3+ (media, podcast, asociación).
+4. **Estrategia de influencers** → ver sección dedicada más abajo (pieza central de la propuesta).
 
 ---
 
 ### Fase 3: ESTAR EN TODAS PARTES (Meses 3-5)
 *"Que no puedan ignorarte"*
 
-**El principio:** En market entry B2B, la velocidad de visibilidad importa más que la perfección. Mejor estar en 10 sitios con un mensaje claro que en 2 sitios con un mensaje perfecto.
+**Roadmap para tu equipo:**
 
-**Qué hacemos:**
+1. **Páginas de batalla** — "Kleva vs Colektia", "Kleva vs Moonflow", "Kleva vs InDebted". *Nosotros damos el brief comparativo con datos, tu equipo publica.*
 
-1. **Outbound multichannel a 200 decisores MX** — 
-   Secuencia: cold email (día 1) → LinkedIn del CEO (día 3) → follow-up con benchmark (día 7) → WhatsApp Business (día 10).
-   Targets: Directores de Cobranza y CROs en Banorte, BBVA MX, Santander MX, Citibanamex + fintechs lending como Stori, Klar, Kueski + BNPL como APLAZO.
+2. **Content asset flagship** — "Estado de la Cobranza Digital en México 2026". Un benchmark report que nadie ha hecho todavía. *Nosotros producimos el research, Kleva lo firma y distribuye.* Se convierte en lead magnet, PR hook, fuente para LLMs, y credibilidad instantánea.
 
-2. **Páginas de batalla** — "Kleva vs Colektia", "Kleva vs Moonflow", "Kleva vs InDebted". Formato comparativo que responde exactamente lo que el comprador googlea cuando evalúa opciones. Bonus: los LLMs priorizan este formato para recomendaciones.
-
-3. **Content asset flagship** — "Estado de la Cobranza Digital en México 2026". Un benchmark report que nadie ha hecho todavía. Se convierte en:
-   - Lead magnet (captura emails)
-   - PR hook (medios lo citan como fuente)
-   - Credibilidad instantánea ("son los que hicieron el estudio")
-   - Fuente para LLMs (entrenan con reportes citados)
-
-4. **Speaking en eventos** — Aplicar como speaker/sponsor a CONVECOB (noviembre), Crevolution (octubre), FINNOSUMMIT (septiembre). No hace falta estar en todos — uno bien ejecutado > tres mediocres.
-
-**Ejemplo concreto:**
-> Kleva publica "Estado de la Cobranza Digital en México 2026". El Economista lo referencia. iupana lo cita. 3 podcasts invitan al CEO a comentarlo. 200 directores de cobranza lo descargan. Cuando CONVECOB llega en noviembre, Kleva es "los del estudio". El booth se llena solo.
-
-**KPI:** 200+ prospects contactados, 1 content asset flagship publicado, 1 evento asegurado.
+3. **Speaking en eventos** — Aplicar como speaker/sponsor: CONVECOB (nov), Crevolution (oct), FINNOSUMMIT (sep). *Nosotros preparamos el pitch de aplicación y el deck.*
 
 ---
 
 ### Fase 4: SER RECOMENDADO (Meses 5-6)
 *"Que las máquinas también hablen de ti"*
 
-**El principio:** En 2026, cada vez más decisores consultan ChatGPT, Perplexity o Gemini antes de hacer un shortlist. Si no estás en las respuestas de los LLMs, no existes para una parte creciente del mercado.
-
-**Hoy:** Un CFO pregunta a Perplexity "mejores plataformas AI cobranza México". Respuesta: Colektia, Moonflow, TrueAccord. Kleva no aparece.
-
-**Qué hacemos:**
-
 Las fases 1-3 alimentan esta fase automáticamente:
 - Reviews en G2 → los LLMs las rastrean
 - Artículos en medios → los LLMs los indexan
 - Páginas de comparación → los LLMs las priorizan
-- Benchmark report → los LLMs lo citan como fuente
-- Perfil Finnovista Radar → fuente de autoridad para LLMs
+- Benchmark report → los LLMs lo citan
+- Contenido "LLM-friendly" en la web (FAQ, schema) → favorecido por ChatGPT/Perplexity
 
-**Acción adicional:** Contenido "LLM-friendly" en la web — formato Q&A, datos estructurados, schema FAQPage. Los LLMs favorecen contenido que responde preguntas directas.
+**Meta:** Kleva aparece en al menos 2 de 5 consultas a LLMs sobre "AI debt collection Mexico".
 
-**KPI:** Kleva aparece en al menos 2 de 5 consultas a LLMs sobre "AI debt collection Mexico".
+---
+
+## 🎯 Estrategia de Influencers — La pieza central
+
+Kleva ya está creando contenido en Instagram y haciendo outbound. Lo que falta es **que voces de autoridad del sector amplifiquen el mensaje**. En B2B fintech, la credibilidad no la construye tu propio contenido — la construyen las personas que tu buyer ya sigue y respeta.
+
+### El framework: 3 capas de influencers
+
+No todos los influencers sirven para lo mismo. La estrategia se estructura en 3 capas, cada una con un objetivo diferente:
+
+```
+Capa 1: AUTORIDAD DEL SECTOR          → "Kleva existe y es serio"
+   (Líderes de asociaciones, reguladores, CEOs de bancos)
+
+Capa 2: EXPERTISE TÉCNICO             → "Kleva funciona y es mejor"
+   (CTOs fintech, consultores credit risk, analistas)
+
+Capa 3: COMUNIDAD Y AMPLIFICACIÓN     → "Todo el mundo habla de Kleva"
+   (Creadores fintech, periodistas, podcasters)
+```
+
+---
+
+### Capa 1: Autoridad del sector
+**Objetivo:** Que las figuras que representan al sector avalen o mencionen a Kleva.
+**Impacto:** Un post o mención de estas personas vale más que 100 posts propios.
+
+| Persona | Cargo | Por qué importa | Acción para Kleva |
+|---------|-------|-----------------|-------------------|
+| **Alan Ramírez Flores** | Presidente APCOB | Representa a todo el sector de cobranza en México. Su aval = legitimidad instantánea. | Solicitar membresía APCOB → pedir reunión → proponer panel conjunto en CONVECOB |
+| **Felipe Vallejo** | Presidente Asociación FinTech México, Director Bitso MX | Representa +180 fintechs. Young Global Leader WEF. | Membresía FinTech México → participar en FinTech México Festival → buscar co-mención |
+| **Tonatiuh Rodríguez** | Director General Banco Azteca | Banco Azteca = "Most Innovative Bank" 2025 (World Finance). Referente en innovación bancaria MX. | Target a largo plazo. Si Banco Azteca se convierte en cliente, su endorsement es game-changer. |
+| **Álvaro Jaramillo** | Director Citi México | Posicionado como agente de cambio en sistema financiero MX. | Invitar a keynote/panel organizado por Kleva. Asociación por proximidad. |
+| **Patricia Armendáriz** | Ex VP CNBV, Shark Tank MX | Voz influyente en inclusión financiera y regulación. Gran audiencia cross-sector. | Contactar para entrevista/podcast. Alto impacto en awareness general. |
+
+**Play concreto:**
+> Kleva se hace miembro de APCOB. Alan Ramírez invita al CEO a participar en un panel de CONVECOB. Post-evento, Kleva publica el video del panel. Alan lo comparte en LinkedIn. Los 5,000 profesionales de cobranza que siguen a Alan ven a Kleva por primera vez como "uno de los nuestros".
+
+---
+
+### Capa 2: Expertise técnico
+**Objetivo:** Que los expertos que tu buyer consulta validen la tecnología y el enfoque de Kleva.
+**Impacto:** Cuando el CRO de un banco evalúa opciones, pregunta a su red técnica de confianza.
+
+| Persona | Cargo | Por qué importa | Acción para Kleva |
+|---------|-------|-----------------|-------------------|
+| **Ángel Maass** | Director Estudios Económicos, Grupo Unicco | LinkedIn Top Voice Finanzas MX. +20 años en análisis de riesgo. Columnista El Financiero. | Enviar el benchmark report → proponer artículo conjunto sobre IA en cobranza |
+| **Janneth Quiroz** | Chief Economist, Monex Grupo Financiero | LinkedIn Top Voice. Profesora TEC y UP. Referente en análisis financiero MX. | Invitar a webinar como panelista → asociar marca con análisis riguroso |
+| **Gerardo González** | Analista credit risk, fintechs MX | Publica sobre riesgo crediticio en neobancos. Expertise técnico específico. | Enviar producto para revisión → pedir opinión pública → co-crear contenido técnico |
+| **Gerry Giacomán** | CEO Clara (unicornio fintech MX) | Referente en crecimiento fintech LATAM. Financial Times "fastest growing". | Target aspiracional. Conectar en FINNOSUMMIT → buscar endorsement si Clara usa o evaluó Kleva |
+| **Marlene Garayzar** | CGO Stori (unicornio fintech MX) | Líder en inclusión financiera y crédito digital. | Stori es cliente potencial de Kleva. Si usan el producto → case study + endorsement |
+| **Daniel Autrique** | Co-fundador Klar (unicornio) | Neobanco con crédito accesible. Necesita cobranza escalable. | Klar es prospect directo. Conectar CEO-to-CEO → convertir en early adopter MX |
+
+**Play concreto:**
+> Kleva publica "Estado de la Cobranza Digital en México 2026". Se lo envía a Ángel Maass con nota: "Hicimos este benchmark, nos encantaría tu perspectiva". Maass lo comenta en LinkedIn con su análisis. Sus 15K followers (CFOs, CROs, analistas) ven el report con el sello de credibilidad de Maass. 3 solicitan el report completo. 1 agenda demo.
+
+---
+
+### Capa 3: Comunidad y amplificación
+**Objetivo:** Que el ecosistema fintech MX hable de Kleva de forma orgánica.
+**Impacto:** Volumen de menciones que alimenta SEO, GEO (LLMs) y top-of-mind.
+
+| Persona/Medio | Tipo | Por qué importa | Acción para Kleva |
+|---------------|------|-----------------|-------------------|
+| **Alejo López** | Influencer fintech LATAM | Audiencia en pagos digitales y banca PyMEs. Brasil + México. | Colaboración de contenido: video o post sobre IA en cobranza LATAM |
+| **Podcast "Desde la banca" (BBVA MX)** | Podcast banking | Audiencia de decisores bancarios MX. El podcast de referencia. | Proponer al CEO como guest: "Cómo la IA está transformando la cobranza" |
+| **Podcast "Evolución Fintech" (Complif)** | Podcast fintech | Nicho fintech MX, audiencia técnica. | Participar en episodio sobre regulación + IA en cobranza |
+| **DPL News** | Newsletter tech/fintech MX | Newsletter especializado, alto engagement, suscripción gratuita. | Enviar press release del benchmark report → buscar feature |
+| **iupana** | Newsletter LATAM fintech | Análisis verificado, equipo periodístico en CDMX. | Pitch de historia: "Fintech israelí/global entra a México con IA de cobranza compliance-first" |
+| **El Economista - Fintech** | Medio nacional | Sección fintech activa, audiencia corporativa. | Artículo de opinión firmado por CEO + cobertura del benchmark |
+| **MundoFintech** | Portal especializado MX | Cubre IA aplicada a finanzas, ciberseguridad, fraude. | Artículo o entrevista sobre IA en cobranza |
+
+**Play concreto:**
+> CEO de Kleva es guest en "Desde la banca" de BBVA. Habla sobre "el futuro de la cobranza empática con IA". El episodio se publica. Kleva lo comparte en LinkedIn e Instagram. DPL News lo referencia en su newsletter. 3 medios más lo mencionan. En 2 semanas, "Kleva" aparece en 8 resultados nuevos de Google.
+
+---
+
+### Roadmap de influencers por mes
+
+| Mes | Acción | Capa | Resultado esperado |
+|-----|--------|------|-------------------|
+| **1** | Membresía APCOB + contacto Alan Ramírez | Autoridad | Sello de legitimidad, puerta a CONVECOB |
+| **1** | Membresía FinTech México | Autoridad | Directorio oficial, acceso a comunidad |
+| **2** | Enviar benchmark report a Ángel Maass + Janneth Quiroz | Expertise | Comentario/share en LinkedIn |
+| **2** | Pitch a "Desde la banca" o Complif como guest | Comunidad | 1 aparición en podcast |
+| **3** | Artículo de opinión en El Economista o DPL News | Comunidad | PR + SEO + credibilidad |
+| **3** | Conectar CEO-to-CEO con Daniel Autrique (Klar) o Marlene (Stori) | Expertise | Relación que puede convertir en cliente + endorsement |
+| **4** | Colaboración contenido con Alejo López | Comunidad | Amplificación LATAM |
+| **4** | Proponer panel CONVECOB con Alan Ramírez | Autoridad | Speaking slot en flagship |
+| **5** | Press release + distribución iupana, MundoFintech | Comunidad | 3-5 menciones en medios |
+| **5-6** | CONVECOB: speaker + booth + networking | Todas | Posicionamiento definitivo ante sector |
+
+### Cómo medir el impacto de influencers
+
+| Métrica | Baseline (hoy) | Target 6 meses |
+|---------|----------------|----------------|
+| Menciones externas de "Kleva" | 0 | 15+ |
+| LinkedIn impressions (posts de influencers) | 0 | 50K+ acumuladas |
+| Inbound leads atribuibles a influencer | 0 | 5-10 |
+| Podcast appearances | 0 | 2-3 |
+| Artículos en medios | 0 | 3-5 |
+| Apariciones en eventos | 0 | 1-2 speaking slots |
+
+---
+
+## Cómo se adapta la estrategia por nicho
+
+La estrategia de 4 fases es el motor. Los influencers son el acelerador. Pero **el mensaje, el canal y los influencers clave cambian según el nicho**:
+
+### Nicho 1: Fintechs de Lending / BNPL ⚡ *Empezar aquí*
+**Targets:** Stori, Klar, Kueski, APLAZO, Nelo, Creditea, Moneyman
+**Por qué primero:** Decisión rápida (2-4 semanas), tech-savvy, carteras en mora crecientes.
+
+| Elemento | Qué hace tu equipo |
+|----------|-------------------|
+| **Mensaje** | "Escala tu cobranza al ritmo de tu crecimiento sin contratar 50 agentes" |
+| **Influencers clave** | Gerry Giacomán (Clara), Marlene Garayzar (Stori), Daniel Autrique (Klar) — CEO-to-CEO |
+| **Content** | Case study: "Cómo una fintech LATAM recuperó 25% más con 70% menos costo en 30 días" |
+| **Canal** | LinkedIn directo + FINNOSUMMIT (sep) |
+| **Outbound tweak** | Incluir link al case study en el follow-up email |
+
+**Play:** CEO conecta con Daniel Autrique (Klar) en FINNOSUMMIT → demo de voz en vivo → piloto → case study que abre todo el vertical.
+
+---
+
+### Nicho 2: Bancos medianos 🏦 *Sembrar en paralelo*
+**Targets:** Banregio, Inbursa, Banbajío, Banco Azteca, Compartamos
+**Por qué estratégicos:** Volumen masivo, contratos largos. Ciclo lento (3-6 meses).
+
+| Elemento | Qué hace tu equipo |
+|----------|-------------------|
+| **Mensaje** | "Compliance automático CONDUSEF + 50% reducción de costos operativos" |
+| **Influencers clave** | Alan Ramírez (APCOB), Ángel Maass (LinkedIn Top Voice Finanzas), Felipe García Ascencio (Santander) |
+| **Content** | Whitepaper: "IA y regulación CONDUSEF: cumplimiento al 100% en cobranza automatizada" |
+| **Canal** | CONVECOB (nov) + outbound al Director de Cobranza |
+| **Outbound tweak** | Adjuntar whitepaper CONDUSEF en primer email |
+
+**Play:** Publicar whitepaper → presentar en CONVECOB → follow-up a todos los asistentes del panel con el PDF.
+
+---
+
+### Nicho 3: Telecoms y servicios masivos 📡 *Oportunista*
+**Targets:** Telcel, AT&T México, Izzi, Totalplay, Sky
+**Por qué jugosos:** Millones de cuentas, carteras de mora altísimas, alto impacto del "50% reducción".
+
+| Elemento | Qué hace tu equipo |
+|----------|-------------------|
+| **Mensaje** | "500K+ interacciones mensuales, sin límite. Procesa toda tu cartera en un día." |
+| **Influencers clave** | Referrals vía APCOB, contactos en Crevolution |
+| **Content** | Benchmark: "Cobranza en telecoms MX: despachos tradicionales vs IA" |
+| **Canal** | Crevolution (oct) + outbound al VP Operations |
+
+---
+
+### Nicho 4: SOFOMes / Microfinancieras 🏪 *Volumen después*
+**Targets:** Gentera, Came, Financiera Independencia, Pro Mujer
+**Por qué interesantes:** Cientos de SOFOMes (AMFE), microcréditos, cobranza intensiva.
+
+| Elemento | Qué hace tu equipo |
+|----------|-------------------|
+| **Mensaje** | "Cobranza empática de microcréditos: en español, 24/7, sin contratar más agentes" |
+| **Influencers clave** | Patricia Armendáriz (inclusión financiera), líderes AMFE |
+| **Content** | Video demo: llamada de voz AI en acción (ya lo tienen en kleva.co) |
+| **Canal** | Crevolution Marketplace (mayo) + AMFE |
+
+---
+
+### Secuencia de ataque
+
+```
+Mes 1-3: Fintechs lending    →  2-3 wins rápidos → case studies
+Mes 2-5: Bancos medianos     →  whitepaper + CONVECOB → pipeline largo
+Mes 3+:  Telecoms            →  oportunista, si hay contacto atacar
+Mes 4+:  SOFOMes             →  volumen, escalar con pricing masivo
+```
 
 ---
 
@@ -126,96 +274,24 @@ Trust: 41       Trust: 48        Trust: 57       Trust: 64        Trust: 70+
 | Antes (hoy) | Después (6 meses) |
 |---|---|
 | Cold email → prospect googlea → gym equipment → borra email | Cold email → prospect googlea → G2, artículo, APCOB → responde |
+| Instagram content → solo seguidores propios ven | Instagram + influencers → el sector entero amplifica |
 | Demo → "nunca oí de ustedes" → objeción de confianza | Demo → "vi su estudio de cobranza" → conversación de valor |
 | Pregunta a ChatGPT → no aparece | Pregunta a ChatGPT → Kleva en top 5 |
 | 0 presencia en eventos MX | Speaker en CONVECOB, el flagship del sector |
 
 ---
 
-## Cómo se adapta la estrategia por nicho
+## Cómo trabajamos: el modelo
 
-La estrategia de 4 fases es el motor. Pero **el mensaje, el canal y el content asset cambian según el nicho**. Kleva atiende bancos, fintechs y prestamistas — pero no a todos se les vende igual.
-
-### Nicho 1: Fintechs de Lending / BNPL
-**Targets México:** Stori, Klar, Kueski, APLAZO, Nelo, Creditea, Moneyman
-**Por qué son ideales para empezar:** Decisión rápida (semanas, no meses), tech-savvy (entienden IA), carteras en mora crecientes por expansión agresiva de crédito, dolor real de cobranza.
-
-| Elemento | Adaptación |
-|----------|-----------|
-| **Mensaje** | "Escala tu cobranza al ritmo de tu crecimiento sin contratar 50 agentes" |
-| **Canal principal** | LinkedIn directo al CEO/COO + referral de inversores comunes |
-| **Content asset** | Case study: "Cómo una fintech LATAM recuperó 25% más con 70% menos costo en 30 días" |
-| **Evento** | FINNOSUMMIT (sep) — todos están ahí |
-| **Influencer clave** | Gerry Giacomán (Clara), Marlene Garayzar (Stori) — misma comunidad |
-| **Objeción típica** | "Ya tenemos algo interno" → respuesta: ROI calculator que muestra costo real vs Kleva |
-
-**Play concreto:**
-> CEO de Kleva conecta con Daniel Autrique (Klar) en FINNOSUMMIT. Le muestra el demo de voz en vivo (la conversación con "Nicolás" que ya tienen en su web). Autrique lo manda a su Director de Collections. Demo → piloto → caso de estudio que abre la puerta a todo el vertical.
-
----
-
-### Nicho 2: Bancos medianos
-**Targets México:** Banregio, Inbursa (Slim), Banbajío, Banco Azteca, Compartamos
-**Por qué son estratégicos:** Volumen masivo de carteras, presupuesto real, y una vez que entras, contratos largos. Pero ciclo de venta más lento (3-6 meses).
-
-| Elemento | Adaptación |
-|----------|-----------|
-| **Mensaje** | "Compliance automático CONDUSEF + 50% reducción de costos operativos en cobranza" |
-| **Canal principal** | CONVECOB (evento APCOB) + outbound al Director de Cobranza |
-| **Content asset** | Whitepaper: "IA y regulación CONDUSEF: cómo garantizar cumplimiento al 100% en cobranza automatizada" |
-| **Evento** | CONVECOB (nov) — flagship del sector, todos los directores de cobranza están ahí |
-| **Influencer clave** | Ángel Maass (LinkedIn Top Voice Finanzas MX), Felipe García Ascencio (CEO Santander MX) como aspiracional |
-| **Objeción típica** | "Regulación, compliance, riesgo" → respuesta: whitepaper CONDUSEF + audit trail automático |
-
-**Play concreto:**
-> Kleva publica el whitepaper de compliance CONDUSEF. Lo presenta en CONVECOB como "Cómo la IA garantiza cumplimiento regulatorio automático". El Director de Cobranza de Banregio asiste al panel. Post-evento, recibe follow-up con el whitepaper + invitación a piloto con una cartera small. Sin riesgo, con métricas claras.
-
----
-
-### Nicho 3: Telecoms y servicios masivos
-**Targets México:** Telcel (América Móvil), AT&T México, Izzi, Totalplay, Sky
-**Por qué son jugosos:** Millones de cuentas de consumo, carteras de mora altísimas, procesos de cobranza ineficientes y costosos. Alto volumen = alto impacto del "50% reducción de costos".
-
-| Elemento | Adaptación |
-|----------|-----------|
-| **Mensaje** | "500K+ interacciones mensuales, sin límite de capacidad. Procesa toda tu cartera en un día." |
-| **Canal principal** | Outbound directo al VP Operations + referral vía APCOB |
-| **Content asset** | Benchmark: "Cobranza en telecoms MX: el costo oculto de los despachos tradicionales vs IA" |
-| **Evento** | Crevolution (oct) — crédito y cobranza, público más enterprise |
-| **Objeción típica** | "Necesitamos integración con nuestro sistema legacy" → respuesta: "2-3 semanas de implementación, si tienes API conectamos" |
-
-**Play concreto:**
-> Kleva publica el benchmark de costos de cobranza en telecoms. Telcel gasta X millones/año en despachos externos. El benchmark muestra que con IA se reduce 50%. El VP Operations de Totalplay lo ve en LinkedIn. El equipo comercial de Kleva lo contacta con el número exacto de lo que ahorraría. La conversación empieza con datos, no con un pitch.
-
----
-
-### Nicho 4: Microfinancieras / SOFOMes
-**Targets México:** Compartamos (también banco), Gentera, Came, Financiera Independencia, Pro Mujer
-**Por qué son interesantes:** Cientos de SOFOMes en México (agremiadas en AMFE), alto volumen de microcréditos, cobranza intensiva en recursos humanos, sensibilidad a costos.
-
-| Elemento | Adaptación |
-|----------|-----------|
-| **Mensaje** | "Automatiza la cobranza de microcréditos: empático, en español, 24/7, sin contratar más agentes" |
-| **Canal principal** | AMFE (asociación de SOFOMes) + outbound email masivo |
-| **Content asset** | Video demo: la llamada de voz AI en acción (ya lo tienen en kleva.co — la conversación con "Nicolás") |
-| **Evento** | Crevolution Marketplace (mayo) — compra/venta de cartera, público microfinanciero |
-| **Objeción típica** | "Nuestros clientes son informales, no responden digital" → respuesta: "Llamada de voz AI, el canal más efectivo para este segmento" |
-
-**Play concreto:**
-> Kleva presenta en el Crevolution Marketplace. Pone un stand con demo en vivo de la llamada de voz AI. Los directores de SOFOMes escuchan la conversación empática en español. "¿Eso lo hace una máquina?" Tres piden demo la misma semana.
-
----
-
-### Cuál atacar primero
-
-| Nicho | Velocidad de cierre | Ticket | Volumen | Recomendación |
-|-------|---------------------|--------|---------|---------------|
-| Fintechs lending/BNPL | ⚡ Rápido (2-4 sem) | Medio | Medio | **Empezar aquí** — wins rápidos para case studies |
-| Bancos medianos | 🐢 Lento (3-6 meses) | Alto | Alto | **Sembrar en paralelo** — CONVECOB + whitepaper |
-| Telecoms | 🐢 Lento (3-6 meses) | Muy alto | Muy alto | **Oportunista** — si hay contacto, atacar |
-| SOFOMes | ⚡ Rápido (2-4 sem) | Bajo | Muy alto | **Volumen** — escalar después de fintechs |
-
-**La secuencia óptima:** Cerrar 2-3 fintechs rápido → usar esos case studies para abrir bancos y telecoms → escalar a SOFOMes con pricing de volumen.
+| Growth4U hace | Kleva ejecuta |
+|---------------|---------------|
+| Research de mercado y competidores | Outbound (ya lo hacen) |
+| Estrategia de influencers con nombres y plays | Contacto y relación con influencers |
+| Brief y estructura de artículos | Escritura y publicación |
+| Brief del benchmark report | Distribución y follow-up |
+| Roadmap de eventos con pitch de aplicación | Asistencia y networking |
+| Templates de outreach a medios/podcasts | Envío y seguimiento |
+| Tracking de métricas y optimización | Ejecución de ajustes |
 
 ---
 
@@ -224,12 +300,12 @@ La estrategia de 4 fases es el motor. Pero **el mensaje, el canal y el content a
 1. **Acceso a web de Kleva** (para fixes técnicos + landing pages)
 2. **Disponibilidad del CEO/CTO** para 2-3 piezas de contenido (artículo + podcast)
 3. **Lista de clientes actuales** (para reviews G2, aunque sean de otros mercados)
-4. **Presupuesto indicativo** para membresía APCOB (~$X MXN) + 1 evento sponsorship
+4. **Presupuesto indicativo** para membresía APCOB + 1 evento sponsorship
 
-El Trust Engine maneja todo lo demás: research, creación de contenido, outreach, tracking, optimización.
+El Trust Engine diseña el camino. Kleva lo recorre.
 
 ---
 
 *Propuesta generada por Trust Engine — Growth4U*
 *Basada en research de 63 fuentes del ecosistema mexicano*
-*13 de marzo de 2026*
+*14 de marzo de 2026*

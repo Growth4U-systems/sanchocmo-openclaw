@@ -806,6 +806,537 @@ function findClientByToken(token) {
   return loadClients().find(c => c.mcToken === token) || null;
 }
 
+// ========== PROJECTS PAGE ==========
+
+function loadProjectsData(slug) {
+  const projectsDir = path.join(BASE, 'brand', slug, 'projects');
+  let registry = { projects: [] };
+  try { registry = JSON.parse(fs.readFileSync(path.join(projectsDir, 'registry.json'), 'utf-8')); } catch {}
+
+  return (registry.projects || []).map(p => {
+    const projDir = path.join(projectsDir, `${p.id}-${p.slug}`);
+    let project = { ...p };
+    let tasks = [];
+    try { project = { ...project, ...JSON.parse(fs.readFileSync(path.join(projDir, 'project.json'), 'utf-8')) }; } catch {}
+    try {
+      const td = JSON.parse(fs.readFileSync(path.join(projDir, 'tasks.json'), 'utf-8'));
+      tasks = Array.isArray(td) ? td : (td.tasks || []);
+    } catch {}
+    return { ...project, tasks };
+  });
+}
+
+function buildProjectsPage(slug, baseUrl, clientName, guildId) {
+  const projects = loadProjectsData(slug);
+
+  const total = projects.length;
+  const totalTasks = projects.reduce((s, p) => s + p.tasks.length, 0);
+  const doneTasks = projects.reduce((s, p) => s + p.tasks.filter(t => ['completed','done'].includes(t.status)).length, 0);
+  const activePrj = projects.filter(p => p.status === 'active').length;
+  const blockedPrj = projects.filter(p => p.status === 'blocked').length;
+
+  const statusLabel = s => ({ active:'Activo', blocked:'Bloqueado', completed:'Completado', reviewed:'Revisado', paused:'Pausado', proposed:'Propuesto', todo:'Por hacer', pending:'Por hacer', 'in-progress':'En progreso', done:'Hecho', cancelled:'Cancelado' }[s] || s);
+  const statusColor = s => ({ active:'#3B82F6', blocked:'#C0392B', completed:'#4A5D23', reviewed:'#4A5D23', paused:'#F2C94C', proposed:'#9333ea', todo:'#888', pending:'#888', 'in-progress':'#3B82F6', done:'#4A5D23', cancelled:'#666' }[s] || '#888');
+  const phaseLabel = p => ({ 0:'Fase 0 — Prerequisitos', 1:'Fase 1 — Ejecución', 2:'Fase 2 — Escalado' }[p] || `Fase ${p}`);
+  const channelIcon = c => ({ web:'🌐', content:'📝', 'paid-ads':'📢', prospecting:'📤', partners:'🤝', creatives:'🎨', research:'🔍', brand:'🏷️', intelligence:'📡', learning:'📚', onboarding:'👋', projects:'📋' }[c] || '#');
+  const channelLabel = c => ({ web:'web', content:'content', 'paid-ads':'paid-ads', prospecting:'prospecting', partners:'partners', creatives:'creatives', research:'research', brand:'brand', intelligence:'intelligence', learning:'learning', onboarding:'onboarding', projects:'projects' }[c] || c || '—');
+  const CHANNEL_OPTIONS = ['web','content','paid-ads','prospecting','partners','creatives','research','brand','intelligence','learning'];
+
+  function escHtml(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+  // ============ VIEW 1: BY PROJECT ============
+  const projectRows = projects.map(p => {
+    const obj = typeof p.objective === 'string' ? p.objective : (p.objective ? p.objective.description || '' : '');
+    const metrics = p.objective && typeof p.objective === 'object' && p.objective.metric
+      ? `${p.objective.baseline}${p.objective.unit||''} → ${p.objective.target}${p.objective.unit||''}` : '';
+    const tasksDone = p.tasks.filter(t => ['completed','done'].includes(t.status)).length;
+    const pct = p.tasks.length > 0 ? Math.round((tasksDone / p.tasks.length) * 100) : 0;
+    const discordLink = (p.discord && p.discord.project_thread_id && guildId)
+      ? `<a href="https://discord.com/channels/${guildId}/${p.discord.project_thread_id}" target="_blank" class="discord-link" title="Abrir en Discord">💬</a>` : '';
+
+    const taskItems = p.tasks.map(t => {
+      const tDiscord = (t.discord_thread_id && guildId)
+        ? `<a href="https://discord.com/channels/${guildId}/${t.discord_thread_id}" target="_blank" class="discord-link">💬</a>` : '';
+      const ownerBadge = t.owner && t.owner !== 'Sancho' ? `<span class="owner-badge">👤 ${escHtml(t.owner)}</span>` : '';
+      const ch = t.channel || t.skill || '';
+      const chBadge = ch ? `<span class="channel-badge">${channelIcon(ch)} ${channelLabel(ch)}</span>` : '';
+      const isDone = ['completed','done'].includes(t.status);
+      const prjSelOpts = ['todo','in-progress','blocked','completed'].map(s => {
+        const lab = {todo:'📋 Por hacer','in-progress':'🔧 En progreso',blocked:'⛔ Bloqueado',completed:'✅ Completado'}[s];
+        const sel = (s === t.status || (s === 'todo' && t.status === 'pending')) ? ' selected' : '';
+        return '<option value="' + s + '"' + sel + '>' + lab + '</option>';
+      }).join('');
+      return `<div class="prj-task ${isDone ? 'done' : ''}" data-task-id="${escHtml(t.id)}">
+        <div class="prj-task-main">
+          <span class="pill-sm"  style="background:${statusColor(t.status)}20;color:${statusColor(t.status)}">${statusLabel(t.status)}</span>
+          <span class="prj-task-name">${escHtml(t.name)}</span>
+          <span class="prj-task-meta">${chBadge}${ownerBadge}${tDiscord}
+            <select class="mobile-status" onchange="mobileStatusChange(this)" onclick="event.stopPropagation();" data-task-id="${escHtml(t.id)}">${prjSelOpts}</select>
+            <button class="edit-btn" onclick="editTask('${escHtml(t.id)}','${escHtml(t.name)}','${escHtml((t.description||'').replace(/'/g,"&#39;"))}','${escHtml(t.owner||'Sancho')}','${escHtml(t.channel||'')}','${escHtml(t.status)}')">✏️</button>
+          </span>
+        </div>
+        ${t.description ? `<div class="prj-task-desc">${escHtml(t.description)}</div>` : ''}
+      </div>`;
+    }).join('');
+
+    return `<div class="prj-card" id="prj-${p.id}">
+      <div class="prj-header" onclick="togglePrj('${p.id}')">
+        <div class="prj-left">
+          <span class="prj-id">${escHtml(p.id)}</span>
+          <span class="prj-name">${escHtml(p.name)}</span>
+          <span class="pill-sm" style="background:${statusColor(p.status)}20;color:${statusColor(p.status)}">${statusLabel(p.status)}</span>
+          ${p.blocked_by ? `<span class="prj-blocked">⛔ por ${escHtml(p.blocked_by)}</span>` : ''}
+        </div>
+        <div class="prj-right">
+          <span class="prj-phase">${phaseLabel(p.phase !== undefined ? p.phase : 1)}</span>
+          <div class="progress-bar"><div class="progress-fill" style="width:${pct}%;"></div></div>
+          <span class="prj-count">${tasksDone}/${p.tasks.length}</span>
+          ${discordLink}
+          <button class="edit-btn" onclick="event.stopPropagation();editProject('${escHtml(p.id)}','${escHtml(p.name)}','${escHtml(obj.replace(/'/g,"&#39;"))}','${escHtml(p.status)}','${escHtml(p.strategy||'')}','${escHtml(p.review_date||'')}')" title="Editar proyecto">✏️</button>
+          <span class="chevron">▸</span>
+        </div>
+      </div>
+      <div class="prj-body" style="display:none;">
+        <div class="prj-info">
+          ${obj ? `<div class="prj-obj"><strong>🎯 Objetivo:</strong> ${escHtml(obj)}</div>` : ''}
+          ${metrics ? `<div class="prj-metrics"><strong>📊 Métrica:</strong> ${escHtml(metrics)}</div>` : ''}
+          ${p.strategy ? `<div><strong>📋 Estrategia:</strong> ${escHtml(p.strategy)}</div>` : ''}
+          ${p.review_date ? `<div><strong>📅 Review:</strong> ${p.review_date}</div>` : ''}
+        </div>
+        <div class="prj-tasks">${taskItems || '<p class="empty-msg">Sin tareas.</p>'}</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  // ============ VIEW 2: KANBAN BY TASK ============
+  const columns = [
+    { key: 'todo', label: 'Por hacer', statuses: ['todo','pending'], icon: '📋' },
+    { key: 'in-progress', label: 'En progreso', statuses: ['in-progress'], icon: '🔧' },
+    { key: 'blocked', label: 'Bloqueado', statuses: ['blocked'], icon: '⛔' },
+    { key: 'done', label: 'Completado', statuses: ['completed','done','reviewed'], icon: '✅' },
+  ];
+
+  const allTasks = [];
+  projects.forEach(p => {
+    const projectBlocked = p.status === 'blocked';
+    p.tasks.forEach(t => {
+      let effectiveStatus = t.status;
+      if (projectBlocked && ['todo','pending'].includes(t.status)) effectiveStatus = 'blocked';
+      allTasks.push({ ...t, effectiveStatus, projectId: p.id, projectName: p.name,
+        projectDiscord: (p.discord && p.discord.project_thread_id && guildId) ? `https://discord.com/channels/${guildId}/${p.discord.project_thread_id}` : null,
+        taskDiscord: (t.discord_thread_id && guildId) ? `https://discord.com/channels/${guildId}/${t.discord_thread_id}` : null,
+      });
+    });
+  });
+
+  const buildKanbanCard = (t) => {
+    const discordBtn = t.taskDiscord
+      ? `<a href="${t.taskDiscord}" target="_blank" class="discord-link">💬</a>`
+      : (t.projectDiscord ? `<a href="${t.projectDiscord}" target="_blank" class="discord-link">💬</a>` : '');
+    const ownerBadge = t.owner && t.owner !== 'Sancho' ? `<span class="owner-badge">👤 ${escHtml(t.owner)}</span>` : '';
+    const ch = t.channel || t.skill || '';
+    const chBadge = ch ? `<span class="channel-badge">${channelIcon(ch)} ${channelLabel(ch)}</span>` : '';
+    const desc = t.description ? `<div class="task-desc">${escHtml(t.description)}</div>` : '';
+    const selOpts = ['todo','in-progress','blocked','completed'].map(s => {
+      const lab = {todo:'📋 Por hacer','in-progress':'🔧 En progreso',blocked:'⛔ Bloqueado',completed:'✅ Completado'}[s];
+      const sel = (s === t.effectiveStatus || (s === 'todo' && t.effectiveStatus === 'pending')) ? ' selected' : '';
+      return '<option value="' + s + '"' + sel + '>' + lab + '</option>';
+    }).join('');
+    return `<div class="task-card" draggable="true" data-task-id="${escHtml(t.id)}" data-slug="${escHtml(slug)}" data-status="${escHtml(t.effectiveStatus)}">
+      <div class="task-card-header drag-handle">
+        <span class="task-id" onclick="showDetail('${escHtml(t.projectId)}')">${escHtml(t.projectId)}</span>
+        <span class="task-actions"><span class="task-code">${escHtml(t.id)}</span>${chBadge}${ownerBadge}${discordBtn}${desc ? '<span class="expand-btn" onclick="toggleTaskDesc(this.closest(&quot;.task-card&quot;))">▾</span>' : ''}</span>
+      </div>
+      <div class="task-name">${escHtml(t.name)}</div>
+      ${desc}
+      <div class="task-footer">
+        <span class="task-project">${escHtml(t.projectName)}</span>
+        <span><select class="mobile-status" onchange="mobileStatusChange(this)" onclick="event.stopPropagation();" data-task-id="${escHtml(t.id)}">${selOpts}</select>
+        <button class="edit-btn" onclick="editTask('${escHtml(t.id)}','${escHtml(t.name)}','${escHtml((t.description||'').replace(/'/g,"&#39;"))}','${escHtml(t.owner||'Sancho')}','${escHtml(t.channel||'')}','${escHtml(t.effectiveStatus)}')" title="Editar">✏️</button></span>
+      </div>
+    </div>`;
+  };
+
+  const columnHtml = columns.map(col => {
+    const colTasks = allTasks.filter(t => col.statuses.includes(t.effectiveStatus));
+    return `<div class="kanban-col" data-col="${col.key}">
+      <div class="col-header"><span>${col.icon} ${col.label}</span><span class="col-count">${colTasks.length}</span></div>
+      <div class="col-body" data-col="${col.key}">${colTasks.map(buildKanbanCard).join('')}</div>
+    </div>`;
+  }).join('');
+
+  // Project detail sidebar (for kanban view)
+  const projectPanels = projects.map(p => {
+    const obj = typeof p.objective === 'string' ? p.objective : (p.objective ? p.objective.description || '' : '');
+    const metrics = p.objective && typeof p.objective === 'object' && p.objective.metric
+      ? `<div class="detail-metric"><strong>${p.objective.metric}</strong>: ${p.objective.baseline}${p.objective.unit||''} → ${p.objective.target}${p.objective.unit||''}</div>` : '';
+    const tasksDone = p.tasks.filter(t => ['completed','done'].includes(t.status)).length;
+    const pct = p.tasks.length > 0 ? Math.round((tasksDone / p.tasks.length) * 100) : 0;
+    return `<div class="project-detail" id="detail-${p.id}" style="display:none;">
+      <div class="detail-header"><h3>${escHtml(p.id)} — ${escHtml(p.name)}</h3><button class="close-detail" onclick="closeDetail('${p.id}')">&times;</button></div>
+      <div class="detail-body">
+        ${obj ? `<p class="detail-obj"><strong>Objetivo:</strong> ${escHtml(obj)}</p>` : ''}
+        ${metrics}
+        ${p.strategy ? `<p><strong>Estrategia:</strong> ${escHtml(p.strategy)}</p>` : ''}
+        <p><strong>Fase:</strong> ${phaseLabel(p.phase)}</p>
+        <p><strong>Estado:</strong> ${statusLabel(p.status)}${p.blocked_by ? ` — Bloqueado por ${p.blocked_by}` : ''}</p>
+        ${p.review_date ? `<p><strong>Review:</strong> ${p.review_date}</p>` : ''}
+        <div class="detail-progress"><div class="detail-progress-fill" style="width:${pct}%;"></div></div>
+        <p class="detail-progress-text">${tasksDone}/${p.tasks.length} tareas (${pct}%)</p>
+      </div>
+    </div>`;
+  }).join('');
+
+  return `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>📋 Proyectos — ${escHtml(clientName)}</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#F5F0E6;--card:#FDF8EF;--border:#D4C9B8;--text:#1A1A2E;--muted:#5D5348;--ink:#1A1A2E;--rust:#C45D35;--navy:#1E3A5F;--green:#4A5D23;--blue:#3B82F6;--red:#C0392B;}
+@media(prefers-color-scheme:dark){:root{--bg:#1A1A2E;--card:#2D2D44;--border:#3D3D5C;--text:#FDF8EF;--muted:#A09890;--ink:#FDF8EF;--rust:#D4734F;--navy:#60a5fa;--green:#6B8E23;--blue:#60a5fa;--red:#E74C3C;}}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);padding:24px 32px;overflow-x:auto;}
+h1{font-family:'Space Grotesk',sans-serif;color:var(--navy);font-size:28px;margin-bottom:4px;}
+.top-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:12px;}
+.top-left{display:flex;align-items:baseline;gap:16px;}
+.subtitle{color:var(--muted);font-size:14px;}
+.back{color:var(--muted);text-decoration:none;font-size:14px;display:inline-block;margin-bottom:12px;}
+.back:hover{color:var(--rust);}
+.stats{display:flex;gap:10px;flex-wrap:wrap;}
+.stat{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px 16px;text-align:center;min-width:90px;}
+.stat-val{font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:600;color:var(--navy);}
+.stat-label{font-size:11px;color:var(--muted);}
+
+/* Tabs */
+.view-tabs{display:flex;gap:0;margin-bottom:20px;border-bottom:2px solid var(--border);}
+.view-tab{padding:10px 20px;font-size:14px;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .15s;}
+.view-tab:hover{color:var(--text);}
+.view-tab.active{color:var(--rust);border-bottom-color:var(--rust);}
+.view-panel{display:none;}
+.view-panel.active{display:block;}
+
+/* === PROJECT VIEW === */
+.prj-card{background:var(--card);border:1px solid var(--border);border-radius:10px;margin-bottom:8px;overflow:hidden;}
+.prj-header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;cursor:pointer;gap:12px;}
+.prj-header:hover{background:color-mix(in srgb,var(--bg) 50%,transparent);}
+.prj-left{display:flex;align-items:center;gap:10px;flex:1;min-width:0;}
+.prj-right{display:flex;align-items:center;gap:12px;flex-shrink:0;}
+.prj-id{font-family:'Space Grotesk',sans-serif;font-weight:700;color:var(--rust);font-size:14px;}
+.prj-name{font-weight:600;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.prj-phase{font-size:11px;color:var(--muted);white-space:nowrap;}
+.prj-count{font-size:13px;color:var(--muted);white-space:nowrap;font-weight:600;}
+.prj-blocked{font-size:11px;color:var(--red);}
+.pill-sm{display:inline-block;padding:1px 8px;border-radius:12px;font-size:11px;font-weight:600;white-space:nowrap;}
+.progress-bar{width:70px;height:6px;background:var(--border);border-radius:3px;overflow:hidden;}
+.progress-fill{height:100%;background:var(--green);border-radius:3px;transition:width .3s;}
+.chevron{font-size:14px;color:var(--muted);transition:transform .2s;display:inline-block;}
+.prj-card.open .chevron{transform:rotate(90deg);}
+.prj-body{padding:0 18px 16px;}
+.prj-info{display:flex;flex-direction:column;gap:6px;padding:10px 0 14px;font-size:13px;color:var(--muted);border-bottom:1px solid var(--border);margin-bottom:10px;}
+.prj-obj{font-size:14px;color:var(--text);}
+.prj-tasks{display:flex;flex-direction:column;gap:4px;}
+.prj-task{padding:10px 12px;border-radius:6px;background:color-mix(in srgb,var(--bg) 60%,transparent);transition:background .15s;}
+.prj-task:hover{background:color-mix(in srgb,var(--bg) 80%,var(--card));}
+.prj-task.done{opacity:0.6;}
+.prj-task.done .prj-task-name{text-decoration:line-through;}
+.prj-task-main{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.prj-task-name{font-size:14px;font-weight:500;flex:1;min-width:0;}
+.prj-task-meta{display:flex;align-items:center;gap:6px;flex-shrink:0;}
+.prj-task-desc{font-size:12px;color:var(--muted);margin-top:6px;line-height:1.4;padding-left:4px;}
+.channel-badge{font-size:10px;background:color-mix(in srgb,var(--navy) 10%,transparent);color:var(--navy);padding:1px 6px;border-radius:4px;white-space:nowrap;}
+.owner-badge{font-size:10px;background:color-mix(in srgb,var(--blue) 12%,transparent);color:var(--blue);padding:1px 6px;border-radius:4px;white-space:nowrap;}
+.discord-link{text-decoration:none;font-size:14px;opacity:0.7;transition:opacity .15s;}
+.discord-link:hover{opacity:1;}
+.empty-msg{color:var(--muted);font-size:13px;padding:8px 0;}
+
+/* === KANBAN VIEW === */
+.kanban{display:flex;gap:14px;align-items:flex-start;min-height:calc(100vh - 240px);overflow-x:auto;padding-bottom:20px;}
+.kanban-col{flex:1;min-width:260px;max-width:340px;background:color-mix(in srgb,var(--bg) 80%,var(--card));border-radius:12px;display:flex;flex-direction:column;max-height:calc(100vh - 240px);}
+.col-header{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:600;color:var(--text);border-bottom:1px solid var(--border);}
+.col-count{background:var(--border);color:var(--text);font-size:11px;padding:2px 8px;border-radius:10px;font-weight:700;}
+.col-body{flex:1;overflow-y:auto;padding:8px;display:flex;flex-direction:column;gap:8px;min-height:60px;}
+.col-body.drag-over{background:color-mix(in srgb,var(--blue) 10%,transparent);border-radius:0 0 12px 12px;}
+.task-card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px;transition:box-shadow .15s,transform .15s;}
+.task-card:hover{box-shadow:0 2px 8px rgba(0,0,0,.08);transform:translateY(-1px);}
+.task-card.dragging{opacity:0.5;transform:rotate(2deg);}
+.task-card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;cursor:grab;user-select:none;-webkit-user-select:none;}
+.task-name,.task-desc,.task-project,.task-footer{user-select:text;-webkit-user-select:text;cursor:text;}
+.expand-btn{cursor:pointer;font-size:14px;color:var(--muted);padding:0 4px;transition:transform .2s;display:inline-block;user-select:none;}
+.expand-btn:hover{color:var(--rust);}
+.task-card.show-desc .expand-btn{transform:rotate(180deg);}
+.task-id{font-family:'Space Grotesk',sans-serif;font-size:11px;font-weight:600;color:var(--rust);background:color-mix(in srgb,var(--rust) 10%,transparent);padding:1px 8px;border-radius:4px;cursor:pointer;}
+.task-id:hover{background:color-mix(in srgb,var(--rust) 20%,transparent);}
+.task-actions{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.task-name{font-size:14px;font-weight:600;line-height:1.35;margin-bottom:4px;}
+.task-project{font-size:12px;color:var(--muted);}
+.task-code{font-family:'Space Grotesk',sans-serif;font-size:10px;color:var(--muted);opacity:0.6;}
+.task-footer{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.task-desc{font-size:12px;color:var(--muted);line-height:1.4;margin:6px 0 4px;padding:6px 8px;background:color-mix(in srgb,var(--bg) 60%,transparent);border-radius:4px;display:none;}
+.task-card.show-desc .task-desc{display:block;}
+.mobile-status{display:none;font-size:12px;padding:3px 6px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);cursor:pointer;max-width:140px;}
+@media(max-width:768px){
+  .mobile-status{display:block;}
+  .task-card{cursor:pointer;}
+  .kanban{flex-direction:column;}
+  .kanban-col{max-width:100%;min-width:0;max-height:none;}
+}
+
+/* Project detail sidebar */
+.project-detail{position:fixed;top:0;right:0;width:380px;height:100vh;background:var(--card);border-left:2px solid var(--border);box-shadow:-4px 0 20px rgba(0,0,0,.1);z-index:100;overflow-y:auto;padding:24px;}
+.detail-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;}
+.detail-header h3{font-family:'Space Grotesk',sans-serif;color:var(--navy);font-size:18px;line-height:1.3;}
+.close-detail{background:none;border:none;font-size:24px;cursor:pointer;color:var(--muted);padding:0 4px;}
+.close-detail:hover{color:var(--text);}
+.detail-body p{font-size:14px;margin-bottom:8px;line-height:1.5;}
+.detail-obj{font-size:15px!important;}
+.detail-metric{background:color-mix(in srgb,var(--green) 10%,transparent);padding:8px 12px;border-radius:6px;font-size:14px;margin-bottom:10px;}
+.detail-progress{width:100%;height:8px;background:var(--border);border-radius:4px;overflow:hidden;margin-top:12px;}
+.detail-progress-fill{height:100%;background:var(--green);border-radius:4px;}
+.detail-progress-text{font-size:12px;color:var(--muted);margin-top:4px;}
+
+.toast{position:fixed;bottom:20px;right:20px;background:var(--green);color:#fff;padding:10px 20px;border-radius:8px;font-size:14px;font-weight:600;display:none;z-index:999;box-shadow:0 4px 12px rgba(0,0,0,.2);}
+.toast.error{background:var(--red);}
+.toast.show{display:block;animation:fadeIn .2s ease;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+/* Edit modal */
+.edit-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.4);z-index:200;display:none;align-items:center;justify-content:center;}
+.edit-overlay.open{display:flex;}
+.edit-modal{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:24px;width:90%;max-width:520px;max-height:90vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.2);}
+.edit-modal h3{font-family:'Space Grotesk',sans-serif;color:var(--navy);margin-bottom:16px;font-size:18px;}
+.edit-field{margin-bottom:12px;}
+.edit-field label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px;}
+.edit-field input,.edit-field textarea,.edit-field select{width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);font-family:'Nunito',sans-serif;font-size:14px;}
+.edit-field textarea{min-height:80px;resize:vertical;}
+.edit-field select{appearance:auto;}
+.edit-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:16px;}
+.edit-actions button{padding:8px 16px;border:1px solid var(--border);border-radius:6px;cursor:pointer;font-size:14px;font-weight:600;}
+.btn-save{background:var(--green);color:#fff;border-color:var(--green)!important;}
+.btn-save:hover{opacity:0.9;}
+.btn-cancel{background:var(--card);color:var(--muted);}
+.btn-cancel:hover{background:var(--bg);}
+.edit-btn{background:none;border:none;cursor:pointer;font-size:13px;color:var(--muted);padding:2px 4px;opacity:0.5;transition:opacity .15s;}
+.edit-btn:hover{opacity:1;color:var(--rust);}
+
+.empty{text-align:center;padding:60px 20px;color:var(--muted);}
+.empty h2{font-family:'Space Grotesk',sans-serif;color:var(--navy);margin-bottom:8px;}
+</style></head><body>
+<a class="back" href="${baseUrl}/">← Mission Control</a>
+<div class="top-bar">
+  <div class="top-left">
+    <h1>📋 Proyectos</h1>
+    <span class="subtitle">${escHtml(clientName)}</span>
+  </div>
+  <div class="stats">
+    <div class="stat"><div class="stat-val">${activePrj}</div><div class="stat-label">Activos</div></div>
+    <div class="stat"><div class="stat-val">${blockedPrj}</div><div class="stat-label">Bloqueados</div></div>
+    <div class="stat"><div class="stat-val">${doneTasks}/${totalTasks}</div><div class="stat-label">Tareas</div></div>
+    <div class="stat"><div class="stat-val">${totalTasks > 0 ? Math.round((doneTasks/totalTasks)*100) : 0}%</div><div class="stat-label">Progreso</div></div>
+  </div>
+</div>
+
+<div class="view-tabs">
+  <div class="view-tab active" onclick="switchView('projects',this)">📂 Por Proyecto</div>
+  <div class="view-tab" onclick="switchView('kanban',this)">📋 Por Tarea (Kanban)</div>
+</div>
+
+${total === 0 ? '<div class="empty"><h2>Sin proyectos</h2><p>Ejecuta el strategic plan para generar proyectos.</p></div>' : `
+<div class="view-panel active" id="view-projects">${projectRows}</div>
+<div class="view-panel" id="view-kanban"><div class="kanban">${columnHtml}</div></div>
+`}
+
+${projectPanels}
+
+<div class="edit-overlay" id="editOverlay" onclick="if(event.target===this)closeEdit()">
+  <div class="edit-modal" id="editModal"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SLUG = '${slug}';
+const CHANNELS = ${JSON.stringify(['web','content','paid-ads','prospecting','partners','creatives','research','brand','intelligence','learning'])};
+const API_BASE = window.location.pathname.replace(/\\/projects\\/?$/, '');
+
+function switchView(view, tab) {
+  document.querySelectorAll('.view-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.view-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('view-' + view).classList.add('active');
+  tab.classList.add('active');
+}
+
+// === Edit functions ===
+function closeEdit() { document.getElementById('editOverlay').classList.remove('open'); }
+
+function editTask(taskId, name, desc, owner, channel, status) {
+  const chOpts = CHANNELS.map(c => '<option value="' + c + '"' + (c===channel?' selected':'') + '>#' + c + '</option>').join('');
+  const stOpts = ['todo','in-progress','blocked','completed'].map(s => {
+    const lab = {todo:'Por hacer','in-progress':'En progreso',blocked:'Bloqueado',completed:'Completado'}[s];
+    return '<option value="' + s + '"' + (s===status?' selected':'') + '>' + lab + '</option>';
+  }).join('');
+  document.getElementById('editModal').innerHTML = 
+    '<h3>✏️ Editar tarea ' + taskId + '</h3>' +
+    '<div class="edit-field"><label>Nombre</label><input id="ef-name" value="' + name.replace(/"/g,'&quot;') + '"/></div>' +
+    '<div class="edit-field"><label>Descripción</label><textarea id="ef-desc">' + desc.replace(/</g,'&lt;') + '</textarea></div>' +
+    '<div class="edit-field"><label>Canal</label><select id="ef-channel"><option value="">— Sin canal —</option>' + chOpts + '</select></div>' +
+    '<div class="edit-field"><label>Owner</label><input id="ef-owner" value="' + owner.replace(/"/g,'&quot;') + '"/></div>' +
+    '<div class="edit-field"><label>Estado</label><select id="ef-status">' + stOpts + '</select></div>' +
+    '<div class="edit-actions"><button class="btn-cancel" onclick="closeEdit()">Cancelar</button><button class="btn-save" onclick="saveTask(\\'' + taskId + '\\')">Guardar</button></div>';
+  document.getElementById('editOverlay').classList.add('open');
+}
+
+function saveTask(taskId) {
+  const fields = {
+    name: document.getElementById('ef-name').value,
+    description: document.getElementById('ef-desc').value,
+    channel: document.getElementById('ef-channel').value,
+    owner: document.getElementById('ef-owner').value,
+    status: document.getElementById('ef-status').value,
+  };
+  fetch(API_BASE + '/api/projects/task-update', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ slug: SLUG, taskId, fields })
+  }).then(r => r.json()).then(d => {
+    if (d.ok) { showToast('✅ ' + taskId + ' actualizado'); closeEdit(); setTimeout(() => location.reload(), 600); }
+    else showToast('Error: ' + (d.error||''), true);
+  }).catch(() => showToast('Error de conexión', true));
+}
+
+function editProject(projId, name, objective, status, strategy, reviewDate) {
+  const stOpts = ['active','blocked','paused','completed'].map(s => {
+    const lab = {active:'Activo',blocked:'Bloqueado',paused:'Pausado',completed:'Completado'}[s];
+    return '<option value="' + s + '"' + (s===status?' selected':'') + '>' + lab + '</option>';
+  }).join('');
+  document.getElementById('editModal').innerHTML = 
+    '<h3>✏️ Editar proyecto ' + projId + '</h3>' +
+    '<div class="edit-field"><label>Nombre</label><input id="ef-pname" value="' + name.replace(/"/g,'&quot;') + '"/></div>' +
+    '<div class="edit-field"><label>Objetivo</label><textarea id="ef-pobj">' + objective.replace(/</g,'&lt;') + '</textarea></div>' +
+    '<div class="edit-field"><label>Estrategia</label><input id="ef-pstrat" value="' + strategy.replace(/"/g,'&quot;') + '"/></div>' +
+    '<div class="edit-field"><label>Estado</label><select id="ef-pstatus">' + stOpts + '</select></div>' +
+    '<div class="edit-field"><label>Review date</label><input id="ef-preview" type="date" value="' + reviewDate + '"/></div>' +
+    '<div class="edit-actions"><button class="btn-cancel" onclick="closeEdit()">Cancelar</button><button class="btn-save" onclick="saveProject(\\'' + projId + '\\')">Guardar</button></div>';
+  document.getElementById('editOverlay').classList.add('open');
+}
+
+function saveProject(projId) {
+  const fields = {
+    name: document.getElementById('ef-pname').value,
+    objective: document.getElementById('ef-pobj').value,
+    status: document.getElementById('ef-pstatus').value,
+    strategy: document.getElementById('ef-pstrat').value,
+    review_date: document.getElementById('ef-preview').value,
+  };
+  fetch(API_BASE + '/api/projects/project-update', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ slug: SLUG, projectId: projId, fields })
+  }).then(r => r.json()).then(d => {
+    if (d.ok) { showToast('✅ ' + projId + ' actualizado'); closeEdit(); setTimeout(() => location.reload(), 600); }
+    else showToast('Error: ' + (d.error||''), true);
+  }).catch(() => showToast('Error de conexión', true));
+}
+
+function togglePrj(id) {
+  const card = document.getElementById('prj-' + id);
+  if (!card) return;
+  const body = card.querySelector('.prj-body');
+  const isOpen = card.classList.contains('open');
+  card.classList.toggle('open');
+  body.style.display = isOpen ? 'none' : 'block';
+}
+
+function toggleTaskDesc(card) {
+  if (event && (event.target.closest('a') || event.target.closest('.task-id'))) return;
+  card.classList.toggle('show-desc');
+}
+
+function showToast(msg, isError) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (isError ? ' error' : '');
+  setTimeout(() => { t.className = 'toast'; }, 2500);
+}
+
+function updateTaskStatus(taskId, newStatus) {
+  return fetch(API_BASE + '/api/projects/task-status', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ slug: SLUG, taskId, status: newStatus })
+  }).then(r => r.json());
+}
+
+function showDetail(projectId) {
+  document.querySelectorAll('.project-detail').forEach(d => d.style.display = 'none');
+  const panel = document.getElementById('detail-' + projectId);
+  if (panel) panel.style.display = 'block';
+}
+function closeDetail(projectId) {
+  const panel = document.getElementById('detail-' + projectId);
+  if (panel) panel.style.display = 'none';
+}
+
+// Mobile status change
+function mobileStatusChange(sel) {
+  const card = sel.closest('.task-card');
+  const taskId = sel.dataset.taskId;
+  const newStatus = sel.value;
+  const labels = {todo:'Por hacer','in-progress':'En progreso',blocked:'Bloqueado',completed:'Completado'};
+  updateTaskStatus(taskId, newStatus).then(d => {
+    if (d.ok) {
+      showToast(taskId + ' → ' + (labels[newStatus] || newStatus));
+      setTimeout(() => location.reload(), 600);
+    } else {
+      showToast('Error: ' + (d.error || ''), true);
+    }
+  }).catch(() => showToast('Error de conexión', true));
+}
+
+// Drag and drop (kanban) — only drag from header (drag-handle)
+const statusMap = { 'todo': 'todo', 'in-progress': 'in-progress', 'blocked': 'blocked', 'done': 'completed' };
+let draggedCard = null;
+let dragAllowed = false;
+
+// Track mousedown: only allow drag if started on the header
+document.addEventListener('mousedown', function(e) {
+  dragAllowed = !!e.target.closest('.drag-handle');
+});
+
+document.querySelectorAll('.task-card[draggable]').forEach(card => {
+  card.addEventListener('dragstart', function(e) {
+    if (!dragAllowed) { e.preventDefault(); return; }
+    draggedCard = card;
+    card.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', card.dataset.taskId);
+  });
+  card.addEventListener('dragend', function() {
+    if (draggedCard) draggedCard.classList.remove('dragging');
+    draggedCard = null;
+    dragAllowed = false;
+    document.querySelectorAll('.col-body').forEach(c => c.classList.remove('drag-over'));
+  });
+});
+document.querySelectorAll('.col-body').forEach(col => {
+  col.addEventListener('dragover', e => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; col.classList.add('drag-over'); });
+  col.addEventListener('dragleave', () => col.classList.remove('drag-over'));
+  col.addEventListener('drop', e => {
+    e.preventDefault(); col.classList.remove('drag-over');
+    if (!draggedCard) return;
+    const taskId = draggedCard.dataset.taskId;
+    const newCol = col.dataset.col;
+    const newStatus = statusMap[newCol] || newCol;
+    col.appendChild(draggedCard);
+    draggedCard.dataset.status = newStatus;
+    document.querySelectorAll('.kanban-col').forEach(c => {
+      c.querySelector('.col-count').textContent = c.querySelector('.col-body').children.length;
+    });
+    updateTaskStatus(taskId, newStatus).then(d => {
+      if (d.ok) showToast(taskId + ' → ' + ({"todo":"Por hacer","in-progress":"En progreso","blocked":"Bloqueado","completed":"Completado"}[newStatus] || newStatus));
+      else { showToast('Error: ' + (d.error || ''), true); setTimeout(() => location.reload(), 1000); }
+    }).catch(() => { showToast('Error de conexión', true); setTimeout(() => location.reload(), 1000); });
+  });
+});
+</script>
+</body></html>`;
+}
+
 function portalPage(title, clientName, content) {
   return `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>${title} — ${clientName}</title>
@@ -1063,6 +1594,14 @@ nav .nav-footer { display:none !important; }
       return;
     }
 
+    // Portal: Projects dashboard
+    if (portalPath === '/projects' || portalPath === '/projects/') {
+      const guildId = client.guild || client.discord_guild_id || '';
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+      res.end(buildProjectsPage(slug, portalBase, clientName, guildId));
+      return;
+    }
+
     // Portal: Docs — route through main handler with scoping
     if (portalPath.startsWith('/docs/')) {
       req._portalClient = client;
@@ -1115,6 +1654,11 @@ nav .nav-footer { display:none !important; }
         '/api/api-health',
         '/api/health-check',
         '/api/system-sa',
+        '/api/projects/task-status',
+        '/api/projects/task-update',
+        '/api/projects/project-update',
+        '/api/projects/',
+        '/api/metrics',
       ];
       const apiPath = portalPath.split('?')[0];
       const isAllowed = allowedApis.some(a => apiPath === a || apiPath.startsWith(a + '/') || apiPath.startsWith(a + '?'));
@@ -1151,6 +1695,187 @@ nav .nav-footer { display:none !important; }
     }
   }
   // ========== END PORTAL ROUTES ==========
+
+  // === API: Projects — task status update ===
+  if (req.method === 'POST' && url === '/api/projects/task-status') {
+    // Requires admin or portal auth
+    if (!req._adminToken && !req._portalClient) {
+      res.writeHead(403, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Unauthorized' }));
+      return;
+    }
+    let body = '';
+    req.on('data', chunk => { body += chunk; if (body.length > 1e5) req.destroy(); });
+    req.on('end', () => {
+      try {
+        const { slug, taskId, status } = JSON.parse(body);
+        if (!slug || !taskId || !status) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Missing slug, taskId, or status' }));
+          return;
+        }
+        // Portal clients can only update their own slug
+        if (req._portalClient && req._portalSlug !== slug) {
+          res.writeHead(403, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Forbidden' }));
+          return;
+        }
+        // Find the project folder
+        const projectsDir = path.join(BASE, 'brand', slug, 'projects');
+        const projectId = taskId.split('-').slice(0, 1).join('-'); // P01 from P01-T01
+        // Find the folder matching the project ID
+        let projFolder = null;
+        try {
+          const dirs = fs.readdirSync(projectsDir, { withFileTypes: true });
+          projFolder = dirs.find(d => d.isDirectory() && d.name.startsWith(projectId + '-'));
+        } catch {}
+        if (!projFolder) {
+          res.writeHead(404, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Project not found: ' + projectId }));
+          return;
+        }
+        const tasksFile = path.join(projectsDir, projFolder.name, 'tasks.json');
+        let tasksData;
+        try { tasksData = JSON.parse(fs.readFileSync(tasksFile, 'utf-8')); } catch {
+          res.writeHead(404, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'tasks.json not found' }));
+          return;
+        }
+        const tasks = Array.isArray(tasksData) ? tasksData : (tasksData.tasks || []);
+        const task = tasks.find(t => t.id === taskId);
+        if (!task) {
+          res.writeHead(404, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Task not found: ' + taskId }));
+          return;
+        }
+        const oldStatus = task.status;
+        task.status = status;
+        if (status === 'completed' || status === 'done') task.completed = new Date().toISOString().slice(0, 10);
+        // Write back
+        const writeData = Array.isArray(tasksData) ? tasks : { ...tasksData, tasks };
+        fs.writeFileSync(tasksFile, JSON.stringify(writeData, null, 2));
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true, taskId, oldStatus, newStatus: status }));
+      } catch (e) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: e.message }));
+      }
+    });
+    return;
+  }
+
+  // === API: Projects — update task fields ===
+  if (req.method === 'POST' && url === '/api/projects/task-update') {
+    if (!req._adminToken && !req._portalClient) {
+      res.writeHead(403, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'Unauthorized' })); return;
+    }
+    let body = '';
+    req.on('data', chunk => { body += chunk; if (body.length > 1e5) req.destroy(); });
+    req.on('end', () => {
+      try {
+        const { slug, taskId, fields } = JSON.parse(body);
+        if (!slug || !taskId || !fields) { res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'Missing slug, taskId, or fields' })); return; }
+        if (req._portalClient && req._portalSlug !== slug) { res.writeHead(403, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'Forbidden' })); return; }
+        const projectsDir = path.join(BASE, 'brand', slug, 'projects');
+        const projectId = taskId.split('-').slice(0, 1).join('-');
+        let projFolder = null;
+        try { const dirs = fs.readdirSync(projectsDir, { withFileTypes: true }); projFolder = dirs.find(d => d.isDirectory() && d.name.startsWith(projectId + '-')); } catch {}
+        if (!projFolder) { res.writeHead(404, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'Project not found' })); return; }
+        const tasksFile = path.join(projectsDir, projFolder.name, 'tasks.json');
+        let tasksData;
+        try { tasksData = JSON.parse(fs.readFileSync(tasksFile, 'utf-8')); } catch { res.writeHead(404, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'tasks.json not found' })); return; }
+        const tasks = Array.isArray(tasksData) ? tasksData : (tasksData.tasks || []);
+        const task = tasks.find(t => t.id === taskId);
+        if (!task) { res.writeHead(404, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'Task not found' })); return; }
+        const allowed = ['name','description','owner','channel','status'];
+        for (const [k, v] of Object.entries(fields)) { if (allowed.includes(k)) task[k] = v; }
+        if (fields.status === 'completed' || fields.status === 'done') task.completed = new Date().toISOString().slice(0, 10);
+        const writeData = Array.isArray(tasksData) ? tasks : { ...tasksData, tasks };
+        fs.writeFileSync(tasksFile, JSON.stringify(writeData, null, 2));
+        res.writeHead(200, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: true, task }));
+      } catch (e) { res.writeHead(500, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: e.message })); }
+    });
+    return;
+  }
+
+  // === API: Projects — update project fields ===
+  if (req.method === 'POST' && url === '/api/projects/project-update') {
+    if (!req._adminToken && !req._portalClient) {
+      res.writeHead(403, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'Unauthorized' })); return;
+    }
+    let body = '';
+    req.on('data', chunk => { body += chunk; if (body.length > 1e5) req.destroy(); });
+    req.on('end', () => {
+      try {
+        const { slug, projectId, fields } = JSON.parse(body);
+        if (!slug || !projectId || !fields) { res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'Missing params' })); return; }
+        if (req._portalClient && req._portalSlug !== slug) { res.writeHead(403, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'Forbidden' })); return; }
+        const projectsDir = path.join(BASE, 'brand', slug, 'projects');
+        let projFolder = null;
+        try { const dirs = fs.readdirSync(projectsDir, { withFileTypes: true }); projFolder = dirs.find(d => d.isDirectory() && d.name.startsWith(projectId + '-')); } catch {}
+        if (!projFolder) { res.writeHead(404, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'Project not found' })); return; }
+        const projFile = path.join(projectsDir, projFolder.name, 'project.json');
+        let project;
+        try { project = JSON.parse(fs.readFileSync(projFile, 'utf-8')); } catch { res.writeHead(404, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'project.json not found' })); return; }
+        const allowed = ['name','objective','status','review_date','strategy'];
+        for (const [k, v] of Object.entries(fields)) { if (allowed.includes(k)) project[k] = v; }
+        fs.writeFileSync(projFile, JSON.stringify(project, null, 2));
+        // Also update registry
+        const regFile = path.join(projectsDir, 'registry.json');
+        try {
+          const reg = JSON.parse(fs.readFileSync(regFile, 'utf-8'));
+          const rp = (reg.projects || []).find(p => p.id === projectId);
+          if (rp) { if (fields.name) rp.name = fields.name; if (fields.status) rp.status = fields.status; if (fields.review_date) rp.review_date = fields.review_date; }
+          fs.writeFileSync(regFile, JSON.stringify(reg, null, 2));
+        } catch {}
+        res.writeHead(200, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: true, project }));
+      } catch (e) { res.writeHead(500, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: e.message })); }
+    });
+    return;
+  }
+
+  // === API: Projects — get all projects data ===
+  if (req.method === 'GET' && url.startsWith('/api/projects/') && !url.includes('task-status')) {
+    if (!req._adminToken && !req._portalClient) {
+      res.writeHead(403, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Unauthorized' }));
+      return;
+    }
+    const slug = url.replace('/api/projects/', '').replace(/\/$/, '');
+    if (req._portalClient && req._portalSlug !== slug) {
+      res.writeHead(403, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Forbidden' }));
+      return;
+    }
+    const projects = loadProjectsData(slug);
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ ok: true, slug, projects }));
+    return;
+  }
+
+  // === Projects page (admin mode) ===
+  if (url.startsWith('/projects/') || url === '/projects') {
+    if (!req._adminToken) {
+      res.writeHead(403, { 'Content-Type': 'text/html; charset=utf-8' });
+      res.end(portalForbiddenPage());
+      return;
+    }
+    const slug = url.replace('/projects/', '').replace(/\/$/, '') || null;
+    if (!slug) {
+      // List all clients with projects link
+      const clients = loadClients();
+      const links = clients.map(c => `<div class="card"><a href="${req._adminBase}/projects/${c.slug}/">${c.emoji || '🏢'} ${c.name || c.slug}</a></div>`).join('');
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+      res.end(page('Proyectos', `<a class="back" href="${req._adminBase}/">← Mission Control</a>`, `<h1>📋 Proyectos por cliente</h1>${links}`));
+      return;
+    }
+    const client = loadClients().find(c => c.slug === slug);
+    const clientName = client ? (client.name || slug) : slug;
+    const guildId = client ? (client.guild || client.discord_guild_id || '') : '';
+    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+    res.end(buildProjectsPage(slug, req._adminBase, clientName, guildId));
+    return;
+  }
 
   // === API: Google Workspace OAuth (gog auth) — Step 1: Generate auth URL ===
   if (req.method === 'POST' && url === '/api/gog-auth-start') {
@@ -2341,6 +3066,58 @@ async function doTest() {
         res.end(JSON.stringify({ ok: true, service: serviceId, status: 'connected' }));
       } catch (e) { res.writeHead(500); res.end('Error: ' + e.message); }
     });
+    return;
+  }
+
+  // === API: metrics data for a client ===
+  if (req.method === 'GET' && url.startsWith('/api/metrics')) {
+    const params = new URLSearchParams(req.url.split('?')[1] || '');
+    const slug = params.get('slug');
+    if (!slug) {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Missing slug parameter' }));
+      return;
+    }
+
+    const metricsFile = path.join(BASE, 'brand', slug, 'metrics', 'metrics-data.json');
+    const integrationsFile = path.join(BASE, 'brand', slug, 'integrations.json');
+
+    try {
+      let metrics = [];
+      if (fs.existsSync(metricsFile)) {
+        metrics = JSON.parse(fs.readFileSync(metricsFile, 'utf-8'));
+      }
+
+      let integrations = {};
+      if (fs.existsSync(integrationsFile)) {
+        integrations = JSON.parse(fs.readFileSync(integrationsFile, 'utf-8'));
+      }
+
+      // Load daily snapshots for trend data (last 30 days)
+      const metricsDir = path.join(BASE, 'brand', slug, 'metrics');
+      const dailyFiles = [];
+      if (fs.existsSync(metricsDir)) {
+        const files = fs.readdirSync(metricsDir).filter(f => /^\d{4}-\d{2}-\d{2}\.json$/.test(f)).sort().slice(-30);
+        for (const f of files) {
+          try {
+            const data = JSON.parse(fs.readFileSync(path.join(metricsDir, f), 'utf-8'));
+            dailyFiles.push({ date: f.replace('.json', ''), ...data });
+          } catch {}
+        }
+      }
+
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        slug,
+        metricsSheet: integrations.metricsSheet || null,
+        dataSources: integrations.dataSources || {},
+        rolling: metrics,
+        daily: dailyFiles,
+      }));
+    } catch (e) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: e.message }));
+    }
     return;
   }
 

@@ -175,7 +175,9 @@ Tareas de un proyecto. Cada tarea se ejecuta en un canal temático.
     {
       "id": "T01",
       "name": "Reescribir página de servicios — copy Trust Engine",
+      "description": "Redactar copy persuasivo para la página de servicios usando framework Trust Engine. Incluir: headline, subheadline, 3 bloques de servicio con beneficios, social proof, CTA.",
       "status": "pending",
+      "owner": "Sancho",
       "channel": "web",
       "discord_thread_id": null,
       "skill": "direct-response-copy",
@@ -224,6 +226,23 @@ Tareas de un proyecto. Cada tarea se ejecuta en un canal temático.
 }
 ```
 
+### Campos task `owner`
+
+| owner | Cuándo |
+|-------|--------|
+| `Sancho` | **DEFAULT.** Toda tarea que Sancho puede ejecutar (contenido, research, configuración, análisis, copy, diseño, scheduling) |
+| `Equipo` | Requiere acción humana: grabar vídeos, llamadas, aprobaciones, acceso a cuentas, interacción personal |
+| `[Nombre]` | Solo si una persona específica debe hacerlo (ej: "Alfonso" para aparecer en podcast) |
+
+**Regla: Sancho es el owner por defecto.** Solo marcar a humanos cuando la tarea genuinamente requiere su intervención.
+
+### Campos task `description`
+
+Cada tarea DEBE tener un campo `description` que explique:
+- Qué hay que hacer concretamente
+- Qué se entrega al completar
+- Contexto relevante (herramientas, fuentes, criterios)
+
 ### Campos task `status`
 
 | status | Significado |
@@ -236,8 +255,29 @@ Tareas de un proyecto. Cada tarea se ejecuta en un canal temático.
 
 ### Campos task `channel`
 
-Canal temático donde se ejecuta la tarea. Valores comunes:
-`web`, `content`, `outreach`, `ads`, `email`, `social`, `analytics`
+Canal Discord donde se ejecuta la tarea. Mapea a canales reales del guild del cliente:
+
+| channel | Discord | Categoría |
+|---------|---------|-----------|
+| `web` | #web | CONTENT |
+| `content` | #content | CONTENT |
+| `paid-ads` | #paid-ads | CONTENT |
+| `prospecting` | #prospecting | OUTREACH |
+| `partners` | #partners | OUTREACH |
+| `creatives` | #creatives | SOPORTE |
+| `research` | #research | SOPORTE |
+| `brand` | #brand | ESTRATEGIA |
+| `intelligence` | #intelligence | SISTEMA |
+| `learning` | #learning | SISTEMA |
+
+### Campo task `discord_thread_id`
+
+ID del hilo de Discord creado para esta tarea. Se rellena al ejecutar `_system/project-threads-protocol.md`.
+MC usa este ID para generar links 💬 directos a Discord.
+
+### Campo project `discord.project_thread_id`
+
+ID del hilo de Discord creado en #projects para este proyecto.
 
 ---
 

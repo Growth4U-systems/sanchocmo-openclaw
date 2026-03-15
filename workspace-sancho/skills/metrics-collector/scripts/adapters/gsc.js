@@ -17,7 +17,7 @@ const SA_PATH = path.resolve(__dirname, '..', '..', '..', '..', '.secrets', 'goo
  * @param {{ from: string, to: string }} dateRange
  */
 export async function collect(config, env, dateRange) {
-  const siteUrl = config.siteUrl;
+  const siteUrl = config.siteUrl || config.SITE_URL || config.site_url;
   if (!siteUrl) {
     throw new Error('GSC: missing siteUrl in integrations.json');
   }

@@ -1,0 +1,15 @@
+{
+  "id": "P08",
+  "name": "Twitter/X Build-in-Public",
+  "objective": "Reactivar @AlfonsoSB con estrategia build-in-public",
+  "metrics": {
+    "baseline": { "followers": 1444, "impressions_month": 0 },
+    "target": { "followers": 1944, "impressions_month": 50000 }
+  },
+  "account": "@AlfonsoSB",
+  "origin": "strategic-plan-v2",
+  "strategy": "Twitter/X BIP",
+  "phase": 1,
+  "review_date": "2026-06-13",
+  "status": "active"
+}

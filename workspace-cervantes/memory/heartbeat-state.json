@@ -1,1 +1,11 @@
-{"lastRegenTime": 1772989546}
+{
+  "lastRegenTime": 1773514385,
+  "lastHeartbeat": 1773619260,
+  "lastChecks": {
+    "gateway": 1773619260,
+    "discord": 1773619260,
+    "mcServer": 1773619260,
+    "devices": 1773619260,
+    "anthropic": 1773605178
+  }
+}

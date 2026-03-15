@@ -221,11 +221,51 @@ Presentar: estado actual → gaps → canales → estrategias con scoring → pl
 
 **Esperar aprobación antes de escribir archivos.**
 
+Después de aprobación, ofrecer SIEMPRE:
+
+```
+✅ Plan aprobado. ¿Quieres que genere la presentación?
+→ Generaré slides con tu visual identity usando el Presentation Summary del plan.
+```
+
 ---
 
-## Output y modelo de datos
+## Output: Estructura narrativa del plan
 
-Ver [references/data-model.md](references/data-model.md) para schemas completos de `strategic-plan.md`, `project.json`, `tasks.json`, y `value-review.md`.
+El documento `strategic-plan/current.md` sigue un arco narrativo — NO el orden de los pasos internos. Debe leerse como una historia, no como un log de proceso.
+
+```
+1. RESUMEN EJECUTIVO — 3-4 frases: quién eres, qué quieres, qué vamos a hacer
+2. DÓNDE ESTAMOS HOY — Estado actual destilado (destino, canales, herramientas, contenido)
+3. QUÉ NOS FRENA — Gaps priorizados (🔴🟡🟢) con acción concreta por gap
+4. DÓNDE QUEREMOS IR — Objetivo + horizonte + métrica baseline → target
+5. CÓMO VAMOS A LLEGAR — Canales priorizados + estrategias seleccionadas (score, por qué, KPIs)
+6. QUÉ HACEMOS PRIMERO — Roadmap por fases (Fase 0 → Fase 1 → Fase 2)
+7. PROYECTOS — Lista con objetivo, métrica, target, review date
+8. CÓMO MEDIMOS — Dashboard de métricas por semana/mes
+```
+
+**No incluir en el documento:**
+- Logs del proceso ("el usuario dijo X")
+- Verificaciones internas de capacidad
+- Metadata de skills
+
+**Cada dato debe citar su fuente** con link relativo al documento origen.
+
+### Presentation Summary (obligatorio)
+
+Al final del documento, incluir `## Presentation Summary` siguiendo `_system/presentation-summary-protocol.md`:
+- Slides destiladas del contenido del plan
+- Cada dato con `source: "[doc](ruta-relativa)"`
+- Max 6 bullets por slide
+- Arco narrativo respetado
+- Sin info interna
+
+Este Presentation Summary permite generar presentación con frontend-slides bajo demanda.
+
+### Modelo de datos
+
+Ver [references/data-model.md](references/data-model.md) para schemas de `project.json`, `tasks.json`, y `value-review.md`.
 
 ### Al aprobar el plan:
 
@@ -234,9 +274,14 @@ Ver [references/data-model.md](references/data-model.md) para schemas completos 
 3. Por cada estrategia aprobada → crear proyecto:
    - Carpeta `brand/{slug}/projects/P{XX}-{slug}/`
    - `project.json` con objetivo, métricas baseline/target, origin, review_date
-   - `tasks.json` con tareas iniciales y canal temático asignado
-4. Crear hilo en `#projects` del guild: `[P01] Nombre del proyecto`
-5. Por cada tarea → crear hilo en el canal temático: `[P01-T01] Nombre tarea`
+   - `tasks.json` con tareas iniciales, canal temático asignado, descripción, owner
+4. Preguntar: "Plan aprobado con X proyectos y Y tareas. ¿Creo los hilos en Discord?"
+5. Al confirmar → seguir `_system/project-threads-protocol.md`:
+   - Crear hilo en `#projects` del guild: `[P01] Nombre del proyecto` con links a MC
+   - Por cada tarea → crear hilo en el canal temático: `[P01-T01] Nombre tarea` con link al proyecto y MC
+   - Resumen en hilo del proyecto con links a todos los hilos de tareas
+   - Guardar `discord_thread_id` en project.json y tasks.json
+6. En cada hilo de tarea: "¿La ejecuto?" → esperar confirmación
 
 ### Nomenclatura proyectos
 

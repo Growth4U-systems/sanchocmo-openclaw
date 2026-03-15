@@ -1,128 +1,73 @@
-## 2026-03-13
+# Observaciones Sancho — 2026-03-14
 
-### Sesiones Activas (últimas 24h)
-
-| Canal | Tipo | Actividad |
-|-------|------|-----------|
-| #nichos-y-positioning-hc | Discord | Actualizando docs madre con 7 nichos |
-| #actualizacion-docs-hc | Discord | Philippe actualiza con nuevos descubrimientos |
-| #intelligence (HC) | Discord | Daily Pulse publicado |
-| #metrics (Growth4U) | Discord | Morning Metrics publicado |
-| #infra | Discord | Cost Alert: $100.87 vs threshold $50 |
-| Cron: funnel-watchdog | Cron | OK |
-| Cron: Morning Metrics | Cron | OK |
-| Cron: Daily Pulse | Cron | OK |
-| Cron: cost-tracker | Cron | OK (alertó correctamente) |
-| Cron: image-optimizer | Cron | OK |
-| Cron: update-skills | Cron | Actualizó OpenClaw 2026.3.11 → 2026.3.12 |
-| Cron: Regenerate Dashboard | Cron | OK |
-
-### Errores/Skills
-
-- **Health check Cervantes (ayer)**: 2 errores "debounced" (anthropic 401, openclaw command failed) - no cambios nuevos
-- **Cost Alert**: $100.87 spend el 12-Mar exceedió threshold $50 - reportado por Sancho en #infra
-- **Funnel watchdog**: ✅ OK
-- **Update skills**: Rate limit en clawhub (apify) - no crítico
-
-### Reglas de canal
-
-✅ **Correcto**:
-- Usa menciones @ correctamente (#nichos-y-positioning, #actualizacion-docs-hc)
-- Publica en hilos (Daily Pulse, Morning Metrics, Cost Alert)
-- Communication clara y concisa
-
-### Patrones de mejora
-
-**Positivos**:
-1. Comunicación clara: "El prompt de la presentación ya está actualizado" + lista de qué sí y qué NO
-2. Pide clarificación: "¿Quieres que actualice Positioning a 7 nichos ahora?"
-3. Crons funcionando correctamente
-4. Reporta alertas proactivamente
-
-**Área a monitorear**:
-- Costes elevados: $100.87 el 12-Mar vs media $92.84/día - proyecciones $3075/mes
-
-### Estado general: 🟢 Sancho operando bien
+## Resumen Ejecutivo
+Sancho trabajó bien en las últimas 24h. Sin errores críticos, sin cosas que no supiera responder. Mejoró un skill proactivamente.
 
 ---
 
-# Sancho Observations - 2026-03-12
+## Sesiones (24h)
 
-## Sesiones Activas (últimas 24h)
+### Canales activos
+| Canal | Actividad | Evaluación |
+|-------|-----------|------------|
+| **#soporte** | Propuesta light para Kleva | ✅ Excelente |
+| **#onboarding (Kleva)** | Bienvenida + inicio Foundation | ✅ Correcto |
+| **#tasks › Cloudflare** | Investigación + comparativa Apify/Firecrawl | ✅ Excelente |
+| **#terminando-foundation** | Mejoró strategic-plan skill | ✅ Proactivo |
+| **#bienvenida-onboarding-kleva** | Onboarding | ✅ Correcto |
+| **Crons** (6) | Funnel, cost, dashboard, images, skills, heartbeat | ✅ Todos OK |
 
-| Canal | Tipo | Actividad |
-|-------|------|-----------|
-| g-1481562944256082004 | Discord | Daily Pulse |
-| #conexiones-apis-y-mcps | Discord | Tunnel Tailscale, fixing mobile JS |
-| #métricas-y-kpis | Discord | Métricas + metrics-collector task |
-| #monitoreo-recurrente | Discord | Heartbeat check |
-| g-1481554981269278772 | Discord | Growth4U metrics analysis |
-| g-1477741644789842031 | Discord | Growth4U #intelligence |
+---
 
-## Errores/Skills que fallaron
+## Errors/Skills Fallidos
+**Ninguno detectado.** Los transcripts no muestran errores de tools, skills fallidos, o tiempos de timeout.
 
-### 1. Error LLM "thinking blocks cannot be modified"
-- **Cuándo**: En #métricas-y-kpis al procesar un mensaje
-- **Estado**: Error de API, no de skill
-- **Consecuencia**: Sesión truncada
+---
 
-### 2. Morning Metrics publicado 3 veces
-- **Cuándo**: 11-12 marzo en #intelligence Growth4U
-- **Problema**: 
-  - Datos publicados directamente al canal (no en hilo)
-  - Cron corrió 3 veces (23:54, 00:13, 07:30)
-  - Sesión principal interfería con el cron
-- **Fix aplicado**: 
-  - Cambiado a sessionTarget: isolated
-  - Cambiado a Sonnet 4.5 (antes MiniMax)
-  - Prompt reescrito para seguir patrón de hilo correctamente
+## Preguntas Sin Responder
+**Ninguna identificada.** Todas las queries de Martin y Alfonso recibieron respuesta estructurada.
 
-### 3. JS roto en Mission Control (mobile)
-- **Problema**: String roto en clipboard.writeText hacia fallback todo el JS
-- **Fix**: Sancho reescribió la función copyGogUrl()
-- **Estado**: ✅ Arreglado
+---
 
-## Preguntas que no supo responder
-- Ninguna detectada
+## Reglas de Canal
+**Cumplidas:**
+- ✅ Usa hilos correctamente (thread-create antes de responder)
+- ✅ Responde dentro del hilo, no en canal principal
+- ✅ Formato Discord: markdown con tablas, code blocks cuando corresponde
+- ✅ Menciona usuarios con @ cuando responde a alguien específico
 
-## Respeto a reglas de canal
+---
 
-### ✅ Correcto:
-- En #conexiones-apis-y-mcps: ответил solo con código, sin largas explicaciones
-- En #métricas-y-kpis: mantuvo tema de infraestructura de métricas
+## Patrones de Mejora
 
-### ❌ Problema detectado:
-- Morning Metrics no siguió el patrón de hilo (datos fuera de hilo)
-- **Ya corregido** por Sancho mismo
+### ✅ Positivos
+1. **Proactividad** — En #terminando-foundation, Alfonso sugirió "pasa a evaluations de Skill Creator" y Sancho:
+   - Detectó que Alfonso quería que implementara el cambio
+   - Editó el SKILL.md directamente
+   - Corrió quick_validate.py + package_skill.py
+   - Reportó el resultado con checkmarks
+   - **Sin que se lo pidieran explícitamente, ejecutó la tarea completa**
 
-## Patrones de mejora
+2. **Calidad de outputs** — 
+   - Propuesta Kleva: 2.500 palabras, 5 líneas estratégicas con ejemplos concretos (nombres de medios, influencers, podcasts)
+   - Comparativa Cloudflare: tabla de precios, features, recomendación de stack por tiers
 
-### Positivos:
-1. **Proactividad**: Detectó y arregló el bug JS de mobile él solo
-2. **Comunicación**: Informó a Alfonso de cada fix
-3. **Delegación**: Spawned Escudero para metrics-collector skill (task complejo)
-4. **Fix rápido**: Identificó el problema del cron y lo arregló
+3. **Uso eficiente de tools** — web_search para research, memory_search para contexto, exec para validación de skills
 
-### Áreas a mejorar:
-1. **Errores LLM**: El error "thinking blocks cannot be modified" apareció 2 veces - revisar configuración
-2. **Cron jobs**: Memory Maintenance falló (edit en MEMORY.md falló)
+### ⚠️ Notas menores
+1. **Duplicación ocasional** — Algunos mensajes aparecen duplicados (enviados dos veces via delivery-mirror). Esto pasa a veces cuando el cron usa el mismo canal. No es crítico.
 
-## Estado Crons
+2. **Sin contexto de Kleva en onboarding** — Cuando Martin dijo "hola" en onboarding, Sancho buscó en clients.json y vio que Kleva no tenía Foundation started. Hizo las preguntas correctas (qué es, qué problema resuelve). Todo bien.
 
-| Cron | Estado | Notas |
-|------|--------|-------|
-| funnel-watchdog | ✅ ok | |
-| healthcheck | ✅ ok | |
-| Regenerar Dashboard | ✅ ok | |
-| image-optimizer | ✅ ok | |
-| update-skills | ✅ ok | |
-| cost-tracker-daily | ✅ ok | |
-| Morning Metrics | ✅ ok | Fix aplicado |
-| Daily Pulse | ✅ ok | |
-| Memory Maintenance | ❌ error | Edit falló en MEMORY.md |
-| Weekly Synthesis | ✅ ok | |
+---
 
-## Notas adicionales
-- metrics-collector skill fue creada por Escudero (subagent)
-- Guillermo ( Philippe) sigue en onboarding
-- OpenClaw caído brevemente el 10-mar (detectado por Sancho)
+## Métricas (últimas 24h)
+- **Sesiones activas**: 13+
+- **Tokens totales**: ~500K+
+- **Crons ejecutados**: 6 (todos OK)
+- **Errores**: 0
+
+---
+
+## Veredicto
+**Sancho está funcionando correctamente.** Trabajo de calidad, sin errores, proactivo en mejoras de skills. No hay nada urgente que notificar.

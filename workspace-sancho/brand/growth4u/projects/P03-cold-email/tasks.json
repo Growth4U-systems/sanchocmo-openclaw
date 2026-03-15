@@ -1,0 +1,7 @@
+[
+  { "id": "P03-T01", "name": "Lista ECP1: 200 startups tech post-PMF España", "owner": "Sancho", "status": "todo", "channel": "research", "description": "Investigar y compilar lista de 200 startups tecnológicas españolas post-PMF que encajen con ECP1. Incluir: empresa, web, contacto, tamaño, sector." },
+  { "id": "P03-T02", "name": "Lista ECP2: 100 fintechs reguladas BdE", "owner": "Sancho", "status": "todo", "channel": "research", "description": "Compilar lista de 100 fintechs con licencia BdE. Fuentes: registro BdE, Crunchbase, LinkedIn. Incluir contacto decisor." },
+  { "id": "P03-T03", "name": "Crear 3 secuencias × 4 emails por ECP", "owner": "Sancho", "status": "todo", "channel": "prospecting", "description": "Redactar 3 ángulos de cold email por ECP, cada uno con 4 emails de secuencia (initial + 3 follow-ups). Personalización por dolor/sector." },
+  { "id": "P03-T04", "name": "Lanzar: 50 emails/día, 2 buzones", "owner": "Sancho", "status": "todo", "channel": "prospecting", "description": "Configurar envío en Instantly/similar: 50 emails/día distribuidos en 2 buzones calentados. Monitorear deliverability." },
+  { "id": "P03-T05", "name": "Gestionar replies <4h, agendar calls, iterar copy", "owner": "Equipo", "status": "todo", "channel": "prospecting", "description": "Responder a replies en menos de 4 horas. Agendar calls cualificadas. Iterar copy basándose en tasas de respuesta." }
+]

@@ -1,7 +1,7 @@
 {
   "version": "2.0",
   "started_at": "2026-03-01T19:03:21Z",
-  "updated_at": "2026-03-11T09:13:03Z",
+  "updated_at": "2026-03-14T20:03:00Z",
   "sections": {
     "company-brief": {
       "status": "approved",
@@ -283,6 +283,13 @@
         }
       },
       "approved_at": "2026-03-08T10:54:00Z"
+    },
+    "strategic-plan": {
+      "status": "approved",
+      "approved_at": "2026-03-14T20:03:00Z",
+      "output_file": "brand/growth4u/strategic-plan/current.md",
+      "projects": "brand/growth4u/projects/registry.json",
+      "notes": "v2 — 7 estrategias, 8 proyectos (P01-P08). LinkedIn 3 perfiles + Cold Email + Meta Ads + Free Media + IG/TikTok + Twitter/X + Social Proof."
     }
   }
 }

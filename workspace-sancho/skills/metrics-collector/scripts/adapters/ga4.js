@@ -28,7 +28,7 @@ const METRICS = [
  * @returns {{ metrics: Array<{ name: string, value: number, date: string }> }}
  */
 export async function collect(config, env, dateRange) {
-  const propertyId = config.propertyId;
+  const propertyId = config.propertyId || config.PROPERTY_ID;
   if (!propertyId) {
     throw new Error('GA4: missing propertyId in integrations.json');
   }

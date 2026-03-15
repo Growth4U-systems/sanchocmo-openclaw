@@ -1,101 +1,152 @@
 /**
- * Metricool Adapter — Social media analytics via Metricool API
+ * Metricool Adapter — Social media analytics via Metricool API v2
  *
- * Auth: X-Mc-Auth header with userToken, plus userId and blogId as query params.
- * Pulls: followers, engagement, reach, posts via Stats Service endpoints.
+ * Auth: X-Mc-Auth header with API token.
+ * Pulls: posts with engagement per connected network.
+ * Uses /v2/analytics/posts/{network} endpoint (reliable, returns per-post data).
+ * Also checks /admin/simpleProfiles to detect connected networks.
  *
  * API docs: https://app.metricool.com/api/swagger.json
- * Endpoints used:
- *   GET /stats/aggregations/{category} — aggregated metrics by category
- *   GET /stats/values/{category} — daily metric values
- *   GET /stats/instagram/posts — IG posts with metrics
- *   GET /stats/facebook/posts — FB posts with metrics
  */
 
 const BASE_URL = 'https://app.metricool.com/api';
 
-// Categories for aggregations endpoint
-const CATEGORIES = ['instagram', 'facebook', 'twitter', 'linkedin', 'tiktok'];
+// Networks to check via v2 analytics
+const V2_NETWORKS = ['linkedin', 'instagram', 'facebook', 'twitter', 'tiktok'];
 
 /**
- * @param {object} config - From integrations.json
- * @param {object} env - Must contain METRICOOL_USER_TOKEN, METRICOOL_USER_ID, METRICOOL_BLOG_ID
+ * @param {object} config - From integrations.json (e.g. { METRICOOL_URL: "..." })
+ * @param {object} env - { METRICOOL_API_TOKEN, METRICOOL_USER_ID, METRICOOL_BLOG_ID }
  * @param {{ from: string, to: string }} dateRange
  */
 export async function collect(config, env, dateRange) {
-  const userToken = env.METRICOOL_USER_TOKEN;
-  const userId = env.METRICOOL_USER_ID;
-  const blogId = env.METRICOOL_BLOG_ID;
+  const userToken = env.METRICOOL_USER_TOKEN || env.METRICOOL_API_TOKEN;
+  let userId = env.METRICOOL_USER_ID;
+  let blogId = env.METRICOOL_BLOG_ID;
 
-  if (!userToken || !userId || !blogId) {
-    throw new Error('Metricool: missing METRICOOL_USER_TOKEN, METRICOOL_USER_ID, or METRICOOL_BLOG_ID in .env');
+  // Parse blogId/userId from METRICOOL_URL config if not in env
+  const mcUrl = config.METRICOOL_URL || config.metricoolUrl;
+  if (mcUrl && (!blogId || !userId)) {
+    try {
+      const parsed = new URL(mcUrl.startsWith('http') ? mcUrl : `https://${mcUrl}`);
+      blogId = blogId || parsed.searchParams.get('blogId');
+      userId = userId || parsed.searchParams.get('userId');
+    } catch (_) {}
   }
 
-  const authParams = `userId=${userId}&blogId=${blogId}`;
-  const dateParams = `init=${dateRange.from}&end=${dateRange.to}`;
+  if (!userToken || !userId || !blogId) {
+    throw new Error('Metricool: missing API token, userId, or blogId. Set METRICOOL_API_TOKEN in .env and METRICOOL_URL in config.');
+  }
+
   const headers = {
     'X-Mc-Auth': userToken,
     'Content-Type': 'application/json',
   };
 
   const metrics = [];
+  const from = `${dateRange.from}T00:00:00`;
+  const to = `${dateRange.to}T23:59:59`;
 
-  // Pull aggregated metrics for each social network category
-  for (const category of CATEGORIES) {
+  // --- Detect connected networks ---
+  let connectedNetworks = new Set();
+  try {
+    const profileResp = await fetch(
+      `${BASE_URL}/admin/simpleProfiles?userId=${userId}&blogId=${blogId}`,
+      { headers }
+    );
+    if (profileResp.ok) {
+      const profiles = await profileResp.json();
+      const brand = profiles.find(p => String(p.id) === String(blogId));
+      if (brand) {
+        if (brand.instagram) connectedNetworks.add('instagram');
+        if (brand.facebook || brand.facebookPageId) connectedNetworks.add('facebook');
+        if (brand.twitter) connectedNetworks.add('twitter');
+        if (brand.linkedinCompany) connectedNetworks.add('linkedin');
+        if (brand.tiktok) connectedNetworks.add('tiktok');
+        if (brand.youtube) connectedNetworks.add('youtube');
+      }
+    }
+  } catch (err) {
+    // If detection fails, try all networks
+    connectedNetworks = new Set(V2_NETWORKS);
+  }
+
+  if (connectedNetworks.size === 0) {
+    console.warn('  ⚠️  Metricool: no social networks connected for this brand');
+    return { source: 'metricool', date: dateRange.from, metrics: [] };
+  }
+
+  console.log(`  📡 Connected networks: ${[...connectedNetworks].join(', ')}`);
+
+  // --- Pull posts per network via v2 API ---
+  for (const network of connectedNetworks) {
+    if (!V2_NETWORKS.includes(network)) continue;
+
     try {
-      const url = `${BASE_URL}/stats/aggregations/${category}?${authParams}&${dateParams}`;
-      const response = await fetch(url, { headers });
+      const url = `${BASE_URL}/v2/analytics/posts/${network}?userId=${userId}&blogId=${blogId}&from=${from}&to=${to}`;
+      const resp = await fetch(url, { headers });
 
-      if (!response.ok) {
-        // Not all accounts have all networks — skip 404/403
-        if (response.status === 404 || response.status === 403) continue;
-        const text = await response.text();
-        console.warn(`  ⚠️  Metricool ${category} ${response.status}: ${text.slice(0, 200)}`);
+      if (!resp.ok) {
+        const body = await resp.text().catch(() => '');
+        if (resp.status === 403) {
+          console.warn(`  ⚠️  Metricool ${network}: not connected (403)`);
+        } else {
+          console.warn(`  ⚠️  Metricool ${network} ${resp.status}: ${body.slice(0, 100)}`);
+        }
         continue;
       }
 
-      const data = await response.json();
+      const data = await resp.json();
+      const posts = data.data || (Array.isArray(data) ? data : []);
 
-      // Metricool returns an object with metric name → value pairs
-      if (data && typeof data === 'object') {
-        for (const [key, value] of Object.entries(data)) {
-          if (typeof value === 'number' || typeof value === 'string') {
-            metrics.push({
-              name: key,
-              value: typeof value === 'string' ? parseFloat(value) || 0 : value,
-              date: dateRange.from,
-              dimensions: { network: category },
-            });
-          }
-        }
+      if (posts.length === 0) continue;
+
+      // Aggregate metrics for the period
+      let totalImpressions = 0, totalClicks = 0, totalLikes = 0, totalComments = 0;
+      let totalEngagement = 0;
+
+      for (const post of posts) {
+        totalImpressions += post.impressions || 0;
+        totalClicks += post.clicks || 0;
+        totalLikes += post.likes || post.likeCount || 0;
+        totalComments += post.comments || post.commentCount || 0;
+        totalEngagement += post.engagement || 0;
       }
-    } catch (err) {
-      console.warn(`  ⚠️  Metricool ${category} error: ${err.message}`);
-    }
-  }
 
-  // Pull timeline for key metrics (followers over time)
-  for (const metric of ['followers', 'engagement']) {
-    try {
-      const url = `${BASE_URL}/stats/timeline/${metric}?${authParams}&${dateParams}`;
-      const response = await fetch(url, { headers });
-      if (!response.ok) continue;
+      const avgEngagement = posts.length > 0 ? Math.round(totalEngagement / posts.length * 100) / 100 : 0;
 
-      const data = await response.json();
-      if (Array.isArray(data)) {
-        for (const point of data) {
-          if (point.date && point.value !== undefined) {
-            metrics.push({
-              name: metric,
-              value: point.value,
-              date: point.date,
-              dimensions: { type: 'timeline' },
-            });
-          }
-        }
+      metrics.push(
+        { name: 'posts', value: posts.length, date: dateRange.from, dimensions: { network } },
+        { name: 'impressions', value: totalImpressions, date: dateRange.from, dimensions: { network } },
+        { name: 'clicks', value: totalClicks, date: dateRange.from, dimensions: { network } },
+        { name: 'likes', value: totalLikes, date: dateRange.from, dimensions: { network } },
+        { name: 'comments', value: totalComments, date: dateRange.from, dimensions: { network } },
+        { name: 'avgEngagement', value: avgEngagement, date: dateRange.from, dimensions: { network } },
+      );
+
+      // Also add per-post detail (top 5 by impressions)
+      const sortedPosts = [...posts].sort((a, b) => (b.impressions || 0) - (a.impressions || 0));
+      for (const post of sortedPosts.slice(0, 5)) {
+        const date = post.created?.dateTime?.slice(0, 10) || dateRange.from;
+        const text = (post.comment || post.text || post.caption || '').slice(0, 80);
+        metrics.push({
+          name: 'postDetail',
+          value: post.impressions || 0,
+          date,
+          dimensions: {
+            network,
+            url: post.url || '',
+            likes: post.likes || 0,
+            clicks: post.clicks || 0,
+            engagement: Math.round((post.engagement || 0) * 100) / 100,
+            text: text,
+          },
+        });
       }
+
+      console.log(`  ✅ ${network}: ${posts.length} posts, ${totalImpressions} impressions, avg eng ${avgEngagement}%`);
     } catch (err) {
-      console.warn(`  ⚠️  Metricool timeline/${metric} error: ${err.message}`);
+      console.warn(`  ⚠️  Metricool ${network} error: ${err.message}`);
     }
   }
 

@@ -1,0 +1,13 @@
+{
+  "id": "P01",
+  "name": "Fontanería Web",
+  "objective": "Tracking funcional: Meta Pixel + GA4 conversiones + booking unificado",
+  "metrics": {
+    "baseline": { "pixel": false, "ga4_conversions": false, "booking_unified": false },
+    "target": { "pixel": true, "ga4_conversions": true, "booking_unified": true }
+  },
+  "origin": "strategic-plan-v2",
+  "phase": 0,
+  "review_date": "2026-03-28",
+  "status": "active"
+}

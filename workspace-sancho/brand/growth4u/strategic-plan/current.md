@@ -1,31 +1,36 @@
 # Strategic Plan — Growth4U Q2 2026
 
-> Generado: 2026-03-14 | Skill: strategic-plan v1.0 | Mode: INIT
-> Status: pending-approval | Versión: v1
-> Objetivo: Lead Generation | Horizonte: 1-3 meses
-> Foundation: 15 docs cargados (Layers 0-5 complete)
+> Aprobado: 2026-03-14 | Versión: v2 | Ciclo: marzo-junio 2026
+> Objetivo: Lead Generation | Horizonte: 90 días
+> Origen: [Foundation approved](../foundation-state.json) (Layers 0-5, 15 documentos)
 
 ---
 
-## 1. Estado Actual Consolidado
+## 1. Resumen Ejecutivo
+
+Growth4U es una consultora de growth embedded que instala sistemas de adquisición en empresas tech post-PMF a través del Trust Engine (7K€, 6 meses, fecha de fin). Con un equipo de 4 personas, 5-10K€/mes de presupuesto y un posicionamiento GEO #1-2 en Gemini para "agencia growth fintech España", el objetivo ahora es **generar pipeline cualificado en 90 días** activando 7 estrategias en paralelo: LinkedIn (3 perfiles coordinados), cold email, Meta Ads, free media, contenido social (IG + TikTok), Twitter/X y social proof.
+
+---
+
+## 2. Dónde Estamos Hoy
 
 ### Destino de conversión
-- **Web:** growth4u.io → CTA "Agendar Llamada" → GHL Booking (`api.leadconnectorhq.com`)
-- **Booking page:** Funcional, Alfonso cierra en call 1:1
-- **Trust Score Analyzer:** Lead magnet gratuito → report por email
+growth4u.io → CTA "Agendar Llamada" → GHL Booking → Call 1:1 con Alfonso → Venta 7K€. [Fuente: [company-brief](../company-brief/current.md)]
 
 ### Canales activos
 
 | Canal | Status | Evaluación |
 |-------|--------|------------|
-| **Web (growth4u.io)** | ✅ Activo | 3 páginas servicio completas, 4 cases, 20+ blog posts, schema markup, GEO-optimizado |
-| **LinkedIn Alfonso** | ✅ Activo | Publica contenido regularmente, 1 persona dedicada. **No genera leads** |
-| **LinkedIn Company** | ✅ Activo | Presencia mínima |
-| **Blog** | ✅ Activo | 20+ artículos long-form, batch publicados Feb 2026. GEO funcional |
-| **Meta Ads** | ⚠️ Pausado | 1/11 anuncios activo. **Meta Pixel NO instalado** — ads sin tracking |
-| **Cold Email (Instantly)** | ⚠️ Inactivo | Tool disponible pero sin actividad confirmada |
-| **LinkedIn Ads** | ⚠️ Planeado | No activado |
-| **Twitter/X, IG, YT, TikTok** | ❌ Ausente | Zero presencia |
+| Web (growth4u.io) | ✅ | 3 páginas servicio, 4 cases, 20+ blog posts, schema markup, GEO-optimizado. [Fuente: [self-intelligence](../market-and-us/self/current.md)] |
+| LinkedIn Alfonso | ✅ | Publica regularmente, 1 persona dedicada. No genera leads — falta funnel post-engagement |
+| LinkedIn Martín | ✅ | Activo, pilares definidos en Notion |
+| LinkedIn Philippe | ✅ | Activo |
+| Blog | ✅ | 20+ artículos long-form, GEO funcional (#1-2 Gemini fintech ES) |
+| Meta Ads | ⚠️ | 1/11 activo. Meta Pixel NO instalado — ads sin tracking |
+| Cold Email (Instantly) | ⚠️ | Tool disponible, sin actividad |
+| Twitter/X (@AlfonsoSB) | ⚠️ | 1.444 followers, 6.501 posts históricos. Bio desactualizada. Inactivo |
+| Instagram (@growth4u_systems) | ⚠️ | Cuenta existe, sin contenido reciente |
+| TikTok | ❌ | Sin cuenta |
 
 ### Herramientas
 
@@ -33,261 +38,275 @@
 |------|---------|--------|
 | Go High Level | CRM + landing + email + automation | ✅ |
 | Instantly | Cold email | ✅ (no activo) |
-| Meta BM | Ads | ✅ (sin pixel en web) |
-| GA4 | Analytics | ✅ (config básica — `G-4YBYPVQDT6`, sin conversiones custom) |
+| Meta BM | Ads | ✅ (sin pixel) |
+| GA4 (G-4YBYPVQDT6) | Analytics | ✅ (sin conversiones custom) |
 | Trustpilot | Reviews | ⚠️ (1 review, 3.5★) |
 
 ### Contenido existente
-- 4 case studies verificados (Bnext 0→500K, Bit2Me LTV 3x, GoCardless 10K MRR, Criptan +160% depósitos)
-- 20+ blog posts pillar (GEO-first, long-form, 8+ min lectura)
-- 9 recursos gratuitos (playbooks, frameworks, herramientas)
-- Trust Score Analyzer (herramienta gratuita — lead magnet)
-- Versión EN de la web
-
-### GEO Performance
-- **#1-2 en Gemini** para "agencia growth fintech España" ✅
-- **#1 en Gemini** para "agencia growth hacking fintech España" ✅
-- **No aparece** en búsquedas en inglés
-- **No aparece** en rankings orgánicos de Google (SEO aún inmaduro)
+- 4 case studies verificados: Bnext 0→500K, Bit2Me LTV 3x, GoCardless, Criptan. [Fuente: [self-intelligence](../market-and-us/self/current.md)]
+- 9 lead magnets en /recursos/: Trust Score Analyzer, CAC Sostenible, Meseta de Crecimiento, David vs Goliat, Kit Liberación Fundador, Dashboard Attribution, Foros a Nichos, Sistema de Growth, Nichos en 60 Días
+- 10 pilares de contenido en Notion (5 Alfonso + 5 Martín): Sistemas de Growth, IA Aplicada, Casos y Lecciones, Build in Public, Fintech y Mercado, Ops y Productividad
 
 ---
 
-## 2. Inputs del Usuario
+## 3. Qué Nos Frena
 
-| Pregunta | Respuesta |
-|----------|-----------|
-| **Objetivo principal** | A) Lead Generation — generar pipeline cualificado |
-| **Horizonte temporal** | Corto (1-3 meses) |
-| **Qué no funcionó** | LinkedIn — publican de forma continua pero no genera leads |
+### 🔴 Críticos — resolver antes de escalar
 
----
+| Gap | Problema | Acción | Esfuerzo |
+|-----|----------|--------|----------|
+| Meta Pixel sin instalar | Ads corren a ciegas. Zero optimización de conversiones | Instalar Pixel + CAPI + evento Lead | 1-2h |
+| GA4 sin conversiones | No se mide qué canal trae leads | Configurar form_submit, booking_started, trust_score_completed | 1h |
+| 2 URLs de booking | Atribución fragmentada (leadconnectorhq vs now.growth4u.io) | Unificar a now.growth4u.io | 30min |
 
-## 3. Gaps Detectados
+### 🟡 Altos — resolver en paralelo
 
-### 🔴 CRÍTICOS (resolver ANTES de escalar)
+| Gap | Acción |
+|-----|--------|
+| /servicios/ casi vacía | Crear hub con resumen 3 servicios + links + CTA |
+| 1 review Trustpilot (3.5★) — [W1 SWOT](../market-and-us/swot/current.md) | Campaña reviews a clientes actuales |
+| LinkedIn no convierte | Pasar de content-only a content + outreach warm |
+| Cold email inactivo | Activar Instantly con secuencias ECP 1 + 2 |
 
-| # | Gap | Por qué bloquea | Acción | Esfuerzo |
-|---|-----|-----------------|--------|----------|
-| G1 | **Meta Pixel sin instalar** | Ads corren a ciegas. Zero optimización de conversiones | Instalar Pixel + CAPI + evento Lead | 1-2h |
-| G2 | **GA4 sin conversiones custom** | No se puede medir qué canal trae leads reales | Configurar eventos: form_submit, booking_started, trust_score_completed | 1h |
-| G3 | **2 URLs de booking diferentes** | Atribución fragmentada (leadconnectorhq vs now.growth4u.io) | Unificar a `now.growth4u.io` (branded) | 30min |
+### 🟢 Menores
 
-### 🟡 ALTOS (resolver en paralelo)
-
-| # | Gap | Impacto | Acción |
-|---|-----|---------|--------|
-| G4 | **/servicios/ casi vacía** | Prospect no encuentra info sin clicar subpáginas | Crear hub con resumen 3 servicios + links + CTA |
-| G5 | **1 review Trustpilot (3.5★)** | Social proof negativa. W1 del SWOT: paradoja trust | Campaña reviews: pedir a clientes actuales |
-| G6 | **LinkedIn no convierte** | Canal activo sin ROI. Falta funnel post-engagement | Cambiar de content-only → content + outreach warm |
-| G7 | **Cold email inactivo** | Instantly disponible pero sin usar | Activar con secuencias ECP 1 + 2 |
-
-### 🟢 BAJOS
-
-| # | Gap | Acción |
-|---|-----|--------|
-| G8 | Copyright 2025 | Actualizar a 2026 |
-| G9 | OG image en Imgur | Hospedar en growth4u.io |
-| G10 | Sin llms.txt | Crear /llms.txt (coherencia con oferta GEO) |
-| G11 | /sitemap.xml → 404 | Redirect 301 → /sitemap-index.xml |
+Copyright 2025, OG image en Imgur, sin llms.txt, /sitemap.xml → 404
 
 ---
 
-## 4. Canales Priorizados
+## 4. Dónde Queremos Ir
 
-Cruce: Foundation (ECPs, dolores, channel maps) × Recursos (4 FT, 5-10K€/mes) × Objetivo (Lead Gen, 1-3 meses)
+| Métrica | Hoy (baseline) | Target (90 días) |
+|---------|----------------|-------------------|
+| Calls cualificadas/semana | 0 | 8-10 |
+| Pipeline mensual | 0€ | 70K€ |
+| CPL Meta Ads | — | <18€ |
+| Reviews ≥4.5★ | 1 (3.5★) | 8+ |
+| Directorios activos | 0 | 20+ |
+| Seguidores IG | ~0 | 500 |
+| Seguidores TikTok | 0 | 1.000 |
+| Seguidores Twitter/X | 1.444 | ~2.000 |
 
-| Prioridad | Canal | Justificación | ECPs |
-|-----------|-------|---------------|------|
-| 🥇 | **LinkedIn Founder-Led GTM** | Alfonso ya publica + ICP ahí + 0 coste. Falta: convertir engagement en pipeline | 1, 3, 4 |
-| 🥈 | **Cold Email B2B** | Instantly listo. ACV 7K€ justifica 1:1. Resultados 2-4 semanas | 1, 2 |
-| 🥉 | **Meta Ads → Landing → Call** | Stack existe. CPL 20€ demostrado. Bloqueado por G1-G3 | 1, 3 |
-| 4 | **GEO / Blog** | Ya funciona (#1-2 Gemini). Mantener y expandir | 2, 3, 5 |
-| 5 | **Trust Engine Media** | Podcasts/newsletters nicho. Alfonso tiene expertise | 1, 2 |
-
----
-
-## 5. Estrategias Seleccionadas (scoring catálogo)
-
-**Formula:** `Score = (Dolor×0.25) + (Objetivo×0.25) + (Resource×0.25) + (Time×0.25)`
-
-| Estrategia | Dolor | Obj | Res | Time | **Score** |
-|---|---|---|---|---|---|
-| **#30 Founder-Led GTM** | 8 | 9 | 9 | 7 | **8.25** |
-| **#01 ICP List B2B Outreach** | 8 | 9 | 8 | 8 | **8.25** |
-| **#27 Paid Ads** | 7 | 9 | 7 | 9 | **8.00** |
-| **#05 Customer Advocacy** | 9 | 7 | 8 | 8 | **8.00** |
-| #02 Trust Engine Media | 7 | 8 | 7 | 7 | 7.25 |
-| #31 AIO/GEO | 6 | 7 | 8 | 5 | 6.50 |
-| #22 Webinars | 7 | 7 | 6 | 6 | 6.50 |
-| #04 Partnerships | 6 | 7 | 6 | 5 | 6.00 |
-
-### Estrategia A: Founder-Led GTM (#30) — Score 8.25
-
-**Cuadrante:** 1:Many + 1:1 Organic (híbrido)
-**Por qué:** Alfonso ya publica en LinkedIn pero SIN sistema de conversión. El problema no es el contenido — es que no hay funnel post-engagement. LinkedIn → DM warm → Call es el canal más rápido para B2B 7K€.
-**Tiempo al resultado:** 4-6 semanas (primeras calls)
-**Prerequisites:** Brand voice (✅), content calendar, DM templates
-**Skills:** brand-voice → content-calendar-planner → outreach-sequence-builder
-
-**KPIs objetivo:**
-| Métrica | Target |
-|---------|--------|
-| Posts/semana | 3-5 |
-| DMs warm/semana | ≥10 |
-| Reply rate DMs | >30% |
-| Calls cualificadas/semana (semana 6) | ≥3 |
-
-### Estrategia B: ICP List B2B Outreach (#01) — Score 8.25
-
-**Cuadrante:** 1:1 Organic
-**Por qué:** ACV 7K€ justifica esfuerzo 1:1. Instantly listo. ECP 1 (sistema repetible): ~2.500 startups tech post-PMF en España. ECP 2 (regulación): ~427 fintechs registradas BdE. Ambos listables.
-**Tiempo al resultado:** 2-4 semanas (replies), 4-8 semanas (calls)
-**Prerequisites:** Dominios warm-up (2 semanas), secuencias creadas
-**Skills:** company-finder → decision-maker-finder → contact-enrichment → cold-email
-
-**KPIs objetivo:**
-| Métrica | Target |
-|---------|--------|
-| Emails/día | 50 |
-| Open rate | >50% |
-| Reply rate | >5% |
-| Meetings/mes | ≥5 |
-| Pipeline/mes | >€35K |
-
-### Estrategia C: Paid Ads (#27) — Score 8.00
-
-**Cuadrante:** 1:Many Paid
-**Por qué:** Meta stack existe, CPL 20€ ya demostrado. BLOQUEADO hasta G1-G3 resueltos.
-**Tiempo al resultado:** 2-3 semanas (post-fix fontanería)
-**Prerequisites:** Meta Pixel ✅, GA4 conversiones ✅, booking unificado ✅
-**Skills:** paid-ads → ad-creative → landing-page CRO
-
-**KPIs objetivo:**
-| Métrica | Target |
-|---------|--------|
-| CPL | <25€ |
-| Demo rate | >10% |
-| Hooks activos | 2-3 simultáneo |
-| Budget diario | 20-30€ → escalar ganador |
-
-### +URGENTE: Customer Advocacy (#05) — Score 8.00
-
-**No es lead gen directa pero desbloquea todo.** Resolver W1 SWOT (0 social proof como empresa).
-**Acción:** Pedir reviews a clientes actuales: Trustpilot + Google + LinkedIn recommendations.
-**Objetivo:** 5+ reviews ≥4.5★ en 30 días.
+Objetivo: **A) Lead Generation** — generar pipeline cualificado. [Input usuario 12-mar-2026]
+Horizonte: **Corto (1-3 meses)**
+Qué no funcionó: **LinkedIn — publican de forma continua pero no genera leads**
 
 ---
 
-## 6. Plan de Acción (90 días)
+## 5. Cómo Vamos a Llegar
+
+### Canales priorizados
+
+Cruce: [ECPs](../go-to-market/ecps/ecps.md) (dolores, channel maps) × [Budget](../company-brief/current.md) (4 FT, 5-10K€/mes) × Objetivo (Lead Gen, 1-3 meses)
+
+| Prioridad | Canal | ECPs |
+|-----------|-------|------|
+| 🥇 | LinkedIn Founder-Led GTM (3 perfiles) | 1, 3, 4 |
+| 🥈 | Cold Email B2B | 1, 2 |
+| 🥉 | Meta Ads → Landing → Call | 1, 3 |
+| 4 | Free Media & Directories | 1, 2, 5 |
+| 5 | Instagram + TikTok | 1, 3, 5 |
+| 6 | Twitter/X | 1, 4 |
+| 7 | GEO / Blog (mantener) | 2, 3, 5 |
+
+### Estrategias seleccionadas
+
+Scoring: `(Dolor×0.25) + (Objetivo×0.25) + (Resource×0.25) + (Time×0.25)`. [Catálogo: 25 estrategias](../../skills/strategic-plan/references/gtm-strategies-catalog.md)
+
+| Estrategia | Score | Por qué |
+|---|---|---|
+| **#30 Founder-Led GTM (3 perfiles)** | **8.25** | Alfonso, Martín y Philippe ya en LinkedIn. Falta funnel post-engagement. LinkedIn → DM warm → Call = canal más rápido para B2B 7K€ |
+| **#01 ICP List B2B Outreach** | **8.25** | ACV 7K€ justifica 1:1. Instantly listo. [ECP 1](../go-to-market/ecps/ecps.md): ~2.500 startups. [ECP 2](../go-to-market/ecps/ecps.md): ~427 fintechs BdE |
+| **#27 Paid Ads** | **8.00** | Meta stack existe, CPL 20€ demostrado. Bloqueado hasta pixel instalado |
+| **#05 Customer Advocacy** | **8.00** | Desbloquea todo: resolver [W1 SWOT](../market-and-us/swot/current.md) (0 social proof) |
+| **#23 Free Media & Directories** | **7.75** | Aparecer en todos los sitios gratuitos: directorios, guest posts, HARO, podcasts |
+| **Twitter/X Build-in-Public** | **7.00** | @AlfonsoSB tiene 1.444 followers — reactivar con build-in-public |
+| **#32 Social SEO (IG + TikTok)** | **6.50** | Contenido educativo respondiendo preguntas de growth. IG estáticos + TikTok vídeos |
+
+### LinkedIn — 3 perfiles coordinados
+
+Pilares de Notion integrados:
+
+| Persona | Pilares | Lead magnets | DMs a |
+|---------|---------|-------------|-------|
+| **Alfonso** | Sistemas de Growth, Fintech y Mercado, Casos y Lecciones, Build in Public, IA Aplicada | Trust Score, CAC Sostenible, Meseta de Crecimiento, David vs Goliat | C-level, founders |
+| **Martín** | Sistemas de Growth, Ops y Productividad, Casos y Lecciones, Build in Public, IA Aplicada | Dashboard Attribution, Kit Liberación, Sistema de Growth | CTOs, tech leads |
+| **Philippe** | Ejecución táctica, channel deep-dives, experimentación | Foros a Nichos, Nichos en 60 Días | Growth managers |
+
+Coordinación: calendario compartido (sin solapar temas), cross-engagement entre los 3, 7-10 posts/semana total.
+
+---
+
+## 6. Qué Hacemos Primero
 
 ### FASE 0 — Fontanería (Semana 1-2)
-*Resolver gaps críticos. Sin esto, las estrategias no escalan.*
 
-| Día | Acción | Owner | Gap |
-|-----|--------|-------|-----|
-| 1-2 | Instalar Meta Pixel + CAPI en growth4u.io | Martín/Philippe | G1 |
-| 1-2 | Configurar conversiones GA4 (form_submit, booking, trust_score) | Martín/Philippe | G2 |
-| 1-2 | Unificar URL de booking a now.growth4u.io | Martín/Philippe | G3 |
-| 3-5 | Crear hub /servicios/ con resumen + links | Philippe | G4 |
-| 3-5 | Pedir reviews a clientes actuales (email + call) | Alfonso | G5 |
-| 1-5 | Warm-up dominios de envío para cold email | Philippe | G7 |
-| 5 | Fixes menores: copyright, OG image, llms.txt, sitemap redirect | Martín | G8-11 |
+| Acción | Owner | Plazo |
+|--------|-------|-------|
+| Instalar Meta Pixel + CAPI | Martín/Philippe | Día 1-2 |
+| Configurar conversiones GA4 | Martín/Philippe | Día 1-2 |
+| Unificar booking a now.growth4u.io | Martín/Philippe | Día 1-2 |
+| Crear hub /servicios/ | Philippe | Día 3-5 |
+| Pedir reviews a clientes actuales | Alfonso | Día 3-5 |
+| Warm-up dominios cold email | Philippe | Día 1-14 |
+| Fixes menores (copyright, OG, llms.txt, sitemap) | Martín | Día 5 |
 
 ### FASE 1 — Activación (Semana 3-6)
-*3 estrategias en paralelo. Medir todo.*
 
-#### LinkedIn Founder-Led GTM (Estrategia A)
-| Semana | Acción |
-|--------|--------|
-| 3 | Crear calendario contenido (40% dolor ICP, 20% frameworks, 20% build-in-public, 20% cases) |
-| 3 | Templates DM warm: comentó en post, visitó perfil, conexión mutua |
-| 3-6 | Alfonso: 3-5 posts/semana + 10 DMs warm/semana + 10 comentarios valor/día en posts ICP |
-| 4+ | Trackear en GHL: respondió → call agendada → pipeline |
+**LinkedIn (3 perfiles):** Calendario coordinado + templates DM warm + 7-10 posts/sem + 15 DMs/sem + tracking GHL
 
-#### Cold Email B2B (Estrategia B)
-| Semana | Acción |
-|--------|--------|
-| 3 | Lista ECP 1: 200 startups tech post-PMF España (5-50 empleados, >10K MRR) |
-| 3 | Lista ECP 2: 100 fintechs reguladas BdE |
-| 3 | 3 secuencias × 4 emails por ECP (ángulos positioning) |
-| 4 | Lanzar: 50 emails/día, 2 buzones |
-| 4-6 | Gestionar replies <4h. Agendar calls. Iterar copy |
+**Cold Email:** Listas ECP 1 (200 startups) + ECP 2 (100 fintechs) → 3 secuencias × 4 emails → 50/día, 2 buzones → replies <4h
 
-#### Meta Ads (Estrategia C) — post-Fase 0
-| Semana | Acción |
-|--------|--------|
-| 3 | Verificar pixel + conversiones funcionando |
-| 3 | 3 hooks nuevos basados en ECPs (dolor → CTA agendar) |
-| 4 | Lanzar: 20€/día, 3 variantes |
-| 4-6 | A/B test real (1 variable, 1 semana). Escalar ganador |
+**Meta Ads:** Verificar tracking → 3 hooks ECPs → 20€/día, 3 variantes → A/B test semanal → escalar ganador
+
+**Free Media:** Blitz directorios (≥15) → 5 pitches guest post/sem → 5 respuestas HARO/sem → pitch podcasts
+
+**IG + TikTok:** Configurar cuentas + keyword research social + 10 templates carrusel → 3-4 IG/sem + 3-5 TikTok/sem
+
+**Twitter/X:** Actualizar bio → seguir 100-200 cuentas → warm-up replies → 1-3 tweets/día + 1 thread/sem
 
 ### FASE 2 — Optimizar + Escalar (Semana 7-12)
-*Duplicar lo que funciona. Cortar lo que no.*
 
-| Acción | Trigger |
-|--------|---------|
-| Duplicar budget canal ganador | CPL < target + demo rate > 10% |
-| Activar Media Placements (#02) | 2-3 podcast pitches, 1-2 newsletters nicho |
-| Publicar 2 case studies propios Trust Engine | Primeros clientes cerrados |
-| Activar LinkedIn Ads | Si LinkedIn orgánico ≥3 calls/semana |
-| Partnership VCs/aceleradoras | Si pipeline orgánico funciona → escalar vía referral |
+- Duplicar budget canal ganador (trigger: CPL < target + demo rate > 10%)
+- Activar Media Placements (#02): podcast pitches, newsletters
+- Publicar 2 case studies propios de Trust Engine
+- Activar LinkedIn Ads si orgánico ≥3 calls/semana
+- Partnership VCs/aceleradoras si pipeline orgánico funciona
 
-### Dashboard Semanal (checkpoint cada lunes)
+---
+
+## 7. Proyectos
+
+| ID | Nombre | Objetivo | Métrica | Target | Review |
+|----|--------|----------|---------|--------|--------|
+| P01 | Fontanería Web | Tracking funcional | Pixel + GA4 + booking | 100% operativo | 28 mar |
+| P02 | LinkedIn Pipeline (3 perfiles) | Calls desde LinkedIn | Calls/semana | ≥5 | 25 abr |
+| P03 | Cold Email Pipeline | Meetings desde outreach | Meetings/mes | ≥5 | 9 may |
+| P04 | Meta Ads *(bloqueado P01)* | Pipeline desde ads | CPL + demo rate | <25€, >10% | 9 may |
+| P05 | Social Proof & Reviews | Reviews verificables | Reviews ≥4.5★ | 5+ | 11 abr |
+| P06 | Free Media & Directories | Presencia gratuita | Directorios + guest posts | ≥15, ≥2/mes | 9 may |
+| P07 | Social Content (IG + TikTok) | Awareness social | Seguidores + engagement | IG 500, TikTok 1K | 13 jun |
+| P08 | Twitter/X Build-in-Public | Presencia Twitter | Seguidores + impresiones | +500, 50K imp/mes | 13 jun |
+
+---
+
+## 8. Cómo Medimos
+
+### Dashboard semanal (checkpoint cada lunes)
 
 | Métrica | Sem 4 | Sem 8 | Sem 12 |
 |---------|-------|-------|--------|
+| **Pipeline** |||
 | Calls agendadas/semana | 2-3 | 5-6 | 8-10 |
-| Pipeline total | €14K | €35K | €70K |
+| Pipeline total | 14K€ | 35K€ | 70K€ |
+| **Canales de adquisición** |||
 | CPL Meta | <25€ | <20€ | <18€ |
 | Cold email reply rate | >3% | >5% | >5% |
 | LinkedIn DM reply rate | >25% | >30% | >30% |
+| **Awareness / Brand** |||
 | Reviews acumuladas | 3+ | 5+ | 8+ |
-
----
-
-## 7. Relación con Foundation
+| Directorios activos | 10+ | 15+ | 20+ |
+| Guest posts publicados | 1 | 3+ | 6+ |
+| Seguidores IG | — | 200+ | 500+ |
+| Seguidores TikTok | — | 400+ | 1.000+ |
+| Seguidores Twitter/X | 1.544+ | 1.744+ | ~2.000 |
+| Apariciones podcasts | 0 | 1+ | 3+ |
 
 ### ECPs activados por estrategia
 
-| Estrategia | ECP 1 (Sistema) | ECP 2 (Regulación) | ECP 3 (Canal muriendo) | ECP 4 (Quemado) | ECP 5 (Invisible) |
+| Estrategia | ECP 1 Sistema | ECP 2 Regulación | ECP 3 Canal | ECP 4 Quemado | ECP 5 Invisible |
 |---|---|---|---|---|---|
-| Founder-Led GTM | ✅ Primary | ⬜ | ✅ Secondary | ✅ Secondary | ⬜ |
-| Cold Email B2B | ✅ Primary | ✅ Primary | ⬜ | ⬜ | ⬜ |
-| Paid Ads | ✅ Primary | ⬜ | ✅ Secondary | ⬜ | ⬜ |
-| Customer Advocacy | ⬜ | ⬜ | ⬜ | ✅ Enabler | ✅ Enabler |
-| GEO (mantener) | ⬜ | ✅ Primary | ✅ Secondary | ⬜ | ✅ Primary |
+| LinkedIn GTM | ✅ | — | ✅ | ✅ | — |
+| Cold Email | ✅ | ✅ | — | — | — |
+| Paid Ads | ✅ | — | ✅ | — | — |
+| Free Media | ✅ | ✅ | — | — | ✅ |
+| Social Content | ✅ | — | ✅ | — | ✅ |
+| Twitter/X | ✅ | — | — | ✅ | — |
+| Customer Advocacy | — | — | — | ✅ | ✅ |
 
-### Wave 1 (ahora): ECP 1 + ECP 2
-- **ECP 1 "Sistema repetible"** — volumen. LinkedIn + Cold Email + Ads.
-- **ECP 2 "Regulación"** — diferenciación. Cold Email a fintechs + GEO (ya funciona).
+Wave 1 (ahora): [ECP 1 + ECP 2](../go-to-market/ecps/ecps.md) — volumen + diferenciación
+Wave 2 (con 3+ cases propios): ECP 3 + ECP 4
 
-### Wave 2 (cuando haya 3+ cases propios): ECP 3 + ECP 4
-- Activar messaging "canal muriendo" en contenido.
-- Social proof verificable desbloquea ECP 4 "quemado por agencias".
-
----
-
-## 8. Proyectos (pendiente aprobación)
-
-Al aprobar, se crearán:
-
-| Proyecto | Objetivo | Métrica | Target | Review |
-|----------|----------|---------|--------|--------|
-| P01 — Fontanería Web | Tracking funcional | Pixel + GA4 + booking unificado | 100% operativo | Sem 2 |
-| P02 — LinkedIn Pipeline | Calls desde LinkedIn | Calls/semana | ≥3 | Sem 6 |
-| P03 — Cold Email Pipeline | Meetings desde outreach | Meetings/mes | ≥5 | Sem 8 |
-| P04 — Meta Ads Reactivación | Pipeline desde ads | CPL + demo rate | <25€, >10% | Sem 8 |
-| P05 — Social Proof | Reviews verificables | Reviews ≥4.5★ | 5+ | Sem 4 |
+Próxima revisión: **Lunes 28 marzo 2026** (Fase 0 complete check)
 
 ---
 
-<!-- Self-QA: PASS | 2026-03-14
-1. ✅ TODOS los docs Foundation leídos (15 docs, Layers 0-5)
-2. ✅ Estado actual de Foundation + auditoría web fresca (12-mar-2026)
-3. ✅ Gaps cruzados con stack real + datos web verificados
-4. ✅ Estrategias ejecutables con recursos (4 FT + 5-10K€/mes)
-5. ✅ Scoring catálogo 25 estrategias, top 4 presentadas
-6. ✅ Plan temporal 3 fases + métricas + dashboard semanal
-7. ✅ ECPs cruzados con estrategias
-8. ⏳ Aprobación pendiente del usuario
--->
+## Presentation Summary
+<!-- Generado para frontend-slides. Estilo: Electric Studio + visual identity Growth4U. -->
+
+### slide:title
+company: Growth4U
+title: Strategic Plan Q2 2026
+subtitle: De Foundation a pipeline cualificado en 90 días
+
+### slide:donde-estamos
+headline: Dónde estamos hoy
+highlights:
+  - GEO #1-2 en Gemini para "agencia growth fintech España" — source: "[self-intelligence](../market-and-us/self/current.md)"
+  - 20+ artículos blog + 9 lead magnets + 4 case studies verificados — source: "[self-intelligence](../market-and-us/self/current.md)"
+  - LinkedIn activo (3 perfiles) pero 0 leads generados
+  - Meta Ads sin pixel — ads corriendo a ciegas
+  - 1 review en Trustpilot (3.5★) — paradoja de trust
+  - Instantly, GHL y Meta BM disponibles pero no activados
+
+### slide:que-nos-frena
+headline: 3 gaps críticos que bloquean todo
+highlights:
+  - 🔴 Meta Pixel sin instalar → no podemos optimizar conversiones
+  - 🔴 GA4 sin eventos → no sabemos qué canal trae leads
+  - 🔴 2 URLs de booking → atribución fragmentada
+  - 🟡 LinkedIn sin funnel de conversión
+  - 🟡 0 social proof como empresa — source: "[SWOT W1](../market-and-us/swot/current.md)"
+
+### slide:objetivo
+headline: Objetivo: pipeline cualificado en 90 días
+metric:
+  name: Calls cualificadas/semana
+  baseline: 0
+  target: 8-10
+  source: "[strategic-plan](current.md)"
+metric:
+  name: Pipeline mensual
+  baseline: 0€
+  target: 70K€
+  source: "[strategic-plan](current.md)"
+
+### slide:estrategias
+headline: 7 estrategias, 3 canales de pipeline
+highlights:
+  - 🥇 LinkedIn 3 perfiles coordinados (Alfonso + Martín + Philippe) → DM warm → Call — Score 8.25
+  - 🥈 Cold Email B2B a 300 empresas (ECP 1 + ECP 2) vía Instantly — Score 8.25
+  - 🥉 Meta Ads reactivados con tracking real — Score 8.00
+  - +4 canales de awareness: Free Media, IG, TikTok, Twitter/X
+  - Social Proof urgente: de 1 review a 8+ — source: "[SWOT](../market-and-us/swot/current.md)"
+
+### slide:linkedin
+headline: LinkedIn — 3 perfiles, 1 sistema
+highlights:
+  - Alfonso: visión estratégica, fintech, build-in-public → DMs a C-level
+  - Martín: ops, IA, behind the scenes técnico → DMs a CTOs
+  - Philippe: ejecución táctica, channel deep-dives → DMs a growth managers
+  - 10 pilares de contenido definidos en Notion
+  - 9 lead magnets como CTA en cada post
+  - Target: ≥5 calls/semana en semana 6
+
+### slide:roadmap
+headline: Roadmap: 3 fases en 12 semanas
+highlights:
+  - Fase 0 (sem 1-2): Fontanería — pixel, GA4, booking, reviews, warm-up dominios
+  - Fase 1 (sem 3-6): Activación — LinkedIn + Cold Email + Ads + Free Media + Social + Twitter
+  - Fase 2 (sem 7-12): Optimizar — duplicar ganador, case studies, LinkedIn Ads, partnerships
+
+### slide:proyectos
+headline: 8 proyectos, 41 tareas
+highlights:
+  - P01 Fontanería Web — tracking funcional (sem 1-2)
+  - P02 LinkedIn Pipeline 3 perfiles — ≥5 calls/sem (review 25 abr)
+  - P03 Cold Email — ≥5 meetings/mes (review 9 may)
+  - P04 Meta Ads — CPL <25€ (bloqueado por P01)
+  - P05 Social Proof — 5+ reviews ≥4.5★ (review 11 abr)
+  - P06-P08: Free Media, IG+TikTok, Twitter/X (review jun)
+
+### slide:next
+headline: Empezamos el lunes
+cta: Fase 0 — fontanería web + reviews. ¿Por cuál proyecto arrancamos?

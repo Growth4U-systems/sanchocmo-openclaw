@@ -1,0 +1,7 @@
+[
+  { "id": "P02-T01", "name": "Crear calendario coordinado 3 perfiles (sin solapar temas)", "owner": "Sancho", "status": "todo", "channel": "content", "description": "Planificar calendario editorial LinkedIn para Alfonso, Martín y Philippe: temas, frecuencia, pilares de contenido sin solapamiento." },
+  { "id": "P02-T02", "name": "Asignar lead magnets por perfil y pilar", "owner": "Sancho", "status": "todo", "channel": "content", "description": "Definir qué lead magnet ofrece cada perfil según su audiencia: Alfonso→C-level, Martín→CTOs, Philippe→growth managers." },
+  { "id": "P02-T03", "name": "Templates DM warm: Alfonso→C-level, Martín→CTOs, Philippe→growth managers", "owner": "Sancho", "status": "todo", "channel": "prospecting", "description": "Redactar plantillas de mensajes directos personalizados por persona y segmento, con secuencia de follow-up." },
+  { "id": "P02-T04", "name": "Ejecutar: 7-10 posts/sem + 15 DMs warm/sem + cross-engagement", "owner": "Equipo", "status": "todo", "channel": "prospecting", "description": "Ejecución semanal: publicar posts según calendario, enviar DMs warm, y hacer cross-engagement entre los 3 perfiles." },
+  { "id": "P02-T05", "name": "Trackear en GHL: respondió → call → pipeline. Atribuir por persona", "owner": "Sancho", "status": "todo", "channel": "intelligence", "description": "Configurar tracking en GoHighLevel para medir conversión de DMs a calls, atribuido por perfil de origen." }
+]

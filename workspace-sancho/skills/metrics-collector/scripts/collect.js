@@ -42,10 +42,16 @@ if (!sourceFilter && !collectAll) {
 }
 
 // --- Date range ---
-const today = new Date().toISOString().split('T')[0];
+// Default: yesterday (most sources have 1-day lag; GSC adapter adds its own 3-day lag)
+function daysAgo(n) {
+  const d = new Date();
+  d.setDate(d.getDate() - n);
+  return d.toISOString().split('T')[0];
+}
+const yesterday = daysAgo(1);
 const dateRange = {
-  from: fromDate || today,
-  to: toDate || today,
+  from: fromDate || yesterday,
+  to: toDate || yesterday,
 };
 
 // --- Load integrations.json ---
@@ -82,14 +88,29 @@ function loadEnv(slug) {
   return env;
 }
 
-const env = loadEnv(slug);
+const rawEnv = loadEnv(slug);
+
+// Strip slug prefix from env vars so adapters get generic keys
+// e.g. GROWTH4U_METRICOOL_API_TOKEN → METRICOOL_API_TOKEN
+const slugPrefix = slug.toUpperCase().replace(/-/g, '_') + '_';
+const env = {};
+for (const [key, val] of Object.entries(rawEnv)) {
+  env[key] = val; // keep original
+  if (key.startsWith(slugPrefix)) {
+    env[key.slice(slugPrefix.length)] = val; // add without prefix
+  }
+}
 
 // --- Available adapters ---
 const ADAPTERS = ['ga4', 'gsc', 'metricool', 'meta-ads', 'ghl', 'instantly', 'sheets'];
 
 // --- Determine which adapters to run ---
+const ds = integrations.dataSources || integrations;
 const toRun = collectAll
-  ? ADAPTERS.filter((a) => integrations[a]?.enabled)
+  ? ADAPTERS.filter((a) => {
+      const entry = ds[a] || ds[a.replace('-', '_')];
+      return entry && entry.status && entry.status !== 'not_configured';
+    })
   : sourceFilter && ADAPTERS.includes(sourceFilter)
     ? [sourceFilter]
     : [];
@@ -108,20 +129,30 @@ async function runCollection() {
     sources: {},
   };
 
+  // Support both flat and nested (dataSources) integrations format
+  const dataSources = integrations.dataSources || integrations;
+
   for (const adapterName of toRun) {
-    const config = integrations[adapterName] || {};
+    const entry = dataSources[adapterName] || dataSources[adapterName.replace('-', '_')] || {};
+    const config = entry.config || entry || {};
+    const status = entry.status || 'not_configured';
     console.log(`\n📊 Collecting: ${adapterName}...`);
 
-    if (!config.enabled && collectAll) {
+    if (status === 'not_configured' && collectAll) {
       result.sources[adapterName] = { status: 'not_configured' };
-      console.log(`   ⏭  Skipped (not enabled)`);
+      console.log(`   ⏭  Skipped (not configured)`);
       continue;
     }
 
     try {
       // Dynamic import of adapter
       const adapterModule = await import(`./adapters/${adapterName}.js`);
-      const data = await adapterModule.collect(config, env, dateRange);
+      // GSC has ~3 day lag; override date range unless user specified explicit dates
+      let adapterDateRange = dateRange;
+      if (adapterName === 'gsc' && !fromDate) {
+        adapterDateRange = { from: daysAgo(4), to: daysAgo(3) };
+      }
+      const data = await adapterModule.collect(config, env, adapterDateRange);
       result.sources[adapterName] = {
         status: 'ok',
         collectedAt: new Date().toISOString(),
@@ -141,6 +172,7 @@ async function runCollection() {
   const metricsDir = path.join(brandDir, 'metrics');
   mkdirSync(metricsDir, { recursive: true });
 
+  const today = new Date().toISOString().split('T')[0];
   const snapshotPath = path.join(metricsDir, `${today}.json`);
   writeFileSync(snapshotPath, JSON.stringify(result, null, 2));
   console.log(`\n💾 Daily snapshot saved: ${snapshotPath}`);

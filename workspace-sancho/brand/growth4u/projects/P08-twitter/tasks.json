@@ -1,0 +1,6 @@
+[
+  { "id": "P08-T01", "name": "Actualizar bio Twitter: Growth4U, Trust Engine, link web", "owner": "Sancho", "status": "todo", "channel": "content", "description": "Reescribir bio de Twitter con posicionamiento actual: Growth4U, Trust Engine, propuesta de valor clara, link a web." },
+  { "id": "P08-T02", "name": "Seguir 100-200 cuentas del ecosistema (founders, growth, fintech ES)", "owner": "Sancho", "status": "todo", "channel": "content", "description": "Investigar y seguir 100-200 cuentas relevantes del ecosistema startup/growth/fintech español para building audience." },
+  { "id": "P08-T03", "name": "Warm-up: 10-20 replies de valor/día (2 semanas)", "owner": "Equipo", "status": "todo", "channel": "content", "description": "Alfonso interactúa activamente con la comunidad: replies con valor añadido, quote tweets con opinión, retweets selectivos." },
+  { "id": "P08-T04", "name": "Publicar: 1-3 tweets/día + 1 thread/semana", "owner": "Sancho", "status": "todo", "channel": "content", "description": "Crear y programar contenido: tweets diarios con insights de growth + 1 thread semanal profundo sobre un tema de expertise." }
+]

@@ -77,7 +77,7 @@
       "name": "Regenerar Dashboard",
       "enabled": true,
       "createdAtMs": 1771950708148,
-      "updatedAtMs": 1773428508602,
+      "updatedAtMs": 1773514856535,
       "schedule": {
         "kind": "cron",
         "expr": "0 8,12,16,20 * * *",
@@ -95,11 +95,11 @@
         "channel": "last"
       },
       "state": {
-        "nextRunAtMs": 1773471600000,
-        "lastRunAtMs": 1773428400022,
+        "nextRunAtMs": 1773558000000,
+        "lastRunAtMs": 1773514800015,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 108580,
+        "lastDurationMs": 56520,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0,
         "lastDelivered": false
@@ -208,7 +208,7 @@
       "name": "backup-sancho",
       "enabled": true,
       "createdAtMs": 1772069600272,
-      "updatedAtMs": 1773367216858,
+      "updatedAtMs": 1773453619673,
       "schedule": {
         "kind": "cron",
         "expr": "0 3 * * *"
@@ -225,15 +225,15 @@
         "channel": "last"
       },
       "state": {
-        "nextRunAtMs": 1773453600000,
-        "lastRunAtMs": 1773367200019,
+        "nextRunAtMs": 1773540000000,
+        "lastRunAtMs": 1773453600015,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 16839,
+        "lastDurationMs": 19658,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0,
         "lastDelivered": false,
-        "runningAtMs": 1773453600010
+        "runningAtMs": 1773540000012
       }
     },
     {
@@ -242,7 +242,7 @@
       "name": "healthcheck",
       "enabled": true,
       "createdAtMs": 1772069609685,
-      "updatedAtMs": 1773442405621,
+      "updatedAtMs": 1773528788615,
       "schedule": {
         "kind": "every",
         "everyMs": 21600000,
@@ -262,11 +262,11 @@
         "channel": "last"
       },
       "state": {
-        "nextRunAtMs": 1773463959219,
-        "lastRunAtMs": 1773442359219,
+        "nextRunAtMs": 1773550359285,
+        "lastRunAtMs": 1773528759285,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 46402,
+        "lastDurationMs": 29330,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0,
         "lastDelivered": false
@@ -279,7 +279,7 @@
       "description": "T-022: Run cost-tracker.py daily at 23:00",
       "enabled": true,
       "createdAtMs": 1772069993394,
-      "updatedAtMs": 1773439355209,
+      "updatedAtMs": 1773525672619,
       "schedule": {
         "kind": "cron",
         "expr": "0 23 * * *"
@@ -296,11 +296,11 @@
         "channel": "webchat"
       },
       "state": {
-        "nextRunAtMs": 1773525600000,
-        "lastRunAtMs": 1773439200034,
+        "nextRunAtMs": 1773612000000,
+        "lastRunAtMs": 1773525600016,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 155175,
+        "lastDurationMs": 72603,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0,
         "lastDelivered": false
@@ -312,7 +312,7 @@
       "name": "Cervantes observa a Sancho",
       "enabled": true,
       "createdAtMs": 1772115026027,
-      "updatedAtMs": 1773392487716,
+      "updatedAtMs": 1773478916443,
       "schedule": {
         "kind": "cron",
         "expr": "0 10 * * *",
@@ -330,11 +330,11 @@
         "channel": "last"
       },
       "state": {
-        "nextRunAtMs": 1773478800000,
-        "lastRunAtMs": 1773392400020,
+        "nextRunAtMs": 1773565200000,
+        "lastRunAtMs": 1773478800021,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 87696,
+        "lastDurationMs": 116422,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0,
         "lastDelivered": false
@@ -375,7 +375,7 @@
       "name": "funnel-watchdog",
       "enabled": true,
       "createdAtMs": 1772667196949,
-      "updatedAtMs": 1773453126652,
+      "updatedAtMs": 1773539528133,
       "schedule": {
         "kind": "every",
         "everyMs": 900000,
@@ -392,11 +392,11 @@
         "mode": "none"
       },
       "state": {
-        "nextRunAtMs": 1773454019834,
-        "lastRunAtMs": 1773453119834,
+        "nextRunAtMs": 1773540421503,
+        "lastRunAtMs": 1773539521503,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 6818,
+        "lastDurationMs": 6630,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0,
         "lastDelivered": false
@@ -409,7 +409,7 @@
       "name": "cost-tracker-daily",
       "enabled": true,
       "createdAtMs": 1772750911798,
-      "updatedAtMs": 1773385302719,
+      "updatedAtMs": 1773471665278,
       "schedule": {
         "kind": "cron",
         "expr": "0 8 * * *",
@@ -426,11 +426,11 @@
         "mode": "none"
       },
       "state": {
-        "nextRunAtMs": 1773471600000,
-        "lastRunAtMs": 1773385251515,
+        "nextRunAtMs": 1773558000000,
+        "lastRunAtMs": 1773471633907,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 51204,
+        "lastDurationMs": 31371,
         "lastDelivered": false,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0
@@ -468,7 +468,7 @@
       "name": "image-optimizer",
       "enabled": true,
       "createdAtMs": 1773187213085,
-      "updatedAtMs": 1773446428100,
+      "updatedAtMs": 1773532826189,
       "schedule": {
         "kind": "every",
         "everyMs": 21600000,
@@ -487,11 +487,11 @@
         "to": "1480154276205433035"
       },
       "state": {
-        "nextRunAtMs": 1773468013287,
-        "lastRunAtMs": 1773446413287,
+        "nextRunAtMs": 1773554413364,
+        "lastRunAtMs": 1773532813364,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 14813,
+        "lastDurationMs": 12825,
         "lastDelivered": true,
         "lastDeliveryStatus": "delivered",
         "consecutiveErrors": 0
@@ -504,7 +504,7 @@
       "name": "update-skills",
       "enabled": true,
       "createdAtMs": 1773235919019,
-      "updatedAtMs": 1773378084535,
+      "updatedAtMs": 1773464479323,
       "schedule": {
         "kind": "cron",
         "expr": "0 6 * * *",
@@ -523,11 +523,11 @@
         "to": "1481220331845976125"
       },
       "state": {
-        "nextRunAtMs": 1773464400000,
-        "lastRunAtMs": 1773378000019,
+        "nextRunAtMs": 1773550800000,
+        "lastRunAtMs": 1773464400018,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 84516,
+        "lastDurationMs": 79305,
         "lastDelivered": true,
         "lastDeliveryStatus": "delivered",
         "consecutiveErrors": 0
@@ -620,6 +620,34 @@
       },
       "delivery": {
         "mode": "announce"
+      }
+    },
+    {
+      "id": "ecd449f6-599a-4b8c-8285-2fb015e3a5a3",
+      "agentId": "sancho",
+      "sessionKey": "agent:sancho:discord:channel:1479920195299578116",
+      "name": "Daily Metrics Collector — Growth4U",
+      "enabled": true,
+      "createdAtMs": 1773518330038,
+      "updatedAtMs": 1773518330038,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 7 * * *",
+        "tz": "Europe/Madrid"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Run the metrics collector for Growth4U:\n\n```\ncd /Users/ragi/.openclaw/workspace-sancho && node skills/metrics-collector/scripts/collect.js --slug growth4u --all\n```\n\nCapture the full output. If all sources return ok, just reply HEARTBEAT_OK.\n\nIf any source has errors, report to #infra thread 1480273578770567319 in Cervantes Brain guild with:\nmessage(action=send, channel=discord, target='1480273578770567319', message='⚠️ Metrics Collector Growth4U: [error summary]')\n\nDo NOT publish to client channels — this is infrastructure only.",
+        "model": "anthropic/claude-sonnet-4-5",
+        "timeoutSeconds": 120
+      },
+      "delivery": {
+        "mode": "none"
+      },
+      "state": {
+        "nextRunAtMs": 1773554400000
       }
     }
   ]
