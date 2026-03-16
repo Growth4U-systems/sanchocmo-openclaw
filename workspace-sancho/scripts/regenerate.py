@@ -170,7 +170,10 @@ def parse_activity():
         return fallback
 
     # Get files from last 14 days — ONLY daily logs (YYYY-MM-DD.md), not session transcripts
-    for md_file in sorted(memory_dir.glob("*.md"), reverse=True)[:30]:
+    # Check both memory/daily/ (new structure) and memory/ (legacy fallback)
+    daily_dir = memory_dir / "daily"
+    daily_source = daily_dir if daily_dir.exists() else memory_dir
+    for md_file in sorted(daily_source.glob("*.md"), reverse=True)[:30]:
         # Only parse daily log files (exact format: YYYY-MM-DD.md)
         if not re.match(r'^\d{4}-\d{2}-\d{2}\.md$', md_file.name):
             continue

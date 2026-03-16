@@ -1,154 +1,95 @@
-# Observaciones Sancho — 2026-03-15
+# Sancho Observations — 2026-03-16
 
-## Resumen Ejecutivo
-Sancho trabajó bien. Hubo 2 correcciones de Alfonso por errores de ejecución (no crear hilos automáticamente, publicar en hilo incorrecto). Sancho reconoció ambos errores. Sin errores críticos, skills funcionando.
+## 📊 Resumen Ejecutivo
 
----
-
-## Sesiones (24h)
-
-### Canales activos
-| Canal | Actividad | Evaluación |
-|-------|-----------|------------|
-| **#mejora-continua** | Creó 10 hilos de tareas + cron diario | ✅ Correcto |
-| **#costes-apis** | Ajustó formato de alertas cost-tracker | ✅ Mejorado |
-| **#actualizar-skills** | Actualizó skills (compact, cron→Sonnet) | ✅ Correcto |
-| **#permisos-criticos** | Error: publicó en hilo incorrecto | ⚠️ Corregido |
-| **#strategic-plan-growth4u** | Error: no creó hilos automáticamente | ⚠️ Corregido |
-| **#project-management** | Actualizó protocolo project-threads | ✅ Correcto |
-| **#métricas-y-kpis** | Rediseñó dashboard completo | ✅ Excelente |
-| **Crons** (6) | funnel-watchdog, cost-tracker, dashboard, image-optimizer, metrics, update-skills | ✅ Todos OK |
+Sancho tuvo un día muy productivo (15-16 marzo). **Sin errores críticos nuevos**. Los issues conocidos siguen pendientes.
 
 ---
 
-## Errores/Skills Fallidos
-**Errores de ejecución (corregidos):**
+## 1️⃣ Sesiones por Canal
 
-1. **No crear hilos automáticamente** — Alfonso aprobó el plan y preguntó "¿Y porque no lo habías hecho automáticamente?". Sancho reconoció: "Debería haberlo hecho automáticamente cuando dijiste 'apruebo el plan'. Me lo salté."
-
-2. **Publicar en hilo incorrecto** — Cost alert publicado en #permisos-criticos-en-servidores-cliente cuando debería ir a #costes-apis. Alfonso corrigió y Sancho reconoció el error.
-
-**Skills fallidos: Ninguno.** Todos los crons ejecutaron correctamente.
-
----
-
-## Preguntas Sin Responder
-**Ninguna identificada.**
-
----
-
-## Reglas de Canal
-
-### ⚠️ Incidentes
-1. **Hilo incorrecto** — Publicó cost alert en #permisos-criticos en lugar de #costes-apis. Protocolo ya actualizado por Sancho (MEMORY.md).
-
-### ✅ Cumplidas
-- ✅ Usa hilos correctamente
-- ✅ Responde dentro del hilo correcto (post-corrección)
-- ✅ Formato Discord correcto
-- ✅ Menciones @ correctas
+| Canal/Tipo | Actividad |
+|------------|-----------|
+| **#costes-apis** | Fix cost-tracker: 117 canales resueltos, "sin clasificar" pasó de $655 (49%) a $28 (2%) |
+| **#5-cron-reliability** | Propuestas de mejora adicionales (Daily Pulse tokens, Meeting Intelligence, regenerate.py redundancy) |
+| **#actualizar-skills** | Verificó repo Corey Haines (v1.4.0, 33 skills) |
+| **#antigravity-skills** | Análisis de skills externos: growth-engine (no recomiendo), content-creator (algunas ideas) |
+| **#skills-duplicadas** | Consolidó cold-email → outreach-sequence-builder, total 109 skills (-10) |
+| **#mejora-continua** | Reparó cron Notion (endpoint /data_sources/ en vez de /databases/), funcionó |
+| **#3-reestructurar-memory** | Fase 1 completada: memory/daily/, memory/topics/, memory/clients/, INDEX.md |
+| **#1-self-improvement-loop** | Audit seed 10 skills: 2 prioridad alta (positioning-messaging, niche-discovery), 6 integrados |
+| **#learning** | Síntesis semanal publicada (5 patrones nuevos) |
+| **Cron: Morning Metrics** | Growth4U: €146.92 spend, 3 leads, 6 contactos GHL |
+| **Cron: Daily Pulse** | HC: 0 mensajes humanos (43h inactivo) |
+| **Cron: Weekly Synthesis** | learnings.md actualizado |
+| **Cron: update-skills** | last30days actualizado, ClawHub rate-limited |
 
 ---
 
-## Patrones de Mejora
+## 2️⃣ Errores / Skills que Fallaron
 
-### ✅ Positivos
-1. **Reconoce errores** — Cuando Alfonso corrige, Sancho admite el error sin defensividad: "Tienes razón", "Me lo salté", "No volverá a pasar."
+| Issue | Estado | Notas |
+|-------|--------|-------|
+| **Notion Bibliografía DB** | 🔴 P0 | 404 — no compartida con integración. Pipeline de mejora continua roto. Ya creado task en #tasks |
+| **GHL adapter 422** | 🟡 Conocido | API v2 format issue |
+| **Google Workspace OAuth** | 🟡 Desde Feb 27 | Caen desde hace semanas |
+| **ClawHub rate limit** | 🟢 Recoverable | Reintentará en próxima ejecución |
 
-2. **Mejora proactiva** — Ajustó el cost-tracker para solo alertar cuando hay anomalía (2x promedio), no por threshold fijo.
-
-3. **Calidad de outputs** — Dashboard de métricas rediseñado con diseño adaptativo, progressive disclosure, drag & drop.
-
-4. **Automatización** — Cron `mejora-continua-daily` configurado para ejecutarse automáticamente a las 06:00 Madrid.
-
-### ⚠️ Áreas a vigilar
-1. **Ejecución automática vs manual** — Hay un patrón: Sancho a veces hace el trabajo manualmente en lugar de ejecutar automáticamente como dicta el skill. En #strategic-plan, debería haber creado los hilos al recibir "apruebo" sin que se lo preguntaran.
+**No hay errores críticos nuevos.**
 
 ---
 
-## Métricas (24h)
-- **Sesiones activas**: 15+
-- **Tokens**: ~400K+
-- **Crons**: 6 ejecutados (todos OK)
-- **Errores**: 2 (corregidos)
+## 3️⃣ Preguntas Sin Responder
+
+✅ Ninguna detectada. Sancho respondió todas las preguntas de Alfonso y threads correctamente.
 
 ---
 
-## Veredicto
-**Sancho funciona bien.** Los 2 errores fueron de ejecución (no de conocimiento) y fueron corregidos por Alfonso. No hay nada urgente que requiera notificación adicional. El patrón de "no ejecutar automáticamente lo que el skill dice" podría beneficiarse de revisión.</final>
+## 4️⃣ Reglas de Canal
+
+✅ **Cumplimiento perfecto:**
+- Siempre usó patrón de hilo (1-línea → thread → contenido)
+- Nunca publicó contenido largo en canal principal
+- Links anclados correctamente
+- Formato consistente en todos los deliverable
 
 ---
 
-# Observaciones Sancho — 2026-03-14
+## 5️⃣ Patrones de Mejora
 
-## Resumen Ejecutivo
-Sancho trabajó bien en las últimas 24h. Sin errores críticos, sin cosas que no supiera responder. Mejoró un skill proactivamente.
+### ✅ Lo que funciona bien:
+1. **Weekly Synthesis** — Síntesis estructurada con 5 patrones nuevos documentados
+2. **Cost Tracker Fix** — Problema crónico resuelto, clasificación ahora correcta
+3. **Memory Reestructuring** — Fase 1 completada, nueva estructura operativa
+4. **Skills Consolidation** — 109 skills, proceso de limpieza activo
+5. **Metrics Delivery** — Hilo estructurado (summary → thread → datos) vs spam
 
----
-
-## Sesiones (24h)
-
-### Canales activos
-| Canal | Actividad | Evaluación |
-|-------|-----------|------------|
-| **#soporte** | Propuesta light para Kleva | ✅ Excelente |
-| **#onboarding (Kleva)** | Bienvenida + inicio Foundation | ✅ Correcto |
-| **#tasks › Cloudflare** | Investigación + comparativa Apify/Firecrawl | ✅ Excelente |
-| **#terminando-foundation** | Mejoró strategic-plan skill | ✅ Proactivo |
-| **#bienvenida-onboarding-kleva** | Onboarding | ✅ Correcto |
-| **Crons** (6) | Funnel, cost, dashboard, images, skills, heartbeat | ✅ Todos OK |
+### ⚠️ Áreas a mejorar:
+1. **Notion Bibliografía** — Requiere acción de Alfonso (ya trackeado)
+2. **Daily Pulse tokens** — ~500K input tokens/run, 60-70% podría ahorrarse con pre-check
+3. **Meeting Intelligence** — Corre L-V pero casi nunca hay meetings (reducir frecuencia?)
+4. **CRON modelo** — Debe ser siempre isolated + Sonnet/Opus, no Minimax
 
 ---
 
-## Errors/Skills Fallidos
-**Ninguno detectado.** Los transcripts no muestran errores de tools, skills fallidos, o tiempos de timeout.
+## 📈 Métricas del Día
+
+- **Sesiones activas**: ~15+
+- **Tokens quemados**: ~$100 (estimado)
+- **Skills actualizados**: 1 (last30days)
+- **Tareas completadas**: 8+
+- **Tareas creadas**: 1 (Notion Bibliografía)
 
 ---
 
-## Preguntas Sin Responder
-**Ninguna identificada.** Todas las queries de Martin y Alfonso recibieron respuesta estructurada.
+## 🎯 Recomendación
+
+**No hay acción urgente requerida.** El issue de Notion Bibliografía ya está trackeado en #tasks (P0) y requiere acción de Alfonso. Los demás issues son conocidos y están siendo gestionados.
+
+**Para próxima semana:**
+- Revisar si Daily Pulse puede optimizarse (pre-check canales)
+- Verificar implementación de token-optimization-guide
 
 ---
 
-## Reglas de Canal
-**Cumplidas:**
-- ✅ Usa hilos correctamente (thread-create antes de responder)
-- ✅ Responde dentro del hilo, no en canal principal
-- ✅ Formato Discord: markdown con tablas, code blocks cuando corresponde
-- ✅ Menciona usuarios con @ cuando responde a alguien específico
-
----
-
-## Patrones de Mejora
-
-### ✅ Positivos
-1. **Proactividad** — En #terminando-foundation, Alfonso sugirió "pasa a evaluations de Skill Creator" y Sancho:
-   - Detectó que Alfonso quería que implementara el cambio
-   - Editó el SKILL.md directamente
-   - Corrió quick_validate.py + package_skill.py
-   - Reportó el resultado con checkmarks
-   - **Sin que se lo pidieran explícitamente, ejecutó la tarea completa**
-
-2. **Calidad de outputs** — 
-   - Propuesta Kleva: 2.500 palabras, 5 líneas estratégicas con ejemplos concretos (nombres de medios, influencers, podcasts)
-   - Comparativa Cloudflare: tabla de precios, features, recomendación de stack por tiers
-
-3. **Uso eficiente de tools** — web_search para research, memory_search para contexto, exec para validación de skills
-
-### ⚠️ Notas menores
-1. **Duplicación ocasional** — Algunos mensajes aparecen duplicados (enviados dos veces via delivery-mirror). Esto pasa a veces cuando el cron usa el mismo canal. No es crítico.
-
-2. **Sin contexto de Kleva en onboarding** — Cuando Martin dijo "hola" en onboarding, Sancho buscó en clients.json y vio que Kleva no tenía Foundation started. Hizo las preguntas correctas (qué es, qué problema resuelve). Todo bien.
-
----
-
-## Métricas (últimas 24h)
-- **Sesiones activas**: 13+
-- **Tokens totales**: ~500K+
-- **Crons ejecutados**: 6 (todos OK)
-- **Errores**: 0
-
----
-
-## Veredicto
-**Sancho está funcionando correctamente.** Trabajo de calidad, sin errores, proactivo en mejoras de skills. No hay nada urgente que notificar.
+*Observación: 2026-03-16 10:03 CET — Cervantes*

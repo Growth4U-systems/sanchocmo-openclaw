@@ -1,11 +1,11 @@
 {
   "client": "paymatico",
   "period": "2026-03",
-  "updatedAt": "2026-03-15T23:00:24.016036",
-  "total_cost_usd": 60.9207,
-  "total_cost_eur": 56.047,
-  "turns": 498,
-  "sessions": 8,
+  "updatedAt": "2026-03-16T09:49:45.551626",
+  "total_cost_usd": 61.1269,
+  "total_cost_eur": 56.2368,
+  "turns": 501,
+  "sessions": 9,
   "agents": {
     "escudero": {
       "cost_usd": 0,
@@ -14,10 +14,10 @@
       "sessions": 1
     },
     "sancho": {
-      "cost_usd": 60.9207,
-      "cost_eur": 56.047,
-      "turns": 495,
-      "sessions": 7
+      "cost_usd": 61.1269,
+      "cost_eur": 56.2368,
+      "turns": 498,
+      "sessions": 8
     }
   },
   "models": {
@@ -31,13 +31,13 @@
       "turns": 3
     },
     "claude-opus-4-6": {
-      "input": 548,
-      "output": 295665,
-      "cache_read": 35124914,
-      "cache_write": 5754216,
-      "cost_usd": 60.9207,
-      "cost_eur": 56.047,
-      "turns": 495
+      "input": 552,
+      "output": 298287,
+      "cache_read": 35163142,
+      "cache_write": 5773668,
+      "cost_usd": 61.1269,
+      "cost_eur": 56.2368,
+      "turns": 498
     }
   },
   "days": {
@@ -54,8 +54,8 @@
       "turns": 22
     },
     "2026-03-11": {
-      "cost_usd": 1.5512,
-      "turns": 23
+      "cost_usd": 1.7574,
+      "turns": 26
     },
     "2026-03-12": {
       "cost_usd": 2.7113,

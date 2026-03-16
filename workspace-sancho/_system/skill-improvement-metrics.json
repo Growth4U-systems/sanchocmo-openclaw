@@ -1,0 +1,88 @@
+{
+  "weekly_snapshots": [
+    {
+      "date": "2026-03-16",
+      "total_skills_active": 10,
+      "total_executions": 10,
+      "avg_quality": 3.8,
+      "skills_below_3": [],
+      "top_priority": [
+        [
+          "positioning-messaging",
+          {
+            "executions": 1,
+            "avg_quality": 3.0,
+            "priority_score": 2.0,
+            "outcomes": {
+              "success": 1
+            },
+            "top_issues": [
+              [
+                "10 steps es mucho para una sola sesi\u00f3n",
+                1
+              ],
+              [
+                "DAG review puede bloquear entrega",
+                1
+              ],
+              [
+                "Formato Tier 2 muy espec\u00edfico \u2014 dif\u00edcil de cumplir al 100%",
+                1
+              ]
+            ],
+            "hints": [
+              "Evaluar si Steps 1-3 (research) podr\u00edan pre-ejecutarse como sub-tarea separada"
+            ],
+            "failure_rate": 0.0
+          }
+        ],
+        [
+          "niche-discovery-100x",
+          {
+            "executions": 1,
+            "avg_quality": 3.0,
+            "priority_score": 2.0,
+            "outcomes": {
+              "partial": 1
+            },
+            "top_issues": [
+              [
+                "Scripts Python SIGTERM silencioso (bug conocido)",
+                1
+              ],
+              [
+                "Bifurcaci\u00f3n B2C/B2B Enterprise compleja",
+                1
+              ],
+              [
+                "456 l\u00edneas \u2014 excede 500 line guideline con references",
+                1
+              ]
+            ],
+            "hints": [
+              "Arreglar bug SIGTERM o eliminar scripts en favor de herramientas del agente"
+            ],
+            "failure_rate": 100.0
+          }
+        ],
+        [
+          "copywriting",
+          {
+            "executions": 1,
+            "avg_quality": 4.0,
+            "priority_score": 1.0,
+            "outcomes": {
+              "success": 1
+            },
+            "top_issues": [],
+            "hints": [
+              "A\u00f1adir context hydration, brand memory reads/writes, versionado SanchoCMO"
+            ],
+            "failure_rate": 0.0
+          }
+        ]
+      ]
+    }
+  ],
+  "last_updated": "2026-03-16"
+}

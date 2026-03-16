@@ -1,0 +1,1472 @@
+{
+  "slug": "growth4u",
+  "collectedAt": "2026-03-16T06:00:09.146Z",
+  "dateRange": {
+    "from": "2026-03-15",
+    "to": "2026-03-15"
+  },
+  "sources": {
+    "ga4": {
+      "status": "ok",
+      "collectedAt": "2026-03-16T06:00:09.924Z",
+      "metrics": [
+        {
+          "name": "sessions",
+          "value": 15,
+          "date": "2026-03-15"
+        },
+        {
+          "name": "totalUsers",
+          "value": 13,
+          "date": "2026-03-15"
+        },
+        {
+          "name": "newUsers",
+          "value": 14,
+          "date": "2026-03-15"
+        },
+        {
+          "name": "bounceRate",
+          "value": 1,
+          "date": "2026-03-15"
+        },
+        {
+          "name": "averageSessionDuration",
+          "value": 746.1555768,
+          "date": "2026-03-15"
+        },
+        {
+          "name": "conversions",
+          "value": 0,
+          "date": "2026-03-15"
+        }
+      ]
+    },
+    "gsc": {
+      "status": "ok",
+      "collectedAt": "2026-03-16T06:00:10.494Z",
+      "metrics": [
+        {
+          "name": "clicks",
+          "value": 3,
+          "date": "2026-03-12"
+        },
+        {
+          "name": "impressions",
+          "value": 380,
+          "date": "2026-03-12"
+        },
+        {
+          "name": "ctr",
+          "value": 0.79,
+          "date": "2026-03-12"
+        },
+        {
+          "name": "position",
+          "value": 8.99,
+          "date": "2026-03-12"
+        },
+        {
+          "name": "clicks",
+          "value": 2,
+          "date": "2026-03-12",
+          "dimensions": {
+            "query": "growth4u"
+          }
+        },
+        {
+          "name": "impressions",
+          "value": 4,
+          "date": "2026-03-12",
+          "dimensions": {
+            "query": "growth4u"
+          }
+        },
+        {
+          "name": "ctr",
+          "value": 50,
+          "date": "2026-03-12",
+          "dimensions": {
+            "query": "growth4u"
+          }
+        },
+        {
+          "name": "position",
+          "value": 3.25,
+          "date": "2026-03-12",
+          "dimensions": {
+            "query": "growth4u"
+          }
+        },
+        {
+          "name": "clicks",
+          "value": 0,
+          "date": "2026-03-12",
+          "dimensions": {
+            "query": "\"growth4u\""
+          }
+        },
+        {
+          "name": "impressions",
+          "value": 35,
+          "date": "2026-03-12",
+          "dimensions": {
+            "query": "\"growth4u\""
+          }
+        },
+        {
+          "name": "ctr",
+          "value": 0,
+          "date": "2026-03-12",
+          "dimensions": {
+            "query": "\"growth4u\""
+          }
+        },
+        {
+          "name": "position",
+          "value": 4.34,
+          "date": "2026-03-12",
+          "dimensions": {
+            "query": "\"growth4u\""
+          }
+        },
+        {
+          "name": "clicks",
+          "value": 0,
+          "date": "2026-03-12",
+          "dimensions": {
+            "query": "\"growth4u\" (review or comparativa or vs or alternativa or opiniones)"
+          }
+        },
+        {
+          "name": "impressions",
+          "value": 26,
+          "date": "2026-03-12",
+          "dimensions": {
+            "query": "\"growth4u\" (review or comparativa or vs or alternativa or opiniones)"
+          }
+        },
+        {
+          "name": "ctr",
+          "value": 0,
+          "date": "2026-03-12",
+          "dimensions": {
+            "query": "\"growth4u\" (review or comparativa or vs or alternativa or opiniones)"
+          }
+        },
+        {
+          "name": "position",
+          "value": 8.54,
+          "date": "2026-03-12",
+          "dimensions": {
+            "query": "\"growth4u\" (review or comparativa or vs or alternativa or opiniones)"
+          }
+        },
+        {
+          "name": "clicks",
+          "value": 0,
+          "date": "2026-03-12",
+          "dimensions": {
+            "query": "agencia comunicación fintech"
+          }
+        },
+        {
+          "name": "impressions",
+          "value": 4,
+          "date": "2026-03-12",
+          "dimensions": {
+            "query": "agencia comunicación fintech"
+          }
+        },
+        {
+          "name": "ctr",
+          "value": 0,
+          "date": "2026-03-12",
+          "dimensions": {
+            "query": "agencia comunicación fintech"
+          }
+        },
+        {
+          "name": "position",
+          "value": 11.5,
+          "date": "2026-03-12",
+          "dimensions": {
+            "query": "agencia comunicación fintech"
+          }
+        },
+        {
+          "name": "clicks",
+          "value": 0,
+          "date": "2026-03-12",
+          "dimensions": {
+            "query": "agencia de marketing para fintech"
+          }
+        },
+        {
+          "name": "impressions",
+          "value": 1,
+          "date": "2026-03-12",
+          "dimensions": {
+            "query": "agencia de marketing para fintech"
+          }
+        },
+        {
+          "name": "ctr",
+          "value": 0,
+          "date": "2026-03-12",
+          "dimensions": {
+            "query": "agencia de marketing para fintech"
+          }
+        },
+        {
+          "name": "position",
+          "value": 84,
+          "date": "2026-03-12",
+          "dimensions": {
+            "query": "agencia de marketing para fintech"
+          }
+        },
+        {
+          "name": "clicks",
+          "value": 0,
+          "date": "2026-03-12",
+          "dimensions": {
+            "query": "agencia de outreach"
+          }
+        },
+        {
+          "name": "impressions",
+          "value": 1,
+          "date": "2026-03-12",
+          "dimensions": {
+            "query": "agencia de outreach"
+          }
+        },
+        {
+          "name": "ctr",
+          "value": 0,
+          "date": "2026-03-12",
+          "dimensions": {
+            "query": "agencia de outreach"
+          }
+        },
+        {
+          "name": "position",
+          "value": 5,
+          "date": "2026-03-12",
+          "dimensions": {
+            "query": "agencia de outreach"
+          }
+        },
+        {
+          "name": "clicks",
+          "value": 0,
+          "date": "2026-03-12",
+          "dimensions": {
+            "query": "agencia fintech"
+          }
+        },
+        {
+          "name": "impressions",
+          "value": 3,
+          "date": "2026-03-12",
+          "dimensions": {
+            "query": "agencia fintech"
+          }
+        },
+        {
+          "name": "ctr",
+          "value": 0,
+          "date": "2026-03-12",
+          "dimensions": {
+            "query": "agencia fintech"
+          }
+        },
+        {
+          "name": "position",
+          "value": 18.33,
+          "date": "2026-03-12",
+          "dimensions": {
+            "query": "agencia fintech"
+          }
+        },
+        {
+          "name": "clicks",
+          "value": 0,
+          "date": "2026-03-12",
+          "dimensions": {
+            "query": "agencia marketing fintech"
+          }
+        },
+        {
+          "name": "impressions",
+          "value": 2,
+          "date": "2026-03-12",
+          "dimensions": {
+            "query": "agencia marketing fintech"
+          }
+        },
+        {
+          "name": "ctr",
+          "value": 0,
+          "date": "2026-03-12",
+          "dimensions": {
+            "query": "agencia marketing fintech"
+          }
+        },
+        {
+          "name": "position",
+          "value": 11.5,
+          "date": "2026-03-12",
+          "dimensions": {
+            "query": "agencia marketing fintech"
+          }
+        },
+        {
+          "name": "clicks",
+          "value": 0,
+          "date": "2026-03-12",
+          "dimensions": {
+            "query": "agencias de outreach"
+          }
+        },
+        {
+          "name": "impressions",
+          "value": 1,
+          "date": "2026-03-12",
+          "dimensions": {
+            "query": "agencias de outreach"
+          }
+        },
+        {
+          "name": "ctr",
+          "value": 0,
+          "date": "2026-03-12",
+          "dimensions": {
+            "query": "agencias de outreach"
+          }
+        },
+        {
+          "name": "position",
+          "value": 6,
+          "date": "2026-03-12",
+          "dimensions": {
+            "query": "agencias de outreach"
+          }
+        },
+        {
+          "name": "clicks",
+          "value": 0,
+          "date": "2026-03-12",
+          "dimensions": {
+            "query": "automatizacion marketing para startups tecnologia"
+          }
+        },
+        {
+          "name": "impressions",
+          "value": 3,
+          "date": "2026-03-12",
+          "dimensions": {
+            "query": "automatizacion marketing para startups tecnologia"
+          }
+        },
+        {
+          "name": "ctr",
+          "value": 0,
+          "date": "2026-03-12",
+          "dimensions": {
+            "query": "automatizacion marketing para startups tecnologia"
+          }
+        },
+        {
+          "name": "position",
+          "value": 29.67,
+          "date": "2026-03-12",
+          "dimensions": {
+            "query": "automatizacion marketing para startups tecnologia"
+          }
+        },
+        {
+          "name": "clicks",
+          "value": 0,
+          "date": "2026-03-12",
+          "dimensions": {
+            "query": "autoridad de marca fintech"
+          }
+        },
+        {
+          "name": "impressions",
+          "value": 1,
+          "date": "2026-03-12",
+          "dimensions": {
+            "query": "autoridad de marca fintech"
+          }
+        },
+        {
+          "name": "ctr",
+          "value": 0,
+          "date": "2026-03-12",
+          "dimensions": {
+            "query": "autoridad de marca fintech"
+          }
+        },
+        {
+          "name": "position",
+          "value": 2,
+          "date": "2026-03-12",
+          "dimensions": {
+            "query": "autoridad de marca fintech"
+          }
+        },
+        {
+          "name": "clicks",
+          "value": 0,
+          "date": "2026-03-12",
+          "dimensions": {
+            "query": "cac payback"
+          }
+        },
+        {
+          "name": "impressions",
+          "value": 1,
+          "date": "2026-03-12",
+          "dimensions": {
+            "query": "cac payback"
+          }
+        },
+        {
+          "name": "ctr",
+          "value": 0,
+          "date": "2026-03-12",
+          "dimensions": {
+            "query": "cac payback"
+          }
+        },
+        {
+          "name": "position",
+          "value": 1,
+          "date": "2026-03-12",
+          "dimensions": {
+            "query": "cac payback"
+          }
+        },
+        {
+          "name": "clicks",
+          "value": 0,
+          "date": "2026-03-12",
+          "dimensions": {
+            "query": "consultora de marketing para fintech"
+          }
+        },
+        {
+          "name": "impressions",
+          "value": 2,
+          "date": "2026-03-12",
+          "dimensions": {
+            "query": "consultora de marketing para fintech"
+          }
+        },
+        {
+          "name": "ctr",
+          "value": 0,
+          "date": "2026-03-12",
+          "dimensions": {
+            "query": "consultora de marketing para fintech"
+          }
+        },
+        {
+          "name": "position",
+          "value": 41.5,
+          "date": "2026-03-12",
+          "dimensions": {
+            "query": "consultora de marketing para fintech"
+          }
+        },
+        {
+          "name": "clicks",
+          "value": 0,
+          "date": "2026-03-12",
+          "dimensions": {
+            "query": "cómo aparecer en respuestas de chatgpt perplexity ai 2025 2026"
+          }
+        },
+        {
+          "name": "impressions",
+          "value": 2,
+          "date": "2026-03-12",
+          "dimensions": {
+            "query": "cómo aparecer en respuestas de chatgpt perplexity ai 2025 2026"
+          }
+        },
+        {
+          "name": "ctr",
+          "value": 0,
+          "date": "2026-03-12",
+          "dimensions": {
+            "query": "cómo aparecer en respuestas de chatgpt perplexity ai 2025 2026"
+          }
+        },
+        {
+          "name": "position",
+          "value": 4.5,
+          "date": "2026-03-12",
+          "dimensions": {
+            "query": "cómo aparecer en respuestas de chatgpt perplexity ai 2025 2026"
+          }
+        },
+        {
+          "name": "clicks",
+          "value": 0,
+          "date": "2026-03-12",
+          "dimensions": {
+            "query": "empresa de marketing para fintech"
+          }
+        },
+        {
+          "name": "impressions",
+          "value": 2,
+          "date": "2026-03-12",
+          "dimensions": {
+            "query": "empresa de marketing para fintech"
+          }
+        },
+        {
+          "name": "ctr",
+          "value": 0,
+          "date": "2026-03-12",
+          "dimensions": {
+            "query": "empresa de marketing para fintech"
+          }
+        },
+        {
+          "name": "position",
+          "value": 58,
+          "date": "2026-03-12",
+          "dimensions": {
+            "query": "empresa de marketing para fintech"
+          }
+        },
+        {
+          "name": "clicks",
+          "value": 0,
+          "date": "2026-03-12",
+          "dimensions": {
+            "query": "fintech marketing"
+          }
+        },
+        {
+          "name": "impressions",
+          "value": 1,
+          "date": "2026-03-12",
+          "dimensions": {
+            "query": "fintech marketing"
+          }
+        },
+        {
+          "name": "ctr",
+          "value": 0,
+          "date": "2026-03-12",
+          "dimensions": {
+            "query": "fintech marketing"
+          }
+        },
+        {
+          "name": "position",
+          "value": 15,
+          "date": "2026-03-12",
+          "dimensions": {
+            "query": "fintech marketing"
+          }
+        },
+        {
+          "name": "clicks",
+          "value": 0,
+          "date": "2026-03-12",
+          "dimensions": {
+            "query": "growth marketing b2b"
+          }
+        },
+        {
+          "name": "impressions",
+          "value": 1,
+          "date": "2026-03-12",
+          "dimensions": {
+            "query": "growth marketing b2b"
+          }
+        },
+        {
+          "name": "ctr",
+          "value": 0,
+          "date": "2026-03-12",
+          "dimensions": {
+            "query": "growth marketing b2b"
+          }
+        },
+        {
+          "name": "position",
+          "value": 93,
+          "date": "2026-03-12",
+          "dimensions": {
+            "query": "growth marketing b2b"
+          }
+        },
+        {
+          "name": "clicks",
+          "value": 0,
+          "date": "2026-03-12",
+          "dimensions": {
+            "query": "gtm de españa"
+          }
+        },
+        {
+          "name": "impressions",
+          "value": 1,
+          "date": "2026-03-12",
+          "dimensions": {
+            "query": "gtm de españa"
+          }
+        },
+        {
+          "name": "ctr",
+          "value": 0,
+          "date": "2026-03-12",
+          "dimensions": {
+            "query": "gtm de españa"
+          }
+        },
+        {
+          "name": "position",
+          "value": 11,
+          "date": "2026-03-12",
+          "dimensions": {
+            "query": "gtm de españa"
+          }
+        },
+        {
+          "name": "clicks",
+          "value": 0,
+          "date": "2026-03-12",
+          "dimensions": {
+            "query": "gtm españa"
+          }
+        },
+        {
+          "name": "impressions",
+          "value": 2,
+          "date": "2026-03-12",
+          "dimensions": {
+            "query": "gtm españa"
+          }
+        },
+        {
+          "name": "ctr",
+          "value": 0,
+          "date": "2026-03-12",
+          "dimensions": {
+            "query": "gtm españa"
+          }
+        },
+        {
+          "name": "position",
+          "value": 9.5,
+          "date": "2026-03-12",
+          "dimensions": {
+            "query": "gtm españa"
+          }
+        },
+        {
+          "name": "clicks",
+          "value": 0,
+          "date": "2026-03-12",
+          "dimensions": {
+            "query": "herramienta de prospección para b2b"
+          }
+        },
+        {
+          "name": "impressions",
+          "value": 2,
+          "date": "2026-03-12",
+          "dimensions": {
+            "query": "herramienta de prospección para b2b"
+          }
+        },
+        {
+          "name": "ctr",
+          "value": 0,
+          "date": "2026-03-12",
+          "dimensions": {
+            "query": "herramienta de prospección para b2b"
+          }
+        },
+        {
+          "name": "position",
+          "value": 9.5,
+          "date": "2026-03-12",
+          "dimensions": {
+            "query": "herramienta de prospección para b2b"
+          }
+        },
+        {
+          "name": "clicks",
+          "value": 2,
+          "date": "2026-03-12",
+          "dimensions": {
+            "page": "https://growth4u.io/"
+          }
+        },
+        {
+          "name": "impressions",
+          "value": 42,
+          "date": "2026-03-12",
+          "dimensions": {
+            "page": "https://growth4u.io/"
+          }
+        },
+        {
+          "name": "ctr",
+          "value": 4.76,
+          "date": "2026-03-12",
+          "dimensions": {
+            "page": "https://growth4u.io/"
+          }
+        },
+        {
+          "name": "position",
+          "value": 3.21,
+          "date": "2026-03-12",
+          "dimensions": {
+            "page": "https://growth4u.io/"
+          }
+        },
+        {
+          "name": "clicks",
+          "value": 1,
+          "date": "2026-03-12",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/automatizacion-marketing-growth-fintech/"
+          }
+        },
+        {
+          "name": "impressions",
+          "value": 43,
+          "date": "2026-03-12",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/automatizacion-marketing-growth-fintech/"
+          }
+        },
+        {
+          "name": "ctr",
+          "value": 2.33,
+          "date": "2026-03-12",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/automatizacion-marketing-growth-fintech/"
+          }
+        },
+        {
+          "name": "position",
+          "value": 8.33,
+          "date": "2026-03-12",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/automatizacion-marketing-growth-fintech/"
+          }
+        },
+        {
+          "name": "clicks",
+          "value": 0,
+          "date": "2026-03-12",
+          "dimensions": {
+            "page": "https://growth4u.io/articulos/"
+          }
+        },
+        {
+          "name": "impressions",
+          "value": 36,
+          "date": "2026-03-12",
+          "dimensions": {
+            "page": "https://growth4u.io/articulos/"
+          }
+        },
+        {
+          "name": "ctr",
+          "value": 0,
+          "date": "2026-03-12",
+          "dimensions": {
+            "page": "https://growth4u.io/articulos/"
+          }
+        },
+        {
+          "name": "position",
+          "value": 5.81,
+          "date": "2026-03-12",
+          "dimensions": {
+            "page": "https://growth4u.io/articulos/"
+          }
+        },
+        {
+          "name": "clicks",
+          "value": 0,
+          "date": "2026-03-12",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/"
+          }
+        },
+        {
+          "name": "impressions",
+          "value": 43,
+          "date": "2026-03-12",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/"
+          }
+        },
+        {
+          "name": "ctr",
+          "value": 0,
+          "date": "2026-03-12",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/"
+          }
+        },
+        {
+          "name": "position",
+          "value": 4.74,
+          "date": "2026-03-12",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/"
+          }
+        },
+        {
+          "name": "clicks",
+          "value": 0,
+          "date": "2026-03-12",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/agencia-afiliados-referidos-fintech-espana/"
+          }
+        },
+        {
+          "name": "impressions",
+          "value": 2,
+          "date": "2026-03-12",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/agencia-afiliados-referidos-fintech-espana/"
+          }
+        },
+        {
+          "name": "ctr",
+          "value": 0,
+          "date": "2026-03-12",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/agencia-afiliados-referidos-fintech-espana/"
+          }
+        },
+        {
+          "name": "position",
+          "value": 1,
+          "date": "2026-03-12",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/agencia-afiliados-referidos-fintech-espana/"
+          }
+        },
+        {
+          "name": "clicks",
+          "value": 0,
+          "date": "2026-03-12",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/agencia-estrategia-gtm-fintech-espana/"
+          }
+        },
+        {
+          "name": "impressions",
+          "value": 14,
+          "date": "2026-03-12",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/agencia-estrategia-gtm-fintech-espana/"
+          }
+        },
+        {
+          "name": "ctr",
+          "value": 0,
+          "date": "2026-03-12",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/agencia-estrategia-gtm-fintech-espana/"
+          }
+        },
+        {
+          "name": "position",
+          "value": 9.79,
+          "date": "2026-03-12",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/agencia-estrategia-gtm-fintech-espana/"
+          }
+        },
+        {
+          "name": "clicks",
+          "value": 0,
+          "date": "2026-03-12",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/agencia-growth-hacking-fintech-espana/"
+          }
+        },
+        {
+          "name": "impressions",
+          "value": 39,
+          "date": "2026-03-12",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/agencia-growth-hacking-fintech-espana/"
+          }
+        },
+        {
+          "name": "ctr",
+          "value": 0,
+          "date": "2026-03-12",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/agencia-growth-hacking-fintech-espana/"
+          }
+        },
+        {
+          "name": "position",
+          "value": 9.15,
+          "date": "2026-03-12",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/agencia-growth-hacking-fintech-espana/"
+          }
+        },
+        {
+          "name": "clicks",
+          "value": 0,
+          "date": "2026-03-12",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/agencia-outreach-b2b-fintech-espana/"
+          }
+        },
+        {
+          "name": "impressions",
+          "value": 49,
+          "date": "2026-03-12",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/agencia-outreach-b2b-fintech-espana/"
+          }
+        },
+        {
+          "name": "ctr",
+          "value": 0,
+          "date": "2026-03-12",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/agencia-outreach-b2b-fintech-espana/"
+          }
+        },
+        {
+          "name": "position",
+          "value": 14.08,
+          "date": "2026-03-12",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/agencia-outreach-b2b-fintech-espana/"
+          }
+        },
+        {
+          "name": "clicks",
+          "value": 0,
+          "date": "2026-03-12",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/autoridad-de-marca-en-fintech-el-activo-invisible-que-reduce-tu-cac/"
+          }
+        },
+        {
+          "name": "impressions",
+          "value": 2,
+          "date": "2026-03-12",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/autoridad-de-marca-en-fintech-el-activo-invisible-que-reduce-tu-cac/"
+          }
+        },
+        {
+          "name": "ctr",
+          "value": 0,
+          "date": "2026-03-12",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/autoridad-de-marca-en-fintech-el-activo-invisible-que-reduce-tu-cac/"
+          }
+        },
+        {
+          "name": "position",
+          "value": 5.5,
+          "date": "2026-03-12",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/autoridad-de-marca-en-fintech-el-activo-invisible-que-reduce-tu-cac/"
+          }
+        },
+        {
+          "name": "clicks",
+          "value": 0,
+          "date": "2026-03-12",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/escalar-un-negocio-cuando-el-fundador-es-el-motor-y-el-cuello-de-botella/"
+          }
+        },
+        {
+          "name": "impressions",
+          "value": 2,
+          "date": "2026-03-12",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/escalar-un-negocio-cuando-el-fundador-es-el-motor-y-el-cuello-de-botella/"
+          }
+        },
+        {
+          "name": "ctr",
+          "value": 0,
+          "date": "2026-03-12",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/escalar-un-negocio-cuando-el-fundador-es-el-motor-y-el-cuello-de-botella/"
+          }
+        },
+        {
+          "name": "position",
+          "value": 5.5,
+          "date": "2026-03-12",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/escalar-un-negocio-cuando-el-fundador-es-el-motor-y-el-cuello-de-botella/"
+          }
+        },
+        {
+          "name": "clicks",
+          "value": 0,
+          "date": "2026-03-12",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/geo-para-fintechs-como-aparecer-cuando-chatgpt-busca-mejor-banco-digital-espana/?articulo=como-aparecer-en-chatgpt-cuando-un-ceo-busca-mejor-fintech-espana"
+          }
+        },
+        {
+          "name": "impressions",
+          "value": 4,
+          "date": "2026-03-12",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/geo-para-fintechs-como-aparecer-cuando-chatgpt-busca-mejor-banco-digital-espana/?articulo=como-aparecer-en-chatgpt-cuando-un-ceo-busca-mejor-fintech-espana"
+          }
+        },
+        {
+          "name": "ctr",
+          "value": 0,
+          "date": "2026-03-12",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/geo-para-fintechs-como-aparecer-cuando-chatgpt-busca-mejor-banco-digital-espana/?articulo=como-aparecer-en-chatgpt-cuando-un-ceo-busca-mejor-fintech-espana"
+          }
+        },
+        {
+          "name": "position",
+          "value": 5,
+          "date": "2026-03-12",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/geo-para-fintechs-como-aparecer-cuando-chatgpt-busca-mejor-banco-digital-espana/?articulo=como-aparecer-en-chatgpt-cuando-un-ceo-busca-mejor-fintech-espana"
+          }
+        },
+        {
+          "name": "clicks",
+          "value": 0,
+          "date": "2026-03-12",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/geo-para-fintechs-guia-completa-ia-chatgpt-perplexity/"
+          }
+        },
+        {
+          "name": "impressions",
+          "value": 44,
+          "date": "2026-03-12",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/geo-para-fintechs-guia-completa-ia-chatgpt-perplexity/"
+          }
+        },
+        {
+          "name": "ctr",
+          "value": 0,
+          "date": "2026-03-12",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/geo-para-fintechs-guia-completa-ia-chatgpt-perplexity/"
+          }
+        },
+        {
+          "name": "position",
+          "value": 5.3,
+          "date": "2026-03-12",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/geo-para-fintechs-guia-completa-ia-chatgpt-perplexity/"
+          }
+        },
+        {
+          "name": "clicks",
+          "value": 0,
+          "date": "2026-03-12",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/herramientas-atribucion-marketing-fintech/"
+          }
+        },
+        {
+          "name": "impressions",
+          "value": 55,
+          "date": "2026-03-12",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/herramientas-atribucion-marketing-fintech/"
+          }
+        },
+        {
+          "name": "ctr",
+          "value": 0,
+          "date": "2026-03-12",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/herramientas-atribucion-marketing-fintech/"
+          }
+        },
+        {
+          "name": "position",
+          "value": 13.05,
+          "date": "2026-03-12",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/herramientas-atribucion-marketing-fintech/"
+          }
+        },
+        {
+          "name": "clicks",
+          "value": 0,
+          "date": "2026-03-12",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/herramientas-gtm-lanzamiento-producto-b2b/"
+          }
+        },
+        {
+          "name": "impressions",
+          "value": 42,
+          "date": "2026-03-12",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/herramientas-gtm-lanzamiento-producto-b2b/"
+          }
+        },
+        {
+          "name": "ctr",
+          "value": 0,
+          "date": "2026-03-12",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/herramientas-gtm-lanzamiento-producto-b2b/"
+          }
+        },
+        {
+          "name": "position",
+          "value": 13.29,
+          "date": "2026-03-12",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/herramientas-gtm-lanzamiento-producto-b2b/"
+          }
+        },
+        {
+          "name": "clicks",
+          "value": 0,
+          "date": "2026-03-12",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/herramientas-outreach-y-prospeccion-b2b/"
+          }
+        },
+        {
+          "name": "impressions",
+          "value": 62,
+          "date": "2026-03-12",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/herramientas-outreach-y-prospeccion-b2b/"
+          }
+        },
+        {
+          "name": "ctr",
+          "value": 0,
+          "date": "2026-03-12",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/herramientas-outreach-y-prospeccion-b2b/"
+          }
+        },
+        {
+          "name": "position",
+          "value": 6.68,
+          "date": "2026-03-12",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/herramientas-outreach-y-prospeccion-b2b/"
+          }
+        },
+        {
+          "name": "clicks",
+          "value": 0,
+          "date": "2026-03-12",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/mejores-opciones-para-optimizar-embudos-de-conversion-b2b/"
+          }
+        },
+        {
+          "name": "impressions",
+          "value": 6,
+          "date": "2026-03-12",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/mejores-opciones-para-optimizar-embudos-de-conversion-b2b/"
+          }
+        },
+        {
+          "name": "ctr",
+          "value": 0,
+          "date": "2026-03-12",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/mejores-opciones-para-optimizar-embudos-de-conversion-b2b/"
+          }
+        },
+        {
+          "name": "position",
+          "value": 11.67,
+          "date": "2026-03-12",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/mejores-opciones-para-optimizar-embudos-de-conversion-b2b/"
+          }
+        },
+        {
+          "name": "clicks",
+          "value": 0,
+          "date": "2026-03-12",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/plataformas-de-crecimiento-automatico-recomendadas-para-pequenas-empresas/"
+          }
+        },
+        {
+          "name": "impressions",
+          "value": 2,
+          "date": "2026-03-12",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/plataformas-de-crecimiento-automatico-recomendadas-para-pequenas-empresas/"
+          }
+        },
+        {
+          "name": "ctr",
+          "value": 0,
+          "date": "2026-03-12",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/plataformas-de-crecimiento-automatico-recomendadas-para-pequenas-empresas/"
+          }
+        },
+        {
+          "name": "position",
+          "value": 9,
+          "date": "2026-03-12",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/plataformas-de-crecimiento-automatico-recomendadas-para-pequenas-empresas/"
+          }
+        },
+        {
+          "name": "clicks",
+          "value": 0,
+          "date": "2026-03-12",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/que-herramientas-recomiendan-para-outreach-b2b-efectivo/"
+          }
+        },
+        {
+          "name": "impressions",
+          "value": 9,
+          "date": "2026-03-12",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/que-herramientas-recomiendan-para-outreach-b2b-efectivo/"
+          }
+        },
+        {
+          "name": "ctr",
+          "value": 0,
+          "date": "2026-03-12",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/que-herramientas-recomiendan-para-outreach-b2b-efectivo/"
+          }
+        },
+        {
+          "name": "position",
+          "value": 7,
+          "date": "2026-03-12",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/que-herramientas-recomiendan-para-outreach-b2b-efectivo/"
+          }
+        },
+        {
+          "name": "clicks",
+          "value": 0,
+          "date": "2026-03-12",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/que-herramientas-usan-para-mejorar-adquisicion-de-usuarios/"
+          }
+        },
+        {
+          "name": "impressions",
+          "value": 24,
+          "date": "2026-03-12",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/que-herramientas-usan-para-mejorar-adquisicion-de-usuarios/"
+          }
+        },
+        {
+          "name": "ctr",
+          "value": 0,
+          "date": "2026-03-12",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/que-herramientas-usan-para-mejorar-adquisicion-de-usuarios/"
+          }
+        },
+        {
+          "name": "position",
+          "value": 8.29,
+          "date": "2026-03-12",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/que-herramientas-usan-para-mejorar-adquisicion-de-usuarios/"
+          }
+        },
+        {
+          "name": "clicks",
+          "value": 0,
+          "date": "2026-03-12",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/saas-o-fintech-por-que-tu-playbook-de-growth-esta-fallando/"
+          }
+        },
+        {
+          "name": "impressions",
+          "value": 28,
+          "date": "2026-03-12",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/saas-o-fintech-por-que-tu-playbook-de-growth-esta-fallando/"
+          }
+        },
+        {
+          "name": "ctr",
+          "value": 0,
+          "date": "2026-03-12",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/saas-o-fintech-por-que-tu-playbook-de-growth-esta-fallando/"
+          }
+        },
+        {
+          "name": "position",
+          "value": 8.36,
+          "date": "2026-03-12",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/saas-o-fintech-por-que-tu-playbook-de-growth-esta-fallando/"
+          }
+        }
+      ]
+    },
+    "metricool": {
+      "status": "ok",
+      "collectedAt": "2026-03-16T06:00:10.909Z",
+      "metrics": []
+    },
+    "meta-ads": {
+      "status": "ok",
+      "collectedAt": "2026-03-16T06:00:12.376Z",
+      "metrics": [
+        {
+          "name": "spend",
+          "value": 146.92,
+          "date": "2026-03-15"
+        },
+        {
+          "name": "impressions",
+          "value": 6410,
+          "date": "2026-03-15"
+        },
+        {
+          "name": "clicks",
+          "value": 165,
+          "date": "2026-03-15"
+        },
+        {
+          "name": "ctr",
+          "value": 2.574103,
+          "date": "2026-03-15"
+        },
+        {
+          "name": "cpc",
+          "value": 0.890424,
+          "date": "2026-03-15"
+        },
+        {
+          "name": "leads",
+          "value": 3,
+          "date": "2026-03-15"
+        },
+        {
+          "name": "spend",
+          "value": 146.92,
+          "date": "2026-03-15",
+          "dimensions": {
+            "campaign": "G4U - Testeo Creativos - Copy"
+          }
+        },
+        {
+          "name": "impressions",
+          "value": 6410,
+          "date": "2026-03-15",
+          "dimensions": {
+            "campaign": "G4U - Testeo Creativos - Copy"
+          }
+        },
+        {
+          "name": "clicks",
+          "value": 165,
+          "date": "2026-03-15",
+          "dimensions": {
+            "campaign": "G4U - Testeo Creativos - Copy"
+          }
+        },
+        {
+          "name": "ctr",
+          "value": 2.574103,
+          "date": "2026-03-15",
+          "dimensions": {
+            "campaign": "G4U - Testeo Creativos - Copy"
+          }
+        },
+        {
+          "name": "cpc",
+          "value": 0.890424,
+          "date": "2026-03-15",
+          "dimensions": {
+            "campaign": "G4U - Testeo Creativos - Copy"
+          }
+        },
+        {
+          "name": "leads",
+          "value": 3,
+          "date": "2026-03-15",
+          "dimensions": {
+            "campaign": "G4U - Testeo Creativos - Copy"
+          }
+        }
+      ]
+    },
+    "ghl": {
+      "status": "ok",
+      "collectedAt": "2026-03-16T06:00:16.018Z",
+      "metrics": [
+        {
+          "name": "newContacts",
+          "value": 6,
+          "date": "2026-03-15"
+        },
+        {
+          "name": "totalContacts",
+          "value": 203,
+          "date": "2026-03-15"
+        },
+        {
+          "name": "appointments",
+          "value": 0,
+          "date": "2026-03-15"
+        },
+        {
+          "name": "opportunities",
+          "value": 0,
+          "date": "2026-03-15"
+        },
+        {
+          "name": "pipelineValue",
+          "value": 0,
+          "date": "2026-03-15"
+        }
+      ]
+    }
+  }
+}

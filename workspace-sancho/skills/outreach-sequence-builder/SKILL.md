@@ -1,6 +1,6 @@
 ---
 name: outreach-sequence-builder
-description: Build cold outreach sequences.
+description: "Build cold outreach sequences that get replies. Use when the user wants to write cold outreach emails, prospecting emails, cold email campaigns, sales development emails, SDR emails, or multi-channel outbound sequences. Also use when the user mentions 'cold outreach,' 'prospecting email,' 'outbound email,' 'email to leads,' 'reach out to prospects,' 'sales email,' 'follow-up email sequence,' 'nobody is replying to my emails,' 'how do I write a cold email,' 'cold email,' 'LinkedIn outreach,' 'outbound sequence,' or 'book more meetings.' Covers subject lines, opening lines, body copy, CTAs, personalization, multi-touch follow-up sequences, and multi-channel (email + LinkedIn + video). For warm/lifecycle email sequences, see email-sequence. For sales collateral beyond emails, see sales-enablement."
 metadata:
   author: Alfonso Sainz de Baranda (Growth4U)
   version: '1.0'
@@ -10,15 +10,15 @@ metadata:
   layer: Decide
   depends_on: channel-prioritization, contact-enrichment, signal-definition
   chains_to: email-outreach-executor, linkedin-outreach-executor
-context_required:
-- brand/{slug}/go-to-market/channel-plan.md
-- brand/{slug}/go-to-market/positioning/*/current.md
-- brand/{slug}/go-to-market/ecps/current.md
-- brand/{slug}/brand-voice/current.md
-context_writes:
-- campaigns/
-- brand/{slug}/operational/learnings.md
-- brand/{slug}/operational/assets.md
+  context_required:
+    - brand/{slug}/go-to-market/channel-plan.md
+    - brand/{slug}/go-to-market/positioning/*/current.md
+    - brand/{slug}/go-to-market/ecps/current.md
+    - brand/{slug}/brand-voice/current.md
+  context_writes:
+    - campaigns/
+    - brand/{slug}/operational/learnings.md
+    - brand/{slug}/operational/assets.md
 ---
 
 # Outreach Sequence Builder — Cold to Warm in 5-7 Touches

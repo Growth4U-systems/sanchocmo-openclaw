@@ -1,48 +1,12 @@
 {
   "lastChecks": {
-    "email": 1773314578,
-    "calendar": 1773314578,
-    "calendar": 1773235783,
+    "email": 1773048371,
+    "calendar": 1773048371,
     "regenerate": 1771962349,
-    "memory": 1773235783,
-    "email_2026_03_09_1204": 1773146694,
-    "email_2026_03_10_1356": 1773208613,
-    "calendar_2026_03_10_1356": 1773208613,
-    "email_2026_03_11_1428": 1773235783,
-    "calendar_2026_03_11_1428": 1773235783,
-    "email_2026_03_13_1401": 1773499262,
-    "calendar_2026_03_13_1401": 1773499262,
-    "email_2026_03_13_2001": 1773523278,
-    "calendar_2026_03_13_2001": 1773523278,
-    "email_2026_03_14_1100": 1773482469,
-    "calendar_2026_03_14_1100": 1773482469,
-    "email_2026_03_15_1719": 1773591587,
-    "calendar_2026_03_15_1719": 1773591587,
-    "email_2026_03_15_2018": 1773602366,
-    "calendar_2026_03_15_2018": 1773602366,
-    "email_2026_03_15_2318": 1773613140,
-    "email_2026_03_16_0218": 1773623932
+    "memory": 1771962349
   },
   "notes": {
-    "2026-02-24T18:43": "gog CLI timeout en gmail/calendar/drive. Memory file actualizado. Email/calendar checks fallidos.",
-    "2026-02-24T18:45": "Dashboard regenerado (12 tasks, 26 events). Memory OK. gog sigue en timeout — skip email/calendar.",
-    "2026-03-01T06:46": "First heartbeat of day. Memory file created. Email/calendar blocked (gog CLI timeout). Nothing urgent detected.",
-    "2026-03-01T17:34": "Memory maintenance check. Reviewed Feb 28 daily files (doc regeneration, QA process). No major learnings. gog CLI timeout persists (5 days). System working despite it.",
-    "2026-03-02T19:33": "gog CLI fully restored. Email/calendar checks working. No urgent items. Mostly newsletters.",
-    "2026-03-04T08:02": "Memory maintenance: reviewed Mar 1-3 daily logs. Added heartbeat patterns, Kleva reschedule, competitor intel completion to MEMORY.md.",
-    "2026-03-03T20:20": "Email/calendar checks OK. 5 unread (Kleva meeting rescheduled to Tue 10 Mar, Lenny's meetup invite, newsletters). Tomorrow packed. No urgent items <2h. Sub-agent cron running (idle).",
     "2026-03-08T18:26": "Email: 10 unread (newsletters, Upwork messages, GSC 40 clicks milestone). Calendar: normal week, meetings Mar 9. No urgent items <2h.",
-    "2026-03-08T20:25": "Email: 5 unread (Google Slides share, Andrew A Upwork work submitted, newsletters). Calendar: Mar 9 packed (Sync Daily 09:45, Cobee 10:00, Olanzo 11:15, HC Análisis 12:00, Alfonso NISTAL 13:00, Kleva 17:30). Nothing urgent <2h.",
-    "2026-03-08T22:02": "Email: 10+ unread (Upwork messages, newsletters). Calendar: Mar 9 packed. Nothing urgent <2h.",
-    "2026-03-10T06:06": "First heartbeat Mar 10. Email: 5 unread (Amazon Business, Skool notifications, Paco Sierra doc shared, Neil Patel). Calendar: packed (Sync Daily 09:45, Cobee 10:00, Olanzo 11:15, HC Análisis 12:00, Alfonso NISTAL 13:00, Kleva 17:30). Next event 09:45 (~3.5h).",
-    "2026-03-10T13:56": "Email: 5 unread (Skool notifications, web2wave newsletter, El Club De Las Agencias, Amamos el Dinero, Teresa Torres podcast). No urgent items. Calendar: search returning no events - may need re-auth or events are private.",
-    "2026-03-11T06:02": "Quiet hours (06:02). Email: Supabase SECURITY WARNING still unread. Calendar: Mid-week G4U 09:45 (~3.9h).",
-    "2026-03-11T14:28": "Email: 10 unread (Martin Fila - Oier Q&A calendar invites). Calendar: busy 14:00-16:00, next 15:30 Olanzo. No urgent items <2h. Memory maintenance done.",
-    "2026-03-11T21:24": "Email: 5 unread (Vercel deployment fail, Supercut first view, auth code, newsletters). No urgent items. Calendar: Mar 12 packed (Sync Daily 09:45, Martin Test 10:00, Martin Fila 10:30, Q&A Oier 12:00, Bi-weekly VIP 13:00). Next event ~12h away.",
-    "2026-03-13T14:01": "Email: 5 unread (Gemini notes x2, Pandavideo, Vilma.AI Growth Q&A, Growth4U newsletter). No urgent items. Calendar: Mar 13 busy (Ocupado 14:00-16:00), Q&A Oier 15:00 (~1h). Nothing urgent <2h.",
-    "2026-03-13T20:01": "Email: 5 unread (Facundo Daniel C. Upwork, Deel promo, Meta ad approved, Railway deletion, Alfonso wrap-up). Calendar: Mar 13 done, Mar 14 empty. Weekend.",
-    "2026-03-14T11:00": "Email: 5 unread (Skool notifications x3, AI with Kyle newsletter, Smartlead cold email webinar). No urgent items. Calendar: Mar 14-15 empty. Weekend clear.",
-    "2026-03-15T17:19": "Email: 5 unread (Zephyr newsletter, Calendly Fixcal reminder Mon 16:30, Qonto payment notification, Eloisa Wolf newsletter). Calendar: Mar 16 packed (Alba 09:30, G4U Weekly 11:00, HC Nichos 12:00, Kleva 13:30, Fixcal 16:30). Nothing urgent <2h.",
-    "2026-03-15T20:18": "Email: 5 unread (⚠️ URGENT: Claude API access turned off - from Anthropic, Trigify Nordic Funding Day, Alfonso Digest semanal, Neil Patel AI traffic). Calendar: Mar 16 packed. Next event ~13h away."
+    "2026-03-16T12:26": "Email: Nothing urgent. Newsletters, Kleva prep, Meta ads approved. Calendar: HC Nichos now, Kleva 13:30, Review Sancho 18:00."
   }
 }

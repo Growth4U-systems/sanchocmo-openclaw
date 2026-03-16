@@ -30,6 +30,20 @@ if [ $MC_EXIT -ne 0 ] || echo "$MC_RESULT" | python3 -c "import sys,json; json.l
   fi
 fi
 
+# Step 1b: Funnel watchdog (moved from dedicated cron — was burning Opus every 15min)
+FUNNEL_STATUS=$(tailscale funnel status 2>&1)
+if echo "$FUNNEL_STATUS" | grep -q "tailnet only"; then
+  echo "$(date): Funnel down — re-enabling..."
+  tailscale serve reset 2>/dev/null
+  tailscale funnel --bg --set-path / http://127.0.0.1:18789 2>/dev/null
+  tailscale funnel --bg --set-path /mc http://127.0.0.1:18790 2>/dev/null
+  echo "$(date): Funnel re-enabled"
+  FUNNEL_RESTORED=1
+else
+  echo "$(date): Funnel OK"
+  FUNNEL_RESTORED=0
+fi
+
 # Step 2: Run extra checks that MC doesn't cover
 EXTRA_CHECKS="{}"
 

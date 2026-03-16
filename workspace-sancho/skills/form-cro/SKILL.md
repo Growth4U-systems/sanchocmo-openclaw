@@ -1,6 +1,6 @@
 ---
 name: form-cro
-description: When the user wants to optimize any form that is NOT signup/registration — including lead capture forms, contact forms, demo request forms, application forms, survey forms, or checkout forms. Also use when the user mentions "form optimization," "lead form conversions," "form friction," "form fields," "form completion rate," "contact form," "nobody fills out our form," "form abandonment," "too many fields," "demo request form," or "lead form isn't converting." Use this for any non-signup form that captures information. For signup/registration forms, see signup-flow-cro. For popups containing forms, see popup-cro.
+description: "When the user wants to optimize any form — including signup/registration, lead capture, contact, demo request, application, survey, or checkout forms. Also use when the user mentions 'form optimization,' 'lead form conversions,' 'form friction,' 'form fields,' 'form completion rate,' 'contact form,' 'nobody fills out our form,' 'form abandonment,' 'too many fields,' 'demo request form,' 'lead form isn't converting,' 'signup conversions,' 'registration friction,' 'signup form optimization,' 'free trial signup,' 'reduce signup dropoff,' 'account creation flow,' 'people aren't signing up,' 'signup abandonment,' 'trial conversion rate,' 'nobody completes registration,' 'too many steps to sign up,' or 'simplify our signup.' Use this for any form that captures information, including signup flows. For post-signup onboarding, see onboarding-cro. For popups containing forms, see popup-cro."
 metadata:
   version: 1.1.0
 ---
@@ -245,6 +245,39 @@ Examples:
 
 ## Form Types: Specific Guidance
 
+### Signup / Registration Flows
+
+Signup forms have unique considerations beyond standard form CRO:
+
+**Social Auth Options:**
+- Place prominently (often higher conversion than email)
+- B2C: Google, Apple, Facebook | B2B: Google, Microsoft, SSO
+- Clear visual separation from email signup
+- Consider "Sign up with Google" as primary CTA
+
+**Minimize Required Fields:**
+- Essential: Email (or phone) + Password
+- Often needed: Name
+- Usually deferrable: Company, Role, Team size, Phone
+- Progressive profiling: collect more after signup
+
+**Show Value Before Commitment:**
+- What can you show before requiring signup?
+- Can they experience the product first?
+- Reverse the order: value first, signup second
+
+**Post-Submit Verification:**
+- Consider delaying email verification until necessary
+- Magic link as alternative to password
+- Let users explore while awaiting verification
+- Clear re-engagement if verification stalls
+
+**Common Signup Patterns:**
+- B2B SaaS Trial: Email + Password (or Google auth) → Name + Company → Onboarding
+- B2C App: Google/Apple auth OR Email → Product experience → Profile later
+- Waitlist: Email only → Waitlist confirmation
+- E-commerce: Guest checkout default → Account creation post-purchase
+
 ### Lead Capture (Gated Content)
 - Minimum viable fields (often just email)
 - Clear value proposition for what they get
@@ -423,7 +456,7 @@ Ideas to A/B test with expected outcomes
 
 ## Related Skills
 
-- **signup-flow-cro**: For account creation forms
+- **onboarding-cro**: For post-signup activation and onboarding
 - **popup-cro**: For forms inside popups/modals
 - **page-cro**: For the page containing the form
 - **ab-test-setup**: For testing form changes

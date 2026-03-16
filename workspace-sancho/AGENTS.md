@@ -1,8 +1,11 @@
 # AGENTS.md
 
 ## Memory
-- Daily notes: `memory/YYYY-MM-DD.md` — raw logs
-- Long-term: `MEMORY.md` — curated, ONLY in main session (security)
+- Daily notes: `memory/daily/YYYY-MM-DD.md` — raw logs
+- Topic notes: `memory/topics/YYYY-MM-DD-topic.md` — deep dives
+- Client memory: `memory/clients/{slug}.md` — per-client curated facts
+- Long-term: `MEMORY.md` — compact core (system, personas, learnings)
+- Skills changelog: `memory/skills.md`
 - "Remember this" → write to file. Mental notes don't survive restarts.
 
 ## Safety
