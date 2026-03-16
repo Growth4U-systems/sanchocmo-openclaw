@@ -160,6 +160,7 @@ from lib import (
     websearch,
     xai_x,
     youtube_yt,
+    query_type as qt,
 )
 
 
@@ -352,7 +353,7 @@ def _search_x(
             raw_response = {"error": str(e)}
             x_error = f"{type(e).__name__}: {e}"
 
-        x_items = bird_x.parse_bird_response(raw_response or {})
+        x_items = bird_x.parse_bird_response(raw_response or {}, query=topic)
 
         # Check for error in response (Bird returns list on success, dict on error)
         if raw_response and isinstance(raw_response, dict) and raw_response.get("error") and not x_error:
@@ -507,7 +508,7 @@ def _search_hackernews(
     except Exception as e:
         return [], f"{type(e).__name__}: {e}"
 
-    hn_items = hackernews.parse_hackernews_response(response)
+    hn_items = hackernews.parse_hackernews_response(response, query=topic)
 
     if response.get("error"):
         hn_error = response["error"]
@@ -631,8 +632,10 @@ def _search_web(
                 topic, from_date, to_date, config["PARALLEL_API_KEY"], depth=depth,
             )
         elif backend == "brave":
+            use_llm_ctx = os.environ.get("BRAVE_LLM_CONTEXT", "").strip() == "1"
             raw_results = brave_search.search_web(
-                topic, from_date, to_date, config["BRAVE_API_KEY"], depth=depth,
+                topic, from_date, to_date, config["BRAVE_API_KEY"],
+                depth=depth, use_llm_context=use_llm_ctx,
             )
         elif backend == "openrouter":
             raw_results = openrouter_search.search_web(
@@ -1621,8 +1624,8 @@ def main():
     # Check available sources (accounting for Bird auto-detection)
     available = env.get_available_sources(config)
 
-    # Override available if Bird or ScrapeCreators provides X
-    if x_source in ('bird', 'scrapecreators'):
+    # Override available if Bird provides X
+    if x_source == 'bird':
         if available == 'reddit':
             available = 'both'  # Now have both Reddit + X
         elif available == 'reddit-web':
@@ -1692,14 +1695,19 @@ def main():
     else:
         mode = sources
 
+    # Detect query type for source tiering and scoring adjustments
+    query_type = qt.detect_query_type(args.topic)
+
     # Apply --search flag: restrict sources to the specified subset
-    search_do_hackernews = True
-    search_do_bluesky = has_bluesky
-    search_do_truthsocial = has_truthsocial
-    search_do_polymarket = True
-    search_run_youtube = has_ytdlp
-    search_run_tiktok = has_tiktok
-    search_run_instagram = has_instagram
+    # Source defaults are query-type-aware (Truth Social always opt-in,
+    # Bluesky only for query types where it adds signal)
+    search_do_hackernews = qt.is_source_enabled("hn", query_type) if not args.search else True
+    search_do_bluesky = has_bluesky and qt.is_source_enabled("bluesky", query_type)
+    search_do_truthsocial = False  # Always opt-in (requires --search truthsocial)
+    search_do_polymarket = qt.is_source_enabled("polymarket", query_type)
+    search_run_youtube = has_ytdlp and qt.is_source_enabled("youtube", query_type)
+    search_run_tiktok = has_tiktok and qt.is_source_enabled("tiktok", query_type)
+    search_run_instagram = has_instagram and qt.is_source_enabled("instagram", query_type)
     search_run_xiaohongshu = has_xiaohongshu
     if args.search:
         search_sources = parse_search_flag(args.search)
@@ -1795,19 +1803,19 @@ def main():
     scored_bsky = score.score_bluesky_items(filtered_bsky) if filtered_bsky else []
     scored_ts = score.score_truthsocial_items(filtered_ts) if filtered_ts else []
     scored_pm = score.score_polymarket_items(filtered_pm) if filtered_pm else []
-    scored_web = score.score_websearch_items(filtered_web) if filtered_web else []
+    scored_web = score.score_websearch_items(filtered_web, query_type=query_type) if filtered_web else []
 
-    # Sort items
-    sorted_reddit = score.sort_items(scored_reddit)
-    sorted_x = score.sort_items(scored_x)
-    sorted_youtube = score.sort_items(scored_youtube) if scored_youtube else []
-    sorted_tiktok = score.sort_items(scored_tiktok) if scored_tiktok else []
-    sorted_ig = score.sort_items(scored_ig) if scored_ig else []
-    sorted_hn = score.sort_items(scored_hn) if scored_hn else []
-    sorted_bsky = score.sort_items(scored_bsky) if scored_bsky else []
-    sorted_ts = score.sort_items(scored_ts) if scored_ts else []
-    sorted_pm = score.sort_items(scored_pm) if scored_pm else []
-    sorted_web = score.sort_items(scored_web) if scored_web else []
+    # Sort items (query-type-aware tiebreaker ordering)
+    sorted_reddit = score.sort_items(scored_reddit, query_type=query_type)
+    sorted_x = score.sort_items(scored_x, query_type=query_type)
+    sorted_youtube = score.sort_items(scored_youtube, query_type=query_type) if scored_youtube else []
+    sorted_tiktok = score.sort_items(scored_tiktok, query_type=query_type) if scored_tiktok else []
+    sorted_ig = score.sort_items(scored_ig, query_type=query_type) if scored_ig else []
+    sorted_hn = score.sort_items(scored_hn, query_type=query_type) if scored_hn else []
+    sorted_bsky = score.sort_items(scored_bsky, query_type=query_type) if scored_bsky else []
+    sorted_ts = score.sort_items(scored_ts, query_type=query_type) if scored_ts else []
+    sorted_pm = score.sort_items(scored_pm, query_type=query_type) if scored_pm else []
+    sorted_web = score.sort_items(scored_web, query_type=query_type) if scored_web else []
 
     # Dedupe items
     deduped_reddit = dedupe.dedupe_reddit(sorted_reddit)
@@ -1821,12 +1829,16 @@ def main():
     deduped_pm = dedupe.dedupe_polymarket(sorted_pm) if sorted_pm else []
     deduped_web = websearch.dedupe_websearch(sorted_web) if sorted_web else []
 
-    # Minimum result guarantee: if all Reddit results were filtered out but
-    # we had raw results, keep top 3 by relevance regardless of score
-    if not deduped_reddit and normalized_reddit:
-        print("[REDDIT WARNING] All results scored below threshold, keeping top 3 by relevance", file=sys.stderr)
-        by_relevance = sorted(normalized_reddit, key=lambda item: item.relevance, reverse=True)
-        deduped_reddit = by_relevance[:3]
+    # Post-retrieval relevance filter: drop low-relevance items per source
+    deduped_reddit = score.relevance_filter(deduped_reddit, "REDDIT")
+    deduped_x = score.relevance_filter(deduped_x, "X")
+    deduped_youtube = score.relevance_filter(deduped_youtube, "YOUTUBE")
+    deduped_tiktok = score.relevance_filter(deduped_tiktok, "TIKTOK")
+    deduped_ig = score.relevance_filter(deduped_ig, "INSTAGRAM")
+    deduped_hn = score.relevance_filter(deduped_hn, "HN")
+    deduped_bsky = score.relevance_filter(deduped_bsky, "BLUESKY")
+    deduped_ts = score.relevance_filter(deduped_ts, "TRUTHSOCIAL")
+    deduped_pm = score.relevance_filter(deduped_pm, "POLYMARKET") if deduped_pm else []
 
     # Cross-source linking: annotate items that discuss the same story
     dedupe.cross_source_link(

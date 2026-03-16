@@ -79,6 +79,38 @@ class TestConfigPrecedence(unittest.TestCase):
                 config = env.get_config()
                 self.assertEqual(config['BRAVE_API_KEY'], 'env-key')
 
+    def test_gemini_keys_load_from_project_env(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmpdir:
+            project_dir = Path(tmpdir) / ".claude"
+            project_dir.mkdir()
+            project_env = project_dir / "last30days.env"
+            project_env.write_text("GEMINI_API_KEY=gem-key\nGEMINI_MODEL=gemini-3-pro-preview\n")
+
+            with patch.object(Path, 'cwd', return_value=Path(tmpdir)), \
+                 patch.object(env, 'CONFIG_FILE', None), \
+                 patch.dict(os.environ, {}, clear=False):
+                os.environ.pop('GEMINI_API_KEY', None)
+                os.environ.pop('GEMINI_MODEL', None)
+                config = env.get_config()
+                self.assertEqual(config['GEMINI_API_KEY'], 'gem-key')
+                self.assertEqual(config['GEMINI_MODEL'], 'gemini-3-pro-preview')
+
+    def test_google_api_key_loads_from_project_env(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmpdir:
+            project_dir = Path(tmpdir) / ".claude"
+            project_dir.mkdir()
+            project_env = project_dir / "last30days.env"
+            project_env.write_text("GOOGLE_API_KEY=google-key\n")
+
+            with patch.object(Path, 'cwd', return_value=Path(tmpdir)), \
+                 patch.object(env, 'CONFIG_FILE', None), \
+                 patch.dict(os.environ, {}, clear=False):
+                os.environ.pop('GOOGLE_API_KEY', None)
+                config = env.get_config()
+                self.assertEqual(config['GOOGLE_API_KEY'], 'google-key')
+
 
 class TestConfigSource(unittest.TestCase):
     """Tests for _CONFIG_SOURCE tracking."""
@@ -171,6 +203,31 @@ class TestFilePermissions(unittest.TestCase):
             with patch('sys.stderr', stderr):
                 env._check_file_permissions(f)
             self.assertEqual(stderr.getvalue(), "")
+
+
+class TestXSourceSelection(unittest.TestCase):
+    """Tests for supported X backend selection."""
+
+    def test_get_x_source_ignores_scrapecreators_key(self):
+        config = {'SCRAPECREATORS_API_KEY': 'sc-key'}
+
+        with patch('lib.bird_x.is_bird_installed', return_value=False):
+            self.assertIsNone(env.get_x_source(config))
+
+    def test_get_x_source_status_ignores_scrapecreators_key(self):
+        config = {'SCRAPECREATORS_API_KEY': 'sc-key'}
+        bird_status = {
+            'installed': True,
+            'authenticated': False,
+            'username': None,
+            'can_install': False,
+        }
+
+        with patch('lib.bird_x.get_bird_status', return_value=bird_status):
+            status = env.get_x_source_status(config)
+
+        self.assertIsNone(status['source'])
+        self.assertFalse(status['xai_available'])
 
 
 if __name__ == "__main__":

@@ -47,16 +47,28 @@ class TestExpandRedditQueries(unittest.TestCase):
         self.assertGreaterEqual(len(queries), 1)
 
     def test_default_includes_review_variant(self):
-        queries = reddit.expand_reddit_queries("cursor IDE", "default")
+        queries = reddit.expand_reddit_queries("cursor IDE pricing", "default")
         self.assertTrue(any("worth it" in q or "review" in q for q in queries))
 
+    def test_default_skips_review_variant_for_prediction(self):
+        queries = reddit.expand_reddit_queries("anthropic odds", "default")
+        self.assertFalse(any("worth it" in q or "review" in q for q in queries))
+
+    def test_default_skips_review_variant_for_breaking_news(self):
+        queries = reddit.expand_reddit_queries("kanye west", "default")
+        self.assertFalse(any("worth it" in q or "review" in q for q in queries))
+
     def test_deep_includes_issues_variant(self):
-        queries = reddit.expand_reddit_queries("cursor IDE", "deep")
+        queries = reddit.expand_reddit_queries("cursor IDE pricing", "deep")
         self.assertTrue(any("issues" in q or "problems" in q for q in queries))
 
+    def test_deep_skips_issues_variant_for_prediction(self):
+        queries = reddit.expand_reddit_queries("anthropic odds", "deep")
+        self.assertFalse(any("issues" in q or "problems" in q for q in queries))
+
     def test_deep_has_more_queries_than_quick(self):
-        quick = reddit.expand_reddit_queries("cursor IDE", "quick")
-        deep = reddit.expand_reddit_queries("cursor IDE", "deep")
+        quick = reddit.expand_reddit_queries("cursor IDE pricing", "quick")
+        deep = reddit.expand_reddit_queries("cursor IDE pricing", "deep")
         self.assertGreater(len(deep), len(quick))
 
 
@@ -144,6 +156,25 @@ class TestDepthConfig(unittest.TestCase):
             reddit.DEPTH_CONFIG["deep"]["global_searches"],
             reddit.DEPTH_CONFIG["quick"]["global_searches"],
         )
+
+
+class TestPostRelevance(unittest.TestCase):
+    def test_body_cannot_rescue_weak_title_too_far(self):
+        score = reddit._compute_post_relevance(
+            "anthropic odds",
+            "President Trump orders agencies to stop using Anthropic technology",
+            "Long body text eventually mentions odds and other tangential details.",
+        )
+        self.assertLess(score, 0.7)
+        self.assertGreaterEqual(score, 0.5)
+
+    def test_exact_title_match_stays_high(self):
+        score = reddit._compute_post_relevance(
+            "claude code tips",
+            "Claude Code tips for faster workflows",
+            "",
+        )
+        self.assertGreater(score, 0.7)
 
 
 if __name__ == "__main__":

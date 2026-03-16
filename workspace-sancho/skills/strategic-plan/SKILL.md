@@ -58,8 +58,18 @@ Detectar intención del usuario:
 |-----------|--------|
 | "Nuevo proyecto" / "Quiero hacer X" / intelligence sugiere | → **Nuevo proyecto** |
 | "Añade tarea a P01" | → **Nueva tarea** en proyecto existente |
+| "Crea los proyectos" / "Crea los hilos" / "Monta los proyectos en Discord" | → **Crear hilos Discord** (Fase 2 de "Al aprobar el plan") |
 | "P01 está terminado" / todas las tareas completed | → **Value review** |
 | "Nuevos objetivos" / "Siguiente ciclo" | → **Nuevo ciclo** (versionar plan, crear nuevo) |
+
+### Crear hilos Discord
+
+Si `registry.json` + tasks.json existen PERO no tienen `discord_thread_id`:
+
+1. Leer `_system/project-threads-protocol.md`
+2. Resolver channel IDs desde `brand/{slug}/discord-channels.json` (o crear con channel-list)
+3. Ejecutar Fase 2 de "Al aprobar el plan" — crear hilos proyecto por proyecto
+4. **IMPORTANTE:** Usar `thread-create` para CADA proyecto y CADA tarea. NUNCA mensajes planos.
 
 ### Nuevo proyecto
 
@@ -269,19 +279,81 @@ Ver [references/data-model.md](references/data-model.md) para schemas de `projec
 
 ### Al aprobar el plan:
 
+**Fase 1: Escribir archivos**
+
 1. Escribir `brand/{slug}/strategic-plan/current.md` (documento vivo, versionable)
 2. Crear `brand/{slug}/projects/registry.json` (si no existe)
 3. Por cada estrategia aprobada → crear proyecto:
    - Carpeta `brand/{slug}/projects/P{XX}-{slug}/`
    - `project.json` con objetivo, métricas baseline/target, origin, review_date
-   - `tasks.json` con tareas iniciales, canal temático asignado, descripción, owner
+   - `tasks.json` con tareas iniciales, canal temático asignado, descripción, owner (ver [data-model.md](references/data-model.md))
+
+**Fase 2: Crear hilos en Discord (OBLIGATORIO)**
+
+> ⚠️ **NUNCA publicar proyectos como mensajes planos.** Los proyectos son HILOS (`thread-create`), no mensajes.
+> Leer `_system/project-threads-protocol.md` ANTES de empezar.
+
 4. Preguntar: "Plan aprobado con X proyectos y Y tareas. ¿Creo los hilos en Discord?"
-5. Al confirmar → seguir `_system/project-threads-protocol.md`:
-   - Crear hilo en `#projects` del guild: `[P01] Nombre del proyecto` con links a MC
-   - Por cada tarea → crear hilo en el canal temático: `[P01-T01] Nombre tarea` con link al proyecto y MC
-   - Resumen en hilo del proyecto con links a todos los hilos de tareas
-   - Guardar `discord_thread_id` en project.json y tasks.json
-6. En cada hilo de tarea: "¿La ejecuto?" → esperar confirmación
+5. **Resolver datos del cliente:**
+   - Leer `brand/{slug}/discord-channels.json` para channel IDs
+   - Si no existe → `message(action=channel-list, guildId={guild})` → crear el fichero
+   - Obtener `mcToken` de `clients.json` → MC URL: `https://sancho-cmo.taild48df2.ts.net/mc/portal/{mcToken}/projects/`
+6. **Por cada proyecto** (ir uno a uno):
+
+   a. **Crear hilo de proyecto en #projects:**
+   ```
+   message(action=thread-create, channel=discord, channelId="{projects_channel_id}", threadName="[P{XX}] {nombre}", messageId="{msg_id}")
+   ```
+   
+   b. **Primer mensaje en el hilo del proyecto** (mencionar al usuario con `<@{sender_id}>`):
+   ```
+   <@{sender_id}> 📋 **[P{XX}] {nombre}**
+   
+   🎯 **Objetivo:** {objetivo}
+   📋 **Estrategia:** {estrategia}
+   📅 **Review:** {review_date}
+   📊 **Métricas:** {baseline} → {target}
+   
+   🔗 **Mission Control:** <{MC_URL}>
+   
+   Tareas: (links se añaden tras crear los hilos)
+   ```
+   
+   c. **Por cada tarea del proyecto → crear hilo en su canal temático:**
+   ```
+   message(action=thread-create, channel=discord, channelId="{channel_id_del_canal}", threadName="[P{XX}-T{YY}] {nombre_tarea}", messageId="{msg_id}")
+   ```
+   
+   d. **Primer mensaje en el hilo de la tarea** (mencionar al usuario + link al proyecto):
+   ```
+   <@{sender_id}> 🔧 **[P{XX}-T{YY}] {nombre_tarea}**
+   
+   {descripción}
+   
+   📂 **Proyecto:** [P{XX}] {nombre_proyecto} → <https://discord.com/channels/{guild}/{project_thread_id}>
+   🔗 **Mission Control:** <{MC_URL}>
+   
+   ¿La ejecuto? Esperando confirmación.
+   ```
+   
+   e. **Mensaje resumen en el hilo del proyecto** (tras crear TODOS los hilos de tareas, con links cruzados):
+   ```
+   📋 **Tareas:**
+   • <https://discord.com/channels/{guild}/{task_thread_id}> — {nombre} → #{canal}
+   • <https://discord.com/channels/{guild}/{task_thread_id}> — {nombre} → #{canal}
+   ...
+   Todas esperan confirmación antes de ejecutarse.
+   ```
+   
+   > ⚠️ **SIEMPRE mencionar al usuario** (`<@{sender_id}>`) en el primer mensaje de cada hilo (proyecto y tarea). Sin mención, Discord no notifica y los hilos quedan ocultos.
+   > ⚠️ **SIEMPRE links cruzados**: tarea→proyecto (link Discord al hilo del proyecto), proyecto→tareas (links Discord a cada hilo de tarea).
+
+7. **Guardar thread IDs en los JSONs:**
+   - `project.json` → añadir `"discord": { "project_thread_id": "{id}" }`
+   - `tasks.json` → añadir `"discord_thread_id": "{id}"` en cada tarea
+   - MC mostrará los 💬 automáticamente con links a Discord
+
+8. En cada hilo de tarea: "¿La ejecuto?" → **NUNCA ejecutar sin confirmación explícita**
 
 ### Nomenclatura proyectos
 
@@ -348,6 +420,14 @@ Al completar un proyecto → generar `value-review.md`:
 3. ¿Gaps cruzados con stack.md + datos reales?
 4. ¿Estrategias ejecutables con recursos del cliente?
 5. ¿Proyectos con objetivo medible (métrica + baseline + target)?
-6. ¿Tareas asignadas a canal temático correcto?
-7. ¿Review date definida para cada proyecto?
-8. ¿Aprobación del usuario antes de crear proyectos?
+6. ¿Tareas asignadas a canal temático correcto (channel field)?
+7. ¿Cada tarea tiene description y owner?
+8. ¿Review date definida para cada proyecto?
+9. ¿Aprobación del usuario antes de crear proyectos?
+10. ⚠️ **¿Hilos creados con `thread-create`?** (NUNCA mensajes planos en #projects)
+11. ⚠️ **¿Mención `<@sender_id>` en CADA hilo?** (sin mención = hilo oculto para el usuario)
+12. ⚠️ **¿Links cruzados?** Proyecto→tareas (links en resumen) + Tarea→proyecto (link en primer mensaje)
+13. ¿Cada hilo de proyecto tiene link a MC?
+14. ¿Cada hilo de tarea tiene link al proyecto padre + link a MC?
+15. ¿`discord_thread_id` guardado en tasks.json y project.json?
+16. ¿Cada tarea pregunta "¿La ejecuto?" y espera confirmación?

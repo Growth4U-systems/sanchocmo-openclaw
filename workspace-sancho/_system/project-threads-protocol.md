@@ -48,9 +48,9 @@ message(action=thread-create, channel=discord, channelId="{projects_channel_id}"
 → obtener thread_id → guardar como project_thread_id
 ```
 
-Primer mensaje en el hilo del proyecto:
+Primer mensaje en el hilo del proyecto (**MENCIONAR al usuario**):
 ```
-📋 **[P{XX}] {nombre}**
+<@{sender_id}> 📋 **[P{XX}] {nombre}**
 
 **Objetivo:** {objetivo}
 **Estrategia:** {estrategia}
@@ -66,6 +66,8 @@ Primer mensaje en el hilo del proyecto:
 **Tareas:** (links se añaden tras crear los hilos)
 ```
 
+> ⚠️ Sin `<@{sender_id}>`, Discord no notifica y el hilo queda oculto para el usuario.
+
 ### Paso 2: Crear hilos de tareas en canales temáticos
 
 Para cada tarea del proyecto:
@@ -78,37 +80,39 @@ message(action=thread-create, channel=discord, channelId="{channel_id}", threadN
 → obtener task_thread_id → guardar en tasks.json
 ```
 
-Primer mensaje en el hilo de la tarea:
+Primer mensaje en el hilo de la tarea (**MENCIONAR al usuario + LINK al proyecto**):
 ```
-🔧 **[P{XX}-T{YY}] {nombre_tarea}**
+<@{sender_id}> 🔧 **[P{XX}-T{YY}] {nombre_tarea}**
 
-**Descripción:** {descripción}
-**Canal:** #{channel}
-**Owner:** {owner}
+{descripción}
 
 📂 **Proyecto:** [P{XX}] {nombre_proyecto} → <https://discord.com/channels/{guild}/{project_thread_id}>
 🔗 **Mission Control:** <{MC_BASE}/projects/>
 
----
-
-¿La ejecuto? Esperando confirmación para empezar.
+¿La ejecuto? Esperando confirmación.
 ```
 
-### Paso 3: Mensaje resumen en el hilo del proyecto
+> ⚠️ El link al proyecto es OBLIGATORIO — el usuario debe poder navegar tarea→proyecto con un click.
+> ⚠️ Sin `<@{sender_id}>`, el usuario no ve la tarea en sus notificaciones.
 
-Después de crear TODOS los hilos de tareas, enviar un mensaje al hilo del proyecto:
+### Paso 3: Mensaje resumen en el hilo del proyecto (links cruzados)
+
+Después de crear TODOS los hilos de tareas, enviar un mensaje al hilo del proyecto con **links a cada hilo de tarea**:
 
 ```
 📋 **Tareas creadas:**
 
-| # | Tarea | Canal | Estado |
-|---|-------|-------|--------|
-| [P{XX}-T01](https://discord.com/channels/{guild}/{task_thread_id}) | {nombre} | #{channel} | Por hacer |
-| [P{XX}-T02](https://discord.com/channels/{guild}/{task_thread_id}) | {nombre} | #{channel} | Por hacer |
+• <https://discord.com/channels/{guild}/{task_thread_id_1}> — {nombre_T01} → #{channel}
+• <https://discord.com/channels/{guild}/{task_thread_id_2}> — {nombre_T02} → #{channel}
 ...
 
 Todas las tareas esperan confirmación antes de ejecutarse.
 ```
+
+> ⚠️ **Links cruzados OBLIGATORIOS:**
+> - Proyecto → cada tarea (links Discord en este resumen)
+> - Cada tarea → proyecto (link Discord en el primer mensaje de la tarea)
+> Sin links cruzados, el usuario no puede navegar entre proyecto y tareas.
 
 ### Paso 4: Actualizar JSONs
 

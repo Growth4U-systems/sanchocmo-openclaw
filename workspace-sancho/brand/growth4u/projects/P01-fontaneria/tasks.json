@@ -1,8 +1,8 @@
 [
-  { "id": "P01-T01", "name": "Instalar Meta Pixel + CAPI en growth4u.io", "owner": "Sancho", "status": "todo", "channel": "web", "description": "Añadir el snippet de Meta Pixel y configurar la Conversions API en el sitio growth4u.io para tracking de eventos de ads." },
-  { "id": "P01-T02", "name": "Configurar conversiones GA4 (form_submit, booking_started, trust_score_completed)", "owner": "Sancho", "status": "todo", "channel": "web", "description": "Crear eventos personalizados en GA4 para los 3 puntos de conversión principales del funnel." },
-  { "id": "P01-T03", "name": "Unificar URL booking a now.growth4u.io", "owner": "Equipo", "status": "todo", "channel": "web", "description": "Consolidar todos los links de reserva de llamada a un único dominio now.growth4u.io para tracking limpio." },
-  { "id": "P01-T04", "name": "Crear hub /servicios/ con resumen 3 servicios", "owner": "Sancho", "status": "todo", "channel": "web", "description": "Diseñar y redactar una página hub que agrupe los 3 servicios principales con copy persuasivo y CTAs claros." },
-  { "id": "P01-T05", "name": "Fixes menores: copyright 2026, OG image, llms.txt, sitemap redirect", "owner": "Sancho", "status": "todo", "channel": "web", "description": "Batch de correcciones técnicas: actualizar año copyright, crear imagen OG, añadir llms.txt, y corregir redirect del sitemap." },
-  { "id": "P01-T06", "name": "Warm-up dominios envío cold email (2 semanas)", "owner": "Sancho", "status": "todo", "channel": "prospecting", "description": "Configurar y calentar los dominios de envío para cold email. 2 buzones, incremento gradual de volumen durante 2 semanas." }
+  { "id": "P01-T01", "name": "Instalar Meta Pixel + CAPI en growth4u.io", "owner": "Equipo", "status": "ready", "channel": "web", "deliverable": "playbook.md §T01 — instrucciones paso a paso" },
+  { "id": "P01-T02", "name": "Configurar conversiones GA4", "owner": "Equipo", "status": "ready", "channel": "web", "deliverable": "playbook.md §T02 — 3 eventos: booking_started, form_submit, trust_score_completed" },
+  { "id": "P01-T03", "name": "Unificar URL booking a now.growth4u.io", "owner": "Equipo", "status": "ready", "channel": "web", "deliverable": "playbook.md §T03 — reemplazar todas las instancias" },
+  { "id": "P01-T04", "name": "Crear hub /servicios/", "owner": "Sancho", "status": "done", "channel": "web", "deliverable": "playbook.md §T04 — copy completo listo para implementar" },
+  { "id": "P01-T05", "name": "Fixes menores", "owner": "Equipo", "status": "ready", "channel": "web", "deliverable": "playbook.md §T05 — copyright, OG image, llms.txt (generado), sitemap redirect" },
+  { "id": "P01-T06", "name": "Warm-up dominios cold email", "owner": "Equipo", "status": "ready", "channel": "prospecting", "deliverable": "playbook.md §T06 — setup Instantly + DNS + 14 días warm-up" }
 ]

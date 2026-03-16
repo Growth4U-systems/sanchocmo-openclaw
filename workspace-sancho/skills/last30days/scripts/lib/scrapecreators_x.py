@@ -7,10 +7,9 @@ Requires SCRAPECREATORS_API_KEY in config.
 API docs: https://scrapecreators.com/docs
 """
 
-import re
 import sys
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Dict, List, Optional
 
 try:
     import requests as _requests
@@ -25,67 +24,19 @@ DEPTH_CONFIG = {
     "deep":    {"results_per_page": 40},
 }
 
-STOPWORDS = frozenset({
-    'the', 'a', 'an', 'to', 'for', 'how', 'is', 'in', 'of', 'on',
-    'and', 'with', 'from', 'by', 'at', 'this', 'that', 'it', 'my',
-    'your', 'i', 'me', 'we', 'you', 'what', 'are', 'do', 'can',
-    'its', 'be', 'or', 'not', 'no', 'so', 'if', 'but', 'about',
-    'all', 'just', 'get', 'has', 'have', 'was', 'will',
-})
-
-SYNONYMS = {
-    'js': {'javascript'}, 'javascript': {'js'},
-    'ts': {'typescript'}, 'typescript': {'ts'},
-    'ai': {'artificial', 'intelligence'},
-    'ml': {'machine', 'learning'},
-    'react': {'reactjs'}, 'reactjs': {'react'},
-}
-
-
-def _tokenize(text: str) -> Set[str]:
-    """Lowercase, strip punctuation, remove stopwords, drop single-char tokens."""
-    words = re.sub(r'[^\w\s]', ' ', text.lower()).split()
-    tokens = {w for w in words if w not in STOPWORDS and len(w) > 1}
-    expanded = set(tokens)
-    for t in tokens:
-        if t in SYNONYMS:
-            expanded.update(SYNONYMS[t])
-    return expanded
-
-
-def _compute_relevance(query: str, text: str) -> float:
-    """Compute relevance as ratio of query tokens found in text. Floors at 0.1."""
-    q_tokens = _tokenize(query)
-    t_tokens = _tokenize(text)
-    if not q_tokens:
-        return 0.5
-    overlap = len(q_tokens & t_tokens)
-    ratio = overlap / len(q_tokens)
-    return max(0.1, min(1.0, ratio))
+from .relevance import token_overlap_relevance as _compute_relevance
 
 
 def _extract_core_subject(topic: str) -> str:
     """Extract core subject from verbose query for Twitter search."""
-    text = topic.lower().strip()
-    prefixes = [
-        'what are the best', 'what is the best', 'what are the latest',
-        'what are people saying about', 'what do people think about',
-        'how do i use', 'how to use', 'how to',
-        'what are', 'what is', 'tips for', 'best practices for',
-    ]
-    for p in prefixes:
-        if text.startswith(p + ' '):
-            text = text[len(p):].strip()
-    noise = {
+    from .query import extract_core_subject
+    _SC_X_NOISE = frozenset({
         'best', 'top', 'good', 'great', 'awesome',
         'latest', 'new', 'news', 'update', 'updates',
         'trending', 'hottest', 'popular', 'viral',
         'practices', 'features', 'recommendations', 'advice',
-    }
-    words = text.split()
-    filtered = [w for w in words if w not in noise]
-    result = ' '.join(filtered) if filtered else text
-    return result.rstrip('?!.')
+    })
+    return extract_core_subject(topic, noise=_SC_X_NOISE)
 
 
 def _log(msg: str):

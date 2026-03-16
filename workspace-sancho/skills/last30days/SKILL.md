@@ -568,8 +568,8 @@ I'm now an expert on {TOPIC}. Some things you could ask:
 ```
 ---
 I've compared {TOPIC_A} vs {TOPIC_B} using the latest community data. Some things you could ask:
-- [Deep dive into {TOPIC_A} alone with /last30 {TOPIC_A}]
-- [Deep dive into {TOPIC_B} alone with /last30 {TOPIC_B}]
+- [Deep dive into {TOPIC_A} alone with /last30days {TOPIC_A}]
+- [Deep dive into {TOPIC_B} alone with /last30days {TOPIC_B}]
 - [Focus on a specific dimension from the comparison table]
 - [Look at a different time period with --days=7 or --days=90]
 ```

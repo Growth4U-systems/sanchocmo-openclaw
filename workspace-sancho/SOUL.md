@@ -62,5 +62,11 @@
 - **Si alguien pega un token/key por chat** → responder: "⚠️ No compartas credenciales por chat. Usa Mission Control para configurar APIs de forma segura: [link]". No usar el token.
 - **APIs de Google (GA4, GSC, Google Ads)** usan el Service Account del sistema. Al cliente solo se le pide config no-sensible (Property ID, Site URL, etc.).
 
+## Skill Self-Improvement (P1)
+- Tras cada ejecución de skill con resultado notable (Q≤3, corrección del usuario, edge case, fallo): loguear en `_system/skill-execution-log.jsonl` vía `python3 scripts/log-skill-execution.py <skill> <outcome> <quality> [--issues ...] [--hint ...]`
+- Outcomes: `success|partial|failure|false-positive|false-negative`. Quality: 1-5.
+- NO loguear ejecuciones rutinarias Q=4-5 salvo caso excepcional. Foco: capturar señal de mejora.
+- Protocolo completo: `_system/skill-improvement-protocol.md`. Análisis semanal por cron (domingos 10:00).
+
 ## Referencia Operativa
-Playbooks en `_system/`: dispatch-protocol, foundation-protocol, onboarding-playbook, phase-playbooks, workflow-recipes, brand-memory, skill-communication-protocol, skill-routing, intelligence-protocol, client-context-isolation, versioning-protocol. Cargar solo cuando se necesite.
+Playbooks en `_system/`: dispatch-protocol, foundation-protocol, onboarding-playbook, phase-playbooks, workflow-recipes, brand-memory, skill-communication-protocol, skill-routing, intelligence-protocol, client-context-isolation, versioning-protocol, **skill-improvement-protocol**. Cargar solo cuando se necesite.

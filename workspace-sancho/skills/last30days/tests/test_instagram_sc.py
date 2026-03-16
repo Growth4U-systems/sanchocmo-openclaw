@@ -8,34 +8,35 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent / "scripts"))
 
 from lib import instagram
+from lib.relevance import tokenize as _tokenize
 
 
 class TestTokenize(unittest.TestCase):
-    """Tests for _tokenize()."""
+    """Tests for tokenize() from relevance module."""
 
     def test_strips_stopwords(self):
-        tokens = instagram._tokenize("how to use the AI tools")
+        tokens = _tokenize("how to use the AI tools")
         self.assertNotIn("how", tokens)
         self.assertNotIn("the", tokens)
         self.assertNotIn("to", tokens)
 
     def test_expands_synonyms(self):
-        tokens = instagram._tokenize("ai tools")
+        tokens = _tokenize("ai tools")
         self.assertTrue("artificial" in tokens or "intelligence" in tokens)
 
     def test_removes_single_char(self):
-        tokens = instagram._tokenize("a b c python")
+        tokens = _tokenize("a b c python")
         self.assertNotIn("a", tokens)
         self.assertNotIn("b", tokens)
         self.assertIn("python", tokens)
 
     def test_lowercases(self):
-        tokens = instagram._tokenize("Python REACT")
+        tokens = _tokenize("Python REACT")
         self.assertIn("python", tokens)
         self.assertIn("react", tokens)
 
     def test_strips_punctuation(self):
-        tokens = instagram._tokenize("hello, world!")
+        tokens = _tokenize("hello, world!")
         self.assertIn("hello", tokens)
         self.assertIn("world", tokens)
 
@@ -56,9 +57,9 @@ class TestComputeRelevance(unittest.TestCase):
         boosted = instagram._compute_relevance("claude code", "random video about stuff", ["claudecode", "ai"])
         self.assertGreater(boosted, base)
 
-    def test_floor_at_01(self):
+    def test_no_match_returns_zero(self):
         rel = instagram._compute_relevance("quantum physics", "cat dancing video")
-        self.assertGreaterEqual(rel, 0.1)
+        self.assertEqual(rel, 0.0)
 
     def test_empty_query_returns_default(self):
         rel = instagram._compute_relevance("", "Some video title")

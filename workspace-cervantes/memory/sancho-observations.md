@@ -1,3 +1,84 @@
+# Observaciones Sancho — 2026-03-15
+
+## Resumen Ejecutivo
+Sancho trabajó bien. Hubo 2 correcciones de Alfonso por errores de ejecución (no crear hilos automáticamente, publicar en hilo incorrecto). Sancho reconoció ambos errores. Sin errores críticos, skills funcionando.
+
+---
+
+## Sesiones (24h)
+
+### Canales activos
+| Canal | Actividad | Evaluación |
+|-------|-----------|------------|
+| **#mejora-continua** | Creó 10 hilos de tareas + cron diario | ✅ Correcto |
+| **#costes-apis** | Ajustó formato de alertas cost-tracker | ✅ Mejorado |
+| **#actualizar-skills** | Actualizó skills (compact, cron→Sonnet) | ✅ Correcto |
+| **#permisos-criticos** | Error: publicó en hilo incorrecto | ⚠️ Corregido |
+| **#strategic-plan-growth4u** | Error: no creó hilos automáticamente | ⚠️ Corregido |
+| **#project-management** | Actualizó protocolo project-threads | ✅ Correcto |
+| **#métricas-y-kpis** | Rediseñó dashboard completo | ✅ Excelente |
+| **Crons** (6) | funnel-watchdog, cost-tracker, dashboard, image-optimizer, metrics, update-skills | ✅ Todos OK |
+
+---
+
+## Errores/Skills Fallidos
+**Errores de ejecución (corregidos):**
+
+1. **No crear hilos automáticamente** — Alfonso aprobó el plan y preguntó "¿Y porque no lo habías hecho automáticamente?". Sancho reconoció: "Debería haberlo hecho automáticamente cuando dijiste 'apruebo el plan'. Me lo salté."
+
+2. **Publicar en hilo incorrecto** — Cost alert publicado en #permisos-criticos-en-servidores-cliente cuando debería ir a #costes-apis. Alfonso corrigió y Sancho reconoció el error.
+
+**Skills fallidos: Ninguno.** Todos los crons ejecutaron correctamente.
+
+---
+
+## Preguntas Sin Responder
+**Ninguna identificada.**
+
+---
+
+## Reglas de Canal
+
+### ⚠️ Incidentes
+1. **Hilo incorrecto** — Publicó cost alert en #permisos-criticos en lugar de #costes-apis. Protocolo ya actualizado por Sancho (MEMORY.md).
+
+### ✅ Cumplidas
+- ✅ Usa hilos correctamente
+- ✅ Responde dentro del hilo correcto (post-corrección)
+- ✅ Formato Discord correcto
+- ✅ Menciones @ correctas
+
+---
+
+## Patrones de Mejora
+
+### ✅ Positivos
+1. **Reconoce errores** — Cuando Alfonso corrige, Sancho admite el error sin defensividad: "Tienes razón", "Me lo salté", "No volverá a pasar."
+
+2. **Mejora proactiva** — Ajustó el cost-tracker para solo alertar cuando hay anomalía (2x promedio), no por threshold fijo.
+
+3. **Calidad de outputs** — Dashboard de métricas rediseñado con diseño adaptativo, progressive disclosure, drag & drop.
+
+4. **Automatización** — Cron `mejora-continua-daily` configurado para ejecutarse automáticamente a las 06:00 Madrid.
+
+### ⚠️ Áreas a vigilar
+1. **Ejecución automática vs manual** — Hay un patrón: Sancho a veces hace el trabajo manualmente en lugar de ejecutar automáticamente como dicta el skill. En #strategic-plan, debería haber creado los hilos al recibir "apruebo" sin que se lo preguntaran.
+
+---
+
+## Métricas (24h)
+- **Sesiones activas**: 15+
+- **Tokens**: ~400K+
+- **Crons**: 6 ejecutados (todos OK)
+- **Errores**: 2 (corregidos)
+
+---
+
+## Veredicto
+**Sancho funciona bien.** Los 2 errores fueron de ejecución (no de conocimiento) y fueron corregidos por Alfonso. No hay nada urgente que requiera notificación adicional. El patrón de "no ejecutar automáticamente lo que el skill dice" podría beneficiarse de revisión.</final>
+
+---
+
 # Observaciones Sancho — 2026-03-14
 
 ## Resumen Ejecutivo

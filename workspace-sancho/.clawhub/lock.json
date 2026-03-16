@@ -3,35 +3,35 @@
   "skills": {
     "apify": {
       "version": "1.0.3",
-      "installedAt": 1772141143939
+      "installedAt": 1773550861824
     },
     "google-analytics": {
       "version": "1.0.10",
-      "installedAt": 1772142291128
+      "installedAt": 1773550865210
     },
     "google-search-console": {
       "version": "1.0.5",
-      "installedAt": 1772142294121
+      "installedAt": 1773550867019
     },
     "google-ads": {
       "version": "1.1.0",
-      "installedAt": 1772142303154
+      "installedAt": 1773550868900
     },
     "meta-ads": {
       "version": "1.0.0",
-      "installedAt": 1772142304945
+      "installedAt": 1773550874527
     },
     "apollo": {
       "version": "1.0.0",
-      "installedAt": 1772142308258
+      "installedAt": 1773550879406
     },
     "native-google-analytics": {
       "version": "0.1.1",
-      "installedAt": 1772916987340
+      "installedAt": 1773550882348
     },
     "gsc": {
       "version": "1.2.2",
-      "installedAt": 1772917002072
+      "installedAt": 1773550884085
     }
   }
 }

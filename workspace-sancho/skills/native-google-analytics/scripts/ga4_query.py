@@ -12,36 +12,7 @@ import urllib.request
 
 # ── Auth ─────────────────────────────────────────────────────────────────────
 
-# Service account search paths (relative to workspace root)
-_SA_PATHS = [
-    os.path.join(os.path.dirname(__file__), "..", "..", "..", ".secrets", "google-service-account.json"),
-    os.environ.get("GOOGLE_SERVICE_ACCOUNT_FILE", ""),
-]
-
-def _get_sa_token():
-    """Try to get access token via service account."""
-    try:
-        from google.oauth2 import service_account
-        import google.auth.transport.requests
-    except ImportError:
-        return None
-    for p in _SA_PATHS:
-        if p and os.path.isfile(p):
-            creds = service_account.Credentials.from_service_account_file(
-                p, scopes=["https://www.googleapis.com/auth/analytics.readonly"]
-            )
-            creds.refresh(google.auth.transport.requests.Request())
-            return creds.token
-    return None
-
-
 def get_access_token():
-    # 1. Try service account
-    sa_token = _get_sa_token()
-    if sa_token:
-        return sa_token
-
-    # 2. Fallback to OAuth env vars
     client_id = os.environ.get("GOOGLE_CLIENT_ID")
     client_secret = os.environ.get("GOOGLE_CLIENT_SECRET")
     refresh_token = os.environ.get("GOOGLE_REFRESH_TOKEN")
@@ -53,8 +24,8 @@ def get_access_token():
     }.items() if not v]
 
     if missing:
-        print(f"Error: No service account found and missing env vars: {', '.join(missing)}", file=sys.stderr)
-        print("Place google-service-account.json in .secrets/ or set OAuth env vars.", file=sys.stderr)
+        print(f"Error: missing env vars: {', '.join(missing)}", file=sys.stderr)
+        print("Run ga4_auth.py to complete setup.", file=sys.stderr)
         sys.exit(1)
 
     data = urllib.parse.urlencode({

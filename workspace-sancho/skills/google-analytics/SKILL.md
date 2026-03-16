@@ -1,185 +1,480 @@
 ---
 name: google-analytics
-description: "Query Google Analytics 4 (GA4) data directly via the Analytics Data API. Use when you need website analytics like top pages, traffic sources, sessions, users, conversions, bounce rate, or any GA4 metrics and dimensions. Also use when the user mentions 'GA4,' 'Google Analytics,' 'page views,' 'traffic data,' 'analytics report,' or 'how is the website doing.' Supports custom date ranges, filtering, and multi-metric queries. Calls analyticsdata.googleapis.com directly with no third-party proxy."
+description: |
+  Google Analytics API integration with managed OAuth. Manage accounts, properties, and data streams (Admin API). Run reports on sessions, users, page views, and conversions (Data API). Use this skill when users want to configure or query Google Analytics. For other third party apps, use the api-gateway skill (https://clawhub.ai/byungkyu/api-gateway).
+compatibility: Requires network access and valid Maton API key
 metadata:
-  openclaw:
+  author: maton
+  version: "1.0"
+  clawdbot:
+    emoji: 🧠
     requires:
       env:
-        - GA4_PROPERTY_ID
-        - GOOGLE_CLIENT_ID
-        - GOOGLE_CLIENT_SECRET
-        - GOOGLE_REFRESH_TOKEN
-      bins:
-        - python3
-    primaryEnv: GA4_PROPERTY_ID
-    files:
-      - "scripts/*"
+        - MATON_API_KEY
 ---
 
-# Google Analytics 4
+# Google Analytics
 
-Query GA4 properties directly via the Google Analytics Data API (`analyticsdata.googleapis.com`).
+Access Google Analytics with managed OAuth authentication. This skill covers both the Admin API (manage accounts, properties, data streams) and the Data API (run reports on metrics).
 
-## Setup (one-time)
-
-### 1. Create a Google Cloud project (or use an existing one)
-
-Go to https://console.cloud.google.com and create or select a project.
-
-### 2. Set the OAuth consent screen to Internal
-
-Go to **APIs & Credentials > OAuth consent screen > Audience** and set:
-- **User type**: Internal
-
-This avoids Google's app verification process (which requires a demo video for sensitive scopes like Analytics). Internal is fine for personal/team use. Note: this requires a Google Workspace account (not a personal @gmail.com).
-
-If you must use External (e.g. you have a personal Gmail), set publishing status to "In production" and add the `analytics.readonly` scope under **Data Access / Scopes**.
-
-### 3. Add the Analytics scope
-
-Go to **OAuth consent screen > Data Access** (or Scopes) and add:
-```
-https://www.googleapis.com/auth/analytics.readonly
-```
-This is listed as a "sensitive scope" by Google. If your app is Internal, no verification is needed.
-
-### 4. Enable the Analytics Data API
-
-Go to: https://console.cloud.google.com/apis/library/analyticsdata.googleapis.com
-
-Click **Enable**.
-
-### 5. Create OAuth 2.0 credentials
-
-Go to **APIs & Credentials > Credentials > Create Credentials > OAuth client ID**
-- Application type: **Desktop app**
-- Name: anything you want
-
-Save the **Client ID** and **Client Secret**.
-
-### 6. Get your GA4 Property ID
-
-Go to https://analytics.google.com > **Admin** (gear icon) > **Property Settings**. The Property ID is the numeric value at the top.
-
-### 7. Generate a refresh token
-
-Run this on your local machine (needs a browser for the Google login flow):
+## Quick Start
 
 ```bash
-pip install google-auth-oauthlib
+# List account summaries (Admin API)
+python <<'EOF'
+import urllib.request, os, json
+req = urllib.request.Request('https://gateway.maton.ai/google-analytics-admin/v1beta/accountSummaries')
+req.add_header('Authorization', f'Bearer {os.environ["MATON_API_KEY"]}')
+print(json.dumps(json.load(urllib.request.urlopen(req)), indent=2))
+EOF
+
+# Run a report (Data API)
+python <<'EOF'
+import urllib.request, os, json
+data = json.dumps({'dateRanges': [{'startDate': '30daysAgo', 'endDate': 'today'}], 'dimensions': [{'name': 'city'}], 'metrics': [{'name': 'activeUsers'}]}).encode()
+req = urllib.request.Request('https://gateway.maton.ai/google-analytics-data/v1beta/properties/{propertyId}:runReport', data=data, method='POST')
+req.add_header('Authorization', f'Bearer {os.environ["MATON_API_KEY"]}')
+req.add_header('Content-Type', 'application/json')
+print(json.dumps(json.load(urllib.request.urlopen(req)), indent=2))
+EOF
 ```
+
+## Base URLs
+
+**Admin API** (manage accounts, properties, data streams):
+```
+https://gateway.maton.ai/google-analytics-admin/{native-api-path}
+```
+
+**Data API** (run reports):
+```
+https://gateway.maton.ai/google-analytics-data/{native-api-path}
+```
+
+Replace `{native-api-path}` with the actual Google Analytics API endpoint path. The gateway proxies requests to `analyticsadmin.googleapis.com` and `analyticsdata.googleapis.com` and automatically injects your OAuth token.
+
+## Authentication
+
+All requests require the Maton API key in the Authorization header:
+
+```
+Authorization: Bearer $MATON_API_KEY
+```
+
+**Environment Variable:** Set your API key as `MATON_API_KEY`:
 
 ```bash
-python3 -c "from google_auth_oauthlib.flow import InstalledAppFlow; flow = InstalledAppFlow.from_client_config({'installed': {'client_id': 'YOUR_CLIENT_ID', 'client_secret': 'YOUR_CLIENT_SECRET', 'auth_uri': 'https://accounts.google.com/o/oauth2/auth', 'token_uri': 'https://oauth2.googleapis.com/token'}}, scopes=['https://www.googleapis.com/auth/analytics.readonly']); creds = flow.run_local_server(port=0); print('REFRESH TOKEN:', creds.refresh_token)"
+export MATON_API_KEY="YOUR_API_KEY"
 ```
 
-Replace `YOUR_CLIENT_ID` and `YOUR_CLIENT_SECRET` with your values. A browser window will open for you to log in with Google. Copy the refresh token from the output.
+### Getting Your API Key
 
-### 8. Set environment variables
+1. Sign in or create an account at [maton.ai](https://maton.ai)
+2. Go to [maton.ai/settings](https://maton.ai/settings)
+3. Copy your API key
 
-```
-GA4_PROPERTY_ID=123456789
-GOOGLE_CLIENT_ID=your-client-id
-GOOGLE_CLIENT_SECRET=your-client-secret
-GOOGLE_REFRESH_TOKEN=your-refresh-token
-```
+## Connection Management
 
-## Troubleshooting
+Manage your Google OAuth connections at `https://ctrl.maton.ai`.
 
-- **403 HTML error page**: The `analytics.readonly` scope is probably not added to your OAuth consent screen. Go to Data Access/Scopes and add it, then regenerate your refresh token.
-- **403 JSON error "caller does not have permission"**: Your Google account doesn't have access to the GA4 property. Check Admin > Property Access Management in Google Analytics.
-- **Token refresh fails**: Your refresh token may be expired. Regenerate it using step 7.
+**Important:** The Admin API and Data API use separate connections:
+- `google-analytics-admin` - Required for Admin API endpoints (manage accounts, properties, data streams)
+- `google-analytics-data` - Required for Data API endpoints (run reports)
 
-## Queries
+Create the connection(s) you need based on which API you want to use.
 
-### Top pages by pageviews
+### List Connections
+
 ```bash
-python3 /mnt/skills/user/google-analytics/scripts/ga4_query.py \
-  --metrics screenPageViews \
-  --dimension pagePath \
-  --limit 20
+# List Admin API connections
+python <<'EOF'
+import urllib.request, os, json
+req = urllib.request.Request('https://ctrl.maton.ai/connections?app=google-analytics-admin&status=ACTIVE')
+req.add_header('Authorization', f'Bearer {os.environ["MATON_API_KEY"]}')
+print(json.dumps(json.load(urllib.request.urlopen(req)), indent=2))
+EOF
+
+# List Data API connections
+python <<'EOF'
+import urllib.request, os, json
+req = urllib.request.Request('https://ctrl.maton.ai/connections?app=google-analytics-data&status=ACTIVE')
+req.add_header('Authorization', f'Bearer {os.environ["MATON_API_KEY"]}')
+print(json.dumps(json.load(urllib.request.urlopen(req)), indent=2))
+EOF
 ```
 
-### Top pages with sessions and users
+### Create Connection
+
 ```bash
-python3 /mnt/skills/user/google-analytics/scripts/ga4_query.py \
-  --metrics screenPageViews,sessions,totalUsers \
-  --dimension pagePath \
-  --limit 20
+# Create Admin API connection (for managing accounts, properties, data streams)
+python <<'EOF'
+import urllib.request, os, json
+data = json.dumps({'app': 'google-analytics-admin'}).encode()
+req = urllib.request.Request('https://ctrl.maton.ai/connections', data=data, method='POST')
+req.add_header('Authorization', f'Bearer {os.environ["MATON_API_KEY"]}')
+req.add_header('Content-Type', 'application/json')
+print(json.dumps(json.load(urllib.request.urlopen(req)), indent=2))
+EOF
+
+# Create Data API connection (for running reports)
+python <<'EOF'
+import urllib.request, os, json
+data = json.dumps({'app': 'google-analytics-data'}).encode()
+req = urllib.request.Request('https://ctrl.maton.ai/connections', data=data, method='POST')
+req.add_header('Authorization', f'Bearer {os.environ["MATON_API_KEY"]}')
+req.add_header('Content-Type', 'application/json')
+print(json.dumps(json.load(urllib.request.urlopen(req)), indent=2))
+EOF
 ```
 
-### Traffic sources
+### Get Connection
+
 ```bash
-python3 /mnt/skills/user/google-analytics/scripts/ga4_query.py \
-  --metrics sessions \
-  --dimension sessionSource \
-  --limit 20
+python <<'EOF'
+import urllib.request, os, json
+req = urllib.request.Request('https://ctrl.maton.ai/connections/{connection_id}')
+req.add_header('Authorization', f'Bearer {os.environ["MATON_API_KEY"]}')
+print(json.dumps(json.load(urllib.request.urlopen(req)), indent=2))
+EOF
 ```
 
-### Traffic by source and medium
+**Response:**
+```json
+{
+  "connection": {
+    "connection_id": "21fd90f9-5935-43cd-b6c8-bde9d915ca80",
+    "status": "ACTIVE",
+    "creation_time": "2025-12-08T07:20:53.488460Z",
+    "last_updated_time": "2026-01-31T20:03:32.593153Z",
+    "url": "https://connect.maton.ai/?session_token=...",
+    "app": "google-analytics-admin",
+    "metadata": {}
+  }
+}
+```
+
+Open the returned `url` in a browser to complete OAuth authorization.
+
+### Delete Connection
+
 ```bash
-python3 /mnt/skills/user/google-analytics/scripts/ga4_query.py \
-  --metrics sessions,totalUsers,conversions \
-  --dimensions sessionSource,sessionMedium \
-  --limit 20
+python <<'EOF'
+import urllib.request, os, json
+req = urllib.request.Request('https://ctrl.maton.ai/connections/{connection_id}', method='DELETE')
+req.add_header('Authorization', f'Bearer {os.environ["MATON_API_KEY"]}')
+print(json.dumps(json.load(urllib.request.urlopen(req)), indent=2))
+EOF
 ```
 
-### Landing pages
+### Specifying Connection
+
+If you have multiple Google Analytics connections, specify which one to use with the `Maton-Connection` header:
+
 ```bash
-python3 /mnt/skills/user/google-analytics/scripts/ga4_query.py \
-  --metrics sessions,bounceRate \
-  --dimension landingPage \
-  --limit 30
+python <<'EOF'
+import urllib.request, os, json
+req = urllib.request.Request('https://gateway.maton.ai/google-analytics-admin/v1beta/accountSummaries')
+req.add_header('Authorization', f'Bearer {os.environ["MATON_API_KEY"]}')
+req.add_header('Maton-Connection', '21fd90f9-5935-43cd-b6c8-bde9d915ca80')
+print(json.dumps(json.load(urllib.request.urlopen(req)), indent=2))
+EOF
 ```
 
-### Custom date range
+If omitted, the gateway uses the default (oldest) active connection.
+
+## Admin API Reference
+
+### Accounts
+
 ```bash
-python3 /mnt/skills/user/google-analytics/scripts/ga4_query.py \
-  --metrics screenPageViews,sessions \
-  --dimension pagePath \
-  --start 2026-01-01 \
-  --end 2026-01-31 \
-  --limit 20
+GET /google-analytics-admin/v1beta/accounts
+GET /google-analytics-admin/v1beta/accounts/{accountId}
+GET /google-analytics-admin/v1beta/accountSummaries
 ```
 
-### Filter by path prefix
+### Properties
+
 ```bash
-python3 /mnt/skills/user/google-analytics/scripts/ga4_query.py \
-  --metrics screenPageViews,sessions \
-  --dimension pagePath \
-  --filter "pagePath=~/blog/" \
-  --limit 20
+GET /google-analytics-admin/v1beta/properties?filter=parent:accounts/{accountId}
+GET /google-analytics-admin/v1beta/properties/{propertyId}
 ```
 
-### Conversions by campaign
+#### Create Property
+
 ```bash
-python3 /mnt/skills/user/google-analytics/scripts/ga4_query.py \
-  --metrics conversions,sessions \
-  --dimensions sessionCampaignName,sessionSource \
-  --limit 20
+POST /google-analytics-admin/v1beta/properties
+Content-Type: application/json
+
+{
+  "parent": "accounts/{accountId}",
+  "displayName": "My New Property",
+  "timeZone": "America/Los_Angeles",
+  "currencyCode": "USD"
+}
 ```
 
-### Device breakdown
+### Data Streams
+
 ```bash
-python3 /mnt/skills/user/google-analytics/scripts/ga4_query.py \
-  --metrics sessions,totalUsers \
-  --dimension deviceCategory \
-  --limit 10
+GET /google-analytics-admin/v1beta/properties/{propertyId}/dataStreams
 ```
 
-### Country breakdown
+#### Create Web Data Stream
+
 ```bash
-python3 /mnt/skills/user/google-analytics/scripts/ga4_query.py \
-  --metrics sessions,totalUsers \
-  --dimension country \
-  --limit 20
+POST /google-analytics-admin/v1beta/properties/{propertyId}/dataStreams
+Content-Type: application/json
+
+{
+  "type": "WEB_DATA_STREAM",
+  "displayName": "My Website",
+  "webStreamData": {"defaultUri": "https://example.com"}
+}
 ```
 
-## Common metrics
-`screenPageViews`, `sessions`, `totalUsers`, `newUsers`, `activeUsers`, `bounceRate`, `averageSessionDuration`, `conversions`, `eventCount`, `engagementRate`, `userEngagementDuration`
+### Custom Dimensions
 
-## Common dimensions
-`pagePath`, `pageTitle`, `landingPage`, `sessionSource`, `sessionMedium`, `sessionCampaignName`, `country`, `city`, `deviceCategory`, `browser`, `date`, `week`, `month`
+```bash
+GET /google-analytics-admin/v1beta/properties/{propertyId}/customDimensions
+```
 
-## Output
-Results are printed as a formatted table to stdout. Pipe to `| python3 -m json.tool` if you need raw JSON.
+#### Create Custom Dimension
+
+```bash
+POST /google-analytics-admin/v1beta/properties/{propertyId}/customDimensions
+Content-Type: application/json
+
+{
+  "parameterName": "user_type",
+  "displayName": "User Type",
+  "scope": "USER"
+}
+```
+
+### Conversion Events
+
+```bash
+GET /google-analytics-admin/v1beta/properties/{propertyId}/conversionEvents
+POST /google-analytics-admin/v1beta/properties/{propertyId}/conversionEvents
+```
+
+## Data API Reference
+
+### Run Report
+
+```bash
+POST /google-analytics-data/v1beta/properties/{propertyId}:runReport
+Content-Type: application/json
+
+{
+  "dateRanges": [{"startDate": "30daysAgo", "endDate": "today"}],
+  "dimensions": [{"name": "city"}],
+  "metrics": [{"name": "activeUsers"}]
+}
+```
+
+### Run Realtime Report
+
+```bash
+POST /google-analytics-data/v1beta/properties/{propertyId}:runRealtimeReport
+Content-Type: application/json
+
+{
+  "dimensions": [{"name": "country"}],
+  "metrics": [{"name": "activeUsers"}]
+}
+```
+
+### Batch Run Reports
+
+```bash
+POST /google-analytics-data/v1beta/properties/{propertyId}:batchRunReports
+Content-Type: application/json
+
+{
+  "requests": [
+    {
+      "dateRanges": [{"startDate": "7daysAgo", "endDate": "today"}],
+      "dimensions": [{"name": "country"}],
+      "metrics": [{"name": "sessions"}]
+    }
+  ]
+}
+```
+
+### Get Metadata
+
+```bash
+GET /google-analytics-data/v1beta/properties/{propertyId}/metadata
+```
+
+## Common Report Examples
+
+### Page Views by Page
+
+```json
+{
+  "dateRanges": [{"startDate": "30daysAgo", "endDate": "today"}],
+  "dimensions": [{"name": "pagePath"}],
+  "metrics": [{"name": "screenPageViews"}],
+  "orderBys": [{"metric": {"metricName": "screenPageViews"}, "desc": true}],
+  "limit": 10
+}
+```
+
+### Users by Country
+
+```json
+{
+  "dateRanges": [{"startDate": "30daysAgo", "endDate": "today"}],
+  "dimensions": [{"name": "country"}],
+  "metrics": [{"name": "activeUsers"}, {"name": "sessions"}]
+}
+```
+
+### Traffic Sources
+
+```json
+{
+  "dateRanges": [{"startDate": "30daysAgo", "endDate": "today"}],
+  "dimensions": [{"name": "sessionSource"}, {"name": "sessionMedium"}],
+  "metrics": [{"name": "sessions"}, {"name": "conversions"}]
+}
+```
+
+## Common Dimensions
+
+- `date`, `country`, `city`, `deviceCategory`
+- `pagePath`, `pageTitle`, `landingPage`
+- `sessionSource`, `sessionMedium`, `sessionCampaignName`
+
+## Common Metrics
+
+- `activeUsers`, `newUsers`, `sessions`
+- `screenPageViews`, `bounceRate`, `averageSessionDuration`
+- `conversions`, `eventCount`
+
+## Date Formats
+
+- Relative: `today`, `yesterday`, `7daysAgo`, `30daysAgo`
+- Absolute: `2026-01-01`
+
+## Code Examples
+
+### JavaScript
+
+```javascript
+// List account summaries (Admin API)
+const accounts = await fetch(
+  'https://gateway.maton.ai/google-analytics-admin/v1beta/accountSummaries',
+  {
+    headers: {
+      'Authorization': `Bearer ${process.env.MATON_API_KEY}`
+    }
+  }
+);
+
+// Run a report (Data API)
+const report = await fetch(
+  'https://gateway.maton.ai/google-analytics-data/v1beta/properties/123456:runReport',
+  {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${process.env.MATON_API_KEY}`
+    },
+    body: JSON.stringify({
+      dateRanges: [{ startDate: '30daysAgo', endDate: 'today' }],
+      dimensions: [{ name: 'country' }],
+      metrics: [{ name: 'activeUsers' }]
+    })
+  }
+);
+```
+
+### Python
+
+```python
+import os
+import requests
+
+# List account summaries (Admin API)
+accounts = requests.get(
+    'https://gateway.maton.ai/google-analytics-admin/v1beta/accountSummaries',
+    headers={'Authorization': f'Bearer {os.environ["MATON_API_KEY"]}'}
+)
+
+# Run a report (Data API)
+report = requests.post(
+    'https://gateway.maton.ai/google-analytics-data/v1beta/properties/123456:runReport',
+    headers={'Authorization': f'Bearer {os.environ["MATON_API_KEY"]}'},
+    json={
+        'dateRanges': [{'startDate': '30daysAgo', 'endDate': 'today'}],
+        'dimensions': [{'name': 'country'}],
+        'metrics': [{'name': 'activeUsers'}]
+    }
+)
+```
+
+## Notes
+
+- GA4 properties only (Universal Analytics not supported)
+- Property IDs are numeric (e.g., `properties/521310447`)
+- Use `accountSummaries` to quickly list all accessible properties
+- Use `updateMask` for PATCH requests in Admin API
+- Use metadata endpoint to discover available dimensions/metrics
+- IMPORTANT: When using curl commands, use `curl -g` when URLs contain brackets (`fields[]`, `sort[]`, `records[]`) to disable glob parsing
+- IMPORTANT: When piping curl output to `jq` or other commands, environment variables like `$MATON_API_KEY` may not expand correctly in some shell environments. You may get "Invalid API key" errors when piping.
+
+## Error Handling
+
+| Status | Meaning |
+|--------|---------|
+| 400 | Missing Google Analytics connection |
+| 401 | Invalid or missing Maton API key |
+| 429 | Rate limited (10 req/sec per account) |
+| 4xx/5xx | Passthrough error from Google Analytics API |
+
+### Troubleshooting: Invalid API Key
+
+**When you receive a "Invalid API key" error, ALWAYS follow these steps before concluding there is an issue:**
+
+1. Check that the `MATON_API_KEY` environment variable is set:
+
+```bash
+echo $MATON_API_KEY
+```
+
+2. Verify the API key is valid by listing connections:
+
+```bash
+python <<'EOF'
+import urllib.request, os, json
+req = urllib.request.Request('https://ctrl.maton.ai/connections')
+req.add_header('Authorization', f'Bearer {os.environ["MATON_API_KEY"]}')
+print(json.dumps(json.load(urllib.request.urlopen(req)), indent=2))
+EOF
+```
+
+### Troubleshooting: Invalid App Name
+
+1. Ensure your URL path starts with the correct app name:
+   - For Admin API: use `google-analytics-admin`
+   - For Data API: use `google-analytics-data`
+
+Examples:
+- Correct: `https://gateway.maton.ai/google-analytics-admin/v1beta/accountSummaries`
+- Correct: `https://gateway.maton.ai/google-analytics-data/v1beta/properties/123456:runReport`
+- Incorrect: `https://gateway.maton.ai/analytics/v1beta/accountSummaries`
+
+## Resources
+
+- [Admin API Overview](https://developers.google.com/analytics/devguides/config/admin/v1)
+- [Accounts](https://developers.google.com/analytics/devguides/config/admin/v1/rest/v1beta/accounts)
+- [Properties](https://developers.google.com/analytics/devguides/config/admin/v1/rest/v1beta/properties)
+- [Data Streams](https://developers.google.com/analytics/devguides/config/admin/v1/rest/v1beta/properties.dataStreams)
+- [Data API Overview](https://developers.google.com/analytics/devguides/reporting/data/v1)
+- [Run Report](https://developers.google.com/analytics/devguides/reporting/data/v1/rest/v1beta/properties/runReport)
+- [Realtime Report](https://developers.google.com/analytics/devguides/reporting/data/v1/rest/v1beta/properties/runRealtimeReport)
+- [Maton Community](https://discord.com/invite/dBfFAcefs2)
+- [Maton Support](mailto:support@maton.ai)

@@ -6,26 +6,27 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent / "scripts"))
 from lib import scrapecreators_x
+from lib.relevance import tokenize as _tokenize
 
 
 class TestTokenize(unittest.TestCase):
     def test_lowercases(self):
-        tokens = scrapecreators_x._tokenize("Claude AI")
+        tokens = _tokenize("Claude AI")
         self.assertIn("claude", tokens)
 
     def test_strips_stopwords(self):
-        tokens = scrapecreators_x._tokenize("the best AI tool")
+        tokens = _tokenize("the best AI tool")
         self.assertNotIn("the", tokens)
         self.assertIn("best", tokens)  # 'best' is not a stopword in tokenizer
 
     def test_removes_single_char(self):
-        tokens = scrapecreators_x._tokenize("a b cd ef")
+        tokens = _tokenize("a b cd ef")
         self.assertNotIn("a", tokens)
         self.assertNotIn("b", tokens)
         self.assertIn("cd", tokens)
 
     def test_expands_synonyms(self):
-        tokens = scrapecreators_x._tokenize("ai research")
+        tokens = _tokenize("ai research")
         self.assertIn("artificial", tokens)
         self.assertIn("intelligence", tokens)
 
@@ -43,9 +44,9 @@ class TestComputeRelevance(unittest.TestCase):
         score = scrapecreators_x._compute_relevance("", "some text")
         self.assertEqual(score, 0.5)
 
-    def test_floor_at_01(self):
+    def test_no_match_returns_zero(self):
         score = scrapecreators_x._compute_relevance("abcdef ghijkl", "xyz")
-        self.assertGreaterEqual(score, 0.1)
+        self.assertEqual(score, 0.0)
 
 
 class TestExtractCoreSubject(unittest.TestCase):

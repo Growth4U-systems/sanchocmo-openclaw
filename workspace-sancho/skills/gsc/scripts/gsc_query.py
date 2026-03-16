@@ -22,39 +22,25 @@ from typing import Optional
 
 try:
     from google.oauth2.credentials import Credentials
-    from google.oauth2 import service_account
     from googleapiclient.discovery import build
     from googleapiclient.errors import HttpError
 except ImportError:
     print("ERROR: Required packages not installed. Run:")
-    print("  pip install google-auth google-api-python-client")
+    print("  pip install google-auth google-auth-oauthlib google-api-python-client")
     sys.exit(1)
 
-SCOPES = ["https://www.googleapis.com/auth/webmasters.readonly"]
 
-# Service account search paths (relative to workspace root)
-_SA_PATHS = [
-    os.path.join(os.path.dirname(__file__), "..", "..", "..", ".secrets", "google-service-account.json"),
-    os.environ.get("GOOGLE_SERVICE_ACCOUNT_FILE", ""),
-]
-
-
-def get_credentials():
-    """Get credentials: prefer service account, fallback to OAuth env vars."""
-    # 1. Try service account
-    for p in _SA_PATHS:
-        if p and os.path.isfile(p):
-            return service_account.Credentials.from_service_account_file(p, scopes=SCOPES)
-
-    # 2. Fallback to OAuth
+def get_credentials() -> Credentials:
+    """Get credentials from environment variables."""
     client_id = os.environ.get("GOOGLE_CLIENT_ID")
     client_secret = os.environ.get("GOOGLE_CLIENT_SECRET")
     refresh_token = os.environ.get("GOOGLE_REFRESH_TOKEN")
     
     if not all([client_id, client_secret, refresh_token]):
-        print("ERROR: No service account found and no OAuth env vars set.")
-        print("  Place google-service-account.json in .secrets/ or set:")
-        print("  GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REFRESH_TOKEN")
+        print("ERROR: Missing credentials. Set these environment variables:")
+        print("  GOOGLE_CLIENT_ID")
+        print("  GOOGLE_CLIENT_SECRET")
+        print("  GOOGLE_REFRESH_TOKEN")
         sys.exit(1)
     
     return Credentials(
@@ -63,7 +49,7 @@ def get_credentials():
         token_uri="https://oauth2.googleapis.com/token",
         client_id=client_id,
         client_secret=client_secret,
-        scopes=SCOPES
+        scopes=["https://www.googleapis.com/auth/webmasters.readonly"]
     )
 
 

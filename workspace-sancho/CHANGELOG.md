@@ -5,6 +5,33 @@ Scope: Features y cambios del producto SanchoCMO. Actividad operativa por client
 
 ---
 
+## [2.6.0] — 2026-03-15
+
+### Added
+- **`metrics-collector` skill** — Multi-adapter metrics collection system with 7 adapters (GA4, GSC, Metricool, Meta Ads, GHL, Instantly, Google Sheets). Collects daily metrics, stores rolling 90-day JSON, supports Google Sheets sync.
+- **`connect-api` skill** — Triggers on "conecta/vincular/integrar" + API name. Maps colloquial names to catalog IDs, responds with tokenized MC link. Enforces P0: never asks for credentials in chat.
+- **`strategic-plan` skill** — Project planning with task breakdown, channel mapping, owner assignment, and review dates.
+- **Morning Metrics cron** — Automated daily metrics report (weekdays 08:30) with thread-based delivery to client #intelligence channels.
+- **Mission Control: Projects UI** — New `/projects` route with two views: expandable project cards ("Por Proyecto") and Kanban board ("Por Tarea") with drag-and-drop (desktop) and dropdown selects (mobile). Edit modals for tasks and projects. 4 new API endpoints.
+- **Mission Control: Google Workspace OAuth** — Custom OAuth flow via `gog` CLI with 3 new endpoints (`gog-auth-start`, `gog-auth-complete`, `gog-accounts`). No terminal needed for client setup.
+- **Mission Control: System API override buttons** — Changed inline checkbox+form to link buttons opening `/mc/connect/{slug}/{apiId}`.
+- **40+ new skills from ClawHub/3rd-party** — ab-test-setup, ad-creative, ai-seo, canvas-design, churn-prevention, cold-email, competitor-alternatives, content-strategy, copy-editing, copywriting, doc-coauthoring, docx, email-sequence, form-cro, free-tool-strategy, frontend-design, internal-comms, launch-strategy, lead-magnets, marketing-ideas, marketing-psychology, mcp-builder, onboarding-cro, page-cro, paid-ads, paywall-upgrade-cro, pdf, popup-cro, pptx, product-marketing-context, programmatic-seo, referral-program, revops, sales-enablement, schema-markup, seo-audit, signup-flow-cro, site-architecture, skill-creator, slack-gif-creator, smart-scrape, social-content, theme-factory, web-artifacts-builder, webapp-testing, xlsx.
+- **4 new system protocols** — `mc-links-protocol.md` (tokenized URL resolution), `morning-metrics-protocol.md`, `presentation-summary-protocol.md`, `project-threads-protocol.md` (Discord thread ↔ MC project sync).
+
+### Changed
+- **SOUL.md** — Added P0 rule for API connection security (never ask credentials in chat, always redirect to MC). Added `connect-api` skill routing. Moved inline API connection rules to dedicated skill.
+- **TOOLS.md** — Updated with MC link patterns and tokenized URL conventions.
+- **Morning Metrics cron** — Migrated from `sessionTarget: "main"` to `"isolated"`, switched model from Minimax to Sonnet 4.5, added explicit thread-create pattern to prevent channel spam.
+- **`foundation-protocol.md`** — Updated prerequisite checks and gate logic.
+- **`brand-memory.md`** — Updated cross-pillar reference patterns.
+
+### Fixed
+- **MC access control** — `/connect/*` and API routes were blocked by auth middleware (403). Added whitelist for public-facing routes (already protected by Tailscale).
+- **MC mobile JS crash** — Broken template literal string in `gogStep1()` crashed all page JavaScript. Fixed with `window._gogAuthUrl` variable and fallback copy method for mobile/insecure contexts.
+- **`metrics-collector` adapter config** — Fixed camelCase vs UPPER_CASE key mismatch, nested `integrations.dataSources` path, and env var slug prefix stripping.
+
+---
+
 ## [2.5.0] — 2026-03-11
 
 ### Added
