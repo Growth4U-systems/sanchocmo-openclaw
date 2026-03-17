@@ -1,14 +1,15 @@
 ---
 name: lead-magnet
-description: "Create high-converting lead magnets from concept to build. Use when: client needs to capture leads with valuable free content. Pipeline: Context → Format Selection → Concept Generation → Build Mode → Funnel Chain. Supports 12+ formats (checklists, templates, mini-courses, calculators, etc). Integrates with email-sequences and landing pages."
-context_required:
-- brand/{slug}/brand-voice/current.md
-- brand/{slug}/go-to-market/positioning/*/current.md
-- brand/{slug}/go-to-market/ecps/current.md
-context_writes:
-- campaigns/{slug}/lead-magnet/
-- brand/{slug}/operational/learnings.md
-- brand/{slug}/operational/assets.md
+description: "Create high-converting lead magnets from concept to build. Use when the user wants to create, plan, or optimize a lead magnet for email capture or lead generation. Also use when the user mentions 'lead magnet,' 'gated content,' 'content upgrade,' 'downloadable,' 'ebook,' 'cheat sheet,' 'checklist,' 'template download,' 'opt-in,' 'freebie,' 'PDF download,' 'resource library,' 'content offer,' 'email capture content,' 'Notion template,' 'spreadsheet template,' or 'what should I give away for emails.' Pipeline: Context → Format Selection → Concept Generation → Build Mode → Funnel Chain. Supports 12+ formats. For interactive tools as lead magnets, see free-tool-strategy. For the email sequence after capture, see email-sequence."
+metadata:
+  context_required:
+    - brand/{slug}/brand-voice/current.md
+    - brand/{slug}/go-to-market/positioning/*/current.md
+    - brand/{slug}/go-to-market/ecps/current.md
+  context_writes:
+    - campaigns/{slug}/lead-magnet/
+    - brand/{slug}/operational/learnings.md
+    - brand/{slug}/operational/assets.md
 ---
 
 # Lead Magnet — Concept to Content

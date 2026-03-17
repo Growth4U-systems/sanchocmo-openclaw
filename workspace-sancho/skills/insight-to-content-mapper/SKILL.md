@@ -1,6 +1,6 @@
 ---
 name: insight-to-content-mapper
-description: Turn insights into content briefs.
+description: "Turn insights, meeting notes, and signals into production-ready content briefs. Use when the user mentions 'content ideas from meetings,' 'turn insights into content,' 'content briefs,' 'meeting notes to content,' 'what content should we create from this,' or 'content mining.' Combines signal detection (7 content signals) with SERP gap analysis and brand-aligned brief generation. Input: raw insights from daily-pulse, meeting-intelligence, or manual. Output: prioritized content briefs ready for seo-content or content-atomizer."
 metadata:
   author: Alfonso Sainz de Baranda (Growth4U)
   version: '1.0'
@@ -8,17 +8,16 @@ metadata:
   phase: Encuentra -> Decide bridge
   depends_on: company-context, brand-voice, positioning-messaging
   chains_to: keyword-research, seo-content, content-atomizer
-context_required:
-- brand/{slug}/company-brief/current.md
-- brand/{slug}/brand-voice/current.md
-- brand/{slug}/go-to-market/positioning/*/current.md
-- brand/{slug}/go-to-market/ecps/current.md
-- brand/{slug}/go-to-market/ecps/current.md
-- brand/{slug}/go-to-market/keyword-plan.md
-context_writes:
-- campaigns/
-- brand/{slug}/operational/learnings.md
-- brand/{slug}/operational/assets.md
+  context_required:
+    - brand/{slug}/company-brief/current.md
+    - brand/{slug}/brand-voice/current.md
+    - brand/{slug}/go-to-market/positioning/*/current.md
+    - brand/{slug}/go-to-market/ecps/current.md
+    - brand/{slug}/go-to-market/keyword-plan.md
+  context_writes:
+    - campaigns/
+    - brand/{slug}/operational/learnings.md
+    - brand/{slug}/operational/assets.md
 ---
 
 # Insight-to-Content Mapper — From Signal to Brief

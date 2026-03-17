@@ -80,13 +80,14 @@ message(action=thread-create, channel=discord, channelId="{channel_id}", threadN
 → obtener task_thread_id → guardar en tasks.json
 ```
 
-Primer mensaje en el hilo de la tarea (**MENCIONAR al usuario + LINK al proyecto**):
+Primer mensaje en el hilo de la tarea (**MENCIONAR al usuario + LINK al proyecto + LINK al playbook**):
 ```
 <@{sender_id}> 🔧 **[P{XX}-T{YY}] {nombre_tarea}**
 
 {descripción}
 
 📂 **Proyecto:** [P{XX}] {nombre_proyecto} → <https://discord.com/channels/{guild}/{project_thread_id}>
+📖 **Playbook:** <{MC_BASE}/docs/brand/{slug}/projects/P{XX}-{slug}/T{YY}/playbook.md>
 🔗 **Mission Control:** <{MC_BASE}/projects/>
 
 ¿La ejecuto? Esperando confirmación.
@@ -143,8 +144,40 @@ Cuando el usuario confirma una tarea:
 1. Sancho ejecuta la tarea usando el skill correspondiente
 2. Al completar: mensaje en el hilo de la tarea con resultado + output files
 3. Actualizar status en tasks.json → `completed`
-4. Mensaje en hilo del proyecto: "✅ P{XX}-T{YY} completada. Progreso: X/Y"
-5. Si todas las tareas completadas → proponer value review
+4. **Renombrar hilo de la tarea**: `✅ [P{XX}-T{YY}] {nombre}` (añadir ✅ al inicio)
+5. Mensaje en hilo del proyecto: "✅ P{XX}-T{YY} completada. Progreso: X/Y"
+6. Si todas las tareas completadas → proponer value review + renombrar hilo del proyecto
+
+## Protocolo de cambio de estado en hilos Discord
+
+> ⚠️ **Cuando cambia el estado de un proyecto o tarea, SIEMPRE actualizar el nombre del hilo en Discord Y el status en MC (JSON).**
+
+### Tareas
+
+| Estado nuevo | Acción en hilo Discord | JSON |
+|---|---|---|
+| `completed` / `done` | Renombrar: `✅ [P{XX}-T{YY}] {nombre}` | status → `completed` |
+| `cancelled` | Renombrar: `❌ ~~[P{XX}-T{YY}] {nombre}~~` | status → `cancelled` |
+| `blocked` | Renombrar: `⛔ [P{XX}-T{YY}] {nombre}` | status → `blocked` |
+| `in-progress` | Renombrar: `🔧 [P{XX}-T{YY}] {nombre}` | status → `in-progress` |
+| `todo` | Renombrar: `[P{XX}-T{YY}] {nombre}` (sin emoji) | status → `todo` |
+
+Usar `message(action=channel-edit, channel=discord, channelId="{thread_id}", name="{nuevo_nombre}")` para renombrar.
+
+### Proyectos
+
+| Estado nuevo | Acción en hilo Discord | JSON |
+|---|---|---|
+| `completed` | Renombrar: `✅ [P{XX}] {nombre}` | status → `completed` en registry + project.json |
+| `cancelled` | Renombrar: `❌ [P{XX}] {nombre}` | status → `cancelled` |
+| `reviewed` | Renombrar: `✅ [P{XX}] {nombre} — Reviewed` | status → `reviewed` |
+| `paused` | Renombrar: `⏸️ [P{XX}] {nombre}` | status → `paused` |
+
+### Sync bidireccional obligatorio
+Cada cambio de estado actualiza SIEMPRE:
+1. El nombre del hilo en Discord (visual para el usuario)
+2. El status en tasks.json / project.json / registry.json (datos para MC)
+3. MC refleja automáticamente los cambios del JSON
 
 ## Protocolo de nuevas tareas
 

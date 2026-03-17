@@ -4,22 +4,36 @@
 
 ```
 brand/{slug}/
+  discord-channels.json     ← mapeo canal→ID Discord del guild
   strategic-plan/
     current.md              ← plan activo (documento vivo)
     v1.md                   ← archivo: plan de marzo 2026
-    v2.md                   ← archivo: plan de abril 2026
     history.json            ← log de versiones
   projects/
     registry.json           ← índice de todos los proyectos
     P01-optimizar-web/
       project.json          ← metadata del proyecto
       tasks.json            ← tareas del proyecto
+      playbook.md           ← resumen del proyecto + links a tareas
       value-review.md       ← review al completar (si aplica)
+      T01/
+        playbook.md         ← detalle/instrucciones de la tarea
+      T02/
+        playbook.md
+      ...
     P02-cold-outreach-ecp1/
       project.json
       tasks.json
-      value-review.md
+      playbook.md
+      T01/
+        playbook.md
+      ...
 ```
+
+> ⚠️ **Cada tarea tiene su propia carpeta y playbook.** NUNCA meter todo el detalle en un solo fichero del proyecto.
+> El playbook del proyecto es solo un resumen con links a los playbooks de tareas.
+> En Discord, el hilo de cada tarea linka a su playbook individual en MC:
+> `{MC_BASE}/docs/brand/{slug}/projects/P{XX}-{slug}/T{YY}/playbook.md`
 
 ---
 

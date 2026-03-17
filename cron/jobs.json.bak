@@ -7,7 +7,7 @@
       "name": "Daily Pulse",
       "enabled": true,
       "createdAtMs": 1771950688301,
-      "updatedAtMs": 1773648138987,
+      "updatedAtMs": 1773680247497,
       "schedule": {
         "kind": "cron",
         "expr": "0 9 * * 1-5",
@@ -17,7 +17,7 @@
       "wakeMode": "now",
       "payload": {
         "kind": "agentTurn",
-        "message": "Ejecuta el Daily Pulse para Hospital Capilar (guild 1475635138108063746).\n\nPASO 1 — LEER FUENTES:\nLee brand/hospital-capilar/sources.json → sección daily_pulse. Para cada source habilitado:\n\nDISCORD (OBLIGATORIO):\n- Lee mensajes de las últimas 24h de CADA canal usando: message(action=read, channel=discord, target=<channelId>, limit=50)\n- Canales y sus IDs:\n  general: 1475635138988609678\n  brand: 1475638249107095866\n  campaigns: 1475638251485401171\n  content: 1475638259425087629\n  intelligence: 1475638253154603170\n  onboarding: 1476491108421730334\n  soporte: 1475638273501040681\n  research: 1475638269109862463\n  paid-ads: 1475638261819900161\n- Filtra mensajes de las últimas 24h (compara timestamps)\n- Excluye mensajes de bots (author.bot=true) y mensajes cortos (<30 chars)\n- Incluye threads activos\n\nGmail → gog gmail inbox (si habilitado en sources.json, filtrar por labels configurados)\nNotion → leer DB con filter de últimas 24h (si habilitado)\n\nPASO 2 — EXTRAER INSIGHTS:\nExtrae insights (pain points, feature requests, success stories, trends, preguntas recurrentes).\nClasifica por categoría. Genera micro-briefs.\n\nPASO 3 — GUARDAR:\nGuarda en brand/hospital-capilar/daily-pulse/YYYY-MM-DD.json\nDespués ejecuta: python3 ~/.openclaw/workspace-sancho/scripts/regenerate.py\n\nPASO 4 — PUBLICAR EN DISCORD (PATRÓN OBLIGATORIO DE HILO):\n1. Envía un mensaje corto (1 línea) al canal: message(action=send, channel=discord, target=1475638253154603170, message='📊 Daily Pulse — YYYY-MM-DD: [insight más relevante del día en 1 línea]')\n2. Del resultado del send, captura el messageId devuelto.\n3. Crea un hilo DESDE ese mensaje: message(action=thread-create, channel=discord, target=1475638253154603170, messageId=<messageId>, threadName='📊 Daily Pulse — YYYY-MM-DD')\n4. Del resultado del thread-create, captura el threadId.\n5. Publica el contenido completo DENTRO del hilo: message(action=send, channel=discord, target=<threadId>, message=<contenido completo>)\n6. NUNCA publiques el contenido completo directamente en el canal — SIEMPRE dentro del hilo.\n7. APLICA reglas de _system/client-context-isolation.md — solo info relevante al cliente, CERO info interna.",
+        "message": "Ejecuta el Daily Pulse para Hospital Capilar (guild 1475635138108063746).\n\nPASO 0 — PRE-CHECK (AHORRO DE TOKENS):\nAntes de leer 50 msgs por canal, haz un pre-check rápido. Para CADA canal, lee solo 1 mensaje:\nmessage(action=read, channel=discord, target=<channelId>, limit=1)\nSi el último mensaje tiene >24h de antigüedad O es de un bot → SKIP ese canal.\nSolo haz el read completo (limit=50) en canales con actividad humana reciente (<24h).\n\nCanales y sus IDs:\n  general: 1475635138988609678\n  brand: 1475638249107095866\n  campaigns: 1475638251485401171\n  content: 1475638259425087629\n  intelligence: 1475638253154603170\n  onboarding: 1476491108421730334\n  soporte: 1475638273501040681\n  research: 1475638269109862463\n  paid-ads: 1475638261819900161\n\nPASO 1 — LEER FUENTES:\nPara cada canal que PASÓ el pre-check: message(action=read, channel=discord, target=<channelId>, limit=50)\n- Filtra mensajes de las últimas 24h (compara timestamps)\n- Excluye mensajes de bots (author.bot=true) y mensajes cortos (<30 chars)\n- Incluye threads activos\n\nGmail → gog gmail inbox (si habilitado en sources.json)\nNotion → leer DB con filter de últimas 24h (si habilitado)\n\nPASO 2 — EXTRAER INSIGHTS:\nExtrae insights (pain points, feature requests, success stories, trends, preguntas recurrentes).\nClasifica por categoría. Genera micro-briefs.\n\nPASO 3 — GUARDAR:\nGuarda en brand/hospital-capilar/daily-pulse/YYYY-MM-DD.json\n\nPASO 4 — PUBLICAR EN DISCORD (PATRÓN OBLIGATORIO DE HILO):\n1. Envía un mensaje corto (1 línea) al canal: message(action=send, channel=discord, target=1475638253154603170, message='📊 Daily Pulse — YYYY-MM-DD: [insight más relevante del día en 1 línea]')\n2. Del resultado del send, captura el messageId devuelto.\n3. Crea un hilo DESDE ese mensaje: message(action=thread-create, channel=discord, target=1475638253154603170, messageId=<messageId>, threadName='📊 Daily Pulse — YYYY-MM-DD')\n4. Del resultado del thread-create, captura el threadId.\n5. Publica el contenido completo DENTRO del hilo: message(action=send, channel=discord, target=<threadId>, message=<contenido completo>)\n6. NUNCA publiques el contenido completo directamente en el canal — SIEMPRE dentro del hilo.\n7. APLICA reglas de _system/client-context-isolation.md — solo info relevante al cliente, CERO info interna.\n8. Incluye al final: cuántos canales tenían actividad vs cuántos se saltaron (para tracking de eficiencia).",
         "model": "minimax/MiniMax-M2.5"
       },
       "delivery": {
@@ -42,7 +42,7 @@
       "name": "Weekly Synthesis",
       "enabled": true,
       "createdAtMs": 1771950696201,
-      "updatedAtMs": 1773651781004,
+      "updatedAtMs": 1773680328462,
       "schedule": {
         "kind": "cron",
         "expr": "0 10 * * 1",
@@ -77,7 +77,7 @@
       "name": "Regenerar Dashboard",
       "enabled": true,
       "createdAtMs": 1771950708148,
-      "updatedAtMs": 1773658878070,
+      "updatedAtMs": 1773687683477,
       "schedule": {
         "kind": "cron",
         "expr": "0 8,12,16,20 * * *",
@@ -95,11 +95,11 @@
         "channel": "last"
       },
       "state": {
-        "nextRunAtMs": 1773673200000,
-        "lastRunAtMs": 1773658800021,
+        "nextRunAtMs": 1773730800000,
+        "lastRunAtMs": 1773687600025,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 78049,
+        "lastDurationMs": 83452,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0,
         "lastDelivered": false
@@ -111,7 +111,7 @@
       "name": "Meeting Intelligence",
       "enabled": true,
       "createdAtMs": 1771950715725,
-      "updatedAtMs": 1773421440704,
+      "updatedAtMs": 1773680647450,
       "schedule": {
         "kind": "cron",
         "expr": "0 18 * * 1-5",
@@ -121,7 +121,7 @@
       "wakeMode": "now",
       "payload": {
         "kind": "agentTurn",
-        "message": "Ejecuta Meeting Intelligence para Hospital Capilar. Carpeta de Google Drive: ID 17FpwSgL-XLAqaaH5-UccpADHkCFRcCHY. Usa 'gog docs cat <docId>' para leer las notas. Busca documentos nuevos o modificados desde la última ejecución. Para cada reunión, extrae: decisiones, acciones, insights, participantes. Guarda en brand/hospital-capilar/intelligence/meetings/ como .md y actualiza meetings.json. Después ejecuta: python3 ~/.openclaw/workspace-sancho/scripts/regenerate.py\n\nPUBLICAR EN DISCORD (PATRÓN OBLIGATORIO DE HILO):\n1. Envía un mensaje corto (1 línea) al canal #intelligence: message(action=send, channel=discord, target=1475638253154603170, message='🧠 Meeting Intelligence — YYYY-MM-DD: [resumen principal en 1 línea, ej: 2 reuniones procesadas, 5 decisiones extraídas]')\n2. Del resultado del send, captura el messageId devuelto.\n3. Crea un hilo DESDE ese mensaje: message(action=thread-create, channel=discord, target=1475638253154603170, messageId=<messageId>, threadName='🧠 Meeting Intelligence — YYYY-MM-DD')\n4. Del resultado del thread-create, captura el threadId.\n5. Publica el contenido completo DENTRO del hilo: message(action=send, channel=discord, target=<threadId>, message=<resumen completo de meetings>)\n6. NUNCA publiques contenido directamente en el canal — SIEMPRE dentro del hilo.\n7. APLICA reglas de _system/client-context-isolation.md — solo info relevante al cliente, CERO info interna.\n8. Si no hay meetings nuevos, envía igualmente el mensaje corto al canal informando que no hay novedades (sin crear hilo en ese caso).",
+        "message": "Ejecuta Meeting Intelligence para Hospital Capilar. Carpeta de Google Drive: ID 17FpwSgL-XLAqaaH5-UccpADHkCFRcCHY. Usa 'gog docs cat <docId>' para leer las notas. Busca documentos nuevos o modificados desde la última ejecución. Para cada reunión, extrae: decisiones, acciones, insights, participantes. Guarda en brand/hospital-capilar/intelligence/meetings/ como .md y actualiza meetings.json.\n\nNO ejecutes regenerate.py — el cron 'Regenerar Dashboard' se encarga (4x/día).\n\nPUBLICAR EN DISCORD (PATRÓN OBLIGATORIO DE HILO):\n1. Envía un mensaje corto (1 línea) al canal #intelligence: message(action=send, channel=discord, target=1475638253154603170, message='🧠 Meeting Intelligence — YYYY-MM-DD: [resumen principal en 1 línea]')\n2. Del resultado del send, captura el messageId devuelto.\n3. Crea un hilo DESDE ese mensaje: message(action=thread-create, channel=discord, target=1475638253154603170, messageId=<messageId>, threadName='🧠 Meeting Intelligence — YYYY-MM-DD')\n4. Del resultado del thread-create, captura el threadId.\n5. Publica el contenido completo DENTRO del hilo: message(action=send, channel=discord, target=<threadId>, message=<resumen completo de meetings>)\n6. NUNCA publiques contenido directamente en el canal — SIEMPRE dentro del hilo.\n7. APLICA reglas de _system/client-context-isolation.md — solo info relevante al cliente, CERO info interna.\n8. Si no hay meetings nuevos, envía igualmente el mensaje corto al canal informando que no hay novedades (sin crear hilo en ese caso).",
         "model": "minimax/MiniMax-M2.5"
       },
       "delivery": {
@@ -130,11 +130,11 @@
         "to": "channel:1475638253154603170"
       },
       "state": {
-        "nextRunAtMs": 1773680400000,
-        "lastRunAtMs": 1773421200026,
+        "nextRunAtMs": 1773766800000,
+        "lastRunAtMs": 1773680400021,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 240678,
+        "lastDurationMs": 247429,
         "lastDelivered": false,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0
@@ -146,7 +146,7 @@
       "name": "Memory Maintenance",
       "enabled": true,
       "createdAtMs": 1771950722307,
-      "updatedAtMs": 1773608588359,
+      "updatedAtMs": 1773680328727,
       "schedule": {
         "kind": "cron",
         "expr": "0 22 * * 0",
@@ -206,7 +206,7 @@
       "name": "backup-sancho",
       "enabled": true,
       "createdAtMs": 1772069600272,
-      "updatedAtMs": 1773626433794,
+      "updatedAtMs": 1773680328593,
       "schedule": {
         "kind": "cron",
         "expr": "0 3 * * *"
@@ -239,7 +239,7 @@
       "name": "healthcheck",
       "enabled": true,
       "createdAtMs": 1772069609685,
-      "updatedAtMs": 1773658404644,
+      "updatedAtMs": 1773701583251,
       "schedule": {
         "kind": "every",
         "everyMs": 21600000,
@@ -249,7 +249,7 @@
       "wakeMode": "now",
       "payload": {
         "kind": "agentTurn",
-        "message": "Ejecuta el health check: bash ~/.openclaw/workspace-cervantes/scripts/healthcheck.sh\n\nInterpreta el EXIT CODE:\n- Exit 0 = todo OK o fallos sin cambio (debounced). Responde HEARTBEAT_OK.\n- Exit 1 = NUEVO fallo detectado (servicio pasó de ok→fail). DEBES alertar en Discord #admin:\n  1. message(action=send, channel=discord, target=1475638273501040681, message='⚠️ Health Check — [fecha]: [servicios nuevos caídos]')\n  2. Del resultado captura messageId\n  3. message(action=thread-create, channel=discord, target=1475638273501040681, messageId=<messageId>, threadName='⚠️ Health Check — [fecha]')\n  4. Del resultado captura threadId\n  5. message(action=send, channel=discord, target=<threadId>, message=<detalles: qué servicios fallaron, errores, qué servicios siguen OK>)\n- Exit 2 = servicio RECUPERADO (fail→ok). Informa en #admin:\n  1. message(action=send, channel=discord, target=1475638273501040681, message='✅ Health Check — [fecha]: [servicios recuperados]')\n\nDespués ejecuta: python3 ~/.openclaw/workspace-sancho/scripts/regenerate.py",
+        "message": "Ejecuta el health check: bash ~/.openclaw/workspace-cervantes/scripts/healthcheck.sh\n\nInterpreta el EXIT CODE:\n- Exit 0 = todo OK o fallos sin cambio (debounced). Responde HEARTBEAT_OK.\n- Exit 1 = NUEVO fallo detectado (servicio pasó de ok→fail). DEBES alertar en Discord #admin:\n  1. message(action=send, channel=discord, target=1475638273501040681, message='⚠️ Health Check — [fecha]: [servicios nuevos caídos]')\n  2. Del resultado captura messageId\n  3. message(action=thread-create, channel=discord, target=1475638273501040681, messageId=<messageId>, threadName='⚠️ Health Check — [fecha]')\n  4. Del resultado captura threadId\n  5. message(action=send, channel=discord, target=<threadId>, message=<detalles: qué servicios fallaron, errores, qué servicios siguen OK>)\n- Exit 2 = servicio RECUPERADO (fail→ok). Informa en #admin:\n  1. message(action=send, channel=discord, target=1475638273501040681, message='✅ Health Check — [fecha]: [servicios recuperados]')\n\nNO ejecutes regenerate.py — el cron 'Regenerar Dashboard' se encarga (4x/día).",
         "thinking": "off",
         "timeoutSeconds": 120,
         "model": "minimax/MiniMax-M2.5"
@@ -259,11 +259,11 @@
         "channel": "last"
       },
       "state": {
-        "nextRunAtMs": 1773679959435,
-        "lastRunAtMs": 1773658359435,
+        "nextRunAtMs": 1773723159478,
+        "lastRunAtMs": 1773701559478,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 45209,
+        "lastDurationMs": 23773,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0,
         "lastDelivered": false
@@ -276,7 +276,7 @@
       "description": "T-022: Run cost-tracker.py daily at 23:00",
       "enabled": true,
       "createdAtMs": 1772069993394,
-      "updatedAtMs": 1773612038794,
+      "updatedAtMs": 1773698490175,
       "schedule": {
         "kind": "cron",
         "expr": "0 23 * * *"
@@ -285,7 +285,7 @@
       "wakeMode": "now",
       "payload": {
         "kind": "agentTurn",
-        "message": "Ejecuta el cost tracker: python3 ~/.openclaw/workspace-sancho/scripts/cost-tracker.py && python3 ~/.openclaw/workspace-sancho/scripts/regenerate.py. Reporta el resultado.",
+        "message": "Ejecuta el cost tracker: python3 ~/.openclaw/workspace-sancho/scripts/cost-tracker.py. Reporta el resultado.\n\nNO ejecutes regenerate.py — el cron 'Regenerar Dashboard' se encarga (4x/día).",
         "model": "minimax/MiniMax-M2.5"
       },
       "delivery": {
@@ -293,11 +293,11 @@
         "channel": "webchat"
       },
       "state": {
-        "nextRunAtMs": 1773698400000,
-        "lastRunAtMs": 1773612000018,
+        "nextRunAtMs": 1773784800000,
+        "lastRunAtMs": 1773698400025,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 38776,
+        "lastDurationMs": 90150,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0,
         "lastDelivered": false
@@ -309,7 +309,7 @@
       "name": "Cervantes observa a Sancho",
       "enabled": true,
       "createdAtMs": 1772115026027,
-      "updatedAtMs": 1773651895867,
+      "updatedAtMs": 1773680328479,
       "schedule": {
         "kind": "cron",
         "expr": "0 10 * * *",
@@ -432,7 +432,7 @@
       "name": "image-optimizer",
       "enabled": true,
       "createdAtMs": 1773187213085,
-      "updatedAtMs": 1773650528859,
+      "updatedAtMs": 1773705697840,
       "schedule": {
         "kind": "every",
         "everyMs": 21600000,
@@ -452,15 +452,14 @@
         "to": "1480154276205433035"
       },
       "state": {
-        "nextRunAtMs": 1773662421006,
-        "lastRunAtMs": 1773640821006,
+        "nextRunAtMs": 1773727221074,
+        "lastRunAtMs": 1773705621074,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 23784,
+        "lastDurationMs": 76766,
         "lastDelivered": true,
         "lastDeliveryStatus": "delivered",
-        "consecutiveErrors": 0,
-        "runningAtMs": 1773662421022
+        "consecutiveErrors": 0
       }
     },
     {
@@ -507,7 +506,7 @@
       "name": "Weekly Changelog Update",
       "enabled": true,
       "createdAtMs": 1773249903776,
-      "updatedAtMs": 1773565444563,
+      "updatedAtMs": 1773680328810,
       "schedule": {
         "kind": "cron",
         "expr": "0 10 * * 0",
@@ -541,7 +540,7 @@
       "name": "Weekly Activity Summary",
       "enabled": true,
       "createdAtMs": 1773249903895,
-      "updatedAtMs": 1773565510540,
+      "updatedAtMs": 1773680328882,
       "schedule": {
         "kind": "cron",
         "expr": "0 10 * * 0",
@@ -642,13 +641,13 @@
       "id": "953c7fcd-9358-4dd6-8092-6ddde9c775a0",
       "agentId": "sancho",
       "sessionKey": "agent:sancho:discord:channel:1482638140240953396",
-      "name": "mejora-continua-daily",
+      "name": "mejora-continua-weekly",
       "enabled": true,
       "createdAtMs": 1773560184099,
-      "updatedAtMs": 1773650554361,
+      "updatedAtMs": 1773678726494,
       "schedule": {
         "kind": "cron",
-        "expr": "0 6 * * *",
+        "expr": "0 10 * * 0",
         "tz": "Europe/Madrid"
       },
       "sessionTarget": "isolated",
@@ -665,7 +664,7 @@
         "to": "1482638140240953396"
       },
       "state": {
-        "nextRunAtMs": 1773723600000,
+        "nextRunAtMs": 1774170000000,
         "lastRunAtMs": 1773637273225,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
@@ -736,6 +735,60 @@
         "lastDelivered": false,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0
+      }
+    },
+    {
+      "id": "f78ba296-fe22-4ddc-a9a4-a6602465c13e",
+      "agentId": "sancho",
+      "sessionKey": "agent:sancho:discord:channel:1482643082393419969",
+      "name": "memory-compact-monthly",
+      "enabled": true,
+      "createdAtMs": 1773669805969,
+      "updatedAtMs": 1773669805969,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 3 1 * *",
+        "tz": "Europe/Madrid"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Ejecuta compactación de memoria: 1) bash ~/.openclaw/workspace-sancho/scripts/memory-compact.sh 2) bash ~/.openclaw/workspace-sancho/scripts/memory-index.sh 3) Revisa el output. Si hubo archivos movidos, reporta cuántos. Si todo OK, responde HEARTBEAT_OK."
+      },
+      "delivery": {
+        "mode": "none"
+      },
+      "state": {
+        "nextRunAtMs": 1775005200000
+      }
+    },
+    {
+      "id": "2e1d6efd-5da7-4a5a-bcb0-e0892ff25b66",
+      "agentId": "sancho",
+      "sessionKey": "agent:sancho:discord:channel:1482642836586233886",
+      "name": "cron-watchdog-weekly",
+      "enabled": true,
+      "createdAtMs": 1773680314014,
+      "updatedAtMs": 1773680314014,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 11 * * 1",
+        "tz": "Europe/Madrid"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "## Cron Watchdog — Verificar que todos los crons ejecutaron correctamente\n\nEres el watchdog de crons. Tu trabajo: detectar crons que dejaron de ejecutar silenciosamente.\n\n### Pasos:\n\n1. Lista todos los crons: usa cron(action=list, includeDisabled=false)\n\n2. Para CADA cron enabled, verifica:\n   - `lastRunAtMs` existe y es reciente (dentro de su ventana esperada)\n   - `consecutiveErrors` = 0\n   - `lastRunStatus` = 'ok'\n   - Si es un cron diario: lastRun < 48h. Si es cada 6h: lastRun < 24h. Si es semanal: lastRun < 8 días. Si es every 15min/1h: lastRun < 6h.\n\n3. Clasifica resultados:\n   - 🔴 STALE: no ejecutó en su ventana esperada\n   - 🟡 ERRORING: consecutiveErrors > 0\n   - ✅ OK: ejecutando normalmente\n\n4. Si hay algún 🔴 o 🟡: publica alerta en #infra thread 1480273578770567319:\n   message(action=send, channel=discord, target='1480273578770567319', message='🔍 **Cron Watchdog** — {fecha}\\n\\n{lista de crons con problemas}\\n\\n{recomendaciones}')\n\n5. Si todo OK: responde HEARTBEAT_OK.\n\nIMPORTANTE: Este cron vigila a los demás. Si este falla, nadie vigila nada. Sé eficiente y rápido.",
+        "model": "minimax/MiniMax-M2.5",
+        "timeoutSeconds": 120
+      },
+      "delivery": {
+        "mode": "none"
+      },
+      "state": {
+        "nextRunAtMs": 1774260000000
       }
     }
   ]

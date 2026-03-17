@@ -1,5 +1,5 @@
 # Memory Index
-> Auto-maintained. Last updated: 2026-03-16.
+> Auto-maintained by `scripts/memory-index.sh`.
 
 ## Structure
 ```
@@ -7,7 +7,7 @@ memory/
 ├── daily/          ← Daily notes (YYYY-MM-DD.md)
 ├── topics/         ← Topic-specific deep dives
 ├── clients/        ← Per-client curated memory
-├── archive/        ← Old daily notes (>30d)
+├── archive/        ← Old daily notes (>30d) + monthly summaries
 ├── skills.md       ← Skills changelog
 ├── INDEX.md        ← This file
 ├── *.json          ← State trackers
@@ -15,29 +15,63 @@ memory/
 ```
 
 ## Daily Notes (memory/daily/)
-Active daily logs. Format: YYYY-MM-DD.md.
+Active: 14 files
+
+- 2026-03-16.md
+- 2026-03-14.md
+- 2026-03-13.md
+- 2026-03-12.md
+- 2026-03-11.md
+- ... and 9 more
 
 ## Topic Notes (memory/topics/)
-Deep dives on specific subjects. Format: YYYY-MM-DD-topic.md.
+Total: 24 files
+
+- 2026-03-10-treatment-pricing.md
+- 2026-03-10-daily-crons.md
+- 2026-03-09-philippe-onboarding.md
+- 2026-03-09-market-presentation.md
+- 2026-02-28-visual-identity.md
+- 2026-02-28-session-greeting.md
+- 2026-02-28-seo-content.md
+- 2026-02-28-positioning-review.md
+- 2026-02-28-doc-regeneration.md
+- 2026-02-28-content-requests.md
+- 2026-02-28-content-calendar.md
+- 2026-02-28-calendario-mayo.md
+- 2026-02-28-brand-voice.md
+- 2026-02-28-ad-emails.md
+- 2026-02-27-ope-canvas.md
+- 2026-02-25-session-intro.md
+- 2026-02-25-sancho-intro.md
+- 2026-02-25-new-session.md
+- 2026-02-25-identity-binding.md
+- 2026-02-25-cervantes-split.md
+- 2026-02-25-cervantes-setup.md
+- 2026-02-25-cervantes-binding.md
+- 2026-02-24-task-kanban.md
+- 2026-02-24-tailscale-debug.md
 
 ## Client Memory (memory/clients/)
-One file per client slug with curated facts, decisions, and state.
+- growth4u.md
 - hospital-capilar.md
 - paymatico.md
 - sanchocmo.md
-- growth4u.md
 
 ## State Files (memory/*.json)
-- heartbeat-state.json — Heartbeat check rotation
-- onboarding-state.json — SanchoCMO onboarding
-- onboarding-alexg-state.json — Paymático onboarding
-- onboarding-state-growth4u.json — Growth4U onboarding
-- onboarding-state-kleva.json — Kleva onboarding (in progress)
-- foundation-state.json — Foundation pillar tracker
-- healthcheck-state.json — System health checks
-- cost-alert.json — Cost anomaly alerts
-- cost-data.json — Historical cost data
-- backup-state.json — Backup status
+- backup-state.json
+- cost-alert.json
+- cost-data.json
+- foundation-state.json
+- healthcheck-state.json
+- heartbeat-state.json
+- onboarding-alexg-state.json
+- onboarding-state-growth4u.json
+- onboarding-state-kleva.json
+- onboarding-state.json
 
 ## Archive (memory/archive/)
-Daily notes older than 30 days. Compacted monthly.
+Total: 5 files
+
+
+*Last updated: 2026-03-16 15:03*

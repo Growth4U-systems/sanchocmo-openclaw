@@ -167,7 +167,7 @@ Instagram        Reel                2x/week      Social Proof   BOFU
 Pull topic ideas from all available sources:
 
 1. **keyword-plan.md**: SEO topics (highest priority for blog/content)
-2. **Content ideas from intelligence pipeline**: daily-pulse, content-miner, insight-to-content-mapper
+2. **Content ideas from intelligence pipeline**: daily-pulse, insight-to-content-mapper, insight-to-content-mapper
 3. **Positioning angles**: Each angle × each ECP = topic variant
 4. **Competitor gaps**: Topics competitors miss (from competitors.md)
 

@@ -10,6 +10,7 @@
 > Cambios v2.4: Pain clusters v2 integrados (nombres JTBD + voces reales). Sección Speed Videos con 6 guiones (1 por ECP, incluye mujeres). Storytelling desarrollado.
 > Cambios v2.5: ECP #6 ampliado — sub-perfiles mujeres (frontal fibrosante, alopecias raras, no tratables pero diagnosticables). Reunión HC 10/03/2026.
 > Cambios v2.6: Datos HC 2025 integrados — 82%/18% split género, jóvenes 23-24 tendencia, post-Turquía 10%, perfiles mantenimiento (infiltrados +45, padres 30-45), mujeres segmentadas por momento vital (efluvio telógeno, perimenopausia, envejecimiento capilar).
+> **v4.0 (2026-03-16):** Alineado con presentación "Estrategia de Nichos 2026" (Growth4U × HC). 7 nichos (postparto separado de menopausia). Posicionamiento macro: "De clínica de trasplantes → hospital de salud capilar". Presentación guardada en `estrategia-nichos-2026.md`.
 > Cambios v2.7: Corrección competidores — Insparya y Capiclinic SÍ tienen tratamientos (oral, plasma, mesoterapia). HC no es único con tratamientos, sino único con enfoque médico riguroso + pauta anual + treatment-first. Restricción SEO: home = injerto, tratamientos en landing separada. ECP #5 enriquecido con motivos reales insatisfacción.
 
 ---

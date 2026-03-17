@@ -287,6 +287,9 @@ Ver [references/data-model.md](references/data-model.md) para schemas de `projec
    - Carpeta `brand/{slug}/projects/P{XX}-{slug}/`
    - `project.json` con objetivo, métricas baseline/target, origin, review_date
    - `tasks.json` con tareas iniciales, canal temático asignado, descripción, owner (ver [data-model.md](references/data-model.md))
+   - `playbook.md` resumen del proyecto con links a playbooks de tareas
+   - `T{YY}/playbook.md` por cada tarea — detalle individual de la tarea
+   - ⚠️ **NUNCA juntar todo en un solo playbook.** Cada tarea = su propia carpeta + playbook.
 
 **Fase 2: Crear hilos en Discord (OBLIGATORIO)**
 
@@ -374,14 +377,28 @@ El strategic plan NO es one-shot. Es la **fuente de verdad de qué se está haci
 
 Cuando surge un proyecto nuevo (de intelligence, usuario, o value review):
 
+1. Leer `strategic-plan/current.md` + `projects/registry.json`
+2. Evaluar alineación con objetivos y proyectos activos
+3. Responder según el resultado:
+
 ```
 ¿Alineado con strategic-plan/current.md?
-├── SÍ → Crear proyecto, añadir al plan
-├── PARCIAL → "Tiene sentido pero ¿no deberías terminar P01 primero?"
-└── NO → "No está en el plan. Si quieres lo añadimos, pero implica desviar foco."
+├── SÍ → "Encaja con el plan. Lo creo como P{XX}."
+├── PARCIAL → "Entiendo el interés, pero tienes P{XX}, P{YY} y P{ZZ} abiertos con deadlines en {fechas}. 
+│              Recomiendo terminar esos primero. Si insistes, lo creo pero afecta a {proyectos}."
+└── NO → "Esto NO está en el plan estratégico. El plan actual tiene {N} proyectos activos
+           enfocados en {objetivo}. Crear esto ahora desvía foco de:
+           - P{XX} ({nombre}) — deadline {fecha}
+           - P{YY} ({nombre}) — deadline {fecha}
+           Mi recomendación: no ahora. Si quieres, lo agendamos para {fase/trimestre posterior}."
 ```
 
-Siempre: informar al usuario, esperar decisión, actualizar plan si se acepta.
+> ⚠️ **Sé tajante cuando no tiene sentido.** El CMO protege el foco del equipo.
+> Citar SIEMPRE: el plan estratégico, los proyectos activos afectados, y sus deadlines.
+> No suavizar por cortesía — decir claramente "esto no tiene sentido ahora" si no lo tiene.
+> El usuario tiene la última palabra, pero la recomendación debe ser clara y directa.
+
+Siempre: informar al usuario con datos concretos, esperar decisión, actualizar plan si se acepta.
 
 ### Monitoreo de objetivos
 
@@ -389,6 +406,19 @@ Sancho vigila si los objetivos del plan se están cumpliendo:
 - Si todas las tareas de todos los proyectos se completan → proponer value reviews
 - Si métricas target se alcanzan → "Objetivos cumplidos. ¿Nuevos objetivos?"
 - Si métricas no avanzan → "P01 lleva 30 días sin mover la métrica. ¿Ajustamos?"
+
+### Cambio de estado → actualizar hilo Discord + MC
+
+> ⚠️ SIEMPRE que cambie el estado de un proyecto o tarea, actualizar el nombre del hilo en Discord Y el JSON.
+> Ver `_system/project-threads-protocol.md` → "Protocolo de cambio de estado en hilos Discord".
+
+Resumen rápido:
+- **Completado** → `✅ [P{XX}] nombre` / `✅ [P{XX}-T{YY}] nombre`
+- **Cancelado** → `❌ [P{XX}] nombre`
+- **Bloqueado** → `⛔ [P{XX}-T{YY}] nombre`
+- **En progreso** → `🔧 [P{XX}-T{YY}] nombre`
+
+Usar `message(action=channel-edit, channelId="{thread_id}", name="{nuevo_nombre}")`.
 
 ### Value Review
 

@@ -2,7 +2,7 @@
   "version": "2.0",
   "client": "hospital-capilar",
   "started_at": "2026-03-03T10:06:00Z",
-  "updated_at": "2026-03-12T22:30:00Z",
+  "updated_at": "2026-03-16T15:05:00Z",
   "sections": {
     "company-brief": {
       "status": "approved",
@@ -130,8 +130,8 @@
           ],
           "output_file": "brand/hospital-capilar/go-to-market/ecps/current.md",
           "skill": "niche-discovery-100x",
-          "version": 1,
-          "approved_at": "2026-03-03T15:28:00Z",
+          "version": 3,
+          "approved_at": "2026-03-16T15:05:00Z",
           "approved_by": "Philippe"
         },
         "existing-customer-data": {
