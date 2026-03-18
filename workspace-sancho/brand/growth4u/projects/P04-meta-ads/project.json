@@ -3,13 +3,22 @@
   "name": "Meta Ads Reactivación",
   "objective": "Pipeline desde Meta Ads con tracking funcional",
   "metrics": {
-    "baseline": { "cpl": null, "demo_rate": null },
-    "target": { "cpl": 25, "demo_rate": 0.10 }
+    "baseline": {
+      "cpl": null,
+      "demo_rate": null
+    },
+    "target": {
+      "cpl": 25,
+      "demo_rate": 0.1
+    }
   },
   "blocked_by": "P01",
   "origin": "strategic-plan-v2",
   "strategy": "#27",
   "phase": 1,
   "review_date": "2026-05-09",
-  "status": "blocked"
+  "status": "blocked",
+  "discord": {
+    "project_thread_id": "1482772069484728391"
+  }
 }

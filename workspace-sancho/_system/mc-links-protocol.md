@@ -15,10 +15,21 @@
 
 **URLs disponibles:**
 ```
-/mc/portal/{mcToken}/                     → Dashboard del cliente
-/mc/portal/{mcToken}/docs/{section}/      → Documentos (brand/{slug}/{section})
-/mc/portal/{mcToken}/docs/{section}/{file} → Documento específico
-/mc/portal/{mcToken}/connect/{apiId}      → Página de conexión de API
+/mc/portal/{mcToken}/                                          → Dashboard del cliente
+/mc/portal/{mcToken}/docs/brand/{slug}/                        → Raíz de docs del cliente
+/mc/portal/{mcToken}/docs/brand/{slug}/{section}/              → Sección (ej: campaigns/, foundation/)
+/mc/portal/{mcToken}/docs/brand/{slug}/{section}/{file}.md     → Documento específico
+/mc/portal/{mcToken}/connect/{apiId}                           → Página de conexión de API
+```
+
+**⚠️ IMPORTANTE: La ruta SIEMPRE incluye `brand/{slug}/` después de `/docs/`.**
+
+❌ INCORRECTO: `/mc/portal/{token}/docs/campaigns/archivo.md`
+✅ CORRECTO:   `/mc/portal/{token}/docs/brand/hospital-capilar/campaigns/archivo.md`
+
+**Ejemplo completo (Hospital Capilar):**
+```
+https://sancho-cmo.taild48df2.ts.net/mc/portal/730a6de7b765cdaf15131aa46a31a610/docs/brand/hospital-capilar/campaigns/fase-1-guiones-google-ads.md
 ```
 
 ### 2. Admin (`/admin/{adminToken}/`)

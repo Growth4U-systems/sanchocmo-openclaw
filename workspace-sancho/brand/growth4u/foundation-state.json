@@ -291,5 +291,19 @@
       "projects": "brand/growth4u/projects/registry.json",
       "notes": "v2 — 7 estrategias, 8 proyectos (P01-P08). LinkedIn 3 perfiles + Cold Email + Meta Ads + Free Media + IG/TikTok + Twitter/X + Social Proof."
     }
-  }
+  },
+  "presentations": [
+    {
+      "name": "Foundation Report",
+      "file": "brand/growth4u/presentations/foundation-report.html",
+      "type": "html",
+      "section": "market-and-us"
+    },
+    {
+      "name": "Strategic Plan Q2 2026",
+      "file": "brand/growth4u/presentations/strategic-plan-q2-2026.html",
+      "type": "html",
+      "section": "go-to-market"
+    }
+  ]
 }

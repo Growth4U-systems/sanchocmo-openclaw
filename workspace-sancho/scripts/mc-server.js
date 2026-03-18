@@ -776,7 +776,7 @@ function isValidAdmin(token) {
 // Rewrite /mc/ links to admin-scoped when in admin mode
 function adminRewrite(html, req) {
   if (!req || !req._adminBase) return html;
-  return html.replace(/\/mc\//g, req._adminBase + '/');
+  return html.replace(/\/mc\/(?!admin\/|portal\/)/g, req._adminBase + '/');
 }
 
 function landingPage() {
@@ -1430,7 +1430,7 @@ http.createServer((req, res) => {
     res.end = function(data, encoding) {
       if (data && _isHtml && req._adminBase) {
         const text = (typeof data === 'string' ? data : data.toString('utf-8'))
-          .replace(/\/mc\//g, req._adminBase + '/')
+          .replace(/\/mc\/(?!admin\/|portal\/)/g, req._adminBase + '/')
           .replace(/href="\/mc#/g, `href="${req._adminBase}/#`)
           .replace(/href="\/mc"/g, `href="${req._adminBase}/"`);
         return origEnd(text, 'utf-8');
@@ -1470,7 +1470,7 @@ http.createServer((req, res) => {
       try {
         let html = fs.readFileSync(path.join(BASE, 'mission-control.html'), 'utf-8');
         // Rewrite /mc/ links to portal base
-        html = html.replace(/\/mc\//g, portalBase + '/');
+        html = html.replace(/\/mc\/(?!admin\/|portal\/)/g, portalBase + '/');
         // Inject portal config before </head>
         const portalScript = `<script>
 window.PORTAL_MODE = true;
@@ -1632,7 +1632,7 @@ nav .nav-footer { display:none !important; }
       res.end = function(data, encoding) {
         if (data && _isHtmlC.v && portalBase) {
           const text = (typeof data === 'string' ? data : data.toString('utf-8'))
-            .replace(/\/mc\//g, portalBase + '/')
+            .replace(/\/mc\/(?!admin\/|portal\/)/g, portalBase + '/')
             .replace(/href="\/mc"/g, `href="${portalBase}/"`);
           return origEndC(text, 'utf-8');
         }
@@ -3280,10 +3280,15 @@ async function doTest() {
     // For JS files in admin mode, also rewrite /mc/ paths
     if (req._adminBase && ext === '.js') {
       let text = data.toString('utf-8');
-      text = text.replace(/\/mc\//g, req._adminBase + '/');
+      text = text.replace(/\/mc\/(?!admin\/|portal\/)/g, req._adminBase + '/');
       data = Buffer.from(text, 'utf-8');
     }
-    res.writeHead(200, { 'Content-Type': ct });
+    const headers = { 'Content-Type': ct };
+    if (filename === 'mc-data.js') {
+      headers['Cache-Control'] = 'no-store, no-cache, must-revalidate';
+      headers['Pragma'] = 'no-cache';
+    }
+    res.writeHead(200, headers);
     res.end(data);
   } catch {
     res.writeHead(404); res.end('Not found');

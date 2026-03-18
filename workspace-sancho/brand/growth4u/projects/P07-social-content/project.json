@@ -3,8 +3,16 @@
   "name": "Social Content (IG + TikTok)",
   "objective": "Awareness en Instagram y TikTok con contenido educativo de growth",
   "metrics": {
-    "baseline": { "ig_followers": 0, "tiktok_followers": 0, "engagement_rate": 0 },
-    "target": { "ig_followers": 500, "tiktok_followers": 1000, "engagement_rate": 0.05 }
+    "baseline": {
+      "ig_followers": 0,
+      "tiktok_followers": 0,
+      "engagement_rate": 0
+    },
+    "target": {
+      "ig_followers": 500,
+      "tiktok_followers": 1000,
+      "engagement_rate": 0.05
+    }
   },
   "accounts": {
     "instagram": "@growth4u_systems",
@@ -14,5 +22,8 @@
   "strategy": "#32",
   "phase": 1,
   "review_date": "2026-06-13",
-  "status": "active"
+  "status": "active",
+  "discord": {
+    "project_thread_id": "1482772350117089493"
+  }
 }

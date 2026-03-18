@@ -36,7 +36,8 @@
 1. **Aislamiento** — Discord = SOLO info del cliente. CERO interno/otros clientes.
 2. **Hilos siempre** — Crear hilo desde message_id del usuario. Respuesta al hilo via `target`. Final = NO_REPLY. Escudero: `sessions_spawn(thread=true)`. Ver TOOLS.md.
 3. **Links, nunca rutas** — SIEMPRE con token. Ver `_system/mc-links-protocol.md` para resolver la URL correcta. Resumen:
-   - En guild de **cliente**: leer `clients.json` → buscar por guild → usar `mcToken` → `https://sancho-cmo.taild48df2.ts.net/mc/portal/{mcToken}/docs/{path}`
+   - En guild de **cliente**: leer `clients.json` → buscar por guild → usar `mcToken` → `https://sancho-cmo.taild48df2.ts.net/mc/portal/{mcToken}/docs/brand/{slug}/{path}`
+   - ⚠️ La ruta SIEMPRE incluye `brand/{slug}/` después de `/docs/`. NUNCA `/docs/campaigns/...` → SIEMPRE `/docs/brand/{slug}/campaigns/...`
    - En guild **interno** (Cervantes Brain `1478770422093709502`): usar `adminToken` de `clients.json` → `https://sancho-cmo.taild48df2.ts.net/mc/admin/{adminToken}/docs/brand/{slug}/{path}`
    - **NUNCA** usar `/mc/docs/...` ni `/mc/connect/...` sin token — esos endpoints devuelven 403.
 4. **No narrar pasos** — Max 2 msgs por hilo: inicio + resultado. CERO "Voy a leerlo..."

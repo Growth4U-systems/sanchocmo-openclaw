@@ -3,13 +3,27 @@
   "name": "Cold Email Pipeline",
   "objective": "Generar meetings cualificados desde cold email (Instantly)",
   "metrics": {
-    "baseline": { "meetings_month": 0, "reply_rate": 0, "pipeline_month": 0 },
-    "target": { "meetings_month": 5, "reply_rate": 0.05, "pipeline_month": 35000 }
+    "baseline": {
+      "meetings_month": 0,
+      "reply_rate": 0,
+      "pipeline_month": 0
+    },
+    "target": {
+      "meetings_month": 5,
+      "reply_rate": 0.05,
+      "pipeline_month": 35000
+    }
   },
-  "ecps": ["ECP1-sistema-repetible", "ECP2-regulacion"],
+  "ecps": [
+    "ECP1-sistema-repetible",
+    "ECP2-regulacion"
+  ],
   "origin": "strategic-plan-v2",
   "strategy": "#01",
   "phase": 1,
   "review_date": "2026-05-09",
-  "status": "active"
+  "status": "active",
+  "discord": {
+    "project_thread_id": "1482771981207081116"
+  }
 }

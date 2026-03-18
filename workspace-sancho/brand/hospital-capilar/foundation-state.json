@@ -232,5 +232,13 @@
     "imd",
     "manual-co",
     "mediquo"
+  ],
+  "presentations": [
+    {
+      "name": "Mercado Competidores",
+      "file": "brand/hospital-capilar/presentations/mercado-competidores/index.html",
+      "type": "html",
+      "section": "market-and-us"
+    }
   ]
 }

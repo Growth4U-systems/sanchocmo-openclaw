@@ -325,6 +325,39 @@ def parse_foundation():
                             client_data["pending"] += 1
                     client_data["sections"][sec_key] = sec_data
 
+            # Presentations: scan presentations/ dir, auto-map to sections
+            presentations = state.get("presentations", [])
+            if not presentations:
+                pres_dir = client_dir / "presentations"
+                if pres_dir.exists():
+                    for pf in sorted(pres_dir.rglob("*.html")):
+                        rel = pf.relative_to(client_dir.parent.parent)
+                        name = pf.stem if pf.stem != "index" else pf.parent.name
+                        presentations.append({
+                            "name": name.replace("-", " ").title(),
+                            "file": str(rel),
+                            "type": "html"
+                        })
+
+            # Auto-assign sections based on filename keywords
+            PRES_SECTION_MAP = {
+                "market-and-us": ["foundation-report", "foundation-slides", "swot", "ope-canvas", "competitor", "mercado", "competidor", "market", "deep-dive"],
+                "go-to-market": ["strategic-plan", "strategic", "gtm", "go-to-market", "channels", "pricing"],
+                "brand-identity": ["brand", "voice", "visual", "identity", "logo"],
+                "company-brief": ["company", "brief", "business-model", "budget"],
+            }
+            for p in presentations:
+                if "section" not in p:
+                    fname = (p.get("file", "") + " " + p.get("name", "")).lower().replace(" ", "-")
+                    matched = None
+                    for sec_key, keywords in PRES_SECTION_MAP.items():
+                        if any(kw in fname for kw in keywords):
+                            matched = sec_key
+                            break
+                    p["section"] = matched  # None = unassigned → "Otras"
+
+            client_data["presentations"] = presentations
+
             clients[slug] = client_data
 
     # Aggregate totals
@@ -559,8 +592,20 @@ def parse_api_health():
 def main():
     print("🔄 Regenerating Mission Control data...")
 
+    # Load client list for frontend
+    clients_list = []
+    try:
+        cfile = WORKSPACE / "clients.json"
+        if cfile.exists():
+            cdata = json.loads(cfile.read_text(encoding="utf-8"))
+            for c in cdata.get("clients", []):
+                clients_list.append({"slug": c.get("slug",""), "name": c.get("name",""), "active": c.get("active", True)})
+    except Exception:
+        pass
+
     data = {
         "generated": datetime.now().isoformat(),
+        "clients": clients_list,
         "tasks": parse_tasks(),
         "activity": parse_activity(),
         "foundation": parse_foundation(),

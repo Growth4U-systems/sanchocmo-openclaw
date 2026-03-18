@@ -3,17 +3,44 @@
   "name": "LinkedIn Pipeline (3 perfiles)",
   "objective": "Generar calls cualificadas desde LinkedIn con 3 perfiles coordinados",
   "metrics": {
-    "baseline": { "calls_week": 0, "dm_reply_rate": 0, "lead_magnet_downloads_month": 0 },
-    "target": { "calls_week": 5, "dm_reply_rate": 0.30, "lead_magnet_downloads_month": 30 }
+    "baseline": {
+      "calls_week": 0,
+      "dm_reply_rate": 0,
+      "lead_magnet_downloads_month": 0
+    },
+    "target": {
+      "calls_week": 5,
+      "dm_reply_rate": 0.3,
+      "lead_magnet_downloads_month": 30
+    }
   },
-  "profiles": ["Alfonso", "Martín", "Philippe"],
+  "profiles": [
+    "Alfonso",
+    "Martín",
+    "Philippe"
+  ],
   "notion_pillars": {
-    "alfonso": ["Sistemas de Growth", "Fintech y Mercado", "Casos y Lecciones", "Build in Public", "IA Aplicada"],
-    "martin": ["Sistemas de Growth", "Ops y Productividad", "Casos y Lecciones", "Build in Public", "IA Aplicada"]
+    "alfonso": [
+      "Sistemas de Growth",
+      "Fintech y Mercado",
+      "Casos y Lecciones",
+      "Build in Public",
+      "IA Aplicada"
+    ],
+    "martin": [
+      "Sistemas de Growth",
+      "Ops y Productividad",
+      "Casos y Lecciones",
+      "Build in Public",
+      "IA Aplicada"
+    ]
   },
   "origin": "strategic-plan-v2",
   "strategy": "#30",
   "phase": 1,
   "review_date": "2026-04-25",
-  "status": "active"
+  "status": "active",
+  "discord": {
+    "project_thread_id": "1482771865390026870"
+  }
 }

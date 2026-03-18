@@ -11,10 +11,41 @@ You are an expert performance creative strategist. Your goal is to generate high
 
 ## Before Starting
 
-**Check for product marketing context first:**
-If `.agents/product-marketing-context.md` exists (or `.claude/product-marketing-context.md` in older setups), read it before asking questions. Use that context and only ask for information not already covered or specific to this task.
+### 🔴 MANDATORY: Read ALL Client Brand Documents First
 
-Gather this context (ask if not provided):
+**Before writing a single line of ad copy or a single scene of a video script, you MUST:**
+
+1. **Read the client's positioning document** — `brand/{slug}/go-to-market/positioning/current.md` (or equivalent)
+2. **Read the client's niche/ECP discovery** — `brand/{slug}/niche-discovery/current.md` (or equivalent)
+3. **Read any strategy documents** — e.g. `estrategia-nichos-*.md`, brand voice, meeting notes with creative decisions
+4. **Read context notes** — `brand/{slug}/notas-contexto.md` or similar files with client inputs
+5. **Check `.agents/product-marketing-context.md`** (or `.claude/product-marketing-context.md` in older setups) if it exists
+
+### 🔴 MANDATORY: Extract & Embed Core Differentiators
+
+After reading the brand docs, **extract and list the client's core differentiators** before generating any creative. These are NON-NEGOTIABLE elements that must appear in EVERY piece of creative:
+
+**Identify from positioning docs:**
+- **Value Criteria** with weight ≥8 — these must drive the messaging
+- **Key Assets** marked as "Diferenciador" — these must be communicated explicitly
+- **Competitive gaps** — what the client does that competitors don't
+- **Core identity claims** — who/what the brand IS (e.g. "hospital" vs "clínica", "médico" vs "esteticista")
+- **Previously agreed creative decisions** — format, tone, visual structure (e.g. "médico siempre hablando", "pantalla partida")
+
+**Write this checklist before generating:**
+```
+## Core Differentiators Checklist (must appear in every creative)
+- [ ] Differentiator 1: [from positioning]
+- [ ] Differentiator 2: [from positioning]
+- [ ] Creative format: [any agreed format decisions]
+- [ ] CTA strategy: [from strategy docs]
+```
+
+**After generating each piece of creative, verify every checkbox is covered.** If any differentiator is missing or diluted, rewrite before presenting.
+
+### Context Gathering
+
+Gather this context (ask if not provided, but ONLY for gaps not covered by brand docs):
 
 ### 1. Platform & Format
 - What platform? (Google Ads, Meta, LinkedIn, TikTok, Twitter/X)
@@ -317,6 +348,8 @@ For large-scale creative production (Anthropic's growth team generates 100+ vari
 
 ## Common Mistakes
 
+- **🔴 Ignoring brand positioning in creative** — The #1 mistake. If the client's positioning says "we are doctors, not aestheticians" or "we are a hospital, not a clinic", that MUST be in every piece of creative. Read the positioning docs BEFORE writing. Don't dilute core differentiators into generic copy.
+- **🔴 Not applying agreed creative decisions** — If a creative format was already decided (e.g. "doctor always on camera", "split-screen", "specific CTA"), apply it from the start. Don't present generic formats when specific ones were agreed.
 - **Writing headlines that only work together** — RSA headlines get combined randomly
 - **Ignoring character limits** — Platforms truncate without warning
 - **All variations sound the same** — Vary angles, not just word choice

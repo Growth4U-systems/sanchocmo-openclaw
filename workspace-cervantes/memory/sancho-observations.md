@@ -1,8 +1,8 @@
-# Sancho Observations — 2026-03-16
+# Sancho Observations — 2026-03-17
 
 ## 📊 Resumen Ejecutivo
 
-Sancho tuvo un día muy productivo (15-16 marzo). **Sin errores críticos nuevos**. Los issues conocidos siguen pendientes.
+Sancho tuvo otra jornada productiva. **Sin errores críticos nuevos** (un cron falló por sobrecarga de Anthropic, recuperable). Todo el trabajo fue en mejorar Mission Control respondiendo a feedback de Alfonso.
 
 ---
 
@@ -10,19 +10,13 @@ Sancho tuvo un día muy productivo (15-16 marzo). **Sin errores críticos nuevos
 
 | Canal/Tipo | Actividad |
 |------------|-----------|
-| **#costes-apis** | Fix cost-tracker: 117 canales resueltos, "sin clasificar" pasó de $655 (49%) a $28 (2%) |
-| **#5-cron-reliability** | Propuestas de mejora adicionales (Daily Pulse tokens, Meeting Intelligence, regenerate.py redundancy) |
-| **#actualizar-skills** | Verificó repo Corey Haines (v1.4.0, 33 skills) |
-| **#antigravity-skills** | Análisis de skills externos: growth-engine (no recomiendo), content-creator (algunas ideas) |
-| **#skills-duplicadas** | Consolidó cold-email → outreach-sequence-builder, total 109 skills (-10) |
-| **#mejora-continua** | Reparó cron Notion (endpoint /data_sources/ en vez de /databases/), funcionó |
-| **#3-reestructurar-memory** | Fase 1 completada: memory/daily/, memory/topics/, memory/clients/, INDEX.md |
-| **#1-self-improvement-loop** | Audit seed 10 skills: 2 prioridad alta (positioning-messaging, niche-discovery), 6 integrados |
-| **#learning** | Síntesis semanal publicada (5 patrones nuevos) |
-| **Cron: Morning Metrics** | Growth4U: €146.92 spend, 3 leads, 6 contactos GHL |
-| **Cron: Daily Pulse** | HC: 0 mensajes humanos (43h inactivo) |
-| **Cron: Weekly Synthesis** | learnings.md actualizado |
-| **Cron: update-skills** | last30days actualizado, ClawHub rate-limited |
+| **#conexiones-apis-y-mcps** | Arregló tabla global de integraciones: leía de `mc-data.js` (fichero estático viejo) → ahora consulta API `/api/client-integrations` en tiempo real |
+| **#costes-apis** | Rediseñó sección de costes: separó de integraciones (card propia), nuevos KPIs (€ / Turns / Sesiones), gráfico de barras daily, barras horizontales por agente.growth4u ahora muestra 5 APIs conectadas |
+| **#métricas-y-kpis** | Propuso 3 opciones para mejorar módulo GHL: (A) Lead Feed, (B) Pipeline Board, (C) Full CRM. Explora API GHL: 203 contacts, 3 pipelines, conversaciones, atribuciones por canal |
+| **Cron: Daily Pulse** | 9 canales verificados, 3 activos (intelligence, onboarding, soporte), 6 saltados |
+| **Cron: Morning Metrics** | Growth4U: 5 contacts nuevos, 0 citas, spend €136 vs media €94, gap de conversión detectado |
+| **Cron: cost-tracker-daily** | ❌ Falló con error "Overloaded" de Anthropic (recuperable, reintentará) |
+| **Cron: update-skills** | 8 ClawHub skills + last30days actualizados |
 
 ---
 
@@ -30,66 +24,63 @@ Sancho tuvo un día muy productivo (15-16 marzo). **Sin errores críticos nuevos
 
 | Issue | Estado | Notas |
 |-------|--------|-------|
-| **Notion Bibliografía DB** | 🔴 P0 | 404 — no compartida con integración. Pipeline de mejora continua roto. Ya creado task en #tasks |
+| **cost-tracker-daily (cron)** | 🟡 Recoverable | Anthropic overloaded — reintentará en siguiente ejecución |
+| **Notion Bibliografía DB** | 🔴 P0 | 404 — no compartida con integración. Issue conocido desde ayer |
 | **GHL adapter 422** | 🟡 Conocido | API v2 format issue |
 | **Google Workspace OAuth** | 🟡 Desde Feb 27 | Caen desde hace semanas |
-| **ClawHub rate limit** | 🟢 Recoverable | Reintentará en próxima ejecución |
 
-**No hay errores críticos nuevos.**
+**Ningún error crítico nuevo.**
 
 ---
 
 ## 3️⃣ Preguntas Sin Responder
 
-✅ Ninguna detectada. Sancho respondió todas las preguntas de Alfonso y threads correctamente.
+✅ **Ninguna.** Sancho respondió todas las requests de Alfonso:
+- Feedback de integraciones globales → arreglado
+- Feedback de costes vs integraciones → separada sección + redesign
+- Request de más métricas GHL → exploró API y propuso 3 opciones
 
 ---
 
 ## 4️⃣ Reglas de Canal
 
 ✅ **Cumplimiento perfecto:**
-- Siempre usó patrón de hilo (1-línea → thread → contenido)
+- Siempre usó patrón de hilo (alerta 1 línea → thread → detalles)
 - Nunca publicó contenido largo en canal principal
-- Links anclados correctamente
-- Formato consistente en todos los deliverable
+- Propuestas estructuradas antes de implementar (Opción A/B/C)
+- Links a Mission Control incluidos cuando relevante
 
 ---
 
 ## 5️⃣ Patrones de Mejora
 
 ### ✅ Lo que funciona bien:
-1. **Weekly Synthesis** — Síntesis estructurada con 5 patrones nuevos documentados
-2. **Cost Tracker Fix** — Problema crónico resuelto, clasificación ahora correcta
-3. **Memory Reestructuring** — Fase 1 completada, nueva estructura operativa
-4. **Skills Consolidation** — 109 skills, proceso de limpieza activo
-5. **Metrics Delivery** — Hilo estructurado (summary → thread → datos) vs spam
+1. **Respuesta a feedback** — Alfonso sugiere → Sancho implementa y propone alternativas
+2. **Proactividad en MC** — Está convirtiendo Mission Control en dashboard usable (costes, integraciones, GHL)
+3. **Propuestas estructuradas** — Siempre da opciones (A/B/C) antes de actuar
+4. **Investigación de APIs** — Exploró GHL a fondo para proponer mejoras
 
-### ⚠️ Áreas a mejorar:
-1. **Notion Bibliografía** — Requiere acción de Alfonso (ya trackeado)
-2. **Daily Pulse tokens** — ~500K input tokens/run, 60-70% podría ahorrarse con pre-check
-3. **Meeting Intelligence** — Corre L-V pero casi nunca hay meetings (reducir frecuencia?)
-4. **CRON modelo** — Debe ser siempre isolated + Sonnet/Opus, no Minimax
+### ⚠️ Áreas a observar:
+1. **Notion Bibliografía** — Sigue roto, requiere acción de Alfonso
+2. **Daily Pulse** — Ejecuta pero 6/9 canales inactivos. ¿Rediseñar lógica de skip?
 
 ---
 
 ## 📈 Métricas del Día
 
-- **Sesiones activas**: ~15+
-- **Tokens quemados**: ~$100 (estimado)
-- **Skills actualizados**: 1 (last30days)
-- **Tareas completadas**: 8+
-- **Tareas creadas**: 1 (Notion Bibliografía)
+- **Sesiones activas**: ~8+ (Discord + crons)
+- **Tokens quemados**: ~$80-100 (estimado)
+- **Crontabs fallidos**: 1 (recuperable)
+- **Mejoras implementadas**: 3 (integraciones global, costes redesign, GHL opciones)
 
 ---
 
 ## 🎯 Recomendación
 
-**No hay acción urgente requerida.** El issue de Notion Bibliografía ya está trackeado en #tasks (P0) y requiere acción de Alfonso. Los demás issues son conocidos y están siendo gestionados.
+**No hay acción urgente.** El error del cron es recuperable (overload de Anthropic). El issue de Notion Bibliografía sigue necesitando acción de Alfonso (P0 conocido).
 
-**Para próxima semana:**
-- Revisar si Daily Pulse puede optimizarse (pre-check canales)
-- Verificar implementación de token-optimization-guide
+Sancho está haciendo un trabajo excelente mejorando Mission Control proactivamente basándose en feedback de Alfonso.
 
 ---
 
-*Observación: 2026-03-16 10:03 CET — Cervantes*
+*Observación: 2026-03-17 10:00 CET — Cervantes*
