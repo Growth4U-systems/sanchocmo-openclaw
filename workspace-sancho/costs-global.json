@@ -1,58 +1,58 @@
 {
   "period": "2026-03",
-  "updatedAt": "2026-03-17T23:00:21.649754",
-  "total_cost_usd": 1499.9011,
-  "total_cost_eur": 1379.909,
-  "total_turns": 16080,
-  "total_sessions": 362,
+  "updatedAt": "2026-03-18T23:00:21.141316",
+  "total_cost_usd": 1524.1763,
+  "total_cost_eur": 1402.2422,
+  "total_turns": 16474,
+  "total_sessions": 374,
   "system": {
-    "input_tokens": 23648707,
-    "output_tokens": 2137590,
-    "cache_read": 569591092,
-    "cache_write": 64207036,
-    "cost_usd": 706.3744,
-    "cost_eur": 649.8644,
-    "turns": 7655,
+    "input_tokens": 23459422,
+    "output_tokens": 2153156,
+    "cache_read": 573349594,
+    "cache_write": 64552485,
+    "cost_usd": 709.5553,
+    "cost_eur": 652.7909,
+    "turns": 7747,
     "sessions": 117,
     "agents": {
       "cervantes": {
-        "cost_usd": 148.1794,
-        "turns": 1130,
+        "cost_usd": 148.5341,
+        "turns": 1164,
         "sessions": 14
       },
       "sancho": {
-        "cost_usd": 558.195,
-        "turns": 6525,
+        "cost_usd": 561.0212,
+        "turns": 6583,
         "sessions": 103
       }
     },
     "models": {
       "MiniMax-M2.5": {
-        "input": 1019623,
-        "output": 25657,
-        "cache_read": 1815363,
-        "cache_write": 428726,
-        "cost_usd": 0.4619,
-        "cost_eur": 0.425,
-        "turns": 118
+        "input": 830297,
+        "output": 36402,
+        "cache_read": 2748954,
+        "cache_write": 552626,
+        "cost_usd": 0.7801,
+        "cost_eur": 0.7177,
+        "turns": 179
       },
       "claude-opus-4-6": {
-        "input": 21401893,
-        "output": 1361499,
-        "cache_read": 402291171,
-        "cache_write": 52806851,
-        "cost_usd": 537.3151,
-        "cost_eur": 494.3299,
-        "turns": 4841
+        "input": 21401914,
+        "output": 1365234,
+        "cache_read": 404980405,
+        "cache_write": 53021589,
+        "cost_usd": 540.0953,
+        "cost_eur": 496.8876,
+        "turns": 4869
       },
       "claude-sonnet-4-5": {
-        "input": 321997,
-        "output": 7272,
-        "cache_read": 1036087,
-        "cache_write": 265380,
-        "cost_usd": 1.2786,
-        "cost_eur": 1.1763,
-        "turns": 61
+        "input": 322017,
+        "output": 8358,
+        "cache_read": 1171764,
+        "cache_write": 272191,
+        "cost_usd": 1.3612,
+        "cost_eur": 1.2523,
+        "turns": 64
       },
       "unknown": {
         "input": 905194,
@@ -66,39 +66,44 @@
     }
   },
   "unclassified": {
-    "input_tokens": 3652862,
-    "output_tokens": 390766,
-    "cache_read": 89708005,
-    "cache_write": 6621379,
-    "cost_usd": 89.9844,
-    "cost_eur": 82.7857,
-    "turns": 1609,
-    "sessions": 107,
+    "input_tokens": 4086356,
+    "output_tokens": 427336,
+    "cache_read": 98997032,
+    "cache_write": 7670268,
+    "cost_usd": 100.989,
+    "cost_eur": 92.9099,
+    "turns": 1798,
+    "sessions": 119,
     "agents": {
+      "cervantes": {
+        "cost_usd": 0,
+        "turns": 1,
+        "sessions": 1
+      },
       "sancho": {
-        "cost_usd": 89.9844,
-        "turns": 1609,
-        "sessions": 107
+        "cost_usd": 100.989,
+        "turns": 1797,
+        "sessions": 118
       }
     },
     "models": {
       "unknown": {
-        "input": 28318,
-        "output": 69847,
-        "cache_read": 9610081,
-        "cache_write": 842282,
-        "cost_usd": 11.6161,
-        "cost_eur": 10.6868,
-        "turns": 311
+        "input": 28329,
+        "output": 71942,
+        "cache_read": 10316677,
+        "cache_write": 949517,
+        "cost_usd": 12.6921,
+        "cost_eur": 11.6767,
+        "turns": 330
       },
       "claude-opus-4-6": {
-        "input": 2173633,
-        "output": 293166,
-        "cache_read": 78564023,
-        "cache_write": 5580703,
-        "cost_usd": 77.2657,
-        "cost_eur": 71.0845,
-        "turns": 1215
+        "input": 2607116,
+        "output": 327641,
+        "cache_read": 87146454,
+        "cache_write": 6522357,
+        "cost_usd": 87.1944,
+        "cost_eur": 80.2188,
+        "turns": 1385
       },
       "MiniMax-M2.5": {
         "input": 1450716,
@@ -128,17 +133,17 @@
       "cache_write": 16909393,
       "cost_usd": 169.2542,
       "cost_eur": 155.7139,
-      "turns": 1664,
+      "turns": 1667,
       "sessions": 54,
       "agents": {
         "cervantes": {
           "cost_usd": 0,
-          "turns": 27,
+          "turns": 28,
           "sessions": 9
         },
         "sancho": {
           "cost_usd": 169.2542,
-          "turns": 1637,
+          "turns": 1639,
           "sessions": 45
         }
       },
@@ -150,7 +155,7 @@
           "cache_write": 16768725,
           "cost_usd": 168.0057,
           "cost_eur": 154.5653,
-          "turns": 1641
+          "turns": 1644
         },
         "claude-opus-4-6": {
           "input": 30,
@@ -206,30 +211,30 @@
       }
     },
     "sanchocmo": {
-      "input_tokens": 1322545,
-      "output_tokens": 295365,
-      "cache_read": 45406150,
-      "cache_write": 8009059,
-      "cost_usd": 77.757,
-      "cost_eur": 71.5365,
-      "turns": 896,
+      "input_tokens": 1322665,
+      "output_tokens": 324226,
+      "cache_read": 55133168,
+      "cache_write": 8844881,
+      "cost_usd": 87.8467,
+      "cost_eur": 80.819,
+      "turns": 1005,
       "sessions": 18,
       "agents": {
         "sancho": {
-          "cost_usd": 77.757,
-          "turns": 896,
+          "cost_usd": 87.8467,
+          "turns": 1005,
           "sessions": 18
         }
       },
       "models": {
         "unknown": {
-          "input": 1322266,
-          "output": 261555,
-          "cache_read": 41000937,
-          "cache_write": 7416857,
-          "cost_usd": 71.2792,
-          "cost_eur": 65.5769,
-          "turns": 757
+          "input": 1322386,
+          "output": 290416,
+          "cache_read": 50727955,
+          "cache_write": 8252679,
+          "cost_usd": 81.3689,
+          "cost_eur": 74.8594,
+          "turns": 866
         },
         "claude-opus-4-6": {
           "input": 279,
@@ -249,12 +254,12 @@
       "cache_write": 39745224,
       "cost_usd": 388.5727,
       "cost_eur": 357.4869,
-      "turns": 3650,
+      "turns": 3651,
       "sessions": 52,
       "agents": {
         "sancho": {
           "cost_usd": 388.5727,
-          "turns": 3650,
+          "turns": 3651,
           "sessions": 52
         }
       },
@@ -275,7 +280,7 @@
           "cache_write": 3257310,
           "cost_usd": 30.081,
           "cost_eur": 27.6745,
-          "turns": 175
+          "turns": 176
         }
       }
     },
@@ -309,10 +314,10 @@
     }
   },
   "projection": {
-    "days_elapsed": 17,
+    "days_elapsed": 18,
     "days_in_month": 31,
-    "daily_avg_usd": 88.23,
-    "projected_month_usd": 2735.11,
-    "projected_month_eur": 2516.3
+    "daily_avg_usd": 84.68,
+    "projected_month_usd": 2624.97,
+    "projected_month_eur": 2414.97
   }
 }

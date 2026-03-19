@@ -116,6 +116,19 @@
       "active": true,
       "guild": "1483424292824940659",
       "mcToken": "2c366e97f11ef9428ae5474351a44bd8"
+    },
+    {
+      "slug": "dealcar",
+      "name": "Dealcar",
+      "discord_guild_id": "1483765888761991178",
+      "phase": 0,
+      "paths": {
+        "brand": "brand/"
+      },
+      "supabase": {
+        "url": "https://psapmujzxhaxraphddlv.supabase.co",
+        "anon_key": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBzYXBtdWp6eGhheHJhcGhkZGx2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4OTAxNTEsImV4cCI6MjA4NzQ2NjE1MX0.RxanIQCJtjGfCUL_X0MqPi2IdGkXOkmfaEAJZvQJblI"
+      }
     }
   ],
   "adminToken": "cc9b8067c18c5214358611d75f151f6d"

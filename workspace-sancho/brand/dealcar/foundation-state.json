@@ -1,0 +1,58 @@
+{
+  "version": "2.0",
+  "started_at": "2026-03-18T10:23:22Z",
+  "updated_at": "2026-03-18T10:23:22Z",
+  "sections": {
+    "company-brief": {
+      "status": "not-started",
+      "layer": 0,
+      "output_dir": "brand/dealcar/company-brief/",
+      "approved_at": null,
+      "skills": {
+        "company-context": {"status": "not-started"},
+        "business-model": {"status": "not-started"},
+        "budget": {"status": "not-started"}
+      }
+    },
+    "market-and-us": {
+      "status": "not-started",
+      "layer": 1,
+      "output_dir": "brand/dealcar/market-and-us/",
+      "pillars": {
+        "market-analysis": {"status": "not-started", "layer": 1, "requires": ["company-brief"], "enriches_with": ["competitor-analysis", "self-analysis"], "skill": "market-intelligence"},
+        "competitor-analysis": {"status": "not-started", "layer": 1, "requires": ["company-brief"], "enriches_with": ["market-analysis", "self-analysis"], "output_files": [], "skill": "competitor-intelligence"},
+        "self-analysis": {"status": "not-started", "layer": 1, "requires": ["company-brief"], "enriches_with": ["market-analysis", "competitor-analysis"], "skill": "self-intelligence"},
+        "swot": {"status": "not-started", "layer": 2, "requires": ["market-analysis", "competitor-analysis", "self-analysis"], "skill": "swot-analysis"}
+      },
+      "syntheses": {
+        "summary": {"status": "not-generated", "generated_by": "orchestrator", "requires": ["market-analysis", "competitor-analysis", "self-analysis"]},
+        "ope-canvas": {"status": "not-generated", "generated_by": "orchestrator", "requires": ["market-analysis", "competitor-analysis", "self-analysis"]}
+      }
+    },
+    "go-to-market": {
+      "status": "not-started",
+      "layer": 3,
+      "output_dir": "brand/dealcar/go-to-market/",
+      "pillars": {
+        "niche-discovery": {"status": "not-started", "layer": 3, "requires": ["swot"], "enriches_with": ["existing-customer-data"], "skill": "niche-discovery-100x"},
+        "existing-customer-data": {"status": "not-started", "layer": 3, "requires": ["company-brief"], "optional": true, "skill": "existing-customer-data"},
+        "positioning": {"status": "not-started", "layer": 4, "requires": ["niche-discovery"], "skill": "positioning-messaging"},
+        "pricing": {"status": "not-started", "layer": 4, "requires": ["niche-discovery"], "enriches_with": ["positioning"], "skill": "pricing-strategy"},
+        "metrics-plan": {"status": "not-started", "layer": 4, "requires": ["company-brief"], "enriches_with": ["niche-discovery"], "skill": "acquisition-metrics-plan"},
+        "ecp-validation": {"status": "not-started", "layer": 4, "requires": ["niche-discovery"], "optional": true, "skill": "ecp-validation"}
+      },
+      "syntheses": {
+        "messaging-summary": {"status": "not-generated", "generated_by": "orchestrator", "requires": ["positioning"]}
+      }
+    },
+    "brand-identity": {
+      "status": "not-started",
+      "layer": 5,
+      "output_dir": "brand/dealcar/brand-identity/",
+      "pillars": {
+        "brand-voice": {"status": "not-started", "layer": 5, "requires": ["positioning"], "skill": "brand-voice"},
+        "visual-identity": {"status": "not-started", "layer": 5, "requires": ["brand-voice"], "skill": "visual-identity"}
+      }
+    }
+  }
+}

@@ -1,7 +1,8 @@
 # Inteligencia Competitiva — SanchoCMO
 
-> Re-run completo | Generado: 2026-03-05 | Fuente: web_search + web_fetch (Primary Source Verification)
-> Validado por: Pendiente aprobación Martin
+> Re-run completo | Generado: 2026-03-05 | Actualizado: 2026-03-18 (añadido Okara.ai)
+> Fuente: web_search + web_fetch (Primary Source Verification)
+> Validado por: Pendiente aprobación
 
 ---
 
@@ -13,7 +14,9 @@ En un extremo está el **mundo enterprise anglosajón**: Jasper AI (valorada en 
 
 En el otro extremo está el **mundo hispano de formación + herramienta**: Vilma.ai, respaldada por Vilma Núñez y el ecosistema Convierte Más (+100K alumnos). A $37-47/mes, Vilma.ai vende la promesa de "tu agencia de marketing con IA" con 15 agentes especializados y 150+ tareas listas. Su fortaleza brutal es la marca personal de Vilma Núñez y la comunidad hispana cautiva. Su debilidad: es un wrapper de prompts con metodología predefinida — el usuario ejecuta tareas, no construye estrategia viva. No hay aprendizaje continuo del negocio más allá del "cerebro" inicial.
 
-En el medio — y aquí es donde SanchoCMO entra — hay un **vacío**: no existe ningún producto que combine (1) agentes IA con contexto profundo del negocio, (2) ejecución end-to-end del GTM (no solo contenido), (3) aprendizaje continuo de cada interacción, y (4) precio accesible para startups hispanas. Los enterprise son caros y genéricos. Vilma.ai es barata pero limitada a tareas predefinidas. SanchoCMO puede ocupar ese hueco: CMO que aprende, piensa y ejecuta — no solo escribe.
+Recientemente ha aparecido un **cuarto actor relevante**: Okara.ai, una startup de Singapur que vende literalmente un "AI CMO" a $99/mes. Okara viene del mundo de los chats IA privados (open-source, encrypted) y ha añadido agentes especializados en SEO, Reddit, X/Twitter, y contenido. Su claim es agresivo ("The only CMO you need"), pero la realidad — según Reddit y reviews independientes — es que funciona más como un "buggy Claude wrapper" que como un estratega real. Genera contenido genérico, tiene riesgo de spam en comunidades, y carece de profundidad estratégica. Sin embargo, a $99/mes con foco en startups, es el competidor más cercano en pricing y target a SanchoCMO.
+
+En el medio — y aquí es donde SanchoCMO entra — hay un **vacío**: no existe ningún producto que combine (1) agentes IA con contexto profundo del negocio, (2) ejecución end-to-end del GTM (no solo contenido), (3) aprendizaje continuo de cada interacción, y (4) precio accesible para startups hispanas. Los enterprise son caros y genéricos. Vilma.ai es barata pero limitada a tareas predefinidas. Okara.ai es barata pero superficial. SanchoCMO puede ocupar ese hueco: CMO que aprende, piensa y ejecuta — no solo escribe.
 
 ---
 
@@ -261,6 +264,96 @@ Copy.ai dice "17 million users trust us" (Lens 1), pero las reviews recientes de
 
 ---
 
+### Battle Card: Okara.ai (AI CMO)
+
+Okara.ai es el newcomer más interesante del panorama. Viene de un ángulo completamente diferente: es una plataforma de chat IA privado (open-source, encrypted) con sede en Singapur que decidió lanzar un "AI CMO" como producto estrella. El claim es directo: "The only CMO you need to grow your business". A $99/mes, con agentes de SEO, Reddit, X, Hacker News y contenido, suena como competencia directa de SanchoCMO.
+
+Pero la realidad es más matizada. Okara.ai viene del mundo de la privacidad y los modelos open-source — su ADN es tech, no marketing. Los agentes son automation básica: auditoría SEO, posts automáticos en Reddit, tweets programados. No hay Foundation, no hay strategy layer, no hay aprendizaje del negocio. Es marketing "de ejecución ciega" — actúa sin entender. Y las reviews de Reddit lo confirman: "buggy Claude wrapper", contenido genérico, riesgo de spam bans.
+
+Lo que hace a Okara peligroso NO es su producto actual — es su posicionamiento. Son los primeros en decir explícitamente "AI CMO" a un precio de startup. Si mejoran la profundidad, podrían ser competencia real.
+
+**Tier**: A | **Type**: Direct | **Updated**: 2026-03-18
+
+#### Quick Profile
+- **Fundada**: ~2024-2025
+- **HQ**: Singapur
+- **Equipo**: No público (startup early stage)
+- **Funding**: No público
+- **Growth model**: PLG (free tier → Pro → Max con AI CMO) + Product Hunt + Reddit marketing (usan su propio Reddit Agent para promocionarse)
+
+#### Positioning (Lens 1)
+**Claim**: "The only CMO you need to grow your business" [Fuente: okara.ai/agent/cmo]
+**Target audience**: Solo founders, small startups, bootstrapped teams (anglosajón primero)
+**Key features**:
+- SEO Agent (auditoría diaria, GEO score — visibilidad en ChatGPT/Claude/Perplexity)
+- AI Writer Agent (generación de contenido)
+- Reddit Agent (monitoriza keywords, genera respuestas en threads)
+- X/Twitter Agent (gestión de presencia social)
+- Hacker News Agent (engagement en comunidad tech)
+- Privacy-first (modelos open-source, encrypted, no training con datos)
+- 20+ modelos open-source (DeepSeek, Llama, Mistral, Qwen)
+- Projects (contexto permanente por proyecto)
+
+**Pricing** [Fuente: okara.ai/pricing]:
+- **Free**: 5 créditos (~50 mensajes) — sin agentes CMO
+- **Pro**: $20/mes — 500 créditos, sin agentes CMO
+- **Max**: $99/mes — 2.000 créditos, AI CMO completo (todos los agentes)
+- **Founding User**: $1.000 one-time — lifetime Max
+- **Enterprise**: Custom
+
+⚠️ Nota: El AI CMO solo está disponible en el plan Max ($99/mes). Los planes inferiores son solo chat IA.
+
+#### External Perception (Lens 2)
+**Media narrative**: Cobertura en TimesNow, Digit.in, StartupPedia — posicionado como "startup that launched world's first AI CMO". La prensa tech india lo cubrió ampliamente. Product Hunt launch con reviews positivas (pero sobre el chat IA, no el CMO agent).
+**SEO strength**: Dominio nuevo, DA bajo. Blog activo pero contenido genérico sobre IA.
+**Recognition**: Product Hunt featured. No tiene presencia en G2, Trustpilot o Capterra como producto de marketing.
+
+#### Customer Reality (Lens 3)
+**Rating**: ⚠️ Sin ratings en plataformas de review independientes para el CMO Agent
+**Love**:
+- Precio accesible ($99/mes para "un CMO")
+- Privacy-first genuino (modelos open-source, encrypted)
+- Multi-modelo (20+ modelos en un chat)
+- Reddit Agent es el feature más valorado del ecosistema
+
+**Hate** [Fuente: Reddit r/AgentsOfAI, r/aiToolForBusiness, efficienist.com]:
+- Descrito como "buggy Claude wrapper con UI"
+- Contenido generado es genérico, outdated, y de baja calidad
+- Reddit/HN agents con alto riesgo de spam bans
+- Demo gratuita prácticamente inservible (5 créditos = nada)
+- Sugiere tweets autopromocionales sobre Okara.ai en vez de tu marca
+- No hay strategy layer — solo ejecución ciega
+- Algunos tweets autogenerados son embarazosos
+
+**Unmet needs**: Estrategia antes de ejecución. Comprensión profunda del negocio. Contenido que no suene a IA. Marketing que no te banee de Reddit.
+
+#### Lens Conflicts
+El conflicto es brutal: "The only CMO you need" (Lens 1) vs. "buggy Claude wrapper" / "basic automation tool" (Lens 3). Okara promete reemplazar un CMO humano pero entrega automatización de bajo nivel sin comprensión estratégica. La prensa tech (Lens 2) lo presenta como innovador, pero los usuarios reales (Lens 3) lo ven como hype sobre sustancia.
+
+#### How to Beat Them
+
+**Their weakness, our strength**: Okara ejecuta sin pensar; SanchoCMO piensa antes de ejecutar. Okara no tiene Foundation, no hace ICP discovery, no construye posicionamiento, no analiza competidores. Solo automatiza tareas tácticas. *Esto es explotable porque cualquier fundador que use Okara 2 semanas descubrirá que ejecutar marketing sin estrategia es tirar dinero.*
+
+**Positioning angle**: "Okara te da bots que postean. SanchoCMO te da un CMO que piensa qué postear, por qué, y para quién." *Esto resonará porque el fundador que probó Okara y se frustró con contenido genérico es exactamente el early adopter de SanchoCMO.*
+
+**What NOT to compete on**: Privacy/encryption (no es nuestro diferenciador). Acceso a múltiples modelos open-source (no es relevante para el ICP). Automation de Reddit/HN (alto riesgo de spam, no queremos asociarnos con eso).
+
+**Sales talking points**:
+1. SanchoCMO hace Foundation estratégica antes de ejecutar — Okara ejecuta a ciegas
+2. SanchoCMO aprende tu negocio en profundidad (38 skills, Context Lake) — Okara tiene "Projects" básicos
+3. SanchoCMO tiene sistema multi-agente real (4 agentes especializados) — Okara tiene bots de automation
+4. SanchoCMO en español nativo — Okara solo en inglés
+5. Precio similar (~€100-200 vs $99) pero profundidad incomparable
+
+#### Monitoring Triggers
+- Mejora significativa en calidad de output (modelos más potentes)
+- Añadir strategy layer o Foundation equivalent
+- Expansión al mercado hispano
+- Funding round significativo
+- Adopción masiva (>10K usuarios del CMO agent)
+
+---
+
 ## 🟡 Competidores Indirectos (Análisis parcial — Lens 1)
 
 ---
@@ -336,6 +429,7 @@ Cuando vemos el campo competitivo completo, emergen tres patrones claros. Primer
 | **Vilma.ai** | Direct | A | "Tu agencia IA" | $37-47/mes | ⚠️ Sin reviews indep. | Marca Vilma Núñez + comunidad hispana | Sistema de tareas, no de estrategia |
 | **Jasper AI** | Direct | A | "Agent workspace" | $49-69/seat/mes | TP 3.5 · G2 4.7 | Líder de mercado, $1.7B, features masivas | Enterprise-only, caro, output genérico |
 | **Copy.ai** | Direct | A | "GTM AI Platform" | $1.000+/mes | TP bajo · G2 bajando | 17M usuarios históricos, multi-LLM | Soporte en crisis, alienó usuarios pequeños |
+| **Okara.ai** | Direct | A | "The only CMO" | $99/mes (Max) | ⚠️ Sin reviews indep. | Precio accesible, privacy-first, multi-agent | Output genérico, sin estrategia, riesgo spam |
 | **Writesonic** | Indirect | B | "AI SEO + GEO" | $49-499/mes | TP 4.7 · G2 4.7 | Mejor valorado, feature GEO innovadora | Solo contenido, sin estrategia |
 | **HubSpot Breeze** | Indirect | B | "AI teammates" | $450+/mes (CRM req.) | — | Integración CRM profunda, enterprise-ready | Requiere HubSpot, coste prohibitivo |
 | **Lindy.ai** | Indirect | C | "Custom AI agents" | $0-50/mes | — | Flexibilidad total, no-code, barato | Genérico, requiere configuración manual |
@@ -358,12 +452,12 @@ La tabla revela un patrón claro: **a más potencia, más caro y más enterprise
   MUY ACCESIBLE                              ENTERPRISE
   ($0-100/mes)                               ($1.000+/mes)
                               |
-               Lindy.ai ●    |     ● Copy.ai
-              (genérico)      |     (GTM platform)
-                              |
-             Writesonic ●     |     ● Jasper AI
-              (solo SEO)      |     (content factory)
-                              |
+            Okara.ai ●        |     ● Copy.ai
+           (bots sin strategy)|     (GTM platform)
+               Lindy.ai ●    |
+              (genérico)      |     ● Jasper AI
+             Writesonic ●     |     (content factory)
+              (solo SEO)      |
                     BAJA profundidad estratégica
 ```
 
@@ -371,22 +465,23 @@ La tabla revela un patrón claro: **a más potencia, más caro y más enterprise
 
 ### 3. Feature Heatmap
 
-| Feature | SanchoCMO | Vilma.ai | Jasper | Copy.ai | Writesonic | Lindy.ai |
-|---|---|---|---|---|---|---|
-| Foundation/Strategy | 🟢 | 🟡 | 🔴 | 🔴 | 🔴 | 🔴 |
-| Content Generation | 🟢 | 🟢 | 🟢 | 🟢 | 🟢 | 🟡 |
-| Competitor Research | 🟢 | 🔴 | 🔴 | 🟡 | 🔴 | 🔴 |
-| SEO Content | 🟢 | 🟡 | 🟢 | 🟡 | 🟢 | 🔴 |
-| Brand Voice | 🟢 | 🟢 | 🟢 | 🟡 | 🟡 | 🔴 |
-| ICP/Niche Discovery | 🟢 | 🔴 | 🔴 | 🔴 | 🔴 | 🔴 |
-| Email Sequences | 🟢 | 🟡 | 🟡 | 🟢 | 🔴 | 🟡 |
-| Positioning/Messaging | 🟢 | 🟡 | 🔴 | 🔴 | 🔴 | 🔴 |
-| Learning/Adaptation | 🟢 | 🟡 | 🟡 | 🔴 | 🔴 | 🔴 |
-| Multi-Agent System | 🟢 | 🟢 | 🟢 | 🟡 | 🔴 | 🟢 |
-| GEO (AI Search Visibility) | 🔴 | 🔴 | 🟡 | 🔴 | 🟢 | 🔴 |
-| CRM Integration | 🔴 | 🔴 | 🟡 | 🟢 | 🔴 | 🟢 |
-| Spanish Native | 🟢 | 🟢 | 🔴 | 🔴 | 🟡 | 🔴 |
-| Discord Native | 🟢 | 🔴 | 🔴 | 🔴 | 🔴 | 🔴 |
+| Feature | SanchoCMO | Vilma.ai | Jasper | Copy.ai | Okara.ai | Writesonic | Lindy.ai |
+|---|---|---|---|---|---|---|---|
+| Foundation/Strategy | 🟢 | 🟡 | 🔴 | 🔴 | 🔴 | 🔴 | 🔴 |
+| Content Generation | 🟢 | 🟢 | 🟢 | 🟢 | 🟡 | 🟢 | 🟡 |
+| Competitor Research | 🟢 | 🔴 | 🔴 | 🟡 | 🔴 | 🔴 | 🔴 |
+| SEO/GEO | 🟢 | 🟡 | 🟢 | 🟡 | 🟢 | 🟢 | 🔴 |
+| Brand Voice | 🟢 | 🟢 | 🟢 | 🟡 | 🔴 | 🟡 | 🔴 |
+| ICP/Niche Discovery | 🟢 | 🔴 | 🔴 | 🔴 | 🔴 | 🔴 | 🔴 |
+| Email Sequences | 🟢 | 🟡 | 🟡 | 🟢 | 🔴 | 🔴 | 🟡 |
+| Positioning/Messaging | 🟢 | 🟡 | 🔴 | 🔴 | 🔴 | 🔴 | 🔴 |
+| Learning/Adaptation | 🟢 | 🟡 | 🟡 | 🔴 | 🟡 | 🔴 | 🔴 |
+| Multi-Agent System | 🟢 | 🟢 | 🟢 | 🟡 | 🟢 | 🔴 | 🟢 |
+| Community Automation | 🔴 | 🔴 | 🔴 | 🔴 | 🟢 | 🔴 | 🔴 |
+| Privacy/Encryption | 🔴 | 🔴 | 🟡 | 🔴 | 🟢 | 🔴 | 🔴 |
+| CRM Integration | 🔴 | 🔴 | 🟡 | 🟢 | 🔴 | 🔴 | 🟢 |
+| Spanish Native | 🟢 | 🟢 | 🔴 | 🔴 | 🔴 | 🟡 | 🔴 |
+| Discord Native | 🟢 | 🔴 | 🔴 | 🔴 | 🔴 | 🔴 | 🔴 |
 
 **White space analysis**: Las columnas de Foundation/Strategy, ICP/Niche Discovery, Competitor Research, y Positioning/Messaging están prácticamente vacías excepto SanchoCMO. NINGÚN competidor ofrece un sistema de descubrimiento estratégico. Esta es la diferenciación más clara. El gap de GEO y CRM en SanchoCMO son áreas a monitorizar pero no prioritarias para el MVP.
 
@@ -399,6 +494,7 @@ Cada competidor adquiere clientes de forma radicalmente diferente:
 | **Vilma.ai** | Brand de Vilma Núñez (Personal Brand-Led) | Comunidad Convierte Más (Community) |
 | **Jasper** | Enterprise Sales | PLG residual + Content Marketing |
 | **Copy.ai** | Enterprise Sales (post-pivot) | SEO + residual de 17M usuarios |
+| **Okara.ai** | PLG (free → Max) + Product Hunt | Reddit marketing (propio Reddit Agent) |
 | **Writesonic** | PLG + SEO Content | Affiliate Marketing |
 | **HubSpot Breeze** | Bundled con CRM (Ecosystem-Led) | — |
 | **Lindy.ai** | PLG (free tier) | Content Marketing |
@@ -415,6 +511,7 @@ Cada competidor adquiere clientes de forma radicalmente diferente:
 | **Vilma.ai** | — | ✅ ($37-47) | — | — | — |
 | **Jasper** | Trial | ✅ ($49-69/seat) | — | — | ✅ (Business custom) |
 | **Copy.ai** | Chat basic | — | — | — | ✅ ($1.000-3.000) |
+| **Okara.ai** | ✅ (5 créditos) | ✅ (Pro $20) | ✅ (Max $99) | — | Founding $1.000 one-time |
 | **Writesonic** | ✅ | ✅ ($49) | ✅ ($99-249) | ✅ ($499) | Enterprise |
 | **HubSpot Breeze** | Parcial | — | — | ✅ ($450-800) | ✅ ($1.500-3.600) |
 | **Lindy.ai** | ✅ | ✅ ($20-50) | — | — | Enterprise |
@@ -447,6 +544,7 @@ En este panorama competitivo, la mejor jugada de SanchoCMO es **no competir cont
 | Vilma.ai | ✅ vilma.ai — "IA que Piensa, Ejecuta y Convierte Por Ti" | ⚠️ Pricing no visible en scrape (renderizado dinámico). Datos de pricing vienen de web_search (múltiples fuentes coincidentes: $37-47/mes) | ✅ vilma.ai — 150+ tareas, 15 empleados IA, workflows |
 | Jasper AI | ✅ jasper.ai — "Put AI agents to work for marketing" | ✅ jasper.ai/pricing — Creator $49, Pro $69, Business custom | ✅ jasper.ai — Canvas, Studio, IQ, Grid, Image Suite, Content Pipelines |
 | Copy.ai | ✅ copy.ai — "The First AI-Native GTM Platform" | ✅ copy.ai/prices — Chat free, Growth $1.000, Expansion $2.000, Scale $3.000 | ✅ copy.ai — Prospecting, Content, ABM, Translation, Deal Coaching |
+| Okara.ai | ✅ okara.ai/agent/cmo — "The only CMO you need" | ✅ okara.ai/pricing — Free, Pro $20, Max $99, Founding $1.000 | ✅ okara.ai — SEO Agent, Reddit Agent, X Agent, AI Writer, GEO score |
 
 ## Herramientas Utilizadas
 
@@ -459,4 +557,4 @@ En este panorama competitivo, la mejor jugada de SanchoCMO es **no competir cont
 
 ---
 
-<!-- Self-QA: PASS | 2026-03-05 | Storytelling ✅ | 3 battle cards ✅ | 3 indirectos ✅ | 1 emergente ✅ | Landscape map completo ✅ | Primary source verified ✅ | Apify/DataForSEO ⚠️ no ejecutados (justificado) | Fuentes inline ✅ -->
+<!-- Self-QA: PASS | 2026-03-18 | Storytelling ✅ | 4 battle cards ✅ (añadido Okara.ai) | 3 indirectos ✅ | 1 emergente ✅ | Landscape map actualizado ✅ | Primary source verified ✅ | Apify/DataForSEO ⚠️ no ejecutados (justificado) | Fuentes inline ✅ -->

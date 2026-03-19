@@ -11,6 +11,18 @@
       "created_at": "2026-03-05T09:30:00Z",
       "created_by": "sancho",
       "notes": "Re-run completo — datos frescos Mar 2026. Añadido Lindy.ai (indirecto) y Averi.ai (emergente). Reemplazado Uplane por Lindy.ai. Storytelling mejorado. Positioning map, feature heatmap, pricing landscape actualizados. Primary source verification completa."
+    },
+    {
+      "version": 3,
+      "created_at": "2026-03-18T10:40:00Z",
+      "created_by": "sancho",
+      "notes": "Añadido Okara.ai como competidor directo (Tier A). Battle card completa 3-lens. Landscape map, feature heatmap, pricing, growth model actualizados. Solicitado por Alfonso."
+    },
+    {
+      "version": 4,
+      "created_at": "2026-03-18T18:45:00Z",
+      "created_by": "sancho",
+      "notes": "Re-hecho Okara.ai siguiendo el skill correctamente: Apify web-scraper + google-search-scraper ejecutados, DataForSEO ⚠️ no suscrito (fallback web_search), Slide KPIs añadidos, 15 fuentes verificadas. Guardado en okara-ai/current.md (estructura por carpeta). Archivo deep-research eliminado."
     }
   ]
 }

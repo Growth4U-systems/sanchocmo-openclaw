@@ -1,8 +1,9 @@
 {
   "lastChecks": {
-    "email": 1774102200,
-    "calendar": 1774102200,
-    "email_2026_03_17_2310": 1774102200
+    "email": 1774526640,
+    "calendar": 1774526640,
+    "email_2026_03_18_1723": 1774526640,
+    "heartbeat": 1773856240
   },
   "notes": {
     "2026-03-08T18:26": "Email: 10 unread (newsletters, Upwork messages, GSC 40 clicks milestone). Calendar: normal week, meetings Mar 9. No urgent items <2h.",
@@ -13,8 +14,12 @@
     "2026-03-17T00:18": "Quiet hours (23:18). Email: 5 unread (Mike Futia subscription, Mastery Haus preventa, Claude Team Cowork promo, HighLevel support, Zephyr newsletter). No urgent items.",
     "2026-03-17T08:31": "Email: 5 unread (Skool digest, LinkedIn self-sent, Daniel Canosa newsletter, STARTRADER, spam report). Calendar: Sync Daily 9:45, Paylead 10:00, Alfonso-Anna 11:00, Demo Sancho Guido 11:30. Nada urgente <2h.",
     "2026-03-17T11:31": "Email: 5 unread (AI Money Lab Skool, VWO, Demo Sancho prep self-sent, Paco 1to1 accept/update). Demo Sancho Guido 11:30-12:00 AHORA. Q&A Oier 12:00, Weekly sistemas 13:00.",
-    "2026-03-17T17:11": "Email: 5 unread (Baserow promo, Forte Labs, self-sent Weekly Projects prep, Zephyr, Paco 1to1 update). Calendar: Cita digestivo 18:30 (~2h), 1to1 Paco mañana 12:30. Nada urgente.",
-    "2026-03-17T19:10": "Email: 5 unread (Airtable, Martin invite update, Supercut view, HighLevel receipt, DigitalOcean). Calendar mañana: Mid-week G4U 9:45, Edu 10:30, Alex Paymatico 11:30, Weekly Inuentia 12:00, Paco 1to1 12:30, Anna 13:00, Martin 13:30.",
-    "2026-03-17T23:10": "Quiet hours (23:10). Email: 5 unread (Supabase security alert, BEYOND MEDIA portal, Anna declined 18-Mar, 2 newsletters). Calendar mañana: lleno desde 9:45. Sin eventos <2h."
+    "2026-03-17T17:11": "Email: 5 unread (Baserow promo, Forte Labs, self-sent Weekly Projects prep, Zephyr, Paco 1to1 update). Calendar: Cita digestivo 18:30 (~2h), 1to1 Paco ma\u00f1ana 12:30. Nada urgente.",
+    "2026-03-17T19:10": "Email: 5 unread (Airtable, Martin invite update, Supercut view, HighLevel receipt, DigitalOcean). Calendar ma\u00f1ana: Mid-week G4U 9:45, Edu 10:30, Alex Paymatico 11:30, Weekly Inuentia 12:00, Paco 1to1 12:30, Anna 13:00, Martin 13:30.",
+    "2026-03-17T23:10": "Quiet hours (23:10). Email: 5 unread (Supabase security alert, BEYOND MEDIA portal, Anna declined 18-Mar, 2 newsletters). Calendar ma\u00f1ana: lleno desde 9:45. Sin eventos <2h.",
+    "2026-03-18T10:00": "Email: 5 unread (AI Money Lab Skool, Agent Mailscale, email change, self-sent prep, AI with Kyle). Calendar: Mid-week G4U AHORA 9:45-10:15, Edu 10:30, Paymatico 11:30, Weekly Inuentia 12:00, Paco 12:30, Anna 13:00, Martin 13:30. Ma\u00f1ana vac\u00edo.",
+    "2026-03-18T14:24": "Email: 5 unread (Valley, Amamos el Dinero, Teresa Torres, Thomas Oakes GTM, vFairs). Calendar: Ocupado 14:00-16:00 AHORA. Nada urgente.",
+    "2026-03-18T17:23": "Email: 5 unread (Skool Salsa $36k, Alba Spain Audience segmentation, Alfonso Spain Share out FY27 H1, Zephyr AI wrong, Qonto transferencia procesada). Calendar: Alfonso/Abi 16:30 (7 min). Ma\u00f1ana: Sync Daily 9:45.",
+    "2026-03-18T18:50:40.042023": "Heartbeat 18:50. Calendar check fall\u00f3 (gog error). \u00daltima info: Sync Daily ma\u00f1ana 9:45 (>2h). Nada urgente."
   }
 }

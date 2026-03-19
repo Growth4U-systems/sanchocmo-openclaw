@@ -17,3 +17,18 @@ Casos donde es mejor pedir el bono porque necesitan analítica casi obligatoriam
 - Debe estar presente (explícita o implícitamente) en TODA pieza de creative
 - NO usar referencias a competidores por nombre en copy público (CR7, Insparya, Svenson)
 - Formato video Meta: SIEMPRE pantalla partida — médico arriba hablando + situación abajo
+
+## 4 Caminos de Conversión (Philippe, 2026-03-18)
+
+1. **Quiz largo** (~12-14 preguntas, 3-4 min) — experiencia diagnóstica
+2. **Quiz corto** — versión rápida
+3. **Formulario directo** — "deja tu info y te contactamos"
+4. **Pago directo** — bono diagnóstico
+
+### Test de precio bono: €195 vs €125
+
+### Estructura de anuncios por género:
+- **Nichos hombres:** 2 anuncios diferentes:
+  - Anuncio A: "Deja tu información y te contactamos" (formulario directo)
+  - Anuncio B: Quiz
+- **Nichos mujeres:** Pendiente de definir

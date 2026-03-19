@@ -1,0 +1,18 @@
+{
+  "client": "dealcar",
+  "status": "in_progress",
+  "current_step": 2,
+  "started_at": "2026-03-18T10:41:00Z",
+  "thread_id": "1483777119061409876",
+  "sender_id": "1402171221747040369",
+  "responses": {
+    "step_1_empresa": "Dealcar es un software SaaS todo-en-uno para concesionarios de vehículos de ocasión (B2B). Fundada en 2023, sede en Las Rozas de Madrid. Startup. Ayuda a concesionarios independientes a digitalizar su gestión: inventario, CRM, multipublicación en portales (Coches.net, Wallapop, Milanuncios, Autoscout, etc.), creación de webs, facturación, contratos con firma digital, expedientes, gestión de leads, app móvil, y ecosistema de partners (financiación, proveedores). +500 compraventas confían en ellos. Propuesta de valor: ahorrar hasta 30h/mes y reducir tiempo de rotación de vehículos. Planes desde 54€/mes (Starter, 15 coches) hasta 144€/mes (Profesional, 100 coches), sin permanencia. Ronda de inversión en Feb 2025.",
+    "step_2_producto": "El software de gestión todo-en-uno para concesionarios de vehículos de ocasión (el producto core de Dealcar). Incluye CRM, inventario, multipublicación en portales, facturación, contratos, expedientes digitales, app móvil.",
+    "step_3_cliente_ideal": null,
+    "step_4_competidores": null,
+    "step_5_recursos": null,
+    "step_6_historial": null
+  },
+  "follow_ups_used": {},
+  "completed_at": null
+}

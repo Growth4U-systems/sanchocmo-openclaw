@@ -1,14 +1,14 @@
 {
   "client": "masavo",
   "status": "in_progress",
-  "current_step": 3,
+  "current_step": 4,
   "started_at": "2026-03-17T16:08:00Z",
   "thread_id": null,
   "sender_id": "1402171221747040369",
   "responses": {
     "step_1_empresa": "Café brunch en el barrio de Gracia, Barcelona. Espacio con buena música, buen wifi y comida excelente.",
     "step_2_producto": "Objetivo principal: llenar el local y darlo a conocer. El producto a impulsar es el café-brunch en sí.",
-    "step_3_cliente_ideal": null,
+    "step_3_cliente_ideal": "Público abierto pero ideal: 20-40 años, perfil cool/hipster, amante del slow living. Entre semana: remote workers que van a trabajar desde el café. Fines de semana: familias, parejas y grupos de amigos. Local cerca de Sagrada Familia — mix histórico 50% turistas / 50% locales. Traspaso reciente (negocio ya funcionaba).",
     "step_4_competidores": null,
     "step_5_recursos": null,
     "step_6_historial": null
