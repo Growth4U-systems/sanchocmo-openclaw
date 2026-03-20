@@ -134,16 +134,14 @@ gog drive search "nombre del lead" --folder="Supabase Recordings"
 
 4. **Crear archivo de lead**: `brand/{slug}/leads/{ghl_id}.md`
 
-### Phase 4: Existing Lead — State Update
+### Phase 4: Existing Lead — Update Intelligence
 
 Para contactos CON archivo `leads/{ghl_id}.md`:
 
-1. Leer frontmatter actual del archivo
-2. Comparar pipeline stage de GHL con el guardado
-3. Si cambió → añadir entrada en Interaction History (old → new)
-4. Si hay nuevas notas de Slack en GHL → añadir a history
-5. Buscar nuevos transcripts en Drive (por fecha vs `last_updated`)
-6. Actualizar frontmatter: `last_updated`, `ghl_pipeline_stage`
+1. Buscar nuevos transcripts en Drive (por fecha vs `last_enriched`)
+2. Si hay nuevos transcripts → resumir y añadir a sección Call Transcripts
+3. Actualizar frontmatter: `last_enriched`
+4. NO duplicar datos de GHL — pipeline stage, notas, contacto se leen siempre de GHL en tiempo real
 
 ### Phase 5: Summary
 
@@ -167,18 +165,12 @@ message(action=send, channel=discord, target="{intelligence_channel}", message="
 
 ## Lead File Template
 
+> Solo inteligencia que NO está en GHL. Datos operativos (email, teléfono, pipeline stage, notas Slack) se leen siempre de GHL en tiempo real.
+
 ```markdown
 ---
-name: {firstName} {lastName}
-company: {companyName}
-email: {email}
-phone: {phone}
-linkedin: {linkedin_url}
 ghl_id: {id}
-ghl_pipeline_stage: {pipeline_stage}
-lead_source: {source/tag}
-first_contact: {dateAdded}
-last_updated: {now}
+last_enriched: {now}
 enrichment_pending: false
 ---
 
@@ -186,7 +178,7 @@ enrichment_pending: false
 {company-finder output — sector, tamaño, producto, competidores, funding}
 
 ## Contact Enrichment
-{contact-enrichment output — verified email, phone, LinkedIn, role}
+{datos encontrados por contact-enrichment que NO estaban en GHL: LinkedIn verificado, email secundario, etc.}
 
 ## Call Transcripts
 ### {date} — {call_title}
@@ -194,13 +186,6 @@ enrichment_pending: false
 - **Next steps**: {extracted}
 - **Key quotes**: {extracted}
 - 🔗 [Transcript en Drive]({drive_link})
-
-## Interaction History
-
-### {date}
-- **Lead creado** via {source}
-- **Estado GHL**: {stage}
-- **Notas Slack**: "{slack_notes}"
 ```
 
 ## Error Handling

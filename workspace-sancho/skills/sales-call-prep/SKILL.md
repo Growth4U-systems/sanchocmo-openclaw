@@ -58,15 +58,16 @@ Filtrar solo eventos que parecen llamadas de ventas:
 
 Extraer: hora, título, nombres de attendees.
 
-### Step 2: Match Events to Lead Profiles
+### Step 2: Match Events to GHL Contacts + Lead Profiles
 
 Para cada evento del calendario:
 
 1. Extraer nombre del lead del título o de los attendees
-2. Buscar en `brand/{slug}/leads/` el archivo que coincida:
-   - Comparar nombre del frontmatter (`name:`) con el nombre del evento
-   - Fuzzy match: ignorar acentos, case-insensitive, permitir orden inverso
-3. Si no hay match → incluir en el briefing con "⚠️ Sin perfil encontrado"
+2. Buscar el contacto en GHL por nombre/email del attendee:
+   - `GET https://services.leadconnectorhq.com/contacts/?locationId={id}&query={nombre_o_email}`
+   - GHL es la fuente de verdad para datos operativos (email, teléfono, pipeline stage, notas Slack)
+3. Si hay match en GHL → buscar inteligencia adicional en `brand/{slug}/leads/{ghl_id}.md`
+4. Si no hay match en GHL → incluir en el briefing con "⚠️ Sin contacto en GHL"
 
 ### Step 3: Read Generic Sales Script
 
@@ -89,13 +90,11 @@ Si `notion_sales_script_page` está vacío o Notion no responde → usar script 
 
 ### Step 4: Personalize Script per Lead
 
-Para cada lead con perfil encontrado, generar script personalizado usando el contexto del lead file:
+Para cada lead con contacto en GHL, generar script personalizado combinando ambas fuentes:
 
 **Input al LLM:**
-- Company Intelligence (sector, tamaño, producto)
-- Interaction History completa
-- Pain points de llamadas anteriores (sección Call Transcripts)
-- Pipeline stage actual
+- **De GHL** (datos operativos): pipeline stage, notas Slack, tags, fecha de creación
+- **De leads/{ghl_id}.md** (inteligencia): Company Intelligence, Call Transcripts con pain points
 - Script genérico como template
 
 **Output — script personalizado con:**
