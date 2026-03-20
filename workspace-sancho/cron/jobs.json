@@ -352,8 +352,8 @@
     {
       "id": "a1b2c3d4-call-prep-growth4u-0002",
       "agentId": "sancho",
-      "name": "Sales Call Prep — Growth4U",
-      "description": "Nightly briefing with tomorrow's calls, enriched context, and personalized scripts",
+      "name": "Call Prep Daily — Growth4U",
+      "description": "Nightly briefing: tomorrow's calls with lead summary and meeting objective",
       "enabled": true,
       "createdAtMs": 1742504400000,
       "updatedAtMs": 1742504400000,
@@ -366,7 +366,34 @@
       "wakeMode": "now",
       "payload": {
         "kind": "agentTurn",
-        "message": "Ejecuta la skill sales-call-prep para Growth4U (slug: growth4u).\n\nCONFIG:\nLee brand/growth4u/lead-tracking-config.json para notion_sales_script_page y slack_channel_id.\n\nPASO 1 — CALENDARIO DE MAÑANA:\nUsa gog calendar upcoming para ver eventos de mañana. Filtra solo los que parecen llamadas de ventas (título contiene: call, llamada, demo, intro, reunión, meeting) y tienen attendees externos.\n\nPASO 2 — MATCH CON LEAD PROFILES:\nPara cada evento:\n1. Extrae nombre del lead del título o attendees\n2. Busca en brand/growth4u/leads/ un archivo cuyo frontmatter name: coincida (fuzzy match, ignorar acentos)\n3. Si no hay match → marcar como '⚠️ Sin perfil encontrado'\n\nPASO 3 — SALES SCRIPT DE NOTION:\nSi notion_sales_script_page tiene valor, lee la página con mcp__notion: notion-fetch(url: 'https://notion.so/{page_id}')\nSi está vacío o falla → usar script genérico: apertura + contexto + 3 preguntas discovery + propuesta de valor + cierre\n\nPASO 4 — PERSONALIZAR SCRIPT POR LEAD:\nPara cada lead con perfil, genera script personalizado usando:\n- Company Intelligence del lead file\n- Interaction History completa\n- Pain points de transcripts\n- Pipeline stage actual\n- Script genérico como template\n\nPersonalizar: apertura (referencia última interacción), preguntas discovery (lo que NO sabemos), ángulo de valor (su industria/pain points), manejo de objeciones, cierre apropiado al stage.\n\nPASO 5 — PUBLICAR BRIEFING:\nFormato:\n📞 LLAMADAS DE MAÑANA — {date}\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n🔵 {time} — {name} ({company})\n   Estado: {pipeline_stage}\n   📋 Contexto: {2-3 sentences}\n   🎯 Script: {personalizado}\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\nPublicar en Discord #intelligence (1477741644789842031) con patrón de hilo:\n1. message(action=send, channel=discord, target=1477741644789842031, message='📞 Llamadas de mañana — {date}: {count} calls')\n2. Capturar messageId → thread-create → enviar briefing completo al hilo\n\nSi NO hay llamadas mañana:\nmessage(action=send, channel=discord, target=1477741644789842031, message='📞 No hay llamadas programadas para mañana ({date}). Leads activos sin seguimiento reciente: {count}')\n\nPASO 6 — LOG:\nActualizar memory/heartbeat-state.json → sales_call_prep con last_run, calls_prepped, no_profile_found.",
+        "message": "Ejecuta sales-call-prep en MODO DIARIO para Growth4U (slug: growth4u).\n\nPASO 1 — CALENDARIO DE MAÑANA:\nUsa gog calendar upcoming para ver eventos de MAÑANA. Filtra solo llamadas de ventas (título contiene: call, llamada, demo, intro, reunión, meeting) con attendees externos (no @growth4u.io).\n\nPASO 2 — MATCH CON GHL:\nPara cada evento:\n1. Extrae nombre/email del lead del título o attendees\n2. Busca en GHL: GET https://services.leadconnectorhq.com/contacts/?locationId=BnXWP5dcLVMgUudLv10O&query={nombre_o_email} (Headers: Authorization: Bearer $GROWTH4U_GHL_API_KEY, Version: 2021-07-28)\n3. De GHL extrae: pipeline stage, notas Slack (custom field slack_notes), tags\n4. Si existe brand/growth4u/leads/{ghl_id}.md → lee Company Intelligence y Call Transcripts\n5. Sin match en GHL → '⚠️ Sin contacto en GHL'\n\nPASO 3 — GENERAR BRIEFING:\nPara cada llamada:\n- ⏰ Hora de la reunión\n- 📋 Resumen del lead: qué hablamos la última vez (de slack_notes + transcripts)\n- 🎯 Objetivo de la reunión: inferir del título del evento + pipeline stage + contexto de últimas notas\n\nFormato:\n📞 LLAMADAS DE MAÑANA — {date}\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n🔵 {time} — {name} ({company})\n   Estado: {pipeline_stage}\n   📋 Última vez: {qué se habló, 2-3 líneas}\n   🎯 Objetivo: {qué queremos lograr}\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\nSi NO hay llamadas mañana → '📞 No hay llamadas programadas para mañana ({date}).'\n\nPASO 4 — PUBLICAR:\nDiscord #intelligence (1477741644789842031) con patrón de hilo:\n1. message(action=send, channel=discord, target=1477741644789842031, message='📞 Llamadas de mañana — {date}: {count} calls')\n2. Capturar messageId → thread-create → enviar briefing al hilo\n\nPASO 5 — LOG:\nmemory/heartbeat-state.json → sales_call_prep: last_run, mode: daily, calls_found, no_ghl_match.",
+        "model": "anthropic/claude-sonnet-4-5"
+      },
+      "delivery": {
+        "mode": "none",
+        "channel": "discord",
+        "to": "channel:1477741644789842031"
+      },
+      "state": {}
+    },
+    {
+      "id": "a1b2c3d4-call-prep-growth4u-0003",
+      "agentId": "sancho",
+      "name": "Call Prep Weekly — Growth4U",
+      "description": "Friday overview: all calls for next week at a glance",
+      "enabled": true,
+      "createdAtMs": 1742504400000,
+      "updatedAtMs": 1742504400000,
+      "schedule": {
+        "kind": "cron",
+        "expr": "30 22 * * 5",
+        "tz": "Europe/Madrid"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Ejecuta sales-call-prep en MODO SEMANAL para Growth4U (slug: growth4u).\n\nPASO 1 — CALENDARIO SEMANA SIGUIENTE:\nUsa Google Calendar API para obtener eventos de LUNES a VIERNES de la semana que viene. Filtra solo llamadas de ventas (título contiene: call, llamada, demo, intro, reunión, meeting) con attendees externos.\n\nPASO 2 — MATCH CON GHL:\nPara cada evento:\n1. Busca en GHL: GET https://services.leadconnectorhq.com/contacts/?locationId=BnXWP5dcLVMgUudLv10O&query={nombre_o_email} (Headers: Authorization: Bearer $GROWTH4U_GHL_API_KEY, Version: 2021-07-28)\n2. Extrae: nombre, empresa, pipeline stage\n\nPASO 3 — GENERAR RESUMEN SEMANAL:\nFormato:\n📅 LLAMADAS SEMANA {date_range}\n\nLunes:\n  10:00 — Juan Pérez (TechCorp) — Follow-up demo\n  16:00 — María López (StartupXYZ) — Primera call\n\nMartes:\n  (sin llamadas)\n\n...\n\nTotal: {count} llamadas programadas\n\nSi NO hay llamadas → '📅 No hay llamadas programadas para la semana del {date_range}.'\n\nPASO 4 — PUBLICAR:\nDiscord #intelligence (1477741644789842031) con patrón de hilo:\n1. message(action=send, target=1477741644789842031, message='📅 Llamadas semana {date_range}: {count} calls')\n2. thread-create → enviar resumen al hilo\n\nPASO 5 — LOG:\nmemory/heartbeat-state.json → sales_call_prep: last_run, mode: weekly, calls_found.",
         "model": "anthropic/claude-sonnet-4-5"
       },
       "delivery": {

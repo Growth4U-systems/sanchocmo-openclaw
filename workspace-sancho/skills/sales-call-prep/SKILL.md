@@ -1,10 +1,10 @@
 ---
 name: sales-call-prep
-description: "Prepares daily sales call briefings with personalized scripts. Reads tomorrow's calls from Google Calendar, matches with enriched lead profiles, personalizes the generic Notion sales script, sends briefing via Discord. Triggers: 'prep calls', 'sales briefing', 'call prep', 'llamadas de mañana'."
+description: "Prepares call briefings: weekly overview on Fridays + daily detail the night before. For each call: time, lead summary, meeting objective. Triggers: 'prep calls', 'llamadas de mañana', 'llamadas de la semana', 'call prep'."
 user-invocable: true
 metadata:
   author: Alfonso Sainz de Baranda (Growth4U)
-  version: '1.0'
+  version: '2.0'
   system: SanchoCMO
   phase: Encuentra
   pillar: lead-tracking
@@ -14,99 +14,90 @@ metadata:
 context_required:
   - brand/{slug}/lead-tracking-config.json
   - brand/{slug}/leads/
-context_writes:
-  - brand/{slug}/leads/
+context_writes: []
 ---
 
 # Sales Call Prep
 
-> Briefing nocturno con las llamadas de mañana, contexto completo y scripts personalizados.
+> Dos avisos: viernes = resumen semanal, cada noche = detalle de mañana.
 
 ## Prerequisites
 
 **Tools needed:**
-- **Google Calendar** (`gog calendar`) — leer eventos de mañana
-- **Notion MCP** (`mcp__notion`) — leer sales script genérico
-- **Discord** (`message()`) — enviar briefing al canal
-- **GHL API** — datos de contacto si el lead file está incompleto
-- Archivos de leads en `brand/{slug}/leads/` (generados por @lead-intelligence-hub)
+- **Google Calendar** (`gog calendar`) — leer eventos
+- **Discord** (`message()`) — enviar briefing
+- **GHL API** — datos operativos del lead (notas Slack, pipeline stage)
+- Archivos de leads en `brand/{slug}/leads/` (inteligencia generada por @lead-intelligence-hub)
 
-## Config
+## Dos modos de ejecución
 
-Lee `brand/{slug}/lead-tracking-config.json`:
-- `notion_sales_script_page`: ID de la página de Notion con el sales script genérico
-- `slack_channel_id`: Canal donde enviar el briefing (también se publica en Discord)
+### Modo 1: Briefing diario (cada noche, domingo a jueves)
 
-## Execution Flow
+Llamadas de **mañana** con detalle completo.
 
-### Step 1: Get Tomorrow's Calendar Events
+### Modo 2: Resumen semanal (viernes)
 
-Usar `gog calendar upcoming` o la Google Calendar API directamente:
+Llamadas de **lunes a viernes de la semana siguiente** en vista panorámica.
 
+---
+
+## Step 1: Get Calendar Events
+
+**Diario:** eventos de mañana (00:00 a 23:59)
+**Semanal (viernes):** eventos de lunes a viernes de la semana siguiente
+
+Usar `gog calendar upcoming` o Google Calendar API:
 ```
 GET https://www.googleapis.com/calendar/v3/calendars/primary/events
 Params:
-  timeMin={tomorrow_00:00_UTC}
-  timeMax={tomorrow_23:59_UTC}
+  timeMin={start_UTC}
+  timeMax={end_UTC}
   singleEvents=true
   orderBy=startTime
 ```
 
-Filtrar solo eventos que parecen llamadas de ventas:
+Filtrar solo eventos que parecen llamadas con leads:
 - Título contiene: "call", "llamada", "demo", "intro", "reunión", "meeting"
 - Tiene attendees externos (no @growth4u.io)
 
-Extraer: hora, título, nombres de attendees.
+## Step 2: Match Events to GHL Contacts
 
-### Step 2: Match Events to GHL Contacts + Lead Profiles
+Para cada evento:
 
-Para cada evento del calendario:
+1. Extraer nombre/email del lead del título o attendees
+2. Buscar en GHL:
+   ```
+   GET https://services.leadconnectorhq.com/contacts/?locationId={id}&query={nombre_o_email}
+   Headers: Authorization: Bearer $GROWTH4U_GHL_API_KEY, Version: 2021-07-28
+   ```
+3. De GHL extraer: pipeline stage, notas Slack (`slack_notes` custom field), tags
+4. Buscar inteligencia adicional en `brand/{slug}/leads/{ghl_id}.md` (company research, transcripts)
+5. Si no hay match en GHL → marcar "⚠️ Sin contacto en GHL"
 
-1. Extraer nombre del lead del título o de los attendees
-2. Buscar el contacto en GHL por nombre/email del attendee:
-   - `GET https://services.leadconnectorhq.com/contacts/?locationId={id}&query={nombre_o_email}`
-   - GHL es la fuente de verdad para datos operativos (email, teléfono, pipeline stage, notas Slack)
-3. Si hay match en GHL → buscar inteligencia adicional en `brand/{slug}/leads/{ghl_id}.md`
-4. Si no hay match en GHL → incluir en el briefing con "⚠️ Sin contacto en GHL"
+## Step 3: Build Briefing
 
-### Step 3: Read Generic Sales Script
+Para cada llamada, generar:
 
-Leer la página de Notion con el script genérico:
+### A) Hora y datos básicos
+- Hora de la reunión
+- Nombre del lead + empresa (de GHL)
+- Pipeline stage actual
 
-```
-notion-fetch(url: "https://notion.so/{notion_sales_script_page}")
-```
+### B) Resumen del lead
+Combinar info de GHL + leads/{id}.md para responder: **¿Qué hablamos la última vez?**
+- Leer `slack_notes` de GHL → extraer la última nota con fecha
+- Leer Call Transcripts de leads/{id}.md → pain points y key quotes de la última llamada
+- Si no hay historial previo → indicar "Primera interacción"
 
-Parsear el contenido como template base del script.
+### C) Objetivo de la reunión
+Inferir el objetivo según:
+- El título del evento en Calendar (a veces dice "Demo", "Follow-up", "Propuesta", etc.)
+- El pipeline stage en GHL (si es "new" → discovery, si es "proposal" → cierre, etc.)
+- El contexto de las últimas notas (si dijeron "quiero ver pricing" → la reunión es para presentar propuesta)
 
-Si `notion_sales_script_page` está vacío o Notion no responde → usar script fallback:
-```
-1. Apertura: saludo + referencia a última interacción
-2. Contexto: "Vi que en [empresa] están trabajando en..."
-3. Discovery: 3 preguntas abiertas sobre pain points
-4. Propuesta de valor: cómo Growth4U ayuda con [problema específico]
-5. Cierre: siguiente paso concreto
-```
+## Step 4: Send Briefing
 
-### Step 4: Personalize Script per Lead
-
-Para cada lead con contacto en GHL, generar script personalizado combinando ambas fuentes:
-
-**Input al LLM:**
-- **De GHL** (datos operativos): pipeline stage, notas Slack, tags, fecha de creación
-- **De leads/{ghl_id}.md** (inteligencia): Company Intelligence, Call Transcripts con pain points
-- Script genérico como template
-
-**Output — script personalizado con:**
-- **Apertura**: Referencia a la última interacción o detalle específico de la empresa
-- **Preguntas discovery**: Adaptadas a lo que NO sabemos aún
-- **Ángulo de valor**: Basado en su industria/pain points
-- **Manejo de objeciones**: Basado en concerns de llamadas previas
-- **Cierre/Next step**: Apropiado para el stage actual del pipeline
-
-### Step 5: Generate and Send Briefing
-
-Formato del briefing:
+### Formato diario (llamadas de mañana):
 
 ```
 📞 LLAMADAS DE MAÑANA — {date}
@@ -114,54 +105,58 @@ Formato del briefing:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 🔵 {time} — {name} ({company})
    Estado: {pipeline_stage}
-   Última interacción: {days_ago} días ({type})
 
-   📋 Contexto:
-   {2-3 sentences resumen del lead file}
+   📋 Última vez: {resumen de qué se habló, 2-3 líneas}
 
-   🎯 Script personalizado:
-   - Apertura: {opening}
-   - Preguntas clave: {key_questions}
-   - Ángulo de valor: {value_angle}
-   - Cierre: {close}
-
-   🔗 Perfil: brand/{slug}/leads/{ghl_id}.md
+   🎯 Objetivo: {qué queremos lograr en esta reunión}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
-**Publicar en Discord** (patrón obligatorio de hilo):
-1. `message(action=send, channel=discord, target="{intelligence_channel}", message="📞 Llamadas de mañana — {date}: {count} calls")`
-2. Capturar `messageId` del resultado
-3. `message(action=thread-create, channel=discord, target="{intelligence_channel}", messageId="{messageId}", threadName="📞 Call Prep — {date}")`
-4. Capturar `threadId`
-5. `message(action=send, channel=discord, target="{threadId}", message="{briefing_completo}")`
+### Formato semanal (viernes, semana siguiente):
 
-### Step 6: Log Execution
+```
+📅 LLAMADAS SEMANA {date_range}
+
+Lunes:
+  10:00 — Juan Pérez (TechCorp) — Follow-up demo
+  16:00 — María López (StartupXYZ) — Primera call
+
+Martes:
+  (sin llamadas)
+
+Miércoles:
+  11:00 — Carlos García (AgenciaABC) — Propuesta
+
+Total: {count} llamadas programadas
+```
+
+### Publicar en Discord (patrón de hilo):
+1. `message(action=send, channel=discord, target=1477741644789842031, message="📞 {título}: {count} llamadas")`
+2. Capturar `messageId` → `message(action=thread-create, ...threadName="📞 Call Prep — {date}")`
+3. Capturar `threadId` → `message(action=send, target={threadId}, message="{briefing_completo}")`
+
+## Step 5: Log
 
 Actualizar `memory/heartbeat-state.json`:
 ```json
 {
   "sales_call_prep": {
-    "last_run": "2026-03-20T23:30:00Z",
-    "calls_prepped": 2,
-    "no_profile_found": 0
+    "last_run": "2026-03-20T22:30:00Z",
+    "mode": "daily",
+    "calls_found": 2,
+    "no_ghl_match": 0
   }
 }
 ```
 
-## No Calls Tomorrow?
+## No Calls?
 
-Si no hay eventos que coincidan, enviar mensaje breve:
-```
-📞 No hay llamadas programadas para mañana ({date}).
-Leads activos sin seguimiento reciente: {count}
-```
-
-Contar leads activos = archivos en `brand/{slug}/leads/` cuyo `last_updated` > 7 días.
+**Diario:** "📞 No hay llamadas programadas para mañana ({date})."
+**Semanal:** "📅 No hay llamadas programadas para la semana del {date_range}."
 
 ## Error Handling
 
-- Calendar API error → skip, log en heartbeat-state, notificar en Discord
-- Notion page no encontrada → usar script fallback genérico (Step 3)
-- Lead profile missing → incluir en briefing con warning, usar solo datos básicos de GHL
+- Calendar API error → log en heartbeat-state, notificar en Discord
+- GHL contact no encontrado → incluir en briefing con datos del evento solo
+- leads/{id}.md no existe → briefing con datos de GHL solamente (sin inteligencia extra)
 - Discord send falla → retry 1x, log error
