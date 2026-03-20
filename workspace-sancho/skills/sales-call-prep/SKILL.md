@@ -112,6 +112,8 @@ Inferir el objetivo según:
    📋 Última vez: {resumen de qué se habló, 2-3 líneas}
 
    🎯 Objetivo: {qué queremos lograr en esta reunión}
+
+   📄 Perfil: brand/growth4u/leads/{ghl_id}.md
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
