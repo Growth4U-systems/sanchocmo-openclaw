@@ -1,12 +1,14 @@
 # Fase 1 — Campañas Google Ads + Meta Ads (Guiones)
 
-> Versión: v2.0 | Fecha: 2026-03-17 | Nichos: 3
+> Versión: v3.0 | Fecha: 2026-03-19 | Nichos: 3
 > v1.0: Primera versión
 > v1.1: Formato pantalla partida (Philippe 17/03)
-> v2.0: Frase core integrada + diferenciador "hospital con médicos" en cada pieza + QA corrections (SAM 9.6M). Philippe 17/03.
+> v2.0: Frase core integrada + diferenciador "hospital con médicos" + QA corrections. Philippe 17/03.
+> v3.0: CTAs actualizados — 4 caminos de conversión + estructura por género. Philippe 18-19/03.
 > Nichos: "Es Normal" (menopausia) + "Lo Que Vino Con el Bebé" (postparto) + "¿Qué Me Pasa?" (gateway)
-> CTA principal nichos femeninos: Bono diagnóstico €195 (analítica obligatoria)
-> CTA gateway: Quiz online → Consulta
+> CTA mujeres: SOLO quiz (no formulario directo)
+> CTA hombres: 2 anuncios (formulario directo + quiz)
+> Test de precio bono: €195 vs €125
 
 ## Diferenciadores Core (presentes en CADA pieza)
 
@@ -19,13 +21,29 @@
 
 ---
 
+## 4 Caminos de Conversión
+
+| # | Camino | Descripción | Fricción |
+|---|--------|-------------|----------|
+| 1 | Quiz largo | 12-14 preguntas, 3-4 min. Experiencia diagnóstica. Educa y segmenta. | Baja |
+| 2 | Quiz corto | Versión rápida. Menos fricción. | Muy baja |
+| 3 | Formulario directo | "Deja tu info y te contactamos." | Media |
+| 4 | Pago directo | Bono diagnóstico. Test: **€195 vs €125** | Alta |
+
+### Regla de asignación por género:
+- **Mujeres → SOLO quiz** (necesitan educación, el quiz genera confianza)
+- **Hombres → 2 anuncios:** formulario directo + quiz
+
+---
+
 ## 📋 Resumen de Campañas
 
 | # | Nicho | Google Ads | Meta Video | CTA |
 |---|-------|-----------|------------|-----|
-| 1 | 👩 "Es Normal" | Search + Display | 1 video 45s | Bono €195 |
-| 2 | 🤱 "Lo Que Vino Con el Bebé" | Search | 1 video 40s | Bono €195 |
-| 3 | ❓ "¿Qué Me Pasa?" | Search (2 grupos) | 1 video 35s | Quiz online |
+| 1 | 👩 "Es Normal" | Search | 1 video → Quiz | Solo quiz |
+| 2 | 🤱 "Lo Que Vino Con el Bebé" | Search | 1 video → Quiz | Solo quiz |
+| 3 | ❓ "¿Qué Me Pasa?" (hombres) | Search (2 grupos) | Video A → Formulario / Video B → Quiz | 2 anuncios |
+| 4 | ❓ "¿Qué Me Pasa?" (mujeres) | Search (2 grupos) | 1 video → Quiz | Solo quiz |
 
 ---
 
@@ -68,13 +86,13 @@
 *Abajo (situación):* Médico con paciente en consulta real, mostrando resultados en pantalla. La paciente asiente, aliviada.
 *Texto:* Protocolo personalizado · Seguimiento médico cada 3 meses
 
-**[32-42s] CTA — Bono diagnóstico**
-*Arriba (médico):* "Si te dicen que es normal y tú sabes que no lo es… pide la opinión de un médico que sí sepa de pelo."
+**[32-42s] CTA — Quiz**
+*Arriba (médico):* "Si te dicen que es normal y tú sabes que no lo es… haz el test. En 3 minutos sabes por dónde empezar."
 *Abajo → pantalla completa:* Logo Hospital Capilar + CTA grande.
 *Texto en pantalla:*
-🏥 **Hospital Capilar — Diagnóstico capilar completo**
-Tricoscopía + analítica hormonal + plan personalizado — **€195**
-**Pide tu cita →**
+🏥 **Hospital Capilar — Test capilar gratuito**
+Descubre qué le pasa a tu pelo en 3 minutos
+**Haz tu test →**
 
 ### Variaciones para testear:
 - **Hook A:** Médico: "Soy médico especialista en pelo. Y lo primero que digo a mis pacientes es: tu ginecóloga no tiene las herramientas para diagnosticar esto." / Abajo: Mujer frente al espejo.
@@ -87,20 +105,24 @@ Tricoscopía + analítica hormonal + plan personalizado — **€195**
 
 ### Grupo de anuncios: Caída pelo menopausia
 
-**Keywords (exact + phrase match):**
+**Keywords (datos reales Google Keyword Planner, ordenadas por volumen):**
+
+*Tier 1 — Mayor volumen:*
+- "porque se cae el pelo en mujeres"
+- "porque se me cae tanto el pelo mujer"
+- "porque se cae el pelo en la mujer"
+- "porque se cae el pelo en las mujeres"
+
+*Tier 2 — Volumen medio (específicas menopausia):*
+- [caída cabello menopausia]
+- [menopausia y caída de pelo]
 - [caída pelo menopausia]
-- [pelo fino menopausia]
-- [se me cae el pelo menopausia]
-- [alopecia femenina menopausia]
-- [tratamiento caída pelo mujer 50 años]
-- [caída pelo mujer menopausia tratamiento]
-- [pelo ralo menopausia]
-- "pelo se cae menopausia"
-- "alopecia mujer menopausia"
-- "pérdida pelo hormonal mujer"
+- [caída de pelo en menopausia]
+- [caída de cabello en la menopausia]
+- "con la menopausia se cae el pelo"
 
 **Negativas:**
-- trasplante, injerto, hombre, barba, cejas, champú, farmacia, casero, natural, gratis (ajustar)
+- trasplante, injerto, hombre, barba, cejas, champú, farmacia, casero, natural, gratis, kerastase, peluquería (ajustar)
 
 ### Anuncios RSA (Responsive Search Ads):
 
@@ -111,27 +133,26 @@ Tricoscopía + analítica hormonal + plan personalizado — **€195**
 4. Médico Especialista · No Esteticista
 5. Tricoscopía + Analítica Hormonal
 6. Hospital Capilar — 4.8★ Trustpilot
-7. Diagnóstico Médico Real por €195
+7. Test Capilar Gratis en 3 Minutos
 8. Un Hospital. Con Médicos. De Verdad.
 9. Protocolo Personalizado para Mujer
 10. Resultados en 3-6 Meses
 11. Sin Presión · Sin Compromiso
-12. Saber Qué Tienes. Luego Decides
+12. Descubre Qué Le Pasa a Tu Pelo
 13. Pide Cita Esta Semana
 14. No Una Clínica Estética
 15. 4 de Cada 10 Mujeres Lo Sufren
 
 **Descriptions (4 opciones):**
-1. Somos un hospital con médicos especialistas, no una clínica estética. Diagnóstico completo en 1 consulta: tricoscopía + analítica hormonal. €195.
-2. La caída hormonal tiene solución médica. En Hospital Capilar te atiende un médico especialista — no un asesor comercial. Protocolo personalizado. Pide tu cita.
-3. 4 de cada 10 mujeres pierden pelo en la menopausia. Ninguna clínica se especializa en ellas. Hospital Capilar sí. Diagnóstico médico + plan personalizado.
-4. Sin ventas, sin presión. Un médico especialista te explica qué pasa con tu pelo y qué opciones reales tienes. Tú decides después.
+1. Somos un hospital con médicos especialistas, no una clínica estética. Haz el test capilar gratis y descubre qué le pasa a tu pelo en 3 minutos.
+2. La caída hormonal tiene solución médica. En Hospital Capilar te atiende un médico especialista — no un asesor comercial. Haz tu test gratis.
+3. 4 de cada 10 mujeres pierden pelo en la menopausia. Ninguna clínica se especializa en ellas. Hospital Capilar sí. Test capilar gratuito.
+4. Sin ventas, sin presión. Un médico especialista te explica qué pasa con tu pelo y qué opciones reales tienes. Empieza con el test gratis.
 
 **Extensiones:**
 - *Sitelinks:* Diagnóstico capilar | Tratamientos mujer | Opiniones pacientes | Nuestro equipo médico
 - *Callout:* 4.8★ Trustpilot · Médicos especialistas · Hospital, no clínica estética · Sin compromiso
-- *Snippet:* Servicios: Tricoscopía, Analítica hormonal, Tratamiento personalizado, Seguimiento trimestral
-- *Precio:* Diagnóstico completo: €195
+- *Snippet:* Servicios: Test capilar gratis, Tricoscopía, Analítica hormonal, Protocolo personalizado
 
 **Configuración campaña:**
 - Red: Search only
@@ -146,7 +167,7 @@ Tricoscopía + analítica hormonal + plan personalizado — **€195**
 # NICHO 2 — 🤱 "LO QUE VINO CON EL BEBÉ" (Postparto)
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-## 🎬 GUIÓN VIDEO META ADS — "Si llevas +6 meses, necesitas un médico"
+## 🎬 GUIÓN VIDEO META ADS — "Si llevas +6 meses, necesitas un médico" → CTA: Quiz
 
 **Formato:** Vertical 9:16 — PANTALLA PARTIDA
 - **Mitad superior:** Médico/a de Hospital Capilar hablando a cámara (siempre visible, narra todo)
@@ -181,13 +202,13 @@ Tricoscopía + analítica hormonal + plan personalizado — **€195**
 *Abajo (situación):* Médico con paciente en consulta, mostrando plan en pantalla. La paciente sonríe aliviada.
 *Texto:* Protocolo personalizado · Compatible con lactancia (consultar)
 
-**[32-40s] CTA**
-*Arriba (médico):* "Si tu pelo no vuelve, no esperes más. No necesitas otro 'dale tiempo'. Necesitas un diagnóstico médico."
+**[32-40s] CTA — Quiz**
+*Arriba (médico):* "Si tu pelo no vuelve, no esperes más. Haz el test y en 3 minutos sabes si necesitas un médico capilar."
 *Abajo → pantalla completa:* Logo Hospital Capilar. CTA grande.
 *Texto en pantalla:*
-🏥 **Hospital Capilar — Diagnóstico capilar completo**
-Tricoscopía + analítica hormonal + plan personalizado — **€195**
-**Pide tu cita →**
+🏥 **Hospital Capilar — Test capilar gratuito**
+Descubre qué le pasa a tu pelo en 3 minutos
+**Haz tu test →**
 
 ### Variaciones para testear:
 - **Hook A:** Médico: "¿Sabías que la caída postparto 'normal' dura máximo 4 meses? Si llevas más, necesitas un médico. No un 'dale tiempo'." / Abajo: Calendario marcando meses.
@@ -200,19 +221,34 @@ Tricoscopía + analítica hormonal + plan personalizado — **€195**
 
 ### Grupo de anuncios: Caída pelo postparto
 
-**Keywords (exact + phrase match):**
+**Keywords (datos reales Google Keyword Planner, ordenadas por volumen):**
+
+*Tier 1 — Mayor volumen:*
 - [caída pelo postparto]
-- [se me cae el pelo después del parto]
-- [alopecia postparto]
-- [pelo se cae después embarazo]
-- [tratamiento caída pelo postparto]
+- [caída de pelo postparto]
+- "mejor tratamiento caída cabello postparto"
+- [caída cabello postparto]
+
+*Tier 2 — Volumen medio:*
 - [caída pelo lactancia]
-- [cuándo deja de caerse el pelo postparto]
-- "pelo postparto no se recupera"
-- "efluvio telógeno postparto tratamiento"
+- [caída de pelo lactancia]
+- "vitaminas caída pelo postparto"
+- "pastillas caída pelo postparto"
+- "vitaminas pelo postparto"
+- [caída de cabello postparto]
+- [caída cabello post parto]
+- [caída del cabello postparto]
+- "caída pelo postparto tratamiento"
+- "caída pelo después embarazo"
+
+*Tier 3 — Volumen bajo pero relevante:*
+- [efluvio telógeno postparto]
+- [alopecia postparto]
+- "caída del pelo y lactancia"
+- "pastillas caída pelo lactancia"
 
 **Negativas:**
-- trasplante, injerto, hombre, champú casero, remedios naturales, gratis
+- trasplante, injerto, hombre, champú casero, remedios naturales, gratis, kerastase
 
 ### Anuncios RSA:
 
@@ -224,26 +260,25 @@ Tricoscopía + analítica hormonal + plan personalizado — **€195**
 5. No Una Clínica Estética
 6. Tricoscopía + Analítica Hormonal
 7. Hospital Capilar — 4.8★ Trustpilot
-8. Diagnóstico Médico Completo €195
+8. Test Capilar Gratis en 3 Minutos
 9. Diferenciamos Postparto de Alopecia
 10. Respuestas en 1 Consulta
 11. Protocolo Personalizado
 12. Sin Presión · Tú Decides
-13. Pide Cita Esta Semana
+13. Descubre Qué Le Pasa a Tu Pelo
 14. Médico Especialista · No Esteticista
 15. Compatible con Lactancia (consultar)
 
 **Descriptions:**
-1. ¿Tu pelo no vuelve después del parto? Si lleva +6 meses, necesitas un médico especialista — no más "dale tiempo". Diagnóstico completo por €195.
-2. Somos un hospital con médicos especialistas, no una clínica estética. Diferenciamos efluvio postparto de alopecia hormonal en 1 consulta. Pide tu cita.
-3. Tu ginecóloga dice "ya volverá". Pero no vuelve. En Hospital Capilar, un médico especialista te diagnostica con tricoscopía + analítica hormonal.
-4. Sin ventas, sin presión. Un médico que entiende de pelo — no un "asesor capilar". Te dice qué tienes y tú decides. €195.
+1. ¿Tu pelo no vuelve después del parto? Si lleva +6 meses, necesitas un médico especialista. Haz el test capilar gratis y descubre qué pasa.
+2. Somos un hospital con médicos especialistas, no una clínica estética. Diferenciamos efluvio postparto de alopecia hormonal. Test gratis en 3 min.
+3. Tu ginecóloga dice "ya volverá". Pero no vuelve. En Hospital Capilar, un médico especialista te diagnostica. Empieza con el test gratuito.
+4. Sin ventas, sin presión. Un médico que entiende de pelo — no un "asesor capilar". Haz tu test capilar y da el primer paso.
 
 **Extensiones:**
 - *Sitelinks:* Diagnóstico capilar | Alopecia femenina | Opiniones reales | Nuestros médicos
 - *Callout:* 4.8★ Trustpilot · Hospital con médicos · No clínica estética · Sin compromiso
-- *Snippet:* Incluye: Tricoscopía, Analítica hormonal, Plan personalizado, Seguimiento médico
-- *Precio:* Diagnóstico: €195
+- *Snippet:* Incluye: Test capilar gratis, Tricoscopía, Analítica hormonal, Protocolo personalizado
 
 **Configuración:**
 - Red: Search only
@@ -260,13 +295,19 @@ Tricoscopía + analítica hormonal + plan personalizado — **€195**
 
 ## 🎬 GUIÓN VIDEO META ADS — "Google no es un médico. Nosotros sí."
 
+> **NOTA:** Este nicho es hombre + mujer. Se hacen **3 versiones de CTA**:
+> - **Versión A (hombres):** CTA → Formulario directo ("deja tu info")
+> - **Versión B (hombres):** CTA → Quiz
+> - **Versión C (mujeres):** CTA → Solo quiz
+> El cuerpo del video (hook → problema → solución) es el mismo. Solo cambia el cierre (últimos 8-10s) y la audiencia segmentada en Meta.
+
 **Formato:** Vertical 9:16 — PANTALLA PARTIDA
 - **Mitad superior:** Médico de Hospital Capilar hablando a cámara (siempre visible, narra todo)
 - **Mitad inferior:** Situaciones — hombre y mujer alternan
 
 **Duración:** 30-40s | **Tono:** Médico directo, seguro. "Deja de buscar. Ven a un hospital."
 
-### Estructura:
+### Estructura (común para las 3 versiones):
 
 **[0-3s] HOOK — Impacto**
 *Arriba (médico):* Bata blanca, placa visible. "47 millones de resultados en Google. Ninguno te dice qué tienes tú. Yo sí puedo."
@@ -288,7 +329,23 @@ Tricoscopía + analítica hormonal + plan personalizado — **€195**
 *Abajo (situación):* Tricoscopio sobre cuero cabelludo. Pantalla con imágenes foliculares. Médico señalando datos.
 *Texto:* Diagnóstico médico completo en 1 consulta
 
-**[22-30s] CTA — Quiz**
+---
+
+### 🔹 CTA VERSIÓN A — Hombres → Formulario directo
+
+**[22-30s]**
+*Arriba (médico):* "Deja tus datos y un médico de nuestro equipo te contacta para explicarte cómo funciona. Sin compromiso."
+*Abajo → pantalla completa:* Logo Hospital Capilar. Formulario con campos nombre + teléfono.
+*Texto en pantalla:*
+🏥 **Hospital Capilar — Te contactamos**
+Deja tu información y un médico especialista te llama
+**Pide que te llamen →**
+
+---
+
+### 🔹 CTA VERSIÓN B — Hombres → Quiz
+
+**[22-30s]**
 *Arriba (médico):* "Deja de buscar en Google. Haz el test en 3 minutos y da el primer paso con un hospital de verdad."
 *Abajo → pantalla completa:* Pantalla del móvil con quiz HC. Logo Hospital Capilar.
 *Texto en pantalla:*
@@ -296,7 +353,21 @@ Tricoscopía + analítica hormonal + plan personalizado — **€195**
 Descubre tu tipo de caída en 3 minutos
 **Haz tu test →**
 
-### Variaciones:
+---
+
+### 🔹 CTA VERSIÓN C — Mujeres → Solo quiz
+
+**[22-30s]**
+*Arriba (médico):* "Haz el test capilar. En 3 minutos descubres qué le pasa a tu pelo y qué puedes hacer."
+*Abajo → pantalla completa:* Pantalla del móvil con quiz HC. Logo Hospital Capilar.
+*Texto en pantalla:*
+🏥 **Hospital Capilar — Test capilar gratuito**
+Descubre qué le pasa a tu pelo en 3 minutos
+**Haz tu test →**
+
+---
+
+### Variaciones de hook (aplican a las 3 versiones):
 - **Hook A:** Médico: "Tu médico de cabecera miró tu pelo 30 segundos. En un hospital capilar lo miramos con esto." (muestra tricoscopio) / Abajo: Tricoscopía en detalle.
 - **Hook B:** Médico: "¿Cuántas mañanas más vas a contar los pelos de la almohada? Ven a un hospital. Con médicos de verdad." / Abajo: Persona en la cama, mirando la almohada.
 - **Hook C:** Médico: "Soy médico. No esteticista, no asesor, no comercial. Y esto es lo que veo cuando miro tu pelo." / Abajo: Imagen de tricoscopía real.
@@ -305,34 +376,73 @@ Descubre tu tipo de caída en 3 minutos
 
 ## 🔍 GOOGLE ADS — "¿Qué Me Pasa?" (Gateway)
 
+> **Configuración de campañas por género:**
+> - **Hombres:** 2 campañas (o ad groups) con CTAs diferentes — formulario directo + quiz
+> - **Mujeres:** Solo quiz como CTA
+> Segmentar por audiencia en Google Ads (observation → target cuando haya datos)
+
 ### Grupo 1: Búsqueda de síntomas (volumen alto)
 
-**Keywords:**
-- [por qué se me cae el pelo]
-- [se me cae mucho el pelo]
-- [caída pelo causas]
-- [se me cae el pelo qué hago]
-- [caída pelo mujer causas]
-- [caída pelo hombre causas]
-- [pelo se cae mucho de repente]
+**Keywords (datos reales Google Keyword Planner, ordenadas por volumen):**
+
+*Tier 1 — Mayor volumen:*
+- "se me cae el pelo mucho"
+- "porque se me cae tanto el pelo"
+- "porque se cae el pelo"
+- "porque se me cae el pelo"
+- "por qué se me cae tanto el pelo"
+- "se me cae mucho el pelo que puedo hacer"
 - "se me cae el pelo"
-- "por qué pierdo pelo"
-- "caída pelo estrés"
+- "por qué se me cae el pelo"
+- "porque se me cae mucho el pelo"
+
+*Tier 2 — Volumen medio:*
+- "el pelo que se cae vuelve a crecer"
+- "porque se te cae el pelo"
+- "porque se cae tanto el pelo"
+- "porque se cae mucho el pelo"
+- "se me cae mucho el pelo que tomar"
+- "motivos por los que se cae el pelo"
+- "porque se cae el pelo en los hombres"
+- "me cae mucho el pelo que puedo hacer"
+- "se me está cayendo el pelo que hago"
+
+*Tier 3 — Volumen medio-bajo (acción):*
+- "q hacer si se me cae mucho el pelo"
+- "q hacer si se te cae el pelo"
+- "se me cae muchísimo el pelo que puedo hacer"
+- "a qué médico ir si se me cae el pelo"
+- "es normal que se me caiga mucho el pelo"
+
+*Variantes "cabello" (tráfico mixto España+Latam):*
+- "porque se cae el cabello"
+- "porque se me cae el cabello"
+- "porque se me cae mucho el cabello"
+- "por qué se me cae mucho el cabello"
+- "por qué se me cae tanto el cabello"
 
 ### Grupo 2: Búsqueda de diagnóstico
 
 **Keywords:**
 - [diagnóstico capilar]
-- [tricólogo cerca de mí]
-- [especialista capilar]
-- [clínica capilar diagnóstico]
-- [médico capilar Madrid/Barcelona]
-- [tricoscopía precio]
-- "diagnóstico alopecia"
-- "dermatólogo pelo"
+- [diagnóstico capilar gratuito]
+- [diagnóstico capilar online]
+- "a qué médico ir si se me cae el pelo"
+- "estudio capilar"
 
-**Negativas (ambos grupos):**
-- trasplante, injerto, champú, remedios caseros, amazon, comprar, barato, gratis, perro, gato
+### Grupo 3: Keywords estacionales (activar en otoño/primavera)
+
+**Keywords:**
+- "en qué mes se cae más el pelo"
+- "en otoño se cae más el pelo"
+- "es normal que se caiga el pelo en verano"
+- "porque se cae el pelo en otoño"
+- "porque se cae el pelo en verano"
+- "se cae más el pelo en otoño"
+- "se me cae mucho el pelo en verano"
+
+**Negativas (todos los grupos):**
+- trasplante, injerto, champú, remedios caseros, amazon, comprar, barato, gratis, perro, gato, cejas, kerastase, peluquería
 
 ### Anuncios RSA — Grupo 1 (Síntomas):
 
@@ -397,12 +507,32 @@ Descubre tu tipo de caída en 3 minutos
 
 ## Presupuesto estimado total: €100-160/día (~€3.000-4.800/mes)
 
-| Nicho | Google Ads/día | Meta Ads/día | Total/día | CPA estimado |
-|-------|---------------|-------------|----------|-------------|
-| 👩 Es Normal | €30-50 | €30-50 | €60-100 | €15-30 |
-| 🤱 Postparto | €20-30 | €20-30 | €40-60 | €10-25 |
-| ❓ Qué Me Pasa | €50-80 | €30-50 | €80-130 | €8-20 |
-| **TOTAL** | **€100-160** | **€80-130** | **€180-290** | — |
+### Distribución Google Ads (basada en volumen real de keywords):
+
+| Nicho | % Google Ads | Google/día | Justificación |
+|-------|:-----------:|-----------|---------------|
+| ❓ Gateway | **55%** | €55-90 | Mayor volumen de búsqueda con diferencia |
+| 🤱 Postparto | **20%** | €20-30 | Volumen real confirmado + keywords producto |
+| 👩 Menopausia | **15%** | €15-25 | Más volumen del esperado (5+ keywords directas) |
+| 🔬 Diagnóstico | **10%** | €10-15 | Poco volumen pero intención altísima |
+
+### Distribución Meta Ads:
+
+| Nicho | % Meta Ads | Meta/día | Justificación |
+|-------|:---------:|---------|---------------|
+| 👩 Menopausia | **40%** | €30-50 | Canal principal — segmentación mujeres 45-55 |
+| ❓ Gateway | **30%** | €25-40 | Vídeo amplio hombre+mujer |
+| 🤱 Postparto | **30%** | €25-40 | Comunidades mamás + segmentación 28-38 |
+
+### Total combinado:
+
+| Nicho | Google/día | Meta/día | Total/día |
+|-------|-----------|---------|----------|
+| ❓ Gateway | €55-90 | €25-40 | €80-130 |
+| 👩 Menopausia | €15-25 | €30-50 | €45-75 |
+| 🤱 Postparto | €20-30 | €25-40 | €45-70 |
+| 🔬 Diagnóstico | €10-15 | — | €10-15 |
+| **TOTAL** | **€100-160** | **€80-130** | **€180-290** |
 
 ## Diferenciador en cada pieza — Checklist ✅
 
@@ -423,7 +553,21 @@ Descubre tu tipo de caída en 3 minutos
 5. Lanzar y medir durante 2 semanas → optimizar
 
 ## Notas sobre CTA:
-- **Nichos femeninos (Es Normal + Postparto):** Bono €195 como CTA principal. Estos casos necesitan analítica casi obligatoriamente (confirmado por Philippe 09/03). El bono incluye: tricoscopía + analítica hormonal + plan. Valor percibido alto.
-- **Gateway (¿Qué Me Pasa?):** Quiz online gratuito como primer paso → consulta como segundo paso. El quiz baja la barrera de entrada y segmenta automáticamente.
 
-<!-- Self-QA: PASS | 2026-03-17 | v2.0 — Frase core "Somos un hospital. Con médicos. No una clínica estética." presente en los 3 guiones de video y los 3 grupos de Google Ads. Sin referencias a competidores por nombre. Formato pantalla partida en todos los videos. SAM corregido (no 9.6M). -->
+### Mujeres → SOLO quiz
+- **Es Normal + Postparto:** Quiz como único CTA en anuncios. Estas mujeres necesitan educación — el quiz genera confianza y segmenta.
+- El bono (€195 o €125) aparece DESPUÉS del quiz, en la página de resultados, como opción para quien quiera avanzar rápido.
+- La analítica es casi obligatoria en estos casos (Philippe 09/03), pero la venta del bono ocurre post-quiz, no en el anuncio.
+
+### Hombres → 2 anuncios
+- **Anuncio A — Formulario directo:** "Deja tu info y te contactamos." Para hombres que ya saben que tienen un problema y quieren acción directa.
+- **Anuncio B — Quiz:** Para hombres que necesitan más contexto antes de dar el paso.
+- **Test de precio bono:** €195 vs €125 (en landing post-quiz o post-formulario).
+
+### 4 caminos de conversión en el funnel:
+1. Quiz largo (12-14 preguntas) → página resultado → bono/booking/callback
+2. Quiz corto → página resultado → bono/booking/callback
+3. Formulario directo → equipo comercial llama
+4. Pago directo → bono diagnóstico (test €195 vs €125)
+
+<!-- Self-QA: PASS | 2026-03-19 | v3.0 — CTAs actualizados: mujeres=solo quiz, hombres=2 anuncios (formulario+quiz). Frase core presente en todos los videos y Google Ads. Sin competidores por nombre. Pantalla partida en todos. SAM correcto. Test precio €195 vs €125 documentado. -->

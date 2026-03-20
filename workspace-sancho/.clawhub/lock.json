@@ -3,43 +3,43 @@
   "skills": {
     "apify": {
       "version": "1.0.3",
-      "installedAt": 1773808268307
+      "installedAt": 1773894649207
     },
     "google-analytics": {
       "version": "1.0.10",
-      "installedAt": 1773808270130
+      "installedAt": 1773894651351
     },
     "google-search-console": {
       "version": "1.0.5",
-      "installedAt": 1773808272012
+      "installedAt": 1773894653720
     },
     "google-ads": {
       "version": "1.1.0",
-      "installedAt": 1773808274031
+      "installedAt": 1773894655213
     },
     "meta-ads": {
       "version": "1.0.0",
-      "installedAt": 1773808275807
+      "installedAt": 1773894657052
     },
     "apollo": {
       "version": "1.0.0",
-      "installedAt": 1773808277841
+      "installedAt": 1773894659326
     },
     "native-google-analytics": {
       "version": "0.1.1",
-      "installedAt": 1773808279886
+      "installedAt": 1773894661246
     },
     "gsc": {
       "version": "1.2.2",
-      "installedAt": 1773808282100
+      "installedAt": 1773894663381
     },
     "metricool": {
       "version": "1.0.0",
-      "installedAt": 1773808284042
+      "installedAt": 1773894665412
     },
     "larry": {
       "version": "1.0.0",
-      "installedAt": 1773808286251
+      "installedAt": 1773894667627
     }
   }
 }

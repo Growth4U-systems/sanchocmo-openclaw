@@ -31,4 +31,4 @@ Casos donde es mejor pedir el bono porque necesitan analítica casi obligatoriam
 - **Nichos hombres:** 2 anuncios diferentes:
   - Anuncio A: "Deja tu información y te contactamos" (formulario directo)
   - Anuncio B: Quiz
-- **Nichos mujeres:** Pendiente de definir
+- **Nichos mujeres:** Solo quiz (no formulario directo). Philippe 19/03.

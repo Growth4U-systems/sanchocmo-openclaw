@@ -1,9 +1,8 @@
 {
   "lastChecks": {
-    "email": 1774526640,
-    "calendar": 1774526640,
-    "email_2026_03_18_1723": 1774526640,
-    "heartbeat": 1773856240
+    "email": 1774716060,
+    "calendar": 1774716060,
+    "email_2026_03_19_2201": 1774716060
   },
   "notes": {
     "2026-03-08T18:26": "Email: 10 unread (newsletters, Upwork messages, GSC 40 clicks milestone). Calendar: normal week, meetings Mar 9. No urgent items <2h.",
@@ -14,12 +13,15 @@
     "2026-03-17T00:18": "Quiet hours (23:18). Email: 5 unread (Mike Futia subscription, Mastery Haus preventa, Claude Team Cowork promo, HighLevel support, Zephyr newsletter). No urgent items.",
     "2026-03-17T08:31": "Email: 5 unread (Skool digest, LinkedIn self-sent, Daniel Canosa newsletter, STARTRADER, spam report). Calendar: Sync Daily 9:45, Paylead 10:00, Alfonso-Anna 11:00, Demo Sancho Guido 11:30. Nada urgente <2h.",
     "2026-03-17T11:31": "Email: 5 unread (AI Money Lab Skool, VWO, Demo Sancho prep self-sent, Paco 1to1 accept/update). Demo Sancho Guido 11:30-12:00 AHORA. Q&A Oier 12:00, Weekly sistemas 13:00.",
-    "2026-03-17T17:11": "Email: 5 unread (Baserow promo, Forte Labs, self-sent Weekly Projects prep, Zephyr, Paco 1to1 update). Calendar: Cita digestivo 18:30 (~2h), 1to1 Paco ma\u00f1ana 12:30. Nada urgente.",
-    "2026-03-17T19:10": "Email: 5 unread (Airtable, Martin invite update, Supercut view, HighLevel receipt, DigitalOcean). Calendar ma\u00f1ana: Mid-week G4U 9:45, Edu 10:30, Alex Paymatico 11:30, Weekly Inuentia 12:00, Paco 1to1 12:30, Anna 13:00, Martin 13:30.",
-    "2026-03-17T23:10": "Quiet hours (23:10). Email: 5 unread (Supabase security alert, BEYOND MEDIA portal, Anna declined 18-Mar, 2 newsletters). Calendar ma\u00f1ana: lleno desde 9:45. Sin eventos <2h.",
-    "2026-03-18T10:00": "Email: 5 unread (AI Money Lab Skool, Agent Mailscale, email change, self-sent prep, AI with Kyle). Calendar: Mid-week G4U AHORA 9:45-10:15, Edu 10:30, Paymatico 11:30, Weekly Inuentia 12:00, Paco 12:30, Anna 13:00, Martin 13:30. Ma\u00f1ana vac\u00edo.",
+    "2026-03-17T17:11": "Email: 5 unread (Baserow promo, Forte Labs, self-sent Weekly Projects prep, Zephyr, Paco 1to1 update). Calendar: Cita digestivo 18:30 (~2h), 1to1 Paco mañana 12:30. Nada urgente.",
+    "2026-03-17T19:10": "Email: 5 unread (Airtable, Martin invite update, Supercut view, HighLevel receipt, DigitalOcean). Calendar mañana: Mid-week G4U 9:45, Edu 10:30, Alex Paymatico 11:30, Weekly Inuentia 12:00, Paco 1to1 12:30, Anna 13:00, Martin 13:30.",
+    "2026-03-17T23:10": "Quiet hours (23:10). Email: 5 unread (Supabase security alert, BEYOND MEDIA portal, Anna declined 18-Mar, 2 newsletters). Calendar mañana: lleno desde 9:45. Sin eventos <2h.",
+    "2026-03-18T10:00": "Email: 5 unread (AI Money Lab Skool, Agent Mailscale, email change, self-sent prep, AI with Kyle). Calendar: Mid-week G4U AHORA 9:45-10:15, Edu 10:30, Paymatico 11:30, Weekly Inuentia 12:00, Paco 12:30, Anna 13:00, Martin 13:30. Mañana vacío.",
     "2026-03-18T14:24": "Email: 5 unread (Valley, Amamos el Dinero, Teresa Torres, Thomas Oakes GTM, vFairs). Calendar: Ocupado 14:00-16:00 AHORA. Nada urgente.",
-    "2026-03-18T17:23": "Email: 5 unread (Skool Salsa $36k, Alba Spain Audience segmentation, Alfonso Spain Share out FY27 H1, Zephyr AI wrong, Qonto transferencia procesada). Calendar: Alfonso/Abi 16:30 (7 min). Ma\u00f1ana: Sync Daily 9:45.",
-    "2026-03-18T18:50:40.042023": "Heartbeat 18:50. Calendar check fall\u00f3 (gog error). \u00daltima info: Sync Daily ma\u00f1ana 9:45 (>2h). Nada urgente."
+    "2026-03-18T17:23": "Email: 5 unread (Skool Salsa $36k, Alba Spain Audience segmentation, Alfonso Spain Share out FY27 H1, Zephyr AI wrong, Qonto transferencia procesada). Calendar: Alfonso/Abi 16:30 (7 min). Mañana: Sync Daily 9:45.",
+    "2026-03-18T20:49": "⚠️ URGENTE: Claude API access turned off (Anthropic). Email: 5 unread. Calendar mañana: Sync Daily 9:45, Alba Weekly 10:30, etc. Sin eventos <2h.",
+    "2026-03-19T03:49": "Quiet hours (02:49 Madrid). Email: 3 unread (AI Money Lab notification, Mastery Haus promo, Smartlead newsletter). No urgente. Calendar hoy: Sync Daily 9:45 (~6h).",
+    "2026-03-19T19:01": "Email: 5 unread (Vercel ToS, Martin Fila Monzo presentation, Paymatico declined 20-Mar, Airtable AI workflows, Alfonso self-sent). No urgente. Calendar mañana: Mikel Catena 9:00, Sync Daily 9:45, Paymatico 12:00, Q&A Oier 15:00.",
+    "2026-03-19T22:01": "Email: 5 unread (newsletters). Calendar mañana: Mikel Catena 9:00, Sync Daily 9:45, Cafeteria T7 10:00, IASAF 11:00, Paymatico 12:00, Q&A Oier 15:00. Sin eventos <2h."
   }
 }
