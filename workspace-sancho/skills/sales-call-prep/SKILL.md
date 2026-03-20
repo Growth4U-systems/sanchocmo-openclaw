@@ -41,7 +41,16 @@ Llamadas de **lunes a viernes de la semana siguiente** en vista panorámica.
 
 ---
 
-## Step 1: Get Calendar Events
+## Step 1: Get All Lead Names from GHL
+
+Primero, obtener TODOS los contactos de GHL:
+```
+GET https://services.leadconnectorhq.com/contacts/?locationId={id}&limit=100
+Headers: Authorization: Bearer $GROWTH4U_GHL_API_KEY, Version: 2021-07-28
+```
+Paginar si hay más de 100. Extraer lista de nombres: `{firstName} {lastName}` de cada contacto.
+
+## Step 2: Search Calendar for Leads
 
 **Diario:** eventos de mañana (00:00 a 23:59)
 **Semanal (viernes):** eventos de lunes a viernes de la semana siguiente
@@ -56,23 +65,17 @@ Params:
   orderBy=startTime
 ```
 
-Filtrar solo eventos que parecen llamadas con leads:
-- Título contiene: "call", "llamada", "demo", "intro", "reunión", "meeting"
-- Tiene attendees externos (no @growth4u.io)
+Para cada evento, comprobar si el **título o algún attendee** contiene alguno de los nombres de la lista de leads de GHL. Solo incluir en el briefing los eventos que matchean con un lead.
 
-## Step 2: Match Events to GHL Contacts
+El match es fuzzy: ignorar acentos, case-insensitive, nombre parcial OK (ej: "Juan" matchea con "Juan Pérez").
 
-Para cada evento:
+## Step 3: Enrich with GHL Data + Intelligence
 
-1. Extraer nombre/email del lead del título o attendees
-2. Buscar en GHL:
-   ```
-   GET https://services.leadconnectorhq.com/contacts/?locationId={id}&query={nombre_o_email}
-   Headers: Authorization: Bearer $GROWTH4U_GHL_API_KEY, Version: 2021-07-28
-   ```
-3. De GHL extraer: pipeline stage, notas Slack (`slack_notes` custom field), tags
-4. Buscar inteligencia adicional en `brand/{slug}/leads/{ghl_id}.md` (company research, transcripts)
-5. Si no hay match en GHL → marcar "⚠️ Sin contacto en GHL"
+Para cada evento que matchea con un lead:
+
+1. Del contacto GHL correspondiente extraer: pipeline stage, notas Slack (`slack_notes` custom field), tags, empresa
+2. Buscar inteligencia adicional en `brand/{slug}/leads/{ghl_id}.md` (company research, transcripts)
+3. Si el lead file no existe → usar solo datos de GHL
 
 ## Step 3: Build Briefing
 
