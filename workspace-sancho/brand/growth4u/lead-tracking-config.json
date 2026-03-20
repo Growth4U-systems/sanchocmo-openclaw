@@ -1,0 +1,13 @@
+{
+  "ghl_location_id": "BnXWP5dcLVMgUudLv10O",
+  "ghl_api_key_env": "GHL_API_KEY",
+  "slack_channel_id": "C097N5EJGTB",
+  "drive_recordings_folder": "Supabase Recordings",
+  "notion_sales_script_page": "",
+  "lead_sync_enabled": true,
+  "ghl_custom_field_ids": {
+    "slack_notes": "",
+    "last_slack_sync": "",
+    "lead_source_channel": ""
+  }
+}

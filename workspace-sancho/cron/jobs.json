@@ -321,6 +321,60 @@
         "consecutiveErrors": 2,
         "lastError": "cron announce delivery failed"
       }
+    },
+    {
+      "id": "a1b2c3d4-lead-sync-growth4u-0001",
+      "agentId": "sancho",
+      "name": "Lead Sync — Growth4U",
+      "description": "Nightly lead intelligence: sync Slack notes to GHL + enrich new leads + update existing",
+      "enabled": true,
+      "createdAtMs": 1742504400000,
+      "updatedAtMs": 1742504400000,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 22 * * *",
+        "tz": "Europe/Madrid"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Ejecuta la skill lead-intelligence-hub para Growth4U (slug: growth4u).\n\nCONFIG:\nLee brand/growth4u/lead-tracking-config.json para obtener:\n- ghl_location_id: BnXWP5dcLVMgUudLv10O\n- slack_channel_id: C097N5EJGTB\n- ghl_custom_field_ids (para slack_notes, last_slack_sync)\n- drive_recordings_folder: Supabase Recordings\n\nPASO 1 — SLACK NOTES → GHL:\n1. Lee mensajes recientes del canal de Slack usando mcp__slack: list_channel_messages(channel: C097N5EJGTB, limit: 100)\n2. Para cada mensaje que sea parent de un thread, lee los replies\n3. Extrae email/teléfono del mensaje parent para identificar el lead\n4. Busca el contacto en GHL: GET https://services.leadconnectorhq.com/contacts/?locationId=BnXWP5dcLVMgUudLv10O&query={email_o_telefono} (Headers: Authorization: Bearer $GROWTH4U_GHL_API_KEY, Version: 2021-07-28)\n5. Si encuentra match, formatea las notas como [YYYY-MM-DD] {texto} y actualiza el custom field slack_notes via PUT https://services.leadconnectorhq.com/contacts/{contactId} con body: {\"customFields\": [{\"id\": \"{slack_notes_id}\", \"field_value\": \"{notas_acumuladas}\"}]}\n6. Si NO encuentra match, loguea en el resumen como error\n\nPASO 2 — FETCH ALL GHL CONTACTS:\nGET https://services.leadconnectorhq.com/contacts/?locationId=BnXWP5dcLVMgUudLv10O&limit=100\nPaginar con startAfter si hay más de 100.\n\nPASO 3 — NEW LEADS (sin archivo en brand/growth4u/leads/):\nPara cada contacto SIN brand/growth4u/leads/{ghl_id}.md:\n1. Company research: usar @company-finder en modo targeted (buscar por nombre/dominio de empresa del contacto, NO por ICP)\n2. Contact enrichment: usar @contact-enrichment solo para datos que faltan (email no verificado, phone missing, LinkedIn missing)\n3. Transcript search: gog drive search \"{nombre}\" en carpeta \"Supabase Recordings\". Si encuentra, leer y resumir: pain points, next steps, key quotes\n4. Crear brand/growth4u/leads/{ghl_id}.md con template completo (frontmatter + Company Intelligence + Contact Enrichment + Call Transcripts + Interaction History)\n\nPASO 4 — EXISTING LEADS (ya tienen archivo):\nPara cada contacto CON brand/growth4u/leads/{ghl_id}.md:\n1. Comparar pipeline stage de GHL con el guardado en frontmatter\n2. Si cambió → añadir entrada en Interaction History\n3. Si hay nuevas notas de Slack → añadir a history\n4. Buscar nuevos transcripts en Drive\n5. Actualizar frontmatter: last_updated, ghl_pipeline_stage\n\nPASO 5 — SUMMARY:\nGuardar resumen en memory/heartbeat-state.json → lead_sync\nPublicar en Discord #intelligence (1477741644789842031):\nmessage(action=send, channel=discord, target=1477741644789842031, message='📊 Lead Sync — YYYY-MM-DD: X nuevos, Y actualizados, Z notas sincronizadas')\nCrear hilo con detalles.",
+        "model": "anthropic/claude-sonnet-4-5"
+      },
+      "delivery": {
+        "mode": "none",
+        "channel": "discord",
+        "to": "channel:1477741644789842031"
+      },
+      "state": {}
+    },
+    {
+      "id": "a1b2c3d4-call-prep-growth4u-0002",
+      "agentId": "sancho",
+      "name": "Sales Call Prep — Growth4U",
+      "description": "Nightly briefing with tomorrow's calls, enriched context, and personalized scripts",
+      "enabled": true,
+      "createdAtMs": 1742504400000,
+      "updatedAtMs": 1742504400000,
+      "schedule": {
+        "kind": "cron",
+        "expr": "30 22 * * 0-4",
+        "tz": "Europe/Madrid"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Ejecuta la skill sales-call-prep para Growth4U (slug: growth4u).\n\nCONFIG:\nLee brand/growth4u/lead-tracking-config.json para notion_sales_script_page y slack_channel_id.\n\nPASO 1 — CALENDARIO DE MAÑANA:\nUsa gog calendar upcoming para ver eventos de mañana. Filtra solo los que parecen llamadas de ventas (título contiene: call, llamada, demo, intro, reunión, meeting) y tienen attendees externos.\n\nPASO 2 — MATCH CON LEAD PROFILES:\nPara cada evento:\n1. Extrae nombre del lead del título o attendees\n2. Busca en brand/growth4u/leads/ un archivo cuyo frontmatter name: coincida (fuzzy match, ignorar acentos)\n3. Si no hay match → marcar como '⚠️ Sin perfil encontrado'\n\nPASO 3 — SALES SCRIPT DE NOTION:\nSi notion_sales_script_page tiene valor, lee la página con mcp__notion: notion-fetch(url: 'https://notion.so/{page_id}')\nSi está vacío o falla → usar script genérico: apertura + contexto + 3 preguntas discovery + propuesta de valor + cierre\n\nPASO 4 — PERSONALIZAR SCRIPT POR LEAD:\nPara cada lead con perfil, genera script personalizado usando:\n- Company Intelligence del lead file\n- Interaction History completa\n- Pain points de transcripts\n- Pipeline stage actual\n- Script genérico como template\n\nPersonalizar: apertura (referencia última interacción), preguntas discovery (lo que NO sabemos), ángulo de valor (su industria/pain points), manejo de objeciones, cierre apropiado al stage.\n\nPASO 5 — PUBLICAR BRIEFING:\nFormato:\n📞 LLAMADAS DE MAÑANA — {date}\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n🔵 {time} — {name} ({company})\n   Estado: {pipeline_stage}\n   📋 Contexto: {2-3 sentences}\n   🎯 Script: {personalizado}\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\nPublicar en Discord #intelligence (1477741644789842031) con patrón de hilo:\n1. message(action=send, channel=discord, target=1477741644789842031, message='📞 Llamadas de mañana — {date}: {count} calls')\n2. Capturar messageId → thread-create → enviar briefing completo al hilo\n\nSi NO hay llamadas mañana:\nmessage(action=send, channel=discord, target=1477741644789842031, message='📞 No hay llamadas programadas para mañana ({date}). Leads activos sin seguimiento reciente: {count}')\n\nPASO 6 — LOG:\nActualizar memory/heartbeat-state.json → sales_call_prep con last_run, calls_prepped, no_profile_found.",
+        "model": "anthropic/claude-sonnet-4-5"
+      },
+      "delivery": {
+        "mode": "none",
+        "channel": "discord",
+        "to": "channel:1477741644789842031"
+      },
+      "state": {}
     }
   ]
 }
