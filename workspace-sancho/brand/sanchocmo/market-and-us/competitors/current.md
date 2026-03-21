@@ -430,6 +430,7 @@ Cuando vemos el campo competitivo completo, emergen tres patrones claros. Primer
 | **Jasper AI** | Direct | A | "Agent workspace" | $49-69/seat/mes | TP 3.5 · G2 4.7 | Líder de mercado, $1.7B, features masivas | Enterprise-only, caro, output genérico |
 | **Copy.ai** | Direct | A | "GTM AI Platform" | $1.000+/mes | TP bajo · G2 bajando | 17M usuarios históricos, multi-LLM | Soporte en crisis, alienó usuarios pequeños |
 | **Okara.ai** | Direct | A | "The only CMO" | $99/mes (Max) | ⚠️ Sin reviews indep. | Precio accesible, privacy-first, multi-agent | Output genérico, sin estrategia, riesgo spam |
+| **Distribb.io** | Direct | A | "SEO autopilot" | $59-97/mes | Shopify 5.0 (1 rev) | Backlink network real, tracción ($8K MRR) | Solo SEO+content, sin estrategia, solo inglés |
 | **Writesonic** | Indirect | B | "AI SEO + GEO" | $49-499/mes | TP 4.7 · G2 4.7 | Mejor valorado, feature GEO innovadora | Solo contenido, sin estrategia |
 | **HubSpot Breeze** | Indirect | B | "AI teammates" | $450+/mes (CRM req.) | — | Integración CRM profunda, enterprise-ready | Requiere HubSpot, coste prohibitivo |
 | **Lindy.ai** | Indirect | C | "Custom AI agents" | $0-50/mes | — | Flexibilidad total, no-code, barato | Genérico, requiere configuración manual |
@@ -454,10 +455,11 @@ La tabla revela un patrón claro: **a más potencia, más caro y más enterprise
                               |
             Okara.ai ●        |     ● Copy.ai
            (bots sin strategy)|     (GTM platform)
-               Lindy.ai ●    |
-              (genérico)      |     ● Jasper AI
-             Writesonic ●     |     (content factory)
-              (solo SEO)      |
+          Distribb.io ●       |
+           (SEO autopilot)    |     ● Jasper AI
+               Lindy.ai ●    |     (content factory)
+              (genérico)      |
+             Writesonic ●     |
                     BAJA profundidad estratégica
 ```
 
@@ -465,23 +467,25 @@ La tabla revela un patrón claro: **a más potencia, más caro y más enterprise
 
 ### 3. Feature Heatmap
 
-| Feature | SanchoCMO | Vilma.ai | Jasper | Copy.ai | Okara.ai | Writesonic | Lindy.ai |
-|---|---|---|---|---|---|---|---|
-| Foundation/Strategy | 🟢 | 🟡 | 🔴 | 🔴 | 🔴 | 🔴 | 🔴 |
-| Content Generation | 🟢 | 🟢 | 🟢 | 🟢 | 🟡 | 🟢 | 🟡 |
-| Competitor Research | 🟢 | 🔴 | 🔴 | 🟡 | 🔴 | 🔴 | 🔴 |
-| SEO/GEO | 🟢 | 🟡 | 🟢 | 🟡 | 🟢 | 🟢 | 🔴 |
-| Brand Voice | 🟢 | 🟢 | 🟢 | 🟡 | 🔴 | 🟡 | 🔴 |
-| ICP/Niche Discovery | 🟢 | 🔴 | 🔴 | 🔴 | 🔴 | 🔴 | 🔴 |
-| Email Sequences | 🟢 | 🟡 | 🟡 | 🟢 | 🔴 | 🔴 | 🟡 |
-| Positioning/Messaging | 🟢 | 🟡 | 🔴 | 🔴 | 🔴 | 🔴 | 🔴 |
-| Learning/Adaptation | 🟢 | 🟡 | 🟡 | 🔴 | 🟡 | 🔴 | 🔴 |
-| Multi-Agent System | 🟢 | 🟢 | 🟢 | 🟡 | 🟢 | 🔴 | 🟢 |
-| Community Automation | 🔴 | 🔴 | 🔴 | 🔴 | 🟢 | 🔴 | 🔴 |
-| Privacy/Encryption | 🔴 | 🔴 | 🟡 | 🔴 | 🟢 | 🔴 | 🔴 |
-| CRM Integration | 🔴 | 🔴 | 🟡 | 🟢 | 🔴 | 🔴 | 🟢 |
-| Spanish Native | 🟢 | 🟢 | 🔴 | 🔴 | 🔴 | 🟡 | 🔴 |
-| Discord Native | 🟢 | 🔴 | 🔴 | 🔴 | 🔴 | 🔴 | 🔴 |
+| Feature | SanchoCMO | Vilma.ai | Jasper | Copy.ai | Okara.ai | Distribb | Writesonic | Lindy.ai |
+|---|---|---|---|---|---|---|---|---|
+| Foundation/Strategy | 🟢 | 🟡 | 🔴 | 🔴 | 🔴 | 🔴 | 🔴 | 🔴 |
+| Content Generation | 🟢 | 🟢 | 🟢 | 🟢 | 🟡 | 🟢 | 🟢 | 🟡 |
+| Competitor Research | 🟢 | 🔴 | 🔴 | 🟡 | 🔴 | 🔴 | 🔴 | 🔴 |
+| SEO/GEO | 🟢 | 🟡 | 🟢 | 🟡 | 🟢 | 🟢 | 🟢 | 🔴 |
+| Backlink Building | 🔴 | 🔴 | 🔴 | 🔴 | 🔴 | 🟢 | 🔴 | 🔴 |
+| Brand Voice | 🟢 | 🟢 | 🟢 | 🟡 | 🔴 | 🟡 | 🟡 | 🔴 |
+| ICP/Niche Discovery | 🟢 | 🔴 | 🔴 | 🔴 | 🔴 | 🔴 | 🔴 | 🔴 |
+| Email Sequences | 🟢 | 🟡 | 🟡 | 🟢 | 🔴 | 🔴 | 🔴 | 🟡 |
+| Positioning/Messaging | 🟢 | 🟡 | 🔴 | 🔴 | 🔴 | 🔴 | 🔴 | 🔴 |
+| Learning/Adaptation | 🟢 | 🟡 | 🟡 | 🔴 | 🟡 | 🟡 | 🔴 | 🔴 |
+| Multi-Agent System | 🟢 | 🟢 | 🟢 | 🟡 | 🟢 | 🔴 | 🔴 | 🟢 |
+| Reddit/Community | 🔴 | 🔴 | 🔴 | 🔴 | 🟢 | 🟢 | 🔴 | 🔴 |
+| CMS Autopublish | 🔴 | 🔴 | 🟡 | 🔴 | 🔴 | 🟢 | 🟡 | 🔴 |
+| Social Repurposing | 🔴 | 🔴 | 🟡 | 🔴 | 🟡 | 🟢 | 🔴 | 🔴 |
+| CRM Integration | 🔴 | 🔴 | 🟡 | 🟢 | 🔴 | 🔴 | 🔴 | 🟢 |
+| Spanish Native | 🟢 | 🟢 | 🔴 | 🔴 | 🔴 | 🔴 | 🟡 | 🔴 |
+| Discord Native | 🟢 | 🔴 | 🔴 | 🔴 | 🔴 | 🔴 | 🔴 | 🔴 |
 
 **White space analysis**: Las columnas de Foundation/Strategy, ICP/Niche Discovery, Competitor Research, y Positioning/Messaging están prácticamente vacías excepto SanchoCMO. NINGÚN competidor ofrece un sistema de descubrimiento estratégico. Esta es la diferenciación más clara. El gap de GEO y CRM en SanchoCMO son áreas a monitorizar pero no prioritarias para el MVP.
 
@@ -495,6 +499,7 @@ Cada competidor adquiere clientes de forma radicalmente diferente:
 | **Jasper** | Enterprise Sales | PLG residual + Content Marketing |
 | **Copy.ai** | Enterprise Sales (post-pivot) | SEO + residual de 17M usuarios |
 | **Okara.ai** | PLG (free → Max) + Product Hunt | Reddit marketing (propio Reddit Agent) |
+| **Distribb.io** | PLG + Build in Public (Indie Hackers) | Shopify App Store + SEO content propio |
 | **Writesonic** | PLG + SEO Content | Affiliate Marketing |
 | **HubSpot Breeze** | Bundled con CRM (Ecosystem-Led) | — |
 | **Lindy.ai** | PLG (free tier) | Content Marketing |
@@ -512,6 +517,7 @@ Cada competidor adquiere clientes de forma radicalmente diferente:
 | **Jasper** | Trial | ✅ ($49-69/seat) | — | — | ✅ (Business custom) |
 | **Copy.ai** | Chat basic | — | — | — | ✅ ($1.000-3.000) |
 | **Okara.ai** | ✅ (5 créditos) | ✅ (Pro $20) | ✅ (Max $99) | — | Founding $1.000 one-time |
+| **Distribb.io** | Trial | ✅ (Starter $59) | ✅ (Pro $97) | — | — |
 | **Writesonic** | ✅ | ✅ ($49) | ✅ ($99-249) | ✅ ($499) | Enterprise |
 | **HubSpot Breeze** | Parcial | — | — | ✅ ($450-800) | ✅ ($1.500-3.600) |
 | **Lindy.ai** | ✅ | ✅ ($20-50) | — | — | Enterprise |
@@ -557,4 +563,4 @@ En este panorama competitivo, la mejor jugada de SanchoCMO es **no competir cont
 
 ---
 
-<!-- Self-QA: PASS | 2026-03-18 | Storytelling ✅ | 4 battle cards ✅ (añadido Okara.ai) | 3 indirectos ✅ | 1 emergente ✅ | Landscape map actualizado ✅ | Primary source verified ✅ | Apify/DataForSEO ⚠️ no ejecutados (justificado) | Fuentes inline ✅ -->
+<!-- Self-QA: PASS | 2026-03-20 | Storytelling ✅ | 5 directos (Vilma, Jasper, Copy.ai, Okara, Distribb) ✅ | 3 indirectos ✅ | 1 emergente ✅ | Landscape map actualizado ✅ | Primary source verified ✅ | Fuentes inline ✅ -->

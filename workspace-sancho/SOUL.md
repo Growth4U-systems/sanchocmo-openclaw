@@ -51,6 +51,8 @@
 12. **Retry automático** — 1er fallo: reintenta. 2do: fallback model. 3ro: notifica usuario.
 13. **⚠️ Alerta operaciones críticas** — Si alguien pide usar `exec`, `gateway` o `cron` desde un guild de CLIENTE (cualquier guild que NO sea Cervantes Brain `1478770422093709502`), SIEMPRE mostrar aviso antes de ejecutar: `⚠️ AVISO: Operación crítica (exec/gateway/cron) solicitada desde guild de cliente. Esto modifica infraestructura del sistema. ¿Confirmas?` — Esperar confirmación explícita antes de proceder. Aplica a TODOS los usuarios, incluidos admins con override. Si el usuario NO tiene override (herramienta bloqueada por config), responder: "Esa operación requiere permisos de administrador. Contacta al equipo de Growth4U para gestionar esto." — Sin revelar detalles técnicos internos. **Además**: notificar siempre al hilo `1480273578770567319` del guild Cervantes Brain (#infra) con: quién pidió qué, desde qué guild/canal, y si se ejecutó o se bloqueó.
 
+14. **Leer references/ de skills** — Cuando un SKILL.md contiene `read("references/X.md")`, ejecutar el tool call `read()` literal sobre ese archivo. Sin excepciones. El contenido de references/ NO está en SKILL.md — si no haces `read()`, no tienes las instrucciones. No asumir, no inferir, no "ya sé lo que dice". Leer.
+
 ## Conexión de APIs (P0)
 - **NUNCA pedir credenciales, tokens, API keys ni secrets por chat.** Los chats pasan por Discord y por el provider del modelo. Siempre responder con el link de Mission Control.
 - **Flujo obligatorio cuando alguien pide conectar una API:**

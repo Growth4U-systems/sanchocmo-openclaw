@@ -92,6 +92,26 @@ else
   log "— No changes"
 fi
 
+# 6. frontend-slides (zarazhangrui/frontend-slides)
+log ""
+log "## 6. frontend-slides"
+cd "$SKILL_REPOS/frontend-slides"
+OLD_SHA=$(git rev-parse HEAD)
+git pull --ff-only 2>&1 || git fetch origin main && git reset --hard origin/main
+NEW_SHA=$(git rev-parse HEAD)
+
+if [ "$OLD_SHA" != "$NEW_SHA" ]; then
+  # Sync repo files but preserve our extras (templates/, generate-foundation-report.py)
+  for f in SKILL.md STYLE_PRESETS.md animation-patterns.md html-template.md viewport-base.css LICENSE README.md; do
+    [ -f "$f" ] && cp "$f" "$SKILLS_DIR/frontend-slides/"
+  done
+  [ -d "scripts" ] && cp -r scripts/* "$SKILLS_DIR/frontend-slides/scripts/" 2>/dev/null
+  echo '{"source":"github","repo":"zarazhangrui/frontend-slides"}' > "$SKILLS_DIR/frontend-slides/.skill-source.json"
+  log "✅ Updated (${OLD_SHA:0:7} → ${NEW_SHA:0:7})"
+else
+  log "— No changes"
+fi
+
 # Summary
 TOTAL=$(ls -d "$SKILLS_DIR"/*/ 2>/dev/null | wc -l | tr -d ' ')
 log ""

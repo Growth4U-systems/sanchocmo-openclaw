@@ -23,6 +23,18 @@
       "created_at": "2026-03-18T18:45:00Z",
       "created_by": "sancho",
       "notes": "Re-hecho Okara.ai siguiendo el skill correctamente: Apify web-scraper + google-search-scraper ejecutados, DataForSEO ⚠️ no suscrito (fallback web_search), Slide KPIs añadidos, 15 fuentes verificadas. Guardado en okara-ai/current.md (estructura por carpeta). Archivo deep-research eliminado."
+    },
+    {
+      "version": 5,
+      "created_at": "2026-03-20T12:35:00Z",
+      "created_by": "sancho",
+      "notes": "Añadido Distribb.io (ex-RebelGrowth) como competidor directo (Tier A). Battle card completa 3-lens + Slide KPIs. Apify cheerio-scraper + google-search-scraper ejecutados. 12 fuentes. Landscape map, heatmap, pricing, growth model actualizados. Solicitado por Martin."
+    },
+    {
+      "version": 6,
+      "created_at": "2026-03-20T13:15:00Z",
+      "created_by": "sancho",
+      "notes": "Re-hecho Jasper.AI y Distribb.io desde cero siguiendo el skill. PSV completo (web_fetch homepage + pricing + blog). Apify cheerio-scraper (schema.org extraído de Jasper) + google-search-scraper para ambos. Trustpilot PSV (Jasper 3.4/5 4144 reviews, RebelGrowth perfil sin reviews). Slide KPIs. 14 fuentes cada uno. DataForSEO ⚠️ no suscrito. Guardados en jasper/current.md y distribb/current.md."
     }
   ]
 }
