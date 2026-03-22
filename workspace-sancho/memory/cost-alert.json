@@ -1,10 +1,10 @@
 {
-  "updatedAt": "2026-03-20T23:01:00.643608",
+  "updatedAt": "2026-03-21T23:00:20.379438",
   "threshold_usd": 50.0,
   "alerts": [
     {
       "date": "2026-03-20",
-      "total_usd": 85.84,
+      "total_usd": 85.18,
       "threshold_usd": 50.0,
       "severity": "warning",
       "detail": {
@@ -17,10 +17,10 @@
     }
   ],
   "projection": {
-    "days_elapsed": 20,
+    "days_elapsed": 21,
     "days_in_month": 31,
-    "daily_avg_usd": 81.03,
-    "projected_month_usd": 2511.93,
-    "projected_month_eur": 2310.98
+    "daily_avg_usd": 77.4,
+    "projected_month_usd": 2399.29,
+    "projected_month_eur": 2207.34
   }
 }
