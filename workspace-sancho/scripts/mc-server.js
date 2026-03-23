@@ -83,39 +83,63 @@ pre code{border:none;padding:0;}
 blockquote{border-left:4px solid #C45D35;margin:12px 0;padding:8px 16px;background:#FDF8EF;font-style:italic;}
 </style>`;
 
-function renderMarkdown(md) {
-  // Use marked.js loaded in browser for rendering
-  // Server-side: return raw markdown wrapped in a div that client-side marked.js will render
-  // Since marked.js runs client-side, we pass the raw markdown and render in browser
-  // For server-side rendering, use a simple but robust approach:
+function renderMarkdown(md, docContext) {
+  // docContext: { slug, docsBase } - for rewriting relative links in brand docs
+  // docsBase: e.g. '/mc/docs/brand/growth4u' or '/mc/portal/{token}/docs/brand/growth4u'
+  const ctxJson = docContext ? JSON.stringify(docContext).replace(/</g,'\\u003c').replace(/>/g,'\\u003e') : 'null';
   
-  // Protect code blocks
-  const codeBlocks = [];
-  let processed = md.replace(/```(\w*)\n([\s\S]*?)```/g, (_, lang, code) => {
-    codeBlocks.push(`<pre><code>${code.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').trim()}</code></pre>`);
-    return `%%CODEBLOCK_${codeBlocks.length - 1}%%`;
-  });
-  
-  // Return markdown in a special div that will be rendered client-side by marked.js
-  // But also include a noscript fallback
-  const escaped = processed.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-  
-  // Restore code blocks in escaped version
-  let result = escaped.replace(/%%CODEBLOCK_(\d+)%%/g, (_, i) => codeBlocks[i]);
-  
-  // Actually, let's do server-side with marked since it's simpler
-  // We'll pass raw md to the browser and render there
   return `<div class="md-raw" style="display:none;">${md.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div><div class="md-rendered"></div>
+<style>
+a.mc-redlink { color: #C45D35 !important; text-decoration: line-through wavy !important; opacity: 0.7; cursor: help; position: relative; }
+a.mc-redlink::after { content: ' (pendiente)'; font-size: 0.8em; font-style: italic; opacity: 0.6; }
+a.mc-internal { color: #C45D35 !important; text-decoration: underline !important; }
+</style>
 <script>
 if (typeof marked !== 'undefined') {
   const raw = document.querySelector('.md-raw');
   const rendered = document.querySelector('.md-rendered');
+  const docCtx = ${ctxJson};
   if (raw && rendered) {
     marked.setOptions({ breaks: true, gfm: true });
     rendered.innerHTML = marked.parse(raw.textContent);
     raw.style.display = 'none';
-    // Style links
-    rendered.querySelectorAll('a').forEach(a => { a.style.color = '#C45D35'; a.target = '_blank'; });
+    
+    // Rewrite and check links
+    rendered.querySelectorAll('a').forEach(a => {
+      const href = a.getAttribute('href');
+      if (!href) return;
+      
+      // Absolute-path links (e.g. /servicios/trust-engine/) → rewrite to MC docs
+      if (href.startsWith('/') && !href.startsWith('//') && docCtx && docCtx.docsBase) {
+        // Map /path/to/page/ → {docsBase}/pages/path/to/page.md (or just the path within brand)
+        const cleanPath = href.replace(/^\/+|\/+$/g, '');
+        const mcHref = docCtx.docsBase + '/pages/' + cleanPath + '/';
+        a.setAttribute('href', mcHref);
+        a.removeAttribute('target');
+        a.classList.add('mc-internal');
+        a.title = 'Contenido interno: /' + cleanPath + '/';
+        // Check if the target exists
+        fetch(mcHref, { method: 'HEAD' }).then(r => {
+          if (!r.ok) {
+            a.classList.remove('mc-internal');
+            a.classList.add('mc-redlink');
+            a.title = 'Página pendiente de crear: /' + cleanPath + '/';
+            a.onclick = (e) => { e.preventDefault(); alert('📝 Página pendiente de crear: /' + cleanPath + '/'); };
+          }
+        }).catch(() => {
+          a.classList.remove('mc-internal');
+          a.classList.add('mc-redlink');
+          a.title = 'Página pendiente de crear: /' + cleanPath + '/';
+          a.onclick = (e) => { e.preventDefault(); alert('📝 Página pendiente de crear: /' + cleanPath + '/'); };
+        });
+      } else if (href.startsWith('http')) {
+        // External links: open in new tab
+        a.style.color = '#C45D35';
+        a.target = '_blank';
+      } else {
+        a.style.color = '#C45D35';
+      }
+    });
   }
 }
 </script>`;
@@ -3511,7 +3535,11 @@ async function doTest() {
       
       if (stat.isFile() && fullPath.endsWith('.md')) {
         const md = fs.readFileSync(fullPath, 'utf-8');
-        const html = renderMarkdown(md);
+        // Build doc context for link rewriting in brand docs
+        const mcPrefix = req._portalBase || req._adminBase || '/mc';
+        const brandSlug = (rootKey === 'brand' && subParts.length >= 1) ? subParts[0] : null;
+        const docContext = brandSlug ? { slug: brandSlug, docsBase: `${mcPrefix}/docs/brand/${brandSlug}` } : null;
+        const html = renderMarkdown(md, docContext);
         const fileName = path.basename(fullPath, '.md');
         const backUrl = `/mc/docs/${rootKey}/${subParts.slice(0, -1).join('/')}/`;
         const backLabel = subParts.length > 1 ? subParts.slice(-2, -1)[0] : rootKey;

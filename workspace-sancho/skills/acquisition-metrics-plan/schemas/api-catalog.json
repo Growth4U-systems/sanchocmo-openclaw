@@ -465,6 +465,25 @@
         }
       }
     },
+    "web_factory": {
+      "label": "🏭 Web & Landing Pages",
+      "apis": {
+        "alarife": {
+          "provider": "Alarife (LP Factory)",
+          "icon": "🏗️",
+          "desc": "Landing page factory — webs, funnels, pSEO, blog, A/B testing",
+          "ownership": "system",
+          "credentials": [
+            { "key": "API_KEY", "label": "API Key", "type": "string", "sensitive": true, "help": "Alarife Dashboard → Settings → API Keys → Create. Scopes recomendados: todos." }
+          ],
+          "config": [
+            { "key": "BASE_URL", "label": "URL base de Alarife", "type": "string", "sensitive": false, "default": "https://alarife.growth4u.io", "help": "URL de la instancia de Alarife (incluye https://)" }
+          ],
+          "testEndpoint": "https://alarife.growth4u.io/api/health",
+          "docs": "https://github.com/Growth4U-systems/alarife"
+        }
+      }
+    },
     "payments": {
       "label": "💳 Payments & Revenue",
       "apis": {

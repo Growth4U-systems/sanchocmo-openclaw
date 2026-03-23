@@ -73,6 +73,33 @@
 - Ley SARA: pendiente crear `_references/ley-sara.md`
 - HC pending: `competitors/current.md`, `self/current.md` v1.1, `pricing/current.md`
 
+## 🔄 Patterns Confirmed This Week (16-22 Mar)
+
+### 1. API Crisis Monitoring Required
+- **Pattern**: Claude API access turn-off email (Mar 18) triggered urgent review
+- **Insight**: System needs proactive monitoring for API access/credits
+- **Action**: Add API status check to daily heartbeat or create monitoring cron
+
+### 2. Security Alerts Don't Stop Operations
+- **Pattern**: Supabase security vulnerability detected (Mar 17), but system continued
+- **Insight**: Alerts appear but don't automatically halt operations
+- **Action**: Review Supabase alerts during weekly synthesis, escalate if critical
+
+### 3. Weekend Quiet Hours Effective
+- **Pattern**: Sat/Sun consistently show low activity (3-5 unread emails, no meetings)
+- **Insight**: Weekend pattern is predictable - use for maintenance/updates
+- **Action**: Schedule system updates for weekends when possible
+
+### 4. Client Demos Continue
+- **Pattern**: Demo with Guido Lonetti (Mar 17), various client syncs
+- **Insight**: Demo pipeline active - track conversion
+- **Action**: Log demos in client activity, track follow-up
+
+### 5. Multiple Weekly Cycles Converging
+- **Pattern**: G4U Weekly, Weekly sistemas, Weekly Fellow<>G4U, Weekly Projects Philippe
+- **Insight**: Internal cadence stabilizing - 4-5 recurring weekly meetings
+- **Action**: Document weekly cadence in memory for pattern recognition
+
 ---
 
-*Last updated: 2026-03-16*
+*Last updated: 2026-03-23*

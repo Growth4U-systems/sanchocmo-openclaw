@@ -1,10 +1,10 @@
 {
   "client": "hospital-capilar",
   "period": "2026-03",
-  "updatedAt": "2026-03-22T23:00:23.667447",
+  "updatedAt": "2026-03-23T09:02:04.129218",
   "total_cost_usd": 169.2542,
   "total_cost_eur": 155.7139,
-  "turns": 1678,
+  "turns": 1679,
   "sessions": 54,
   "agents": {
     "cervantes": {
@@ -16,7 +16,7 @@
     "sancho": {
       "cost_usd": 169.2542,
       "cost_eur": 155.7139,
-      "turns": 1643,
+      "turns": 1644,
       "sessions": 45
     }
   },
@@ -28,7 +28,7 @@
       "cache_write": 16768725,
       "cost_usd": 168.0057,
       "cost_eur": 154.5653,
-      "turns": 1655
+      "turns": 1656
     },
     "claude-opus-4-6": {
       "input": 30,
@@ -118,6 +118,10 @@
       "turns": 2
     },
     "2026-03-22": {
+      "cost_usd": 0,
+      "turns": 1
+    },
+    "2026-03-23": {
       "cost_usd": 0,
       "turns": 1
     }

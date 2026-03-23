@@ -7,7 +7,7 @@
       "name": "Daily Pulse",
       "enabled": true,
       "createdAtMs": 1771950688301,
-      "updatedAtMs": 1773993749540,
+      "updatedAtMs": 1774252904701,
       "schedule": {
         "kind": "cron",
         "expr": "0 9 * * 1-5",
@@ -26,11 +26,11 @@
         "to": "channel:1475638253154603170"
       },
       "state": {
-        "nextRunAtMs": 1774252800000,
-        "lastRunAtMs": 1773993600022,
+        "nextRunAtMs": 1774339200000,
+        "lastRunAtMs": 1774252800021,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 149518,
+        "lastDurationMs": 104680,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0,
         "lastDelivered": false
@@ -42,7 +42,7 @@
       "name": "Weekly Synthesis",
       "enabled": true,
       "createdAtMs": 1771950696201,
-      "updatedAtMs": 1774217582545,
+      "updatedAtMs": 1774256554380,
       "schedule": {
         "kind": "cron",
         "expr": "0 10 * * 1",
@@ -61,11 +61,11 @@
         "to": "channel:1475638272523763834"
       },
       "state": {
-        "nextRunAtMs": 1774256400000,
-        "lastRunAtMs": 1773651600024,
+        "nextRunAtMs": 1774857600000,
+        "lastRunAtMs": 1774256400019,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 180980,
+        "lastDurationMs": 154361,
         "lastDelivered": false,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0
@@ -77,7 +77,7 @@
       "name": "Regenerar Dashboard",
       "enabled": true,
       "createdAtMs": 1771950708148,
-      "updatedAtMs": 1774206089709,
+      "updatedAtMs": 1774293018887,
       "schedule": {
         "kind": "cron",
         "expr": "0 8,12,16,20 * * *",
@@ -95,11 +95,11 @@
         "channel": "last"
       },
       "state": {
-        "nextRunAtMs": 1774249200000,
-        "lastRunAtMs": 1774206000051,
+        "nextRunAtMs": 1774335600000,
+        "lastRunAtMs": 1774292400019,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 89658,
+        "lastDurationMs": 618868,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0,
         "lastDelivered": false
@@ -111,7 +111,7 @@
       "name": "Meeting Intelligence",
       "enabled": true,
       "createdAtMs": 1771950715725,
-      "updatedAtMs": 1774026114813,
+      "updatedAtMs": 1774286359923,
       "schedule": {
         "kind": "cron",
         "expr": "0 18 * * 1-5",
@@ -130,11 +130,11 @@
         "to": "channel:1475638253154603170"
       },
       "state": {
-        "nextRunAtMs": 1774285200000,
-        "lastRunAtMs": 1774026000014,
+        "nextRunAtMs": 1774371600000,
+        "lastRunAtMs": 1774285200018,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 114799,
+        "lastDurationMs": 1159905,
         "lastDelivered": false,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0
@@ -206,7 +206,7 @@
       "name": "backup-sancho",
       "enabled": true,
       "createdAtMs": 1772069600272,
-      "updatedAtMs": 1774144842619,
+      "updatedAtMs": 1774231230634,
       "schedule": {
         "kind": "cron",
         "expr": "0 3 * * *"
@@ -223,11 +223,11 @@
         "channel": "last"
       },
       "state": {
-        "nextRunAtMs": 1774231200000,
-        "lastRunAtMs": 1774144800019,
+        "nextRunAtMs": 1774317600000,
+        "lastRunAtMs": 1774231200018,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 42600,
+        "lastDurationMs": 30616,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0,
         "lastDelivered": false
@@ -239,7 +239,7 @@
       "name": "healthcheck",
       "enabled": true,
       "createdAtMs": 1772069609685,
-      "updatedAtMs": 1774219978332,
+      "updatedAtMs": 1774284787319,
       "schedule": {
         "kind": "every",
         "everyMs": 21600000,
@@ -259,11 +259,11 @@
         "channel": "last"
       },
       "state": {
-        "nextRunAtMs": 1774241559973,
-        "lastRunAtMs": 1774219959973,
+        "nextRunAtMs": 1774306360036,
+        "lastRunAtMs": 1774284760036,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 18359,
+        "lastDurationMs": 27283,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0,
         "lastDelivered": false
@@ -309,7 +309,7 @@
       "name": "Cervantes observa a Sancho",
       "enabled": true,
       "createdAtMs": 1772115026027,
-      "updatedAtMs": 1774170184515,
+      "updatedAtMs": 1774256641057,
       "schedule": {
         "kind": "cron",
         "expr": "0 10 * * *",
@@ -327,11 +327,11 @@
         "channel": "last"
       },
       "state": {
-        "nextRunAtMs": 1774256400000,
-        "lastRunAtMs": 1774170000018,
+        "nextRunAtMs": 1774342800000,
+        "lastRunAtMs": 1774256554380,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 184497,
+        "lastDurationMs": 86677,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0,
         "lastDelivered": false
@@ -372,7 +372,7 @@
       "name": "cost-tracker-daily",
       "enabled": true,
       "createdAtMs": 1772750911798,
-      "updatedAtMs": 1774162865436,
+      "updatedAtMs": 1774249426324,
       "schedule": {
         "kind": "cron",
         "expr": "0 8 * * *",
@@ -390,11 +390,11 @@
         "mode": "none"
       },
       "state": {
-        "nextRunAtMs": 1774249200000,
-        "lastRunAtMs": 1774162839468,
+        "nextRunAtMs": 1774335600000,
+        "lastRunAtMs": 1774249393537,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 25968,
+        "lastDurationMs": 32787,
         "lastDelivered": false,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0
@@ -432,7 +432,7 @@
       "name": "image-optimizer",
       "enabled": true,
       "createdAtMs": 1773187213085,
-      "updatedAtMs": 1774197022308,
+      "updatedAtMs": 1774256652386,
       "schedule": {
         "kind": "cron",
         "expr": "0 10 * * 1",
@@ -452,15 +452,14 @@
         "to": "1480154276205433035"
       },
       "state": {
-        "nextRunAtMs": 1774256400000,
-        "lastRunAtMs": 1774180836637,
-        "lastRunStatus": "error",
-        "lastStatus": "error",
-        "lastDurationMs": 4880,
+        "nextRunAtMs": 1774857600000,
+        "lastRunAtMs": 1774256641057,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 11329,
         "lastDelivered": true,
         "lastDeliveryStatus": "delivered",
-        "consecutiveErrors": 1,
-        "lastError": "Unexpected non-whitespace character after JSON at position 91 (line 1 column 92)"
+        "consecutiveErrors": 0
       }
     },
     {
@@ -470,7 +469,7 @@
       "name": "update-skills",
       "enabled": true,
       "createdAtMs": 1773235919019,
-      "updatedAtMs": 1774153906379,
+      "updatedAtMs": 1774240297752,
       "schedule": {
         "kind": "cron",
         "expr": "30 5 * * *",
@@ -490,11 +489,11 @@
         "to": "1481220331845976125"
       },
       "state": {
-        "nextRunAtMs": 1774240200000,
-        "lastRunAtMs": 1774153800019,
+        "nextRunAtMs": 1774326600000,
+        "lastRunAtMs": 1774240200019,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 106360,
+        "lastDurationMs": 97733,
         "lastDelivered": true,
         "lastDeliveryStatus": "delivered",
         "consecutiveErrors": 0
@@ -575,7 +574,7 @@
       "name": "Morning Metrics — Growth4U",
       "enabled": true,
       "createdAtMs": 1773274108369,
-      "updatedAtMs": 1773991840988,
+      "updatedAtMs": 1774251052110,
       "schedule": {
         "kind": "cron",
         "expr": "30 8 * * 1-5",
@@ -590,11 +589,11 @@
         "timeoutSeconds": 120
       },
       "state": {
-        "nextRunAtMs": 1774251000000,
-        "lastRunAtMs": 1773991800015,
+        "nextRunAtMs": 1774337400000,
+        "lastRunAtMs": 1774251000020,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 40973,
+        "lastDurationMs": 52090,
         "lastDeliveryStatus": "delivered",
         "consecutiveErrors": 0,
         "lastDelivered": true
@@ -610,7 +609,7 @@
       "name": "Daily Metrics Collector — Growth4U",
       "enabled": true,
       "createdAtMs": 1773518330038,
-      "updatedAtMs": 1774159224002,
+      "updatedAtMs": 1774245628143,
       "schedule": {
         "kind": "cron",
         "expr": "0 7 * * *",
@@ -628,11 +627,11 @@
         "mode": "none"
       },
       "state": {
-        "nextRunAtMs": 1774245600000,
-        "lastRunAtMs": 1774159200015,
+        "nextRunAtMs": 1774332000000,
+        "lastRunAtMs": 1774245600018,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 23987,
+        "lastDurationMs": 28125,
         "lastDelivered": false,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0
@@ -717,7 +716,7 @@
       "name": "Weekly Token Audit",
       "enabled": true,
       "createdAtMs": 1773650217981,
-      "updatedAtMs": 1773650470335,
+      "updatedAtMs": 1774253001641,
       "schedule": {
         "kind": "cron",
         "expr": "0 9 * * 1",
@@ -735,11 +734,11 @@
         "mode": "none"
       },
       "state": {
-        "nextRunAtMs": 1774252800000,
-        "lastRunAtMs": 1773650386045,
+        "nextRunAtMs": 1774854000000,
+        "lastRunAtMs": 1774252904701,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 84290,
+        "lastDurationMs": 96940,
         "lastDelivered": false,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0
@@ -778,7 +777,7 @@
       "name": "cron-watchdog-weekly",
       "enabled": true,
       "createdAtMs": 1773680314014,
-      "updatedAtMs": 1773680314014,
+      "updatedAtMs": 1774260049666,
       "schedule": {
         "kind": "cron",
         "expr": "0 11 * * 1",
@@ -796,7 +795,14 @@
         "mode": "none"
       },
       "state": {
-        "nextRunAtMs": 1774260000000
+        "nextRunAtMs": 1774861200000,
+        "lastRunAtMs": 1774260000020,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 49646,
+        "lastDelivered": false,
+        "lastDeliveryStatus": "not-delivered",
+        "consecutiveErrors": 0
       }
     },
     {
@@ -806,7 +812,7 @@
       "name": "Lead Sync — Growth4U",
       "enabled": true,
       "createdAtMs": 1774192173315,
-      "updatedAtMs": 1774213393099,
+      "updatedAtMs": 1774299658998,
       "schedule": {
         "kind": "cron",
         "expr": "0 22 * * *",
@@ -823,11 +829,11 @@
         "mode": "none"
       },
       "state": {
-        "nextRunAtMs": 1774299600000,
-        "lastRunAtMs": 1774213301389,
+        "nextRunAtMs": 1774386000000,
+        "lastRunAtMs": 1774299600021,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 91710,
+        "lastDurationMs": 58977,
         "lastDelivered": false,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0
@@ -864,7 +870,8 @@
         "lastDurationMs": 129983,
         "lastDelivered": false,
         "lastDeliveryStatus": "not-delivered",
-        "consecutiveErrors": 0
+        "consecutiveErrors": 0,
+        "runningAtMs": 1774301400019
       }
     },
     {
@@ -927,7 +934,7 @@
       "name": "Morning Metrics — Multi-Client",
       "enabled": true,
       "createdAtMs": 1774217794921,
-      "updatedAtMs": 1774217837781,
+      "updatedAtMs": 1774251092232,
       "schedule": {
         "kind": "cron",
         "expr": "30 8 * * 1-5",
@@ -944,11 +951,11 @@
         "mode": "none"
       },
       "state": {
-        "nextRunAtMs": 1774251000000,
-        "lastRunAtMs": 1774217799132,
+        "nextRunAtMs": 1774337400000,
+        "lastRunAtMs": 1774251052110,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 38649,
+        "lastDurationMs": 40122,
         "lastDelivered": false,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0

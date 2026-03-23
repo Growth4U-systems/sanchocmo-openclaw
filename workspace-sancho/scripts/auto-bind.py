@@ -10,19 +10,25 @@ Usage:
     auto-bind.py <guild_id> --name "Client Name" --slug "client-slug" --apply
 
 Channel → Role mapping (by name):
-    general      → DECISIÓN (requireMention: true)
-    onboarding   → EJECUCIÓN (Foundation flow)
-    inbox        → INPUT + DECISIÓN (ideas, feedback, brand)
-    projects     → DECISIÓN (proponer proyectos)
-    content      → EJECUCIÓN (crear contenido)
-    creatives    → EJECUCIÓN (visual/identity)
-    prospecting  → EJECUCIÓN (outreach)
-    partners     → EJECUCIÓN (partnerships)
-    paid-ads     → EJECUCIÓN (ads)
-    web          → EJECUCIÓN (landing/magnets)
-    insights     → INTELIGENCIA (research + signals + CRM)
-    soporte/tasks→ TAREAS (task management)
-    admin*       → cervantes agent binding
+
+    ESTRATEGIA:
+    onboarding       → EJECUCIÓN (Foundation flow)
+    marketing-inbox  → INPUT + DECISIÓN (ideas, feedback, brand)
+    projects         → DECISIÓN (proponer proyectos)
+    research         → INTELIGENCIA bajo demanda (deep research)
+
+    EJECUCION:
+    partners         → EJECUCIÓN (partnerships)
+    prospecting      → EJECUCIÓN (outreach)
+    content          → EJECUCIÓN (crear contenido)
+    paid-ads         → EJECUCIÓN (ads)
+    creatives        → EJECUCIÓN (visual/identity)
+    web              → EJECUCIÓN (landing/magnets)
+
+    SISTEMA:
+    insights         → INTELIGENCIA automática (signals + CRM)
+    soporte          → TAREAS (task management)
+    admin*           → cervantes agent binding
 """
 
 import argparse
@@ -46,15 +52,6 @@ ALLOWED_USERS = [
 # Channel name → systemPrompt template
 # {name} = client name, {slug} = client slug, {prefix} = task ID prefix
 CHANNEL_TEMPLATES = {
-    "general": {
-        "requireMention": True,
-        "systemPrompt": (
-            "[CLIENTE: {name} | slug: {slug}]\n"
-            "PATHS: ./brand/ → ./brand/{slug}/ (SIEMPRE)\n"
-            "Estás en #general. Canal de DECISIÓN. NO ejecutes nada aquí. "
-            "Solo responde si te mencionan con @SanchoCMO."
-        ),
-    },
     "onboarding": {
         "systemPrompt": (
             "[CLIENTE: {name} | slug: {slug}]\n"
@@ -69,14 +66,14 @@ CHANNEL_TEMPLATES = {
             "6. NUNCA respondas directamente en el canal — siempre dentro de un hilo\n\n"
             "Skills: foundation-threads, sancho-start, foundation-orchestrator, phase-0-diagnostic, "
             "company-context, ecp-validation, niche-discovery-100x.\n\n"
-            "Cuando termines toda la Foundation, recomienda pasar a #brand para consultas."
+            "Cuando termines toda la Foundation, recomienda pasar a #marketing-inbox para consultas."
         ),
     },
-    "inbox": {
+    "marketing-inbox": {
         "systemPrompt": (
             "[CLIENTE: {name} | slug: {slug}]\n"
             "PATHS: ./brand/ → ./brand/{slug}/ (SIEMPRE)\n"
-            "Estás en #inbox. Canal de INPUT + DECISIÓN.\n\n"
+            "Estás en #marketing-inbox. Canal de INPUT + DECISIÓN.\n\n"
             "Dos usos:\n"
             "1. INBOX — El cliente comparte ideas, feedback de clientes, observaciones del mercado, "
             "movimientos de competidores. Sancho lo procesa, clasifica y convierte en recomendaciones accionables.\n"
@@ -148,14 +145,21 @@ CHANNEL_TEMPLATES = {
         "systemPrompt": (
             "[CLIENTE: {name} | slug: {slug}]\n"
             "PATHS: ./brand/ → ./brand/{slug}/ (SIEMPRE)\n"
-            "Estás en #insights. Canal de INTELIGENCIA. Toda la inteligencia en un sitio:\n"
-            "- Señales de mercado, competencia, patrones\n"
-            "- Deep research e investigación profunda\n"
-            "- Pulso diario e inteligencia de reuniones\n"
-            "- CRM, datos de clientes, tendencias internas\n\n"
-            "Skills: deep-research, competitor-intelligence, market-intelligence, "
-            "daily-pulse, signal-monitor, meeting-intelligence, last30days, existing-customer-data.\n"
-            "Ideas accionables → proponlas como proyecto en #projects."
+            "Estás en #insights. Canal de INTELIGENCIA AUTOMÁTICA.\n"
+            "Señales de mercado, patrones, pulso diario, inteligencia de reuniones, "
+            "CRM y datos de clientes.\n\n"
+            "Skills: daily-pulse, signal-monitor, meeting-intelligence, last30days, existing-customer-data.\n"
+            "Ideas accionables → proponlas como proyecto en #projects. "
+            "Para investigación profunda bajo demanda → #research."
+        ),
+    },
+    "research": {
+        "systemPrompt": (
+            "[CLIENTE: {name} | slug: {slug}]\n"
+            "PATHS: ./brand/ → ./brand/{slug}/ (SIEMPRE)\n"
+            "Estás en #research. Canal de INVESTIGACIÓN bajo demanda.\n"
+            "Deep research, competitive intelligence, análisis de mercado, benchmarks.\n\n"
+            "Skills: deep-research, competitor-intelligence, market-intelligence."
         ),
     },
     "soporte": {
@@ -172,8 +176,6 @@ CHANNEL_TEMPLATES = {
             "- Si es una pregunta de marketing, responde tú directamente."
         ),
     },
-    # Alias: #tasks uses same template as #soporte
-    "tasks": "soporte",
 }
 
 # Channels that get agent=cervantes instead of sancho (default)

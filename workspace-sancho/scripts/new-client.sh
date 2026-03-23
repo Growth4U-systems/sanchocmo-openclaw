@@ -21,7 +21,7 @@ while [[ $# -gt 0 ]]; do
     --help|-h)
       echo "Uso: new-client.sh --slug <slug> --name <nombre> --guild <guild_id>"
       echo ""
-      echo "Prerequisito: cliente creó servidor desde https://discord.new/mnXBVkNQqFBk"
+      echo "Prerequisito: cliente creó servidor desde https://discord.new/9nbefJmU7YKy"
       echo "              y añadió bot desde https://discord.com/oauth2/authorize?client_id=1475635406610628769&permissions=8&integration_type=0&scope=bot"
       exit 0 ;;
     *) echo "❌ Argumento desconocido: $1"; exit 1 ;;

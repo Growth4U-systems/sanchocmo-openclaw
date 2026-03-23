@@ -1,22 +1,28 @@
 {
   "lastChecks": {
     "email_2026_03_23_0016": 1775270180,
-    "calendar_2026_03_23_0016": 1775270180
+    "calendar_2026_03_23_0016": 1775270180,
+    "email_2026_03_23_1103": 1775373780,
+    "calendar_2026_03_23_1103": 1775373780,
+    "email_2026_03_23_1552": 1775393520,
+    "calendar_2026_03_23_1552": 1775393520,
+    "email_2026_03_23_2008": 1775412480,
+    "calendar_2026_03_23_2008": 1775412480
   },
   "notes": {
-    "2026-03-23T00:16": "Quiet hours (00:16 Madrid). Calendar: Lunes 23 ocupado desde 10:00. Sin eventos <2h."
+    "2026-03-23T00:16": "Quiet hours (00:16 Madrid). Calendar: Lunes 23 ocupado desde 10:00. Sin eventos <2h.",
+    "2026-03-23T11:03": "Monday AM heartbeat. Email: 5 unread (G4U Weekly prep, Searchable webinar, ESB calendar, Spain Share out). Calendar: G4U Weekly AHORA 11:00-12:00, Spain GTM 12:00, Spain Share out 14:00, Ocupado 14-16h, Demo DealCar martes 13:00.",
+    "2026-03-23T15:52": "Monday PM heartbeat. Email: 5 unread (Qonto receipts, Mailgun code, Mike Futia, Upwork billing, Notion updates Monzo). Calendar: Weekly Spain Readiness AHORA 15:30-16:00. Nada urgente <2h.",
+    "2026-03-23T20:08": "Monday evening heartbeat. Email: 5 unread (Mark Kashef, Stripe AI feedback, Gemini notes Leads+Sancho, Smartlead AMA). Calendar: Todos los eventos de hoy completados. Martes 24: Demo DealCar 13:00-13:30."
   },
   "sales_call_prep": {
-    "last_run": "2026-03-22T21:31:00Z",
+    "last_run": "2026-03-23T21:30:00Z",
     "mode": "daily",
-    "target_date": "2026-03-23",
+    "target_date": "2026-03-24",
     "calls_found": 0,
-    "leads_with_tag": 3,
-    "ghl_calendar_mismatch": 3,
-    "issues": [
-      "3 leads con tag llamada-agendada sin evento de Calendar",
-      "Eduardo Zuñiga tiene llamada-confirmada pero sin evento",
-      "GHL API key retornó 401 — fallback a archivo de dry-run"
-    ]
+    "no_ghl_match": 0,
+    "ghl_leads_total": 100,
+    "calendar_events_tomorrow": 10,
+    "note": "No hay llamadas con leads de GHL mañana. Eventos de mañana son internos (Sync Daily, Q&A Oier) o con partners (DealCar, Monzo, Orbyn)."
   }
 }

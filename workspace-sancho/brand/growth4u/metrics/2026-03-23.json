@@ -1,6 +1,6 @@
 {
   "slug": "growth4u",
-  "collectedAt": "2026-03-23T00:50:48.697Z",
+  "collectedAt": "2026-03-23T06:00:07.289Z",
   "dateRange": {
     "from": "2026-03-22",
     "to": "2026-03-22"
@@ -8,7 +8,7 @@
   "sources": {
     "ga4": {
       "status": "ok",
-      "collectedAt": "2026-03-23T00:50:51.320Z",
+      "collectedAt": "2026-03-23T06:00:09.301Z",
       "metrics": [
         {
           "name": "sessions",
@@ -397,7 +397,7 @@
     },
     "gsc": {
       "status": "ok",
-      "collectedAt": "2026-03-23T00:50:52.060Z",
+      "collectedAt": "2026-03-23T06:00:09.877Z",
       "metrics": [
         {
           "name": "clicks",
@@ -1703,21 +1703,21 @@
     },
     "metricool": {
       "status": "ok",
-      "collectedAt": "2026-03-23T00:50:52.673Z",
+      "collectedAt": "2026-03-23T06:00:10.350Z",
       "metrics": []
     },
     "meta-ads": {
       "status": "ok",
-      "collectedAt": "2026-03-23T00:50:54.630Z",
+      "collectedAt": "2026-03-23T06:00:12.884Z",
       "metrics": [
         {
           "name": "spend",
-          "value": 160.66,
+          "value": 160.79,
           "date": "2026-03-22"
         },
         {
           "name": "impressions",
-          "value": 13022,
+          "value": 13024,
           "date": "2026-03-22"
         },
         {
@@ -1727,12 +1727,12 @@
         },
         {
           "name": "ctr",
-          "value": 1.996621,
+          "value": 1.996315,
           "date": "2026-03-22"
         },
         {
           "name": "cpc",
-          "value": 0.617923,
+          "value": 0.618423,
           "date": "2026-03-22"
         },
         {
@@ -1742,7 +1742,7 @@
         },
         {
           "name": "spend",
-          "value": 160.66,
+          "value": 160.79,
           "date": "2026-03-22",
           "dimensions": {
             "campaign": "G4U - Testeo Creativos - Copy"
@@ -1750,7 +1750,7 @@
         },
         {
           "name": "impressions",
-          "value": 13022,
+          "value": 13024,
           "date": "2026-03-22",
           "dimensions": {
             "campaign": "G4U - Testeo Creativos - Copy"
@@ -1766,7 +1766,7 @@
         },
         {
           "name": "ctr",
-          "value": 1.996621,
+          "value": 1.996315,
           "date": "2026-03-22",
           "dimensions": {
             "campaign": "G4U - Testeo Creativos - Copy"
@@ -1774,7 +1774,7 @@
         },
         {
           "name": "cpc",
-          "value": 0.617923,
+          "value": 0.618423,
           "date": "2026-03-22",
           "dimensions": {
             "campaign": "G4U - Testeo Creativos - Copy"
@@ -1835,7 +1835,7 @@
         },
         {
           "name": "spend",
-          "value": 66.41,
+          "value": 66.54,
           "date": "2026-03-22",
           "dimensions": {
             "adset": "unknown",
@@ -1844,7 +1844,7 @@
         },
         {
           "name": "impressions",
-          "value": 3733,
+          "value": 3734,
           "date": "2026-03-22",
           "dimensions": {
             "adset": "unknown",
@@ -1862,7 +1862,7 @@
         },
         {
           "name": "ctr",
-          "value": 1.848379,
+          "value": 1.847884,
           "date": "2026-03-22",
           "dimensions": {
             "adset": "unknown",
@@ -1871,7 +1871,7 @@
         },
         {
           "name": "cpc",
-          "value": 0.962464,
+          "value": 0.964348,
           "date": "2026-03-22",
           "dimensions": {
             "adset": "unknown",
@@ -1889,7 +1889,7 @@
         },
         {
           "name": "impressions",
-          "value": 1461,
+          "value": 1462,
           "date": "2026-03-22",
           "dimensions": {
             "adset": "unknown",
@@ -1907,7 +1907,7 @@
         },
         {
           "name": "ctr",
-          "value": 2.327173,
+          "value": 2.325581,
           "date": "2026-03-22",
           "dimensions": {
             "adset": "unknown",
@@ -2405,7 +2405,7 @@
         },
         {
           "name": "impressions",
-          "value": 306,
+          "value": 307,
           "date": "2026-03-22",
           "dimensions": {
             "ad": "Ángulo 5_V1",
@@ -2425,7 +2425,7 @@
         },
         {
           "name": "ctr",
-          "value": 1.960784,
+          "value": 1.954397,
           "date": "2026-03-22",
           "dimensions": {
             "ad": "Ángulo 5_V1",
@@ -2465,7 +2465,7 @@
         },
         {
           "name": "engagement",
-          "value": 53,
+          "value": 54,
           "date": "2026-03-22",
           "dimensions": {
             "ad": "Ángulo 5_V1",
@@ -2815,7 +2815,7 @@
         },
         {
           "name": "spend",
-          "value": 63.12,
+          "value": 63.25,
           "date": "2026-03-22",
           "dimensions": {
             "ad": "Angulo 1_V1",
@@ -2825,7 +2825,7 @@
         },
         {
           "name": "impressions",
-          "value": 3570,
+          "value": 3571,
           "date": "2026-03-22",
           "dimensions": {
             "ad": "Angulo 1_V1",
@@ -2845,7 +2845,7 @@
         },
         {
           "name": "ctr",
-          "value": 1.876751,
+          "value": 1.876225,
           "date": "2026-03-22",
           "dimensions": {
             "ad": "Angulo 1_V1",
@@ -2855,7 +2855,7 @@
         },
         {
           "name": "cpc",
-          "value": 0.94209,
+          "value": 0.94403,
           "date": "2026-03-22",
           "dimensions": {
             "ad": "Angulo 1_V1",
@@ -3027,7 +3027,7 @@
     },
     "ghl": {
       "status": "ok",
-      "collectedAt": "2026-03-23T00:51:00.050Z",
+      "collectedAt": "2026-03-23T06:00:22.208Z",
       "metrics": [
         {
           "name": "newContacts",

@@ -1,6 +1,45 @@
 {
   "meetings": [
     {
+      "id": "2026-03-18-lead-nurturing-madrid",
+      "date": "2026-03-18",
+      "title": "HC Lead-Nurturing Madrid — Reunión 18/03/2026",
+      "type": "technical-operational",
+      "file": "2026-03-18-lead-nurturing-madrid/summary.md",
+      "source": "Google Drive",
+      "sourceId": "1Dun42lJdsRliJVvB7VLjJ3nif_2x-m92NAFFf6aurRs",
+      "participants": ["Philippe Sainthubert", "Ramiro"],
+      "decisions": 5,
+      "actions": 6,
+      "status": "processed"
+    },
+    {
+      "id": "2026-03-10-analisis-mercado-competidores",
+      "date": "2026-03-10",
+      "title": "Análisis de Mercado y Competidores HC",
+      "type": "strategic-market-analysis",
+      "file": "2026-03-10-analisis-mercado-competidores/summary.md",
+      "source": "Google Drive",
+      "sourceId": "1Y3Th4w4KK3N7TiFreMZk__kX9dWxK69W0avG3J-k8d4",
+      "participants": ["Alfonso Sainz de Baranda", "Philippe Sainthubert", "Miguel Ángel Herrera", "María Silva", "Óscar Mendoza"],
+      "decisions": 7,
+      "actions": 20,
+      "status": "processed"
+    },
+    {
+      "id": "2026-03-09-avances-proyecto",
+      "date": "2026-03-09",
+      "title": "Avances Proyecto HC",
+      "type": "technical-development",
+      "file": "2026-03-09-avances-proyecto/summary.md",
+      "source": "Google Drive",
+      "sourceId": "1H8wb4w85UGVX-LIlUZyKRY9uxaByllCyUZmLsNwdYaU",
+      "participants": ["Philippe Sainthubert", "Ramiro Perez"],
+      "decisions": 7,
+      "actions": 14,
+      "status": "processed"
+    },
+    {
       "id": "2026-03-04-status-arquitectura",
       "date": "2026-03-04",
       "title": "Status arquitectura Hospital Capilar",
@@ -92,8 +131,8 @@
       "status": "processed"
     }
   ],
-  "lastSync": "2026-03-10T17:00:00Z",
-  "totalMeetings": 7,
-  "totalDecisions": 33,
-  "totalActions": 29
+  "lastSync": "2026-03-23T17:00:00Z",
+  "totalMeetings": 10,
+  "totalDecisions": 52,
+  "totalActions": 69
 }
