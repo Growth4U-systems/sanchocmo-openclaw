@@ -1,0 +1,16 @@
+{
+  "ghl_location_id": "BnXWP5dcLVMgUudLv10O",
+  "ghl_api_key_env": "GHL_API_KEY",
+  "enrichment_filter_tag": "llamada-agendada",
+  "slack_bot_token_env": "SLACK_BOT_TOKEN",
+  "slack_channel_id": "C097N5EJGTB",
+  "slack_enabled": true,
+  "drive_recordings_folder": "Supabase Recordings",
+  "drive_enabled": true,
+  "lead_sync_enabled": true,
+  "dry_run": true,
+  "max_transcripts_per_lead": 3,
+  "transcript_lookback_days": 90,
+  "discord_intelligence_channel": "1477741644789842031",
+  "ghl_notes_field": "notes"
+}

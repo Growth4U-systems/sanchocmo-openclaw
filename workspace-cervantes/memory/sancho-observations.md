@@ -1,32 +1,29 @@
 
 
-# Sancho Observations — 2026-03-21
+## 2026-03-22 — Observaciones Sancho
 
-## Sesiones activas (últimas 24h)
+### Sesiones activa (24h)
+- **Discord #creación-de-webs**: Ayudando a Martín con GitHub Actions (setup-buildx-action)
+- **Discord #migración-escudero**: Reescribiendo PDR v4.0 con feedback de Alfonso (~900→400 líneas)
+- **Discord #organización-discord**: Seguimiento a reorganización de canales
+- **Discord #idea-generation**: Registrando decisiones de diseño (D1-D4)
+- **Discord #monitoreo-recurrente-de-métricas**: Identificando problema de timeout en cron
+- **Cron cost-tracker**: Ejecutado OK (MiniMax)
+- **Cron regenerate-dashboard**: 54 tareas, 100 eventos, 40/84 pilares
+- **Cron image-optimizer**: Sin imágenes que optimizar
+- **Cron update-skills**: 10 skills actualizados
 
-| Canal | Actividad |
-|-------|-----------|
-| #niche-presentation-skill | Actualizó skill con responsive obligatorio |
-| #respetar-las-skills | Explicó stack completo (Apify + Serper + DataForSEO) |
-| #tasks › Creación de Webs | Dio fix para GitHub workflow (token scope) |
-| #campa-as-google-ads-meta-ads-plan-por-nicho | Generó 13 URLs de campañas |
-| #plan-estrat-gico-sanchocmo-q2-2026 | Planning Q2 |
-| #actualizar-skills | Actualizó 10 skills de ClawHub |
+### Problemas detectados
+1. **Cron métricas recurrente fallando**: Timeout en sesiones aisladas. Sancho propuso solución (agentTurn ultraligero). Pendiente aprobación.
+2. **API Anthropic 401** (previo): Cervantes ya gestionó con recovery message.
 
-## Observaciones
+### Reglas de canal
+✅ Correcto uso de @menciones
+✅ Respuestas estructuradas en hilos correctos
+✅ NO_REPLY cuando corresponde
 
-**✅ Positivo:**
-- Sancho dijo "No, siendo honesto — no conozco Alarife" — honestidad cuando no sabe algo
-- Correcto uso de NO_REPLY cuando Martín dijo "ok" (reconociendo que era ack)
-- Buenos formatos de tablas y menciones @ en Discord
-
-**⚠️ Notas:**
-- Sesiones limitadas visibles en el transcript (truncated)
-- La skill de #niche-presentation fue actualizada — verificar que se aplicó bien
-
-**Sin errores críticos detectados.**
-
-## Patrones
-- Sancho está operando correctamente en múltiples canales
-- Responde de forma concisa y estructurada
-- No hay quejas de usuarios en las sesiones revisadas
+### Notas
+- Sancho está funcionando correctamente
+- Activo en múltiples canales de Discord con Alfonso y Martín
+- Crons básicos funcionando (algunos con MiniMax para reducir costos)
+- No hay errores críticos propios de Sancho

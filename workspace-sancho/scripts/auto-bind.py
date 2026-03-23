@@ -12,17 +12,15 @@ Usage:
 Channel → Role mapping (by name):
     general      → DECISIÓN (requireMention: true)
     onboarding   → EJECUCIÓN (Foundation flow)
-    brand        → DECISIÓN (pilares existentes)
-    campaigns    → DECISIÓN (proponer campañas)
+    inbox        → INPUT + DECISIÓN (ideas, feedback, brand)
+    projects     → DECISIÓN (proponer proyectos)
     content      → EJECUCIÓN (crear contenido)
     creatives    → EJECUCIÓN (visual/identity)
     prospecting  → EJECUCIÓN (outreach)
     partners     → EJECUCIÓN (partnerships)
     paid-ads     → EJECUCIÓN (ads)
     web          → EJECUCIÓN (landing/magnets)
-    research     → INTELIGENCIA (deep research)
-    intelligence → INTELIGENCIA (signals/patterns)
-    learning     → INTELIGENCIA (CRM/trends)
+    insights     → INTELIGENCIA (research + signals + CRM)
     soporte/tasks→ TAREAS (task management)
     admin*       → cervantes agent binding
 """
@@ -74,21 +72,24 @@ CHANNEL_TEMPLATES = {
             "Cuando termines toda la Foundation, recomienda pasar a #brand para consultas."
         ),
     },
-    "brand": {
+    "inbox": {
         "systemPrompt": (
             "[CLIENTE: {name} | slug: {slug}]\n"
             "PATHS: ./brand/ → ./brand/{slug}/ (SIEMPRE)\n"
-            "Estás en #brand. Canal de DECISIÓN. NO crees documentos nuevos aquí (eso va en #onboarding).\n"
-            "Consulta, revisa y actualiza pilares existentes. "
+            "Estás en #inbox. Canal de INPUT + DECISIÓN.\n\n"
+            "Dos usos:\n"
+            "1. INBOX — El cliente comparte ideas, feedback de clientes, observaciones del mercado, "
+            "movimientos de competidores. Sancho lo procesa, clasifica y convierte en recomendaciones accionables.\n"
+            "2. MARCA — Consultas sobre brand voice, posicionamiento, pricing. Responde basándote en Foundation.\n\n"
             "Skills: brand-voice, positioning-messaging, pricing-strategy, business-model-audit, self-intelligence."
         ),
     },
-    "campaigns": {
+    "projects": {
         "systemPrompt": (
             "[CLIENTE: {name} | slug: {slug}]\n"
             "PATHS: ./brand/ → ./brand/{slug}/ (SIEMPRE)\n"
-            "Estás en #campaigns. Canal de DECISIÓN. NO ejecutes nada aquí. "
-            "Propón y decide campañas, funnels, priorización de canales.\n"
+            "Estás en #projects. Canal de DECISIÓN. NO ejecutes nada aquí. "
+            "Propón y decide proyectos, funnels, priorización de canales.\n"
             "Ejecución va a #content, #paid-ads, #prospecting, etc."
         ),
     },
@@ -99,7 +100,7 @@ CHANNEL_TEMPLATES = {
             "Estás en #content. Canal de EJECUCIÓN. Crea contenido aquí.\n"
             "Skills: content-calendar-planner, keyword-research, seo-content, content-atomizer, "
             "newsletter, insight-to-content-mapper.\n"
-            "Las ideas nacen en #intelligence → se aprueban en #campaigns → se ejecutan aquí."
+            "Las ideas nacen en #insights → se aprueban en #projects → se ejecutan aquí."
         ),
     },
     "creatives": {
@@ -132,7 +133,7 @@ CHANNEL_TEMPLATES = {
             "PATHS: ./brand/ → ./brand/{slug}/ (SIEMPRE)\n"
             "Estás en #paid-ads. Canal de EJECUCIÓN. Crea copies de anuncios, creatividades, "
             "setup de cuentas Meta/Google.\nSkills: direct-response-copy, google-ads, meta-ads.\n"
-            "Las decisiones de qué campañas lanzar vienen de #campaigns."
+            "Las decisiones de qué proyectos lanzar vienen de #projects."
         ),
     },
     "web": {
@@ -143,29 +144,18 @@ CHANNEL_TEMPLATES = {
             "Skills: direct-response-copy, lead-magnet."
         ),
     },
-    "research": {
+    "insights": {
         "systemPrompt": (
             "[CLIENTE: {name} | slug: {slug}]\n"
             "PATHS: ./brand/ → ./brand/{slug}/ (SIEMPRE)\n"
-            "Estás en #research. Canal de INTELIGENCIA. Deep research, competitive intelligence, "
-            "análisis de mercado.\nSkills: deep-research, competitor-intelligence, market-intelligence."
-        ),
-    },
-    "intelligence": {
-        "systemPrompt": (
-            "[CLIENTE: {name} | slug: {slug}]\n"
-            "PATHS: ./brand/ → ./brand/{slug}/ (SIEMPRE)\n"
-            "Estás en #intelligence. Canal de INTELIGENCIA. Señales, patrones, pulso diario, "
-            "inteligencia de reuniones.\nSkills: daily-pulse, signal-monitor, meeting-intelligence.\n"
-            "Ideas que surjan aquí → proponlas como campaña en #campaigns."
-        ),
-    },
-    "learning": {
-        "systemPrompt": (
-            "[CLIENTE: {name} | slug: {slug}]\n"
-            "PATHS: ./brand/ → ./brand/{slug}/ (SIEMPRE)\n"
-            "Estás en #learning. Canal de INTELIGENCIA. CRM, tendencias, análisis interno.\n"
-            "Skills: last30days, existing-customer-data."
+            "Estás en #insights. Canal de INTELIGENCIA. Toda la inteligencia en un sitio:\n"
+            "- Señales de mercado, competencia, patrones\n"
+            "- Deep research e investigación profunda\n"
+            "- Pulso diario e inteligencia de reuniones\n"
+            "- CRM, datos de clientes, tendencias internas\n\n"
+            "Skills: deep-research, competitor-intelligence, market-intelligence, "
+            "daily-pulse, signal-monitor, meeting-intelligence, last30days, existing-customer-data.\n"
+            "Ideas accionables → proponlas como proyecto en #projects."
         ),
     },
     "soporte": {

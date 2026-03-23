@@ -1,28 +1,22 @@
 {
   "lastChecks": {
-    "email": 1774801320,
-    "calendar": 1774801320,
-    "email_2026_03_21_2202": 1774801320
+    "email_2026_03_23_0016": 1775270180,
+    "calendar_2026_03_23_0016": 1775270180
   },
   "notes": {
-    "2026-03-08T18:26": "Email: 10 unread (newsletters, Upwork messages, GSC 40 clicks milestone). Calendar: normal week, meetings Mar 9. No urgent items <2h.",
-    "2026-03-16T12:26": "Email: Nothing urgent. Newsletters, Kleva prep, Meta ads approved. Calendar: HC Nichos now, Kleva 13:30, Review Sancho 18:00.",
-    "2026-03-16T16:31": "Email: 5 unread (Neil Patel, Qonto SWIFT transfer + invoice, Lenny's newsletter, Qonto receipts reminder). Calendar: Startrader now (ends ~16:15), Weekly Spain Readiness 15:30 done. Nothing urgent <2h.",
-    "2026-03-16T18:18": "Email: 5 unread (Meta receipt, Wrap-up, newsletters). Calendar: no events in next 2h. Nothing urgent.",
-    "2026-03-16T21:18": "Email: 5 unread (HighLevel support ticket, Zephyr newsletter, Kevin Henrikson Founder Mode, Fixcal Zoom full, Startup Empire Greg). Mar 17: Demo Sancho 11:30 Guido Lonetti. Nothing urgent.",
-    "2026-03-17T00:18": "Quiet hours (23:18). Email: 5 unread (Mike Futia subscription, Mastery Haus preventa, Claude Team Cowork promo, HighLevel support, Zephyr newsletter). No urgent items.",
-    "2026-03-17T08:31": "Email: 5 unread (Skool digest, LinkedIn self-sent, Daniel Canosa newsletter, STARTRADER, spam report). Calendar: Sync Daily 9:45, Paylead 10:00, Alfonso-Anna 11:00, Demo Sancho Guido 11:30. Nada urgente <2h.",
-    "2026-03-17T11:31": "Email: 5 unread (AI Money Lab Skool, VWO, Demo Sancho prep self-sent, Paco 1to1 accept/update). Demo Sancho Guido 11:30-12:00 AHORA. Q&A Oier 12:00, Weekly sistemas 13:00.",
-    "2026-03-17T17:11": "Email: 5 unread (Baserow promo, Forte Labs, self-sent Weekly Projects prep, Zephyr, Paco 1to1 update). Calendar: Cita digestivo 18:30 (~2h), 1to1 Paco mañana 12:30. Nada urgente.",
-    "2026-03-17T19:10": "Email: 5 unread (Airtable, Martin invite update, Supercut view, HighLevel receipt, DigitalOcean). Calendar mañana: Mid-week G4U 9:45, Edu 10:30, Alex Paymatico 11:30, Weekly Inuentia 12:00, Paco 1to1 12:30, Anna 13:00, Martin 13:30.",
-    "2026-03-17T23:10": "Quiet hours (23:10). Email: 5 unread (Supabase security alert, BEYOND MEDIA portal, Anna declined 18-Mar, 2 newsletters). Calendar mañana: lleno desde 9:45. Sin eventos <2h.",
-    "2026-03-18T10:00": "Email: 5 unread (AI Money Lab Skool, Agent Mailscale, email change, self-sent prep, AI with Kyle). Calendar: Mid-week G4U AHORA 9:45-10:15, Edu 10:30, Paymatico 11:30, Weekly Inuentia 12:00, Paco 12:30, Anna 13:00, Martin 13:30. Mañana vacío.",
-    "2026-03-18T14:24": "Email: 5 unread (Valley, Amamos el Dinero, Teresa Torres, Thomas Oakes GTM, vFairs). Calendar: Ocupado 14:00-16:00 AHORA. Nada urgente.",
-    "2026-03-18T17:23": "Email: 5 unread (Skool Salsa $36k, Alba Spain Audience segmentation, Alfonso Spain Share out FY27 H1, Zephyr AI wrong, Qonto transferencia procesada). Calendar: Alfonso/Abi 16:30 (7 min). Mañana: Sync Daily 9:45.",
-    "2026-03-18T20:49": "⚠️ URGENTE: Claude API access turned off (Anthropic). Email: 5 unread. Calendar mañana: Sync Daily 9:45, Alba Weekly 10:30, etc. Sin eventos <2h.",
-    "2026-03-19T03:49": "Quiet hours (02:49 Madrid). Email: 3 unread (AI Money Lab notification, Mastery Haus promo, Smartlead newsletter). No urgente. Calendar hoy: Sync Daily 9:45 (~6h).",
-    "2026-03-21T19:02": "Saturday heartbeat. Email: 5 unread. Calendar: Domingo 22 vacío, Lunes 23 ocupado. Sin eventos <2h.",
-    "2026-03-21T22:02": "Saturday PM heartbeat. Email: 5 unread (Jordan Platten x2, Euge Oller, Lenny's, Meta receipt). Calendar: Domingo vacío, Lunes 23 ocupado. Sin eventos <2h.",
-    "2026-03-22T02:03": "Quiet hours (01:03 UTC / 02:03 Madrid). Email: 3 unread (Jordan Platten x2, Euge Oller newsletter). No urgente. Calendar lunes 23: lleno desde 10:00."
+    "2026-03-23T00:16": "Quiet hours (00:16 Madrid). Calendar: Lunes 23 ocupado desde 10:00. Sin eventos <2h."
+  },
+  "sales_call_prep": {
+    "last_run": "2026-03-22T21:31:00Z",
+    "mode": "daily",
+    "target_date": "2026-03-23",
+    "calls_found": 0,
+    "leads_with_tag": 3,
+    "ghl_calendar_mismatch": 3,
+    "issues": [
+      "3 leads con tag llamada-agendada sin evento de Calendar",
+      "Eduardo Zuñiga tiene llamada-confirmada pero sin evento",
+      "GHL API key retornó 401 — fallback a archivo de dry-run"
+    ]
   }
 }

@@ -231,6 +231,72 @@ Presentar: estado actual → gaps → canales → estrategias con scoring → pl
 
 **Esperar aprobación antes de escribir archivos.**
 
+---
+
+### Paso 8.5: Proponer Idea Generation Tasks (~3 min)
+
+Después de aprobar el plan, ANTES de escribir archivos:
+
+Para cada estrategia aprobada → proponer **recurring tasks** concretas para el Idea Generation System.
+
+**Lógica:**
+1. Por cada estrategia, inferir qué intelligence recurrente la alimenta
+2. Definir: nombre, frecuencia, fuentes, canal destino
+3. Presentar como tabla para aprobación
+
+**Ejemplo para estrategia "Content SEO+GEO":**
+```
+| Tarea | Frecuencia | Fuentes | Canal destino |
+|-------|-----------|---------|---------------|
+| Buscar PAA para keywords del cliente | Cada 7 días | Serper PAA, SERP gaps | Blog |
+| Monitor menciones en LLMs | Cada 14 días | GEO multi-provider | Blog, LinkedIn |
+| Scan blogs competencia para gaps | Cada 7 días | SERP analysis, competitor URLs | Blog |
+| Trending topics del nicho | Cada 3 días | Google Trends, news | Blog, IG, LinkedIn, Twitter |
+```
+
+**Ejemplo para estrategia "LinkedIn Outreach":**
+```
+| Tarea | Frecuencia | Fuentes | Canal destino |
+|-------|-----------|---------|---------------|
+| Señales LinkedIn (cambios puesto, fundraising) | Diario | Signal monitor | Outreach |
+| Identificar partners potenciales | Cada 14 días | SERP discovery, influencer finder | Partners |
+| Monitor contenido competencia LinkedIn | Cada 7 días | Social media extractor | LinkedIn |
+```
+
+**Catálogo de fuentes disponibles:**
+- PAA (People Also Ask) — via Serper
+- SERP gaps — via audit engines
+- GEO visibility — via multi-provider analysis
+- Google Trends / trending topics
+- Competitor content monitoring
+- Signal detection (LinkedIn, web)
+- News / eventos del sector
+- Influencer/partner discovery
+- Own media gaps (del audit)
+
+**Presentar al usuario:**
+```
+📋 **Idea Generation — Tareas recurrentes propuestas:**
+
+Para [{estrategia A}]:
+[tabla]
+
+Para [{estrategia B}]:
+[tabla]
+
+¿Apruebas estas tareas? Las crearé como recurring_tasks 
+en el Idea Generation System → notificaciones en #intelligence.
+```
+
+**Esperar aprobación.** El usuario puede modificar frecuencias, eliminar tareas, o añadir nuevas.
+
+**Al aprobar:**
+- Crear `recurring_tasks` entries (JSON en `brand/{slug}/idea-generation/recurring-tasks.json` hasta que exista backend)
+- Crear crons correspondientes en Sancho (via cron tool)
+- Las ideas generadas irán a `idea_bank` → notificación Discord #intelligence → MC para aprobar/rechazar
+
+---
+
 Después de aprobación, ofrecer SIEMPRE:
 
 ```
@@ -253,6 +319,7 @@ El documento `strategic-plan/current.md` sigue un arco narrativo — NO el orden
 6. QUÉ HACEMOS PRIMERO — Roadmap por fases (Fase 0 → Fase 1 → Fase 2)
 7. PROYECTOS — Lista con objetivo, métrica, target, review date
 8. CÓMO MEDIMOS — Dashboard de métricas por semana/mes
+9. IDEA GENERATION — Tareas recurrentes por estrategia (nombre, frecuencia, fuentes, canal destino)
 ```
 
 **No incluir en el documento:**
@@ -461,3 +528,6 @@ Al completar un proyecto → generar `value-review.md`:
 14. ¿Cada hilo de tarea tiene link al proyecto padre + link a MC?
 15. ¿`discord_thread_id` guardado en tasks.json y project.json?
 16. ¿Cada tarea pregunta "¿La ejecuto?" y espera confirmación?
+17. ¿Se propusieron recurring tasks de Idea Generation por cada estrategia aprobada?
+18. ¿Las recurring tasks tienen nombre, frecuencia, fuentes y canal destino definidos?
+19. ¿Se crearon los crons/JSON de recurring_tasks al aprobar?

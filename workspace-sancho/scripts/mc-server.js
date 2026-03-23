@@ -764,6 +764,26 @@ function loadClients() {
   return loadClientsData().clients || [];
 }
 
+// ========== Idea Bank & Recurring Tasks helpers ==========
+function loadIdeas(slug) {
+  const file = path.join(BASE, 'brand', slug, 'idea-generation', 'ideas.json');
+  try { return JSON.parse(fs.readFileSync(file, 'utf-8')); } catch { return []; }
+}
+function saveIdeas(slug, ideas) {
+  const dir = path.join(BASE, 'brand', slug, 'idea-generation');
+  fs.mkdirSync(dir, { recursive: true });
+  fs.writeFileSync(path.join(dir, 'ideas.json'), JSON.stringify(ideas, null, 2));
+}
+function loadRecurringTasks(slug) {
+  const file = path.join(BASE, 'brand', slug, 'idea-generation', 'recurring-tasks.json');
+  try { return JSON.parse(fs.readFileSync(file, 'utf-8')); } catch { return []; }
+}
+function saveRecurringTasks(slug, tasks) {
+  const dir = path.join(BASE, 'brand', slug, 'idea-generation');
+  fs.mkdirSync(dir, { recursive: true });
+  fs.writeFileSync(path.join(dir, 'recurring-tasks.json'), JSON.stringify(tasks, null, 2));
+}
+
 function getAdminToken() {
   return loadClientsData().adminToken || null;
 }
@@ -1659,6 +1679,12 @@ nav .nav-footer { display:none !important; }
         '/api/projects/project-update',
         '/api/projects/',
         '/api/metrics',
+        '/api/ideas',
+        '/api/ideas/status',
+        '/api/notifications',
+        '/api/notifications/sent',
+        '/api/recurring-tasks',
+        '/api/recurring-tasks/toggle',
       ];
       const apiPath = portalPath.split('?')[0];
       const isAllowed = allowedApis.some(a => apiPath === a || apiPath.startsWith(a + '/') || apiPath.startsWith(a + '?'));
@@ -1695,6 +1721,283 @@ nav .nav-footer { display:none !important; }
     }
   }
   // ========== END PORTAL ROUTES ==========
+
+  // === API: Ideas (Idea Bank) ===
+  // GET /api/notifications?slug=X — returns unsent notifications
+  if (req.method === 'GET' && url.startsWith('/api/notifications')) {
+    if (!req._adminToken && !req._portalClient) {
+      res.writeHead(403, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Unauthorized' }));
+      return;
+    }
+    const params = new URL('http://x' + req.url).searchParams;
+    const slugParam = params.get('slug');
+    const result = {};
+    if (slugParam) {
+      const notifsFile = path.join(BASE, 'brand', slugParam, 'idea-generation', 'notifications.json');
+      try { result[slugParam] = JSON.parse(fs.readFileSync(notifsFile, 'utf-8')).filter(n => !n.sent); } catch { result[slugParam] = []; }
+    }
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ ok: true, notifications: result }));
+    return;
+  }
+
+  // POST /api/notifications/sent — mark notifications as sent { slug, ids: [...] }
+  if (req.method === 'POST' && url === '/api/notifications/sent') {
+    if (!req._adminToken && !req._portalClient) {
+      res.writeHead(403, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Unauthorized' }));
+      return;
+    }
+    let body = '';
+    req.on('data', chunk => { body += chunk; if (body.length > 1e5) req.destroy(); });
+    req.on('end', () => {
+      try {
+        const { slug, ids } = JSON.parse(body);
+        if (!slug || !ids || !Array.isArray(ids)) { res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'Missing slug or ids array' })); return; }
+        const notifsFile = path.join(BASE, 'brand', slug, 'idea-generation', 'notifications.json');
+        let notifs = [];
+        try { notifs = JSON.parse(fs.readFileSync(notifsFile, 'utf-8')); } catch {}
+        let marked = 0;
+        notifs.forEach(n => { if (ids.includes(n.id)) { n.sent = true; marked++; } });
+        fs.writeFileSync(notifsFile, JSON.stringify(notifs, null, 2));
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true, marked }));
+      } catch (e) { res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: e.message })); }
+    });
+    return;
+  }
+
+  if (req.method === 'GET' && url.startsWith('/api/ideas')) {
+    if (!req._adminToken && !req._portalClient) {
+      res.writeHead(403, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Unauthorized' }));
+      return;
+    }
+    const params = new URL('http://x' + url.replace(/^\/api\/ideas/, '/api/ideas')).searchParams;
+    let slugParam = params.get('slug') || new URL('http://x' + req.url).searchParams.get('slug');
+    if (req._portalClient) slugParam = req._portalSlug;
+    let result = {};
+    if (slugParam) {
+      result[slugParam] = loadIdeas(slugParam);
+    } else {
+      const clients = loadClients();
+      for (const c of clients) {
+        if (c.slug) result[c.slug] = loadIdeas(c.slug);
+      }
+    }
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify(result));
+    return;
+  }
+  if (req.method === 'POST' && url === '/api/ideas') {
+    if (!req._adminToken && !req._portalClient) {
+      res.writeHead(403, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Unauthorized' }));
+      return;
+    }
+    let body = '';
+    req.on('data', chunk => { body += chunk; if (body.length > 1e5) req.destroy(); });
+    req.on('end', () => {
+      try {
+        let { slug, idea } = JSON.parse(body);
+        if (!slug || !idea) { res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'Missing slug or idea' })); return; }
+        if (req._portalClient && req._portalSlug !== slug) { res.writeHead(403, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'Forbidden' })); return; }
+        const ideas = loadIdeas(slug);
+        const existingIdx = idea.id ? ideas.findIndex(i => i.id === idea.id) : -1;
+        if (existingIdx >= 0) {
+          // Upsert: merge fields into existing idea
+          idea.updated_at = new Date().toISOString();
+          Object.assign(ideas[existingIdx], idea);
+          idea = ideas[existingIdx];
+        } else {
+          idea.id = idea.id || crypto.randomUUID();
+          idea.created_at = idea.created_at || new Date().toISOString();
+          idea.status = idea.status || 'new';
+          ideas.push(idea);
+        }
+        saveIdeas(slug, ideas);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true, idea }));
+      } catch (e) { res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: e.message })); }
+    });
+    return;
+  }
+  if (req.method === 'POST' && url === '/api/ideas/status') {
+    if (!req._adminToken && !req._portalClient) {
+      res.writeHead(403, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Unauthorized' }));
+      return;
+    }
+    let body = '';
+    req.on('data', chunk => { body += chunk; if (body.length > 1e5) req.destroy(); });
+    req.on('end', () => {
+      try {
+        const { slug, ideaId, status, approvedBy } = JSON.parse(body);
+        if (!slug || !ideaId || !status) { res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'Missing slug, ideaId, or status' })); return; }
+        if (req._portalClient && req._portalSlug !== slug) { res.writeHead(403, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'Forbidden' })); return; }
+        const ideas = loadIdeas(slug);
+        const idea = ideas.find(i => i.id === ideaId);
+        if (!idea) { res.writeHead(404, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'Idea not found' })); return; }
+        const oldStatus = idea.status;
+        idea.status = status;
+        if (status === 'approved') { idea.approved_at = new Date().toISOString(); idea.approved_by = approvedBy || null; }
+        saveIdeas(slug, ideas);
+
+        // Write to notification queue on approve
+        if (status === 'approved') {
+          const notifsFile = path.join(BASE, 'brand', slug, 'idea-generation', 'notifications.json');
+          let notifs = [];
+          try { notifs = JSON.parse(fs.readFileSync(notifsFile, 'utf-8')); } catch {}
+          notifs.push({
+            id: crypto.randomUUID(),
+            type: 'idea_approved',
+            ideaId: idea.id,
+            ideaTitle: idea.title,
+            ideaType: idea.type,
+            channels: idea.channels || (idea.target_channel ? [idea.target_channel] : []),
+            approvedBy: approvedBy || 'admin',
+            timestamp: new Date().toISOString(),
+            sent: false
+          });
+          const notifsDir = path.join(BASE, 'brand', slug, 'idea-generation');
+          fs.mkdirSync(notifsDir, { recursive: true });
+          fs.writeFileSync(notifsFile, JSON.stringify(notifs, null, 2));
+        }
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true, ideaId, oldStatus, newStatus: status }));
+      } catch (e) { res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: e.message })); }
+    });
+    return;
+  }
+  if (req.method === 'DELETE' && url === '/api/ideas') {
+    if (!req._adminToken && !req._portalClient) {
+      res.writeHead(403, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Unauthorized' }));
+      return;
+    }
+    let body = '';
+    req.on('data', chunk => { body += chunk; if (body.length > 1e5) req.destroy(); });
+    req.on('end', () => {
+      try {
+        const { slug, ideaId } = JSON.parse(body);
+        if (!slug || !ideaId) { res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'Missing slug or ideaId' })); return; }
+        if (req._portalClient && req._portalSlug !== slug) { res.writeHead(403, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'Forbidden' })); return; }
+        let ideas = loadIdeas(slug);
+        const len = ideas.length;
+        ideas = ideas.filter(i => i.id !== ideaId);
+        if (ideas.length === len) { res.writeHead(404, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'Idea not found' })); return; }
+        saveIdeas(slug, ideas);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true }));
+      } catch (e) { res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: e.message })); }
+    });
+    return;
+  }
+
+  // === API: Recurring Tasks ===
+  if (req.method === 'GET' && url.startsWith('/api/recurring-tasks')) {
+    if (!req._adminToken && !req._portalClient) {
+      res.writeHead(403, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Unauthorized' }));
+      return;
+    }
+    const params = new URL('http://x' + url.replace(/^\/api\/recurring-tasks/, '/api/recurring-tasks')).searchParams;
+    let slugParam = params.get('slug') || new URL('http://x' + req.url).searchParams.get('slug');
+    if (req._portalClient) slugParam = req._portalSlug;
+    let result = {};
+    if (slugParam) {
+      result[slugParam] = loadRecurringTasks(slugParam);
+    } else {
+      const clients = loadClients();
+      for (const c of clients) {
+        if (c.slug) result[c.slug] = loadRecurringTasks(c.slug);
+      }
+    }
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify(result));
+    return;
+  }
+  if (req.method === 'POST' && url === '/api/recurring-tasks') {
+    if (!req._adminToken && !req._portalClient) {
+      res.writeHead(403, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Unauthorized' }));
+      return;
+    }
+    let body = '';
+    req.on('data', chunk => { body += chunk; if (body.length > 1e5) req.destroy(); });
+    req.on('end', () => {
+      try {
+        const { slug, task } = JSON.parse(body);
+        if (!slug || !task) { res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'Missing slug or task' })); return; }
+        if (req._portalClient && req._portalSlug !== slug) { res.writeHead(403, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'Forbidden' })); return; }
+        const tasks = loadRecurringTasks(slug);
+        if (task.id) {
+          const idx = tasks.findIndex(t => t.id === task.id);
+          if (idx >= 0) { Object.assign(tasks[idx], task); } else { task.created_at = task.created_at || new Date().toISOString(); tasks.push(task); }
+        } else {
+          task.id = crypto.randomUUID();
+          task.created_at = new Date().toISOString();
+          task.status = task.status || 'active';
+          task.ideas_generated = task.ideas_generated || 0;
+          tasks.push(task);
+        }
+        saveRecurringTasks(slug, tasks);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true, task }));
+      } catch (e) { res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: e.message })); }
+    });
+    return;
+  }
+  if (req.method === 'POST' && url === '/api/recurring-tasks/toggle') {
+    if (!req._adminToken && !req._portalClient) {
+      res.writeHead(403, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Unauthorized' }));
+      return;
+    }
+    let body = '';
+    req.on('data', chunk => { body += chunk; if (body.length > 1e5) req.destroy(); });
+    req.on('end', () => {
+      try {
+        const { slug, taskId } = JSON.parse(body);
+        if (!slug || !taskId) { res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'Missing slug or taskId' })); return; }
+        if (req._portalClient && req._portalSlug !== slug) { res.writeHead(403, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'Forbidden' })); return; }
+        const tasks = loadRecurringTasks(slug);
+        const task = tasks.find(t => t.id === taskId);
+        if (!task) { res.writeHead(404, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'Task not found' })); return; }
+        task.status = task.status === 'active' ? 'paused' : 'active';
+        saveRecurringTasks(slug, tasks);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true, taskId, newStatus: task.status }));
+      } catch (e) { res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: e.message })); }
+    });
+    return;
+  }
+  if (req.method === 'DELETE' && url === '/api/recurring-tasks') {
+    if (!req._adminToken && !req._portalClient) {
+      res.writeHead(403, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Unauthorized' }));
+      return;
+    }
+    let body = '';
+    req.on('data', chunk => { body += chunk; if (body.length > 1e5) req.destroy(); });
+    req.on('end', () => {
+      try {
+        const { slug, taskId } = JSON.parse(body);
+        if (!slug || !taskId) { res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'Missing slug or taskId' })); return; }
+        if (req._portalClient && req._portalSlug !== slug) { res.writeHead(403, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'Forbidden' })); return; }
+        let tasks = loadRecurringTasks(slug);
+        const len = tasks.length;
+        tasks = tasks.filter(t => t.id !== taskId);
+        if (tasks.length === len) { res.writeHead(404, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'Task not found' })); return; }
+        saveRecurringTasks(slug, tasks);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true }));
+      } catch (e) { res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: e.message })); }
+    });
+    return;
+  }
 
   // === API: Projects — task status update ===
   if (req.method === 'POST' && url === '/api/projects/task-status') {
@@ -3106,9 +3409,24 @@ async function doTest() {
         }
       }
 
+      // Load metrics plan if exists
+      let metricsPlan = null;
+      const planFile = path.join(BASE, 'brand', slug, 'metrics-plan.json');
+      if (fs.existsSync(planFile)) {
+        try { metricsPlan = JSON.parse(fs.readFileSync(planFile, 'utf-8')); } catch {}
+      }
+
+      // Load archetype templates
+      let archetypeTemplates = null;
+      const mappingsFile = path.join(BASE, 'skills', 'acquisition-metrics-plan', 'schemas', 'integration-mappings.json');
+      if (fs.existsSync(mappingsFile)) {
+        try { archetypeTemplates = JSON.parse(fs.readFileSync(mappingsFile, 'utf-8')); } catch {}
+      }
+
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({
         slug,
+        plan: metricsPlan,
         metricsSheet: integrations.metricsSheet || null,
         dataSources: integrations.dataSources || {},
         rolling: metrics,

@@ -68,20 +68,23 @@ Documentar cada URL con status: `active` / `dormant` / `not found`
 
 | Herramienta | Qué extraer | Actor/Endpoint |
 |------------|-------------|----------------|
-| Apify web-scraper | Homepage + /pricing + /about + /blog (últimos 10 posts) | `apify/web-scraper` |
-| Apify instagram-scraper | Últimos 20 posts + bio + followers + engagement | `apify/instagram-scraper` |
+| Apify web-scraper | Homepage + /pricing + /about + /blog (últimos 10 posts) | `apify/web-scraper` o `apify/cheerio-scraper` |
+| Apify instagram-scraper | Últimos 20 posts + bio + followers + engagement | `apify/instagram-scraper` o `apify/instagram-profile-scraper` |
 | Apify facebook-ads-scraper | Ads activos en FB Ads Library | `apify/facebook-ads-scraper` |
 | web_fetch | /pricing OBLIGATORIO (verificación directa) | Nativo |
 
 ### Lens 2 (Terceros) — Qué OTROS dicen
 
-| Herramienta | Qué extraer | Endpoint |
-|------------|-------------|----------|
-| DataForSEO SERP | Rankings por keywords principales | `/v3/serp/google/organic/live` |
-| DataForSEO Backlinks | DA, backlinks, referring domains | `/v3/backlinks/summary/live` |
-| DataForSEO Keywords | Keywords por las que rankea | `/v3/keywords_data/google_ads/keywords_for_site/live` |
+| Herramienta | Qué extraer | Fuente |
+|------------|-------------|--------|
+| Serper | SERP results por keywords principales | `$SERPER_API_KEY` — PAA, Related Searches, rankings |
+| DataForSEO Keywords | Keywords por las que rankea el competidor | `/v3/keywords_data/google_ads/keywords_for_site/live` |
+| DataForSEO SERP | Rankings orgánicos complementarios | `/v3/serp/google/organic/live` |
+| Apify backlinks scraper | DA/DR, backlinks, referring domains | Apify actors que scrapean free tools (Ahrefs free checker, Moz free) |
 | Apify google-search-scraper | "[nombre] reviews", "[nombre] vs" | `apify/google-search-scraper` |
 | web_search | Noticias, press releases, artículos recientes | Nativo |
+
+**Para visibilidad en LLMs / GEO:** No se cubre en esta skill. Usar skill `ai-seo` que hace queries directas a múltiples LLMs (GPT, Claude, Gemini, Perplexity) y trackea menciones de marca, citations y sentiment.
 
 ### Lens 3 (Consumidores) — Qué CLIENTES dicen
 
@@ -92,26 +95,52 @@ Documentar cada URL con status: `active` / `dormant` / `not found`
 | web_search | Reddit, foros sobre el competidor | Nativo |
 | web_fetch | Threads relevantes de Reddit/foros | Nativo (fallback) |
 
-### DataForSEO API — Referencia rápida
+---
 
+## APIs disponibles — Referencia rápida
+
+### Serper (SERP + PAA)
+```
+Auth: Header X-API-KEY → $SERPER_API_KEY
+Base URL: https://google.serper.dev
+
+Endpoints:
+  POST /search          → SERP orgánico
+  POST /search (type: news)  → noticias
+
+Body ejemplo:
+  { "q": "keyword", "gl": "es", "hl": "es", "num": 10 }
+```
+
+### DataForSEO (Keywords + SERP complementario)
 ```
 Auth: Basic auth → $DATAFORSEO_LOGIN : $DATAFORSEO_PASSWORD
 Base URL: https://api.dataforseo.com/v3
 
-Endpoints clave:
+Endpoints disponibles (sin mínimo mensual):
   /serp/google/organic/live          → SERP results por keyword
-  /backlinks/summary/live            → DA, backlinks, referring domains
   /keywords_data/google_ads/keywords_for_site/live  → keywords de un dominio
   /on_page/summary                   → análisis on-page
 
+⚠️ Endpoints NO disponibles (requieren $100/mes mínimo):
+  /backlinks/*           → Usar Apify actors como alternativa
+  
 Parámetros siempre:
   location_code: 2724  (España)
   language_code: "es"
 
-⚠️ Balance limitado (~$35) — usar con moderación: 1-3 queries por competidor
+Balance: pay-as-you-go, ~$0.01-0.05 por query
 ```
 
-Lee el skill `apify` para la sintaxis exacta de cada actor.
+### Apify — Backlinks (alternativa a DataForSEO Backlinks)
+```
+Buscar actors en Apify Store para:
+  - Ahrefs free backlink checker scraper → DR, backlinks, referring domains
+  - Moz free DA checker scraper → DA, PA
+  
+Usar skill `apify` para la sintaxis exacta de cada actor.
+Datos menos completos que API directa pero suficientes para análisis competitivo.
+```
 
 ---
 

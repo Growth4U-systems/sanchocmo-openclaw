@@ -5,6 +5,45 @@ Scope: Features y cambios del producto SanchoCMO. Actividad operativa por client
 
 ---
 
+## [2.7.0] — 2026-03-22
+
+### Added
+- **`larry` skill** — App growth agent with TikTok posting, RevenueCat integration, analytics loop, competitor research, slide generation, and daily reports. Includes 6 scripts and 5 reference docs.
+- **`tiktok-growth` skill** — TikTok-specific growth playbook with analytics, competitor research, content slides, posting automation, and onboarding flow. Full script suite + references.
+- **`metricool` skill** — Metricool API integration for social media scheduling, best-time analysis, brand listing, and scheduled post management. 4 scripts (schedule-post, best-time, get-brands, list-scheduled).
+- **`apify` skill** — Run Apify Actors (scrapers, crawlers, automation) via REST API with curl. Includes full OpenAPI spec.
+- **`gsc` skill** — Google Search Console direct integration with Python scripts for auth and query (impressions, clicks, CTR, position). Service Account based.
+- **`native-google-analytics` skill** — Native GA4 integration via Python + Google Analytics Data API. Direct property queries without third-party wrappers.
+- **`instagram-content` skill** — Instagram content creation guidelines and templates.
+- **`linkedin-content` skill** — LinkedIn post creation with format templates and best practices.
+- **`twitter-content` skill** — Twitter/X content creation skill with thread and single-tweet formats.
+- **`niche-presentation` skill** — Niche market presentation generator with slide templates.
+- **`new-client-protocol.md`** — Full onboarding protocol: data collection → Discord setup (template + bot invite) → `new-client.sh` automation → verification. Eliminates manual improvisation.
+- **Escudero PRD suite** — 7 PRD documents for Escudero bot architecture: consolidated PDR, architecture decisions, bot spec, executive summary, integration flows, QA responses, and v1 spec.
+- **Bots Engagement PDR** — Product design review for Discord bot engagement patterns.
+
+### Changed
+- **SOUL.md** — Added P0 rule #14: mandatory `read()` for skill `references/` files. Fixed MC portal URL pattern to always include `brand/{slug}/` after `/docs/`.
+- **`mc-links-protocol.md`** — Updated URL patterns: all doc paths now require `brand/{slug}/` segment. Added explicit correct/incorrect examples.
+- **`project-threads-protocol.md`** — Added playbook link to task thread first messages. Added thread rename protocol on state changes (✅/❌/⛔/🔧 prefixes). Added bidirectional sync requirement (Discord thread name ↔ JSON status ↔ MC).
+- **`competitor-intelligence` skill** — Major refactor with new scraping reference guide. Backed up v4.1 before changes.
+- **`ad-creative` skill** — Updated with refined templates and guidelines.
+- **`lead-magnet` skill** — Consolidated (replaced separate `lead-magnets` skill).
+- **`insight-to-content-mapper` skill** — Updated mapping logic.
+- **`strategic-plan` skill** — Updated data model references.
+- **`content-calendar-planner` skill** — Minor update.
+- **`metrics-collector` adapters** — Updated GA4, GHL, and Meta Ads adapters with fixes and improvements.
+- **`last30days` skill** — Updated Bluesky scraping library and tests.
+- **`clients.json`** — New client entries added.
+
+### Removed
+- **`content-miner` skill** — Removed (SKILL.md + 3 reference files). Functionality covered by other content skills.
+- **`lead-magnets` skill** — Removed (consolidated into `lead-magnet`).
+- **`product-marketing-context` skill** — Removed (SKILL.md + evals).
+- **Legacy workspace cleanup** — Removed old `brand/`, config backups, and obsolete files (commit `3a02685`).
+
+---
+
 ## [2.6.0] — 2026-03-15
 
 ### Added

@@ -19,7 +19,13 @@
         "campaigns": "campaigns/"
       },
       "phase": 0,
-      "mcToken": "730a6de7b765cdaf15131aa46a31a610"
+      "mcToken": "730a6de7b765cdaf15131aa46a31a610",
+      "channels": {
+        "intelligence": "1475638253154603170"
+      },
+      "metrics": {
+        "apis": []
+      }
     },
     {
       "slug": "growth4u",
@@ -35,7 +41,22 @@
         "url": "https://psapmujzxhaxraphddlv.supabase.co",
         "anon_key": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBzYXBtdWp6eGhheHJhcGhkZGx2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4OTAxNTEsImV4cCI6MjA4NzQ2NjE1MX0.RxanIQCJtjGfCUL_X0MqPi2IdGkXOkmfaEAJZvQJblI"
       },
-      "mcToken": "7be93afd7e2be887ce181f8aeab0d0ec"
+      "mcToken": "7be93afd7e2be887ce181f8aeab0d0ec",
+      "channels": {
+        "intelligence": "1477741644789842031"
+      },
+      "metrics": {
+        "apis": ["meta-ads", "ghl"],
+        "meta_ads": {
+          "token_env": "META_ACCESS_TOKEN",
+          "account_id": "act_1507778460268244"
+        },
+        "ghl": {
+          "token_env": "GHL_API_KEY",
+          "location_env": "GHL_LOCATION_ID",
+          "calendar_id": "8hQcyWydgrySmdli6vyN"
+        }
+      }
     },
     {
       "slug": "paymatico",
@@ -51,7 +72,13 @@
         "url": "https://psapmujzxhaxraphddlv.supabase.co",
         "anon_key": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBzYXBtdWp6eGhheHJhcGhkZGx2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4OTAxNTEsImV4cCI6MjA4NzQ2NjE1MX0.RxanIQCJtjGfCUL_X0MqPi2IdGkXOkmfaEAJZvQJblI"
       },
-      "mcToken": "63829b9d674d04e272626e9df17409f9"
+      "mcToken": "63829b9d674d04e272626e9df17409f9",
+      "channels": {
+        "intelligence": "1477995838092476477"
+      },
+      "metrics": {
+        "apis": []
+      }
     },
     {
       "slug": "sanchocmo",
@@ -115,7 +142,13 @@
       "language": "es",
       "active": true,
       "guild": "1483424292824940659",
-      "mcToken": "2c366e97f11ef9428ae5474351a44bd8"
+      "mcToken": "2c366e97f11ef9428ae5474351a44bd8",
+      "channels": {
+        "intelligence": "1483424294099882093"
+      },
+      "metrics": {
+        "apis": []
+      }
     },
     {
       "slug": "dealcar",
