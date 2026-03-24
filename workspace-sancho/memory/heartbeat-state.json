@@ -1,28 +1,11 @@
 {
-  "lastChecks": {
-    "email_2026_03_23_0016": 1775270180,
-    "calendar_2026_03_23_0016": 1775270180,
-    "email_2026_03_23_1103": 1775373780,
-    "calendar_2026_03_23_1103": 1775373780,
-    "email_2026_03_23_1552": 1775393520,
-    "calendar_2026_03_23_1552": 1775393520,
-    "email_2026_03_23_2008": 1775412480,
-    "calendar_2026_03_23_2008": 1775412480
+  "last_heartbeat": "2026-03-24T02:01:00+01:00",
+  "checks_done": {
+    "email": "skipped-gog-args",
+    "calendar": "2026-03-24T02:01:00+01:00"
   },
   "notes": {
-    "2026-03-23T00:16": "Quiet hours (00:16 Madrid). Calendar: Lunes 23 ocupado desde 10:00. Sin eventos <2h.",
-    "2026-03-23T11:03": "Monday AM heartbeat. Email: 5 unread (G4U Weekly prep, Searchable webinar, ESB calendar, Spain Share out). Calendar: G4U Weekly AHORA 11:00-12:00, Spain GTM 12:00, Spain Share out 14:00, Ocupado 14-16h, Demo DealCar martes 13:00.",
-    "2026-03-23T15:52": "Monday PM heartbeat. Email: 5 unread (Qonto receipts, Mailgun code, Mike Futia, Upwork billing, Notion updates Monzo). Calendar: Weekly Spain Readiness AHORA 15:30-16:00. Nada urgente <2h.",
-    "2026-03-23T20:08": "Monday evening heartbeat. Email: 5 unread (Mark Kashef, Stripe AI feedback, Gemini notes Leads+Sancho, Smartlead AMA). Calendar: Todos los eventos de hoy completados. Martes 24: Demo DealCar 13:00-13:30."
-  },
-  "sales_call_prep": {
-    "last_run": "2026-03-23T21:30:00Z",
-    "mode": "daily",
-    "target_date": "2026-03-24",
-    "calls_found": 0,
-    "no_ghl_match": 0,
-    "ghl_leads_total": 100,
-    "calendar_events_tomorrow": 10,
-    "note": "No hay llamadas con leads de GHL mañana. Eventos de mañana son internos (Sync Daily, Q&A Oier) o con partners (DealCar, Monzo, Orbyn)."
+    "calendar": "Next events: Philippe en Arg/Uru (23 mar-18 abr), Casa (24 mar), Sync Daily (24 mar 09:45), Tomás López (24 mar 10:30), ESB schedule (24 mar 11:00). No eventos <2h.",
+    "email": "No se verificó por error de sintaxis gog"
   }
 }

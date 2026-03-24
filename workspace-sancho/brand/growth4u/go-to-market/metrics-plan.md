@@ -106,7 +106,38 @@ Visita /recursos/ o ad lead magnet → Opt-in (descarga) → Email nurturing →
 
 ---
 
-### 🔵 Camino 3: Web orgánico/directo → Navegación → Agenda
+### 🟡 Camino 3: Outbound (WhatsApp/Email/DM) → Respuesta → Agenda
+
+```
+Contacto existente en GHL → Mensaje outbound (WhatsApp/Email) → Respuesta → Conversación → Agenda → Llamada → Cliente
+```
+
+| Step | Métrica | Fuente | Datos actuales |
+|------|---------|--------|----------------|
+| Contactos en CRM | totalContacts | GHL | **237** |
+| Mensajes enviados | conversations sent | GHL | Se detectan 5+ conversations activas recientes |
+| Respuestas recibidas | unread / reply rate | GHL | Pendiente segmentar outbound vs inbound |
+| Conversaciones activas | recentConversation | GHL | 5 en últimos 5 días |
+| Agenda desde outbound | appointments from conversation | GHL | ❌ No separado |
+
+**Datos observados:**
+- Hay mensajes outbound de Alfonso tipo "Cómo llegar a +50.000 MRR con tu startup" enviados a contactos de Trust Score y Calendar
+- Contactos alcanzados via WhatsApp: al menos 5 en la semana del 17-22 mar
+- **No podemos separar** agendas que vienen de outbound vs inbound sin tag en GHL
+
+**KPIs de este camino:**
+| KPI | Fórmula | Fuente | Valor actual |
+|-----|---------|--------|--------------|
+| **Mensajes outbound / semana** | messages sent (no automations) | GHL | Pendiente |
+| **Response Rate** | respuestas / mensajes enviados | GHL | Pendiente |
+| **CR Conversación → Agenda** | agendas from outbound / conversations | GHL | ❌ |
+| **Coste por Llamada Outbound** | (tiempo Alfonso × hora) / llamadas outbound | Manual | ❌ |
+
+> ⚠️ **Para activar este panel:** necesitamos etiquetar en GHL qué contactos reciben outbound (tag "outbound" o similar) y crear un pipeline stage o campo custom para separar agendas inbound vs outbound.
+
+---
+
+### 🔵 Camino 4: Web orgánico/directo → Navegación → Agenda
 
 ```
 SEO/Social/Directo → Homepage → Servicios/Equipo/Casos → Calendario → Agenda

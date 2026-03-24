@@ -1,28 +1,28 @@
 {
   "client": "growth4u",
   "period": "2026-03",
-  "updatedAt": "2026-03-23T09:02:04.129218",
-  "total_cost_usd": 388.5727,
-  "total_cost_eur": 357.4869,
-  "turns": 3657,
+  "updatedAt": "2026-03-23T23:10:18.692665",
+  "total_cost_usd": 389.6036,
+  "total_cost_eur": 358.4353,
+  "turns": 3661,
   "sessions": 52,
   "agents": {
     "sancho": {
-      "cost_usd": 388.5727,
-      "cost_eur": 357.4869,
-      "turns": 3657,
+      "cost_usd": 389.6036,
+      "cost_eur": 358.4353,
+      "turns": 3661,
       "sessions": 52
     }
   },
   "models": {
     "claude-opus-4-6": {
-      "input": 105224,
-      "output": 1181322,
-      "cache_read": 210325943,
-      "cache_write": 36487914,
-      "cost_usd": 358.4917,
-      "cost_eur": 329.8123,
-      "turns": 3475
+      "input": 105229,
+      "output": 1181678,
+      "cache_read": 210635314,
+      "cache_write": 36626674,
+      "cost_usd": 359.5225,
+      "cost_eur": 330.7607,
+      "turns": 3478
     },
     "unknown": {
       "input": 164,
@@ -31,7 +31,7 @@
       "cache_write": 3257310,
       "cost_usd": 30.081,
       "cost_eur": 27.6745,
-      "turns": 182
+      "turns": 183
     }
   },
   "days": {
@@ -120,8 +120,8 @@
       "turns": 2
     },
     "2026-03-23": {
-      "cost_usd": 0,
-      "turns": 2
+      "cost_usd": 1.0309,
+      "turns": 6
     }
   },
   "clientSpend": {

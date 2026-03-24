@@ -28,7 +28,13 @@ Casos donde es mejor pedir el bono porque necesitan analítica casi obligatoriam
 ### Test de precio bono: €195 vs €125
 
 ### Estructura de anuncios por género:
-- **Nichos hombres:** 2 anuncios diferentes:
-  - Anuncio A: "Deja tu información y te contactamos" (formulario directo)
-  - Anuncio B: Quiz
-- **Nichos mujeres:** Solo quiz (no formulario directo). Philippe 19/03.
+- **Nichos hombres:** 3 caminos: quiz largo + quiz rápido + formulario directo
+- **Nichos mujeres:** Solo quiz (largo + rápido). NO formulario directo (necesitan quiz para llegar al pago del bono). Philippe 19/03, confirmado 24/03.
+
+### Formato URLs landings:
+- Quiz largo: `diagnostico.hospitalcapilar.com/{nicho}`
+- Quiz rápido: `diagnostico.hospitalcapilar.com/rapido/{nicho}`
+- Formulario directo: `diagnostico.hospitalcapilar.com/form/{nicho}`
+- Slugs nichos: `que-me-pasa`, `es-normal`, `postparto`, `el-espejo`, `ya-me-engañaron`, `farmacia-sin-salida`, `la-inversion`
+- UTMs Meta: `?utm_source=facebook&utm_medium=paid_social&utm_campaign={tipo}-{nicho}&utm_content={{ad.name}}`
+- UTMs Google: `?utm_source=google&utm_medium=cpc&utm_campaign={tipo}-{nicho}&utm_content={adgroupid}&utm_term={keyword}`

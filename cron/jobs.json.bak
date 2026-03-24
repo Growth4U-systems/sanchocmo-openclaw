@@ -239,7 +239,7 @@
       "name": "healthcheck",
       "enabled": true,
       "createdAtMs": 1772069609685,
-      "updatedAtMs": 1774284787319,
+      "updatedAtMs": 1774306393624,
       "schedule": {
         "kind": "every",
         "everyMs": 21600000,
@@ -259,11 +259,11 @@
         "channel": "last"
       },
       "state": {
-        "nextRunAtMs": 1774306360036,
-        "lastRunAtMs": 1774284760036,
+        "nextRunAtMs": 1774327960057,
+        "lastRunAtMs": 1774306360057,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 27283,
+        "lastDurationMs": 33567,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0,
         "lastDelivered": false
@@ -276,7 +276,7 @@
       "description": "T-022: Run cost-tracker.py daily at 23:00",
       "enabled": true,
       "createdAtMs": 1772069993394,
-      "updatedAtMs": 1774216868927,
+      "updatedAtMs": 1774303825687,
       "schedule": {
         "kind": "cron",
         "expr": "0 23 * * *"
@@ -293,11 +293,11 @@
         "channel": "webchat"
       },
       "state": {
-        "nextRunAtMs": 1774303200000,
-        "lastRunAtMs": 1774216800019,
+        "nextRunAtMs": 1774389600000,
+        "lastRunAtMs": 1774303200020,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 68908,
+        "lastDurationMs": 625667,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0,
         "lastDelivered": false
@@ -846,7 +846,7 @@
       "name": "Call Prep Daily — Growth4U",
       "enabled": true,
       "createdAtMs": 1774192180766,
-      "updatedAtMs": 1774215130000,
+      "updatedAtMs": 1774301523382,
       "schedule": {
         "kind": "cron",
         "expr": "30 22 * * 0-4",
@@ -863,15 +863,14 @@
         "mode": "none"
       },
       "state": {
-        "nextRunAtMs": 1774301400000,
-        "lastRunAtMs": 1774215000017,
+        "nextRunAtMs": 1774387800000,
+        "lastRunAtMs": 1774301400022,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 129983,
+        "lastDurationMs": 123360,
         "lastDelivered": false,
         "lastDeliveryStatus": "not-delivered",
-        "consecutiveErrors": 0,
-        "runningAtMs": 1774301400019
+        "consecutiveErrors": 0
       }
     },
     {

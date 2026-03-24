@@ -24437,7 +24437,7 @@
   },
   {
     "slug": "growth4u",
-    "collectedAt": "2026-03-23T06:00:07.289Z",
+    "collectedAt": "2026-03-23T22:12:14.741Z",
     "dateRange": {
       "from": "2026-03-22",
       "to": "2026-03-22"
@@ -24445,7 +24445,7 @@
     "sources": {
       "ga4": {
         "status": "ok",
-        "collectedAt": "2026-03-23T06:00:09.301Z",
+        "collectedAt": "2026-03-23T22:12:16.730Z",
         "metrics": [
           {
             "name": "sessions",
@@ -24464,12 +24464,12 @@
           },
           {
             "name": "bounceRate",
-            "value": 1,
+            "value": 0.75,
             "date": "2026-03-22"
           },
           {
             "name": "averageSessionDuration",
-            "value": 10.2879366875,
+            "value": 27.631165125,
             "date": "2026-03-22"
           },
           {
@@ -24484,12 +24484,12 @@
           },
           {
             "name": "engagedSessions",
-            "value": 0,
+            "value": 4,
             "date": "2026-03-22"
           },
           {
             "name": "engagementRate",
-            "value": 0,
+            "value": 0.25,
             "date": "2026-03-22"
           },
           {
@@ -24558,7 +24558,7 @@
           },
           {
             "name": "engagedSessions",
-            "value": 0,
+            "value": 4,
             "date": "2026-03-22",
             "dimensions": {
               "channel": "Organic Video"
@@ -24566,7 +24566,7 @@
           },
           {
             "name": "screenPageViews",
-            "value": 7,
+            "value": 9,
             "date": "2026-03-22",
             "dimensions": {
               "channel": "Organic Video"
@@ -24650,46 +24650,6 @@
             "date": "2026-03-22",
             "dimensions": {
               "channel": "Organic Social"
-            }
-          },
-          {
-            "name": "sessions",
-            "value": 2,
-            "date": "2026-03-22",
-            "dimensions": {
-              "channel": "Unassigned"
-            }
-          },
-          {
-            "name": "totalUsers",
-            "value": 1,
-            "date": "2026-03-22",
-            "dimensions": {
-              "channel": "Unassigned"
-            }
-          },
-          {
-            "name": "newUsers",
-            "value": 0,
-            "date": "2026-03-22",
-            "dimensions": {
-              "channel": "Unassigned"
-            }
-          },
-          {
-            "name": "engagedSessions",
-            "value": 0,
-            "date": "2026-03-22",
-            "dimensions": {
-              "channel": "Unassigned"
-            }
-          },
-          {
-            "name": "screenPageViews",
-            "value": 2,
-            "date": "2026-03-22",
-            "dimensions": {
-              "channel": "Unassigned"
             }
           },
           {
@@ -24698,8 +24658,8 @@
             "date": "2026-03-22",
             "dimensions": {
               "page": "/",
-              "duration": 18,
-              "engagementRate": 0
+              "duration": 19,
+              "engagementRate": 38
             }
           },
           {
@@ -24708,8 +24668,8 @@
             "date": "2026-03-22",
             "dimensions": {
               "page": "/blog/inteligencia-artificial-para-empresas-lo-que-nadie-te-cuenta-y-lo-que-me-hubiese-ahorrado-saberlo-antes/",
-              "duration": 0,
-              "engagementRate": 0
+              "duration": 109,
+              "engagementRate": 50
             }
           },
           {
@@ -24738,8 +24698,8 @@
             "date": "2026-03-22",
             "dimensions": {
               "page": "/equipo/",
-              "duration": 7,
-              "engagementRate": 0
+              "duration": 3,
+              "engagementRate": 100
             }
           },
           {
@@ -24748,8 +24708,8 @@
             "date": "2026-03-22",
             "dimensions": {
               "page": "/blog/",
-              "duration": 6,
-              "engagementRate": 0
+              "duration": 14,
+              "engagementRate": 100
             }
           },
           {
@@ -24778,8 +24738,8 @@
             "date": "2026-03-22",
             "dimensions": {
               "page": "/recursos/meseta-de-crecimiento/",
-              "duration": 0,
-              "engagementRate": 0
+              "duration": 55,
+              "engagementRate": 100
             }
           },
           {
@@ -24792,7 +24752,7 @@
           },
           {
             "name": "bounceRate",
-            "value": 1,
+            "value": 0.7142857142857143,
             "date": "2026-03-22",
             "dimensions": {
               "device": "desktop"
@@ -24800,7 +24760,7 @@
           },
           {
             "name": "engagementRate",
-            "value": 0,
+            "value": 0.2857142857142857,
             "date": "2026-03-22",
             "dimensions": {
               "device": "desktop"
@@ -24834,7 +24794,7 @@
       },
       "gsc": {
         "status": "ok",
-        "collectedAt": "2026-03-23T06:00:09.877Z",
+        "collectedAt": "2026-03-23T22:12:17.521Z",
         "metrics": [
           {
             "name": "clicks",
@@ -26140,21 +26100,21 @@
       },
       "metricool": {
         "status": "ok",
-        "collectedAt": "2026-03-23T06:00:10.350Z",
+        "collectedAt": "2026-03-23T22:12:17.985Z",
         "metrics": []
       },
       "meta-ads": {
         "status": "ok",
-        "collectedAt": "2026-03-23T06:00:12.884Z",
+        "collectedAt": "2026-03-23T22:12:21.571Z",
         "metrics": [
           {
             "name": "spend",
-            "value": 160.79,
+            "value": 161.07,
             "date": "2026-03-22"
           },
           {
             "name": "impressions",
-            "value": 13024,
+            "value": 13029,
             "date": "2026-03-22"
           },
           {
@@ -26164,12 +26124,12 @@
           },
           {
             "name": "ctr",
-            "value": 1.996315,
+            "value": 1.995548,
             "date": "2026-03-22"
           },
           {
             "name": "cpc",
-            "value": 0.618423,
+            "value": 0.6195,
             "date": "2026-03-22"
           },
           {
@@ -26179,7 +26139,7 @@
           },
           {
             "name": "spend",
-            "value": 160.79,
+            "value": 161.07,
             "date": "2026-03-22",
             "dimensions": {
               "campaign": "G4U - Testeo Creativos - Copy"
@@ -26187,7 +26147,7 @@
           },
           {
             "name": "impressions",
-            "value": 13024,
+            "value": 13029,
             "date": "2026-03-22",
             "dimensions": {
               "campaign": "G4U - Testeo Creativos - Copy"
@@ -26203,7 +26163,7 @@
           },
           {
             "name": "ctr",
-            "value": 1.996315,
+            "value": 1.995548,
             "date": "2026-03-22",
             "dimensions": {
               "campaign": "G4U - Testeo Creativos - Copy"
@@ -26211,7 +26171,7 @@
           },
           {
             "name": "cpc",
-            "value": 0.618423,
+            "value": 0.6195,
             "date": "2026-03-22",
             "dimensions": {
               "campaign": "G4U - Testeo Creativos - Copy"
@@ -26227,7 +26187,7 @@
           },
           {
             "name": "spend",
-            "value": 22.49,
+            "value": 22.77,
             "date": "2026-03-22",
             "dimensions": {
               "adset": "unknown",
@@ -26236,7 +26196,7 @@
           },
           {
             "name": "impressions",
-            "value": 3151,
+            "value": 3154,
             "date": "2026-03-22",
             "dimensions": {
               "adset": "unknown",
@@ -26254,7 +26214,7 @@
           },
           {
             "name": "ctr",
-            "value": 1.872421,
+            "value": 1.87064,
             "date": "2026-03-22",
             "dimensions": {
               "adset": "unknown",
@@ -26263,7 +26223,7 @@
           },
           {
             "name": "cpc",
-            "value": 0.381186,
+            "value": 0.385932,
             "date": "2026-03-22",
             "dimensions": {
               "adset": "unknown",
@@ -26326,7 +26286,7 @@
           },
           {
             "name": "impressions",
-            "value": 1462,
+            "value": 1464,
             "date": "2026-03-22",
             "dimensions": {
               "adset": "unknown",
@@ -26344,7 +26304,7 @@
           },
           {
             "name": "ctr",
-            "value": 2.325581,
+            "value": 2.322404,
             "date": "2026-03-22",
             "dimensions": {
               "adset": "unknown",
@@ -26532,7 +26492,7 @@
           },
           {
             "name": "spend",
-            "value": 18.31,
+            "value": 18.59,
             "date": "2026-03-22",
             "dimensions": {
               "ad": "Ángulo 3_V3",
@@ -26542,7 +26502,7 @@
           },
           {
             "name": "impressions",
-            "value": 2679,
+            "value": 2682,
             "date": "2026-03-22",
             "dimensions": {
               "ad": "Ángulo 3_V3",
@@ -26562,7 +26522,7 @@
           },
           {
             "name": "ctr",
-            "value": 1.866368,
+            "value": 1.86428,
             "date": "2026-03-22",
             "dimensions": {
               "ad": "Ángulo 3_V3",
@@ -26572,7 +26532,7 @@
           },
           {
             "name": "cpc",
-            "value": 0.3662,
+            "value": 0.3718,
             "date": "2026-03-22",
             "dimensions": {
               "ad": "Ángulo 3_V3",
@@ -27052,7 +27012,7 @@
           },
           {
             "name": "impressions",
-            "value": 578,
+            "value": 580,
             "date": "2026-03-22",
             "dimensions": {
               "ad": "Ángulo 5_V2",
@@ -27072,7 +27032,7 @@
           },
           {
             "name": "ctr",
-            "value": 2.422145,
+            "value": 2.413793,
             "date": "2026-03-22",
             "dimensions": {
               "ad": "Ángulo 5_V2",
@@ -27464,7 +27424,7 @@
       },
       "ghl": {
         "status": "ok",
-        "collectedAt": "2026-03-23T06:00:22.208Z",
+        "collectedAt": "2026-03-23T22:12:26.055Z",
         "metrics": [
           {
             "name": "newContacts",
@@ -27473,23 +27433,207 @@
           },
           {
             "name": "totalContacts",
-            "value": 242,
+            "value": 250,
+            "date": "2026-03-22"
+          },
+          {
+            "name": "newContacts",
+            "value": 4,
+            "date": "2026-03-22",
+            "dimensions": {
+              "channel": "facebook/Paid Social"
+            }
+          },
+          {
+            "name": "newContacts",
+            "value": 1,
+            "date": "2026-03-22",
+            "dimensions": {
+              "channel": "instagram/Social media"
+            }
+          },
+          {
+            "name": "appointments",
+            "value": 4,
             "date": "2026-03-22"
           },
           {
             "name": "appointments",
-            "value": 0,
-            "date": "2026-03-22"
+            "value": 2,
+            "date": "2026-03-22",
+            "dimensions": {
+              "status": "Llamada Agendada"
+            }
+          },
+          {
+            "name": "appointments",
+            "value": 1,
+            "date": "2026-03-22",
+            "dimensions": {
+              "status": "Llamada Confirmada"
+            }
+          },
+          {
+            "name": "appointments",
+            "value": 1,
+            "date": "2026-03-22",
+            "dimensions": {
+              "status": "Llamada de Seguimiento"
+            }
           },
           {
             "name": "opportunities",
-            "value": 4,
+            "value": 5,
             "date": "2026-03-22"
           },
           {
             "name": "pipelineValue",
             "value": 0,
             "date": "2026-03-22"
+          },
+          {
+            "name": "recentLead",
+            "value": 1,
+            "date": "2026-03-23",
+            "dimensions": {
+              "id": "OOn49YjVgGJyhjPO3zYw",
+              "name": "santiago garcia temprano",
+              "email": "sgarciatemprano@gmail.com",
+              "phone": "+34619341561",
+              "source": "Facebook",
+              "channel": "facebook",
+              "utmSource": "Paid Social",
+              "tags": "",
+              "company": "",
+              "website": "",
+              "dateAdded": "2026-03-23T18:08:36.315Z"
+            }
+          },
+          {
+            "name": "recentLead",
+            "value": 1,
+            "date": "2026-03-23",
+            "dimensions": {
+              "id": "TXHKJZy5gwdFY8pXgiPm",
+              "name": "teresa sainz de baranda",
+              "email": "teresasainzdebaranda@esbycia.com",
+              "phone": "",
+              "source": "Growth4U | Reunión",
+              "channel": "calendar",
+              "utmSource": "Direct traffic",
+              "tags": "llamada-agendada, secuencia-seguimiento",
+              "company": "",
+              "website": "",
+              "dateAdded": "2026-03-23T17:18:28.672Z"
+            }
+          },
+          {
+            "name": "recentLead",
+            "value": 1,
+            "date": "2026-03-23",
+            "dimensions": {
+              "id": "yo2ZUQ9a71TQNtGitNYm",
+              "name": "julio vela",
+              "email": "juliovelarodriguez51@gmail.com",
+              "phone": "+34691503474",
+              "source": "Facebook",
+              "channel": "facebook",
+              "utmSource": "Paid Social",
+              "tags": "",
+              "company": "",
+              "website": "",
+              "dateAdded": "2026-03-23T15:41:36.523Z"
+            }
+          },
+          {
+            "name": "recentLead",
+            "value": 1,
+            "date": "2026-03-23",
+            "dimensions": {
+              "id": "JkaG3Shx081C1uDJgodj",
+              "name": "laureano moreno galera",
+              "email": "morenogaleralaureano6@gmail.com",
+              "phone": "+34626623023",
+              "source": "Facebook",
+              "channel": "facebook",
+              "utmSource": "Paid Social",
+              "tags": "",
+              "company": "",
+              "website": "",
+              "dateAdded": "2026-03-23T11:29:26.237Z"
+            }
+          },
+          {
+            "name": "recentLead",
+            "value": 1,
+            "date": "2026-03-23",
+            "dimensions": {
+              "id": "ZLMisV9CuQwvxUONUXWq",
+              "name": "mariano fabian romero",
+              "email": "marianostar03@hotmail.com",
+              "phone": "+34611147894",
+              "source": "Facebook",
+              "channel": "facebook",
+              "utmSource": "Paid Social",
+              "tags": "",
+              "company": "",
+              "website": "",
+              "dateAdded": "2026-03-23T11:12:58.116Z"
+            }
+          },
+          {
+            "name": "recentLead",
+            "value": 1,
+            "date": "2026-03-23",
+            "dimensions": {
+              "id": "j5fLCmI0t3OHcSp3LGLA",
+              "name": "hugo",
+              "email": "hugogomezarias2@gmail.com",
+              "phone": "+34658344411",
+              "source": "Facebook",
+              "channel": "facebook",
+              "utmSource": "Paid Social",
+              "tags": "",
+              "company": "",
+              "website": "",
+              "dateAdded": "2026-03-23T09:34:48.356Z"
+            }
+          },
+          {
+            "name": "recentLead",
+            "value": 1,
+            "date": "2026-03-23",
+            "dimensions": {
+              "id": "CpM7jqR7DxGd9DecNsj2",
+              "name": "luis burgos",
+              "email": "jlburgos@outlook.es",
+              "phone": "+34621010503",
+              "source": "Facebook",
+              "channel": "facebook",
+              "utmSource": "Paid Social",
+              "tags": "",
+              "company": "",
+              "website": "",
+              "dateAdded": "2026-03-23T09:15:02.778Z"
+            }
+          },
+          {
+            "name": "recentLead",
+            "value": 1,
+            "date": "2026-03-23",
+            "dimensions": {
+              "id": "KzpiWp36cAEO2Ze7QcQ7",
+              "name": "clara poca de gracia",
+              "email": "carmenclara.pg@gmail.com",
+              "phone": "+34669668450",
+              "source": "Facebook",
+              "channel": "facebook",
+              "utmSource": "Paid Social",
+              "tags": "",
+              "company": "",
+              "website": "",
+              "dateAdded": "2026-03-23T08:52:19.449Z"
+            }
           },
           {
             "name": "recentLead",
@@ -27618,152 +27762,8 @@
             }
           },
           {
-            "name": "recentLead",
-            "value": 1,
-            "date": "2026-03-21",
-            "dimensions": {
-              "id": "SoYhukjp6dp9H2hMynB5",
-              "name": "l3frit",
-              "email": "mohamed.bensouira@icloud.com",
-              "phone": "+34632567002",
-              "source": "Facebook",
-              "channel": "facebook",
-              "utmSource": "Paid Social",
-              "tags": "",
-              "company": "",
-              "website": "",
-              "dateAdded": "2026-03-21T15:27:58.053Z"
-            }
-          },
-          {
-            "name": "recentLead",
-            "value": 1,
-            "date": "2026-03-21",
-            "dimensions": {
-              "id": "QeVKQ1d5BalH0p8w9ARo",
-              "name": "pepe",
-              "email": "teleservices.es@gmail.com",
-              "phone": "+34952667066",
-              "source": "Facebook",
-              "channel": "facebook",
-              "utmSource": "Paid Social",
-              "tags": "",
-              "company": "",
-              "website": "",
-              "dateAdded": "2026-03-21T11:39:24.125Z"
-            }
-          },
-          {
-            "name": "recentLead",
-            "value": 1,
-            "date": "2026-03-21",
-            "dimensions": {
-              "id": "F9nsVCHdq5X7gQs9puoM",
-              "name": "manu rodríguez franco",
-              "email": "grupodegestionr3@gmail.com.com",
-              "phone": "+34622839669",
-              "source": "Facebook",
-              "channel": "facebook",
-              "utmSource": "Paid Social",
-              "tags": "",
-              "company": "",
-              "website": "",
-              "dateAdded": "2026-03-21T09:36:49.218Z"
-            }
-          },
-          {
-            "name": "recentLead",
-            "value": 1,
-            "date": "2026-03-20",
-            "dimensions": {
-              "id": "0ekyyiq8XsWTQdgRIPwZ",
-              "name": "esther",
-              "email": "emartincandel@gmail.com",
-              "phone": "+34601133892",
-              "source": "Facebook",
-              "channel": "facebook",
-              "utmSource": "Paid Social",
-              "tags": "",
-              "company": "",
-              "website": "",
-              "dateAdded": "2026-03-20T19:05:38.848Z"
-            }
-          },
-          {
-            "name": "recentLead",
-            "value": 1,
-            "date": "2026-03-20",
-            "dimensions": {
-              "id": "UdPgu2kjwusOanC1C2P3",
-              "name": "raquel ruizian materos",
-              "email": "rakelruiz@hotmail.com",
-              "phone": "+34625582114",
-              "source": "Facebook",
-              "channel": "facebook",
-              "utmSource": "Paid Social",
-              "tags": "",
-              "company": "",
-              "website": "",
-              "dateAdded": "2026-03-20T16:55:47.746Z"
-            }
-          },
-          {
-            "name": "recentLead",
-            "value": 1,
-            "date": "2026-03-20",
-            "dimensions": {
-              "id": "xSVYq0ixaBPBumS88Caa",
-              "name": "john",
-              "email": "john@leadpanther.ai",
-              "phone": "+3414169957161",
-              "source": "Trust Score Analyzer",
-              "channel": "",
-              "utmSource": "",
-              "tags": "trust-score",
-              "company": "",
-              "website": "leadpanther.ai",
-              "dateAdded": "2026-03-20T15:27:42.566Z"
-            }
-          },
-          {
-            "name": "recentLead",
-            "value": 1,
-            "date": "2026-03-20",
-            "dimensions": {
-              "id": "7f00OR4io7MFtfe3KbD3",
-              "name": "gladys",
-              "email": "gladys.rostan@metafp.es",
-              "phone": "+34665424995",
-              "source": "Trust Score Analyzer",
-              "channel": "",
-              "utmSource": "",
-              "tags": "trust-score",
-              "company": "",
-              "website": "metafp.es",
-              "dateAdded": "2026-03-20T12:39:23.940Z"
-            }
-          },
-          {
-            "name": "recentLead",
-            "value": 1,
-            "date": "2026-03-19",
-            "dimensions": {
-              "id": "4aie6SaidE31O7ktiYjS",
-              "name": "mikel catena",
-              "email": "catena@suyca.com",
-              "phone": "+34680849573",
-              "source": "Trust Score Analyzer",
-              "channel": "calendar",
-              "utmSource": "Direct traffic",
-              "tags": "trust-score, llamada-agendada, lead-nurturing",
-              "company": "",
-              "website": "Suyca.com",
-              "dateAdded": "2026-03-19T11:13:11.872Z"
-            }
-          },
-          {
             "name": "pipeline",
-            "value": 4,
+            "value": 5,
             "date": "2026-03-22",
             "dimensions": {
               "pipelineId": "OSBqHAuARcSvYct49emn",
@@ -27772,7 +27772,7 @@
                 {
                   "id": "9c385e34-35a7-4477-9257-4a136cedd8e7",
                   "name": "Llamada Agendada",
-                  "count": 1
+                  "count": 2
                 },
                 {
                   "id": "749376a8-b3ee-439c-8515-d873608bbf30",
@@ -27931,6 +27931,18 @@
           },
           {
             "name": "recentConversation",
+            "value": 0,
+            "date": "2026-03-22",
+            "dimensions": {
+              "contactId": "TXHKJZy5gwdFY8pXgiPm",
+              "type": "TYPE_PHONE",
+              "lastMessage": "",
+              "lastMessageDate": "2026-03-23T17:18",
+              "unread": 0
+            }
+          },
+          {
+            "name": "recentConversation",
             "value": 1,
             "date": "2026-03-22",
             "dimensions": {
@@ -27978,40 +27990,27 @@
             }
           },
           {
-            "name": "recentConversation",
-            "value": 0,
-            "date": "2026-03-22",
-            "dimensions": {
-              "contactId": "lZZSg4FGzeMxd0WoyxGG",
-              "type": "TYPE_PHONE",
-              "lastMessage": "Para que los encuentres en menos de 14 días\n\n[https://storage.googleapis.com/msgsndr/BnXWP5dcLVMgUudLv10O/media/ff4c3083",
-              "lastMessageDate": "2026-03-18T07:03",
-              "unread": 0
-            }
-          },
-          {
             "name": "sourceBreakdown",
-            "value": 242,
+            "value": 250,
             "date": "2026-03-22",
             "dimensions": {
               "sources": {
-                "Facebook": 31,
-                "Unknown": 48,
+                "Facebook": 38,
+                "Growth4U | Reunión": 3,
+                "Unknown": 41,
                 "Trust Score Analyzer": 12,
                 "GROWTH4U |  Llamada Estratégica": 3,
                 "Growth4U - De Foros a Nichos Rentables en 14 Días": 2,
-                "Growth4U | Reunión": 2,
-                "Growth4U - Framework para encontrar 20–30 nichos en 60 días (sin gastar en paid)": 1,
-                "GROWTH4U |  Llamada Estratégica.": 1
+                "Growth4U - Framework para encontrar 20–30 nichos en 60 días (sin gastar en paid)": 1
               },
               "channels": {
-                "facebook/Paid Social": 29,
+                "facebook/Paid Social": 36,
+                "calendar/Direct traffic": 6,
                 "instagram/Social media": 5,
-                "calendar/Direct traffic": 5,
                 "form/Social media": 1,
                 "calendar/Social media": 1,
                 "form/Direct traffic": 1,
-                "csv_import/CRM UI": 44
+                "csv_import/CRM UI": 36
               }
             }
           }
