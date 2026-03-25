@@ -52,11 +52,12 @@ export async function collect(config, env, dateRange) {
         const created = new Date(c.dateAdded || c.createdAt).getTime();
         if (created >= fromTs && created <= toTs) {
           newContacts++;
-          // Track channel
+          // Track channel — use "source" field (preferred), fallback to attribution medium
+          const source = c.source || '';
           const attr = c.attributions?.[0];
-          const medium = attr?.medium || 'unknown';
+          const medium = attr?.medium || '';
           const utmSource = attr?.utmSessionSource || '';
-          const channel = utmSource ? `${medium}/${utmSource}` : medium;
+          const channel = source || (utmSource ? `${medium}/${utmSource}` : medium) || 'Unknown';
           channelCounts[channel] = (channelCounts[channel] || 0) + 1;
         }
         if (created < fromTs) { url = null; break; }

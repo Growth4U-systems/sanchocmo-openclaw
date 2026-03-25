@@ -1,0 +1,120 @@
+{
+  "module": "own-media-audit",
+  "version": 1,
+  "created_at": "2026-03-24T22:10:00Z",
+  "updated_at": "2026-03-24T22:10:00Z",
+  "status": "completed",
+  "data": {
+    "blog": {
+      "detected": true,
+      "url": "https://hospitalcapilar.com/blog-capilar/",
+      "post_count_estimated": 20,
+      "frequency": "1-2/month (irregular)",
+      "last_post_date": "2025-04-15",
+      "categories": ["FAQs", "Injerto Capilar", "Injerto de Barba", "Curiosidades del pelo"],
+      "avg_word_count": 600,
+      "has_structured_data": false,
+      "issues": [
+        "Blog 100% orientado a cirugía — CERO contenido sobre tratamientos capilares (CRT/HRT)",
+        "Último post hace ~11 meses (abril 2025) — blog abandonado",
+        "Categorías no cubren ECPs (jóvenes, OTC frustrados, sin diagnóstico)",
+        "Sin Article schema JSON-LD",
+        "URL /blog/ redirige 301 a /blog-capilar/ — señal de migración pasada"
+      ]
+    },
+    "social": {
+      "platforms": [
+        {
+          "platform": "instagram",
+          "url": "https://instagram.com/hospitalcapilar",
+          "handle": "@hospitalcapilar",
+          "posting_frequency": "active",
+          "bio_optimized": true
+        },
+        {
+          "platform": "linkedin",
+          "url": "https://linkedin.com/company/hospital-capilar",
+          "handle": "Hospital Capilar",
+          "posting_frequency": "moderate",
+          "bio_optimized": true
+        },
+        {
+          "platform": "youtube",
+          "url": "https://youtube.com/@hospitalcapilar2607",
+          "handle": "@hospitalcapilar2607",
+          "posting_frequency": "active",
+          "bio_optimized": true,
+          "notes": "Múltiples videos de casos de éxito, canal activo"
+        },
+        {
+          "platform": "tiktok",
+          "url": "https://tiktok.com/@hospitalcapilar",
+          "handle": "@hospitalcapilar",
+          "posting_frequency": "active",
+          "bio_optimized": true
+        },
+        {
+          "platform": "facebook",
+          "url": null,
+          "posting_frequency": "unknown",
+          "bio_optimized": false,
+          "notes": "No verificado — probablemente existe pero no confirmado"
+        },
+        {
+          "platform": "twitter",
+          "url": null,
+          "posting_frequency": "unknown",
+          "bio_optimized": false,
+          "notes": "No encontrado / no activo"
+        }
+      ]
+    },
+    "schemas": {
+      "found": ["HealthAndBeautyBusiness", "HealthAndBeautyBusiness", "HealthAndBeautyBusiness"],
+      "missing_recommended": ["MedicalBusiness", "FAQPage", "Article", "Physician", "MedicalClinic"],
+      "errors": [],
+      "notes": "Schema tipo genérico para clínica médica. Debería usar MedicalBusiness/MedicalClinic con medicalSpecialty."
+    },
+    "tech": {
+      "cms": "WordPress",
+      "analytics": ["Google Analytics (probable — no verificable via web_fetch)"],
+      "cdn": "Desconocido (no Cloudflare — sin cf-ray header)",
+      "ssl": true,
+      "mobile_responsive": true,
+      "page_speed_tool": "Ninguno detectado"
+    },
+    "scores": {
+      "content": 35,
+      "social": 75,
+      "technical": 60,
+      "overall": 56
+    },
+    "score_breakdown": {
+      "content_35": {
+        "blog_exists": "✅ +20",
+        "frequency": "❌ Irregular/abandonado +5",
+        "quality": "⚠️ Posts cortos, solo cirugía +5",
+        "categories": "❌ No cubren ECPs +0",
+        "freshness": "❌ Último post hace 11 meses +5"
+      },
+      "social_75": {
+        "platforms_found": "✅ 4 activas (IG, LI, YT, TT) +35",
+        "posting_frequency": "✅ Activo en varias +25",
+        "profile_optimization": "✅ Handles consistentes +15"
+      },
+      "technical_60": {
+        "ssl": "✅ +15",
+        "mobile": "✅ +15",
+        "cms": "✅ WordPress moderno +10",
+        "analytics": "⚠️ Probable pero no verificado +10",
+        "cdn": "❌ No detectado +0",
+        "schemas": "⚠️ Existen pero tipo genérico +10"
+      }
+    }
+  },
+  "metadata": {
+    "duration_seconds": 15,
+    "apis_called": ["web_fetch", "web_search"],
+    "errors": []
+  }
+}

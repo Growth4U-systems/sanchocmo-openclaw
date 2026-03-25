@@ -1,63 +1,39 @@
-## 2026-03-22 — Observaciones Sancho
+## 2026-03-24 — Observaciones Sancho
 
 ### Sesiones activa (24h)
-- **Discord #creación-de-webs**: Ayudando a Martín con GitHub Actions (setup-buildx-action)
-- **Discord #migración-escudero**: Reescribiendo PDR v4.0 con feedback de Alfonso (~900→400 líneas)
-- **Discord #organización-discord**: Seguimiento a reorganización de canales
-- **Discord #idea-generation**: Registrando decisiones de diseño (D1-D4)
-- **Discord #monitoreo-recurrente-de-métricas**: Identificando problema de timeout en cron
-- **Cron cost-tracker**: Ejecutado OK (MiniMax)
-- **Cron regenerate-dashboard**: 54 tareas, 100 eventos, 40/84 pilares
-- **Cron image-optimizer**: Sin imágenes que optimizar
-- **Cron update-skills**: 10 skills actualizados
-
-### Problemas detectados
-1. **Cron métricas recurrente fallando**: Timeout en sesiones aisladas. Sancho propuso solución (agentTurn ultraligero). Pendiente aprobación.
-2. **API Anthropic 401** (previo): Cervantes ya gestionó con recovery message.
-
-### Reglas de canal
-✅ Correcto uso de @menciones
-✅ Respuestas estructuradas en hilos correctos
-✅ NO_REPLY cuando corresponde
-
-### Notas
-- Sancho está funcionando correctamente
-- Activo en múltiples canales de Discord con Alfonso y Martín
-- Crons básicos funcionando (algunos con MiniMax para reducir costos)
-- No hay errores críticos propios de Sancho
-
----
-
-## 2026-03-23 — Observaciones Sancho
-
-### Sesiones activa (24h)
-- **Cron Weekly Synthesis**: Completado — 7 archivos daily leídos, brand/learnings.md actualizado con 5 patrones, memory/patterns.md migrado de vacío a activo. Reportado en hilo dedicado.
-- **Discord #intelligence (G4U)**: Daily pulse — sin actividad humana en últimas 24h, 9 canales revisados, 0 con actividad reciente
-- **Discord #métricas-y-kpis (G4U)**: Morning metrics — 5 leads, 0 citas, spend€109 (vs media €140), CTR 2.47% (vs media 3.13%). Análisis correcto: spend descendente + CTR bajo + 0 citas = revisar seguimiento
-- **Discord #métricas-y-kpis (HC)**: Morning metrics — 13K impressions (x2 vs media), CPC €0.62 (mejor), 0 citas de 5 leads. Mismos problemas de conversión lead→cita
-- **Cron Morning Metrics Multi-Client**: Growth4U OK, Hospital Capilar/Paymatico/Masavo skip (no APIs)
-- **Cron Daily Metrics Collector**: 5/5 fuentes OK (GA4, GSC, Metricool, Meta Ads, GHL)
-- **Cron update-skills**: 10 plugins actualizados, 119 skills en workspace
-- **Cron Memory Maintenance**: Completado — MEMORY.md actualizado con eventos de la semana
-- **Cron Lead Sync (dry run)**: 241 contactos, 3 con tag "llamada-agendada" sin eventos de Calendar — ISSUE detectadoy reportado
+- **Webchat**: Gateway restart, verificó resolved channels. Cervantes Brain sigue unresolved — problema de permisos Discord, no OpenClaw.
+- **Discord #trust-engine-qu-necesitas**: Entregó audit + listas Trust Engine completos
+- **Discord #migración-escudero**: Backend arrancado, preguntó sobre continuidad de prueba Trust Engine
+- **Discord #cron-jobs**: Reportó 26 cron jobs configurados, todos OK/idle
+- **Discord #métricas-y-kpis (G4U)**: Añadió outbound como nuevo canal en metrics plan
+- **Discord #projects**: Preguntó a Alfonso qué necesita del Trust Engine (opciones: web, landing, materiales)
+- **Discord #campañas-google-ads-meta-ads-plan-por-nicho**: Identificó líneas a eliminar del doc (formularios Es Normal/Postparto)
+- **Cron Morning Metrics**: Growth4U — 8 leads (€14.54/lead), CPL mejorado vs media, 0 citas
+- **Cron Morning Metrics Multi-Client**: Sin alertas rojas, 8 leads (casi x2 media 7d)
+- **Cron cost-tracker-daily**: Sin anomalías — uso 21% media
+- **Cron Regenerar Dashboard**: 40/84 pilares completados
+- **Cron update-skills**: OpenClaw 2026.3.13→2026.3.23-2, 11 skills actualizados
+- **Cron Daily Metrics Collector**: 5/5 fuentes OK
 
 ### Errores/Skills que fallaron
-- **Cron image-optimizer**: Error JSON en argumentos exec (bug del cron, no de Sancho)
-- **Skills audit (16 Mar)**: 2 skills con Q=3.0 (positioning-messaging: complejidad excesiva; niche-discovery-100x: bug SIGTERM en scripts Python). No son fallos recientes sino deuda conocida.
+- **Cron Daily Pulse FALLÓ**: La herramienta `message` no soporta acción `read` — no puede leer mensajes de Discord. Error reportado en #infra.
+- **Skill positioning-messaging** (audit 16 Mar): Q=3.0 — complejidad excesiva. Pendiente simplificar.
 
 ### Problemas detectados
-1. **3 leads con "llamada-agendada" sin eventos Calendar**: Mikel Catena, Eduardo Zuñiga, Daniel Serrano — tags indican llamada programada pero NO hay eventos en Calendar. Posibles causas: booking sin crear evento, tags obsoletos, o error en automatización GHL. Sancho lo detectó y documentó correctamente.
-2. **CTR Meta Ads descendiendo**: 2.47% vs 3.13% media — posible fatiga creativa o cambio de audience
-3. **0 citas de 5 leads**: Mismo problema en G4U y HC — fricción en pipeline lead→cita
+1. **Cron Daily Pulse roto**: Tool limitation, no de Sancho. Se requiere habilitar lectura de mensajes o usar API alternativa.
+2. **Canales unresolved persistentes**: Cervantes Brain (`1478770422093709502`), 1 canal Growth4U, 4 canales Kleva — permisos Discord, no OpenClaw.
+3. **0 citas de 8 leads**: Mismo patrón que ayer — fricción lead→cita. Los leads vienen de Facebook sin tags, verificar flujo nurturing.
 
 ### Reglas de canal
-✅ Weekly synthesis publicada en hilo dedicado (no en canal público)
-✅ Cron metrics collector reportado a #infra (no a canales cliente)
-✅ Análisis de métricas en canales correctos (#intelligence, #métricas-y-kpis)
-✅ Respuestas estructuradas con emojis y tablas
+✅ Menciones correctas (@Alfonso, @Martin)
+✅ Respuestas en hilos correctos
+✅ NO_REPLY cuando corresponde
+✅ Métricas reportadas en canales correctos (#intelligence, #métricas-y-kpis)
+✅ Análisis estructurado con tablas y emojis
 
 ### Notas
-- Sancho funcionando bien —weekly synthesis robusta, detección de anomalías correcta
-- El issue de leads sin Calendar es hallazgo valioso (data integrity problem)
-- Crons ejecutándose con modelo apropiado (Sonnet para ejecución, MiniMax para crons ringan)
-- NO hay errores críticos propios de Sancho que requieran atención de Alfonso
+- Sancho funcionando bien — crons ejecutándose correctamente
+- El fallo del Daily Pulse es una limitación de herramientas, no un error de Sancho
+- El issue de leads sin tags de Facebook fue detectado (mismo problema que ayer)
+- Los canales unresolved son problema de permisos Discord, no de configuración de OpenClaw
+- **NO requiere atención de Alfonso** — los problemas son técnicos/de infraestructura

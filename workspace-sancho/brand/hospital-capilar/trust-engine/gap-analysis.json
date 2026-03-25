@@ -1,0 +1,28 @@
+{
+  "module": "gap-analysis",
+  "version": 1,
+  "created_at": "2026-03-24T22:20:00Z",
+  "updated_at": "2026-03-24T22:20:00Z",
+  "status": "completed",
+  "data": {
+    "gaps": [
+      { "id": "gap-001", "type": "both", "domain": "topdoctors.es", "url": "https://www.topdoctors.es/madrid-ciudad/centro/cirugia-capilar/", "title": "Mejores especialistas en Tratamiento capilar en Madrid", "competitors_present": ["Insparya", "IMD", "Capilclinic"], "client_present": false, "opportunity_score": 90, "recommended_action": "Crear perfil en TopDoctors con foco en tratamientos, no solo cirugía" },
+      { "id": "gap-002", "type": "serp_only", "domain": "capilarea.com", "url": "https://www.capilarea.com/tratamientos-capilares-sin-cirugia/", "title": "Tratamientos capilares sin cirugía", "competitors_present": ["Capilárea"], "client_present": false, "opportunity_score": 85, "recommended_action": "Crear contenido propio: 'Tratamientos capilares sin cirugía en Hospital Capilar'" },
+      { "id": "gap-003", "type": "both", "domain": "abc.es", "url": "https://www.abc.es/comparativa-clinicas-injerto-capilar", "title": "Comparativa mejores clínicas de injerto capilar", "competitors_present": ["Insparya", "Svenson", "Capilclinic"], "client_present": false, "opportunity_score": 88, "recommended_action": "Contactar ABC.es para inclusión en comparativa — HC tiene 4.8/5 Trustpilot como argumento" },
+      { "id": "gap-004", "type": "both", "domain": "elmundo.es", "url": "https://www.elmundo.es/mejor-clinica-injerto-capilar-madrid", "title": "La mejor clínica de injerto capilar en Madrid", "competitors_present": ["Insparya", "Svenson"], "client_present": false, "opportunity_score": 85, "recommended_action": "PR/Outreach a El Mundo para inclusión — los medios citan estas fuentes en GEO" },
+      { "id": "gap-005", "type": "serp_only", "domain": "grupopedrojaen.com", "url": "https://grupopedrojaen.com/", "title": "Clínica capilar en Madrid - Tricólogos expertos", "competitors_present": ["Grupo Pedro Jaén"], "client_present": false, "opportunity_score": 70, "recommended_action": "Crear página de diagnóstico capilar optimizada para SEO" },
+      { "id": "gap-006", "type": "serp_only", "domain": "reddit.com", "url": "https://reddit.com/r/Hairloss/", "title": "Minoxidil no funciona - Reddit", "competitors_present": [], "client_present": false, "opportunity_score": 80, "recommended_action": "Crear artículo GEO: 'Cuando el minoxidil deja de funcionar: opciones médicas reales'. Reddit domina esta query." },
+      { "id": "gap-007", "type": "geo_only", "domain": "castellanaclinic.com", "url": "https://castellanaclinic.com/tratamientos-capilares-sin-cirugia/", "title": "Tratamientos capilares sin cirugía", "competitors_present": ["Castellana Clinic"], "client_present": false, "opportunity_score": 75, "recommended_action": "Castellana Clinic tiene contenido que Gemini cita para tratamientos — HC necesita contenido equivalente" },
+      { "id": "gap-008", "type": "serp_only", "domain": "clinicacapilarvelazquez.es", "url": "https://clinicacapilarvelazquez.es/prp-capilar-madrid/", "title": "PRP Capilar Madrid", "competitors_present": ["Clínica Capilar Velázquez"], "client_present": false, "opportunity_score": 72, "recommended_action": "Crear página CRT (protocolo PRP de HC) optimizada para 'PRP capilar madrid'" },
+      { "id": "gap-009", "type": "serp_only", "domain": "cun.es", "url": "https://www.cun.es/alopecia", "title": "Alopecia - Causas, diagnóstico y tratamiento", "competitors_present": [], "client_present": false, "opportunity_score": 65, "recommended_action": "Crear guía completa de alopecia — CUN rankea porque tiene contenido educativo, HC no" },
+      { "id": "gap-010", "type": "geo_only", "domain": "imdermatologico.com", "url": "https://imdermatologico.com/", "title": "IMD - Centros Capilares", "competitors_present": ["IMD"], "client_present": false, "opportunity_score": 82, "recommended_action": "IMD aparece en TODAS las queries GEO de tratamientos. HC necesita posicionamiento GEO agresivo." }
+    ],
+    "summary": {
+      "total_gaps": 10,
+      "high_opportunity": 6,
+      "by_type": { "geo_only": 2, "serp_only": 5, "both": 3 },
+      "key_insight": "Los gaps más importantes son en contenido de TRATAMIENTOS. Los medios (ABC, El Mundo) y directorios (TopDoctors) son las fuentes que las IAs citan — HC necesita aparecer en ellos para queries de tratamiento, no solo cirugía."
+    }
+  },
+  "metadata": { "duration_seconds": 5, "apis_called": [], "errors": [] }
+}

@@ -1,0 +1,90 @@
+{
+  "module": "geo-analysis",
+  "version": 2,
+  "created_at": "2026-03-24T22:12:00Z",
+  "updated_at": "2026-03-25T00:20:00Z",
+  "status": "completed",
+  "data": {
+    "runs": [
+      {
+        "id": "geo-001",
+        "prompt": "¿Cuáles son las mejores clínicas de tratamiento capilar en Madrid?",
+        "topic": "ranking",
+        "provider": "gemini",
+        "client_mentioned": true,
+        "client_position": 2,
+        "client_sentiment": "positive",
+        "client_context": "Alta valoración. Se especializan en injertos capilares con atención integral.",
+        "competitors_mentioned": ["Capilclinic (#1)", "Insparya (#14)", "IMD (#11)"],
+        "note": "HC mencionado pero descrito como 'injertos capilares' — NO como tratamientos"
+      },
+      {
+        "id": "geo-002",
+        "prompt": "Mejor tratamiento para la caída del pelo en España sin cirugía",
+        "topic": "solution",
+        "provider": "gemini",
+        "client_mentioned": false,
+        "client_position": null,
+        "competitors_mentioned": ["IMD", "Insparya", "Svenson", "Castellana Clinic", "Capilárea"],
+        "note": "❌ HC NO MENCIONADO. 5 competidores sí aparecen."
+      },
+      {
+        "id": "geo-003",
+        "prompt": "¿Dónde puedo hacerme un diagnóstico capilar completo en Madrid?",
+        "topic": "discovery",
+        "provider": "gemini",
+        "client_mentioned": true,
+        "client_position": 2,
+        "client_sentiment": "positive",
+        "client_context": "Ofrecen diagnóstico capilar personalizado con análisis tricoscópico y analítica.",
+        "competitors_mentioned": ["Grupo Pedro Jaén (#1)", "MED Medicina Estética (#3)", "IMD (#7)"],
+        "note": "✅ HC mencionado correctamente para diagnóstico"
+      },
+      {
+        "id": "geo-004",
+        "prompt": "Tengo 25 años y se me cae el pelo, ¿qué opciones de tratamiento tengo en España?",
+        "topic": "solution",
+        "provider": "gemini",
+        "client_mentioned": false,
+        "client_position": null,
+        "competitors_mentioned": ["Insparya (citado)", "Svenson (citado)"],
+        "cited_domains": ["kellerhair.es", "grupopedrojaen.com", "insparya.es", "castellanaclinic.com"],
+        "note": "❌ HC citado como link pero NO nombrado en el texto. Gemini menciona 'clínicas en Madrid, Murcia y Pontevedra' pero no dice Hospital Capilar. Insparya y Svenson sí son nombrados."
+      }
+    ],
+    "summary": {
+      "client_visibility": {
+        "mentioned_in_pct": 50,
+        "avg_position": 2.0,
+        "sentiment_breakdown": { "positive": 100, "neutral": 0, "negative": 0 },
+        "mentioned_as": "cirugía/injerto/diagnóstico — NUNCA como referente en tratamientos"
+      },
+      "competitor_visibility": [
+        { "brand": "IMD", "mentioned_in_pct": 75, "avg_position": 5, "appears_for": "tratamiento + ranking + diagnóstico" },
+        { "brand": "Insparya", "mentioned_in_pct": 75, "avg_position": 8, "appears_for": "tratamiento + ranking + jóvenes" },
+        { "brand": "Grupo Pedro Jaén", "mentioned_in_pct": 50, "avg_position": 1, "appears_for": "diagnóstico + jóvenes" },
+        { "brand": "Svenson", "mentioned_in_pct": 50, "avg_position": 4, "appears_for": "tratamiento + jóvenes" },
+        { "brand": "Castellana Clinic", "mentioned_in_pct": 50, "avg_position": 5, "appears_for": "tratamiento" },
+        { "brand": "Capilárea", "mentioned_in_pct": 25, "avg_position": 2, "appears_for": "tratamiento" }
+      ],
+      "top_cited_domains": [
+        { "domain": "grupopedrojaen.com", "count": 3, "type": "competitor" },
+        { "domain": "insparya.es", "count": 2, "type": "competitor" },
+        { "domain": "cun.es", "count": 2, "type": "medical_authority" },
+        { "domain": "topdoctors.es", "count": 2, "type": "directory" },
+        { "domain": "castellanaclinic.com", "count": 2, "type": "competitor" },
+        { "domain": "hospitalcapilar.com", "count": 2, "type": "own" }
+      ],
+      "key_findings": [
+        "🟢 HC aparece para queries de CIRUGÍA y DIAGNÓSTICO",
+        "🔴 HC NO aparece para queries de TRATAMIENTO (0/2 queries de tratamiento)",
+        "🔴 IMD e Insparya aparecen en 75% de las queries — mucho más visibles que HC",
+        "🔴 Cuando HC aparece, se describe como 'injertos capilares' — las IAs NO asocian HC con tratamientos",
+        "🟡 HC es citado como URL por Gemini (hospitalcapilar.com aparece en citations) pero no nombrado en texto para tratamientos",
+        "🔴 Grupo Pedro Jaén domina en diagnóstico (#1) — HC debería ser #1 con su tricoscopía + analítica"
+      ],
+      "limitations": "4 prompts × 1 provider (Gemini). Para análisis completo: 6 prompts × nicho × 4 providers (ChatGPT, Claude, Perplexity, Gemini) × 3 turns por prompt."
+    }
+  },
+  "metadata": { "duration_seconds": 50, "apis_called": ["web_search (Gemini) × 4"], "errors": [] }
+}

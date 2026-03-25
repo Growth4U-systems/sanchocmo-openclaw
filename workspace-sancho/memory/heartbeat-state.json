@@ -1,11 +1,11 @@
 {
-  "last_heartbeat": "2026-03-24T02:01:00+01:00",
+  "last_heartbeat": "2026-03-25T01:20:00+01:00",
   "checks_done": {
-    "email": "skipped-gog-args",
-    "calendar": "2026-03-24T02:01:00+01:00"
+    "email": "2026-03-25T01:20:00+01:00",
+    "calendar": "2026-03-25T01:20:00+01:00"
   },
   "notes": {
-    "calendar": "Next events: Philippe en Arg/Uru (23 mar-18 abr), Casa (24 mar), Sync Daily (24 mar 09:45), Tomás López (24 mar 10:30), ESB schedule (24 mar 11:00). No eventos <2h.",
-    "email": "No se verificó por error de sintaxis gog"
+    "email": "gog sin output (madrugada 01:20)",
+    "calendar": "sin eventos próximos inmediatos"
   }
 }

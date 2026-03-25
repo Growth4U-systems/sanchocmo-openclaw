@@ -282,11 +282,11 @@ cron(action=add, job={
   "id": "uuid",
   "type": "content",
   "title": "Guía completa: FUE vs FUT en 2026",
-  "description": "Artículo comparativo detallado basado en gap detectado en SERP. Top 10 no cubren diferencias de recuperación ni costes reales.",
+  "description": "Artículo comparativo detallado basado en gap detectado en SERP.",
+  "action": "Escribir artículo SEO para rankear en 'fue vs fut trasplante' (vol: 1.8K/mes, KD: 28). Ningún competidor en top 10 cubre diferencias de recuperación ni costes reales.",
+  "list": "keywords",
   "channels": ["blog", "instagram", "linkedin"],
   "source": "seo_geo",
-  "goal": "consideration",
-  "theme": "comparativo",
   "status": "new",
   "priority_score": 82,
   "source_data": {
@@ -306,8 +306,10 @@ cron(action=add, job={
 {
   "id": "uuid",
   "type": "contact",
-  "title": "Blog 'Salud y Bienestar' — Guest post opportunity",
-  "description": "Blog con DA 45, publica artículos sobre tratamientos estéticos. Aceptan guest posts. Contacto visible en About page.",
+  "title": "Salud y Bienestar — Guest post opportunity",
+  "description": "Blog con DA 45, publica artículos sobre tratamientos estéticos.",
+  "action": "Conseguir guest post sobre tratamientos capilares. Contacto: editor@saludybienestar.com. Aceptan guest posts en sección salud.",
+  "list": "medios",
   "target_channel": "medios",
   "source": "seo_geo",
   "status": "new",
@@ -323,6 +325,18 @@ cron(action=add, job={
   "created_at": "2026-03-22T23:00:00Z"
 }
 ```
+
+### List Values
+| List | Icon | Label | Tipo |
+|------|------|-------|------|
+| `keywords` | 🔍 | Keywords para rankear | content |
+| `trending` | 🔥 | Contenido trending para crear | content |
+| `gaps` | 🏆 | Gaps vs competencia | content |
+| `repurpose` | ♻️ | Contenido para reutilizar | content |
+| `medios` | 📢 | Medios donde aparecer | contact |
+| `partners` | 🤝 | Partners para colaborar | contact |
+| `influencers` | 🎯 | Influencers para contactar | contact |
+| `outreach` | 📨 | Prospects para contactar | contact |
 
 ---
 

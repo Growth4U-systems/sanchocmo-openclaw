@@ -1,9 +1,9 @@
 # Market Intelligence — Growth4U
 
-> Generado: 2026-03-03 | Método: Deep Research v4 — 35+ búsquedas web, validación cruzada, fuentes primarias
-> Status: pending-approval
+\> Generado: 2026\-03\-03 \| Método: Deep Research v4 — 35\+ búsquedas web\, validación cruzada\, fuentes primarias
+\> Status: pending\-approval
 
----
+***
 
 ## PARTE 0: Executive Narrative
 
@@ -19,7 +19,7 @@ Growth4U tiene las piezas correctas: un framework propio (Trust Engine) que inst
 
 La ventana es de 2-3 años antes de que el mercado se consolide. Quien se posicione primero como "el sistema de growth para empresas tech en España", gana.
 
----
+***
 
 ## PARTE 1: Visión General y Dinámicas del Mercado
 
@@ -29,15 +29,15 @@ Para Growth4U, el mercado relevante es el subconjunto de empresas tech en Españ
 
 ### 1.1. Dimensionamiento TAM
 
-El ecosistema tech español alcanzó las 8.580 empresas activas en 2025 (+22% vs 2024), con 5.010 startups activas (+38%) y 484 scale-ups con crecimiento sostenido >20% [Fuente: elreferente.es](https://elreferente.es/actualidad/informe-nacional-empresas-tech-2025/), [Fuente: Endeavor](https://spain.endeavor.org/spain-ecosystem-report-2025/). Un 22% de las startups superaron los 150.000€ de ingresos, dándonos ~1.100 empresas post-PMF [Fuente: Forbes.es](https://forbes.es/economia/831975/un-22-de-las-startups-espanoles-superaron-los-150-000-euros-de-ingresos-en-2024/).
+El ecosistema tech español alcanzó las 8.580 empresas activas en 2025 (+22% vs 2024), con 5.010 startups activas (+38%) y 484 scale-ups con crecimiento sostenido >20% [Fuente: elreferente.es](https://elreferente.es/actualidad/informe-nacional-empresas-tech-2025/), [Fuente: Endeavor](https://spain.endeavor.org/spain-ecosystem-report-2025/). Un 22% de las startups superaron los 150.000€ de ingresos, dándonos \~1.100 empresas post-PMF [Fuente: Forbes.es](https://forbes.es/economia/831975/un-22-de-las-startups-espanoles-superaron-los-150-000-euros-de-ingresos-en-2024/).
 
 **Cálculo bottom-up:**
 
-| Segmento | # Empresas | Revenue medio | Spend marketing (10%) | % que externaliza growth | TAM segmento |
-|---|---|---|---|---|---|
-| Scale-ups (>20% growth) | 484 | ~1.500K€ | ~150K€/año | ~30% | ~21,8M€ |
-| Post-PMF (>150K€ revenue) | 1.100 | ~454K€ | ~45K€/año | ~25% | ~12,4M€ |
-| Resto tech con budget marketing | ~2.000 | ~300K€ | ~30K€/año | ~15% | ~9M€ |
+| Segmento | \# Empresas | Revenue medio | Spend marketing (10%) | % que externaliza growth | TAM segmento |
+| -------- | ---------- | ------------- | --------------------- | ------------------------ | ------------ |
+| Scale-ups (>20% growth) | 484 | \~1.500K€ | \~150K€/año | \~30% | \~21,8M€ |
+| Post-PMF (>150K€ revenue) | 1.100 | \~454K€ | \~45K€/año | \~25% | \~12,4M€ |
+| Resto tech con budget marketing | \~2.000 | \~300K€ | \~30K€/año | \~15% | \~9M€ |
 
 *Asunciones: gasto marketing B2B tech 8-15% de revenue [Fuente: rampiq.agency](https://rampiq.agency/blog/b2b-saas-marketing-budget/). Facturación media por startup: 453.646€ [Fuente: Informa D&B](https://www.economiadigital.es/empresas/informa-analiza-noviembre-datos-start-ups.html). ⚠️ % de externalización es estimación propia.*
 
@@ -46,29 +46,30 @@ El ecosistema tech español alcanzó las 8.580 empresas activas en 2025 (+22% vs
 Con un ACV de 7.000€ en Trust Engine más retainers de 5-10K€/mes, Growth4U necesita entre 50-100 clientes al año para un negocio sólido — un 5-10% de las scale-ups o un 2-3% de las post-PMF. Alcanzable en un mercado donde nadie domina.
 
 **Crecimiento del ecosistema:**
-- Inversión VC: 3.108M€ en 2025, +11% en número de rondas. Series A +34%, Seed -10% → inversores apuestan por empresas validadas [Fuente: capital-riesgo.es](https://capital-riesgo.es/en/articles/startup-investment-in-spain-stabilizes-at-3-1-billion-in-2025-with-record-activity-levels/)
-- Ecosistema startup: valor superior a 110.000M€, duplicando desde 2020 [Fuente: Dealroom/ENISA](https://www.enisa.es/es/sala-de-prensa/notas-prensa/spain-ecosystem-report-2025-633)
-- Marketing digital: +11,2% anual [Fuente: marketing4ecommerce.net](https://marketing4ecommerce.net/crecimiento-inversion-publicitaria-digital-en-espana-un-112/)
-- Ley de Startups activa: IS al 15% durante 4 años, stock options exentas hasta 50K€, deducción inversores 50% [Fuente: metricson.com](https://metricson.com/en/tax-and-legal-benefits-for-startups-in-spain-startup-law/)
-- H1 2025: startups españolas levantaron 1.950M€ en solo 6 meses, superando el total de 2024 [Fuente: gohub.vc](https://gohub.vc/spain-startup-ecosystem-2025-investment-record/)
+
+* Inversión VC: 3.108M€ en 2025, +11% en número de rondas. Series A +34%, Seed -10% → inversores apuestan por empresas validadas [Fuente: capital-riesgo.es](https://capital-riesgo.es/en/articles/startup-investment-in-spain-stabilizes-at-3-1-billion-in-2025-with-record-activity-levels/)
+* Ecosistema startup: valor superior a 110.000M€, duplicando desde 2020 [Fuente: Dealroom/ENISA](https://www.enisa.es/es/sala-de-prensa/notas-prensa/spain-ecosystem-report-2025-633)
+* Marketing digital: +11,2% anual [Fuente: marketing4ecommerce.net](https://marketing4ecommerce.net/crecimiento-inversion-publicitaria-digital-en-espana-un-112/)
+* Ley de Startups activa: IS al 15% durante 4 años, stock options exentas hasta 50K€, deducción inversores 50% [Fuente: metricson.com](https://metricson.com/en/tax-and-legal-benefits-for-startups-in-spain-startup-law/)
+* H1 2025: startups españolas levantaron 1.950M€ en solo 6 meses, superando el total de 2024 [Fuente: gohub.vc](https://gohub.vc/spain-startup-ecosystem-2025-investment-record/)
 
 **Proyección 5 años:** Si el ecosistema tech crece al 15-20% anual y el gasto digital al 10-14%, el TAM podría alcanzar 100-150M€/año en 2030. ⚠️ Proyección propia.
 
 Más empresas + más capital concentrado en rondas maduras + más gasto digital = más demanda de growth expertise externo. El viento sopla a favor.
 
----
+***
 
 ### 1.2. Segmentos Verticales del Mercado Tech
 
 El mercado tech español no es monolítico. Se distribuye en verticales con tamaños, dinámicas y necesidades de growth muy diferentes. Growth4U opera transversalmente — el Trust Engine funciona para cualquier empresa tech post-PMF — pero entender cada vertical es clave para el messaging y el approach:
 
-| Vertical | Tamaño mercado España | Inversión 2025 | # Empresas/startups | Crecimiento | Datos clave |
-|---|---|---|---|---|---|
+| Vertical | Tamaño mercado España | Inversión 2025 | \# Empresas/startups | Crecimiento | Datos clave |
+| -------- | --------------------- | -------------- | ------------------- | ----------- | ----------- |
 | **SaaS / IA** | Enterprise software: $7.288M (2024), proyección $15.288M en 2030, CAGR 13,4% [Fuente: grandviewresearch.com](https://www.grandviewresearch.com/horizon/outlook/enterprise-software-market/spain) | 516M€ (lideró inversión 2025) [Fuente: capital-riesgo.es](https://capital-riesgo.es/en/articles/startup-investment-in-spain-stabilizes-at-3-1-billion-in-2025-with-record-activity-levels/) | 3.510 SaaS companies, 774 funded [Fuente: tracxn.com](https://tracxn.com/d/explore/saas-startups-in-spain/__NA5CPilirQz5V0ouDfM18mzm3zHCL4i-N1SEWba-kWc) | Muy alto | Barcelona SaaS: $289M en 14 rondas (+120% YoY). IA atrajo >2.000M€ en España 2020-2024, 5º en Europa. SaaS CAGR >19% |
 | **Healthtech** | $6.530M (2024), CAGR 22,4% [Fuente: databridgemarketresearch.com](https://www.databridgemarketresearch.com/nucleus/spain-digital-health-market) | Life sciences Cataluña: 517M€ (+43% YoY) [Fuente: bioworld.com](https://www.bioworld.com/articles/729088-2025-report-spains-catalonia-region-a-european-life-sciences-leader) | 650+ health tech companies, 482 funded [Fuente: tracxn.com](https://tracxn.com/d/explore/healthcare-startups-in-spain/__BO5ZqNP-b7fJKOoRzp0GDBKoFR6yYz2mC2SFioCJ3fg) | Alto | Barcelona 5ª ciudad europea en VC digital health. 82% VC internacional. IA en diagnóstico, telemedicina post-COVID |
-| **Fintech** | $4.080M, CAGR 15% [Fuente: IMARC Group](https://www.imarcgroup.com/spain-fintech-market) | Top 5 por volumen de deals [Fuente: capital-riesgo.es](https://capital-riesgo.es/en/articles/startup-investment-in-spain-stabilizes-at-3-1-billion-in-2025-with-record-activity-levels/) | >400 entidades no bancarias, ~50% crecimiento en 5 años [Fuente: BdE](https://www.bde.es/wbe/en/publicaciones/informacion-estadistica/notas-estadisticas/observatorio-de-la-industria-fintech-no-bancaria-en-espana-2025.html) | Alto | Sub-segmentos: pagos (143), crowdfunding (158), crypto (88, x11 desde 2020), insurtech (250+), neobancos (27,2% españoles los usan) |
+| **Fintech** | $4.080M, CAGR 15% [Fuente: IMARC Group](https://www.imarcgroup.com/spain-fintech-market) | Top 5 por volumen de deals [Fuente: capital-riesgo.es](https://capital-riesgo.es/en/articles/startup-investment-in-spain-stabilizes-at-3-1-billion-in-2025-with-record-activity-levels/) | \>400 entidades no bancarias\, \~50% crecimiento en 5 años [Fuente: BdE](https://www.bde.es/wbe/en/publicaciones/informacion-estadistica/notas-estadisticas/observatorio-de-la-industria-fintech-no-bancaria-en-espana-2025.html) | Alto | Sub-segmentos: pagos (143), crowdfunding (158), crypto (88, x11 desde 2020), insurtech (250+), neobancos (27,2% españoles los usan) |
 | **Edtech** | $4.503M (2025), CAGR 11,4% [Fuente: IMARC](https://www.imarcgroup.com/spain-edtech-market) | $140M+ en 2025 (+308% YoY) [Fuente: tracxn.com](https://tracxn.com/d/explore/edtech-startups-in-spain/__YNOHvB4yaa7WBl2vwMIxYn-gIyX_V9_3y7mou7TM3Uo) | 1.200 companies, 182 funded [Fuente: tracxn.com](https://tracxn.com/d/explore/edtech-startups-in-spain/__YNOHvB4yaa7WBl2vwMIxYn-gIyX_V9_3y7mou7TM3Uo) | Alto | Lingokids ($186M raised), Smartick, ODILO ($84.5M). 73% profesores usan IA. Cloud 85% deployment |
-| **Proptech** | ~$45.000M (real estate brokerage + tech) [Fuente: researchandmarkets.com](https://www.researchandmarkets.com/reports/6212310/spain-real-estate-brokerage-proptech-market) | >500M€ en sector [Fuente: urbanitae.com](https://blog.urbanitae.com/en/2025/07/16/analysis-and-outlook-of-the-proptech-market-in-spain-2024/) | 562 startups (vs 151 en 2020, +272%) [Fuente: urbanitae.com](https://blog.urbanitae.com/en/2025/07/16/analysis-and-outlook-of-the-proptech-market-in-spain-2024/) | Alto | IA en real estate: $1.200M. 73,7% empresas reportan demanda creciente en eficiencia energética |
+| **Proptech** | \~$45.000M (real estate brokerage + tech) [Fuente: researchandmarkets.com](https://www.researchandmarkets.com/reports/6212310/spain-real-estate-brokerage-proptech-market) | \>500M€ en sector [Fuente: urbanitae.com](https://blog.urbanitae.com/en/2025/07/16/analysis-and-outlook-of-the-proptech-market-in-spain-2024/) | 562 startups (vs 151 en 2020, +272%) [Fuente: urbanitae.com](https://blog.urbanitae.com/en/2025/07/16/analysis-and-outlook-of-the-proptech-market-in-spain-2024/) | Alto | IA en real estate: $1.200M. 73,7% empresas reportan demanda creciente en eficiencia energética |
 | **Mobility** | Smart mobility: $13M; sector más amplio mucho mayor [Fuente: kenresearch.com](https://www.kenresearch.com/spain-smart-mobility-and-ev-fleets-market) | 507M€ (2º sector en funding 2024) [Fuente: oliverwyman.com](https://www.oliverwyman.com/our-expertise/insights/2025/feb/mobility-investment-radar-2025-mobility-trends.html) | Significativo (Zunder: €225M solo en infraestructura EV) | Alto | Electrificación y sostenibilidad como driver principal |
 | **Deep Tech / Biotech** | — | 354M€ inversión 2025 | Variable | Variable | Ciclos largos, menos relevante para growth consulting |
 
@@ -76,12 +77,12 @@ Lo que este mapa revela: Growth4U tiene un mercado amplio y diverso donde operar
 
 La implicación: el Trust Engine no necesita limitarse a una vertical. El sistema de growth funciona para cualquier empresa tech post-PMF con journey digital. La diferenciación no viene de la vertical sino del framework + el expertise del equipo + la capacidad de ejecución. La vertical fintech es un bonus competitivo, no una limitación.
 
----
+***
 
 ### 1.3. Paisaje Geográfico
 
 | Mercado | Inversión 2025 | Notas |
-|---|---|---|
+| ------- | -------------- | ----- |
 | **Madrid** | 865M€ | #1 en nº de empresas, startups y scale-ups. Red de Alfonso [Fuente: startupsreal.com](https://startupsreal.com/the-spanish-tech-ecosystem-grows-by-22-to-reach-8580-companies-and-an-economic-impact-of-e14-8-billion/) |
 | **Barcelona** | 1.374M€ (líder en volumen) | Fuerte en SaaS (+120% YoY), healthtech, biotech, gaming. MWC [Fuente: spaincap.org](https://www.spaincap.org/storage/documents/2025/06/the-spanish-tech-ecosystem.pdf) |
 | **Valencia** | 267M€ | Superó 200M€ por primera vez. Lanzadera, StartupValencia [Fuente: startupvalencia.org](https://startupvalencia.org/valencia-startup-investment-2025/) |
@@ -89,7 +90,7 @@ La implicación: el Trust Engine no necesita limitarse a una vertical. El sistem
 
 Madrid tiene más empresas; Barcelona atrae más capital. Growth4U puede servir ambos mercados digitalmente. Valencia emerge como tercer polo relevante. España alcanzó el 93% de compliance con estándares ESNA, liderando en acceso a financiación [Fuente: empresaexterior.com](https://en.empresaexterior.com/art/101403/Spain-achieves-93%25-implementation-of-European-standards-for-startups-according-to-ESNA).
 
----
+***
 
 ### 1.4. Madurez del Mercado
 
@@ -103,11 +104,11 @@ Madrid tiene más empresas; Barcelona atrae más capital. Growth4U puede servir 
 
 Esto significa que Growth4U tiene una ventana de 2-3 años para capturar posición antes de que el mercado se consolide. La estrategia correcta: diferenciación por framework + velocidad de posicionamiento.
 
----
+***
 
 *Con un TAM de 50-80M€ en un mercado en crecimiento rápido y diverso en verticales, la pregunta natural es: ¿quién más está jugando y qué espacio dejan?*
 
----
+***
 
 ## PARTE 2: Inteligencia Competitiva y Posicionamiento
 
@@ -118,24 +119,24 @@ El panorama competitivo del growth consulting en España es paradójico: hay muc
 **Tier 1 — Agencias Growth con escala en España:**
 
 | Agencia | Sede | Empleados | Revenue | Especialización | Modelo |
-|---|---|---|---|---|---|
+| ------- | ---- | --------- | ------- | --------------- | ------ |
 | **Product Hackers** | Madrid | 120 (2024) | **6M€** (+53% YoY) [Fuente: elreferente.es](https://elreferente.es/startups/product-hackers-supera-los-seis-millones-de-facturacion-en-2024/) | Growth generalista: eCommerce, retail, seguros. Clientes: Zara, MAPFRE, Sanitas, Cobee, Freepik. 120+ clientes. Metodología "SOLID Growth". 60% revenue de clientes recurrentes. Nueva vertical: AI Hackers | Retainer + proyecto |
-| **iSocialWeb** | Barcelona | 30+ profesionales (2025) [Fuente: isocialweb.agency](https://www.isocialweb.agency/en/about-us/) | ⚠️ ~1,5M€ (2019, dato obsoleto) | SEO/GEO #1 España. CRO, analytics. 1B+ visitas/año. Ha crecido de ~15 personas (2019) a 30+ (2025) | Retainer |
+| **iSocialWeb** | Barcelona | 30+ profesionales (2025) [Fuente: isocialweb.agency](https://www.isocialweb.agency/en/about-us/) | ⚠️ \~1,5M€ (2019, dato obsoleto) | SEO/GEO #1 España. CRO, analytics. 1B+ visitas/año. Ha crecido de \~15 personas (2019) a 30+ (2025) | Retainer |
 | **Flat 101** | Zaragoza | 266-279 (post-adquisición) | $3,6M est. | CRO, UX, analytics. **Adquirida por Minsait (Indra) junio 2021** [Fuente: indragroup.com](https://www.indragroup.com/en/news/minsait-acquires-flat-101-leader-digital-marketing-accelerate-online-strategies-commerce) | Proyecto + retainer |
 
 **Tier 2 — Agencias especializadas por canal:**
 
 | Agencia | Empleados | Especialización | Relevancia |
-|---|---|---|---|
-| **Performanze** | ~200 [Fuente: clutch.co](https://clutch.co/profile/performanze-0) | Growth + performance. Revenue ~$10M est. | Indirecto — generalista |
-| **ROI UP Group** | ~200 [Fuente: agencyvista.com](https://agencyvista.com/lists/top-marketing-agencies-in-spain/) | CRO, SEO, SEM, social. Revenue $10-25M. Presencia LATAM | Indirecto — escala diferente |
+| ------- | --------- | --------------- | ---------- |
+| **Performanze** | \~200 [Fuente: clutch.co](https://clutch.co/profile/performanze-0) | Growth + performance. Revenue \~$10M est. | Indirecto — generalista |
+| **ROI UP Group** | \~200 [Fuente: agencyvista.com](https://agencyvista.com/lists/top-marketing-agencies-in-spain/) | CRO, SEO, SEM, social. Revenue $10-25M. Presencia LATAM | Indirecto — escala diferente |
 | **Flake Agency** | ⚠️ No público | Influencer marketing financiero. 45+ finfluencers. Equipo legal CNMV [Fuente: flake-agency.com](https://flake-agency.com/) | Solo relevante en vertical fintech |
 | **TEAM LEWIS** | 600+ global | PR/comms multinacional [Fuente: teamlewis.com](https://www.teamlewis.com/es/agencia-marketing-fintech/) | Demasiado grande para startups |
 
 **Tier 3 — Alternativas no-agencia:**
 
 | Tipo | Pricing | Amenaza |
-|---|---|---|
+| ---- | ------- | ------- |
 | **Fractional CMO** | 4.000-20.000€/mes. Demanda de roles C-level fractional +68% YoY; profesionales duplicados de 60K a 120K globalmente (2022-2024) [Fuente: FractionOfficer](https://www.fractionalofficer.com/top-2025-trends-fractional-executive-leadership-solopreneur), [Fuente: Fractionus](https://fractionus.com/blog/10-statistics-fractional-work-future). Ahorro 60-70% vs CMO full-time [Fuente: boardroomadvisors.co](https://boardroomadvisors.co/fractional-cmo-cost-breakdown/) | **Alta** — mismo target, mismo presupuesto |
 | **Freelancers growth** | 50-149€/hora [Fuente: superbcompanies.com](https://superbcompanies.com/categories/digital-marketing-agencies-for-startups-in-spain/) | Media — sin framework ni equipo |
 | **Consultoras Big 4** | 150-300€/hora | Baja — segmento enterprise |
@@ -152,7 +153,7 @@ En un mercado fragmentado, la batalla no es por cuota contra un líder sino por 
 ### 2.3. Modelos de Pricing
 
 | Modelo | Rango España 2025 | Quién lo usa |
-|---|---|---|
+| ------ | ----------------- | ------------ |
 | Retainer mensual | 2.000-10.000€/mes [Fuente: sortlist.com](https://www.sortlist.com/i/s/growth-marketing/spain-es) | Mayoría de agencias |
 | Proyecto | 5.000-60.000€ [Fuente: superbcompanies.com](https://superbcompanies.com/categories/digital-marketing-agencies-for-startups-in-spain/) | Estrategia, audit, CRO |
 | Por hora | 50-149€/hora | Freelancers, consultores |
@@ -160,12 +161,12 @@ En un mercado fragmentado, la batalla no es por cuota contra un líder sino por 
 | Performance (CPA/revenue share) | $50-200/lead o 5-25% revenue [Fuente: influenceflow.io](https://influenceflow.io/resources/digital-marketing-agency-pricing-complete-2026-guide-to-costs-models-roi/) | Agencias de performance |
 | High-ticket one-time | 5.000-15.000€ | Consulting/coaching |
 
-**Contexto salarial:** CMO full-time España: ~85.000€/año [Fuente: payscale.com](https://www.payscale.com/research/ES/Job=Chief_Marketing_Officer_(CMO)/Salary). CMO Barcelona con bonus: ~159.434€/año [Fuente: salaryexpert.com](https://www.salaryexpert.com/salary/job/chief-marketing-and-sales-officer/spain/barcelona). Para startups, el Trust Engine de 7K€ es más accesible que un CMO (85K€/año) o un fractional (48-240K€/año) — y el output es un sistema que se queda, no una persona que se va.
+**Contexto salarial:** CMO full-time España: \~85.000€/año [Fuente: payscale.com](https://www.payscale.com/research/ES/Job=Chief_Marketing_Officer_(CMO)/Salary). CMO Barcelona con bonus: \~159.434€/año [Fuente: salaryexpert.com](https://www.salaryexpert.com/salary/job/chief-marketing-and-sales-officer/spain/barcelona). Para startups, el Trust Engine de 7K€ es más accesible que un CMO (85K€/año) o un fractional (48-240K€/año) — y el output es un sistema que se queda, no una persona que se va.
 
 ### 2.4. Benchmarking Digital
 
 | Competidor | LinkedIn | Blog/SEO | Conferencias | Reviews | GEO |
-|---|---|---|---|---|---|
+| ---------- | -------- | -------- | ------------ | ------- | --- |
 | **Product Hackers** | Fuerte (120 empleados, employee advocacy) | Blog activo, SEO sólido | PH Conference propia (Madrid) | Clutch/G2 | ⚠️ No verificado |
 | **iSocialWeb** | Presente (30+ profesionales) | Blog #1 SEO España | Eventos propios | Directorios | Pioneros en GEO |
 | **Flat 101** | Fuerte (266+ empleados, respaldo Minsait) | Blog CRO/UX | CRO.CAFE podcast | Directorios | ⚠️ No verificado |
@@ -176,7 +177,7 @@ Product Hackers tiene 120 personas publicando en LinkedIn. En el algoritmo 2025,
 ### 2.5. Evaluación de Amenazas
 
 | Amenaza | Probabilidad | Impacto | Mitigación |
-|---|---|---|---|
+| ------- | ------------ | ------- | ---------- |
 | **Fractional CMOs compiten en mismo segmento** | Alta | Alto | Trust Engine = framework + equipo vs 1 persona |
 | **Product Hackers crea vertical tech/startups** | Media | Alto | Consolidar posición rápido, generar cases propios |
 | **IA commoditiza servicios growth** | Alta | Medio | Posicionar como estrategia + IA, no tareas. 56% marketers ya usan IA [Fuente: semrush.com](https://www.semrush.com/blog/ai-seo-statistics/) |
@@ -186,15 +187,15 @@ Product Hackers tiene 120 personas publicando en LinkedIn. En el algoritmo 2025,
 
 La amenaza #1 son los fractional CMOs porque compiten por el mismo presupuesto y el mismo comprador. La diferencia: un fractional se lleva el conocimiento cuando se va; Trust Engine se queda instalado.
 
----
+***
 
 *Sabiendo quiénes son los competidores y dónde fallan, veamos quiénes son los clientes — y qué necesitan realmente.*
 
----
+***
 
 ## PARTE 3: Segmentación de Clientes y Audiencias
 
-Los compradores de growth consulting para tech no son homogéneos, pero comparten un cambio radical: el 61% prefiere una experiencia completamente rep-free [Fuente: Gartner 2025](https://www.gartner.com/en/newsroom/press-releases/2025-06-25-gartner-sales-survey-finds-61-percent-of-b2b-buyers-prefer-a-rep-free-buying-experience), están ~70% avanzados antes de contactar, y consumen 11+ piezas de contenido antes de iniciar conversación [Fuente: sopro.io](https://sopro.io/resources/blog/b2b-buyer-statistics-and-insights/). El funnel de Growth4U se gana o se pierde antes de la call.
+Los compradores de growth consulting para tech no son homogéneos, pero comparten un cambio radical: el 61% prefiere una experiencia completamente rep-free [Fuente: Gartner 2025](https://www.gartner.com/en/newsroom/press-releases/2025-06-25-gartner-sales-survey-finds-61-percent-of-b2b-buyers-prefer-a-rep-free-buying-experience), están \~70% avanzados antes de contactar, y consumen 11+ piezas de contenido antes de iniciar conversación [Fuente: sopro.io](https://sopro.io/resources/blog/b2b-buyer-statistics-and-insights/). El funnel de Growth4U se gana o se pierde antes de la call.
 
 ### Segmento 1: "El Fundador-CMO" — Tier 1 (Mayor oportunidad)
 
@@ -207,17 +208,18 @@ Los compradores de growth consulting para tech no son homogéneos, pero comparte
 **Conductual:** Gasta 2-10K€/mes en marketing, prueba herramientas constantemente, cambia de agencia cada 6-12 meses si no ve resultados. Decisión rápida: 1-2 semanas.
 
 **Pain points:**
-- Es cuello de botella — no puede delegar marketing
-- No puede contratar CMO full-time: coste ~85K€/año + equity [Fuente: payscale.com](https://www.payscale.com/research/ES/Job=Chief_Marketing_Officer_(CMO)/Salary)
-- Trust deficit hacia agencias: quiere pruebas verificables, no claims [Fuente: Reddit](https://www.reddit.com/r/b2b_sales/comments/1otdb8y/running_a_b2b_business_in_2025_these_are_the_pain/)
-- CAC sube y no entiende por qué — necesita sistema, no más tareas
-- Privacy/tracking: GDPR + iOS dificultan atribución
+
+* Es cuello de botella — no puede delegar marketing
+* No puede contratar CMO full-time: coste \~85K€/año + equity [Fuente: payscale.com](https://www.payscale.com/research/ES/Job=Chief_Marketing_Officer_(CMO)/Salary)
+* Trust deficit hacia agencias: quiere pruebas verificables, no claims [Fuente: Reddit](https://www.reddit.com/r/b2b_sales/comments/1otdb8y/running_a_b2b_business_in_2025_these_are_the_pain/)
+* CAC sube y no entiende por qué — necesita sistema, no más tareas
+* Privacy/tracking: GDPR + iOS dificultan atribución
 
 **Journey:** LinkedIn/podcast → busca en ChatGPT/Perplexity/Google → landing page → call → decisión 1-2 semanas.
 
 **Motivaciones:** Quiere un sistema que funcione sin él. Busca un cofundador temporal para growth, no una agencia.
 
----
+***
 
 ### Segmento 2: "El CMO Profesional" — Tier 1
 
@@ -231,9 +233,9 @@ Los compradores de growth consulting para tech no son homogéneos, pero comparte
 
 **Pain points:** Board pide resultados con timeline corto. Equipo no llega a todo. Cansada de agencias que empiezan de cero en su vertical.
 
-**Journey:** Conferencias/network → referidos → self-serve research online (~70% avanzada) → shortlist 3 → propuestas → decisión 2-4 semanas.
+**Journey:** Conferencias/network → referidos → self-serve research online (\~70% avanzada) → shortlist 3 → propuestas → decisión 2-4 semanas.
 
----
+***
 
 ### Segmento 3: "La Scale-up en Crecimiento" — Tier 2
 
@@ -241,21 +243,21 @@ Los compradores de growth consulting para tech no son homogéneos, pero comparte
 
 30-100 empleados, revenue 1-10M€, equipo marketing 3-8. Canales actuales se saturan. Buying committee de 8-11 stakeholders [Fuente: 6sense.com](https://6sense.com/science-of-b2b/buyer-experience-report-2025/). Budget 20-100K€/mes. Ciclo 1-3 meses. Buscan framework transferible, no más proveedores.
 
----
+***
 
 ### Segmento 4: "El Prescriptor" (Inversor/Aceleradora)
 
 No cliente directo pero prescribe. VCs, aceleradoras que recomiendan agencias a portfolio companies post-ronda. Series A +34% en España [Fuente: capital-riesgo.es](https://capital-riesgo.es/en/articles/startup-investment-in-spain-stabilizes-at-3-1-billion-in-2025-with-record-activity-levels/). Si los VCs recomiendan Growth4U → canal de referidos escalable sin CAC directo.
 
----
+***
 
-Los patrones: todos migran a self-serve research. El trust deficit es universal — todos piden pruebas. Los pain points convergentes (CAC creciente, falta de sistema, fundador cuello de botella) son exactamente lo que Trust Engine resuelve. El content engine no es "marketing" — es el funnel. Sin contenido que responda preguntas en ChatGPT y demuestre expertise, Growth4U es invisible para el ~70% de compradores que investigan online antes de hablar con un vendor.
+Los patrones: todos migran a self-serve research. El trust deficit es universal — todos piden pruebas. Los pain points convergentes (CAC creciente, falta de sistema, fundador cuello de botella) son exactamente lo que Trust Engine resuelve. El content engine no es "marketing" — es el funnel. Sin contenido que responda preguntas en ChatGPT y demuestre expertise, Growth4U es invisible para el \~70% de compradores que investigan online antes de hablar con un vendor.
 
----
+***
 
 *Conociendo los clientes, veamos qué fuerzas están moldeando este mercado — y cuáles son oportunidades disfrazadas.*
 
----
+***
 
 ## PARTE 4: Análisis de Tendencias y Perspectivas Futuras
 
@@ -264,7 +266,7 @@ Tres fuerzas convergen para redefinir cómo se adquieren clientes en el sector t
 ### 4.1. Tendencias con Horizonte Temporal
 
 | Tendencia | Dirección | Horizonte | Tipo | Impacto G4U |
-|---|---|---|---|---|
+| --------- | --------- | --------- | ---- | ----------- |
 | **GEO reemplaza parte de SEO** | Acelerando | NOW | Oportunidad | Alto |
 | **AI Overviews destruyen CTR orgánico** | Acelerando | NOW | Oportunidad | Alto |
 | **IA commoditiza tareas marketing** | Acelerando | NOW | Amenaza/Oportunidad | Alto |
@@ -282,23 +284,24 @@ Tres fuerzas convergen para redefinir cómo se adquieren clientes en el sector t
 La adopción de IA generativa pasó del 8% al 38% de la población americana entre 2023 y 2025. El 77% de usuarios de ChatGPT lo usan como buscador. 1 de cada 4 lo prefiere a Google. Perplexity AI: 153M visitas/mes (+191,9% YoY) [Fuente: seosherpa.com](https://seosherpa.com/generative-ai-statistics/), [Fuente: sequencr.ai](https://www.sequencr.ai/insights/geo-generative-engine-optimization-key-statistics-and-trends-for-2025-as-of-september-30-2025).
 
 El impacto en SEO tradicional:
-- CTR orgánico **-47%** cuando hay AI Overview (8% vs 15%) — Pew Research, marzo 2025, 69.000 búsquedas [Fuente: searchengineland.com](https://searchengineland.com/google-ai-overviews-drive-drop-organic-paid-ctr-464212)
-- CTR top organic page **-58%** con AIO [Fuente: ahrefs.com](https://ahrefs.com/blog/ai-overviews-reduce-clicks-update/)
-- AI Overviews en **18%** de queries (marzo 2025) [Fuente: sistrix.com](https://www.sistrix.com/blog/pew-research-ai-overviews-halve-click-through-rates/)
-- **-33% referrals Google** a publishers globalmente [Fuente: issuewire.com](https://www.issuewire.com/2025-data-confirms-ai-search-summaries-cutting-publisher-traffic-by-one-third-globally-1855367787664191)
-- Zero-click searches: ~70% de queries a finales de 2025 [Fuente: dataslayer.ai](https://www.dataslayer.ai/blog/google-ai-overviews-the-end-of-traditional-ctr-and-how-to-adapt-in-2025)
+
+* CTR orgánico **-47%** cuando hay AI Overview (8% vs 15%) — Pew Research, marzo 2025, 69.000 búsquedas [Fuente: searchengineland.com](https://searchengineland.com/google-ai-overviews-drive-drop-organic-paid-ctr-464212)
+* CTR top organic page **-58%** con AIO [Fuente: ahrefs.com](https://ahrefs.com/blog/ai-overviews-reduce-clicks-update/)
+* AI Overviews en **18%** de queries (marzo 2025) [Fuente: sistrix.com](https://www.sistrix.com/blog/pew-research-ai-overviews-halve-click-through-rates/)
+* **-33% referrals Google** a publishers globalmente [Fuente: issuewire.com](https://www.issuewire.com/2025-data-confirms-ai-search-summaries-cutting-publisher-traffic-by-one-third-globally-1855367787664191)
+* Zero-click searches: \~70% de queries a finales de 2025 [Fuente: dataslayer.ai](https://www.dataslayer.ai/blog/google-ai-overviews-the-end-of-traditional-ctr-and-how-to-adapt-in-2025)
 
 Esto significa que el juego ya no es aparecer en Google — es ser la fuente que la IA cita. Growth4U ya gana esta batalla. El 56% de marketers usan IA en SEO pero la mayoría para generar contenido, no para optimizar para ser citados por IA [Fuente: semrush.com](https://www.semrush.com/blog/ai-seo-statistics/). Oportunidad doble: (1) ofrecer GEO como servicio a clientes tech, y (2) usar GEO como canal de adquisición propio.
 
 ### 4.3. Cambios en Comportamiento del Cliente
 
-- **61%** B2B buyers prefieren experiencia rep-free [Fuente: Gartner 2025](https://www.gartner.com/en/newsroom/press-releases/2025-06-25-gartner-sales-survey-finds-61-percent-of-b2b-buyers-prefer-a-rep-free-buying-experience)
-- **75%** quieren experiencia "rep-free"
-- **70%** del proceso de decisión ocurre antes de contactar vendor
-- **77%** consultan reviews, **54%** hablan con usuarios actuales [Fuente: sopro.io](https://sopro.io/resources/blog/b2b-buyer-statistics-and-insights/)
-- **11+ piezas de contenido** antes de contactar
-- **46%** B2B buyers usan IA generativa para research [Fuente: digitalcommerce360.com](https://www.digitalcommerce360.com/2025/12/05/google-survey-of-b2b-buyers/)
-- **80%** usan mobile en su journey [Fuente: trinity42.com](https://www.trinity42.com/surprising-b2b-sales-statistics-you-need-to-know-in-2025/)
+* **61%** B2B buyers prefieren experiencia rep-free [Fuente: Gartner 2025](https://www.gartner.com/en/newsroom/press-releases/2025-06-25-gartner-sales-survey-finds-61-percent-of-b2b-buyers-prefer-a-rep-free-buying-experience)
+* **75%** quieren experiencia "rep-free"
+* **70%** del proceso de decisión ocurre antes de contactar vendor
+* **77%** consultan reviews, **54%** hablan con usuarios actuales [Fuente: sopro.io](https://sopro.io/resources/blog/b2b-buyer-statistics-and-insights/)
+* **11+ piezas de contenido** antes de contactar
+* **46%** B2B buyers usan IA generativa para research [Fuente: digitalcommerce360.com](https://www.digitalcommerce360.com/2025/12/05/google-survey-of-b2b-buyers/)
+* **80%** usan mobile en su journey [Fuente: trinity42.com](https://www.trinity42.com/surprising-b2b-sales-statistics-you-need-to-know-in-2025/)
 
 El "dark social" manda: decisiones en Slack, LinkedIn DMs, Reddit, WhatsApp. Case studies y referencias peer-to-peer pesan más que cualquier landing page. Para Growth4U: el blog GEO-first, los cases de Alfonso, y la presencia en comunidades de founders son el verdadero funnel.
 
@@ -308,7 +311,7 @@ El "dark social" manda: decisiones en Slack, LinkedIn DMs, Reddit, WhatsApp. Cas
 
 **Vídeo corto (<90s) obligatorio:** LinkedIn Video, YouTube Shorts, Reels — ROI más alto en B2B 2025. Decision-makers consumen en mobile durante microbreaks [Fuente: informatechtarget.com](https://www.informatechtarget.com/blog/4-short-form-video-trends-for-b2b-marketing-in-2025/).
 
-**Podcasting B2B en auge:** ~$4B en publicidad. 50% marketers B2B aumentan inversión. Video podcasts mejoran discoverability [Fuente: contentallies.com](https://contentallies.com/learn/b2b-podcasting-trends).
+**Podcasting B2B en auge:** \~$4B en publicidad. 50% marketers B2B aumentan inversión. Video podcasts mejoran discoverability [Fuente: contentallies.com](https://contentallies.com/learn/b2b-podcasting-trends).
 
 **Newsletters como canal propio:** LinkedIn newsletters ganan tracción. Audiencia propia, no alquilada.
 
@@ -318,26 +321,26 @@ Para Growth4U: Alfonso como founder-led content en LinkedIn (personal > empresa)
 
 Para los clientes fintech de Growth4U, la regulación no es una barrera — es una ventaja competitiva que diferencia de agencias generalistas:
 
-- **MiCA en vigor**: Google exige licencia CASP para ads crypto desde abril 2025. Publicidad debe ser clara, no engañosa, con riesgos prominentes [Fuente: manimama.eu](https://manimama.eu/mica-implementation-in-spain-regulatory-requirements-and-licensing-process/)
-- **CNMV Circular 1/2022 derogada** por Circular 1/2024, alineando con MiCA [Fuente: bakermckenzie.com](https://blockchain.bakermckenzie.com/2025/01/22/spain-crypto-exchanges-welcome-more-flexibility-on-spanish-crypto-asset-advertising-rules/)
-- **Código de Conducta para publicidad con influencers** (Autocontrol + AEA + IAB Spain), vigente desde 1 octubre 2025. Etiquetado: "Publicidad" en español (no #ad). Responsabilidad compartida creador + agencia [Fuente: lfchannel.com](https://lfchannel.com/en/new-2025-advertising-code-for-influencers-in-spain-here-are-key-points-you-need-to-know/)
-- **CNMV finfluencers**: remuneración vinculada a volumen = actividad reservada sin licencia [Fuente: esma.europa.eu](https://www.esma.europa.eu/sites/default/files/2026-01/ES_Spain_es_-_Finfluencers_factsheet.pdf)
-- **Enforcement real**: CNMV multó a Twitter/X con **5M€** en noviembre 2025 por ads crypto fraudulentos que suplantaban famosos [Fuente: cadenaser.com](https://cadenaser.com/nacional/2025/11/13/la-cnmv-multa-con-5-millones-de-euros-a-twitter-por-permitir-anuncios-falsos-de-inversiones-en-criptomonedas-suplantando-famosos-cadena-ser/). Miolo Desarrollos: 30K€ en 4 multas [Fuente: efe.com](https://efe.com/economia/2024-02-16/cnmv-multa-publicidad-criptoactivos/)
+* **MiCA en vigor**: Google exige licencia CASP para ads crypto desde abril 2025. Publicidad debe ser clara, no engañosa, con riesgos prominentes [Fuente: manimama.eu](https://manimama.eu/mica-implementation-in-spain-regulatory-requirements-and-licensing-process/)
+* **CNMV Circular 1/2022 derogada** por Circular 1/2024, alineando con MiCA [Fuente: bakermckenzie.com](https://blockchain.bakermckenzie.com/2025/01/22/spain-crypto-exchanges-welcome-more-flexibility-on-spanish-crypto-asset-advertising-rules/)
+* **Código de Conducta para publicidad con influencers** (Autocontrol + AEA + IAB Spain), vigente desde 1 octubre 2025. Etiquetado: "Publicidad" en español (no #ad). Responsabilidad compartida creador + agencia [Fuente: lfchannel.com](https://lfchannel.com/en/new-2025-advertising-code-for-influencers-in-spain-here-are-key-points-you-need-to-know/)
+* **CNMV finfluencers**: remuneración vinculada a volumen = actividad reservada sin licencia [Fuente: esma.europa.eu](https://www.esma.europa.eu/sites/default/files/2026-01/ES_Spain_es_-_Finfluencers_factsheet.pdf)
+* **Enforcement real**: CNMV multó a Twitter/X con **5M€** en noviembre 2025 por ads crypto fraudulentos que suplantaban famosos [Fuente: cadenaser.com](https://cadenaser.com/nacional/2025/11/13/la-cnmv-multa-con-5-millones-de-euros-a-twitter-por-permitir-anuncios-falsos-de-inversiones-en-criptomonedas-suplantando-famosos-cadena-ser/). Miolo Desarrollos: 30K€ en 4 multas [Fuente: efe.com](https://efe.com/economia/2024-02-16/cnmv-multa-publicidad-criptoactivos/)
 
 Esto no afecta a todos los clientes de Growth4U — solo a los fintech. Pero para ese sub-segmento, el expertise regulatorio de Alfonso es un diferenciador que pocas agencias pueden replicar. Compliance marketing como add-on premium para clientes fintech, no como limitación del negocio.
 
----
+***
 
 *Con todas las piezas analizadas — tamaño, competidores, clientes, tendencias — sintetizamos las oportunidades concretas.*
 
----
+***
 
 ## PARTE 5: Síntesis de Oportunidades Estratégicas
 
 ### 5.1. Gaps de Mercado
 
 | Gap | Evidencia | Oportunidad |
-|---|---|---|
+| --- | --------- | ----------- |
 | **Nadie ofrece framework de growth transferible para tech** | Product Hackers es generalista. Fractional CMOs son individuos. Agencias de performance hacen tareas | Trust Engine como producto diferenciado |
 | **GEO como servicio** | Solo 56% marketers adaptan SEO para IA. -47% CTR con AI Overviews. Pocas agencias ofrecen GEO | G4U ya gana en GEO. First-mover advantage |
 | **Content engine para self-serve buyers** | 61% prefieren experiencia rep-free [Gartner]. 11+ piezas antes de contactar. 70% avanzado | Blog GEO + newsletter + community |
@@ -348,7 +351,7 @@ Esto no afecta a todos los clientes de Growth4U — solo a los fintech. Pero par
 ### 5.2. Oportunidades de Crecimiento
 
 | Oportunidad | Horizonte | Prioridad | Justificación |
-|---|---|---|---|
+| ----------- | --------- | --------- | ------------- |
 | **Consolidar posición "sistema de growth para tech"** | 0-6 meses | 🔴 Alta | Nadie lo ocupa. 8.580 empresas tech, 484 scale-ups |
 | **GEO como servicio premium** | 0-6 meses | 🔴 Alta | -47% CTR. G4U ya gana en GEO. 77% usan ChatGPT como buscador |
 | **Content engine self-serve** (blog + newsletter) | 0-6 meses | 🔴 Alta | 61% buyers prefieren rep-free [Gartner]. 70% avanzado antes de contactar |
@@ -364,7 +367,7 @@ Esto no afecta a todos los clientes de Growth4U — solo a los fintech. Pero par
 **Valoración: ALTO** ✅
 
 | Factor | Score | Justificación |
-|---|---|---|
+| ------ | ----- | ------------- |
 | Tamaño | 🟢 | 50-80M€ TAM, 8.580 empresas tech creciendo +22% |
 | Crecimiento | 🟢 | Ecosistema en boom. H1 2025 ya superó inversión de todo 2024 |
 | Diversidad de verticales | 🟢 | SaaS, healthtech, fintech, edtech, proptech, mobility — portfolio risk diversificado |
@@ -378,7 +381,7 @@ Esto no afecta a todos los clientes de Growth4U — solo a los fintech. Pero par
 Secuencia: cimentar (0-3 meses) → construir distribución (3-6 meses) → expandir (6-12 meses).
 
 | Recomendación | Timeline | Prioridad |
-|---|---|---|
+| ------------- | -------- | --------- |
 | Lanzar funnel Trust Engine, validar CAC | Inmediato | 🔴 |
 | Generar 2-3 case studies propios | 0-3 meses | 🔴 |
 | Content engine: blog GEO + newsletter | 0-6 meses | 🔴 |
@@ -390,14 +393,15 @@ Secuencia: cimentar (0-3 meses) → construir distribución (3-6 meses) → expa
 
 **Lo que NO hacer ahora:** no expandir verticales sin 3+ cases propios. No lanzar podcast sin blog + newsletter funcionando. No invertir en paid sin GA4 instalado. Secuencia > ambición.
 
----
+***
 
 **En resumen:** Growth4U entra en un mercado de 50-80M€ diverso y en crecimiento, sin líder que ofrezca un framework transferible de growth para empresas tech. Las fuerzas macro — GEO, self-serve buyers, IA — favorecen a quien tenga expertise, framework propio y presencia en IA. El Trust Engine resuelve exactamente lo que los compradores piden: un sistema que se queda, no una dependencia de personas. Si hay una sola cosa que hacer primero, es generar 2-3 case studies propios — son la prueba que convierte el argumento estratégico en confianza real.
 
----
+***
 
 ## Slide Summary
-<!-- Bloque estructurado para generación automática de slides -->
+
+\<!-- Bloque estructurado para generación automática de slides -->
 
 ```yaml
 slide_summary:
@@ -423,7 +427,7 @@ slide_summary:
       cagr: "13.4%"
       source: "Grand View Research"
       entities: "3.510 SaaS companies, 774 funded ($8.06B total raised)"
-      highlight: "IA: >2.000M€ inversión 2020-2024, 5º en Europa. Barcelona SaaS: $289M en 14 rondas (+120% YoY)"
+      highlight: "IA: &gt;2.000M€ inversión 2020-2024, 5º en Europa. Barcelona SaaS: $289M en 14 rondas (+120% YoY)"
     - name: "Healthtech"
       tam: "$6.530M (2024)"
       cagr: "22.4%"
@@ -440,10 +444,10 @@ slide_summary:
       tam: "$4.080M"
       cagr: "15%"
       source: "IMARC Group"
-      entities: ">400 entidades no bancarias (~50% growth en 5 años)"
+      entities: "&gt;400 entidades no bancarias (~50% growth en 5 años)"
       highlight: "Sub-segmentos: pagos (143), crowdfunding (158), crypto (88, x11 desde 2020), insurtech (250+). 27,2% españoles usan neobancos"
     - name: "Proptech"
-      tam: ">500M€ inversión"
+      tam: "&gt;500M€ inversión"
       cagr: null
       source: "Urbanitae / Research and Markets"
       entities: "562 startups (+272% desde 2020)"
@@ -458,9 +462,9 @@ slide_summary:
   # --- MARKET PROFILE ---
   market_profile:
     maturity: "Growing"
-    maturity_signal: "+22% empresas tech, +38% startups, marketing digital +11,2%, M&A activo (Flat 101/Minsait, vLex/Clio $1B). Shift a rondas maduras: Series A +34%, median round +34% a 2,14M€"
+    maturity_signal: "+22% empresas tech, +38% startups, marketing digital +11,2%, M&amp;A activo (Flat 101/Minsait, vLex/Clio $1B). Shift a rondas maduras: Series A +34%, median round +34% a 2,14M€"
     growth_historical: "Ecosistema 2x en valor desde 2020. H1 2025 superó inversión total de 2024 (1.950M€ vs 1.900M€). 117K+ empresas creadas en 2024 (+9,1%)"
-    growth_projected: "TAM growth consulting 100-150M€/año en 2030. Enterprise software España: $15.288M en 2030 (CAGR 13,4%). SaaS España: CAGR >19% (2024-2029)"
+    growth_projected: "TAM growth consulting 100-150M€/año en 2030. Enterprise software España: $15.288M en 2030 (CAGR 13,4%). SaaS España: CAGR &gt;19% (2024-2029)"
     growth_source: "elreferente.es, capital-riesgo.es, Grand View Research, gohub.vc"
     talent_shortage: "76% empresas con dificultad para contratar tech, 65% no encuentran juniors — implicación: las empresas necesitan ayuda externa, no pueden construir todo in-house"
 
@@ -470,9 +474,9 @@ slide_summary:
     fractional_cmo_cost: "4.000-20.000€/mes (48K-240K€/año). Ahorro 60-70% vs full-time"
     trust_engine_cost: "7.000€ one-time + retainer 5-10K€/mes"
     trust_engine_vs_alternatives: "Trust Engine = 7K€ por sistema permanente vs Fractional CMO = 48-240K€/año sin sistema. vs CMO full-time = 85-160K€/año + equity + recruiting time"
-    startup_marketing_spend_by_stage: "Seed: 10-20% de funding (50-250K€/año). Series A: 25-40% de funding (500K-2M€/año). Scaling >5M€: 7-12% revenue"
+    startup_marketing_spend_by_stage: "Seed: 10-20% de funding (50-250K€/año). Series A: 25-40% de funding (500K-2M€/año). Scaling &gt;5M€: 7-12% revenue"
     startup_channel_mix_seed: "35% SEO/content, 20% founder-led outreach, 15% organic social, 15% partnerships, 15% experimental"
-    b2b_saas_cac_benchmark: "Media $536-1.200/cliente. SMB: $200-300. Mid-market: $400-800. Enterprise: >$10.000. CAC +222% en 8 años, +40-60% desde 2023"
+    b2b_saas_cac_benchmark: "Media $536-1.200/cliente. SMB: $200-300. Mid-market: $400-800. Enterprise: &gt;$10.000. CAC +222% en 8 años, +40-60% desde 2023"
     cac_payback_period: "23 meses media (SaaS privado). LTV:CAC ratio saludable: 3:1 mínimo, 4:1 a 7:1 óptimo"
     referral_cac: "$150/cliente (más eficiente). Orgánico: $480-942. Paid search: $802. Google Ads CPL: $70,11 (+5,13% YoY)"
     retention_pressure: "75% empresas SaaS reportan retención en declive en 2025"
@@ -484,13 +488,13 @@ slide_summary:
     top_3:
       - name: "Product Hackers"
         estimated_share: "⚠️ Cuota no disponible"
-        profile: "Líder por volumen: 6M€ revenue (+53% YoY), 120 empleados, 120+ clientes. Generalista: eCommerce/retail > tech. 60% revenue recurrente. Revenue/empleado: ~50K€. Nueva vertical: AI Hackers"
+        profile: "Líder por volumen: 6M€ revenue (+53% YoY), 120 empleados, 120+ clientes. Generalista: eCommerce/retail &gt; tech. 60% revenue recurrente. Revenue/empleado: ~50K€. Nueva vertical: AI Hackers"
       - name: "iSocialWeb"
         estimated_share: "⚠️ Cuota no disponible"
         profile: "Líder SEO/GEO España: 30+ profesionales, 1B+ visitas gestionadas. Revenue obsoleto (~1,5M€ 2019). Modelo lean. Solo SEO/CRO, no growth full-funnel"
       - name: "Flat 101 (Minsait/Indra)"
         estimated_share: "⚠️ Cuota no disponible"
-        profile: "266 empleados post-adquisición (2021). CRO/UX/analytics. Ahora parte de consultora grande — menos ágil para startups. Señal M&A: los grandes compran agencias especializadas"
+        profile: "266 empleados post-adquisición (2021). CRO/UX/analytics. Ahora parte de consultora grande — menos ágil para startups. Señal M&amp;A: los grandes compran agencias especializadas"
     white_space: "Nadie ofrece framework de growth transferible + especialización tech + equipo. Product Hackers es generalista (eCommerce/retail). Fractional CMOs son individuos sin sistema. Agencias de performance hacen tareas, no instalan capacidad. El gap es: ¿quién instala un sistema de growth permanente en una empresa tech post-PMF?"
 
   # --- MARKET TRENDS ---
@@ -528,7 +532,7 @@ slide_summary:
       losers: "Modelos unipersonales sin sistema transferible ni equipo de respaldo"
       action: "Diferenciarse por framework replicable + equipo. Precio Trust Engine (7K€) vs fractional (48-240K€/año) = ROI incomparable"
     - trend: "Founder-Led Growth como modelo dominante"
-      insight: "El contenido de fundadores tiene el ROI más alto — autenticidad gana a producción pulida. LinkedIn 2025 prioriza calidad: dwell time > likes, personal 3-5x más alcance que empresa. Vídeo corto (<90s) tiene el ROI más alto en B2B marketing."
+      insight: "El contenido de fundadores tiene el ROI más alto — autenticidad gana a producción pulida. LinkedIn 2025 prioriza calidad: dwell time &gt; likes, personal 3-5x más alcance que empresa. Vídeo corto (&lt;90s) tiene el ROI más alto en B2B marketing."
       data: "80% ventas B2B en canales digitales. Personal pages 3-5x vs empresa en LinkedIn. Podcasting B2B: $4B publicidad, 50% marketers aumentan inversión [Hootsuite / RocketWheel / ContentAllies]"
       horizon: "Now"
       impact: "Alto"
@@ -554,14 +558,14 @@ slide_summary:
   opportunity:
     primary: "Mercado de 50-80M€ fragmentado y en crecimiento (+22% empresas, +11% digital), donde nadie ofrece un framework transferible de growth para empresas tech. 8.580 empresas tech, 484 scale-ups, 6 unicornios — y el 76% no encuentra talento tech, lo que fuerza externalización. Trust Engine ocupa el espacio vacío entre agencias generalistas (tareas) y fractional CMOs (individuos sin sistema)."
     gap: "Framework de growth transferible + equipo dedicado + especialización tech. Product Hackers: generalista, 6M€ pero eCommerce/retail. Fractional CMOs: individuos sin sistema (48-240K€/año). Agencias de performance: ejecución sin estrategia. El Trust Engine (7K€) instala capacidad permanente — el output se queda cuando G4U se va."
-    timing: "Ventana de 2-3 años antes de consolidación M&A (señales: Flat 101/Minsait, vLex/Clio $1B). GEO es first-mover advantage que se erosiona. H1 2025 batió récords de inversión. CAC B2B SaaS +222% en 8 años → empresas buscan alternativas a paid — exactamente lo que Trust Engine ofrece (sistema orgánico + GEO)."
+    timing: "Ventana de 2-3 años antes de consolidación M&amp;A (señales: Flat 101/Minsait, vLex/Clio $1B). GEO es first-mover advantage que se erosiona. H1 2025 batió récords de inversión. CAC B2B SaaS +222% en 8 años → empresas buscan alternativas a paid — exactamente lo que Trust Engine ofrece (sistema orgánico + GEO)."
     risk: "No generar 2-3 case studies propios rápido. El trust deficit es real: 77% consultan reviews, 54% hablan con usuarios actuales. Sin pruebas verificables, el argumento queda en teoría. Segundo riesgo: que Product Hackers o un grupo consolidador entre en el nicho tech antes de que G4U tenga tracción."
 
   # --- SAM (se rellena post niche-discovery) ---
   sam: null  # Pending: se calcula en niche-discovery cuando se eligen ECPs
 ```
 
----
+***
 
 ## Fuentes
 
@@ -636,9 +640,9 @@ slide_summary:
 69. [contentallies.com — B2B podcasting trends](https://contentallies.com/learn/b2b-podcasting-trends)
 70. [Reddit r/b2b_sales — Pain points 2025](https://www.reddit.com/r/b2b_sales/comments/1otdb8y/running_a_b2b_business_in_2025_these_are_the_pain/)
 
----
+***
 
-<!-- Self-QA: PASS | 2026-03-03 | v4 (skill v4, recentrado en tech)
+<\!\-\- Self\-QA: PASS \| 2026\-03\-03 \| v4 \(skill v4\, recentrado en tech\)
 
 STORYTELLING:
 ✅ Executive Narrative: narrativa pura, CERO tablas, Situación→Tensión→Oportunidad
@@ -661,7 +665,7 @@ CORRECCIONES QA APLICADAS:
 ✅ iSocialWeb: 30+ profesionales (isocialweb.agency), no "4+15"
 ✅ "78% scale-ups Cataluña" eliminado — reemplazado por "+35% YoY" verificable
 ✅ AI Overviews: 18% de queries (Pew Research), no 13%
-✅ Fintech: ">400 entidades, ~50% crecimiento" (BdE Observatorio)
+✅ Fintech: ">400 entidades, \~50% crecimiento" (BdE Observatorio)
 ✅ Executive Narrative: micro-contexto para multa Twitter y Código Influencers
 
 PARTES:

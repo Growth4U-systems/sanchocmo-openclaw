@@ -83,12 +83,58 @@ pre code{border:none;padding:0;}
 blockquote{border-left:4px solid #C45D35;margin:12px 0;padding:8px 16px;background:#FDF8EF;font-style:italic;}
 </style>`;
 
+// Simple server-side markdown to HTML (fallback when marked.js CDN blocked)
+function simpleMarkdownToHtml(md) {
+  let html = md;
+  // Code blocks
+  html = html.replace(/```(\w*)\n([\s\S]*?)```/g, (_, lang, code) => 
+    '<pre><code>' + code.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').trim() + '</code></pre>');
+  // Inline code
+  html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+  // Headers
+  html = html.replace(/^######\s+(.+)$/gm, '<h6>$1</h6>');
+  html = html.replace(/^#####\s+(.+)$/gm, '<h5>$1</h5>');
+  html = html.replace(/^####\s+(.+)$/gm, '<h4>$1</h4>');
+  html = html.replace(/^###\s+(.+)$/gm, '<h3>$1</h3>');
+  html = html.replace(/^##\s+(.+)$/gm, '<h2>$1</h2>');
+  html = html.replace(/^#\s+(.+)$/gm, '<h1>$1</h1>');
+  // Bold and italic
+  html = html.replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>');
+  html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
+  // Links
+  html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
+  // Blockquotes
+  html = html.replace(/^>\s+(.+)$/gm, '<blockquote>$1</blockquote>');
+  // Horizontal rules
+  html = html.replace(/^---+$/gm, '<hr>');
+  // Tables (basic)
+  html = html.replace(/^\|(.+)\|$/gm, (_, row) => {
+    const cells = row.split('|').map(c => c.trim());
+    return '<tr>' + cells.map(c => /^[-:]+$/.test(c) ? '' : '<td>' + c + '</td>').join('') + '</tr>';
+  });
+  html = html.replace(/(<tr>.*?<\/tr>\n?)+/g, m => '<table>' + m + '</table>');
+  html = html.replace(/<table><tr>(<td>[-:]+<\/td>)+<\/tr>/g, '<table>');
+  // Lists
+  html = html.replace(/^[-*]\s+(.+)$/gm, '<li>$1</li>');
+  html = html.replace(/(<li>.*<\/li>\n?)+/g, m => '<ul>' + m + '</ul>');
+  html = html.replace(/^\d+\.\s+(.+)$/gm, '<li>$1</li>');
+  // Paragraphs (lines not already tagged)
+  html = html.replace(/^(?!<[hupoltbd]|<\/|<li|<bl|<hr|<co|<ta|<tr)(.+)$/gm, '<p>$1</p>');
+  // Clean up empty paragraphs
+  html = html.replace(/<p>\s*<\/p>/g, '');
+  return html;
+}
+
 function renderMarkdown(md, docContext) {
   // docContext: { slug, docsBase } - for rewriting relative links in brand docs
   // docsBase: e.g. '/mc/docs/brand/growth4u' or '/mc/portal/{token}/docs/brand/growth4u'
   const ctxJson = docContext ? JSON.stringify(docContext).replace(/</g,'\\u003c').replace(/>/g,'\\u003e') : 'null';
   
-  return `<div class="md-raw" style="display:none;">${md.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div><div class="md-rendered"></div>
+  // Server-side rendered HTML as fallback (visible immediately, even without marked.js)
+  const ssrHtml = simpleMarkdownToHtml(md);
+  
+  return `<div class="md-raw" style="display:none;">${md.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div><div class="md-rendered">${ssrHtml}</div>
 <style>
 a.mc-redlink { color: #C45D35 !important; text-decoration: line-through wavy !important; opacity: 0.7; cursor: help; position: relative; }
 a.mc-redlink::after { content: ' (pendiente)'; font-size: 0.8em; font-style: italic; opacity: 0.6; }
@@ -870,6 +916,600 @@ function loadProjectsData(slug) {
   });
 }
 
+function buildTrustEnginePage(slug, baseUrl, clientName) {
+  function escHtml(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  const teDir = path.join(BASE, 'brand', slug, 'trust-engine');
+
+  // Load run-state
+  let runState = { modules: {} };
+  try { runState = JSON.parse(fs.readFileSync(path.join(teDir, 'run-state.json'), 'utf-8')); } catch {}
+
+  // Module definitions
+  const MODULE_DEFS = [
+    { id: 'foundation-import', name: 'Foundation Import', icon: '📋', cmd: 'trust-engine init' },
+    { id: 'seo-audit', name: 'SEO Audit', icon: '🔍', cmd: 'trust-engine seo-audit' },
+    { id: 'own-media-audit', name: 'Own Media', icon: '🌐', cmd: 'trust-engine own-media' },
+    { id: 'geo-analysis', name: 'GEO Analysis', icon: '🤖', cmd: 'trust-engine geo' },
+    { id: 'serp-analysis', name: 'SERP Analysis', icon: '📊', cmd: 'trust-engine serp' },
+    { id: 'gap-analysis', name: 'Gap Analysis', icon: '🔗', cmd: 'trust-engine gaps' },
+    { id: 'recommendations', name: 'Recommendations', icon: '✅', cmd: 'trust-engine recs' },
+    { id: 'keywords', name: 'Keywords', icon: '🔑', cmd: 'trust-engine keywords' },
+    { id: 'influencers', name: 'Influencers', icon: '🎯', cmd: 'trust-engine influencers' },
+  ];
+
+  // Load module data files
+  const moduleFiles = {
+    'seo-audit': 'seo-audit.json',
+    'own-media-audit': 'own-media-audit.json',
+    'geo-analysis': 'geo-analysis.json',
+    'serp-analysis': 'serp-analysis.json',
+    'gap-analysis': 'gap-analysis.json',
+    'recommendations': 'recommendations.json',
+    'keywords': 'keywords.json',
+    'influencers': 'influencers.json',
+    'foundation-import': 'config.json',
+  };
+
+  const moduleData = {};
+  for (const [modId, fname] of Object.entries(moduleFiles)) {
+    try { moduleData[modId] = JSON.parse(fs.readFileSync(path.join(teDir, fname), 'utf-8')); } catch { moduleData[modId] = null; }
+  }
+
+  // Determine effective status for each module
+  function getEffectiveStatus(modId) {
+    const mod = runState.modules[modId];
+    if (!mod) return 'pending';
+    if (mod.status === 'completed' || mod.status === 'running' || mod.status === 'error') return mod.status;
+    // Check if locked by dependencies
+    const deps = mod.depends_on || [];
+    for (const dep of deps) {
+      const depMod = runState.modules[dep];
+      if (!depMod || depMod.status !== 'completed') return 'locked';
+    }
+    return mod.status || 'pending';
+  }
+
+  const STATUS_ICONS = { pending: '⬚', locked: '🔒', running: '⏳', completed: '✅', error: '❌' };
+  const STATUS_COLORS = { pending: '#5D5348', locked: '#5D5348', running: '#F2C94C', completed: '#4A5D23', error: '#C0392B' };
+  const STATUS_LABELS = { pending: 'Pendiente', locked: 'Bloqueado', running: 'Ejecutando...', completed: 'Completado', error: 'Error' };
+
+  // Get summary for completed modules
+  function getModuleSummary(modId) {
+    const data = moduleData[modId];
+    if (!data) return '';
+    switch (modId) {
+      case 'foundation-import':
+        return data.project ? `${(data.niches||[]).length} niches, ${(data.competitors||[]).length} competidores` : '';
+      case 'seo-audit': {
+        const d = data.data || data;
+        const score = d.lighthouse?.seo || d.score || '—';
+        const issues = (d.issues||[]).length;
+        return `Score: ${score}/100 · ${issues} issues`;
+      }
+      case 'own-media-audit': {
+        const d = data.data || data;
+        const score = d.scores?.overall || d.overall_score || '—';
+        return `Score: ${score}/100`;
+      }
+      case 'geo-analysis': {
+        const d = data.data || data;
+        const vis = d.summary?.client_visibility?.mentioned_in_pct;
+        return vis != null ? `Visibility: ${vis}%` : '';
+      }
+      case 'serp-analysis': {
+        const d = data.data || data;
+        const n = (d.queries||[]).length;
+        return n ? `${n} keywords analizadas` : '';
+      }
+      case 'gap-analysis': {
+        const d = data.data || data;
+        const n = d.summary?.total_gaps || (d.gaps||[]).length;
+        return n ? `${n} gaps encontrados` : '';
+      }
+      case 'recommendations': {
+        const d = data.data || data;
+        const n = (d.recommendations||[]).length;
+        return n ? `${n} recomendaciones` : '';
+      }
+      case 'keywords': {
+        const d = data.data || data;
+        const n = (d.keywords||[]).length;
+        return n ? `${n} keywords` : '';
+      }
+      case 'influencers': {
+        const d = data.data || data;
+        const n = (d.influencers||[]).length;
+        return n ? `${n} influencers` : '';
+      }
+      default: return '';
+    }
+  }
+
+  // Build module cards grid
+  const completedCount = MODULE_DEFS.filter(m => getEffectiveStatus(m.id) === 'completed').length;
+  const totalCount = MODULE_DEFS.length;
+
+  const moduleCards = MODULE_DEFS.map(mod => {
+    const status = getEffectiveStatus(mod.id);
+    const icon = STATUS_ICONS[status];
+    const color = STATUS_COLORS[status];
+    const label = STATUS_LABELS[status];
+    const summary = status === 'completed' ? getModuleSummary(mod.id) : '';
+    const deps = (runState.modules[mod.id]?.depends_on || []).filter(d => {
+      const ds = runState.modules[d];
+      return !ds || ds.status !== 'completed';
+    });
+    const depsText = status === 'locked' ? `<div style="font-size:11px;color:#5D5348;margin-top:6px;">Necesita: ${deps.join(', ')}</div>` : '';
+
+    let buttons = '';
+    if (status === 'pending') {
+      buttons = `<div style="margin-top:12px;display:flex;gap:6px;">
+        <button onclick="launchModule('${escHtml(mod.id)}','${escHtml(slug)}')" class="te-btn te-btn-primary">▶ Lanzar</button>
+      </div>`;
+    } else if (status === 'completed') {
+      buttons = `<div style="margin-top:12px;display:flex;gap:6px;">
+        <button onclick="showModuleDetail('${escHtml(mod.id)}')" class="te-btn te-btn-secondary">👁 Ver</button>
+        <button onclick="launchModule('${escHtml(mod.id)}','${escHtml(slug)}')" class="te-btn te-btn-outline">🔄 Rerun</button>
+      </div>`;
+    } else if (status === 'error') {
+      buttons = `<div style="margin-top:12px;display:flex;gap:6px;">
+        <button onclick="launchModule('${escHtml(mod.id)}','${escHtml(slug)}')" class="te-btn te-btn-primary">🔄 Reintentar</button>
+      </div>`;
+    } else if (status === 'locked') {
+      buttons = `<div style="margin-top:12px;"><button disabled class="te-btn te-btn-disabled">🔒 Bloqueado</button></div>`;
+    }
+
+    return `<div class="te-module-card te-status-${status}" id="mod-${mod.id}">
+      <div class="te-module-header">
+        <span class="te-module-icon">${mod.icon}</span>
+        <span class="te-module-status" style="color:${color};">${icon} ${label}</span>
+      </div>
+      <div class="te-module-name">${escHtml(mod.name)}</div>
+      ${summary ? `<div class="te-module-summary">${escHtml(summary)}</div>` : ''}
+      ${depsText}
+      ${buttons}
+    </div>`;
+  }).join('');
+
+  // Build detail views for completed modules
+  function buildSeoDetail() {
+    const data = moduleData['seo-audit'];
+    if (!data) return '';
+    const d = data.data || data;
+    const lh = d.lighthouse || {};
+    const cwv = lh.core_web_vitals || {};
+    const ratingColor = r => r === 'good' ? '#4A5D23' : r === 'needs-improvement' ? '#F2C94C' : '#C0392B';
+
+    let cwvHtml = '';
+    if (cwv.lcp || cwv.tbt || cwv.cls) {
+      cwvHtml = `<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:12px 0;">
+        ${['lcp','tbt','cls','fcp','speed_index'].map(k => {
+          const v = cwv[k];
+          if (!v) return `<div class="te-metric-box"><div class="te-metric-value">—</div><div class="te-metric-label">${k.toUpperCase()}</div></div>`;
+          return `<div class="te-metric-box" style="border-color:${ratingColor(v.rating)}">
+            <div class="te-metric-value">${v.value}${v.unit || ''}</div>
+            <div class="te-metric-label">${k.toUpperCase()}</div>
+            <div style="font-size:10px;color:${ratingColor(v.rating)}">${v.rating || ''}</div>
+          </div>`;
+        }).join('')}
+      </div>`;
+    }
+
+    let issuesHtml = '<div class="te-empty">Sin issues.</div>';
+    if ((d.issues || []).length) {
+      const sevIcon = s => ({ critical: '🔴', high: '🟠', medium: '🟡', low: '🟢' }[s] || '⚪');
+      const rows = d.issues.map(iss => `<tr>
+        <td>${sevIcon(iss.severity)} ${escHtml(iss.severity||'')}</td>
+        <td>${escHtml(iss.title||'')}</td>
+        <td>${escHtml(iss.description||'').substring(0,100)}${(iss.description||'').length>100?'...':''}</td>
+        <td>${iss.expected_impact_pct ? iss.expected_impact_pct + '%' : '—'}</td>
+      </tr>`).join('');
+      issuesHtml = `<table class="te-tbl"><thead><tr><th>Sev</th><th>Issue</th><th>Descripción</th><th>Impacto</th></tr></thead><tbody>${rows}</tbody></table>`;
+    }
+
+    let hcHtml = '';
+    if ((d.health_checks || []).length) {
+      const hcIcon = s => ({ pass: '✅', fail: '❌', warning: '⚠️' }[s] || '❓');
+      const rows = d.health_checks.map(hc => `<tr>
+        <td>${hcIcon(hc.status)}</td><td>${escHtml(hc.name||'')}</td><td>${escHtml(hc.details||'')}</td>
+      </tr>`).join('');
+      hcHtml = `<h3 style="margin-top:16px;">Health Checks</h3><table class="te-tbl"><thead><tr><th></th><th>Check</th><th>Detalle</th></tr></thead><tbody>${rows}</tbody></table>`;
+    }
+
+    return `<div id="detail-seo-audit" class="te-detail" style="display:none;">
+      <button onclick="hideDetail('seo-audit')" class="te-btn te-btn-outline" style="margin-bottom:12px;">← Volver</button>
+      <h2 style="font-family:'Space Grotesk',sans-serif;color:#1E3A5F;">🔍 SEO Audit — Detalle</h2>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:16px 0;">
+        <div class="te-score-box"><div class="te-score-value">${lh.performance||'—'}</div><div class="te-score-label">Performance</div></div>
+        <div class="te-score-box"><div class="te-score-value">${lh.accessibility||'—'}</div><div class="te-score-label">Accessibility</div></div>
+        <div class="te-score-box"><div class="te-score-value">${lh.best_practices||'—'}</div><div class="te-score-label">Best Practices</div></div>
+        <div class="te-score-box"><div class="te-score-value">${lh.seo||'—'}</div><div class="te-score-label">SEO</div></div>
+      </div>
+      ${cwvHtml}
+      <h3>Issues</h3>
+      ${issuesHtml}
+      ${hcHtml}
+    </div>`;
+  }
+
+  function buildOwnMediaDetail() {
+    const data = moduleData['own-media-audit'];
+    if (!data) return '';
+    const d = data.data || data;
+    const blog = d.blog || {};
+    const social = d.social || {};
+    const schemas = d.schemas || {};
+    const tech = d.tech || {};
+    const scores = d.scores || {};
+
+    const platforms = (social.platforms || []).map(p =>
+      `<span class="te-tag">${escHtml(p.platform)} ${p.url ? '✓' : '✗'}</span>`
+    ).join(' ') || '<span class="te-tag">Ninguno detectado</span>';
+
+    const foundSchemas = (schemas.found || []).map(s => `<span class="te-tag te-tag-green">${escHtml(s)}</span>`).join(' ');
+    const missingSchemas = (schemas.missing_recommended || []).map(s => `<span class="te-tag te-tag-red">${escHtml(s)}</span>`).join(' ');
+
+    return `<div id="detail-own-media-audit" class="te-detail" style="display:none;">
+      <button onclick="hideDetail('own-media-audit')" class="te-btn te-btn-outline" style="margin-bottom:12px;">← Volver</button>
+      <h2 style="font-family:'Space Grotesk',sans-serif;color:#1E3A5F;">🌐 Own Media — Detalle</h2>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:16px 0;">
+        <div class="te-score-box"><div class="te-score-value">${scores.content||'—'}</div><div class="te-score-label">Content (35%)</div></div>
+        <div class="te-score-box"><div class="te-score-value">${scores.social||'—'}</div><div class="te-score-label">Social (30%)</div></div>
+        <div class="te-score-box"><div class="te-score-value">${scores.technical||'—'}</div><div class="te-score-label">Technical (35%)</div></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px;">
+        <div class="te-section">
+          <h3>📝 Blog</h3>
+          <div class="te-kv"><span>Detectado:</span><span>${blog.detected ? '✅ Sí' : '❌ No'}</span></div>
+          ${blog.url ? `<div class="te-kv"><span>URL:</span><span><a href="${escHtml(blog.url)}" target="_blank">${escHtml(blog.url)}</a></span></div>` : ''}
+          <div class="te-kv"><span>Frecuencia:</span><span>${escHtml(blog.frequency||'—')}</span></div>
+          <div class="te-kv"><span>Posts estimados:</span><span>${blog.post_count_estimated||'—'}</span></div>
+        </div>
+        <div class="te-section">
+          <h3>📱 Social</h3>
+          <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:8px;">${platforms}</div>
+        </div>
+        <div class="te-section">
+          <h3>🔧 Tech</h3>
+          <div class="te-kv"><span>CMS:</span><span>${escHtml(tech.cms||'—')}</span></div>
+          <div class="te-kv"><span>Analytics:</span><span>${(tech.analytics||[]).join(', ')||'—'}</span></div>
+          <div class="te-kv"><span>CDN:</span><span>${escHtml(tech.cdn||'—')}</span></div>
+          <div class="te-kv"><span>SSL:</span><span>${tech.ssl ? '✅' : '❌'}</span></div>
+        </div>
+        <div class="te-section">
+          <h3>📋 Schemas</h3>
+          <div>Found: ${foundSchemas || 'Ninguno'}</div>
+          <div style="margin-top:6px;">Missing: ${missingSchemas || '—'}</div>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  function buildGeoDetail() {
+    const data = moduleData['geo-analysis'];
+    if (!data) return '';
+    const d = data.data || data;
+    const summary = d.summary || {};
+    const runs = d.runs || [];
+    const cv = summary.client_visibility || {};
+
+    let competitorTable = '';
+    if ((summary.competitor_visibility||[]).length) {
+      const rows = summary.competitor_visibility.map(c => `<tr>
+        <td>${escHtml(c.brand||'')}</td><td>${c.mentioned_in_pct != null ? c.mentioned_in_pct + '%' : '—'}</td><td>${c.avg_position||'—'}</td>
+      </tr>`).join('');
+      competitorTable = `<table class="te-tbl"><thead><tr><th>Competidor</th><th>Visibility</th><th>Pos Avg</th></tr></thead><tbody>${rows}</tbody></table>`;
+    }
+
+    let citedDomains = '';
+    if ((summary.top_cited_domains||[]).length) {
+      citedDomains = summary.top_cited_domains.slice(0, 10).map(d =>
+        `<span class="te-tag">${escHtml(d.domain)} (${d.count})</span>`
+      ).join(' ');
+    }
+
+    return `<div id="detail-geo-analysis" class="te-detail" style="display:none;">
+      <button onclick="hideDetail('geo-analysis')" class="te-btn te-btn-outline" style="margin-bottom:12px;">← Volver</button>
+      <h2 style="font-family:'Space Grotesk',sans-serif;color:#1E3A5F;">🤖 GEO Analysis — Detalle</h2>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:16px 0;">
+        <div class="te-score-box"><div class="te-score-value">${cv.mentioned_in_pct != null ? cv.mentioned_in_pct + '%' : '—'}</div><div class="te-score-label">Visibility</div></div>
+        <div class="te-score-box"><div class="te-score-value">${cv.avg_position||'—'}</div><div class="te-score-label">Pos. Media</div></div>
+        <div class="te-score-box"><div class="te-score-value">${runs.length}</div><div class="te-score-label">Prompts</div></div>
+      </div>
+      <h3>Competidores</h3>
+      ${competitorTable || '<div class="te-empty">Sin datos de competidores.</div>'}
+      <h3 style="margin-top:16px;">Dominios más citados</h3>
+      <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:8px;">${citedDomains || '<span class="te-empty">—</span>'}</div>
+    </div>`;
+  }
+
+  function buildGapDetail() {
+    const data = moduleData['gap-analysis'];
+    if (!data) return '';
+    const d = data.data || data;
+    const gaps = d.gaps || [];
+    const summary = d.summary || {};
+
+    let gapTable = '<div class="te-empty">Sin gaps.</div>';
+    if (gaps.length) {
+      const rows = gaps.slice(0, 20).map(g => {
+        const typeIcon = { geo_only: '🤖', serp_only: '🔍', both: '⚡' }[g.type] || '';
+        return `<tr>
+          <td>${typeIcon} ${escHtml(g.type||'')}</td>
+          <td><a href="${escHtml(g.url||'')}" target="_blank" style="color:#C45D35;">${escHtml((g.domain||g.url||'').substring(0,40))}</a></td>
+          <td>${escHtml((g.competitors_present||[]).join(', '))}</td>
+          <td style="font-weight:700;">${g.opportunity_score||'—'}</td>
+        </tr>`;
+      }).join('');
+      gapTable = `<table class="te-tbl"><thead><tr><th>Tipo</th><th>Dominio/URL</th><th>Competidores</th><th>Score</th></tr></thead><tbody>${rows}</tbody></table>`;
+    }
+
+    return `<div id="detail-gap-analysis" class="te-detail" style="display:none;">
+      <button onclick="hideDetail('gap-analysis')" class="te-btn te-btn-outline" style="margin-bottom:12px;">← Volver</button>
+      <h2 style="font-family:'Space Grotesk',sans-serif;color:#1E3A5F;">🔗 Gap Analysis — Detalle</h2>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:16px 0;">
+        <div class="te-score-box"><div class="te-score-value">${summary.total_gaps||gaps.length}</div><div class="te-score-label">Total Gaps</div></div>
+        <div class="te-score-box"><div class="te-score-value">${summary.high_opportunity||gaps.filter(g=>(g.opportunity_score||0)>=70).length}</div><div class="te-score-label">High Opportunity</div></div>
+        <div class="te-score-box"><div class="te-score-value">${summary.by_type?.both||gaps.filter(g=>g.type==='both').length}</div><div class="te-score-label">SEO+GEO</div></div>
+      </div>
+      ${gapTable}
+    </div>`;
+  }
+
+  function buildRecsDetail() {
+    const data = moduleData['recommendations'];
+    if (!data) return '';
+    const d = data.data || data;
+    const recs = d.recommendations || [];
+
+    let recsTable = '<div class="te-empty">Sin recomendaciones.</div>';
+    if (recs.length) {
+      const sevIcon = s => ({ critical: '🔴', high: '🟠', medium: '🟡', low: '🟢' }[s] || '⚪');
+      const rows = recs.map(r => `<tr>
+        <td>${sevIcon(r.severity)} ${escHtml(r.severity||'')}</td>
+        <td>${escHtml(r.title||'')}</td>
+        <td>${escHtml(r.category||'')}</td>
+        <td>${r.expected_impact_pct ? r.expected_impact_pct + '%' : '—'}</td>
+        <td>${escHtml(r.effort||'—')}</td>
+        <td><select onchange="updateRecStatus('${escHtml(r.id||'')}',this.value)" style="padding:4px;border:1px solid #D4C9B8;border-radius:4px;font-size:12px;background:#F5F0E6;color:#1A1A2E;">
+          <option value="pending" ${(r.status||'pending')==='pending'?'selected':''}>Pendiente</option>
+          <option value="in-progress" ${r.status==='in-progress'?'selected':''}>En progreso</option>
+          <option value="done" ${r.status==='done'?'selected':''}>Hecho</option>
+          <option value="dismissed" ${r.status==='dismissed'?'selected':''}>Descartado</option>
+        </select></td>
+      </tr>`).join('');
+      recsTable = `<table class="te-tbl"><thead><tr><th>Sev</th><th>Recomendación</th><th>Categoría</th><th>Impacto</th><th>Esfuerzo</th><th>Estado</th></tr></thead><tbody>${rows}</tbody></table>`;
+    }
+
+    return `<div id="detail-recommendations" class="te-detail" style="display:none;">
+      <button onclick="hideDetail('recommendations')" class="te-btn te-btn-outline" style="margin-bottom:12px;">← Volver</button>
+      <h2 style="font-family:'Space Grotesk',sans-serif;color:#1E3A5F;">✅ Recommendations — Detalle</h2>
+      ${recsTable}
+    </div>`;
+  }
+
+  function buildKeywordsDetail() {
+    const data = moduleData['keywords'];
+    if (!data) return '';
+    const d = data.data || data;
+    const kws = d.keywords || [];
+
+    let kwTable = '<div class="te-empty">Sin keywords.</div>';
+    if (kws.length) {
+      const rows = kws.sort((a,b) => (b.opportunity_score||0) - (a.opportunity_score||0)).slice(0, 30).map(k => `<tr>
+        <td>${escHtml(k.keyword||'')}</td>
+        <td>${escHtml(k.category||'')}</td>
+        <td>${k.volume != null ? k.volume.toLocaleString() : '—'}</td>
+        <td>${k.cpc != null ? '€' + k.cpc.toFixed(2) : '—'}</td>
+        <td>${k.kd != null ? k.kd : '—'}</td>
+        <td style="font-weight:700;">${k.opportunity_score != null ? (k.opportunity_score * 100).toFixed(0) : '—'}</td>
+        <td><select onchange="updateKwStatus('${escHtml(k.id||'')}',this.value)" style="padding:4px;border:1px solid #D4C9B8;border-radius:4px;font-size:12px;background:#F5F0E6;color:#1A1A2E;">
+          <option value="suggested" ${(k.status||'suggested')==='suggested'?'selected':''}>Sugerida</option>
+          <option value="approved" ${k.status==='approved'?'selected':''}>Aprobada</option>
+          <option value="rejected" ${k.status==='rejected'?'selected':''}>Rechazada</option>
+          <option value="content-created" ${k.status==='content-created'?'selected':''}>Contenido creado</option>
+        </select></td>
+      </tr>`).join('');
+      kwTable = `<table class="te-tbl"><thead><tr><th>Keyword</th><th>Categoría</th><th>Volume</th><th>CPC</th><th>KD</th><th>Score</th><th>Estado</th></tr></thead><tbody>${rows}</tbody></table>`;
+    }
+
+    return `<div id="detail-keywords" class="te-detail" style="display:none;">
+      <button onclick="hideDetail('keywords')" class="te-btn te-btn-outline" style="margin-bottom:12px;">← Volver</button>
+      <h2 style="font-family:'Space Grotesk',sans-serif;color:#1E3A5F;">🔑 Keywords — Detalle</h2>
+      ${kwTable}
+    </div>`;
+  }
+
+  function buildInfluencersDetail() {
+    const data = moduleData['influencers'];
+    if (!data) return '';
+    const d = data.data || data;
+    const infs = d.influencers || [];
+
+    let infTable = '<div class="te-empty">Sin influencers.</div>';
+    if (infs.length) {
+      const rows = infs.sort((a,b) => (b.relevance_score||0) - (a.relevance_score||0)).map(inf => `<tr>
+        <td>${escHtml(inf.name||'')}</td>
+        <td>${escHtml(inf.platform||'')}</td>
+        <td><a href="${escHtml(inf.url||'')}" target="_blank" style="color:#C45D35;">Perfil →</a></td>
+        <td>${inf.subscribers ? inf.subscribers.toLocaleString() : '—'}</td>
+        <td style="font-weight:700;">${inf.relevance_score||'—'}</td>
+        <td><select onchange="updateInfStatus('${escHtml(inf.id||'')}',this.value)" style="padding:4px;border:1px solid #D4C9B8;border-radius:4px;font-size:12px;background:#F5F0E6;color:#1A1A2E;">
+          <option value="discovered" ${(inf.contact_status||'discovered')==='discovered'?'selected':''}>Descubierto</option>
+          <option value="contacted" ${inf.contact_status==='contacted'?'selected':''}>Contactado</option>
+          <option value="responded" ${inf.contact_status==='responded'?'selected':''}>Respondió</option>
+          <option value="partner" ${inf.contact_status==='partner'?'selected':''}>Partner</option>
+        </select></td>
+      </tr>`).join('');
+      infTable = `<table class="te-tbl"><thead><tr><th>Nombre</th><th>Plataforma</th><th>Perfil</th><th>Seguidores</th><th>Relevancia</th><th>Estado</th></tr></thead><tbody>${rows}</tbody></table>`;
+    }
+
+    return `<div id="detail-influencers" class="te-detail" style="display:none;">
+      <button onclick="hideDetail('influencers')" class="te-btn te-btn-outline" style="margin-bottom:12px;">← Volver</button>
+      <h2 style="font-family:'Space Grotesk',sans-serif;color:#1E3A5F;">🎯 Influencers — Detalle</h2>
+      ${infTable}
+    </div>`;
+  }
+
+  function buildSerpDetail() {
+    const data = moduleData['serp-analysis'];
+    if (!data) return '';
+    const d = data.data || data;
+    const queries = d.queries || [];
+
+    let serpTable = '<div class="te-empty">Sin datos SERP.</div>';
+    if (queries.length) {
+      const rows = queries.slice(0, 20).map(q => {
+        const ownPos = (q.results||[]).find(r => r.domain_type === 'own');
+        return `<tr>
+          <td>${escHtml(q.keyword||'')}</td>
+          <td>${q.volume != null ? q.volume.toLocaleString() : '—'}</td>
+          <td>${ownPos ? '#' + ownPos.position : '—'}</td>
+          <td>${(q.results||[]).filter(r => r.domain_type === 'competitor').length}</td>
+        </tr>`;
+      }).join('');
+      serpTable = `<table class="te-tbl"><thead><tr><th>Keyword</th><th>Volume</th><th>Tu posición</th><th>Competidores en top 10</th></tr></thead><tbody>${rows}</tbody></table>`;
+    }
+
+    return `<div id="detail-serp-analysis" class="te-detail" style="display:none;">
+      <button onclick="hideDetail('serp-analysis')" class="te-btn te-btn-outline" style="margin-bottom:12px;">← Volver</button>
+      <h2 style="font-family:'Space Grotesk',sans-serif;color:#1E3A5F;">📊 SERP Analysis — Detalle</h2>
+      ${serpTable}
+    </div>`;
+  }
+
+  // Assemble all detail views
+  const detailViews = [
+    buildSeoDetail(),
+    buildOwnMediaDetail(),
+    buildGeoDetail(),
+    buildSerpDetail(),
+    buildGapDetail(),
+    buildRecsDetail(),
+    buildKeywordsDetail(),
+    buildInfluencersDetail(),
+  ].join('\n');
+
+  // Progress bar
+  const progressPct = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
+
+  const content = `
+<a class="back" href="${baseUrl}/">← Mission Control</a>
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+  <div>
+    <h1 style="font-family:'Space Grotesk',sans-serif;font-size:28px;color:#1E3A5F;margin:0;">🔍 Trust Engine</h1>
+    <div style="color:#5D5348;font-size:14px;">${escHtml(clientName)}</div>
+  </div>
+  <div style="text-align:right;">
+    <div style="font-size:14px;color:#5D5348;">${completedCount}/${totalCount} módulos</div>
+    <div style="width:200px;height:8px;background:#D4C9B8;border-radius:4px;margin-top:4px;overflow:hidden;">
+      <div style="width:${progressPct}%;height:100%;background:#4A5D23;border-radius:4px;transition:width .3s;"></div>
+    </div>
+  </div>
+</div>
+
+<div id="te-dashboard" class="te-module-grid">
+  ${moduleCards}
+</div>
+
+${detailViews}
+
+<div id="te-launch-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:500;align-items:center;justify-content:center;">
+  <div style="background:#FDF8EF;border:3px solid #1A1A2E;border-radius:12px;padding:28px;width:480px;max-width:90vw;box-shadow:6px 6px 0 #1A1A2E;">
+    <h3 style="font-family:'Space Grotesk',sans-serif;margin-bottom:12px;color:#1E3A5F;">▶ Lanzar Módulo</h3>
+    <p style="font-size:14px;color:#5D5348;margin-bottom:16px;">Escribe este comando en Discord para ejecutar el módulo:</p>
+    <pre id="te-launch-cmd" style="background:#F5F0E6;padding:16px;border-radius:8px;font-size:14px;cursor:pointer;border:2px solid #D4C9B8;white-space:pre-wrap;" onclick="navigator.clipboard.writeText(this.textContent);this.style.borderColor='#4A5D23';setTimeout(()=>this.style.borderColor='#D4C9B8',1000);">trust-engine init ${slug}</pre>
+    <p style="font-size:12px;color:#5D5348;margin-top:8px;">💡 Click para copiar</p>
+    <div style="display:flex;justify-content:flex-end;margin-top:16px;">
+      <button onclick="document.getElementById('te-launch-modal').style.display='none'" class="te-btn te-btn-outline">Cerrar</button>
+    </div>
+  </div>
+</div>
+`;
+
+  const styles = `<style>
+:root { --bg:#F5F0E6; --card:#FDF8EF; --border:#D4C9B8; --text:#1A1A2E; --muted:#5D5348; --ink:#1A1A2E; --green:#4A5D23; --yellow:#F2C94C; --red:#C0392B; --blue:#3B82F6; --rust:#C45D35; --navy:#1E3A5F; --sage:#4A5D23; --aged:#E8DCC8; }
+.te-module-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:16px; margin-top:20px; }
+.te-module-card { background:#FDF8EF !important; border:3px solid #1A1A2E !important; border-radius:10px !important; padding:18px !important; box-shadow:4px 4px 0 #1A1A2E !important; transition:all 0.2s; }
+.te-module-card:hover { transform:translateY(-2px); box-shadow:6px 6px 0 #1A1A2E; }
+.te-status-completed { border-left:5px solid #4A5D23 !important; }
+.te-status-running { border-left:5px solid #F2C94C; }
+.te-status-error { border-left:5px solid #C0392B; }
+.te-status-locked { opacity:0.6 !important; }
+.te-module-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+.te-module-icon { font-size:24px; }
+.te-module-status { font-size:12px; font-weight:600; }
+.te-module-name { font-family:'Space Grotesk',sans-serif; font-size:16px; font-weight:600; color:#1E3A5F; }
+.te-module-summary { font-size:13px; color:#5D5348; margin-top:4px; }
+.te-btn { padding:6px 14px; border-radius:6px; font-size:12px; font-weight:600; cursor:pointer; border:2px solid #1A1A2E; transition:all .15s; }
+.te-btn-primary { background:#C45D35 !important; color:#fff !important; box-shadow:2px 2px 0 #1A1A2E !important; padding:8px 16px !important; }
+.te-btn-primary:hover { transform:translateY(-1px); box-shadow:3px 3px 0 #1A1A2E; }
+.te-btn-secondary { background:#1E3A5F !important; color:#fff !important; box-shadow:2px 2px 0 #1A1A2E !important; padding:8px 16px !important; }
+.te-btn-outline { background:#FDF8EF; color:#1A1A2E; }
+.te-btn-outline:hover { background:#F5F0E6; }
+.te-btn-disabled { background:#D4C9B8 !important; color:#5D5348 !important; cursor:not-allowed !important; border-color:#D4C9B8 !important; }
+.te-detail { margin-top:20px; }
+.te-score-box { background:#F5F0E6; padding:16px; border-radius:10px; border:2px solid #D4C9B8; text-align:center; }
+.te-score-value { font-family:'Space Grotesk',sans-serif; font-size:28px; font-weight:800; color:#1E3A5F; }
+.te-score-label { font-size:12px; color:#5D5348; margin-top:2px; }
+.te-metric-box { background:#F5F0E6; padding:10px; border-radius:8px; border:2px solid #D4C9B8; text-align:center; }
+.te-metric-value { font-family:'Space Grotesk',sans-serif; font-size:18px; font-weight:700; color:#1E3A5F; }
+.te-metric-label { font-size:10px; color:#5D5348; text-transform:uppercase; letter-spacing:0.5px; }
+.te-empty { text-align:center; padding:24px; color:#5D5348; font-size:14px; }
+.te-tbl { width:100%; border-collapse:collapse; font-size:13px; }
+.te-tbl th { padding:8px; border-bottom:2px solid #D4C9B8; text-align:left; font-weight:600; color:#5D5348; font-size:12px; text-transform:uppercase; letter-spacing:0.5px; }
+.te-tbl td { padding:8px; border-bottom:1px solid #D4C9B8; }
+.te-tbl tr:hover td { background:#F5F0E6; }
+.te-tag { display:inline-block; background:#F5F0E6; padding:2px 10px; border-radius:6px; font-size:12px; border:1px solid #D4C9B8; margin:2px; }
+.te-tag-green { background:rgba(74,93,35,0.1); border-color:#4A5D23; color:#4A5D23; }
+.te-tag-red { background:rgba(192,57,43,0.1); border-color:#C0392B; color:#C0392B; }
+.te-section { background:#F5F0E6; padding:16px; border-radius:10px; border:2px solid #D4C9B8; }
+.te-section h3 { font-family:'Space Grotesk',sans-serif; font-size:14px; color:#1E3A5F; margin-bottom:8px; }
+.te-kv { display:flex; justify-content:space-between; font-size:13px; padding:4px 0; border-bottom:1px solid #D4C9B8; }
+.te-kv:last-child { border-bottom:none; }
+</style>
+<script>
+const TE_CMDS = ${JSON.stringify(Object.fromEntries(MODULE_DEFS.map(m => [m.id, m.cmd])))};
+function launchModule(modId, slug) {
+  const cmd = (TE_CMDS[modId] || 'trust-engine') + ' ' + slug;
+  document.getElementById('te-launch-cmd').textContent = cmd;
+  document.getElementById('te-launch-modal').style.display = 'flex';
+}
+function showModuleDetail(modId) {
+  document.getElementById('te-dashboard').style.display = 'none';
+  const det = document.getElementById('detail-' + modId);
+  if (det) det.style.display = 'block';
+}
+function hideDetail(modId) {
+  const det = document.getElementById('detail-' + modId);
+  if (det) det.style.display = 'none';
+  document.getElementById('te-dashboard').style.display = 'grid';
+}
+function updateRecStatus(id, val) { saveTEField('recommendations', 'recommendations', id, 'status', val); }
+function updateKwStatus(id, val) { saveTEField('keywords', 'keywords', id, 'status', val); }
+function updateInfStatus(id, val) { saveTEField('influencers', 'influencers', id, 'contact_status', val); }
+async function saveTEField(module, arrayKey, itemId, field, value) {
+  try {
+    const res = await fetch(window.location.pathname.replace(/\\/$/, '') + '/api/save', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ module, arrayKey, itemId, field, value })
+    });
+    if (res.ok) {
+      const el = event?.target;
+      if (el) { el.style.borderColor = '#4A5D23'; setTimeout(() => el.style.borderColor = '#D4C9B8', 1000); }
+    }
+  } catch (e) { console.error('Save error:', e); }
+}
+document.getElementById('te-launch-modal')?.addEventListener('click', function(e) {
+  if (e.target === this) this.style.display = 'none';
+});
+</script>`;
+
+  return page('Trust Engine — ' + clientName, '', styles + content);
+}
+
+
 function buildProjectsPage(slug, baseUrl, clientName, guildId) {
   const projects = loadProjectsData(slug);
 
@@ -1433,7 +2073,7 @@ p{color:#5D5348;font-size:16px;margin:0;}
 
 // ========== End Portal Helpers ==========
 
-http.createServer((req, res) => {
+const mcServer = http.createServer((req, res) => {
   let url = req.url.split('?')[0];
   if (url.startsWith('/mc/')) url = url.slice(3);
 
@@ -1646,6 +2286,47 @@ nav .nav-footer { display:none !important; }
       return;
     }
 
+    // Portal: Trust Engine dashboard
+    if (portalPath === '/trust-engine' || portalPath === '/trust-engine/') {
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+      res.end(buildTrustEnginePage(slug, portalBase, clientName));
+      return;
+    }
+
+    // Portal: Trust Engine save API
+    if (portalPath === '/trust-engine/api/save' && req.method === 'POST') {
+      let body = '';
+      req.on('data', chunk => body += chunk);
+      req.on('end', () => {
+        try {
+          const { module: mod, arrayKey, itemId, field, value } = JSON.parse(body);
+          const teDir = path.join(BASE, 'brand', slug, 'trust-engine');
+          const fileMap = { recommendations: 'recommendations.json', keywords: 'keywords.json', influencers: 'influencers.json' };
+          const fname = fileMap[mod];
+          if (!fname) { res.writeHead(400); res.end(JSON.stringify({ error: 'Unknown module' })); return; }
+          const fpath = path.join(teDir, fname);
+          const data = JSON.parse(fs.readFileSync(fpath, 'utf-8'));
+          const arr = (data.data || data)[arrayKey] || [];
+          const item = arr.find(i => i.id === itemId);
+          if (item) {
+            item[field] = value;
+            item.edited_by_human = true;
+            data.updated_at = new Date().toISOString();
+            fs.writeFileSync(fpath, JSON.stringify(data, null, 2));
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ ok: true }));
+          } else {
+            res.writeHead(404);
+            res.end(JSON.stringify({ error: 'Item not found' }));
+          }
+        } catch (e) {
+          res.writeHead(500);
+          res.end(JSON.stringify({ error: e.message }));
+        }
+      });
+      return;
+    }
+
     // Portal: Docs — route through main handler with scoping
     if (portalPath.startsWith('/docs/')) {
       req._portalClient = client;
@@ -1703,6 +2384,10 @@ nav .nav-footer { display:none !important; }
         '/api/projects/project-update',
         '/api/projects/',
         '/api/metrics',
+        '/api/metrics-plan',
+        '/api/chat/threads',
+        '/api/chat/thread',
+        '/api/chat/send',
         '/api/ideas',
         '/api/ideas/status',
         '/api/notifications',
@@ -1921,6 +2606,42 @@ nav .nav-footer { display:none !important; }
   }
 
   // === API: Recurring Tasks ===
+  // === Trust Engine API ===
+  if (req.method === 'GET' && url.startsWith('/api/trust-engine/')) {
+    const params = new URL('http://x' + req.url.replace(/.*?(\/api\/trust-engine\/)/, '/api/trust-engine/')).searchParams;
+    const slug = params.get('slug');
+    if (!slug) { res.writeHead(400); res.end(JSON.stringify({ error: 'slug required' })); return; }
+    const teDir = path.join(BASE, 'brand', slug, 'trust-engine');
+
+    if (url.startsWith('/api/trust-engine/run-state')) {
+      try {
+        const data = JSON.parse(fs.readFileSync(path.join(teDir, 'run-state.json'), 'utf-8'));
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(data));
+      } catch {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ modules: {} }));
+      }
+      return;
+    }
+
+    if (url.startsWith('/api/trust-engine/module')) {
+      const file = params.get('file');
+      if (!file || file.includes('..')) { res.writeHead(400); res.end(JSON.stringify({ error: 'invalid file' })); return; }
+      try {
+        const data = JSON.parse(fs.readFileSync(path.join(teDir, file), 'utf-8'));
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(data));
+      } catch {
+        res.writeHead(404); res.end(JSON.stringify({ error: 'not found' }));
+      }
+      return;
+    }
+
+    res.writeHead(404); res.end(JSON.stringify({ error: 'unknown endpoint' }));
+    return;
+  }
+
   if (req.method === 'GET' && url.startsWith('/api/recurring-tasks')) {
     if (!req._adminToken && !req._portalClient) {
       res.writeHead(403, { 'Content-Type': 'application/json' });
@@ -2201,6 +2922,67 @@ nav .nav-footer { display:none !important; }
     const guildId = client ? (client.guild || client.discord_guild_id || '') : '';
     res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
     res.end(buildProjectsPage(slug, req._adminBase, clientName, guildId));
+    return;
+  }
+
+  // === Trust Engine save API (admin mode) ===
+  if (req.method === 'POST' && url.match(/^\/trust-engine\/([^/]+)\/api\/save$/)) {
+    if (!req._adminToken) { res.writeHead(403); res.end('Forbidden'); return; }
+    const teSlug = url.match(/^\/trust-engine\/([^/]+)\/api\/save$/)[1];
+    let body = '';
+    req.on('data', chunk => body += chunk);
+    req.on('end', () => {
+      try {
+        const { module: mod, arrayKey, itemId, field, value } = JSON.parse(body);
+        const teDir = path.join(BASE, 'brand', teSlug, 'trust-engine');
+        const fileMap = { recommendations: 'recommendations.json', keywords: 'keywords.json', influencers: 'influencers.json' };
+        const fname = fileMap[mod];
+        if (!fname) { res.writeHead(400); res.end(JSON.stringify({ error: 'Unknown module' })); return; }
+        const fpath = path.join(teDir, fname);
+        const data = JSON.parse(fs.readFileSync(fpath, 'utf-8'));
+        const arr = (data.data || data)[arrayKey] || [];
+        const item = arr.find(i => i.id === itemId);
+        if (item) {
+          item[field] = value;
+          item.edited_by_human = true;
+          data.updated_at = new Date().toISOString();
+          fs.writeFileSync(fpath, JSON.stringify(data, null, 2));
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ ok: true }));
+        } else {
+          res.writeHead(404); res.end(JSON.stringify({ error: 'Item not found' }));
+        }
+      } catch (e) {
+        res.writeHead(500); res.end(JSON.stringify({ error: e.message }));
+      }
+    });
+    return;
+  }
+
+  // === Trust Engine page (admin mode) ===
+  if (url.startsWith('/trust-engine/') || url === '/trust-engine') {
+    if (!req._adminToken) {
+      res.writeHead(403, { 'Content-Type': 'text/html; charset=utf-8' });
+      res.end(portalForbiddenPage());
+      return;
+    }
+    const slug = url.replace('/trust-engine/', '').replace(/\/$/, '') || null;
+    if (!slug) {
+      const clients = loadClients();
+      const links = clients.map(c => `<div class="card"><a href="${req._adminBase}/trust-engine/${c.slug}/">${c.emoji || '🏢'} ${c.name || c.slug}</a></div>`).join('');
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+      res.end(page('Trust Engine', `<a class="back" href="${req._adminBase}/">← Mission Control</a>`, `<h1>🔍 Trust Engine por cliente</h1>${links}`));
+      return;
+    }
+    const client = loadClients().find(c => c.slug === slug);
+    const clientName = client ? (client.name || slug) : slug;
+    try {
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+      res.end(buildTrustEnginePage(slug, req._adminBase, clientName));
+    } catch (err) {
+      res.writeHead(500, { 'Content-Type': 'text/html; charset=utf-8' });
+      res.end(page('Trust Engine Error', '', `<h1>Error</h1><pre>${err.stack}</pre>`));
+    }
     return;
   }
 
@@ -3397,6 +4179,154 @@ async function doTest() {
   }
 
   // === API: metrics data for a client ===
+  // === API: Metrics Plan ===
+  if (req.method === 'GET' && url.startsWith('/api/metrics-plan')) {
+    const params = new URLSearchParams(req.url.split('?')[1] || '');
+    const slug = req._portalSlug || params.get('slug');
+    if (!slug) { res.writeHead(400, { 'Content-Type': 'application/json' }); res.end('{"error":"Missing slug"}'); return; }
+    const planFile = path.join(BASE, 'brand', slug, 'metrics-plan.json');
+    try {
+      const plan = JSON.parse(fs.readFileSync(planFile, 'utf-8'));
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(plan));
+    } catch {
+      res.writeHead(404, { 'Content-Type': 'application/json' });
+      res.end('{"error":"No metrics plan found"}');
+    }
+    return;
+  }
+
+  // ========== CHAT API ==========
+  // GET /api/chat/threads?slug=X — list all threads for a client
+  if (req.method === 'GET' && url === '/api/chat/threads') {
+    const params = new URLSearchParams(req.url.split('?')[1] || '');
+    const slug = req._portalSlug || params.get('slug');
+    if (!slug) { res.writeHead(400, { 'Content-Type': 'application/json' }); res.end('{"error":"Missing slug"}'); return; }
+    const chatDir = path.join(BASE, 'brand', slug, 'chat', 'threads');
+    const threads = [];
+    try {
+      if (fs.existsSync(chatDir)) {
+        for (const f of fs.readdirSync(chatDir).filter(f => f.endsWith('.json')).sort()) {
+          try {
+            const t = JSON.parse(fs.readFileSync(path.join(chatDir, f), 'utf-8'));
+            const msgs = t.messages || [];
+            const last = msgs[msgs.length - 1];
+            threads.push({
+              id: t.id, name: t.name, status: t.status || 'open',
+              linkedTo: t.linkedTo || null, skill: t.skill || null,
+              createdAt: t.createdAt, updatedAt: t.updatedAt || t.createdAt,
+              messageCount: msgs.length,
+              lastMessage: last ? { role: last.role, text: (last.text || '').slice(0, 80), ts: last.ts } : null,
+            });
+          } catch {}
+        }
+      }
+    } catch {}
+    threads.sort((a, b) => (b.updatedAt || '').localeCompare(a.updatedAt || ''));
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ ok: true, threads }));
+    return;
+  }
+
+  // GET /api/chat/thread/:id?slug=X — get a specific thread with messages
+  if (req.method === 'GET' && url.startsWith('/api/chat/thread/')) {
+    const params = new URLSearchParams(req.url.split('?')[1] || '');
+    const slug = req._portalSlug || params.get('slug');
+    const threadId = url.replace('/api/chat/thread/', '').split('?')[0];
+    if (!slug || !threadId) { res.writeHead(400, { 'Content-Type': 'application/json' }); res.end('{"error":"Missing slug or threadId"}'); return; }
+    const threadFile = path.join(BASE, 'brand', slug, 'chat', 'threads', threadId + '.json');
+    try {
+      const thread = JSON.parse(fs.readFileSync(threadFile, 'utf-8'));
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, thread }));
+    } catch {
+      res.writeHead(404, { 'Content-Type': 'application/json' });
+      res.end('{"error":"Thread not found"}');
+    }
+    return;
+  }
+
+  // POST /api/chat/thread — create a new thread
+  if (req.method === 'POST' && url === '/api/chat/thread') {
+    let body = '';
+    req.on('data', chunk => { body += chunk; if (body.length > 1e5) req.destroy(); });
+    req.on('end', () => {
+      try {
+        const { slug, name, linkedTo, skill } = JSON.parse(body);
+        if (!slug || !name) { res.writeHead(400, { 'Content-Type': 'application/json' }); res.end('{"error":"Missing slug or name"}'); return; }
+        const chatDir = path.join(BASE, 'brand', slug, 'chat', 'threads');
+        if (!fs.existsSync(chatDir)) fs.mkdirSync(chatDir, { recursive: true });
+        const id = Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 6);
+        const thread = {
+          id, name, status: 'open',
+          linkedTo: linkedTo || null, skill: skill || null,
+          createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
+          messages: [],
+        };
+        fs.writeFileSync(path.join(chatDir, id + '.json'), JSON.stringify(thread, null, 2));
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true, thread }));
+      } catch (e) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: e.message }));
+      }
+    });
+    return;
+  }
+
+  // POST /api/chat/send — send a message to a thread
+  if (req.method === 'POST' && url === '/api/chat/send') {
+    let body = '';
+    req.on('data', chunk => { body += chunk; if (body.length > 1e5) req.destroy(); });
+    req.on('end', () => {
+      try {
+        const { slug, threadId, text, role } = JSON.parse(body);
+        if (!slug || !threadId || !text) { res.writeHead(400, { 'Content-Type': 'application/json' }); res.end('{"error":"Missing fields"}'); return; }
+        const threadFile = path.join(BASE, 'brand', slug, 'chat', 'threads', threadId + '.json');
+        if (!fs.existsSync(threadFile)) { res.writeHead(404, { 'Content-Type': 'application/json' }); res.end('{"error":"Thread not found"}'); return; }
+        const thread = JSON.parse(fs.readFileSync(threadFile, 'utf-8'));
+        const msg = { role: role || 'user', text, ts: new Date().toISOString() };
+        thread.messages.push(msg);
+        thread.updatedAt = msg.ts;
+        fs.writeFileSync(threadFile, JSON.stringify(thread, null, 2));
+
+        // Trigger Sancho response via openclaw agent CLI
+        if (role !== 'bot') {
+          // Build context for Sancho
+          const threadContext = thread.linkedTo ? `[Context: working on "${thread.name}" (pilar: ${thread.linkedTo}, skill: ${thread.skill || 'none'}) for client ${slug}]` : `[Context: free chat thread "${thread.name}" for client ${slug}]`;
+          const fullMessage = threadContext + '\n\nUsuario dice: ' + text;
+          
+          // Run openclaw agent async — don't block the response
+          const agentCmd = `/opt/homebrew/bin/openclaw agent --agent sancho -m ${JSON.stringify(fullMessage)}`;
+          execCb(agentCmd, { timeout: 120000, encoding: 'utf-8', maxBuffer: 1024 * 1024 }, (err, stdout, stderr) => {
+            try {
+              const reply = (stdout || '').trim() || (err ? 'Error: ' + (err.message || '').slice(0, 200) : 'Sin respuesta');
+              const reloadThread = JSON.parse(fs.readFileSync(threadFile, 'utf-8'));
+              const botMsg = { role: 'bot', text: reply, ts: new Date().toISOString() };
+              reloadThread.messages.push(botMsg);
+              reloadThread.updatedAt = botMsg.ts;
+              fs.writeFileSync(threadFile, JSON.stringify(reloadThread, null, 2));
+            } catch(e) { console.error('Chat bot response error:', e.message); }
+          });
+          
+          // Add a "typing" indicator immediately
+          const typingMsg = { role: 'bot', text: '🔄 Sancho está pensando...', ts: new Date().toISOString(), typing: true };
+          thread.messages.push(typingMsg);
+          thread.updatedAt = typingMsg.ts;
+          fs.writeFileSync(threadFile, JSON.stringify(thread, null, 2));
+        }
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true, message: msg }));
+      } catch (e) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: e.message }));
+      }
+    });
+    return;
+  }
+  // ========== END CHAT API ==========
+
   if (req.method === 'GET' && url.startsWith('/api/metrics')) {
     const params = new URLSearchParams(req.url.split('?')[1] || '');
     const slug = params.get('slug');
@@ -3639,6 +4569,214 @@ async function doTest() {
   } catch {
     res.writeHead(404); res.end('Not found');
   }
-}).listen(PORT, '127.0.0.1', () => {
-  console.log(`Mission Control server on http://127.0.0.1:${PORT}`);
 });
+
+// ========== WS PROXY: Browser ↔ MC Server ↔ Gateway ==========
+// Browser can't do device-auth crypto directly. MC Server on localhost
+// connects to Gateway (auto-approved) and proxies chat/sessions/agent events.
+
+const { WebSocketServer, WebSocket: WsClient } = require('ws');
+
+const GATEWAY_URL = 'ws://127.0.0.1:18789';
+const GATEWAY_AUTH = (() => {
+  // Read gateway auth from openclaw.json
+  try {
+    const cfg = JSON.parse(fs.readFileSync(path.join(path.dirname(__dirname), '..', 'openclaw.json'), 'utf-8'));
+    return cfg.gateway?.auth || {};
+  } catch { return {}; }
+})();
+
+const wss = new WebSocketServer({ noServer: true });
+
+// Keep a single shared Gateway connection (reused across browser clients)
+let gwConn = null;
+let gwConnected = false;
+let gwMsgSeq = 1;
+let gwPendingRequests = {};
+let gwBrowserClients = new Set();
+let gwReconnectTimer = null;
+
+function gwConnect() {
+  if (gwConn && (gwConn.readyState === WsClient.OPEN || gwConn.readyState === WsClient.CONNECTING)) return;
+
+  const params = new URLSearchParams();
+  if (GATEWAY_AUTH.token) params.set('auth.token', GATEWAY_AUTH.token);
+  else if (GATEWAY_AUTH.password) params.set('auth.password', GATEWAY_AUTH.password);
+  params.set('mode', 'webchat');
+  params.set('clientName', 'mc-server-proxy');
+
+  const url = GATEWAY_URL + '?' + params.toString();
+  gwConn = new WsClient(url, {
+    headers: { 'Origin': 'http://127.0.0.1:18789' }
+  });
+
+  gwConn.on('open', () => {
+    console.log('[mc-ws-proxy] Gateway WS open, waiting for challenge...');
+  });
+
+  gwConn.on('message', (data) => {
+    let msg;
+    try { msg = JSON.parse(data.toString()); } catch { return; }
+
+    // Handle connect.challenge — respond with connect request
+    if (msg.type === 'event' && msg.event === 'connect.challenge') {
+      const nonce = msg.payload?.nonce;
+      console.log('[mc-ws-proxy] Got challenge, sending connect...');
+      const connectReq = {
+        type: 'req',
+        id: 'connect-' + Date.now(),
+        method: 'connect',
+        params: {
+          minProtocol: 3,
+          maxProtocol: 3,
+          client: { id: 'webchat', version: '1.0.0', platform: 'node', mode: 'webchat' },
+          role: 'operator',
+          scopes: ['operator.read', 'operator.write', 'operator.admin'],
+          caps: [],
+          commands: [],
+          permissions: {},
+          auth: { ...(GATEWAY_AUTH.token ? { token: GATEWAY_AUTH.token } : {}), ...(GATEWAY_AUTH.password ? { password: GATEWAY_AUTH.password } : {}) },
+          locale: 'es-ES',
+          userAgent: 'mc-server-proxy/1.0.0'
+          // No device field — localhost is auto-approved
+        }
+      };
+      gwConn.send(JSON.stringify(connectReq));
+      return;
+    }
+
+    // Handle connect response
+    if (msg.type === 'res' && msg.id && msg.id.startsWith('connect-')) {
+      if (msg.ok) {
+        gwConnected = true;
+        console.log('[mc-ws-proxy] Gateway connected! Protocol:', msg.payload?.protocol);
+        // Notify all browser clients
+        for (const bc of gwBrowserClients) {
+          bc.send(JSON.stringify({ type: 'mc-proxy', event: 'connected' }));
+        }
+      } else {
+        console.error('[mc-ws-proxy] Connect failed:', JSON.stringify(msg.error));
+        gwConnected = false;
+      }
+      return;
+    }
+
+    // Handle hello event (sent after connect-ok)
+    if (msg.type === 'event' && msg.event === 'hello') {
+      // Already handled above via connect response
+      return;
+    }
+
+    // JSON-RPC response — route to pending request callback
+    if (msg.type === 'res' && msg.id && gwPendingRequests[msg.id]) {
+      const p = gwPendingRequests[msg.id];
+      delete gwPendingRequests[msg.id];
+      // Forward the response to the browser that made the request
+      if (p.browserWs && p.browserWs.readyState === WsClient.OPEN) {
+        p.browserWs.send(JSON.stringify({ id: p.browserReqId, result: msg.ok ? msg.payload : undefined, error: msg.ok ? undefined : msg.error }));
+      }
+      return;
+    }
+
+    // Events — broadcast to all browser clients
+    // Wrap in the format browser expects: { method: 'event', params: { event, payload } }
+    if (msg.type === 'event') {
+      const fwd = JSON.stringify({ method: 'event', params: { event: msg.event, payload: msg.payload } });
+      for (const bc of gwBrowserClients) {
+        if (bc.readyState === WsClient.OPEN) bc.send(fwd);
+      }
+      return;
+    }
+  });
+
+  gwConn.on('close', (code, reason) => {
+    gwConnected = false;
+    console.log('[mc-ws-proxy] Gateway disconnected:', code, reason?.toString());
+    // Notify browser clients
+    for (const bc of gwBrowserClients) {
+      if (bc.readyState === WsClient.OPEN) bc.send(JSON.stringify({ type: 'mc-proxy', event: 'disconnected' }));
+    }
+    // Auto-reconnect
+    if (gwReconnectTimer) clearTimeout(gwReconnectTimer);
+    gwReconnectTimer = setTimeout(() => gwConnect(), 3000);
+  });
+
+  gwConn.on('error', (err) => {
+    console.error('[mc-ws-proxy] Gateway error:', err.message);
+  });
+}
+
+// Handle browser WS connections
+wss.on('connection', (ws) => {
+  gwBrowserClients.add(ws);
+  console.log('[mc-ws-proxy] Browser client connected. Total:', gwBrowserClients.size);
+
+  // Immediately tell browser if we're connected to gateway
+  ws.send(JSON.stringify({ type: 'mc-proxy', event: gwConnected ? 'connected' : 'connecting' }));
+
+  // Ensure gateway connection exists
+  if (!gwConnected) gwConnect();
+
+  ws.on('message', (data) => {
+    let msg;
+    try { msg = JSON.parse(data.toString()); } catch { return; }
+
+    // Browser sends JSON-RPC requests: { jsonrpc, id, method, params }
+    if (msg.jsonrpc === '2.0' && msg.method && msg.id != null) {
+      if (!gwConnected || !gwConn || gwConn.readyState !== WsClient.OPEN) {
+        ws.send(JSON.stringify({ id: msg.id, error: { message: 'Gateway not connected' } }));
+        return;
+      }
+
+      // Proxy the request to gateway using gateway's req format
+      const gwReqId = 'p-' + (gwMsgSeq++);
+      gwPendingRequests[gwReqId] = { browserWs: ws, browserReqId: msg.id, ts: Date.now() };
+
+      gwConn.send(JSON.stringify({
+        type: 'req',
+        id: gwReqId,
+        method: msg.method,
+        params: msg.params || {}
+      }));
+      return;
+    }
+  });
+
+  ws.on('close', () => {
+    gwBrowserClients.delete(ws);
+    console.log('[mc-ws-proxy] Browser client disconnected. Total:', gwBrowserClients.size);
+  });
+});
+
+// HTTP upgrade → WS
+mcServer.on('upgrade', (req, socket, head) => {
+  const url = req.url?.split('?')[0] || '';
+  console.log('[mc-ws-proxy] Upgrade request:', url);
+  // Accept WS connections at /ws/chat (and variants for admin/portal/tailscale paths)
+  if (url.endsWith('/ws/chat')) {
+    wss.handleUpgrade(req, socket, head, (ws) => {
+      wss.emit('connection', ws, req);
+    });
+  } else {
+    console.log('[mc-ws-proxy] Rejecting upgrade for:', url);
+    socket.destroy();
+  }
+});
+
+// Start server
+mcServer.listen(PORT, '127.0.0.1', () => {
+  console.log(`Mission Control server on http://127.0.0.1:${PORT}`);
+  console.log(`WS proxy at ws://127.0.0.1:${PORT}/ws/chat`);
+  // Connect to gateway on startup
+  setTimeout(() => gwConnect(), 1000);
+});
+
+// Cleanup stale pending requests every 60s
+setInterval(() => {
+  const now = Date.now();
+  for (const [id, p] of Object.entries(gwPendingRequests)) {
+    if (now - p.ts > 60000) {
+      delete gwPendingRequests[id];
+    }
+  }
+}, 60000);

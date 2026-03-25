@@ -1,0 +1,45 @@
+{
+  "module": "serp-analysis",
+  "version": 2,
+  "created_at": "2026-03-24T22:18:00Z",
+  "updated_at": "2026-03-25T00:18:00Z",
+  "status": "completed",
+  "data": {
+    "queries": [
+      { "keyword": "clinica capilar madrid", "volume": 1900, "client_position": 1, "note": "✅ HC #1", "top_competitors": ["clinicacapilarmora.com", "capilea.com.es", "grupopedrojaen.com"] },
+      { "keyword": "trasplante capilar madrid precio", "volume": null, "client_position": 1, "note": "✅ HC #1 — posición más fuerte", "top_competitors": ["drespinosacustodio.com", "capilclinic.es"] },
+      { "keyword": "clinica capilar madrid opiniones", "volume": null, "client_position": 1, "note": "✅ HC #1 (via Trustpilot 4.8/5)", "top_competitors": ["clinicacapilarvelazquez.es"] },
+      { "keyword": "mejor clinica capilar madrid", "volume": 590, "client_position": 4, "note": "⚠️ HC #4 — abc.es y elmundo.es arriba", "top_competitors": ["abc.es #1", "elmundo.es #2", "topdoctors.es #3", "svenson.es #5"] },
+      { "keyword": "mesoterapia capilar madrid", "volume": 320, "client_position": 4, "note": "⚠️ HC #4 — puede mejorar con página HRT dedicada", "top_competitors": ["bookimed.com", "instagram.com", "aesthetemed.com"] },
+      { "keyword": "PRP capilar madrid", "volume": 320, "client_position": 8, "note": "⚠️ HC #8 — lejos del top 3", "top_competitors": ["clinicacapilarvelazquez.es #1", "centromedicoelpilar.com #2"] },
+      { "keyword": "tratamiento capilar madrid", "volume": 320, "client_position": null, "note": "❌ HC NO EN TOP 10 — keyword core", "top_competitors": ["topdoctors.es #1", "capilarea.com #2", "insparya.es #5"] },
+      { "keyword": "alopecia androgenetica tratamiento", "volume": 1300, "client_position": null, "note": "❌ HC NO EN TOP 10 — alto volumen", "top_competitors": ["cun.es #1", "quironsalud.com #2", "actasdermo.org #3"] },
+      { "keyword": "caida cabello tratamiento", "volume": 320, "client_position": null, "note": "❌ HC NO EN TOP 10", "top_competitors": ["mayoclinic.org #1", "insparya.es #4"] },
+      { "keyword": "tratamiento alopecia", "volume": 480, "client_position": null, "note": "❌ HC NO EN TOP 10", "top_competitors": ["cun.es #1", "mayoclinic.org #2", "pfizer.es #6"] },
+      { "keyword": "caida pelo tratamiento", "volume": null, "client_position": null, "note": "❌ HC NO EN TOP 10", "top_competitors": ["mayoclinic.org #1", "insparya.es #5"] },
+      { "keyword": "caida pelo mujer tratamiento", "volume": 590, "client_position": null, "note": "❌ HC NO EN TOP 10", "top_competitors": ["olisticscience.com #1", "quironsalud.com #4"] },
+      { "keyword": "alopecia joven tratamiento", "volume": null, "client_position": null, "note": "❌ HC NO EN TOP 10 — ECP #1", "top_competitors": ["cun.es #2", "topdoctors.es #3", "capilarea.com #5"] },
+      { "keyword": "dermatologo capilar madrid", "volume": 260, "client_position": null, "note": "❌ HC NO EN TOP 10", "top_competitors": ["topdoctors.es #1", "sergiovano.com #3", "grupopedrojaen.com #7"] },
+      { "keyword": "diagnostico capilar madrid", "volume": null, "client_position": null, "note": "❌ HC NO EN TOP 10 — ofrece esto pero no rankea", "top_competitors": ["grupopedrojaen.com #1", "institutomedicoricart.com #2"] },
+      { "keyword": "minoxidil no funciona que hago", "volume": 20, "client_position": null, "note": "❌ HC NO EN TOP 10 — Reddit domina", "top_competitors": ["reddit.com #1 y #2", "youtube.com #3"] },
+      { "keyword": "tratamiento capilar sin cirugia espana", "volume": 10, "client_position": null, "note": "❌ HC NO EN TOP 10 — exactamente su posicionamiento", "top_competitors": ["capilarea.com #3", "misaludcapilar.com #5"] },
+      { "keyword": "PRP capilar precio", "volume": 720, "client_position": null, "note": "❌ HC NO EN TOP 10", "top_competitors": ["saludonnet.com #1", "clinicadefreitas.com #2"] }
+    ],
+    "summary": {
+      "total_keywords": 18,
+      "client_in_top3": 3,
+      "client_in_top10": 6,
+      "client_invisible": 12,
+      "top3_keywords": ["clinica capilar madrid (#1)", "trasplante capilar madrid precio (#1)", "clinica capilar madrid opiniones (#1)"],
+      "invisible_high_volume": [
+        "alopecia androgenetica tratamiento (1300/mo)",
+        "PRP capilar precio (720/mo)",
+        "caida pelo mujer tratamiento (590/mo)",
+        "tratamiento alopecia (480/mo)",
+        "tratamiento capilar madrid (320/mo)"
+      ],
+      "key_finding": "HC rankea TOP 3 para 3 keywords — todas de CIRUGÍA o brand. De 12 keywords de TRATAMIENTO, HC aparece en 0. Volumen combinado invisible: >4,000 búsquedas/mes solo en las keywords analizadas."
+    }
+  },
+  "metadata": { "duration_seconds": 30, "apis_called": ["serper.dev (18 queries)", "dataforseo (35 keywords)"], "errors": [] }
+}

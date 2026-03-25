@@ -2,16 +2,17 @@
 
 **ID:** T-060
 **Producto:** Bots de Engagement Automatizado — IG + LI
-**Versión:** 2.0
-**Fecha:** 2026-03-22
+**Versión:** 2.1
+**Fecha:** 2026-03-25
 **Autor:** Cervantes
 **Sistema:** SanchoCMO — Post-Foundation Execution
 **Estado:** Arquitectura aprobada por Alfonso (2026-03-22)
 **Prioridad:** P2 (separado del Execution Engine core)
 
-> **v2.0 cambios**: Arquitectura simplificada. Sin VPS separado, sin DB, sin agente nuevo.
-> Todo corre dentro de OpenClaw: skills de Sancho + crons + Apify API + JSON state en workspace.
-> Costo reducido de ~$149/mo a ~$10-20/mo por cliente.
+> **v2.0 cambios**: Arquitectura simplificada. Sin VPS, sin DB, sin agente nuevo.
+> Todo en OpenClaw: skills + crons + Apify API + JSON state. Costo ~$10-20/mo.
+> **v2.1 cambios**: Apify actors confirmados (IG + LI). Sección Mission Control añadida.
+> MC UI como hito separado, en paralelo con skills.
 
 ---
 
@@ -27,14 +28,15 @@
 8. [Flujos Operativos](#8-flujos-operativos)
 9. [Integraciones Externas](#9-integraciones-externas)
 10. [Skills de Sancho](#10-skills-de-sancho)
-11. [Multi-Cliente](#11-multi-cliente)
-12. [Criterios de Aceptación](#12-criterios-de-aceptación)
-13. [Riesgos](#13-riesgos)
-14. [Costos](#14-costos)
-15. [Estimación](#15-estimación)
-16. [Lo que NO hacer](#16-lo-que-no-hacer)
-17. [Escalado futuro](#17-escalado-futuro)
-18. [Decisiones Pendientes](#18-decisiones-pendientes)
+11. [Mission Control UI](#11-mission-control-ui)
+12. [Multi-Cliente](#12-multi-cliente)
+13. [Criterios de Aceptación](#13-criterios-de-aceptación)
+14. [Riesgos](#14-riesgos)
+15. [Costos](#15-costos)
+16. [Estimación](#16-estimación)
+17. [Lo que NO hacer](#17-lo-que-no-hacer)
+18. [Escalado futuro](#18-escalado-futuro)
+19. [Decisiones Pendientes](#19-decisiones-pendientes)
 
 ---
 
@@ -305,15 +307,54 @@ Migración es trivial: leer JSONs → insertar en tablas. Schema ya definido en 
 | **InMail** | **PROHIBIDO** | **>90% ban** | **NO IMPLEMENTAR** |
 | **NO fines de semana** | — | — | Cron respeta config |
 
-### 4.3 Apify actors a evaluar
+### 4.3 Apify actors confirmados ✅
 
-> **PENDIENTE**: Investigar qué actors de Apify existen para IG y LI engagement.
-> Alternativa: phantom custom de Philippe (pendiente que pase el código).
+> Investigado 2026-03-23. Hay actors para TODAS las acciones necesarias.
 
-Candidatos conocidos:
-- IG: `apify/instagram-post-scraper`, `apify/instagram-profile-scraper` (discovery, no engagement)
-- LI: Varios actors de scraping, menos de engagement directo
-- **Si no hay actors de engagement** → evaluar: a) phantom custom, b) Playwright local, c) otro provider
+#### Instagram — Actor principal: `zen-studio/instagram-automation-api`
+
+API REST completa con **43 endpoints**. No usa browser/Selenium — son HTTP requests autenticados. Sessions persisten días. Proxy routing incluido por país. Multi-account (cada email = sesión aislada).
+
+| Acción del bot | Endpoint | Método |
+|---|---|---|
+| Follow | `/follow` | POST |
+| Unfollow | `/unfollow` | POST |
+| Like | `/like` | POST |
+| Comment | `/comment` (soporta replies) | POST |
+| Story like | `/story-like` | POST |
+| View profile | `/user-info` | GET |
+| Login | `/login` (2FA soportado) | POST |
+| Session check | `/session-status` | GET |
+| Followers list | `/followers` | GET (paginated) |
+| Posts | `/posts` | GET (para verificar follow-back) |
+
+**Auth**: Login con email/password + 2FA. Session persiste. Multi-account.
+**Pricing**: Pay-per-call, estimado ~$5-10/mo con uso moderado.
+
+Actors alternativos (single-purpose, como backup):
+- `dead00/instagram-comment-bot` — Solo comments ($0.01/1000)
+- `am_production/instagram-posts-auto-like-tool` — Solo likes
+- `synk/instagram-auto-unfollow` — Solo unfollows
+
+**Decisión**: `zen-studio` como actor principal (todo en uno).
+
+#### LinkedIn — Actors por acción
+
+No hay "todo en uno". Combinamos actors especializados:
+
+| Acción del bot | Actor | Auth | Notas |
+|---|---|---|---|
+| Connection request | `data_link_miner/linkedin-network-connection-request` | Cookie `li_at` | Max 20/run, rate limited, notas personalizadas |
+| Like post | `addeus/like-post` | Cookie `li_at` | Puppeteer + anti-detection, 7 estrategias |
+| Comment post | `addeus/comment-post` | Cookie `li_at` | Emojis, residential proxies incluidos |
+| View profile | (via scraper actors) | Cookie `li_at` | No simula "Who viewed" — baja prioridad |
+
+**Auth LinkedIn**: Todos usan cookie `li_at` (no OAuth). Cliente exporta cookie una vez.
+**Pricing**: Pay-per-run, ~$5-10/mo total para las 3 acciones.
+
+#### Gap: LinkedIn profile view
+
+NO hay actor de "profile view" como engagement (que aparezca en "Who viewed your profile"). Los scrapers leen datos pero no simulan visita real. **Para MVP lo omitimos** — es la acción de menor impacto. Si lo necesitamos: Playwright local.
 
 ---
 
@@ -572,9 +613,131 @@ run-cycle       → Ejecuta un ciclo ahora (sin esperar cron)
 
 ---
 
-## 11. Multi-Cliente
+## 11. Mission Control UI
 
-### 11.1 Qué necesita cada cliente
+### 11.1 Visión general
+
+Nueva sección **"🤖 Engagement"** en Mission Control, visible solo cuando hay un cliente seleccionado. Lee directamente los JSON de `brand/{slug}/engagement/` — cero backend nuevo, `mc-server.js` ya sirve archivos del workspace.
+
+**Hito separado**: Se construye en paralelo con los skills. Los skills funcionan sin MC (Discord notifications). MC añade visibilidad y control.
+
+### 11.2 Navegación
+
+```
+Nav lateral (client selected):
+  📊 Dashboard
+  🏗️ Foundation
+  📈 Métricas
+  🚀 Campañas
+  🤖 Engagement  ← NUEVO
+  🗄️ Datos
+```
+
+### 11.3 Layout de la página
+
+```
+┌─────────────────────────────────────────────────────┐
+│  🤖 Engagement — {clientName}                        │
+│                                                      │
+│  [📸 Instagram]  [💼 LinkedIn]    ← tabs             │
+│                                                      │
+│  ┌─ Estado ─────────────────────────────────────┐   │
+│  │ ● Active  |  Cuenta: @hospitalcapilar        │   │
+│  │ Warm-up: Completado (día 24)                  │   │
+│  │ [⏸ Pausar]  [⚙️ Config]                      │   │
+│  └──────────────────────────────────────────────┘   │
+│                                                      │
+│  ┌─ Métricas 7d ────────────────────────────────┐   │
+│  │ Follows    Likes    Comments   Follow-back    │   │
+│  │   87        245       18        11.5%         │   │
+│  │                                               │   │
+│  │ Success rate: 94.2%  |  Acciones hoy: 42      │   │
+│  └──────────────────────────────────────────────┘   │
+│                                                      │
+│  ┌─ Gráfica 30d ────────────────────────────────┐   │
+│  │ [chart.js: follows/día, success rate,         │   │
+│  │  follow-back rate — últimos 30 días]          │   │
+│  └──────────────────────────────────────────────┘   │
+│                                                      │
+│  ┌─ Secuencias activas (8) ─────────────────────┐   │
+│  │ @influencer1  Paso 3/4  Día 5   Score: 72    │   │
+│  │ @influencer2  Paso 1/4  Día 1   Score: 68    │   │
+│  │ @influencer3  Paso 2/4  Día 3   Score: 65    │   │
+│  │ ...                              [Ver todas]  │   │
+│  └──────────────────────────────────────────────┘   │
+│                                                      │
+│  ┌─ Últimas acciones ───────────────────────────┐   │
+│  │ 14:22 ✅ Like @user3 post                     │   │
+│  │ 14:18 ✅ Follow @user4                        │   │
+│  │ 14:15 ❌ Comment @user5 (rate limited)        │   │
+│  │ 14:10 ✅ Story view @user6                    │   │
+│  │ ...                              [Ver todas]  │   │
+│  └──────────────────────────────────────────────┘   │
+│                                                      │
+│  ┌─ Config ─────────────────────────────────────┐   │
+│  │ Horario: 9:00-22:00  |  Weekend: 60%         │   │
+│  │ Max follows: 200/día | Likes: 300 | Cmts: 20 │   │
+│  │ [Editar config]                               │   │
+│  └──────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────┘
+```
+
+### 11.4 Datos → UI mapping
+
+| Componente UI | JSON source | Campo(s) |
+|---|---|---|
+| Estado + cuenta | `config.json` + `ig-state.json` | `status`, `warmup_phase`, `username` |
+| Métricas 7d | `ig-metrics.json` | `daily[]` últimos 7 entries |
+| Gráfica 30d | `ig-metrics.json` | `daily[]` últimos 30 entries |
+| Secuencias activas | `ig-sequences.json` | `active[]` |
+| Últimas acciones | `ig-actions-queue.json` | últimas 20 con `status != queued` |
+| Config | `config.json` | `instagram.*` o `linkedin.*` |
+
+### 11.5 Interactividad (v2 — post-MVP)
+
+| Acción UI | Efecto |
+|---|---|
+| **Pausar cuenta** | Escribe `status: "paused"` en `ig-state.json`. Cron executor lo respeta. |
+| **Resume cuenta** | Escribe `status: "active"`, `pause_until: null` |
+| **Editar config** | Modal con campos editables → escribe `config.json` |
+| **Añadir target manual** | Input de username → crea secuencia en `ig-sequences.json` |
+
+Para MVP: los botones llaman endpoints en `mc-server.js` que escriben los JSON. Los crons leen el estado actualizado en el siguiente ciclo.
+
+### 11.6 Implementación técnica
+
+```
+mc-server.js cambios:
+
+  GET /api/engagement/{slug}/{platform}
+    → Lee config.json + {platform}-state.json + {platform}-metrics.json
+    → Devuelve JSON combinado para la UI
+
+  POST /api/engagement/{slug}/{platform}/action
+    → Acciones: pause, resume, update-config
+    → Escribe el JSON correspondiente
+
+mission-control.html cambios:
+
+  Nueva función: showPage('engagement')
+  Tabs: Instagram / LinkedIn
+  Chart.js para gráfica de métricas
+  Polling cada 30s para actualizar estado (cuando página visible)
+```
+
+### 11.7 Hitos MC
+
+| Hito | Scope | Depende de |
+|---|---|---|
+| **MC-E1** (MVP) | Página read-only: estado, métricas, secuencias, log acciones | Skills funcionando + JSON con datos reales |
+| **MC-E2** | Pausar/resume + gráfica Chart.js 30d | MC-E1 |
+| **MC-E3** | Editar config + añadir targets manuales | MC-E2 |
+
+---
+
+## 12. Multi-Cliente
+
+### 12.1 Qué necesita cada cliente
 
 | Requisito | Obligatorio | Quién lo provee |
 |---|---|---|
@@ -584,7 +747,7 @@ run-cycle       → Ejecuta un ciclo ahora (sin esperar cron)
 | Foundation (brand_voice) | Recomendado (comments) | **Sancho Foundation** |
 | Config timezone/horarios | Recomendado | **Cliente** via MC |
 
-### 11.2 Aislamiento
+### 12.2 Aislamiento
 
 - Cada cliente: `brand/{slug}/engagement/` separado
 - Cada cuenta: su propio state, queue, métricas
@@ -592,7 +755,7 @@ run-cycle       → Ejecuta un ciclo ahora (sin esperar cron)
 - Session data encriptada (nunca plaintext)
 - Credenciales NUNCA por Discord → siempre MC
 
-### 11.3 Lo que Sancho pone de base
+### 12.3 Lo que Sancho pone de base
 
 | Servicio | Incluido | Límite |
 |---|---|---|
@@ -603,7 +766,7 @@ run-cycle       → Ejecuta un ciclo ahora (sin esperar cron)
 
 ---
 
-## 12. Criterios de Aceptación
+## 13. Criterios de Aceptación
 
 ### CA-01: Scheduler
 - [ ] Lee influencer_results con relevance_score > 50
@@ -655,7 +818,7 @@ run-cycle       → Ejecuta un ciclo ahora (sin esperar cron)
 
 ---
 
-## 13. Riesgos
+## 14. Riesgos
 
 | Riesgo | Impacto | Prob. | Mitigación |
 |---|---|---|---|
@@ -669,7 +832,7 @@ run-cycle       → Ejecuta un ciclo ahora (sin esperar cron)
 
 ---
 
-## 14. Costos
+## 15. Costos
 
 ### 14.1 Coste real por cliente/mes
 
@@ -696,11 +859,11 @@ run-cycle       → Ejecuta un ciclo ahora (sin esperar cron)
 
 ---
 
-## 15. Estimación
+## 16. Estimación
 
 | Tarea | Esfuerzo |
 |---|---|
-| Investigar Apify actors disponibles (IG + LI engagement) | 1 día |
+| ~~Investigar Apify actors~~ | ~~1 día~~ ✅ Hecho |
 | Diseñar JSON schemas definitivos | 0.5 días |
 | Skill `instagram-engagement` (scheduler + executor + monitor) | 3-4 días |
 | Skill `linkedin-engagement` | 3-4 días |
@@ -708,13 +871,16 @@ run-cycle       → Ejecuta un ciclo ahora (sin esperar cron)
 | Anti-ban engine (warm-up, pausa, delays) | 1-2 días |
 | Crons setup en OpenClaw | 0.5 días |
 | Integrar phantom custom Philippe (si aplica) | 1-2 días |
+| **MC-E1**: Página engagement read-only en Mission Control | 2-3 días |
+| **MC-E2**: Pausar/resume + Chart.js gráficas | 1-2 días |
+| **MC-E3**: Editar config + targets manuales | 1-2 días |
 | Test E2E con 1 cuenta real | 5-7 días (incluye warm-up) |
-| **Total dev** | **~2-3 semanas** |
-| **Total hasta producción** | **~5-6 semanas** (incluye warm-up 21 días) |
+| **Total dev (skills + MC)** | **~3-4 semanas** |
+| **Total hasta producción** | **~6-7 semanas** (incluye warm-up 21 días) |
 
 ---
 
-## 16. Lo que NO hacer
+## 17. Lo que NO hacer
 
 | ❌ No | Razón |
 |---|---|
@@ -728,7 +894,7 @@ run-cycle       → Ejecuta un ciclo ahora (sin esperar cron)
 
 ---
 
-## 17. Escalado futuro
+## 18. Escalado futuro
 
 Cuando el sistema necesite crecer más allá de JSON + Apify:
 
@@ -743,11 +909,11 @@ La migración JSON → DB es trivial: leer archivos → insertar en tablas.
 
 ---
 
-## 18. Decisiones Pendientes
+## 19. Decisiones Pendientes
 
 | # | Tema | Estado | Decide |
 |---|---|---|---|
-| **DP-1** | ¿Existen Apify actors de engagement para IG/LI? | Investigar | Cervantes |
+| ~~**DP-1**~~ | ~~¿Existen Apify actors de engagement para IG/LI?~~ | ✅ Resuelto (2026-03-23) — Sí: `zen-studio` (IG), `addeus`+`data_link_miner` (LI) | — |
 | **DP-2** | Phantom custom Philippe: ¿código disponible? | Pendiente Philippe | Philippe |
 | **DP-3** | Si no hay actors Apify: ¿Playwright local o custom? | Depende de DP-1 | Alfonso + Cervantes |
 | **DP-4** | ¿1 cuenta IG + 1 LI por cliente para MVP? | Recomendado: sí | Alfonso |
@@ -773,5 +939,6 @@ La migración JSON → DB es trivial: leer archivos → insertar en tablas.
 
 ---
 
-*PDR v2.0 — 2026-03-22. Arquitectura simplificada aprobada por Alfonso.*
-*Cambios v1→v2: Sin VPS, sin DB, sin agente nuevo. Todo OpenClaw nativo.*
+*PDR v2.1 — 2026-03-25. Apify actors confirmados + Mission Control UI.*
+*v1→v2: Sin VPS, sin DB, sin agente nuevo. Todo OpenClaw nativo.*
+*v2→v2.1: Actors específicos (zen-studio IG, addeus/data_link_miner LI). MC como hito paralelo.*

@@ -1,0 +1,126 @@
+{
+  "module": "foundation-import",
+  "version": 1,
+  "created_at": "2026-03-24T21:55:00Z",
+  "updated_at": "2026-03-24T21:55:00Z",
+  "status": "completed",
+  "project": {
+    "slug": "hospital-capilar",
+    "name": "Hospital Capilar",
+    "website": "https://hospitalcapilar.com",
+    "language": "es",
+    "market": "España",
+    "foundation_imported_at": "2026-03-24T21:55:00Z"
+  },
+  "brand": {
+    "name": "Hospital Capilar",
+    "aliases": ["HC", "Hospital Capilar Madrid"],
+    "domains": ["hospitalcapilar.com"]
+  },
+  "niches": [
+    {
+      "id": "n1",
+      "name": "Jóvenes con alopecia temprana",
+      "ecp_id": "jovenes-alopecia-temprana",
+      "brief": {
+        "A": "Tu pelo tiene solución médica. Cuanto antes, mejor.",
+        "B": "Minoxidil OTC, Olistic, Keeps, gorras, no hacer nada",
+        "C": "Hombres 20-30 años con primeros signos de alopecia. Alta carga emocional: dating, autoestima, redes sociales.",
+        "D": "Diagnóstico médico completo + HRT/CRT frenan caída temprana. Transparencia radical = confianza en jóvenes escépticos."
+      }
+    },
+    {
+      "id": "n2",
+      "name": "Frustrados con tratamientos OTC",
+      "ecp_id": "otc-frustrados",
+      "brief": {
+        "A": "Cuando el minoxidil deja de funcionar, necesitas un médico.",
+        "B": "Farmacia (minoxidil/finasteride), suplementos, clínicas genéricas",
+        "C": "Personas que llevan 1-3 años con minoxidil/finasteride sin resultados satisfactorios. Frustrados, escépticos.",
+        "D": "HC ofrece diagnóstico real (no venta directa) + protocolos médicos propios (CRT/HRT) superiores a OTC."
+      }
+    },
+    {
+      "id": "n3",
+      "name": "Sin diagnóstico médico",
+      "ecp_id": "sin-diagnostico-medico",
+      "brief": {
+        "A": "Antes de tratar, hay que diagnosticar.",
+        "B": "Autodiagnóstico Google, farmacia, dermatólogo generalista",
+        "C": "Personas con caída anormal que no saben qué tienen. Buscan claridad. SAM grande (~150K).",
+        "D": "Tricoscopía + analítica hormonal en 1 consulta. Diagnóstico completo en la primera visita."
+      }
+    },
+    {
+      "id": "n4",
+      "name": "Post-trasplante en degradación",
+      "ecp_id": "post-trasplante",
+      "brief": {
+        "A": "Tu injerto necesita un médico que cuide lo que queda.",
+        "B": "No hacer nada, volver a la clínica del trasplante, segundo trasplante",
+        "C": "Personas que se hicieron un trasplante (HC o en Turquía) y ven que el pelo nativo sigue cayendo.",
+        "D": "Protocolos de mantenimiento post-cirugía + diagnóstico de pelo nativo restante."
+      }
+    },
+    {
+      "id": "n5",
+      "name": "Insatisfechos con otras clínicas",
+      "ecp_id": "insatisfechos-clinicas",
+      "brief": {
+        "A": "La clínica donde el médico te dice la verdad.",
+        "B": "Otras clínicas capilares, dermatólogos, no hacer nada",
+        "C": "Personas que tuvieron mala experiencia en otra clínica (malas reviews, sensación de 'venta', sin seguimiento).",
+        "D": "Transparencia total, Trustpilot 4.8/5, seguimiento real con tricoscopía a 3 meses."
+      }
+    }
+  ],
+  "competitors": [
+    {
+      "name": "Insparya",
+      "domain": "insparya.es",
+      "niches": ["n1", "n2", "n4"],
+      "trustpilot": 3.8,
+      "notes": "CR7 cofundador. 5 clínicas España. Foco cirugía. ActivePlasma, MesoHAir+."
+    },
+    {
+      "name": "Svenson",
+      "domain": "svenson.es",
+      "niches": ["n2", "n3"],
+      "trustpilot": 1.5,
+      "notes": "1.5/5 Trustpilot. Havas Creative rebrand sept 2025. Modelo sesión mensual."
+    },
+    {
+      "name": "IMD (Instituto Médico Dermatológico)",
+      "domain": "imd.es",
+      "niches": ["n1", "n3"],
+      "trustpilot": null,
+      "notes": "21 clínicas. Referente en tratamientos capilares no quirúrgicos."
+    },
+    {
+      "name": "Capiclinic",
+      "domain": "capiclinic.es",
+      "niches": ["n1", "n4"],
+      "trustpilot": null,
+      "notes": "Red de clínicas. Tiene tratamientos."
+    },
+    {
+      "name": "Manual.co",
+      "domain": "manual.co",
+      "niches": ["n1", "n2"],
+      "trustpilot": null,
+      "notes": "DTC online. Suscripción mensual medicamentos capilares."
+    },
+    {
+      "name": "mediQuo",
+      "domain": "mediquo.com",
+      "niches": ["n3"],
+      "trustpilot": null,
+      "notes": "Consulta online €29.99. Perfil hormonal alopecia."
+    }
+  ],
+  "metadata": {
+    "duration_seconds": 5,
+    "apis_called": [],
+    "errors": []
+  }
+}

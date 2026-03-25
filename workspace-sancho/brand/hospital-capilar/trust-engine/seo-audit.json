@@ -1,0 +1,103 @@
+{
+  "module": "seo-audit",
+  "version": 1,
+  "created_at": "2026-03-24T21:57:00Z",
+  "updated_at": "2026-03-24T21:57:00Z",
+  "status": "completed",
+  "data": {
+    "lighthouse": {
+      "performance": null,
+      "accessibility": null,
+      "best_practices": null,
+      "seo": null,
+      "core_web_vitals": {
+        "lcp": { "value": null, "unit": "s", "rating": "unknown" },
+        "tbt": { "value": null, "unit": "ms", "rating": "unknown" },
+        "cls": { "value": null, "unit": "", "rating": "unknown" },
+        "fcp": { "value": null, "unit": "s", "rating": "unknown" },
+        "speed_index": { "value": null, "unit": "s", "rating": "unknown" }
+      },
+      "note": "Google PSI API rate limited (429). Lighthouse scores pendientes — se ejecutará cuando la API esté disponible."
+    },
+    "health_checks": [
+      { "id": "hc-01", "name": "Meta Title", "status": "pass", "details": "Title: 'Injerto capilar en Madrid con todo incluido | Hospital Capilar' — 55 chars, dentro del rango óptimo (30-60).", "severity": null, "fix": null, "impact_pct": null },
+      { "id": "hc-02", "name": "Meta Description", "status": "pass", "details": "Description: 'Ven a Hospital Capilar, la mejor clínica de injerto capilar en Madrid y recupera tu cabello...' — ~127 chars, dentro del rango (120-160).", "severity": null, "fix": null, "impact_pct": null },
+      { "id": "hc-03", "name": "H1 Tag", "status": "pass", "details": "Exactamente 1 H1 en la página.", "severity": null, "fix": null, "impact_pct": null },
+      { "id": "hc-04", "name": "Open Graph Tags", "status": "pass", "details": "og:title, og:description, og:image, og:url, og:site_name — todos presentes.", "severity": null, "fix": null, "impact_pct": null },
+      { "id": "hc-05", "name": "Canonical Tag", "status": "pass", "details": "Canonical apunta a https://hospitalcapilar.com/", "severity": null, "fix": null, "impact_pct": null },
+      { "id": "hc-06", "name": "SSL", "status": "pass", "details": "HTTPS activo. HTTP/2 confirmado.", "severity": null, "fix": null, "impact_pct": null },
+      { "id": "hc-07", "name": "Mobile Viewport", "status": "pass", "details": "meta viewport presente: width=device-width, initial-scale=1", "severity": null, "fix": null, "impact_pct": null },
+      { "id": "hc-08", "name": "Language Tag", "status": "pass", "details": "html lang='es' presente.", "severity": null, "fix": null, "impact_pct": null },
+      { "id": "hc-09", "name": "Sitemap", "status": "warning", "details": "/sitemap.xml redirige 301 → sitemap_index.xml (declarado en robots.txt). Funciona pero la URL canónica debería coincidir.", "severity": "low", "fix": "Asegurar que /sitemap.xml resuelve sin redirect, o actualizar referencias a sitemap_index.xml.", "impact_pct": 2 },
+      { "id": "hc-10", "name": "Robots.txt", "status": "pass", "details": "robots.txt presente. Bloquea /wp-admin/, /privacy-policy/, tags. Permite admin-ajax.php. Sitemap declarado.", "severity": null, "fix": null, "impact_pct": null },
+      { "id": "hc-11", "name": "Core Web Vitals", "status": "warning", "details": "No se pudo medir — Google PSI API rate limited. Requiere re-ejecución.", "severity": "medium", "fix": "Re-ejecutar cuando la API esté disponible.", "impact_pct": null },
+      { "id": "hc-12", "name": "Structured Data", "status": "pass", "details": "4 schemas JSON-LD detectados: HealthAndBeautyBusiness (×3 — una por clínica), más 1 schema adicional. Tipos de negocio correctos.", "severity": null, "fix": null, "impact_pct": null },
+      { "id": "hc-13", "name": "Hreflang", "status": "pass", "details": "hreflang configurado: es → hospitalcapilar.com/, en → hospitalcapilar.com/en/. Correcto para site bilingüe.", "severity": null, "fix": null, "impact_pct": null },
+      { "id": "hc-14", "name": "CMS Detection", "status": "pass", "details": "WordPress detectado (wp-content, wp-admin en robots.txt).", "severity": null, "fix": null, "impact_pct": null },
+      { "id": "hc-15", "name": "Robots Meta", "status": "pass", "details": "robots: follow, index, max-snippet:-1, max-video-preview:-1, max-image-preview:large — configuración óptima para SEO.", "severity": null, "fix": null, "impact_pct": null }
+    ],
+    "issues": [
+      {
+        "id": "issue-01",
+        "source": "health-check",
+        "severity": "high",
+        "title": "Web 100% enfocada en cirugía — tratamientos invisibles",
+        "description": "La homepage, title, meta description, OG tags y pricing visible están 100% orientados a injerto capilar. Los tratamientos capilares (CRT/HRT) que son el foco del proyecto no aparecen en la home de forma prominente. Esto es un gap crítico vs el objetivo de +€50K/mes en tratamientos.",
+        "fix_steps": ["Crear landing page dedicada a tratamientos capilares", "Añadir sección de tratamientos en la homepage", "Optimizar meta tags para incluir 'tratamiento capilar'"],
+        "expected_impact_pct": 30
+      },
+      {
+        "id": "issue-02",
+        "source": "health-check",
+        "severity": "high",
+        "title": "Sin FAQ Schema en homepage",
+        "description": "No hay FAQPage JSON-LD. Las FAQs son uno de los formatos más citados por IAs (GEO). Hospital Capilar pierde visibilidad en AI Overviews y ChatGPT por no tener FAQs estructuradas.",
+        "fix_steps": ["Crear sección FAQ en homepage y páginas de servicio", "Implementar FAQPage JSON-LD", "Optimizar preguntas para prompts GEO comunes"],
+        "expected_impact_pct": 15
+      },
+      {
+        "id": "issue-03",
+        "source": "health-check",
+        "severity": "medium",
+        "title": "Sin Article Schema — blog sin structured data",
+        "description": "No se detectó Article schema en la homepage. Si el blog tampoco lo tiene, Google no puede mostrar rich snippets de artículos.",
+        "fix_steps": ["Implementar Article JSON-LD en posts del blog", "Añadir Author schema (E-E-A-T)", "Verificar con Rich Results Test"],
+        "expected_impact_pct": 10
+      },
+      {
+        "id": "issue-04",
+        "source": "health-check",
+        "severity": "medium",
+        "title": "Schema tipo HealthAndBeautyBusiness — podría ser más específico",
+        "description": "El schema usa 'HealthAndBeautyBusiness' que es genérico. 'MedicalBusiness' o 'Physician' sería más preciso para una clínica médica capilar y ayudaría a la clasificación E-E-A-T.",
+        "fix_steps": ["Cambiar @type a MedicalBusiness", "Añadir medicalSpecialty: Dermatology", "Añadir physician schema para los doctores"],
+        "expected_impact_pct": 8
+      },
+      {
+        "id": "issue-05",
+        "source": "health-check",
+        "severity": "low",
+        "title": "Sitemap redirect 301",
+        "description": "/sitemap.xml redirige a sitemap_index.xml. Funcional pero no óptimo.",
+        "fix_steps": ["Configurar /sitemap.xml como URL principal o actualizar referencias"],
+        "expected_impact_pct": 2
+      },
+      {
+        "id": "issue-06",
+        "source": "analysis",
+        "severity": "high",
+        "title": "Sin contenido de blog orientado a tratamientos",
+        "description": "El posicionamiento web es 100% cirugía. Para capturar tráfico de 'tratamiento capilar', 'caída de pelo', 'minoxidil no funciona', etc., se necesita contenido SEO/GEO optimizado.",
+        "fix_steps": ["Crear cluster de contenido: tratamientos capilares", "Artículos GEO-optimizados por ECP", "Link building interno desde blog a landing de tratamientos"],
+        "expected_impact_pct": 25
+      }
+    ],
+    "score": 72
+  },
+  "metadata": {
+    "duration_seconds": 12,
+    "apis_called": ["web_fetch", "curl-headers", "curl-robots", "curl-sitemap"],
+    "errors": ["Google PSI API rate limited (429) — Lighthouse scores no disponibles"],
+    "note": "Score basado en health checks (13/15 pass). Lighthouse pendiente."
+  }
+}

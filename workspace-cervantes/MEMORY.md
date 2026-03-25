@@ -112,6 +112,7 @@ requires = bloqueante | enriches_with = opcional
 3. **Inventar keys en openclaw.json** — schema estricto. SIEMPRE leer docs antes de editar config.
 4. **Regex artesanal para markdown** — siempre librería estándar (marked.js). Cada doc nuevo revela edge cases.
 5. **Consolidar prompts que scripts leen enteros** — si `llm_step.py` lee un archivo completo como prompt, NO juntar fases separadas en un solo archivo.
+6. **NO reinstalar plugins sin parchear primero** — reinstalar un plugin roto reproduce el crash. Flujo: parchear en local (`extensions/*.broken/src/`) → verificar que funciona → solo entonces reinstalar. (Incidente mc-chat 2026-03-25)
 
 ### 🟡 Config & Placement (dónde van las cosas)
 6. **Exec permissions**: `tools.exec.security` + `tools.exec.ask`, NO en `agents.defaults.exec` (crashea gateway).
