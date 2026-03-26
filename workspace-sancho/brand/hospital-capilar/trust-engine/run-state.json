@@ -3,7 +3,7 @@
   "started_at": "2026-03-24T21:55:00Z",
   "modules": {
     "foundation-import": { "status": "completed", "completed_at": "2026-03-24T21:55:00Z", "version": 1 },
-    "seo-audit":         { "status": "completed", "completed_at": "2026-03-24T21:57:00Z", "version": 1 },
+    "seo-audit":         { "status": "completed", "completed_at": "2026-03-25T11:55:00Z", "version": 2 },
     "own-media-audit":   { "status": "completed", "completed_at": "2026-03-24T22:10:00Z", "version": 1 },
     "geo-analysis":      { "status": "completed", "completed_at": "2026-03-24T22:12:00Z", "version": 1 },
     "serp-analysis":     { "status": "completed", "completed_at": "2026-03-24T22:18:00Z", "version": 1 },

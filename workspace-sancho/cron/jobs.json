@@ -321,6 +321,81 @@
         "consecutiveErrors": 2,
         "lastError": "cron announce delivery failed"
       }
+    },
+    {
+      "id": "71443ed6-a4e9-4f26-a149-b727850a8364",
+      "agentId": "sancho",
+      "name": "Lead Sync — Growth4U",
+      "description": "Nightly lead intelligence: sync Slack notes to GHL + enrich new leads with tag llamada-agendada",
+      "enabled": true,
+      "createdAtMs": 1742932800000,
+      "updatedAtMs": 1742932800000,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 22 * * *",
+        "tz": "Europe/Madrid"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Ejecuta la skill lead-intelligence-hub para Growth4U (slug: growth4u). Lee brand/growth4u/lead-tracking-config.json y skills/lead-intelligence-hub/SKILL.md. Sigue el SKILL.md al pie de la letra. Solo procesa leads con tag 'llamada-agendada'. Config tiene dry_run — respétalo.",
+        "model": "anthropic/claude-sonnet-4-5"
+      },
+      "delivery": {
+        "mode": "none"
+      },
+      "state": {}
+    },
+    {
+      "id": "8b159467-80d1-4b00-bda5-a18e7a521d59",
+      "agentId": "sancho",
+      "name": "Call Prep Daily — Growth4U",
+      "description": "Nightly briefing: tomorrow's calls with lead summary and meeting objective",
+      "enabled": true,
+      "createdAtMs": 1742932800000,
+      "updatedAtMs": 1742932800000,
+      "schedule": {
+        "kind": "cron",
+        "expr": "30 22 * * 0-4",
+        "tz": "Europe/Madrid"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Ejecuta sales-call-prep en MODO DIARIO para Growth4U (slug: growth4u). Lee brand/growth4u/lead-tracking-config.json y skills/sales-call-prep/SKILL.md. Sigue el SKILL.md al pie de la letra.",
+        "model": "anthropic/claude-sonnet-4-5"
+      },
+      "delivery": {
+        "mode": "none"
+      },
+      "state": {}
+    },
+    {
+      "id": "480d86f1-998a-4187-856c-dd1c135caf93",
+      "agentId": "sancho",
+      "name": "Call Prep Weekly — Growth4U",
+      "description": "Friday overview: all calls for next week at a glance",
+      "enabled": true,
+      "createdAtMs": 1742932800000,
+      "updatedAtMs": 1742932800000,
+      "schedule": {
+        "kind": "cron",
+        "expr": "30 22 * * 5",
+        "tz": "Europe/Madrid"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Ejecuta sales-call-prep en MODO SEMANAL para Growth4U (slug: growth4u). Lee brand/growth4u/lead-tracking-config.json y skills/sales-call-prep/SKILL.md. Sigue el SKILL.md al pie de la letra.",
+        "model": "anthropic/claude-sonnet-4-5"
+      },
+      "delivery": {
+        "mode": "none"
+      },
+      "state": {}
     }
   ]
 }

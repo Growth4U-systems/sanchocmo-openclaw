@@ -56,6 +56,14 @@ function isConfigured(cfg) {
 export const mcChatPlugin = createChatChannelPlugin({
   base: createChannelPluginBase({
     id: CHANNEL_KEY,
+    capabilities: {
+      chatTypes: ["dm"],
+      reactions: false,
+      threads: false,
+      media: false,
+      nativeCommands: false,
+      blockStreaming: true,
+    },
     setup: {
       resolveAccount,
       inspectAccount(cfg, _accountId) {

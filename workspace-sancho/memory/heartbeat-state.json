@@ -7,5 +7,11 @@
   "notes": {
     "email": "gog sin output (madrugada 01:20)",
     "calendar": "sin eventos próximos inmediatos"
+  },
+  "sales_call_prep": {
+    "last_run": "2026-03-25T21:30:00Z",
+    "mode": "daily",
+    "calls_found": 2,
+    "no_ghl_match": 1
   }
 }

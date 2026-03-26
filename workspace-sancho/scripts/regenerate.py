@@ -273,7 +273,10 @@ def parse_foundation():
                         skills = sec.get("skills", {})
                         for pname in pillar_names:
                             skill_state = skills.get(pname, {})
-                            sec_data["pillars"][pname] = {"status": skill_state.get("status", "not-started")}
+                            entry = {"status": skill_state.get("status", "not-started")}
+                            if skill_state.get("output_file"):
+                                entry["output_file"] = skill_state["output_file"]
+                            sec_data["pillars"][pname] = entry
                             client_data["total"] += 1
                             if skill_state.get("status") == "approved" or sec.get("status") == "approved":
                                 client_data["approved"] += 1
@@ -357,6 +360,94 @@ def parse_foundation():
                     p["section"] = matched  # None = unassigned → "Otras"
 
             client_data["presentations"] = presentations
+
+            # Strategic Plan (top-level or in sections)
+            sp = state.get("strategic-plan", state.get("sections", {}).get("strategic-plan", {}))
+            if sp and sp.get("status"):
+                client_data["sections"]["strategic-plan"] = {
+                    "display_name": "Strategic Plan",
+                    "status": sp.get("status", "not-started"),
+                    "output_file": sp.get("output_file", ""),
+                    "notes": sp.get("notes", ""),
+                    "pillars": {},
+                    "syntheses": {},
+                }
+
+            # Projects
+            projects_dir = client_dir / "projects"
+            projects_list = []
+            if projects_dir.exists():
+                registry_file = projects_dir / "registry.json"
+                if registry_file.exists():
+                    try:
+                        registry = json.loads(registry_file.read_text())
+                        for proj in registry.get("projects", []):
+                            proj_id = proj.get("id", "")
+                            proj_slug = proj.get("slug", "")
+                            # Try multiple folder patterns: P01, P01-slug
+                            proj_dir = None
+                            for fname in [proj_id, f"{proj_id}-{proj_slug}", proj_slug]:
+                                candidate = projects_dir / fname
+                                if candidate.exists():
+                                    proj_dir = candidate
+                                    break
+                            if not proj_dir:
+                                proj_dir = projects_dir / proj_id  # fallback
+                            proj_file = proj_dir / "project.json"
+                            if proj_file.exists():
+                                try:
+                                    pdata = json.loads(proj_file.read_text())
+                                    # Merge registry info with project.json
+                                    proj.update({k: v for k, v in pdata.items() if k not in proj})
+                                except:
+                                    pass
+                            # Load tasks
+                            tasks_file = proj_dir / "tasks.json"
+                            if tasks_file.exists():
+                                try:
+                                    tdata = json.loads(tasks_file.read_text())
+                                    proj["tasks"] = tdata if isinstance(tdata, list) else tdata.get("tasks", [])
+                                except:
+                                    proj["tasks"] = []
+                            else:
+                                proj["tasks"] = []
+                            projects_list.append(proj)
+                    except:
+                        pass
+            client_data["projects"] = projects_list
+
+            # Ideas (Idea Bank)
+            ideas_file = client_dir / "idea-generation" / "ideas.json"
+            if ideas_file.exists():
+                try:
+                    ideas_data = json.loads(ideas_file.read_text())
+                    client_data["ideas"] = ideas_data if isinstance(ideas_data, list) else ideas_data.get("ideas", [])
+                except:
+                    client_data["ideas"] = []
+            else:
+                client_data["ideas"] = []
+
+            # Metrics
+            metrics_file = client_dir / "metrics" / "metrics-data.json"
+            if metrics_file.exists():
+                try:
+                    metrics_data = json.loads(metrics_file.read_text())
+                    client_data["metrics"] = metrics_data
+                except:
+                    client_data["metrics"] = {}
+            else:
+                client_data["metrics"] = {}
+
+            # Latest daily metrics
+            metrics_dir = client_dir / "metrics"
+            if metrics_dir.exists():
+                daily_files = sorted([f for f in metrics_dir.iterdir() if f.name.startswith("20") and f.suffix == ".json"], reverse=True)
+                if daily_files:
+                    try:
+                        client_data["metrics_latest"] = json.loads(daily_files[0].read_text())
+                        client_data["metrics_latest"]["_date"] = daily_files[0].stem
+                    except:
+                        client_data["metrics_latest"] = {}
 
             clients[slug] = client_data
 

@@ -3,7 +3,7 @@ name: trust-engine
 description: "Trust Engine: analyzes client's SEO, GEO (AI visibility), and Own Media. Produces gaps, recommendations, keywords, and influencer lists. Use when: 'run trust engine', 'trust engine seo-audit', 'trust engine init', 'analiza mi SEO', 'analiza mi GEO', 'qué me falta', 'dónde estoy', 'trust engine status', 'ejecuta trust engine'. Subcommands: init, seo-audit, own-media, geo, serp, gaps, recs, keywords, influencers, status, full. NOT for: content creation (use content skills), Foundation (use foundation-orchestrator), bot engagement (separate system)."
 metadata:
   author: Alfonso + Cervantes
-  version: '5.0'
+  version: '6.0'
   system: SanchoCMO
   phase: Execution
   depends_on: foundation-orchestrator
@@ -27,31 +27,47 @@ metadata:
     - brand/{slug}/trust-engine/content-briefs.json
 ---
 
-# Trust Engine v5 — Native OpenClaw Architecture
+# Trust Engine v6 — Specification with Quality Gates
 
-> No backend Python. No FastAPI. Todo nativo: skills + exec (curl) + LLM + JSON files.
-> MC lee los JSON files directamente. Cada módulo es independiente con dependency gates.
+> v6 changes: Mandatory minimums, quality gates, fallback chains, DataForSEO mandatory.
+> Every module has a QUALITY GATE section. If the gate fails, the module CANNOT be marked "completed".
+> The agent MUST NOT skip quality gates to save time.
 
 ---
 
-## Architecture Overview
+## Architecture
 
 ```
-Sancho Skill (this)
-  → exec (curl APIs) + web_fetch + LLM analysis
-  → Writes to brand/{slug}/trust-engine/*.json
-  → MC reads JSONs and renders dashboard with buttons
-  → User launches modules from MC or Discord
+Agent reads SKILL.md
+  → exec (curl APIs) + web_fetch + web_search + browser + LLM
+  → Writes JSON to brand/{slug}/trust-engine/
+  → MC reads JSONs → renders dashboard
 ```
 
-**Persistence**: `brand/{slug}/trust-engine/` — one JSON per module + config + run-state.
-**No database**. No SQL. JSON files only.
+**Persistence**: `brand/{slug}/trust-engine/` — one JSON per module.
+**Delegatable**: Each module can run as sessions_spawn to Escudero.
+
+---
+
+## API Credentials (Auto-Detect)
+
+Before each module, check available APIs:
+
+```bash
+# Run this check and store results in memory for the session
+echo "SERPER: $([ -n "$SERPER_API_KEY" ] && echo 'YES' || echo 'NO')"
+echo "DATAFORSEO: $([ -n "$DATAFORSEO_LOGIN" ] && echo 'YES' || echo 'NO')"
+echo "YOUTUBE: $([ -n "$YOUTUBE_API_KEY" ] && echo 'YES' || echo 'NO')"
+echo "GOOGLE_CSE: $([ -n "$GOOGLE_CSE_KEY" ] && echo 'YES' || echo 'NO')"
+echo "APIFY: $([ -n "$APIFY_TOKEN" ] && echo 'YES' || echo 'NO')"
+echo "GOOGLE_API: $([ -n "$GOOGLE_API_KEY" ] && echo 'YES' || echo 'NO')"
+```
+
+Use detected APIs. Do NOT treat available APIs as optional — if the key exists, USE IT.
 
 ---
 
 ## Subcommand Routing
-
-Parse the user's message to determine which subcommand to run:
 
 | Pattern | Subcommand |
 |---|---|
@@ -65,36 +81,24 @@ Parse the user's message to determine which subcommand to run:
 | `trust-engine keywords {slug}` | → Step 8: Keyword Research |
 | `trust-engine influencers {slug}` | → Step 9: Influencer Discovery |
 | `trust-engine content {slug} {kw-id}` | → Step 10: Content Generation |
-| `trust-engine status {slug}` | → Show run-state.json |
+| `trust-engine status {slug}` | → Show run-state |
 | `trust-engine full {slug}` | → Run all in sequence |
-
-If no subcommand specified, show status + suggest next action.
-If no slug specified, detect from current Discord guild via clients.json.
 
 ---
 
 ## Step 0: Common — Resolve Slug & Gate Check
 
 ```
-1. Resolve slug:
-   - If slug provided in command → use it
-   - If in client guild → read clients.json, match guild to slug
-   - If ambiguous → ask user
-
-2. Foundation gate check:
-   Read these files (ALL must exist, otherwise STOP):
+1. Resolve slug from command or guild (via clients.json)
+2. Gate check: ALL of these must exist:
    - brand/{slug}/company-brief/current.md
    - brand/{slug}/go-to-market/ecps/current.md
-   - brand/{slug}/go-to-market/positioning/current.md  
+   - brand/{slug}/go-to-market/positioning/current.md
    - brand/{slug}/market-and-us/competitors/current.md
-   If any missing → respond: "❌ Foundation incompleta. Falta: {list}. Ejecuta Foundation primero."
-
-3. Create trust-engine dir if needed:
-   exec: mkdir -p brand/{slug}/trust-engine
-
-4. Load or create run-state.json:
-   Read brand/{slug}/trust-engine/run-state.json
-   If not exists → create with all modules "pending" (see template below)
+   If any missing → STOP with "❌ Foundation incompleta."
+3. mkdir -p brand/{slug}/trust-engine
+4. Load/create run-state.json (template below)
+5. Check API credentials (see above)
 ```
 
 ### run-state.json Template
@@ -117,515 +121,666 @@ If no slug specified, detect from current Discord guild via clients.json.
 }
 ```
 
-### Dependency Gate
+---
 
-Before running a module, check run-state.json:
-- If the module has `depends_on`, ALL dependencies must have status `"completed"`
-- If not → respond: "🔒 {module} requiere: {missing_deps}. Ejecútalos primero."
+## Step 1: Foundation Import (`init`)
 
-After completing a module, update run-state.json:
+Read Foundation docs → create config.json.
+
+```
+Read ALL of:
+  - brand/{slug}/company-brief/current.md
+  - brand/{slug}/go-to-market/ecps/current.md
+  - brand/{slug}/go-to-market/positioning/current.md
+  - brand/{slug}/market-and-us/competitors/current.md
+  - brand/{slug}/market-and-us/self/current.md
+  - brand/{slug}/brand-identity/voice/current.md (if exists)
+
+Extract and write config.json:
+{
+  "project": { "slug", "name", "website", "language", "market", "country_code" },
+  "brand": { "name", "aliases", "domains" },
+  "niches": [{ "id": "n1", "name", "brief" }],
+  "competitors": [{ "name", "domain", "niches" }]
+}
+```
+
+### QUALITY GATE — init
+- ✅ config.json written
+- ✅ ≥1 niche extracted
+- ✅ ≥1 competitor extracted
+- ✅ website URL present and valid (starts with https://)
+
+---
+
+## Step 2: SEO Site Audit (`seo-audit`)
+
+**Depends on**: init completed.
+
+### 2.1 Lighthouse Scores
+
+Fallback chain (try in order, use first success):
+
+```
+ATTEMPT 1: Google PSI with API key (if $GOOGLE_API_KEY exists)
+  curl -s "https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url={website}&strategy=mobile&category=performance&category=accessibility&category=best-practices&category=seo&key=$GOOGLE_API_KEY"
+
+ATTEMPT 2: Google PSI without API key
+  curl -s "https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url={website}&strategy=mobile&category=performance&category=accessibility&category=best-practices&category=seo"
+
+ATTEMPT 3: If both fail with 429, wait 60 seconds and retry ONCE
+
+ATTEMPT 4: If still 429, use browser tool to run Lighthouse:
+  browser action=navigate url="https://pagespeed.web.dev/analysis?url={website}"
+  Wait for results (up to 60s)
+  browser action=snapshot → extract scores
+
+ATTEMPT 5: If all fail, set lighthouse scores to null with error message.
+  DO NOT fake or estimate scores. Mark as "lighthouse_unavailable" in the JSON.
+```
+
+Parse successful response:
+- categories.{performance|accessibility|best-practices|seo}.score × 100
+- audits.{largest-contentful-paint|total-blocking-time|cumulative-layout-shift|first-contentful-paint|speed-index}.numericValue
+
+### 2.2 Health Checks (MANDATORY — these always work)
+
+Run ALL 15 checks. No skipping.
+
+```bash
+# HC-01 to HC-08: Parse homepage HTML
+web_fetch({website}) → store as $HTML
+
+HC-01: Meta Title — exists + length 30-60 chars
+HC-02: Meta Description — exists + length 120-160 chars
+HC-03: H1 Count — exactly 1
+HC-04: Open Graph — og:title + og:description + og:image
+HC-05: Canonical Tag — <link rel="canonical">
+HC-06: SSL — URL redirects to https
+HC-07: Mobile Viewport — <meta name="viewport">
+HC-08: Language Tag — <html lang="...">
+
+# HC-09: Sitemap
+exec: curl -s -o /dev/null -w "%{http_code}" {website}/sitemap.xml
+→ pass if 200
+
+# HC-10: Robots.txt
+exec: curl -s {website}/robots.txt
+→ pass if exists + doesn't block /
+
+# HC-11: Core Web Vitals — from Lighthouse data (if available)
+# HC-12: Image Alt Tags — from Lighthouse audit (if available)
+# HC-13: Structured Data — use browser tool:
+browser action=act kind=evaluate fn="JSON.stringify([...document.querySelectorAll('script[type=\"application/ld+json\"]')].map(s=>{try{return JSON.parse(s.textContent)}catch(e){return null}}).filter(Boolean))"
+→ List schema types found
+
+# HC-14: Internal Links — count links in HTML pointing to same domain
+# HC-15: Hreflang — check <link rel="alternate" hreflang="...">
+```
+
+### 2.3 Server Timing
+
+```bash
+curl -s -o /dev/null -w "ttfb:%{time_starttransfer}\ntotal:%{time_total}\nsize:%{size_download}" {website}
+```
+
+### 2.4 Issue Generation
+
+Use LLM to generate issues from ALL collected data. Each issue:
 ```json
-{ "status": "completed", "completed_at": "2026-03-24T19:30:00Z", "version": 1 }
+{ "id", "source", "severity": "critical|high|medium|low", "title", "description", "fix_steps": [], "expected_impact_pct" }
+```
+
+### 2.5 Score Calculation
+
+```
+If Lighthouse available:
+  score = (lighthouse_seo × 0.4 + health_check_pass_rate × 100 × 0.4 + lighthouse_performance × 0.2)
+If Lighthouse unavailable:
+  score = health_check_pass_rate × 100
+  Note: "Score basado solo en health checks — Lighthouse no disponible"
+```
+
+### QUALITY GATE — seo-audit
+- ✅ ≥13 of 15 health checks executed (HC-11/12 may fail if no Lighthouse)
+- ✅ Server timing measured
+- ✅ Lighthouse attempted (even if failed — must have tried)
+- ✅ ≥3 issues generated
+- ✅ Score calculated with methodology noted
+- ❌ FAIL if only Lighthouse attempted but no health checks
+- ❌ FAIL if score is estimated/guessed without actual data
+
+---
+
+## Step 3: Own Media Audit (`own-media`)
+
+**Depends on**: init completed.
+
+### 3.1 Blog Scanner (MANDATORY)
+
+```
+1. Try these URLs in order until one returns 200:
+   {website}/blog, {website}/blog/, {website}/noticias, {website}/articles, {website}/recursos
+   
+2. If found:
+   - web_fetch the blog index page
+   - Count visible articles/posts
+   - Extract last 3 post titles + dates (estimate freshness)
+   - web_fetch 1 full blog post → measure word count
+   - Estimate posting frequency from dates
+   
+3. If NOT found: note blog_exists: false
+```
+
+### 3.2 Social Discovery (MANDATORY — check ALL 6 platforms)
+
+For each platform, you MUST actually find the real profile URL. Do NOT just confirm "they have Instagram."
+
+```
+FOR EACH platform in [instagram, linkedin, youtube, tiktok, twitter/x, facebook]:
+
+  Step A: Find profile URL
+    - First check homepage HTML for social links: grep for platform domain in $HTML
+    - If not found: web_search "{brand_name} {platform}"
+    
+  Step B: Get real metrics (use best available method)
+    PREFERRED: If $APIFY_TOKEN exists → use Apify actors:
+      Instagram: apify/instagram-profile-scraper
+      YouTube: apify/youtube-channel-scraper
+      TikTok: apify/tiktok-profile-scraper
+    
+    FALLBACK: web_fetch the profile page → extract visible metrics
+    
+    MINIMUM FALLBACK: web_search "{brand_name} {platform} followers" → extract from search snippets
+    
+  Step C: Record for each platform:
+    - url: actual profile URL
+    - followers: real number (not "unknown")
+    - posts_count: if available
+    - posting_frequency: estimated from visible content
+    - last_post_date: if visible
+    - engagement_rate: if calculable
+    - verified: boolean
+```
+
+### 3.3 Schema Scanner
+
+```
+Use browser tool to extract JSON-LD:
+browser action=act kind=evaluate fn="JSON.stringify([...document.querySelectorAll('script[type=\"application/ld+json\"]')].map(s=>{try{return JSON.parse(s.textContent)}catch(e){return null}}).filter(Boolean))"
+
+List all schema types found.
+Note missing recommended schemas based on business type:
+  - Medical: MedicalBusiness, Physician, MedicalProcedure
+  - E-commerce: Product, Offer, AggregateRating
+  - Service: LocalBusiness, Service, FAQPage
+  - All: Organization, WebSite, BreadcrumbList
+```
+
+### 3.4 Tech Detection
+
+```
+From HTML headers (curl -I) and content:
+  - CMS: WordPress (wp-content/wp-includes), Shopify, Wix, etc.
+  - Analytics: GA4 (gtag/G-), Mixpanel, Hotjar, Clarity
+  - CDN: Cloudflare (cf-ray), AWS (x-amz), Fastly
+  - Tag Manager: GTM (googletagmanager.com/gtm.js)
+```
+
+### 3.5 Scoring
+
+```
+content_score (35%):
+  blog_exists: 20pts | frequency ≥2/month: 30pts | word_count ≥800: 20pts | categories: 15pts | fresh (<30 days): 15pts
+
+social_score (30%):
+  per_platform_found: 40pts/6 | per_platform_active: 30pts/6 | profile_optimized: 30pts/6
+
+technical_score (35%):
+  SSL: 15pts | mobile: 15pts | CMS: 15pts | analytics: 20pts | CDN: 15pts | schemas: 20pts
+
+overall = content × 0.35 + social × 0.30 + technical × 0.35
+```
+
+### QUALITY GATE — own-media
+- ✅ Blog checked (exists or confirmed missing)
+- ✅ ALL 6 social platforms checked (each has url or "not_found")
+- ✅ ≥4 of 6 platforms have real follower counts (not "unknown" or null)
+- ✅ Schema scan executed via browser tool (not guessed from HTML)
+- ✅ Tech stack detected (at minimum: CMS + analytics)
+- ✅ Score calculated with breakdown
+- ❌ FAIL if social section just says "confirmed profile exists" without metrics
+- ❌ FAIL if <4 platforms checked
+
+---
+
+## Step 4: GEO Analysis (`geo`)
+
+**Depends on**: init completed.
+
+### MANDATORY MINIMUMS
+- **≥4 prompts per niche** (6 categories, pick best 4 minimum)
+- **≥2 providers** (use web_search for Gemini + at least 1 more)
+- **≥3 niches** (or all niches if <3)
+- **Total minimum: 12 prompt-provider combinations** (e.g., 4 prompts × 3 niches, but can do more providers per prompt)
+
+### 4.1 Prompt Generation
+
+For EACH niche in config.json, generate prompts in these categories:
+
+```
+ranking:    "¿Cuáles son las mejores {niche_service} en {market}?"
+comparison: "Compara {niche_service} en {market}: opciones y precios"
+solution:   "Tengo {ECP_problem}. ¿Qué opciones tengo en {market}?"
+discovery:  "Busco {specific_service} en {city}, ¿qué me recomiendas?"
+authority:  "¿Quién es el mejor especialista en {niche} en {market}?"
+guide:      "Guía completa para {niche_action} en {market}"
+```
+
+Minimum 4 per niche. Store ALL generated prompts before querying.
+
+### 4.2 Query Execution
+
+```
+FOR EACH prompt:
+  
+  Provider 1 — Gemini (via web_search):
+    web_search(prompt)
+    → Extract: body text + citations
+  
+  Provider 2 — Choose ONE of:
+    A) If ChatGPT API available ($OPENAI_API_KEY):
+       exec: curl -s "https://api.openai.com/v1/chat/completions" with prompt
+    B) If Claude available:
+       sessions_spawn with task=prompt (subagent, run mode, short timeout)
+    C) If Perplexity available ($PERPLEXITY_API_KEY):
+       exec: curl -s "https://api.perplexity.ai/chat/completions" with prompt
+    D) Fallback: Re-run web_search with slightly rephrased prompt
+
+  For EACH response, parse:
+    - All brand mentions (brand name, position 1-indexed, sentiment, context quote)
+    - All cited URLs/domains
+    - Whether client was mentioned, and HOW (what was said about them)
+```
+
+### 4.3 Analysis
+
+```
+Calculate per-brand:
+  - mention_rate: % of runs where brand appeared in body text
+  - avg_position: average position when mentioned
+  - sentiment: positive/neutral/negative breakdown
+  - mentioned_as: what topics/contexts the brand is associated with
+
+Calculate per-niche:
+  - which brands dominate
+  - which brands are invisible
+  - what domains are cited most
+
+Cross-niche:
+  - client_visibility_overall: % across all runs
+  - competitor_comparison: table of visibility rates
+```
+
+### QUALITY GATE — geo
+- ✅ ≥12 prompt-provider runs executed (tracked with counter)
+- ✅ ≥2 different providers used
+- ✅ ≥3 niches covered (or all if <3)
+- ✅ Each run has parsed brand mentions (not just raw text dumped)
+- ✅ Summary includes client_visibility percentage with actual denominator
+- ✅ Summary includes competitor comparison (≥3 competitors tracked)
+- ✅ Each run includes cited domains list
+- ❌ FAIL if <8 prompt-provider runs
+- ❌ FAIL if only 1 provider used
+- ❌ FAIL if no parsed brand mentions (just raw text)
+
+---
+
+## Step 5: SERP Analysis (`serp`)
+
+**Depends on**: init completed.
+
+### MANDATORY: Use Serper.dev API ($SERPER_API_KEY)
+
+### 5.1 Keyword Generation
+
+```
+FOR EACH niche (minimum 3):
+  Generate 8-10 keywords across categories:
+    ranking:    "mejor {service} {location}" (2 variants)
+    solution:   "{problem} tratamiento/solución" (2 variants)  
+    comparison: "{brand} vs {competitor}", "{service} precio" (2 variants)
+    discovery:  "{service} {city}", "dónde {service}" (1-2 variants)
+    guide:      "cómo {action}", "guía {service}" (1-2 variants)
+
+TOTAL MINIMUM: 25 keywords. Can go up to 50 for thorough analysis.
+```
+
+### 5.2 SERP Fetching
+
+```bash
+# For EACH keyword, fetch top 10 results:
+FOR keyword IN keywords:
+  curl -s -X POST "https://google.serper.dev/search" \
+    -H "X-API-KEY: $SERPER_API_KEY" \
+    -H "Content-Type: application/json" \
+    -d '{"q": "{keyword}", "gl": "{country_code}", "hl": "{language}", "num": 10}'
+  
+  Parse: organic[].{position, title, link, snippet}
+  Extract domain from link
+  Check if client domain appears → record position
+  Check if competitor domains appear → record positions
+  
+  # Rate limit: 1 second between requests
+  sleep 1
+DONE
+```
+
+### 5.3 Classification
+
+For each result, classify:
+- content_type: guide | comparison | review | directory | service | news | forum | video
+- domain_type: competitor | media | directory | forum | own | medical_authority | other
+
+Use heuristics first (competitor domain list, known directories), LLM for ambiguous.
+
+### 5.4 Volume Enrichment
+
+```
+IF $DATAFORSEO_LOGIN exists:
+  # Batch all keywords (max 100 per request)
+  AUTH=$(echo -n "$DATAFORSEO_LOGIN:$DATAFORSEO_PASSWORD" | base64)
+  curl -s -X POST "https://api.dataforseo.com/v3/keywords_data/google_ads/search_volume/live" \
+    -H "Authorization: Basic $AUTH" \
+    -H "Content-Type: application/json" \
+    -d '[{"keywords": [...all keywords...], "location_code": {location_code}, "language_code": "{lang}"}]'
+  
+  Parse: search_volume, cpc, competition
+  
+  THIS IS MANDATORY IF CREDENTIALS EXIST. NOT OPTIONAL.
+ELSE:
+  Note: "DataForSEO no configurado — volumen no disponible. Pide al equipo configurarlo."
+```
+
+### QUALITY GATE — serp
+- ✅ ≥25 keywords searched
+- ✅ ALL keywords have SERP results (top 10 positions)
+- ✅ Client position identified for each keyword (position number or "not_in_top_10")
+- ✅ ≥3 competitor positions tracked
+- ✅ If DataForSEO credentials exist → ALL keywords enriched with volume/CPC
+- ✅ Summary includes: total keywords, client_in_top3, client_in_top10, client_invisible
+- ✅ Summary includes top invisible high-volume keywords
+- ❌ FAIL if <15 keywords searched
+- ❌ FAIL if DataForSEO exists but not used
+- ❌ FAIL if no summary statistics
+
+---
+
+## Step 6: Gap Analysis (`gaps`)
+
+**Depends on**: geo-analysis + serp-analysis completed.
+
+```
+1. Read geo-analysis.json → all cited domains
+2. Read serp-analysis.json → all SERP domains
+
+3. Cross-reference:
+   FOR EACH domain that appears in either:
+     in_geo = appears in GEO citations
+     in_serp = appears in SERP results
+     competitors_present = which competitors rank/appear on this domain
+     client_present = does client appear here?
+     
+     IF client NOT present AND competitors ARE present:
+       → This is a GAP
+       
+     gap_type:
+       "geo+serp" = appears in both → HIGH PRIORITY
+       "geo_only" = only in AI citations → MEDIUM (AI-focused)
+       "serp_only" = only in Google → MEDIUM (SEO-focused)
+     
+     opportunity_score = base_by_type + competitor_count_bonus + volume_bonus
+
+4. Generate actionable gap entries:
+   Each gap needs: domain, url (if specific), gap_type, competitors_present, 
+   opportunity_score, action (what to do: guest post, directory listing, create content, PR)
+```
+
+### QUALITY GATE — gaps
+- ✅ Both geo-analysis.json and serp-analysis.json read
+- ✅ ≥5 gaps identified (if fewer exist, explain why)
+- ✅ Each gap has opportunity_score + actionable recommendation
+- ✅ Gaps sorted by opportunity score
+- ❌ FAIL if gaps are just a copy of competitor domains without cross-referencing
+
+---
+
+## Step 7: Recommendations (`recs`)
+
+**Depends on**: seo-audit + own-media-audit + geo-analysis + gap-analysis completed.
+
+```
+1. Read ALL audit JSONs
+2. Aggregate all findings into unified recommendation list
+
+Each recommendation:
+{
+  "id": "rec-001",
+  "source": "seo-audit|own-media|geo|gaps",
+  "severity": "critical|high|medium|low",
+  "category": "content|technical|social|partnerships|geo-optimization",
+  "title": "short action title",
+  "description": "why this matters + data backing",
+  "fix_steps": ["step 1", "step 2"],
+  "expected_impact_pct": 25,
+  "effort": "low|medium|high",
+  "priority_score": calculated,
+  "data_source": "what specific data point triggered this"
+}
+
+Priority score = severity_weight × impact × (1/effort_weight)
+  severity: critical=4, high=3, medium=2, low=1
+  effort: low=1, medium=2, high=3
+
+Princeton GEO benchmarks for impact estimation:
+  - Citing authoritative sources: +30-40%
+  - Statistics with sources: +15-25%
+  - Expert quotes (blockquote): +10-20%
+  - FAQ JSON-LD: +10-15%
+  - Authoritative tone: +5-15%
+```
+
+### QUALITY GATE — recs
+- ✅ ≥8 recommendations generated
+- ✅ Each has data_source referencing specific finding from an audit
+- ✅ Sorted by priority_score
+- ✅ Mix of categories (not all same type)
+- ❌ FAIL if recommendations are generic without linking to specific audit data
+
+---
+
+## Step 8: Keyword Research (`keywords`)
+
+**Depends on**: serp-analysis completed.
+
+### 8.1 Keyword Expansion
+
+```
+Read serp-analysis.json → get already-analyzed keywords.
+Read config.json → niches, competitors.
+
+FOR EACH niche:
+  Use LLM to generate 15-20 ADDITIONAL keywords (beyond SERP set):
+    - Long-tail variations of top keywords
+    - Question-format keywords ("¿cómo...?", "¿dónde...?")
+    - Comparison keywords ("{brand} vs {competitor}")
+    - Commercial intent keywords ("{service} precio", "{service} opiniones")
+    - Problem-aware keywords ("{symptom} solución")
+
+TOTAL MINIMUM: 40 new keywords + SERP keywords = ≥65 total keyword database
+```
+
+### 8.2 Volume Enrichment (MANDATORY if DataForSEO available)
+
+```
+IF $DATAFORSEO_LOGIN exists:
+  Batch all NEW keywords to DataForSEO (max 100/request, split if needed):
+  
+  AUTH=$(echo -n "$DATAFORSEO_LOGIN:$DATAFORSEO_PASSWORD" | base64)
+  curl -s -X POST "https://api.dataforseo.com/v3/keywords_data/google_ads/search_volume/live" \
+    -H "Authorization: Basic $AUTH" \
+    -H "Content-Type: application/json" \
+    -d '[{"keywords": [...], "location_code": {code}, "language_code": "{lang}"}]'
+
+  Parse: search_volume, cpc, competition
+```
+
+### 8.3 Opportunity Scoring
+
+```
+FOR EACH keyword:
+  IF volume data available:
+    kd_factor = 1.0 if competition=LOW, 0.6 if MEDIUM, 0.3 if HIGH
+    commercial = min(1.0, (volume × max(cpc, 0.1)) / 5000)
+    score = 0.2 + commercial × 0.5 + kd_factor × 0.3
+  ELSE:
+    score = LLM estimate (0-1) with note "estimated, no volume data"
+```
+
+### QUALITY GATE — keywords
+- ✅ ≥50 total keywords in database (SERP + new)
+- ✅ If DataForSEO available → ≥90% of keywords have volume data
+- ✅ Each keyword has: niche_id, category, opportunity_score
+- ✅ Keywords sorted by opportunity_score
+- ✅ Top 10 keywords highlighted with rationale
+- ❌ FAIL if <30 total keywords
+- ❌ FAIL if DataForSEO exists but keywords lack volume data
+
+---
+
+## Step 9: Influencer/Partner Discovery (`influencers`)
+
+**Depends on**: init completed.
+
+### 9.1 Discovery Methods
+
+```
+FOR EACH niche:
+
+  YouTube Discovery:
+    IF $YOUTUBE_API_KEY exists:
+      curl -s "https://www.googleapis.com/youtube/v3/search?part=snippet,statistics&q={niche}+{market}&type=channel&maxResults=10&key=$YOUTUBE_API_KEY"
+    ELSE:
+      web_search "site:youtube.com {niche} {market} canal español" (3 searches per niche)
+      web_fetch each found channel → extract subscriber count from page
+  
+  Instagram Discovery:
+    IF $APIFY_TOKEN exists:
+      Use Instagram search actor
+    ELSE:
+      web_search "{niche} {market} instagram influencer" (2 searches per niche)
+      web_search "{niche} instagram españa seguidores" (1 search per niche)
+  
+  Media/Blog Discovery:
+    web_search "{niche} blog españa" (1 search per niche)
+    web_search "{niche} revista digital españa" (1 search per niche)
+  
+  Directory/Authority Discovery:
+    web_search "directorio {service} {market}" (1 search per niche)
+
+MINIMUM: 8 web_search queries for discovery
+```
+
+### 9.2 Profile Enrichment
+
+```
+FOR EACH discovered profile/site:
+  - Get actual metrics (subscribers, followers, DA if possible)
+  - Classify type: influencer | media | directory | community | review_platform
+  - Score relevance (0-100) based on:
+    niche_match (40%), audience_size (20%), engagement (20%), content_quality (20%)
+  - Write brief: why relevant + suggested collaboration type
+```
+
+### QUALITY GATE — influencers
+- ✅ ≥10 influencers/partners discovered
+- ✅ Mix of types (not all same type)
+- ✅ ≥3 have real metrics (subscribers/followers)
+- ✅ Each has relevance_score + brief + suggested collaboration
+- ✅ ≥8 discovery searches executed
+- ❌ FAIL if just listing domains from SERP results (those are gaps, not influencer discovery)
+- ❌ FAIL if <5 entries
+
+---
+
+## Step 10: Content Generation (`content`)
+
+```
+1. Read keywords.json → find keyword by id (must be status=approved)
+2. Read config.json + brand voice
+3. Generate brief → show to user → wait for approval
+4. Generate article: 1500-2500 words, FAQ, JSON-LD, GEO-optimized
+5. Append to content-briefs.json
+6. Update keyword status → "content-created"
 ```
 
 ---
 
-## Step 1: Foundation Import (`trust-engine init {slug}`)
-
-**Purpose**: Read Foundation docs and create config.json for Trust Engine.
+## `status` Command
 
 ```
-1. Read Foundation docs:
-   - brand/{slug}/company-brief/current.md → extract: name, website, market, language, services
-   - brand/{slug}/go-to-market/ecps/current.md → extract: niche names, target audiences
-   - brand/{slug}/go-to-market/positioning/current.md → extract: positioning per ECP
-   - brand/{slug}/market-and-us/competitors/current.md → extract: competitor names, domains
-   - brand/{slug}/market-and-us/self/current.md → extract: brand aliases, own domains
-   - brand/{slug}/brand-identity/voice/current.md (if exists) → note for content generation
-
-2. Generate config.json using LLM:
-   Prompt: "Based on these Foundation documents, create a Trust Engine config JSON with:
-   - project: slug, name, website, language, market
-   - brand: name, aliases, domains
-   - niches: array of {id, name, brief with A/B/C/D}
-   - competitors: array of {name, domain, niches}
-   Follow this schema exactly: [paste schema from PDR v5 section 3.1]"
-
-3. Write brand/{slug}/trust-engine/config.json
-
-4. Update run-state.json: foundation-import → completed
-
-5. Output: "✅ Foundation importada. {N} niches, {N} competidores. Config: brand/{slug}/trust-engine/config.json"
-```
-
----
-
-## Step 2: SEO Site Audit (`trust-engine seo-audit {slug}`)
-
-**Purpose**: Lighthouse scores + health checks via Google PSI API + web_fetch.
-
-**Prerequisite**: foundation-import completed (need website URL from config.json).
-
-```
-1. Read config.json → get website URL
-
-2. Lighthouse via Google PSI API:
-   exec: curl -s "https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url={website}&strategy=mobile&category=performance&category=accessibility&category=best-practices&category=seo&key={GOOGLE_API_KEY}"
-   
-   Parse response:
-   - lighthouseResult.categories.performance.score × 100
-   - lighthouseResult.categories.accessibility.score × 100
-   - lighthouseResult.categories.best-practices.score × 100
-   - lighthouseResult.categories.seo.score × 100
-   - lighthouseResult.audits['largest-contentful-paint'].numericValue (ms → s)
-   - lighthouseResult.audits['total-blocking-time'].numericValue
-   - lighthouseResult.audits['cumulative-layout-shift'].numericValue
-   - lighthouseResult.audits['first-contentful-paint'].numericValue (ms → s)
-   - lighthouseResult.audits['speed-index'].numericValue (ms → s)
-
-   Rate CWV: good (<2.5s LCP, <200ms TBT, <0.1 CLS), needs-improvement, poor
-
-   NOTE: If no GOOGLE_API_KEY available, the PSI API works without a key but with lower rate limits.
-   Try without key first: curl -s "https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url={website}&strategy=mobile&category=performance&category=accessibility&category=best-practices&category=seo"
-
-3. Health Checks via web_fetch:
-   Fetch the homepage HTML and check:
-   
-   HC-01: Meta Title — exists, length 30-60 chars
-   HC-02: Meta Description — exists, length 120-160 chars
-   HC-03: H1 Tag — exactly 1 H1 on the page
-   HC-04: Open Graph Tags — og:title, og:description, og:image present
-   HC-05: Canonical Tag — <link rel="canonical"> present
-   HC-06: SSL — URL starts with https://
-   HC-07: Mobile Viewport — <meta name="viewport"> present
-   HC-08: Language Tag — <html lang="..."> present
-   
-   Fetch /sitemap.xml:
-   HC-09: Sitemap — exists, returns XML
-   
-   Fetch /robots.txt:
-   HC-10: Robots.txt — exists, doesn't block important paths
-   
-   Check via Lighthouse data:
-   HC-11: Core Web Vitals — all three pass thresholds
-   HC-12: Image Alt Tags — from lighthouse audit data
-   HC-13: Structured Data — ⚠️ web_fetch can't reliably detect JS-injected JSON-LD.
-          Use browser tool if available: document.querySelectorAll('script[type="application/ld+json"]')
-          Or note as "requires manual verification"
-   HC-14: Internal Links — check for reasonable internal linking
-   HC-15: Hreflang — check if multi-language site has hreflang tags
-
-4. Generate issues using LLM:
-   Prompt: "Based on these Lighthouse scores and health check results, generate a list of issues with:
-   - id, source (lighthouse|health-check), severity (critical|high|medium|low)
-   - title, description, fix_steps (array), expected_impact_pct (number)
-   Prioritize by impact. Use Princeton GEO benchmarks for impact estimates."
-
-5. Calculate overall score: average of Lighthouse SEO + weighted health check pass rate
-
-6. Write brand/{slug}/trust-engine/seo-audit.json following schema:
-   {
-     "module": "seo-audit",
-     "version": 1,
-     "created_at": "{ISO datetime}",
-     "updated_at": "{ISO datetime}",
-     "status": "completed",
-     "data": {
-       "lighthouse": { performance, accessibility, best_practices, seo, core_web_vitals },
-       "health_checks": [ { id, name, status, details, severity, fix, impact_pct } ],
-       "issues": [ { id, source, severity, title, description, fix_steps, expected_impact_pct } ],
-       "score": {overall}
-     },
-     "metadata": { "duration_seconds": ..., "apis_called": ["google-psi"], "errors": [] }
-   }
-
-7. Update run-state.json: seo-audit → completed
-
-8. Output summary: "✅ SEO Audit completado. Score: {score}/100. {N} issues ({critical} critical, {high} high)."
-```
-
----
-
-## Step 3: Own Media Audit (`trust-engine own-media {slug}`)
-
-**Purpose**: Scan blog, social profiles, schemas, and tech stack.
-
-**Prerequisite**: foundation-import completed.
-
-```
-1. Read config.json → get website, brand name, social hints from Foundation
-
-2. Blog Scanner:
-   - web_fetch: {website}/blog (or /blog/, /noticias/, /articles/)
-   - Detect: exists, estimated post count, frequency, last post date, categories
-   - If 404 → try common paths: /blog, /noticias, /news, /insights, /recursos
-   - Check average word count of 2-3 recent posts
-
-3. Social Discovery:
-   For each platform, search via web_fetch or exec:
-   - Instagram: web_fetch "https://www.google.com/search?q=site:instagram.com+{brand_name}" — extract profile URL
-   - LinkedIn: web_fetch "https://www.google.com/search?q=site:linkedin.com/company+{brand_name}" — extract company URL
-   - Twitter/X: web_fetch "https://www.google.com/search?q=site:twitter.com+{brand_name}+OR+site:x.com+{brand_name}"
-   - YouTube: web_fetch "https://www.google.com/search?q=site:youtube.com+{brand_name}+channel"
-   - TikTok: web_fetch "https://www.google.com/search?q=site:tiktok.com+@{brand_name}"
-   - Facebook: web_fetch "https://www.google.com/search?q=site:facebook.com+{brand_name}"
-   
-   For each found: note URL, estimate posting frequency from page content
-
-4. Schema Scanner:
-   - web_fetch the homepage HTML
-   - Search for <script type="application/ld+json"> blocks
-   - ⚠️ If web_fetch strips scripts, use browser tool: 
-     browser action=act kind=evaluate fn="JSON.stringify([...document.querySelectorAll('script[type=\"application/ld+json\"]')].map(s=>JSON.parse(s.textContent)))"
-   - List found schemas, note missing recommended ones based on business type
-
-5. Tech Detector:
-   - From HTML headers and content, detect:
-   - CMS: WordPress (wp-content), Shopify, Wix, Squarespace, custom
-   - Analytics: GA4 (gtag), Mixpanel, Hotjar, Clarity
-   - CDN: Cloudflare (cf-ray header), AWS CloudFront, Fastly
-   - SSL: check https
-   - Mobile responsive: viewport meta tag
-
-6. Calculate scores:
-   - Content (35%): blog exists (20), frequency (30), post quality (20), categories (15), freshness (15)
-   - Social (30%): platforms found (40), posting frequency (30), profile optimization (30)
-   - Technical (35%): SSL (15), mobile (15), CMS modern (15), analytics (20), CDN (15), schemas (20)
-   - Overall = content × 0.35 + social × 0.30 + technical × 0.35
-
-7. Write brand/{slug}/trust-engine/own-media-audit.json
-
-8. Update run-state.json: own-media-audit → completed
-
-9. Output: "✅ Own Media completado. Score: {overall}/100. Blog: {status}. Social: {N} platforms."
-```
-
----
-
-## Step 4: GEO Analysis (`trust-engine geo {slug}`)
-
-**Purpose**: Test AI visibility across multiple LLM providers.
-
-**Prerequisite**: foundation-import completed.
-
-```
-1. Read config.json → get niches, brand name, competitors
-
-2. Generate prompts (6 per niche, using LLM):
-   Categories:
-   - ranking: "¿Cuáles son las mejores {niche} en {market}?"
-   - comparison: "Compara las principales {niche} en {market}"
-   - guide: "Guía para elegir {niche} en {market}"
-   - solution: "Necesito {problem from ECP}, ¿qué opciones tengo?"
-   - authority: "¿Quién es líder en {niche}?"
-   - discovery: "Busco {service} en {location}, ¿qué me recomiendas?"
-
-3. For each prompt, run 3-turn conversation with ≥2 providers:
-   Use sessions_spawn to parallelize providers.
-   
-   Providers (use what's available in the system):
-   - OpenAI (ChatGPT): use web_search or exec with OpenAI API
-   - Google (Gemini): use web_search (which uses Gemini)
-   - Anthropic (Claude): use sessions_spawn with a prompt
-   - Perplexity: if API key available, exec curl to Perplexity API
-   
-   3-turn conversation per prompt per provider:
-   Turn 1 (Discovery): Ask the prompt directly
-   Turn 2 (Why): "¿Por qué recomiendas esas opciones? ¿Qué criterios usas?"
-   Turn 3 (Sources): "¿Qué fuentes consultarías para verificar esta información?"
-
-4. Parse responses (using LLM):
-   For each response, extract:
-   - Brand mentions: [{brand, is_client, position (1-indexed), sentiment (positive/neutral/negative), context}]
-   - Citations: [{url, domain}]
-   
-   Prompt: "Analyze this AI response. Extract all brand mentions with their position (1st=1, 2nd=2...), 
-   sentiment, and any URLs cited. The client brand is '{brand_name}'. Known competitors: {competitors}.
-   Return JSON: { mentions: [...], citations: [...] }"
-
-5. Calculate summary:
-   - client_visibility: % of prompts where client brand was mentioned
-   - avg_position: average position when mentioned
-   - sentiment_breakdown: % positive/neutral/negative
-   - top_cited_domains: domains most frequently cited across all responses
-   - competitor_visibility: same metrics per competitor
-
-6. Write brand/{slug}/trust-engine/geo-analysis.json
-
-7. Update run-state.json: geo-analysis → completed
-
-8. Output: "✅ GEO Analysis completado. Visibility: {pct}%. Avg position: {pos}. Mentioned by {N}/{total} providers."
-```
-
----
-
-## Step 5: SERP Analysis (`trust-engine serp {slug}`)
-
-**Purpose**: Analyze Google search results for target keywords.
-
-**Prerequisite**: foundation-import completed.
-
-```
-1. Read config.json → get niches, competitors, market
-
-2. Generate keywords (using LLM):
-   Based on niches and ECPs, generate 15-30 target keywords across categories:
-   - ranking: "mejor {service} {location}"
-   - comparison: "{brand} vs {competitor}", "comparativa {service}"
-   - guide: "cómo elegir {service}", "guía {service}"
-   - solution: "{problem} solución", "tratamiento para {problem}"
-   - authority: "{service} expertos", "líder en {service}"
-   - discovery: "{service} cerca de mí", "{service} {city}"
-
-3. Search each keyword via Serper.dev:
-   exec: curl -s -X POST "https://google.serper.dev/search" \
-     -H "X-API-KEY: $SERPER_API_KEY" \
-     -H "Content-Type: application/json" \
-     -d '{"q": "{keyword}", "gl": "{country_code}", "hl": "{language}", "num": 10}'
-   
-   Parse: organic results with position, title, link, snippet, domain
-
-4. Classify results (using LLM for batches):
-   - Content type: guide, comparison, review, directory, service, news, forum, video
-   - Domain type: competitor, media, directory, forum, own, other
-   
-   Classification heuristics (try before LLM):
-   - URL contains /vs/ or /compare → comparison
-   - Domain is yelp/tripadvisor/trustpilot → directory
-   - Domain matches competitor list → competitor
-   - Domain matches client → own
-   - URL contains /blog/ or /guide/ → guide
-
-5. Write brand/{slug}/trust-engine/serp-analysis.json
-
-6. Update run-state.json: serp-analysis → completed
-
-7. Output: "✅ SERP Analysis completado. {N} keywords analyzed. Client in top 10: {N}/{total}."
-```
-
----
-
-## Step 6: Gap Analysis (`trust-engine gaps {slug}`)
-
-**Purpose**: Cross-reference GEO citations with SERP results to find gaps.
-
-**Dependencies**: geo-analysis + serp-analysis must be completed.
-
-```
-1. Read geo-analysis.json → extract all citations (URLs + domains)
-2. Read serp-analysis.json → extract all SERP results (URLs + domains)
-
-3. Find gaps (using LLM):
-   - Domains where competitors appear in SERP but client doesn't
-   - URLs cited by AI providers where client is NOT mentioned
-   - Cross-reference: URLs that appear in BOTH GEO citations and SERP results = high opportunity
-   
-   For each gap:
-   - type: geo_only (only in AI citations), serp_only (only in Google), both (in both)
-   - competitors_present: which competitors appear there
-   - opportunity_score: min(30, n_competitors×10) + (25 if both, 15 if geo_only, 10 if serp_only) + bonuses
-
-4. Write brand/{slug}/trust-engine/gap-analysis.json
-
-5. Update run-state.json: gap-analysis → completed
-
-6. Output: "✅ Gap Analysis completado. {total} gaps found ({high_opp} high opportunity)."
-```
-
----
-
-## Step 7: Recommendations (`trust-engine recs {slug}`)
-
-**Purpose**: Aggregate all findings into prioritized recommendations.
-
-**Dependencies**: seo-audit + own-media-audit + geo-analysis + gap-analysis must be completed.
-
-```
-1. Read all completed module JSONs:
-   - seo-audit.json → issues
-   - own-media-audit.json → gaps in social, blog, tech
-   - geo-analysis.json → visibility gaps per provider
-   - gap-analysis.json → opportunities
-
-2. Generate recommendations (using LLM):
-   Prompt: "Based on these audit results, generate prioritized recommendations.
-   Each recommendation must have: id, source, severity, category, title, description,
-   fix_steps, expected_impact_pct, effort (low/medium/high), priority_score.
-   
-   Use Princeton GEO benchmarks for impact:
-   - Citing authoritative sources: +30-40%
-   - Statistics with sources: +15-25%
-   - Expert quotes (blockquote): +10-20%
-   - FAQ JSON-LD: +10-15%
-   - Authoritative tone: +5-15%
-   
-   Priority score = severity_weight × impact × (1/effort)
-   Severity weights: critical=4, high=3, medium=2, low=1"
-
-3. Write brand/{slug}/trust-engine/recommendations.json
-
-4. Update run-state.json: recommendations → completed
-
-5. Output: "✅ Recommendations generadas. {N} total ({critical} critical, {high} high). Top 3: {list}."
-```
-
----
-
-## Step 8: Keyword Research (`trust-engine keywords {slug}`)
-
-**Purpose**: Deep keyword research with volume/CPC/KD data.
-
-**Dependencies**: serp-analysis (to avoid duplicates).
-
-```
-1. Read config.json → niches
-2. Read serp-analysis.json → already-analyzed keywords
-
-3. Generate expanded keyword list (using LLM):
-   For each niche, generate 20-40 keywords across 6 categories.
-   Exclude keywords already in serp-analysis.
-
-4. Enrich with DataForSEO (if API key available):
-   exec: curl -s -X POST "https://api.dataforseo.com/v3/keywords_data/google_ads/search_volume/live" \
-     -H "Authorization: Basic $DATAFORSEO_AUTH" \
-     -H "Content-Type: application/json" \
-     -d '[{"keywords": [...], "location_code": 2724, "language_code": "es"}]'
-   
-   Extract: search_volume, cpc, competition (kd)
-   
-   If no DataForSEO key → use LLM estimates with disclaimer
-
-5. Calculate opportunity score:
-   kd_factor = (100 - kd) / 100
-   commercial = min(1.0, (volume × max(cpc, 0.1)) / 5000)
-   score = 0.2 + commercial × 0.5 + kd_factor × 0.3
-
-6. Write brand/{slug}/trust-engine/keywords.json
-
-7. Update run-state.json: keywords → completed
-
-8. Output: "✅ Keywords generadas. {N} total. Top 5 by opportunity: {list}."
-```
-
----
-
-## Step 9: Influencer Discovery (`trust-engine influencers {slug}`)
-
-**Purpose**: Find relevant influencers/partners on YouTube and Instagram.
-
-**Prerequisite**: foundation-import completed.
-
-```
-1. Read config.json → niches, market, language
-
-2. YouTube Discovery:
-   For each niche, search YouTube:
-   exec: curl -s "https://www.googleapis.com/youtube/v3/search?part=snippet&q={niche_keyword}&type=channel&maxResults=10&key=$YOUTUBE_API_KEY"
-   
-   If no YouTube API key → use web_search as fallback:
-   web_search: "site:youtube.com {niche} {market} channel"
-
-3. Instagram Discovery:
-   For each niche, search via Google:
-   web_search: "site:instagram.com {niche} {market} influencer"
-   
-   Or via Google CSE if available:
-   exec: curl -s "https://www.googleapis.com/customsearch/v1?q={niche}+{market}&cx=$GOOGLE_CSE_CX&key=$GOOGLE_CSE_KEY&siteSearch=instagram.com"
-
-4. Score and brief (using LLM):
-   For each found profile, generate:
-   - relevance_score (0-100)
-   - brief describing why they're relevant
-   - suggested collaboration type
-
-5. Write brand/{slug}/trust-engine/influencers.json
-
-6. Update run-state.json: influencers → completed
-
-7. Output: "✅ Influencers descubiertos. {N} total ({yt} YouTube, {ig} Instagram)."
-```
-
----
-
-## Step 10: Content Generation (`trust-engine content {slug} {keyword-id}`)
-
-**Purpose**: Generate article for an approved keyword.
-
-**Prerequisite**: keywords.json must exist, keyword must be status=approved.
-
-```
-1. Read keywords.json → find keyword by id
-2. Read config.json → brand voice, niches
-3. Read brand-voice (if exists) → tone, vocabulary
-
-4. Generate brief (using LLM):
-   Title, outline, target word count, template type, SEO directives
-
-5. Show brief to user → wait for approval
-
-6. Generate article (using LLM):
-   - 1500-2500 words
-   - Include direct answer blockquote at top
-   - FAQ section (3-5 questions)
-   - Citations inline with [Source](url) format
-   - Brand voice applied
-   - GEO-optimized structure
-
-7. Generate JSON-LD schema:
-   - Article schema
-   - FAQPage schema
-   - Author Person schema (E-E-A-T)
-
-8. Write to content-briefs.json (append)
-
-9. Update keyword status in keywords.json → "content-created"
-
-10. Output: article in thread for review
-```
-
----
-
-## `trust-engine status {slug}`
-
-```
-Read brand/{slug}/trust-engine/run-state.json
-Display status of each module with emoji:
+Read run-state.json
+Display each module:
   ⬚ pending | 🔒 locked (deps not met) | ⏳ running | ✅ completed | ❌ error
-
-Show which modules can be run next (pending + deps met).
-Show MC link for visual dashboard.
+Show quality gate results for completed modules
+Show MC link
 ```
 
 ---
 
-## `trust-engine full {slug}`
+## `full` Command — Run All
 
 ```
-Run all modules in optimal sequence:
+Sequence:
 1. init (if not completed)
-2. Parallel: seo-audit + own-media-audit + geo-analysis
-3. serp-analysis
-4. gap-analysis (needs geo + serp)
-5. recommendations (needs all audits + gaps)
-6. keywords (needs serp)
-7. influencers
+2. PARALLEL: seo-audit + own-media + geo (via sessions_spawn if available)
+3. serp (after init)
+4. gaps (after geo + serp)
+5. recs (after all audits + gaps)
+6. keywords (after serp)
+7. influencers (after init)
 
-Use sessions_spawn for parallel modules in step 2.
-After each module, update progress in Discord thread.
+Progress updates in Discord: after each module completes.
+Format: "🔄 Trust Engine ({N}/9): {module} ✅ — {summary}"
 ```
 
 ---
 
-## Output Format Reference
+## Output Format
 
-All JSON files follow the PDR v5 schemas. See brand/sanchocmo/prds/escudero-pdr-v5.md sections 3.1-3.10 for full schemas.
+All JSON files follow standard format:
+```json
+{
+  "module": "{module_name}",
+  "version": 1,
+  "created_at": "ISO datetime",
+  "updated_at": "ISO datetime",
+  "status": "completed",
+  "data": { ... module-specific ... },
+  "metadata": { "duration_seconds", "apis_called": [], "errors": [] }
+}
+```
 
-## Self-QA Checklist
+---
 
-- [ ] Foundation gate check passed
-- [ ] run-state.json updated after each module
-- [ ] Dependency gates enforced
-- [ ] JSON files follow standard format (module, version, created_at, status, data, metadata)
-- [ ] MC link provided in output (using mcToken from clients.json)
-- [ ] No backend Python calls — all native OpenClaw
-- [ ] Progress updates in Discord thread (max 2 messages: start + result)
+## Self-QA Checklist (run BEFORE marking any module completed)
+
+- [ ] Quality gate for this module PASSES (check all ✅ items)
+- [ ] run-state.json updated
+- [ ] JSON follows standard format
+- [ ] No invented/estimated data where real data was available
+- [ ] All available APIs were used (not treated as optional)
+- [ ] MC link provided in output
+- [ ] No more than 3 tool calls without a progress update to user
+
+<!-- Self-QA: v6.0 | 2026-03-25 -->

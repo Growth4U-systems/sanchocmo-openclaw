@@ -11,5 +11,16 @@
     "approvedBy": "admin",
     "timestamp": "2026-03-24T15:16:07.022Z",
     "sent": false
+  },
+  {
+    "id": "4f320eaa-b877-41d3-8547-ebcfeafe1dfc",
+    "type": "idea_approved",
+    "ideaId": "4957b2db-1641-4df1-b31d-2018d2fa1ac2",
+    "ideaTitle": "estrategias de growth marketing para SaaS B2B",
+    "ideaType": "content",
+    "channels": [],
+    "approvedBy": "admin",
+    "timestamp": "2026-03-25T20:59:15.955Z",
+    "sent": false
   }
 ]

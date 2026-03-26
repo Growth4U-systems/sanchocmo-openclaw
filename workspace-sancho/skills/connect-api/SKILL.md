@@ -32,6 +32,7 @@ API name mapping (common names → catalog IDs):
 - posthog → `posthog`
 - instantly → `instantly`
 - lemlist → `lemlist`
+- slack → `slack`
 - notion → `notion`
 - metricool → `metricool`
 - amplitude → `amplitude`

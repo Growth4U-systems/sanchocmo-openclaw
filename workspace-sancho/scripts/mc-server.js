@@ -503,6 +503,7 @@ const SERVICE_ENV_MAP = {
   fal:        [{ key: 'FAL_API_KEY', label: 'API Key', placeholder: '' }],
   wavespeed:  [{ key: 'WAVESPEED_API_KEY', label: 'API Key', placeholder: '' }],
   dumpling:   [{ key: 'DUMPLING_API_KEY', label: 'API Key', placeholder: '' }],
+  slack:      [{ key: 'SLACK_BOT_TOKEN', label: 'Bot Token', placeholder: 'xoxb-...' }],
   instantly:  [{ key: 'INSTANTLY_API_KEY', label: 'API Key', placeholder: '' }],
   metricool:  [{ key: 'METRICOOL_API_KEY', label: 'API Key', placeholder: '' }],
 };
@@ -747,6 +748,15 @@ function checkService(serviceId) {
         } catch (e) { resolve({ status: 'error', lastCheck: now, details: { error: e.message.slice(0, 200) } }); }
         break;
       }
+      case 'slack': {
+        const key = getKey('SLACK_BOT_TOKEN');
+        if (!key) return resolve({ status: 'not-configured', lastCheck: now, details: { error: 'SLACK_BOT_TOKEN not set' } });
+        try {
+          const res = execSync(`curl -s -o /dev/null -w "%{http_code}" -H "Authorization: Bearer ${key}" https://slack.com/api/auth.test -m 10`, { timeout, encoding: 'utf-8' }).trim();
+          resolve({ status: res === '200' ? 'ok' : 'error', lastCheck: now, details: { httpCode: res } });
+        } catch (e) { resolve({ status: 'error', lastCheck: now, details: { error: e.message.slice(0, 200) } }); }
+        break;
+      }
       case 'instantly': {
         // Instantly.ai — cold email platform, web login (no env var API key typically)
         const key = getKey('INSTANTLY_API_KEY');
@@ -809,7 +819,7 @@ function checkService(serviceId) {
 
 async function runHealthChecks(serviceFilter) {
   const health = loadApiHealth();
-  const allServices = ['anthropic', 'openrouter', 'openai', 'gemini', 'xai', 'minimax', 'brave', 'apify', 'firecrawl', 'serper', 'dataforseo', 'notion', 'supabase', 'fal', 'wavespeed', 'dumpling', 'instantly', 'metricool', 'nanobanana', 'remotion', 'gog', 'openclaw', 'discord'];
+  const allServices = ['anthropic', 'openrouter', 'openai', 'gemini', 'xai', 'minimax', 'brave', 'apify', 'firecrawl', 'serper', 'dataforseo', 'notion', 'supabase', 'slack', 'fal', 'wavespeed', 'dumpling', 'instantly', 'metricool', 'nanobanana', 'remotion', 'gog', 'openclaw', 'discord'];
   const toCheck = serviceFilter === 'all' ? allServices : allServices.includes(serviceFilter) ? [serviceFilter] : [];
 
   if (toCheck.length === 0) return { error: `Unknown service: ${serviceFilter}` };
@@ -824,6 +834,38 @@ async function runHealthChecks(serviceFilter) {
 }
 
 // ========== Portal: Client-scoped access ==========
+
+// Ensure brand directory structure exists for a client
+function ensureBrandStructure(slug) {
+  const brandDir = path.join(BASE, 'brand', slug);
+  const dirs = [
+    '', 'company-brief', 'market-and-us', 'market-and-us/market', 'market-and-us/competitors',
+    'market-and-us/self', 'market-and-us/swot', 'go-to-market', 'go-to-market/ecps',
+    'go-to-market/positioning', 'go-to-market/pricing', 'brand-identity',
+    'brand-identity/voice-profile', 'brand-identity/visual-identity',
+    'strategic-plan', 'presentations', 'projects', 'chat/threads',
+  ];
+  for (const d of dirs) {
+    const full = path.join(brandDir, d);
+    if (!fs.existsSync(full)) fs.mkdirSync(full, { recursive: true });
+  }
+  // Create foundation-state.json if it doesn't exist
+  const stateFile = path.join(brandDir, 'foundation-state.json');
+  if (!fs.existsSync(stateFile)) {
+    const state = {
+      version: '2.0',
+      started_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      sections: {
+        'company-brief': { status: 'not-started', skills: { 'company-context': { status: 'not-started' }, 'business-model': { status: 'not-started' }, 'budget': { status: 'not-started' } } },
+        'market-and-us': { status: 'not-started', pillars: { 'market-analysis': { status: 'not-started' }, 'competitor-analysis': { status: 'not-started' }, 'self-analysis': { status: 'not-started' }, 'swot': { status: 'not-started' } }, syntheses: {} },
+        'go-to-market': { status: 'not-started', pillars: { 'niche-discovery': { status: 'not-started' }, 'positioning': { status: 'not-started' }, 'pricing': { status: 'not-started' } }, syntheses: {} },
+        'brand-identity': { status: 'not-started', pillars: { 'brand-voice': { status: 'not-started' }, 'visual-identity': { status: 'not-started' } }, syntheses: {} },
+      },
+    };
+    fs.writeFileSync(stateFile, JSON.stringify(state, null, 2));
+  }
+}
 
 function loadClientsData() {
   try { return JSON.parse(fs.readFileSync(CLIENTS_FILE, 'utf-8')); }
@@ -844,14 +886,151 @@ function saveIdeas(slug, ideas) {
   fs.mkdirSync(dir, { recursive: true });
   fs.writeFileSync(path.join(dir, 'ideas.json'), JSON.stringify(ideas, null, 2));
 }
-function loadRecurringTasks(slug) {
-  const file = path.join(BASE, 'brand', slug, 'idea-generation', 'recurring-tasks.json');
-  try { return JSON.parse(fs.readFileSync(file, 'utf-8')); } catch { return []; }
+// --- Recurring Tasks: reads from OpenClaw crons (source of truth) + local JSON overlay ---
+
+// Category detection from cron name/prompt
+function _detectCronCategory(name, prompt) {
+  const n = (name || '').toLowerCase();
+  const p = (prompt || '').toLowerCase();
+  if (n.includes('metric') || n.includes('cost') || n.includes('dashboard') || n.includes('regenerar')) return 'metrics';
+  if (n.includes('pulse') || n.includes('intelligence') || n.includes('synthesis') || n.includes('thief') || n.includes('signal') || n.includes('idea')) return 'intelligence';
+  if (n.includes('outreach') || n.includes('lead') || n.includes('call prep') || n.includes('prospecting')) return 'outreach';
+  if (n.includes('content') || n.includes('blog') || n.includes('social') || n.includes('newsletter')) return 'content';
+  if (n.includes('health') || n.includes('backup') || n.includes('watchdog') || n.includes('memory') || n.includes('update') || n.includes('token') || n.includes('image-opt') || n.includes('compact') || n.includes('changelog') || n.includes('activity') || n.includes('mejora') || n.includes('skill-improvement') || n.includes('pattern')) return 'system';
+  return 'other';
 }
+
+// Humanize cron expression
+function _humanizeCron(schedule) {
+  if (!schedule) return '—';
+  if (schedule.kind === 'every') {
+    const h = Math.round((schedule.everyMs || 0) / 3600000);
+    return h >= 24 ? `Cada ${Math.round(h/24)}d` : `Cada ${h}h`;
+  }
+  const expr = schedule.expr || '';
+  const tz = schedule.tz || '';
+  const parts = expr.split(/\s+/);
+  if (parts.length < 5) return expr;
+  const [min, hour, dom, mon, dow] = parts;
+  const hStr = hour.includes(',') ? hour.split(',').map(h => `${h}:${min.padStart(2,'0')}`).join(', ') : `${hour}:${min.padStart(2,'0')}`;
+  const dowMap = { '0': 'Dom', '1': 'Lun', '2': 'Mar', '3': 'Mié', '4': 'Jue', '5': 'Vie', '6': 'Sáb' };
+  let dayStr = '';
+  if (dow === '*' && dom === '*') dayStr = 'Cada día';
+  else if (dow === '1-5') dayStr = 'L-V';
+  else if (dow === '0-4') dayStr = 'D-J';
+  else if (dow !== '*') {
+    dayStr = dow.split(',').map(d => dowMap[d] || d).join(', ');
+    if (dow.includes('-')) {
+      const [a,b] = dow.split('-');
+      dayStr = (dowMap[a]||a) + '-' + (dowMap[b]||b);
+    }
+  }
+  else if (dom === '1') dayStr = 'Día 1 del mes';
+  else dayStr = `Día ${dom}`;
+  return `${dayStr} ${hStr}`;
+}
+
+// Extract client slug from cron name (e.g. "Daily Pulse — Growth4U" → "growth4u")
+function _extractSlugFromCron(cronName, clients) {
+  const lower = (cronName || '').toLowerCase();
+  for (const c of clients) {
+    if (lower.includes(c.name.toLowerCase()) || lower.includes(c.slug.toLowerCase())) return c.slug;
+  }
+  // Check if prompt mentions a slug
+  return null;
+}
+
+let _cronCache = null;
+let _cronCacheTs = 0;
+const CRON_CACHE_TTL = 15000; // 15 seconds
+
+function _loadCronsFromOpenClaw() {
+  const now = Date.now();
+  if (_cronCache && (now - _cronCacheTs) < CRON_CACHE_TTL) return _cronCache;
+  try {
+    const ocBin = fs.existsSync('/opt/homebrew/bin/openclaw') ? '/opt/homebrew/bin/openclaw' : 'openclaw';
+    const raw = execSync(`${ocBin} cron list --json 2>/dev/null`, { timeout: 10000, encoding: 'utf-8', env: { ...process.env, PATH: (process.env.PATH || '') + ':/opt/homebrew/bin:/usr/local/bin' } });
+    _cronCache = JSON.parse(raw).jobs || [];
+    _cronCacheTs = now;
+    return _cronCache;
+  } catch (e) {
+    if (_cronCache) return _cronCache; // stale cache better than nothing
+    return [];
+  }
+}
+
+function loadRecurringTasks(slug) {
+  const clients = loadClients();
+  const crons = _loadCronsFromOpenClaw();
+  const tasks = [];
+
+  for (const cron of crons) {
+    // Determine which client this cron belongs to
+    let cronSlug = _extractSlugFromCron(cron.name, clients);
+    // If prompt mentions a brand/{slug}/ path, extract
+    if (!cronSlug) {
+      const promptMatch = (cron.payload?.message || '').match(/brand\/([a-z0-9_-]+)\//i);
+      if (promptMatch) {
+        // Validate it's an actual client slug, not a subdirectory
+        const candidateSlug = promptMatch[1];
+        if (clients.some(c => c.slug === candidateSlug)) cronSlug = candidateSlug;
+      }
+    }
+
+    const category = _detectCronCategory(cron.name, cron.payload?.message);
+
+    // Filter: if slug specified, only that client's crons + system crons
+    // If no slug, return all
+    const isSystem = category === 'system' || !cronSlug;
+    if (slug && cronSlug && cronSlug !== slug) continue;
+    if (slug && isSystem && !cronSlug) continue; // skip system crons without slug when filtering
+
+    const sched = cron.schedule || {};
+    const state = cron.state || {};
+
+    tasks.push({
+      id: cron.id,
+      name: cron.name || '—',
+      task_type: category,
+      schedule: _humanizeCron(sched),
+      schedule_raw: sched,
+      status: cron.enabled ? 'active' : 'paused',
+      last_run_at: state.lastRunAtMs ? new Date(state.lastRunAtMs).toISOString() : null,
+      next_run_at: state.nextRunAtMs ? new Date(state.nextRunAtMs).toISOString() : null,
+      last_status: state.lastStatus || null,
+      last_duration_ms: state.lastDurationMs || null,
+      consecutive_errors: state.consecutiveErrors || 0,
+      ideas_generated: 0, // TODO: count from idea_bank
+      agent: cron.agentId || 'sancho',
+      model: cron.payload?.model || '—',
+      prompt: cron.payload?.message || '',
+      description: cron.description || '',
+      client_slug: cronSlug || null,
+      _source: 'openclaw-cron',
+      created_at: cron.createdAtMs ? new Date(cron.createdAtMs).toISOString() : null,
+    });
+  }
+
+  // Also merge any local recurring-tasks.json entries (manual tasks not yet synced to crons)
+  const file = path.join(BASE, 'brand', slug || '_global', 'idea-generation', 'recurring-tasks.json');
+  try {
+    const local = JSON.parse(fs.readFileSync(file, 'utf-8'));
+    for (const t of local) {
+      if (!tasks.find(c => c.id === t.id)) {
+        tasks.push({ ...t, _source: 'local-json' });
+      }
+    }
+  } catch {}
+
+  return tasks;
+}
+
 function saveRecurringTasks(slug, tasks) {
+  // Save only local-json tasks; cron-sourced tasks are managed via openclaw cron
+  const localTasks = tasks.filter(t => t._source !== 'openclaw-cron');
   const dir = path.join(BASE, 'brand', slug, 'idea-generation');
   fs.mkdirSync(dir, { recursive: true });
-  fs.writeFileSync(path.join(dir, 'recurring-tasks.json'), JSON.stringify(tasks, null, 2));
+  fs.writeFileSync(path.join(dir, 'recurring-tasks.json'), JSON.stringify(localTasks, null, 2));
 }
 
 function getAdminToken() {
@@ -1416,10 +1595,10 @@ ${detailViews}
 
 <div id="te-launch-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:500;align-items:center;justify-content:center;">
   <div style="background:#FDF8EF;border:3px solid #1A1A2E;border-radius:12px;padding:28px;width:480px;max-width:90vw;box-shadow:6px 6px 0 #1A1A2E;">
-    <h3 style="font-family:'Space Grotesk',sans-serif;margin-bottom:12px;color:#1E3A5F;">▶ Lanzar Módulo</h3>
-    <p style="font-size:14px;color:#5D5348;margin-bottom:16px;">Escribe este comando en Discord para ejecutar el módulo:</p>
-    <pre id="te-launch-cmd" style="background:#F5F0E6;padding:16px;border-radius:8px;font-size:14px;cursor:pointer;border:2px solid #D4C9B8;white-space:pre-wrap;" onclick="navigator.clipboard.writeText(this.textContent);this.style.borderColor='#4A5D23';setTimeout(()=>this.style.borderColor='#D4C9B8',1000);">trust-engine init ${slug}</pre>
-    <p style="font-size:12px;color:#5D5348;margin-top:8px;">💡 Click para copiar</p>
+    <h3 style="font-family:'Space Grotesk',sans-serif;margin-bottom:12px;color:#1E3A5F;">▶ Módulo en ejecución</h3>
+    <p style="font-size:14px;color:#5D5348;margin-bottom:16px;">Sancho está ejecutando el módulo. La página se recargará automáticamente en 30 segundos.</p>
+    <pre id="te-launch-cmd" style="background:#F5F0E6;padding:16px;border-radius:8px;font-size:14px;border:2px solid #D4C9B8;white-space:pre-wrap;">...</pre>
+    <p style="font-size:12px;color:#5D5348;margin-top:8px;">⏳ Recargando en 30s...</p>
     <div style="display:flex;justify-content:flex-end;margin-top:16px;">
       <button onclick="document.getElementById('te-launch-modal').style.display='none'" class="te-btn te-btn-outline">Cerrar</button>
     </div>
@@ -1470,10 +1649,43 @@ ${detailViews}
 </style>
 <script>
 const TE_CMDS = ${JSON.stringify(Object.fromEntries(MODULE_DEFS.map(m => [m.id, m.cmd])))};
-function launchModule(modId, slug) {
+async function launchModule(modId, slug) {
   const cmd = (TE_CMDS[modId] || 'trust-engine') + ' ' + slug;
-  document.getElementById('te-launch-cmd').textContent = cmd;
-  document.getElementById('te-launch-modal').style.display = 'flex';
+  const btn = event?.target;
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Lanzando...'; }
+  try {
+    const idx = window.location.pathname.indexOf('/trust-engine/');
+    const basePath = idx > 0 ? window.location.pathname.substring(0, idx) : '';
+    const res = await fetch(basePath + '/api/mc-chat/send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        slug: slug,
+        threadId: 'trust-engine-' + slug,
+        threadName: 'Trust Engine — ' + slug,
+        text: cmd,
+        userName: 'Mission Control',
+        skill: 'trust-engine'
+      })
+    });
+    if (res.ok) {
+      if (btn) { btn.textContent = '✅ Lanzado'; btn.style.background = '#4A5D23'; }
+      // Show status message
+      const modal = document.getElementById('te-launch-modal');
+      document.getElementById('te-launch-cmd').textContent = '✅ Módulo "' + modId + '" enviado a Sancho. Ejecutándose en background...';
+      modal.style.display = 'flex';
+      // Auto-reload after 30s to check for updates
+      setTimeout(() => location.reload(), 30000);
+    } else {
+      throw new Error('HTTP ' + res.status);
+    }
+  } catch (e) {
+    console.error('Launch error:', e);
+    if (btn) { btn.textContent = '❌ Error'; btn.disabled = false; }
+    // Fallback: show command to copy
+    document.getElementById('te-launch-cmd').textContent = cmd;
+    document.getElementById('te-launch-modal').style.display = 'flex';
+  }
 }
 function showModuleDetail(modId) {
   document.getElementById('te-dashboard').style.display = 'none';
@@ -1800,10 +2012,41 @@ h1{font-family:'Space Grotesk',sans-serif;color:var(--navy);font-size:28px;margi
 .edit-btn{background:none;border:none;cursor:pointer;font-size:13px;color:var(--muted);padding:2px 4px;opacity:0.5;transition:opacity .15s;}
 .edit-btn:hover{opacity:1;color:var(--rust);}
 
+/* Sidebar nav */
+.sidebar{position:fixed;top:0;left:0;width:220px;height:100vh;background:var(--card);border-right:2px solid var(--border);padding:20px 16px;z-index:100;overflow-y:auto;display:flex;flex-direction:column;}
+.sidebar .logo{font-family:'Space Grotesk',sans-serif;font-size:22px;color:var(--rust);margin-bottom:2px;}
+.sidebar .logo-sub{font-size:12px;color:var(--muted);margin-bottom:14px;}
+.sidebar .ns{font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin:14px 0 6px 12px;font-weight:600;}
+.sidebar a{display:block;padding:8px 12px;color:var(--muted);text-decoration:none;font-size:14px;border-radius:8px;margin-bottom:1px;transition:all .15s;font-weight:400;}
+.sidebar a:hover{background:var(--bg);color:var(--text);}
+.sidebar a.active{background:var(--bg);color:var(--rust);font-weight:600;}
+.sidebar .nav-footer{margin-top:auto;padding-top:16px;border-top:1px solid var(--border);}
+.sidebar .theme-toggle{display:flex;align-items:center;gap:8px;padding:8px 12px;font-size:12px;color:var(--muted);cursor:pointer;border-radius:8px;}
+.sidebar .theme-toggle:hover{background:var(--bg);color:var(--text);}
+.main-content{margin-left:220px;padding:24px 32px;overflow-x:auto;}
+@media(max-width:768px){
+  .sidebar{display:none;}
+  .main-content{margin-left:0;}
+}
+
 .empty{text-align:center;padding:60px 20px;color:var(--muted);}
 .empty h2{font-family:'Space Grotesk',sans-serif;color:var(--navy);margin-bottom:8px;}
 </style></head><body>
-<a class="back" href="${baseUrl}/">← Mission Control</a>
+<div class="sidebar">
+  <div class="logo">SanchoCMO</div>
+  <div class="logo-sub">Mission Control</div>
+  <div class="ns">${escHtml(clientName)}</div>
+  <a href="${baseUrl}/">📊 Dashboard</a>
+  <a href="${baseUrl}/docs/brand/${slug}/">📂 Documentos</a>
+  <a href="#" class="active">📋 Proyectos</a>
+  <div class="ns">Vista</div>
+  <a href="#" onclick="switchView('projects',this);return false;" id="nav-projects" class="active">📂 Por Proyecto</a>
+  <a href="#" onclick="switchView('kanban',this);return false;" id="nav-kanban">📋 Kanban</a>
+  <div class="nav-footer">
+    <div class="theme-toggle" onclick="document.documentElement.dataset.theme=document.documentElement.dataset.theme==='dark'?'':'dark'">🌗 Tema</div>
+  </div>
+</div>
+<div class="main-content">
 <div class="top-bar">
   <div class="top-left">
     <h1>📋 Proyectos</h1>
@@ -2017,7 +2260,20 @@ document.querySelectorAll('.col-body').forEach(col => {
     }).catch(() => { showToast('Error de conexión', true); setTimeout(() => location.reload(), 1000); });
   });
 });
+
+// Sidebar view toggle sync
+function switchView(view, tab) {
+  document.querySelectorAll('.view-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.view-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('view-' + view).classList.add('active');
+  // Update tab
+  document.querySelectorAll('.view-tab').forEach(t => { if(t.textContent.toLowerCase().includes(view === 'projects' ? 'proyecto' : 'kanban')) t.classList.add('active'); });
+  // Update sidebar
+  document.getElementById('nav-projects').classList.toggle('active', view === 'projects');
+  document.getElementById('nav-kanban').classList.toggle('active', view === 'kanban');
+}
 </script>
+</div>
 </body></html>`;
 }
 
@@ -2073,9 +2329,260 @@ p{color:#5D5348;font-size:16px;margin:0;}
 
 // ========== End Portal Helpers ==========
 
+// ========== MC-CHAT CHANNEL: Message store + endpoints ==========
+// Stores bot responses from the mc-chat plugin callback and provides
+// endpoints for the frontend to send messages and poll for responses.
+
+const MC_CHAT_SECRET = (() => {
+  try {
+    const cfg = JSON.parse(fs.readFileSync(path.join(BASE, '..', 'openclaw.json'), 'utf-8'));
+    return cfg.channels?.['mc-chat']?.sharedSecret || '';
+  } catch { return ''; }
+})();
+const MC_CHAT_GATEWAY = 'http://127.0.0.1:18789';
+
+// Disk-backed message store per thread
+// Threads stored at brand/{slug}/chat/{shortId}.json
+// In-memory cache for fast reads, flushed to disk on every write
+const mcChatCache = new Map();
+const MC_CHAT_MAX_MSGS = 200; // max messages per thread
+
+function mcChatThreadPath(threadId) {
+  // threadId format: "slug:shortId" or "slug:type:id"
+  const colonIdx = threadId.indexOf(':');
+  if (colonIdx < 0) return null;
+  const slug = threadId.slice(0, colonIdx);
+  const shortId = threadId.slice(colonIdx + 1);
+  // Sanitize shortId for filesystem (replace : with -, remove dangerous chars)
+  const safeId = shortId.replace(/:/g, '-').replace(/[^a-zA-Z0-9\-_]/g, '');
+  const dir = path.join(BASE, 'brand', slug, 'chat');
+  return { dir, file: path.join(dir, safeId + '.json'), slug, shortId: safeId };
+}
+
+function mcChatLoadThread(threadId) {
+  // Check cache first
+  if (mcChatCache.has(threadId)) return mcChatCache.get(threadId);
+  // Try disk
+  const p = mcChatThreadPath(threadId);
+  if (!p) return { messages: [], updatedAt: Date.now() };
+  try {
+    if (fs.existsSync(p.file)) {
+      const data = JSON.parse(fs.readFileSync(p.file, 'utf-8'));
+      mcChatCache.set(threadId, data);
+      return data;
+    }
+  } catch (e) { console.error('[mc-chat] Load error:', p.file, e.message); }
+  return { messages: [], updatedAt: Date.now() };
+}
+
+function mcChatSaveThread(threadId, thread) {
+  const p = mcChatThreadPath(threadId);
+  if (!p) return;
+  try {
+    if (!fs.existsSync(p.dir)) fs.mkdirSync(p.dir, { recursive: true });
+    fs.writeFileSync(p.file, JSON.stringify(thread, null, 2));
+    mcChatCache.set(threadId, thread);
+  } catch (e) { console.error('[mc-chat] Save error:', p.file, e.message); }
+}
+
+function mcChatGetThread(threadId) {
+  return mcChatLoadThread(threadId);
+}
+
+function mcChatAddMessage(threadId, role, text, agent) {
+  const thread = mcChatLoadThread(threadId);
+  const msg = { role, text, agent: agent || undefined, ts: new Date().toISOString() };
+  thread.messages.push(msg);
+  // Trim old messages
+  if (thread.messages.length > MC_CHAT_MAX_MSGS) {
+    thread.messages = thread.messages.slice(-MC_CHAT_MAX_MSGS);
+  }
+  thread.updatedAt = Date.now();
+  mcChatSaveThread(threadId, thread);
+  return msg;
+}
+
 const mcServer = http.createServer((req, res) => {
   let url = req.url.split('?')[0];
   if (url.startsWith('/mc/')) url = url.slice(3);
+
+  // Normalize admin/portal API paths early so mc-chat handlers see clean URLs
+  if (url.startsWith('/admin/')) {
+    const adminParts = url.replace('/admin/', '').split('/');
+    const earlyToken = adminParts[0];
+    if (isValidAdmin(earlyToken)) {
+      req._adminToken = earlyToken;
+      req._adminBase = `/mc/admin/${earlyToken}`;
+    }
+    const apiIdx = url.indexOf('/api/');
+    const webhookIdx = url.indexOf('/webhook/');
+    if (apiIdx !== -1) url = url.slice(apiIdx);
+    else if (webhookIdx !== -1) url = url.slice(webhookIdx);
+  }
+  if (url.startsWith('/portal/')) {
+    const portalParts = url.replace('/portal/', '').split('/');
+    const earlyToken = portalParts[0];
+    const client = findClientByToken(earlyToken);
+    if (client) {
+      req._portalClient = client;
+      req._portalSlug = client.slug;
+    }
+    const apiIdx = url.indexOf('/api/');
+    if (apiIdx !== -1) url = url.slice(apiIdx);
+  }
+
+  // ========== MC-CHAT WEBHOOK: Bot response callback ==========
+  // Plugin sends bot responses here when Sancho replies
+  if (req.method === 'POST' && (url === '/webhook/mc-chat/response' || url === '/mc/webhook/mc-chat/response')) {
+    // Verify shared secret
+    if (MC_CHAT_SECRET && req.headers['x-mc-secret'] !== MC_CHAT_SECRET) {
+      res.writeHead(403, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Forbidden' }));
+      return;
+    }
+    let body = '';
+    req.on('data', chunk => { body += chunk; if (body.length > 500000) req.destroy(); });
+    req.on('end', () => {
+      try {
+        const { slug, threadId, text, agent, ts } = JSON.parse(body);
+        const tid = threadId || `${slug || 'default'}:general`;
+        mcChatAddMessage(tid, 'bot', text, agent);
+        console.log(`[mc-chat] Bot response → ${tid}: ${(text || '').slice(0, 60)}`);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true, messageId: `mc-${Date.now()}` }));
+      } catch (e) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: e.message }));
+      }
+    });
+    return;
+  }
+
+  // ========== MC-CHAT API: Send message from frontend ==========
+  if (req.method === 'POST' && (url === '/api/mc-chat/send' || url === '/mc/api/mc-chat/send')) {
+    let body = '';
+    req.on('data', chunk => { body += chunk; if (body.length > 100000) req.destroy(); });
+    req.on('end', () => {
+      try {
+        const { slug, threadId, threadName, text, userName, linkedTo, skill } = JSON.parse(body);
+        if (!slug || !text) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Missing slug or text' }));
+          return;
+        }
+        const tid = threadId || `${slug}:general`;
+        // Store user message locally
+        mcChatAddMessage(tid, 'user', text);
+        // Forward to Gateway mc-chat plugin inbound webhook
+        const payload = JSON.stringify({
+          slug,
+          threadId: tid,
+          threadName: threadName || tid,
+          text,
+          userId: userName || 'mc-admin',
+          userName: userName || 'Admin',
+          linkedTo: linkedTo || undefined,
+          skill: skill || undefined,
+        });
+        fetch(`${MC_CHAT_GATEWAY}/mc-chat/inbound`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(MC_CHAT_SECRET ? { 'X-MC-Secret': MC_CHAT_SECRET } : {}),
+          },
+          body: payload,
+        }).then(r => r.json()).then(data => {
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ ok: true, chatId: data.chatId || tid }));
+        }).catch(err => {
+          console.error('[mc-chat] Forward error:', err.message);
+          res.writeHead(502, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Gateway unreachable: ' + err.message }));
+        });
+      } catch (e) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: e.message }));
+      }
+    });
+    return;
+  }
+
+  // ========== MC-CHAT API: Get raw doc content (for pinned docs) ==========
+  if (req.method === 'GET' && (url.startsWith('/api/mc-chat/doc/') || url.startsWith('/mc/api/mc-chat/doc/'))) {
+    const cleanUrl = url.replace('/mc/api/mc-chat/doc/', '/api/mc-chat/doc/');
+    const docPath = decodeURIComponent(cleanUrl.replace('/api/mc-chat/doc/', '').split('?')[0]);
+    if (!docPath) {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Missing path' }));
+      return;
+    }
+    // Only allow reading from brand/ directory
+    const fullPath = path.join(BASE, 'brand', docPath);
+    const resolved = path.resolve(fullPath);
+    if (!resolved.startsWith(path.resolve(path.join(BASE, 'brand')))) {
+      res.writeHead(403, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Forbidden' }));
+      return;
+    }
+    try {
+      const content = fs.readFileSync(resolved, 'utf-8');
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, path: docPath, content }));
+    } catch {
+      res.writeHead(404, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: false, error: 'Not found' }));
+    }
+    return;
+  }
+
+  // ========== MC-CHAT API: List threads for a client ==========
+  if (req.method === 'GET' && (url.startsWith('/api/mc-chat/threads/') || url.startsWith('/mc/api/mc-chat/threads/'))) {
+    const cleanUrl = url.replace('/mc/api/mc-chat/threads/', '/api/mc-chat/threads/');
+    const slug = decodeURIComponent(cleanUrl.replace('/api/mc-chat/threads/', '').split('?')[0]);
+    const threads = [];
+    // Read from disk
+    const chatDir = path.join(BASE, 'brand', slug, 'chat');
+    try {
+      if (fs.existsSync(chatDir)) {
+        for (const f of fs.readdirSync(chatDir).filter(f => f.endsWith('.json'))) {
+          try {
+            const data = JSON.parse(fs.readFileSync(path.join(chatDir, f), 'utf-8'));
+            const shortId = f.replace('.json', '');
+            const tid = slug + ':' + shortId;
+            const msgs = data.messages || [];
+            const last = msgs[msgs.length - 1];
+            threads.push({
+              id: tid,
+              shortId,
+              name: shortId.replace(/-/g, ' '),
+              messageCount: msgs.length,
+              updatedAt: data.updatedAt || 0,
+              lastMessage: last ? { role: last.role, text: (last.text || '').slice(0, 80), ts: last.ts } : null,
+            });
+          } catch {}
+        }
+      }
+    } catch {}
+    threads.sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ ok: true, slug, threads }));
+    return;
+  }
+
+  // ========== MC-CHAT API: Get thread messages ==========
+  if (req.method === 'GET' && (url.startsWith('/api/mc-chat/thread/') || url.startsWith('/mc/api/mc-chat/thread/'))) {
+    const cleanUrl = url.replace('/mc/api/mc-chat/thread/', '/api/mc-chat/thread/');
+    const threadId = decodeURIComponent(cleanUrl.replace('/api/mc-chat/thread/', '').split('?')[0]);
+    if (!threadId) {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Missing threadId' }));
+      return;
+    }
+    const thread = mcChatGetThread(threadId);
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ ok: true, threadId, messages: thread?.messages || [] }));
+    return;
+  }
 
   // ========== ACCESS CONTROL ==========
   // Root / landing page (no token)
@@ -2385,6 +2892,7 @@ nav .nav-footer { display:none !important; }
         '/api/projects/',
         '/api/metrics',
         '/api/metrics-plan',
+        '/api/metrics-chat',
         '/api/chat/threads',
         '/api/chat/thread',
         '/api/chat/send',
@@ -2655,10 +3163,44 @@ nav .nav-footer { display:none !important; }
     if (slugParam) {
       result[slugParam] = loadRecurringTasks(slugParam);
     } else {
+      // Global view: group all crons by client
       const clients = loadClients();
-      for (const c of clients) {
-        if (c.slug) result[c.slug] = loadRecurringTasks(c.slug);
+      const crons = _loadCronsFromOpenClaw();
+      const grouped = {};
+      for (const cron of crons) {
+        let cronSlug = _extractSlugFromCron(cron.name, clients);
+        if (!cronSlug) {
+          const promptMatch = (cron.payload?.message || '').match(/brand\/([a-z0-9_-]+)\//i);
+          if (promptMatch && clients.some(c => c.slug === promptMatch[1])) cronSlug = promptMatch[1];
+        }
+        const key = cronSlug || '_system';
+        if (!grouped[key]) grouped[key] = [];
+        const category = _detectCronCategory(cron.name, cron.payload?.message);
+        const sched = cron.schedule || {};
+        const state = cron.state || {};
+        grouped[key].push({
+          id: cron.id,
+          name: cron.name || '—',
+          task_type: category,
+          schedule: _humanizeCron(sched),
+          schedule_raw: sched,
+          status: cron.enabled ? 'active' : 'paused',
+          last_run_at: state.lastRunAtMs ? new Date(state.lastRunAtMs).toISOString() : null,
+          next_run_at: state.nextRunAtMs ? new Date(state.nextRunAtMs).toISOString() : null,
+          last_status: state.lastStatus || null,
+          last_duration_ms: state.lastDurationMs || null,
+          consecutive_errors: state.consecutiveErrors || 0,
+          ideas_generated: 0,
+          agent: cron.agentId || 'sancho',
+          model: cron.payload?.model || '—',
+          prompt: cron.payload?.message || '',
+          description: cron.description || '',
+          client_slug: cronSlug || null,
+          _source: 'openclaw-cron',
+          created_at: cron.createdAtMs ? new Date(cron.createdAtMs).toISOString() : null,
+        });
       }
+      result = grouped;
     }
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify(result));
@@ -2711,10 +3253,65 @@ nav .nav-footer { display:none !important; }
         const tasks = loadRecurringTasks(slug);
         const task = tasks.find(t => t.id === taskId);
         if (!task) { res.writeHead(404, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'Task not found' })); return; }
-        task.status = task.status === 'active' ? 'paused' : 'active';
-        saveRecurringTasks(slug, tasks);
+        const newStatus = task.status === 'active' ? 'paused' : 'active';
+        // If this is an OpenClaw cron, toggle it via CLI
+        if (task._source === 'openclaw-cron') {
+          try {
+            const cmd = newStatus === 'active' ? 'enable' : 'disable';
+            execSync(`openclaw cron ${cmd} ${taskId} 2>/dev/null`, { timeout: 10000 });
+            _cronCache = null; // invalidate cache
+          } catch (e) {
+            res.writeHead(500, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Failed to toggle cron: ' + e.message }));
+            return;
+          }
+        } else {
+          task.status = newStatus;
+          saveRecurringTasks(slug, tasks);
+        }
         res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ ok: true, taskId, newStatus: task.status }));
+        res.end(JSON.stringify({ ok: true, taskId, newStatus }));
+      } catch (e) { res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: e.message })); }
+    });
+    return;
+  }
+  // Update cron prompt via openclaw cron update
+  if (req.method === 'POST' && url === '/api/recurring-tasks/update-prompt') {
+    if (!req._adminToken) {
+      res.writeHead(403, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Admin only' }));
+      return;
+    }
+    let body = '';
+    req.on('data', chunk => { body += chunk; if (body.length > 1e6) req.destroy(); });
+    req.on('end', () => {
+      try {
+        const { taskId, prompt, name } = JSON.parse(body);
+        if (!taskId || !prompt) { res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'Missing taskId or prompt' })); return; }
+        // Write prompt to temp file to avoid shell escaping issues
+        const tmpFile = path.join(BASE, '_system', '.tmp-cron-prompt-' + taskId.slice(0,8) + '.txt');
+        fs.writeFileSync(tmpFile, prompt);
+        const ocBin = fs.existsSync('/opt/homebrew/bin/openclaw') ? '/opt/homebrew/bin/openclaw' : 'openclaw';
+        const envOpts = { timeout: 15000, encoding: 'utf-8', env: { ...process.env, PATH: (process.env.PATH || '') + ':/opt/homebrew/bin:/usr/local/bin' } };
+        try {
+          // Use openclaw cron update with --prompt-file
+          execSync(`${ocBin} cron update ${taskId} --prompt-file "${tmpFile}" 2>/dev/null`, envOpts);
+        } catch (e1) {
+          // Fallback: try with --prompt flag (older versions)
+          try {
+            execSync(`${ocBin} cron update ${taskId} --prompt "${tmpFile}" 2>/dev/null`, envOpts);
+          } catch (e2) {
+            // Last resort: delete + recreate? For now just report error
+            try { fs.unlinkSync(tmpFile); } catch {}
+            res.writeHead(500, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Failed to update cron prompt. Use `openclaw cron update` manually.' }));
+            return;
+          }
+        }
+        try { fs.unlinkSync(tmpFile); } catch {}
+        _cronCache = null; // invalidate cache
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true, taskId }));
       } catch (e) { res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: e.message })); }
     });
     return;
@@ -3909,6 +4506,8 @@ async function doTest() {
     return;
   }
 
+
+
   // === API: Client Integrations — catalog ===
   if (req.method === 'GET' && url === '/api/client-integrations/catalog') {
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -4178,6 +4777,57 @@ async function doTest() {
     return;
   }
 
+  // === API: Metrics Chat (wraps mc-chat for metrics-specific thread) ===
+  if (req.method === 'POST' && url === '/api/metrics-chat') {
+    let body = '';
+    req.on('data', chunk => { body += chunk; if (body.length > 50000) req.destroy(); });
+    req.on('end', () => {
+      try {
+        const { slug, message, threadId } = JSON.parse(body);
+        if (!slug || !message) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Missing slug or message' }));
+          return;
+        }
+        const tid = threadId || `${slug}:metrics`;
+        const threadName = `📊 Métricas y Resultados — ${slug}`;
+
+        // Use mc-chat system to relay
+        const payload = JSON.stringify({
+          slug,
+          threadId: tid,
+          threadName,
+          text: message,
+          userId: 'mc-admin',
+          userName: 'Admin (MC)',
+          linkedTo: 'metrics',
+          skill: 'metrics-collector',
+        });
+
+        const gatewayUrl = typeof MC_CHAT_GATEWAY !== 'undefined' ? MC_CHAT_GATEWAY : 'http://localhost:18790';
+        fetch(`${gatewayUrl}/mc-chat/inbound`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(typeof MC_CHAT_SECRET !== 'undefined' && MC_CHAT_SECRET ? { 'X-MC-Secret': MC_CHAT_SECRET } : {}),
+          },
+          body: payload,
+        }).then(r => r.json()).then(data => {
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ ok: true, threadId: tid, reply: 'Mensaje enviado al hilo de métricas. Te respondo por Discord. 💬' }));
+        }).catch(err => {
+          // Even if gateway fails, acknowledge the message
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ ok: true, threadId: tid, reply: 'Mensaje recibido. El hilo de métricas se creará en Discord cuando Sancho responda. 💬' }));
+        });
+      } catch (e) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: e.message }));
+      }
+    });
+    return;
+  }
+
   // === API: metrics data for a client ===
   // === API: Metrics Plan ===
   if (req.method === 'GET' && url.startsWith('/api/metrics-plan')) {
@@ -4336,6 +4986,16 @@ async function doTest() {
       return;
     }
 
+    // Server-side cache: 5 min TTL per slug
+    if (!global._metricsCache) global._metricsCache = {};
+    const cached = global._metricsCache[slug];
+    const now = Date.now();
+    if (cached && (now - cached.ts) < 300000) {
+      res.writeHead(200, { 'Content-Type': 'application/json', 'X-Cache': 'hit' });
+      res.end(cached.json);
+      return;
+    }
+
     const metricsFile = path.join(BASE, 'brand', slug, 'metrics', 'metrics-data.json');
     const integrationsFile = path.join(BASE, 'brand', slug, 'integrations.json');
 
@@ -4350,7 +5010,6 @@ async function doTest() {
         integrations = JSON.parse(fs.readFileSync(integrationsFile, 'utf-8'));
       }
 
-      // Load daily snapshots for trend data (last 30 days)
       const metricsDir = path.join(BASE, 'brand', slug, 'metrics');
       const dailyFiles = [];
       if (fs.existsSync(metricsDir)) {
@@ -4363,29 +5022,27 @@ async function doTest() {
         }
       }
 
-      // Load metrics plan if exists
       let metricsPlan = null;
       const planFile = path.join(BASE, 'brand', slug, 'metrics-plan.json');
       if (fs.existsSync(planFile)) {
         try { metricsPlan = JSON.parse(fs.readFileSync(planFile, 'utf-8')); } catch {}
       }
 
-      // Load archetype templates
-      let archetypeTemplates = null;
-      const mappingsFile = path.join(BASE, 'skills', 'acquisition-metrics-plan', 'schemas', 'integration-mappings.json');
-      if (fs.existsSync(mappingsFile)) {
-        try { archetypeTemplates = JSON.parse(fs.readFileSync(mappingsFile, 'utf-8')); } catch {}
-      }
-
-      res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({
+      const result = JSON.stringify({
         slug,
         plan: metricsPlan,
         metricsSheet: integrations.metricsSheet || null,
         dataSources: integrations.dataSources || {},
         rolling: metrics,
         daily: dailyFiles,
-      }));
+        _cachedAt: new Date().toISOString(),
+      });
+
+      // Cache it
+      global._metricsCache[slug] = { json: result, ts: now };
+
+      res.writeHead(200, { 'Content-Type': 'application/json', 'X-Cache': 'miss' });
+      res.end(result);
     } catch (e) {
       res.writeHead(500, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ error: e.message }));
@@ -4409,6 +5066,11 @@ async function doTest() {
     const rest = url.replace('/docs/', '');
     const parts = rest.split('/').filter(Boolean);
     const rootKey = parts[0];
+
+    // Auto-create brand structure when accessing a client's brand root
+    if (rootKey === 'brand' && parts.length >= 2) {
+      try { ensureBrandStructure(parts[1]); } catch(e) {}
+    }
 
     // Portal mode: block non-brand docs and other clients' brand dirs
     if (req._portalSlug) {
@@ -4579,12 +5241,77 @@ const { WebSocketServer, WebSocket: WsClient } = require('ws');
 
 const GATEWAY_URL = 'ws://127.0.0.1:18789';
 const GATEWAY_AUTH = (() => {
-  // Read gateway auth from openclaw.json
   try {
     const cfg = JSON.parse(fs.readFileSync(path.join(path.dirname(__dirname), '..', 'openclaw.json'), 'utf-8'));
     return cfg.gateway?.auth || {};
   } catch { return {}; }
 })();
+
+// Device identity for gateway auth (Ed25519 keypair, persisted)
+const DEVICE_STORE_PATH = path.join(path.dirname(__dirname), '..', '.mc-proxy-device.json');
+let gwDeviceIdentity = null;
+
+async function getDeviceIdentity() {
+  if (gwDeviceIdentity) return gwDeviceIdentity;
+  // Try load from disk
+  try {
+    const stored = JSON.parse(fs.readFileSync(DEVICE_STORE_PATH, 'utf-8'));
+    if (stored.privateKeyHex && stored.publicKeyHex && stored.deviceId) {
+      gwDeviceIdentity = stored;
+      return gwDeviceIdentity;
+    }
+  } catch {}
+  // Generate new keypair
+  const kp = await crypto.subtle.generateKey('Ed25519', true, ['sign', 'verify']);
+  const pubRaw = new Uint8Array(await crypto.subtle.exportKey('raw', kp.publicKey));
+  const privRaw = new Uint8Array(await crypto.subtle.exportKey('pkcs8', kp.privateKey));
+  const pubHex = Buffer.from(pubRaw).toString('hex');
+  const pubB64url = Buffer.from(pubRaw).toString('base64url');
+  // Device ID = SHA-256 of public key
+  const idHash = crypto.createHash('sha256').update(pubRaw).digest('hex');
+  gwDeviceIdentity = {
+    deviceId: idHash,
+    publicKeyHex: pubHex,
+    publicKeyB64url: pubB64url,
+    privateKeyDer: Buffer.from(privRaw).toString('base64'),
+    // Store the CryptoKey objects for signing
+    _privateKey: kp.privateKey,
+    _publicKey: kp.publicKey,
+  };
+  // Persist (without CryptoKey objects)
+  fs.writeFileSync(DEVICE_STORE_PATH, JSON.stringify({
+    deviceId: gwDeviceIdentity.deviceId,
+    publicKeyHex: gwDeviceIdentity.publicKeyHex,
+    publicKeyB64url: gwDeviceIdentity.publicKeyB64url,
+    privateKeyDer: gwDeviceIdentity.privateKeyDer,
+  }, null, 2));
+  console.log('[mc-ws-proxy] Generated device identity:', gwDeviceIdentity.deviceId.slice(0, 12) + '...');
+  return gwDeviceIdentity;
+}
+
+async function signChallenge(nonce) {
+  const dev = await getDeviceIdentity();
+  // Import private key if needed (when loaded from disk)
+  let privKey = dev._privateKey;
+  if (!privKey) {
+    const der = Buffer.from(dev.privateKeyDer, 'base64');
+    privKey = await crypto.subtle.importKey('pkcs8', der, 'Ed25519', false, ['sign']);
+    dev._privateKey = privKey;
+  }
+  const signedAt = Date.now();
+  const scopes = ['operator.read', 'operator.write', 'operator.admin', 'operator.approvals', 'operator.pairing'];
+  const token = GATEWAY_AUTH.token || '';
+  // v2 payload format: v2|deviceId|clientId|clientMode|role|scopes|signedAt|token|nonce
+  const payload = ['v2', dev.deviceId, 'cli', 'cli', 'operator', scopes.join(','), String(signedAt), token, nonce].join('|');
+  const sig = new Uint8Array(await crypto.subtle.sign('Ed25519', privKey, new TextEncoder().encode(payload)));
+  return {
+    id: dev.deviceId,
+    publicKey: dev.publicKeyB64url,
+    signature: Buffer.from(sig).toString('base64url'),
+    signedAt,
+    nonce,
+  };
+}
 
 const wss = new WebSocketServer({ noServer: true });
 
@@ -4618,30 +5345,32 @@ function gwConnect() {
     let msg;
     try { msg = JSON.parse(data.toString()); } catch { return; }
 
-    // Handle connect.challenge — respond with connect request
+    // Handle connect.challenge — respond with device-signed connect
     if (msg.type === 'event' && msg.event === 'connect.challenge') {
       const nonce = msg.payload?.nonce;
-      console.log('[mc-ws-proxy] Got challenge, sending connect...');
-      const connectReq = {
-        type: 'req',
-        id: 'connect-' + Date.now(),
-        method: 'connect',
-        params: {
-          minProtocol: 3,
-          maxProtocol: 3,
-          client: { id: 'webchat', version: '1.0.0', platform: 'node', mode: 'webchat' },
-          role: 'operator',
-          scopes: ['operator.read', 'operator.write', 'operator.admin'],
-          caps: [],
-          commands: [],
-          permissions: {},
-          auth: { ...(GATEWAY_AUTH.token ? { token: GATEWAY_AUTH.token } : {}), ...(GATEWAY_AUTH.password ? { password: GATEWAY_AUTH.password } : {}) },
-          locale: 'es-ES',
-          userAgent: 'mc-server-proxy/1.0.0'
-          // No device field — localhost is auto-approved
-        }
-      };
-      gwConn.send(JSON.stringify(connectReq));
+      console.log('[mc-ws-proxy] Got challenge, signing with device identity...');
+      signChallenge(nonce).then(device => {
+        const connectReq = {
+          type: 'req',
+          id: 'connect-' + Date.now(),
+          method: 'connect',
+          params: {
+            minProtocol: 3,
+            maxProtocol: 3,
+            client: { id: 'cli', version: '2026.3.23', platform: 'darwin', mode: 'cli' },
+            role: 'operator',
+            scopes: ['operator.read', 'operator.write', 'operator.admin', 'operator.approvals', 'operator.pairing'],
+            caps: ['tool-events'],
+            commands: [],
+            permissions: {},
+            auth: { ...(GATEWAY_AUTH.token ? { token: GATEWAY_AUTH.token } : {}), ...(GATEWAY_AUTH.password ? { password: GATEWAY_AUTH.password } : {}) },
+            locale: 'es-ES',
+            userAgent: 'mc-server-proxy/1.0.0',
+            device
+          }
+        };
+        gwConn.send(JSON.stringify(connectReq));
+      }).catch(err => console.error('[mc-ws-proxy] Sign error:', err.message));
       return;
     }
 
@@ -4715,7 +5444,8 @@ wss.on('connection', (ws) => {
   ws.send(JSON.stringify({ type: 'mc-proxy', event: gwConnected ? 'connected' : 'connecting' }));
 
   // Ensure gateway connection exists
-  if (!gwConnected) gwConnect();
+  // WS proxy disabled
+  // if (!gwConnected) gwConnect();
 
   ws.on('message', (data) => {
     let msg;
@@ -4767,8 +5497,8 @@ mcServer.on('upgrade', (req, socket, head) => {
 mcServer.listen(PORT, '127.0.0.1', () => {
   console.log(`Mission Control server on http://127.0.0.1:${PORT}`);
   console.log(`WS proxy at ws://127.0.0.1:${PORT}/ws/chat`);
-  // Connect to gateway on startup
-  setTimeout(() => gwConnect(), 1000);
+  // WS proxy disabled — using mc-chat channel plugin instead
+  // setTimeout(() => gwConnect(), 1000);
 });
 
 // Cleanup stale pending requests every 60s

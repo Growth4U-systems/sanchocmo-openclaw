@@ -6,43 +6,45 @@ description: Integrate SanchoCMO with Alarife LP Factory. Use when creating/mana
 # Alarife Integration Skill
 
 ## Overview
-Alarife is Growth4U's LP Factory — a multi-tenant platform for landing pages, homepages, blog posts, pSEO pages, funnels, and A/B tests. This skill connects Sancho's Foundation data with Alarife's content creation API.
+Alarife is Growth4U's LP Factory — a multi-tenant platform for pages (homepages, landings, product pages), blog posts, funnels, A/B tests, and legal pages. This skill connects Sancho's Foundation data with Alarife's content API.
 
 ## Architecture
 ```
 Sancho (Foundation)           Alarife (Production)
 ─────────────────            ───────────────────
 ECPs, Brand Voice    ──API──►  Client Settings (voice, audience, brand)
-Copy, Headlines      ──API──►  Homepage / Landing Page content
+Copy, Headlines      ──API──►  Pages (homepage, landing, product, etc.)
 Blog topics + text   ──API──►  Blog posts (draft → publish)
 CRO suggestions      ──API──►  A/B Experiments
+HTML from skills     ──API──►  Import & Publish
 ```
 
-## ⚠️ CAPABILITY STATUS (verified 2026-03-25)
+## ⚠️ CAPABILITY STATUS (updated 2026-03-25 from official API reference)
 
 ### ✅ Working
-- **Clients**: List, Create, Update settings
-- **Homepages**: CRUD + Publish (freeform + default templates)
+- **Clients**: List, Create
+- **Pages** (unified): CRUD + Publish + Preview (categories: homepage, landing, producto, servicio, pricing, about, equipo, contacto, otra)
+- **Import**: Quick save, Crawl (SSE), Classify/decompose
+- **Blog Posts**: CRUD + Publish
 - **Partner LPs**: CRUD + Publish
-- **Funnels**: CRUD + Publish
-- **pSEO Pages**: CRUD + Publish
-- **Experiments**: CRUD + Start/Stop/Promote
-- **Legal Pages**: CRUD
+- **Legal Pages**: CRUD (privacy_policy, terms_of_service, cookie_policy, legal_notice)
+- **Funnels**: CRUD + Steps + Publish
+- **Experiments**: CRUD + Variants + Start/Stop/Promote
+- **Domains**: CRUD (primary, alias, module)
+- **Upload Image**: multipart/form-data
 - **Auth**: Bearer token `ak_...`
 
 ### ❌ NOT Working
-- **Blog Posts**: API returns 500 (broken endpoint)
 - **Public Serving**: Routes `/s/{slug}/{page}` return 404 — frontend serving NOT IMPLEMENTED yet
 
 ### ⚠️ CRITICAL: Never Promise Public URLs
 Do NOT generate or share URLs like `https://alarife.growth4u.io/s/{slug}/{page}` — they don't work.
-Direct users to the **admin dashboard** instead: `https://alarife.growth4u.io/dashboard`
+Use the **preview endpoint** or direct users to the **admin dashboard**: `https://alarife.growth4u.io/dashboard`
 
 ## Configuration
 
 ### API Key
 - Stored in: `brand/sanchocmo/.env` → `SANCHOCMO_ALARIFE_API_KEY`
-- Also in Mission Control: `brand/sanchocmo/integrations.json` → `alarife`
 - Format: `ak_...` (Bearer token)
 
 ### Base URL
@@ -56,193 +58,282 @@ BASE="https://alarife.growth4u.io"
 
 ## API Reference
 
+> Source of truth: https://github.com/Growth4U-systems/alarife/blob/main/docs/api-reference-sancho.md
+
 ### Authentication
-All requests use Bearer token:
 ```
 Authorization: Bearer ak_...
+Content-Type: application/json
 ```
+
+---
 
 ### Clients
 
 #### List clients
 ```
 GET /api/clients
-→ [{id, name, slug, domain, logoUrl, createdAt}]
+→ [{ id, name, slug, domain, ... }]
 ```
 
 #### Create client
 ```
 POST /api/clients
-Body: {name, slug, locale: "es"|"en"|"pt", currency: "EUR", timezone: "Europe/Madrid", domain?, logoUrl?, company?, brand?, voice?, products?, audience?}
-→ {id, name, slug, ...}
+Body: { "name": "Acme Corp", "slug": "acme-corp" }
 ```
 
-#### Update client settings (profile enrichment)
-```
-PUT /api/clients/{clientId}/settings
-Body: {theme?, company?, brand?, voice?, products?, audience?, routing?}
-→ {success: true, settings: {...}}
-```
+---
 
-### Client Settings Schema (for Foundation sync)
+### Pages (UNIFIED endpoint — replaces old /homepages)
 
-#### voice
-```json
-{
-  "tone": ["profesional", "cercano"],
-  "style": "Directo, orientado a datos",
-  "tagline": "Tu CMO con IA",
-  "doList": ["Usar datos", "Ser directo"],
-  "dontList": ["Jerga técnica sin explicar"],
-  "sampleCopy": "Ejemplo de copy en la voz de marca"
-}
+⚠️ **IMPORTANT**: All page types use `/api/clients/{clientId}/pages` with a `category` field.
+The old `/homepages` endpoint may still work but `/pages` is the canonical API.
+
+#### List pages
+```
+GET /api/clients/{clientId}/pages
+→ [{ id, title, slug, category, status, sections, ... }]
 ```
 
-#### audience
-```json
-{
-  "description": "CMOs y founders de startups B2B",
-  "demographics": "25-45, urbano, tech-savvy",
-  "painPoints": ["No saben qué medir", "Sin tiempo"],
-  "motivations": ["Crecer rápido", "Datos claros"],
-  "objections": ["¿Es fiable una IA para marketing?"]
-}
+#### Create page
 ```
-
-#### brand
-```json
-{
-  "colors": {"primary": "#C45D35", "secondary": "#1A1A2E", "accent": "#F2C94C", "background": "#F5F0E6", "foreground": "#1A1A2E"},
-  "fonts": {"heading": "Space Grotesk", "body": "Nunito"},
-  "logoDarkUrl": "https://...",
-  "faviconUrl": "https://...",
-  "ogImageUrl": "https://..."
-}
+POST /api/clients/{clientId}/pages
 ```
-
-#### products
-```json
-{
-  "items": [
-    {
-      "name": "SanchoCMO Pro",
-      "description": "CMO con IA para tu startup",
-      "features": ["Foundation", "Content", "Analytics"],
-      "price": "€200/mes",
-      "ctaText": "Empezar",
-      "ctaUrl": "https://...",
-      "highlighted": true
-    }
-  ]
-}
-```
-
-### Homepages
-
-```
-GET    /api/clients/{clientId}/homepages
-POST   /api/clients/{clientId}/homepages          → Create homepage
-PUT    /api/clients/{clientId}/homepages/{id}      → Update
-DELETE /api/clients/{clientId}/homepages/{id}      → Delete
-POST   /api/clients/{clientId}/homepages/{id}/publish → Publish
-```
-
-#### Homepage Templates
-
-**Two template types verified:**
-
-##### 1. `freeform` — Raw HTML/CSS (for importing existing pages)
 ```json
 {
   "title": "Mi Página",
   "slug": "mi-pagina",
+  "category": "homepage",
   "template": "freeform",
   "sections": [
     {
       "type": "raw_html",
+      "name": "Contenido principal",
       "config": {
-        "html": "<section>...</section>",
-        "css": ".my-class { color: red; }",
-        "scopeClass": "fp-UniqueId123"
+        "html": "<div>...HTML...</div>",
+        "css": ".mi-clase { color: red; }",
+        "scopeClass": "mi-scope"
       }
     }
   ],
+  "status": "draft",
   "metaTitle": "SEO Title",
-  "metaDescription": "SEO description",
-  "ogImage": "https://..."
+  "metaDescription": "SEO Description",
+  "position": 0
 }
 ```
 
-##### 2. `default` — Structured sections
+**Categories**: `homepage`, `landing`, `producto`, `servicio`, `pricing`, `about`, `equipo`, `contacto`, `otra`
+
+**Templates**: `freeform` (HTML libre), `default` (structured sections)
+
+#### Get page
+```
+GET /api/clients/{clientId}/pages/{pageId}
+```
+
+#### Update page (PATCH, not PUT!)
+```
+PATCH /api/clients/{clientId}/pages/{pageId}
+```
+All fields optional:
 ```json
 {
-  "title": "Mi Página",
-  "template": "default",
-  "sections": [
-    {"type": "hero", "config": {"title": "...", "subtitle": "...", "ctaText": "...", "ctaHref": "#", "bgColor": "#..."}},
-    {"type": "features", "config": {"heading": "...", "columns": 3, "items": [...]}},
-    {"type": "cta", "config": {"heading": "...", "subheading": "...", "ctaText": "...", "ctaHref": "#", "bgColor": "#..."}}
-  ]
+  "title": "Nuevo título",
+  "slug": "nuevo-slug",
+  "category": "landing",
+  "sections": [...],
+  "status": "published",
+  "metaTitle": "...",
+  "metaDescription": "..."
 }
 ```
 
-⚠️ **IMPORTANT**: HTML and CSS go INSIDE `sections[].config`, NOT as top-level fields. Using top-level `html`/`css` fields will save an empty page.
+#### Publish page
+```
+PATCH /api/clients/{clientId}/pages/{pageId}
+Body: { "status": "published" }
+```
+
+#### Unpublish page
+```
+PATCH /api/clients/{clientId}/pages/{pageId}
+Body: { "status": "draft" }
+```
+
+#### Delete page
+```
+DELETE /api/clients/{clientId}/pages/{pageId}
+```
+
+#### Preview page (rendered HTML)
+```
+GET /api/clients/{clientId}/pages/{pageId}/preview
+→ Content-Type: text/html (full rendered page)
+```
+
+---
+
+### Import (Quick HTML Import)
+
+#### Import HTML as page
+```
+POST /api/clients/{clientId}/import/save
+```
+```json
+{
+  "detectedType": "page",
+  "data": {
+    "title": "LP Fitness",
+    "slug": "lp-fitness",
+    "category": "landing",
+    "template": "freeform",
+    "sections": [
+      {
+        "type": "raw_html",
+        "name": "Página completa",
+        "config": {
+          "html": "<!DOCTYPE html>...HTML completo..."
+        }
+      }
+    ]
+  }
+}
+```
+**detectedType values**: `page`, `homepage`, `partner_lp`, `blog_post`, `legal_page`
+
+#### Crawl a site
+```
+POST /api/clients/{clientId}/import/crawl
+Body: { "url": "https://example.com" }
+→ SSE stream with discovered pages
+```
+
+#### Classify/decompose HTML
+```
+POST /api/clients/{clientId}/import
+Body: { "url": "https://example.com/about", "pageType": "auto" }
+```
+
+---
+
+### Domains
+
+```
+GET    /api/clients/{clientId}/domains
+POST   /api/clients/{clientId}/domains       → { "domain": "example.com", "type": "primary" }
+PUT    /api/clients/{clientId}/domains/{id}
+DELETE /api/clients/{clientId}/domains/{id}
+```
+Types: `primary` (one only), `alias` (redirects to primary), `module` (subdomain for specific module)
+
+---
+
+### Blog Posts
+
+```
+GET    /api/clients/{clientId}/blog-posts
+POST   /api/clients/{clientId}/blog-posts
+PATCH  /api/clients/{clientId}/blog-posts/{id}
+POST   /api/clients/{clientId}/blog-posts/{id}/publish
+DELETE /api/clients/{clientId}/blog-posts/{id}
+```
+
+#### Create blog post
+```json
+{
+  "title": "Mi Post",
+  "slug": "mi-post",
+  "content": "# Markdown o HTML",
+  "excerpt": "Resumen",
+  "category": "marketing",
+  "tags": ["seo", "growth"],
+  "featuredImage": "https://..."
+}
+```
+
+---
 
 ### Partner Landing Pages
+
 ```
 GET    /api/clients/{clientId}/partner-lps
-POST   /api/clients/{clientId}/partner-lps         → Create LP
-PUT    /api/clients/{clientId}/partner-lps/{id}     → Update
-POST   /api/clients/{clientId}/partner-lps/{id}/publish → Publish
+POST   /api/clients/{clientId}/partner-lps
+PATCH  /api/clients/{clientId}/partner-lps/{id}
+DELETE /api/clients/{clientId}/partner-lps/{id}
+POST   /api/clients/{clientId}/partner-lps/{id}/publish
 ```
 
-### Blog Posts ⚠️ BROKEN
-```
-GET    /api/clients/{clientId}/blog-posts          → ❌ Returns 500
-POST   /api/clients/{clientId}/blog-posts          → ❌ Untested (endpoint likely broken)
-```
-**Status**: Blog endpoint returns Internal Server Error. Escalate to Cervantes/Martin for fix.
-
-### Funnels
-```
-GET    /api/clients/{clientId}/funnels
-POST   /api/clients/{clientId}/funnels             → Create funnel
-PUT    /api/clients/{clientId}/funnels/{id}         → Update
-POST   /api/clients/{clientId}/funnels/{id}/publish → Publish
-GET    /api/clients/{clientId}/funnels/{id}/steps   → List steps
-POST   /api/clients/{clientId}/funnels/{id}/steps   → Add step
-```
-
-### pSEO Pages
-```
-GET    /api/clients/{clientId}/pseo-pages
-POST   /api/clients/{clientId}/pseo-pages          → Create page
-PUT    /api/clients/{clientId}/pseo-pages/{id}      → Update
-POST   /api/clients/{clientId}/pseo-pages/{id}/publish → Publish
-```
-
-### pSEO Entities (competitors/categories)
-```
-GET    /api/clients/{clientId}/pseo-entities
-POST   /api/clients/{clientId}/pseo-entities       → Create entity
-PUT    /api/clients/{clientId}/pseo-entities/{id}   → Update
-```
-
-### Experiments (A/B Tests)
-```
-GET    /api/clients/{clientId}/experiments
-POST   /api/clients/{clientId}/experiments          → Create experiment
-POST   /api/clients/{clientId}/experiments/{id}/start → Start
-POST   /api/clients/{clientId}/experiments/{id}/stop  → Stop
-POST   /api/clients/{clientId}/experiments/{id}/promote → Promote winner
-```
+---
 
 ### Legal Pages
+
 ```
 GET    /api/clients/{clientId}/legal-pages
-POST   /api/clients/{clientId}/legal-pages         → Create
-PUT    /api/clients/{clientId}/legal-pages/{id}     → Update
+POST   /api/clients/{clientId}/legal-pages
+PATCH  /api/clients/{clientId}/legal-pages/{id}
+DELETE /api/clients/{clientId}/legal-pages/{id}
 ```
+Types: `privacy_policy`, `terms_of_service`, `cookie_policy`, `legal_notice`
+
+---
+
+### Funnels
+
+```
+GET    /api/clients/{clientId}/funnels
+POST   /api/clients/{clientId}/funnels
+PATCH  /api/clients/{clientId}/funnels/{id}
+DELETE /api/clients/{clientId}/funnels/{id}
+POST   /api/clients/{clientId}/funnels/{id}/publish
+```
+
+#### Steps
+```
+GET    /api/clients/{clientId}/funnels/{id}/steps
+POST   /api/clients/{clientId}/funnels/{id}/steps
+PATCH  /api/clients/{clientId}/funnels/{id}/steps/{stepId}
+DELETE /api/clients/{clientId}/funnels/{id}/steps/{stepId}
+POST   /api/clients/{clientId}/funnels/{id}/steps/reorder
+```
+
+---
+
+### Experiments (A/B Testing)
+
+```
+GET    /api/clients/{clientId}/experiments
+POST   /api/clients/{clientId}/experiments
+PATCH  /api/clients/{clientId}/experiments/{id}
+POST   /api/clients/{clientId}/experiments/{id}/start
+POST   /api/clients/{clientId}/experiments/{id}/stop
+POST   /api/clients/{clientId}/experiments/{id}/promote
+```
+
+#### Variants
+```
+GET    /api/clients/{clientId}/experiments/{id}/variants
+POST   /api/clients/{clientId}/experiments/{id}/variants
+PATCH  /api/clients/{clientId}/experiments/{id}/variants/{variantId}
+DELETE /api/clients/{clientId}/experiments/{id}/variants/{variantId}
+```
+
+---
+
+### Utility
+
+#### Health check
+```
+GET /api/health
+```
+
+#### Upload image
+```
+POST /api/upload-image
+Content-Type: multipart/form-data
+```
+
+---
 
 ## Workflows
 
@@ -257,71 +348,74 @@ PUT    /api/clients/{clientId}/legal-pages/{id}     → Update
    - Broken image paths → replace with Unsplash or client's real images
    - Local font references → replace with CDN/Google Fonts URLs
    - `href="#"` or broken CTAs → replace with client's real URLs
-3. Separate HTML (body content) from CSS (style blocks)
-4. Generate a unique `scopeClass` (e.g., `fp-` + random 8 chars)
-5. Create the homepage:
-   ```json
-   POST /api/clients/{clientId}/homepages
+3. Use the **import/save** endpoint (simplest) or create via `/pages`:
+   ```
+   POST /api/clients/{clientId}/import/save
    {
-     "title": "Page Title",
-     "slug": "page-slug",
-     "template": "freeform",
-     "sections": [{
-       "type": "raw_html",
-       "config": {
-         "html": "<extracted body content>",
-         "css": "<extracted styles>",
-         "scopeClass": "fp-Ab12Cd34"
-       }
-     }],
-     "metaTitle": "SEO Title",
-     "metaDescription": "SEO Description"
+     "detectedType": "page",
+     "data": {
+       "title": "Page Title",
+       "slug": "page-slug",
+       "category": "landing",
+       "template": "freeform",
+       "sections": [{
+         "type": "raw_html",
+         "name": "Contenido completo",
+         "config": {
+           "html": "<extracted body content>",
+           "css": "<extracted styles>",
+           "scopeClass": "fp-Ab12Cd34"
+         }
+       }]
+     }
    }
    ```
-6. Publish: `POST /api/clients/{clientId}/homepages/{id}/publish`
-7. Confirm to user with **dashboard link** (NOT public URL):
-   - `https://alarife.growth4u.io/dashboard` → navigate to client → homepages
+4. Publish: `PATCH /api/clients/{clientId}/pages/{id}` with `{"status": "published"}`
+5. Preview: `GET /api/clients/{clientId}/pages/{id}/preview`
+6. Confirm to user with **preview link** or **dashboard link**:
+   - Preview: `https://alarife.growth4u.io/api/clients/{clientId}/pages/{id}/preview`
+   - Dashboard: `https://alarife.growth4u.io/dashboard`
 
 **⚠️ Max 2 messages**: One "working on it" + one "done with result". No narration.
 
 ### 2. Sync Foundation → Alarife Client Profile
 When Foundation is complete for a client:
-1. Read `brand/{slug}/foundation/` files (company-context, ecps, brand-voice, positioning)
-2. Map to Alarife settings schema (voice, audience, brand, products)
-3. `PUT /api/clients/{clientId}/settings` with enriched data
+1. Read `brand/{slug}/foundation/` files
+2. Map to client settings (voice, audience, brand, products)
+3. Create or update client
 
-### 3. Create Landing Page from Foundation
+### 3. Create Page from Foundation
 1. Read ECPs + brand voice from Foundation
 2. Generate copy (headlines, CTAs, body) using copywriting skill
 3. Use `template: "freeform"` with `sections: [{type: "raw_html", ...}]`
-4. `POST /api/clients/{clientId}/homepages` or `/partner-lps`
-5. `POST .../publish` when ready
+4. `POST /api/clients/{clientId}/pages` with `category: "landing"` (or appropriate)
+5. Publish via PATCH
 
-### 4. pSEO at Scale
-1. Identify competitors via competitor-intelligence skill
-2. `POST /api/clients/{clientId}/pseo-entities` for each competitor/category
-3. Alarife auto-generates comparison and category pages
-4. Publish in bulk
+### 4. Import existing website
+1. Use crawl endpoint: `POST /api/clients/{clientId}/import/crawl` with site URL
+2. Process SSE stream of discovered pages
+3. Save selected pages via `/import/save`
 
 ## Error Handling
-- `401` → API key invalid or expired. Check `brand/sanchocmo/.env`
-- `403` → Missing scope. Verify API key has all scopes in Alarife dashboard
-- `400` → Validation error. Check required fields.
-- `404` → Client or resource not found. Verify clientId.
+- `401` → API key invalid or expired
+- `403` → Missing scope
+- `400` → Validation error (check required fields)
+- `404` → Client or resource not found
 - `409` → Duplicate (e.g., slug already exists)
-- `500` → Server error (known issue with blog-posts endpoint). Report to Cervantes.
+- `500` → Server error. Report to Cervantes/Martin.
 
 ## Known Clients (verified 2026-03-25)
 | Name | ID | Slug |
 |---|---|---|
-| Growth4U | qx52hhSmnqLWi0UC_9cLc | growth4u |
 | Paymatico | 7SRxn8rDeE3PWEi-oQjle | paymatico |
+| Growth4U | qx52hhSmnqLWi0UC_9cLc | growth4u |
 | Test API | QEJ7clelBh0CjIFuc4G40 | test-api-sancho |
 
 ## Notes
+- **API Reference source of truth**: https://github.com/Growth4U-systems/alarife/blob/main/docs/api-reference-sancho.md
 - Alarife URL: https://alarife.growth4u.io
 - Admin dashboard: https://alarife.growth4u.io/dashboard
 - Repo: github.com/Growth4U-systems/alarife (private)
 - Hosting: Hetzner CX23, Helsinki, IP 37.27.22.139
-- DB: Neon PostgreSQL (shared, needs search_path=public on URL)
-- Public serving NOT IMPLEMENTED — do not promise `/s/{slug}/{page}` URLs
+- DB: Neon PostgreSQL
+- Public serving NOT IMPLEMENTED — use preview endpoint or dashboard

@@ -1,10 +1,10 @@
 [
   {
-    "id": "4957b2db-1641-4df1-b31d-2018d2fa1ac2",
+    "id": "00f19b3a-0dee-4850-a1e9-8e934869c814",
     "type": "content",
     "status": "new",
     "title": "estrategias de growth marketing para SaaS B2B",
-    "description": "Pillar page (2.000-3.000 palabras). Framework del Trust Engine aplicado a SaaS B2B: 4 fases, métricas por fase, caso real. SEO target. Después atomizar en 3-4 posts LinkedIn.",
+    "description": "Pillar page (2.500 palabras). Framework Trust Engine aplicado a SaaS B2B: 4 fases, métricas, caso Bnext. SEO target. Atomizar en 4 posts LinkedIn (1 por fase).",
     "category": "guide",
     "source": "trust_engine",
     "goal": "awareness",
@@ -17,39 +17,39 @@
     "ecp_relevance": [
       "ecp1-sistema-repetible"
     ],
-    "created_at": "2026-03-24T10:09:58.612210",
+    "created_at": "2026-03-25T23:51:35.594978",
     "task_id": null,
     "approved_at": null,
     "notes": ""
   },
   {
-    "id": "cbeb0272-ae6d-4a50-9d3d-d7e4f86c00cb",
+    "id": "4ab8cc1d-fbc5-422d-bede-62f60b17169a",
     "type": "content",
     "status": "new",
     "title": "mejores agencias de growth marketing para SaaS",
-    "description": "Artículo comparativo SEO: \"Mejores agencias de growth para SaaS [2026]\". Tabla: G4U vs Product Hackers vs Snowball. Diferenciador: Trust Engine. Long-tail con volumen.",
+    "description": "Comparar agencias es crucial para empresas que buscan contratar servicios de growth marketing.",
     "category": "comparison",
     "source": "trust_engine",
-    "goal": "consideration",
-    "theme": "comparativo",
+    "goal": "awareness",
+    "theme": "educativo",
     "channels_suggested": [
       "blog"
     ],
-    "priority_score": 88,
+    "priority_score": 50,
     "ecp_relevance": [
       "ecp1-sistema-repetible"
     ],
-    "created_at": "2026-03-24T10:09:58.612210",
+    "created_at": "2026-03-25T23:51:35.594978",
     "task_id": null,
     "approved_at": null,
     "notes": ""
   },
   {
-    "id": "3b6fc34b-699c-477b-8da3-323a16c084f7",
+    "id": "98d1e59f-2106-4a54-bfa0-dc6b222cc3a6",
     "type": "content",
     "status": "new",
-    "title": "Growth4U vs Growth Hackers",
-    "description": "Página vs/alternativa SEO. \"Growth4U vs Product Hackers: ¿Cuál necesitas?\". Comparar modelo (embedded vs agencia), precios, enfoque. Captura long-tail.",
+    "title": "Growth4U vs Growth Gorilla",
+    "description": "Página vs SEO: diferenciador España vs UK, embedded vs agencia, Trust Engine vs performance pura.",
     "category": "comparison",
     "source": "trust_engine",
     "goal": "consideration",
@@ -57,21 +57,21 @@
     "channels_suggested": [
       "blog"
     ],
-    "priority_score": 86,
+    "priority_score": 72,
     "ecp_relevance": [
       "ecp1-sistema-repetible"
     ],
-    "created_at": "2026-03-24T10:09:58.612210",
+    "created_at": "2026-03-25T23:51:35.594978",
     "task_id": null,
     "approved_at": null,
     "notes": ""
   },
   {
-    "id": "21f06c2d-ebb0-4612-aff7-76a7bc6313cc",
+    "id": "fc530054-6aa5-4541-a510-5b82e1f3a96b",
     "type": "content",
     "status": "new",
     "title": "cómo aumentar clientes para SaaS B2B",
-    "description": "Artículo blog: playbook 5 pasos para adquisición B2B SaaS. Caso real G4U. Post LinkedIn: \"5 cosas que hice para pasar de 0 a 400K usuarios en Bnext\".",
+    "description": "Artículo blog: playbook 5 pasos adquisición B2B SaaS con caso real. Post LinkedIn: \"5 cosas que hice para pasar de 0 a 400K usuarios en Bnext\".",
     "category": "solution",
     "source": "trust_engine",
     "goal": "awareness",
@@ -80,44 +80,43 @@
       "blog",
       "linkedin"
     ],
-    "priority_score": 84,
+    "priority_score": 86,
     "ecp_relevance": [
       "ecp1-sistema-repetible"
     ],
-    "created_at": "2026-03-24T10:09:58.612210",
+    "created_at": "2026-03-25T23:51:35.594978",
     "task_id": null,
     "approved_at": null,
     "notes": ""
   },
   {
-    "id": "9c4763fd-1db1-4b7b-821a-b08e59fa1eb0",
+    "id": "cae1fc35-a7d6-44e8-b8dc-198b8468fc2e",
     "type": "content",
     "status": "new",
-    "title": "Growth4U opiniones",
-    "description": "Página testimonials/reviews en web. Recopilar opiniones de clientes + LinkedIn recommendations. SEO brand protection — que cuando busquen opiniones, encuentren la tuya.",
+    "title": "consultoría de growth marketing para SaaS",
+    "description": "Landing page comercial SEO. \"Consultoría Growth para SaaS\". CTA: agendar call. Mini-casos + Trust Engine overview. Página de servicio, no artículo.",
     "category": "authority",
     "source": "trust_engine",
     "goal": "conversion",
-    "theme": "social_proof",
+    "theme": "comercial",
     "channels_suggested": [
-      "blog",
       "web"
     ],
     "priority_score": 82,
     "ecp_relevance": [
       "ecp1-sistema-repetible"
     ],
-    "created_at": "2026-03-24T10:09:58.612210",
+    "created_at": "2026-03-25T23:51:35.594978",
     "task_id": null,
     "approved_at": null,
     "notes": ""
   },
   {
-    "id": "2750572a-42bb-4b0d-8e37-6b5226d0c19e",
+    "id": "c1f4c550-06cf-4c3b-9906-9e50d2e61d4b",
     "type": "content",
     "status": "new",
     "title": "alternativas a Skale.io",
-    "description": "Página de alternativas SEO: \"5 Alternativas a Skale.io para Growth B2B en España\". Incluir G4U como opción. Long-tail baja competencia.",
+    "description": "Página de alternativas SEO: \"5 Alternativas a Skale.io para Growth B2B en España\". Long-tail baja competencia.",
     "category": "comparison",
     "source": "trust_engine",
     "goal": "consideration",
@@ -125,25 +124,47 @@
     "channels_suggested": [
       "blog"
     ],
-    "priority_score": 80,
+    "priority_score": 68,
     "ecp_relevance": [
       "ecp1-sistema-repetible"
     ],
-    "created_at": "2026-03-24T10:09:58.612210",
+    "created_at": "2026-03-25T23:51:35.594978",
     "task_id": null,
     "approved_at": null,
     "notes": ""
   },
   {
-    "id": "2666385a-8dd0-4484-af39-4f3b2e90e441",
+    "id": "bc0b7d8f-f836-4578-909d-b324fc2fb876",
     "type": "content",
     "status": "new",
-    "title": "consultoría de growth marketing para SaaS",
-    "description": "Landing page comercial SEO. \"Consultoría Growth para SaaS\". CTA: agendar call. Incluir mini-casos + Trust Engine overview. No artículo, página de servicio.",
-    "category": "solution",
+    "title": "estrategias de retención de clientes para SaaS",
+    "description": "Retener clientes es una prioridad para empresas SaaS, y buscan estrategias efectivas.",
+    "category": "guide",
+    "source": "trust_engine",
+    "goal": "awareness",
+    "theme": "educativo",
+    "channels_suggested": [
+      "blog"
+    ],
+    "priority_score": 50,
+    "ecp_relevance": [
+      "ecp1-sistema-repetible"
+    ],
+    "created_at": "2026-03-25T23:51:35.594978",
+    "task_id": null,
+    "approved_at": null,
+    "notes": ""
+  },
+  {
+    "id": "ceef8001-8078-4cf7-ba96-db9b8f3808f7",
+    "type": "content",
+    "status": "new",
+    "title": "Growth4U opiniones",
+    "description": "Página testimonials/reviews en web. SEO brand protection — que cuando busquen opiniones, encuentren la tuya.",
+    "category": "discovery",
     "source": "trust_engine",
     "goal": "conversion",
-    "theme": "comercial",
+    "theme": "social_proof",
     "channels_suggested": [
       "web"
     ],
@@ -151,41 +172,107 @@
     "ecp_relevance": [
       "ecp1-sistema-repetible"
     ],
-    "created_at": "2026-03-24T10:09:58.612210",
+    "created_at": "2026-03-25T23:51:35.594978",
     "task_id": null,
     "approved_at": null,
     "notes": ""
   },
   {
-    "id": "8d80cbdf-821b-4bf4-b61a-87b34ec7a2fb",
+    "id": "d85870d3-6bc3-4871-a841-b2ecb79b156c",
     "type": "content",
     "status": "new",
-    "title": "cómo implementar growth hacking en SaaS",
-    "description": "Artículo blog: guía práctica (no teoría). 7 tácticas probadas con datos. Thread Twitter: versión resumida con 1 táctica por tweet + resultados reales.",
+    "title": "herramientas de growth hacking para SaaS",
+    "description": "Empresas buscan herramientas específicas que puedan implementar en sus estrategias de growth hacking.",
+    "category": "discovery",
+    "source": "trust_engine",
+    "goal": "awareness",
+    "theme": "educativo",
+    "channels_suggested": [
+      "blog"
+    ],
+    "priority_score": 50,
+    "ecp_relevance": [
+      "ecp1-sistema-repetible"
+    ],
+    "created_at": "2026-03-25T23:51:35.594978",
+    "task_id": null,
+    "approved_at": null,
+    "notes": ""
+  },
+  {
+    "id": "7d0fbf7a-32e5-421c-bc3a-d549efa5b52b",
+    "type": "content",
+    "status": "new",
+    "title": "cómo implementar growth marketing en SaaS",
+    "description": "Guías prácticas son esenciales para empresas que desean implementar growth marketing.",
     "category": "guide",
     "source": "trust_engine",
     "goal": "awareness",
     "theme": "educativo",
     "channels_suggested": [
-      "blog",
-      "twitter"
+      "blog"
     ],
-    "priority_score": 76,
+    "priority_score": 50,
     "ecp_relevance": [
       "ecp1-sistema-repetible"
     ],
-    "created_at": "2026-03-24T10:09:58.612210",
+    "created_at": "2026-03-25T23:51:35.594978",
     "task_id": null,
     "approved_at": null,
     "notes": ""
   },
   {
-    "id": "180c4ac6-651a-4a6b-ab87-d8a824800416",
+    "id": "214196b4-cb1c-4e73-92ab-76cb28feb1d1",
+    "type": "content",
+    "status": "new",
+    "title": "Growth4U casos de éxito",
+    "description": "Hub de case studies: Bnext (-75% CAC), Criptan (+160%), Bit2Me (3x LTV), Múltiplo (93→17 clientes). Cada caso = 1 post LinkedIn.",
+    "category": "authority",
+    "source": "trust_engine",
+    "goal": "conversion",
+    "theme": "social_proof",
+    "channels_suggested": [
+      "web",
+      "linkedin"
+    ],
+    "priority_score": 92,
+    "ecp_relevance": [
+      "ecp1-sistema-repetible"
+    ],
+    "created_at": "2026-03-25T23:51:35.594978",
+    "task_id": null,
+    "approved_at": null,
+    "notes": ""
+  },
+  {
+    "id": "f5449771-fc6f-46e2-8813-5281a112c470",
+    "type": "content",
+    "status": "new",
+    "title": "mejores prácticas de growth marketing para SaaS",
+    "description": "Las mejores prácticas ayudan a las empresas a optimizar sus estrategias de marketing.",
+    "category": "guide",
+    "source": "trust_engine",
+    "goal": "awareness",
+    "theme": "educativo",
+    "channels_suggested": [
+      "blog"
+    ],
+    "priority_score": 50,
+    "ecp_relevance": [
+      "ecp1-sistema-repetible"
+    ],
+    "created_at": "2026-03-25T23:51:35.594978",
+    "task_id": null,
+    "approved_at": null,
+    "notes": ""
+  },
+  {
+    "id": "c9c16202-4168-45b2-9fa1-d3d6fd9e81c7",
     "type": "content",
     "status": "new",
     "title": "Growth4U precios",
-    "description": "Decisión: pricing privado (aprobado). Pero necesitas una página que responda a esta búsqueda con valor: \"Inversión en Trust Engine — Qué incluye, cómo funciona, CTA agendar\".",
-    "category": "ranking",
+    "description": "Página que responde a esta búsqueda con valor: \"Inversión en Trust Engine — Qué incluye, cómo funciona, CTA agendar\". Pricing privado aprobado.",
+    "category": "discovery",
     "source": "trust_engine",
     "goal": "conversion",
     "theme": "comercial",
@@ -196,291 +283,216 @@
     "ecp_relevance": [
       "ecp1-sistema-repetible"
     ],
-    "created_at": "2026-03-24T10:09:58.612210",
+    "created_at": "2026-03-25T23:51:35.594978",
     "task_id": null,
     "approved_at": null,
     "notes": ""
   },
   {
-    "id": "4a118909-42c0-4512-8a52-60044a2cedd9",
+    "id": "6932f8af-9de5-42a8-af4e-8717dd774e0d",
     "type": "content",
     "status": "new",
-    "title": "estrategias de retención para SaaS B2B",
-    "description": "Artículo blog: framework retención (cohortes + NPS + activation). Post LinkedIn: \"Tu CAC baja cuando tu retención sube. Aquí está la fórmula.\" Carrusel con métricas.",
+    "title": "cómo mejorar el funnel de ventas para SaaS",
+    "description": "Optimizar el funnel de ventas es clave para aumentar las conversiones en empresas SaaS.",
+    "category": "solution",
+    "source": "trust_engine",
+    "goal": "awareness",
+    "theme": "educativo",
+    "channels_suggested": [
+      "blog"
+    ],
+    "priority_score": 50,
+    "ecp_relevance": [
+      "ecp1-sistema-repetible"
+    ],
+    "created_at": "2026-03-25T23:51:35.594978",
+    "task_id": null,
+    "approved_at": null,
+    "notes": ""
+  },
+  {
+    "id": "3cebe321-ca1c-43e0-88ec-17eeecdc7622",
+    "type": "content",
+    "status": "new",
+    "title": "Growth4U contacto",
+    "description": "Optimizar página contacto. CTA claro, formulario simple, link a booking. Asegurar que rankea.",
+    "category": "discovery",
+    "source": "trust_engine",
+    "goal": "conversion",
+    "theme": "comercial",
+    "channels_suggested": [
+      "web"
+    ],
+    "priority_score": 65,
+    "ecp_relevance": [
+      "ecp1-sistema-repetible"
+    ],
+    "created_at": "2026-03-25T23:51:35.594978",
+    "task_id": null,
+    "approved_at": null,
+    "notes": ""
+  },
+  {
+    "id": "6ec51297-93cb-4bc8-85d7-d0d455ccaf13",
+    "type": "content",
+    "status": "new",
+    "title": "estrategias de adquisición de clientes para SaaS",
+    "description": "Adquirir nuevos clientes es una prioridad para empresas SaaS, y buscan estrategias efectivas.",
     "category": "guide",
     "source": "trust_engine",
     "goal": "awareness",
     "theme": "educativo",
     "channels_suggested": [
+      "blog"
+    ],
+    "priority_score": 50,
+    "ecp_relevance": [
+      "ecp1-sistema-repetible"
+    ],
+    "created_at": "2026-03-25T23:51:35.594978",
+    "task_id": null,
+    "approved_at": null,
+    "notes": ""
+  },
+  {
+    "id": "8030b60e-1d6a-425a-8fa5-7ae93c83a450",
+    "type": "content",
+    "status": "new",
+    "title": "Growth4U casos de estudio",
+    "description": "Casos de estudio proporcionan evidencia de la efectividad de las estrategias de Growth4U.",
+    "category": "authority",
+    "source": "trust_engine",
+    "goal": "awareness",
+    "theme": "educativo",
+    "channels_suggested": [
+      "blog"
+    ],
+    "priority_score": 50,
+    "ecp_relevance": [
+      "ecp1-sistema-repetible"
+    ],
+    "created_at": "2026-03-25T23:51:35.594978",
+    "task_id": null,
+    "approved_at": null,
+    "notes": ""
+  },
+  {
+    "id": "079a7b08-d57a-4e17-8d81-b9c0d09aac22",
+    "type": "content",
+    "status": "new",
+    "title": "cómo optimizar el churn rate en SaaS",
+    "description": "Artículo blog con datos + fórmulas. Thread Twitter: \"Redujimos el churn de [cliente] del X% al Y%. Los 5 cambios.\"",
+    "category": "solution",
+    "source": "trust_engine",
+    "goal": "awareness",
+    "theme": "educativo",
+    "channels_suggested": [
       "blog",
-      "linkedin"
+      "twitter"
     ],
     "priority_score": 72,
     "ecp_relevance": [
       "ecp1-sistema-repetible"
     ],
-    "created_at": "2026-03-24T10:09:58.612210",
+    "created_at": "2026-03-25T23:51:35.594978",
     "task_id": null,
     "approved_at": null,
     "notes": ""
   },
   {
-    "id": "f3fe2b4c-6df9-4330-a09d-c2ddfbbfd6ce",
-    "type": "content",
-    "status": "new",
-    "title": "mejores prácticas de growth marketing",
-    "description": "Artículo blog: \"10 prácticas de growth que realmente funcionan (y 5 que son humo)\". Tono directo marca G4U. Post LinkedIn: versión corta con las 5 que son humo.",
-    "category": "authority",
-    "source": "trust_engine",
-    "goal": "awareness",
-    "theme": "educativo",
-    "channels_suggested": [
-      "blog",
-      "linkedin"
-    ],
-    "priority_score": 70,
-    "ecp_relevance": [
-      "ecp1-sistema-repetible"
-    ],
-    "created_at": "2026-03-24T10:09:58.612210",
-    "task_id": null,
-    "approved_at": null,
-    "notes": ""
-  },
-  {
-    "id": "153107ad-b089-40ae-ab1e-13351439321f",
-    "type": "content",
-    "status": "new",
-    "title": "cómo mejorar el funnel de ventas en SaaS",
-    "description": "Artículo blog: audit de funnel en 5 pasos. Diagnosticar dónde pierde cada etapa. Post LinkedIn: \"El 80% de los SaaS tienen el mismo punto ciego en su funnel.\"",
-    "category": "solution",
-    "source": "trust_engine",
-    "goal": "awareness",
-    "theme": "educativo",
-    "channels_suggested": [
-      "blog",
-      "linkedin"
-    ],
-    "priority_score": 68,
-    "ecp_relevance": [
-      "ecp1-sistema-repetible"
-    ],
-    "created_at": "2026-03-24T10:09:58.612210",
-    "task_id": null,
-    "approved_at": null,
-    "notes": ""
-  },
-  {
-    "id": "dc4758cb-9a8a-4701-bd8a-37d97b260f76",
-    "type": "content",
-    "status": "new",
-    "title": "Growth4U casos de éxito",
-    "description": "Hub de case studies en web: Bnext (CAC -75%), Criptan (+160% depósitos), Bit2Me (LTV 3x), Múltiplo (93 leads → 17 clientes). Cada caso = 1 post LinkedIn.",
-    "category": "authority",
-    "source": "trust_engine",
-    "goal": "conversion",
-    "theme": "social_proof",
-    "channels_suggested": [
-      "blog",
-      "web",
-      "linkedin"
-    ],
-    "priority_score": 66,
-    "ecp_relevance": [
-      "ecp1-sistema-repetible"
-    ],
-    "created_at": "2026-03-24T10:09:58.612210",
-    "task_id": null,
-    "approved_at": null,
-    "notes": ""
-  },
-  {
-    "id": "0227f555-4e2a-4545-854a-ba8d4913f229",
-    "type": "content",
-    "status": "new",
-    "title": "herramientas de growth marketing para SaaS",
-    "description": "Artículo listicle blog: \"Las 15 herramientas de growth que usamos en Growth4U\". Incluir Sancho/Horus como propias. Post LinkedIn: \"Mi stack de growth cuesta 264€/mes.\"",
-    "category": "discovery",
-    "source": "trust_engine",
-    "goal": "awareness",
-    "theme": "educativo",
-    "channels_suggested": [
-      "blog",
-      "linkedin"
-    ],
-    "priority_score": 64,
-    "ecp_relevance": [
-      "ecp1-sistema-repetible"
-    ],
-    "created_at": "2026-03-24T10:09:58.612210",
-    "task_id": null,
-    "approved_at": null,
-    "notes": ""
-  },
-  {
-    "id": "26641a9e-86a1-4be6-96ec-e3927f7e8193",
+    "id": "572b4481-6cbb-43f7-a5dd-19b87dc072d7",
     "type": "content",
     "status": "new",
     "title": "Growth4U servicios",
-    "description": "Hub /servicios/ (ya en P01-T04, copy listo). Asegurar que rankea. Trust Engine + Consultoría como servicios principales.",
-    "category": "ranking",
+    "description": "Hub /servicios/ (P01-T04, copy listo). Trust Engine + Consultoría.",
+    "category": "discovery",
     "source": "trust_engine",
     "goal": "conversion",
     "theme": "comercial",
     "channels_suggested": [
       "web"
-    ],
-    "priority_score": 62,
-    "ecp_relevance": [
-      "ecp1-sistema-repetible"
-    ],
-    "created_at": "2026-03-24T10:09:58.612210",
-    "task_id": null,
-    "approved_at": null,
-    "notes": ""
-  },
-  {
-    "id": "1abd3396-8997-4a71-ae25-7dce18418eeb",
-    "type": "content",
-    "status": "new",
-    "title": "cómo escalar un SaaS B2B",
-    "description": "Artículo blog: \"De 500 a 5.000 usuarios/mes sin aumentar presupuesto\" (caso Lydia). Thread Twitter. Post LinkedIn con gráfica antes/después.",
-    "category": "solution",
-    "source": "trust_engine",
-    "goal": "awareness",
-    "theme": "educativo",
-    "channels_suggested": [
-      "blog",
-      "linkedin",
-      "twitter"
     ],
     "priority_score": 60,
     "ecp_relevance": [
       "ecp1-sistema-repetible"
     ],
-    "created_at": "2026-03-24T10:09:58.612210",
+    "created_at": "2026-03-25T23:51:35.594978",
     "task_id": null,
     "approved_at": null,
     "notes": ""
   },
   {
-    "id": "fda3e34b-42b1-47ef-b051-1c700c33a15d",
+    "id": "7fea6a59-4280-46da-8e37-869633327f0f",
     "type": "content",
     "status": "new",
-    "title": "Growth4U vs Directive Consulting",
-    "description": "Página vs SEO: \"Growth4U vs Directive Consulting\". Diferenciador: España vs US, embedded vs agencia, Trust Engine vs performance pura.",
-    "category": "comparison",
-    "source": "trust_engine",
-    "goal": "consideration",
-    "theme": "comparativo",
-    "channels_suggested": [
-      "blog"
-    ],
-    "priority_score": 58,
-    "ecp_relevance": [
-      "ecp1-sistema-repetible"
-    ],
-    "created_at": "2026-03-24T10:09:58.612210",
-    "task_id": null,
-    "approved_at": null,
-    "notes": ""
-  },
-  {
-    "id": "02b05678-0437-4136-9305-9c736ad70ba3",
-    "type": "content",
-    "status": "new",
-    "title": "técnicas avanzadas de growth hacking",
-    "description": "Artículo blog largo: técnicas probadas (no teoría). 5 técnicas con datos reales de clientes G4U. Atomizar en carrusel LinkedIn (1 técnica = 1 slide).",
+    "title": "estrategias de marketing digital para SaaS",
+    "description": "El marketing digital es esencial para el crecimiento de empresas SaaS, y buscan estrategias efectivas.",
     "category": "guide",
     "source": "trust_engine",
     "goal": "awareness",
     "theme": "educativo",
     "channels_suggested": [
-      "blog",
-      "linkedin"
+      "blog"
     ],
-    "priority_score": 56,
+    "priority_score": 50,
     "ecp_relevance": [
       "ecp1-sistema-repetible"
     ],
-    "created_at": "2026-03-24T10:09:58.612210",
+    "created_at": "2026-03-25T23:51:35.594978",
     "task_id": null,
     "approved_at": null,
     "notes": ""
   },
   {
-    "id": "568fc249-8a1d-4c4e-b14d-33f7ca36a5fa",
-    "type": "content",
-    "status": "new",
-    "title": "cómo aumentar la conversión en SaaS",
-    "description": "Artículo blog: 10 quick wins de CRO para SaaS. Caso XLY Yoga (5.8% conversión, 3x baseline). Post LinkedIn: \"Triplicamos la conversión de XLY Yoga con 3 cambios.\"",
-    "category": "solution",
-    "source": "trust_engine",
-    "goal": "awareness",
-    "theme": "educativo",
-    "channels_suggested": [
-      "blog",
-      "linkedin"
-    ],
-    "priority_score": 54,
-    "ecp_relevance": [
-      "ecp1-sistema-repetible"
-    ],
-    "created_at": "2026-03-24T10:09:58.612210",
-    "task_id": null,
-    "approved_at": null,
-    "notes": ""
-  },
-  {
-    "id": "ebff7f2d-feb5-49a1-b1f6-f04d7b261e91",
-    "type": "content",
-    "status": "new",
-    "title": "Growth4U contacto",
-    "description": "Optimizar página de contacto actual. Asegurar que rankea para esta búsqueda. CTA claro, formulario simple, link a booking.",
-    "category": "ranking",
-    "source": "trust_engine",
-    "goal": "conversion",
-    "theme": "comercial",
-    "channels_suggested": [
-      "web"
-    ],
-    "priority_score": 52,
-    "ecp_relevance": [
-      "ecp1-sistema-repetible"
-    ],
-    "created_at": "2026-03-24T10:09:58.612210",
-    "task_id": null,
-    "approved_at": null,
-    "notes": ""
-  },
-  {
-    "id": "65941bf1-62a5-46e1-8b6b-2c7793222ec0",
+    "id": "17b9ba52-75fc-428c-ab14-ec6c1c49232f",
     "type": "action",
     "status": "new",
     "title": "Enriquecimiento GEO: Citar fuentes autoritativas",
-    "description": "",
+    "description": "Añadir citas de estudios .gov, .edu, informes sectoriales a artículos existentes. Los motores IA priorizan contenido con fuentes autoritativas. Revisión de los 27 posts del blog.",
     "category": "geo_optimization",
     "source": "trust_engine",
     "goal": "visibility",
     "theme": "technical",
     "channels_suggested": [
-      "web"
+      "blog"
     ],
     "priority_score": 95,
     "ecp_relevance": [
       "all"
     ],
-    "created_at": "2026-03-24T10:09:58.612210",
+    "created_at": "2026-03-25T23:51:35.594978",
     "task_id": null,
     "approved_at": null,
     "notes": "Severity: high"
   },
   {
-    "id": "75da86f6-1e53-41ef-a826-80a4c24ba307",
+    "id": "2c1f0e62-4240-4cd0-bd78-ec792eb3507a",
+    "type": "action",
+    "status": "new",
+    "title": "Crear perfil en YouTube",
+    "description": "Crear canal YouTube Growth4U. Empezar con: 1) Casos de éxito en vídeo, 2) Explicación Trust Engine, 3) Tips growth semanales. Refuerza E-E-A-T.",
+    "category": "geo_optimization",
+    "source": "trust_engine",
+    "goal": "visibility",
+    "theme": "technical",
+    "channels_suggested": [
+      "youtube"
+    ],
+    "priority_score": 92,
+    "ecp_relevance": [
+      "all"
+    ],
+    "created_at": "2026-03-25T23:51:35.594978",
+    "task_id": null,
+    "approved_at": null,
+    "notes": "Severity: high"
+  },
+  {
+    "id": "d8dbee55-3102-4ed6-8489-3d7216b0ab1a",
     "type": "action",
     "status": "new",
     "title": "Añadir Author Schema con E-E-A-T",
-    "description": "",
+    "description": "Implementar schema de autor en blog con credenciales de Alfonso (experiencia Bnext, Criptan, etc.). Los motores IA valoran la autoridad del autor.",
     "category": "geo_optimization",
     "source": "trust_engine",
     "goal": "visibility",
@@ -488,65 +500,109 @@
     "channels_suggested": [
       "web"
     ],
-    "priority_score": 95,
+    "priority_score": 90,
     "ecp_relevance": [
       "all"
     ],
-    "created_at": "2026-03-24T10:09:58.612210",
+    "created_at": "2026-03-25T23:51:35.594978",
     "task_id": null,
     "approved_at": null,
     "notes": "Severity: high"
   },
   {
-    "id": "ba6d2252-346a-440a-860d-904dcc1bcd6e",
+    "id": "15591c5a-ccd4-4532-83b9-fe0ca430cdb5",
     "type": "action",
     "status": "new",
     "title": "Enriquecimiento GEO: Citas de expertos",
-    "description": "",
+    "description": "Incluir blockquotes de expertos reconocidos en artículos. +10-20% visibilidad en IAs.",
     "category": "geo_optimization",
     "source": "trust_engine",
     "goal": "visibility",
     "theme": "technical",
     "channels_suggested": [
-      "web"
+      "blog"
     ],
-    "priority_score": 70,
+    "priority_score": 75,
     "ecp_relevance": [
       "all"
     ],
-    "created_at": "2026-03-24T10:09:58.612210",
+    "created_at": "2026-03-25T23:51:35.594978",
     "task_id": null,
     "approved_at": null,
     "notes": "Severity: medium"
   },
   {
-    "id": "627398dc-423a-4276-b462-e76987d1b378",
+    "id": "11356b14-008d-4f05-92b7-29d62022c516",
     "type": "action",
     "status": "new",
-    "title": "Enriquecimiento GEO: Tono autoritativo",
-    "description": "",
+    "title": "Artículos demasiado cortos para GEO",
+    "description": "Artículos actuales avg 1.016 palabras. Para GEO, los que sean pillar pages deberían ser +2.000. Revisar y expandir los top 5.",
     "category": "geo_optimization",
     "source": "trust_engine",
     "goal": "visibility",
     "theme": "technical",
     "channels_suggested": [
-      "web"
+      "blog"
+    ],
+    "priority_score": 80,
+    "ecp_relevance": [
+      "all"
+    ],
+    "created_at": "2026-03-25T23:51:35.594978",
+    "task_id": null,
+    "approved_at": null,
+    "notes": "Severity: medium"
+  },
+  {
+    "id": "8dead14c-f856-4725-ac2a-c87558cb5655",
+    "type": "action",
+    "status": "new",
+    "title": "Crear perfil en Twitter/X",
+    "description": "Ya en proyecto P08. Reactivar @AlfonsoSB con build-in-public.",
+    "category": "geo_optimization",
+    "source": "trust_engine",
+    "goal": "visibility",
+    "theme": "technical",
+    "channels_suggested": [
+      "twitter"
     ],
     "priority_score": 70,
     "ecp_relevance": [
       "all"
     ],
-    "created_at": "2026-03-24T10:09:58.612210",
+    "created_at": "2026-03-25T23:51:35.594978",
+    "task_id": null,
+    "approved_at": null,
+    "notes": "Severity: medium"
+  },
+  {
+    "id": "a309d4ac-b38d-410c-823e-6f1db07aab45",
+    "type": "action",
+    "status": "new",
+    "title": "Enriquecimiento GEO: Tono autoritativo",
+    "description": "Reescribir secciones clave con lenguaje confiado y terminología del dominio. +5-15% visibilidad AI.",
+    "category": "geo_optimization",
+    "source": "trust_engine",
+    "goal": "visibility",
+    "theme": "technical",
+    "channels_suggested": [
+      "blog"
+    ],
+    "priority_score": 60,
+    "ecp_relevance": [
+      "all"
+    ],
+    "created_at": "2026-03-25T23:51:35.594978",
     "task_id": null,
     "approved_at": null,
     "notes": "Severity: low"
   },
   {
-    "id": "d57d0c0a-76bb-4eeb-9965-7829bd1595ec",
+    "id": "fdba03b9-e50e-45b4-beb4-95cbd69adfd4",
     "type": "contact",
     "status": "new",
-    "title": "Product Hackers Podcast (ex En.Digital)",
-    "description": "Podcast líder de growth y negocios digitales. Entrevistas semanales con founders. Competidor directo — aparecer aquí posiciona a Alfonso como peer.",
+    "title": "Product Hackers Podcast",
+    "description": "Podcast líder growth/negocios digitales ES. Competidor directo — aparecer posiciona como peer. Pitch: caso Trust Engine + resultados Bnext.",
     "category": "podcasts",
     "source": "trust_engine",
     "goal": "authority",
@@ -560,17 +616,17 @@
     "ecp_relevance": [
       "all"
     ],
-    "created_at": "2026-03-24T11:07:45.898714",
+    "created_at": "2026-03-25T23:51:35.594978",
     "task_id": null,
     "approved_at": null,
     "notes": ""
   },
   {
-    "id": "9ca69067-dfc3-4a45-a07c-ca0b01766ad1",
+    "id": "e358315b-1aa2-474d-b680-a3c7a189deac",
     "type": "contact",
     "status": "new",
-    "title": "Itnig Podcast — Bernat Farrero & Jordi Romero",
-    "description": "Podcast top de tecnología y emprendimiento. Audiencia: founders tech España. Alfonso encaja perfecto como invitado hablando de Trust Engine.",
+    "title": "Itnig Podcast — Bernat Farrero",
+    "description": "Top podcast tech/emprendimiento. Audiencia: founders tech España. Alfonso como invitado hablando de Trust Engine.",
     "category": "podcasts",
     "source": "trust_engine",
     "goal": "authority",
@@ -584,17 +640,17 @@
     "ecp_relevance": [
       "all"
     ],
-    "created_at": "2026-03-24T11:07:45.898714",
+    "created_at": "2026-03-25T23:51:35.594978",
     "task_id": null,
     "approved_at": null,
     "notes": ""
   },
   {
-    "id": "d414d0ba-c6ff-4f1b-a43c-0e086bef5dce",
+    "id": "1ecde4c2-a38a-41bd-ab7d-f5eccd977399",
     "type": "contact",
     "status": "new",
     "title": "Marketing Online — Joan Boluda",
-    "description": "Podcast diario de marketing digital, top en España. Audiencia masiva de marketers y emprendedores. Formato corto, ideal para caso práctico G4U.",
+    "description": "Podcast diario marketing digital, top ES. Formato corto ideal para caso práctico G4U.",
     "category": "podcasts",
     "source": "trust_engine",
     "goal": "authority",
@@ -608,17 +664,17 @@
     "ecp_relevance": [
       "all"
     ],
-    "created_at": "2026-03-24T11:07:45.898714",
+    "created_at": "2026-03-25T23:51:35.594978",
     "task_id": null,
     "approved_at": null,
     "notes": ""
   },
   {
-    "id": "7c36f0d1-918e-4e59-934b-cd27ae790dfe",
+    "id": "be0851e9-1da5-4fd6-85de-c6ae3dcd0009",
     "type": "contact",
     "status": "new",
-    "title": "Marketing sin Filtro — Daniela Goicoechea & Marjori Haddad",
-    "description": "Perspectiva fresca y honesta de marketing. Audiencia: marketers jóvenes. Buen fit para hablar de lo que NO funciona en growth agencies.",
+    "title": "Marketing sin Filtro",
+    "description": "Perspectiva honesta de marketing. Buen fit para hablar de lo que NO funciona en growth agencies.",
     "category": "podcasts",
     "source": "trust_engine",
     "goal": "authority",
@@ -632,17 +688,17 @@
     "ecp_relevance": [
       "all"
     ],
-    "created_at": "2026-03-24T11:07:45.898714",
+    "created_at": "2026-03-25T23:51:35.594978",
     "task_id": null,
     "approved_at": null,
     "notes": ""
   },
   {
-    "id": "e5754282-4a50-4e8a-b30c-b2be1f300592",
+    "id": "cef14bbb-537c-4588-8fe1-03df35a88057",
     "type": "contact",
     "status": "new",
-    "title": "Campamento Web Podcast",
-    "description": "Podcast de marketing digital y SEO. Ya en lista P06. Audiencia técnica que valora frameworks.",
+    "title": "Campamento Web",
+    "description": "Podcast marketing/SEO. Audiencia técnica.",
     "category": "podcasts",
     "source": "trust_engine",
     "goal": "authority",
@@ -656,17 +712,41 @@
     "ecp_relevance": [
       "all"
     ],
-    "created_at": "2026-03-24T11:07:45.898714",
+    "created_at": "2026-03-25T23:51:35.594978",
     "task_id": null,
     "approved_at": null,
     "notes": ""
   },
   {
-    "id": "84dc0c17-6d2c-4b8d-a3dd-55b9161c5dd5",
+    "id": "48f435e1-56e6-4057-b52a-da42fe5f7636",
     "type": "contact",
-    "status": "approved",
-    "title": "El Referente — Revista líder startups ES",
-    "description": "LA referencia de startups en España. Publican reportajes, entrevistas founders, datos VC. Press release de Trust Engine + caso Bnext/Criptan encaja perfecto.",
+    "status": "new",
+    "title": "MAS QUE FINTECH",
+    "description": "Podcast fintech español. Alfonso tiene cases Bnext, Criptan, Bit2Me — perfil ideal de invitado.",
+    "category": "podcasts",
+    "source": "trust_engine",
+    "goal": "authority",
+    "theme": "podcasts",
+    "channels_suggested": [
+      "podcasts"
+    ],
+    "target_channel": "podcasts",
+    "url": "",
+    "priority_score": 85,
+    "ecp_relevance": [
+      "all"
+    ],
+    "created_at": "2026-03-25T23:51:35.594978",
+    "task_id": null,
+    "approved_at": null,
+    "notes": ""
+  },
+  {
+    "id": "fbb7c776-014c-4eae-84f3-14c9afedb364",
+    "type": "contact",
+    "status": "new",
+    "title": "El Referente",
+    "description": "Revista líder startups ES. Press release Trust Engine + caso Bnext/Criptan. Reportaje o entrevista founder.",
     "category": "medios",
     "source": "trust_engine",
     "goal": "authority",
@@ -680,18 +760,17 @@
     "ecp_relevance": [
       "all"
     ],
-    "created_at": "2026-03-24T11:07:45.898714",
+    "created_at": "2026-03-25T23:51:35.594978",
     "task_id": null,
-    "approved_at": "2026-03-24T15:16:07.019Z",
-    "notes": "",
-    "approved_by": null
+    "approved_at": null,
+    "notes": ""
   },
   {
-    "id": "9706def7-9c0a-4c73-be8b-72e9e13b8db9",
+    "id": "3b9bbec1-efa0-4866-a3a6-f65bf0368823",
     "type": "contact",
     "status": "new",
-    "title": "Puro Marketing — Guest post growth/trust",
-    "description": "Referente en marketing digital España. Aceptan guest posts. Artículo tipo: \"Por qué tu CAC sube y qué hacer\" o \"El Trust Engine como framework\".",
+    "title": "Puro Marketing — Guest post",
+    "description": "Referente marketing digital ES. Guest post: \"Por qué tu CAC sube y qué hacer\" o \"Trust Engine como framework\".",
     "category": "medios",
     "source": "trust_engine",
     "goal": "authority",
@@ -705,17 +784,17 @@
     "ecp_relevance": [
       "all"
     ],
-    "created_at": "2026-03-24T11:07:45.898714",
+    "created_at": "2026-03-25T23:51:35.594978",
     "task_id": null,
     "approved_at": null,
     "notes": ""
   },
   {
-    "id": "042fc393-5652-4c7a-bb98-99cbcf2e7dee",
+    "id": "87895b0f-2c5a-4f14-b0a2-704d3e619815",
     "type": "contact",
     "status": "new",
     "title": "Emprendedores.es — Caso de éxito",
-    "description": "Revista de emprendimiento top en ES. Formato caso de éxito: \"Cómo Growth4U redujo el CAC de Bnext un 75%\".",
+    "description": "Revista emprendimiento top. Formato: \"Cómo Growth4U redujo el CAC de Bnext un 75%\".",
     "category": "medios",
     "source": "trust_engine",
     "goal": "authority",
@@ -729,17 +808,17 @@
     "ecp_relevance": [
       "all"
     ],
-    "created_at": "2026-03-24T11:07:45.898714",
+    "created_at": "2026-03-25T23:51:35.594978",
     "task_id": null,
     "approved_at": null,
     "notes": ""
   },
   {
-    "id": "859f40b3-b798-4a1a-8c1d-12f5bbec23c4",
+    "id": "c46d17f3-662b-4b31-85bf-4a91f6789927",
     "type": "contact",
     "status": "new",
     "title": "Business Insider España",
-    "description": "Medio de actualidad económica y tech. Perfil Alfonso como experto en growth fintech. Op-ed o entrevista.",
+    "description": "Actualidad económica/tech. Op-ed o entrevista Alfonso como experto growth fintech.",
     "category": "medios",
     "source": "trust_engine",
     "goal": "authority",
@@ -753,17 +832,17 @@
     "ecp_relevance": [
       "all"
     ],
-    "created_at": "2026-03-24T11:07:45.898714",
+    "created_at": "2026-03-25T23:51:35.594978",
     "task_id": null,
     "approved_at": null,
     "notes": ""
   },
   {
-    "id": "825f5b8f-cf74-44ca-adef-9884be03481d",
+    "id": "0672e5be-7a40-40aa-ad66-4f022afc26b8",
     "type": "contact",
     "status": "new",
-    "title": "Marketing4eCommerce — Artículo",
-    "description": "Podcast + blog de ecommerce y marketing. Guest post sobre growth para SaaS B2B vs ecommerce.",
+    "title": "Marketing4eCommerce",
+    "description": "Blog+podcast ecommerce/marketing. Guest post growth SaaS B2B vs ecommerce.",
     "category": "medios",
     "source": "trust_engine",
     "goal": "authority",
@@ -777,17 +856,17 @@
     "ecp_relevance": [
       "all"
     ],
-    "created_at": "2026-03-24T11:07:45.898714",
+    "created_at": "2026-03-25T23:51:35.594978",
     "task_id": null,
     "approved_at": null,
     "notes": ""
   },
   {
-    "id": "f30b3c0c-23d9-4bf5-8062-28293fcf12f3",
+    "id": "ca2ed9d2-a194-4957-84ae-27c0e76b0160",
     "type": "contact",
     "status": "new",
-    "title": "Cyberclick Blog — Guest post SEO/GEO",
-    "description": "Blog de marketing digital con buena autoridad. Artículo sobre GEO (Generative Engine Optimization) como diferenciador.",
+    "title": "Cyberclick Blog",
+    "description": "Blog marketing alta autoridad. Artículo sobre GEO como diferenciador.",
     "category": "medios",
     "source": "trust_engine",
     "goal": "authority",
@@ -801,17 +880,17 @@
     "ecp_relevance": [
       "all"
     ],
-    "created_at": "2026-03-24T11:07:45.898714",
+    "created_at": "2026-03-25T23:51:35.594978",
     "task_id": null,
     "approved_at": null,
     "notes": ""
   },
   {
-    "id": "d38b3f37-725f-41bd-90d3-b81ca6427e2a",
+    "id": "070c4646-755b-424b-9c0e-bf1f0b3d1e05",
     "type": "contact",
     "status": "new",
-    "title": "IEBS Blog — Artículo formativo",
-    "description": "Escuela de negocio digital con blog de alta autoridad. Formato educativo: \"Qué es un Trust Engine y cómo construirlo\".",
+    "title": "IEBS Blog",
+    "description": "Escuela negocio digital. Formato educativo: \"Qué es un Trust Engine y cómo construirlo\".",
     "category": "medios",
     "source": "trust_engine",
     "goal": "authority",
@@ -825,17 +904,17 @@
     "ecp_relevance": [
       "all"
     ],
-    "created_at": "2026-03-24T11:07:45.898714",
+    "created_at": "2026-03-25T23:51:35.594978",
     "task_id": null,
     "approved_at": null,
     "notes": ""
   },
   {
-    "id": "176daf43-a683-41f4-bd3f-661fa39a6315",
+    "id": "6475cda7-23dd-4468-9335-7418749c15f9",
     "type": "contact",
     "status": "new",
-    "title": "Carlos Blanco — Encomenda / Nuclio",
-    "description": "Emprendedor e inversor top ES. +100 startups invertidas. Si recomienda G4U a portfolio = lead machine. Approach: invitar a podcast/evento, ofrecer valor primero.",
+    "title": "Carlos Blanco — Encomenda/Nuclio",
+    "description": "Emprendedor+inversor top ES. +100 startups. Si recomienda G4U a portfolio = lead machine. Approach: ofrecer valor primero.",
     "category": "influencers",
     "source": "trust_engine",
     "goal": "authority",
@@ -849,17 +928,17 @@
     "ecp_relevance": [
       "all"
     ],
-    "created_at": "2026-03-24T11:07:45.898714",
+    "created_at": "2026-03-25T23:51:35.594978",
     "task_id": null,
     "approved_at": null,
     "notes": ""
   },
   {
-    "id": "ed548909-1f82-4f93-ab74-957916842a57",
+    "id": "f2222149-cfc4-4e41-b46f-de16e7e8f839",
     "type": "contact",
     "status": "new",
     "title": "Jose del Barrio — Samaipata VC",
-    "description": "Founder de Samaipata (early-stage VC). Sus portfolio companies son ICP perfecto de G4U. Referral play.",
+    "description": "Founder Samaipata (early-stage VC). Portfolio = ICP perfecto de G4U. Referral play.",
     "category": "influencers",
     "source": "trust_engine",
     "goal": "authority",
@@ -873,17 +952,17 @@
     "ecp_relevance": [
       "all"
     ],
-    "created_at": "2026-03-24T11:07:45.898714",
+    "created_at": "2026-03-25T23:51:35.594978",
     "task_id": null,
     "approved_at": null,
     "notes": ""
   },
   {
-    "id": "f4d3c3d4-ef2b-4038-9d2a-5c2363390e2e",
+    "id": "f7da7a4c-f5d6-4668-91af-b724f3f02630",
     "type": "contact",
     "status": "new",
-    "title": "Rubén Domínguez Ibar — The VC Corner",
-    "description": "Inversor tech, comparte sobre fundraising y growth. Audiencia: founders post-round = ECP4 (Post-Round Firefighter).",
+    "title": "Rubén Domínguez — The VC Corner",
+    "description": "Inversor tech. Audiencia: founders post-round = ECP4 de G4U.",
     "category": "influencers",
     "source": "trust_engine",
     "goal": "authority",
@@ -897,17 +976,17 @@
     "ecp_relevance": [
       "all"
     ],
-    "created_at": "2026-03-24T11:07:45.898714",
+    "created_at": "2026-03-25T23:51:35.594978",
     "task_id": null,
     "approved_at": null,
     "notes": ""
   },
   {
-    "id": "18f356a0-cabf-4e54-a640-d8ea9724170f",
+    "id": "a1e0ce7c-bdcc-483b-b8d3-db292a424103",
     "type": "contact",
     "status": "new",
     "title": "Daniel Olmedo — EasyVC",
-    "description": "Co-founder EasyVC. Comparte sobre fundraising y growth tactics. Cross-promo: G4U ayuda con growth post-ronda.",
+    "description": "Co-founder EasyVC. Cross-promo: G4U ayuda con growth post-ronda.",
     "category": "influencers",
     "source": "trust_engine",
     "goal": "authority",
@@ -921,17 +1000,17 @@
     "ecp_relevance": [
       "all"
     ],
-    "created_at": "2026-03-24T11:07:45.898714",
+    "created_at": "2026-03-25T23:51:35.594978",
     "task_id": null,
     "approved_at": null,
     "notes": ""
   },
   {
-    "id": "2b55b6e2-a3ec-470d-b6b0-d1f2d911ad27",
+    "id": "8fbfa006-6351-497a-af2b-3cd251beccdb",
     "type": "contact",
     "status": "new",
     "title": "Helena Torras — Board Director",
-    "description": "Top mujer en VC Europa. Independent board director. Approach: panel conjunto o entrevista cruzada en LinkedIn.",
+    "description": "Top mujer en VC Europa. Panel conjunto o entrevista cruzada LinkedIn.",
     "category": "influencers",
     "source": "trust_engine",
     "goal": "authority",
@@ -945,7 +1024,7 @@
     "ecp_relevance": [
       "all"
     ],
-    "created_at": "2026-03-24T11:07:45.898714",
+    "created_at": "2026-03-25T23:51:35.594978",
     "task_id": null,
     "approved_at": null,
     "notes": ""

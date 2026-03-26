@@ -1,0 +1,16 @@
+{
+  "messages": [
+    {
+      "role": "user",
+      "text": "Test persistencia disco",
+      "ts": "2026-03-25T17:08:03.251Z"
+    },
+    {
+      "role": "bot",
+      "text": "Test recibido. Persistencia OK — estoy aquí y operativo. 🫡",
+      "agent": "sancho",
+      "ts": "2026-03-25T17:09:15.830Z"
+    }
+  ],
+  "updatedAt": 1774458555830
+}

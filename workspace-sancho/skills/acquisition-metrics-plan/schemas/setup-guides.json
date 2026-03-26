@@ -297,6 +297,38 @@
     ],
     "warning": "⚠️ Requiere plan <strong>Hypergrowth</strong> o superior."
   },
+  "slack": {
+    "title": "Slack",
+    "difficulty": "media",
+    "time": "10 min",
+    "steps": [
+      {
+        "title": "Crea una Slack App",
+        "instructions": "Ve a <a href='https://api.slack.com/apps' target='_blank'>api.slack.com/apps</a> → <strong>Create New App</strong> → <strong>From scratch</strong>. Nombre: <code>SanchoCMO</code>. Workspace: el de tu empresa.",
+        "alwaysShow": true
+      },
+      {
+        "title": "Añade permisos (Bot Token Scopes)",
+        "instructions": "En la app → <strong>OAuth & Permissions</strong> → sección <strong>Bot Token Scopes</strong> → añade estos scopes:<br><code>channels:history</code> — leer mensajes de canales<br><code>channels:read</code> — listar canales<br><code>users:read</code> — resolver nombres de usuarios<br><code>chat:write</code> — enviar mensajes<br><code>files:read</code> — leer archivos compartidos",
+        "alwaysShow": true
+      },
+      {
+        "title": "Instala la app en tu workspace",
+        "instructions": "En la app → <strong>Install App</strong> → <strong>Install to Workspace</strong> → Autoriza. Se generará el <strong>Bot User OAuth Token</strong> (<code>xoxb-...</code>).",
+        "alwaysShow": true
+      },
+      {
+        "title": "Copia el token",
+        "instructions": "Copia el <strong>Bot User OAuth Token</strong> que empieza por <code>xoxb-</code> y pégalo en el campo de abajo.",
+        "alwaysShow": true
+      },
+      {
+        "title": "Invita al bot a los canales",
+        "instructions": "En Slack, en cada canal que quieras que SanchoCMO pueda leer, escribe <code>/invite @SanchoCMO</code>.",
+        "alwaysShow": true
+      }
+    ]
+  },
   "notion": {
     "title": "Notion",
     "difficulty": "baja",

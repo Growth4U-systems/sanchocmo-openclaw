@@ -1,4 +1,5 @@
 {
-  "audit": "audit-2026-03-24.json",
-  "lists": "lists-2026-03-24.json"
+  "audit": "audit-2026-03-25-v2.json",
+  "ideas": "../idea-generation/ideas.json",
+  "run": 2
 }
