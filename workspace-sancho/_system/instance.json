@@ -1,6 +1,8 @@
 {
   "$comment": "Instance-specific configuration. Single source of truth for all scripts and agents.",
   "mc_base_url": "https://sancho-cmo.taild48df2.ts.net/mc",
+  "mc_server_port": 18790,
+  "gateway_port": 18789,
   "discord": {
     "bot_client_id": "1475635406610628769",
     "admin_users": [
@@ -21,5 +23,9 @@
   },
   "supabase": {
     "url": "https://psapmujzxhaxraphddlv.supabase.co"
+  },
+  "accounts": {
+    "google_workspace": "alfonso@growth4u.io",
+    "dataforseo": "accounts@growth4u.io"
   }
 }

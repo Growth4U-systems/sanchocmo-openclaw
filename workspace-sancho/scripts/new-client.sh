@@ -22,7 +22,8 @@ while [[ $# -gt 0 ]]; do
       echo "Uso: new-client.sh --slug <slug> --name <nombre> --guild <guild_id>"
       echo ""
       echo "Prerequisito: cliente creó servidor desde https://discord.new/9nbefJmU7YKy"
-      echo "              y añadió bot desde https://discord.com/oauth2/authorize?client_id=1475635406610628769&permissions=8&integration_type=0&scope=bot"
+      BOT_ID=$(python3 -c "import json; print(json.load(open('$WORKSPACE/_system/instance.json'))['discord']['bot_client_id'])" 2>/dev/null || echo "BOT_CLIENT_ID")
+      echo "              y añadió bot desde https://discord.com/oauth2/authorize?client_id=${BOT_ID}&permissions=8&integration_type=0&scope=bot"
       exit 0 ;;
     *) echo "❌ Argumento desconocido: $1"; exit 1 ;;
   esac
