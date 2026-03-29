@@ -1,0 +1,18 @@
+{
+  "$comment": "Instance config for Cervantes. See workspace-sancho/_system/instance.json for full version.",
+  "mc_base_url": "https://sancho-cmo.taild48df2.ts.net/mc",
+  "mc_server_port": 18790,
+  "gateway_port": 18789,
+  "supabase_url": "https://psapmujzxhaxraphddlv.supabase.co",
+  "discord": {
+    "infra_guild": "1478770422093709502",
+    "admin_channel": "1475638273501040681",
+    "infra_thread": "1480273578770567319",
+    "costs_thread": "1481910083255406694",
+    "tasks_channel": "1478771960388386909"
+  },
+  "accounts": {
+    "google_workspace": "alfonso@growth4u.io",
+    "dataforseo": "accounts@growth4u.io"
+  }
+}

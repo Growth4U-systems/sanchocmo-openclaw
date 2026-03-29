@@ -8,7 +8,7 @@
 - **Alfonso user ID**: 1334604955687977042
 
 ## Mission Control
-- **Config**: Ver `_system/instance-config.md` para URLs actuales
+- **Config**: Ver `_system/instance.json` para URLs actuales
 - **MC path**: /mc (puerto 18790 interno)
 
 ## Supabase

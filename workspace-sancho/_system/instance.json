@@ -1,5 +1,5 @@
 {
-  "$comment": "Instance-specific configuration. Read by scripts. See instance-config.md for human docs.",
+  "$comment": "Instance-specific configuration. Single source of truth for all scripts and agents.",
   "mc_base_url": "https://sancho-cmo.taild48df2.ts.net/mc",
   "discord": {
     "bot_client_id": "1475635406610628769",

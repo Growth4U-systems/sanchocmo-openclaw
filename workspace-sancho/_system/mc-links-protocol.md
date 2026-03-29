@@ -3,7 +3,7 @@
 > Todos los links a Mission Control DEBEN incluir un token de acceso. URLs sin token devuelven 403.
 
 ## URL Base
-Lee de `_system/instance-config.md` → Mission Control → **MC Base URL**
+Lee de `_system/instance.json` → campo `mc_base_url`
 
 ## Tipos de Acceso
 
