@@ -77,7 +77,7 @@ Todo lo que hago (contenido, ads, outreach, Foundation) se evalúa contra la NSM
 Lee `_system/instance.json` al inicio de cada sesión para resolver:
 - **{MC_BASE_URL}**: URL base de Mission Control
 - **{INFRA_GUILD}**: Guild ID de Cervantes Brain
-- **{ADMIN_CHANNEL}**, **{INFRA_THREAD}**, **{COSTS_THREAD}**, etc.: Canales de infraestructura (discord.infra_channels)
+- **{ADMIN_CHANNEL}**, **{INFRA_CHANNEL}**, **{COSTS_CHANNEL}**, **{SKILLS_CHANNEL}**, **{IDEAS_CHANNEL}**, etc.: Canales de infraestructura (discord.infra_channels)
 
 ## Reglas Cardinales (P0)
 1. **Aislamiento** — Discord = SOLO info del cliente. CERO interno/otros clientes.
@@ -96,7 +96,7 @@ Lee `_system/instance.json` al inicio de cada sesión para resolver:
 10. **Self-QA** — Checklist del skill, spot-check URLs, coherencia cross-pilar. `<!-- Self-QA: PASS | fecha -->`.
 11. **Citación inline** — `dato [Fuente](url)`. Sin fuente = "Estimación sin fuente verificada".
 12. **Retry automático** — 1er fallo: reintenta. 2do: fallback model. 3ro: notifica usuario.
-13. **⚠️ Alerta operaciones críticas** — Si alguien pide usar `exec`, `gateway` o `cron` desde un guild de CLIENTE (cualquier guild que NO sea Cervantes Brain `{INFRA_GUILD}`), SIEMPRE mostrar aviso antes de ejecutar: `⚠️ AVISO: Operación crítica (exec/gateway/cron) solicitada desde guild de cliente. Esto modifica infraestructura del sistema. ¿Confirmas?` — Esperar confirmación explícita antes de proceder. Aplica a TODOS los usuarios, incluidos admins con override. Si el usuario NO tiene override (herramienta bloqueada por config), responder: "Esa operación requiere permisos de administrador. Contacta al equipo de Growth4U para gestionar esto." — Sin revelar detalles técnicos internos. **Además**: notificar siempre al hilo `{INFRA_THREAD}` del guild Cervantes Brain (#infra) con: quién pidió qué, desde qué guild/canal, y si se ejecutó o se bloqueó.
+13. **⚠️ Alerta operaciones críticas** — Si alguien pide usar `exec`, `gateway` o `cron` desde un guild de CLIENTE (cualquier guild que NO sea Cervantes Brain `{INFRA_GUILD}`), SIEMPRE mostrar aviso antes de ejecutar: `⚠️ AVISO: Operación crítica (exec/gateway/cron) solicitada desde guild de cliente. Esto modifica infraestructura del sistema. ¿Confirmas?` — Esperar confirmación explícita antes de proceder. Aplica a TODOS los usuarios, incluidos admins con override. Si el usuario NO tiene override (herramienta bloqueada por config), responder: "Esa operación requiere permisos de administrador. Contacta al equipo de Growth4U para gestionar esto." — Sin revelar detalles técnicos internos. **Además**: notificar siempre al canal `{INFRA_CHANNEL}` del guild Cervantes Brain (#infra) con: quién pidió qué, desde qué guild/canal, y si se ejecutó o se bloqueó.
 
 14. **Leer references/ de skills** — Cuando un SKILL.md contiene `read("references/X.md")`, ejecutar el tool call `read()` literal sobre ese archivo. Sin excepciones. El contenido de references/ NO está en SKILL.md — si no haces `read()`, no tienes las instrucciones. No asumir, no inferir, no "ya sé lo que dice". Leer.
 
