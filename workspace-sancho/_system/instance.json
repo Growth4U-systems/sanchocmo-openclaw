@@ -1,0 +1,25 @@
+{
+  "$comment": "Instance-specific configuration. Read by scripts. See instance-config.md for human docs.",
+  "mc_base_url": "https://sancho-cmo.taild48df2.ts.net/mc",
+  "discord": {
+    "bot_client_id": "1475635406610628769",
+    "admin_users": [
+      "1334604955687977042",
+      "1402171221747040369",
+      "1478058457419616349"
+    ],
+    "infra_guild": "1478770422093709502",
+    "infra_channels": {
+      "admin": "1475638273501040681",
+      "infra_thread": "1480273578770567319",
+      "costs_thread": "1481910083255406694",
+      "tasks": "1478771960388386909",
+      "changelog": "1478771913865298022",
+      "update_skills_thread": "1481220331845976125",
+      "mejora_continua_thread": "1482638140240953396"
+    }
+  },
+  "supabase": {
+    "url": "https://psapmujzxhaxraphddlv.supabase.co"
+  }
+}

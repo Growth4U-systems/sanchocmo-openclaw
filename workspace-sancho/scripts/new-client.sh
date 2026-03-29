@@ -877,9 +877,11 @@ fi
 
 # --- 7. Aplicar restricciones de seguridad al guild ---
 echo "🔒 Aplicando restricciones de seguridad..."
-ALFONSO="1334604955687977042"
-MARTIN="1402171221747040369"
-PHILIPPE="1475772310614048858"
+INSTANCE_JSON="$WORKSPACE/_system/instance.json"
+ADMIN_USERS=$(python3 -c "import json; d=json.load(open('$INSTANCE_JSON')); print(' '.join(d['discord']['admin_users']))" 2>/dev/null)
+ALFONSO=$(echo "$ADMIN_USERS" | cut -d' ' -f1)
+MARTIN=$(echo "$ADMIN_USERS" | cut -d' ' -f2)
+PHILIPPE=$(echo "$ADMIN_USERS" | cut -d' ' -f3)
 
 python3 -c "
 import json

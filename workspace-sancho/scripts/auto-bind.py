@@ -43,12 +43,14 @@ import copy
 OPENCLAW_HOME = os.environ.get("OPENCLAW_HOME", os.path.expanduser("~/.openclaw"))
 OPENCLAW_JSON = os.path.join(OPENCLAW_HOME, "openclaw.json")
 
-# Allowed user IDs (from allowFrom)
-ALLOWED_USERS = [
-    "1334604955687977042",
-    "1402171221747040369",
-    "1478058457419616349",
-]
+# Allowed user IDs — loaded from instance config
+_INSTANCE_JSON = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "_system", "instance.json")
+try:
+    with open(_INSTANCE_JSON) as _f:
+        _instance = json.load(_f)
+    ALLOWED_USERS = _instance.get("discord", {}).get("admin_users", [])
+except FileNotFoundError:
+    ALLOWED_USERS = []
 
 # Channel name → systemPrompt template
 # {name} = client name, {slug} = client slug, {prefix} = task ID prefix

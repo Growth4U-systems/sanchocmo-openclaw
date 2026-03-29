@@ -16,8 +16,9 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from collections import defaultdict
 
-WORKSPACE = Path.home() / ".openclaw" / "workspace-sancho"
-AGENTS_DIR = Path.home() / ".openclaw" / "agents"
+OPENCLAW_HOME = Path(os.environ.get("OPENCLAW_HOME", str(Path.home() / ".openclaw")))
+WORKSPACE = OPENCLAW_HOME / "workspace-sancho"
+AGENTS_DIR = OPENCLAW_HOME / "agents"
 USD_TO_EUR = 0.92
 CHANNEL_CACHE = WORKSPACE / "scripts" / ".channel-guild-cache.json"
 
@@ -55,52 +56,33 @@ def build_channel_guild_map(session_map):
     guild_to_client = load_guild_to_client()
     cache = load_channel_cache()
     
-    # Add known static channels from dispatch-map.json
+    # Build channel → guild map dynamically from sources.json files
+    brand_dir = WORKSPACE / "brand"
+    if brand_dir.exists():
+        for sources_file in brand_dir.glob("*/sources.json"):
+            try:
+                src = json.loads(sources_file.read_text())
+                guild_id = str(src.get("guild_id", ""))
+                if guild_id:
+                    for ch_name, ch_id in src.get("channels", {}).items():
+                        if isinstance(ch_id, str):
+                            cache[ch_id] = guild_id
+            except:
+                pass
+
+    # Also map channels from dispatch-map.json (legacy, uses guild from clients.json)
     dispatch_file = WORKSPACE / "dispatch-map.json"
     if dispatch_file.exists():
-        dispatch = json.loads(dispatch_file.read_text())
-        for name, ch_id in dispatch.get("discord_channels", {}).items():
-            if isinstance(ch_id, str):
-                # Hospital Capilar guild
-                cache[ch_id] = "1475635138108063746"
-    
-    # Add the internal/tasks guild channel mappings
-    # These are hardcoded from the known guild channel lists
-    known_guild_channels = {
-        # Hospital Capilar
-        "1475635138108063746": [
-            "1475635138988609678", "1475638249107095866", "1475638251485401171",
-            "1475638253154603170", "1475638255641952386", "1475638257088860244",
-            "1475638259425087629", "1475638261819900146", "1475638263720181841",
-            "1475638268015022284", "1475638269109862463", "1475638272523763834",
-            "1475638273501040681", "1476491108421730334",
-        ],
-        # Paymático
-        "1477995837719056458": [
-            "1477995837719056461", "1477995837719056463", "1477995837719056464",
-            "1477995837719056465", "1477995837719056467", "1477995838092476468",
-            "1477995838092476470", "1477995838092476471", "1477995838092476472",
-            "1477995838092476474", "1477995838092476475", "1477995838092476477",
-            "1477995838256189592", "1477995838256189593",
-        ],
-        # SanchoCMO (internal)
-        "1477997446885019670": [
-            "1477997447673282684", "1477997447673282686", "1477997447673282687",
-            "1477997447673282688", "1477997447673282690", "1477997447673282691",
-            "1477997447845511219", "1477997447845511220", "1477997447845511221",
-            "1477997447845511223", "1477997447845511224", "1477997447845511226",
-            "1477997447845511227", "1477997447845511228",
-        ],
-        # Cervantes/Tasks (internal)
-        "1478770422093709502": [
-            "1478770423352262760", "1478771913865298022", "1478771936782844055",
-            "1478771960388386909", "1478771985638096981", "1478772035894120508",
-            "1478809499371311145",
-        ],
-    }
-    for guild_id, channels in known_guild_channels.items():
-        for ch in channels:
-            cache[ch] = guild_id
+        try:
+            dispatch = json.loads(dispatch_file.read_text())
+            for name, ch_id in dispatch.get("discord_channels", {}).items():
+                if isinstance(ch_id, str) and ch_id not in cache:
+                    # Try to find guild from clients.json by matching first client
+                    for gid in guild_to_client:
+                        cache[ch_id] = gid
+                        break
+        except:
+            pass
     
     # Collect unresolved discord channels
     unresolved = set()

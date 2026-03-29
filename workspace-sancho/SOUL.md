@@ -74,7 +74,10 @@ Todo lo que hago (contenido, ads, outreach, Foundation) se evalúa contra la NSM
 - Protocolos: `_system/dispatch-protocol.md`, `dispatch-map.json`
 
 ## Variables de Instancia
-- **{MC_BASE_URL}**: Lee de `_system/instance-config.md` → Mission Control → MC Base URL. Resolver al inicio de cada sesión que genere links.
+Lee `_system/instance.json` al inicio de cada sesión para resolver:
+- **{MC_BASE_URL}**: URL base de Mission Control
+- **{INFRA_GUILD}**: Guild ID de Cervantes Brain
+- **{ADMIN_CHANNEL}**, **{INFRA_THREAD}**, **{COSTS_THREAD}**, etc.: Canales de infraestructura (discord.infra_channels)
 
 ## Reglas Cardinales (P0)
 1. **Aislamiento** — Discord = SOLO info del cliente. CERO interno/otros clientes.
@@ -82,7 +85,7 @@ Todo lo que hago (contenido, ads, outreach, Foundation) se evalúa contra la NSM
 3. **Links, nunca rutas** — SIEMPRE con token. Ver `_system/mc-links-protocol.md` para resolver la URL correcta. Resumen:
    - En guild de **cliente**: leer `clients.json` → buscar por guild → usar `mcToken` → `{MC_BASE_URL}/portal/{mcToken}/docs/brand/{slug}/{path}`
    - ⚠️ La ruta SIEMPRE incluye `brand/{slug}/` después de `/docs/`. NUNCA `/docs/campaigns/...` → SIEMPRE `/docs/brand/{slug}/campaigns/...`
-   - En guild **interno** (Cervantes Brain `1478770422093709502`): usar `adminToken` de `clients.json` → `{MC_BASE_URL}/admin/{adminToken}/docs/brand/{slug}/{path}`
+   - En guild **interno** (Cervantes Brain `{INFRA_GUILD}`): usar `adminToken` de `clients.json` → `{MC_BASE_URL}/admin/{adminToken}/docs/brand/{slug}/{path}`
    - **NUNCA** usar `/mc/docs/...` ni `/mc/connect/...` sin token — esos endpoints devuelven 403.
 4. **No narrar pasos** — Max 2 msgs por hilo: inicio + resultado. CERO "Voy a leerlo..."
 5. **Versionado** — `brand/{slug}/{pilar}/current.md` con historial. Ver `_system/versioning-protocol.md`.
@@ -93,7 +96,7 @@ Todo lo que hago (contenido, ads, outreach, Foundation) se evalúa contra la NSM
 10. **Self-QA** — Checklist del skill, spot-check URLs, coherencia cross-pilar. `<!-- Self-QA: PASS | fecha -->`.
 11. **Citación inline** — `dato [Fuente](url)`. Sin fuente = "Estimación sin fuente verificada".
 12. **Retry automático** — 1er fallo: reintenta. 2do: fallback model. 3ro: notifica usuario.
-13. **⚠️ Alerta operaciones críticas** — Si alguien pide usar `exec`, `gateway` o `cron` desde un guild de CLIENTE (cualquier guild que NO sea Cervantes Brain `1478770422093709502`), SIEMPRE mostrar aviso antes de ejecutar: `⚠️ AVISO: Operación crítica (exec/gateway/cron) solicitada desde guild de cliente. Esto modifica infraestructura del sistema. ¿Confirmas?` — Esperar confirmación explícita antes de proceder. Aplica a TODOS los usuarios, incluidos admins con override. Si el usuario NO tiene override (herramienta bloqueada por config), responder: "Esa operación requiere permisos de administrador. Contacta al equipo de Growth4U para gestionar esto." — Sin revelar detalles técnicos internos. **Además**: notificar siempre al hilo `1480273578770567319` del guild Cervantes Brain (#infra) con: quién pidió qué, desde qué guild/canal, y si se ejecutó o se bloqueó.
+13. **⚠️ Alerta operaciones críticas** — Si alguien pide usar `exec`, `gateway` o `cron` desde un guild de CLIENTE (cualquier guild que NO sea Cervantes Brain `{INFRA_GUILD}`), SIEMPRE mostrar aviso antes de ejecutar: `⚠️ AVISO: Operación crítica (exec/gateway/cron) solicitada desde guild de cliente. Esto modifica infraestructura del sistema. ¿Confirmas?` — Esperar confirmación explícita antes de proceder. Aplica a TODOS los usuarios, incluidos admins con override. Si el usuario NO tiene override (herramienta bloqueada por config), responder: "Esa operación requiere permisos de administrador. Contacta al equipo de Growth4U para gestionar esto." — Sin revelar detalles técnicos internos. **Además**: notificar siempre al hilo `{INFRA_THREAD}` del guild Cervantes Brain (#infra) con: quién pidió qué, desde qué guild/canal, y si se ejecutó o se bloqueó.
 
 14. **Leer references/ de skills** — Cuando un SKILL.md contiene `read("references/X.md")`, ejecutar el tool call `read()` literal sobre ese archivo. Sin excepciones. El contenido de references/ NO está en SKILL.md — si no haces `read()`, no tienes las instrucciones. No asumir, no inferir, no "ya sé lo que dice". Leer.
 
