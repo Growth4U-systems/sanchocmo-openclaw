@@ -1,40 +1,166 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# SanchoCMO
 
-## Getting Started
+**Fractional CMO AI** — A multi-agent marketing system built on [OpenClaw](https://openclaw.ai).
 
-First, run the development server:
+SanchoCMO operates as an AI-powered Chief Marketing Officer: it onboards clients, builds brand foundations, plans campaigns, creates content, tracks metrics, and manages everything through Discord.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## Architecture
+
+```
+                         Discord (1 guild per client)
+                                  │
+                          OpenClaw Gateway (:18789)
+                                  │
+                 ┌────────────────┼────────────────┐
+                 │                │                 │
+             Sancho           Escudero          Rocinante
+           (Strategist)      (Worker)         (QA Guardian)
+            Opus 4.6         Sonnet 4.5         Opus 4.6
+                 │
+                 │ sessions_send
+                 ▼
+            Cervantes
+        (System Architect)
+            Opus 4.6
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Agents
 
-You can start editing the page by modifying `pages/index.tsx`. The page auto-updates as you edit the file.
+| Agent | Role | How it activates |
+|-------|------|------------------|
+| **Sancho** | CMO Strategist & Orchestrator | Discord messages + cron jobs |
+| **Escudero** | Execution worker (adopts personas) | `sessions_spawn` from Sancho |
+| **Rocinante** | Brand Guardian / QA | `sessions_send` from Sancho |
+| **Cervantes** | System Architect & Infra | `sessions_send` + cron jobs |
 
-[API routes](https://nextjs.org/docs/api-routes/introduction) can be accessed on [http://localhost:3000/api/hello](http://localhost:3000/api/hello). This endpoint can be edited in `pages/api/hello.ts`.
+### Personas (Escudero)
 
-The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/api-routes/introduction) instead of React pages.
+Escudero has no fixed personality. Sancho assigns one of 9 personas per task:
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+Explorador (prospecting), Redactor (SEO/content), Comunicador (social/newsletters), Creativo (visual), Amplificador (paid media), Investigador (research), Comercial (sales), Arquitecto (landing pages), Conector (partnerships).
 
-## Learn More
+### Skills
 
-To learn more about Next.js, take a look at the following resources:
+120+ marketing skills with a Context Matrix system — each skill declares which brand files it needs (`context_required`) and where it writes (`context_writes`), preventing unnecessary context loading.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Multi-Client
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
+One instance serves multiple clients with strict isolation:
+- Each client = 1 Discord guild with standard channels
+- Brand data stored in `brand/{slug}/` (Foundation v2.0 structure)
+- Channel IDs and config per client in `brand/{slug}/sources.json`
+- Zero data leakage between clients enforced at every level
 
-## Deploy on Vercel
+## Quick Start
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Prerequisites
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+- [OpenClaw](https://docs.openclaw.ai/start/getting-started) (Node 24+ recommended)
+- A Discord bot (with token)
+- Anthropic API key (Claude)
+- A Discord server created from the template
+
+### Setup
+
+```bash
+# 1. Clone
+git clone https://github.com/Growth4U-systems/sanchocmo-openclaw.git
+cd sanchocmo-openclaw
+
+# 2. Configure environment
+cp .env.example .env
+# Edit .env with your API keys and Discord bot token
+
+# 3. Configure instance
+cp config/instance.json.example config/instance.json
+# Edit with your MC URL, Discord IDs, Supabase URL
+
+# 4. Configure clients
+cp config/clients.json.example config/clients.json
+# Add your first client
+
+# 5. Start OpenClaw gateway
+openclaw daemon start
+
+# 6. Start Mission Control (optional)
+node workspace-sancho/scripts/mc-server.js &
+```
+
+### Adding a Client
+
+```bash
+bash workspace-sancho/scripts/new-client.sh \
+  --slug "my-client" \
+  --name "My Client" \
+  --guild "DISCORD_GUILD_ID"
+```
+
+This creates the brand directory structure, updates `clients.json`, binds Discord channels, and configures systemPrompts.
+
+## Directory Structure
+
+```
+config/                          # Instance-specific configuration
+  instance.json                  # URLs, Discord IDs, accounts
+  clients.json                   # Client registry (tokens, guilds)
+  clients.js                     # Same data for MC dashboard
+  dispatch-map.json              # Channel → role routing
+
+workspace-sancho/                # Main CMO agent
+  SOUL.md                        # Identity & rules
+  AGENTS.md                      # Inter-agent protocols
+  _system/                       # Protocols, schemas, templates
+  skills/                        # 120+ marketing skills
+  personas/                      # 9 worker personas for Escudero
+  scripts/                       # Automation scripts
+  brand/{slug}/                  # Client data (Foundation v2.0)
+
+workspace-cervantes/             # System architect agent
+workspace-escudero/              # Worker agent (symlinks to sancho)
+workspace-rocinante/             # QA agent (symlinks to sancho)
+
+cron/                            # OpenClaw cron jobs
+```
+
+## Configuration
+
+All instance-specific data lives in `config/`:
+
+| File | Purpose | Gitignored |
+|------|---------|------------|
+| `instance.json` | MC URL, Discord IDs, ports, accounts | Yes |
+| `clients.json` | Client tokens, guilds, Supabase keys | Yes |
+| `clients.js` | Same data in JS for MC dashboard | Yes |
+| `dispatch-map.json` | Channel role mapping | No (framework) |
+
+Templates (`.example` files) are provided for all gitignored configs.
+
+## Cron Jobs
+
+19+ automated jobs handle daily operations:
+
+- **Daily Pulse** — Extract insights from Discord (per client)
+- **Meeting Intelligence** — Process meeting notes from Google Drive
+- **Weekly Synthesis** — Detect patterns and trends
+- **Healthcheck** — Monitor 23+ services every 6 hours
+- **Cost Tracker** — Track API costs per client
+- **Backup** — Daily git commit + push
+
+Templates in `_system/cron-templates.json` generate per-client jobs automatically via `scripts/create-client-crons.sh`.
+
+## Mission Control
+
+Web dashboard (`mc-server.js`) on port 18790:
+- Client portal with token-based access
+- Foundation progress tracking
+- Brand document viewer
+- API connection pages
+- Trust Engine
+
+Exposed via reverse proxy (nginx on VPS) or Tailscale Funnel (local dev).
+
+## License
+
+[Sustainable Use License (SUL)](LICENSE.md)
+
+You may use, modify, and distribute this software for internal business or personal purposes. Commercial redistribution as a hosted service requires a separate agreement.
