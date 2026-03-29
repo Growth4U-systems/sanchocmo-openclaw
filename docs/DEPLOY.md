@@ -96,15 +96,21 @@ DISCORD_CLIENT_ID=your_discord_client_id
 CERVANTES_GUILD_ID=your_infra_guild_id
 ```
 
-**`config/instance.json`** — set your Mission Control base URL:
+**`config/instance.json`** — copy from example and set your values:
 
-```json
-{
-  "mc_base_url": "https://staging.sanchocmo.ai/mc"
-}
+```bash
+cp config/instance.json.example config/instance.json
+nano config/instance.json
+# Set mc_base_url to https://your-domain.com/mc
+# Set Discord IDs, Supabase URL, etc.
 ```
 
-**`config/clients.json`** — configure your client workspaces as needed.
+**`config/clients.json`** — copy from example and add your first client:
+
+```bash
+cp config/clients.json.example config/clients.json
+nano config/clients.json
+```
 
 ### 6. Launch
 
