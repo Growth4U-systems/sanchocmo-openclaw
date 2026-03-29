@@ -7,31 +7,32 @@ SanchoCMO operates as an AI-powered Chief Marketing Officer: it onboards clients
 ## Architecture
 
 ```
-                         Discord (1 guild per client)
-                                  │
-                          OpenClaw Gateway (:18789)
-                                  │
-                 ┌────────────────┼────────────────┐
-                 │                │                 │
-             Sancho           Escudero          Rocinante
-           (Strategist)      (Worker)         (QA Guardian)
-            Opus 4.6         Sonnet 4.5         Opus 4.6
-                 │
-                 │ sessions_send
-                 ▼
-            Cervantes
-        (System Architect)
-            Opus 4.6
+   Client Discord Guilds              Cervantes Brain Guild
+   (1 per client)                     (internal infra)
+          │                                   │
+          └──────── OpenClaw Gateway (:18789) ─┘
+                            │
+            ┌───────────────┼───────────────┐
+            │               │               │
+        Sancho          Escudero        Rocinante
+      (Strategist)      (Worker)      (QA Guardian)
+       Opus 4.6        Sonnet 4.5      Opus 4.6
+            │                               ▲
+            ├── sessions_spawn ─► Escudero   │
+            ├── sessions_send ──► Rocinante ─┘
+            └── sessions_send ──► Cervantes
+                                  (System Architect)
+                                   Opus 4.6
 ```
 
 ### Agents
 
 | Agent | Role | How it activates |
 |-------|------|------------------|
-| **Sancho** | CMO Strategist & Orchestrator | Discord messages + cron jobs |
+| **Sancho** | CMO Strategist & Orchestrator | Discord messages (client guilds) + cron jobs |
 | **Escudero** | Execution worker (adopts personas) | `sessions_spawn` from Sancho |
 | **Rocinante** | Brand Guardian / QA | `sessions_send` from Sancho |
-| **Cervantes** | System Architect & Infra | `sessions_send` + cron jobs |
+| **Cervantes** | System Architect & Infra | Own cron jobs + `sessions_send` from Sancho. Operates in Cervantes Brain guild (#admin, #infra, #tasks, #changelog). Can edit Sancho's skills, SOUL.md, and cron jobs. Runs daily backups (git commit + push). |
 
 ### Personas (Escudero)
 
@@ -46,7 +47,8 @@ Explorador (prospecting), Redactor (SEO/content), Comunicador (social/newsletter
 ### Multi-Client
 
 One instance serves multiple clients with strict isolation:
-- Each client = 1 Discord guild with standard channels
+- Each client = 1 Discord guild with standard channels (general, brand, campaigns, content, intelligence, etc.)
+- 1 additional infra guild ("Cervantes Brain") for system operations, alerts, and cost tracking
 - Brand data stored in `brand/{slug}/` (Foundation v2.0 structure)
 - Channel IDs and config per client in `brand/{slug}/sources.json`
 - Zero data leakage between clients enforced at every level
