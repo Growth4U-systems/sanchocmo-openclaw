@@ -8,7 +8,8 @@ Usage: python3 generate-foundation-report.py <slug>
 import sys, os, re, json, urllib.request, base64
 from pathlib import Path
 
-BRAND_DIR = Path(os.path.expanduser("~/.openclaw/workspace-sancho/brand"))
+OPENCLAW_HOME = os.environ.get("OPENCLAW_HOME", os.path.expanduser("~/.openclaw"))
+BRAND_DIR = Path(os.path.join(OPENCLAW_HOME, "workspace-sancho", "brand"))
 
 def read_file(path):
     try:

@@ -17,7 +17,7 @@
       "wakeMode": "now",
       "payload": {
         "kind": "agentTurn",
-        "message": "Ejecuta el Daily Pulse para Hospital Capilar (guild 1475635138108063746).\n\nPASO 1 — LEER FUENTES:\nLee brand/hospital-capilar/sources.json → sección daily_pulse. Para cada source habilitado:\n\nDISCORD (OBLIGATORIO):\n- Lee mensajes de las últimas 24h de CADA canal usando: message(action=read, channel=discord, target=<channelId>, limit=50)\n- Canales y sus IDs:\n  general: 1475635138988609678\n  brand: 1475638249107095866\n  campaigns: 1475638251485401171\n  content: 1475638259425087629\n  intelligence: 1475638253154603170\n  onboarding: 1476491108421730334\n  soporte: 1475638273501040681\n  research: 1475638269109862463\n  paid-ads: 1475638261819900161\n- Filtra mensajes de las últimas 24h (compara timestamps)\n- Excluye mensajes de bots (author.bot=true) y mensajes cortos (<30 chars)\n- Incluye threads activos\n\nGmail → gog gmail inbox (si habilitado en sources.json, filtrar por labels configurados)\nNotion → leer DB con filter de últimas 24h (si habilitado)\n\nPASO 2 — EXTRAER INSIGHTS:\nExtrae insights (pain points, feature requests, success stories, trends, preguntas recurrentes).\nClasifica por categoría. Genera micro-briefs.\n\nPASO 3 — GUARDAR:\nGuarda en brand/hospital-capilar/daily-pulse/YYYY-MM-DD.json\nDespués ejecuta: python3 ~/.openclaw/workspace-sancho/scripts/regenerate.py\n\nPASO 4 — PUBLICAR EN DISCORD:\n1. Crea un hilo: message(action=thread-create, channel=discord, target=1475638253154603170, threadName='📊 Daily Pulse — YYYY-MM-DD')\n2. El resultado del thread-create te dará un threadId. Usa ESE threadId como target para enviar el resumen: message(action=send, channel=discord, target=<threadId>)\n3. NUNCA uses thread-reply — usa send con el threadId como target.\n4. APLICA reglas de _system/client-context-isolation.md — solo info relevante al cliente, CERO info interna.",
+        "message": "Ejecuta el Daily Pulse para Hospital Capilar (guild 1475635138108063746).\n\nPASO 1 — LEER FUENTES:\nLee brand/hospital-capilar/sources.json → sección daily_pulse. Para cada source habilitado:\n\nDISCORD (OBLIGATORIO):\n- Lee mensajes de las últimas 24h de CADA canal usando: message(action=read, channel=discord, target=<channelId>, limit=50)\n- Canales y sus IDs:\n  general: 1475635138988609678\n  brand: 1475638249107095866\n  campaigns: 1475638251485401171\n  content: 1475638259425087629\n  intelligence: 1475638253154603170\n  onboarding: 1476491108421730334\n  soporte: 1475638273501040681\n  research: 1475638269109862463\n  paid-ads: 1475638261819900161\n- Filtra mensajes de las últimas 24h (compara timestamps)\n- Excluye mensajes de bots (author.bot=true) y mensajes cortos (<30 chars)\n- Incluye threads activos\n\nGmail → gog gmail inbox (si habilitado en sources.json, filtrar por labels configurados)\nNotion → leer DB con filter de últimas 24h (si habilitado)\n\nPASO 2 — EXTRAER INSIGHTS:\nExtrae insights (pain points, feature requests, success stories, trends, preguntas recurrentes).\nClasifica por categoría. Genera micro-briefs.\n\nPASO 3 — GUARDAR:\nGuarda en brand/hospital-capilar/daily-pulse/YYYY-MM-DD.json\nDespués ejecuta: python3 scripts/regenerate.py\n\nPASO 4 — PUBLICAR EN DISCORD:\n1. Crea un hilo: message(action=thread-create, channel=discord, target=1475638253154603170, threadName='📊 Daily Pulse — YYYY-MM-DD')\n2. El resultado del thread-create te dará un threadId. Usa ESE threadId como target para enviar el resumen: message(action=send, channel=discord, target=<threadId>)\n3. NUNCA uses thread-reply — usa send con el threadId como target.\n4. APLICA reglas de _system/client-context-isolation.md — solo info relevante al cliente, CERO info interna.",
         "model": "anthropic/claude-sonnet-4-5"
       },
       "delivery": {
@@ -80,7 +80,7 @@
       "wakeMode": "now",
       "payload": {
         "kind": "agentTurn",
-        "message": "Regenera datos del dashboard: 1) Ejecuta python3 ~/.openclaw/workspace-sancho/scripts/regenerate.py 2) Regenera agents-data.js con el script Python inline. Responde solo con el resultado (cuántas tareas, eventos, pilares).",
+        "message": "Regenera datos del dashboard: 1) Ejecuta python3 scripts/regenerate.py 2) Regenera agents-data.js con el script Python inline. Responde solo con el resultado (cuántas tareas, eventos, pilares).",
         "model": "anthropic/claude-sonnet-4-5"
       },
       "delivery": {
@@ -114,7 +114,7 @@
       "wakeMode": "now",
       "payload": {
         "kind": "agentTurn",
-        "message": "Ejecuta Meeting Intelligence para Hospital Capilar. Carpeta de Google Drive: ID 17FpwSgL-XLAqaaH5-UccpADHkCFRcCHY. Usa 'gog docs cat <docId>' para leer las notas. Busca documentos nuevos o modificados desde la última ejecución. Para cada reunión, extrae: decisiones, acciones, insights, participantes. Guarda en brand/hospital-capilar/intelligence/meetings/ como .md y actualiza meetings.json. Después ejecuta: python3 ~/.openclaw/workspace-sancho/scripts/regenerate.py\n\nPUBLICAR EN DISCORD:\n1. Crea un hilo: message(action=thread-create, channel=discord, target=1475638253154603170, threadName='🧠 Meeting Intelligence — YYYY-MM-DD')\n2. El resultado del thread-create te dará un threadId. Usa ESE threadId como target para enviar el resumen: message(action=send, channel=discord, to='channel:<threadId>')\n3. NUNCA uses thread-reply — usa send con el threadId como target.\n4. APLICA reglas de _system/client-context-isolation.md — solo info relevante al cliente, CERO info interna.\n5. Si no hay meetings nuevos, crea el hilo igualmente informando que no hay novedades.",
+        "message": "Ejecuta Meeting Intelligence para Hospital Capilar. Carpeta de Google Drive: ID 17FpwSgL-XLAqaaH5-UccpADHkCFRcCHY. Usa 'gog docs cat <docId>' para leer las notas. Busca documentos nuevos o modificados desde la última ejecución. Para cada reunión, extrae: decisiones, acciones, insights, participantes. Guarda en brand/hospital-capilar/intelligence/meetings/ como .md y actualiza meetings.json. Después ejecuta: python3 scripts/regenerate.py\n\nPUBLICAR EN DISCORD:\n1. Crea un hilo: message(action=thread-create, channel=discord, target=1475638253154603170, threadName='🧠 Meeting Intelligence — YYYY-MM-DD')\n2. El resultado del thread-create te dará un threadId. Usa ESE threadId como target para enviar el resumen: message(action=send, channel=discord, to='channel:<threadId>')\n3. NUNCA uses thread-reply — usa send con el threadId como target.\n4. APLICA reglas de _system/client-context-isolation.md — solo info relevante al cliente, CERO info interna.\n5. Si no hay meetings nuevos, crea el hilo igualmente informando que no hay novedades.",
         "model": "anthropic/claude-sonnet-4-5"
       },
       "delivery": {
@@ -200,7 +200,7 @@
       "wakeMode": "now",
       "payload": {
         "kind": "agentTurn",
-        "message": "Ejecuta: bash ~/.openclaw/workspace-sancho/scripts/backup.sh. Luego lee ~/.openclaw/workspace-sancho/memory/backup-state.json. Si lastBackup tiene más de 48h respecto a ahora, envía alerta a Discord #admin (channel 1475638273501040681): ⚠️ Backup de workspace-sancho lleva >48h sin ejecutarse. Si todo OK, responde HEARTBEAT_OK.",
+        "message": "Ejecuta: bash scripts/backup.sh. Luego lee memory/backup-state.json. Si lastBackup tiene más de 48h respecto a ahora, envía alerta a Discord #admin (channel 1475638273501040681): ⚠️ Backup de workspace-sancho lleva >48h sin ejecutarse. Si todo OK, responde HEARTBEAT_OK.",
         "model": "anthropic/claude-sonnet-4-5"
       },
       "delivery": {
@@ -234,7 +234,7 @@
       "wakeMode": "now",
       "payload": {
         "kind": "agentTurn",
-        "message": "Ejecuta el health check del sistema. Corre: bash ~/.openclaw/workspace-cervantes/scripts/healthcheck.sh. Si el exit code es 1 (hay fallos), lee el output y envía un mensaje a Discord #admin (channel 1475638273501040681) con los servicios caídos usando el message tool (action=send, channel=discord, target=1475638273501040681). Si ALL_OK, no hagas nada más.",
+        "message": "Ejecuta el health check del sistema. Corre: bash scripts/healthcheck.sh. Si el exit code es 1 (hay fallos), lee el output y envía un mensaje a Discord #admin (channel 1475638273501040681) con los servicios caídos usando el message tool (action=send, channel=discord, target=1475638273501040681). Si ALL_OK, no hagas nada más.",
         "thinking": "off",
         "timeoutSeconds": 120,
         "model": "anthropic/claude-sonnet-4-5"
@@ -270,7 +270,7 @@
       "wakeMode": "now",
       "payload": {
         "kind": "agentTurn",
-        "message": "Ejecuta el cost tracker: python3 ~/.openclaw/workspace-sancho/scripts/cost-tracker.py && python3 ~/.openclaw/workspace-sancho/scripts/regenerate.py. Reporta el resultado.",
+        "message": "Ejecuta el cost tracker: python3 scripts/cost-tracker.py && python3 scripts/regenerate.py. Reporta el resultado.",
         "model": "anthropic/claude-sonnet-4-5"
       },
       "delivery": {

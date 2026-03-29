@@ -7,7 +7,7 @@ set -euo pipefail
 #
 # Uso: new-client.sh --slug "slug" --name "Nombre" --guild "GUILD_ID"
 
-WORKSPACE="$HOME/.openclaw/workspace-sancho"
+WORKSPACE="${OPENCLAW_WORKSPACE:-$HOME/.openclaw/workspace-sancho}"
 SUPABASE_URL="https://psapmujzxhaxraphddlv.supabase.co"
 SKEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBzYXBtdWp6eGhheHJhcGhkZGx2Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MTg5MDE1MSwiZXhwIjoyMDg3NDY2MTUxfQ.uDPfDOg23MfjtORZBXitIUpLNpTRR8ahMqjvJkmg6wE"
 
@@ -834,7 +834,7 @@ if grep -q "\"$SLUG\"" "$CLIENTS_JS"; then
   echo "   ⏭️ Ya existe en clients.js"
 else
   # Insert new client entry before TEMPLATE comment
-  NEW_ENTRY="  \"$SLUG\": {\n    name: \"$NAME\",\n    emoji: \"🏢\",\n    url: \"\",\n    discord_guild: \"$GUILD\",\n    supabase: {\n      url: \"https://psapmujzxhaxraphddlv.supabase.co\",\n      anon_key: \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBzYXBtdWp6eGhheHJhcGhkZGx2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4OTAxNTEsImV4cCI6MjA4NzQ2NjE1MX0.RxanIQCJtjGfCUL_X0MqPi2IdGkXOkmfaEAJZvQJblI\",\n    },\n    workspace: \"~/.openclaw/workspace-sancho\",\n    phase: 0,\n  },"
+  NEW_ENTRY="  \"$SLUG\": {\n    name: \"$NAME\",\n    emoji: \"🏢\",\n    url: \"\",\n    discord_guild: \"$GUILD\",\n    supabase: {\n      url: \"https://psapmujzxhaxraphddlv.supabase.co\",\n      anon_key: \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBzYXBtdWp6eGhheHJhcGhkZGx2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4OTAxNTEsImV4cCI6MjA4NzQ2NjE1MX0.RxanIQCJtjGfCUL_X0MqPi2IdGkXOkmfaEAJZvQJblI\",\n    },\n    phase: 0,\n  },"
   # Use python for safe text insertion
   python3 -c "
 c = open('$CLIENTS_JS').read()
@@ -884,7 +884,7 @@ PHILIPPE="1475772310614048858"
 python3 -c "
 import json
 
-config_path = '$HOME/.openclaw/openclaw.json'
+config_path = '${OPENCLAW_HOME:-$HOME/.openclaw}/openclaw.json'
 with open(config_path, 'r') as f:
     config = json.load(f)
 

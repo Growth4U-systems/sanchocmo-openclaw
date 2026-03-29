@@ -10,7 +10,7 @@ trap "rm -rf $TMPDIR" EXIT
 
 # Load env
 source "$SCRIPT_DIR/.meta-ads-env" 2>/dev/null || true
-source "$HOME/.openclaw/.env" 2>/dev/null || true
+source "${OPENCLAW_HOME:-$HOME/.openclaw}/.env" 2>/dev/null || true
 
 META_TOKEN="${META_ADS_TOKEN:-}"
 META_ACCOUNT="act_1507778460268244"

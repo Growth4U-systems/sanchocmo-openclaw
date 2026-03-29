@@ -6,8 +6,9 @@
 
 set -euo pipefail
 
-SKILL_REPOS="$HOME/.openclaw/skill-repos"
-SKILLS_DIR="$HOME/.openclaw/workspace-sancho/skills"
+OPENCLAW_HOME="${OPENCLAW_HOME:-$HOME/.openclaw}"
+SKILL_REPOS="$OPENCLAW_HOME/skill-repos"
+SKILLS_DIR="$OPENCLAW_HOME/workspace-sancho/skills"
 LOG=""
 
 log() { LOG+="$1\n"; }

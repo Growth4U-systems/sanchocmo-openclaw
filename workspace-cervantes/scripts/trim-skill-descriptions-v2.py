@@ -3,7 +3,8 @@
 
 import os, re
 
-SKILLS_DIR = os.path.expanduser("~/.openclaw/workspace-sancho/skills")
+OPENCLAW_HOME = os.environ.get("OPENCLAW_HOME", os.path.expanduser("~/.openclaw"))
+SKILLS_DIR = os.path.join(OPENCLAW_HOME, "workspace-sancho", "skills")
 
 # Ultra-short descriptions (~80 chars max)
 NEW_DESCRIPTIONS = {

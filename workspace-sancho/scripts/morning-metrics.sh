@@ -17,7 +17,7 @@ TMPDIR=$(mktemp -d)
 trap "rm -rf $TMPDIR" EXIT
 
 # Load env
-source "$HOME/.openclaw/.env" 2>/dev/null || true
+source "${OPENCLAW_HOME:-$HOME/.openclaw}/.env" 2>/dev/null || true
 source "$SCRIPT_DIR/.meta-ads-env" 2>/dev/null || true
 
 TODAY=$(date +%Y-%m-%d)

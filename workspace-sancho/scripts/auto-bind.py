@@ -40,7 +40,8 @@ import urllib.error
 import tempfile
 import copy
 
-OPENCLAW_JSON = os.path.expanduser("~/.openclaw/openclaw.json")
+OPENCLAW_HOME = os.environ.get("OPENCLAW_HOME", os.path.expanduser("~/.openclaw"))
+OPENCLAW_JSON = os.path.join(OPENCLAW_HOME, "openclaw.json")
 
 # Allowed user IDs (from allowFrom)
 ALLOWED_USERS = [

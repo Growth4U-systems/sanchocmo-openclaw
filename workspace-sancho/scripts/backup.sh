@@ -4,7 +4,7 @@
 
 set -euo pipefail
 
-OPENCLAW_ROOT="$HOME/.openclaw"
+OPENCLAW_ROOT="${OPENCLAW_HOME:-$HOME/.openclaw}"
 STATE_FILE="$OPENCLAW_ROOT/workspace-sancho/memory/backup-state.json"
 LOG_FILE="$OPENCLAW_ROOT/workspace-sancho/memory/backup.log"
 TIMESTAMP=$(date '+%Y-%m-%d %H:%M')

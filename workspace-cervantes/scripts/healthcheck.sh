@@ -8,9 +8,10 @@
 # Exit 2 = servicio recuperado (fail→ok — informational)
 set -uo pipefail
 
-export SANCHO_STATE="$HOME/.openclaw/workspace-sancho/memory/healthcheck-state.json"
-export CERVANTES_STATE="$HOME/.openclaw/workspace-cervantes/memory/healthcheck-state.json"
-export API_HEALTH_FILE="$HOME/.openclaw/workspace-sancho/_system/api-health.json"
+OPENCLAW_HOME="${OPENCLAW_HOME:-$HOME/.openclaw}"
+export SANCHO_STATE="$OPENCLAW_HOME/workspace-sancho/memory/healthcheck-state.json"
+export CERVANTES_STATE="$OPENCLAW_HOME/workspace-cervantes/memory/healthcheck-state.json"
+export API_HEALTH_FILE="$OPENCLAW_HOME/workspace-sancho/_system/api-health.json"
 export NOW=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
 mkdir -p "$(dirname "$SANCHO_STATE")" "$(dirname "$CERVANTES_STATE")"

@@ -5,15 +5,16 @@
 
 set -euo pipefail
 
-WORKSPACE="$HOME/.openclaw/workspace-sancho"
+OPENCLAW_HOME="${OPENCLAW_HOME:-$HOME/.openclaw}"
+WORKSPACE="${OPENCLAW_WORKSPACE:-$OPENCLAW_HOME/workspace-sancho}"
 CACHE="$WORKSPACE/scripts/.channel-guild-cache.json"
-TOKEN=$(grep -o '"token":"[^"]*"' "$HOME/.openclaw/agents/sancho/agent.yaml" 2>/dev/null | head -1 | cut -d'"' -f4 || true)
+TOKEN=$(grep -o '"token":"[^"]*"' "$OPENCLAW_HOME/agents/sancho/agent.yaml" 2>/dev/null | head -1 | cut -d'"' -f4 || true)
 
 # Try to get token from openclaw config
 if [ -z "$TOKEN" ]; then
     TOKEN=$(python3 -c "
 import yaml
-with open('$HOME/.openclaw/config.yaml') as f:
+with open('$OPENCLAW_HOME/config.yaml') as f:
     cfg = yaml.safe_load(f)
 print(cfg.get('discord', {}).get('token', ''))
 " 2>/dev/null || true)
