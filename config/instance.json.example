@@ -11,13 +11,13 @@
     ],
     "infra_guild": "your-infra-guild-id",
     "infra_channels": {
-      "admin": "channel-id",
-      "infra": "channel-id",
-      "costs": "channel-id",
-      "tasks": "channel-id",
-      "changelog": "channel-id",
-      "skills": "channel-id",
-      "ideas": "channel-id"
+      "admin": "channel-id (maps to your #infra or #admin channel)",
+      "infra_thread": "channel-id (maps to your #infra channel)",
+      "costs_thread": "channel-id (maps to your #infra channel for cost reports)",
+      "tasks": "channel-id (maps to your #tasks channel)",
+      "changelog": "channel-id (maps to your #skills or a dedicated changelog channel)",
+      "update_skills_thread": "channel-id (maps to your #skills channel)",
+      "mejora_continua_thread": "channel-id (maps to your #ideas channel)"
     }
   },
   "supabase": {
