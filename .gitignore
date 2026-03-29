@@ -96,3 +96,6 @@ skill-repos/
 
 # === MC proxy device keys ===
 .mc-proxy-device.json
+
+# === Docker runtime ===
+docker/nginx.conf
