@@ -31,37 +31,68 @@ if [ $MC_EXIT -ne 0 ] || echo "$MC_RESULT" | python3 -c "import sys,json; json.l
   fi
 fi
 
-# Step 1b: Funnel watchdog (moved from dedicated cron — was burning Opus every 15min)
-FUNNEL_STATUS=$(tailscale funnel status 2>&1)
-if echo "$FUNNEL_STATUS" | grep -q "tailnet only"; then
-  echo "$(date): Funnel down — re-enabling..."
-  tailscale serve reset 2>/dev/null
-  tailscale funnel --bg --set-path / http://127.0.0.1:18789 2>/dev/null
-  tailscale funnel --bg --set-path /mc http://127.0.0.1:18790 2>/dev/null
-  echo "$(date): Funnel re-enabled"
-  FUNNEL_RESTORED=1
+# Step 1b: Infrastructure checks (nginx + Docker on VPS, Tailscale on local dev)
+# Detect environment: if tailscale is available, we're on local dev
+if command -v tailscale &> /dev/null; then
+  # --- Local dev: Tailscale Funnel watchdog ---
+  FUNNEL_STATUS=$(tailscale funnel status 2>&1)
+  if echo "$FUNNEL_STATUS" | grep -q "tailnet only"; then
+    echo "$(date): Funnel down — re-enabling..."
+    tailscale serve reset 2>/dev/null
+    tailscale funnel --bg --set-path / http://127.0.0.1:18789 2>/dev/null
+    tailscale funnel --bg --set-path /mc http://127.0.0.1:18790 2>/dev/null
+    echo "$(date): Funnel re-enabled"
+  else
+    echo "$(date): Funnel OK"
+  fi
+
+  # Tailscale service check
+  if tailscale status &> /dev/null; then
+    INFRA_STATUS="ok"
+    INFRA_DETAIL="tailscale status OK"
+  else
+    INFRA_STATUS="error"
+    INFRA_DETAIL="tailscale status failed"
+  fi
 else
-  echo "$(date): Funnel OK"
-  FUNNEL_RESTORED=0
+  # --- VPS: nginx + Docker checks ---
+  INFRA_STATUS="ok"
+  INFRA_DETAIL=""
+  INFRA_ERRORS=""
+
+  # Check nginx
+  if command -v systemctl &> /dev/null && systemctl is-active --quiet nginx; then
+    INFRA_DETAIL="nginx: active"
+  else
+    INFRA_STATUS="error"
+    INFRA_ERRORS="nginx not running"
+  fi
+
+  # Check Docker container
+  CONTAINER_STATE=$(docker inspect --format='{{.State.Status}}' sanchocmo 2>/dev/null || echo "not-found")
+  if [ "$CONTAINER_STATE" = "running" ]; then
+    INFRA_DETAIL="$INFRA_DETAIL, container: running"
+  else
+    INFRA_STATUS="error"
+    INFRA_ERRORS="$INFRA_ERRORS, container: $CONTAINER_STATE"
+  fi
+
+  if [ "$INFRA_STATUS" = "error" ]; then
+    INFRA_DETAIL="$INFRA_ERRORS"
+  fi
 fi
 
 # Step 2: Run extra checks that MC doesn't cover
-EXTRA_CHECKS="{}"
-
-# Tailscale
-if tailscale status 2>&1 | head -5 | grep -qi ""; then
-  EXTRA_CHECKS=$(echo "$EXTRA_CHECKS" | python3 -c "
-import json,sys
-d=json.load(sys.stdin)
-d['tailscale']={'status':'ok','lastCheck':'$NOW','details':{'note':'tailscale status OK'}}
-print(json.dumps(d))")
-else
-  EXTRA_CHECKS=$(echo "$EXTRA_CHECKS" | python3 -c "
-import json,sys
-d=json.load(sys.stdin)
-d['tailscale']={'status':'error','lastCheck':'$NOW','details':{'error':'tailscale status failed'}}
-print(json.dumps(d))")
-fi
+EXTRA_CHECKS=$(python3 -c "
+import json
+d = {}
+d['infrastructure'] = {
+    'status': '$INFRA_STATUS',
+    'lastCheck': '$NOW',
+    'details': {'note': '$INFRA_DETAIL'}
+}
+print(json.dumps(d))
+")
 
 # Step 3: Merge MC results + extras, apply debounce, write state
 python3 -c "
