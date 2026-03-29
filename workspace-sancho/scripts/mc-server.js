@@ -2557,11 +2557,18 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);line
 <div class="sidebar">
   <div class="logo">SanchoCMO</div>
   <div class="logo-sub">Mission Control</div>
-  <div class="ns">${escHtml(clientName)}</div>
+  <div class="ns">Overview</div>
   <a href="${baseUrl}/">📊 Dashboard</a>
-  <a href="${baseUrl}/docs/brand/${slug}/">📂 Documentos</a>
+  <div class="ns">${escHtml(clientName)}</div>
+  <a href="${baseUrl}/docs/brand/${slug}/">📂 Documents</a>
+  <div class="ns">Trabajo</div>
   <a href="${baseUrl}/projects/">📋 Proyectos</a>
+  <a href="${baseUrl}/">💡 Idea Bank</a>
+  <a href="${baseUrl}/">🔄 Recurrentes</a>
+  <a href="${baseUrl}/">📈 Métricas</a>
   <a href="${baseUrl}/trust-engine/">🔍 Trust Engine</a>
+  <div class="ns">Sistema</div>
+  <a href="${baseUrl}/">📡 Activity</a>
   <a href="#" class="active">⚙️ Settings</a>
   <div class="nav-footer">
     <div class="theme-toggle" onclick="toggleTheme()">🌗 Tema</div>
