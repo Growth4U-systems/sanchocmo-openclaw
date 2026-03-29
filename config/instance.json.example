@@ -1,0 +1,30 @@
+{
+  "$comment": "Copy to instance.json and fill in your values.",
+  "mc_base_url": "https://your-domain.com/mc",
+  "mc_server_port": 18790,
+  "gateway_port": 18789,
+  "discord": {
+    "bot_client_id": "your-bot-client-id",
+    "admin_users": [
+      "discord-user-id-1",
+      "discord-user-id-2"
+    ],
+    "infra_guild": "your-infra-guild-id",
+    "infra_channels": {
+      "admin": "channel-id",
+      "infra_thread": "thread-id",
+      "costs_thread": "thread-id",
+      "tasks": "channel-id",
+      "changelog": "channel-id",
+      "update_skills_thread": "thread-id",
+      "mejora_continua_thread": "thread-id"
+    }
+  },
+  "supabase": {
+    "url": "https://your-project.supabase.co"
+  },
+  "accounts": {
+    "google_workspace": "admin@yourdomain.com",
+    "dataforseo": "api@yourdomain.com"
+  }
+}
