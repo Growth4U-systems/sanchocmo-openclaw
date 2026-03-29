@@ -1,0 +1,129 @@
+{
+  "version": 3,
+  "dispatch_mode": "sessions",
+  "note": "v3: Channel roles (decision/execution/intelligence/support). Sancho respects channel context.",
+  "channel_roles": {
+    "decision": {
+      "description": "No execution. Propose, discuss, redirect.",
+      "channels": ["general", "brand", "campaigns"],
+      "rules": {
+        "general": "Only respond when @mentioned. Never execute skills.",
+        "brand": "Post-onboarding only. Consult and update existing brand, never create from scratch. Show file links.",
+        "campaigns": "Propose and plan only. Execution goes to execution channels."
+      }
+    },
+    "execution": {
+      "description": "Create and execute. Skills run here.",
+      "channels": ["onboarding", "content", "paid-ads", "prospecting", "creatives", "web", "partners"],
+      "rules": {
+        "onboarding": "Full Foundation creation. Iterative flow. Recommend archiving when done.",
+        "content": "Create content. Ideas come from intelligence → campaigns → here.",
+        "paid-ads": "Create ad copy, creatives, setup Meta/Google accounts.",
+        "prospecting": "Find companies, decision makers, build outreach sequences.",
+        "creatives": "Visual identity, marketing creatives.",
+        "web": "Landing page copy, lead magnets, pricing pages.",
+        "partners": "Find partners, create collaboration proposals."
+      }
+    },
+    "intelligence": {
+      "description": "Gather insights, detect patterns, feed decisions.",
+      "channels": ["research", "intelligence", "learning"],
+      "rules": {
+        "research": "Deep research, competitive intelligence, market analysis.",
+        "intelligence": "Signals, patterns, daily pulse, meeting intelligence. Ideas go to #campaigns.",
+        "learning": "CRM analysis, last 30 days trends, self-intelligence."
+      }
+    },
+    "support": {
+      "description": "Bugs, feedback, escalation to Cervantes.",
+      "channels": ["soporte"]
+    }
+  },
+  "flow": "intelligence → campaigns (propose) → user approves → execution channels → brand (if update needed)",
+  "personas": {
+    "explorador": {
+      "name": "El Explorador",
+      "persona_file": "./personas/explorador.md",
+      "dispatch_for": ["company-finder", "decision-maker-finder", "contact-enrichment", "outreach"],
+      "skills": ["company-finder", "decision-maker-finder", "contact-enrichment", "outreach-sequence-builder", "email-sequences", "direct-response-copy"],
+      "brand_context": ["ecps.md", "positioning.md"]
+    },
+    "redactor": {
+      "name": "El Redactor",
+      "persona_file": "./personas/redactor.md",
+      "dispatch_for": ["seo-content", "keyword-research", "content-calendar"],
+      "skills": ["keyword-research", "seo-content", "content-calendar-planner"],
+      "brand_context": ["voice-profile.md", "positioning.md"]
+    },
+    "comunicador": {
+      "name": "El Comunicador",
+      "persona_file": "./personas/comunicador.md",
+      "dispatch_for": ["content-atomizer", "newsletter", "social"],
+      "skills": ["content-atomizer", "newsletter", "direct-response-copy"],
+      "brand_context": ["voice-profile.md", "positioning.md"]
+    },
+    "creativo": {
+      "name": "El Creativo",
+      "persona_file": "./personas/creativo.md",
+      "dispatch_for": ["nano-banana-pro", "visual-identity", "design"],
+      "skills": ["visual-identity", "brand-voice", "sancho-visual"],
+      "brand_context": ["visual-identity.md"]
+    },
+    "amplificador": {
+      "name": "El Amplificador",
+      "persona_file": "./personas/amplificador.md",
+      "dispatch_for": ["paid-ads", "retargeting", "campaigns-paid"],
+      "skills": ["direct-response-copy", "sancho-visual"],
+      "brand_context": ["positioning.md", "ecps.md"]
+    },
+    "conector": {
+      "name": "El Conector",
+      "persona_file": "./personas/conector.md",
+      "dispatch_for": ["partnerships", "affiliates", "collaborations"],
+      "skills": ["company-finder", "decision-maker-finder", "contact-enrichment", "direct-response-copy"],
+      "brand_context": ["ecps.md", "positioning.md", "competitors.md"]
+    },
+    "comercial": {
+      "name": "El Comercial",
+      "persona_file": "./personas/comercial.md",
+      "dispatch_for": ["email-sequences", "lead-magnet", "sales"],
+      "skills": ["positioning-messaging", "pricing-strategy", "business-model-audit", "direct-response-copy"],
+      "brand_context": ["positioning.md", "ecps.md", "competitors.md"]
+    },
+    "arquitecto": {
+      "name": "El Arquitecto",
+      "persona_file": "./personas/arquitecto.md",
+      "dispatch_for": ["direct-response-copy", "landing-pages", "web"],
+      "skills": ["direct-response-copy", "lead-magnet", "positioning-messaging"],
+      "brand_context": ["positioning.md", "ecps.md", "voice-profile.md"]
+    },
+    "investigador": {
+      "name": "El Investigador",
+      "persona_file": "./personas/investigador.md",
+      "dispatch_for": ["market-intelligence", "competitor-intelligence", "deep-research", "thief-marketers"],
+      "skills": ["daily-pulse", "meeting-intelligence", "signal-monitor", "thief-marketers", "pattern-detector", "competitor-intelligence", "market-intelligence"],
+      "brand_context": ["competitors.md", "market.md", "learnings.md"]
+    }
+  },
+  "discord_channels": {
+    "onboarding": "1476491108421730334",
+    "general": "1475635138988609678",
+    "brand": "1475638249107095866",
+    "campaigns": "1475638251485401171",
+    "content": "1475638259425087629",
+    "creatives": "1475638268015022284",
+    "prospecting": "1475638257088860244",
+    "partners": "1475638255641952386",
+    "paid-ads": "1475638261819900146",
+    "web": "1475638263720181841",
+    "research": "1475638269109862463",
+    "intelligence": "1475638253154603170",
+    "learning": "1475638272523763834",
+    "soporte": "1475638273501040681"
+  },
+  "qa_agent": {
+    "id": "rocinante",
+    "method": "sessions_send",
+    "activate_for": ["brand-check", "qa-review", "devil-advocate", "foundation-verification"]
+  }
+}
