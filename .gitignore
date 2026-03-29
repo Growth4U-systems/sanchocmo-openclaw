@@ -99,3 +99,8 @@ skill-repos/
 
 # === Docker runtime ===
 docker/nginx.conf
+
+
+# === Development plans ===
+docs/superpowers
+.claude/plans
