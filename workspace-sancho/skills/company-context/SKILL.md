@@ -66,7 +66,7 @@ context_writes:
 ### 6. Guardar con versionado
 - Ruta: `brand/{slug}/company-context/current.md`
 - Si ya existe → backup como `v{N+1}.md`, sobreescribe `current.md`, actualiza `history.json`
-- Link: `https://sancho-cmo.taild48df2.ts.net/mc/docs/brand/{slug}/company-context/current.md`
+- Link: `{MC_BASE_URL}/docs/brand/{slug}/company-context/current.md`
 
 ---
 
@@ -107,4 +107,4 @@ brand/{{slug}}/company-context/
 1. Identifica slug desde systemPrompt (`[CLIENTE: ... | slug: ...]`)
 2. Si existe `current.md` → backup como `v{N+1}.md`, pide confirmación
 3. Si no existe → crea carpeta + `current.md` + `v1.md` + `history.json`
-4. Link: `https://sancho-cmo.taild48df2.ts.net/mc/docs/brand/{slug}/company-context/current.md`
+4. Link: `{MC_BASE_URL}/docs/brand/{slug}/company-context/current.md`

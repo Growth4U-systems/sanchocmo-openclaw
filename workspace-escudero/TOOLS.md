@@ -15,5 +15,5 @@ Todos los archivos de brand van en `brand/{slug-cliente}/`, NUNCA en `brand/` di
 
 ## Links, nunca rutas
 
-Comparte docs como URL: `https://sancho-cmo.taild48df2.ts.net/mc/docs/brand/{slug}/{pilar}/current.md`
+Comparte docs como URL: `{MC_BASE_URL}/docs/brand/{slug}/{pilar}/current.md`
 NUNCA rutas filesystem.

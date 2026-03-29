@@ -194,7 +194,7 @@ Presentar como 3 rondas conversacionales, no un cuestionario de 15 preguntas sue
 - Ruta: `brand/{slug}/visual-identity/current.md`
 - HTML presentable: `brand/{slug}/visual-identity/visual-guide.html`
 - Backup + versionado + history.json
-- Link: `https://sancho-cmo.taild48df2.ts.net/mc/docs/brand/{slug}/visual-identity/current.md`
+- Link: `{MC_BASE_URL}/docs/brand/{slug}/visual-identity/current.md`
 
 ---
 

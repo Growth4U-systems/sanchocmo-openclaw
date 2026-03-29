@@ -11,7 +11,7 @@
 ## Paso 0: Resolver datos del cliente
 
 1. Leer `clients.json` → guild ID + mcToken del cliente
-2. MC base URL: `https://sancho-cmo.taild48df2.ts.net/mc/portal/{mcToken}`
+2. MC base URL: `{MC_BASE_URL}/portal/{mcToken}`
 3. MC projects URL: `{MC_BASE}/projects/`
 4. Leer `brand/{slug}/discord-channels.json` para obtener channel IDs
    - **Si no existe**: ejecutar `message(action=channel-list, guildId={guild_id})`, mapear canales por nombre, y escribir el fichero

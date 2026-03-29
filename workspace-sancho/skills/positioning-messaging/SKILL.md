@@ -136,7 +136,7 @@ context_writes:
 ### 10. Guardar con versionado
 - Ruta: `brand/{slug}/go-to-market/positioning/current.md`
 - Backup + versionado + history.json
-- Link: `https://sancho-cmo.taild48df2.ts.net/mc/docs/brand/{slug}/go-to-market/positioning/current.md`
+- Link: `{MC_BASE_URL}/docs/brand/{slug}/go-to-market/positioning/current.md`
 
 ---
 
@@ -202,4 +202,4 @@ brand/{{slug}}/positioning/
 1. Identifica slug desde systemPrompt
 2. Si existe `current.md` → backup como `v{N+1}.md`
 3. Si no existe → crea carpeta + archivos
-4. Links: `https://sancho-cmo.taild48df2.ts.net/mc/docs/brand/{slug}/go-to-market/positioning/shared/value-criteria.md`
+4. Links: `{MC_BASE_URL}/docs/brand/{slug}/go-to-market/positioning/shared/value-criteria.md`

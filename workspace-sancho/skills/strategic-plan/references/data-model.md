@@ -335,7 +335,7 @@ Aumentar conversion rate de 0.5% a 2.0%
 Los archivos en `brand/{slug}/strategic-plan/` y `brand/{slug}/projects/` son accesibles vía MC con token del cliente:
 
 ```
-https://sancho-cmo.taild48df2.ts.net/mc/portal/{mcToken}/docs/strategic-plan/current.md
-https://sancho-cmo.taild48df2.ts.net/mc/portal/{mcToken}/docs/projects/registry.json
-https://sancho-cmo.taild48df2.ts.net/mc/portal/{mcToken}/docs/projects/P01-optimizar-web/project.json
+{MC_BASE_URL}/portal/{mcToken}/docs/strategic-plan/current.md
+{MC_BASE_URL}/portal/{mcToken}/docs/projects/registry.json
+{MC_BASE_URL}/portal/{mcToken}/docs/projects/P01-optimizar-web/project.json
 ```

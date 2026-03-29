@@ -7,9 +7,8 @@
 - **#onboarding channel**: 1476491108421730334
 - **Alfonso user ID**: 1334604955687977042
 
-## Tailscale
-- **Hostname**: sancho-cmo.taild48df2.ts.net
-- **Dashboard**: https://sancho-cmo.taild48df2.ts.net
+## Mission Control
+- **Config**: Ver `_system/instance-config.md` para URLs actuales
 - **MC path**: /mc (puerto 18790 interno)
 
 ## Supabase
@@ -20,13 +19,12 @@
 - **Gateway**: com.openclaw.gateway (pid en `openclaw status`)
 - **MC Server**: com.sancho.mc-server (puerto 18790, mc-server.js)
 
-## Paths
-- **Mi workspace**: ~/.openclaw/workspace-cervantes/
-- **Workspace de Sancho**: ~/.openclaw/workspace-sancho/
-- **Regenerate script**: ~/.openclaw/workspace-sancho/scripts/regenerate.py
-- **Mission Control HTML**: ~/.openclaw/workspace-sancho/mission-control.html
-- **Skills compartidas**: ~/.openclaw/workspace-sancho/skills/
-- **Dispatch map**: ~/.openclaw/workspace-sancho/dispatch-map.json
+## Paths (relativos al $OPENCLAW_HOME)
+- **Mi workspace**: workspace-cervantes/
+- **Workspace de Sancho**: workspace-sancho/
+- **Regenerate script**: workspace-sancho/scripts/regenerate.py
+- **Skills compartidas**: workspace-sancho/skills/
+- **Dispatch map**: workspace-sancho/dispatch-map.json
 
 ## Google Workspace
 - **Account**: alfonso@growth4u.io

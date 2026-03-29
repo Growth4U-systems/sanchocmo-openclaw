@@ -67,7 +67,7 @@ context_writes:
 
 ### 7. Comunicar resultado
 - "✅ Deep-research completado. {N} fuentes, {M} secciones ampliadas."
-- Link: `https://sancho-cmo.taild48df2.ts.net/mc/docs/brand/{slug}/{pilar}/current.md`
+- Link: `{MC_BASE_URL}/docs/brand/{slug}/{pilar}/current.md`
 
 ---
 

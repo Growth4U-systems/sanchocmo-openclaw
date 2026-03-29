@@ -10,6 +10,7 @@ from pathlib import Path
 
 OPENCLAW_HOME = os.environ.get("OPENCLAW_HOME", os.path.expanduser("~/.openclaw"))
 BRAND_DIR = Path(os.path.join(OPENCLAW_HOME, "workspace-sancho", "brand"))
+MC_BASE_URL = os.environ.get("MC_BASE_URL", "https://sancho-cmo.taild48df2.ts.net/mc")
 
 def read_file(path):
     try:
@@ -1613,7 +1614,7 @@ def main():
     print(f"   Size: {len(html):,} bytes")
     slide_count = html.count('class="slide ')
     print(f"   Slides: {slide_count}")
-    print(f"   URL: https://sancho-cmo.taild48df2.ts.net/mc/brand/{slug}/presentations/foundation-report.html")
+    print(f"   URL: {MC_BASE_URL}/brand/{slug}/presentations/foundation-report.html")
 
 if __name__ == '__main__':
     main()

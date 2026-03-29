@@ -3,7 +3,7 @@
 > Todos los links a Mission Control DEBEN incluir un token de acceso. URLs sin token devuelven 403.
 
 ## URL Base
-`https://sancho-cmo.taild48df2.ts.net/mc`
+Lee de `_system/instance-config.md` → Mission Control → **MC Base URL**
 
 ## Tipos de Acceso
 
@@ -29,7 +29,7 @@
 
 **Ejemplo completo (Hospital Capilar):**
 ```
-https://sancho-cmo.taild48df2.ts.net/mc/portal/730a6de7b765cdaf15131aa46a31a610/docs/brand/hospital-capilar/campaigns/fase-1-guiones-google-ads.md
+{MC_BASE_URL}/portal/730a6de7b765cdaf15131aa46a31a610/docs/brand/hospital-capilar/campaigns/fase-1-guiones-google-ads.md
 ```
 
 ### 2. Admin (`/admin/{adminToken}/`)

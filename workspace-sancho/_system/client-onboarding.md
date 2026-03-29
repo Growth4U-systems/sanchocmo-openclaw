@@ -57,5 +57,5 @@ openclaw gateway restart
 | Plantilla Discord | https://discord.new/mnXBVkNQqFBk |
 | OAuth Bot | https://discord.com/oauth2/authorize?client_id=1475635406610628769&permissions=8&integration_type=0&scope=bot |
 | Supabase | https://psapmujzxhaxraphddlv.supabase.co |
-| Mission Control | https://sancho-cmo.taild48df2.ts.net/mc |
-| Docs (público) | https://sancho-cmo.taild48df2.ts.net:8443/mc/docs/ |
+| Mission Control | {MC_BASE_URL} |
+| Docs (público) | {MC_BASE_URL}/docs/ |

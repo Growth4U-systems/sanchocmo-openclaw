@@ -83,4 +83,4 @@ Cuando el usuario pide presentación de un documento:
 4. Ejecutar frontend-slides con las slides definidas
 5. Incluir links "Ver detalle →" en cada slide que tenga `source`
 6. Guardar HTML en `brand/{slug}/presentations/{nombre}.html`
-7. Servir via MC: `https://sancho-cmo.taild48df2.ts.net/mc/portal/{mcToken}/docs/presentations/{nombre}.html`
+7. Servir via MC: `{MC_BASE_URL}/portal/{mcToken}/docs/presentations/{nombre}.html`
