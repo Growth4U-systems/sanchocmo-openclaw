@@ -6,6 +6,7 @@
 # Prerequisites:
 #   - Fresh Ubuntu 22.04 VPS
 #   - DNS A record pointing <domain> to this server's IP
+#   - Hetzner volume mounted at /mnt/data (for data snapshots)
 #   - Run as root (or with sudo)
 set -euo pipefail
 

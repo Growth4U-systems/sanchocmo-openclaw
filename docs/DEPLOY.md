@@ -143,10 +143,31 @@ docker compose build --no-cache && docker compose up -d
 
 ### Backups
 
-Cervantes runs a backup automatically every day. To trigger a manual backup:
+Two backup mechanisms run automatically:
+
+**Framework backup** (daily at 03:00) — `backup.sh` commits and pushes git-tracked files to GitHub:
 
 ```bash
-docker exec sanchocmo bash scripts/backup.sh
+docker exec sanchocmo bash workspace-sancho/scripts/backup.sh
+```
+
+**Data snapshots** (every 3h) — `snapshot-data.sh` creates tarballs of private data (brand, memory, config, SQLite) on the Hetzner volume:
+
+```bash
+docker exec sanchocmo bash workspace-cervantes/scripts/snapshot-data.sh
+```
+
+Snapshots are stored at `/mnt/data/snapshots/` (last 24 retained, ~3 days). To restore from a snapshot:
+
+```bash
+# Stop the container first
+docker compose down
+
+# Extract snapshot over the data directory
+tar xzf /mnt/data/snapshots/snapshot-YYYY-MM-DD_HHMM.tar.gz -C ~/.openclaw
+
+# Restart
+docker compose up -d
 ```
 
 ### SSL renewal
@@ -176,8 +197,9 @@ Internet → nginx (:443, SSL) → Docker container
                                   ├── OpenClaw Gateway (:18789)
                                   └── MC Server (:18790)
 
-Persistent data: ~/.openclaw/ (bind-mounted into container)
-SSH keys:        ~/.ssh/       (bind-mounted read-only for git push)
+Persistent data: ~/.openclaw/        (bind-mounted into container)
+SSH keys:        ~/.ssh/              (bind-mounted read-only for git push)
+Data snapshots:  /mnt/data/snapshots/ (Hetzner volume, every 3h)
 ```
 
 ---
