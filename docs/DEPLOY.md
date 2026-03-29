@@ -10,10 +10,13 @@ This guide covers deploying SanchoCMO to a VPS using Docker Compose and nginx. A
 |---|---|
 | VPS | 2 vCPU, 4 GB RAM, 20 GB disk |
 | OS | Ubuntu 22.04 |
+| Block storage | 10 GB volume mounted at `/mnt/data` (for data snapshots) |
 | Domain | A record pointing to VPS IP |
 | GitHub SSH key | On the VPS, for Cervantes backups |
 | Discord | Bot token + client ID |
 | Anthropic | API key |
+
+> **No Hetzner volume?** Set `SNAPSHOT_DATA_DIR=/path/to/your/storage` in `.env` to store snapshots elsewhere.
 
 Tested on: **Hetzner CX22**
 
@@ -24,6 +27,19 @@ Tested on: **Hetzner CX22**
 ### 1. Provision VPS
 
 Spin up an Ubuntu 22.04 server on Hetzner, DigitalOcean, or any compatible provider. Note the public IP address.
+
+If using Hetzner, attach a volume (10 GB minimum) and mount it:
+
+```bash
+# Hetzner volumes are auto-attached as /dev/disk/by-id/scsi-0HC_Volume_*
+# Format and mount (first time only):
+mkfs.ext4 /dev/disk/by-id/scsi-0HC_Volume_<ID>
+mkdir -p /mnt/data
+mount /dev/disk/by-id/scsi-0HC_Volume_<ID> /mnt/data
+
+# Add to /etc/fstab for persistence across reboots:
+echo '/dev/disk/by-id/scsi-0HC_Volume_<ID> /mnt/data ext4 defaults 0 2' >> /etc/fstab
+```
 
 ### 2. Configure DNS
 
