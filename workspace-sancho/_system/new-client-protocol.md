@@ -13,7 +13,7 @@ Preguntar (si no los dan):
 
 ### Paso 2: Discord Server (lo hace el CLIENTE, no tú)
 El cliente debe:
-1. Crear servidor desde plantilla: `https://discord.new/mnXBVkNQqFBk`
+1. Crear servidor desde plantilla: `https://discord.new/9nbefJmU7YKy`
 2. Añadir bot: `https://discord.com/oauth2/authorize?client_id=1475635406610628769&permissions=8&integration_type=0&scope=bot`
 
 ⚠️ Si el cliente NO tiene servidor todavía:

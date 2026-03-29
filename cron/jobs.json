@@ -7,7 +7,7 @@
       "name": "Daily Pulse",
       "enabled": true,
       "createdAtMs": 1771950688301,
-      "updatedAtMs": 1774425644434,
+      "updatedAtMs": 1774598927373,
       "schedule": {
         "kind": "cron",
         "expr": "0 9 * * 1-5",
@@ -26,14 +26,16 @@
         "to": "channel:1475638253154603170"
       },
       "state": {
-        "nextRunAtMs": 1774512000000,
-        "lastRunAtMs": 1774425600012,
-        "lastRunStatus": "ok",
-        "lastStatus": "ok",
-        "lastDurationMs": 44422,
+        "nextRunAtMs": 1774854000000,
+        "lastRunAtMs": 1774598400935,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 526438,
         "lastDeliveryStatus": "not-delivered",
-        "consecutiveErrors": 0,
-        "lastDelivered": false
+        "consecutiveErrors": 1,
+        "lastDelivered": false,
+        "lastError": "⚠️ ✉️ Message failed",
+        "lastDeliveryError": "⚠️ ✉️ Message failed"
       }
     },
     {
@@ -77,7 +79,7 @@
       "name": "Regenerar Dashboard",
       "enabled": true,
       "createdAtMs": 1771950708148,
-      "updatedAtMs": 1774465395211,
+      "updatedAtMs": 1774793033797,
       "schedule": {
         "kind": "cron",
         "expr": "0 8,12,16,20 * * *",
@@ -95,11 +97,11 @@
         "channel": "last"
       },
       "state": {
-        "nextRunAtMs": 1774508400000,
-        "lastRunAtMs": 1774465200010,
+        "nextRunAtMs": 1774807200000,
+        "lastRunAtMs": 1774792800012,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 195201,
+        "lastDurationMs": 233785,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0,
         "lastDelivered": false
@@ -111,7 +113,7 @@
       "name": "Meeting Intelligence",
       "enabled": true,
       "createdAtMs": 1771950715725,
-      "updatedAtMs": 1774458209638,
+      "updatedAtMs": 1774631054960,
       "schedule": {
         "kind": "cron",
         "expr": "0 18 * * 1-5",
@@ -130,11 +132,11 @@
         "to": "channel:1475638253154603170"
       },
       "state": {
-        "nextRunAtMs": 1774544400000,
-        "lastRunAtMs": 1774458000012,
+        "nextRunAtMs": 1774886400000,
+        "lastRunAtMs": 1774630800011,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 209626,
+        "lastDurationMs": 254949,
         "lastDelivered": false,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0
@@ -206,7 +208,7 @@
       "name": "backup-sancho",
       "enabled": true,
       "createdAtMs": 1772069600272,
-      "updatedAtMs": 1774404308133,
+      "updatedAtMs": 1774748346548,
       "schedule": {
         "kind": "cron",
         "expr": "0 3 * * *"
@@ -223,15 +225,14 @@
         "channel": "last"
       },
       "state": {
-        "nextRunAtMs": 1774490400000,
-        "lastRunAtMs": 1774404000014,
+        "nextRunAtMs": 1774832400000,
+        "lastRunAtMs": 1774746730263,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 308119,
+        "lastDurationMs": 1616285,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0,
-        "lastDelivered": false,
-        "runningAtMs": 1774490400006
+        "lastDelivered": false
       }
     },
     {
@@ -240,7 +241,7 @@
       "name": "healthcheck",
       "enabled": true,
       "createdAtMs": 1772069609685,
-      "updatedAtMs": 1774479177702,
+      "updatedAtMs": 1774782937786,
       "schedule": {
         "kind": "every",
         "everyMs": 21600000,
@@ -260,14 +261,16 @@
         "channel": "last"
       },
       "state": {
-        "nextRunAtMs": 1774500760229,
-        "lastRunAtMs": 1774479160229,
-        "lastRunStatus": "ok",
-        "lastStatus": "ok",
-        "lastDurationMs": 17473,
+        "nextRunAtMs": 1774804510423,
+        "lastRunAtMs": 1774782910423,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 27363,
         "lastDeliveryStatus": "not-delivered",
-        "consecutiveErrors": 0,
-        "lastDelivered": false
+        "consecutiveErrors": 1,
+        "lastDelivered": false,
+        "lastError": "⚠️ ✉️ Message: `⚠️ Health Check — 29/03/2026 13:15` failed",
+        "lastDeliveryError": "⚠️ ✉️ Message: `⚠️ Health Check — 29/03/2026 13:15` failed"
       }
     },
     {
@@ -277,7 +280,7 @@
       "description": "T-022: Run cost-tracker.py daily at 23:00",
       "enabled": true,
       "createdAtMs": 1772069993394,
-      "updatedAtMs": 1774476127141,
+      "updatedAtMs": 1774740175549,
       "schedule": {
         "kind": "cron",
         "expr": "0 23 * * *"
@@ -294,11 +297,11 @@
         "channel": "webchat"
       },
       "state": {
-        "nextRunAtMs": 1774562400000,
-        "lastRunAtMs": 1774476000013,
+        "nextRunAtMs": 1774818000000,
+        "lastRunAtMs": 1774740016011,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 127128,
+        "lastDurationMs": 159538,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0,
         "lastDelivered": false
@@ -310,7 +313,7 @@
       "name": "Cervantes observa a Sancho",
       "enabled": true,
       "createdAtMs": 1772115026027,
-      "updatedAtMs": 1774430948269,
+      "updatedAtMs": 1774775271831,
       "schedule": {
         "kind": "cron",
         "expr": "0 10 * * *",
@@ -328,11 +331,11 @@
         "channel": "last"
       },
       "state": {
-        "nextRunAtMs": 1774515600000,
-        "lastRunAtMs": 1774429962772,
+        "nextRunAtMs": 1774857600000,
+        "lastRunAtMs": 1774775242790,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 985497,
+        "lastDurationMs": 29041,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0,
         "lastDelivered": false
@@ -373,7 +376,7 @@
       "name": "cost-tracker-daily",
       "enabled": true,
       "createdAtMs": 1772750911798,
-      "updatedAtMs": 1774422279643,
+      "updatedAtMs": 1774764293976,
       "schedule": {
         "kind": "cron",
         "expr": "0 8 * * *",
@@ -391,11 +394,11 @@
         "mode": "none"
       },
       "state": {
-        "nextRunAtMs": 1774508400000,
-        "lastRunAtMs": 1774422247024,
+        "nextRunAtMs": 1774850400000,
+        "lastRunAtMs": 1774764253026,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 32619,
+        "lastDurationMs": 40950,
         "lastDelivered": false,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0
@@ -470,7 +473,7 @@
       "name": "update-skills",
       "enabled": true,
       "createdAtMs": 1773235919019,
-      "updatedAtMs": 1774413089393,
+      "updatedAtMs": 1774756254264,
       "schedule": {
         "kind": "cron",
         "expr": "30 5 * * *",
@@ -490,14 +493,15 @@
         "to": "1481220331845976125"
       },
       "state": {
-        "nextRunAtMs": 1774499400000,
-        "lastRunAtMs": 1774413000011,
-        "lastRunStatus": "ok",
-        "lastStatus": "ok",
-        "lastDurationMs": 89382,
-        "lastDeliveryStatus": "delivered",
-        "consecutiveErrors": 0,
-        "lastDelivered": true
+        "nextRunAtMs": 1774841400000,
+        "lastRunAtMs": 1774755255465,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 998799,
+        "lastDeliveryStatus": "unknown",
+        "consecutiveErrors": 1,
+        "lastError": "cron: job execution timed out",
+        "lastErrorReason": "timeout"
       }
     },
     {
@@ -507,7 +511,7 @@
       "name": "Weekly Changelog Update",
       "enabled": true,
       "createdAtMs": 1773249903776,
-      "updatedAtMs": 1774170276963,
+      "updatedAtMs": 1774775427512,
       "schedule": {
         "kind": "cron",
         "expr": "0 10 * * 0",
@@ -524,11 +528,11 @@
         "mode": "none"
       },
       "state": {
-        "nextRunAtMs": 1774771200000,
-        "lastRunAtMs": 1774170184515,
+        "nextRunAtMs": 1775376000000,
+        "lastRunAtMs": 1774775271831,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 92448,
+        "lastDurationMs": 155681,
         "lastDelivered": false,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0
@@ -541,7 +545,7 @@
       "name": "Weekly Activity Summary",
       "enabled": true,
       "createdAtMs": 1773249903895,
-      "updatedAtMs": 1774170351337,
+      "updatedAtMs": 1774775517601,
       "schedule": {
         "kind": "cron",
         "expr": "0 10 * * 0",
@@ -558,49 +562,14 @@
         "mode": "none"
       },
       "state": {
-        "nextRunAtMs": 1774771200000,
-        "lastRunAtMs": 1774170276963,
+        "nextRunAtMs": 1775376000000,
+        "lastRunAtMs": 1774775427512,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 74374,
+        "lastDurationMs": 90089,
         "lastDelivered": false,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0
-      }
-    },
-    {
-      "id": "d46675e3-06e1-4887-a136-0537f3923299",
-      "agentId": "sancho",
-      "sessionKey": "agent:sancho:discord:channel:1480949333963575427",
-      "name": "Morning Metrics — Growth4U",
-      "enabled": true,
-      "createdAtMs": 1773274108369,
-      "updatedAtMs": 1774423831895,
-      "schedule": {
-        "kind": "cron",
-        "expr": "30 8 * * 1-5",
-        "tz": "Europe/Madrid"
-      },
-      "sessionTarget": "isolated",
-      "wakeMode": "now",
-      "payload": {
-        "kind": "agentTurn",
-        "message": "Run `bash scripts/morning-metrics-growth4u.sh` and capture the full output.\n\nThen publish to Growth4U #intelligence (channel 1477741644789842031) using the THREAD PATTERN:\n\n1. Send a SHORT 1-line summary to the channel: message(action=send, channel=discord, target='1477741644789842031', message='📊 Morning Metrics — Growth4U | {date}: {1-line headline}')\n2. From the send result, capture the messageId.\n3. Create thread FROM that message: message(action=thread-create, channel=discord, channelId='1477741644789842031', messageId=<messageId>, threadName='📊 Metrics {date} — Análisis')\n4. From thread-create result, capture the threadId.\n5. Post ALL data + analysis + alerts INSIDE the thread: message(action=send, channel=discord, target=<threadId>, message=<full metrics output>). If content is too long, split into max 3 messages to the same thread.\n6. NEVER post data/tables directly to the channel — ALL content goes inside the thread.\n7. If there are 🔴 alerts, add action proposals at the end of the thread.\n8. Reply NO_REPLY.",
-        "model": "anthropic/claude-sonnet-4-5",
-        "timeoutSeconds": 120
-      },
-      "state": {
-        "nextRunAtMs": 1774510200000,
-        "lastRunAtMs": 1774423800013,
-        "lastRunStatus": "error",
-        "lastStatus": "error",
-        "lastDurationMs": 31882,
-        "lastDeliveryStatus": "unknown",
-        "consecutiveErrors": 2,
-        "lastError": "Unsupported channel: discord"
-      },
-      "delivery": {
-        "mode": "announce"
       }
     },
     {
@@ -610,7 +579,7 @@
       "name": "Daily Metrics Collector — Growth4U",
       "enabled": true,
       "createdAtMs": 1773518330038,
-      "updatedAtMs": 1774418431290,
+      "updatedAtMs": 1774760424916,
       "schedule": {
         "kind": "cron",
         "expr": "0 7 * * *",
@@ -628,11 +597,11 @@
         "mode": "none"
       },
       "state": {
-        "nextRunAtMs": 1774504800000,
-        "lastRunAtMs": 1774418400012,
+        "nextRunAtMs": 1774846800000,
+        "lastRunAtMs": 1774760400008,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 31278,
+        "lastDurationMs": 24908,
         "lastDelivered": false,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0
@@ -645,7 +614,7 @@
       "name": "mejora-continua-weekly",
       "enabled": true,
       "createdAtMs": 1773560184099,
-      "updatedAtMs": 1774170589553,
+      "updatedAtMs": 1774775683443,
       "schedule": {
         "kind": "cron",
         "expr": "0 10 * * 0",
@@ -665,11 +634,11 @@
         "to": "1482638140240953396"
       },
       "state": {
-        "nextRunAtMs": 1774771200000,
-        "lastRunAtMs": 1774170351337,
+        "nextRunAtMs": 1775376000000,
+        "lastRunAtMs": 1774775517601,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 238216,
+        "lastDurationMs": 165842,
         "lastDelivered": true,
         "lastDeliveryStatus": "delivered",
         "consecutiveErrors": 0
@@ -682,7 +651,7 @@
       "name": "skill-improvement-weekly",
       "enabled": true,
       "createdAtMs": 1773591436668,
-      "updatedAtMs": 1774170629742,
+      "updatedAtMs": 1774775711006,
       "schedule": {
         "kind": "cron",
         "expr": "0 10 * * 0",
@@ -700,11 +669,11 @@
         "channel": "1482642972712505395"
       },
       "state": {
-        "nextRunAtMs": 1774771200000,
-        "lastRunAtMs": 1774170589553,
+        "nextRunAtMs": 1775376000000,
+        "lastRunAtMs": 1774775683443,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 40189,
+        "lastDurationMs": 27563,
         "lastDelivered": true,
         "lastDeliveryStatus": "delivered",
         "consecutiveErrors": 0
@@ -813,7 +782,7 @@
       "name": "Lead Sync — Growth4U",
       "enabled": true,
       "createdAtMs": 1774192173315,
-      "updatedAtMs": 1774472515985,
+      "updatedAtMs": 1774731760665,
       "schedule": {
         "kind": "cron",
         "expr": "0 22 * * *",
@@ -830,11 +799,11 @@
         "mode": "none"
       },
       "state": {
-        "nextRunAtMs": 1774558800000,
-        "lastRunAtMs": 1774472400013,
+        "nextRunAtMs": 1774814400000,
+        "lastRunAtMs": 1774731600012,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 115972,
+        "lastDurationMs": 160653,
         "lastDelivered": false,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0
@@ -847,7 +816,7 @@
       "name": "Call Prep Daily — Growth4U",
       "enabled": true,
       "createdAtMs": 1774192180766,
-      "updatedAtMs": 1774474300609,
+      "updatedAtMs": 1774560741312,
       "schedule": {
         "kind": "cron",
         "expr": "30 22 * * 0-4",
@@ -864,11 +833,11 @@
         "mode": "none"
       },
       "state": {
-        "nextRunAtMs": 1774560600000,
-        "lastRunAtMs": 1774474200014,
+        "nextRunAtMs": 1774816200000,
+        "lastRunAtMs": 1774560600012,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 100595,
+        "lastDurationMs": 141300,
         "lastDelivered": false,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0
@@ -881,7 +850,7 @@
       "name": "Call Prep Weekly — Growth4U",
       "enabled": true,
       "createdAtMs": 1774192186720,
-      "updatedAtMs": 1774192186720,
+      "updatedAtMs": 1774647122707,
       "schedule": {
         "kind": "cron",
         "expr": "30 22 * * 5",
@@ -898,7 +867,14 @@
         "mode": "none"
       },
       "state": {
-        "nextRunAtMs": 1774647000000
+        "nextRunAtMs": 1775248200000,
+        "lastRunAtMs": 1774647000019,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 122688,
+        "lastDelivered": false,
+        "lastDeliveryStatus": "not-delivered",
+        "consecutiveErrors": 0
       }
     },
     {
@@ -924,7 +900,7 @@
         "mode": "none"
       },
       "state": {
-        "nextRunAtMs": 1774771200000
+        "nextRunAtMs": 1775376000000
       }
     },
     {
@@ -934,7 +910,7 @@
       "name": "Morning Metrics — Multi-Client",
       "enabled": true,
       "createdAtMs": 1774217794921,
-      "updatedAtMs": 1774423859249,
+      "updatedAtMs": 1774596699236,
       "schedule": {
         "kind": "cron",
         "expr": "30 8 * * 1-5",
@@ -944,23 +920,21 @@
       "wakeMode": "now",
       "payload": {
         "kind": "agentTurn",
-        "message": "MORNING METRICS — MULTI-CLIENT RUN\n\nExecute the morning metrics for ALL clients that have APIs configured.\n\nFor each client:\n1. Run: `bash scripts/morning-metrics.sh {slug}` — if output starts with NO_APIS, skip that client.\n2. Post the report to the client's #intelligence channel using message(action=send, channel=discord, channelId=\"{intelligence_channel_id}\").\n3. Create a thread from the posted message: \"📊 Metrics {today's date}\"\n4. If there are 🔴 red alerts, add action proposals in the thread.\n\nClient registry (from clients.json):\n- growth4u → intelligence channel: 1477741644789842031 (has meta-ads + ghl)\n- hospital-capilar → intelligence: 1475638253154603170 (no APIs yet — skip)\n- paymatico → intelligence: 1477995838092476477 (no APIs yet — skip)\n- masavo → intelligence: 1483424294099882093 (no APIs yet — skip)\n\nRun growth4u FIRST (only one with APIs right now). As clients connect APIs, they get added to clients.json metrics.apis and the script picks them up automatically.\n\nIMPORTANT: Each report goes to ITS OWN client guild. Client context isolation. No internal info.",
+        "message": "MORNING METRICS — MULTI-CLIENT RUN\n\nExecute the morning metrics for ALL clients that have APIs configured.\n\nFor each client:\n1. Run: `bash scripts/morning-metrics.sh {slug}` — if output starts with NO_APIS, skip that client.\n2. Post the report to the client #insights channel using message(action=send, channel=discord, channelId=\"{insights_channel_id}\").\n3. Create a thread from the posted message: \"📊 Metrics {today date}\"\n4. If there are red alerts, add action proposals in the thread.\n\nClient registry (from clients.json):\n- growth4u: insights channel 1477741644789842031 (has meta-ads + ghl)\n- hospital-capilar: insights 1475638253154603170 (no APIs yet, skip)\n- paymatico: insights 1477995838092476477 (no APIs yet, skip)\n- masavo: insights 1483424294099882093 (no APIs yet, skip)\n\nRun growth4u FIRST (only one with APIs right now). As clients connect APIs, they get added to clients.json metrics.apis and the script picks them up automatically.\n\nIMPORTANT: Each report goes to ITS OWN client guild. Client context isolation. No internal info.",
         "timeoutSeconds": 180
       },
       "delivery": {
         "mode": "none"
       },
       "state": {
-        "nextRunAtMs": 1774510200000,
-        "lastRunAtMs": 1774423831895,
-        "lastRunStatus": "error",
-        "lastStatus": "error",
-        "lastDurationMs": 27354,
+        "nextRunAtMs": 1774852200000,
+        "lastRunAtMs": 1774596600012,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 99224,
         "lastDelivered": false,
         "lastDeliveryStatus": "not-delivered",
-        "consecutiveErrors": 1,
-        "lastError": "⚠️ ✉️ Message failed",
-        "lastDeliveryError": "⚠️ ✉️ Message failed"
+        "consecutiveErrors": 0
       }
     }
   ]

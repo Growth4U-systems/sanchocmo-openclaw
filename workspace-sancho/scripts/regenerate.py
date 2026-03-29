@@ -231,6 +231,81 @@ def parse_activity():
     return activity[:100]  # Last 100 events
 
 
+def extract_brand_summary(client_dir):
+    """Extract key brand fields from company-brief for dashboard, including Foundation Index links."""
+    brief_file = client_dir / "company-brief" / "current.md"
+    if not brief_file.exists():
+        return None
+    try:
+        content = brief_file.read_text(encoding="utf-8")
+    except Exception:
+        return None
+    summary = {}
+    # Company name from title
+    title_match = re.search(r'^#\s+Company Brief\s*[—–-]\s*(.+)', content, re.MULTILINE)
+    if title_match:
+        summary["company_name"] = title_match.group(1).strip()
+    # Section "## 1. La Empresa"
+    empresa_match = re.search(r'##\s+1\.\s+La Empresa[^\n]*\n+((?:\*\*[^\n]+\n)*)', content)
+    if empresa_match:
+        lines_text = empresa_match.group(1).strip().split('\n')
+        for line in lines_text:
+            kv = re.match(r'\*\*([^*]+)\*\*:?\s*(.*)', line)
+            if kv:
+                key = kv.group(1).strip().lower()
+                val = kv.group(2).strip()
+                if 'nombre' in key and "company_name" not in summary:
+                    summary["company_name"] = val
+                elif 'tipo' in key:
+                    summary["sector"] = val
+                elif 'modelo' in key and "description" not in summary:
+                    summary["description"] = val[:200]
+    # Parse Foundation Index table for ICPs, competitors, positioning
+    index_match = re.search(r'## Foundation Index.*?\n\n(.*?)(?:\n##\s|\Z)', content, re.DOTALL)
+    if index_match:
+        table_text = index_match.group(1)
+        icps = []
+        competitors = []
+        for line in table_text.split('\n'):
+            if not line.strip().startswith('|'):
+                continue
+            cells = [c.strip() for c in line.split('|')[1:-1]]
+            if len(cells) < 4:
+                continue
+            layer, pilar, status, archivo = cells[0], cells[1], cells[2], cells[3]
+            if 'Layer' in layer or '---' in layer:
+                continue
+            link_match = re.search(r'\[([^\]]+)\]\(([^)]+)\)', archivo)
+            if not link_match:
+                continue
+            link_text, link_url = link_match.group(1), link_match.group(2)
+            # Normalize relative path: ../go-to-market/... → go-to-market/...
+            link_url = link_url.replace('../', '')
+            # ICPs: Positioning — ECP1/2/3/4/5
+            if 'Positioning — ECP' in pilar:
+                ecp_name = pilar.split('—')[1].strip() if '—' in pilar else pilar
+                icps.append({"name": ecp_name, "link": link_url})
+            # Competitors: individual folders
+            elif pilar in ['Product Hackers', 'Snowball', 'TheGrowtHacker', 'Glissmarket', 'TEAM LEWIS', 'Innsomnia / FinTK']:
+                competitors.append({"name": pilar, "link": link_url})
+            # Positioning: Messaging Summary
+            elif 'Messaging Summary' in pilar:
+                summary["positioning_link"] = link_url
+        if icps:
+            summary["icps"] = icps
+        if competitors:
+            summary["competitors"] = competitors
+    # Fallback positioning text from "## 3. Cliente Ideal"
+    if "positioning_link" not in summary:
+        icp_section = re.search(r'##\s+3\.\s+Cliente Ideal[^\n]*\n(.*?)(?:\n##\s+\d+\.|\Z)', content, re.DOTALL)
+        if icp_section:
+            frase_match = re.search(r'\*\*En una frase:\*\*\s*(.+)', icp_section.group(1))
+            if frase_match:
+                summary["positioning"] = frase_match.group(1).strip()[:200]
+    return summary if summary else None
+
+
+
 def parse_foundation():
     """Parse Foundation v2.0 state from all brand/{slug}/foundation-state.json files."""
     brand_dir = WORKSPACE / "brand"
@@ -238,9 +313,11 @@ def parse_foundation():
     # v2.0 section/pillar display order
     SECTIONS_ORDER = [
         ("Company Brief", "company-brief", ["company-context", "business-model", "budget"]),
-        ("Market & Us", "market-and-us", ["market-analysis", "competitor-analysis", "self-analysis", "swot"]),
+        ("Market & Us", "market-and-us", ["market-analysis", "competitor-analysis", "self-analysis", "market-synthesis"]),
         ("Go-To-Market", "go-to-market", ["niche-discovery", "existing-customer-data", "positioning", "pricing", "ecp-validation"]),
         ("Brand Identity", "brand-identity", ["brand-voice", "visual-identity"]),
+        ("Métricas", "metrics-setup", ["metrics-setup"]),
+        ("Strategic Plan", "strategic-plan", ["strategic-plan"]),
     ]
 
     clients = {}
@@ -262,7 +339,7 @@ def parse_foundation():
             version = state.get("version", "1.0")
             client_data = {"slug": slug, "version": version, "sections": {}, "total": 0, "approved": 0, "pending": 0}
 
-            if version.startswith("2"):
+            if version.startswith("2") or version.startswith("3"):
                 # v2.0 schema: sections → pillars
                 for display_name, sec_key, pillar_names in SECTIONS_ORDER:
                     sec = state.get("sections", {}).get(sec_key, {})
@@ -273,37 +350,43 @@ def parse_foundation():
                         skills = sec.get("skills", {})
                         for pname in pillar_names:
                             skill_state = skills.get(pname, {})
+                            is_optional = skill_state.get("optional", False)
                             entry = {"status": skill_state.get("status", "not-started")}
+                            if is_optional:
+                                entry["optional"] = True
                             if skill_state.get("output_file"):
                                 entry["output_file"] = skill_state["output_file"]
                             sec_data["pillars"][pname] = entry
-                            client_data["total"] += 1
-                            if skill_state.get("status") == "approved" or sec.get("status") == "approved":
-                                client_data["approved"] += 1
-                            elif skill_state.get("status") in ("pending-review", "in-progress"):
-                                client_data["pending"] += 1
+                            if not is_optional:
+                                client_data["total"] += 1
+                                if skill_state.get("status") == "approved" or sec.get("status") == "approved":
+                                    client_data["approved"] += 1
+                                elif skill_state.get("status") in ("pending-review", "in-progress"):
+                                    client_data["pending"] += 1
                     else:
                         pillars = sec.get("pillars", {})
                         for pname in pillar_names:
                             if pname in pillars:
                                 pdata = pillars[pname]
+                                is_optional = pdata.get("optional", False)
                                 pentry = {
                                     "status": pdata.get("status", "not-started"),
                                     "layer": pdata.get("layer"),
                                     "requires": pdata.get("requires", []),
-                                    "optional": pdata.get("optional", False),
+                                    "optional": is_optional,
                                 }
                                 if pdata.get("output_file"):
                                     pentry["output_file"] = pdata["output_file"]
                                 elif pdata.get("output_files"):
                                     pentry["output_file"] = pdata["output_files"][0]
                                 sec_data["pillars"][pname] = pentry
-                                client_data["total"] += 1
-                                st = pdata.get("status", "not-started")
-                                if st == "approved":
-                                    client_data["approved"] += 1
-                                elif st in ("pending-review", "in-progress"):
-                                    client_data["pending"] += 1
+                                if not is_optional:
+                                    client_data["total"] += 1
+                                    st = pdata.get("status", "not-started")
+                                    if st == "approved":
+                                        client_data["approved"] += 1
+                                    elif st in ("pending-review", "in-progress"):
+                                        client_data["pending"] += 1
 
                     # Syntheses
                     for syn_name, syn_data in sec.get("syntheses", {}).items():
@@ -448,6 +531,11 @@ def parse_foundation():
                         client_data["metrics_latest"]["_date"] = daily_files[0].stem
                     except:
                         client_data["metrics_latest"] = {}
+
+            # Brand Summary — extract key fields from company-brief/current.md
+            brand_summary = extract_brand_summary(client_dir)
+            if brand_summary:
+                client_data["brand_summary"] = brand_summary
 
             clients[slug] = client_data
 

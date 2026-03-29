@@ -1,0 +1,19 @@
+{
+  "id": "P00-Metrics",
+  "name": "Métricas y Conexiones",
+  "description": "Configurar métricas de adquisición, conectar APIs de tracking y generar dashboard de rendimiento.",
+  "approach": "Tras Full Foundation, definimos las métricas clave de adquisición por canal. Conectamos APIs (analytics, CRM, ads). Generamos dashboard unificado para tracking ongoing.",
+  "objective": {
+    "description": "Sistema de métricas operativo",
+    "metric": "metrics_status",
+    "baseline": "not-started",
+    "target": "operational",
+    "unit": ""
+  },
+  "origin": "onboarding",
+  "phase": -1,
+  "category": "foundation",
+  "review_date": null,
+  "status": "todo",
+  "strategy": "Foundation — Metrics Layer"
+}

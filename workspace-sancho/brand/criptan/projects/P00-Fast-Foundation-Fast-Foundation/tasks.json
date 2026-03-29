@@ -1,0 +1,47 @@
+[
+  {
+    "id": "P00-FF-T01",
+    "name": "L0 — Company Context",
+    "description": "Contexto completo de la empresa.",
+    "deliverable": "company-brief/company-context.md",
+    "done_criteria": "Documento generado y validado.",
+    "depends_on": null,
+    "owner": "Sancho",
+    "status": "todo",
+    "channel": "strategy",
+    "type": "foundation",
+    "skill": "company-context",
+    "pillar": "company-context",
+    "section": "company-brief"
+  },
+  {
+    "id": "P00-FF-T02",
+    "name": "L0 — Business Model Audit",
+    "description": "Auditoría del modelo de negocio.",
+    "deliverable": "company-brief/business-model.md",
+    "done_criteria": "Modelo documentado.",
+    "depends_on": null,
+    "owner": "Sancho",
+    "status": "todo",
+    "channel": "strategy",
+    "type": "foundation",
+    "skill": "business-model-audit",
+    "pillar": "business-model",
+    "section": "company-brief"
+  },
+  {
+    "id": "P00-FF-T03",
+    "name": "L1 — Niche Discovery 100x",
+    "description": "Descubrimiento de nichos y ECPs básicos.",
+    "deliverable": "go-to-market/ecps/current.md",
+    "done_criteria": "ECPs básicos identificados.",
+    "depends_on": "P00-FF-T01",
+    "owner": "Sancho",
+    "status": "todo",
+    "channel": "strategy",
+    "type": "foundation",
+    "skill": "niche-discovery-100x",
+    "pillar": "niche-discovery",
+    "section": "go-to-market"
+  }
+]

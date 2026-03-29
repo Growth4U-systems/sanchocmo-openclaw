@@ -13,7 +13,10 @@
 |-------|-------|--------|---------|
 | 0 | Company Brief | ✅ approved | (este documento) |
 | 1 | Market Analysis | ✅ approved | [market/current.md](../market-and-us/market/current.md) |
-| 1 | Competitors | ✅ approved | [competitors/current.md](../market-and-us/competitors/current.md) |
+| 1 | Competitors (overview) | ✅ approved | [competitors/current.md](../market-and-us/competitors/current.md) |
+| — | Product Hackers | ✅ approved | [product-hackers/current.md](../market-and-us/competitors/product-hackers/current.md) |
+| — | Snowball | ✅ approved | [snowball/current.md](../market-and-us/competitors/snowball/current.md) |
+| — | TheGrowtHacker | ✅ approved | [thegrowthacker/current.md](../market-and-us/competitors/thegrowthacker/current.md) |
 | 1 | Self Analysis | ✅ approved | [self/current.md](../market-and-us/self/current.md) |
 | 2 | SWOT | ✅ approved | [swot/current.md](../market-and-us/swot/current.md) |
 | — | Síntesis Ejecutiva | ✅ approved | [summary/current.md](../market-and-us/summary/current.md) |

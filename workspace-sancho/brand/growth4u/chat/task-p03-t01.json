@@ -1,0 +1,18 @@
+{
+  "messages": [
+    {
+      "role": "user",
+      "text": "Estoy abriendo el chat sobre \"Lista ECP1: 200 startups tech post-PMF España\". Dame un resumen rápido del estado actual y qué podemos hacer. Si necesitas algo de mí, dímelo.",
+      "ts": "2026-03-27T22:08:48.882Z"
+    },
+    {
+      "role": "bot",
+      "text": "Perfecto, aquí va el resumen:\n\n## 📋 P03-T01: Lista ECP1 — 200 startups tech post-PMF España\n\n**Estado actual:** `todo` — no se ha empezado.\n\n**Contexto del proyecto (P03 - Cold Email Pipeline):**\n- Objetivo: 5 meetings/mes cualificados, 5% reply rate, €35K pipeline/mes\n- ECP1 = startups tech post-PMF estancadas que necesitan sistema de growth repetible (Score 79/100)\n- Target: empresas tech España, 5-50 personas, post-PMF, estancadas en crecimiento\n\n**Entregable esperado:**\nSpreadsheet con 200 empresas: nombre, web, contacto decisor, email, tamaño, sector.\n\n**Criterios de filtrado (de ecps.md):**\n- Tech/SaaS en España\n- Post-PMF (producto en mercado, primeros clientes)\n- Equipo 5-50 personas\n- Señales de estancamiento o growth sin sistema\n\n---\n\n## ⚡ Qué podemos hacer\n\n**Opción A — Research con fuentes públicas** (lo que puedo hacer ya):\nUsar Tracxn, Crunchbase, Sabi, El Referente, LinkedIn como fuentes. Buscar startups tech españolas con rondas Serie A/Seed+, 10-50 empleados, y compilar la lista. Resultado: ~60-70% de las 200 con datos públicos. Emails de decisor necesitarán enrichment posterior (Apollo, Hunter, o LinkedIn Sales Navigator).\n\n**Opción B — Con Apollo/herramienta de prospecting:**\nSi tienes acceso a Apollo, Hunter.io, o Instantly ya configurado, puedo hacer la lista más rápida y con emails verificados.\n\n**Lo que necesito de ti:**\n1. **¿Tienes acceso a Apollo, Hunter.io u otra herramienta de enrichment?** Sin ella puedo compilar empresas + nombres de decisores, pero no emails verificados.\n2. **¿Algún filtro adicional?** ¿Solo SaaS o tech más amplio (healthtech, proptech, etc.)? ¿Excluir algún sector?\n3. **¿Prioridad geográfica?** ¿Solo Madrid/Barcelona o toda España?\n\nDime y arranco.",
+      "agent": "sancho",
+      "ts": "2026-03-27T22:09:41.400Z"
+    }
+  ],
+  "updatedAt": 1774649381400,
+  "discordThreadId": null,
+  "discordChannelId": null
+}

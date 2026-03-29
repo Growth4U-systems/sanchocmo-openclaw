@@ -1,0 +1,20 @@
+{
+  "project_id": "P00-Metrics",
+  "tasks": [
+    {
+      "id": "P00-MET-T01",
+      "name": "L6 — Acquisition Metrics Plan",
+      "description": "Definir métricas clave de adquisición por canal.",
+      "deliverable": "go-to-market/metrics-plan.md",
+      "done_criteria": "Métricas definidas. Tareas de conexión generadas.",
+      "depends_on": "P00-FUL-T08",
+      "owner": "Sancho",
+      "status": "todo",
+      "channel": "intelligence",
+      "type": "foundation",
+      "skill": "metrics-setup",
+      "pillar": "metrics-setup",
+      "section": "metrics-setup"
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "date": "2026-03-26",
+  "client": "hospital-capilar",
+  "guild": "1475635138108063746",
+  "insights": [],
+  "summary": "Sin actividad humana reciente en ningún canal Discord. Últimos mensajes: campaigns (bot, 36h), intelligence (bot, 15h), soporte (bot, 23h). Todos los canales con actividad son de SanchoCMO (auto-mensajes).",
+  "channels_checked": 9,
+  "channels_with_human_activity": 0,
+  "channels_skipped": 9,
+  "skipped_reasons": {
+    "general": "Sin actividad humana (>24h)",
+    "brand": "Sin actividad (>26 días)",
+    "campaigns": "Último msg de bot (SanchoCMO)",
+    "content": "Sin actividad (>26 días)",
+    "intelligence": "Último msg de bot (SanchoCMO)",
+    "onboarding": "Sin actividad (>10 días)",
+    "soporte": "Último msg de bot (SanchoCMO)",
+    "research": "Sin actividad (>25 días)",
+    "paid-ads": "Canal no disponible (Unknown Channel)"
+  },
+  "gmail_checked": false,
+  "gmail_status": "no_config",
+  "notion_checked": false,
+  "notion_status": "no_config",
+  "generated_at": "2026-03-26T09:00:00Z"
+}

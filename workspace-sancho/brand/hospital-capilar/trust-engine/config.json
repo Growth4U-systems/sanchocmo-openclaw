@@ -1,16 +1,11 @@
 {
-  "module": "foundation-import",
-  "version": 1,
-  "created_at": "2026-03-24T21:55:00Z",
-  "updated_at": "2026-03-24T21:55:00Z",
-  "status": "completed",
   "project": {
     "slug": "hospital-capilar",
     "name": "Hospital Capilar",
     "website": "https://hospitalcapilar.com",
     "language": "es",
     "market": "España",
-    "foundation_imported_at": "2026-03-24T21:55:00Z"
+    "country_code": "ES"
   },
   "brand": {
     "name": "Hospital Capilar",
@@ -21,106 +16,74 @@
     {
       "id": "n1",
       "name": "Jóvenes con alopecia temprana",
+      "brief": "Hombres 20-30 con primeros signos. Alta carga emocional (dating, autoestima). No se identifican con clínicas 'para calvos'.",
       "ecp_id": "jovenes-alopecia-temprana",
-      "brief": {
-        "A": "Tu pelo tiene solución médica. Cuanto antes, mejor.",
-        "B": "Minoxidil OTC, Olistic, Keeps, gorras, no hacer nada",
-        "C": "Hombres 20-30 años con primeros signos de alopecia. Alta carga emocional: dating, autoestima, redes sociales.",
-        "D": "Diagnóstico médico completo + HRT/CRT frenan caída temprana. Transparencia radical = confianza en jóvenes escépticos."
-      }
+      "subniches": [
+        { "id": "n1-s1", "name": "Alopecia joven masculina (20-30)", "priority": "high", "keywords_seed": ["caida pelo joven", "alopecia 25 años", "calvicie temprana tratamiento"], "known_media": [] },
+        { "id": "n1-s2", "name": "Alopecia y autoestima/dating", "priority": "medium", "keywords_seed": ["caida pelo autoestima", "calvicie joven inseguridad", "pelo y citas"], "known_media": [] },
+        { "id": "n1-s3", "name": "Tratamiento preventivo capilar", "priority": "high", "keywords_seed": ["frenar caida pelo", "tratamiento preventivo alopecia", "HRT capilar"], "known_media": [] }
+      ]
     },
     {
       "id": "n2",
-      "name": "Frustrados con tratamientos OTC",
+      "name": "OTC frustrados (farmacia sin salida)",
+      "brief": "Llevan 6+ meses con minoxidil/finasteride sin supervisión, frustrados con resultados. Buscan alternativa médica real.",
       "ecp_id": "otc-frustrados",
-      "brief": {
-        "A": "Cuando el minoxidil deja de funcionar, necesitas un médico.",
-        "B": "Farmacia (minoxidil/finasteride), suplementos, clínicas genéricas",
-        "C": "Personas que llevan 1-3 años con minoxidil/finasteride sin resultados satisfactorios. Frustrados, escépticos.",
-        "D": "HC ofrece diagnóstico real (no venta directa) + protocolos médicos propios (CRT/HRT) superiores a OTC."
-      }
+      "subniches": [
+        { "id": "n2-s1", "name": "Minoxidil no funciona", "priority": "high", "keywords_seed": ["minoxidil no funciona", "minoxidil dejó de funcionar", "alternativas minoxidil"], "known_media": ["reddit.com"] },
+        { "id": "n2-s2", "name": "Finasteride efectos secundarios", "priority": "high", "keywords_seed": ["finasteride efectos secundarios", "finasteride miedo", "alternativa finasteride"], "known_media": [] },
+        { "id": "n2-s3", "name": "Tratamientos médicos vs OTC", "priority": "high", "keywords_seed": ["PRP capilar", "mesoterapia capilar", "CRT capilar", "tratamiento capilar clínica"], "known_media": [] }
+      ]
     },
     {
       "id": "n3",
       "name": "Sin diagnóstico médico",
+      "brief": "Notan caída anormal, no saben qué tienen. Quieren diagnóstico claro y rápido. 150K SAM.",
       "ecp_id": "sin-diagnostico-medico",
-      "brief": {
-        "A": "Antes de tratar, hay que diagnosticar.",
-        "B": "Autodiagnóstico Google, farmacia, dermatólogo generalista",
-        "C": "Personas con caída anormal que no saben qué tienen. Buscan claridad. SAM grande (~150K).",
-        "D": "Tricoscopía + analítica hormonal en 1 consulta. Diagnóstico completo en la primera visita."
-      }
+      "subniches": [
+        { "id": "n3-s1", "name": "Diagnóstico capilar / tricoscopia", "priority": "high", "keywords_seed": ["diagnostico capilar", "tricoscopia", "estudio capilar", "analisis pelo"], "known_media": ["topdoctors.es"] },
+        { "id": "n3-s2", "name": "Tipos de alopecia", "priority": "medium", "keywords_seed": ["tipos alopecia", "alopecia androgenetica", "alopecia difusa", "alopecia femenina"], "known_media": ["cun.es"] },
+        { "id": "n3-s3", "name": "Caída pelo mujer", "priority": "high", "keywords_seed": ["caida pelo mujer", "alopecia femenina tratamiento", "pelo se cae mujer"], "known_media": [] }
+      ]
     },
     {
       "id": "n4",
-      "name": "Post-trasplante en degradación",
+      "name": "Post-trasplante (inversión que se deshace)",
+      "brief": "Hicieron injerto hace 2-5 años, notan degradación. Quieren proteger su inversión con plan médico.",
       "ecp_id": "post-trasplante",
-      "brief": {
-        "A": "Tu injerto necesita un médico que cuide lo que queda.",
-        "B": "No hacer nada, volver a la clínica del trasplante, segundo trasplante",
-        "C": "Personas que se hicieron un trasplante (HC o en Turquía) y ven que el pelo nativo sigue cayendo.",
-        "D": "Protocolos de mantenimiento post-cirugía + diagnóstico de pelo nativo restante."
-      }
+      "subniches": [
+        { "id": "n4-s1", "name": "Mantenimiento post-trasplante", "priority": "high", "keywords_seed": ["mantenimiento trasplante capilar", "cuidados post injerto", "pelo trasplante se cae"], "known_media": [] },
+        { "id": "n4-s2", "name": "Segundo trasplante", "priority": "medium", "keywords_seed": ["segundo trasplante capilar", "retocar trasplante", "injerto capilar fallido"], "known_media": [] }
+      ]
     },
     {
       "id": "n5",
-      "name": "Insatisfechos con otras clínicas",
+      "name": "Insatisfechos con clínicas (el negocio, no el paciente)",
+      "brief": "Han tenido malas experiencias en clínicas. Buscan transparencia y profesionalidad real.",
       "ecp_id": "insatisfechos-clinicas",
-      "brief": {
-        "A": "La clínica donde el médico te dice la verdad.",
-        "B": "Otras clínicas capilares, dermatólogos, no hacer nada",
-        "C": "Personas que tuvieron mala experiencia en otra clínica (malas reviews, sensación de 'venta', sin seguimiento).",
-        "D": "Transparencia total, Trustpilot 4.8/5, seguimiento real con tricoscopía a 3 meses."
-      }
+      "subniches": [
+        { "id": "n5-s1", "name": "Opiniones y comparativas clínicas", "priority": "high", "keywords_seed": ["mejor clinica capilar madrid", "clinica capilar opiniones", "hospital capilar opiniones"], "known_media": ["trustpilot.com"] },
+        { "id": "n5-s2", "name": "Hospital Capilar vs competidores", "priority": "high", "keywords_seed": ["hospital capilar vs insparya", "insparya opiniones", "svenson opiniones"], "known_media": [] }
+      ]
     }
   ],
   "competitors": [
-    {
-      "name": "Insparya",
-      "domain": "insparya.es",
-      "niches": ["n1", "n2", "n4"],
-      "trustpilot": 3.8,
-      "notes": "CR7 cofundador. 5 clínicas España. Foco cirugía. ActivePlasma, MesoHAir+."
-    },
-    {
-      "name": "Svenson",
-      "domain": "svenson.es",
-      "niches": ["n2", "n3"],
-      "trustpilot": 1.5,
-      "notes": "1.5/5 Trustpilot. Havas Creative rebrand sept 2025. Modelo sesión mensual."
-    },
-    {
-      "name": "IMD (Instituto Médico Dermatológico)",
-      "domain": "imd.es",
-      "niches": ["n1", "n3"],
-      "trustpilot": null,
-      "notes": "21 clínicas. Referente en tratamientos capilares no quirúrgicos."
-    },
-    {
-      "name": "Capiclinic",
-      "domain": "capiclinic.es",
-      "niches": ["n1", "n4"],
-      "trustpilot": null,
-      "notes": "Red de clínicas. Tiene tratamientos."
-    },
-    {
-      "name": "Manual.co",
-      "domain": "manual.co",
-      "niches": ["n1", "n2"],
-      "trustpilot": null,
-      "notes": "DTC online. Suscripción mensual medicamentos capilares."
-    },
-    {
-      "name": "mediQuo",
-      "domain": "mediquo.com",
-      "niches": ["n3"],
-      "trustpilot": null,
-      "notes": "Consulta online €29.99. Perfil hormonal alopecia."
-    }
+    { "name": "Insparya", "domain": "insparya.es", "niches": ["n1","n2","n3","n4"], "threat_level": "high" },
+    { "name": "Svenson", "domain": "svenson.es", "niches": ["n1","n2","n3"], "threat_level": "high" },
+    { "name": "Capiclinic", "domain": "capilclinic.es", "niches": ["n1","n4"], "threat_level": "medium" },
+    { "name": "Medical Hair", "domain": "medicalhair.es", "niches": ["n1","n4"], "threat_level": "medium" },
+    { "name": "IMD", "domain": "imdermatologico.com", "niches": ["n2","n3"], "threat_level": "medium" },
+    { "name": "Manual.co", "domain": "manual.co", "niches": ["n2"], "threat_level": "low" },
+    { "name": "mediQuo", "domain": "mediquo.com", "niches": ["n3"], "threat_level": "low" },
+    { "name": "Grupo Pedro Jaén", "domain": "grupopedrojaen.com", "niches": ["n3","n2"], "threat_level": "medium" },
+    { "name": "Capilárea", "domain": "capilarea.com", "niches": ["n1","n2","n3"], "threat_level": "medium" }
   ],
-  "metadata": {
-    "duration_seconds": 5,
-    "apis_called": [],
-    "errors": []
-  }
+  "market_filter": {
+    "country": "ES",
+    "language": "es",
+    "exclude_domains_pattern": ["forbes.com", "techcrunch.com", "mayoclinic.org", "webmd.com", "healthline.com"],
+    "prioritize_tlds": [".es"]
+  },
+  "version": 2,
+  "created_at": "2026-03-26T10:45:00Z"
 }

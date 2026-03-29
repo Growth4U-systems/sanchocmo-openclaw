@@ -1,43 +1,42 @@
 ---
 name: foundation-orchestrator
-description: "Orquesta la Foundation v2.0: 4 secciones, 6 layers, gate checks con requires/enriches_with. Flujo continuo — al aprobar un pilar, ejecuta automáticamente el siguiente. Company Brief como flujo único (3 skills → 1 aprobación). Genera síntesis inline (summary, ope-canvas, messaging-summary). Leer pillar-registry.md para detalle de cada pilar."
+description: "Orquesta la Foundation v3.0: 6 secciones, 8 layers, gate checks con requires/enriches_with. Flujo: Fast Foundation (1 skill, 5 docs lite) → Full Foundation (9 skills individuales) → Metrics Setup → Strategic Plan. Al aprobar un pilar, ejecuta automáticamente el siguiente. Leer pillar-registry.md para detalle de cada pilar."
 user-invocable: false
 context_required:
 - brand/{slug}/foundation-state.json
 - _system/foundation-protocol.md
-context_writes:
-- brand/{slug}/foundation-state.json
-- brand/{slug}/company-brief/current.md
-- brand/{slug}/market-and-us/summary/current.md
-- brand/{slug}/go-to-market/ecps/current.md
 ---
 
-# Foundation Orchestrator v2.0
+# Foundation Orchestrator v3.0
 
 > Orquesta el flujo de Foundation pilar a pilar. Presenta → Valida → Aprueba → Siguiente.
 
 **Protocolo**: `_system/foundation-protocol.md`
 **Registry**: `references/pillar-registry.md`
-**Estado**: `brand/{slug}/foundation-state.json` (schema v2.0)
+**Estado**: `brand/{slug}/foundation-state.json` (schema v3.0)
 
 ## Secciones de Output
 
 | Sección | Dir | Qué contiene |
 |---------|-----|-------------|
-| Company Brief | `company-brief/` | Doc único: Identity + Business Model + Budget |
-| Market & Us | `market-and-us/` | Research + síntesis (summary, swot, ope-canvas) |
-| Go-To-Market | `go-to-market/` | ECPs, positioning, pricing, messaging |
-| Brand Identity | `brand-identity/` | Voice + Visual |
+| Fast Foundation | `company-brief/` + varios | 5 docs lite: Company Brief, Self L1, Market L1, Brand Voice Snapshot, Niche básico |
+| Market & Us | `market-and-us/` | Research profundo + Market Synthesis (SWOT, Summary, OPE Canvas, Presentación) |
+| Go-To-Market | `go-to-market/` | Niche Discovery, Positioning, Pricing |
+| Brand Identity | `brand-identity/` + `brand-voice/` | Full Voice Guide + Visual Identity |
+| Métricas | `go-to-market/metrics-plan/` | Plan de métricas + integraciones + dashboard |
+| Strategic Plan | `strategic-plan/` | Roadmap GTM |
 
-## DAG — 6 Layers
+## DAG — 8 Layers
 
 ```
-L0 INTAKE:     company-brief (3 skills → 1 aprobación)
-L1 RESEARCH:   market-analysis + competitor-analysis + self-analysis
-L2 SYNTHESIS:  swot + summary* + ope-canvas*    (* = orchestrator inline)
-L3 DISCOVERY:  niche-discovery + existing-customer-data?
-L4 ACTIVATION: positioning + pricing + ecp-validation? + metrics-plan + messaging-summary*
-L5 BRAND:      brand-voice + visual-identity
+L0 FAST-FOUNDATION:  fast-foundation (1 skill → 5 docs lite)
+L1 RESEARCH:         market-intelligence + competitor-intelligence + self-intelligence
+L2 SYNTHESIS:        market-synthesis (SWOT + Summary + OPE Canvas + Presentación)
+L3 DISCOVERY:        niche-discovery-100x + existing-customer-data?
+L4 ACTIVATION:       positioning-messaging + pricing-strategy + ecp-validation?
+L5 BRAND:            brand-voice + visual-identity
+L6 METRICS:          metrics-setup (plan + connect APIs + dashboard)
+L7 STRATEGY:         strategic-plan
 ```
 
 ## Gate Check — requires vs enriches_with
@@ -55,20 +54,22 @@ Ver `references/pillar-registry.md` para mapa completo de dependencias.
 
 ### Paso 1: Leer Estado
 1. Leer `brand/{slug}/foundation-state.json`
-2. Si no existe o es v1.x → crear v2.0 con todo en `not-started`
-3. Si version=2.0 → determinar dónde quedamos
+2. Si no existe o es v1.x/v2.x → crear v3.0 con todo en `not-started`
+3. Si version=3.0 → determinar dónde quedamos
 
 ### Paso 2: Mostrar Progreso
 
 ```
 🏗️ FOUNDATION — [Cliente]
 
-📋 Company Brief          ✅
-📊 Market & Us            ✅ Market · ⬜ Competitors · ✅ Self · ⬜ SWOT
-🎯 Go-To-Market           ⬜ Niches · ⬜ Positioning · ⬜ Pricing
-🎨 Brand Identity         ⬜ Voice · ⬜ Visual
+📋 Fast Foundation       ✅ (5 docs lite)
+📊 Market & Us           ✅ Market · ⬜ Competitors · ✅ Self · ⬜ Synthesis
+🎯 Go-To-Market          ⬜ Niches · ⬜ Positioning · ⬜ Pricing
+🎨 Brand Identity        ⬜ Voice · ⬜ Visual
+📏 Métricas              ⬜ Plan + Conexiones
+🗺️ Strategic Plan        ⬜
 
-Progreso: 5/12 pilares
+Progreso: 6/13 pilares
 ```
 
 Iconos: ✅ approved | ⚠️ pending-review | 🔧 in-progress | ⬜ not-started | ➖ skipped
@@ -80,19 +81,18 @@ Iconos: ✅ approved | ⚠️ pending-review | 🔧 in-progress | ⬜ not-starte
 
 ---
 
-## Company Brief — Flujo Especial (Layer 0)
+## Fast Foundation — Layer 0
 
-Las 3 skills se ejecutan en secuencia como UNA conversación:
+**Skill**: `fast-foundation`
+**Thread**: `{slug}:fast-foundation`
 
-1. Invocar `company-context` → escribe `## Company Identity`
-2. Invocar `business-model` → escribe `## Business Model`
-3. Invocar `budget` → escribe `## Budget & Resources`
-4. **Además**: preguntar competidores conocidos (guardar para Layer 1)
-5. Presentar Company Brief completo → **1 sola aprobación**
+Sesión de intake única (~30 min):
+1. Usuario introduce URL (o modo manual sin URL)
+2. Scrape web + sociales → pre-fill 5 docs
+3. Validar con usuario → completar gaps
+4. Genera 5 docs lite: Company Brief, Self L1, Market L1, Brand Voice Snapshot, Niche básico
 
-NO pedir aprobación entre skills internas. El usuario ve un solo flujo.
-
-Al aprobar → `brand/{slug}/company-brief/current.md` + versionado.
+Al aprobar → marcar `fast-foundation` section como `approved` → desbloquea Layer 1.
 
 ---
 
@@ -103,6 +103,7 @@ Verificar requires + cargar enriches_with disponibles.
 
 ### 2. Ejecutar Skill
 Invocar el skill del registry. Si hay enriches_with disponibles, pasarlos como contexto.
+Skills full leen los docs lite de Fast Foundation como **hydration** (no re-preguntan lo que ya existe).
 
 **Con model fallback:**
 ```
@@ -144,35 +145,29 @@ Invocar el skill del registry. Si hay enriches_with disponibles, pasarlos como c
 
 ---
 
-## Síntesis Inline (Layer 2 y 4)
+## Market Synthesis — Layer 2 (skill dedicado)
 
-### Cuándo generar
-- **summary.md + ope-canvas.md**: al completar TODA Layer 1 (market + competitors + self approved)
-- **messaging-summary.md**: al completar positioning (+ pricing si disponible)
+**Skill**: `market-synthesis`
+**Thread**: `{slug}:market-synthesis`
 
-### Cómo generar
-El orchestrator lee los documentos fuente y genera la síntesis directamente:
+Genera 4 outputs en secuencia:
+1. **SWOT + TOWS** con ICE prioritization
+2. **Market Summary** (1-2 páginas)
+3. **OPE Canvas** (14 secciones)
+4. **Presentación HTML** (vía frontend-slides)
 
-**summary.md**: "Lee market-analysis, todos los competitor-{x}.md, y self-analysis. Sintetiza en 1-2 páginas: posición en el mercado, ventajas competitivas, gaps, oportunidades. Referencia cada documento fuente."
-
-**ope-canvas.md**: "Lee todo lo anterior. Genera One-Page Endgame: empresa + mercado + competencia + posición propia en 1 página visual. Formato tabla/canvas."
-
-**messaging-summary.md**: "Lee ecps.md + todos los positioning-{ecp}.md + pricing.md. Sintetiza: segmentos target, mensaje por segmento, canales recomendados, hooks de pricing."
-
-### Post-síntesis
-Presentar síntesis al usuario para review (no aprobación formal — es derivada).
-Marcar `syntheses.X.status = "generated"` en state.
+**Nota**: En v2.0 las síntesis (summary, ope-canvas) eran inline del orchestrator. En v3.0 son parte del skill `market-synthesis`. El orchestrator solo invoca el skill y valida el output.
 
 ---
 
 ## Competitors — Lista Dinámica
 
 Los competidores se descubren en múltiples momentos:
-1. **Company Brief** (L0): "¿Quiénes son tus competidores?"
+1. **Fast Foundation** (L0): "¿Quiénes son tus competidores?"
 2. **Market Analysis** (L1): descubiertos durante research
 3. **Niche Discovery** (L3): competidores por nicho
 
-Cada competidor → `market-and-us/competitor-{slug}.md`.
+Cada competidor → `market-and-us/competitors/{slug}/current.md`.
 Actualizar `competitor-analysis.output_files[]` en state.
 
 El orchestrator puede preguntar proactivamente: "¿Hay otros competidores que deberíamos analizar?"
@@ -189,7 +184,7 @@ Después de aprobar self-analysis:
 
 ## Resumen Final
 
-Al completar toda la Foundation:
+Al completar toda la Foundation (Layer 0-5):
 
 ```
 ═══════════════════════════════════════
@@ -203,6 +198,8 @@ Al completar toda la Foundation:
 💬 Posicionamiento: "[statement]"
 💰 Pricing: [estrategia]
 🎨 Voz: [3 atributos]
+
+Siguiente: Métricas y Conexiones → Strategic Plan
 
 Docs en: brand/{slug}/
 ═══════════════════════════════════════
@@ -233,33 +230,6 @@ Docs en: brand/{slug}/
 2. Notificar al usuario: qué falló, por qué, qué hacer
 3. Ofrecer: reintentar manualmente, skippear, o resolver el error
 
-### Errores comunes y soluciones
-
-| Error | Solución |
-|-------|----------|
-| `rate_limit` | Esperar 30s, reintentar (MiniMax es más permissive) |
-| `API key missing` | Verificar en .env, notificar usuario |
-| `scraper blocked` | Usar web_fetch en vez de Apify, o esperar + retry |
-| `timeout` | Reducir scope (menos URLs, menos profundo), reintentar |
-| `output malformed` | Añadir más contexto del usuario, reintentar |
-
-### Notificación de error
-
-```
-⚠️ ERROR — [Nombre del pilar]
-
-Error: [descripción breve]
-Causa probable: [razón]
-Intentos: 1/3 → 2/3 → fallido
-
-Opciones:
-1. Reintentar (3er intento con MiniMax)
-2. Skippear este pilar
-3. [Resolver manualmente]
-
-¿Qué prefieres?
-```
-
 ---
 
 ## Reglas
@@ -267,9 +237,11 @@ Opciones:
 1. **Gate check SIEMPRE** antes de cada pilar
 2. **Resumen ejecutivo** — nunca el doc entero
 3. **Flujo automático** — al aprobar, siguiente arranca solo
-4. **Company Brief = 1 aprobación** para las 3 skills internas
-5. **Estado siempre actualizado** — foundation-state.json tras cada transición
-6. **Retomable** — si la sesión se corta, retoma donde quedó
-7. **enriches_with es silencioso** — si no está disponible, funcionar sin avisar excepto la primera vez
-8. **Retry automático** — 3 intentos con model fallback antes de rendirse
-9. **Error = notificar** — nunca silently fail, siempre decir al usuario qué pasó
+4. **Fast Foundation = 1 skill** (no 3 como en v2.0)
+5. **Market Synthesis = 1 skill** (SWOT + Summary + OPE Canvas + Presentación)
+6. **Estado siempre actualizado** — foundation-state.json tras cada transición
+7. **Retomable** — si la sesión se corta, retoma donde quedó
+8. **enriches_with es silencioso** — si no está disponible, funcionar sin avisar
+9. **Retry automático** — 3 intentos con model fallback antes de rendirse
+10. **Error = notificar** — nunca silently fail
+11. **Hydration** — skills full leen docs lite de Fast Foundation, no re-preguntan

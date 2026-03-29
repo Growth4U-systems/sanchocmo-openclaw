@@ -1,6 +1,49 @@
 [
-  { "id": "P04-T01", "name": "Verificar pixel + conversiones funcionando (post-P01)", "owner": "Sancho", "status": "blocked", "channel": "web", "description": "Validar que Meta Pixel y GA4 conversiones están disparando correctamente. Depende de P01 completado." },
-  { "id": "P04-T02", "name": "Crear 3 hooks basados en ECPs (dolor → CTA agendar)", "owner": "Sancho", "status": "todo", "channel": "creatives", "description": "Escribir 3 creatividades de anuncio, cada una atacando un dolor específico de los ECPs. CTA: agendar llamada." },
-  { "id": "P04-T03", "name": "Lanzar: 20€/día, 3 variantes", "owner": "Sancho", "status": "blocked", "channel": "paid-ads", "description": "Configurar campaña Meta Ads: 20€/día, 3 variantes de anuncio para A/B test. Audiencia: lookalike + interest targeting." },
-  { "id": "P04-T04", "name": "A/B test (1 variable, 1 semana). Escalar ganador", "owner": "Sancho", "status": "blocked", "channel": "paid-ads", "description": "Evaluar rendimiento tras 1 semana. Identificar variante ganadora y escalar presupuesto. Kill las que no funcionan." }
+  {
+    "id": "P04-T01",
+    "name": "Verificar pixel + conversiones funcionando (post-P01)",
+    "owner": "Sancho",
+    "status": "blocked",
+    "channel": "web",
+    "description": "Validar que Meta Pixel y GA4 conversiones están disparando correctamente. Depende de P01 completado.",
+    "deliverable": "Verificación documentada de que Pixel + GA4 disparan correctamente.",
+    "done_criteria": "Meta Pixel Helper + GA4 DebugView confirman eventos en tiempo real.",
+    "depends_on": "P01",
+    "skill": "frontend-design"
+  },
+  {
+    "id": "P04-T02",
+    "name": "Crear 3 hooks basados en ECPs (dolor → CTA agendar)",
+    "owner": "Sancho",
+    "status": "todo",
+    "channel": "creatives",
+    "description": "Escribir 3 creatividades de anuncio, cada una atacando un dolor específico de los ECPs. CTA: agendar llamada.",
+    "deliverable": "3 creatividades de anuncio: headline, copy, visual, CTA. Un ángulo por ECP.",
+    "done_criteria": "Creatividades aprobadas. Cada una ataca un dolor específico con CTA de agendar.",
+    "skill": "canvas-design"
+  },
+  {
+    "id": "P04-T03",
+    "name": "Lanzar: 20€/día, 3 variantes",
+    "owner": "Sancho",
+    "status": "blocked",
+    "channel": "paid-ads",
+    "description": "Configurar campaña Meta Ads: 20€/día, 3 variantes de anuncio para A/B test. Audiencia: lookalike + interest targeting.",
+    "deliverable": "Campaña Meta Ads activa: 20€/día, 3 variantes, audiencia configurada.",
+    "done_criteria": "Campaña publicada y gastando. 3 ad sets con variantes diferentes.",
+    "depends_on": "P04-T01",
+    "skill": "meta-ads"
+  },
+  {
+    "id": "P04-T04",
+    "name": "A/B test (1 variable, 1 semana). Escalar ganador",
+    "owner": "Sancho",
+    "status": "blocked",
+    "channel": "paid-ads",
+    "description": "Evaluar rendimiento tras 1 semana. Identificar variante ganadora y escalar presupuesto. Kill las que no funcionan.",
+    "deliverable": "Análisis de rendimiento: ganador identificado, perdedores pausados, budget escalado.",
+    "done_criteria": "1 variante ganadora con CPL <25€. Presupuesto incrementado en ganador.",
+    "depends_on": "P04-T03",
+    "skill": "meta-ads"
+  }
 ]

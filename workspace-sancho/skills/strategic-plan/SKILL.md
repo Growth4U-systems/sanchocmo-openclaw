@@ -179,7 +179,7 @@ Cruzar canales con gaps: si un canal necesita algo que no existe → incluir set
 
 ### Paso 6: Seleccionar Estrategias (~5 min)
 
-Cargar [references/gtm-strategies-catalog.md](references/gtm-strategies-catalog.md) — catálogo de 25 estrategias.
+Cargar [references/strategies-catalog.json](references/strategies-catalog.json) — catálogo de estrategias GTM (fuente de verdad única, editable desde Mission Control).
 
 Ejecutar scoring del catálogo:
 
@@ -204,10 +204,10 @@ ESTRATEGIA: [Nombre] (#XX)
 
 Plan temporal con 3 fases + revisión:
 
-- **FASE 0** (Semana 1): Resolver gaps 🔴 críticos
-- **FASE 1** (Mes 1): Ejecutar estrategias A y B — pasos concretos por semana + KPI target
-- **FASE 2** (Mes 2-3): Medir Fase 1 → ajustar → activar estrategia C si procede
-- **REVISIÓN TRIMESTRAL**: Re-evaluar con datos reales
+- **FASE 0** (Día 1-2): Resolver gaps 🔴 críticos
+- **FASE 1** (Semana 1): Ejecutar estrategias A y B — pasos concretos + KPI target
+- **FASE 2** (Semana 2-3): Medir Fase 1 → ajustar → activar estrategia C si procede
+- **REVISIÓN**: A las 4 semanas, re-evaluar con datos reales
 
 Cada estrategia aprobada genera una carpeta de campaña:
 ```
@@ -353,7 +353,8 @@ Ver [references/data-model.md](references/data-model.md) para schemas de `projec
 3. Por cada estrategia aprobada → crear proyecto:
    - Carpeta `brand/{slug}/projects/P{XX}-{slug}/`
    - `project.json` con objetivo, métricas baseline/target, origin, review_date
-   - `tasks.json` con tareas iniciales, canal temático asignado, descripción, owner (ver [data-model.md](references/data-model.md))
+   - `tasks.json` con tareas iniciales, canal temático asignado, descripción, owner, **skill** (ver [data-model.md](references/data-model.md))
+   - ⚠️ **SIEMPRE asignar `"skill"` a cada tarea** — es el skill de Escudero que ejecutará la tarea. Consultar `strategies-catalog.json` campo `skills` de la estrategia. Si no hay match claro, usar `doc-coauthoring`. Flujo: Escudero ejecuta con el skill → Rocinante verifica contra Foundation + Brand Voice + Brand Visual.
    - `playbook.md` resumen del proyecto con links a playbooks de tareas
    - `T{YY}/playbook.md` por cada tarea — detalle individual de la tarea
    - ⚠️ **NUNCA juntar todo en un solo playbook.** Cada tarea = su propia carpeta + playbook.
@@ -503,7 +504,7 @@ Al completar un proyecto → generar `value-review.md`:
 | Acción | Skill/Archivo |
 |--------|---------------|
 | **Llama** | `channel-prioritization` (si no existe channel-plan.md) |
-| **Lee** | Foundation completa, phase-0-diagnostic (si existe), `references/gtm-strategies-catalog.md` |
+| **Lee** | Foundation completa, phase-0-diagnostic (si existe), `references/strategies-catalog.json` |
 | **Produce** | `strategic-plan/current.md`, `current-state.md`, `projects/*/project.json`, `projects/*/tasks.json` |
 | **Encadena** | Execution skills por tarea. Value reviews al completar proyecto |
 | **Valida** | Nuevos proyectos propuestos vs plan activo |

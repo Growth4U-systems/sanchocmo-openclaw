@@ -1,175 +1,193 @@
-# Pillar Registry v2.0
+# Pillar Registry v3.0
 <!-- Fuente de verdad para pilares, skills, dependencias y criterios -->
+<!-- Alineado con Mission Control threads y Discord threads (foundation-threads v3.0) -->
 
 ---
 
-## LAYER 0 — INTAKE
+## FAST FOUNDATION (1 skill, 1 thread, ~30 min)
 
-### company-brief (flujo continuo: 3 skills → 1 aprobación)
-
-**Skills**: company-context → business-model → budget (secuenciales, sin aprobación intermedia)
-**Output**: `brand/{slug}/company-brief/current.md` (doc único con 3 secciones)
-**requires**: —
+### fast-foundation
+**Skill**: `fast-foundation`
+**Thread**: `{slug}:fast-foundation`
+**Output**: 5 docs lite:
+- `brand/{slug}/company-brief/current.md` — Company Brief (identidad + business model + budget)
+- `brand/{slug}/market-and-us/self/current.md` — Self Intelligence L1 (autopercepción)
+- `brand/{slug}/market-and-us/market/current.md` — Market Intelligence L1 (datos básicos)
+- `brand/{slug}/brand-voice/current.md` — Brand Voice Snapshot (quick)
+- `brand/{slug}/go-to-market/ecps/current.md` — Niche Discovery básico (ECPs preliminares)
+**requires**: — (es el primer paso)
 **Skip**: nunca
-
-| Skill | Sección en doc | Done criteria |
-|-------|---------------|---------------|
-| company-context | `## Company Identity` | Identidad, producto, objetivos, cultura, equipo, URL analizada |
-| business-model | `## Business Model` | B2B/B2C clasificado, revenue model, funnel actual, PLG/MLG assessment |
-| budget | `## Budget & Resources` | Budget mensual, timeline, equipo disponible, stack actual |
-
-**Además**: preguntar competidores conocidos y guardar nombres para Layer 1.
+**Modo URL**: scrape web + sociales → pre-fill → validar → completar gaps
+**Modo manual**: 6 preguntas conversacionales (sin URL)
+**Done**: Los 5 docs lite generados y validados por el usuario
 
 ---
 
-## LAYER 1 — RESEARCH
+## FULL FOUNDATION — LAYER 1: RESEARCH
 
 ### market-analysis
 **Skill**: `market-intelligence`
+**Thread**: `{slug}:market-analysis`
 **Output**: `brand/{slug}/market-and-us/market/current.md`
-**requires**: company-brief
+**requires**: fast-foundation
 **enriches_with**: competitor-analysis, self-analysis
-**Skip**: nunca
+**Hydration**: lee doc lite de Fast Foundation (market L1) y amplía
 **Lite done**: Sector + TAM/SAM estimado + tendencias principales
 **Deep done**: Lite + regulación + 3+ tendencias + tasa crecimiento + características mercado
 
 ### competitor-analysis
 **Skill**: `competitor-intelligence`
+**Thread**: `{slug}:competitor-analysis`
 **Output**: `brand/{slug}/market-and-us/competitors/{nombre}/current.md` (1 por competidor)
-**requires**: company-brief
+**requires**: fast-foundation
 **enriches_with**: market-analysis, self-analysis
-**Skip**: nunca
 **Lite done**: Top 3 competidores directos + Lens 1 (qué dicen de sí mismos)
 **Deep done**: 3+ directos con 3 lenses + 2+ alternativas indirectas + growth model por competidor
-**Nota**: Lista de competidores es dinámica. Se descubren en Company Brief (usuario dice), Market Analysis (research), y Niche Discovery (por nicho). El orchestrator puede preguntar proactivamente si hay más competidores a analizar.
 
 ### self-analysis
 **Skill**: `self-intelligence`
+**Thread**: `{slug}:self-analysis`
 **Output**: `brand/{slug}/market-and-us/self/current.md`
-**requires**: company-brief
+**requires**: fast-foundation
 **enriches_with**: market-analysis, competitor-analysis
+**Hydration**: lee doc lite de Fast Foundation (Self L1) y añade Lens 2 + Lens 3
 **Skip**: si es marca nueva sin track record
 **Lite done**: Lens 1 (qué decimos) para homepage + 2 redes sociales top
 **Deep done**: 3 lentes completas: homepage, 2 redes sociales, 2 plataformas de reviews
-**Post-completion**: Viability Checkpoint (advisory)
-**IMPORTANTE**: Este skill hace SOLO Deep Research Company (radiografía propia). NO hace market research — eso pertenece a market-intelligence.
 
 ---
 
-## LAYER 2 — SYNTHESIS
+## FULL FOUNDATION — LAYER 2: SYNTHESIS
 
-### swot
-**Skill**: `swot-analysis`
-**Output**: `brand/{slug}/market-and-us/swot/current.md`
+### market-synthesis
+**Skill**: `market-synthesis`
+**Thread**: `{slug}:market-synthesis`
+**Output**:
+- `brand/{slug}/market-and-us/swot/current.md` — SWOT + TOWS + ICE
+- `brand/{slug}/market-and-us/summary/current.md` — Market Summary (1-2 pág)
+- `brand/{slug}/market-and-us/ope-canvas/current.md` — OPE Canvas (14 secciones)
+- `brand/{slug}/presentations/foundation-report.html` — Presentación HTML
 **requires**: market-analysis, competitor-analysis, self-analysis
 **Skip**: nunca
-**Lite done**: SWOT 4 cuadrantes con datos reales (no asunciones)
-**Deep done**: Lite + 2+ estrategias por cuadrante TOWS (SO, ST, WO, WT)
-
-### summary (síntesis — generada por orchestrator)
-**Output**: `brand/{slug}/market-and-us/summary/current.md`
-**requires**: market-analysis, competitor-analysis, self-analysis
-**Generada por**: orchestrator inline (no skill dedicado)
-**Qué es**: 1-2 páginas sintetizando mercado + competidores + posición propia. Referencia cada doc fuente.
-
-### ope-canvas (síntesis — generada por orchestrator)
-**Output**: `brand/{slug}/market-and-us/ope-canvas/current.md`
-**requires**: market-analysis, competitor-analysis, self-analysis
-**Generada por**: orchestrator inline (no skill dedicado)
-**Qué es**: One-Page Endgame. La foto completa del negocio en 1 página.
+**Done**: 4 outputs generados, SWOT validado por usuario, presentación renderizable
 
 ---
 
-## LAYER 3 — CUSTOMER DISCOVERY
+## FULL FOUNDATION — LAYER 3: CUSTOMER DISCOVERY
 
 ### niche-discovery
 **Skill**: `niche-discovery-100x`
+**Thread**: `{slug}:niche-discovery`
 **Output**: `brand/{slug}/go-to-market/ecps/current.md` (JTBD integrado por segmento)
-**requires**: swot
+**requires**: market-synthesis (swot)
 **enriches_with**: existing-customer-data
-**Skip**: nunca
+**Hydration**: lee doc lite de Fast Foundation (ECPs básicos) y valida con research
 **Lite done**: 50+ problemas, Triple Filter, 3-7 ECPs scored
 **Deep done**: 100+ problemas, 5+ tipos fuente, TAM/SAM por ECP, datos clientes integrados
 
 ### existing-customer-data (OPCIONAL)
 **Skill**: `existing-customer-data`
+**Thread**: `{slug}:existing-customer-data` (solo si se activa)
 **Output**: `brand/{slug}/go-to-market/existing-customer-data/current.md`
-**requires**: company-brief
-**enriches_with**: niche-discovery (si disponible, enriquece los ECPs)
+**requires**: fast-foundation
+**enriches_with**: niche-discovery
 **Skip**: si pre-launch sin clientes
-**Nota**: Se puede ejecutar en paralelo con Layer 1-2 (solo requires company-brief). Enriquece niche-discovery si está disponible.
 
 ---
 
-## LAYER 4 — ACTIVATION
+## FULL FOUNDATION — LAYER 4: ACTIVATION
 
 ### positioning
 **Skill**: `positioning-messaging`
+**Thread**: `{slug}:positioning`
 **Output**: `brand/{slug}/go-to-market/positioning/{ecp-slug}/current.md` (1 por ECP)
 **requires**: niche-discovery
-**Skip**: nunca
 **Lite done**: Messaging básico para top ECP
 **Deep done**: Por ECP: value criteria ranked, competitor scoring, 3+ assets con proof, messaging framework
+**Nota**: genera messaging-summary.md automáticamente como subproducto
 
 ### pricing
 **Skill**: `pricing-strategy`
+**Thread**: `{slug}:pricing`
 **Output**: `brand/{slug}/go-to-market/pricing/current.md`
-**requires**: niche-discovery
-**enriches_with**: positioning
+**requires**: niche-discovery, positioning
+**Nota**: En tasks.json pricing depende explícitamente de positioning (secuencial). El registry marca positioning como enriches_with pero en la práctica siempre se ejecuta después.
 **Skip**: si pricing es fijo/no negociable
 **Lite done**: Pricing actual documentado + 1 hook por top ECP
 **Deep done**: Pricing competidores comparado + estrategia + 3+ hooks por ECP con proof
 
 ### ecp-validation (OPCIONAL)
 **Skill**: `ecp-validation`
+**Thread**: `{slug}:ecp-validation` (solo si se activa)
 **requires**: niche-discovery
-**Skip**: si timeline muy corto (validar a través de ejecución)
-
-### metrics-plan
-**Skill**: `acquisition-metrics-plan`
-**Output**: `brand/{slug}/go-to-market/metrics-plan.md` + Excel template
-**requires**: niche-discovery
-**enriches_with**: positioning, pricing
-**Skip**: nunca
-**Lite done**: Arquetipo clasificado + activation event + Level 1-2 KPIs + funnel steps
-**Deep done**: Lite + data sources mapeados con canales de positioning + benchmarks calibrados con pricing + Excel template generado + review cadence
-
-### messaging-summary (síntesis — generada por orchestrator)
-**Output**: `brand/{slug}/go-to-market/positioning/shared/messaging-summary.md`
-**requires**: positioning
-**enriches_with**: pricing
-**Generada por**: orchestrator inline
-**Qué es**: Síntesis GTM: "estos segmentos, este mensaje, estos canales"
+**Skip**: si timeline muy corto
 
 ---
 
-## LAYER 5 — BRAND IDENTITY
+## FULL FOUNDATION — LAYER 5: BRAND IDENTITY
 
 ### brand-voice
 **Skill**: `brand-voice`
-**Output**: `brand/{slug}/brand-identity/voice-profile/current.md`
+**Thread**: `{slug}:brand-voice`
+**Output**: `brand/{slug}/brand-voice/current.md`
 **requires**: positioning
-**Skip**: si no produce contenido aún (diferir)
-**Done**: Voice guide completa con do/don't, espectro tonal, ejemplos por tipo de contenido
+**Hydration**: lee doc lite de Fast Foundation (Brand Voice Snapshot) y genera Full Guide
+**Done**: Voice guide completa + AI Brand Kit + Per-ECP/Channel adaptation
 
 ### visual-identity
 **Skill**: `visual-identity`
+**Thread**: `{slug}:visual-identity`
 **Output**: `brand/{slug}/brand-identity/visual-identity/current.md`
 **requires**: brand-voice
-**Skip**: si no tiene necesidad de branding visual aún
 **Done**: Sistema visual completo: paleta, tipografía, guidelines de uso
 
 ---
 
+## MÉTRICAS Y CONEXIONES (Post-Foundation)
+
+### metrics-setup
+**Skill**: `metrics-setup`
+**Thread**: `{slug}:metrics-setup`
+**Output**: `brand/{slug}/go-to-market/metrics-plan/current.md` + `metrics-plan.json` + `integrations.json`
+**requires**: positioning, pricing (para determinar arquetipo y funnel)
+**Done**: Plan de métricas + integraciones conectadas + dashboard generado
+
+---
+
+## STRATEGIC PLAN (Post-Métricas)
+
+### strategic-plan
+**Skill**: `strategic-plan`
+**Thread**: `{slug}:strategic-plan`
+**Output**: `brand/{slug}/strategic-plan/current.md`
+**requires**: Full Foundation completada + metrics-setup
+**Done**: Roadmap con estrategias GTM seleccionadas, proyectos definidos, fases y KPIs
+
+---
+
+## Quick Reference: Flujo de Desbloqueo
+
+```
+fast-foundation
+  ├── market-analysis ─┐
+  ├── competitor-analysis ├── market-synthesis
+  └── self-analysis ───┘       │
+                               └── niche-discovery
+                                     ├── positioning ── brand-voice ── visual-identity
+                                     └── pricing
+                                              └── metrics-setup ── strategic-plan
+```
+
 ## Quick Reference: Impacto de Desbloqueo
 
-| Pilar | Desbloquea | Downstream count |
-|-------|-----------|-----------------|
-| company-brief | Toda Layer 1+ | 12+ |
-| market-analysis | swot → discovery → activation → brand | 8+ |
-| competitor-analysis | swot → discovery → activation → brand | 8+ |
-| self-analysis | swot → discovery → activation → brand | 8+ |
-| swot | discovery → activation → brand | 6+ |
-| niche-discovery | positioning + pricing + metrics-plan + ecp-validation + brand | 6+ |
-| metrics-plan | channel-prioritization (post-Foundation) | 1 |
-| positioning | messaging-summary + brand-voice + visual-identity | 3 |
+| Pilar | Desbloquea | Downstream |
+|-------|-----------|------------|
+| fast-foundation | Todo Layer 1+ | 11+ |
+| market-analysis | market-synthesis → discovery → activation → brand | 8+ |
+| competitor-analysis | market-synthesis → discovery → activation → brand | 8+ |
+| self-analysis | market-synthesis → discovery → activation → brand | 8+ |
+| market-synthesis | niche-discovery → activation → brand | 6+ |
+| niche-discovery | positioning + pricing + ecp-validation + brand | 5+ |
+| positioning | brand-voice + visual-identity + messaging-summary | 3 |
+| pricing | metrics-setup | 2 |
+| metrics-setup | strategic-plan | 1 |

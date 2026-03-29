@@ -1,0 +1,56 @@
+{
+  "version": "2.0",
+  "started_at": "2026-03-17T11:20:00Z",
+  "updated_at": "2026-03-27T21:42:00Z",
+  "sections": {
+    "fast-foundation": {
+      "status": "completed",
+      "layer": 0,
+      "completed_at": "2026-03-27T21:42:00Z",
+      "thread_id": "1487205255702909079",
+      "output_files": [
+        "brand/masavo/company-brief/current.md",
+        "brand/masavo/market-and-us/self/current.md",
+        "brand/masavo/market-and-us/market/current.md",
+        "brand/masavo/brand-voice/current.md",
+        "brand/masavo/go-to-market/ecps/current.md"
+      ]
+    },
+    "company-brief": {
+      "status": "completed",
+      "layer": 0,
+      "output_dir": "brand/masavo/company-brief/",
+      "approved_at": "2026-03-27T21:26:00Z"
+    },
+    "market-and-us": {
+      "status": "in-progress",
+      "layer": 1,
+      "output_dir": "brand/masavo/market-and-us/",
+      "pillars": {
+        "market-analysis": {"status": "lite-done", "layer": 1, "requires": ["company-brief"], "skill": "market-intelligence"},
+        "competitor-analysis": {"status": "not-started", "layer": 1, "requires": ["company-brief"], "skill": "competitor-intelligence"},
+        "self-analysis": {"status": "lite-done", "layer": 1, "requires": ["company-brief"], "skill": "self-intelligence"},
+        "swot": {"status": "not-started", "layer": 2, "requires": ["market-analysis", "competitor-analysis", "self-analysis"], "skill": "swot-analysis"}
+      }
+    },
+    "go-to-market": {
+      "status": "in-progress",
+      "layer": 3,
+      "output_dir": "brand/masavo/go-to-market/",
+      "pillars": {
+        "niche-discovery": {"status": "lite-done", "layer": 3, "requires": ["swot"], "skill": "niche-discovery-100x"},
+        "positioning": {"status": "not-started", "layer": 4, "requires": ["niche-discovery"], "skill": "positioning-messaging"},
+        "pricing": {"status": "not-started", "layer": 4, "requires": ["niche-discovery"], "skill": "pricing-strategy"}
+      }
+    },
+    "brand-identity": {
+      "status": "in-progress",
+      "layer": 5,
+      "output_dir": "brand/masavo/brand-identity/",
+      "pillars": {
+        "brand-voice": {"status": "snapshot-done", "layer": 5, "requires": ["positioning"], "skill": "brand-voice"},
+        "visual-identity": {"status": "not-started", "layer": 5, "requires": ["brand-voice"], "skill": "visual-identity"}
+      }
+    }
+  }
+}

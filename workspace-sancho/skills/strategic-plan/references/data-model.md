@@ -124,6 +124,8 @@ Metadata de un proyecto individual.
 {
   "id": "P01",
   "name": "Optimizar web para conversión",
+  "description": "La web no tiene tracking de conversiones ni página de servicios completa. Sin esto, no podemos medir resultados ni lanzar ads con ROI medible.",
+  "approach": "Instalamos Meta Pixel + GA4 para medir conversiones, unificamos el booking en una sola URL, creamos el hub de servicios con copy persuasivo, y calentamos dominios para cold email.",
   "status": "active",
   "created": "2026-03-12",
   "review_date": "2026-04-12",
@@ -137,8 +139,7 @@ Metadata de un proyecto individual.
     "metric": "conversion_rate",
     "baseline": 0.5,
     "target": 2.0,
-    "unit": "%",
-    "horizon_days": 60
+    "unit": "%"
   },
   "strategy": {
     "catalog_id": null,
@@ -153,6 +154,19 @@ Metadata de un proyecto individual.
   "tasks_completed": 0,
   "value_review": null
 }
+```
+
+### Campos project obligatorios
+
+| Campo | Qué es | Ejemplo |
+|-------|--------|---------|
+| `name` | Nombre corto del proyecto | "Fontanería Web" |
+| `description` | Por qué existe, contexto de negocio. 2-3 frases legibles por cualquiera. | "La web no tiene tracking..." |
+| `approach` | Cómo lo vamos a hacer. Resumen del plan de ataque que refleja las tareas. | "Instalamos Pixel, unificamos booking..." |
+| `objective` | Qué queremos conseguir. Métrica concreta con baseline → target. | { metric: "conversion_rate", baseline: 0.5, target: 2.0 } |
+| `review_date` | Cuándo evaluamos si funcionó. | "2026-04-12" |
+
+> ⚠️ **NUNCA** crear un proyecto sin `description` y `approach`. Son obligatorios.
 ```
 
 ### Campos `origin.type`
@@ -189,7 +203,10 @@ Tareas de un proyecto. Cada tarea se ejecuta en un canal temático.
     {
       "id": "T01",
       "name": "Reescribir página de servicios — copy Trust Engine",
-      "description": "Redactar copy persuasivo para la página de servicios usando framework Trust Engine. Incluir: headline, subheadline, 3 bloques de servicio con beneficios, social proof, CTA.",
+      "description": "Redactar copy persuasivo para la página de servicios. Incluir headline, propuesta de valor, 3 bloques de servicio con beneficios, social proof y CTA de agendar llamada.",
+      "deliverable": "Copy completo de la página de servicios listo para implementar en la web.",
+      "done_criteria": "Copy revisado y aprobado. Publicado en growth4u.io/servicios/.",
+      "depends_on": null,
       "status": "pending",
       "owner": "Sancho",
       "channel": "web",
@@ -250,12 +267,16 @@ Tareas de un proyecto. Cada tarea se ejecuta en un canal temático.
 
 **Regla: Sancho es el owner por defecto.** Solo marcar a humanos cuando la tarea genuinamente requiere su intervención.
 
-### Campos task `description`
+### Campos task obligatorios
 
-Cada tarea DEBE tener un campo `description` que explique:
-- Qué hay que hacer concretamente
-- Qué se entrega al completar
-- Contexto relevante (herramientas, fuentes, criterios)
+| Campo | Qué es | Ejemplo |
+|-------|--------|---------|
+| `description` | Qué se va a hacer concretamente. Legible por cualquiera, no técnico. | "Instalar el pixel de Meta y configurar la API de conversiones para poder trackear eventos de ads en la web." |
+| `deliverable` | Qué sale de esta tarea. Resultado tangible. | "Pixel instalado y disparando eventos PageView + Lead." |
+| `done_criteria` | Cómo sabemos que está hecha. Criterio verificable. | "Meta Pixel Helper muestra PageView ✅ al visitar growth4u.io." |
+| `depends_on` | Qué necesita estar hecho antes. null si no hay dependencias. | "P01-T01" o null |
+
+> ⚠️ **NUNCA** crear una tarea sin `description` y `deliverable`. Son obligatorios.
 
 ### Campos task `status`
 

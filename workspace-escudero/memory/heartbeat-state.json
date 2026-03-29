@@ -1,0 +1,46 @@
+{
+  "lead_sync": {
+    "last_run": "2026-03-26T16:17:00Z",
+    "client": "growth4u",
+    "new_leads": 4,
+    "updated_leads": 0,
+    "slack_notes_synced": 0,
+    "errors": 0,
+    "details": {
+      "leads_processed": [
+        {
+          "ghl_id": "TXHKJZy5gwdFY8pXgiPm",
+          "name": "Teresa Sainz de Baranda",
+          "company": "ESBYCIA",
+          "transcripts_found": 0,
+          "enrichment_pending": true,
+          "notes": "Empresa sin presencia web pública. Email corporativo sugiere empresa activa."
+        },
+        {
+          "ghl_id": "4aie6SaidE31O7ktiYjS",
+          "name": "Mikel Catena",
+          "company": "SUYCA",
+          "transcripts_found": 1,
+          "enrichment_pending": false,
+          "notes": "SaaS IA para facturación en Business Central. Busca tracción a corto plazo via partner Microsoft. No encaja con servicio G4U por timing."
+        },
+        {
+          "ghl_id": "1i2QVzqgQQZErNUD3nuK",
+          "name": "Eduardo Zuñiga",
+          "company": null,
+          "transcripts_found": 0,
+          "enrichment_pending": true,
+          "notes": "Email personal. Llamada 25/03 no conectó (contestador). Pendiente identificar empresa."
+        },
+        {
+          "ghl_id": "jhicQ1oQ41r29JQ4HaP9",
+          "name": "Daniel Serrano",
+          "company": "Unidos Ecosystem / Unidos Chain",
+          "transcripts_found": 1,
+          "enrichment_pending": true,
+          "notes": "Blockchain/cripto. Tokenización inmobiliaria. 35k comunidad, 400 VIP. Busca partner estratégico long-term. Propuesta en proceso."
+        }
+      ]
+    }
+  }
+}

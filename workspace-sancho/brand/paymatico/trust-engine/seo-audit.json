@@ -1,0 +1,219 @@
+{
+  "module": "seo-audit",
+  "version": 1,
+  "created_at": "2026-03-26T14:11:30Z",
+  "updated_at": "2026-03-26T14:11:30Z",
+  "status": "completed",
+  "data": {
+    "lighthouse": {
+      "available": "partial_crux_only",
+      "note": "Lighthouse lab data unavailable after timeout. Using CrUX field data.",
+      "performance_score": null,
+      "accessibility_score": null,
+      "best_practices_score": null,
+      "seo_score": null,
+      "crux_metrics": {
+        "lcp": 1.6,
+        "cls": 0.06,
+        "fcp": 1.2,
+        "inp": null,
+        "ttfb": null,
+        "assessment": "passed"
+      }
+    },
+    "health_checks": {
+      "HC-01_meta_title": {
+        "pass": false,
+        "severity": "high",
+        "finding": "Title too short (9 chars). Should be 30-60 chars.",
+        "current": "Paymatico",
+        "recommendation": "Expand title with keywords: 'Paymático — Plataforma de Pagos Regulada BdE | PSP España'"
+      },
+      "HC-02_meta_description": {
+        "pass": true,
+        "severity": "low",
+        "finding": "Meta description OK (156 chars)",
+        "current": "Proveedor de Servicios de Pago Todo en Uno. Con nuestra Plataforma de Servicios de Pago (PSP) construye todos los servicios de pago que tu empresa necesita."
+      },
+      "HC-03_h1_count": {
+        "pass": true,
+        "severity": "low",
+        "finding": "Exactly 1 H1 found",
+        "current": "Proveedor de Servicios de Pago Todo en Uno"
+      },
+      "HC-04_open_graph": {
+        "pass": true,
+        "severity": "low",
+        "finding": "OG tags present (title, description, image)"
+      },
+      "HC-05_canonical": {
+        "pass": false,
+        "severity": "medium",
+        "finding": "No canonical tag found",
+        "recommendation": "Add <link rel='canonical' href='https://www.paymatico.com/'>"
+      },
+      "HC-06_ssl": {
+        "pass": true,
+        "severity": "low",
+        "finding": "HTTPS active"
+      },
+      "HC-07_mobile_viewport": {
+        "pass": true,
+        "severity": "low",
+        "finding": "Viewport meta tag present",
+        "current": "width=device-width, initial-scale=1"
+      },
+      "HC-08_language_tag": {
+        "pass": true,
+        "severity": "low",
+        "finding": "Language tag present",
+        "current": "es-ES"
+      },
+      "HC-09_sitemap": {
+        "pass": false,
+        "severity": "critical",
+        "finding": "sitemap.xml returns 404",
+        "recommendation": "Create and submit sitemap to Google Search Console"
+      },
+      "HC-10_robots": {
+        "pass": false,
+        "severity": "high",
+        "finding": "robots.txt returns 404",
+        "recommendation": "Create robots.txt with sitemap reference"
+      },
+      "HC-11_core_web_vitals": {
+        "pass": true,
+        "severity": "low",
+        "finding": "CrUX metrics passed (LCP 1.6s, CLS 0.06)"
+      },
+      "HC-12_image_alt": {
+        "pass": null,
+        "severity": "medium",
+        "finding": "Unable to verify without Lighthouse lab data"
+      },
+      "HC-13_structured_data": {
+        "pass": false,
+        "severity": "high",
+        "finding": "No JSON-LD structured data found",
+        "recommendation": "Add Organization, WebSite, and service-specific schemas"
+      },
+      "HC-14_internal_links": {
+        "pass": true,
+        "severity": "low",
+        "finding": "112 internal links found"
+      },
+      "HC-15_hreflang": {
+        "pass": false,
+        "severity": "low",
+        "finding": "No hreflang tags (single-market site, optional)"
+      }
+    },
+    "server_timing": {
+      "note": "Estimated from CrUX TTFB N/A and site speed observations",
+      "ttfb_estimated_ms": 400,
+      "total_time_estimated_ms": 1600
+    },
+    "summary": {
+      "total_checks": 15,
+      "passed": 8,
+      "failed": 6,
+      "not_applicable": 1,
+      "pass_rate": 0.53,
+      "critical_issues": 1,
+      "high_issues": 3,
+      "medium_issues": 2
+    },
+    "issues": [
+      {
+        "id": "SEO-001",
+        "source": "HC-09",
+        "severity": "critical",
+        "title": "Missing sitemap.xml",
+        "description": "No sitemap.xml found. Search engines cannot efficiently discover and index site pages.",
+        "fix_steps": [
+          "Generate sitemap.xml with all site URLs",
+          "Upload to root directory (https://www.paymatico.com/sitemap.xml)",
+          "Submit to Google Search Console",
+          "Add sitemap reference to robots.txt"
+        ],
+        "expected_impact_pct": 15
+      },
+      {
+        "id": "SEO-002",
+        "source": "HC-13",
+        "severity": "high",
+        "title": "No structured data (Schema.org)",
+        "description": "Missing JSON-LD schemas. Impacts rich snippets, knowledge graph eligibility, and AI visibility (GEO).",
+        "fix_steps": [
+          "Add Organization schema with name, logo, address, founder, foundingDate (2013)",
+          "Add WebSite schema with potential action (search)",
+          "Add Service schemas for each payment solution",
+          "Validate with Google Rich Results Test"
+        ],
+        "expected_impact_pct": 12
+      },
+      {
+        "id": "SEO-003",
+        "source": "HC-10",
+        "severity": "high",
+        "title": "Missing robots.txt",
+        "description": "No robots.txt file. Cannot guide crawlers or disallow sensitive paths.",
+        "fix_steps": [
+          "Create robots.txt with User-agent: * and Allow: /",
+          "Add Sitemap: https://www.paymatico.com/sitemap.xml",
+          "Upload to root directory"
+        ],
+        "expected_impact_pct": 8
+      },
+      {
+        "id": "SEO-004",
+        "source": "HC-01",
+        "severity": "high",
+        "title": "Title tag too short",
+        "description": "Title 'Paymatico' (9 chars) is too short. Missing keyword optimization opportunity.",
+        "fix_steps": [
+          "Expand to 50-60 chars with keywords",
+          "Example: 'Paymático — Plataforma de Pagos Regulada BdE | PSP España'",
+          "Include differentiators: 'Regulada', 'BdE', 'España'"
+        ],
+        "expected_impact_pct": 10
+      },
+      {
+        "id": "SEO-005",
+        "source": "HC-05",
+        "severity": "medium",
+        "title": "Missing canonical tag",
+        "description": "No canonical tag. Risk of duplicate content issues if URL variations exist.",
+        "fix_steps": [
+          "Add <link rel='canonical' href='https://www.paymatico.com/'> to <head>",
+          "Apply to all pages, pointing to preferred version"
+        ],
+        "expected_impact_pct": 5
+      },
+      {
+        "id": "SEO-006",
+        "source": "general",
+        "severity": "medium",
+        "title": "Branding genérico en title/H1",
+        "description": "Title y H1 usan lenguaje genérico ('PSP Todo en Uno'). No capitaliza diferenciadores únicos (BdE, stack propietario).",
+        "fix_steps": [
+          "H1 nuevo: 'Plataforma de Pagos Regulada BdE | Infraestructura Propietaria'",
+          "Enfatizar veteranía: 'Regulados desde 2013'",
+          "Diferenciar vs competencia: 'Stack propietario, no intermediarios'"
+        ],
+        "expected_impact_pct": 8
+      }
+    ]
+  },
+  "score": {
+    "methodology": "health_check_only",
+    "note": "Score based on health checks only (Lighthouse lab data unavailable). CrUX metrics passed.",
+    "health_check_score": 53,
+    "overall_seo_score": 53
+  },
+  "metadata": {
+    "duration_seconds": 180,
+    "apis_called": ["pagespeed.web.dev_crux"],
+    "errors": ["Lighthouse lab data timeout after 60s"]
+  }
+}

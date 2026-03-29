@@ -1,0 +1,27 @@
+{
+  "messages": [
+    {
+      "role": "user",
+      "text": "Hola. Puedo modificar alguna skill?",
+      "ts": "2026-03-26T22:01:39.342Z"
+    },
+    {
+      "role": "bot",
+      "text": "Sí, puedes. Las skills son archivos Markdown editables que viven en:\n\n```\n~/.openclaw/workspace-sancho/skills/{nombre-skill}/SKILL.md\n```\n\n**Opciones para modificarlas:**\n\n1. **Desde MC** — Si tienes acceso al filesystem, editas directamente el `SKILL.md` del skill que quieras.\n2. **Pidiéndomelo** — Dime qué skill y qué cambio, y lo hago yo (o lo delego a Cervantes si es complejo).\n3. **Crear una nueva** — Tengo el skill `skill-creator` para eso.\n\n¿Qué skill quieres tocar y qué cambio necesitas?",
+      "agent": "sancho",
+      "ts": "2026-03-26T22:01:54.678Z"
+    },
+    {
+      "role": "user",
+      "text": "que tal?",
+      "ts": "2026-03-28T19:13:10.108Z"
+    },
+    {
+      "role": "bot",
+      "text": "¡Buenas, Alfonso! Todo en orden por aquí, listo para lo que necesites. ¿En qué te puedo ayudar?",
+      "agent": "sancho",
+      "ts": "2026-03-28T19:13:21.158Z"
+    }
+  ],
+  "updatedAt": 1774725201158
+}

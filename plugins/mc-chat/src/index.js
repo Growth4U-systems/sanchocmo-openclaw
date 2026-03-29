@@ -79,6 +79,9 @@ export default defineChannelPluginEntry({
           linkedTo,
           skill,
           agentId,
+          isAdmin,
+          senderRole,
+          _source, // "discord" if relayed from Discord
         } = payload;
 
         if (!slug || !threadId || !text) {
@@ -89,21 +92,33 @@ export default defineChannelPluginEntry({
 
         logger.info(`[mc-chat] Inbound from ${userName || userId || "unknown"} → ${slug}/${threadId}: ${text.slice(0, 80)}`);
 
-        const chatId = `channel:mc-chat:${slug}:${threadId}`;
+        // threadId may already include slug prefix (e.g. "growth4u:self-intelligence")
+        const chatId = threadId.startsWith(slug + ':')
+          ? `channel:mc-chat:${threadId}`
+          : `channel:mc-chat:${slug}:${threadId}`;
 
         // Build structured context for the agent
         // This mimics how Discord provides guild context via inbound metadata
         const contextLines = [
           `[MC Chat Context]`,
+          `channel: mc-chat (Mission Control webchat — NOT Discord)`,
           `client_slug: ${slug}`,
           `thread_id: ${threadId}`,
         ];
         if (threadName) contextLines.push(`thread_name: ${threadName}`);
         if (linkedTo) contextLines.push(`linked_to: ${linkedTo}`);
         if (skill) contextLines.push(`skill: ${skill}`);
+        contextLines.push(`IMPORTANT: You are responding via MC Chat, NOT Discord. Do NOT use the message tool to reply. Just respond with text directly — your reply will be delivered to the user automatically via the MC Chat callback. Do NOT create Discord threads or send Discord messages for this conversation. Read files from disk (brand/${slug}/), never via HTTP/web_fetch to localhost.`);
         contextLines.push(`[/MC Chat Context]`);
 
         const bodyForAgent = contextLines.join('\n') + '\n\n' + text;
+
+        // Resolve sender identity based on admin/client role
+        // This maps to toolsBySender keys in openclaw.json:
+        //   "id:mc-admin" → alsoAllow: [gateway, exec, cron]
+        //   clients get default deny
+        const resolvedSenderId = isAdmin ? "mc-admin" : (userId || `mc-client-${slug}`);
+        const resolvedSenderName = userName || (isAdmin ? "Admin" : `${slug} (client)`);
 
         // Build MsgContext for OpenClaw dispatch
         const msgCtx = finalizeInboundContext({
@@ -115,9 +130,9 @@ export default defineChannelPluginEntry({
           To: chatId,
           SessionKey: chatId,
           AccountId: DEFAULT_ACCOUNT_ID,
-          SenderName: userName || "MC User",
-          SenderId: userId || `mc-user-${slug}`,
-          SenderUsername: userId || `mc-user-${slug}`,
+          SenderName: resolvedSenderName,
+          SenderId: resolvedSenderId,
+          SenderUsername: resolvedSenderId,
           Provider: CHANNEL_KEY,
           Surface: CHANNEL_KEY,
           OriginatingChannel: CHANNEL_KEY,
@@ -162,7 +177,17 @@ export default defineChannelPluginEntry({
                 // Detect which agent is responding
                 const respondingAgent = replyPayload?.agentId || replyPayload?.agent || agentId || "sancho";
 
-                // Send each text as a separate message
+                // Check if thread is linked to Discord
+                let discordLink = null;
+                try {
+                  const threadRes = await fetch(`${mcUrl}/api/mc-chat/thread/${encodeURIComponent(chatId)}`);
+                  const threadData = await threadRes.json();
+                  if (threadData.discordThreadId && threadData.discordChannelId) {
+                    discordLink = { threadId: threadData.discordThreadId, channelId: threadData.discordChannelId };
+                  }
+                } catch {}
+
+                // Send each text as a separate message (MC + Discord if linked)
                 for (const msgText of texts) {
                   try {
                     const response = await fetch(callbackUrl, {
@@ -183,6 +208,19 @@ export default defineChannelPluginEntry({
                     if (!response.ok) {
                       logger.error(`[mc-chat] Callback failed: ${response.status}`);
                     }
+                    // Also relay to Discord if linked (skip if message came from Discord)
+                    if (discordLink && _source !== "discord") {
+                      try {
+                        await tools.message.send({
+                          action: "send",
+                          target: `channel:${discordLink.threadId}`,
+                          message: msgText + "\n||[_mc_relay]||", // Hidden spoiler tag
+                        });
+                        logger.info(`[mc-chat] Relayed to Discord thread ${discordLink.threadId}`);
+                      } catch (discordErr) {
+                        logger.error(`[mc-chat] Discord relay error: ${discordErr?.message}`);
+                      }
+                    }
                   } catch (err) {
                     logger.error(`[mc-chat] Callback error: ${err?.message}`);
                   }
@@ -190,6 +228,41 @@ export default defineChannelPluginEntry({
               },
               onError: (err, info) => {
                 logger.error(`[mc-chat] Dispatch error (${info.kind}): ${err?.message || err}`);
+              },
+            },
+            // Status updates: send intermediate state to MC typing indicator
+            typingCallbacks: {
+              onReplyStart: async () => {
+                fetch(callbackUrl, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json", ...(secret ? { "X-MC-Secret": secret } : {}) },
+                  body: JSON.stringify({ slug, threadId, role: "status", text: "🔄 Sancho está pensando...", agent: agentId || "sancho" }),
+                }).catch(() => {});
+              },
+            },
+            getReplyOptions: {
+              onToolStart: async (payload) => {
+                if (payload?.name) {
+                  const label = payload.name === "Read" ? "📄 Leyendo"
+                    : payload.name === "Write" ? "✍️ Escribiendo"
+                    : payload.name === "Bash" ? "⚡ Ejecutando"
+                    : payload.name === "Grep" || payload.name === "Glob" ? "🔍 Buscando"
+                    : payload.name === "WebFetch" || payload.name === "WebSearch" ? "🌐 Buscando en web"
+                    : payload.name === "Agent" ? "🤖 Delegando a subagente"
+                    : "🔧 " + payload.name;
+                  fetch(callbackUrl, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json", ...(secret ? { "X-MC-Secret": secret } : {}) },
+                    body: JSON.stringify({ slug, threadId, role: "status", text: label + "...", agent: agentId || "sancho" }),
+                  }).catch(() => {});
+                }
+              },
+              onCompactionStart: async () => {
+                fetch(callbackUrl, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json", ...(secret ? { "X-MC-Secret": secret } : {}) },
+                  body: JSON.stringify({ slug, threadId, role: "status", text: "📦 Compactando contexto...", agent: agentId || "sancho" }),
+                }).catch(() => {});
               },
             },
           });
@@ -214,6 +287,97 @@ export default defineChannelPluginEntry({
           ts: new Date().toISOString(),
         }));
         return true;
+      },
+    });
+
+    // Discord thread creation endpoint (proxies to message tool)
+    api.registerHttpRoute({
+      path: "/mc-chat/create-discord-thread",
+      auth: "plugin",
+      handler: async (req, res) => {
+        let body = "";
+        req.on("data", (chunk) => { body += chunk; if (body.length > 100000) req.destroy(); });
+        req.on("end", async () => {
+          try {
+            const { channelId, name, initialMessage } = JSON.parse(body);
+            if (!channelId || !name) {
+              res.statusCode = 400;
+              res.end(JSON.stringify({ error: "Missing channelId or name" }));
+              return;
+            }
+            // Create Discord thread via message tool
+            const result = await tools.message.send({
+              action: "thread-create",
+              channel: "discord",
+              target: `channel:${channelId}`,
+              threadName: name.substring(0, 100),
+              message: initialMessage || `🔗 Thread sincronizado con Mission Control`,
+            });
+            if (result?.result?.threadId) {
+              res.statusCode = 200;
+              res.end(JSON.stringify({
+                ok: true,
+                threadId: result.result.threadId,
+                channelId,
+              }));
+            } else {
+              res.statusCode = 500;
+              res.end(JSON.stringify({ error: "Thread creation failed", details: result }));
+            }
+          } catch (e) {
+            logger.error(`[mc-chat] Discord thread creation error: ${e.message}`);
+            res.statusCode = 500;
+            res.end(JSON.stringify({ error: e.message }));
+          }
+        });
+        return true;
+      },
+    });
+
+    // Outbound hook: watch Discord messages and relay to MC if thread is linked
+    api.registerOutboundHook({
+      provider: "discord",
+      handler: async (msgCtx) => {
+        // Only process messages from threads
+        if (!msgCtx.ThreadId) return;
+        const discordThreadId = msgCtx.ThreadId;
+        // Check if this Discord thread is linked to an MC thread
+        const mcUrl = channelCfg?.mcServerUrl || "http://localhost:18790";
+        let mcThreadId = null;
+        try {
+          // Search all MC threads for this discordThreadId
+          const searchRes = await fetch(`${mcUrl}/api/mc-chat/find-by-discord/${encodeURIComponent(discordThreadId)}`);
+          const searchData = await searchRes.json();
+          if (searchData.ok && searchData.threadId) {
+            mcThreadId = searchData.threadId;
+          }
+        } catch {}
+        if (!mcThreadId) return; // Not linked, ignore
+
+        // Check for loop flag
+        if (msgCtx.Body?.includes("[_mc_relay]")) return; // Avoid loop
+
+        // Relay to MC (strip relay marker if present)
+        const slug = mcThreadId.split(":")[0];
+        let text = msgCtx.Body || msgCtx.RawBody || "";
+        text = text.replace(/\|\|?\[_mc_relay\]\|\|?/g, "").trim(); // Remove marker
+        if (!text.trim()) return;
+        try {
+          await fetch(`${mcUrl}/api/mc-chat/send`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              slug,
+              threadId: mcThreadId,
+              text,
+              userName: msgCtx.SenderName || "Discord User",
+              _source: "discord", // Mark source to prevent re-relay
+            }),
+          });
+          logger.info(`[mc-chat] Relayed Discord message from ${discordThreadId} to MC ${mcThreadId}`);
+        } catch (e) {
+          logger.error(`[mc-chat] Discord→MC relay error: ${e.message}`);
+        }
       },
     });
 

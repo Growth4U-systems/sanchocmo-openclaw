@@ -10,7 +10,7 @@
 
 ### Growth4U (guild: 1477741643762241548)
 
-**Canal #intelligence**: `1477741644789842031`
+**Canal #insights**: `1477741644789842031`
 
 **APIs disponibles:**
 

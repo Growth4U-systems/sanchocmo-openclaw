@@ -1,0 +1,16 @@
+{
+  "messages": [
+    {
+      "role": "user",
+      "text": "Estoy abriendo el chat sobre \"Unificar URL booking a now.growth4u.io\". Dame un resumen rápido del estado actual y qué podemos hacer. Si necesitas algo de mí, dímelo.",
+      "ts": "2026-03-26T16:19:48.491Z"
+    },
+    {
+      "role": "bot",
+      "text": "Aquí va el resumen:\n\n## P01-T03: Unificar URL de Booking → `now.growth4u.io`\n\n**Problema actual:** Growth4U tiene 2 URLs de booking diferentes:\n- **Home/Servicios** → `api.leadconnectorhq.com/widget/booking/XsVb9H5fZjGeVArLn2EN` (genérica, sin branding)\n- **Recursos** → `now.growth4u.io/widget/bookings/growth4u_demo` (branded)\n\n**Objetivo:** Todo apuntando a `https://now.growth4u.io/widget/bookings/llamada-estrategica-alfonso-w` (branded, más confianza).\n\n**Status:** `todo` — no se ha tocado aún.\n\n---\n\n**Pasos del playbook:**\n\n1. ✅ Verificar en GHL → Calendars que ambos calendarios son el mismo (o consolidar)\n2. 🔄 Reemplazar TODOS los links de booking en la web por la URL unificada\n3. 🔄 Buscar en el código fuente de growth4u.io todas las instancias de `leadconnectorhq.com`\n4. 🔄 Verificar que UTMs se pasan correctamente al nuevo link\n\n---\n\n**Lo que necesito de ti:**\n\n1. **Acceso al código fuente de growth4u.io** — ¿Está en un repo de GitHub? ¿O es un builder tipo WordPress/Webflow/GHL Sites? Según dónde esté, el approach cambia.\n2. **Confirmar la URL final** — ¿Es `llamada-estrategica-alfonso-w` la correcta, o hay que verificar en GHL?\n3. **¿El calendario de GHL ya está consolidado?** — Es decir, ¿hay un solo calendario detrás o son dos configuraciones distintas?\n\nCon eso puedo mapear dónde hay que hacer los cambios y darte el plan de ejecución concreto.",
+      "agent": "sancho",
+      "ts": "2026-03-26T16:20:28.369Z"
+    }
+  ],
+  "updatedAt": 1774542028369
+}

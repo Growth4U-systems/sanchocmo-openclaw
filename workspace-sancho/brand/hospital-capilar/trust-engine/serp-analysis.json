@@ -1,45 +1,1985 @@
 {
   "module": "serp-analysis",
-  "version": 2,
-  "created_at": "2026-03-24T22:18:00Z",
-  "updated_at": "2026-03-25T00:18:00Z",
+  "version": 3,
+  "created_at": "2026-03-26T10:50:00Z",
+  "updated_at": "2026-03-26T10:50:00Z",
   "status": "completed",
   "data": {
     "queries": [
-      { "keyword": "clinica capilar madrid", "volume": 1900, "client_position": 1, "note": "✅ HC #1", "top_competitors": ["clinicacapilarmora.com", "capilea.com.es", "grupopedrojaen.com"] },
-      { "keyword": "trasplante capilar madrid precio", "volume": null, "client_position": 1, "note": "✅ HC #1 — posición más fuerte", "top_competitors": ["drespinosacustodio.com", "capilclinic.es"] },
-      { "keyword": "clinica capilar madrid opiniones", "volume": null, "client_position": 1, "note": "✅ HC #1 (via Trustpilot 4.8/5)", "top_competitors": ["clinicacapilarvelazquez.es"] },
-      { "keyword": "mejor clinica capilar madrid", "volume": 590, "client_position": 4, "note": "⚠️ HC #4 — abc.es y elmundo.es arriba", "top_competitors": ["abc.es #1", "elmundo.es #2", "topdoctors.es #3", "svenson.es #5"] },
-      { "keyword": "mesoterapia capilar madrid", "volume": 320, "client_position": 4, "note": "⚠️ HC #4 — puede mejorar con página HRT dedicada", "top_competitors": ["bookimed.com", "instagram.com", "aesthetemed.com"] },
-      { "keyword": "PRP capilar madrid", "volume": 320, "client_position": 8, "note": "⚠️ HC #8 — lejos del top 3", "top_competitors": ["clinicacapilarvelazquez.es #1", "centromedicoelpilar.com #2"] },
-      { "keyword": "tratamiento capilar madrid", "volume": 320, "client_position": null, "note": "❌ HC NO EN TOP 10 — keyword core", "top_competitors": ["topdoctors.es #1", "capilarea.com #2", "insparya.es #5"] },
-      { "keyword": "alopecia androgenetica tratamiento", "volume": 1300, "client_position": null, "note": "❌ HC NO EN TOP 10 — alto volumen", "top_competitors": ["cun.es #1", "quironsalud.com #2", "actasdermo.org #3"] },
-      { "keyword": "caida cabello tratamiento", "volume": 320, "client_position": null, "note": "❌ HC NO EN TOP 10", "top_competitors": ["mayoclinic.org #1", "insparya.es #4"] },
-      { "keyword": "tratamiento alopecia", "volume": 480, "client_position": null, "note": "❌ HC NO EN TOP 10", "top_competitors": ["cun.es #1", "mayoclinic.org #2", "pfizer.es #6"] },
-      { "keyword": "caida pelo tratamiento", "volume": null, "client_position": null, "note": "❌ HC NO EN TOP 10", "top_competitors": ["mayoclinic.org #1", "insparya.es #5"] },
-      { "keyword": "caida pelo mujer tratamiento", "volume": 590, "client_position": null, "note": "❌ HC NO EN TOP 10", "top_competitors": ["olisticscience.com #1", "quironsalud.com #4"] },
-      { "keyword": "alopecia joven tratamiento", "volume": null, "client_position": null, "note": "❌ HC NO EN TOP 10 — ECP #1", "top_competitors": ["cun.es #2", "topdoctors.es #3", "capilarea.com #5"] },
-      { "keyword": "dermatologo capilar madrid", "volume": 260, "client_position": null, "note": "❌ HC NO EN TOP 10", "top_competitors": ["topdoctors.es #1", "sergiovano.com #3", "grupopedrojaen.com #7"] },
-      { "keyword": "diagnostico capilar madrid", "volume": null, "client_position": null, "note": "❌ HC NO EN TOP 10 — ofrece esto pero no rankea", "top_competitors": ["grupopedrojaen.com #1", "institutomedicoricart.com #2"] },
-      { "keyword": "minoxidil no funciona que hago", "volume": 20, "client_position": null, "note": "❌ HC NO EN TOP 10 — Reddit domina", "top_competitors": ["reddit.com #1 y #2", "youtube.com #3"] },
-      { "keyword": "tratamiento capilar sin cirugia espana", "volume": 10, "client_position": null, "note": "❌ HC NO EN TOP 10 — exactamente su posicionamiento", "top_competitors": ["capilarea.com #3", "misaludcapilar.com #5"] },
-      { "keyword": "PRP capilar precio", "volume": 720, "client_position": null, "note": "❌ HC NO EN TOP 10", "top_competitors": ["saludonnet.com #1", "clinicadefreitas.com #2"] }
+      {
+        "keyword": "caida pelo joven hombre",
+        "niche_id": "n1",
+        "subnicho_id": "n1-s1",
+        "category": "solution",
+        "volume": 0,
+        "cpc": 0,
+        "competition": null,
+        "client_position": null,
+        "top_competitors": [
+          "www.clinicadefreitas.com #1",
+          "www.garnier.es #2",
+          "www.quironsalud.com #3"
+        ],
+        "serp_urls": [
+          {
+            "pos": 1,
+            "url": "https://www.clinicadefreitas.com/prevenir-la-caida-del-cabello-en-hombres-jovenes/",
+            "title": "Cómo prevenir la caída del cabello en hombres jóvenes",
+            "domain": "www.clinicadefreitas.com"
+          },
+          {
+            "pos": 2,
+            "url": "https://www.garnier.es/consejos-belleza/cuidado-pelo/caida-pelo-hombres",
+            "title": "Caída de cabello en hombres: causas y prevención",
+            "domain": "www.garnier.es"
+          },
+          {
+            "pos": 3,
+            "url": "https://www.quironsalud.com/es/comunicacion/actualidad/tratamiento-alopecia-androgenica-caida-pelo-hombres",
+            "title": "Tratamiento de la Alopecia androgénica",
+            "domain": "www.quironsalud.com"
+          },
+          {
+            "pos": 4,
+            "url": "https://insparya.es/se-me-cae-mucho-el-pelo-siendo-joven-causas-soluciones/",
+            "title": "Se me cae mucho el pelo siendo joven: causas y soluciones",
+            "domain": "insparya.es"
+          },
+          {
+            "pos": 5,
+            "url": "https://www.mayoclinic.org/es/diseases-conditions/hair-loss/symptoms-causes/syc-20372926",
+            "title": "Caída del cabello - Síntomas y causas",
+            "domain": "www.mayoclinic.org"
+          }
+        ]
+      },
+      {
+        "keyword": "alopecia 25 años tratamiento",
+        "niche_id": "n1",
+        "subnicho_id": "n1-s1",
+        "category": "solution",
+        "volume": 0,
+        "cpc": 0,
+        "competition": null,
+        "client_position": null,
+        "top_competitors": [
+          "www.sergiovano.com #1",
+          "institutomedicoricart.com #2",
+          "www.capilarea.com #3"
+        ],
+        "serp_urls": [
+          {
+            "pos": 1,
+            "url": "https://www.sergiovano.com/alopecia-androgenica-masculina.html",
+            "title": "Alopecia Androgénica Masculina - Madrid",
+            "domain": "www.sergiovano.com"
+          },
+          {
+            "pos": 2,
+            "url": "https://institutomedicoricart.com/medicina-capilar/alopecia-androgenica/",
+            "title": "Alopecia androgénica - Tratamientos y diagnóstico personalizado - IMR",
+            "domain": "institutomedicoricart.com"
+          },
+          {
+            "pos": 3,
+            "url": "https://www.capilarea.com/la-alopecia-juvenil-consejos-para-solucionarla/",
+            "title": "La alopecia juvenil: consejos para solucionarla eficazmente",
+            "domain": "www.capilarea.com"
+          },
+          {
+            "pos": 4,
+            "url": "https://www.mayoclinic.org/es/diseases-conditions/hair-loss/diagnosis-treatment/drc-20372932",
+            "title": "Caída del cabello - Diagnóstico y tratamiento",
+            "domain": "www.mayoclinic.org"
+          },
+          {
+            "pos": 5,
+            "url": "https://imclinic.com/es/im-blog/alopecia-androgenica-masculina/",
+            "title": "Cómo tratar la alopecia androgénica masculina - IM Clinic",
+            "domain": "imclinic.com"
+          }
+        ]
+      },
+      {
+        "keyword": "calvicie temprana que hacer",
+        "niche_id": "n1",
+        "subnicho_id": "n1-s1",
+        "category": "discovery",
+        "volume": 0,
+        "cpc": 0,
+        "competition": null,
+        "client_position": 1,
+        "top_competitors": [
+          "epicalclinic.es #2",
+          "www.medicalhair.es #3",
+          "www.topdoctors.es #4"
+        ],
+        "serp_urls": [
+          {
+            "pos": 1,
+            "url": "https://hospitalcapilar.com/calvicie-prematura/",
+            "title": "CALVICIE PREMATURA: ¿Cómo combatirla? ✅",
+            "domain": "hospitalcapilar.com"
+          },
+          {
+            "pos": 2,
+            "url": "https://epicalclinic.es/calvicie-prematura-como-frenarla/",
+            "title": "Calvicie prematura: ¿Cómo frenarla?",
+            "domain": "epicalclinic.es"
+          },
+          {
+            "pos": 3,
+            "url": "https://www.medicalhair.es/como-combatir-la-alopecia-prematura/",
+            "title": "Cómo combatir la alopecia prematura",
+            "domain": "www.medicalhair.es"
+          },
+          {
+            "pos": 4,
+            "url": "https://www.topdoctors.es/articulos-medicos/alopecia-en-jovenes-por-que-aparece-la-caida-del-cabello-a-temprana-edad/",
+            "title": "Alopecia en jóvenes: causas y tratamientos",
+            "domain": "www.topdoctors.es"
+          },
+          {
+            "pos": 5,
+            "url": "https://www.bonomedico.es/blog/caida-pelo-alopecia/calvicie-prematura/",
+            "title": "Calvicie prematura - BonomédicoBlog",
+            "domain": "www.bonomedico.es"
+          }
+        ]
+      },
+      {
+        "keyword": "tratamiento alopecia joven",
+        "niche_id": "n1",
+        "subnicho_id": "n1-s1",
+        "category": "solution",
+        "volume": 0,
+        "cpc": 0,
+        "competition": null,
+        "client_position": null,
+        "top_competitors": [
+          "www.mayoclinic.org #1",
+          "www.cun.es #2",
+          "www.capilarea.com #3"
+        ],
+        "serp_urls": [
+          {
+            "pos": 1,
+            "url": "https://www.mayoclinic.org/es/diseases-conditions/hair-loss/diagnosis-treatment/drc-20372932",
+            "title": "Caída del cabello - Diagnóstico y tratamiento",
+            "domain": "www.mayoclinic.org"
+          },
+          {
+            "pos": 2,
+            "url": "https://www.cun.es/enfermedades-tratamientos/enfermedades/alopecia-calvicie",
+            "title": "Alopecia. Causas, diagnóstico y tratamiento. ...",
+            "domain": "www.cun.es"
+          },
+          {
+            "pos": 3,
+            "url": "https://www.capilarea.com/la-alopecia-juvenil-consejos-para-solucionarla/",
+            "title": "La alopecia juvenil: consejos para solucionarla eficazmente",
+            "domain": "www.capilarea.com"
+          },
+          {
+            "pos": 4,
+            "url": "https://www.topdoctors.es/articulos-medicos/alopecia-en-jovenes-por-que-aparece-la-caida-del-cabello-a-temprana-edad/",
+            "title": "Alopecia en jóvenes: causas y tratamientos",
+            "domain": "www.topdoctors.es"
+          },
+          {
+            "pos": 5,
+            "url": "https://www.aarp.org/espanol/salud/enfermedades-y-tratamientos/info-2024/remedios-para-la-calvicie.html",
+            "title": "Tratamientos para la alopecia y la caída del pelo",
+            "domain": "www.aarp.org"
+          }
+        ]
+      },
+      {
+        "keyword": "frenar caida pelo sin cirugia",
+        "niche_id": "n1",
+        "subnicho_id": "n1-s3",
+        "category": "solution",
+        "volume": 0,
+        "cpc": 0,
+        "competition": null,
+        "client_position": null,
+        "top_competitors": [
+          "misaludcapilar.com #1",
+          "insparya.es #2",
+          "www.quironsalud.com #3"
+        ],
+        "serp_urls": [
+          {
+            "pos": 1,
+            "url": "https://misaludcapilar.com/adios-a-la-alopecia-sin-cirugia/",
+            "title": "Adiós a la alopecia sin cirugía",
+            "domain": "misaludcapilar.com"
+          },
+          {
+            "pos": 2,
+            "url": "https://insparya.es/remedios-naturales-alopecia-androgenica/",
+            "title": "Remedios caseros para la caída del pelo: hombres y mujeres",
+            "domain": "insparya.es"
+          },
+          {
+            "pos": 3,
+            "url": "https://www.quironsalud.com/blogs/es/cambio-deseo/regeneracion-capilar-posible-solucion-caida-cabello",
+            "title": "La regeneración capilar, la posible solución para la caída del cabello",
+            "domain": "www.quironsalud.com"
+          },
+          {
+            "pos": 4,
+            "url": "https://eonclinicpalma.com/medicina-estetica-capilar/tratamiento-sin-cirugia-para-la-caida-del-cabello/",
+            "title": "Tratamiento sin cirugía para la caída del cabello con PRP - Dra Marta Payá",
+            "domain": "eonclinicpalma.com"
+          },
+          {
+            "pos": 5,
+            "url": "https://www.montemauro.es/noticias/antes-despues-tratamiento-capilar-sin-cirugia-madrid/",
+            "title": "Antes y después de tratamiento capilar sin cirugía en Madrid",
+            "domain": "www.montemauro.es"
+          }
+        ]
+      },
+      {
+        "keyword": "tratamiento preventivo alopecia",
+        "niche_id": "n1",
+        "subnicho_id": "n1-s3",
+        "category": "solution",
+        "volume": 0,
+        "cpc": 0,
+        "competition": null,
+        "client_position": null,
+        "top_competitors": [
+          "www.mayoclinic.org #1",
+          "aedv.es #2",
+          "unidadmedicaserrano.com #3"
+        ],
+        "serp_urls": [
+          {
+            "pos": 1,
+            "url": "https://www.mayoclinic.org/es/diseases-conditions/hair-loss/diagnosis-treatment/drc-20372932",
+            "title": "Caída del cabello - Diagnóstico y tratamiento",
+            "domain": "www.mayoclinic.org"
+          },
+          {
+            "pos": 2,
+            "url": "https://aedv.es/comunicacion/notas-de-prensa/alopecia-novedades-contra-la-perdida-del-cabello/",
+            "title": "Alopecia, novedades contra la pérdida del cabello",
+            "domain": "aedv.es"
+          },
+          {
+            "pos": 3,
+            "url": "https://unidadmedicaserrano.com/blog/pastillas-para-la-alopecia-los-tratamientos-mas-efectivos-y-actualizados-para-combatir-la-caida-del-cabello/",
+            "title": "¿Pastillas para la alopecia? Los tratamientos más efectivos ...",
+            "domain": "unidadmedicaserrano.com"
+          },
+          {
+            "pos": 4,
+            "url": "https://www.sefac.org/sites/default/files/sefac2010/private/documentos_sefac/documentos/SEF_FR_Alopecia_V.pdf",
+            "title": "Consejos para la prevención de la alopecia",
+            "domain": "www.sefac.org"
+          },
+          {
+            "pos": 5,
+            "url": "https://www.cun.es/enfermedades-tratamientos/enfermedades/alopecia-calvicie",
+            "title": "Alopecia. Causas, diagnóstico y tratamiento. ...",
+            "domain": "www.cun.es"
+          }
+        ]
+      },
+      {
+        "keyword": "minoxidil no funciona alternativas",
+        "niche_id": "n2",
+        "subnicho_id": "n2-s1",
+        "category": "solution",
+        "volume": 0,
+        "cpc": 0,
+        "competition": null,
+        "client_position": null,
+        "top_competitors": [
+          "www.tiktok.com #1",
+          "www.reddit.com #2",
+          "www.youtube.com #3"
+        ],
+        "serp_urls": [
+          {
+            "pos": 1,
+            "url": "https://www.tiktok.com/@linn.dourado/video/7473937471227825430",
+            "title": "Alternativas al Minoxidil para la Caída Capilar",
+            "domain": "www.tiktok.com"
+          },
+          {
+            "pos": 2,
+            "url": "https://www.reddit.com/r/tressless/comments/ze7f2f/best_effective_alternatives_to_minoxidil_for/?tl=es-419",
+            "title": "¿Cuáles son las alternativas más efectivas al minoxidil ...",
+            "domain": "www.reddit.com"
+          },
+          {
+            "pos": 3,
+            "url": "https://www.youtube.com/watch?v=cbsq7gx2MGc",
+            "title": "Best Alternatives To Minoxidil And Finasteride",
+            "domain": "www.youtube.com"
+          },
+          {
+            "pos": 4,
+            "url": "https://www.youtube.com/watch?v=tJfmCwPx4hw",
+            "title": "🟡 ¿Por qué MINOXIDIL NO me FUNCIONA? Descubre las ...",
+            "domain": "www.youtube.com"
+          },
+          {
+            "pos": 5,
+            "url": "https://www.reddit.com/r/tressless/comments/qh3k4x/for_minoxidil_nonresponders_what_are_the/?tl=es-419",
+            "title": "Para los que no les funciona el minoxidil... ¿Qué ...",
+            "domain": "www.reddit.com"
+          }
+        ]
+      },
+      {
+        "keyword": "minoxidil dejo de funcionar que hago",
+        "niche_id": "n2",
+        "subnicho_id": "n2-s1",
+        "category": "solution",
+        "volume": 0,
+        "cpc": 0,
+        "competition": null,
+        "client_position": null,
+        "top_competitors": [
+          "www.instagram.com #1",
+          "www.reddit.com #2",
+          "imdermatologico.com #3"
+        ],
+        "serp_urls": [
+          {
+            "pos": 1,
+            "url": "https://www.instagram.com/reel/DVTeYivEesY/",
+            "title": "“Es que el minoxidil no me funciona…” 👀 ...",
+            "domain": "www.instagram.com"
+          },
+          {
+            "pos": 2,
+            "url": "https://www.reddit.com/r/FemaleHairLoss/comments/1c8j8ve/minoxidil_stopped_working_after_2_years_losing/?tl=es-419",
+            "title": "El minoxidil dejó de funcionar después de 2 años. ¡Se me ...",
+            "domain": "www.reddit.com"
+          },
+          {
+            "pos": 3,
+            "url": "https://imdermatologico.com/blogimd/tratamientos-capilares/que-hacer-si-el-minoxidil-no-ha-dado-los-resultados-deseados-en-la-caida-del-cabello/?srsltid=AfmBOorCIZV-oXFeL_7IylZ0e59g_vCG2rSdr8lMoVBnRD-AA1Gv0bWn",
+            "title": "¿Qué hacer si el minoxidil no ha dado los resultados ...",
+            "domain": "imdermatologico.com"
+          },
+          {
+            "pos": 4,
+            "url": "https://www.youtube.com/watch?v=tJfmCwPx4hw",
+            "title": "🟡 ¿Por qué MINOXIDIL NO me FUNCIONA? Descubre las ...",
+            "domain": "www.youtube.com"
+          },
+          {
+            "pos": 5,
+            "url": "https://www.tiktok.com/@drtoltl/video/7504022485692599607?lang=en",
+            "title": "El minoxidil no funciona: Aquí te explico por qué",
+            "domain": "www.tiktok.com"
+          }
+        ]
+      },
+      {
+        "keyword": "alternativas minoxidil caida pelo",
+        "niche_id": "n2",
+        "subnicho_id": "n2-s1",
+        "category": "solution",
+        "volume": 0,
+        "cpc": 0,
+        "competition": null,
+        "client_position": null,
+        "top_competitors": [
+          "www.primor.eu #1",
+          "unidadmedicaserrano.com #2",
+          "es.foligain.com #3"
+        ],
+        "serp_urls": [
+          {
+            "pos": 1,
+            "url": "https://www.primor.eu/blog/minoxidil-activos-similares-cabello/?srsltid=AfmBOoqPLDqPsHVkgbR49v9PD2nzCyjvmSg1NVdtSV5JQC88XD23n2Md",
+            "title": "Activos similares minoxidil cabello - Perfumerías Primor",
+            "domain": "www.primor.eu"
+          },
+          {
+            "pos": 2,
+            "url": "https://unidadmedicaserrano.com/blog/pastillas-para-la-alopecia-los-tratamientos-mas-efectivos-y-actualizados-para-combatir-la-caida-del-cabello/",
+            "title": "¿Pastillas para la alopecia? Los tratamientos más efectivos y ...",
+            "domain": "unidadmedicaserrano.com"
+          },
+          {
+            "pos": 3,
+            "url": "https://es.foligain.com/blogs/news/natural-alternatives-to-minoxidil-and-trioxidil-solutions",
+            "title": "Alternativas naturales a las soluciones de Minoxidil y Trioxidil",
+            "domain": "es.foligain.com"
+          },
+          {
+            "pos": 4,
+            "url": "https://www.agenciasinc.es/Reportajes/Basta-de-tomaduras-de-pelo-que-funciona-y-que-no-contra-la-calvicie",
+            "title": "Basta de tomaduras de pelo: qué funciona y qué no contra la calvicie",
+            "domain": "www.agenciasinc.es"
+          },
+          {
+            "pos": 5,
+            "url": "https://www.larazon.es/lifestyle/belleza/sustituto-minoxidil-aceite-natural-que-elimina-caida-cabello-hace-crecer-pelo_20250801688ce8d4c5e9fd602f650980.html",
+            "title": "Sustituto de minoxidil: el aceite natural que elimina la caída del cabello y ...",
+            "domain": "www.larazon.es"
+          }
+        ]
+      },
+      {
+        "keyword": "finasteride efectos secundarios",
+        "niche_id": "n2",
+        "subnicho_id": "n2-s2",
+        "category": "guide",
+        "volume": 4400,
+        "cpc": 0,
+        "competition": "LOW",
+        "client_position": null,
+        "top_competitors": [
+          "medlineplus.gov #1",
+          "www.scielo.cl #2",
+          "www.mskcc.org #3"
+        ],
+        "serp_urls": [
+          {
+            "pos": 1,
+            "url": "https://medlineplus.gov/spanish/druginfo/meds/a698016-es.html",
+            "title": "Finasterida: MedlinePlus medicinas",
+            "domain": "medlineplus.gov"
+          },
+          {
+            "pos": 2,
+            "url": "https://www.scielo.cl/scielo.php?script=sci_arttext&pid=S0034-98872016001200010",
+            "title": "Efectos adversos de finasteride: mitos y realidades. Una ...",
+            "domain": "www.scielo.cl"
+          },
+          {
+            "pos": 3,
+            "url": "https://www.mskcc.org/es/cancer-care/patient-education/medications/adult/finasteride-and-tadalafil",
+            "title": "Finasteride and Tadalafil",
+            "domain": "www.mskcc.org"
+          },
+          {
+            "pos": 4,
+            "url": "https://www.drugs.com/mtm_esp/finasteride.html",
+            "title": "Finasteride: Para qué sirve, Dosis y Efectos Secundarios",
+            "domain": "www.drugs.com"
+          },
+          {
+            "pos": 5,
+            "url": "https://www.quironsalud.com/blogs/es/blogs-quironsalud/famosa-finasterida-sindrome-post-finsterida",
+            "title": "La famosa finasterida y el síndrome post-finsterida",
+            "domain": "www.quironsalud.com"
+          }
+        ]
+      },
+      {
+        "keyword": "alternativa finasteride sin efectos",
+        "niche_id": "n2",
+        "subnicho_id": "n2-s2",
+        "category": "solution",
+        "volume": 0,
+        "cpc": 0,
+        "competition": null,
+        "client_position": null,
+        "top_competitors": [
+          "www.abc.es #1",
+          "martinezsimon.com #2",
+          "www.clinicadefreitas.com #3"
+        ],
+        "serp_urls": [
+          {
+            "pos": 1,
+            "url": "https://www.abc.es/summum/estilo/belleza/abci-alternativas-finasteride-para-combatir-alopecia-resultados-similares-y-sin-efectos-adversos-202102220037_noticia.html",
+            "title": "Alternativas al finasteride para combatir la alopecia con resultados ...",
+            "domain": "www.abc.es"
+          },
+          {
+            "pos": 2,
+            "url": "https://martinezsimon.com/medicacion-vs-productos-naturales-para-el-cuidado-capilar/",
+            "title": "Medicación vs. Productos Naturales para el cuidado capilar",
+            "domain": "martinezsimon.com"
+          },
+          {
+            "pos": 3,
+            "url": "https://www.clinicadefreitas.com/trasplante-de-pelo-sin-finasteride-es-posible/",
+            "title": "Trasplante de pelo sin finasteride ¿es posible?",
+            "domain": "www.clinicadefreitas.com"
+          },
+          {
+            "pos": 4,
+            "url": "https://www.esquire.com/es/cuidados-hombre/a29684793/finasteride-saw-palmetto-serenoa-repens-efectos-secundarios-comprar/",
+            "title": "Finasteride Vs saw palmetto: ¿cuál es mejor para el pelo?",
+            "domain": "www.esquire.com"
+          },
+          {
+            "pos": 5,
+            "url": "https://dfineclinic.es/finasteride-oral-vs-mesoterapia-capilar/",
+            "title": "Finasteride Oral vs. Mesoterapia Capilar: ¿Cuál es Mejor para la ...",
+            "domain": "dfineclinic.es"
+          }
+        ]
+      },
+      {
+        "keyword": "PRP capilar madrid",
+        "niche_id": "n2",
+        "subnicho_id": "n2-s3",
+        "category": "solution",
+        "volume": 320,
+        "cpc": 0.4,
+        "competition": "HIGH",
+        "client_position": null,
+        "top_competitors": [
+          "www.centromedicoelpilar.com #1",
+          "clinicacapilarvelazquez.es #2",
+          "drespinosacustodio.com #3"
+        ],
+        "serp_urls": [
+          {
+            "pos": 1,
+            "url": "https://www.centromedicoelpilar.com/especialidades-medicas/prp-capilar/",
+            "title": "PRP Capilar en Madrid",
+            "domain": "www.centromedicoelpilar.com"
+          },
+          {
+            "pos": 2,
+            "url": "https://clinicacapilarvelazquez.es/tratamientos-capilares/prp-capilar-plasma-rico-en-plaquetas",
+            "title": "PRP Capilar Madrid. Tratamiento con Plasma Rico en Plaquetas",
+            "domain": "clinicacapilarvelazquez.es"
+          },
+          {
+            "pos": 3,
+            "url": "https://drespinosacustodio.com/medicina-capilar-madrid/prp-capilar-madrid/",
+            "title": "PRP capilar en Madrid - Medicina capilar Instituto Médico del Prado",
+            "domain": "drespinosacustodio.com"
+          },
+          {
+            "pos": 4,
+            "url": "https://www.capilexmadrid.es/",
+            "title": "Implante Capilar Madrid - Técnica FUE y PRP | Clínica Capilex",
+            "domain": "www.capilexmadrid.es"
+          },
+          {
+            "pos": 5,
+            "url": "https://clinicablife.es/",
+            "title": "Blife Clínica Estética y Trasplante Capilar en Madrid - Medicina ...",
+            "domain": "clinicablife.es"
+          }
+        ]
+      },
+      {
+        "keyword": "mesoterapia capilar madrid",
+        "niche_id": "n2",
+        "subnicho_id": "n2-s3",
+        "category": "solution",
+        "volume": 320,
+        "cpc": 4.71,
+        "competition": "HIGH",
+        "client_position": null,
+        "top_competitors": [
+          "www.instagram.com #1",
+          "centroclinicobetanzos60.es #2",
+          "www.instagram.com #3"
+        ],
+        "serp_urls": [
+          {
+            "pos": 1,
+            "url": "https://www.instagram.com/reel/DRiLc5KAKoq/",
+            "title": "de mesoterapia capilar. El tratamiento ...",
+            "domain": "www.instagram.com"
+          },
+          {
+            "pos": 2,
+            "url": "https://centroclinicobetanzos60.es/medicina-estetica/mesoterapia-corporal/",
+            "title": "Mesoterapia corporal y la mesoterapía virtual, juntos a la ...",
+            "domain": "centroclinicobetanzos60.es"
+          },
+          {
+            "pos": 3,
+            "url": "https://www.instagram.com/reel/DQebgZBjKxM/",
+            "title": "¿Sabías que la mesoterapia puede aplicarse tanto ...",
+            "domain": "www.instagram.com"
+          },
+          {
+            "pos": 4,
+            "url": "https://www.youtube.com/watch?v=9Srb2lNnSrY",
+            "title": "HAIR MESOTHERAPY (infiltration treatment) to REGROW ...",
+            "domain": "www.youtube.com"
+          },
+          {
+            "pos": 5,
+            "url": "https://www.instagram.com/reel/DJUrkSxMVUC/",
+            "title": "💆‍♂️ Bioestimulación vs. Mesoterapia Capilar: ¿Cuál es ...",
+            "domain": "www.instagram.com"
+          }
+        ]
+      },
+      {
+        "keyword": "tratamiento capilar madrid",
+        "niche_id": "n2",
+        "subnicho_id": "n2-s3",
+        "category": "solution",
+        "volume": 320,
+        "cpc": 7.27,
+        "competition": "MEDIUM",
+        "client_position": 5,
+        "top_competitors": [
+          "clinicacapilarmora.com #1",
+          "capilea.com.es #2",
+          "clinicacapilarvelazquez.es #3"
+        ],
+        "serp_urls": [
+          {
+            "pos": 1,
+            "url": "https://clinicacapilarmora.com/",
+            "title": "Clínica Capilar en Madrid – Dr. Aníbal Mora, Especialista en ...",
+            "domain": "clinicacapilarmora.com"
+          },
+          {
+            "pos": 2,
+            "url": "https://capilea.com.es/",
+            "title": "Capilea: Clínica Capilar de Trasplante e Injerto Capilar en ...",
+            "domain": "capilea.com.es"
+          },
+          {
+            "pos": 3,
+            "url": "https://clinicacapilarvelazquez.es/tratamientos-capilares/prp-capilar-plasma-rico-en-plaquetas",
+            "title": "PRP CAPILAR Madrid. Plasma rico en plaquetas",
+            "domain": "clinicacapilarvelazquez.es"
+          },
+          {
+            "pos": 4,
+            "url": "https://clinicamcapilar.com/",
+            "title": "MCapilar: Clínica de Injerto Capilar en España",
+            "domain": "clinicamcapilar.com"
+          },
+          {
+            "pos": 5,
+            "url": "https://hospitalcapilar.com/",
+            "title": "Hospital Capilar: Injerto capilar en Madrid con todo incluido",
+            "domain": "hospitalcapilar.com"
+          }
+        ]
+      },
+      {
+        "keyword": "tratamiento capilar sin cirugia espana",
+        "niche_id": "n2",
+        "subnicho_id": "n2-s3",
+        "category": "solution",
+        "volume": 0,
+        "cpc": 0,
+        "competition": null,
+        "client_position": null,
+        "top_competitors": [
+          "eonclinicpalma.com #1",
+          "www.montemauro.es #2",
+          "www.capilarea.com #3"
+        ],
+        "serp_urls": [
+          {
+            "pos": 1,
+            "url": "https://eonclinicpalma.com/medicina-estetica-capilar/tratamiento-sin-cirugia-para-la-caida-del-cabello/",
+            "title": "Tratamiento sin cirugía para la caída del cabello con PRP",
+            "domain": "eonclinicpalma.com"
+          },
+          {
+            "pos": 2,
+            "url": "https://www.montemauro.es/noticias/antes-despues-tratamiento-capilar-sin-cirugia-madrid/",
+            "title": "Antes y después de tratamiento capilar sin cirugía en Madrid",
+            "domain": "www.montemauro.es"
+          },
+          {
+            "pos": 3,
+            "url": "https://www.capilarea.com/tratamientos-capilares-sin-cirugia/",
+            "title": "✅ Tratamientos capilares sin cirugía: opciones más eficaces",
+            "domain": "www.capilarea.com"
+          },
+          {
+            "pos": 4,
+            "url": "https://www.clinicaplanas.com/jorge-planas/2023/07/12/mas-pelo-sin-cirugia/",
+            "title": "Más pelo sin cirugía - Tu blog de medicina y cirugía estética",
+            "domain": "www.clinicaplanas.com"
+          },
+          {
+            "pos": 5,
+            "url": "https://castellanaclinic.com/2020/07/10/tratamientos-capilares-sin-cirugia/",
+            "title": "¿Buscas tratamientos capilares sin cirugia ...",
+            "domain": "castellanaclinic.com"
+          }
+        ]
+      },
+      {
+        "keyword": "PRP capilar precio",
+        "niche_id": "n2",
+        "subnicho_id": "n2-s3",
+        "category": "comparison",
+        "volume": 720,
+        "cpc": 0.13,
+        "competition": "HIGH",
+        "client_position": 3,
+        "top_competitors": [
+          "shop.aureaclinic.com #1",
+          "www.saludonnet.com #2",
+          "www.centromedicoelpilar.com #4"
+        ],
+        "serp_urls": [
+          {
+            "pos": 1,
+            "url": "https://shop.aureaclinic.com/producto/pack-plasma-capilar/",
+            "title": "PRP Capilar, bioestimulación para regeneración del cabello",
+            "domain": "shop.aureaclinic.com"
+          },
+          {
+            "pos": 2,
+            "url": "https://www.saludonnet.com/centros-medicos/medicina-estetica/provincia/valencia/6527-plasma-rico-en-plaquetas-prp-capilar-1-sesion",
+            "title": "Plasma rico en plaquetas PRP capilar. 1 sesión en la provincia de Valencia",
+            "domain": "www.saludonnet.com"
+          },
+          {
+            "pos": 3,
+            "url": "https://hospitalcapilar.com/prp-capilar-pontevedra/",
+            "title": "PRP capilar en Pontevedra: Precio y beneficios para el pelo",
+            "domain": "hospitalcapilar.com"
+          },
+          {
+            "pos": 4,
+            "url": "https://www.centromedicoelpilar.com/especialidades-medicas/prp-capilar/",
+            "title": "PRP Capilar en Madrid",
+            "domain": "www.centromedicoelpilar.com"
+          },
+          {
+            "pos": 5,
+            "url": "https://renacek.com/prp-capilar-barcelona/",
+            "title": "Tratamiento de PRP Capilar en Barcelona",
+            "domain": "renacek.com"
+          }
+        ]
+      },
+      {
+        "keyword": "mesoterapia capilar precio",
+        "niche_id": "n2",
+        "subnicho_id": "n2-s3",
+        "category": "comparison",
+        "volume": 720,
+        "cpc": 3.34,
+        "competition": "HIGH",
+        "client_position": 3,
+        "top_competitors": [
+          "heybloome.com #1",
+          "www.svenson.es #2",
+          "www.capilarea.com #4"
+        ],
+        "serp_urls": [
+          {
+            "pos": 1,
+            "url": "https://heybloome.com/products/mesoterapia-capilar?srsltid=AfmBOoqbVzaJHsNppBXc670DQOQ3xYLCwZTZVgAs8q0BSEa3wkkHELN_",
+            "title": "Mesoterapia capilar hombre - Bloome",
+            "domain": "heybloome.com"
+          },
+          {
+            "pos": 2,
+            "url": "https://www.svenson.es/servicios-centros-cabello/tratamientos-para-el-cabello/mesoterapia-alopecia/",
+            "title": "Tratamiento de Mesoterapia para alopecia - Svenson",
+            "domain": "www.svenson.es"
+          },
+          {
+            "pos": 3,
+            "url": "https://hospitalcapilar.com/mesoterapia-capilar-precio/",
+            "title": "Mesoterapia capilar precio: ¿Cuánto cuesta cuidar del cabello?",
+            "domain": "hospitalcapilar.com"
+          },
+          {
+            "pos": 4,
+            "url": "https://www.capilarea.com/mesoterapia-capilar-cual-es-el-precio-del-tratamiento/",
+            "title": "Mesoterapia capilar: ¿cuál es el precio del tratamiento?",
+            "domain": "www.capilarea.com"
+          },
+          {
+            "pos": 5,
+            "url": "https://clinicacapilarvelazquez.es/tratamientos-capilares/mesoterapia-capilar",
+            "title": "Mesoterapia Capilar en Madrid | Precio desde 195€",
+            "domain": "clinicacapilarvelazquez.es"
+          }
+        ]
+      },
+      {
+        "keyword": "diagnostico capilar madrid",
+        "niche_id": "n3",
+        "subnicho_id": "n3-s1",
+        "category": "discovery",
+        "volume": 70,
+        "cpc": 11.1,
+        "competition": "LOW",
+        "client_position": 9,
+        "top_competitors": [
+          "grupopedrojaen.com #1",
+          "institutomedicoricart.com #2",
+          "clinicacapilarlauraagrelo.com #3"
+        ],
+        "serp_urls": [
+          {
+            "pos": 1,
+            "url": "https://grupopedrojaen.com/especialistas-diagnostico-capilar/",
+            "title": "Tricólogos expertos en diagnóstico capilar en Madrid (España)",
+            "domain": "grupopedrojaen.com"
+          },
+          {
+            "pos": 2,
+            "url": "https://institutomedicoricart.com/medicina-capilar/diagnostico-capilar/",
+            "title": "Diagnóstico capilar - IMR",
+            "domain": "institutomedicoricart.com"
+          },
+          {
+            "pos": 3,
+            "url": "https://clinicacapilarlauraagrelo.com/",
+            "title": "Clínica Capilar en Madrid | Laura Agrelo",
+            "domain": "clinicacapilarlauraagrelo.com"
+          },
+          {
+            "pos": 4,
+            "url": "https://justonebydramorante.com/blog/estudio-capilar-diagnostico-madrid/",
+            "title": "Estudio Capilar Madrid: el diagnóstico para la salud de tu cabello",
+            "domain": "justonebydramorante.com"
+          },
+          {
+            "pos": 5,
+            "url": "https://capilando.com/diagnostico-capilar-en-madrid/",
+            "title": "Diagnóstico Capilar en Madrid",
+            "domain": "capilando.com"
+          }
+        ]
+      },
+      {
+        "keyword": "tricoscopia capilar",
+        "niche_id": "n3",
+        "subnicho_id": "n3-s1",
+        "category": "discovery",
+        "volume": 70,
+        "cpc": 7.67,
+        "competition": "MEDIUM",
+        "client_position": null,
+        "top_competitors": [
+          "www.facebook.com #1",
+          "www.instagram.com #2",
+          "www.youtube.com #3"
+        ],
+        "serp_urls": [
+          {
+            "pos": 1,
+            "url": "https://www.facebook.com/tekderma/videos/el-tricoscopio-capilar-es-una-herramienta-fundamental-en-dermatolog%C3%ADa-para-el-es/819142247311003/",
+            "title": "El Tricoscopio capilar es una herramienta fundamental ...",
+            "domain": "www.facebook.com"
+          },
+          {
+            "pos": 2,
+            "url": "https://www.instagram.com/reel/DMtDKmfOXos/?hl=es",
+            "title": "¡La Tricoscopia es clave para un diagnóstico preciso! 🔍 ...",
+            "domain": "www.instagram.com"
+          },
+          {
+            "pos": 3,
+            "url": "https://www.youtube.com/watch?v=wdQCxGfDb3s",
+            "title": "Trichoscopy, a real analysis of your baldness",
+            "domain": "www.youtube.com"
+          },
+          {
+            "pos": 4,
+            "url": "https://www.instagram.com/reel/DPEexh9jIL9/",
+            "title": "El Tricoscopio capilar es una herramienta fundamental ...",
+            "domain": "www.instagram.com"
+          },
+          {
+            "pos": 5,
+            "url": "https://www.facebook.com/InstitutoMedicoRicart/videos/la-tricoscopia-digital-o-trichoscan%EF%B8%8F-nos-permite-analizar-in-situ-y-de-una-maner/290176617345004/",
+            "title": "La tricoscopia digital o Trichoscan®️ 🔍 nos permite ...",
+            "domain": "www.facebook.com"
+          }
+        ]
+      },
+      {
+        "keyword": "estudio capilar madrid",
+        "niche_id": "n3",
+        "subnicho_id": "n3-s1",
+        "category": "discovery",
+        "volume": 40,
+        "cpc": 12.54,
+        "competition": "MEDIUM",
+        "client_position": 4,
+        "top_competitors": [
+          "grupopedrojaen.com #1",
+          "clinicacapilarlauraagrelo.com #2",
+          "justonebydramorante.com #3"
+        ],
+        "serp_urls": [
+          {
+            "pos": 1,
+            "url": "https://grupopedrojaen.com/especialistas-diagnostico-capilar/",
+            "title": "Tricólogos expertos en diagnóstico capilar en Madrid ...",
+            "domain": "grupopedrojaen.com"
+          },
+          {
+            "pos": 2,
+            "url": "https://clinicacapilarlauraagrelo.com/",
+            "title": "Clínica Capilar en Madrid | Laura Agrelo",
+            "domain": "clinicacapilarlauraagrelo.com"
+          },
+          {
+            "pos": 3,
+            "url": "https://justonebydramorante.com/blog/estudio-capilar-diagnostico-madrid/",
+            "title": "Estudio Capilar Madrid: el diagnóstico para la salud de tu ...",
+            "domain": "justonebydramorante.com"
+          },
+          {
+            "pos": 4,
+            "url": "https://hospitalcapilar.com/",
+            "title": "Hospital Capilar: Injerto capilar en Madrid con todo incluido",
+            "domain": "hospitalcapilar.com"
+          },
+          {
+            "pos": 5,
+            "url": "https://microcapilarhairclinic.es/",
+            "title": "Clínica Capilar Madrid | Valoración Gratis | MicroCapilar Hair ...",
+            "domain": "microcapilarhairclinic.es"
+          }
+        ]
+      },
+      {
+        "keyword": "dermatologo capilar madrid",
+        "niche_id": "n3",
+        "subnicho_id": "n3-s1",
+        "category": "discovery",
+        "volume": 260,
+        "cpc": 10.75,
+        "competition": "HIGH",
+        "client_position": null,
+        "top_competitors": [
+          "www.youtube.com #1"
+        ],
+        "serp_urls": [
+          {
+            "pos": 1,
+            "url": "https://www.youtube.com/watch?v=CtyCxIgJODU",
+            "title": "Charlando sobre INJERTO CAPILAR: Dr. Oscar Muñoz y ...",
+            "domain": "www.youtube.com"
+          }
+        ]
+      },
+      {
+        "keyword": "alopecia androgenetica tratamiento",
+        "niche_id": "n3",
+        "subnicho_id": "n3-s2",
+        "category": "guide",
+        "volume": 1300,
+        "cpc": 1.35,
+        "competition": "HIGH",
+        "client_position": null,
+        "top_competitors": [
+          "www.cun.es #1",
+          "www.mayoclinic.org #2",
+          "www.actasdermo.org #3"
+        ],
+        "serp_urls": [
+          {
+            "pos": 1,
+            "url": "https://www.cun.es/enfermedades-tratamientos/enfermedades/alopecia-calvicie",
+            "title": "Alopecia. Causas, diagnóstico y tratamiento. ...",
+            "domain": "www.cun.es"
+          },
+          {
+            "pos": 2,
+            "url": "https://www.mayoclinic.org/es/diseases-conditions/hair-loss/diagnosis-treatment/drc-20372932",
+            "title": "Caída del cabello - Diagnóstico y tratamiento",
+            "domain": "www.mayoclinic.org"
+          },
+          {
+            "pos": 3,
+            "url": "https://www.actasdermo.org/es-recomendaciones-sobre-el-manejo-clinico-articulo-S000173102300844X",
+            "title": "Recomendaciones sobre el manejo clínico de la alopecia ...",
+            "domain": "www.actasdermo.org"
+          },
+          {
+            "pos": 4,
+            "url": "https://innovacionclinica.com/alopecia-androgenica-tratamientos-efectivos/",
+            "title": "Alopecia androgénica: los tratamientos más efectivos",
+            "domain": "innovacionclinica.com"
+          },
+          {
+            "pos": 5,
+            "url": "https://www.sciencedirect.com/science/article/pii/S000173102300844X",
+            "title": "Recomendaciones sobre el manejo clínico de la alopecia ...",
+            "domain": "www.sciencedirect.com"
+          }
+        ]
+      },
+      {
+        "keyword": "tipos de alopecia",
+        "niche_id": "n3",
+        "subnicho_id": "n3-s2",
+        "category": "guide",
+        "volume": 880,
+        "cpc": 0.79,
+        "competition": "LOW",
+        "client_position": null,
+        "top_competitors": [
+          "www.svenson.es #1",
+          "www.cun.es #2",
+          "garcialegaz.com #3"
+        ],
+        "serp_urls": [
+          {
+            "pos": 1,
+            "url": "https://www.svenson.es/tipos-de-alopecia/",
+            "title": "Tipos de Alopecia: ¿qué tipos de calvicie hay? | Svenson",
+            "domain": "www.svenson.es"
+          },
+          {
+            "pos": 2,
+            "url": "https://www.cun.es/enfermedades-tratamientos/enfermedades/alopecia-calvicie",
+            "title": "Alopecia. Causas, diagnóstico y tratamiento. ...",
+            "domain": "www.cun.es"
+          },
+          {
+            "pos": 3,
+            "url": "https://garcialegaz.com/blog/tipos-alopecia/",
+            "title": "Tipos de alopecia y sus posibles tratamientos",
+            "domain": "garcialegaz.com"
+          },
+          {
+            "pos": 4,
+            "url": "https://www.sergiovano.com/tipos-de-alopecia.html",
+            "title": "Efluvio telógeno agudo - crónico - Alopecia Areata - frontal fibrosante",
+            "domain": "www.sergiovano.com"
+          },
+          {
+            "pos": 5,
+            "url": "https://q-med.es/blog/tipos-de-alopecia-cual-es-la-mia/",
+            "title": "Tipos de alopecia, ¿cuál es la mía? | Blog Capilar",
+            "domain": "q-med.es"
+          }
+        ]
+      },
+      {
+        "keyword": "tratamiento alopecia",
+        "niche_id": "n3",
+        "subnicho_id": "n3-s2",
+        "category": "solution",
+        "volume": 480,
+        "cpc": 1.85,
+        "competition": "HIGH",
+        "client_position": null,
+        "top_competitors": [
+          "www.cun.es #1",
+          "www.mayoclinic.org #2",
+          "www.quironsalud.com #3"
+        ],
+        "serp_urls": [
+          {
+            "pos": 1,
+            "url": "https://www.cun.es/enfermedades-tratamientos/enfermedades/alopecia-calvicie",
+            "title": "Alopecia. Causas, diagnóstico y tratamiento. ...",
+            "domain": "www.cun.es"
+          },
+          {
+            "pos": 2,
+            "url": "https://www.mayoclinic.org/es/diseases-conditions/hair-loss/diagnosis-treatment/drc-20372932",
+            "title": "Caída del cabello - Diagnóstico y tratamiento",
+            "domain": "www.mayoclinic.org"
+          },
+          {
+            "pos": 3,
+            "url": "https://www.quironsalud.com/es/comunicacion/actualidad/tratamiento-alopecia-androgenica-caida-pelo-hombres",
+            "title": "Tratamiento de la Alopecia androgénica",
+            "domain": "www.quironsalud.com"
+          },
+          {
+            "pos": 4,
+            "url": "https://www.clinicbarcelona.org/noticias/un-paso-mas-cerca-de-frenar-la-alopecia",
+            "title": "Un paso más cerca de frenar la alopecia | PortalCLÍNIC",
+            "domain": "www.clinicbarcelona.org"
+          },
+          {
+            "pos": 5,
+            "url": "https://www.pfizer.es/noticias/noticias-2024/disponible-en-espa%C3%B1a-el-primer-y-%C3%BAnico-tratamiento-indicado-para-la-alopecia-areata-grave-en-adultos-y-adolescentes-a-partir-de-12-a%C3%B1os-medios-generalistas",
+            "title": "Disponible en España el primer y único tratamiento indicado para la ...",
+            "domain": "www.pfizer.es"
+          }
+        ]
+      },
+      {
+        "keyword": "caida pelo mujer tratamiento",
+        "niche_id": "n3",
+        "subnicho_id": "n3-s3",
+        "category": "solution",
+        "volume": 590,
+        "cpc": 1.25,
+        "competition": "HIGH",
+        "client_position": null,
+        "top_competitors": [
+          "www.olisticscience.com #1",
+          "www.quironsalud.com #2",
+          "farmaciaolmos.es #3"
+        ],
+        "serp_urls": [
+          {
+            "pos": 1,
+            "url": "https://www.olisticscience.com/blogs/historias-de-cabello/complemento-para-la-caida-del-cabello-en-mujeres",
+            "title": "Mejor tratamiento para la caída del cabello en mujeres",
+            "domain": "www.olisticscience.com"
+          },
+          {
+            "pos": 2,
+            "url": "https://www.quironsalud.com/blogs/es/cambio-deseo/alopecia-femenina-solucion-perdida-pelo",
+            "title": "Alopecia femenina, solución a la pérdida de pelo",
+            "domain": "www.quironsalud.com"
+          },
+          {
+            "pos": 3,
+            "url": "https://farmaciaolmos.es/cosmetica/cabello-y-tratamientos-capilares/anticaida?srsltid=AfmBOopWYW_LCIFgZ96ZJJnCrsq3nzdLGKoIXPuTAL4yWoRk_bhJoM4C",
+            "title": "Tratamientos Anticaída y Perdida Cabello",
+            "domain": "farmaciaolmos.es"
+          },
+          {
+            "pos": 4,
+            "url": "https://www.freshlycosmetics.com/es/productos/tratamiento-anticaida-pelo",
+            "title": "Tratamiento capilar para caída del pelo",
+            "domain": "www.freshlycosmetics.com"
+          },
+          {
+            "pos": 5,
+            "url": "https://www.mayoclinic.org/es/diseases-conditions/hair-loss/diagnosis-treatment/drc-20372932",
+            "title": "Caída del cabello - Diagnóstico y tratamiento",
+            "domain": "www.mayoclinic.org"
+          }
+        ]
+      },
+      {
+        "keyword": "alopecia femenina tratamiento",
+        "niche_id": "n3",
+        "subnicho_id": "n3-s3",
+        "category": "solution",
+        "volume": 0,
+        "cpc": 0,
+        "competition": null,
+        "client_position": null,
+        "top_competitors": [
+          "medlineplus.gov #1",
+          "www.mayoclinic.org #2",
+          "institutomedicoricart.com #3"
+        ],
+        "serp_urls": [
+          {
+            "pos": 1,
+            "url": "https://medlineplus.gov/spanish/ency/article/001173.htm",
+            "title": "Calvicie de patrón femenino",
+            "domain": "medlineplus.gov"
+          },
+          {
+            "pos": 2,
+            "url": "https://www.mayoclinic.org/es/diseases-conditions/hair-loss/diagnosis-treatment/drc-20372932",
+            "title": "Caída del cabello - Diagnóstico y tratamiento",
+            "domain": "www.mayoclinic.org"
+          },
+          {
+            "pos": 3,
+            "url": "https://institutomedicoricart.com/blog/alopecia-femenina-tratamientos/",
+            "title": "Alopecia femenina: Tratamientos para combatirla - IMR",
+            "domain": "institutomedicoricart.com"
+          },
+          {
+            "pos": 4,
+            "url": "https://www.cun.es/enfermedades-tratamientos/enfermedades/alopecia-calvicie",
+            "title": "Alopecia. Causas, diagnóstico y tratamiento. ...",
+            "domain": "www.cun.es"
+          },
+          {
+            "pos": 5,
+            "url": "https://tricologiamir.com/tratamiento-medico-de-la-alopecia-androgenetica-femenina-faga/",
+            "title": "Tratamiento médico de la alopecia androgenética ...",
+            "domain": "tricologiamir.com"
+          }
+        ]
+      },
+      {
+        "keyword": "caida pelo mujer causas",
+        "niche_id": "n3",
+        "subnicho_id": "n3-s3",
+        "category": "guide",
+        "volume": 210,
+        "cpc": 0.94,
+        "competition": "MEDIUM",
+        "client_position": null,
+        "top_competitors": [
+          "www.mayoclinic.org #1",
+          "medlineplus.gov #2",
+          "es-share.upmc.com #3"
+        ],
+        "serp_urls": [
+          {
+            "pos": 1,
+            "url": "https://www.mayoclinic.org/es/diseases-conditions/hair-loss/symptoms-causes/syc-20372926",
+            "title": "Caída del cabello - Síntomas y causas",
+            "domain": "www.mayoclinic.org"
+          },
+          {
+            "pos": 2,
+            "url": "https://medlineplus.gov/spanish/ency/article/003246.htm",
+            "title": "Pérdida de cabello: MedlinePlus enciclopedia médica",
+            "domain": "medlineplus.gov"
+          },
+          {
+            "pos": 3,
+            "url": "https://es-share.upmc.com/2022/12/caida-del-cabello-mujeres/",
+            "title": "Caída del cabello en mujeres: causas y prevención",
+            "domain": "es-share.upmc.com"
+          },
+          {
+            "pos": 4,
+            "url": "https://www.aarp.org/espanol/salud/vida-saludable/info-2017/causas-que-provocan-caida-cabello-mujeres.html",
+            "title": "5 causas que provocan la caída del cabello en las mujeres",
+            "domain": "www.aarp.org"
+          },
+          {
+            "pos": 5,
+            "url": "https://www.bosley.com/es/why-bosley/hair-loss-causes-in-women/",
+            "title": "Causas de la caída del cabello en las mujeres",
+            "domain": "www.bosley.com"
+          }
+        ]
+      },
+      {
+        "keyword": "cuidados post trasplante capilar",
+        "niche_id": "n4",
+        "subnicho_id": "n4-s1",
+        "category": "guide",
+        "volume": 0,
+        "cpc": 0,
+        "competition": null,
+        "client_position": null,
+        "top_competitors": [
+          "institutotrasplantecapilar.com #1",
+          "www.clinicatrasplantecapilar.com #2",
+          "capilea.com.ar #3"
+        ],
+        "serp_urls": [
+          {
+            "pos": 1,
+            "url": "https://institutotrasplantecapilar.com/postoperatorio-injerto-capilar/",
+            "title": "Postoperatorio de un injerto capilar",
+            "domain": "institutotrasplantecapilar.com"
+          },
+          {
+            "pos": 2,
+            "url": "https://www.clinicatrasplantecapilar.com/Cuidados-post-trasplante-capilar/",
+            "title": "Cuidados después de un trasplante capilar",
+            "domain": "www.clinicatrasplantecapilar.com"
+          },
+          {
+            "pos": 3,
+            "url": "https://capilea.com.ar/2024/04/cuidados-despues-de-un-implante-capilar-tu-guia-para-una-recuperacion-exitosa/",
+            "title": "Cuidados Después de un Trasplante Capilar",
+            "domain": "capilea.com.ar"
+          },
+          {
+            "pos": 4,
+            "url": "https://www.youtube.com/watch?v=Z1CJ0kZxviE",
+            "title": "🧑‍⚕️💡 Recuperación rápida tras el injerto capilar 💥 Lo ...",
+            "domain": "www.youtube.com"
+          },
+          {
+            "pos": 5,
+            "url": "https://www.quironsalud.com/ruber-internacional/es/blog-ciencia-salud-bienestar/salud-z/recuperacion-cuidados-posteriores-trasplante-capilar-pelo-l",
+            "title": "Recuperación y cuidados posteriores al Trasplante Capilar ...",
+            "domain": "www.quironsalud.com"
+          }
+        ]
+      },
+      {
+        "keyword": "pelo trasplante se cae",
+        "niche_id": "n4",
+        "subnicho_id": "n4-s1",
+        "category": "solution",
+        "volume": 0,
+        "cpc": 0,
+        "competition": null,
+        "client_position": null,
+        "top_competitors": [
+          "kellerhair.es #1",
+          "www.topdoctors.es #2",
+          "www.clinicspots.com #3"
+        ],
+        "serp_urls": [
+          {
+            "pos": 1,
+            "url": "https://kellerhair.es/blog/el-pelo-de-un-injerto-de-cabello-vuelve-a-caer/",
+            "title": "¿El Pelo Injertado se vuelve a caer tras un trasplante?",
+            "domain": "kellerhair.es"
+          },
+          {
+            "pos": 2,
+            "url": "https://www.topdoctors.es/articulos-medicos/se-me-caera-el-pelo-que-me-injerte/",
+            "title": "¿Se me caerá el pelo que me injerte?",
+            "domain": "www.topdoctors.es"
+          },
+          {
+            "pos": 3,
+            "url": "https://www.clinicspots.com/es/blog/transplanted-hair-falling-out-after-2-years",
+            "title": "El cabello trasplantado se cae después de 2 años",
+            "domain": "www.clinicspots.com"
+          },
+          {
+            "pos": 4,
+            "url": "https://bscapilar.es/se-me-cae-el-pelo-injertado-en-los-lavados/",
+            "title": "Se Me Cae El Pelo Injertado En Los Lavados, ¿debo ...",
+            "domain": "bscapilar.es"
+          },
+          {
+            "pos": 5,
+            "url": "https://clinicasaludcapilar.com/el-pelo-injertado-se-cae/",
+            "title": "¿El pelo injertado se cae? Todo lo que necesitas saber",
+            "domain": "clinicasaludcapilar.com"
+          }
+        ]
+      },
+      {
+        "keyword": "mantenimiento injerto capilar",
+        "niche_id": "n4",
+        "subnicho_id": "n4-s1",
+        "category": "guide",
+        "volume": 0,
+        "cpc": 0,
+        "competition": null,
+        "client_position": null,
+        "top_competitors": [
+          "insparya.es #1",
+          "www.clinicatrasplantecapilar.com #2",
+          "istanbul-care.com #3"
+        ],
+        "serp_urls": [
+          {
+            "pos": 1,
+            "url": "https://insparya.es/mantenimiento-capilar-antes-y-despues-de-un-trasplante-capilar/",
+            "title": "Mantenimiento capilar antes y después de un trasplante capilar",
+            "domain": "insparya.es"
+          },
+          {
+            "pos": 2,
+            "url": "https://www.clinicatrasplantecapilar.com/Cuidados-post-trasplante-capilar/",
+            "title": "Cuidados después de un trasplante capilar",
+            "domain": "www.clinicatrasplantecapilar.com"
+          },
+          {
+            "pos": 3,
+            "url": "https://istanbul-care.com/es/mantenimiento-del-trasplante-capilar-como-garantizar-resultados-duraderos/",
+            "title": "Mantenimiento del trasplante capilar: Cómo garantizar resultados ...",
+            "domain": "istanbul-care.com"
+          },
+          {
+            "pos": 4,
+            "url": "https://grupopedrojaen.com/tratamiento-medico-despues-trasplante-capilar/",
+            "title": "Tratamiento médico después de un trasplante capilar: ¿es necesario?",
+            "domain": "grupopedrojaen.com"
+          },
+          {
+            "pos": 5,
+            "url": "https://hairforever.es/cuidado-postoperatorio-del-trasplante-capilar-guia-detallada/",
+            "title": "Cuidado Postoperatorio del Trasplante Capilar: Guía Detallada",
+            "domain": "hairforever.es"
+          }
+        ]
+      },
+      {
+        "keyword": "mejor clinica capilar madrid",
+        "niche_id": "n5",
+        "subnicho_id": "n5-s1",
+        "category": "ranking",
+        "volume": 590,
+        "cpc": 9.63,
+        "competition": "MEDIUM",
+        "client_position": 3,
+        "top_competitors": [
+          "www.abc.es #1",
+          "www.capilclinic.es #2",
+          "www.elmundo.es #4"
+        ],
+        "serp_urls": [
+          {
+            "pos": 1,
+            "url": "https://www.abc.es/salud/comparativa-mejores-clinicas-injerto-capilar-madrid-20251002113749-nt.html",
+            "title": "Comparativa de las mejores clínicas de injerto capilar en Madrid",
+            "domain": "www.abc.es"
+          },
+          {
+            "pos": 2,
+            "url": "https://www.capilclinic.es/injerto-capilar-madrid/",
+            "title": "Injerto capilar en Madrid con resultados naturales",
+            "domain": "www.capilclinic.es"
+          },
+          {
+            "pos": 3,
+            "url": "https://hospitalcapilar.com/",
+            "title": "Hospital Capilar: Injerto capilar en Madrid con todo incluido",
+            "domain": "hospitalcapilar.com"
+          },
+          {
+            "pos": 4,
+            "url": "https://www.elmundo.es/uestudio/2025/07/01/6863bd9bfdddff519e8b4598.html",
+            "title": "La mejor clínica de injerto capilar en Madrid según pacientes y expertos",
+            "domain": "www.elmundo.es"
+          },
+          {
+            "pos": 5,
+            "url": "https://www.topdoctors.es/madrid-ciudad/centro/cirugia-capilar/",
+            "title": "Clínicas y Centros Médicos de Especialistas en Cirugía Capilar ...",
+            "domain": "www.topdoctors.es"
+          }
+        ]
+      },
+      {
+        "keyword": "clinica capilar madrid opiniones",
+        "niche_id": "n5",
+        "subnicho_id": "n5-s1",
+        "category": "ranking",
+        "volume": 0,
+        "cpc": 0,
+        "competition": null,
+        "client_position": 7,
+        "top_competitors": [
+          "es.trustpilot.com #1",
+          "www.forotenerpelo.com #2",
+          "clinicacapilarvelazquez.es #3"
+        ],
+        "serp_urls": [
+          {
+            "pos": 1,
+            "url": "https://es.trustpilot.com/review/hospitalcapilar.com",
+            "title": "Opiniones sobre Hospital Capilar",
+            "domain": "es.trustpilot.com"
+          },
+          {
+            "pos": 2,
+            "url": "https://www.forotenerpelo.com/viewtopic.php?t=3565",
+            "title": "Opiniones sobre las mejores clínicas de injerto capilar en Madrid✔️",
+            "domain": "www.forotenerpelo.com"
+          },
+          {
+            "pos": 3,
+            "url": "https://clinicacapilarvelazquez.es/opiniones-y-testimonios",
+            "title": "Opiniones y Testimonios Reales ✔️ Clínica Capilar Velázquez",
+            "domain": "clinicacapilarvelazquez.es"
+          },
+          {
+            "pos": 4,
+            "url": "https://www.topmadrid.com.es/clinicas-injerto-capilar/",
+            "title": "Las 10 mejores clínicas de injerto capilar en Madrid",
+            "domain": "www.topmadrid.com.es"
+          },
+          {
+            "pos": 5,
+            "url": "https://www.topdoctors.es/madrid-ciudad/cirugia-capilar/",
+            "title": "Los 10 Especialistas en Cirugía Capilar de Madrid mejor valorados",
+            "domain": "www.topdoctors.es"
+          }
+        ]
+      },
+      {
+        "keyword": "clinica capilar madrid",
+        "niche_id": "n5",
+        "subnicho_id": "n5-s1",
+        "category": "ranking",
+        "volume": 1900,
+        "cpc": 11.29,
+        "competition": "MEDIUM",
+        "client_position": 1,
+        "top_competitors": [
+          "clinicacapilarmora.com #2",
+          "capilea.com.es #3",
+          "clinicamcapilar.com #4"
+        ],
+        "serp_urls": [
+          {
+            "pos": 1,
+            "url": "https://hospitalcapilar.com/",
+            "title": "Hospital Capilar: Injerto capilar en Madrid con todo incluido",
+            "domain": "hospitalcapilar.com"
+          },
+          {
+            "pos": 2,
+            "url": "https://clinicacapilarmora.com/",
+            "title": "Clínica Capilar en Madrid – Dr. Aníbal Mora, Especialista en ...",
+            "domain": "clinicacapilarmora.com"
+          },
+          {
+            "pos": 3,
+            "url": "https://capilea.com.es/",
+            "title": "Capilea: Clínica Capilar de Trasplante e Injerto Capilar en ...",
+            "domain": "capilea.com.es"
+          },
+          {
+            "pos": 4,
+            "url": "https://clinicamcapilar.com/",
+            "title": "MCapilar: Clínica de Injerto Capilar en España",
+            "domain": "clinicamcapilar.com"
+          },
+          {
+            "pos": 5,
+            "url": "https://grupopedrojaen.com/ubicaciones/clinica-cinca-30-madrid/",
+            "title": "Clínica capilar en Madrid - Injertos y tratamientos médicos",
+            "domain": "grupopedrojaen.com"
+          }
+        ]
+      },
+      {
+        "keyword": "hospital capilar vs insparya",
+        "niche_id": "n5",
+        "subnicho_id": "n5-s2",
+        "category": "comparison",
+        "volume": 0,
+        "cpc": 0,
+        "competition": null,
+        "client_position": null,
+        "top_competitors": [
+          "todoimplantecapilar.com #1",
+          "forocoches.com #2",
+          "www.implante-dental.biz #3"
+        ],
+        "serp_urls": [
+          {
+            "pos": 1,
+            "url": "https://todoimplantecapilar.com/capilclinic-vs-insparya-la-batalla-de-las-grandes-clinicas-de-injertos-capilares/",
+            "title": "Capilclinic vs Insparya: La batalla de las grandes clínicas de ...",
+            "domain": "todoimplantecapilar.com"
+          },
+          {
+            "pos": 2,
+            "url": "https://forocoches.com/foro/index.php/showthread.php?p=453231314",
+            "title": "Forocalvos a mi: CAPILCLINIC vs INSPARYA",
+            "domain": "forocoches.com"
+          },
+          {
+            "pos": 3,
+            "url": "https://www.implante-dental.biz/mejores-clinicas-injerto-capilar-madrid/",
+            "title": "Mejores Clínicas de Injerto Capilar en Madrid 2025",
+            "domain": "www.implante-dental.biz"
+          },
+          {
+            "pos": 4,
+            "url": "https://www.forotenerpelo.com/viewtopic.php?t=3883",
+            "title": "¿He hecho bien? ¿Insparya, Capilclinic, Clínica Medilor o ...",
+            "domain": "www.forotenerpelo.com"
+          },
+          {
+            "pos": 5,
+            "url": "https://insparya.es/",
+            "title": "Insparya: ᐅ Clinica Salud Capilar",
+            "domain": "insparya.es"
+          }
+        ]
+      },
+      {
+        "keyword": "alternativas a insparya",
+        "niche_id": "n5",
+        "subnicho_id": "n5-s2",
+        "category": "comparison",
+        "volume": 0,
+        "cpc": 0,
+        "competition": null,
+        "client_position": null,
+        "top_competitors": [
+          "todoimplantecapilar.com #1",
+          "www.capilclinic.es #2",
+          "www.implante-dental.biz #3"
+        ],
+        "serp_urls": [
+          {
+            "pos": 1,
+            "url": "https://todoimplantecapilar.com/capilclinic-vs-insparya-la-batalla-de-las-grandes-clinicas-de-injertos-capilares/",
+            "title": "Capilclinic vs Insparya: La batalla de las grandes clínicas de ...",
+            "domain": "todoimplantecapilar.com"
+          },
+          {
+            "pos": 2,
+            "url": "https://www.capilclinic.es/blog/alternativas-trasplante-capilar/",
+            "title": "¿Cuáles son las alternativas al trasplante capilar?",
+            "domain": "www.capilclinic.es"
+          },
+          {
+            "pos": 3,
+            "url": "https://www.implante-dental.biz/mejores-clinicas-injerto-capilar-madrid/",
+            "title": "Mejores Clínicas de Injerto Capilar en Madrid 2025",
+            "domain": "www.implante-dental.biz"
+          },
+          {
+            "pos": 4,
+            "url": "https://www.abc.es/summum/estilo/belleza/abci-mesoterapia-capilar-y-otros-tratamientos-nuevos-contra-calvicie-202102121003_noticia.html",
+            "title": "Mesoterapia capilar y otros tratamientos nuevos contra la ...",
+            "domain": "www.abc.es"
+          },
+          {
+            "pos": 5,
+            "url": "https://www.topmadrid.com.es/clinicas-injerto-capilar/",
+            "title": "Las 10 mejores clínicas de injerto capilar en Madrid",
+            "domain": "www.topmadrid.com.es"
+          }
+        ]
+      },
+      {
+        "keyword": "insparya opiniones",
+        "niche_id": "n5",
+        "subnicho_id": "n5-s2",
+        "category": "ranking",
+        "volume": 0,
+        "cpc": 0,
+        "competition": null,
+        "client_position": null,
+        "top_competitors": [
+          "insparya.es #1",
+          "es.trustpilot.com #2",
+          "www.forotenerpelo.com #3"
+        ],
+        "serp_urls": [
+          {
+            "pos": 1,
+            "url": "https://insparya.es/opiniones/",
+            "title": "Insparya opiniones | Reseñas Insparya ®",
+            "domain": "insparya.es"
+          },
+          {
+            "pos": 2,
+            "url": "https://es.trustpilot.com/review/insparya.es",
+            "title": "Opiniones sobre Insparya Hair Company",
+            "domain": "es.trustpilot.com"
+          },
+          {
+            "pos": 3,
+            "url": "https://www.forotenerpelo.com/viewtopic.php?t=3635",
+            "title": "Clínica Insparya Opiniones✔️",
+            "domain": "www.forotenerpelo.com"
+          },
+          {
+            "pos": 4,
+            "url": "https://www.ocu.org/reclamar/empresas/insparya/B5A5F71A-249B8964B",
+            "title": "Reclamaciones y opiniones Insparya",
+            "domain": "www.ocu.org"
+          },
+          {
+            "pos": 5,
+            "url": "https://www.youtube.com/playlist?list=PLQrbrcl4KjX7cNGJncLqPm0d76-rC-Mvv",
+            "title": "Opiniones Insparya",
+            "domain": "www.youtube.com"
+          }
+        ]
+      },
+      {
+        "keyword": "svenson opiniones",
+        "niche_id": "n5",
+        "subnicho_id": "n5-s2",
+        "category": "ranking",
+        "volume": 0,
+        "cpc": 0,
+        "competition": null,
+        "client_position": null,
+        "top_competitors": [
+          "es.trustpilot.com #1",
+          "www.svenson.es #2",
+          "www.ocu.org #3"
+        ],
+        "serp_urls": [
+          {
+            "pos": 1,
+            "url": "https://es.trustpilot.com/review/svenson.com",
+            "title": "Lee las opiniones sobre el servicio de svenson.com",
+            "domain": "es.trustpilot.com"
+          },
+          {
+            "pos": 2,
+            "url": "https://www.svenson.es/blog/testimonios-las-opiniones-de-los-clientes-de-svenson/",
+            "title": "Testimonios: las opiniones de los clientes de - Svenson",
+            "domain": "www.svenson.es"
+          },
+          {
+            "pos": 3,
+            "url": "https://www.ocu.org/reclamar/empresas/svenson/64B8EF51-A166DE779",
+            "title": "Reclamaciones y opiniones Svenson",
+            "domain": "www.ocu.org"
+          },
+          {
+            "pos": 4,
+            "url": "https://www.svenson-responde.es/opiniones/tratamientos-medicos/",
+            "title": "Opiniones sobre Tratamientos médicos",
+            "domain": "www.svenson-responde.es"
+          },
+          {
+            "pos": 5,
+            "url": "https://www.reddit.com/r/femalehairadvice/comments/132uay6/is_the_svenson_hair_treatment_worth_it/?tl=es-es",
+            "title": "¿Vale la pena el tratamiento capilar de Svenson? : r/femalehairadvice",
+            "domain": "www.reddit.com"
+          }
+        ]
+      },
+      {
+        "keyword": "hospital capilar opiniones",
+        "niche_id": "n5",
+        "subnicho_id": "n5-s2",
+        "category": "ranking",
+        "volume": 140,
+        "cpc": 4.83,
+        "competition": "MEDIUM",
+        "client_position": 7,
+        "top_competitors": [
+          "es.trustpilot.com #1",
+          "www.facebook.com #4",
+          "www.ocu.org #5"
+        ],
+        "serp_urls": [
+          {
+            "pos": 1,
+            "url": "https://es.trustpilot.com/review/hospitalcapilar.com",
+            "title": "Opiniones sobre Hospital Capilar",
+            "domain": "es.trustpilot.com"
+          },
+          {
+            "pos": 2,
+            "url": "https://hospitalcapilar.com/",
+            "title": "Hospital Capilar: Injerto capilar en Madrid con todo incluido",
+            "domain": "hospitalcapilar.com"
+          },
+          {
+            "pos": 3,
+            "url": "https://hospitalcapilar.com/testimonio-injerto-capilar/",
+            "title": "Nuestros pacientes hablan: Testimonio tras un injerto capilar",
+            "domain": "hospitalcapilar.com"
+          },
+          {
+            "pos": 4,
+            "url": "https://www.facebook.com/hospitalcapilar/",
+            "title": "Hospital Capilar | Madrid",
+            "domain": "www.facebook.com"
+          },
+          {
+            "pos": 5,
+            "url": "https://www.ocu.org/reclamar/lista-reclamaciones-publicas/mala-praxis/90c5a7f4574a1e336e",
+            "title": "Hospital Capilar Pontevedra - Mala praxis",
+            "domain": "www.ocu.org"
+          }
+        ]
+      },
+      {
+        "keyword": "tratamiento anticaida pelo",
+        "niche_id": "n2",
+        "subnicho_id": "n2-s3",
+        "category": "solution",
+        "volume": 720,
+        "cpc": 1.12,
+        "competition": "HIGH",
+        "client_position": null,
+        "top_competitors": [
+          "www.mayoclinic.org #1",
+          "www.amazon.com #2",
+          "www.primor.eu #3"
+        ],
+        "serp_urls": [
+          {
+            "pos": 1,
+            "url": "https://www.mayoclinic.org/es/diseases-conditions/hair-loss/diagnosis-treatment/drc-20372932",
+            "title": "Caída del cabello - Diagnóstico y tratamiento",
+            "domain": "www.mayoclinic.org"
+          },
+          {
+            "pos": 2,
+            "url": "https://www.amazon.com/-/es/Los-m%C3%A1s-vendidos-Productos-para-Ca%C3%ADda-de-Cabello/zgbs/beauty/10898755011",
+            "title": "Mejor Productos para Caída de Cabello",
+            "domain": "www.amazon.com"
+          },
+          {
+            "pos": 3,
+            "url": "https://www.primor.eu/blog/mejores-activos-anticaida/?srsltid=AfmBOoonVNNnNJrgl1TfatmzeZefRSUes_xe7HsT0pLFL-HGIDUm5CaF",
+            "title": "Los 10 mejores activos anticaída para tu cabello",
+            "domain": "www.primor.eu"
+          },
+          {
+            "pos": 4,
+            "url": "https://milagrosbeauty.com/collections/capilar-caida-del-cabello?srsltid=AfmBOoqdn6_NRbNiOGGOwnFJ7zHgYsQZfCD09DOTk2diE8tQiOwctiVl",
+            "title": "Productos y Tratamientos para la caída del cabello",
+            "domain": "milagrosbeauty.com"
+          },
+          {
+            "pos": 5,
+            "url": "https://www.cosmopolitan.com/es/belleza/pelo-cortes-peinados/a70278556/tratamientos-anticaida-pelo-especialistas/",
+            "title": "Los tratamientos anticaída que mejor funcionan y que ...",
+            "domain": "www.cosmopolitan.com"
+          }
+        ]
+      },
+      {
+        "keyword": "caida cabello tratamiento",
+        "niche_id": "n3",
+        "subnicho_id": "n3-s2",
+        "category": "solution",
+        "volume": 320,
+        "cpc": 1.93,
+        "competition": "HIGH",
+        "client_position": null,
+        "top_competitors": [
+          "www.mayoclinic.org #1",
+          "www.aarp.org #2",
+          "www.amazon.com #3"
+        ],
+        "serp_urls": [
+          {
+            "pos": 1,
+            "url": "https://www.mayoclinic.org/es/diseases-conditions/hair-loss/diagnosis-treatment/drc-20372932",
+            "title": "Caída del cabello - Diagnóstico y tratamiento",
+            "domain": "www.mayoclinic.org"
+          },
+          {
+            "pos": 2,
+            "url": "https://www.aarp.org/espanol/salud/enfermedades-y-tratamientos/info-2024/remedios-para-la-calvicie.html",
+            "title": "Tratamientos para la alopecia y la caída del pelo",
+            "domain": "www.aarp.org"
+          },
+          {
+            "pos": 3,
+            "url": "https://www.amazon.com/-/es/Los-m%C3%A1s-vendidos-Productos-para-Ca%C3%ADda-de-Cabello/zgbs/beauty/10898755011",
+            "title": "Mejor Productos para Caída de Cabello",
+            "domain": "www.amazon.com"
+          },
+          {
+            "pos": 4,
+            "url": "https://insparya.es/remedios-naturales-alopecia-androgenica/",
+            "title": "Remedios caseros para la caída del pelo: hombres y mujeres",
+            "domain": "insparya.es"
+          },
+          {
+            "pos": 5,
+            "url": "https://www.cigna.com/es-us/knowledge-center/hw/temas-de-salud/cada-del-cabello-aa151672",
+            "title": "Caída del cabello",
+            "domain": "www.cigna.com"
+          }
+        ]
+      },
+      {
+        "keyword": "se me cae el pelo que hago",
+        "niche_id": "n3",
+        "subnicho_id": "n3-s1",
+        "category": "discovery",
+        "volume": 20,
+        "cpc": 4.03,
+        "competition": "HIGH",
+        "client_position": null,
+        "top_competitors": [
+          "www.quironsalud.com #1",
+          "insparya.es #2",
+          "www.mayoclinic.org #3"
+        ],
+        "serp_urls": [
+          {
+            "pos": 1,
+            "url": "https://www.quironsalud.com/blogs/es/piel-protege-cuidala/doctora-cae-pelo-hago",
+            "title": "Doctora: se me cae el pelo, ¿qué hago?",
+            "domain": "www.quironsalud.com"
+          },
+          {
+            "pos": 2,
+            "url": "https://insparya.es/remedios-naturales-alopecia-androgenica/",
+            "title": "Remedios caseros para la caída del pelo: hombres y mujeres",
+            "domain": "insparya.es"
+          },
+          {
+            "pos": 3,
+            "url": "https://www.mayoclinic.org/es/diseases-conditions/hair-loss/diagnosis-treatment/drc-20372932",
+            "title": "Caída del cabello - Diagnóstico y tratamiento",
+            "domain": "www.mayoclinic.org"
+          },
+          {
+            "pos": 4,
+            "url": "https://www.grupohospitalariohc.com/se-te-cae-mucho-el-pelo-descubre-las-causas-y-que-hacer-al-respecto",
+            "title": "¿Se te cae mucho el pelo? Descubre las causas y qué hacer al respecto",
+            "domain": "www.grupohospitalariohc.com"
+          },
+          {
+            "pos": 5,
+            "url": "https://dehesia.com/causas-soluciones-naturales-caida-cabello/?srsltid=AfmBOor6LE_x8Iq1SdnmGfIq6fY2c42QmmuAp5mPbplrmf9JqGYr4wQy",
+            "title": "¿SE TE CAE MUCHO EL PELO? Causas y las soluciones naturales ...",
+            "domain": "dehesia.com"
+          }
+        ]
+      }
     ],
     "summary": {
-      "total_keywords": 18,
-      "client_in_top3": 3,
-      "client_in_top10": 6,
-      "client_invisible": 12,
-      "top3_keywords": ["clinica capilar madrid (#1)", "trasplante capilar madrid precio (#1)", "clinica capilar madrid opiniones (#1)"],
-      "invisible_high_volume": [
-        "alopecia androgenetica tratamiento (1300/mo)",
-        "PRP capilar precio (720/mo)",
-        "caida pelo mujer tratamiento (590/mo)",
-        "tratamiento alopecia (480/mo)",
-        "tratamiento capilar madrid (320/mo)"
-      ],
-      "key_finding": "HC rankea TOP 3 para 3 keywords — todas de CIRUGÍA o brand. De 12 keywords de TRATAMIENTO, HC aparece en 0. Volumen combinado invisible: >4,000 búsquedas/mes solo en las keywords analizadas."
+      "total_keywords": 41,
+      "client_in_top3": 5,
+      "client_in_top10": 10,
+      "client_invisible": 31,
+      "total_invisible_volume": 9890,
+      "per_subnicho": {
+        "n1-s1": {
+          "total": 4,
+          "visible": 1,
+          "invisible": 3
+        },
+        "n1-s3": {
+          "total": 2,
+          "visible": 0,
+          "invisible": 2
+        },
+        "n2-s1": {
+          "total": 3,
+          "visible": 0,
+          "invisible": 3
+        },
+        "n2-s2": {
+          "total": 2,
+          "visible": 0,
+          "invisible": 2
+        },
+        "n2-s3": {
+          "total": 7,
+          "visible": 3,
+          "invisible": 4
+        },
+        "n3-s1": {
+          "total": 5,
+          "visible": 2,
+          "invisible": 3
+        },
+        "n3-s2": {
+          "total": 4,
+          "visible": 0,
+          "invisible": 4
+        },
+        "n3-s3": {
+          "total": 3,
+          "visible": 0,
+          "invisible": 3
+        },
+        "n4-s1": {
+          "total": 3,
+          "visible": 0,
+          "invisible": 3
+        },
+        "n5-s1": {
+          "total": 3,
+          "visible": 3,
+          "invisible": 0
+        },
+        "n5-s2": {
+          "total": 5,
+          "visible": 1,
+          "invisible": 4
+        }
+      },
+      "key_finding": "HC visible in 10/41 keywords. Invisible for 31 keywords with combined volume of 9890/mo. All visibility is surgery/brand — ZERO for treatments."
     }
   },
-  "metadata": { "duration_seconds": 30, "apis_called": ["serper.dev (18 queries)", "dataforseo (35 keywords)"], "errors": [] }
+  "metadata": {
+    "duration_seconds": 60,
+    "apis_called": [
+      "serper.dev (41 queries)",
+      "dataforseo (41 keywords)"
+    ],
+    "errors": []
+  }
 }

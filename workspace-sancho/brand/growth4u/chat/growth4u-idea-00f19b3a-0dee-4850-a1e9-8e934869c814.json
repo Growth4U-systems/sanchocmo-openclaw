@@ -1,0 +1,11 @@
+{
+  "messages": [
+    {
+      "role": "bot",
+      "text": "¡Listo! El artículo pillar y los posts de LinkedIn están terminados. Aquí va el resumen:\n\n## 📦 Lo que hay\n\n**Pillar Page SEO** (~2.500 palabras)\n→ `campaigns/content/estrategias-growth-marketing-saas-b2b.md`\n\n- Framework Trust Engine completo aplicado a SaaS B2B en 4 fases (semanas 1-24+)\n- Caso Bnext con datos reales: CAC de 50€ → 12,40€, de 0 a 400K usuarios\n- 8 FAQs optimizadas para PAA\n- Schema markup (Article + FAQ JSON-LD)\n- Voz de marca Growth4U aplicada en los 4 traits\n\n**4 Posts LinkedIn** (atomización)\n→ `campaigns/content/atomized/estrategias-growth-marketing-saas-b2b-linkedin.md`\n\n- Un post por cada fase del Trust Engine (800-1.500 chars cada uno)\n- Hook provocador → dato/historia → insight → CTA soft\n- Funcionan de forma independiente\n\n## 🎯 Ángulo\n\nNo es otro \"10 estrategias growth\" genérico — es el Trust Engine con métricas concretas y Bnext como prueba verificable.\n\n## ⏭️ Próximos pasos sugeridos\n\n1. Alfonso revisa y aprueba\n2. Publicar en growth4u.io/blog con el schema markup\n3. Programar los posts LinkedIn (Lun-Mie-Vie-Lun)\n4. Crear los visual assets (featured image + carousels)\n5. Meter en la próxima newsletter\n\n¿Quieres que revise algo del contenido o pasamos a los assets visuales?",
+      "agent": "sancho",
+      "ts": "2026-03-26T07:10:16.717Z"
+    }
+  ],
+  "updatedAt": 1774509016717
+}

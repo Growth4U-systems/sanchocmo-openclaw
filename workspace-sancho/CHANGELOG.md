@@ -5,6 +5,74 @@ Scope: Features y cambios del producto SanchoCMO. Actividad operativa por client
 
 ---
 
+## [2.9.0] — 2026-03-29
+
+### Added
+- **Trust Engine v5** — Complete rewrite as native OpenClaw skill (no backend Python). 10 subcommands, MC inline page with sidebar integration, 3 API endpoints (`run-state`, `module`, `save`). First real-data execution: DataForSEO keyword enrichment (20 keywords), Serper.dev SERP analysis (18 keywords), GEO via Gemini, social profiles audit. v2 re-run after shallow v1 flagged.
+- **MC Chat Plugin (`mc-chat`)** — Channel plugin shipped and deployed. Full persistence (`brand/{slug}/chat/{id}.json`), structured dispatch context, multi-message delivery. Replaces stateless `openclaw agent -m`.
+- **MC Projects: Detail Page** — Click project opens full-page view with header (status/phase/strategy/review), objective, metrics, progress bar, task cards with status pills, 💬 Chat + ✏️ Edit buttons, back navigation.
+- **MC Projects: Archiving** — 📦 archive button per project with optional reason prompt. New `POST /api/projects/project-archive` endpoint. Archived projects hidden from main list, shown in collapsible "📦 Archivados" section.
+- **MC Notification System (server-side)** — `notifyProjectChange()` fires on task/project status changes. Notifies correct MC Chat thread via `sourceThread` parameter + queues Discord notification in `_system/notification-queue.jsonl`.
+- **MC Sidebar Reorganization** — New structure: Foundation | **Trabajo** (Proyectos, Idea Bank, Recurrentes) | **Datos** (Métricas, Trust Engine, Campañas, Supabase) | Sistema.
+- **`alarife-integration` skill** — New skill for Alarife integration (421 lines).
+- **`frontend-slides` deploy + export** — `deploy.sh` (218 lines) for deployment and `export-pdf.sh` (418 lines) for PDF conversion.
+- **MC Smoke Test script** — `scripts/mc-smoke-test.sh` for automated MC health checks.
+- **Outbound System PDR** — `_system/prds/outbound-system-pdr.md` — architecture spec for outbound pipeline.
+- **Idea Generation spec** — `_system/prds/idea-generation-spec.md`.
+- **MC Chat v2 WIP** — Next-gen chat plugin scaffolded in Cervantes workspace (`plugins-wip/mc-chat-v2/`).
+
+### Changed
+- **MC Doc Viewer: Relative Link Rewriting** — `renderMarkdown()` accepts `docContext` (slug + docsBase). Absolute-path links in brand docs rewrite to MC internal paths. Non-existent content renders as red links (strikethrough + "pendiente" label).
+- **MC Server-Side Markdown** — New `simpleMarkdownToHtml()` replaces client-side-only rendering. Full support: headers, bold/italic, links, code blocks, tables, lists, blockquotes. Works as fallback when browser blocks CDN (Brave).
+- **SOUL.md** — Added Principio 8: AI-speed time estimates (Foundation pillar = 5-15 min, not weeks). Added Rule 15: mandatory user mention + MC tokenized links on task completion.
+- **TOOLS.md** — Added "Entrega de resultados (P0)" section with mandatory delivery format (mention + links).
+- **3 skills: AI-speed timelines** — `strategic-plan` ("Semana 1-4" → "Día 1-2"), `keyword-research` ("weeks 1-12" → action-based batches), `insight-to-content-mapper` ("this week/2 weeks" → "next action/after batch").
+- **`claude-api` skill** — Updated across all 7 language references (Python, TypeScript, Go, Java, PHP, Ruby, C#, curl).
+- **`last30days` skill** — YouTube adapter improvements + new tests.
+- **`idea-generation` skill** — Updated SKILL.md.
+- **MC Chat spawn mechanism** — Replaced `execCb` with `spawn` for agent CLI calls. Added explicit PATH with `/opt/homebrew/bin` to env.
+- **MC server notification routing** — All task/project API endpoints now pass `sourceThread` for correct MC Chat thread targeting.
+- **12 ClawHub skill versions bumped** — apify, apollo, google-ads, google-analytics, google-search-console, gsc, larry, meta-ads, metricool, native-google-analytics, nano-banana-pro, connect-api.
+
+### Fixed
+- **MC Documents blank page (critical)** — Two root causes fixed: (1) Race condition in `renderDocBrowserRoot` — `innerHTML` assignment after async `fetch()` wiped content; moved assignment before fetch. (2) Missing CORS headers — added `Access-Control-Allow-Origin: *` to all 13 MC server HTML endpoints.
+- **MC Chat shell escaping** — Messages with quotes/newlines/special chars broke `execCb` shell command. Fixed by switching to `spawn`.
+- **`nano-banana-pro` skill** — Reinstalled via ClawHub after accidental removal in 2.8.0.
+
+---
+
+## [2.8.0] — 2026-03-27
+
+### Added
+- **Dashboard v2** — Complete redesign with Okara-inspired 4-column layout. Sidebar (brand + nav), Activity bar (collapsible event feed), Columns: (1) Foundation interactive with onboarding URL input + clickable pillars (▶️ start, 📄 doc, 👁️ review), (2) Metrics dual-mode (PageSpeed insights for no-plan, API metrics plan with funnel visualization), (3) Next Steps (⚡Ahora urgent actions + 📋Strategies + ❓Decisions), (4) Chat with Sancho (thread system). Mobile responsive (hamburger + tab bar). 9 mockup iterations (Mar 24).
+- **MC Chat Plugin (`mc-chat`)** — OpenClaw channel plugin connecting MC dashboard to Sancho. Full persistence (`brand/{slug}/chat/{id}.json`), structured dispatch context, multi-message delivery. Replaces stateless `openclaw agent -m`. 3 crash bugs fixed (capabilities, listAccountIds, send runtime).
+- **Chat Thread System** — Backend JSON persistence + frontend polling (1.5-3s). Thread types: Foundation (`{slug}:{pillar}`), Projects, Tasks, Ideas, Recurring, Free. Pinned doc bar for Foundation threads. Agent visual ID (🤠 Sancho, ⚔️ Escudero, 🐴 Rocinante, ✒️ Cervantes). 💬 buttons on all Foundation pillars, projects, tasks. Universal `mcChatSidebar` module with Free/Locked modes.
+- **Metrics Plan System** — Plan-driven metrics dashboard. `integration-mappings.json` defines 12 integrations (GA4, GSC, Meta Ads, etc.) with funnel step mappings. `generate-plan.js` auto-generates `metrics-plan.json` per client archetype (SaaS, Fintech, Marketplace, E-commerce, Lead-to-Sale). 5 archetype templates with funnels + benchmarks. MC renders funnel visualization + categorized KPIs (Traffic, SEO, Paid, Social, CRM).
+- **`/api/metrics-plan`** — Returns client's `metrics-plan.json` with archetype, funnel, KPIs, connected modules, missing integrations.
+- **`/api/metrics` plan field** — Metrics API now includes plan data + archetype templates from integration-mappings.
+- **Metrics Dashboard Features** — Date range selector (Ayer | 7 días | 30 días | Todo), sortable ad tables (Campaigns/Ad Sets/Creatives), Leads + CPL columns on ads, per-channel view (Facebook Ads, Instagram, Organic Search, etc.), GHL meetings from pipeline stages (Closer pipeline).
+- **Chat API Endpoints** — `GET /api/mc-chat/threads/{slug}`, `GET /api/mc-chat/thread/{id}`, `POST /api/mc-chat/thread`, `POST /api/mc-chat/send`, `GET /api/mc-chat/doc/{path}` (for pinned doc raw content). All portal-allowed.
+- **Server-Side Markdown Rendering** — `simpleMarkdownToHtml()` in mc-server.js (headers, bold, italic, links, code, tables, lists, blockquotes). Fallback for Brave browser blocking `marked.js` CDN.
+- **SanchoCMO Logo** — 4 final icon candidates generated (steampunk comic Sancho). Voting sheet created. Iterations: circular rust border, rounded square dark bg, detailed cartoon brown bg, simpler cartoon white bg.
+
+### Changed
+- **Dashboard responsive** — Sidebar hidden with ☰ on mobile (<900px), tab bar for columns, 2x2 grid on tablet. Fixed hardcoded `position:fixed; left:220px` with `!important` override.
+- **Foundation pillar links** — All doc links now use `${MC_BASE}/docs/...` (auto-detects admin/portal mode). Fixed hardcoded `/mc/docs/` breaking in admin route.
+- **GHL adapter** — New contacts tracked per channel via `attributions[0].medium/utmSessionSource`. Metrics output includes `newContacts` with `dimensions: { channel }`.
+- **`acquisition-metrics-plan` skill** — Added Step 7.5 (generate metrics-plan.json via generate-plan.js), Step 8 (integration discovery flow with MC connect links). Output: 3 deliverables (plan.md + plan.json + XLSX template). Context Lake: metrics-plan.json + integration-mappings.json.
+- **Visual Identity direction** — Evolved from "Sancho Futurista Light" (Mar 8) → "Steampunk Hybrid" (Mar 16, Martin approved) → Logo iteration (Mar 25). Final doc update pending logo vote.
+
+### Fixed
+- **`mc-chat` plugin crashes** — (1) Missing `capabilities` → `nativeCommands` TypeError, (2) Missing `config.listAccountIds` → health monitor crash loop, (3) `_runtime.chat.send()` doesn't exist → replaced with `dispatchInboundMessageWithBufferedDispatcher`.
+- **Metrics meetings count** — GHL `/calendars/events` returns 0 with Private Integration Tokens (API bug). Fixed by counting from **Closer pipeline** opportunities in meeting stages ("agendad", "confirmad", "seguimiento"). Result: 4 meetings (was 0).
+- **Brave browser markdown** — CDN blocked `marked.js` (cdn.jsdelivr.net). Added server-side markdown rendering as fallback.
+- **Ads table styling** — Added `sortable-ads-table` class (compact 12px font, proper padding, hover, scroll on overflow).
+
+### Removed
+- **`nano-banana-pro` skill** — Removed Mar 25, then reinstalled via clawhub. Images now via internal `tool-image-generation` pipeline.
+
+---
+
 ## [2.7.0] — 2026-03-22
 
 ### Added

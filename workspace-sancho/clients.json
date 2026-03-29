@@ -21,7 +21,7 @@
       "phase": 0,
       "mcToken": "730a6de7b765cdaf15131aa46a31a610",
       "channels": {
-        "intelligence": "1475638253154603170"
+        "insights": "1475638253154603170"
       },
       "metrics": {
         "apis": []
@@ -43,10 +43,13 @@
       },
       "mcToken": "7be93afd7e2be887ce181f8aeab0d0ec",
       "channels": {
-        "intelligence": "1477741644789842031"
+        "insights": "1477741644789842031"
       },
       "metrics": {
-        "apis": ["meta-ads", "ghl"],
+        "apis": [
+          "meta-ads",
+          "ghl"
+        ],
         "meta_ads": {
           "token_env": "META_ACCESS_TOKEN",
           "account_id": "act_1507778460268244"
@@ -74,7 +77,7 @@
       },
       "mcToken": "63829b9d674d04e272626e9df17409f9",
       "channels": {
-        "intelligence": "1477995838092476477"
+        "insights": "1477995838092476477"
       },
       "metrics": {
         "apis": []
@@ -144,7 +147,7 @@
       "guild": "1483424292824940659",
       "mcToken": "2c366e97f11ef9428ae5474351a44bd8",
       "channels": {
-        "intelligence": "1483424294099882093"
+        "insights": "1483424294099882093"
       },
       "metrics": {
         "apis": []
@@ -153,7 +156,23 @@
     {
       "slug": "dealcar",
       "name": "Dealcar",
-      "discord_guild_id": "1483765888761991178",
+      "phase": 0,
+      "paths": {
+        "brand": "brand/"
+      },
+      "supabase": {
+        "url": "https://psapmujzxhaxraphddlv.supabase.co",
+        "anon_key": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBzYXBtdWp6eGhheHJhcGhkZGx2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4OTAxNTEsImV4cCI6MjA4NzQ2NjE1MX0.RxanIQCJtjGfCUL_X0MqPi2IdGkXOkmfaEAJZvQJblI"
+      },
+      "mcToken": "5265de9064be9bf3f1b1f46c75d38303",
+      "language": "es",
+      "active": true,
+      "guild": "1483765888761991178"
+    },
+    {
+      "slug": "criptan",
+      "name": "Criptan",
+      "discord_guild_id": "1486844082520195132",
       "phase": 0,
       "paths": {
         "brand": "brand/"

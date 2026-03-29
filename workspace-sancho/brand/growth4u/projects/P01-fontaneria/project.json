@@ -1,24 +1,23 @@
 {
   "id": "P01",
   "name": "Fontanería Web",
-  "objective": "Tracking funcional: Meta Pixel + GA4 conversiones + booking unificado",
+  "description": "La web de Growth4U no tiene tracking de conversiones, la página de servicios está vacía, y hay dos URLs de booking diferentes. Sin resolver esto, no podemos medir resultados de ningún canal ni lanzar ads con ROI medible.",
+  "approach": "Instalamos Meta Pixel + GA4 para medir conversiones en los puntos clave del funnel. Unificamos el booking en una sola URL branded. Creamos el hub de /servicios/ con copy persuasivo para los 3 servicios. Aplicamos fixes técnicos menores (copyright, OG, llms.txt). Y calentamos dominios para cold email en paralelo.",
+  "objective": {
+    "description": "Tracking funcional + web preparada para convertir",
+    "metric": "prerequisites_completed",
+    "baseline": 0,
+    "target": 6,
+    "unit": " tareas"
+  },
   "metrics": {
-    "baseline": {
-      "pixel": false,
-      "ga4_conversions": false,
-      "booking_unified": false
-    },
-    "target": {
-      "pixel": true,
-      "ga4_conversions": true,
-      "booking_unified": true
-    }
+    "baseline": { "pixel": false, "ga4_conversions": false, "booking_unified": false },
+    "target": { "pixel": true, "ga4_conversions": true, "booking_unified": true }
   },
   "origin": "strategic-plan-v2",
   "phase": 0,
+  "strategy": "Fase 0 — Prerequisites",
   "review_date": "2026-03-28",
   "status": "active",
-  "discord": {
-    "project_thread_id": "1482771762566664252"
-  }
+  "discord": { "project_thread_id": "1482771762566664252" }
 }

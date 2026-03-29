@@ -1,0 +1,16 @@
+{
+  "messages": [
+    {
+      "role": "user",
+      "text": "Estoy abriendo el chat sobre \"Warm-up dominios cold email\". Dame un resumen rápido del estado actual y qué podemos hacer. Si necesitas algo de mí, dímelo.",
+      "ts": "2026-03-26T22:43:55.587Z"
+    },
+    {
+      "role": "bot",
+      "text": "## Warm-up Dominios Cold Email — Estado actual\n\n**Proyecto:** P01-T06 (Fontanería Web) → alimenta P03 (Cold Email Pipeline)\n**Status:** `ready` — playbook escrito, pendiente de ejecución\n\n### Lo que está definido:\n- **2 buzones** en dominio secundario (tipo `growthmails.io`) — nunca growth4u.io\n- **DNS:** SPF + DKIM + DMARC\n- **Warm-up 14 días** en Instantly: ramp de 2→50 emails/día por buzón\n- **Después del warm-up** → arranca P03 (listas de prospects + secuencias cold email)\n\n### Lo que falta (acción tuya):\n1. **Comprar dominio(s) secundario(s)** — ¿ya tienes alguno? Tipo `growthmails.io`, `growth4uteam.com`, etc.\n2. **Crear cuenta en Instantly** (o confirmar si ya tienes una)\n3. **Crear los buzones** en Google Workspace o el provider que elijas para esos dominios\n4. **Configurar DNS** (SPF, DKIM, DMARC) — el playbook tiene los registros exactos\n5. **Activar warm-up** en Instantly y esperar 14 días\n\n### Contexto estratégico:\nEsta tarea es el **prerequisito** para P03 (Cold Email Pipeline), que tiene como target **5 meetings/mes** y **€35K pipeline/mes**. Hasta que los buzones no estén calentados, no podemos lanzar campañas.\n\n**¿Qué necesito de ti?**\n- ¿Tienes ya dominio secundario y cuenta Instantly, o hay que partir de cero?\n- ¿Prefieres que te guíe paso a paso o te basta con el playbook tal cual?",
+      "agent": "sancho",
+      "ts": "2026-03-26T22:44:50.549Z"
+    }
+  ],
+  "updatedAt": 1774565090549
+}

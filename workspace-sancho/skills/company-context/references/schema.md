@@ -45,10 +45,11 @@ Complete field-by-field specification. Each field: data type, required level, so
 
 ---
 
-## Section 4: Goals and Vision
+## Section 4: Goals, Vision & North Star Metric
 
 | Field | Type | Required | Source Priority | Consumed By |
 |-------|------|----------|-----------------|-------------|
+| north_star_metric | object {name, definition, baseline, target, timeframe} | REQUIRED | User (guided by business model) | ALL agents — defines success for this client |
 | goal_3_6_months | string | REQUIRED | User | foundation-orchestrator (Lite/Deep), phase routing |
 | goal_quantified | string | Lite | User | diagnostic scoring, goals tracking |
 | vision_3_5_years | string | Deep | Pitch deck > User | positioning-messaging (narrative) |
@@ -108,7 +109,7 @@ Fields marked "optional" do not count toward coverage — they're captured if av
 
 ## Storage
 
-- **Tier 1 (always loaded)**: elevator_pitch, b2b_b2c, revenue_model, goal_3_6_months, differentiator_10x, industry_vertical
+- **Tier 1 (always loaded)**: elevator_pitch, b2b_b2c, revenue_model, north_star_metric, goal_3_6_months, differentiator_10x, industry_vertical
 - **Tier 2 (loaded when relevant)**: Full profile (all sections)
 - **Tier 3 (raw)**: Source URLs, extraction timestamps, validation log
 

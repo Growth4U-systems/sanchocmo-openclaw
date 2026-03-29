@@ -1,0 +1,24 @@
+{
+  "messages": [
+    {
+      "role": "user",
+      "text": "Estoy abriendo el chat sobre \"strategic plan\". Dame un resumen rápido del estado actual y qué podemos hacer. Si necesitas algo de mí, dímelo.",
+      "ts": "2026-03-27T12:33:07.018Z"
+    },
+    {
+      "role": "bot",
+      "text": "Voy a revisar el estado actual de Foundation y strategic plan de Growth4U.",
+      "agent": "sancho",
+      "ts": "2026-03-27T12:34:38.142Z"
+    },
+    {
+      "role": "bot",
+      "text": "## 📊 Strategic Plan — Growth4U\n\n**Estado:** ✅ Approved (14-mar-2026)  \n**Objetivo:** Lead Generation  \n**Horizonte:** Q2 2026 (90 días)  \n**Versión:** v2\n\n---\n\n### 🎯 Objetivo\nPasar de **0 calls/semana a 8-10 calls cualificadas** vía 7 canales coordinados. Pipeline target: **70K€/mes**.\n\n---\n\n### 🔴 3 bloqueadores críticos (resolver primero)\n1. **Meta Pixel sin instalar** — ads corriendo a ciegas\n2. **GA4 sin eventos de conversión** — no sabemos qué canal funciona\n3. **2 URLs de booking** — atribución fragmentada\n\n**Acción:** Fase 0 — Fontanería (semana 1-2)\n\n---\n\n### 🥇 7 estrategias priorizadas\n\n| Prioridad | Estrategia | Score | Target |\n|-----------|-----------|-------|--------|\n| 🥇 | **LinkedIn GTM 3 perfiles** (Alfonso + Martín + Philippe) | 8.25 | ≥5 calls/sem |\n| 🥈 | **Cold Email B2B** (Instantly → 300 empresas ECP 1+2) | 8.25 | ≥5 meetings/mes |\n| 🥉 | **Meta Ads** → tracking real → calls | 8.00 | CPL <18€ |\n| 4 | **Social Proof** — de 1 review (3.5★) a 8+ (≥4.5★) | 8.00 | 8+ reviews |\n| 5 | **Free Media & Directories** | 7.75 | ≥20 directorios |\n| 6 | **Twitter/X Build-in-Public** (@AlfonsoSB reactivar) | 7.00 | +500 followers |\n| 7 | **IG + TikTok Social SEO** | 6.50 | 500 + 1K followers |\n\n---\n\n### 📋 8 Proyectos en marcha\n\n| ID | Proyecto | Review | Target |\n|----|----------|--------|--------|\n| **P01** | Fontanería Web (pixel + GA4 + booking) | 28 mar | 100% operativo |\n| **P02** | LinkedIn Pipeline (3 perfiles) | 25 abr | ≥5 calls/sem |\n| **P03** | Cold Email Pipeline | 9 may | ≥5 meetings/mes |\n| **P04** | Meta Ads (bloqueado P01) | 9 may | CPL <25€ |\n| **P05** | Social Proof & Reviews | 11 abr | 5+ reviews |\n| **P06** | Free Media & Directories | 9 may | ≥15 directorios |\n| **P07** | Social Content (IG + TikTok) | 13 jun | 500 + 1K followers |\n| **P08** | Twitter/X Build-in-Public | 13 jun | +500 followers |\n\n---\n\n### 🚀 Próximo paso\n**Fase 0 — Fontanería** (sem 1-2): pixel + GA4 + booking + reviews + warm-up cold email.\n\n**Revisión:** Lunes 28 marzo 2026\n\n---\n\n### 💡 ¿Qué necesitas de mí?\n\n1. **¿Arrancamos con P01 (Fontanería)?** — puedo coordinar la instalación del pixel + GA4 + unificar booking.\n2. **¿Priorizas otro proyecto?** — dime cuál y te despliego el roadmap específico.\n3. **¿Quieres drill-down en alguna estrategia?** — LinkedIn, cold email, ads...\n\n**Dime por dónde empezamos.**",
+      "agent": "sancho",
+      "ts": "2026-03-27T12:34:38.144Z"
+    }
+  ],
+  "updatedAt": 1774614878144,
+  "discordThreadId": null,
+  "discordChannelId": null
+}

@@ -81,7 +81,8 @@ For each ECP keyword/topic:
   → web_search("{keyword}") 
   → Extract "People Also Ask" questions from results
   → Each PAA = potential content idea
-  → Classify: goal (awareness/consideration/conversion), theme (educativo/faq/comparativo)
+  → Classify: list (keywords/trending/gaps/repurpose)
+  → Write concrete action: "Rankear en '{keyword}' — vol: X, KD: Y. Gap: [what's missing]"
   → Suggest channels based on format (long-form → blog, question → blog+twitter, visual → instagram)
 ```
 
@@ -111,7 +112,7 @@ For the client's industry/niche:
   → web_search("latest trends {industry} {year}")
   → web_search("{industry} news this week")
   → Extract trending topics relevant to the business
-  → Each trend = content idea (theme: trending, goal: awareness)
+  → Each trend = content idea (list: trending)
   → Source: signal
 ```
 
@@ -171,8 +172,10 @@ For each raw idea candidate:
        - Niche relevance → +30
        - Accessibility (contact info visible) → +20
        - Competitor presence (they already work with competitors) → +25
-  3. Auto-assign goal and theme if not set (LLM classification)
-  4. Suggest channels (multi-select) based on content type
+  3. Auto-assign list based on source and content type
+  4. Write concrete action text (the KEY value of each idea)
+  5. Suggest channels (multi-select) based on content type
+  6. Dedup check: compare against existing ideas (title similarity >80% = skip)
 ```
 
 ---
@@ -345,7 +348,7 @@ cron(action=add, job={
 1. ¿Se leyó Foundation completa antes de generar?
 2. ¿Se verificaron duplicados contra ideas existentes?
 3. ¿Cada idea tiene: id, type, title, description, source, status, priority_score, created_at?
-4. ¿Content ideas tienen: channels (array), goal, theme?
+4. ¿Content ideas tienen: channels (array), list, action?
 5. ¿Contact ideas tienen: target_channel (string)?
 6. ¿Se calculó priority_score para cada idea?
 7. ¿Se actualizó recurring-tasks.json con last_run_at e ideas_generated?

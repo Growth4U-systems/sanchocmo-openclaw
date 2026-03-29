@@ -699,9 +699,9 @@ For each priority cluster, assign:
 
 ### Content Calendar Placement
 
-**Tier 1 (Publish in weeks 1-4):** Highest priority, category-defining
-**Tier 2 (Publish in weeks 5-8):** High priority, supporting pillars
-**Tier 3 (Publish in weeks 9-12):** Medium priority, depth content
+**Tier 1 (Publish first):** Highest priority, category-defining — execute immediately
+**Tier 2 (Publish next):** High priority, supporting pillars — queue after Tier 1
+**Tier 3 (Backlog):** Medium priority, depth content — schedule as capacity allows
 **Tier 4 (Backlog):** Lower priority, future opportunities
 
 ### PAA-Driven Content Structure

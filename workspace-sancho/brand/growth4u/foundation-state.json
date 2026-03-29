@@ -1,8 +1,41 @@
 {
-  "version": "2.0",
+  "version": "3.0",
   "started_at": "2026-03-01T19:03:21Z",
-  "updated_at": "2026-03-14T20:03:00Z",
+  "updated_at": "2026-03-27T21:39:27Z",
   "sections": {
+    "fast-foundation": {
+      "status": "approved",
+      "layer": 0,
+      "output_dir": "brand/growth4u/company-brief/",
+      "skill": "fast-foundation",
+      "pillars": {
+        "company-brief": {
+          "status": "approved",
+          "output_file": "brand/growth4u/company-brief/current.md",
+          "skill": "fast-foundation"
+        },
+        "self-l1": {
+          "status": "approved",
+          "output_file": "brand/growth4u/market-and-us/self/current.md",
+          "skill": "fast-foundation"
+        },
+        "market-l1": {
+          "status": "approved",
+          "output_file": "brand/growth4u/market-and-us/market/current.md",
+          "skill": "fast-foundation"
+        },
+        "brand-voice-snapshot": {
+          "status": "approved",
+          "output_file": "brand/growth4u/brand-voice/current.md",
+          "skill": "fast-foundation"
+        },
+        "niche-basic": {
+          "status": "approved",
+          "output_file": "brand/growth4u/go-to-market/ecps/current.md",
+          "skill": "fast-foundation"
+        }
+      }
+    },
     "company-brief": {
       "status": "approved",
       "layer": 0,
@@ -22,7 +55,8 @@
         "budget": {
           "status": "approved",
           "completed_at": "2026-03-02T13:28:00Z",
-          "output_file": "brand/growth4u/company-brief/current.md"
+          "output_file": "brand/growth4u/company-brief/current.md",
+          "optional": true
         }
       }
     },
@@ -35,7 +69,7 @@
           "status": "approved",
           "layer": 1,
           "requires": [
-            "company-brief"
+            "fast-foundation"
           ],
           "enriches_with": [
             "competitor-analysis",
@@ -44,13 +78,14 @@
           "output_file": "brand/growth4u/market-and-us/market/current.md",
           "approved_at": "2026-03-03T18:56:00Z",
           "notes": "v4 — recentrado en empresas tech (no solo fintech). 70 fuentes, QA PASS.",
-          "skill": "market-intelligence"
+          "skill": "market-intelligence",
+          "updated_at": "2026-03-29T06:52:14.496Z"
         },
         "competitor-analysis": {
           "status": "approved",
           "layer": 1,
           "requires": [
-            "company-brief"
+            "fast-foundation"
           ],
           "enriches_with": [
             "market-analysis",
@@ -70,7 +105,7 @@
           "status": "approved",
           "layer": 1,
           "requires": [
-            "company-brief"
+            "fast-foundation"
           ],
           "enriches_with": [
             "market-analysis",
@@ -80,8 +115,8 @@
           "approved_at": "2026-03-02T14:27:00Z",
           "skill": "self-intelligence"
         },
-        "swot": {
-          "status": "approved",
+        "market-synthesis": {
+          "status": "not-started",
           "layer": 2,
           "requires": [
             "market-analysis",
@@ -89,39 +124,10 @@
             "self-analysis"
           ],
           "output_file": "brand/growth4u/market-and-us/swot/current.md",
-          "skill": "swot-analysis",
-          "approved_at": "2026-03-04T06:10:00Z",
-          "notes": "v3 — Matriz TOWS pura (17 cruces) + priorización ICE + ideas estratégicas en anexo. 7S+8W+10O+7T con evidencia."
-        }
-      },
-      "syntheses": {
-        "summary": {
-          "status": "approved",
-          "output_file": "brand/growth4u/market-and-us/summary/current.md",
-          "generated_by": "orchestrator",
-          "generated_at": "2026-03-04T06:15:00Z",
-          "approved_at": "2026-03-04T16:29:00Z",
-          "notes": "Updated with OPE Canvas resolved DUDAs.",
-          "requires": [
-            "market-analysis",
-            "competitor-analysis",
-            "self-analysis",
-            "swot"
-          ]
-        },
-        "ope-canvas": {
-          "status": "approved",
-          "output_file": "brand/growth4u/market-and-us/ope-canvas/current.md",
-          "generated_by": "orchestrator",
-          "generated_at": "2026-03-04T06:15:00Z",
-          "approved_at": "2026-03-04T16:29:00Z",
-          "notes": "4 DUDAs resueltas: Endgame (3 capas, 5-6M€/año), Core Values (4 confirmados), Geografía (ES→LATAM→UK→Global), Capacidad (6 boutique + 10 comunidad).",
-          "requires": [
-            "market-analysis",
-            "competitor-analysis",
-            "self-analysis",
-            "swot"
-          ]
+          "skill": "market-synthesis",
+          "approved_at": "2026-03-29T11:29:11.058Z",
+          "notes": "v3 — Matriz TOWS pura (17 cruces) + priorización ICE + ideas estratégicas en anexo. 7S+8W+10O+7T con evidencia.",
+          "updated_at": "2026-03-29T11:34:44.972Z"
         }
       }
     },
@@ -135,7 +141,7 @@
           "status": "approved",
           "layer": 3,
           "requires": [
-            "swot"
+            "market-synthesis"
           ],
           "enriches_with": [
             "existing-customer-data"
@@ -155,14 +161,14 @@
           "status": "not-started",
           "layer": 3,
           "requires": [
-            "company-brief"
+            "fast-foundation"
           ],
           "optional": true,
           "output_file": "brand/growth4u/go-to-market/existing-customer-data/current.md",
           "skill": "existing-customer-data"
         },
         "positioning": {
-          "status": "approved",
+          "status": "request-refresh",
           "approved_at": "2026-03-06T18:47:00Z",
           "layer": 4,
           "requires": [
@@ -203,7 +209,8 @@
             }
           },
           "notes": "5/5 ECPs approved. Shared Tier 2: value-criteria.md (25 criteria), assets.md (15 assets). Skill v5.0.",
-          "output_file": "brand/growth4u/go-to-market/positioning/current.md"
+          "output_file": "brand/growth4u/go-to-market/positioning/current.md",
+          "updated_at": "2026-03-29T11:11:37.567Z"
         },
         "pricing": {
           "status": "approved",
@@ -227,30 +234,6 @@
           ],
           "optional": true,
           "skill": "ecp-validation"
-        },
-        "metrics-plan": {
-          "status": "not-started",
-          "layer": 4,
-          "requires": [
-            "company-brief"
-          ],
-          "enriches_with": [
-            "niche-discovery"
-          ],
-          "skill": "acquisition-metrics-plan"
-        }
-      },
-      "syntheses": {
-        "messaging-summary": {
-          "status": "approved",
-          "output_file": "brand/growth4u/go-to-market/positioning/shared/messaging-summary.md",
-          "generated_by": "positioning-messaging",
-          "generated_at": "2026-03-06T19:00:00Z",
-          "approved_at": "2026-03-06T20:10:00Z",
-          "requires": [
-            "positioning"
-          ],
-          "notes": "Tier 2 shared doc. 5 UVPs, 9 USPs consolidados, 10 objeciones deduplicadas, mensajes transversales, debilidades cross-ECP."
         }
       }
     },
@@ -288,12 +271,39 @@
       },
       "approved_at": "2026-03-08T10:54:00Z"
     },
+    "metrics-setup": {
+      "status": "not-started",
+      "layer": 6,
+      "skill": "metrics-setup",
+      "requires": [
+        "positioning",
+        "pricing"
+      ],
+      "pillars": {
+        "metrics-setup": {
+          "status": "approved",
+          "requires": [
+            "positioning",
+            "pricing"
+          ],
+          "skill": "metrics-setup",
+          "updated_at": "2026-03-29T05:48:31.853Z",
+          "approved_at": "2026-03-29T05:48:31.853Z",
+          "output_file": "brand/growth4u/go-to-market/metrics-plan.md"
+        }
+      }
+    },
     "strategic-plan": {
       "status": "approved",
-      "approved_at": "2026-03-14T20:03:00Z",
+      "layer": 7,
+      "skill": "strategic-plan",
+      "requires": [
+        "metrics-setup"
+      ],
       "output_file": "brand/growth4u/strategic-plan/current.md",
-      "projects": "brand/growth4u/projects/registry.json",
-      "notes": "v2 — 7 estrategias, 8 proyectos (P01-P08). LinkedIn 3 perfiles + Cold Email + Meta Ads + Free Media + IG/TikTok + Twitter/X + Social Proof."
+      "approved_at": "2026-03-14T20:03:00Z",
+      "notes": "v2 — 7 estrategias, 8 proyectos (P01-P08). LinkedIn 3 perfiles + Cold Email + Meta Ads + Free Media + IG/TikTok + Twitter/X + Social Proof.",
+      "projects": "brand/growth4u/projects/registry.json"
     }
   },
   "presentations": [

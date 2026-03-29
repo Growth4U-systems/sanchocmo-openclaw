@@ -1,0 +1,33 @@
+{
+  "client": "dealcar",
+  "next_id": 4,
+  "projects": [
+    {
+      "id": "P01",
+      "slug": "P01-seo-blog-b2b",
+      "name": "SEO Blog B2B — Pivotar contenido a dealers",
+      "status": "active",
+      "created": "2026-03-26",
+      "strategic_plan_version": 1,
+      "origin": "strategic-plan"
+    },
+    {
+      "id": "P02",
+      "slug": "P02-linkedin-founder-led",
+      "name": "Founder-Led LinkedIn — Carlos Horno",
+      "status": "active",
+      "created": "2026-03-26",
+      "strategic_plan_version": 1,
+      "origin": "strategic-plan"
+    },
+    {
+      "id": "P03",
+      "slug": "P03-analytics-setup",
+      "name": "Resolver gaps analytics (GA4 + GSC)",
+      "status": "active",
+      "created": "2026-03-26",
+      "strategic_plan_version": 1,
+      "origin": "strategic-plan"
+    }
+  ]
+}

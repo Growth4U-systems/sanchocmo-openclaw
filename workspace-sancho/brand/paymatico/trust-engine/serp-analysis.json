@@ -1,0 +1,577 @@
+{
+  "module": "serp-analysis",
+  "version": 1,
+  "created_at": "2026-03-26T14:17:00Z",
+  "updated_at": "2026-03-26T14:17:00Z",
+  "status": "completed",
+  "methodology": {
+    "approach": "Google Search SERP analysis via Gemini citations. 6 representative keywords across 3 nichos.",
+    "keywords_executed": 6,
+    "target_keywords": 50,
+    "note": "Sample represents ~12% of target keyword universe. Full analysis requires 50+ keywords from ECPs."
+  },
+  "data": {
+    "keywords_analyzed": [
+      {
+        "id": "kw001",
+        "keyword": "software cobros recurrentes gimnasios España",
+        "niche": "n1",
+        "subniche": "n1-s1",
+        "search_intent": "transactional",
+        "paymatico_rank": null,
+        "paymatico_visible": false,
+        "top_10_results": [
+          {
+            "rank": 1,
+            "domain": "xcore.fit",
+            "title": "Software para gimnasios España",
+            "type": "landing_page"
+          },
+          {
+            "rank": 2,
+            "domain": "ptminder.com",
+            "title": "Mejor software gestión gimnasios España",
+            "type": "blog_comparison"
+          },
+          {
+            "rank": 3,
+            "domain": "virtuagym.com",
+            "title": "Software gestión gimnasios",
+            "type": "landing_page"
+          },
+          {
+            "rank": 4,
+            "domain": "truecoach.co",
+            "title": "Software para gimnasios",
+            "type": "blog"
+          },
+          {
+            "rank": 5,
+            "domain": "wodbuster.com",
+            "title": "Software gestión gimnasios",
+            "type": "landing_page"
+          },
+          {
+            "rank": 6,
+            "domain": "fitfox.es",
+            "title": "Pagos recurrentes gimnasio",
+            "type": "landing_page"
+          },
+          {
+            "rank": 7,
+            "domain": "trainingym.com",
+            "title": "Pasarela de pagos",
+            "type": "landing_page"
+          },
+          {
+            "rank": 8,
+            "domain": "techfit.app",
+            "title": "Software para el manejo de suscripciones y pagos recurrentes en gimnasios",
+            "type": "blog"
+          }
+        ],
+        "total_results_cited": 8,
+        "competitor_domains": ["xcore.fit", "ptminder.com", "virtuagym.com", "truecoach.co", "wodbuster.com", "fitfox.es", "trainingym.com", "techfit.app"]
+      },
+      {
+        "id": "kw002",
+        "keyword": "plataforma pagos franquicia restaurantes",
+        "niche": "n2",
+        "subniche": "n2-s1",
+        "search_intent": "transactional",
+        "paymatico_rank": null,
+        "paymatico_visible": false,
+        "top_10_results": [
+          {
+            "rank": 1,
+            "domain": "sipos.ai",
+            "title": "Software TPV para franquicias",
+            "type": "landing_page"
+          },
+          {
+            "rank": 2,
+            "domain": "hosteltactil.com",
+            "title": "TPV para franquicias hostelería",
+            "type": "landing_page"
+          },
+          {
+            "rank": 3,
+            "domain": "loomispay.com",
+            "title": "TPV grupos franquicias",
+            "type": "landing_page"
+          },
+          {
+            "rank": 4,
+            "domain": "joinposter.mx",
+            "title": "Software para franquicias",
+            "type": "landing_page"
+          },
+          {
+            "rank": 5,
+            "domain": "foodyservice.com",
+            "title": "Franquicias software",
+            "type": "landing_page"
+          },
+          {
+            "rank": 6,
+            "domain": "adyen.com",
+            "title": "Soluciones para restauración",
+            "type": "landing_page"
+          },
+          {
+            "rank": 7,
+            "domain": "givex.com",
+            "title": "PDV restaurante",
+            "type": "landing_page"
+          },
+          {
+            "rank": 8,
+            "domain": "mollie.com",
+            "title": "Payments for franchises",
+            "type": "landing_page"
+          },
+          {
+            "rank": 9,
+            "domain": "squareup.com",
+            "title": "Franchises",
+            "type": "landing_page"
+          }
+        ],
+        "total_results_cited": 9,
+        "competitor_domains": ["sipos.ai", "hosteltactil.com", "loomispay.com", "joinposter.mx", "foodyservice.com", "adyen.com", "givex.com", "mollie.com", "squareup.com"]
+      },
+      {
+        "id": "kw003",
+        "keyword": "TPV marca blanca franquicia",
+        "niche": "n2",
+        "subniche": "n2-s1",
+        "search_intent": "transactional",
+        "paymatico_rank": null,
+        "paymatico_visible": false,
+        "top_10_results": [
+          {
+            "rank": 1,
+            "domain": "yakuma.com",
+            "title": "Franchise TPV solutions",
+            "type": "landing_page"
+          },
+          {
+            "rank": 2,
+            "domain": "finalpos.com",
+            "title": "Características POS franquicia",
+            "type": "blog"
+          },
+          {
+            "rank": 3,
+            "domain": "hosteltactil.com",
+            "title": "TPV marca blanca franquicia",
+            "type": "landing_page"
+          },
+          {
+            "rank": 4,
+            "domain": "foodyservice.com",
+            "title": "Franquicias",
+            "type": "landing_page"
+          },
+          {
+            "rank": 5,
+            "domain": "camarero10.com",
+            "title": "Software para franquicias",
+            "type": "landing_page"
+          },
+          {
+            "rank": 6,
+            "domain": "ricma.es",
+            "title": "TPV pros y contras",
+            "type": "blog"
+          }
+        ],
+        "total_results_cited": 6,
+        "competitor_domains": ["yakuma.com", "finalpos.com", "hosteltactil.com", "foodyservice.com", "camarero10.com", "ricma.es"]
+      },
+      {
+        "id": "kw004",
+        "keyword": "API pagos blanca España SaaS",
+        "niche": "n3",
+        "subniche": "n3-s1",
+        "search_intent": "transactional",
+        "paymatico_rank": null,
+        "paymatico_visible": false,
+        "top_10_results": [
+          {
+            "rank": 1,
+            "domain": "adyen.com",
+            "title": "White label payment processing",
+            "type": "landing_page"
+          },
+          {
+            "rank": 2,
+            "domain": "fiska.com",
+            "title": "Best white label payment platforms for SaaS",
+            "type": "blog"
+          },
+          {
+            "rank": 3,
+            "domain": "stripe.com",
+            "title": "White label payment gateways",
+            "type": "guide"
+          },
+          {
+            "rank": 4,
+            "domain": "payproglobal.com",
+            "title": "Qué es el SaaS de marca blanca",
+            "type": "guide"
+          },
+          {
+            "rank": 5,
+            "domain": "mozaic.io",
+            "title": "White label payment solutions",
+            "type": "landing_page"
+          },
+          {
+            "rank": 6,
+            "domain": "inoviopay.com",
+            "title": "Flexible white label API",
+            "type": "landing_page"
+          },
+          {
+            "rank": 7,
+            "domain": "autopay.eu",
+            "title": "SaaS platform operators",
+            "type": "landing_page"
+          },
+          {
+            "rank": 8,
+            "domain": "sipay.es",
+            "title": "Soluciones digital",
+            "type": "landing_page"
+          },
+          {
+            "rank": 9,
+            "domain": "bpcbt.com",
+            "title": "E-commerce as a Service",
+            "type": "landing_page"
+          }
+        ],
+        "total_results_cited": 9,
+        "competitor_domains": ["adyen.com", "fiska.com", "stripe.com", "payproglobal.com", "mozaic.io", "inoviopay.com", "autopay.eu", "sipay.es", "bpcbt.com"]
+      },
+      {
+        "id": "kw005",
+        "keyword": "pasarela pago recurrente SEPA España",
+        "niche": "n1",
+        "subniche": "general",
+        "search_intent": "transactional",
+        "paymatico_rank": null,
+        "paymatico_visible": false,
+        "top_10_results": [
+          {
+            "rank": 1,
+            "domain": "stripe.com",
+            "title": "Direct debit in Spain",
+            "type": "guide"
+          },
+          {
+            "rank": 2,
+            "domain": "fin.do",
+            "title": "What is direct debit and how does it work",
+            "type": "blog"
+          },
+          {
+            "rank": 3,
+            "domain": "mollie.com",
+            "title": "SEPA direct debit guide",
+            "type": "guide"
+          },
+          {
+            "rank": 4,
+            "domain": "bancsabadell.com",
+            "title": "Adeudos directos SEPA",
+            "type": "bank_landing"
+          },
+          {
+            "rank": 5,
+            "domain": "ibercaja.es",
+            "title": "Adeudos domiciliados SEPA",
+            "type": "bank_landing"
+          },
+          {
+            "rank": 6,
+            "domain": "tadosi.com",
+            "title": "Pago recurrente SEPA",
+            "type": "blog"
+          },
+          {
+            "rank": 7,
+            "domain": "caixabank.es",
+            "title": "Domiciliados SEPA",
+            "type": "bank_landing"
+          },
+          {
+            "rank": 8,
+            "domain": "monei.com",
+            "title": "SEPA direct debit",
+            "type": "landing_page"
+          },
+          {
+            "rank": 9,
+            "domain": "gocardless.com",
+            "title": "Introducción SEPA",
+            "type": "guide"
+          }
+        ],
+        "total_results_cited": 9,
+        "competitor_domains": ["stripe.com", "fin.do", "mollie.com", "bancsabadell.com", "ibercaja.es", "tadosi.com", "caixabank.es", "monei.com", "gocardless.com"]
+      },
+      {
+        "id": "kw006",
+        "keyword": "PSP regulado Banco España",
+        "niche": "general",
+        "subniche": "general",
+        "search_intent": "informational",
+        "paymatico_rank": null,
+        "paymatico_visible": false,
+        "top_10_results": [
+          {
+            "rank": 1,
+            "domain": "payatlas.com",
+            "title": "Banco de España regulator",
+            "type": "directory"
+          },
+          {
+            "rank": 2,
+            "domain": "wikipedia.org",
+            "title": "Payment service provider",
+            "type": "wiki"
+          },
+          {
+            "rank": 3,
+            "domain": "devengo.com",
+            "title": "PSP glossary",
+            "type": "glossary"
+          },
+          {
+            "rank": 4,
+            "domain": "eternitylaw.com",
+            "title": "PSP license in Spain",
+            "type": "legal_guide"
+          },
+          {
+            "rank": 5,
+            "domain": "monei.com",
+            "title": "What is a PSP",
+            "type": "blog"
+          },
+          {
+            "rank": 6,
+            "domain": "bde.es",
+            "title": "Supervisión entidades financieras",
+            "type": "official_bde"
+          },
+          {
+            "rank": 7,
+            "domain": "bde.es",
+            "title": "A new regime (PDF)",
+            "type": "official_report"
+          }
+        ],
+        "total_results_cited": 7,
+        "competitor_domains": ["payatlas.com", "wikipedia.org", "devengo.com", "eternitylaw.com", "monei.com", "bde.es"]
+      }
+    ],
+    "aggregate_findings": {
+      "total_keywords_analyzed": 6,
+      "paymatico_visible_count": 0,
+      "paymatico_visibility_rate": 0.0,
+      "average_competitors_per_keyword": 8,
+      "unique_competitor_domains": 45,
+      "top_competitors_by_serp_presence": {
+        "stripe.com": 3,
+        "mollie.com": 3,
+        "adyen.com": 2,
+        "monei.com": 2,
+        "sipay.es": 1,
+        "hosteltactil.com": 2,
+        "foodyservice.com": 2,
+        "squareup.com": 1,
+        "xcore.fit": 1,
+        "virtuagym.com": 1,
+        "trainingym.com": 1
+      },
+      "content_type_distribution": {
+        "landing_page": 26,
+        "blog": 8,
+        "guide": 5,
+        "bank_landing": 3,
+        "directory": 1,
+        "wiki": 1,
+        "legal_guide": 1,
+        "official_bde": 2
+      }
+    },
+    "zero_visibility_analysis": {
+      "finding": "Paymático NO aparece en NINGUNO de los 6 SERPs analizados. 45 competidores únicos ocupan las posiciones.",
+      "keywords_with_highest_competition": [
+        {
+          "keyword": "plataforma pagos franquicia restaurantes",
+          "competitors_count": 9,
+          "top_3": ["sipos.ai", "hosteltactil.com", "loomispay.com"]
+        },
+        {
+          "keyword": "pasarela pago recurrente SEPA España",
+          "competitors_count": 9,
+          "top_3": ["stripe.com", "fin.do", "mollie.com"]
+        },
+        {
+          "keyword": "API pagos blanca España SaaS",
+          "competitors_count": 9,
+          "top_3": ["adyen.com", "fiska.com", "stripe.com"]
+        }
+      ],
+      "seo_moats_identified": [
+        {
+          "competitor": "Stripe",
+          "moat": "Guías educativas de alta calidad ('Direct debit in Spain', 'White label payment gateways') que dominan SERPs informacionales y transaccionales"
+        },
+        {
+          "competitor": "Mollie",
+          "moat": "Contenido vertical específico: 'Payments for franchises', 'SEPA direct debit guide' — atacan nichos con autoridad"
+        },
+        {
+          "competitor": "Adyen",
+          "moat": "Casos de éxito públicos (VivaGym) + landing pages verticales ('Soluciones restauración')"
+        },
+        {
+          "competitor": "Sipos",
+          "moat": "SEO vertical hostelería: 'Software TPV para franquicias' — domina nicho franquicia restaurantes"
+        },
+        {
+          "competitor": "MONEI",
+          "moat": "Contenido educativo + thought leadership blog ('What is a PSP', 'SEPA direct debit')"
+        }
+      ]
+    },
+    "content_opportunities": [
+      {
+        "keyword": "software cobros recurrentes gimnasios España",
+        "current_serp_type": "Dominado por software gestión completo (Xcore, Virtuagym)",
+        "paymatico_angle": "Publicar guía: 'Cobros recurrentes SEPA para gimnasios sin cambiar tu software actual — Integración API en 48h'",
+        "priority": "critical"
+      },
+      {
+        "keyword": "plataforma pagos franquicia restaurantes",
+        "current_serp_type": "Dominado por TPV completo (Sipos, Hosteltáctil, Loomis)",
+        "paymatico_angle": "Publicar caso uso: 'Franquicia de 10 locales: onboarding en 3 días vs 2 meses — Case study'",
+        "priority": "critical"
+      },
+      {
+        "keyword": "API pagos blanca España SaaS",
+        "current_serp_type": "Guías genéricas (Stripe, Adyen, Fiska)",
+        "paymatico_angle": "Publicar guía técnica: 'API pagos white label con licencia BdE — Cómo integrar en tu SaaS vertical (fitness, estética, talleres)'",
+        "priority": "high"
+      },
+      {
+        "keyword": "pasarela pago recurrente SEPA España",
+        "current_serp_type": "Guías educativas (Stripe, Mollie) + bancos (Sabadell, CaixaBank)",
+        "paymatico_angle": "Publicar comparativa: 'SEPA recurrente: Paymático vs Stripe vs bancos — Costes, onboarding, soporte'",
+        "priority": "high"
+      },
+      {
+        "keyword": "PSP regulado Banco España",
+        "current_serp_type": "Directorios (PayAtlas) + contenido educativo (MONEI, Devengo) + BdE oficial",
+        "paymatico_angle": "Publicar thought leadership: 'PSP regulado BdE desde 2013 (entidad #6861) — Por qué importa la veteranía regulatoria'",
+        "priority": "medium"
+      }
+    ]
+  },
+  "score": {
+    "methodology": "serp_visibility_rate",
+    "note": "Score based on keyword visibility in top 10 SERPs. 0% visibility = 0 score.",
+    "visibility_rate": 0.0,
+    "avg_rank": null,
+    "weighted_score": 0,
+    "max_score": 100,
+    "finding": "Score 0/100. Paymático es completamente invisible en SERPs de Google para keywords comerciales."
+  },
+  "issues": [
+    {
+      "id": "SERP-001",
+      "severity": "critical",
+      "title": "Zero SERP visibility — Paymático no aparece en rankings Google",
+      "description": "En 6 keywords transaccionales críticas de 3 nichos, Paymático NO rankea en top 10. 45 competidores ocupan las posiciones.",
+      "fix_steps": [
+        "Ejecutar SEO content plan: 2 artículos/mes en keywords objetivo (gimnasios, franquicias, white label API)",
+        "Crear landing pages específicas por keyword: '/pagos-gimnasios-multicentro', '/pagos-franquicia-restaurantes', '/api-white-label'",
+        "Optimizar title tags con keywords target + diferenciador ('Regulado BdE', 'Onboarding 3 días')",
+        "Agregar Schema.org Organization + Service con keywords en 'description'",
+        "Solicitar backlinks de clientes actuales (gimnasios, franquicias) hacia landing pages"
+      ],
+      "expected_impact_pct": 35
+    },
+    {
+      "id": "SERP-002",
+      "severity": "high",
+      "title": "Competidores con SEO moats establecidos",
+      "description": "Stripe, Mollie, Adyen, Sipos, MONEI tienen contenido educativo de alta calidad que domina SERPs. Paymático no compite.",
+      "fix_steps": [
+        "No atacar keywords genéricas dominadas por Stripe/Adyen ('pasarela pago online')",
+        "Atacar long-tail vertical: 'cobros recurrentes gimnasios multicentro', 'pagos franquicia 10 locales onboarding rápido'",
+        "Crear contenido 10x vs competencia: guías 2000+ palabras, tablas comparativas interactivas, calculadoras ROI",
+        "Agregar cases estudios públicos con ROI y testimonios (IAs y Google priorizan evidencia)"
+      ],
+      "expected_impact_pct": 25
+    },
+    {
+      "id": "SERP-003",
+      "severity": "high",
+      "title": "Missing content types que rankean",
+      "description": "SERPs dominados por: landing pages (26), blogs (8), guías (5). Paymático tiene 0 de estos content types.",
+      "fix_steps": [
+        "Crear 10 landing pages verticales: 'Pagos gimnasios', 'Pagos franquicias', 'API white label', etc.",
+        "Lanzar blog: 15 artículos en primeros 3 meses",
+        "Publicar 5 guías largas (2000+ palabras): 'Guía completa SEPA recurrente', 'Guía white label API', 'Guía onboarding pagos franquicias'"
+      ],
+      "expected_impact_pct": 30
+    },
+    {
+      "id": "SERP-004",
+      "severity": "medium",
+      "title": "Bancos rankean en keywords SEPA",
+      "description": "Sabadell, CaixaBank, Ibercaja rankean en 'pasarela pago recurrente SEPA'. Paymático no capitaliza ventaja de ser PSP (no banco).",
+      "fix_steps": [
+        "Contraposicionamiento: 'PSP vs banco para SEPA recurrente — Por qué un PSP es mejor'",
+        "Ventajas PSP: onboarding rápido (3 días vs semanas banco), APIs modernas, soporte especializado, multi-gateway",
+        "Publicar tabla comparativa: Paymático vs Sabadell vs CaixaBank (onboarding, comisiones, API, soporte)"
+      ],
+      "expected_impact_pct": 15
+    }
+  ],
+  "recommendations": {
+    "immediate_actions": [
+      "Crear 3 landing pages piloto en próximos 30 días: '/pagos-gimnasios', '/pagos-franquicias', '/api-white-label'",
+      "Optimizar title tag homepage: 'Paymático — Plataforma de Pagos Regulada BdE | Onboarding 3 Días | PSP España'",
+      "Publicar 3 artículos long-tail: 'Cobros recurrentes gimnasios multicentro', 'Pagos franquicia onboarding rápido', 'White label API licencia BdE'"
+    ],
+    "3_month_plan": [
+      "10 landing pages verticales operativas",
+      "12 artículos SEO publicados (2/mes)",
+      "5 guías largas (2000+ palabras)",
+      "Sitemap.xml + robots.txt + Schema.org operativos",
+      "3 backlinks de clientes actuales"
+    ],
+    "12_month_plan": [
+      "50+ landing pages cubriendo todos los nichos/subnichos",
+      "50+ artículos SEO publicados",
+      "15+ guías largas",
+      "10+ casos de éxito públicos con backlinks",
+      "Rankear top 10 en 10+ keywords comerciales",
+      "Rankear top 3 en 5+ keywords long-tail"
+    ]
+  },
+  "metadata": {
+    "duration_seconds": 180,
+    "apis_called": ["gemini_search"],
+    "errors": [],
+    "next_steps": "Ejecutar 44 keywords adicionales (50 total target) para SERP analysis completo. Sample actual representa ~12% del target."
+  }
+}

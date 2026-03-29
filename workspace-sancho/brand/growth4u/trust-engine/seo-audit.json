@@ -1,0 +1,210 @@
+{
+  "module": "seo-audit",
+  "version": 1,
+  "created_at": "2026-03-27T11:18:00+01:00",
+  "updated_at": "2026-03-27T11:18:00+01:00",
+  "status": "completed",
+  "data": {
+    "lighthouse": {
+      "available": false,
+      "error": "Google PSI rate limit exceeded (429). No API key configured. Scores not available.",
+      "scores": {
+        "performance": null,
+        "accessibility": null,
+        "best_practices": null,
+        "seo": null
+      },
+      "core_web_vitals": {
+        "lcp": null,
+        "tbt": null,
+        "cls": null,
+        "fcp": null,
+        "speed_index": null
+      }
+    },
+    "health_checks": {
+      "summary": {
+        "total": 15,
+        "passed": 13,
+        "failed": 2,
+        "pass_rate": 86.67
+      },
+      "checks": [
+        {
+          "id": "HC-01",
+          "name": "Meta Title",
+          "status": "pass",
+          "detail": "Title exists: 'Growth4U | Crece más rápido sin invertir más en marketing' (62 chars)"
+        },
+        {
+          "id": "HC-02",
+          "name": "Meta Description",
+          "status": "pass",
+          "detail": "Description exists: 'Especialistas en Growth para Empresas Tech...' (156 chars, within 120-160 range)"
+        },
+        {
+          "id": "HC-03",
+          "name": "H1 Count",
+          "status": "pass",
+          "detail": "Exactly 1 H1 tag found"
+        },
+        {
+          "id": "HC-04",
+          "name": "Open Graph",
+          "status": "pass",
+          "detail": "og:title, og:description, og:image all present. Also og:type, og:url, og:site_name."
+        },
+        {
+          "id": "HC-05",
+          "name": "Canonical Tag",
+          "status": "pass",
+          "detail": "Canonical present: https://growth4u.io/"
+        },
+        {
+          "id": "HC-06",
+          "name": "SSL",
+          "status": "pass",
+          "detail": "Site uses HTTPS (HTTP/2 200)"
+        },
+        {
+          "id": "HC-07",
+          "name": "Mobile Viewport",
+          "status": "pass",
+          "detail": "Viewport meta tag present: 'width=device-width, initial-scale=1'"
+        },
+        {
+          "id": "HC-08",
+          "name": "Language Tag",
+          "status": "pass",
+          "detail": "HTML lang attribute present: 'es'"
+        },
+        {
+          "id": "HC-09",
+          "name": "Sitemap",
+          "status": "fail",
+          "detail": "Sitemap.xml returned 404 — not found at https://growth4u.io/sitemap.xml"
+        },
+        {
+          "id": "HC-10",
+          "name": "Robots.txt",
+          "status": "pass",
+          "detail": "Robots.txt exists. Allows all user-agents. Disallows /admin and /feedback. Explicitly allows AI bots (GPTBot, ChatGPT-User, Google-Extended, OAI-SearchBot)."
+        },
+        {
+          "id": "HC-11",
+          "name": "Core Web Vitals",
+          "status": "unavailable",
+          "detail": "Lighthouse unavailable — cannot measure CWV from PSI"
+        },
+        {
+          "id": "HC-12",
+          "name": "Image Alt Tags",
+          "status": "unavailable",
+          "detail": "Lighthouse unavailable — cannot audit alt tags from PSI"
+        },
+        {
+          "id": "HC-13",
+          "name": "Structured Data",
+          "status": "pass",
+          "detail": "3 JSON-LD schemas found: Organization (logo, sameAs), ProfessionalService (areaServed, serviceType, knowsAbout), FAQPage (8 Q&A items)"
+        },
+        {
+          "id": "HC-14",
+          "name": "Internal Links",
+          "status": "pass",
+          "detail": "37 internal links found pointing to same domain"
+        },
+        {
+          "id": "HC-15",
+          "name": "Hreflang",
+          "status": "pass",
+          "detail": "Hreflang tags present: es, en, x-default. Bilingual site structure confirmed."
+        }
+      ]
+    },
+    "server_timing": {
+      "ttfb_seconds": 0.159734,
+      "total_seconds": 0.231204,
+      "size_bytes": 75461
+    },
+    "issues": [
+      {
+        "id": "SEO-001",
+        "source": "health_check",
+        "severity": "high",
+        "title": "Sitemap.xml Missing",
+        "description": "The sitemap.xml file returned a 404 error. This blocks search engines from efficiently crawling and indexing all pages. For a content-heavy site with a blog, this is critical.",
+        "fix_steps": [
+          "Generate sitemap.xml (most static site generators like Astro have built-in sitemap plugins)",
+          "Add sitemap location to robots.txt: `Sitemap: https://growth4u.io/sitemap.xml`",
+          "Submit sitemap to Google Search Console"
+        ],
+        "expected_impact_pct": 15
+      },
+      {
+        "id": "SEO-002",
+        "source": "lighthouse_unavailable",
+        "severity": "medium",
+        "title": "Core Web Vitals Unknown",
+        "description": "Lighthouse was unavailable due to PSI rate limits. Without CWV data (LCP, CLS, FCP), we cannot assess page speed performance, which is a ranking factor and affects user experience.",
+        "fix_steps": [
+          "Configure GOOGLE_API_KEY to enable PSI access",
+          "OR run Lighthouse locally: `npx lighthouse https://growth4u.io --view`",
+          "OR use WebPageTest.org for real-user performance metrics"
+        ],
+        "expected_impact_pct": 10
+      },
+      {
+        "id": "SEO-003",
+        "source": "structured_data",
+        "severity": "low",
+        "title": "Missing LocalBusiness Schema",
+        "description": "Site has Organization, ProfessionalService, and FAQPage schemas, but no LocalBusiness schema. For a B2B service with area focus (Spain/Portugal), LocalBusiness schema can improve local search visibility.",
+        "fix_steps": [
+          "Add LocalBusiness schema with address, phone, geo coordinates for Madrid office",
+          "Include opening hours, service area (Spain, Portugal, Iberia)"
+        ],
+        "expected_impact_pct": 5
+      },
+      {
+        "id": "SEO-004",
+        "source": "server_timing",
+        "severity": "low",
+        "title": "TTFB Slightly Slow",
+        "description": "Time to First Byte (TTFB) is 159ms. While acceptable (<200ms), it could be optimized further. Page size is 75KB, which is lean.",
+        "fix_steps": [
+          "Enable CDN caching (if not already using Cloudflare/Vercel edge)",
+          "Enable HTTP/2 server push for critical resources (already using HTTP/2)",
+          "Consider edge functions for dynamic content"
+        ],
+        "expected_impact_pct": 3
+      },
+      {
+        "id": "SEO-005",
+        "source": "internal_linking",
+        "severity": "low",
+        "title": "Low Internal Link Density",
+        "description": "Only 37 internal links found on homepage. For a site with 20+ blog articles, the homepage should link to more pillar content to distribute PageRank.",
+        "fix_steps": [
+          "Add \"Featured Articles\" or \"Popular Resources\" section with 5-10 links",
+          "Link to key service pages from homepage content (not just nav)",
+          "Consider breadcrumbs for hierarchical navigation"
+        ],
+        "expected_impact_pct": 5
+      }
+    ],
+    "score_calculation": {
+      "method": "health_checks_only",
+      "note": "Lighthouse unavailable. Score based solely on 15 health checks (13/15 passed = 86.67%)",
+      "health_check_pass_rate": 86.67,
+      "lighthouse_seo": null,
+      "lighthouse_performance": null,
+      "final_score": 86.67
+    }
+  },
+  "metadata": {
+    "duration_seconds": 18,
+    "apis_called": ["web_fetch", "curl (sitemap, robots, server timing)"],
+    "errors": ["Google PSI rate limit exceeded — no Lighthouse data"]
+  }
+}

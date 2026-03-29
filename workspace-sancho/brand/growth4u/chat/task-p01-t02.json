@@ -1,0 +1,27 @@
+{
+  "messages": [
+    {
+      "role": "user",
+      "text": "Estoy abriendo el chat sobre \"Configurar conversiones GA4\". Dame un resumen rápido del estado actual y qué podemos hacer. Si necesitas algo de mí, dímelo.",
+      "ts": "2026-03-26T16:21:53.490Z"
+    },
+    {
+      "role": "bot",
+      "text": "**Resumen P01-T02: Configurar conversiones GA4**\n\n**Estado:** Ready (pendiente de implementar)\n\n**Lo que hay:**\n- GA4 ya está instalado → `G-4YBYPVQDT6`\n- GA4 ya conectado a nuestro sistema (desde Mar 11)\n- Playbook listo con instrucciones paso a paso\n\n**Lo que falta — 3 eventos custom:**\n1. **`booking_started`** → Click en \"Agendar Llamada\" / URLs de booking\n2. **`form_submit`** → Envío de formulario de contacto\n3. **`trust_score_completed`** → Completar el Trust Score Analyzer\n\n**Dos opciones:**\n- **Opción A (recomendada):** Via GTM — crear 3 tags con sus triggers\n- **Opción B:** Via gtag.js directo en el código\n\nDespués hay que marcar los 3 eventos como conversiones en GA4 Admin (tarda ~24h en aparecer tras el primer disparo).\n\n---\n\n**Lo que necesito de ti:**\n\n1. **¿Usáis GTM o va por código directo?** Eso determina qué ruta seguimos.\n2. **¿Quién implementa?** El task tiene owner \"Equipo\" — ¿lo haría alguien de desarrollo o necesitas que te dé instrucciones más detalladas para hacerlo tú?\n3. **El Trust Score Analyzer** — ¿cómo funciona técnicamente? ¿Es un widget embebido, un iframe, una página propia? Necesito saberlo para definir bien el trigger de `trust_score_completed`.\n\nCon eso puedo ajustar el playbook al escenario real y avanzamos.",
+      "agent": "sancho",
+      "ts": "2026-03-26T16:22:44.550Z"
+    },
+    {
+      "role": "user",
+      "text": "Hey",
+      "ts": "2026-03-28T07:20:04.760Z"
+    },
+    {
+      "role": "bot",
+      "text": "¡Hola! 👋\n\nEstoy en el hilo de **Configurar conversiones GA4** (P01-T02). ¿En qué te puedo ayudar?",
+      "agent": "sancho",
+      "ts": "2026-03-28T07:20:16.913Z"
+    }
+  ],
+  "updatedAt": 1774682416913
+}

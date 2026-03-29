@@ -1,0 +1,44 @@
+[
+  {
+    "id": "P00-SP-T01",
+    "name": "Crear Strategic Plan",
+    "description": "Generar plan estratégico completo: SWOT ejecutivo, channel prioritization, roadmap de proyectos (P01-P08+), KPIs.",
+    "deliverable": "operational/strategic-plan.md con análisis, canales, proyectos y métricas.",
+    "done_criteria": "Plan aprobado. Proyectos P01-P08+ creados en Mission Control con tareas detalladas.",
+    "depends_on": "P00-MET-T01",
+    "owner": "Sancho",
+    "status": "done",
+    "channel": "strategy",
+    "skill": "strategic-plan",
+    "completed": "2026-03-22",
+    "discord_thread_id": null,
+    "output_files": [
+      "brand/growth4u/strategic-plan/current.md"
+    ],
+    "documents": [
+      {
+        "name": "Strategic Plan Q2 2026",
+        "path": "brand/growth4u/strategic-plan/current.md",
+        "type": "primary"
+      }
+    ],
+    "type": "foundation",
+    "pillar": "strategic-plan",
+    "section": "strategic-plan"
+  },
+  {
+    "id": "P00-SP-T02",
+    "name": "Ejecutar Strategic Plan",
+    "description": "Ejecutar los proyectos del roadmap (P01-P08+). Esta tarea se marca como done cuando todos los proyectos principales están completados o en ejecución estable.",
+    "deliverable": "Proyectos P01-P08+ ejecutados. Métricas L1-L4 trackeadas en dashboards.",
+    "done_criteria": "Fase 1 (Foundation + Quick Wins) completada. Fases 2-3 en progreso o completadas.",
+    "depends_on": "P00-SP-T01",
+    "owner": "Sancho",
+    "status": "active",
+    "channel": "strategy",
+    "skill": "strategic-plan",
+    "discord_thread_id": null,
+    "output_files": [],
+    "type": "execution"
+  }
+]

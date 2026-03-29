@@ -115,13 +115,13 @@ Scoring: `(Dolor×0.25) + (Objetivo×0.25) + (Resource×0.25) + (Time×0.25)`. [
 
 | Estrategia | Score | Por qué |
 |---|---|---|
-| **#30 Founder-Led GTM (3 perfiles)** | **8.25** | Alfonso, Martín y Philippe ya en LinkedIn. Falta funnel post-engagement. LinkedIn → DM warm → Call = canal más rápido para B2B 7K€ |
+| **#19 Founder-Led GTM (3 perfiles)** | **8.25** | Alfonso, Martín y Philippe ya en LinkedIn. Falta funnel post-engagement. LinkedIn → DM warm → Call = canal más rápido para B2B 7K€ |
 | **#01 ICP List B2B Outreach** | **8.25** | ACV 7K€ justifica 1:1. Instantly listo. [ECP 1](../go-to-market/ecps/ecps.md): ~2.500 startups. [ECP 2](../go-to-market/ecps/ecps.md): ~427 fintechs BdE |
-| **#27 Paid Ads** | **8.00** | Meta stack existe, CPL 20€ demostrado. Bloqueado hasta pixel instalado |
-| **#05 Customer Advocacy** | **8.00** | Desbloquea todo: resolver [W1 SWOT](../market-and-us/swot/current.md) (0 social proof) |
-| **#23 Free Media & Directories** | **7.75** | Aparecer en todos los sitios gratuitos: directorios, guest posts, HARO, podcasts |
+| **#16 Paid Ads** | **8.00** | Meta stack existe, CPL 20€ demostrado. Bloqueado hasta pixel instalado |
+| **#04 Customer Advocacy** | **8.00** | Desbloquea todo: resolver [W1 SWOT](../market-and-us/swot/current.md) (0 social proof) |
+| **#13 Free Media & Directories** | **7.75** | Aparecer en todos los sitios gratuitos: directorios, guest posts, HARO, podcasts |
 | **Twitter/X Build-in-Public** | **7.00** | @AlfonsoSB tiene 1.444 followers — reactivar con build-in-public |
-| **#32 Social SEO (IG + TikTok)** | **6.50** | Contenido educativo respondiendo preguntas de growth. IG estáticos + TikTok vídeos |
+| **#21 Social SEO (IG + TikTok)** | **6.50** | Contenido educativo respondiendo preguntas de growth. IG estáticos + TikTok vídeos |
 
 ### LinkedIn — 3 perfiles coordinados
 

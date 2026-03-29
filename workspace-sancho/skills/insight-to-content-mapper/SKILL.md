@@ -160,9 +160,9 @@ PRIORITY = (Business Impact x 0.4) + (SEO Potential x 0.3)
          + (Production Ease x 0.2) + (Timeliness x 0.1)
 
 Thresholds:
-  8.0-10.0 → Produce immediately (this week)
-  6.0-7.9  → Queue for next sprint (2 weeks)
-  4.0-5.9  → Backlog (this month)
+  8.0-10.0 → Produce immediately (next action)
+  6.0-7.9  → Queue (after current batch)
+  4.0-5.9  → Backlog
   Below 4.0 → Skip
 ```
 
@@ -262,10 +262,10 @@ INSIGHT-TO-CONTENT MAPPER — Batch Complete
 
 Insights processed: [N] | Briefs generated: [top 5] | Skipped: [count]
 
-CONTENT CALENDAR PREVIEW
-  Week 1: [Priority 7.8] Competitor Feature X — Comparison page
-  Week 2: [Priority 6.9] Client Y Case Study — Case study
-  Week 3: [Priority 6.3] Measuring ROI — FAQ hub page
+CONTENT QUEUE (by priority)
+  #1 [Priority 7.8] Competitor Feature X — Comparison page
+  #2 [Priority 6.9] Client Y Case Study — Case study
+  #3 [Priority 6.3] Measuring ROI — FAQ hub page
 
 FILES SAVED
   content-briefs/batch-2026-02-21.json (summary)

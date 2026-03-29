@@ -4,6 +4,49 @@
   "strategic_plan": "brand/growth4u/strategic-plan/current.md",
   "projects": [
     {
+      "id": "P00-Fast-Foundation",
+      "slug": "Fast-Foundation",
+      "name": "Fast Foundation (L0-L1)",
+      "strategy": "Foundation — Layer 0-1",
+      "status": "completed",
+      "phase": -1,
+      "category": "foundation",
+      "created_at": "2026-03-15T00:00:00Z",
+      "review_date": null
+    },
+    {
+      "id": "P00-Full-Foundation",
+      "slug": "Full-Foundation",
+      "name": "Full Foundation (L0-L5)",
+      "strategy": "Foundation — Layer 0-5",
+      "status": "completed",
+      "phase": -1,
+      "category": "foundation",
+      "created_at": "2026-03-15T00:00:00Z",
+      "review_date": null
+    },
+    {
+      "id": "P00-Metrics",
+      "name": "Métricas y Conexiones",
+      "status": "todo",
+      "slug": "Metrics-and-Connections",
+      "strategy": "Foundation — Metrics Layer",
+      "phase": -1,
+      "category": "foundation",
+      "created_at": "2026-03-28T00:00:00Z"
+    },
+    {
+      "id": "P00-Strategic-Plan",
+      "slug": "Strategic-Plan",
+      "name": "Strategic Plan",
+      "strategy": "Foundation — Strategic Planning",
+      "status": "active",
+      "phase": -1,
+      "category": "foundation",
+      "created_at": "2026-03-22T00:00:00Z",
+      "review_date": "2026-06-30"
+    },
+    {
       "id": "P01",
       "slug": "fontaneria",
       "name": "Fontanería Web",

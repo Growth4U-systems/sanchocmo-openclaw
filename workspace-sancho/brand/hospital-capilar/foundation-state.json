@@ -1,9 +1,41 @@
 {
-  "version": "2.0",
-  "client": "hospital-capilar",
+  "version": "3.0",
   "started_at": "2026-03-03T10:06:00Z",
-  "updated_at": "2026-03-16T15:05:00Z",
+  "updated_at": "2026-03-27T21:39:27Z",
   "sections": {
+    "fast-foundation": {
+      "status": "approved",
+      "layer": 0,
+      "output_dir": "brand/hospital-capilar/company-brief/",
+      "skill": "fast-foundation",
+      "pillars": {
+        "company-brief": {
+          "status": "approved",
+          "output_file": "brand/hospital-capilar/company-brief/current.md",
+          "skill": "fast-foundation"
+        },
+        "self-l1": {
+          "status": "approved",
+          "output_file": "brand/hospital-capilar/market-and-us/self/current.md",
+          "skill": "fast-foundation"
+        },
+        "market-l1": {
+          "status": "approved",
+          "output_file": "brand/hospital-capilar/market-and-us/market/current.md",
+          "skill": "fast-foundation"
+        },
+        "brand-voice-snapshot": {
+          "status": "approved",
+          "output_file": "brand/hospital-capilar/brand-voice/current.md",
+          "skill": "fast-foundation"
+        },
+        "niche-basic": {
+          "status": "approved",
+          "output_file": "brand/hospital-capilar/go-to-market/ecps/current.md",
+          "skill": "fast-foundation"
+        }
+      }
+    },
     "company-brief": {
       "status": "approved",
       "layer": 0,
@@ -32,7 +64,7 @@
           "status": "approved",
           "layer": 1,
           "requires": [
-            "company-brief"
+            "fast-foundation"
           ],
           "enriches_with": [
             "competitor-analysis",
@@ -46,7 +78,7 @@
           "status": "approved",
           "layer": 1,
           "requires": [
-            "company-brief"
+            "fast-foundation"
           ],
           "enriches_with": [
             "market-analysis",
@@ -63,7 +95,7 @@
           "status": "approved",
           "layer": 1,
           "requires": [
-            "company-brief"
+            "fast-foundation"
           ],
           "enriches_with": [
             "market-analysis",
@@ -74,7 +106,7 @@
           "completed_at": "2026-03-03T12:05:00Z",
           "approved_at": "2026-03-03T12:05:00Z"
         },
-        "swot": {
+        "market-synthesis": {
           "status": "approved",
           "layer": 2,
           "requires": [
@@ -83,34 +115,10 @@
             "self-analysis"
           ],
           "output_file": "brand/hospital-capilar/market-and-us/swot/current.md",
-          "skill": "swot-analysis",
+          "skill": "market-synthesis",
           "started_at": "2026-03-03T12:06:00Z",
           "completed_at": "2026-03-03T12:12:00Z",
           "approved_at": "2026-03-03T12:33:00Z"
-        }
-      },
-      "syntheses": {
-        "summary": {
-          "status": "generated",
-          "output_file": "brand/hospital-capilar/market-and-us/summary/current.md",
-          "generated_by": "orchestrator",
-          "requires": [
-            "market-analysis",
-            "competitor-analysis",
-            "self-analysis"
-          ],
-          "generated_at": "2026-03-03T12:35:00Z"
-        },
-        "ope-canvas": {
-          "status": "generated",
-          "output_file": "brand/hospital-capilar/market-and-us/ope-canvas/current.md",
-          "generated_by": "orchestrator",
-          "requires": [
-            "market-analysis",
-            "competitor-analysis",
-            "self-analysis"
-          ],
-          "generated_at": "2026-03-03T12:35:00Z"
         }
       }
     },
@@ -123,7 +131,7 @@
           "status": "approved",
           "layer": 3,
           "requires": [
-            "swot"
+            "market-synthesis"
           ],
           "enriches_with": [
             "existing-customer-data"
@@ -138,7 +146,7 @@
           "status": "not-started",
           "layer": 3,
           "requires": [
-            "company-brief"
+            "fast-foundation"
           ],
           "optional": true,
           "skill": "existing-customer-data"
@@ -174,27 +182,6 @@
           ],
           "optional": true,
           "skill": "ecp-validation"
-        },
-        "metrics-plan": {
-          "status": "not-started",
-          "layer": 4,
-          "requires": [
-            "company-brief"
-          ],
-          "enriches_with": [
-            "niche-discovery"
-          ],
-          "skill": "acquisition-metrics-plan"
-        }
-      },
-      "syntheses": {
-        "messaging-summary": {
-          "status": "not-generated",
-          "output_file": "brand/hospital-capilar/go-to-market/messaging-summary/current.md",
-          "generated_by": "orchestrator",
-          "requires": [
-            "positioning"
-          ]
         }
       }
     },
@@ -222,17 +209,36 @@
           "skill": "visual-identity"
         }
       }
+    },
+    "metrics-setup": {
+      "status": "not-started",
+      "layer": 6,
+      "skill": "metrics-setup",
+      "requires": [
+        "positioning",
+        "pricing"
+      ],
+      "pillars": {
+        "metrics-setup": {
+          "status": "not-started",
+          "requires": [
+            "positioning",
+            "pricing"
+          ],
+          "skill": "metrics-setup"
+        }
+      }
+    },
+    "strategic-plan": {
+      "status": "not-started",
+      "layer": 7,
+      "skill": "strategic-plan",
+      "requires": [
+        "metrics-setup"
+      ],
+      "output_file": "brand/hospital-capilar/strategic-plan/current.md"
     }
   },
-  "known_competitors": [
-    "insparya",
-    "svenson",
-    "capilclinic",
-    "medical-hair",
-    "imd",
-    "manual-co",
-    "mediquo"
-  ],
   "presentations": [
     {
       "name": "Mercado Competidores",

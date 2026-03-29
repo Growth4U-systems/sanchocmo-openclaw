@@ -1,15 +1,15 @@
 {
   "project_slug": "hospital-capilar",
-  "started_at": "2026-03-24T21:55:00Z",
+  "started_at": "2026-03-26T10:45:00Z",
   "modules": {
-    "foundation-import": { "status": "completed", "completed_at": "2026-03-24T21:55:00Z", "version": 1 },
-    "seo-audit":         { "status": "completed", "completed_at": "2026-03-25T11:55:00Z", "version": 2 },
+    "foundation-import": { "status": "completed", "completed_at": "2026-03-26T10:46:00Z", "version": 2 },
+    "seo-audit":         { "status": "completed", "completed_at": "2026-03-26T10:47:00Z", "version": 2 },
     "own-media-audit":   { "status": "completed", "completed_at": "2026-03-24T22:10:00Z", "version": 1 },
-    "geo-analysis":      { "status": "completed", "completed_at": "2026-03-24T22:12:00Z", "version": 1 },
-    "serp-analysis":     { "status": "completed", "completed_at": "2026-03-24T22:18:00Z", "version": 1 },
-    "gap-analysis":      { "status": "completed", "completed_at": "2026-03-24T22:20:00Z", "version": 1, "depends_on": ["geo-analysis", "serp-analysis"] },
-    "recommendations":   { "status": "completed", "completed_at": "2026-03-24T22:22:00Z", "version": 1, "depends_on": ["seo-audit", "own-media-audit", "geo-analysis", "gap-analysis"] },
-    "keywords":          { "status": "completed", "completed_at": "2026-03-24T22:24:00Z", "version": 1, "depends_on": ["serp-analysis"] },
-    "influencers":       { "status": "completed", "completed_at": "2026-03-24T22:25:00Z", "version": 1 }
+    "geo-analysis":      { "status": "completed", "completed_at": "2026-03-26T10:55:00Z", "version": 3 },
+    "serp-analysis":     { "status": "completed", "completed_at": "2026-03-26T10:50:00Z", "version": 3 },
+    "gap-analysis":      { "status": "completed", "completed_at": "2026-03-26T11:00:00Z", "version": 3, "depends_on": ["geo-analysis", "serp-analysis"] },
+    "recommendations":   { "status": "pending", "depends_on": ["seo-audit", "own-media-audit", "geo-analysis", "gap-analysis"] },
+    "keywords":          { "status": "pending", "depends_on": ["serp-analysis"] },
+    "influencers":       { "status": "pending" }
   }
 }

@@ -21,6 +21,8 @@ const MIME = {
 const ALLOWED_FILES = [
   'mission-control.html',
   'mc-data.js',
+  'mc-work.js',
+  'mc-work.css',
   'clients.js',
   'skills-data.js',
   'agents-data.js',
@@ -30,10 +32,13 @@ const ALLOWED_FILES = [
 
 // Foundation section order (matches actual directory structure + foundation-state.json)
 const FOUNDATION_ORDER = [
+  { cat: '📋 Fast Foundation', folder: 'fast-foundation', pillarsKey: 'pillars' },
   { cat: '🏢 La Empresa', folder: 'company-brief', pillarsKey: 'skills' },
   { cat: '📊 El Mercado & Nosotros', folder: 'market-and-us', pillarsKey: 'pillars' },
   { cat: '🎯 Go-To-Market', folder: 'go-to-market', pillarsKey: 'pillars' },
   { cat: '🎨 Brand Identity', folder: 'brand-identity', pillarsKey: 'pillars' },
+  { cat: '📏 Métricas y Conexiones', folder: 'metrics-setup', pillarsKey: 'pillars' },
+  { cat: '🗺️ Strategic Plan', folder: 'strategic-plan', pillarsKey: 'pillars' },
 ];
 const PILLAR_FLAT = FOUNDATION_ORDER.map(g => g.folder);
 
@@ -102,6 +107,8 @@ function simpleMarkdownToHtml(md) {
   html = html.replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>');
   html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
   html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
+  // Images (before links to avoid conflict)
+  html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" style="max-width:100%;border-radius:8px;margin:8px 0;">');
   // Links
   html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
   // Blockquotes
@@ -306,11 +313,12 @@ function listDir(dirPath, urlPrefix, opts = {}) {
     const statusIcon = (s) => {
       if (s === 'approved' || s === 'done') return '✅';
       if (s === 'generated') return '📝';
+      if (s === 'request-refresh') return '🔄';
       if (s === 'in-progress' || s === 'draft' || s === 'pending-review' || s === 'pending-approval') return '⚠️';
       return '⬜';
     };
     const statusLabel = (s) => {
-      const labels = { 'approved': 'Validado', 'done': 'Completado', 'in-progress': 'En progreso', 'draft': 'Borrador', 'pending-review': 'Pendiente revisión', 'pending-approval': 'Pendiente aprobación', 'generated': 'Generado', 'not-started': 'No iniciado', 'not-generated': 'No generado' };
+      const labels = { 'approved': 'Validado', 'done': 'Completado', 'in-progress': 'En progreso', 'draft': 'Borrador', 'pending-review': 'Pendiente revisión', 'pending-approval': 'Pendiente aprobación', 'generated': 'Generado', 'not-started': 'No iniciado', 'not-generated': 'No generado', 'request-refresh': 'Solicitar actualización' };
       return labels[s] || s;
     };
 
@@ -396,8 +404,9 @@ function listDir(dirPath, urlPrefix, opts = {}) {
       const sectionStatus = section.status || 'not-started';
       const pillars = section[group.pillarsKey] || {};
       const pillarNames = Object.keys(pillars);
-      const approvedCount = pillarNames.filter(p => pillars[p].status === 'approved').length;
-      const totalCount = pillarNames.length;
+      const requiredPillars = pillarNames.filter(p => !pillars[p].optional);
+      const approvedCount = requiredPillars.filter(p => pillars[p].status === 'approved').length;
+      const totalCount = requiredPillars.length;
 
       html += `<h2 style="margin:24px 0 10px;font-family:'Space Grotesk',sans-serif;font-size:1.4em;color:#C45D35;">${group.cat}</h2>\n`;
 
@@ -877,14 +886,40 @@ function loadClients() {
 }
 
 // ========== Idea Bank & Recurring Tasks helpers ==========
+
+// --- Ideas v2: central store at brand/{slug}/ideas.json ---
+// Ideas have: id, title, description, type, list, source, source_data, priority_score,
+//   status (pool|assigned|executed|rejected), project_ids[], pieces[], created_at
+// Pieces have: id, channel, channel_type, intent, format, status, task_id, created_at, output_url
+
 function loadIdeas(slug) {
-  const file = path.join(BASE, 'brand', slug, 'idea-generation', 'ideas.json');
-  try { return JSON.parse(fs.readFileSync(file, 'utf-8')); } catch { return []; }
+  // Try new central location first
+  const centralFile = path.join(BASE, 'brand', slug, 'ideas.json');
+  try {
+    const data = JSON.parse(fs.readFileSync(centralFile, 'utf-8'));
+    return data.ideas || data; // support both {ideas:[...]} and [...] formats
+  } catch {}
+  // Fallback to legacy location
+  const legacyFile = path.join(BASE, 'brand', slug, 'idea-generation', 'ideas.json');
+  try {
+    const legacy = JSON.parse(fs.readFileSync(legacyFile, 'utf-8'));
+    // Mark as legacy so UI can show migration prompt
+    return legacy.map(idea => ({ ...idea, _legacy: true, project_ids: idea.project_ids || [], pieces: idea.pieces || [] }));
+  } catch { return []; }
 }
+
 function saveIdeas(slug, ideas) {
-  const dir = path.join(BASE, 'brand', slug, 'idea-generation');
-  fs.mkdirSync(dir, { recursive: true });
-  fs.writeFileSync(path.join(dir, 'ideas.json'), JSON.stringify(ideas, null, 2));
+  const brandDir = path.join(BASE, 'brand', slug);
+  fs.mkdirSync(brandDir, { recursive: true });
+  fs.writeFileSync(path.join(brandDir, 'ideas.json'), JSON.stringify({ ideas }, null, 2));
+}
+
+function getProjectPool(slug, projectId) {
+  return loadIdeas(slug).filter(idea => (idea.project_ids || []).includes(projectId));
+}
+
+function getUnassignedIdeas(slug) {
+  return loadIdeas(slug).filter(idea => !idea.project_ids || idea.project_ids.length === 0);
 }
 // --- Recurring Tasks: reads from OpenClaw crons (source of truth) + local JSON overlay ---
 
@@ -938,6 +973,45 @@ function _extractSlugFromCron(cronName, clients) {
   }
   // Check if prompt mentions a slug
   return null;
+}
+
+// Extract executable script paths from a cron prompt
+function _extractScripts(prompt) {
+  if (!prompt) return [];
+  const scripts = new Set();
+  // Match explicit invocations: node X.js, python3 Y.py, bash Z.sh
+  const invocations = prompt.matchAll(/(?:node|python3|bash)\s+([^\s;|&"']+\.(?:js|py|sh))/g);
+  for (const m of invocations) scripts.add(m[1]);
+  // Match absolute paths to scripts
+  const absPaths = prompt.matchAll(/((?:~\/|\/)[^\s;|&"']+\.(?:js|py|sh))/g);
+  for (const m of absPaths) scripts.add(m[1]);
+  // Match relative paths like scripts/X.py or skills/Y/scripts/Z.js
+  const relPaths = prompt.matchAll(/((?:scripts|skills)\/[^\s;|&"']+\.(?:js|py|sh))/g);
+  for (const m of relPaths) scripts.add(m[1]);
+
+  // Resolve paths and filter to actual executable scripts (not config/data files)
+  const resolved = [];
+  const seen = new Set();
+  for (const s of scripts) {
+    // Skip obvious non-scripts (config files, output paths, wildcards)
+    if (s.includes('*') || s.includes('YYYY') || s.includes('config.js') || s.includes('state.js')) continue;
+    // Resolve path
+    let absPath = s;
+    if (s.startsWith('~/')) absPath = s.replace('~', process.env.HOME || '/Users/ragi');
+    else if (s.startsWith('scripts/') || s.startsWith('skills/')) absPath = path.join(BASE, s);
+    else if (!s.startsWith('/')) absPath = path.join(BASE, s);
+    // Normalize
+    try { absPath = fs.realpathSync(absPath); } catch { continue; } // skip if file doesn't exist
+    if (seen.has(absPath)) continue;
+    seen.add(absPath);
+    const basename = path.basename(absPath);
+    const relPath = absPath.startsWith(BASE) ? path.relative(BASE, absPath) : absPath;
+    const lang = basename.endsWith('.py') ? 'python' : basename.endsWith('.sh') ? 'bash' : 'javascript';
+    let lines = 0;
+    try { lines = fs.readFileSync(absPath, 'utf-8').split('\n').length; } catch {}
+    resolved.push({ path: relPath, absPath, name: basename, lang, lines });
+  }
+  return resolved;
 }
 
 let _cronCache = null;
@@ -1005,6 +1079,7 @@ function loadRecurringTasks(slug) {
       model: cron.payload?.model || '—',
       prompt: cron.payload?.message || '',
       description: cron.description || '',
+      scripts: _extractScripts(cron.payload?.message || ''),
       client_slug: cronSlug || null,
       _source: 'openclaw-cron',
       created_at: cron.createdAtMs ? new Date(cron.createdAtMs).toISOString() : null,
@@ -1031,6 +1106,41 @@ function saveRecurringTasks(slug, tasks) {
   const dir = path.join(BASE, 'brand', slug, 'idea-generation');
   fs.mkdirSync(dir, { recursive: true });
   fs.writeFileSync(path.join(dir, 'recurring-tasks.json'), JSON.stringify(localTasks, null, 2));
+}
+
+function loadCronJobs() {
+  try {
+    const output = execSync('openclaw cron list --json', { timeout: 15000, encoding: 'utf-8', env: { ...process.env, PATH: '/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin' } });
+    return (JSON.parse(output).jobs || []);
+  } catch (e) { console.error('loadCronJobs error:', e.message); return []; }
+}
+
+function enrichCronJob(job, clients) {
+  const name = (job.name || '').toLowerCase();
+  const msg = ((job.payload || {}).message || '').toLowerCase();
+  let clientSlug = null;
+  for (const c of clients) {
+    const s = (c.slug || '').toLowerCase(), n2 = (c.name || '').toLowerCase();
+    if (name.includes(s) || msg.includes(s) || name.includes(n2)) { clientSlug = c.slug; break; }
+  }
+  let category = 'other';
+  if (/metric|morning|analytics/.test(name)) category = 'metrics';
+  else if (/pulse|meeting|synthesis|intelligence|thief/.test(name)) category = 'intelligence';
+  else if (/lead|outreach|call prep|prospecting/.test(name)) category = 'outreach';
+  else if (/content|blog|social|idea.gen/.test(name)) category = 'content';
+  else if (/backup|health|cost|update|watchdog|memory|regenerar|changelog|skill|mejora|image-opt|token.audit|activity|observa/.test(name)) category = 'system';
+  const st = job.state || {};
+  return {
+    id: job.id, name: job.name, enabled: job.enabled !== false,
+    schedule: job.schedule, agent: job.agentId,
+    model: (job.payload || {}).model || null,
+    client_slug: clientSlug, category,
+    last_run: st.lastRunAtMs ? new Date(st.lastRunAtMs).toISOString() : null,
+    next_run: st.nextRunAtMs ? new Date(st.nextRunAtMs).toISOString() : null,
+    last_status: st.lastRunStatus || null,
+    duration_ms: st.lastDurationMs || null,
+    consecutive_errors: st.consecutiveErrors || 0,
+  };
 }
 
 function getAdminToken() {
@@ -2039,6 +2149,8 @@ h1{font-family:'Space Grotesk',sans-serif;color:var(--navy);font-size:28px;margi
   <a href="${baseUrl}/">📊 Dashboard</a>
   <a href="${baseUrl}/docs/brand/${slug}/">📂 Documentos</a>
   <a href="#" class="active">📋 Proyectos</a>
+  <a href="${baseUrl}/trust-engine/">🔍 Trust Engine</a>
+  <a href="${baseUrl}/settings/">⚙️ Settings</a>
   <div class="ns">Vista</div>
   <a href="#" onclick="switchView('projects',this);return false;" id="nav-projects" class="active">📂 Por Proyecto</a>
   <a href="#" onclick="switchView('kanban',this);return false;" id="nav-kanban">📋 Kanban</a>
@@ -2277,6 +2389,1388 @@ function switchView(view, tab) {
 </body></html>`;
 }
 
+function buildSettingsPage(slug, baseUrl, clientName, guildId) {
+  function escHtml(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+  // Read dispatch-map.json
+  let dispatchData = {};
+  try { dispatchData = JSON.parse(fs.readFileSync(path.join(BASE, 'dispatch-map.json'), 'utf-8')); } catch {}
+
+  // Read agent .md files (NO openclaw.json — contains secrets)
+  const agentsDataObj = {};
+  for (const agentSlug of ['cervantes', 'sancho', 'rocinante', 'escudero']) {
+    const agentDir = path.join('/Users/ragi/.openclaw', 'workspace-' + agentSlug);
+    const files = {};
+    try {
+      const entries = fs.readdirSync(agentDir).filter(f => f.endsWith('.md'));
+      for (const f of entries) {
+        try { files[f] = fs.readFileSync(path.join(agentDir, f), 'utf-8'); } catch {}
+      }
+    } catch {}
+    agentsDataObj[agentSlug] = { name: agentSlug.charAt(0).toUpperCase() + agentSlug.slice(1), files };
+  }
+
+  return `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>⚙️ Settings — ${escHtml(clientName)}</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="${baseUrl}/mc-data.js"><\/script>
+<script src="${baseUrl}/skills-data.js"><\/script>
+<style>
+:root{--bg:#F5F0E6;--card:#FDF8EF;--border:#D4C9B8;--text:#1A1A2E;--muted:#5D5348;--ink:#1A1A2E;--rust:#C45D35;--navy:#1E3A5F;--green:#4A5D23;--blue:#3B82F6;--red:#C0392B;--yellow:#F2C94C;--bg-alt:#F0EDE8;--cyan:#3B9EBF;--orange:#F2994A;}
+[data-theme=dark]{--bg:#1A1A2E;--card:#2D2D44;--border:#3D3D5C;--text:#FDF8EF;--muted:#A09890;--ink:#FDF8EF;--rust:#D4734F;--navy:#60a5fa;--green:#6B8E23;--blue:#60a5fa;--red:#E74C3C;--yellow:#F2C94C;--bg-alt:#252538;--cyan:#22d3ee;--orange:#fb923c;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);line-height:1.5;min-height:100vh;}
+.sidebar{position:fixed;top:0;left:0;width:220px;height:100vh;background:var(--card);border-right:2px solid var(--border);display:flex;flex-direction:column;padding:16px 12px;z-index:50;overflow-y:auto;}
+.sidebar .logo{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:22px;color:var(--rust);}
+.sidebar .logo-sub{font-size:11px;color:var(--muted);margin-bottom:14px;letter-spacing:1px;text-transform:uppercase;}
+.sidebar .ns{font-size:12px;color:var(--muted);margin-bottom:10px;padding:6px 0;font-weight:600;}
+.sidebar a{display:block;padding:8px 12px;font-size:13px;color:var(--text);text-decoration:none;border-radius:8px;margin-bottom:2px;transition:all .12s;}
+.sidebar a:hover{background:var(--bg);color:var(--rust);}
+.sidebar a.active{background:var(--bg);color:var(--rust);font-weight:600;}
+.sidebar .nav-footer{margin-top:auto;padding-top:16px;border-top:1px solid var(--border);}
+.sidebar .theme-toggle{display:flex;align-items:center;gap:8px;padding:8px 12px;font-size:12px;color:var(--muted);cursor:pointer;border-radius:8px;}
+.sidebar .theme-toggle:hover{background:var(--bg);color:var(--text);}
+.main-content{margin-left:220px;padding:24px 32px;overflow-x:auto;}
+@media(max-width:768px){.sidebar{display:none;}.main-content{margin-left:0;}}
+
+/* Settings tabs */
+.settings-tabs{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:20px;border-bottom:2px solid var(--border);padding-bottom:10px;}
+.settings-tab{padding:8px 16px;border-radius:8px 8px 0 0;font-size:13px;cursor:pointer;background:var(--bg);border:1px solid var(--border);border-bottom:none;color:var(--muted);font-weight:500;transition:all .12s;}
+.settings-tab:hover{border-color:var(--rust);color:var(--rust);}
+.settings-tab.active{background:var(--card);color:var(--rust);font-weight:700;border-color:var(--rust);border-bottom:2px solid var(--card);margin-bottom:-2px;}
+.settings-panel{display:none;}
+.settings-panel.active{display:block;}
+
+/* Card & Grid */
+.card{background:var(--card);border:2px solid var(--ink);border-radius:8px;padding:16px;margin-bottom:12px;box-shadow:3px 3px 0 var(--ink);}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;}
+
+/* Buttons */
+.btn{padding:8px 20px;border:2px solid var(--ink);border-radius:6px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Nunito',sans-serif;box-shadow:3px 3px 0 var(--ink);transition:all .2s cubic-bezier(.16,1,.3,1);}
+.btn:hover{box-shadow:4px 4px 0 var(--ink);transform:translate(-1px,-1px);}
+.btn:active{box-shadow:1px 1px 0 var(--ink);transform:translate(1px,1px);}
+.btn-primary{background:linear-gradient(135deg,#C45D35,#D4734F);color:#fff;}
+.btn-primary:hover{background:linear-gradient(135deg,#A34A28,#C45D35);}
+.btn-secondary{background:var(--border);color:var(--text);margin-left:6px;}
+.btn-sm{background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:3px 10px;font-size:11px;cursor:pointer;color:var(--text);transition:all .15s;}
+.btn-sm:hover{border-color:var(--rust);background:var(--rust);color:#fff;}
+
+/* Status dots */
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--muted);}
+.dot.g{background:var(--green);}
+.dot.y{background:var(--yellow);}
+.dot.x{background:var(--red);}
+
+/* Tabs & Skills */
+.tabs{display:flex;gap:4px;margin-bottom:14px;flex-wrap:wrap;}
+.tab{padding:5px 14px;border-radius:8px;font-size:12px;cursor:pointer;background:var(--bg);border:1px solid var(--border);color:var(--muted);}
+.tab:hover{border-color:var(--rust);}
+.tab.active{background:var(--rust);color:#fff;border-color:var(--ink);font-weight:600;}
+.tab-content{display:none;}
+.tab-content.active{display:block;}
+.skill-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px;}
+.skill-item{background:var(--bg);border:2px solid var(--ink);border-radius:6px;padding:10px 12px;font-size:13px;cursor:pointer;transition:all .2s cubic-bezier(.16,1,.3,1);}
+.skill-item:hover{border-color:var(--rust);box-shadow:3px 3px 0 var(--ink);transform:translate(-1px,-1px);}
+.skill-item .sn{font-weight:600;}
+.skill-item .sd{color:var(--muted);font-size:11px;margin-top:2px;}
+
+/* DAG */
+.dag-container{padding:20px;}
+.dag-layer{display:flex;align-items:center;gap:12px;margin-bottom:16px;}
+.dag-label{min-width:60px;font-size:12px;font-weight:700;color:var(--muted);text-align:center;}
+.dag-nodes{display:flex;flex-wrap:wrap;gap:8px;}
+.dag-node{padding:8px 14px;background:var(--bg);border:2px solid var(--ink);border-radius:6px;font-size:12px;font-weight:500;cursor:pointer;transition:all .15s;}
+.dag-node:hover{border-color:var(--rust);}
+.dag-node.done{border-color:var(--green);color:var(--green);}
+.dag-node.locked{opacity:.4;}
+.dag-arrow{text-align:center;color:var(--muted);font-size:18px;margin:4px 0;padding-left:60px;}
+
+/* Agents */
+.agent-row{display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid var(--border);font-size:13px;}
+.agent-row:last-child{border-bottom:none;}
+.agent-tab{padding:3px 10px;border-radius:6px;font-size:11px;cursor:pointer;background:var(--bg);border:1px solid var(--border);color:var(--muted);}
+.agent-tab.active{background:var(--rust);color:#fff;border-color:var(--rust);}
+
+/* Strategies */
+.str-filter{padding:4px 10px;border-radius:6px;font-size:11px;cursor:pointer;background:var(--bg);border:1px solid var(--border);color:var(--muted);transition:all .12s;}
+.str-filter:hover{border-color:var(--rust);}
+.str-filter.active{background:var(--rust);color:#fff;border-color:var(--rust);font-weight:600;}
+.str-row{border-bottom:1px solid var(--border);}
+.str-row:last-child{border-bottom:none;}
+.str-header{display:flex;align-items:center;gap:10px;padding:10px 12px;cursor:pointer;transition:background .1s;font-size:13px;}
+.str-header:hover{background:var(--bg-alt);}
+.str-header .str-id{font-weight:700;color:var(--rust);min-width:28px;font-family:'Space Grotesk',monospace;}
+.str-header .str-name{font-weight:600;flex:1;}
+.str-header .str-badges{display:flex;gap:4px;align-items:center;}
+.str-header .str-badge{font-size:10px;padding:1px 6px;border-radius:3px;background:var(--bg);border:1px solid var(--border);}
+.str-header .str-badge-active{background:rgba(76,175,80,0.1);border-color:var(--green);color:var(--green);font-weight:700;}
+.str-header .str-chevron{transition:transform .2s;font-size:10px;color:var(--muted);}
+.str-row.open .str-chevron{transform:rotate(90deg);}
+.str-body{display:none;padding:0 12px 14px 50px;font-size:13px;line-height:1.7;}
+.str-row.open .str-body{display:block;}
+.str-props{display:grid;grid-template-columns:1fr 1fr;gap:4px 16px;margin-bottom:10px;}
+.str-props div{font-size:12px;}
+.str-props strong{color:var(--text);}
+.str-props code{background:var(--bg);padding:1px 4px;border-radius:3px;font-size:11px;}
+.strategy-score{background:var(--green);color:#fff;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:700;}
+.hormozi-matrix{display:grid;grid-template-columns:auto 1fr 1fr;gap:1px;background:var(--border);border-radius:8px;overflow:hidden;}
+.hm-header{background:var(--bg-alt);padding:8px 12px;font-weight:700;font-size:12px;text-align:center;}
+.hm-row-label{background:var(--bg-alt);padding:8px 12px;font-weight:700;font-size:12px;display:flex;align-items:center;}
+.hm-cell{background:var(--card);padding:10px;}
+.hm-strat{display:inline-block;padding:3px 8px;margin:2px;border-radius:4px;font-size:11px;cursor:pointer;background:var(--bg);border:1px solid var(--border);transition:border-color .15s;}
+.hm-strat:hover{border-color:var(--rust);}
+.hm-strat.active{border-color:var(--green);background:rgba(76,175,80,0.1);font-weight:700;}
+.hm-transversal{padding:10px;margin-top:8px;font-size:12px;text-align:center;}
+
+/* Strategy editor */
+.se-lbl{display:block;font-weight:600;font-size:10px;text-transform:uppercase;color:var(--muted);margin-bottom:2px;margin-top:4px;}
+.se-input{width:100%;padding:5px 8px;border:1px solid var(--border);border-radius:6px;background:var(--bg);font-size:12px;box-sizing:border-box;color:var(--text);}
+.se-mono{font-family:monospace;font-size:11px;}
+
+/* Recurring tasks table */
+.idea-table{width:100%;border-collapse:collapse;font-size:13px;}
+.idea-table th,.idea-table td{padding:8px;}
+.idea-table th{text-align:left;background:var(--bg);}
+.idea-table tr{border-bottom:1px solid var(--border);}
+
+/* Dispatch */
+.dispatch-group{margin-bottom:20px;}
+.dispatch-group h3{font-family:'Space Grotesk',sans-serif;font-size:16px;color:var(--rust);margin-bottom:8px;}
+.dispatch-channel{padding:8px 12px;background:var(--bg);border:1px solid var(--border);border-radius:6px;margin-bottom:4px;font-size:13px;}
+.dispatch-channel strong{color:var(--navy);}
+.dispatch-rule{color:var(--muted);font-size:12px;margin-top:2px;}
+.persona-card{background:var(--bg);border:2px solid var(--ink);border-radius:8px;padding:12px;margin-bottom:8px;}
+.persona-card h4{font-family:'Space Grotesk',sans-serif;font-size:14px;margin-bottom:4px;}
+
+/* Preferences form */
+.pref-field{margin-bottom:16px;}
+.pref-field label{display:block;font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;}
+.pref-field input,.pref-field select{width:100%;max-width:300px;padding:8px 12px;border:2px solid var(--border);border-radius:8px;background:var(--card);color:var(--text);font-size:14px;font-family:inherit;}
+.pref-field input:focus,.pref-field select:focus{outline:none;border-color:var(--rust);}
+
+/* Toast */
+.toast{position:fixed;bottom:20px;right:20px;background:var(--green);color:#fff;padding:10px 20px;border-radius:8px;font-size:14px;font-weight:600;display:none;z-index:999;box-shadow:0 4px 12px rgba(0,0,0,.2);}
+.toast.error{background:var(--red);}
+.toast.show{display:block;animation:fadeIn .2s ease;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+</style></head><body>
+<div class="sidebar">
+  <div class="logo">SanchoCMO</div>
+  <div class="logo-sub">Mission Control</div>
+  <div class="ns">${escHtml(clientName)}</div>
+  <a href="${baseUrl}/">📊 Dashboard</a>
+  <a href="${baseUrl}/docs/brand/${slug}/">📂 Documentos</a>
+  <a href="${baseUrl}/projects/">📋 Proyectos</a>
+  <a href="${baseUrl}/trust-engine/">🔍 Trust Engine</a>
+  <a href="#" class="active">⚙️ Settings</a>
+  <div class="nav-footer">
+    <div class="theme-toggle" onclick="toggleTheme()">🌗 Tema</div>
+  </div>
+</div>
+<div class="main-content">
+<h1 style="font-family:'Space Grotesk',sans-serif;font-size:24px;margin-bottom:4px;">⚙️ Settings</h1>
+<p style="color:var(--muted);font-size:13px;margin-bottom:16px;">${escHtml(clientName)} — Configuración del sistema</p>
+
+<!-- Settings Tabs -->
+<div class="settings-tabs">
+  <div class="settings-tab active" onclick="switchSettingsTab('apis')">🔌 APIs</div>
+  <div class="settings-tab" onclick="switchSettingsTab('agents')">🤖 Agentes</div>
+  <div class="settings-tab" onclick="switchSettingsTab('skills')">🧰 Skills</div>
+  <div class="settings-tab" onclick="switchSettingsTab('dispatch')">📡 Dispatch</div>
+  <div class="settings-tab" onclick="switchSettingsTab('strategies')">🎯 Estrategias</div>
+  <div class="settings-tab" onclick="switchSettingsTab('recurring')">🔄 Recurrentes</div>
+  <div class="settings-tab" onclick="switchSettingsTab('preferences')">⚙️ Preferencias</div>
+</div>
+
+<!-- Tab 1: APIs -->
+<div id="panel-apis" class="settings-panel active">
+  <h2 style="font-family:'Space Grotesk',sans-serif;font-size:18px;margin-bottom:12px;">🔌 APIs & Servicios</h2>
+  <div id="apis-global-view">
+    <div style="margin-bottom:16px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+      <button class="btn btn-primary" onclick="verifyAllApis()" id="btn-client-check-all">🔄 Verificar Todo</button>
+      <button class="btn btn-secondary" onclick="restartGateway()" id="btn-restart-gw" style="display:none;">🔁 Restart Gateway</button>
+      <span id="client-api-check-status" style="color:var(--muted);font-size:12px;margin-left:4px;"></span>
+    </div>
+    <div id="client-apis-stats" style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px;"></div>
+    <div id="client-apis-datasources"></div>
+    <div id="client-apis-overrides" style="margin-top:24px;"></div>
+  </div>
+</div>
+
+<!-- Tab 2: Agents -->
+<div id="panel-agents" class="settings-panel">
+  <h2 style="font-family:'Space Grotesk',sans-serif;font-size:18px;margin-bottom:4px;">🤖 Agentes</h2>
+  <p style="color:var(--muted);font-size:13px;margin-bottom:12px;">4 agentes — Cervantes, Sancho, Rocinante, Escudero</p>
+  <div id="agents-list"></div>
+  <div id="agent-file-viewer" class="card" style="display:none;margin-top:16px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+      <h2 id="agent-viewer-title" style="font-size:15px;margin:0;"></h2>
+      <button class="btn-sm" onclick="closeAgentViewer()">✕ Cerrar</button>
+    </div>
+    <div id="agent-file-tabs" style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:12px;"></div>
+    <pre id="agent-file-content" style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:14px;font-size:12px;line-height:1.6;max-height:500px;overflow:auto;white-space:pre-wrap;word-break:break-word;margin:0;"></pre>
+    <div style="margin-top:10px;display:flex;gap:6px;">
+      <button class="btn btn-secondary" onclick="copyAgentPath()" style="font-size:12px;padding:6px 14px;">📋 Copiar ruta</button>
+    </div>
+  </div>
+</div>
+
+<!-- Tab 3: Skills -->
+<div id="panel-skills" class="settings-panel">
+  <h2 style="font-family:'Space Grotesk',sans-serif;font-size:18px;margin-bottom:4px;">🧰 Skills</h2>
+  <p style="color:var(--muted);font-size:13px;margin-bottom:12px;">38 skills — catálogo completo</p>
+  <div class="card">
+    <div class="tabs">
+      <div class="tab active" onclick="showTab(this,'foundation')">Foundation (16)</div>
+      <div class="tab" onclick="showTab(this,'decide')">Decide (3)</div>
+      <div class="tab" onclick="showTab(this,'intel')">Intelligence (5)</div>
+      <div class="tab" onclick="showTab(this,'content')">Content (7)</div>
+      <div class="tab" onclick="showTab(this,'outreach')">Outreach (3)</div>
+      <div class="tab" onclick="showTab(this,'utils')">Utilities (4)</div>
+      <div class="tab" onclick="showTab(this,'dag')">🔗 Dependencies</div>
+    </div>
+    <div id="tab-foundation" class="tab-content active"><div class="skill-grid" id="sg-foundation"></div></div>
+    <div id="tab-decide" class="tab-content"><div class="skill-grid" id="sg-decide"></div></div>
+    <div id="tab-intel" class="tab-content"><div class="skill-grid" id="sg-intel"></div></div>
+    <div id="tab-content" class="tab-content"><div class="skill-grid" id="sg-content"></div></div>
+    <div id="tab-outreach" class="tab-content"><div class="skill-grid" id="sg-outreach"></div></div>
+    <div id="tab-utils" class="tab-content"><div class="skill-grid" id="sg-utils"></div></div>
+    <div id="tab-dag" class="tab-content"><div class="dag-container" id="skill-dag"></div></div>
+  </div>
+</div>
+
+<!-- Tab 4: Dispatch -->
+<div id="panel-dispatch" class="settings-panel">
+  <h2 style="font-family:'Space Grotesk',sans-serif;font-size:18px;margin-bottom:4px;">📡 Dispatch & Personas</h2>
+  <p style="color:var(--muted);font-size:13px;margin-bottom:12px;">Reglas de despacho por canal y personas del sistema</p>
+  <div id="dispatch-content"></div>
+</div>
+
+<!-- Tab 5: Strategies -->
+<div id="panel-strategies" class="settings-panel">
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
+    <h2 style="font-family:'Space Grotesk',sans-serif;font-size:18px;margin:0;">🎯 Estrategias GTM</h2>
+    <button class="btn btn-primary" onclick="openStrategyNew()" style="font-size:12px;padding:6px 14px;margin-left:auto;">+ Nueva estrategia</button>
+  </div>
+  <p style="color:var(--muted);font-size:13px;margin-bottom:12px;" id="strategies-sub">25 estrategias — Catálogo Hormozi Core Four</p>
+  <div class="card" style="margin-bottom:14px;">
+    <div style="font-weight:700;font-size:14px;margin-bottom:8px;">Core Four Matrix</div>
+    <div id="hormozi-grid"></div>
+  </div>
+  <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;" id="str-filters">
+    <button class="str-filter active" onclick="filterStrategies('all',this)">Todas</button>
+    <button class="str-filter" onclick="filterStrategies('1to1-organic',this)">🤝 1:1 Organic</button>
+    <button class="str-filter" onclick="filterStrategies('1toN-organic',this)">📢 1:Many Organic</button>
+    <button class="str-filter" onclick="filterStrategies('1to1-paid',this)">💰 1:1 Paid</button>
+    <button class="str-filter" onclick="filterStrategies('1toN-paid',this)">💳 1:Many Paid</button>
+    <button class="str-filter" onclick="filterStrategies('transversal',this)">⚙️ Transversal</button>
+    <span style="width:1px;background:var(--border);margin:0 4px;"></span>
+    <button class="str-filter" onclick="filterStrategies('rapido',this)">⚡ Rápido</button>
+    <button class="str-filter" onclick="filterStrategies('medio',this)">🕐 Medio</button>
+    <button class="str-filter" onclick="filterStrategies('lento',this)">🐢 Lento</button>
+    <span style="width:1px;background:var(--border);margin:0 4px;"></span>
+    <button class="str-filter" onclick="filterStrategies('active',this)">🟢 Activas cliente</button>
+  </div>
+  <div id="strategies-list"></div>
+</div>
+
+<!-- Strategy Editor — fullscreen -->
+<div id="strategy-editor-fs" style="display:none;position:fixed;inset:0;z-index:999;flex-direction:column;background:var(--card);">
+  <div style="display:flex;align-items:center;gap:12px;padding:10px 20px;border-bottom:1px solid var(--border);background:var(--bg-alt);flex-shrink:0;">
+    <span id="se-fs-title" style="font-size:16px;font-weight:700;">🎯 Nueva Estrategia</span>
+    <div style="margin-left:auto;display:flex;gap:6px;">
+      <button id="se-delete-btn" class="btn" onclick="deleteStrategy()" style="font-size:12px;padding:5px 12px;color:#E53935;display:none;">🗑️ Eliminar</button>
+      <button class="btn btn-primary" onclick="saveStrategy()" style="font-size:12px;padding:5px 12px;">💾 Guardar</button>
+      <button class="btn btn-secondary" onclick="closeStrategyEdit()" style="font-size:12px;padding:5px 12px;">✕ Cerrar</button>
+    </div>
+  </div>
+  <div style="flex:1;display:flex;overflow:hidden;">
+    <div style="flex:1;overflow-y:auto;padding:16px 20px;" id="se-form-pane">
+      <div style="max-width:700px;">
+        <div id="se-info-panel" style="margin-bottom:16px;padding:14px;background:rgba(196,93,53,0.06);border:1px solid rgba(196,93,53,0.15);border-radius:8px;font-size:13px;line-height:1.6;display:none;">
+          <div style="font-weight:700;margin-bottom:6px;">📋 Cómo crear una estrategia</div>
+          <div>Rellena los campos y guarda. Puedes usar el catálogo Hormozi Core Four como referencia.</div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:13px;">
+          <div><label class="se-lbl">ID</label><input id="se-id" class="se-input"></div>
+          <div><label class="se-lbl">Nombre</label><input id="se-name" class="se-input"></div>
+          <div><label class="se-lbl">Cuadrante</label><select id="se-quadrant" class="se-input"><option value="1to1-organic">1:1 Organic</option><option value="1toN-organic">1:Many Organic</option><option value="1to1-paid">1:1 Paid</option><option value="1toN-paid">1:Many Paid</option><option value="transversal">Transversal</option></select></div>
+          <div><label class="se-lbl">Velocidad</label><select id="se-velocidad" class="se-input"><option value="rapido">⚡ Rápido</option><option value="medio">🕐 Medio</option><option value="lento">🐢 Lento</option></select></div>
+          <div><label class="se-lbl">B2B</label><select id="se-b2b" class="se-input"><option value="core">✅ Core</option><option value="adaptacion">⚠️ Con adaptación</option><option value="no">❌ No aplica</option></select></div>
+          <div><label class="se-lbl">B2C</label><select id="se-b2c" class="se-input"><option value="core">✅ Core</option><option value="adaptacion">⚠️ Con adaptación</option><option value="no">❌ No aplica</option></select></div>
+          <div style="grid-column:1/-1;"><label class="se-lbl">Objetivo medible</label><textarea id="se-objetivo" rows="2" class="se-input" style="resize:vertical;"></textarea></div>
+          <div style="grid-column:1/-1;"><label class="se-lbl">Prerequisitos</label><textarea id="se-prerequisitos" rows="2" class="se-input" style="resize:vertical;"></textarea></div>
+          <div><label class="se-lbl">Tiempo al resultado</label><input id="se-tiempo" class="se-input"></div>
+          <div><label class="se-lbl">Sectores (comma)</label><input id="se-sectores" class="se-input"></div>
+          <div style="grid-column:1/-1;"><label class="se-lbl">Skills de Sancho (comma)</label><input id="se-skills" class="se-input"></div>
+          <div style="grid-column:1/-1;"><label class="se-lbl">Objetivos</label><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:3px;">
+            <label style="font-size:12px;"><input type="checkbox" id="se-obj-awareness"> Awareness</label>
+            <label style="font-size:12px;"><input type="checkbox" id="se-obj-lead-gen"> Lead Gen</label>
+            <label style="font-size:12px;"><input type="checkbox" id="se-obj-conversion"> Conversión</label>
+            <label style="font-size:12px;"><input type="checkbox" id="se-obj-autoridad"> Autoridad</label>
+            <label style="font-size:12px;"><input type="checkbox" id="se-obj-retencion"> Retención</label>
+            <label style="font-size:12px;"><input type="checkbox" id="se-obj-expansion"> Expansión</label>
+            <label style="font-size:12px;"><input type="checkbox" id="se-obj-comunidad"> Comunidad</label>
+          </div></div>
+        </div>
+        <div style="margin-top:14px;">
+          <div style="font-weight:700;font-size:13px;margin-bottom:6px;">Workflow (markdown)</div>
+          <label class="se-lbl">🎯 0) Objetivo y por qué</label><textarea id="se-wf-objetivo" rows="3" class="se-input se-mono" style="resize:vertical;margin-bottom:6px;"></textarea>
+          <label class="se-lbl">💡 1) Ideación</label><textarea id="se-wf-ideacion" rows="3" class="se-input se-mono" style="resize:vertical;margin-bottom:6px;"></textarea>
+          <label class="se-lbl">🔨 2) Creación</label><textarea id="se-wf-creacion" rows="3" class="se-input se-mono" style="resize:vertical;margin-bottom:6px;"></textarea>
+          <label class="se-lbl">🚀 3) Ejecución</label><textarea id="se-wf-ejecucion" rows="3" class="se-input se-mono" style="resize:vertical;margin-bottom:6px;"></textarea>
+          <label class="se-lbl">📊 4) Medición</label><textarea id="se-wf-medicion" rows="3" class="se-input se-mono" style="resize:vertical;margin-bottom:6px;"></textarea>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px;">
+          <div><label class="se-lbl">✅ Cuándo usar (1/línea)</label><textarea id="se-cuando-si" rows="3" class="se-input" style="resize:vertical;"></textarea></div>
+          <div><label class="se-lbl">❌ Cuándo NO usar (1/línea)</label><textarea id="se-cuando-no" rows="3" class="se-input" style="resize:vertical;"></textarea></div>
+        </div>
+      </div>
+    </div>
+    <div style="width:380px;border-left:1px solid var(--border);display:flex;flex-direction:column;background:var(--bg);" id="se-chat-pane">
+      <div style="padding:10px 14px;border-bottom:1px solid var(--border);font-weight:700;font-size:13px;color:var(--rust);">💬 Chat con Sancho</div>
+      <div id="se-chat-msgs" style="flex:1;overflow-y:auto;padding:10px 14px;font-size:13px;"></div>
+      <div style="padding:8px 14px;border-top:1px solid var(--border);display:flex;gap:6px;">
+        <input id="se-chat-input" placeholder="Escribe aquí..." style="flex:1;padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:var(--card);font-size:13px;color:var(--text);" onkeydown="if(event.key==='Enter'){seChatSend();event.preventDefault();}">
+        <button onclick="seChatSend()" style="padding:8px 14px;background:var(--rust);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:14px;">→</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Tab 6: Recurring Tasks -->
+<div id="panel-recurring" class="settings-panel">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+    <div>
+      <h2 style="font-family:'Space Grotesk',sans-serif;font-size:18px;">🔄 Tareas Recurrentes</h2>
+      <p style="color:var(--muted);font-size:13px;">Crons de OpenClaw — fuente de verdad</p>
+    </div>
+  </div>
+  <div id="recurring-tasks-content"></div>
+</div>
+
+<!-- Prompt Modal -->
+<div id="prompt-modal-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;align-items:center;justify-content:center;" onclick="if(event.target===this)closePromptModal()">
+  <div style="background:var(--card);border:2px solid var(--border);border-radius:12px;max-width:800px;width:90%;max-height:85vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.4);">
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid var(--border);">
+      <div>
+        <div id="prompt-modal-title" style="font-weight:700;font-size:16px;"></div>
+        <div id="prompt-modal-meta" style="font-size:12px;color:var(--muted);margin-top:2px;"></div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <button id="prompt-modal-edit-btn" onclick="togglePromptEdit()" style="padding:5px 14px;background:var(--bg);border:1px solid var(--border);border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;color:var(--text);">✏️ Editar</button>
+        <button onclick="closePromptModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--muted);">✕</button>
+      </div>
+    </div>
+    <div style="flex:1;overflow-y:auto;padding:20px;">
+      <pre id="prompt-modal-view" style="white-space:pre-wrap;word-wrap:break-word;font-size:13px;line-height:1.6;font-family:'Nunito',sans-serif;color:var(--text);margin:0;"></pre>
+      <textarea id="prompt-modal-editor" style="display:none;width:100%;min-height:300px;padding:12px;background:var(--bg);border:2px solid var(--border);border-radius:8px;font-size:13px;line-height:1.6;font-family:'Space Grotesk',monospace;color:var(--text);resize:vertical;box-sizing:border-box;"></textarea>
+    </div>
+    <div id="prompt-modal-actions" style="display:none;padding:12px 20px;border-top:1px solid var(--border);text-align:right;">
+      <button onclick="cancelPromptEdit()" style="padding:6px 16px;background:var(--bg);border:1px solid var(--border);border-radius:6px;font-size:12px;cursor:pointer;color:var(--text);margin-right:8px;">Cancelar</button>
+      <button onclick="savePromptEdit()" style="padding:6px 16px;background:var(--green);color:#fff;border:2px solid var(--ink);border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;">💾 Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Script Modal -->
+<div id="script-modal-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;align-items:center;justify-content:center;" onclick="if(event.target===this)closeScriptModal()">
+  <div style="background:#1e1e2e;border:2px solid #3D3D5C;border-radius:12px;max-width:900px;width:95%;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.6);">
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 20px;border-bottom:1px solid #3D3D5C;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span id="script-modal-lang-badge" style="padding:2px 10px;border-radius:12px;font-size:11px;font-weight:700;text-transform:uppercase;"></span>
+        <span id="script-modal-title" style="font-weight:700;font-size:15px;color:#cdd6f4;"></span>
+        <span id="script-modal-lines" style="font-size:11px;color:#666;"></span>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <button id="script-modal-edit-btn" onclick="toggleScriptEdit()" style="padding:5px 14px;background:#313244;border:1px solid #3D3D5C;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;color:#cdd6f4;">✏️ Editar</button>
+        <button onclick="closeScriptModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#666;">✕</button>
+      </div>
+    </div>
+    <div style="flex:1;overflow-y:auto;padding:0;">
+      <pre id="script-modal-view" style="margin:0;padding:20px;white-space:pre;overflow-x:auto;font-size:12px;line-height:1.6;font-family:'JetBrains Mono','Fira Code','SF Mono',monospace;color:#cdd6f4;background:#1e1e2e;tab-size:4;"></pre>
+      <textarea id="script-modal-editor" style="display:none;width:100%;min-height:500px;padding:20px;background:#11111b;border:none;font-size:12px;line-height:1.6;font-family:'JetBrains Mono','Fira Code','SF Mono',monospace;color:#cdd6f4;resize:vertical;box-sizing:border-box;tab-size:4;" spellcheck="false"></textarea>
+    </div>
+    <div id="script-modal-actions" style="display:none;padding:12px 20px;border-top:1px solid #3D3D5C;justify-content:space-between;align-items:center;">
+      <span id="script-modal-status" style="font-size:11px;color:#666;"></span>
+      <div style="display:flex;gap:8px;">
+        <button onclick="cancelScriptEdit()" style="padding:6px 16px;background:#313244;border:1px solid #3D3D5C;border-radius:6px;font-size:12px;cursor:pointer;color:#cdd6f4;">Cancelar</button>
+        <button onclick="saveScriptEdit()" id="script-save-btn" style="padding:6px 16px;background:#22A06B;color:#fff;border:2px solid #1e1e2e;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;">💾 Guardar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Tab 7: Preferences -->
+<div id="panel-preferences" class="settings-panel">
+  <h2 style="font-family:'Space Grotesk',sans-serif;font-size:18px;margin-bottom:12px;">⚙️ Preferencias</h2>
+  <div class="card">
+    <div class="pref-field">
+      <label>Nombre de usuario</label>
+      <input type="text" id="pref-username" placeholder="Tu nombre" onchange="savePref('mc-user-name',this.value)">
+    </div>
+    <div class="pref-field">
+      <label>Idioma</label>
+      <select id="pref-lang" onchange="savePref('mc-lang',this.value)">
+        <option value="es">🇪🇸 Español</option>
+        <option value="en">🇬🇧 English</option>
+      </select>
+    </div>
+    <div class="pref-field">
+      <label>Tema</label>
+      <select id="pref-theme" onchange="applyTheme(this.value)">
+        <option value="auto">🌗 Auto (sistema)</option>
+        <option value="light">☀️ Claro</option>
+        <option value="dark">🌙 Oscuro</option>
+      </select>
+    </div>
+    <p style="color:var(--muted);font-size:12px;margin-top:16px;">Las preferencias se guardan localmente en el navegador.</p>
+  </div>
+</div>
+
+</div><!-- end main-content -->
+
+<div id="toast" class="toast"></div>
+
+<script>
+// === Constants ===
+const SLUG = '${slug}';
+const API_BASE = window.location.pathname.replace(/\\/settings\\/?$/, '');
+const D = typeof MC_DATA !== 'undefined' ? MC_DATA : null;
+const S = typeof SKILLS_DATA !== 'undefined' ? SKILLS_DATA : {};
+
+const AGENTS = [
+  {name:"Cervantes",ch:"Webchat + #admin",model:"Opus 4.6",role:"Arquitecto del sistema",emoji:"✒️"},
+  {name:"Sancho",ch:"Todos los canales Discord (default)",model:"Opus 4.6",role:"CMO Estratega / Orchestrator",emoji:"🐴"},
+  {name:"Rocinante",ch:"Invocado por Sancho (QA)",model:"Sonnet 4.5",role:"QA & Brand Check",emoji:"🐎"},
+  {name:"Escudero",ch:"Invocado por Sancho (ejecución)",model:"Sonnet 4.5",role:"Ejecución de tareas",emoji:"⚔️"},
+];
+
+const AGENTS_DATA = ${JSON.stringify(agentsDataObj).replace(/<\//g, '<\\/')};
+
+const DISPATCH_DATA = ${JSON.stringify(dispatchData).replace(/<\//g, '<\\/')};
+
+const SKILL_CATS = {
+  foundation: [
+    {id:"company-context",sd:"L0 · Qué es la empresa"},{id:"budget-constraints",sd:"L0 · Presupuesto y recursos"},
+    {id:"business-model-audit",sd:"L1 · Modelo de negocio"},{id:"self-intelligence",sd:"L1 · Análisis propio"},
+    {id:"competitor-intelligence",sd:"L2 · Battle cards"},{id:"market-intelligence",sd:"L2 · TAM, tendencias"},
+    {id:"existing-customer-data",sd:"L1 · Opcional · CRM"},{id:"swot-analysis",sd:"L2 · SWOT + TOWS"},
+    {id:"niche-discovery-100x",sd:"L3 · ECPs y nichos"},{id:"ecp-validation",sd:"L4 · Validar ECPs"},
+    {id:"positioning-messaging",sd:"L4 · Posicionamiento"},{id:"pricing-hooks",sd:"L4 · Hooks de precio"},
+    {id:"brand-voice",sd:"L5 · Voz de marca"},{id:"visual-identity",sd:"L5 · Identidad visual"},
+    {id:"foundation-orchestrator",sd:"Meta · Orquesta Foundation v2.0 (6 layers)"},{id:"phase-0-diagnostic",sd:"Meta · Entry point"},
+  ],
+  decide: [{id:"channel-prioritization",sd:"Qué canales (Core Four)"},{id:"content-calendar-planner",sd:"Calendario editorial"},{id:"outreach-sequence-builder",sd:"Cold outreach"}],
+  intel: [{id:"daily-pulse",sd:"Pulso diario"},{id:"meeting-intelligence",sd:"Intel de reuniones"},{id:"content-miner",sd:"Ideas de contenido"},{id:"pattern-detector",sd:"Patrones cross-canal"},{id:"signal-definition",sd:"Señales de compra"}],
+  content: [{id:"keyword-research",sd:"SEO research"},{id:"seo-content",sd:"Artículos SEO"},{id:"content-atomizer",sd:"Multi-plataforma"},{id:"direct-response-copy",sd:"Copy persuasivo"},{id:"lead-magnet",sd:"Lead magnets"},{id:"email-sequences",sd:"Email nurture"},{id:"newsletter",sd:"Newsletters"}],
+  outreach: [{id:"company-finder",sd:"Buscar empresas"},{id:"decision-maker-finder",sd:"Encontrar decisores"},{id:"contact-enrichment",sd:"Waterfall enrichment"}],
+  utils: [{id:"insight-to-content-mapper",sd:"Insight → brief"},{id:"thief-marketers",sd:"Robar ideas"},{id:"social-media-extractor",sd:"Extract social data"},{id:"youtube-transcript",sd:"Transcripts YouTube"}],
+};
+
+const SKILL_DEPS = {
+  "company-context": [],
+  "business-model-audit": ["company-context"],
+  "budget-constraints": ["business-model-audit"],
+  "market-intelligence": ["company-context","business-model-audit","budget-constraints"],
+  "competitor-intelligence": ["company-context","business-model-audit","budget-constraints"],
+  "self-intelligence": ["company-context","business-model-audit","budget-constraints"],
+  "swot-analysis": ["market-intelligence","competitor-intelligence","self-intelligence"],
+  "niche-discovery-100x": ["swot-analysis"],
+  "existing-customer-data": ["company-context"],
+  "positioning-messaging": ["niche-discovery-100x"],
+  "pricing-strategy": ["niche-discovery-100x"],
+  "ecp-validation": ["niche-discovery-100x"],
+  "brand-voice": ["positioning-messaging"],
+  "visual-identity": ["brand-voice"],
+};
+
+const DAG_LAYERS = [
+  {label:"📋 Company Brief (L0)",nodes:["company-context","business-model-audit","budget-constraints"]},
+  {label:"📊 Research (L1)",nodes:["market-intelligence","competitor-intelligence","self-intelligence"]},
+  {label:"🔄 Synthesis (L2)",nodes:["swot-analysis"]},
+  {label:"👥 Discovery (L3)",nodes:["niche-discovery-100x","existing-customer-data"]},
+  {label:"🎯 Activation (L4)",nodes:["positioning-messaging","pricing-strategy","ecp-validation"]},
+  {label:"🎨 Brand (L5)",nodes:["brand-voice","visual-identity"]},
+];
+
+const API_META = {
+  anthropic:{icon:'🧠',name:'Anthropic',desc:'Claude API — modelos de lenguaje',cat:'LLM'},
+  openrouter:{icon:'🔀',name:'OpenRouter',desc:'Multi-model routing API',cat:'LLM'},
+  openai:{icon:'💚',name:'OpenAI',desc:'GPT + DALL-E + Whisper',cat:'LLM'},
+  gemini:{icon:'💎',name:'Gemini',desc:'Google AI — modelos Gemini',cat:'LLM'},
+  xai:{icon:'𝕏',name:'xAI (Grok)',desc:'Grok API',cat:'LLM'},
+  minimax:{icon:'🔷',name:'MiniMax',desc:'MiniMax API — M1/M2 models',cat:'LLM'},
+  brave:{icon:'🦁',name:'Brave Search',desc:'Web search API',cat:'Data'},
+  apify:{icon:'🕷️',name:'Apify',desc:'Web scraping & automation',cat:'Data'},
+  firecrawl:{icon:'🔥',name:'Firecrawl',desc:'Web scraping API',cat:'Data'},
+  serper:{icon:'🔍',name:'Serper',desc:'Google SERP API',cat:'Data'},
+  dataforseo:{icon:'📊',name:'DataForSEO',desc:'SEO data API',cat:'Data'},
+  notion:{icon:'📝',name:'Notion',desc:'Workspace & docs API',cat:'Infra'},
+  supabase:{icon:'⚡',name:'Supabase',desc:'Database & auth',cat:'Infra'},
+  gog:{icon:'📧',name:'Google Workspace',desc:'Gmail, Calendar, Drive (gog CLI)',cat:'Infra'},
+  discord:{icon:'💬',name:'Discord Bot',desc:'Bot SanchoCMO',cat:'Infra'},
+  openclaw:{icon:'🐾',name:'OpenClaw Gateway',desc:'Agent orchestration platform',cat:'Infra'},
+  nanobanana:{icon:'🍌',name:'Nano Banana Pro',desc:'Gemini image generation (skill)',cat:'Media'},
+  fal:{icon:'🎨',name:'FAL.ai',desc:'Image/video generation',cat:'Media'},
+  wavespeed:{icon:'🌊',name:'WaveSpeed',desc:'AI media generation',cat:'Media'},
+  remotion:{icon:'🎬',name:'Remotion',desc:'Programmatic video rendering',cat:'Media'},
+  dumpling:{icon:'🥟',name:'Dumpling',desc:'Document processing API',cat:'Media'},
+  instantly:{icon:'⚡',name:'Instantly.ai',desc:'Cold email outreach',cat:'Marketing'},
+  metricool:{icon:'📈',name:'Metricool',desc:'Social media scheduling & analytics',cat:'Marketing'},
+};
+
+const SERVICE_ENV_MAP_FE = {
+  anthropic:['ANTHROPIC_API_KEY'], openrouter:['OPENROUTER_API_KEY'], openai:['OPENAI_API_KEY'],
+  gemini:['GEMINI_API_KEY'], xai:['XAI_API_KEY'], minimax:['MINIMAX_API_KEY'], brave:['BRAVE_API_KEY'],
+  apify:['APIFY_API_KEY'], firecrawl:['FIRECRAWL_API_KEY'], serper:['SERPER_API_KEY'],
+  dataforseo:['DATAFORSEO_LOGIN','DATAFORSEO_PASSWORD'], notion:['NOTION_API_KEY'],
+  supabase:['SUPABASE_URL','SUPABASE_ANON_KEY'], fal:['FAL_API_KEY'], wavespeed:['WAVESPEED_API_KEY'],
+  dumpling:['DUMPLING_API_KEY'], slack:['SLACK_BOT_TOKEN'], instantly:['INSTANTLY_API_KEY'], metricool:['METRICOOL_API_KEY'],
+};
+
+// === Theme ===
+function toggleTheme() {
+  const current = document.documentElement.dataset.theme;
+  const next = current === 'dark' ? '' : 'dark';
+  document.documentElement.dataset.theme = next;
+  localStorage.setItem('mc-theme', next || 'auto');
+}
+function applyTheme(val) {
+  if (val === 'dark') document.documentElement.dataset.theme = 'dark';
+  else if (val === 'light') document.documentElement.dataset.theme = '';
+  else document.documentElement.removeAttribute('data-theme');
+  localStorage.setItem('mc-theme', val);
+}
+(function(){
+  const t = localStorage.getItem('mc-theme');
+  if (t === 'dark') document.documentElement.dataset.theme = 'dark';
+  else if (t === 'light') document.documentElement.dataset.theme = '';
+})();
+
+// === Toast ===
+function showToast(msg, duration) {
+  duration = duration || 3000;
+  const t = document.getElementById('toast');
+  if (!t) return;
+  t.textContent = msg;
+  t.style.display = 'block';
+  t.style.opacity = '1';
+  setTimeout(function(){ t.style.opacity='0'; setTimeout(function(){ t.style.display='none'; }, 300); }, duration);
+}
+
+// === Tab switching ===
+function switchSettingsTab(tabId) {
+  document.querySelectorAll('.settings-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.settings-panel').forEach(p => p.classList.remove('active'));
+  const panel = document.getElementById('panel-' + tabId);
+  if (panel) panel.classList.add('active');
+  // Activate the matching tab button
+  document.querySelectorAll('.settings-tab').forEach(t => {
+    if (t.textContent.toLowerCase().includes(tabId.substring(0,3)) ||
+        (tabId === 'apis' && t.textContent.includes('APIs')) ||
+        (tabId === 'agents' && t.textContent.includes('Agentes')) ||
+        (tabId === 'skills' && t.textContent.includes('Skills')) ||
+        (tabId === 'dispatch' && t.textContent.includes('Dispatch')) ||
+        (tabId === 'strategies' && t.textContent.includes('Estrategias')) ||
+        (tabId === 'recurring' && t.textContent.includes('Recurrentes')) ||
+        (tabId === 'preferences' && t.textContent.includes('Preferencias'))
+    ) t.classList.add('active');
+  });
+  localStorage.setItem('mc-settings-tab', tabId);
+}
+
+// === Skills tab switching (inside skills card) ===
+function showTab(el, name) {
+  const card = el.closest('.card');
+  card.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  card.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  card.querySelector('#tab-' + name).classList.add('active');
+  el.classList.add('active');
+}
+
+// ============ TAB 1: APIs ============
+function apiStatusBadge(status) {
+  const map = {
+    'ok': { dot: 'g', label: 'Conectado', color: 'var(--green)' },
+    'error': { dot: 'x', label: 'Error', color: 'var(--red)' },
+    'not-configured': { dot: '', label: 'No configurado', color: 'var(--muted)' },
+    'unchecked': { dot: 'y', label: 'Sin verificar', color: 'var(--yellow)' },
+  };
+  return map[status] || { dot: 'y', label: status, color: 'var(--muted)' };
+}
+
+function clientApiStatusBadge(status) {
+  const map = {
+    'connected': { dot: 'g', label: 'Conectado', color: 'var(--green)', border: 'var(--green)' },
+    'error': { dot: 'x', label: 'Error', color: 'var(--red)', border: 'var(--red)' },
+    'expired': { dot: 'x', label: 'Expirado', color: 'var(--red)', border: 'var(--red)' },
+    'pending': { dot: 'y', label: 'Pendiente', color: 'var(--yellow)', border: 'var(--yellow)' },
+    'testing': { dot: 'y', label: 'Verificando...', color: 'var(--yellow)', border: 'var(--yellow)' },
+    'not_configured': { dot: '', label: 'No configurado', color: 'var(--muted)', border: 'var(--muted)' },
+  };
+  return map[status] || { dot: '', label: status || 'No configurado', color: 'var(--muted)', border: 'var(--muted)' };
+}
+
+let envDataCache = null;
+async function loadEnvData() {
+  try { const res = await fetch(API_BASE + '/api/env'); envDataCache = await res.json(); } catch { envDataCache = {}; }
+}
+
+let clientApiCatalog = null;
+let clientApiData = {};
+
+async function loadApiCatalog() {
+  if (clientApiCatalog) return clientApiCatalog;
+  try { const res = await fetch(API_BASE + '/api/client-integrations/catalog'); clientApiCatalog = await res.json(); return clientApiCatalog; } catch(e) { console.error('Failed to load API catalog:', e); return null; }
+}
+
+function renderApis() {
+  renderClientApisView(SLUG || '_global');
+}
+
+async function renderClientApisView(slug) {
+  if (!slug) return;
+  const isGlobal = slug === '_global';
+  const catalog = await loadApiCatalog();
+  if (!catalog || !catalog.categories) return;
+
+  let allClientData = {};
+  if (isGlobal) {
+    const health = (D && D.apiHealth) ? D.apiHealth.services || {} : {};
+    for (const [healthId, svc] of Object.entries(health)) {
+      allClientData[healthId] = {
+        status: svc.status === 'ok' ? 'connected' : svc.status === 'not-configured' ? 'not_configured' : svc.status === 'error' ? 'error' : 'not_configured',
+        config: {}, envVars: [],
+        lastTestedAt: svc.lastCheck || null, lastError: svc.details?.error || null,
+        notes: svc.details?.account || svc.details?.username || svc.details?.botName || null,
+      };
+    }
+  } else {
+    let intData;
+    try { const res = await fetch(API_BASE + '/api/client-integrations?slug=' + slug); intData = await res.json(); clientApiData[slug] = intData; } catch { intData = { dataSources: {}, systemOverrides: {} }; }
+    const ds = intData.dataSources || {};
+    const so = intData.systemOverrides || {};
+    allClientData = { ...ds, ...so };
+  }
+
+  let connected = 0, pending = 0, errored = 0, notConfigured = 0;
+  for (const [, catData] of Object.entries(catalog.categories)) {
+    for (const [apiId, apiMeta] of Object.entries(catData.apis || {})) {
+      const own = apiMeta.ownership || 'system';
+      const clientStatus = allClientData[apiId];
+      const st = clientStatus ? clientStatus.status : 'not_configured';
+      if (isGlobal && own === 'client') continue;
+      if (own === 'system' && st === 'not_configured' && !isGlobal) { connected++; }
+      else if (st === 'connected') { connected++; }
+      else if (st === 'pending' || st === 'testing') { pending++; }
+      else if (st === 'error' || st === 'expired') { errored++; }
+      else { notConfigured++; }
+    }
+  }
+
+  document.getElementById('client-apis-stats').innerHTML =
+    '<div class="card" style="flex:1;min-width:100px;padding:12px;text-align:center;"><div style="font-size:24px;font-weight:800;color:var(--green);">' + connected + '</div><div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;">🟢 Conectados</div></div>' +
+    '<div class="card" style="flex:1;min-width:100px;padding:12px;text-align:center;"><div style="font-size:24px;font-weight:800;color:var(--yellow);">' + pending + '</div><div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;">🟡 Pendientes</div></div>' +
+    '<div class="card" style="flex:1;min-width:100px;padding:12px;text-align:center;"><div style="font-size:24px;font-weight:800;color:var(--red);">' + errored + '</div><div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;">🔴 Errores</div></div>' +
+    '<div class="card" style="flex:1;min-width:100px;padding:12px;text-align:center;"><div style="font-size:24px;font-weight:800;color:var(--muted);">' + notConfigured + '</div><div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;">⚫ Sin configurar</div></div>';
+
+  let html = '';
+  for (const [catKey, catData] of Object.entries(catalog.categories)) {
+    const apis = catData.apis || {};
+    if (Object.keys(apis).length === 0) continue;
+    html += '<div style="margin-top:20px;margin-bottom:8px;"><h2 style="font-family:\\'Space Grotesk\\',sans-serif;font-size:1.1em;color:var(--rust);">' + catData.label + '</h2></div><div class="grid">';
+    for (const [apiId, apiMeta] of Object.entries(apis)) {
+      const ownership = apiMeta.ownership || 'system';
+      const isSystem = ownership === 'system';
+      const clientStatus = allClientData[apiId] || { status: 'not_configured' };
+      const isOverridden = isSystem && clientStatus.status === 'connected';
+      const isUsingSystemKey = isSystem && !isOverridden;
+      let badge, borderStyle;
+      if (isGlobal && !isSystem) { badge = { dot: '', label: 'Por cliente', color: 'var(--muted)' }; borderStyle = 'border-left:4px solid var(--border);opacity:0.6;'; }
+      else if (isUsingSystemKey) { badge = { dot: 'g', label: 'Key sistema', color: 'var(--blue)' }; borderStyle = 'border-left:4px solid var(--blue);'; }
+      else if (clientStatus.status === 'connected') { badge = { dot: 'g', label: isSystem ? 'Key propia' : 'Conectado', color: 'var(--green)' }; borderStyle = 'border-left:4px solid var(--green);'; }
+      else if (clientStatus.status === 'error' || clientStatus.status === 'expired') { badge = clientApiStatusBadge(clientStatus.status); borderStyle = 'border-left:4px solid var(--red);'; }
+      else if (clientStatus.status === 'pending' || clientStatus.status === 'testing') { badge = clientApiStatusBadge(clientStatus.status); borderStyle = 'border-left:4px solid var(--yellow);'; }
+      else { badge = clientApiStatusBadge('not_configured'); borderStyle = isSystem ? 'border-left:4px solid var(--blue);' : 'border-left:4px solid var(--muted);opacity:0.7;'; }
+      const lastTested = clientStatus.lastTestedAt ? new Date(clientStatus.lastTestedAt).toLocaleString('es-ES', { timeZone: 'Europe/Madrid', hour: '2-digit', minute: '2-digit', day: '2-digit', month: 'short' }) : '';
+      const ownerBadge = isSystem ? '<span style="font-size:10px;background:var(--blue);color:#fff;padding:1px 6px;border-radius:4px;font-weight:600;">SISTEMA</span>' : '<span style="font-size:10px;background:var(--rust);color:#fff;padding:1px 6px;border-radius:4px;font-weight:600;">CLIENTE</span>';
+      let notesHtml = '';
+      if (clientStatus.notes) notesHtml += '<div style="font-size:12px;color:var(--muted);margin-top:4px;">📝 ' + clientStatus.notes + '</div>';
+      if (clientStatus.lastError) notesHtml += '<div style="font-size:12px;color:var(--red);margin-top:4px;word-break:break-word;">❌ ' + (clientStatus.lastError||'').slice(0, 120) + '</div>';
+      html += '<div class="card" style="' + borderStyle + '" id="capi-card-' + apiId + '"><div style="display:flex;justify-content:space-between;align-items:flex-start;"><div><div style="font-size:18px;font-weight:700;">' + apiMeta.icon + ' ' + apiMeta.provider + '</div><div style="font-size:12px;color:var(--muted);margin-top:2px;">' + (apiMeta.desc || '') + ' ' + ownerBadge + '</div></div><div style="text-align:right;"><div style="display:flex;align-items:center;gap:4px;justify-content:flex-end;"><span class="dot ' + badge.dot + '"></span><span style="font-size:13px;font-weight:600;color:' + badge.color + ';">' + badge.label + '</span></div>' + (lastTested ? '<div style="font-size:11px;color:var(--muted);margin-top:2px;">' + lastTested + '</div>' : '') + '</div></div>' + notesHtml + '<div style="margin-top:10px;display:flex;gap:6px;align-items:center;flex-wrap:wrap;">';
+      if (isGlobal && isSystem) {
+        html += '<button class="btn-sm" onclick="runSingleHealthCheck(\\'' + apiId + '\\')" id="btn-check-' + apiId + '">🔄 Verificar</button>';
+        if (SERVICE_ENV_MAP_FE[apiId]) html += '<button class="btn-sm" onclick="toggleApiSetup(\\'' + apiId + '\\')" id="btn-setup-' + apiId + '">⚙️ ' + (clientStatus.status === 'not_configured' ? 'Configurar' : 'Editar key') + '</button>';
+      } else if (!isGlobal && isSystem) {
+        if (isOverridden) {
+          html += '<a href="' + API_BASE + '/connect/' + slug + '/' + apiId + '" target="_blank" class="btn-sm" style="text-decoration:none;display:inline-flex;align-items:center;">⚙️ Editar key propia</a>';
+          html += '<button class="btn-sm" onclick="testClientIntegration(\\'' + apiId + '\\')" id="btn-capi-test-' + apiId + '">🔄 Verificar</button>';
+        } else {
+          html += '<a href="' + API_BASE + '/connect/' + slug + '/' + apiId + '" target="_blank" class="btn-sm" style="text-decoration:none;display:inline-flex;align-items:center;">🔑 Usar key propia</a>';
+        }
+      } else if (!isGlobal && !isSystem) {
+        html += '<a href="' + API_BASE + '/connect/' + slug + '/' + apiId + '" target="_blank" class="btn-sm" style="text-decoration:none;display:inline-flex;align-items:center;" id="btn-capi-setup-' + apiId + '">⚙️ ' + (clientStatus.status === 'not_configured' ? 'Configurar' : 'Editar') + '</a>';
+        html += '<button class="btn-sm" onclick="testClientIntegration(\\'' + apiId + '\\')" id="btn-capi-test-' + apiId + '">🔄 Verificar</button>';
+      }
+      if (apiMeta.docs) html += '<a href="' + apiMeta.docs + '" target="_blank" style="font-size:11px;color:var(--muted);">📖 Docs</a>';
+      html += '</div>';
+      if (isGlobal && isSystem) {
+        html += '<div id="api-setup-' + apiId + '" style="display:none;margin-top:10px;padding:12px;background:var(--bg);border:2px solid var(--border);border-radius:6px;"><div id="api-setup-fields-' + apiId + '"></div><div style="display:flex;gap:6px;align-items:center;margin-top:8px;"><button class="btn btn-primary" onclick="saveApiKey(\\'' + apiId + '\\')" style="font-size:12px;padding:6px 14px;" id="btn-save-' + apiId + '">💾 Guardar</button><button class="btn-sm" onclick="toggleApiSetup(\\'' + apiId + '\\')">✕ Cerrar</button><span id="api-save-status-' + apiId + '" style="font-size:12px;color:var(--muted);"></span></div></div>';
+      }
+      html += '</div>';
+    }
+    html += '</div>';
+  }
+  document.getElementById('client-apis-datasources').innerHTML = html;
+  const ov = document.getElementById('client-apis-overrides');
+  if (ov) ov.innerHTML = '';
+}
+
+async function runSingleHealthCheck(serviceId) {
+  const btn = document.getElementById('btn-check-' + serviceId);
+  if (!btn) return;
+  const origText = btn.textContent;
+  btn.disabled = true; btn.textContent = '⏳...';
+  try {
+    const res = await fetch(API_BASE + '/api/health-check?service=' + serviceId);
+    const data = await res.json();
+    if (data.results && data.results[serviceId]) {
+      if (!D.apiHealth) D.apiHealth = { lastCheck: null, services: {} };
+      D.apiHealth.services[serviceId] = data.results[serviceId];
+      D.apiHealth.lastCheck = data.lastCheck;
+      renderApis();
+    }
+  } catch (e) { console.error('Health check failed:', e); }
+  btn.disabled = false; btn.textContent = origText;
+}
+
+async function restartGateway() {
+  const btn = document.getElementById('btn-restart-gw');
+  const status = document.getElementById('client-api-check-status');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Reiniciando...'; }
+  if (status) { status.textContent = 'Reiniciando gateway...'; status.style.color = 'var(--muted)'; }
+  try {
+    const res = await fetch(API_BASE + '/api/restart-gateway');
+    const data = await res.json();
+    if (data.ok) { if (status) { status.textContent = '✅ Gateway reiniciado.'; status.style.color = 'var(--green)'; } }
+    else { if (status) { status.textContent = '⚠️ ' + (data.error||'Error'); status.style.color = 'var(--yellow)'; } }
+  } catch (e) { if (status) { status.textContent = '❌ ' + e.message; status.style.color = 'var(--red)'; } }
+  if (btn) { btn.disabled = false; btn.textContent = '🔁 Restart Gateway'; }
+}
+
+async function toggleApiSetup(serviceId) {
+  const panel = document.getElementById('api-setup-' + serviceId);
+  if (!panel) return;
+  const isHidden = panel.style.display === 'none';
+  panel.style.display = isHidden ? 'block' : 'none';
+  if (!isHidden) return;
+  const fieldsDiv = document.getElementById('api-setup-fields-' + serviceId);
+  if (!fieldsDiv) return;
+  fieldsDiv.innerHTML = '<span style="font-size:12px;color:var(--muted);">Cargando...</span>';
+  try {
+    const res = await fetch(API_BASE + '/api/env?service=' + serviceId);
+    const data = await res.json();
+    let h = '';
+    for (const [key, info] of Object.entries(data)) {
+      h += '<div style="margin-bottom:8px;"><label style="display:block;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;">' + info.label + ' <code style="font-size:10px;">' + key + '</code></label><div style="display:flex;gap:6px;align-items:center;"><input type="text" id="env-input-' + key + '" placeholder="' + (info.placeholder || key) + '" style="flex:1;padding:6px 10px;background:var(--card);border:2px solid var(--border);border-radius:6px;font-family:\\'Nunito\\',monospace;font-size:13px;color:var(--text);">' + (info.hasValue ? '<span style="font-size:11px;color:var(--muted);" title="' + info.masked + '">✅ ' + info.masked + '</span>' : '<span style="font-size:11px;color:var(--yellow);">⚠️ vacío</span>') + '</div></div>';
+    }
+    fieldsDiv.innerHTML = h || '<span style="font-size:12px;color:var(--muted);">Este servicio no usa API keys configurables.</span>';
+  } catch (e) { fieldsDiv.innerHTML = '<span style="font-size:12px;color:var(--red);">Error: ' + (e.message || '') + '</span>'; }
+}
+
+async function saveApiKey(serviceId) {
+  const btn = document.getElementById('btn-save-' + serviceId);
+  const status = document.getElementById('api-save-status-' + serviceId);
+  const fields = SERVICE_ENV_MAP_FE[serviceId] || [];
+  if (!fields.length) return;
+  const vars = {};
+  let hasAny = false;
+  for (const key of fields) {
+    const input = document.getElementById('env-input-' + key);
+    if (input && input.value.trim()) { vars[key] = input.value.trim(); hasAny = true; }
+  }
+  if (!hasAny) { status.textContent = '⚠️ Escribe al menos un valor'; status.style.color = 'var(--yellow)'; return; }
+  btn.disabled = true; btn.textContent = '⏳ Guardando...';
+  status.textContent = '';
+  try {
+    const res = await fetch(API_BASE + '/api/env', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ service: serviceId, vars }) });
+    const data = await res.json();
+    if (data.ok) {
+      status.textContent = '✅ Guardado. ' + (data.healthCheck?.results?.[serviceId]?.status === 'ok' ? 'Health check: OK ✅' : 'Health check: ' + (data.healthCheck?.results?.[serviceId]?.status || '?'));
+      status.style.color = 'var(--green)';
+      if (data.healthCheck?.results?.[serviceId]) {
+        if (!D.apiHealth) D.apiHealth = { lastCheck: null, services: {} };
+        D.apiHealth.services[serviceId] = data.healthCheck.results[serviceId];
+        D.apiHealth.lastCheck = data.healthCheck.lastCheck;
+      }
+      for (const key of fields) { const input = document.getElementById('env-input-' + key); if (input) input.value = ''; }
+      setTimeout(() => { renderApis(); }, 1500);
+    } else { status.textContent = '❌ ' + (data.error || 'Error'); status.style.color = 'var(--red)'; }
+  } catch (e) { status.textContent = '❌ ' + e.message; status.style.color = 'var(--red)'; }
+  btn.disabled = false; btn.textContent = '💾 Guardar';
+}
+
+async function testClientIntegration(apiId) {
+  const btn = document.getElementById('btn-capi-test-' + apiId) || document.getElementById('btn-capi-test-ov-' + apiId);
+  if (btn) { btn.disabled = true; btn.textContent = '⏳...'; }
+  try {
+    const res = await fetch(API_BASE + '/api/client-integrations/test', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ slug: SLUG, source: apiId }) });
+    const data = await res.json();
+    if (data.ok) setTimeout(() => renderApis(), 500);
+  } catch (e) { console.error('Test failed:', e); }
+  if (btn) { btn.disabled = false; btn.textContent = '🔄 Verificar'; }
+}
+
+async function verifyAllApis() {
+  const isGlobal = !SLUG;
+  const btn = document.getElementById('btn-client-check-all');
+  const status = document.getElementById('client-api-check-status');
+  if (isGlobal) {
+    if (btn) { btn.disabled = true; btn.textContent = '⏳ Verificando...'; }
+    if (status) { status.textContent = 'Verificando APIs del sistema...'; status.style.color = 'var(--muted)'; }
+    try {
+      const res = await fetch(API_BASE + '/api/health-check?service=all');
+      const data = await res.json();
+      if (!data.error) {
+        if (!D.apiHealth) D.apiHealth = { lastCheck: null, services: {} };
+        D.apiHealth.lastCheck = data.lastCheck;
+        for (const [k, v] of Object.entries(data.results)) D.apiHealth.services[k] = v;
+        if (status) { status.textContent = '✅ Verificación completa'; status.style.color = 'var(--green)'; }
+        renderClientApisView('_global');
+      } else { if (status) { status.textContent = '❌ ' + data.error; status.style.color = 'var(--red)'; } }
+    } catch (e) { if (status) { status.textContent = '❌ ' + e.message; status.style.color = 'var(--red)'; } }
+    if (btn) { btn.disabled = false; btn.textContent = '🔄 Verificar Todo'; }
+  } else {
+    testAllClientIntegrations();
+  }
+}
+
+async function testAllClientIntegrations() {
+  const btn = document.getElementById('btn-client-check-all');
+  const status = document.getElementById('client-api-check-status');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Verificando...'; }
+  if (status) status.textContent = 'Verificando todas las integraciones...';
+  try {
+    const res = await fetch(API_BASE + '/api/client-integrations/test', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ slug: SLUG, all: true }) });
+    const data = await res.json();
+    if (data.ok) { if (status) { status.textContent = '✅ Verificación completa'; status.style.color = 'var(--green)'; } setTimeout(() => renderApis(), 500); }
+    else { if (status) { status.textContent = '❌ ' + (data.error || 'Error'); status.style.color = 'var(--red)'; } }
+  } catch (e) { if (status) { status.textContent = '❌ ' + e.message; status.style.color = 'var(--red)'; } }
+  if (btn) { btn.disabled = false; btn.textContent = '🔄 Verificar Todo'; }
+}
+
+// ============ TAB 2: Agents ============
+let _agentSlug = '', _agentFile = '';
+function renderAgents() {
+  const slugMap = {'Cervantes':'cervantes','Sancho':'sancho','Rocinante':'rocinante','Escudero':'escudero'};
+  document.getElementById('agents-list').innerHTML = AGENTS.map(a => {
+    const slug = slugMap[a.name] || '';
+    const ad = AGENTS_DATA[slug];
+    const fileCount = ad ? Object.keys(ad.files).length : 0;
+    return '<div class="card" style="margin-bottom:8px;cursor:pointer;" onclick="openAgentViewer(\\'' + slug + '\\')"><div class="agent-row"><span class="dot g"></span><span style="font-weight:600;min-width:150px;">' + a.emoji + ' ' + a.name + '</span><span style="color:var(--blue);font-size:13px;">' + a.ch + '</span><span style="color:var(--muted);font-size:12px;margin-left:auto;">' + a.model + ' · ' + a.role + ' · ' + fileCount + ' archivos</span></div></div>';
+  }).join('');
+}
+
+function openAgentViewer(slug) {
+  const ad = AGENTS_DATA[slug];
+  if (!ad || !ad.files) return;
+  const viewer = document.getElementById('agent-file-viewer');
+  document.getElementById('agent-viewer-title').textContent = ad.name;
+  const files = Object.keys(ad.files);
+  const defaultFile = files.includes('SOUL.md') ? 'SOUL.md' : files[0];
+  document.getElementById('agent-file-tabs').innerHTML = files.map(f =>
+    '<button class="btn-sm agent-tab ' + (f===defaultFile?'active':'') + '" onclick="showAgentFile(\\'' + slug + '\\',\\'' + f + '\\',this)">' + f + '</button>'
+  ).join('');
+  document.getElementById('agent-file-content').textContent = ad.files[defaultFile] || '';
+  _agentSlug = slug; _agentFile = defaultFile;
+  viewer.style.display = 'block';
+  viewer.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+function showAgentFile(slug, fname, el) {
+  const ad = AGENTS_DATA[slug];
+  document.getElementById('agent-file-content').textContent = ad.files[fname] || '';
+  _agentSlug = slug; _agentFile = fname;
+  el.parentElement.querySelectorAll('.agent-tab').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+}
+
+function copyAgentPath() {
+  const p = '~/.openclaw/workspace-' + _agentSlug + '/' + _agentFile;
+  navigator.clipboard.writeText(p).then(() => showToast('📋 Ruta copiada: ' + p));
+}
+
+function closeAgentViewer() { document.getElementById('agent-file-viewer').style.display = 'none'; }
+
+// ============ TAB 3: Skills ============
+function renderSkills() {
+  for (const [cat, skills] of Object.entries(SKILL_CATS)) {
+    const el = document.getElementById('sg-' + cat);
+    if (!el) continue;
+    el.innerHTML = skills.map(s => '<div class="skill-item"><div class="sn">' + s.id + '</div><div class="sd">' + s.sd + '</div></div>').join('');
+  }
+  // DAG
+  const dagEl = document.getElementById('skill-dag');
+  const fClients = D ? (D.foundation?.clients || {}) : {};
+  const fc = fClients[SLUG] || {};
+  const pillarStatuses = {};
+  if (fc.sections) {
+    for (const sec of Object.values(fc.sections)) {
+      if (sec.pillars) { for (const [pn, pv] of Object.entries(sec.pillars)) pillarStatuses[pn] = pv.status; }
+    }
+  }
+  dagEl.innerHTML = DAG_LAYERS.map((layer, i) =>
+    (i > 0 ? '<div class="dag-arrow">↓</div>' : '') +
+    '<div class="dag-layer"><div class="dag-label" style="color:var(--rust);">' + layer.label + '</div><div class="dag-nodes">' + layer.nodes.map(n => {
+      const done = pillarStatuses[n] === 'approved';
+      const locked = !done && SKILL_DEPS[n]?.some(dep => pillarStatuses[dep] !== 'approved') && SKILL_DEPS[n]?.length > 0;
+      return '<div class="dag-node ' + (done?'done':'') + (locked?' locked':'') + '">' + (done?'✅':'') + (locked?'🔒':'') + ' ' + n + '</div>';
+    }).join('') + '</div></div>'
+  ).join('');
+}
+
+// ============ TAB 4: Dispatch ============
+function renderDispatch() {
+  const dd = DISPATCH_DATA;
+  const el = document.getElementById('dispatch-content');
+  if (!el || !dd.channel_roles) { if (el) el.innerHTML = '<div class="card"><p style="color:var(--muted);">No hay datos de dispatch disponibles.</p></div>'; return; }
+
+  let html = '<h3 style="font-family:\\'Space Grotesk\\',sans-serif;font-size:16px;margin-bottom:12px;">📡 Channel Roles</h3>';
+  const roleIcons = { decision: '🧭', execution: '⚡', intelligence: '🔍', support: '🛟' };
+  for (const [role, data] of Object.entries(dd.channel_roles)) {
+    html += '<div class="card dispatch-group"><h3>' + (roleIcons[role]||'') + ' ' + role.charAt(0).toUpperCase() + role.slice(1) + '</h3>';
+    html += '<p style="color:var(--muted);font-size:12px;margin-bottom:8px;">' + (data.description || '') + '</p>';
+    if (data.channels) {
+      for (const ch of data.channels) {
+        const rule = data.rules ? data.rules[ch] : '';
+        html += '<div class="dispatch-channel"><strong>#' + ch + '</strong>' + (rule ? '<div class="dispatch-rule">' + rule + '</div>' : '') + '</div>';
+      }
+    }
+    html += '</div>';
+  }
+
+  if (dd.personas && Array.isArray(dd.personas)) {
+    html += '<h3 style="font-family:\\'Space Grotesk\\',sans-serif;font-size:16px;margin:20px 0 12px;">👥 Personas</h3>';
+    html += '<div class="grid">';
+    for (const p of dd.personas) {
+      html += '<div class="persona-card"><h4>' + (p.emoji||'') + ' ' + (p.name||'') + '</h4>';
+      if (p.skills) html += '<div style="font-size:12px;color:var(--muted);margin-top:4px;"><strong>Skills:</strong> ' + (Array.isArray(p.skills) ? p.skills.join(', ') : p.skills) + '</div>';
+      if (p.brand_context) html += '<div style="font-size:12px;color:var(--muted);margin-top:2px;"><strong>Brand:</strong> ' + p.brand_context + '</div>';
+      html += '</div>';
+    }
+    html += '</div>';
+  }
+
+  if (dd.flow) {
+    html += '<div class="card" style="margin-top:16px;"><h3>🔄 Flow</h3><p style="font-size:13px;margin-top:4px;">' + dd.flow + '</p></div>';
+  }
+
+  el.innerHTML = html;
+}
+
+// ============ TAB 5: Strategies ============
+let _strFilter = 'all';
+async function renderStrategies() {
+  try {
+    const res = await fetch(API_BASE + '/api/strategies-catalog');
+    window.STRATEGIES_DATA = await res.json();
+  } catch { return; }
+  if (!STRATEGIES_DATA || !STRATEGIES_DATA.strategies) return;
+  renderStrategyList();
+}
+
+function renderStrategyList() {
+  const clientStrats = (SLUG && STRATEGIES_DATA.clientStrategies?.[SLUG]) || null;
+  const clientMap = {};
+  if (clientStrats) clientStrats.forEach(cs => clientMap[cs.id] = cs);
+
+  let strats = STRATEGIES_DATA.strategies;
+  if (_strFilter === 'active') strats = strats.filter(s => clientMap[s.id]);
+  else if (['rapido','medio','lento'].includes(_strFilter)) strats = strats.filter(s => s.velocidad === _strFilter);
+  else if (_strFilter !== 'all') strats = strats.filter(s => s.quadrant === _strFilter);
+
+  const listEl = document.getElementById('strategies-list');
+  listEl.innerHTML = strats.map(s => {
+    const cd = clientMap[s.id];
+    const speedIcon = s.velocidad === 'rapido' ? '⚡' : s.velocidad === 'medio' ? '🕐' : '🐢';
+    const q = STRATEGIES_DATA.quadrants.find(q => q.id === s.quadrant);
+    const scoreBadge = cd ? '<span class="strategy-score">' + cd.score.toFixed(2) + '</span>' : '';
+    const activeBadge = cd ? ' str-badge-active' : '';
+    const b2bLabel = s.b2b === 'core' ? '✅ Core' : s.b2b === 'adaptacion' ? '⚠️ Adaptación' : '❌ No';
+    const b2cLabel = s.b2c === 'core' ? '✅ Core' : s.b2c === 'adaptacion' ? '⚠️ Adaptación' : '❌ No';
+    const b2bIcon = s.b2b === 'core' ? '✅' : s.b2b === 'adaptacion' ? '⚠️' : '❌';
+    const b2cIcon = s.b2c === 'core' ? '✅' : s.b2c === 'adaptacion' ? '⚠️' : '❌';
+
+    let body = '<div style="display:flex;gap:6px;margin-bottom:10px;"><button class="btn btn-primary" onclick="event.stopPropagation();openStrategyEdit(\\'' + s.id + '\\')" style="font-size:11px;padding:4px 10px;">✏️ Editar</button></div>';
+    body += '<div class="str-props"><div><strong>Objetivo:</strong> ' + (s.objetivo||'') + '</div><div><strong>Cuadrante:</strong> ' + (q ? q.icon + ' ' + q.label : '') + '</div><div><strong>Prerequisitos:</strong> ' + (s.prerequisitos||'') + '</div><div><strong>Tiempo:</strong> ' + (s.tiempoResultado||'') + '</div><div><strong>B2B:</strong> ' + b2bLabel + ' · <strong>B2C:</strong> ' + b2cLabel + '</div><div><strong>Sectores:</strong> ' + (s.sectores||[]).join(', ') + '</div><div style="grid-column:1/-1;"><strong>Skills:</strong> ' + (s.skills||[]).map(sk => '<code>' + sk + '</code>').join(' → ') + '</div><div style="grid-column:1/-1;"><strong>Objetivos:</strong> ' + (s.objetivos||[]).map(o => '<span class="str-badge">' + o + '</span>').join(' ') + '</div></div>';
+    if (s.workflow) {
+      const wf = [{key:'objetivo',label:'0) Objetivo y por qué',icon:'🎯'},{key:'ideacion',label:'1) Ideación',icon:'💡'},{key:'creacion',label:'2) Creación',icon:'🔨'},{key:'ejecucion',label:'3) Ejecución',icon:'🚀'},{key:'medicion',label:'4) Medición',icon:'📊'}];
+      for (const sec of wf) { if (!s.workflow[sec.key]) continue; body += '<details style="margin-bottom:4px;"><summary style="cursor:pointer;font-weight:600;font-size:12px;padding:4px 0;">' + sec.icon + ' ' + sec.label + '</summary><div style="padding:6px 10px;background:var(--bg);border-radius:6px;font-size:12px;line-height:1.7;">' + _mdToHtml(s.workflow[sec.key]) + '</div></details>'; }
+    }
+    if (s.cuandoUsar?.length || s.cuandoNoUsar?.length) {
+      body += '<div style="display:flex;gap:8px;margin-top:8px;">';
+      if (s.cuandoUsar?.length) body += '<div style="flex:1;padding:6px;background:rgba(76,175,80,0.06);border:1px solid rgba(76,175,80,0.15);border-radius:6px;font-size:11px;"><strong>✅ Usar</strong><ul style="margin:2px 0 0;padding-left:14px;">' + s.cuandoUsar.map(c=>'<li>'+c+'</li>').join('') + '</ul></div>';
+      if (s.cuandoNoUsar?.length) body += '<div style="flex:1;padding:6px;background:rgba(244,67,54,0.06);border:1px solid rgba(244,67,54,0.15);border-radius:6px;font-size:11px;"><strong>❌ No usar</strong><ul style="margin:2px 0 0;padding-left:14px;">' + s.cuandoNoUsar.map(c=>'<li>'+c+'</li>').join('') + '</ul></div>';
+      body += '</div>';
+    }
+    if (cd) { body += '<div style="margin-top:8px;padding:8px;border-left:3px solid var(--green);background:rgba(76,175,80,0.04);border-radius:4px;font-size:12px;"><strong>📊 Score ' + cd.score.toFixed(2) + '</strong> — ' + cd.justification + '</div>'; }
+
+    return '<div class="str-row" id="str-row-' + s.id + '"><div class="str-header" onclick="toggleStrategyRow(\\'' + s.id + '\\')"><span class="str-chevron">▶</span><span class="str-id">#' + s.id + '</span><span class="str-name">' + s.name + '</span><span class="str-badges">' + scoreBadge + '<span class="str-badge' + activeBadge + '">' + (q?q.icon:'') + '</span><span class="str-badge">' + speedIcon + '</span><span class="str-badge">B2B' + b2bIcon + '</span><span class="str-badge">B2C' + b2cIcon + '</span></span></div><div class="str-body">' + body + '</div></div>';
+  }).join('');
+
+  document.getElementById('strategies-sub').textContent = strats.length + ' estrategias' + (_strFilter !== 'all' ? ' (filtradas)' : '') + ' — Catálogo Hormozi Core Four';
+  renderHormoziGrid(clientMap);
+}
+
+function renderHormoziGrid(clientMap) {
+  const grid = document.getElementById('hormozi-grid');
+  if (!grid) return;
+  const strats = STRATEGIES_DATA.strategies;
+  function cellHtml(qid) {
+    return '<div class="hm-cell">' + strats.filter(s => s.quadrant === qid).map(s => {
+      const act = clientMap[s.id] ? ' active' : '';
+      return '<span class="hm-strat' + act + '" onclick="toggleStrategyRow(\\'' + s.id + '\\')" title="' + s.name + '">#' + s.id + '</span>';
+    }).join('') + '</div>';
+  }
+  grid.innerHTML = '<div class="hormozi-matrix"><div class="hm-header"></div><div class="hm-header">Organic (tiempo)</div><div class="hm-header">Paid (dinero)</div><div class="hm-row-label">ONE-TO-ONE</div>' + cellHtml('1to1-organic') + cellHtml('1to1-paid') + '<div class="hm-row-label">ONE-TO-MANY</div>' + cellHtml('1toN-organic') + cellHtml('1toN-paid') + '</div><div class="hm-transversal"><strong>Transversal:</strong> ' + strats.filter(s => s.quadrant === 'transversal').map(s => {
+    const act = clientMap[s.id] ? ' active' : '';
+    return '<span class="hm-strat' + act + '" onclick="toggleStrategyRow(\\'' + s.id + '\\')">#' + s.id + ' ' + s.name + '</span>';
+  }).join(' · ') + '</div>';
+}
+
+function toggleStrategyRow(id) { const row = document.getElementById('str-row-' + id); if (row) row.classList.toggle('open'); }
+
+function filterStrategies(filter, el) {
+  _strFilter = filter;
+  document.querySelectorAll('#str-filters .str-filter').forEach(b => b.classList.remove('active'));
+  if (el) el.classList.add('active');
+  renderStrategyList();
+}
+
+function _mdToHtml(md) {
+  if (!md) return '';
+  return md.replace(/\\n\\n/g,'<br><br>').replace(/\\n- /g,'<br>• ').replace(/\\n/g,'<br>').replace(/\\*\\*([^*]+)\\*\\*/g,'<strong>$1</strong>').replace(/\`([^\`]+)\`/g,'<code>$1</code>');
+}
+
+// Strategy Editor
+let _strategyEditId = null;
+
+function openStrategyEdit(id) {
+  const s = id ? STRATEGIES_DATA.strategies.find(x => x.id === id) : null;
+  _strategyEditId = id || null;
+  const isNew = !s;
+  document.getElementById('se-fs-title').textContent = s ? '✏️ Editar #' + s.id + ' ' + s.name : '🎯 Nueva Estrategia';
+  document.getElementById('se-info-panel').style.display = isNew ? 'block' : 'none';
+  document.getElementById('se-delete-btn').style.display = s ? 'inline-block' : 'none';
+  document.getElementById('se-id').value = s ? s.id : '';
+  document.getElementById('se-name').value = s ? s.name : '';
+  document.getElementById('se-quadrant').value = s ? s.quadrant : '1to1-organic';
+  document.getElementById('se-objetivo').value = s ? s.objetivo : '';
+  document.getElementById('se-prerequisitos').value = s ? s.prerequisitos : '';
+  document.getElementById('se-tiempo').value = s ? s.tiempoResultado : '';
+  document.getElementById('se-b2b').value = s ? s.b2b : 'core';
+  document.getElementById('se-b2c').value = s ? s.b2c : 'no';
+  document.getElementById('se-velocidad').value = s ? s.velocidad : 'medio';
+  document.getElementById('se-sectores').value = s ? s.sectores.join(', ') : '';
+  document.getElementById('se-skills').value = s ? s.skills.join(', ') : '';
+  ['awareness','lead-gen','conversion','autoridad','retencion','expansion','comunidad'].forEach(o => {
+    const cb = document.getElementById('se-obj-' + o);
+    if (cb) cb.checked = s ? s.objetivos.includes(o) : false;
+  });
+  document.getElementById('se-wf-objetivo').value = s?.workflow?.objetivo || '';
+  document.getElementById('se-wf-ideacion').value = s?.workflow?.ideacion || '';
+  document.getElementById('se-wf-creacion').value = s?.workflow?.creacion || '';
+  document.getElementById('se-wf-ejecucion').value = s?.workflow?.ejecucion || '';
+  document.getElementById('se-wf-medicion').value = s?.workflow?.medicion || '';
+  document.getElementById('se-cuando-si').value = s ? s.cuandoUsar.join('\\n') : '';
+  document.getElementById('se-cuando-no').value = s ? s.cuandoNoUsar.join('\\n') : '';
+  // Chat stub
+  document.getElementById('se-chat-msgs').innerHTML = '<div style="padding:20px;text-align:center;color:var(--muted);">Chat disponible en MC principal</div>';
+  document.getElementById('strategy-editor-fs').style.display = 'flex';
+}
+
+function openStrategyNew() { openStrategyEdit(null); }
+
+async function saveStrategy() {
+  const id = document.getElementById('se-id').value.trim();
+  if (!id) { showToast('ID es obligatorio'); return; }
+  const objetivos = [];
+  ['awareness','lead-gen','conversion','autoridad','retencion','expansion','comunidad'].forEach(o => {
+    if (document.getElementById('se-obj-' + o)?.checked) objetivos.push(o);
+  });
+  const entry = {
+    id, name: document.getElementById('se-name').value.trim(),
+    quadrant: document.getElementById('se-quadrant').value,
+    objetivo: document.getElementById('se-objetivo').value.trim(),
+    prerequisitos: document.getElementById('se-prerequisitos').value.trim(),
+    tiempoResultado: document.getElementById('se-tiempo').value.trim(),
+    b2b: document.getElementById('se-b2b').value, b2c: document.getElementById('se-b2c').value,
+    sectores: document.getElementById('se-sectores').value.split(',').map(s=>s.trim()).filter(Boolean),
+    velocidad: document.getElementById('se-velocidad').value,
+    objetivos,
+    skills: document.getElementById('se-skills').value.split(',').map(s=>s.trim()).filter(Boolean),
+    workflow: { objetivo: document.getElementById('se-wf-objetivo').value, ideacion: document.getElementById('se-wf-ideacion').value, creacion: document.getElementById('se-wf-creacion').value, ejecucion: document.getElementById('se-wf-ejecucion').value, medicion: document.getElementById('se-wf-medicion').value },
+    cuandoUsar: document.getElementById('se-cuando-si').value.split('\\n').map(s=>s.trim()).filter(Boolean),
+    cuandoNoUsar: document.getElementById('se-cuando-no').value.split('\\n').map(s=>s.trim()).filter(Boolean)
+  };
+  const idx = STRATEGIES_DATA.strategies.findIndex(s => s.id === _strategyEditId);
+  if (idx >= 0) STRATEGIES_DATA.strategies[idx] = entry;
+  else STRATEGIES_DATA.strategies.push(entry);
+  try {
+    const res = await fetch(API_BASE + '/api/strategies-catalog', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(STRATEGIES_DATA) });
+    const r = await res.json();
+    if (r.ok) { showToast('💾 Estrategia guardada'); closeStrategyEdit(); renderStrategies(); }
+    else showToast('Error: ' + (r.error || 'desconocido'));
+  } catch(e) { showToast('Error: ' + e.message); }
+}
+
+async function deleteStrategy() {
+  if (!_strategyEditId) return;
+  if (!confirm('¿Eliminar estrategia #' + _strategyEditId + '?')) return;
+  STRATEGIES_DATA.strategies = STRATEGIES_DATA.strategies.filter(s => s.id !== _strategyEditId);
+  try {
+    await fetch(API_BASE + '/api/strategies-catalog', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(STRATEGIES_DATA) });
+    showToast('🗑️ Estrategia eliminada');
+    closeStrategyEdit();
+    renderStrategies();
+  } catch(e) { showToast('Error: ' + e.message); }
+}
+
+function closeStrategyEdit() { document.getElementById('strategy-editor-fs').style.display = 'none'; }
+
+function seChatSend() { showToast('Chat disponible en MC principal'); }
+
+// ============ TAB 6: Recurring Tasks ============
+let _recurringTasksCache = {};
+let _allRecurringTasks = [];
+
+async function loadRecurringTasksData() {
+  const url = SLUG ? API_BASE + '/api/recurring-tasks?slug=' + SLUG : API_BASE + '/api/recurring-tasks';
+  try {
+    const res = await fetch(url);
+    const data = await res.json();
+    if (typeof data === 'object' && !Array.isArray(data)) {
+      const flat = [];
+      for (const [clientSlug, tasks] of Object.entries(data)) { for (const t of tasks) { t._slug = clientSlug; flat.push(t); } }
+      _recurringTasksCache = flat;
+    } else { _recurringTasksCache = data || []; }
+  } catch (e) { _recurringTasksCache = []; }
+  renderRecurringTasksPage();
+}
+
+function renderRecurringTasksPage() {
+  _allRecurringTasks = [];
+  const crons = _recurringTasksCache || [];
+  const el = document.getElementById('recurring-tasks-content');
+  if (!el) return;
+  if (crons.length === 0) { el.innerHTML = '<div class="card"><div style="text-align:center;padding:40px;color:var(--muted);">No hay tareas recurrentes para este cliente.</div></div>'; return; }
+
+  for (const c of crons) {
+    c.category = c.task_type || c.category || 'other';
+    c.enabled = c.status === 'active';
+    c.last_run = c.last_run_at;
+    c.next_run = c.next_run_at;
+    c.duration_ms = c.last_duration_ms;
+    c.schedule = c.schedule_raw || c.schedule;
+  }
+
+  const CAT = { intelligence:{icon:'🧠',label:'Intelligence'}, metrics:{icon:'📊',label:'Métricas'}, outreach:{icon:'📨',label:'Outreach'}, content:{icon:'✍️',label:'Contenido'}, system:{icon:'⚙️',label:'Sistema'}, other:{icon:'📋',label:'Otros'} };
+  function cronToHuman(schedule) {
+    if (typeof schedule === 'string') return schedule;
+    if (!schedule || (!schedule.expr && !schedule.kind)) return '—';
+    if (schedule.kind === 'every') { const hrs = Math.floor(schedule.everyMs / 3600000); if (hrs >= 1) return 'Cada ' + hrs + 'h'; return 'Cada ' + Math.floor(schedule.everyMs / 60000) + ' min'; }
+    const e = schedule.expr; if (!e) return '—';
+    if (e === '0 9 * * 1-5') return 'L-V 9:00'; if (e === '0 18 * * 1-5') return 'L-V 18:00';
+    const m1 = e.match(/^(\\d+) (\\d+) \\* \\* \\*$/); if (m1) return 'Cada día ' + m1[2] + ':' + m1[1].padStart(2,'0');
+    return e;
+  }
+  function relTime(iso) {
+    if (!iso) return 'Nunca';
+    const ms = Date.now() - new Date(iso).getTime();
+    if (ms < 0) { const f = -ms; if (f<3600000) return 'En '+Math.floor(f/60000)+' min'; if (f<86400000) return 'En '+Math.floor(f/3600000)+'h'; return 'En '+Math.floor(f/86400000)+'d'; }
+    if (ms < 60000) return 'Hace <1 min'; if (ms < 3600000) return 'Hace ' + Math.floor(ms/60000) + ' min';
+    if (ms < 86400000) return 'Hace ' + Math.floor(ms/3600000) + 'h'; return 'Hace ' + Math.floor(ms/86400000) + 'd';
+  }
+  function fmtDur(ms) { if (!ms) return '—'; if (ms < 1000) return ms + 'ms'; if (ms < 60000) return Math.round(ms/1000) + 's'; return Math.floor(ms/60000) + 'm ' + Math.round((ms%60000)/1000) + 's'; }
+  function statusDot(s) { const colors = { ok: '#4A5D23', error: '#C0392B', idle: '#888' }; const c = colors[s] || '#888'; return '<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:'+c+';margin-right:4px;" title="'+(s||'idle')+'"></span>'; }
+
+  const groups = {};
+  const catOrder = ['intelligence','metrics','outreach','content','system','other'];
+  for (const c of crons) { const cat = c.category || 'other'; if (!groups[cat]) groups[cat] = []; groups[cat].push(c); }
+  const slugs = new Set(crons.map(c => c.client_slug).filter(Boolean));
+  const showClient = slugs.size > 1;
+
+  let html = '';
+  let first = true;
+  for (const cat of catOrder) {
+    const items = groups[cat];
+    if (!items || items.length === 0) continue;
+    const cfg = CAT[cat] || CAT.other;
+    const gid = 'cron-' + cat;
+    html += '<div style="cursor:pointer;display:flex;align-items:center;gap:8px;padding:10px 0;border-bottom:2px solid var(--border);margin-top:' + (first ? '0' : '16') + 'px;" onclick="toggleIdeaGroup(\\'' + gid + '\\')">';
+    html += '<span id="chevron-' + gid + '" style="font-size:12px;">' + (first ? '▾' : '▸') + '</span>';
+    html += '<span style="font-family:\\'Space Grotesk\\';font-size:16px;font-weight:600;color:var(--navy);">' + cfg.icon + ' ' + cfg.label + ' (' + items.length + ')</span></div>';
+    html += '<div id="group-' + gid + '" style="' + (first ? '' : 'max-height:0px;overflow:hidden;') + 'transition:max-height 0.3s;">';
+    html += '<table class="idea-table"><thead><tr style="background:var(--bg);"><th style="width:30px;"></th><th>Nombre</th>';
+    if (showClient) html += '<th>Cliente</th>';
+    html += '<th>Frecuencia</th><th style="text-align:center;">Último run</th><th style="text-align:center;">Próximo</th><th style="text-align:center;">Duración</th><th style="text-align:center;">Acciones</th><th style="text-align:center;">Activo</th></tr></thead><tbody>';
+    for (const c of items) {
+      const isOn = c.enabled;
+      const hasPrompt = c.prompt && c.prompt.length > 0;
+      const hasScripts = c.scripts && c.scripts.length > 0;
+      const globalIdx = _allRecurringTasks.length;
+      _allRecurringTasks.push(c);
+      html += '<tr style="border-bottom:1px solid var(--border);' + (!isOn ? 'opacity:0.5;' : '') + '">';
+      html += '<td style="text-align:center;">' + statusDot(c.last_status) + '</td>';
+      html += '<td style="font-weight:600;">' + (c.name || '—') + (c.consecutive_errors > 0 ? ' <span style="color:#C0392B;font-size:11px;">(' + c.consecutive_errors + ' errores)</span>' : '') + '</td>';
+      if (showClient) html += '<td style="color:var(--muted);">' + (c.client_slug || '—') + '</td>';
+      html += '<td style="color:var(--muted);">' + cronToHuman(c.schedule) + '</td>';
+      html += '<td style="text-align:center;font-size:12px;color:var(--muted);">' + relTime(c.last_run) + '</td>';
+      html += '<td style="text-align:center;font-size:12px;color:var(--muted);">' + relTime(c.next_run) + '</td>';
+      html += '<td style="text-align:center;font-size:12px;color:var(--muted);">' + fmtDur(c.duration_ms) + '</td>';
+      html += '<td style="text-align:center;display:flex;gap:4px;justify-content:center;flex-wrap:wrap;">';
+      if (hasPrompt) html += '<button onclick="openPromptModal(' + globalIdx + ')" style="background:none;border:1px solid var(--border);color:var(--text);padding:4px 10px;border-radius:6px;font-size:11px;cursor:pointer;" title="Ver/editar prompt">📜</button>';
+      if (hasScripts) { for (let si = 0; si < c.scripts.length; si++) { const s = c.scripts[si]; html += '<button onclick="openScriptModal(' + globalIdx + ',' + si + ')" style="background:none;border:1px solid #C45D35;color:#C45D35;padding:4px 10px;border-radius:6px;font-size:11px;cursor:pointer;" title="' + s.name + ' (' + s.lines + ' líneas)">📄 ' + s.name + '</button>'; } }
+      html += '</td>';
+      html += '<td style="text-align:center;"><label style="position:relative;display:inline-block;width:40px;height:22px;cursor:pointer;"><input type="checkbox" ' + (isOn ? 'checked' : '') + ' onchange="toggleCronJob(\\'' + c.id + '\\',this.checked)" style="opacity:0;width:0;height:0;"><span style="position:absolute;inset:0;background:' + (isOn ? '#4A5D23' : 'var(--border)') + ';border-radius:22px;transition:.3s;"></span><span style="position:absolute;top:2px;left:' + (isOn ? '20px' : '2px') + ';width:18px;height:18px;background:#fff;border-radius:50%;transition:.3s;box-shadow:0 1px 3px rgba(0,0,0,.3);"></span></label></td>';
+      html += '</tr>';
+    }
+    html += '</tbody></table></div>';
+    first = false;
+  }
+  el.innerHTML = html;
+}
+
+function toggleIdeaGroup(groupId) {
+  const content = document.getElementById('group-' + groupId);
+  const chevron = document.getElementById('chevron-' + groupId);
+  if (!content || !chevron) return;
+  if (content.style.maxHeight && content.style.maxHeight !== '0px') { content.style.maxHeight = '0px'; content.style.overflow = 'hidden'; chevron.textContent = '▸'; }
+  else { content.style.maxHeight = content.scrollHeight + 'px'; content.style.overflow = 'visible'; chevron.textContent = '▾'; }
+}
+
+async function toggleCronJob(cronId, enable) {
+  try { await fetch(API_BASE + '/api/crons/toggle', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ cronId, enable }) }); await loadRecurringTasksData(); } catch (e) { console.error('Error toggling cron:', e); }
+}
+
+// Prompt Modal
+let _promptModalTask = null, _promptModalIdx = -1, _promptEditing = false;
+function openPromptModal(taskIdx) {
+  const task = _allRecurringTasks[taskIdx]; if (!task) return;
+  _promptModalTask = task; _promptModalIdx = taskIdx; _promptEditing = false;
+  document.getElementById('prompt-modal-title').textContent = task.name || '—';
+  document.getElementById('prompt-modal-meta').textContent = (task.agent||'sancho') + ' · ' + (task.model||'—') + ' · ' + (task.schedule||'—') + ' · ' + (task._slug||'sistema');
+  document.getElementById('prompt-modal-view').textContent = task.prompt || '(sin prompt)';
+  document.getElementById('prompt-modal-editor').value = task.prompt || '';
+  document.getElementById('prompt-modal-view').style.display = '';
+  document.getElementById('prompt-modal-editor').style.display = 'none';
+  document.getElementById('prompt-modal-actions').style.display = 'none';
+  document.getElementById('prompt-modal-edit-btn').style.display = '';
+  document.getElementById('prompt-modal-overlay').style.display = 'flex';
+}
+function closePromptModal() { document.getElementById('prompt-modal-overlay').style.display = 'none'; _promptModalTask = null; _promptEditing = false; }
+function togglePromptEdit() {
+  _promptEditing = !_promptEditing;
+  document.getElementById('prompt-modal-view').style.display = _promptEditing ? 'none' : '';
+  document.getElementById('prompt-modal-editor').style.display = _promptEditing ? '' : 'none';
+  document.getElementById('prompt-modal-actions').style.display = _promptEditing ? '' : 'none';
+  document.getElementById('prompt-modal-edit-btn').textContent = _promptEditing ? '👁️ Vista previa' : '✏️ Editar';
+  if (_promptEditing) { const editor = document.getElementById('prompt-modal-editor'); editor.focus(); editor.setSelectionRange(0, 0); }
+}
+function cancelPromptEdit() { document.getElementById('prompt-modal-editor').value = _promptModalTask?.prompt || ''; togglePromptEdit(); }
+async function savePromptEdit() {
+  if (!_promptModalTask) return;
+  const newPrompt = document.getElementById('prompt-modal-editor').value.trim();
+  if (!newPrompt) { alert('El prompt no puede estar vacío'); return; }
+  const btn = document.querySelector('#prompt-modal-actions button:last-child');
+  btn.textContent = '⏳ Guardando...'; btn.disabled = true;
+  try {
+    const res = await fetch(API_BASE + '/api/recurring-tasks/update-prompt', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ taskId: _promptModalTask.id, prompt: newPrompt }) });
+    const data = await res.json();
+    if (data.ok) { _promptModalTask.prompt = newPrompt; document.getElementById('prompt-modal-view').textContent = newPrompt; togglePromptEdit(); loadRecurringTasksData(); }
+    else { alert('Error: ' + (data.error || 'No se pudo guardar')); }
+  } catch (e) { alert('Error de red: ' + e.message); } finally { btn.textContent = '💾 Guardar'; btn.disabled = false; }
+}
+
+// Script Modal
+let _scriptModalTask = null, _scriptModalScript = null, _scriptEditing = false, _scriptOriginalContent = '';
+async function openScriptModal(taskIdx, scriptIdx) {
+  const task = _allRecurringTasks[taskIdx]; if (!task || !task.scripts || !task.scripts[scriptIdx]) return;
+  _scriptModalTask = task; _scriptModalScript = task.scripts[scriptIdx]; _scriptEditing = false;
+  const s = _scriptModalScript;
+  const langColors = { python: '#3776AB', bash: '#4EAA25', javascript: '#F7DF1E' };
+  document.getElementById('script-modal-title').textContent = s.name;
+  document.getElementById('script-modal-lines').textContent = s.lines + ' líneas';
+  const badge = document.getElementById('script-modal-lang-badge');
+  badge.textContent = s.lang; badge.style.background = langColors[s.lang] || '#666'; badge.style.color = s.lang === 'javascript' ? '#000' : '#fff';
+  document.getElementById('script-modal-view').textContent = '⏳ Cargando...';
+  document.getElementById('script-modal-editor').style.display = 'none';
+  document.getElementById('script-modal-actions').style.display = 'none';
+  document.getElementById('script-modal-edit-btn').textContent = '✏️ Editar';
+  document.getElementById('script-modal-overlay').style.display = 'flex';
+  try {
+    const res = await fetch(API_BASE + '/api/recurring-tasks/script?path=' + encodeURIComponent(s.path));
+    const data = await res.json();
+    if (data.ok) { _scriptOriginalContent = data.content; document.getElementById('script-modal-view').textContent = data.content; document.getElementById('script-modal-editor').value = data.content; document.getElementById('script-modal-lines').textContent = data.lines + ' líneas'; }
+    else { document.getElementById('script-modal-view').textContent = '❌ Error: ' + (data.error || 'No se pudo cargar'); }
+  } catch (e) { document.getElementById('script-modal-view').textContent = '❌ Error de red: ' + e.message; }
+}
+function closeScriptModal() { document.getElementById('script-modal-overlay').style.display = 'none'; _scriptModalTask = null; _scriptModalScript = null; _scriptEditing = false; }
+function toggleScriptEdit() {
+  _scriptEditing = !_scriptEditing;
+  document.getElementById('script-modal-view').style.display = _scriptEditing ? 'none' : '';
+  document.getElementById('script-modal-editor').style.display = _scriptEditing ? '' : 'none';
+  document.getElementById('script-modal-actions').style.display = _scriptEditing ? 'flex' : 'none';
+  document.getElementById('script-modal-edit-btn').textContent = _scriptEditing ? '👁️ Vista previa' : '✏️ Editar';
+  document.getElementById('script-modal-status').textContent = _scriptModalScript ? _scriptModalScript.path : '';
+  if (_scriptEditing) { document.getElementById('script-modal-editor').focus(); }
+  else { document.getElementById('script-modal-view').textContent = document.getElementById('script-modal-editor').value; }
+}
+function cancelScriptEdit() { document.getElementById('script-modal-editor').value = _scriptOriginalContent; if (_scriptEditing) toggleScriptEdit(); }
+async function saveScriptEdit() {
+  if (!_scriptModalScript) return;
+  const newContent = document.getElementById('script-modal-editor').value;
+  if (!newContent.trim()) { alert('El script no puede estar vacío'); return; }
+  const btn = document.getElementById('script-save-btn');
+  btn.textContent = '⏳ Guardando...'; btn.disabled = true;
+  try {
+    const res = await fetch(API_BASE + '/api/recurring-tasks/script', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ path: _scriptModalScript.path, content: newContent }) });
+    const data = await res.json();
+    if (data.ok) { _scriptOriginalContent = newContent; document.getElementById('script-modal-view').textContent = newContent; document.getElementById('script-modal-lines').textContent = data.lines + ' líneas'; document.getElementById('script-modal-status').textContent = '✅ Guardado (backup creado)'; toggleScriptEdit(); loadRecurringTasksData(); }
+    else { alert('Error: ' + (data.error || 'No se pudo guardar')); }
+  } catch (e) { alert('Error de red: ' + e.message); } finally { btn.textContent = '💾 Guardar'; btn.disabled = false; }
+}
+
+// ============ TAB 7: Preferences ============
+function loadPreferences() {
+  const name = localStorage.getItem('mc-user-name') || '';
+  const lang = localStorage.getItem('mc-lang') || 'es';
+  const theme = localStorage.getItem('mc-theme') || 'auto';
+  document.getElementById('pref-username').value = name;
+  document.getElementById('pref-lang').value = lang;
+  document.getElementById('pref-theme').value = theme;
+}
+
+function savePref(key, value) {
+  localStorage.setItem(key, value);
+  showToast('✅ Preferencia guardada');
+}
+
+// ============ INIT ============
+const savedTab = localStorage.getItem('mc-settings-tab') || 'apis';
+switchSettingsTab(savedTab);
+renderApis();
+renderAgents();
+renderSkills();
+renderDispatch();
+renderStrategies();
+loadRecurringTasksData();
+loadPreferences();
+<\/script>
+</body></html>`;
+}
+
 function portalPage(title, clientName, content) {
   return `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>${title} — ${clientName}</title>
@@ -2345,6 +3839,7 @@ const MC_CHAT_GATEWAY = 'http://127.0.0.1:18789';
 // Threads stored at brand/{slug}/chat/{shortId}.json
 // In-memory cache for fast reads, flushed to disk on every write
 const mcChatCache = new Map();
+const mcChatStatusCache = new Map(); // threadId → { text, agent, ts } — live status from gateway
 const MC_CHAT_MAX_MSGS = 200; // max messages per thread
 
 function mcChatThreadPath(threadId) {
@@ -2372,7 +3867,7 @@ function mcChatLoadThread(threadId) {
       return data;
     }
   } catch (e) { console.error('[mc-chat] Load error:', p.file, e.message); }
-  return { messages: [], updatedAt: Date.now() };
+  return { messages: [], updatedAt: Date.now(), discordThreadId: null, discordChannelId: null };
 }
 
 function mcChatSaveThread(threadId, thread) {
@@ -2388,6 +3883,100 @@ function mcChatSaveThread(threadId, thread) {
 function mcChatGetThread(threadId) {
   return mcChatLoadThread(threadId);
 }
+
+// ========== PROJECT NOTIFICATIONS ==========
+// Fire-and-forget notification when task/project status changes
+function notifyProjectChange(slug, change) {
+  // change: { type: 'task'|'project', id, name, oldStatus, newStatus, projectId?, projectName?, outputFiles? }
+  const clients = loadClients();
+  const client = clients.find(c => c.slug === slug);
+  if (!client) return;
+
+  const mcToken = client.mcToken;
+  const mcBase = `https://sancho-cmo.taild48df2.ts.net/mc/portal/${mcToken}`;
+  const statusEmoji = { completed:'✅', done:'✅', archived:'📦', cancelled:'❌', blocked:'⛔', 'in-progress':'🔧', todo:'📋', ready:'📋' };
+  const statusLabel = { completed:'Completado', done:'Completado', archived:'Archivado', cancelled:'Cancelado', blocked:'Bloqueado', 'in-progress':'En progreso', todo:'Por hacer', ready:'Listo' };
+
+  let notifText = '';
+  if (change.type === 'task' && (change.newStatus === 'completed' || change.newStatus === 'done')) {
+    // Task completed — include links to output files
+    const projectsDir = path.join(BASE, 'brand', slug, 'projects');
+    const projId = change.id.split('-').slice(0, 1).join('-');
+    const taskNum = change.id.split('-').slice(1).join('-');
+    // Check if task has a playbook
+    let playbookLink = '';
+    try {
+      const dirs = fs.readdirSync(projectsDir, { withFileTypes: true });
+      const pf = dirs.find(d => d.isDirectory() && d.name.startsWith(projId + '-'));
+      if (pf) {
+        const taskDir = path.join(projectsDir, pf.name, taskNum);
+        if (fs.existsSync(path.join(taskDir, 'playbook.md'))) {
+          playbookLink = `\n📖 **Playbook:** <${mcBase}/docs/brand/${slug}/projects/${pf.name}/${taskNum}/playbook.md>`;
+        }
+      }
+    } catch {}
+    notifText = `${statusEmoji[change.newStatus] || '🔔'} **${change.id}** — ${change.name || 'Tarea'} → ${statusLabel[change.newStatus] || change.newStatus}${playbookLink}\n🔗 **Proyectos:** <${mcBase}/projects/>`;
+  } else if (change.type === 'project') {
+    notifText = `${statusEmoji[change.newStatus] || '🔔'} **${change.id}** — ${change.name || 'Proyecto'} → ${statusLabel[change.newStatus] || change.newStatus}\n🔗 **Proyectos:** <${mcBase}/projects/>`;
+  } else {
+    // Other status changes
+    notifText = `${statusEmoji[change.newStatus] || '🔔'} **${change.id}** → ${statusLabel[change.newStatus] || change.newStatus}`;
+  }
+
+  // 1. Notify MC Chat thread — use sourceThread if provided, otherwise find most recent active thread
+  const sourceThread = change.sourceThread; // e.g. "growth4u:threads/mn58q5se-dr32"
+  if (sourceThread) {
+    try { mcChatAddMessage(sourceThread, 'assistant', notifText, 'sancho'); } catch {}
+  } else {
+    // Find most recent active chat thread for this client
+    try {
+      const chatDir = path.join(BASE, 'brand', slug, 'chat', 'threads');
+      if (fs.existsSync(chatDir)) {
+        const files = fs.readdirSync(chatDir).filter(f => f.endsWith('.json')).map(f => {
+          const stat = fs.statSync(path.join(chatDir, f));
+          return { file: f, mtime: stat.mtimeMs };
+        }).sort((a, b) => b.mtime - a.mtime);
+        if (files.length > 0) {
+          const recentId = slug + ':threads/' + files[0].file.replace('.json', '');
+          mcChatAddMessage(recentId, 'assistant', notifText, 'sancho');
+        }
+      }
+    } catch {}
+  }
+
+  // 2. Resolve Discord thread ID from the task/project JSON
+  let discordThreadId = null;
+  try {
+    const projectsDir = path.join(BASE, 'brand', slug, 'projects');
+    if (change.type === 'task') {
+      const projId = change.id.split('-').slice(0, 1).join('-');
+      const dirs = fs.readdirSync(projectsDir, { withFileTypes: true });
+      const pf = dirs.find(d => d.isDirectory() && d.name.startsWith(projId + '-'));
+      if (pf) {
+        const tf = path.join(projectsDir, pf.name, 'tasks.json');
+        const tasks = JSON.parse(fs.readFileSync(tf, 'utf-8'));
+        const arr = Array.isArray(tasks) ? tasks : (tasks.tasks || []);
+        const task = arr.find(t => t.id === change.id);
+        discordThreadId = task?.discord_thread_id || null;
+      }
+    } else {
+      const dirs = fs.readdirSync(projectsDir, { withFileTypes: true });
+      const pf = dirs.find(d => d.isDirectory() && d.name.startsWith(change.id + '-'));
+      if (pf) {
+        const proj = JSON.parse(fs.readFileSync(path.join(projectsDir, pf.name, 'project.json'), 'utf-8'));
+        discordThreadId = proj?.discord?.project_thread_id || null;
+      }
+    }
+  } catch {}
+
+  // Store notification with discord_thread_id so Sancho sends to the right thread
+  try {
+    const queueFile = path.join(BASE, '_system', 'notification-queue.jsonl');
+    const entry = JSON.stringify({ ts: new Date().toISOString(), slug, ...change, text: notifText, discordThreadId }) + '\n';
+    fs.appendFileSync(queueFile, entry);
+  } catch {}
+}
+// ========== END PROJECT NOTIFICATIONS ==========
 
 function mcChatAddMessage(threadId, role, text, agent) {
   const thread = mcChatLoadThread(threadId);
@@ -2444,8 +4033,19 @@ const mcServer = http.createServer((req, res) => {
     req.on('data', chunk => { body += chunk; if (body.length > 500000) req.destroy(); });
     req.on('end', () => {
       try {
-        const { slug, threadId, text, agent, ts } = JSON.parse(body);
+        const { slug, threadId, text, agent, ts, role } = JSON.parse(body);
         const tid = threadId || `${slug || 'default'}:general`;
+
+        // Status updates: cache for polling, don't store in messages
+        if (role === 'status') {
+          mcChatStatusCache.set(tid, { text, agent, ts: Date.now() });
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ ok: true }));
+          return;
+        }
+
+        // Bot response: clear status + store message
+        mcChatStatusCache.delete(tid);
         mcChatAddMessage(tid, 'bot', text, agent);
         console.log(`[mc-chat] Bot response → ${tid}: ${(text || '').slice(0, 60)}`);
         res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -2464,7 +4064,7 @@ const mcServer = http.createServer((req, res) => {
     req.on('data', chunk => { body += chunk; if (body.length > 100000) req.destroy(); });
     req.on('end', () => {
       try {
-        const { slug, threadId, threadName, text, userName, linkedTo, skill } = JSON.parse(body);
+        const { slug, threadId, threadName, text, userName, linkedTo, skill, skills, threadState, docPath } = JSON.parse(body);
         if (!slug || !text) {
           res.writeHead(400, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ error: 'Missing slug or text' }));
@@ -2473,16 +4073,24 @@ const mcServer = http.createServer((req, res) => {
         const tid = threadId || `${slug}:general`;
         // Store user message locally
         mcChatAddMessage(tid, 'user', text);
+        // Determine if sender is admin (adminToken) or client (portalToken)
+        const isAdmin = Boolean(req._adminToken);
+        const senderRole = isAdmin ? 'admin' : 'client';
         // Forward to Gateway mc-chat plugin inbound webhook
         const payload = JSON.stringify({
           slug,
           threadId: tid,
           threadName: threadName || tid,
           text,
-          userId: userName || 'mc-admin',
-          userName: userName || 'Admin',
+          userId: isAdmin ? 'mc-admin' : `mc-client-${slug}`,
+          userName: userName || (isAdmin ? 'Admin' : slug),
           linkedTo: linkedTo || undefined,
           skill: skill || undefined,
+          skills: skills || undefined,
+          threadState: threadState || undefined,
+          docPath: docPath || undefined,
+          isAdmin,
+          senderRole,
         });
         fetch(`${MC_CHAT_GATEWAY}/mc-chat/inbound`, {
           method: 'POST',
@@ -2504,6 +4112,109 @@ const mcServer = http.createServer((req, res) => {
         res.end(JSON.stringify({ error: e.message }));
       }
     });
+    return;
+  }
+
+  // ========== MC-CHAT API: Link Discord thread to MC thread ==========
+  if (req.method === 'POST' && (url === '/api/mc-chat/link-discord' || url === '/mc/api/mc-chat/link-discord')) {
+    let body = '';
+    req.on('data', chunk => { body += chunk; if (body.length > 100000) req.destroy(); });
+    req.on('end', () => {
+      try {
+        const { threadId, discordThreadId, discordChannelId } = JSON.parse(body);
+        if (!threadId || !discordThreadId || !discordChannelId) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Missing threadId, discordThreadId, or discordChannelId' }));
+          return;
+        }
+        const thread = mcChatGetThread(threadId);
+        thread.discordThreadId = discordThreadId;
+        thread.discordChannelId = discordChannelId;
+        mcChatSaveThread(threadId, thread);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true, threadId, discordThreadId, discordChannelId }));
+      } catch (e) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: e.message }));
+      }
+    });
+    return;
+  }
+
+  // ========== DISCORD API: Create thread (via OpenClaw message tool) ==========
+  if (req.method === 'POST' && (url === '/api/discord/thread-create' || url === '/mc/api/discord/thread-create')) {
+    let body = '';
+    req.on('data', chunk => { body += chunk; if (body.length > 100000) req.destroy(); });
+    req.on('end', async () => {
+      try {
+        const { guild, channel, name, message } = JSON.parse(body);
+        if (!guild || !channel || !name) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Missing guild, channel, or name' }));
+          return;
+        }
+        // Call gateway plugin endpoint to create Discord thread
+        const threadRes = await fetch(`${MC_CHAT_GATEWAY}/mc-chat/create-discord-thread`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            channelId: channel,
+            name,
+            initialMessage: message || `🔗 Thread sincronizado con Mission Control`,
+          }),
+        });
+        const threadData = await threadRes.json();
+        if (threadData.ok && threadData.threadId) {
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ ok: true, threadId: threadData.threadId, channelId: channel }));
+        } else {
+          res.writeHead(500, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Thread creation failed', details: threadData }));
+        }
+      } catch (e) {
+        console.error('[mc-server] Discord thread creation error:', e.message);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: e.message }));
+      }
+    });
+    return;
+  }
+
+  // ========== MC-CHAT API: Find MC thread by Discord thread ID ==========
+  if (req.method === 'GET' && (url.startsWith('/api/mc-chat/find-by-discord/') || url.startsWith('/mc/api/mc-chat/find-by-discord/'))) {
+    const cleanUrl = url.replace('/mc/api/mc-chat/find-by-discord/', '/api/mc-chat/find-by-discord/');
+    const discordThreadId = decodeURIComponent(cleanUrl.replace('/api/mc-chat/find-by-discord/', '').split('?')[0]);
+    if (!discordThreadId) {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Missing discordThreadId' }));
+      return;
+    }
+    // Search all chat files for this discordThreadId
+    try {
+      const clients = loadClients();
+      for (const client of clients) {
+        const chatDir = path.join(BASE, 'brand', client.slug, 'chat');
+        if (!fs.existsSync(chatDir)) continue;
+        const files = fs.readdirSync(chatDir).filter(f => f.endsWith('.json'));
+        for (const file of files) {
+          const threadData = JSON.parse(fs.readFileSync(path.join(chatDir, file), 'utf-8'));
+          if (threadData.discordThreadId === discordThreadId) {
+            // Found it — reconstruct threadId from slug + filename
+            const shortId = file.replace('.json', '');
+            const threadId = `${client.slug}:${shortId}`;
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ ok: true, threadId, slug: client.slug }));
+            return;
+          }
+        }
+      }
+      // Not found
+      res.writeHead(404, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: false, error: 'No MC thread linked to this Discord thread' }));
+    } catch (e) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: e.message }));
+    }
     return;
   }
 
@@ -2579,15 +4290,16 @@ const mcServer = http.createServer((req, res) => {
       return;
     }
     const thread = mcChatGetThread(threadId);
+    const statusEntry = mcChatStatusCache.get(threadId) || null;
     res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ ok: true, threadId, messages: thread?.messages || [] }));
+    res.end(JSON.stringify({ ok: true, threadId, messages: thread?.messages || [], status: statusEntry }));
     return;
   }
 
   // ========== ACCESS CONTROL ==========
   // Root / landing page (no token)
   if (url === '/' || url === '/mc') {
-    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Access-Control-Allow-Origin': '*' });
     res.end(landingPage());
     return;
   }
@@ -2607,6 +4319,12 @@ const mcServer = http.createServer((req, res) => {
     // Tag the request as admin so static files and APIs work
     req._adminToken = token;
     req._adminBase = `/mc/admin/${token}`;
+    // No-cache for HTML to prevent stale sidebar/JS
+    if (url === '/mission-control.html' || url.endsWith('.html')) {
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+    }
     // Wrap res.writeHead + res.end to auto-rewrite /mc/ links in HTML responses
     let _isHtml = false;
     const origWriteHead = res.writeHead.bind(res);
@@ -2703,7 +4421,10 @@ nav .nav-footer { display:none !important; }
 </script>`;
         html = html.replace('</head>', portalScript + '\n</head>');
         html = html.replace('</body>', portalPostScript + '\n</body>');
-        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+        res.writeHead(200, { 
+          'Content-Type': 'text/html; charset=utf-8',
+          'Access-Control-Allow-Origin': '*'
+        });
         res.end(html);
       } catch (e) {
         res.writeHead(500); res.end('Error loading dashboard: ' + e.message);
@@ -2788,15 +4509,23 @@ nav .nav-footer { display:none !important; }
     // Portal: Projects dashboard
     if (portalPath === '/projects' || portalPath === '/projects/') {
       const guildId = client.guild || client.discord_guild_id || '';
-      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Access-Control-Allow-Origin': '*' });
       res.end(buildProjectsPage(slug, portalBase, clientName, guildId));
       return;
     }
 
     // Portal: Trust Engine dashboard
     if (portalPath === '/trust-engine' || portalPath === '/trust-engine/') {
-      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Access-Control-Allow-Origin': '*' });
       res.end(buildTrustEnginePage(slug, portalBase, clientName));
+      return;
+    }
+
+    // Portal: Settings dashboard
+    if (portalPath === '/settings' || portalPath === '/settings/') {
+      const guildId = client.guild || client.discord_guild_id || '';
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Access-Control-Allow-Origin': '*' });
+      res.end(buildSettingsPage(slug, portalBase, clientName, guildId));
       return;
     }
 
@@ -2889,6 +4618,7 @@ nav .nav-footer { display:none !important; }
         '/api/projects/task-status',
         '/api/projects/task-update',
         '/api/projects/project-update',
+        '/api/projects/project-archive',
         '/api/projects/',
         '/api/metrics',
         '/api/metrics-plan',
@@ -2902,6 +4632,8 @@ nav .nav-footer { display:none !important; }
         '/api/notifications/sent',
         '/api/recurring-tasks',
         '/api/recurring-tasks/toggle',
+        '/api/crons',
+        '/api/crons/toggle',
       ];
       const apiPath = portalPath.split('?')[0];
       const isAllowed = allowedApis.some(a => apiPath === a || apiPath.startsWith(a + '/') || apiPath.startsWith(a + '?'));
@@ -2985,22 +4717,64 @@ nav .nav-footer { display:none !important; }
     return;
   }
 
+  // ── Strategies Catalog API ──
+  if (req.method === 'GET' && url === '/api/strategies-catalog') {
+    const catalogPath = path.join(BASE, 'skills', 'strategic-plan', 'references', 'strategies-catalog.json');
+    try {
+      const data = fs.readFileSync(catalogPath, 'utf-8');
+      res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end(data);
+    } catch {
+      res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end('{"strategies":[],"quadrants":[],"clientStrategies":{}}');
+    }
+    return;
+  }
+
+  if (req.method === 'POST' && url === '/api/strategies-catalog') {
+    let body = '';
+    req.on('data', c => body += c);
+    req.on('end', () => {
+      try {
+        const data = JSON.parse(body);
+        const catalogPath = path.join(BASE, 'skills', 'strategic-plan', 'references', 'strategies-catalog.json');
+        fs.writeFileSync(catalogPath, JSON.stringify(data, null, 2), 'utf-8');
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true }));
+      } catch (e) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: e.message }));
+      }
+    });
+    return;
+  }
+
   if (req.method === 'GET' && url.startsWith('/api/ideas')) {
     if (!req._adminToken && !req._portalClient) {
       res.writeHead(403, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ error: 'Unauthorized' }));
       return;
     }
-    const params = new URL('http://x' + url.replace(/^\/api\/ideas/, '/api/ideas')).searchParams;
-    let slugParam = params.get('slug') || new URL('http://x' + req.url).searchParams.get('slug');
+    const params = new URL('http://x' + req.url).searchParams;
+    let slugParam = params.get('slug');
     if (req._portalClient) slugParam = req._portalSlug;
+    const projectFilter = params.get('project'); // filter by project ID
+    const unassigned = params.get('unassigned') === 'true'; // only unassigned ideas
     let result = {};
     if (slugParam) {
-      result[slugParam] = loadIdeas(slugParam);
+      let ideas = loadIdeas(slugParam);
+      if (projectFilter) ideas = ideas.filter(i => (i.project_ids || []).includes(projectFilter));
+      else if (unassigned) ideas = ideas.filter(i => !i.project_ids || i.project_ids.length === 0);
+      result[slugParam] = ideas;
     } else {
       const clients = loadClients();
       for (const c of clients) {
-        if (c.slug) result[c.slug] = loadIdeas(c.slug);
+        if (c.slug) {
+          let ideas = loadIdeas(c.slug);
+          if (projectFilter) ideas = ideas.filter(i => (i.project_ids || []).includes(projectFilter));
+          else if (unassigned) ideas = ideas.filter(i => !i.project_ids || i.project_ids.length === 0);
+          result[c.slug] = ideas;
+        }
       }
     }
     res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -3023,14 +4797,15 @@ nav .nav-footer { display:none !important; }
         const ideas = loadIdeas(slug);
         const existingIdx = idea.id ? ideas.findIndex(i => i.id === idea.id) : -1;
         if (existingIdx >= 0) {
-          // Upsert: merge fields into existing idea
           idea.updated_at = new Date().toISOString();
           Object.assign(ideas[existingIdx], idea);
           idea = ideas[existingIdx];
         } else {
           idea.id = idea.id || crypto.randomUUID();
           idea.created_at = idea.created_at || new Date().toISOString();
-          idea.status = idea.status || 'new';
+          idea.status = idea.status || 'pool';
+          idea.project_ids = idea.project_ids || [];
+          idea.pieces = idea.pieces || [];
           ideas.push(idea);
         }
         saveIdeas(slug, ideas);
@@ -3088,6 +4863,99 @@ nav .nav-footer { display:none !important; }
     });
     return;
   }
+  // POST /api/foundation/pillar-status — update a pillar's status in foundation-state.json
+  if (req.method === 'POST' && url === '/api/foundation/pillar-status') {
+    if (!req._adminToken && !req._portalClient) {
+      res.writeHead(403, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Unauthorized' }));
+      return;
+    }
+    let body = '';
+    req.on('data', chunk => { body += chunk; if (body.length > 1e5) req.destroy(); });
+    req.on('end', () => {
+      try {
+        const { slug, section, pillar, status, comment } = JSON.parse(body);
+        if (!slug || !section || !pillar || !status) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Missing slug, section, pillar, or status' }));
+          return;
+        }
+        if (req._portalClient && req._portalSlug !== slug) {
+          res.writeHead(403, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Forbidden' }));
+          return;
+        }
+        const validStatuses = ['approved', 'pending-review', 'not-started', 'in-progress', 'generated', 'request-changes', 'request-refresh'];
+        if (!validStatuses.includes(status)) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Invalid status: ' + status }));
+          return;
+        }
+        const stateFile = path.join(BASE, 'brand', slug, 'foundation-state.json');
+        if (!fs.existsSync(stateFile)) {
+          res.writeHead(404, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'foundation-state.json not found' }));
+          return;
+        }
+        const state = JSON.parse(fs.readFileSync(stateFile, 'utf-8'));
+        const sec = (state.sections || {})[section];
+        if (!sec) {
+          res.writeHead(404, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Section not found: ' + section }));
+          return;
+        }
+        const pillars = sec.pillars || sec.skills || {};
+        if (!pillars[pillar]) {
+          res.writeHead(404, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Pillar not found: ' + pillar }));
+          return;
+        }
+        const oldStatus = pillars[pillar].status;
+        pillars[pillar].status = status;
+        pillars[pillar].updated_at = new Date().toISOString();
+        if (comment) pillars[pillar].comment = comment;
+        if (status === 'approved') pillars[pillar].approved_at = new Date().toISOString();
+        fs.writeFileSync(stateFile, JSON.stringify(state, null, 2));
+
+        // Regenerate mc-data.js
+        try {
+          const { execSync } = require('child_process');
+          execSync('python3 scripts/regenerate.py', { cwd: BASE, timeout: 15000 });
+        } catch (e) { console.error('[mc-server] regenerate after pillar status change failed:', e.message); }
+
+        // Sync: update matching P00 foundation task status
+        const PILLAR_TO_TASK = {'approved':'completed','in-progress':'in-progress','not-started':'todo','pending-review':'in-progress','generated':'in-progress'};
+        const syncTaskStatus = PILLAR_TO_TASK[status] || 'todo';
+        try {
+          const projectsDir = path.join(BASE, 'brand', slug, 'projects');
+          if (fs.existsSync(projectsDir)) {
+            const dirs = fs.readdirSync(projectsDir, { withFileTypes: true }).filter(d => d.isDirectory() && d.name.startsWith('P00'));
+            for (const d of dirs) {
+              const tf = path.join(projectsDir, d.name, 'tasks.json');
+              if (!fs.existsSync(tf)) continue;
+              const td = JSON.parse(fs.readFileSync(tf, 'utf-8'));
+              const tasks = Array.isArray(td) ? td : (td.tasks || []);
+              const match = tasks.find(t => t.pillar === pillar);
+              if (match && match.status !== syncTaskStatus) {
+                match.status = syncTaskStatus;
+                if (syncTaskStatus === 'completed') match.completed = new Date().toISOString().slice(0, 10);
+                const wd = Array.isArray(td) ? tasks : { ...td, tasks };
+                fs.writeFileSync(tf, JSON.stringify(wd, null, 2));
+              }
+            }
+          }
+        } catch (e) { console.error('[mc-server] sync pillar→task failed:', e.message); }
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true, slug, section, pillar, oldStatus, newStatus: status }));
+      } catch (e) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: e.message }));
+      }
+    });
+    return;
+  }
+
   if (req.method === 'DELETE' && url === '/api/ideas') {
     if (!req._adminToken && !req._portalClient) {
       res.writeHead(403, { 'Content-Type': 'application/json' });
@@ -3108,6 +4976,172 @@ nav .nav-footer { display:none !important; }
         saveIdeas(slug, ideas);
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ ok: true }));
+      } catch (e) { res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: e.message })); }
+    });
+    return;
+  }
+
+  // POST /api/ideas/assign — add/remove project_ids on an idea (many-to-many)
+  if (req.method === 'POST' && url === '/api/ideas/assign') {
+    if (!req._adminToken && !req._portalClient) { res.writeHead(403, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'Unauthorized' })); return; }
+    let body = '';
+    req.on('data', chunk => { body += chunk; if (body.length > 1e5) req.destroy(); });
+    req.on('end', () => {
+      try {
+        const { slug, ideaId, addProjects, removeProjects } = JSON.parse(body);
+        if (!slug || !ideaId) { res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'Missing slug or ideaId' })); return; }
+        if (req._portalClient && req._portalSlug !== slug) { res.writeHead(403, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'Forbidden' })); return; }
+        const ideas = loadIdeas(slug);
+        const idea = ideas.find(i => i.id === ideaId);
+        if (!idea) { res.writeHead(404, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'Idea not found' })); return; }
+        if (!idea.project_ids) idea.project_ids = [];
+        if (addProjects) {
+          for (const pid of addProjects) {
+            if (!idea.project_ids.includes(pid)) idea.project_ids.push(pid);
+          }
+        }
+        if (removeProjects) {
+          idea.project_ids = idea.project_ids.filter(pid => !removeProjects.includes(pid));
+        }
+        idea.updated_at = new Date().toISOString();
+        saveIdeas(slug, ideas);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true, ideaId, project_ids: idea.project_ids }));
+      } catch (e) { res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: e.message })); }
+    });
+    return;
+  }
+
+  // POST /api/ideas/add-piece — add a piece (execution) to an idea
+  if (req.method === 'POST' && url === '/api/ideas/add-piece') {
+    if (!req._adminToken && !req._portalClient) { res.writeHead(403, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'Unauthorized' })); return; }
+    let body = '';
+    req.on('data', chunk => { body += chunk; if (body.length > 1e5) req.destroy(); });
+    req.on('end', () => {
+      try {
+        const { slug, ideaId, piece } = JSON.parse(body);
+        if (!slug || !ideaId || !piece) { res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'Missing slug, ideaId, or piece' })); return; }
+        if (req._portalClient && req._portalSlug !== slug) { res.writeHead(403, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'Forbidden' })); return; }
+        const ideas = loadIdeas(slug);
+        const idea = ideas.find(i => i.id === ideaId);
+        if (!idea) { res.writeHead(404, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'Idea not found' })); return; }
+        if (!idea.pieces) idea.pieces = [];
+        piece.id = piece.id || crypto.randomUUID();
+        piece.created_at = piece.created_at || new Date().toISOString();
+        piece.status = piece.status || 'draft';
+        idea.pieces.push(piece);
+        idea.updated_at = new Date().toISOString();
+        saveIdeas(slug, ideas);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true, ideaId, piece }));
+      } catch (e) { res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: e.message })); }
+    });
+    return;
+  }
+
+  // POST /api/projects/create-batch — create a batch task from selected pool ideas
+  if (req.method === 'POST' && url === '/api/projects/create-batch') {
+    if (!req._adminToken && !req._portalClient) { res.writeHead(403, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'Unauthorized' })); return; }
+    let body = '';
+    req.on('data', chunk => { body += chunk; if (body.length > 1e5) req.destroy(); });
+    req.on('end', () => {
+      try {
+        const { slug, projectId, name, batchType, ideaIds } = JSON.parse(body);
+        if (!slug || !projectId || !name || !ideaIds || !ideaIds.length) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Missing slug, projectId, name, or ideaIds' }));
+          return;
+        }
+        if (req._portalClient && req._portalSlug !== slug) { res.writeHead(403, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'Forbidden' })); return; }
+
+        // Find the project directory
+        const projDir = path.join(BASE, 'brand', slug, 'projects');
+        const dirs = fs.readdirSync(projDir, { withFileTypes: true });
+        const projFolder = dirs.find(d => d.isDirectory() && d.name.startsWith(projectId + '-'));
+        if (!projFolder) { res.writeHead(404, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'Project not found: ' + projectId })); return; }
+
+        // Load tasks and generate next task ID
+        const tasksFile = path.join(projDir, projFolder.name, 'tasks.json');
+        let tasks = [];
+        try { tasks = JSON.parse(fs.readFileSync(tasksFile, 'utf-8')); } catch {}
+        const maxNum = tasks.reduce((m, t) => {
+          const match = t.id.match(/-T(\d+)$/);
+          return match ? Math.max(m, parseInt(match[1])) : m;
+        }, 0);
+        const taskId = `${projectId}-T${String(maxNum + 1).padStart(2, '0')}`;
+
+        // Create the batch task
+        const batchTask = {
+          id: taskId,
+          name,
+          description: `Batch con ${ideaIds.length} ideas`,
+          batch_type: batchType || 'mixed',
+          idea_ids: ideaIds,
+          created_by: 'manual',
+          status: 'todo',
+          channel: batchType === 'outreach' ? 'prospecting' : 'content',
+          owner: 'Sancho',
+        };
+        tasks.push(batchTask);
+        fs.writeFileSync(tasksFile, JSON.stringify(tasks, null, 2));
+
+        // Update ideas: set status to 'assigned' and link batch_id
+        const ideas = loadIdeas(slug);
+        for (const idea of ideas) {
+          if (ideaIds.includes(idea.id)) {
+            idea.status = 'assigned';
+            idea.updated_at = new Date().toISOString();
+            // Also set batch_id on pieces that belong to this project
+            if (idea.pieces) {
+              for (const p of idea.pieces) {
+                if (!p.task_id) p.task_id = taskId;
+              }
+            }
+          }
+        }
+        saveIdeas(slug, ideas);
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true, task: batchTask, assignedCount: ideaIds.length }));
+      } catch (e) { res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: e.message })); }
+    });
+    return;
+  }
+
+  // POST /api/projects/run-outreach-pipeline — run enrichment pipeline on outreach contacts
+  if (req.method === 'POST' && url === '/api/projects/run-outreach-pipeline') {
+    if (!req._adminToken && !req._portalClient) { res.writeHead(403, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'Unauthorized' })); return; }
+    let body = '';
+    req.on('data', chunk => { body += chunk; if (body.length > 1e5) req.destroy(); });
+    req.on('end', () => {
+      try {
+        const { slug, projectId, taskId, ideaIds } = JSON.parse(body);
+        if (!slug || !taskId || !ideaIds || !ideaIds.length) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Missing slug, taskId, or ideaIds' }));
+          return;
+        }
+
+        // Update pipeline_status on each idea to 'finding_dm' (first step)
+        const ideas = loadIdeas(slug);
+        let queued = 0;
+        for (const idea of ideas) {
+          if (ideaIds.includes(idea.id) && (!idea.pipeline_status || idea.pipeline_status === 'pending')) {
+            idea.pipeline_status = 'finding_dm';
+            idea.pipeline_started_at = new Date().toISOString();
+            queued++;
+          }
+        }
+        saveIdeas(slug, ideas);
+
+        // TODO: In the future, this will trigger actual skill execution:
+        // 1. Run decision-maker-finder skill for each company
+        // 2. Run contact-enrichment skill for each decision maker
+        // 3. Run outreach-sequence-builder for the batch
+        // For now, we just set the initial status and the agent handles the rest via chat
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true, queued, taskId }));
       } catch (e) { res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: e.message })); }
     });
     return;
@@ -3195,6 +5229,7 @@ nav .nav-footer { display:none !important; }
           model: cron.payload?.model || '—',
           prompt: cron.payload?.message || '',
           description: cron.description || '',
+          scripts: _extractScripts(cron.payload?.message || ''),
           client_slug: cronSlug || null,
           _source: 'openclaw-cron',
           created_at: cron.createdAtMs ? new Date(cron.createdAtMs).toISOString() : null,
@@ -3316,6 +5351,76 @@ nav .nav-footer { display:none !important; }
     });
     return;
   }
+  // Read script content
+  if (req.method === 'GET' && url.startsWith('/api/recurring-tasks/script')) {
+    if (!req._adminToken) {
+      res.writeHead(403, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Admin only' }));
+      return;
+    }
+    const params = new URL('http://x' + req.url).searchParams;
+    const scriptPath = params.get('path');
+    if (!scriptPath) { res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'Missing path' })); return; }
+    // Resolve path safely — only allow files under workspace
+    let absPath = scriptPath;
+    if (scriptPath.startsWith('~/')) absPath = scriptPath.replace('~', process.env.HOME || '/Users/ragi');
+    else if (!scriptPath.startsWith('/')) absPath = path.join(BASE, scriptPath);
+    try { absPath = fs.realpathSync(absPath); } catch {
+      res.writeHead(404, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'File not found' })); return;
+    }
+    // Security: only allow reading under workspace dirs
+    const allowedPrefixes = [BASE, path.join(process.env.HOME || '', '.openclaw')];
+    if (!allowedPrefixes.some(p => absPath.startsWith(p))) {
+      res.writeHead(403, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'Access denied' })); return;
+    }
+    try {
+      const content = fs.readFileSync(absPath, 'utf-8');
+      const lang = absPath.endsWith('.py') ? 'python' : absPath.endsWith('.sh') ? 'bash' : 'javascript';
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, path: scriptPath, absPath, content, lang, lines: content.split('\n').length }));
+    } catch (e) {
+      res.writeHead(500, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: e.message }));
+    }
+    return;
+  }
+  // Write script content
+  if (req.method === 'POST' && url === '/api/recurring-tasks/script') {
+    if (!req._adminToken) {
+      res.writeHead(403, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Admin only' }));
+      return;
+    }
+    let body = '';
+    req.on('data', chunk => { body += chunk; if (body.length > 5e6) req.destroy(); });
+    req.on('end', () => {
+      try {
+        const { path: scriptPath, content } = JSON.parse(body);
+        if (!scriptPath || content === undefined) { res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'Missing path or content' })); return; }
+        let absPath = scriptPath;
+        if (scriptPath.startsWith('~/')) absPath = scriptPath.replace('~', process.env.HOME || '/Users/ragi');
+        else if (!scriptPath.startsWith('/')) absPath = path.join(BASE, scriptPath);
+        // Security: only write under workspace
+        const allowedPrefixes = [BASE, path.join(process.env.HOME || '', '.openclaw')];
+        const resolvedDir = path.dirname(absPath);
+        if (!allowedPrefixes.some(p => absPath.startsWith(p))) {
+          res.writeHead(403, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'Access denied' })); return;
+        }
+        // Backup original
+        if (fs.existsSync(absPath)) {
+          const backupPath = absPath + '.bak.' + Date.now();
+          fs.copyFileSync(absPath, backupPath);
+        }
+        fs.writeFileSync(absPath, content);
+        // Preserve execute permission for .sh files
+        if (absPath.endsWith('.sh')) {
+          try { fs.chmodSync(absPath, 0o755); } catch {}
+        }
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true, path: scriptPath, lines: content.split('\n').length }));
+      } catch (e) { res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: e.message })); }
+    });
+    return;
+  }
   if (req.method === 'DELETE' && url === '/api/recurring-tasks') {
     if (!req._adminToken && !req._portalClient) {
       res.writeHead(403, { 'Content-Type': 'application/json' });
@@ -3341,6 +5446,31 @@ nav .nav-footer { display:none !important; }
     return;
   }
 
+  // === API: Crons (OpenClaw cron list) ===
+  if (req.method === 'GET' && url.startsWith('/api/crons')) {
+    if (!req._adminToken && !req._portalClient) { res.writeHead(403, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'Unauthorized' })); return; }
+    const params = new URL('http://x' + req.url).searchParams;
+    let slugParam = params.get('slug');
+    if (req._portalClient) slugParam = req._portalSlug;
+    const clients = loadClients();
+    const enriched = loadCronJobs().map(j => enrichCronJob(j, clients));
+    let filtered = enriched;
+    if (slugParam) filtered = enriched.filter(j => j.client_slug === slugParam || (!j.client_slug && j.category === 'system'));
+    if (req._portalClient) filtered = enriched.filter(j => j.client_slug === slugParam);
+    res.writeHead(200, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: true, crons: filtered })); return;
+  }
+  if (req.method === 'POST' && url === '/api/crons/toggle') {
+    if (!req._adminToken) { res.writeHead(403, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'Admin only' })); return; }
+    let body = ''; req.on('data', chunk => { body += chunk; });
+    req.on('end', () => {
+      try {
+        const { cronId, enable } = JSON.parse(body);
+        execSync(`openclaw cron ${enable ? 'enable' : 'disable'} ${cronId}`, { timeout: 10000, encoding: 'utf-8', env: { ...process.env, PATH: '/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin' } });
+        res.writeHead(200, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: true, cronId, enabled: enable }));
+      } catch (e) { res.writeHead(500, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: e.message })); }
+    }); return;
+  }
+
   // === API: Projects — task status update ===
   if (req.method === 'POST' && url === '/api/projects/task-status') {
     // Requires admin or portal auth
@@ -3353,7 +5483,7 @@ nav .nav-footer { display:none !important; }
     req.on('data', chunk => { body += chunk; if (body.length > 1e5) req.destroy(); });
     req.on('end', () => {
       try {
-        const { slug, taskId, status } = JSON.parse(body);
+        const { slug, taskId, status, sourceThread } = JSON.parse(body);
         if (!slug || !taskId || !status) {
           res.writeHead(400, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ error: 'Missing slug, taskId, or status' }));
@@ -3399,6 +5529,10 @@ nav .nav-footer { display:none !important; }
         // Write back
         const writeData = Array.isArray(tasksData) ? tasks : { ...tasksData, tasks };
         fs.writeFileSync(tasksFile, JSON.stringify(writeData, null, 2));
+        // Notify on status change
+        if (oldStatus !== status) {
+          notifyProjectChange(slug, { type: 'task', id: taskId, name: task.name, oldStatus, newStatus: status, sourceThread });
+        }
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ ok: true, taskId, oldStatus, newStatus: status }));
       } catch (e) {
@@ -3418,7 +5552,7 @@ nav .nav-footer { display:none !important; }
     req.on('data', chunk => { body += chunk; if (body.length > 1e5) req.destroy(); });
     req.on('end', () => {
       try {
-        const { slug, taskId, fields } = JSON.parse(body);
+        const { slug, taskId, fields, sourceThread } = JSON.parse(body);
         if (!slug || !taskId || !fields) { res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'Missing slug, taskId, or fields' })); return; }
         if (req._portalClient && req._portalSlug !== slug) { res.writeHead(403, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'Forbidden' })); return; }
         const projectsDir = path.join(BASE, 'brand', slug, 'projects');
@@ -3432,11 +5566,15 @@ nav .nav-footer { display:none !important; }
         const tasks = Array.isArray(tasksData) ? tasksData : (tasksData.tasks || []);
         const task = tasks.find(t => t.id === taskId);
         if (!task) { res.writeHead(404, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'Task not found' })); return; }
-        const allowed = ['name','description','owner','channel','status'];
+        const oldStatus = task.status;
+        const allowed = ['name','description','deliverable','done_criteria','depends_on','owner','channel','status','type','skill','idea_ids','pillar','section','documents'];
         for (const [k, v] of Object.entries(fields)) { if (allowed.includes(k)) task[k] = v; }
         if (fields.status === 'completed' || fields.status === 'done') task.completed = new Date().toISOString().slice(0, 10);
         const writeData = Array.isArray(tasksData) ? tasks : { ...tasksData, tasks };
         fs.writeFileSync(tasksFile, JSON.stringify(writeData, null, 2));
+        if (fields.status && fields.status !== oldStatus) {
+          notifyProjectChange(slug, { type: 'task', id: taskId, name: task.name, oldStatus, newStatus: fields.status, sourceThread });
+        }
         res.writeHead(200, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: true, task }));
       } catch (e) { res.writeHead(500, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: e.message })); }
     });
@@ -3452,7 +5590,7 @@ nav .nav-footer { display:none !important; }
     req.on('data', chunk => { body += chunk; if (body.length > 1e5) req.destroy(); });
     req.on('end', () => {
       try {
-        const { slug, projectId, fields } = JSON.parse(body);
+        const { slug, projectId, fields, sourceThread } = JSON.parse(body);
         if (!slug || !projectId || !fields) { res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'Missing params' })); return; }
         if (req._portalClient && req._portalSlug !== slug) { res.writeHead(403, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'Forbidden' })); return; }
         const projectsDir = path.join(BASE, 'brand', slug, 'projects');
@@ -3462,7 +5600,8 @@ nav .nav-footer { display:none !important; }
         const projFile = path.join(projectsDir, projFolder.name, 'project.json');
         let project;
         try { project = JSON.parse(fs.readFileSync(projFile, 'utf-8')); } catch { res.writeHead(404, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'project.json not found' })); return; }
-        const allowed = ['name','objective','status','review_date','strategy'];
+        const oldStatus = project.status;
+        const allowed = ['name','description','approach','objective','status','review_date','strategy'];
         for (const [k, v] of Object.entries(fields)) { if (allowed.includes(k)) project[k] = v; }
         fs.writeFileSync(projFile, JSON.stringify(project, null, 2));
         // Also update registry
@@ -3473,7 +5612,72 @@ nav .nav-footer { display:none !important; }
           if (rp) { if (fields.name) rp.name = fields.name; if (fields.status) rp.status = fields.status; if (fields.review_date) rp.review_date = fields.review_date; }
           fs.writeFileSync(regFile, JSON.stringify(reg, null, 2));
         } catch {}
+        // Notify on status change
+        if (fields.status && fields.status !== oldStatus) {
+          notifyProjectChange(slug, { type: 'project', id: projectId, name: project.name, oldStatus, newStatus: fields.status, sourceThread });
+        }
         res.writeHead(200, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: true, project }));
+      } catch (e) { res.writeHead(500, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: e.message })); }
+    });
+    return;
+  }
+
+  // === API: Projects — archive project (with reason + strategic plan update) ===
+  if (req.method === 'POST' && url === '/api/projects/project-archive') {
+    if (!req._adminToken && !req._portalClient) {
+      res.writeHead(403, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'Unauthorized' })); return;
+    }
+    let body = '';
+    req.on('data', chunk => { body += chunk; if (body.length > 1e5) req.destroy(); });
+    req.on('end', () => {
+      try {
+        const { slug, projectId, reason } = JSON.parse(body);
+        if (!slug || !projectId) { res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'Missing params' })); return; }
+        if (req._portalClient && req._portalSlug !== slug) { res.writeHead(403, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'Forbidden' })); return; }
+        const projectsDir = path.join(BASE, 'brand', slug, 'projects');
+        // Update registry
+        const regFile = path.join(projectsDir, 'registry.json');
+        try {
+          const reg = JSON.parse(fs.readFileSync(regFile, 'utf-8'));
+          const rp = (reg.projects || []).find(p => p.id === projectId);
+          if (rp) {
+            rp.status = 'archived';
+            rp.archived_at = new Date().toISOString().slice(0, 10);
+            rp.archive_reason = reason || 'Archivado por el cliente';
+          }
+          fs.writeFileSync(regFile, JSON.stringify(reg, null, 2));
+        } catch {}
+        // Update project.json
+        let projFolder = null;
+        try { const dirs = fs.readdirSync(projectsDir, { withFileTypes: true }); projFolder = dirs.find(d => d.isDirectory() && d.name.startsWith(projectId + '-')); } catch {}
+        if (projFolder) {
+          const projFile = path.join(projectsDir, projFolder.name, 'project.json');
+          try {
+            const proj = JSON.parse(fs.readFileSync(projFile, 'utf-8'));
+            proj.status = 'archived';
+            proj.archived_at = new Date().toISOString().slice(0, 10);
+            proj.archive_reason = reason || 'Archivado por el cliente';
+            fs.writeFileSync(projFile, JSON.stringify(proj, null, 2));
+          } catch {}
+        }
+        // Append to strategic-plan/current.md if it exists
+        const planFile = path.join(BASE, 'brand', slug, 'strategic-plan', 'current.md');
+        try {
+          if (fs.existsSync(planFile)) {
+            const plan = fs.readFileSync(planFile, 'utf-8');
+            // Find "Proyectos completados" or "Proyectos archivados" section, or append
+            const archiveEntry = `\n| ${projectId} | Archivado | ${reason || 'Archivado por el cliente'} | ${new Date().toISOString().slice(0, 10)} |`;
+            if (plan.includes('## Proyectos archivados')) {
+              fs.writeFileSync(planFile, plan.replace('## Proyectos archivados', '## Proyectos archivados' + archiveEntry));
+            } else {
+              fs.appendFileSync(planFile, '\n\n## Proyectos archivados\n\n| ID | Estado | Motivo | Fecha |\n|---|---|---|---|' + archiveEntry + '\n');
+            }
+          }
+        } catch {}
+        // Notify
+        const projName = projFolder ? projFolder.name.replace(/^P\d+-/, '') : projectId;
+        notifyProjectChange(slug, { type: 'project', id: projectId, name: projName, oldStatus: 'active', newStatus: 'archived' });
+        res.writeHead(200, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: true, projectId, status: 'archived', reason }));
       } catch (e) { res.writeHead(500, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: e.message })); }
     });
     return;
@@ -3510,14 +5714,14 @@ nav .nav-footer { display:none !important; }
       // List all clients with projects link
       const clients = loadClients();
       const links = clients.map(c => `<div class="card"><a href="${req._adminBase}/projects/${c.slug}/">${c.emoji || '🏢'} ${c.name || c.slug}</a></div>`).join('');
-      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Access-Control-Allow-Origin': '*' });
       res.end(page('Proyectos', `<a class="back" href="${req._adminBase}/">← Mission Control</a>`, `<h1>📋 Proyectos por cliente</h1>${links}`));
       return;
     }
     const client = loadClients().find(c => c.slug === slug);
     const clientName = client ? (client.name || slug) : slug;
     const guildId = client ? (client.guild || client.discord_guild_id || '') : '';
-    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Access-Control-Allow-Origin': '*' });
     res.end(buildProjectsPage(slug, req._adminBase, clientName, guildId));
     return;
   }
@@ -3567,19 +5771,42 @@ nav .nav-footer { display:none !important; }
     if (!slug) {
       const clients = loadClients();
       const links = clients.map(c => `<div class="card"><a href="${req._adminBase}/trust-engine/${c.slug}/">${c.emoji || '🏢'} ${c.name || c.slug}</a></div>`).join('');
-      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Access-Control-Allow-Origin': '*' });
       res.end(page('Trust Engine', `<a class="back" href="${req._adminBase}/">← Mission Control</a>`, `<h1>🔍 Trust Engine por cliente</h1>${links}`));
       return;
     }
     const client = loadClients().find(c => c.slug === slug);
     const clientName = client ? (client.name || slug) : slug;
     try {
-      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Access-Control-Allow-Origin': '*' });
       res.end(buildTrustEnginePage(slug, req._adminBase, clientName));
     } catch (err) {
       res.writeHead(500, { 'Content-Type': 'text/html; charset=utf-8' });
       res.end(page('Trust Engine Error', '', `<h1>Error</h1><pre>${err.stack}</pre>`));
     }
+    return;
+  }
+
+  // === Settings page (admin mode) ===
+  if (url.startsWith('/settings/') || url === '/settings') {
+    if (!req._adminToken) {
+      res.writeHead(403, { 'Content-Type': 'text/html; charset=utf-8' });
+      res.end(portalForbiddenPage());
+      return;
+    }
+    const slug = url.replace('/settings/', '').replace(/\/$/, '') || null;
+    if (!slug) {
+      const clients = loadClients();
+      const links = clients.map(c => `<div class="card"><a href="${req._adminBase}/settings/${c.slug}/">${c.emoji || '🏢'} ${c.name || c.slug}</a></div>`).join('');
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Access-Control-Allow-Origin': '*' });
+      res.end(page('Settings', `<a class="back" href="${req._adminBase}/">← Mission Control</a>`, `<h1>⚙️ Settings por cliente</h1>${links}`));
+      return;
+    }
+    const client = loadClients().find(c => c.slug === slug);
+    const clientName = client ? (client.name || slug) : slug;
+    const guildId = client ? (client.guild || client.discord_guild_id || '') : '';
+    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Access-Control-Allow-Origin': '*' });
+    res.end(buildSettingsPage(slug, req._adminBase, clientName, guildId));
     return;
   }
 
@@ -3785,7 +6012,7 @@ async function saveSA() {
   btn.disabled=false; btn.textContent='💾 Guardar Service Account';
 }
 </script></body></html>`;
-    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Access-Control-Allow-Origin': '*' });
     res.end(html);
     return;
   }
@@ -4336,7 +6563,7 @@ async function doTest() {
 </body>
 </html>`;
 
-    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Access-Control-Allow-Origin': '*' });
     res.end(html);
     return;
   }
@@ -4946,9 +7173,19 @@ async function doTest() {
           const threadContext = thread.linkedTo ? `[Context: working on "${thread.name}" (pilar: ${thread.linkedTo}, skill: ${thread.skill || 'none'}) for client ${slug}]` : `[Context: free chat thread "${thread.name}" for client ${slug}]`;
           const fullMessage = threadContext + '\n\nUsuario dice: ' + text;
           
-          // Run openclaw agent async — don't block the response
-          const agentCmd = `/opt/homebrew/bin/openclaw agent --agent sancho -m ${JSON.stringify(fullMessage)}`;
-          execCb(agentCmd, { timeout: 120000, encoding: 'utf-8', maxBuffer: 1024 * 1024 }, (err, stdout, stderr) => {
+          // Run openclaw agent async — use spawn with args to avoid shell escaping issues
+          const { spawn } = require('child_process');
+          const agentEnv = { ...process.env, PATH: '/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:' + (process.env.PATH || '') };
+          const agentProc = spawn('/opt/homebrew/bin/openclaw', ['agent', '--agent', 'sancho', '-m', fullMessage], { timeout: 120000, env: agentEnv });
+          let agentStdout = '';
+          let agentStderr = '';
+          agentProc.stdout.on('data', d => { agentStdout += d; });
+          agentProc.stderr.on('data', d => { agentStderr += d; });
+          agentProc.on('close', (code) => {
+            const err = code !== 0 ? { message: agentStderr.slice(0, 200) } : null;
+            const stdout = agentStdout;
+            const stderr = agentStderr;
+            // Original callback logic below:
             try {
               const reply = (stdout || '').trim() || (err ? 'Error: ' + (err.message || '').slice(0, 200) : 'Sin respuesta');
               const reloadThread = JSON.parse(fs.readFileSync(threadFile, 'utf-8'));
@@ -5057,7 +7294,7 @@ async function doTest() {
     const nav = Object.keys(roots).map(k => {
       return `<a href="/mc/docs/${k}/">${roots[k]} ${k}</a>`;
     }).join('');
-    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Access-Control-Allow-Origin': '*' });
     res.end(page('Documentos', '<a class="back" href="/mc#">← Mission Control</a>', `<h1>📚 Documentos</h1><div class="nav">${nav}</div>`));
     return;
   }
@@ -5120,7 +7357,7 @@ async function doTest() {
           brandPillars: isBrandSlug,
           brandSection: isBrandSection ? { slug: subParts[0], section: subParts[1] } : null,
         });
-        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Access-Control-Allow-Origin': '*' });
         res.end(page(prettyPath, `<a class="back" href="${backUrl}">${backLabel}</a>`, `<h1>📂 ${prettyPath}</h1>${content}`));
         return;
       }
@@ -5136,7 +7373,7 @@ async function doTest() {
         const backUrl = `/mc/docs/${rootKey}/${subParts.slice(0, -1).join('/')}/`;
         const backLabel = subParts.length > 1 ? subParts.slice(-2, -1)[0] : rootKey;
         const rawEscaped = md.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Access-Control-Allow-Origin': '*' });
         res.end(page(fileName, `<a class="back" href="${backUrl}">← ${backLabel}</a>`, `<div>${html}</div>`, { editable: true, rawMd: rawEscaped }));
         return;
       }
@@ -5144,7 +7381,7 @@ async function doTest() {
       // Serve .html files directly (visual identity guides, reports, etc.)
       if (stat.isFile() && fullPath.endsWith('.html')) {
         const htmlContent = fs.readFileSync(fullPath, 'utf-8');
-        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Access-Control-Allow-Origin': '*' });
         res.end(htmlContent);
         return;
       }

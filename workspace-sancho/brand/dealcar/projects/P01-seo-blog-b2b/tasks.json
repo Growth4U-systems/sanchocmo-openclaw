@@ -1,0 +1,65 @@
+{
+  "project_id": "P01",
+  "tasks": [
+    {
+      "id": "T01",
+      "name": "Escribir artículo BOFU: Comparativa software concesionarios VO 2026",
+      "description": "Artículo SEO orientado a 'software concesionario' y 'programa para concesionarios'. Comparativa de Dealcar vs competidores principales (Nextlane, Walcu, ApexCRM, Motoreto). Incluir tabla comparativa, pricing, pros/cons, CTA a demo. ~2500 palabras.",
+      "status": "done",
+      "owner": "Sancho",
+      "channel": "content",
+      "discord_thread_id": "1486634696908734484",
+      "skill": "seo-content",
+      "created": "2026-03-26",
+      "completed": "2026-03-26",
+      "output_files": [
+        "brand/dealcar/campaigns/content/software-concesionarios-vo-comparativa-2026.md"
+      ],
+      "notes": "Keyword principal: software concesionario. Ref: keyword-research-plan-v1.md Cluster 1"
+    },
+    {
+      "id": "T02",
+      "name": "Escribir comparador: Dealcar vs Walcu",
+      "description": "Artículo comparador branded al estilo de los existentes (vs Nextlane, vs Portalclub). Keyword: 'Dealcar vs Walcu'. Estructura: intro, tabla features, pricing, pros/cons, veredicto, CTA. ~1500 palabras.",
+      "status": "pending",
+      "owner": "Sancho",
+      "channel": "content",
+      "discord_thread_id": "1486634857894252574",
+      "skill": "seo-content",
+      "created": "2026-03-26",
+      "completed": null,
+      "output_files": [],
+      "notes": "Formato ya validado con comparadores existentes"
+    },
+    {
+      "id": "T03",
+      "name": "Escribir comparador: Dealcar vs ApexCRM",
+      "description": "Artículo comparador branded. Keyword: 'Dealcar vs ApexCRM'. Misma estructura que T02. ~1500 palabras.",
+      "status": "pending",
+      "owner": "Sancho",
+      "channel": "content",
+      "discord_thread_id": "1486634975083233390",
+      "skill": "seo-content",
+      "created": "2026-03-26",
+      "completed": null,
+      "output_files": [],
+      "notes": ""
+    },
+    {
+      "id": "T04",
+      "name": "Escribir artículo BOFU: Verifactu 2027 para concesionarios",
+      "description": "Artículo SEO sobre la normativa Verifactu y su impacto en concesionarios de VO. Keyword: 'Verifactu concesionario'. Ángulo de urgencia regulatoria. Incluir CTA a Dealcar (facturación Verifactu integrada). ~2000 palabras.",
+      "status": "done",
+      "owner": "Sancho",
+      "channel": "content",
+      "discord_thread_id": "1486635092041535548",
+      "skill": "seo-content",
+      "created": "2026-03-26",
+      "completed": "2026-03-26",
+      "output_files": [
+        "brand/dealcar/campaigns/content/verifactu-concesionario-2027.md"
+      ],
+      "notes": "Urgencia: Verifactu obligatorio 2027. Dealcar ya lo tiene integrado."
+    }
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "id": "P03",
+  "name": "Resolver gaps analytics (GA4 + GSC)",
+  "status": "active",
+  "created": "2026-03-26",
+  "review_date": "2026-04-02",
+  "origin": {
+    "type": "strategic-plan",
+    "version": 1,
+    "detail": "Gap crítico: sin analytics no se puede medir nada del plan."
+  },
+  "objective": {
+    "description": "Tener GA4 y GSC conectados y midiendo tráfico + conversiones",
+    "metric": "analytics_connected",
+    "baseline": false,
+    "target": true,
+    "unit": "boolean",
+    "horizon_days": 7
+  },
+  "strategy": {
+    "catalog_id": null,
+    "description": "Setup técnico: verificar/instalar GA4 + GSC + definir eventos de conversión"
+  },
+  "channels": ["web"],
+  "discord": {
+    "project_thread_id": "1486634140932640789",
+    "project_channel": "projects"
+  },
+  "tasks_total": 2,
+  "tasks_completed": 0,
+  "value_review": null
+}

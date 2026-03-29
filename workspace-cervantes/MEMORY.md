@@ -142,6 +142,9 @@ requires = bloqueante | enriches_with = opcional
 24. **Docs tempranos (pre-reglas) son peores** — los primeros pilares tenían 50-60 líneas sin QA. Siempre regenerar con QA completo.
 25. **Checklists de herramientas**: items explícitos por tool (pegar run ID), prohibido marcar ✅ con fallback genérico.
 
+### 🔄 Updates & Restarts
+29. **pnpm update sin restart = módulos rotos** — Los archivos en `dist/` tienen hashes en el nombre. Si pnpm reemplaza los archivos pero el gateway sigue corriendo, los imports dinámicos (como memory-tool) fallan con "Cannot find module". El gateway carga módulos en memoria pero los lazy-imports (memory_search) van a disco. **Siempre reiniciar gateway después de cualquier update** (manual o automático). `gateway update.run` lo hace solo; `pnpm update` manual NO.
+
 ### ⚡ Performance & Sub-agentes
 26. **Sub-agentes Opus para reestructuración masiva son lentos** (8 min para 2/5 archivos). Para tareas mecánicas de extracción, hacerlo yo es más rápido.
 27. **Sub-agentes CSS rompen cosas** cuando tocan demasiado HTML/JS. Hacer cambios quirúrgicos uno a uno desde sesión principal.

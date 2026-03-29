@@ -1,0 +1,53 @@
+{
+  "_meta": {
+    "description": "Shared domain classification across all clients. Each domain is classified once and reused.",
+    "version": 1,
+    "updated_at": "2026-03-26T10:40:00Z",
+    "learning_ref": "Trust Engine v7, Learning #4 from Paymatico"
+  },
+  "domains": {
+    "expansion.com": { "type": "editorial", "market": "ES", "language": "es", "sector": "business" },
+    "cincodias.elpais.com": { "type": "editorial", "market": "ES", "language": "es", "sector": "business" },
+    "forbes.es": { "type": "editorial", "market": "ES", "language": "es", "sector": "business" },
+    "forbes.com": { "type": "editorial", "market": "US", "language": "en", "sector": "business", "exclude_for_ES": true },
+    "techcrunch.com": { "type": "editorial", "market": "US", "language": "en", "sector": "tech", "exclude_for_ES": true },
+    "capterra.es": { "type": "directorio_software", "market": "ES", "language": "es" },
+    "appvizer.es": { "type": "directorio_software", "market": "ES", "language": "es" },
+    "softwaredoit.es": { "type": "directorio_software", "market": "ES", "language": "es" },
+    "rankia.com": { "type": "comparador", "market": "ES", "language": "es", "sector": "finance" },
+    "helpmycash.com": { "type": "comparador", "market": "ES", "language": "es", "sector": "finance" },
+    "topdoctors.es": { "type": "directorio", "market": "ES", "language": "es", "sector": "health" },
+    "doctoralia.es": { "type": "directorio", "market": "ES", "language": "es", "sector": "health" },
+    "trustpilot.com": { "type": "review_platform", "market": "global", "language": "multi" },
+    "es.trustpilot.com": { "type": "review_platform", "market": "ES", "language": "es" },
+    "linkedin.com": { "type": "red_social", "exclude_from_media": true },
+    "instagram.com": { "type": "red_social", "exclude_from_media": true },
+    "youtube.com": { "type": "red_social", "exclude_from_media": true },
+    "tiktok.com": { "type": "red_social", "exclude_from_media": true },
+    "twitter.com": { "type": "red_social", "exclude_from_media": true },
+    "x.com": { "type": "red_social", "exclude_from_media": true },
+    "facebook.com": { "type": "red_social", "exclude_from_media": true },
+    "reddit.com": { "type": "community", "market": "global", "language": "multi" },
+    "abc.es": { "type": "editorial", "market": "ES", "language": "es", "sector": "general" },
+    "elmundo.es": { "type": "editorial", "market": "ES", "language": "es", "sector": "general" },
+    "elpais.com": { "type": "editorial", "market": "ES", "language": "es", "sector": "general" },
+    "emprendedores.es": { "type": "editorial", "market": "ES", "language": "es", "sector": "business" },
+    "palco23.com": { "type": "portal_sectorial", "market": "ES", "language": "es", "sector": "sports" },
+    "cmdsport.com": { "type": "portal_sectorial", "market": "ES", "language": "es", "sector": "sports" },
+    "cun.es": { "type": "medical_authority", "market": "ES", "language": "es", "sector": "health" },
+    "quironsalud.com": { "type": "medical_authority", "market": "ES", "language": "es", "sector": "health" },
+    "mayoclinic.org": { "type": "medical_authority", "market": "US", "language": "en", "sector": "health" }
+  },
+  "type_actions": {
+    "editorial": { "actions": ["artículo", "entrevista", "nota de prensa"], "outreach_template": "press_pitch" },
+    "portal_sectorial": { "actions": ["guest post", "publirreportaje", "directorio"], "outreach_template": "guest_post_pitch" },
+    "directorio_software": { "actions": ["crear perfil", "recoger reseñas"], "outreach_template": "directory_listing" },
+    "directorio": { "actions": ["crear perfil", "solicitar inclusión"], "outreach_template": "directory_listing" },
+    "comparador": { "actions": ["solicitar inclusión en ranking"], "outreach_template": "comparison_pitch" },
+    "asociacion": { "actions": ["membresía", "informes", "eventos"], "outreach_template": "association_inquiry" },
+    "review_platform": { "actions": ["optimizar perfil", "solicitar reseñas"], "outreach_template": "review_optimization" },
+    "medical_authority": { "actions": ["citación", "colaboración científica"], "outreach_template": "expert_collaboration" },
+    "community": { "actions": ["participación orgánica", "AMA"], "outreach_template": "community_engagement" }
+  },
+  "exclude_types": ["competitor", "empresa_consultora", "red_social"]
+}

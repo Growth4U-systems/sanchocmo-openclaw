@@ -1,0 +1,154 @@
+{
+  "project": {
+    "slug": "growth4u",
+    "name": "Growth4U",
+    "website": "https://growth4u.io",
+    "language": "es",
+    "market": "ES",
+    "country_code": "ES"
+  },
+  "brand": {
+    "name": "Growth4U",
+    "aliases": ["G4U", "Growth 4 You"],
+    "domains": ["growth4u.io"]
+  },
+  "niches": [
+    {
+      "id": "n1",
+      "name": "Fintech & Financial Services",
+      "brief": "Empresas tech en sector financiero (neobancos, plataformas inversión, plataformas pago, brokers, crowdfunding, insurtech) con regulación CNMV/BdE",
+      "subniches": [
+        {
+          "id": "n1-s1",
+          "name": "Neobancos y Banca Digital",
+          "priority": "high",
+          "keywords_seed": ["neobanco España", "cuenta digital sin comisiones", "banca online empresas"],
+          "known_media": ["Cinco Días", "Expansión", "CincoDías.com"]
+        },
+        {
+          "id": "n1-s2",
+          "name": "Plataformas de Pago y Pagos Recurrentes",
+          "priority": "high",
+          "keywords_seed": ["plataforma pagos recurrentes", "software cobros automáticos", "pasarela pago SaaS"],
+          "known_media": ["Rankia", "Finnovating"]
+        },
+        {
+          "id": "n1-s3",
+          "name": "Inversión y Trading",
+          "priority": "medium",
+          "keywords_seed": ["plataforma inversión España", "broker online", "robo advisor"],
+          "known_media": ["HelpMyCash", "El Economista Digital"]
+        },
+        {
+          "id": "n1-s4",
+          "name": "Crowdfunding y Crowdlending",
+          "priority": "medium",
+          "keywords_seed": ["crowdfunding inversión", "crowdlending empresas", "financiación colectiva"],
+          "known_media": ["Startupeable", "El Referente"]
+        },
+        {
+          "id": "n1-s5",
+          "name": "Insurtech",
+          "priority": "medium",
+          "keywords_seed": ["seguro digital", "comparador seguros online", "insurtech España"],
+          "known_media": ["Aseguradores.com", "Insurtech Spain"]
+        }
+      ]
+    },
+    {
+      "id": "n2",
+      "name": "SaaS B2B Tech",
+      "brief": "Software como servicio B2B, startups tech post-PMF con modelo PLG o sales-led, necesitando escalar adquisición y mejorar unit economics",
+      "subniches": [
+        {
+          "id": "n2-s1",
+          "name": "SaaS para Marketing y Growth",
+          "priority": "high",
+          "keywords_seed": ["software marketing automation", "herramienta growth SaaS", "CRM startups"],
+          "known_media": ["Marketing4eCommerce", "PuroMarketing"]
+        },
+        {
+          "id": "n2-s2",
+          "name": "SaaS para Equipos y Productividad",
+          "priority": "medium",
+          "keywords_seed": ["software gestión equipos", "herramienta productividad remoto", "proyecto management SaaS"],
+          "known_media": ["ComputerWorld", "CIO España"]
+        },
+        {
+          "id": "n2-s3",
+          "name": "SaaS Vertical (por industria)",
+          "priority": "medium",
+          "keywords_seed": ["software gestión restaurantes", "ERP pequeña empresa", "CRM sector"],
+          "known_media": ["El Referente", "Emprendedores"]
+        }
+      ]
+    },
+    {
+      "id": "n3",
+      "name": "Consultorías Growth y Agencias Growth-First",
+      "brief": "Otras agencias/consultorías de growth marketing buscando sistemas propios o referrals de clientes que no son fit para ellas",
+      "subniches": [
+        {
+          "id": "n3-s1",
+          "name": "Agencias Growth Boutique",
+          "priority": "low",
+          "keywords_seed": ["agencia growth hacking España", "consultoría growth marketing", "fractional CMO"],
+          "known_media": ["iSocialWeb", "Marketing4eCommerce"]
+        }
+      ]
+    }
+  ],
+  "competitors": [
+    {
+      "name": "Product Hackers",
+      "domain": "producthackers.com",
+      "niches": ["n1", "n2"],
+      "threat_level": "high"
+    },
+    {
+      "name": "Snowball",
+      "domain": "agenciasnowball.com",
+      "niches": ["n2"],
+      "threat_level": "medium"
+    },
+    {
+      "name": "TheGrowtHacker",
+      "domain": "thegrowthacker.com",
+      "niches": ["n2"],
+      "threat_level": "low"
+    },
+    {
+      "name": "iSocialWeb",
+      "domain": "isocialweb.agency",
+      "niches": ["n1", "n2"],
+      "threat_level": "medium"
+    },
+    {
+      "name": "Flat 101",
+      "domain": "flat101.es",
+      "niches": ["n2"],
+      "threat_level": "low"
+    },
+    {
+      "name": "Glissmarket",
+      "domain": "glissmarket.com",
+      "niches": ["n1"],
+      "threat_level": "medium"
+    }
+  ],
+  "market_filter": {
+    "country": "ES",
+    "language": "es",
+    "exclude_domains_pattern": [
+      "forbes.com",
+      "techcrunch.com",
+      "wsj.com",
+      "nytimes.com",
+      "bloomberg.com",
+      "reuters.com",
+      "ft.com",
+      "economist.com"
+    ],
+    "prioritize_tlds": [".es"]
+  }
+}

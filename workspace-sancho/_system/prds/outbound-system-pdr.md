@@ -1,6 +1,15 @@
 # PDR: Sistema Outbound Multicanal — Instantly + HeyReach
-> Autor: Cervantes | Fecha: 2026-03-22 | Estado: DRAFT
+> Autor: Cervantes | Fecha: 2026-03-22 | Actualizado: 2026-03-26 | Estado: DRAFT → PENDING APPROVAL
 > Contexto: Integración ColdIQ GTM Skills + herramientas de ejecución
+
+## 0. Decisiones de Diseño (2026-03-26)
+
+| # | Conflicto | Decisión | Implicación |
+|---|-----------|----------|-------------|
+| 1 | `trust-engine` vs audit skills separados | **A) Trust Engine sigue como orquestador.** ColdIQ data se importa a skills individuales (seo-audit, ai-seo) que Trust Engine ya orquesta. | Trust Engine no se modifica. Skills "debajo" se enriquecen. |
+| 2 | `idea-generation` vs signal detection | **B) Separados.** idea-generation = contenido. signal-scorer + gtm-plays = outreach. | Dos motores independientes. Fuentes pueden solaparse, output es distinto. |
+| 3 | `lead-intelligence-hub` vs enrichment pipeline | **A) Lead store unificado.** SQLite/JSON por cliente. GHL (inbound) y signals (outbound) escriben al mismo store. Dedup por email + LinkedIn URL. | Se añade `lead-store` como data layer (+4h). Si lead ya en pipeline ventas → NO outreach frío. |
+| 4 | Multichannel orchestrator | **Pausado.** Canales independientes primero (Instantly email, HeyReach LinkedIn). | -10h. Se retoma cuando ambos canales estén validados. |
 
 ## 1. Visión
 

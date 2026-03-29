@@ -1,0 +1,91 @@
+{
+  "id": "mn813ohg-8w33",
+  "name": "P01:P01-T01",
+  "status": "open",
+  "linkedTo": "P01:P01-T01",
+  "skill": null,
+  "createdAt": "2026-03-26T22:13:04.564Z",
+  "updatedAt": "2026-03-26T22:22:42.904Z",
+  "messages": [
+    {
+      "role": "user",
+      "text": "▶️ Ejecutar tarea P01-T01: Instalar Meta Pixel + CAPI en growth4u.io",
+      "ts": "2026-03-26T22:13:04.858Z"
+    },
+    {
+      "role": "bot",
+      "text": "🔄 Sancho está pensando...",
+      "ts": "2026-03-26T22:13:04.867Z",
+      "typing": true
+    },
+    {
+      "role": "bot",
+      "text": "Error: Command failed: /opt/homebrew/bin/openclaw agent --agent sancho -m \"[Context: working on \\\"P01:P01-T01\\\" (pilar: P01:P01-T01, skill: none) for client growth4u]\\n\\nUsuario dice: ▶️ Ejecutar tarea P01-T",
+      "ts": "2026-03-26T22:13:04.886Z"
+    },
+    {
+      "role": "user",
+      "text": "▶️ Ejecutar tarea P01-T01: Instalar Meta Pixel + CAPI en growth4u.io",
+      "ts": "2026-03-26T22:13:53.849Z"
+    },
+    {
+      "role": "bot",
+      "text": "🔄 Sancho está pensando...",
+      "ts": "2026-03-26T22:13:53.851Z",
+      "typing": true
+    },
+    {
+      "role": "bot",
+      "text": "Error: Command failed: /opt/homebrew/bin/openclaw agent --agent sancho -m \"[Context: working on \\\"P01:P01-T01\\\" (pilar: P01:P01-T01, skill: none) for client growth4u]\\n\\nUsuario dice: ▶️ Ejecutar tarea P01-T",
+      "ts": "2026-03-26T22:13:53.876Z"
+    },
+    {
+      "role": "user",
+      "text": "▶️ Ejecutar tarea P01-T01: Instalar Meta Pixel + CAPI en growth4u.io",
+      "ts": "2026-03-26T22:17:13.758Z"
+    },
+    {
+      "role": "bot",
+      "text": "🔄 Sancho está pensando...",
+      "ts": "2026-03-26T22:17:13.766Z",
+      "typing": true
+    },
+    {
+      "role": "bot",
+      "text": "Error: env: node: No such file or directory\n",
+      "ts": "2026-03-26T22:17:13.775Z"
+    },
+    {
+      "role": "user",
+      "text": "▶️ Ejecutar tarea P01-T01: Instalar Meta Pixel + CAPI en growth4u.io",
+      "ts": "2026-03-26T22:19:40.131Z"
+    },
+    {
+      "role": "bot",
+      "text": "🔄 Sancho está pensando...",
+      "ts": "2026-03-26T22:19:40.138Z",
+      "typing": true
+    },
+    {
+      "role": "bot",
+      "text": "[plugins] [mc-chat] Channel plugin registered — webhook at /mc-chat/inbound\n[plugins] [mc-chat] Channel plugin registered — webhook at /mc-chat/inbound\n[plugins] [mc-chat] Channel plugin registered — webhook at /mc-chat/inbound\n[plugins] [mc-chat] Channel plugin registered — webhook at /mc-chat/inbound\nEsto es una tarea de ejecución técnica — instalar Meta Pixel + CAPI en growth4u.io. Necesito entender el stack antes de dar instrucciones.\n\n**Preguntas clave:**\n\n1. **¿Qué plataforma usa growth4u.io?** — WordPress, custom, Webflow, etc.\n2. **¿Tenéis GTM (Google Tag Manager) instalado?** — Si sí, Pixel va por GTM. Si no, necesitamos decidir si instalar GTM primero.\n3. **¿Tenéis el Meta Pixel ID?** — Se crea desde Meta Events Manager (business.facebook.com/events_manager)\n4. **¿Dónde está el backend para CAPI?** — CAPI (Conversions API) necesita server-side. Opciones:\n   - **GTM Server-Side** (recomendado si ya tenéis GTM)\n   - **Meta's Partner Integrations** (WordPress plugin, Shopify, etc.)\n   - **Custom endpoint** (Node/Python)\n\n**Mi recomendación sin más contexto:**\n- Si no hay GTM → instalar GTM + Pixel vía GTM + CAPI vía Meta Gateway (la opción más limpia y escalable)\n- Eventos mínimos a trackear: `PageView`, `Lead` (formulario de contacto), `Schedule` (si hay booking)\n\n¿Me das el stack técnico de growth4u.io y si tenéis GTM?",
+      "ts": "2026-03-26T22:20:10.707Z"
+    },
+    {
+      "role": "user",
+      "text": "▶️ Ejecutar tarea P01-T01: Instalar Meta Pixel + CAPI en growth4u.io",
+      "ts": "2026-03-26T22:21:40.164Z"
+    },
+    {
+      "role": "bot",
+      "text": "🔄 Sancho está pensando...",
+      "ts": "2026-03-26T22:21:40.170Z",
+      "typing": true
+    },
+    {
+      "role": "bot",
+      "text": "[plugins] [mc-chat] Channel plugin registered — webhook at /mc-chat/inbound\n[plugins] [mc-chat] Channel plugin registered — webhook at /mc-chat/inbound\n[plugins] [mc-chat] Channel plugin registered — webhook at /mc-chat/inbound\n[plugins] [mc-chat] Channel plugin registered — webhook at /mc-chat/inbound\nBuenas noticias — ya tengo el diagnóstico:\n\n**Estado actual de growth4u.io:**\n- **Plataforma**: Next.js\n- **GA4**: ✅ Instalado (`G-4YBYPVQDT6`)\n- **GTM**: ⚠️ Referencia a GTM pero sin ID real (solo \"gtm-lanzamiento\" como clase CSS, no container)\n- **Meta Pixel**: ❌ No instalado (hay mención en el HTML pero no hay `fbq('init')` activo)\n- **CAPI**: ❌ No configurado\n\n**Para ejecutar esto necesito:**\n\n1. **Meta Pixel ID** — ¿Ya tienes uno creado en Meta Events Manager? Si no, necesito acceso o que lo crees tú desde business.facebook.com → Events Manager → Connect Data Sources → Web → Meta Pixel\n2. **Token de CAPI** — Se genera en Events Manager → Settings → Conversions API → Generate Access Token\n3. **Acceso al repo de Next.js** — ¿Dónde está? GitHub? ¿Quién lo deploya?\n\n**Plan de ejecución:**\n- Pixel client-side vía `next/script` + `fbq` (PageView automático)\n- CAPI server-side vía API routes de Next.js (`/api/meta-events`)\n- Deduplicación con `eventID` compartido client↔server\n- Eventos: `PageView`, `Lead` (formularios), `ViewContent` (páginas clave)\n\n¿Tienes el Pixel ID y token, o los creo yo si me das acceso al link de conexión de MC?",
+      "ts": "2026-03-26T22:22:42.904Z"
+    }
+  ]
+}

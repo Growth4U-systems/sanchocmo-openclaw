@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SanchoCMO — Dashboard Mockup v2: Quick Foundation ✅ + Deep en progreso</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F8F8F6; --card: #FFFFFF; --border: #E5E2DC; --text: #1A1A1A;
+    --muted: #7A7A7A; --rust: #C45D35; --green: #22A06B; --navy: #1E3A5F;
+    --yellow: #FF991F; --blue: #0065FF; --red: #C0392B;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Inter',system-ui,sans-serif; background:#1E1E2E; color:var(--text); }
+
+  nav {
+    position:fixed; top:0; left:0; width:220px; height:100vh;
+    background:#FAFAF8; border-right:1px solid var(--border);
+    padding:20px 16px; z-index:100; display:flex; flex-direction:column;
+  }
+  .logo { font-size:22px; font-weight:800; color:var(--rust); margin-bottom:2px; letter-spacing:-.5px; }
+  .version { background:var(--rust); color:#fff; padding:2px 10px; border-radius:6px; font-size:10px; font-weight:700; display:inline-block; margin-bottom:16px; }
+  .client-select {
+    width:100%; padding:9px 12px; background:#fff; border:1.5px solid var(--border);
+    border-radius:8px; font-size:13px; margin-bottom:20px; color:var(--text); appearance:none; cursor:pointer;
+  }
+  .nav-section { font-size:10px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:1.2px; margin:16px 0 6px 12px; }
+  nav a {
+    display:flex; align-items:center; gap:8px; padding:9px 12px; color:var(--muted);
+    text-decoration:none; font-size:13px; border-radius:8px; margin-bottom:1px; transition:all .15s;
+  }
+  nav a:hover { background:var(--bg); color:var(--text); }
+  nav a.active { background:var(--bg); color:var(--rust); font-weight:600; }
+  nav a .icon { font-size:14px; width:20px; text-align:center; }
+
+  .main {
+    margin-left:220px; height:100vh; display:flex; flex-direction:column;
+    background:var(--bg); overflow:hidden;
+  }
+
+  .activity-bar {
+    display:flex; align-items:center; gap:10px; padding:8px 20px;
+    background:#1E1E2E; border-bottom:1px solid #313244; flex-shrink:0;
+  }
+  .live-dot { width:6px; height:6px; border-radius:50%; background:var(--green); box-shadow:0 0 5px var(--green); animation:pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+  .act-label { font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--green); }
+  .act-dim { font-family:'JetBrains Mono',monospace; font-size:10px; color:#666; }
+
+  .grid { display:grid; grid-template-columns:1fr 1fr 1fr; flex:1; min-height:0; }
+  .col {
+    display:flex; flex-direction:column; overflow:hidden;
+    background:#fff; border-right:1px solid var(--border);
+  }
+  .col:last-child { border-right:none; }
+  .col-header {
+    font-size:13px; font-weight:700; color:var(--text); letter-spacing:-.2px;
+    padding:14px 20px; background:#fff; border-bottom:1px solid var(--border);
+    display:flex; align-items:center; justify-content:space-between; flex-shrink:0;
+  }
+  .col-link { font-size:11px; font-weight:600; color:var(--rust); cursor:pointer; text-decoration:none; }
+  .col-body { flex:1; overflow-y:auto; padding:16px 20px; }
+
+  /* Brand Snapshot */
+  .brand-name { font-size:20px; font-weight:800; color:var(--navy); margin-bottom:2px; letter-spacing:-.3px; }
+  .brand-desc { font-size:12px; color:var(--muted); line-height:1.5; margin-bottom:16px; }
+
+  .snapshot-section { margin-bottom:14px; }
+  .snapshot-label {
+    font-size:10px; font-weight:700; color:var(--muted); text-transform:uppercase;
+    letter-spacing:.8px; margin-bottom:6px;
+  }
+
+  .nsm-box {
+    background:linear-gradient(135deg, #F0F7FF 0%, #E8F4FD 100%);
+    border:1px solid #B8D4E8; border-radius:10px; padding:12px 14px; margin-bottom:14px;
+  }
+  .nsm-label { font-size:10px; font-weight:700; color:var(--blue); text-transform:uppercase; letter-spacing:.5px; }
+  .nsm-value { font-size:16px; font-weight:700; color:var(--navy); margin-top:2px; }
+  .nsm-target { font-size:11px; color:var(--muted); margin-top:2px; }
+
+  .icp-chip {
+    display:inline-block; background:#F5F0EB; border:1px solid var(--border);
+    border-radius:6px; padding:4px 10px; font-size:11px; margin:2px 4px 2px 0; color:var(--text);
+  }
+  .comp-item {
+    display:flex; align-items:center; gap:8px; padding:6px 0; font-size:12px;
+    border-bottom:1px solid #F5F2EE; cursor:pointer; transition:color .12s;
+  }
+  .comp-item:hover { color:var(--rust); }
+  .comp-item:last-child { border-bottom:none; }
+  .comp-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+
+  .depth-container { margin-top:6px; padding:12px 14px; background:#FAFAF8; border-radius:10px; border:1px solid var(--border); }
+  .depth-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
+  .depth-title { font-size:11px; font-weight:700; color:var(--muted); }
+  .depth-pct { font-size:13px; font-weight:700; }
+  .depth-bar { height:8px; background:#F0EDE8; border-radius:4px; overflow:hidden; }
+  .depth-fill { height:100%; border-radius:4px; }
+  .depth-link { font-size:10px; color:var(--rust); margin-top:6px; display:block; cursor:pointer; font-weight:600; }
+
+  /* Metrics */
+  .metric-card {
+    background:#FAFAF8; border:1px solid var(--border); border-radius:10px;
+    padding:12px 14px; margin-bottom:8px;
+  }
+  .metric-label { font-size:10px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; }
+  .metric-value { font-size:24px; font-weight:800; color:var(--navy); margin:4px 0; letter-spacing:-.5px; }
+  .metrics-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:16px; }
+  .connect-banner {
+    background:#FEF3EE; border:1px solid var(--rust); border-radius:8px;
+    padding:10px 14px; display:flex; align-items:center; gap:10px; margin-bottom:14px; cursor:pointer;
+  }
+  .connect-banner:hover { background:#FDE8DC; }
+  .quality-warning {
+    padding:10px 14px; background:#FFFAE6; border:1px solid #FFE380;
+    border-radius:8px; font-size:11px; color:#5C4813; line-height:1.5; margin-bottom:12px;
+  }
+
+  /* Next Steps — Projects inline */
+  .section-title {
+    font-size:10px; font-weight:700; color:var(--muted); text-transform:uppercase;
+    letter-spacing:.8px; margin:14px 0 8px;
+  }
+
+  .decision-card {
+    display:flex; align-items:center; gap:10px; padding:10px 12px;
+    background:#FFF7ED; border:1px solid #FFD699; border-radius:8px;
+    margin-bottom:6px; font-size:12px; cursor:pointer; transition:all .12s;
+  }
+  .decision-card:hover { background:#FFF0DC; border-color:#FFC266; }
+  .decision-badge {
+    background:#FF991F; color:#fff; font-size:9px; font-weight:700;
+    padding:2px 6px; border-radius:4px; margin-left:auto; flex-shrink:0;
+  }
+
+  /* Project with inline next task */
+  .proj-block { margin-bottom:10px; }
+  .proj-header {
+    display:flex; align-items:center; gap:8px; padding:10px 12px;
+    background:#FAFAF8; border:1px solid var(--border); border-radius:10px;
+    cursor:pointer; transition:all .12s;
+  }
+  .proj-header:hover { border-color:var(--rust); }
+  .proj-icon { font-size:14px; flex-shrink:0; }
+  .proj-info { flex:1; min-width:0; }
+  .proj-name { font-size:13px; font-weight:600; color:var(--text); }
+  .proj-meta { font-size:10px; color:var(--muted); margin-top:1px; }
+  .proj-prog { font-size:11px; color:var(--muted); font-weight:600; flex-shrink:0; }
+  .proj-bar { height:4px; background:#F0EDE8; border-radius:2px; margin:6px 12px 0; overflow:hidden; }
+  .proj-fill { height:100%; border-radius:2px; }
+
+  .proj-done .proj-header { border-color:var(--green); background:#F0FAF5; }
+  .proj-done .proj-name { color:var(--green); }
+
+  .proj-next {
+    display:flex; align-items:center; gap:8px; margin:4px 0 0 28px;
+    padding:8px 12px; background:#fff; border:1px dashed var(--border);
+    border-radius:8px; font-size:11px; color:var(--text); cursor:pointer; transition:all .12s;
+  }
+  .proj-next:hover { border-color:var(--rust); border-style:solid; background:#FEF7F0; }
+  .proj-next-label { color:var(--muted); font-weight:600; margin-right:4px; }
+  .proj-next-name { font-weight:500; flex:1; }
+  .proj-next-actions { display:flex; gap:4px; opacity:.4; transition:opacity .12s; }
+  .proj-next:hover .proj-next-actions { opacity:1; }
+  .proj-next-btn {
+    background:none; border:none; cursor:pointer; font-size:13px; padding:2px;
+  }
+
+  .proj-locked {
+    font-size:9px; background:#F0EDE8; color:var(--muted); padding:2px 8px;
+    border-radius:4px; font-weight:600; margin-left:6px;
+  }
+
+  /* Chat FAB */
+  .chat-fab {
+    position:fixed; bottom:24px; right:24px; width:56px; height:56px;
+    background:var(--rust); color:#fff; border:none; border-radius:50%;
+    font-size:24px; cursor:pointer; box-shadow:0 4px 16px rgba(196,93,53,.4);
+    display:flex; align-items:center; justify-content:center;
+    transition:all .2s; z-index:200;
+  }
+  .chat-fab:hover { transform:scale(1.1); box-shadow:0 6px 24px rgba(196,93,53,.5); }
+  .chat-fab-label {
+    position:fixed; bottom:32px; right:88px; background:#1A1A1A; color:#fff;
+    padding:6px 12px; border-radius:6px; font-size:11px; font-weight:600; z-index:200;
+    opacity:0; transition:opacity .2s; pointer-events:none;
+  }
+  .chat-fab:hover + .chat-fab-label { opacity:1; }
+
+  .mockup-label {
+    position:fixed; bottom:16px; left:236px; background:var(--rust); color:#fff;
+    padding:8px 16px; border-radius:8px; font-size:12px; font-weight:700; z-index:200;
+    box-shadow:0 4px 12px rgba(0,0,0,.2);
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">✒️ SanchoCMO</div>
+  <div class="version">v3.0</div>
+  <select class="client-select">
+    <option>💳 Paymático</option>
+  </select>
+  <div class="nav-section">Cliente</div>
+  <a href="#" class="active"><span class="icon">📊</span> Dashboard</a>
+  <a href="#"><span class="icon">📂</span> Documents</a>
+  <a href="#"><span class="icon">📋</span> Proyectos</a>
+  <a href="#"><span class="icon">💡</span> Idea Bank</a>
+  <a href="#"><span class="icon">🔄</span> Recurrentes</a>
+  <a href="#"><span class="icon">📈</span> Métricas</a>
+  <a href="#"><span class="icon">🔍</span> Trust Engine</a>
+  <div class="nav-section">Sistema</div>
+  <a href="#"><span class="icon">🔌</span> APIs</a>
+  <a href="#"><span class="icon">🤖</span> Agentes</a>
+  <a href="#"><span class="icon">🧰</span> Skills</a>
+</nav>
+
+<div class="main">
+  <div class="activity-bar">
+    <span class="live-dot"></span>
+    <span class="act-label">Activity</span>
+    <span class="act-dim">— 23 eventos · última: 14:32 · Deep Foundation en progreso</span>
+  </div>
+
+  <div class="grid">
+    <!-- ============ Col 1: Brand Snapshot ============ -->
+    <div class="col">
+      <div class="col-header">
+        <span>🏢 Brand Snapshot</span>
+        <a class="col-link" href="#">Documents →</a>
+      </div>
+      <div class="col-body">
+        <div style="margin-bottom:16px;">
+          <div class="brand-name">💳 Paymático</div>
+          <div class="brand-desc">Entidad de pago regulada por Banco de España. Fintech B2B que consolida la inteligencia de pagos: tarjetas, SEPA, transferencias, TPVs. Cuentas programables con automatización tipo IFTTT.</div>
+        </div>
+
+        <div class="nsm-box">
+          <div class="nsm-label">⭐ North Star Metric</div>
+          <div class="nsm-value">Empresas activadas/mes</div>
+          <div class="nsm-target">🎯 Objetivo: +30% en 6 meses</div>
+        </div>
+
+        <div class="snapshot-section">
+          <div class="snapshot-label">👥 ICPs</div>
+          <div>
+            <span class="icp-chip">🏪 Franquicias españolas</span>
+            <span class="icp-chip">🏗️ Corporates con filiales</span>
+            <span class="icp-chip">💰 Gestores de dinero 3ros</span>
+          </div>
+        </div>
+
+        <div class="snapshot-section">
+          <div class="snapshot-label">⚔️ Competidores</div>
+          <div class="comp-item"><div class="comp-dot" style="background:#635BFF;"></div> Stripe <span style="margin-left:auto;font-size:10px;color:var(--rust);">ver →</span></div>
+          <div class="comp-item"><div class="comp-dot" style="background:#0ABF53;"></div> Adyen <span style="margin-left:auto;font-size:10px;color:var(--rust);">ver →</span></div>
+          <div class="comp-item"><div class="comp-dot" style="background:#FF6B35;"></div> Sipay <span style="margin-left:auto;font-size:10px;color:var(--rust);">ver →</span></div>
+          <div class="comp-item"><div class="comp-dot" style="background:#2D5BFF;"></div> Pecunpay <span style="margin-left:auto;font-size:10px;color:var(--rust);">ver →</span></div>
+        </div>
+
+        <div class="snapshot-section">
+          <div class="snapshot-label">💎 Posicionamiento</div>
+          <div style="font-size:12px;font-style:italic;color:var(--navy);line-height:1.5;">"El N8N de las cuentas bancarias — automatización de pagos para empresas complejas"</div>
+        </div>
+
+        <div class="depth-container">
+          <div class="depth-header">
+            <span class="depth-title">Foundation Depth</span>
+            <span class="depth-pct" style="color:var(--yellow);">53%</span>
+          </div>
+          <div class="depth-bar">
+            <div class="depth-fill" style="width:53%;background:linear-gradient(90deg,var(--yellow),#E8A317);"></div>
+          </div>
+          <a class="depth-link">🏗️ 7 pilares pendientes · Mejorar →</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ Col 2: Métricas ============ -->
+    <div class="col">
+      <div class="col-header">
+        <span>📈 Métricas</span>
+        <a class="col-link" href="#">Dashboard →</a>
+      </div>
+      <div class="col-body">
+        <div class="quality-warning">
+          ⚠️ <strong>Foundation Depth: 53%</strong> — El Metrics Plan se basa en info parcial. <a href="#" style="color:var(--rust);font-weight:600;">Mejorar →</a>
+        </div>
+
+        <div class="connect-banner">
+          <span style="font-size:16px;">🔌</span>
+          <div>
+            <div style="font-size:12px;font-weight:700;color:var(--rust);">Conecta tus APIs</div>
+            <div style="font-size:10px;color:var(--muted);">Web Analytics, Search Console, Redes Sociales...</div>
+          </div>
+        </div>
+
+        <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;">🌐 Web Performance (auto)</div>
+        <div class="metrics-grid">
+          <div class="metric-card">
+            <div class="metric-label">Performance</div>
+            <div class="metric-value" style="color:var(--green);">87</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">SEO</div>
+            <div class="metric-value" style="color:var(--green);">92</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">Accesibilidad</div>
+            <div class="metric-value" style="color:var(--yellow);">74</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">Best Practices</div>
+            <div class="metric-value" style="color:var(--green);">95</div>
+          </div>
+        </div>
+
+        <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin:16px 0 8px;">📊 Supabase</div>
+        <div class="metrics-grid">
+          <div class="metric-card">
+            <div class="metric-label">Ideas</div>
+            <div class="metric-value">12</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">Contactos</div>
+            <div class="metric-value">0</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ Col 3: Próximos Pasos ============ -->
+    <div class="col">
+      <div class="col-header">
+        <span>🎯 Próximos Pasos</span>
+        <a class="col-link" href="#">Proyectos →</a>
+      </div>
+      <div class="col-body">
+
+        <!-- ❓ Decisions -->
+        <div class="section-title">❓ Tu Decisión</div>
+
+        <div class="decision-card">
+          <span>📄</span>
+          <div style="flex:1;">
+            <div style="font-weight:600;">Revisar: Self Intelligence</div>
+            <div style="font-size:10px;color:var(--muted);">Deep Foundation · Generado por Sancho</div>
+          </div>
+          <span class="decision-badge">REVISAR</span>
+        </div>
+
+        <div class="decision-card">
+          <span>💡</span>
+          <div style="flex:1;">
+            <div style="font-weight:600;">3 ideas de contenido nuevas</div>
+            <div style="font-size:10px;color:var(--muted);">Idea Bank · Aprobar o rechazar</div>
+          </div>
+          <span class="decision-badge">3</span>
+        </div>
+
+        <!-- 📋 Projects with inline next task -->
+        <div class="section-title">📋 Proyectos</div>
+
+        <!-- P1: Quick Foundation — DONE -->
+        <div class="proj-block proj-done">
+          <div class="proj-header">
+            <span class="proj-icon">✅</span>
+            <div class="proj-info">
+              <div class="proj-name">Quick Foundation</div>
+              <div class="proj-meta">Completado · 5/5</div>
+            </div>
+            <span class="proj-prog" style="color:var(--green);">100%</span>
+          </div>
+          <div class="proj-bar"><div class="proj-fill" style="width:100%;background:var(--green);"></div></div>
+        </div>
+
+        <!-- P2: Deep Foundation — IN PROGRESS -->
+        <div class="proj-block">
+          <div class="proj-header">
+            <span class="proj-icon">🏗️</span>
+            <div class="proj-info">
+              <div class="proj-name">Deep Foundation</div>
+              <div class="proj-meta">En progreso · 3/10</div>
+            </div>
+            <span class="proj-prog">30%</span>
+          </div>
+          <div class="proj-bar"><div class="proj-fill" style="width:30%;background:var(--blue);"></div></div>
+          <div class="proj-next">
+            <span class="proj-next-label">→</span>
+            <span class="proj-next-name">SWOT Analysis</span>
+            <div class="proj-next-actions">
+              <button class="proj-next-btn" title="Ejecutar">▶️</button>
+              <button class="proj-next-btn" title="Chat">💬</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- P3: Metrics Setup -->
+        <div class="proj-block">
+          <div class="proj-header">
+            <span class="proj-icon">📊</span>
+            <div class="proj-info">
+              <div class="proj-name">Metrics Setup</div>
+              <div class="proj-meta">En progreso · 1/5</div>
+            </div>
+            <span class="proj-prog">20%</span>
+          </div>
+          <div class="proj-bar"><div class="proj-fill" style="width:20%;background:var(--yellow);"></div></div>
+          <div class="proj-next">
+            <span class="proj-next-label">→</span>
+            <span class="proj-next-name">Conectar Web Analytics</span>
+            <div class="proj-next-actions">
+              <button class="proj-next-btn" title="Ejecutar">▶️</button>
+              <button class="proj-next-btn" title="Chat">💬</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- P4: Strategic Plan -->
+        <div class="proj-block">
+          <div class="proj-header" style="opacity:.7;">
+            <span class="proj-icon">📋</span>
+            <div class="proj-info">
+              <div class="proj-name">Strategic Plan</div>
+              <div class="proj-meta">Pendiente · 0/3</div>
+            </div>
+            <span class="proj-prog">0%</span>
+          </div>
+          <div class="proj-bar"><div class="proj-fill" style="width:0%;"></div></div>
+          <div class="proj-next" style="border-color:#E5E2DC;cursor:default;">
+            <span class="proj-next-label">→</span>
+            <span class="proj-next-name" style="color:var(--muted);">Generar Strategic Plan</span>
+            <div class="proj-next-actions">
+              <button class="proj-next-btn" title="Ejecutar">▶️</button>
+              <button class="proj-next-btn" title="Chat">💬</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Foundation Depth warning -->
+        <div class="quality-warning" style="margin-top:14px;">
+          ⚠️ <strong>Foundation Depth: 53%</strong> — Completar Deep Foundation mejora la calidad del Strategic Plan y las recomendaciones. <a href="#" style="color:var(--rust);font-weight:600;">Ver qué falta →</a>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Chat FAB -->
+<button class="chat-fab" title="Chat con Sancho">💬</button>
+<div class="chat-fab-label">Chat con Sancho</div>
+
+<div class="mockup-label">MOCKUP v2 — Quick Foundation ✅ + Deep en progreso</div>
+
+</body>
+</html>

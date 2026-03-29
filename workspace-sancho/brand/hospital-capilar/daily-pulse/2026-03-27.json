@@ -1,0 +1,23 @@
+{
+  "date": "2026-03-27",
+  "client": "hospital-capilar",
+  "guild": "1475635138108063746",
+  "channels_checked": 9,
+  "channels_with_human_activity": 0,
+  "channels_skipped": [
+    {"channel": "general", "reason": "último msg 28 Feb (28 días)"},
+    {"channel": "brand", "reason": "último msg 28 Feb (28 días)"},
+    {"channel": "campaigns", "reason": "último msg 24 Mar (bot, no humano)"},
+    {"channel": "content", "reason": "último msg 28 Feb (28 días)"},
+    {"channel": "intelligence", "reason": "último msg 26 Mar (bot, no humano)"},
+    {"channel": "onboarding", "reason": "último msg 16 Mar (11 días)"},
+    {"channel": "soporte", "reason": "último msg 26 Mar (bot, no humano)"},
+    {"channel": "research", "reason": "último msg 1 Mar (26 días)"},
+    {"channel": "paid-ads", "reason": "Unknown Channel"}
+  ],
+  "insights": [],
+  "gmail": {"enabled": false, "reason": "No sources.json"},
+  "notion": {"enabled": false, "reason": "No sources.json"},
+  "summary": "Sin actividad humana reciente en Discord. Todos los canales tienen mensajes de hace >24h o son de bots.",
+  "generated_at": "2026-03-27T09:00:00+01:00"
+}

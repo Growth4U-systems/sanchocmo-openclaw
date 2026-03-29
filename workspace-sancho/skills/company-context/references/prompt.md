@@ -103,7 +103,7 @@ Seguir el schema completo en `references/schema.md`. El output debe cubrir:
 1. **Identity**: nombre, año fundación, ubicación, mercados, URLs
 2. **What They Do**: elevator pitch, descripción producto, tipo producto, features clave, use cases, diferenciador 10x
 3. **Business Model**: B2B/B2C, revenue model, pricing tiers, ticket medio, LTV
-4. **Goals & Vision**: goal 3-6 meses (cuantificado), visión 3-5 años, non-negotiables, constraints marketing
+4. **Goals, Vision & North Star Metric**: goal 3-6 meses (cuantificado), **North Star Metric** (la métrica que define el éxito — varía por modelo: leads, usuarios activados, citas, transacciones, etc. — incluir: nombre, definición, baseline actual, target, timeframe), visión 3-5 años, non-negotiables, constraints marketing
 5. **Current State**: canales actuales, leads/mes, clientes/mes, fuente adquisición principal, analytics, CRM
 6. **Brand & Culture**: valores, tone keywords, temas contenido, industria/vertical
 7. **Team & Ops**: tamaño equipo, equipo marketing, decision maker

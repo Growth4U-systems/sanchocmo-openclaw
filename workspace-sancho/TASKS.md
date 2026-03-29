@@ -54,6 +54,16 @@ _ninguna_
 
 _Las tareas T-001 a T-012 fueron de setup del sistema y ahora viven en el TASKS.md de Cervantes._
 
+### 🔄 Recurrentes
+
+- **R-001** `P1` — **Morning Metrics — Multi-Client**
+  - Cron: L-V 08:30 Madrid
+  - Script: `scripts/morning-metrics.sh {slug}`
+  - Destino: **#insights** del guild de cada cliente
+  - Clientes activos: Growth4U (Meta Ads + GHL)
+  - Pendientes: HC, Paymatico, Masabo, Masavo (esperando conexión de APIs)
+  - Estado: ✅ Funcionando (cron ok, publicando diariamente en #insights)
+
 ### 🧊 Congeladas
 
 _ninguna_

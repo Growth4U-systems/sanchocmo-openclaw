@@ -20,3 +20,18 @@
 
 ## Progress Updates
 - Max 3 tool calls sin update. Patrón: `🔄 Update (X/Y): progreso → siguiente → ETA`
+
+## Entrega de resultados (P0)
+Al completar cualquier tarea que genera archivos:
+1. **Mencionar** al usuario: `<@{sender_id}>` — sin mención no hay notificación
+2. **Links tokenizados de MC** a TODOS los archivos generados:
+   - `<https://sancho-cmo.taild48df2.ts.net/mc/portal/{mcToken}/docs/brand/{slug}/{path}>`
+   - NUNCA rutas internas (`campaigns/content/archivo.md`)
+   - NUNCA links sin token
+3. **Formato obligatorio:**
+   ```
+   <@{sender_id}> ✅ Listo.
+   📄 **Pillar Page:** <{link MC}>
+   📱 **Posts LinkedIn (4):** <{link MC}>
+   ```
+4. Si tarda >30s → update intermedio: `🔄 Trabajando en {X}...`

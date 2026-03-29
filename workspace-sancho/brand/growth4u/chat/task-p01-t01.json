@@ -1,0 +1,16 @@
+{
+  "messages": [
+    {
+      "role": "user",
+      "text": "Estoy abriendo el chat sobre \"Instalar Meta Pixel + CAPI en growth4u.io\". Dame un resumen rápido del estado actual y qué podemos hacer. Si necesitas algo de mí, dímelo.",
+      "ts": "2026-03-26T22:31:18.279Z"
+    },
+    {
+      "role": "bot",
+      "text": "## P01-T01: Meta Pixel + CAPI en growth4u.io\n\n**Estado actual:** `ready` (playbook creado, pendiente de implementar)\n\n### Lo que ya tenemos:\n- ✅ **Meta Ads conectado** — Account `act_1507778460268244`, token configurado\n- ✅ **Playbook completo** con 5 pasos detallados\n- ✅ **GA4 conectado** — Property `515424511`\n\n### Lo que falta hacer (5 pasos):\n\n| Paso | Qué | Quién lo hace |\n|------|-----|---------------|\n| 1 | Obtener el Pixel ID en [Events Manager](https://business.facebook.com/events_manager) | Tú (acceso al Business Manager) |\n| 2 | Pegar el base code en el `<head>` de growth4u.io | Tú (acceso al CMS/código) |\n| 3 | Añadir eventos: `Lead` (booking), `CompleteRegistration` (Trust Score), `Lead` (lead magnets) | Tú |\n| 4 | Activar CAPI (server-side) desde Events Manager | Tú |\n| 5 | Verificar con Meta Pixel Helper | Tú |\n\n### Lo que necesito de ti:\n\n1. **¿Ya tienes un Meta Pixel creado?** Si sí, pásame el ID y actualizo el playbook con el código listo para copiar/pegar.\n2. **¿Qué CMS/stack usa growth4u.io?** (WordPress, custom, Webflow...) — para darte instrucciones específicas de CAPI. Si es WordPress hay plugins que hacen pixel + CAPI en un click.\n3. **¿Quieres que revise la web actual para confirmar que NO hay pixel instalado ya?**\n\nEsto es 100% ejecución técnica en tu lado (acceso al código de la web). Mi parte es darte el código exacto y verificar que funciona.",
+      "agent": "sancho",
+      "ts": "2026-03-26T22:32:18.679Z"
+    }
+  ],
+  "updatedAt": 1774564338679
+}

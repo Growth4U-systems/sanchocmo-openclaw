@@ -32,6 +32,31 @@ Complete field-by-field specification for the business-model-audit pillar.
 
 ---
 
+## Section 2b: North Star Metric (NSM)
+
+Definida aquí o en company-context. Si ya existe en company-context, validar y refinar con datos de business model.
+
+| Field | Type | Required | Source Priority | Consumed By |
+|-------|------|----------|-----------------|-------------|
+| north_star_metric | object {name, definition, baseline, target, timeframe} | REQUIRED | Guided by revenue_model + growth_motion | ALL agents — defines success |
+
+### NSM por Archetype (guía para el agente)
+
+| Revenue Model | Growth Motion | NSM recomendada | Ejemplo |
+|--------------|--------------|-----------------|---------|
+| Subscription SaaS | PLG | Usuarios activados (signup → acción clave) | "Weekly active users que completan 1+ workflow" |
+| Subscription SaaS | Sales-led | Pipeline value / ARR nuevo | "ARR nuevo firmado por mes" |
+| Transaction/Marketplace | PLG/MLG | Transacciones completadas | "GMV mensual" o "Transacciones/mes" |
+| Freemium | PLG | Free → Paid conversions | "Upgrades a plan de pago / mes" |
+| B2C Services | MLG | Citas/reservas agendadas | "Citas agendadas desde web / mes" |
+| B2B Services | Sales-led | Leads cualificados (SQL) | "SQLs generados / mes" |
+| E-commerce/D2C | MLG | Revenue por visitor o pedidos | "Pedidos / mes" o "Revenue / visitor" |
+| FinTech B2C | PLG | Usuarios activados | "Signup → primera transacción en 7 días" |
+
+**Regla:** NUNCA asumir la NSM — siempre confirmar con el cliente. La tabla es guía, no verdad.
+
+---
+
 ## Section 3: Growth Motion
 
 | Field | Type | Required | Source Priority | Consumed By |

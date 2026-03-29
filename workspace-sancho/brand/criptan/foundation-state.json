@@ -1,0 +1,221 @@
+{
+  "version": "3.0",
+  "started_at": "2026-03-26T21:50:31Z",
+  "updated_at": "2026-03-27T21:39:27Z",
+  "sections": {
+    "fast-foundation": {
+      "status": "not-started",
+      "layer": 0,
+      "output_dir": "brand/criptan/company-brief/",
+      "skill": "fast-foundation",
+      "pillars": {
+        "company-brief": {
+          "status": "not-started",
+          "output_file": "brand/criptan/company-brief/current.md",
+          "skill": "fast-foundation"
+        },
+        "self-l1": {
+          "status": "not-started",
+          "output_file": "brand/criptan/market-and-us/self/current.md",
+          "skill": "fast-foundation"
+        },
+        "market-l1": {
+          "status": "not-started",
+          "output_file": "brand/criptan/market-and-us/market/current.md",
+          "skill": "fast-foundation"
+        },
+        "brand-voice-snapshot": {
+          "status": "not-started",
+          "output_file": "brand/criptan/brand-voice/current.md",
+          "skill": "fast-foundation"
+        },
+        "niche-basic": {
+          "status": "not-started",
+          "output_file": "brand/criptan/go-to-market/ecps/current.md",
+          "skill": "fast-foundation"
+        }
+      }
+    },
+    "company-brief": {
+      "status": "not-started",
+      "layer": 0,
+      "output_dir": "brand/criptan/company-brief/",
+      "approved_at": null,
+      "skills": {
+        "company-context": {
+          "status": "not-started",
+          "skill": "company-context"
+        },
+        "business-model": {
+          "status": "not-started",
+          "skill": "business-model-audit"
+        },
+        "budget": {
+          "status": "not-started",
+          "optional": true,
+          "skill": "budget-assessment"
+        }
+      }
+    },
+    "market-and-us": {
+      "status": "not-started",
+      "layer": 1,
+      "output_dir": "brand/criptan/market-and-us/",
+      "pillars": {
+        "market-analysis": {
+          "status": "not-started",
+          "layer": 1,
+          "requires": [
+            "fast-foundation"
+          ],
+          "enriches_with": [
+            "competitor-analysis",
+            "self-analysis"
+          ],
+          "skill": "market-intelligence"
+        },
+        "competitor-analysis": {
+          "status": "not-started",
+          "layer": 1,
+          "requires": [
+            "fast-foundation"
+          ],
+          "enriches_with": [
+            "market-analysis",
+            "self-analysis"
+          ],
+          "output_files": [],
+          "skill": "competitor-intelligence"
+        },
+        "self-analysis": {
+          "status": "not-started",
+          "layer": 1,
+          "requires": [
+            "fast-foundation"
+          ],
+          "enriches_with": [
+            "market-analysis",
+            "competitor-analysis"
+          ],
+          "skill": "self-intelligence"
+        },
+        "market-synthesis": {
+          "status": "not-started",
+          "layer": 2,
+          "requires": [
+            "market-analysis",
+            "competitor-analysis",
+            "self-analysis"
+          ],
+          "skill": "market-synthesis"
+        }
+      }
+    },
+    "go-to-market": {
+      "status": "not-started",
+      "layer": 3,
+      "output_dir": "brand/criptan/go-to-market/",
+      "pillars": {
+        "niche-discovery": {
+          "status": "not-started",
+          "layer": 3,
+          "requires": [
+            "market-synthesis"
+          ],
+          "enriches_with": [
+            "existing-customer-data"
+          ],
+          "skill": "niche-discovery-100x"
+        },
+        "existing-customer-data": {
+          "status": "not-started",
+          "layer": 3,
+          "requires": [
+            "fast-foundation"
+          ],
+          "optional": true,
+          "skill": "existing-customer-data"
+        },
+        "positioning": {
+          "status": "not-started",
+          "layer": 4,
+          "requires": [
+            "niche-discovery"
+          ],
+          "skill": "positioning-messaging"
+        },
+        "pricing": {
+          "status": "not-started",
+          "layer": 4,
+          "requires": [
+            "niche-discovery"
+          ],
+          "enriches_with": [
+            "positioning"
+          ],
+          "skill": "pricing-strategy"
+        },
+        "ecp-validation": {
+          "status": "not-started",
+          "layer": 4,
+          "requires": [
+            "niche-discovery"
+          ],
+          "optional": true,
+          "skill": "ecp-validation"
+        }
+      }
+    },
+    "brand-identity": {
+      "status": "not-started",
+      "layer": 5,
+      "output_dir": "brand/criptan/brand-identity/",
+      "pillars": {
+        "brand-voice": {
+          "status": "not-started",
+          "layer": 5,
+          "requires": [
+            "positioning"
+          ],
+          "skill": "brand-voice"
+        },
+        "visual-identity": {
+          "status": "not-started",
+          "layer": 5,
+          "requires": [
+            "brand-voice"
+          ],
+          "skill": "visual-identity"
+        }
+      }
+    },
+    "metrics-setup": {
+      "status": "not-started",
+      "layer": 6,
+      "skill": "metrics-setup",
+      "requires": [
+        "positioning",
+        "pricing"
+      ],
+      "pillars": {
+        "metrics-setup": {
+          "status": "not-started",
+          "requires": [
+            "positioning",
+            "pricing"
+          ],
+          "skill": "metrics-setup"
+        }
+      }
+    },
+    "strategic-plan": {
+      "status": "not-started",
+      "layer": 7,
+      "skill": "strategic-plan",
+      "requires": [
+        "metrics-setup"
+      ],
+      "output_file": "brand/criptan/strategic-plan/current.md"
+    }
+  }
+}

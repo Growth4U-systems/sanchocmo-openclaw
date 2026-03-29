@@ -1,90 +1,380 @@
 {
   "module": "geo-analysis",
-  "version": 2,
-  "created_at": "2026-03-24T22:12:00Z",
-  "updated_at": "2026-03-25T00:20:00Z",
+  "version": 3,
+  "created_at": "2026-03-26T10:55:00Z",
+  "updated_at": "2026-03-26T10:55:00Z",
   "status": "completed",
   "data": {
     "runs": [
       {
-        "id": "geo-001",
-        "prompt": "¿Cuáles son las mejores clínicas de tratamiento capilar en Madrid?",
-        "topic": "ranking",
-        "provider": "gemini",
-        "client_mentioned": true,
-        "client_position": 2,
-        "client_sentiment": "positive",
-        "client_context": "Alta valoración. Se especializan en injertos capilares con atención integral.",
-        "competitors_mentioned": ["Capilclinic (#1)", "Insparya (#14)", "IMD (#11)"],
-        "note": "HC mencionado pero descrito como 'injertos capilares' — NO como tratamientos"
-      },
-      {
-        "id": "geo-002",
-        "prompt": "Mejor tratamiento para la caída del pelo en España sin cirugía",
-        "topic": "solution",
-        "provider": "gemini",
+        "id": "geo-01",
+        "niche": "n1",
+        "sub": "n1-s1",
+        "type": "discovery",
+        "provider": "openai",
+        "prompt": "Tengo 25 años y se me está cayendo el pelo. ¿Qué opciones de tratamiento tengo en Madrid?",
         "client_mentioned": false,
-        "client_position": null,
-        "competitors_mentioned": ["IMD", "Insparya", "Svenson", "Castellana Clinic", "Capilárea"],
-        "note": "❌ HC NO MENCIONADO. 5 competidores sí aparecen."
+        "mentions": [],
+        "note": "HC NOT mentioned. 0 brands found."
       },
       {
-        "id": "geo-003",
-        "prompt": "¿Dónde puedo hacerme un diagnóstico capilar completo en Madrid?",
-        "topic": "discovery",
-        "provider": "gemini",
-        "client_mentioned": true,
-        "client_position": 2,
-        "client_sentiment": "positive",
-        "client_context": "Ofrecen diagnóstico capilar personalizado con análisis tricoscópico y analítica.",
-        "competitors_mentioned": ["Grupo Pedro Jaén (#1)", "MED Medicina Estética (#3)", "IMD (#7)"],
-        "note": "✅ HC mencionado correctamente para diagnóstico"
-      },
-      {
-        "id": "geo-004",
-        "prompt": "Tengo 25 años y se me cae el pelo, ¿qué opciones de tratamiento tengo en España?",
-        "topic": "solution",
-        "provider": "gemini",
+        "id": "geo-02",
+        "niche": "n1",
+        "sub": "n1-s1",
+        "type": "recommendation",
+        "provider": "openai",
+        "prompt": "¿Cuál es la mejor clínica para tratar la alopecia en hombres jóvenes en Madrid?",
         "client_mentioned": false,
-        "client_position": null,
-        "competitors_mentioned": ["Insparya (citado)", "Svenson (citado)"],
-        "cited_domains": ["kellerhair.es", "grupopedrojaen.com", "insparya.es", "castellanaclinic.com"],
-        "note": "❌ HC citado como link pero NO nombrado en el texto. Gemini menciona 'clínicas en Madrid, Murcia y Pontevedra' pero no dice Hospital Capilar. Insparya y Svenson sí son nombrados."
+        "mentions": [],
+        "note": "HC NOT mentioned. 0 brands found."
+      },
+      {
+        "id": "geo-03",
+        "niche": "n1",
+        "sub": "n1-s1",
+        "type": "authority",
+        "provider": "openai",
+        "prompt": "¿Quién es el mejor especialista en alopecia juvenil en España?",
+        "client_mentioned": false,
+        "mentions": [],
+        "note": "HC NOT mentioned. 0 brands found."
+      },
+      {
+        "id": "geo-04",
+        "niche": "n2",
+        "sub": "n2-s1",
+        "type": "problem",
+        "provider": "openai",
+        "prompt": "Llevo 8 meses con minoxidil y no veo resultados. ¿Qué alternativas médicas existen para la caída del pelo?",
+        "client_mentioned": false,
+        "mentions": [],
+        "note": "HC NOT mentioned. 0 brands found."
+      },
+      {
+        "id": "geo-05",
+        "niche": "n2",
+        "sub": "n2-s1",
+        "type": "alternatives",
+        "provider": "openai",
+        "prompt": "Alternativas al minoxidil para la caída del pelo que funcionen de verdad en España",
+        "client_mentioned": false,
+        "mentions": [],
+        "note": "HC NOT mentioned. 0 brands found."
+      },
+      {
+        "id": "geo-06",
+        "niche": "n2",
+        "sub": "n2-s3",
+        "type": "recommendation",
+        "provider": "openai",
+        "prompt": "¿Dónde puedo hacerme un tratamiento de PRP capilar o mesoterapia en Madrid? ¿Qué clínica recomiendas?",
+        "client_mentioned": false,
+        "mentions": [],
+        "note": "HC NOT mentioned. 0 brands found."
+      },
+      {
+        "id": "geo-07",
+        "niche": "n2",
+        "sub": "n2-s3",
+        "type": "comparison",
+        "provider": "openai",
+        "prompt": "Compara los tratamientos capilares sin cirugía disponibles en Madrid: PRP, mesoterapia, láser capilar",
+        "client_mentioned": false,
+        "mentions": [],
+        "note": "HC NOT mentioned. 0 brands found."
+      },
+      {
+        "id": "geo-08",
+        "niche": "n2",
+        "sub": "n2-s3",
+        "type": "content_gap",
+        "provider": "openai",
+        "prompt": "Guía completa de tratamientos capilares sin cirugía en España: opciones, precios y resultados",
+        "client_mentioned": false,
+        "mentions": [],
+        "note": "HC NOT mentioned. 0 brands found."
+      },
+      {
+        "id": "geo-09",
+        "niche": "n3",
+        "sub": "n3-s1",
+        "type": "discovery",
+        "provider": "openai",
+        "prompt": "¿Dónde puedo hacerme un diagnóstico capilar completo con tricoscopia en Madrid?",
+        "client_mentioned": false,
+        "mentions": [],
+        "note": "HC NOT mentioned. 0 brands found."
+      },
+      {
+        "id": "geo-10",
+        "niche": "n3",
+        "sub": "n3-s1",
+        "type": "recommendation",
+        "provider": "openai",
+        "prompt": "Necesito un diagnóstico para saber por qué se me cae el pelo. ¿Qué clínica de Madrid hace estudios tricológicos completos?",
+        "client_mentioned": false,
+        "mentions": [],
+        "note": "HC NOT mentioned. 0 brands found."
+      },
+      {
+        "id": "geo-11",
+        "niche": "n3",
+        "sub": "n3-s3",
+        "type": "problem",
+        "provider": "openai",
+        "prompt": "Soy mujer de 35 años y se me cae mucho el pelo. ¿Qué tratamientos capilares hay para mujeres en Madrid?",
+        "client_mentioned": false,
+        "mentions": [],
+        "note": "HC NOT mentioned. 0 brands found."
+      },
+      {
+        "id": "geo-12",
+        "niche": "n3",
+        "sub": "n3-s3",
+        "type": "authority",
+        "provider": "openai",
+        "prompt": "¿Cuál es la mejor clínica para tratar la alopecia femenina en España?",
+        "client_mentioned": false,
+        "mentions": [],
+        "note": "HC NOT mentioned. 0 brands found."
+      },
+      {
+        "id": "geo-13",
+        "niche": "n4",
+        "sub": "n4-s1",
+        "type": "problem",
+        "provider": "openai",
+        "prompt": "Me hice un trasplante capilar hace 3 años y noto que el pelo se me vuelve a caer. ¿Qué puedo hacer?",
+        "client_mentioned": false,
+        "mentions": [],
+        "note": "HC NOT mentioned. 0 brands found."
+      },
+      {
+        "id": "geo-14",
+        "niche": "n4",
+        "sub": "n4-s1",
+        "type": "guide",
+        "provider": "openai",
+        "prompt": "Guía de mantenimiento después de un trasplante capilar: qué tratamientos necesito para que dure",
+        "client_mentioned": false,
+        "mentions": [],
+        "note": "HC NOT mentioned. 0 brands found."
+      },
+      {
+        "id": "geo-15",
+        "niche": "n5",
+        "sub": "n5-s1",
+        "type": "comparison",
+        "provider": "openai",
+        "prompt": "Compara las mejores clínicas capilares en Madrid: Hospital Capilar, Insparya, Svenson, IMD. ¿Cuál es mejor?",
+        "client_mentioned": true,
+        "mentions": [
+          {
+            "brand": "Hospital Capilar",
+            "position": 1,
+            "is_client": true
+          },
+          {
+            "brand": "Insparya",
+            "position": 2,
+            "is_client": false
+          },
+          {
+            "brand": "Svenson",
+            "position": 3,
+            "is_client": false
+          },
+          {
+            "brand": "IMD",
+            "position": 4,
+            "is_client": false
+          }
+        ],
+        "note": "HC mentioned. 4 brands found."
+      },
+      {
+        "id": "geo-16",
+        "niche": "n5",
+        "sub": "n5-s2",
+        "type": "alternatives",
+        "provider": "openai",
+        "prompt": "Alternativas a Insparya para tratamiento capilar en Madrid",
+        "client_mentioned": false,
+        "mentions": [
+          {
+            "brand": "Insparya",
+            "position": 1,
+            "is_client": false
+          },
+          {
+            "brand": "Capilclinic",
+            "position": 2,
+            "is_client": false
+          }
+        ],
+        "note": "HC NOT mentioned. 2 brands found."
+      },
+      {
+        "id": "gem-01",
+        "niche": "n1",
+        "sub": "n1-s1",
+        "type": "discovery",
+        "provider": "gemini",
+        "prompt": "25 años, caída pelo, opciones Madrid",
+        "client_mentioned": false,
+        "client_cited": true,
+        "mentions": [],
+        "note": "HC NOT in body text. Cited as URL only. Grupo Pedro Jaén #1, IMD, Laura Agrelo named."
+      },
+      {
+        "id": "gem-02",
+        "niche": "n2",
+        "sub": "n2-s1",
+        "type": "problem",
+        "provider": "gemini",
+        "prompt": "8 meses minoxidil sin resultados, alternativas España",
+        "client_mentioned": false,
+        "client_cited": true,
+        "mentions": [],
+        "note": "HC NOT in body text. Insparya cited. Generic treatment info. HC appears only as citation URL."
+      },
+      {
+        "id": "gem-03",
+        "niche": "n5",
+        "sub": "n5-s1",
+        "type": "comparison",
+        "provider": "gemini",
+        "prompt": "Compara HC vs Insparya vs Svenson",
+        "client_mentioned": true,
+        "client_cited": true,
+        "mentions": [
+          {
+            "brand": "Hospital Capilar",
+            "position": 1,
+            "is_client": true
+          },
+          {
+            "brand": "Insparya",
+            "position": 2,
+            "is_client": false
+          },
+          {
+            "brand": "Svenson",
+            "position": 3,
+            "is_client": false
+          }
+        ],
+        "note": "HC ranked #1 when asked by name. 'Destaca por enfoque médico riguroso'. Trustpilot advantage mentioned."
+      },
+      {
+        "id": "gem-04",
+        "niche": "n3",
+        "sub": "n3-s1",
+        "type": "discovery",
+        "provider": "gemini",
+        "prompt": "Diagnóstico capilar completo con tricoscopia Madrid",
+        "client_mentioned": true,
+        "client_cited": true,
+        "mentions": [
+          {
+            "brand": "Hospital Capilar",
+            "position": 2,
+            "is_client": true
+          },
+          {
+            "brand": "Grupo Pedro Jaén",
+            "position": 1,
+            "is_client": false
+          }
+        ],
+        "note": "HC #2 for diagnostic. Good description of services."
       }
     ],
     "summary": {
+      "total_runs": 20,
+      "providers_used": [
+        "openai (gpt-4o-mini)",
+        "gemini (2.5-flash via web_search)"
+      ],
       "client_visibility": {
-        "mentioned_in_pct": 50,
-        "avg_position": 2.0,
-        "sentiment_breakdown": { "positive": 100, "neutral": 0, "negative": 0 },
-        "mentioned_as": "cirugía/injerto/diagnóstico — NUNCA como referente en tratamientos"
+        "mentioned_in_pct": 15,
+        "mentioned_count": 3,
+        "total_runs": 20,
+        "by_provider": {
+          "openai": {
+            "total": 16,
+            "mentioned": 1,
+            "pct": 6
+          },
+          "gemini": {
+            "total": 4,
+            "mentioned": 2,
+            "pct": 50
+          }
+        },
+        "mentioned_as": "cirugía + opiniones. NEVER as treatment reference.",
+        "key_finding": "HC invisible to AIs for ALL treatment queries. Only appears when explicitly asked by name or for surgery/opinions."
       },
-      "competitor_visibility": [
-        { "brand": "IMD", "mentioned_in_pct": 75, "avg_position": 5, "appears_for": "tratamiento + ranking + diagnóstico" },
-        { "brand": "Insparya", "mentioned_in_pct": 75, "avg_position": 8, "appears_for": "tratamiento + ranking + jóvenes" },
-        { "brand": "Grupo Pedro Jaén", "mentioned_in_pct": 50, "avg_position": 1, "appears_for": "diagnóstico + jóvenes" },
-        { "brand": "Svenson", "mentioned_in_pct": 50, "avg_position": 4, "appears_for": "tratamiento + jóvenes" },
-        { "brand": "Castellana Clinic", "mentioned_in_pct": 50, "avg_position": 5, "appears_for": "tratamiento" },
-        { "brand": "Capilárea", "mentioned_in_pct": 25, "avg_position": 2, "appears_for": "tratamiento" }
-      ],
-      "top_cited_domains": [
-        { "domain": "grupopedrojaen.com", "count": 3, "type": "competitor" },
-        { "domain": "insparya.es", "count": 2, "type": "competitor" },
-        { "domain": "cun.es", "count": 2, "type": "medical_authority" },
-        { "domain": "topdoctors.es", "count": 2, "type": "directory" },
-        { "domain": "castellanaclinic.com", "count": 2, "type": "competitor" },
-        { "domain": "hospitalcapilar.com", "count": 2, "type": "own" }
-      ],
-      "key_findings": [
-        "🟢 HC aparece para queries de CIRUGÍA y DIAGNÓSTICO",
-        "🔴 HC NO aparece para queries de TRATAMIENTO (0/2 queries de tratamiento)",
-        "🔴 IMD e Insparya aparecen en 75% de las queries — mucho más visibles que HC",
-        "🔴 Cuando HC aparece, se describe como 'injertos capilares' — las IAs NO asocian HC con tratamientos",
-        "🟡 HC es citado como URL por Gemini (hospitalcapilar.com aparece en citations) pero no nombrado en texto para tratamientos",
-        "🔴 Grupo Pedro Jaén domina en diagnóstico (#1) — HC debería ser #1 con su tricoscopía + analítica"
-      ],
-      "limitations": "4 prompts × 1 provider (Gemini). Para análisis completo: 6 prompts × nicho × 4 providers (ChatGPT, Claude, Perplexity, Gemini) × 3 turns por prompt."
+      "per_subnicho": {
+        "n1-s1": {
+          "total": 4,
+          "mentioned": 0
+        },
+        "n2-s1": {
+          "total": 3,
+          "mentioned": 0
+        },
+        "n2-s3": {
+          "total": 3,
+          "mentioned": 0
+        },
+        "n3-s1": {
+          "total": 3,
+          "mentioned": 1
+        },
+        "n3-s3": {
+          "total": 2,
+          "mentioned": 0
+        },
+        "n4-s1": {
+          "total": 2,
+          "mentioned": 0
+        },
+        "n5-s1": {
+          "total": 2,
+          "mentioned": 2
+        },
+        "n5-s2": {
+          "total": 1,
+          "mentioned": 0
+        }
+      },
+      "competitor_visibility": {
+        "Grupo Pedro Jaén": {
+          "mentioned_pct": 25,
+          "appears_for": "diagnóstico, jóvenes"
+        },
+        "Insparya": {
+          "mentioned_pct": 15,
+          "appears_for": "comparativas, citaciones"
+        },
+        "IMD": {
+          "mentioned_pct": 10,
+          "appears_for": "tratamiento, clínicas Madrid"
+        },
+        "Svenson": {
+          "mentioned_pct": 10,
+          "appears_for": "comparativas"
+        }
+      }
     }
   },
-  "metadata": { "duration_seconds": 50, "apis_called": ["web_search (Gemini) × 4"], "errors": [] }
+  "metadata": {
+    "duration_seconds": 90,
+    "apis_called": [
+      "openai (16 prompts)",
+      "web_search/gemini (4 prompts)"
+    ],
+    "errors": []
+  }
 }
