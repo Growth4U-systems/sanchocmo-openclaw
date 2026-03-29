@@ -55,26 +55,28 @@ if command -v tailscale &> /dev/null; then
     INFRA_DETAIL="tailscale status failed"
   fi
 else
-  # --- VPS: nginx + Docker checks ---
+  # --- VPS: checks from inside the container ---
+  # Note: systemctl and docker CLI are NOT available inside the container.
+  # We verify the gateway is responsive (curl) and nginx is reachable
+  # via the proxied endpoint (if MC_BASE_URL is set in instance.json).
   INFRA_STATUS="ok"
   INFRA_DETAIL=""
   INFRA_ERRORS=""
 
-  # Check nginx
-  if command -v systemctl &> /dev/null && systemctl is-active --quiet nginx; then
-    INFRA_DETAIL="nginx: active"
+  # Check gateway is responsive
+  if curl -sf http://localhost:18789/healthz > /dev/null 2>&1; then
+    INFRA_DETAIL="gateway: responsive"
   else
     INFRA_STATUS="error"
-    INFRA_ERRORS="nginx not running"
+    INFRA_ERRORS="gateway not responding on :18789"
   fi
 
-  # Check Docker container
-  CONTAINER_STATE=$(docker inspect --format='{{.State.Status}}' sanchocmo 2>/dev/null || echo "not-found")
-  if [ "$CONTAINER_STATE" = "running" ]; then
-    INFRA_DETAIL="$INFRA_DETAIL, container: running"
+  # Check MC server is responsive
+  if curl -sf http://localhost:18790/mc/api/health-check > /dev/null 2>&1; then
+    INFRA_DETAIL="$INFRA_DETAIL, mc-server: responsive"
   else
     INFRA_STATUS="error"
-    INFRA_ERRORS="$INFRA_ERRORS, container: $CONTAINER_STATE"
+    INFRA_ERRORS="${INFRA_ERRORS:+$INFRA_ERRORS, }mc-server not responding on :18790"
   fi
 
   if [ "$INFRA_STATUS" = "error" ]; then

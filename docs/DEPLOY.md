@@ -60,7 +60,7 @@ The setup script installs Docker, nginx, certbot, configures SSL, and sets up UF
 bash docker/setup-vps.sh staging.sanchocmo.ai
 ```
 
-Replace `staging.sanchocmo.ai` with your actual domain. The script will prompt for your email address for Let's Encrypt certificate registration.
+Replace `staging.sanchocmo.ai` with your actual domain. The script derives a Let's Encrypt email from your domain (e.g., `admin@sanchocmo.ai`).
 
 ### 5. Configure environment and instance
 
@@ -74,16 +74,17 @@ nano .env
 Required values:
 
 ```env
-DISCORD_TOKEN=your_discord_bot_token
+ANTHROPIC_API_KEY=sk-ant-...
+DISCORD_BOT_TOKEN=your_discord_bot_token
 DISCORD_CLIENT_ID=your_discord_client_id
-ANTHROPIC_API_KEY=your_anthropic_api_key
+CERVANTES_GUILD_ID=your_infra_guild_id
 ```
 
 **`config/instance.json`** — set your Mission Control base URL:
 
 ```json
 {
-  "mc_base_url": "https://staging.sanchocmo.ai"
+  "mc_base_url": "https://staging.sanchocmo.ai/mc"
 }
 ```
 
@@ -102,13 +103,13 @@ docker compose up -d
 docker ps
 
 # Hit the health endpoint
-curl https://staging.sanchocmo.ai/health
+curl https://staging.sanchocmo.ai/mc/api/health-check
 
 # Stream logs
 docker logs sanchocmo --tail 50 -f
 
 # Check bot status inside container
-docker exec openclaw status
+docker exec sanchocmo openclaw status
 ```
 
 ---
