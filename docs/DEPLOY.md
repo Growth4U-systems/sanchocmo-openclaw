@@ -68,7 +68,9 @@ ssh root@<VPS IP>
 ssh-keygen -t ed25519 -C "vps@sanchocmo"
 cat ~/.ssh/id_ed25519.pub   # Add this to GitHub → Settings → SSH keys
 
-# Clone the repository
+# Clone the repository into ~/.openclaw (OpenClaw's default root directory).
+# This is required — OpenClaw expects its config, agents, and state here.
+# To use a different path, set OPENCLAW_HOME in .env and docker-compose.yml.
 git clone git@github.com:Growth4U-systems/sanchocmo-openclaw.git ~/.openclaw
 cd ~/.openclaw
 ```
