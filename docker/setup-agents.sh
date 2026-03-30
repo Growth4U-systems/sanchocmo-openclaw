@@ -46,12 +46,21 @@ for AGENT_NAME in sancho cervantes escudero rocinante; do
 
   echo "  + Registering $AGENT_NAME (model: $MODEL, workspace: $WORKSPACE)"
 
-  openclaw agents add "$AGENT_NAME" \
+  OUTPUT=$(openclaw agents add "$AGENT_NAME" \
     --workspace "$WORKSPACE" \
     --agent-dir "$AGENT_DIR" \
     --model "$MODEL" \
-    --non-interactive \
-    2>/dev/null || echo "    WARNING: Failed to register $AGENT_NAME"
+    --non-interactive 2>&1) && true
+  EXIT_CODE=$?
+
+  if [ $EXIT_CODE -eq 0 ]; then
+    echo "    OK"
+  elif echo "$OUTPUT" | grep -qi "already exists\|duplicate\|conflict"; then
+    echo "  ✓ $AGENT_NAME already registered (skipped)"
+  else
+    echo "    ERROR: Failed to register $AGENT_NAME"
+    echo "    $OUTPUT"
+  fi
 done
 
 echo ""
