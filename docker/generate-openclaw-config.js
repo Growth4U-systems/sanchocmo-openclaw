@@ -14,9 +14,13 @@ const https = require('https');
 const path = require('path');
 
 const OPENCLAW_ROOT = process.env.OPENCLAW_HOME || '/root/.openclaw';
-const OPENCLAW_JSON = path.join(OPENCLAW_ROOT, 'openclaw.json');
+const OPENCLAW_JSON = path.join(OPENCLAW_ROOT, '.openclaw', 'openclaw.json');
 
 async function main() {
+  // Ensure .openclaw directory exists
+  const configDir = path.dirname(OPENCLAW_JSON);
+  if (!fs.existsSync(configDir)) fs.mkdirSync(configDir, { recursive: true });
+
   // Load existing config or start fresh
   let config = {};
   if (fs.existsSync(OPENCLAW_JSON)) {
