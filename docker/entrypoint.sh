@@ -3,39 +3,31 @@ set -e
 
 cd /root/.openclaw
 
-# ===========================================================
-# 1. GENERATE OPENCLAW CONFIG
-#    Auto-detects Discord guilds, registers agents, creates
-#    bindings. Idempotent — merges with existing config.
-# ===========================================================
-echo "[entrypoint] Configuring OpenClaw..."
-node docker/generate-openclaw-config.js
+SETUP_DONE="/root/.openclaw/.setup-complete"
 
 # ===========================================================
-# 2. REGISTER AGENTS (if not already registered)
-#    Uses openclaw agents add CLI for proper registration.
+# 1-3. FIRST-RUN SETUP (skipped on restarts)
 # ===========================================================
-AGENT_COUNT=$(openclaw agents list --json 2>/dev/null | python3 -c "
-import json,sys
-try:
-    d=json.load(sys.stdin)
-    print(len([a for a in d.get('agents',[]) if a.get('name') != 'main']))
-except:
-    print('0')
-" 2>/dev/null || echo "0")
+if [ ! -f "$SETUP_DONE" ]; then
+  echo "[entrypoint] First run — configuring..."
 
-if [ "$AGENT_COUNT" -lt 4 ]; then
+  # 1. Generate openclaw.json from env vars + auto-detect Discord guilds
+  echo "[entrypoint] Generating OpenClaw config..."
+  node docker/generate-openclaw-config.js
+
+  # 2. Register agents
   echo "[entrypoint] Registering agents..."
   bash docker/setup-agents.sh
-fi
 
-# ===========================================================
-# 3. ENV VAR INJECTION INTO .md FILES
-#    Replace {UPPER_SNAKE_CASE} placeholders with env values.
-#    Allows SOUL.md, TOOLS.md etc. to reference MC_BASE_URL,
-#    CERVANTES_GUILD_ID, etc. without hardcoding.
-# ===========================================================
-bash docker/inject-env-vars.sh
+  # 3. Inject env vars into .md files
+  bash docker/inject-env-vars.sh
+
+  # Mark setup as complete
+  touch "$SETUP_DONE"
+  echo "[entrypoint] Setup complete."
+else
+  echo "[entrypoint] Setup already done, skipping config generation."
+fi
 
 # ===========================================================
 # 4. NODE DEPENDENCIES (ws for MC server)
