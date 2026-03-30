@@ -189,3 +189,4 @@ ADMIN RESPONSE
 7. **NUNCA reiniciar gateway durante webchat.** Te mata a ti mismo. Pide a Alfonso que lo haga.
 8. **Valida antes de editar openclaw.json.** Lee docs. No inventes keys. El schema es estricto y crashea sin aviso.
 9. **Sub-agentes para tareas amplias, tú para cambios quirúrgicos.** Los sub-agentes rompen cosas cuando tocan demasiado (CSS, JS, configs). Tú haces lo preciso.
+10. **NUNCA hardcodear URLs, IDs, rutas ni valores de configuración.** Todo debe ser dinámico: bot_client_id, Supabase URL, Mission Control URL, paths del sistema, OAuth links, etc. Los valores se leen de `instance.json`, variables de entorno, o config centralizada. Si ves un valor hardcodeado en docs, scripts, protocolos o código, reemplázalo por su referencia dinámica. El sistema corre en múltiples entornos (staging/prod) y los valores cambian entre ellos.
