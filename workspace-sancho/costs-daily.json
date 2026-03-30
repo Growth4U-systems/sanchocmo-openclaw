@@ -1,6 +1,6 @@
 {
   "period": "2026-03",
-  "updatedAt": "2026-03-29T08:04:38.915493",
+  "updatedAt": "2026-03-29T23:39:12.474573",
   "days": {
     "2026-03-01": {
       "total_usd": 44.4122,
@@ -594,7 +594,7 @@
           "turns": 0
         }
       },
-      "system_usd": 31.1709
+      "system_usd": 29.7403
     },
     "2026-03-23": {
       "total_usd": 74.3609,
@@ -624,8 +624,8 @@
       "system_usd": 51.3399
     },
     "2026-03-24": {
-      "total_usd": 278.3627,
-      "total_turns": 1473,
+      "total_usd": 266.2868,
+      "total_turns": 1429,
       "clients": {
         "hospital-capilar": {
           "cost_usd": 1.3393,
@@ -648,11 +648,11 @@
           "turns": 0
         }
       },
-      "system_usd": 188.0559
+      "system_usd": 175.98
     },
     "2026-03-25": {
-      "total_usd": 278.1998,
-      "total_turns": 1824,
+      "total_usd": 276.339,
+      "total_turns": 1822,
       "clients": {
         "hospital-capilar": {
           "cost_usd": 0,
@@ -675,11 +675,11 @@
           "turns": 0
         }
       },
-      "system_usd": 135.9388
+      "system_usd": 134.078
     },
     "2026-03-26": {
-      "total_usd": 224.9216,
-      "total_turns": 1715,
+      "total_usd": 221.9147,
+      "total_turns": 1706,
       "clients": {
         "hospital-capilar": {
           "cost_usd": 0,
@@ -702,11 +702,11 @@
           "turns": 3
         }
       },
-      "system_usd": 99.371
+      "system_usd": 95.8271
     },
     "2026-03-27": {
-      "total_usd": 72.7119,
-      "total_turns": 1367,
+      "total_usd": 72.5243,
+      "total_turns": 1356,
       "clients": {
         "hospital-capilar": {
           "cost_usd": 0.3263,
@@ -729,11 +729,11 @@
           "turns": 0
         }
       },
-      "system_usd": 15.9831
+      "system_usd": 15.7956
     },
     "2026-03-28": {
-      "total_usd": 5.6594,
-      "total_turns": 185,
+      "total_usd": 3.4755,
+      "total_turns": 68,
       "clients": {
         "hospital-capilar": {
           "cost_usd": 0,
@@ -756,15 +756,15 @@
           "turns": 0
         }
       },
-      "system_usd": 2.2069
+      "system_usd": 0.023
     },
     "2026-03-29": {
-      "total_usd": 2.2577,
-      "total_turns": 51,
+      "total_usd": 7.7258,
+      "total_turns": 243,
       "clients": {
         "hospital-capilar": {
           "cost_usd": 0,
-          "turns": 2
+          "turns": 3
         },
         "paymatico": {
           "cost_usd": 0,
@@ -776,14 +776,14 @@
         },
         "growth4u": {
           "cost_usd": 0,
-          "turns": 0
+          "turns": 4
         },
         "kleva": {
           "cost_usd": 0,
           "turns": 0
         }
       },
-      "system_usd": 0.2724
+      "system_usd": 5.2369
     }
   }
 }

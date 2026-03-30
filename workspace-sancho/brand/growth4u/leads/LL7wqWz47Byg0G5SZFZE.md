@@ -3,11 +3,11 @@ ghl_id: LL7wqWz47Byg0G5SZFZE
 contact_name: Jose Antonio Martinez Marcos
 email: apusmelba@hotmail.es
 phone: +34669691805
-company: null
+company: Máquinas Expendedoras (Vending)
 source: Facebook Ads (G4U - Testeo Creativos - Copy)
 date_added: 2026-03-27
-last_enriched: 2026-03-27T21:00:00Z
-enrichment_pending: true
+last_enriched: 2026-03-29T20:08:00Z
+enrichment_pending: false
 tags: [llamada-agendada, secuencia-seguimiento]
 budget: 10k-25k€
 ---
@@ -30,10 +30,14 @@ budget: 10k-25k€
   - Creative: Ángulo 2_V1
 
 ## Company Intelligence
-⚠️ **Enrichment pendiente** — No se encontró información pública de empresa asociada al contacto. Requiere:
-- Llamada de descubrimiento para identificar empresa/proyecto
-- Búsqueda manual en LinkedIn
-- Verificación durante primera conversación
+**Negocio**: Máquinas expendedoras (vending) en Asturias  
+**Modelo**: Propietario directo de máquinas, alquila ubicaciones pagando monto mensual fijo  
+**Situación actual**:
+- Facturación: ~30.000€/mes
+- Equipo: José Antonio + 1 empleado (reposición de máquinas)
+- 5 máquinas actuales en: hospitales, empresas, oficinas, calle 24h
+- Objetivo: Duplicar cantidad de máquinas (5 → 10+)
+- Gestión 100% tradicional, sin herramientas digitales
 
 ## Contact Enrichment
 - Email verificado en GHL ✅
@@ -41,13 +45,30 @@ budget: 10k-25k€
 - LinkedIn: No encontrado en búsqueda automática
 
 ## Call Transcripts
-### 2026-03-27 — Recording disponible
-🔗 [Audio en Drive](https://drive.google.com/file/d/1aVlY2tkvRJxUaSC7GDVL8i_1hHAkCcRt/view?usp=drivesdk)
+### 2026-03-27 — Primera llamada de descubrimiento
+🔗 [Audio en Drive](https://drive.google.com/file/d/1aVlY2tkvRJxUaSC7GDVL8i_1hHAkCcRt/view?usp=drivesdk) | Duración: ~7 minutos
 
-⚠️ **Transcript pendiente** — Audio recording (.m4a, 14MB) descargado pero no transcrito. Requiere:
-- Transcripción con Whisper/Assembly AI
-- Extracción de pain points y next steps
-- Actualización de este archivo con resumen
+**Pain Points identificados:**
+- Necesita más ubicaciones para expandir red de máquinas
+- Gestión 100% tradicional, sin presencia/herramientas digitales
+- No usa Google Meet, Zoom ni herramientas online → barrera de adopción tecnológica
+- Busca duplicar cantidad de máquinas (de 5 a ~10)
+- Depende de encontrar ubicaciones rentables manualmente
+
+**Next Steps acordados:**
+- Llamada de seguimiento agendada lunes/martes próxima semana (horario flexible: iniciativamente 2 atardeceres)
+- Growth4U enviará material sobre servicios + link de agendamiento
+- Objetivo reunión: profundizar en estrategias de crecimiento para vending
+
+**Key Quotes:**
+> "Pues eso, el crecimiento de la empresa" *(motivación principal)*  
+> "Mis clientes están en la calle. Son gente que compra. Lo que tengo son las posiciones con las máquinas"  
+> "Yo ahora tengo cinco, pues... duplicar o duplicar"
+
+**Observaciones:**
+- Lead cualificado (facturación 30k€/mes, objetivo claro de expansión)
+- Posible resistencia inicial a herramientas digitales (no conocía Google Meet)
+- Oportunidad: digitalizar proceso de búsqueda de ubicaciones + presencia online
 
 ## Campaign Performance Notes
 - Lead proveniente de Facebook Ads
@@ -55,11 +76,12 @@ budget: 10k-25k€
 - Budget declarado: 10k-25k€ → Lead cualificado (rango medio-alto)
 - Click-through desde Facebook → Calendar booking (conversión directa)
 
-## Next Steps
-1. Transcribir audio de llamada (2026-03-27)
-2. Actualizar con pain points y company context post-transcripción
-3. Verificar empresa durante seguimiento
-4. Re-enriquecer perfil una vez identificada la empresa
+## Sales Playbook
+**Recomendaciones para próxima llamada:**
+1. Enfocar en ROI tangible: "¿Cuántas ubicaciones más podrías gestionar con mejor visibilidad digital?"
+2. Caso de uso: Mapa interactivo de ubicaciones disponibles con filtros (zona, tráfico, perfil demográfico)
+3. Propuesta gradual: empezar con presencia digital básica (web + landing para propietarios de ubicaciones)
+4. Addressar barrera tecnológica: enfatizar simplicidad, soporte, no requiere tiempo diario
 
 ---
-*Lead file creado automáticamente por Lead Intelligence Hub | 2026-03-27*
+*Lead file creado: 2026-03-27 | Última actualización: 2026-03-29 (transcript procesado)*

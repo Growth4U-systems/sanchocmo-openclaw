@@ -15,18 +15,21 @@ memory/
 ```
 
 ## Daily Notes (memory/daily/)
-Active: 14 files
+Active: 24 files
 
-- 2026-03-16.md
-- 2026-03-14.md
-- 2026-03-13.md
-- 2026-03-12.md
-- 2026-03-11.md
-- ... and 9 more
+- 2026-03-26.md
+- 2026-03-25.md
+- 2026-03-24.md
+- 2026-03-23.md
+- 2026-03-22.md
+- ... and 19 more
 
 ## Topic Notes (memory/topics/)
-Total: 24 files
+Total: 27 files
 
+- alarife.md
+- 2026-03-22-recent-learnings.md
+- 2026-03-17-execution-engine-pdr.md
 - 2026-03-10-treatment-pricing.md
 - 2026-03-10-daily-crons.md
 - 2026-03-09-philippe-onboarding.md
@@ -62,16 +65,18 @@ Total: 24 files
 - backup-state.json
 - cost-alert.json
 - cost-data.json
+- dealcar-onboarding-state.json
 - foundation-state.json
 - healthcheck-state.json
 - heartbeat-state.json
 - onboarding-alexg-state.json
 - onboarding-state-growth4u.json
 - onboarding-state-kleva.json
+- onboarding-state-masavo.json
 - onboarding-state.json
 
 ## Archive (memory/archive/)
 Total: 5 files
 
 
-*Last updated: 2026-03-16 15:03*
+*Last updated: 2026-03-29 22:04*

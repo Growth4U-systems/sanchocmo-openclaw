@@ -79,7 +79,7 @@
       "name": "Regenerar Dashboard",
       "enabled": true,
       "createdAtMs": 1771950708148,
-      "updatedAtMs": 1774793033797,
+      "updatedAtMs": 1774807422274,
       "schedule": {
         "kind": "cron",
         "expr": "0 8,12,16,20 * * *",
@@ -97,11 +97,11 @@
         "channel": "last"
       },
       "state": {
-        "nextRunAtMs": 1774807200000,
-        "lastRunAtMs": 1774792800012,
+        "nextRunAtMs": 1774850400000,
+        "lastRunAtMs": 1774807200031,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 233785,
+        "lastDurationMs": 222243,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0,
         "lastDelivered": false
@@ -148,7 +148,7 @@
       "name": "Memory Maintenance",
       "enabled": true,
       "createdAtMs": 1771950722307,
-      "updatedAtMs": 1774217567460,
+      "updatedAtMs": 1774814732084,
       "schedule": {
         "kind": "cron",
         "expr": "0 22 * * 0",
@@ -166,11 +166,11 @@
         "channel": "last"
       },
       "state": {
-        "nextRunAtMs": 1774814400000,
-        "lastRunAtMs": 1774213200129,
+        "nextRunAtMs": 1775419200000,
+        "lastRunAtMs": 1774814400013,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 101260,
+        "lastDurationMs": 332071,
         "lastDelivered": false,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0
@@ -232,7 +232,8 @@
         "lastDurationMs": 1616285,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0,
-        "lastDelivered": false
+        "lastDelivered": false,
+        "runningAtMs": 1774832400003
       }
     },
     {
@@ -241,7 +242,7 @@
       "name": "healthcheck",
       "enabled": true,
       "createdAtMs": 1772069609685,
-      "updatedAtMs": 1774782937786,
+      "updatedAtMs": 1774826125896,
       "schedule": {
         "kind": "every",
         "everyMs": 21600000,
@@ -261,16 +262,14 @@
         "channel": "last"
       },
       "state": {
-        "nextRunAtMs": 1774804510423,
-        "lastRunAtMs": 1774782910423,
-        "lastRunStatus": "error",
-        "lastStatus": "error",
-        "lastDurationMs": 27363,
+        "nextRunAtMs": 1774847710460,
+        "lastRunAtMs": 1774826110460,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 15436,
         "lastDeliveryStatus": "not-delivered",
-        "consecutiveErrors": 1,
-        "lastDelivered": false,
-        "lastError": "⚠️ ✉️ Message: `⚠️ Health Check — 29/03/2026 13:15` failed",
-        "lastDeliveryError": "⚠️ ✉️ Message: `⚠️ Health Check — 29/03/2026 13:15` failed"
+        "consecutiveErrors": 0,
+        "lastDelivered": false
       }
     },
     {
@@ -280,7 +279,7 @@
       "description": "T-022: Run cost-tracker.py daily at 23:00",
       "enabled": true,
       "createdAtMs": 1772069993394,
-      "updatedAtMs": 1774740175549,
+      "updatedAtMs": 1774820355682,
       "schedule": {
         "kind": "cron",
         "expr": "0 23 * * *"
@@ -297,11 +296,11 @@
         "channel": "webchat"
       },
       "state": {
-        "nextRunAtMs": 1774818000000,
-        "lastRunAtMs": 1774740016011,
+        "nextRunAtMs": 1774904400000,
+        "lastRunAtMs": 1774820330113,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 159538,
+        "lastDurationMs": 25569,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0,
         "lastDelivered": false
@@ -782,7 +781,7 @@
       "name": "Lead Sync — Growth4U",
       "enabled": true,
       "createdAtMs": 1774192173315,
-      "updatedAtMs": 1774731760665,
+      "updatedAtMs": 1774815133653,
       "schedule": {
         "kind": "cron",
         "expr": "0 22 * * *",
@@ -799,11 +798,11 @@
         "mode": "none"
       },
       "state": {
-        "nextRunAtMs": 1774814400000,
-        "lastRunAtMs": 1774731600012,
+        "nextRunAtMs": 1774900800000,
+        "lastRunAtMs": 1774814732084,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 160653,
+        "lastDurationMs": 401569,
         "lastDelivered": false,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0
@@ -816,7 +815,7 @@
       "name": "Call Prep Daily — Growth4U",
       "enabled": true,
       "createdAtMs": 1774192180766,
-      "updatedAtMs": 1774560741312,
+      "updatedAtMs": 1774816254308,
       "schedule": {
         "kind": "cron",
         "expr": "30 22 * * 0-4",
@@ -833,11 +832,11 @@
         "mode": "none"
       },
       "state": {
-        "nextRunAtMs": 1774816200000,
-        "lastRunAtMs": 1774560600012,
+        "nextRunAtMs": 1774902600000,
+        "lastRunAtMs": 1774816200011,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 141300,
+        "lastDurationMs": 54297,
         "lastDelivered": false,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0

@@ -22,7 +22,16 @@
 - **Dealcar** — Nuevo cliente (Mar 22). Foundation pendiente.
 - **Kleva** — Prospect (taste test). Foundation lite.
 
+## Trust Engine Findings (Hospital Capilar)
+- **v5 built** (Mar 24): PDR v5, SKILL.md v5.0, 10 subcommands, MC inline
+- **Execution HC** (Mar 25): 9/9 modules complete
+- **HC visibility**: #1 surgery keywords (clinica capilar madrid 1900/mo), **INVISIBLE treatment** (0/12 top 10)
+- **Invisible volume**: >4,000 searches/month treatment keywords
+- Missing: alopecia androgenética tratamiento (1300/mo), PRP capilar (720/mo), caída pelo mujer (590/mo)
+- DATA: DataForSEO (credentials ok), Serper.dev (ok), Own media (IG 133K, YT 40K, LinkedIn 7.8K, TikTok 55K)
+
 ## Pending
+- HC Foundation desde cero (DAG a seguir)
 - Scripts Python niche-discovery-100x: SIGTERM → workaround: web_search
 
 ## Learnings Clave
