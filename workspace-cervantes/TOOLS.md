@@ -63,7 +63,7 @@
 
 ## Onboarding Clientes
 - **Plantilla Discord**: https://discord.new/mnXBVkNQqFBk
-- **OAuth Bot**: https://discord.com/oauth2/authorize?client_id=1475635406610628769&permissions=8&integration_type=0&scope=bot
+- **OAuth Bot**: `https://discord.com/oauth2/authorize?client_id={BOT_CLIENT_ID}&permissions=8&integration_type=0&scope=bot` (leer `BOT_CLIENT_ID` de `~/.openclaw/workspace-sancho/_system/instance.json → discord.bot_client_id`)
 - **Procedimiento**: `~/.openclaw/workspace-sancho/_system/client-onboarding.md`
 - **Script**: `~/.openclaw/workspace-sancho/scripts/new-client.sh --slug X --name Y --guild Z`
 
