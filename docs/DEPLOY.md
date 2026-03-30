@@ -96,6 +96,15 @@ DISCORD_CLIENT_ID=your_discord_client_id
 CERVANTES_GUILD_ID=your_infra_guild_id
 ```
 
+**`openclaw.json`** — OpenClaw gateway configuration (must be at repo root):
+
+```bash
+cp config/openclaw.json.example openclaw.json
+nano openclaw.json
+# Set gateway.auth.token (generate with: openssl rand -hex 24)
+# Set workspace path if needed
+```
+
 **`config/instance.json`** — copy from example and set your values:
 
 ```bash

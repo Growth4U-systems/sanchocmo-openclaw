@@ -3,6 +3,14 @@ set -e
 
 cd /root/.openclaw
 
+# Ensure openclaw.json exists
+if [ ! -f openclaw.json ]; then
+  echo "[entrypoint] ERROR: openclaw.json not found."
+  echo "  Copy from example: cp config/openclaw.json.example openclaw.json"
+  echo "  Then edit with your gateway token and API keys."
+  exit 1
+fi
+
 # Start OpenClaw gateway in background (foreground mode, no systemd)
 echo "[entrypoint] Starting OpenClaw gateway..."
 openclaw gateway run &
