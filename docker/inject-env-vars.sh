@@ -2,7 +2,7 @@
 # inject-env-vars.sh — Replace {UPPER_SNAKE_CASE} placeholders in .md files
 # with actual environment variable values.
 # Only processes whitelisted files. Lowercase placeholders ({slug}, {mcToken}) are untouched.
-set -euo pipefail
+set -uo pipefail
 
 OPENCLAW_ROOT="${OPENCLAW_HOME:-/root/.openclaw}"
 
