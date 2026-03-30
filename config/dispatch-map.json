@@ -3,21 +3,22 @@
   "dispatch_mode": "sessions",
   "note": "v3: Channel roles (decision/execution/intelligence/support). Sancho respects channel context.",
   "channel_roles": {
-    "decision": {
+    "estrategia": {
       "description": "No execution. Propose, discuss, redirect.",
-      "channels": ["general", "brand", "campaigns"],
+      "channels": ["general", "onboarding", "marketing-inbox", "projects", "research"],
       "rules": {
         "general": "Only respond when @mentioned. Never execute skills.",
-        "brand": "Post-onboarding only. Consult and update existing brand, never create from scratch. Show file links.",
-        "campaigns": "Propose and plan only. Execution goes to execution channels."
+        "onboarding": "Full Foundation creation. Iterative flow. Recommend archiving when done.",
+        "marketing-inbox": "Triage incoming requests. Route to appropriate execution channels.",
+        "projects": "Propose and plan only. Execution goes to execution channels.",
+        "research": "Deep research, competitive intelligence, market analysis."
       }
     },
-    "execution": {
+    "ejecucion": {
       "description": "Create and execute. Skills run here.",
-      "channels": ["onboarding", "content", "paid-ads", "prospecting", "creatives", "web", "partners"],
+      "channels": ["partners", "prospecting", "content", "paid-ads", "creatives", "web"],
       "rules": {
-        "onboarding": "Full Foundation creation. Iterative flow. Recommend archiving when done.",
-        "content": "Create content. Ideas come from intelligence → campaigns → here.",
+        "content": "Create content. Ideas come from intelligence → projects → here.",
         "paid-ads": "Create ad copy, creatives, setup Meta/Google accounts.",
         "prospecting": "Find companies, decision makers, build outreach sequences.",
         "creatives": "Visual identity, marketing creatives.",
@@ -25,18 +26,13 @@
         "partners": "Find partners, create collaboration proposals."
       }
     },
-    "intelligence": {
-      "description": "Gather insights, detect patterns, feed decisions.",
-      "channels": ["research", "intelligence", "learning"],
+    "sistema": {
+      "description": "Insights, feedback, escalation.",
+      "channels": ["insights", "soporte"],
       "rules": {
-        "research": "Deep research, competitive intelligence, market analysis.",
-        "intelligence": "Signals, patterns, daily pulse, meeting intelligence. Ideas go to #campaigns.",
-        "learning": "CRM analysis, last 30 days trends, self-intelligence."
+        "insights": "Signals, patterns, daily pulse, meeting intelligence.",
+        "soporte": "Bugs, feedback, escalation to Cervantes."
       }
-    },
-    "support": {
-      "description": "Bugs, feedback, escalation to Cervantes.",
-      "channels": ["soporte"]
     }
   },
   "flow": "intelligence → campaigns (propose) → user approves → execution channels → brand (if update needed)",
@@ -105,21 +101,9 @@
       "brand_context": ["competitors.md", "market.md", "learnings.md"]
     }
   },
-  "discord_channels": {
-    "general": "1487998376275607694",
-    "onboarding": "1485748690214850670",
-    "marketing-inbox": "1487996602177159293",
-    "projects": "1485748694904082584",
-    "research": "1485748692593152218",
-    "partners": "1485748714588078340",
-    "prospecting": "1485748708292169931",
-    "content": "1485748699710886078",
-    "paid-ads": "1485748702936170598",
-    "creatives": "1485748719495413991",
-    "web": "1485748711333036114",
-    "insights": "1485748726898364558",
-    "soporte": "1485748732728311839"
-  },
+  "discord_channels_note": "Channel IDs are resolved per-client from brand/{slug}/sources.json. No hardcoded IDs here.",
+  "client_channels": ["general", "onboarding", "marketing-inbox", "projects", "research", "partners", "prospecting", "content", "paid-ads", "creatives", "web", "insights", "soporte"],
+  "cervantes_channels": ["skills", "bugs", "infra", "tasks", "ideas", "nuevo-cliente"],
   "qa_agent": {
     "id": "rocinante",
     "method": "sessions_send",
