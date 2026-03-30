@@ -22,6 +22,13 @@ if [ ! -f "$SETUP_DONE" ]; then
   # 3. Inject env vars into .md files
   bash docker/inject-env-vars.sh
 
+  # 4. Link cron jobs to where OpenClaw expects them
+  mkdir -p .openclaw/cron
+  if [ -f cron/jobs.json ] && [ ! -f .openclaw/cron/jobs.json ]; then
+    ln -sf /root/.openclaw/cron/jobs.json .openclaw/cron/jobs.json
+    echo "[entrypoint] Linked cron jobs ($(python3 -c "import json; print(len(json.load(open('cron/jobs.json')).get('jobs',[])))" 2>/dev/null || echo '?') jobs)"
+  fi
+
   # Mark setup as complete
   touch "$SETUP_DONE"
   echo "[entrypoint] Setup complete."
