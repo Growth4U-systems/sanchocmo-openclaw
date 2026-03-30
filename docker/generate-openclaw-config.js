@@ -80,6 +80,7 @@ async function main() {
   if (!config.channels) config.channels = {};
   if (!config.channels.discord) config.channels.discord = {};
   config.channels.discord.enabled = true;
+  if (discordToken) config.channels.discord.token = discordToken;
   config.channels.discord.groupPolicy = 'allowlist';
   config.channels.discord.replyToMode = 'first';
   if (!config.channels.discord.threadBindings) config.channels.discord.threadBindings = {};
