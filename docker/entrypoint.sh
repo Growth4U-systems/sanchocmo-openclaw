@@ -3,12 +3,29 @@ set -e
 
 cd /root/.openclaw
 
-# Ensure openclaw.json exists
+# First-run setup: generate openclaw.json if missing
 if [ ! -f openclaw.json ]; then
-  echo "[entrypoint] ERROR: openclaw.json not found."
-  echo "  Copy from example: cp config/openclaw.json.example openclaw.json"
-  echo "  Then edit with your gateway token and API keys."
-  exit 1
+  echo "[entrypoint] First run detected — running openclaw setup..."
+  openclaw setup --non-interactive 2>/dev/null || openclaw setup 2>/dev/null || {
+    echo "[entrypoint] ERROR: openclaw setup failed."
+    echo "  Copy from example: cp config/openclaw.json.example openclaw.json"
+    exit 1
+  }
+fi
+
+# Register agents if not yet configured
+AGENT_COUNT=$(openclaw agents list --json 2>/dev/null | python3 -c "
+import json,sys
+try:
+    d=json.load(sys.stdin)
+    print(len([a for a in d.get('agents',[]) if a.get('name') != 'main']))
+except:
+    print('0')
+" 2>/dev/null || echo "0")
+
+if [ "$AGENT_COUNT" -lt 4 ]; then
+  echo "[entrypoint] Registering agents..."
+  bash docker/setup-agents.sh
 fi
 
 # Install Node dependencies if needed (e.g., ws for MC server)
