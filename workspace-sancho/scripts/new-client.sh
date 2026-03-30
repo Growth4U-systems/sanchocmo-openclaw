@@ -898,10 +898,12 @@ else:
 
 # --- 8. Gateway restart ---
 echo "🔄 Restarting gateway..."
-if command -v openclaw &>/dev/null; then
-  openclaw gateway restart 2>/dev/null && echo "   ✅ Gateway reiniciado" || echo "   ⚠️ Gateway restart falló — reiniciar manualmente"
+if docker exec sanchocmo openclaw gateway restart 2>/dev/null; then
+  echo "   ✅ Gateway reiniciado (via docker exec)"
+elif command -v openclaw &>/dev/null && openclaw gateway restart 2>/dev/null; then
+  echo "   ✅ Gateway reiniciado (local)"
 else
-  echo "   ⚠️ openclaw CLI no encontrado — reiniciar gateway manualmente"
+  echo "   ⚠️ Gateway restart falló — ejecutar manualmente: docker compose restart"
 fi
 
 # --- 8b. Crear crons recurrentes desde templates ---

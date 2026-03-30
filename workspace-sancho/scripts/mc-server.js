@@ -9197,7 +9197,7 @@ async function doTest() {
   if (url === '/api/restart-gateway') {
     res.setHeader('Access-Control-Allow-Origin', '*');
     try {
-      execSync('/opt/homebrew/bin/openclaw gateway restart 2>&1', { timeout: 30000, encoding: 'utf-8' });
+      execSync('openclaw gateway restart 2>&1', { timeout: 30000, encoding: 'utf-8' });
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ ok: true }));
     } catch (e) {
