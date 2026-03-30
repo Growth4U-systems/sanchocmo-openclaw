@@ -877,7 +877,7 @@ PHILIPPE=$(echo "$ADMIN_USERS" | cut -d' ' -f3)
 python3 -c "
 import json
 
-config_path = '${OPENCLAW_HOME:-$HOME/.openclaw}/openclaw.json'
+config_path = '${OPENCLAW_HOME:-$HOME/.openclaw}/.openclaw/openclaw.json'
 with open(config_path, 'r') as f:
     config = json.load(f)
 

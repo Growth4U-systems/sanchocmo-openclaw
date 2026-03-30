@@ -41,7 +41,7 @@ import tempfile
 import copy
 
 OPENCLAW_HOME = os.environ.get("OPENCLAW_HOME", os.path.expanduser("~/.openclaw"))
-OPENCLAW_JSON = os.path.join(OPENCLAW_HOME, "openclaw.json")
+OPENCLAW_JSON = os.path.join(OPENCLAW_HOME, ".openclaw", "openclaw.json")
 
 # Allowed user IDs — loaded from instance config
 _INSTANCE_JSON = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "_system", "instance.json")

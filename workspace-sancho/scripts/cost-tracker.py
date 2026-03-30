@@ -143,7 +143,7 @@ def _resolve_via_discord_api(channels, cache):
     import urllib.request
     
     # Read bot token from openclaw config
-    config_path = Path.home() / ".openclaw" / "openclaw.json"
+    config_path = Path.home() / ".openclaw" / ".openclaw" / "openclaw.json"
     if not config_path.exists():
         return
     

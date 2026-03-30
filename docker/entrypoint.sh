@@ -3,7 +3,7 @@ set -e
 
 cd /root/.openclaw
 
-OPENCLAW_CONFIG="/root/.openclaw/openclaw.json"
+OPENCLAW_CONFIG="/root/.openclaw/.openclaw/openclaw.json"
 
 # ===========================================================
 # 1-4. SETUP (runs if openclaw.json is missing)
@@ -22,11 +22,11 @@ if [ ! -f "$OPENCLAW_CONFIG" ]; then
   # 3. Inject env vars into .md files
   bash docker/inject-env-vars.sh
 
-  # 4. Verify cron jobs are available (mounted via volume)
-  if [ -f cron/jobs.json ]; then
-    echo "[entrypoint] Cron jobs found ($(python3 -c "import json; print(len(json.load(open('cron/jobs.json')).get('jobs',[])))" 2>/dev/null || echo '?') jobs)"
-  else
-    echo "[entrypoint] WARNING: cron/jobs.json not found"
+  # 4. Link cron jobs to where OpenClaw expects them
+  mkdir -p .openclaw/cron
+  if [ -f cron/jobs.json ] && [ ! -f .openclaw/cron/jobs.json ]; then
+    ln -sf /root/.openclaw/cron/jobs.json .openclaw/cron/jobs.json
+    echo "[entrypoint] Linked cron jobs ($(python3 -c "import json; print(len(json.load(open('cron/jobs.json')).get('jobs',[])))" 2>/dev/null || echo '?') jobs)"
   fi
 
   echo "[entrypoint] Setup complete."

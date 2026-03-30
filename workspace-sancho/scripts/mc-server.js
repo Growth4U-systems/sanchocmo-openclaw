@@ -5145,7 +5145,7 @@ p{color:#5D5348;font-size:16px;margin:0;}
 
 const MC_CHAT_SECRET = (() => {
   try {
-    const cfg = JSON.parse(fs.readFileSync(path.join(BASE, '..', 'openclaw.json'), 'utf-8'));
+    const cfg = JSON.parse(fs.readFileSync(path.join(BASE, '..', '.openclaw', 'openclaw.json'), 'utf-8'));
     return cfg.channels?.['mc-chat']?.sharedSecret || '';
   } catch { return ''; }
 })();
@@ -10176,7 +10176,7 @@ const { WebSocketServer, WebSocket: WsClient } = require('ws');
 const GATEWAY_URL = 'ws://127.0.0.1:18789';
 const GATEWAY_AUTH = (() => {
   try {
-    const cfg = JSON.parse(fs.readFileSync(path.join(path.dirname(__dirname), '..', 'openclaw.json'), 'utf-8'));
+    const cfg = JSON.parse(fs.readFileSync(path.join(path.dirname(__dirname), '..', '.openclaw', 'openclaw.json'), 'utf-8'));
     return cfg.gateway?.auth || {};
   } catch { return {}; }
 })();
