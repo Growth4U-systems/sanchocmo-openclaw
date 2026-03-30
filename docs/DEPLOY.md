@@ -1,6 +1,6 @@
 # SanchoCMO — VPS Deploy Guide
 
-This guide covers deploying SanchoCMO to a VPS using Docker Compose and nginx. A basic familiarity with Linux and Docker is assumed.
+Deploy SanchoCMO to a VPS using Docker Compose and nginx.
 
 ---
 
@@ -13,7 +13,7 @@ This guide covers deploying SanchoCMO to a VPS using Docker Compose and nginx. A
 | Block storage | 10 GB volume mounted at `/mnt/data` (for data snapshots) |
 | Domain | A record pointing to VPS IP |
 | GitHub SSH key | On the VPS, for Cervantes backups |
-| Discord | Bot token + client ID |
+| Discord | Bot token + client ID + Message Content Intent enabled |
 | Anthropic | API key |
 
 > **No Hetzner volume?** Set `SNAPSHOT_DATA_DIR=/path/to/your/storage` in `.env` to store snapshots elsewhere.
@@ -52,7 +52,12 @@ Value: <VPS IP>
 TTL:  300
 ```
 
-Wait for DNS propagation before proceeding (usually a few minutes).
+**Verify DNS propagation before proceeding** (certbot will fail otherwise):
+
+```bash
+dig staging.sanchocmo.ai +short
+# Should return your VPS IP
+```
 
 ### 3. SSH into the VPS and clone the repo
 
@@ -70,17 +75,17 @@ cd ~/.openclaw
 
 ### 4. Run setup script
 
-The setup script installs Docker, nginx, certbot, configures SSL, and sets up UFW firewall rules.
+Installs Docker, nginx, certbot, configures SSL, and sets up UFW firewall.
 
 ```bash
 bash docker/setup-vps.sh staging.sanchocmo.ai
 ```
 
-Replace `staging.sanchocmo.ai` with your actual domain. The script derives a Let's Encrypt email from your domain (e.g., `admin@sanchocmo.ai`).
+Replace `staging.sanchocmo.ai` with your actual domain.
 
 ### 5. Configure
 
-Only two files need manual configuration. Everything else is auto-generated on first startup.
+Three files need manual configuration. Everything else is auto-generated on first startup.
 
 **`.env`** — copy from example and fill in your secrets:
 
@@ -113,13 +118,13 @@ cp config/clients.json.example config/clients.json
 nano config/clients.json
 ```
 
-> **Note:** `openclaw.json` is auto-generated on first startup. The entrypoint detects Discord guilds, registers agents (sancho, cervantes, escudero, rocinante), and creates bindings automatically. No manual OpenClaw configuration needed.
-
 ### 6. Launch
 
 ```bash
 docker compose up -d
 ```
+
+First launch builds the Docker image (~2-3 minutes), generates `openclaw.json`, registers agents (sancho, cervantes, escudero, rocinante), and auto-detects Discord guilds.
 
 ### 7. Verify
 
@@ -135,6 +140,35 @@ docker logs sanchocmo --tail 50 -f
 
 # Check bot status inside container
 docker exec sanchocmo openclaw status
+```
+
+### 8. Approve your Discord user
+
+The first time you message the bot, it will ask you to approve your device. Run the command it shows you:
+
+```bash
+docker exec sanchocmo openclaw pairing approve discord <PAIRING_CODE>
+```
+
+After approval, the bot will respond to your messages in all configured guilds.
+
+---
+
+## What happens on first startup
+
+The entrypoint automatically:
+
+1. **Generates `openclaw.json`** — detects Discord guilds via API, binds client guilds to sancho and infra guild to cervantes
+2. **Registers agents** — sancho (Opus), cervantes (Opus), escudero (Sonnet), rocinante (Opus)
+3. **Injects env vars** — replaces `{MC_BASE_URL}`, `{CERVANTES_GUILD_ID}`, etc. in SOUL.md and protocol files
+4. **Installs dependencies** — `npm install` for MC server (ws module)
+5. **Generates dashboard** — runs `regenerate.py` for Mission Control HTML/JS
+
+A `.setup-complete` flag prevents re-running setup on container restarts. To force re-setup:
+
+```bash
+rm ~/.openclaw/.setup-complete
+docker compose restart
 ```
 
 ---
@@ -227,6 +261,17 @@ SSH keys:        ~/.ssh/              (bind-mounted read-only for git push)
 Data snapshots:  /mnt/data/snapshots/ (Hetzner volume, every 3h)
 ```
 
+**Auto-configuration flow:**
+```
+.env (secrets) + Discord API (guild detection)
+        ↓
+generate-openclaw-config.js
+        ↓
+.openclaw/openclaw.json (agents, bindings, guilds)
+        ↓
+openclaw gateway run (reads config, connects to Discord)
+```
+
 ---
 
 ## Troubleshooting
@@ -234,9 +279,12 @@ Data snapshots:  /mnt/data/snapshots/ (Hetzner volume, every 3h)
 | Symptom | What to check |
 |---|---|
 | Container won't start | `docker logs sanchocmo` — look for missing env vars or config errors |
-| Bot online but not responding | Check logs for guild detection: `docker logs sanchocmo \| grep "Guild binding"`. If no guilds found, verify `DISCORD_BOT_TOKEN` in `.env` and that the bot is invited to your Discord servers |
+| Bot online but not responding | Approve your device: `docker exec sanchocmo openclaw pairing approve discord <CODE>` |
+| Bot responds in DM but not in server | Check guild bindings: `docker exec sanchocmo openclaw agents bindings` |
+| No guilds detected | Verify `DISCORD_BOT_TOKEN` in `.env` and that the bot is invited to your Discord servers |
 | nginx returns 502 | Container is down. Check `docker ps` and `curl localhost:18790/mc/api/health-check` |
+| nginx won't start (SSL error) | `curl -o /etc/letsencrypt/options-ssl-nginx.conf https://raw.githubusercontent.com/certbot/certbot/master/certbot-nginx/certbot_nginx/_internal/tls_configs/options-ssl-nginx.conf` |
 | SSL certificate expired | `certbot renew && systemctl reload nginx` |
 | Can't push to GitHub from container | `docker exec sanchocmo ssh -T git@github.com` — verify SSH key is mounted |
 | Port already in use | `ss -tlnp \| grep <port>` to find the conflicting process |
-| Need to reconfigure agents | Delete `openclaw.json` and restart: `rm ~/.openclaw/openclaw.json && docker compose restart` |
+| Need to reconfigure agents/guilds | `rm ~/.openclaw/.setup-complete && docker compose restart` |

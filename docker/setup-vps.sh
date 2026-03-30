@@ -58,6 +58,16 @@ certbot certonly --standalone \
   -d "$DOMAIN" \
   || { echo "ERROR: certbot failed. Is DNS pointing to this server?"; exit 1; }
 
+# Ensure SSL hardening files exist (certbot standalone doesn't create them)
+if [ ! -f /etc/letsencrypt/options-ssl-nginx.conf ]; then
+  curl -so /etc/letsencrypt/options-ssl-nginx.conf \
+    https://raw.githubusercontent.com/certbot/certbot/master/certbot-nginx/certbot_nginx/_internal/tls_configs/options-ssl-nginx.conf
+fi
+if [ ! -f /etc/letsencrypt/ssl-dhparams.pem ]; then
+  curl -so /etc/letsencrypt/ssl-dhparams.pem \
+    https://raw.githubusercontent.com/certbot/certbot/master/certbot/certbot/ssl-dhparams.pem
+fi
+
 # --- Step 5: Configure nginx ---
 echo "[5/6] Configuring nginx..."
 sed "s/DOMAIN/$DOMAIN/g" "$SCRIPT_DIR/nginx.conf.template" \
