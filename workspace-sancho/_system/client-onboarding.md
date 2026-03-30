@@ -16,7 +16,10 @@ Esto crea automáticamente todos los canales y categorías estándar de SanchoCM
 
 El cliente añade el bot a su servidor:
 
-**👉 https://discord.com/oauth2/authorize?client_id=1475635406610628769&permissions=8&integration_type=0&scope=bot**
+**👉 `https://discord.com/oauth2/authorize?client_id={BOT_CLIENT_ID}&permissions=8&integration_type=0&scope=bot`**
+
+> ⚠️ Reemplazar `{BOT_CLIENT_ID}` con el valor de `_system/instance.json → discord.bot_client_id`.
+> `new-client.sh --help` muestra el link correcto automáticamente.
 
 ## Paso 3: Configurar OpenClaw (Cervantes)
 
@@ -55,7 +58,7 @@ openclaw gateway restart
 | Qué | URL |
 |-----|-----|
 | Plantilla Discord | https://discord.new/mnXBVkNQqFBk |
-| OAuth Bot | https://discord.com/oauth2/authorize?client_id=1475635406610628769&permissions=8&integration_type=0&scope=bot |
+| OAuth Bot | Dinámico — ver `instance.json → discord.bot_client_id` |
 | Supabase | https://psapmujzxhaxraphddlv.supabase.co |
-| Mission Control | {MC_BASE_URL} |
-| Docs (público) | {MC_BASE_URL}/docs/ |
+| Mission Control | https://staging.sanchocmo.ai/mc |
+| Docs (público) | https://staging.sanchocmo.ai/mc/docs/ |

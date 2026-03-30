@@ -47,6 +47,11 @@ if [[ -d "$BRAND_DIR" ]]; then
   exit 1
 fi
 
+# --- Read bot_client_id from instance.json ---
+INSTANCE_JSON="$WORKSPACE/_system/instance.json"
+BOT_CLIENT_ID=$(python3 -c "import json; print(json.load(open('$INSTANCE_JSON'))['discord']['bot_client_id'])" 2>/dev/null || echo "UNKNOWN")
+OAUTH_URL="https://discord.com/oauth2/authorize?client_id=${BOT_CLIENT_ID}&permissions=8&integration_type=0&scope=bot"
+
 echo "🔨 Onboarding: $NAME (slug: $SLUG, guild: $GUILD)"
 
 # --- 1. Crear estructura de archivos ---
@@ -828,22 +833,7 @@ else:
     print("   ⏭️ Ya existe en clients.json")
 PYJSON
 
-# --- 4. Actualizar clients.js (Mission Control) ---
-echo "🖥️ Actualizando clients.js..."
-CLIENTS_JS="$WORKSPACE/clients.js"
-if grep -q "\"$SLUG\"" "$CLIENTS_JS"; then
-  echo "   ⏭️ Ya existe en clients.js"
-else
-  # Insert new client entry before TEMPLATE comment
-  NEW_ENTRY="  \"$SLUG\": {\n    name: \"$NAME\",\n    emoji: \"🏢\",\n    url: \"\",\n    discord_guild: \"$GUILD\",\n    supabase: {\n      url: \"https://psapmujzxhaxraphddlv.supabase.co\",\n      anon_key: \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBzYXBtdWp6eGhheHJhcGhkZGx2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4OTAxNTEsImV4cCI6MjA4NzQ2NjE1MX0.RxanIQCJtjGfCUL_X0MqPi2IdGkXOkmfaEAJZvQJblI\",\n    },\n    phase: 0,\n  },"
-  # Use python for safe text insertion
-  python3 -c "
-c = open('$CLIENTS_JS').read()
-c = c.replace('  // === TEMPLATE:', '$NEW_ENTRY\n\n  // === TEMPLATE:')
-open('$CLIENTS_JS','w').write(c)
-"
-  echo "   ✅ clients.js actualizado"
-fi
+# --- 4. (Removido: clients.js ya no existe, MC usa clients.json directamente) ---
 
 # --- 5. Regenerar MC ---
 echo "🔄 Regenerando Mission Control..."
@@ -931,5 +921,9 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 echo ""
 echo "📁 Brand dir:  $BRAND_DIR"
 echo "🔗 Guild ID:   $GUILD"
+echo "🤖 Bot ID:     $BOT_CLIENT_ID"
+echo ""
+echo "📌 Si el bot aún no está en el servidor, invítalo:"
+echo "   $OAUTH_URL"
 echo ""
 echo "🎯 El cliente puede empezar Foundation en #onboarding"
