@@ -10428,8 +10428,9 @@ mcServer.on('upgrade', (req, socket, head) => {
 });
 
 // Start server
-mcServer.listen(PORT, '127.0.0.1', () => {
-  console.log(`Mission Control server on http://127.0.0.1:${PORT}`);
+const BIND_ADDR = process.env.MC_BIND_ADDRESS || '127.0.0.1';
+mcServer.listen(PORT, BIND_ADDR, () => {
+  console.log(`Mission Control server on http://${BIND_ADDR}:${PORT}`);
   console.log(`WS proxy at ws://127.0.0.1:${PORT}/ws/chat`);
   // WS proxy disabled — using mc-chat channel plugin instead
   // setTimeout(() => gwConnect(), 1000);
