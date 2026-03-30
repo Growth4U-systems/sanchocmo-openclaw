@@ -8,7 +8,7 @@ OPENCLAW_ROOT="${OPENCLAW_HOME:-/root/.openclaw}"
 
 # Default BASE_URL for standalone deployments
 export BASE_URL="${BASE_URL:-http://localhost}"
-export MC_BASE_URL="${MC_BASE_URL:-${BASE_URL}/mc}"
+export MC_BASE_URL="${MC_BASE_URL:-$BASE_URL/mc}"
 
 echo "[env-inject] BASE_URL=$BASE_URL"
 echo "[env-inject] MC_BASE_URL=$MC_BASE_URL"
