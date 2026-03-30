@@ -78,9 +78,11 @@ bash docker/setup-vps.sh staging.sanchocmo.ai
 
 Replace `staging.sanchocmo.ai` with your actual domain. The script derives a Let's Encrypt email from your domain (e.g., `admin@sanchocmo.ai`).
 
-### 5. Configure environment and instance
+### 5. Configure
 
-**`.env`** — copy from the example and fill in your secrets:
+Only two files need manual configuration. Everything else is auto-generated on first startup.
+
+**`.env`** — copy from example and fill in your secrets:
 
 ```bash
 cp .env.example .env
@@ -94,24 +96,14 @@ ANTHROPIC_API_KEY=sk-ant-...
 DISCORD_BOT_TOKEN=your_discord_bot_token
 DISCORD_CLIENT_ID=your_discord_client_id
 CERVANTES_GUILD_ID=your_infra_guild_id
+BASE_URL=https://your-domain.com
 ```
 
-**`openclaw.json`** — OpenClaw gateway configuration (must be at repo root):
-
-```bash
-cp config/openclaw.json.example openclaw.json
-nano openclaw.json
-# Set gateway.auth.token (generate with: openssl rand -hex 24)
-# Set workspace path if needed
-```
-
-**`config/instance.json`** — copy from example and set your values:
+**`config/instance.json`** — copy from example and set Discord IDs:
 
 ```bash
 cp config/instance.json.example config/instance.json
 nano config/instance.json
-# Set mc_base_url to https://your-domain.com/mc
-# Set Discord IDs, Supabase URL, etc.
 ```
 
 **`config/clients.json`** — copy from example and add your first client:
@@ -120,6 +112,8 @@ nano config/instance.json
 cp config/clients.json.example config/clients.json
 nano config/clients.json
 ```
+
+> **Note:** `openclaw.json` is auto-generated on first startup. The entrypoint detects Discord guilds, registers agents (sancho, cervantes, escudero, rocinante), and creates bindings automatically. No manual OpenClaw configuration needed.
 
 ### 6. Launch
 
@@ -240,7 +234,9 @@ Data snapshots:  /mnt/data/snapshots/ (Hetzner volume, every 3h)
 | Symptom | What to check |
 |---|---|
 | Container won't start | `docker logs sanchocmo` — look for missing env vars or config errors |
-| nginx returns 502 | Container is down. Check `docker ps` and `curl localhost:18789` |
+| Bot online but not responding | Check logs for guild detection: `docker logs sanchocmo \| grep "Guild binding"`. If no guilds found, verify `DISCORD_BOT_TOKEN` in `.env` and that the bot is invited to your Discord servers |
+| nginx returns 502 | Container is down. Check `docker ps` and `curl localhost:18790/mc/api/health-check` |
 | SSL certificate expired | `certbot renew && systemctl reload nginx` |
 | Can't push to GitHub from container | `docker exec sanchocmo ssh -T git@github.com` — verify SSH key is mounted |
 | Port already in use | `ss -tlnp \| grep <port>` to find the conflicting process |
+| Need to reconfigure agents | Delete `openclaw.json` and restart: `rm ~/.openclaw/openclaw.json && docker compose restart` |
