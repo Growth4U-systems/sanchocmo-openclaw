@@ -34,7 +34,8 @@ fi
 
 # --- 4. Push to remote ---
 if git remote get-url origin &>/dev/null; then
-  git push origin main --quiet 2>/dev/null && echo "☁️ Pushed to GitHub" || echo "⚠️ Push failed (will retry next backup)"
+  BRANCH=$(git symbolic-ref --short HEAD 2>/dev/null || echo "main")
+  git push origin "$BRANCH" --quiet 2>/dev/null && echo "☁️ Pushed to GitHub ($BRANCH)" || echo "⚠️ Push failed (will retry next backup)"
 fi
 
 # --- 5. Update state ---

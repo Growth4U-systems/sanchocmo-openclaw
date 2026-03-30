@@ -100,6 +100,17 @@ skill-repos/
 # === Docker runtime ===
 docker/nginx.conf
 
+# === Cost tracker outputs (cron-generated, instance-specific) ===
+workspace-sancho/costs-global.json
+workspace-sancho/costs-daily.json
+workspace-sancho/scripts/.channel-guild-cache.json
+
+# === Backup state (cron-generated, instance-specific) ===
+workspace-sancho/memory/backup-state.json
+memory/backup-state.json
+
+# === Root-level SQLite (runtime) ===
+memory/*.sqlite
 
 # === Development plans ===
 docs/superpowers
