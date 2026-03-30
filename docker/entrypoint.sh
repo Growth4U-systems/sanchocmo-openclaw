@@ -3,12 +3,12 @@ set -e
 
 cd /root/.openclaw
 
-SETUP_DONE="/root/.openclaw/.setup-complete"
+OPENCLAW_CONFIG="/root/.openclaw/.openclaw/openclaw.json"
 
 # ===========================================================
-# 1-3. FIRST-RUN SETUP (skipped on restarts)
+# 1-4. SETUP (runs if openclaw.json is missing)
 # ===========================================================
-if [ ! -f "$SETUP_DONE" ]; then
+if [ ! -f "$OPENCLAW_CONFIG" ]; then
   echo "[entrypoint] First run — configuring..."
 
   # 1. Generate openclaw.json from env vars + auto-detect Discord guilds
@@ -29,11 +29,9 @@ if [ ! -f "$SETUP_DONE" ]; then
     echo "[entrypoint] Linked cron jobs ($(python3 -c "import json; print(len(json.load(open('cron/jobs.json')).get('jobs',[])))" 2>/dev/null || echo '?') jobs)"
   fi
 
-  # Mark setup as complete
-  touch "$SETUP_DONE"
   echo "[entrypoint] Setup complete."
 else
-  echo "[entrypoint] Setup already done, skipping config generation."
+  echo "[entrypoint] Config exists, skipping setup."
 fi
 
 # ===========================================================
