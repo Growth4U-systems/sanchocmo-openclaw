@@ -5,7 +5,7 @@ cd /root/.openclaw
 
 # Start OpenClaw gateway in background (foreground mode, no systemd)
 echo "[entrypoint] Starting OpenClaw gateway..."
-openclaw gateway &
+openclaw gateway run &
 GATEWAY_PID=$!
 
 # Wait for gateway to be ready (max 60s)
