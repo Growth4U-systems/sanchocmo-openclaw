@@ -11,6 +11,12 @@ if [ ! -f openclaw.json ]; then
   exit 1
 fi
 
+# Install Node dependencies if needed (e.g., ws for MC server)
+if [ -f workspace-sancho/package.json ] && [ ! -d workspace-sancho/node_modules ]; then
+  echo "[entrypoint] Installing Node dependencies..."
+  (cd workspace-sancho && npm install --production --quiet)
+fi
+
 # Start OpenClaw gateway in background (foreground mode, no systemd)
 echo "[entrypoint] Starting OpenClaw gateway..."
 openclaw gateway run &
