@@ -59,6 +59,6 @@ openclaw gateway restart
 |-----|-----|
 | Plantilla Discord | https://discord.new/mnXBVkNQqFBk |
 | OAuth Bot | Dinámico — ver `instance.json → discord.bot_client_id` |
-| Supabase | https://psapmujzxhaxraphddlv.supabase.co |
-| Mission Control | https://staging.sanchocmo.ai/mc |
-| Docs (público) | https://staging.sanchocmo.ai/mc/docs/ |
+| Supabase | Dinámico — ver `instance.json → supabase.url` |
+| Mission Control | Dinámico — ver `instance.json → mc_base_url` |
+| Docs (público) | Dinámico — ver `instance.json → mc_base_url` + `/docs/` |
