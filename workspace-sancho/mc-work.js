@@ -123,7 +123,8 @@ function renderProjectsKanban() {
       const kTypeBadge = taskTypeBadge(kType);
       const kChat = '<button style="background:none;border:none;cursor:pointer;font-size:12px;opacity:0.5;" onclick="mcChatOpenTask(\''+esc(t.id)+'\',\''+esc(t.name).replace(/'/g,"\\'")+'\',\''+esc(t.projectId)+'\',\''+esc(t.projectName).replace(/'/g,"\\'")+'\',\''+(t.skill||'')+'\',\''+(t.channel||'')+'\',\''+(t.status||'')+'\',\''+kType+'\')">💬</button>';
       const kEdit = kFnd ? '' : '<button style="background:none;border:none;cursor:pointer;font-size:12px;opacity:0.5;" onclick="openWorkEditor(\'task\',\''+esc(t.id)+'\')">✏️</button>';
-      cards += '<div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px;cursor:pointer;" onclick="'+(kFnd ? 'openFoundationTask('+esc(JSON.stringify({pillar:t.pillar,skill:t.skill||'',status:t.status||'todo'}))+')' : '')+'"><div style="display:flex;justify-content:space-between;margin-bottom:4px;"><span style="font-family:\'Space Grotesk\';font-size:11px;font-weight:600;color:var(--rust);background:color-mix(in srgb,var(--rust) 10%,transparent);padding:1px 8px;border-radius:4px;">'+esc(t.projectId)+'</span><span style="display:flex;gap:4px;align-items:center;"><span style="font-size:10px;color:var(--muted);">'+esc(t.id)+'</span>'+kTypeBadge+chBadge(t.channel)+ownerBadge+kChat+kEdit+'</span></div><div style="font-size:14px;font-weight:600;margin-bottom:4px;">'+esc(t.name)+'</div><div style="font-size:12px;color:var(--muted);">'+esc(t.projectName)+'</div></div>';
+      const kClick = kFnd ? 'openFoundationTask('+esc(JSON.stringify({pillar:t.pillar,skill:t.skill||'',status:t.status||'todo'}))+')' : 'showProjectDetail(\''+esc(t.projectId)+'\')';
+      cards += '<div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px;cursor:pointer;" onclick="'+kClick+'"><div style="display:flex;justify-content:space-between;margin-bottom:4px;"><span style="font-family:\'Space Grotesk\';font-size:11px;font-weight:600;color:var(--rust);background:color-mix(in srgb,var(--rust) 10%,transparent);padding:1px 8px;border-radius:4px;">'+esc(t.projectId)+'</span><span style="display:flex;gap:4px;align-items:center;"><span style="font-size:10px;color:var(--muted);">'+esc(t.id)+'</span>'+kTypeBadge+chBadge(t.channel)+ownerBadge+kChat+kEdit+'</span></div><div style="font-size:14px;font-weight:600;margin-bottom:4px;">'+esc(t.name)+'</div><div style="font-size:12px;color:var(--muted);">'+esc(t.projectName)+'</div></div>';
     }
     html += '<div style="flex:1;min-width:240px;max-width:320px;background:color-mix(in srgb,var(--bg) 80%,var(--card));border-radius:12px;display:flex;flex-direction:column;"><div style="display:flex;justify-content:space-between;padding:12px 14px;font-family:\'Space Grotesk\';font-size:14px;font-weight:600;border-bottom:1px solid var(--border);">'+col.icon+' '+col.label+'<span style="background:var(--border);font-size:11px;padding:2px 8px;border-radius:10px;font-weight:700;">'+ct.length+'</span></div><div style="padding:8px;display:flex;flex-direction:column;gap:8px;overflow-y:auto;">'+cards+'</div></div>';
   }
@@ -136,6 +137,7 @@ function showProjectDetail(projId) {
   const p = _prjData.find(pr => pr.id === projId);
   if (!p) return;
   const obj = typeof p.objective === 'string' ? p.objective : (p.objective?.description || '');
+  const strat = typeof p.strategy === 'string' ? p.strategy : (p.strategy?.description || '');
   const metrics = p.objective && typeof p.objective === 'object' && p.objective.metric
     ? `<div style="background:color-mix(in srgb,var(--green) 10%,transparent);padding:10px 14px;border-radius:8px;font-size:14px;margin-bottom:12px;"><strong>${esc(p.objective.metric)}</strong>: ${p.objective.baseline}${p.objective.unit||''} → ${p.objective.target}${p.objective.unit||''}</div>` : '';
   const tasksDone = p.tasks.filter(t => ['completed','done','discarded','cancelled'].includes(t.status)).length;
@@ -160,7 +162,7 @@ function showProjectDetail(projId) {
     const ownerBadge = t.owner && t.owner !== 'Sancho' ? '<span style="font-size:10px;background:color-mix(in srgb,var(--blue) 12%,transparent);color:var(--blue);padding:2px 8px;border-radius:4px;">👤 '+esc(t.owner)+'</span>' : '';
     const cardClick = isFoundation
       ? `openFoundationTask(${esc(JSON.stringify({pillar:t.pillar,skill:t.skill||'',status:t.status||'todo'}))})`
-      : `showTaskDetail('${esc(t.id)}')`;
+      : `showTaskDetail('${esc(t.id)}','${esc(p.id)}')`;
     const quickCheck = isFoundation && !isDone
       ? `<button style="background:none;border:1px solid var(--green);border-radius:4px;cursor:pointer;font-size:12px;padding:1px 6px;color:var(--green);" onclick="event.stopPropagation();quickCompleteFoundation('${esc(t.id)}','${esc(t.pillar||'')}','${esc(t.section||'')}')" title="Completar">✓</button>`
       : '';
@@ -197,10 +199,10 @@ function showProjectDetail(projId) {
           ${pill(p.status)}
           ${p.blocked_by?'<span style="font-size:12px;color:var(--red);">⛔ Bloqueado por '+esc(p.blocked_by)+'</span>':''}
         </div>
-        <div class="page-sub" style="margin-bottom:0;">${p.phase!==undefined?'Fase '+p.phase+' · ':''} ${p.strategy?esc(p.strategy)+' · ':''}Review: ${p.review_date||'—'}</div>
+        <div class="page-sub" style="margin-bottom:0;">${p.phase!==undefined?'Fase '+p.phase+' · ':''} ${strat?esc(strat)+' · ':''}Review: ${p.review_date||'—'}</div>
       </div>
       <div style="display:flex;gap:8px;">
-        <button onclick="mcChatOpenProject('${esc(p.id)}','${esc(p.name).replace(/'/g,"\\'")}','${esc(p.strategy||'').replace(/'/g,"\\'")}','${esc(p.status||'')}')" style="padding:6px 14px;background:var(--card);border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:13px;">💬 Chat</button>
+        <button onclick="mcChatOpenProject('${esc(p.id)}','${esc(p.name).replace(/'/g,"\\'")}','${esc(strat).replace(/'/g,"\\'")}','${esc(p.status||'')}')" style="padding:6px 14px;background:var(--card);border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:13px;">💬 Chat</button>
         <button onclick="openWorkEditor('project','${esc(p.id)}')" style="padding:6px 14px;background:var(--card);border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:13px;">✏️ Editar</button>
         ${p.status!=='archived'&&p.status!=='cancelled'?'<button onclick="archiveProject(\''+esc(p.id)+'\',\''+esc(p.name).replace(/'/g,"\\'")+'\');backToProjectsList();" style="padding:6px 14px;background:var(--card);border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:13px;">📦 Archivar</button>':''}
       </div>
@@ -1728,8 +1730,10 @@ function _renderContentPipeline(task) {
   </div>`;
 }
 
-function showTaskDetail(taskId) {
-  const p = _prjData.find(pr => pr.tasks.some(t => t.id === taskId));
+function showTaskDetail(taskId, projectId) {
+  const p = projectId
+    ? _prjData.find(pr => pr.id === projectId)
+    : _prjData.find(pr => pr.tasks.some(t => t.id === taskId));
   if (!p) return;
   const task = p.tasks.find(t => t.id === taskId);
   if (!task) return;

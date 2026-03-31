@@ -84,12 +84,10 @@
             "market-analysis",
             "self-analysis"
           ],
-          "output_files": [
-            "brand/hospital-capilar/market-and-us/competitors/current.md"
-          ],
           "skill": "competitor-intelligence",
           "approved_at": "2026-03-03T11:57:00Z",
-          "notes": "Competitor deep-dive files (insparya, svenson, capilclinic, medical-hair, imd) referenced in original but not created as files. To be generated when competitors/ subfolder structure is populated."
+          "notes": "Competitor deep-dive files (insparya, svenson, capilclinic, medical-hair, imd) referenced in original but not created as files. To be generated when competitors/ subfolder structure is populated.",
+          "output_file": "brand/hospital-capilar/market-and-us/competitors/current.md"
         },
         "self-analysis": {
           "status": "approved",

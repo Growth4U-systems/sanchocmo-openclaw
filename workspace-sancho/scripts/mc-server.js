@@ -1186,22 +1186,73 @@ function findClientByToken(token) {
 
 // ========== PROJECTS PAGE ==========
 
+// Resolve a project folder from projectsDir given an id and/or slug.
+// Handles all naming conventions: "P01-seo-bofu", "P01", "seo-bofu".
+// Registry slugs may or may not include the id prefix — this function
+// tries multiple patterns so the path is always found.
+function resolveProjectDir(projectsDir, projectId, projectSlug) {
+  // Try candidates in order: slug as-is, id-slug, id alone, then scan by prefix
+  const candidates = [];
+  if (projectSlug) candidates.push(projectSlug);
+  if (projectId && projectSlug && !projectSlug.startsWith(projectId)) candidates.push(`${projectId}-${projectSlug}`);
+  if (projectId) candidates.push(projectId);
+  for (const name of candidates) {
+    const dir = path.join(projectsDir, name);
+    try { if (fs.statSync(dir).isDirectory()) return dir; } catch {}
+  }
+  // Fallback: scan for directory starting with projectId-
+  if (projectId) {
+    try {
+      const dirs = fs.readdirSync(projectsDir, { withFileTypes: true });
+      const match = dirs.find(d => d.isDirectory() && d.name.startsWith(projectId + '-'));
+      if (match) return path.join(projectsDir, match.name);
+    } catch {}
+  }
+  return null;
+}
+
 function loadProjectsData(slug) {
   const projectsDir = path.join(BASE, 'brand', slug, 'projects');
   let registry = { projects: [] };
   try { registry = JSON.parse(fs.readFileSync(path.join(projectsDir, 'registry.json'), 'utf-8')); } catch {}
 
-  return (registry.projects || []).map(p => {
-    const projDir = path.join(projectsDir, `${p.id}-${p.slug}`);
+  const results = [];
+  const loadedDirs = new Set();
+
+  // 1. Load projects from registry
+  for (const p of (registry.projects || [])) {
+    const projDir = resolveProjectDir(projectsDir, p.id, p.slug);
     let project = { ...p };
     let tasks = [];
-    try { project = { ...project, ...JSON.parse(fs.readFileSync(path.join(projDir, 'project.json'), 'utf-8')) }; } catch {}
-    try {
-      const td = JSON.parse(fs.readFileSync(path.join(projDir, 'tasks.json'), 'utf-8'));
-      tasks = Array.isArray(td) ? td : (td.tasks || []);
-    } catch {}
-    return { ...project, tasks };
-  });
+    if (projDir) {
+      loadedDirs.add(path.basename(projDir));
+      try { project = { ...project, ...JSON.parse(fs.readFileSync(path.join(projDir, 'project.json'), 'utf-8')) }; } catch {}
+      try {
+        const td = JSON.parse(fs.readFileSync(path.join(projDir, 'tasks.json'), 'utf-8'));
+        tasks = Array.isArray(td) ? td : (td.tasks || []);
+      } catch {}
+    }
+    results.push({ ...project, tasks });
+  }
+
+  // 2. Scan for project dirs not in registry (e.g. P00 foundation projects)
+  try {
+    const dirs = fs.readdirSync(projectsDir, { withFileTypes: true });
+    for (const d of dirs) {
+      if (!d.isDirectory() || !d.name.match(/^P\d+/) || loadedDirs.has(d.name)) continue;
+      const dirPath = path.join(projectsDir, d.name);
+      let project = { id: d.name.split('-')[0], slug: d.name, name: d.name };
+      let tasks = [];
+      try { project = { ...project, ...JSON.parse(fs.readFileSync(path.join(dirPath, 'project.json'), 'utf-8')) }; } catch {}
+      try {
+        const td = JSON.parse(fs.readFileSync(path.join(dirPath, 'tasks.json'), 'utf-8'));
+        tasks = Array.isArray(td) ? td : (td.tasks || []);
+      } catch {}
+      results.push({ ...project, tasks });
+    }
+  } catch {}
+
+  return results;
 }
 
 function buildTrustEnginePage(slug, baseUrl, clientName) {
@@ -5144,12 +5195,11 @@ nav .nav-footer { display:none !important; }
 
         // Find the project directory
         const projDir = path.join(BASE, 'brand', slug, 'projects');
-        const dirs = fs.readdirSync(projDir, { withFileTypes: true });
-        const projFolder = dirs.find(d => d.isDirectory() && d.name.startsWith(projectId + '-'));
-        if (!projFolder) { res.writeHead(404, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'Project not found: ' + projectId })); return; }
+        const resolvedDir = resolveProjectDir(projDir, projectId, null);
+        if (!resolvedDir) { res.writeHead(404, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'Project not found: ' + projectId })); return; }
 
         // Load tasks and generate next task ID
-        const tasksFile = path.join(projDir, projFolder.name, 'tasks.json');
+        const tasksFile = path.join(resolvedDir, 'tasks.json');
         let tasks = [];
         try { tasks = JSON.parse(fs.readFileSync(tasksFile, 'utf-8')); } catch {}
         const maxNum = tasks.reduce((m, t) => {
@@ -5725,18 +5775,13 @@ nav .nav-footer { display:none !important; }
         // Find the project folder
         const projectsDir = path.join(BASE, 'brand', slug, 'projects');
         const projectId = taskId.split('-').slice(0, 1).join('-'); // P01 from P01-T01
-        // Find the folder matching the project ID
-        let projFolder = null;
-        try {
-          const dirs = fs.readdirSync(projectsDir, { withFileTypes: true });
-          projFolder = dirs.find(d => d.isDirectory() && d.name.startsWith(projectId + '-'));
-        } catch {}
-        if (!projFolder) {
+        const projDir = resolveProjectDir(projectsDir, projectId, null);
+        if (!projDir) {
           res.writeHead(404, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ error: 'Project not found: ' + projectId }));
           return;
         }
-        const tasksFile = path.join(projectsDir, projFolder.name, 'tasks.json');
+        const tasksFile = path.join(projDir, 'tasks.json');
         let tasksData;
         try { tasksData = JSON.parse(fs.readFileSync(tasksFile, 'utf-8')); } catch {
           res.writeHead(404, { 'Content-Type': 'application/json' });
@@ -5792,10 +5837,9 @@ nav .nav-footer { display:none !important; }
         if (req._portalClient && req._portalSlug !== slug) { res.writeHead(403, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'Forbidden' })); return; }
         const projectsDir = path.join(BASE, 'brand', slug, 'projects');
         const projectId = taskId.split('-').slice(0, 1).join('-');
-        let projFolder = null;
-        try { const dirs = fs.readdirSync(projectsDir, { withFileTypes: true }); projFolder = dirs.find(d => d.isDirectory() && d.name.startsWith(projectId + '-')); } catch {}
-        if (!projFolder) { res.writeHead(404, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'Project not found' })); return; }
-        const tasksFile = path.join(projectsDir, projFolder.name, 'tasks.json');
+        const projDir = resolveProjectDir(projectsDir, projectId, null);
+        if (!projDir) { res.writeHead(404, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'Project not found' })); return; }
+        const tasksFile = path.join(projDir, 'tasks.json');
         let tasksData;
         try { tasksData = JSON.parse(fs.readFileSync(tasksFile, 'utf-8')); } catch { res.writeHead(404, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'tasks.json not found' })); return; }
         const tasks = Array.isArray(tasksData) ? tasksData : (tasksData.tasks || []);
@@ -5835,10 +5879,9 @@ nav .nav-footer { display:none !important; }
         if (!slug || !projectId || !fields) { res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'Missing params' })); return; }
         if (req._portalClient && req._portalSlug !== slug) { res.writeHead(403, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'Forbidden' })); return; }
         const projectsDir = path.join(BASE, 'brand', slug, 'projects');
-        let projFolder = null;
-        try { const dirs = fs.readdirSync(projectsDir, { withFileTypes: true }); projFolder = dirs.find(d => d.isDirectory() && d.name.startsWith(projectId + '-')); } catch {}
-        if (!projFolder) { res.writeHead(404, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'Project not found' })); return; }
-        const projFile = path.join(projectsDir, projFolder.name, 'project.json');
+        const projDir = resolveProjectDir(projectsDir, projectId, null);
+        if (!projDir) { res.writeHead(404, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'Project not found' })); return; }
+        const projFile = path.join(projDir, 'project.json');
         let project;
         try { project = JSON.parse(fs.readFileSync(projFile, 'utf-8')); } catch { res.writeHead(404, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'project.json not found' })); return; }
         const oldStatus = project.status;
@@ -5891,10 +5934,9 @@ nav .nav-footer { display:none !important; }
           fs.writeFileSync(regFile, JSON.stringify(reg, null, 2));
         } catch {}
         // Update project.json
-        let projFolder = null;
-        try { const dirs = fs.readdirSync(projectsDir, { withFileTypes: true }); projFolder = dirs.find(d => d.isDirectory() && d.name.startsWith(projectId + '-')); } catch {}
-        if (projFolder) {
-          const projFile = path.join(projectsDir, projFolder.name, 'project.json');
+        const projDir = resolveProjectDir(projectsDir, projectId, null);
+        if (projDir) {
+          const projFile = path.join(projDir, 'project.json');
           try {
             const proj = JSON.parse(fs.readFileSync(projFile, 'utf-8'));
             proj.status = 'archived';

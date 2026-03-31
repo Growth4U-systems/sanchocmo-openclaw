@@ -1,0 +1,29 @@
+{
+  "messages": [
+    {
+      "role": "user",
+      "text": "Estoy abriendo el chat sobre \"Auditar perfil LinkedIn de Jorge + optimizar\". Dame un resumen rápido del estado actual y qué podemos hacer. Si necesitas algo de mí, dímelo.",
+      "ts": "2026-03-31T13:32:24.696Z"
+    },
+    {
+      "role": "user",
+      "text": "como vas?",
+      "ts": "2026-03-31T13:46:41.287Z"
+    },
+    {
+      "role": "bot",
+      "text": "Vamos al lío. Aquí tienes el resumen rápido:\n\n## Estado actual de T01: Auditar perfil LinkedIn de Jorge\n\n**✅ Completada (30 marzo 2026)**\n\nLa auditoría ya se hizo. El perfil de Jorge puntuó **4/10 para objetivo B2B** — headline genérico, sin trust signals visibles, sin CTA claro. Se generó una propuesta completa con:\n\n- **3 opciones de headline** (la recomendada posiciona \"250 empresas + MiCA + Banco de España\")\n- **About section nueva** — storytelling + trust signals + CTA suave hacia CFOs\n- **Featured section** — 5 piezas ordenadas por impacto (caso B2B, entrevista Cinco Días, MiCA para CFOs, etc.)\n- **Diseño de banner** — specs completas para B2B (no imagery crypto genérica)\n- **Experiencia actualizada** — descripción de Criptan con logros concretos\n- **Prioridades de implementación** — P0: headline + about (12 min), P1: creator mode + banner, P2: featured + skills\n\n## 🔑 Lo que falta (depende de Jorge/equipo):\n\n1. **Jorge tiene que aprobar y aplicar los cambios** — headline, about, experiencia\n2. **Diseñar y subir el banner** — hay specs pero falta ejecutar el diseño gráfico\n3. **Activar modo creator** en LinkedIn\n\n## Siguiente paso natural → T02\n\nCon T01 cerrada, el siguiente es **T02: Content calendar LinkedIn primer mes (12-20 posts)**. Está en `pending` y no tiene bloqueantes.\n\n---\n\n**¿Qué quieres hacer?**\n- **A)** Revisar/ajustar la propuesta de T01 antes de que Jorge la implemente\n- **B)** Arrancar T02 (calendario de contenido) directamente\n- **C)** Otra cosa — dime",
+      "agent": "sancho",
+      "ts": "2026-03-31T13:47:11.401Z"
+    },
+    {
+      "role": "bot",
+      "text": "¡Ya está! Acabo de darte el resumen completo arriba 👆\n\nEn resumen: **T01 está completada** — la auditoría del perfil de Jorge ya se hizo el 30 de marzo con propuesta completa (headline, about, featured, banner, prioridades).\n\nLo que queda es que **Jorge apruebe y aplique los cambios** en su perfil real.\n\nY cuando digáis, arrancamos **T02** (calendario de contenido LinkedIn, 12-20 posts del primer mes).\n\n¿Tiramos con T02 o quieres revisar algo de T01 primero?",
+      "agent": "sancho",
+      "ts": "2026-03-31T13:48:33.362Z"
+    }
+  ],
+  "updatedAt": 1774964913362,
+  "discordThreadId": null,
+  "discordChannelId": null
+}

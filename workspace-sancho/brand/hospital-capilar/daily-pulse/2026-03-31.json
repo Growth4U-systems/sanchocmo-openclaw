@@ -1,0 +1,59 @@
+{
+  "date": "2026-03-31",
+  "generated_at": "2026-03-31T07:00:00Z",
+  "client": "hospital-capilar",
+  "guild": "1475635138108063746",
+  "pre_check": {
+    "channels_checked": 9,
+    "channels_with_activity": 2,
+    "channels_skipped": 7,
+    "channels_error": 1,
+    "details": {
+      "general": { "status": "skip", "reason": "System join message (Nahuel), no human content" },
+      "brand": { "status": "skip", "reason": "Last activity Feb 28 (>24h)" },
+      "campaigns": { "status": "skip", "reason": "Last activity Mar 24, bot message" },
+      "content": { "status": "skip", "reason": "Last activity Feb 28 (>24h)" },
+      "intelligence": { "status": "read", "reason": "Meeting Intelligence posted Mar 30 16:03 UTC (bot but strategic)" },
+      "onboarding": { "status": "skip", "reason": "Last activity Mar 27 (>24h)" },
+      "soporte": { "status": "skip", "reason": "Bot message about CLI bug (infra, not client)" },
+      "research": { "status": "skip", "reason": "Last activity Mar 1 (>24h)" },
+      "paid-ads": { "status": "error", "reason": "Unknown Channel" }
+    }
+  },
+  "insights": [
+    {
+      "category": "strategic",
+      "source": "intelligence/meeting-intelligence-thread",
+      "title": "Meeting Intelligence procesó 2 reuniones clave",
+      "summary": "Se publicaron resúmenes de: (1) Análisis de Mercado y Competidores HC — posicionamiento 'Treatment First', diagnóstico gratuito, test precios consulta, perfil hormonal como producto Stripe; (2) Sales Presentation HC×Growth4U — evaluar Astro, Go High Level para funnels, vídeo equipo médico.",
+      "priority": "high"
+    },
+    {
+      "category": "market",
+      "source": "intelligence/meeting-intelligence-thread",
+      "title": "Mercado tratamientos 4x mayor que trasplantes",
+      "summary": "Tratamientos €276M vs trasplantes €63.8M. España >20M afectados alopecia. Crecimiento 4-7% anual hasta 2030. Ningún competidor >6% cuota en tratamientos no quirúrgicos.",
+      "priority": "high"
+    },
+    {
+      "category": "operational",
+      "source": "intelligence/meeting-intelligence-thread",
+      "title": "No-shows 47% en Madrid — problema crítico",
+      "summary": "Tasa de no-show del 47% en clínica de Madrid. Acción pendiente: sistema de reviews (TrustPilot + Google QR) y test de precios consulta €10-€195 durante 5 semanas.",
+      "priority": "high"
+    },
+    {
+      "category": "team",
+      "source": "general",
+      "title": "Nuevo miembro: Nahuel",
+      "summary": "Nahuel se unió al servidor Discord el 30/03.",
+      "priority": "low"
+    }
+  ],
+  "activity_summary": {
+    "human_messages_24h": 0,
+    "bot_messages_24h": 2,
+    "new_members": 1,
+    "active_threads": 1
+  }
+}

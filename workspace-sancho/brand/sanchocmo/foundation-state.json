@@ -82,10 +82,8 @@
             "market-analysis",
             "self-analysis"
           ],
-          "output_files": [
-            "brand/sanchocmo/market-and-us/competitors/current.md"
-          ],
-          "skill": "competitor-intelligence"
+          "skill": "competitor-intelligence",
+          "output_file": "brand/sanchocmo/market-and-us/competitors/current.md"
         },
         "self-analysis": {
           "status": "approved",

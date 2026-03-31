@@ -355,6 +355,7 @@ def parse_foundation():
                                 "layer": pdata.get("layer"),
                                 "requires": pdata.get("requires", []),
                                 "optional": is_optional,
+                                "skill": pdata.get("skill", ""),
                             }
                             if pdata.get("output_file"):
                                 pentry["output_file"] = pdata["output_file"]

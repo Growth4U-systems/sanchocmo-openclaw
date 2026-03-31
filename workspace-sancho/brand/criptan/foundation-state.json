@@ -72,7 +72,7 @@
           "approved_at": "2026-03-30T11:36:56.248Z"
         },
         "competitor-analysis": {
-          "status": "pending-review",
+          "status": "approved",
           "layer": 1,
           "requires": [
             "fast-foundation"
@@ -81,12 +81,11 @@
             "market-analysis",
             "self-analysis"
           ],
-          "output_files": [
-            "brand/criptan/market-and-us/competitors/current.md"
-          ],
           "skill": "competitor-intelligence",
           "completed_at": "2026-03-30T15:32:00Z",
-          "updated_at": "2026-03-30T15:39:04.085Z"
+          "updated_at": "2026-03-31T09:58:17.256Z",
+          "approved_at": "2026-03-31T09:58:17.256Z",
+          "output_file": "brand/criptan/market-and-us/competitors/current.md"
         },
         "self-analysis": {
           "status": "not-started",

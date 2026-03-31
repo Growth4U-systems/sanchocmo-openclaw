@@ -353,7 +353,7 @@ Ver [references/data-model.md](references/data-model.md) para schemas de `projec
 **Fase 1: Escribir archivos**
 
 1. Escribir `brand/{slug}/strategic-plan/current.md` (documento vivo, versionable)
-2. Crear `brand/{slug}/projects/registry.json` (si no existe)
+2. Actualizar `brand/{slug}/projects/registry.json` — **MERGE, nunca sobreescribir.** Leer el registry existente, añadir los nuevos proyectos al array `projects`, preservando los P00 y cualquier proyecto previo. Si no existe, crear nuevo.
 3. Por cada estrategia aprobada → crear proyecto:
    - Carpeta `brand/{slug}/projects/P{XX}-{slug}/`
    - `project.json` con objetivo, métricas baseline/target, origin, review_date
@@ -541,3 +541,4 @@ Al completar un proyecto → generar `value-review.md`:
 18. ¿Las recurring tasks tienen nombre, frecuencia, fuentes y canal destino definidos?
 19. ¿Se crearon los crons/JSON de recurring_tasks al aprobar?
 20. ⚠️ **¿Se ejecutó `python3 scripts/regenerate.py`** después de crear/actualizar proyectos y tareas?
+21. ⚠️ **¿`registry.json` preserva los P00?** NUNCA sobreescribir — siempre leer, hacer merge, y guardar.

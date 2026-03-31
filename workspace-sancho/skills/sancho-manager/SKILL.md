@@ -1,6 +1,6 @@
 ---
 name: sancho-manager
-description: "Universal project manager. Breaks ANY objective into projects and tasks with measurable outcomes. Two modes: FROM GENERAL (ad-hoc → project/tasks) and FROM PROJECT (manage tasks within existing project). Use when: user asks 'organiza esto', 'necesito hacer X', 'crea proyecto', 'add task to P01', 'qué hago primero', 'next steps', 'project status', 'value review', or any multi-step request that doesn't match a specific skill. NOT for: Foundation (foundation-orchestrator), creating strategic plan from scratch (strategic-plan INIT), or executing individual tasks (Escudero). Triggers: organiza, planifica, desglosa, break down, plan this, crea proyecto, add task, task management, project status, qué hago primero, siguiente paso, next steps, value review, project review."
+description: "Universal project manager. Breaks ANY objective into projects and tasks with measurable outcomes. Two modes: FROM GENERAL (ad-hoc → project/tasks) and FROM PROJECT (manage tasks within existing project). Use when: user asks 'organiza esto', 'necesito hacer X', 'crea proyecto', 'add task to P01', 'edita la tarea T03', 'qué hago primero', 'next steps', 'project status', 'value review', 'priorizar', 'roadmap', 'plan de trabajo', 'backlog', or any multi-step request that doesn't match a specific skill. Also use for operational next steps ('qué hago ahora', 'siguiente tarea') — distinct from strategic-plan which handles post-Foundation strategic direction. NOT for: Foundation (foundation-orchestrator), creating strategic plan from scratch (strategic-plan INIT), or executing individual tasks (Escudero). Triggers: organiza, planifica, desglosa, break down, plan this, crea proyecto, add task, edit task, task management, project status, qué hago primero, siguiente paso, next steps, value review, project review, priorizar, roadmap, plan de trabajo, backlog."
 metadata:
   author: Alfonso Sainz de Baranda (Growth4U)
   version: '1.0'
@@ -59,7 +59,11 @@ Leer en paralelo:
 - `brand/{slug}/foundation-state.json` — estado Foundation
 - `brand/{slug}/company-brief/current.md` — contexto de negocio
 
-Si alguno no existe, continuar sin él (warning, no bloqueo).
+Si `registry.json` no existe (primer proyecto del cliente), crearlo con `next_id: 1` y `projects: []`.
+Si otros archivos no existen, continuar sin ellos (warning, no bloqueo).
+
+Al presentar archivos al usuario, usar siempre links tokenizados de MC (leer `clients.json` para obtener `mcToken`):
+`{MC_BASE}/docs/brand/{slug}/projects/P{XX}-{slug}/playbook.md`
 
 ### Paso 1: Entender el Objetivo (~1 min)
 
@@ -99,16 +103,17 @@ Cada tarea DEBE tener:
 | `channel` | Sí | "web" |
 | `skill` | Sí | "direct-response-copy" |
 | `owner` | Sí | "Sancho" (default) |
-| `depends_on` | Sí | null o "T01" |
+| `depends_on` | Sí | null o "P{XX}-T01" (siempre fully qualified) |
 
 Consultar [channel-skill-map.md](references/channel-skill-map.md) para asignar canal y skill correctos.
 
 **Reglas de descomposición:**
-- 3-8 tareas por proyecto. Más de 8 → dividir en sub-proyectos.
-- Cada tarea = 1 skill, 1 canal, 1 owner
-- `done_criteria` debe ser binario (sí/no), nunca subjetivo
-- Maximizar tareas en paralelo (minimizar dependencias secuenciales)
+- 3-8 tareas por proyecto (menos de 3 no justifica el overhead de proyecto; más de 8 indica que el objetivo es demasiado amplio y conviene dividir en sub-proyectos)
+- Cada tarea = 1 skill, 1 canal, 1 owner (si toca dos canales, son dos tareas — mantiene la ejecución limpia)
+- `done_criteria` debe ser binario (sí/no), nunca subjetivo (permite verificar automáticamente sin ambigüedad)
+- Maximizar tareas en paralelo (menos dependencias = menos tiempo total de ejecución)
 - Owner = "Sancho" por defecto. Solo "Equipo" si genuinamente requiere acción humana.
+- Si la estrategia viene del catálogo, anotar `strategy.catalog_id` en project.json (permite trazar resultados por estrategia)
 
 ### Paso 4: Presentar para Aprobación
 
@@ -188,7 +193,8 @@ Al aprobar:
 4. **Crear `projects/P{XX}-{slug}/playbook.md`** — Resumen con links a playbooks de tareas
 5. **Crear `projects/P{XX}-{slug}/T{YY}/playbook.md`** — Por cada tarea, instrucciones detalladas
 6. **Actualizar `registry.json`** — Añadir entrada, incrementar `next_id`
-7. **Ofrecer crear hilos Discord** — "¿Creo los hilos en Discord?" → Si sí, seguir `_system/project-threads-protocol.md`
+7. **Regenerar MC data:** `python3 scripts/regenerate.py` (para que MC refleje el nuevo proyecto)
+8. **Ofrecer crear hilos Discord** — "¿Creo los hilos en Discord?" → Si sí, seguir `_system/project-threads-protocol.md` (resolver channel IDs desde `brand/{slug}/discord-channels.json` primero; si no existe, ejecutar `message(action=channel-list)` para crearlo)
 
 ---
 
@@ -201,11 +207,21 @@ Detectar sub-modo:
 ### Add Task
 
 1. Leer `tasks.json` → determinar siguiente T{YY}
-2. Proponer tarea con todos los campos obligatorios
+2. Proponer tarea con todos los campos obligatorios (usar `depends_on: "P{XX}-T{YY}"` formato completo)
 3. **ESPERAR aprobación**
 4. Crear en `tasks.json` + crear `T{YY}/playbook.md`
 5. Actualizar `tasks_total` en `project.json`
-6. Ofrecer crear hilo Discord en canal temático
+6. **Regenerar MC data:** `python3 scripts/regenerate.py`
+7. Ofrecer crear hilo Discord en canal temático
+
+### Edit Task
+
+1. Leer `tasks.json` → encontrar tarea por ID
+2. Presentar campos actuales, proponer cambios
+3. **ESPERAR aprobación**
+4. Actualizar campos en `tasks.json` + actualizar `T{YY}/playbook.md` si aplica
+5. **Regenerar MC data:** `python3 scripts/regenerate.py`
+6. Si el hilo Discord existe y cambió el nombre → renombrar hilo
 
 ### Status Review
 
@@ -241,14 +257,16 @@ Trigger: todas las tareas completadas O `review_date` alcanzada.
 3. Generar `value-review.md` siguiendo template de [data-model.md](../strategic-plan/references/data-model.md)
 4. Actualizar `project.json` → status = `reviewed`
 5. Actualizar `registry.json`
-6. Renombrar hilo Discord: `✅ [P{XX}] {nombre} — Reviewed`
-7. Si learnings sugieren acción → proponer nuevo proyecto (vuelve a Mode GENERAL)
+6. **Regenerar MC data:** `python3 scripts/regenerate.py`
+7. Renombrar hilo Discord: `✅ [P{XX}] {nombre} — Reviewed`
+8. Si learnings sugieren acción → proponer nuevo proyecto (vuelve a Mode GENERAL)
 
 ### Close / Cancel
 
 1. Confirmar con usuario
 2. Actualizar status en `project.json` + `registry.json`
-3. Renombrar hilo Discord según protocolo:
+3. **Regenerar MC data:** `python3 scripts/regenerate.py`
+4. Renombrar hilo Discord según protocolo:
    - Completed: `✅ [P{XX}] {nombre}`
    - Cancelled: `❌ [P{XX}] {nombre}`
 
@@ -303,6 +321,7 @@ Antes de crear/presentar cualquier proyecto o tarea, verificar:
 
 - [ ] Proyecto tiene: name, description, approach, objective (metric + baseline + target), review_date
 - [ ] Cada tarea tiene: name, description, deliverable, done_criteria, channel, skill, owner
+- [ ] `depends_on` usa formato fully qualified: `"P{XX}-T{YY}"` o null
 - [ ] Dependencies son acíclicas y lógicas
 - [ ] Channels asignados corresponden al tipo de tarea (web → #web, no #content)
 - [ ] Skills asignados existen en `skills/` directory
@@ -311,6 +330,10 @@ Antes de crear/presentar cualquier proyecto o tarea, verificar:
 - [ ] Alignment check ejecutado vs strategic plan (si existe)
 - [ ] Estimaciones usan velocidad-AI (no timelines de agencia)
 - [ ] `description` y `approach` escritos para ser legibles por cualquiera (no técnico)
+- [ ] `python3 scripts/regenerate.py` ejecutado después de crear/actualizar proyectos o tareas
+- [ ] Hilos Discord mencionan al usuario (`<@{sender_id}>`) en el primer mensaje
+- [ ] Links cruzados: proyecto→tareas + tarea→proyecto en Discord
+- [ ] Links al usuario usan MC tokenizado (nunca rutas de archivo)
 
 ---
 
@@ -322,7 +345,7 @@ Antes de crear/presentar cualquier proyecto o tarea, verificar:
 | Defiere a | `strategic-plan` (INIT) | Crear plan estratégico completo desde cero |
 | Lee de | `strategic-plan/current.md` | Objetivos, canales, para alignment checks |
 | Lee de | `foundation-state.json` | Estado de Foundation |
-| Lee de | `strategies-catalog.json` | Vincular tareas a estrategias del catálogo |
+| Lee de | `skills/strategic-plan/references/strategies-catalog.json` | Vincular tareas a estrategias del catálogo (poblar `strategy.catalog_id` en project.json) |
 | Escribe | project.json, tasks.json, playbook.md | Artefactos de proyecto |
 | Escribe | registry.json | Índice de proyectos |
 | Encadena con | Skills de ejecución | Via dispatch para ejecutar tareas |

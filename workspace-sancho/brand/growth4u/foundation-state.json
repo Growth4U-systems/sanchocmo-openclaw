@@ -80,12 +80,6 @@
             "market-analysis",
             "self-analysis"
           ],
-          "output_files": [
-            "brand/growth4u/market-and-us/competitors/current.md",
-            "brand/growth4u/market-and-us/competitors/snowball/current.md",
-            "brand/growth4u/market-and-us/competitors/product-hackers/current.md",
-            "brand/growth4u/market-and-us/competitors/thegrowthacker/current.md"
-          ],
           "skill": "competitor-intelligence",
           "approved_at": "2026-03-03T23:34:00Z",
           "notes": "v2 — 3 deep dives (36 páginas scrapeadas), 3-lens analysis, battle cards, landscape enriched. TGH downgraded Tier B.",
@@ -144,16 +138,10 @@
           "enriches_with": [
             "existing-customer-data"
           ],
-          "output_files": [
-            "brand/growth4u/go-to-market/ecps/ecps.md",
-            "brand/growth4u/go-to-market/ecps/problems.md",
-            "brand/growth4u/go-to-market/ecps/persona-map.md",
-            "brand/growth4u/go-to-market/ecps/reddit-forum-discovery.md",
-            "brand/growth4u/go-to-market/ecps/spanish-forums-discovery.md"
-          ],
           "skill": "niche-discovery-100x",
           "approved_at": "2026-03-06T01:38:00Z",
-          "notes": "v2 (new methodology) — 120 problems → 96 filtered → 5 ECPs by NEED. Scoring 2-99 with evidence. JTBD Synthesis + Reachability Discovery (Trust×Search→Channel Map). Wave 1: Sistema repetible (79.00) + Regulación (73.70, 🏆). Wave 2: Canal muriendo (73.50) + Quemado (66.45)."
+          "notes": "v2 (new methodology) — 120 problems → 96 filtered → 5 ECPs by NEED. Scoring 2-99 with evidence. JTBD Synthesis + Reachability Discovery (Trust×Search→Channel Map). Wave 1: Sistema repetible (79.00) + Regulación (73.70, 🏆). Wave 2: Canal muriendo (73.50) + Quemado (66.45).",
+          "output_file": "brand/growth4u/go-to-market/ecps/ecps.md"
         },
         "existing-customer-data": {
           "status": "not-started",
@@ -337,13 +325,10 @@
       "pillars": {
         "foundation-presentation": {
           "status": "approved",
-          "output_files": [
-            "brand/growth4u/presentations/foundation-presentation.html",
-            "brand/growth4u/presentations/foundation-report.html"
-          ],
           "skill": "niche-presentation",
           "approved_at": "2026-03-30T09:25:00Z",
-          "notes": "v1 — 16 slides: market, competitors, 8 clusters, 5 ECPs con positioning + campañas, Trust Engine"
+          "notes": "v1 — 16 slides: market, competitors, 8 clusters, 5 ECPs con positioning + campañas, Trust Engine",
+          "output_file": "brand/growth4u/presentations/foundation-presentation.html"
         }
       }
     }

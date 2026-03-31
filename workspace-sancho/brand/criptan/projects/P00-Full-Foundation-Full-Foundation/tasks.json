@@ -23,12 +23,13 @@
     "done_criteria": "Mínimo 5 competidores mapeados.",
     "depends_on": "P00-FF-T01",
     "owner": "Sancho",
-    "status": "in-progress",
+    "status": "completed",
     "channel": "strategy",
     "type": "foundation",
     "skill": "competitor-intelligence",
     "pillar": "competitor-analysis",
-    "section": "market-and-us"
+    "section": "market-and-us",
+    "completed": "2026-03-31"
   },
   {
     "id": "P00-FUL-T03",

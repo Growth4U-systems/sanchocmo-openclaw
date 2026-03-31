@@ -2,6 +2,10 @@
   "client": "criptan",
   "next_id": 7,
   "projects": [
+    {"id": "P00-Fast-Foundation", "slug": "P00-Fast-Foundation-Fast-Foundation", "name": "Fast Foundation (L0-L1)", "strategy": "Foundation — Layer 0-1", "status": "archived", "phase": -1, "category": "foundation"},
+    {"id": "P00-Full-Foundation", "slug": "P00-Full-Foundation-Full-Foundation", "name": "Full Foundation (L2-L5)", "strategy": "Foundation — Layer 2-5", "status": "todo", "phase": -1, "category": "foundation"},
+    {"id": "P00-Metrics", "slug": "P00-Metrics-Metrics-Setup", "name": "Métricas y Conexiones", "strategy": "Foundation — Metrics Layer", "status": "todo", "phase": -1, "category": "foundation"},
+    {"id": "P00-Strategic-Plan", "slug": "P00-Strategic-Plan-Strategic-Plan", "name": "Strategic Plan", "strategy": "Foundation — Strategic Planning", "status": "todo", "phase": -1, "category": "foundation"},
     {
       "id": "P01",
       "slug": "P01-seo-bofu",

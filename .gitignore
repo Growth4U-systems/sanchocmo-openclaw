@@ -34,8 +34,10 @@ skills.bak.*
 .git-backup-temp
 
 # === Generated/large data files ===
-*-data.js
-mission-control.html
+# (MC data files are now tracked — see workspace-sancho/)
+# Keep ignoring non-MC generated data outside workspace-sancho
+agents/*-data.js
+gateway-data.js
 
 # === Media (binary) ===
 media/

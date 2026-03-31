@@ -46,22 +46,25 @@ pending → in-progress → completed
 - **Acciones:**
   1. Crear `project.json` + `tasks.json` + `playbook.md`
   2. Actualizar `registry.json`
-  3. (Opcional) Crear hilo en #projects
+  3. `python3 scripts/regenerate.py`
+  4. (Opcional) Crear hilo en #projects — mencionar usuario con `<@{sender_id}>`
 
 ### Proyecto: active → completed
 - **Trigger:** Última tarea marcada como completed
 - **Acciones:**
   1. Actualizar status en `project.json` + `registry.json`
-  2. Proponer value review al usuario
-  3. Mensaje en hilo del proyecto: "Todas las tareas completadas. ¿Hacemos value review?"
+  2. `python3 scripts/regenerate.py`
+  3. Proponer value review al usuario
+  4. Mensaje en hilo del proyecto: "Todas las tareas completadas. ¿Hacemos value review?"
 
 ### Proyecto: completed → reviewed
 - **Trigger:** Value review generada y aprobada
 - **Acciones:**
   1. Generar `value-review.md`
   2. Actualizar status en `project.json` + `registry.json`
-  3. Renombrar hilo Discord: `✅ [P{XX}] {nombre} — Reviewed`
-  4. Si learnings sugieren acción → proponer nuevo proyecto
+  3. `python3 scripts/regenerate.py`
+  4. Renombrar hilo Discord: `✅ [P{XX}] {nombre} — Reviewed`
+  5. Si learnings sugieren acción → proponer nuevo proyecto
 
 ### Tarea: pending → in-progress
 - **Trigger:** Usuario confirma "¿La ejecuto?" o Escudero empieza
@@ -74,10 +77,11 @@ pending → in-progress → completed
 - **Acciones:**
   1. Actualizar status en `tasks.json` + `completed` date
   2. Registrar `output_files` en `tasks.json`
-  3. Renombrar hilo Discord: `✅ [P{XX}-T{YY}] {nombre}`
-  4. Mensaje en hilo del proyecto: "✅ T{YY} completada. Progreso: X/Y"
-  5. Actualizar `tasks_completed` en `project.json`
-  6. Si era la última → trigger proyecto completed
+  3. Actualizar `tasks_completed` en `project.json`
+  4. `python3 scripts/regenerate.py`
+  5. Renombrar hilo Discord: `✅ [P{XX}-T{YY}] {nombre}`
+  6. Mensaje en hilo del proyecto: "✅ T{YY} completada. Progreso: X/Y"
+  7. Si era la última → trigger proyecto completed
 
 ### Tarea: → blocked
 - **Trigger:** depends_on tiene tarea no completada
@@ -93,7 +97,9 @@ pending → in-progress → completed
 Cada cambio de estado actualiza SIEMPRE:
 1. **Nombre del hilo Discord** (visual para el usuario)
 2. **Status en JSON** (datos para Mission Control)
-3. **MC refleja automáticamente** los cambios del JSON
+3. **`python3 scripts/regenerate.py`** (para que MC refleje los cambios)
+
+> Nota: El estado inicial de tareas es `pending` (no `todo`). Usar `pending` consistentemente en todos los JSONs.
 
 ### Emojis en hilos
 
