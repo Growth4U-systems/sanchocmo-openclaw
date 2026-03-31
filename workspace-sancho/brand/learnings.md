@@ -102,4 +102,61 @@
 
 ---
 
-*Last updated: 2026-03-23*
+## 🔄 Patterns Confirmed This Week (23-30 Mar)
+
+### 1. Treatment Keyword Gap = Biggest HC Opportunity
+- **Pattern**: Trust Engine v2 confirmed HC #1 for surgery keywords, but 0/12 treatment keywords in top 10
+- **Insight**: >4,000 monthly searches invisible. Competitors (IMD, Insparya, Pedro Jaén) own this space entirely
+- **Action**: Treatment content strategy is the #1 priority — SEO + GEO for treatment terms
+
+### 2. Depth Over Speed — Alfonso Expectation
+- **Pattern**: Trust Engine v1 was shallow, Alfonso immediately flagged it. v2 with real data (DataForSEO, Serper) passed
+- **Insight**: Quick-and-dirty outputs get rejected. Real data enrichment is non-negotiable
+- **Action**: Always use real APIs (DataForSEO, Serper, PSI) for analysis — never synthetic/estimated data
+
+### 3. GEO (Generative Engine Optimization) as New Frontier
+- **Pattern**: HC appears in AI answers for cirugía & diagnóstico, but 0/2 treatment queries
+- **Insight**: AI search (ChatGPT, Perplexity, Gemini) is a new visibility channel — and HC is missing in treatments there too
+- **Action**: Expand GEO analysis (30 prompts × 4 providers) and create GEO-optimized content
+
+### 4. HC Social Presence is Strong but Underlevered
+- **Pattern**: IG 133K, YT 40K, TikTok 55K, LinkedIn 7.8K — massive audience, but not converting to treatment awareness
+- **Insight**: Social can amplify treatment content — the audience is there, the content isn't
+- **Action**: Social content strategy focused on treatment topics (not just surgery showcases)
+
+### 5. Weekend Quiet Pattern Continues
+- **Pattern**: Mar 20-22 consistently low activity (newsletters only, no client urgency)
+- **Insight**: Weekends are predictable downtime — good for batch analysis/updates
+- **Action**: Keep maintenance/heavy analysis on weekends
+
+---
+
+## 📉 What Changed (23-30 Mar)
+
+| Area | Before | After |
+|------|--------|-------|
+| HC Visibility Data | Qualitative estimates | Quantified: 20 keywords with volume/CPC/position via DataForSEO + Serper |
+| Treatment Gap | Suspected | Confirmed: 0/12 treatment keywords in top 10, >4K monthly invisible searches |
+| GEO Visibility | Unknown | Mapped: HC present in surgery AI answers, absent in treatment AI answers |
+| Trust Engine | Shallow v1 | Data-enriched v2 with 9/9 modules, real API data |
+| Social Audit | Not done | Completed: 4 platforms mapped with follower counts |
+
+---
+
+## 🎯 What to Do Different (from this week)
+
+1. **Treatment content first** — SEO articles targeting top missing keywords (alopecia androgenética tratamiento 1300/mo, PRP capilar precio 720/mo)
+2. **GEO strategy** — Expand AI search analysis, create content optimized for AI snippets
+3. **Social → Treatment pivot** — Use 133K IG + 55K TikTok audience to amplify treatment content
+4. **Always enrich with real data** — Never deliver analysis without API-backed data
+5. **PSI rate limit workaround** — Need alternative to Google PSI for site speed audits (429 errors)
+
+---
+
+## 🔧 Operational Issues (Noted)
+
+- Google PSI API: rate limited (429) — need CrUX API key or alternative
+- GEO still limited: 4 prompts × 1 provider (target: 30 × 4)
+- Pending: execution plan for treatment visibility improvement
+
+*Last updated: 2026-03-30*

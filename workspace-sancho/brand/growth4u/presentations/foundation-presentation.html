@@ -1,0 +1,1182 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Growth4U — Foundation Strategy</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        /* === BRAND THEME === */
+        :root {
+            --brand-primary: #2563EB;
+            --brand-primary-light: #EFF6FF;
+            --brand-primary-dark: #1D4ED8;
+            --brand-secondary: #0F172A;
+            --brand-secondary-light: #1E293B;
+            --brand-accent: #F97316;
+            --brand-accent-light: #FFF7ED;
+            --brand-bg: #FAFAF9;
+            --brand-text: #0F172A;
+            --brand-text-light: #475569;
+            --brand-text-lighter: #94A3B8;
+            --brand-border: #E2E8F0;
+            --brand-shadow: 0 4px 24px rgba(15,23,42,0.08);
+            --brand-shadow-lg: 0 12px 48px rgba(15,23,42,0.12);
+            --brand-radius: 16px;
+            --brand-radius-sm: 12px;
+            --brand-font-display: 'Inter', -apple-system, sans-serif;
+            --brand-font-body: 'Inter', -apple-system, sans-serif;
+            --brand-font-mono: 'JetBrains Mono', monospace;
+            --gradient-primary: linear-gradient(135deg, #2563EB, #1D4ED8);
+            --gradient-secondary: linear-gradient(135deg, #0F172A, #1E293B);
+            --gradient-accent: linear-gradient(135deg, #F97316, #EA580C);
+            --title-size: clamp(1.5rem, 5vw, 4rem);
+            --h2-size: clamp(1.25rem, 3.5vw, 2.5rem);
+            --body-size: clamp(0.75rem, 1.5vw, 1.125rem);
+            --small-size: clamp(0.65rem, 1vw, 0.875rem);
+            --slide-padding: clamp(1rem, 4vw, 4rem);
+        }
+
+        /* === VIEWPORT BASE === */
+        html, body { height: 100%; overflow-x: hidden; margin: 0; padding: 0; }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        .slide {
+            width: 100vw; height: 100vh; height: 100dvh;
+            overflow: hidden;
+            padding: clamp(24px, 4vw, 48px);
+            display: none; flex-direction: column;
+            position: relative;
+            background: var(--brand-bg);
+            font-family: var(--brand-font-body);
+        }
+        .slide.active { display: flex; }
+        .slide.cover-bg {
+            background: linear-gradient(135deg, #fafaf9 0%, var(--brand-primary-light) 50%, #fafaf9 100%);
+        }
+        .slide.cover-bg > div { flex: 1; }
+
+        /* === COMPONENTS === */
+        .section-label {
+            font-size: clamp(0.55rem, 0.9vw, 0.7rem); font-weight: 700;
+            letter-spacing: 2.5px; text-transform: uppercase;
+            background: var(--brand-primary-light); color: var(--brand-primary);
+            padding: clamp(3px, 0.4vh, 6px) clamp(8px, 1.2vw, 14px);
+            border-radius: 20px; display: inline-block;
+        }
+        .section-label.accent-label { background: var(--brand-accent-light); color: var(--brand-accent); }
+        .section-label.secondary-label { background: rgba(15,23,42,0.06); color: var(--brand-secondary); }
+
+        .card {
+            background: white; border-radius: var(--brand-radius-sm);
+            padding: clamp(12px, 2vw, 20px); box-shadow: var(--brand-shadow);
+            border: 1px solid var(--brand-border);
+        }
+        .card-accent { border-left: 4px solid var(--brand-primary); }
+        .card-accent-secondary { border-left: 4px solid var(--brand-secondary); }
+        .card-accent-accent { border-left: 4px solid var(--brand-accent); }
+
+        .stat-number {
+            font-size: clamp(1.6rem, 3.5vw, 2.8rem); font-weight: 900;
+            font-family: var(--brand-font-mono);
+        }
+        .stat-label { font-size: clamp(0.65rem, 1vw, 0.85rem); color: var(--brand-text-light); margin-top: 4px; }
+
+        .tag {
+            display: inline-block; padding: clamp(3px, 0.4vh, 6px) clamp(10px, 1.5vw, 16px);
+            border-radius: 20px; font-size: clamp(0.6rem, 0.9vw, 0.78rem); font-weight: 600;
+        }
+        .tag-primary { background: var(--brand-primary-light); color: var(--brand-primary-dark); }
+        .tag-secondary { background: rgba(15,23,42,0.06); color: var(--brand-secondary); }
+        .tag-accent { background: var(--brand-accent-light); color: var(--brand-accent); }
+
+        .kpi-row { display: flex; gap: clamp(12px, 2vw, 24px); margin: clamp(8px, 1.5vh, 16px) 0; }
+        .kpi-value { font-size: clamp(0.85rem, 1.5vw, 1.1rem); font-weight: 800; color: var(--brand-primary); font-family: var(--brand-font-mono); }
+        .kpi-label { font-size: clamp(0.6rem, 0.9vw, 0.78rem); color: var(--brand-text-lighter); }
+
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(12px, 2vw, 20px); }
+        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: clamp(12px, 2vw, 20px); }
+        .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: clamp(12px, 2vw, 16px); }
+
+        .niche-hero { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: clamp(16px, 3vw, 32px); flex: 1; }
+        .niche-icon {
+            width: clamp(40px, 5vw, 56px); height: clamp(40px, 5vw, 56px);
+            border-radius: 14px; display: flex; align-items: center; justify-content: center;
+            font-size: clamp(1.2rem, 2.5vw, 1.8rem); margin-bottom: clamp(6px, 1vh, 12px);
+        }
+        .niche-name { font-size: clamp(1.2rem, 2.5vw, 1.8rem); font-weight: 800; color: var(--brand-text); margin-bottom: clamp(4px, 0.8vh, 8px); }
+        .niche-desc { font-size: clamp(0.72rem, 1.1vw, 0.88rem); color: var(--brand-text-light); line-height: 1.55; }
+
+        .competitor-pill {
+            display: inline-block; padding: clamp(2px, 0.3vh, 4px) clamp(8px, 1vw, 12px);
+            background: var(--brand-bg); border: 1px solid var(--brand-border);
+            border-radius: 20px; font-size: clamp(0.6rem, 0.9vw, 0.72rem);
+            font-weight: 600; color: var(--brand-secondary);
+        }
+
+        .bullet-list { list-style: none; padding: 0; }
+        .bullet-list li {
+            font-size: clamp(0.72rem, 1.1vw, 0.85rem); color: var(--brand-text-light);
+            line-height: 1.5; padding: clamp(3px, 0.5vh, 6px) 0 clamp(3px, 0.5vh, 6px) 1.2em;
+            position: relative;
+        }
+        .bullet-list li::before { content: '→'; position: absolute; left: 0; color: var(--brand-primary); font-weight: 700; }
+
+        .slide-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: clamp(12px, 2vh, 20px); flex-shrink: 0; }
+        .slide-title { font-family: var(--brand-font-display); font-size: clamp(1.4rem, 3vw, 2.4rem); font-weight: 800; color: var(--brand-secondary); margin-bottom: clamp(4px, 0.6vh, 8px); }
+        .slide-subtitle { font-size: clamp(0.8rem, 1.3vw, 1.05rem); color: var(--brand-text-light); font-weight: 400; margin-bottom: clamp(10px, 1.5vh, 16px); }
+
+        .brand-logo-text {
+            font-family: var(--brand-font-display); font-weight: 900;
+            font-size: clamp(0.9rem, 1.8vw, 1.4rem); color: var(--brand-primary);
+            letter-spacing: -0.5px;
+        }
+
+        /* === ANIMATIONS === */
+        .animate-in { opacity: 0; transform: translateY(20px); transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
+        .slide.active .animate-in { opacity: 1; transform: translateY(0); }
+        .delay-1 { transition-delay: 0.1s; } .delay-2 { transition-delay: 0.2s; }
+        .delay-3 { transition-delay: 0.35s; } .delay-4 { transition-delay: 0.5s; }
+        .delay-5 { transition-delay: 0.65s; }
+
+        /* === META AD === */
+        .meta-ad { background: white; border-radius: 12px; overflow: hidden; box-shadow: var(--brand-shadow); }
+        .meta-ad-header { display: flex; align-items: center; gap: clamp(6px, 1vw, 10px); padding: clamp(8px, 1.2vh, 12px) clamp(10px, 1.5vw, 14px); }
+        .meta-ad-avatar { width: clamp(28px, 3.5vw, 40px); height: clamp(28px, 3.5vw, 40px); border-radius: 50%; background: var(--brand-primary); display: flex; align-items: center; justify-content: center; color: white; font-weight: 800; font-size: clamp(0.6rem, 1vw, 0.85rem); }
+        .meta-ad-name { font-size: clamp(0.65rem, 1vw, 0.82rem); font-weight: 600; color: #1c1e21; }
+        .meta-ad-sponsor { font-size: clamp(0.5rem, 0.75vw, 0.65rem); color: #65676B; }
+        .meta-ad-img { aspect-ratio: 1.2/1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; padding: clamp(12px, 2vw, 20px); text-align: center; }
+        .meta-ad-body { padding: clamp(8px, 1.2vh, 12px) clamp(10px, 1.5vw, 14px); }
+        .meta-ad-cta { display: block; text-align: center; padding: clamp(6px, 1vh, 10px); color: white; font-weight: 700; font-size: clamp(0.65rem, 1vw, 0.82rem); text-decoration: none; border-radius: 0 0 12px 12px; }
+
+        /* === CAMPAIGN GRID === */
+        .campaign-grid { display: flex; gap: clamp(12px, 2vw, 20px); flex: 1; align-items: flex-start; }
+        .google-serp { background: white; border-radius: 12px; padding: clamp(10px, 1.5vw, 16px); box-shadow: var(--brand-shadow); }
+        .google-serp-bar { display: flex; align-items: center; gap: clamp(8px, 1.5vw, 14px); margin-bottom: clamp(8px, 1.2vh, 14px); }
+        .g-logo { font-size: clamp(0.8rem, 1.3vw, 1.1rem); font-weight: 500; }
+        .google-serp-searchbox { flex: 1; padding: clamp(6px, 1vh, 10px) clamp(10px, 1.5vw, 14px); background: var(--brand-bg); border-radius: 999px; font-size: clamp(0.65rem, 1vw, 0.82rem); border: 1px solid var(--brand-border); }
+        .google-ad-sponsored { font-size: clamp(0.5rem, 0.75vw, 0.65rem); font-weight: 700; }
+        .google-ad-url { font-size: clamp(0.55rem, 0.85vw, 0.72rem); margin-bottom: 2px; }
+        .google-ad-title { font-size: clamp(0.8rem, 1.3vw, 1.05rem); color: #1a0dab; margin-bottom: 4px; }
+        .google-ad-desc { font-size: clamp(0.6rem, 0.95vw, 0.78rem); color: #4d5156; line-height: 1.4; }
+
+        .stories-row { display: flex; gap: clamp(6px, 1vw, 8px); }
+        .story-mock { width: clamp(90px, 12vw, 130px); height: clamp(160px, 25vh, 230px); border-radius: 14px; color: white; display: flex; flex-direction: column; align-items: center; padding: clamp(8px, 1.2vw, 12px); position: relative; overflow: hidden; }
+        .story-progress { position: absolute; top: 8px; left: 8px; right: 8px; height: 2px; background: rgba(255,255,255,0.3); border-radius: 2px; }
+        .story-progress::after { content: ''; position: absolute; left: 0; top: 0; width: 60%; height: 100%; background: white; border-radius: 2px; }
+        .story-title { font-size: clamp(0.55rem, 0.85vw, 0.7rem); text-align: center; line-height: 1.3; margin-top: auto; z-index: 2; }
+        .story-cta { background: white; color: var(--brand-secondary); font-size: clamp(0.45rem, 0.7vw, 0.55rem); font-weight: 700; padding: clamp(3px, 0.4vh, 5px) clamp(6px, 1vw, 12px); border-radius: 6px; margin-top: auto; z-index: 2; }
+
+        .funnel-step { color: white; padding: clamp(8px, 1.2vh, 14px) clamp(12px, 2vw, 20px); border-radius: var(--brand-radius-sm); font-size: clamp(0.72rem, 1.1vw, 0.88rem); font-weight: 700; text-align: center; }
+        .funnel-step small { display: block; font-weight: 400; font-size: clamp(0.6rem, 0.9vw, 0.75rem); opacity: 0.85; margin-top: 2px; }
+
+        /* === NAV === */
+        .slide-footer { position: fixed; bottom: 0; left: 0; right: 0; display: flex; justify-content: space-between; padding: clamp(8px, 1vh, 12px) clamp(16px, 3vw, 32px); font-size: clamp(0.6rem, 0.9vw, 0.78rem); color: var(--brand-text-lighter); background: rgba(250,250,249,0.95); backdrop-filter: blur(8px); z-index: 100; }
+        .progress-bar { position: fixed; bottom: 0; left: 0; height: 3px; background: var(--gradient-primary); transition: width 0.3s ease; z-index: 101; }
+        .nav-btn { position: fixed; top: 50%; transform: translateY(-50%); background: white; border: 1px solid var(--brand-border); border-radius: 50%; width: clamp(32px, 4vw, 44px); height: clamp(32px, 4vw, 44px); display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: clamp(0.9rem, 1.5vw, 1.2rem); color: var(--brand-secondary); box-shadow: var(--brand-shadow); z-index: 100; transition: opacity 0.3s, transform 0.2s; }
+        .nav-btn:hover { transform: translateY(-50%) scale(1.1); }
+        .nav-prev { left: clamp(8px, 1.5vw, 16px); }
+        .nav-next { right: clamp(8px, 1.5vw, 16px); }
+        .fs-btn { position: fixed; top: clamp(8px, 1.5vh, 16px); right: clamp(8px, 1.5vw, 16px); background: white; border: 1px solid var(--brand-border); border-radius: 8px; padding: clamp(4px, 0.6vh, 8px) clamp(8px, 1.2vw, 12px); cursor: pointer; font-size: clamp(0.8rem, 1.2vw, 1rem); color: var(--brand-secondary); z-index: 100; }
+
+        /* === RESPONSIVE === */
+        @media (max-width: 900px) {
+            .niche-hero, .grid-2, .campaign-grid { grid-template-columns: 1fr !important; display: flex !important; flex-direction: column !important; }
+            .grid-3 { grid-template-columns: 1fr 1fr !important; }
+            .story-mock { width: clamp(80px, 20vw, 120px) !important; height: clamp(140px, 35vh, 200px) !important; }
+            .nav-btn { display: none !important; }
+            .meta-ad { max-width: 100% !important; }
+        }
+        @media (max-width: 600px) {
+            .grid-3, .grid-4 { grid-template-columns: 1fr !important; }
+            .slide { padding: clamp(0.8rem, 3vw, 1.5rem) !important; }
+            .slide-title { font-size: clamp(1.1rem, 5vw, 1.6rem) !important; }
+            .niche-desc { font-size: clamp(0.7rem, 3vw, 0.85rem) !important; }
+            .stories-row { justify-content: center; }
+            .kpi-row { flex-wrap: wrap; }
+            .competitor-pill { font-size: clamp(0.55rem, 2.5vw, 0.7rem) !important; }
+        }
+        @media (max-height: 700px) {
+            :root { --slide-padding: clamp(0.75rem, 3vw, 2rem); }
+        }
+        @media (max-height: 600px) {
+            :root { --slide-padding: clamp(0.5rem, 2.5vw, 1.5rem); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.2s !important; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ========== SLIDE 1: COVER ========== -->
+<div class="slide cover-bg active" data-slide="0">
+    <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; text-align:center;">
+        <div class="animate-in">
+            <span style="font-family:var(--brand-font-display); font-size:clamp(2rem, 4vw, 3rem); font-weight:900; color:var(--brand-primary); letter-spacing:-1px;">Growth4U</span>
+        </div>
+        <div class="animate-in delay-1" style="display:flex; align-items:center; gap:14px; justify-content:center; margin:16px 0 28px;">
+            <span style="font-size:1rem; color:var(--brand-text-lighter);">×</span>
+            <span style="font-family:var(--brand-font-display); font-size:clamp(1rem, 2vw, 1.4rem); font-weight:700; color:var(--brand-text-lighter);">Foundation Strategy</span>
+        </div>
+        <div class="animate-in delay-2">
+            <h1 style="font-size:clamp(1.8rem, 5vw, 3rem); font-weight:900; color:var(--brand-secondary); margin-bottom:12px; line-height:1.15;">
+                Nichos, Posicionamiento<br><span style="color:var(--brand-primary);">& Sistema de Growth</span>
+            </h1>
+        </div>
+        <div class="animate-in delay-2">
+            <p style="font-size:clamp(0.85rem, 1.5vw, 1.15rem); color:var(--brand-text-light); max-width:640px; margin:0 auto 28px; line-height:1.6;">
+                8 Pain Clusters · 27 personas · 5 ECPs con positioning · Trust Engine como sistema productizado
+            </p>
+        </div>
+        <div class="animate-in delay-3" style="display:flex; gap:16px; align-items:center; justify-content:center; flex-wrap:wrap;">
+            <span class="tag tag-primary">Foundation L0–L4</span>
+            <span class="tag tag-accent">TAM 50-80M€</span>
+            <span class="tag tag-secondary">Marzo 2026</span>
+        </div>
+        <div class="animate-in delay-4" style="margin-top:48px; color:var(--brand-text-lighter); font-size:clamp(0.65rem, 1vw, 0.85rem);">
+            Usa ← → o desliza para navegar · Pulsa <kbd style="padding:2px 8px; background:var(--brand-bg); border:1px solid var(--brand-border); border-radius:4px; font-size:0.75rem;">F</kbd> para pantalla completa
+        </div>
+    </div>
+</div>
+
+<!-- ========== SLIDE 2: MARKET CONTEXT ========== -->
+<div class="slide" data-slide="1">
+    <div class="slide-header">
+        <span class="section-label">Contexto de Mercado</span>
+        <span class="brand-logo-text">Growth4U</span>
+    </div>
+    <h2 class="slide-title animate-in">El mercado tech español crece — y necesita growth</h2>
+    <p class="slide-subtitle animate-in delay-1">8.580 empresas tech, inversión récord, y nadie domina el consulting de growth</p>
+
+    <div class="grid-3 animate-in delay-2" style="margin-bottom:clamp(14px, 2.5vh, 24px);">
+        <div class="card card-accent">
+            <div class="stat-number" style="color:var(--brand-primary);">8.580</div>
+            <div class="stat-label">Empresas tech activas en España (+22% YoY)</div>
+            <p style="font-size:clamp(0.6rem, 0.9vw, 0.75rem); color:var(--brand-text-lighter); margin-top:6px;">Fuente: El Referente 2025</p>
+        </div>
+        <div class="card card-accent-accent">
+            <div class="stat-number" style="color:var(--brand-accent);">50-80M€</div>
+            <div class="stat-label">TAM en consultoría de growth para tech en España</div>
+            <p style="font-size:clamp(0.6rem, 0.9vw, 0.75rem); color:var(--brand-text-lighter); margin-top:6px;">Estimación bottom-up</p>
+        </div>
+        <div class="card card-accent-secondary">
+            <div class="stat-number" style="color:var(--brand-secondary);">3.108M€</div>
+            <div class="stat-label">Inversión VC 2025 — Series A +34%</div>
+            <p style="font-size:clamp(0.6rem, 0.9vw, 0.75rem); color:var(--brand-text-lighter); margin-top:6px;">Fuente: capital-riesgo.es</p>
+        </div>
+    </div>
+
+    <div style="background:var(--brand-primary-light); border-left:4px solid var(--brand-primary); padding:clamp(12px, 2vw, 20px); border-radius:0 var(--brand-radius-sm) var(--brand-radius-sm) 0;" class="animate-in delay-3">
+        <p style="font-size:clamp(0.82rem, 1.3vw, 1rem); color:var(--brand-text); font-style:italic; line-height:1.6; margin:0;">
+            "El 77% de usuarios de ChatGPT ya lo usan como buscador. El 61-70% del buyer B2B investiga online sin hablar con ventas. Quien no sea la respuesta de la IA, no existe para el comprador moderno."
+        </p>
+    </div>
+
+    <div class="grid-4 animate-in delay-3" style="margin-top:clamp(12px, 2vh, 20px);">
+        <div style="text-align:center;">
+            <div style="font-size:clamp(0.85rem, 1.5vw, 1.1rem); font-weight:800; color:var(--brand-primary); font-family:var(--brand-font-mono);">516M€</div>
+            <div style="font-size:clamp(0.6rem, 0.9vw, 0.72rem); color:var(--brand-text-lighter);">SaaS/IA inversión 2025</div>
+        </div>
+        <div style="text-align:center;">
+            <div style="font-size:clamp(0.85rem, 1.5vw, 1.1rem); font-weight:800; color:var(--brand-accent); font-family:var(--brand-font-mono);">+22%</div>
+            <div style="font-size:clamp(0.6rem, 0.9vw, 0.72rem); color:var(--brand-text-lighter);">CAGR healthtech</div>
+        </div>
+        <div style="text-align:center;">
+            <div style="font-size:clamp(0.85rem, 1.5vw, 1.1rem); font-weight:800; color:var(--brand-secondary); font-family:var(--brand-font-mono);">400+</div>
+            <div style="font-size:clamp(0.6rem, 0.9vw, 0.72rem); color:var(--brand-text-lighter);">Fintechs en España</div>
+        </div>
+        <div style="text-align:center;">
+            <div style="font-size:clamp(0.85rem, 1.5vw, 1.1rem); font-weight:800; color:var(--brand-primary); font-family:var(--brand-font-mono);">+11%</div>
+            <div style="font-size:clamp(0.6rem, 0.9vw, 0.72rem); color:var(--brand-text-lighter);">Marketing digital YoY</div>
+        </div>
+    </div>
+</div>
+
+<!-- ========== SLIDE 3: COMPETITORS ========== -->
+<div class="slide" data-slide="2">
+    <div class="slide-header">
+        <span class="section-label">Competencia</span>
+        <span class="brand-logo-text">Growth4U</span>
+    </div>
+    <h2 class="slide-title animate-in">Nadie ofrece un sistema de growth transferible</h2>
+    <p class="slide-subtitle animate-in delay-1">Todos venden retainer. Nadie instala un sistema y se va. Trust-building es white space total.</p>
+
+    <div class="grid-3 animate-in delay-2" style="margin-bottom:clamp(10px, 1.5vh, 16px);">
+        <div class="card" style="border-top:4px solid #fbbf24;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                <h4 style="font-weight:800; color:var(--brand-secondary); font-size:clamp(0.8rem,1.2vw,1rem);">Snowball</h4>
+                <span style="background:#fef3c7; color:#92400e; padding:2px 8px; border-radius:12px; font-size:var(--small-size); font-weight:700;">Tier A</span>
+            </div>
+            <ul class="bullet-list" style="font-size:var(--small-size);">
+                <li>Growth Squad embedded — modelo similar a G4U</li>
+                <li>Casos CRO: LOCK&Enjoy -57% CPA</li>
+                <li>Blog activo, BNI networking</li>
+                <li><strong>PERO:</strong> Fundador dual-role (Voxel), sin framework, sin reviews</li>
+            </ul>
+            <div style="background:var(--brand-primary-light); padding:6px 10px; border-radius:8px; margin-top:10px; font-size:clamp(0.55rem,0.85vw,0.7rem); color:var(--brand-primary-dark);">
+                → Retainer continuo vs Trust Engine con exit date
+            </div>
+        </div>
+
+        <div class="card" style="border-top:4px solid #fbbf24;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                <h4 style="font-weight:800; color:var(--brand-secondary); font-size:clamp(0.8rem,1.2vw,1rem);">Product Hackers</h4>
+                <span style="background:#fef3c7; color:#92400e; padding:2px 8px; border-radius:12px; font-size:var(--small-size); font-weight:700;">6M€ rev</span>
+            </div>
+            <ul class="bullet-list" style="font-size:var(--small-size);">
+                <li>+110 personas, Zara/Mapfre/Wallapop</li>
+                <li>Metodología SOLID Growth, libro, Forbes</li>
+                <li>Formación: cursos 195€-2.600€</li>
+                <li><strong>PERO:</strong> Enterprise-only, juniors rotativos, retainer-forever</li>
+            </ul>
+            <div style="background:var(--brand-accent-light); padding:6px 10px; border-radius:8px; margin-top:10px; font-size:clamp(0.55rem,0.85vw,0.7rem); color:var(--brand-accent);">
+                → "PH es para Zara. Trust Engine es para ti."
+            </div>
+        </div>
+
+        <div class="card" style="border-top:4px solid var(--brand-primary);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                <h4 style="font-weight:800; color:var(--brand-secondary); font-size:clamp(0.8rem,1.2vw,1rem);">Growth4U</h4>
+                <span style="background:var(--brand-primary-light); color:var(--brand-primary-dark); padding:2px 8px; border-radius:12px; font-size:var(--small-size); font-weight:700;">Trust Engine</span>
+            </div>
+            <ul class="bullet-list" style="font-size:var(--small-size);">
+                <li>Framework productizado: 6 meses, €7K, exit date</li>
+                <li>Cases: Bnext 0→400K, Criptan x10, Bit2Me LTV 3x</li>
+                <li>Especialización fintech/B2B tech + GEO first-mover</li>
+                <li><strong>A resolver:</strong> Cases propios de G4U empresa (no Alfonso empleado)</li>
+            </ul>
+            <div style="background:var(--brand-primary-light); padding:6px 10px; border-radius:8px; margin-top:10px; font-size:clamp(0.55rem,0.85vw,0.7rem); color:var(--brand-primary-dark);">
+                → Único con trust-building + programa productizado + exit
+            </div>
+        </div>
+    </div>
+
+    <div class="animate-in delay-3" style="background:var(--brand-secondary); padding:clamp(10px, 1.5vh, 16px) clamp(14px, 2.5vw, 20px); border-radius:var(--brand-radius-sm); color:white;">
+        <p style="font-style:italic; font-size:clamp(0.72rem, 1.1vw, 0.9rem); line-height:1.5; margin:0;">
+            "0 de 3 competidores directos tiene reviews públicas significativas. El que primero construya social proof, gana. El white space es trust-building como sistema de growth." — Competitor Intelligence v2
+        </p>
+    </div>
+</div>
+
+<!-- ========== SLIDE 4: ECOSYSTEM OVERVIEW ========== -->
+<div class="slide" data-slide="3">
+    <div class="slide-header">
+        <span class="section-label accent-label">Ecosistema de Nichos</span>
+        <span class="brand-logo-text">Growth4U</span>
+    </div>
+    <h2 class="slide-title animate-in">8 Pain Clusters · 27 Personas</h2>
+    <p class="slide-subtitle animate-in delay-1">Agrupados por el dolor que les hace buscar ayuda — no por cargo ni vertical</p>
+
+    <div class="grid-4 animate-in delay-2" style="margin-bottom:clamp(8px, 1.5vh, 14px);">
+        <div class="card" style="border-top:4px solid #EF4444; text-align:center; padding:clamp(10px, 1.5vw, 16px);">
+            <div style="font-size:clamp(1.2rem, 2.5vw, 1.8rem); margin-bottom:4px;">🔴</div>
+            <h4 style="font-weight:700; color:var(--brand-secondary); font-size:clamp(0.68rem, 1vw, 0.85rem);">System Seekers</h4>
+            <p style="font-size:clamp(0.58rem, 0.85vw, 0.72rem); color:var(--brand-text-light); margin:4px 0;">Necesitan sistema repetible</p>
+            <div class="competitor-pill">4 personas · SAM 7.100</div>
+        </div>
+        <div class="card" style="border-top:4px solid #F97316; text-align:center; padding:clamp(10px, 1.5vw, 16px);">
+            <div style="font-size:clamp(1.2rem, 2.5vw, 1.8rem); margin-bottom:4px;">🟠</div>
+            <h4 style="font-weight:700; color:var(--brand-secondary); font-size:clamp(0.68rem, 1vw, 0.85rem);">The Burned</h4>
+            <p style="font-size:clamp(0.58rem, 0.85vw, 0.72rem); color:var(--brand-text-light); margin:4px 0;">Quemados por agencias</p>
+            <div class="competitor-pill">3 personas · SAM 3.800</div>
+        </div>
+        <div class="card" style="border-top:4px solid #EAB308; text-align:center; padding:clamp(10px, 1.5vw, 16px);">
+            <div style="font-size:clamp(1.2rem, 2.5vw, 1.8rem); margin-bottom:4px;">🟡</div>
+            <h4 style="font-weight:700; color:var(--brand-secondary); font-size:clamp(0.68rem, 1vw, 0.85rem);">Channel Death</h4>
+            <p style="font-size:clamp(0.58rem, 0.85vw, 0.72rem); color:var(--brand-text-light); margin:4px 0;">Canal principal muriendo</p>
+            <div class="competitor-pill">5 personas · SAM 6.000</div>
+        </div>
+        <div class="card" style="border-top:4px solid #22C55E; text-align:center; padding:clamp(10px, 1.5vw, 16px);">
+            <div style="font-size:clamp(1.2rem, 2.5vw, 1.8rem); margin-bottom:4px;">🟢</div>
+            <h4 style="font-weight:700; color:var(--brand-secondary); font-size:clamp(0.68rem, 1vw, 0.85rem);">Compliance Paralysis</h4>
+            <p style="font-size:clamp(0.58rem, 0.85vw, 0.72rem); color:var(--brand-text-light); margin:4px 0;">Regulación ata las manos</p>
+            <div class="competitor-pill">4 personas · SAM 950</div>
+        </div>
+    </div>
+    <div class="grid-4 animate-in delay-3">
+        <div class="card" style="border-top:4px solid #3B82F6; text-align:center; padding:clamp(10px, 1.5vw, 16px);">
+            <div style="font-size:clamp(1.2rem, 2.5vw, 1.8rem); margin-bottom:4px;">🔵</div>
+            <h4 style="font-weight:700; color:var(--brand-secondary); font-size:clamp(0.68rem, 1vw, 0.85rem);">Measurement Void</h4>
+            <p style="font-size:clamp(0.58rem, 0.85vw, 0.72rem); color:var(--brand-text-light); margin:4px 0;">No saben qué funciona</p>
+            <div class="competitor-pill">3 personas · SAM 4.500</div>
+        </div>
+        <div class="card" style="border-top:4px solid #A855F7; text-align:center; padding:clamp(10px, 1.5vw, 16px);">
+            <div style="font-size:clamp(1.2rem, 2.5vw, 1.8rem); margin-bottom:4px;">🟣</div>
+            <h4 style="font-weight:700; color:var(--brand-secondary); font-size:clamp(0.68rem, 1vw, 0.85rem);">Invisibility</h4>
+            <p style="font-size:clamp(0.58rem, 0.85vw, 0.72rem); color:var(--brand-text-light); margin:4px 0;">Nadie les conoce online</p>
+            <div class="competitor-pill">3 personas · SAM 5.300</div>
+        </div>
+        <div class="card" style="border-top:4px solid #1F2937; text-align:center; padding:clamp(10px, 1.5vw, 16px);">
+            <div style="font-size:clamp(1.2rem, 2.5vw, 1.8rem); margin-bottom:4px;">⚫</div>
+            <h4 style="font-weight:700; color:var(--brand-secondary); font-size:clamp(0.68rem, 1vw, 0.85rem);">Scale Blockers</h4>
+            <p style="font-size:clamp(0.58rem, 0.85vw, 0.72rem); color:var(--brand-text-light); margin:4px 0;">No escalan de donde están</p>
+            <div class="competitor-pill">3 personas · SAM 1.600</div>
+        </div>
+        <div class="card" style="border-top:4px solid #9CA3AF; text-align:center; padding:clamp(10px, 1.5vw, 16px);">
+            <div style="font-size:clamp(1.2rem, 2.5vw, 1.8rem); margin-bottom:4px;">⚪</div>
+            <h4 style="font-weight:700; color:var(--brand-secondary); font-size:clamp(0.68rem, 1vw, 0.85rem);">Resource Crunch</h4>
+            <p style="font-size:clamp(0.58rem, 0.85vw, 0.72rem); color:var(--brand-text-light); margin:4px 0;">Equipo no da para más</p>
+            <div class="competitor-pill">2 personas · SAM 2.300</div>
+        </div>
+    </div>
+
+    <div class="animate-in delay-4" style="margin-top:clamp(8px, 1.5vh, 14px); font-size:clamp(0.68rem, 1vw, 0.82rem); color:var(--brand-text-light); text-align:center;">
+        <strong>Estrategia:</strong> Liderar con <span style="color:#EF4444; font-weight:700;">System Seekers</span> (volumen) + <span style="color:#22C55E; font-weight:700;">Compliance</span> (moat Alfonso) · Messaging transversal: <span style="color:#F97316; font-weight:700;">The Burned</span>
+    </div>
+</div>
+
+<!-- ========== SLIDE 5: ECP1 DETAIL — System Seekers ========== -->
+<div class="slide" data-slide="4">
+    <div class="slide-header">
+        <span class="section-label">ECP 1 de 5</span>
+        <span class="brand-logo-text">Growth4U</span>
+    </div>
+
+    <div class="niche-hero">
+        <div>
+            <div class="niche-icon animate-in" style="background:#FEE2E2;">🔴</div>
+            <h2 class="niche-name animate-in delay-1">System Seekers</h2>
+            <p class="niche-desc animate-in delay-2">
+                <strong>Founders técnicos (CTO→CEO), Heads of Growth junior, y Post-Round Firefighters</strong> que llevan <em>6+ meses estancados</em> probando tácticas sueltas sin resultado. Un mes LinkedIn, otro Google Ads, un blog que lee su madre. Nada conectado, todo improvisado. Tienen producto bueno y clientes, pero <strong>no tienen sistema de growth</strong>. El 73% de startups no logra ventas recurrentes. El 95% no escala y desaparece.
+            </p>
+            <div class="animate-in delay-2" style="background:#FFF5F5; border-left:4px solid #E74C3C; padding:clamp(8px, 1.2vh, 12px) clamp(10px, 1.5vw, 16px); border-radius:0 8px 8px 0; margin:clamp(8px, 1vh, 12px) 0;">
+                <div style="font-size:clamp(0.55rem, 0.8vw, 0.7rem); font-weight:700; color:#E74C3C; text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">Dolor real</div>
+                <p style="font-size:clamp(0.7rem, 1.1vw, 0.82rem); color:var(--brand-secondary); line-height:1.5; font-style:italic;">"Programo 16 horas al día y las últimas 2 intento hacer marketing. No tengo ni idea de lo que hago."</p>
+            </div>
+            <div class="kpi-row animate-in delay-3">
+                <div class="kpi-item"><div class="kpi-value">Score 79</div><div class="kpi-label">Prioridad</div></div>
+                <div class="kpi-item"><div class="kpi-value">7.100</div><div class="kpi-label">SAM total</div></div>
+                <div class="kpi-item"><div class="kpi-value">82/100</div><div class="kpi-label">Pain score</div></div>
+            </div>
+            <div class="animate-in delay-3" style="display:flex; gap:8px; flex-wrap:wrap;">
+                <span class="competitor-pill">PH (enterprise, juniors)</span>
+                <span class="competitor-pill">Snowball (sin framework)</span>
+                <span class="competitor-pill">fCMOs (se van sin sistema)</span>
+            </div>
+        </div>
+
+        <div class="animate-in delay-4">
+            <div class="meta-ad">
+                <div class="meta-ad-header">
+                    <div class="meta-ad-avatar">G4</div>
+                    <div>
+                        <div class="meta-ad-name">Growth4U</div>
+                        <div class="meta-ad-sponsor">Publicidad · 🌍</div>
+                    </div>
+                </div>
+                <div class="meta-ad-img" style="background: var(--gradient-secondary);">
+                    <div style="font-size:clamp(1.2rem, 2.5vw, 1.8rem); margin-bottom:8px;">🔴</div>
+                    <div style="font-size:clamp(0.82rem, 1.3vw, 0.95rem); font-weight:800; margin-bottom:6px;">¿Llevas 6 meses sin crecer?</div>
+                    <div style="font-size:clamp(0.6rem, 1vw, 0.75rem); opacity:0.9; line-height:1.4;">No es falta de esfuerzo. Es falta de sistema.</div>
+                </div>
+                <div class="meta-ad-body">
+                    <p style="font-size:clamp(0.6rem, 1vw, 0.75rem); color:#1c1e21; margin-bottom:4px;"><strong>Growth4U</strong> — Trust Engine: el sistema de growth que se queda cuando nos vamos.</p>
+                    <p style="font-size:clamp(0.55rem, 0.8vw, 0.68rem); color:#65676B;">growth4u.io/trust-engine</p>
+                </div>
+                <a class="meta-ad-cta" href="#" style="background:var(--brand-primary);">Descubre Trust Engine →</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="animate-in delay-3" style="margin-top:clamp(6px, 1vh, 10px); padding:clamp(6px, 1vh, 10px) clamp(10px, 1.5vw, 14px); border-left:4px solid var(--brand-accent); background:var(--brand-accent-light); border-radius:0 8px 8px 0;">
+        <div style="font-size:clamp(0.5rem, 0.8vw, 0.65rem); font-weight:700; color:var(--brand-accent); text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">📍 Canales</div>
+        <div style="font-size:clamp(0.62rem, 0.95vw, 0.75rem); color:var(--brand-secondary); line-height:1.6;">
+            → Slack (Product Hackers Go!, Gomarketeros) · → LinkedIn (founder posts, job change signals) · → South Summit, 4YFN · → Reddit r/SaaS, r/startups
+        </div>
+    </div>
+</div>
+
+<!-- ========== SLIDE 6: ECP1 CAMPAIGN ========== -->
+<div class="slide" data-slide="5">
+    <div class="slide-header">
+        <span class="section-label accent-label">System Seekers — Ejecución</span>
+        <span class="brand-logo-text">Growth4U</span>
+    </div>
+    <h2 class="slide-title animate-in">Campañas: "El sistema que se queda"</h2>
+    <p class="slide-subtitle animate-in delay-1">UVP: Para startups que llevan meses sin crecer, Trust Engine instala un sistema en 6 meses y se va.</p>
+
+    <div class="campaign-grid animate-in delay-2">
+        <div style="flex:1;">
+            <div style="font-size:clamp(0.55rem, 0.8vw, 0.7rem); font-weight:700; color:var(--brand-text-lighter); text-transform:uppercase; letter-spacing:1.5px; margin-bottom:8px;">Google Search</div>
+            <div class="google-serp">
+                <div class="google-serp-bar">
+                    <div class="g-logo"><span style="color:#4285F4">G</span><span style="color:#EA4335">o</span><span style="color:#FBBC05">o</span><span style="color:#4285F4">g</span><span style="color:#34A853">l</span><span style="color:#EA4335">e</span></div>
+                    <div class="google-serp-searchbox">sistema growth startup españa</div>
+                </div>
+                <div class="google-serp-content">
+                    <div class="google-ad-sponsored">Patrocinado</div>
+                    <div class="google-ad-url">growth4u.io › trust-engine</div>
+                    <div class="google-ad-title">Trust Engine — El Sistema de Growth que tu Startup Necesita</div>
+                    <div class="google-ad-desc">6 meses. €7K. Un sistema que tu equipo opera solo. Por quien escaló Bnext a 400K usuarios. Sin retainer.</div>
+                </div>
+            </div>
+        </div>
+
+        <div style="flex:1;">
+            <div style="font-size:clamp(0.55rem, 0.8vw, 0.7rem); font-weight:700; color:var(--brand-text-lighter); text-transform:uppercase; letter-spacing:1.5px; margin-bottom:8px;">Instagram Stories</div>
+            <div class="stories-row">
+                <div class="story-mock" style="background: var(--gradient-secondary);">
+                    <div class="story-progress"></div>
+                    <div style="position:relative;z-index:2;text-align:center;margin-bottom:auto;padding-top:clamp(24px, 4vh, 40px);">
+                        <div style="font-size:clamp(1.5rem, 3vw, 2.5rem);">📉</div>
+                        <div style="font-size:clamp(0.6rem, 1vw, 0.8rem);font-weight:900;margin-top:4px;">6 meses sin crecer</div>
+                    </div>
+                    <div class="story-title">No es tu marketing. Es que no tienes sistema.</div>
+                    <div class="story-cta">Saber más</div>
+                </div>
+                <div class="story-mock" style="background: var(--gradient-primary);">
+                    <div class="story-progress"></div>
+                    <div style="position:relative;z-index:2;text-align:center;margin-bottom:auto;padding-top:clamp(24px, 4vh, 40px);">
+                        <div style="font-size:clamp(1.5rem, 3vw, 2.5rem);">🚀</div>
+                        <div style="font-size:clamp(0.5rem, 0.8vw, 0.56rem);text-transform:uppercase;letter-spacing:1.5px;opacity:0.8;">Trust Engine</div>
+                    </div>
+                    <div class="story-title">€7K · 6 meses · Un sistema que se queda</div>
+                    <div class="story-cta">Agendar call</div>
+                </div>
+            </div>
+        </div>
+
+        <div style="flex:1; min-width:clamp(160px, 20vw, 220px);">
+            <div style="font-size:clamp(0.55rem, 0.8vw, 0.7rem); font-weight:700; color:var(--brand-text-lighter); text-transform:uppercase; letter-spacing:1.5px; margin-bottom:8px;">Keywords Target</div>
+            <div class="card" style="padding:clamp(10px, 1.5vw, 16px);">
+                <div style="display:flex; flex-direction:column; gap:clamp(4px, 0.6vh, 6px); font-size:clamp(0.65rem, 1vw, 0.82rem);">
+                    <div style="display:flex; justify-content:space-between;"><span>growth marketing startup</span><span style="font-weight:700; color:var(--brand-primary);">Alta</span></div>
+                    <div style="display:flex; justify-content:space-between;"><span>consultoría growth españa</span><span style="font-weight:700; color:var(--brand-primary);">Alta</span></div>
+                    <div style="display:flex; justify-content:space-between;"><span>fractional CMO español</span><span style="font-weight:700; color:var(--brand-accent);">Media</span></div>
+                    <div style="display:flex; justify-content:space-between;"><span>sistema growth repetible</span><span style="font-weight:700; color:var(--brand-accent);">Media</span></div>
+                    <div style="display:flex; justify-content:space-between;"><span>escalar startup sin CMO</span><span style="font-weight:700; color:var(--brand-primary);">Alta</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ========== SLIDE 7: ECP2 DETAIL — Compliance ========== -->
+<div class="slide" data-slide="6">
+    <div class="slide-header">
+        <span class="section-label">ECP 2 de 5</span>
+        <span class="brand-logo-text">Growth4U</span>
+    </div>
+
+    <div class="niche-hero">
+        <div>
+            <div class="niche-icon animate-in" style="background:#DCFCE7;">🟢</div>
+            <h2 class="niche-name animate-in delay-1">Compliance Paralysis</h2>
+            <p class="niche-desc animate-in delay-2">
+                <strong>Founders/CMOs de fintechs reguladas (CNMV/BdE) y crypto post-MiCA</strong> cuyo departamento legal tumba campaña tras campaña. No pueden decir "rentabilidad", ni usar testimoniales sin disclaimers de 4 líneas. <em>Multa de 5M€ a X/Twitter por CNMV en 2024.</em> La licencia tarda 18-24 meses — perderla por una campaña es catastrófico. Alfonso tiene el <strong>único track record verificable</strong> de growth bajo regulación CNMV en España: Bnext 0→400K, Bit2Me LTV 3x, Criptan x10.
+            </p>
+            <div class="animate-in delay-2" style="background:#FFF5F5; border-left:4px solid #E74C3C; padding:clamp(8px, 1.2vh, 12px) clamp(10px, 1.5vw, 16px); border-radius:0 8px 8px 0; margin:clamp(8px, 1vh, 12px) 0;">
+                <div style="font-size:clamp(0.55rem, 0.8vw, 0.7rem); font-weight:700; color:#E74C3C; text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">Dolor real</div>
+                <p style="font-size:clamp(0.7rem, 1.1vw, 0.82rem); color:var(--brand-secondary); line-height:1.5; font-style:italic;">"La CNMV me prohíbe usar testimonios. No puedo decir cuánto rentabiliza mi producto. ¿Cómo hago marketing si no puedo decir la verdad?"</p>
+            </div>
+            <div class="kpi-row animate-in delay-3">
+                <div class="kpi-item"><div class="kpi-value">Pain 90</div><div class="kpi-label">Máximo dolor</div></div>
+                <div class="kpi-item"><div class="kpi-value">950</div><div class="kpi-label">SAM</div></div>
+                <div class="kpi-item"><div class="kpi-value">Moat</div><div class="kpi-label">Founder Moat ALTO</div></div>
+            </div>
+            <div class="animate-in delay-3" style="display:flex; gap:8px; flex-wrap:wrap;">
+                <span class="competitor-pill">Despachos (compliance, no growth)</span>
+                <span class="competitor-pill">Agencias genéricas (no entienden CNMV)</span>
+            </div>
+        </div>
+
+        <div class="animate-in delay-4">
+            <div class="meta-ad">
+                <div class="meta-ad-header">
+                    <div class="meta-ad-avatar">G4</div>
+                    <div><div class="meta-ad-name">Growth4U</div><div class="meta-ad-sponsor">Publicidad · 🌍</div></div>
+                </div>
+                <div class="meta-ad-img" style="background: linear-gradient(135deg, #166534, #15803d);">
+                    <div style="font-size:clamp(1.2rem, 2.5vw, 1.8rem); margin-bottom:8px;">⚖️</div>
+                    <div style="font-size:clamp(0.82rem, 1.3vw, 0.95rem); font-weight:800; margin-bottom:6px;">Growth sin arriesgar la licencia</div>
+                    <div style="font-size:clamp(0.6rem, 1vw, 0.75rem); opacity:0.9; line-height:1.4;">Por quien escaló Bnext bajo CNMV</div>
+                </div>
+                <div class="meta-ad-body">
+                    <p style="font-size:clamp(0.6rem, 1vw, 0.75rem); color:#1c1e21; margin-bottom:4px;"><strong>Growth4U</strong> — FinReg360 te dice lo que NO. Nosotros lo que SÍ.</p>
+                    <p style="font-size:clamp(0.55rem, 0.8vw, 0.68rem); color:#65676B;">growth4u.io/fintech</p>
+                </div>
+                <a class="meta-ad-cta" href="#" style="background:#166534;">Hablar con Alfonso →</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="animate-in delay-3" style="margin-top:clamp(6px, 1vh, 10px); padding:clamp(6px, 1vh, 10px) clamp(10px, 1.5vw, 14px); border-left:4px solid var(--brand-accent); background:var(--brand-accent-light); border-radius:0 8px 8px 0;">
+        <div style="font-size:clamp(0.5rem, 0.8vw, 0.65rem); font-weight:700; color:var(--brand-accent); text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">📍 Canales</div>
+        <div style="font-size:clamp(0.62rem, 0.95vw, 0.75rem); color:var(--brand-secondary); line-height:1.6;">
+            → Rankia (foro fintech) · → LinkedIn (fintech founders) · → Fintech events, CNMV Portal Fintech · → Referrals de abogados fintech
+        </div>
+    </div>
+</div>
+
+<!-- ========== SLIDE 8: ECP2 CAMPAIGN ========== -->
+<div class="slide" data-slide="7">
+    <div class="slide-header">
+        <span class="section-label accent-label">Compliance Paralysis — Ejecución</span>
+        <span class="brand-logo-text">Growth4U</span>
+    </div>
+    <h2 class="slide-title animate-in">Campañas: "Lo que SÍ puedes hacer"</h2>
+    <p class="slide-subtitle animate-in delay-1">UVP: Para fintechs reguladas, Trust Engine — growth diseñado por quien escaló Bnext y Bit2Me bajo CNMV.</p>
+
+    <div class="campaign-grid animate-in delay-2">
+        <div style="flex:1;">
+            <div style="font-size:clamp(0.55rem, 0.8vw, 0.7rem); font-weight:700; color:var(--brand-text-lighter); text-transform:uppercase; letter-spacing:1.5px; margin-bottom:8px;">Google Search</div>
+            <div class="google-serp">
+                <div class="google-serp-bar">
+                    <div class="g-logo"><span style="color:#4285F4">G</span><span style="color:#EA4335">o</span><span style="color:#FBBC05">o</span><span style="color:#4285F4">g</span><span style="color:#34A853">l</span><span style="color:#EA4335">e</span></div>
+                    <div class="google-serp-searchbox">marketing fintech CNMV compliant</div>
+                </div>
+                <div>
+                    <div class="google-ad-sponsored">Patrocinado</div>
+                    <div class="google-ad-url">growth4u.io › fintech-regulada</div>
+                    <div class="google-ad-title">Marketing Fintech sin Arriesgar la Licencia — Growth4U</div>
+                    <div class="google-ad-desc">El único sistema de growth diseñado bajo regulación CNMV/BdE/MiCA. Cases: Bnext 0→400K, Bit2Me LTV 3x.</div>
+                </div>
+            </div>
+        </div>
+
+        <div style="flex:1;">
+            <div style="font-size:clamp(0.55rem, 0.8vw, 0.7rem); font-weight:700; color:var(--brand-text-lighter); text-transform:uppercase; letter-spacing:1.5px; margin-bottom:8px;">LinkedIn Post</div>
+            <div class="card" style="padding:clamp(10px, 1.5vw, 16px);">
+                <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+                    <div style="width:32px; height:32px; border-radius:50%; background:var(--brand-secondary); display:flex; align-items:center; justify-content:center; color:white; font-weight:800; font-size:0.7rem;">A</div>
+                    <div><div style="font-size:clamp(0.65rem, 1vw, 0.8rem); font-weight:600;">Alfonso · Growth4U</div><div style="font-size:clamp(0.5rem, 0.75vw, 0.65rem); color:#65676B;">CMO fintech · 15 años</div></div>
+                </div>
+                <p style="font-size:clamp(0.62rem, 0.95vw, 0.78rem); line-height:1.5; color:var(--brand-text);">
+                    Tu agencia preguntó "¿qué es la CNMV?" en la primera call.<br><br>
+                    Yo escalé Bnext de 0 a 400K usuarios bajo CNMV.<br><br>
+                    No es lo mismo "hacer growth" que hacer growth bajo regulación.
+                </p>
+            </div>
+        </div>
+
+        <div style="flex:1; min-width:clamp(160px, 20vw, 220px);">
+            <div style="font-size:clamp(0.55rem, 0.8vw, 0.7rem); font-weight:700; color:var(--brand-text-lighter); text-transform:uppercase; letter-spacing:1.5px; margin-bottom:8px;">Keywords Target</div>
+            <div class="card" style="padding:clamp(10px, 1.5vw, 16px);">
+                <div style="display:flex; flex-direction:column; gap:clamp(4px, 0.6vh, 6px); font-size:clamp(0.65rem, 1vw, 0.82rem);">
+                    <div style="display:flex; justify-content:space-between;"><span>marketing fintech CNMV</span><span style="font-weight:700; color:var(--brand-primary);">Alta</span></div>
+                    <div style="display:flex; justify-content:space-between;"><span>growth fintech regulada</span><span style="font-weight:700; color:var(--brand-primary);">Alta</span></div>
+                    <div style="display:flex; justify-content:space-between;"><span>marketing MiCA crypto</span><span style="font-weight:700; color:var(--brand-accent);">Media</span></div>
+                    <div style="display:flex; justify-content:space-between;"><span>compliance marketing fintech</span><span style="font-weight:700; color:var(--brand-accent);">Media</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ========== SLIDE 9: ECP3 DETAIL — Channel Death ========== -->
+<div class="slide" data-slide="8">
+    <div class="slide-header">
+        <span class="section-label">ECP 3 de 5</span>
+        <span class="brand-logo-text">Growth4U</span>
+    </div>
+
+    <div class="niche-hero">
+        <div>
+            <div class="niche-icon animate-in" style="background:#FEF9C3;">🟡</div>
+            <h2 class="niche-name animate-in delay-1">Channel Death</h2>
+            <p class="niche-desc animate-in delay-2">
+                <strong>Startups cuyo canal principal se degrada:</strong> Google Ads addicts (CAC +40% YoY), SEO Gravediggers (-25% tráfico por AI Overviews), Cold Email Corpses (reply rate <1%), Ghost Bloggers (60K visitas, 0 leads). <em>El 80% del negocio depende de un canal que no controlan.</em> Cuando el algoritmo cambia, mueren. La dependencia es existencial.
+            </p>
+            <div class="animate-in delay-2" style="background:#FFF5F5; border-left:4px solid #E74C3C; padding:clamp(8px, 1.2vh, 12px) clamp(10px, 1.5vw, 16px); border-radius:0 8px 8px 0; margin:clamp(8px, 1vh, 12px) 0;">
+                <div style="font-size:clamp(0.55rem, 0.8vw, 0.7rem); font-weight:700; color:#E74C3C; text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">Dolor real</div>
+                <p style="font-size:clamp(0.7rem, 1.1vw, 0.82rem); color:var(--brand-secondary); line-height:1.5; font-style:italic;">"Si apago Google Ads mañana, mi empresa muere en 3 meses. Pero el CAC ha subido un 40% en un año."</p>
+            </div>
+            <div class="kpi-row animate-in delay-3">
+                <div class="kpi-item"><div class="kpi-value">Score 73</div><div class="kpi-label">Prioridad</div></div>
+                <div class="kpi-item"><div class="kpi-value">6.000</div><div class="kpi-label">SAM total</div></div>
+                <div class="kpi-item"><div class="kpi-value">-8.9%</div><div class="kpi-label">CTR por AI Overviews</div></div>
+            </div>
+            <div class="animate-in delay-3" style="display:flex; gap:8px; flex-wrap:wrap;">
+                <span class="competitor-pill">Agencias SEO (canal decadente)</span>
+                <span class="competitor-pill">Agencias monocanal</span>
+                <span class="competitor-pill">iSocialWeb (solo SEO)</span>
+            </div>
+        </div>
+
+        <div class="animate-in delay-4">
+            <div class="meta-ad">
+                <div class="meta-ad-header">
+                    <div class="meta-ad-avatar">G4</div>
+                    <div><div class="meta-ad-name">Growth4U</div><div class="meta-ad-sponsor">Publicidad · 🌍</div></div>
+                </div>
+                <div class="meta-ad-img" style="background: linear-gradient(135deg, #92400e, #d97706);">
+                    <div style="font-size:clamp(1.2rem, 2.5vw, 1.8rem); margin-bottom:8px;">⚡</div>
+                    <div style="font-size:clamp(0.82rem, 1.3vw, 0.95rem); font-weight:800; margin-bottom:6px;">Tu canal muere lentamente</div>
+                    <div style="font-size:clamp(0.6rem, 1vw, 0.75rem); opacity:0.9;">Trust Engine construye los otros 3</div>
+                </div>
+                <div class="meta-ad-body">
+                    <p style="font-size:clamp(0.6rem, 1vw, 0.75rem); color:#1c1e21; margin-bottom:4px;"><strong>Growth4U</strong> — Multi-canal trust-based. GEO #1 en Gemini.</p>
+                    <p style="font-size:clamp(0.55rem, 0.8vw, 0.68rem); color:#65676B;">growth4u.io/diversificar</p>
+                </div>
+                <a class="meta-ad-cta" href="#" style="background:#92400e;">Diversificar ahora →</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="animate-in delay-3" style="margin-top:clamp(6px, 1vh, 10px); padding:clamp(6px, 1vh, 10px) clamp(10px, 1.5vw, 14px); border-left:4px solid var(--brand-accent); background:var(--brand-accent-light); border-radius:0 8px 8px 0;">
+        <div style="font-size:clamp(0.5rem, 0.8vw, 0.65rem); font-weight:700; color:var(--brand-accent); text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">📍 Canales</div>
+        <div style="font-size:clamp(0.62rem, 0.95vw, 0.75rem); color:var(--brand-secondary); line-height:1.6;">
+            → Google Ads community · → Reddit r/SEO, r/SaaS · → LinkedIn (posts frustración CAC) · → Marketing conferences
+        </div>
+    </div>
+</div>
+
+<!-- ========== SLIDE 10: ECP3 CAMPAIGN ========== -->
+<div class="slide" data-slide="9">
+    <div class="slide-header">
+        <span class="section-label accent-label">Channel Death — Ejecución</span>
+        <span class="brand-logo-text">Growth4U</span>
+    </div>
+    <h2 class="slide-title animate-in">Campañas: "GEO + Multi-canal trust-based"</h2>
+    <p class="slide-subtitle animate-in delay-1">UVP: Trust Engine construye un sistema multi-canal que no depende de Google, Meta ni cold email.</p>
+
+    <div class="campaign-grid animate-in delay-2">
+        <div style="flex:1;">
+            <div style="font-size:clamp(0.55rem, 0.8vw, 0.7rem); font-weight:700; color:var(--brand-text-lighter); text-transform:uppercase; letter-spacing:1.5px; margin-bottom:8px;">Google Search</div>
+            <div class="google-serp">
+                <div class="google-serp-bar">
+                    <div class="g-logo"><span style="color:#4285F4">G</span><span style="color:#EA4335">o</span><span style="color:#FBBC05">o</span><span style="color:#4285F4">g</span><span style="color:#34A853">l</span><span style="color:#EA4335">e</span></div>
+                    <div class="google-serp-searchbox">alternativa a google ads startup</div>
+                </div>
+                <div>
+                    <div class="google-ad-sponsored">Patrocinado</div>
+                    <div class="google-ad-url">growth4u.io › diversificar-canales</div>
+                    <div class="google-ad-title">Tu CAC Sube +40% al Año — Hay una Alternativa</div>
+                    <div class="google-ad-desc">Trust Engine: multi-canal trust-based. G4U aparece #1 en Gemini con 20 artículos. Imagina lo que puede hacer por ti.</div>
+                </div>
+            </div>
+        </div>
+
+        <div style="flex:1;">
+            <div style="font-size:clamp(0.55rem, 0.8vw, 0.7rem); font-weight:700; color:var(--brand-text-lighter); text-transform:uppercase; letter-spacing:1.5px; margin-bottom:8px;">Instagram Stories</div>
+            <div class="stories-row">
+                <div class="story-mock" style="background: linear-gradient(135deg, #92400e, #d97706);">
+                    <div class="story-progress"></div>
+                    <div style="position:relative;z-index:2;text-align:center;margin-bottom:auto;padding-top:clamp(24px, 4vh, 40px);">
+                        <div style="font-size:clamp(1.5rem, 3vw, 2.5rem);">💀</div>
+                        <div style="font-size:clamp(0.6rem, 1vw, 0.8rem);font-weight:900;margin-top:4px;">CAC +40%</div>
+                    </div>
+                    <div class="story-title">Google Ads es una adicción. Hay alternativa.</div>
+                    <div class="story-cta">Ver cómo</div>
+                </div>
+                <div class="story-mock" style="background: var(--gradient-primary);">
+                    <div class="story-progress"></div>
+                    <div style="position:relative;z-index:2;text-align:center;margin-bottom:auto;padding-top:clamp(24px, 4vh, 40px);">
+                        <div style="font-size:clamp(1.5rem, 3vw, 2.5rem);">🤖</div>
+                        <div style="font-size:clamp(0.5rem, 0.8vw, 0.56rem);text-transform:uppercase;letter-spacing:1.5px;opacity:0.8;">GEO First-Mover</div>
+                    </div>
+                    <div class="story-title">#1 en Gemini con solo 20 artículos</div>
+                    <div class="story-cta">Pedir demo</div>
+                </div>
+            </div>
+        </div>
+
+        <div style="flex:1; min-width:clamp(160px, 20vw, 220px);">
+            <div style="font-size:clamp(0.55rem, 0.8vw, 0.7rem); font-weight:700; color:var(--brand-text-lighter); text-transform:uppercase; letter-spacing:1.5px; margin-bottom:8px;">Keywords Target</div>
+            <div class="card" style="padding:clamp(10px, 1.5vw, 16px);">
+                <div style="display:flex; flex-direction:column; gap:clamp(4px, 0.6vh, 6px); font-size:clamp(0.65rem, 1vw, 0.82rem);">
+                    <div style="display:flex; justify-content:space-between;"><span>bajar CAC startup</span><span style="font-weight:700; color:var(--brand-primary);">Alta</span></div>
+                    <div style="display:flex; justify-content:space-between;"><span>GEO optimization</span><span style="font-weight:700; color:var(--brand-primary);">Alta</span></div>
+                    <div style="display:flex; justify-content:space-between;"><span>alternativa google ads B2B</span><span style="font-weight:700; color:var(--brand-accent);">Media</span></div>
+                    <div style="display:flex; justify-content:space-between;"><span>multi-canal growth</span><span style="font-weight:700; color:var(--brand-accent);">Media</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ========== SLIDE 11: ECP4 DETAIL — The Burned ========== -->
+<div class="slide" data-slide="10">
+    <div class="slide-header">
+        <span class="section-label">ECP 4 de 5</span>
+        <span class="brand-logo-text">Growth4U</span>
+    </div>
+
+    <div class="niche-hero">
+        <div>
+            <div class="niche-icon animate-in" style="background:#FFF7ED;">🟠</div>
+            <h2 class="niche-name animate-in delay-1">The Burned</h2>
+            <p class="niche-desc animate-in delay-2">
+                <strong>Founders que han contratado 2-3 agencias y todas les dieron dashboards bonitos y cero resultados.</strong> €15-50K perdidos. O el fCMO hizo un plan increíble, se fue, y nadie sabía ejecutarlo. El coste emocional es mayor que el económico: <em>12-18 meses de retraso + desconfianza total en cualquier externo</em>. La alternativa más común es "no hacer nada". El messaging es transversal — todos los que llegan a G4U han sido quemados.
+            </p>
+            <div class="animate-in delay-2" style="background:#FFF5F5; border-left:4px solid #E74C3C; padding:clamp(8px, 1.2vh, 12px) clamp(10px, 1.5vw, 16px); border-radius:0 8px 8px 0; margin:clamp(8px, 1vh, 12px) 0;">
+                <div style="font-size:clamp(0.55rem, 0.8vw, 0.7rem); font-weight:700; color:#E74C3C; text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">Dolor real</div>
+                <p style="font-size:clamp(0.7rem, 1.1vw, 0.82rem); color:var(--brand-secondary); line-height:1.5; font-style:italic;">"He contratado 3 agencias en 2 años. Todas me prometieron growth y me dieron informes bonitos. €40K después, sigo igual."</p>
+            </div>
+            <div class="kpi-row animate-in delay-3">
+                <div class="kpi-item"><div class="kpi-value">Pain 85</div><div class="kpi-label">Dolor muy alto</div></div>
+                <div class="kpi-item"><div class="kpi-value">3.800</div><div class="kpi-label">SAM total</div></div>
+                <div class="kpi-item"><div class="kpi-value">€7K vs €50K</div><div class="kpi-label">Precio vs perdido</div></div>
+            </div>
+            <div class="animate-in delay-3" style="display:flex; gap:8px; flex-wrap:wrap;">
+                <span class="competitor-pill">Agencias retainer (€1-5K/mes sin fin)</span>
+                <span class="competitor-pill">fCMOs (se van sin transferir)</span>
+            </div>
+        </div>
+
+        <div class="animate-in delay-4">
+            <div class="meta-ad">
+                <div class="meta-ad-header">
+                    <div class="meta-ad-avatar">G4</div>
+                    <div><div class="meta-ad-name">Growth4U</div><div class="meta-ad-sponsor">Publicidad · 🌍</div></div>
+                </div>
+                <div class="meta-ad-img" style="background: linear-gradient(135deg, #c2410c, #ea580c);">
+                    <div style="font-size:clamp(1.2rem, 2.5vw, 1.8rem); margin-bottom:8px;">🔥</div>
+                    <div style="font-size:clamp(0.82rem, 1.3vw, 0.95rem); font-weight:800; margin-bottom:6px;">¿€40K en agencias y sigues igual?</div>
+                    <div style="font-size:clamp(0.6rem, 1vw, 0.75rem); opacity:0.9;">No confíes. Verifica.</div>
+                </div>
+                <div class="meta-ad-body">
+                    <p style="font-size:clamp(0.6rem, 1vw, 0.75rem); color:#1c1e21; margin-bottom:4px;"><strong>Growth4U</strong> — 6 meses, fecha de fin, track record verificable. Busca "Alfonso Bnext" en Google.</p>
+                    <p style="font-size:clamp(0.55rem, 0.8vw, 0.68rem); color:#65676B;">growth4u.io/sin-retainer</p>
+                </div>
+                <a class="meta-ad-cta" href="#" style="background:#c2410c;">Verificar track record →</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="animate-in delay-3" style="margin-top:clamp(6px, 1vh, 10px); padding:clamp(6px, 1vh, 10px) clamp(10px, 1.5vw, 14px); border-left:4px solid var(--brand-accent); background:var(--brand-accent-light); border-radius:0 8px 8px 0;">
+        <div style="font-size:clamp(0.5rem, 0.8vw, 0.65rem); font-weight:700; color:var(--brand-accent); text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">📍 Canales</div>
+        <div style="font-size:clamp(0.62rem, 0.95vw, 0.75rem); color:var(--brand-secondary); line-height:1.6;">
+            → Reddit r/SaaS, r/startups (buscan recomendaciones) · → LinkedIn (recomendaciones de peers) · → Word of mouth, referrals
+        </div>
+    </div>
+</div>
+
+<!-- ========== SLIDE 12: ECP4 CAMPAIGN ========== -->
+<div class="slide" data-slide="11">
+    <div class="slide-header">
+        <span class="section-label accent-label">The Burned — Ejecución</span>
+        <span class="brand-logo-text">Growth4U</span>
+    </div>
+    <h2 class="slide-title animate-in">Campañas: "No confíes. Verifica."</h2>
+    <p class="slide-subtitle animate-in delay-1">UVP: Trust Engine — fecha de fin, precio fijo, track record verificable en prensa.</p>
+
+    <div class="campaign-grid animate-in delay-2">
+        <div style="flex:1;">
+            <div style="font-size:clamp(0.55rem, 0.8vw, 0.7rem); font-weight:700; color:var(--brand-text-lighter); text-transform:uppercase; letter-spacing:1.5px; margin-bottom:8px;">Google Search</div>
+            <div class="google-serp">
+                <div class="google-serp-bar">
+                    <div class="g-logo"><span style="color:#4285F4">G</span><span style="color:#EA4335">o</span><span style="color:#FBBC05">o</span><span style="color:#4285F4">g</span><span style="color:#34A853">l</span><span style="color:#EA4335">e</span></div>
+                    <div class="google-serp-searchbox">agencia growth que funcione españa</div>
+                </div>
+                <div>
+                    <div class="google-ad-sponsored">Patrocinado</div>
+                    <div class="google-ad-url">growth4u.io › sin-retainer</div>
+                    <div class="google-ad-title">Tu Última Agencia de Growth — Porque Después no Necesitas Ninguna</div>
+                    <div class="google-ad-desc">6 meses. €7K. Un sistema que se queda. No más retainers. Busca "Alfonso Bnext" para verificar antes de llamar.</div>
+                </div>
+            </div>
+        </div>
+
+        <div style="flex:1;">
+            <div style="font-size:clamp(0.55rem, 0.8vw, 0.7rem); font-weight:700; color:var(--brand-text-lighter); text-transform:uppercase; letter-spacing:1.5px; margin-bottom:8px;">Instagram Stories</div>
+            <div class="stories-row">
+                <div class="story-mock" style="background: linear-gradient(135deg, #c2410c, #ea580c);">
+                    <div class="story-progress"></div>
+                    <div style="position:relative;z-index:2;text-align:center;margin-bottom:auto;padding-top:clamp(24px, 4vh, 40px);">
+                        <div style="font-size:clamp(1.5rem, 3vw, 2.5rem);">💸</div>
+                        <div style="font-size:clamp(0.6rem, 1vw, 0.8rem);font-weight:900;margin-top:4px;">€40K en agencias</div>
+                    </div>
+                    <div class="story-title">Cero resultados. ¿Te suena?</div>
+                    <div class="story-cta">Ver solución</div>
+                </div>
+                <div class="story-mock" style="background: var(--gradient-secondary);">
+                    <div class="story-progress"></div>
+                    <div style="position:relative;z-index:2;text-align:center;margin-bottom:auto;padding-top:clamp(24px, 4vh, 40px);">
+                        <div style="font-size:clamp(1.5rem, 3vw, 2.5rem);">✅</div>
+                        <div style="font-size:clamp(0.5rem, 0.8vw, 0.56rem);text-transform:uppercase;letter-spacing:1.5px;opacity:0.8;">Exit Date</div>
+                    </div>
+                    <div class="story-title">6 meses. Si no funciona, se acaba.</div>
+                    <div class="story-cta">Agendar call</div>
+                </div>
+            </div>
+        </div>
+
+        <div style="flex:1; min-width:clamp(160px, 20vw, 220px);">
+            <div style="font-size:clamp(0.55rem, 0.8vw, 0.7rem); font-weight:700; color:var(--brand-text-lighter); text-transform:uppercase; letter-spacing:1.5px; margin-bottom:8px;">Messaging Clave</div>
+            <div class="card" style="padding:clamp(10px, 1.5vw, 16px);">
+                <ul class="bullet-list" style="font-size:clamp(0.65rem, 1vw, 0.78rem);">
+                    <li><strong>€7K fijo</strong> vs €15-50K ya perdidos</li>
+                    <li><strong>Exit date:</strong> 6 meses, no retainer infinito</li>
+                    <li><strong>Verifica:</strong> Busca "Alfonso Bnext" en Google</li>
+                    <li><strong>No bait-and-switch:</strong> Alfonso en cada call</li>
+                    <li><strong>Te llevas todo:</strong> playbooks, dashboard, conocimiento</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ========== SLIDE 13: ECP5 DETAIL — Invisible ========== -->
+<div class="slide" data-slide="12">
+    <div class="slide-header">
+        <span class="section-label">ECP 5 de 5</span>
+        <span class="brand-logo-text">Growth4U</span>
+    </div>
+
+    <div class="niche-hero">
+        <div>
+            <div class="niche-icon animate-in" style="background:#F3E8FF;">🟣</div>
+            <h2 class="niche-name animate-in delay-1">Invisibility</h2>
+            <p class="niche-desc animate-in delay-2">
+                <strong>Startups con buen producto que nadie encuentra online.</strong> NPS de 70, clientes que les adoran, pero si buscas su nombre en Google no aparece nada. Preguntan a ChatGPT "quién hace X en España" y salen los competidores, ellos no. Pierden deals porque el prospect dice <em>"no encontré nada sobre vosotros online"</em>. El 70% del buyer journey B2B es online — sin presencia, no existes. Growth4U es <strong>first-mover en GEO</strong>: #1-2 en Gemini con solo 20 artículos.
+            </p>
+            <div class="animate-in delay-2" style="background:#FFF5F5; border-left:4px solid #E74C3C; padding:clamp(8px, 1.2vh, 12px) clamp(10px, 1.5vw, 16px); border-radius:0 8px 8px 0; margin:clamp(8px, 1vh, 12px) 0;">
+                <div style="font-size:clamp(0.55rem, 0.8vw, 0.7rem); font-weight:700; color:#E74C3C; text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">Dolor real</div>
+                <p style="font-size:clamp(0.7rem, 1.1vw, 0.82rem); color:var(--brand-secondary); line-height:1.5; font-style:italic;">"Pregunté a ChatGPT 'quién hace growth marketing para fintechs en España' y no aparecemos. Pero Product Hackers sí."</p>
+            </div>
+            <div class="kpi-row animate-in delay-3">
+                <div class="kpi-item"><div class="kpi-value">Score 65</div><div class="kpi-label">Prioridad</div></div>
+                <div class="kpi-item"><div class="kpi-value">5.300</div><div class="kpi-label">SAM total</div></div>
+                <div class="kpi-item"><div class="kpi-value">77%</div><div class="kpi-label">Usan ChatGPT para buscar</div></div>
+            </div>
+            <div class="animate-in delay-3" style="display:flex; gap:8px; flex-wrap:wrap;">
+                <span class="competitor-pill">Agencias PR (no miden ROI)</span>
+                <span class="competitor-pill">Agencias SEO (canal decayendo)</span>
+                <span class="competitor-pill">Community managers (vanity)</span>
+            </div>
+        </div>
+
+        <div class="animate-in delay-4">
+            <div class="meta-ad">
+                <div class="meta-ad-header">
+                    <div class="meta-ad-avatar">G4</div>
+                    <div><div class="meta-ad-name">Growth4U</div><div class="meta-ad-sponsor">Publicidad · 🌍</div></div>
+                </div>
+                <div class="meta-ad-img" style="background: linear-gradient(135deg, #7c3aed, #6d28d9);">
+                    <div style="font-size:clamp(1.2rem, 2.5vw, 1.8rem); margin-bottom:8px;">👻</div>
+                    <div style="font-size:clamp(0.82rem, 1.3vw, 0.95rem); font-weight:800; margin-bottom:6px;">¿Preguntas a ChatGPT y no sales?</div>
+                    <div style="font-size:clamp(0.6rem, 1vw, 0.75rem); opacity:0.9;">Nosotros sí. Con 20 artículos.</div>
+                </div>
+                <div class="meta-ad-body">
+                    <p style="font-size:clamp(0.6rem, 1vw, 0.75rem); color:#1c1e21; margin-bottom:4px;"><strong>Growth4U</strong> — GEO first-mover. Trust Engine Phase 2: Fortaleza de Confianza.</p>
+                    <p style="font-size:clamp(0.55rem, 0.8vw, 0.68rem); color:#65676B;">growth4u.io/visibilidad</p>
+                </div>
+                <a class="meta-ad-cta" href="#" style="background:#7c3aed;">Existir online →</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="animate-in delay-3" style="margin-top:clamp(6px, 1vh, 10px); padding:clamp(6px, 1vh, 10px) clamp(10px, 1.5vw, 14px); border-left:4px solid var(--brand-accent); background:var(--brand-accent-light); border-radius:0 8px 8px 0;">
+        <div style="font-size:clamp(0.5rem, 0.8vw, 0.65rem); font-weight:700; color:var(--brand-accent); text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">📍 Canales</div>
+        <div style="font-size:clamp(0.62rem, 0.95vw, 0.75rem); color:var(--brand-secondary); line-height:1.6;">
+            → Events, referidos (están offline) · → LinkedIn (early adopters marketing AI) · → Conferencias marketing
+        </div>
+    </div>
+</div>
+
+<!-- ========== SLIDE 14: ECP5 CAMPAIGN ========== -->
+<div class="slide" data-slide="13">
+    <div class="slide-header">
+        <span class="section-label accent-label">Invisibility — Ejecución</span>
+        <span class="brand-logo-text">Growth4U</span>
+    </div>
+    <h2 class="slide-title animate-in">Campañas: "Pregúntale a Gemini"</h2>
+    <p class="slide-subtitle animate-in delay-1">UVP: Trust Engine Phase 2 — Fortaleza de Confianza: reviews, GEO, PR, social proof.</p>
+
+    <div class="campaign-grid animate-in delay-2">
+        <div style="flex:1;">
+            <div style="font-size:clamp(0.55rem, 0.8vw, 0.7rem); font-weight:700; color:var(--brand-text-lighter); text-transform:uppercase; letter-spacing:1.5px; margin-bottom:8px;">Google Search</div>
+            <div class="google-serp">
+                <div class="google-serp-bar">
+                    <div class="g-logo"><span style="color:#4285F4">G</span><span style="color:#EA4335">o</span><span style="color:#FBBC05">o</span><span style="color:#4285F4">g</span><span style="color:#34A853">l</span><span style="color:#EA4335">e</span></div>
+                    <div class="google-serp-searchbox">cómo aparecer en ChatGPT empresa</div>
+                </div>
+                <div>
+                    <div class="google-ad-sponsored">Patrocinado</div>
+                    <div class="google-ad-url">growth4u.io › geo-visibility</div>
+                    <div class="google-ad-title">¿Invisible para ChatGPT y Gemini? — GEO te Posiciona</div>
+                    <div class="google-ad-desc">G4U posicionó #1-2 en Gemini con 20 artículos. Trust Engine instala la misma estrategia en tu empresa.</div>
+                </div>
+            </div>
+        </div>
+
+        <div style="flex:1;">
+            <div style="font-size:clamp(0.55rem, 0.8vw, 0.7rem); font-weight:700; color:var(--brand-text-lighter); text-transform:uppercase; letter-spacing:1.5px; margin-bottom:8px;">Instagram Stories</div>
+            <div class="stories-row">
+                <div class="story-mock" style="background: linear-gradient(135deg, #7c3aed, #6d28d9);">
+                    <div class="story-progress"></div>
+                    <div style="position:relative;z-index:2;text-align:center;margin-bottom:auto;padding-top:clamp(24px, 4vh, 40px);">
+                        <div style="font-size:clamp(1.5rem, 3vw, 2.5rem);">🔍</div>
+                        <div style="font-size:clamp(0.6rem, 1vw, 0.8rem);font-weight:900;margin-top:4px;">Test rápido</div>
+                    </div>
+                    <div class="story-title">Pregunta a ChatGPT quién es el mejor en tu sector. ¿Sales?</div>
+                    <div class="story-cta">Hacer el test</div>
+                </div>
+                <div class="story-mock" style="background: var(--gradient-primary);">
+                    <div class="story-progress"></div>
+                    <div style="position:relative;z-index:2;text-align:center;margin-bottom:auto;padding-top:clamp(24px, 4vh, 40px);">
+                        <div style="font-size:clamp(1.5rem, 3vw, 2.5rem);">✨</div>
+                        <div style="font-size:clamp(0.5rem, 0.8vw, 0.56rem);text-transform:uppercase;letter-spacing:1.5px;opacity:0.8;">20 artículos → #1</div>
+                    </div>
+                    <div class="story-title">No necesitas ser grande. Solo ser primero.</div>
+                    <div class="story-cta">Ver cómo</div>
+                </div>
+            </div>
+        </div>
+
+        <div style="flex:1; min-width:clamp(160px, 20vw, 220px);">
+            <div style="font-size:clamp(0.55rem, 0.8vw, 0.7rem); font-weight:700; color:var(--brand-text-lighter); text-transform:uppercase; letter-spacing:1.5px; margin-bottom:8px;">Keywords Target</div>
+            <div class="card" style="padding:clamp(10px, 1.5vw, 16px);">
+                <div style="display:flex; flex-direction:column; gap:clamp(4px, 0.6vh, 6px); font-size:clamp(0.65rem, 1vw, 0.82rem);">
+                    <div style="display:flex; justify-content:space-between;"><span>GEO optimization</span><span style="font-weight:700; color:var(--brand-primary);">Alta</span></div>
+                    <div style="display:flex; justify-content:space-between;"><span>aparecer en ChatGPT empresa</span><span style="font-weight:700; color:var(--brand-primary);">Alta</span></div>
+                    <div style="display:flex; justify-content:space-between;"><span>visibilidad startup online</span><span style="font-weight:700; color:var(--brand-accent);">Media</span></div>
+                    <div style="display:flex; justify-content:space-between;"><span>social proof B2B SaaS</span><span style="font-weight:700; color:var(--brand-accent);">Media</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ========== SLIDE 15: TRUST ENGINE — THE SOLUTION ========== -->
+<div class="slide" data-slide="14">
+    <div class="slide-header">
+        <span class="section-label secondary-label">La Solución</span>
+        <span class="brand-logo-text">Growth4U</span>
+    </div>
+    <h2 class="slide-title animate-in">Trust Engine: el anti-retainer</h2>
+    <p class="slide-subtitle animate-in delay-1">Un sistema que se queda cuando nos vamos. 6 meses. €7K. Exit date incluido.</p>
+
+    <div class="grid-2 animate-in delay-2" style="margin-bottom:clamp(10px, 1.5vh, 18px);">
+        <div>
+            <h3 style="font-size:clamp(0.85rem, 1.4vw, 1.1rem); font-weight:700; color:var(--brand-secondary); margin-bottom:clamp(8px, 1.5vh, 14px);">🔴 El modelo roto</h3>
+            <div style="display:flex; flex-direction:column; gap:clamp(4px, 0.8vh, 8px);">
+                <div class="funnel-step" style="background:var(--brand-secondary); width:100%;">Agencia retainer <small>€1-5K/mes sin fin</small></div>
+                <div class="funnel-step" style="background:var(--brand-secondary-light); width:85%; margin:0 auto;">Junior rotativo <small>El senior vende, el junior ejecuta</small></div>
+                <div class="funnel-step" style="background:#475569; width:70%; margin:0 auto;">Dashboards bonitos <small>0 revenue impact</small></div>
+                <div class="funnel-step" style="background:#94A3B8; width:50%; margin:0 auto;">Dependencia <small>Sin ellos, todo para</small></div>
+            </div>
+            <p style="font-size:clamp(0.65rem, 1vw, 0.82rem); color:#C0392B; margin-top:clamp(6px, 1vh, 10px); font-weight:600;">❌ €15-50K gastados, 0 sistema transferido, vuelta a empezar</p>
+        </div>
+        <div>
+            <h3 style="font-size:clamp(0.85rem, 1.4vw, 1.1rem); font-weight:700; color:var(--brand-primary); margin-bottom:clamp(8px, 1.5vh, 14px);">🟢 Trust Engine</h3>
+            <div style="display:flex; flex-direction:column; gap:clamp(4px, 0.8vh, 8px);">
+                <div class="funnel-step" style="background:var(--brand-primary); width:100%;">Phase 1: La Base <small>Nichos, canales, atribución</small></div>
+                <div class="funnel-step" style="background:var(--brand-primary-dark); width:95%; margin:0 auto;">Phase 2: Fortaleza de Confianza <small>Reviews, GEO, PR, social proof</small></div>
+                <div class="funnel-step" style="background:var(--brand-primary); width:90%; margin:0 auto; opacity:0.85;">Phase 3: Generación de Demanda <small>Outbound, creators, paid</small></div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; width:85%; margin:0 auto;">
+                    <div class="funnel-step" style="background:var(--brand-accent); font-size:clamp(0.6rem, 0.9vw, 0.75rem);">Phase 4: Optimización <small>Dashboard + rituales</small></div>
+                    <div class="funnel-step" style="background:#22C55E; font-size:clamp(0.6rem, 0.9vw, 0.75rem);">EXIT: Handoff <small>Tu equipo opera solo</small></div>
+                </div>
+            </div>
+            <p style="font-size:clamp(0.65rem, 1vw, 0.82rem); color:var(--brand-primary); margin-top:clamp(6px, 1vh, 10px); font-weight:600;">✅ €7K una vez. 13 playbooks. Dashboard. Tu equipo opera solo.</p>
+        </div>
+    </div>
+
+    <div class="grid-3 animate-in delay-3" style="gap:clamp(8px, 1.5vw, 14px);">
+        <div style="text-align:center; padding:clamp(8px, 1.2vw, 14px); background:white; border-radius:var(--brand-radius-sm); box-shadow:var(--brand-shadow);">
+            <div style="font-size:clamp(1rem, 2vw, 1.5rem); font-weight:900; color:var(--brand-primary); font-family:var(--brand-font-mono);">0→400K</div>
+            <div style="font-size:clamp(0.6rem, 0.9vw, 0.72rem); color:var(--brand-text-lighter);">Bnext usuarios bajo CNMV</div>
+        </div>
+        <div style="text-align:center; padding:clamp(8px, 1.2vw, 14px); background:white; border-radius:var(--brand-radius-sm); box-shadow:var(--brand-shadow);">
+            <div style="font-size:clamp(1rem, 2vw, 1.5rem); font-weight:900; color:var(--brand-accent); font-family:var(--brand-font-mono);">LTV 3x</div>
+            <div style="font-size:clamp(0.6rem, 0.9vw, 0.72rem); color:var(--brand-text-lighter);">Bit2Me en 1 año</div>
+        </div>
+        <div style="text-align:center; padding:clamp(8px, 1.2vw, 14px); background:white; border-radius:var(--brand-radius-sm); box-shadow:var(--brand-shadow);">
+            <div style="font-size:clamp(1rem, 2vw, 1.5rem); font-weight:900; color:var(--brand-secondary); font-family:var(--brand-font-mono);">x10</div>
+            <div style="font-size:clamp(0.6rem, 0.9vw, 0.72rem); color:var(--brand-text-lighter);">Criptan primeros depósitos/mes</div>
+        </div>
+    </div>
+</div>
+
+<!-- ========== SLIDE 16: CLOSING ========== -->
+<div class="slide" data-slide="15">
+    <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; text-align:center;">
+        <div class="animate-in">
+            <span style="font-family:var(--brand-font-display); font-size:clamp(2rem, 4vw, 3rem); font-weight:900; color:var(--brand-primary); letter-spacing:-1px;">Growth4U</span>
+        </div>
+
+        <h2 class="slide-title animate-in delay-1" style="font-size:clamp(1.4rem, 4vw, 2.6rem); margin:clamp(12px, 2vh, 20px) 0 clamp(8px, 1.5vh, 16px);">
+            El sistema de growth que <span style="color:var(--brand-primary);">se queda</span>
+        </h2>
+        <p class="slide-subtitle animate-in delay-2" style="max-width:600px; margin:0 auto clamp(16px, 3vh, 28px);">
+            8 Pain Clusters · 27 personas · 5 ECPs con messaging · Trust Engine productizado · TAM 50-80M€
+        </p>
+
+        <div class="animate-in delay-3" style="display:flex; gap:clamp(12px, 2.5vw, 24px); margin-bottom:clamp(20px, 4vh, 40px); flex-wrap:wrap; justify-content:center;">
+            <div class="card" style="padding:clamp(12px, 2vw, 20px) clamp(16px, 3vw, 28px); text-align:center;">
+                <div class="stat-number" style="color:var(--brand-primary); font-size:clamp(1.2rem, 3vw, 2.2rem);">€7K</div>
+                <div class="stat-label">Pago único, exit a 6 meses</div>
+            </div>
+            <div class="card" style="padding:clamp(12px, 2vw, 20px) clamp(16px, 3vw, 28px); text-align:center;">
+                <div class="stat-number" style="color:var(--brand-accent); font-size:clamp(1.2rem, 3vw, 2.2rem);">8.580</div>
+                <div class="stat-label">Empresas tech en España</div>
+            </div>
+            <div class="card" style="padding:clamp(12px, 2vw, 20px) clamp(16px, 3vw, 28px); text-align:center;">
+                <div class="stat-number" style="color:var(--brand-secondary); font-size:clamp(1.2rem, 3vw, 2.2rem);">0</div>
+                <div class="stat-label">Competidores con trust-building</div>
+            </div>
+        </div>
+
+        <div class="animate-in delay-4">
+            <div style="display:inline-block; padding:clamp(10px, 2vh, 16px) clamp(28px, 5vw, 48px); background:var(--gradient-primary); color:white; border-radius:40px; font-weight:700; font-size:clamp(0.85rem, 1.5vw, 1.15rem); box-shadow:var(--brand-shadow-lg);">
+                Agendar Call con Alfonso →
+            </div>
+        </div>
+
+        <div class="animate-in delay-5" style="margin-top:clamp(16px, 3vh, 32px);">
+            <span class="tag tag-primary">Growth4U Foundation Strategy</span>
+            <span class="tag tag-secondary" style="margin-left:8px;">Marzo 2026</span>
+        </div>
+    </div>
+</div>
+
+<!-- Footer -->
+<div class="slide-footer">
+    <span>Growth4U — Foundation Strategy</span>
+    <span class="page-num" id="pageNum">1 / 16</span>
+</div>
+
+<!-- Progress bar -->
+<div class="progress-bar" id="progressBar" style="width:0%"></div>
+
+<!-- Navigation -->
+<button class="nav-btn nav-prev" id="prevBtn" onclick="navigate(-1)">←</button>
+<button class="nav-btn nav-next" id="nextBtn" onclick="navigate(1)">→</button>
+<button class="fs-btn" onclick="toggleFullscreen()" title="Pantalla completa (F)">⛶</button>
+
+<script>
+    let current = 0;
+    const slides = document.querySelectorAll('.slide');
+    const total = slides.length;
+
+    function showSlide(n) {
+        current = Math.max(0, Math.min(n, total - 1));
+        slides.forEach(s => s.classList.remove('active'));
+        slides[current].classList.add('active');
+        document.getElementById('pageNum').textContent = `${current + 1} / ${total}`;
+        document.getElementById('progressBar').style.width = `${((current + 1) / total) * 100}%`;
+        document.getElementById('prevBtn').style.opacity = current === 0 ? '0.3' : '1';
+        document.getElementById('nextBtn').style.opacity = current === total - 1 ? '0.3' : '1';
+    }
+
+    function navigate(dir) { showSlide(current + dir); }
+
+    document.addEventListener('keydown', e => {
+        if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); navigate(1); }
+        if (e.key === 'ArrowLeft') { e.preventDefault(); navigate(-1); }
+        if (e.key === 'f' || e.key === 'F') toggleFullscreen();
+        if (e.key === 'Home') showSlide(0);
+        if (e.key === 'End') showSlide(total - 1);
+    });
+
+    let touchStartX = 0;
+    document.addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; });
+    document.addEventListener('touchend', e => {
+        const dx = e.changedTouches[0].clientX - touchStartX;
+        if (Math.abs(dx) > 60) navigate(dx < 0 ? 1 : -1);
+    });
+
+    function toggleFullscreen() {
+        if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+        else document.exitFullscreen();
+    }
+
+    showSlide(0);
+</script>
+
+<!-- Self-QA: PASS | 2026-03-30 -->
+</body>
+</html>

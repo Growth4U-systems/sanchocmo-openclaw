@@ -187,7 +187,7 @@ Tras generar el Metrics Plan y el dashboard, crear tareas individuales en el pro
 {
   "id": "P00-MET-T{XX}",
   "name": "Conectar {nombre_api}",
-  "description": "{instrucciones según caso}",
+  "description": "Enlace de conexión: https://sancho-cmo.taild48df2.ts.net/mc/connect/{slug}/{apiId}\n\n{instrucciones según caso}",
   "type": "execution",
   "skill": "metrics-setup",
   "channel": "intelligence",
@@ -197,10 +197,12 @@ Tras generar el Metrics Plan y el dashboard, crear tareas individuales en el pro
 }
 ```
 
+**IMPORTANTE:** Toda tarea de tipo "Conectar X" DEBE incluir el enlace de conexión MC como primera línea del campo `description`. Formato: `https://sancho-cmo.taild48df2.ts.net/mc/connect/{slug}/{apiId}`. Usa el mapeo de nombres a API IDs del Step 6 para obtener el `{apiId}` correcto.
+
 **Reglas según ownership y estado:**
 - API ya conectada (`status: "connected"` en integrations.json) → crear tarea con `status: "completed"`, nota "Ya conectada"
 - API no conectada + `ownership: "system"` → `status: "todo"`, `owner: "Sancho"` — Escudero la puede conectar directamente
-- API no conectada + `ownership: "client"` → `status: "todo"`, `owner: "Equipo"`, descripción: "Contactar al equipo de {cliente} para obtener credenciales de {api}. Mientras tanto, trackear vía Excel."
+- API no conectada + `ownership: "client"` → `status: "todo"`, `owner: "Equipo"`, descripción: "Enlace de conexión: https://sancho-cmo.taild48df2.ts.net/mc/connect/{slug}/{apiId}\n\nContactar al equipo de {cliente} para obtener credenciales de {api}. Mientras tanto, trackear vía Excel."
 
 6. Añadir tarea final de verificación:
 ```json
@@ -257,6 +259,7 @@ Tras generar el Metrics Plan y el dashboard, crear tareas individuales en el pro
 - [ ] APIs ya conectadas marcadas como completed
 - [ ] APIs sin conectar (client) tienen instrucción de contactar equipo
 - [ ] Tarea final de verificación de dashboard creada
+- [ ] Cada tarea de conexión incluye enlace MC (`/mc/connect/{slug}/{apiId}`)
 
 ---
 

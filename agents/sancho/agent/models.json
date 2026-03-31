@@ -139,7 +139,7 @@
     },
     "xai": {
       "baseUrl": "https://api.x.ai/v1",
-      "api": "openai-completions",
+      "api": "openai-responses",
       "models": [
         {
           "id": "grok-3",

@@ -7,12 +7,13 @@
     "done_criteria": "Análisis aprobado.",
     "depends_on": "P00-FF-T01",
     "owner": "Sancho",
-    "status": "todo",
+    "status": "completed",
     "channel": "strategy",
     "type": "foundation",
     "skill": "market-intelligence",
     "pillar": "market-analysis",
-    "section": "market-and-us"
+    "section": "market-and-us",
+    "completed": "2026-03-30"
   },
   {
     "id": "P00-FUL-T02",
@@ -22,7 +23,7 @@
     "done_criteria": "Mínimo 5 competidores mapeados.",
     "depends_on": "P00-FF-T01",
     "owner": "Sancho",
-    "status": "todo",
+    "status": "in-progress",
     "channel": "strategy",
     "type": "foundation",
     "skill": "competitor-intelligence",

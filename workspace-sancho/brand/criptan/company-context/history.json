@@ -1,0 +1,13 @@
+{
+  "versions": [
+    {
+      "version": 1,
+      "date": "2026-03-30",
+      "author": "sancho",
+      "action": "created",
+      "source": "website scrape + web research (press, support docs)",
+      "coverage": "Lite 71%",
+      "notes": "Initial inference. Pending user validation + gap completion."
+    }
+  ]
+}

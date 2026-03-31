@@ -67,10 +67,10 @@
     "done_criteria": "SWOT aprobado. Oportunidades y amenazas prioritarias identificadas.",
     "depends_on": "P00-FUL-T01,P00-FUL-T02,P00-FUL-T03",
     "owner": "Sancho",
-    "status": "todo",
+    "status": "completed",
     "channel": "strategy",
     "skill": "swot-analysis",
-    "completed": "2026-03-29",
+    "completed": "2026-03-30",
     "discord_thread_id": null,
     "output_files": [
       "brand/growth4u/market-and-us/swot/swot-analysis.md"
@@ -87,10 +87,10 @@
     "done_criteria": "Posicionamiento aprobado. Mensajes diferenciados para cada ECP.",
     "depends_on": "P00-FUL-T04",
     "owner": "Sancho",
-    "status": "todo",
+    "status": "completed",
     "channel": "strategy",
     "skill": "positioning-messaging",
-    "completed": "2026-03-19",
+    "completed": "2026-03-30",
     "discord_thread_id": null,
     "output_files": [
       "brand/growth4u/go-to-market/positioning/positioning.md"

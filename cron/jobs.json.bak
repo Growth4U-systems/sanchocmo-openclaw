@@ -7,7 +7,7 @@
       "name": "Daily Pulse",
       "enabled": true,
       "createdAtMs": 1771950688301,
-      "updatedAtMs": 1774512282911,
+      "updatedAtMs": 1774854080483,
       "schedule": {
         "kind": "cron",
         "expr": "0 9 * * 1-5",
@@ -26,11 +26,11 @@
         "to": "channel:1475638253154603170"
       },
       "state": {
-        "nextRunAtMs": 1774598400000,
-        "lastRunAtMs": 1774512000010,
+        "nextRunAtMs": 1774940400000,
+        "lastRunAtMs": 1774854000015,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 282901,
+        "lastDurationMs": 80468,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0,
         "lastDelivered": false
@@ -42,7 +42,7 @@
       "name": "Weekly Synthesis",
       "enabled": true,
       "createdAtMs": 1771950696201,
-      "updatedAtMs": 1774256554380,
+      "updatedAtMs": 1774857760769,
       "schedule": {
         "kind": "cron",
         "expr": "0 10 * * 1",
@@ -61,11 +61,11 @@
         "to": "channel:1475638272523763834"
       },
       "state": {
-        "nextRunAtMs": 1774857600000,
-        "lastRunAtMs": 1774256400019,
+        "nextRunAtMs": 1775462400000,
+        "lastRunAtMs": 1774857600016,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 154361,
+        "lastDurationMs": 160753,
         "lastDelivered": false,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0
@@ -77,7 +77,7 @@
       "name": "Regenerar Dashboard",
       "enabled": true,
       "createdAtMs": 1771950708148,
-      "updatedAtMs": 1774551820542,
+      "updatedAtMs": 1774893947640,
       "schedule": {
         "kind": "cron",
         "expr": "0 8,12,16,20 * * *",
@@ -95,11 +95,11 @@
         "channel": "last"
       },
       "state": {
-        "nextRunAtMs": 1774594800000,
-        "lastRunAtMs": 1774551602305,
+        "nextRunAtMs": 1774936800000,
+        "lastRunAtMs": 1774893600014,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 218237,
+        "lastDurationMs": 347626,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0,
         "lastDelivered": false
@@ -111,7 +111,7 @@
       "name": "Meeting Intelligence",
       "enabled": true,
       "createdAtMs": 1771950715725,
-      "updatedAtMs": 1774544584651,
+      "updatedAtMs": 1774886636294,
       "schedule": {
         "kind": "cron",
         "expr": "0 18 * * 1-5",
@@ -130,16 +130,14 @@
         "to": "channel:1475638253154603170"
       },
       "state": {
-        "nextRunAtMs": 1774630800000,
-        "lastRunAtMs": 1774544400012,
-        "lastRunStatus": "error",
-        "lastStatus": "error",
-        "lastDurationMs": 184639,
+        "nextRunAtMs": 1774972800000,
+        "lastRunAtMs": 1774886400018,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 236276,
         "lastDelivered": false,
         "lastDeliveryStatus": "not-delivered",
-        "consecutiveErrors": 1,
-        "lastError": "⚠️ ✉️ Message failed",
-        "lastDeliveryError": "⚠️ ✉️ Message failed"
+        "consecutiveErrors": 0
       }
     },
     {
@@ -148,7 +146,7 @@
       "name": "Memory Maintenance",
       "enabled": true,
       "createdAtMs": 1771950722307,
-      "updatedAtMs": 1774217567460,
+      "updatedAtMs": 1774814732084,
       "schedule": {
         "kind": "cron",
         "expr": "0 22 * * 0",
@@ -166,11 +164,11 @@
         "channel": "last"
       },
       "state": {
-        "nextRunAtMs": 1774814400000,
-        "lastRunAtMs": 1774213200129,
+        "nextRunAtMs": 1775419200000,
+        "lastRunAtMs": 1774814400013,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 101260,
+        "lastDurationMs": 332071,
         "lastDelivered": false,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0
@@ -208,7 +206,7 @@
       "name": "backup-sancho",
       "enabled": true,
       "createdAtMs": 1772069600272,
-      "updatedAtMs": 1774490606993,
+      "updatedAtMs": 1774832560224,
       "schedule": {
         "kind": "cron",
         "expr": "0 3 * * *"
@@ -225,11 +223,11 @@
         "channel": "last"
       },
       "state": {
-        "nextRunAtMs": 1774576800000,
-        "lastRunAtMs": 1774490400014,
+        "nextRunAtMs": 1774918800000,
+        "lastRunAtMs": 1774832400011,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 206979,
+        "lastDurationMs": 160213,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0,
         "lastDelivered": false
@@ -241,7 +239,7 @@
       "name": "healthcheck",
       "enabled": true,
       "createdAtMs": 1772069609685,
-      "updatedAtMs": 1774544013245,
+      "updatedAtMs": 1774890992966,
       "schedule": {
         "kind": "every",
         "everyMs": 21600000,
@@ -261,14 +259,15 @@
         "channel": "last"
       },
       "state": {
-        "nextRunAtMs": 1774565560264,
-        "lastRunAtMs": 1774543960264,
-        "lastRunStatus": "ok",
-        "lastStatus": "ok",
-        "lastDurationMs": 52981,
-        "lastDeliveryStatus": "not-delivered",
-        "consecutiveErrors": 0,
-        "lastDelivered": false
+        "nextRunAtMs": 1774912510498,
+        "lastRunAtMs": 1774890910498,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 82468,
+        "lastDeliveryStatus": "not-requested",
+        "consecutiveErrors": 1,
+        "lastError": "FallbackSummaryError: All models failed (3): minimax/MiniMax-M2.5: Unknown model: minimax/MiniMax-M2.5 (model_not_found) | anthropic/claude-sonnet-4-5: Live session model switch requested: anthropic/claude-opus-4-6 (unknown) | anthropic/claude-opus-4-6: The AI service is temporarily overloaded. Please try again in a moment. (overloaded)",
+        "lastErrorReason": "model_not_found"
       }
     },
     {
@@ -278,7 +277,7 @@
       "description": "T-022: Run cost-tracker.py daily at 23:00",
       "enabled": true,
       "createdAtMs": 1772069993394,
-      "updatedAtMs": 1774476127141,
+      "updatedAtMs": 1774904441509,
       "schedule": {
         "kind": "cron",
         "expr": "0 23 * * *"
@@ -295,11 +294,11 @@
         "channel": "webchat"
       },
       "state": {
-        "nextRunAtMs": 1774562400000,
-        "lastRunAtMs": 1774476000013,
+        "nextRunAtMs": 1774990800000,
+        "lastRunAtMs": 1774904400021,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 127128,
+        "lastDurationMs": 41488,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0,
         "lastDelivered": false
@@ -311,7 +310,7 @@
       "name": "Cervantes observa a Sancho",
       "enabled": true,
       "createdAtMs": 1772115026027,
-      "updatedAtMs": 1774515822169,
+      "updatedAtMs": 1774857872933,
       "schedule": {
         "kind": "cron",
         "expr": "0 10 * * *",
@@ -329,11 +328,11 @@
         "channel": "last"
       },
       "state": {
-        "nextRunAtMs": 1774602000000,
-        "lastRunAtMs": 1774515600010,
+        "nextRunAtMs": 1774944000000,
+        "lastRunAtMs": 1774857760769,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 222159,
+        "lastDurationMs": 112164,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0,
         "lastDelivered": false
@@ -374,7 +373,7 @@
       "name": "cost-tracker-daily",
       "enabled": true,
       "createdAtMs": 1772750911798,
-      "updatedAtMs": 1774508655921,
+      "updatedAtMs": 1774850552541,
       "schedule": {
         "kind": "cron",
         "expr": "0 8 * * *",
@@ -392,11 +391,11 @@
         "mode": "none"
       },
       "state": {
-        "nextRunAtMs": 1774594800000,
-        "lastRunAtMs": 1774508625265,
+        "nextRunAtMs": 1774936800000,
+        "lastRunAtMs": 1774850503777,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 30656,
+        "lastDurationMs": 48764,
         "lastDelivered": false,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0
@@ -434,7 +433,7 @@
       "name": "image-optimizer",
       "enabled": true,
       "createdAtMs": 1773187213085,
-      "updatedAtMs": 1774256652386,
+      "updatedAtMs": 1774857900985,
       "schedule": {
         "kind": "cron",
         "expr": "0 10 * * 1",
@@ -454,11 +453,11 @@
         "to": "1480154276205433035"
       },
       "state": {
-        "nextRunAtMs": 1774857600000,
-        "lastRunAtMs": 1774256641057,
+        "nextRunAtMs": 1775462400000,
+        "lastRunAtMs": 1774857872933,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 11329,
+        "lastDurationMs": 28052,
         "lastDelivered": true,
         "lastDeliveryStatus": "delivered",
         "consecutiveErrors": 0
@@ -471,7 +470,7 @@
       "name": "update-skills",
       "enabled": true,
       "createdAtMs": 1773235919019,
-      "updatedAtMs": 1774499505787,
+      "updatedAtMs": 1774841503338,
       "schedule": {
         "kind": "cron",
         "expr": "30 5 * * *",
@@ -491,14 +490,14 @@
         "to": "1481220331845976125"
       },
       "state": {
-        "nextRunAtMs": 1774585800000,
-        "lastRunAtMs": 1774499400015,
-        "lastRunStatus": "ok",
-        "lastStatus": "ok",
-        "lastDurationMs": 105772,
-        "lastDeliveryStatus": "delivered",
-        "consecutiveErrors": 0,
-        "lastDelivered": true
+        "nextRunAtMs": 1774927800000,
+        "lastRunAtMs": 1774841400038,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 103300,
+        "lastDeliveryStatus": "unknown",
+        "consecutiveErrors": 2,
+        "lastError": "Error [ERR_MODULE_NOT_FOUND]: Cannot find module '/opt/homebrew/lib/node_modules/openclaw/dist/discord-B1pkR9pY.js' imported from /opt/homebrew/lib/node_modules/openclaw/dist/pi-embedded-BaSvmUpW.js"
       }
     },
     {
@@ -508,7 +507,7 @@
       "name": "Weekly Changelog Update",
       "enabled": true,
       "createdAtMs": 1773249903776,
-      "updatedAtMs": 1774170276963,
+      "updatedAtMs": 1774775427512,
       "schedule": {
         "kind": "cron",
         "expr": "0 10 * * 0",
@@ -525,11 +524,11 @@
         "mode": "none"
       },
       "state": {
-        "nextRunAtMs": 1774771200000,
-        "lastRunAtMs": 1774170184515,
+        "nextRunAtMs": 1775376000000,
+        "lastRunAtMs": 1774775271831,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 92448,
+        "lastDurationMs": 155681,
         "lastDelivered": false,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0
@@ -542,7 +541,7 @@
       "name": "Weekly Activity Summary",
       "enabled": true,
       "createdAtMs": 1773249903895,
-      "updatedAtMs": 1774170351337,
+      "updatedAtMs": 1774775517601,
       "schedule": {
         "kind": "cron",
         "expr": "0 10 * * 0",
@@ -559,11 +558,11 @@
         "mode": "none"
       },
       "state": {
-        "nextRunAtMs": 1774771200000,
-        "lastRunAtMs": 1774170276963,
+        "nextRunAtMs": 1775376000000,
+        "lastRunAtMs": 1774775427512,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 74374,
+        "lastDurationMs": 90089,
         "lastDelivered": false,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0
@@ -576,7 +575,7 @@
       "name": "Daily Metrics Collector — Growth4U",
       "enabled": true,
       "createdAtMs": 1773518330038,
-      "updatedAtMs": 1774504833312,
+      "updatedAtMs": 1774846830379,
       "schedule": {
         "kind": "cron",
         "expr": "0 7 * * *",
@@ -594,11 +593,11 @@
         "mode": "none"
       },
       "state": {
-        "nextRunAtMs": 1774591200000,
-        "lastRunAtMs": 1774504800014,
+        "nextRunAtMs": 1774933200000,
+        "lastRunAtMs": 1774846800015,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 33298,
+        "lastDurationMs": 30364,
         "lastDelivered": false,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0
@@ -611,7 +610,7 @@
       "name": "mejora-continua-weekly",
       "enabled": true,
       "createdAtMs": 1773560184099,
-      "updatedAtMs": 1774170589553,
+      "updatedAtMs": 1774775683443,
       "schedule": {
         "kind": "cron",
         "expr": "0 10 * * 0",
@@ -631,11 +630,11 @@
         "to": "1482638140240953396"
       },
       "state": {
-        "nextRunAtMs": 1774771200000,
-        "lastRunAtMs": 1774170351337,
+        "nextRunAtMs": 1775376000000,
+        "lastRunAtMs": 1774775517601,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 238216,
+        "lastDurationMs": 165842,
         "lastDelivered": true,
         "lastDeliveryStatus": "delivered",
         "consecutiveErrors": 0
@@ -648,7 +647,7 @@
       "name": "skill-improvement-weekly",
       "enabled": true,
       "createdAtMs": 1773591436668,
-      "updatedAtMs": 1774170629742,
+      "updatedAtMs": 1774775711006,
       "schedule": {
         "kind": "cron",
         "expr": "0 10 * * 0",
@@ -666,11 +665,11 @@
         "channel": "1482642972712505395"
       },
       "state": {
-        "nextRunAtMs": 1774771200000,
-        "lastRunAtMs": 1774170589553,
+        "nextRunAtMs": 1775376000000,
+        "lastRunAtMs": 1774775683443,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 40189,
+        "lastDurationMs": 27563,
         "lastDelivered": true,
         "lastDeliveryStatus": "delivered",
         "consecutiveErrors": 0
@@ -683,7 +682,7 @@
       "name": "Weekly Token Audit",
       "enabled": true,
       "createdAtMs": 1773650217981,
-      "updatedAtMs": 1774253001641,
+      "updatedAtMs": 1774854189585,
       "schedule": {
         "kind": "cron",
         "expr": "0 9 * * 1",
@@ -701,11 +700,11 @@
         "mode": "none"
       },
       "state": {
-        "nextRunAtMs": 1774854000000,
-        "lastRunAtMs": 1774252904701,
+        "nextRunAtMs": 1775458800000,
+        "lastRunAtMs": 1774854080483,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 96940,
+        "lastDurationMs": 109102,
         "lastDelivered": false,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0
@@ -744,7 +743,7 @@
       "name": "cron-watchdog-weekly",
       "enabled": true,
       "createdAtMs": 1773680314014,
-      "updatedAtMs": 1774260049666,
+      "updatedAtMs": 1774861269061,
       "schedule": {
         "kind": "cron",
         "expr": "0 11 * * 1",
@@ -762,11 +761,11 @@
         "mode": "none"
       },
       "state": {
-        "nextRunAtMs": 1774861200000,
-        "lastRunAtMs": 1774260000020,
+        "nextRunAtMs": 1775466000000,
+        "lastRunAtMs": 1774861200015,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 49646,
+        "lastDurationMs": 69046,
         "lastDelivered": false,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0
@@ -779,7 +778,7 @@
       "name": "Lead Sync — Growth4U",
       "enabled": true,
       "createdAtMs": 1774192173315,
-      "updatedAtMs": 1774562051590,
+      "updatedAtMs": 1774900920948,
       "schedule": {
         "kind": "cron",
         "expr": "0 22 * * *",
@@ -796,11 +795,11 @@
         "mode": "none"
       },
       "state": {
-        "nextRunAtMs": 1774645200000,
-        "lastRunAtMs": 1774561839221,
+        "nextRunAtMs": 1774987200000,
+        "lastRunAtMs": 1774900800014,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 212369,
+        "lastDurationMs": 120934,
         "lastDelivered": false,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0
@@ -813,7 +812,7 @@
       "name": "Call Prep Daily — Growth4U",
       "enabled": true,
       "createdAtMs": 1774192180766,
-      "updatedAtMs": 1774560741312,
+      "updatedAtMs": 1774902759589,
       "schedule": {
         "kind": "cron",
         "expr": "30 22 * * 0-4",
@@ -830,11 +829,11 @@
         "mode": "none"
       },
       "state": {
-        "nextRunAtMs": 1774816200000,
-        "lastRunAtMs": 1774560600012,
+        "nextRunAtMs": 1774989000000,
+        "lastRunAtMs": 1774902600012,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 141300,
+        "lastDurationMs": 159577,
         "lastDelivered": false,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0
@@ -847,7 +846,7 @@
       "name": "Call Prep Weekly — Growth4U",
       "enabled": true,
       "createdAtMs": 1774192186720,
-      "updatedAtMs": 1774192186720,
+      "updatedAtMs": 1774647122707,
       "schedule": {
         "kind": "cron",
         "expr": "30 22 * * 5",
@@ -864,7 +863,14 @@
         "mode": "none"
       },
       "state": {
-        "nextRunAtMs": 1774647000000
+        "nextRunAtMs": 1775248200000,
+        "lastRunAtMs": 1774647000019,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 122688,
+        "lastDelivered": false,
+        "lastDeliveryStatus": "not-delivered",
+        "consecutiveErrors": 0
       }
     },
     {
@@ -890,7 +896,7 @@
         "mode": "none"
       },
       "state": {
-        "nextRunAtMs": 1774771200000
+        "nextRunAtMs": 1775376000000
       }
     },
     {
@@ -900,7 +906,7 @@
       "name": "Morning Metrics — Multi-Client",
       "enabled": true,
       "createdAtMs": 1774217794921,
-      "updatedAtMs": 1774510281478,
+      "updatedAtMs": 1774852254882,
       "schedule": {
         "kind": "cron",
         "expr": "30 8 * * 1-5",
@@ -910,21 +916,133 @@
       "wakeMode": "now",
       "payload": {
         "kind": "agentTurn",
-        "message": "MORNING METRICS — MULTI-CLIENT RUN\n\nExecute the morning metrics for ALL clients that have APIs configured.\n\nFor each client:\n1. Run: `bash scripts/morning-metrics.sh {slug}` — if output starts with NO_APIS, skip that client.\n2. Post the report to the client's #intelligence channel using message(action=send, channel=discord, channelId=\"{intelligence_channel_id}\").\n3. Create a thread from the posted message: \"📊 Metrics {today's date}\"\n4. If there are 🔴 red alerts, add action proposals in the thread.\n\nClient registry (from clients.json):\n- growth4u → intelligence channel: 1477741644789842031 (has meta-ads + ghl)\n- hospital-capilar → intelligence: 1475638253154603170 (no APIs yet — skip)\n- paymatico → intelligence: 1477995838092476477 (no APIs yet — skip)\n- masavo → intelligence: 1483424294099882093 (no APIs yet — skip)\n\nRun growth4u FIRST (only one with APIs right now). As clients connect APIs, they get added to clients.json metrics.apis and the script picks them up automatically.\n\nIMPORTANT: Each report goes to ITS OWN client guild. Client context isolation. No internal info.",
+        "message": "MORNING METRICS — MULTI-CLIENT RUN\n\nExecute the morning metrics for ALL clients that have APIs configured.\n\nFor each client:\n1. Run: `bash scripts/morning-metrics.sh {slug}` — if output starts with NO_APIS, skip that client.\n2. Post the report to the client #insights channel using message(action=send, channel=discord, channelId=\"{insights_channel_id}\").\n3. Create a thread from the posted message: \"📊 Metrics {today date}\"\n4. If there are red alerts, add action proposals in the thread.\n\nClient registry (from clients.json):\n- growth4u: insights channel 1477741644789842031 (has meta-ads + ghl)\n- hospital-capilar: insights 1475638253154603170 (no APIs yet, skip)\n- paymatico: insights 1477995838092476477 (no APIs yet, skip)\n- masavo: insights 1483424294099882093 (no APIs yet, skip)\n\nRun growth4u FIRST (only one with APIs right now). As clients connect APIs, they get added to clients.json metrics.apis and the script picks them up automatically.\n\nIMPORTANT: Each report goes to ITS OWN client guild. Client context isolation. No internal info.",
         "timeoutSeconds": 180
       },
       "delivery": {
         "mode": "none"
       },
       "state": {
-        "nextRunAtMs": 1774596600000,
-        "lastRunAtMs": 1774510251647,
+        "nextRunAtMs": 1774938600000,
+        "lastRunAtMs": 1774852200015,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 29831,
+        "lastDurationMs": 54867,
         "lastDelivered": false,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0
+      }
+    },
+    {
+      "id": "7442ba81-9342-40b4-b8c0-87786890c84e",
+      "agentId": "sancho",
+      "name": "SEO Weekly Review — Criptan",
+      "enabled": true,
+      "createdAtMs": 1774907384193,
+      "updatedAtMs": 1774907384193,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 9 * * 1",
+        "tz": "Europe/Madrid"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Revisión SEO semanal para Criptan.\n\nPASO 1 — LEER CONTEXTO:\nLee brand/criptan/current-state.md y brand/criptan/projects/P01-seo-bofu/tasks.json para entender el estado actual.\n\nPASO 2 — CHECK GSC:\nUsa Google Search Console (sc-domain:criptan.com) para obtener:\n- Top queries últimos 7 días vs 7 días anteriores\n- Páginas con más impresiones/clics\n- Keywords BOFU (comprar crypto, mejor exchange españa, etc): posición, CTR, tendencia\n- Alertas: caídas de posición >5 puestos, pérdida de tráfico >15%\n\nPASO 3 — CHECK GA4:\nUsa GA4 (Property 387759614) para:\n- Tráfico orgánico semanal vs semana anterior\n- Páginas de destino top orgánicas\n- Conversiones desde orgánico (si hay eventos configurados)\n\nPASO 4 — GUARDAR:\nGuarda resumen en brand/criptan/metrics/seo-weekly-YYYY-MM-DD.md con formato:\n## SEO Weekly — [fecha]\n### KPIs\n- Clics orgánicos: X (Δ%)\n- Impresiones: X (Δ%)\n- CTR medio: X%\n- Posición media: X\n### Keywords BOFU tracking\n[tabla de keywords objetivo con posición actual y tendencia]\n### Alertas\n[caídas, oportunidades, anomalías]\n### Recomendaciones\n[3 acciones concretas para la semana]\n\nDespués ejecuta: python3 ~/.openclaw/workspace-sancho/scripts/regenerate.py\n\nAPLICA reglas de _system/client-context-isolation.md — solo info de Criptan.",
+        "model": "minimax/MiniMax-M2.5",
+        "timeoutSeconds": 120
+      },
+      "delivery": {
+        "mode": "none",
+        "channel": "last"
+      },
+      "state": {
+        "nextRunAtMs": 1775458800000
+      }
+    },
+    {
+      "id": "53f6b4d3-51b4-4f78-8907-2f68a82efc7b",
+      "agentId": "sancho",
+      "name": "Competitor Watch — Criptan",
+      "enabled": true,
+      "createdAtMs": 1774907441307,
+      "updatedAtMs": 1774907441307,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 10 * * 3",
+        "tz": "Europe/Madrid"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Monitoreo de competidores para Criptan.\n\nPASO 1 — LEER COMPETIDORES:\nLee brand/criptan/market-and-us/competitors/current.md para la lista de competidores principales.\n\nPASO 2 — SCRAPE COMPETIDORES:\nPara los top 5 competidores (Bit2Me, Binance, Coinbase, Kraken, Bitvavo):\n- web_fetch de su homepage y blog (cambios recientes)\n- web_search de noticias últimas 7 días\n- web_search de sus campañas/promociones activas\n- Revisar si tienen contenido BOFU nuevo que nos afecte\n\nPASO 3 — ANÁLISIS:\n- Movimientos relevantes (nuevas features, promos, partnerships)\n- Contenido nuevo que compita con nuestras keywords\n- Oportunidades que podemos capitalizar\n- Amenazas que requieren reacción\n\nPASO 4 — GUARDAR:\nGuarda en brand/criptan/intelligence/competitor-watch-YYYY-MM-DD.md con formato:\n## Competitor Watch — [fecha]\n### Movimientos clave\n### Oportunidades detectadas\n### Amenazas\n### Acciones recomendadas\n\nDespués ejecuta: python3 ~/.openclaw/workspace-sancho/scripts/regenerate.py\n\nAPLICA reglas de _system/client-context-isolation.md — solo info de Criptan.",
+        "model": "minimax/MiniMax-M2.5",
+        "timeoutSeconds": 180
+      },
+      "delivery": {
+        "mode": "none",
+        "channel": "last"
+      },
+      "state": {
+        "nextRunAtMs": 1775030400000
+      }
+    },
+    {
+      "id": "df8aaf99-8b1b-4b5b-844b-5c53de641e5c",
+      "agentId": "sancho",
+      "name": "Social & Content Review — Criptan",
+      "enabled": true,
+      "createdAtMs": 1774907485233,
+      "updatedAtMs": 1774907485233,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 10 * * 5",
+        "tz": "Europe/Madrid"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Revisión semanal de social media y contenido para Criptan.\n\nPASO 1 — LEER CONTEXTO:\nLee brand/criptan/current-state.md para canales activos.\nLee brand/criptan/projects/P04-linkedin-b2b-jorge/tasks.json y brand/criptan/projects/P06-social-content-ai/tasks.json para estado de proyectos.\n\nPASO 2 — SOCIAL MONITORING:\n- web_search 'Criptan' últimas noticias y menciones\n- x_search 'criptan OR @criptanapp' últimos 7 días — engagement, sentiment, temas\n- web_search 'Criptan instagram' o 'Criptan linkedin jorge soriano' para actividad reciente\n- Buscar menciones en crypto communities españolas\n\nPASO 3 — CONTENT AUDIT:\n- web_fetch criptan.com/blog — ¿se publicó contenido nuevo esta semana?\n- ¿El contenido es BOFU o sigue siendo solo awareness?\n- ¿Hay gaps respecto al content calendar?\n\nPASO 4 — GUARDAR:\nGuarda en brand/criptan/intelligence/social-review-YYYY-MM-DD.md con formato:\n## Social & Content Review — [fecha]\n### Engagement resumen (X, IG, LinkedIn)\n### Menciones y sentiment\n### Contenido publicado esta semana\n### Gaps vs plan\n### Recomendaciones para próxima semana\n\nDespués ejecuta: python3 ~/.openclaw/workspace-sancho/scripts/regenerate.py\n\nAPLICA reglas de _system/client-context-isolation.md — solo info de Criptan.",
+        "model": "minimax/MiniMax-M2.5",
+        "timeoutSeconds": 120
+      },
+      "delivery": {
+        "mode": "none",
+        "channel": "last"
+      },
+      "state": {
+        "nextRunAtMs": 1775203200000
+      }
+    },
+    {
+      "id": "854d8902-eea8-45aa-bb26-6afeb3a6c949",
+      "agentId": "sancho",
+      "name": "B2B Pipeline Review — Criptan",
+      "enabled": true,
+      "createdAtMs": 1774907548780,
+      "updatedAtMs": 1774907548780,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 11 * * 4",
+        "tz": "Europe/Madrid"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Revisión semanal del pipeline B2B y LinkedIn de Criptan.\n\nPASO 1 — LEER CONTEXTO:\nLee brand/criptan/current-state.md (sección B2B: 250 empresas clientes, sin GTM).\nLee brand/criptan/projects/P04-linkedin-b2b-jorge/tasks.json para LinkedIn de Jorge Soriano.\nLee brand/criptan/projects/P05-b2b-outbound/tasks.json para outbound empresas.\n\nPASO 2 — CHECK LINKEDIN JORGE:\n- web_search 'Jorge Soriano Criptan LinkedIn' — posts recientes, engagement\n- x_search 'jorge soriano criptan' — cross-platform activity\n- ¿Se publicó contenido esta semana? ¿Qué engagement tuvo?\n\nPASO 3 — B2B OUTBOUND STATUS:\n- Revisar estado de tareas en P05\n- ¿Hay secuencias activas? ¿Respuestas? ¿Reuniones?\n- Oportunidades de mejora en messaging/targeting\n\nPASO 4 — GUARDAR:\nGuarda en brand/criptan/intelligence/b2b-review-YYYY-MM-DD.md con formato:\n## B2B Pipeline Review — [fecha]\n### LinkedIn Jorge Soriano\n- Posts publicados: X\n- Engagement: [métricas]\n- Recomendaciones próxima semana\n### B2B Outbound\n- Estado pipeline\n- Respuestas/reuniones\n- Acciones pendientes\n### Prioridades semana siguiente\n\nDespués ejecuta: python3 ~/.openclaw/workspace-sancho/scripts/regenerate.py\n\nAPLICA reglas de _system/client-context-isolation.md — solo info de Criptan.",
+        "model": "minimax/MiniMax-M2.5",
+        "timeoutSeconds": 120
+      },
+      "delivery": {
+        "mode": "none",
+        "channel": "last"
+      },
+      "state": {
+        "nextRunAtMs": 1775120400000
       }
     }
   ]

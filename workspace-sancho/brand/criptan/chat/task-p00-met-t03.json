@@ -1,0 +1,46 @@
+{
+  "messages": [
+    {
+      "role": "user",
+      "text": "Estoy abriendo el chat sobre \"Conectar Google Search Console\". Dame un resumen rápido del estado actual y qué podemos hacer. Si necesitas algo de mí, dímelo.",
+      "ts": "2026-03-30T12:13:56.191Z"
+    },
+    {
+      "role": "bot",
+      "text": "Aquí tienes el resumen:\n\n## 📋 Estado: P00-MET-T03 — Conectar Google Search Console\n\n**Status:** 🔴 Pendiente (todo)\n\nGSC es clave para monitorizar el rendimiento SEO de Criptan: impresiones, clics, posiciones y keywords orgánicas. En el Metrics Plan ya está identificado como fuente para:\n- Tráfico orgánico (SEO + Blog)\n- Brand searches (impacto de PR/Podcast)\n\n---\n\n## ¿Qué se necesita para conectar?\n\nGSC usa el **Service Account del sistema** (no necesitas compartir contraseñas). Solo hacen falta **2 cosas**:\n\n### 1. Site URL exacta\nLa URL tal como está registrada en GSC. Puede ser:\n- `https://criptan.com/` (con protocolo)\n- `sc-domain:criptan.com` (propiedad de dominio)\n\n### 2. Dar acceso Viewer al Service Account\nEn Google Search Console:\n1. Ir a **Configuración → Usuarios y permisos**\n2. Añadir como usuario con permiso **Lectura** el email del Service Account del sistema\n\n¿Tienes acceso a la cuenta de GSC de Criptan? Si me confirmas la Site URL y das acceso al Service Account, lo configuro y verifico la conexión.",
+      "agent": "sancho",
+      "ts": "2026-03-30T12:15:13.472Z"
+    },
+    {
+      "role": "user",
+      "text": "Si tengo acceso dame el link para conectar del Mission Control",
+      "ts": "2026-03-30T12:15:35.962Z"
+    },
+    {
+      "role": "bot",
+      "text": "Aquí tienes:\n\n🔗 **Conectar Google Search Console:** <https://sancho-cmo.taild48df2.ts.net/mc/admin/cc9b8067c18c5214358611d75f151f6d/connect/criptan/gsc>\n\nAhí te pedirá la **Site URL** exacta como está en GSC y te dará las instrucciones para añadir el Service Account como usuario con permiso de lectura. Cuando completes la configuración, avísame y verifico que la conexión funciona.",
+      "agent": "sancho",
+      "ts": "2026-03-30T12:16:02.018Z"
+    },
+    {
+      "role": "user",
+      "text": "Ya lo he conectado. Comprueba que efectivamente está conectado y márcala como hecha esta tarea",
+      "ts": "2026-03-30T12:19:55.819Z"
+    },
+    {
+      "role": "bot",
+      "text": "GSC está conectado — lo confirmo en `integrations.json`:\n- **Site URL:** `sc-domain:criptan.com`\n- **Status:** connected\n- **Último test:** 2026-03-30T12:19:34\n\nVoy a actualizar los registros y marcar la tarea como completada.",
+      "agent": "sancho",
+      "ts": "2026-03-30T12:20:56.508Z"
+    },
+    {
+      "role": "bot",
+      "text": "✅ **Hecho.** GSC conectado y tarea P00-MET-T03 marcada como completada.\n\n**Resumen:**\n- 🔍 **GSC:** `sc-domain:criptan.com` — conectado via Service Account\n- 📊 **GA4:** ya estaba conectado (Property `387759614`)\n- 🔴 **Pendiente:** CleverTap (Account ID + Passcode + Region)\n\nCleverTap es la pieza que falta para tener el funnel completo (registro → KYC → depósito → Earn). ¿Quieres que abramos esa tarea?",
+      "agent": "sancho",
+      "ts": "2026-03-30T12:20:56.510Z"
+    }
+  ],
+  "updatedAt": 1774873256510,
+  "discordThreadId": null,
+  "discordChannelId": null
+}

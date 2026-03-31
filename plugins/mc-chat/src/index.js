@@ -335,6 +335,10 @@ export default defineChannelPluginEntry({
     });
 
     // Outbound hook: watch Discord messages and relay to MC if thread is linked
+    // NOTE: registerOutboundHook may not exist in all SDK versions — guard it
+    if (typeof api.registerOutboundHook !== "function") {
+      logger.warn("[mc-chat] api.registerOutboundHook not available in this SDK version — Discord↔MC relay disabled");
+    } else {
     api.registerOutboundHook({
       provider: "discord",
       handler: async (msgCtx) => {
@@ -380,6 +384,7 @@ export default defineChannelPluginEntry({
         }
       },
     });
+    } // end registerOutboundHook guard
 
     logger.info("[mc-chat] Channel plugin registered — webhook at /mc-chat/inbound");
   },

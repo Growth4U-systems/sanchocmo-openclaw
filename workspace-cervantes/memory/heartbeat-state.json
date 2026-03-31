@@ -1,12 +1,12 @@
 {
-  "lastRegenTime": 1773514385,
-  "lastHeartbeat": 1774397700,
+  "lastRegenTime": 1743331440,
+  "lastHeartbeat": 1743328240,
   "lastChecks": {
-    "gateway": 1774397700,
-    "discord": 1774397700,
-    "mcServer": 1774397700,
-    "devices": 1774397700,
-    "anthropic": 1773605178
+    "gateway": 1743328240,
+    "discord": 1743328240,
+    "mcServer": 1743328240,
+    "devices": 1743328240,
+    "regen": 1743331440
   },
-  "todayCreated": "2026-03-25.md"
+  "todayCreated": "2026-03-30.md"
 }

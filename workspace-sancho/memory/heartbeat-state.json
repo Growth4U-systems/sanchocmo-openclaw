@@ -1,13 +1,27 @@
 {
+  "last_heartbeat": "2026-03-30T20:47:00+02:00",
+  "checks_done": [
+    "email",
+    "calendar",
+    "daily_file_creation"
+  ],
+  "next_rotate": [
+    "memory_maintenance"
+  ],
+  "lead_sync": {
+    "last_run": "2026-03-30T20:00:00Z",
+    "new_leads": 0,
+    "updated_leads": 0,
+    "slack_notes_synced": 0,
+    "transcript_updates": 0,
+    "total_contacts": 6,
+    "errors": 0,
+    "notes": "All 6 leads up to date. No new transcripts since last enrichment."
+  },
   "sales_call_prep": {
-    "last_run": "2026-03-29T20:30:00Z",
+    "last_run": "2026-03-30T22:31:00+02:00",
     "mode": "daily",
-    "status": "credentials_unavailable",
-    "errors": [
-      "GHL API: 401 - token not valid",
-      "Google Calendar: gog not configured"
-    ],
-    "calls_found": null,
-    "target_date": "2026-03-30"
+    "calls_found": 1,
+    "no_ghl_match": 5
   }
 }

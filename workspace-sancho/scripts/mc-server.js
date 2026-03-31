@@ -32,12 +32,11 @@ const ALLOWED_FILES = [
 
 // Foundation section order (matches actual directory structure + foundation-state.json)
 const FOUNDATION_ORDER = [
-  { cat: '📋 Fast Foundation', folder: 'fast-foundation', pillarsKey: 'pillars' },
-  { cat: '🏢 La Empresa', folder: 'company-brief', pillarsKey: 'skills' },
-  { cat: '📊 El Mercado & Nosotros', folder: 'market-and-us', pillarsKey: 'pillars' },
+  { cat: '🏢 Company Brief', folder: 'company-brief', pillarsKey: 'pillars' },
+  { cat: '📊 Market & Us', folder: 'market-and-us', pillarsKey: 'pillars' },
   { cat: '🎯 Go-To-Market', folder: 'go-to-market', pillarsKey: 'pillars' },
-  { cat: '🎨 Brand Identity', folder: 'brand-identity', pillarsKey: 'pillars' },
-  { cat: '📏 Métricas y Conexiones', folder: 'metrics-setup', pillarsKey: 'pillars' },
+  { cat: '📖 Brand Book', folder: 'brand-book', pillarsKey: 'pillars' },
+  { cat: '📏 Métricas', folder: 'metrics-setup', pillarsKey: 'pillars' },
   { cat: '🗺️ Strategic Plan', folder: 'strategic-plan', pillarsKey: 'pillars' },
 ];
 const PILLAR_FLAT = FOUNDATION_ORDER.map(g => g.folder);
@@ -2553,7 +2552,16 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);line
 .toast.error{background:var(--red);}
 .toast.show{display:block;animation:fadeIn .2s ease;}
 @keyframes fadeIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
-</style></head><body>
+</style>
+<script>
+const IS_EMBED = new URLSearchParams(window.location.search).has('embed');
+if (IS_EMBED) document.documentElement.classList.add('embed');
+</script>
+<style>
+.embed .sidebar{display:none !important;}
+.embed .main-content{margin-left:0 !important;padding:16px 24px !important;}
+</style>
+</head><body>
 <div class="sidebar">
   <div class="logo">SanchoCMO</div>
   <div class="logo-sub">Mission Control</div>
@@ -2752,6 +2760,9 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);line
       <h2 style="font-family:'Space Grotesk',sans-serif;font-size:18px;">🔄 Tareas Recurrentes</h2>
       <p style="color:var(--muted);font-size:13px;">Crons de OpenClaw — fuente de verdad</p>
     </div>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <button onclick="showCreateRecurringTaskForm()" style="padding:8px 14px;border:2px solid var(--border);border-radius:8px;font-weight:600;cursor:pointer;font-size:13px;background:var(--rust);color:#fff;">+ Nueva tarea</button>
+    </div>
   </div>
   <div id="recurring-tasks-content"></div>
 </div>
@@ -2842,7 +2853,7 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);line
 <script>
 // === Constants ===
 const SLUG = '${slug}';
-const API_BASE = window.location.pathname.replace(/\\/settings\\/?$/, '');
+const API_BASE = '${escHtml(baseUrl)}';
 const D = typeof MC_DATA !== 'undefined' ? MC_DATA : null;
 const S = typeof SKILLS_DATA !== 'undefined' ? SKILLS_DATA : {};
 
@@ -3661,6 +3672,30 @@ async function toggleCronJob(cronId, enable) {
   try { await fetch(API_BASE + '/api/crons/toggle', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ cronId, enable }) }); await loadRecurringTasksData(); } catch (e) { console.error('Error toggling cron:', e); }
 }
 
+function showCreateRecurringTaskForm() {
+  const threadId = SLUG + ':recurring:new-' + Date.now();
+  const chatMsg = 'Quiero crear una nueva tarea recurrente para el cliente ' + SLUG + '. ' +
+    'Pregúntame qué quiero automatizar y ayúdame a definir: nombre, categoría (intelligence/metrics/outreach/content/system), ' +
+    'frecuencia (cron expression), qué agente la ejecuta, y el prompt. ' +
+    'Cuando tengamos todo claro, crea la tarea con el endpoint POST /api/recurring-tasks.';
+  fetch(API_BASE + '/api/mc-chat/send', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      slug: SLUG,
+      threadId: threadId,
+      threadName: 'Nueva tarea recurrente',
+      text: chatMsg,
+      userName: 'Mission Control',
+      skill: 'recurring-tasks'
+    })
+  }).then(() => {
+    showToast('💬 Chat abierto con Sancho para crear la tarea.');
+  }).catch(() => {
+    showToast('Error abriendo chat');
+  });
+}
+
 // Prompt Modal
 let _promptModalTask = null, _promptModalIdx = -1, _promptEditing = false;
 function openPromptModal(taskIdx) {
@@ -3765,7 +3800,8 @@ function savePref(key, value) {
 }
 
 // ============ INIT ============
-const savedTab = localStorage.getItem('mc-settings-tab') || 'apis';
+const urlTab = new URLSearchParams(window.location.search).get('tab');
+const savedTab = urlTab || localStorage.getItem('mc-settings-tab') || 'apis';
 switchSettingsTab(savedTab);
 renderApis();
 renderAgents();
@@ -3847,6 +3883,7 @@ const MC_CHAT_GATEWAY = 'http://127.0.0.1:18789';
 // In-memory cache for fast reads, flushed to disk on every write
 const mcChatCache = new Map();
 const mcChatStatusCache = new Map(); // threadId → { text, agent, ts } — live status from gateway
+const mcChatCancelledThreads = new Set(); // threads cancelled by user — discard next bot response
 const MC_CHAT_MAX_MSGS = 200; // max messages per thread
 
 function mcChatThreadPath(threadId) {
@@ -4051,8 +4088,15 @@ const mcServer = http.createServer((req, res) => {
           return;
         }
 
-        // Bot response: clear status + store message
+        // Bot response: clear status + store message (unless cancelled)
         mcChatStatusCache.delete(tid);
+        if (mcChatCancelledThreads.has(tid)) {
+          mcChatCancelledThreads.delete(tid);
+          console.log(`[mc-chat] Bot response discarded (cancelled): ${tid}`);
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ ok: true, cancelled: true }));
+          return;
+        }
         mcChatAddMessage(tid, 'bot', text, agent);
         console.log(`[mc-chat] Bot response → ${tid}: ${(text || '').slice(0, 60)}`);
         res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -4066,6 +4110,40 @@ const mcServer = http.createServer((req, res) => {
   }
 
   // ========== MC-CHAT API: Send message from frontend ==========
+  // Cancel: send /stop to gateway to abort the running agent + discard response
+  if (req.method === 'POST' && (url === '/api/mc-chat/cancel' || url === '/mc/api/mc-chat/cancel')) {
+    let body = '';
+    req.on('data', chunk => { body += chunk; });
+    req.on('end', async () => {
+      try {
+        const { slug, threadId } = JSON.parse(body);
+        const tid = threadId || slug;
+        mcChatCancelledThreads.add(tid);
+        mcChatStatusCache.delete(tid);
+        console.log(`[mc-chat] Cancelling thread: ${tid}`);
+        // Send /stop to gateway — OpenClaw recognizes it as abort phrase
+        try {
+          await fetch(`${MC_CHAT_GATEWAY}/mc-chat/inbound`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              ...(MC_CHAT_SECRET ? { 'X-MC-Secret': MC_CHAT_SECRET } : {}),
+            },
+            body: JSON.stringify({ slug, threadId, text: '/stop', userName: 'Admin' }),
+          });
+        } catch (gwErr) {
+          console.error(`[mc-chat] Gateway /stop failed: ${gwErr.message}`);
+        }
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true }));
+      } catch (e) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: e.message }));
+      }
+    });
+    return;
+  }
+
   if (req.method === 'POST' && (url === '/api/mc-chat/send' || url === '/mc/api/mc-chat/send')) {
     let body = '';
     req.on('data', chunk => { body += chunk; if (body.length > 100000) req.destroy(); });
@@ -4630,6 +4708,8 @@ nav .nav-footer { display:none !important; }
         '/api/metrics',
         '/api/metrics-plan',
         '/api/metrics-chat',
+        '/api/metrics-collect',
+        '/api/pagespeed',
         '/api/chat/threads',
         '/api/chat/thread',
         '/api/chat/send',
@@ -4641,6 +4721,7 @@ nav .nav-footer { display:none !important; }
         '/api/recurring-tasks/toggle',
         '/api/crons',
         '/api/crons/toggle',
+        '/api/cron-runs',
       ];
       const apiPath = portalPath.split('?')[0];
       const isAllowed = allowedApis.some(a => apiPath === a || apiPath.startsWith(a + '/') || apiPath.startsWith(a + '?'));
@@ -5248,6 +5329,68 @@ nav .nav-footer { display:none !important; }
     res.end(JSON.stringify(result));
     return;
   }
+
+  // GET /api/cron-runs — latest run output (summary) for each cron
+  if (req.method === 'GET' && url.startsWith('/api/cron-runs')) {
+    if (!req._adminToken && !req._portalClient) {
+      res.writeHead(403, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Unauthorized' }));
+      return;
+    }
+    const params = new URL('http://x' + req.url).searchParams;
+    let slugParam = params.get('slug');
+    if (req._portalClient) slugParam = req._portalSlug;
+    const limitParam = parseInt(params.get('limit') || '1', 10);
+    const limit = Math.max(1, Math.min(limitParam, 20));
+
+    const clients = loadClients();
+    const crons = _loadCronsFromOpenClaw();
+    const runsDir = path.join(process.env.HOME || '/tmp', '.openclaw', 'cron', 'runs');
+    const runs = [];
+
+    for (const cron of crons) {
+      const cronSlug = _extractSlugFromCron(cron.name, clients);
+      if (!cronSlug && slugParam) {
+        // Try prompt match
+        const promptMatch = (cron.payload?.message || '').match(/brand\/([a-z0-9_-]+)\//i);
+        if (!promptMatch || promptMatch[1] !== slugParam) continue;
+      } else if (slugParam && cronSlug !== slugParam) continue;
+
+      const runFile = path.join(runsDir, cron.id + '.jsonl');
+      if (!fs.existsSync(runFile)) continue;
+
+      try {
+        const content = fs.readFileSync(runFile, 'utf-8').trim();
+        const lines = content.split('\n').filter(Boolean);
+        const lastN = lines.slice(-limit).reverse();
+        for (const line of lastN) {
+          try {
+            const d = JSON.parse(line);
+            if (d.action !== 'finished') continue;
+            runs.push({
+              jobId: cron.id,
+              jobName: cron.name || '—',
+              status: d.status || 'unknown',
+              summary: d.summary || '',
+              durationMs: d.durationMs || null,
+              model: d.model || null,
+              runAtMs: d.runAtMs || d.ts || null,
+              sessionId: d.sessionId || null,
+              client_slug: cronSlug || null,
+              category: _detectCronCategory(cron.name, cron.payload?.message),
+            });
+          } catch {}
+        }
+      } catch {}
+    }
+
+    // Sort by runAtMs descending
+    runs.sort((a, b) => (b.runAtMs || 0) - (a.runAtMs || 0));
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify(runs));
+    return;
+  }
+
   if (req.method === 'POST' && url === '/api/recurring-tasks') {
     if (!req._adminToken && !req._portalClient) {
       res.writeHead(403, { 'Content-Type': 'application/json' });
@@ -5478,6 +5621,83 @@ nav .nav-footer { display:none !important; }
     }); return;
   }
 
+  // ═══════════════════════════════════════════════════════════════
+  // REVERSE SYNC: task completion → foundation pillar status
+  // ═══════════════════════════════════════════════════════════════
+  // When a task with type "foundation" completes, update the
+  // corresponding pillar in foundation-state.json.
+  //
+  // Case 1: task has section + pillar → update specific pillar
+  // Case 2: task.pillar matches a section name (e.g. "fast-foundation")
+  //         → update ALL pillars in that section
+  //
+  // This sync also triggers regenerate.py to rebuild mc-data.js.
+  // The frontend's refreshFoundationState() will pick up changes
+  // within 30 seconds (or immediately after agent chat response).
+  // ═══════════════════════════════════════════════════════════════
+  function syncTaskToPillar(slug, task, newStatus) {
+    if (!task.pillar) return;
+    const TASK_TO_PILLAR = { 'completed': 'approved', 'done': 'approved', 'in-progress': 'in-progress', 'todo': 'not-started' };
+    const pillarStatus = TASK_TO_PILLAR[newStatus];
+    if (!pillarStatus) return;
+    try {
+      const stateFile = path.join(BASE, 'brand', slug, 'foundation-state.json');
+      if (!fs.existsSync(stateFile)) return;
+      const state = JSON.parse(fs.readFileSync(stateFile, 'utf-8'));
+      const sections = state.sections || {};
+      let changed = false;
+
+      // Case 1: task has section + pillar — update specific pillar
+      if (task.section && sections[task.section]) {
+        const pillars = sections[task.section].pillars || {};
+        if (pillars[task.pillar] && pillars[task.pillar].status !== pillarStatus) {
+          console.log(`[syncTaskToPillar] ${slug}: ${task.section}/${task.pillar} ${pillars[task.pillar].status} → ${pillarStatus}`);
+          pillars[task.pillar].status = pillarStatus;
+          pillars[task.pillar].updated_at = new Date().toISOString();
+          if (pillarStatus === 'approved') pillars[task.pillar].approved_at = new Date().toISOString();
+          changed = true;
+        }
+      }
+
+      // Case 2: pillar name matches a section (e.g. fast-foundation) — update all pillars in that section
+      if (sections[task.pillar]) {
+        const secPillars = sections[task.pillar].pillars || {};
+        for (const [pName, pInfo] of Object.entries(secPillars)) {
+          if (pInfo.status !== pillarStatus) {
+            console.log(`[syncTaskToPillar] ${slug}: ${task.pillar}/${pName} ${pInfo.status} → ${pillarStatus}`);
+            pInfo.status = pillarStatus;
+            pInfo.updated_at = new Date().toISOString();
+            if (pillarStatus === 'approved') pInfo.approved_at = new Date().toISOString();
+            changed = true;
+          }
+        }
+      }
+
+      if (changed) {
+        fs.writeFileSync(stateFile, JSON.stringify(state, null, 2));
+        try { const { execSync } = require('child_process'); execSync('python3 scripts/regenerate.py', { cwd: BASE, timeout: 15000 }); } catch (e) { console.error('[syncTaskToPillar] regenerate error:', e.message); }
+      }
+    } catch (e) { console.error('[syncTaskToPillar] error:', e.message); }
+  }
+
+  // === API: Regenerate mc-data.js on demand ===
+  if (req.method === 'POST' && url === '/api/regenerate') {
+    if (!req._adminToken && !req._portalClient) {
+      res.writeHead(403, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Unauthorized' }));
+      return;
+    }
+    try {
+      execSync('python3 scripts/regenerate.py', { cwd: BASE, timeout: 15000 });
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, regenerated: new Date().toISOString() }));
+    } catch (e) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: e.message }));
+    }
+    return;
+  }
+
   // === API: Projects — task status update ===
   if (req.method === 'POST' && url === '/api/projects/task-status') {
     // Requires admin or portal auth
@@ -5539,7 +5759,15 @@ nav .nav-footer { display:none !important; }
         // Notify on status change
         if (oldStatus !== status) {
           notifyProjectChange(slug, { type: 'task', id: taskId, name: task.name, oldStatus, newStatus: status, sourceThread });
+          // Reverse sync: update foundation pillar if this is a foundation task
+          syncTaskToPillar(slug, task, status);
+          // Warn if foundation task is missing pillar field
+          if ((task.type === 'foundation' || task.batch_type === 'foundation') && !task.pillar) {
+            console.warn(`[syncTaskToPillar] ⚠️ Task ${taskId} is type=foundation but has no pillar field — foundation-state.json will NOT be updated`);
+          }
         }
+        // Regenerate mc-data.js so MC reflects changes
+        try { execSync('python3 scripts/regenerate.py', { cwd: BASE, timeout: 15000 }); } catch (e) { console.error('[task-status] regenerate error:', e.message); }
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ ok: true, taskId, oldStatus, newStatus: status }));
       } catch (e) {
@@ -5581,7 +5809,13 @@ nav .nav-footer { display:none !important; }
         fs.writeFileSync(tasksFile, JSON.stringify(writeData, null, 2));
         if (fields.status && fields.status !== oldStatus) {
           notifyProjectChange(slug, { type: 'task', id: taskId, name: task.name, oldStatus, newStatus: fields.status, sourceThread });
+          syncTaskToPillar(slug, task, fields.status);
+          if ((task.type === 'foundation' || task.batch_type === 'foundation') && !task.pillar) {
+            console.warn(`[syncTaskToPillar] ⚠️ Task ${taskId} is type=foundation but has no pillar field — foundation-state.json will NOT be updated`);
+          }
         }
+        // Regenerate mc-data.js so MC reflects changes
+        try { execSync('python3 scripts/regenerate.py', { cwd: BASE, timeout: 15000 }); } catch (e) { console.error('[task-update] regenerate error:', e.message); }
         res.writeHead(200, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: true, task }));
       } catch (e) { res.writeHead(500, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: e.message })); }
     });
@@ -5623,6 +5857,8 @@ nav .nav-footer { display:none !important; }
         if (fields.status && fields.status !== oldStatus) {
           notifyProjectChange(slug, { type: 'project', id: projectId, name: project.name, oldStatus, newStatus: fields.status, sourceThread });
         }
+        // Regenerate mc-data.js so MC reflects changes
+        try { execSync('python3 scripts/regenerate.py', { cwd: BASE, timeout: 15000 }); } catch (e) { console.error('[project-update] regenerate error:', e.message); }
         res.writeHead(200, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: true, project }));
       } catch (e) { res.writeHead(500, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: e.message })); }
     });
@@ -7221,6 +7457,203 @@ async function doTest() {
   }
   // ========== END CHAT API ==========
 
+  // ═══════════════════════════════════════════════════════════════
+  // PageSpeed Insights API — free, no API key needed
+  // Cache: brand/{slug}/metrics/pagespeed.json (24h TTL)
+  // Also saves to weekly metrics daily file as source "pagespeed"
+  // ═══════════════════════════════════════════════════════════════
+  if (req.method === 'GET' && url === '/api/pagespeed') {
+    const params = new URLSearchParams(req.url.split('?')[1] || '');
+    const slug = params.get('slug');
+    const refresh = params.get('refresh') === '1';
+    if (!slug) { res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'Missing slug' })); return; }
+
+    const cacheFile = path.join(BASE, 'brand', slug, 'metrics', 'pagespeed.json');
+    const metricsDir = path.join(BASE, 'brand', slug, 'metrics');
+
+    // Check cache (24h TTL)
+    if (!refresh && fs.existsSync(cacheFile)) {
+      try {
+        const cached = JSON.parse(fs.readFileSync(cacheFile, 'utf-8'));
+        if (cached.fetchedAt && (Date.now() - new Date(cached.fetchedAt).getTime()) < 24 * 60 * 60 * 1000) {
+          res.writeHead(200, { 'Content-Type': 'application/json' }); res.end(JSON.stringify(cached)); return;
+        }
+      } catch {}
+    }
+
+    // Find client URL
+    let clientUrl = null;
+    try {
+      const clientsFile = path.join(BASE, 'clients.json');
+      if (fs.existsSync(clientsFile)) {
+        const clients = JSON.parse(fs.readFileSync(clientsFile, 'utf-8'));
+        clientUrl = clients[slug]?.url;
+      }
+    } catch {}
+    if (!clientUrl) {
+      try {
+        const stateFile = path.join(BASE, 'brand', slug, 'foundation-state.json');
+        if (fs.existsSync(stateFile)) {
+          const state = JSON.parse(fs.readFileSync(stateFile, 'utf-8'));
+          clientUrl = state.brand_summary?.url;
+        }
+      } catch {}
+    }
+    // Also accept URL as direct parameter
+    if (!clientUrl) clientUrl = params.get('url');
+    if (!clientUrl) { res.writeHead(404, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'No URL found for client. Pass ?url= or set url in clients.json / brand_summary' })); return; }
+
+    // Ensure URL has protocol
+    if (!clientUrl.startsWith('http')) clientUrl = 'https://' + clientUrl;
+
+    // Persist URL in foundation-state.json brand_summary if not already there
+    try {
+      const stateFile = path.join(BASE, 'brand', slug, 'foundation-state.json');
+      if (fs.existsSync(stateFile)) {
+        const state = JSON.parse(fs.readFileSync(stateFile, 'utf-8'));
+        if (!state.brand_summary) state.brand_summary = {};
+        if (!state.brand_summary.url || state.brand_summary.url !== clientUrl) {
+          state.brand_summary.url = clientUrl;
+          fs.writeFileSync(stateFile, JSON.stringify(state, null, 2));
+          console.log(`[pagespeed] Saved URL ${clientUrl} to ${slug}/foundation-state.json`);
+        }
+      }
+    } catch (e) { console.error('[pagespeed] Error saving URL:', e.message); }
+
+    // Fetch from Google PSI API (mobile + desktop)
+    const psiBase = 'https://www.googleapis.com/pagespeedonline/v5/runPagespeed';
+    const categories = '&category=performance&category=seo&category=accessibility&category=best-practices';
+    // Read API key from env or .env file
+    let _psiApiKey = process.env.PAGESPEED_API_KEY || '';
+    if (!_psiApiKey) {
+      try {
+        const envFile = path.join(require('os').homedir(), '.openclaw', '.env');
+        const envContent = fs.readFileSync(envFile, 'utf-8');
+        const match = envContent.match(/^PAGESPEED_API_KEY=(.+)$/m);
+        if (match) _psiApiKey = match[1].trim();
+      } catch {}
+    }
+    const psiKey = _psiApiKey ? `&key=${_psiApiKey}` : '';
+
+    const fetchPSI = async (strategy) => {
+      const apiUrl = `${psiBase}?url=${encodeURIComponent(clientUrl)}&strategy=${strategy}${categories}${psiKey}`;
+      console.log(`[pagespeed] Fetching ${strategy} for ${clientUrl} (key=${psiKey ? 'yes' : 'no'})`);
+      const resp = await fetch(apiUrl);
+      if (!resp.ok) {
+        const body = await resp.text().catch(() => '');
+        console.error(`[pagespeed] PSI ${strategy} HTTP ${resp.status}: ${body.slice(0, 200)}`);
+        throw new Error(`PSI ${strategy}: HTTP ${resp.status}`);
+      }
+      const data = await resp.json();
+      const cats = data.lighthouseResult?.categories || {};
+      const audits = data.lighthouseResult?.audits || {};
+      // Extract opportunities (actionable items with estimated savings)
+      const opportunities = [];
+      for (const [id, audit] of Object.entries(audits)) {
+        if (audit.details?.type === 'opportunity' && audit.details?.overallSavingsMs > 0) {
+          opportunities.push({ id, title: audit.title, savings: Math.round(audit.details.overallSavingsMs), description: audit.description?.slice(0, 150) });
+        }
+      }
+      // Extract failed diagnostics
+      const diagnostics = [];
+      for (const [id, audit] of Object.entries(audits)) {
+        if (audit.score !== null && audit.score < 0.5 && audit.details?.type === 'table') {
+          diagnostics.push({ id, title: audit.title, score: Math.round(audit.score * 100) });
+        }
+      }
+      return {
+        performance: Math.round((cats.performance?.score || 0) * 100),
+        seo: Math.round((cats.seo?.score || 0) * 100),
+        accessibility: Math.round((cats.accessibility?.score || 0) * 100),
+        bestPractices: Math.round((cats['best-practices']?.score || 0) * 100),
+        lcp: parseFloat(((audits['largest-contentful-paint']?.numericValue || 0) / 1000).toFixed(1)),
+        cls: parseFloat((audits['cumulative-layout-shift']?.numericValue || 0).toFixed(3)),
+        tbt: Math.round(audits['total-blocking-time']?.numericValue || 0),
+        opportunities: opportunities.sort((a,b) => b.savings - a.savings).slice(0, 10),
+        diagnostics: diagnostics.slice(0, 10),
+      };
+    };
+
+    (async () => {
+      try {
+        // Sequential to avoid rate limits (parallel doubles the burst)
+        const mobile = await fetchPSI('mobile');
+        const desktop = await fetchPSI('desktop');
+        const result = { url: clientUrl, mobile, desktop, fetchedAt: new Date().toISOString() };
+
+        // Save cache
+        if (!fs.existsSync(metricsDir)) fs.mkdirSync(metricsDir, { recursive: true });
+        fs.writeFileSync(cacheFile, JSON.stringify(result, null, 2));
+
+        // Save to daily metrics file as "pagespeed" source
+        const today = new Date().toISOString().slice(0, 10);
+        const dailyFile = path.join(metricsDir, today + '.json');
+        try {
+          let daily = {};
+          if (fs.existsSync(dailyFile)) daily = JSON.parse(fs.readFileSync(dailyFile, 'utf-8'));
+          if (!daily.sources) daily.sources = {};
+          daily.sources.pagespeed = {
+            status: 'ok',
+            metrics: [
+              { name: 'performance_mobile', value: mobile.performance, date: today },
+              { name: 'seo_mobile', value: mobile.seo, date: today },
+              { name: 'performance_desktop', value: desktop.performance, date: today },
+              { name: 'seo_desktop', value: desktop.seo, date: today },
+              { name: 'lcp_mobile', value: mobile.lcp, date: today },
+              { name: 'cls_mobile', value: mobile.cls, date: today },
+              { name: 'tbt_mobile', value: mobile.tbt, date: today },
+            ]
+          };
+          if (!daily.slug) daily.slug = slug;
+          if (!daily.collectedAt) daily.collectedAt = new Date().toISOString();
+          fs.writeFileSync(dailyFile, JSON.stringify(daily, null, 2));
+        } catch (e) { console.error('[pagespeed] daily file error:', e.message); }
+
+        console.log(`[pagespeed] ${slug}: perf=${mobile.performance}/${desktop.performance} seo=${mobile.seo}/${desktop.seo}`);
+        res.writeHead(200, { 'Content-Type': 'application/json' }); res.end(JSON.stringify(result));
+      } catch (e) {
+        console.error(`[pagespeed] Error for ${slug}:`, e.message);
+        // Return stale cache if available
+        if (fs.existsSync(cacheFile)) {
+          try { const stale = JSON.parse(fs.readFileSync(cacheFile, 'utf-8')); stale._stale = true; res.writeHead(200, { 'Content-Type': 'application/json' }); res.end(JSON.stringify(stale)); return; } catch {}
+        }
+        res.writeHead(500, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: e.message }));
+      }
+    })();
+    return;
+  }
+
+  // === API: Trigger metrics collection for a client ===
+  if (req.method === 'POST' && url === '/api/metrics-collect') {
+    let body = '';
+    req.on('data', chunk => { body += chunk; if (body.length > 10000) req.destroy(); });
+    req.on('end', () => {
+      try {
+        const { slug } = JSON.parse(body);
+        if (!slug) { res.writeHead(400, { 'Content-Type': 'application/json' }); res.end('{"error":"Missing slug"}'); return; }
+        const collectScript = path.join(BASE, 'skills', 'metrics-collector', 'scripts', 'collect.js');
+        if (!fs.existsSync(collectScript)) { res.writeHead(500, { 'Content-Type': 'application/json' }); res.end('{"error":"collect.js not found"}'); return; }
+        // Run collector asynchronously
+        const child = execCb(`/opt/homebrew/bin/node "${collectScript}" --slug ${slug} --all`, { cwd: BASE, timeout: 120000, env: { ...process.env, HOME: process.env.HOME || '/Users/ragi' } }, (err, stdout, stderr) => {
+          // Invalidate server-side metrics cache for this slug
+          if (global._metricsCache && global._metricsCache[slug]) delete global._metricsCache[slug];
+          if (err) {
+            console.error(`[metrics-collect] Error for ${slug}:`, stderr || err.message);
+          } else {
+            console.log(`[metrics-collect] Success for ${slug}:`, stdout.slice(0, 200));
+          }
+        });
+        // Respond immediately — collection runs in background
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true, message: `Recolección iniciada para ${slug}. Los datos aparecerán en unos segundos.` }));
+      } catch (e) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: e.message }));
+      }
+    });
+    return;
+  }
+
   if (req.method === 'GET' && url.startsWith('/api/metrics')) {
     const params = new URLSearchParams(req.url.split('?')[1] || '');
     const slug = params.get('slug');
@@ -7744,6 +8177,125 @@ mcServer.listen(PORT, '127.0.0.1', () => {
   // WS proxy disabled — using mc-chat channel plugin instead
   // setTimeout(() => gwConnect(), 1000);
 });
+
+// ═══════════════════════════════════════════════════════════════
+// FILE WATCHER: foundation-state.json → auto pending-review + task sync
+// ═══════════════════════════════════════════════════════════════
+// When an agent writes to foundation-state.json, this watcher:
+// 1. Detects pillar status changes
+// 2. Converts "done"/"generated" → "pending-review" (forces user review)
+// 3. Syncs pillar status → P00 task status
+// 4. Regenerates mc-data.js
+// ═══════════════════════════════════════════════════════════════
+const foundationWatchers = {};
+const foundationStateCache = {}; // slug → previous state snapshot
+const PILLAR_TO_TASK_STATUS = {'approved':'completed','done':'completed','in-progress':'in-progress','not-started':'todo','pending-review':'in-progress','generated':'in-progress'};
+
+function watchFoundationState(slug) {
+  const stateFile = path.join(BASE, 'brand', slug, 'foundation-state.json');
+  if (!fs.existsSync(stateFile) || foundationWatchers[slug]) return;
+
+  // Cache initial state
+  try {
+    const initial = JSON.parse(fs.readFileSync(stateFile, 'utf-8'));
+    foundationStateCache[slug] = JSON.parse(JSON.stringify(initial));
+  } catch { return; }
+
+  let debounceTimer = null;
+  foundationWatchers[slug] = fs.watch(stateFile, () => {
+    // Debounce: agents may write multiple times in quick succession
+    if (debounceTimer) clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => onFoundationStateChange(slug, stateFile), 1000);
+  });
+  console.log(`[foundation-watch] Watching ${slug}/foundation-state.json`);
+}
+
+function onFoundationStateChange(slug, stateFile) {
+  try {
+    const newState = JSON.parse(fs.readFileSync(stateFile, 'utf-8'));
+    const oldState = foundationStateCache[slug] || {};
+    let changed = false;
+
+    for (const [secKey, secData] of Object.entries(newState.sections || {})) {
+      const oldSec = (oldState.sections || {})[secKey] || {};
+      const oldPillars = oldSec.pillars || {};
+      const newPillars = secData.pillars || {};
+
+      for (const [pName, pInfo] of Object.entries(newPillars)) {
+        const oldStatus = (oldPillars[pName] || {}).status || 'not-started';
+        const newStatus = pInfo.status || 'not-started';
+
+        if (oldStatus === newStatus) continue;
+
+        console.log(`[foundation-watch] ${slug}: ${secKey}/${pName} ${oldStatus} → ${newStatus}`);
+
+        // Auto-convert done/generated → pending-review (force user approval)
+        if (['done', 'generated'].includes(newStatus) && !['approved', 'pending-review'].includes(oldStatus)) {
+          pInfo.status = 'pending-review';
+          pInfo.updated_at = new Date().toISOString();
+          console.log(`[foundation-watch] ${slug}: ${secKey}/${pName} auto-set to pending-review`);
+          changed = true;
+        }
+
+        // Sync to P00 tasks
+        const effectiveStatus = pInfo.status; // may have been changed to pending-review above
+        const taskStatus = PILLAR_TO_TASK_STATUS[effectiveStatus];
+        if (taskStatus) {
+          syncPillarToTask(slug, secKey, pName, taskStatus);
+        }
+      }
+    }
+
+    // Write back if we changed any statuses (done→pending-review)
+    if (changed) {
+      // Temporarily stop watching to avoid triggering ourselves
+      if (foundationWatchers[slug]) { foundationWatchers[slug].close(); delete foundationWatchers[slug]; }
+      fs.writeFileSync(stateFile, JSON.stringify(newState, null, 2));
+      // Regenerate mc-data.js
+      try { const { execSync } = require('child_process'); execSync('python3 scripts/regenerate.py', { cwd: BASE, timeout: 15000 }); } catch (e) { console.error('[foundation-watch] regenerate error:', e.message); }
+      // Re-start watcher
+      setTimeout(() => watchFoundationState(slug), 500);
+    }
+
+    // Update cache
+    foundationStateCache[slug] = JSON.parse(JSON.stringify(newState));
+  } catch (e) {
+    console.error(`[foundation-watch] Error processing ${slug}:`, e.message);
+  }
+}
+
+function syncPillarToTask(slug, section, pillar, taskStatus) {
+  try {
+    const projectsDir = path.join(BASE, 'brand', slug, 'projects');
+    if (!fs.existsSync(projectsDir)) return;
+    const dirs = fs.readdirSync(projectsDir, { withFileTypes: true }).filter(d => d.isDirectory() && d.name.startsWith('P00'));
+    for (const d of dirs) {
+      const tf = path.join(projectsDir, d.name, 'tasks.json');
+      if (!fs.existsSync(tf)) continue;
+      const td = JSON.parse(fs.readFileSync(tf, 'utf-8'));
+      const tasks = Array.isArray(td) ? td : (td.tasks || []);
+      // Match by pillar name OR by section name (for fast-foundation aggregate task)
+      const match = tasks.find(t => t.pillar === pillar || t.pillar === section);
+      if (match && match.status !== taskStatus) {
+        console.log(`[foundation-watch] ${slug}: task ${match.id} ${match.status} → ${taskStatus}`);
+        match.status = taskStatus;
+        if (taskStatus === 'completed') match.completed = new Date().toISOString().slice(0, 10);
+        const wd = Array.isArray(td) ? tasks : { ...td, tasks };
+        fs.writeFileSync(tf, JSON.stringify(wd, null, 2));
+      }
+    }
+  } catch (e) { console.error(`[foundation-watch] syncPillarToTask error:`, e.message); }
+}
+
+// Start watchers for all existing clients
+try {
+  const brandDir = path.join(BASE, 'brand');
+  if (fs.existsSync(brandDir)) {
+    for (const slug of fs.readdirSync(brandDir).filter(d => fs.statSync(path.join(brandDir, d)).isDirectory())) {
+      watchFoundationState(slug);
+    }
+  }
+} catch (e) { console.error('[foundation-watch] Init error:', e.message); }
 
 // Cleanup stale pending requests every 60s
 setInterval(() => {

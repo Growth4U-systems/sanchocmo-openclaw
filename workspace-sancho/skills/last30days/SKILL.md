@@ -1,7 +1,7 @@
 ---
 name: last30days
-version: "2.9.5"
-description: "Deep research engine covering the last 30 days across 10+ sources - Reddit, X/Twitter, YouTube, TikTok, Instagram, Hacker News, Polymarket, Bluesky, Truth Social, web. AI synthesizes findings into grounded, cited reports. The most comprehensive recency research skill on ClawHub."
+version: "2.9.6"
+description: "Deep research engine covering the last 30 days across 10+ sources - Reddit, X/Twitter, YouTube, TikTok, Instagram, Hacker News, Polymarket, and the web. AI synthesizes findings into grounded, cited reports."
 argument-hint: 'last30 AI video tools, last30 best project management tools'
 allowed-tools: Bash, Read, Write, AskUserQuestion, WebSearch
 homepage: https://github.com/mvanhorn/last30days-skill
@@ -61,9 +61,129 @@ metadata:
 
 # last30days v2.9.5: Research Any Topic from the Last 30 Days
 
-> **Permissions overview:** Reads public web/platform data and optionally saves research briefings to `~/Documents/Last30Days/`. X/Twitter search uses optional user-provided tokens (AUTH_TOKEN/CT0 env vars). Bluesky search uses optional app password (BSKY_HANDLE/BSKY_APP_PASSWORD env vars - create at bsky.app/settings/app-passwords). Truth Social search uses optional bearer token (TRUTHSOCIAL_TOKEN env var - extract from browser dev tools). All credential usage and data writes are documented in the [Security & Permissions](#security--permissions) section.
+> **Permissions overview:** Reads public web/platform data and optionally saves research briefings to `~/Documents/Last30Days/`. X/Twitter search uses optional user-provided tokens (AUTH_TOKEN/CT0 env vars). Bluesky search uses optional app password (BSKY_HANDLE/BSKY_APP_PASSWORD env vars - create at bsky.app/settings/app-passwords). All credential usage and data writes are documented in the [Security & Permissions](#security--permissions) section.
 
-Research ANY topic across Reddit, X, Bluesky, Truth Social, YouTube, TikTok, Hacker News, Polymarket, and the web. Surface what people are actually discussing, recommending, betting on, and debating right now.
+Research ANY topic across Reddit, X, YouTube, and other sources. Surface what people are actually discussing, recommending, betting on, and debating right now.
+
+## Step 0: First-Run Setup Wizard
+
+**CRITICAL: ALWAYS execute Step 0 BEFORE Step 1, even if the user provided a topic.** If the user typed `/last30days Mercer Island`, you MUST check for FIRST_RUN and present the wizard BEFORE running research. The topic "Mercer Island" is preserved — research runs immediately after the wizard completes. Do NOT skip the wizard because a topic was provided. The wizard takes 10 seconds and only runs once ever.
+
+To detect first run: check if `~/.config/last30days/.env` exists. If it does NOT exist, this is a first run. **Do NOT run any Bash commands or show any command output to detect this — just check the file existence silently.** If the file exists and contains `SETUP_COMPLETE=true`, skip this section and proceed to Step 1.
+
+**When first run is detected, you MUST follow these steps IN ORDER. Do NOT skip ahead to the topic picker or research. The sequence is: (1) welcome text → (2) setup modal → (3) run setup if chosen → (4) ScrapeCreators modal → (5) topic picker. You MUST start at step 1.**
+
+**Step 1: Display the following welcome text ONCE as a normal message (not blockquoted). Then IMMEDIATELY call AskUserQuestion — do NOT repeat any of the welcome text inside the AskUserQuestion call.**
+
+👋 Welcome to /last30days!
+
+I research any topic across Reddit, X, YouTube, and other sources — synthesizing what people are actually saying right now.
+
+To get the best results, I can:
+🔍 **Scan your browser** for X/Twitter cookies (free X search — reads x.com only, never saved)
+📺 **Install yt-dlp** for YouTube search + transcripts (free, open source, 190K+ GitHub stars)
+⭐ **ScrapeCreators API key** unlocks Reddit comments + TikTok + Instagram (100 free to start — scrapecreators.com)
+
+We recommend all 3 before your first run — it's what makes the magic. More community sources available later. We get no kickbacks from any of these.
+
+**Then call AskUserQuestion with ONLY this question and these options — no additional text:**
+
+Question: "How would you like to set up?"
+Options:
+- "Auto setup (~30 seconds) — scans browser for X cookies (free X search) and installs yt-dlp (free YouTube transcripts)"
+- "Manual setup — show me what to configure"
+- "Skip for now — Reddit (threads only), HN, Polymarket, Web"
+
+**If the user picks 1 (Auto setup):**
+Run the setup subcommand:
+```bash
+cd {SKILL_DIR} && python3 scripts/last30days.py setup
+```
+Show the user the results (what cookies were found, whether yt-dlp was installed).
+
+**Then show the ScrapeCreators push (plain text, then modal):**
+
+⭐ One more thing — Reddit comments are some of the best content on the internet. The top-voted replies often have sharper insights than the posts themselves. ScrapeCreators unlocks these (plus TikTok + Instagram) — 100 free to start, no credit card.
+
+**Call AskUserQuestion:**
+Question: "Want to add Reddit comments to your research?"
+Options:
+- "Open scrapecreators.com to get my free key" — run `open https://scrapecreators.com` via Bash to open in the user's browser. Then ask them to paste the API key they get. When they paste it, write SCRAPECREATORS_API_KEY={key} to ~/.config/last30days/.env
+- "I have a key — let me paste it" — accept the key, write to .env
+- "Skip for now — start researching" — proceed without ScrapeCreators
+
+**After ScrapeCreators modal (or skip), show the first research topic modal:**
+
+**Call AskUserQuestion:**
+Question: "What do you want to research first?"
+Options:
+- "Claude Code vs Codex" — tech comparison
+- "Sam Altman" — person in the news
+- "Warriors Basketball" — sports
+- "AI Legal Prompting Techniques" — niche/professional
+- "Type my own topic"
+
+If user picks an example, run research with that topic. If they pick "Type my own", ask them what they want to research. If the user originally provided a topic with the command (e.g., `/last30days Mercer Island`), skip this modal and use their topic directly.
+
+**END OF FIRST-RUN WIZARD. Everything above in Step 0 ONLY runs on first run. If SETUP_COMPLETE=true exists in .env, skip ALL of Step 0 — no welcome, no setup, no ScrapeCreators modal, no topic picker. Go directly to Step 1 (Parse User Intent). The topic picker is ONLY for first-time users who haven't run /last30days before.**
+
+**If the user picks 2 (Manual setup):**
+Show them this guide (present as plain text, not blockquoted):
+
+**The magic of /last30days is Reddit comments + X posts together.** Here's how to unlock each source.
+
+Add these to `~/.config/last30days/.env`:
+
+**🔍 X/Twitter** (pick one — this is the most important):
+- `FROM_BROWSER=auto` — easiest, free. Scans your browser cookies for x.com login.
+- `AUTH_TOKEN=xxx` + `CT0=xxx` — paste your X cookies manually (x.com → F12 → Application → Cookies)
+- `XAI_API_KEY=xxx` — use an xAI/Grok API key instead (api.x.ai)
+
+**⭐ Reddit Comments + TikTok + Instagram + YouTube backup** (one key, 5 platforms):
+- `SCRAPECREATORS_API_KEY=xxx` — 100 free to start at scrapecreators.com. This is the single most impactful key — Reddit comments are where the sharpest insights live.
+
+**💡 Reddit discovery fallback** (optional):
+- `OPENAI_API_KEY=xxx` — ChatGPT web search for Reddit threads. Only used if ScrapeCreators isn't configured — SC is better.
+
+**📺 YouTube** (primary engine):
+- Run `brew install yt-dlp` — free, open source. ScrapeCreators covers YouTube as backup if you skip this.
+
+**Bonus sources** (add anytime):
+- `EXA_API_KEY=xxx` — semantic web search, 1K free/month (exa.ai)
+- `BSKY_HANDLE=you.bsky.social` + `BSKY_APP_PASSWORD=xxx` — Bluesky (free app password)
+- `BRAVE_API_KEY=xxx` — Brave web search
+- `OPENROUTER_API_KEY=xxx` — Perplexity Sonar Pro search
+
+Always add this last line: `SETUP_COMPLETE=true`
+
+You can paste your API keys right here and I'll write the file for you. Some people say giving LLMs your keys is risky, others live in YOLO mode. Your call.
+
+**If the user pastes keys**, write them to `~/.config/last30days/.env` (create the file and parent dirs if needed, append without overwriting existing keys, always include `SETUP_COMPLETE=true`). Then proceed with research.
+
+**If the user says they'll do it themselves**, tell them: "Save the file, then run `/last30days <topic>` to research anything." Then proceed with research using whatever sources are currently available.
+
+**If the user picks Skip:**
+Proceed with research immediately using the user's original topic. Note: without setup, sources are limited to Reddit (threads only, no comments), HN, and Polymarket. X/Twitter and YouTube require setup.
+
+---
+
+## Do I Need API Keys?
+
+When users ask about API keys, setup, or how to unlock more sources, reference this:
+
+**You do NOT need API keys to use last30days.** It works out of the box with Reddit (threads only, no comments), Hacker News, and Polymarket. Browser cookies for X/Twitter are equivalent to an API key — just log into x.com in any browser and last30days will find your session automatically.
+
+**Source unlock progression (all free except ScrapeCreators):**
+- **Zero config (40% quality):** Reddit (threads only, no comments), HN, Polymarket — works immediately
+- **+ X cookies (60%):** Log into x.com in any browser. last30days scans your cookies automatically. This is the same as having an API key — no signup required.
+- **+ yt-dlp (80%):** `brew install yt-dlp` — open source, 190K+ GitHub stars. Enables YouTube search and transcripts.
+- **+ ScrapeCreators (100%):** The only paid option worth mentioning. Unlocks Reddit with full comments (the most valuable research content), TikTok, and Instagram. 100 free API calls, no credit card — scrapecreators.com
+
+**Key comparison:** X browser cookies = same access as an API key (free, no signup). ScrapeCreators is the only service worth paying for (and the free tier is generous).
+
+last30days has no affiliation with any API provider — no referrals, no kickbacks.
+
+---
 
 ## CRITICAL: Parse User Intent
 
@@ -100,7 +220,7 @@ Common patterns:
 **DISPLAY your parsing to the user.** Before running any tools, output:
 
 ```
-I'll research {TOPIC} across Reddit, X, Bluesky, Truth Social, TikTok, and the web to find what's been discussed in the last 30 days.
+I'll research {TOPIC} across Reddit, X, YouTube, and other sources to find what's been discussed in the last 30 days.
 
 Parsed intent:
 - TOPIC = {TOPIC}
@@ -164,7 +284,7 @@ Agent mode report format:
 
 ```
 ## Research Report: {TOPIC}
-Generated: {date} | Sources: Reddit, X, Bluesky, Truth Social, YouTube, TikTok, HN, Polymarket, Web
+Generated: {date} | Sources: Reddit, X, Bluesky, YouTube, TikTok, HN, Polymarket, Web
 
 ### Key Findings
 [3-5 bullet points, highest-signal insights with citations]
@@ -499,6 +619,10 @@ KEY PATTERNS from the research:
 3. [Pattern] — per @handle
 ```
 
+**THEN - Quality Nudge (if present in the output):**
+
+If the research output contains a `**🔍 Research Coverage:**` block, render it verbatim right before the stats block. This tells the user which core sources are missing and how to unlock them. Do NOT render this block if it is absent from the output (100% coverage = no nudge).
+
 **THEN - Stats (right before invitation):**
 
 **CRITICAL: Calculate actual totals from the research output.**
@@ -726,7 +850,7 @@ Want another prompt? Just tell me what you're creating next.
 - Sends search queries to Algolia HN Search API (`hn.algolia.com`) for Hacker News story and comment discovery (free, no auth)
 - Sends search queries to Polymarket Gamma API (`gamma-api.polymarket.com`) for prediction market discovery (free, no auth)
 - Runs `yt-dlp` locally for YouTube search and transcript extraction (no API key, public data)
-- Sends search queries to ScrapeCreators API (`api.scrapecreators.com`) for TikTok and Instagram search, transcript/caption extraction (same SCRAPECREATORS_API_KEY as Reddit, PAYG after 100 free credits)
+- Sends search queries to ScrapeCreators API (`api.scrapecreators.com`) for TikTok and Instagram search, transcript/caption extraction (same SCRAPECREATORS_API_KEY as Reddit, PAYG after 100 free API calls)
 - Optionally sends search queries to Brave Search API, Parallel AI API, or OpenRouter API for web search
 - Fetches public Reddit thread data from `reddit.com` for engagement metrics
 - Stores research findings in local SQLite database (watchlist mode only)
@@ -739,7 +863,7 @@ Want another prompt? Just tell me what you're creating next.
 - Does not log, cache, or write API keys to output files
 - Does not send data to any endpoint not listed above
 - Hacker News and Polymarket sources are always available (no API key, no binary dependency)
-- TikTok and Instagram sources require SCRAPECREATORS_API_KEY (same key covers both; 100 free credits, then PAYG)
+- TikTok and Instagram sources require SCRAPECREATORS_API_KEY (same key covers both; 100 free API calls, then PAYG)
 - Can be invoked autonomously by agents via the Skill tool (runs inline, not forked); pass `--agent` for non-interactive report output
 
 **Bundled scripts:** `scripts/last30days.py` (main research engine), `scripts/lib/` (search, enrichment, rendering modules), `scripts/lib/vendor/bird-search/` (vendored X search client, MIT licensed)

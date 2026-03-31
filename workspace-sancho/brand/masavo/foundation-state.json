@@ -1,7 +1,7 @@
 {
   "version": "2.0",
   "started_at": "2026-03-17T11:20:00Z",
-  "updated_at": "2026-03-27T21:42:00Z",
+  "updated_at": "2026-03-30T20:30:00Z",
   "sections": {
     "fast-foundation": {
       "status": "completed",
@@ -27,7 +27,7 @@
       "layer": 1,
       "output_dir": "brand/masavo/market-and-us/",
       "pillars": {
-        "market-analysis": {"status": "lite-done", "layer": 1, "requires": ["company-brief"], "skill": "market-intelligence"},
+        "market-analysis": {"status": "completed", "layer": 1, "requires": ["company-brief"], "skill": "market-intelligence", "completed_at": "2026-03-30T20:30:00Z"},
         "competitor-analysis": {"status": "not-started", "layer": 1, "requires": ["company-brief"], "skill": "competitor-intelligence"},
         "self-analysis": {"status": "lite-done", "layer": 1, "requires": ["company-brief"], "skill": "self-intelligence"},
         "swot": {"status": "not-started", "layer": 2, "requires": ["market-analysis", "competitor-analysis", "self-analysis"], "skill": "swot-analysis"}

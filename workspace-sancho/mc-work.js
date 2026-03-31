@@ -68,7 +68,7 @@ function chBadge(ch) { return ch ? '<span style="font-size:10px;background:color
 function renderProjectsList() {
   const guildId = ''; // Will be populated from project discord data
   let html = '';
-  for (const p of _prjData) {
+  for (const p of _prjData.filter(pr => pr.status !== 'archived' && pr.status !== 'cancelled')) {
     const tasksDone = p.tasks.filter(t => ['completed','done','discarded','cancelled'].includes(t.status)).length;
     const pct = p.tasks.length > 0 ? Math.round(tasksDone/p.tasks.length*100) : 0;
     const obj = typeof p.objective === 'string' ? p.objective : (p.objective?.description || '');

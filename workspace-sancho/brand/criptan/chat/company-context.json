@@ -72,9 +72,104 @@
       "text": "## 📋 Company Context — Perfil Inferido de Criptan\n\nHe analizado la web, LinkedIn y otras fuentes públicas. Esto es lo que he encontrado. **Revisa y corrige lo que esté mal:**\n\n### ✅ Identidad (alta confianza)\n- **Nombre**: Criptan\n- **Nombre legal**: Criptan Trade S.L.\n- **Fundación**: 2017\n- **Sede**: Valencia, España\n- **Mercados**: España + 140+ países (disponible en toda la UE con pasaporte MiCA)\n- **Web**: https://www.criptan.com\n- **Sociales**: LinkedIn, Twitter (@criptanapp), Instagram (@criptanapp), YouTube, Telegram\n\n### ⚠️ Qué hacen (validar redacción)\n- **Elevator pitch inferido**: \"Criptan es una compañía de tecnología financiera que permite invertir y proteger tu dinero en criptoactivos de forma segura, generando ingresos pasivos desde el minuto uno.\"\n- **Producto**: Plataforma de compra, venta, custodia e inversión en criptoactivos (USDC, EURC, BTC, ETH). Ofrecen:\n  - **Criptan Earn**: Ingresos pasivos hasta 4.5% TAE en USDC, 2.9% TAE en EURC, 1.25% TAE en BTC, 3% TAE en ETH (pagos semanales)\n  - **Criptan Cestas**: Inversión automatizada y diversificada en +30 criptoactivos con rebalanceo semanal\n  - **CriptanCard** (Mastercard): Pago con criptoactivos en cualquier comercio\n  - Compra/venta con bajas comisiones, envío/recepción de euros, dólares y criptoactivos\n\n### ⚠️ Modelo de Negocio (confirmar)\n- **Tipo**: B2C\n- **Revenue model**: Freemium + comisiones (trading fees, spread, posiblemente fees de Earn/Cestas)\n- **Pricing**: No explícito en web (inferido: comisiones por transacción + posible modelo freemium)\n- **Ticket medio/LTV**: No disponible públicamente\n\n### ⚠️ Estado Actual (validar volúmenes)\n- **Clientes**: +100.000 usuarios\n- **Equipo**: 37 empleados (según LinkedIn, enero 2026)\n- **Regulación**: Registro Banco de España (D646), Autorización MiCA (marzo 2025)\n- **Seguro**: 250M EUR para custodia\n- **Tiempo en mercado**: 7+ años\n- **Reconocimientos**: Premio Rankia 2025 (Mejor Exchange), Premio El Mundo 2025 (Mejores Ideas del Año — Finanzas y Seguros)\n- **Canales actuales**: Web, app (iOS/Android), blog, redes sociales, eventos (Rankia Markets Experience)\n\n### ⚠️ Inversores (confirmar relevancia para marketing)\n- Draper B1 (lead 3.5M EUR en 2021)\n- Angels Capital (Juan Roig)\n- Ángel Corcóstegui (ex-CEO Banco Santander)\n- José María Castellano (ex-VP Inditex)\n- Juan Revenga (founder Ebury)\n\n---\n\n### ❓ **Necesito tu ayuda para completar:**\n\n1. **¿Qué resultado concreto queréis conseguir en los próximos 3-6 meses?** (ejemplo: \"Llegar a 150K usuarios activos\", \"Facturar 2M EUR/mes\", etc.)\n\n2. **¿Cuál es vuestra North Star Metric?** (la métrica que define el éxito del negocio)\n   - Posibles opciones según vuestro modelo: usuarios activos mensuales, volumen de trading mensual, usuarios con ingresos pasivos activos, AUM (Assets Under Management), ingresos recurrentes...\n   - Necesito: nombre de la métrica, baseline actual, target deseado y timeframe\n\n3. **¿Qué os diferencia de alternativas como Bit2Me, Binance, Coinbase o Revolut cripto?** (el diferenciador 10x que hace que un usuario os elija)\n\n4. **¿De dónde vienen la mayoría de vuestros usuarios hoy?** (canal principal de adquisición)\n\n5. **¿Visión a 3 años?** ¿Cómo os veis en 2029? (opcional pero útil para narrative largo plazo)\n\n6. **¿Hay algo que NO queréis hacer nunca en marketing?** (constraints, non-negotiables)\n\n---\n\n¿Qué necesitas corregir del perfil inferido? Luego pasamos a completar los gaps.",
       "agent": "sancho",
       "ts": "2026-03-27T10:24:19.068Z"
+    },
+    {
+      "role": "user",
+      "text": "Analiza la empresa en www.criptan.com para el Company Context",
+      "ts": "2026-03-30T08:22:22.820Z"
+    },
+    {
+      "role": "user",
+      "text": "Analiza la empresa en www.criptan.com para el Company Context",
+      "ts": "2026-03-30T08:22:28.055Z"
+    },
+    {
+      "role": "bot",
+      "text": "Now let me read the schema and checklist, and check existing docs for Criptan.",
+      "agent": "sancho",
+      "ts": "2026-03-30T08:26:01.001Z"
+    },
+    {
+      "role": "bot",
+      "text": "Ahora voy a buscar info adicional de redes sociales y app stores para completar el perfil.",
+      "agent": "sancho",
+      "ts": "2026-03-30T08:26:01.297Z"
+    },
+    {
+      "role": "bot",
+      "text": "Tengo suficiente información. Voy a generar el Company Context Profile y presentarlo para validación.",
+      "agent": "sancho",
+      "ts": "2026-03-30T08:26:01.329Z"
+    },
+    {
+      "role": "bot",
+      "text": "Vamos al lío. Esto es lo que he encontrado analizando criptan.com y fuentes públicas. Revisa y corrígeme lo que esté mal:\n\n---\n\n## 🏢 Identidad\n- **Nombre**: Criptan (Criptan Trade S.L.) ✅\n- **Fundación**: 2018, Valencia ✅\n- **Fundadores**: Jorge Soriano (CEO) + Jaume Sola (Dir. Innovación) ✅\n- **Registro**: Banco de España D646 + Autorización MiCA ✅\n- **Mercados**: España principal, +140 países disponibles ✅\n- **Reconocimiento**: Mejor Exchange Rankia 2025 ✅\n\n## 🎯 Qué hacen\n- **Elevator pitch**: Plataforma cripto regulada que protege y hace crecer la riqueza de sus clientes — compra, venta, custodia e inversión en criptoactivos con máxima seguridad y transparencia.\n- **Producto core**: Exchange + Criptan Earn (rendimientos semanales: hasta 4.5% TAE en USDC)\n- **Otros productos**: Cestas auto-rebalanceadas, Criptan Card (1% cashback), CriptanPay\n- **+30 criptoactivos** disponibles\n- **Custodia**: +80% en monederos multifirma ultra-fríos, seguro de 250M€\n\n## 💰 Modelo de negocio\n- **B2C** principal (¿hay peso B2B relevante?)\n- **Revenue**: Comisiones trading (0.15%-0.99% según nivel), spread, spread del Earn\n- **Sistema 8 niveles**: desde L1 (0.99%) hasta L8 (0.15%, para +1.5M€ en Earn)\n- **Base**: +100.000 clientes\n\n## 🚀 Financiación\n- **~7.5M€ levantados** en 3 rondas\n- **Inversores**: Juan Roig (Angels/Mercadona), Ángel Corcóstegui (ex-CEO Santander), José María Castellano (ex-VP Inditex), Juan Lobato (CEO Ebury), Iñaki Berenguer\n\n## ⚠️ Lo que NO tengo claro — necesito que confirmes:\n\n**Bloque 1 — El negocio:**\n1. ¿El diferenciador clave es regulación + seguro + inversores de perfil, o hay algo más que os distingue de Bit2Me, Coinbase, etc.?\n2. ¿B2B tiene peso real o es residual?\n3. ¿Ticket medio por usuario y LTV estimado?\n\n**Bloque 2 — Goals:**\n4. **¿Cuál es el objetivo principal para los próximos 3-6 meses?** (ej: llegar a X usuarios, X AUM, expansión a nuevo mercado...)\n5. **North Star Metric**: Mi propuesta es \"MAU con saldo en Earn\" o \"AUM total\". ¿Cuál refleja mejor vuestro éxito?\n6. ¿Visión a 3-5 años? ¿Expansión europea post-MiCA?\n\n**Bloque 3 — Estado actual marketing:**\n7. ¿De dónde vienen los usuarios hoy? (orgánico, paid, PR, referral...)\n8. ¿Leads/registros nuevos por mes? ¿Tasa de activación?\n9. ¿Qué canales de marketing tenéis activos y cuáles funcionan mejor?\n10. ¿Usáis algún CRM? ¿Analytics (GA4, Mixpanel...)?\n\nTe pregunto esto porque determina si arrancamos construyendo funnel, optimizando adquisición, o trabajando retención. Cada respuesta cambia la estrategia.\n\n📄 **Perfil inferido guardado en**: `brand/criptan/company-context/current.md`",
+      "agent": "sancho",
+      "ts": "2026-03-30T08:26:01.832Z"
+    },
+    {
+      "role": "bot",
+      "text": "Ya lo tengo — acabo de completar el análisis justo arriba ☝️\n\nEl perfil inferido de Criptan ya está guardado en `brand/criptan/company-context/current.md` con toda la info extraída de la web y fuentes públicas (identidad, producto, modelo de negocio, financiación, equipo).\n\nSolo faltan las 10 preguntas de validación que te dejé para completar los gaps (diferenciador, goals, North Star Metric, estado actual de marketing). Cuando respondas esas, cierro el Company Context completo.",
+      "agent": "sancho",
+      "ts": "2026-03-30T08:26:12.963Z"
+    },
+    {
+      "role": "user",
+      "text": "Analiza la empresa en www.criptan.com para el Company Context",
+      "ts": "2026-03-30T08:42:08.583Z"
+    },
+    {
+      "role": "user",
+      "text": "Analiza la empresa en www.criptan.com para el Company Context",
+      "ts": "2026-03-30T08:42:09.272Z"
+    },
+    {
+      "role": "user",
+      "text": "Analiza la empresa en www.criptan.com para el Company Context",
+      "ts": "2026-03-30T08:42:09.969Z"
+    },
+    {
+      "role": "user",
+      "text": "Analiza la empresa en www.criptan.com para el Company Context",
+      "ts": "2026-03-30T08:42:10.166Z"
+    },
+    {
+      "role": "user",
+      "text": "Analiza la empresa en www.criptan.com para el Company Context",
+      "ts": "2026-03-30T08:42:10.348Z"
+    },
+    {
+      "role": "bot",
+      "text": "Ya está hecho — el análisis completo de Criptan está en `brand/criptan/company-context/current.md`.\n\nResumen rápido de lo que ya tenemos:\n\n- ✅ **Identidad**: Criptan Trade S.L., Valencia, 2018, Jorge Soriano (CEO)\n- ✅ **Producto**: Exchange + Earn (hasta 4.5% TAE), +30 cripto, app + web, +140 países\n- ✅ **Regulación**: Banco de España D646 + MiCA + seguro 250M€\n- ✅ **Modelo**: B2C, comisiones trading (0.15%-0.99%), spread, Earn spread\n- ✅ **Base**: +100.000 clientes, Mejor Exchange Rankia 2025\n- ✅ **Financiación**: ~7.5M€ (Juan Roig, Corcóstegui, Castellano, Lobato, Berenguer)\n\n**Lo que falta para cerrar** — necesito respuestas a estas preguntas:\n\n1. ¿Diferenciador clave vs Bit2Me, Coinbase, etc.?\n2. ¿B2B tiene peso real?\n3. ¿Ticket medio y LTV?\n4. **¿Objetivo principal 3-6 meses?**\n5. **¿North Star Metric?** (propongo MAU con saldo en Earn o AUM total)\n6. ¿Visión 3-5 años?\n7. ¿De dónde vienen los usuarios hoy?\n8. ¿Registros nuevos/mes?\n9. ¿Canales de marketing activos?\n10. ¿CRM y analytics que usan?\n\nCon esas respuestas cierro el Company Context y pasamos a Foundation. ¿Vamos?",
+      "agent": "sancho",
+      "ts": "2026-03-30T08:42:46.461Z"
+    },
+    {
+      "role": "bot",
+      "text": "Ya está completado — es la tercera vez que llega este mensaje, probablemente se encoló.\n\n📄 El perfil está en `brand/criptan/company-context/current.md` con cobertura Lite al 71%.\n\n**Solo falta tu input** en las 10 preguntas que te dejé arriba (goals, diferenciador, NSM, estado marketing). Cuando respondas, cierro el documento y pasamos a Foundation.\n\n¿Empezamos con las respuestas?",
+      "agent": "sancho",
+      "ts": "2026-03-30T08:43:00.170Z"
+    },
+    {
+      "role": "bot",
+      "text": "Mensaje duplicado (4ª vez) — ya está hecho. El perfil de Criptan está en `brand/criptan/company-context/current.md`. Esperando tus respuestas a las 10 preguntas para cerrar el documento.",
+      "agent": "sancho",
+      "ts": "2026-03-30T08:43:06.795Z"
+    },
+    {
+      "role": "bot",
+      "text": "Duplicado (#5). Ya completado — `brand/criptan/company-context/current.md`. Pendiente: tus respuestas a las preguntas de validación.",
+      "agent": "sancho",
+      "ts": "2026-03-30T08:43:13.753Z"
+    },
+    {
+      "role": "bot",
+      "text": "Duplicado (#6). Hecho. Esperando respuestas.",
+      "agent": "sancho",
+      "ts": "2026-03-30T08:43:22.627Z"
     }
   ],
-  "updatedAt": 1774607059068,
+  "updatedAt": 1774860202628,
   "discordThreadId": null,
   "discordChannelId": null
 }

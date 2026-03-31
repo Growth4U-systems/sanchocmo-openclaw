@@ -5,16 +5,66 @@
       "id": "P00-MET-T01",
       "name": "L6 — Acquisition Metrics Plan",
       "description": "Definir métricas clave de adquisición por canal.",
-      "deliverable": "go-to-market/metrics-plan.md",
+      "deliverable": "go-to-market/metrics-plan/current.md",
       "done_criteria": "Métricas definidas. Tareas de conexión generadas.",
-      "depends_on": "P00-FUL-T08",
+      "depends_on": null,
       "owner": "Sancho",
-      "status": "todo",
+      "status": "completed",
       "channel": "intelligence",
       "type": "foundation",
       "skill": "metrics-setup",
       "pillar": "metrics-setup",
-      "section": "metrics-setup"
+      "section": "metrics-setup",
+      "completed_at": "2026-03-30T13:50:00Z"
+    },
+    {
+      "id": "P00-MET-T02",
+      "name": "Conectar GA4",
+      "description": "Conectar Google Analytics 4. Property ID 387759614 + acceso Viewer al Service Account.",
+      "type": "execution",
+      "skill": "metrics-setup",
+      "channel": "intelligence",
+      "owner": "Equipo",
+      "status": "completed",
+      "depends_on": "P00-MET-T01",
+      "completed_at": "2026-03-30T12:13:23Z",
+      "config": {
+        "PROPERTY_ID": "387759614"
+      }
+    },
+    {
+      "id": "P00-MET-T03",
+      "name": "Conectar Google Search Console",
+      "description": "Conectar GSC. Necesario: Site URL + dar acceso al Service Account del sistema.",
+      "type": "execution",
+      "skill": "metrics-setup",
+      "channel": "intelligence",
+      "owner": "Equipo",
+      "status": "completed",
+      "completed_at": "2026-03-30T12:19:34Z",
+      "depends_on": "P00-MET-T01"
+    },
+    {
+      "id": "P00-MET-T04",
+      "name": "Conectar CleverTap",
+      "description": "Conectar CleverTap CRM/CDP. Necesario: Account ID, Passcode y Region. Configurar vía Mission Control.",
+      "type": "execution",
+      "skill": "metrics-setup",
+      "channel": "intelligence",
+      "owner": "Equipo",
+      "status": "todo",
+      "depends_on": "P00-MET-T01"
+    },
+    {
+      "id": "P00-MET-T05",
+      "name": "Verificar dashboard y flujo de datos",
+      "description": "Comprobar que todas las fuentes de datos fluyen al dashboard. Validar que las métricas se calculan correctamente.",
+      "type": "execution",
+      "skill": "metrics-collector",
+      "channel": "intelligence",
+      "owner": "Sancho",
+      "status": "todo",
+      "depends_on": "P00-MET-T04"
     }
   ]
 }

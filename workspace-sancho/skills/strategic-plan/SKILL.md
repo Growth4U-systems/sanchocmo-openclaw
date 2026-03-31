@@ -50,6 +50,8 @@ else:
 
 ## Mode UPDATE — Operación sobre plan existente
 
+> **Nota:** Para gestión continua de proyectos y tareas (añadir tareas, status, value review, crear proyectos ad-hoc), usar `sancho-manager`. Este skill se reserva para INIT (crear plan desde cero), Crear hilos Discord, y Nuevo ciclo (versionar plan + re-planificar). Las operaciones "Nuevo proyecto", "Nueva tarea" y "Value review" se documentan aquí como referencia, pero `sancho-manager` es el skill preferido para estas operaciones día a día.
+
 Leer `strategic-plan/current.md` + `projects/registry.json`.
 
 Detectar intención del usuario:
@@ -81,14 +83,16 @@ Si `registry.json` + tasks.json existen PERO no tienen `discord_thread_id`:
 3. Esperar confirmación del usuario
 4. Crear `projects/P{XX}-{slug}/project.json` + `tasks.json`
 5. Actualizar `registry.json` + `strategic-plan/current.md` (añadir a proyectos activos)
-6. Crear hilo en `#projects`: `[P{XX}] Nombre`
-7. Crear hilos de tareas en canales temáticos
+6. **Regenerar MC data:** `python3 scripts/regenerate.py` (para que MC refleje el nuevo proyecto)
+7. Crear hilo en `#projects`: `[P{XX}] Nombre`
+8. Crear hilos de tareas en canales temáticos
 
 ### Nueva tarea
 
 1. Leer `projects/P{XX}/tasks.json`
 2. Añadir tarea con ID secuencial, canal asignado
-3. Crear hilo en canal temático: `[P{XX}-T{YY}] Nombre`
+3. **Regenerar MC data:** `python3 scripts/regenerate.py`
+4. Crear hilo en canal temático: `[P{XX}-T{YY}] Nombre`
 
 ### Value review
 
@@ -424,7 +428,11 @@ Ver [references/data-model.md](references/data-model.md) para schemas de `projec
    - `tasks.json` → añadir `"discord_thread_id": "{id}"` en cada tarea
    - MC mostrará los 💬 automáticamente con links a Discord
 
-8. En cada hilo de tarea: "¿La ejecuto?" → **NUNCA ejecutar sin confirmación explícita**
+8. **Regenerar Mission Control data:**
+   - Ejecutar `python3 scripts/regenerate.py`
+   - Esto actualiza `mc-data.js` con los nuevos proyectos y tareas creados
+
+9. En cada hilo de tarea: "¿La ejecuto?" → **NUNCA ejecutar sin confirmación explícita**
 
 ### Nomenclatura proyectos
 
@@ -532,3 +540,4 @@ Al completar un proyecto → generar `value-review.md`:
 17. ¿Se propusieron recurring tasks de Idea Generation por cada estrategia aprobada?
 18. ¿Las recurring tasks tienen nombre, frecuencia, fuentes y canal destino definidos?
 19. ¿Se crearon los crons/JSON de recurring_tasks al aprobar?
+20. ⚠️ **¿Se ejecutó `python3 scripts/regenerate.py`** después de crear/actualizar proyectos y tareas?

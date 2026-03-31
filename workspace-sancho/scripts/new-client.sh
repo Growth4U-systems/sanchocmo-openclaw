@@ -50,25 +50,244 @@ echo "🔨 Onboarding: $NAME (slug: $SLUG, guild: $GUILD)"
 
 # --- 1. Crear estructura de archivos ---
 echo "📁 Creando estructura..."
-mkdir -p "$BRAND_DIR"/{company-brief,market-and-us/{market,competitors,self,swot,summary,ope-canvas,sources},go-to-market/{ecps,positioning/shared,pricing,existing-customer-data,metrics-plan,ecp-validation},brand-identity/{voice-profile,visual-identity},brand-voice,strategic-plan,presentations,operational,_archive,projects}
+mkdir -p "$BRAND_DIR"/{company-brief,market-and-us/{market,competitors,self,market-synthesis,sources},go-to-market/{ecps,positioning/shared,pricing,existing-customer-data,ecp-validation},brand-book/{brand-voice,visual-identity},strategic-plan,operational,_archive,projects}
 
-# Foundation state v3.0 (6 secciones: fast-foundation, market-and-us, go-to-market, brand-identity, metrics-setup, strategic-plan)
+# --- 1b. Crear placeholders de documentos ---
+echo "📄 Creando placeholders..."
+
+cat > "$BRAND_DIR/company-brief/current.md" << 'PLACEHOLDER'
+<!-- mode: placeholder | status: not-started -->
+# Company Brief — {NOMBRE}
+
+> Documento único: identidad, modelo de negocio, equipo, diferenciadores y recursos.
+
+## Identidad
+<!-- Nombre, tipo de empresa, sector, año fundación, equipo -->
+
+## Modelo de Negocio
+<!-- Qué vende, a quién, cómo cobra, ticket medio, unit economics -->
+
+## Recursos y Budget
+<!-- Equipo actual, herramientas, presupuesto marketing, restricciones -->
+
+## Diferenciadores
+<!-- Qué hace diferente a esta empresa, assets únicos -->
+PLACEHOLDER
+sed -i '' "s/{NOMBRE}/$NAME/g" "$BRAND_DIR/company-brief/current.md"
+
+cat > "$BRAND_DIR/market-and-us/market/current.md" << 'PLACEHOLDER'
+<!-- mode: placeholder | status: not-started -->
+# Market Intelligence — {NOMBRE}
+
+## Executive Narrative
+<!-- Resumen ejecutivo del mercado -->
+
+## Tamaño de Mercado
+<!-- TAM, SAM, SOM con fuentes -->
+
+## Tendencias
+<!-- Tendencias clave del sector -->
+
+## Regulación
+<!-- Marco regulatorio relevante -->
+
+## Segmentación
+<!-- Segmentos de mercado y oportunidades -->
+PLACEHOLDER
+sed -i '' "s/{NOMBRE}/$NAME/g" "$BRAND_DIR/market-and-us/market/current.md"
+
+cat > "$BRAND_DIR/market-and-us/self/current.md" << 'PLACEHOLDER'
+<!-- mode: placeholder | status: not-started -->
+# Self Intelligence — {NOMBRE}
+
+## Lens 1: Autopercepción
+<!-- Cómo se ve la empresa a sí misma -->
+
+## Lens 2: Terceros
+<!-- Cómo la ven partners, analistas, prensa -->
+
+## Lens 3: Consumidores
+<!-- Cómo la ven clientes actuales y potenciales -->
+
+## Assets Únicos
+<!-- Fortalezas y recursos diferenciadores -->
+
+## Gaps
+<!-- Debilidades y áreas de mejora -->
+PLACEHOLDER
+sed -i '' "s/{NOMBRE}/$NAME/g" "$BRAND_DIR/market-and-us/self/current.md"
+
+cat > "$BRAND_DIR/market-and-us/market-synthesis/swot.md" << 'PLACEHOLDER'
+<!-- mode: placeholder | status: not-started -->
+# SWOT Analysis — {NOMBRE}
+
+## Strengths
+<!-- Fortalezas internas -->
+
+## Weaknesses
+<!-- Debilidades internas -->
+
+## Opportunities
+<!-- Oportunidades externas -->
+
+## Threats
+<!-- Amenazas externas -->
+
+## TOWS Matrix
+<!-- Estrategias cruzadas SO, WO, ST, WT -->
+PLACEHOLDER
+sed -i '' "s/{NOMBRE}/$NAME/g" "$BRAND_DIR/market-and-us/market-synthesis/swot.md"
+
+cat > "$BRAND_DIR/market-and-us/market-synthesis/summary.md" << 'PLACEHOLDER'
+<!-- mode: placeholder | status: not-started -->
+# Market Summary — {NOMBRE}
+
+## Resumen Ejecutivo
+<!-- Síntesis de Market + Competitors + Self -->
+
+## Conclusiones Clave
+<!-- Top insights para la estrategia -->
+PLACEHOLDER
+sed -i '' "s/{NOMBRE}/$NAME/g" "$BRAND_DIR/market-and-us/market-synthesis/summary.md"
+
+cat > "$BRAND_DIR/market-and-us/market-synthesis/ope-canvas.md" << 'PLACEHOLDER'
+<!-- mode: placeholder | status: not-started -->
+# OPE Canvas — {NOMBRE}
+
+## Oportunidad
+<!-- Oportunidad principal identificada -->
+
+## Problema
+<!-- Problema que resuelve -->
+
+## Ejecución
+<!-- Cómo se ejecuta la solución -->
+PLACEHOLDER
+sed -i '' "s/{NOMBRE}/$NAME/g" "$BRAND_DIR/market-and-us/market-synthesis/ope-canvas.md"
+
+cat > "$BRAND_DIR/go-to-market/ecps/current.md" << 'PLACEHOLDER'
+<!-- mode: placeholder | status: not-started -->
+# Niche Discovery & ECPs — {NOMBRE}
+
+## Nichos Identificados
+<!-- Nichos de mercado con potencial -->
+
+## ECPs (Exceptional Client Profiles)
+<!-- Perfiles de cliente ideal con pain clusters -->
+PLACEHOLDER
+sed -i '' "s/{NOMBRE}/$NAME/g" "$BRAND_DIR/go-to-market/ecps/current.md"
+
+cat > "$BRAND_DIR/go-to-market/positioning/shared/messaging-summary.md" << 'PLACEHOLDER'
+<!-- mode: placeholder | status: not-started -->
+# Positioning & Messaging — {NOMBRE}
+
+## Posicionamiento
+<!-- Declaración de posicionamiento -->
+
+## Propuesta de Valor
+<!-- Value proposition por ECP -->
+
+## Mensajes Clave
+<!-- Key messages diferenciadores -->
+PLACEHOLDER
+sed -i '' "s/{NOMBRE}/$NAME/g" "$BRAND_DIR/go-to-market/positioning/shared/messaging-summary.md"
+
+cat > "$BRAND_DIR/go-to-market/pricing/current.md" << 'PLACEHOLDER'
+<!-- mode: placeholder | status: not-started -->
+# Pricing Strategy — {NOMBRE}
+
+## Modelo de Pricing
+<!-- Tipo de modelo, justificación -->
+
+## Tiers
+<!-- Niveles de servicio/producto -->
+
+## Value Metrics
+<!-- Métricas de valor para el cliente -->
+PLACEHOLDER
+sed -i '' "s/{NOMBRE}/$NAME/g" "$BRAND_DIR/go-to-market/pricing/current.md"
+
+cat > "$BRAND_DIR/brand-book/brand-voice/current.md" << 'PLACEHOLDER'
+<!-- mode: placeholder | status: not-started -->
+# Brand Voice — {NOMBRE}
+
+## Personalidad
+<!-- Rasgos de personalidad de la marca -->
+
+## Tono
+<!-- Espectro de tono por contexto -->
+
+## Vocabulario
+<!-- Palabras a usar y evitar -->
+
+## Ejemplos
+<!-- Antes/después por canal -->
+PLACEHOLDER
+sed -i '' "s/{NOMBRE}/$NAME/g" "$BRAND_DIR/brand-book/brand-voice/current.md"
+
+cat > "$BRAND_DIR/brand-book/visual-identity/current.md" << 'PLACEHOLDER'
+<!-- mode: placeholder | status: not-started -->
+# Visual Identity — {NOMBRE}
+
+## Paleta de Colores
+<!-- Colores primarios, secundarios, neutros -->
+
+## Tipografía
+<!-- Fuentes display y body -->
+
+## Logo
+<!-- Guidelines de uso del logo -->
+
+## Templates
+<!-- Plantillas de diseño -->
+PLACEHOLDER
+sed -i '' "s/{NOMBRE}/$NAME/g" "$BRAND_DIR/brand-book/visual-identity/current.md"
+
+cat > "$BRAND_DIR/strategic-plan/current.md" << 'PLACEHOLDER'
+<!-- mode: placeholder | status: not-started -->
+# Strategic Plan — {NOMBRE}
+
+## SWOT Ejecutivo
+<!-- Resumen del SWOT para decisiones -->
+
+## Priorización de Canales
+<!-- Ranking de canales por ajuste al ICP -->
+
+## Roadmap de Proyectos
+<!-- P01-P08+ con fases y dependencias -->
+
+## KPIs
+<!-- Métricas de éxito del plan -->
+PLACEHOLDER
+sed -i '' "s/{NOMBRE}/$NAME/g" "$BRAND_DIR/strategic-plan/current.md"
+
+echo "   ✅ Placeholders creados (12 documentos)"
+
+# Foundation state v3.0
 cat > "$BRAND_DIR/foundation-state.json" << FJSON
 {
   "version": "3.0",
   "started_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
   "updated_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+  "brand_summary": {
+    "company_name": "",
+    "sector": "",
+    "description": "",
+    "north_star": "",
+    "icps": [],
+    "competitors": [],
+    "positioning": ""
+  },
   "sections": {
     "fast-foundation": {
       "status": "not-started",
       "layer": 0,
-      "output_dir": "brand/$SLUG/company-brief/",
       "skill": "fast-foundation",
       "pillars": {
         "company-brief": {"status": "not-started", "output_file": "brand/$SLUG/company-brief/current.md", "skill": "fast-foundation"},
         "self-l1": {"status": "not-started", "output_file": "brand/$SLUG/market-and-us/self/current.md", "skill": "fast-foundation"},
         "market-l1": {"status": "not-started", "output_file": "brand/$SLUG/market-and-us/market/current.md", "skill": "fast-foundation"},
-        "brand-voice-snapshot": {"status": "not-started", "output_file": "brand/$SLUG/brand-voice/current.md", "skill": "fast-foundation"},
+        "brand-voice-snapshot": {"status": "not-started", "output_file": "brand/$SLUG/brand-book/brand-voice/current.md", "skill": "fast-foundation"},
         "niche-basic": {"status": "not-started", "output_file": "brand/$SLUG/go-to-market/ecps/current.md", "skill": "fast-foundation"}
       }
     },
@@ -77,9 +296,7 @@ cat > "$BRAND_DIR/foundation-state.json" << FJSON
       "layer": 0,
       "output_dir": "brand/$SLUG/company-brief/",
       "pillars": {
-        "company-context": {"status": "not-started", "layer": 0, "skill": "company-context"},
-        "business-model": {"status": "not-started", "layer": 0, "skill": "business-model-audit"},
-        "budget": {"status": "not-started", "layer": 0, "optional": true, "skill": "budget-assessment"}
+        "company-brief": {"status": "not-started", "skill": "fast-foundation", "output_file": "brand/$SLUG/company-brief/current.md"}
       }
     },
     "market-and-us": {
@@ -87,10 +304,11 @@ cat > "$BRAND_DIR/foundation-state.json" << FJSON
       "layer": 1,
       "output_dir": "brand/$SLUG/market-and-us/",
       "pillars": {
-        "market-analysis": {"status": "not-started", "layer": 1, "requires": ["fast-foundation"], "enriches_with": ["competitor-analysis", "self-analysis"], "skill": "market-intelligence"},
-        "competitor-analysis": {"status": "not-started", "layer": 1, "requires": ["fast-foundation"], "enriches_with": ["market-analysis", "self-analysis"], "skill": "competitor-intelligence"},
-        "self-analysis": {"status": "not-started", "layer": 1, "requires": ["fast-foundation"], "enriches_with": ["market-analysis", "competitor-analysis"], "skill": "self-intelligence"},
-        "market-synthesis": {"status": "not-started", "layer": 2, "requires": ["market-analysis", "competitor-analysis", "self-analysis"], "skill": "market-synthesis"}
+        "market-analysis": {"status": "not-started", "layer": 1, "skill": "market-intelligence", "output_file": "brand/$SLUG/market-and-us/market/current.md"},
+        "competitor-analysis": {"status": "not-started", "layer": 1, "skill": "competitor-intelligence"},
+        "self-analysis": {"status": "not-started", "layer": 1, "skill": "self-intelligence", "output_file": "brand/$SLUG/market-and-us/self/current.md"},
+        "market-synthesis": {"status": "not-started", "layer": 2, "skill": "market-synthesis"},
+        "foundation-presentation": {"status": "not-started", "layer": 2, "skill": "market-synthesis", "output_file": "brand/$SLUG/market-and-us/market-synthesis/foundation-report.html"}
       }
     },
     "go-to-market": {
@@ -98,37 +316,39 @@ cat > "$BRAND_DIR/foundation-state.json" << FJSON
       "layer": 3,
       "output_dir": "brand/$SLUG/go-to-market/",
       "pillars": {
-        "niche-discovery": {"status": "not-started", "layer": 3, "requires": ["market-synthesis"], "enriches_with": ["existing-customer-data"], "skill": "niche-discovery-100x"},
-        "existing-customer-data": {"status": "not-started", "layer": 3, "requires": ["fast-foundation"], "optional": true, "skill": "existing-customer-data"},
-        "positioning": {"status": "not-started", "layer": 4, "requires": ["niche-discovery"], "skill": "positioning-messaging"},
-        "pricing": {"status": "not-started", "layer": 4, "requires": ["niche-discovery"], "enriches_with": ["positioning"], "skill": "pricing-strategy"},
-        "ecp-validation": {"status": "not-started", "layer": 4, "requires": ["niche-discovery"], "optional": true, "skill": "ecp-validation"}
+        "niche-discovery": {"status": "not-started", "layer": 3, "skill": "niche-discovery-100x", "output_file": "brand/$SLUG/go-to-market/ecps/current.md"},
+        "existing-customer-data": {"status": "not-started", "layer": 3, "optional": true, "skill": "existing-customer-data"},
+        "positioning": {"status": "not-started", "layer": 4, "skill": "positioning-messaging", "output_file": "brand/$SLUG/go-to-market/positioning/shared/messaging-summary.md"},
+        "pricing": {"status": "not-started", "layer": 4, "skill": "pricing-strategy", "output_file": "brand/$SLUG/go-to-market/pricing/current.md"},
+        "ecp-validation": {"status": "not-started", "layer": 4, "optional": true, "skill": "ecp-validation"},
+        "gtm-presentation": {"status": "not-started", "layer": 4, "skill": "gtm-presentation", "output_file": "brand/$SLUG/go-to-market/gtm-report.html"}
       }
     },
-    "brand-identity": {
+    "brand-book": {
       "status": "not-started",
       "layer": 5,
-      "output_dir": "brand/$SLUG/brand-identity/",
+      "output_dir": "brand/$SLUG/brand-book/",
       "pillars": {
-        "brand-voice": {"status": "not-started", "layer": 5, "requires": ["positioning"], "skill": "brand-voice"},
-        "visual-identity": {"status": "not-started", "layer": 5, "requires": ["brand-voice"], "skill": "visual-identity"}
+        "brand-voice": {"status": "not-started", "layer": 5, "skill": "brand-voice", "output_file": "brand/$SLUG/brand-book/brand-voice/current.md"},
+        "visual-identity": {"status": "not-started", "layer": 5, "skill": "visual-identity", "output_file": "brand/$SLUG/brand-book/visual-identity/current.md"},
+        "brand-report": {"status": "not-started", "layer": 5, "optional": true, "skill": "brand-report", "output_file": "brand/$SLUG/brand-book/brand-report.html"}
       }
     },
     "metrics-setup": {
       "status": "not-started",
       "layer": 6,
-      "skill": "metrics-setup",
-      "requires": ["positioning", "pricing"],
       "pillars": {
-        "metrics-setup": {"status": "not-started", "requires": ["positioning", "pricing"], "skill": "metrics-setup"}
+        "metrics-setup": {"status": "not-started", "skill": "metrics-setup", "output_file": "brand/$SLUG/go-to-market/metrics-plan.md"}
       }
     },
     "strategic-plan": {
       "status": "not-started",
       "layer": 7,
-      "skill": "strategic-plan",
-      "requires": ["metrics-setup"],
-      "output_file": "brand/$SLUG/strategic-plan/current.md"
+      "output_file": "brand/$SLUG/strategic-plan/current.md",
+      "pillars": {
+        "strategic-plan": {"status": "not-started", "skill": "strategic-plan", "output_file": "brand/$SLUG/strategic-plan/current.md"},
+        "strategic-presentation": {"status": "not-started", "skill": "strategic-plan", "output_file": "brand/$SLUG/strategic-plan/strategic-presentation.html"}
+      }
     }
   }
 }

@@ -312,12 +312,12 @@ def parse_foundation():
 
     # v2.0 section/pillar display order
     SECTIONS_ORDER = [
-        ("Company Brief", "company-brief", ["company-context", "business-model", "budget"]),
-        ("Market & Us", "market-and-us", ["market-analysis", "competitor-analysis", "self-analysis", "market-synthesis"]),
-        ("Go-To-Market", "go-to-market", ["niche-discovery", "existing-customer-data", "positioning", "pricing", "ecp-validation"]),
-        ("Brand Identity", "brand-identity", ["brand-voice", "visual-identity"]),
+        ("Company Brief", "company-brief", ["company-brief"]),
+        ("Market & Us", "market-and-us", ["market-analysis", "competitor-analysis", "self-analysis", "market-synthesis", "foundation-presentation"]),
+        ("Go-To-Market", "go-to-market", ["niche-discovery", "existing-customer-data", "positioning", "pricing", "ecp-validation", "gtm-presentation"]),
+        ("Brand Book", "brand-book", ["brand-voice", "visual-identity", "brand-report"]),
         ("Métricas", "metrics-setup", ["metrics-setup"]),
-        ("Strategic Plan", "strategic-plan", ["strategic-plan"]),
+        ("Strategic Plan", "strategic-plan", ["strategic-plan", "strategic-presentation"]),
     ]
 
     clients = {}
@@ -345,48 +345,29 @@ def parse_foundation():
                     sec = state.get("sections", {}).get(sec_key, {})
                     sec_data = {"display_name": display_name, "status": sec.get("status", "not-started"), "pillars": {}, "syntheses": {}}
 
-                    if sec_key == "company-brief":
-                        # Company Brief: skills, not pillars
-                        skills = sec.get("skills", {})
-                        for pname in pillar_names:
-                            skill_state = skills.get(pname, {})
-                            is_optional = skill_state.get("optional", False)
-                            entry = {"status": skill_state.get("status", "not-started")}
-                            if is_optional:
-                                entry["optional"] = True
-                            if skill_state.get("output_file"):
-                                entry["output_file"] = skill_state["output_file"]
-                            sec_data["pillars"][pname] = entry
+                    pillars = sec.get("pillars", sec.get("skills", {}))
+                    for pname in pillar_names:
+                        if pname in pillars:
+                            pdata = pillars[pname]
+                            is_optional = pdata.get("optional", False)
+                            pentry = {
+                                "status": pdata.get("status", "not-started"),
+                                "layer": pdata.get("layer"),
+                                "requires": pdata.get("requires", []),
+                                "optional": is_optional,
+                            }
+                            if pdata.get("output_file"):
+                                pentry["output_file"] = pdata["output_file"]
+                            elif pdata.get("output_files"):
+                                pentry["output_file"] = pdata["output_files"][0]
+                            sec_data["pillars"][pname] = pentry
                             if not is_optional:
                                 client_data["total"] += 1
-                                if skill_state.get("status") == "approved" or sec.get("status") == "approved":
+                                st = pdata.get("status", "not-started")
+                                if st == "approved":
                                     client_data["approved"] += 1
-                                elif skill_state.get("status") in ("pending-review", "in-progress"):
+                                elif st in ("pending-review", "in-progress"):
                                     client_data["pending"] += 1
-                    else:
-                        pillars = sec.get("pillars", {})
-                        for pname in pillar_names:
-                            if pname in pillars:
-                                pdata = pillars[pname]
-                                is_optional = pdata.get("optional", False)
-                                pentry = {
-                                    "status": pdata.get("status", "not-started"),
-                                    "layer": pdata.get("layer"),
-                                    "requires": pdata.get("requires", []),
-                                    "optional": is_optional,
-                                }
-                                if pdata.get("output_file"):
-                                    pentry["output_file"] = pdata["output_file"]
-                                elif pdata.get("output_files"):
-                                    pentry["output_file"] = pdata["output_files"][0]
-                                sec_data["pillars"][pname] = pentry
-                                if not is_optional:
-                                    client_data["total"] += 1
-                                    st = pdata.get("status", "not-started")
-                                    if st == "approved":
-                                        client_data["approved"] += 1
-                                    elif st in ("pending-review", "in-progress"):
-                                        client_data["pending"] += 1
 
                     # Syntheses
                     for syn_name, syn_data in sec.get("syntheses", {}).items():
@@ -410,6 +391,9 @@ def parse_foundation():
                         elif st in ("pending-review", "in-progress"):
                             client_data["pending"] += 1
                     client_data["sections"][sec_key] = sec_data
+
+            # Brand summary
+            client_data["brand_summary"] = state.get("brand_summary", {})
 
             # Presentations: scan presentations/ dir, auto-map to sections
             presentations = state.get("presentations", [])
@@ -444,17 +428,12 @@ def parse_foundation():
 
             client_data["presentations"] = presentations
 
-            # Strategic Plan (top-level or in sections)
-            sp = state.get("strategic-plan", state.get("sections", {}).get("strategic-plan", {}))
-            if sp and sp.get("status"):
-                client_data["sections"]["strategic-plan"] = {
-                    "display_name": "Strategic Plan",
-                    "status": sp.get("status", "not-started"),
-                    "output_file": sp.get("output_file", ""),
-                    "notes": sp.get("notes", ""),
-                    "pillars": {},
-                    "syntheses": {},
-                }
+            # Strategic Plan: enrich section data with top-level fields if present
+            sp = state.get("sections", {}).get("strategic-plan", {})
+            if sp and sp.get("status") and "strategic-plan" in client_data["sections"]:
+                sec = client_data["sections"]["strategic-plan"]
+                sec["output_file"] = sp.get("output_file", "")
+                sec["notes"] = sp.get("notes", "")
 
             # Projects
             projects_dir = client_dir / "projects"
