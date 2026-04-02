@@ -225,9 +225,10 @@ const TESTERS = {
 
     try {
       const res = await httpRequest(
-        `https://api.instantly.ai/api/v1/authenticate?api_key=${apiKey}`
+        'https://api.instantly.ai/api/v2/campaigns?limit=1',
+        { headers: { 'Authorization': `Bearer ${apiKey}` } }
       );
-      if (res.status === 200) return { ok: true, detail: 'Instantly authenticated' };
+      if (res.status === 200) return { ok: true, detail: 'Instantly v2 authenticated' };
       return { ok: false, error: `HTTP ${res.status}: ${res.body.slice(0, 200)}` };
     } catch (e) {
       return { ok: false, error: e.message };

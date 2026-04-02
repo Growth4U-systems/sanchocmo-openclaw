@@ -6,7 +6,7 @@ phone: +34669691805
 company: Máquinas Expendedoras (Vending)
 source: Facebook Ads (G4U - Testeo Creativos - Copy)
 date_added: 2026-03-27
-last_enriched: 2026-03-29T20:08:00Z
+last_enriched: 2026-04-01T22:00:00+02:00
 enrichment_pending: false
 tags: [llamada-agendada, secuencia-seguimiento]
 budget: 10k-25k€
@@ -83,5 +83,28 @@ budget: 10k-25k€
 3. Propuesta gradual: empezar con presencia digital básica (web + landing para propietarios de ubicaciones)
 4. Addressar barrera tecnológica: enfatizar simplicidad, soporte, no requiere tiempo diario
 
+### 2026-04-01 — Seguimiento interno (Jose Antonio no se presentó)
+🔗 [Notas Gemini](https://docs.google.com/document/d/17YakVwEShgM3JvRkLSn1IKcfkHBI0LX2ShDCfxJ73Oc) | 🔗 [Recording](https://drive.google.com/file/d/1rdvRdC8ZewhXxVfjD9nNIYCO2pdOuM54)
+
+**Situación:**
+- Jose Antonio NO se presentó a la llamada (había pedido moverla a hoy)
+- Es la 3ª vez que se mueve la cita
+- Contexto: víspera de vacaciones, baja disponibilidad general
+
+**Decisiones:**
+- Enviar WhatsApp con nuevo enlace de GoHighLevel (para que entre en automatización de validación + recordatorios)
+- No dar la reunión por perdida — mantener seguimiento
+- Posponer revisión del plan estratégico hasta después de vacaciones
+
+**Next Steps:**
+- Martin Fila envía WhatsApp con link de reagendamiento
+- Verificar que automatización de GoHighLevel funciona correctamente
+- Intentar cerrar llamadas pendientes la semana próxima (Jose Antonio + academia de música + renting)
+
+**Observaciones:**
+- 3 cancelaciones/no-shows → riesgo de pérdida si no se cierra pronto
+- Lead sigue cualificado (facturación 30k€/mes, objetivo claro) pero engagement bajando
+- Período vacacional dificulta contacto
+
 ---
-*Lead file creado: 2026-03-27 | Última actualización: 2026-03-29 (transcript procesado)*
+*Lead file creado: 2026-03-27 | Última actualización: 2026-04-01 (transcript seguimiento procesado)*

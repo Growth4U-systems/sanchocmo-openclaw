@@ -270,5 +270,26 @@
     ],
     "positioning": "El complemento perfecto de tu banco — cripto seguro, regulado y rentable",
     "url": "https://criptan.com"
+  },
+  "file_index": {
+    "competitors": {
+      "sources": "market-and-us/competitors/sources.json",
+      "summary": "market-and-us/competitors/current.md"
+    },
+    "integrations": "integrations.json",
+    "metrics": {
+      "plan_json": "metrics-plan.json",
+      "data_dir": "metrics/"
+    },
+    "brand_assets": {
+      "brand_voice": "brand-voice/current.md"
+    },
+    "operational": {
+      "current_state": "current-state.md"
+    },
+    "projects": {
+      "dir": "projects/"
+    },
+    "memory": null
   }
 }

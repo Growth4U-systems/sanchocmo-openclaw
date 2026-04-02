@@ -1,0 +1,210 @@
+{
+  "generated_at": "2026-04-01T13:11:00Z",
+  "scan_date": "2026-04-01",
+  "ideas": [
+    {
+      "id": "idea-001",
+      "title": "Tu startup tiene producto. No tiene sistema de growth.",
+      "inspired_by": {
+        "author": "Maja Voje",
+        "post_url": "https://www.linkedin.com/posts/majavoje_for-80-days-ive-been-running-my-entire-activity-7444353093657427968-sKSP",
+        "pattern": "IA como sistema operativo de GTM"
+      },
+      "adaptation": "Voje habla de Claude Code como GTM OS para operadores técnicos. Nosotros lo adaptamos al founder NO técnico español: Trust Engine = tu sistema de growth que funciona sin que entiendas la IA. Diagnóstico-provocador: abrir con el dolor de tener producto y 0 sistema.",
+      "format": "LinkedIn post largo (2.000-2.500 chars) + infografía de las 4 fases Trust Engine",
+      "channels": ["linkedin-alfonso", "newsletter"],
+      "target_ecp": "Cluster A — System Seekers (Solo Technical Founder, Spreadsheet CMO)",
+      "priority": "high",
+      "hook": "Tienes un producto que tus clientes adoran.\nPero si mañana te pregunto cuál es tu sistema de growth, me enseñas un Notion con 47 ideas.",
+      "brand_voice_notes": "Diagnóstico-provocador + insider vulnerable. Abrir con tensión, no con promesa. Incluir caso real (Bnext o similar).",
+      "status": "pending"
+    },
+    {
+      "id": "idea-002",
+      "title": "3 agencias, €40K y los mismos números. La historia más común del SaaS español.",
+      "inspired_by": {
+        "author": "Noam Nisand",
+        "post_url": "https://www.linkedin.com/posts/noam-nisand_were-living-in-the-funniest-moment-online-activity-7441446247107948544-QSGM",
+        "pattern": "Autenticidad vs. genérico en IA"
+      },
+      "adaptation": "Nisand dice 'AI can help you package an idea. But it can't give you one.' Nosotros: las agencias usan IA para generar informes bonitos, pero siguen sin entender tu negocio. Trust Engine tiene exit date, no retainer infinito.",
+      "format": "LinkedIn post + carousel con datos de retainers vs. resultados",
+      "channels": ["linkedin-alfonso"],
+      "target_ecp": "Cluster B — The Burned (3-Agency Veteran)",
+      "priority": "high",
+      "hook": "He contratado 3 agencias en 2 años.\nTodas me prometieron growth.\n€40K después, sigo con los mismos números.",
+      "brand_voice_notes": "Insider vulnerable (Alfonso ha visto esto desde el lado del cliente). Dato concreto: exit date a 6 meses vs retainer infinito. Ironía seca sobre 'informes bonitos'.",
+      "status": "pending"
+    },
+    {
+      "id": "idea-003",
+      "title": "Sin Foundation, tu IA es genérica. Con Foundation, tu IA ES tu CMO.",
+      "inspired_by": {
+        "author": "Ruben Hassid + Maja Voje",
+        "post_url": "https://www.linkedin.com/posts/majavoje_500-emails-zero-meetings-your-ai-didnt-activity-7443281210040172545-5sPi",
+        "pattern": "Contexto > Prompting"
+      },
+      "adaptation": "Hassid y Voje insisten en context files (.md, folders). Nosotros: Foundation de Growth4U = el contexto que tu IA necesita para dejar de dar respuestas genéricas. El founder que monta Foundation tiene ventaja competitiva. El que no, tiene ChatGPT genérico.",
+      "format": "LinkedIn post + comparativa antes/después (sin Foundation vs con Foundation)",
+      "channels": ["linkedin-alfonso", "blog"],
+      "target_ecp": "Cluster A — System Seekers + Cluster E — Measurement Void",
+      "priority": "high",
+      "hook": "Todo el mundo te dice que uses IA para marketing.\nNadie te dice que sin contexto, la IA te da las mismas respuestas que a tu competidor.",
+      "brand_voice_notes": "Sistema sobre táctica. Provocar: '¿Tu ChatGPT sabe quién es tu cliente ideal? ¿Conoce tu positioning? Entonces no es tu CMO, es un becario con buena labia.'",
+      "status": "pending"
+    },
+    {
+      "id": "idea-004",
+      "title": "Cuánto cuesta REALMENTE un sistema de growth con IA en 2026",
+      "inspired_by": {
+        "author": "David Arnoux",
+        "post_url": "https://www.linkedin.com/posts/davidarnoux_someone-tracked-their-actual-claude-code-activity-7444994713624944640-KFeT",
+        "pattern": "Transparencia de costes IA"
+      },
+      "adaptation": "Arnoux revela €565/semana en Claude API. Nosotros: transparencia total de costes. Un sistema de growth serio no cuesta €0. Pero tampoco cuesta €80K/año (Head of Growth). Trust Engine a €7K vs alternativas reales.",
+      "format": "LinkedIn post + tabla comparativa de costes (in-house vs agencia vs fCMO vs Trust Engine)",
+      "channels": ["linkedin-alfonso", "newsletter", "web-landing"],
+      "target_ecp": "Cluster H — Resource Crunch (Talent Desert Wanderer) + Cluster A (Post-Round Firefighter)",
+      "priority": "medium",
+      "hook": "Alguien acaba de publicar que gasta €565 a la semana en Claude API.\nMientras tanto, buscas Growth Manager y los buenos piden €80K.\nVamos a hacer las cuentas.",
+      "brand_voice_notes": "Directo con datos. Tabla comparativa: Head of Growth (€80K + 4 meses encontrarlo) vs Agencia (€3-5K/mes × 12 = €36-60K sin exit) vs Trust Engine (€7K con sistema transferible). Sin hedge.",
+      "status": "pending"
+    },
+    {
+      "id": "idea-005",
+      "title": "La marca no es el logo. Es la promesa que entregas cada vez. (Y las startups la ignoran)",
+      "inspired_by": {
+        "author": "Jose Carlos Cortizo",
+        "post_url": "https://www.linkedin.com/posts/jccortizo_la-marca-no-es-el-logo-es-la-promesa-de-activity-7442476626870775808-qoMm",
+        "pattern": "Marca = consistencia > belleza"
+      },
+      "adaptation": "Cortizo usa el caso Ryanair: fea pero potente porque entrega lo que promete. Nosotros: en startups tech, la marca es el último pilar que montan. Error. Trust Engine incluye brand voice desde Foundation porque sin marca, tu growth es genérico.",
+      "format": "LinkedIn post largo en español",
+      "channels": ["linkedin-alfonso"],
+      "target_ecp": "Cluster F — Invisibility (Best-Kept Secret, GEO Ghost)",
+      "priority": "medium",
+      "hook": "Ryanair tiene la marca más fea de Europa.\nY es la aerolínea más grande y más rentable.\n¿Sabes qué tiene tu startup? Un logo bonito. Y cero promesa consistente.",
+      "brand_voice_notes": "Provocador pero con solución. Conectar con Foundation: brand voice no es un PDF bonito, es un sistema que se aplica en cada touchpoint. Caso real si hay.",
+      "status": "pending"
+    },
+    {
+      "id": "idea-006",
+      "title": "Tu cold email murió en 2022. Tu outbound no tiene por qué morir con él.",
+      "inspired_by": {
+        "author": "Noam Nisand + Maja Voje",
+        "post_url": "https://www.linkedin.com/posts/noam-nisand_stop-randomly-asking-strangers-to-hop-on-activity-7444330282616246272-6gtq",
+        "pattern": "Signal-based outbound"
+      },
+      "adaptation": "Nisand: 'No context = no trigger = no reason to reply.' Voje: 'Claude Code (research) → Clay (orchestration) → Sending.' Nosotros: warm outbound basado en señales, no en spray & pray. Trust Engine construye el sistema.",
+      "format": "LinkedIn post + mini framework de 3 pasos",
+      "channels": ["linkedin-alfonso"],
+      "target_ecp": "Cluster C — Channel Death (Cold Email Corpse)",
+      "priority": "medium",
+      "hook": "De 2020 a 2022, el cold email era tu máquina de leads.\nHoy tienes 0.5% reply rate.\n¿El problema? Sigues enviando emails fríos en un mundo que pide señales calientes.",
+      "brand_voice_notes": "Dato concreto del ECP. Solución: signal-based prospecting. NO recomendar herramientas específicas sin context. 3 señales que funcionan en 2026.",
+      "status": "pending"
+    },
+    {
+      "id": "idea-007",
+      "title": "El Ruben Hassid del growth para startups españolas no existe. Todavía.",
+      "inspired_by": {
+        "author": "Ruben Hassid (contenido EN) vs Cortizo/Sanz (contenido ES)",
+        "post_url": "multiple",
+        "pattern": "Océano azul en español"
+      },
+      "adaptation": "Hassid tiene 400K+ newsletter subscribers hablando de Claude en inglés. ¿Quién habla de sistemas de growth con IA para el mercado español? Nadie. Oportunidad para Alfonso: ser el referente ES.",
+      "format": "Estrategia interna — NOT for publishing. Brief para Alfonso.",
+      "channels": ["internal"],
+      "target_ecp": "N/A — estrategia de posicionamiento",
+      "priority": "high",
+      "hook": "N/A — documento interno",
+      "brand_voice_notes": "Propuesta: serie de contenido LinkedIn en español sobre growth + IA, con la voz de Alfonso (insider con cicatrices). Frecuencia: 3x/semana.",
+      "status": "pending"
+    },
+    {
+      "id": "idea-008",
+      "title": "Retención es el growth de verdad. Adquisición es el growth que se ve.",
+      "inspired_by": {
+        "author": "Jose Carlos Cortizo",
+        "post_url": "https://www.linkedin.com/posts/jccortizo_est%C3%A1s-invirtiendo-5-veces-m%C3%A1s-en-captar-activity-7444635851222900737-5ntG",
+        "pattern": "Retención > Adquisición"
+      },
+      "adaptation": "Cortizo: '5% mejora en retención = 25-95% más beneficio.' Nosotros: Trust Engine no solo te trae clientes, construye retention loops. La mayoría de startups invierten 5x más en captar que en retener.",
+      "format": "LinkedIn post + dato + CTA a diagnóstico",
+      "channels": ["linkedin-alfonso"],
+      "target_ecp": "Cluster G — Scale Blockers (€30K MRR Ceiling, Freemium Trap)",
+      "priority": "medium",
+      "hook": "Dato: adquirir un cliente cuesta 5-25x más que retener uno.\nOtro dato: solo el 18% de empresas priorizan retención.\n¿En qué lado estás?",
+      "brand_voice_notes": "Directo con datos (de Cortizo, verificados). No vender Trust Engine directamente — posicionar como CMO que piensa en sistema completo, no solo top-of-funnel.",
+      "status": "pending"
+    },
+    {
+      "id": "idea-009",
+      "title": "Playtomic acaba de abrir sus APIs. Tu startup debería estar pensando en ecosistema.",
+      "inspired_by": {
+        "author": "Felix Ruiz Hernandez",
+        "post_url": "https://www.linkedin.com/posts/felix-ruiz-hernandez-694ba113_breakpoint-ai-powered-crm-for-padel-clubs-activity-7432464126599331841-U81d",
+        "pattern": "Platform/ecosystem strategy"
+      },
+      "adaptation": "Felix abre APIs de Playtomic → de producto a plataforma. Para founders tech: ¿tu growth depende solo de ti o estás construyendo un ecosistema? Trust Engine como framework que integra partners/afiliados.",
+      "format": "LinkedIn post",
+      "channels": ["linkedin-alfonso"],
+      "target_ecp": "Cluster G — Scale Blockers (€30K MRR Ceiling)",
+      "priority": "low",
+      "hook": "Playtomic no solo vende reservas de pádel.\nAcaba de abrir sus APIs y dejar que otros construyan sobre su plataforma.\nMientras tanto, tu SaaS sigue vendiendo features.",
+      "brand_voice_notes": "Sistema sobre táctica. Caso español real (Playtomic, Felix Ruiz). Conectar con Core Four: Partners/Afiliados.",
+      "status": "pending"
+    },
+    {
+      "id": "idea-010",
+      "title": "Marketing y ventas son el mismo equipo. Si los tienes separados, pierdes.",
+      "inspired_by": {
+        "author": "Miguel Sanz",
+        "post_url": "https://www.linkedin.com/posts/miguelsanzrivas_cada-vez-entiendo-menos-a-las-empresas-b2b-activity-7438129391882186752-2gZm",
+        "pattern": "Marketing + ventas unificados"
+      },
+      "adaptation": "Sanz: 'No se me ocurre en qué universo debería alguien separar marketing y ventas.' Alfonso piensa igual. Growth4U: Trust Engine integra ambos desde día 1.",
+      "format": "LinkedIn post en español",
+      "channels": ["linkedin-alfonso"],
+      "target_ecp": "Cluster A — System Seekers (Headless Growth Team)",
+      "priority": "low",
+      "hook": "Departamento de Marketing.\nDepartamento de Ventas.\nDos objetivos 'alineados'. Dos reuniones distintas. Cero coordinación.\nUn clásico.",
+      "brand_voice_notes": "Cercano, humor seco. Provocar sin ofender. Proponer Revenue Team como solución. Citar a Sanz como referencia si se publica.",
+      "status": "pending"
+    },
+    {
+      "id": "idea-011",
+      "title": "Dwell time > likes: lo que el algoritmo de LinkedIn mide de verdad en 2026",
+      "inspired_by": {
+        "author": "David Arnoux",
+        "post_url": "https://www.linkedin.com/posts/davidarnoux_we-analyzed-102220-linkedin-posts-the-activity-7444422191133208576-NVEG",
+        "pattern": "LinkedIn algorithm data"
+      },
+      "adaptation": "Arnoux analizó 102K posts. Dwell time > likes. Posts largos (2-3K chars) generan 2x más comentarios. Para nuestros clientes: formato importa tanto como contenido.",
+      "format": "LinkedIn post + cheatsheet para clientes",
+      "channels": ["linkedin-alfonso", "newsletter"],
+      "target_ecp": "Cluster F — Invisibility (LinkedIn Lurker)",
+      "priority": "low",
+      "hook": "Analizaron 102.220 posts de LinkedIn.\nResultado: lo que más importa no son los likes.\nEs cuántos SEGUNDOS pasan leyéndote.",
+      "brand_voice_notes": "Directo con datos. Dato de Arnoux/ViralBrain citado. 4 tácticas concretas para dwell time. Útil para nuestra audiencia de founders.",
+      "status": "pending"
+    },
+    {
+      "id": "idea-012",
+      "title": "La IA no va a matar el SaaS. Va a matar el SaaS mediocre.",
+      "inspired_by": {
+        "author": "Jose Carlos Cortizo",
+        "post_url": "https://www.linkedin.com/posts/jccortizo_se-habla-mucho-de-que-con-el-vibe-coding-activity-7442105369444896768-uFLd",
+        "pattern": "SaaS vs Vibe Coding debate"
+      },
+      "adaptation": "Cortizo: 'El software que entiende un sector tiene más futuro que nunca.' Para nuestro ICP: si tu SaaS resuelve un problema de nicho con know-how real, la IA te potencia. Si eres genérico, mueres.",
+      "format": "LinkedIn post + thread",
+      "channels": ["linkedin-alfonso"],
+      "target_ecp": "Cluster G — Scale Blockers + Cluster A — System Seekers",
+      "priority": "medium",
+      "hook": "Todo el mundo dice que la IA va a matar el SaaS.\nEs mentira.\nLa IA va a matar el SaaS que no tiene opinión.\nEl que tenga expertise de nicho va a crecer más rápido que nunca.",
+      "brand_voice_notes": "Bold sin bravuconería. Caso Canva (diseñadores no desaparecieron). Provocar la narrativa apocalíptica. Posicionar Growth4U como el que ayuda a diferenciarse.",
+      "status": "pending"
+    }
+  ]
+}

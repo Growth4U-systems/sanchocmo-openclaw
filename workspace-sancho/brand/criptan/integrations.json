@@ -55,8 +55,55 @@
       },
       "envVars": [],
       "lastTestedAt": "2026-03-30T12:19:34.476Z"
+    },
+    "sheets": {
+      "provider": "sheets",
+      "status": "connected",
+      "config": {
+        "spreadsheetId": "1fb_uCEwmXiHGnmOjxcrUpUuqoe83ifXVHFoScbffqk4",
+        "range": "Summary!A:Z"
+      },
+      "envVars": [],
+      "lastTestedAt": "2026-03-31T09:00:00Z",
+      "notes": "Manual input: signups, kyc, deposits, earn, recurring"
     }
   },
   "systemOverrides": {},
-  "updatedAt": "2026-03-30T12:19:34.477Z"
+  "updatedAt": "2026-03-30T12:19:34.477Z",
+  "metricsSheet": {
+    "spreadsheetId": "1fb_uCEwmXiHGnmOjxcrUpUuqoe83ifXVHFoScbffqk4",
+    "url": "https://docs.google.com/spreadsheets/d/1fb_uCEwmXiHGnmOjxcrUpUuqoe83ifXVHFoScbffqk4/edit"
+  },
+  "recommended": [
+    {
+      "apiId": "appstore",
+      "label": "App Store Connect",
+      "metric": "App Downloads",
+      "priority": "medium"
+    },
+    {
+      "apiId": "google_play",
+      "label": "Google Play Console",
+      "metric": "App Downloads",
+      "priority": "medium"
+    },
+    {
+      "apiId": "google_ads",
+      "label": "Google Ads",
+      "metric": "Paid Spend (when active)",
+      "priority": "high_when_needed"
+    },
+    {
+      "apiId": "meta_ads",
+      "label": "Meta Ads",
+      "metric": "Paid Spend (when active)",
+      "priority": "high_when_needed"
+    },
+    {
+      "apiId": "metricool",
+      "label": "Metricool",
+      "metric": "Social Engagement",
+      "priority": "low"
+    }
+  ]
 }

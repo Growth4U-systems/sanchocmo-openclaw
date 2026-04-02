@@ -382,5 +382,61 @@
     ],
     "positioning": "El sistema de growth para empresas tech en España que instala capacidad permanente, no dependencia.",
     "url": "https://growth4u.io"
+  },
+  "file_index": {
+    "competitors": {
+      "sources": "market-and-us/competitors/sources.json",
+      "battle_cards": {
+        "product-hackers": "market-and-us/competitors/product-hackers/current.md",
+        "snowball": "market-and-us/competitors/snowball/current.md",
+        "thegrowthacker": "market-and-us/competitors/thegrowthacker/current.md"
+      }
+    },
+    "integrations": "integrations.json",
+    "metrics": {
+      "plan_json": "metrics-plan.json",
+      "data_dir": "metrics/"
+    },
+    "brand_assets": {
+      "design_tokens_json": "brand-identity/visual-identity/design-tokens.json",
+      "design_tokens_css": "brand-identity/visual-identity/design-tokens.css",
+      "visual_guide_html": "brand-identity/visual-identity/visual-identity-guide.html",
+      "mockups_dir": "brand-identity/visual-identity/mockups/"
+    },
+    "operational": {
+      "current_state": "current-state.md",
+      "costs": "costs.json",
+      "leads_dir": "leads/",
+      "lead_tracking_config": "lead-tracking-config.json"
+    },
+    "idea_generation": {
+      "dir": "idea-generation/",
+      "ideas": "idea-generation/ideas.json",
+      "notifications": "idea-generation/notifications.json"
+    },
+    "projects": {
+      "dir": "projects/"
+    },
+    "presentations": {
+      "foundation_report": "presentations/foundation-report.html",
+      "foundation_presentation": "presentations/foundation-presentation.html",
+      "niche_presentation": "presentations/niche-presentation.html",
+      "strategic_plan": "strategic-plan/strategic-plan-q2-2026.html",
+      "strategic-plan-q2-2026": "presentations/strategic-plan-q2-2026.html"
+    },
+    "public": {
+      "llms_txt": "llms.txt"
+    },
+    "discord": {
+      "channels": "discord-channels.json",
+      "client_config": "client-config.json"
+    },
+    "memory": "memory.md",
+    "atalaya": {
+      "config": "atalaya/config.json",
+      "profiles_scan_dir": "atalaya/profiles-scan/",
+      "profiles_pending": "atalaya/profiles-pending.json",
+      "latest_report": "atalaya/profiles-scan/2026-04-01-report.md"
+    }
   }
 }

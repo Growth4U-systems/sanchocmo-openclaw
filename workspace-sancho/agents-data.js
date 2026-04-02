@@ -1,4 +1,4 @@
-// Regenerated 2026-03-31T16:08:28.486109+02:00
+// Regenerated 2026-04-01T16:14:06.434055+02:00
 window.AGENTS_DATA = {
   "tareas_totales": 54,
   "eventos_actividad": 100,
@@ -6,5 +6,5 @@ window.AGENTS_DATA = {
   "pilares_completados": 35,
   "pilares_pendientes": 46,
   "campanas": 1,
-  "timestamp": "2026-03-31T16:08:28.486109+02:00"
+  "timestamp": "2026-04-01T16:14:06.434055+02:00"
 };

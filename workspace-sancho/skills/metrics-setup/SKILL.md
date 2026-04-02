@@ -159,6 +159,65 @@ Esto genera `brand/{slug}/metrics-plan.json` con:
 
 Mission Control lee este JSON para renderizar el dashboard de métricas.
 
+### Step 7.5: Crear Google Sheet de Métricas (~2 min)
+
+Crear una Google Sheet para input manual de métricas que no vienen de APIs (funnel steps sin integración conectada).
+
+**Flujo:**
+
+1. **Crear la Sheet** vía `gog`:
+   ```bash
+   gog sheets create "Métricas — {ClientName}" --sheets "Summary,GA4,GSC,Meta-ads,GHL" --json
+   ```
+   Del output JSON, extraer `spreadsheetId` y construir la URL: `https://docs.google.com/spreadsheets/d/{spreadsheetId}/edit`
+
+2. **Compartir con el Service Account** (para que el collector pueda leerla):
+   ```bash
+   gog drive share "{spreadsheetId}" --email "sancho-analytics@gen-lang-client-0422972889.iam.gserviceaccount.com" --role reader
+   ```
+
+3. **Escribir la plantilla de input manual** en la pestaña `Summary`:
+   - Primera columna: `semana_del` (fechas de lunes, cadencia semanal)
+   - Resto de columnas: los campos del funnel que son manuales (depende del cliente)
+   - Ejemplo Fintech: `signups, kyc_completed, first_deposit, amount_deposited_eur, earn_activated, second_deposit, app_downloads, ad_spend_eur, notes`
+   - Pre-rellenar 12 semanas de filas vacías con fechas de lunes
+
+4. **Guardar en integrations.json** — añadir dos cosas:
+   ```json
+   "metricsSheet": {
+     "spreadsheetId": "{spreadsheetId}",
+     "url": "https://docs.google.com/spreadsheets/d/{spreadsheetId}/edit"
+   }
+   ```
+   Y en `dataSources`:
+   ```json
+   "sheets": {
+     "provider": "sheets",
+     "status": "connected",
+     "config": {
+       "spreadsheetId": "{spreadsheetId}",
+       "range": "Summary!A:Z"
+     }
+   }
+   ```
+
+5. **Compartir el link** con el usuario:
+   > 📊 Tu Google Sheet de métricas: {url}
+   > Rellena los datos manuales cada lunes. Pulsa "Sincronizar" en MC para importarlos.
+
+**Nombres de pestañas** según las APIs conectadas. Solo crear las que tengan datos:
+- `Summary` — siempre (input manual + resumen)
+- `GA4` — si GA4 conectado
+- `GSC` — si GSC conectado
+- `Meta-ads` — si Meta Ads conectado
+- `GHL` — si GHL conectado
+- etc.
+
+**IMPORTANTE:**
+- La Sheet es para INPUT (datos manuales del cliente), no para exportar datos automáticos
+- El link aparece en MC automáticamente cuando `metricsSheet` existe en `integrations.json`
+- Compartir siempre con el SA para que el adapter `sheets.js` del collector pueda leerla
+
 ### Step 8: Definir Benchmarks y Cadencia (~2 min)
 
 **Benchmarks por defecto según arquetipo:**
@@ -260,6 +319,8 @@ Tras generar el Metrics Plan y el dashboard, crear tareas individuales en el pro
 - [ ] APIs sin conectar (client) tienen instrucción de contactar equipo
 - [ ] Tarea final de verificación de dashboard creada
 - [ ] Cada tarea de conexión incluye enlace MC (`/mc/connect/{slug}/{apiId}`)
+- [ ] Google Sheet creada y `metricsSheet.spreadsheetId` guardado en integrations.json
+- [ ] Link de la Sheet compartido con el usuario
 
 ---
 

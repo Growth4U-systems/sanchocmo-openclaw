@@ -45,14 +45,13 @@ pending → in-progress → completed
 - **Trigger:** Usuario aprueba propuesta del Manager
 - **Acciones:**
   1. Crear `project.json` + `tasks.json` + `playbook.md`
-  2. Actualizar `registry.json`
-  3. `python3 scripts/regenerate.py`
+  2. `python3 scripts/regenerate.py`
   4. (Opcional) Crear hilo en #projects — mencionar usuario con `<@{sender_id}>`
 
 ### Proyecto: active → completed
 - **Trigger:** Última tarea marcada como completed
 - **Acciones:**
-  1. Actualizar status en `project.json` + `registry.json`
+  1. Actualizar status en `project.json`
   2. `python3 scripts/regenerate.py`
   3. Proponer value review al usuario
   4. Mensaje en hilo del proyecto: "Todas las tareas completadas. ¿Hacemos value review?"
@@ -61,7 +60,7 @@ pending → in-progress → completed
 - **Trigger:** Value review generada y aprobada
 - **Acciones:**
   1. Generar `value-review.md`
-  2. Actualizar status en `project.json` + `registry.json`
+  2. Actualizar status en `project.json`
   3. `python3 scripts/regenerate.py`
   4. Renombrar hilo Discord: `✅ [P{XX}] {nombre} — Reviewed`
   5. Si learnings sugieren acción → proponer nuevo proyecto

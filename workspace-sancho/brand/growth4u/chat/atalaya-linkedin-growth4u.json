@@ -1,0 +1,19 @@
+{
+  "messages": [
+    {
+      "role": "bot",
+      "text": "Aquí tienes los resultados del último scan (1 de abril 2026):\n\n## 📡 Scan LinkedIn — Resultados\n\n**8 perfiles | ~65 posts analizados | 12 ideas generadas**\n\n---\n\n### 🔥 Top 5 Patrones Detectados\n\n**1. IA como Sistema Operativo de GTM** ⭐⭐⭐⭐⭐\nVoje, Arnoux, Hassid, Jain → ya no hablan de \"usa IA para X\". Hablan de construir TODO tu negocio sobre IA. Voje lleva 80 días corriendo su GTM entero en Claude Code.\n→ **Para G4U:** Trust Engine ES un sistema, no otra herramienta.\n\n**2. Contexto > Prompting** ⭐⭐⭐⭐\nVoje, Hassid, Jain, Nisand → \"The context you feed is your moat\". El prompting puro está muerto.\n→ **Para G4U:** Foundation = el contexto que hace tu IA útil de verdad.\n\n**3. Outbound Signal-Based** ⭐⭐⭐⭐\nNisand, Voje, Arnoux → Claude research → Clay → Sending. Adiós spray & pray.\n→ **Para G4U:** Directo a nuestros ECPs \"The Burned\" y \"Cold Email Corpse\".\n\n**4. Transparencia de Costes IA** ⭐⭐⭐\nArnoux: €565/semana en Claude API. 61% de IT leaders cortan proyectos por sobrecostes.\n→ **Para G4U:** Contenido comparativo Trust Engine €7K vs alternativas.\n\n**5. Contenido en Español = Océano Azul** ⭐⭐⭐⭐⭐\nSolo Cortizo y Sanz publican en ES. NADIE está haciendo el equivalente de Hassid/Voje en español.\n→ **Para G4U:** Alfonso puede ser el referente de growth+IA para startups españolas. Sin competencia directa.\n\n---\n\n### 📊 Ranking por Engagement\n\n| Perfil | Categoría | Avg Likes | Frecuencia |\n|--------|-----------|-----------|------------|\n| Ruben Hassid | AI | ~1.200 | Diario |\n| Anisha Jain | AI | ~800 | Diario |\n| Felix Ruiz | Founder | ~250 | 3-4/sem |\n| Maja Voje | Growth | ~200 | Diario |\n| Noam Nisand | Marketing | ~170 | Diario |\n| David Arnoux | Founder | ~80 | Diario |\n| JC Cortizo | Growth | ~50 | 3-4/sem |\n| Miguel Sanz | Founder | ~45 | 2-3/sem |\n\n---\n\n### 💡 12 Ideas de Contenido Generadas\n\n**🔴 High Priority (3):**\n1. \"Tu startup tiene producto. No tiene sistema de growth\" (inspirado por Voje)\n2. \"3 agencias, €40K y los mismos números\" (inspirado por Nisand)\n3. \"Sin Foundation, tu IA es genérica. Con Foundation, tu IA ES tu CMO\" (Hassid+Voje)\n\n**🟡 Medium (5):**\n4. Costes reales de un sistema de growth con IA (Arnoux)\n5. La marca no es el logo (Cortizo)\n6. Tu cold email murió en 2022 (Nisand+Voje)\n7. Retención es el growth de verdad (Cortizo)\n8. La IA no mata el SaaS, mata el SaaS mediocre (Cortizo)\n\n**🟢 Low (4):**\n9. Playtomic y la estrategia de ecosistema (Felix Ruiz)\n10. Marketing y ventas son el mismo equipo (Sanz)\n11. Dwell time > likes en LinkedIn 2026 (Arnoux)\n12. El Ruben Hassid español no existe. Todavía. (estrategia interna)\n\n---\n\n¿Qué quieres hacer? Puedo:\n- **Lanzar un nuevo scan** para actualizar con posts más recientes\n- **Profundizar en alguna idea** concreta para desarrollarla\n- **Añadir/quitar perfiles** a monitorizar\n- **Priorizar y mover ideas** a producción",
+      "agent": "sancho",
+      "ts": "2026-04-01T22:08:44.143Z"
+    },
+    {
+      "role": "bot",
+      "text": "Solo para confirmar — ¿te refieres a la **opción 3: Descartar** la idea del backlog?\n\nSi es así, la marco como descartada en `profiles-pending.json`. Si querías decir otra cosa (modificar, aprobar, desarrollar), dime.",
+      "agent": "sancho",
+      "ts": "2026-04-01T22:09:38.896Z"
+    }
+  ],
+  "updatedAt": 1775081378896,
+  "discordThreadId": null,
+  "discordChannelId": null
+}

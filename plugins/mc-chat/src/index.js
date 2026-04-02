@@ -109,6 +109,7 @@ export default defineChannelPluginEntry({
         if (linkedTo) contextLines.push(`linked_to: ${linkedTo}`);
         if (skill) contextLines.push(`skill: ${skill}`);
         contextLines.push(`IMPORTANT: You are responding via MC Chat, NOT Discord. Do NOT use the message tool to reply. Just respond with text directly — your reply will be delivered to the user automatically via the MC Chat callback. Do NOT create Discord threads or send Discord messages for this conversation. Read files from disk (brand/${slug}/), never via HTTP/web_fetch to localhost.`);
+        contextLines.push(`⚠️ EXECUTION GUARDRAIL: Aprobar un plan o crear proyectos NO es autorización para ejecutar tareas. Siempre preguntar "¿Ejecuto [tarea específica]?" y esperar confirmación explícita antes de generar deliverables. "Apruebo el plan" y "Ejecuta" son pasos DIFERENTES.`);
         contextLines.push(`[/MC Chat Context]`);
 
         const bodyForAgent = contextLines.join('\n') + '\n\n' + text;

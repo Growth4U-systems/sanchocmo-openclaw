@@ -1,0 +1,240 @@
+{
+  "slug": "growth4u",
+  "reportDate": "2026-04-01",
+  "reportType": "weekly",
+  "period": {
+    "from": "2026-03-25",
+    "to": "2026-03-31"
+  },
+  "nsm": {
+    "metric": "Meetings",
+    "thisWeek": 32,
+    "lastWeek": 12,
+    "monthTotal": 44,
+    "monthTarget": null,
+    "weekOverWeekChange": "+166.7%",
+    "onTrack": true,
+    "note": "Appointments jumped from 0/day early March to 4-6/day last week. Strong inflection point — pipeline is activating."
+  },
+  "funnel": {
+    "leads": {
+      "thisWeek": 44,
+      "lastWeek": 27,
+      "change": "+63%"
+    },
+    "meetings": {
+      "thisWeek": 32,
+      "lastWeek": 12,
+      "change": "+166.7%"
+    },
+    "leadsToMeetingsRate": "72.7%",
+    "meetingsToProposalsRate": "N/A — opportunities still 0 in GHL"
+  },
+  "baselines": {
+    "ga4.sessions": {
+      "mean_7d": 20.17,
+      "mean_30d": 24.38,
+      "trend": "stable",
+      "note": "Sessions down from 86 spike on Mar 20 but stable at 16-36 range"
+    },
+    "ga4.newUsers": {
+      "mean_7d": 14.5,
+      "mean_30d": 15.44,
+      "trend": "stable"
+    },
+    "gsc.impressions": {
+      "mean_7d": 242.33,
+      "mean_30d": 254.87,
+      "trend": "stable",
+      "note": "GSC impressions stable 200-290 range. Position improving."
+    },
+    "gsc.position": {
+      "mean_7d": 8.65,
+      "mean_30d": 9.72,
+      "trend": "improving",
+      "note": "Position improved from 11-13 in mid-March to 7-9 range. Trending up 3+ consecutive days."
+    },
+    "meta-ads.spend": {
+      "mean_7d": 133.96,
+      "mean_30d": 129.4,
+      "trend": "stable"
+    },
+    "meta-ads.clicks": {
+      "mean_7d": 210.17,
+      "mean_30d": 171.24,
+      "trend": "up",
+      "note": "Clicks 23% above 30d average — more efficient delivery."
+    },
+    "meta-ads.ctr": {
+      "mean_7d": 2.34,
+      "mean_30d": 2.76,
+      "trend": "declining",
+      "note": "CTR slightly below 30d avg. May indicate audience saturation on current creatives."
+    },
+    "meta-ads.cpc": {
+      "mean_7d": 0.67,
+      "mean_30d": 0.82,
+      "trend": "improving",
+      "note": "CPC dropped 18% vs 30d avg. Best CPC days: Mar 28 (0.48€) and Mar 29 (0.45€). Excellent efficiency."
+    },
+    "meta-ads.leads": {
+      "mean_7d": 3.83,
+      "mean_30d": 3.75,
+      "trend": "stable"
+    },
+    "ghl.newContacts": {
+      "mean_7d": 7.33,
+      "mean_30d": 5.94,
+      "trend": "up",
+      "note": "New contacts 23% above 30d avg. Spike on Mar 30 (25 contacts) — investigate source."
+    },
+    "ghl.appointments": {
+      "mean_7d": 5.33,
+      "mean_30d": 2.59,
+      "trend": "up",
+      "note": "MAJOR inflection: appointments went from 0 (Mar 13-21) to 4-6/day (Mar 22+). This is the NSM moving."
+    }
+  },
+  "anomalies": [
+    {
+      "metric": "ghl.newContacts",
+      "date": "2026-03-30",
+      "value": 25,
+      "mean_7d": 7.33,
+      "severity": "RED",
+      "type": "spike",
+      "direction": "positive",
+      "note": "25 new contacts = 3.4x the 7d average. Investigate: batch import? Campaign burst? New lead magnet?"
+    },
+    {
+      "metric": "ghl.appointments",
+      "date": "2026-03-27",
+      "value": 6,
+      "mean_30d": 2.59,
+      "severity": "YELLOW",
+      "type": "spike",
+      "direction": "positive",
+      "note": "Appointments jumped to 6/day — sustained for 4 days. Positive anomaly. Something is working."
+    },
+    {
+      "metric": "meta-ads.cpc",
+      "severity": "GREEN_OPPORTUNITY",
+      "type": "sustained_improvement",
+      "note": "CPC has been below 0.71€ for 4 consecutive days (Mar 27-30). 18% below 30d avg. Inverted metric: lower is better."
+    },
+    {
+      "metric": "meta-ads.ctr",
+      "severity": "YELLOW",
+      "type": "declining",
+      "note": "CTR declining from 4.6% (Mar 13) to 2.0-2.4% range (last 7 days). Below 0.75x peak. Creative fatigue likely."
+    },
+    {
+      "metric": "ga4.engagementRate",
+      "severity": "RED",
+      "type": "stagnation",
+      "note": "Engagement rate has been 0% for 5+ consecutive days (Mar 18-19, etc.). Bounce rate at 100% on several days. Website is not engaging visitors."
+    }
+  ],
+  "opportunities": [
+    {
+      "metric": "gsc.position",
+      "note": "Average position improving consistently: 12.95 → 10.39 → 8.69 → 7.05. Several pages approaching page 1. Opportunity to push blog content with internal linking."
+    },
+    {
+      "metric": "meta-ads.cpc",
+      "note": "CPC at all-time low (0.45-0.48€). Good time to increase budget on winning creatives before fatigue sets in."
+    },
+    {
+      "metric": "ghl.appointments",
+      "note": "Appointment pipeline activated. Opportunity to optimize the lead→meeting conversion further — currently 72.7% which is excellent."
+    }
+  ],
+  "projectCorrelations": [
+    {
+      "project": "P04-meta-ads",
+      "relatedMetrics": ["meta-ads.spend", "meta-ads.clicks", "meta-ads.ctr", "meta-ads.cpc", "meta-ads.leads"],
+      "weeksActive": 3,
+      "impact": "CPC improved 18%, clicks up 23%. Campaign 'G4U - Testeo Creativos - Copy' running with multiple ángulos. Winners: Ángulo 4_V3 (CTR 7.4%, CPC 0.70€) and Ángulo 5_V2 (CTR 6.3%, CPC 0.72€).",
+      "confidence": "high"
+    },
+    {
+      "project": "P01-fontaneria",
+      "relatedMetrics": ["ga4.sessions", "ghl.appointments"],
+      "weeksActive": 3,
+      "impact": "Appointments started appearing after tracking/fontaneria fixes. Correlation with P01 completion.",
+      "confidence": "medium"
+    }
+  ],
+  "recommendations": [
+    {
+      "id": "R001",
+      "type": "optimize",
+      "priority": "high",
+      "metric": "meta-ads.ctr",
+      "title": "Refresh ad creatives — CTR fatigue detected",
+      "description": "CTR has dropped from 4.6% to ~2.3% over 3 weeks. Rotate in new creatives for Ángulo 2 and Ángulo 3 (worst performers). Keep Ángulo 4_V3 and Ángulo 5_V2 as controls.",
+      "linkedProject": "P04-meta-ads",
+      "status": "active"
+    },
+    {
+      "id": "R002",
+      "type": "investigate",
+      "priority": "high",
+      "metric": "ghl.newContacts",
+      "title": "Investigate Mar 30 contact spike (25 contacts)",
+      "description": "25 new contacts on a single day = 3.4x average. Determine if this was a batch import, a specific campaign burst, or organic. If replicable, double down.",
+      "linkedProject": null,
+      "status": "active"
+    },
+    {
+      "id": "R003",
+      "type": "optimize",
+      "priority": "high",
+      "metric": "ga4.engagementRate",
+      "title": "Fix website engagement — bounce rate at 100%",
+      "description": "Multiple days with 100% bounce rate and 0% engagement rate. Visitors land and leave immediately. Check: page load speed, mobile UX, CTA visibility, content above the fold. This is leaking the traffic Meta Ads is sending.",
+      "linkedProject": "P01-fontaneria",
+      "status": "active"
+    },
+    {
+      "id": "R004",
+      "type": "launch",
+      "priority": "medium",
+      "metric": "meta-ads.cpc",
+      "title": "Scale Meta Ads budget on winning creatives",
+      "description": "CPC at 0.45-0.48€ on best days. Ángulo 4_V3 and 5_V2 are clear winners. Increase daily budget by 30-50% on these adsets while CPC is favorable.",
+      "linkedProject": "P04-meta-ads",
+      "status": "active"
+    },
+    {
+      "id": "R005",
+      "type": "investigate",
+      "priority": "medium",
+      "metric": "ghl.appointments",
+      "title": "Understand appointment activation source",
+      "description": "Appointments went from 0 (Mar 13-21) to 4-6/day (Mar 22+). What changed? New automation? Manual follow-up? Different ad landing? This is the most important signal of the month.",
+      "linkedProject": null,
+      "status": "active"
+    },
+    {
+      "id": "R006",
+      "type": "optimize",
+      "priority": "medium",
+      "metric": "gsc.position",
+      "title": "Push SEO content into top 5",
+      "description": "Average position improved to 7.05. Top pages like 'herramientas-outreach-y-prospeccion-b2b' are at position 6-7. Add internal links from homepage and blog index to push them into click-generating positions (<5).",
+      "linkedProject": null,
+      "status": "active"
+    },
+    {
+      "id": "R007",
+      "type": "escalate",
+      "priority": "medium",
+      "metric": "ghl.opportunities",
+      "title": "Pipeline tracking gap — 0 opportunities despite 44 appointments",
+      "description": "GHL shows 0 opportunities and 0 pipeline value despite 44 appointments this month. Either the pipeline stages aren't being used, or there's a tracking gap. This needs manual review — without it, we can't measure ROI.",
+      "linkedProject": null,
+      "status": "active"
+    }
+  ]
+}

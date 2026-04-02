@@ -1,0 +1,29 @@
+{
+  "messages": [
+    {
+      "role": "user",
+      "text": "Quiero crear una nueva estrategia GTM. Comprueba duplicados con las existentes, investiga tendencias, y guíame para completar los campos.",
+      "ts": "2026-03-31T17:53:40.621Z"
+    },
+    {
+      "role": "user",
+      "text": "Estoy abriendo el chat sobre \"Nueva Estrategia\". Dame un resumen rápido del estado actual y qué podemos hacer. Si necesitas algo de mí, dímelo.",
+      "ts": "2026-03-31T17:53:40.675Z"
+    },
+    {
+      "role": "bot",
+      "text": "Vamos al lío. Tengo el catálogo cargado (25 estrategias activas) y el contexto de Criptan.\n\nPara arrancar bien, necesito entender qué tienes en mente:\n\n1. **¿Qué objetivo quieres lograr con esta estrategia?** — ¿Qué problema resuelve o qué oportunidad ataca?\n2. **¿Para qué tipo de cliente?** — Criptan es B2C principal, pero ¿esto va dirigido a retail, empresas, o un segmento específico?\n3. **¿Qué resultado esperas?** — leads, awareness, conversión, retención, comunidad, expansión...\n\nDime el concepto aunque sea en bruto y yo me encargo de buscar duplicados en el catálogo, investigar tendencias, y guiarte campo por campo. 🔧",
+      "agent": "sancho",
+      "ts": "2026-03-31T17:54:26.803Z"
+    },
+    {
+      "role": "bot",
+      "text": "Vamos al lío. Aquí tienes el estado de Criptan:\n\n---\n\n## 📊 Estado actual — Criptan\n\n### Foundation\n- **Fast Foundation**: ✅ Completa\n- **Full Foundation**: En progreso — falta Self-Analysis, Market Synthesis, y capas 3-5 (Niche Discovery, Positioning, Brand Voice...)\n- **Market Analysis + Competitor Analysis**: ✅ Aprobados\n- **Strategic Plan (lite)**: ✅ Aprobado — basado en Fast Foundation\n\n### Plan Estratégico Q2 2026 (aprobado)\n**Objetivo**: 5.000 nuevos usuarios con primer depósito en 3 meses. CAC ≤70€. Budget ~10K€/mes.\n\n**4 proyectos activos** (todos en estado \"proposed\", ninguno ejecutado aún):\n\n| Proyecto | Estrategia | Target |\n|----------|-----------|--------|\n| **P01** — SEO BOFU | Contenido de decisión de compra | ≥10 keywords top 10 |\n| **P04** — LinkedIn Jorge (CEO) | Founder-Led GTM → B2B | ≥3 calls/semana |\n| **P05** — B2B Outbound | Outreach a CFOs/tesoreros | ≥10 meetings/mes |\n| **P06** — IG + TikTok AI | Social SEO educativo | ≥30% views from search |\n\n**Cancelados**: Google Ads (P02) y Optimización Funnel/Meta (P03) — por decisión del cliente, foco en orgánico + outbound.\n\n### Gaps críticos detectados\n- 🔴 ZERO contenido BOFU — quien busca \"mejor exchange España\" no encuentra Criptan\n- 🔴 Sin presencia en comparadores (Rankia, Finect, Trustpilot)\n- 🔴 CleverTap sin conectar → sin datos de funnel in-app\n- 🟡 B2B infraexplotado (250 empresas ya clientes, sin GTM activo)\n\n---\n\n## 🎯 ¿Qué podemos hacer?\n\n1. **Arrancar ejecución de proyectos** — Estamos en Fase 0 del roadmap (keyword research BOFU, auditar LinkedIn Jorge, definir ICP B2B). Puedo lanzar cualquiera de estos.\n\n2. **Completar Full Foundation** — Self-Analysis → Market Synthesis → Niche Discovery → Positioning. Refinará el plan estratégico con más profundidad.\n\n3. **Conectar integraciones pendientes** — CleverTap es el gap más crítico para medir el funnel.\n\n4. **Revisar/ajustar estrategia** — Si las prioridades han cambiado, podemos reordenar proyectos o reactivar los cancelados (Google Ads, Meta Ads).\n\n**¿Por dónde quieres empezar?** Mi recomendación: lanzar P01 (keyword research BOFU) porque es el gap más grande y tiene impacto compuesto — mientras en paralelo completamos la Full Foundation.",
+      "agent": "sancho",
+      "ts": "2026-03-31T17:55:02.469Z"
+    }
+  ],
+  "updatedAt": 1774979702469,
+  "discordThreadId": null,
+  "discordChannelId": null
+}

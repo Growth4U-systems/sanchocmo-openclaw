@@ -1,5 +1,5 @@
 const MC_DATA = {
-  "generated": "2026-03-31T16:07:46.659600",
+  "generated": "2026-04-01T16:13:45.163312",
   "clients": [
     {
       "slug": "hospital-capilar",
@@ -788,6 +788,76 @@ const MC_DATA = {
   },
   "activity": [
     {
+      "date": "2026-04-01",
+      "time": "",
+      "text": "08:44 — Created daily file. First heartbeat of day.",
+      "raw": "08:44 — Created daily file. First heartbeat of day.",
+      "client": "system"
+    },
+    {
+      "date": "2026-04-01",
+      "time": "",
+      "text": "Calendar: GOG unavailable — could not check.",
+      "raw": "Calendar: GOG unavailable — could not check.",
+      "client": "system"
+    },
+    {
+      "date": "2026-04-01",
+      "time": "",
+      "text": "Email: GOG unavailable — could not check.",
+      "raw": "Email: GOG unavailable — could not check.",
+      "client": "system"
+    },
+    {
+      "date": "2026-04-01",
+      "time": "",
+      "text": "Memory maintenance: reviewed dailies Mar 26-31. No new long-term items to add to MEMORY.md.",
+      "raw": "Memory maintenance: reviewed dailies Mar 26-31. No new long-term items to add to MEMORY.md.",
+      "client": "system"
+    },
+    {
+      "date": "2026-04-01",
+      "time": "",
+      "text": "⚠️ Carry-forward from Mar 31: Facebook connection expired for Growth Systems Now (GHL).",
+      "raw": "⚠️ Carry-forward from Mar 31: Facebook connection expired for Growth Systems Now (GHL).",
+      "client": "system"
+    },
+    {
+      "date": "2026-04-01",
+      "time": "",
+      "text": "13:23 — Checks: email, calendar.",
+      "raw": "13:23 — Checks: email, calendar.",
+      "client": "system"
+    },
+    {
+      "date": "2026-04-01",
+      "time": "",
+      "text": "Email: Onboarding HulaHoop accepted (Cristina Allende + Sandra Cavero, Apr 8 16:00). Meeting prep sent for Alfonso<>Martin. Rest promotions.",
+      "raw": "Email: Onboarding HulaHoop accepted (Cristina Allende + Sandra Cavero, Apr 8 16:00). Meeting prep sent for Alfonso<>Martin. Rest promotions.",
+      "client": "growth4u"
+    },
+    {
+      "date": "2026-04-01",
+      "time": "",
+      "text": "Calendar rest of today: Alfonso<>Martin (13:00), Ocupado (14:00-16:00), Jose Antonio Martinez (16:00), Q&A Oier (17:00), Publicar LinkedIn (17:30).",
+      "raw": "Calendar rest of today: Alfonso<>Martin (13:00), Ocupado (14:00-16:00), Jose Antonio Martinez (16:00), Q&A Oier (17:00), Publicar LinkedIn (17:30).",
+      "client": "growth4u"
+    },
+    {
+      "date": "2026-04-01",
+      "time": "",
+      "text": "Calendar tomorrow (Apr 2): Alba/Alfonso Weekly (11:45), Q&A Oier (12:00), Prospección Q&A (12:00), Sync Daily (12:30), Ocupado (14:00-16:00), 1to1 Paco-Alfonso (16:00).",
+      "raw": "Calendar tomorrow (Apr 2): Alba/Alfonso Weekly (11:45), Q&A Oier (12:00), Prospección Q&A (12:00), Sync Daily (12:30), Ocupado (14:00-16:00), 1to1 Paco-Alfonso (16:00).",
+      "client": "growth4u"
+    },
+    {
+      "date": "2026-04-01",
+      "time": "",
+      "text": "⏰ morning-metrics: 📊 **Morning Metrics — Growth4U** | 2026-04-01  ━━━ **META ADS** (ayer) ━━━ 💰 Spend: **€99.59** (media 7d: €129.16 ⬇️) 👁️",
+      "raw": "Cron run: morning-metrics",
+      "client": "growth4u"
+    },
+    {
       "date": "2026-03-31",
       "time": "",
       "text": "14:15 — Created daily file. Checks: calendar, email.",
@@ -816,6 +886,20 @@ const MC_DATA = {
       "client": "system"
     },
     {
+      "date": "2026-03-31",
+      "time": "",
+      "text": "⏰ morning-metrics: 📊 **Morning Metrics — Growth4U** | 2026-03-31  ━━━ **META ADS** (ayer) ━━━ 💰 Spend: **€133.93** (media 7d: €128.77 ✅) 👁️",
+      "raw": "Cron run: morning-metrics",
+      "client": "growth4u"
+    },
+    {
+      "date": "2026-03-31",
+      "time": "",
+      "text": "⏰ call-prep-daily-growth4u: 📞 No hay llamadas con leads programadas para mañana (miércoles 1 de abril).  Se revisaron 10 eventos en Calendar vs 200+",
+      "raw": "Cron run: call-prep-daily-growth4u",
+      "client": "paymatico"
+    },
+    {
       "date": "2026-03-30",
       "time": "",
       "text": "20:47 — Created daily file. Checks: email, calendar.",
@@ -835,6 +919,69 @@ const MC_DATA = {
       "text": "Calendar today: all meetings done (last 16:00). Tomorrow first at 11:00 (Carlos Garcia Gomez).",
       "raw": "Calendar today: all meetings done (last 16:00). Tomorrow first at 11:00 (Carlos Garcia Gomez).",
       "client": "system"
+    },
+    {
+      "date": "2026-03-30",
+      "time": "",
+      "text": "⏰ call-prep-daily: 📞 **LLAMADAS DE MAÑANA — Martes 31 de marzo**  1 llamada con lead identificado en GHL.  ---  📞 **LLAMADAS DE MAÑANA — Ma",
+      "raw": "Cron run: call-prep-daily",
+      "client": "growth4u"
+    },
+    {
+      "date": "2026-03-30",
+      "time": "",
+      "text": "⏰ lead-sync: 📊 **Lead Sync — 2026-03-30 (22:00 CET)**  • **Contactos GHL**: 6 (todos con tag `llamada-agendada`) • **Nuevos leads**:",
+      "raw": "Cron run: lead-sync",
+      "client": "growth4u"
+    },
+    {
+      "date": "2026-03-30",
+      "time": "",
+      "text": "⏰ weekly-synthesis: ## 📚 Síntesis Semanal — 23-30 Marzo 2026  ### 🎯 Lo más importante que aprendimos  **Hospital Capilar es el #1 en cirugía",
+      "raw": "Cron run: weekly-synthesis",
+      "client": "hospital-capilar"
+    },
+    {
+      "date": "2026-03-29",
+      "time": "",
+      "text": "⏰ weekly-activity-summary: 📊 **Resumen Semanal — W13 (23-29 Mar 2026)**  **5 clientes activos** | **2 pendientes onboarding** | **~50+ archivos gen",
+      "raw": "Cron run: weekly-activity-summary",
+      "client": "hospital-capilar"
+    },
+    {
+      "date": "2026-03-29",
+      "time": "",
+      "text": "⏰ weekly-changelog-update: ## 🚀 SanchoCMO v2.9.0 — 2026-03-29  ### ✅ Added - **Trust Engine v5** — Rewrite completo como skill nativo OpenClaw. 10",
+      "raw": "Cron run: weekly-changelog-update",
+      "client": "sanchocmo"
+    },
+    {
+      "date": "2026-03-27",
+      "time": "",
+      "text": "⏰ morning-metrics: 📊 **Morning Metrics — Growth4U** | 2026-03-27  ━━━ **META ADS** (ayer) ━━━ 💰 Spend: **€149.85** (media 7d: €127.55 ✅) 👁️",
+      "raw": "Cron run: morning-metrics",
+      "client": "growth4u"
+    },
+    {
+      "date": "2026-03-27",
+      "time": "",
+      "text": "⏰ call-prep-weekly: 🚨 **CALL PREP SEMANAL — BLOQUEADO**  **Semana:** Lunes 31 marzo - Viernes 4 abril 2026  **Problema:** Calendar API no di",
+      "raw": "Cron run: call-prep-weekly",
+      "client": "growth4u"
+    },
+    {
+      "date": "2026-03-27",
+      "time": "",
+      "text": "⏰ meeting-intelligence: 🧠 Meeting Intelligence — 2026-03-27: No hay reuniones nuevas de Hospital Capilar esta semana. Última procesada: 18 de ma",
+      "raw": "Cron run: meeting-intelligence",
+      "client": "hospital-capilar"
+    },
+    {
+      "date": "2026-03-26",
+      "time": "",
+      "text": "⏰ call-prep-daily: ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 🔵 **10:00 — Teresa Sainz de Baranda** (ES by Cia)    **Estado**: Lead reciente (agendada 2",
+      "raw": "Cron run: call-prep-daily",
+      "client": "growth4u"
     },
     {
       "date": "2026-03-25",
@@ -1152,6 +1299,13 @@ const MC_DATA = {
       "client": "dealcar"
     },
     {
+      "date": "2026-03-23",
+      "time": "",
+      "text": "⏰ cron-watchdog-weekly: 🔍 **Cron Watchdog** — 2026-03-23  **Crons con problemas:**  🔴 **Memory Maintenance** (id: d46675e3) - Schedule: dom 22:0",
+      "raw": "Cron run: cron-watchdog-weekly",
+      "client": "growth4u"
+    },
+    {
       "date": "2026-03-22",
       "time": "",
       "text": "(04:03 UTC = 05:03 Madrid).",
@@ -1192,6 +1346,20 @@ const MC_DATA = {
       "text": "Domingo - día de descanso.",
       "raw": "Domingo - día de descanso.",
       "client": "system"
+    },
+    {
+      "date": "2026-03-22",
+      "time": "",
+      "text": "⏰ weekly-activity-summary: ## 📊 Resumen Semanal — 16-22 Mar 2026  ### 🏥 Hospital Capilar (Phase 0 → avanzando) - **Niche Discovery v3** aprobada po",
+      "raw": "Cron run: weekly-activity-summary",
+      "client": "hospital-capilar"
+    },
+    {
+      "date": "2026-03-22",
+      "time": "",
+      "text": "⏰ weekly-changelog-update: ## 📦 SanchoCMO v2.7.0 — 2026-03-22  ### ✨ Added - **`larry`** — App growth agent (TikTok posting, RevenueCat, analytics,",
+      "raw": "Cron run: weekly-changelog-update",
+      "client": "sanchocmo"
     },
     {
       "date": "2026-03-21",
@@ -1317,174 +1485,6 @@ const MC_DATA = {
       "time": "",
       "text": "Sync Daily 9:45, Alba Weekly 10:30, Daniel Serrano 11:30, Q&A Oier 12:00, Growth4u LinkedIn 12:00, Bi-weekly VIP Growth 13:15, Weekly Fellow<>G4U 16:00, Criptan 16:30.",
       "raw": "**Calendar mañana (19-Mar):** Sync Daily 9:45, Alba Weekly 10:30, Daniel Serrano 11:30, Q&A Oier 12:00, Growth4u LinkedIn 12:00, Bi-weekly VIP Growth 13:15, Weekly Fellow<>G4U 16:00, Criptan 16:30.",
-      "client": "growth4u"
-    },
-    {
-      "date": "2026-03-18",
-      "time": "",
-      "text": "Ningún evento (20:49 → 22:49).",
-      "raw": "**Próximas 2h:** Ningún evento (20:49 → 22:49).",
-      "client": "system"
-    },
-    {
-      "date": "2026-03-18",
-      "time": "",
-      "text": "(02:49 Madrid).",
-      "raw": "**Quiet hours** (02:49 Madrid).",
-      "client": "system"
-    },
-    {
-      "date": "2026-03-18",
-      "time": "",
-      "text": "3 unread (AI Money Lab notification, Mastery Haus promo, Smartlead newsletter). No urgente.",
-      "raw": "**Email:** 3 unread (AI Money Lab notification, Mastery Haus promo, Smartlead newsletter). No urgente.",
-      "client": "system"
-    },
-    {
-      "date": "2026-03-18",
-      "time": "",
-      "text": "Primer evento Sync Daily 9:45 (~6h).",
-      "raw": "**Calendar hoy (19-Mar):** Primer evento Sync Daily 9:45 (~6h).",
-      "client": "system"
-    },
-    {
-      "date": "2026-03-18",
-      "time": "",
-      "text": "Ningún evento.",
-      "raw": "**Próximas 2h:** Ningún evento.",
-      "client": "system"
-    },
-    {
-      "date": "2026-03-18",
-      "time": "",
-      "text": "(01:01 Madrid, 20-Mar).",
-      "raw": "**Quiet hours** (01:01 Madrid, 20-Mar).",
-      "client": "system"
-    },
-    {
-      "date": "2026-03-18",
-      "time": "",
-      "text": "3 unread (Mike Koziol promo, Boring Marketer OpenClaw article x2). No urgente.",
-      "raw": "**Email:** 3 unread (Mike Koziol promo, Boring Marketer OpenClaw article x2). No urgente.",
-      "client": "system"
-    },
-    {
-      "date": "2026-03-18",
-      "time": "",
-      "text": "Primer evento Sync Daily 9:45 (~8h).",
-      "raw": "**Calendar hoy (20-Mar):** Primer evento Sync Daily 9:45 (~8h).",
-      "client": "system"
-    },
-    {
-      "date": "2026-03-18",
-      "time": "",
-      "text": "Ningún evento.",
-      "raw": "**Próximas 2h:** Ningún evento.",
-      "client": "system"
-    },
-    {
-      "date": "2026-03-18",
-      "time": "",
-      "text": "⚠️ Revisar acceso API Claude - puede afectar a OpenClaw/Sancho.",
-      "raw": "⚠️ **URGENTE (pendiente):** Revisar acceso API Claude - puede afectar a OpenClaw/Sancho.",
-      "client": "system"
-    },
-    {
-      "date": "2026-03-17",
-      "time": "",
-      "text": "5 unread (Skool digest, LinkedIn Pipeline self-sent, Daniel Canosa newsletter, STARTRADER market brief, spam report). Nothing urgent.",
-      "raw": "**Email:** 5 unread (Skool digest, LinkedIn Pipeline self-sent, Daniel Canosa newsletter, STARTRADER market brief, spam report). Nothing urgent.",
-      "client": "system"
-    },
-    {
-      "date": "2026-03-17",
-      "time": "",
-      "text": "Hoy: Sync Daily 9:45, Paylead 10:00, Alfonso-Anna 11:00, Demo Sancho Guido 11:30, Q&A Oier 12:00, Weekly sistemas 13:00, Weekly Fellow<>G4U 16:00, Weekly Projects Philippe 16:30. Mañana: sin eventos destacados.",
-      "raw": "**Calendar:** Hoy: Sync Daily 9:45, Paylead 10:00, Alfonso-Anna 11:00, Demo Sancho Guido 11:30, Q&A Oier 12:00, Weekly sistemas 13:00, Weekly Fellow<>G4U 16:00, Weekly Projects Philippe 16:30. Mañana: sin eventos destacados.",
-      "client": "hospital-capilar"
-    },
-    {
-      "date": "2026-03-17",
-      "time": "",
-      "text": "Sync Daily 9:45, Paylead 10:00 → dentro de 1-1.5h.",
-      "raw": "**Próximas 2h:** Sync Daily 9:45, Paylead 10:00 → dentro de 1-1.5h.",
-      "client": "system"
-    },
-    {
-      "date": "2026-03-17",
-      "time": "",
-      "text": "5 unread (Supabase security vulnerabilities detected, BEYOND MEDIA client portal, Anna declined 18-Mar, 2 newsletters). ⚠️ Supabase security alert - revisar mañana.",
-      "raw": "**Email:** 5 unread (Supabase security vulnerabilities detected, BEYOND MEDIA client portal, Anna declined 18-Mar, 2 newsletters). ⚠️ Supabase security alert - revisar mañana.",
-      "client": "system"
-    },
-    {
-      "date": "2026-03-17",
-      "time": "",
-      "text": "Mañana: Mid-week G4U 9:45, Edu 10:30, Alex Paymatico 11:30, Weekly Inulentia 12:00, Paco 1to1 12:30, Anna 13:00, Martin 13:30.",
-      "raw": "**Calendar:** Mañana: Mid-week G4U 9:45, Edu 10:30, Alex Paymatico 11:30, Weekly Inulentia 12:00, Paco 1to1 12:30, Anna 13:00, Martin 13:30.",
-      "client": "growth4u"
-    },
-    {
-      "date": "2026-03-17",
-      "time": "",
-      "text": "Ningún evento (23:10 → 01:10).",
-      "raw": "**Próximas 2h:** Ningún evento (23:10 → 01:10).",
-      "client": "system"
-    },
-    {
-      "date": "2026-03-17",
-      "time": "",
-      "text": "Primer heartbeat del día (08:31 Madrid).",
-      "raw": "Primer heartbeat del día (08:31 Madrid).",
-      "client": "system"
-    },
-    {
-      "date": "2026-03-17",
-      "time": "",
-      "text": "Demo Sancho con Guido Lonetti 11:30-12:00 completado.",
-      "raw": "Demo Sancho con Guido Lonetti 11:30-12:00 completado.",
-      "client": "system"
-    },
-    {
-      "date": "2026-03-17",
-      "time": "",
-      "text": "Quiet hours (23:00-08:00).",
-      "raw": "Quiet hours (23:00-08:00).",
-      "client": "system"
-    },
-    {
-      "date": "2026-03-17",
-      "time": "",
-      "text": "5 unread (AI Money Lab Skool, Agent Mailscale, email change, self-sent prep, AI with Kyle). Nothing urgent.",
-      "raw": "**Email:** 5 unread (AI Money Lab Skool, Agent Mailscale, email change, self-sent prep, AI with Kyle). Nothing urgent.",
-      "client": "system"
-    },
-    {
-      "date": "2026-03-17",
-      "time": "",
-      "text": "Mid-week G4U AHORA 9:45-10:15, Edu 10:30, Paymatico 11:30, Weekly Inuentia 12:00, Paco 12:30, Anna 13:00, Martin 13:30. Mañana vacío.",
-      "raw": "**Calendar:** Mid-week G4U AHORA 9:45-10:15, Edu 10:30, Paymatico 11:30, Weekly Inuentia 12:00, Paco 12:30, Anna 13:00, Martin 13:30. Mañana vacío.",
-      "client": "growth4u"
-    },
-    {
-      "date": "2026-03-17",
-      "time": "",
-      "text": "5 unread (Valley growth lessons, Amamos el Dinero, Teresa Torres via Accounts, Thomas Oakes GTM tools, vFairs promo). Nothing urgent.",
-      "raw": "**Email:** 5 unread (Valley growth lessons, Amamos el Dinero, Teresa Torres via Accounts, Thomas Oakes GTM tools, vFairs promo). Nothing urgent.",
-      "client": "system"
-    },
-    {
-      "date": "2026-03-17",
-      "time": "",
-      "text": "AHORA: Ocupado 14:00-16:00. Busy 16:00-16:30. Día terminado tras 16:30.",
-      "raw": "**Calendar:** AHORA: Ocupado 14:00-16:00. Busy 16:00-16:30. Día terminado tras 16:30.",
-      "client": "system"
-    },
-    {
-      "date": "2026-03-16",
-      "time": "",
-      "text": "5 unread (Amazon Business, tl;dv weekly, Apify invoice x2, Alfonso digest)",
-      "raw": "**Email:** 5 unread (Amazon Business, tl;dv weekly, Apify invoice x2, Alfonso digest)",
       "client": "growth4u"
     }
   ],
@@ -1705,10 +1705,6 @@ const MC_DATA = {
             "id": "P00-Fast-Foundation",
             "slug": "P00-Fast-Foundation-Fast-Foundation",
             "name": "Fast Foundation (L0-L1)",
-            "strategy": "Foundation — Layer 0-1",
-            "status": "archived",
-            "phase": -1,
-            "category": "foundation",
             "description": "Foundation rápida: Company Context, Business Model Audit, Niche Discovery básico.",
             "approach": "Scrape URL + intake → generar docs lite de contexto, modelo y ECPs básicos.",
             "objective": {
@@ -1719,7 +1715,10 @@ const MC_DATA = {
               "unit": " docs"
             },
             "origin": "onboarding",
+            "phase": -1,
+            "category": "foundation",
             "review_date": null,
+            "status": "archived",
             "archived_at": "2026-03-30",
             "archive_reason": "Terminado",
             "tasks": [
@@ -1742,10 +1741,6 @@ const MC_DATA = {
             "id": "P00-Full-Foundation",
             "slug": "P00-Full-Foundation-Full-Foundation",
             "name": "Full Foundation (L2-L5)",
-            "strategy": "Foundation — Layer 2-5",
-            "status": "todo",
-            "phase": -1,
-            "category": "foundation",
             "description": "Foundation completa: market, competitors, self, SWOT, positioning, pricing, brand voice, visual identity.",
             "approach": "Profundizar docs lite de Fast Foundation con research completo.",
             "objective": {
@@ -1756,7 +1751,10 @@ const MC_DATA = {
               "unit": " pillars"
             },
             "origin": "onboarding",
+            "phase": -1,
+            "category": "foundation",
             "review_date": null,
+            "status": "todo",
             "tasks": [
               {
                 "id": "P00-FUL-T01",
@@ -1886,10 +1884,6 @@ const MC_DATA = {
             "id": "P00-Metrics",
             "slug": "P00-Metrics-Metrics-Setup",
             "name": "Métricas y Conexiones",
-            "strategy": "Foundation — Metrics Layer",
-            "status": "todo",
-            "phase": -1,
-            "category": "foundation",
             "description": "Definir plan de métricas, conectar herramientas y generar dashboard.",
             "approach": "Clasificar negocio → definir KPIs → conectar integraciones → dashboard.",
             "objective": {
@@ -1900,7 +1894,10 @@ const MC_DATA = {
               "unit": " integrations"
             },
             "origin": "onboarding",
+            "phase": -1,
+            "category": "foundation",
             "review_date": null,
+            "status": "todo",
             "tasks": [
               {
                 "id": "P00-MET-T01",
@@ -1973,10 +1970,6 @@ const MC_DATA = {
             "id": "P00-Strategic-Plan",
             "slug": "P00-Strategic-Plan-Strategic-Plan",
             "name": "Strategic Plan",
-            "strategy": "Foundation — Strategic Planning",
-            "status": "todo",
-            "phase": -1,
-            "category": "foundation",
             "description": "Creación y ejecución del plan estratégico completo.",
             "approach": "Sintetizar Foundation en SWOT ejecutivo → priorizar canales → crear roadmap → ejecutar.",
             "objective": {
@@ -1987,7 +1980,10 @@ const MC_DATA = {
               "unit": ""
             },
             "origin": "onboarding",
+            "phase": -1,
+            "category": "foundation",
             "review_date": null,
+            "status": "todo",
             "tasks": [
               {
                 "id": "P00-SP-T01",
@@ -2024,13 +2020,16 @@ const MC_DATA = {
             "id": "P01",
             "slug": "P01-seo-bofu",
             "name": "Contenido SEO BOFU",
-            "status": "active",
-            "created": "2026-03-30",
-            "strategic_plan_version": 1,
-            "origin": "strategic-plan",
             "description": "Criptan no tiene NINGÚN contenido de decisión de compra. Quien busca 'mejor exchange España', 'Criptan opiniones' o 'alternativa depósito bancario' no encuentra a Criptan. Este tráfico de alta intención va directamente a Bit2Me, Bitvavo y comparadores. Con las credenciales de Criptan (MiCA, seguro 250M€, Rankia 2025), el contenido BOFU se escribe solo.",
             "approach": "Investigación de keywords BOFU + creación de 5 artículos pillar en el primer mes (comparativas, reviews, guías de decisión) + presencia en comparadores (Rankia, Finect) + schema markup para rich snippets + estructura AIO para visibilidad en ChatGPT/Perplexity.",
+            "status": "active",
+            "created": "2026-03-30",
             "review_date": "2026-04-30",
+            "origin": {
+              "type": "strategic-plan",
+              "version": 1,
+              "detail": "Gap crítico: zero contenido BOFU. Market Intel confirma que nadie hace bien SEO BOFU en exchanges España."
+            },
             "objective": {
               "description": "Posicionar Criptan en keywords de alta intención de compra",
               "metric": "keywords_top_10",
@@ -2146,14 +2145,16 @@ const MC_DATA = {
             "id": "P02",
             "slug": "P02-google-ads-mica",
             "name": "Google Ads MiCA",
+            "description": "CANCELADO — El cliente prefiere no activar paid ads (Google ni Meta) en esta fase. Foco en orgánico + outbound.",
             "status": "cancelled",
             "created": "2026-03-30",
             "cancelled_at": "2026-03-30",
-            "strategic_plan_version": 1,
-            "origin": "strategic-plan",
-            "note": "Cancelado — cliente prioriza orgánico + outbound",
-            "description": "CANCELADO — El cliente prefiere no activar paid ads (Google ni Meta) en esta fase. Foco en orgánico + outbound.",
             "review_date": null,
+            "origin": {
+              "type": "strategic-plan",
+              "version": 1,
+              "detail": "Cancelado por decisión del cliente — prioriza LinkedIn B2B + Social content"
+            },
             "objective": null,
             "strategy": {
               "catalog_id": "16",
@@ -2226,15 +2227,17 @@ const MC_DATA = {
           {
             "id": "P03",
             "slug": "P03-funnel-optimization",
-            "name": "Optimización Funnel",
+            "name": "Optimización Funnel (Meta Ads + Referidos + Reviews)",
+            "description": "CANCELADO — El cliente prefiere no optimizar Meta Ads en esta fase. Foco en orgánico + outbound.",
             "status": "cancelled",
             "created": "2026-03-30",
             "cancelled_at": "2026-03-30",
-            "strategic_plan_version": 1,
-            "origin": "strategic-plan",
-            "note": "Cancelado — cliente prioriza orgánico + outbound",
-            "description": "CANCELADO — El cliente prefiere no optimizar Meta Ads en esta fase. Foco en orgánico + outbound.",
             "review_date": null,
+            "origin": {
+              "type": "strategic-plan",
+              "version": 1,
+              "detail": "Cancelado por decisión del cliente — prioriza LinkedIn B2B + Social content"
+            },
             "objective": null,
             "strategy": {
               "catalog_id": "04",
@@ -2326,13 +2329,16 @@ const MC_DATA = {
             "id": "P04",
             "slug": "P04-linkedin-b2b-jorge",
             "name": "LinkedIn Flywheel — Jorge Soriano (CEO)",
-            "status": "active",
-            "created": "2026-03-30",
-            "strategic_plan_version": 1,
-            "origin": "strategic-plan",
             "description": "Jorge Soriano (CEO y cofundador) tiene el perfil ideal para Founder-Led GTM en LinkedIn: 7 años construyendo Criptan, inversores de primer nivel, MiCA, y un segmento B2B validado (250 empresas ya clientes que mueven 10% del volumen). LinkedIn es donde los CFOs y directivos de pymes pasan tiempo. El objetivo es posicionar a Jorge como referente en crypto-finanza empresarial y generar pipeline B2B cualificado de empresas con tesorería ociosa.",
             "approach": "Jorge publica 3-5 posts/semana con mix de contenido (dolores de tesorerías empresariales, insights de regulación MiCA, building in public de Criptan, casos de uso B2B). Pre-engagement con prospects → DMs warm → calls. Sancho genera los borradores, Jorge personaliza y publica.",
+            "status": "active",
+            "created": "2026-03-30",
             "review_date": "2026-04-30",
+            "origin": {
+              "type": "strategic-plan",
+              "version": 1,
+              "detail": "Decisión del cliente: foco en LinkedIn B2B para empresas con tesorería"
+            },
             "objective": {
               "description": "Generar pipeline B2B cualificado desde LinkedIn",
               "metric": "qualified_calls_per_week",
@@ -2448,13 +2454,16 @@ const MC_DATA = {
             "id": "P05",
             "slug": "P05-b2b-outbound",
             "name": "B2B Outbound — Empresas con Tesorería",
-            "status": "active",
-            "created": "2026-03-30",
-            "strategic_plan_version": 1,
-            "origin": "strategic-plan",
             "description": "Criptan ya tiene 250 empresas clientes que mueven el 10% del volumen total — el segmento B2B está validado y es de altísimo valor. Pero no hay un go-to-market activo para captar más. Este proyecto monta el engine de outbound: identificar empresas target, enriquecer contactos, y lanzar secuencias de outreach multi-canal (email + LinkedIn) enfocadas en el dolor de tesorería ociosa.",
             "approach": "List building de 200-500 empresas target (pymes españolas con excedentes de tesorería), enriquecimiento de contactos (CFO/Director Financiero), secuencia de outreach 3-5 touchpoints (email + LinkedIn). Ángulo: Criptan Earn B2B como alternativa regulada al depósito empresarial.",
+            "status": "active",
+            "created": "2026-03-30",
             "review_date": "2026-04-30",
+            "origin": {
+              "type": "strategic-plan",
+              "version": 1,
+              "detail": "Decisión del cliente: outbound B2B activo complementando LinkedIn de Jorge"
+            },
             "objective": {
               "description": "Generar meetings cualificados con empresas para Criptan Earn B2B",
               "metric": "meetings_booked_per_month",
@@ -2552,14 +2561,17 @@ const MC_DATA = {
           {
             "id": "P06",
             "slug": "P06-social-content-ai",
-            "name": "Contenido AI — Instagram + TikTok",
-            "status": "active",
-            "created": "2026-03-30",
-            "strategic_plan_version": 1,
-            "origin": "strategic-plan",
+            "name": "Contenido AI — Instagram + TikTok (Educación Crypto)",
             "description": "Publicar contenido educativo generado por IA en Instagram y TikTok enseñando conceptos crypto de forma simple y visual. El target (Ahorrador Desencantado y Crypto-Curioso) cada vez busca más en TikTok e Instagram directamente. Los contenidos optimizados para búsqueda dentro de estas plataformas (Social SEO) capturan tráfico de alta intención que no pasa por Google.",
             "approach": "Crear contenido educativo en formatos nativos: Reels/TikToks cortos (30-60s) explicando conceptos crypto, comparativas rápidas, tips de inversión segura, novedades regulatorias (MiCA). Todo generado por AI, con estética Criptan. Optimizado para búsqueda interna de IG/TikTok (Social SEO). Cadencia: 4-5 posts/semana por plataforma.",
+            "status": "active",
+            "created": "2026-03-30",
             "review_date": "2026-04-30",
+            "origin": {
+              "type": "strategic-plan",
+              "version": 1,
+              "detail": "Decisión del cliente: contenido AI en IG + TikTok para educar sobre crypto"
+            },
             "objective": {
               "description": "Crecer audiencia y visibilidad en IG + TikTok con contenido educativo",
               "metric": "views_from_search_percent",
@@ -4383,1773 +4395,648 @@ const MC_DATA = {
                 ]
               }
             }
+          },
+          {
+            "slug": "criptan",
+            "collectedAt": "2026-03-31T19:16:57.971Z",
+            "dateRange": {
+              "from": "2026-03-30",
+              "to": "2026-03-30"
+            },
+            "sources": {
+              "sheets": {
+                "status": "ok",
+                "collectedAt": "2026-03-31T19:16:59.342Z",
+                "metrics": [
+                  {
+                    "name": "semana_del",
+                    "value": 2026,
+                    "date": "2026-03-30",
+                    "dimensions": {
+                      "source": "manual"
+                    }
+                  },
+                  {
+                    "name": "signups",
+                    "value": 100,
+                    "date": "2026-03-30",
+                    "dimensions": {
+                      "source": "manual"
+                    }
+                  },
+                  {
+                    "name": "kyc_completed",
+                    "value": 50,
+                    "date": "2026-03-30",
+                    "dimensions": {
+                      "source": "manual"
+                    }
+                  },
+                  {
+                    "name": "first_deposit",
+                    "value": 40,
+                    "date": "2026-03-30",
+                    "dimensions": {
+                      "source": "manual"
+                    }
+                  },
+                  {
+                    "name": "amount_deposited_eur",
+                    "value": 135000,
+                    "date": "2026-03-30",
+                    "dimensions": {
+                      "source": "manual"
+                    }
+                  },
+                  {
+                    "name": "notes",
+                    "value": "Semana del 24-30 mar",
+                    "date": "2026-03-30",
+                    "dimensions": {
+                      "source": "manual"
+                    }
+                  },
+                  {
+                    "name": "semana_del",
+                    "value": 2026,
+                    "date": "2026-03-30",
+                    "dimensions": {
+                      "source": "manual"
+                    }
+                  },
+                  {
+                    "name": "signups",
+                    "value": 100,
+                    "date": "2026-03-30",
+                    "dimensions": {
+                      "source": "manual"
+                    }
+                  },
+                  {
+                    "name": "kyc_completed",
+                    "value": 50,
+                    "date": "2026-03-30",
+                    "dimensions": {
+                      "source": "manual"
+                    }
+                  },
+                  {
+                    "name": "first_deposit",
+                    "value": 40,
+                    "date": "2026-03-30",
+                    "dimensions": {
+                      "source": "manual"
+                    }
+                  },
+                  {
+                    "name": "amount_deposited_eur",
+                    "value": 135000,
+                    "date": "2026-03-30",
+                    "dimensions": {
+                      "source": "manual"
+                    }
+                  },
+                  {
+                    "name": "notes",
+                    "value": "Semana del 31 mar - 6 abr",
+                    "date": "2026-03-30",
+                    "dimensions": {
+                      "source": "manual"
+                    }
+                  },
+                  {
+                    "name": "semana_del",
+                    "value": 2026,
+                    "date": "2026-03-30",
+                    "dimensions": {
+                      "source": "manual"
+                    }
+                  },
+                  {
+                    "name": "signups",
+                    "value": 100,
+                    "date": "2026-03-30",
+                    "dimensions": {
+                      "source": "manual"
+                    }
+                  },
+                  {
+                    "name": "kyc_completed",
+                    "value": 50,
+                    "date": "2026-03-30",
+                    "dimensions": {
+                      "source": "manual"
+                    }
+                  },
+                  {
+                    "name": "first_deposit",
+                    "value": 40,
+                    "date": "2026-03-30",
+                    "dimensions": {
+                      "source": "manual"
+                    }
+                  },
+                  {
+                    "name": "amount_deposited_eur",
+                    "value": 135000,
+                    "date": "2026-03-30",
+                    "dimensions": {
+                      "source": "manual"
+                    }
+                  },
+                  {
+                    "name": "semana_del",
+                    "value": 2026,
+                    "date": "2026-03-30",
+                    "dimensions": {
+                      "source": "manual"
+                    }
+                  },
+                  {
+                    "name": "signups",
+                    "value": 100,
+                    "date": "2026-03-30",
+                    "dimensions": {
+                      "source": "manual"
+                    }
+                  },
+                  {
+                    "name": "kyc_completed",
+                    "value": 50,
+                    "date": "2026-03-30",
+                    "dimensions": {
+                      "source": "manual"
+                    }
+                  },
+                  {
+                    "name": "first_deposit",
+                    "value": 40,
+                    "date": "2026-03-30",
+                    "dimensions": {
+                      "source": "manual"
+                    }
+                  },
+                  {
+                    "name": "amount_deposited_eur",
+                    "value": 135000,
+                    "date": "2026-03-30",
+                    "dimensions": {
+                      "source": "manual"
+                    }
+                  },
+                  {
+                    "name": "semana_del",
+                    "value": 2026,
+                    "date": "2026-03-30",
+                    "dimensions": {
+                      "source": "manual"
+                    }
+                  },
+                  {
+                    "name": "signups",
+                    "value": 100,
+                    "date": "2026-03-30",
+                    "dimensions": {
+                      "source": "manual"
+                    }
+                  },
+                  {
+                    "name": "kyc_completed",
+                    "value": 50,
+                    "date": "2026-03-30",
+                    "dimensions": {
+                      "source": "manual"
+                    }
+                  },
+                  {
+                    "name": "first_deposit",
+                    "value": 40,
+                    "date": "2026-03-30",
+                    "dimensions": {
+                      "source": "manual"
+                    }
+                  },
+                  {
+                    "name": "amount_deposited_eur",
+                    "value": 135000,
+                    "date": "2026-03-30",
+                    "dimensions": {
+                      "source": "manual"
+                    }
+                  },
+                  {
+                    "name": "semana_del",
+                    "value": 2026,
+                    "date": "2026-03-30",
+                    "dimensions": {
+                      "source": "manual"
+                    }
+                  },
+                  {
+                    "name": "signups",
+                    "value": 100,
+                    "date": "2026-03-30",
+                    "dimensions": {
+                      "source": "manual"
+                    }
+                  },
+                  {
+                    "name": "kyc_completed",
+                    "value": 50,
+                    "date": "2026-03-30",
+                    "dimensions": {
+                      "source": "manual"
+                    }
+                  },
+                  {
+                    "name": "first_deposit",
+                    "value": 40,
+                    "date": "2026-03-30",
+                    "dimensions": {
+                      "source": "manual"
+                    }
+                  },
+                  {
+                    "name": "amount_deposited_eur",
+                    "value": 135000,
+                    "date": "2026-03-30",
+                    "dimensions": {
+                      "source": "manual"
+                    }
+                  },
+                  {
+                    "name": "semana_del",
+                    "value": 2026,
+                    "date": "2026-03-30",
+                    "dimensions": {
+                      "source": "manual"
+                    }
+                  },
+                  {
+                    "name": "semana_del",
+                    "value": 2026,
+                    "date": "2026-03-30",
+                    "dimensions": {
+                      "source": "manual"
+                    }
+                  },
+                  {
+                    "name": "semana_del",
+                    "value": 2026,
+                    "date": "2026-03-30",
+                    "dimensions": {
+                      "source": "manual"
+                    }
+                  },
+                  {
+                    "name": "semana_del",
+                    "value": 2026,
+                    "date": "2026-03-30",
+                    "dimensions": {
+                      "source": "manual"
+                    }
+                  },
+                  {
+                    "name": "semana_del",
+                    "value": 2026,
+                    "date": "2026-03-30",
+                    "dimensions": {
+                      "source": "manual"
+                    }
+                  },
+                  {
+                    "name": "semana_del",
+                    "value": 2026,
+                    "date": "2026-03-30",
+                    "dimensions": {
+                      "source": "manual"
+                    }
+                  }
+                ]
+              }
+            }
           }
         ],
         "metrics_latest": {
           "slug": "criptan",
-          "collectedAt": "2026-03-30T15:20:34.608Z",
+          "collectedAt": "2026-03-31T19:16:57.971Z",
           "dateRange": {
-            "from": "2026-03-29",
-            "to": "2026-03-29"
+            "from": "2026-03-30",
+            "to": "2026-03-30"
           },
           "sources": {
-            "ga4": {
+            "sheets": {
               "status": "ok",
-              "collectedAt": "2026-03-30T15:20:37.596Z",
+              "collectedAt": "2026-03-31T19:16:59.342Z",
               "metrics": [
                 {
-                  "name": "sessions",
-                  "value": 95,
-                  "date": "2026-03-29"
-                },
-                {
-                  "name": "totalUsers",
-                  "value": 82,
-                  "date": "2026-03-29"
-                },
-                {
-                  "name": "newUsers",
-                  "value": 44,
-                  "date": "2026-03-29"
-                },
-                {
-                  "name": "bounceRate",
-                  "value": 0.5157894736842106,
-                  "date": "2026-03-29"
-                },
-                {
-                  "name": "averageSessionDuration",
-                  "value": 129.7494980736842,
-                  "date": "2026-03-29"
-                },
-                {
-                  "name": "conversions",
-                  "value": 0,
-                  "date": "2026-03-29"
-                },
-                {
-                  "name": "screenPageViews",
-                  "value": 136,
-                  "date": "2026-03-29"
-                },
-                {
-                  "name": "engagedSessions",
-                  "value": 46,
-                  "date": "2026-03-29"
-                },
-                {
-                  "name": "engagementRate",
-                  "value": 0.4842105263157895,
-                  "date": "2026-03-29"
-                },
-                {
-                  "name": "sessions",
-                  "value": 64,
-                  "date": "2026-03-29",
+                  "name": "semana_del",
+                  "value": 2026,
+                  "date": "2026-03-30",
                   "dimensions": {
-                    "channel": "Organic Search"
+                    "source": "manual"
                   }
                 },
                 {
-                  "name": "totalUsers",
-                  "value": 53,
-                  "date": "2026-03-29",
-                  "dimensions": {
-                    "channel": "Organic Search"
-                  }
-                },
-                {
-                  "name": "newUsers",
-                  "value": 31,
-                  "date": "2026-03-29",
-                  "dimensions": {
-                    "channel": "Organic Search"
-                  }
-                },
-                {
-                  "name": "engagedSessions",
-                  "value": 34,
-                  "date": "2026-03-29",
-                  "dimensions": {
-                    "channel": "Organic Search"
-                  }
-                },
-                {
-                  "name": "screenPageViews",
-                  "value": 96,
-                  "date": "2026-03-29",
-                  "dimensions": {
-                    "channel": "Organic Search"
-                  }
-                },
-                {
-                  "name": "sessions",
-                  "value": 28,
-                  "date": "2026-03-29",
-                  "dimensions": {
-                    "channel": "Direct"
-                  }
-                },
-                {
-                  "name": "totalUsers",
-                  "value": 26,
-                  "date": "2026-03-29",
-                  "dimensions": {
-                    "channel": "Direct"
-                  }
-                },
-                {
-                  "name": "newUsers",
-                  "value": 12,
-                  "date": "2026-03-29",
-                  "dimensions": {
-                    "channel": "Direct"
-                  }
-                },
-                {
-                  "name": "engagedSessions",
-                  "value": 10,
-                  "date": "2026-03-29",
-                  "dimensions": {
-                    "channel": "Direct"
-                  }
-                },
-                {
-                  "name": "screenPageViews",
-                  "value": 32,
-                  "date": "2026-03-29",
-                  "dimensions": {
-                    "channel": "Direct"
-                  }
-                },
-                {
-                  "name": "sessions",
-                  "value": 2,
-                  "date": "2026-03-29",
-                  "dimensions": {
-                    "channel": "Organic Video"
-                  }
-                },
-                {
-                  "name": "totalUsers",
-                  "value": 2,
-                  "date": "2026-03-29",
-                  "dimensions": {
-                    "channel": "Organic Video"
-                  }
-                },
-                {
-                  "name": "newUsers",
-                  "value": 1,
-                  "date": "2026-03-29",
-                  "dimensions": {
-                    "channel": "Organic Video"
-                  }
-                },
-                {
-                  "name": "engagedSessions",
-                  "value": 1,
-                  "date": "2026-03-29",
-                  "dimensions": {
-                    "channel": "Organic Video"
-                  }
-                },
-                {
-                  "name": "screenPageViews",
-                  "value": 7,
-                  "date": "2026-03-29",
-                  "dimensions": {
-                    "channel": "Organic Video"
-                  }
-                },
-                {
-                  "name": "sessions",
-                  "value": 1,
-                  "date": "2026-03-29",
-                  "dimensions": {
-                    "channel": "Organic Social"
-                  }
-                },
-                {
-                  "name": "totalUsers",
-                  "value": 1,
-                  "date": "2026-03-29",
-                  "dimensions": {
-                    "channel": "Organic Social"
-                  }
-                },
-                {
-                  "name": "newUsers",
-                  "value": 0,
-                  "date": "2026-03-29",
-                  "dimensions": {
-                    "channel": "Organic Social"
-                  }
-                },
-                {
-                  "name": "engagedSessions",
-                  "value": 1,
-                  "date": "2026-03-29",
-                  "dimensions": {
-                    "channel": "Organic Social"
-                  }
-                },
-                {
-                  "name": "screenPageViews",
-                  "value": 1,
-                  "date": "2026-03-29",
-                  "dimensions": {
-                    "channel": "Organic Social"
-                  }
-                },
-                {
-                  "name": "topPage",
-                  "value": 85,
-                  "date": "2026-03-29",
-                  "dimensions": {
-                    "page": "/",
-                    "duration": 106,
-                    "engagementRate": 52
-                  }
-                },
-                {
-                  "name": "topPage",
-                  "value": 6,
-                  "date": "2026-03-29",
-                  "dimensions": {
-                    "page": "/aprende/usdc-que-es-para-que-sirve-y-que-ventajas-tiene/",
-                    "duration": 178,
-                    "engagementRate": 40
-                  }
-                },
-                {
-                  "name": "topPage",
-                  "value": 6,
-                  "date": "2026-03-29",
-                  "dimensions": {
-                    "page": "/personal/",
-                    "duration": 38,
-                    "engagementRate": 33
-                  }
-                },
-                {
-                  "name": "topPage",
-                  "value": 4,
-                  "date": "2026-03-29",
-                  "dimensions": {
-                    "page": "/cestas/",
-                    "duration": 36,
-                    "engagementRate": 67
-                  }
-                },
-                {
-                  "name": "topPage",
-                  "value": 3,
-                  "date": "2026-03-29",
-                  "dimensions": {
-                    "page": "/criptan-x-invertir-para-conseguir/",
-                    "duration": 36,
-                    "engagementRate": 50
-                  }
-                },
-                {
-                  "name": "topPage",
-                  "value": 3,
-                  "date": "2026-03-29",
-                  "dimensions": {
-                    "page": "/team/",
-                    "duration": 33,
-                    "engagementRate": 100
-                  }
-                },
-                {
-                  "name": "topPage",
-                  "value": 2,
-                  "date": "2026-03-29",
-                  "dimensions": {
-                    "page": "/aprende/criptan-obtiene-autorizacion-mica/",
-                    "duration": 0,
-                    "engagementRate": 0
-                  }
-                },
-                {
-                  "name": "topPage",
-                  "value": 2,
-                  "date": "2026-03-29",
-                  "dimensions": {
-                    "page": "/aprende/donald-trump-anuncia-la-creacion-de-una-reserva-estrategica-de-criptomonedas-en-ee-uu/",
-                    "duration": 43,
-                    "engagementRate": 50
-                  }
-                },
-                {
-                  "name": "topPage",
-                  "value": 2,
-                  "date": "2026-03-29",
-                  "dimensions": {
-                    "page": "/aprende/mejores-comisiones-y-mas-beneficios-para-nuestros-clientes/",
-                    "duration": 65,
-                    "engagementRate": 100
-                  }
-                },
-                {
-                  "name": "topPage",
-                  "value": 2,
-                  "date": "2026-03-29",
-                  "dimensions": {
-                    "page": "/aprende/que-es-el-eurc-o-euro-coin/",
-                    "duration": 77,
-                    "engagementRate": 100
-                  }
-                },
-                {
-                  "name": "topPage",
-                  "value": 2,
-                  "date": "2026-03-29",
-                  "dimensions": {
-                    "page": "/earn-fijo/",
-                    "duration": 28,
-                    "engagementRate": 100
-                  }
-                },
-                {
-                  "name": "topPage",
-                  "value": 2,
-                  "date": "2026-03-29",
-                  "dimensions": {
-                    "page": "/earn-lottery/",
-                    "duration": 45,
-                    "engagementRate": 100
-                  }
-                },
-                {
-                  "name": "topPage",
-                  "value": 2,
-                  "date": "2026-03-29",
-                  "dimensions": {
-                    "page": "/equipo/",
-                    "duration": 23,
-                    "engagementRate": 100
-                  }
-                },
-                {
-                  "name": "topPage",
-                  "value": 2,
-                  "date": "2026-03-29",
-                  "dimensions": {
-                    "page": "/savings/",
-                    "duration": 41,
-                    "engagementRate": 100
-                  }
-                },
-                {
-                  "name": "topPage",
-                  "value": 1,
-                  "date": "2026-03-29",
-                  "dimensions": {
-                    "page": "/aprende/como-gana-dinero-criptan/",
-                    "duration": 86,
-                    "engagementRate": 100
-                  }
-                },
-                {
-                  "name": "sessions",
-                  "value": 58,
-                  "date": "2026-03-29",
-                  "dimensions": {
-                    "device": "desktop"
-                  }
-                },
-                {
-                  "name": "bounceRate",
-                  "value": 0.5689655172413793,
-                  "date": "2026-03-29",
-                  "dimensions": {
-                    "device": "desktop"
-                  }
-                },
-                {
-                  "name": "engagementRate",
-                  "value": 0.43103448275862066,
-                  "date": "2026-03-29",
-                  "dimensions": {
-                    "device": "desktop"
-                  }
-                },
-                {
-                  "name": "sessions",
-                  "value": 37,
-                  "date": "2026-03-29",
-                  "dimensions": {
-                    "device": "mobile"
-                  }
-                },
-                {
-                  "name": "bounceRate",
-                  "value": 0.43243243243243246,
-                  "date": "2026-03-29",
-                  "dimensions": {
-                    "device": "mobile"
-                  }
-                },
-                {
-                  "name": "engagementRate",
-                  "value": 0.5675675675675675,
-                  "date": "2026-03-29",
-                  "dimensions": {
-                    "device": "mobile"
-                  }
-                }
-              ]
-            },
-            "gsc": {
-              "status": "ok",
-              "collectedAt": "2026-03-30T15:20:38.517Z",
-              "metrics": [
-                {
-                  "name": "clicks",
-                  "value": 172,
-                  "date": "2026-03-26"
-                },
-                {
-                  "name": "impressions",
-                  "value": 4541,
-                  "date": "2026-03-26"
-                },
-                {
-                  "name": "ctr",
-                  "value": 3.79,
-                  "date": "2026-03-26"
-                },
-                {
-                  "name": "position",
-                  "value": 7.44,
-                  "date": "2026-03-26"
-                },
-                {
-                  "name": "clicks",
-                  "value": 108,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "query": "criptan"
-                  }
-                },
-                {
-                  "name": "impressions",
-                  "value": 163,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "query": "criptan"
-                  }
-                },
-                {
-                  "name": "ctr",
-                  "value": 66.26,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "query": "criptan"
-                  }
-                },
-                {
-                  "name": "position",
-                  "value": 1.2,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "query": "criptan"
-                  }
-                },
-                {
-                  "name": "clicks",
-                  "value": 5,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "query": "criptan trade sl"
-                  }
-                },
-                {
-                  "name": "impressions",
-                  "value": 9,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "query": "criptan trade sl"
-                  }
-                },
-                {
-                  "name": "ctr",
-                  "value": 55.56,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "query": "criptan trade sl"
-                  }
-                },
-                {
-                  "name": "position",
-                  "value": 1,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "query": "criptan trade sl"
-                  }
-                },
-                {
-                  "name": "clicks",
-                  "value": 3,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "query": "kriptan"
-                  }
-                },
-                {
-                  "name": "impressions",
-                  "value": 10,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "query": "kriptan"
-                  }
-                },
-                {
-                  "name": "ctr",
-                  "value": 30,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "query": "kriptan"
-                  }
-                },
-                {
-                  "name": "position",
-                  "value": 3.7,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "query": "kriptan"
-                  }
-                },
-                {
-                  "name": "clicks",
-                  "value": 2,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "query": "criptain"
-                  }
-                },
-                {
-                  "name": "impressions",
-                  "value": 2,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "query": "criptain"
-                  }
-                },
-                {
-                  "name": "ctr",
+                  "name": "signups",
                   "value": 100,
-                  "date": "2026-03-26",
+                  "date": "2026-03-30",
                   "dimensions": {
-                    "query": "criptain"
+                    "source": "manual"
                   }
                 },
                 {
-                  "name": "position",
-                  "value": 1,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "query": "criptain"
-                  }
-                },
-                {
-                  "name": "clicks",
-                  "value": 2,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "query": "criptan earn"
-                  }
-                },
-                {
-                  "name": "impressions",
-                  "value": 2,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "query": "criptan earn"
-                  }
-                },
-                {
-                  "name": "ctr",
-                  "value": 100,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "query": "criptan earn"
-                  }
-                },
-                {
-                  "name": "position",
-                  "value": 1,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "query": "criptan earn"
-                  }
-                },
-                {
-                  "name": "clicks",
-                  "value": 2,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "query": "cryptan"
-                  }
-                },
-                {
-                  "name": "impressions",
-                  "value": 14,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "query": "cryptan"
-                  }
-                },
-                {
-                  "name": "ctr",
-                  "value": 14.29,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "query": "cryptan"
-                  }
-                },
-                {
-                  "name": "position",
-                  "value": 1.43,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "query": "cryptan"
-                  }
-                },
-                {
-                  "name": "clicks",
-                  "value": 1,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "query": "criptam"
-                  }
-                },
-                {
-                  "name": "impressions",
-                  "value": 1,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "query": "criptam"
-                  }
-                },
-                {
-                  "name": "ctr",
-                  "value": 100,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "query": "criptam"
-                  }
-                },
-                {
-                  "name": "position",
-                  "value": 1,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "query": "criptam"
-                  }
-                },
-                {
-                  "name": "clicks",
-                  "value": 1,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "query": "criptan crypto"
-                  }
-                },
-                {
-                  "name": "impressions",
-                  "value": 1,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "query": "criptan crypto"
-                  }
-                },
-                {
-                  "name": "ctr",
-                  "value": 100,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "query": "criptan crypto"
-                  }
-                },
-                {
-                  "name": "position",
-                  "value": 1,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "query": "criptan crypto"
-                  }
-                },
-                {
-                  "name": "clicks",
-                  "value": 1,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "query": "criptan hacienda"
-                  }
-                },
-                {
-                  "name": "impressions",
-                  "value": 2,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "query": "criptan hacienda"
-                  }
-                },
-                {
-                  "name": "ctr",
+                  "name": "kyc_completed",
                   "value": 50,
-                  "date": "2026-03-26",
+                  "date": "2026-03-30",
                   "dimensions": {
-                    "query": "criptan hacienda"
+                    "source": "manual"
                   }
                 },
                 {
-                  "name": "position",
-                  "value": 1,
-                  "date": "2026-03-26",
+                  "name": "first_deposit",
+                  "value": 40,
+                  "date": "2026-03-30",
                   "dimensions": {
-                    "query": "criptan hacienda"
+                    "source": "manual"
                   }
                 },
                 {
-                  "name": "clicks",
-                  "value": 1,
-                  "date": "2026-03-26",
+                  "name": "amount_deposited_eur",
+                  "value": 135000,
+                  "date": "2026-03-30",
                   "dimensions": {
-                    "query": "euro coin"
+                    "source": "manual"
                   }
                 },
                 {
-                  "name": "impressions",
-                  "value": 8,
-                  "date": "2026-03-26",
+                  "name": "notes",
+                  "value": "Semana del 24-30 mar",
+                  "date": "2026-03-30",
                   "dimensions": {
-                    "query": "euro coin"
+                    "source": "manual"
                   }
                 },
                 {
-                  "name": "ctr",
-                  "value": 12.5,
-                  "date": "2026-03-26",
+                  "name": "semana_del",
+                  "value": 2026,
+                  "date": "2026-03-30",
                   "dimensions": {
-                    "query": "euro coin"
+                    "source": "manual"
                   }
                 },
                 {
-                  "name": "position",
-                  "value": 5.13,
-                  "date": "2026-03-26",
+                  "name": "signups",
+                  "value": 100,
+                  "date": "2026-03-30",
                   "dimensions": {
-                    "query": "euro coin"
+                    "source": "manual"
                   }
                 },
                 {
-                  "name": "clicks",
-                  "value": 1,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "query": "que es criptan"
-                  }
-                },
-                {
-                  "name": "impressions",
-                  "value": 2,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "query": "que es criptan"
-                  }
-                },
-                {
-                  "name": "ctr",
+                  "name": "kyc_completed",
                   "value": 50,
-                  "date": "2026-03-26",
+                  "date": "2026-03-30",
                   "dimensions": {
-                    "query": "que es criptan"
+                    "source": "manual"
                   }
                 },
                 {
-                  "name": "position",
-                  "value": 2,
-                  "date": "2026-03-26",
+                  "name": "first_deposit",
+                  "value": 40,
+                  "date": "2026-03-30",
                   "dimensions": {
-                    "query": "que es criptan"
+                    "source": "manual"
                   }
                 },
                 {
-                  "name": "clicks",
-                  "value": 1,
-                  "date": "2026-03-26",
+                  "name": "amount_deposited_eur",
+                  "value": 135000,
+                  "date": "2026-03-30",
                   "dimensions": {
-                    "query": "que es usdc"
+                    "source": "manual"
                   }
                 },
                 {
-                  "name": "impressions",
-                  "value": 91,
-                  "date": "2026-03-26",
+                  "name": "notes",
+                  "value": "Semana del 31 mar - 6 abr",
+                  "date": "2026-03-30",
                   "dimensions": {
-                    "query": "que es usdc"
+                    "source": "manual"
                   }
                 },
                 {
-                  "name": "ctr",
-                  "value": 1.1,
-                  "date": "2026-03-26",
+                  "name": "semana_del",
+                  "value": 2026,
+                  "date": "2026-03-30",
                   "dimensions": {
-                    "query": "que es usdc"
+                    "source": "manual"
                   }
                 },
                 {
-                  "name": "position",
-                  "value": 4.26,
-                  "date": "2026-03-26",
+                  "name": "signups",
+                  "value": 100,
+                  "date": "2026-03-30",
                   "dimensions": {
-                    "query": "que es usdc"
+                    "source": "manual"
                   }
                 },
                 {
-                  "name": "clicks",
-                  "value": 0,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "query": "\"@circleinternet-financialeurope.com\""
-                  }
-                },
-                {
-                  "name": "impressions",
-                  "value": 2,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "query": "\"@circleinternet-financialeurope.com\""
-                  }
-                },
-                {
-                  "name": "ctr",
-                  "value": 0,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "query": "\"@circleinternet-financialeurope.com\""
-                  }
-                },
-                {
-                  "name": "position",
-                  "value": 4.5,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "query": "\"@circleinternet-financialeurope.com\""
-                  }
-                },
-                {
-                  "name": "clicks",
-                  "value": 0,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "query": "\"circleinternet-financialeurope\""
-                  }
-                },
-                {
-                  "name": "impressions",
-                  "value": 1,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "query": "\"circleinternet-financialeurope\""
-                  }
-                },
-                {
-                  "name": "ctr",
-                  "value": 0,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "query": "\"circleinternet-financialeurope\""
-                  }
-                },
-                {
-                  "name": "position",
-                  "value": 6,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "query": "\"circleinternet-financialeurope\""
-                  }
-                },
-                {
-                  "name": "clicks",
-                  "value": 0,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "query": "\"circleinternet-financialeurope.com\""
-                  }
-                },
-                {
-                  "name": "impressions",
-                  "value": 10,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "query": "\"circleinternet-financialeurope.com\""
-                  }
-                },
-                {
-                  "name": "ctr",
-                  "value": 0,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "query": "\"circleinternet-financialeurope.com\""
-                  }
-                },
-                {
-                  "name": "position",
-                  "value": 7.5,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "query": "\"circleinternet-financialeurope.com\""
-                  }
-                },
-                {
-                  "name": "clicks",
-                  "value": 0,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "query": "\"registre sus datos para obtener una ventaja inmediata en el mercado de criptomoneda\""
-                  }
-                },
-                {
-                  "name": "impressions",
-                  "value": 4,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "query": "\"registre sus datos para obtener una ventaja inmediata en el mercado de criptomoneda\""
-                  }
-                },
-                {
-                  "name": "ctr",
-                  "value": 0,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "query": "\"registre sus datos para obtener una ventaja inmediata en el mercado de criptomoneda\""
-                  }
-                },
-                {
-                  "name": "position",
-                  "value": 8.25,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "query": "\"registre sus datos para obtener una ventaja inmediata en el mercado de criptomoneda\""
-                  }
-                },
-                {
-                  "name": "clicks",
-                  "value": 0,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "query": "(usdc)"
-                  }
-                },
-                {
-                  "name": "impressions",
-                  "value": 1,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "query": "(usdc)"
-                  }
-                },
-                {
-                  "name": "ctr",
-                  "value": 0,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "query": "(usdc)"
-                  }
-                },
-                {
-                  "name": "position",
-                  "value": 12,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "query": "(usdc)"
-                  }
-                },
-                {
-                  "name": "clicks",
-                  "value": 0,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "query": "1bitcon"
-                  }
-                },
-                {
-                  "name": "impressions",
-                  "value": 1,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "query": "1bitcon"
-                  }
-                },
-                {
-                  "name": "ctr",
-                  "value": 0,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "query": "1bitcon"
-                  }
-                },
-                {
-                  "name": "position",
-                  "value": 1,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "query": "1bitcon"
-                  }
-                },
-                {
-                  "name": "clicks",
-                  "value": 0,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "query": "abanca criptomonedas"
-                  }
-                },
-                {
-                  "name": "impressions",
-                  "value": 1,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "query": "abanca criptomonedas"
-                  }
-                },
-                {
-                  "name": "ctr",
-                  "value": 0,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "query": "abanca criptomonedas"
-                  }
-                },
-                {
-                  "name": "position",
-                  "value": 10,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "query": "abanca criptomonedas"
-                  }
-                },
-                {
-                  "name": "clicks",
-                  "value": 0,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "query": "acciones de cardano"
-                  }
-                },
-                {
-                  "name": "impressions",
-                  "value": 28,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "query": "acciones de cardano"
-                  }
-                },
-                {
-                  "name": "ctr",
-                  "value": 0,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "query": "acciones de cardano"
-                  }
-                },
-                {
-                  "name": "position",
-                  "value": 2.93,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "query": "acciones de cardano"
-                  }
-                },
-                {
-                  "name": "clicks",
-                  "value": 143,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "page": "https://criptan.com/"
-                  }
-                },
-                {
-                  "name": "impressions",
-                  "value": 1534,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "page": "https://criptan.com/"
-                  }
-                },
-                {
-                  "name": "ctr",
-                  "value": 9.32,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "page": "https://criptan.com/"
-                  }
-                },
-                {
-                  "name": "position",
-                  "value": 7.88,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "page": "https://criptan.com/"
-                  }
-                },
-                {
-                  "name": "clicks",
-                  "value": 4,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "page": "https://criptan.com/equipo/"
-                  }
-                },
-                {
-                  "name": "impressions",
-                  "value": 95,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "page": "https://criptan.com/equipo/"
-                  }
-                },
-                {
-                  "name": "ctr",
-                  "value": 4.21,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "page": "https://criptan.com/equipo/"
-                  }
-                },
-                {
-                  "name": "position",
-                  "value": 1.81,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "page": "https://criptan.com/equipo/"
-                  }
-                },
-                {
-                  "name": "clicks",
-                  "value": 2,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "page": "https://criptan.com/aprende/como-gana-dinero-criptan/"
-                  }
-                },
-                {
-                  "name": "impressions",
-                  "value": 210,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "page": "https://criptan.com/aprende/como-gana-dinero-criptan/"
-                  }
-                },
-                {
-                  "name": "ctr",
-                  "value": 0.95,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "page": "https://criptan.com/aprende/como-gana-dinero-criptan/"
-                  }
-                },
-                {
-                  "name": "position",
-                  "value": 2,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "page": "https://criptan.com/aprende/como-gana-dinero-criptan/"
-                  }
-                },
-                {
-                  "name": "clicks",
-                  "value": 2,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "page": "https://criptan.com/atencion-al-cliente/"
-                  }
-                },
-                {
-                  "name": "impressions",
-                  "value": 166,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "page": "https://criptan.com/atencion-al-cliente/"
-                  }
-                },
-                {
-                  "name": "ctr",
-                  "value": 1.2,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "page": "https://criptan.com/atencion-al-cliente/"
-                  }
-                },
-                {
-                  "name": "position",
-                  "value": 1.37,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "page": "https://criptan.com/atencion-al-cliente/"
-                  }
-                },
-                {
-                  "name": "clicks",
-                  "value": 2,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "page": "https://criptan.com/earn/"
-                  }
-                },
-                {
-                  "name": "impressions",
-                  "value": 34,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "page": "https://criptan.com/earn/"
-                  }
-                },
-                {
-                  "name": "ctr",
-                  "value": 5.88,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "page": "https://criptan.com/earn/"
-                  }
-                },
-                {
-                  "name": "position",
-                  "value": 3.44,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "page": "https://criptan.com/earn/"
-                  }
-                },
-                {
-                  "name": "clicks",
-                  "value": 1,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "page": "https://app.criptan.com/"
-                  }
-                },
-                {
-                  "name": "impressions",
-                  "value": 28,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "page": "https://app.criptan.com/"
-                  }
-                },
-                {
-                  "name": "ctr",
-                  "value": 3.57,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "page": "https://app.criptan.com/"
-                  }
-                },
-                {
-                  "name": "position",
-                  "value": 1.89,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "page": "https://app.criptan.com/"
-                  }
-                },
-                {
-                  "name": "clicks",
-                  "value": 1,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "page": "https://criptan.com/aprende/analisis-mercado-febrero-2026/"
-                  }
-                },
-                {
-                  "name": "impressions",
-                  "value": 15,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "page": "https://criptan.com/aprende/analisis-mercado-febrero-2026/"
-                  }
-                },
-                {
-                  "name": "ctr",
-                  "value": 6.67,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "page": "https://criptan.com/aprende/analisis-mercado-febrero-2026/"
-                  }
-                },
-                {
-                  "name": "position",
-                  "value": 5.2,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "page": "https://criptan.com/aprende/analisis-mercado-febrero-2026/"
-                  }
-                },
-                {
-                  "name": "clicks",
-                  "value": 1,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "page": "https://criptan.com/aprende/category/novedades/"
-                  }
-                },
-                {
-                  "name": "impressions",
-                  "value": 2,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "page": "https://criptan.com/aprende/category/novedades/"
-                  }
-                },
-                {
-                  "name": "ctr",
+                  "name": "kyc_completed",
                   "value": 50,
-                  "date": "2026-03-26",
+                  "date": "2026-03-30",
                   "dimensions": {
-                    "page": "https://criptan.com/aprende/category/novedades/"
+                    "source": "manual"
                   }
                 },
                 {
-                  "name": "position",
-                  "value": 5.5,
-                  "date": "2026-03-26",
+                  "name": "first_deposit",
+                  "value": 40,
+                  "date": "2026-03-30",
                   "dimensions": {
-                    "page": "https://criptan.com/aprende/category/novedades/"
+                    "source": "manual"
                   }
                 },
                 {
-                  "name": "clicks",
-                  "value": 1,
-                  "date": "2026-03-26",
+                  "name": "amount_deposited_eur",
+                  "value": 135000,
+                  "date": "2026-03-30",
                   "dimensions": {
-                    "page": "https://criptan.com/aprende/el-70-de-los-inversores-no-sabe-como-declarar-sus-criptomonedas/"
+                    "source": "manual"
                   }
                 },
                 {
-                  "name": "impressions",
-                  "value": 15,
-                  "date": "2026-03-26",
+                  "name": "semana_del",
+                  "value": 2026,
+                  "date": "2026-03-30",
                   "dimensions": {
-                    "page": "https://criptan.com/aprende/el-70-de-los-inversores-no-sabe-como-declarar-sus-criptomonedas/"
+                    "source": "manual"
                   }
                 },
                 {
-                  "name": "ctr",
-                  "value": 6.67,
-                  "date": "2026-03-26",
+                  "name": "signups",
+                  "value": 100,
+                  "date": "2026-03-30",
                   "dimensions": {
-                    "page": "https://criptan.com/aprende/el-70-de-los-inversores-no-sabe-como-declarar-sus-criptomonedas/"
+                    "source": "manual"
                   }
                 },
                 {
-                  "name": "position",
-                  "value": 6.87,
-                  "date": "2026-03-26",
+                  "name": "kyc_completed",
+                  "value": 50,
+                  "date": "2026-03-30",
                   "dimensions": {
-                    "page": "https://criptan.com/aprende/el-70-de-los-inversores-no-sabe-como-declarar-sus-criptomonedas/"
+                    "source": "manual"
                   }
                 },
                 {
-                  "name": "clicks",
-                  "value": 1,
-                  "date": "2026-03-26",
+                  "name": "first_deposit",
+                  "value": 40,
+                  "date": "2026-03-30",
                   "dimensions": {
-                    "page": "https://criptan.com/aprende/el-ecosistema-cripto-vive-una-semana-de-cambios-clave/"
+                    "source": "manual"
                   }
                 },
                 {
-                  "name": "impressions",
-                  "value": 6,
-                  "date": "2026-03-26",
+                  "name": "amount_deposited_eur",
+                  "value": 135000,
+                  "date": "2026-03-30",
                   "dimensions": {
-                    "page": "https://criptan.com/aprende/el-ecosistema-cripto-vive-una-semana-de-cambios-clave/"
+                    "source": "manual"
                   }
                 },
                 {
-                  "name": "ctr",
-                  "value": 16.67,
-                  "date": "2026-03-26",
+                  "name": "semana_del",
+                  "value": 2026,
+                  "date": "2026-03-30",
                   "dimensions": {
-                    "page": "https://criptan.com/aprende/el-ecosistema-cripto-vive-una-semana-de-cambios-clave/"
+                    "source": "manual"
                   }
                 },
                 {
-                  "name": "position",
-                  "value": 8.83,
-                  "date": "2026-03-26",
+                  "name": "signups",
+                  "value": 100,
+                  "date": "2026-03-30",
                   "dimensions": {
-                    "page": "https://criptan.com/aprende/el-ecosistema-cripto-vive-una-semana-de-cambios-clave/"
+                    "source": "manual"
                   }
                 },
                 {
-                  "name": "clicks",
-                  "value": 1,
-                  "date": "2026-03-26",
+                  "name": "kyc_completed",
+                  "value": 50,
+                  "date": "2026-03-30",
                   "dimensions": {
-                    "page": "https://criptan.com/aprende/how-does-criptan-make-money/?lang=en"
+                    "source": "manual"
                   }
                 },
                 {
-                  "name": "impressions",
-                  "value": 110,
-                  "date": "2026-03-26",
+                  "name": "first_deposit",
+                  "value": 40,
+                  "date": "2026-03-30",
                   "dimensions": {
-                    "page": "https://criptan.com/aprende/how-does-criptan-make-money/?lang=en"
+                    "source": "manual"
                   }
                 },
                 {
-                  "name": "ctr",
-                  "value": 0.91,
-                  "date": "2026-03-26",
+                  "name": "amount_deposited_eur",
+                  "value": 135000,
+                  "date": "2026-03-30",
                   "dimensions": {
-                    "page": "https://criptan.com/aprende/how-does-criptan-make-money/?lang=en"
+                    "source": "manual"
                   }
                 },
                 {
-                  "name": "position",
-                  "value": 3.42,
-                  "date": "2026-03-26",
+                  "name": "semana_del",
+                  "value": 2026,
+                  "date": "2026-03-30",
                   "dimensions": {
-                    "page": "https://criptan.com/aprende/how-does-criptan-make-money/?lang=en"
+                    "source": "manual"
                   }
                 },
                 {
-                  "name": "clicks",
-                  "value": 1,
-                  "date": "2026-03-26",
+                  "name": "signups",
+                  "value": 100,
+                  "date": "2026-03-30",
                   "dimensions": {
-                    "page": "https://criptan.com/aprende/invertir-en-criptomonedas/"
+                    "source": "manual"
                   }
                 },
                 {
-                  "name": "impressions",
-                  "value": 135,
-                  "date": "2026-03-26",
+                  "name": "kyc_completed",
+                  "value": 50,
+                  "date": "2026-03-30",
                   "dimensions": {
-                    "page": "https://criptan.com/aprende/invertir-en-criptomonedas/"
+                    "source": "manual"
                   }
                 },
                 {
-                  "name": "ctr",
-                  "value": 0.74,
-                  "date": "2026-03-26",
+                  "name": "first_deposit",
+                  "value": 40,
+                  "date": "2026-03-30",
                   "dimensions": {
-                    "page": "https://criptan.com/aprende/invertir-en-criptomonedas/"
+                    "source": "manual"
                   }
                 },
                 {
-                  "name": "position",
-                  "value": 1.93,
-                  "date": "2026-03-26",
+                  "name": "amount_deposited_eur",
+                  "value": 135000,
+                  "date": "2026-03-30",
                   "dimensions": {
-                    "page": "https://criptan.com/aprende/invertir-en-criptomonedas/"
+                    "source": "manual"
                   }
                 },
                 {
-                  "name": "clicks",
-                  "value": 1,
-                  "date": "2026-03-26",
+                  "name": "semana_del",
+                  "value": 2026,
+                  "date": "2026-03-30",
                   "dimensions": {
-                    "page": "https://criptan.com/aprende/que-es-el-eurc-o-euro-coin/"
+                    "source": "manual"
                   }
                 },
                 {
-                  "name": "impressions",
-                  "value": 205,
-                  "date": "2026-03-26",
+                  "name": "semana_del",
+                  "value": 2026,
+                  "date": "2026-03-30",
                   "dimensions": {
-                    "page": "https://criptan.com/aprende/que-es-el-eurc-o-euro-coin/"
+                    "source": "manual"
                   }
                 },
                 {
-                  "name": "ctr",
-                  "value": 0.49,
-                  "date": "2026-03-26",
+                  "name": "semana_del",
+                  "value": 2026,
+                  "date": "2026-03-30",
                   "dimensions": {
-                    "page": "https://criptan.com/aprende/que-es-el-eurc-o-euro-coin/"
+                    "source": "manual"
                   }
                 },
                 {
-                  "name": "position",
-                  "value": 4.92,
-                  "date": "2026-03-26",
+                  "name": "semana_del",
+                  "value": 2026,
+                  "date": "2026-03-30",
                   "dimensions": {
-                    "page": "https://criptan.com/aprende/que-es-el-eurc-o-euro-coin/"
+                    "source": "manual"
                   }
                 },
                 {
-                  "name": "clicks",
-                  "value": 1,
-                  "date": "2026-03-26",
+                  "name": "semana_del",
+                  "value": 2026,
+                  "date": "2026-03-30",
                   "dimensions": {
-                    "page": "https://criptan.com/aprende/sacar-rentabilidad-dinero-con-criptan/"
+                    "source": "manual"
                   }
                 },
                 {
-                  "name": "impressions",
-                  "value": 58,
-                  "date": "2026-03-26",
+                  "name": "semana_del",
+                  "value": 2026,
+                  "date": "2026-03-30",
                   "dimensions": {
-                    "page": "https://criptan.com/aprende/sacar-rentabilidad-dinero-con-criptan/"
+                    "source": "manual"
                   }
-                },
-                {
-                  "name": "ctr",
-                  "value": 1.72,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "page": "https://criptan.com/aprende/sacar-rentabilidad-dinero-con-criptan/"
-                  }
-                },
-                {
-                  "name": "position",
-                  "value": 3.31,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "page": "https://criptan.com/aprende/sacar-rentabilidad-dinero-con-criptan/"
-                  }
-                },
-                {
-                  "name": "clicks",
-                  "value": 1,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "page": "https://criptan.com/aprende/usdc-que-es-para-que-sirve-y-que-ventajas-tiene/"
-                  }
-                },
-                {
-                  "name": "impressions",
-                  "value": 1555,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "page": "https://criptan.com/aprende/usdc-que-es-para-que-sirve-y-que-ventajas-tiene/"
-                  }
-                },
-                {
-                  "name": "ctr",
-                  "value": 0.06,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "page": "https://criptan.com/aprende/usdc-que-es-para-que-sirve-y-que-ventajas-tiene/"
-                  }
-                },
-                {
-                  "name": "position",
-                  "value": 8.16,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "page": "https://criptan.com/aprende/usdc-que-es-para-que-sirve-y-que-ventajas-tiene/"
-                  }
-                },
-                {
-                  "name": "clicks",
-                  "value": 1,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "page": "https://criptan.com/personal/"
-                  }
-                },
-                {
-                  "name": "impressions",
-                  "value": 192,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "page": "https://criptan.com/personal/"
-                  }
-                },
-                {
-                  "name": "ctr",
-                  "value": 0.52,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "page": "https://criptan.com/personal/"
-                  }
-                },
-                {
-                  "name": "position",
-                  "value": 1.68,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "page": "https://criptan.com/personal/"
-                  }
-                },
-                {
-                  "name": "clicks",
-                  "value": 1,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "page": "https://criptan.com/personal/?lang=en"
-                  }
-                },
-                {
-                  "name": "impressions",
-                  "value": 99,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "page": "https://criptan.com/personal/?lang=en"
-                  }
-                },
-                {
-                  "name": "ctr",
-                  "value": 1.01,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "page": "https://criptan.com/personal/?lang=en"
-                  }
-                },
-                {
-                  "name": "position",
-                  "value": 3.73,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "page": "https://criptan.com/personal/?lang=en"
-                  }
-                },
-                {
-                  "name": "clicks",
-                  "value": 1,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "page": "https://criptan.com/savings/"
-                  }
-                },
-                {
-                  "name": "impressions",
-                  "value": 11,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "page": "https://criptan.com/savings/"
-                  }
-                },
-                {
-                  "name": "ctr",
-                  "value": 9.09,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "page": "https://criptan.com/savings/"
-                  }
-                },
-                {
-                  "name": "position",
-                  "value": 9.36,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "page": "https://criptan.com/savings/"
-                  }
-                },
-                {
-                  "name": "clicks",
-                  "value": 1,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "page": "https://criptan.com/terminos-y-condiciones-earn/?lang=en"
-                  }
-                },
-                {
-                  "name": "impressions",
-                  "value": 47,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "page": "https://criptan.com/terminos-y-condiciones-earn/?lang=en"
-                  }
-                },
-                {
-                  "name": "ctr",
-                  "value": 2.13,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "page": "https://criptan.com/terminos-y-condiciones-earn/?lang=en"
-                  }
-                },
-                {
-                  "name": "position",
-                  "value": 5.21,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "page": "https://criptan.com/terminos-y-condiciones-earn/?lang=en"
-                  }
-                },
-                {
-                  "name": "clicks",
-                  "value": 1,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "page": "https://criptan.com/terminos-y-condiciones/"
-                  }
-                },
-                {
-                  "name": "impressions",
-                  "value": 33,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "page": "https://criptan.com/terminos-y-condiciones/"
-                  }
-                },
-                {
-                  "name": "ctr",
-                  "value": 3.03,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "page": "https://criptan.com/terminos-y-condiciones/"
-                  }
-                },
-                {
-                  "name": "position",
-                  "value": 2.24,
-                  "date": "2026-03-26",
-                  "dimensions": {
-                    "page": "https://criptan.com/terminos-y-condiciones/"
-                  }
-                }
-              ]
-            },
-            "pagespeed": {
-              "status": "ok",
-              "metrics": [
-                {
-                  "name": "performance_mobile",
-                  "value": 37,
-                  "date": "2026-03-30"
-                },
-                {
-                  "name": "seo_mobile",
-                  "value": 92,
-                  "date": "2026-03-30"
-                },
-                {
-                  "name": "performance_desktop",
-                  "value": 64,
-                  "date": "2026-03-30"
-                },
-                {
-                  "name": "seo_desktop",
-                  "value": 92,
-                  "date": "2026-03-30"
-                },
-                {
-                  "name": "lcp_mobile",
-                  "value": 10.9,
-                  "date": "2026-03-30"
-                },
-                {
-                  "name": "cls_mobile",
-                  "value": 0.177,
-                  "date": "2026-03-30"
-                },
-                {
-                  "name": "tbt_mobile",
-                  "value": 694,
-                  "date": "2026-03-30"
                 }
               ]
             }
           },
-          "_date": "2026-03-30"
+          "_date": "2026-03-31"
         }
       },
       "dealcar": {
@@ -6306,9 +5193,12 @@ const MC_DATA = {
             "name": "SEO Blog B2B — Pivotar contenido a dealers",
             "status": "active",
             "created": "2026-03-26",
-            "strategic_plan_version": 1,
-            "origin": "strategic-plan",
             "review_date": "2026-04-26",
+            "origin": {
+              "type": "strategic-plan",
+              "version": 1,
+              "detail": "Blog actual orientado B2C. Pivotar a contenido B2B para captar dealers."
+            },
             "objective": {
               "description": "Rankear top 10 para keywords de software concesionario y generar leads orgánicos",
               "metric": "keywords_top_10",
@@ -6400,9 +5290,12 @@ const MC_DATA = {
             "name": "Founder-Led LinkedIn — Carlos Horno",
             "status": "active",
             "created": "2026-03-26",
-            "strategic_plan_version": 1,
-            "origin": "strategic-plan",
             "review_date": "2026-04-26",
+            "origin": {
+              "type": "strategic-plan",
+              "version": 1,
+              "detail": "Carlos ya tiene 9K seguidores y publica. Estructurar cadencia + DMs warm."
+            },
             "objective": {
               "description": "Generar pipeline orgánico desde LinkedIn con contenido + DMs warm",
               "metric": "qualified_calls_per_week",
@@ -6466,9 +5359,12 @@ const MC_DATA = {
             "name": "Resolver gaps analytics (GA4 + GSC)",
             "status": "active",
             "created": "2026-03-26",
-            "strategic_plan_version": 1,
-            "origin": "strategic-plan",
             "review_date": "2026-04-02",
+            "origin": {
+              "type": "strategic-plan",
+              "version": 1,
+              "detail": "Gap crítico: sin analytics no se puede medir nada del plan."
+            },
             "objective": {
               "description": "Tener GA4 y GSC conectados y midiendo tráfico + conversiones",
               "metric": "analytics_connected",
@@ -6806,14 +5702,8 @@ const MC_DATA = {
         "projects": [
           {
             "id": "P00-Fast-Foundation",
-            "slug": "Fast-Foundation",
+            "slug": "P00-Fast-Foundation-Fast-Foundation",
             "name": "Fast Foundation (L0-L1)",
-            "strategy": "Foundation — Layer 0-1",
-            "status": "completed",
-            "phase": -1,
-            "category": "foundation",
-            "created_at": "2026-03-15T00:00:00Z",
-            "review_date": null,
             "description": "Foundation rápida pre-ejecución. Suficiente para empezar a ejecutar canales básicos sin bloquearse en research largo.",
             "approach": "Completar Company Context (L0) para entender el negocio y Business Model Audit para mapear el funnel actual. Luego ejecutar Niche Discovery 100x (L1) para identificar los ECPs prioritarios. Sin research de mercado profundo — se hace en Full Foundation.",
             "objective": {
@@ -6824,6 +5714,10 @@ const MC_DATA = {
               "unit": " pillars"
             },
             "origin": "onboarding",
+            "phase": -1,
+            "category": "foundation",
+            "review_date": null,
+            "status": "completed",
             "discord": {
               "project_thread_id": null
             },
@@ -6845,14 +5739,8 @@ const MC_DATA = {
           },
           {
             "id": "P00-Full-Foundation",
-            "slug": "Full-Foundation",
+            "slug": "P00-Full-Foundation-Full-Foundation",
             "name": "Full Foundation (L0-L5)",
-            "strategy": "Foundation — Layer 0-5",
-            "status": "completed",
-            "phase": -1,
-            "category": "foundation",
-            "created_at": "2026-03-15T00:00:00Z",
-            "review_date": null,
             "description": "Foundation completa con análisis profundo de mercado, competencia, posicionamiento y brand voice. Necesaria para contenido premium, brand building y escalado de canales.",
             "approach": "Tras Fast Foundation, ejecutamos Market Intelligence (L2) para entender el mercado, Competitor Intelligence para mapear rivales, Self Intelligence para analizar fortalezas propias, y SWOT para sintetizar. Luego Positioning (L3) para definir cómo nos diferenciamos, Pricing Strategy y Metrics Plan (L4). Finalmente Brand Voice (L5) para contenido consistente y Visual Identity para diseño.",
             "objective": {
@@ -6863,6 +5751,10 @@ const MC_DATA = {
               "unit": " pillars"
             },
             "origin": "onboarding",
+            "phase": -1,
+            "category": "foundation",
+            "review_date": null,
+            "status": "completed",
             "discord": {
               "project_thread_id": null
             },
@@ -7051,13 +5943,8 @@ const MC_DATA = {
           },
           {
             "id": "P00-Metrics",
+            "slug": "P00-Metrics-Metrics-and-Connections",
             "name": "Métricas y Conexiones",
-            "status": "todo",
-            "slug": "Metrics-and-Connections",
-            "strategy": "Foundation — Metrics Layer",
-            "phase": -1,
-            "category": "foundation",
-            "created_at": "2026-03-28T00:00:00Z",
             "description": "Configurar métricas de adquisición, conectar APIs de tracking y generar dashboard de rendimiento.",
             "approach": "Tras Full Foundation, definimos las métricas clave de adquisición por canal. Conectamos APIs (analytics, CRM, ads). Generamos dashboard unificado para tracking ongoing.",
             "objective": {
@@ -7068,7 +5955,11 @@ const MC_DATA = {
               "unit": ""
             },
             "origin": "onboarding",
+            "phase": -1,
+            "category": "foundation",
             "review_date": null,
+            "status": "todo",
+            "strategy": "Foundation — Metrics Layer",
             "tasks": [
               {
                 "id": "P00-MET-T01",
@@ -7078,27 +5969,122 @@ const MC_DATA = {
                 "done_criteria": "Métricas definidas y aprobadas por el cliente.",
                 "depends_on": "P00-FUL-T08",
                 "owner": "Sancho",
-                "status": "todo",
+                "status": "done",
                 "channel": "intelligence",
                 "type": "foundation",
                 "skill": "metrics-setup",
                 "pillar": "metrics-setup",
                 "section": "metrics-setup",
+                "completed": "2026-03-29T05:48:31Z",
+                "output_files": [
+                  "brand/growth4u/go-to-market/metrics-plan.md",
+                  "brand/growth4u/metrics-plan.json"
+                ]
+              },
+              {
+                "id": "P00-MET-T02",
+                "name": "Activar pipeline GHL — mover leads por stages",
+                "description": "Los 3 pipelines GHL (Closer, Sales, Setter) tienen todos los stages a 0. Los contactos entran pero no se mueven. Activar automations o definir proceso manual.",
+                "deliverable": "Pipeline GHL operativo con leads moviéndose por stages.",
+                "done_criteria": "Al menos 1 pipeline tiene leads en stages distintos a 'New'. CR Lead→Agenda calculable.",
+                "depends_on": "P00-MET-T01",
+                "owner": "Alfonso",
+                "status": "todo",
+                "channel": "intelligence",
+                "type": "ops",
+                "priority": "P0",
                 "completed": null,
                 "output_files": []
+              },
+              {
+                "id": "P00-MET-T03",
+                "name": "Identificar URL calendario + trackear en GA4",
+                "description": "No hay datos de visitas al calendario en GA4. Identificar URL del calendario y configurar tracking como evento.",
+                "deliverable": "Evento calendar_view configurado en GA4 con datos fluyendo.",
+                "done_criteria": "GA4 muestra visitas a la página de calendario.",
+                "depends_on": "P00-MET-T01",
+                "owner": "Alfonso",
+                "status": "todo",
+                "channel": "intelligence",
+                "type": "ops",
+                "priority": "P0",
+                "completed": null,
+                "output_files": []
+              },
+              {
+                "id": "P00-MET-T04",
+                "name": "Configurar eventos de conversión en GA4",
+                "description": "GA4 conversions = 0. Configurar eventos: calendar_view, lead_form_submit, lead_magnet_download.",
+                "deliverable": "3 eventos de conversión activos en GA4.",
+                "done_criteria": "Eventos disparándose y visibles en GA4 > Events > Conversions.",
+                "depends_on": "P00-MET-T03",
+                "owner": "Alfonso",
+                "status": "todo",
+                "channel": "intelligence",
+                "type": "ops",
+                "priority": "P1",
+                "completed": null,
+                "output_files": []
+              },
+              {
+                "id": "P00-MET-T05",
+                "name": "Segmentar tráfico GA4 por fuente (paid vs orgánico)",
+                "description": "Separar sessions por source/medium para atribución correcta por camino.",
+                "deliverable": "Segmentos configurados en GA4/metrics para separar tráfico.",
+                "done_criteria": "Dashboard semanal muestra tráfico separado por fuente.",
+                "depends_on": "P00-MET-T04",
+                "owner": "Sancho",
+                "status": "todo",
+                "channel": "intelligence",
+                "type": "ops",
+                "priority": "P1",
+                "completed": null,
+                "output_files": []
+              },
+              {
+                "id": "P00-MET-T06",
+                "name": "Dashboard visual automático semanal",
+                "description": "Dashboard que genere automáticamente: spend, leads, CPL, agendas, sesiones web, top páginas, mejor ángulo creativo.",
+                "deliverable": "Dashboard semanal generado automáticamente con gráficas.",
+                "done_criteria": "Dashboard se genera cada lunes con datos de la semana anterior.",
+                "depends_on": "P00-MET-T05",
+                "owner": "Sancho",
+                "status": "todo",
+                "channel": "intelligence",
+                "type": "ops",
+                "priority": "P2",
+                "completed": null,
+                "output_files": []
+              },
+              {
+                "id": "P00-MET-T07",
+                "name": "Conectar Instantly (outreach/cold email tracking)",
+                "description": "Integración pendiente para cerrar tracking del camino de outreach directo.",
+                "deliverable": "Instantly conectado en integrations.json con datos fluyendo.",
+                "done_criteria": "Métricas de cold email (sent, opened, replied) disponibles en metrics diarios.",
+                "depends_on": "P00-MET-T01",
+                "owner": "Alfonso",
+                "status": "todo",
+                "channel": "intelligence",
+                "type": "integration",
+                "priority": "P1",
+                "completed": null,
+                "output_files": []
+              },
+              {
+                "id": "P00-Metrics-T08",
+                "name": "Investigate Mar 30 contact spike (25 contacts)",
+                "description": "25 new contacts on a single day = 3.4x average. Determine if replicable.\n\n**Accion sugerida:** ",
+                "status": "todo",
+                "source": "performance-analysis",
+                "created_at": "2026-04-01T12:31:48.215Z"
               }
             ]
           },
           {
             "id": "P00-Strategic-Plan",
-            "slug": "Strategic-Plan",
+            "slug": "P00-Strategic-Plan-Strategic-Plan",
             "name": "Strategic Plan",
-            "strategy": "Foundation — Strategic Planning",
-            "status": "active",
-            "phase": -1,
-            "category": "foundation",
-            "created_at": "2026-03-22T00:00:00Z",
-            "review_date": "2026-06-30",
             "description": "Creación y ejecución del plan estratégico completo: análisis SWOT, priorización de canales, roadmap de proyectos y KPIs.",
             "approach": "Tras Full Foundation, sintetizamos todo el contexto en un SWOT ejecutivo. Priorizamos canales (Outreach, Contenido, Partners, Ads) según ajuste al ICP y recursos. Creamos roadmap de proyectos con fases 0-3. Definimos métricas de éxito. Ejecutamos los proyectos del plan.",
             "objective": {
@@ -7109,6 +6095,10 @@ const MC_DATA = {
               "unit": ""
             },
             "origin": "onboarding",
+            "phase": -1,
+            "category": "foundation",
+            "review_date": "2026-06-30",
+            "status": "active",
             "documents": [
               {
                 "name": "Strategic Plan Q2 2026",
@@ -7166,13 +6156,8 @@ const MC_DATA = {
           },
           {
             "id": "P01",
-            "slug": "fontaneria",
+            "slug": "P01-fontaneria",
             "name": "Fontanería Web",
-            "strategy": "Fase 0 — Prerequisites",
-            "status": "active",
-            "phase": 0,
-            "created_at": "2026-03-14T20:03:00Z",
-            "review_date": "2026-03-28",
             "description": "La web de Growth4U no tiene tracking de conversiones, la página de servicios está vacía, y hay dos URLs de booking diferentes. Sin resolver esto, no podemos medir resultados de ningún canal ni lanzar ads con ROI medible.",
             "approach": "Instalamos Meta Pixel + GA4 para medir conversiones en los puntos clave del funnel. Unificamos el booking en una sola URL branded. Creamos el hub de /servicios/ con copy persuasivo para los 3 servicios. Aplicamos fixes técnicos menores (copyright, OG, llms.txt). Y calentamos dominios para cold email en paralelo.",
             "objective": {
@@ -7195,6 +6180,10 @@ const MC_DATA = {
               }
             },
             "origin": "strategic-plan-v2",
+            "phase": 0,
+            "strategy": "Fase 0 — Prerequisites",
+            "review_date": "2026-03-28",
+            "status": "active",
             "discord": {
               "project_thread_id": "1482771762566664252"
             },
@@ -7282,18 +6271,26 @@ const MC_DATA = {
                 "discord_thread_id": "1482640165443866634",
                 "type": "outreach",
                 "skill": "outreach-sequence-builder"
+              },
+              {
+                "id": "P01-fontaneria-T07",
+                "name": "Fix website engagement — bounce rate at 100%",
+                "description": "Multiple days with 100% bounce rate and 0% engagement rate. Leaking paid traffic.\n\n**Accion sugerida:** ",
+                "status": "in-progress",
+                "source": "performance-analysis",
+                "created_at": "2026-04-01T08:56:30.323Z",
+                "type": "execution",
+                "deliverable": "",
+                "done_criteria": "",
+                "channel": "",
+                "owner": "Sancho"
               }
             ]
           },
           {
             "id": "P02",
-            "slug": "linkedin-pipeline",
+            "slug": "P02-linkedin-pipeline",
             "name": "LinkedIn Pipeline (3 perfiles)",
-            "strategy": "#30 Founder-Led GTM",
-            "status": "active",
-            "phase": 1,
-            "created_at": "2026-03-14T20:03:00Z",
-            "review_date": "2026-04-25",
             "objective": "Generar calls cualificadas desde LinkedIn con 3 perfiles coordinados",
             "metrics": {
               "baseline": {
@@ -7329,6 +6326,10 @@ const MC_DATA = {
               ]
             },
             "origin": "strategic-plan-v2",
+            "strategy": "#30",
+            "phase": 1,
+            "review_date": "2026-04-25",
+            "status": "active",
             "discord": {
               "project_thread_id": "1482771865390026870"
             },
@@ -7399,13 +6400,8 @@ const MC_DATA = {
           },
           {
             "id": "P03",
-            "slug": "cold-email",
+            "slug": "P03-cold-email",
             "name": "Cold Email Pipeline",
-            "strategy": "#01 ICP List B2B Outreach",
-            "status": "active",
-            "phase": 1,
-            "created_at": "2026-03-14T20:03:00Z",
-            "review_date": "2026-05-09",
             "objective": "Generar meetings cualificados desde cold email (Instantly)",
             "metrics": {
               "baseline": {
@@ -7424,6 +6420,10 @@ const MC_DATA = {
               "ECP2-regulacion"
             ],
             "origin": "strategic-plan-v2",
+            "strategy": "#01",
+            "phase": 1,
+            "review_date": "2026-05-09",
+            "status": "active",
             "discord": {
               "project_thread_id": "1482771981207081116"
             },
@@ -7501,14 +6501,8 @@ const MC_DATA = {
           },
           {
             "id": "P04",
-            "slug": "meta-ads",
+            "slug": "P04-meta-ads",
             "name": "Meta Ads Reactivación",
-            "strategy": "#27 Paid Ads",
-            "status": "blocked",
-            "blocked_by": "P01",
-            "phase": 1,
-            "created_at": "2026-03-14T20:03:00Z",
-            "review_date": "2026-05-09",
             "objective": "Pipeline desde Meta Ads con tracking funcional",
             "metrics": {
               "baseline": {
@@ -7520,7 +6514,12 @@ const MC_DATA = {
                 "demo_rate": 0.1
               }
             },
+            "blocked_by": "P01",
             "origin": "strategic-plan-v2",
+            "strategy": "#27",
+            "phase": 1,
+            "review_date": "2026-05-09",
+            "status": "blocked",
             "discord": {
               "project_thread_id": "1482772069484728391"
             },
@@ -7578,13 +6577,8 @@ const MC_DATA = {
           },
           {
             "id": "P05",
-            "slug": "social-proof",
+            "slug": "P05-social-proof",
             "name": "Social Proof & Reviews",
-            "strategy": "#05 Customer Advocacy",
-            "status": "active",
-            "phase": 0,
-            "created_at": "2026-03-14T20:03:00Z",
-            "review_date": "2026-04-11",
             "objective": "Construir social proof verificable (resolver W1 SWOT)",
             "metrics": {
               "baseline": {
@@ -7597,6 +6591,10 @@ const MC_DATA = {
               }
             },
             "origin": "strategic-plan-v2",
+            "strategy": "#05",
+            "phase": 0,
+            "review_date": "2026-04-11",
+            "status": "active",
             "discord": {
               "project_thread_id": "1482772163449851986"
             },
@@ -7651,13 +6649,8 @@ const MC_DATA = {
           },
           {
             "id": "P06",
-            "slug": "free-media",
+            "slug": "P06-free-media",
             "name": "Free Media & Directories",
-            "strategy": "#23 Free Media & Directory Listings",
-            "status": "active",
-            "phase": 1,
-            "created_at": "2026-03-14T20:03:00Z",
-            "review_date": "2026-05-09",
             "objective": "Presencia en directorios + guest posts + apariciones podcasts",
             "metrics": {
               "baseline": {
@@ -7674,6 +6667,10 @@ const MC_DATA = {
               }
             },
             "origin": "strategic-plan-v2",
+            "strategy": "#23",
+            "phase": 1,
+            "review_date": "2026-05-09",
+            "status": "active",
             "discord": {
               "project_thread_id": "1482772251010138155"
             },
@@ -7756,13 +6753,8 @@ const MC_DATA = {
           },
           {
             "id": "P07",
-            "slug": "social-content",
+            "slug": "P07-social-content",
             "name": "Social Content (IG + TikTok)",
-            "strategy": "#32 Social SEO",
-            "status": "active",
-            "phase": 1,
-            "created_at": "2026-03-14T20:03:00Z",
-            "review_date": "2026-06-13",
             "objective": "Awareness en Instagram y TikTok con contenido educativo de growth",
             "metrics": {
               "baseline": {
@@ -7781,6 +6773,10 @@ const MC_DATA = {
               "tiktok": "TBD"
             },
             "origin": "strategic-plan-v2",
+            "strategy": "#32",
+            "phase": 1,
+            "review_date": "2026-06-13",
+            "status": "active",
             "discord": {
               "project_thread_id": "1482772350117089493"
             },
@@ -7882,13 +6878,8 @@ const MC_DATA = {
           },
           {
             "id": "P08",
-            "slug": "twitter",
+            "slug": "P08-twitter",
             "name": "Twitter/X Build-in-Public",
-            "strategy": "Twitter/X Reactivation",
-            "status": "active",
-            "phase": 1,
-            "created_at": "2026-03-14T20:03:00Z",
-            "review_date": "2026-06-13",
             "objective": "Reactivar @AlfonsoSB con estrategia build-in-public",
             "metrics": {
               "baseline": {
@@ -7902,6 +6893,10 @@ const MC_DATA = {
             },
             "account": "@AlfonsoSB",
             "origin": "strategic-plan-v2",
+            "strategy": "Twitter/X BIP",
+            "phase": 1,
+            "review_date": "2026-06-13",
+            "status": "active",
             "discord": {
               "project_thread_id": "1482772461341901115"
             },
@@ -65739,6 +64734,46 @@ const MC_DATA = {
                   }
                 }
               ]
+            },
+            "pagespeed": {
+              "status": "ok",
+              "metrics": [
+                {
+                  "name": "performance_mobile",
+                  "value": 80,
+                  "date": "2026-03-31"
+                },
+                {
+                  "name": "seo_mobile",
+                  "value": 100,
+                  "date": "2026-03-31"
+                },
+                {
+                  "name": "performance_desktop",
+                  "value": 78,
+                  "date": "2026-03-31"
+                },
+                {
+                  "name": "seo_desktop",
+                  "value": 100,
+                  "date": "2026-03-31"
+                },
+                {
+                  "name": "lcp_mobile",
+                  "value": 4.2,
+                  "date": "2026-03-31"
+                },
+                {
+                  "name": "cls_mobile",
+                  "value": 0.007,
+                  "date": "2026-03-31"
+                },
+                {
+                  "name": "tbt_mobile",
+                  "value": 41,
+                  "date": "2026-03-31"
+                }
+              ]
             }
           },
           "_date": "2026-03-31"
@@ -67405,13 +66440,13 @@ const MC_DATA = {
   },
   "healthcheck": {
     "status": "fail",
-    "last_run": "2026-03-31T11:21:18Z",
+    "last_run": "2026-04-01T11:50:40Z",
     "summary": "20/21 ok, 1 errors",
     "failureCount": 1,
     "services": {
       "anthropic": {
         "status": "ok",
-        "lastCheck": "2026-03-31T11:21:18.170Z",
+        "lastCheck": "2026-04-01T11:50:40.115Z",
         "details": {
           "httpCode": "200"
         },
@@ -67419,7 +66454,7 @@ const MC_DATA = {
       },
       "openrouter": {
         "status": "ok",
-        "lastCheck": "2026-03-31T11:21:18.485Z",
+        "lastCheck": "2026-04-01T11:50:40.395Z",
         "details": {
           "httpCode": "200"
         },
@@ -67427,7 +66462,7 @@ const MC_DATA = {
       },
       "openai": {
         "status": "ok",
-        "lastCheck": "2026-03-31T11:21:18.856Z",
+        "lastCheck": "2026-04-01T11:50:40.610Z",
         "details": {
           "httpCode": "200"
         },
@@ -67435,7 +66470,7 @@ const MC_DATA = {
       },
       "gemini": {
         "status": "ok",
-        "lastCheck": "2026-03-31T11:21:19.870Z",
+        "lastCheck": "2026-04-01T11:50:41.439Z",
         "details": {
           "httpCode": "200"
         },
@@ -67443,7 +66478,7 @@ const MC_DATA = {
       },
       "xai": {
         "status": "ok",
-        "lastCheck": "2026-03-31T11:21:20.112Z",
+        "lastCheck": "2026-04-01T11:50:41.746Z",
         "details": {
           "httpCode": "200"
         },
@@ -67451,7 +66486,7 @@ const MC_DATA = {
       },
       "minimax": {
         "status": "ok",
-        "lastCheck": "2026-03-31T11:21:20.347Z",
+        "lastCheck": "2026-04-01T11:50:42.420Z",
         "details": {
           "note": "Key present, no lightweight verify endpoint"
         },
@@ -67459,7 +66494,7 @@ const MC_DATA = {
       },
       "brave": {
         "status": "not-configured",
-        "lastCheck": "2026-03-31T11:21:20.348Z",
+        "lastCheck": "2026-04-01T11:50:42.420Z",
         "details": {
           "error": "BRAVE_API_KEY not set"
         },
@@ -67467,7 +66502,7 @@ const MC_DATA = {
       },
       "apify": {
         "status": "ok",
-        "lastCheck": "2026-03-31T11:21:20.348Z",
+        "lastCheck": "2026-04-01T11:50:42.421Z",
         "details": {
           "username": "growth4u",
           "plan": ""
@@ -67476,7 +66511,7 @@ const MC_DATA = {
       },
       "firecrawl": {
         "status": "ok",
-        "lastCheck": "2026-03-31T11:21:21.149Z",
+        "lastCheck": "2026-04-01T11:50:43.060Z",
         "details": {
           "httpCode": "200"
         },
@@ -67484,7 +66519,7 @@ const MC_DATA = {
       },
       "serper": {
         "status": "ok",
-        "lastCheck": "2026-03-31T11:21:22.314Z",
+        "lastCheck": "2026-04-01T11:50:43.927Z",
         "details": {
           "httpCode": "200"
         },
@@ -67492,7 +66527,7 @@ const MC_DATA = {
       },
       "dataforseo": {
         "status": "ok",
-        "lastCheck": "2026-03-31T11:21:23.258Z",
+        "lastCheck": "2026-04-01T11:50:44.816Z",
         "details": {
           "httpCode": "200",
           "login": "accounts@growth4u.io"
@@ -67501,7 +66536,7 @@ const MC_DATA = {
       },
       "notion": {
         "status": "ok",
-        "lastCheck": "2026-03-31T11:21:24.262Z",
+        "lastCheck": "2026-04-01T11:50:45.538Z",
         "details": {
           "botName": "openclaw-Alfonso"
         },
@@ -67509,7 +66544,7 @@ const MC_DATA = {
       },
       "supabase": {
         "status": "ok",
-        "lastCheck": "2026-03-31T11:21:24.755Z",
+        "lastCheck": "2026-04-01T11:50:46.064Z",
         "details": {
           "httpCode": "200",
           "project": "psapmujzxhaxraphddlv"
@@ -67518,7 +66553,7 @@ const MC_DATA = {
       },
       "slack": {
         "status": "ok",
-        "lastCheck": "2026-03-31T11:21:25.126Z",
+        "lastCheck": "2026-04-01T11:50:46.452Z",
         "details": {
           "httpCode": "200"
         },
@@ -67526,7 +66561,7 @@ const MC_DATA = {
       },
       "fal": {
         "status": "ok",
-        "lastCheck": "2026-03-31T11:21:25.424Z",
+        "lastCheck": "2026-04-01T11:50:46.750Z",
         "details": {
           "note": "Key present"
         },
@@ -67534,7 +66569,7 @@ const MC_DATA = {
       },
       "wavespeed": {
         "status": "ok",
-        "lastCheck": "2026-03-31T11:21:25.425Z",
+        "lastCheck": "2026-04-01T11:50:46.751Z",
         "details": {
           "note": "Key present"
         },
@@ -67542,7 +66577,7 @@ const MC_DATA = {
       },
       "dumpling": {
         "status": "ok",
-        "lastCheck": "2026-03-31T11:21:25.425Z",
+        "lastCheck": "2026-04-01T11:50:46.751Z",
         "details": {
           "note": "Key present"
         },
@@ -67550,7 +66585,7 @@ const MC_DATA = {
       },
       "instantly": {
         "status": "not-configured",
-        "lastCheck": "2026-03-31T11:21:25.426Z",
+        "lastCheck": "2026-04-01T11:50:46.751Z",
         "details": {
           "note": "Web login — no API key in .env"
         },
@@ -67558,7 +66593,7 @@ const MC_DATA = {
       },
       "metricool": {
         "status": "not-configured",
-        "lastCheck": "2026-03-31T11:21:25.426Z",
+        "lastCheck": "2026-04-01T11:50:46.752Z",
         "details": {
           "note": "Web login — no API key in .env"
         },
@@ -67566,7 +66601,7 @@ const MC_DATA = {
       },
       "nanobanana": {
         "status": "ok",
-        "lastCheck": "2026-03-31T11:21:25.426Z",
+        "lastCheck": "2026-04-01T11:50:46.752Z",
         "details": {
           "note": "Uses Gemini API key (shared)",
           "engine": "gemini-2.0-flash-exp"
@@ -67575,7 +66610,7 @@ const MC_DATA = {
       },
       "remotion": {
         "status": "not-configured",
-        "lastCheck": "2026-03-31T11:21:25.426Z",
+        "lastCheck": "2026-04-01T11:50:46.752Z",
         "details": {
           "version": null,
           "note": "Local install"
@@ -67584,7 +66619,7 @@ const MC_DATA = {
       },
       "gog": {
         "status": "ok",
-        "lastCheck": "2026-03-31T11:21:25.441Z",
+        "lastCheck": "2026-04-01T11:50:46.770Z",
         "details": {
           "account": "alfonso@growth4u.io",
           "test": "gmail inbox"
@@ -67593,7 +66628,7 @@ const MC_DATA = {
       },
       "openclaw": {
         "status": "error",
-        "lastCheck": "2026-03-31T11:21:26.688Z",
+        "lastCheck": "2026-04-01T11:50:47.825Z",
         "details": {
           "error": "Command failed: /opt/homebrew/bin/openclaw status 2>&1"
         },
@@ -67601,7 +66636,7 @@ const MC_DATA = {
       },
       "discord": {
         "status": "ok",
-        "lastCheck": "2026-03-31T11:21:26.707Z",
+        "lastCheck": "2026-04-01T11:50:47.846Z",
         "details": {
           "httpCode": "200"
         },
@@ -67609,7 +66644,7 @@ const MC_DATA = {
       },
       "tailscale": {
         "status": "ok",
-        "lastCheck": "2026-03-31T11:21:18Z",
+        "lastCheck": "2026-04-01T11:50:40Z",
         "details": {
           "note": "tailscale status OK"
         },
@@ -67626,6 +66661,11 @@ const MC_DATA = {
     }
   },
   "integrations": {
+    "atalaya": {
+      "slug": "atalaya",
+      "services": [],
+      "costs": null
+    },
     "criptan": {
       "slug": "criptan",
       "services": [
@@ -67687,16 +66727,16 @@ const MC_DATA = {
       "costs": {
         "client": "growth4u",
         "period": "2026-03",
-        "updatedAt": "2026-03-31T08:05:25.424504",
+        "updatedAt": "2026-03-31T23:00:32.219881",
         "total_cost_usd": 392.8649,
         "total_cost_eur": 361.4357,
-        "turns": 3720,
+        "turns": 3722,
         "sessions": 53,
         "agents": {
           "sancho": {
             "cost_usd": 392.8649,
             "cost_eur": 361.4357,
-            "turns": 3720,
+            "turns": 3722,
             "sessions": 53
           }
         },
@@ -67717,7 +66757,7 @@ const MC_DATA = {
             "cache_write": 3474317,
             "cost_usd": 31.564,
             "cost_eur": 29.0389,
-            "turns": 205
+            "turns": 207
           }
         },
         "days": {
@@ -67832,6 +66872,10 @@ const MC_DATA = {
           "2026-03-30": {
             "cost_usd": 1.4829,
             "turns": 6
+          },
+          "2026-03-31": {
+            "cost_usd": 0,
+            "turns": 2
           }
         },
         "clientSpend": {
@@ -67847,10 +66891,10 @@ const MC_DATA = {
       "costs": {
         "client": "hospital-capilar",
         "period": "2026-03",
-        "updatedAt": "2026-03-31T08:05:25.424504",
+        "updatedAt": "2026-03-31T23:00:32.219881",
         "total_cost_usd": 170.9198,
         "total_cost_eur": 157.2463,
-        "turns": 1728,
+        "turns": 1730,
         "sessions": 55,
         "agents": {
           "cervantes": {
@@ -67862,7 +66906,7 @@ const MC_DATA = {
           "sancho": {
             "cost_usd": 170.9198,
             "cost_eur": 157.2463,
-            "turns": 1683,
+            "turns": 1685,
             "sessions": 46
           }
         },
@@ -67874,7 +66918,7 @@ const MC_DATA = {
             "cache_write": 16844386,
             "cost_usd": 168.3321,
             "cost_eur": 154.8655,
-            "turns": 1689
+            "turns": 1691
           },
           "claude-opus-4-6": {
             "input": 50,
@@ -67998,6 +67042,10 @@ const MC_DATA = {
           "2026-03-30": {
             "cost_usd": 0,
             "turns": 5
+          },
+          "2026-03-31": {
+            "cost_usd": 0,
+            "turns": 2
           }
         },
         "clientSpend": {
@@ -68013,7 +67061,7 @@ const MC_DATA = {
       "costs": {
         "client": "kleva",
         "period": "2026-03",
-        "updatedAt": "2026-03-31T08:05:25.424504",
+        "updatedAt": "2026-03-31T23:00:32.219881",
         "total_cost_usd": 6.8412,
         "total_cost_eur": 6.2939,
         "turns": 105,
@@ -68078,10 +67126,10 @@ const MC_DATA = {
       "costs": {
         "client": "paymatico",
         "period": "2026-03",
-        "updatedAt": "2026-03-31T08:05:25.424504",
-        "total_cost_usd": 72.7071,
-        "total_cost_eur": 66.8905,
-        "turns": 589,
+        "updatedAt": "2026-03-31T23:00:32.219881",
+        "total_cost_usd": 76.3359,
+        "total_cost_eur": 70.229,
+        "turns": 614,
         "sessions": 11,
         "agents": {
           "escudero": {
@@ -68091,9 +67139,9 @@ const MC_DATA = {
             "sessions": 1
           },
           "sancho": {
-            "cost_usd": 72.7071,
-            "cost_eur": 66.8905,
-            "turns": 586,
+            "cost_usd": 76.3359,
+            "cost_eur": 70.229,
+            "turns": 611,
             "sessions": 10
           }
         },
@@ -68108,13 +67156,13 @@ const MC_DATA = {
             "turns": 3
           },
           "claude-opus-4-6": {
-            "input": 660,
-            "output": 333205,
-            "cache_read": 46023894,
-            "cache_write": 6617869,
-            "cost_usd": 72.7071,
-            "cost_eur": 66.8905,
-            "turns": 586
+            "input": 689,
+            "output": 338918,
+            "cache_read": 50241006,
+            "cache_write": 6838244,
+            "cost_usd": 76.3359,
+            "cost_eur": 70.229,
+            "turns": 611
           }
         },
         "days": {
@@ -68157,6 +67205,10 @@ const MC_DATA = {
           "2026-03-30": {
             "cost_usd": 2.7121,
             "turns": 13
+          },
+          "2026-03-31": {
+            "cost_usd": 3.6289,
+            "turns": 25
           }
         },
         "clientSpend": {
@@ -68172,7 +67224,7 @@ const MC_DATA = {
       "costs": {
         "client": "sanchocmo",
         "period": "2026-03",
-        "updatedAt": "2026-03-31T08:05:25.424504",
+        "updatedAt": "2026-03-31T23:00:32.219881",
         "total_cost_usd": 126.2682,
         "total_cost_eur": 116.1668,
         "turns": 1339,
@@ -68272,6 +67324,7 @@ const MC_DATA = {
     }
   },
   "meetings": {
+    "atalaya": [],
     "criptan": [],
     "daily-pulse": [],
     "dealcar": [],
@@ -68804,392 +67857,109 @@ const MC_DATA = {
     }
   },
   "global_costs": {
-    "period": "2026-03",
-    "updatedAt": "2026-03-31T08:05:25.424504",
-    "total_cost_usd": 2664.6687,
-    "total_cost_eur": 2451.4952,
-    "total_turns": 25610,
-    "total_sessions": 517,
+    "period": "2026-04",
+    "updatedAt": "2026-04-01T08:45:31.918483",
+    "total_cost_usd": 0.5787,
+    "total_cost_eur": 0.5324,
+    "total_turns": 21,
+    "total_sessions": 8,
     "system": {
-      "input_tokens": 21640759,
-      "output_tokens": 3109140,
-      "cache_read": 1184164541,
-      "cache_write": 97254288,
-      "cost_usd": 1232.751,
-      "cost_eur": 1134.1309,
-      "turns": 10939,
-      "sessions": 143,
+      "input_tokens": 29,
+      "output_tokens": 1892,
+      "cache_read": 332268,
+      "cache_write": 58417,
+      "cost_usd": 0.5787,
+      "cost_eur": 0.5324,
+      "turns": 21,
+      "sessions": 8,
       "agents": {
         "cervantes": {
-          "cost_usd": 151.6497,
-          "turns": 1136,
-          "sessions": 15
-        },
-        "escudero": {
-          "cost_usd": 7.1876,
-          "turns": 86,
-          "sessions": 5
+          "cost_usd": 0.1732,
+          "turns": 4,
+          "sessions": 2
         },
         "sancho": {
-          "cost_usd": 1073.9137,
-          "turns": 9717,
-          "sessions": 123
+          "cost_usd": 0.4055,
+          "turns": 17,
+          "sessions": 6
         }
       },
       "models": {
         "claude-opus-4-6": {
-          "input": 20385706,
-          "output": 2224063,
-          "cache_read": 1001028751,
-          "cache_write": 84009960,
-          "cost_usd": 1043.5936,
-          "cost_eur": 960.1061,
-          "turns": 8006
-        },
-        "claude-sonnet-4-5": {
-          "input": 322516,
-          "output": 111192,
-          "cache_read": 8103804,
-          "cache_write": 1624484,
-          "cost_usd": 10.3061,
-          "cost_eur": 9.4816,
-          "turns": 170
-        },
-        "unknown": {
-          "input": 905326,
-          "output": 771179,
-          "cache_read": 174643250,
-          "cache_write": 11619844,
-          "cost_usd": 178.8283,
-          "cost_eur": 164.522,
-          "turns": 2747
-        },
-        "MiniMax-M2.5": {
-          "input": 27211,
-          "output": 2706,
-          "cache_read": 388736,
-          "cache_write": 0,
-          "cost_usd": 0.0231,
-          "cost_eur": 0.0212,
-          "turns": 16
+          "input": 29,
+          "output": 1892,
+          "cache_read": 332268,
+          "cache_write": 58417,
+          "cost_usd": 0.5787,
+          "cost_eur": 0.5324,
+          "turns": 21
         }
       }
     },
     "unclassified": {
-      "input_tokens": 1875667,
-      "output_tokens": 2115439,
-      "cache_read": 651670480,
-      "cache_write": 50663874,
-      "cost_usd": 662.3164,
-      "cost_eur": 609.3311,
-      "turns": 7190,
-      "sessions": 233,
-      "agents": {
-        "cervantes": {
-          "cost_usd": 0,
-          "turns": 11,
-          "sessions": 10
-        },
-        "escudero": {
-          "cost_usd": 0,
-          "turns": 30,
-          "sessions": 3
-        },
-        "main": {
-          "cost_usd": 0.3495,
-          "turns": 6,
-          "sessions": 2
-        },
-        "sancho": {
-          "cost_usd": 661.9669,
-          "turns": 7143,
-          "sessions": 218
-        }
-      },
-      "models": {
-        "unknown": {
-          "input": 29119,
-          "output": 363598,
-          "cache_read": 101031561,
-          "cache_write": 7427734,
-          "cost_usd": 105.8337,
-          "cost_eur": 97.367,
-          "turns": 1125
-        },
-        "claude-opus-4-6": {
-          "input": 1613140,
-          "output": 1727236,
-          "cache_read": 547664163,
-          "cache_write": 43139509,
-          "cost_usd": 555.3516,
-          "cost_eur": 510.9235,
-          "turns": 5981
-        },
-        "claude-sonnet-4-5": {
-          "input": 134,
-          "output": 12540,
-          "cache_read": 1505552,
-          "cache_write": 96631,
-          "cost_usd": 1.0025,
-          "cost_eur": 0.9223,
-          "turns": 34
-        },
-        "MiniMax-M2.5": {
-          "input": 233274,
-          "output": 12065,
-          "cache_read": 1469204,
-          "cache_write": 0,
-          "cost_usd": 0.1285,
-          "cost_eur": 0.1183,
-          "turns": 50
-        }
-      }
+      "cost_usd": 0,
+      "cost_eur": 0,
+      "turns": 0,
+      "sessions": 0
     },
-    "clients": {
-      "hospital-capilar": {
-        "input_tokens": 365520,
-        "output_tokens": 659986,
-        "cache_read": 104300496,
-        "cache_write": 17100600,
-        "cost_usd": 170.9198,
-        "cost_eur": 157.2463,
-        "turns": 1728,
-        "sessions": 55,
-        "agents": {
-          "cervantes": {
-            "cost_usd": 0,
-            "turns": 45,
-            "sessions": 9
-          },
-          "sancho": {
-            "cost_usd": 170.9198,
-            "turns": 1683,
-            "sessions": 46
-          }
-        },
-        "models": {
-          "unknown": {
-            "input": 365470,
-            "output": 644640,
-            "cache_read": 103095426,
-            "cache_write": 16844386,
-            "cost_usd": 168.3321,
-            "cost_eur": 154.8655,
-            "turns": 1689
-          },
-          "claude-opus-4-6": {
-            "input": 50,
-            "output": 15346,
-            "cache_read": 1205070,
-            "cache_write": 256214,
-            "cost_usd": 2.5878,
-            "cost_eur": 2.3808,
-            "turns": 39
-          }
-        }
-      },
-      "paymatico": {
-        "input_tokens": 660,
-        "output_tokens": 333205,
-        "cache_read": 46023894,
-        "cache_write": 6617869,
-        "cost_usd": 72.7071,
-        "cost_eur": 66.8905,
-        "turns": 589,
-        "sessions": 11,
-        "agents": {
-          "escudero": {
-            "cost_usd": 0,
-            "turns": 3,
-            "sessions": 1
-          },
-          "sancho": {
-            "cost_usd": 72.7071,
-            "turns": 586,
-            "sessions": 10
-          }
-        },
-        "models": {
-          "unknown": {
-            "input": 0,
-            "output": 0,
-            "cache_read": 0,
-            "cache_write": 0,
-            "cost_usd": 0,
-            "cost_eur": 0.0,
-            "turns": 3
-          },
-          "claude-opus-4-6": {
-            "input": 660,
-            "output": 333205,
-            "cache_read": 46023894,
-            "cache_write": 6617869,
-            "cost_usd": 72.7071,
-            "cost_eur": 66.8905,
-            "turns": 586
-          }
-        }
-      },
-      "sanchocmo": {
-        "input_tokens": 1703050,
-        "output_tokens": 416461,
-        "cache_read": 91905019,
-        "cache_write": 11865963,
-        "cost_usd": 126.2682,
-        "cost_eur": 116.1668,
-        "turns": 1339,
-        "sessions": 18,
-        "agents": {
-          "sancho": {
-            "cost_usd": 126.2682,
-            "turns": 1339,
-            "sessions": 18
-          }
-        },
-        "models": {
-          "unknown": {
-            "input": 1702771,
-            "output": 382651,
-            "cache_read": 87499806,
-            "cache_write": 11273761,
-            "cost_usd": 119.7904,
-            "cost_eur": 110.2072,
-            "turns": 1200
-          },
-          "claude-opus-4-6": {
-            "input": 279,
-            "output": 33810,
-            "cache_read": 4405213,
-            "cache_write": 592202,
-            "cost_usd": 6.4778,
-            "cost_eur": 5.9596,
-            "turns": 139
-          }
-        }
-      },
-      "growth4u": {
-        "input_tokens": 121202,
-        "output_tokens": 1271107,
-        "cache_read": 228353226,
-        "cache_write": 40232331,
-        "cost_usd": 392.8649,
-        "cost_eur": 361.4357,
-        "turns": 3720,
-        "sessions": 53,
-        "agents": {
-          "sancho": {
-            "cost_usd": 392.8649,
-            "turns": 3720,
-            "sessions": 53
-          }
-        },
-        "models": {
-          "claude-opus-4-6": {
-            "input": 121034,
-            "output": 1194029,
-            "cache_read": 212509814,
-            "cache_write": 36758014,
-            "cost_usd": 361.3009,
-            "cost_eur": 332.3969,
-            "turns": 3515
-          },
-          "unknown": {
-            "input": 168,
-            "output": 77078,
-            "cache_read": 15843412,
-            "cache_write": 3474317,
-            "cost_usd": 31.564,
-            "cost_eur": 29.0389,
-            "turns": 205
-          }
-        }
-      },
-      "kleva": {
-        "input_tokens": 137,
-        "output_tokens": 40877,
-        "cache_read": 4594561,
-        "cache_write": 563412,
-        "cost_usd": 6.8412,
-        "cost_eur": 6.2939,
-        "turns": 105,
-        "sessions": 4,
-        "agents": {
-          "sancho": {
-            "cost_usd": 6.8412,
-            "turns": 105,
-            "sessions": 4
-          }
-        },
-        "models": {
-          "claude-opus-4-6": {
-            "input": 137,
-            "output": 40877,
-            "cache_read": 4594561,
-            "cache_write": 563412,
-            "cost_usd": 6.8412,
-            "cost_eur": 6.2939,
-            "turns": 105
-          }
-        }
-      }
-    },
+    "clients": {},
     "projection": {
-      "days_elapsed": 31,
-      "days_in_month": 31,
-      "daily_avg_usd": 85.96,
-      "projected_month_usd": 2664.67,
-      "projected_month_eur": 2451.5
+      "days_elapsed": 1,
+      "days_in_month": 30,
+      "daily_avg_usd": 0.58,
+      "projected_month_usd": 17.36,
+      "projected_month_eur": 15.97
     }
   },
   "client_tasks": {},
   "apiHealth": {
-    "lastCheck": "2026-03-31T11:21:18Z",
+    "lastCheck": "2026-04-01T11:50:40Z",
     "services": {
       "anthropic": {
         "status": "ok",
-        "lastCheck": "2026-03-31T11:21:18.170Z",
+        "lastCheck": "2026-04-01T11:50:40.115Z",
         "details": {
           "httpCode": "200"
         }
       },
       "openrouter": {
         "status": "ok",
-        "lastCheck": "2026-03-31T11:21:18.485Z",
+        "lastCheck": "2026-04-01T11:50:40.395Z",
         "details": {
           "httpCode": "200"
         }
       },
       "openai": {
         "status": "ok",
-        "lastCheck": "2026-03-31T11:21:18.856Z",
+        "lastCheck": "2026-04-01T11:50:40.610Z",
         "details": {
           "httpCode": "200"
         }
       },
       "gemini": {
         "status": "ok",
-        "lastCheck": "2026-03-31T11:21:19.870Z",
+        "lastCheck": "2026-04-01T11:50:41.439Z",
         "details": {
           "httpCode": "200"
         }
       },
       "xai": {
         "status": "ok",
-        "lastCheck": "2026-03-31T11:21:20.112Z",
+        "lastCheck": "2026-04-01T11:50:41.746Z",
         "details": {
           "httpCode": "200"
         }
       },
       "minimax": {
         "status": "ok",
-        "lastCheck": "2026-03-31T11:21:20.347Z",
+        "lastCheck": "2026-04-01T11:50:42.420Z",
         "details": {
           "note": "Key present, no lightweight verify endpoint"
         }
       },
       "apify": {
         "status": "ok",
-        "lastCheck": "2026-03-31T11:21:20.348Z",
+        "lastCheck": "2026-04-01T11:50:42.421Z",
         "details": {
           "username": "growth4u",
           "plan": ""
@@ -69197,21 +67967,21 @@ const MC_DATA = {
       },
       "firecrawl": {
         "status": "ok",
-        "lastCheck": "2026-03-31T11:21:21.149Z",
+        "lastCheck": "2026-04-01T11:50:43.060Z",
         "details": {
           "httpCode": "200"
         }
       },
       "serper": {
         "status": "ok",
-        "lastCheck": "2026-03-31T11:21:22.314Z",
+        "lastCheck": "2026-04-01T11:50:43.927Z",
         "details": {
           "httpCode": "200"
         }
       },
       "dataforseo": {
         "status": "ok",
-        "lastCheck": "2026-03-31T11:21:23.258Z",
+        "lastCheck": "2026-04-01T11:50:44.816Z",
         "details": {
           "httpCode": "200",
           "login": "accounts@growth4u.io"
@@ -69219,14 +67989,14 @@ const MC_DATA = {
       },
       "notion": {
         "status": "ok",
-        "lastCheck": "2026-03-31T11:21:24.262Z",
+        "lastCheck": "2026-04-01T11:50:45.538Z",
         "details": {
           "botName": "openclaw-Alfonso"
         }
       },
       "supabase": {
         "status": "ok",
-        "lastCheck": "2026-03-31T11:21:24.755Z",
+        "lastCheck": "2026-04-01T11:50:46.064Z",
         "details": {
           "httpCode": "200",
           "project": "psapmujzxhaxraphddlv"
@@ -69234,7 +68004,7 @@ const MC_DATA = {
       },
       "gog": {
         "status": "ok",
-        "lastCheck": "2026-03-31T11:21:25.441Z",
+        "lastCheck": "2026-04-01T11:50:46.770Z",
         "details": {
           "account": "alfonso@growth4u.io",
           "test": "gmail inbox"
@@ -69242,56 +68012,56 @@ const MC_DATA = {
       },
       "openclaw": {
         "status": "error",
-        "lastCheck": "2026-03-31T11:21:26.688Z",
+        "lastCheck": "2026-04-01T11:50:47.825Z",
         "details": {
           "error": "Command failed: /opt/homebrew/bin/openclaw status 2>&1"
         }
       },
       "fal": {
         "status": "ok",
-        "lastCheck": "2026-03-31T11:21:25.424Z",
+        "lastCheck": "2026-04-01T11:50:46.750Z",
         "details": {
           "note": "Key present"
         }
       },
       "wavespeed": {
         "status": "ok",
-        "lastCheck": "2026-03-31T11:21:25.425Z",
+        "lastCheck": "2026-04-01T11:50:46.751Z",
         "details": {
           "note": "Key present"
         }
       },
       "dumpling": {
         "status": "ok",
-        "lastCheck": "2026-03-31T11:21:25.425Z",
+        "lastCheck": "2026-04-01T11:50:46.751Z",
         "details": {
           "note": "Key present"
         }
       },
       "brave": {
         "status": "not-configured",
-        "lastCheck": "2026-03-31T11:21:20.348Z",
+        "lastCheck": "2026-04-01T11:50:42.420Z",
         "details": {
           "error": "BRAVE_API_KEY not set"
         }
       },
       "instantly": {
         "status": "not-configured",
-        "lastCheck": "2026-03-31T11:21:25.426Z",
+        "lastCheck": "2026-04-01T11:50:46.751Z",
         "details": {
           "note": "Web login — no API key in .env"
         }
       },
       "metricool": {
         "status": "not-configured",
-        "lastCheck": "2026-03-31T11:21:25.426Z",
+        "lastCheck": "2026-04-01T11:50:46.752Z",
         "details": {
           "note": "Web login — no API key in .env"
         }
       },
       "nanobanana": {
         "status": "ok",
-        "lastCheck": "2026-03-31T11:21:25.426Z",
+        "lastCheck": "2026-04-01T11:50:46.752Z",
         "details": {
           "note": "Uses Gemini API key (shared)",
           "engine": "gemini-2.0-flash-exp"
@@ -69306,21 +68076,21 @@ const MC_DATA = {
       },
       "discord": {
         "status": "ok",
-        "lastCheck": "2026-03-31T11:21:26.707Z",
+        "lastCheck": "2026-04-01T11:50:47.846Z",
         "details": {
           "httpCode": "200"
         }
       },
       "tailscale": {
         "status": "ok",
-        "lastCheck": "2026-03-31T11:21:18Z",
+        "lastCheck": "2026-04-01T11:50:40Z",
         "details": {
           "note": "tailscale status OK"
         }
       },
       "remotion": {
         "status": "not-configured",
-        "lastCheck": "2026-03-31T11:21:25.426Z",
+        "lastCheck": "2026-04-01T11:50:46.752Z",
         "details": {
           "version": null,
           "note": "Local install"
@@ -69328,11 +68098,160 @@ const MC_DATA = {
       },
       "slack": {
         "status": "ok",
-        "lastCheck": "2026-03-31T11:21:25.126Z",
+        "lastCheck": "2026-04-01T11:50:46.452Z",
         "details": {
           "httpCode": "200"
         }
       }
+    }
+  },
+  "monitoring": {
+    "criptan": {
+      "slug": "criptan",
+      "health_score": null,
+      "pending_recommendations_count": 0
+    },
+    "growth4u": {
+      "slug": "growth4u",
+      "health_score": {
+        "slug": "growth4u",
+        "updatedAt": "2026-04-01T10:41:00.000Z",
+        "overallScore": 58,
+        "trend": "improving",
+        "categories": {
+          "funnel": {
+            "weight": 0.35,
+            "score": 72,
+            "trend": "up",
+            "note": "Appointments activated (0→6/day). Lead→Meeting rate 72.7%. BUT opportunities=0 in GHL — pipeline tracking gap.",
+            "kpis": {
+              "appointments": {
+                "score": 90,
+                "trend": "up"
+              },
+              "newContacts": {
+                "score": 75,
+                "trend": "up"
+              },
+              "leadsToMeetingsRate": {
+                "score": 85,
+                "trend": "up"
+              },
+              "opportunities": {
+                "score": 10,
+                "trend": "stagnant",
+                "note": "Always 0 — tracking issue"
+              }
+            }
+          },
+          "paid": {
+            "weight": 0.25,
+            "score": 68,
+            "trend": "mixed",
+            "note": "CPC at all-time low (0.67€ avg). But CTR declining from 4.6% to 2.3% — creative fatigue.",
+            "kpis": {
+              "spend": {
+                "score": 70,
+                "trend": "stable"
+              },
+              "cpc": {
+                "score": 85,
+                "trend": "improving"
+              },
+              "ctr": {
+                "score": 45,
+                "trend": "declining"
+              },
+              "clicks": {
+                "score": 80,
+                "trend": "up"
+              },
+              "leads": {
+                "score": 65,
+                "trend": "stable"
+              }
+            }
+          },
+          "traffic": {
+            "weight": 0.2,
+            "score": 35,
+            "trend": "down",
+            "note": "Sessions stable but engagement rate 0% on multiple days. Bounce rate 100%. Critical website UX issue.",
+            "kpis": {
+              "sessions": {
+                "score": 55,
+                "trend": "stable"
+              },
+              "newUsers": {
+                "score": 55,
+                "trend": "stable"
+              },
+              "engagementRate": {
+                "score": 5,
+                "trend": "critical"
+              },
+              "bounceRate": {
+                "score": 10,
+                "trend": "critical"
+              }
+            }
+          },
+          "seo": {
+            "weight": 0.1,
+            "score": 62,
+            "trend": "improving",
+            "note": "Position improving (12.95→7.05). Impressions stable ~250/day. 0 clicks most days — need to break into top 3.",
+            "kpis": {
+              "impressions": {
+                "score": 60,
+                "trend": "stable"
+              },
+              "position": {
+                "score": 70,
+                "trend": "improving"
+              },
+              "clicks": {
+                "score": 25,
+                "trend": "stagnant"
+              }
+            }
+          },
+          "social": {
+            "weight": 0.1,
+            "score": 20,
+            "trend": "stagnant",
+            "note": "No Metricool data in last 2 weeks. LinkedIn posting appears paused or data collection broken.",
+            "kpis": {
+              "avgEngagement": {
+                "score": 20,
+                "trend": "unknown"
+              },
+              "impressions": {
+                "score": 20,
+                "trend": "unknown"
+              }
+            }
+          }
+        },
+        "topAlerts": [
+          "🔴 Website engagement at 0% — bounce rate 100% on multiple days",
+          "🟡 Meta Ads CTR declining (4.6% → 2.3%) — creative fatigue",
+          "🟡 GHL opportunities always 0 despite 44 appointments — tracking gap",
+          "🟢 Appointments activated: 0→6/day — NSM moving",
+          "🟢 CPC at all-time low: 0.45-0.67€"
+        ]
+      },
+      "pending_recommendations_count": 4
+    },
+    "hospital-capilar": {
+      "slug": "hospital-capilar",
+      "health_score": null,
+      "pending_recommendations_count": 0
+    },
+    "masabo": {
+      "slug": "masabo",
+      "health_score": null,
+      "pending_recommendations_count": 0
     }
   }
 };

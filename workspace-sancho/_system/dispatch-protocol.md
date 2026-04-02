@@ -69,10 +69,12 @@ Lee y adopta esta persona:
 TAREA:
 [Descripción clara de la tarea]
 
-CONTEXTO DE MARCA (lee estos archivos):
-- ./brand/{slug}/[archivo1]/current.md
-- ./brand/{slug}/[archivo2]/current.md
-[solo los relevantes — ver context_required del skill]
+CONTEXTO DE MARCA:
+- PRIMERO lee ./brand/{slug}/foundation-state.json → usa brand_summary + file_index para resolver paths
+- Luego lee los archivos específicos:
+  - ./brand/{slug}/[archivo1]/current.md
+  - ./brand/{slug}/[archivo2]/current.md
+  [solo los relevantes — ver context_required del skill]
 
 SKILLS A USAR:
 - [skill-1]
@@ -85,9 +87,11 @@ OUTPUT ESPERADO:
 ### Context Matrix Enforcement
 
 Cada skill declara `context_required` y `context_writes` en su frontmatter YAML. Cuando spawnes un Escudero:
+- **SIEMPRE** incluye `brand/{slug}/foundation-state.json` en el contexto — contiene `brand_summary` y `file_index` para resolver paths a cualquier archivo
 - Lee `context_required` del skill que va a ejecutar
-- Pasa SOLO esos archivos como contexto al Escudero
+- Pasa esos archivos como contexto al Escudero (resolviéndolos desde `file_index` cuando sea posible)
 - NUNCA pases todo `./brand/` — solo lo que el skill necesita
+- Si el Escudero crea archivos nuevos, debe actualizar `file_index` en foundation-state.json
 
 ---
 

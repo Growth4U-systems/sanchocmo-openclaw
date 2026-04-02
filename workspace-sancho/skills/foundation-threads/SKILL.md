@@ -100,3 +100,4 @@ context_writes: []
 - Fast Foundation = intake completo en 1 hilo (5 docs lite)
 - Total: **12 hilos obligatorios** + 2 opcionales
 - Si el orchestrator detecta hilos existentes con los nombres correctos, NO crea nuevos
+- **foundation-state.json es la fuente de verdad**: leer `file_index` para resolver paths a archivos del cliente. Al crear threads, guardar `thread_id` en el pilar correspondiente de `sections`. Al completar un pilar que genera archivos nuevos, actualizar `file_index`.

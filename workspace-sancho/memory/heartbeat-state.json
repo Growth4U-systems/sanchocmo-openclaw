@@ -1,27 +1,25 @@
 {
-  "last_heartbeat": "2026-03-31T14:15:00+02:00",
+  "last_heartbeat": "2026-04-01T22:36:00+02:00",
   "checks_done": [
-    "calendar",
-    "email",
-    "daily_file_creation"
-  ],
-  "next_rotate": [
     "memory_maintenance"
   ],
+  "next_rotate": [
+    "calendar",
+    "email"
+  ],
   "lead_sync": {
-    "last_run": "2026-03-30T20:00:00Z",
-    "new_leads": 0,
-    "updated_leads": 0,
+    "last_run": "2026-04-01T22:00:00+02:00",
+    "new_leads": 1,
+    "updated_leads": 1,
     "slack_notes_synced": 0,
-    "transcript_updates": 0,
-    "total_contacts": 6,
+    "transcripts_processed": 1,
     "errors": 0,
-    "notes": "All 6 leads up to date. No new transcripts since last enrichment."
+    "notes": "New: Juan Antonio (jugavi.com). Updated: Jose Antonio Martinez (new transcript 2026-04-01). Slack disabled. 5 other leads unchanged (no new transcripts since last enrichment)."
   },
   "sales_call_prep": {
-    "last_run": "2026-03-30T22:31:00+02:00",
+    "last_run": "2026-04-01T22:39:00+02:00",
     "mode": "daily",
-    "calls_found": 1,
-    "no_ghl_match": 5
+    "calls_found": 0,
+    "no_ghl_match": 6
   }
 }

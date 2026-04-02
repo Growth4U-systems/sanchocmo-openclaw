@@ -22,7 +22,8 @@
         "trustpilot": null,
         "google_maps": null,
         "capterra": null,
-        "g2": null
+        "g2": null,
+        "_type": "direct"
       },
       {
         "name": "Product Hackers",
@@ -46,7 +47,12 @@
             "twitter": "https://twitter.com/luisdiazdeldedo",
             "youtube": "https://www.youtube.com/channel/UC-6FrYZEoDOcGP4NK7-3Rng",
             "book": "Growth Hacking: Supera el reto de crear productos digitales exponenciales",
-            "press": ["Forbes", "El País", "Capital", "PRNoticias"]
+            "press": [
+              "Forbes",
+              "El País",
+              "Capital",
+              "PRNoticias"
+            ]
           },
           {
             "name": "José Carlos Cortizo (Corti)",
@@ -57,12 +63,16 @@
             "web": "https://josek.net",
             "newsletter": "https://sobrecrecer.substack.com",
             "book": "PsychoGrowth",
-            "podcast": ["Growth (Product Hackers)", "En.Digital"]
+            "podcast": [
+              "Growth (Product Hackers)",
+              "En.Digital"
+            ]
           }
         ],
         "trustpilot": null,
         "capterra": null,
-        "g2": null
+        "g2": null,
+        "_type": "direct"
       },
       {
         "name": "TheGrowtHacker",
@@ -80,14 +90,132 @@
         "trustpilot": null,
         "google_maps": null,
         "capterra": null,
-        "g2": null
+        "g2": null,
+        "_type": "direct"
       }
     ],
     "indirect": [
-      { "name": "iSocialWeb", "slug": "isocialweb", "tier": "C", "web": "https://isocialweb.agency" },
-      { "name": "Flat 101", "slug": "flat101", "tier": "C", "web": "https://flat101.es" },
-      { "name": "Glissmarket", "slug": "glissmarket", "tier": "B" },
-      { "name": "TEAM LEWIS", "slug": "team-lewis", "tier": "C" }
+      {
+        "name": "iSocialWeb",
+        "slug": "isocialweb",
+        "tier": "C",
+        "_type": "indirect",
+        "company": {
+          "web": "https://isocialweb.agency",
+          "linkedin": "https://www.linkedin.com/company/isocialweb/",
+          "twitter": "https://x.com/isocialweb",
+          "youtube": true,
+          "_notes": "Twitter @isocialweb está inactivo desde 2014. Álvaro publica desde @isocialwebseo"
+        },
+        "founders": [
+          {
+            "name": "Álvaro Peña de Luna",
+            "role": "Co-CEO & Head of SEO & AI",
+            "twitter": "https://x.com/isocialwebseo",
+            "linkedin": "https://www.linkedin.com/in/alvaro-pena-de-luna/",
+            "web": "https://es.wix.com/blog/profile/alvaro-pena-de-luna/author",
+            "_linkedin_verified": false,
+            "_twitter_verified": true,
+            "also": ["Co-Founder Growwer (link building tool)", "R&D Lead Virality Media (150M+ monthly visits)"],
+            "speaker": true,
+            "university_lecturer": true
+          },
+          {
+            "name": "Arnau Vendrell",
+            "role": "Co-CEO & Head of CRO",
+            "web": "https://arvendrell.com",
+            "linkedin": "https://www.linkedin.com/in/arnauvendrell/",
+            "twitter": null,
+            "_linkedin_verified": false,
+            "_twitter_verified": true,
+            "_notes": "No Twitter encontrado. LinkedIn enlazado desde arvendrell.com pero no extraíble sin JS"
+          }
+        ]
+      },
+      {
+        "name": "Flat 101",
+        "slug": "flat101",
+        "tier": "C",
+        "_type": "indirect",
+        "company": {
+          "web": "https://flat101.es",
+          "linkedin": "https://www.linkedin.com/company/flat101/",
+          "twitter": "https://x.com/SomosFlat101",
+          "facebook": true,
+          "_notes": "Parte de Minsait (Indra). Oficinas: Madrid, Barcelona, Zaragoza, London. ~300 empleados"
+        },
+        "founder": {
+          "name": "Ricardo Tayar",
+          "role": "CEO & Founder",
+          "linkedin": "https://www.linkedin.com/in/ricardotayar/",
+          "twitter": "https://x.com/ricardotayar",
+          "_linkedin_verified": true,
+          "_twitter_verified": true,
+          "podcast": "CRO.CAFE (host, 60+ episodios)",
+          "books": ["CRO, diseño y desarrollo de negocios digitales", "CRO. Estrategia y práctica"],
+          "linkedin_top_voice": true,
+          "kschool": "Director Máster CRO"
+        }
+      },
+      {
+        "name": "Glissmarket",
+        "slug": "glissmarket",
+        "tier": "B",
+        "_type": "indirect",
+        "company": {
+          "web": "https://www.glissmarket.com",
+          "linkedin": "https://www.linkedin.com/company/glissmarket/",
+          "twitter": "https://x.com/glissmarket",
+          "_twitter_verified": true,
+          "_linkedin_verified": false,
+          "_notes": "Agencia pequeña (~6 personas). Foco: SEO, SEM, Email, CRO. Nicho fuerte en marketing jurídico/legal"
+        },
+        "founder": {
+          "name": "Pablo Clavero",
+          "role": "CEO & Founder",
+          "twitter": "https://x.com/pclavero",
+          "linkedin": "https://www.linkedin.com/in/pablo-clavero/",
+          "_twitter_verified": true,
+          "_linkedin_verified": false,
+          "podcast": "Yo no soy abogado, pero… (Glissmarket)",
+          "also": ["Co-founder @powerbargain", "CMO @leibent", "Co-organizer @jotb22"]
+        }
+      },
+      {
+        "name": "TEAM LEWIS",
+        "slug": "team-lewis",
+        "tier": "C",
+        "_type": "indirect",
+        "company": {
+          "web": "https://www.teamlewis.com/es/",
+          "linkedin": "https://www.linkedin.com/company/teamlewis/",
+          "youtube": "https://www.youtube.com/@teamlewisespana8570",
+          "twitter": null,
+          "instagram": null,
+          "_notes": "Agencia global (24 oficinas, 500+ empleados). España: Madrid + Barcelona, 60+ profesionales. No tiene cuentas sociales específicas de España en Twitter/IG"
+        },
+        "founder_global": {
+          "name": "Chris Lewis",
+          "role": "CEO & Founder (Global)",
+          "linkedin": "https://www.linkedin.com/in/chrislewis4/",
+          "twitter": "https://x.com/largeburrito",
+          "_linkedin_verified": true,
+          "_twitter_verified": true,
+          "books": ["Too Fast to Think", "The Leadership Lab", "Greater: Britain After the Storm"],
+          "founded": 1995
+        },
+        "head_spain": {
+          "name": "Nuria Mañá",
+          "role": "Head of TEAM LEWIS Spain",
+          "linkedin": "https://www.linkedin.com/in/nuriamanafdez/",
+          "twitter": "https://x.com/nuriamanaf",
+          "_linkedin_verified": true,
+          "_twitter_verified": true,
+          "since": "2011 en TEAM LEWIS, Head of Spain desde abril 2022",
+          "previous": ["FC Barcelona", "Radio Nacional de España", "OgilvyOne"]
+        }
+      }
     ]
-  }
+  },
+  "updated_at": "2026-04-01T10:10:00.000Z"
 }

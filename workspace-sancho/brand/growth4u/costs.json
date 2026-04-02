@@ -1,151 +1,34 @@
 {
   "client": "growth4u",
-  "period": "2026-03",
-  "updatedAt": "2026-03-31T08:05:25.424504",
-  "total_cost_usd": 392.8649,
-  "total_cost_eur": 361.4357,
-  "turns": 3720,
-  "sessions": 53,
+  "period": "2026-04",
+  "updatedAt": "2026-04-01T23:06:21.196967",
+  "total_cost_usd": 0,
+  "total_cost_eur": 0.0,
+  "turns": 3,
+  "sessions": 1,
   "agents": {
     "sancho": {
-      "cost_usd": 392.8649,
-      "cost_eur": 361.4357,
-      "turns": 3720,
-      "sessions": 53
+      "cost_usd": 0,
+      "cost_eur": 0.0,
+      "turns": 3,
+      "sessions": 1
     }
   },
   "models": {
-    "claude-opus-4-6": {
-      "input": 121034,
-      "output": 1194029,
-      "cache_read": 212509814,
-      "cache_write": 36758014,
-      "cost_usd": 361.3009,
-      "cost_eur": 332.3969,
-      "turns": 3515
-    },
     "unknown": {
-      "input": 168,
-      "output": 77078,
-      "cache_read": 15843412,
-      "cache_write": 3474317,
-      "cost_usd": 31.564,
-      "cost_eur": 29.0389,
-      "turns": 205
+      "input": 0,
+      "output": 0,
+      "cache_read": 0,
+      "cache_write": 0,
+      "cost_usd": 0,
+      "cost_eur": 0.0,
+      "turns": 3
     }
   },
   "days": {
-    "2026-03-01": {
-      "cost_usd": 0.859,
-      "turns": 12
-    },
-    "2026-03-02": {
-      "cost_usd": 27.3417,
-      "turns": 575
-    },
-    "2026-03-03": {
-      "cost_usd": 76.1258,
-      "turns": 536
-    },
-    "2026-03-04": {
-      "cost_usd": 57.8871,
-      "turns": 477
-    },
-    "2026-03-05": {
-      "cost_usd": 32.9225,
-      "turns": 147
-    },
-    "2026-03-06": {
-      "cost_usd": 81.0397,
-      "turns": 892
-    },
-    "2026-03-07": {
-      "cost_usd": 4.8204,
-      "turns": 56
-    },
-    "2026-03-08": {
-      "cost_usd": 38.3412,
-      "turns": 525
-    },
-    "2026-03-09": {
-      "cost_usd": 19.9435,
-      "turns": 87
-    },
-    "2026-03-10": {
-      "cost_usd": 1.5779,
-      "turns": 8
-    },
-    "2026-03-11": {
-      "cost_usd": 9.4724,
-      "turns": 88
-    },
-    "2026-03-12": {
-      "cost_usd": 4.973,
-      "turns": 34
-    },
-    "2026-03-13": {
-      "cost_usd": 0,
-      "turns": 2
-    },
-    "2026-03-14": {
-      "cost_usd": 21.1762,
-      "turns": 99
-    },
-    "2026-03-15": {
-      "cost_usd": 10.0358,
-      "turns": 95
-    },
-    "2026-03-16": {
-      "cost_usd": 0.572,
-      "turns": 7
-    },
-    "2026-03-17": {
-      "cost_usd": 1.4845,
-      "turns": 10
-    },
-    "2026-03-18": {
-      "cost_usd": 0,
-      "turns": 1
-    },
-    "2026-03-19": {
-      "cost_usd": 0,
-      "turns": 1
-    },
-    "2026-03-20": {
-      "cost_usd": 0,
-      "turns": 1
-    },
-    "2026-03-22": {
-      "cost_usd": 0,
-      "turns": 2
-    },
-    "2026-03-23": {
-      "cost_usd": 1.0309,
-      "turns": 6
-    },
-    "2026-03-24": {
-      "cost_usd": 1.7784,
-      "turns": 42
-    },
-    "2026-03-25": {
-      "cost_usd": 0,
-      "turns": 1
-    },
-    "2026-03-26": {
+    "2026-04-01": {
       "cost_usd": 0,
       "turns": 3
-    },
-    "2026-03-27": {
-      "cost_usd": 0,
-      "turns": 3
-    },
-    "2026-03-29": {
-      "cost_usd": 0,
-      "turns": 4
-    },
-    "2026-03-30": {
-      "cost_usd": 1.4829,
-      "turns": 6
     }
   },
   "clientSpend": {

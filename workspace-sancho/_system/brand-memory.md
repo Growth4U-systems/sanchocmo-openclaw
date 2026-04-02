@@ -178,7 +178,27 @@ On every skill invocation, check whether `./brand/` exists.
 - **If exists**: proceed to step 2
 - **If not exists**: skip brand loading entirely. Do NOT error. Proceed as first-time user with note: "I don't see brand memory yet. Run /sancho-start first, or I'll work without it."
 
-### 2. Load Only What You Need (Context Matrix)
+### 2. Read foundation-state.json FIRST (file_index)
+
+**Before loading any pillar docs**, read `brand/{slug}/foundation-state.json`. It contains:
+
+- **`brand_summary`** — company name, sector, ICPs, competitors, positioning, URL
+- **`sections`** — pillar states with `output_file` paths, status, dependencies
+- **`file_index`** — index of ALL non-pillar files organized by domain:
+  - `competitors.battle_cards` — path to each competitor's battle card
+  - `competitors.sources` — path to competitor source URLs
+  - `integrations` — path to API connections config
+  - `metrics` — paths to metrics plan (JSON + doc) and data directory
+  - `brand_assets` — design tokens, visual guide, mockups
+  - `operational` — current-state, ideas, costs, leads
+  - `presentations` — HTML reports
+  - etc.
+
+**Use `file_index` to resolve paths.** Do NOT search directories or guess file locations. If you need competitor data, read `file_index.competitors.battle_cards`. If you need integrations, read the file at `file_index.integrations`.
+
+**All paths in `file_index` are relative to `brand/{slug}/`.**
+
+### 3. Load Only What You Need (Context Matrix)
 
 Each skill declares dependencies. Do NOT read every file on every invocation.
 
@@ -214,7 +234,7 @@ Each skill declares dependencies. Do NOT read every file on every invocation.
 | sancho-start | ALL brand files (only current.md per pillar) + operational/ | Full picture for routing |
 | foundation-orchestrator | ALL sections (only current.md per pillar, for coverage + gate checks) | Manages 6-layer DAG |
 
-### 3. Handle Missing Files Gracefully
+### 4. Handle Missing Files Gracefully
 
 If a file your skill wants doesn't exist, do NOT error.
 
@@ -224,7 +244,7 @@ If a file your skill wants doesn't exist, do NOT error.
 - Ask questions that file would have answered, OR proceed with defaults
 - At end, suggest: "Running /positioning-messaging would sharpen this output (~2 hours)"
 
-### 4. Use Loaded Context Visibly
+### 5. Use Loaded Context Visibly
 
 Show the user you're using brand context. Do NOT silently absorb.
 
@@ -236,7 +256,7 @@ Show the user you're using brand context. Do NOT silently absorb.
 
 **Why:** Builds trust. Lets user correct stale data.
 
-### 5. Detect Stale or Conflicting Data
+### 6. Detect Stale or Conflicting Data
 
 If file content seems outdated or conflicts with session context:
 

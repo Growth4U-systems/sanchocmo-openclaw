@@ -1,0 +1,25 @@
+{
+  "date": "2026-04-01",
+  "client": "hospital-capilar",
+  "guild": "1475635138108063746",
+  "generatedAt": "2026-04-01T07:07:00Z",
+  "preCheck": {
+    "channelsScanned": 9,
+    "channelsWithActivity": 0,
+    "channelsSkipped": 9,
+    "skipReasons": {
+      "general": ">24h (join msg)",
+      "brand": ">24h (31d old)",
+      "campaigns": "bot message (7d old)",
+      "content": ">24h (31d old)",
+      "intelligence": "bot message (15h old)",
+      "onboarding": ">24h (4.7d old)",
+      "soporte": "bot message (24h old)",
+      "research": ">24h (31d old)",
+      "paid-ads": "channel not found"
+    }
+  },
+  "insights": [],
+  "summary": "Sin actividad humana en las últimas 24h en ningún canal del servidor.",
+  "recommendation": "El servidor lleva varios días sin actividad humana significativa. Considerar: 1) Reactivar engagement con contenido o pregunta en #general, 2) Verificar si el equipo está usando otro canal de comunicación, 3) Programar siguiente acción de contenido para generar conversación."
+}

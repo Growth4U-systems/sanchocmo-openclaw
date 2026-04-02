@@ -52,5 +52,24 @@
         "visual-identity": {"status": "not-started", "layer": 5, "requires": ["brand-voice"], "skill": "visual-identity"}
       }
     }
+  },
+  "brand_summary": {
+    "company_name": "Masavo",
+    "sector": "Hostelería — Café brunch",
+    "description": "Café brunch en Gracia, Barcelona. Combina comida, buena música y wifi. Espacio para trabajar entre semana y disfrutar en fin de semana.",
+    "north_star": "Convertir local traspasado en referente de brunch en Gracia",
+    "icps": [
+      "Locales 20-40 (remote workers entre semana, familias/parejas fines de semana)",
+      "Turistas (cercanía Sagrada Familia)"
+    ],
+    "competitors": [],
+    "positioning": "Un lugar slow en una ciudad rápida",
+    "url": null
+  },
+  "file_index": {
+    "competitors": {},
+    "brand_assets": {
+      "brand_voice": "brand-voice/current.md"
+    }
   }
 }

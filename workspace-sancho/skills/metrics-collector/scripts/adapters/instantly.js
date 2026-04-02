@@ -5,7 +5,7 @@
  * Auth: API key from {SLUG}_INSTANTLY_API_KEY
  */
 
-const BASE_URL = 'https://api.instantly.ai/api/v1';
+const BASE_URL = 'https://api.instantly.ai/api/v2';
 
 /**
  * @param {object} config - From integrations.json
@@ -20,11 +20,17 @@ export async function collect(config, env, dateRange) {
     throw new Error('Instantly: missing INSTANTLY_API_KEY in .env');
   }
 
+  const headers = {
+    'Authorization': `Bearer ${apiKey}`,
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+  };
+
   const metrics = [];
 
   // --- Campaign analytics ---
   try {
-    const campaignsResp = await fetch(`${BASE_URL}/campaign/list?api_key=${apiKey}&limit=100`);
+    const campaignsResp = await fetch(`${BASE_URL}/campaigns?limit=100`, { headers });
     if (!campaignsResp.ok) {
       throw new Error(`Instantly campaigns ${campaignsResp.status}`);
     }
@@ -39,9 +45,13 @@ export async function collect(config, env, dateRange) {
       if (!campaignId) continue;
 
       try {
+        const params = new URLSearchParams({
+          start_date: dateRange.from,
+          end_date: dateRange.to,
+        });
         const summaryResp = await fetch(
-          `${BASE_URL}/analytics/campaign/summary?api_key=${apiKey}&campaign_id=${campaignId}` +
-          `&start_date=${dateRange.from}&end_date=${dateRange.to}`
+          `${BASE_URL}/campaigns/${campaignId}/analytics?${params.toString()}`,
+          { headers }
         );
 
         if (summaryResp.ok) {

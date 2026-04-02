@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# create-client-crons.sh — Create per-client cron jobs from sources.json + cron-templates.json
+# create-client-crons.sh — Create per-client cron jobs from client-config.json + cron-templates.json
 #
 # Usage: ./scripts/create-client-crons.sh <client-slug> [--dry-run]
 #
-# Reads brand/<slug>/sources.json for enabled crons and schedules.
+# Reads brand/<slug>/client-config.json for enabled crons and schedules.
 # Reads _system/cron-templates.json for prompt templates.
 # Creates OpenClaw cron jobs via `openclaw cron add`.
 #
@@ -25,7 +25,7 @@ fi
 
 SLUG="$1"
 DRY_RUN="${2:-}"
-SOURCES="${WORKSPACE}/brand/${SLUG}/sources.json"
+SOURCES="${WORKSPACE}/brand/${SLUG}/client-config.json"
 
 if ! command -v jq &>/dev/null; then
   echo "ERROR: jq is required but not installed" >&2
@@ -33,8 +33,8 @@ if ! command -v jq &>/dev/null; then
 fi
 
 if [[ ! -f "$SOURCES" ]]; then
-  echo "ERROR: sources.json not found at $SOURCES" >&2
-  echo "Create it first: brand/${SLUG}/sources.json" >&2
+  echo "ERROR: client-config.json not found at $SOURCES" >&2
+  echo "Create it first: brand/${SLUG}/client-config.json" >&2
   exit 1
 fi
 
@@ -47,7 +47,7 @@ CLIENT_NAME=$(jq -r '.name' "$SOURCES")
 echo "=== Creating crons for: ${CLIENT_NAME} (${SLUG}) ==="
 echo ""
 
-# Get list of cron types from sources.json
+# Get list of cron types from client-config.json
 CRON_TYPES=$(jq -r '.crons | keys[]' "$SOURCES")
 CREATED=0
 SKIPPED=0
@@ -66,7 +66,7 @@ for CRON_TYPE in $CRON_TYPES; do
   fi
 
   if [[ "$ENABLED" != "true" ]]; then
-    echo "⏭️  ${CRON_TYPE} — disabled in sources.json, skipping"
+    echo "⏭️  ${CRON_TYPE} — disabled in client-config.json, skipping"
     SKIPPED=$((SKIPPED + 1))
     continue
   fi
@@ -101,16 +101,20 @@ for CRON_TYPE in $CRON_TYPES; do
 
   # Create the cron job
   echo "➕ Creating: ${CRON_NAME}"
+  # Write prompt to temp file, pass via xargs to avoid shell escaping issues with long prompts
+  TMPFILE=$(mktemp)
+  printf '%s' "${PROMPT}" > "$TMPFILE"
+  MSG=$(cat "$TMPFILE")
   openclaw cron add \
     --name "${CRON_NAME}" \
     --agent "${AGENT}" \
     --cron "${SCHEDULE}" \
     --tz "${TZ}" \
     --session isolated \
-    --message "${PROMPT}" \
     --model "${MODEL}" \
-    --delivery none \
-    2>&1 | head -3
+    --message "$MSG" \
+    2>&1 | head -5
+  rm -f "$TMPFILE"
 
   CREATED=$((CREATED + 1))
   echo "   ✓ Created"

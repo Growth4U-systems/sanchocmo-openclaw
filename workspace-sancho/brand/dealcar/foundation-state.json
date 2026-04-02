@@ -214,5 +214,15 @@
       ],
       "output_file": "brand/dealcar/strategic-plan/current.md"
     }
+  },
+  "file_index": {
+    "integrations": "integrations.json",
+    "discord": {
+      "channels": "discord-channels.json"
+    },
+    "memory": "memory.md"
+  },
+  "brand_summary": {
+    "url": "https://www.dealcar.io/"
   }
 }

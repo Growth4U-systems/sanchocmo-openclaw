@@ -1,0 +1,82 @@
+{
+  "url": "https://sanchocmo.com",
+  "mobile": {
+    "performance": 100,
+    "seo": 73,
+    "accessibility": 73,
+    "bestPractices": 88,
+    "lcp": 0.8,
+    "cls": 0,
+    "tbt": 0,
+    "opportunities": [
+      {
+        "id": "redirects",
+        "title": "Avoid multiple page redirects",
+        "savings": 751,
+        "description": "Redirects introduce additional delays before the page can be loaded. [Learn how to avoid page redirects](https://developer.chrome.com/docs/lighthouse/"
+      }
+    ],
+    "diagnostics": [
+      {
+        "id": "html-has-lang",
+        "title": "`<html>` element does not have a `[lang]` attribute",
+        "score": 0
+      },
+      {
+        "id": "landmark-one-main",
+        "title": "Document does not have a main landmark.",
+        "score": 0
+      },
+      {
+        "id": "errors-in-console",
+        "title": "Browser errors were logged to the console",
+        "score": 0
+      },
+      {
+        "id": "robots-txt",
+        "title": "robots.txt is not valid",
+        "score": 0
+      }
+    ]
+  },
+  "desktop": {
+    "performance": 100,
+    "seo": 73,
+    "accessibility": 73,
+    "bestPractices": 88,
+    "lcp": 0.2,
+    "cls": 0,
+    "tbt": 0,
+    "opportunities": [
+      {
+        "id": "redirects",
+        "title": "Avoid multiple page redirects",
+        "savings": 201,
+        "description": "Redirects introduce additional delays before the page can be loaded. [Learn how to avoid page redirects](https://developer.chrome.com/docs/lighthouse/"
+      }
+    ],
+    "diagnostics": [
+      {
+        "id": "landmark-one-main",
+        "title": "Document does not have a main landmark.",
+        "score": 0
+      },
+      {
+        "id": "robots-txt",
+        "title": "robots.txt is not valid",
+        "score": 0
+      },
+      {
+        "id": "html-has-lang",
+        "title": "`<html>` element does not have a `[lang]` attribute",
+        "score": 0
+      },
+      {
+        "id": "errors-in-console",
+        "title": "Browser errors were logged to the console",
+        "score": 0
+      }
+    ]
+  },
+  "fetchedAt": "2026-04-01T15:22:43.963Z"
+}

@@ -4,7 +4,7 @@
 
 ## Prerequisitos
 - `strategic-plan/current.md` aprobado
-- `projects/registry.json` + `projects/P{XX}-{slug}/tasks.json` creados
+- `projects/P{XX}-{slug}/project.json` + `tasks.json` creados
 - Canal `#projects` existe en el guild del cliente
 - Canales temáticos existen (web, content, prospecting, etc.)
 
@@ -168,7 +168,7 @@ Usar `message(action=channel-edit, channel=discord, channelId="{thread_id}", nam
 
 | Estado nuevo | Acción en hilo Discord | JSON |
 |---|---|---|
-| `completed` | Renombrar: `✅ [P{XX}] {nombre}` | status → `completed` en registry + project.json |
+| `completed` | Renombrar: `✅ [P{XX}] {nombre}` | status → `completed` en project.json |
 | `cancelled` | Renombrar: `❌ [P{XX}] {nombre}` | status → `cancelled` |
 | `reviewed` | Renombrar: `✅ [P{XX}] {nombre} — Reviewed` | status → `reviewed` |
 | `paused` | Renombrar: `⏸️ [P{XX}] {nombre}` | status → `paused` |
@@ -176,7 +176,7 @@ Usar `message(action=channel-edit, channel=discord, channelId="{thread_id}", nam
 ### Sync bidireccional obligatorio
 Cada cambio de estado actualiza SIEMPRE:
 1. El nombre del hilo en Discord (visual para el usuario)
-2. El status en tasks.json / project.json / registry.json (datos para MC)
+2. El status en tasks.json / project.json (datos para MC)
 3. MC refleja automáticamente los cambios del JSON
 
 ## Protocolo de nuevas tareas

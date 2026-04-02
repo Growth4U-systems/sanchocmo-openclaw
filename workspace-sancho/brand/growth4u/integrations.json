@@ -52,13 +52,30 @@
         "GROWTH4U_METRICOOL_API_TOKEN"
       ],
       "lastTestedAt": "2026-03-12T13:29:15.879Z"
+    },
+    "instantly": {
+      "provider": "instantly",
+      "status": "connected",
+      "config": {},
+      "envVars": [
+        "GROWTH4U_INSTANTLY_API_KEY"
+      ],
+      "lastTestedAt": "2026-04-01T12:37:53.752Z"
     }
   },
   "systemOverrides": {},
-  "updatedAt": "2026-03-12T13:29:15.893Z",
+  "updatedAt": "2026-04-01T12:37:53.754Z",
   "metricsSheet": {
     "spreadsheetId": "16d5sxuu5bRTV_Y69g-ZkHoxUb_3hDm5KyYSuP51o4m4",
     "folderId": "1ZujxjkBZs6EEQ6KXyBmZMe6IfU9DJ0lY",
     "url": "https://docs.google.com/spreadsheets/d/16d5sxuu5bRTV_Y69g-ZkHoxUb_3hDm5KyYSuP51o4m4/edit"
-  }
+  },
+  "recommended": [
+    {
+      "apiId": "lemlist",
+      "label": "Lemlist",
+      "metric": "Outbound Activity",
+      "priority": "medium"
+    }
+  ]
 }

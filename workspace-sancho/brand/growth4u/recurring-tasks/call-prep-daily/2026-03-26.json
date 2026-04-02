@@ -1,0 +1,11 @@
+{
+  "cronId": "36d0bff9-fea9-40d8-9bfd-bf1e5e58468b",
+  "cronName": "Call Prep Daily — Growth4U",
+  "slug": "growth4u",
+  "date": "2026-03-26",
+  "runAtMs": 1774560600012,
+  "status": "ok",
+  "durationMs": 141300,
+  "model": "claude-sonnet-4-5",
+  "content": "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n🔵 **10:00 — Teresa Sainz de Baranda** (ES by Cia)\n   **Estado**: Lead reciente (agendada 23/mar)\n   **Tags**: llamada-agendada, secuencia-seguimiento\n\n   📋 **Última vez**: Primera interacción. Lead llegó por formulario de reserva Growth4U.\n\n   🎯 **Objetivo**: Discovery call — Entender necesidad, contexto de ES by Cia, y determinar fit con servicios Growth4U.\n\n   📄 **Perfil**: `brand/growth4u/leads/TXHKJZy5gwdFY8pXgiPm.md`\n\n   ⚠️ **Notas**:\n   - Dominio `esbycia.com` sin contenido activo (Plesk default page)\n   - No hay transcripciones previas\n   - No hay teléfono registrado en GHL\n   - Email verificado: teresasainzdebaranda@esbycia.com\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n**Total**: 1 llamada con lead de GHL confirmado\n\n**Otros eventos mañana** (no leads):\n- 10:45 — Alba / Alfonso Weekly (interna)\n- 11:45 — Sync Daily (interna)\n- 12:00 — Paymatico - Growth4U (cliente existente, seguimiento)\n- 13:00 — Café Muy Optimista (networking/charla abierta)\n- 13:00 — Updates Sancho (interna)\n- 15:00 — Q&A Oier (interna)\n- 15:00 — Product Review: Spain (Monzo, trabajo Alfonso)"
+}

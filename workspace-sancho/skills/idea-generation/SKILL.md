@@ -13,7 +13,7 @@ metadata:
     - brand/{slug}/go-to-market/ecps/current.md
     - brand/{slug}/brand-voice/current.md
     - brand/{slug}/idea-generation/recurring-tasks.json
-    - brand/{slug}/sources.json
+    - brand/{slug}/client-config.json
   context_writes:
     - brand/{slug}/idea-generation/ideas.json
     - brand/{slug}/idea-generation/recurring-tasks.json
@@ -35,7 +35,7 @@ Este skill es el **runner** del Idea Generation System. Se ejecuta:
 ## Step 0: Load Context
 
 ```
-1. Read brand/{slug}/sources.json → get channel IDs, cron config
+1. Read brand/{slug}/client-config.json → get channel IDs, cron config
 2. Read brand/{slug}/company-brief/current.md → business context
 3. Read brand/{slug}/go-to-market/ecps/current.md → target audience
 4. Read brand/{slug}/brand-voice/current.md → tone (for evaluating relevance)
@@ -212,7 +212,7 @@ if from_cron:
 Publish summary to the client's #intelligence channel.
 
 ```
-1. Read sources.json → get intelligence channel ID
+1. Read client-config.json → get intelligence channel ID
 2. Create summary message:
 
 "💡 Idea Generation — {date}

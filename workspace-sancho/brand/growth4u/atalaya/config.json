@@ -1,0 +1,98 @@
+{
+  "channels_to_monitor": [],
+  "followed_profiles": {
+    "linkedin": [
+      {
+        "id": "p-1775027590548-m8ft",
+        "name": "miguelsanzrivas",
+        "url": "https://www.linkedin.com/in/miguelsanzrivas/",
+        "category": "Founder",
+        "active": true,
+        "added_at": "2026-04-01T07:13:10.548Z",
+        "posts_monitored": 10,
+        "last_scan": "2026-04-01"
+      },
+      {
+        "id": "p-1775027634750-2p99",
+        "name": "jccortizo",
+        "url": "https://www.linkedin.com/in/jccortizo/",
+        "category": "Growth",
+        "active": true,
+        "added_at": "2026-04-01T07:13:54.750Z",
+        "posts_monitored": 10,
+        "last_scan": "2026-04-01"
+      },
+      {
+        "id": "p-1775027645050-a0zy",
+        "name": "felix-ruiz-hernandez-694ba113",
+        "url": "https://www.linkedin.com/in/felix-ruiz-hernandez-694ba113/",
+        "category": "Growth",
+        "active": true,
+        "added_at": "2026-04-01T07:14:05.050Z",
+        "posts_monitored": 10,
+        "last_scan": "2026-04-01"
+      },
+      {
+        "id": "p-1775027661176-ezhv",
+        "name": "ruben-hassid",
+        "url": "https://www.linkedin.com/in/ruben-hassid/",
+        "category": "AI",
+        "active": true,
+        "added_at": "2026-04-01T07:14:21.176Z",
+        "posts_monitored": 10,
+        "last_scan": "2026-04-01"
+      },
+      {
+        "id": "p-1775027674475-ry3v",
+        "name": "noam-nisand",
+        "url": "https://www.linkedin.com/in/noam-nisand/",
+        "category": "Marketing",
+        "active": true,
+        "added_at": "2026-04-01T07:14:34.475Z",
+        "posts_monitored": 10,
+        "last_scan": "2026-04-01"
+      },
+      {
+        "id": "p-1775027691742-wk1p",
+        "name": "davidarnoux",
+        "url": "https://www.linkedin.com/in/davidarnoux/",
+        "category": "Founder",
+        "active": true,
+        "added_at": "2026-04-01T07:14:51.742Z",
+        "posts_monitored": 10,
+        "last_scan": "2026-04-01"
+      },
+      {
+        "id": "p-1775027716704-nvbc",
+        "name": "majavoje",
+        "url": "https://www.linkedin.com/in/majavoje/",
+        "category": "Growth",
+        "active": true,
+        "added_at": "2026-04-01T07:15:16.705Z",
+        "posts_monitored": 10,
+        "last_scan": "2026-04-01"
+      },
+      {
+        "id": "p-1775027728706-yvab",
+        "name": "theanishajain",
+        "url": "https://www.linkedin.com/in/theanishajain/",
+        "category": "AI",
+        "active": true,
+        "added_at": "2026-04-01T07:15:28.706Z",
+        "posts_monitored": 10,
+        "last_scan": "2026-04-01"
+      }
+    ],
+    "twitter": [],
+    "instagram": []
+  },
+  "competitor_overrides": {},
+  "categories": [
+    "Growth",
+    "Founder",
+    "SEO",
+    "AI",
+    "Marketing",
+    "Comunidad"
+  ]
+}

@@ -50,7 +50,7 @@ echo "🔨 Onboarding: $NAME (slug: $SLUG, guild: $GUILD)"
 
 # --- 1. Crear estructura de archivos ---
 echo "📁 Creando estructura..."
-mkdir -p "$BRAND_DIR"/{company-brief,market-and-us/{market,competitors,self,market-synthesis,sources},go-to-market/{ecps,positioning/shared,pricing,existing-customer-data,ecp-validation},brand-book/{brand-voice,visual-identity},strategic-plan,operational,_archive,projects}
+mkdir -p "$BRAND_DIR"/{company-brief,market-and-us/{market,competitors,self,market-synthesis,sources},go-to-market/{ecps,positioning/shared,pricing,existing-customer-data,ecp-validation},brand-book/{brand-voice,visual-identity},strategic-plan,operational,_archive,projects,monitoring/weekly}
 
 # --- 1b. Crear placeholders de documentos ---
 echo "📄 Creando placeholders..."
@@ -350,6 +350,18 @@ cat > "$BRAND_DIR/foundation-state.json" << FJSON
         "strategic-presentation": {"status": "not-started", "skill": "strategic-plan", "output_file": "brand/$SLUG/strategic-plan/strategic-presentation.html"}
       }
     }
+  },
+  "file_index": {
+    "competitors": {},
+    "integrations": "integrations.json",
+    "metrics": {},
+    "brand_assets": {},
+    "operational": {},
+    "projects": {
+      "dir": "projects/"
+    },
+    "presentations": {},
+    "memory": null
   }
 }
 FJSON
@@ -582,6 +594,20 @@ cat > "$BRAND_DIR/projects/P00-Full-Foundation-Full-Foundation/tasks.json" << TA
     "skill": "visual-identity",
     "pillar": "visual-identity",
     "section": "brand-identity"
+  },
+  {
+    "id": "P00-FUL-T09",
+    "name": "Configurar Atalaya (Inteligencia Competitiva)",
+    "description": "Una vez identificados tus competidores, Atalaya los monitoriza automáticamente: sus ads, blog, redes sociales. Genera ideas de contenido inspiradas en lo que funciona en tu mercado.",
+    "deliverable": "atalaya/config.json + primer informe de Atalaya.",
+    "done_criteria": "atalaya/config.json creado y Atalaya ejecutado con al menos 1 competidor.",
+    "depends_on": "P00-FUL-T02",
+    "owner": "Usuario",
+    "status": "todo",
+    "channel": "intelligence",
+    "type": "integration",
+    "skill": "atalaya",
+    "notes": "Se configura después de completar Competitor Intelligence. Requiere Apify MCP para scraping de contenido."
   }
 ]
 TASKSJSON2
@@ -627,6 +653,57 @@ cat > "$BRAND_DIR/projects/P00-Metrics-Metrics-Setup/tasks.json" << TASKSJSON_MS
       "skill": "metrics-setup",
       "pillar": "metrics-setup",
       "section": "metrics-setup"
+    },
+    {
+      "id": "P00-MET-T08",
+      "name": "Conectar reuniones (Meeting Intelligence)",
+      "description": "Comparte una carpeta de Google Drive con tus notas o grabaciones de reuniones. Sancho extraerá decisiones, acciones e insights automáticamente después de cada reunión.",
+      "deliverable": "Meeting Intelligence configurado y ejecutando automáticamente.",
+      "done_criteria": "google_drive_folder_id configurado y Meeting Intelligence ejecutado con al menos 1 reunión.",
+      "depends_on": null,
+      "owner": "Usuario",
+      "status": "todo",
+      "channel": "intelligence",
+      "type": "integration",
+      "skill": "meeting-intelligence",
+      "notes": "1) Crea o identifica una carpeta en Google Drive con tus notas de reuniones. 2) Comparte la carpeta con el agente. 3) Sancho configurará Meeting Intelligence automáticamente. Corre L-V a las 18h."
+    },
+    {
+      "id": "P00-MET-T09",
+      "name": "Configurar preparación de reuniones (Call Prep)",
+      "description": "Si tienes un CRM con calendario de reuniones (GHL, HubSpot, etc.), Sancho puede preparar briefings automáticos antes de cada llamada con un lead.",
+      "deliverable": "Call Prep configurado y generando briefings.",
+      "done_criteria": "Call Prep ejecutado con al menos 1 briefing generado.",
+      "depends_on": null,
+      "owner": "Usuario",
+      "status": "todo",
+      "channel": "intelligence",
+      "type": "integration",
+      "skill": "sales-call-prep",
+      "notes": "Requiere: acceso a tu calendario + CRM con datos de leads. Dile a Sancho qué CRM usas y él configurará la integración."
+    },
+    {
+      "id": "P00-MET-T10",
+      "name": "Conectar comunicaciones internas",
+      "description": "Conecta los canales de comunicación interna de tu empresa para que Sancho pueda generar el Daily Pulse: un resumen diario con emails importantes, mensajes clave, oportunidades detectadas y acciones pendientes.",
+      "deliverable": "Al menos 1 canal de comunicación conectado y Daily Pulse ejecutando.",
+      "done_criteria": "Daily Pulse ejecutado con al menos 1 fuente conectada.",
+      "depends_on": null,
+      "owner": "Usuario",
+      "status": "todo",
+      "channel": "insights",
+      "type": "integration",
+      "skill": "daily-pulse",
+      "connectors": [
+        {"id": "gmail", "name": "Gmail", "icon": "📧", "status": "available", "config_hint": "Cuenta Gmail + labels a ignorar"},
+        {"id": "outlook", "name": "Outlook / Microsoft 365", "icon": "📨", "status": "available", "config_hint": "Cuenta Outlook + carpetas a monitorizar"},
+        {"id": "slack", "name": "Slack", "icon": "💬", "status": "available", "config_hint": "Bot token (xoxb-) + canales a monitorizar"},
+        {"id": "teams", "name": "Microsoft Teams", "icon": "🟣", "status": "coming_soon", "config_hint": "Requiere app registrada en Azure AD"},
+        {"id": "whatsapp", "name": "WhatsApp Business", "icon": "🟢", "status": "coming_soon", "config_hint": "API de WhatsApp Business"},
+        {"id": "intercom", "name": "Intercom", "icon": "🔵", "status": "coming_soon", "config_hint": "API key de Intercom"},
+        {"id": "zendesk", "name": "Zendesk", "icon": "🟠", "status": "coming_soon", "config_hint": "Subdomain + API token"}
+      ],
+      "notes": "Abre esta tarea y dile a Sancho qué herramientas de comunicación usa tu empresa. Él te guiará paso a paso para conectar cada una. Cuantas más fuentes conectes, más completo será tu Daily Pulse."
     }
   ]
 }
@@ -688,19 +765,38 @@ cat > "$BRAND_DIR/projects/P00-Strategic-Plan-Strategic-Plan/tasks.json" << TASK
 ]
 TASKSJSON3
 
-# Registry
-cat > "$BRAND_DIR/projects/registry.json" << REGJSON
-{
-  "projects": [
-    {"id": "P00-Fast-Foundation", "slug": "Fast-Foundation", "name": "Fast Foundation (L0-L1)", "strategy": "Foundation — Layer 0-1", "status": "pending", "phase": -1, "category": "foundation"},
-    {"id": "P00-Full-Foundation", "slug": "Full-Foundation", "name": "Full Foundation (L2-L5)", "strategy": "Foundation — Layer 2-5", "status": "pending", "phase": -1, "category": "foundation"},
-    {"id": "P00-Metrics", "slug": "Metrics-Setup", "name": "Métricas y Conexiones", "strategy": "Foundation — Metrics Layer", "status": "pending", "phase": -1, "category": "foundation"},
-    {"id": "P00-Strategic-Plan", "slug": "Strategic-Plan", "name": "Strategic Plan", "strategy": "Foundation — Strategic Planning", "status": "pending", "phase": -1, "category": "foundation"}
-  ]
-}
-REGJSON
+# No registry.json — el filesystem (carpetas P{XX}-{slug}/ con project.json) es la fuente de verdad
 
 echo "   ✅ Proyectos core creados (P00-Fast-Foundation, P00-Full-Foundation, P00-Metrics-Setup, P00-Strategic-Plan)"
+
+# --- 1c. Crear client-config.json (config de crons por defecto) ---
+echo "📋 Creando client-config.json..."
+cat > "$BRAND_DIR/client-config.json" << SOURCESJSON
+{
+  "\$schema": "../../_system/sources.schema.json",
+  "slug": "$SLUG",
+  "name": "$NAME",
+  "guild_id": "$GUILD",
+  "language": "es",
+  "channels": {},
+  "crons": {
+    "morning_metrics": {
+      "enabled": true,
+      "schedule": "30 8 * * *",
+      "tz": "Europe/Madrid",
+      "publish_channel": "intelligence"
+    },
+    "performance_analysis_weekly": {
+      "enabled": true,
+      "schedule": "0 11 * * 1",
+      "tz": "Europe/Madrid",
+      "publish_channel": "intelligence"
+    }
+  }
+}
+SOURCESJSON
+echo "   ✅ client-config.json creado con crons por defecto"
+echo "   ℹ️  Los channel IDs se rellenan en el paso 6 (auto-bind Discord)"
 
 # --- 2. Insertar en Supabase ---
 echo "🗄️ Insertando en Supabase..."
@@ -774,6 +870,22 @@ AUTOBIND="$WORKSPACE/scripts/auto-bind.py"
 if [[ -f "$AUTOBIND" ]]; then
   python3 "$AUTOBIND" "$GUILD" --name "$NAME" --slug "$SLUG" --apply
   echo "   ✅ Guild config + systemPrompts aplicados"
+
+  # Update client-config.json with discovered channel IDs
+  DISCORD_CHANNELS_FILE="$BRAND_DIR/discord-channels.json"
+  if [[ -f "$DISCORD_CHANNELS_FILE" ]]; then
+    python3 -c "
+import json
+with open('$DISCORD_CHANNELS_FILE') as f:
+    dc = json.load(f)
+with open('$BRAND_DIR/client-config.json') as f:
+    sources = json.load(f)
+sources['channels'] = dc.get('channels', {})
+with open('$BRAND_DIR/client-config.json', 'w') as f:
+    json.dump(sources, f, indent=2)
+print('   ✅ client-config.json actualizado con channel IDs')
+" 2>/dev/null || echo "   ⚠️ No se pudo actualizar client-config.json con channels"
+  fi
 else
   echo "   ⚠️ auto-bind.py no encontrado — config manual necesario"
 fi
@@ -812,6 +924,15 @@ if command -v openclaw &>/dev/null; then
   openclaw gateway restart 2>/dev/null && echo "   ✅ Gateway reiniciado" || echo "   ⚠️ Gateway restart falló — reiniciar manualmente"
 else
   echo "   ⚠️ openclaw CLI no encontrado — reiniciar gateway manualmente"
+fi
+
+# --- 8b. Crear crons recurrentes desde templates ---
+echo "⏰ Creando crons recurrentes..."
+CRON_SCRIPT="$WORKSPACE/scripts/create-client-crons.sh"
+if [[ -f "$CRON_SCRIPT" ]]; then
+  bash "$CRON_SCRIPT" "$SLUG" 2>&1 | sed 's/^/   /'
+else
+  echo "   ⚠️ create-client-crons.sh no encontrado — crear crons manualmente"
 fi
 
 # --- 9. Instrucciones ---

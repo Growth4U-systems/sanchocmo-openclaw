@@ -11,14 +11,13 @@ metadata:
   chains_to: strategic-plan, execution-skills
 context_required:
   - brand/{slug}/strategic-plan/current.md
-  - brand/{slug}/projects/registry.json
+  - brand/{slug}/projects/P*/project.json
   - brand/{slug}/foundation-state.json
   - brand/{slug}/company-brief/current.md
 context_writes:
   - brand/{slug}/projects/P{XX}-{slug}/project.json
   - brand/{slug}/projects/P{XX}-{slug}/tasks.json
   - brand/{slug}/projects/P{XX}-{slug}/playbook.md
-  - brand/{slug}/projects/registry.json
 ---
 
 # Sancho Manager — Comodín de Gestión
@@ -55,11 +54,11 @@ context_writes:
 
 Leer en paralelo:
 - `brand/{slug}/strategic-plan/current.md` — objetivos y canales actuales
-- `brand/{slug}/projects/registry.json` — proyectos existentes (evitar duplicación)
+- `brand/{slug}/projects/P*/project.json` — escanear proyectos existentes (evitar duplicación)
 - `brand/{slug}/foundation-state.json` — estado Foundation
 - `brand/{slug}/company-brief/current.md` — contexto de negocio
 
-Si `registry.json` no existe (primer proyecto del cliente), crearlo con `next_id: 1` y `projects: []`.
+Si no hay directorios `P*/` en `projects/`, el primer proyecto será P01.
 Si otros archivos no existen, continuar sin ellos (warning, no bloqueo).
 
 Al presentar archivos al usuario, usar siempre links tokenizados de MC (leer `clients.json` para obtener `mcToken`):
@@ -144,7 +143,7 @@ T02 → {nombre} | depende de T01 | #{canal} | ...
 
 Al aprobar:
 
-1. **Asignar P{XX}** — Leer `registry.json.next_id`, incrementar
+1. **Asignar P{XX}** — Escanear directorios `projects/P*/`, tomar el número más alto + 1
 2. **Crear `projects/P{XX}-{slug}/project.json`** — Seguir schema de [data-model.md](../strategic-plan/references/data-model.md):
    ```json
    {
@@ -192,8 +191,7 @@ Al aprobar:
    ```
 4. **Crear `projects/P{XX}-{slug}/playbook.md`** — Resumen con links a playbooks de tareas
 5. **Crear `projects/P{XX}-{slug}/T{YY}/playbook.md`** — Por cada tarea, instrucciones detalladas
-6. **Actualizar `registry.json`** — Añadir entrada, incrementar `next_id`
-7. **Regenerar MC data:** `python3 scripts/regenerate.py` (para que MC refleje el nuevo proyecto)
+6. **Regenerar MC data:** `python3 scripts/regenerate.py` (para que MC refleje el nuevo proyecto)
 8. **Ofrecer crear hilos Discord** — "¿Creo los hilos en Discord?" → Si sí, seguir `_system/project-threads-protocol.md` (resolver channel IDs desde `brand/{slug}/discord-channels.json` primero; si no existe, ejecutar `message(action=channel-list)` para crearlo)
 
 ---
@@ -256,15 +254,14 @@ Trigger: todas las tareas completadas O `review_date` alcanzada.
 2. Obtener métricas actuales (preguntar al usuario si no disponibles)
 3. Generar `value-review.md` siguiendo template de [data-model.md](../strategic-plan/references/data-model.md)
 4. Actualizar `project.json` → status = `reviewed`
-5. Actualizar `registry.json`
-6. **Regenerar MC data:** `python3 scripts/regenerate.py`
+5. **Regenerar MC data:** `python3 scripts/regenerate.py`
 7. Renombrar hilo Discord: `✅ [P{XX}] {nombre} — Reviewed`
 8. Si learnings sugieren acción → proponer nuevo proyecto (vuelve a Mode GENERAL)
 
 ### Close / Cancel
 
 1. Confirmar con usuario
-2. Actualizar status en `project.json` + `registry.json`
+2. Actualizar status en `project.json`
 3. **Regenerar MC data:** `python3 scripts/regenerate.py`
 4. Renombrar hilo Discord según protocolo:
    - Completed: `✅ [P{XX}] {nombre}`
@@ -276,7 +273,7 @@ Trigger: todas las tareas completadas O `review_date` alcanzada.
 
 Cuando el usuario pregunta "¿qué hago?" o "status" sin especificar proyecto.
 
-1. Leer `registry.json` → todos los proyectos con status `active`
+1. Escanear `projects/P*/project.json` → todos los proyectos con status `active`
 2. Para cada activo, leer `tasks.json` y calcular progreso
 3. Presentar vista priorizada:
 
@@ -298,6 +295,33 @@ P02 LinkedIn Pipeline — 0/5 tareas | Review: 15 abr
 
 ---
 
+## Mode RECURRING — Gestión de tareas recurrentes
+
+sancho-manager gestiona el ciclo completo de recurring tasks:
+
+### Gestión
+- **Crear** nuevas recurring tasks (frecuencia, fuentes, canal destino)
+- **Editar** configuración (cambiar frecuencia, fuentes, pausar/reactivar)
+- **Listar** estado de todas las recurring tasks del cliente
+
+### Análisis de resultados
+- Cuando una recurring task genera insights (keywords, señales, tendencias):
+  1. Analizar los resultados del último run
+  2. Crear **tareas de análisis** (tipo `analysis`) en el proyecto correspondiente
+  3. De esas tareas salen ideas/contactos → Idea Bank
+  4. Las ideas se asignan a tareas content/outreach existentes
+
+### Flujo
+```
+Recurring task (cron) → genera datos/insights
+  → sancho-manager analiza resultados
+    → Crea tareas de análisis en el proyecto
+      → Ideas/contactos generados → Idea Bank
+        → Se asignan a tareas content/outreach
+```
+
+---
+
 ## Gate Checks
 
 ### 1. Foundation (soft)
@@ -311,7 +335,17 @@ if foundation-state.json NOT exists OR sections.company-brief.status != "approve
 Ver Paso 2 de Mode GENERAL. Informativo — el usuario siempre tiene la última palabra.
 
 ### 3. Execution
-**NUNCA ejecutar una tarea sin confirmación explícita.** Siempre preguntar: "¿La ejecuto?"
+**NUNCA ejecutar una tarea sin confirmación explícita.**
+
+Incluso si el usuario dice "ejecuta los proyectos" o "arranca todo":
+1. Listar tareas pendientes con su estado
+2. Preguntar: "¿Cuál quieres que ejecute primero?" o "¿Todas en paralelo?"
+3. Esperar confirmación ESPECÍFICA por tarea o grupo de tareas
+4. Ejecutar via dispatch a Escudero (no directamente)
+
+⚠️ **"Apruebo el plan" / "Crea los proyectos" = crear estructura (JSONs + playbooks)**
+⚠️ **"Ejecuta T01" / "Arranca la Fase 0" = confirmación de ejecución**
+**Son pasos DIFERENTES. Nunca confundirlos.**
 
 ---
 
@@ -326,7 +360,7 @@ Antes de crear/presentar cualquier proyecto o tarea, verificar:
 - [ ] Channels asignados corresponden al tipo de tarea (web → #web, no #content)
 - [ ] Skills asignados existen en `skills/` directory
 - [ ] Owner = "Sancho" por defecto, "Equipo" solo si requiere acción humana genuina
-- [ ] `registry.json` actualizado con `next_id` correcto
+- [ ] Carpeta `P{XX}-{slug}/` creada con `project.json` válido
 - [ ] Alignment check ejecutado vs strategic plan (si existe)
 - [ ] Estimaciones usan velocidad-AI (no timelines de agencia)
 - [ ] `description` y `approach` escritos para ser legibles por cualquiera (no técnico)
@@ -347,6 +381,6 @@ Antes de crear/presentar cualquier proyecto o tarea, verificar:
 | Lee de | `foundation-state.json` | Estado de Foundation |
 | Lee de | `skills/strategic-plan/references/strategies-catalog.json` | Vincular tareas a estrategias del catálogo (poblar `strategy.catalog_id` en project.json) |
 | Escribe | project.json, tasks.json, playbook.md | Artefactos de proyecto |
-| Escribe | registry.json | Índice de proyectos |
+| Escribe | projects/P{XX}-{slug}/project.json | Datos del proyecto (el filesystem es el registro) |
 | Encadena con | Skills de ejecución | Via dispatch para ejecutar tareas |
 | Encadena con | `project-threads-protocol.md` | Para creación de hilos Discord |

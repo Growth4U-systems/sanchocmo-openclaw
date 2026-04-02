@@ -53157,5 +53157,362 @@
         ]
       }
     }
+  },
+  {
+    "slug": "growth4u",
+    "collectedAt": "2026-04-01T22:13:57.647Z",
+    "dateRange": {
+      "from": "2026-03-31",
+      "to": "2026-03-31"
+    },
+    "sources": {
+      "ghl": {
+        "status": "ok",
+        "collectedAt": "2026-04-01T22:14:06.320Z",
+        "metrics": [
+          {
+            "name": "newContacts",
+            "value": 31,
+            "date": "2026-03-31"
+          },
+          {
+            "name": "totalContacts",
+            "value": 331,
+            "date": "2026-03-31"
+          },
+          {
+            "name": "newContacts",
+            "value": 24,
+            "date": "2026-03-31",
+            "dimensions": {
+              "channel": "Unknown"
+            }
+          },
+          {
+            "name": "newContacts",
+            "value": 5,
+            "date": "2026-03-31",
+            "dimensions": {
+              "channel": "Trust Score Analyzer"
+            }
+          },
+          {
+            "name": "newContacts",
+            "value": 2,
+            "date": "2026-03-31",
+            "dimensions": {
+              "channel": "Facebook"
+            }
+          },
+          {
+            "name": "appointments",
+            "value": 1,
+            "date": "2026-03-31"
+          },
+          {
+            "name": "appointments",
+            "value": 1,
+            "date": "2026-03-31",
+            "dimensions": {
+              "status": "confirmed"
+            }
+          },
+          {
+            "name": "opportunities",
+            "value": 25,
+            "date": "2026-03-31"
+          },
+          {
+            "name": "pipelineValue",
+            "value": 0,
+            "date": "2026-03-31"
+          },
+          {
+            "name": "totalOpportunities",
+            "value": 53,
+            "date": "2026-03-31"
+          },
+          {
+            "name": "pipeline",
+            "value": 9,
+            "date": "2026-03-31",
+            "dimensions": {
+              "pipelineId": "OSBqHAuARcSvYct49emn",
+              "pipelineName": "Closer",
+              "stages": [
+                {
+                  "id": "9c385e34-35a7-4477-9257-4a136cedd8e7",
+                  "name": "Llamada Agendada",
+                  "count": 5
+                },
+                {
+                  "id": "749376a8-b3ee-439c-8515-d873608bbf30",
+                  "name": "Llamada Confirmada",
+                  "count": 0
+                },
+                {
+                  "id": "6013462a-125f-4aa1-aba5-969fc383e3ab",
+                  "name": "Llamada cancelada",
+                  "count": 2
+                },
+                {
+                  "id": "03885eeb-b792-4c08-a915-e1c30bc5f810",
+                  "name": "No ha Asistido",
+                  "count": 0
+                },
+                {
+                  "id": "3b60296e-9a7a-48c8-a1d7-82c5df58a81d",
+                  "name": "Llamada de Seguimiento",
+                  "count": 1
+                },
+                {
+                  "id": "734678bc-acb8-4a1f-b0e8-90d81137dd20",
+                  "name": "Pendiente de Confirmación",
+                  "count": 0
+                },
+                {
+                  "id": "116a774a-7027-41e2-836e-650937d4e3a1",
+                  "name": "No Asistió (Llamada de Seg.)",
+                  "count": 0
+                },
+                {
+                  "id": "6885f28c-0ada-4a0b-b0a5-4c66e35da55d",
+                  "name": "No Cualificados",
+                  "count": 0
+                },
+                {
+                  "id": "d9833ab6-7cee-47ae-942d-9fd2730f7887",
+                  "name": "No Interesados",
+                  "count": 0
+                },
+                {
+                  "id": "302e04b1-5f61-4c0f-8604-3d61a47a13f4",
+                  "name": "Lead Nurturing",
+                  "count": 1
+                },
+                {
+                  "id": "0b8ea35a-7a6d-49f0-b3e3-8f959afe4918",
+                  "name": "Cliente",
+                  "count": 0
+                }
+              ]
+            }
+          },
+          {
+            "name": "pipeline",
+            "value": 44,
+            "date": "2026-03-31",
+            "dimensions": {
+              "pipelineId": "CeJQdqdQUR3Ure7DPbWu",
+              "pipelineName": "Guest Posting Outreach",
+              "stages": [
+                {
+                  "id": "7b5537bd-fe67-43bd-96d5-224b4fe33221",
+                  "name": "Prospecto",
+                  "count": 4
+                },
+                {
+                  "id": "a201c8bb-068d-4711-ab34-93945260714c",
+                  "name": "Pitch Enviado",
+                  "count": 40
+                },
+                {
+                  "id": "5abc9162-f749-4e77-83b5-193c14976bb6",
+                  "name": "Follow-up 1",
+                  "count": 0
+                },
+                {
+                  "id": "59dc2db0-a82f-48af-9695-957c9aee0711",
+                  "name": "Follow-up 2",
+                  "count": 0
+                },
+                {
+                  "id": "2ffe8970-4ef6-4148-84b3-12d8cf61c4b1",
+                  "name": "Respondió",
+                  "count": 0
+                },
+                {
+                  "id": "3e9fdc08-1471-4a97-aa38-8b160d0e6f2c",
+                  "name": "Artículo Enviado",
+                  "count": 0
+                },
+                {
+                  "id": "28aa7001-5854-42bd-89bd-247e339cc50e",
+                  "name": "Publicado",
+                  "count": 0
+                },
+                {
+                  "id": "eb1090e1-e12d-459f-98a9-cfe1fa87860f",
+                  "name": "Descartado",
+                  "count": 0
+                }
+              ]
+            }
+          },
+          {
+            "name": "pipeline",
+            "value": 0,
+            "date": "2026-03-31",
+            "dimensions": {
+              "pipelineId": "Kr69F4XA3YrI0ZmIjGYe",
+              "pipelineName": "Sales",
+              "stages": [
+                {
+                  "id": "b1829829-ae5a-4970-b9f0-28980e7814b9",
+                  "name": "Opt-in",
+                  "count": 0
+                },
+                {
+                  "id": "d288ddca-15cd-4fec-8620-66fc75c12af1",
+                  "name": "Opt-in Bootcamp",
+                  "count": 0
+                },
+                {
+                  "id": "df7969f4-b77c-4d7e-80de-d0edf52bf52e",
+                  "name": "Discovery agendado",
+                  "count": 0
+                },
+                {
+                  "id": "1ccb31b2-0029-4ffe-b285-c44c573d2daf",
+                  "name": "AUT -> discovery no show",
+                  "count": 0
+                },
+                {
+                  "id": "f0433650-dc9b-4a15-bfa6-0c1d01172265",
+                  "name": "Demo agendada",
+                  "count": 0
+                },
+                {
+                  "id": "1c23e185-db5d-4bbc-a440-90cee01ccf8b",
+                  "name": "AUT -> demo no show",
+                  "count": 0
+                },
+                {
+                  "id": "dbe70712-f524-4727-9107-1ae66ca631ce",
+                  "name": "AUT -> demo efectiva envío mail",
+                  "count": 0
+                },
+                {
+                  "id": "3a9ec576-0c28-417f-9597-050e97dc2666",
+                  "name": "AUT -> cliente realiza deposito",
+                  "count": 0
+                },
+                {
+                  "id": "5507835c-5af1-4f30-ba56-2549031d7a67",
+                  "name": "AUT -> no cerrado/newsletter",
+                  "count": 0
+                }
+              ]
+            }
+          },
+          {
+            "name": "pipeline",
+            "value": 0,
+            "date": "2026-03-31",
+            "dimensions": {
+              "pipelineId": "SsvNx8ufQKMv5TmS6AHj",
+              "pipelineName": "Setter",
+              "stages": [
+                {
+                  "id": "554b8bdb-1646-413b-8bd1-6184d0a3c9e6",
+                  "name": "LeadMagnets",
+                  "count": 0
+                },
+                {
+                  "id": "3b3e2bdd-bd89-43f6-aaf4-c4c42764006f",
+                  "name": "Typeforms Calificados",
+                  "count": 0
+                },
+                {
+                  "id": "04d0fec5-af5a-4e39-9a2f-9c6345fee781",
+                  "name": "No Resp/ Lead Magnets",
+                  "count": 0
+                },
+                {
+                  "id": "47ebc5b4-0dda-4e1f-84b7-ddf089933523",
+                  "name": "No Resp/ Typeforms",
+                  "count": 0
+                },
+                {
+                  "id": "d6e813ea-11a7-4681-aef8-1a099bc2ded6",
+                  "name": "No Cualificados",
+                  "count": 0
+                },
+                {
+                  "id": "a8afce57-221b-41b5-843a-219328b33409",
+                  "name": "Lead Nurturing",
+                  "count": 0
+                },
+                {
+                  "id": "a8779e80-8306-4eff-8adf-9277488ea233",
+                  "name": "No Interesados",
+                  "count": 0
+                }
+              ]
+            }
+          },
+          {
+            "name": "recentConversation",
+            "value": 0,
+            "date": "2026-03-31",
+            "dimensions": {
+              "contactId": "kTWWSEk7rs2LoBzgjAPs",
+              "type": "TYPE_PHONE",
+              "lastMessage": "Hola – quería mostrarte un ejemplo real\n\nHola Juan, soy Alfonso.\n\n\nQuería mostrarte el detrás de cámaras de cómo hemos c",
+              "lastMessageDate": "2026-04-01T21:27",
+              "unread": 0
+            }
+          },
+          {
+            "name": "recentConversation",
+            "value": 0,
+            "date": "2026-03-31",
+            "dimensions": {
+              "contactId": "XE7bsGDxDp287Pu28Glw",
+              "type": "TYPE_PHONE",
+              "lastMessage": "\n\n\nHola Editor,\n\n\nSoy Alfonso de Growth4U. Nos dedicamos al growth marketing para empresas tech y estamos buscando blogs",
+              "lastMessageDate": "2026-03-31T15:50",
+              "unread": 0
+            }
+          },
+          {
+            "name": "recentConversation",
+            "value": 0,
+            "date": "2026-03-31",
+            "dimensions": {
+              "contactId": "sONiqWI2Yge4FzuI73iJ",
+              "type": "TYPE_PHONE",
+              "lastMessage": "",
+              "lastMessageDate": "2026-03-31T15:50",
+              "unread": 0
+            }
+          },
+          {
+            "name": "recentConversation",
+            "value": 0,
+            "date": "2026-03-31",
+            "dimensions": {
+              "contactId": "KMFb1CxlAUDEVN7nB98z",
+              "type": "TYPE_PHONE",
+              "lastMessage": "",
+              "lastMessageDate": "2026-03-31T15:50",
+              "unread": 0
+            }
+          },
+          {
+            "name": "recentConversation",
+            "value": 0,
+            "date": "2026-03-31",
+            "dimensions": {
+              "contactId": "IIcIaktv8L7e286ifczk",
+              "type": "TYPE_PHONE",
+              "lastMessage": "",
+              "lastMessageDate": "2026-03-31T15:50",
+              "unread": 0
+            }
+          }
+        ]
+      }
+    }
   }
 ]

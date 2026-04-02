@@ -365,10 +365,17 @@
   .cron-output .cron-header h3 { font-size:14px; margin:0; }
   .cron-output .cron-meta { font-size:11px; color:var(--muted,#7A7A7A); margin-bottom:10px; }
   .cron-output .cron-summary { font-size:13px; line-height:1.7; }
-  .cron-output .cron-summary pre { background:var(--paper,#FFF); border:1px solid var(--border,#E5E2DC); border-radius:6px; padding:10px; font-size:12px; overflow-x:auto; }
-  .cron-output .cron-summary table { font-size:12px; border-collapse:collapse; width:100%; }
+  .cron-output .cron-summary p { margin:6px 0; }
+  .cron-output .cron-summary ul, .cron-output .cron-summary ol { margin:6px 0; padding-left:20px; }
+  .cron-output .cron-summary li { margin:2px 0; }
+  .cron-output .cron-summary hr { border:none; border-top:2px solid var(--border,#E5E2DC); margin:12px 0; }
+  .cron-output .cron-summary h1, .cron-output .cron-summary h2, .cron-output .cron-summary h3 { margin:12px 0 6px; }
+  .cron-output .cron-summary pre { background:var(--paper,#FFF); border:1px solid var(--border,#E5E2DC); border-radius:6px; padding:10px; font-size:12px; overflow-x:auto; white-space:pre-wrap; word-break:break-word; }
+  .cron-output .cron-summary code { background:var(--bg,#F5F0E6); padding:1px 4px; border-radius:3px; font-size:12px; }
+  .cron-output .cron-summary table { font-size:12px; border-collapse:collapse; width:100%; margin:8px 0; }
   .cron-output .cron-summary th, .cron-output .cron-summary td { border:1px solid var(--border,#E5E2DC); padding:4px 8px; text-align:left; }
   .cron-output .cron-summary th { background:var(--bg,#F5F0E6); font-weight:600; }
+  .cron-output .cron-summary a { color:var(--rust,#C45D35); }
   /* Alert toast for crons */
   .toast.cron-alert { background:var(--ink,#1E1E2E); border:2px solid #22A06B; color:#cdd6f4; cursor:pointer; }
   .toast.cron-alert.error { border-color:#C0392B; }
@@ -849,6 +856,7 @@
     .v2-cb { padding:12px 14px; }
   }
 </style>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
 <body>
 
@@ -872,6 +880,7 @@
   <div class="ns">Overview</div>
   <a href="#" class="active" onclick="showPage('dashboard',this)">📊 Dashboard</a>
   <a href="#" class="nav-global-only" onclick="showPage('tasks',this)">📋 Tareas Cervantes</a>
+  <a href="#" class="nav-global-only" onclick="openNewClientWizard();return false;" style="margin-top:8px;display:flex;align-items:center;gap:6px;padding:8px 14px;background:var(--rust,#C45D35);color:#fff;border-radius:8px;font-weight:700;font-size:12px;text-decoration:none;justify-content:center;">🆕 Nuevo Cliente</a>
 
   <div class="ns nav-client-only" id="nav-client-section">Hospital Capilar</div>
   <a href="#" class="nav-client-only" onclick="showPage('foundation',this)">📂 Documents</a>
@@ -881,6 +890,7 @@
   <a href="#" class="nav-client-only" onclick="showPage('idea-bank',this)">💡 Idea Bank</a>
   <a href="#" class="nav-client-only" onclick="showPage('metrics',this)">📈 Métricas</a>
   <a href="#" class="nav-client-only" onclick="showPage('trust-engine',this)">🔍 Trust Engine</a>
+  <a href="#" class="nav-client-only" onclick="showPage('atalaya',this)">🏰 Atalaya <span id="atalaya-badge" style="background:#C45D35;color:#fff;font-size:10px;padding:1px 6px;border-radius:8px;margin-left:4px;display:none;"></span></a>
   <div class="ns">Sistema</div>
   <a href="#" onclick="showPage('activity',this)">📡 Activity</a>
 
@@ -1061,6 +1071,11 @@
       <div id="docbrowser-chat-pane" style="display:none;"></div>
     </div>
   </div>
+</div>
+
+<!-- ==================== ATALAYA ==================== -->
+<div id="page-atalaya" class="page">
+  <iframe id="atalaya-iframe" style="width:100%;height:calc(100vh - 56px);border:none;display:block;"></iframe>
 </div>
 
 <!-- ==================== TRUST ENGINE ==================== -->
@@ -1292,6 +1307,12 @@
     </div>
   </div>
 
+  <!-- Performance Analysis Recommendations -->
+  <div id="metrics-monitoring-section" style="display:none;"></div>
+
+  <!-- Manual data pending banner -->
+  <div id="metrics-manual-banner" style="display:none;"></div>
+
   <!-- Health Score KPIs -->
   <div class="m-health" id="metrics-health"></div>
 
@@ -1354,10 +1375,8 @@
       <div style="display:flex;border-bottom:1px solid var(--border);padding:16px 24px;gap:4px;" id="wiz-steps">
         <div class="wiz-step active" data-step="1">① Info</div>
         <div class="wiz-step" data-step="2">② Discord</div>
-        <div class="wiz-step" data-step="3">③ Script</div>
-        <div class="wiz-step" data-step="4">④ OpenClaw</div>
-        <div class="wiz-step" data-step="5">⑤ Fuentes</div>
-        <div class="wiz-step" data-step="6">⑥ Verificar</div>
+        <div class="wiz-step" data-step="3">③ Competidores</div>
+        <div class="wiz-step" data-step="4">④ Crear</div>
       </div>
 
       <!-- Step 1: Basic info -->
@@ -1366,7 +1385,6 @@
         <div class="wiz-desc">Datos básicos para configurar todo.</div>
         <div class="form-row"><div class="form-field"><label>Nombre del cliente</label><input type="text" id="wiz-name" placeholder="Ej: Hospital Capilar"></div><div class="form-field"><label>Emoji</label><input type="text" id="wiz-emoji" placeholder="🏥" style="width:60px;text-align:center;" maxlength="4"></div></div>
         <div class="form-row"><div class="form-field"><label>URL de la web</label><input type="text" id="wiz-url" placeholder="https://ejemplo.com"></div><div class="form-field"><label>Slug (identificador)</label><input type="text" id="wiz-slug" placeholder="hospital-capilar" oninput="this.value=this.value.toLowerCase().replace(/[^a-z0-9-]/g,'')"></div></div>
-        <div class="form-row full"><div class="form-field"><label>Sector / industria</label><input type="text" id="wiz-industry" placeholder="Ej: Salud capilar, SaaS, Fintech..."></div></div>
       </div>
 
       <!-- Step 2: Discord -->
@@ -1385,94 +1403,14 @@
         </div>
       </div>
 
-      <!-- Step 3: Run Script -->
+      <!-- Step 3: Competidores (opcional) -->
       <div class="wiz-content" id="wiz-3">
-        <div class="wiz-title">Ejecutar script de onboarding</div>
-        <div class="wiz-desc">Un comando que crea todo: archivos, Supabase, clients.js, y regenera MC.</div>
-        <div class="wiz-checklist">
-          <div class="wiz-check" onclick="toggleCheck(this)"><span class="wiz-checkbox">☐</span>Ejecutar en terminal:
-            <pre id="wiz-script-cmd" style="margin-top:8px;background:var(--bg);padding:12px;border-radius:8px;font-size:13px;cursor:pointer;white-space:pre-wrap;" onclick="event.stopPropagation();navigator.clipboard.writeText(this.textContent);showToast('📋 Comando copiado')">bash ~/.openclaw/workspace-sancho/scripts/new-client.sh --slug "{slug}" --name "{nombre}" --guild "{guild}"</pre>
-          </div>
-        </div>
-        <div style="margin-top:16px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;">
-          <div style="font-size:12px;font-weight:600;margin-bottom:6px;">✅ El script hace automáticamente:</div>
-          <div style="font-size:12px;color:var(--muted);line-height:1.8;">
-            📁 Crea <code>brand/{slug}/</code> con foundation-state.json v3.0 (6 secciones, 14 pilares)<br>
-            📋 Crea 4 proyectos P00 (Fast Foundation, Full Foundation, Métricas, Strategic Plan) con tareas foundation<br>
-            🗄️ Inserta cliente en Supabase (tabla compartida multi-tenant)<br>
-            📋 Actualiza clients.json<br>
-            🖥️ Actualiza clients.js (selector de MC)<br>
-            🔄 Regenera Mission Control
-          </div>
-        </div>
-      </div>
+        <div class="wiz-title">Competidores</div>
+        <div class="wiz-desc">Si conoces los competidores principales, añádelos aquí. Atalaya los monitorizará automáticamente. <em>(Opcional — puedes añadirlos después)</em></div>
 
-      <!-- Step 4: OpenClaw config -->
-      <div class="wiz-content" id="wiz-4">
-        <div class="wiz-title">Configurar OpenClaw</div>
-        <div class="wiz-desc">Registrar el nuevo guild en OpenClaw para que Sancho escuche en el servidor.</div>
-        <div class="wiz-checklist">
-          <div class="wiz-check" onclick="toggleCheck(this)"><span class="wiz-checkbox">☐</span>Pedir a Cervantes (webchat): <pre style="margin-top:8px;background:var(--bg);padding:12px;border-radius:8px;font-size:12px;white-space:pre-wrap;" id="wiz-cervantes-msg">Configura el guild {guild} para el cliente {nombre} (slug: {slug}) en openclaw.json con systemPrompts para los 14 canales.</pre></div>
-          <div class="wiz-check" onclick="toggleCheck(this)"><span class="wiz-checkbox">☐</span>Reiniciar gateway: <code>openclaw gateway restart</code></div>
-          <div class="wiz-check" onclick="toggleCheck(this)"><span class="wiz-checkbox">☐</span>Verificar que el bot responde en #general del nuevo servidor</div>
-        </div>
-      </div>
-
-      <!-- Step 5: Fuentes de datos -->
-      <div class="wiz-content" id="wiz-5">
-        <div class="wiz-title">Fuentes de datos</div>
-        <div class="wiz-desc">¿De dónde sacamos información? Configura las fuentes para Daily Pulse, Meeting Intelligence y Thief Marketer.</div>
-
-        <div style="margin-bottom:20px;">
-          <h3 style="font-size:14px;margin-bottom:8px;">📧 Email & Comunicación</h3>
-          <div class="form-row">
-            <div class="form-field"><label>Cuenta Gmail</label><input type="text" id="wiz-src-gmail" placeholder="contacto@empresa.com"></div>
-            <div class="form-field"><label>Labels a ignorar</label><input type="text" id="wiz-src-gmail-skip" placeholder="promotions, social" value="promotions, social"></div>
-          </div>
-          <div class="form-row">
-            <div class="form-field"><label>¿Usan Slack?</label>
-              <select id="wiz-src-slack"><option value="no">No</option><option value="yes">Sí</option></select>
-            </div>
-            <div class="form-field"><label>Slack channels (si aplica)</label><input type="text" id="wiz-src-slack-channels" placeholder="#general, #marketing"></div>
-          </div>
-        </div>
-
-        <div style="margin-bottom:20px;">
-          <h3 style="font-size:14px;margin-bottom:8px;">🗒️ Meetings & Notas</h3>
-          <div class="form-row">
-            <div class="form-field"><label>¿Herramienta de meetings?</label>
-              <select id="wiz-src-meeting-tool">
-                <option value="none">Solo Google Meet / Zoom (sin transcriptor)</option>
-                <option value="fathom">Fathom</option>
-                <option value="granola">Granola</option>
-                <option value="otter">Otter.ai</option>
-                <option value="fireflies">Fireflies.ai</option>
-                <option value="other">Otra</option>
-              </select>
-            </div>
-            <div class="form-field"><label>¿Dónde llegan las notas?</label>
-              <select id="wiz-src-notes-dest">
-                <option value="notion">Notion</option>
-                <option value="gdrive">Google Drive</option>
-                <option value="email">Email (reenvío automático)</option>
-                <option value="manual">Manual / no automatizado</option>
-              </select>
-            </div>
-          </div>
-          <div class="form-row">
-            <div class="form-field"><label>Google Drive Folder ID (recordings/notas)</label><input type="text" id="wiz-src-gdrive-folder" placeholder="1ABcD... (copiar de la URL de la carpeta)">
-              <div style="font-size:11px;color:var(--muted);margin-top:4px;">📌 drive.google.com/drive/folders/<strong>FOLDER_ID</strong></div>
-            </div>
-            <div class="form-field"><label>Notion Database ID (meetings)</label><input type="text" id="wiz-src-notion-meetings" placeholder="abc123... (copiar de la URL de la DB)">
-              <div style="font-size:11px;color:var(--muted);margin-top:4px;">📌 notion.so/<strong>DATABASE_ID</strong>?v=...</div>
-            </div>
-          </div>
-        </div>
-
-        <div style="margin-bottom:20px;">
-          <h3 style="font-size:14px;margin-bottom:8px;">🕵️ Competidores (3-5 principales)</h3>
+        <div style="margin-top:16px;">
           <div id="wiz-competitors">
-            <div class="wiz-competitor" style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:8px;">
+            <div class="wiz-competitor" style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:10px;">
               <div class="form-row">
                 <div class="form-field"><label>Nombre</label><input type="text" class="wiz-comp-name" placeholder="Competidor 1"></div>
                 <div class="form-field"><label>Website</label><input type="text" class="wiz-comp-web" placeholder="https://..."></div>
@@ -1485,29 +1423,63 @@
           </div>
           <button class="btn btn-secondary" onclick="addCompetitor()" style="font-size:12px;">+ Añadir competidor</button>
         </div>
+
+        <div style="margin-top:20px;padding:12px;background:var(--bg);border-radius:8px;font-size:12px;color:var(--muted);line-height:1.6;">
+          💡 Las integraciones de email, Slack y reuniones se configuran después como tareas dentro del proyecto de Métricas (P00-Metrics).
+        </div>
       </div>
 
-      <!-- Step 6: Verify -->
-      <div class="wiz-content" id="wiz-6">
-        <div class="wiz-title">Verificar</div>
-        <div class="wiz-desc">Comprueba que todo está configurado correctamente.</div>
-        <div id="wiz-summary" style="margin-bottom:16px;"></div>
-        <div class="wiz-checklist">
-          <div class="wiz-check" onclick="toggleCheck(this)"><span class="wiz-checkbox">☐</span>Cliente aparece en el selector de MC ↑</div>
-          <div class="wiz-check" onclick="toggleCheck(this)"><span class="wiz-checkbox">☐</span>Foundation muestra 0/12 pilares para el nuevo cliente</div>
-          <div class="wiz-check" onclick="toggleCheck(this)"><span class="wiz-checkbox">☐</span>Bot responde en Discord (escribir en #general con @SanchoCMO)</div>
-          <div class="wiz-check" onclick="toggleCheck(this)"><span class="wiz-checkbox">☐</span>El cliente puede empezar Foundation en #onboarding</div>
+      <!-- Step 4: Create + Verify -->
+      <div class="wiz-content" id="wiz-4">
+        <div class="wiz-title">Crear cliente</div>
+        <div class="wiz-desc">Revisa los datos y lanza la creación automática.</div>
+
+        <!-- Pre-run summary -->
+        <div id="wiz-summary" style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:16px;">
+          <div style="font-size:12px;font-weight:600;margin-bottom:8px;">Resumen</div>
+          <div id="wiz-summary-content" style="font-size:13px;line-height:1.8;color:var(--muted);"></div>
         </div>
-        <div style="margin-top:16px;background:var(--green);background:rgba(42,157,42,0.1);border:2px solid var(--green);border-radius:8px;padding:16px;text-align:center;">
-          <div style="font-size:18px;font-weight:700;">🎉 ¡Cliente listo!</div>
-          <div style="font-size:13px;color:var(--muted);margin-top:4px;">Sancho puede empezar Foundation en #onboarding del nuevo servidor.</div>
+
+        <!-- What the script does -->
+        <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:16px;">
+          <div style="font-size:12px;font-weight:600;margin-bottom:6px;">El script hace automáticamente:</div>
+          <div style="font-size:12px;color:var(--muted);line-height:1.8;">
+            📁 Crea <code>brand/{slug}/</code> con foundation-state.json v3.0<br>
+            📋 Crea 4 proyectos P00 con tareas foundation<br>
+            🗄️ Inserta en Supabase + actualiza clients.json/clients.js<br>
+            🔗 Auto-bind Discord (mapea canales a systemPrompts)<br>
+            🔒 Configura seguridad + reinicia gateway<br>
+            🔄 Regenera Mission Control
+          </div>
+        </div>
+
+        <!-- Run button -->
+        <div style="text-align:center;margin-bottom:16px;">
+          <button class="btn btn-primary" id="wiz-run-btn" onclick="createClient()" style="font-size:15px;padding:12px 32px;">Crear Cliente</button>
+        </div>
+
+        <!-- Progress log -->
+        <pre id="wiz-progress-log" style="display:none;background:#1E1E2E;color:#CDD6F4;padding:16px;border-radius:8px;font-size:12px;font-family:'JetBrains Mono',monospace;max-height:300px;overflow-y:auto;white-space:pre-wrap;line-height:1.6;"></pre>
+
+        <!-- Verification (shown after success) -->
+        <div id="wiz-verify-section" style="display:none;margin-top:16px;">
+          <div class="wiz-checklist">
+            <div class="wiz-check" onclick="toggleCheck(this)"><span class="wiz-checkbox">☐</span>Cliente aparece en el selector de MC ↑</div>
+            <div class="wiz-check" onclick="toggleCheck(this)"><span class="wiz-checkbox">☐</span>Foundation muestra 0/12 pilares para el nuevo cliente</div>
+            <div class="wiz-check" onclick="toggleCheck(this)"><span class="wiz-checkbox">☐</span>Bot responde en Discord (escribir en #general con @SanchoCMO)</div>
+            <div class="wiz-check" onclick="toggleCheck(this)"><span class="wiz-checkbox">☐</span>El cliente puede empezar Foundation en #onboarding</div>
+          </div>
+          <div style="margin-top:16px;background:rgba(42,157,42,0.1);border:2px solid var(--green);border-radius:8px;padding:16px;text-align:center;">
+            <div style="font-size:18px;font-weight:700;">🎉 ¡Cliente listo!</div>
+            <div style="font-size:13px;color:var(--muted);margin-top:4px;">Sancho puede empezar Foundation en #onboarding del nuevo servidor.</div>
+          </div>
         </div>
       </div>
 
       <!-- Navigation -->
       <div style="display:flex;justify-content:space-between;padding:16px 24px;border-top:1px solid var(--border);">
         <button class="btn btn-secondary" id="wiz-prev" onclick="wizStep(-1)" style="visibility:hidden;">← Anterior</button>
-        <div style="color:var(--muted);font-size:13px;" id="wiz-progress">Paso 1 de 6</div>
+        <div style="color:var(--muted);font-size:13px;" id="wiz-progress">Paso 1 de 4</div>
         <button class="btn btn-primary" id="wiz-next" onclick="wizStep(1)">Siguiente →</button>
       </div>
 
@@ -2172,7 +2144,8 @@ function renderActivityFeed(containerId, events, limit, showBadges) {
   }
 }
 
-function goToActivity() {
+function goToActivity(cronKey) {
+  window._pendingCronOpen = cronKey || null;
   const navLink = document.querySelector('nav a[onclick*="activity"]');
   showPage('activity', navLink);
 }
@@ -2180,6 +2153,7 @@ function goToActivity() {
 window._activityPageInit = false;
 let _activityCronRuns = [];
 let _activityCronsFetched = false;
+let _activityCronSlug = null;
 
 async function renderActivityPage() {
   const el = document.getElementById('activity-full-list');
@@ -2210,21 +2184,26 @@ async function renderActivityPage() {
     window._activityPageInit = true;
   }
 
-  // Fetch cron runs (all clients, last 3 runs each)
-  if (!_activityCronsFetched) {
-    el.innerHTML = '<div class="empty">Cargando actividad y crons...</div>';
-    _activityCronRuns = await fetchCronRuns(null, 3);
-    _activityCronsFetched = true;
-  }
-
+  // Fetch cron runs for the selected client
   const clientFilter = filterSelect.value;
+  const cronSlug = (clientFilter && clientFilter !== 'all') ? clientFilter : (document.getElementById('clientSelector')?.value || null);
+  const cronSlugKey = cronSlug || '_all';
+  if (!_activityCronsFetched || _activityCronSlug !== cronSlugKey) {
+    el.innerHTML = '<div class="empty">Cargando actividad y crons...</div>';
+    _activityCronRuns = await fetchCronRuns(cronSlug, 3);
+    _activityCronsFetched = true;
+    _activityCronSlug = cronSlugKey;
+  }
   const search = (searchInput.value || '').toLowerCase();
   const cronOnly = cronFilterEl && cronFilterEl.checked;
   const showBadges = clientFilter === 'all';
 
-  // Merge activity + cron events
+  // Merge activity + cron events (filter out "Cron run:" from D.activity — cron-runs endpoint is the source of truth)
   const cronEvents = cronRunsToEvents(_activityCronRuns);
-  let events = cronOnly ? cronEvents : cronEvents.concat(D && D.activity ? D.activity : []);
+  const activityFiltered = (D && D.activity ? D.activity : []).filter(function(e) {
+    return !(e.raw && e.raw.startsWith('Cron run:'));
+  });
+  let events = cronOnly ? cronEvents : cronEvents.concat(activityFiltered);
 
   // Filter by client
   if (clientFilter !== 'all') {
@@ -2284,6 +2263,26 @@ async function renderActivityPage() {
       }).join('') +
       '</div>';
   }).join('');
+
+  // Auto-open a specific cron if navigated from the bar
+  if (window._pendingCronOpen) {
+    const key = window._pendingCronOpen;
+    window._pendingCronOpen = null;
+    setTimeout(function() {
+      // Find the cron-output div whose id starts with 'cron-output-' + jobId
+      var target = document.getElementById('cron-output-' + key);
+      if (!target) {
+        // Try partial match (just jobId without runAtMs)
+        var allOutputs = document.querySelectorAll('.cron-output[data-job-id="' + key + '"]');
+        if (allOutputs.length > 0) target = allOutputs[0];
+      }
+      if (target) {
+        var fullKey = target.id.replace('cron-output-', '');
+        toggleCronOutput(fullKey);
+        target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 200);
+  }
 }
 
 function toggleCronOutput(key) {
@@ -2307,12 +2306,31 @@ function toggleCronOutput(key) {
   }
 }
 
+function prepareCronMarkdown(text) {
+  if (!text) return '';
+  var s = text;
+  // Normalize bullet points: • → markdown list items
+  s = s.replace(/^[ \t]*[•·][ \t]*/gm, '- ');
+  // Ensure blank line before headers/separators so markdown parses them as blocks
+  s = s.replace(/([^\n])\n(━+)/g, '$1\n\n$2');
+  s = s.replace(/(━+)\n([^\n])/g, '$1\n\n$2');
+  // Ensure blank line before lines starting with bold (**) or emoji headers
+  s = s.replace(/([^\n])\n(\*\*[A-Z])/g, '$1\n\n$2');
+  s = s.replace(/([^\n])\n([📊💰🎯📞🔵📧🏷️📥💰📋🔍⚡🟡🟢🔴📈📉🚨✅⚠️🧠📌📝])/g, '$1\n\n$2');
+  // Ensure list items have blank line before first item
+  s = s.replace(/([^\n])\n(- )/g, '$1\n\n$2');
+  // Convert horizontal rules (━━━+) to markdown hr
+  s = s.replace(/━{3,}[^\n]*/g, function(m) { return '\n---\n' + m.replace(/━+\s*/, ''); });
+  return s;
+}
+
 function renderCronOutput(run) {
   var summaryHtml;
+  var prepared = prepareCronMarkdown(run.summary || '');
   if (typeof marked !== 'undefined' && marked.parse) {
-    try { summaryHtml = marked.parse(run.summary || ''); } catch(e) { summaryHtml = esc(run.summary || '').replace(/\n/g, '<br>'); }
+    try { summaryHtml = marked.parse(prepared); } catch(e) { summaryHtml = esc(prepared).replace(/\n/g, '<br>'); }
   } else {
-    summaryHtml = esc(run.summary || '').replace(/\n/g, '<br>');
+    summaryHtml = esc(prepared).replace(/\n/g, '<br>');
   }
   const isErr = run.status === 'error' || run.status === 'failed';
   const statusLabel = isErr ? '<span style="color:#C0392B">⚠ Error</span>' : '<span style="color:#22A06B">✓ OK</span>';
@@ -2432,9 +2450,21 @@ function renderDocBrowser(slug, subPath) {
   }
 
   // SUB-FOLDER VIEW: fetch directory listing
+  // Special: competitors visual editor
+  const isCompetitorsFolder = subPath === 'market-and-us/competitors';
   const docsUrl = `${MC_BASE}/docs/brand/${slug}/${subPath}/`;
   el.innerHTML = '<div class="empty">Cargando...</div>';
   console.log('[DocBrowser] Fetching:', docsUrl);
+
+  if (isCompetitorsFolder) {
+    // Set chat thread to competitor-analysis so the chat button works
+    docChatThreadId = slug + ':competitor-analysis';
+    if (!mcChatLocalThreads.includes(docChatThreadId)) mcChatLocalThreads.push(docChatThreadId);
+  }
+
+  const compSourcesPromise = isCompetitorsFolder
+    ? fetch(`${MC_BASE}/api/competitors-sources?slug=${slug}`).then(r=>r.json()).catch(() => null)
+    : Promise.resolve(null);
 
   fetch(docsUrl).then(r => {
     if (!r.ok) throw new Error(`HTTP ${r.status}`);
@@ -2503,8 +2533,14 @@ function renderDocBrowser(slug, subPath) {
     }
     listHtml += '</div>';
     console.log('[DocBrowser] Setting innerHTML, length:', listHtml.length);
-    el.innerHTML = listHtml;
-    console.log('[DocBrowser] Done');
+    compSourcesPromise.then(srcData => {
+      if (srcData) {
+        renderCompetitorsSources(slug, srcData, el, listHtml);
+      } else {
+        el.innerHTML = listHtml;
+      }
+      console.log('[DocBrowser] Done');
+    });
   }).catch(e => {
     console.error('[DocBrowser] Fetch error:', e);
     el.innerHTML = '<div class="empty">Error cargando: ' + (e.message || '').replace(/</g,'&lt;') + '</div>';
@@ -2633,6 +2669,224 @@ function renderDocBrowserRoot(slug, el) {
 let docChatHistory = [];
 let docChatThreadId = null;
 let docChatPollTimer = null;
+
+// === Competitors sources.json visual editor ===
+let _compSourcesData = null;
+let _compSourcesSlug = null;
+
+function renderCompetitorsSources(slug, data, containerEl, filesHtml) {
+  _compSourcesData = data;
+  _compSourcesSlug = slug;
+  const allComps = [
+    ...((data.competitors?.direct || []).map(c => ({ ...c, _type: 'direct' }))),
+    ...((data.competitors?.indirect || []).map(c => ({ ...c, _type: 'indirect' }))),
+    ...((data.competitors?.emerging || []).map(c => ({ ...c, _type: 'emerging' }))),
+  ];
+  if (allComps.length === 0 && !data.competitors) return;
+
+  const ICONS = {
+    web:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>',
+    linkedin:'<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M20.5 2h-17A1.5 1.5 0 002 3.5v17A1.5 1.5 0 003.5 22h17a1.5 1.5 0 001.5-1.5v-17A1.5 1.5 0 0020.5 2zM8 19H5v-9h3zM6.5 8.25A1.75 1.75 0 118.3 6.5a1.78 1.78 0 01-1.8 1.75zM19 19h-3v-4.74c0-1.42-.6-1.93-1.38-1.93A1.74 1.74 0 0013 14.19V19h-3v-9h2.9v1.3a3.11 3.11 0 012.7-1.4c1.55 0 3.36.86 3.36 3.66z"/></svg>',
+    twitter:'<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>',
+    instagram:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="5"/></svg>',
+    facebook:'<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>',
+    youtube:'<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>'
+  };
+  const CHANNEL_KEYS = ['web','linkedin','twitter','instagram','facebook','youtube'];
+  const TYPE_LABELS = {direct:'Direct',indirect:'Indirect',emerging:'Emerging'};
+  const TYPE_COLORS = {direct:'#C45D35',indirect:'#27AE60',emerging:'#F39C12'};
+
+  function esc(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  function shortUrl(u) { return (u||'').replace('https://','').replace('http://','').replace(/\/$/,''); }
+
+  let html = '<style>.cse-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px;}.cse-card{background:#fff;border:1px solid #E8E2D9;border-radius:8px;padding:12px;font-size:12px;}.cse-card:hover{box-shadow:0 2px 8px rgba(0,0,0,0.08);}.cse-name{font-family:"Space Grotesk",sans-serif;font-size:13px;font-weight:600;color:#2C3E50;}.cse-badge{font-size:9px;font-weight:700;padding:1px 6px;border-radius:3px;}.cse-channels{display:flex;flex-wrap:wrap;gap:4px;margin:6px 0;}.cse-ch{display:inline-flex;align-items:center;gap:3px;padding:2px 6px;border:1px solid #E8E2D9;border-radius:4px;font-size:11px;color:#2C3E50;line-height:1.2;}.cse-ch a{color:#2C3E50;text-decoration:none;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}.cse-ch svg{width:11px;height:11px;flex-shrink:0;}.cse-ch .act{cursor:pointer;opacity:0.4;font-size:10px;}.cse-ch:hover .act{opacity:1;}.cse-add{display:inline-flex;align-items:center;padding:2px 6px;border:1px dashed #BDC3C7;border-radius:4px;font-size:10px;color:#7F8C8D;cursor:pointer;}.cse-add:hover{border-color:#C45D35;color:#C45D35;}.cse-founders{border-top:1px solid #F0EDE8;padding-top:6px;margin-top:6px;}.cse-f{display:flex;align-items:center;gap:5px;padding:2px 0;font-size:11px;}.cse-f b{font-weight:600;color:#2C3E50;}.cse-f a{display:flex;}.cse-f a svg{width:12px;height:12px;}@media(max-width:900px){.cse-grid{grid-template-columns:repeat(2,1fr);}}@media(max-width:600px){.cse-grid{grid-template-columns:1fr;}}</style>';
+  html += '<div style="margin-bottom:20px;">';
+  html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;"><span style="font-family:\'Space Grotesk\',sans-serif;font-size:14px;font-weight:700;color:#2C3E50;">Competidores</span><span style="font-size:11px;color:#7F8C8D;">sources.json</span></div>';
+  html += '<div class="cse-grid">';
+
+  for (let ci = 0; ci < allComps.length; ci++) {
+    const c = allComps[ci];
+    const co = c.company || c;
+    const typeColor = TYPE_COLORS[c._type] || '#7F8C8D';
+    html += `<div class="cse-card" id="comp-card-${ci}">`;
+    html += `<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;flex-wrap:wrap;">`;
+    html += `<span class="cse-name">${esc(c.name)}</span>`;
+    html += `<span class="cse-badge" style="background:${typeColor}20;color:${typeColor};">${TYPE_LABELS[c._type]||c._type}</span>`;
+    if (c.tier) html += `<span style="font-size:9px;color:#7F8C8D;">T${esc(c.tier)}</span>`;
+    html += '</div>';
+    html += '<div class="cse-channels">';
+    for (const key of CHANNEL_KEYS) {
+      const val = (co[key] && typeof co[key] === 'string') ? co[key] : (c[key] && typeof c[key] === 'string') ? c[key] : null;
+      if (val) {
+        html += `<div class="cse-ch"><span style="display:flex;">${ICONS[key]||''}</span><a href="${esc(val)}" target="_blank">${esc(shortUrl(val))}</a><span class="act" onclick="editCompChannel(${ci},'${key}')" title="Editar">&#9998;</span><span class="act" onclick="removeCompChannel(${ci},'${key}')" title="Eliminar" style="color:#E74C3C;">&times;</span></div>`;
+      }
+    }
+    html += `<div class="cse-add" onclick="addCompChannel(${ci})">+</div>`;
+    html += '</div>';
+    const founders = c.founders || (c.founder ? [c.founder] : []);
+    html += '<div class="cse-founders">';
+    for (let fi = 0; fi < founders.length; fi++) {
+      const f = founders[fi];
+      html += `<div class="cse-f"><b>${esc(f.name)}</b>`;
+      if (f.role) html += `<span style="color:#7F8C8D;">${esc(f.role)}</span>`;
+      if (f.linkedin) html += `<a href="${esc(f.linkedin)}" target="_blank" style="color:#0077B5;" title="LinkedIn">${ICONS.linkedin}</a>`;
+      if (f.twitter) html += `<a href="${esc(f.twitter)}" target="_blank" style="color:#1DA1F2;" title="Twitter">${ICONS.twitter}</a>`;
+      html += `<span class="act" onclick="removeFounder(${ci},${fi})" style="color:#E74C3C;cursor:pointer;font-size:12px;margin-left:auto;" title="Eliminar">&times;</span>`;
+      html += '</div>';
+    }
+    html += `<div class="cse-add" onclick="addFounder(${ci})" style="margin-top:4px;">+ Founder</div>`;
+    html += '</div>';
+    html += '</div>';
+  }
+
+  html += `<div class="cse-card" onclick="addCompetitor()" style="display:flex;align-items:center;justify-content:center;border:1px dashed #BDC3C7;color:#7F8C8D;cursor:pointer;min-height:80px;font-size:12px;font-weight:600;" onmouseover="this.style.borderColor='#C45D35';this.style.color='#C45D35'" onmouseout="this.style.borderColor='#BDC3C7';this.style.color='#7F8C8D'">+ Competidor</div>`;
+  html += '</div></div>';
+
+  containerEl.innerHTML = html + (filesHtml || '');
+}
+
+async function _saveCompSources() {
+  try {
+    await fetch(`${MC_BASE}/api/competitors-sources?slug=${_compSourcesSlug}`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(_compSourcesData)
+    });
+  } catch(e) { console.error('Save error:', e); }
+}
+
+function _getCompList() {
+  const d = _compSourcesData?.competitors || {};
+  const list = [];
+  for (const c of (d.direct || [])) { c._type = 'direct'; list.push(c); }
+  for (const c of (d.indirect || [])) { c._type = 'indirect'; list.push(c); }
+  for (const c of (d.emerging || [])) { c._type = 'emerging'; list.push(c); }
+  return list;
+}
+
+function _compModal(title, fields, onSave) {
+  let existing = document.getElementById('comp-modal');
+  if (existing) existing.remove();
+  const modal = document.createElement('div');
+  modal.id = 'comp-modal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;z-index:9999;';
+  let fieldsHtml = fields.map(f => {
+    if (f.type === 'select') {
+      const opts = f.options.map(o => `<option value="${o.value}"${o.value===f.value?' selected':''}>${o.label}</option>`).join('');
+      return `<div style="margin-bottom:10px;"><label style="font-size:12px;font-weight:600;color:#2C3E50;display:block;margin-bottom:4px;">${f.label}</label><select id="cm-${f.id}" style="width:100%;padding:8px 10px;border:1px solid #E8E2D9;border-radius:6px;font-size:13px;font-family:Nunito,sans-serif;">${opts}</select></div>`;
+    }
+    return `<div style="margin-bottom:10px;"><label style="font-size:12px;font-weight:600;color:#2C3E50;display:block;margin-bottom:4px;">${f.label}</label><input id="cm-${f.id}" type="text" value="${(f.value||'').replace(/"/g,'&quot;')}" placeholder="${f.placeholder||''}" style="width:100%;padding:8px 10px;border:1px solid #E8E2D9;border-radius:6px;font-size:13px;font-family:Nunito,sans-serif;box-sizing:border-box;"></div>`;
+  }).join('');
+  modal.innerHTML = `<div style="background:#fff;border-radius:12px;padding:20px;width:380px;max-width:90vw;box-shadow:0 8px 32px rgba(0,0,0,0.2);"><div style="font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:700;color:#2C3E50;margin-bottom:14px;">${title}</div>${fieldsHtml}<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px;"><button onclick="document.getElementById('comp-modal').remove()" style="padding:7px 16px;border:1px solid #E8E2D9;border-radius:6px;background:#fff;font-size:13px;cursor:pointer;font-family:Nunito,sans-serif;">Cancelar</button><button id="cm-save" style="padding:7px 16px;border:none;border-radius:6px;background:#C45D35;color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:Nunito,sans-serif;">Guardar</button></div></div>`;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+  document.getElementById('cm-save').onclick = () => {
+    const vals = {};
+    fields.forEach(f => { vals[f.id] = document.getElementById('cm-' + f.id)?.value?.trim() || ''; });
+    modal.remove();
+    onSave(vals);
+  };
+  setTimeout(() => { const first = modal.querySelector('input,select'); if (first) first.focus(); }, 50);
+}
+
+function _compRefresh() {
+  _saveCompSources().then(() => { docBrowserPath = 'market-and-us/competitors'; renderFoundation(); });
+}
+
+function editCompChannel(compIdx, channelKey) {
+  const comps = _getCompList();
+  const c = comps[compIdx];
+  if (!c) return;
+  const co = c.company || c;
+  const currentVal = co[channelKey] || c[channelKey] || '';
+  _compModal('Editar ' + channelKey, [
+    { id: 'url', label: 'URL', value: currentVal, placeholder: 'https://...' }
+  ], vals => {
+    if (!vals.url) return;
+    if (c.company) { c.company[channelKey] = vals.url; } else { c[channelKey] = vals.url; }
+    _compRefresh();
+  });
+}
+
+function removeCompChannel(compIdx, channelKey) {
+  const comps = _getCompList();
+  const c = comps[compIdx];
+  if (!c) return;
+  if (c.company) { delete c.company[channelKey]; } else { delete c[channelKey]; }
+  _compRefresh();
+}
+
+function addCompChannel(compIdx) {
+  const comps = _getCompList();
+  const c = comps[compIdx];
+  if (!c) return;
+  _compModal('Anadir canal a ' + (c.name || ''), [
+    { id: 'platform', label: 'Plataforma', type: 'select', value: 'web', options: [
+      {value:'web',label:'Web'},{value:'linkedin',label:'LinkedIn'},{value:'twitter',label:'Twitter / X'},
+      {value:'instagram',label:'Instagram'},{value:'facebook',label:'Facebook'},{value:'youtube',label:'YouTube'}
+    ]},
+    { id: 'url', label: 'URL', placeholder: 'https://...' }
+  ], vals => {
+    if (!vals.url || !vals.platform) return;
+    if (!c.company) {
+      c.company = {};
+      // Migrate root-level channels into company
+      const chKeys = ['web','linkedin','twitter','instagram','facebook','youtube'];
+      for (const k of chKeys) { if (c[k] && typeof c[k] === 'string') { c.company[k] = c[k]; delete c[k]; } }
+    }
+    c.company[vals.platform] = vals.url;
+    _compRefresh();
+  });
+}
+
+function addFounder(compIdx) {
+  const comps = _getCompList();
+  const c = comps[compIdx];
+  if (!c) return;
+  _compModal('Anadir founder a ' + (c.name || ''), [
+    { id: 'name', label: 'Nombre', placeholder: 'Nombre completo' },
+    { id: 'role', label: 'Rol', placeholder: 'CEO, CTO, Founder...' },
+    { id: 'linkedin', label: 'LinkedIn (opcional)', placeholder: 'https://linkedin.com/in/...' },
+    { id: 'twitter', label: 'Twitter (opcional)', placeholder: 'https://x.com/...' }
+  ], vals => {
+    if (!vals.name) return;
+    if (!c.founders && !c.founder) { c.founders = []; }
+    else if (c.founder && !c.founders) { c.founders = [c.founder]; delete c.founder; }
+    const f = { name: vals.name };
+    if (vals.role) f.role = vals.role;
+    if (vals.linkedin) f.linkedin = vals.linkedin;
+    if (vals.twitter) f.twitter = vals.twitter;
+    c.founders.push(f);
+    _compRefresh();
+  });
+}
+
+function removeFounder(compIdx, founderIdx) {
+  const comps = _getCompList();
+  const c = comps[compIdx];
+  if (!c) return;
+  const founders = c.founders || (c.founder ? [c.founder] : []);
+  founders.splice(founderIdx, 1);
+  c.founders = founders;
+  if (c.founder) delete c.founder;
+  _compRefresh();
+}
+
+function addCompetitor() {
+  const slug = document.getElementById('clientSelector')?.value || '';
+  if (!slug || slug === 'global') return;
+  // Ensure thread is set to competitor-analysis
+  docChatThreadId = slug + ':competitor-analysis';
+  if (!mcChatLocalThreads.includes(docChatThreadId)) mcChatLocalThreads.push(docChatThreadId);
+  // Open the chat sidebar
+  openDocChatSidebar();
+  // Send the initial message
+  const msg = 'Quiero añadir un nuevo competidor. Dime qué necesitas saber para añadirlo al sources.json con toda su información (web, redes sociales, founders, tier, tipo).';
+  fetch(MC_BASE + '/api/mc-chat/send', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ slug, threadId: docChatThreadId, threadName: 'Competitor Analysis', text: msg, userName: 'Admin', skill: 'competitor-intelligence' })
+  }).catch(e => console.error('Chat send error:', e));
+}
 
 function renderDocView(slug, docPath) {
   const el = document.getElementById('foundation-content');
@@ -3833,6 +4087,37 @@ function goToSettings() {
     window.location.href = '/mc/settings/' + slug + '/';
   }
 }
+function loadAtalayaIframe() {
+  const iframe = document.getElementById('atalaya-iframe');
+  if (!iframe) return;
+  const sel = document.getElementById('clientSelector');
+  const slug = sel ? sel.value : '';
+  if (!slug || slug === 'global') return;
+  let atalayaUrl;
+  if (window.location.pathname.includes('/admin/')) {
+    const base = window.location.pathname.match(/\/mc\/admin\/[^/]+/);
+    atalayaUrl = base ? base[0] + '/atalaya/' + slug + '/?embed=1' : null;
+  } else {
+    atalayaUrl = '/mc/atalaya/' + slug + '/?embed=1';
+  }
+  if (!atalayaUrl) return;
+  if (iframe.src !== atalayaUrl) iframe.src = atalayaUrl;
+}
+async function updateAtalayaBadge() {
+  const sel = document.getElementById('clientSelector');
+  const slug = sel ? sel.value : '';
+  const badge = document.getElementById('atalaya-badge');
+  if (!badge || !slug || slug === 'global') { if (badge) badge.style.display = 'none'; return; }
+  try {
+    const base = window.location.pathname.includes('/admin/') ? (window.location.pathname.match(/\/mc\/admin\/[^/]+/) || [''])[0] : '/mc';
+    const res = await fetch(base + '/api/atalaya-overview?slug=' + slug);
+    if (res.ok) {
+      const data = await res.json();
+      if (data.pendingCount > 0) { badge.textContent = data.pendingCount; badge.style.display = ''; } else { badge.style.display = 'none'; }
+    }
+  } catch { if (badge) badge.style.display = 'none'; }
+}
+
 function loadSettingsIframe(tab) {
   const iframe = document.getElementById('settings-iframe');
   if (!iframe) return;
@@ -3859,6 +4144,43 @@ function loadSettingsIframe(tab) {
   }
   if (iframe.src !== settingsUrl) iframe.src = settingsUrl;
 }
+// Listen for messages from Settings iframe (chat requests, etc.)
+window.addEventListener('message', function(e) {
+  if (!e.data) return;
+  // Forward chat messages from iframe input to MC chat
+  if (e.data.type === 'settings-chat-send' && e.data.text && mcChatCurrentThread) {
+    const input = document.getElementById('sidebar-chat-input');
+    if (input) { input.value = e.data.text; }
+    try { mcChatSidebarSend(); } catch(err) { console.error('Chat send error:', err); }
+    return;
+  }
+  if (e.data.type === 'atalaya-navigate') {
+    if (e.data.page === 'foundation' && e.data.docPath) {
+      docBrowserPath = e.data.docPath;
+      try { localStorage.setItem('sancho-docpath', docBrowserPath); } catch(ex) {}
+      showPage('foundation');
+    }
+    return;
+  }
+  if (e.data.type !== 'settings-open-chat') return;
+  const { slug, threadId, threadName, initialMessage, skill } = e.data;
+  // Set chat context
+  mcChatCurrentSlug = slug;
+  mcChatRegisterThread(threadId, threadName);
+  mcChatCurrentThread = threadId;
+  if (skill) mcChatSetThreadMeta(threadId, { skill });
+  // Open sidebar chat locked to this thread
+  mcChatSidebar.init({ anchorId: 'mc-global-chat-anchor', toggleBtnId: 'global-chat-toggle', threadId, threadName });
+  if (!mcChatSidebar.isOpen) mcChatSidebar.toggle();
+  // Send initial message
+  if (initialMessage) {
+    fetch(MC_BASE + '/api/mc-chat/send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ slug, threadId, threadName, text: initialMessage, userName: 'Admin', skill })
+    }).catch(() => {});
+  }
+});
 function showPage(name, el) {
   // Redirect settings-owned pages to Settings iframe
   const SETTINGS_TABS = { 'apis': 'apis', 'agents': 'agents', 'skills': 'skills', 'strategies': 'strategies', 'recurring-tasks': 'recurring' };
@@ -3883,11 +4205,12 @@ function showPage(name, el) {
   const PAGE_INIT = {
     'dashboard':        () => { const cs = document.getElementById('clientSelector'); renderDashboardV2(cs ? cs.value : ''); if (cs && cs.value && cs.value !== 'global') { mcChatSidebar.init({ anchorId: 'mc-global-chat-anchor', toggleBtnId: 'global-chat-toggle' }); if (!mcChatSidebar.isOpen) mcChatSidebar.toggle(); } },
     'foundation':       () => { renderFoundation(); },
-    'activity':         () => { window._activityPageInit = false; _activityCronsFetched = false; renderActivityPage(); },
+    'activity':         () => { window._activityPageInit = false; _activityCronsFetched = false; _activityCronSlug = null; renderActivityPage(); },
     'metrics':          () => { loadMetrics(); },
     'projects':         () => { loadProjects(); },
     'idea-bank':        () => { populateIdeaBankClientFilter(); loadIdeasData(); },
     'trust-engine':     () => { loadTrustEngine(); },
+    'atalaya':          () => { loadAtalayaIframe(); },
     'settings':         () => { loadSettingsIframe(window._pendingSettingsTab); window._pendingSettingsTab = null; },
   };
   if (PAGE_INIT[name]) PAGE_INIT[name]();
@@ -3927,7 +4250,7 @@ function switchClient(val) {
     clientItems.forEach(el => el.style.display = 'none');
     globalItems.forEach(el => el.style.display = '');
     const active = document.querySelector('.page.active');
-    if (active && ['page-foundation','page-tasks','page-trust-engine','page-projects'].includes(active.id)) showPage('dashboard');
+    if (active && ['page-foundation','page-tasks','page-trust-engine','page-projects','page-atalaya'].includes(active.id)) showPage('dashboard');
   } else {
     document.getElementById('view-global').style.display = 'none';
     document.getElementById('view-client').style.display = ''; // defer to CSS (flex layout)
@@ -3951,6 +4274,7 @@ function switchClient(val) {
   renderApis(); // Re-render APIs page (context-aware: global vs client)
   renderIntelligence(); // Re-render meetings for selected client
   renderFoundation(); // Re-render foundation for selected client
+  updateAtalayaBadge(); // Update Atalaya badge for selected client
   // Re-render metrics if on that page
   const activePage = document.querySelector('.page.active');
   if (activePage && activePage.id === 'page-metrics') loadMetrics();
@@ -4018,7 +4342,7 @@ document.addEventListener('keydown', e => { if(e.key==='Escape') closeSkill(); }
 
 // === New Client Wizard ===
 let wizCurrentStep = 1;
-const wizTotalSteps = 6;
+const wizTotalSteps = 4;
 
 function openNewClientWizard() {
   wizCurrentStep = 1;
@@ -4049,55 +4373,122 @@ function updateWizard() {
   document.getElementById('wiz-' + step).classList.add('active');
   // Nav
   document.getElementById('wiz-prev').style.visibility = step === 1 ? 'hidden' : 'visible';
-  document.getElementById('wiz-next').textContent = step === wizTotalSteps ? '✅ Cerrar' : 'Siguiente →';
-  if (step === wizTotalSteps) document.getElementById('wiz-next').onclick = closeWizard;
-  else document.getElementById('wiz-next').onclick = () => wizStep(1);
+  if (step === wizTotalSteps) {
+    document.getElementById('wiz-next').style.display = 'none';
+  } else {
+    document.getElementById('wiz-next').style.display = '';
+    document.getElementById('wiz-next').textContent = 'Siguiente →';
+    document.getElementById('wiz-next').onclick = () => wizStep(1);
+  }
   document.getElementById('wiz-progress').textContent = `Paso ${step} de ${wizTotalSteps}`;
 
-  // Dynamic content based on inputs
-  const slug = document.getElementById('wiz-slug').value || '{slug}';
-  const name = document.getElementById('wiz-name').value || '{nombre}';
-  const emoji = document.getElementById('wiz-emoji').value || '🏢';
-  const url = document.getElementById('wiz-url').value || 'https://ejemplo.com';
-  const guild = document.getElementById('wiz-dc-guild')?.value || '{GUILD_ID}';
-  const industry = document.getElementById('wiz-industry').value || '';
+  // Step 4: populate summary
+  if (step === 4) {
+    const slug = document.getElementById('wiz-slug').value || '{slug}';
+    const name = document.getElementById('wiz-name').value || '{nombre}';
+    const emoji = document.getElementById('wiz-emoji').value || '🏢';
+    const url = document.getElementById('wiz-url').value || '';
+    const guild = document.getElementById('wiz-dc-guild')?.value || '{GUILD_ID}';
+    const competitors = getWizCompetitors();
+    document.getElementById('wiz-summary-content').innerHTML = `
+      <div class="sr"><span>Nombre</span><span>${emoji} ${name}</span></div>
+      <div class="sr"><span>Slug</span><span>${slug}</span></div>
+      ${url ? `<div class="sr"><span>URL</span><span>${url}</span></div>` : ''}
+      <div class="sr"><span>Discord Guild</span><span>${guild}</span></div>
+      ${competitors.length ? `<div class="sr"><span>Competidores</span><span>${competitors.map(c=>c.name).join(', ')}</span></div>` : ''}`;
+  }
+}
 
-  // Step 3: Script command
-  const scriptCmd = document.getElementById('wiz-script-cmd');
-  if (scriptCmd) scriptCmd.textContent = `bash ~/.openclaw/workspace-sancho/scripts/new-client.sh --slug "${slug}" --name "${name}" --guild "${guild}"`;
+async function createClient() {
+  const slug = document.getElementById('wiz-slug').value.trim();
+  const name = document.getElementById('wiz-name').value.trim();
+  const guild = document.getElementById('wiz-dc-guild')?.value.trim();
+  const emoji = document.getElementById('wiz-emoji').value.trim();
+  const url = document.getElementById('wiz-url').value.trim();
 
-  // Step 4: Cervantes message
-  const cervMsg = document.getElementById('wiz-cervantes-msg');
-  if (cervMsg) cervMsg.textContent = `Configura el guild ${guild} para el cliente ${name} (slug: ${slug}) en openclaw.json con systemPrompts para los 14 canales.`;
+  if (!slug || !name || !guild) { showToast('Faltan campos obligatorios (nombre, slug, guild)'); return; }
+  if (!/^[a-z0-9][a-z0-9-]*$/.test(slug)) { showToast('Slug inválido (solo minúsculas, números, guiones)'); return; }
+  if (!/^\d{17,20}$/.test(guild)) { showToast('Guild ID inválido (debe ser 17-20 dígitos)'); return; }
 
-  // Step 5: Summary
-  if (step === 6) {
-    document.getElementById('wiz-summary').innerHTML = `
-      <div class="card" style="margin-bottom:12px;">
-        <div class="sr"><span>Nombre</span><span>${emoji} ${name}</span></div>
-        <div class="sr"><span>Slug</span><span>${slug}</span></div>
-        <div class="sr"><span>URL</span><span>${url}</span></div>
-        <div class="sr"><span>Industria</span><span>${industry}</span></div>
-        <div class="sr"><span>Discord Guild</span><span>${guild}</span></div>
-        <div class="sr"><span>Supabase</span><span>Multi-tenant (compartido)</span></div>
-      </div>`;
+  const btn = document.getElementById('wiz-run-btn');
+  btn.disabled = true;
+  btn.textContent = '⏳ Creando...';
+  const log = document.getElementById('wiz-progress-log');
+  log.style.display = 'block';
+  log.textContent = '🚀 Iniciando creación de cliente...\n';
 
-    document.getElementById('wiz-output').value = `// === clients.js entry ===
-  "${slug}": {
-    name: "${name}",
-    emoji: "${emoji}",
-    url: "${url}",
-    discord_guild: "${guild}",
-    supabase: {
-      url: "${sbUrl}",
-      anon_key: "${sbKey}",
-    },
-    workspace: "~/Projects/sanchocmo-${slug}",
-    phase: 0,
-  },
+  try {
+    const resp = await fetch(MC_BASE + '/api/new-client', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ slug, name, guild, emoji, url })
+    });
 
-// === brand/sources.json ===
-${srcJSON}`;
+    if (!resp.ok && !resp.headers.get('content-type')?.includes('text/event-stream')) {
+      const err = await resp.json();
+      throw new Error(err.error || 'Error ' + resp.status);
+    }
+
+    const reader = resp.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    let result = { ok: false };
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop();
+      for (const line of lines) {
+        if (line.startsWith('data: ')) {
+          const data = line.slice(6);
+          // Check if this is the done event data
+          try {
+            const parsed = JSON.parse(data);
+            if ('ok' in parsed && 'code' in parsed) { result = parsed; continue; }
+          } catch {}
+          log.textContent += data + '\n';
+          log.scrollTop = log.scrollHeight;
+        }
+      }
+    }
+
+    if (result.ok) {
+      log.textContent += '\n✅ Cliente creado exitosamente.\n';
+      btn.textContent = '✅ Cliente creado';
+      btn.classList.remove('btn-primary');
+      btn.classList.add('btn-secondary');
+      document.getElementById('wiz-verify-section').style.display = 'block';
+
+      // Save sources.json if competitors were configured
+      try {
+        const competitors = getWizCompetitors();
+        if (competitors.length > 0) {
+          const sourcesJSON = generateSourcesJSON(competitors, slug);
+          await fetch(MC_BASE + '/api/client-sources', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ slug, sources: JSON.parse(sourcesJSON) })
+          });
+          log.textContent += '📋 sources.json guardado con ' + competitors.length + ' competidor(es).\n';
+        }
+      } catch (e) {
+        log.textContent += '⚠️ No se pudo guardar sources.json: ' + e.message + '\n';
+      }
+
+      // Reload after short delay to show new client in selector
+      setTimeout(() => location.reload(), 2000);
+    } else {
+      log.textContent += '\n❌ El script terminó con código ' + result.code + '\n';
+      btn.disabled = false;
+      btn.textContent = '🔁 Reintentar';
+      btn.classList.add('btn-primary');
+    }
+  } catch (e) {
+    log.textContent += '\n❌ Error: ' + e.message + '\n';
+    btn.disabled = false;
+    btn.textContent = '🔁 Reintentar';
   }
 }
 
@@ -4105,11 +4496,6 @@ function toggleCheck(el) {
   el.classList.toggle('checked');
   const cb = el.querySelector('.wiz-checkbox');
   cb.textContent = el.classList.contains('checked') ? '☑' : '☐';
-}
-
-function copyWizOutput() {
-  const ta = document.getElementById('wiz-output');
-  navigator.clipboard.writeText(ta.value).then(() => showToast('📋 Código copiado — pégalo en clients.js'));
 }
 
 function addCompetitor() {
@@ -4122,25 +4508,8 @@ function addCompetitor() {
   container.appendChild(div);
 }
 
-// Slack toggle
-document.addEventListener('change', (e) => {
-  if (e.target.id === 'wiz-src-slack') {
-    document.getElementById('wiz-src-slack-channels').disabled = e.target.value === 'no';
-  }
-});
 
-function getWizSources() {
-  const gmail = document.getElementById('wiz-src-gmail').value.trim();
-  const gmailSkip = document.getElementById('wiz-src-gmail-skip').value.trim();
-  const useSlack = document.getElementById('wiz-src-slack').value === 'yes';
-  const slackChannels = document.getElementById('wiz-src-slack-channels').value.trim();
-  const meetingTool = document.getElementById('wiz-src-meeting-tool').value;
-  const notesDest = document.getElementById('wiz-src-notes-dest').value;
-  const notionMeetings = document.getElementById('wiz-src-notion-meetings').value.trim();
-  const gdriveFolder = document.getElementById('wiz-src-gdrive-folder').value.trim();
-  const transcriptLabel = document.getElementById('wiz-src-transcript-label').value.trim();
-  const notionNotes = document.getElementById('wiz-src-notion-notes').value.trim();
-
+function getWizCompetitors() {
   const competitors = [];
   document.querySelectorAll('.wiz-competitor').forEach(el => {
     const name = el.querySelector('.wiz-comp-name').value.trim();
@@ -4149,70 +4518,17 @@ function getWizSources() {
     const ig = el.querySelector('.wiz-comp-ig').value.trim();
     if (name) competitors.push({name, website: web, linkedin, instagram: ig});
   });
-
-  return {gmail, gmailSkip, useSlack, slackChannels, meetingTool, notesDest,
-    notionMeetings, gdriveFolder, transcriptLabel, notionNotes, competitors};
+  return competitors;
 }
 
-function generateSourcesJSON(src, slug) {
+function generateSourcesJSON(competitors, slug) {
   const sources = {
     _doc: `Fuentes de datos para ${slug}. Los crons leen esto.`,
     meetings: {enabled: true, sources: []},
     daily_pulse: {enabled: true, sources: []},
-    thief_marketer: {enabled: src.competitors.length > 0, competitors: []}
+    thief_marketer: {enabled: competitors.length > 0, competitors: []}
   };
-  // Gmail for daily pulse
-  if (src.gmail) {
-    sources.daily_pulse.sources.push({
-      type: 'gmail', name: 'Inbox', config: {
-        account: src.gmail, max_messages: 10,
-        labels: ['INBOX'],
-        skip_labels: src.gmailSkip ? src.gmailSkip.split(',').map(s=>s.trim()) : []
-      }
-    });
-  }
-  // Slack
-  if (src.useSlack && src.slackChannels) {
-    sources.daily_pulse.sources.push({
-      type: 'slack', name: 'Slack', enabled: false,
-      config: {channels: src.slackChannels.split(',').map(s=>s.trim()), note: 'Requiere Slack bot token (xoxb-)'}
-    });
-  }
-  // Notion meetings
-  if (src.notionMeetings) {
-    sources.meetings.sources.push({
-      type: 'notion', name: 'Meeting Notes DB',
-      config: {database_id: src.notionMeetings, filter_property: 'Date', filter_range: 'last_24h'}
-    });
-  }
-  // Notion notes
-  if (src.notionNotes) {
-    sources.daily_pulse.sources.push({
-      type: 'notion', name: 'Team Notes',
-      config: {database_id: src.notionNotes, filter_range: 'last_24h'}
-    });
-  }
-  // Google Drive
-  if (src.gdriveFolder) {
-    sources.meetings.sources.push({
-      type: 'google-drive', name: 'Meet Recordings',
-      config: {folder_id: src.gdriveFolder, mime_types: ['application/vnd.google-apps.document','text/plain'], modified_after: 'last_24h'}
-    });
-  }
-  // Meeting tool integration
-  if (src.meetingTool && src.meetingTool !== 'none') {
-    const toolConfig = {type: src.meetingTool, name: src.meetingTool.charAt(0).toUpperCase()+src.meetingTool.slice(1), config: {}};
-    if (src.notesDest === 'email' && src.transcriptLabel) {
-      toolConfig.config = {method: 'email-forward', inbox_label: src.transcriptLabel};
-    } else if (src.notesDest === 'notion') {
-      toolConfig.config = {method: 'notion-sync', note: 'Uses Notion meeting DB source'};
-    } else if (src.notesDest === 'gdrive') {
-      toolConfig.config = {method: 'gdrive-export', note: 'Uses Google Drive folder source'};
-    }
-    sources.meetings.sources.push(toolConfig);
-  }
-  // Competitors
-  src.competitors.forEach(c => {
+  competitors.forEach(c => {
     sources.thief_marketer.competitors.push({
       name: c.name,
       sources: {website: c.website, linkedin: c.linkedin, instagram: c.instagram, blog: '', youtube: '', newsletter: '', google_ads_library: ''},
@@ -4220,11 +4536,6 @@ function generateSourcesJSON(src, slug) {
     });
   });
   return JSON.stringify(sources, null, 2);
-}
-
-function copyInitSQL() {
-  const sqlPath = '~/Projects/sanchocmo-openclaw/database/init-db.sql';
-  showToast('📁 Ruta del SQL: ' + sqlPath + ' — ábrelo con: cat ' + sqlPath + ' | pbcopy');
 }
 
 function copyText(text) {
@@ -4326,19 +4637,19 @@ function checkCronAlerts(runs) {
     if (r.runAtMs && r.runAtMs !== prev.runAtMs) {
       const isError = r.status === 'error' || r.status === 'failed';
       const dur = r.durationMs ? ' (' + fmtDurShort(r.durationMs) + ')' : '';
-      showCronToast((isError ? '⚠ ' : '✓ ') + r.jobName + (isError ? ' falló' : ' completado') + dur, isError);
+      showCronToast((isError ? '⚠ ' : '✓ ') + r.jobName + (isError ? ' falló' : ' completado') + dur, isError, r.jobId);
     }
   }
   _cronPrevState = {};
   for (const r of runs) _cronPrevState[r.jobId] = { runAtMs: r.runAtMs, status: r.status };
 }
 
-function showCronToast(msg, isError) {
+function showCronToast(msg, isError, jobId) {
   const t = document.getElementById('toast');
   if (!t) return;
   t.textContent = msg;
   t.className = 'toast cron-alert' + (isError ? ' error' : '') + ' show';
-  t.onclick = function() { t.style.display = 'none'; goToActivity(); };
+  t.onclick = function() { t.style.display = 'none'; goToActivity(jobId); };
   t.style.display = 'block';
   t.style.opacity = '1';
   setTimeout(function() { t.style.opacity = '0'; setTimeout(function() { t.style.display = 'none'; }, 300); }, 8000);
@@ -4357,10 +4668,13 @@ async function renderUnifiedBar(slug) {
   _dashboardCronRuns = runs;
   checkCronAlerts(runs);
 
-  // Convert to events and merge with activity
+  // Convert to events and merge with activity (filter out "Cron run:" duplicates)
   const cronEvents = cronRunsToEvents(runs);
   const allActivity = D && D.activity ? D.activity : [];
-  const clientActivity = allActivity.filter(function(e) { return !e.client || e.client === slug; });
+  const clientActivity = allActivity.filter(function(e) {
+    if (e.raw && e.raw.startsWith('Cron run:')) return false;
+    return !e.client || e.client === slug;
+  });
   const merged = cronEvents.concat(clientActivity);
 
   // Sort by timestamp descending
@@ -4412,7 +4726,7 @@ async function renderUnifiedBar(slug) {
           const icon = isErr ? '<span class="ty">⚠</span>' : '<span class="tok">✓</span>';
           const badge = '<span class="cron-badge' + (isErr ? ' error' : '') + '">🔄</span>';
           const msg = esc(e._cronRun.jobName) + (isErr ? ' falló' : ' completado') + (e._cronRun.durationMs ? ' (' + fmtDurShort(e._cronRun.durationMs) + ')' : '');
-          return '<span class="tp">' + ts + '</span> ' + icon + ' <span class="tw">' + msg + '</span>' + badge + '<br>';
+          return '<div style="cursor:pointer;padding:1px 0;border-radius:3px;" onclick="event.stopPropagation();goToActivity(\'' + e._cronRun.jobId + '\');" onmouseover="this.style.background=\'rgba(255,255,255,.07)\'" onmouseout="this.style.background=\'none\'"><span class="tp">' + ts + '</span> ' + icon + ' <span class="tw">' + msg + '</span>' + badge + ' <span style="color:#555;font-size:9px;">›</span></div>';
         } else {
           const isWarn = e.level === 'error' || e.level === 'warning';
           const icon = isWarn ? '<span class="ty">⚠</span>' : '<span class="tok">✓</span>';
@@ -4919,8 +5233,8 @@ function resolveThreadSkills(ctx) {
   }
   // 5. By pillar
   if (ctx.pillar) return PILLAR_SKILLS[ctx.pillar] || { skill: 'doc-coauthoring', skills: ['doc-coauthoring'] };
-  // 6. Fallback
-  return { skill: 'doc-coauthoring', skills: ['doc-coauthoring'] };
+  // 6. Fallback — sancho-manager as default for anything without a specific skill
+  return { skill: 'sancho-manager', skills: ['sancho-manager'] };
 }
 
 function mcChatSetStatus(status, color) {
@@ -5652,7 +5966,11 @@ function mcChatOpenProject(projectId, projectName, projectStrategy, projectStatu
     return;
   }
 
-  const resolved = resolveThreadSkills({ strategy: projectStrategy });
+  const strategySkills = resolveThreadSkills({ strategy: projectStrategy });
+  const resolved = {
+    skill: 'sancho-manager',
+    skills: ['sancho-manager', ...(strategySkills.skills || [])],
+  };
 
   mcChatSetThreadMeta(threadId, {
     skill: resolved.skill,
@@ -5718,46 +6036,7 @@ function mcChatOpenTask(taskId, taskName, projectId, projectName, taskSkill, tas
 }
 
 // Open chat thread for an idea
-function mcChatOpenIdea(slug, ideaId, ideaTitle, ideaList, ideaChannels) {
-  slug = slug || mcChatCurrentSlug || (document.getElementById('clientSelector')?.value || '');
-  if (!slug) return;
-  mcChatCurrentSlug = slug;
-  const safeId = ideaId.toLowerCase().replace(/[^a-z0-9\-]/g, '');
-  const threadId = slug + ':idea:' + safeId;
-
-  // Resolve skill: ideas are content (by channel) or outreach (by list type)
-  const ideaChannel = ideaChannels && ideaChannels.length ? ideaChannels[0] : null;
-  const ideaTaskType = (ideaList === 'outreach' || ideaList === 'medios' || ideaList === 'partners' || ideaList === 'influencers') ? 'outreach' : 'content';
-  const resolved = resolveThreadSkills({ taskType: ideaTaskType, channel: ideaChannel });
-
-  mcChatSetThreadMeta(threadId, {
-    skill: resolved.skill,
-    skills: resolved.skills,
-    linkedTo: 'ideas/' + ideaId,
-    docPath: null,
-    threadName: ideaTitle,
-    threadState: 'continue',
-  });
-
-  mcChatRegisterThread(threadId, ideaTitle);
-  mcChatCurrentThread = threadId;
-  mcChatSetStatus('Conectado · ' + ideaTitle, '#22A06B');
-  mcChatHidePinnedDoc();
-  // Write welcome message to BOTH main chat and sidebar (whichever exists)
-  const welcomeHtml = '<div class="v2-msg v2-msg-b"><div class="v2-msg-who">Sancho</div>💡 Idea: <strong>' + ideaTitle + '</strong>. ¿Qué quieres hacer con esta idea?</div>';
-  const mainMsgs = document.getElementById('v2-chat-msgs');
-  if (mainMsgs) mainMsgs.innerHTML = welcomeHtml;
-  const sidebarMsgs = document.getElementById('sidebar-chat-msgs');
-  if (sidebarMsgs) sidebarMsgs.innerHTML = welcomeHtml;
-  mcChatLoadThreads();
-  mcChatLoadMessages();
-  mcChatStartPoll();
-  // Open sidebar with this idea's thread
-  try {
-    mcChatSidebar.init({ anchorId: 'mc-global-chat-anchor', toggleBtnId: 'global-chat-toggle', threadId: threadId, threadName: ideaTitle });
-    if (!mcChatSidebar.isOpen) mcChatSidebar.toggle();
-  } catch(e) { console.error('Chat sidebar error:', e); }
-}
+// Ideas don't have their own thread — managed from their parent task
 
 // Open chat thread for a strategy
 function mcChatOpenStrategy(strategyId, strategyName) {
@@ -5768,7 +6047,11 @@ function mcChatOpenStrategy(strategyId, strategyName) {
   if (mcChatSidebar.isOpen && mcChatSidebar._lockedThreadId === threadId) { mcChatSidebar.toggle(); return; }
   const displayName = '#' + strategyId + ' ' + strategyName;
 
-  const resolved = resolveThreadSkills({ strategyId });
+  const strategySkills = resolveThreadSkills({ strategyId });
+  const resolved = {
+    skill: 'sancho-manager',
+    skills: ['sancho-manager', ...(strategySkills.skills || [])],
+  };
 
   mcChatSetThreadMeta(threadId, {
     skill: resolved.skill,
@@ -5802,7 +6085,10 @@ function mcChatOpenRecurring(slug, taskId, taskName, taskSkill) {
   const safeId = taskId.toLowerCase().replace(/[^a-z0-9\-]/g, '');
   const threadId = slug + ':recurring:' + safeId;
 
-  const resolved = resolveThreadSkills({ taskSkill });
+  const resolved = {
+    skill: 'sancho-manager',
+    skills: ['sancho-manager', ...(taskSkill ? [taskSkill] : [])],
+  };
 
   mcChatSetThreadMeta(threadId, {
     skill: resolved.skill,
@@ -5924,9 +6210,46 @@ async function renderV2NextSteps(slug) {
     }
   }
 
+  // Check manual metrics pending (weekly, dismissable per week)
+  let manualMetricsPending = false;
+  try {
+    const mRes = await fetch(`${MC_BASE}/api/metrics?slug=${slug}`);
+    if (mRes.ok) {
+      const mData = await mRes.json();
+      if (mData.manualDataPending && mData.metricsSheet && mData.metricsSheet.url) {
+        // Compute current week key (Monday date) for dismiss tracking
+        const now_ = new Date();
+        const day_ = now_.getDay();
+        const mon_ = new Date(now_);
+        mon_.setDate(mon_.getDate() - ((day_ + 6) % 7));
+        const weekKey = 'mc-manual-metrics-dismiss-' + slug + '-' + mon_.toISOString().slice(0, 10);
+        if (!localStorage.getItem(weekKey)) {
+          manualMetricsPending = true;
+          decisions.push({
+            name: 'Métricas manuales de esta semana',
+            why: 'Signups, KYC, depósitos... sin rellenar',
+            pillar: null,
+            _type: 'manual-metrics',
+            _sheetUrl: mData.metricsSheet.url,
+            _weekKey: weekKey
+          });
+        }
+      }
+    }
+  } catch(e) {}
+
   if (decisions.length > 0) {
     html += '<div class="v2-sub"><div class="v2-sub-t">❓ Tu Decisión</div>';
     for (const d of decisions) {
+      if (d._type === 'manual-metrics') {
+        html += `<div class="v2-fp review" style="margin:2px 0;padding:6px 10px;background:#FFF8E1;border:1px solid var(--border);border-left:3px solid #E5A100;border-radius:6px;display:flex;align-items:center;gap:8px;font-size:11px;">
+          <span style="font-size:13px;">📝</span>
+          <span style="flex:1;font-weight:500;">${d.name}<br><span style="font-size:10px;color:var(--muted);font-weight:400;">${d.why}</span></span>
+          <a href="${d._sheetUrl}" target="_blank" style="font-size:10px;font-weight:700;color:#E5A100;text-decoration:none;white-space:nowrap;" onclick="event.stopPropagation();">Sheets →</a>
+          <span style="font-size:11px;cursor:pointer;color:var(--muted);padding:2px 4px;" title="Ocultar hasta la semana que viene" onclick="event.stopPropagation();localStorage.setItem('${d._weekKey}','1');this.closest('.v2-fp').remove();">✕</span>
+        </div>`;
+        continue;
+      }
       const skill = d.skill || d.pillar || '';
       const safeDocUrl = (d.docUrl || '').replace(/'/g, '%27');
       const safeName = (d.name || '').replace(/'/g, '');
@@ -5945,6 +6268,49 @@ async function renderV2NextSteps(slug) {
       </div>`;
     }
     html += '</div>';
+  }
+
+  // ===== 📈 PERFORMANCE RECOMMENDATIONS (Section 1b — from monitoring) =====
+  const monD = (D && D.monitoring) ? D.monitoring[slug] : null;
+  if (monD && monD.pending_recommendations_count > 0) {
+    try {
+      const monRes = await fetch(`${MC_BASE}/api/monitoring?slug=${slug}`);
+      if (monRes.ok) {
+        const monData = await monRes.json();
+        const monRecs = monData.pending_recommendations ? (monData.pending_recommendations.recommendations || []).filter(r => r.status === 'pending' || r.status === 'active') : [];
+        const topRecs = monRecs.filter(r => r.priority === 'high' || r.priority === 'medium').slice(0, 4);
+        if (topRecs.length > 0) {
+          const typeIcons = {optimize:'🔧',investigate:'🔍',launch:'🚀',pause:'⏸️',escalate:'⚡'};
+          html += '<div class="v2-sub"><div class="v2-sub-t">📈 Recomendaciones</div>';
+          for (const rec of topRecs) {
+            const projRef = rec.linked_project || rec.linkedProject || '';
+            const prioColor = rec.priority === 'high' ? '#C45D35' : '#B8860B';
+            html += `<div style="margin:2px 0;padding:8px 10px;background:var(--card-bg);border:1px solid var(--border);border-left:3px solid ${prioColor};border-radius:6px;font-size:11px;">
+              <div style="display:flex;align-items:flex-start;gap:6px;">
+                <span style="font-size:13px;flex-shrink:0;">${typeIcons[rec.type] || '📌'}</span>
+                <div style="flex:1;">
+                  <div style="font-weight:600;margin-bottom:2px;">${rec.title}</div>
+                  <div style="font-size:10px;color:var(--muted);line-height:1.4;margin-bottom:6px;">${(rec.rationale || rec.description || '').slice(0, 100)}${(rec.rationale || rec.description || '').length > 100 ? '...' : ''}</div>
+                  <div style="display:flex;align-items:center;gap:5px;">
+                    ${projRef
+                      ? `<button onclick="event.stopPropagation();monitoringRecAction('${slug}','${rec.id}','convert',this)" style="font-size:9px;font-weight:600;color:#fff;background:#4A5D23;border:none;border-radius:3px;padding:3px 8px;cursor:pointer;">→ Tarea en ${projRef}</button>`
+                      : `<button onclick="event.stopPropagation();monitoringRecAction('${slug}','${rec.id}','convert',this)" style="font-size:9px;font-weight:600;color:#fff;background:#4A5D23;border:none;border-radius:3px;padding:3px 8px;cursor:pointer;">→ Crear tarea</button>`
+                    }
+                    <button onclick="event.stopPropagation();monitoringRecAction('${slug}','${rec.id}','dismiss',this)" style="font-size:9px;font-weight:600;color:var(--muted);background:transparent;border:1px solid var(--border);border-radius:3px;padding:3px 8px;cursor:pointer;">Descartar</button>
+                    <span style="flex:1;"></span>
+                    <span style="font-size:8px;font-weight:700;color:${prioColor};text-transform:uppercase;">${rec.priority}</span>
+                  </div>
+                </div>
+              </div>
+            </div>`;
+          }
+          if (monRecs.length > topRecs.length) {
+            html += `<div style="text-align:center;margin-top:4px;"><a href="#" onclick="showPage('metrics');setTimeout(()=>{const r=document.getElementById('monitoring-recs');if(r)r.scrollIntoView({behavior:'smooth',block:'start'})},300);return false;" style="font-size:10px;color:var(--rust);text-decoration:none;">Ver las ${monRecs.length} recomendaciones →</a></div>`;
+          }
+          html += '</div>';
+        }
+      }
+    } catch(e) { console.warn('[NextSteps] Monitoring fetch error:', e.message); }
   }
 
   // ===== 📋 PROYECTOS (Section 2 — always) =====
@@ -6114,7 +6480,7 @@ async function renderV2Metrics(slug) {
   // Helper: find metric value
   function mGet(src, name) {
     if (!src || !src.metrics) return null;
-    const m = src.metrics.find(x => x.name === name && !x.dimensions);
+    const m = src.metrics.find(x => x.name === name && (!x.dimensions || (x.dimensions && x.dimensions.source === 'manual')));
     return m ? m.value : null;
   }
   function fmt(v) { return v === null ? '—' : typeof v === 'number' ? (v >= 1000 ? v.toLocaleString() : (Number.isInteger(v) ? v : v.toFixed(1))) : v; }
@@ -6252,6 +6618,48 @@ async function renderV2Metrics(slug) {
     } catch(e) {}
 
     let html = metricsFoundationWarning;
+
+    // Health Score card from Performance Analysis
+    const monData = (D && D.monitoring) ? D.monitoring[slug] : null;
+    if (monData && monData.health_score) {
+      const hs = monData.health_score;
+      // Support both schema formats: overall/overallScore, by_category/categories
+      const score = hs.overall ?? hs.overallScore ?? 0;
+      const cats = hs.by_category || hs.categories || {};
+      const alerts = hs.active_alerts || hs.topAlerts || [];
+      const trend = hs.trend === 'improving' ? '↑' : hs.trend === 'declining' ? '↓' : '→';
+      const trendColor = hs.trend === 'improving' ? '#4A5D23' : hs.trend === 'declining' ? '#C45D35' : '#7A7A7A';
+      const scoreColor = score >= 70 ? '#4A5D23' : score >= 40 ? '#B8860B' : '#C45D35';
+      const alertCount = Array.isArray(alerts) ? alerts.length : 0;
+      const recCount = monData.pending_recommendations_count || 0;
+      const catLabels = {funnel:'Funnel',paid:'Paid',traffic:'Trafico',seo:'SEO',social:'Social'};
+      const catBars = Object.entries(cats).map(([k,v]) => {
+        const barColor = v.score >= 70 ? '#4A5D23' : v.score >= 40 ? '#B8860B' : '#C45D35';
+        const tArr = v.trend === 'up' ? '↑' : v.trend === 'down' ? '↓' : '→';
+        return `<div style="display:flex;align-items:center;gap:6px;">
+          <span style="font-size:10px;color:var(--muted);width:52px;">${catLabels[k]||k}</span>
+          <div style="flex:1;height:6px;background:#E5E2DC;border-radius:3px;overflow:hidden;"><div style="width:${v.score}%;height:100%;background:${barColor};border-radius:3px;"></div></div>
+          <span style="font-size:10px;font-weight:700;width:28px;text-align:right;color:${barColor};">${v.score} <span style="font-size:8px;">${tArr}</span></span>
+        </div>`;
+      }).join('');
+      html += `<div style="background:var(--card-bg);border:1px solid var(--border);border-radius:8px;padding:14px 16px;margin-bottom:14px;">
+        <div style="display:flex;align-items:center;gap:14px;margin-bottom:12px;">
+          <div style="width:60px;height:60px;border-radius:50%;border:4px solid ${scoreColor};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <span style="font-size:22px;font-weight:800;color:${scoreColor};">${score}</span>
+          </div>
+          <div style="flex:1;">
+            <div style="font-size:13px;font-weight:700;letter-spacing:0.3px;">Health Score <span style="color:${trendColor};font-size:15px;margin-left:2px;">${trend}</span></div>
+            ${hs.previous_week ? `<div style="font-size:9px;color:var(--muted);margin-top:2px;">vs ${hs.previous_week} semana anterior</div>` : ''}
+          </div>
+          <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end;">
+            ${alertCount > 0 ? `<span style="background:#C45D35;color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;cursor:pointer;" onclick="showPage('metrics');setTimeout(()=>{const t=document.getElementById('monitoring-top');if(t)t.scrollIntoView({behavior:'smooth',block:'start'})},300)">${alertCount} alerta${alertCount>1?'s':''}</span>` : ''}
+            ${recCount > 0 ? `<span style="background:#4A5D23;color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;cursor:pointer;" onclick="showPage('metrics');setTimeout(()=>{const r=document.getElementById('monitoring-recs');if(r)r.scrollIntoView({behavior:'smooth',block:'start'})},300)">${recCount} rec.</span>` : ''}
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 14px;">${catBars}</div>
+        ${hs.last_weekly_report ? `<div style="font-size:9px;color:var(--muted);margin-top:10px;text-align:right;">Ultimo analisis: ${hs.last_weekly_report}</div>` : ''}
+      </div>`;
+    }
 
     if (plan && plan.funnel && plan.funnel.length > 0) {
       // === METRICS PLAN MODE: show funnel + categorized KPIs ===
@@ -7128,6 +7536,9 @@ async function loadMetrics() {
 
   document.getElementById('metrics-client-name').textContent = slug.charAt(0).toUpperCase() + slug.slice(1).replace(/-/g, ' ');
 
+  // Load monitoring section (performance analysis recommendations)
+  loadMonitoringSection(slug);
+
   // --- Client-side cache: show cached data instantly, refresh in background ---
   const cacheKey = 'mc-metrics-cache-' + slug;
   const cached = localStorage.getItem(cacheKey);
@@ -7174,6 +7585,291 @@ async function loadMetrics() {
       console.warn('[Metrics] Background refresh failed, showing cached data:', e.message);
     }
   }
+}
+
+async function loadMonitoringSection(slug) {
+  const el = document.getElementById('metrics-monitoring-section');
+  if (!el) return;
+  try {
+    const res = await fetch(`${MC_BASE}/api/monitoring?slug=${slug}`);
+    if (!res.ok) { el.style.display = 'none'; return; }
+    const data = await res.json();
+    if (!data.health_score && !data.pending_recommendations) { el.style.display = 'none'; return; }
+
+    const hs = data.health_score;
+    const wr = data.latest_weekly;
+    const wrPeriod = wr ? (wr.period || {}) : {};
+    const score = hs ? (hs.overall ?? hs.overallScore ?? 0) : null;
+    const cats = hs ? (hs.by_category || hs.categories || {}) : {};
+    const alerts = hs ? (hs.active_alerts || hs.topAlerts || []) : [];
+    const nsmData = wr ? (wr.nsm_progress || wr.nsm || null) : null;
+    const allRecs = data.pending_recommendations ? (data.pending_recommendations.recommendations || []) : [];
+    const recs = allRecs.filter(r => r.status === 'pending' || r.status === 'active');
+    const historyRecs = allRecs.filter(r => r.status === 'converted' || r.status === 'dismissed');
+    const highRecs = recs.filter(r => r.priority === 'high');
+    const medRecs = recs.filter(r => r.priority === 'medium');
+    const lowRecs = recs.filter(r => r.priority === 'low' || (!r.priority));
+    const hasHighPrio = highRecs.length > 0;
+
+    // Collapsible state from localStorage
+    const lsKey = 'mc-monitoring-collapsed-' + slug;
+    const defaultCollapsed = !hasHighPrio && recs.length === 0;
+    const isCollapsed = localStorage.getItem(lsKey) === null ? defaultCollapsed : localStorage.getItem(lsKey) === 'true';
+
+    // Summary for header
+    const trendArrow = hs ? (hs.trend === 'improving' ? '↑' : hs.trend === 'declining' ? '↓' : '→') : '';
+    const headerSummary = score !== null ? `Health Score: ${score} ${trendArrow}` : '';
+    const recSummary = recs.length > 0 ? `${recs.length} recomendacion${recs.length>1?'es':''}` : '';
+    const headerParts = [headerSummary, recSummary].filter(Boolean).join(' | ');
+
+    // === COLLAPSIBLE WRAPPER ===
+    let html = `<div style="background:var(--card-bg);border:1px solid var(--border);border-radius:10px;margin-bottom:16px;overflow:hidden;">
+      <div onclick="toggleMonitoring('${slug}')" style="display:flex;align-items:center;gap:10px;padding:12px 16px;cursor:pointer;user-select:none;border-bottom:${isCollapsed ? 'none' : '1px solid var(--border)'};" id="monitoring-header">
+        <span style="font-size:14px;">📈</span>
+        <span style="font-size:12px;font-weight:700;flex:1;">Performance Analysis</span>
+        <span style="font-size:10px;color:var(--muted);">${headerParts}</span>
+        ${hasHighPrio ? `<span style="background:#C45D35;color:#fff;font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px;">${highRecs.length} urgente${highRecs.length>1?'s':''}</span>` : ''}
+        <span style="font-size:11px;color:var(--muted);transition:transform 0.2s;" id="monitoring-chevron">${isCollapsed ? '▸' : '▾'}</span>
+      </div>
+      <div id="monitoring-body" style="display:${isCollapsed ? 'none' : 'block'};padding:16px;">`;
+
+    // === TOP BAR: Health Score + NSM side by side ===
+    if (score !== null || nsmData) {
+      html += `<div id="monitoring-top" style="display:grid;grid-template-columns:${score !== null && nsmData ? '1fr 1fr' : '1fr'};gap:12px;margin-bottom:16px;">`;
+      if (score !== null) {
+        const scoreColor = score >= 70 ? '#4A5D23' : score >= 40 ? '#B8860B' : '#C45D35';
+        const trend = hs.trend === 'improving' ? '↑' : hs.trend === 'declining' ? '↓' : '→';
+        const trendColor = hs.trend === 'improving' ? '#4A5D23' : hs.trend === 'declining' ? '#C45D35' : '#7A7A7A';
+        const catLabels = {funnel:'Funnel',paid:'Paid',traffic:'Trafico',seo:'SEO',social:'Social'};
+        html += `<div style="background:var(--bg);border-radius:8px;padding:14px 16px;">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
+            <div style="width:50px;height:50px;border-radius:50%;border:3px solid ${scoreColor};display:flex;align-items:center;justify-content:center;">
+              <span style="font-size:18px;font-weight:800;color:${scoreColor};">${score}</span>
+            </div>
+            <div>
+              <div style="font-size:12px;font-weight:700;">Health Score <span style="color:${trendColor};font-size:13px;">${trend}</span></div>
+              <div style="font-size:9px;color:var(--muted);">${wrPeriod.from || ''} — ${wrPeriod.to || ''}</div>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:4px;">
+            ${Object.entries(cats).map(([k,v]) => {
+              const c = v.score >= 70 ? '#4A5D23' : v.score >= 40 ? '#B8860B' : '#C45D35';
+              const t = v.trend === 'up' || v.trend === 'improving' ? '↑' : v.trend === 'down' || v.trend === 'declining' ? '↓' : '→';
+              return `<div style="display:flex;align-items:center;gap:6px;">
+                <span style="font-size:9px;color:var(--muted);width:44px;">${catLabels[k]||k}</span>
+                <div style="flex:1;height:5px;background:#E5E2DC;border-radius:3px;overflow:hidden;"><div style="width:${v.score}%;height:100%;background:${c};border-radius:3px;"></div></div>
+                <span style="font-size:9px;font-weight:700;color:${c};width:24px;text-align:right;">${v.score}${t}</span>
+              </div>`;
+            }).join('')}
+          </div>
+        </div>`;
+      }
+      if (nsmData) {
+        const nsmOnTrack = nsmData.on_track ?? nsmData.onTrack ?? false;
+        const nsmColor = nsmOnTrack ? '#4A5D23' : '#C45D35';
+        const nsmMetric = nsmData.metric || '—';
+        const nsmWeek = nsmData.current_week ?? nsmData.thisWeek ?? '—';
+        const nsmPrev = nsmData.previous_week ?? nsmData.lastWeek ?? null;
+        const nsmMonthActual = nsmData.monthly_actual ?? nsmData.monthTotal ?? '—';
+        const nsmMonthTarget = nsmData.monthly_target ?? nsmData.monthTarget ?? '—';
+        const nsmChange = nsmData.weekOverWeekChange || '';
+        const nsmNote = nsmData.note || '';
+        html += `<div style="background:var(--bg);border-radius:8px;padding:14px 16px;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+            <span style="font-size:20px;">${nsmOnTrack ? '🎯' : '⚠️'}</span>
+            <div>
+              <div style="font-size:12px;font-weight:700;color:${nsmColor};">NSM: ${nsmMetric}</div>
+              <div style="font-size:9px;color:var(--muted);">${nsmOnTrack ? 'On track' : 'Behind target'}</div>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+            <div style="background:var(--card-bg);border-radius:6px;padding:8px;text-align:center;">
+              <div style="font-size:20px;font-weight:800;color:${nsmColor};">${nsmWeek}</div>
+              <div style="font-size:9px;color:var(--muted);">esta semana</div>
+              ${nsmPrev !== null ? `<div style="font-size:9px;color:${nsmColor};font-weight:600;">${nsmChange || ('vs ' + nsmPrev)}</div>` : ''}
+            </div>
+            <div style="background:var(--card-bg);border-radius:6px;padding:8px;text-align:center;">
+              <div style="font-size:20px;font-weight:800;color:var(--fg);">${nsmMonthActual}<span style="font-size:12px;color:var(--muted);">/${nsmMonthTarget}</span></div>
+              <div style="font-size:9px;color:var(--muted);">mes</div>
+            </div>
+          </div>
+          ${nsmNote ? `<div style="font-size:9px;color:var(--muted);line-height:1.4;">${nsmNote.length > 120 ? nsmNote.slice(0,120)+'...' : nsmNote}</div>` : ''}
+        </div>`;
+      }
+      html += '</div>';
+    }
+
+    // === ALERTS BAR ===
+    if (alerts.length > 0) {
+      html += `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;">`;
+      for (const a of alerts) {
+        const isRed = typeof a === 'string' ? a.includes('🔴') : a.severity === 'red';
+        const isGreen = typeof a === 'string' ? a.includes('🟢') : false;
+        const text = typeof a === 'string' ? a.replace(/^[🔴🟡🟢⚠️]\s*/, '') : (a.message || a.metric || '');
+        const bg = isGreen ? '#F0F7EE' : isRed ? '#FEE2E2' : '#FEF3C7';
+        const color = isGreen ? '#4A5D23' : isRed ? '#991B1B' : '#92400E';
+        const dot = isGreen ? '🟢' : isRed ? '🔴' : '🟡';
+        html += `<div style="background:${bg};color:${color};font-size:10px;padding:4px 10px;border-radius:6px;display:flex;align-items:center;gap:4px;">
+          <span style="font-size:8px;">${dot}</span> ${text}
+        </div>`;
+      }
+      html += '</div>';
+    }
+
+    // === RECOMMENDATIONS (grouped by priority) ===
+    if (recs.length > 0) {
+      const typeIcons = {optimize:'🔧',investigate:'🔍',launch:'🚀',pause:'⏸️',escalate:'⚡'};
+      const typeLabels = {optimize:'Optimizar',investigate:'Investigar',launch:'Lanzar',pause:'Pausar',escalate:'Escalar'};
+
+      html += `<div id="monitoring-recs" style="margin-bottom:16px;">`;
+
+      function renderRecGroup(title, groupRecs, borderColor) {
+        if (groupRecs.length === 0) return '';
+        let g = `<div style="margin-bottom:12px;">
+          <div style="font-size:11px;font-weight:700;color:${borderColor};text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;padding-bottom:4px;border-bottom:2px solid ${borderColor};">${title} (${groupRecs.length})</div>`;
+        for (const rec of groupRecs) {
+          const projRef = rec.linked_project || rec.linkedProject || '';
+          g += `<div id="rec-${rec.id}" style="background:var(--card-bg);border:1px solid var(--border);border-left:3px solid ${borderColor};border-radius:6px;padding:12px 14px;margin-bottom:8px;transition:all 0.3s;">
+            <div style="display:flex;align-items:flex-start;gap:8px;">
+              <span style="font-size:16px;flex-shrink:0;margin-top:1px;">${typeIcons[rec.type] || '📌'}</span>
+              <div style="flex:1;">
+                <div style="font-size:12px;font-weight:700;margin-bottom:4px;">${rec.title}</div>
+                <div style="font-size:10px;color:var(--muted);line-height:1.5;margin-bottom:6px;">${rec.rationale || rec.description || ''}</div>
+                ${rec.suggested_action ? `<div style="font-size:10px;line-height:1.5;margin-bottom:6px;background:var(--bg);padding:6px 8px;border-radius:4px;"><strong>→</strong> ${rec.suggested_action}</div>` : ''}
+                <div style="display:flex;align-items:center;gap:6px;margin-top:8px;">
+                  ${rec.type ? `<span style="font-size:9px;color:var(--muted);background:var(--bg);padding:2px 6px;border-radius:3px;">${typeLabels[rec.type]||rec.type}</span>` : ''}
+                  ${projRef ? `<span style="font-size:9px;color:#2C5282;background:#EBF5FF;padding:2px 6px;border-radius:3px;">${projRef}</span>` : ''}
+                  <span style="flex:1;"></span>
+                  ${projRef
+                    ? `<button onclick="monitoringRecAction('${slug}','${rec.id}','convert',this)" style="font-size:10px;font-weight:600;color:#fff;background:#4A5D23;border:none;border-radius:4px;padding:5px 12px;cursor:pointer;">→ Tarea en ${projRef}</button>`
+                    : `<button onclick="monitoringRecAction('${slug}','${rec.id}','convert',this)" style="font-size:10px;font-weight:600;color:#fff;background:#4A5D23;border:none;border-radius:4px;padding:5px 12px;cursor:pointer;">→ Crear tarea</button>`
+                  }
+                  <button onclick="monitoringRecAction('${slug}','${rec.id}','dismiss',this)" style="font-size:10px;font-weight:600;color:var(--muted);background:transparent;border:1px solid var(--border);border-radius:4px;padding:5px 12px;cursor:pointer;">Descartar</button>
+                </div>
+              </div>
+            </div>
+          </div>`;
+        }
+        g += '</div>';
+        return g;
+      }
+
+      html += renderRecGroup('Prioridad alta', highRecs, '#C45D35');
+      html += renderRecGroup('Prioridad media', medRecs, '#B8860B');
+      html += renderRecGroup('Prioridad baja', lowRecs, '#7A7A7A');
+      html += '</div>';
+    }
+
+    // === HISTORY (collapsed by default) ===
+    if (historyRecs.length > 0) {
+      html += `<div style="margin-top:8px;">
+        <div onclick="document.getElementById('monitoring-history-list').style.display=document.getElementById('monitoring-history-list').style.display==='none'?'block':'none';this.querySelector('span').textContent=document.getElementById('monitoring-history-list').style.display==='none'?'▸':'▾'" style="font-size:11px;font-weight:600;color:var(--muted);cursor:pointer;user-select:none;display:flex;align-items:center;gap:6px;padding:6px 0;">
+          <span>▸</span> Historial (${historyRecs.length})
+        </div>
+        <div id="monitoring-history-list" style="display:none;">`;
+      for (const rec of historyRecs) {
+        const isConverted = rec.status === 'converted';
+        const taskRef = rec.converted_to_task || rec.convertedToTask || '';
+        const actionDate = rec.actioned_at || rec.approved_at || '';
+        const projRef = rec.linked_project || rec.linkedProject || '';
+        html += `<div style="display:flex;align-items:center;gap:8px;padding:6px 8px;border-bottom:1px solid var(--border);font-size:10px;${isConverted ? '' : 'opacity:0.6;'}">
+          <span style="font-size:12px;">${isConverted ? '✅' : '❌'}</span>
+          <span style="flex:1;${isConverted ? '' : 'text-decoration:line-through;color:var(--muted);'}">${rec.title}</span>
+          ${isConverted && taskRef ? `<a href="#" onclick="showPage('projects');return false;" style="font-size:9px;font-weight:700;color:#2C5282;text-decoration:none;background:#EBF5FF;padding:2px 8px;border-radius:4px;">→ ${taskRef}</a>` : ''}
+          ${!isConverted ? `<span style="font-size:9px;color:var(--muted);">descartada</span>` : ''}
+          ${actionDate ? `<span style="font-size:9px;color:var(--muted);">${actionDate.slice(0,10)}</span>` : ''}
+        </div>`;
+      }
+      html += '</div></div>';
+    }
+
+    // Close collapsible wrapper
+    html += '</div></div>';
+
+    el.innerHTML = html;
+    el.style.display = 'block';
+  } catch (e) { console.warn('[Monitoring] Error:', e.message); el.style.display = 'none'; }
+}
+
+function toggleMonitoring(slug) {
+  const body = document.getElementById('monitoring-body');
+  const chevron = document.getElementById('monitoring-chevron');
+  const header = document.getElementById('monitoring-header');
+  if (!body) return;
+  const nowHidden = body.style.display === 'none';
+  body.style.display = nowHidden ? 'block' : 'none';
+  if (chevron) chevron.textContent = nowHidden ? '▾' : '▸';
+  if (header) header.style.borderBottom = nowHidden ? '1px solid var(--border)' : 'none';
+  localStorage.setItem('mc-monitoring-collapsed-' + slug, nowHidden ? 'false' : 'true');
+}
+
+async function monitoringRecAction(slug, recId, action, btn, projectOverride) {
+  if (btn) { btn.disabled = true; btn.textContent = '...'; }
+  const recEl = document.getElementById('rec-' + recId);
+  const body = { slug, recommendationId: recId, action };
+  if (projectOverride) body.projectOverride = projectOverride;
+  try {
+    const res = await fetch(`${MC_BASE}/api/monitoring/recommendation-action`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    const data = await res.json();
+    if (data.ok) {
+      if (action === 'convert' && data.recommendation) {
+        const taskId = data.recommendation.converted_to_task || data.recommendation.convertedToTask || '';
+        if (recEl) {
+          recEl.style.borderLeft = '3px solid #22A06B';
+          recEl.style.background = '#F0F7EE';
+          recEl.innerHTML = `<div style="display:flex;align-items:center;gap:8px;padding:4px;">
+            <span style="font-size:16px;">✅</span>
+            <span style="font-size:11px;font-weight:700;color:#4A5D23;">Tarea ${taskId} creada</span>
+            ${taskId ? `<a href="#" onclick="showPage('projects');return false;" style="font-size:10px;color:#2C5282;text-decoration:none;">Ver en proyectos →</a>` : ''}
+          </div>`;
+        } else if (btn) {
+          // Compact mode (from NextSteps column)
+          btn.textContent = `✓ ${taskId}`;
+          btn.style.background = '#22A06B';
+        }
+      } else if (action === 'dismiss') {
+        if (recEl) {
+          recEl.style.opacity = '0.4';
+          recEl.style.borderLeft = '3px solid var(--muted)';
+          recEl.innerHTML = `<div style="display:flex;align-items:center;gap:8px;padding:4px;">
+            <span style="font-size:16px;">❌</span>
+            <span style="font-size:11px;color:var(--muted);text-decoration:line-through;">Descartada</span>
+          </div>`;
+        } else if (btn) {
+          btn.textContent = '✓';
+          btn.style.opacity = '0.4';
+        }
+      }
+      setTimeout(() => { loadMonitoringSection(slug); renderV2NextSteps(slug); }, 3000);
+    } else if (data.error && data.error.includes('No linked project')) {
+      // Show project picker inline
+      monitoringShowProjectPicker(slug, recId, btn);
+    } else {
+      if (btn) { btn.textContent = data.error || 'Error'; btn.disabled = false; }
+    }
+  } catch (e) { if (btn) { btn.textContent = 'Error'; btn.disabled = false; } }
+}
+
+async function monitoringShowProjectPicker(slug, recId, btn) {
+  let projects = [];
+  try {
+    const r = await fetch(`${MC_BASE}/api/projects/${slug}`);
+    if (r.ok) { const d = await r.json(); projects = (d.projects || []).filter(p => !['archived','cancelled'].includes(p.status)); }
+  } catch {}
+  if (projects.length === 0) { if (btn) { btn.textContent = 'Sin proyectos'; btn.disabled = false; } return; }
+
+  // Replace the entire button row with a project picker
+  const row = btn ? btn.closest('div') : null;
+  if (!row) return;
+  const selectId = 'proj-pick-' + recId;
+  const optionsHtml = projects.map(p => `<option value="${p.id}">${p.id} — ${(p.name||'').slice(0,25)}</option>`).join('');
+  row.innerHTML = `<span style="font-size:9px;color:var(--muted);">Proyecto:</span>
+    <select id="${selectId}" style="font-size:10px;padding:3px 6px;border:1px solid var(--border);border-radius:4px;flex:1;max-width:200px;">${optionsHtml}</select>
+    <button onclick="monitoringRecAction('${slug}','${recId}','convert',this,document.getElementById('${selectId}').value)" style="font-size:10px;font-weight:600;color:#fff;background:#4A5D23;border:none;border-radius:4px;padding:5px 12px;cursor:pointer;">→ Crear tarea</button>
+    <button onclick="monitoringRecAction('${slug}','${recId}','dismiss',this)" style="font-size:10px;font-weight:600;color:var(--muted);background:transparent;border:1px solid var(--border);border-radius:4px;padding:5px 12px;cursor:pointer;">Cancelar</button>`;
 }
 
 async function metricsPageCollect(slug) {
@@ -7238,6 +7934,25 @@ function renderMetrics() {
     return;
   }
   document.getElementById('metrics-empty').style.display = 'none';
+
+  // Manual data pending banner
+  const manualBanner = document.getElementById('metrics-manual-banner');
+  if (manualBanner) {
+    if (d.manualDataPending && d.metricsSheet && d.metricsSheet.url) {
+      manualBanner.style.display = 'block';
+      const _slug = d.slug || currentClientId || '';
+      manualBanner.innerHTML = `<div style="background:#FFF8E1;border:2px solid #E5A100;border-radius:8px;padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;gap:12px;">
+        <span style="font-size:18px;">📝</span>
+        <div style="flex:1;"><div style="font-size:13px;font-weight:700;color:#8B6914;">Faltan métricas manuales de esta semana</div><div style="font-size:11px;color:#7A7A7A;">Signups, KYC, depósitos, Earn... Rellena la Sheet y pulsa Sincronizar.</div></div>
+        <a href="${d.metricsSheet.url}" target="_blank" style="font-size:12px;font-weight:700;color:#fff;background:#E5A100;border-radius:4px;padding:6px 14px;text-decoration:none;white-space:nowrap;">Rellenar en Sheets →</a>
+        <button onclick="metricsPageCollect('${_slug}')" id="metrics-collect-btn" style="font-size:12px;font-weight:700;color:#fff;background:#4A5D23;border:none;border-radius:4px;padding:6px 14px;cursor:pointer;white-space:nowrap;">Sincronizar</button>
+        <span id="metrics-collect-status" style="font-size:10px;color:#7A7A7A;"></span>
+      </div>`;
+    } else {
+      manualBanner.style.display = 'none';
+      manualBanner.innerHTML = '';
+    }
+  }
 
   // Normalize keys helper
   function normSources(raw) {
@@ -7337,19 +8052,24 @@ function renderMetrics() {
     const funnelHtml = plan.funnel.map((step, i) => {
       let value = '—';
       let automated = false;
-      if (step.source && !step.manual) {
+      let hasManualData = false;
+      if (step.source) {
         const src = sources[step.source] || sources[step.source.replace(/-/g,'_')] || sources[step.source.replace(/_/g,'-')];
         if (src && src.status === 'ok') {
-          const m = src.metrics.find(x => x.name === step.metric && !x.dimensions);
-          if (m) { value = typeof m.value === 'number' ? m.value.toLocaleString() : m.value; automated = true; }
+          const m = src.metrics.find(x => x.name === step.metric && (!x.dimensions || (x.dimensions && x.dimensions.source === 'manual')));
+          if (m) {
+            value = typeof m.value === 'number' ? m.value.toLocaleString() : m.value;
+            if (step.manual) { hasManualData = true; } else { automated = true; }
+          }
         }
       }
       const arrow = i < plan.funnel.length - 1 ? '<div style="font-size:20px;color:var(--muted);margin:0 4px;">→</div>' : '';
-      const statusDot = automated ? '🟢' : step.manual ? '🟡' : '🔴';
+      const statusDot = automated ? '🟢' : hasManualData ? '🟢' : step.manual ? '🟡' : '🔴';
+      const statusLabel = automated ? 'auto' : hasManualData ? 'sheets' : 'manual';
       return `<div style="text-align:center;min-width:100px;">
         <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;">${step.step}</div>
-        <div style="font-size:28px;font-weight:700;font-family:'Space Grotesk';margin:4px 0;${automated?'':'color:var(--muted);'}">${value}</div>
-        <div style="font-size:10px;">${statusDot} ${automated?'auto':'manual'}</div>
+        <div style="font-size:28px;font-weight:700;font-family:'Space Grotesk';margin:4px 0;${automated||hasManualData?'':'color:var(--muted);'}">${value}</div>
+        <div style="font-size:10px;">${statusDot} ${statusLabel}</div>
       </div>${arrow}`;
     }).join('');
 
@@ -7476,14 +8196,20 @@ function renderMetrics() {
         <div id="plan-tab-channels" style="display:none;">
           ${channelTableHtml || '<div style="color:var(--muted);padding:16px;text-align:center;">Sin datos per-channel aún</div>'}
         </div>
-        ${plan.missingIntegrations && plan.missingIntegrations.length > 0 ? `
-          <div style="border-top:1px solid var(--border);padding:10px 0 4px;margin-top:8px;">
+        ${d.recommended && d.recommended.length > 0 ? (() => {
+          const _slug = currentClientId || '';
+          return `<div style="border-top:1px solid var(--border);padding:10px 0 4px;margin-top:8px;">
             <div style="font-size:11px;color:var(--muted);margin-bottom:6px;">⚠️ Integraciones pendientes:</div>
             <div style="display:flex;flex-wrap:wrap;gap:6px;">
-              ${plan.missingIntegrations.map(m => `<span style="padding:3px 10px;background:var(--bg);border:1px solid var(--yellow);border-radius:12px;font-size:11px;">${m.metric} (${m.suggestedSource})</span>`).join('')}
+              ${d.recommended.map(r => {
+                if (r.apiId && _slug) {
+                  return '<a href="' + MC_BASE + '/connect/' + _slug + '/' + r.apiId + '" target="_blank" style="padding:3px 10px;background:var(--bg);border:1px solid var(--yellow);border-radius:12px;font-size:11px;text-decoration:none;color:var(--text);display:inline-flex;align-items:center;gap:4px;cursor:pointer;">' + r.label + ' <span style="font-size:9px;color:var(--rust);">conectar →</span></a>';
+                }
+                return '<span style="padding:3px 10px;background:var(--bg);border:1px solid var(--border);border-radius:12px;font-size:11px;">' + r.label + '</span>';
+              }).join('')}
             </div>
-          </div>
-        ` : ''}
+          </div>`;
+        })() : ''}
       </div>`;
 
     // Insert/replace plan card

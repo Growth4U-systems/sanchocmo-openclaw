@@ -1,0 +1,92 @@
+{
+  "messages": [
+    {
+      "role": "user",
+      "text": "Estoy abriendo el chat sobre \"Competitor Analysis — growth4u\". Dame un resumen rápido del estado actual y qué podemos hacer. Si necesitas algo de mí, dímelo.",
+      "ts": "2026-04-01T07:58:06.211Z"
+    },
+    {
+      "role": "bot",
+      "text": "Vamos al lío. Aquí tienes el estado del **Competitor Analysis de Growth4U**:\n\n## 📊 Estado: ✅ Aprobado (v2)\n\nEl pilar de competitor intelligence está **completado y aprobado** desde el 3 de marzo. Incluye:\n\n- **3 deep dives** con 36 páginas scrapeadas:\n  - **Product Hackers** — Tier A (competidor principal)\n  - **Snowball** — Tier A\n  - **TheGrowthHacker** — Tier B (downgraded, bajo SEO visibility y cases propios limitados)\n- **Battle cards** individuales para cada competidor\n- **3-lens analysis** (positioning, capabilities, go-to-market)\n- **Landscape enrichido** con el market synthesis (TOWS con 17 cruces)\n\n## 🔗 Archivos disponibles\n\n- `market-and-us/competitors/current.md` — Análisis principal\n- `market-and-us/competitors/product-hackers/current.md` — Battle card PH\n- `market-and-us/competitors/snowball/current.md` — Battle card Snowball\n- `market-and-us/competitors/thegrowthacker/current.md` — Battle card TGH\n- `market-and-us/competitors/sources.json` — Fuentes utilizadas\n\n## 🎯 ¿Qué podemos hacer desde aquí?\n\n1. **Actualizar el análisis** — Han pasado ~4 semanas. Puedo revisar si hay movimientos recientes de los competidores (nuevos servicios, contenido, cambios de pricing)\n2. **Añadir competidores** — Si has detectado nuevos players en el mercado\n3. **Competitive monitoring** — Configurar vigilancia periódica de sus movimientos\n4. **Battle cards para ventas** — Refinar las battle cards para uso en calls comerciales\n5. **Análisis de gaps** — Cruzar con el positioning actual para encontrar oportunidades sin explotar\n\n¿Qué te interesa más? ¿O hay algo específico que quieras revisar?",
+      "agent": "sancho",
+      "ts": "2026-04-01T07:58:39.405Z"
+    },
+    {
+      "role": "user",
+      "text": "Lo que quiero es que me ayudes a completar los perfiles sociales de iSocialWeb, Flat101, Gliss Market y Team Lewis. Y así como encontrarme los fundadores de cada una y su Twitter y su LinkedIn para rellenar todo el archivo de Sources Json.",
+      "ts": "2026-04-01T09:05:01.799Z"
+    },
+    {
+      "role": "user",
+      "text": "Lo que quiero es que me ayudes a completar los perfiles sociales de iSocialWeb, Flat101, Gliss Market y Team Lewis. Y así como encontrarme los fundadores de cada una y su Twitter y su LinkedIn para rellenar todo el archivo de Sources Json.",
+      "ts": "2026-04-01T09:41:57.594Z"
+    },
+    {
+      "role": "bot",
+      "text": "Vamos al lío. Investigo las 4 empresas en paralelo.",
+      "agent": "sancho",
+      "ts": "2026-04-01T09:44:57.337Z"
+    },
+    {
+      "role": "bot",
+      "text": "Bien, tengo los fundadores. Ahora voy a scrapear las webs para sacar los links exactos de redes sociales.",
+      "agent": "sancho",
+      "ts": "2026-04-01T09:44:57.339Z"
+    },
+    {
+      "role": "bot",
+      "text": "Voy a buscar los links exactos de LinkedIn/Twitter scrapeando las webs directamente.",
+      "agent": "sancho",
+      "ts": "2026-04-01T09:44:57.341Z"
+    },
+    {
+      "role": "bot",
+      "text": "Aquí tienes lo que he encontrado. Te presento los hallazgos y lo que necesita verificación antes de actualizar el `sources.json`:\n\n---\n\n## 🔍 Resultados de la investigación\n\n### 1. iSocialWeb\n**Company socials:**\n- Web: `https://isocialweb.agency` ✅ (ya lo teníamos)\n- Twitter/X: `https://x.com/isocialweb` ⚠️ Cuenta antigua/inactiva (2014). Los fundadores publican desde cuentas personales\n- YouTube: Mencionado en footer de la web (no pude extraer URL exacta)\n- LinkedIn: No pude extraer la URL exacta del footer\n\n**Fundadores (2 Co-CEOs):**\n\n| | Álvaro Peña de Luna | Arnau Vendrell |\n|---|---|---|\n| Rol | Co-CEO, Head of SEO & AI | Co-CEO, Head of CRO |\n| Twitter | `@isocialwebseo` ✅ verificado | ❌ No encontrado |\n| LinkedIn | Probable `/in/alvaro-pena-de-luna/` ⚠️ | Probable `/in/arnauvendrell/` ⚠️ |\n| Web | — | `arvendrell.com` |\n| Extra | También cofundador de Growwer (link building tool) | Background: ingeniería nuclear + jazz, psicología conductual |\n\n---\n\n### 2. Flat 101\n**Company socials:**\n- Web: `https://flat101.es` ✅\n- LinkedIn: `linkedin.com/company/flat101` ✅ (ya lo teníamos)\n- Twitter/Instagram: ❌ No encontrados (parece que no tienen presencia activa en X)\n\n**Fundador:**\n\n| | Ricardo Tayar |\n|---|---|\n| Rol | CEO & Founder |\n| Twitter | `@ricardotayar` ✅ verificado |\n| LinkedIn | Probable `/in/ricardotayar/` ⚠️ — LinkedIn Top Voice |\n| Extra | Autor del primer libro de CRO en español, +300 proyectos digitales, Director Máster CRO en KSchool, ~300 empleados |\n\n---\n\n### 3. Glissmarket\n**Company socials:**\n- Web: `https://glissmarket.com` ✅\n- Twitter/X: `@glissmarket` ✅ (333 seguidores, activos)\n- LinkedIn: ❌ No encontrado\n\n**Fundador:**\n\n| | Pablo Clavero |\n|---|---|\n| Rol | CEO & Founder |\n| Twitter | `@pclavero` ✅ verificado (487 seguidores) |\n| LinkedIn | Probable `/in/pablo-clavero/` ⚠️ |\n| Extra | Consultor Digital Business & BI, podcast \"Yo no soy abogado, pero…\", cofundador de @powerbargain, CMO en @leibent |\n\n---\n\n### 4. TEAM LEWIS\n**Company socials:**\n- Web: `https://www.teamlewis.com/es/` ✅\n- LinkedIn: `linkedin.com/company/teamlewis` (global)\n- YouTube: TEAM LEWIS España (`@teamlewisespana8570`)\n- Twitter/Instagram: No encontré cuentas específicas de España\n\n**Personas clave:**\n\n| | Chris Lewis (Global) | Nuria Mañá (España) |\n|---|---|---|\n| Rol | Founder & CEO | Head of Spain |\n| LinkedIn | Probable `/in/chris-lewis-teamlewis/` ⚠️ | Probable `/in/nuria-mana/` ⚠️ |\n| Twitter | ❌ No encontrado | ❌ No encontrado |\n| Extra | Fundó LEWIS en 1990, autor \"Too Fast to Think\" | Desde 2011 en TL, antes FC Barcelona, RNE, Ogilvy |\n\n---\n\n## ⚠️ Nota de honestidad\n\nLos **LinkedIn marcados con ⚠️** son URLs inferidas del patrón habitual de LinkedIn — no las he podido verificar al 100% porque LinkedIn bloquea scraping. Los Twitter con ✅ sí están verificados vía X Search.\n\n**¿Quieres que actualice el `sources.json` con lo verificado y marque los LinkedIn como \"pendiente verificación\"?** O si prefieres, puedes verificar rápidamente los LinkedIn abriendo los links y me confirmas para meter todo limpio.",
+      "agent": "sancho",
+      "ts": "2026-04-01T09:44:57.342Z"
+    },
+    {
+      "role": "user",
+      "text": "Pues no busques los LinkedIn con scrapping, búscalos directamente con un web search normal. Y mientras tanto, vete marcando, actualizando el sources.json de todos los demás.",
+      "ts": "2026-04-01T10:08:20.118Z"
+    },
+    {
+      "role": "user",
+      "text": "Estoy abriendo el chat sobre \"Competitor Analysis — growth4u\". Dame un resumen rápido del estado actual y qué podemos hacer. Si necesitas algo de mí, dímelo. 🤠 Sancho Vamos al lío. Aquí tienes el estado del Competitor Analysis de Growth4U:  ## 📊 Estado: ✅ Aprobado (v2)  El pilar de competitor intelligence está completado y aprobado desde el 3 de marzo. Incluye:  - 3 deep dives con 36 páginas scrapeadas: - Product Hackers — Tier A (competidor principal) - Snowball — Tier A - TheGrowthHacker — Tier B (downgraded, bajo SEO visibility y cases propios limitados) - Battle cards individuales para cada competidor - 3-lens analysis (positioning, capabilities, go-to-market) - Landscape enrichido con el market synthesis (TOWS con 17 cruces)  ## 🔗 Archivos disponibles  - market-and-us/competitors/current.md — Análisis principal - market-and-us/competitors/product-hackers/current.md — Battle card PH - market-and-us/competitors/snowball/current.md — Battle card Snowball - market-and-us/competitors/thegrowthacker/current.md — Battle card TGH - market-and-us/competitors/sources.json — Fuentes utilizadas  ## 🎯 ¿Qué podemos hacer desde aquí?  1. Actualizar el análisis — Han pasado ~4 semanas. Puedo revisar si hay movimientos recientes de los competidores (nuevos servicios, contenido, cambios de pricing) 2. Añadir competidores — Si has detectado nuevos players en el mercado 3. Competitive monitoring — Configurar vigilancia periódica de sus movimientos 4. Battle cards para ventas — Refinar las battle cards para uso en calls comerciales 5. Análisis de gaps — Cruzar con el positioning actual para encontrar oportunidades sin explotar  ¿Qué te interesa más? ¿O hay algo específico que quieras revisar? Lo que quiero es que me ayudes a completar los perfiles sociales de iSocialWeb, Flat101, Gliss Market y Team Lewis. Y así como encontrarme los fundadores de cada una y su Twitter y su LinkedIn para rellenar todo el archivo de Sources Json. Lo que quiero es que me ayudes a completar los perfiles sociales de iSocialWeb, Flat101, Gliss Market y Team Lewis. Y así como encontrarme los fundadores de cada una y su Twitter y su LinkedIn para rellenar todo el archivo de Sources Json. 🤠 Sancho Vamos al lío. Investigo las 4 empresas en paralelo. 🤠 Sancho Bien, tengo los fundadores. Ahora voy a scrapear las webs para sacar los links exactos de redes sociales. 🤠 Sancho Voy a buscar los links exactos de LinkedIn/Twitter scrapeando las webs directamente. 🤠 Sancho Aquí tienes lo que he encontrado. Te presento los hallazgos y lo que necesita verificación antes de actualizar el sources.json:  ---  ## 🔍 Resultados de la investigación  ### 1. iSocialWeb Company socials: - Web: https://isocialweb.agency ✅ (ya lo teníamos) - Twitter/X: \" target=\"_blank\" rel=\"noopener\" style=\"color:#89b4fa;word-break:break-all;\">https://x.com/isocialweb ⚠️ Cuenta antigua/inactiva (2014). Los fundadores publican desde cuentas personales - YouTube: Mencionado en footer de la web (no pude extraer URL exacta) - LinkedIn: No pude extraer la URL exacta del footer  Fundadores (2 Co-CEOs):  | | Álvaro Peña de Luna | Arnau Vendrell | |---|---|---| | Rol | Co-CEO, Head of SEO & AI | Co-CEO, Head of CRO | | Twitter | @isocialwebseo ✅ verificado | ❌ No encontrado | | LinkedIn | Probable /in/alvaro-pena-de-luna/ ⚠️ | Probable /in/arnauvendrell/ ⚠️ | | Web | — | arvendrell.com | | Extra | También cofundador de Growwer (link building tool) | Background: ingeniería nuclear + jazz, psicología conductual |  ---  ### 2. Flat 101 Company socials: - Web: https://flat101.es ✅ - LinkedIn: linkedin.com/company/flat101 ✅ (ya lo teníamos) - Twitter/Instagram: ❌ No encontrados (parece que no tienen presencia activa en X)  Fundador:  | | Ricardo Tayar | |---|---| | Rol | CEO & Founder | | Twitter | @ricardotayar ✅ verificado | | LinkedIn | Probable /in/ricardotayar/ ⚠️ — LinkedIn Top Voice | | Extra | Autor del primer libro de CRO en español, +300 proyectos digitales, Director Máster CRO en KSchool, ~300 empleados |  ---  ### 3. Glissmarket Company socials: - Web: \" target=\"_blank\" rel=\"noopener\" style=\"color:#89b4fa;word-break:break-all;\">https://glissmarket.com ✅ - Twitter/X: @glissmarket ✅ (333 seguidores, activos) - LinkedIn: ❌ No encontrado  Fundador:  | | Pablo Clavero | |---|---| | Rol | CEO & Founder | | Twitter | @pclavero ✅ verificado (487 seguidores) | | LinkedIn | Probable /in/pablo-clavero/ ⚠️ | | Extra | Consultor Digital Business & BI, podcast \"Yo no soy abogado, pero…\", cofundador de @powerbargain, CMO en @leibent |  ---  ### 4. TEAM LEWIS Company socials: - Web: https://www.teamlewis.com/es/ ✅ - LinkedIn: linkedin.com/company/teamlewis (global) - YouTube: TEAM LEWIS España (@teamlewisespana8570) - Twitter/Instagram: No encontré cuentas específicas de España  Personas clave:  | | Chris Lewis (Global) | Nuria Mañá (España) | |---|---|---| | Rol | Founder & CEO | Head of Spain | | LinkedIn | Probable /in/chris-lewis-teamlewis/ ⚠️ | Probable /in/nuria-mana/ ⚠️ | | Twitter | ❌ No encontrado | ❌ No encontrado | | Extra | Fundó LEWIS en 1990, autor \"Too Fast to Think\" | Desde 2011 en TL, antes FC Barcelona, RNE, Ogilvy |  ---  ## ⚠️ Nota de honestidad  Los LinkedIn marcados con ⚠️ son URLs inferidas del patrón habitual de LinkedIn — no las he podido verificar al 100% porque LinkedIn bloquea scraping. Los Twitter con ✅ sí están verificados vía X Search.  ¿Quieres que actualice el sources.json` con lo verificado y marque los LinkedIn como \"pendiente verificación\"? O si prefieres, puedes verificar rápidamente los LinkedIn abriendo los links y me confirmas para meter todo limpio. Pues no busques los LinkedIn con scrapping, búscalos directamente con un web search normal. Y mientras tanto, vete marcando, actualizando el sources.json de todos los demás.",
+      "ts": "2026-04-01T10:10:38.559Z"
+    },
+    {
+      "role": "bot",
+      "text": "Voy a intentar sacar los LinkedIn directos desde las páginas que los enlazan.",
+      "agent": "sancho",
+      "ts": "2026-04-01T10:11:06.890Z"
+    },
+    {
+      "role": "bot",
+      "text": "Encontré los links verificados de Nuria Mañá y Chris Lewis directamente de sus páginas oficiales. Voy a buscar los que faltan y mientras actualizo el JSON.",
+      "agent": "sancho",
+      "ts": "2026-04-01T10:11:06.910Z"
+    },
+    {
+      "role": "bot",
+      "text": "Tengo suficiente. Actualizo el `sources.json` con todo lo verificado.",
+      "agent": "sancho",
+      "ts": "2026-04-01T10:11:06.917Z"
+    },
+    {
+      "role": "bot",
+      "text": "✅ **`sources.json` actualizado.** Aquí el resumen de lo que he metido:\n\n---\n\n### 🟢 Verificado (link confirmado desde fuente oficial)\n\n| Persona | LinkedIn | Twitter |\n|---|---|---|\n| **Ricardo Tayar** (Flat 101) | `/in/ricardotayar/` ✅ | `@ricardotayar` ✅ |\n| **Nuria Mañá** (TEAM LEWIS ES) | `/in/nuriamanafdez/` ✅ | `@nuriamanaf` ✅ |\n| **Chris Lewis** (TEAM LEWIS Global) | `/in/chrislewis4/` ✅ | `@largeburrito` ✅ |\n| **Pablo Clavero** (Glissmarket) | — | `@pclavero` ✅ |\n| **Álvaro Peña de Luna** (iSocialWeb) | — | `@isocialwebseo` ✅ |\n| **Glissmarket** (empresa) | — | `@glissmarket` ✅ |\n| **Flat 101** (empresa) | Ya lo teníamos | `@SomosFlat101` ✅ |\n\n### 🟡 LinkedIn inferido (patrón estándar, marcado `_linkedin_verified: false`)\n\n| Persona/Empresa | LinkedIn (pendiente verificación) |\n|---|---|\n| Álvaro Peña de Luna | `/in/alvaro-pena-de-luna/` |\n| Arnau Vendrell | `/in/arnauvendrell/` |\n| Pablo Clavero | `/in/pablo-clavero/` |\n| iSocialWeb (empresa) | `/company/isocialweb/` |\n| Glissmarket (empresa) | `/company/glissmarket/` |\n\n### 🔴 No encontrado\n- **Arnau Vendrell** — no tiene Twitter (o no es público)\n- **TEAM LEWIS España** — no tiene Twitter ni Instagram propios (solo cuentas globales)\n\n---\n\nLos LinkedIn marcados con `_linkedin_verified: false` son los que te sugiero verificar rápidamente abriendo el link. Si alguno está mal, me dices y lo corrijo al momento. ¿Quieres que haga algo más con estos perfiles?",
+      "agent": "sancho",
+      "ts": "2026-04-01T10:11:08.302Z"
+    },
+    {
+      "role": "bot",
+      "text": "Ya está hecho — el `sources.json` quedó actualizado en mi respuesta anterior con todo lo que encontré. Si quieres verificar los LinkedIn marcados con `_linkedin_verified: false`, ábrelos y me dices si alguno falla para corregirlo. ¿Algo más que necesites sobre los competidores?",
+      "agent": "sancho",
+      "ts": "2026-04-01T10:11:21.503Z"
+    }
+  ],
+  "updatedAt": 1775038281503,
+  "discordThreadId": null,
+  "discordChannelId": null
+}

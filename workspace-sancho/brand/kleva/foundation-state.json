@@ -212,5 +212,12 @@
       ],
       "output_file": "brand/kleva/strategic-plan/current.md"
     }
+  },
+  "file_index": {
+    "integrations": "integrations.json",
+    "operational": {
+      "costs": "costs.json"
+    },
+    "memory": "memory.md"
   }
 }

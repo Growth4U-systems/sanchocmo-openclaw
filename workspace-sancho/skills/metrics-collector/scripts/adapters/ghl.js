@@ -1,7 +1,11 @@
 /**
  * GHL Adapter — GoHighLevel CRM API v2
  *
- * Pulls: new contacts (with pagination), appointments from all calendars, pipeline value.
+ * Uses proper API endpoints with server-side date filtering:
+ * - Contacts: POST /contacts/search with filters.dateAdded
+ * - Calendar Events: GET /calendars/events with startTime/endTime (epoch ms)
+ * - Opportunities: GET /opportunities/search with date/endDate (mm-dd-yyyy)
+ *
  * Auth: Bearer token (Private Integration Token) + locationId.
  * API base: https://services.leadconnectorhq.com
  */
@@ -9,9 +13,9 @@
 const BASE_URL = 'https://services.leadconnectorhq.com';
 
 /**
- * @param {object} config - { locationId: "..." }
- * @param {object} env - { GHL_API_KEY: "pit-..." }
- * @param {{ from: string, to: string }} dateRange
+ * @param {object} config - { locationId, calendarId? }
+ * @param {object} env - { GHL_API_KEY }
+ * @param {{ from: string, to: string }} dateRange - YYYY-MM-DD
  */
 export async function collect(config, env, dateRange) {
   const locationId = config.locationId || config.LOCATION_ID;
@@ -27,44 +31,76 @@ export async function collect(config, env, dateRange) {
   };
 
   const metrics = [];
+  const fromTs = new Date(dateRange.from).getTime();
+  const toTs = new Date(dateRange.to + 'T23:59:59Z').getTime();
 
-  // --- New contacts (paginated) + per-channel breakdown ---
+  // Helper: mm-dd-yyyy format for opportunities API
+  function toMMDDYYYY(isoDate) {
+    const [y, m, d] = isoDate.split('-');
+    return `${m}-${d}-${y}`;
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // 1. CONTACTS — POST /contacts/search (server-side date filter)
+  // ═══════════════════════════════════════════════════════════
   try {
     let newContacts = 0;
     let totalContacts = 0;
-    const channelCounts = {}; // channel → count of new contacts
-    let url = `${BASE_URL}/contacts/?locationId=${locationId}&limit=100`;
-    const fromTs = new Date(dateRange.from).getTime();
-    const toTs = new Date(dateRange.to + 'T23:59:59Z').getTime();
-    let pages = 0;
+    const channelCounts = {};
+    let page = 1;
+    let hasMore = true;
 
-    while (url && pages < 10) {
-      const resp = await fetch(url, { headers });
+    while (hasMore && page <= 10) {
+      const resp = await fetch(`${BASE_URL}/contacts/search`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          locationId,
+          page,
+          pageLimit: 100,
+          sortBy: 'dateAdded',
+          direction: 'desc',
+          filters: {
+            dateAdded: {
+              startDate: dateRange.from,
+              endDate: dateRange.to,
+            },
+          },
+        }),
+      });
+
       if (!resp.ok) {
-        console.warn(`  ⚠️  GHL contacts ${resp.status}: ${await resp.text().catch(() => '')}`);
+        const errText = await resp.text().catch(() => '');
+        // Fallback to deprecated GET if POST search not available
+        if (resp.status === 400 || resp.status === 422) {
+          console.warn(`  ⚠️  GHL contacts/search not available (${resp.status}), falling back to GET`);
+          const fallbackResult = await collectContactsFallback(locationId, headers, fromTs, toTs, dateRange);
+          newContacts = fallbackResult.newContacts;
+          totalContacts = fallbackResult.totalContacts;
+          Object.assign(channelCounts, fallbackResult.channelCounts);
+          hasMore = false;
+          break;
+        }
+        console.warn(`  ⚠️  GHL contacts ${resp.status}: ${errText}`);
         break;
       }
+
       const data = await resp.json();
       const contacts = data.contacts || [];
-      totalContacts = data.meta?.total || totalContacts;
+      totalContacts = data.total || data.meta?.total || totalContacts;
 
       for (const c of contacts) {
-        const created = new Date(c.dateAdded || c.createdAt).getTime();
-        if (created >= fromTs && created <= toTs) {
-          newContacts++;
-          // Track channel — use "source" field (preferred), fallback to attribution medium
-          const source = c.source || '';
-          const attr = c.attributions?.[0];
-          const medium = attr?.medium || '';
-          const utmSource = attr?.utmSessionSource || '';
-          const channel = source || (utmSource ? `${medium}/${utmSource}` : medium) || 'Unknown';
-          channelCounts[channel] = (channelCounts[channel] || 0) + 1;
-        }
-        if (created < fromTs) { url = null; break; }
+        newContacts++;
+        const source = c.source || '';
+        const attr = c.attributions?.[0];
+        const medium = attr?.medium || '';
+        const utmSource = attr?.utmSessionSource || '';
+        const channel = source || (utmSource ? `${medium}/${utmSource}` : medium) || 'Unknown';
+        channelCounts[channel] = (channelCounts[channel] || 0) + 1;
       }
 
-      url = data.meta?.nextPageUrl || null;
-      pages++;
+      hasMore = contacts.length === 100;
+      page++;
     }
 
     metrics.push(
@@ -72,7 +108,6 @@ export async function collect(config, env, dateRange) {
       { name: 'totalContacts', value: totalContacts, date: dateRange.from },
     );
 
-    // Per-channel new contacts
     for (const [channel, count] of Object.entries(channelCounts)) {
       metrics.push({ name: 'newContacts', value: count, date: dateRange.from, dimensions: { channel } });
     }
@@ -80,38 +115,36 @@ export async function collect(config, env, dateRange) {
     console.warn(`  ⚠️  GHL contacts error: ${err.message}`);
   }
 
-  // --- Meetings from pipeline (calendar API broken with Private Integration Tokens) ---
-  // Count opportunities in meeting-related stages as "appointments"
+  // ═══════════════════════════════════════════════════════════
+  // 2. CALENDAR EVENTS — GET /calendars/events (native date filter)
+  // ═══════════════════════════════════════════════════════════
   try {
     let totalAppointments = 0;
     const statuses = {};
 
-    // Meeting stages: Llamada Agendada, Llamada Confirmada, Llamada de Seguimiento
-    // These are pipeline stages that represent meetings happened/scheduled
-    const meetingStageKeywords = ['agendad', 'confirmad', 'seguimiento', 'demo', 'meeting', 'llamada'];
-    const noShowKeywords = ['no asist', 'no show', 'cancelad'];
+    // Get all calendars for this location
+    const calResp = await fetch(`${BASE_URL}/calendars/?locationId=${locationId}`, {
+      headers: { ...headers, Version: '2021-04-15' },
+    });
 
-    const pipesResp = await fetch(`${BASE_URL}/opportunities/pipelines?locationId=${locationId}`, { headers });
-    if (pipesResp.ok) {
-      const pipesData = await pipesResp.json();
-      for (const pipe of pipesData.pipelines || []) {
-        const oppsResp = await fetch(`${BASE_URL}/opportunities/search?location_id=${locationId}&pipeline_id=${pipe.id}&limit=100`, { headers });
-        if (!oppsResp.ok) continue;
-        const oppsData = await oppsResp.json();
+    if (calResp.ok) {
+      const calData = await calResp.json();
+      const calendars = calData.calendars || [];
 
-        // Map stage IDs to names
-        const stageNames = {};
-        for (const stage of pipe.stages || []) stageNames[stage.id] = stage.name;
+      for (const cal of calendars) {
+        const eventsResp = await fetch(
+          `${BASE_URL}/calendars/events?locationId=${locationId}&calendarId=${cal.id}&startTime=${fromTs}&endTime=${toTs}`,
+          { headers: { ...headers, Version: '2021-04-15' } }
+        );
 
-        for (const opp of oppsData.opportunities || []) {
-          const stageName = (stageNames[opp.pipelineStageId] || '').toLowerCase();
-          const isMeeting = meetingStageKeywords.some(k => stageName.includes(k));
-          const isNoShow = noShowKeywords.some(k => stageName.includes(k));
-          if (isMeeting && !isNoShow) {
-            totalAppointments++;
-            const status = stageNames[opp.pipelineStageId] || 'unknown';
-            statuses[status] = (statuses[status] || 0) + 1;
-          }
+        if (!eventsResp.ok) continue;
+        const eventsData = await eventsResp.json();
+        const events = eventsData.events || [];
+
+        for (const e of events) {
+          totalAppointments++;
+          const status = e.appointmentStatus || e.status || 'scheduled';
+          statuses[status] = (statuses[status] || 0) + 1;
         }
       }
     }
@@ -124,41 +157,75 @@ export async function collect(config, env, dateRange) {
     console.warn(`  ⚠️  GHL appointments error: ${err.message}`);
   }
 
-  // --- Pipeline / Opportunities ---
+  // ═══════════════════════════════════════════════════════════
+  // 3. OPPORTUNITIES — GET /opportunities/search (native date filter)
+  // ═══════════════════════════════════════════════════════════
   try {
-    const pipeUrl = `${BASE_URL}/opportunities/search?location_id=${locationId}`;
-    const pipeResp = await fetch(pipeUrl, { headers });
-    if (pipeResp.ok) {
-      const data = await pipeResp.json();
-      const opportunities = data.opportunities || [];
-      let totalValue = 0;
-      const byStage = {};
+    let newOpps = 0;
+    let newValue = 0;
+    let page = 1;
+    let hasMore = true;
 
-      for (const opp of opportunities) {
-        totalValue += opp.monetaryValue || 0;
-        const stage = opp.pipelineStageId || opp.status || 'unknown';
-        byStage[stage] = (byStage[stage] || 0) + 1;
+    while (hasMore && page <= 5) {
+      const url = `${BASE_URL}/opportunities/search?location_id=${locationId}&date=${toMMDDYYYY(dateRange.from)}&endDate=${toMMDDYYYY(dateRange.to)}&status=all&limit=100&page=${page}`;
+      const resp = await fetch(url, { headers });
+
+      if (!resp.ok) {
+        console.warn(`  ⚠️  GHL opportunities ${resp.status}`);
+        break;
       }
 
-      metrics.push(
-        { name: 'opportunities', value: opportunities.length, date: dateRange.from },
-        { name: 'pipelineValue', value: totalValue, date: dateRange.from },
-      );
-    } else {
-      console.warn(`  ⚠️  GHL pipeline ${pipeResp.status}`);
+      const data = await resp.json();
+      const opportunities = data.opportunities || [];
+
+      for (const opp of opportunities) {
+        newOpps++;
+        newValue += opp.monetaryValue || 0;
+      }
+
+      hasMore = opportunities.length === 100;
+      page++;
     }
+
+    // Also get totals (all time) for pipeline overview
+    let totalOpps = 0;
+    let totalValue = 0;
+    try {
+      const totalResp = await fetch(`${BASE_URL}/opportunities/search?location_id=${locationId}&status=all&limit=1`, { headers });
+      if (totalResp.ok) {
+        const totalData = await totalResp.json();
+        totalOpps = totalData.meta?.total || 0;
+      }
+    } catch {}
+
+    metrics.push(
+      { name: 'opportunities', value: newOpps, date: dateRange.from },
+      { name: 'pipelineValue', value: newValue, date: dateRange.from },
+      { name: 'totalOpportunities', value: totalOpps, date: dateRange.from },
+    );
   } catch (err) {
-    console.warn(`  ⚠️  GHL pipeline error: ${err.message}`);
+    console.warn(`  ⚠️  GHL opportunities error: ${err.message}`);
   }
 
-  // --- Recent leads (last 15 with full detail) ---
+  // ═══════════════════════════════════════════════════════════
+  // 4. RECENT LEADS (last 15, for dashboard feed)
+  // ═══════════════════════════════════════════════════════════
   try {
-    const leadsUrl = `${BASE_URL}/contacts/?locationId=${locationId}&limit=15`;
-    const leadsResp = await fetch(leadsUrl, { headers });
-    if (leadsResp.ok) {
-      const data = await leadsResp.json();
-      const contacts = data.contacts || [];
-      for (const c of contacts) {
+    const resp = await fetch(`${BASE_URL}/contacts/search`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        locationId,
+        page: 1,
+        pageLimit: 15,
+        sortBy: 'dateAdded',
+        direction: 'desc',
+      }),
+    });
+
+    if (resp.ok) {
+      const data = await resp.json();
+      for (const c of data.contacts || []) {
         const attr = c.attributions?.[0] || {};
         metrics.push({
           name: 'recentLead',
@@ -184,19 +251,19 @@ export async function collect(config, env, dateRange) {
     console.warn(`  ⚠️  GHL recent leads error: ${err.message}`);
   }
 
-  // --- Pipeline stages with counts ---
+  // ═══════════════════════════════════════════════════════════
+  // 5. PIPELINE STAGES (snapshot for dashboard)
+  // ═══════════════════════════════════════════════════════════
   try {
     const pipesResp = await fetch(`${BASE_URL}/opportunities/pipelines?locationId=${locationId}`, { headers });
     if (pipesResp.ok) {
       const pipesData = await pipesResp.json();
       for (const pipe of pipesData.pipelines || []) {
-        // Get opportunities for this pipeline
-        const oppsResp = await fetch(`${BASE_URL}/opportunities/search?location_id=${locationId}&pipeline_id=${pipe.id}&limit=100`, { headers });
+        const oppsResp = await fetch(`${BASE_URL}/opportunities/search?location_id=${locationId}&pipeline_id=${pipe.id}&status=all&limit=100`, { headers });
         if (!oppsResp.ok) continue;
         const oppsData = await oppsResp.json();
         const opps = oppsData.opportunities || [];
 
-        // Count by stage
         const stageCounts = {};
         const stageNames = {};
         for (const stage of pipe.stages || []) {
@@ -228,15 +295,17 @@ export async function collect(config, env, dateRange) {
     console.warn(`  ⚠️  GHL pipelines error: ${err.message}`);
   }
 
-  // --- Recent conversations (last 5) ---
+  // ═══════════════════════════════════════════════════════════
+  // 6. RECENT CONVERSATIONS (last 5, for dashboard feed)
+  // ═══════════════════════════════════════════════════════════
   try {
-    const convoResp = await fetch(
+    const resp = await fetch(
       `${BASE_URL}/conversations/search?locationId=${locationId}&limit=5&sortBy=last_message_date&sortOrder=desc`,
       { headers }
     );
-    if (convoResp.ok) {
-      const convoData = await convoResp.json();
-      for (const c of convoData.conversations || []) {
+    if (resp.ok) {
+      const data = await resp.json();
+      for (const c of data.conversations || []) {
         metrics.push({
           name: 'recentConversation',
           value: c.unreadCount || 0,
@@ -255,33 +324,44 @@ export async function collect(config, env, dateRange) {
     console.warn(`  ⚠️  GHL conversations error: ${err.message}`);
   }
 
-  // --- Source breakdown (from all contacts) ---
-  try {
-    let sourceUrl = `${BASE_URL}/contacts/?locationId=${locationId}&limit=100`;
-    const sourceResp = await fetch(sourceUrl, { headers });
-    if (sourceResp.ok) {
-      const data = await sourceResp.json();
-      const srcCounts = {};
-      const channelCounts = {};
-      for (const c of data.contacts || []) {
-        const src = c.source || 'Unknown';
-        srcCounts[src] = (srcCounts[src] || 0) + 1;
+  return { source: 'ghl', date: dateRange.from, metrics };
+}
+
+/**
+ * Fallback: GET /contacts/ with client-side date filtering
+ * Used if POST /contacts/search is not available
+ */
+async function collectContactsFallback(locationId, headers, fromTs, toTs, dateRange) {
+  let newContacts = 0;
+  let totalContacts = 0;
+  const channelCounts = {};
+  let url = `${BASE_URL}/contacts/?locationId=${locationId}&limit=100`;
+  let pages = 0;
+
+  while (url && pages < 10) {
+    const resp = await fetch(url, { headers });
+    if (!resp.ok) break;
+    const data = await resp.json();
+    const contacts = data.contacts || [];
+    totalContacts = data.meta?.total || totalContacts;
+
+    for (const c of contacts) {
+      const created = new Date(c.dateAdded || c.createdAt).getTime();
+      if (created >= fromTs && created <= toTs) {
+        newContacts++;
+        const source = c.source || '';
         const attr = c.attributions?.[0];
-        if (attr?.medium) {
-          const ch = attr.medium + (attr.utmSessionSource ? `/${attr.utmSessionSource}` : '');
-          channelCounts[ch] = (channelCounts[ch] || 0) + 1;
-        }
+        const medium = attr?.medium || '';
+        const utmSource = attr?.utmSessionSource || '';
+        const channel = source || (utmSource ? `${medium}/${utmSource}` : medium) || 'Unknown';
+        channelCounts[channel] = (channelCounts[channel] || 0) + 1;
       }
-      metrics.push({
-        name: 'sourceBreakdown',
-        value: data.meta?.total || Object.values(srcCounts).reduce((a, b) => a + b, 0),
-        date: dateRange.from,
-        dimensions: { sources: srcCounts, channels: channelCounts },
-      });
+      if (created < fromTs) { url = null; break; }
     }
-  } catch (err) {
-    console.warn(`  ⚠️  GHL source breakdown error: ${err.message}`);
+
+    url = data.meta?.nextPageUrl || null;
+    pages++;
   }
 
-  return { source: 'ghl', date: dateRange.from, metrics };
+  return { newContacts, totalContacts, channelCounts };
 }

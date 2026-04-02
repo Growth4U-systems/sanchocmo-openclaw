@@ -2,12 +2,13 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
-const { execSync, exec: execCb } = require('child_process');
+const { execSync, exec: execCb, spawn } = require('child_process');
 
 const PORT = 18790;
 const BASE = path.join(__dirname, '..');
 const API_HEALTH_FILE = path.join(BASE, '_system', 'api-health.json');
 const CLIENTS_FILE = path.join(BASE, 'clients.json');
+let _clientCreationInProgress = false;
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -17,6 +18,18 @@ const MIME = {
   '.png': 'image/png',
   '.svg': 'image/svg+xml',
 };
+
+// Safe writer for foundation-state.json — validates JSON + required fields + backup
+function safeWriteFoundationState(stateFile, state) {
+  const json = JSON.stringify(state, null, 2);
+  JSON.parse(json); // Validate JSON roundtrip
+  if (!state.sections) throw new Error('foundation-state.json: missing sections');
+  // Backup before overwrite
+  if (fs.existsSync(stateFile)) {
+    fs.copyFileSync(stateFile, stateFile + '.bak');
+  }
+  fs.writeFileSync(stateFile, json);
+}
 
 const ALLOWED_FILES = [
   'mission-control.html',
@@ -852,6 +865,7 @@ function ensureBrandStructure(slug) {
     'go-to-market/positioning', 'go-to-market/pricing', 'brand-identity',
     'brand-identity/voice-profile', 'brand-identity/visual-identity',
     'strategic-plan', 'presentations', 'projects', 'chat/threads',
+    'monitoring', 'monitoring/weekly',
   ];
   for (const d of dirs) {
     const full = path.join(brandDir, d);
@@ -871,7 +885,7 @@ function ensureBrandStructure(slug) {
         'brand-identity': { status: 'not-started', pillars: { 'brand-voice': { status: 'not-started' }, 'visual-identity': { status: 'not-started' } }, syntheses: {} },
       },
     };
-    fs.writeFileSync(stateFile, JSON.stringify(state, null, 2));
+    safeWriteFoundationState(stateFile, state);
   }
 }
 
@@ -1052,11 +1066,15 @@ function loadRecurringTasks(slug) {
 
     const category = _detectCronCategory(cron.name, cron.payload?.message);
 
-    // Filter: if slug specified, only that client's crons + system crons
+    // Filter: if slug specified, only that client's crons (by name or prompt mention)
     // If no slug, return all
     const isSystem = category === 'system' || !cronSlug;
-    if (slug && cronSlug && cronSlug !== slug) continue;
-    if (slug && isSystem && !cronSlug) continue; // skip system crons without slug when filtering
+    if (slug) {
+      const prompt = (cron.payload?.message || '').toLowerCase();
+      const nameMatch = cronSlug === slug;
+      const promptMentions = prompt.includes(slug.toLowerCase());
+      if (!nameMatch && !promptMentions) continue;
+    }
 
     const sched = cron.schedule || {};
     const state = cron.state || {};
@@ -1186,60 +1204,30 @@ function findClientByToken(token) {
 
 // ========== PROJECTS PAGE ==========
 
-// Resolve a project folder from projectsDir given an id and/or slug.
-// Handles all naming conventions: "P01-seo-bofu", "P01", "seo-bofu".
-// Registry slugs may or may not include the id prefix — this function
-// tries multiple patterns so the path is always found.
-function resolveProjectDir(projectsDir, projectId, projectSlug) {
-  // Try candidates in order: slug as-is, id-slug, id alone, then scan by prefix
-  const candidates = [];
-  if (projectSlug) candidates.push(projectSlug);
-  if (projectId && projectSlug && !projectSlug.startsWith(projectId)) candidates.push(`${projectId}-${projectSlug}`);
-  if (projectId) candidates.push(projectId);
-  for (const name of candidates) {
-    const dir = path.join(projectsDir, name);
-    try { if (fs.statSync(dir).isDirectory()) return dir; } catch {}
-  }
-  // Fallback: scan for directory starting with projectId-
-  if (projectId) {
-    try {
-      const dirs = fs.readdirSync(projectsDir, { withFileTypes: true });
-      const match = dirs.find(d => d.isDirectory() && d.name.startsWith(projectId + '-'));
-      if (match) return path.join(projectsDir, match.name);
-    } catch {}
-  }
+// Resolve a project folder from projectsDir given a projectId.
+// Scans for directory starting with projectId- (e.g. "P01-seo-bofu" from "P01").
+function resolveProjectDir(projectsDir, projectId) {
+  if (!projectId) return null;
+  try {
+    const dirs = fs.readdirSync(projectsDir, { withFileTypes: true });
+    const match = dirs.find(d => d.isDirectory() && d.name.startsWith(projectId + '-'));
+    if (match) return path.join(projectsDir, match.name);
+    // Try exact match (e.g. projectId itself is the full folder name)
+    const exact = dirs.find(d => d.isDirectory() && d.name === projectId);
+    if (exact) return path.join(projectsDir, exact.name);
+  } catch {}
   return null;
 }
 
+// Filesystem-only project loading. No registry.json needed.
+// Scans brand/{slug}/projects/ for P* directories and reads project.json + tasks.json.
 function loadProjectsData(slug) {
   const projectsDir = path.join(BASE, 'brand', slug, 'projects');
-  let registry = { projects: [] };
-  try { registry = JSON.parse(fs.readFileSync(path.join(projectsDir, 'registry.json'), 'utf-8')); } catch {}
-
   const results = [];
-  const loadedDirs = new Set();
-
-  // 1. Load projects from registry
-  for (const p of (registry.projects || [])) {
-    const projDir = resolveProjectDir(projectsDir, p.id, p.slug);
-    let project = { ...p };
-    let tasks = [];
-    if (projDir) {
-      loadedDirs.add(path.basename(projDir));
-      try { project = { ...project, ...JSON.parse(fs.readFileSync(path.join(projDir, 'project.json'), 'utf-8')) }; } catch {}
-      try {
-        const td = JSON.parse(fs.readFileSync(path.join(projDir, 'tasks.json'), 'utf-8'));
-        tasks = Array.isArray(td) ? td : (td.tasks || []);
-      } catch {}
-    }
-    results.push({ ...project, tasks });
-  }
-
-  // 2. Scan for project dirs not in registry (e.g. P00 foundation projects)
   try {
     const dirs = fs.readdirSync(projectsDir, { withFileTypes: true });
     for (const d of dirs) {
-      if (!d.isDirectory() || !d.name.match(/^P\d+/) || loadedDirs.has(d.name)) continue;
+      if (!d.isDirectory() || !d.name.match(/^P\d+/)) continue;
       const dirPath = path.join(projectsDir, d.name);
       let project = { id: d.name.split('-')[0], slug: d.name, name: d.name };
       let tasks = [];
@@ -1251,8 +1239,607 @@ function loadProjectsData(slug) {
       results.push({ ...project, tasks });
     }
   } catch {}
-
   return results;
+}
+
+// Compute next project ID by scanning existing P{XX} directories.
+function getNextProjectId(slug) {
+  const projectsDir = path.join(BASE, 'brand', slug, 'projects');
+  let maxId = 0;
+  try {
+    const dirs = fs.readdirSync(projectsDir, { withFileTypes: true });
+    for (const d of dirs) {
+      const match = d.name.match(/^P(\d+)/);
+      if (match) {
+        const num = parseInt(match[1], 10);
+        if (num > maxId) maxId = num;
+      }
+    }
+  } catch {}
+  return maxId + 1;
+}
+
+// === Atalaya (Watchtower) — Competitive Intelligence Page ===
+function buildAtalayaPage(slug, baseUrl, clientName) {
+  function escHtml(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+  const atalayaDir = path.join(BASE, 'brand', slug, 'atalaya');
+  const competitorsDir = path.join(BASE, 'brand', slug, 'market-and-us', 'competitors');
+
+  // Load config
+  const DEFAULT_CATEGORIES = ['Growth','Founder','SEO','AI','Marketing'];
+  let config = { channels_to_monitor: [], followed_profiles: { linkedin: [], twitter: [], instagram: [] }, competitor_overrides: {}, categories: DEFAULT_CATEGORIES, max_results_per_channel: 30 };
+  try { config = { ...config, ...JSON.parse(fs.readFileSync(path.join(atalayaDir, 'config.json'), 'utf-8')) }; } catch {}
+
+  // Load pending ideas
+  let pendingIdeas = [];
+  try { pendingIdeas = JSON.parse(fs.readFileSync(path.join(atalayaDir, 'pending-ideas.json'), 'utf-8')); } catch {}
+  if (!Array.isArray(pendingIdeas)) pendingIdeas = pendingIdeas.ideas_generated || pendingIdeas.ideas || [];
+
+  // Load per-type pending ideas
+  let profilesPending = [];
+  try { const raw = JSON.parse(fs.readFileSync(path.join(atalayaDir, 'profiles-pending.json'), 'utf-8')); profilesPending = Array.isArray(raw) ? raw : raw.ideas || raw.ideas_generated || []; } catch {}
+  let compPending = [];
+  try { const raw = JSON.parse(fs.readFileSync(path.join(atalayaDir, 'competitors-pending.json'), 'utf-8')); compPending = Array.isArray(raw) ? raw : raw.ideas || raw.ideas_generated || []; } catch {}
+  let adsPending = [];
+  try { const raw = JSON.parse(fs.readFileSync(path.join(atalayaDir, 'ads-pending.json'), 'utf-8')); adsPending = Array.isArray(raw) ? raw : raw.ideas || raw.ideas_generated || []; } catch {}
+
+  // Load reports list (YYYY-MM-DD.json files)
+  let reports = [];
+  try {
+    reports = fs.readdirSync(atalayaDir)
+      .filter(f => /^\d{4}-\d{2}-\d{2}\.json$/.test(f))
+      .sort().reverse()
+      .map(f => {
+        try {
+          const d = JSON.parse(fs.readFileSync(path.join(atalayaDir, f), 'utf-8'));
+          return { date: f.replace('.json',''), trigger: d.trigger || 'cron', competitors: (d.competitors_analyzed||[]).length, items: 0, ideas: (d.ideas_generated||[]).length, status: 'complete' };
+        } catch { return { date: f.replace('.json',''), status: 'error' }; }
+      });
+  } catch {}
+
+  // Load competitors from Foundation — sources.json is the primary source
+  let competitors = [];
+  try {
+    const sourcesPath = path.join(competitorsDir, 'sources.json');
+    const sourcesData = JSON.parse(fs.readFileSync(sourcesPath, 'utf-8'));
+    const allComps = [
+      ...((sourcesData.competitors?.direct || []).map(c => ({ ...c, type: 'Direct' }))),
+      ...((sourcesData.competitors?.indirect || []).map(c => ({ ...c, type: 'Indirect' }))),
+      ...((sourcesData.competitors?.emerging || []).map(c => ({ ...c, type: 'Emerging' }))),
+    ];
+    competitors = allComps.map(c => {
+      const compSlug = c.slug || c.name?.toLowerCase().replace(/\s+/g, '-') || '';
+      const overrides = config.competitor_overrides?.[compSlug];
+      const channels = overrides?.channels || config.channels_to_monitor || [];
+      // Extract social URLs from company and founder(s)
+      const co = c.company || c;
+      const socials = {};
+      if (co.web) socials.web = co.web;
+      if (co.linkedin) socials.linkedin = co.linkedin;
+      if (co.twitter) socials.twitter = co.twitter;
+      if (co.instagram) socials.instagram = co.instagram;
+      if (co.facebook) socials.facebook = co.facebook;
+      if (co.youtube) socials.youtube = co.youtube;
+      return { slug: compSlug, name: c.name || compSlug, type: c.type, tier: c.tier || '—', channels, socials, founders: c.founders || (c.founder ? [c.founder] : []) };
+    });
+  } catch {
+    // Fallback: read subdirectories if sources.json doesn't exist
+    try {
+      const compFolders = fs.readdirSync(competitorsDir).filter(f => {
+        try { return fs.statSync(path.join(competitorsDir, f)).isDirectory() && !['chat','_qa','sources'].includes(f); } catch { return false; }
+      });
+      competitors = compFolders.map(folder => {
+        let name = folder.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+        let type = 'Direct';
+        try {
+          const bc = fs.readFileSync(path.join(competitorsDir, folder, 'current.md'), 'utf-8');
+          const nameMatch = bc.match(/^#\s+(.+)/m);
+          if (nameMatch) name = nameMatch[1].replace(/[*_]/g,'').replace(/^Competitor Deep Dive:\s*/i,'').replace(/\s*\(.+\)\s*$/,'').trim();
+          if (/emerging/i.test(bc)) type = 'Emerging';
+          if (/indirect/i.test(bc)) type = 'Indirect';
+        } catch {}
+        const overrides = config.competitor_overrides?.[folder];
+        const channels = overrides?.channels || config.channels_to_monitor || [];
+        return { slug: folder, name, type, tier: '—', channels, socials: {}, founders: [] };
+      });
+    } catch {}
+  }
+
+  // Load client-config.json for cron schedule
+  let cronSchedule = '0 8 * * 3';
+  let cronTz = 'Europe/Madrid';
+  try {
+    const sources = JSON.parse(fs.readFileSync(path.join(BASE, 'brand', slug, 'client-config.json'), 'utf-8'));
+    const atCron = sources.crons?.atalaya || sources.crons?.thief_marketer || {};
+    if (atCron.schedule) cronSchedule = atCron.schedule;
+    if (atCron.tz) cronTz = atCron.tz;
+  } catch {}
+
+  const categories = config.categories || DEFAULT_CATEGORIES;
+  const catOptions = categories.map(c => `<option>${escHtml(c)}</option>`).join('');
+  const profiles = config.followed_profiles || { linkedin: [], twitter: [], instagram: [] };
+  const linkedinCount = (profiles.linkedin||[]).length;
+  const twitterCount = (profiles.twitter||[]).length;
+  const instagramCount = (profiles.instagram||[]).length;
+  const totalProfiles = linkedinCount + twitterCount + instagramCount;
+  const lastScan = config.last_scan || null;
+  const highPriority = pendingIdeas.filter(i => i.adapted_idea?.priority === 'high').length;
+
+  // Channel label helper
+  const CH_LABELS = { meta_ads: 'Meta Ads', google_ads: 'Google Ads', blog: 'Blog', linkedin: 'LinkedIn', instagram: 'Instagram', twitter: 'Twitter / X' };
+  const ALL_CHANNELS = ['meta_ads','google_ads','blog','linkedin','instagram','twitter'];
+
+  return `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>🏰 Atalaya — ${escHtml(clientName)}</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Nunito:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#FFFDF9;--card:#FFFFFF;--border:#E8E2D9;--rust:#C45D35;--rust-light:#F5E6DF;--navy:#2C3E50;--text:#2C3E50;--muted:#7F8C8D;--green:#27AE60;--green-light:#E8F8F0;--green-bg:#D5F5E3;--blue:#3498DB;--blue-light:#EBF5FB;--yellow:#F39C12;--yellow-light:#FEF9E7;--red:#E74C3C;--red-light:#FDEDEC;--shadow:0 1px 3px rgba(0,0,0,0.06);--shadow-hover:0 4px 12px rgba(0,0,0,0.1);--radius:10px;--radius-sm:6px;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);line-height:1.5;padding:0;margin:0;}
+.page-header{padding:28px 32px 0;}
+.page-title{font-family:'Space Grotesk',sans-serif;font-size:26px;font-weight:700;color:var(--navy);}
+.page-sub{font-size:14px;color:var(--muted);margin-top:2px;}
+.tabs{display:flex;gap:0;padding:20px 32px 0;border-bottom:1px solid var(--border);}
+.tab{padding:10px 20px;font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:500;color:var(--muted);cursor:pointer;border:1px solid transparent;border-bottom:none;border-radius:8px 8px 0 0;background:transparent;transition:all .15s;display:flex;align-items:center;gap:8px;position:relative;bottom:-1px;}
+.tab:hover{color:var(--navy);background:rgba(0,0,0,0.02);}
+.tab.active{color:var(--rust);background:var(--card);border-color:var(--border);font-weight:600;}
+.badge{background:var(--rust);color:#fff;font-size:11px;padding:1px 7px;border-radius:10px;font-weight:600;}
+.content{padding:24px 32px;}
+.tab-content{display:none;}.tab-content.active{display:block;}
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);transition:box-shadow .2s;}
+.card:hover{box-shadow:var(--shadow-hover);}
+.card-title{font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:600;color:var(--navy);margin-bottom:12px;}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;}
+.scan-section{background:linear-gradient(135deg,var(--rust-light) 0%,#FFF 100%);border:1px solid var(--rust);border-radius:var(--radius);padding:28px;text-align:center;margin-bottom:20px;}
+.btn-scan{background:var(--rust);color:#fff;border:none;padding:12px 32px;font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:600;border-radius:8px;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:8px;}
+.btn-scan:hover{background:#A84D2D;transform:translateY(-1px);box-shadow:0 4px 12px rgba(196,93,53,0.3);}
+.scan-desc{font-size:13px;color:var(--muted);margin-top:8px;}
+.stat-value{font-family:'Space Grotesk',sans-serif;font-size:28px;font-weight:700;color:var(--navy);}
+.stat-label{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-top:2px;}
+.stat-detail{font-size:13px;color:var(--muted);margin-top:8px;}
+.link-arrow{display:inline-flex;align-items:center;gap:4px;color:var(--rust);font-size:13px;font-weight:600;text-decoration:none;cursor:pointer;margin-top:12px;}
+.link-arrow:hover{text-decoration:underline;}
+.cron-bar{background:var(--blue-light);border:1px solid #BDD7EE;border-radius:var(--radius-sm);padding:12px 16px;font-size:13px;color:var(--navy);display:flex;align-items:center;gap:8px;margin-top:20px;flex-wrap:wrap;}
+.idea-item{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid #F0EDE8;}
+.idea-item:last-child{border-bottom:none;}
+.idea-title{font-size:13px;font-weight:600;color:var(--navy);}
+.idea-source{font-size:11px;color:var(--muted);margin-top:2px;}
+.idea-priority{font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;text-transform:uppercase;}
+.p-high{background:var(--rust-light);color:var(--rust);}.p-medium{background:var(--yellow-light);color:var(--yellow);}.p-low{background:var(--blue-light);color:var(--blue);}
+.btn-approve{background:var(--green);color:#fff;border:none;padding:5px 12px;font-size:11px;font-weight:600;border-radius:5px;cursor:pointer;}
+.btn-approve:hover{background:#219A52;}
+.btn-approve-all{background:transparent;color:var(--green);border:1px solid var(--green);padding:8px 16px;font-size:12px;font-weight:600;border-radius:6px;cursor:pointer;margin-top:0;}
+.btn-approve-all:hover{background:var(--green-light);}
+.ideas-block{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-top:20px;}
+.ideas-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:600;color:var(--navy);}
+/* Competitor cards */
+.comp-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);}
+.comp-header{display:flex;align-items:center;gap:12px;margin-bottom:14px;}
+.comp-avatar{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:18px;color:#fff;}
+.comp-name{font-family:'Space Grotesk',sans-serif;font-size:16px;font-weight:600;color:var(--navy);}
+.comp-type{display:inline-block;font-size:11px;font-weight:600;padding:2px 10px;border-radius:4px;margin-top:2px;}
+.type-direct{background:var(--rust-light);color:var(--rust);}
+.type-emerging{background:var(--yellow-light);color:var(--yellow);}
+.type-indirect{background:var(--blue-light);color:var(--blue);}
+.channels-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px 16px;margin:14px 0;}
+.channel-item{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text);}
+.channel-item input[type="checkbox"]{accent-color:var(--rust);width:15px;height:15px;}
+.comp-footer{padding-top:12px;border-top:1px solid #F0EDE8;font-size:12px;color:var(--muted);display:flex;flex-wrap:wrap;gap:6px;}
+.social-links{margin:10px 0;display:flex;flex-wrap:wrap;gap:6px;}
+.social-link{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:500;color:var(--navy);text-decoration:none;padding:4px 10px;border:1px solid var(--border);border-radius:6px;transition:all .12s;line-height:1;}
+.social-link:hover{background:var(--rust-light);border-color:var(--rust);color:var(--rust);}
+.social-link svg{flex-shrink:0;}
+.social-link span{white-space:nowrap;max-width:160px;overflow:hidden;text-overflow:ellipsis;}
+.founders-section{padding-top:10px;border-top:1px solid #F0EDE8;}
+.founder-row{display:flex;align-items:center;gap:8px;padding:5px 0;flex-wrap:wrap;}
+.founder-name{font-size:13px;font-weight:600;color:var(--navy);}
+.founder-role{font-size:11px;color:var(--muted);}
+.founder-socials{display:flex;gap:4px;margin-left:auto;}
+.founder-socials .social-link{padding:3px 6px;border:none;}
+/* Profile subtabs */
+.subtabs{display:flex;gap:8px;margin-bottom:20px;}
+.subtab{padding:8px 18px;font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;border-radius:8px;background:transparent;border:1px solid var(--border);transition:all .15s;display:flex;align-items:center;gap:6px;}
+.subtab:hover{border-color:var(--navy);color:var(--navy);}
+.subtab.active{background:var(--navy);color:#fff;border-color:var(--navy);}
+.add-form{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;display:flex;align-items:flex-end;gap:12px;margin-bottom:16px;box-shadow:var(--shadow);}
+.add-form label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600;display:block;margin-bottom:4px;}
+.add-form input,.add-form select{border:1px solid var(--border);border-radius:6px;padding:9px 14px;font-family:'Nunito',sans-serif;font-size:14px;color:var(--text);outline:none;width:100%;}
+.add-form input:focus{border-color:var(--rust);}
+.add-form input::placeholder{color:#BDC3C7;}
+.add-form select{background:#fff;cursor:pointer;min-width:120px;}
+.btn-add{background:var(--green);color:#fff;border:none;width:38px;height:38px;border-radius:50%;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;}
+.btn-add:hover{background:#219A52;transform:scale(1.05);}
+.cat-filters{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap;}
+.cat-filter{padding:5px 14px;font-size:12px;font-weight:600;border-radius:20px;cursor:pointer;border:1px solid var(--border);background:#fff;color:var(--muted);transition:all .15s;}
+.cat-filter:hover{border-color:var(--navy);color:var(--navy);}
+.cat-filter.active{background:var(--navy);color:#fff;border-color:var(--navy);}
+.profile-list{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;}
+.profile-item{display:flex;align-items:center;padding:14px 20px;border-bottom:1px solid #F5F2ED;transition:background .1s;}
+.profile-item:last-child{border-bottom:none;}
+.profile-item:hover{background:#FDFCFA;}
+.toggle{position:relative;width:40px;height:22px;flex-shrink:0;margin-right:14px;}
+.toggle input{opacity:0;width:0;height:0;}
+.toggle-slider{position:absolute;inset:0;background:#D5D8DC;border-radius:11px;cursor:pointer;transition:.2s;}
+.toggle-slider::before{content:'';position:absolute;width:16px;height:16px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.2s;}
+.toggle input:checked+.toggle-slider{background:var(--green);}
+.toggle input:checked+.toggle-slider::before{transform:translateX(18px);}
+.profile-name{font-size:14px;font-weight:600;color:var(--navy);flex:1;}
+.profile-meta{font-size:11px;color:var(--muted);margin-top:1px;}
+.profile-category{display:inline-block;font-size:11px;font-weight:600;padding:2px 10px;border-radius:4px;margin-left:10px;}
+.cat-select{font-size:12px;font-weight:600;padding:3px 8px;border-radius:6px;border:1px solid var(--border);background:#fff;color:var(--text);cursor:pointer;margin-left:10px;outline:none;transition:border-color .15s;}
+.cat-select:hover{border-color:var(--rust);}
+.cat-select:focus{border-color:var(--rust);box-shadow:0 0 0 2px var(--rust-light);}
+.cat-manager{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px 20px;margin-bottom:16px;box-shadow:var(--shadow);}
+.cat-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
+.cat-chip{display:inline-flex;align-items:center;gap:4px;padding:4px 12px;font-size:12px;font-weight:600;border-radius:16px;background:var(--blue-light);color:var(--navy);border:1px solid var(--border);}
+.cat-chip .remove{cursor:pointer;font-size:14px;color:var(--muted);margin-left:2px;line-height:1;}
+.cat-chip .remove:hover{color:var(--red);}
+.cat-add-row{display:flex;gap:8px;align-items:center;margin-top:10px;}
+.cat-add-row input{border:1px solid var(--border);border-radius:6px;padding:6px 12px;font-size:13px;font-family:'Nunito',sans-serif;outline:none;width:180px;}
+.cat-add-row input:focus{border-color:var(--rust);}
+.cat-add-btn{background:var(--green);color:#fff;border:none;padding:6px 14px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;}
+.cat-add-btn:hover{background:#219A52;}
+.cat-growth{background:var(--green-bg);color:var(--green);}.cat-founder{background:var(--blue-light);color:var(--blue);}.cat-seo{background:var(--yellow-light);color:#D68910;}.cat-ai{background:#F4ECF7;color:#8E44AD;}.cat-marketing{background:var(--rust-light);color:var(--rust);}
+.profile-avatar{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:14px;color:#fff;margin-right:12px;flex-shrink:0;}
+.profile-actions{display:flex;gap:8px;margin-left:auto;padding-left:16px;}
+.btn-icon{background:none;border:none;cursor:pointer;font-size:16px;color:var(--muted);padding:4px;border-radius:4px;transition:all .1s;}
+.btn-icon:hover{color:var(--navy);background:rgba(0,0,0,0.04);}
+.btn-icon.delete:hover{color:var(--red);background:var(--red-light);}
+.subtab-content{display:none;}.subtab-content.active{display:block;}
+.chat-hint{background:#F8F6F2;border:1px dashed var(--border);border-radius:var(--radius-sm);padding:10px 14px;font-size:12px;color:var(--muted);margin-top:16px;display:flex;align-items:center;gap:8px;}
+.empty-state{text-align:center;padding:48px 0;color:var(--muted);}
+.empty-state .icon{font-size:48px;margin-bottom:12px;}
+.empty-state .title{font-size:15px;font-weight:600;color:var(--navy);}
+.empty-state .desc{font-size:13px;margin-top:4px;}
+@media(max-width:900px){.grid-2,.grid-3{grid-template-columns:1fr;}.tabs{flex-wrap:wrap;}.add-form{flex-wrap:wrap;}}
+</style>
+</head><body>
+<div class="page-header">
+  <div class="page-title">&#127984; Atalaya</div>
+  <div class="page-sub">Monitoriza competidores y perfiles &rarr; Genera ideas de contenido</div>
+</div>
+<div class="tabs">
+  <div class="tab active" onclick="showTab('competitors')">&#127919; Competidores <span class="badge">${competitors.length}</span></div>
+  <div class="tab" onclick="showTab('profiles')">&#128101; Perfiles <span class="badge">${totalProfiles}</span></div>
+  <div class="tab" onclick="showTab('ads')">&#128226; Ads Library</div>
+</div>
+<div class="content">
+
+<!-- COMPETITORS TAB -->
+<div id="tab-competitors" class="tab-content active">
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap;">
+    <button class="btn-scan" onclick="launchCompScan()">&#128640; Lanzar scan</button>
+    <button onclick="openCompChat()" style="padding:8px 16px;font-size:13px;border:1px solid var(--border);border-radius:8px;background:var(--card);cursor:pointer;font-family:'Space Grotesk',sans-serif;font-weight:500;color:var(--navy);transition:all .12s;" onmouseover="this.style.borderColor='var(--rust)'" onmouseout="this.style.borderColor='var(--border)'">&#128172; Chat</button>
+    <a href="#" onclick="goToFoundationDoc('market-and-us/competitors');return false;" style="color:var(--rust);font-size:13px;font-weight:600;margin-left:auto;">Editar en Documents &#8599;</a>
+  </div>
+  <div class="grid-3">
+    ${competitors.map((c,i) => {
+      const colors = ['#3498DB','#E67E22','#9B59B6','#27AE60','#E74C3C','#1ABC9C','#2980B9','#D35400'];
+      const color = colors[i % colors.length];
+      const initial = (c.name||'?')[0].toUpperCase();
+      const SOCIAL_ICONS = {
+        web:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>',
+        linkedin:'<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M20.5 2h-17A1.5 1.5 0 002 3.5v17A1.5 1.5 0 003.5 22h17a1.5 1.5 0 001.5-1.5v-17A1.5 1.5 0 0020.5 2zM8 19H5v-9h3zM6.5 8.25A1.75 1.75 0 118.3 6.5a1.78 1.78 0 01-1.8 1.75zM19 19h-3v-4.74c0-1.42-.6-1.93-1.38-1.93A1.74 1.74 0 0013 14.19V19h-3v-9h2.9v1.3a3.11 3.11 0 012.7-1.4c1.55 0 3.36.86 3.36 3.66z"/></svg>',
+        twitter:'<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>',
+        instagram:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="5"/><circle cx="17.5" cy="6.5" r="1.5" fill="currentColor" stroke="none"/></svg>',
+        facebook:'<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>',
+        youtube:'<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>'
+      };
+      function socialIcon(k, url) {
+        const icon = SOCIAL_ICONS[k] || SOCIAL_ICONS.web;
+        const handle = k === 'twitter' ? (url.match(/@?([^/]+)$/) || ['',''])[1] : k === 'instagram' ? (url.match(/@?([^/]+)\/?$/) || ['',''])[1] : '';
+        const cleanUrl = url.replace('https://','').replace('http://',''); const label = handle ? '@' + handle.replace('@','') : (k === 'web' ? (cleanUrl.endsWith('/') ? cleanUrl.slice(0,-1) : cleanUrl) : k);
+        return '<a href="' + escHtml(url) + '" target="_blank" class="social-link" title="' + escHtml(k) + '">' + icon + ' <span>' + escHtml(label) + '</span></a>';
+      }
+      const socialLinksList = Object.entries(c.socials||{}).filter(([k,v]) => v && typeof v === 'string').map(([k,v]) => socialIcon(k, v)).join('');
+      const founderItems = (c.founders||[]).filter(f=>f.name).map(f => {
+        const fLinks = [];
+        if (f.linkedin) fLinks.push('<a href="' + escHtml(f.linkedin) + '" target="_blank" class="social-link" title="LinkedIn">' + SOCIAL_ICONS.linkedin + '</a>');
+        if (f.twitter) fLinks.push('<a href="' + escHtml(f.twitter) + '" target="_blank" class="social-link" title="Twitter">' + SOCIAL_ICONS.twitter + '</a>');
+        return '<div class="founder-row"><span class="founder-name">' + escHtml(f.name) + '</span>' + (f.role ? '<span class="founder-role">' + escHtml(f.role) + '</span>' : '') + '<span class="founder-socials">' + fLinks.join('') + '</span></div>';
+      }).join('');
+      return '<div class="comp-card"><div class="comp-header"><div class="comp-avatar" style="background:' + color + ';">' + initial + '</div><div><div class="comp-name">' + escHtml(c.name) + '</div><span class="comp-type type-' + c.type.toLowerCase() + '">' + escHtml(c.type) + '</span> <span style="font-size:10px;color:var(--muted);margin-left:4px;">Tier ' + escHtml(c.tier) + '</span></div></div>' + (socialLinksList ? '<div class="social-links">' + socialLinksList + '</div>' : '<div style="font-size:12px;color:var(--muted);padding:8px 0;">Sin canales registrados</div>') + (founderItems ? '<div class="founders-section">' + founderItems + '</div>' : '') + '</div>';
+    }).join('')}
+  </div>
+  ${competitors.length === 0 ? '<div class="empty-state"><div class="icon">&#127919;</div><div class="title">No hay competidores definidos</div><div class="desc">Define competidores en Foundation &rarr; Competitor Analysis</div></div>' : ''}
+  ${compPending.length > 0 ? `<div class="ideas-block"><div class="ideas-header"><span>&#128161; ${compPending.length} ideas de competidores</span><button class="btn-approve-all" onclick="approveAll('competitors')">Aprobar todas &rarr; Idea Bank</button></div>${compPending.slice(0,10).map(idea => `<div class="idea-item"><div><div class="idea-title">${escHtml(idea.title||idea.adapted_idea?.title||'—')}</div><div class="idea-source">${escHtml(idea.source||idea.source_name||'')} &middot; ${escHtml(idea.source_channel||'')}</div></div><div style="display:flex;align-items:center;gap:6px;"><span class="idea-priority p-${(idea.priority||idea.adapted_idea?.priority||'medium')}">${escHtml(idea.priority||idea.adapted_idea?.priority||'med')}</span><button class="btn-approve" onclick="approveIdea('${escHtml(idea.id||'')}','competitors')">Aprobar</button></div></div>`).join('')}</div>` : ''}
+</div>
+
+<!-- PROFILES TAB -->
+<div id="tab-profiles" class="tab-content">
+  <div class="cat-manager">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <span style="font-size:13px;font-weight:600;color:var(--navy);">Categorias</span>
+    </div>
+    <div class="cat-chips" id="cat-chips">
+      ${categories.map(c => `<span class="cat-chip">${escHtml(c)} <span class="remove" onclick="removeCategory('${escHtml(c)}')">&times;</span></span>`).join('')}
+    </div>
+    <div class="cat-add-row">
+      <input type="text" id="new-cat-input" placeholder="Nueva categoria..." onkeydown="if(event.key==='Enter')addCategory()">
+      <button class="cat-add-btn" onclick="addCategory()">+ Anadir</button>
+    </div>
+  </div>
+  <div class="subtabs">
+    <div class="subtab active" onclick="showSubtab('linkedin')">&#128279; LinkedIn (${linkedinCount})</div>
+    <div class="subtab" onclick="showSubtab('twitter')">&#120143; Twitter (${twitterCount})</div>
+    <div class="subtab" onclick="showSubtab('instagram')">&#128248; Instagram (${instagramCount})</div>
+  </div>
+  ${['linkedin','twitter','instagram'].map(platform => {
+    const pList = profiles[platform] || [];
+    const cats = {};
+    pList.forEach(p => { const c = p.category||'Otros'; cats[c] = (cats[c]||0) + 1; });
+    const placeholder = platform === 'linkedin' ? 'https://linkedin.com/in/...' : '@usuario';
+    const labelField = platform === 'linkedin' ? 'URL de LinkedIn' : platform === 'twitter' ? 'Handle de X' : 'Handle de Instagram';
+    const platformLabel = platform === 'linkedin' ? 'LinkedIn' : platform === 'twitter' ? 'Twitter/X' : 'Instagram';
+    return `<div id="subtab-${platform}" class="subtab-content ${platform==='linkedin'?'active':''}">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+        <button class="btn-scan" style="padding:8px 16px;font-size:13px;" onclick="launchPlatformScan('${platform}')">&#128640; Scan ${platformLabel}</button>
+        <button onclick="openPlatformChat('${platform}')" style="padding:8px 16px;font-size:13px;border:1px solid var(--border);border-radius:8px;background:var(--card);cursor:pointer;font-family:'Space Grotesk',sans-serif;font-weight:500;color:var(--navy);transition:all .12s;" onmouseover="this.style.borderColor='var(--rust)'" onmouseout="this.style.borderColor='var(--border)'">&#128172; Chat</button>
+        <span style="font-size:12px;color:var(--muted);margin-left:auto;">${pList.filter(p=>p.active!==false).length} perfiles activos</span>
+      </div>
+      <div class="add-form">
+        <div style="flex:1;"><label>${labelField}</label><input type="text" id="add-${platform}-url" placeholder="${placeholder}"></div>
+        <div><label>Categoria</label><select id="add-${platform}-cat">${catOptions}</select></div>
+        <button class="btn-add" onclick="addProfile('${platform}')">+</button>
+      </div>
+      <div class="cat-filters"><span class="cat-filter active" onclick="filterCat(this,'${platform}','all')">Todos (${pList.length})</span>${Object.entries(cats).map(([c,n]) => `<span class="cat-filter" onclick="filterCat(this,'${platform}','${escHtml(c)}')">${escHtml(c)} (${n})</span>`).join('')}</div>
+      <div class="profile-list" id="profiles-${platform}">
+        ${pList.length === 0 ? `<div class="empty-state"><div class="icon">${platform==='linkedin'?'&#128279;':platform==='twitter'?'&#120143;':'&#128248;'}</div><div class="title">No hay perfiles de ${platform}</div><div class="desc">Usa el chat o el formulario para anadir perfiles</div></div>` : ''}
+        ${pList.map(p => {
+          const catClass = 'cat-' + (p.category||'growth').toLowerCase();
+          const initial = (p.name||p.url||'?')[0].toUpperCase();
+          const avatarColor = {'Growth':'#27AE60','Founder':'#3498DB','SEO':'#D68910','AI':'#8E44AD','Marketing':'#C45D35'}[p.category] || '#95A5A6';
+          const catSelectOptions = categories.map(c => `<option${c===p.category?' selected':''}>${escHtml(c)}</option>`).join('');
+          return `<div class="profile-item" data-cat="${escHtml(p.category||'')}">${platform==='linkedin'?`<div class="profile-avatar" style="background:${avatarColor};">${initial}</div>`:''}<label class="toggle"><input type="checkbox" ${p.active!==false?'checked':''} onchange="toggleProfile('${platform}','${escHtml(p.id)}',this.checked)"><span class="toggle-slider"></span></label><div><div class="profile-name">${escHtml(p.name||p.url||'—')}</div>${platform==='linkedin'?`<div class="profile-meta">${escHtml(p.url||'')} &middot; ${p.posts_monitored||0} posts monitorizados</div>`:''}</div><select class="cat-select" onchange="changeCategory('${platform}','${escHtml(p.id)}',this.value)">${catSelectOptions}</select><div class="profile-actions">${platform==='linkedin'?'<button class="btn-icon" title="Abrir perfil" onclick="window.open(\''+escHtml(p.url||'')+'\')">&#8599;</button>':''}<button class="btn-icon delete" title="Eliminar" onclick="deleteProfile('${platform}','${escHtml(p.id)}')">&#128465;</button></div></div>`;
+        }).join('')}
+      </div>
+      <div class="chat-hint" onclick="openChat()" style="cursor:pointer;">&#128172; Chat: Thread <strong>atalaya:${platform}:${escHtml(slug)}</strong> &rarr; Click para abrir</div>
+    </div>`;
+  }).join('')}
+  ${profilesPending.length > 0 ? `<div class="ideas-block"><div class="ideas-header"><span>&#128161; ${profilesPending.length} ideas de perfiles</span><button class="btn-approve-all" onclick="approveAll('profiles')">Aprobar todas &rarr; Idea Bank</button></div>${profilesPending.slice(0,10).map(idea => `<div class="idea-item"><div><div class="idea-title">${escHtml(idea.title||idea.adapted_idea?.title||'—')}</div><div class="idea-source">${escHtml(idea.source||idea.source_name||'')} &middot; ${escHtml(idea.source_channel||idea.source_platform||'')}</div></div><div style="display:flex;align-items:center;gap:6px;"><span class="idea-priority p-${(idea.priority||idea.adapted_idea?.priority||'medium')}">${escHtml(idea.priority||idea.adapted_idea?.priority||'med')}</span><button class="btn-approve" onclick="approveIdea('${escHtml(idea.id||'')}','profiles')">Aprobar</button></div></div>`).join('')}</div>` : ''}
+</div>
+
+<!-- ADS TAB -->
+<div id="tab-ads" class="tab-content">
+  <div class="subtabs">
+    <div class="subtab active" onclick="showSubtab('meta-ads')">&#128266; Meta Ads Library</div>
+    <div class="subtab" onclick="showSubtab('google-ads')">&#127760; Google Ads Library</div>
+  </div>
+
+  <div id="subtab-meta-ads" class="subtab-content active">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap;">
+      <button class="btn-scan" onclick="launchAdsScan('meta')">&#128640; Scan Meta Ads</button>
+      <button onclick="openAdsChat('meta')" style="padding:8px 16px;font-size:13px;border:1px solid var(--border);border-radius:8px;background:var(--card);cursor:pointer;font-family:'Space Grotesk',sans-serif;font-weight:500;color:var(--navy);">&#128172; Chat</button>
+      <span style="font-size:13px;color:var(--muted);">Busca anuncios activos de tus competidores en Facebook/Instagram Ads Library</span>
+    </div>
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;">
+      <div style="font-size:13px;font-weight:600;color:var(--navy);margin-bottom:8px;">Competidores a escanear</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;">
+        ${competitors.map(c => `<span style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;color:var(--navy);">${escHtml(c.name)}</span>`).join('')}
+      </div>
+      <div style="margin-top:12px;font-size:12px;color:var(--muted);">El scan buscara anuncios activos de cada competidor en Meta Ads Library. Extraera copy completo, headlines, CTAs, y duracion de cada anuncio.</div>
+    </div>
+  </div>
+
+  <div id="subtab-google-ads" class="subtab-content">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap;">
+      <button class="btn-scan" onclick="launchAdsScan('google')">&#128640; Scan Google Ads</button>
+      <button onclick="openAdsChat('google')" style="padding:8px 16px;font-size:13px;border:1px solid var(--border);border-radius:8px;background:var(--card);cursor:pointer;font-family:'Space Grotesk',sans-serif;font-weight:500;color:var(--navy);">&#128172; Chat</button>
+      <span style="font-size:13px;color:var(--muted);">Busca anuncios de tus competidores en Google Ads Transparency Center</span>
+    </div>
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;">
+      <div style="font-size:13px;font-weight:600;color:var(--navy);margin-bottom:8px;">Competidores a escanear</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;">
+        ${competitors.map(c => `<span style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;color:var(--navy);">${escHtml(c.name)}</span>`).join('')}
+      </div>
+      <div style="margin-top:12px;font-size:12px;color:var(--muted);">El scan buscara anuncios de cada competidor en Google Ads Transparency Center. Extraera headlines, descriptions y formatos.</div>
+    </div>
+  </div>
+  ${adsPending.length > 0 ? `<div class="ideas-block"><div class="ideas-header"><span>&#128161; ${adsPending.length} ideas de ads</span><button class="btn-approve-all" onclick="approveAll('ads')">Aprobar todas &rarr; Idea Bank</button></div>${adsPending.slice(0,10).map(idea => `<div class="idea-item"><div><div class="idea-title">${escHtml(idea.title||idea.adapted_idea?.title||'—')}</div><div class="idea-source">${escHtml(idea.source||idea.source_name||'')}</div></div><div style="display:flex;align-items:center;gap:6px;"><span class="idea-priority p-${(idea.priority||idea.adapted_idea?.priority||'medium')}">${escHtml(idea.priority||idea.adapted_idea?.priority||'med')}</span><button class="btn-approve" onclick="approveIdea('${escHtml(idea.id||'')}','ads')">Aprobar</button></div></div>`).join('')}</div>` : ''}
+</div>
+
+</div><!-- /content -->
+
+<script>
+const SLUG = '${escHtml(slug)}';
+// Compute API base that survives admin path normalization
+const _p = window.location.pathname;
+const _adminMatch = _p.match(/\\/mc\\/admin\\/[^/]+/);
+const API_BASE = _adminMatch ? _adminMatch[0] : (_p.includes('/mc/') ? '/mc' : '');
+
+function showTab(name) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  event.currentTarget.classList.add('active');
+  document.getElementById('tab-' + name).classList.add('active');
+}
+function showSubtab(name) {
+  document.querySelectorAll('.subtab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.subtab-content').forEach(t => t.classList.remove('active'));
+  event.currentTarget.classList.add('active');
+  document.getElementById('subtab-' + name).classList.add('active');
+}
+
+function _launchScanChat(threadId, threadName, skill, msg, btn) {
+  btn.innerHTML = '&#9203; Lanzando...';
+  btn.style.background = '#95A5A6';
+  btn.disabled = true;
+  // Open chat in parent MC
+  if (window.parent && window.parent !== window) {
+    window.parent.postMessage({ type: 'settings-open-chat', slug: SLUG, threadId, threadName, initialMessage: msg, skill }, '*');
+  }
+  fetch(API_BASE + '/api/mc-chat/send', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ slug: SLUG, threadId, threadName, text: msg, userName: 'Mission Control', skill })
+  }).then(() => {
+    btn.innerHTML = '&#9989; Scan lanzado';
+    btn.style.background = '#27AE60';
+    setTimeout(() => { btn.innerHTML = '&#128640; Lanzar scan'; btn.style.background = '#C45D35'; btn.disabled = false; }, 4000);
+  }).catch(e => { console.error(e); btn.innerHTML = '&#10060; Error'; btn.style.background = '#E74C3C'; setTimeout(() => { btn.innerHTML = '&#128640; Lanzar scan'; btn.style.background = '#C45D35'; btn.disabled = false; }, 3000); });
+}
+function launchCompScan() {
+  _launchScanChat(
+    SLUG + ':competitor-scan',
+    'Competitor Scan — ' + SLUG,
+    'atalaya-competitors',
+    'Lanza el scan de competidores. Lee brand/' + SLUG + '/market-and-us/competitors/sources.json para la lista de competidores y sus canales. Scrapea cada competidor (web, blog, LinkedIn, Meta Ads, Google Ads, Instagram, Twitter). Genera informe completo con contenido escrapeado y extrae ideas de contenido adaptadas a nuestra marca.',
+    event.currentTarget
+  );
+}
+function launchPlatformScan(platform) {
+  const labels = {linkedin:'LinkedIn',twitter:'Twitter/X',instagram:'Instagram'};
+  _launchScanChat(
+    SLUG + ':' + platform + '-scan',
+    labels[platform] + ' Scan — ' + SLUG,
+    'atalaya-' + platform,
+    'Lanza el scan de perfiles de ' + labels[platform] + '. Lee brand/' + SLUG + '/atalaya/config.json para la lista de perfiles seguidos. Scrapea los ultimos posts de cada perfil activo en ' + labels[platform] + '. Genera informe con contenido completo y extrae ideas de contenido adaptadas a nuestra marca.',
+    event.currentTarget
+  );
+}
+function launchAdsScan(adType) {
+  const labels = {meta:'Meta Ads Library',google:'Google Ads Transparency'};
+  _launchScanChat(
+    SLUG + ':' + adType + '-ads-scan',
+    labels[adType] + ' Scan — ' + SLUG,
+    'atalaya-' + adType + '-ads',
+    'Lanza el scan de ' + labels[adType] + '. Lee brand/' + SLUG + '/market-and-us/competitors/sources.json para la lista de competidores. Busca anuncios activos de cada competidor. Extrae copy completo, headlines, CTAs, creatividades. Genera ideas de ads adaptadas a nuestra marca y posicionamiento.',
+    event.currentTarget
+  );
+}
+
+function apiUrl(endpoint) { return API_BASE + '/api/atalaya-' + endpoint + '?slug=' + SLUG; }
+
+async function approveIdea(ideaId, sourceType) {
+  try {
+    const res = await fetch(apiUrl('approve-idea'), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ideaId, sourceType: sourceType || 'pending' }) });
+    if (res.ok) location.reload();
+  } catch(e) { console.error(e); }
+}
+async function approveAll(sourceType) {
+  try {
+    const res = await fetch(apiUrl('approve-all'), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sourceType: sourceType || 'pending' }) });
+    if (res.ok) location.reload();
+  } catch(e) { console.error(e); }
+}
+
+async function addProfile(platform) {
+  const url = document.getElementById('add-' + platform + '-url').value.trim();
+  const category = document.getElementById('add-' + platform + '-cat').value;
+  if (!url) return;
+  try {
+    const res = await fetch(apiUrl('profiles'), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ platform, url, category }) });
+    if (res.ok) location.reload();
+  } catch(e) { console.error(e); }
+}
+async function toggleProfile(platform, id, active) {
+  try { await fetch(apiUrl('profiles-update'), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ platform, id, active }) }); } catch(e) { console.error(e); }
+}
+async function deleteProfile(platform, id) {
+  if (!confirm('Eliminar este perfil?')) return;
+  try { const res = await fetch(apiUrl('profiles-delete'), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ platform, id }) }); if (res.ok) location.reload(); } catch(e) { console.error(e); }
+}
+async function toggleChannel(compSlug, channel, enabled) {
+  try { await fetch(apiUrl('channel'), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ competitorSlug: compSlug, channel, enabled }) }); } catch(e) { console.error(e); }
+}
+
+async function addCategory() {
+  const input = document.getElementById('new-cat-input');
+  const cat = input.value.trim();
+  if (!cat) return;
+  try {
+    const res = await fetch(apiUrl('categories'), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'add', category: cat }) });
+    if (res.ok) location.reload();
+  } catch(e) { console.error(e); }
+}
+async function removeCategory(cat) {
+  if (!confirm('Eliminar categoria "' + cat + '"?')) return;
+  try {
+    const res = await fetch(apiUrl('categories'), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'remove', category: cat }) });
+    if (res.ok) location.reload();
+  } catch(e) { console.error(e); }
+}
+async function changeCategory(platform, id, newCat) {
+  try {
+    await fetch(apiUrl('profiles-update'), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ platform, id, category: newCat }) });
+    // Visual feedback
+    const sel = event?.target;
+    if (sel) { sel.style.borderColor = '#27AE60'; setTimeout(() => sel.style.borderColor = '', 1000); }
+  } catch(e) { console.error(e); }
+}
+
+function filterCat(el, platform, cat) {
+  el.closest('.cat-filters').querySelectorAll('.cat-filter').forEach(f => f.classList.remove('active'));
+  el.classList.add('active');
+  document.querySelectorAll('#profiles-' + platform + ' .profile-item').forEach(item => {
+    item.style.display = (cat === 'all' || item.dataset.cat === cat) ? '' : 'none';
+  });
+}
+
+// Chat integration — sends postMessage to parent MC to open sidebar
+let currentTab = 'overview';
+let currentSubtab = 'linkedin';
+const _origShowTab = showTab;
+showTab = function(name) {
+  currentTab = name;
+  _origShowTab.call(this, name);
+};
+const _origShowSubtab = showSubtab;
+showSubtab = function(name) {
+  currentSubtab = name;
+  _origShowSubtab.call(this, name);
+};
+
+function goToFoundationDoc(docPath) {
+  if (window.parent && window.parent !== window) {
+    window.parent.postMessage({ type: 'atalaya-navigate', page: 'foundation', docPath: docPath }, '*');
+  }
+}
+
+function _openChatThread(threadId, threadName, skill) {
+  if (window.parent && window.parent !== window) {
+    window.parent.postMessage({ type: 'settings-open-chat', slug: SLUG, threadId, threadName, skill }, '*');
+  }
+}
+function openPlatformChat(platform) {
+  const labels = {linkedin:'LinkedIn',twitter:'Twitter/X',instagram:'Instagram'};
+  _openChatThread('atalaya:' + platform + ':' + SLUG, 'Atalaya ' + labels[platform] + ' — ' + SLUG, 'find-' + platform + '-profiles');
+}
+function openCompChat() {
+  _openChatThread(SLUG + ':competitor-analysis', 'Competitor Analysis — ' + SLUG, 'competitor-intelligence');
+}
+function openAdsChat(adType) {
+  const labels = {meta:'Meta Ads',google:'Google Ads'};
+  _openChatThread(SLUG + ':' + adType + '-ads', labels[adType] + ' — ' + SLUG, 'atalaya-' + adType + '-ads');
+}
+
+function openChat() {
+  let threadId, threadName, skill;
+  if (currentTab === 'competitors') {
+    threadId = SLUG + ':competitor-analysis';
+    threadName = 'Competitor Analysis — ' + SLUG;
+    skill = 'competitor-intelligence';
+  } else if (currentTab === 'profiles') {
+    threadId = 'atalaya:' + currentSubtab + ':' + SLUG;
+    threadName = 'Atalaya ' + currentSubtab + ' — ' + SLUG;
+    skill = 'find-' + currentSubtab + '-profiles';
+  } else if (currentTab === 'ads') {
+    threadId = SLUG + ':' + currentSubtab;
+    threadName = currentSubtab + ' — ' + SLUG;
+    skill = 'atalaya-' + currentSubtab;
+  } else {
+    threadId = 'atalaya:' + SLUG;
+    threadName = 'Atalaya — ' + SLUG;
+    skill = 'atalaya';
+  }
+  if (window.parent && window.parent !== window) {
+    window.parent.postMessage({ type: 'settings-open-chat', slug: SLUG, threadId, threadName, skill }, '*');
+  }
+}
+</script>
+</body></html>`;
 }
 
 function buildTrustEnginePage(slug, baseUrl, clientName) {
@@ -2793,14 +3380,6 @@ if (IS_EMBED) document.documentElement.classList.add('embed');
         </div>
       </div>
     </div>
-    <div style="width:380px;border-left:1px solid var(--border);display:flex;flex-direction:column;background:var(--bg);" id="se-chat-pane">
-      <div style="padding:10px 14px;border-bottom:1px solid var(--border);font-weight:700;font-size:13px;color:var(--rust);">💬 Chat con Sancho</div>
-      <div id="se-chat-msgs" style="flex:1;overflow-y:auto;padding:10px 14px;font-size:13px;"></div>
-      <div style="padding:8px 14px;border-top:1px solid var(--border);display:flex;gap:6px;">
-        <input id="se-chat-input" placeholder="Escribe aquí..." style="flex:1;padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:var(--card);font-size:13px;color:var(--text);" onkeydown="if(event.key==='Enter'){seChatSend();event.preventDefault();}">
-        <button onclick="seChatSend()" style="padding:8px 14px;background:var(--rust);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:14px;">→</button>
-      </div>
-    </div>
   </div>
 </div>
 
@@ -3554,8 +4133,15 @@ function openStrategyEdit(id) {
   document.getElementById('se-wf-medicion').value = s?.workflow?.medicion || '';
   document.getElementById('se-cuando-si').value = s ? s.cuandoUsar.join('\\n') : '';
   document.getElementById('se-cuando-no').value = s ? s.cuandoNoUsar.join('\\n') : '';
-  // Chat stub
-  document.getElementById('se-chat-msgs').innerHTML = '<div style="padding:20px;text-align:center;color:var(--muted);">Chat disponible en MC principal</div>';
+  // Open chat in parent MC via postMessage
+  const threadId = SLUG + ':strategy:' + (id || 'new-' + Date.now());
+  const threadName = s ? '#' + s.id + ' ' + s.name : 'Nueva Estrategia';
+  const chatMsg = isNew
+    ? 'Quiero crear una nueva estrategia GTM. Comprueba duplicados con las existentes, investiga tendencias, y guíame para completar los campos.'
+    : 'Estoy editando la estrategia #' + s.id + ' ' + s.name + '. ¿Qué quieres modificar?';
+  if (window.parent && window.parent !== window) {
+    window.parent.postMessage({ type: 'settings-open-chat', slug: SLUG, threadId, threadName, initialMessage: chatMsg, skill: 'new-strategy' }, '*');
+  }
   document.getElementById('strategy-editor-fs').style.display = 'flex';
 }
 
@@ -3608,23 +4194,24 @@ async function deleteStrategy() {
 
 function closeStrategyEdit() { document.getElementById('strategy-editor-fs').style.display = 'none'; }
 
-function seChatSend() { showToast('Chat disponible en MC principal'); }
-
 // ============ TAB 6: Recurring Tasks ============
 let _recurringTasksCache = {};
 let _allRecurringTasks = [];
+let _availableTemplates = [];
 
 async function loadRecurringTasksData() {
   const url = SLUG ? API_BASE + '/api/recurring-tasks?slug=' + SLUG : API_BASE + '/api/recurring-tasks';
   try {
     const res = await fetch(url);
     const data = await res.json();
+    _availableTemplates = data._available_templates || [];
+    delete data._available_templates;
     if (typeof data === 'object' && !Array.isArray(data)) {
       const flat = [];
-      for (const [clientSlug, tasks] of Object.entries(data)) { for (const t of tasks) { t._slug = clientSlug; flat.push(t); } }
+      for (const [clientSlug, tasks] of Object.entries(data)) { if (Array.isArray(tasks)) { for (const t of tasks) { t._slug = clientSlug; flat.push(t); } } }
       _recurringTasksCache = flat;
     } else { _recurringTasksCache = data || []; }
-  } catch (e) { _recurringTasksCache = []; }
+  } catch (e) { _recurringTasksCache = []; _availableTemplates = []; }
   renderRecurringTasksPage();
 }
 
@@ -3708,6 +4295,24 @@ function renderRecurringTasksPage() {
     html += '</tbody></table></div>';
     first = false;
   }
+  // Available templates section
+  if (_availableTemplates && _availableTemplates.length > 0) {
+    html += '<div style="margin-top:24px;padding-top:16px;border-top:2px solid var(--border);">';
+    html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;"><span style="font-size:16px;">⏸</span><span style="font-family:\\'Space Grotesk\\',sans-serif;font-size:16px;font-weight:600;color:var(--navy);">Disponibles (' + _availableTemplates.length + ')</span></div>';
+    html += '<p style="color:var(--muted);font-size:13px;margin-bottom:16px;">Estas tareas recurrentes se pueden activar cuando configures las integraciones necesarias.</p>';
+    for (const tmpl of _availableTemplates) {
+      html += '<div class="card" style="margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;padding:14px 18px;">';
+      html += '<div>';
+      html += '<div style="font-weight:600;font-size:14px;">' + (tmpl.name || tmpl.template_key).replace('{NAME}', SLUG ? _recurringTasksCache[0]?._slug || '' : '') + '</div>';
+      if (tmpl.description) html += '<div style="color:var(--muted);font-size:12px;margin-top:2px;">' + tmpl.description + '</div>';
+      if (tmpl.requires) html += '<div style="font-size:12px;margin-top:4px;"><strong>Requiere:</strong> ' + tmpl.requires + '</div>';
+      if (tmpl.p00_task) html += '<div style="font-size:11px;color:var(--muted);margin-top:2px;">→ Tarea: ' + tmpl.p00_task + '</div>';
+      html += '</div>';
+      html += '</div>';
+    }
+    html += '</div>';
+  }
+
   el.innerHTML = html;
 }
 
@@ -3725,26 +4330,20 @@ async function toggleCronJob(cronId, enable) {
 
 function showCreateRecurringTaskForm() {
   const threadId = SLUG + ':recurring:new-' + Date.now();
-  const chatMsg = 'Quiero crear una nueva tarea recurrente para el cliente ' + SLUG + '. ' +
-    'Pregúntame qué quiero automatizar y ayúdame a definir: nombre, categoría (intelligence/metrics/outreach/content/system), ' +
-    'frecuencia (cron expression), qué agente la ejecuta, y el prompt. ' +
-    'Cuando tengamos todo claro, crea la tarea con el endpoint POST /api/recurring-tasks.';
-  fetch(API_BASE + '/api/mc-chat/send', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
+  // Tell parent MC to open the chat sidebar with this thread
+  if (window.parent && window.parent !== window) {
+    window.parent.postMessage({
+      type: 'settings-open-chat',
       slug: SLUG,
       threadId: threadId,
       threadName: 'Nueva tarea recurrente',
-      text: chatMsg,
-      userName: 'Mission Control',
+      initialMessage: 'Quiero crear una nueva tarea recurrente. Pregúntame qué quiero automatizar y ayúdame a definir: nombre, categoría, frecuencia, agente y prompt. Cuando tengamos todo claro, crea la tarea.',
       skill: 'recurring-tasks'
-    })
-  }).then(() => {
-    showToast('💬 Chat abierto con Sancho para crear la tarea.');
-  }).catch(() => {
-    showToast('Error abriendo chat');
-  });
+    }, '*');
+    showToast('💬 Abriendo chat con Sancho...');
+  } else {
+    showToast('Chat no disponible en modo standalone');
+  }
 }
 
 // Prompt Modal
@@ -4773,6 +5372,8 @@ nav .nav-footer { display:none !important; }
         '/api/crons',
         '/api/crons/toggle',
         '/api/cron-runs',
+        '/api/monitoring',
+        '/api/monitoring/recommendation-action',
       ];
       const apiPath = portalPath.split('?')[0];
       const isAllowed = allowedApis.some(a => apiPath === a || apiPath.startsWith(a + '/') || apiPath.startsWith(a + '?'));
@@ -5054,7 +5655,7 @@ nav .nav-footer { display:none !important; }
         pillars[pillar].updated_at = new Date().toISOString();
         if (comment) pillars[pillar].comment = comment;
         if (status === 'approved') pillars[pillar].approved_at = new Date().toISOString();
-        fs.writeFileSync(stateFile, JSON.stringify(state, null, 2));
+        safeWriteFoundationState(stateFile, state);
 
         // Regenerate mc-data.js
         try {
@@ -5195,7 +5796,7 @@ nav .nav-footer { display:none !important; }
 
         // Find the project directory
         const projDir = path.join(BASE, 'brand', slug, 'projects');
-        const resolvedDir = resolveProjectDir(projDir, projectId, null);
+        const resolvedDir = resolveProjectDir(projDir, projectId);
         if (!resolvedDir) { res.writeHead(404, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'Project not found: ' + projectId })); return; }
 
         // Load tasks and generate next task ID
@@ -5334,6 +5935,30 @@ nav .nav-footer { display:none !important; }
     let result = {};
     if (slugParam) {
       result[slugParam] = loadRecurringTasks(slugParam);
+      // Also return available (not-yet-created) templates for this client
+      try {
+        const templatesFile = path.join(BASE, '_system', 'cron-templates.json');
+        const templates = JSON.parse(fs.readFileSync(templatesFile, 'utf-8'));
+        const activeCrons = result[slugParam] || [];
+        const activeNames = activeCrons.map(c => (c.name || '').toLowerCase());
+        const available = [];
+        for (const [key, tmpl] of Object.entries(templates)) {
+          if (key === '$comment') continue;
+          if (tmpl.auto_onboarding) continue; // already created at onboarding
+          const cronName = (tmpl.name_template || '').replace('{NAME}', '').toLowerCase().trim().replace(/\s*[—–-]\s*$/, '');
+          const isActive = activeNames.some(n => n.toLowerCase().includes(cronName));
+          if (!isActive) {
+            available.push({
+              template_key: key,
+              name: tmpl.name_template || key,
+              description: tmpl.description || '',
+              requires: tmpl.requires || '',
+              p00_task: tmpl.p00_task || null,
+            });
+          }
+        }
+        if (available.length > 0) result._available_templates = available;
+      } catch {}
     } else {
       // Global view: group all crons by client
       const clients = loadClients();
@@ -5400,11 +6025,14 @@ nav .nav-footer { display:none !important; }
 
     for (const cron of crons) {
       const cronSlug = _extractSlugFromCron(cron.name, clients);
-      if (!cronSlug && slugParam) {
-        // Try prompt match
-        const promptMatch = (cron.payload?.message || '').match(/brand\/([a-z0-9_-]+)\//i);
-        if (!promptMatch || promptMatch[1] !== slugParam) continue;
-      } else if (slugParam && cronSlug !== slugParam) continue;
+      if (slugParam) {
+        // Include if: name matches, or prompt mentions the slug (multi-client crons), or brand/ path matches
+        const prompt = (cron.payload?.message || '').toLowerCase();
+        const nameMatch = cronSlug === slugParam;
+        const promptMentions = prompt.includes(slugParam.toLowerCase());
+        const brandPathMatch = prompt.includes('brand/' + slugParam);
+        if (!nameMatch && !promptMentions && !brandPathMatch) continue;
+      }
 
       const runFile = path.join(runsDir, cron.id + '.jsonl');
       if (!fs.existsSync(runFile)) continue;
@@ -5430,6 +6058,90 @@ nav .nav-footer { display:none !important; }
               category: _detectCronCategory(cron.name, cron.payload?.message),
             });
           } catch {}
+        }
+      } catch {}
+    }
+
+    // Enrich summaries from saved recurring-tasks output files
+    // If exact date has no output, use most recent available output for that task
+    for (const run of runs) {
+      run.hasOutput = false;
+      const targetSlug = run.client_slug || slugParam;
+      if (!targetSlug) continue;
+      const taskName = slugifyCronName(run.jobName, targetSlug);
+      if (!taskName) continue;
+      const taskDir = path.join(BASE, 'brand', targetSlug, 'recurring-tasks', taskName);
+
+      // Try exact date first
+      const date = run.runAtMs ? new Date(run.runAtMs).toISOString().slice(0, 10) : null;
+      if (date) {
+        const outFile = path.join(taskDir, date + '.json');
+        try {
+          if (fs.existsSync(outFile)) {
+            const saved = JSON.parse(fs.readFileSync(outFile, 'utf-8'));
+            if (saved.content) { run.summary = saved.content; run.hasOutput = true; continue; }
+          }
+        } catch {}
+      }
+
+      // Fallback: most recent output file for this task
+      try {
+        if (!fs.existsSync(taskDir)) continue;
+        const files = fs.readdirSync(taskDir).filter(f => f.endsWith('.json')).sort().reverse();
+        for (const f of files) {
+          try {
+            const saved = JSON.parse(fs.readFileSync(path.join(taskDir, f), 'utf-8'));
+            if (saved.content) {
+              run.summary = saved.content;
+              run.hasOutput = true;
+              if (saved.runAtMs) run.runAtMs = saved.runAtMs;
+              break;
+            }
+          } catch {}
+        }
+      } catch {}
+    }
+
+    // Also scan recurring-tasks/ directory for outputs not covered by cron runs
+    // (e.g. cron was recreated, old run files gone, but outputs persist)
+    if (slugParam) {
+      const rtDir = path.join(BASE, 'brand', slugParam, 'recurring-tasks');
+      try {
+        if (fs.existsSync(rtDir)) {
+          const taskDirs = fs.readdirSync(rtDir).filter(d => fs.statSync(path.join(rtDir, d)).isDirectory());
+          for (const taskName of taskDirs) {
+            // Check if we already have runs for this task
+            const alreadyCovered = runs.some(r => slugifyCronName(r.jobName, slugParam) === taskName && r.hasOutput);
+            if (alreadyCovered) continue;
+
+            // Read the most recent output files
+            const taskDir = path.join(rtDir, taskName);
+            const files = fs.readdirSync(taskDir).filter(f => f.endsWith('.json')).sort().reverse().slice(0, limit);
+            for (const f of files) {
+              try {
+                const saved = JSON.parse(fs.readFileSync(path.join(taskDir, f), 'utf-8'));
+                if (!saved.content) continue;
+                // Check if this run is already in the list (by date)
+                const date = f.replace('.json', '');
+                const alreadyHasDate = runs.some(r => r.hasOutput && slugifyCronName(r.jobName, slugParam) === taskName && r.runAtMs && new Date(r.runAtMs).toISOString().slice(0, 10) === date);
+                if (alreadyHasDate) continue;
+
+                runs.push({
+                  jobId: saved.cronId || taskName,
+                  jobName: saved.cronName || taskName.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
+                  status: saved.status || 'ok',
+                  summary: saved.content,
+                  durationMs: saved.durationMs || null,
+                  model: saved.model || null,
+                  runAtMs: saved.runAtMs || new Date(date + 'T08:00:00').getTime(),
+                  sessionId: null,
+                  client_slug: slugParam,
+                  category: _detectCronCategory(saved.cronName || taskName, ''),
+                  hasOutput: true,
+                });
+              } catch {}
+            }
+          }
         }
       } catch {}
     }
@@ -5646,6 +6358,78 @@ nav .nav-footer { display:none !important; }
     return;
   }
 
+  // === API: Monitoring (Performance Analysis) ===
+  if (req.method === 'GET' && url.startsWith('/api/monitoring')) {
+    if (!req._adminToken && !req._portalClient) { res.writeHead(403, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'Unauthorized' })); return; }
+    const params = new URL('http://x' + req.url).searchParams;
+    let slugParam = params.get('slug');
+    if (req._portalClient) slugParam = req._portalSlug;
+    if (!slugParam) { res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'Missing slug' })); return; }
+    const monDir = path.join(BASE, 'brand', slugParam, 'monitoring');
+    const result = { slug: slugParam, health_score: null, pending_recommendations: null, latest_weekly: null };
+    try { result.health_score = JSON.parse(fs.readFileSync(path.join(monDir, 'health-score.json'), 'utf-8')); } catch {}
+    try { result.pending_recommendations = JSON.parse(fs.readFileSync(path.join(monDir, 'pending-recommendations.json'), 'utf-8')); } catch {}
+    try {
+      const weeklyDir = path.join(monDir, 'weekly');
+      const files = fs.readdirSync(weeklyDir).filter(f => f.endsWith('.json')).sort().reverse();
+      if (files.length > 0) result.latest_weekly = JSON.parse(fs.readFileSync(path.join(weeklyDir, files[0]), 'utf-8'));
+    } catch {}
+    res.writeHead(200, { 'Content-Type': 'application/json' }); res.end(JSON.stringify(result)); return;
+  }
+  if (req.method === 'POST' && url === '/api/monitoring/recommendation-action') {
+    if (!req._adminToken && !req._portalClient) { res.writeHead(403, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'Unauthorized' })); return; }
+    let body = ''; req.on('data', chunk => { body += chunk; if (body.length > 1e5) req.destroy(); });
+    req.on('end', () => {
+      try {
+        const { slug, recommendationId, action, projectOverride } = JSON.parse(body);
+        if (!slug || !recommendationId || !action) { res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'Missing slug, recommendationId, or action' })); return; }
+        if (req._portalClient && req._portalSlug !== slug) { res.writeHead(403, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'Forbidden' })); return; }
+        const recFile = path.join(BASE, 'brand', slug, 'monitoring', 'pending-recommendations.json');
+        if (!fs.existsSync(recFile)) { res.writeHead(404, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'No recommendations file' })); return; }
+        const data = JSON.parse(fs.readFileSync(recFile, 'utf-8'));
+        const rec = (data.recommendations || []).find(r => r.id === recommendationId);
+        if (!rec) { res.writeHead(404, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'Recommendation not found' })); return; }
+        const now = new Date().toISOString();
+        if (action === 'approve') { rec.status = 'approved'; rec.approved_at = now; rec.actioned_at = now; }
+        else if (action === 'dismiss') { rec.status = 'dismissed'; rec.actioned_at = now; }
+        else if (action === 'convert') {
+          rec.status = 'converted';
+          rec.actioned_at = now;
+          // Use projectOverride if provided, else fall back to linked_project/linkedProject
+          const projRef = projectOverride || rec.linked_project || rec.linkedProject;
+          if (!projRef) { res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'No linked project — assign a project first' })); return; }
+          // Save the project reference back to the rec if it came from override
+          if (projectOverride) { rec.linkedProject = projectOverride; }
+          if (projRef) {
+            const projectsDir = path.join(BASE, 'brand', slug, 'projects');
+            const dirs = fs.readdirSync(projectsDir, { withFileTypes: true });
+            const projDir = dirs.find(d => d.isDirectory() && d.name.startsWith(projRef));
+            if (projDir) {
+              const tasksFile = path.join(projectsDir, projDir.name, 'tasks.json');
+              let tasks = [];
+              try { const td = JSON.parse(fs.readFileSync(tasksFile, 'utf-8')); tasks = Array.isArray(td) ? td : (td.tasks || []); } catch {}
+              const taskNum = tasks.length + 1;
+              const taskId = `${projRef}-T${String(taskNum).padStart(2, '0')}`;
+              tasks.push({
+                id: taskId,
+                name: rec.title,
+                description: `${rec.rationale || rec.description || ''}\n\n**Accion sugerida:** ${rec.suggested_action || ''}`,
+                status: 'todo',
+                source: 'performance-analysis',
+                created_at: now
+              });
+              fs.writeFileSync(tasksFile, JSON.stringify(tasks, null, 2));
+              rec.converted_to_task = taskId;
+            }
+          }
+        } else { res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'Invalid action. Use: approve, dismiss, convert' })); return; }
+        data.updated_at = now;
+        fs.writeFileSync(recFile, JSON.stringify(data, null, 2));
+        res.writeHead(200, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: true, recommendation: rec }));
+      } catch (e) { res.writeHead(500, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: e.message })); }
+    }); return;
+  }
+
   // === API: Crons (OpenClaw cron list) ===
   if (req.method === 'GET' && url.startsWith('/api/crons')) {
     if (!req._adminToken && !req._portalClient) { res.writeHead(403, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'Unauthorized' })); return; }
@@ -5724,10 +6508,22 @@ nav .nav-footer { display:none !important; }
       }
 
       if (changed) {
-        fs.writeFileSync(stateFile, JSON.stringify(state, null, 2));
+        safeWriteFoundationState(stateFile, state);
         try { const { execSync } = require('child_process'); execSync('python3 scripts/regenerate.py', { cwd: BASE, timeout: 15000 }); } catch (e) { console.error('[syncTaskToPillar] regenerate error:', e.message); }
       }
     } catch (e) { console.error('[syncTaskToPillar] error:', e.message); }
+  }
+
+  // === API: Get next project ID for a client ===
+  if (req.method === 'GET' && url.match(/^\/api\/projects\/next-id\/[a-z0-9-]+$/)) {
+    if (!req._adminToken && !req._portalClient) {
+      res.writeHead(403, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'Unauthorized' })); return;
+    }
+    const slug = url.split('/').pop();
+    const nextId = getNextProjectId(slug);
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ ok: true, slug, next_id: nextId, next_project: `P${String(nextId).padStart(2, '0')}` }));
+    return;
   }
 
   // === API: Regenerate mc-data.js on demand ===
@@ -5745,6 +6541,130 @@ nav .nav-footer { display:none !important; }
       res.writeHead(500, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ error: e.message }));
     }
+    return;
+  }
+
+  // === API: Create new client (SSE streaming) ===
+  if (req.method === 'POST' && url === '/api/new-client') {
+    if (!req._adminToken) {
+      res.writeHead(403, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Admin only' }));
+      return;
+    }
+    if (_clientCreationInProgress) {
+      res.writeHead(409, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Client creation already in progress' }));
+      return;
+    }
+    let body = '';
+    req.on('data', chunk => { body += chunk; if (body.length > 1e5) req.destroy(); });
+    req.on('end', () => {
+      try {
+        const { slug, name, guild } = JSON.parse(body);
+        // Validate required fields
+        if (!slug || !name || !guild) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Missing slug, name, or guild' }));
+          return;
+        }
+        if (!/^[a-z0-9][a-z0-9-]*$/.test(slug)) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Invalid slug format (lowercase, numbers, hyphens only)' }));
+          return;
+        }
+        if (!/^\d{17,20}$/.test(guild)) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Invalid guild ID (must be 17-20 digit Discord snowflake)' }));
+          return;
+        }
+        // Check if brand directory already exists
+        const brandDir = path.join(BASE, 'brand', slug);
+        if (fs.existsSync(brandDir)) {
+          res.writeHead(409, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: `Client "${slug}" already exists` }));
+          return;
+        }
+        // Start SSE streaming
+        _clientCreationInProgress = true;
+        res.writeHead(200, {
+          'Content-Type': 'text/event-stream',
+          'Cache-Control': 'no-cache',
+          'Connection': 'keep-alive',
+          'X-Accel-Buffering': 'no'
+        });
+        const scriptPath = path.join(BASE, 'scripts', 'new-client.sh');
+        const child = spawn('bash', [scriptPath, '--slug', slug, '--name', name, '--guild', guild], {
+          cwd: BASE,
+          env: { ...process.env }
+        });
+        const sendSSE = (data) => { res.write(`data: ${data}\n\n`); };
+        let outputBuffer = '';
+        const flushLines = (chunk) => {
+          outputBuffer += chunk;
+          const lines = outputBuffer.split('\n');
+          outputBuffer = lines.pop();
+          for (const line of lines) {
+            sendSSE(line);
+          }
+        };
+        child.stdout.on('data', (data) => flushLines(data.toString()));
+        child.stderr.on('data', (data) => flushLines('[stderr] ' + data.toString()));
+        const killTimer = setTimeout(() => {
+          child.kill('SIGTERM');
+          sendSSE('⏱️ Timeout — proceso terminado tras 120s');
+        }, 120000);
+        child.on('close', (code) => {
+          clearTimeout(killTimer);
+          if (outputBuffer) sendSSE(outputBuffer);
+          res.write(`event: done\ndata: ${JSON.stringify({ ok: code === 0, code })}\n\n`);
+          res.end();
+          _clientCreationInProgress = false;
+        });
+        req.on('close', () => {
+          child.kill('SIGTERM');
+          clearTimeout(killTimer);
+          _clientCreationInProgress = false;
+        });
+      } catch (e) {
+        _clientCreationInProgress = false;
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Invalid JSON: ' + e.message }));
+      }
+    });
+    return;
+  }
+
+  // === API: Save client sources.json ===
+  if (req.method === 'POST' && url === '/api/client-sources') {
+    if (!req._adminToken) {
+      res.writeHead(403, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Admin only' }));
+      return;
+    }
+    let body = '';
+    req.on('data', chunk => { body += chunk; if (body.length > 1e5) req.destroy(); });
+    req.on('end', () => {
+      try {
+        const { slug, sources } = JSON.parse(body);
+        if (!slug || !sources) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Missing slug or sources' }));
+          return;
+        }
+        const brandDir = path.join(BASE, 'brand', slug);
+        if (!fs.existsSync(brandDir)) {
+          res.writeHead(404, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: `Client "${slug}" not found` }));
+          return;
+        }
+        fs.writeFileSync(path.join(brandDir, 'sources.json'), JSON.stringify(sources, null, 2));
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true }));
+      } catch (e) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: e.message }));
+      }
+    });
     return;
   }
 
@@ -5775,7 +6695,7 @@ nav .nav-footer { display:none !important; }
         // Find the project folder
         const projectsDir = path.join(BASE, 'brand', slug, 'projects');
         const projectId = taskId.split('-').slice(0, 1).join('-'); // P01 from P01-T01
-        const projDir = resolveProjectDir(projectsDir, projectId, null);
+        const projDir = resolveProjectDir(projectsDir, projectId);
         if (!projDir) {
           res.writeHead(404, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ error: 'Project not found: ' + projectId }));
@@ -5837,7 +6757,7 @@ nav .nav-footer { display:none !important; }
         if (req._portalClient && req._portalSlug !== slug) { res.writeHead(403, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'Forbidden' })); return; }
         const projectsDir = path.join(BASE, 'brand', slug, 'projects');
         const projectId = taskId.split('-').slice(0, 1).join('-');
-        const projDir = resolveProjectDir(projectsDir, projectId, null);
+        const projDir = resolveProjectDir(projectsDir, projectId);
         if (!projDir) { res.writeHead(404, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'Project not found' })); return; }
         const tasksFile = path.join(projDir, 'tasks.json');
         let tasksData;
@@ -5879,7 +6799,7 @@ nav .nav-footer { display:none !important; }
         if (!slug || !projectId || !fields) { res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'Missing params' })); return; }
         if (req._portalClient && req._portalSlug !== slug) { res.writeHead(403, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'Forbidden' })); return; }
         const projectsDir = path.join(BASE, 'brand', slug, 'projects');
-        const projDir = resolveProjectDir(projectsDir, projectId, null);
+        const projDir = resolveProjectDir(projectsDir, projectId);
         if (!projDir) { res.writeHead(404, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'Project not found' })); return; }
         const projFile = path.join(projDir, 'project.json');
         let project;
@@ -5888,14 +6808,6 @@ nav .nav-footer { display:none !important; }
         const allowed = ['name','description','approach','objective','status','review_date','strategy'];
         for (const [k, v] of Object.entries(fields)) { if (allowed.includes(k)) project[k] = v; }
         fs.writeFileSync(projFile, JSON.stringify(project, null, 2));
-        // Also update registry
-        const regFile = path.join(projectsDir, 'registry.json');
-        try {
-          const reg = JSON.parse(fs.readFileSync(regFile, 'utf-8'));
-          const rp = (reg.projects || []).find(p => p.id === projectId);
-          if (rp) { if (fields.name) rp.name = fields.name; if (fields.status) rp.status = fields.status; if (fields.review_date) rp.review_date = fields.review_date; }
-          fs.writeFileSync(regFile, JSON.stringify(reg, null, 2));
-        } catch {}
         // Notify on status change
         if (fields.status && fields.status !== oldStatus) {
           notifyProjectChange(slug, { type: 'project', id: projectId, name: project.name, oldStatus, newStatus: fields.status, sourceThread });
@@ -5921,20 +6833,8 @@ nav .nav-footer { display:none !important; }
         if (!slug || !projectId) { res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'Missing params' })); return; }
         if (req._portalClient && req._portalSlug !== slug) { res.writeHead(403, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'Forbidden' })); return; }
         const projectsDir = path.join(BASE, 'brand', slug, 'projects');
-        // Update registry
-        const regFile = path.join(projectsDir, 'registry.json');
-        try {
-          const reg = JSON.parse(fs.readFileSync(regFile, 'utf-8'));
-          const rp = (reg.projects || []).find(p => p.id === projectId);
-          if (rp) {
-            rp.status = 'archived';
-            rp.archived_at = new Date().toISOString().slice(0, 10);
-            rp.archive_reason = reason || 'Archivado por el cliente';
-          }
-          fs.writeFileSync(regFile, JSON.stringify(reg, null, 2));
-        } catch {}
         // Update project.json
-        const projDir = resolveProjectDir(projectsDir, projectId, null);
+        const projDir = resolveProjectDir(projectsDir, projectId);
         if (projDir) {
           const projFile = path.join(projDir, 'project.json');
           try {
@@ -6042,6 +6942,272 @@ nav .nav-footer { display:none !important; }
         res.writeHead(500); res.end(JSON.stringify({ error: e.message }));
       }
     });
+    return;
+  }
+
+  // === Atalaya API endpoints (use /api/atalaya-* pattern to survive admin path normalization) ===
+  function atalayaSlug() {
+    const params = new URL('http://x' + req.url).searchParams;
+    return params.get('slug') || '';
+  }
+  function atalayaConfigPath(s) {
+    return path.join(BASE, 'brand', s, 'atalaya', 'config.json');
+  }
+  function atalayaLoadConfig(s) {
+    const defaults = { channels_to_monitor: [], followed_profiles: { linkedin: [], twitter: [], instagram: [] }, competitor_overrides: {}, categories: ['Growth','Founder','SEO','AI','Marketing'] };
+    try { return { ...defaults, ...JSON.parse(fs.readFileSync(atalayaConfigPath(s), 'utf-8')) }; } catch { return defaults; }
+  }
+  function atalayaSaveConfig(s, config) {
+    const dir = path.join(BASE, 'brand', s, 'atalaya');
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(atalayaConfigPath(s), JSON.stringify(config, null, 2));
+  }
+
+  if (req.method === 'POST' && url === '/api/atalaya-categories') {
+    if (!req._adminToken) { res.writeHead(403); res.end('Forbidden'); return; }
+    const atSlug = atalayaSlug();
+    let body = '';
+    req.on('data', chunk => body += chunk);
+    req.on('end', () => {
+      try {
+        const { action, category } = JSON.parse(body);
+        const config = atalayaLoadConfig(atSlug);
+        if (!config.categories) config.categories = ['Growth','Founder','SEO','AI','Marketing'];
+        if (action === 'add' && category && !config.categories.includes(category)) {
+          config.categories.push(category);
+        } else if (action === 'remove' && category) {
+          config.categories = config.categories.filter(c => c !== category);
+        }
+        atalayaSaveConfig(atSlug, config);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true, categories: config.categories }));
+      } catch (e) { res.writeHead(500); res.end(JSON.stringify({ error: e.message })); }
+    });
+    return;
+  }
+  if (req.method === 'POST' && (url === '/api/atalaya-profiles' || url === '/api/atalaya-profiles-add')) {
+    if (!req._adminToken) { res.writeHead(403); res.end('Forbidden'); return; }
+    const atSlug = atalayaSlug();
+    let body = '';
+    req.on('data', chunk => body += chunk);
+    req.on('end', () => {
+      try {
+        const { platform, url: profileUrl, category, name } = JSON.parse(body);
+        const config = atalayaLoadConfig(atSlug);
+        if (!config.followed_profiles[platform]) config.followed_profiles[platform] = [];
+        const id = 'p-' + Date.now() + '-' + Math.random().toString(36).slice(2,6);
+        const profileName = name || (platform === 'linkedin' ? profileUrl.split('/in/')[1]?.replace(/\/$/, '') || profileUrl : profileUrl);
+        config.followed_profiles[platform].push({ id, name: profileName, url: profileUrl, category: category || 'Growth', active: true, added_at: new Date().toISOString(), posts_monitored: 0 });
+        atalayaSaveConfig(atSlug, config);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true, id }));
+      } catch (e) { res.writeHead(500); res.end(JSON.stringify({ error: e.message })); }
+    });
+    return;
+  }
+  if (req.method === 'POST' && url.startsWith('/api/atalaya-profiles-update')) {
+    if (!req._adminToken) { res.writeHead(403); res.end('Forbidden'); return; }
+    const atSlug = atalayaSlug();
+    let body = '';
+    req.on('data', chunk => body += chunk);
+    req.on('end', () => {
+      try {
+        const { platform, id: profileId, active, category } = JSON.parse(body);
+        const config = atalayaLoadConfig(atSlug);
+        const list = config.followed_profiles?.[platform] || [];
+        const item = list.find(p => p.id === profileId);
+        if (item) {
+          if (active !== undefined) item.active = active;
+          if (category !== undefined) item.category = category;
+          atalayaSaveConfig(atSlug, config);
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ ok: true }));
+        } else { res.writeHead(404); res.end(JSON.stringify({ error: 'Profile not found' })); }
+      } catch (e) { res.writeHead(500); res.end(JSON.stringify({ error: e.message })); }
+    });
+    return;
+  }
+  if (req.method === 'POST' && url.startsWith('/api/atalaya-profiles-delete')) {
+    if (!req._adminToken) { res.writeHead(403); res.end('Forbidden'); return; }
+    const atSlug = atalayaSlug();
+    let body = '';
+    req.on('data', chunk => body += chunk);
+    req.on('end', () => {
+      try {
+        const { platform, id: profileId } = JSON.parse(body);
+        const config = atalayaLoadConfig(atSlug);
+        if (config.followed_profiles?.[platform]) {
+          config.followed_profiles[platform] = config.followed_profiles[platform].filter(p => p.id !== profileId);
+          atalayaSaveConfig(atSlug, config);
+        }
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true }));
+      } catch (e) { res.writeHead(500); res.end(JSON.stringify({ error: e.message })); }
+    });
+    return;
+  }
+  if (req.method === 'POST' && url.startsWith('/api/atalaya-channel')) {
+    if (!req._adminToken) { res.writeHead(403); res.end('Forbidden'); return; }
+    const atSlug = atalayaSlug();
+    let body = '';
+    req.on('data', chunk => body += chunk);
+    req.on('end', () => {
+      try {
+        const { competitorSlug, channel, enabled } = JSON.parse(body);
+        const config = atalayaLoadConfig(atSlug);
+        if (!config.competitor_overrides) config.competitor_overrides = {};
+        if (!config.competitor_overrides[competitorSlug]) {
+          config.competitor_overrides[competitorSlug] = { channels: [...(config.channels_to_monitor || [])] };
+        }
+        const chList = config.competitor_overrides[competitorSlug].channels;
+        if (enabled && !chList.includes(channel)) chList.push(channel);
+        if (!enabled) config.competitor_overrides[competitorSlug].channels = chList.filter(c => c !== channel);
+        atalayaSaveConfig(atSlug, config);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true }));
+      } catch (e) { res.writeHead(500); res.end(JSON.stringify({ error: e.message })); }
+    });
+    return;
+  }
+  if (req.method === 'POST' && url.startsWith('/api/atalaya-approve-idea')) {
+    if (!req._adminToken) { res.writeHead(403); res.end('Forbidden'); return; }
+    const atSlug = atalayaSlug();
+    let body = '';
+    req.on('data', chunk => body += chunk);
+    req.on('end', () => {
+      try {
+        const { ideaId, sourceType } = JSON.parse(body);
+        const pendingFiles = { profiles: 'profiles-pending.json', competitors: 'competitors-pending.json', ads: 'ads-pending.json', pending: 'pending-ideas.json' };
+        const pendingPath = path.join(BASE, 'brand', atSlug, 'atalaya', pendingFiles[sourceType] || 'pending-ideas.json');
+        const ideasPath = path.join(BASE, 'brand', atSlug, 'ideas.json');
+        let pending = [];
+        try { const raw = JSON.parse(fs.readFileSync(pendingPath, 'utf-8')); pending = Array.isArray(raw) ? raw : raw.ideas_generated || []; } catch {}
+        const idea = pending.find(i => i.id === ideaId);
+        if (!idea) { res.writeHead(404); res.end(JSON.stringify({ error: 'Idea not found' })); return; }
+        let ideas = { ideas: [] };
+        try { ideas = JSON.parse(fs.readFileSync(ideasPath, 'utf-8')); } catch {}
+        if (!ideas.ideas) ideas.ideas = [];
+        ideas.ideas.push({
+          id: idea.id, type: 'content', status: 'new', title: idea.adapted_idea?.title || idea.title || '', description: idea.adapted_idea?.description || '',
+          category: idea.pattern_identified || '', source: 'atalaya', channels_suggested: idea.adapted_idea?.recommended_channels || [],
+          priority_score: idea.adapted_idea?.priority === 'high' ? 80 : idea.adapted_idea?.priority === 'medium' ? 50 : 20,
+          created_at: new Date().toISOString(), notes: 'Fuente: ' + (idea.source_name||'') + ' (' + (idea.source_channel||'') + ')'
+        });
+        fs.writeFileSync(ideasPath, JSON.stringify(ideas, null, 2));
+        pending = pending.filter(i => i.id !== ideaId);
+        fs.writeFileSync(pendingPath, JSON.stringify(pending, null, 2));
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true }));
+      } catch (e) { res.writeHead(500); res.end(JSON.stringify({ error: e.message })); }
+    });
+    return;
+  }
+  if (req.method === 'POST' && url.startsWith('/api/atalaya-approve-all')) {
+    if (!req._adminToken) { res.writeHead(403); res.end('Forbidden'); return; }
+    const atSlug = atalayaSlug();
+    let body2 = '';
+    req.on('data', chunk => body2 += chunk);
+    req.on('end', () => {
+    try {
+      const { sourceType: st } = JSON.parse(body2 || '{}');
+      const pendingFiles2 = { profiles: 'profiles-pending.json', competitors: 'competitors-pending.json', ads: 'ads-pending.json', pending: 'pending-ideas.json' };
+      const pendingPath = path.join(BASE, 'brand', atSlug, 'atalaya', pendingFiles2[st] || 'pending-ideas.json');
+      const ideasPath = path.join(BASE, 'brand', atSlug, 'ideas.json');
+      let pending = [];
+      try { const raw = JSON.parse(fs.readFileSync(pendingPath, 'utf-8')); pending = Array.isArray(raw) ? raw : raw.ideas_generated || raw.ideas || []; } catch {}
+      let ideas = { ideas: [] };
+      try { ideas = JSON.parse(fs.readFileSync(ideasPath, 'utf-8')); } catch {}
+      if (!ideas.ideas) ideas.ideas = [];
+      for (const idea of pending) {
+        ideas.ideas.push({
+          id: idea.id, type: 'content', status: 'new', title: idea.adapted_idea?.title || idea.title || '', description: idea.adapted_idea?.description || idea.description || '',
+          category: idea.pattern_identified || idea.category || '', source: 'atalaya', channels_suggested: idea.adapted_idea?.recommended_channels || [],
+          priority_score: idea.adapted_idea?.priority === 'high' ? 80 : idea.adapted_idea?.priority === 'medium' ? 50 : 20,
+          created_at: new Date().toISOString(), notes: 'Fuente: ' + (idea.source_name||'') + ' (' + (idea.source_channel||'') + ')'
+        });
+      }
+      fs.writeFileSync(ideasPath, JSON.stringify(ideas, null, 2));
+      fs.writeFileSync(pendingPath, JSON.stringify([], null, 2));
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, count: pending.length }));
+    } catch (e) { res.writeHead(500); res.end(JSON.stringify({ error: e.message })); }
+    });
+    return;
+  }
+
+  // === Competitors sources.json API ===
+  if (url === '/api/competitors-sources' && req.method === 'GET') {
+    if (!req._adminToken) { res.writeHead(403); res.end('Forbidden'); return; }
+    const cSlug = new URL('http://x' + req.url).searchParams.get('slug') || '';
+    try {
+      const srcPath = path.join(BASE, 'brand', cSlug, 'market-and-us', 'competitors', 'sources.json');
+      const data = JSON.parse(fs.readFileSync(srcPath, 'utf-8'));
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(data));
+    } catch (e) {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ competitors: { direct: [], indirect: [] } }));
+    }
+    return;
+  }
+  if (url === '/api/competitors-sources' && req.method === 'POST') {
+    if (!req._adminToken) { res.writeHead(403); res.end('Forbidden'); return; }
+    const cSlug = new URL('http://x' + req.url).searchParams.get('slug') || '';
+    let body = '';
+    req.on('data', chunk => body += chunk);
+    req.on('end', () => {
+      try {
+        const data = JSON.parse(body);
+        const srcDir = path.join(BASE, 'brand', cSlug, 'market-and-us', 'competitors');
+        if (!fs.existsSync(srcDir)) fs.mkdirSync(srcDir, { recursive: true });
+        const srcPath = path.join(srcDir, 'sources.json');
+        // Preserve confirmed_at/confirmed_by from existing file
+        let existing = {};
+        try { existing = JSON.parse(fs.readFileSync(srcPath, 'utf-8')); } catch {}
+        data.confirmed_at = existing.confirmed_at || data.confirmed_at;
+        data.confirmed_by = existing.confirmed_by || data.confirmed_by;
+        data.updated_at = new Date().toISOString();
+        fs.writeFileSync(srcPath, JSON.stringify(data, null, 2));
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true }));
+      } catch (e) { res.writeHead(500); res.end(JSON.stringify({ error: e.message })); }
+    });
+    return;
+  }
+
+  if (url.startsWith('/api/atalaya-overview')) {
+    if (!req._adminToken) { res.writeHead(403); res.end('Forbidden'); return; }
+    const atSlug = atalayaSlug();
+    try {
+      const pendingPath = path.join(BASE, 'brand', atSlug, 'atalaya', 'pending-ideas.json');
+      let pending = [];
+      try { const raw = JSON.parse(fs.readFileSync(pendingPath, 'utf-8')); pending = Array.isArray(raw) ? raw : raw.ideas_generated || []; } catch {}
+      res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+      res.end(JSON.stringify({ pendingCount: pending.length }));
+    } catch (e) { res.writeHead(500); res.end(JSON.stringify({ error: e.message })); }
+    return;
+  }
+
+  // === Atalaya page (admin mode) ===
+  if (url.startsWith('/atalaya/') || url === '/atalaya') {
+    if (!req._adminToken) { res.writeHead(403, { 'Content-Type': 'text/html; charset=utf-8' }); res.end(portalForbiddenPage()); return; }
+    const slug = url.replace('/atalaya/', '').replace(/\/api\/.*/, '').replace(/\/$/, '') || null;
+    if (!slug) {
+      const clients = loadClients();
+      const links = clients.map(c => `<div class="card"><a href="${req._adminBase}/atalaya/${c.slug}/">${c.emoji || '🏢'} ${c.name || c.slug}</a></div>`).join('');
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Access-Control-Allow-Origin': '*' });
+      res.end(page('Atalaya', `<a class="back" href="${req._adminBase}/">← Mission Control</a>`, `<h1>🏰 Atalaya por cliente</h1>${links}`));
+      return;
+    }
+    const client = loadClients().find(c => c.slug === slug);
+    const clientName = client ? (client.name || slug) : slug;
+    try {
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Access-Control-Allow-Origin': '*' });
+      res.end(buildAtalayaPage(slug, req._adminBase, clientName));
+    } catch (err) {
+      res.writeHead(500, { 'Content-Type': 'text/html; charset=utf-8' });
+      res.end(page('Atalaya Error', '', `<h1>Error</h1><pre>${err.stack}</pre>`));
+    }
     return;
   }
 
@@ -7556,7 +8722,7 @@ async function doTest() {
         if (!state.brand_summary) state.brand_summary = {};
         if (!state.brand_summary.url || state.brand_summary.url !== clientUrl) {
           state.brand_summary.url = clientUrl;
-          fs.writeFileSync(stateFile, JSON.stringify(state, null, 2));
+          safeWriteFoundationState(stateFile, state);
           console.log(`[pagespeed] Saved URL ${clientUrl} to ${slug}/foundation-state.json`);
         }
       }
@@ -7747,13 +8913,38 @@ async function doTest() {
         try { metricsPlan = JSON.parse(fs.readFileSync(planFile, 'utf-8')); } catch {}
       }
 
+      // Check if manual data is pending for current week
+      let manualDataPending = false;
+      const manualCadence = metricsPlan && metricsPlan.manualDataCadence ? metricsPlan.manualDataCadence : null;
+      if (manualCadence && integrations.dataSources && integrations.dataSources.sheets) {
+        // Find Monday of current week
+        const now_ = new Date();
+        const day = now_.getDay();
+        const monday = new Date(now_);
+        monday.setDate(monday.getDate() - ((day + 6) % 7));
+        const mondayStr = monday.toISOString().slice(0, 10);
+        // Check if any daily file this week has sheets source data
+        const hasSheetData = dailyFiles.some(d => d.date >= mondayStr && d.sources && d.sources.sheets && d.sources.sheets.status === 'ok' && (d.sources.sheets.metrics || []).length > 0);
+        if (!hasSheetData) manualDataPending = true;
+      }
+
+      // Filter recommended integrations: exclude already connected
+      const ds = integrations.dataSources || {};
+      const recommended = (integrations.recommended || []).filter(r => {
+        const existing = ds[r.apiId];
+        return !existing || existing.status !== 'connected';
+      });
+
       const result = JSON.stringify({
         slug,
         plan: metricsPlan,
         metricsSheet: integrations.metricsSheet || null,
-        dataSources: integrations.dataSources || {},
+        dataSources: ds,
         rolling: metrics,
         daily: dailyFiles,
+        recommended,
+        manualDataPending,
+        manualDataCadence: manualCadence,
         _cachedAt: new Date().toISOString(),
       });
 
@@ -7827,15 +9018,16 @@ async function doTest() {
       const stat = fs.statSync(fullPath);
       
       if (stat.isDirectory()) {
+        const mcPrefix = req._portalBase || req._adminBase || '/mc';
         const prettyRoot = rootKey.charAt(0).toUpperCase() + rootKey.slice(1);
         const prettyPath = subPath ? subPath.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : prettyRoot;
-        const backUrl = subParts.length > 0 ? `/mc/docs/${rootKey}/${subParts.slice(0, -1).join('/')}/` : '/mc/docs/';
+        const backUrl = subParts.length > 0 ? `${mcPrefix}/docs/${rootKey}/${subParts.slice(0, -1).join('/')}/` : `${mcPrefix}/docs/`;
         const backLabel = subParts.length > 0 ? `← ${subParts.slice(0, -1).pop() || prettyRoot}` : '← Documentos';
         // Pass brandPillars:true when listing brand/{slug} (pillar level)
         const isBrandSlug = rootKey === 'brand' && subParts.length === 1;
         // Detect brand/{slug}/{section} — Foundation section level
         const isBrandSection = rootKey === 'brand' && subParts.length === 2 && PILLAR_FLAT.includes(subParts[1]);
-        const content = listDir(fullPath, `/mc/docs/${rootKey}/${subPath ? subPath + '/' : ''}`, {
+        const content = listDir(fullPath, `${mcPrefix}/docs/${rootKey}/${subPath ? subPath + '/' : ''}`, {
           brandPillars: isBrandSlug,
           brandSection: isBrandSection ? { slug: subParts[0], section: subParts[1] } : null,
         });
@@ -7852,7 +9044,7 @@ async function doTest() {
         const docContext = brandSlug ? { slug: brandSlug, docsBase: `${mcPrefix}/docs/brand/${brandSlug}` } : null;
         const html = renderMarkdown(md, docContext);
         const fileName = path.basename(fullPath, '.md');
-        const backUrl = `/mc/docs/${rootKey}/${subParts.slice(0, -1).join('/')}/`;
+        const backUrl = `${mcPrefix}/docs/${rootKey}/${subParts.slice(0, -1).join('/')}/`;
         const backLabel = subParts.length > 1 ? subParts.slice(-2, -1)[0] : rootKey;
         const rawEscaped = md.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
         res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Access-Control-Allow-Origin': '*' });
@@ -8221,6 +9413,165 @@ mcServer.listen(PORT, '127.0.0.1', () => {
 });
 
 // ═══════════════════════════════════════════════════════════════
+// CRON OUTPUT WATCHER: Extract Discord content → brand/{slug}/recurring-tasks/
+// ═══════════════════════════════════════════════════════════════
+const CRON_RUNS_DIR = path.join(process.env.HOME || '/tmp', '.openclaw', 'cron', 'runs');
+const SESSIONS_DIR = path.join(process.env.HOME || '/tmp', '.openclaw', 'agents', 'sancho', 'sessions');
+let _lastProcessedRuns = {};
+
+function slugifyCronName(name, clientSlug) {
+  let s = (name || '').toLowerCase();
+  // Remove client name/slug suffix (e.g. "— Growth4U", "— Multi-Client")
+  s = s.replace(/\s*[—–-]\s*(multi-client|system|global)$/i, '');
+  if (clientSlug) {
+    const clients = loadClients();
+    const client = clients.find(c => c.slug === clientSlug);
+    if (client) s = s.replace(new RegExp('\\s*[—–-]\\s*' + client.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$', 'i'), '');
+    s = s.replace(new RegExp('\\s*[—–-]\\s*' + clientSlug.replace(/-/g, '[- ]?') + '$', 'i'), '');
+  }
+  return s.trim().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'unknown';
+}
+
+function extractDiscordContent(sessionId, cron, clients) {
+  if (!sessionId) return [];
+  const sessFile = path.join(SESSIONS_DIR, sessionId + '.jsonl');
+  try {
+    if (!fs.existsSync(sessFile)) return [];
+    const content = fs.readFileSync(sessFile, 'utf-8');
+    const lines = content.split('\n').filter(Boolean);
+    const messages = []; // { text, channelId }
+
+    for (const line of lines) {
+      try {
+        const d = JSON.parse(line);
+        if (d.type !== 'message') continue;
+        const msg = d.message || {};
+        if (msg.role !== 'assistant') continue;
+        const blocks = msg.content;
+        if (!Array.isArray(blocks)) continue;
+        for (const b of blocks) {
+          if (b.type !== 'toolCall' || b.name !== 'message') continue;
+          const args = b.arguments || {};
+          if (args.action !== 'send') continue;
+          if (!args.message || args.message.length < 30) continue;
+          // Skip JSON
+          if (args.message.trimStart().startsWith('{')) continue;
+          messages.push({ text: args.message, channelId: args.channelId || args.target || null });
+        }
+      } catch {}
+    }
+
+    if (messages.length === 0) return [];
+
+    // Determine which client(s) this content belongs to
+    const results = [];
+    // Try to match messages to clients by content
+    for (const client of clients) {
+      const slug = client.slug;
+      const clientName = (client.name || '').toLowerCase();
+      const clientMsgs = messages.filter(m => {
+        const head = m.text.slice(0, 300).toLowerCase();
+        return head.includes(slug) || head.includes(clientName);
+      });
+      if (clientMsgs.length > 0) {
+        results.push({ slug, content: clientMsgs.map(m => m.text).join('\n\n---\n\n') });
+      }
+    }
+
+    // If no client matched but we have messages, try to use cron name to determine client
+    if (results.length === 0 && messages.length > 0) {
+      const cronSlug = _extractSlugFromCron(cron.name, clients);
+      if (cronSlug) {
+        results.push({ slug: cronSlug, content: messages.map(m => m.text).join('\n\n---\n\n') });
+      }
+    }
+
+    return results;
+  } catch { return []; }
+}
+
+function processCronRuns() {
+  const clients = loadClients();
+  let crons;
+  try { crons = _loadCronsFromOpenClaw(); } catch { return; }
+  let saved = 0;
+
+  for (const cron of crons) {
+    const runFile = path.join(CRON_RUNS_DIR, cron.id + '.jsonl');
+    if (!fs.existsSync(runFile)) continue;
+
+    try {
+      const fileContent = fs.readFileSync(runFile, 'utf-8').trim();
+      const allLines = fileContent.split('\n').filter(Boolean);
+
+      // Process all finished runs (for backfill)
+      for (const rawLine of allLines) {
+        let run;
+        try { run = JSON.parse(rawLine); } catch { continue; }
+        if (run.action !== 'finished') continue;
+        const runMs = run.runAtMs || run.ts || 0;
+
+        // Skip if already processed
+        const key = cron.id + ':' + runMs;
+        if (_lastProcessedRuns[key]) continue;
+
+        const date = runMs ? new Date(runMs).toISOString().slice(0, 10) : null;
+        if (!date) continue;
+
+        // Check if output already exists for any client
+        const cronSlug = _extractSlugFromCron(cron.name, clients);
+        if (cronSlug) {
+          const taskName = slugifyCronName(cron.name, cronSlug);
+          const outFile = path.join(BASE, 'brand', cronSlug, 'recurring-tasks', taskName, date + '.json');
+          if (fs.existsSync(outFile)) {
+            _lastProcessedRuns[key] = true;
+            continue; // already saved
+          }
+        }
+
+        // Extract Discord content from session
+        const discordContent = extractDiscordContent(run.sessionId, cron, clients);
+        if (!discordContent || discordContent.length === 0) {
+          _lastProcessedRuns[key] = true;
+          continue;
+        }
+
+        for (const { slug, content: text } of discordContent) {
+          const taskName = slugifyCronName(cron.name, slug);
+          const dir = path.join(BASE, 'brand', slug, 'recurring-tasks', taskName);
+          fs.mkdirSync(dir, { recursive: true });
+          const outFile = path.join(dir, date + '.json');
+          if (fs.existsSync(outFile)) continue; // don't overwrite
+          const output = {
+            cronId: cron.id,
+            cronName: cron.name,
+            slug,
+            date,
+            runAtMs: runMs,
+            status: run.status || 'ok',
+            durationMs: run.durationMs || null,
+            model: run.model || null,
+            content: text,
+          };
+          fs.writeFileSync(outFile, JSON.stringify(output, null, 2));
+          saved++;
+          console.log(`[cron-output] Saved ${slug}/${taskName}/${date}.json`);
+        }
+        _lastProcessedRuns[key] = true;
+      }
+    } catch (e) { console.error('[cron-output] Error processing', cron.id, e.message); }
+  }
+  if (saved > 0) console.log(`[cron-output] Total saved: ${saved} outputs`);
+}
+
+// Start cron output watcher
+setTimeout(() => {
+  console.log('[cron-output] Initial scan...');
+  processCronRuns();
+  setInterval(() => processCronRuns(), 30000);
+}, 3000);
+
+// ═══════════════════════════════════════════════════════════════
 // FILE WATCHER: foundation-state.json → auto pending-review + task sync
 // ═══════════════════════════════════════════════════════════════
 // When an agent writes to foundation-state.json, this watcher:
@@ -8292,7 +9643,7 @@ function onFoundationStateChange(slug, stateFile) {
     if (changed) {
       // Temporarily stop watching to avoid triggering ourselves
       if (foundationWatchers[slug]) { foundationWatchers[slug].close(); delete foundationWatchers[slug]; }
-      fs.writeFileSync(stateFile, JSON.stringify(newState, null, 2));
+      safeWriteFoundationState(stateFile, newState);
       // Regenerate mc-data.js
       try { const { execSync } = require('child_process'); execSync('python3 scripts/regenerate.py', { cwd: BASE, timeout: 15000 }); } catch (e) { console.error('[foundation-watch] regenerate error:', e.message); }
       // Re-start watcher

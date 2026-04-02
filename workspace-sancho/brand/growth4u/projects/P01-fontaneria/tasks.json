@@ -82,5 +82,18 @@
     "discord_thread_id": "1482640165443866634",
     "type": "outreach",
     "skill": "outreach-sequence-builder"
+  },
+  {
+    "id": "P01-fontaneria-T07",
+    "name": "Fix website engagement — bounce rate at 100%",
+    "description": "Multiple days with 100% bounce rate and 0% engagement rate. Leaking paid traffic.\n\n**Accion sugerida:** ",
+    "status": "in-progress",
+    "source": "performance-analysis",
+    "created_at": "2026-04-01T08:56:30.323Z",
+    "type": "execution",
+    "deliverable": "",
+    "done_criteria": "",
+    "channel": "",
+    "owner": "Sancho"
   }
 ]

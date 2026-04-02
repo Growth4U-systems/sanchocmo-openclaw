@@ -249,5 +249,50 @@
       ],
       "output_file": "brand/sanchocmo/strategic-plan/current.md"
     }
+  },
+  "brand_summary": {
+    "company_name": "SanchoCMO",
+    "sector": "AI Marketing — CMO de IA",
+    "description": "CMO de inteligencia artificial que aprende sobre tu empresa y ejecuta marketing por ti. App de Discord con comunidad + cursos + frameworks.",
+    "north_star": "Primeros usuarios de pago en 3 meses",
+    "icps": [
+      "Fundadores startups post-seed",
+      "Heads de growth sin CMO"
+    ],
+    "competitors": [
+      "Okara AI",
+      "Jasper",
+      "Distribb"
+    ],
+    "positioning": "Do it yourself con un copiloto IA que aprende tu negocio — no es una agencia, no es un template",
+    "url": "https://sanchocmo.com"
+  },
+  "file_index": {
+    "competitors": {
+      "battle_cards": {
+        "okara-ai": "market-and-us/competitors/okara-ai/current.md",
+        "jasper": "market-and-us/competitors/jasper/current.md",
+        "distribb": "market-and-us/competitors/distribb/current.md"
+      },
+      "summary": "market-and-us/competitors/current.md"
+    },
+    "integrations": "integrations.json",
+    "brand_assets": {
+      "visual_identity": "brand-identity/visual-identity/current.md"
+    },
+    "operational": {
+      "costs": "costs.json"
+    },
+    "projects": {
+      "dir": "projects/"
+    },
+    "memory": "memory.md",
+    "presentations": {
+      "onboarding-mockup-empty": "presentations/onboarding-mockup-empty.html",
+      "onboarding-mockup-active": "presentations/onboarding-mockup-active.html",
+      "dashboard-v2-no-metrics": "presentations/dashboard-v2-no-metrics.html",
+      "dashboard-v2-with-metrics": "presentations/dashboard-v2-with-metrics.html",
+      "dashboard-v2-mockup": "presentations/dashboard-v2-mockup.html"
+    }
   }
 }

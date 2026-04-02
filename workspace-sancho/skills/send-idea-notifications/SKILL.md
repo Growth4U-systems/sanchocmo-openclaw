@@ -9,7 +9,7 @@ metadata:
   depends_on: idea-generation
   context_required:
     - brand/{slug}/idea-generation/notifications.json
-    - brand/{slug}/sources.json (for Discord channel ID)
+    - brand/{slug}/client-config.json (for Discord channel ID)
   context_writes:
     - brand/{slug}/idea-generation/notifications.json (marks sent)
 ---
@@ -42,7 +42,7 @@ For each client in clients.json where active=true:
 For each pending notification:
 
 ```
-1. Read brand/{slug}/sources.json → get channels.intelligence Discord channel ID
+1. Read brand/{slug}/client-config.json → get channels.intelligence Discord channel ID
 2. If no intelligence channel configured → log warning, skip
 3. Send message to Discord:
    - Use message tool, channel=discord
@@ -120,7 +120,7 @@ Se generaron 18 ideas para Paymático:
 | Error | Action |
 |-------|--------|
 | notifications.json not found | Skip client, log warning |
-| sources.json missing intelligence channel | Skip client, log: "Client {slug}: No intelligence channel configured" |
+| client-config.json missing intelligence channel | Skip client, log: "Client {slug}: No intelligence channel configured" |
 | Discord send fails | Log error, do NOT mark as sent (will retry next run) |
 | Empty queue | Silent skip |
 

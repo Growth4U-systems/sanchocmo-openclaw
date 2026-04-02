@@ -94,6 +94,17 @@ Todo lo que hago (contenido, ads, outreach, Foundation) se evalúa contra la NSM
 
 14. **Leer references/ de skills** — Cuando un SKILL.md contiene `read("references/X.md")`, ejecutar el tool call `read()` literal sobre ese archivo. Sin excepciones. El contenido de references/ NO está en SKILL.md — si no haces `read()`, no tienes las instrucciones. No asumir, no inferir, no "ya sé lo que dice". Leer.
 
+16. **🗂️ foundation-state.json es la fuente de verdad para TODOS los archivos del cliente** — ANTES de buscar, leer o referenciar cualquier archivo de un cliente, leer `brand/{slug}/foundation-state.json`. Contiene:
+    - `brand_summary` → quién es el cliente (nombre, sector, ICPs, competidores, positioning, URL)
+    - `sections` → estado de cada pilar con `output_file` (paths a los docs)
+    - `file_index` → índice de TODOS los archivos no-pilar (integrations, competitors sources, battle cards, design tokens, metrics, ideas, presentations, etc.)
+    - **Separación**: docs de pilares → `sections.*.pillars.*.output_file`. Todo lo demás → `file_index`. NO duplicar.
+    - **NUNCA buscar archivos con glob/find/ls.** Resolver paths desde `file_index` o `output_file`.
+    - **NUNCA adivinar rutas.** Si no está en `file_index` ni en `output_file`, el archivo no existe o falta añadirlo.
+    - **Mantener file_index actualizado:** al crear/mover/eliminar archivos del cliente, actualizar `file_index` en foundation-state.json.
+    - Todos los paths en `file_index` son **relativos a `brand/{slug}/`**.
+    - **Reconciliación**: `python3 scripts/verify-file-index.py [--fix]` verifica y corrige discrepancias.
+
 15. **⚠️ Notificar al completar + links** — Al completar cualquier tarea que genera archivos:
     - **SIEMPRE** mencionar al usuario con `<@{sender_id}>` para que reciba notificación
     - **SIEMPRE** incluir links tokenizados de MC a TODOS los archivos generados. Formato:

@@ -10,7 +10,6 @@ brand/{slug}/
     v1.md                   ← archivo: plan de marzo 2026
     history.json            ← log de versiones
   projects/
-    registry.json           ← índice de todos los proyectos
     P01-optimizar-web/
       project.json          ← metadata del proyecto
       tasks.json            ← tareas del proyecto
@@ -83,36 +82,9 @@ Documento vivo. Se versiona cuando cambian los objetivos o se completa un ciclo.
 
 ---
 
-## projects/registry.json
+## Registro de proyectos
 
-Índice global de proyectos del cliente. Counter secuencial.
-
-```json
-{
-  "client": "growth4u",
-  "next_id": 3,
-  "projects": [
-    {
-      "id": "P01",
-      "slug": "P01-optimizar-web",
-      "name": "Optimizar web para conversión",
-      "status": "active",
-      "created": "2026-03-12",
-      "strategic_plan_version": 1,
-      "origin": "strategic-plan"
-    },
-    {
-      "id": "P02",
-      "slug": "P02-cold-outreach-ecp1",
-      "name": "Cold outreach ECP1 — franquicias",
-      "status": "active",
-      "created": "2026-03-12",
-      "strategic_plan_version": 1,
-      "origin": "strategic-plan"
-    }
-  ]
-}
-```
+> **No existe `registry.json`.** El filesystem es el registro. Cada carpeta `projects/P{XX}-{slug}/` con su `project.json` define un proyecto. Para obtener el siguiente ID, escanear directorios `P*/` y usar max+1.
 
 ---
 

@@ -21,7 +21,53 @@
       "text": "¡Buenas, Alfonso! Todo en orden por aquí, listo para lo que necesites. ¿En qué te puedo ayudar?",
       "agent": "sancho",
       "ts": "2026-03-28T19:13:21.158Z"
+    },
+    {
+      "role": "user",
+      "text": "Hemos creado en Go High Level una nueva campaña de Guest Posting Outreach. ¿Puedes unirte a ella y ayudarme a mejorarla?",
+      "ts": "2026-03-31T14:31:43.531Z"
+    },
+    {
+      "role": "bot",
+      "text": "¡Vamos al lío! Me encanta que estéis moviendo el guest posting outreach. 💪\n\nAntes de meterme a mejorar la campaña, necesito entender qué tenéis montado. Un par de cosas:\n\n1. **No tengo acceso directo a Go High Level** — no puedo \"unirme\" a la plataforma ni ver la campaña desde dentro. Pero puedo ayudarte mucho si me compartes los detalles.\n\n2. **Lo que necesito de ti** para darte feedback accionable:\n\n   - **Objetivo de la campaña** — ¿Qué buscáis? ¿Links SEO, brand awareness, tráfico referral?\n   - **Secuencia de emails** — Pégame los emails tal cual están (asunto + cuerpo de cada paso)\n   - **Segmento/lista** — ¿A quién va dirigida? ¿Qué tipo de sites/blogs estáis contactando?\n   - **Timing** — ¿Cuántos pasos tiene la secuencia y con qué delays?\n   - **Oferta** — ¿Qué ofrecéis a cambio del guest post? (artículo gratis, intercambio, etc.)\n\nCon eso puedo:\n- ✍️ Reescribir los emails para mejorar open rate y reply rate\n- 🎯 Revisar la estrategia de targeting\n- 📊 Sugerir mejoras en la secuencia (timing, número de follow-ups, CTAs)\n- 🔄 Proponer A/B tests\n\n¿Me pasas lo que tengas montado?",
+      "agent": "sancho",
+      "ts": "2026-03-31T14:32:15.498Z"
+    },
+    {
+      "role": "user",
+      "text": "Ya tienes la conexión hecha con Go High Level. Compruébalo, por favor.",
+      "ts": "2026-03-31T14:32:57.945Z"
+    },
+    {
+      "role": "bot",
+      "text": "Déjame comprobarlo.",
+      "agent": "sancho",
+      "ts": "2026-03-31T14:34:18.267Z"
+    },
+    {
+      "role": "bot",
+      "text": "Veo que en `clients.json` Growth4U tiene configurada la integración con GHL:\n\n- **API**: `ghl` está en la lista de APIs\n- **Token**: referenciado como `GHL_API_KEY` (env var)\n- **Location**: referenciado como `GHL_LOCATION_ID` (env var)\n- **Calendar ID**: `8hQcyWydgrySmdli6vyN`\n\nDéjame verificar que las credenciales están operativas:",
+      "agent": "sancho",
+      "ts": "2026-03-31T14:34:18.269Z"
+    },
+    {
+      "role": "bot",
+      "text": "Las credenciales están configuradas. Déjame probar la conexión haciendo una llamada a la API para ver las campañas:",
+      "agent": "sancho",
+      "ts": "2026-03-31T14:34:18.271Z"
+    },
+    {
+      "role": "bot",
+      "text": "Interesante — la conexión funciona perfectamente ✅, pero la API devuelve **0 campañas**. Esto puede pasar por varias razones:\n\n1. **La campaña está como \"Workflow\"** en vez de \"Campaign\" clásica (GHL tiene ambos)\n2. **La API version** puede necesitar actualización\n\nDéjame buscar en Workflows:",
+      "agent": "sancho",
+      "ts": "2026-03-31T14:34:18.272Z"
+    },
+    {
+      "role": "bot",
+      "text": "¡Ahí está! Lo encontré. La campaña está como **Workflow** en GHL:\n\n**📋 \"Guest Posting Linear Follow-up\"**\n- **ID**: `1aecac87-54d5-40db-903a-92a840d1f05e`\n- **Status**: Published ✅\n- **Creado**: Hoy (31 Mar 2026)\n- **Última actualización**: Hoy a las 10:10\n\nLa conexión con GHL funciona perfectamente. Ahora, la API de Workflows de GHL no expone los pasos internos (emails, delays, condiciones) — eso solo se ve desde la UI.\n\nPara poder ayudarte a mejorarla, necesito que me compartas:\n\n1. **Los emails de la secuencia** — asuntos + cuerpos (pégalos aquí o en un doc)\n2. **Timing entre pasos** — delays entre cada email\n3. **Condiciones/branches** — ¿hay lógica tipo \"si abre → X, si no → Y\"?\n4. **Target** — ¿A qué tipo de blogs/sites va dirigido? ¿Qué nicho?\n\nCon eso puedo:\n- ✍️ Reescribir los emails para maximizar reply rate\n- ⏱️ Optimizar el timing de la secuencia\n- 🎯 Sugerir personalización y segmentación\n- 📊 Proponer A/B tests\n\n¿Me lo pasas?",
+      "agent": "sancho",
+      "ts": "2026-03-31T14:34:18.274Z"
     }
   ],
-  "updatedAt": 1774725201158
+  "updatedAt": 1774967658274
 }

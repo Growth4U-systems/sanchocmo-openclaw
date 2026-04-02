@@ -210,4 +210,16 @@ Al completar toda la Foundation, presentar resumen ejecutivo consolidado con hig
 |------|---------|
 | Documentos | `brand/{slug}/{seccion}/` (markdown) |
 | Estado | `brand/{slug}/foundation-state.json` |
+| brand_summary | `brand/{slug}/foundation-state.json` → `brand_summary` |
+| file_index | `brand/{slug}/foundation-state.json` → `file_index` |
 | MC | `python3 scripts/regenerate.py` |
+
+### file_index (obligatorio)
+
+`foundation-state.json` incluye un bloque `file_index` que indexa todos los archivos no-pilar del cliente (integrations, metrics, brand assets, competitors sources, etc.). Ver schema completo en `_system/schemas/foundation-state-v2.md`.
+
+**Regla para skills:** cuando un skill crea un archivo nuevo (ej: nuevo competidor, nueva presentación), debe añadir su entry al `file_index` correspondiente en `foundation-state.json`.
+
+### brand_summary (obligatorio)
+
+Debe existir para todo cliente con al menos Fast Foundation completado. Contiene: company_name, sector, description, north_star, icps, competitors, positioning, url.

@@ -244,5 +244,22 @@
       "type": "html",
       "section": "market-and-us"
     }
-  ]
+  ],
+  "file_index": {
+    "presentations": {
+      "niche-presentation": "presentations/niche-presentation.html"
+    },
+    "integrations": "integrations.json",
+    "metrics": {
+      "plan_json": "metrics-plan.json"
+    },
+    "operational": {
+      "costs": "costs.json",
+      "ideas": "ideas.json"
+    },
+    "memory": "memory.md",
+    "discord": {
+      "client_config": "client-config.json"
+    }
+  }
 }

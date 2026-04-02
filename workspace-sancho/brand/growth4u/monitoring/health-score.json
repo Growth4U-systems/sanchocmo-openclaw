@@ -1,0 +1,73 @@
+{
+  "slug": "growth4u",
+  "updatedAt": "2026-04-01T10:41:00.000Z",
+  "overallScore": 58,
+  "trend": "improving",
+  "categories": {
+    "funnel": {
+      "weight": 0.35,
+      "score": 72,
+      "trend": "up",
+      "note": "Appointments activated (0→6/day). Lead→Meeting rate 72.7%. BUT opportunities=0 in GHL — pipeline tracking gap.",
+      "kpis": {
+        "appointments": { "score": 90, "trend": "up" },
+        "newContacts": { "score": 75, "trend": "up" },
+        "leadsToMeetingsRate": { "score": 85, "trend": "up" },
+        "opportunities": { "score": 10, "trend": "stagnant", "note": "Always 0 — tracking issue" }
+      }
+    },
+    "paid": {
+      "weight": 0.25,
+      "score": 68,
+      "trend": "mixed",
+      "note": "CPC at all-time low (0.67€ avg). But CTR declining from 4.6% to 2.3% — creative fatigue.",
+      "kpis": {
+        "spend": { "score": 70, "trend": "stable" },
+        "cpc": { "score": 85, "trend": "improving" },
+        "ctr": { "score": 45, "trend": "declining" },
+        "clicks": { "score": 80, "trend": "up" },
+        "leads": { "score": 65, "trend": "stable" }
+      }
+    },
+    "traffic": {
+      "weight": 0.20,
+      "score": 35,
+      "trend": "down",
+      "note": "Sessions stable but engagement rate 0% on multiple days. Bounce rate 100%. Critical website UX issue.",
+      "kpis": {
+        "sessions": { "score": 55, "trend": "stable" },
+        "newUsers": { "score": 55, "trend": "stable" },
+        "engagementRate": { "score": 5, "trend": "critical" },
+        "bounceRate": { "score": 10, "trend": "critical" }
+      }
+    },
+    "seo": {
+      "weight": 0.10,
+      "score": 62,
+      "trend": "improving",
+      "note": "Position improving (12.95→7.05). Impressions stable ~250/day. 0 clicks most days — need to break into top 3.",
+      "kpis": {
+        "impressions": { "score": 60, "trend": "stable" },
+        "position": { "score": 70, "trend": "improving" },
+        "clicks": { "score": 25, "trend": "stagnant" }
+      }
+    },
+    "social": {
+      "weight": 0.10,
+      "score": 20,
+      "trend": "stagnant",
+      "note": "No Metricool data in last 2 weeks. LinkedIn posting appears paused or data collection broken.",
+      "kpis": {
+        "avgEngagement": { "score": 20, "trend": "unknown" },
+        "impressions": { "score": 20, "trend": "unknown" }
+      }
+    }
+  },
+  "topAlerts": [
+    "🔴 Website engagement at 0% — bounce rate 100% on multiple days",
+    "🟡 Meta Ads CTR declining (4.6% → 2.3%) — creative fatigue",
+    "🟡 GHL opportunities always 0 despite 44 appointments — tracking gap",
+    "🟢 Appointments activated: 0→6/day — NSM moving",
+    "🟢 CPC at all-time low: 0.45-0.67€"
+  ]
+}

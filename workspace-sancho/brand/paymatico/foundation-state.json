@@ -288,5 +288,59 @@
       ],
       "output_file": "brand/paymatico/strategic-plan/current.md"
     }
+  },
+  "brand_summary": {
+    "company_name": "Paymático",
+    "sector": "Fintech B2B — Pagos y cuentas programables",
+    "description": "Entidad de pago regulada por BdE. Consolida inteligencia de pagos: tarjetas, SEPA, transferencias, TPVs. Cuentas programables tipo IFTTT. Marca blanca para franquicias.",
+    "north_star": "Franquicias españolas con redes de TPVs",
+    "icps": [
+      "Franquicias españolas (automoción, restauración, salud)",
+      "Corporates con filiales (distribuidoras, constructoras)",
+      "Fiduciarios (agencias de valores, notarios, inmobiliarias)"
+    ],
+    "competitors": [
+      "Stripe",
+      "Adyen",
+      "Monei",
+      "Mollie",
+      "Multisafepay",
+      "Paycomet",
+      "Paynopain",
+      "Pecunpay",
+      "Sipay",
+      "Zettle"
+    ],
+    "positioning": "Las ventajas de una fintech sin ser una — panel único de pagos, cuentas programables y marca blanca, todo regulado por BdE",
+    "url": "https://paymatico.com"
+  },
+  "file_index": {
+    "competitors": {
+      "battle_cards": {
+        "adyen": "market-and-us/competitors/adyen/current.md",
+        "mollie": "market-and-us/competitors/mollie/current.md",
+        "monei": "market-and-us/competitors/monei/current.md",
+        "multisafepay": "market-and-us/competitors/multisafepay/current.md",
+        "paycomet": "market-and-us/competitors/paycomet/current.md",
+        "paynopain": "market-and-us/competitors/paynopain/current.md",
+        "pecunpay": "market-and-us/competitors/pecunpay/current.md",
+        "sipay": "market-and-us/competitors/sipay/current.md",
+        "stripe": "market-and-us/competitors/stripe/current.md",
+        "zettle": "market-and-us/competitors/zettle/current.md"
+      },
+      "summary": "market-and-us/competitors/current.md"
+    },
+    "integrations": "integrations.json",
+    "operational": {
+      "costs": "costs.json"
+    },
+    "content": {},
+    "projects": {
+      "dir": "projects/"
+    },
+    "discord": {
+      "client_config": "client-config.json"
+    },
+    "memory": "memory.md"
   }
 }

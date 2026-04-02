@@ -1,6 +1,6 @@
 ---
 name: strategic-plan
-description: "Post-Foundation strategic plan: analyzes current state (web, tools, channels, content), defines objectives, detects gaps, selects channels and GTM strategies, and generates a prioritized action plan with campaigns. Runs AFTER Foundation is complete. Replaces gtm-orchestrator. Use when: Foundation approved and client needs 'what do we do now?', or when re-evaluating strategy quarterly. Triggers: strategic plan, qué hacemos ahora, plan de acción, post-foundation, next steps, plan estratégico, qué canales, cómo crecemos. NOT for: Foundation (use foundation-orchestrator), individual campaign execution (use execution skills directly), or initial onboarding (use sancho-start/phase-0-diagnostic)."
+description: "Post-Foundation strategic plan: analyzes current state (web, tools, channels, content), defines objectives, detects gaps, selects channels and GTM strategies, and generates a prioritized action plan with projects. Runs AFTER Foundation is complete. Replaces gtm-orchestrator. Use when: Foundation approved and client needs 'what do we do now?', or when re-evaluating strategy quarterly. Triggers: strategic plan, qué hacemos ahora, plan de acción, post-foundation, next steps, plan estratégico, qué canales, cómo crecemos. NOT for: Foundation (use foundation-orchestrator), individual campaign execution (use execution skills directly), or initial onboarding (use sancho-start/phase-0-diagnostic)."
 metadata:
   author: Alfonso Sainz de Baranda (Growth4U)
   version: '1.0'
@@ -48,59 +48,24 @@ else:
 
 ---
 
-## Mode UPDATE — Operación sobre plan existente
+## Mode UPDATE — Solo nuevo ciclo
 
-> **Nota:** Para gestión continua de proyectos y tareas (añadir tareas, status, value review, crear proyectos ad-hoc), usar `sancho-manager`. Este skill se reserva para INIT (crear plan desde cero), Crear hilos Discord, y Nuevo ciclo (versionar plan + re-planificar). Las operaciones "Nuevo proyecto", "Nueva tarea" y "Value review" se documentan aquí como referencia, pero `sancho-manager` es el skill preferido para estas operaciones día a día.
+> ⚠️ **Este skill PLANIFICA. No ejecuta. No gestiona proyectos.**
+> Para TODO lo demás (crear proyectos, tareas, hilos Discord, status, value review, ejecutar) → usar `sancho-manager`.
+> Este skill solo se reactiva para: nuevo ciclo de planificación (versionar plan + re-planificar desde cero).
 
-Leer `strategic-plan/current.md` + `projects/registry.json`.
+Leer `strategic-plan/current.md`.
 
 Detectar intención del usuario:
 
-| Intención | Acción |
-|-----------|--------|
-| "Nuevo proyecto" / "Quiero hacer X" / intelligence sugiere | → **Nuevo proyecto** |
-| "Añade tarea a P01" | → **Nueva tarea** en proyecto existente |
-| "Crea los proyectos" / "Crea los hilos" / "Monta los proyectos en Discord" | → **Crear hilos Discord** (Fase 2 de "Al aprobar el plan") |
-| "P01 está terminado" / todas las tareas completed | → **Value review** |
-| "Nuevos objetivos" / "Siguiente ciclo" | → **Nuevo ciclo** (versionar plan, crear nuevo) |
-
-### Crear hilos Discord
-
-Si `registry.json` + tasks.json existen PERO no tienen `discord_thread_id`:
-
-1. Leer `_system/project-threads-protocol.md`
-2. Resolver channel IDs desde `brand/{slug}/discord-channels.json` (o crear con channel-list)
-3. Ejecutar Fase 2 de "Al aprobar el plan" — crear hilos proyecto por proyecto
-4. **IMPORTANTE:** Usar `thread-create` para CADA proyecto y CADA tarea. NUNCA mensajes planos.
-
-### Nuevo proyecto
-
-1. Leer `strategic-plan/current.md` — objetivos y canales actuales
-2. Evaluar alineación:
-   - **SÍ** → "Encaja con el plan. Lo creo como P{XX}."
-   - **PARCIAL** → "Tiene sentido pero tienes P{XX} abiertos. ¿Primero terminar esos?"
-   - **NO** → "No está en el plan. Si quieres lo añadimos, pero implica desviar foco de [objetivos actuales]."
-3. Esperar confirmación del usuario
-4. Crear `projects/P{XX}-{slug}/project.json` + `tasks.json`
-5. Actualizar `registry.json` + `strategic-plan/current.md` (añadir a proyectos activos)
-6. **Regenerar MC data:** `python3 scripts/regenerate.py` (para que MC refleje el nuevo proyecto)
-7. Crear hilo en `#projects`: `[P{XX}] Nombre`
-8. Crear hilos de tareas en canales temáticos
-
-### Nueva tarea
-
-1. Leer `projects/P{XX}/tasks.json`
-2. Añadir tarea con ID secuencial, canal asignado
-3. **Regenerar MC data:** `python3 scripts/regenerate.py`
-4. Crear hilo en canal temático: `[P{XX}-T{YY}] Nombre`
-
-### Value review
-
-1. Leer `project.json` — objetivo, métricas baseline/target
-2. Obtener métricas actuales (analytics, preguntar al usuario, o inferir de outputs)
-3. Generar `value-review.md` — cumplido sí/no/parcial, antes/después, learnings
-4. Marcar proyecto como `reviewed` en `registry.json`
-5. Si learnings sugieren nuevo proyecto → proponer (vuelve a "Nuevo proyecto")
+| Intención | Skill correcto |
+|-----------|---------------|
+| "Nuevo proyecto" / "Quiero hacer X" | → **`sancho-manager`** |
+| "Añade tarea a P01" | → **`sancho-manager`** |
+| "Ejecuta T01" / "Arranca la Fase 0" | → **`sancho-manager`** |
+| "P01 está terminado" / value review | → **`sancho-manager`** |
+| "Crea los hilos" / "Monta en Discord" | → **`sancho-manager`** |
+| "Nuevos objetivos" / "Siguiente ciclo" | → **Nuevo ciclo** (abajo) |
 
 ### Nuevo ciclo
 
@@ -213,10 +178,10 @@ Plan temporal con 3 fases + revisión:
 - **FASE 2** (Semana 2-3): Medir Fase 1 → ajustar → activar estrategia C si procede
 - **REVISIÓN**: A las 4 semanas, re-evaluar con datos reales
 
-Cada estrategia aprobada genera una carpeta de campaña:
+Cada estrategia aprobada genera un proyecto:
 ```
-campaigns/{YYYY-MM}-{strategy-slug}/
-  brief.md | tasks/ | content/ | results.md
+projects/P{XX}-{strategy-slug}/
+  project.json | tasks.json
 ```
 
 ---
@@ -234,6 +199,13 @@ Presentar: estado actual → gaps → canales → estrategias con scoring → pl
 ```
 
 **Esperar aprobación antes de escribir archivos.**
+
+⚠️ **REGLA CRÍTICA — "Aprobar plan" ≠ "Ejecutar tareas"**
+- Al aprobar: crear estructura (project.json, tasks.json, registry.json, playbooks). **NADA MÁS.**
+- Tareas se crean con status `"pending"`. NINGUNA se ejecuta automáticamente.
+- Si el usuario dice "ejecuta", "arranca", "lanza" → responder:
+  "Plan creado con X proyectos y Y tareas. Para gestionar y ejecutar, usa sancho-manager."
+- **strategic-plan NUNCA ejecuta tareas directamente.** Para eso → `sancho-manager`.
 
 ---
 
@@ -353,7 +325,7 @@ Ver [references/data-model.md](references/data-model.md) para schemas de `projec
 **Fase 1: Escribir archivos**
 
 1. Escribir `brand/{slug}/strategic-plan/current.md` (documento vivo, versionable)
-2. Actualizar `brand/{slug}/projects/registry.json` — **MERGE, nunca sobreescribir.** Leer el registry existente, añadir los nuevos proyectos al array `projects`, preservando los P00 y cualquier proyecto previo. Si no existe, crear nuevo.
+2. **No existe `registry.json`** — el filesystem es el registro. Cada carpeta `P{XX}-{slug}/` con su `project.json` define un proyecto. Para obtener el siguiente P{XX}, escanear directorios `P*/` existentes y usar max+1.
 3. Por cada estrategia aprobada → crear proyecto:
    - Carpeta `brand/{slug}/projects/P{XX}-{slug}/`
    - `project.json` con objetivo, métricas baseline/target, origin, review_date
@@ -453,7 +425,7 @@ El strategic plan NO es one-shot. Es la **fuente de verdad de qué se está haci
 
 Cuando surge un proyecto nuevo (de intelligence, usuario, o value review):
 
-1. Leer `strategic-plan/current.md` + `projects/registry.json`
+1. Leer `strategic-plan/current.md` + escanear `projects/P*/project.json`
 2. Evaluar alineación con objetivos y proyectos activos
 3. Responder según el resultado:
 
@@ -513,7 +485,7 @@ Al completar un proyecto → generar `value-review.md`:
 |--------|---------------|
 | **Llama** | `channel-prioritization` (si no existe channel-plan.md) |
 | **Lee** | Foundation completa, phase-0-diagnostic (si existe), `references/strategies-catalog.json` |
-| **Produce** | `strategic-plan/current.md`, `current-state.md`, `projects/*/project.json`, `projects/*/tasks.json` |
+| **Produce** | `strategic-plan/current.md`, `current-state.md`, `projects/P{XX}-{slug}/project.json`, `projects/P{XX}-{slug}/tasks.json` |
 | **Encadena** | Execution skills por tarea. Value reviews al completar proyecto |
 | **Valida** | Nuevos proyectos propuestos vs plan activo |
 
@@ -541,4 +513,4 @@ Al completar un proyecto → generar `value-review.md`:
 18. ¿Las recurring tasks tienen nombre, frecuencia, fuentes y canal destino definidos?
 19. ¿Se crearon los crons/JSON de recurring_tasks al aprobar?
 20. ⚠️ **¿Se ejecutó `python3 scripts/regenerate.py`** después de crear/actualizar proyectos y tareas?
-21. ⚠️ **¿`registry.json` preserva los P00?** NUNCA sobreescribir — siempre leer, hacer merge, y guardar.
+21. ⚠️ **¿Carpetas P00-* intactas en projects/?** NUNCA borrar carpetas existentes al crear nuevos proyectos.

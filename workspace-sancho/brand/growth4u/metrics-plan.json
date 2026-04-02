@@ -174,13 +174,6 @@
     "gsc",
     "metricool"
   ],
-  "missingIntegrations": [
-    {
-      "metric": "Outbound Activity",
-      "suggestedSource": "Instantly / Lemlist",
-      "frequency": "Daily"
-    }
-  ],
   "channels": [
     {
       "group": "Organic",

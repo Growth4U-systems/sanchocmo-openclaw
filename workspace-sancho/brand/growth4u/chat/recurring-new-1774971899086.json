@@ -1,0 +1,18 @@
+{
+  "messages": [
+    {
+      "role": "user",
+      "text": "Quiero crear una nueva tarea recurrente para el cliente growth4u. Pregúntame qué quiero automatizar y ayúdame a definir: nombre, categoría (intelligence/metrics/outreach/content/system), frecuencia (cron expression), qué agente la ejecuta, y el prompt. Cuando tengamos todo claro, crea la tarea con el endpoint POST /api/recurring-tasks.",
+      "ts": "2026-03-31T15:44:59.092Z"
+    },
+    {
+      "role": "bot",
+      "text": "¡Vamos al lío! Cuéntame: **¿qué quieres automatizar?**\n\nDescribe la tarea en lenguaje natural — qué debería hacer, para qué sirve, con qué frecuencia más o menos — y yo te ayudo a darle forma con estos campos:\n\n1. **Nombre** — identificador corto\n2. **Categoría** — `intelligence` | `metrics` | `outreach` | `content` | `system`\n3. **Frecuencia** — expresión cron (te la propongo yo)\n4. **Agente** — quién la ejecuta (sancho, escudero, rocinante, cervantes)\n5. **Prompt** — las instrucciones exactas que recibe el agente\n\n¿Qué tienes en mente?",
+      "agent": "sancho",
+      "ts": "2026-03-31T15:45:25.473Z"
+    }
+  ],
+  "updatedAt": 1774971925473,
+  "discordThreadId": null,
+  "discordChannelId": null
+}

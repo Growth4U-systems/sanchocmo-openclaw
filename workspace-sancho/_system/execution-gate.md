@@ -12,7 +12,7 @@ NO aplica a: Foundation skills, Strategic Plan itself, diagnostics, conversació
 Cuando el usuario pide ejecutar algo que genera trabajo (contenido, audit, outreach, etc.):
 
 1. **¿Hay proyecto activo para esto?**
-   - Buscar en `brand/{slug}/projects/registry.json`
+   - Escanear `brand/{slug}/projects/P*/project.json`
    - Proyecto activo = mismo tipo + status "active"
 
 2. **SI hay proyecto activo** → ejecutar dentro de ese proyecto

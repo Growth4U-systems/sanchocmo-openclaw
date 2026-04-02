@@ -228,6 +228,46 @@ def parse_activity():
                         "client": client,
                     })
 
+    # Also scan cron run outputs from brand/*/recurring-tasks/*/
+    brand_dir = WORKSPACE / "brand"
+    if brand_dir.exists():
+        cutoff = (datetime.now() - timedelta(days=14)).strftime("%Y-%m-%d")
+        for client_dir_act in sorted(brand_dir.iterdir()):
+            if not client_dir_act.is_dir() or client_dir_act.name.startswith('.'):
+                continue
+            slug = client_dir_act.name
+            rt_dir = client_dir_act / "recurring-tasks"
+            if not rt_dir.exists():
+                continue
+            for task_dir in rt_dir.iterdir():
+                if not task_dir.is_dir():
+                    continue
+                task_name = task_dir.name
+                for json_file in sorted(task_dir.glob("*.json"), reverse=True)[:7]:
+                    date_match = re.search(r'(\d{4}-\d{2}-\d{2})', json_file.name)
+                    if not date_match:
+                        continue
+                    date = date_match.group(1)
+                    if date < cutoff:
+                        continue
+                    try:
+                        run_data = json.loads(json_file.read_text(encoding="utf-8"))
+                        content = run_data.get("content", "")
+                        status = run_data.get("status", "ok")
+                        # Truncate to first 120 chars for activity display
+                        summary = content[:120].replace("\n", " ").strip() if content else f"Cron {task_name} ({status})"
+                        activity.append({
+                            "date": date,
+                            "time": "",
+                            "text": f"⏰ {task_name}: {summary}",
+                            "raw": f"Cron run: {task_name}",
+                            "client": slug,
+                        })
+                    except Exception:
+                        pass
+
+    # Sort by date descending, then return
+    activity.sort(key=lambda x: x.get("date", ""), reverse=True)
     return activity[:100]  # Last 100 events
 
 
@@ -436,47 +476,33 @@ def parse_foundation():
                 sec["output_file"] = sp.get("output_file", "")
                 sec["notes"] = sp.get("notes", "")
 
-            # Projects
+            # Projects — scan filesystem directly (no registry.json needed)
             projects_dir = client_dir / "projects"
             projects_list = []
             if projects_dir.exists():
-                registry_file = projects_dir / "registry.json"
-                if registry_file.exists():
-                    try:
-                        registry = json.loads(registry_file.read_text())
-                        for proj in registry.get("projects", []):
-                            proj_id = proj.get("id", "")
-                            proj_slug = proj.get("slug", "")
-                            # Try multiple folder patterns: P01, P01-slug
-                            proj_dir = None
-                            for fname in [proj_id, f"{proj_id}-{proj_slug}", proj_slug]:
-                                candidate = projects_dir / fname
-                                if candidate.exists():
-                                    proj_dir = candidate
-                                    break
-                            if not proj_dir:
-                                proj_dir = projects_dir / proj_id  # fallback
-                            proj_file = proj_dir / "project.json"
-                            if proj_file.exists():
-                                try:
-                                    pdata = json.loads(proj_file.read_text())
-                                    # Merge registry info with project.json
-                                    proj.update({k: v for k, v in pdata.items() if k not in proj})
-                                except:
-                                    pass
-                            # Load tasks
-                            tasks_file = proj_dir / "tasks.json"
-                            if tasks_file.exists():
-                                try:
-                                    tdata = json.loads(tasks_file.read_text())
-                                    proj["tasks"] = tdata if isinstance(tdata, list) else tdata.get("tasks", [])
-                                except:
-                                    proj["tasks"] = []
-                            else:
-                                proj["tasks"] = []
-                            projects_list.append(proj)
-                    except:
-                        pass
+                import re
+                for proj_dir in sorted(projects_dir.iterdir()):
+                    if not proj_dir.is_dir() or not re.match(r'^P\d+', proj_dir.name):
+                        continue
+                    proj_file = proj_dir / "project.json"
+                    proj = {"id": proj_dir.name.split('-')[0], "slug": proj_dir.name, "name": proj_dir.name}
+                    if proj_file.exists():
+                        try:
+                            pdata = json.loads(proj_file.read_text())
+                            proj.update(pdata)
+                        except:
+                            pass
+                    # Load tasks
+                    tasks_file = proj_dir / "tasks.json"
+                    if tasks_file.exists():
+                        try:
+                            tdata = json.loads(tasks_file.read_text())
+                            proj["tasks"] = tdata if isinstance(tdata, list) else tdata.get("tasks", [])
+                        except:
+                            proj["tasks"] = []
+                    else:
+                        proj["tasks"] = []
+                    projects_list.append(proj)
             client_data["projects"] = projects_list
 
             # Ideas (Idea Bank)
@@ -748,6 +774,35 @@ def parse_api_health():
         return {"lastCheck": None, "services": {}}
 
 
+def parse_monitoring():
+    """Load health scores and pending recommendations for all clients."""
+    brand_dir = WORKSPACE / "brand"
+    clients = {}
+    if brand_dir.exists():
+        for client_dir in sorted(brand_dir.iterdir()):
+            if not client_dir.is_dir() or client_dir.name.startswith('.'):
+                continue
+            slug = client_dir.name
+            mon_dir = client_dir / "monitoring"
+            if not mon_dir.exists():
+                continue
+            client_data = {"slug": slug, "health_score": None, "pending_recommendations_count": 0}
+            hs_file = mon_dir / "health-score.json"
+            if hs_file.exists():
+                try:
+                    client_data["health_score"] = json.loads(hs_file.read_text(encoding="utf-8"))
+                except: pass
+            rec_file = mon_dir / "pending-recommendations.json"
+            if rec_file.exists():
+                try:
+                    rec_data = json.loads(rec_file.read_text(encoding="utf-8"))
+                    pending = [r for r in rec_data.get("recommendations", []) if r.get("status") in ("pending", "active")]
+                    client_data["pending_recommendations_count"] = len(pending)
+                except: pass
+            clients[slug] = client_data
+    return clients
+
+
 def main():
     print("🔄 Regenerating Mission Control data...")
 
@@ -779,6 +834,7 @@ def main():
         "global_costs": parse_global_costs(),
         "client_tasks": parse_client_tasks(),
         "apiHealth": parse_api_health(),
+        "monitoring": parse_monitoring(),
     }
 
     # Write as JS file
