@@ -855,6 +855,53 @@
     .v2-ch { padding:10px 14px; font-size:11px; }
     .v2-cb { padding:12px 14px; }
   }
+
+  /* Trust Engine Timeline */
+  .te-summary-bar { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:24px; }
+  .te-pill { display:flex; align-items:center; gap:6px; padding:8px 16px; background:var(--card); border:2px solid var(--ink); border-radius:20px; font-size:13px; font-weight:600; box-shadow:2px 2px 0 var(--ink); }
+  .te-pill .dot { width:10px; height:10px; border-radius:50%; }
+  .te-pill .dot.green { background:var(--green); }
+  .te-pill .dot.yellow { background:var(--yellow); }
+  .te-pill .dot.red { background:var(--red); }
+  .te-pill .dot.gray { background:var(--border); }
+  .te-phase-section { margin-bottom:32px; }
+  .te-phase-header { display:flex; align-items:center; gap:12px; margin-bottom:14px; padding-bottom:8px; border-bottom:2px solid var(--ink); }
+  .te-phase-num { width:32px; height:32px; border-radius:50%; background:var(--navy); color:#fff; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:700; flex-shrink:0; }
+  .te-phase-title { font-size:18px; font-weight:600; color:var(--navy); }
+  .te-phase-desc { font-size:12px; color:var(--muted); }
+  .te-timeline { position:relative; padding-left:36px; }
+  .te-timeline::before { content:''; position:absolute; left:15px; top:0; bottom:0; width:3px; background:var(--border); }
+  .te-tl-item { position:relative; margin-bottom:14px; }
+  .te-tl-item:last-child { margin-bottom:0; }
+  .te-tl-dot { position:absolute; left:-36px; top:14px; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:13px; border:3px solid var(--ink); z-index:1; }
+  .te-tl-dot.completed { background:var(--green); color:#fff; }
+  .te-tl-dot.running { background:var(--yellow); animation:tePulse 2s infinite; }
+  .te-tl-dot.pending { background:var(--card); }
+  .te-tl-dot.locked { background:var(--border); opacity:0.5; }
+  .te-tl-dot.error { background:var(--red); color:#fff; }
+  @keyframes tePulse { 0%,100%{box-shadow:0 0 0 0 rgba(242,201,76,0.4)} 50%{box-shadow:0 0 0 8px rgba(242,201,76,0)} }
+  .te-tl-card { background:var(--card); border:3px solid var(--ink); border-radius:10px; padding:16px 20px; box-shadow:3px 3px 0 var(--ink); transition:all .2s; }
+  .te-tl-card:hover { transform:translate(-1px,-1px); box-shadow:4px 4px 0 var(--ink); }
+  .te-tl-card.active { border-color:var(--yellow); }
+  .te-tl-card.locked { opacity:0.5; }
+  .te-tl-card-top { display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
+  .te-tl-card-title { display:flex; align-items:center; gap:8px; }
+  .te-tl-card-title .icon { font-size:20px; }
+  .te-tl-card-title .name { font-size:15px; font-weight:600; color:var(--navy); }
+  .te-tl-status { font-size:11px; font-weight:600; padding:3px 10px; border-radius:12px; }
+  .te-tl-status.completed { background:rgba(74,93,35,0.15); color:var(--green); }
+  .te-tl-status.running { background:rgba(242,201,76,0.25); color:#8B6914; }
+  .te-tl-status.pending { background:rgba(93,83,72,0.1); color:var(--muted); }
+  .te-tl-status.locked { background:rgba(93,83,72,0.1); color:var(--muted); }
+  .te-tl-status.error { background:rgba(192,57,43,0.15); color:var(--red); }
+  .te-tl-meta { font-size:12px; color:var(--muted); margin-bottom:8px; }
+  .te-dep-tag { font-size:11px; padding:2px 8px; border-radius:4px; background:rgba(196,93,53,0.1); color:var(--rust); font-weight:600; }
+  .te-tl-actions { display:flex; gap:8px; margin-top:8px; }
+  .te-btn { padding:5px 14px; border-radius:6px; font-size:11px; font-weight:600; cursor:pointer; border:2px solid var(--ink); box-shadow:2px 2px 0 var(--ink); transition:all .15s; }
+  .te-btn:hover { transform:translate(-1px,-1px); box-shadow:3px 3px 0 var(--ink); }
+  .te-btn-primary { background:var(--rust); color:#fff; }
+  .te-btn-navy { background:var(--navy); color:#fff; }
+  .te-btn-secondary { background:var(--card); color:var(--text); }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
@@ -889,6 +936,7 @@
   <a href="#" class="nav-client-only" onclick="showPage('projects',this);">📋 Proyectos</a>
   <a href="#" class="nav-client-only" onclick="showPage('idea-bank',this)">💡 Idea Bank</a>
   <a href="#" class="nav-client-only" onclick="showPage('metrics',this)">📈 Métricas</a>
+  <div class="ns nav-client-only">Herramientas</div>
   <a href="#" class="nav-client-only" onclick="showPage('trust-engine',this)">🔍 Trust Engine</a>
   <a href="#" class="nav-client-only" onclick="showPage('atalaya',this)">🏰 Atalaya <span id="atalaya-badge" style="background:#C45D35;color:#fff;font-size:10px;padding:1px 6px;border-radius:8px;margin-left:4px;display:none;"></span></a>
   <div class="ns">Sistema</div>
@@ -1082,25 +1130,9 @@
 <div id="page-trust-engine" class="page">
   <div class="page-title">🔍 Trust Engine</div>
   <div class="page-sub">Audit SEO + GEO + Own Media → Gaps → Recommendations</div>
-  <div id="te-progress-bar" style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
-    <span id="te-progress-label" style="font-size:14px;color:var(--muted);">0/9 módulos</span>
-    <div style="flex:1;height:8px;background:var(--border);border-radius:4px;overflow:hidden;">
-      <div id="te-progress-fill" style="width:0%;height:100%;background:var(--green);border-radius:4px;transition:width .3s;"></div>
-    </div>
-  </div>
-  <div id="te-module-grid" class="grid" style="grid-template-columns:repeat(auto-fill,minmax(240px,1fr));"></div>
+  <div id="te-summary-bar" class="te-summary-bar"></div>
+  <div id="te-timeline-container"></div>
   <div id="te-detail-container" style="display:none;"></div>
-  <div id="te-launch-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:500;align-items:center;justify-content:center;">
-    <div style="background:var(--card);border:3px solid var(--ink);border-radius:12px;padding:28px;width:480px;max-width:90vw;box-shadow:6px 6px 0 var(--ink);">
-      <h3 style="font-family:'Space Grotesk',sans-serif;margin-bottom:12px;color:var(--navy);">▶ Lanzar Módulo</h3>
-      <p style="font-size:14px;color:var(--muted);margin-bottom:16px;">Estado del módulo:</p>
-      <pre id="te-launch-cmd" style="background:var(--bg);padding:16px;border-radius:8px;font-size:14px;cursor:pointer;border:2px solid var(--border);white-space:pre-wrap;" onclick="navigator.clipboard.writeText(this.textContent);this.style.borderColor='var(--green)';setTimeout(()=>this.style.borderColor='var(--border)',1000);"></pre>
-      <p style="font-size:12px;color:var(--muted);margin-top:8px;">💡 Click para copiar</p>
-      <div style="display:flex;justify-content:flex-end;margin-top:16px;">
-        <button onclick="document.getElementById('te-launch-overlay').style.display='none'" style="padding:6px 14px;border:2px solid var(--ink);border-radius:6px;background:var(--card);color:var(--text);cursor:pointer;font-weight:600;">Cerrar</button>
-      </div>
-    </div>
-  </div>
 </div>
 
 <!-- ==================== PROJECTS ==================== -->
@@ -1173,40 +1205,7 @@
 
 <!-- ==================== IDEA BANK ==================== -->
 <div id="page-idea-bank" class="page">
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
-    <div>
-      <div class="page-title">💡 Idea Bank</div>
-      <div class="page-sub">Ideas de contenido, outreach y crecimiento</div>
-    </div>
-    <div style="display:flex;gap:8px;align-items:center;">
-      <!-- Client selection uses nav sidebar #clientSelector -->
-      <button onclick="showCreateIdeaForm()" style="padding:8px 18px;background:var(--rust);color:#fff;border:2px solid var(--ink);border-radius:8px;font-weight:700;cursor:pointer;font-size:14px;box-shadow:3px 3px 0 var(--ink);">+ Nueva Idea</button>
-      <button id="idea-bank-chat-toggle" onclick="mcChatSidebar.toggle()" style="padding:8px 14px;border:2px solid var(--border);border-radius:8px;font-size:14px;font-weight:600;color:var(--muted);background:var(--bg);cursor:pointer;box-shadow:3px 3px 0 var(--ink);" title="Chat con Sancho">💬</button>
-    </div>
-  </div>
-  <div class="tabs" id="idea-bank-tabs" style="margin-bottom:12px;">
-    <div class="tab active" onclick="switchIdeaTab('content',this)">📝 Contenido</div>
-    <div class="tab" onclick="switchIdeaTab('contact',this)">👥 Contactos</div>
-  </div>
-  <div id="idea-bank-stats" class="stats"></div>
-  <div id="idea-bank-filters" style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;"></div>
-  <div id="idea-bank-content"></div>
-  <div id="idea-analytics" style="margin-top:24px;border-top:2px solid var(--border);padding-top:16px;">
-    <div style="display:flex;align-items:center;gap:8px;cursor:pointer;" onclick="toggleAnalytics()">
-      <span style="font-family:'Space Grotesk';font-size:16px;font-weight:600;color:var(--navy);">📊 Analytics de Fuentes</span>
-      <span id="analytics-chevron" style="font-size:12px;">▸</span>
-    </div>
-    <div id="analytics-content" style="display:none;margin-top:12px;"></div>
-  </div>
-  <div id="idea-bulk-bar" style="display:none;position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink,#1A1A2E);color:#fff;padding:12px 24px;border-radius:12px;z-index:200;gap:12px;align-items:center;box-shadow:0 4px 20px rgba(0,0,0,0.3);">
-    <span id="bulk-count">0 seleccionadas</span>
-    <button onclick="bulkAction('approved')" style="background:#4A5D23;color:#fff;border:none;padding:6px 16px;border-radius:6px;cursor:pointer;font-weight:600;">✅ Aprobar</button>
-    <button onclick="bulkAction('rejected')" style="background:#C0392B;color:#fff;border:none;padding:6px 16px;border-radius:6px;cursor:pointer;font-weight:600;">❌ Rechazar</button>
-    <button onclick="clearBulkSelection()" style="background:transparent;color:#fff;border:1px solid #fff;padding:6px 16px;border-radius:6px;cursor:pointer;">Cancelar</button>
-  </div>
-  <div id="toast" style="display:none;position:fixed;top:20px;right:20px;background:#4A5D23;color:#fff;padding:12px 20px;border-radius:8px;z-index:300;font-size:14px;box-shadow:0 4px 12px rgba(0,0,0,0.2);transition:opacity 0.3s;"></div>
-  <!-- Chat sidebar anchor for Idea Bank -->
-  <div id="idea-bank-chat-anchor"></div>
+  <iframe id="idea-bank-iframe" style="width:100%;height:calc(100vh - 56px);border:none;display:block;"></iframe>
 </div>
 
 <!-- ==================== SETTINGS (iframe) ==================== -->
@@ -4087,6 +4086,23 @@ function goToSettings() {
     window.location.href = '/mc/settings/' + slug + '/';
   }
 }
+function loadIdeaBankIframe() {
+  const iframe = document.getElementById('idea-bank-iframe');
+  if (!iframe) return;
+  const sel = document.getElementById('clientSelector');
+  const slug = sel ? sel.value : '';
+  if (!slug || slug === 'global') return;
+  let ibUrl;
+  if (window.location.pathname.includes('/admin/')) {
+    const base = window.location.pathname.match(/\/mc\/admin\/[^/]+/);
+    ibUrl = base ? base[0] + '/idea-bank/' + slug + '/?embed=1' : null;
+  } else {
+    ibUrl = '/mc/idea-bank/' + slug + '/?embed=1';
+  }
+  if (!ibUrl) return;
+  if (iframe.src !== ibUrl) iframe.src = ibUrl;
+}
+
 function loadAtalayaIframe() {
   const iframe = document.getElementById('atalaya-iframe');
   if (!iframe) return;
@@ -4208,7 +4224,7 @@ function showPage(name, el) {
     'activity':         () => { window._activityPageInit = false; _activityCronsFetched = false; _activityCronSlug = null; renderActivityPage(); },
     'metrics':          () => { loadMetrics(); },
     'projects':         () => { loadProjects(); },
-    'idea-bank':        () => { populateIdeaBankClientFilter(); loadIdeasData(); },
+    'idea-bank':        () => { loadIdeaBankIframe(); },
     'trust-engine':     () => { loadTrustEngine(); },
     'atalaya':          () => { loadAtalayaIframe(); },
     'settings':         () => { loadSettingsIframe(window._pendingSettingsTab); window._pendingSettingsTab = null; },
@@ -4278,7 +4294,7 @@ function switchClient(val) {
   // Re-render metrics if on that page
   const activePage = document.querySelector('.page.active');
   if (activePage && activePage.id === 'page-metrics') loadMetrics();
-  if (activePage && activePage.id === 'page-idea-bank') loadIdeasData();
+  if (activePage && activePage.id === 'page-idea-bank') loadIdeaBankIframe();
   if (activePage && activePage.id === 'page-recurring-tasks') loadRecurringTasksData();
 }
 
@@ -8906,17 +8922,28 @@ async function toggleRecurringTask(slug, taskId) {
 // ═══════════════════════════════════════════════
 // TRUST ENGINE — inline page
 // ═══════════════════════════════════════════════
-const TE_MODULES = [
-  { id:'foundation-import', name:'Foundation Import', icon:'📋', cmd:'trust-engine init' },
-  { id:'seo-audit', name:'SEO Audit', icon:'🔍', cmd:'trust-engine seo-audit' },
-  { id:'own-media-audit', name:'Own Media', icon:'🌐', cmd:'trust-engine own-media' },
-  { id:'geo-analysis', name:'GEO Analysis', icon:'🤖', cmd:'trust-engine geo' },
-  { id:'serp-analysis', name:'SERP Analysis', icon:'📊', cmd:'trust-engine serp' },
-  { id:'gap-analysis', name:'Gap Analysis', icon:'🔗', cmd:'trust-engine gaps' },
-  { id:'recommendations', name:'Recommendations', icon:'✅', cmd:'trust-engine recs' },
-  { id:'keywords', name:'Keywords', icon:'🔑', cmd:'trust-engine keywords' },
-  { id:'influencers', name:'Influencers', icon:'🎯', cmd:'trust-engine influencers' },
+const TE_PHASES = [
+  { num:1, title:'Configuración', desc:'Elegir el nicho a analizar y cargar datos del cliente',
+    modules:[ { id:'foundation-import', name:'Choose Niche', icon:'🎯', cmd:'trust-engine init', skill:'trust-engine' } ] },
+  { num:2, title:'Auditoría', desc:'Analizar SEO, medios propios y presencia en IA',
+    modules:[
+      { id:'seo-audit', name:'SEO Audit', icon:'🔍', cmd:'trust-engine seo-audit', skill:'trust-engine' },
+      { id:'own-media-audit', name:'Own Media', icon:'🌐', cmd:'trust-engine own-media', skill:'trust-engine' },
+      { id:'geo-analysis', name:'GEO Analysis', icon:'🤖', cmd:'trust-engine geo', skill:'trust-engine' },
+      { id:'serp-analysis', name:'SERP Analysis', icon:'📊', cmd:'trust-engine serp', skill:'trust-engine' },
+    ] },
+  { num:3, title:'Análisis', desc:'Identificar brechas y generar recomendaciones',
+    modules:[
+      { id:'gap-analysis', name:'Gap Analysis', icon:'🔗', cmd:'trust-engine gaps', skill:'trust-engine' },
+      { id:'recommendations', name:'Recommendations', icon:'✅', cmd:'trust-engine recs', skill:'trust-engine' },
+    ] },
+  { num:4, title:'Acción', desc:'Generar activos ejecutables: keywords e influencers',
+    modules:[
+      { id:'keywords', name:'Keywords', icon:'🔑', cmd:'trust-engine keywords', skill:'trust-engine' },
+      { id:'influencers', name:'Influencers', icon:'🎯', cmd:'trust-engine influencers', skill:'trust-engine' },
+    ] },
 ];
+const TE_MODULES = TE_PHASES.flatMap(p => p.modules);
 
 let teRunState = null;
 let teModuleData = {};
@@ -8925,7 +8952,7 @@ async function loadTrustEngine() {
   const sel = document.getElementById('clientSelector');
   const slug = sel ? sel.value : '';
   if (!slug || slug === 'global') {
-    document.getElementById('te-module-grid').innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted);">Selecciona un cliente para ver Trust Engine.</div>';
+    document.getElementById('te-timeline-container').innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted);">Selecciona un cliente para ver Trust Engine.</div>';
     return;
   }
   // Load run-state
@@ -8984,92 +9011,151 @@ function teGetSummary(modId) {
 
 function renderTEDashboard(slug) {
   const icons = { pending:'⬚', locked:'🔒', running:'⏳', completed:'✅', error:'❌' };
-  const colors = { pending:'var(--muted)', locked:'var(--muted)', running:'var(--yellow)', completed:'var(--green)', error:'var(--red)' };
   const labels = { pending:'Pendiente', locked:'Bloqueado', running:'Ejecutando...', completed:'Completado', error:'Error' };
+  const dotSymbols = { completed:'✓', running:'⏳', pending:'·', locked:'🔒', error:'✕' };
 
-  const completedCount = TE_MODULES.filter(m => teGetEffectiveStatus(m.id) === 'completed').length;
-  document.getElementById('te-progress-label').textContent = `${completedCount}/${TE_MODULES.length} módulos`;
-  document.getElementById('te-progress-fill').style.width = `${Math.round((completedCount / TE_MODULES.length) * 100)}%`;
+  // Count statuses
+  const counts = { completed:0, running:0, pending:0, locked:0, error:0 };
+  TE_MODULES.forEach(m => counts[teGetEffectiveStatus(m.id)]++);
 
-  const grid = document.getElementById('te-module-grid');
-  grid.innerHTML = TE_MODULES.map(mod => {
-    const status = teGetEffectiveStatus(mod.id);
-    const summary = status === 'completed' ? teGetSummary(mod.id) : '';
-    const deps = ((teRunState?.modules||{})[mod.id]?.depends_on || []).filter(d => {
-      const ds = (teRunState?.modules||{})[d];
-      return !ds || ds.status !== 'completed';
-    });
-    const depsText = status === 'locked' ? `<div style="font-size:11px;color:var(--muted);margin-top:6px;">Necesita: ${deps.join(', ')}</div>` : '';
+  // Summary pills
+  const bar = document.getElementById('te-summary-bar');
+  bar.innerHTML = [
+    counts.completed ? `<div class="te-pill"><div class="dot green"></div> ${counts.completed} completados</div>` : '',
+    counts.running ? `<div class="te-pill"><div class="dot yellow"></div> ${counts.running} ejecutando</div>` : '',
+    counts.pending ? `<div class="te-pill"><div class="dot gray"></div> ${counts.pending} pendientes</div>` : '',
+    counts.locked ? `<div class="te-pill"><div class="dot red"></div> ${counts.locked} bloqueados</div>` : '',
+    counts.error ? `<div class="te-pill"><div class="dot red"></div> ${counts.error} con error</div>` : '',
+  ].filter(Boolean).join('');
 
-    let buttons = '';
-    if (status === 'pending') {
-      buttons = `<div style="margin-top:12px;"><button onclick="teLaunch('${mod.id}','${slug}')" style="padding:6px 14px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;border:2px solid var(--ink);background:var(--rust,#C45D35);color:#fff;box-shadow:2px 2px 0 var(--ink);">▶ Lanzar</button></div>`;
-    } else if (status === 'completed') {
-      buttons = `<div style="margin-top:12px;display:flex;gap:6px;">
-        <button onclick="teShowDetail('${mod.id}','${slug}')" style="padding:6px 14px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;border:2px solid var(--ink);background:var(--navy,#1E3A5F);color:#fff;box-shadow:2px 2px 0 var(--ink);">👁 Ver</button>
-        <button onclick="teLaunch('${mod.id}','${slug}')" style="padding:6px 14px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;border:2px solid var(--ink);background:var(--card);color:var(--text);">🔄 Rerun</button>
+  // Timeline by phases
+  const container = document.getElementById('te-timeline-container');
+  container.innerHTML = TE_PHASES.map(phase => {
+    const modsHtml = phase.modules.map(mod => {
+      const status = teGetEffectiveStatus(mod.id);
+      const summary = (status === 'completed') ? teGetSummary(mod.id) : (status === 'running' ? 'Ejecutando...' : '');
+      const deps = ((teRunState?.modules||{})[mod.id]?.depends_on || []).filter(d => {
+        const ds = (teRunState?.modules||{})[d];
+        return !ds || ds.status !== 'completed';
+      });
+
+      let metaHtml = '';
+      if (mod.id === 'foundation-import' && status === 'completed') {
+        const data = teModuleData[mod.id];
+        const d = data?.data || data || {};
+        const niche = d.niche || d.project?.niche || '';
+        metaHtml = niche
+          ? `<div class="te-tl-meta">Nicho: <strong>${niche}</strong> · ${teGetSummary(mod.id)}</div>`
+          : (summary ? `<div class="te-tl-meta">${summary}</div>` : '');
+      } else if (summary) {
+        metaHtml = `<div class="te-tl-meta">${summary}</div>`;
+      }
+      if (status === 'locked' && deps.length) {
+        metaHtml += `<div class="te-tl-meta">Necesita: ${deps.map(d => '<span class="te-dep-tag">'+d+'</span>').join(' ')}</div>`;
+      }
+
+      let actions = '';
+      if (mod.id === 'foundation-import' && status === 'completed') {
+        actions = `<div class="te-tl-actions"><button class="te-btn te-btn-navy" onclick="teShowDetail('${mod.id}','${slug}')">⚙ Cambiar nicho</button></div>`;
+      } else if (status === 'completed') {
+        actions = `<div class="te-tl-actions"><button class="te-btn te-btn-navy" onclick="teShowDetail('${mod.id}','${slug}')">👁 Ver datos</button><button class="te-btn te-btn-secondary" onclick="teLaunch('${mod.id}','${slug}')">🔄 Rerun</button></div>`;
+      } else if (status === 'pending') {
+        actions = `<div class="te-tl-actions"><button class="te-btn te-btn-primary" onclick="teLaunch('${mod.id}','${slug}')">▶ Lanzar</button></div>`;
+      } else if (status === 'error') {
+        actions = `<div class="te-tl-actions"><button class="te-btn te-btn-primary" onclick="teLaunch('${mod.id}','${slug}')">🔄 Reintentar</button></div>`;
+      }
+
+      const cardClass = status === 'running' ? 'te-tl-card active' : (status === 'locked' ? 'te-tl-card locked' : 'te-tl-card');
+      const statusLabel = mod.id === 'foundation-import' && status === 'completed' ? '✅ Configurado' : `${icons[status]} ${labels[status]}`;
+
+      return `<div class="te-tl-item">
+        <div class="te-tl-dot ${status}">${dotSymbols[status]}</div>
+        <div class="${cardClass}">
+          <div class="te-tl-card-top">
+            <div class="te-tl-card-title"><span class="icon">${mod.icon}</span><span class="name">${mod.name}</span></div>
+            <span class="te-tl-status ${status}">${statusLabel}</span>
+          </div>
+          ${metaHtml}
+          ${actions}
+        </div>
       </div>`;
-    } else if (status === 'error') {
-      buttons = `<div style="margin-top:12px;"><button onclick="teLaunch('${mod.id}','${slug}')" style="padding:6px 14px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;border:2px solid var(--ink);background:var(--rust,#C45D35);color:#fff;box-shadow:2px 2px 0 var(--ink);">🔄 Reintentar</button></div>`;
-    } else if (status === 'locked') {
-      buttons = `<div style="margin-top:12px;"><button disabled style="padding:6px 14px;border-radius:6px;font-size:12px;font-weight:600;cursor:not-allowed;border:2px solid var(--border);background:var(--border);color:var(--muted);">🔒 Bloqueado</button></div>`;
-    }
+    }).join('');
 
-    const borderLeft = status === 'completed' ? 'border-left:5px solid var(--green);' : status === 'running' ? 'border-left:5px solid var(--yellow);' : status === 'error' ? 'border-left:5px solid var(--red);' : '';
-    const opacity = status === 'locked' ? 'opacity:0.6;' : '';
-
-    return `<div class="card" style="${borderLeft}${opacity}">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-        <span style="font-size:24px;">${mod.icon}</span>
-        <span style="font-size:12px;font-weight:600;color:${colors[status]};">${icons[status]} ${labels[status]}</span>
+    return `<div class="te-phase-section">
+      <div class="te-phase-header">
+        <div class="te-phase-num">${phase.num}</div>
+        <div><div class="te-phase-title">${phase.title}</div><div class="te-phase-desc">${phase.desc}</div></div>
       </div>
-      <div style="font-family:'Space Grotesk',sans-serif;font-size:16px;font-weight:600;color:var(--navy,#1E3A5F);">${mod.name}</div>
-      ${summary ? `<div style="font-size:13px;color:var(--muted);margin-top:4px;">${summary}</div>` : ''}
-      ${depsText}
-      ${buttons}
+      <div class="te-timeline">${modsHtml}</div>
     </div>`;
   }).join('');
 
-  // Hide detail container, show grid
   document.getElementById('te-detail-container').style.display = 'none';
-  document.getElementById('te-module-grid').style.display = 'grid';
-  document.getElementById('te-progress-bar').style.display = 'flex';
+  container.style.display = 'block';
 }
 
 async function teLaunch(modId, slug) {
   const mod = TE_MODULES.find(m => m.id === modId);
   const cmd = (mod ? mod.cmd : 'trust-engine') + ' ' + slug;
+  const threadId = 'trust-engine-' + slug;
+  const threadName = 'Trust Engine — ' + slug;
   const btn = event?.target;
   if (btn) { btn.disabled = true; btn.textContent = '⏳ Lanzando...'; }
+  mcChatSidebar.init({ anchorId: 'mc-global-chat-anchor', toggleBtnId: 'global-chat-toggle', threadId, threadName });
+  if (!mcChatSidebar.isOpen) mcChatSidebar.toggle();
   try {
-    const res = await fetch(MC_BASE + '/api/mc-chat/send', {
+    const sideMsgs = document.getElementById('sidebar-chat-msgs');
+    if (sideMsgs) {
+      const div = document.createElement('div');
+      div.className = 'v2-msg v2-msg-u';
+      div.textContent = cmd;
+      sideMsgs.appendChild(div);
+      sideMsgs.scrollTop = sideMsgs.scrollHeight;
+    }
+    const typing = document.getElementById('sidebar-chat-typing');
+    if (typing) { typing.style.display = ''; }
+    await fetch(MC_BASE + '/api/mc-chat/send', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        slug: slug,
-        threadId: 'trust-engine-' + slug,
-        threadName: 'Trust Engine — ' + slug,
-        text: cmd,
-        userName: 'Mission Control',
-        skill: 'trust-engine'
-      })
+      body: JSON.stringify({ slug, threadId, threadName, text: cmd, userName: 'Mission Control', skill: mod?.skill || 'trust-engine' })
     });
-    if (res.ok) {
-      if (btn) { btn.textContent = '✅ Lanzado'; btn.style.background = 'var(--green, #4A5D23)'; btn.style.color = '#fff'; }
-      document.getElementById('te-launch-cmd').textContent = '✅ Módulo "' + (mod?.name || modId) + '" enviado a Sancho. Ejecutándose en background...';
-      document.getElementById('te-launch-overlay').style.display = 'flex';
-      setTimeout(() => loadTrustEngine(), 30000);
-    } else {
-      throw new Error('HTTP ' + res.status);
-    }
+    if (btn) { btn.textContent = '✅ Lanzado'; btn.style.background = 'var(--green, #4A5D23)'; btn.style.color = '#fff'; }
+    setTimeout(() => loadTrustEngine(), 30000);
   } catch (e) {
     console.error('Launch error:', e);
     if (btn) { btn.textContent = '❌ Error'; btn.disabled = false; }
-    document.getElementById('te-launch-cmd').textContent = cmd + '\n\n(Error: ' + e.message + '. Copia este comando en Discord.)';
-    document.getElementById('te-launch-overlay').style.display = 'flex';
   }
 }
-document.getElementById('te-launch-overlay')?.addEventListener('click', function(e) { if (e.target === this) this.style.display = 'none'; });
+
+function teSelectNiche(slug, nicheName) {
+  const cmd = 'trust-engine init ' + slug + ' --niche "' + nicheName + '"';
+  const threadId = 'trust-engine-' + slug;
+  const threadName = 'Trust Engine — ' + slug;
+  // Open chat sidebar
+  mcChatSidebar.init({ anchorId: 'mc-global-chat-anchor', toggleBtnId: 'global-chat-toggle', threadId, threadName });
+  if (!mcChatSidebar.isOpen) mcChatSidebar.toggle();
+  // Show user message
+  const sideMsgs = document.getElementById('sidebar-chat-msgs');
+  if (sideMsgs) {
+    const div = document.createElement('div');
+    div.className = 'v2-msg v2-msg-u';
+    div.textContent = cmd;
+    sideMsgs.appendChild(div);
+    sideMsgs.scrollTop = sideMsgs.scrollHeight;
+  }
+  const typing = document.getElementById('sidebar-chat-typing');
+  if (typing) { typing.style.display = ''; }
+  // Send
+  fetch(MC_BASE + '/api/mc-chat/send', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ slug, threadId, threadName, text: cmd, userName: 'Mission Control', skill: 'trust-engine' })
+  }).catch(e => console.error('teSelectNiche error:', e));
+  // Go back to timeline
+  document.getElementById('te-summary-bar').style.display = 'flex';
+  renderTEDashboard(slug);
+}
+
 
 function teShowDetail(modId, slug) {
   const data = teModuleData[modId];
@@ -9078,9 +9164,48 @@ function teShowDetail(modId, slug) {
   const container = document.getElementById('te-detail-container');
   const sevIcon = s => ({critical:'🔴',high:'🟠',medium:'🟡',low:'🟢'}[s]||'⚪');
   const hcIcon = s => ({pass:'✅',fail:'❌',warning:'⚠️'}[s]||'❓');
-  let html = `<button onclick="renderTEDashboard('${slug}')" style="padding:6px 14px;border:2px solid var(--ink);border-radius:6px;background:var(--card);color:var(--text);cursor:pointer;font-weight:600;margin-bottom:12px;">← Volver</button>`;
+  let html = `<button onclick="document.getElementById('te-summary-bar').style.display='flex';renderTEDashboard('${slug}')" style="padding:6px 14px;border:2px solid var(--ink);border-radius:6px;background:var(--card);color:var(--text);cursor:pointer;font-weight:600;margin-bottom:12px;">← Volver</button>`;
 
   switch (modId) {
+    case 'foundation-import': {
+      const niches = d.niches || [];
+      const competitors = d.competitors || [];
+      const project = d.project || {};
+      html += '<h2 style="font-family:\'Space Grotesk\',sans-serif;color:var(--navy);">🎯 Choose Niche</h2>';
+      html += '<p style="font-size:14px;color:var(--muted);margin-bottom:20px;">Selecciona el nicho que quieres analizar con Trust Engine.</p>';
+      if (project.name || project.website) {
+        html += `<div class="card" style="margin-bottom:20px;"><div style="display:flex;align-items:center;gap:12px;">
+          <span style="font-size:28px;">🏢</span>
+          <div><div style="font-size:16px;font-weight:600;color:var(--navy);">${project.name||slug}</div>
+          <div style="font-size:13px;color:var(--muted);">${project.website||''} ${project.market?'· '+project.market:''} ${project.language?'· '+project.language:''}</div></div>
+        </div></div>`;
+      }
+      if (niches.length) {
+        html += '<h3 style="margin-bottom:12px;font-size:16px;color:var(--navy);">Nichos disponibles</h3>';
+        html += '<div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(280px,1fr));">';
+        niches.forEach(n => {
+          const subList = (n.subniches||[]).map(s => `<span style="display:inline-block;font-size:11px;padding:2px 8px;border-radius:4px;background:var(--aged);color:var(--muted);margin:2px;">${s.name||s.id}</span>`).join('');
+          html += `<div class="card" style="cursor:pointer;" onmouseover="this.style.borderColor='var(--rust)'" onmouseout="this.style.borderColor='var(--ink)'" onclick="teSelectNiche('${slug}','${(n.name||n.id).replace(/'/g,'\\&#39;')}')">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+              <div style="font-size:15px;font-weight:600;color:var(--navy);">${n.name||n.id}</div>
+              <span style="font-size:11px;font-weight:600;padding:3px 10px;border-radius:12px;background:rgba(74,93,35,0.15);color:var(--green);">${n.id}</span>
+            </div>
+            ${n.brief ? '<div style="font-size:12px;color:var(--muted);margin-bottom:8px;">'+n.brief+'</div>' : ''}
+            ${(n.subniches||[]).length ? '<div style="margin-top:6px;"><div style="font-size:11px;font-weight:600;color:var(--muted);margin-bottom:4px;">'+(n.subniches||[]).length+' subnichos</div><div style="display:flex;flex-wrap:wrap;gap:2px;">'+subList+'</div></div>' : ''}
+          </div>`;
+        });
+        html += '</div>';
+      }
+      if (competitors.length) {
+        html += '<h3 style="margin-top:20px;margin-bottom:12px;font-size:16px;color:var(--navy);">Competidores configurados</h3>';
+        html += '<div class="card full"><table style="width:100%;font-size:13px;border-collapse:collapse;"><thead><tr style="border-bottom:2px solid var(--border);"><th style="padding:8px;text-align:left;">Competidor</th><th style="padding:8px;text-align:left;">Web</th></tr></thead><tbody>';
+        competitors.forEach(c => {
+          html += `<tr style="border-bottom:1px solid var(--border);"><td style="padding:8px;font-weight:600;">${c.name||c.slug||''}</td><td style="padding:8px;">${c.website ? '<a href="'+c.website+'" target="_blank" style="color:var(--rust);">'+c.website+'</a>' : '—'}</td></tr>`;
+        });
+        html += '</tbody></table></div>';
+      }
+      break;
+    }
     case 'seo-audit': {
       const lh = d.lighthouse || {};
       const cwv = lh.core_web_vitals || {};
@@ -9176,8 +9301,8 @@ function teShowDetail(modId, slug) {
     }
   }
 
-  document.getElementById('te-module-grid').style.display = 'none';
-  document.getElementById('te-progress-bar').style.display = 'none';
+  document.getElementById('te-timeline-container').style.display = 'none';
+  document.getElementById('te-summary-bar').style.display = 'none';
   container.innerHTML = html;
   container.style.display = 'block';
 }

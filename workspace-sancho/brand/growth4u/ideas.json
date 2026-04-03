@@ -1,0 +1,18 @@
+{
+  "ideas": [
+    {
+      "id": "idea-001",
+      "type": "content",
+      "status": "new",
+      "title": "Tu startup tiene producto. No tiene sistema de growth.",
+      "description": "",
+      "source": "atalaya",
+      "list": "keywords",
+      "channels": [],
+      "target_channel": "",
+      "priority_score": 80,
+      "created_at": "2026-04-02T22:08:26.641Z",
+      "notes": ""
+    }
+  ]
+}

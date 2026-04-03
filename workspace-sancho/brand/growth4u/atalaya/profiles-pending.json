@@ -12,12 +12,17 @@
       },
       "adaptation": "Voje habla de Claude Code como GTM OS para operadores técnicos. Nosotros lo adaptamos al founder NO técnico español: Trust Engine = tu sistema de growth que funciona sin que entiendas la IA. Diagnóstico-provocador: abrir con el dolor de tener producto y 0 sistema.",
       "format": "LinkedIn post largo (2.000-2.500 chars) + infografía de las 4 fases Trust Engine",
-      "channels": ["linkedin-alfonso", "newsletter"],
+      "channels": [
+        "linkedin-alfonso",
+        "newsletter"
+      ],
       "target_ecp": "Cluster A — System Seekers (Solo Technical Founder, Spreadsheet CMO)",
       "priority": "high",
       "hook": "Tienes un producto que tus clientes adoran.\nPero si mañana te pregunto cuál es tu sistema de growth, me enseñas un Notion con 47 ideas.",
       "brand_voice_notes": "Diagnóstico-provocador + insider vulnerable. Abrir con tensión, no con promesa. Incluir caso real (Bnext o similar).",
-      "status": "pending"
+      "status": "approved",
+      "actioned_at": "2026-04-02T22:08:26.642Z",
+      "converted_to": "idea:idea-001"
     },
     {
       "id": "idea-002",
@@ -29,7 +34,9 @@
       },
       "adaptation": "Nisand dice 'AI can help you package an idea. But it can't give you one.' Nosotros: las agencias usan IA para generar informes bonitos, pero siguen sin entender tu negocio. Trust Engine tiene exit date, no retainer infinito.",
       "format": "LinkedIn post + carousel con datos de retainers vs. resultados",
-      "channels": ["linkedin-alfonso"],
+      "channels": [
+        "linkedin-alfonso"
+      ],
       "target_ecp": "Cluster B — The Burned (3-Agency Veteran)",
       "priority": "high",
       "hook": "He contratado 3 agencias en 2 años.\nTodas me prometieron growth.\n€40K después, sigo con los mismos números.",
@@ -46,7 +53,10 @@
       },
       "adaptation": "Hassid y Voje insisten en context files (.md, folders). Nosotros: Foundation de Growth4U = el contexto que tu IA necesita para dejar de dar respuestas genéricas. El founder que monta Foundation tiene ventaja competitiva. El que no, tiene ChatGPT genérico.",
       "format": "LinkedIn post + comparativa antes/después (sin Foundation vs con Foundation)",
-      "channels": ["linkedin-alfonso", "blog"],
+      "channels": [
+        "linkedin-alfonso",
+        "blog"
+      ],
       "target_ecp": "Cluster A — System Seekers + Cluster E — Measurement Void",
       "priority": "high",
       "hook": "Todo el mundo te dice que uses IA para marketing.\nNadie te dice que sin contexto, la IA te da las mismas respuestas que a tu competidor.",
@@ -63,7 +73,11 @@
       },
       "adaptation": "Arnoux revela €565/semana en Claude API. Nosotros: transparencia total de costes. Un sistema de growth serio no cuesta €0. Pero tampoco cuesta €80K/año (Head of Growth). Trust Engine a €7K vs alternativas reales.",
       "format": "LinkedIn post + tabla comparativa de costes (in-house vs agencia vs fCMO vs Trust Engine)",
-      "channels": ["linkedin-alfonso", "newsletter", "web-landing"],
+      "channels": [
+        "linkedin-alfonso",
+        "newsletter",
+        "web-landing"
+      ],
       "target_ecp": "Cluster H — Resource Crunch (Talent Desert Wanderer) + Cluster A (Post-Round Firefighter)",
       "priority": "medium",
       "hook": "Alguien acaba de publicar que gasta €565 a la semana en Claude API.\nMientras tanto, buscas Growth Manager y los buenos piden €80K.\nVamos a hacer las cuentas.",
@@ -80,7 +94,9 @@
       },
       "adaptation": "Cortizo usa el caso Ryanair: fea pero potente porque entrega lo que promete. Nosotros: en startups tech, la marca es el último pilar que montan. Error. Trust Engine incluye brand voice desde Foundation porque sin marca, tu growth es genérico.",
       "format": "LinkedIn post largo en español",
-      "channels": ["linkedin-alfonso"],
+      "channels": [
+        "linkedin-alfonso"
+      ],
       "target_ecp": "Cluster F — Invisibility (Best-Kept Secret, GEO Ghost)",
       "priority": "medium",
       "hook": "Ryanair tiene la marca más fea de Europa.\nY es la aerolínea más grande y más rentable.\n¿Sabes qué tiene tu startup? Un logo bonito. Y cero promesa consistente.",
@@ -97,7 +113,9 @@
       },
       "adaptation": "Nisand: 'No context = no trigger = no reason to reply.' Voje: 'Claude Code (research) → Clay (orchestration) → Sending.' Nosotros: warm outbound basado en señales, no en spray & pray. Trust Engine construye el sistema.",
       "format": "LinkedIn post + mini framework de 3 pasos",
-      "channels": ["linkedin-alfonso"],
+      "channels": [
+        "linkedin-alfonso"
+      ],
       "target_ecp": "Cluster C — Channel Death (Cold Email Corpse)",
       "priority": "medium",
       "hook": "De 2020 a 2022, el cold email era tu máquina de leads.\nHoy tienes 0.5% reply rate.\n¿El problema? Sigues enviando emails fríos en un mundo que pide señales calientes.",
@@ -114,7 +132,9 @@
       },
       "adaptation": "Hassid tiene 400K+ newsletter subscribers hablando de Claude en inglés. ¿Quién habla de sistemas de growth con IA para el mercado español? Nadie. Oportunidad para Alfonso: ser el referente ES.",
       "format": "Estrategia interna — NOT for publishing. Brief para Alfonso.",
-      "channels": ["internal"],
+      "channels": [
+        "internal"
+      ],
       "target_ecp": "N/A — estrategia de posicionamiento",
       "priority": "high",
       "hook": "N/A — documento interno",
@@ -131,7 +151,9 @@
       },
       "adaptation": "Cortizo: '5% mejora en retención = 25-95% más beneficio.' Nosotros: Trust Engine no solo te trae clientes, construye retention loops. La mayoría de startups invierten 5x más en captar que en retener.",
       "format": "LinkedIn post + dato + CTA a diagnóstico",
-      "channels": ["linkedin-alfonso"],
+      "channels": [
+        "linkedin-alfonso"
+      ],
       "target_ecp": "Cluster G — Scale Blockers (€30K MRR Ceiling, Freemium Trap)",
       "priority": "medium",
       "hook": "Dato: adquirir un cliente cuesta 5-25x más que retener uno.\nOtro dato: solo el 18% de empresas priorizan retención.\n¿En qué lado estás?",
@@ -148,7 +170,9 @@
       },
       "adaptation": "Felix abre APIs de Playtomic → de producto a plataforma. Para founders tech: ¿tu growth depende solo de ti o estás construyendo un ecosistema? Trust Engine como framework que integra partners/afiliados.",
       "format": "LinkedIn post",
-      "channels": ["linkedin-alfonso"],
+      "channels": [
+        "linkedin-alfonso"
+      ],
       "target_ecp": "Cluster G — Scale Blockers (€30K MRR Ceiling)",
       "priority": "low",
       "hook": "Playtomic no solo vende reservas de pádel.\nAcaba de abrir sus APIs y dejar que otros construyan sobre su plataforma.\nMientras tanto, tu SaaS sigue vendiendo features.",
@@ -165,7 +189,9 @@
       },
       "adaptation": "Sanz: 'No se me ocurre en qué universo debería alguien separar marketing y ventas.' Alfonso piensa igual. Growth4U: Trust Engine integra ambos desde día 1.",
       "format": "LinkedIn post en español",
-      "channels": ["linkedin-alfonso"],
+      "channels": [
+        "linkedin-alfonso"
+      ],
       "target_ecp": "Cluster A — System Seekers (Headless Growth Team)",
       "priority": "low",
       "hook": "Departamento de Marketing.\nDepartamento de Ventas.\nDos objetivos 'alineados'. Dos reuniones distintas. Cero coordinación.\nUn clásico.",
@@ -182,7 +208,10 @@
       },
       "adaptation": "Arnoux analizó 102K posts. Dwell time > likes. Posts largos (2-3K chars) generan 2x más comentarios. Para nuestros clientes: formato importa tanto como contenido.",
       "format": "LinkedIn post + cheatsheet para clientes",
-      "channels": ["linkedin-alfonso", "newsletter"],
+      "channels": [
+        "linkedin-alfonso",
+        "newsletter"
+      ],
       "target_ecp": "Cluster F — Invisibility (LinkedIn Lurker)",
       "priority": "low",
       "hook": "Analizaron 102.220 posts de LinkedIn.\nResultado: lo que más importa no son los likes.\nEs cuántos SEGUNDOS pasan leyéndote.",
@@ -199,7 +228,9 @@
       },
       "adaptation": "Cortizo: 'El software que entiende un sector tiene más futuro que nunca.' Para nuestro ICP: si tu SaaS resuelve un problema de nicho con know-how real, la IA te potencia. Si eres genérico, mueres.",
       "format": "LinkedIn post + thread",
-      "channels": ["linkedin-alfonso"],
+      "channels": [
+        "linkedin-alfonso"
+      ],
       "target_ecp": "Cluster G — Scale Blockers + Cluster A — System Seekers",
       "priority": "medium",
       "hook": "Todo el mundo dice que la IA va a matar el SaaS.\nEs mentira.\nLa IA va a matar el SaaS que no tiene opinión.\nEl que tenga expertise de nicho va a crecer más rápido que nunca.",

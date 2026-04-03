@@ -1259,6 +1259,288 @@ function getNextProjectId(slug) {
   return maxId + 1;
 }
 
+// === Idea Bank — Unified Ideas, Contacts & Recommendations Page ===
+function buildIdeaBankPage(slug, baseUrl, clientName) {
+  function escHtml(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+  // Load ideas
+  const brandDir = path.join(BASE, 'brand', slug);
+  let ideas = [];
+  try {
+    const raw = JSON.parse(fs.readFileSync(path.join(brandDir, 'ideas.json'), 'utf-8'));
+    ideas = raw.ideas || [];
+  } catch {
+    try {
+      const raw = JSON.parse(fs.readFileSync(path.join(brandDir, 'idea-generation', 'ideas.json'), 'utf-8'));
+      ideas = Array.isArray(raw) ? raw : raw.ideas || [];
+    } catch {}
+  }
+
+  const contentIdeas = ideas.filter(i => i.type !== 'contact');
+  const contactIdeas = ideas.filter(i => i.type === 'contact');
+
+  // Load recommendations count (aggregated)
+  let recCount = 0;
+  const pendingFiles = ['atalaya/profiles-pending.json','atalaya/competitors-pending.json','atalaya/ads-pending.json','atalaya/pending-ideas.json','monitoring/pending-recommendations.json'];
+  for (const pf of pendingFiles) {
+    try {
+      const raw = JSON.parse(fs.readFileSync(path.join(brandDir, pf), 'utf-8'));
+      const items = Array.isArray(raw) ? raw : raw.ideas || raw.ideas_generated || raw.recommendations || [];
+      recCount += items.filter(i => !i.status || i.status === 'pending').length;
+    } catch {}
+  }
+  // Trust engine
+  try {
+    const raw = JSON.parse(fs.readFileSync(path.join(brandDir, 'trust-engine', 'recommendations.json'), 'utf-8'));
+    const items = raw.recommendations || raw.data?.recommendations || [];
+    recCount += items.filter(i => !i.status || i.status === 'pending' || i.status === 'Pendiente').length;
+  } catch {}
+
+  const STATUS_COLORS = { 'new': '#3498DB', 'approved': '#27AE60', 'rejected': '#E74C3C', 'executed': '#7F8C8D', 'pool': '#95A5A6' };
+  const SOURCE_LABELS = { 'trust_engine': 'Trust Engine', 'seo_geo': 'SEO/GEO', 'signal': 'Signal', 'competitor': 'Competitor', 'meeting': 'Meeting', 'manual': 'Manual', 'atalaya': 'Atalaya', 'performance-analysis': 'Performance' };
+
+  return `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>💡 Idea Bank — ${escHtml(clientName)}</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Nunito:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#FFFDF9;--card:#FFFFFF;--border:#E8E2D9;--rust:#C45D35;--rust-light:#F5E6DF;--navy:#2C3E50;--text:#2C3E50;--muted:#7F8C8D;--green:#27AE60;--green-light:#E8F8F0;--blue:#3498DB;--blue-light:#EBF5FB;--yellow:#F39C12;--yellow-light:#FEF9E7;--red:#E74C3C;--red-light:#FDEDEC;--shadow:0 1px 3px rgba(0,0,0,0.06);--radius:10px;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);line-height:1.5;padding:0;margin:0;}
+.page-header{padding:28px 32px 0;}
+.page-title{font-family:'Space Grotesk',sans-serif;font-size:26px;font-weight:700;color:var(--navy);}
+.page-sub{font-size:14px;color:var(--muted);margin-top:2px;}
+.tabs{display:flex;gap:0;padding:20px 32px 0;border-bottom:1px solid var(--border);}
+.tab{padding:10px 20px;font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:500;color:var(--muted);cursor:pointer;border:1px solid transparent;border-bottom:none;border-radius:8px 8px 0 0;background:transparent;transition:all .15s;display:flex;align-items:center;gap:8px;position:relative;bottom:-1px;}
+.tab:hover{color:var(--navy);background:rgba(0,0,0,0.02);}
+.tab.active{color:var(--rust);background:var(--card);border-color:var(--border);font-weight:600;}
+.badge{background:var(--rust);color:#fff;font-size:11px;padding:1px 7px;border-radius:10px;font-weight:600;}
+.badge-green{background:var(--green);}
+.content{padding:24px 32px;}
+.tab-content{display:none;}.tab-content.active{display:block;}
+.stats-row{display:flex;gap:16px;margin-bottom:20px;flex-wrap:wrap;}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px 16px;min-width:120px;text-align:center;box-shadow:var(--shadow);}
+.stat-num{font-family:'Space Grotesk',sans-serif;font-size:24px;font-weight:700;color:var(--navy);}
+.stat-lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;}
+.filters{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center;}
+.filter-pill{padding:5px 14px;font-size:12px;font-weight:600;border-radius:20px;cursor:pointer;border:1px solid var(--border);background:#fff;color:var(--muted);transition:all .15s;}
+.filter-pill:hover{border-color:var(--navy);color:var(--navy);}
+.filter-pill.active{background:var(--navy);color:#fff;border-color:var(--navy);}
+.idea-table{width:100%;border-collapse:collapse;}
+.idea-table th{text-align:left;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;padding:8px 12px;border-bottom:2px solid var(--border);font-weight:600;}
+.idea-table td{padding:10px 12px;border-bottom:1px solid #F5F2ED;font-size:13px;vertical-align:middle;}
+.idea-table tr:hover{background:#FDFCFA;}
+.idea-title-cell{font-weight:600;color:var(--navy);max-width:300px;}
+.idea-desc{font-size:11px;color:var(--muted);margin-top:2px;max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.status-badge{display:inline-block;font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;text-transform:uppercase;}
+.source-badge{display:inline-block;font-size:10px;padding:2px 6px;border-radius:4px;background:#F0EDE8;color:var(--muted);}
+.channel-pill{display:inline-block;font-size:10px;padding:1px 6px;border-radius:3px;background:var(--blue-light);color:var(--blue);margin-right:3px;}
+.btn-sm{padding:4px 10px;font-size:11px;font-weight:600;border-radius:5px;cursor:pointer;border:1px solid;transition:all .12s;}
+.btn-approve{background:var(--green);color:#fff;border-color:var(--green);}.btn-approve:hover{background:#219A52;}
+.btn-reject{background:#fff;color:var(--red);border-color:var(--red);}.btn-reject:hover{background:var(--red-light);}
+.btn-action{background:#fff;color:var(--navy);border-color:var(--border);}.btn-action:hover{background:var(--rust-light);border-color:var(--rust);}
+/* Recommendations */
+.rec-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:10px;box-shadow:var(--shadow);display:flex;align-items:flex-start;gap:12px;}
+.rec-card:hover{box-shadow:0 2px 8px rgba(0,0,0,0.08);}
+.rec-icon{font-size:20px;flex-shrink:0;margin-top:2px;}
+.rec-body{flex:1;min-width:0;}
+.rec-title{font-size:14px;font-weight:600;color:var(--navy);}
+.rec-meta{font-size:11px;color:var(--muted);margin-top:2px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+.rec-desc{font-size:12px;color:var(--text);margin-top:6px;line-height:1.4;}
+.rec-actions{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;}
+.priority-high{color:var(--rust);}.priority-medium{color:var(--yellow);}.priority-low{color:var(--blue);}
+.empty-state{text-align:center;padding:48px 0;color:var(--muted);}
+@media(max-width:900px){.stats-row{flex-direction:column;}.idea-table{font-size:12px;}}
+</style>
+</head><body>
+<div class="page-header">
+  <div class="page-title">&#128161; Idea Bank</div>
+  <div class="page-sub">${escHtml(clientName)} &mdash; Ideas, contactos y recomendaciones</div>
+</div>
+<div class="tabs">
+  <div class="tab active" onclick="showTab('ideas')">&#128221; Ideas <span class="badge">${contentIdeas.length}</span></div>
+  <div class="tab" onclick="showTab('contacts')">&#128101; Contactos <span class="badge">${contactIdeas.length}</span></div>
+  <div class="tab" onclick="showTab('recommendations')">&#128300; Recomendaciones ${recCount > 0 ? `<span class="badge badge-green">${recCount}</span>` : ''}</div>
+</div>
+<div class="content">
+
+<!-- IDEAS TAB -->
+<div id="tab-ideas" class="tab-content active">
+  <div class="stats-row">
+    <div class="stat-card"><div class="stat-num">${contentIdeas.length}</div><div class="stat-lbl">Total</div></div>
+    <div class="stat-card"><div class="stat-num">${contentIdeas.filter(i=>i.status==='new'||i.status==='pool').length}</div><div class="stat-lbl">Pendientes</div></div>
+    <div class="stat-card"><div class="stat-num">${contentIdeas.filter(i=>i.status==='approved').length}</div><div class="stat-lbl">Aprobadas</div></div>
+    <div class="stat-card"><div class="stat-num">${contentIdeas.filter(i=>i.status==='executed').length}</div><div class="stat-lbl">Publicadas</div></div>
+  </div>
+  <div class="filters">
+    <span class="filter-pill active" onclick="filterIdeas(this,'all')">Todas</span>
+    <span class="filter-pill" onclick="filterIdeas(this,'new')">Nuevas</span>
+    <span class="filter-pill" onclick="filterIdeas(this,'approved')">Aprobadas</span>
+    <span class="filter-pill" onclick="filterIdeas(this,'executed')">Publicadas</span>
+    <span class="filter-pill" onclick="filterIdeas(this,'rejected')">Descartadas</span>
+  </div>
+  <table class="idea-table">
+    <thead><tr><th>Idea</th><th>Score</th><th>Canales</th><th>Fuente</th><th>Status</th><th>Acciones</th></tr></thead>
+    <tbody id="ideas-tbody">
+      ${contentIdeas.length === 0 ? '<tr><td colspan="6" class="empty-state">Sin ideas de contenido. Lanza un scan desde Atalaya.</td></tr>' : ''}
+      ${contentIdeas.map(idea => {
+        const statusColor = STATUS_COLORS[idea.status] || '#95A5A6';
+        const channels = (idea.channels || idea.channels_suggested || []).map(c => `<span class="channel-pill">${escHtml(c)}</span>`).join('');
+        const sourceLabel = SOURCE_LABELS[idea.source] || idea.source || '—';
+        return `<tr data-status="${escHtml(idea.status||'new')}" data-id="${escHtml(idea.id||'')}">
+          <td><div class="idea-title-cell">${escHtml(idea.title||'—')}</div><div class="idea-desc">${escHtml(idea.description||idea.notes||'')}</div></td>
+          <td>${idea.priority_score||'—'}</td>
+          <td>${channels||'—'}</td>
+          <td><span class="source-badge">${escHtml(sourceLabel)}</span></td>
+          <td><span class="status-badge" style="background:${statusColor}20;color:${statusColor};">${escHtml(idea.status||'new')}</span></td>
+          <td style="white-space:nowrap;">
+            ${idea.status!=='approved'?`<button class="btn-sm btn-approve" onclick="ideaAction('${escHtml(idea.id||'')}','approve')">&#10003;</button>`:''}
+            ${idea.status!=='rejected'?`<button class="btn-sm btn-reject" onclick="ideaAction('${escHtml(idea.id||'')}','reject')">&#10005;</button>`:''}
+          </td>
+        </tr>`;
+      }).join('')}
+    </tbody>
+  </table>
+</div>
+
+<!-- CONTACTS TAB -->
+<div id="tab-contacts" class="tab-content">
+  <div class="stats-row">
+    <div class="stat-card"><div class="stat-num">${contactIdeas.length}</div><div class="stat-lbl">Total</div></div>
+    <div class="stat-card"><div class="stat-num">${contactIdeas.filter(i=>i.status==='new'||i.status==='pool').length}</div><div class="stat-lbl">Pendientes</div></div>
+    <div class="stat-card"><div class="stat-num">${contactIdeas.filter(i=>i.status==='approved').length}</div><div class="stat-lbl">Aprobados</div></div>
+  </div>
+  <table class="idea-table">
+    <thead><tr><th>Contacto</th><th>Canal</th><th>Fuente</th><th>Status</th><th>Acciones</th></tr></thead>
+    <tbody>
+      ${contactIdeas.length === 0 ? '<tr><td colspan="5" class="empty-state">Sin contactos. Lanza un scan desde Atalaya.</td></tr>' : ''}
+      ${contactIdeas.map(idea => {
+        const statusColor = STATUS_COLORS[idea.status] || '#95A5A6';
+        return `<tr data-status="${escHtml(idea.status||'new')}">
+          <td><div class="idea-title-cell">${escHtml(idea.title||'—')}</div><div class="idea-desc">${escHtml(idea.description||idea.notes||'')}</div></td>
+          <td><span class="channel-pill">${escHtml(idea.target_channel||idea.list||'—')}</span></td>
+          <td><span class="source-badge">${escHtml(SOURCE_LABELS[idea.source]||idea.source||'—')}</span></td>
+          <td><span class="status-badge" style="background:${statusColor}20;color:${statusColor};">${escHtml(idea.status||'new')}</span></td>
+          <td>
+            ${idea.status!=='approved'?`<button class="btn-sm btn-approve" onclick="ideaAction('${escHtml(idea.id||'')}','approve')">&#10003;</button>`:''}
+            ${idea.status!=='rejected'?`<button class="btn-sm btn-reject" onclick="ideaAction('${escHtml(idea.id||'')}','reject')">&#10005;</button>`:''}
+          </td>
+        </tr>`;
+      }).join('')}
+    </tbody>
+  </table>
+</div>
+
+<!-- RECOMMENDATIONS TAB -->
+<div id="tab-recommendations" class="tab-content">
+  <div class="filters" id="rec-filters">
+    <span class="filter-pill active" onclick="filterRecs(this,'all')">Todas</span>
+    <span class="filter-pill" onclick="filterRecs(this,'content_idea')">&#128221; Ideas</span>
+    <span class="filter-pill" onclick="filterRecs(this,'contact')">&#128101; Contactos</span>
+    <span class="filter-pill" onclick="filterRecs(this,'operational')">&#9881; Operativas</span>
+    <span style="margin-left:auto;font-size:12px;color:var(--muted);">Fuente:</span>
+    <span class="filter-pill" onclick="filterRecSource(this,'atalaya')">Atalaya</span>
+    <span class="filter-pill" onclick="filterRecSource(this,'trust-engine')">Trust Engine</span>
+    <span class="filter-pill" onclick="filterRecSource(this,'performance')">Performance</span>
+  </div>
+  <div id="recs-list">
+    <div class="empty-state">Cargando recomendaciones...</div>
+  </div>
+</div>
+
+</div><!-- /content -->
+
+<script>
+const SLUG = '${escHtml(slug)}';
+const _mc = '/m' + 'c';
+const _p = window.location.pathname;
+const _adminMatch = _p.match(new RegExp(_mc + '/admin/[^/]+'));
+const API_BASE = _adminMatch ? _adminMatch[0] : (_p.includes(_mc + '/') ? _mc : '');
+
+function showTab(name) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  event.currentTarget.classList.add('active');
+  document.getElementById('tab-' + name).classList.add('active');
+  if (name === 'recommendations') loadRecs();
+}
+
+function filterIdeas(el, status) {
+  el.closest('.filters').querySelectorAll('.filter-pill').forEach(f => f.classList.remove('active'));
+  el.classList.add('active');
+  document.querySelectorAll('#ideas-tbody tr').forEach(tr => {
+    tr.style.display = (status === 'all' || tr.dataset.status === status) ? '' : 'none';
+  });
+}
+
+async function ideaAction(ideaId, action) {
+  const status = action === 'approve' ? 'approved' : 'rejected';
+  try {
+    await fetch(API_BASE + '/api/ideas/status', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ slug: SLUG, ideaId, status }) });
+    location.reload();
+  } catch(e) { console.error(e); }
+}
+
+// Recommendations
+let _recsData = [];
+let _recTypeFilter = 'all';
+let _recSourceFilter = '';
+
+async function loadRecs() {
+  try {
+    const res = await fetch(API_BASE + '/api/recommendations?slug=' + SLUG + '&status=pending');
+    const data = await res.json();
+    _recsData = data.recommendations || [];
+    renderRecs();
+  } catch(e) { console.error(e); document.getElementById('recs-list').innerHTML = '<div class="empty-state">Error cargando recomendaciones</div>'; }
+}
+
+function renderRecs() {
+  let filtered = _recsData;
+  if (_recTypeFilter !== 'all') filtered = filtered.filter(r => r.type === _recTypeFilter);
+  if (_recSourceFilter) filtered = filtered.filter(r => r.source.startsWith(_recSourceFilter));
+
+  const el = document.getElementById('recs-list');
+  if (filtered.length === 0) { el.innerHTML = '<div class="empty-state">Sin recomendaciones pendientes</div>'; return; }
+
+  const TYPE_ICONS = { content_idea: '&#128221;', contact: '&#128101;', operational: '&#9881;' };
+  const PRIO_CLASS = { high: 'priority-high', medium: 'priority-medium', low: 'priority-low' };
+
+  el.innerHTML = filtered.map(r => {
+    const icon = TYPE_ICONS[r.type] || '&#128300;';
+    const prioClass = PRIO_CLASS[r.priority] || '';
+    const channels = (r.content?.channels || []).map(c => '<span class="channel-pill">' + c + '</span>').join('');
+    const contactInfo = r.contact ? '<div style="font-size:12px;margin-top:4px;"><strong>' + (r.contact.name||'') + '</strong> &middot; ' + (r.contact.platform||'') + (r.contact.reason ? ' &middot; ' + r.contact.reason : '') + '</div>' : '';
+    const approveLabel = r.type === 'contact' ? 'Aprobar contacto' : r.type === 'operational' ? 'Convertir a tarea' : 'Aprobar idea';
+    const approveAction = r.type === 'operational' ? "recAction('" + r.id + "','convert')" : "recAction('" + r.id + "','approve')";
+
+    const dismissAction = "recAction('" + r.id + "','dismiss')";
+    return '<div class="rec-card"><div class="rec-icon">' + icon + '</div><div class="rec-body"><div class="rec-title">' + (r.title||'—') + '</div><div class="rec-meta"><span class="source-badge">' + (r.source||'—') + '</span><span class="' + prioClass + '" style="font-weight:700;font-size:11px;">' + (r.priority||'') + '</span>' + channels + '</div>' + (r.description ? '<div class="rec-desc">' + r.description.slice(0,200) + '</div>' : '') + contactInfo + '<div class="rec-actions"><button class="btn-sm btn-approve" onclick="' + approveAction + '">' + approveLabel + '</button><button class="btn-sm btn-reject" onclick="' + dismissAction + '">Descartar</button></div></div></div>';
+  }).join('');
+}
+
+function filterRecs(el, type) {
+  el.closest('.filters').querySelectorAll('.filter-pill').forEach(f => { if (!f.style.marginLeft) f.classList.remove('active'); });
+  el.classList.add('active');
+  _recTypeFilter = type;
+  renderRecs();
+}
+function filterRecSource(el, src) {
+  const wasActive = el.classList.contains('active');
+  document.querySelectorAll('#rec-filters .filter-pill').forEach(f => { if (f.style.marginLeft !== 'auto' && f.textContent.match(/Atalaya|Trust|Performance/)) f.classList.remove('active'); });
+  if (!wasActive) { el.classList.add('active'); _recSourceFilter = src; } else { _recSourceFilter = ''; }
+  renderRecs();
+}
+
+async function recAction(recId, action) {
+  try {
+    await fetch(API_BASE + '/api/recommendations/action', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ slug: SLUG, id: recId, action }) });
+    loadRecs();
+  } catch(e) { console.error(e); }
+}
+</script>
+</body></html>`;
+}
+
 // === Atalaya (Watchtower) — Competitive Intelligence Page ===
 function buildAtalayaPage(slug, baseUrl, clientName) {
   function escHtml(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
@@ -7135,6 +7417,205 @@ nav .nav-footer { display:none !important; }
     return;
   }
 
+  // === Universal Recommendations API (aggregates from all sources) ===
+  if (url.startsWith('/api/recommendations') && req.method === 'GET') {
+    if (!req._adminToken) { res.writeHead(403); res.end('Forbidden'); return; }
+    const params = new URL('http://x' + req.url).searchParams;
+    const rSlug = params.get('slug') || '';
+    const filterType = params.get('type') || '';
+    const filterSource = params.get('source') || '';
+    const filterStatus = params.get('status') || 'pending';
+    try {
+      const brandDir = path.join(BASE, 'brand', rSlug);
+      let allRecs = [];
+
+      // Source 1: Atalaya pending files
+      const atalayaDir = path.join(brandDir, 'atalaya');
+      const atalayaFiles = { 'profiles-pending.json': 'atalaya-profiles', 'competitors-pending.json': 'atalaya-competitors', 'ads-pending.json': 'atalaya-ads', 'pending-ideas.json': 'atalaya' };
+      for (const [fname, src] of Object.entries(atalayaFiles)) {
+        try {
+          const raw = JSON.parse(fs.readFileSync(path.join(atalayaDir, fname), 'utf-8'));
+          const items = Array.isArray(raw) ? raw : raw.ideas || raw.ideas_generated || [];
+          for (const item of items) {
+            allRecs.push({
+              id: item.id || 'rec-' + src + '-' + Date.now() + '-' + Math.random().toString(36).slice(2,5),
+              source: item.source || src,
+              type: item.type || 'content_idea',
+              priority: item.priority || item.adapted_idea?.priority || 'medium',
+              title: item.title || item.adapted_idea?.title || '',
+              description: item.description || item.adapted_idea?.description || '',
+              rationale: item.rationale || item.source_content_snippet || '',
+              content: item.content || (item.adapted_idea ? { channels: item.adapted_idea.recommended_channels || [], format: item.adapted_idea.format || '' } : undefined),
+              contact: item.contact || undefined,
+              status: item.status || 'pending',
+              created_at: item.created_at || '',
+              _file: fname
+            });
+          }
+        } catch {}
+      }
+
+      // Source 2: Performance Analysis
+      try {
+        const raw = JSON.parse(fs.readFileSync(path.join(brandDir, 'monitoring', 'pending-recommendations.json'), 'utf-8'));
+        const items = Array.isArray(raw) ? raw : raw.recommendations || [];
+        for (const item of items) {
+          allRecs.push({
+            id: item.id || '',
+            source: 'performance-analysis',
+            type: item.type === 'content_idea' ? 'content_idea' : 'operational',
+            priority: item.priority || 'medium',
+            title: item.title || '',
+            description: item.description || item.rationale || '',
+            rationale: item.rationale || '',
+            operational: { linked_project: item.linked_project || item.linkedProject || null, linked_metric: item.linked_metric || item.linkedMetric || null, suggested_action: item.suggested_action || item.suggestedAction || '' },
+            status: item.status || 'pending',
+            created_at: item.created_at || item.createdAt || '',
+            converted_to: item.converted_to_task ? 'task:' + item.converted_to_task : null,
+            _file: 'monitoring/pending-recommendations.json'
+          });
+        }
+      } catch {}
+
+      // Source 3: Trust Engine recommendations
+      try {
+        const raw = JSON.parse(fs.readFileSync(path.join(brandDir, 'trust-engine', 'recommendations.json'), 'utf-8'));
+        const items = raw.recommendations || raw.data?.recommendations || [];
+        for (const item of items) {
+          allRecs.push({
+            id: item.rec_id || item.id || '',
+            source: 'trust-engine',
+            type: item.type || 'content_idea',
+            priority: item.priority || item.severity || 'medium',
+            title: item.title || '',
+            description: item.rationale || item.description || '',
+            rationale: item.rationale || '',
+            status: item.status || 'pending',
+            created_at: item.created_at || '',
+            _file: 'trust-engine/recommendations.json'
+          });
+        }
+      } catch {}
+
+      // Apply filters
+      if (filterStatus && filterStatus !== 'all') allRecs = allRecs.filter(r => r.status === filterStatus);
+      if (filterType) allRecs = allRecs.filter(r => r.type === filterType);
+      if (filterSource) allRecs = allRecs.filter(r => r.source.startsWith(filterSource));
+
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ recommendations: allRecs, total: allRecs.length }));
+    } catch (e) { res.writeHead(500); res.end(JSON.stringify({ error: e.message })); }
+    return;
+  }
+
+  if (url === '/api/recommendations/action' && req.method === 'POST') {
+    if (!req._adminToken) { res.writeHead(403); res.end('Forbidden'); return; }
+    let body = '';
+    req.on('data', chunk => body += chunk);
+    req.on('end', () => {
+      try {
+        const { slug: rSlug, id: recId, action, convertTo, projectId, sourceFile } = JSON.parse(body);
+        const brandDir = path.join(BASE, 'brand', rSlug);
+
+        // Find the recommendation in its source file
+        function findAndUpdate(filePath, updateFn) {
+          const raw = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+          let items = Array.isArray(raw) ? raw : raw.ideas || raw.ideas_generated || raw.recommendations || [];
+          const idx = items.findIndex(i => (i.id || i.rec_id) === recId);
+          if (idx === -1) return false;
+          updateFn(items, idx);
+          if (Array.isArray(raw)) { fs.writeFileSync(filePath, JSON.stringify(items, null, 2)); }
+          else { fs.writeFileSync(filePath, JSON.stringify(raw, null, 2)); }
+          return true;
+        }
+
+        // Search in all possible files
+        const searchFiles = [
+          path.join(brandDir, 'atalaya', 'profiles-pending.json'),
+          path.join(brandDir, 'atalaya', 'competitors-pending.json'),
+          path.join(brandDir, 'atalaya', 'ads-pending.json'),
+          path.join(brandDir, 'atalaya', 'pending-ideas.json'),
+          path.join(brandDir, 'monitoring', 'pending-recommendations.json'),
+          path.join(brandDir, 'trust-engine', 'recommendations.json'),
+        ];
+
+        let found = false;
+        for (const fp of searchFiles) {
+          if (!fs.existsSync(fp)) continue;
+          try {
+            found = findAndUpdate(fp, (items, idx) => {
+              const item = items[idx];
+              if (action === 'dismiss') {
+                item.status = 'dismissed';
+                item.actioned_at = new Date().toISOString();
+              } else if (action === 'approve') {
+                // Move to ideas.json
+                const ideasPath = path.join(brandDir, 'ideas.json');
+                let ideas = { ideas: [] };
+                try { ideas = JSON.parse(fs.readFileSync(ideasPath, 'utf-8')); } catch {}
+                if (!ideas.ideas) ideas.ideas = [];
+                const isContact = (item.type === 'contact' || item.contact);
+                ideas.ideas.push({
+                  id: item.id || recId,
+                  type: isContact ? 'contact' : 'content',
+                  status: 'new',
+                  title: item.title || item.adapted_idea?.title || '',
+                  description: item.description || item.adapted_idea?.description || '',
+                  source: item.source || 'atalaya',
+                  list: isContact ? (item.contact?.target_channel || 'outreach') : (item.content?.list || 'keywords'),
+                  channels: item.content?.channels || item.adapted_idea?.recommended_channels || [],
+                  target_channel: item.contact?.target_channel || '',
+                  priority_score: item.priority === 'high' ? 80 : item.priority === 'medium' ? 50 : 20,
+                  created_at: new Date().toISOString(),
+                  notes: item.rationale || ''
+                });
+                fs.writeFileSync(ideasPath, JSON.stringify(ideas, null, 2));
+                item.status = 'approved';
+                item.actioned_at = new Date().toISOString();
+                item.converted_to = 'idea:' + (item.id || recId);
+              } else if (action === 'convert') {
+                // Convert to task in project
+                const pId = projectId || item.operational?.linked_project || item.linked_project || item.linkedProject;
+                if (!pId) { throw new Error('No project specified'); }
+                const projectsDir = path.join(brandDir, 'projects');
+                const projDirs = fs.readdirSync(projectsDir).filter(d => d.startsWith(pId));
+                if (projDirs.length === 0) throw new Error('Project not found: ' + pId);
+                const tasksPath = path.join(projectsDir, projDirs[0], 'tasks.json');
+                let tasks = [];
+                try { tasks = JSON.parse(fs.readFileSync(tasksPath, 'utf-8')); } catch {}
+                if (!Array.isArray(tasks)) tasks = tasks.tasks || [];
+                const taskId = projDirs[0] + '-T' + String(tasks.length + 1).padStart(2, '0');
+                tasks.push({
+                  id: taskId,
+                  name: item.title || '',
+                  description: (item.rationale || '') + (item.operational?.suggested_action ? '\n\n**Accion sugerida:** ' + item.operational.suggested_action : ''),
+                  status: 'todo',
+                  source: item.source || 'recommendation',
+                  created_at: new Date().toISOString()
+                });
+                fs.writeFileSync(tasksPath, JSON.stringify(tasks, null, 2));
+                item.status = 'converted';
+                item.actioned_at = new Date().toISOString();
+                item.converted_to = 'task:' + taskId;
+                item.converted_to_task = taskId;
+              }
+            });
+            if (found) break;
+          } catch {}
+        }
+
+        if (found) {
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ ok: true }));
+        } else {
+          res.writeHead(404, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Recommendation not found' }));
+        }
+      } catch (e) { res.writeHead(500); res.end(JSON.stringify({ error: e.message })); }
+    });
+    return;
+  }
+
   // === Competitors sources.json API ===
   if (url === '/api/competitors-sources' && req.method === 'GET') {
     if (!req._adminToken) { res.writeHead(403); res.end('Forbidden'); return; }
@@ -7185,6 +7666,29 @@ nav .nav-footer { display:none !important; }
       res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
       res.end(JSON.stringify({ pendingCount: pending.length }));
     } catch (e) { res.writeHead(500); res.end(JSON.stringify({ error: e.message })); }
+    return;
+  }
+
+  // === Idea Bank page (admin mode) ===
+  if (url.startsWith('/idea-bank/') || url === '/idea-bank') {
+    if (!req._adminToken) { res.writeHead(403, { 'Content-Type': 'text/html; charset=utf-8' }); res.end(portalForbiddenPage()); return; }
+    const slug = url.replace('/idea-bank/', '').replace(/\/api\/.*/, '').replace(/\/$/, '') || null;
+    if (!slug) {
+      const clients = loadClients();
+      const links = clients.map(c => `<div class="card"><a href="${req._adminBase}/idea-bank/${c.slug}/">${c.emoji || '🏢'} ${c.name || c.slug}</a></div>`).join('');
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Access-Control-Allow-Origin': '*' });
+      res.end(page('Idea Bank', `<a class="back" href="${req._adminBase}/">← Mission Control</a>`, `<h1>💡 Idea Bank por cliente</h1>${links}`));
+      return;
+    }
+    const client = loadClients().find(c => c.slug === slug);
+    const clientName = client ? (client.name || slug) : slug;
+    try {
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Access-Control-Allow-Origin': '*' });
+      res.end(buildIdeaBankPage(slug, req._adminBase, clientName));
+    } catch (err) {
+      res.writeHead(500, { 'Content-Type': 'text/html; charset=utf-8' });
+      res.end(page('Idea Bank Error', '', `<h1>Error</h1><pre>${err.stack}</pre>`));
+    }
     return;
   }
 
