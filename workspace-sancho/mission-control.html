@@ -4225,7 +4225,7 @@ function showPage(name, el) {
     'metrics':          () => { loadMetrics(); },
     'projects':         () => { loadProjects(); },
     'idea-bank':        () => { loadIdeaBankIframe(); },
-    'trust-engine':     () => { loadTrustEngine(); },
+    'trust-engine':     () => { loadTrustEngine(); const _s = document.getElementById('clientSelector')?.value; if (_s && _s !== 'global') { mcChatSidebar.init({ anchorId: 'mc-global-chat-anchor', toggleBtnId: 'global-chat-toggle', threadId: 'trust-engine-' + _s, threadName: 'Trust Engine — ' + _s }); if (!mcChatSidebar.isOpen) mcChatSidebar.toggle(); } },
     'atalaya':          () => { loadAtalayaIframe(); },
     'settings':         () => { loadSettingsIframe(window._pendingSettingsTab); window._pendingSettingsTab = null; },
   };
@@ -6328,6 +6328,41 @@ async function renderV2NextSteps(slug) {
       }
     } catch(e) { console.warn('[NextSteps] Monitoring fetch error:', e.message); }
   }
+
+  // ===== 🏰 ATALAYA RECOMMENDATIONS (Section 1c — from all sources except performance) =====
+  try {
+    const atalayaRes = await fetch(`${MC_BASE}/api/recommendations?slug=${slug}&status=pending`);
+    if (atalayaRes.ok) {
+      const atalayaData = await atalayaRes.json();
+      const atalayaRecs = (atalayaData.recommendations || []).filter(r => !r.source?.startsWith('performance'));
+      const topAtalaya = atalayaRecs.filter(r => r.priority === 'high' || r.priority === 'medium').slice(0, 4);
+      if (topAtalaya.length > 0) {
+        const srcIcons = {'atalaya-profiles':'👤','atalaya-competitors':'🎯','atalaya-ads':'📢','trust-engine':'🔍'};
+        html += '<div class="v2-sub"><div class="v2-sub-t">🏰 Ideas de Atalaya</div>';
+        for (const rec of topAtalaya) {
+          const prioColor = rec.priority === 'high' ? '#C45D35' : '#B8860B';
+          const srcIcon = srcIcons[rec.source] || '💡';
+          html += `<div style="margin:2px 0;padding:8px 10px;background:var(--card-bg);border:1px solid var(--border);border-left:3px solid ${prioColor};border-radius:6px;font-size:11px;">
+            <div style="display:flex;align-items:flex-start;gap:6px;">
+              <span style="font-size:13px;flex-shrink:0;">${srcIcon}</span>
+              <div style="flex:1;">
+                <div style="font-weight:600;margin-bottom:2px;">${(rec.title||'').replace(/</g,'&lt;')}</div>
+                <div style="display:flex;align-items:center;gap:5px;">
+                  <span style="font-size:9px;padding:1px 5px;background:#F0EDE8;border-radius:3px;">${(rec.source||'').replace(/</g,'&lt;')}</span>
+                  <span style="flex:1;"></span>
+                  <span style="font-size:8px;font-weight:700;color:${prioColor};text-transform:uppercase;">${rec.priority}</span>
+                </div>
+              </div>
+            </div>
+          </div>`;
+        }
+        if (atalayaRecs.length > topAtalaya.length) {
+          html += `<div style="text-align:center;margin-top:4px;"><a href="#" onclick="showPage('idea-bank');return false;" style="font-size:10px;color:var(--rust);text-decoration:none;">Ver las ${atalayaRecs.length} recomendaciones en Idea Bank →</a></div>`;
+        }
+        html += '</div>';
+      }
+    }
+  } catch(e) { console.warn('[NextSteps] Atalaya recs fetch error:', e.message); }
 
   // ===== 📋 PROYECTOS (Section 2 — always) =====
   let allProjects = [];
@@ -9096,14 +9131,60 @@ function renderTEDashboard(slug) {
 
 async function teLaunch(modId, slug) {
   const mod = TE_MODULES.find(m => m.id === modId);
-  const cmd = (mod ? mod.cmd : 'trust-engine') + ' ' + slug;
+  const phase = TE_PHASES.find(p => p.modules.some(m => m.id === modId));
+  const phaseIdx = phase ? phase.modules.findIndex(m => m.id === modId) + 1 : 0;
+  const totalInPhase = phase ? phase.modules.length : 0;
+  const baseCmd = (mod ? mod.cmd : 'trust-engine') + ' ' + slug;
+  const phaseContext = phase ? `[Fase ${phase.num}: ${phase.title} — paso ${phaseIdx}/${totalInPhase}]` : '';
+  const cmd = baseCmd + (phaseContext ? ' ' + phaseContext : '');
   const threadId = 'trust-engine-' + slug;
   const threadName = 'Trust Engine — ' + slug;
   const btn = event?.target;
   if (btn) { btn.disabled = true; btn.textContent = '⏳ Lanzando...'; }
+  // Open chat sidebar first
   mcChatSidebar.init({ anchorId: 'mc-global-chat-anchor', toggleBtnId: 'global-chat-toggle', threadId, threadName });
   if (!mcChatSidebar.isOpen) mcChatSidebar.toggle();
-  try {
+  // Wait for sidebar to render, then show message and send
+  setTimeout(async () => {
+    try {
+      // Show user command in chat
+      const sideMsgs = document.getElementById('sidebar-chat-msgs');
+      if (sideMsgs) {
+        const div = document.createElement('div');
+        div.className = 'v2-msg v2-msg-u';
+        div.textContent = cmd;
+        sideMsgs.appendChild(div);
+        sideMsgs.scrollTop = sideMsgs.scrollHeight;
+      }
+      const typing = document.getElementById('sidebar-chat-typing');
+      if (typing) { typing.style.display = ''; }
+      // Send to API
+      await fetch(MC_BASE + '/api/mc-chat/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ slug, threadId, threadName, text: cmd, userName: 'Mission Control', skill: mod?.skill || 'trust-engine' })
+      });
+      if (btn) { btn.textContent = '✅ Lanzado'; btn.style.background = 'var(--green, #4A5D23)'; btn.style.color = '#fff'; }
+      setTimeout(() => loadTrustEngine(), 30000);
+    } catch (e) {
+      console.error('Launch error:', e);
+      if (btn) { btn.textContent = '❌ Error'; btn.disabled = false; }
+    }
+  }, 500);
+}
+
+function teSelectNiche(slug, nicheName) {
+  const cmd = 'trust-engine init ' + slug + ' --niche "' + nicheName + '" [Fase 1: Configuración — paso 1/1]';
+  const threadId = 'trust-engine-' + slug;
+  const threadName = 'Trust Engine — ' + slug;
+  // Open chat sidebar
+  mcChatSidebar.init({ anchorId: 'mc-global-chat-anchor', toggleBtnId: 'global-chat-toggle', threadId, threadName });
+  if (!mcChatSidebar.isOpen) mcChatSidebar.toggle();
+  // Go back to timeline immediately
+  document.getElementById('te-summary-bar').style.display = 'flex';
+  renderTEDashboard(slug);
+  // Wait for sidebar to render, then show message and send
+  setTimeout(() => {
     const sideMsgs = document.getElementById('sidebar-chat-msgs');
     if (sideMsgs) {
       const div = document.createElement('div');
@@ -9114,46 +9195,12 @@ async function teLaunch(modId, slug) {
     }
     const typing = document.getElementById('sidebar-chat-typing');
     if (typing) { typing.style.display = ''; }
-    await fetch(MC_BASE + '/api/mc-chat/send', {
+    fetch(MC_BASE + '/api/mc-chat/send', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ slug, threadId, threadName, text: cmd, userName: 'Mission Control', skill: mod?.skill || 'trust-engine' })
-    });
-    if (btn) { btn.textContent = '✅ Lanzado'; btn.style.background = 'var(--green, #4A5D23)'; btn.style.color = '#fff'; }
-    setTimeout(() => loadTrustEngine(), 30000);
-  } catch (e) {
-    console.error('Launch error:', e);
-    if (btn) { btn.textContent = '❌ Error'; btn.disabled = false; }
-  }
-}
-
-function teSelectNiche(slug, nicheName) {
-  const cmd = 'trust-engine init ' + slug + ' --niche "' + nicheName + '"';
-  const threadId = 'trust-engine-' + slug;
-  const threadName = 'Trust Engine — ' + slug;
-  // Open chat sidebar
-  mcChatSidebar.init({ anchorId: 'mc-global-chat-anchor', toggleBtnId: 'global-chat-toggle', threadId, threadName });
-  if (!mcChatSidebar.isOpen) mcChatSidebar.toggle();
-  // Show user message
-  const sideMsgs = document.getElementById('sidebar-chat-msgs');
-  if (sideMsgs) {
-    const div = document.createElement('div');
-    div.className = 'v2-msg v2-msg-u';
-    div.textContent = cmd;
-    sideMsgs.appendChild(div);
-    sideMsgs.scrollTop = sideMsgs.scrollHeight;
-  }
-  const typing = document.getElementById('sidebar-chat-typing');
-  if (typing) { typing.style.display = ''; }
-  // Send
-  fetch(MC_BASE + '/api/mc-chat/send', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ slug, threadId, threadName, text: cmd, userName: 'Mission Control', skill: 'trust-engine' })
-  }).catch(e => console.error('teSelectNiche error:', e));
-  // Go back to timeline
-  document.getElementById('te-summary-bar').style.display = 'flex';
-  renderTEDashboard(slug);
+      body: JSON.stringify({ slug, threadId, threadName, text: cmd, userName: 'Mission Control', skill: 'trust-engine' })
+    }).catch(e => console.error('teSelectNiche error:', e));
+  }, 500);
 }
 
 

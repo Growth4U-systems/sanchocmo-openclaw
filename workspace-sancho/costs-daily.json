@@ -1,10 +1,10 @@
 {
   "period": "2026-04",
-  "updatedAt": "2026-04-01T23:06:21.196967",
+  "updatedAt": "2026-04-03T23:01:33.924262",
   "days": {
     "2026-04-01": {
-      "total_usd": 22.6994,
-      "total_turns": 388,
+      "total_usd": 19.1594,
+      "total_turns": 272,
       "clients": {
         "hospital-capilar": {
           "cost_usd": 0,
@@ -15,7 +15,37 @@
           "turns": 3
         }
       },
-      "system_usd": 12.1
+      "system_usd": 3.2272
+    },
+    "2026-04-02": {
+      "total_usd": 0.8981,
+      "total_turns": 207,
+      "clients": {
+        "hospital-capilar": {
+          "cost_usd": 0,
+          "turns": 0
+        },
+        "growth4u": {
+          "cost_usd": 0,
+          "turns": 0
+        }
+      },
+      "system_usd": 0.8981
+    },
+    "2026-04-03": {
+      "total_usd": 5.1031,
+      "total_turns": 355,
+      "clients": {
+        "hospital-capilar": {
+          "cost_usd": 0,
+          "turns": 1
+        },
+        "growth4u": {
+          "cost_usd": 0,
+          "turns": 3
+        }
+      },
+      "system_usd": 5.1031
     }
   }
 }

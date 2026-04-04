@@ -424,6 +424,9 @@
       "strategic_plan": "strategic-plan/strategic-plan-q2-2026.html",
       "strategic-plan-q2-2026": "presentations/strategic-plan-q2-2026.html"
     },
+    "seo_audit": {
+      "current": "seo-audit/current.md"
+    },
     "public": {
       "llms_txt": "llms.txt"
     },

@@ -89,5 +89,17 @@
     "done_criteria": "Publicación constante durante 4 semanas. Scheduling automático configurado.",
     "type": "content",
     "skill": "social-content"
+  },
+  {
+    "id": "P07-social-content-T08",
+    "name": "Post sobre sistemas de growth para startups",
+    "description": "1 ideas seleccionadas",
+    "type": "content",
+    "idea_ids": [
+      "idea-001"
+    ],
+    "status": "todo",
+    "owner": "Sancho",
+    "created_at": "2026-04-03T22:00:57.035Z"
   }
 ]

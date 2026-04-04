@@ -48,6 +48,67 @@
       ]
     },
     {
+      "id": "mtg-2026-03-06-avances-proyecto",
+      "type": "meeting",
+      "client": "hospital-capilar",
+      "date": "2026-03-06",
+      "title": "Avances proyecto HC",
+      "summary": "Sesión técnica enfocada en la arquitectura del sistema de precualificación de leads para Hospital Capilar y demostración de herramientas de automatización de contenido con Claude. División de trabajo: Philippe (quiz + scoring con webhook) y Ramiro (landings + automatizaciones en GHL). Stack: Cursor + Cloud Code.",
+      "status": "processed",
+      "sourceFile": "brand/hospital-capilar/intelligence/meetings/2026-03-06-avances-proyecto/summary.md",
+      "processedAt": "2026-04-03T16:00:00Z",
+      "tags": [
+        "meeting"
+      ],
+      "transcriptFile": "brand/hospital-capilar/intelligence/meetings/2026-03-06-avances-proyecto/transcript.md"
+    },
+    {
+      "id": "mtg-2026-03-04-status-arquitectura",
+      "type": "meeting",
+      "client": "hospital-capilar",
+      "date": "2026-03-04",
+      "title": "Status arquitectura Hospital Capilar",
+      "summary": "Sesión de definición estratégica donde se consolidó el posicionamiento de Hospital Capilar (jóvenes con alopecia temprana buscando claridad médica) y se simplificó la arquitectura técnica del sistema de leads. 3 nichos iniciales confirmados, sistema replicable basado en GHL con quiz + scoring vía Make.",
+      "status": "processed",
+      "sourceFile": "brand/hospital-capilar/intelligence/meetings/2026-03-04-status-arquitectura/summary.md",
+      "processedAt": "2026-04-03T16:00:00Z",
+      "tags": [
+        "meeting"
+      ],
+      "transcriptFile": "brand/hospital-capilar/intelligence/meetings/2026-03-04-status-arquitectura/transcript.md"
+    },
+    {
+      "id": "mtg-2026-02-27-gtm-discord",
+      "type": "meeting",
+      "client": "hospital-capilar",
+      "date": "2026-02-27",
+      "title": "GTM Hospital capilar - Discord",
+      "summary": "Sesión técnica interna de Growth4U enfocada en mejoras de usabilidad de Mission Control y diferenciación de agentes (Sancho, Cervantes, Rocinante). Se definieron estados de documentos, reorganización de carpetas, y flujo de trabajo con hilos de Discord. ⚠️ NOTA: Reunión INTERNA Growth4U, no específica de Hospital Capilar.",
+      "status": "processed",
+      "sourceFile": "brand/hospital-capilar/intelligence/meetings/2026-02-27-gtm-discord/summary.md",
+      "processedAt": "2026-04-03T16:00:00Z",
+      "tags": [
+        "meeting",
+        "interna"
+      ],
+      "transcriptFile": "brand/hospital-capilar/intelligence/meetings/2026-02-27-gtm-discord/transcript.md"
+    },
+    {
+      "id": "mtg-2026-02-24-hospital-capilar",
+      "type": "meeting",
+      "client": "hospital-capilar",
+      "date": "2026-02-24",
+      "title": "Hospital Capilar",
+      "summary": "Sesión de planificación estratégica donde se identificaron competidores puramente capilares, se propuso una campaña Google 'Get Directions' para aumentar tráfico presencial, y se detectaron quick wins críticos: reducir no-shows (47% en Madrid) y lanzar programa de referidos.",
+      "status": "processed",
+      "sourceFile": "brand/hospital-capilar/intelligence/meetings/2026-02-24-hospital-capilar/summary.md",
+      "processedAt": "2026-04-03T16:00:00Z",
+      "tags": [
+        "meeting"
+      ],
+      "transcriptFile": "brand/hospital-capilar/intelligence/meetings/2026-02-24-hospital-capilar/transcript.md"
+    },
+    {
       "id": "mtg-2026-03-18-lead-nurturing-madrid",
       "type": "meeting",
       "client": "hospital-capilar",

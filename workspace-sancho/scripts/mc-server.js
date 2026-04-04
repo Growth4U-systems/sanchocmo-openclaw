@@ -1279,6 +1279,19 @@ function buildIdeaBankPage(slug, baseUrl, clientName) {
   const contentIdeas = ideas.filter(i => i.type !== 'contact');
   const contactIdeas = ideas.filter(i => i.type === 'contact');
 
+  // Load projects for task creation modal
+  let projects = [];
+  try {
+    const projDir = path.join(brandDir, 'projects');
+    if (fs.existsSync(projDir)) {
+      projects = fs.readdirSync(projDir).filter(d => fs.statSync(path.join(projDir, d)).isDirectory() && d.startsWith('P')).map(d => {
+        let name = d;
+        try { const pj = JSON.parse(fs.readFileSync(path.join(projDir, d, 'project.json'), 'utf-8')); name = pj.name || d; } catch {}
+        return { id: d, name };
+      });
+    }
+  } catch {}
+
   // Load recommendations count (aggregated)
   let recCount = 0;
   const pendingFiles = ['atalaya/profiles-pending.json','atalaya/competitors-pending.json','atalaya/ads-pending.json','atalaya/pending-ideas.json','monitoring/pending-recommendations.json'];
@@ -1349,6 +1362,25 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);line
 .rec-actions{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;}
 .priority-high{color:var(--rust);}.priority-medium{color:var(--yellow);}.priority-low{color:var(--blue);}
 .empty-state{text-align:center;padding:48px 0;color:var(--muted);}
+.idea-table input[type="checkbox"]{accent-color:var(--rust);width:16px;height:16px;cursor:pointer;}
+.select-bar{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--navy);color:#fff;padding:12px 24px;border-radius:12px;z-index:200;display:none;align-items:center;gap:12px;box-shadow:0 4px 20px rgba(0,0,0,0.3);font-size:14px;}
+.select-bar button{padding:6px 16px;border-radius:6px;cursor:pointer;font-weight:600;font-size:13px;border:none;}
+.select-bar .btn-create{background:var(--rust);color:#fff;}.select-bar .btn-create:hover{background:#A84D2D;}
+.select-bar .btn-cancel{background:transparent;color:#fff;border:1px solid #fff !important;}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;z-index:300;}
+.modal-box{background:#fff;border-radius:12px;padding:24px;width:420px;max-width:90vw;box-shadow:0 8px 32px rgba(0,0,0,0.2);}
+.modal-title{font-family:'Space Grotesk',sans-serif;font-size:18px;font-weight:700;color:var(--navy);margin-bottom:16px;}
+.modal-field{margin-bottom:14px;}
+.modal-field label{display:block;font-size:12px;font-weight:600;color:var(--navy);margin-bottom:4px;}
+.modal-field input,.modal-field select{width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:6px;font-size:14px;font-family:'Nunito',sans-serif;box-sizing:border-box;}
+.modal-field input:focus,.modal-field select:focus{border-color:var(--rust);outline:none;}
+.modal-radio{display:flex;gap:16px;margin-bottom:14px;}
+.modal-radio label{display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;font-weight:500;}
+.modal-radio input[type="radio"]{accent-color:var(--rust);}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:16px;}
+.modal-actions button{padding:8px 20px;border-radius:6px;font-size:14px;font-weight:600;cursor:pointer;font-family:'Nunito',sans-serif;}
+.modal-actions .btn-primary{background:var(--rust);color:#fff;border:none;}.modal-actions .btn-primary:hover{background:#A84D2D;}
+.modal-actions .btn-secondary{background:#fff;border:1px solid var(--border);color:var(--navy);}
 @media(max-width:900px){.stats-row{flex-direction:column;}.idea-table{font-size:12px;}}
 </style>
 </head><body>
@@ -1359,6 +1391,7 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);line
 <div class="tabs">
   <div class="tab active" onclick="showTab('ideas')">&#128221; Ideas <span class="badge">${contentIdeas.length}</span></div>
   <div class="tab" onclick="showTab('contacts')">&#128101; Contactos <span class="badge">${contactIdeas.length}</span></div>
+  <div class="tab" onclick="showTab('insights')">&#128270; Insights</div>
   <div class="tab" onclick="showTab('recommendations')">&#128300; Recomendaciones ${recCount > 0 ? `<span class="badge badge-green">${recCount}</span>` : ''}</div>
 </div>
 <div class="content">
@@ -1379,14 +1412,15 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);line
     <span class="filter-pill" onclick="filterIdeas(this,'rejected')">Descartadas</span>
   </div>
   <table class="idea-table">
-    <thead><tr><th>Idea</th><th>Score</th><th>Canales</th><th>Fuente</th><th>Status</th><th>Acciones</th></tr></thead>
+    <thead><tr><th style="width:30px;"><input type="checkbox" onchange="toggleAllIdeas(this,'ideas')"></th><th>Idea</th><th>Score</th><th>Canales</th><th>Fuente</th><th>Status</th><th>Acciones</th></tr></thead>
     <tbody id="ideas-tbody">
-      ${contentIdeas.length === 0 ? '<tr><td colspan="6" class="empty-state">Sin ideas de contenido. Lanza un scan desde Atalaya.</td></tr>' : ''}
+      ${contentIdeas.length === 0 ? '<tr><td colspan="7" class="empty-state">Sin ideas de contenido. Lanza un scan desde Atalaya.</td></tr>' : ''}
       ${contentIdeas.map(idea => {
         const statusColor = STATUS_COLORS[idea.status] || '#95A5A6';
         const channels = (idea.channels || idea.channels_suggested || []).map(c => `<span class="channel-pill">${escHtml(c)}</span>`).join('');
         const sourceLabel = SOURCE_LABELS[idea.source] || idea.source || '—';
-        return `<tr data-status="${escHtml(idea.status||'new')}" data-id="${escHtml(idea.id||'')}">
+        return `<tr data-status="${escHtml(idea.status||'new')}" data-id="${escHtml(idea.id||'')}" data-type="content">
+          <td><input type="checkbox" class="idea-check" value="${escHtml(idea.id||'')}" onchange="updateSelection()"></td>
           <td><div class="idea-title-cell">${escHtml(idea.title||'—')}</div><div class="idea-desc">${escHtml(idea.description||idea.notes||'')}</div></td>
           <td>${idea.priority_score||'—'}</td>
           <td>${channels||'—'}</td>
@@ -1410,12 +1444,13 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);line
     <div class="stat-card"><div class="stat-num">${contactIdeas.filter(i=>i.status==='approved').length}</div><div class="stat-lbl">Aprobados</div></div>
   </div>
   <table class="idea-table">
-    <thead><tr><th>Contacto</th><th>Canal</th><th>Fuente</th><th>Status</th><th>Acciones</th></tr></thead>
-    <tbody>
-      ${contactIdeas.length === 0 ? '<tr><td colspan="5" class="empty-state">Sin contactos. Lanza un scan desde Atalaya.</td></tr>' : ''}
+    <thead><tr><th style="width:30px;"><input type="checkbox" onchange="toggleAllIdeas(this,'contacts')"></th><th>Contacto</th><th>Canal</th><th>Fuente</th><th>Status</th><th>Acciones</th></tr></thead>
+    <tbody id="contacts-tbody">
+      ${contactIdeas.length === 0 ? '<tr><td colspan="6" class="empty-state">Sin contactos. Lanza un scan desde Atalaya.</td></tr>' : ''}
       ${contactIdeas.map(idea => {
         const statusColor = STATUS_COLORS[idea.status] || '#95A5A6';
-        return `<tr data-status="${escHtml(idea.status||'new')}">
+        return `<tr data-status="${escHtml(idea.status||'new')}" data-id="${escHtml(idea.id||'')}" data-type="contact">
+          <td><input type="checkbox" class="idea-check" value="${escHtml(idea.id||'')}" onchange="updateSelection()"></td>
           <td><div class="idea-title-cell">${escHtml(idea.title||'—')}</div><div class="idea-desc">${escHtml(idea.description||idea.notes||'')}</div></td>
           <td><span class="channel-pill">${escHtml(idea.target_channel||idea.list||'—')}</span></td>
           <td><span class="source-badge">${escHtml(SOURCE_LABELS[idea.source]||idea.source||'—')}</span></td>
@@ -1428,6 +1463,24 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);line
       }).join('')}
     </tbody>
   </table>
+</div>
+
+<!-- INSIGHTS TAB -->
+<div id="tab-insights" class="tab-content">
+  <div class="filters" id="insights-filters">
+    <span class="filter-pill active" onclick="filterInsights(this,'all')">Todas</span>
+    <span class="filter-pill" onclick="filterInsights(this,'anomaly')">&#9888; Anomalias</span>
+    <span class="filter-pill" onclick="filterInsights(this,'opportunity')">&#127942; Oportunidades</span>
+    <span class="filter-pill" onclick="filterInsights(this,'decision')">&#9989; Decisiones</span>
+    <span class="filter-pill" onclick="filterInsights(this,'action')">&#9654; Acciones</span>
+    <span style="margin-left:auto;font-size:12px;color:var(--muted);">Fuente:</span>
+    <span class="filter-pill" onclick="filterInsightSource(this,'performance')">Performance</span>
+    <span class="filter-pill" onclick="filterInsightSource(this,'daily-pulse')">Daily Pulse</span>
+    <span class="filter-pill" onclick="filterInsightSource(this,'meeting')">Meetings</span>
+  </div>
+  <div id="insights-list">
+    <div class="empty-state">Cargando insights...</div>
+  </div>
 </div>
 
 <!-- RECOMMENDATIONS TAB -->
@@ -1447,7 +1500,55 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);line
   </div>
 </div>
 
+<!-- Selection bar -->
+<div class="select-bar" id="select-bar">
+  <span id="select-count">0 seleccionadas</span>
+  <button class="btn-create" onclick="showCreateTaskModal()">&#128736; Crear tarea</button>
+  <button class="btn-cancel" onclick="clearSelection()">Cancelar</button>
+</div>
+
 </div><!-- /content -->
+
+<!-- Create Task Modal -->
+<div class="modal-overlay" id="task-modal" style="display:none;" onclick="if(event.target===this)this.style.display='none'">
+  <div class="modal-box">
+    <div class="modal-title">&#128736; Crear tarea</div>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:16px;" id="modal-selected-info">0 ideas seleccionadas</div>
+    <div class="modal-radio">
+      <label><input type="radio" name="task-dest" value="existing" checked onchange="toggleTaskDest()"> Proyecto existente</label>
+      <label><input type="radio" name="task-dest" value="new" onchange="toggleTaskDest()"> Proyecto nuevo</label>
+    </div>
+    <div id="dest-existing" class="modal-field">
+      <label>Proyecto</label>
+      <select id="task-project">
+        ${projects.map(p => `<option value="${escHtml(p.id)}">${escHtml(p.name)}</option>`).join('')}
+      </select>
+    </div>
+    <div id="dest-new" style="display:none;">
+      <div class="modal-field">
+        <label>Nombre del proyecto</label>
+        <input type="text" id="new-project-name" placeholder="Ej: Content LinkedIn Abril">
+      </div>
+    </div>
+    <div class="modal-field">
+      <label>Nombre de la tarea</label>
+      <input type="text" id="task-name" placeholder="Ej: Publicar 5 posts sobre growth">
+    </div>
+    <div class="modal-field">
+      <label>Tipo</label>
+      <select id="task-type">
+        <option value="content">Content</option>
+        <option value="outreach">Outreach</option>
+        <option value="research">Research</option>
+        <option value="execution">Execution</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="document.getElementById('task-modal').style.display='none'">Cancelar</button>
+      <button class="btn-primary" onclick="createTask()">Crear tarea</button>
+    </div>
+  </div>
+</div>
 
 <script>
 const SLUG = '${escHtml(slug)}';
@@ -1461,6 +1562,7 @@ function showTab(name) {
   document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
   event.currentTarget.classList.add('active');
   document.getElementById('tab-' + name).classList.add('active');
+  if (name === 'insights') loadInsights();
   if (name === 'recommendations') loadRecs();
 }
 
@@ -1478,6 +1580,53 @@ async function ideaAction(ideaId, action) {
     await fetch(API_BASE + '/api/ideas/status', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ slug: SLUG, ideaId, status }) });
     location.reload();
   } catch(e) { console.error(e); }
+}
+
+// Insights
+let _insightsData = [];
+let _insTypeFilter = 'all';
+let _insSourceFilter = '';
+
+async function loadInsights() {
+  try {
+    const res = await fetch(API_BASE + '/api/insights?slug=' + SLUG);
+    const data = await res.json();
+    _insightsData = data.insights || [];
+    renderInsights();
+  } catch(e) { console.error(e); document.getElementById('insights-list').innerHTML = '<div class="empty-state">Error cargando insights</div>'; }
+}
+
+function renderInsights() {
+  let filtered = _insightsData;
+  if (_insTypeFilter !== 'all') filtered = filtered.filter(r => r.type === _insTypeFilter);
+  if (_insSourceFilter) filtered = filtered.filter(r => r.source.startsWith(_insSourceFilter));
+
+  const el = document.getElementById('insights-list');
+  if (filtered.length === 0) { el.innerHTML = '<div class="empty-state">Sin insights disponibles</div>'; return; }
+
+  const SEV_COLORS = { RED: '#E74C3C', YELLOW: '#F39C12', GREEN: '#27AE60', GREEN_OPPORTUNITY: '#27AE60', high: '#E74C3C', medium: '#F39C12', low: '#3498DB' };
+  const TYPE_ICONS = { anomaly: '&#9888;', opportunity: '&#127942;', decision: '&#9989;', action: '&#9654;', insight: '&#128161;', observation: '&#128065;', strategic: '&#127919;', market: '&#128200;', operational: '&#9881;' };
+  const SRC_LABELS = { 'performance-analysis': 'Performance', 'daily-pulse': 'Daily Pulse', 'meeting-intelligence': 'Meeting' };
+
+  el.innerHTML = filtered.map(ins => {
+    const icon = TYPE_ICONS[ins.type] || '&#128270;';
+    const sevColor = SEV_COLORS[ins.severity] || '#7F8C8D';
+    const srcLabel = SRC_LABELS[ins.source] || ins.source;
+    return '<div class="rec-card"><div class="rec-icon" style="color:' + sevColor + '">' + icon + '</div><div class="rec-body"><div class="rec-title">' + (ins.title||'—') + '</div><div class="rec-meta"><span class="source-badge">' + srcLabel + '</span><span style="font-size:10px;color:' + sevColor + ';font-weight:700;">' + (ins.severity||'') + '</span>' + (ins.date ? '<span style="font-size:10px;color:var(--muted);">' + ins.date + '</span>' : '') + (ins.metric ? '<span style="font-size:10px;color:var(--muted);">' + ins.metric + '</span>' : '') + '</div>' + (ins.description && ins.description !== ins.title ? '<div class="rec-desc">' + ins.description.slice(0,200) + '</div>' : '') + '</div></div>';
+  }).join('');
+}
+
+function filterInsights(el, type) {
+  el.closest('.filters').querySelectorAll('.filter-pill').forEach(f => { if (!f.style.marginLeft) f.classList.remove('active'); });
+  el.classList.add('active');
+  _insTypeFilter = type;
+  renderInsights();
+}
+function filterInsightSource(el, src) {
+  const wasActive = el.classList.contains('active');
+  document.querySelectorAll('#insights-filters .filter-pill').forEach(f => { if (f.style.marginLeft !== 'auto' && f.textContent.match(/Performance|Daily|Meeting/)) f.classList.remove('active'); });
+  if (!wasActive) { el.classList.add('active'); _insSourceFilter = src; } else { _insSourceFilter = ''; }
+  renderInsights();
 }
 
 // Recommendations
@@ -1536,6 +1685,78 @@ async function recAction(recId, action) {
     await fetch(API_BASE + '/api/recommendations/action', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ slug: SLUG, id: recId, action }) });
     loadRecs();
   } catch(e) { console.error(e); }
+}
+
+// === Selection + Create Task ===
+function getSelectedIds() {
+  return Array.from(document.querySelectorAll('.idea-check:checked')).map(cb => cb.value);
+}
+function updateSelection() {
+  const selected = getSelectedIds();
+  const bar = document.getElementById('select-bar');
+  if (selected.length > 0) {
+    bar.style.display = 'flex';
+    document.getElementById('select-count').textContent = selected.length + ' seleccionada' + (selected.length > 1 ? 's' : '');
+  } else {
+    bar.style.display = 'none';
+  }
+}
+function toggleAllIdeas(masterCb, tabId) {
+  const tbody = document.getElementById(tabId + '-tbody');
+  if (!tbody) return;
+  tbody.querySelectorAll('.idea-check').forEach(cb => { if (cb.closest('tr').style.display !== 'none') cb.checked = masterCb.checked; });
+  updateSelection();
+}
+function clearSelection() {
+  document.querySelectorAll('.idea-check').forEach(cb => cb.checked = false);
+  document.querySelectorAll('thead input[type="checkbox"]').forEach(cb => cb.checked = false);
+  updateSelection();
+}
+function showCreateTaskModal() {
+  const selected = getSelectedIds();
+  document.getElementById('modal-selected-info').textContent = selected.length + ' idea' + (selected.length > 1 ? 's' : '') + ' seleccionada' + (selected.length > 1 ? 's' : '');
+  // Auto-detect type from first selected
+  const firstRow = document.querySelector('.idea-check:checked')?.closest('tr');
+  const type = firstRow?.dataset.type === 'contact' ? 'outreach' : 'content';
+  document.getElementById('task-type').value = type;
+  document.getElementById('task-modal').style.display = 'flex';
+}
+function toggleTaskDest() {
+  const isNew = document.querySelector('input[name="task-dest"]:checked').value === 'new';
+  document.getElementById('dest-existing').style.display = isNew ? 'none' : '';
+  document.getElementById('dest-new').style.display = isNew ? '' : 'none';
+}
+async function createTask() {
+  const selected = getSelectedIds();
+  if (selected.length === 0) return;
+  const isNew = document.querySelector('input[name="task-dest"]:checked').value === 'new';
+  const taskName = document.getElementById('task-name').value.trim();
+  const taskType = document.getElementById('task-type').value;
+  if (!taskName) { alert('Nombre de tarea requerido'); return; }
+
+  const payload = {
+    slug: SLUG,
+    ideaIds: selected,
+    taskName,
+    taskType,
+  };
+  if (isNew) {
+    payload.newProjectName = document.getElementById('new-project-name').value.trim();
+    if (!payload.newProjectName) { alert('Nombre del proyecto requerido'); return; }
+  } else {
+    payload.projectId = document.getElementById('task-project').value;
+  }
+
+  try {
+    const res = await fetch(API_BASE + '/api/ideas/create-task', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+    if (res.ok) {
+      document.getElementById('task-modal').style.display = 'none';
+      location.reload();
+    } else {
+      const err = await res.json();
+      alert('Error: ' + (err.error || 'Unknown'));
+    }
+  } catch(e) { console.error(e); alert('Error creating task'); }
 }
 </script>
 </body></html>`;
@@ -6129,6 +6350,83 @@ nav .nav-footer { display:none !important; }
     return;
   }
 
+  // POST /api/ideas/create-task — create task from selected ideas (existing or new project)
+  if (req.method === 'POST' && url === '/api/ideas/create-task') {
+    if (!req._adminToken) { res.writeHead(403); res.end('Forbidden'); return; }
+    let body = '';
+    req.on('data', chunk => { body += chunk; if (body.length > 1e5) req.destroy(); });
+    req.on('end', () => {
+      try {
+        const { slug, ideaIds, taskName, taskType, projectId, newProjectName } = JSON.parse(body);
+        if (!slug || !ideaIds?.length || !taskName) { res.writeHead(400); res.end(JSON.stringify({ error: 'Missing required fields' })); return; }
+
+        const brandDir = path.join(BASE, 'brand', slug);
+        const projsDir = path.join(brandDir, 'projects');
+        let targetProjDir;
+        let targetProjId;
+
+        if (newProjectName) {
+          // Create new project
+          const existingProjs = fs.existsSync(projsDir) ? fs.readdirSync(projsDir).filter(d => d.startsWith('P')) : [];
+          const maxNum = existingProjs.reduce((m, d) => { const n = parseInt(d.match(/^P(\d+)/)?.[1] || '0'); return Math.max(m, n); }, 0);
+          targetProjId = 'P' + String(maxNum + 1).padStart(2, '0');
+          const projSlug = newProjectName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+          const dirName = targetProjId + '-' + projSlug;
+          targetProjDir = path.join(projsDir, dirName);
+          fs.mkdirSync(targetProjDir, { recursive: true });
+          fs.writeFileSync(path.join(targetProjDir, 'project.json'), JSON.stringify({
+            id: targetProjId, name: newProjectName, slug: projSlug,
+            type: taskType || 'content', status: 'active',
+            created_at: new Date().toISOString()
+          }, null, 2));
+          fs.writeFileSync(path.join(targetProjDir, 'tasks.json'), JSON.stringify([], null, 2));
+        } else {
+          // Existing project
+          targetProjId = projectId;
+          const resolved = resolveProjectDir(projsDir, projectId);
+          if (!resolved) { res.writeHead(404); res.end(JSON.stringify({ error: 'Project not found: ' + projectId })); return; }
+          targetProjDir = resolved;
+        }
+
+        // Load tasks and generate next ID
+        const tasksFile = path.join(targetProjDir, 'tasks.json');
+        let tasks = [];
+        try { tasks = JSON.parse(fs.readFileSync(tasksFile, 'utf-8')); } catch {}
+        if (!Array.isArray(tasks)) tasks = [];
+        const maxTaskNum = tasks.reduce((m, t) => { const match = (t.id||'').match(/-T(\d+)$/); return match ? Math.max(m, parseInt(match[1])) : m; }, 0);
+        const taskId = targetProjId + '-T' + String(maxTaskNum + 1).padStart(2, '0');
+
+        // Create task with ideas as pieces
+        const task = {
+          id: taskId, name: taskName,
+          description: ideaIds.length + ' ideas seleccionadas',
+          type: taskType || 'content',
+          idea_ids: ideaIds,
+          status: 'todo', owner: 'Sancho',
+          created_at: new Date().toISOString()
+        };
+        tasks.push(task);
+        fs.writeFileSync(tasksFile, JSON.stringify(tasks, null, 2));
+
+        // Update ideas status to assigned
+        const ideas = loadIdeas(slug);
+        for (const idea of ideas) {
+          if (ideaIds.includes(idea.id)) {
+            idea.status = 'assigned';
+            idea.updated_at = new Date().toISOString();
+            if (!idea.project_ids) idea.project_ids = [];
+            if (!idea.project_ids.includes(targetProjId)) idea.project_ids.push(targetProjId);
+          }
+        }
+        saveIdeas(slug, ideas);
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true, taskId, projectId: targetProjId }));
+      } catch (e) { res.writeHead(500); res.end(JSON.stringify({ error: e.message })); }
+    });
+    return;
+  }
+
   // POST /api/projects/run-outreach-pipeline — run enrichment pipeline on outreach contacts
   if (req.method === 'POST' && url === '/api/projects/run-outreach-pipeline') {
     if (!req._adminToken && !req._portalClient) { res.writeHead(403, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'Unauthorized' })); return; }
@@ -7414,6 +7712,79 @@ nav .nav-footer { display:none !important; }
       res.end(JSON.stringify({ ok: true, count: pending.length }));
     } catch (e) { res.writeHead(500); res.end(JSON.stringify({ error: e.message })); }
     });
+    return;
+  }
+
+  // === Insights API (aggregates from Performance, Daily Pulse, Meeting Intelligence) ===
+  if (url.startsWith('/api/insights') && req.method === 'GET') {
+    if (!req._adminToken) { res.writeHead(403); res.end('Forbidden'); return; }
+    const params = new URL('http://x' + req.url).searchParams;
+    const iSlug = params.get('slug') || '';
+    try {
+      const brandDir = path.join(BASE, 'brand', iSlug);
+      let allInsights = [];
+
+      // Source 1: Performance Analysis weekly reports — anomalies + opportunities
+      try {
+        const weeklyDir = path.join(brandDir, 'monitoring', 'weekly');
+        if (fs.existsSync(weeklyDir)) {
+          const files = fs.readdirSync(weeklyDir).filter(f => f.endsWith('.json')).sort().reverse().slice(0, 4);
+          for (const f of files) {
+            const report = JSON.parse(fs.readFileSync(path.join(weeklyDir, f), 'utf-8'));
+            const date = f.replace('.json', '');
+            for (const a of (report.anomalies || [])) {
+              allInsights.push({ id: 'pa-' + date + '-' + (a.metric||'').replace(/\./g,'-'), source: 'performance-analysis', type: a.severity === 'GREEN_OPPORTUNITY' ? 'opportunity' : 'anomaly', severity: a.severity || 'YELLOW', title: (a.metric || '') + ' — ' + (a.message || a.severity || ''), description: a.message || '', date, metric: a.metric });
+            }
+            for (const o of (report.opportunities || [])) {
+              allInsights.push({ id: 'pa-opp-' + date + '-' + (o.metric||'').replace(/\./g,'-'), source: 'performance-analysis', type: 'opportunity', severity: 'GREEN', title: (o.title || o.metric || '') + (o.description ? ' — ' + o.description : ''), description: o.description || o.message || '', date, metric: o.metric });
+            }
+          }
+        }
+      } catch {}
+
+      // Source 2: Daily Pulse insights
+      try {
+        const pulseDir = path.join(brandDir, 'daily-pulse');
+        if (fs.existsSync(pulseDir)) {
+          const files = fs.readdirSync(pulseDir).filter(f => f.endsWith('.json')).sort().reverse().slice(0, 7);
+          for (const f of files) {
+            const pulse = JSON.parse(fs.readFileSync(path.join(pulseDir, f), 'utf-8'));
+            const date = f.replace('.json', '');
+            for (const ins of (pulse.insights || [])) {
+              allInsights.push({ id: 'dp-' + date + '-' + Math.random().toString(36).slice(2,6), source: 'daily-pulse', type: ins.category || 'observation', severity: ins.priority || 'medium', title: ins.title || ins.summary || '', description: ins.summary || ins.title || '', date });
+            }
+          }
+        }
+      } catch {}
+
+      // Source 3: Meeting Intelligence
+      try {
+        const mtgDir = path.join(brandDir, 'intelligence', 'meetings');
+        if (fs.existsSync(mtgDir)) {
+          const files = fs.readdirSync(mtgDir).filter(f => f.endsWith('.json') || f.endsWith('.md')).sort().reverse().slice(0, 5);
+          for (const f of files) {
+            if (f.endsWith('.json')) {
+              try {
+                const mtg = JSON.parse(fs.readFileSync(path.join(mtgDir, f), 'utf-8'));
+                const meetings = mtg.meetings || (Array.isArray(mtg) ? mtg : [mtg]);
+                for (const m of meetings) {
+                  const date = m.date || f.replace('.json', '');
+                  for (const d of (m.decisions || [])) { allInsights.push({ id: 'mi-' + date + '-' + Math.random().toString(36).slice(2,6), source: 'meeting-intelligence', type: 'decision', severity: 'high', title: typeof d === 'string' ? d : d.decision || d.title || '', description: '', date }); }
+                  for (const a of (m.actions || m.action_items || [])) { allInsights.push({ id: 'mi-' + date + '-' + Math.random().toString(36).slice(2,6), source: 'meeting-intelligence', type: 'action', severity: 'medium', title: typeof a === 'string' ? a : a.action || a.title || '', description: typeof a === 'string' ? '' : a.owner || '', date }); }
+                  for (const i of (m.insights || [])) { allInsights.push({ id: 'mi-' + date + '-' + Math.random().toString(36).slice(2,6), source: 'meeting-intelligence', type: 'insight', severity: 'medium', title: typeof i === 'string' ? i : i.insight || i.title || '', description: '', date }); }
+                }
+              } catch {}
+            }
+          }
+        }
+      } catch {}
+
+      // Sort by date desc
+      allInsights.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ insights: allInsights, total: allInsights.length }));
+    } catch (e) { res.writeHead(500); res.end(JSON.stringify({ error: e.message })); }
     return;
   }
 

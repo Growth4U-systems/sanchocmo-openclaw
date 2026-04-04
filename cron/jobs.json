@@ -7,7 +7,7 @@
       "name": "Daily Pulse",
       "enabled": true,
       "createdAtMs": 1771950688301,
-      "updatedAtMs": 1775118123227,
+      "updatedAtMs": 1775199797730,
       "schedule": {
         "kind": "cron",
         "expr": "0 9 * * 1-5",
@@ -26,15 +26,15 @@
         "to": "channel:1475638253154603170"
       },
       "state": {
-        "nextRunAtMs": 1775199600000,
-        "lastRunAtMs": 1775114045572,
+        "nextRunAtMs": 1775458800000,
+        "lastRunAtMs": 1775199600018,
         "lastRunStatus": "error",
         "lastStatus": "error",
-        "lastDurationMs": 4077655,
+        "lastDurationMs": 197712,
         "lastDeliveryStatus": "not-requested",
-        "consecutiveErrors": 1,
-        "lastError": "cron: job execution timed out",
-        "lastErrorReason": "timeout"
+        "consecutiveErrors": 2,
+        "lastErrorReason": "rate_limit",
+        "lastError": "FallbackSummaryError: All models failed (3): anthropic/claude-sonnet-4-5: The AI service is temporarily rate-limited. Please try again in a moment. (rate_limit) | minimax/MiniMax-M2.7: ⚠️ API rate limit reached. Please try again later. (rate_limit) | anthropic/claude-opus-4-6: The AI service is temporarily rate-limited. Please try again in a moment. (rate_limit)"
       }
     },
     {
@@ -78,7 +78,7 @@
       "name": "Regenerar Dashboard",
       "enabled": true,
       "createdAtMs": 1771950708148,
-      "updatedAtMs": 1775153000897,
+      "updatedAtMs": 1775239407008,
       "schedule": {
         "kind": "cron",
         "expr": "0 8,12,16,20 * * *",
@@ -96,15 +96,14 @@
         "channel": "last"
       },
       "state": {
-        "nextRunAtMs": 1775196000000,
-        "lastRunAtMs": 1775152800020,
-        "lastRunStatus": "error",
-        "lastStatus": "error",
-        "lastDurationMs": 200877,
-        "lastDeliveryStatus": "not-requested",
-        "consecutiveErrors": 5,
-        "lastErrorReason": "rate_limit",
-        "lastError": "FallbackSummaryError: All models failed (3): anthropic/claude-sonnet-4-5: The AI service is temporarily rate-limited. Please try again in a moment. (rate_limit) | minimax/MiniMax-M2.7: ⚠️ API rate limit reached. Please try again later. (rate_limit) | anthropic/claude-opus-4-6: The AI service is temporarily rate-limited. Please try again in a moment. (rate_limit)"
+        "nextRunAtMs": 1775282400000,
+        "lastRunAtMs": 1775239200013,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 206995,
+        "lastDeliveryStatus": "not-delivered",
+        "consecutiveErrors": 0,
+        "lastDelivered": false
       }
     },
     {
@@ -113,7 +112,7 @@
       "name": "Meeting Intelligence",
       "enabled": true,
       "createdAtMs": 1771950715725,
-      "updatedAtMs": 1775145957566,
+      "updatedAtMs": 1775232685484,
       "schedule": {
         "kind": "cron",
         "expr": "0 18 * * 1-5",
@@ -132,15 +131,14 @@
         "to": "channel:1475638253154603170"
       },
       "state": {
-        "nextRunAtMs": 1775232000000,
-        "lastRunAtMs": 1775145854124,
-        "lastRunStatus": "error",
-        "lastStatus": "error",
-        "lastDurationMs": 103442,
-        "lastDeliveryStatus": "not-requested",
-        "consecutiveErrors": 1,
-        "lastError": "FallbackSummaryError: All models failed (3): minimax/MiniMax-M2.5: Unknown model: minimax/MiniMax-M2.5 (model_not_found) | anthropic/claude-sonnet-4-5: Live session model switch requested: anthropic/claude-opus-4-6 (unknown) | anthropic/claude-opus-4-6: ⚠️ API rate limit reached. Please try again later. (rate_limit)",
-        "lastErrorReason": "model_not_found"
+        "nextRunAtMs": 1775491200000,
+        "lastRunAtMs": 1775232000011,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 685473,
+        "lastDeliveryStatus": "not-delivered",
+        "consecutiveErrors": 0,
+        "lastDelivered": false
       }
     },
     {
@@ -209,7 +207,7 @@
       "name": "backup-sancho",
       "enabled": true,
       "createdAtMs": 1772069600272,
-      "updatedAtMs": 1775095733308,
+      "updatedAtMs": 1775178195801,
       "schedule": {
         "kind": "cron",
         "expr": "0 3 * * *"
@@ -226,15 +224,15 @@
         "channel": "last"
       },
       "state": {
-        "nextRunAtMs": 1775178000000,
-        "lastRunAtMs": 1775091987097,
+        "nextRunAtMs": 1775264400000,
+        "lastRunAtMs": 1775178000013,
         "lastRunStatus": "error",
         "lastStatus": "error",
-        "lastDurationMs": 3746211,
+        "lastDurationMs": 195788,
         "lastDeliveryStatus": "not-requested",
-        "consecutiveErrors": 2,
-        "lastErrorReason": "timeout",
-        "runningAtMs": 1775178000004
+        "consecutiveErrors": 3,
+        "lastErrorReason": "rate_limit",
+        "runningAtMs": 1775264400009
       }
     },
     {
@@ -243,7 +241,7 @@
       "name": "healthcheck",
       "enabled": true,
       "createdAtMs": 1772069609685,
-      "updatedAtMs": 1775174698445,
+      "updatedAtMs": 1775261154257,
       "schedule": {
         "kind": "every",
         "everyMs": 21600000,
@@ -263,11 +261,11 @@
         "channel": "last"
       },
       "state": {
-        "nextRunAtMs": 1775196203571,
-        "lastRunAtMs": 1775174603571,
+        "nextRunAtMs": 1775282727732,
+        "lastRunAtMs": 1775261127732,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 94874,
+        "lastDurationMs": 26525,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0,
         "lastDelivered": false
@@ -280,7 +278,7 @@
       "description": "T-022: Run cost-tracker.py daily at 23:00",
       "enabled": true,
       "createdAtMs": 1772069993394,
-      "updatedAtMs": 1775163789975,
+      "updatedAtMs": 1775250105589,
       "schedule": {
         "kind": "cron",
         "expr": "0 23 * * *"
@@ -297,15 +295,14 @@
         "channel": "webchat"
       },
       "state": {
-        "nextRunAtMs": 1775250000000,
-        "lastRunAtMs": 1775163600017,
-        "lastRunStatus": "error",
-        "lastStatus": "error",
-        "lastDurationMs": 189958,
-        "lastDeliveryStatus": "not-requested",
-        "consecutiveErrors": 1,
-        "lastError": "FallbackSummaryError: All models failed (3): anthropic/claude-sonnet-4-5: The AI service is temporarily rate-limited. Please try again in a moment. (rate_limit) | minimax/MiniMax-M2.7: ⚠️ API rate limit reached. Please try again later. (rate_limit) | anthropic/claude-opus-4-6: The AI service is temporarily rate-limited. Please try again in a moment. (rate_limit)",
-        "lastErrorReason": "rate_limit"
+        "nextRunAtMs": 1775336400000,
+        "lastRunAtMs": 1775250000015,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 105574,
+        "lastDeliveryStatus": "not-delivered",
+        "consecutiveErrors": 0,
+        "lastDelivered": false
       }
     },
     {
@@ -314,7 +311,7 @@
       "name": "Cervantes observa a Sancho",
       "enabled": true,
       "createdAtMs": 1772115026027,
-      "updatedAtMs": 1775136024235,
+      "updatedAtMs": 1775203385704,
       "schedule": {
         "kind": "cron",
         "expr": "0 10 * * *",
@@ -332,15 +329,15 @@
         "channel": "last"
       },
       "state": {
-        "nextRunAtMs": 1775203200000,
-        "lastRunAtMs": 1775132424219,
+        "nextRunAtMs": 1775289600000,
+        "lastRunAtMs": 1775203200017,
         "lastRunStatus": "error",
         "lastStatus": "error",
-        "lastDurationMs": 3600016,
+        "lastDurationMs": 185687,
         "lastDeliveryStatus": "not-requested",
-        "consecutiveErrors": 1,
-        "lastError": "cron: job execution timed out",
-        "lastErrorReason": "timeout"
+        "consecutiveErrors": 2,
+        "lastErrorReason": "rate_limit",
+        "lastError": "FallbackSummaryError: All models failed (3): anthropic/claude-sonnet-4-5: The AI service is temporarily rate-limited. Please try again in a moment. (rate_limit) | minimax/MiniMax-M2.7: ⚠️ API rate limit reached. Please try again later. (rate_limit) | anthropic/claude-opus-4-6: The AI service is temporarily rate-limited. Please try again in a moment. (rate_limit)"
       }
     },
     {
@@ -378,7 +375,7 @@
       "name": "cost-tracker-daily",
       "enabled": true,
       "createdAtMs": 1772750911798,
-      "updatedAtMs": 1775114039976,
+      "updatedAtMs": 1775196322150,
       "schedule": {
         "kind": "cron",
         "expr": "0 8 * * *",
@@ -396,15 +393,15 @@
         "mode": "none"
       },
       "state": {
-        "nextRunAtMs": 1775196000000,
-        "lastRunAtMs": 1775113667461,
+        "nextRunAtMs": 1775282400000,
+        "lastRunAtMs": 1775196202119,
         "lastRunStatus": "error",
         "lastStatus": "error",
-        "lastDurationMs": 372515,
+        "lastDurationMs": 120031,
         "lastDeliveryStatus": "not-requested",
-        "consecutiveErrors": 1,
-        "lastError": "cron: job execution timed out",
-        "lastErrorReason": "timeout"
+        "consecutiveErrors": 2,
+        "lastErrorReason": "timeout",
+        "lastError": "cron: job execution timed out"
       }
     },
     {
@@ -476,7 +473,7 @@
       "name": "update-skills",
       "enabled": true,
       "createdAtMs": 1773235919019,
-      "updatedAtMs": 1775101613242,
+      "updatedAtMs": 1775187222336,
       "schedule": {
         "kind": "cron",
         "expr": "30 5 * * *",
@@ -496,15 +493,15 @@
         "to": "1481220331845976125"
       },
       "state": {
-        "nextRunAtMs": 1775187000000,
-        "lastRunAtMs": 1775100669103,
+        "nextRunAtMs": 1775273400000,
+        "lastRunAtMs": 1775187000018,
         "lastRunStatus": "error",
         "lastStatus": "error",
-        "lastDurationMs": 944139,
+        "lastDurationMs": 222318,
         "lastDeliveryStatus": "unknown",
-        "consecutiveErrors": 2,
-        "lastErrorReason": "timeout",
-        "lastError": "cron: job execution timed out"
+        "consecutiveErrors": 3,
+        "lastErrorReason": "rate_limit",
+        "lastError": "FallbackSummaryError: All models failed (3): anthropic/claude-sonnet-4-5: The AI service is temporarily rate-limited. Please try again in a moment. (rate_limit) | minimax/MiniMax-M2.7: LLM request timed out. (unknown) | anthropic/claude-opus-4-6: The AI service is temporarily rate-limited. Please try again in a moment. (rate_limit)"
       }
     },
     {
@@ -758,7 +755,7 @@
       "name": "Lead Sync — Growth4U",
       "enabled": true,
       "createdAtMs": 1774192173315,
-      "updatedAtMs": 1775160200426,
+      "updatedAtMs": 1775246656067,
       "schedule": {
         "kind": "cron",
         "expr": "0 22 * * *",
@@ -775,15 +772,14 @@
         "mode": "none"
       },
       "state": {
-        "nextRunAtMs": 1775246400000,
-        "lastRunAtMs": 1775160000017,
-        "lastRunStatus": "error",
-        "lastStatus": "error",
-        "lastDurationMs": 200409,
-        "lastDeliveryStatus": "not-requested",
-        "consecutiveErrors": 1,
-        "lastError": "FallbackSummaryError: All models failed (3): anthropic/claude-sonnet-4-5: The AI service is temporarily rate-limited. Please try again in a moment. (rate_limit) | minimax/MiniMax-M2.7: ⚠️ API rate limit reached. Please try again later. (rate_limit) | anthropic/claude-opus-4-6: The AI service is temporarily rate-limited. Please try again in a moment. (rate_limit)",
-        "lastErrorReason": "rate_limit"
+        "nextRunAtMs": 1775332800000,
+        "lastRunAtMs": 1775246400015,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 256052,
+        "lastDeliveryStatus": "not-delivered",
+        "consecutiveErrors": 0,
+        "lastDelivered": false
       }
     },
     {
@@ -828,7 +824,7 @@
       "name": "Call Prep Weekly — Growth4U",
       "enabled": true,
       "createdAtMs": 1774192186720,
-      "updatedAtMs": 1774647122707,
+      "updatedAtMs": 1775248515774,
       "schedule": {
         "kind": "cron",
         "expr": "30 22 * * 5",
@@ -845,11 +841,11 @@
         "mode": "none"
       },
       "state": {
-        "nextRunAtMs": 1775248200000,
-        "lastRunAtMs": 1774647000019,
+        "nextRunAtMs": 1775853000000,
+        "lastRunAtMs": 1775248200017,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 122688,
+        "lastDurationMs": 315757,
         "lastDelivered": false,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0
@@ -943,7 +939,7 @@
       "name": "Social & Content Review — Criptan",
       "enabled": true,
       "createdAtMs": 1774907485233,
-      "updatedAtMs": 1774907485233,
+      "updatedAtMs": 1775203483165,
       "schedule": {
         "kind": "cron",
         "expr": "0 10 * * 5",
@@ -962,7 +958,14 @@
         "channel": "last"
       },
       "state": {
-        "nextRunAtMs": 1775203200000
+        "nextRunAtMs": 1775808000000,
+        "lastRunAtMs": 1775203385704,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 97461,
+        "lastDelivered": false,
+        "lastDeliveryStatus": "not-delivered",
+        "consecutiveErrors": 0
       }
     },
     {
@@ -1007,7 +1010,7 @@
       "name": "Weekly Strategy Report — Criptan",
       "enabled": true,
       "createdAtMs": 1774907616596,
-      "updatedAtMs": 1774907616596,
+      "updatedAtMs": 1775199918817,
       "schedule": {
         "kind": "cron",
         "expr": "0 9 * * 5",
@@ -1026,7 +1029,15 @@
         "channel": "last"
       },
       "state": {
-        "nextRunAtMs": 1775199600000
+        "nextRunAtMs": 1775804400000,
+        "lastRunAtMs": 1775199797730,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 121087,
+        "lastError": "cron: job execution timed out",
+        "lastErrorReason": "timeout",
+        "lastDeliveryStatus": "not-requested",
+        "consecutiveErrors": 1
       }
     },
     {
@@ -1063,7 +1074,7 @@
       "name": "Daily Pulse — Growth4U",
       "enabled": true,
       "createdAtMs": 1775033081929,
-      "updatedAtMs": 1775122045245,
+      "updatedAtMs": 1775200026874,
       "schedule": {
         "kind": "cron",
         "expr": "0 9 * * 1-5",
@@ -1081,15 +1092,14 @@
         "channel": "last"
       },
       "state": {
-        "nextRunAtMs": 1775199600000,
-        "lastRunAtMs": 1775118123227,
+        "nextRunAtMs": 1775458800000,
+        "lastRunAtMs": 1775199918817,
         "lastRunStatus": "error",
         "lastStatus": "error",
-        "lastDurationMs": 3922018,
-        "lastError": "cron: job execution timed out",
-        "lastErrorReason": "timeout",
+        "lastDurationMs": 108057,
         "lastDeliveryStatus": "unknown",
-        "consecutiveErrors": 1
+        "consecutiveErrors": 2,
+        "lastError": "Channel is required when multiple channels are configured: discord, mc-chat Set delivery.channel explicitly or use a main session with a previous channel."
       }
     },
     {
@@ -1152,7 +1162,7 @@
       "name": "Morning Metrics — Growth4U",
       "enabled": true,
       "createdAtMs": 1775034097507,
-      "updatedAtMs": 1775125705336,
+      "updatedAtMs": 1775198075559,
       "schedule": {
         "kind": "cron",
         "expr": "30 8 * * *",
@@ -1170,15 +1180,14 @@
         "channel": "last"
       },
       "state": {
-        "nextRunAtMs": 1775197800000,
-        "lastRunAtMs": 1775122045245,
+        "nextRunAtMs": 1775284200000,
+        "lastRunAtMs": 1775197800024,
         "lastRunStatus": "error",
         "lastStatus": "error",
-        "lastDurationMs": 3660091,
-        "lastError": "cron: job execution timed out",
-        "lastErrorReason": "timeout",
+        "lastDurationMs": 275535,
         "lastDeliveryStatus": "unknown",
-        "consecutiveErrors": 1
+        "consecutiveErrors": 2,
+        "lastError": "Channel is required when multiple channels are configured: discord, mc-chat Set delivery.channel explicitly or use a main session with a previous channel."
       }
     }
   ]

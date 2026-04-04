@@ -1,25 +1,30 @@
 {
-  "last_heartbeat": "2026-04-01T22:36:00+02:00",
+  "last_heartbeat": "2026-04-03T20:05:00+02:00",
   "checks_done": [
-    "memory_maintenance"
-  ],
-  "next_rotate": [
-    "calendar",
     "email"
   ],
+  "next_rotate": [
+    "memory_maintenance",
+    "calendar"
+  ],
   "lead_sync": {
-    "last_run": "2026-04-01T22:00:00+02:00",
-    "new_leads": 1,
-    "updated_leads": 1,
+    "last_run": "2026-04-03T20:00:00+02:00",
+    "new_leads": 2,
+    "updated_leads": 0,
     "slack_notes_synced": 0,
-    "transcripts_processed": 1,
+    "transcripts_processed": 0,
     "errors": 0,
-    "notes": "New: Juan Antonio (jugavi.com). Updated: Jose Antonio Martinez (new transcript 2026-04-01). Slack disabled. 5 other leads unchanged (no new transcripts since last enrichment)."
+    "notes": "New: Mohamed Dakir (enrichment_pending), Carlos T (enrichment_pending). Both missing companyName/website/transcripts. 4 existing leads unchanged (no new transcripts). Total leads with 'llamada-agendada': 6."
   },
   "sales_call_prep": {
-    "last_run": "2026-04-01T22:39:00+02:00",
-    "mode": "daily",
-    "calls_found": 0,
-    "no_ghl_match": 6
+    "last_run": "2026-04-03T20:30:00+02:00",
+    "mode": "weekly",
+    "calls_found": 2,
+    "week_range": "2026-04-07 to 2026-04-11",
+    "leads": [
+      "Juan Antonio (Jugavi) - Mon 09:30",
+      "Mohamed Dakir - Tue 11:00"
+    ],
+    "no_ghl_match": 0
   }
 }
