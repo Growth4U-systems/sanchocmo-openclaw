@@ -28,9 +28,17 @@ export const PRJ_CH_ICON: Record<string, string> = {
 
 export const PRJ_STATUS_COLOR: Record<string, string> = {
   todo: "var(--border)",
+  pending: "var(--border)",
+  ready: "var(--border)",
   active: "var(--yellow)",
+  "in-progress": "var(--yellow)",
+  in_progress: "var(--yellow)",
   completed: "var(--green)",
+  done: "var(--green)",
   blocked: "var(--red)",
+  archived: "var(--muted)",
+  cancelled: "var(--muted)",
+  discarded: "var(--muted)",
 };
 
 export const PRJ_STATUS_LABEL: Record<string, Record<string, string>> = {

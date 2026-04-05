@@ -36,6 +36,9 @@ const toolItems: NavItem[] = [
 
 const systemItems: NavItem[] = [
   { href: "/dashboard/admin/activity", icon: "📡", labelKey: "activity", adminOnly: true },
+  { href: "/dashboard/changelog", icon: "📜", labelKey: "changelog", adminOnly: true },
+  { href: "/dashboard/guide", icon: "📖", labelKey: "guide" },
+  { href: "/dashboard/admin/settings", icon: "⚙️", labelKey: "settings", adminOnly: true },
 ];
 
 export function Sidebar() {

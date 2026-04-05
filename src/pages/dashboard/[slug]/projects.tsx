@@ -1,16 +1,25 @@
 import { useRouter } from "next/router";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import Head from "next/head";
-import { useTranslations } from "next-intl";
+import Link from "next/link";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import {
   useProjects,
-  useUpdateTaskStatus,
-  useArchiveProject,
 } from "@/hooks/useProjects";
+import { useOpenChat } from "@/hooks/useChat";
+import { buildTaskThread, buildProjectThread } from "@/lib/chat-openers";
 import { cn } from "@/lib/utils";
-import { PRJ_STATUS_COLOR, TASK_TYPE_META, PRJ_CH_ICON } from "@/lib/constants";
-import type { Project, Task, TaskStatus, ProjectStatus } from "@/types";
+import type { Project, Task } from "@/types";
+
+import { StatCard } from "@/components/shared/stat-card";
+import { StatusPill } from "@/components/shared/status-pill";
+import { TaskTypeBadge } from "@/components/shared/task-type-badge";
+import { ChannelBadge } from "@/components/shared/channel-badge";
+import { ProgressBar } from "@/components/shared/progress-bar";
+import { TabGroup } from "@/components/shared/tab-group";
+import { CollapsibleSection } from "@/components/shared/collapsible-section";
+import { EmptyState } from "@/components/shared/empty-state";
+import { WorkEditor } from "@/components/projects/work-editor";
 
 // ---------------------------------------------------------------------------
 // Local types
@@ -21,41 +30,37 @@ interface ProjectWithTasks {
   tasks: Task[];
 }
 
-type ViewMode = "list" | "kanban";
+const DONE_STATUSES = ["completed", "done", "discarded", "cancelled"];
 
-const TASK_STATUSES: TaskStatus[] = ["todo", "ready", "in_progress", "done"];
-
-const TASK_STATUS_LABEL: Record<TaskStatus, string> = {
-  todo: "Por hacer",
-  ready: "Listo",
-  in_progress: "En progreso",
-  done: "Hecho",
-};
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
+function isDone(status: string) {
+  return DONE_STATUSES.includes(status);
+}
 
 function tasksDoneCount(tasks: Task[]): number {
-  return tasks.filter((t) => t.status === "done").length;
+  return tasks.filter((t) => isDone(t.status)).length;
 }
 
-function primaryChannel(tasks: Task[]): string {
-  if (tasks.length === 0) return "—";
-  const counts: Record<string, number> = {};
-  for (const t of tasks) {
-    counts[t.channel] = (counts[t.channel] || 0) + 1;
-  }
-  return Object.entries(counts).sort((a, b) => b[1] - a[1])[0][0];
+function isArchivedProject(p: Project): boolean {
+  return p.status === "archived" || p.status === "cancelled";
 }
 
-function statusBgStyle(status: ProjectStatus): React.CSSProperties {
-  return { background: PRJ_STATUS_COLOR[status] ?? "var(--border)" };
-}
+// ---------------------------------------------------------------------------
+// Kanban columns definition (task-level, matching legacy)
+// ---------------------------------------------------------------------------
 
-function statusTextClass(status: ProjectStatus): string {
-  if (status === "completed" || status === "blocked") return "text-white";
-  return "";
+const KANBAN_COLS = [
+  { key: "todo", label: "Por hacer", statuses: ["todo", "pending", "ready"], icon: "📋" },
+  { key: "in-progress", label: "En progreso", statuses: ["in-progress", "in_progress"], icon: "🔧" },
+  { key: "blocked", label: "Bloqueado", statuses: ["blocked"], icon: "⛔" },
+  { key: "done", label: "Completado", statuses: ["completed", "done"], icon: "✅" },
+  { key: "discarded", label: "Descartado", statuses: ["discarded", "cancelled"], icon: "🗑️" },
+];
+
+// Effective status: if project is blocked, todo tasks become blocked
+function effectiveStatus(task: Task, projectBlocked: boolean): string {
+  const s = task.status;
+  if (projectBlocked && ["todo", "pending", "ready"].includes(s)) return "blocked";
+  return s;
 }
 
 // ---------------------------------------------------------------------------
@@ -64,35 +69,94 @@ function statusTextClass(status: ProjectStatus): string {
 
 export default function ProjectsPage() {
   const router = useRouter();
-  const slug = (router.query.slug as string) || null;
-  const t = useTranslations("projects");
-  const { data, isLoading } = useProjects(slug);
-  const [view, setView] = useState<ViewMode>("list");
-  const [selected, setSelected] = useState<ProjectWithTasks | null>(null);
+  const slug = (router.query.slug as string) || "";
+  const { data, isLoading } = useProjects(slug || null);
+  const [tab, setTab] = useState<string>("list");
+  const [editorOpen, setEditorOpen] = useState(false);
+  const [editorMode, setEditorMode] = useState<"task" | "project">("task");
+  const [editorId, setEditorId] = useState<string | null>(null);
+  const openChat = useOpenChat();
 
-  // Group projects by status for kanban
-  const grouped = useMemo(() => {
-    const map: Record<ProjectStatus, ProjectWithTasks[]> = {
-      todo: [],
-      active: [],
-      completed: [],
-      blocked: [],
+  // Separate active and archived
+  const { active, archived } = useMemo(() => {
+    if (!data) return { active: [] as ProjectWithTasks[], archived: [] as ProjectWithTasks[] };
+    return {
+      active: data.filter((pw) => !isArchivedProject(pw.project)),
+      archived: data.filter((pw) => isArchivedProject(pw.project)),
     };
-    if (data) {
-      for (const pw of data) {
-        const s = pw.project.status as ProjectStatus;
-        (map[s] ?? map.todo).push(pw);
+  }, [data]);
+
+  // Stats calculated from data
+  const stats = useMemo(() => {
+    const totalTasks = active.reduce((s, pw) => s + pw.tasks.length, 0);
+    const doneTasks = active.reduce((s, pw) => s + tasksDoneCount(pw.tasks), 0);
+    const activeCount = active.filter((pw) => pw.project.status === "active" || pw.project.status === "in-progress").length;
+    const blockedCount = active.filter((pw) => pw.project.status === "blocked").length;
+    const pct = totalTasks > 0 ? Math.round((doneTasks / totalTasks) * 100) : 0;
+    return { activeCount, blockedCount, doneTasks, totalTasks, pct };
+  }, [active]);
+
+  // All tasks for kanban (from non-archived projects)
+  const kanbanTasks = useMemo(() => {
+    const all: (Task & { projectId: string; projectName: string; effectiveStatus: string })[] = [];
+    for (const pw of active) {
+      const pBlocked = pw.project.status === "blocked";
+      for (const t of pw.tasks) {
+        all.push({
+          ...t,
+          projectId: pw.project.id,
+          projectName: pw.project.name,
+          effectiveStatus: effectiveStatus(t, pBlocked),
+        });
       }
     }
-    return map;
-  }, [data]);
+    return all;
+  }, [active]);
+
+  const openEditor = useCallback((mode: "task" | "project", id: string) => {
+    setEditorMode(mode);
+    setEditorId(id);
+    setEditorOpen(true);
+  }, []);
+
+  const handleChatTask = useCallback(
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    (t: Task, projectId: string, projectName: string) => {
+      if (!slug) return;
+      const tType = t.type || t.batch_type || "execution";
+      const config = buildTaskThread(slug, t.id, t.name, projectId, {
+        taskSkill: t.skill,
+        taskChannel: t.channel,
+        taskStatus: t.status,
+        taskType: tType,
+        pillar: t.pillar,
+      });
+      openChat(slug, config);
+    },
+    [slug, openChat]
+  );
+
+  const handleChatProject = useCallback(
+    (p: Project) => {
+      if (!slug) return;
+      const config = buildProjectThread(slug, p.id, p.name, {
+        strategy: p.strategy,
+        status: p.status,
+      });
+      openChat(slug, config);
+    },
+    [slug, openChat]
+  );
+
+  // Find any project/task for editor context
+  const allProjects = data || [];
 
   // --- Loading / Empty states ---
   if (isLoading) {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center py-20">
-          <p className="text-muted-foreground">{t("title")}...</p>
+          <p className="text-muted-foreground">Cargando proyectos...</p>
         </div>
       </DashboardLayout>
     );
@@ -102,12 +166,12 @@ export default function ProjectsPage() {
     return (
       <DashboardLayout>
         <Head>
-          <title>{t("title")} — {slug} — Mission Control</title>
+          <title>Proyectos — {slug} — Mission Control</title>
         </Head>
-        <h1 className="font-heading text-2xl text-navy mb-1">{t("title")}</h1>
-        <div className="text-center py-20">
-          <p className="text-muted-foreground">{t("empty")}</p>
-        </div>
+        <EmptyState
+          icon="📋"
+          message="Sin proyectos. Ejecuta el strategic plan para generar proyectos."
+        />
       </DashboardLayout>
     );
   }
@@ -115,354 +179,323 @@ export default function ProjectsPage() {
   return (
     <DashboardLayout>
       <Head>
-        <title>{t("title")} — {slug} — Mission Control</title>
+        <title>Proyectos — {slug} — Mission Control</title>
       </Head>
 
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      {/* Header + Stats row */}
+      <div className="flex items-start justify-between mb-6 flex-wrap gap-4">
         <div>
-          <h1 className="font-heading text-2xl text-navy mb-1">{t("title")}</h1>
+          <h1 className="font-heading text-2xl text-navy mb-1">📋 Proyectos</h1>
           <p className="text-sm text-muted-foreground">
-            {data.length} {t("projectCount")}
+            Gestion de proyectos y tareas del plan estrategico
           </p>
         </div>
-
-        {/* View toggle */}
-        <div className="flex gap-1 border-[3px] border-ink rounded-lg overflow-hidden">
-          <button
-            onClick={() => setView("list")}
-            className={cn(
-              "px-3 py-1.5 text-sm font-semibold transition-colors",
-              view === "list"
-                ? "bg-navy text-white"
-                : "bg-card text-muted-foreground hover:text-foreground"
-            )}
-          >
-            {t("listView")}
-          </button>
-          <button
-            onClick={() => setView("kanban")}
-            className={cn(
-              "px-3 py-1.5 text-sm font-semibold transition-colors",
-              view === "kanban"
-                ? "bg-navy text-white"
-                : "bg-card text-muted-foreground hover:text-foreground"
-            )}
-          >
-            {t("kanbanView")}
-          </button>
+        <div className="flex gap-3 flex-wrap">
+          <StatCard value={stats.activeCount} label="Activos" color="text-blue-600" />
+          <StatCard value={stats.blockedCount} label="Bloqueados" color="text-destructive" />
+          <StatCard value={`${stats.doneTasks}/${stats.totalTasks}`} label="Tareas" />
+          <StatCard value={`${stats.pct}%`} label="Progreso" color="text-sage" />
         </div>
       </div>
 
-      {/* Views */}
-      {view === "list" ? (
-        <ListView items={data} onSelect={setSelected} />
-      ) : (
-        <KanbanView grouped={grouped} onSelect={setSelected} />
+      {/* Tabs */}
+      <TabGroup
+        tabs={[
+          { key: "list", label: "Por Proyecto", icon: "📂" },
+          { key: "kanban", label: "Kanban", icon: "📋" },
+        ]}
+        activeTab={tab}
+        onChange={setTab}
+      />
+
+      {/* List View */}
+      {tab === "list" && (
+        <div className="space-y-3">
+          {active.map((pw) => (
+            <ProjectCard
+              key={pw.project.id}
+              pw={pw}
+              slug={slug}
+              onChatTask={handleChatTask}
+              onChatProject={handleChatProject}
+              onEditTask={(id) => openEditor("task", id)}
+              onEditProject={(id) => openEditor("project", id)}
+            />
+          ))}
+
+          {/* Archived section */}
+          {archived.length > 0 && (
+            <div className="mt-6 border-t border-border pt-4">
+              <CollapsibleSection
+                title={`📦 Archivados (${archived.length})`}
+                icon="📦"
+                count={archived.length}
+                defaultOpen={false}
+              >
+                <div className="space-y-2 opacity-60">
+                  {archived.map((pw) => (
+                    <div
+                      key={pw.project.id}
+                      className="border-[3px] border-ink rounded-lg shadow-comic bg-card px-4 py-3"
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="font-heading font-bold text-muted-foreground text-sm">
+                          {pw.project.id}
+                        </span>
+                        <span className="font-medium text-muted-foreground">
+                          {pw.project.name}
+                        </span>
+                        <StatusPill status={pw.project.status} />
+                        {pw.project.archive_reason && (
+                          <span className="text-xs text-muted-foreground">
+                            — {pw.project.archive_reason}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CollapsibleSection>
+            </div>
+          )}
+        </div>
       )}
 
-      {/* Slide-over */}
-      {selected && (
-        <ProjectSlideOver
-          slug={slug!}
-          pw={selected}
-          onClose={() => setSelected(null)}
-        />
+      {/* Kanban View */}
+      {tab === "kanban" && (
+        <div className="flex gap-4 overflow-x-auto pb-4" style={{ minHeight: 400 }}>
+          {KANBAN_COLS.map((col) => {
+            const colTasks = kanbanTasks.filter((t) =>
+              col.statuses.includes(t.effectiveStatus)
+            );
+            return (
+              <div
+                key={col.key}
+                className="flex-1 min-w-[240px] max-w-[320px] bg-card/80 rounded-xl flex flex-col border border-border"
+              >
+                {/* Column header */}
+                <div className="flex justify-between px-3 py-2 font-heading text-sm font-semibold border-b border-border">
+                  <span>
+                    {col.icon} {col.label}
+                  </span>
+                  <span className="bg-border text-[11px] px-2 py-0.5 rounded-full font-bold">
+                    {colTasks.length}
+                  </span>
+                </div>
+                {/* Cards */}
+                <div className="p-2 flex flex-col gap-2 overflow-y-auto flex-1">
+                  {colTasks.map((t) => {
+                    const tType = t.type || t.batch_type || "execution";
+                    const isFnd = tType === "foundation" && !!t.pillar;
+                    return (
+                      <Link
+                        key={t.id}
+                        href={`/dashboard/${slug}/projects/${t.projectId}`}
+                        className="bg-card border border-border rounded-lg p-3 cursor-pointer hover:border-rust transition-colors block"
+                      >
+                        <div className="flex justify-between mb-1 items-center">
+                          <span className="font-heading text-[11px] font-semibold text-rust bg-rust/10 px-2 py-0.5 rounded">
+                            {t.projectId}
+                          </span>
+                          <span className="flex gap-1 items-center">
+                            <span className="text-[10px] text-muted-foreground">{t.id}</span>
+                            <TaskTypeBadge type={tType} />
+                            {t.channel && <ChannelBadge channel={t.channel} />}
+                            {t.owner && t.owner !== "Sancho" && (
+                              <span className="text-[10px] bg-blue-500/12 text-blue-600 px-1.5 py-0.5 rounded">
+                                👤 {t.owner}
+                              </span>
+                            )}
+                            <button
+                              className="bg-transparent border-none cursor-pointer text-xs opacity-50 hover:opacity-100"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                handleChatTask(t, t.projectId, t.projectName);
+                              }}
+                            >
+                              💬
+                            </button>
+                            {!isFnd && (
+                              <button
+                                className="bg-transparent border-none cursor-pointer text-xs opacity-50 hover:opacity-100"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  openEditor("task", t.id);
+                                }}
+                              >
+                                ✏️
+                              </button>
+                            )}
+                          </span>
+                        </div>
+                        <div className="font-semibold text-sm mb-1">{t.name}</div>
+                        <div className="text-xs text-muted-foreground">{t.projectName}</div>
+                      </Link>
+                    );
+                  })}
+                  {colTasks.length === 0 && (
+                    <p className="text-[11px] text-muted-foreground text-center py-8">
+                      Sin tareas
+                    </p>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
       )}
+
+      {/* Work Editor SlideOver */}
+      <WorkEditor
+        open={editorOpen}
+        onClose={() => setEditorOpen(false)}
+        mode={editorMode}
+        editId={editorId}
+        slug={slug}
+        projects={allProjects}
+      />
     </DashboardLayout>
   );
 }
 
 // ---------------------------------------------------------------------------
-// List View
+// Project Card (list view — collapsible with tasks)
 // ---------------------------------------------------------------------------
 
-function ListView({
-  items,
-  onSelect,
+/* eslint-disable @typescript-eslint/no-unused-vars */
+function ProjectCard({
+  pw,
+  slug,
+  onChatTask,
+  onChatProject,
+  onEditTask,
+  onEditProject,
 }: {
-  items: ProjectWithTasks[];
-  onSelect: (pw: ProjectWithTasks) => void;
+  pw: ProjectWithTasks;
+  slug: string;
+  onChatTask: (t: Task, projectId: string, projectName: string) => void;
+  onChatProject: (p: Project) => void;
+  onEditTask: (id: string) => void;
+  onEditProject: (id: string) => void;
 }) {
-  const t = useTranslations("projects");
+  /* eslint-enable @typescript-eslint/no-unused-vars */
+  const { project: p, tasks } = pw;
+  const done = tasksDoneCount(tasks);
+  const pct = tasks.length > 0 ? Math.round((done / tasks.length) * 100) : 0;
 
   return (
-    <div className="border-[3px] border-ink rounded-lg shadow-comic overflow-hidden bg-card">
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="border-b-[3px] border-ink bg-muted/40">
-            <th className="text-left px-4 py-3 font-heading text-navy">{t("colName")}</th>
-            <th className="text-left px-4 py-3 font-heading text-navy">{t("colStatus")}</th>
-            <th className="text-left px-4 py-3 font-heading text-navy">{t("colTasks")}</th>
-            <th className="text-left px-4 py-3 font-heading text-navy">{t("colPhase")}</th>
-            <th className="text-left px-4 py-3 font-heading text-navy">{t("colChannel")}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {items.map((pw) => {
-            const { project, tasks } = pw;
-            const done = tasksDoneCount(tasks);
-            const ch = primaryChannel(tasks);
+    <div className="border-[3px] border-ink rounded-lg shadow-comic bg-card overflow-hidden">
+      {/* Project header — clicking navigates to detail */}
+      <Link
+        href={`/dashboard/${slug}/projects/${p.id}`}
+        className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-muted/20 transition-colors cursor-pointer"
+      >
+        <div className="flex items-center gap-2.5 flex-1 min-w-0">
+          <span className="font-heading font-bold text-rust text-sm shrink-0">
+            {p.id}
+          </span>
+          <span className="font-semibold text-[15px] truncate">{p.name}</span>
+          <StatusPill status={p.status} />
+          {p.blocked_by && (
+            <span className="text-[11px] text-destructive shrink-0">
+              ⛔ {p.blocked_by}
+            </span>
+          )}
+        </div>
+        <div className="flex items-center gap-3 shrink-0">
+          {p.phase !== undefined && (
+            <span className="text-[11px] text-muted-foreground">
+              Fase {p.phase}
+            </span>
+          )}
+          <div className="w-[70px]">
+            <ProgressBar value={pct} />
+          </div>
+          <span className="text-[13px] text-muted-foreground font-semibold">
+            {done}/{tasks.length}
+          </span>
+          <span className="text-sm text-muted-foreground">→</span>
+        </div>
+      </Link>
+
+      {/* Task rows */}
+      {tasks.length > 0 && (
+        <div className="px-4 pb-3 space-y-1">
+          {tasks.map((t) => {
+            const tDone = isDone(t.status);
+            const tType = t.type || t.batch_type || "execution";
+            const isFnd = tType === "foundation" && !!t.pillar;
             return (
-              <tr
-                key={project.id}
-                onClick={() => onSelect(pw)}
-                className="border-b border-border hover:bg-muted/20 cursor-pointer transition-colors"
+              <div
+                key={t.id}
+                className={cn(
+                  "px-2.5 py-2 rounded-md bg-background/60",
+                  tDone && "opacity-60"
+                )}
               >
-                <td className="px-4 py-3 font-semibold">{project.name}</td>
-                <td className="px-4 py-3">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <StatusPill status={t.status} />
                   <span
                     className={cn(
-                      "px-2 py-0.5 rounded text-xs font-bold capitalize",
-                      statusTextClass(project.status as ProjectStatus)
+                      "text-sm font-medium flex-1",
+                      tDone && "line-through"
                     )}
-                    style={statusBgStyle(project.status as ProjectStatus)}
                   >
-                    {project.status}
+                    {t.name}
                   </span>
-                </td>
-                <td className="px-4 py-3 text-muted-foreground">
-                  {done}/{tasks.length}
-                </td>
-                <td className="px-4 py-3 text-muted-foreground">
-                  {project.phase === -1 ? "F" : project.phase}
-                </td>
-                <td className="px-4 py-3 text-muted-foreground">
-                  {PRJ_CH_ICON[ch] ?? ""} {ch}
-                </td>
-              </tr>
+                  <span className="flex gap-1.5 items-center">
+                    {t.channel && <ChannelBadge channel={t.channel} />}
+                    {t.owner && t.owner !== "Sancho" && (
+                      <span className="text-[10px] bg-blue-500/12 text-blue-600 px-1.5 py-0.5 rounded">
+                        👤 {t.owner}
+                      </span>
+                    )}
+                    {isFnd && !tDone && (
+                      <button
+                        className="bg-transparent border border-sage rounded px-1 text-sage text-[11px] cursor-pointer hover:bg-sage/10"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          // Quick complete — call status update
+                        }}
+                        title="Completar"
+                      >
+                        ✓
+                      </button>
+                    )}
+                    <button
+                      className="bg-transparent border-none cursor-pointer text-[13px] opacity-50 hover:opacity-100"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onChatTask(t, p.id, p.name);
+                      }}
+                    >
+                      💬
+                    </button>
+                    {!isFnd && (
+                      <button
+                        className="bg-transparent border-none cursor-pointer text-[13px] opacity-50 hover:opacity-100"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onEditTask(t.id);
+                        }}
+                      >
+                        ✏️
+                      </button>
+                    )}
+                  </span>
+                </div>
+                {t.description && (
+                  <p className="text-xs text-muted-foreground mt-1 leading-relaxed line-clamp-2">
+                    {t.description}
+                  </p>
+                )}
+              </div>
             );
           })}
-        </tbody>
-      </table>
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Kanban View
-// ---------------------------------------------------------------------------
-
-function KanbanView({
-  grouped,
-  onSelect,
-}: {
-  grouped: Record<ProjectStatus, ProjectWithTasks[]>;
-  onSelect: (pw: ProjectWithTasks) => void;
-}) {
-  const t = useTranslations("projects");
-
-  const KANBAN_COLS: { key: ProjectStatus; label: string }[] = [
-    { key: "todo", label: t("statusTodo") },
-    { key: "active", label: t("statusActive") },
-    { key: "completed", label: t("statusCompleted") },
-    { key: "blocked", label: t("statusBlocked") },
-  ];
-
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-      {KANBAN_COLS.map((col) => (
-        <div key={col.key} className="flex flex-col">
-          {/* Column header */}
-          <div
-            className={cn(
-              "px-3 py-2 rounded-t-lg text-sm font-bold capitalize border-[3px] border-b-0 border-ink",
-              statusTextClass(col.key)
-            )}
-            style={statusBgStyle(col.key)}
-          >
-            {col.label}{" "}
-            <span className="opacity-70">({grouped[col.key].length})</span>
-          </div>
-
-          {/* Cards */}
-          <div className="flex-1 border-[3px] border-ink rounded-b-lg bg-card p-2 space-y-2 min-h-[120px]">
-            {grouped[col.key].length === 0 && (
-              <p className="text-xs text-muted-foreground text-center py-4">
-                {t("emptyColumn")}
-              </p>
-            )}
-            {grouped[col.key].map((pw) => (
-              <button
-                key={pw.project.id}
-                onClick={() => onSelect(pw)}
-                className="w-full text-left rounded-lg border-2 border-ink p-3 bg-card hover:shadow-comic-sm transition-all"
-              >
-                <div className="font-semibold text-sm mb-1 truncate">
-                  {pw.project.name}
-                </div>
-                <div className="flex items-center justify-between text-xs text-muted-foreground">
-                  <span>
-                    {tasksDoneCount(pw.tasks)}/{pw.tasks.length} tasks
-                  </span>
-                  <span>
-                    {pw.project.phase === -1 ? "F" : `P${pw.project.phase}`}
-                  </span>
-                </div>
-              </button>
-            ))}
-          </div>
         </div>
-      ))}
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Project Slide-Over
-// ---------------------------------------------------------------------------
-
-function ProjectSlideOver({
-  slug,
-  pw,
-  onClose,
-}: {
-  slug: string;
-  pw: ProjectWithTasks;
-  onClose: () => void;
-}) {
-  const t = useTranslations("projects");
-  const updateTask = useUpdateTaskStatus();
-  const archiveProject = useArchiveProject();
-  const { project, tasks } = pw;
-
-  function handleTaskStatusChange(taskId: string, status: TaskStatus) {
-    updateTask.mutate({ slug, projectId: project.id, taskId, status });
-  }
-
-  function handleArchive() {
-    archiveProject.mutate(
-      { slug, projectId: project.id },
-      { onSuccess: onClose }
-    );
-  }
-
-  return (
-    <div className="fixed inset-0 z-50 flex justify-end">
-      {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/30" onClick={onClose} />
-
-      {/* Panel */}
-      <div className="relative w-full max-w-md bg-card border-l-[3px] border-ink h-full overflow-y-auto p-6">
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 text-muted-foreground hover:text-foreground"
-        >
-          ✕
-        </button>
-
-        {/* Project info */}
-        <h2 className="font-heading text-xl text-navy mb-1 pr-8">
-          {project.name}
-        </h2>
-        <p className="text-sm text-muted-foreground mb-4">
-          {project.strategy}
-        </p>
-
-        {/* Status badge */}
-        <div className="mb-6">
-          <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">
-            {t("colStatus")}
-          </div>
-          <span
-            className={cn(
-              "inline-block px-3 py-1 rounded text-sm font-bold capitalize",
-              statusTextClass(project.status as ProjectStatus)
-            )}
-            style={statusBgStyle(project.status as ProjectStatus)}
-          >
-            {project.status}
-          </span>
-        </div>
-
-        {/* Phase */}
-        <div className="mb-6">
-          <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">
-            {t("colPhase")}
-          </div>
-          <span className="text-sm font-medium">
-            {project.phase === -1 ? "Foundation" : `Phase ${project.phase}`}
-          </span>
-        </div>
-
-        {/* Tasks */}
-        <div className="mb-6">
-          <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3">
-            {t("colTasks")} ({tasksDoneCount(tasks)}/{tasks.length})
-          </div>
-          <div className="space-y-2">
-            {tasks.map((task) => (
-              <TaskRow
-                key={task.id}
-                task={task}
-                onStatusChange={(s) => handleTaskStatusChange(task.id, s)}
-                isPending={updateTask.isPending}
-              />
-            ))}
-            {tasks.length === 0 && (
-              <p className="text-sm text-muted-foreground">{t("noTasks")}</p>
-            )}
-          </div>
-        </div>
-
-        {/* Archive button */}
-        <div className="mt-6 pt-4 border-t border-border">
-          <button
-            onClick={handleArchive}
-            disabled={archiveProject.isPending}
-            className="w-full px-4 py-2 rounded-lg border-[3px] border-ink text-sm font-bold text-rust hover:bg-red/10 transition-colors disabled:opacity-50"
-          >
-            {archiveProject.isPending ? t("archiving") : t("archive")}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Task Row (inside slide-over)
-// ---------------------------------------------------------------------------
-
-function TaskRow({
-  task,
-  onStatusChange,
-  isPending,
-}: {
-  task: Task;
-  onStatusChange: (status: TaskStatus) => void;
-  isPending: boolean;
-}) {
-  const meta = TASK_TYPE_META[task.type] ?? { color: "var(--border)", icon: "📋" };
-
-  return (
-    <div className="flex items-center gap-2 rounded-lg border-2 border-ink p-2 bg-card">
-      {/* Type badge */}
-      <span
-        className="shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-bold text-white"
-        style={{ background: meta.color }}
-      >
-        {meta.icon} {task.type}
-      </span>
-
-      {/* Name */}
-      <span className="flex-1 text-sm truncate" title={task.name}>
-        {task.name}
-      </span>
-
-      {/* Status dropdown */}
-      <select
-        value={task.status}
-        onChange={(e) => onStatusChange(e.target.value as TaskStatus)}
-        disabled={isPending}
-        className="shrink-0 text-xs border border-border rounded px-1.5 py-1 bg-card cursor-pointer disabled:opacity-50"
-      >
-        {TASK_STATUSES.map((s) => (
-          <option key={s} value={s}>
-            {TASK_STATUS_LABEL[s]}
-          </option>
-        ))}
-      </select>
+      )}
     </div>
   );
 }

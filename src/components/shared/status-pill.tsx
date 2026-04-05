@@ -4,6 +4,8 @@ import { cn } from "@/lib/utils";
 
 const DEFAULT_COLOR_MAP: Record<string, string> = {
   todo: "bg-border text-muted-foreground",
+  pending: "bg-border text-muted-foreground",
+  ready: "bg-border text-muted-foreground",
   active: "bg-yellow-400/20 text-yellow-700",
   in_progress: "bg-yellow-400/20 text-yellow-700",
   "in-progress": "bg-yellow-400/20 text-yellow-700",
@@ -14,6 +16,9 @@ const DEFAULT_COLOR_MAP: Record<string, string> = {
   error: "bg-destructive/20 text-destructive",
   pool: "bg-muted text-muted-foreground",
   "not-started": "bg-muted text-muted-foreground",
+  archived: "bg-muted/50 text-muted-foreground",
+  cancelled: "bg-muted/50 text-muted-foreground",
+  discarded: "bg-muted/50 text-muted-foreground",
 };
 
 interface StatusPillProps {

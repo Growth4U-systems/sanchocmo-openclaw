@@ -31,7 +31,8 @@
     "dataExplorer": "Data Explorer",
     "activity": "Activity",
     "settings": "Settings",
-    "guide": "Guide"
+    "guide": "Guide",
+    "changelog": "Changelog"
   },
   "auth": {
     "signIn": "Sign in",
@@ -73,31 +74,53 @@
   "ideas": {
     "title": "Idea Bank",
     "subtitle": "Ideas, content seeds and contact opportunities",
-    "newIdea": "New idea",
+    "newIdea": "New Idea",
     "status": {
-      "pool": "Pool",
-      "assigned": "Assigned",
-      "in_progress": "In progress",
-      "done": "Done"
+      "all": "All",
+      "new": "New",
+      "approved": "Approved",
+      "rejected": "Rejected",
+      "executed": "Executed"
+    },
+    "stats": {
+      "total": "Total",
+      "new": "New",
+      "approved": "Approved",
+      "approvalRate": "Approval %"
     },
     "bulkActions": "Bulk actions",
-    "assignToProject": "Assign to project",
+    "bulkApprove": "Approve",
+    "bulkReject": "Reject",
+    "selected": "selected",
+    "selectAll": "Select all",
     "priority": "Priority",
     "description": "Description",
+    "action": "Action",
     "channels": "Channels",
     "source": "Source",
+    "sourceAll": "Source: All",
+    "channelAll": "Channel: All",
     "goal": "Goal",
     "theme": "Theme",
+    "list": "List / Group",
     "pieces": "Pieces",
     "changeStatus": "Change status",
     "delete": "Delete idea",
-    "confirmDelete": "Are you sure?",
+    "confirmDelete": "Delete this idea?",
     "yes": "Yes, delete",
     "no": "Cancel",
     "created": "Created",
     "approved": "Approved",
+    "approval": "Approval",
     "searchPlaceholder": "Search ideas...",
-    "empty": "No ideas found"
+    "empty": "No ideas found. Click \"+ New Idea\" or run a recurring task.",
+    "analytics": "Analytics by Source",
+    "close": "Close",
+    "sourceData": "Source data",
+    "score": "Score",
+    "date": "Date",
+    "actions": "Actions",
+    "titleAction": "Title + Action"
   },
   "recurringTasks": {
     "title": "Recurring Tasks",
@@ -109,11 +132,38 @@
   "metrics": {
     "title": "Metrics",
     "range": {
+      "1d": "Yesterday",
       "7d": "7 days",
       "30d": "30 days",
-      "90d": "90 days"
+      "all": "All"
     },
-    "nextSteps": "Next steps"
+    "nextSteps": "Next steps",
+    "health": "Health KPIs",
+    "sources": "Connected sources",
+    "modules": "Modules",
+    "noModules": "No metric modules configured for this client.",
+    "emptyData": "No metric data. The collector runs daily -- data will appear tomorrow.",
+    "manualBanner": "Missing manual metrics this week",
+    "monitoring": "Performance analysis",
+    "apis": "APIs",
+    "plan": "Plan",
+    "sheets": "Sheets"
+  },
+  "trustEngine": {
+    "title": "Trust Engine",
+    "subtitle": "Trust audit and analysis pipeline",
+    "completed": "completed",
+    "running": "running",
+    "pending": "pending",
+    "locked": "locked",
+    "error": "with errors",
+    "launch": "Launch",
+    "rerun": "Rerun",
+    "viewData": "View data",
+    "retry": "Retry",
+    "changeNiche": "Change niche",
+    "back": "Back",
+    "selectClient": "Select a client to view Trust Engine."
   },
   "theme": {
     "light": "Light",

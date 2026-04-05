@@ -5,7 +5,7 @@
 
 // --- Projects ---
 
-export type ProjectStatus = "todo" | "active" | "completed" | "blocked";
+export type ProjectStatus = "todo" | "active" | "completed" | "blocked" | "archived" | "cancelled" | "discarded" | "in-progress";
 
 export interface Project {
   id: string;               // "P00-Fast-Foundation", "P01"
@@ -18,6 +18,10 @@ export interface Project {
   created_at: string;       // ISO8601
   review_date: string | null;
   blocked_by?: string;      // Project ID
+  description?: string;
+  objective?: string | { description?: string; metric?: string; baseline?: number; target?: number; unit?: string };
+  approach?: string;
+  archive_reason?: string;
 }
 
 export interface ProjectRegistry {
@@ -29,7 +33,7 @@ export interface ProjectRegistry {
 
 // --- Tasks ---
 
-export type TaskStatus = "todo" | "ready" | "in_progress" | "done";
+export type TaskStatus = "todo" | "ready" | "in_progress" | "in-progress" | "done" | "completed" | "blocked" | "pending" | "discarded" | "cancelled";
 export type TaskType = "content" | "outreach" | "foundation" | "research" | "analysis" | "execution";
 
 export interface Task {
@@ -43,13 +47,15 @@ export interface Task {
   status: TaskStatus;
   channel: string;          // "web", "content", "intelligence"...
   type: TaskType;
+  batch_type?: string;      // Legacy fallback for type
   skill: string;
   pillar?: string;          // Foundation only
   section?: string;         // Foundation only
   completed?: string;       // ISO8601
   output_files: string[];
-  documents?: { path: string; name?: string }[];
+  documents?: { path: string; name?: string; title?: string; status?: string; created_at?: string }[];
   discord_thread_id?: string;
+  idea_ids?: string[];      // Linked ideas
 }
 
 export interface TaskFile {
@@ -59,8 +65,9 @@ export interface TaskFile {
 
 // --- Ideas ---
 
-export type IdeaStatus = "pool" | "assigned" | "in_progress" | "done";
+export type IdeaStatus = "new" | "approved" | "rejected" | "executed" | "pool" | "assigned" | "in_progress" | "done";
 export type IdeaType = "content" | "contact";
+export type IdeaList = "keywords" | "trending" | "gaps" | "repurpose" | "medios" | "partners" | "influencers" | "outreach";
 
 export interface Piece {
   id: string;
@@ -76,13 +83,18 @@ export interface Idea {
   status: IdeaStatus;
   title: string;
   description: string;
+  action: string;           // Concrete next step
+  list: IdeaList;           // Group: keywords, trending, gaps, etc.
   category: string;         // "guide", "comparison", "solution"...
   source: string;           // "trust_engine", "keyword_research"...
   goal: string;             // "awareness", "consideration", "conversion"
   theme: string;            // "educativo", "comparativo"...
-  channels_suggested: string[];
+  channels: string[];       // Normalized multi-channel
+  channels_suggested: string[];  // Legacy compat
+  target_channel: string;   // For contact ideas
   priority_score: number;   // 0-100
   ecp_relevance: string[];
+  source_data: Record<string, unknown>;
   created_at: string;
   task_id: string | null;
   approved_at: string | null;
