@@ -1,0 +1,128 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "search": "Search...",
+    "noResults": "No results",
+    "confirm": "Confirm",
+    "back": "Back",
+    "close": "Close",
+    "all": "All",
+    "active": "Active",
+    "inactive": "Inactive"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "foundation": "Foundation",
+    "projects": "Projects",
+    "ideas": "Idea Bank",
+    "recurringTasks": "Recurring Tasks",
+    "metrics": "Metrics",
+    "trustEngine": "Trust Engine",
+    "skills": "Skills",
+    "atalaya": "Atalaya",
+    "campaigns": "Campaigns",
+    "tasks": "Tasks",
+    "dataExplorer": "Data Explorer",
+    "activity": "Activity",
+    "settings": "Settings",
+    "guide": "Guide"
+  },
+  "auth": {
+    "signIn": "Sign in",
+    "signOut": "Sign out",
+    "signInWith": "Sign in with {provider}"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "activeClients": "Active clients",
+    "completedPillars": "Completed pillars",
+    "activeProjects": "Active projects",
+    "pendingTasks": "Pending tasks",
+    "recentActivity": "Recent activity"
+  },
+  "foundation": {
+    "title": "Foundation",
+    "subtitle": "Brand pillar status",
+    "notStarted": "Not started",
+    "inProgress": "In progress",
+    "approved": "Approved",
+    "requestRefresh": "Request refresh",
+    "depth": "Depth",
+    "viewDoc": "View document"
+  },
+  "projects": {
+    "title": "Projects",
+    "listView": "List",
+    "kanbanView": "Kanban",
+    "status": {
+      "todo": "To do",
+      "active": "Active",
+      "completed": "Completed",
+      "blocked": "Blocked"
+    },
+    "newProject": "New project",
+    "tasks": "Tasks",
+    "archive": "Archive"
+  },
+  "ideas": {
+    "title": "Idea Bank",
+    "subtitle": "Ideas, content seeds and contact opportunities",
+    "newIdea": "New idea",
+    "status": {
+      "pool": "Pool",
+      "assigned": "Assigned",
+      "in_progress": "In progress",
+      "done": "Done"
+    },
+    "bulkActions": "Bulk actions",
+    "assignToProject": "Assign to project",
+    "priority": "Priority",
+    "description": "Description",
+    "channels": "Channels",
+    "source": "Source",
+    "goal": "Goal",
+    "theme": "Theme",
+    "pieces": "Pieces",
+    "changeStatus": "Change status",
+    "delete": "Delete idea",
+    "confirmDelete": "Are you sure?",
+    "yes": "Yes, delete",
+    "no": "Cancel",
+    "created": "Created",
+    "approved": "Approved",
+    "searchPlaceholder": "Search ideas...",
+    "empty": "No ideas found"
+  },
+  "recurringTasks": {
+    "title": "Recurring Tasks",
+    "newTask": "New task",
+    "schedule": "Schedule",
+    "lastRun": "Last run",
+    "toggleActive": "Toggle active"
+  },
+  "metrics": {
+    "title": "Metrics",
+    "range": {
+      "7d": "7 days",
+      "30d": "30 days",
+      "90d": "90 days"
+    },
+    "nextSteps": "Next steps"
+  },
+  "theme": {
+    "light": "Light",
+    "dark": "Dark",
+    "toggle": "Toggle theme"
+  },
+  "language": {
+    "es": "Español",
+    "en": "English",
+    "select": "Language"
+  }
+}

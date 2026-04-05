@@ -1,0 +1,128 @@
+{
+  "common": {
+    "loading": "Cargando...",
+    "error": "Error",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "create": "Crear",
+    "search": "Buscar...",
+    "noResults": "Sin resultados",
+    "confirm": "Confirmar",
+    "back": "Volver",
+    "close": "Cerrar",
+    "all": "Todos",
+    "active": "Activo",
+    "inactive": "Inactivo"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "foundation": "Foundation",
+    "projects": "Proyectos",
+    "ideas": "Idea Bank",
+    "recurringTasks": "Tareas Recurrentes",
+    "metrics": "Métricas",
+    "trustEngine": "Trust Engine",
+    "skills": "Skills",
+    "atalaya": "Atalaya",
+    "campaigns": "Campañas",
+    "tasks": "Tareas",
+    "dataExplorer": "Data Explorer",
+    "activity": "Actividad",
+    "settings": "Ajustes",
+    "guide": "Guía"
+  },
+  "auth": {
+    "signIn": "Iniciar sesión",
+    "signOut": "Cerrar sesión",
+    "signInWith": "Iniciar sesión con {provider}"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "activeClients": "Clientes activos",
+    "completedPillars": "Pilares completados",
+    "activeProjects": "Proyectos activos",
+    "pendingTasks": "Tareas pendientes",
+    "recentActivity": "Actividad reciente"
+  },
+  "foundation": {
+    "title": "Foundation",
+    "subtitle": "Estado de los pilares de marca",
+    "notStarted": "No iniciado",
+    "inProgress": "En progreso",
+    "approved": "Aprobado",
+    "requestRefresh": "Solicitar actualización",
+    "depth": "Profundidad",
+    "viewDoc": "Ver documento"
+  },
+  "projects": {
+    "title": "Proyectos",
+    "listView": "Lista",
+    "kanbanView": "Kanban",
+    "status": {
+      "todo": "Por hacer",
+      "active": "Activo",
+      "completed": "Completado",
+      "blocked": "Bloqueado"
+    },
+    "newProject": "Nuevo proyecto",
+    "tasks": "Tareas",
+    "archive": "Archivar"
+  },
+  "ideas": {
+    "title": "Idea Bank",
+    "subtitle": "Ideas, semillas de contenido y oportunidades de contacto",
+    "newIdea": "Nueva idea",
+    "status": {
+      "pool": "Pool",
+      "assigned": "Asignada",
+      "in_progress": "En progreso",
+      "done": "Completada"
+    },
+    "bulkActions": "Acciones en lote",
+    "assignToProject": "Asignar a proyecto",
+    "priority": "Prioridad",
+    "description": "Descripci\u00f3n",
+    "channels": "Canales",
+    "source": "Fuente",
+    "goal": "Objetivo",
+    "theme": "Tema",
+    "pieces": "Piezas",
+    "changeStatus": "Cambiar estado",
+    "delete": "Eliminar idea",
+    "confirmDelete": "\u00bfEst\u00e1s seguro?",
+    "yes": "S\u00ed, eliminar",
+    "no": "Cancelar",
+    "created": "Creada",
+    "approved": "Aprobada",
+    "searchPlaceholder": "Buscar ideas...",
+    "empty": "No se encontraron ideas"
+  },
+  "recurringTasks": {
+    "title": "Tareas Recurrentes",
+    "newTask": "Nueva tarea",
+    "schedule": "Horario",
+    "lastRun": "Última ejecución",
+    "toggleActive": "Activar/Desactivar"
+  },
+  "metrics": {
+    "title": "Métricas",
+    "range": {
+      "7d": "7 días",
+      "30d": "30 días",
+      "90d": "90 días"
+    },
+    "nextSteps": "Próximos pasos"
+  },
+  "theme": {
+    "light": "Claro",
+    "dark": "Oscuro",
+    "toggle": "Cambiar tema"
+  },
+  "language": {
+    "es": "Español",
+    "en": "English",
+    "select": "Idioma"
+  }
+}

@@ -1,0 +1,94 @@
+import type { NextApiRequest, NextApiResponse } from "next";
+import fs from "fs";
+import path from "path";
+import { compose, withErrorHandler, withAuth } from "@/lib/api-middleware";
+import { BASE } from "@/lib/data/paths";
+import { loadIdeas, saveIdeas } from "@/lib/data/ideas";
+
+function resolveProjectDir(projectsDir: string, projectId: string): string | null {
+  if (!projectId) return null;
+  try {
+    const dirs = fs.readdirSync(projectsDir, { withFileTypes: true });
+    const match = dirs.find((d) => d.isDirectory() && d.name.startsWith(projectId + "-"));
+    if (match) return path.join(projectsDir, match.name);
+    const exact = dirs.find((d) => d.isDirectory() && d.name === projectId);
+    if (exact) return path.join(projectsDir, exact.name);
+  } catch {}
+  return null;
+}
+
+/**
+ * POST /api/projects/create-batch — Create batch task from ideas.
+ * Body: { slug, projectId, name, batchType?, ideaIds }
+ */
+async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== "POST") {
+    res.setHeader("Allow", "POST");
+    return res.status(405).json({ error: `Method ${req.method} not allowed` });
+  }
+
+  const { slug, projectId, name, batchType, ideaIds } = req.body;
+  if (!slug || !projectId || !name || !ideaIds || !ideaIds.length) {
+    return res.status(400).json({ error: "Missing slug, projectId, name, or ideaIds" });
+  }
+
+  if (req.ctx?.clientSlug && req.ctx.clientSlug !== slug) {
+    return res.status(403).json({ error: "Forbidden" });
+  }
+
+  // Find the project directory
+  const projDir = path.join(BASE, "brand", slug, "projects");
+  const resolvedDir = resolveProjectDir(projDir, projectId);
+  if (!resolvedDir) {
+    return res.status(404).json({ error: "Project not found: " + projectId });
+  }
+
+  // Load tasks and generate next task ID
+  const tasksFilePath = path.join(resolvedDir, "tasks.json");
+  let tasks: Record<string, unknown>[] = [];
+  try {
+    tasks = JSON.parse(fs.readFileSync(tasksFilePath, "utf-8"));
+  } catch {}
+  const maxNum = tasks.reduce((m: number, t: Record<string, unknown>) => {
+    const match = (t.id as string).match(/-T(\d+)$/);
+    return match ? Math.max(m, parseInt(match[1])) : m;
+  }, 0);
+  const taskId = `${projectId}-T${String(maxNum + 1).padStart(2, "0")}`;
+
+  // Create the batch task
+  const batchTask = {
+    id: taskId,
+    name,
+    description: `Batch con ${ideaIds.length} ideas`,
+    batch_type: batchType || "mixed",
+    idea_ids: ideaIds,
+    created_by: "manual",
+    status: "todo",
+    channel: batchType === "outreach" ? "prospecting" : "content",
+    owner: "Sancho",
+  };
+  tasks.push(batchTask);
+  fs.writeFileSync(tasksFilePath, JSON.stringify(tasks, null, 2));
+
+  // Update ideas: set status to 'assigned' and link batch_id
+  const ideas = loadIdeas(slug);
+  for (const idea of ideas) {
+    if (ideaIds.includes(idea.id)) {
+      idea.status = "assigned";
+      idea.updated_at = new Date().toISOString();
+      // Also set task_id on pieces that belong to this project
+      if (idea.pieces) {
+        for (const p of idea.pieces) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const piece = p as any;
+          if (!piece.task_id) piece.task_id = taskId;
+        }
+      }
+    }
+  }
+  saveIdeas(slug, ideas);
+
+  return res.status(200).json({ ok: true, task: batchTask, assignedCount: ideaIds.length });
+}
+
+export default compose(withErrorHandler, withAuth)(handler);
