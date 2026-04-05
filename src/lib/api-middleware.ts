@@ -61,7 +61,7 @@ export function withErrorHandler(handler: ApiHandler): ApiHandler {
  */
 export function withAuth(handler: ApiHandler): ApiHandler {
   return async (req, res) => {
-    const ctx = await resolveAuth(req);
+    const ctx = await resolveAuth(req, res);
     req.ctx = ctx;
 
     if (!ctx.isAdmin && !ctx.clientSlug) {
@@ -79,7 +79,7 @@ export function withAuth(handler: ApiHandler): ApiHandler {
  */
 export function withSlugAuth(handler: ApiHandler): ApiHandler {
   return async (req, res) => {
-    const ctx = await resolveAuth(req);
+    const ctx = await resolveAuth(req, res);
     req.ctx = ctx;
 
     if (!ctx.isAdmin && !ctx.clientSlug) {
@@ -114,7 +114,7 @@ export function withSlugAuth(handler: ApiHandler): ApiHandler {
  * - ?token=<token> (legacy)
  * - x-admin-token header
  */
-async function resolveAuth(req: NextApiRequest): Promise<RequestContext> {
+async function resolveAuth(req: NextApiRequest, res: NextApiResponse): Promise<RequestContext> {
   const { loadClientsData } = await import("@/lib/data/clients");
   const data = loadClientsData();
   const adminToken = data.adminToken || null;
@@ -151,6 +151,25 @@ async function resolveAuth(req: NextApiRequest): Promise<RequestContext> {
         portalClient: { slug: client.slug, name: client.name },
       };
     }
+  }
+
+  // Check NextAuth session (for browser requests with cookies)
+  try {
+    const { getServerSession } = await import("next-auth/next");
+    const { authOptions } = await import("@/pages/api/auth/[...nextauth]");
+    const session = await getServerSession(req, res, authOptions);
+    if (session?.user) {
+      const role = (session.user as { role?: string }).role;
+      const clientSlug = (session.user as { clientSlug?: string | null }).clientSlug;
+      return {
+        isAdmin: role === "admin",
+        clientSlug: clientSlug || null,
+        adminToken: null,
+        portalClient: clientSlug ? { slug: clientSlug, name: session.user.name || "" } : null,
+      };
+    }
+  } catch {
+    // NextAuth not available or session check failed — continue without
   }
 
   // No auth

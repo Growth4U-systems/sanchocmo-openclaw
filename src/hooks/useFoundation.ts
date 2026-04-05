@@ -5,11 +5,9 @@ export function useFoundation(slug: string | null) {
   return useQuery<FoundationState>({
     queryKey: ["foundation", slug],
     queryFn: async () => {
-      const res = await fetch(`/api/docs/brand/${slug}/foundation-state.json`);
+      const res = await fetch(`/api/foundation/state?slug=${slug}`);
       if (!res.ok) throw new Error("Failed to fetch foundation state");
-      const data = await res.json();
-      // The docs endpoint returns { ok, path, content } — content is the raw JSON string
-      return typeof data.content === "string" ? JSON.parse(data.content) : data;
+      return res.json();
     },
     enabled: !!slug,
     staleTime: 30_000,
