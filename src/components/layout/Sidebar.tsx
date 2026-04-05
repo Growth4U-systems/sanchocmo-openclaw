@@ -3,6 +3,7 @@ import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { useSession } from "next-auth/react";
 import { useAppStore } from "@/stores/app";
+import { useChatStore } from "@/stores/chat";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 
@@ -86,12 +87,15 @@ export function Sidebar() {
       {/* Chat button (when client selected) */}
       {slug && sidebarOpen && (
         <div className="px-3 mt-2">
-          <Link
-            href={clientHref("/chat")}
-            className="flex items-center gap-2 px-3 py-2 bg-rust text-white rounded-lg font-bold text-[13px] hover:opacity-90 justify-center"
+          <button
+            onClick={() => {
+              useChatStore.getState().setCurrentSlug(slug);
+              useChatStore.getState().toggleSidebar();
+            }}
+            className="w-full flex items-center gap-2 px-3 py-2 bg-rust text-white rounded-lg font-bold text-[13px] hover:opacity-90 justify-center"
           >
-            💬 {sidebarOpen && "Chat con Sancho"}
-          </Link>
+            💬 Chat con Sancho
+          </button>
         </div>
       )}
 
