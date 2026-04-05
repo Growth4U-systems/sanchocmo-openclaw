@@ -78,7 +78,7 @@
       "name": "Regenerar Dashboard",
       "enabled": true,
       "createdAtMs": 1771950708148,
-      "updatedAtMs": 1775239407008,
+      "updatedAtMs": 1775325733108,
       "schedule": {
         "kind": "cron",
         "expr": "0 8,12,16,20 * * *",
@@ -96,14 +96,15 @@
         "channel": "last"
       },
       "state": {
-        "nextRunAtMs": 1775282400000,
-        "lastRunAtMs": 1775239200013,
+        "nextRunAtMs": 1775368800000,
+        "lastRunAtMs": 1775325600018,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 206995,
+        "lastDurationMs": 133090,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0,
-        "lastDelivered": false
+        "lastDelivered": false,
+        "runningAtMs": 1775379788691
       }
     },
     {
@@ -207,7 +208,7 @@
       "name": "backup-sancho",
       "enabled": true,
       "createdAtMs": 1772069600272,
-      "updatedAtMs": 1775178195801,
+      "updatedAtMs": 1775264484262,
       "schedule": {
         "kind": "cron",
         "expr": "0 3 * * *"
@@ -224,15 +225,15 @@
         "channel": "last"
       },
       "state": {
-        "nextRunAtMs": 1775264400000,
-        "lastRunAtMs": 1775178000013,
-        "lastRunStatus": "error",
-        "lastStatus": "error",
-        "lastDurationMs": 195788,
-        "lastDeliveryStatus": "not-requested",
-        "consecutiveErrors": 3,
-        "lastErrorReason": "rate_limit",
-        "runningAtMs": 1775264400009
+        "nextRunAtMs": 1775350800000,
+        "lastRunAtMs": 1775264400018,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 84244,
+        "lastDeliveryStatus": "not-delivered",
+        "consecutiveErrors": 0,
+        "lastDelivered": false,
+        "runningAtMs": 1775379788691
       }
     },
     {
@@ -241,7 +242,7 @@
       "name": "healthcheck",
       "enabled": true,
       "createdAtMs": 1772069609685,
-      "updatedAtMs": 1775261154257,
+      "updatedAtMs": 1775325951010,
       "schedule": {
         "kind": "every",
         "everyMs": 21600000,
@@ -261,14 +262,15 @@
         "channel": "last"
       },
       "state": {
-        "nextRunAtMs": 1775282727732,
-        "lastRunAtMs": 1775261127732,
+        "nextRunAtMs": 1775347527774,
+        "lastRunAtMs": 1775325927774,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 26525,
+        "lastDurationMs": 23236,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0,
-        "lastDelivered": false
+        "lastDelivered": false,
+        "runningAtMs": 1775379788691
       }
     },
     {
@@ -278,7 +280,7 @@
       "description": "T-022: Run cost-tracker.py daily at 23:00",
       "enabled": true,
       "createdAtMs": 1772069993394,
-      "updatedAtMs": 1775250105589,
+      "updatedAtMs": 1775336475929,
       "schedule": {
         "kind": "cron",
         "expr": "0 23 * * *"
@@ -295,14 +297,14 @@
         "channel": "webchat"
       },
       "state": {
-        "nextRunAtMs": 1775336400000,
-        "lastRunAtMs": 1775250000015,
-        "lastRunStatus": "ok",
-        "lastStatus": "ok",
-        "lastDurationMs": 105574,
-        "lastDeliveryStatus": "not-delivered",
-        "consecutiveErrors": 0,
-        "lastDelivered": false
+        "nextRunAtMs": 1775422800000,
+        "lastRunAtMs": 1775336400014,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 75915,
+        "lastDeliveryStatus": "not-requested",
+        "consecutiveErrors": 1,
+        "lastError": "FallbackSummaryError: All models failed (3): anthropic/claude-sonnet-4-5: LLM request rejected: Third-party apps now draw from your extra usage, not your plan limits. We've added a $200 credit to get you started. Claim it at claude.ai/settings/usage and keep going. (format) | minimax/MiniMax-M2.7: LLM request rejected: Third-party apps now draw from your extra usage, not your plan limits. We've added a $200 credit to get you started. Claim it at claude.ai/settings/usage and keep going. (format) | anthropic/claude-opus-4-6: LLM request rejected: Third-party apps now draw from your extra usage, not your plan limits. We've added a $200 credit to get you started. Claim it at claude.ai/settings/usage and keep going. (format)"
       }
     },
     {
@@ -311,7 +313,7 @@
       "name": "Cervantes observa a Sancho",
       "enabled": true,
       "createdAtMs": 1772115026027,
-      "updatedAtMs": 1775203385704,
+      "updatedAtMs": 1775289965815,
       "schedule": {
         "kind": "cron",
         "expr": "0 10 * * *",
@@ -329,15 +331,14 @@
         "channel": "last"
       },
       "state": {
-        "nextRunAtMs": 1775289600000,
-        "lastRunAtMs": 1775203200017,
-        "lastRunStatus": "error",
-        "lastStatus": "error",
-        "lastDurationMs": 185687,
-        "lastDeliveryStatus": "not-requested",
-        "consecutiveErrors": 2,
-        "lastErrorReason": "rate_limit",
-        "lastError": "FallbackSummaryError: All models failed (3): anthropic/claude-sonnet-4-5: The AI service is temporarily rate-limited. Please try again in a moment. (rate_limit) | minimax/MiniMax-M2.7: ⚠️ API rate limit reached. Please try again later. (rate_limit) | anthropic/claude-opus-4-6: The AI service is temporarily rate-limited. Please try again in a moment. (rate_limit)"
+        "nextRunAtMs": 1775376000000,
+        "lastRunAtMs": 1775289600016,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 365799,
+        "lastDeliveryStatus": "not-delivered",
+        "consecutiveErrors": 0,
+        "lastDelivered": false
       }
     },
     {
@@ -375,7 +376,7 @@
       "name": "cost-tracker-daily",
       "enabled": true,
       "createdAtMs": 1772750911798,
-      "updatedAtMs": 1775196322150,
+      "updatedAtMs": 1775282558077,
       "schedule": {
         "kind": "cron",
         "expr": "0 8 * * *",
@@ -393,15 +394,15 @@
         "mode": "none"
       },
       "state": {
-        "nextRunAtMs": 1775282400000,
-        "lastRunAtMs": 1775196202119,
-        "lastRunStatus": "error",
-        "lastStatus": "error",
-        "lastDurationMs": 120031,
-        "lastDeliveryStatus": "not-requested",
-        "consecutiveErrors": 2,
-        "lastErrorReason": "timeout",
-        "lastError": "cron: job execution timed out"
+        "nextRunAtMs": 1775368800000,
+        "lastRunAtMs": 1775282494857,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 63220,
+        "lastDeliveryStatus": "not-delivered",
+        "consecutiveErrors": 0,
+        "lastDelivered": false,
+        "runningAtMs": 1775379788691
       }
     },
     {
@@ -473,7 +474,7 @@
       "name": "update-skills",
       "enabled": true,
       "createdAtMs": 1773235919019,
-      "updatedAtMs": 1775187222336,
+      "updatedAtMs": 1775273608569,
       "schedule": {
         "kind": "cron",
         "expr": "30 5 * * *",
@@ -493,15 +494,15 @@
         "to": "1481220331845976125"
       },
       "state": {
-        "nextRunAtMs": 1775273400000,
-        "lastRunAtMs": 1775187000018,
-        "lastRunStatus": "error",
-        "lastStatus": "error",
-        "lastDurationMs": 222318,
-        "lastDeliveryStatus": "unknown",
-        "consecutiveErrors": 3,
-        "lastErrorReason": "rate_limit",
-        "lastError": "FallbackSummaryError: All models failed (3): anthropic/claude-sonnet-4-5: The AI service is temporarily rate-limited. Please try again in a moment. (rate_limit) | minimax/MiniMax-M2.7: LLM request timed out. (unknown) | anthropic/claude-opus-4-6: The AI service is temporarily rate-limited. Please try again in a moment. (rate_limit)"
+        "nextRunAtMs": 1775359800000,
+        "lastRunAtMs": 1775273400023,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 208546,
+        "lastDeliveryStatus": "delivered",
+        "consecutiveErrors": 0,
+        "lastDelivered": true,
+        "runningAtMs": 1775379788691
       }
     },
     {
@@ -755,7 +756,7 @@
       "name": "Lead Sync — Growth4U",
       "enabled": true,
       "createdAtMs": 1774192173315,
-      "updatedAtMs": 1775246656067,
+      "updatedAtMs": 1775332890784,
       "schedule": {
         "kind": "cron",
         "expr": "0 22 * * *",
@@ -772,14 +773,15 @@
         "mode": "none"
       },
       "state": {
-        "nextRunAtMs": 1775332800000,
-        "lastRunAtMs": 1775246400015,
-        "lastRunStatus": "ok",
-        "lastStatus": "ok",
-        "lastDurationMs": 256052,
-        "lastDeliveryStatus": "not-delivered",
-        "consecutiveErrors": 0,
-        "lastDelivered": false
+        "nextRunAtMs": 1775419200000,
+        "lastRunAtMs": 1775332800012,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 90772,
+        "lastDeliveryStatus": "not-requested",
+        "consecutiveErrors": 1,
+        "lastError": "FallbackSummaryError: All models failed (3): anthropic/claude-sonnet-4-5: LLM request rejected: Third-party apps now draw from your extra usage, not your plan limits. We've added a $200 credit to get you started. Claim it at claude.ai/settings/usage and keep going. (format) | minimax/MiniMax-M2.7: LLM request timed out. (unknown) | anthropic/claude-opus-4-6: LLM request rejected: Third-party apps now draw from your extra usage, not your plan limits. We've added a $200 credit to get you started. Claim it at claude.ai/settings/usage and keep going. (format)",
+        "lastErrorReason": "timeout"
       }
     },
     {
@@ -1162,7 +1164,7 @@
       "name": "Morning Metrics — Growth4U",
       "enabled": true,
       "createdAtMs": 1775034097507,
-      "updatedAtMs": 1775198075559,
+      "updatedAtMs": 1775284423200,
       "schedule": {
         "kind": "cron",
         "expr": "30 8 * * *",
@@ -1180,13 +1182,13 @@
         "channel": "last"
       },
       "state": {
-        "nextRunAtMs": 1775284200000,
-        "lastRunAtMs": 1775197800024,
+        "nextRunAtMs": 1775370600000,
+        "lastRunAtMs": 1775284200015,
         "lastRunStatus": "error",
         "lastStatus": "error",
-        "lastDurationMs": 275535,
+        "lastDurationMs": 223185,
         "lastDeliveryStatus": "unknown",
-        "consecutiveErrors": 2,
+        "consecutiveErrors": 3,
         "lastError": "Channel is required when multiple channels are configured: discord, mc-chat Set delivery.channel explicitly or use a main session with a previous channel."
       }
     }

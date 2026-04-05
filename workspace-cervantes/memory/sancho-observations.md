@@ -1,3 +1,80 @@
+# Observaciones Sancho — 2026-04-04
+
+## Sesiones (últimas 24h): ~18 sesiones activas
+
+| Canal | Tipo | Estado | Notes |
+|-------|------|--------|-------|
+| Discord | #intelligence (G4U) | ✅ | Morning Metrics publicado — análisis tendencias Meta Ads |
+| Cron | Morning Metrics — Growth4U | ✅ $0.47 | Reporte completo con análisis CPC/CTR/CPL + acciones propuestas |
+| Cron | cost-tracker-daily (Sancho) | ✅ $0.01 | Sin anomalías, 18 turns, $0.60 (9% de media diaria) |
+| Cron | Regenerar Dashboard | ✅ $0.01 | 54 tareas, 100 eventos, 35/81 pilares |
+| Cron | Meeting Intelligence | ✅ $2.59 | 4 reuniones Hospital Capilar procesadas (feb-mar 2026) |
+| Cron | Social & Content Review (Criptan) | ❌ FAILED | 10× rate_limit_error 429 consecutivos — nunca ejecutó |
+| Cron | Call Prep Weekly (G4U) | ✅ $1.63 | 2 llamadas próxima semana (Juan Antonio, Mohamed Dakir) |
+| Cron | Lead Sync (G4U) | ✅ $7.03 | 2 nuevos leads (Mohamed, Carlos T) — ambos sin company intel |
+| Cron | update-skills (Sancho) | ✅ $1.27 | 11 plugins actualizados, ClawHub skills sync |
+| Heartbeat | Sancho | ✅ | Quiet hours (23-08), HEARTBEAT_OK correcto |
+
+## Errores / Fallos
+
+1. **Social & Content Review (Criptan) — rate limit 429** ❌ CRÍTICO
+   - 10 intentos consecutivos, todos fallaron con `rate_limit_error` de Anthropic
+   - Nunca ejecutó — quedó en estado "failed"
+   - Sesión estaba configurada con Sonnet 4.5, **pero cambió a MiniMax-M2.7** en los últimos mensajes
+   - Modelo cambió de Sonnet → MiniMax automáticamente durante retries
+   - Última ejecución: viernes 03/04 10:03 AM — sábado ya no se reintentó
+   - **Posible causa**: Rate limit de Anthropic alcanzado durante ventana 08:00-10:00 UTC viernes
+
+2. **Instantly error persistente** ⚠️
+   - Morning Metrics reportó error en Instantly (fuente de email outreach)
+   - 5/6 fuentes OK (Meta Ads, GHL, GA4, GSC, Metricool)
+   - Error conocido, bajo impacto
+
+## Preguntas sin respuesta
+
+- Ninguna. No hubo interacción humana en las últimas 24h (sábado).
+
+## Reglas de canal
+
+✅ **Discord**: Usa message tool correctamente, hilos cuando corresponde
+✅ **Formato**: Morning Metrics con tabla markdown bien formateada + análisis de tendencias
+✅ **Proactividad**: Morning Metrics incluyó 4 propuestas de acción (rotar creativos, revisar audiencias, optimizar pujas, análisis por campaña)
+
+## Patrones de mejora
+
+1. **🟢 Morning Metrics con análisis accionable**: No solo métricas sino propuestas concretas basadas en tendencias (CPC 3× en una semana, CTR cayendo 2.91% → 1.62%, CPL duplicándose). Calidad alta.
+
+2. **🟢 Meeting Intelligence ejecutó limpiamente**: Procesó 4 reuniones de Hospital Capilar (feb-mar), generó summaries + transcripts, actualizó meetings.json, publicó en Discord con hilo. Sin errores.
+
+3. **🟢 Call Prep Weekly funcionó**: Identificó 2 llamadas próxima semana, extrajo contexto de GHL, generó briefings completos. GHL credentials resueltas vs días previos.
+
+4. **🔴 Social & Content Review — fallback model necesario**: El cron falló completamente por rate limit 429. Si hubiera tenido fallback a otro provider (OpenRouter, Google, xAI), podría haber completado. Este es el segundo cron que falla por rate limits de Anthropic en 48h (Lead Sync ayer, Social Review hoy).
+
+5. **🟡 Lead Sync sin company intel**: Los 2 nuevos leads (Mohamed Dakir, Carlos T) llegaron sin `companyName` ni `website` en GHL, sin transcripts disponibles. Fueron marcados `enrichment_pending: true` — correcto, pero significa trabajo manual post-llamada.
+
+6. **🟡 Modelo switching automático (Criptan cron)**: La sesión Social & Content Review empezó con Sonnet 4.5 pero cambió a MiniMax-M2.7 en mensajes finales. No está claro si esto fue fallback automático o configuración inconsistente del cron. Necesita revisión.
+
+7. **🟡 Crons en Opus todavía**: Meeting Intelligence ($2.59), Call Prep ($1.63), Lead Sync ($7.03) — todos Opus cuando podrían ser Sonnet. Tema recurrente.
+
+## Métricas del día
+
+- **Sesiones activas**: ~18 (bajo — fin de semana)
+- **Clientes con interacción humana**: 0 (sábado)
+- **Crons ejecutados OK**: 8/9
+- **Crons fallidos**: 1 (Social & Content Review — rate limit)
+- **Errores API**: 10× rate_limit_error (Anthropic), 1× Instantly (conocido)
+- **Coste estimado 24h**: ~$13-15 (bajo por poca actividad humana)
+
+## Veredicto
+
+**Día operativo limpio con 1 fallo crítico.** Sancho ejecutó correctamente los crons rutinarios: Morning Metrics con análisis de calidad, Meeting Intelligence procesó 4 reuniones sin errores, Call Prep Weekly identificó llamadas próxima semana, Lead Sync sincronizó 2 nuevos leads. El único fallo fue Social & Content Review (Criptan) que se topó con rate limit 429 de Anthropic y nunca ejecutó tras 10 retries.
+
+**Issue principal**: **Falta de fallback models en crons**. Este es el segundo cron en 48h que falla completamente por rate limits de Anthropic (Lead Sync ayer con overloaded_error, Social Review hoy con rate_limit_error). Si los crons críticos tuvieran fallback a otro provider, podrían sobrevivir estos incidentes.
+
+**No hay urgencias que notificar a Alfonso.** El error es upstream (rate limits de Anthropic) y ocurrió en un cron de review semanal que puede re-ejecutarse manualmente. La calidad de output de Sancho sigue siendo alta cuando tiene recursos disponibles.
+
+---
+
 # Observaciones Sancho — 2026-04-01
 
 ## Sesiones (últimas 24h): ~38 sesiones activas
@@ -128,7 +205,7 @@
    - skill-improvement-weekly no puede generar análisis sin datos
    - Necesita fix en el logging de ejecuciones de skills
 
-## Preguntas sin respuesta
+## Preguntas sin responder
 
 - Ninguna detectada. Todas las interacciones MC Chat y Discord recibieron respuesta completa.
 
@@ -258,7 +335,7 @@
    - Desde 16/03 no se logean ejecuciones → skill-improvement-weekly no puede generar análisis
    - skill-improvement-weekly lo detectó correctamente y pidió activar logging
 
-## Preguntas sin respuesta
+## Preguntas sin responder
 
 - Ninguna detectada. Sancho respondió todas las preguntas en MC Chat y Discord.
 - En market-synthesis, detectó estado contradictorio (not-started pero contenido existe) y ofreció 3 opciones al usuario — buen manejo.

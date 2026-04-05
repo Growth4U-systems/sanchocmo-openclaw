@@ -20,6 +20,7 @@
 - **Masabo** — Nuevo cliente (Mar 22). Foundation pendiente.
 - **Masavo** — Nuevo cliente (Mar 22). Foundation pendiente.
 - **Dealcar** — Nuevo cliente (Mar 22). Foundation pendiente.
+- **HulaHoop** — Onboarding Apr 8 16:00 (Cristina Allende + Sandra Cavero).
 - **Kleva** — Prospect (taste test). Foundation lite.
 
 ## Trust Engine Findings (Hospital Capilar)
