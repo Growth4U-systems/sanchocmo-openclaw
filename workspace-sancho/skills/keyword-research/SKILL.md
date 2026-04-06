@@ -28,9 +28,9 @@ and builds a content plan that actually makes sense.
 
 No expensive tools required. Systematic thinking plus web search.
 
-Read ./brand/ per _system/brand-memory.md
+Read ./brand/ per _system/intelligence/brand-memory.md
 
-Follow all output formatting rules from _system/output-format.md
+Follow all output formatting rules from _system/output/output-format.md
 
 ---
 
@@ -883,7 +883,7 @@ Content pieces planned: {N}
 ## Formatted Output Structure
 
 When presenting the completed keyword plan to the user, follow the output
-format specification from `_system/output-format.md`. The terminal output
+format specification from `_system/output/output-format.md`. The terminal output
 uses the premium formatting system. The markdown file saved to disk uses
 standard markdown.
 
@@ -915,7 +915,7 @@ standard markdown.
       brand context and training data. Volumes and
       rankings are directional, not verified."}
 
-  Per _system/brand-memory.md: always show the research
+  Per _system/intelligence/brand-memory.md: always show the research
   signal. If web search is unavailable, tell the user
   data is estimated and prefix research-dependent
   numbers with ~ (e.g., ~2,400 monthly searches).
@@ -1398,7 +1398,7 @@ standard feedback prompt per brand-memory.md protocol:
 
 When web search is unavailable, skip Phase 3 and run the v1 process (Phases 1,
 2, 4-7). Show the RESEARCH MODE signal with "Data quality: ESTIMATED" per
-_system/brand-memory.md. Tell the user you are using estimated data based on
+_system/intelligence/brand-memory.md. Tell the user you are using estimated data based on
 training knowledge rather than live search results. Prefix all volume and
 ranking estimates with ~ to indicate they are directional. Recommend the user
 manually check top results for priority keywords.

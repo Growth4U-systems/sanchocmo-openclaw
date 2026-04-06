@@ -279,7 +279,7 @@ Canal Discord donde se ejecuta la tarea. Mapea a canales reales del guild del cl
 
 ### Campo task `discord_thread_id`
 
-ID del hilo de Discord creado para esta tarea. Se rellena al ejecutar `_system/project-threads-protocol.md`.
+ID del hilo de Discord creado para esta tarea. Se rellena al ejecutar `_system/output/project-threads-protocol.md`.
 MC usa este ID para generar links 💬 directos a Discord.
 
 ### Campo project `discord.project_thread_id`

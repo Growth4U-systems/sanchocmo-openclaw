@@ -20,9 +20,9 @@ The newsletters that build loyal audiences—and businesses—do something diffe
 
 This skill helps you create newsletters people actually look forward to.
 
-Read `./brand/` per `_system/brand-memory.md`
+Read `./brand/` per `_system/intelligence/brand-memory.md`
 
-Follow all output formatting rules from `_system/output-format.md`
+Follow all output formatting rules from `_system/output/output-format.md`
 
 ---
 
@@ -686,7 +686,7 @@ OR
 
 For news briefing and curated link formats, this skill uses web search to pull current, relevant content. This ensures every edition references real, timely information -- not stale placeholders.
 
-**This is a research-dependent skill.** When sourcing external content, show the RESEARCH MODE signal per `_system/brand-memory.md`:
+**This is a research-dependent skill.** When sourcing external content, show the RESEARCH MODE signal per `_system/intelligence/brand-memory.md`:
 - **If web search tools are available:** Show `RESEARCH MODE → Data quality: LIVE` and proceed with real sources.
 - **If web search tools are NOT available:** Show `RESEARCH MODE → Data quality: ESTIMATED`. Use conceptual/example content and flag clearly that sources are illustrative, not live. Ask the user whether to proceed or connect web search first.
 
@@ -1434,7 +1434,7 @@ d) Haven't used yet
 and tell me.)
 ```
 
-Process feedback per `_system/brand-memory.md` feedback protocol:
+Process feedback per `_system/intelligence/brand-memory.md` feedback protocol:
 - Log to `./brand/{slug}/operational/learnings.md` with date, skill tag `[/newsletter]`, and specific findings
 - If subject line data is shared, log it: "Subject line '[line]' achieved [X]% open rate"
 - If send-time data is shared, log it: "[Day] [time] outperformed [Day] [time] by [X]%"
@@ -1490,7 +1490,7 @@ When a user invokes this skill, follow this sequence:
 
 ### Output Format
 
-Follow `_system/output-format.md` exactly. The newsletter output should use this structure:
+Follow `_system/output/output-format.md` exactly. The newsletter output should use this structure:
 
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

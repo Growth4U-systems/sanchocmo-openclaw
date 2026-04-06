@@ -37,7 +37,7 @@ message(action=send, channel=discord, target=<threadId>, message=<contenido comp
 2. El mensaje del canal debe ser **informativo por sí solo** (1 línea que dé contexto)
 3. Si no hay contenido relevante (ej: Meeting Intelligence sin reuniones nuevas), envía solo el mensaje corto informando que no hay novedades — sin crear hilo
 4. Para alertas cortas (healthcheck, backup), sigue el mismo patrón: alerta en canal, detalles en hilo
-5. Aplica siempre `_system/client-context-isolation.md`
+5. Aplica siempre `_system/governance/client-context-isolation.md`
 
 ## Crons afectados
 

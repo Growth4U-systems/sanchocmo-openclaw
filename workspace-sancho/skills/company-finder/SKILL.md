@@ -37,7 +37,7 @@ Before starting, load context from the brand directory:
 - `brand/{slug}/go-to-market/ecps.json` — Early Customer Profiles with scoring from niche-discovery-100x
 - `brand/{slug}/market-and-us/competitors.json` — Competitor data (to exclude or identify competitor customers)
 
-## Follow _system/output-format.md
+## Follow _system/output/output-format.md
 
 All output follows the standard SanchoCMO output format. JSON outputs use the schema defined in the Output Format section below.
 

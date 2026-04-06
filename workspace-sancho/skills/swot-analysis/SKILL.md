@@ -41,7 +41,7 @@ context_writes:
 ## Flujo de Ejecución
 
 ### 0. Context Hydration (OBLIGATORIO — antes de cualquier pregunta)
-- Lee `_system/context-hydration-protocol.md` para el patrón genérico
+- Lee `_system/skills/context-hydration-protocol.md` para el patrón genérico
 - Lee `references/hydration.md` para el mapeo específico de esta skill
 - Lee TODOS los docs en `context_required`
 - Pre-rellena campos según hydration_map

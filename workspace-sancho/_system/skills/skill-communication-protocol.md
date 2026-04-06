@@ -253,7 +253,7 @@ Before email-sequences runs again, read learnings.md → apply patterns that wor
 
 **Rule:** One protocol document. All skills follow. No runtime enforces it — skills just follow the spec.
 
-**Protocol File:** `_system/brand-memory.md`
+**Protocol File:** `_system/intelligence/brand-memory.md`
 
 **Defines:**
 - How to read brand files

@@ -173,7 +173,7 @@ Formato: `{ campaign_id, insight_type, insight_text, confidence, source }`
 
 ## Referencia de marca
 
-- Lee contexto según `_system/brand-memory.md`
+- Lee contexto según `_system/intelligence/brand-memory.md`
 - Carga SOLO los archivos relevantes de `./brand/` (Context Matrix)
 - Si falta un archivo de Foundation, nota que falta y sugiere completarlo
 

@@ -30,9 +30,9 @@ context_writes:
 
 This skill transforms positioning, keywords, and channel decisions into a publishable editorial plan. It sits after channel-prioritization (which channels) and before execution skills (seo-content, content-atomizer, newsletter). Without a calendar, content creation is reactive. With one, it's strategic.
 
-Read ./brand/ per _system/brand-memory.md (if using SanchoCMO framework)
+Read ./brand/ per _system/intelligence/brand-memory.md (if using SanchoCMO framework)
 
-Follow _system/output-format.md (if using SanchoCMO framework)
+Follow _system/output/output-format.md (if using SanchoCMO framework)
 
 ---
 

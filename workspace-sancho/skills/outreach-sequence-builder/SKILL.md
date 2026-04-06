@@ -40,9 +40,9 @@ This skill creates personalized OUTBOUND cold sequences per ECP. It is NOT email
 
 **If the user asks for warm nurture sequences, redirect to email-sequences.**
 
-Read ./brand/ per _system/brand-memory.md (if using SanchoCMO framework)
+Read ./brand/ per _system/intelligence/brand-memory.md (if using SanchoCMO framework)
 
-Follow _system/output-format.md (if using SanchoCMO framework)
+Follow _system/output/output-format.md (if using SanchoCMO framework)
 
 ---
 

@@ -24,8 +24,8 @@ context_writes:
 
 Este skill es **STEP 1** del Signal Detection workflow. Lee signals-to-track.json y EJECUTA el monitoreo.
 
-Read ./brand/ per _system/brand-memory.md (if using SanchoCMO framework)
-Follow _system/output-format.md (if using SanchoCMO framework)
+Read ./brand/ per _system/intelligence/brand-memory.md (if using SanchoCMO framework)
+Follow _system/output/output-format.md (if using SanchoCMO framework)
 
 ---
 

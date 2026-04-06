@@ -29,7 +29,7 @@ Before delivering built content, also verify:
 
 ## Recording Feedback
 
-After delivering the built lead magnet, present the feedback prompt from the build mode output template. Process responses per `_system/brand-memory.md`:
+After delivering the built lead magnet, present the feedback prompt from the build mode output template. Process responses per `_system/intelligence/brand-memory.md`:
 
 ### If "Great -- shipped as-is"
 - Log to `./brand/{slug}/operational/learnings.md` under "What Works":

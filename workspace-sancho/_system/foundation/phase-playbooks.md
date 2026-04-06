@@ -171,6 +171,6 @@ COMPETITIVE:
   signal-definition → signal-monitor (track buy signals)
 ```
 
-**Routing guide:** Ver `_system/skill-routing.md` para disambiguation.
+**Routing guide:** Ver `_system/skills/skill-routing.md` para disambiguation.
 
 **Output:** Traffic systems generating leads/signups.

@@ -82,14 +82,14 @@ Lee `_system/instance.json` al inicio de cada sesión para resolver:
 ## Reglas Cardinales (P0)
 1. **Aislamiento** — Discord = SOLO info del cliente. CERO interno/otros clientes.
 2. **Hilos siempre** — Crear hilo desde message_id del usuario. Respuesta al hilo via `target`. Final = NO_REPLY. Escudero: `sessions_spawn(thread=true)`. Ver TOOLS.md.
-3. **Links, nunca rutas** — SIEMPRE con token. Ver `_system/mc-links-protocol.md` para resolver la URL correcta. Resumen:
+3. **Links, nunca rutas** — SIEMPRE con token. Ver `_system/technical/mc-links-protocol.md` para resolver la URL correcta. Resumen:
    - En guild de **cliente**: leer `clients.json` → buscar por guild → usar `mcToken` → `{MC_BASE_URL}/portal/{mcToken}/docs/brand/{slug}/{path}`
    - ⚠️ La ruta SIEMPRE incluye `brand/{slug}/` después de `/docs/`. NUNCA `/docs/campaigns/...` → SIEMPRE `/docs/brand/{slug}/campaigns/...`
    - En guild **interno** (Cervantes Brain `{INFRA_GUILD}`): usar `adminToken` de `clients.json` → `{MC_BASE_URL}/admin/{adminToken}/docs/brand/{slug}/{path}`
    - **NUNCA** usar `/mc/docs/...` ni `/mc/connect/...` sin token — esos endpoints devuelven 403.
 4. **No narrar pasos** — Max 2 msgs por hilo: inicio + resultado. CERO "Voy a leerlo..."
-5. **Versionado** — `brand/{slug}/{pilar}/current.md` con historial. Ver `_system/versioning-protocol.md`.
-6. **Gate check Foundation** — Verificar `brand/{slug}/foundation-state.json` prerequisitos antes de ejecutar. Ver `_system/foundation-protocol.md`.
+5. **Versionado** — `brand/{slug}/{pilar}/current.md` con historial. Ver `_system/foundation/versioning-protocol.md`.
+6. **Gate check Foundation** — Verificar `brand/{slug}/foundation-state.json` prerequisitos antes de ejecutar. Ver `_system/foundation/foundation-protocol.md`.
 7. **Confirmar inputs** — Presentar inputs clave y esperar confirmación antes de Foundation skills.
 8. **Leer todo antes de generar** — TODOS los docs del cliente. Cruzar información.
 9. **Honestidad de herramientas** — NUNCA mentir sobre qué herramienta usaste.
@@ -141,7 +141,7 @@ Lee `_system/instance.json` al inicio de cada sesión para resolver:
 - Tras cada ejecución de skill con resultado notable (Q≤3, corrección del usuario, edge case, fallo): loguear en `_system/skill-execution-log.jsonl` vía `python3 scripts/log-skill-execution.py <skill> <outcome> <quality> [--issues ...] [--hint ...]`
 - Outcomes: `success|partial|failure|false-positive|false-negative`. Quality: 1-5.
 - NO loguear ejecuciones rutinarias Q=4-5 salvo caso excepcional. Foco: capturar señal de mejora.
-- Protocolo completo: `_system/skill-improvement-protocol.md`. Análisis semanal por cron (domingos 10:00).
+- Protocolo completo: `_system/skills/skill-improvement-protocol.md`. Análisis semanal por cron (domingos 10:00).
 
 ## Conducta en Chats
 - **Safety** — No exfiltrar datos. `trash` > `rm`. Preguntar antes de acciones externas (emails, posts).
@@ -150,4 +150,12 @@ Lee `_system/instance.json` al inicio de cada sesión para resolver:
 - **Formato WhatsApp** — No headers → **bold** o CAPS.
 
 ## Referencia Operativa
-Playbooks en `_system/`: dispatch-protocol, foundation-protocol, onboarding-playbook, phase-playbooks, workflow-recipes, brand-memory, skill-communication-protocol, skill-routing, intelligence-protocol, client-context-isolation, versioning-protocol, **skill-improvement-protocol**. Cargar solo cuando se necesite.
+Playbooks en `_system/`:
+- **root**: dispatch-protocol, workflow-recipes
+- **foundation/**: foundation-protocol, versioning-protocol, phase-playbooks
+- **skills/**: skill-communication-protocol, skill-routing, **skill-improvement-protocol**
+- **intelligence/**: intelligence-protocol, brand-memory
+- **governance/**: client-context-isolation
+- **onboarding/**: onboarding-playbook
+- **technical/**: mc-links-protocol
+Cargar solo cuando se necesite.

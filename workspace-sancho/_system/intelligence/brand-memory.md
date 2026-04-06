@@ -22,7 +22,7 @@ It lives in a `./brand/` directory at the project root and **accumulates over ti
 
 Skills reference this file with:
 ```markdown
-Read ./brand/ per _system/brand-memory.md
+Read ./brand/ per _system/intelligence/brand-memory.md
 ```
 
 That single line means: "Before I start, load relevant brand context using the protocol defined here."

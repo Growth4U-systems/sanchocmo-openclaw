@@ -6,7 +6,7 @@ Before writing a word, understand what you are competing against.
 
 **This is a research-dependent skill.** Phase 1 requires live web search to
 perform SERP analysis, capture People Also Ask questions, and identify
-competitor gaps. Show the RESEARCH MODE signal per `_system/brand-memory.md`
+competitor gaps. Show the RESEARCH MODE signal per `_system/intelligence/brand-memory.md`
 before beginning research:
 
 - **If web search tools are available:** Show `RESEARCH MODE → Data quality: LIVE`

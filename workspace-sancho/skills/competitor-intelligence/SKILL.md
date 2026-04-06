@@ -63,7 +63,7 @@ En TODOS los modos: check datos existentes primero, presenta hallazgos iniciales
 
 ### Step 0: Context Hydration + Competitor Discovery
 1. `read("references/hydration.md")` — mapeo de campos upstream
-2. `read("_system/context-hydration-protocol.md")` — patrón genérico
+2. `read("_system/skills/context-hydration-protocol.md")` — patrón genérico
 3. Lee TODOS los docs en `context_required`
 4. Presenta datos heredados: "De [fuente] ya tengo X. ¿Correcto?"
 5. Descubrir competidores: Direct (3-5), Indirect (2-3), Emerging (1-2)
@@ -134,7 +134,7 @@ En TODOS los modos: check datos existentes primero, presenta hallazgos iniciales
    - ❌ = falta — VOLVER A INVESTIGAR
 3. **Si hay algún ❌ → NO entregar. Volver al step correspondiente.**
 4. Solo cuando 0 ❌ → guardar en `brand/{slug}/competitors/current.md`
-5. Versionar según `_system/versioning-protocol.md`
+5. Versionar según `_system/foundation/versioning-protocol.md`
 6. Incluir oferta de deep-research al entregar
 
 ---

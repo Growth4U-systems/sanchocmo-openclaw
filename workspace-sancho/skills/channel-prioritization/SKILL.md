@@ -31,9 +31,9 @@ context_writes:
 
 This skill sits between Foundation (understanding) and Execution (doing). Foundation tells you WHO you are, WHO you serve, and WHAT you say. Channel Prioritization tells you WHERE to say it and HOW MUCH to invest.
 
-Read ./brand/ per _system/brand-memory.md (if using SanchoCMO framework)
+Read ./brand/ per _system/intelligence/brand-memory.md (if using SanchoCMO framework)
 
-Follow _system/output-format.md (if using SanchoCMO framework)
+Follow _system/output/output-format.md (if using SanchoCMO framework)
 
 ---
 

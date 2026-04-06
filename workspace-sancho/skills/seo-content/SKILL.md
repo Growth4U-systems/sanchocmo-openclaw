@@ -28,7 +28,7 @@ trust. Content that sounds like an expert sharing what they know.
 
 The goal: Would someone bookmark this? Would they share it? Would they come back?
 
-Read `./brand/` per `_system/brand-memory.md` · Follow `_system/output-format.md`
+Read `./brand/` per `_system/intelligence/brand-memory.md` · Follow `_system/output/output-format.md`
 
 ---
 
@@ -90,7 +90,7 @@ RESEARCH → BRIEF → OUTLINE → DRAFT → HUMANIZE → OPTIMIZE → SCHEMA �
 ```
 
 ### Phase 1: Research
-Live SERP analysis of top 5 results + PAA capture (all questions — they become mandatory sections) + gap analysis. Show RESEARCH MODE signal per `_system/brand-memory.md`. → `references/workflow.md` §Phase 1
+Live SERP analysis of top 5 results + PAA capture (all questions — they become mandatory sections) + gap analysis. Show RESEARCH MODE signal per `_system/intelligence/brand-memory.md`. → `references/workflow.md` §Phase 1
 
 ### Phase 2: Content Brief
 Create or enhance brief from /keyword-research. Target keyword, cluster, intent, type, audience, angle, PAA, gaps, links, CTA. → `references/templates.md` §Content Brief

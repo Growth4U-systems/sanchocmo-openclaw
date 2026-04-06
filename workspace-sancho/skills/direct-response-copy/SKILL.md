@@ -14,8 +14,8 @@ context_writes:
 
 > Copy that makes people act. Not content marketing — direct response.
 
-Read ./brand/ per `_system/brand-memory.md`
-Follow output formatting from `_system/output-format.md`
+Read ./brand/ per `_system/intelligence/brand-memory.md`
+Follow output formatting from `_system/output/output-format.md`
 
 ---
 

@@ -55,7 +55,7 @@ Difficulty: Low
 
 ## Concept Output Format
 
-When generating lead magnet concepts, present them using the numbered options template from `_system/output-format.md`:
+When generating lead magnet concepts, present them using the numbered options template from `_system/output/output-format.md`:
 
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -185,7 +185,7 @@ created_date: {YYYY-MM-DD}
 
 ### Campaign Brief Format
 
-Every lead magnet gets a `brief.md` in the campaign directory. This follows the standard campaign brief format from `_system/brand-memory.md`:
+Every lead magnet gets a `brief.md` in the campaign directory. This follows the standard campaign brief format from `_system/intelligence/brand-memory.md`:
 
 ```markdown
 # Campaign: {Magnet Name}

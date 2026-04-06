@@ -35,9 +35,9 @@ Este skill convierte raw insights en **production-ready content briefs**. No es 
 - **seo-content**: Escribe el contenido final (este skill genera el BRIEF para ello)
 - **insight-to-content-mapper**: El PUENTE entre tener insights y tener contenido
 
-Read ./brand/ per _system/brand-memory.md (if using SanchoCMO framework)
+Read ./brand/ per _system/intelligence/brand-memory.md (if using SanchoCMO framework)
 
-Follow _system/output-format.md (if using SanchoCMO framework)
+Follow _system/output/output-format.md (if using SanchoCMO framework)
 
 ---
 

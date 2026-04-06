@@ -82,7 +82,7 @@ const cronJobs = tasks
     sessionTarget: 'isolated',
     payload: {
       kind: 'agentTurn',
-      message: `Ejecuta idea-generation para ${slug}. Tarea específica: ${t.id}. Lee brand/${slug}/idea-generation/recurring-tasks.json y ejecuta solo la tarea con id=${t.id} (${t.name}). Fuentes: ${(t.config?.sources || []).join(', ') || 'todas'}. Publica resultados en Discord #intelligence del cliente. Aplica _system/client-context-isolation.md.`
+      message: `Ejecuta idea-generation para ${slug}. Tarea específica: ${t.id}. Lee brand/${slug}/idea-generation/recurring-tasks.json y ejecuta solo la tarea con id=${t.id} (${t.name}). Fuentes: ${(t.config?.sources || []).join(', ') || 'todas'}. Publica resultados en Discord #intelligence del cliente. Aplica _system/governance/client-context-isolation.md.`
     },
     delivery: { mode: 'none' }
   }));

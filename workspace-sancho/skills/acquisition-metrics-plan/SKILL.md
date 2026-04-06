@@ -18,9 +18,9 @@ metadata:
 
 This skill designs the measurement system for any business: what to measure, how, with what benchmarks, and at what cadence. It sits between Foundation (understanding the business) and Execution (running campaigns). Without the right metrics framework, channel-prioritization scores blindly and diagnose has no data to work with.
 
-Read ./brand/ per _system/brand-memory.md
+Read ./brand/ per _system/intelligence/brand-memory.md
 
-Follow _system/output-format.md
+Follow _system/output/output-format.md
 
 ---
 

@@ -2,7 +2,7 @@
 
 > Como Sancho recopila, analiza y usa inteligencia de mercado.
 
-> ⚠️ **OBLIGATORIO**: Antes de publicar output de inteligencia en un canal de cliente, aplica `_system/client-context-isolation.md`. Solo contenido relevante al cliente. CERO info interna del sistema.
+> ⚠️ **OBLIGATORIO**: Antes de publicar output de inteligencia en un canal de cliente, aplica `_system/governance/client-context-isolation.md`. Solo contenido relevante al cliente. CERO info interna del sistema.
 
 ---
 
@@ -43,7 +43,7 @@ Cuando se analiza cualquier entidad (competitor, self, market):
 
 ## Data Architecture
 
-Para detalle completo de los 3 data layers (Context Lake, Content Ideas, People/Outreach), ver `_system/brand-memory.md`.
+Para detalle completo de los 3 data layers (Context Lake, Content Ideas, People/Outreach), ver `_system/intelligence/brand-memory.md`.
 
 **Resumen rapido:**
 
