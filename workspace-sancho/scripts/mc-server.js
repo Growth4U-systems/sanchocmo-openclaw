@@ -6,6 +6,7 @@ const { execSync, exec: execCb, spawn } = require('child_process');
 
 const PORT = 18790;
 const BASE = path.join(__dirname, '..');
+const MC_DATA_DIR = path.join(BASE, 'memory', 'mc');
 const API_HEALTH_FILE = path.join(BASE, 'memory', 'state', 'api-health.json');
 const CLIENTS_FILE = path.join(BASE, 'clients.json');
 let _clientCreationInProgress = false;
@@ -5793,7 +5794,7 @@ nav .nav-footer { display:none !important; }
     // Portal: Serve filtered clients.js (only this client)
     if (portalPath === '/clients.js') {
       try {
-        const allClients = fs.readFileSync(path.join(BASE, 'clients.js'), 'utf-8');
+        const allClients = fs.readFileSync(path.join(MC_DATA_DIR, 'clients.js'), 'utf-8');
         // Parse the CLIENTS object, extract only this client
         const clientsData = loadClients();
         const thisClient = clientsData.find(c => c.slug === slug);
@@ -5821,7 +5822,7 @@ nav .nav-footer { display:none !important; }
     // Portal: Serve mc-data.js filtered for this client only
     if (portalPath === '/mc-data.js') {
       try {
-        let js = fs.readFileSync(path.join(BASE, 'mc-data.js'), 'utf-8');
+        let js = fs.readFileSync(path.join(MC_DATA_DIR, 'mc-data.js'), 'utf-8');
         // Parse MC_DATA, filter to only this client's data
         // mc-data.js is: const MC_DATA = { ... };
         const match = js.match(/const MC_DATA\s*=\s*(\{[\s\S]*\})\s*;/);
@@ -10144,7 +10145,9 @@ async function doTest() {
     res.writeHead(404); res.end('Not found'); return;
   }
 
-  const filePath = path.join(BASE, filename);
+  const dataFiles = ['mc-data.js', 'mc-work.js', 'clients.js', 'skills-data.js', 'agents-data.js'];
+  const fileDir = dataFiles.includes(filename) ? MC_DATA_DIR : BASE;
+  const filePath = path.join(fileDir, filename);
   try {
     let data = fs.readFileSync(filePath);
     const ext = path.extname(filename);

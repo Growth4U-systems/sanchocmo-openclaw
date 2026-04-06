@@ -9,7 +9,7 @@ from pathlib import Path
 from datetime import datetime, timezone
 
 WORKSPACE = Path(__file__).parent.parent
-AGENTS_DATA_FILE = WORKSPACE / "agents-data.js"
+AGENTS_DATA_FILE = WORKSPACE / "memory" / "mc" / "agents-data.js"
 
 def run_command(cmd):
     """Run command and return JSON output."""

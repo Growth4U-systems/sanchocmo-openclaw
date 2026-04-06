@@ -11,7 +11,8 @@ from pathlib import Path
 
 WORKSPACE = Path.home() / ".openclaw" / "workspace-sancho"
 CERVANTES_WORKSPACE = Path.home() / ".openclaw" / "workspace-cervantes"
-OUT = WORKSPACE  # output JS files next to mission-control.html
+OUT = WORKSPACE / "memory" / "mc"  # output JS data files to memory/mc/ (instance data)
+OUT.mkdir(parents=True, exist_ok=True)
 
 def parse_tasks_from_file(tasks_file, source="sancho"):
     """Parse a TASKS.md file into structured data."""
