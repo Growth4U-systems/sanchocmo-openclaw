@@ -34,7 +34,7 @@ workspace-sancho/
 │
 ├── templates/                     # Seeds for new instances (framework)
 │   ├── brand/                     # Empty brand structure (Foundation v2.0)
-│   └── instance/                  # USER.md, TOOLS.md, MEMORY.md, TASKS.md
+│   └── instance/                  # MEMORY.md, TASKS.md (copied to memory/)
 │
 ├── brand/                         # Client data (gitignored except example/)
 │   ├── example/                   # Template reference (versionado)
@@ -89,21 +89,23 @@ NEVER put client data, API keys, or deployment-specific info in framework files.
 
 ## First Run
 
-If `memory/USER.md` does not exist, this is a fresh instance:
+If `memory/MEMORY.md` does not exist, this is a fresh instance:
 
 1. Create `memory/` and `memory/daily/` if needed
-2. Copy files from `templates/instance/` into `memory/` (USER.md, TASKS.md, TOOLS.md, MEMORY.md)
+2. Copy `MEMORY.md`, `TASKS.md` from `templates/instance/` into `memory/`
 3. Copy `templates/brand/` structure for each new client into `brand/{slug}/`
-4. Fill in `memory/USER.md` with your human's info
-5. Fill in `memory/TOOLS.md` with deployment-specific values
+4. Fill in `USER.md` (workspace root) with your human's info
+5. Fill in `TOOLS.md` (workspace root) with deployment-specific values
+
+Note: `USER.md` and `TOOLS.md` live in the workspace root (OpenClaw auto-creates and injects them into every session). `memory/` is for files the agent manages: MEMORY.md, TASKS.md, daily logs.
 
 ## Every Session
 
 Before doing anything else:
 
 1. Read `SOUL.md` — this is who you are
-2. Read `memory/USER.md` — this is who you're helping
-3. Read `memory/TOOLS.md` — deployment config
+2. Read `USER.md` — this is who you're helping (workspace root, auto-injected)
+3. Read `TOOLS.md` — deployment config (workspace root, auto-injected)
 4. Read `memory/daily/YYYY-MM-DD.md` (today + yesterday) for recent context
 5. **If in MAIN SESSION** (direct chat with human): Also read `memory/MEMORY.md`
 
@@ -121,7 +123,7 @@ Lee `_system/instance.json` al inicio de cada sesión para resolver:
 ## Reglas Cardinales (P0)
 
 1. **Aislamiento** — Discord = SOLO info del cliente. CERO interno/otros clientes.
-2. **Hilos siempre** — Crear hilo desde message_id del usuario. Respuesta al hilo via `target`. Final = NO_REPLY. Escudero: `sessions_spawn(thread=true)`. Ver memory/TOOLS.md.
+2. **Hilos siempre** — Crear hilo desde message_id del usuario. Respuesta al hilo via `target`. Final = NO_REPLY. Escudero: `sessions_spawn(thread=true)`. Ver TOOLS.md (workspace root).
 3. **Links, nunca rutas** — SIEMPRE con token. Ver `_system/technical/mc-links-protocol.md` para resolver la URL correcta. Resumen:
    - En guild de **cliente**: leer `clients.json` → buscar por guild → usar `mcToken` → `{MC_BASE_URL}/portal/{mcToken}/docs/brand/{slug}/{path}`
    - ⚠️ La ruta SIEMPRE incluye `brand/{slug}/` después de `/docs/`. NUNCA `/docs/campaigns/...` → SIEMPRE `/docs/brand/{slug}/campaigns/...`
@@ -177,7 +179,7 @@ You wake up fresh each session. These files are your continuity:
 - **Daily notes:** `memory/daily/YYYY-MM-DD.md` — raw logs of what happened
 - **Long-term:** `memory/MEMORY.md` — curated instance wisdom
 - **Per-client:** `memory/clients/{slug}.md` — client-specific memory
-- **Instance config:** `memory/USER.md`, `memory/TOOLS.md`, `memory/TASKS.md`
+- **Instance config:** `USER.md`, `TOOLS.md` (workspace root, auto-injected), `memory/TASKS.md`
 
 Capture what matters. Decisions, context, things to remember. "Remember this" → write to file. Mental notes don't survive restarts.
 

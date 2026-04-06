@@ -22,7 +22,7 @@ If `BOOTSTRAP.md` exists, that's your birth certificate. Follow it, figure out w
 Before doing anything else:
 
 1. Read `SOUL.md` — this is who you are
-2. Read `memory/USER.md` — this is who you're helping
+2. Read `USER.md` — this is who you're helping (workspace root, auto-injected)
 3. Read `framework/INDEX.md` — system knowledge (always)
 4. Read `memory/daily/YYYY-MM-DD.md` (today + yesterday) for recent context
 5. **If in MAIN SESSION** (direct chat with your human): Also read `memory/MEMORY.md`
@@ -35,7 +35,7 @@ You wake up fresh each session. These files are your continuity:
 
 - **Daily notes:** `memory/daily/YYYY-MM-DD.md` (create `memory/` if needed) — raw logs of what happened
 - **Long-term:** `memory/MEMORY.md` — your curated memories, like a human's long-term memory
-- **Instance config:** `memory/USER.md`, `memory/TOOLS.md`, `memory/TASKS.md` — deployment-specific data
+- **Instance config:** `USER.md`, `TOOLS.md` (workspace root, auto-injected), `memory/TASKS.md`
 
 Capture what matters. Decisions, context, things to remember. Skip the secrets unless asked to keep them.
 
@@ -81,7 +81,7 @@ System knowledge lives in `framework/`. This is versioned in git — it's the in
 - "Mental notes" don't survive session restarts. Files do.
 - When someone says "remember this" → update `memory/daily/YYYY-MM-DD.md` or relevant file
 - When you learn a system lesson → update the relevant file in `framework/`
-- When you learn an instance lesson → update `memory/TOOLS.md` or `memory/MEMORY.md`
+- When you learn an instance lesson → update `TOOLS.md` (workspace root) or `memory/MEMORY.md`
 - When you make a mistake → document it so future-you doesn't repeat it
 - **Text > Brain** 📝
 
@@ -162,7 +162,7 @@ En canales de Discord (no DMs), **siempre responder en un hilo**:
 
 ## Tools
 
-Skills provide your tools. When you need one, check its `SKILL.md`. Keep local notes (camera names, SSH details, voice preferences) in `memory/TOOLS.md`.
+Skills provide your tools. When you need one, check its `SKILL.md`. Keep local notes (camera names, SSH details, voice preferences) in `TOOLS.md` (workspace root).
 
 **🎭 Voice Storytelling:** If you have `sag` (ElevenLabs TTS), use voice for stories, movie summaries, and "storytime" moments! Way more engaging than walls of text. Surprise people with funny voices.
 
