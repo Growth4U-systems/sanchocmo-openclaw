@@ -32,8 +32,10 @@
 - Trackear timestamp en heartbeat-state.json
 
 ### 📝 Memory Maintenance
-- Si es el primer heartbeat del día: crear memory/YYYY-MM-DD.md
-- **CADA HEARTBEAT**: revisar daily files desde la última actualización de MEMORY.md → actualizar MEMORY.md si hay cambios significativos (decisiones, config, learnings, estado de Foundation)
+- Si es el primer heartbeat del día: crear memory/daily/YYYY-MM-DD.md
+- **CADA HEARTBEAT**: revisar daily files desde la última actualización de memory/MEMORY.md:
+  - System learnings (patterns, architecture, "never do X") → `framework/` (el archivo apropiado)
+  - Instance state (clients, config, operational) → `memory/MEMORY.md`
 
 ### 👁️ Observar a Sancho (semanal)
 - Revisar sesiones recientes de Sancho (sessions_list/sessions_history)
@@ -45,7 +47,7 @@
 - Elegir UNA tarea (priorizar P1 > P2, y las que desbloquean más cosas)
 - Ejecutarla directamente (spawn sub-agente si es grande, hacerla tú si es pequeña)
 - Al completar: mover a "✔️ Completadas" en TASKS.md + regenerar MC
-- Documentar en memory/YYYY-MM-DD.md qué hiciste
+- Documentar en memory/daily/YYYY-MM-DD.md qué hiciste
 - Si la tarea requiere aprobación de Alfonso (ej: cambios visibles al cliente), NO ejecutar — solo preparar y notificar
 
 ### 📋 Actualizar CHANGELOG

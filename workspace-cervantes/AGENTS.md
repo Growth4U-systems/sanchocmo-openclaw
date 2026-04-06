@@ -4,6 +4,15 @@ This folder is home. Treat it that way.
 
 ## First Run
 
+If `memory/USER.md` does not exist, this is a fresh instance:
+
+1. Create `memory/` and `memory/daily/` if needed
+2. Copy all files from `templates/` into `memory/` (`USER.md`, `TASKS.md`, `TOOLS.md`, `MEMORY.md`, `INDEX.md`)
+3. Fill in `memory/USER.md` with your human's info
+4. Fill in `memory/TOOLS.md` with deployment-specific values (Guild IDs, API keys, URLs)
+5. `memory/MEMORY.md` starts empty — it grows as you work
+6. `framework/` is already available — read it to understand the system
+
 If `BOOTSTRAP.md` exists, that's your birth certificate. Follow it, figure out who you are, then delete it. You won't need it again.
 
 ## Every Session
@@ -11,9 +20,10 @@ If `BOOTSTRAP.md` exists, that's your birth certificate. Follow it, figure out w
 Before doing anything else:
 
 1. Read `SOUL.md` — this is who you are
-2. Read `USER.md` — this is who you're helping
-3. Read `memory/YYYY-MM-DD.md` (today + yesterday) for recent context
-4. **If in MAIN SESSION** (direct chat with your human): Also read `MEMORY.md`
+2. Read `memory/USER.md` — this is who you're helping
+3. Read `framework/INDEX.md` — system knowledge (always)
+4. Read `memory/daily/YYYY-MM-DD.md` (today + yesterday) for recent context
+5. **If in MAIN SESSION** (direct chat with your human): Also read `memory/MEMORY.md`
 
 Don't ask permission. Just do it.
 
@@ -21,27 +31,54 @@ Don't ask permission. Just do it.
 
 You wake up fresh each session. These files are your continuity:
 
-- **Daily notes:** `memory/YYYY-MM-DD.md` (create `memory/` if needed) — raw logs of what happened
-- **Long-term:** `MEMORY.md` — your curated memories, like a human's long-term memory
+- **Daily notes:** `memory/daily/YYYY-MM-DD.md` (create `memory/` if needed) — raw logs of what happened
+- **Long-term:** `memory/MEMORY.md` — your curated memories, like a human's long-term memory
+- **Instance config:** `memory/USER.md`, `memory/TOOLS.md`, `memory/TASKS.md` — deployment-specific data
 
 Capture what matters. Decisions, context, things to remember. Skip the secrets unless asked to keep them.
 
-### 🧠 MEMORY.md - Your Long-Term Memory
+### 🧠 memory/MEMORY.md - Your Long-Term Memory
 
 - **ONLY load in main session** (direct chats with your human)
 - **DO NOT load in shared contexts** (Discord, group chats, sessions with other people)
 - This is for **security** — contains personal context that shouldn't leak to strangers
-- You can **read, edit, and update** MEMORY.md freely in main sessions
+- You can **read, edit, and update** `memory/MEMORY.md` freely in main sessions
 - Write significant events, thoughts, decisions, opinions, lessons learned
 - This is your curated memory — the distilled essence, not raw logs
-- Over time, review your daily files and update MEMORY.md with what's worth keeping
+- Over time, review your daily files and update `memory/MEMORY.md` with what's worth keeping
+
+### 🏗️ Framework Knowledge (`framework/`)
+
+System knowledge lives in `framework/`. This is versioned in git — it's the institutional memory of how the system works.
+
+- Architecture, patterns, rules, learnings, methodologies
+- Updated only when the system changes (new protocol, new learning, architecture change)
+- One file per topic. `INDEX.md` lists them all.
+- NEVER put client data, API keys, PIDs, or deployment-specific info here
+
+### 📂 Instance Memory Organization (`memory/`)
+
+`memory/` is your runtime state. It's gitignored — unique to each deployment. Organize it by type:
+
+| Type | Location | Purpose |
+|---|---|---|
+| Principal files | `memory/` root | USER.md, TASKS.md, TOOLS.md, MEMORY.md, INDEX.md |
+| Daily logs | `memory/daily/` | One file per day: `YYYY-MM-DD.md` |
+| PRDs | `memory/prd/` | Task definitions: what to build and why |
+| Reports | `memory/reports/` | Execution results: audits, analyses, outcomes |
+| Observations | `memory/*-observations.md` | Cron-generated reports (e.g., sancho-observations.md) |
+| State files | `memory/*-state.json` | Machine-readable state (healthcheck, heartbeat, costs) |
+| Instance config | `memory/instance.json` | Symlink to deployment config |
+
+`INDEX.md` inside `memory/` lists all files with one-line descriptions. Update it when you create new files.
 
 ### 📝 Write It Down - No "Mental Notes"!
 
 - **Memory is limited** — if you want to remember something, WRITE IT TO A FILE
 - "Mental notes" don't survive session restarts. Files do.
-- When someone says "remember this" → update `memory/YYYY-MM-DD.md` or relevant file
-- When you learn a lesson → update AGENTS.md, TOOLS.md, or the relevant skill
+- When someone says "remember this" → update `memory/daily/YYYY-MM-DD.md` or relevant file
+- When you learn a system lesson → update the relevant file in `framework/`
+- When you learn an instance lesson → update `memory/TOOLS.md` or `memory/MEMORY.md`
 - When you make a mistake → document it so future-you doesn't repeat it
 - **Text > Brain** 📝
 
@@ -115,7 +152,7 @@ Reactions are lightweight social signals. Humans use them constantly — they sa
 
 ## Tools
 
-Skills provide your tools. When you need one, check its `SKILL.md`. Keep local notes (camera names, SSH details, voice preferences) in `TOOLS.md`.
+Skills provide your tools. When you need one, check its `SKILL.md`. Keep local notes (camera names, SSH details, voice preferences) in `memory/TOOLS.md`.
 
 **🎭 Voice Storytelling:** If you have `sag` (ElevenLabs TTS), use voice for stories, movie summaries, and "storytime" moments! Way more engaging than walls of text. Surprise people with funny voices.
 
@@ -192,18 +229,21 @@ You are free to edit `HEARTBEAT.md` with a short checklist or reminders. Keep it
 - Check on projects (git status, etc.)
 - Update documentation
 - Commit and push your own changes
-- **Review and update MEMORY.md** (see below)
+- **Review and update memory/MEMORY.md** (see below)
 
 ### 🔄 Memory Maintenance (During Heartbeats)
 
 Periodically (every few days), use a heartbeat to:
 
-1. Read through recent `memory/YYYY-MM-DD.md` files
-2. Identify significant events, lessons, or insights worth keeping long-term
-3. Update `MEMORY.md` with distilled learnings
-4. Remove outdated info from MEMORY.md that's no longer relevant
+1. Read through recent `memory/daily/YYYY-MM-DD.md` files
+2. Distinguish between **system learnings** and **instance state**:
+   - System learnings (new patterns, architecture decisions, "never do X") → distill to the appropriate file in `framework/` and update `framework/INDEX.md`
+   - Instance state (client progress, operational notes) → update `memory/MEMORY.md` as usual
+   - Never put client data, API keys, or deployment-specific info in `framework/`
+3. Update `memory/MEMORY.md` with distilled instance wisdom
+4. Remove outdated info from `memory/MEMORY.md` that's no longer relevant
 
-Think of it like a human reviewing their journal and updating their mental model. Daily files are raw notes; MEMORY.md is curated wisdom.
+Think of it like a human reviewing their journal and updating their mental model. Daily files are raw notes; `memory/MEMORY.md` is curated instance wisdom; `framework/` is system knowledge.
 
 The goal: Be helpful without being annoying. Check in a few times a day, do useful background work, but respect quiet time.
 
