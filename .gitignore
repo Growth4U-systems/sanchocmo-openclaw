@@ -73,15 +73,9 @@ workspace-sancho/brand/*/
 !workspace-sancho/brand/example/
 
 # === Agent memory (instance-specific) ===
-workspace-sancho/memory/clients/
-workspace-sancho/memory/daily/
+workspace-sancho/memory/
+!workspace-sancho/memory/archive/
 workspace-cervantes/memory/
-
-# === Operational data (instance-specific) ===
-workspace-sancho/_system/api-health.json
-workspace-sancho/_system/intelligence-log.json
-workspace-sancho/_system/intelligence-tracker.json
-workspace-sancho/_system/skill-improvement-metrics.json
 
 # === Cron state (instance-specific) ===
 cron/jobs.json.bak
@@ -100,10 +94,8 @@ skill-repos/
 # === Docker runtime ===
 docker/nginx.conf
 
-# === Cost tracker outputs (cron-generated, instance-specific) ===
-workspace-sancho/costs-global.json
-workspace-sancho/costs-daily.json
-workspace-sancho/scripts/.channel-guild-cache.json
+# === Cost tracker outputs (now in memory/costs/, covered by memory/ rule) ===
+# workspace-sancho/scripts/.channel-guild-cache.json (now in memory/state/)
 
 # === Root-level memory (pre-workspace legacy, instance-specific) ===
 memory/

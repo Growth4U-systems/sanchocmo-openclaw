@@ -557,10 +557,11 @@ def generate_outputs(per_client, period, alert_threshold):
         }
     }
     
-    (WORKSPACE / "costs-global.json").write_text(
+    (WORKSPACE / "memory" / "costs" / "global.json").parent.mkdir(parents=True, exist_ok=True)
+    (WORKSPACE / "memory" / "costs" / "global.json").write_text(
         json.dumps(global_data, indent=2, ensure_ascii=False, default=str)
     )
-    
+
     # ── costs-daily.json (for trend charts) ──
     all_dates = set()
     for data in per_client.values():
@@ -594,7 +595,7 @@ def generate_outputs(per_client, period, alert_threshold):
         day_entry["system_usd"] = round(day_entry["system_usd"], 4)
         daily[date] = day_entry
     
-    (WORKSPACE / "costs-daily.json").write_text(
+    (WORKSPACE / "memory" / "costs" / "daily.json").write_text(
         json.dumps({"period": period, "updatedAt": now, "days": daily},
                     indent=2, ensure_ascii=False, default=str)
     )
@@ -618,10 +619,10 @@ def generate_outputs(per_client, period, alert_threshold):
         projection = None
     
     global_data["projection"] = projection
-    (WORKSPACE / "costs-global.json").write_text(
+    (WORKSPACE / "memory" / "costs" / "global.json").write_text(
         json.dumps(global_data, indent=2, ensure_ascii=False, default=str)
     )
-    
+
     # ── Per-client brand/{slug}/costs.json ──
     for slug, data in real_clients.items():
         brand_dir = WORKSPACE / "brand" / slug
@@ -803,7 +804,7 @@ def main():
         for a in summary["alerts"]:
             print(f"  ⚠️  ALERTA [{a['severity']}]: {a['date']} → ${a['total_usd']:.2f} (threshold: ${a['threshold_usd']:.2f})")
     
-    print(f"\n✅ Output: costs-global.json, costs-daily.json, brand/*/costs.json, memory/cost-alert.json")
+    print(f"\n✅ Output: memory/costs/global.json, memory/costs/daily.json, brand/*/costs.json, memory/cost-alert.json")
     
     if args.json_output:
         print(json.dumps(summary, indent=2, default=str))

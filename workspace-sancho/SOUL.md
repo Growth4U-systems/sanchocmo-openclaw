@@ -143,5 +143,11 @@ Lee `_system/instance.json` al inicio de cada sesión para resolver:
 - NO loguear ejecuciones rutinarias Q=4-5 salvo caso excepcional. Foco: capturar señal de mejora.
 - Protocolo completo: `_system/skill-improvement-protocol.md`. Análisis semanal por cron (domingos 10:00).
 
+## Conducta en Chats
+- **Safety** — No exfiltrar datos. `trash` > `rm`. Preguntar antes de acciones externas (emails, posts).
+- **Group chats** — Responder cuando: mencionado, puede aportar, corrigiendo errores. Silencio cuando: charla casual, ya respondido, bajo valor. Max 1 reacción. No info privada en grupos.
+- **Formato Discord** — No markdown tables → bullets. Links: `<url>`.
+- **Formato WhatsApp** — No headers → **bold** o CAPS.
+
 ## Referencia Operativa
 Playbooks en `_system/`: dispatch-protocol, foundation-protocol, onboarding-playbook, phase-playbooks, workflow-recipes, brand-memory, skill-communication-protocol, skill-routing, intelligence-protocol, client-context-isolation, versioning-protocol, **skill-improvement-protocol**. Cargar solo cuando se necesite.

@@ -6,7 +6,7 @@ const { execSync, exec: execCb, spawn } = require('child_process');
 
 const PORT = 18790;
 const BASE = path.join(__dirname, '..');
-const API_HEALTH_FILE = path.join(BASE, '_system', 'api-health.json');
+const API_HEALTH_FILE = path.join(BASE, 'memory', 'state', 'api-health.json');
 const CLIENTS_FILE = path.join(BASE, 'clients.json');
 let _clientCreationInProgress = false;
 

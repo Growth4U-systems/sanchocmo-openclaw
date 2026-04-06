@@ -613,7 +613,7 @@ def get_system_status():
 
 def get_changelog():
     """Parse CHANGELOG.md."""
-    cl_file = WORKSPACE / "CHANGELOG.md"
+    cl_file = WORKSPACE / "memory" / "CHANGELOG.md"
     if not cl_file.exists():
         return []
 
@@ -680,7 +680,7 @@ def parse_client_tasks():
 
 def parse_global_costs():
     """Parse costs-global.json for the global dashboard."""
-    cost_file = WORKSPACE / "costs-global.json"
+    cost_file = WORKSPACE / "memory" / "costs" / "global.json"
     if cost_file.exists():
         try:
             return json.loads(cost_file.read_text(encoding="utf-8"))
@@ -691,7 +691,7 @@ def parse_global_costs():
 
 def parse_intelligence_log():
     """Parse _system/intelligence-log.json for MC Intelligence section."""
-    log_file = WORKSPACE / "_system" / "intelligence-log.json"
+    log_file = WORKSPACE / "memory" / "state" / "intelligence-log.json"
     if not log_file.exists():
         return {"entries": [], "stats": {}}
     try:
@@ -765,7 +765,7 @@ def parse_integrations():
 
 def parse_api_health():
     """Load API health check data from _system/api-health.json."""
-    health_file = WORKSPACE / "_system" / "api-health.json"
+    health_file = WORKSPACE / "memory" / "state" / "api-health.json"
     if not health_file.exists():
         return {"lastCheck": None, "services": {}}
     try:
