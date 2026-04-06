@@ -46,7 +46,6 @@ tar czf "$SNAPSHOT_FILE" \
   .env \
   config/instance.json \
   config/clients.json \
-  config/clients.js \
   workspace-sancho/brand/ \
   workspace-sancho/memory/ \
   workspace-cervantes/memory/ \

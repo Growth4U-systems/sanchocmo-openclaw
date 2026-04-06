@@ -105,7 +105,6 @@ This creates the brand directory structure, updates `clients.json`, binds Discor
 config/                          # Instance-specific configuration
   instance.json                  # URLs, Discord IDs, accounts
   clients.json                   # Client registry (tokens, guilds)
-  clients.js                     # Same data for MC dashboard
   dispatch-map.json              # Channel → role routing
 
 workspace-sancho/                # Main CMO agent
@@ -132,7 +131,6 @@ All instance-specific data lives in `config/`:
 |------|---------|------------|
 | `instance.json` | MC URL, Discord IDs, ports, accounts | Yes |
 | `clients.json` | Client tokens, guilds, Supabase keys | Yes |
-| `clients.js` | Same data in JS for MC dashboard | Yes |
 | `dispatch-map.json` | Channel role mapping | No (framework) |
 
 Templates (`.example` files) are provided for all gitignored configs.

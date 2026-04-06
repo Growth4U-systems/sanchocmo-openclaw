@@ -5853,7 +5853,7 @@ nav .nav-footer { display:none !important; }
 
     // Portal: Serve other allowed static JS files
     if (portalPath === '/skills-data.js' || portalPath === '/agents-data.js') {
-      const filePath = path.join(BASE, portalPath.slice(1));
+      const filePath = path.join(MC_DATA_DIR, portalPath.slice(1));
       try {
         const data = fs.readFileSync(filePath);
         res.writeHead(200, { 'Content-Type': 'application/javascript; charset=utf-8' });

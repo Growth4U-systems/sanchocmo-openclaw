@@ -61,7 +61,6 @@ workspace-sancho/
 │   └── archive/                   # Historical PRDs, proposals (versionado)
 │
 ├── clients.json → ../config/      # Client registry (symlink)
-├── clients.js → ../config/        # JS version for Mission Control (symlink)
 ├── dispatch-map.json → ../config/ # Channel role routing (symlink)
 └── package.json                   # Node dependencies (ws)
 ```

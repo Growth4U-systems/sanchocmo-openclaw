@@ -35,7 +35,6 @@ Este script hace TODO automáticamente:
 - ✅ Crea `integrations.json`
 - ✅ Inserta en Supabase
 - ✅ Actualiza `clients.json`
-- ✅ Actualiza `clients.js` (Mission Control)
 - ✅ Regenera Mission Control (`regenerate.py`)
 - ✅ Auto-bind Discord channels + systemPrompts (`auto-bind.py`)
 - ✅ Aplica restricciones de seguridad (tools.deny)

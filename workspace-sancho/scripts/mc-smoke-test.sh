@@ -51,7 +51,7 @@ echo ""
 echo "4. mc-data.js content"
 DATA_CHECK=$(python3 -c "
 import json, re
-content = open('mc-data.js').read()
+content = open('memory/mc/mc-data.js').read()
 match = re.search(r'const MC_DATA = (\{.*\});', content, re.DOTALL)
 data = json.loads(match.group(1))
 clients = data['foundation']['clients']

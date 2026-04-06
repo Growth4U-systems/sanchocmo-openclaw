@@ -7,7 +7,7 @@
 3. Admin ejecuta `new-client.sh --slug X --name Y --guild Z`
 4. Script crea: `brand/{slug}/`, foundation-state.json, integrations.json
 5. Script inserta cliente en Supabase (multi-tenant)
-6. Script actualiza clients.json, clients.js, regenera MC
+6. Script actualiza clients.json, regenera MC (data en memory/mc/)
 
 ## Recursos
 
