@@ -101,7 +101,7 @@ Required values:
 ```env
 ANTHROPIC_API_KEY=sk-ant-...
 DISCORD_BOT_TOKEN=your_discord_bot_token
-DISCORD_CLIENT_ID=your_discord_client_id
+DISCORD_BOT_CLIENT_ID=your_discord_bot_client_id
 CERVANTES_GUILD_ID=your_infra_guild_id
 BASE_URL=https://your-domain.com
 ```
