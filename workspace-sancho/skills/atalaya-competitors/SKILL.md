@@ -8,7 +8,8 @@ context_required:
 - brand/{slug}/go-to-market/ecps/current.md
 context_writes:
 - brand/{slug}/atalaya/competitors-scan/YYYY-MM-DD.json
-- brand/{slug}/atalaya/competitors-pending.json
+- brand/{slug}/ideas.json
+- brand/{slug}/recommendations.json
 - brand/{slug}/operational/learnings.md
 ---
 
@@ -49,7 +50,8 @@ For each interesting new piece of content:
 
 ### 5. Save
 - `brand/{slug}/atalaya/competitors-scan/YYYY-MM-DD.json` — full report
-- `brand/{slug}/atalaya/competitors-pending.json` — ideas pending approval
+- `brand/{slug}/ideas.json
+- brand/{slug}/recommendations.json` — ideas pending approval
 - Update `brand/{slug}/operational/learnings.md` with patterns
 
 ### 6. Report

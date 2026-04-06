@@ -7,7 +7,8 @@ context_required:
 - brand/{slug}/go-to-market/ecps/current.md
 context_writes:
 - brand/{slug}/atalaya/ads-scan/google-YYYY-MM-DD.json
-- brand/{slug}/atalaya/ads-pending.json
+- brand/{slug}/ideas.json
+- brand/{slug}/recommendations.json
 ---
 
 # Atalaya — Google Ads Library Scan
@@ -28,5 +29,6 @@ context_writes:
    - Display creative themes
 5. For each pattern: generate adapted search/display ad idea for our positioning
 6. Save report to `brand/{slug}/atalaya/ads-scan/google-YYYY-MM-DD.json`
-7. Append ideas to `brand/{slug}/atalaya/ads-pending.json`
+7. Append ideas to `brand/{slug}/ideas.json
+- brand/{slug}/recommendations.json`
 8. Present results in chat: ads found per competitor, keyword themes, adapted ideas

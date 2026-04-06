@@ -1,36 +1,25 @@
 {
   "url": "https://growth4u.io",
   "mobile": {
-    "performance": 78,
+    "performance": 77,
     "seo": 100,
     "accessibility": 92,
     "bestPractices": 100,
-    "lcp": 4.1,
+    "lcp": 4.2,
     "cls": 0.007,
-    "tbt": 11,
+    "tbt": 55,
     "opportunities": [
       {
         "id": "unused-javascript",
         "title": "Reduce unused JavaScript",
-        "savings": 390,
+        "savings": 430,
         "description": "Reduce unused JavaScript and defer loading scripts until they are required to decrease bytes consumed by network activity. [Learn how to reduce unused"
-      },
-      {
-        "id": "server-response-time",
-        "title": "Initial server response time was short",
-        "savings": 3,
-        "description": "Keep the server response time for the main document short because all other requests depend on it. [Learn more about the Time to First Byte metric](ht"
       }
     ],
     "diagnostics": [
       {
-        "id": "color-contrast",
-        "title": "Background and foreground colors do not have a sufficient contrast ratio.",
-        "score": 0
-      },
-      {
-        "id": "heading-order",
-        "title": "Heading elements are not in a sequentially-descending order",
+        "id": "image-delivery-insight",
+        "title": "Improve image delivery",
         "score": 0
       },
       {
@@ -39,8 +28,13 @@
         "score": 0
       },
       {
-        "id": "image-delivery-insight",
-        "title": "Improve image delivery",
+        "id": "heading-order",
+        "title": "Heading elements are not in a sequentially-descending order",
+        "score": 0
+      },
+      {
+        "id": "color-contrast",
+        "title": "Background and foreground colors do not have a sufficient contrast ratio.",
         "score": 0
       }
     ]
@@ -52,12 +46,12 @@
     "bestPractices": 100,
     "lcp": 1,
     "cls": 0.009,
-    "tbt": 38,
+    "tbt": 0,
     "opportunities": [
       {
         "id": "unused-javascript",
         "title": "Reduce unused JavaScript",
-        "savings": 90,
+        "savings": 110,
         "description": "Reduce unused JavaScript and defer loading scripts until they are required to decrease bytes consumed by network activity. [Learn how to reduce unused"
       }
     ],
@@ -65,6 +59,11 @@
       {
         "id": "image-delivery-insight",
         "title": "Improve image delivery",
+        "score": 0
+      },
+      {
+        "id": "landmark-one-main",
+        "title": "Document does not have a main landmark.",
         "score": 0
       },
       {
@@ -76,13 +75,8 @@
         "id": "color-contrast",
         "title": "Background and foreground colors do not have a sufficient contrast ratio.",
         "score": 0
-      },
-      {
-        "id": "landmark-one-main",
-        "title": "Document does not have a main landmark.",
-        "score": 0
       }
     ]
   },
-  "fetchedAt": "2026-04-03T21:33:33.085Z"
+  "fetchedAt": "2026-04-05T17:28:06.763Z"
 }

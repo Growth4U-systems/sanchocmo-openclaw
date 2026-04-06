@@ -331,6 +331,46 @@
           "output_file": "brand/growth4u/presentations/foundation-presentation.html"
         }
       }
+    },
+    "content-playbook": {
+      "pillars": {
+        "content-playbook": {
+          "status": "not-started",
+          "layer": 2,
+          "requires": [
+            "strategic-plan",
+            "brand-voice",
+            "positioning"
+          ],
+          "enriches_with": [
+            "competitor-analysis",
+            "market-analysis"
+          ],
+          "skill": "content-playbook",
+          "notes": "Optional — only if Strategic Plan includes content strategy",
+          "output_file": "brand/growth4u/content-playbook/current.md",
+          "optional": true
+        }
+      }
+    },
+    "outreach-playbook": {
+      "pillars": {
+        "outreach-playbook": {
+          "status": "not-started",
+          "layer": 2,
+          "requires": [
+            "strategic-plan",
+            "positioning"
+          ],
+          "enriches_with": [
+            "competitor-analysis"
+          ],
+          "skill": "outreach-playbook",
+          "notes": "Optional — only if Strategic Plan includes outreach",
+          "output_file": "brand/growth4u/outreach-playbook/current.md",
+          "optional": true
+        }
+      }
     }
   },
   "presentations": [

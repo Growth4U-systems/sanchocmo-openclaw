@@ -7,7 +7,8 @@ context_required:
 - brand/{slug}/go-to-market/ecps/current.md
 context_writes:
 - brand/{slug}/atalaya/ads-scan/meta-YYYY-MM-DD.json
-- brand/{slug}/atalaya/ads-pending.json
+- brand/{slug}/ideas.json
+- brand/{slug}/recommendations.json
 ---
 
 # Atalaya — Meta Ads Library Scan
@@ -29,5 +30,6 @@ context_writes:
    - Hook structures, creative themes, CTA strategies
 5. For each pattern: generate adapted ad idea in our brand voice and positioning
 6. Save report to `brand/{slug}/atalaya/ads-scan/meta-YYYY-MM-DD.json`
-7. Save ideas to `brand/{slug}/atalaya/ads-pending.json`
+7. Save ideas to `brand/{slug}/ideas.json
+- brand/{slug}/recommendations.json`
 8. Present results in chat: ads found per competitor, top patterns, adapted ideas

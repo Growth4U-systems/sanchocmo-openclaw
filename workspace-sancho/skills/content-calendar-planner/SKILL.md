@@ -15,6 +15,8 @@ context_required:
 - brand/{slug}/go-to-market/positioning/*/current.md
 - brand/{slug}/go-to-market/keyword-plan.md
 - brand/{slug}/brand-voice/current.md
+- brand/{slug}/content-playbook/writing-guide.md
+- brand/{slug}/content-playbook/pillars.md
 - brand/{slug}/go-to-market/ecps/current.md
 context_writes:
 - brand/content-calendar.md
@@ -44,6 +46,8 @@ Follow _system/output-format.md (if using SanchoCMO framework)
 **Recommended (better output with these):**
 - `./brand/{slug}/go-to-market/keyword-plan.md` — SEO topics + clusters (from keyword-research)
 - `./brand/{slug}/brand-voice/current.md` — Tone for content notes (from brand-voice)
+- brand/{slug}/content-playbook/writing-guide.md
+- brand/{slug}/content-playbook/pillars.md
 - Content ideas from intelligence pipeline:
   - `brand/{slug}/operational/transitory/daily-pulse/` — Content ideas from daily-pulse
   - `./campaigns/content-plan/` — Content briefs from insight-to-content-mapper
@@ -76,6 +80,8 @@ From keyword-plan.md (if exists):
   - Content gap opportunities
 
 From brand-voice/current.md (if exists):
+- brand/{slug}/content-playbook/writing-guide.md
+- brand/{slug}/content-playbook/pillars.md
   - Tone and style guidelines
   - Platform-specific voice adaptations
 ```
@@ -324,6 +330,8 @@ Append summary to `./brand/{slug}/operational/assets.md`:
 | READ | `./brand/{slug}/go-to-market/positioning/*/current.md` | Differentiation angles for pillar derivation |
 | READ | `./brand/{slug}/go-to-market/keyword-plan.md` | SEO topics + clusters |
 | READ | `./brand/{slug}/brand-voice/current.md` | Tone for content notes |
+- brand/{slug}/content-playbook/writing-guide.md
+- brand/{slug}/content-playbook/pillars.md
 | READ | `./brand/{slug}/go-to-market/ecps/current.md` | Audience segments for pillar mapping |
 | READ | `brand/{slug}/operational/transitory/daily-pulse/` | Content ideas from intelligence |
 | READ | `./campaigns/content-plan/` | Content briefs from mapper |

@@ -15,6 +15,8 @@ metadata:
     - brand/{slug}/go-to-market/positioning/*/current.md
     - brand/{slug}/go-to-market/ecps/current.md
     - brand/{slug}/brand-voice/current.md
+    - brand/{slug}/outreach-playbook/sequence-templates.md
+    - brand/{slug}/outreach-playbook/discovery-guide.md
   context_writes:
     - campaigns/
     - brand/{slug}/operational/learnings.md
@@ -53,6 +55,8 @@ Follow _system/output-format.md (if using SanchoCMO framework)
 
 **Recommended (better output with these):**
 - `./brand/{slug}/brand-voice/current.md` — Tone for email copy (from brand-voice)
+- brand/{slug}/outreach-playbook/sequence-templates.md
+- brand/{slug}/outreach-playbook/discovery-guide.md
 - `brand/{slug}/operational/contacts-enriched.json` — Enriched contacts for personalization (from contact-enrichment)
 - `brand/{slug}/operational/signals-to-track.json` — Buy signals for triggers (from signal-definition)
 
@@ -101,6 +105,8 @@ From positioning.md:
   - Proof points (metrics, case studies)
 
 From brand-voice/current.md (if exists):
+- brand/{slug}/outreach-playbook/sequence-templates.md
+- brand/{slug}/outreach-playbook/discovery-guide.md
   - Tone guidelines
   - Platform-specific adaptations
   - Words to use / words to avoid
@@ -321,6 +327,8 @@ Append summary to `./brand/{slug}/operational/assets.md`:
 | READ | `./brand/{slug}/go-to-market/positioning/*/current.md` | Value prop angle per ECP |
 | READ | `./brand/{slug}/go-to-market/ecps/current.md` | Target persona details |
 | READ | `./brand/{slug}/brand-voice/current.md` | Tone for email copy |
+- brand/{slug}/outreach-playbook/sequence-templates.md
+- brand/{slug}/outreach-playbook/discovery-guide.md
 | READ | `brand/{slug}/operational/contacts-enriched.json` | Enriched contacts (optional) |
 | READ | `brand/{slug}/operational/signals-to-track.json` | Buy signals for triggers |
 | WRITE | `./campaigns/outreach-{ecp}/` | Sequence files (multiple) |

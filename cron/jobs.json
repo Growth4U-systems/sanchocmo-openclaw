@@ -78,7 +78,7 @@
       "name": "Regenerar Dashboard",
       "enabled": true,
       "createdAtMs": 1771950708148,
-      "updatedAtMs": 1775325733108,
+      "updatedAtMs": 1775412623938,
       "schedule": {
         "kind": "cron",
         "expr": "0 8,12,16,20 * * *",
@@ -96,15 +96,14 @@
         "channel": "last"
       },
       "state": {
-        "nextRunAtMs": 1775368800000,
-        "lastRunAtMs": 1775325600018,
+        "nextRunAtMs": 1775455200000,
+        "lastRunAtMs": 1775412548006,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 133090,
+        "lastDurationMs": 75932,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0,
-        "lastDelivered": false,
-        "runningAtMs": 1775379788691
+        "lastDelivered": false
       }
     },
     {
@@ -148,7 +147,7 @@
       "name": "Memory Maintenance",
       "enabled": true,
       "createdAtMs": 1771950722307,
-      "updatedAtMs": 1774814732084,
+      "updatedAtMs": 1775420306429,
       "schedule": {
         "kind": "cron",
         "expr": "0 22 * * 0",
@@ -166,14 +165,15 @@
         "channel": "last"
       },
       "state": {
-        "nextRunAtMs": 1775419200000,
-        "lastRunAtMs": 1774814400013,
-        "lastRunStatus": "ok",
-        "lastStatus": "ok",
-        "lastDurationMs": 332071,
-        "lastDelivered": false,
-        "lastDeliveryStatus": "not-delivered",
-        "consecutiveErrors": 0
+        "nextRunAtMs": 1776024000000,
+        "lastRunAtMs": 1775419349022,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 957407,
+        "lastDeliveryStatus": "not-requested",
+        "consecutiveErrors": 1,
+        "lastError": "FallbackSummaryError: All models failed (3): anthropic/claude-sonnet-4-5: LLM request rejected: Third-party apps now draw from your extra usage, not your plan limits. We've added a $200 credit to get you started. Claim it at claude.ai/settings/usage and keep going. (format) | minimax/MiniMax-M2.7: LLM request timed out. (unknown) | anthropic/claude-opus-4-6: LLM request rejected: Third-party apps now draw from your extra usage, not your plan limits. We've added a $200 credit to get you started. Claim it at claude.ai/settings/usage and keep going. (format)",
+        "lastErrorReason": "timeout"
       }
     },
     {
@@ -208,7 +208,7 @@
       "name": "backup-sancho",
       "enabled": true,
       "createdAtMs": 1772069600272,
-      "updatedAtMs": 1775264484262,
+      "updatedAtMs": 1775379836504,
       "schedule": {
         "kind": "cron",
         "expr": "0 3 * * *"
@@ -225,15 +225,15 @@
         "channel": "last"
       },
       "state": {
-        "nextRunAtMs": 1775350800000,
-        "lastRunAtMs": 1775264400018,
+        "nextRunAtMs": 1775437200000,
+        "lastRunAtMs": 1775379823300,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 84244,
+        "lastDurationMs": 13204,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0,
         "lastDelivered": false,
-        "runningAtMs": 1775379788691
+        "runningAtMs": 1775437942022
       }
     },
     {
@@ -242,7 +242,7 @@
       "name": "healthcheck",
       "enabled": true,
       "createdAtMs": 1772069609685,
-      "updatedAtMs": 1775325951010,
+      "updatedAtMs": 1775424030853,
       "schedule": {
         "kind": "every",
         "everyMs": 21600000,
@@ -262,15 +262,15 @@
         "channel": "last"
       },
       "state": {
-        "nextRunAtMs": 1775347527774,
-        "lastRunAtMs": 1775325927774,
-        "lastRunStatus": "ok",
-        "lastStatus": "ok",
-        "lastDurationMs": 23236,
-        "lastDeliveryStatus": "not-delivered",
-        "consecutiveErrors": 0,
-        "lastDelivered": false,
-        "runningAtMs": 1775379788691
+        "nextRunAtMs": 1775445510759,
+        "lastRunAtMs": 1775423910759,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 120094,
+        "lastDeliveryStatus": "not-requested",
+        "consecutiveErrors": 1,
+        "lastError": "cron: job execution timed out",
+        "lastErrorReason": "timeout"
       }
     },
     {
@@ -280,7 +280,7 @@
       "description": "T-022: Run cost-tracker.py daily at 23:00",
       "enabled": true,
       "createdAtMs": 1772069993394,
-      "updatedAtMs": 1775336475929,
+      "updatedAtMs": 1775423908119,
       "schedule": {
         "kind": "cron",
         "expr": "0 23 * * *"
@@ -297,14 +297,15 @@
         "channel": "webchat"
       },
       "state": {
-        "nextRunAtMs": 1775422800000,
-        "lastRunAtMs": 1775336400014,
+        "nextRunAtMs": 1775509200000,
+        "lastRunAtMs": 1775423181850,
         "lastRunStatus": "error",
         "lastStatus": "error",
-        "lastDurationMs": 75915,
+        "lastDurationMs": 726269,
         "lastDeliveryStatus": "not-requested",
-        "consecutiveErrors": 1,
-        "lastError": "FallbackSummaryError: All models failed (3): anthropic/claude-sonnet-4-5: LLM request rejected: Third-party apps now draw from your extra usage, not your plan limits. We've added a $200 credit to get you started. Claim it at claude.ai/settings/usage and keep going. (format) | minimax/MiniMax-M2.7: LLM request rejected: Third-party apps now draw from your extra usage, not your plan limits. We've added a $200 credit to get you started. Claim it at claude.ai/settings/usage and keep going. (format) | anthropic/claude-opus-4-6: LLM request rejected: Third-party apps now draw from your extra usage, not your plan limits. We've added a $200 credit to get you started. Claim it at claude.ai/settings/usage and keep going. (format)"
+        "consecutiveErrors": 2,
+        "lastError": "FallbackSummaryError: All models failed (3): anthropic/claude-sonnet-4-5: LLM request timed out. (timeout) | minimax/MiniMax-M2.7: LLM request timed out. (timeout) | anthropic/claude-opus-4-6: LLM request timed out. (timeout)",
+        "lastErrorReason": "timeout"
       }
     },
     {
@@ -313,7 +314,7 @@
       "name": "Cervantes observa a Sancho",
       "enabled": true,
       "createdAtMs": 1772115026027,
-      "updatedAtMs": 1775289965815,
+      "updatedAtMs": 1775380390371,
       "schedule": {
         "kind": "cron",
         "expr": "0 10 * * *",
@@ -331,11 +332,11 @@
         "channel": "last"
       },
       "state": {
-        "nextRunAtMs": 1775376000000,
-        "lastRunAtMs": 1775289600016,
+        "nextRunAtMs": 1775462400000,
+        "lastRunAtMs": 1775380242456,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 365799,
+        "lastDurationMs": 147915,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0,
         "lastDelivered": false
@@ -376,7 +377,7 @@
       "name": "cost-tracker-daily",
       "enabled": true,
       "createdAtMs": 1772750911798,
-      "updatedAtMs": 1775282558077,
+      "updatedAtMs": 1775380111951,
       "schedule": {
         "kind": "cron",
         "expr": "0 8 * * *",
@@ -394,15 +395,14 @@
         "mode": "none"
       },
       "state": {
-        "nextRunAtMs": 1775368800000,
-        "lastRunAtMs": 1775282494857,
+        "nextRunAtMs": 1775455200000,
+        "lastRunAtMs": 1775380046311,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 63220,
+        "lastDurationMs": 65640,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0,
-        "lastDelivered": false,
-        "runningAtMs": 1775379788691
+        "lastDelivered": false
       }
     },
     {
@@ -474,7 +474,7 @@
       "name": "update-skills",
       "enabled": true,
       "createdAtMs": 1773235919019,
-      "updatedAtMs": 1775273608569,
+      "updatedAtMs": 1775379998619,
       "schedule": {
         "kind": "cron",
         "expr": "30 5 * * *",
@@ -494,15 +494,14 @@
         "to": "1481220331845976125"
       },
       "state": {
-        "nextRunAtMs": 1775359800000,
-        "lastRunAtMs": 1775273400023,
+        "nextRunAtMs": 1775446200000,
+        "lastRunAtMs": 1775379836504,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 208546,
-        "lastDeliveryStatus": "delivered",
+        "lastDurationMs": 162115,
+        "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0,
-        "lastDelivered": true,
-        "runningAtMs": 1775379788691
+        "lastDelivered": false
       }
     },
     {
@@ -512,7 +511,7 @@
       "name": "Weekly Changelog Update",
       "enabled": true,
       "createdAtMs": 1773249903776,
-      "updatedAtMs": 1774775427512,
+      "updatedAtMs": 1775380535050,
       "schedule": {
         "kind": "cron",
         "expr": "0 10 * * 0",
@@ -529,14 +528,15 @@
         "mode": "none"
       },
       "state": {
-        "nextRunAtMs": 1775376000000,
-        "lastRunAtMs": 1774775271831,
-        "lastRunStatus": "ok",
-        "lastStatus": "ok",
-        "lastDurationMs": 155681,
-        "lastDelivered": false,
-        "lastDeliveryStatus": "not-delivered",
-        "consecutiveErrors": 0
+        "nextRunAtMs": 1775980800000,
+        "lastRunAtMs": 1775380390371,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 144679,
+        "lastDeliveryStatus": "not-requested",
+        "consecutiveErrors": 1,
+        "lastError": "FallbackSummaryError: All models failed (3): anthropic/claude-opus-4-6: LLM request rejected: Third-party apps now draw from your extra usage, not your plan limits. We've added a $200 credit to get you started. Claim it at claude.ai/settings/usage and keep going. (format) | anthropic/claude-sonnet-4-5: No available auth profile for anthropic (all in cooldown or unavailable). (format) | minimax/MiniMax-M2.7: LLM request timed out. (unknown)",
+        "lastErrorReason": "timeout"
       }
     },
     {
@@ -546,7 +546,7 @@
       "name": "Weekly Activity Summary",
       "enabled": true,
       "createdAtMs": 1773249903895,
-      "updatedAtMs": 1774775517601,
+      "updatedAtMs": 1775380713385,
       "schedule": {
         "kind": "cron",
         "expr": "0 10 * * 0",
@@ -563,14 +563,14 @@
         "mode": "none"
       },
       "state": {
-        "nextRunAtMs": 1775376000000,
-        "lastRunAtMs": 1774775427512,
-        "lastRunStatus": "ok",
-        "lastStatus": "ok",
-        "lastDurationMs": 90089,
-        "lastDelivered": false,
-        "lastDeliveryStatus": "not-delivered",
-        "consecutiveErrors": 0
+        "nextRunAtMs": 1775980800000,
+        "lastRunAtMs": 1775380535050,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 178335,
+        "lastDeliveryStatus": "not-requested",
+        "consecutiveErrors": 1,
+        "lastError": "FallbackSummaryError: All models failed (3): anthropic/claude-opus-4-6: LLM request rejected: Third-party apps now draw from your extra usage, not your plan limits. We've added a $200 credit to get you started. Claim it at claude.ai/settings/usage and keep going. (format) | anthropic/claude-sonnet-4-5: No available auth profile for anthropic (all in cooldown or unavailable). (format) | minimax/MiniMax-M2.7: LLM request rejected: Third-party apps now draw from your extra usage, not your plan limits. We've added a $200 credit to get you started. Claim it at claude.ai/settings/usage and keep going. (format)"
       }
     },
     {
@@ -580,7 +580,7 @@
       "name": "mejora-continua-weekly",
       "enabled": true,
       "createdAtMs": 1773560184099,
-      "updatedAtMs": 1774775683443,
+      "updatedAtMs": 1775381686200,
       "schedule": {
         "kind": "cron",
         "expr": "0 10 * * 0",
@@ -600,14 +600,15 @@
         "to": "1482638140240953396"
       },
       "state": {
-        "nextRunAtMs": 1775376000000,
-        "lastRunAtMs": 1774775517601,
-        "lastRunStatus": "ok",
-        "lastStatus": "ok",
-        "lastDurationMs": 165842,
-        "lastDelivered": true,
-        "lastDeliveryStatus": "delivered",
-        "consecutiveErrors": 0
+        "nextRunAtMs": 1775980800000,
+        "lastRunAtMs": 1775380713385,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 972815,
+        "lastDeliveryStatus": "unknown",
+        "consecutiveErrors": 1,
+        "lastError": "cron: job execution timed out",
+        "lastErrorReason": "timeout"
       }
     },
     {
@@ -617,7 +618,7 @@
       "name": "skill-improvement-weekly",
       "enabled": true,
       "createdAtMs": 1773591436668,
-      "updatedAtMs": 1774775711006,
+      "updatedAtMs": 1775381808437,
       "schedule": {
         "kind": "cron",
         "expr": "0 10 * * 0",
@@ -635,14 +636,15 @@
         "channel": "1482642972712505395"
       },
       "state": {
-        "nextRunAtMs": 1775376000000,
-        "lastRunAtMs": 1774775683443,
-        "lastRunStatus": "ok",
-        "lastStatus": "ok",
-        "lastDurationMs": 27563,
-        "lastDelivered": true,
-        "lastDeliveryStatus": "delivered",
-        "consecutiveErrors": 0
+        "nextRunAtMs": 1775980800000,
+        "lastRunAtMs": 1775381686200,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 122237,
+        "lastDeliveryStatus": "unknown",
+        "consecutiveErrors": 1,
+        "lastError": "FallbackSummaryError: All models failed (3): anthropic/claude-opus-4-6: LLM request rejected: Third-party apps now draw from your extra usage, not your plan limits. We've added a $200 credit to get you started. Claim it at claude.ai/settings/usage and keep going. (format) | anthropic/claude-sonnet-4-5: No available auth profile for anthropic (all in cooldown or unavailable). (format) | minimax/MiniMax-M2.7: LLM request timed out. (unknown)",
+        "lastErrorReason": "timeout"
       }
     },
     {
@@ -756,7 +758,7 @@
       "name": "Lead Sync — Growth4U",
       "enabled": true,
       "createdAtMs": 1774192173315,
-      "updatedAtMs": 1775332890784,
+      "updatedAtMs": 1775420580099,
       "schedule": {
         "kind": "cron",
         "expr": "0 22 * * *",
@@ -773,15 +775,15 @@
         "mode": "none"
       },
       "state": {
-        "nextRunAtMs": 1775419200000,
-        "lastRunAtMs": 1775332800012,
+        "nextRunAtMs": 1775505600000,
+        "lastRunAtMs": 1775420306429,
         "lastRunStatus": "error",
         "lastStatus": "error",
-        "lastDurationMs": 90772,
+        "lastDurationMs": 273670,
         "lastDeliveryStatus": "not-requested",
-        "consecutiveErrors": 1,
-        "lastError": "FallbackSummaryError: All models failed (3): anthropic/claude-sonnet-4-5: LLM request rejected: Third-party apps now draw from your extra usage, not your plan limits. We've added a $200 credit to get you started. Claim it at claude.ai/settings/usage and keep going. (format) | minimax/MiniMax-M2.7: LLM request timed out. (unknown) | anthropic/claude-opus-4-6: LLM request rejected: Third-party apps now draw from your extra usage, not your plan limits. We've added a $200 credit to get you started. Claim it at claude.ai/settings/usage and keep going. (format)",
-        "lastErrorReason": "timeout"
+        "consecutiveErrors": 2,
+        "lastErrorReason": "timeout",
+        "lastError": "FallbackSummaryError: All models failed (3): anthropic/claude-sonnet-4-5: No available auth profile for anthropic (all in cooldown or unavailable). (format) | minimax/MiniMax-M2.7: LLM request timed out. (unknown) | anthropic/claude-opus-4-6: LLM request rejected: Third-party apps now draw from your extra usage, not your plan limits. We've added a $200 credit to get you started. Claim it at claude.ai/settings/usage and keep going. (format)"
       }
     },
     {
@@ -791,7 +793,7 @@
       "name": "Call Prep Daily — Growth4U",
       "enabled": true,
       "createdAtMs": 1774192180766,
-      "updatedAtMs": 1775162010435,
+      "updatedAtMs": 1775421092976,
       "schedule": {
         "kind": "cron",
         "expr": "30 22 * * 0-4",
@@ -808,15 +810,15 @@
         "mode": "none"
       },
       "state": {
-        "nextRunAtMs": 1775421000000,
-        "lastRunAtMs": 1775161800019,
+        "nextRunAtMs": 1775507400000,
+        "lastRunAtMs": 1775421000018,
         "lastRunStatus": "error",
         "lastStatus": "error",
-        "lastDurationMs": 210416,
+        "lastDurationMs": 92958,
         "lastDeliveryStatus": "not-requested",
-        "consecutiveErrors": 1,
-        "lastError": "FallbackSummaryError: All models failed (3): anthropic/claude-sonnet-4-5: The AI service is temporarily rate-limited. Please try again in a moment. (rate_limit) | minimax/MiniMax-M2.7: LLM request timed out. (unknown) | anthropic/claude-opus-4-6: The AI service is temporarily rate-limited. Please try again in a moment. (rate_limit)",
-        "lastErrorReason": "rate_limit"
+        "consecutiveErrors": 2,
+        "lastErrorReason": "timeout",
+        "lastError": "FallbackSummaryError: All models failed (3): anthropic/claude-sonnet-4-5: LLM request rejected: Third-party apps now draw from your extra usage, not your plan limits. We've added a $200 credit to get you started. Claim it at claude.ai/settings/usage and keep going. (format) | minimax/MiniMax-M2.7: LLM request timed out. (unknown) | anthropic/claude-opus-4-6: LLM request rejected: Third-party apps now draw from your extra usage, not your plan limits. We've added a $200 credit to get you started. Claim it at claude.ai/settings/usage and keep going. (format)"
       }
     },
     {
@@ -860,7 +862,7 @@
       "name": "memory-pattern-detection",
       "enabled": true,
       "createdAtMs": 1774217538140,
-      "updatedAtMs": 1774217538140,
+      "updatedAtMs": 1775381948042,
       "schedule": {
         "kind": "cron",
         "expr": "0 10 * * 0",
@@ -876,7 +878,16 @@
         "mode": "none"
       },
       "state": {
-        "nextRunAtMs": 1775376000000
+        "nextRunAtMs": 1775980800000,
+        "lastRunAtMs": 1775381808437,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 139605,
+        "lastError": "⚠️ ✉️ Message failed",
+        "lastDelivered": false,
+        "lastDeliveryStatus": "not-delivered",
+        "lastDeliveryError": "⚠️ ✉️ Message failed",
+        "consecutiveErrors": 1
       }
     },
     {
@@ -1164,7 +1175,7 @@
       "name": "Morning Metrics — Growth4U",
       "enabled": true,
       "createdAtMs": 1775034097507,
-      "updatedAtMs": 1775284423200,
+      "updatedAtMs": 1775380239453,
       "schedule": {
         "kind": "cron",
         "expr": "30 8 * * *",
@@ -1182,13 +1193,13 @@
         "channel": "last"
       },
       "state": {
-        "nextRunAtMs": 1775370600000,
-        "lastRunAtMs": 1775284200015,
+        "nextRunAtMs": 1775457000000,
+        "lastRunAtMs": 1775380116970,
         "lastRunStatus": "error",
         "lastStatus": "error",
-        "lastDurationMs": 223185,
+        "lastDurationMs": 122483,
         "lastDeliveryStatus": "unknown",
-        "consecutiveErrors": 3,
+        "consecutiveErrors": 4,
         "lastError": "Channel is required when multiple channels are configured: discord, mc-chat Set delivery.channel explicitly or use a main session with a previous channel."
       }
     }

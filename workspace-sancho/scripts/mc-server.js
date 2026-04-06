@@ -1277,7 +1277,14 @@ function buildIdeaBankPage(slug, baseUrl, clientName) {
   }
 
   const contentIdeas = ideas.filter(i => i.type !== 'contact');
-  const contactIdeas = ideas.filter(i => i.type === 'contact');
+
+  // Load contacts from contacts.json (separate BD)
+  let contacts = [];
+  try {
+    const cRaw = JSON.parse(fs.readFileSync(path.join(brandDir, 'contacts.json'), 'utf-8'));
+    contacts = cRaw.companies || [];
+  } catch {}
+  const totalContacts = contacts.reduce((sum, c) => sum + (c.contacts || []).length, 0);
 
   // Load projects for task creation modal
   let projects = [];
@@ -1381,7 +1388,23 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);line
 .modal-actions button{padding:8px 20px;border-radius:6px;font-size:14px;font-weight:600;cursor:pointer;font-family:'Nunito',sans-serif;}
 .modal-actions .btn-primary{background:var(--rust);color:#fff;border:none;}.modal-actions .btn-primary:hover{background:#A84D2D;}
 .modal-actions .btn-secondary{background:#fff;border:1px solid var(--border);color:var(--navy);}
-@media(max-width:900px){.stats-row{flex-direction:column;}.idea-table{font-size:12px;}}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:var(--border);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
+.cal-header{background:var(--navy);color:#fff;padding:6px;text-align:center;font-size:11px;font-weight:600;}
+.cal-day{background:var(--card);min-height:80px;padding:4px;font-size:11px;vertical-align:top;}
+.cal-day.other-month{background:#F8F6F2;opacity:0.5;}
+.cal-day.today{background:#FFF7ED;}
+.cal-day-num{font-weight:700;color:var(--navy);margin-bottom:4px;font-size:12px;}
+.cal-item{padding:2px 4px;margin-bottom:2px;border-radius:3px;font-size:10px;line-height:1.3;cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.cal-item.status-new{background:var(--blue-light);color:var(--blue);border-left:2px solid var(--blue);}
+.cal-item.status-scheduled{background:var(--yellow-light);color:#B8860B;border-left:2px solid var(--yellow);}
+.cal-item.status-published,.cal-item.status-executed{background:var(--green-light);color:var(--green);border-left:2px solid var(--green);}
+.cal-item.status-approved{background:#E8F8F0;color:var(--green);border-left:2px solid var(--green);}
+.cal-item.status-assigned{background:var(--rust-light);color:var(--rust);border-left:2px solid var(--rust);}
+.cal-nav{display:flex;align-items:center;justify-content:center;gap:16px;margin-bottom:12px;}
+.cal-nav button{background:none;border:1px solid var(--border);border-radius:6px;padding:4px 12px;cursor:pointer;font-size:14px;}
+.cal-nav button:hover{background:var(--rust-light);}
+.cal-nav span{font-family:'Space Grotesk',sans-serif;font-size:16px;font-weight:600;color:var(--navy);min-width:180px;text-align:center;}
+@media(max-width:900px){.stats-row{flex-direction:column;}.idea-table{font-size:12px;}.cal-day{min-height:60px;}}
 </style>
 </head><body>
 <div class="page-header">
@@ -1390,7 +1413,7 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);line
 </div>
 <div class="tabs">
   <div class="tab active" onclick="showTab('ideas')">&#128221; Ideas <span class="badge">${contentIdeas.length}</span></div>
-  <div class="tab" onclick="showTab('contacts')">&#128101; Contactos <span class="badge">${contactIdeas.length}</span></div>
+  <div class="tab" onclick="showTab('contacts')">&#128101; Contactos <span class="badge">${contacts.length} emp / ${totalContacts} ct</span></div>
   <div class="tab" onclick="showTab('insights')">&#128270; Insights</div>
   <div class="tab" onclick="showTab('recommendations')">&#128300; Recomendaciones ${recCount > 0 ? `<span class="badge badge-green">${recCount}</span>` : ''}</div>
 </div>
@@ -1404,14 +1427,21 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);line
     <div class="stat-card"><div class="stat-num">${contentIdeas.filter(i=>i.status==='approved').length}</div><div class="stat-lbl">Aprobadas</div></div>
     <div class="stat-card"><div class="stat-num">${contentIdeas.filter(i=>i.status==='executed').length}</div><div class="stat-lbl">Publicadas</div></div>
   </div>
-  <div class="filters">
-    <span class="filter-pill active" onclick="filterIdeas(this,'all')">Todas</span>
-    <span class="filter-pill" onclick="filterIdeas(this,'new')">Nuevas</span>
-    <span class="filter-pill" onclick="filterIdeas(this,'approved')">Aprobadas</span>
-    <span class="filter-pill" onclick="filterIdeas(this,'executed')">Publicadas</span>
-    <span class="filter-pill" onclick="filterIdeas(this,'rejected')">Descartadas</span>
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
+    <div class="filters" style="margin-bottom:0;flex:1;">
+      <span class="filter-pill active" onclick="filterIdeas(this,'all')">Todas</span>
+      <span class="filter-pill" onclick="filterIdeas(this,'new')">Nuevas</span>
+      <span class="filter-pill" onclick="filterIdeas(this,'approved')">Aprobadas</span>
+      <span class="filter-pill" onclick="filterIdeas(this,'executed')">Publicadas</span>
+      <span class="filter-pill" onclick="filterIdeas(this,'rejected')">Descartadas</span>
+    </div>
+    <div style="display:flex;gap:2px;border:1px solid var(--border);border-radius:6px;overflow:hidden;">
+      <button onclick="switchView('list')" id="view-list" style="padding:5px 12px;font-size:12px;border:none;cursor:pointer;background:var(--navy);color:#fff;font-weight:600;">&#9776; Lista</button>
+      <button onclick="switchView('calendar')" id="view-cal" style="padding:5px 12px;font-size:12px;border:none;cursor:pointer;background:#fff;color:var(--muted);font-weight:600;">&#128197; Calendario</button>
+    </div>
   </div>
-  <table class="idea-table">
+  <div id="ideas-calendar" style="display:none;"></div>
+  <table class="idea-table" id="ideas-list-view">
     <thead><tr><th style="width:30px;"><input type="checkbox" onchange="toggleAllIdeas(this,'ideas')"></th><th>Idea</th><th>Score</th><th>Canales</th><th>Fuente</th><th>Status</th><th>Acciones</th></tr></thead>
     <tbody id="ideas-tbody">
       ${contentIdeas.length === 0 ? '<tr><td colspan="7" class="empty-state">Sin ideas de contenido. Lanza un scan desde Atalaya.</td></tr>' : ''}
@@ -1439,30 +1469,28 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);line
 <!-- CONTACTS TAB -->
 <div id="tab-contacts" class="tab-content">
   <div class="stats-row">
-    <div class="stat-card"><div class="stat-num">${contactIdeas.length}</div><div class="stat-lbl">Total</div></div>
-    <div class="stat-card"><div class="stat-num">${contactIdeas.filter(i=>i.status==='new'||i.status==='pool').length}</div><div class="stat-lbl">Pendientes</div></div>
-    <div class="stat-card"><div class="stat-num">${contactIdeas.filter(i=>i.status==='approved').length}</div><div class="stat-lbl">Aprobados</div></div>
+    <div class="stat-card"><div class="stat-num">${contacts.length}</div><div class="stat-lbl">Empresas</div></div>
+    <div class="stat-card"><div class="stat-num">${totalContacts}</div><div class="stat-lbl">Contactos</div></div>
   </div>
-  <table class="idea-table">
-    <thead><tr><th style="width:30px;"><input type="checkbox" onchange="toggleAllIdeas(this,'contacts')"></th><th>Contacto</th><th>Canal</th><th>Fuente</th><th>Status</th><th>Acciones</th></tr></thead>
-    <tbody id="contacts-tbody">
-      ${contactIdeas.length === 0 ? '<tr><td colspan="6" class="empty-state">Sin contactos. Lanza un scan desde Atalaya.</td></tr>' : ''}
-      ${contactIdeas.map(idea => {
-        const statusColor = STATUS_COLORS[idea.status] || '#95A5A6';
-        return `<tr data-status="${escHtml(idea.status||'new')}" data-id="${escHtml(idea.id||'')}" data-type="contact">
-          <td><input type="checkbox" class="idea-check" value="${escHtml(idea.id||'')}" onchange="updateSelection()"></td>
-          <td><div class="idea-title-cell">${escHtml(idea.title||'—')}</div><div class="idea-desc">${escHtml(idea.description||idea.notes||'')}</div></td>
-          <td><span class="channel-pill">${escHtml(idea.target_channel||idea.list||'—')}</span></td>
-          <td><span class="source-badge">${escHtml(SOURCE_LABELS[idea.source]||idea.source||'—')}</span></td>
-          <td><span class="status-badge" style="background:${statusColor}20;color:${statusColor};">${escHtml(idea.status||'new')}</span></td>
-          <td>
-            ${idea.status!=='approved'?`<button class="btn-sm btn-approve" onclick="ideaAction('${escHtml(idea.id||'')}','approve')">&#10003;</button>`:''}
-            ${idea.status!=='rejected'?`<button class="btn-sm btn-reject" onclick="ideaAction('${escHtml(idea.id||'')}','reject')">&#10005;</button>`:''}
-          </td>
-        </tr>`;
-      }).join('')}
-    </tbody>
-  </table>
+  ${contacts.length === 0 ? '<div class="empty-state" style="padding:40px 0;">Sin empresas ni contactos. Lanza un scan desde Atalaya o usa el pipeline de outreach.</div>' : ''}
+  ${contacts.map(comp => {
+    return `<div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:10px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+        <span style="font-weight:600;color:var(--navy);font-size:14px;">${escHtml(comp.name||'—')}</span>
+        ${comp.web ? `<a href="${escHtml(comp.web)}" target="_blank" style="font-size:11px;color:var(--rust);">&#8599;</a>` : ''}
+        ${comp.sector ? `<span class="source-badge">${escHtml(comp.sector)}</span>` : ''}
+        ${comp.ecp ? `<span class="channel-pill">${escHtml(comp.ecp)}</span>` : ''}
+        ${comp.icp_score ? `<span style="font-size:10px;color:var(--muted);">Score: ${comp.icp_score}</span>` : ''}
+      </div>
+      ${(comp.contacts||[]).map(ct => `<div style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:12px;border-top:1px solid #F5F2ED;">
+        <span style="font-weight:600;">${escHtml(ct.name||'—')}</span>
+        <span style="color:var(--muted);">${escHtml(ct.role||'')}</span>
+        ${ct.linkedin ? `<a href="${escHtml(ct.linkedin)}" target="_blank" style="color:#0077B5;font-size:11px;">LinkedIn &#8599;</a>` : ''}
+        ${ct.email ? `<span style="color:var(--muted);font-size:11px;">${escHtml(ct.email)}</span>` : ''}
+        <span style="margin-left:auto;font-size:10px;padding:1px 6px;border-radius:3px;background:${ct.status==='contacted'?'#E8F8F0':'#EBF5FB'};color:${ct.status==='contacted'?'var(--green)':'var(--blue)'};">${escHtml(ct.status||'new')}</span>
+      </div>`).join('')}
+    </div>`;
+  }).join('')}
 </div>
 
 <!-- INSIGHTS TAB -->
@@ -1487,8 +1515,8 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);line
 <div id="tab-recommendations" class="tab-content">
   <div class="filters" id="rec-filters">
     <span class="filter-pill active" onclick="filterRecs(this,'all')">Todas</span>
-    <span class="filter-pill" onclick="filterRecs(this,'content_idea')">&#128221; Ideas</span>
-    <span class="filter-pill" onclick="filterRecs(this,'contact')">&#128101; Contactos</span>
+    <span class="filter-pill" onclick="filterRecs(this,'content_task')">&#128221; Content</span>
+    <span class="filter-pill" onclick="filterRecs(this,'outreach_task')">&#128101; Outreach</span>
     <span class="filter-pill" onclick="filterRecs(this,'operational')">&#9881; Operativas</span>
     <span style="margin-left:auto;font-size:12px;color:var(--muted);">Fuente:</span>
     <span class="filter-pill" onclick="filterRecSource(this,'atalaya')">Atalaya</span>
@@ -1556,6 +1584,79 @@ const _mc = '/m' + 'c';
 const _p = window.location.pathname;
 const _adminMatch = _p.match(new RegExp(_mc + '/admin/[^/]+'));
 const API_BASE = _adminMatch ? _adminMatch[0] : (_p.includes(_mc + '/') ? _mc : '');
+
+// Ideas data for calendar view
+const ALL_IDEAS = ${JSON.stringify(contentIdeas.map(i => ({ id: i.id, title: i.title, status: i.status, channel: (i.channels||[])[0]||i.channel||'', scheduled_date: i.scheduled_date||i.created_at||'', source: i.source })))};
+
+let calMonth = new Date().getMonth();
+let calYear = new Date().getFullYear();
+
+function switchView(view) {
+  const listEl = document.getElementById('ideas-list-view');
+  const calEl = document.getElementById('ideas-calendar');
+  const btnList = document.getElementById('view-list');
+  const btnCal = document.getElementById('view-cal');
+  if (view === 'calendar') {
+    if (listEl) listEl.style.display = 'none';
+    if (calEl) calEl.style.display = '';
+    btnList.style.background = '#fff'; btnList.style.color = 'var(--muted)';
+    btnCal.style.background = 'var(--navy)'; btnCal.style.color = '#fff';
+    renderCalendar();
+  } else {
+    if (listEl) listEl.style.display = '';
+    if (calEl) calEl.style.display = 'none';
+    btnList.style.background = 'var(--navy)'; btnList.style.color = '#fff';
+    btnCal.style.background = '#fff'; btnCal.style.color = 'var(--muted)';
+  }
+}
+
+function renderCalendar() {
+  const el = document.getElementById('ideas-calendar');
+  const MONTHS = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const DAYS = ['Lun','Mar','Mie','Jue','Vie','Sab','Dom'];
+
+  const firstDay = new Date(calYear, calMonth, 1);
+  const lastDay = new Date(calYear, calMonth + 1, 0);
+  let startDay = firstDay.getDay() - 1; if (startDay < 0) startDay = 6;
+  const daysInMonth = lastDay.getDate();
+  const today = new Date();
+  const todayStr = today.toISOString().slice(0,10);
+
+  let html = '<div class="cal-nav">';
+  html += '<button onclick="calMonth--;if(calMonth<0){calMonth=11;calYear--;}renderCalendar();">&larr;</button>';
+  html += '<span>' + MONTHS[calMonth] + ' ' + calYear + '</span>';
+  html += '<button onclick="calMonth++;if(calMonth>11){calMonth=0;calYear++;}renderCalendar();">&rarr;</button>';
+  html += '</div>';
+  html += '<div class="cal-grid">';
+  for (const d of DAYS) html += '<div class="cal-header">' + d + '</div>';
+
+  // Fill empty days before month starts
+  for (let i = 0; i < startDay; i++) html += '<div class="cal-day other-month"></div>';
+
+  for (let day = 1; day <= daysInMonth; day++) {
+    const dateStr = calYear + '-' + String(calMonth+1).padStart(2,'0') + '-' + String(day).padStart(2,'0');
+    const isToday = dateStr === todayStr;
+    const dayIdeas = ALL_IDEAS.filter(idea => {
+      const d = (idea.scheduled_date || '').slice(0,10);
+      return d === dateStr;
+    });
+    html += '<div class="cal-day' + (isToday ? ' today' : '') + '">';
+    html += '<div class="cal-day-num">' + day + '</div>';
+    for (const idea of dayIdeas.slice(0,3)) {
+      html += '<div class="cal-item status-' + (idea.status||'new') + '" title="' + (idea.title||'').replace(/"/g,'') + '">' + (idea.channel ? idea.channel.slice(0,2).toUpperCase() + ' ' : '') + (idea.title||'').slice(0,25) + '</div>';
+    }
+    if (dayIdeas.length > 3) html += '<div style="font-size:9px;color:var(--muted);">+' + (dayIdeas.length-3) + ' mas</div>';
+    html += '</div>';
+  }
+
+  // Fill empty days after month ends
+  const totalCells = startDay + daysInMonth;
+  const remaining = totalCells % 7 === 0 ? 0 : 7 - (totalCells % 7);
+  for (let i = 0; i < remaining; i++) html += '<div class="cal-day other-month"></div>';
+
+  html += '</div>';
+  el.innerHTML = html;
+}
 
 function showTab(name) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -1651,19 +1752,38 @@ function renderRecs() {
   const el = document.getElementById('recs-list');
   if (filtered.length === 0) { el.innerHTML = '<div class="empty-state">Sin recomendaciones pendientes</div>'; return; }
 
-  const TYPE_ICONS = { content_idea: '&#128221;', contact: '&#128101;', operational: '&#9881;' };
+  const TYPE_ICONS = { content_task: '&#128221;', outreach_task: '&#128101;', content_idea: '&#128221;', contact: '&#128101;', operational: '&#9881;', optimize: '&#128295;', investigate: '&#128269;', launch: '&#128640;', pause: '&#9208;', escalate: '&#9889;' };
   const PRIO_CLASS = { high: 'priority-high', medium: 'priority-medium', low: 'priority-low' };
+  const TASK_LABELS = { content: 'Content', outreach: 'Outreach', research: 'Research', execution: 'Execution' };
 
   el.innerHTML = filtered.map(r => {
-    const icon = TYPE_ICONS[r.type] || '&#128300;';
+    const icon = TYPE_ICONS[r.type] || TYPE_ICONS[r.task_type] || '&#128300;';
     const prioClass = PRIO_CLASS[r.priority] || '';
-    const channels = (r.content?.channels || []).map(c => '<span class="channel-pill">' + c + '</span>').join('');
-    const contactInfo = r.contact ? '<div style="font-size:12px;margin-top:4px;"><strong>' + (r.contact.name||'') + '</strong> &middot; ' + (r.contact.platform||'') + (r.contact.reason ? ' &middot; ' + r.contact.reason : '') + '</div>' : '';
-    const approveLabel = r.type === 'contact' ? 'Aprobar contacto' : r.type === 'operational' ? 'Convertir a tarea' : 'Aprobar idea';
-    const approveAction = r.type === 'operational' ? "recAction('" + r.id + "','convert')" : "recAction('" + r.id + "','approve')";
+    const ideaCount = (r.idea_ids || []).length;
+    const isGroupedTask = ideaCount > 0;
+    const taskLabel = TASK_LABELS[r.task_type] || r.task_type || '';
+    const projLabel = r.suggested_project || '';
 
+    const approveAction = "recAction('" + r.id + "','approve')";
     const dismissAction = "recAction('" + r.id + "','dismiss')";
-    return '<div class="rec-card"><div class="rec-icon">' + icon + '</div><div class="rec-body"><div class="rec-title">' + (r.title||'—') + '</div><div class="rec-meta"><span class="source-badge">' + (r.source||'—') + '</span><span class="' + prioClass + '" style="font-weight:700;font-size:11px;">' + (r.priority||'') + '</span>' + channels + '</div>' + (r.description ? '<div class="rec-desc">' + r.description.slice(0,200) + '</div>' : '') + contactInfo + '<div class="rec-actions"><button class="btn-sm btn-approve" onclick="' + approveAction + '">' + approveLabel + '</button><button class="btn-sm btn-reject" onclick="' + dismissAction + '">Descartar</button></div></div></div>';
+
+    let html = '<div class="rec-card"><div class="rec-icon">' + icon + '</div><div class="rec-body">';
+    html += '<div class="rec-title">' + (r.title||'—') + '</div>';
+    html += '<div class="rec-meta">';
+    html += '<span class="source-badge">' + (r.source||'—') + '</span>';
+    html += '<span class="' + prioClass + '" style="font-weight:700;font-size:11px;">' + (r.priority||'') + '</span>';
+    if (taskLabel) html += '<span class="channel-pill">' + taskLabel + '</span>';
+    if (projLabel) html += '<span style="font-size:10px;color:var(--muted);">→ ' + projLabel + '</span>';
+    html += '</div>';
+    if (r.description) html += '<div class="rec-desc">' + r.description.slice(0,200) + '</div>';
+    if (isGroupedTask) html += '<div style="font-size:11px;color:var(--muted);margin-top:4px;">&#128221; ' + ideaCount + ' ideas vinculadas</div>';
+    // For operational recs (Performance Analysis)
+    if (r.operational?.suggested_action) html += '<div style="font-size:11px;color:var(--navy);margin-top:4px;"><strong>Accion:</strong> ' + r.operational.suggested_action.slice(0,150) + '</div>';
+    html += '<div class="rec-actions">';
+    html += '<button class="btn-sm btn-approve" onclick="' + approveAction + '">&#10003; Crear tarea</button>';
+    html += '<button class="btn-sm btn-reject" onclick="' + dismissAction + '">Descartar</button>';
+    html += '</div></div></div>';
+    return html;
   }).join('');
 }
 
@@ -7800,31 +7920,27 @@ nav .nav-footer { display:none !important; }
       const brandDir = path.join(BASE, 'brand', rSlug);
       let allRecs = [];
 
-      // Source 1: Atalaya pending files
-      const atalayaDir = path.join(brandDir, 'atalaya');
-      const atalayaFiles = { 'profiles-pending.json': 'atalaya-profiles', 'competitors-pending.json': 'atalaya-competitors', 'ads-pending.json': 'atalaya-ads', 'pending-ideas.json': 'atalaya' };
-      for (const [fname, src] of Object.entries(atalayaFiles)) {
-        try {
-          const raw = JSON.parse(fs.readFileSync(path.join(atalayaDir, fname), 'utf-8'));
-          const items = Array.isArray(raw) ? raw : raw.ideas || raw.ideas_generated || [];
-          for (const item of items) {
-            allRecs.push({
-              id: item.id || 'rec-' + src + '-' + Date.now() + '-' + Math.random().toString(36).slice(2,5),
-              source: item.source || src,
-              type: item.type || 'content_idea',
-              priority: item.priority || item.adapted_idea?.priority || 'medium',
-              title: item.title || item.adapted_idea?.title || '',
-              description: item.description || item.adapted_idea?.description || '',
-              rationale: item.rationale || item.source_content_snippet || '',
-              content: item.content || (item.adapted_idea ? { channels: item.adapted_idea.recommended_channels || [], format: item.adapted_idea.format || '' } : undefined),
-              contact: item.contact || undefined,
-              status: item.status || 'pending',
-              created_at: item.created_at || '',
-              _file: fname
-            });
-          }
-        } catch {}
-      }
+      // Source 1: Grouped task recommendations (from recommendations.json)
+      try {
+        const raw = JSON.parse(fs.readFileSync(path.join(brandDir, 'recommendations.json'), 'utf-8'));
+        const items = raw.recommendations || [];
+        for (const item of items) {
+          allRecs.push({
+            id: item.id || '',
+            source: item.source || 'atalaya',
+            type: item.type || 'content_task',
+            priority: item.priority || 'medium',
+            title: item.title || '',
+            description: item.description || '',
+            idea_ids: item.idea_ids || [],
+            suggested_project: item.suggested_project || '',
+            task_type: item.task_type || 'content',
+            status: item.status || 'pending',
+            created_at: item.created_at || '',
+            _file: 'recommendations.json'
+          });
+        }
+      } catch {}
 
       // Source 2: Performance Analysis
       try {

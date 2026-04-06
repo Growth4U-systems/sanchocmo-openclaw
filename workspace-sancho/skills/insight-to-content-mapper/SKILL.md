@@ -11,6 +11,8 @@ metadata:
   context_required:
     - brand/{slug}/company-brief/current.md
     - brand/{slug}/brand-voice/current.md
+- brand/{slug}/content-playbook/writing-guide.md
+- brand/{slug}/content-playbook/pillars.md
     - brand/{slug}/go-to-market/positioning/*/current.md
     - brand/{slug}/go-to-market/ecps/current.md
     - brand/{slug}/go-to-market/keyword-plan.md
@@ -49,6 +51,8 @@ Follow _system/output-format.md (if using SanchoCMO framework)
 **Brand context (loaded automatically in SanchoCMO):**
 - ./brand/{slug}/go-to-market/positioning/*/current.md (unique angle selection)
 - ./brand/{slug}/brand-voice/current.md (tone guidance)
+- brand/{slug}/content-playbook/writing-guide.md
+- brand/{slug}/content-playbook/pillars.md
 - ./brand/{slug}/go-to-market/keyword-plan.md (existing keyword strategy)
 - brand/{slug}/operational/content-ideas.json (avoid duplicating ideas)
 
@@ -173,6 +177,8 @@ Thresholds:
 ```
 Read ./brand/{slug}/go-to-market/positioning/*/current.md → positioning statement, differentiators, proof points
 Read ./brand/{slug}/brand-voice/current.md → tone, reading level, perspective
+- brand/{slug}/content-playbook/writing-guide.md
+- brand/{slug}/content-playbook/pillars.md
 
 DIFFERENTIATION CHECK:
   ✓ Proprietary data? (client benchmarks, original research)
@@ -309,6 +315,8 @@ content-briefs/YYYY-MM-DD-[topic-slug-2].md   ← Brief #2
 |------|-----------------|---------------|
 | ./brand/{slug}/go-to-market/positioning/*/current.md | Unique angle and differentiators | Step 5: Angle selection |
 | ./brand/{slug}/brand-voice/current.md | Tone, style, reading level | Step 6: Tone guidance in brief |
+- brand/{slug}/content-playbook/writing-guide.md
+- brand/{slug}/content-playbook/pillars.md
 | ./brand/{slug}/go-to-market/keyword-plan.md | Existing keyword strategy | Step 2: Align new keywords |
 | brand/{slug}/operational/content-ideas.json | Existing ideas | Step 0: Avoid duplicates |
 | brand/{slug}/market-and-us/competitors.json | Competitor URLs and battle cards | Step 3: Gap analysis |

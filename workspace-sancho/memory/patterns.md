@@ -61,4 +61,46 @@ See brand/learnings.md for patterns prior to March 2026.
 - **Recurrence**: Emerging (needs monitoring)
 - **Status**: 🟡 Needs expansion (4 prompts → 30 × 4 providers)
 
-*Last updated: 2026-03-30*
+## Active Patterns (Confirmed 30 Mar - 5 Apr)
+
+### 9. Facebook-GHL Connection Failure = Unresolved Infra Risk
+- **First detected**: 2026-03-31
+- **Evidence**: 
+  - 2026-03-31: Facebook connection expired for Growth Systems Now (GHL) — flag noted
+  - 2026-04-01: ⚠️ Carry-forward same issue
+  - Still unresolved as of 2026-04-05
+- **Recurrence**: Persists across multiple daily notes without resolution
+- **Status**: 🔴 Risk — requires Cervantes attention, blocking client service
+
+### 10. GOG (Google Workspace) Availability Gap
+- **First detected**: 2026-04-01
+- **Evidence**: 2026-04-01: GOG unavailable — could not check calendar or email. Created blind spot in morning checks.
+- **Recurrence**: First occurrence (Apr 1), unclear if recurring
+- **Status**: 🟡 Monitoring — needs verification if resolved
+
+### 11. Weekend & Low-Activity Days = Scheduled Maintenance Window
+- **First detected**: 2026-03-29 (pattern continued)
+- **Evidence**: 2026-04-03 (Fri): No urgent items, Philippe traveling, WFH. 2026-04-04 (Sat): Weekend, no meetings. Pattern confirmed.
+- **Recurrence**: Weekly
+- **Status**: 🟢 Stable — good time for system maintenance, reviews
+
+### 12. HulaHoop Onboarding Imminent (Apr 8)
+- **First detected**: 2026-04-01
+- **Evidence**: Onboarding accepted Apr 8 16:00 (Cristina Allende + Sandra Cavero). Meeting prep to be sent.
+- **Recurrence**: One-time event
+- **Status**: 🟡 Action required — prep onboarding materials before Apr 8
+
+---
+
+## Prior Patterns (Carried Forward)
+
+### 6. Treatment Keyword Invisibility = #1 Growth Lever (HC)
+- **Status**: 🔴 Action required — content strategy needed (no change since Mar 25)
+
+### 7. Real Data Enrichment is Non-Negotiable
+- **Status**: 🟢 Pattern confirmed
+
+### 8. GEO is a Parallel Visibility Channel
+- **Status**: 🟡 Needs expansion (pending)
+
+*Last updated: 2026-04-05*

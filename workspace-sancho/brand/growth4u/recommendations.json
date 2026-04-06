@@ -1,0 +1,71 @@
+{
+  "recommendations": [
+    {
+      "id": "rec-atalaya-20260405-001",
+      "type": "content_task",
+      "title": "Publicar 4 posts LinkedIn sobre IA y SaaS",
+      "description": "4 ideas de contenido agrupadas por el tema \"IA y SaaS\". Usar hooks y formatos del Content Playbook.",
+      "idea_ids": [
+        "idea-002",
+        "idea-003",
+        "idea-006",
+        "idea-012"
+      ],
+      "suggested_project": "P07-social-content",
+      "task_type": "content",
+      "priority": "high",
+      "source": "atalaya-linkedin",
+      "status": "pending",
+      "created_at": "2026-04-05T19:27:51.102880"
+    },
+    {
+      "id": "rec-atalaya-20260405-002",
+      "type": "content_task",
+      "title": "Publicar 5 posts LinkedIn sobre Growth Systems",
+      "description": "5 ideas de contenido agrupadas por el tema \"Growth Systems\". Usar hooks y formatos del Content Playbook.",
+      "idea_ids": [
+        "idea-004",
+        "idea-005",
+        "idea-007",
+        "idea-008",
+        "idea-009"
+      ],
+      "suggested_project": "P07-social-content",
+      "task_type": "content",
+      "priority": "high",
+      "source": "atalaya-linkedin",
+      "status": "pending",
+      "created_at": "2026-04-05T19:27:51.102884"
+    },
+    {
+      "id": "rec-atalaya-20260405-003",
+      "type": "content_task",
+      "title": "Publicar 1 posts LinkedIn sobre Marketing y Ventas",
+      "description": "1 ideas de contenido agrupadas por el tema \"Marketing y Ventas\". Usar hooks y formatos del Content Playbook.",
+      "idea_ids": [
+        "idea-010"
+      ],
+      "suggested_project": "P07-social-content",
+      "task_type": "content",
+      "priority": "medium",
+      "source": "atalaya-linkedin",
+      "status": "pending",
+      "created_at": "2026-04-05T19:27:51.102887"
+    },
+    {
+      "id": "rec-atalaya-20260405-004",
+      "type": "content_task",
+      "title": "Publicar 1 posts LinkedIn sobre LinkedIn y Contenido",
+      "description": "1 ideas de contenido agrupadas por el tema \"LinkedIn y Contenido\". Usar hooks y formatos del Content Playbook.",
+      "idea_ids": [
+        "idea-011"
+      ],
+      "suggested_project": "P07-social-content",
+      "task_type": "content",
+      "priority": "medium",
+      "source": "atalaya-linkedin",
+      "status": "pending",
+      "created_at": "2026-04-05T19:27:51.102889"
+    }
+  ]
+}
