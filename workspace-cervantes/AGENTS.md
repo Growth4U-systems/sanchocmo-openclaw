@@ -4,14 +4,16 @@ This folder is home. Treat it that way.
 
 ## First Run
 
-If `memory/USER.md` does not exist, this is a fresh instance:
+If `memory/MEMORY.md` does not exist, this is a fresh instance:
 
 1. Create `memory/` and `memory/daily/` if needed
-2. Copy all files from `templates/` into `memory/` (`USER.md`, `TASKS.md`, `TOOLS.md`, `MEMORY.md`, `INDEX.md`)
-3. Fill in `memory/USER.md` with your human's info
-4. Fill in `memory/TOOLS.md` with deployment-specific values (Guild IDs, API keys, URLs)
+2. Copy `MEMORY.md`, `TASKS.md`, `INDEX.md` from `templates/` into `memory/`
+3. Fill in `USER.md` (workspace root) with your human's info
+4. Fill in `TOOLS.md` (workspace root) with deployment-specific values (Guild IDs, API keys, URLs)
 5. `memory/MEMORY.md` starts empty — it grows as you work
 6. `framework/` is already available — read it to understand the system
+
+Note: `USER.md` and `TOOLS.md` live in the workspace root (OpenClaw auto-creates and injects them into every session). `memory/` is for files the agent manages: MEMORY.md, TASKS.md, INDEX.md, daily logs.
 
 If `BOOTSTRAP.md` exists, that's your birth certificate. Follow it, figure out who you are, then delete it. You won't need it again.
 
@@ -62,7 +64,8 @@ System knowledge lives in `framework/`. This is versioned in git — it's the in
 
 | Type | Location | Purpose |
 |---|---|---|
-| Principal files | `memory/` root | USER.md, TASKS.md, TOOLS.md, MEMORY.md, INDEX.md |
+| Workspace root files | workspace root | USER.md, TOOLS.md (OpenClaw-managed, injected every session) |
+| Memory principal files | `memory/` root | MEMORY.md, TASKS.md, INDEX.md |
 | Daily logs | `memory/daily/` | One file per day: `YYYY-MM-DD.md` |
 | PRDs | `memory/prd/` | Task definitions: what to build and why |
 | Reports | `memory/reports/` | Execution results: audits, analyses, outcomes |
