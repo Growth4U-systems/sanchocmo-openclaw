@@ -105,12 +105,8 @@ workspace-sancho/costs-global.json
 workspace-sancho/costs-daily.json
 workspace-sancho/scripts/.channel-guild-cache.json
 
-# === Backup state (cron-generated, instance-specific) ===
-workspace-sancho/memory/backup-state.json
-memory/backup-state.json
-
-# === Root-level SQLite (runtime) ===
-memory/*.sqlite
+# === Root-level memory (pre-workspace legacy, instance-specific) ===
+memory/
 
 # === Development plans ===
 docs/superpowers

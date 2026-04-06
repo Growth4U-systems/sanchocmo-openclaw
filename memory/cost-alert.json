@@ -1,7 +1,0 @@
-{
-  "date": "2026-02-26",
-  "daily_cost": 100.2243,
-  "threshold": 5.0,
-  "alert": true,
-  "message": "\u26a0\ufe0f Coste diario $100.22 supera threshold $5.00"
-}
