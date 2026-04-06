@@ -8,8 +8,14 @@ set -euo pipefail
 # Uso: new-client.sh --slug "slug" --name "Nombre" --guild "GUILD_ID"
 
 WORKSPACE="${OPENCLAW_WORKSPACE:-$HOME/.openclaw/workspace-sancho}"
-SUPABASE_URL="https://psapmujzxhaxraphddlv.supabase.co"
-SKEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBzYXBtdWp6eGhheHJhcGhkZGx2Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MTg5MDE1MSwiZXhwIjoyMDg3NDY2MTUxfQ.uDPfDOg23MfjtORZBXitIUpLNpTRR8ahMqjvJkmg6wE"
+SUPABASE_URL=$(python3 -c "import json; print(json.load(open('${OPENCLAW_WORKSPACE:-$HOME/.openclaw/workspace-sancho}/_system/instance.json')).get('supabase',{}).get('url',''))" 2>/dev/null)
+SKEY=$(python3 -c "import json; print(json.load(open('${OPENCLAW_WORKSPACE:-$HOME/.openclaw/workspace-sancho}/_system/instance.json')).get('supabase',{}).get('service_key',''))" 2>/dev/null)
+if [[ -z "$SKEY" ]]; then
+  SKEY="${SUPABASE_SERVICE_KEY:-}"
+fi
+if [[ -z "$SUPABASE_URL" || -z "$SKEY" ]]; then
+  echo "⚠️ Supabase URL or service key not found in instance.json or env. Supabase insert will be skipped."
+fi
 
 # --- Parse args ---
 SLUG="" NAME="" GUILD=""
@@ -79,7 +85,7 @@ cat > "$BRAND_DIR/company-brief/current.md" << 'PLACEHOLDER'
 ## Diferenciadores
 <!-- Qué hace diferente a esta empresa, assets únicos -->
 PLACEHOLDER
-sed -i '' "s/{NOMBRE}/$NAME/g" "$BRAND_DIR/company-brief/current.md"
+sed -i "s/{NOMBRE}/$NAME/g" "$BRAND_DIR/company-brief/current.md"
 
 cat > "$BRAND_DIR/market-and-us/market/current.md" << 'PLACEHOLDER'
 <!-- mode: placeholder | status: not-started -->
@@ -100,7 +106,7 @@ cat > "$BRAND_DIR/market-and-us/market/current.md" << 'PLACEHOLDER'
 ## Segmentación
 <!-- Segmentos de mercado y oportunidades -->
 PLACEHOLDER
-sed -i '' "s/{NOMBRE}/$NAME/g" "$BRAND_DIR/market-and-us/market/current.md"
+sed -i "s/{NOMBRE}/$NAME/g" "$BRAND_DIR/market-and-us/market/current.md"
 
 cat > "$BRAND_DIR/market-and-us/self/current.md" << 'PLACEHOLDER'
 <!-- mode: placeholder | status: not-started -->
@@ -121,7 +127,7 @@ cat > "$BRAND_DIR/market-and-us/self/current.md" << 'PLACEHOLDER'
 ## Gaps
 <!-- Debilidades y áreas de mejora -->
 PLACEHOLDER
-sed -i '' "s/{NOMBRE}/$NAME/g" "$BRAND_DIR/market-and-us/self/current.md"
+sed -i "s/{NOMBRE}/$NAME/g" "$BRAND_DIR/market-and-us/self/current.md"
 
 cat > "$BRAND_DIR/market-and-us/market-synthesis/swot.md" << 'PLACEHOLDER'
 <!-- mode: placeholder | status: not-started -->
@@ -142,7 +148,7 @@ cat > "$BRAND_DIR/market-and-us/market-synthesis/swot.md" << 'PLACEHOLDER'
 ## TOWS Matrix
 <!-- Estrategias cruzadas SO, WO, ST, WT -->
 PLACEHOLDER
-sed -i '' "s/{NOMBRE}/$NAME/g" "$BRAND_DIR/market-and-us/market-synthesis/swot.md"
+sed -i "s/{NOMBRE}/$NAME/g" "$BRAND_DIR/market-and-us/market-synthesis/swot.md"
 
 cat > "$BRAND_DIR/market-and-us/market-synthesis/summary.md" << 'PLACEHOLDER'
 <!-- mode: placeholder | status: not-started -->
@@ -154,7 +160,7 @@ cat > "$BRAND_DIR/market-and-us/market-synthesis/summary.md" << 'PLACEHOLDER'
 ## Conclusiones Clave
 <!-- Top insights para la estrategia -->
 PLACEHOLDER
-sed -i '' "s/{NOMBRE}/$NAME/g" "$BRAND_DIR/market-and-us/market-synthesis/summary.md"
+sed -i "s/{NOMBRE}/$NAME/g" "$BRAND_DIR/market-and-us/market-synthesis/summary.md"
 
 cat > "$BRAND_DIR/market-and-us/market-synthesis/ope-canvas.md" << 'PLACEHOLDER'
 <!-- mode: placeholder | status: not-started -->
@@ -169,7 +175,7 @@ cat > "$BRAND_DIR/market-and-us/market-synthesis/ope-canvas.md" << 'PLACEHOLDER'
 ## Ejecución
 <!-- Cómo se ejecuta la solución -->
 PLACEHOLDER
-sed -i '' "s/{NOMBRE}/$NAME/g" "$BRAND_DIR/market-and-us/market-synthesis/ope-canvas.md"
+sed -i "s/{NOMBRE}/$NAME/g" "$BRAND_DIR/market-and-us/market-synthesis/ope-canvas.md"
 
 cat > "$BRAND_DIR/go-to-market/ecps/current.md" << 'PLACEHOLDER'
 <!-- mode: placeholder | status: not-started -->
@@ -181,7 +187,7 @@ cat > "$BRAND_DIR/go-to-market/ecps/current.md" << 'PLACEHOLDER'
 ## ECPs (Exceptional Client Profiles)
 <!-- Perfiles de cliente ideal con pain clusters -->
 PLACEHOLDER
-sed -i '' "s/{NOMBRE}/$NAME/g" "$BRAND_DIR/go-to-market/ecps/current.md"
+sed -i "s/{NOMBRE}/$NAME/g" "$BRAND_DIR/go-to-market/ecps/current.md"
 
 cat > "$BRAND_DIR/go-to-market/positioning/shared/messaging-summary.md" << 'PLACEHOLDER'
 <!-- mode: placeholder | status: not-started -->
@@ -196,7 +202,7 @@ cat > "$BRAND_DIR/go-to-market/positioning/shared/messaging-summary.md" << 'PLAC
 ## Mensajes Clave
 <!-- Key messages diferenciadores -->
 PLACEHOLDER
-sed -i '' "s/{NOMBRE}/$NAME/g" "$BRAND_DIR/go-to-market/positioning/shared/messaging-summary.md"
+sed -i "s/{NOMBRE}/$NAME/g" "$BRAND_DIR/go-to-market/positioning/shared/messaging-summary.md"
 
 cat > "$BRAND_DIR/go-to-market/pricing/current.md" << 'PLACEHOLDER'
 <!-- mode: placeholder | status: not-started -->
@@ -211,7 +217,7 @@ cat > "$BRAND_DIR/go-to-market/pricing/current.md" << 'PLACEHOLDER'
 ## Value Metrics
 <!-- Métricas de valor para el cliente -->
 PLACEHOLDER
-sed -i '' "s/{NOMBRE}/$NAME/g" "$BRAND_DIR/go-to-market/pricing/current.md"
+sed -i "s/{NOMBRE}/$NAME/g" "$BRAND_DIR/go-to-market/pricing/current.md"
 
 cat > "$BRAND_DIR/brand-book/brand-voice/current.md" << 'PLACEHOLDER'
 <!-- mode: placeholder | status: not-started -->
@@ -229,7 +235,7 @@ cat > "$BRAND_DIR/brand-book/brand-voice/current.md" << 'PLACEHOLDER'
 ## Ejemplos
 <!-- Antes/después por canal -->
 PLACEHOLDER
-sed -i '' "s/{NOMBRE}/$NAME/g" "$BRAND_DIR/brand-book/brand-voice/current.md"
+sed -i "s/{NOMBRE}/$NAME/g" "$BRAND_DIR/brand-book/brand-voice/current.md"
 
 cat > "$BRAND_DIR/brand-book/visual-identity/current.md" << 'PLACEHOLDER'
 <!-- mode: placeholder | status: not-started -->
@@ -247,7 +253,7 @@ cat > "$BRAND_DIR/brand-book/visual-identity/current.md" << 'PLACEHOLDER'
 ## Templates
 <!-- Plantillas de diseño -->
 PLACEHOLDER
-sed -i '' "s/{NOMBRE}/$NAME/g" "$BRAND_DIR/brand-book/visual-identity/current.md"
+sed -i "s/{NOMBRE}/$NAME/g" "$BRAND_DIR/brand-book/visual-identity/current.md"
 
 cat > "$BRAND_DIR/strategic-plan/current.md" << 'PLACEHOLDER'
 <!-- mode: placeholder | status: not-started -->
@@ -265,7 +271,7 @@ cat > "$BRAND_DIR/strategic-plan/current.md" << 'PLACEHOLDER'
 ## KPIs
 <!-- Métricas de éxito del plan -->
 PLACEHOLDER
-sed -i '' "s/{NOMBRE}/$NAME/g" "$BRAND_DIR/strategic-plan/current.md"
+sed -i "s/{NOMBRE}/$NAME/g" "$BRAND_DIR/strategic-plan/current.md"
 
 echo "   ✅ Placeholders creados (12 documentos)"
 
@@ -898,12 +904,10 @@ else:
 
 # --- 8. Gateway restart ---
 echo "🔄 Restarting gateway..."
-if docker exec sanchocmo openclaw gateway restart 2>/dev/null; then
-  echo "   ✅ Gateway reiniciado (via docker exec)"
-elif command -v openclaw &>/dev/null && openclaw gateway restart 2>/dev/null; then
-  echo "   ✅ Gateway reiniciado (local)"
+if openclaw gateway restart 2>/dev/null; then
+  echo "   ✅ Gateway reiniciado"
 else
-  echo "   ⚠️ Gateway restart falló — ejecutar manualmente: docker compose restart"
+  echo "   ⚠️ Gateway restart falló — ejecutar manualmente"
 fi
 
 # --- 8b. Crear crons recurrentes desde templates ---

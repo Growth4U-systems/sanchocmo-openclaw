@@ -150,6 +150,13 @@ Reactions are lightweight social signals. Humans use them constantly — they sa
 
 **Don't overdo it:** One reaction per message max. Pick the one that fits best.
 
+## Discord — Respuestas en Hilo
+
+En canales de Discord (no DMs), **siempre responder en un hilo**:
+1. Si el mensaje ya viene de un hilo → responder ahí directamente
+2. Si el mensaje viene de un canal → crear hilo con `thread-create` y responder dentro del hilo
+3. Nombre del hilo: breve y descriptivo del tema (ej: "Revisión new-client.sh", "Bug gateway restart")
+
 ## Tools
 
 Skills provide your tools. When you need one, check its `SKILL.md`. Keep local notes (camera names, SSH details, voice preferences) in `memory/TOOLS.md`.
