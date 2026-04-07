@@ -1222,9 +1222,25 @@ function resolveProjectDir(projectsDir, projectId) {
 
 // Filesystem-only project loading. No registry.json needed.
 // Scans brand/{slug}/projects/ for P* directories and reads project.json + tasks.json.
+// Syncs task statuses with foundation pillar statuses from foundation-state.json.
 function loadProjectsData(slug) {
   const projectsDir = path.join(BASE, 'brand', slug, 'projects');
   const results = [];
+
+  // Load foundation pillar statuses for sync
+  const pillarStatuses = {};
+  try {
+    const stateFile = path.join(BASE, 'brand', slug, 'foundation-state.json');
+    const state = JSON.parse(fs.readFileSync(stateFile, 'utf-8'));
+    const sections = state.sections || {};
+    for (const secKey of Object.keys(sections)) {
+      const pillars = sections[secKey].pillars || sections[secKey].skills || {};
+      for (const [pName, pData] of Object.entries(pillars)) {
+        pillarStatuses[pName] = (pData && pData.status) || 'not-started';
+      }
+    }
+  } catch {}
+
   try {
     const dirs = fs.readdirSync(projectsDir, { withFileTypes: true });
     for (const d of dirs) {
@@ -1237,6 +1253,35 @@ function loadProjectsData(slug) {
         const td = JSON.parse(fs.readFileSync(path.join(dirPath, 'tasks.json'), 'utf-8'));
         tasks = Array.isArray(td) ? td : (td.tasks || []);
       } catch {}
+
+      // Sync task statuses with foundation pillars
+      for (const task of tasks) {
+        const pillarKey = task.pillar;
+        const pillarKeys = task.pillars || [];
+        if (pillarKey && pillarStatuses[pillarKey]) {
+          const pst = pillarStatuses[pillarKey];
+          if ((pst === 'approved' || pst === 'skipped') && !['done','approved','completed'].includes(task.status)) {
+            task.status = 'done';
+          } else if (pst === 'in-progress' && task.status === 'pending') {
+            task.status = 'in-progress';
+          }
+        } else if (pillarKeys.length > 0) {
+          const resolved = pillarKeys.filter(pk => pillarStatuses[pk]).map(pk => pillarStatuses[pk]);
+          if (resolved.length > 0 && resolved.every(s => s === 'approved' || s === 'skipped')) {
+            if (!['done','approved','completed'].includes(task.status)) task.status = 'done';
+          } else if (resolved.some(s => ['approved','skipped','in-progress'].includes(s))) {
+            if (task.status === 'pending') task.status = 'in-progress';
+          }
+        }
+      }
+
+      // Recalculate project status
+      if (tasks.length > 0) {
+        const doneCount = tasks.filter(t => ['done','approved','completed','skipped'].includes(t.status)).length;
+        if (doneCount === tasks.length) project.status = 'done';
+        else if (doneCount > 0 || tasks.some(t => t.status === 'in-progress')) project.status = 'active';
+      }
+
       results.push({ ...project, tasks });
     }
   } catch {}

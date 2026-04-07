@@ -35,6 +35,34 @@ else
 fi
 
 # ===========================================================
+# 1b. ENSURE MC-CHAT PLUGIN (runs every startup)
+# ===========================================================
+MC_CHAT_PLUGIN="/root/.openclaw/plugins/mc-chat"
+if [ -d "$MC_CHAT_PLUGIN" ]; then
+  # Check if plugin is registered in config
+  if ! python3 -c "import json; c=json.load(open('$OPENCLAW_CONFIG')); assert 'mc-chat' in c.get('plugins',{}).get('entries',{})" 2>/dev/null; then
+    echo "[entrypoint] Registering mc-chat plugin..."
+    openclaw plugins install --link "$MC_CHAT_PLUGIN" 2>/dev/null || true
+  fi
+  # Ensure channel config and binding exist
+  python3 -c "
+import json, sys
+f='$OPENCLAW_CONFIG'
+c=json.load(open(f))
+changed=False
+if 'mc-chat' not in c.get('channels',{}):
+    c.setdefault('channels',{})['mc-chat']={'enabled':True,'mcServerUrl':'http://localhost:18790'}
+    changed=True
+if not any(b.get('match',{}).get('channel')=='mc-chat' for b in c.get('bindings',[])):
+    c.setdefault('bindings',[]).append({'agentId':'sancho','match':{'channel':'mc-chat'}})
+    changed=True
+if changed:
+    json.dump(c, open(f,'w'), indent=2)
+    print('[entrypoint] mc-chat channel config + binding added')
+" 2>/dev/null || true
+fi
+
+# ===========================================================
 # 4. NODE DEPENDENCIES (ws for MC server)
 # ===========================================================
 if [ -f workspace-sancho/package.json ] && [ ! -d workspace-sancho/node_modules ]; then

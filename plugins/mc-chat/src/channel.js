@@ -122,9 +122,10 @@ export const mcChatPlugin = createChatChannelPlugin({
         const { to, text, account } = params;
 
         // Parse the target to extract slug and threadId
+        // chatId format: "channel:mc-chat:slug:threadId"
         const parts = (to || "").split(":");
-        const slug = parts[1] || "unknown";
-        const threadId = parts.slice(2).join(":") || "unknown";
+        const slug = parts[2] || "unknown";
+        const threadId = parts.slice(3).join(":") || "unknown";
 
         const mcUrl = account?.mcServerUrl || "http://localhost:18790";
         const callbackUrl = `${mcUrl}/webhook/mc-chat/response`;
@@ -161,9 +162,10 @@ export const mcChatPlugin = createChatChannelPlugin({
     base: {
       sendMedia: async (params) => {
         const { to, filePath, account } = params;
+        // chatId format: "channel:mc-chat:slug:threadId"
         const parts = (to || "").split(":");
-        const slug = parts[1] || "unknown";
-        const threadId = parts.slice(2).join(":") || "unknown";
+        const slug = parts[2] || "unknown";
+        const threadId = parts.slice(3).join(":") || "unknown";
 
         const mcUrl = account?.mcServerUrl || "http://localhost:18790";
         const callbackUrl = `${mcUrl}/webhook/mc-chat/response`;

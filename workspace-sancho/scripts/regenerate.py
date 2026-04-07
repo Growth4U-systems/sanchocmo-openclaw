@@ -418,6 +418,15 @@ def parse_foundation():
                             sentry["output_file"] = syn_data["output_file"]
                         sec_data["syntheses"][syn_name] = sentry
 
+                    # Compute section status from required pillars (fix: don't trust stale section status)
+                    required_pillars = [p for p in sec_data["pillars"].values() if not p.get("optional")]
+                    if required_pillars:
+                        statuses = [p["status"] for p in required_pillars]
+                        if all(s in ("approved", "skipped") for s in statuses):
+                            sec_data["status"] = "approved"
+                        elif any(s in ("approved", "skipped", "pending-review", "in-progress") for s in statuses):
+                            sec_data["status"] = "in-progress"
+
                     client_data["sections"][sec_key] = sec_data
             else:
                 # v1.x fallback: flat pillars (legacy clients)
@@ -504,6 +513,40 @@ def parse_foundation():
                     else:
                         proj["tasks"] = []
                     projects_list.append(proj)
+
+            # Sync project task statuses with foundation pillar statuses
+            all_pillars = {}
+            for sec_key, sec_data in client_data.get("sections", {}).items():
+                for pname, pdata in sec_data.get("pillars", {}).items():
+                    all_pillars[pname] = pdata.get("status", "not-started")
+            for proj in projects_list:
+                for task in proj.get("tasks", []):
+                    pillar_key = task.get("pillar")
+                    pillar_keys = task.get("pillars", [])
+                    if pillar_key and pillar_key in all_pillars:
+                        pst = all_pillars[pillar_key]
+                        if pst in ("approved", "skipped") and task.get("status") not in ("done", "approved", "completed"):
+                            task["status"] = "done"
+                        elif pst == "in-progress" and task.get("status") == "pending":
+                            task["status"] = "in-progress"
+                    elif pillar_keys:
+                        # Multi-pillar tasks (e.g. fast-foundation): done if ALL mapped pillars are approved/skipped
+                        resolved = [all_pillars.get(pk) for pk in pillar_keys if pk in all_pillars]
+                        if resolved and all(s in ("approved", "skipped") for s in resolved):
+                            if task.get("status") not in ("done", "approved", "completed"):
+                                task["status"] = "done"
+                        elif any(s in ("approved", "skipped", "in-progress") for s in resolved):
+                            if task.get("status") == "pending":
+                                task["status"] = "in-progress"
+                # Update project status
+                tasks = proj.get("tasks", [])
+                if tasks:
+                    done_count = sum(1 for t in tasks if t.get("status") in ("done", "approved", "completed", "skipped"))
+                    if done_count == len(tasks):
+                        proj["status"] = "done"
+                    elif done_count > 0 or any(t.get("status") == "in-progress" for t in tasks):
+                        proj["status"] = "active"
+
             client_data["projects"] = projects_list
 
             # Ideas (Idea Bank)

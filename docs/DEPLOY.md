@@ -160,7 +160,7 @@ After approval, the bot will respond to your messages in all configured guilds.
 
 The entrypoint automatically:
 
-1. **Generates `openclaw.json`** — detects Discord guilds via API, binds client guilds to sancho and infra guild to cervantes
+1. **Generates `openclaw.json`** — detects Discord guilds via API, binds client guilds to sancho and infra guild to cervantes. Also registers the `mc-chat` plugin (Mission Control webchat) and creates the `mc-chat → sancho` binding.
 2. **Registers agents** — sancho (Opus), cervantes (Opus), escudero (Sonnet), rocinante (Opus)
 3. **Injects env vars** — replaces `{MC_BASE_URL}`, `{CERVANTES_GUILD_ID}`, etc. in SOUL.md and protocol files
 4. **Installs dependencies** — `npm install` for MC server (ws module)
@@ -284,6 +284,7 @@ openclaw gateway run (reads config, connects to Discord)
 | Bot online but not responding | Approve your device: `docker exec sanchocmo openclaw pairing approve discord <CODE>` |
 | Bot responds in DM but not in server | Check guild bindings: `docker exec sanchocmo openclaw agents bindings` |
 | No guilds detected | Verify `DISCORD_BOT_TOKEN` in `.env` and that the bot is invited to your Discord servers |
+| MC Chat no responde | Verificar: 1) Plugin cargado: `openclaw plugins list \| grep mc-chat` 2) Canal configurado: `channels.mc-chat` en openclaw.json 3) Binding existe: `mc-chat → sancho` en bindings 4) Gateway reiniciado después de instalar plugin |
 | nginx returns 502 | Container is down. Check `docker ps` and `curl localhost:18790/mc/api/health-check` |
 | nginx won't start (SSL error) | `curl -o /etc/letsencrypt/options-ssl-nginx.conf https://raw.githubusercontent.com/certbot/certbot/master/certbot-nginx/certbot_nginx/_internal/tls_configs/options-ssl-nginx.conf` |
 | SSL certificate expired | `certbot renew && systemctl reload nginx` |

@@ -14,6 +14,7 @@
 
 ## Config & Placement
 
+- **Dos openclaw.json**: El gateway lee `$OPENCLAW_HOME/.openclaw/openclaw.json` (nested), NO `$OPENCLAW_HOME/openclaw.json` (raíz). Siempre verificar cuál se está editando. `openclaw plugins install` escribe al correcto automáticamente.
 - **Exec permissions**: `tools.exec.security` + `tools.exec.ask`, NO en `agents.defaults.exec` (crashea gateway).
 - **Crons**: `openclaw cron add/edit/list`, persisten en `~/.openclaw/cron/jobs.json`. NO editar openclaw.json.
 - **Cron delivery**: `delivery.mode: "announce"` + `channel: "last"` falla → usar `mode: none` y publicar explícitamente via message tool.

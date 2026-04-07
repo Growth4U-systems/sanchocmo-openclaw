@@ -117,6 +117,29 @@ async function main() {
   if (!config.memory) config.memory = {};
   config.memory.backend = 'builtin';
 
+  // --- MC Chat plugin (Mission Control webchat → Sancho) ---
+  if (!config.plugins) config.plugins = {};
+  if (!config.plugins.load) config.plugins.load = {};
+  if (!config.plugins.load.paths) config.plugins.load.paths = [];
+  const mcChatPluginPath = path.join(OPENCLAW_ROOT, 'plugins', 'mc-chat');
+  if (fs.existsSync(mcChatPluginPath) && !config.plugins.load.paths.includes(mcChatPluginPath)) {
+    config.plugins.load.paths.push(mcChatPluginPath);
+  }
+  if (!config.plugins.entries) config.plugins.entries = {};
+  if (!config.plugins.entries['mc-chat']) {
+    config.plugins.entries['mc-chat'] = { enabled: true, config: {} };
+  }
+  if (!config.channels['mc-chat']) {
+    config.channels['mc-chat'] = { enabled: true, mcServerUrl: 'http://localhost:18790' };
+  }
+  // Binding: mc-chat → sancho (if not already present)
+  if (!config.bindings) config.bindings = [];
+  const hasMcBinding = config.bindings.some(b => b.match && b.match.channel === 'mc-chat');
+  if (!hasMcBinding) {
+    config.bindings.push({ agentId: 'sancho', match: { channel: 'mc-chat' } });
+    console.log('[config] MC Chat binding: mc-chat → sancho');
+  }
+
   // --- Auto-detect Discord guilds and create bindings ---
   if (discordToken) {
     try {
