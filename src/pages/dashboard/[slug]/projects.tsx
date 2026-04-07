@@ -383,13 +383,14 @@ function ProjectCard({
   const { project: p, tasks } = pw;
   const done = tasksDoneCount(tasks);
   const pct = tasks.length > 0 ? Math.round((done / tasks.length) * 100) : 0;
+  const [expanded, setExpanded] = useState(false);
 
   return (
     <div className="border-[3px] border-ink rounded-lg shadow-comic bg-card overflow-hidden">
-      {/* Project header — clicking navigates to detail */}
-      <Link
-        href={`/dashboard/${slug}/projects/${p.id}`}
-        className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-muted/20 transition-colors cursor-pointer"
+      {/* Project header — click toggles task list */}
+      <div
+        className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-muted/20 transition-colors cursor-pointer select-none"
+        onClick={() => setExpanded(!expanded)}
       >
         <div className="flex items-center gap-2.5 flex-1 min-w-0">
           <span className="font-heading font-bold text-rust text-sm shrink-0">
@@ -415,12 +416,19 @@ function ProjectCard({
           <span className="text-[13px] text-muted-foreground font-semibold">
             {done}/{tasks.length}
           </span>
-          <span className="text-sm text-muted-foreground">→</span>
+          <Link
+            href={`/dashboard/${slug}/projects/${p.id}`}
+            className="text-sm text-muted-foreground hover:text-rust"
+            onClick={(e) => e.stopPropagation()}
+            title="Ver detalle"
+          >
+            →
+          </Link>
         </div>
-      </Link>
+      </div>
 
-      {/* Task rows */}
-      {tasks.length > 0 && (
+      {/* Task rows — collapsible */}
+      {expanded && tasks.length > 0 && (
         <div className="px-4 pb-3 space-y-1">
           {tasks.map((t) => {
             const tDone = isDone(t.status);
