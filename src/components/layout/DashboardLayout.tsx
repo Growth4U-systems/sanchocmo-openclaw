@@ -2,19 +2,19 @@ import { type ReactNode } from "react";
 import { useAppStore } from "@/stores/app";
 import { useChatStore } from "@/stores/chat";
 import { Sidebar } from "./Sidebar";
-import { Header } from "./Header";
 import { ChatSidebar } from "@/components/chat/chat-sidebar";
 import { cn } from "@/lib/utils";
 
 interface DashboardLayoutProps {
   children: ReactNode;
+  /** When true, content fills the viewport with no padding (for V2 dashboard) */
+  fullBleed?: boolean;
 }
 
-export function DashboardLayout({ children }: DashboardLayoutProps) {
+export function DashboardLayout({ children, fullBleed }: DashboardLayoutProps) {
   const { sidebarOpen } = useAppStore();
   const { sidebarOpen: chatOpen, isFullscreen: chatFullscreen } = useChatStore();
 
-  // Adjust main content width when chat is open
   const chatWidth = chatOpen ? (chatFullscreen ? "calc(100vw - 220px)" : "380px") : "0px";
 
   return (
@@ -23,14 +23,13 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       <div
         className={cn(
           "transition-all duration-200",
-          sidebarOpen ? "ml-[220px]" : "ml-[60px]"
+          // Desktop: offset by sidebar width; Mobile: no offset (sidebar is overlay or hidden)
+          sidebarOpen ? "lg:ml-[220px] ml-0" : "lg:ml-[60px] ml-0"
         )}
         style={{ marginRight: chatOpen ? chatWidth : undefined }}
       >
-        <Header />
-        <main className="p-6">{children}</main>
+        <main className={fullBleed ? "" : "p-8 pt-6"}>{children}</main>
       </div>
-      {/* Chat sidebar — renders on all dashboard pages */}
       <ChatSidebar />
     </div>
   );

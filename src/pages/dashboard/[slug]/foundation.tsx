@@ -11,18 +11,85 @@
 
 import { useRouter } from "next/router";
 import Head from "next/head";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import { useFoundation } from "@/hooks/useFoundation";
+import { useSlugSync } from "@/hooks/useSlugSync";
+import { useFoundation, useUpdatePillarStatus } from "@/hooks/useFoundation";
 import { useOpenChat } from "@/hooks/useChat";
 import { buildPillarThread } from "@/lib/chat-openers";
 import { DepthBar } from "@/components/foundation/depth-bar";
 import { WarningsBanner } from "@/components/foundation/warnings-banner";
 import { FileTree } from "@/components/foundation/file-tree";
-import { DocViewer } from "@/components/foundation/doc-viewer";
-import { StatusBar } from "@/components/foundation/status-bar";
 import { EmptyState } from "@/components/shared/empty-state";
+import dynamic from "next/dynamic";
+import ReactMarkdown from "react-markdown";
+
+const MarkdownEditor = dynamic(
+  () => import("@/components/foundation/markdown-editor").then((m) => m.MarkdownEditor),
+  { ssr: false, loading: () => <p className="text-sm text-muted-foreground p-6">Cargando editor...</p> }
+);
+import remarkGfm from "remark-gfm";
 import type { FoundationState, Section, Pillar, PillarStatus } from "@/types";
+
+// ============================================================
+// DocViewerBody — just the markdown content, no breadcrumbs
+// ============================================================
+
+function DocViewerBody({ slug, docPath }: { slug: string; docPath: string }) {
+  const [content, setContent] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setLoading(true);
+    setError(null);
+    setContent(null);
+    fetch(`/api/docs/${docPath}`)
+      .then((res) => { if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.json(); })
+      .then((data) => { if (data.ok && data.content) setContent(data.content); else setError(data.error || "Not found"); })
+      .catch((e) => setError(e.message))
+      .finally(() => setLoading(false));
+  }, [slug, docPath]);
+
+  if (loading) return <p className="text-sm text-muted-foreground text-center py-20">Cargando documento...</p>;
+  if (error) return <p className="text-sm text-red-500 text-center py-20">Error: {error}</p>;
+  if (!content) return null;
+
+  return (
+    <article className="prose prose-sm max-w-none dark:prose-invert prose-headings:font-heading prose-headings:text-rust prose-a:text-rust prose-table:border-collapse prose-th:border prose-th:border-border prose-th:px-3 prose-th:py-2 prose-th:bg-muted/30 prose-th:text-left prose-th:text-xs prose-th:font-bold prose-td:border prose-td:border-border prose-td:px-3 prose-td:py-2 prose-td:text-xs">
+      <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
+    </article>
+  );
+}
+
+// ============================================================
+// Status Dropdown — matches legacy renderStatusDropdown()
+// ============================================================
+
+const STATUS_OPTS = [
+  { value: "not-started", label: "No iniciado", bg: "#F5F5F5", border: "#D0D0D0", color: "#666" },
+  { value: "in-progress", label: "En progreso", bg: "#EFF6FF", border: "#93C5FD", color: "#1D4ED8" },
+  { value: "pending-review", label: "Pendiente revision", bg: "#FFFBEB", border: "#FCD34D", color: "#B45309" },
+  { value: "approved", label: "Aprobado", bg: "#ECFDF5", border: "#6EE7B7", color: "#047857" },
+];
+
+function StatusDropdown({ slug, section, pillar, status }: { slug: string; section: string; pillar: string; status: string }) {
+  const { mutate } = useUpdatePillarStatus();
+  const current = STATUS_OPTS.find((o) => o.value === status) || STATUS_OPTS[0];
+
+  return (
+    <select
+      value={status}
+      onChange={(e) => mutate({ slug, section, pillar, status: e.target.value as PillarStatus })}
+      className="px-2 py-1 text-xs font-semibold rounded-md cursor-pointer border"
+      style={{ background: current.bg, borderColor: current.border, color: current.color }}
+    >
+      {STATUS_OPTS.map((opt) => (
+        <option key={opt.value} value={opt.value}>{opt.label}</option>
+      ))}
+    </select>
+  );
+}
 
 // ============================================================
 // Foundation stats calculation (same logic as brand-column.tsx)
@@ -85,12 +152,45 @@ interface SelectedDoc {
 // ============================================================
 
 export default function FoundationPage() {
+  const slug = useSlugSync();
   const router = useRouter();
-  const slug = router.query.slug as string;
   const { data: foundation, isLoading } = useFoundation(slug);
   const openChat = useOpenChat();
 
   const [selectedDoc, setSelectedDoc] = useState<SelectedDoc | null>(null);
+  const [editing, setEditing] = useState(false);
+  const [docContent, setDocContent] = useState<string | null>(null);
+  const [docLoading, setDocLoading] = useState(false);
+
+  // Fetch doc content whenever selectedDoc changes
+  useEffect(() => {
+    if (!selectedDoc?.docPath) { setDocContent(null); return; }
+    setDocLoading(true);
+    setDocContent(null);
+    setEditing(false);
+    fetch(`/api/docs/${selectedDoc.docPath}`)
+      .then((res) => res.json())
+      .then((data) => { if (data.ok && data.content) setDocContent(data.content); })
+      .catch(() => {})
+      .finally(() => setDocLoading(false));
+  }, [selectedDoc?.docPath]);
+
+  // Open doc from query param ?doc=brand/slug/path
+  useEffect(() => {
+    const docParam = router.query.doc as string | undefined;
+    if (!docParam || !foundation?.sections || selectedDoc) return;
+    // Find the pillar matching this doc path
+    for (const [secKey, secData] of Object.entries(foundation.sections)) {
+      for (const [pKey, pInfo] of Object.entries(secData.pillars || {})) {
+        if (pInfo.output_file === docParam) {
+          setSelectedDoc({ sectionKey: secKey, pillarKey: pKey, pillar: pInfo, docPath: docParam });
+          return;
+        }
+      }
+    }
+    // If no pillar match, still open the doc
+    setSelectedDoc({ sectionKey: "", pillarKey: docParam.split("/").pop()?.replace(".md", "") || "", pillar: { status: "approved" } as Pillar, docPath: docParam });
+  }, [router.query.doc, foundation, selectedDoc]);
 
   // Handle selecting a doc from the file tree
   const handleSelectDoc = useCallback(
@@ -117,12 +217,6 @@ export default function FoundationPage() {
     setSelectedDoc(null);
   }, []);
 
-  // Handle status change from status bar
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const handleStatusChange = useCallback((_newStatus: PillarStatus) => {
-    // Status bar mutation already invalidates queries via useUpdatePillarStatus
-    // Nothing extra needed here
-  }, []);
 
   // --- Loading state ---
   if (isLoading) {
@@ -153,34 +247,100 @@ export default function FoundationPage() {
   const stats = calcFoundationStats(foundation);
 
   // ============================================================
-  // MODE 2: Doc View
+  // MODE 2: Doc View — matches legacy slide-over header
+  // Header: ✕ | Title | [Status dropdown] | 💬 Chat | ✏️ Editar
   // ============================================================
   if (selectedDoc) {
+    const pillarTitle = selectedDoc.pillarKey
+      .replace(/-/g, " ")
+      .replace(/\b\w/g, (c: string) => c.toUpperCase());
+    const displayPath = selectedDoc.docPath.replace(/^brand\/[^/]+\//, "");
+    const normStatus =
+      selectedDoc.pillar.status === "done" ? "approved"
+        : selectedDoc.pillar.status === "generated" ? "pending-review"
+          : selectedDoc.pillar.status || "not-started";
+
+    const btnClass = "inline-flex items-center gap-1.5 px-2.5 py-1 text-[13px] bg-transparent border border-[#E5E2DC] dark:border-[#313244] rounded-md cursor-pointer text-[#7A7A7A] dark:text-[#6c7086] hover:bg-[#E5E2DC] dark:hover:bg-[#313244] hover:text-[#1A1A1A] dark:hover:text-[#cdd6f4] transition-colors";
+
     return (
       <DashboardLayout>
         <Head>
-          <title>
-            {selectedDoc.pillarKey.replace(/-/g, " ")} &mdash; {slug} &mdash; Mission Control
-          </title>
+          <title>{pillarTitle} &mdash; {slug} &mdash; Mission Control</title>
         </Head>
 
-        <div className="flex flex-col" style={{ height: "calc(100vh - 120px)" }}>
-          {/* Doc viewer fills the space */}
-          <div className="flex-1 overflow-hidden">
-            <DocViewer slug={slug} docPath={selectedDoc.docPath} onBack={handleBack} />
-          </div>
+        {/* Header bar */}
+        <div className="flex items-center gap-2.5 mb-4 flex-wrap">
+          <button
+            type="button"
+            onClick={handleBack}
+            className="text-xs text-muted-foreground hover:text-rust"
+          >
+            ← {displayPath.split("/").slice(0, -1).join("/") || selectedDoc.pillarKey}
+          </button>
 
-          {/* Status bar at the bottom */}
-          <StatusBar
-            slug={slug}
-            section={selectedDoc.sectionKey}
-            pillar={selectedDoc.pillarKey}
-            status={selectedDoc.pillar.status}
-            approvedAt={selectedDoc.pillar.approved_at}
-            completedAt={selectedDoc.pillar.completed_at}
-            onStatusChange={handleStatusChange}
-          />
+          <span className="text-sm font-bold text-foreground truncate">
+            {pillarTitle}
+          </span>
+
+          <div className="ml-auto flex items-center gap-2">
+            {/* Status dropdown */}
+            {selectedDoc.sectionKey && (
+              <StatusDropdown
+                slug={slug}
+                section={selectedDoc.sectionKey}
+                pillar={selectedDoc.pillarKey}
+                status={normStatus}
+              />
+            )}
+
+            {/* Chat */}
+            <button
+              type="button"
+              onClick={() => handleOpenChat(selectedDoc.pillarKey, selectedDoc.docPath)}
+              className={btnClass}
+            >
+              💬 Chat
+            </button>
+
+            {/* Editar — toggle editor */}
+            <button
+              type="button"
+              onClick={() => setEditing(!editing)}
+              disabled={!docContent}
+              className={btnClass}
+            >
+              {editing ? "👁 Ver" : "✏️ Editar"}
+            </button>
+          </div>
         </div>
+
+        {/* Doc content — toggle between viewer and editor */}
+        {docLoading && <p className="text-sm text-muted-foreground text-center py-20">Cargando documento...</p>}
+        {!docLoading && editing && docContent ? (
+          <div className="min-h-[60vh]">
+            <MarkdownEditor
+              initialContent={docContent}
+              onSave={async (content) => {
+                const res = await fetch(`/api/docs/${selectedDoc.docPath}`, {
+                  method: "PUT",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ content }),
+                });
+                if (!res.ok) throw new Error("Save failed");
+                setDocContent(content);
+                setEditing(false);
+              }}
+              onCancel={() => setEditing(false)}
+            />
+          </div>
+        ) : !docLoading && docContent ? (
+          <article className="prose prose-sm max-w-none dark:prose-invert prose-headings:font-heading prose-headings:text-rust prose-a:text-rust prose-table:border-collapse prose-th:border prose-th:border-border prose-th:px-3 prose-th:py-2 prose-th:bg-muted/30 prose-th:text-left prose-th:text-xs prose-th:font-bold prose-td:border prose-td:border-border prose-td:px-3 prose-td:py-2 prose-td:text-xs">
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>{docContent}</ReactMarkdown>
+          </article>
+        ) : !docLoading ? (
+          <p className="text-sm text-red-500 text-center py-20">Documento no encontrado</p>
+        ) : null}
+
       </DashboardLayout>
     );
   }

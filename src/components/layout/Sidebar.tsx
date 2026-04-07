@@ -1,11 +1,13 @@
+import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { useSession } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
 import { useAppStore } from "@/stores/app";
 import { useChatStore } from "@/stores/chat";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import { useClients } from "@/hooks/useClients";
 
 interface NavItem {
   href: string;
@@ -18,7 +20,6 @@ interface NavItem {
 
 const globalItems: NavItem[] = [
   { href: "/dashboard", icon: "📊", labelKey: "dashboard" },
-  { href: "/dashboard/admin/tasks", icon: "📋", labelKey: "tasks", adminOnly: true },
 ];
 
 const clientItems: NavItem[] = [
@@ -46,6 +47,14 @@ export function Sidebar() {
   const router = useRouter();
   const { data: session } = useSession();
   const { selectedClient, sidebarOpen } = useAppStore();
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  // Close mobile sidebar on route change
+  useEffect(() => {
+    const handleRouteChange = () => setMobileOpen(false);
+    router.events.on("routeChangeComplete", handleRouteChange);
+    return () => router.events.off("routeChangeComplete", handleRouteChange);
+  }, [router]);
 
   const isAdmin = (session?.user as { role?: string })?.role === "admin";
   const slug = selectedClient;
@@ -59,25 +68,50 @@ export function Sidebar() {
   }
 
   return (
+    <>
+    {/* Mobile hamburger */}
+    <button
+      onClick={() => setMobileOpen(true)}
+      className="lg:hidden fixed top-3 left-3 z-[60] w-10 h-10 rounded-lg bg-card border-2 border-ink flex items-center justify-center shadow-comic-sm"
+      aria-label="Open menu"
+    >
+      ☰
+    </button>
+
+    {/* Mobile overlay */}
+    {mobileOpen && (
+      <div
+        className="lg:hidden fixed inset-0 bg-black/40 z-[55]"
+        onClick={() => setMobileOpen(false)}
+      />
+    )}
+
     <aside
       className={cn(
-        "fixed top-0 left-0 h-screen bg-card border-r-[3px] border-ink z-50 flex flex-col transition-all duration-200",
-        sidebarOpen ? "w-[220px]" : "w-[60px]"
+        "fixed top-0 left-0 h-screen bg-card border-r-[3px] border-ink z-[60] flex flex-col transition-all duration-200",
+        // Desktop: normal sidebar behavior
+        sidebarOpen ? "lg:w-[220px]" : "lg:w-[60px]",
+        // Mobile: full-width overlay, hidden by default
+        mobileOpen ? "w-[260px]" : "max-lg:-translate-x-full",
+        "max-lg:w-[260px]"
       )}
     >
-      {/* Logo */}
-      <div className="px-4 pt-5 pb-1">
-        <h1
-          className={cn(
-            "font-heading text-rust transition-all",
-            sidebarOpen ? "text-xl" : "text-sm text-center"
-          )}
-        >
-          {sidebarOpen ? "Mission Control" : "MC"}
-        </h1>
-        <span className="inline-block bg-rust text-white text-[10px] font-semibold px-2 py-0.5 rounded border-2 border-ink mt-1">
-          v2.0
-        </span>
+      {/* Logo — matching legacy nav .logo */}
+      <div className="px-4 pt-4 pb-1">
+        {sidebarOpen ? (
+          <>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo.webp" alt="SanchoCMO" className="w-full h-auto block mb-0.5" />
+            <span className="inline-block bg-rust text-white text-[10px] font-semibold px-2.5 py-0.5 rounded-md border-2 border-ink">
+              v2.0
+            </span>
+          </>
+        ) : (
+          <div className="flex justify-center">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo.webp" alt="SanchoCMO" className="w-10 h-10 object-contain" />
+          </div>
+        )}
       </div>
 
       {/* Client Selector (admin only) */}
@@ -172,6 +206,7 @@ export function Sidebar() {
         <UserFooter collapsed={!sidebarOpen} />
       </div>
     </aside>
+    </>
   );
 }
 
@@ -230,12 +265,7 @@ function NavLink({
 
 function ClientSelector() {
   const { selectedClient, setSelectedClient } = useAppStore();
-
-  // TODO: Load actual clients from API
-  const clients = [
-    { slug: "hospital-capilar", name: "Hospital Capilar", emoji: "🏥" },
-    { slug: "growth4u", name: "Growth4U", emoji: "🚀" },
-  ];
+  const { data: clients } = useClients();
 
   return (
     <select
@@ -244,9 +274,9 @@ function ClientSelector() {
       className="w-full px-2 py-1.5 bg-background border border-border rounded-lg text-sm focus:outline-none focus:border-rust"
     >
       <option value="global">🌐 Todos los clientes</option>
-      {clients.map((c) => (
+      {(clients || []).filter((c) => c.active).map((c) => (
         <option key={c.slug} value={c.slug}>
-          {c.emoji} {c.name}
+          {c.emoji || "🏢"} {c.name}
         </option>
       ))}
     </select>
@@ -254,6 +284,8 @@ function ClientSelector() {
 }
 
 function UserFooter({ collapsed }: { collapsed: boolean }) {
+  const t = useTranslations("auth");
+  const tTheme = useTranslations("theme");
   const { data: session } = useSession();
   const { toggleTheme, theme } = useAppStore();
   const name = session?.user?.name || "Admin";
@@ -261,18 +293,34 @@ function UserFooter({ collapsed }: { collapsed: boolean }) {
 
   if (collapsed) {
     return (
-      <button
-        onClick={toggleTheme}
-        className="w-8 h-8 mx-auto rounded-full bg-rust text-white flex items-center justify-center text-xs font-bold"
-        title={name}
-      >
-        {initial}
-      </button>
+      <div className="flex flex-col items-center gap-1.5">
+        <button
+          onClick={toggleTheme}
+          className="w-8 h-8 rounded-full bg-rust text-white flex items-center justify-center text-xs font-bold"
+          title={name}
+        >
+          {initial}
+        </button>
+        <button
+          onClick={() => useAppStore.getState().toggleSidebar()}
+          className="w-8 h-8 rounded border border-border hover:bg-background text-muted-foreground flex items-center justify-center text-sm"
+          title="Expandir sidebar"
+        >
+          ☰
+        </button>
+        <button
+          onClick={() => signOut({ callbackUrl: "/auth/signin" })}
+          className="w-8 h-8 rounded border border-border hover:border-red-400 hover:bg-red-500/5 text-muted-foreground hover:text-red-600 flex items-center justify-center text-sm transition-colors"
+          title={t("signOut")}
+        >
+          🚪
+        </button>
+      </div>
     );
   }
 
   return (
-    <div className="space-y-1">
+    <div className="space-y-1.5">
       <div className="flex items-center gap-2 px-2 py-1.5 rounded-lg">
         <div className="w-7 h-7 rounded-full bg-rust text-white flex items-center justify-center text-xs font-bold flex-shrink-0">
           {initial}
@@ -289,15 +337,30 @@ function UserFooter({ collapsed }: { collapsed: boolean }) {
           onClick={toggleTheme}
           className="flex-1 px-2 py-1 rounded border border-border hover:bg-background text-muted-foreground"
         >
-          {theme === "light" ? "🌗 Dark" : "☀️ Light"}
+          {theme === "light" ? `🌗 ${tTheme("dark")}` : `☀️ ${tTheme("light")}`}
         </button>
-        <Link
-          href="/dashboard/admin/settings"
-          className="flex-1 px-2 py-1 rounded border border-border hover:bg-background text-muted-foreground text-center"
+        <button
+          onClick={() => useAppStore.getState().setLocale(
+            useAppStore.getState().locale === "es" ? "en" : "es"
+          )}
+          className="px-2 py-1 rounded border border-border hover:bg-background text-muted-foreground"
         >
-          ⚙️
-        </Link>
+          🌐 {useAppStore.getState().locale === "es" ? "ES" : "EN"}
+        </button>
+        <button
+          onClick={() => useAppStore.getState().toggleSidebar()}
+          className="px-2 py-1 rounded border border-border hover:bg-background text-muted-foreground"
+          title="Colapsar sidebar"
+        >
+          ☰
+        </button>
       </div>
+      <button
+        onClick={() => signOut({ callbackUrl: "/auth/signin" })}
+        className="w-full px-2 py-1.5 rounded border border-border hover:border-red-400 hover:bg-red-500/5 text-muted-foreground hover:text-red-600 text-[11px] transition-colors"
+      >
+        🚪 {t("signOut")}
+      </button>
     </div>
   );
 }

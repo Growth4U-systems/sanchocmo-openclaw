@@ -1,8 +1,8 @@
-import { useRouter } from "next/router";
 import { useState, useMemo, useCallback } from "react";
 import Head from "next/head";
 import { useTranslations } from "next-intl";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { useSlugSync } from "@/hooks/useSlugSync";
 import { StatCard } from "@/components/shared/stat-card";
 import { CollapsibleSection } from "@/components/shared/collapsible-section";
 import { FilterBar } from "@/components/shared/filter-bar";
@@ -119,8 +119,7 @@ function scoreEmoji(score: number): string {
 // ============================================================
 
 export default function IdeasPage() {
-  const router = useRouter();
-  const slug = router.query.slug as string;
+  const slug = useSlugSync();
   const t = useTranslations("ideas");
 
   const { data, isLoading } = useIdeas(slug);

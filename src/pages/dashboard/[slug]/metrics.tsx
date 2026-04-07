@@ -1,7 +1,7 @@
-import { useRouter } from "next/router";
 import { useState, useMemo, useCallback, useEffect } from "react";
 import Head from "next/head";
 import { useTranslations } from "next-intl";
+import { useSlugSync } from "@/hooks/useSlugSync";
 import { useQuery } from "@tanstack/react-query";
 import {
   DndContext,
@@ -263,8 +263,7 @@ function SortableModuleCard({ mod }: { mod: MetricModule }) {
 // ============================================================
 
 export default function MetricsPage() {
-  const router = useRouter();
-  const slug = router.query.slug as string;
+  const slug = useSlugSync();
   const t = useTranslations("metrics");
   const [range, setRange] = useState<DateRange>("7d");
 

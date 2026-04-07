@@ -1,9 +1,9 @@
-import { useRouter } from "next/router";
 import { useState, useMemo, useCallback } from "react";
 import Head from "next/head";
 import { useTranslations } from "next-intl";
 import { useQuery } from "@tanstack/react-query";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { useSlugSync } from "@/hooks/useSlugSync";
 import { Timeline, type TimelinePhase } from "@/components/shared/timeline";
 import { EmptyState } from "@/components/shared/empty-state";
 import { useOpenChat } from "@/hooks/useChat";
@@ -91,8 +91,7 @@ interface TERunState {
 // ============================================================
 
 export default function TrustEnginePage() {
-  const router = useRouter();
-  const slug = router.query.slug as string;
+  const slug = useSlugSync();
   const t = useTranslations("trustEngine");
   const openChat = useOpenChat();
 

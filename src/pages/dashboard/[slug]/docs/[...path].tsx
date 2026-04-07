@@ -3,10 +3,11 @@ import { useQuery } from "@tanstack/react-query";
 import Head from "next/head";
 import ReactMarkdown from "react-markdown";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { useSlugSync } from "@/hooks/useSlugSync";
 
 export default function DocViewerPage() {
+  const slug = useSlugSync();
   const router = useRouter();
-  const slug = router.query.slug as string;
   const pathParts = router.query.path;
   const docPath = Array.isArray(pathParts) ? pathParts.join("/") : pathParts || "";
   const fullPath = slug ? `${slug}/${docPath}` : docPath;

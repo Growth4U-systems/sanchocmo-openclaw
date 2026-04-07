@@ -3,6 +3,7 @@ import { useMemo, useCallback, useState } from "react";
 import Head from "next/head";
 import Link from "next/link";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { useSlugSync } from "@/hooks/useSlugSync";
 import { useProjects } from "@/hooks/useProjects";
 import { useIdeas } from "@/hooks/useIdeas";
 import { useOpenChat } from "@/hooks/useChat";
@@ -66,8 +67,8 @@ const PIPELINE_COLS = [
 // ---------------------------------------------------------------------------
 
 export default function TaskDetailPage() {
+  const slug = useSlugSync() || "";
   const router = useRouter();
-  const slug = (router.query.slug as string) || "";
   const projectId = (router.query.projectId as string) || "";
   const taskId = (router.query.taskId as string) || "";
   const { data: allProjects, isLoading } = useProjects(slug || null);

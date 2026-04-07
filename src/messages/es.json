@@ -53,9 +53,22 @@
     "notStarted": "No iniciado",
     "inProgress": "En progreso",
     "approved": "Aprobado",
+    "completed": "Completado",
+    "pendingReview": "Pendiente revisión",
+    "generated": "Generado",
+    "draft": "Borrador",
+    "refresh": "Actualizar",
+    "notCreated": "No creado",
+    "optional": "opcional",
+    "completedCount": "completados",
+    "others": "Otros",
+    "presentations": "Presentaciones",
+    "files": "archivos",
     "requestRefresh": "Solicitar actualización",
     "depth": "Profundidad",
-    "viewDoc": "Ver documento"
+    "viewDoc": "Ver documento",
+    "depthLabel": "Foundation Depth",
+    "warningMessage": "Foundation {pct}% completa — {pending} pilares pendientes"
   },
   "projects": {
     "title": "Proyectos",

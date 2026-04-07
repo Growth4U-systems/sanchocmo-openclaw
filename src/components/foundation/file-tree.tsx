@@ -5,6 +5,7 @@
 
 "use client";
 
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import type { FoundationState, Section, Pillar } from "@/types";
 
@@ -27,17 +28,17 @@ const SECTION_DEFS = [
   { key: "strategic-plan", icon: "\uD83D\uDCCB", label: "Strategic Plan" },
 ] as const;
 
-// Status display info
-const STATUS_INFO: Record<string, { icon: string; cls: string; label: string }> = {
-  approved: { icon: "\u2705", cls: "done", label: "Aprobado" },
-  done: { icon: "\u2705", cls: "done", label: "Completado" },
-  "pending-review": { icon: "\uD83D\uDFE1", cls: "review", label: "Pendiente revision" },
-  "pending-approval": { icon: "\uD83D\uDFE1", cls: "review", label: "Pendiente revision" },
-  generated: { icon: "\uD83D\uDFE1", cls: "review", label: "Generado" },
-  "in-progress": { icon: "\uD83D\uDD04", cls: "wip", label: "En progreso" },
-  draft: { icon: "\uD83D\uDD04", cls: "wip", label: "Borrador" },
-  "request-refresh": { icon: "\uD83D\uDD04", cls: "wip", label: "Actualizar" },
-  "not-started": { icon: "\u2B1C", cls: "todo", label: "No iniciado" },
+// Status display info — labels are i18n keys (foundation.*)
+const STATUS_INFO: Record<string, { icon: string; cls: string; labelKey: string }> = {
+  approved: { icon: "\u2705", cls: "done", labelKey: "approved" },
+  done: { icon: "\u2705", cls: "done", labelKey: "completed" },
+  "pending-review": { icon: "\uD83D\uDFE1", cls: "review", labelKey: "pendingReview" },
+  "pending-approval": { icon: "\uD83D\uDFE1", cls: "review", labelKey: "pendingReview" },
+  generated: { icon: "\uD83D\uDFE1", cls: "review", labelKey: "generated" },
+  "in-progress": { icon: "\uD83D\uDD04", cls: "wip", labelKey: "inProgress" },
+  draft: { icon: "\uD83D\uDD04", cls: "wip", labelKey: "draft" },
+  "request-refresh": { icon: "\uD83D\uDD04", cls: "wip", labelKey: "refresh" },
+  "not-started": { icon: "\u2B1C", cls: "todo", labelKey: "notStarted" },
 };
 
 const STATUS_BORDER: Record<string, string> = {
@@ -86,6 +87,7 @@ interface FileTreeProps {
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function FileTree({ slug, foundation, onSelectDoc, onOpenChat }: FileTreeProps) {
+  const t = useTranslations("foundation");
   const sections = foundation.sections || {};
   const ffDone = ffDonePillars(sections);
   const ffSection = sections["fast-foundation"]?.pillars || {};
@@ -111,7 +113,7 @@ export function FileTree({ slug, foundation, onSelectDoc, onOpenChat }: FileTree
               <span className="text-base">{sec.icon}</span>
               <span className="text-sm font-medium">{"\u2B1C"} {sec.label}</span>
               <span className="ml-auto text-xs text-muted-foreground">
-                No creado
+                {t("notCreated")}
               </span>
             </div>
           );
@@ -141,7 +143,7 @@ export function FileTree({ slug, foundation, onSelectDoc, onOpenChat }: FileTree
                 {sectionIcon} {sec.label}
               </span>
               <span className="ml-auto text-xs text-muted-foreground">
-                {sectionApproved}/{requiredKeys.length} completados
+                {sectionApproved}/{requiredKeys.length} {t("completedCount")}
               </span>
             </div>
 
@@ -178,12 +180,12 @@ export function FileTree({ slug, foundation, onSelectDoc, onOpenChat }: FileTree
                     {name}
                     {isOptional && (
                       <span className="text-[10px] text-muted-foreground font-normal ml-1">
-                        (opcional)
+                        ({t("optional")})
                       </span>
                     )}
                   </span>
                   <span className="text-[10px] text-muted-foreground hidden sm:inline">
-                    {si.label}
+                    {t(si.labelKey)}
                   </span>
 
                   {/* Actions */}
@@ -225,14 +227,14 @@ export function FileTree({ slug, foundation, onSelectDoc, onOpenChat }: FileTree
         <>
           <div className="px-4 py-2 bg-muted/30 mt-0">
             <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
-              Otros
+              {t("others")}
             </span>
           </div>
           <div className="flex items-center gap-3 px-4 py-3 hover:bg-muted/30 transition-colors cursor-default">
             <span className="text-base">{"\uD83C\uDFAC"}</span>
-            <span className="text-sm font-medium">Presentaciones</span>
+            <span className="text-sm font-medium">{t("presentations")}</span>
             <span className="ml-auto text-xs text-muted-foreground">
-              {foundation.presentations.length} archivos
+              {foundation.presentations.length} {t("files")}
             </span>
           </div>
         </>

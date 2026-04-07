@@ -1,10 +1,9 @@
-import { useRouter } from "next/router";
 import Head from "next/head";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { useSlugSync } from "@/hooks/useSlugSync";
 
 export default function AtalayaPage() {
-  const router = useRouter();
-  const slug = router.query.slug as string;
+  const slug = useSlugSync();
 
   return (
     <DashboardLayout>

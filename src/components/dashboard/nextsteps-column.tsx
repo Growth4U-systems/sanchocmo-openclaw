@@ -60,9 +60,10 @@ function displayName(key: string): string {
 
 interface NextStepsColumnProps {
   slug: string;
+  onOpenDoc?: (docPath: string) => void;
 }
 
-export function NextStepsColumn({ slug }: NextStepsColumnProps) {
+export function NextStepsColumn({ slug, onOpenDoc }: NextStepsColumnProps) {
   const { data: foundation } = useFoundation(slug);
   const { data: projectsData } = useProjects(slug);
   const openChat = useOpenChat();
@@ -163,9 +164,16 @@ export function NextStepsColumn({ slug }: NextStepsColumnProps) {
     <div>
       {/* Strategic Plan banner */}
       {hasStrategicPlan && (
-        <Link
-          href="/foundation"
-          className="flex items-center gap-3 p-3 mb-3 rounded-lg cursor-pointer bg-gradient-to-r from-rust/5 to-transparent border border-rust/30 hover:border-rust/50 transition-colors"
+        <button
+          type="button"
+          onClick={() => {
+            const sp = foundation?.sections?.["strategic-plan"]?.pillars?.["strategic-plan"];
+            const docPath = sp?.output_file;
+            if (docPath && onOpenDoc) {
+              onOpenDoc(docPath);
+            }
+          }}
+          className="w-full flex items-center gap-3 p-3 mb-3 rounded-lg cursor-pointer bg-gradient-to-r from-rust/5 to-transparent border border-rust/30 hover:border-rust/50 transition-colors text-left"
         >
           <span className="text-xl">{"\uD83D\uDCCB"}</span>
           <div className="flex-1">
@@ -177,13 +185,13 @@ export function NextStepsColumn({ slug }: NextStepsColumnProps) {
             </div>
           </div>
           <span className="text-muted-foreground">{"\u2192"}</span>
-        </Link>
+        </button>
       )}
 
       {/* Foundation warning */}
       {foundation && fStats.pct < 100 && (
         <Link
-          href="/foundation"
+          href={`/dashboard/${slug}/foundation`}
           className={cn(
             "block mb-3 px-3 py-2 rounded-lg text-[11px] cursor-pointer transition-colors",
             fStats.pct >= 40
@@ -297,7 +305,7 @@ export function NextStepsColumn({ slug }: NextStepsColumnProps) {
           })}
           {monRecs.length > topMonRecs.length && (
             <div className="text-center mt-1">
-              <Link href="/metrics" className="text-[10px] text-rust">
+              <Link href={`/dashboard/${slug}/metrics`} className="text-[10px] text-rust">
                 Ver las {monRecs.length} recomendaciones {"\u2192"}
               </Link>
             </div>
@@ -348,8 +356,8 @@ export function NextStepsColumn({ slug }: NextStepsColumnProps) {
           })}
           {atalayaRecs.length > topAtalaya.length && (
             <div className="text-center mt-1">
-              <Link href="/ideas" className="text-[10px] text-rust">
-                Ver las {atalayaRecs.length} recomendaciones en Idea Bank {"\u2192"}
+              <Link href={`/dashboard/${slug}/trust-engine`} className="text-[10px] text-rust">
+                Ver las {atalayaRecs.length} recomendaciones en Trust Engine {"\u2192"}
               </Link>
             </div>
           )}

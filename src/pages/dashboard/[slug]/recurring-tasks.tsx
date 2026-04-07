@@ -1,7 +1,7 @@
-import { useRouter } from "next/router";
 import { useState } from "react";
 import Head from "next/head";
 import { useTranslations } from "next-intl";
+import { useSlugSync } from "@/hooks/useSlugSync";
 import ReactMarkdown from "react-markdown";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { useRecurringTasks, useCronRuns, useToggleRecurringTask } from "@/hooks/useRecurringTasks";
@@ -20,8 +20,7 @@ interface CronRun {
 }
 
 export default function RecurringTasksPage() {
-  const router = useRouter();
-  const slug = router.query.slug as string;
+  const slug = useSlugSync();
   const t = useTranslations("recurringTasks");
   const { data: tasksData, isLoading: tasksLoading } = useRecurringTasks(slug);
   const { data: runsData, isLoading: runsLoading } = useCronRuns(slug);

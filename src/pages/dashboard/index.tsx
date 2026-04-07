@@ -18,6 +18,8 @@ import { ActivityBar } from "@/components/dashboard/activity-bar";
 import { BrandColumn } from "@/components/dashboard/brand-column";
 import { MetricsColumn } from "@/components/dashboard/metrics-column";
 import { NextStepsColumn } from "@/components/dashboard/nextsteps-column";
+import { useQuery } from "@tanstack/react-query";
+import { DocSlideOver } from "@/components/shared/doc-slideover";
 import { cn } from "@/lib/utils";
 
 // ============================================================
@@ -32,7 +34,7 @@ export default function DashboardPage() {
   const isAdmin = (session?.user as { role?: string })?.role === "admin";
 
   return (
-    <DashboardLayout>
+    <DashboardLayout fullBleed={!!selectedClient}>
       <Head>
         <title>{t("title")} — Mission Control</title>
       </Head>
@@ -55,6 +57,8 @@ function GlobalDashboard({ isAdmin }: { isAdmin: boolean }) {
   const { data: stats, isLoading } = useGlobalStats();
   const { data: clients } = useClients();
   const { setSelectedClient } = useAppStore();
+  const { data: costs } = useCosts();
+  const { data: integrations } = useIntegrationsSummary();
 
   return (
     <div>
@@ -62,12 +66,12 @@ function GlobalDashboard({ isAdmin }: { isAdmin: boolean }) {
       <p className="text-sm text-muted-foreground mb-6">Todos los clientes</p>
 
       {/* Stats grid — 6 cards */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4 mb-8">
         <StatCard
           value={isLoading ? "..." : stats?.activeClients ?? 0}
           label={t("activeClients")}
           color="text-rust"
-          icon="\uD83C\uDFE2"
+          icon="🏢"
         />
         <StatCard
           value={
@@ -77,37 +81,51 @@ function GlobalDashboard({ isAdmin }: { isAdmin: boolean }) {
           }
           label={t("completedPillars")}
           color="text-sage"
-          icon="\u2705"
+          icon="✅"
         />
         <StatCard
           value={isLoading ? "..." : stats?.activeProjects ?? 0}
           label={t("activeProjects")}
           color="text-navy"
-          icon="\uD83D\uDCCB"
+          icon="📋"
         />
         <StatCard
           value={isLoading ? "..." : stats?.pendingTasks ?? 0}
           label={t("pendingTasks")}
           color="text-rust"
-          icon="\uD83D\uDCDD"
+          icon="📝"
         />
         <StatCard
           value={isLoading ? "..." : stats?.totalIdeas ?? 0}
           label="Ideas"
           color="text-yellow-600"
-          icon="\uD83D\uDCA1"
+          icon="💡"
         />
         <StatCard
-          value="—"
-          label="Costes"
-          color="text-muted-foreground"
-          icon="\uD83D\uDCB0"
+          value={
+            costs?.period
+              ? `€${costs.total_cost_eur?.toFixed(0)}`
+              : "—"
+          }
+          label={costs?.period ? `Costes ${costs.period}` : "Costes"}
+          color={costs?.period ? "text-rust" : "text-muted-foreground"}
+          icon="💰"
+        />
+        <StatCard
+          value={
+            integrations
+              ? `${integrations.connected}/${integrations.connected + integrations.disconnected + integrations.error}`
+              : "—"
+          }
+          label="Integraciones"
+          color={integrations ? "text-sage" : "text-muted-foreground"}
+          icon="🔌"
         />
       </div>
 
       {/* System card */}
       <ComicCard className="mb-5">
-        <h2 className="font-heading text-base text-navy mb-3">{"\u26A1"} Sistema</h2>
+        <h2 className="font-heading text-base text-navy mb-3">⚡ Sistema</h2>
         <SystemStatusRows />
       </ComicCard>
 
@@ -123,7 +141,7 @@ function GlobalDashboard({ isAdmin }: { isAdmin: boolean }) {
                   key={client.slug}
                   slug={client.slug}
                   name={client.name}
-                  emoji={client.emoji || "\uD83C\uDFE2"}
+                  emoji={client.emoji || "🏢"}
                   phase={client.phase}
                   onClick={() => setSelectedClient(client.slug)}
                 />
@@ -133,26 +151,20 @@ function GlobalDashboard({ isAdmin }: { isAdmin: boolean }) {
       )}
 
       {/* Costs card */}
-      <ComicCard className="mb-5">
-        <h2 className="font-heading text-base text-navy">{"\uD83D\uDCB0"} Costes — Global</h2>
-        <p className="text-xs text-muted-foreground mt-2">Proximamente</p>
-      </ComicCard>
+      <CostsCard />
 
       {/* Integrations card */}
-      <ComicCard className="mb-5">
-        <h2 className="font-heading text-base text-navy">{"\uD83D\uDD0C"} Integraciones — Global</h2>
-        <p className="text-xs text-muted-foreground mt-2">Proximamente</p>
-      </ComicCard>
+      <IntegrationsCard />
 
       {/* Activity feed */}
       <ComicCard>
         <div className="flex justify-between items-center mb-3">
-          <h2 className="font-heading text-base text-navy">{"\uD83D\uDCE1"} Actividad Reciente</h2>
+          <h2 className="font-heading text-base text-navy">{"📡"} Actividad Reciente</h2>
           <Link
             href="/activity"
             className="text-xs font-semibold text-rust hover:underline"
           >
-            Ver todo {"\u2192"}
+            Ver todo {"→"}
           </Link>
         </div>
         <GlobalActivityFeed />
@@ -232,7 +244,7 @@ function ClientCard({
         <span className="font-heading font-bold text-base">{name}</span>
       </div>
       <div className="text-[11px] text-muted-foreground mb-2">
-        Fase {phase} {"\u00B7"} {slug}
+        Fase {phase} {"·"} {slug}
       </div>
       {fTotal > 0 && (
         <div>
@@ -252,9 +264,25 @@ function ClientCard({
 }
 
 function GlobalActivityFeed() {
-  // Placeholder — will be populated from API
-  const items: ActivityItem[] = [];
-  return <ActivityFeed items={items} limit={10} />;
+  const { data } = useQuery<ActivityItem[]>({
+    queryKey: ["global-activity"],
+    queryFn: async () => {
+      const res = await fetch("/api/activity?limit=10");
+      if (!res.ok) return [];
+      const json = await res.json();
+      return (json.events || json || []).map((e: Record<string, unknown>) => ({
+        id: e.id || `${e.timestamp}-${e.event}`,
+        text: (e.event || e.message || "") as string,
+        timestamp: (e.timestamp || e.date || "") as string,
+        type: (e.type || "system") as string,
+        client: (e.client || e.slug || "system") as string,
+        ok: e.ok !== false && e.status !== "error",
+      }));
+    },
+    staleTime: 30_000,
+  });
+
+  return <ActivityFeed items={data || []} limit={10} />;
 }
 
 // ============================================================
@@ -264,20 +292,21 @@ function GlobalActivityFeed() {
 
 function ClientDashboardV2({ slug }: { slug: string }) {
   const [activeTab, setActiveTab] = useState(0);
+  const [docPath, setDocPath] = useState<string | null>(null);
 
   const tabs = [
-    { emoji: "\uD83C\uDFE2", label: "Brand" },
-    { emoji: "\uD83D\uDCC8", label: "Metricas" },
-    { emoji: "\uD83C\uDFAF", label: "Pasos" },
+    { emoji: "🏢", label: "Brand" },
+    { emoji: "📈", label: "Metricas" },
+    { emoji: "🎯", label: "Pasos" },
   ];
 
   return (
-    <div>
+    <div className="flex flex-col h-screen">
       {/* Activity Bar (collapsible terminal) */}
       <ActivityBar slug={slug} />
 
       {/* Mobile tab bar — visible < lg */}
-      <div className="flex lg:hidden mb-3 bg-card border-2 border-ink rounded-lg p-1">
+      <div className="flex lg:hidden bg-card border-b-2 border-ink p-1">
         {tabs.map((tab, i) => (
           <button
             key={tab.label}
@@ -294,67 +323,248 @@ function ClientDashboardV2({ slug }: { slug: string }) {
       </div>
 
       {/* 3-Column Grid — desktop: all visible, mobile: tab-switched */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 min-h-[calc(100vh-200px)]">
+      <div className="grid grid-cols-1 lg:grid-cols-3 flex-1 min-h-0 overflow-hidden">
         {/* Col 1: Brand + Foundation */}
         <div
           className={cn(
-            "lg:border-r border-border",
-            activeTab !== 0 && "hidden lg:block"
+            "lg:border-r border-border bg-white dark:bg-card flex flex-col min-h-0",
+            activeTab !== 0 && "hidden lg:flex"
           )}
         >
           {/* Column header */}
           <div className="flex items-center justify-between px-5 py-3 border-b border-border bg-muted/20">
-            <span className="text-xs font-bold">{"\uD83C\uDFE2"} Brand Snapshot</span>
+            <span className="text-xs font-bold">{"🏢"} Brand Snapshot</span>
             <Link
-              href="/foundation"
+              href={`/dashboard/${slug}/foundation`}
               className="text-[10px] font-semibold text-rust hover:underline"
             >
-              Documents {"\u2192"}
+              Documents {"→"}
             </Link>
           </div>
           {/* Column body */}
-          <div className="px-5 py-3 overflow-y-auto max-h-[calc(100vh-280px)]">
-            <BrandColumn slug={slug} />
+          <div className="px-5 py-3 overflow-y-auto flex-1">
+            <BrandColumn slug={slug} onOpenDoc={setDocPath} />
           </div>
         </div>
 
         {/* Col 2: Metrics */}
         <div
           className={cn(
-            "lg:border-r border-border",
-            activeTab !== 1 && "hidden lg:block"
+            "lg:border-r border-border bg-white dark:bg-card flex flex-col min-h-0",
+            activeTab !== 1 && "hidden lg:flex"
           )}
         >
           <div className="flex items-center justify-between px-5 py-3 border-b border-border bg-muted/20">
-            <span className="text-xs font-bold">{"\uD83D\uDCC8"} Metricas</span>
+            <span className="text-xs font-bold">{"📈"} Metricas</span>
             <Link
-              href="/metrics"
+              href={`/dashboard/${slug}/metrics`}
               className="text-[10px] font-semibold text-rust hover:underline"
             >
-              Dashboard {"\u2192"}
+              Dashboard {"→"}
             </Link>
           </div>
-          <div className="px-5 py-3 overflow-y-auto max-h-[calc(100vh-280px)]">
+          <div className="px-5 py-3 overflow-y-auto flex-1">
             <MetricsColumn slug={slug} />
           </div>
         </div>
 
         {/* Col 3: Next Steps */}
-        <div className={cn(activeTab !== 2 && "hidden lg:block")}>
+        <div className={cn("bg-white dark:bg-card flex flex-col min-h-0", activeTab !== 2 && "hidden lg:flex")}>
           <div className="flex items-center justify-between px-5 py-3 border-b border-border bg-muted/20">
-            <span className="text-xs font-bold">{"\uD83C\uDFAF"} Proximos Pasos</span>
+            <span className="text-xs font-bold">{"🎯"} Proximos Pasos</span>
             <Link
-              href="/projects"
+              href={`/dashboard/${slug}/projects`}
               className="text-[10px] font-semibold text-rust hover:underline"
             >
-              Ver todo {"\u2192"}
+              Ver todo {"→"}
             </Link>
           </div>
-          <div className="px-5 py-3 overflow-y-auto max-h-[calc(100vh-280px)]">
-            <NextStepsColumn slug={slug} />
+          <div className="px-5 py-3 overflow-y-auto flex-1">
+            <NextStepsColumn slug={slug} onOpenDoc={setDocPath} />
           </div>
         </div>
       </div>
+
+      {/* Doc slide-over */}
+      <DocSlideOver slug={slug} docPath={docPath} onClose={() => setDocPath(null)} />
     </div>
+  );
+}
+
+// ============================================================
+// Shared hooks for costs & integrations
+// ============================================================
+
+interface CostsData {
+  period: string;
+  total_cost_usd: number;
+  total_cost_eur: number;
+  total_turns: number;
+  total_sessions: number;
+  system?: { agents?: Record<string, { cost_usd: number; turns: number; sessions: number }> };
+  clients?: Record<string, { cost_usd: number; turns: number; sessions: number }>;
+}
+
+interface IntegrationsSummary {
+  connected: number;
+  disconnected: number;
+  error: number;
+  clients: { slug: string; name: string; sources: { name: string; status: string }[] }[];
+}
+
+function useCosts() {
+  return useQuery<CostsData | null>({
+    queryKey: ["costs"],
+    queryFn: async () => {
+      const res = await fetch("/api/system/costs");
+      if (!res.ok) return null;
+      return res.json();
+    },
+    staleTime: 60_000,
+  });
+}
+
+function useIntegrationsSummary() {
+  return useQuery<IntegrationsSummary | null>({
+    queryKey: ["integrations-summary"],
+    queryFn: async () => {
+      const res = await fetch("/api/system/integrations-summary");
+      if (!res.ok) return null;
+      return res.json();
+    },
+    staleTime: 60_000,
+  });
+}
+
+// ============================================================
+// Costs Card — real data from costs-global.json
+// ============================================================
+
+function CostsCard() {
+  const { data } = useCosts();
+
+  return (
+    <ComicCard className="mb-5">
+      <h2 className="font-heading text-base text-navy mb-3">💰 Costes — Global</h2>
+      {!data?.period ? (
+        <p className="text-xs text-muted-foreground">Sin datos de costes.</p>
+      ) : (
+        <>
+          <div className="flex gap-6 mb-3">
+            <div>
+              <div className="font-heading text-2xl text-rust">${data.total_cost_usd?.toFixed(2)}</div>
+              <div className="text-[10px] text-muted-foreground uppercase">USD · {data.period}</div>
+            </div>
+            <div>
+              <div className="font-heading text-2xl text-navy">€{data.total_cost_eur?.toFixed(2)}</div>
+              <div className="text-[10px] text-muted-foreground uppercase">EUR</div>
+            </div>
+            <div>
+              <div className="font-heading text-xl">{data.total_sessions}</div>
+              <div className="text-[10px] text-muted-foreground uppercase">Sesiones</div>
+            </div>
+            <div>
+              <div className="font-heading text-xl">{data.total_turns}</div>
+              <div className="text-[10px] text-muted-foreground uppercase">Turnos</div>
+            </div>
+          </div>
+          {/* Agent breakdown */}
+          {data.system?.agents && (
+            <div className="border-t border-border pt-2 mt-2">
+              <div className="text-[10px] font-bold uppercase text-muted-foreground mb-1.5">Por agente</div>
+              <div className="flex gap-4 flex-wrap">
+                {Object.entries(data.system.agents).map(([agent, info]) => (
+                  <div key={agent} className="text-xs">
+                    <span className="font-semibold capitalize">{agent}</span>
+                    <span className="text-muted-foreground"> ${info.cost_usd?.toFixed(2)} · {info.turns}t</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          {/* Client breakdown */}
+          {data.clients && Object.keys(data.clients).length > 0 && (
+            <div className="border-t border-border pt-2 mt-2">
+              <div className="text-[10px] font-bold uppercase text-muted-foreground mb-1.5">Por cliente</div>
+              <div className="flex gap-4 flex-wrap">
+                {Object.entries(data.clients).map(([slug, info]) => (
+                  <div key={slug} className="text-xs">
+                    <span className="font-semibold">{slug}</span>
+                    <span className="text-muted-foreground"> ${info.cost_usd?.toFixed(2)} · {info.sessions}s</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </>
+      )}
+    </ComicCard>
+  );
+}
+
+// ============================================================
+// Integrations Card — real data from all clients
+// ============================================================
+
+function IntegrationsCard() {
+  const { data } = useIntegrationsSummary();
+
+  const SOURCE_NAMES: Record<string, string> = {
+    ga4: "GA4", gsc: "Search Console", metricool: "Social",
+    "meta-ads": "Meta Ads", meta_ads: "Meta Ads", ghl: "CRM",
+    instantly: "Outreach", sheets: "Manual",
+  };
+
+  return (
+    <ComicCard className="mb-5">
+      <h2 className="font-heading text-base text-navy mb-3">🔌 Integraciones — Global</h2>
+      {!data ? (
+        <p className="text-xs text-muted-foreground">Cargando...</p>
+      ) : (
+        <>
+          <div className="flex gap-4 mb-3">
+            <div className="flex items-center gap-1.5 text-xs">
+              <span className="w-2.5 h-2.5 rounded-full bg-green-500" />
+              <span>{data.connected} conectadas</span>
+            </div>
+            <div className="flex items-center gap-1.5 text-xs">
+              <span className="w-2.5 h-2.5 rounded-full bg-border" />
+              <span>{data.disconnected} desconectadas</span>
+            </div>
+            {data.error > 0 && (
+              <div className="flex items-center gap-1.5 text-xs">
+                <span className="w-2.5 h-2.5 rounded-full bg-red-500" />
+                <span>{data.error} con error</span>
+              </div>
+            )}
+          </div>
+          {data.clients.map((client) => (
+            <div key={client.slug} className="flex items-center gap-3 py-1.5 border-t border-border text-xs">
+              <span className="font-semibold w-28 truncate">{client.name}</span>
+              <div className="flex gap-2 flex-wrap">
+                {client.sources.map((src) => (
+                  <span
+                    key={src.name}
+                    className={cn(
+                      "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium",
+                      src.status === "connected" ? "bg-green-500/10 text-green-700" :
+                        src.status === "error" ? "bg-red-500/10 text-red-700" :
+                          "bg-muted text-muted-foreground"
+                    )}
+                  >
+                    <span className={cn(
+                      "w-1.5 h-1.5 rounded-full",
+                      src.status === "connected" ? "bg-green-500" :
+                        src.status === "error" ? "bg-red-500" : "bg-muted-foreground"
+                    )} />
+                    {SOURCE_NAMES[src.name] || src.name}
+                  </span>
+                ))}
+              </div>
+            </div>
+          ))}
+        </>
+      )}
+    </ComicCard>
   );
 }

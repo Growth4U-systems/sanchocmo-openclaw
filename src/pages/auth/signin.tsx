@@ -1,9 +1,16 @@
+import { useEffect } from "react";
 import { signIn } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import Head from "next/head";
+import { useAppStore } from "@/stores/app";
 
 export default function SignIn() {
   const t = useTranslations("auth");
+
+  // Reset selected client so login always lands on Global Dashboard
+  useEffect(() => {
+    useAppStore.getState().setSelectedClient(null);
+  }, []);
 
   return (
     <>

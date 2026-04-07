@@ -121,3 +121,37 @@
     @apply font-sans;
   }
 }
+
+/* Toast UI Editor — force light theme in dark mode */
+.toastui-editor-defaultUI {
+  background: #fff !important;
+  border: 1px solid #e5e2dc !important;
+  border-radius: 8px !important;
+}
+.toastui-editor-md-container,
+.toastui-editor-ww-container {
+  background: #fff !important;
+}
+.toastui-editor-md-container .CodeMirror {
+  background: #fff !important;
+  color: #1a1a1a !important;
+}
+.toastui-editor-contents,
+.toastui-editor-contents p,
+.toastui-editor-contents li,
+.toastui-editor-contents td,
+.toastui-editor-contents th,
+.toastui-editor-contents h1,
+.toastui-editor-contents h2,
+.toastui-editor-contents h3,
+.toastui-editor-contents h4,
+.ProseMirror {
+  color: #1a1a1a !important;
+}
+.cm-s-default .cm-header { color: #1e40af !important; }
+.cm-s-default .cm-link { color: #047857 !important; }
+.cm-s-default .cm-string { color: #b45309 !important; }
+.toastui-editor-mode-switch {
+  background: #fafaf8 !important;
+  border-top: 1px solid #e5e2dc !important;
+}

@@ -1,8 +1,8 @@
-import { useRouter } from "next/router";
 import { useState, useMemo, useCallback } from "react";
 import Head from "next/head";
 import Link from "next/link";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { useSlugSync } from "@/hooks/useSlugSync";
 import {
   useProjects,
 } from "@/hooks/useProjects";
@@ -41,7 +41,7 @@ function tasksDoneCount(tasks: Task[]): number {
 }
 
 function isArchivedProject(p: Project): boolean {
-  return p.status === "archived" || p.status === "cancelled";
+  return p?.status === "archived" || p?.status === "cancelled";
 }
 
 // ---------------------------------------------------------------------------
@@ -68,8 +68,7 @@ function effectiveStatus(task: Task, projectBlocked: boolean): string {
 // ---------------------------------------------------------------------------
 
 export default function ProjectsPage() {
-  const router = useRouter();
-  const slug = (router.query.slug as string) || "";
+  const slug = useSlugSync() || "";
   const { data, isLoading } = useProjects(slug || null);
   const [tab, setTab] = useState<string>("list");
   const [editorOpen, setEditorOpen] = useState(false);

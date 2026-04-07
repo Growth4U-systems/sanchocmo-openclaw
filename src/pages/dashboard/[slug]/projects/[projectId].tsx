@@ -3,6 +3,7 @@ import { useMemo, useCallback, useState } from "react";
 import Head from "next/head";
 import Link from "next/link";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { useSlugSync } from "@/hooks/useSlugSync";
 import { useProjects, useArchiveProject } from "@/hooks/useProjects";
 import { useIdeas } from "@/hooks/useIdeas";
 import { useOpenChat } from "@/hooks/useChat";
@@ -49,8 +50,8 @@ function getMetricsHtml(obj: Project["objective"]): { metric: string; baseline: 
 // ---------------------------------------------------------------------------
 
 export default function ProjectDetailPage() {
+  const slug = useSlugSync() || "";
   const router = useRouter();
-  const slug = (router.query.slug as string) || "";
   const projectId = (router.query.projectId as string) || "";
   const { data: allProjects, isLoading } = useProjects(slug || null);
   const archiveProject = useArchiveProject();

@@ -53,9 +53,22 @@
     "notStarted": "Not started",
     "inProgress": "In progress",
     "approved": "Approved",
+    "completed": "Completed",
+    "pendingReview": "Pending review",
+    "generated": "Generated",
+    "draft": "Draft",
+    "refresh": "Refresh",
+    "notCreated": "Not created",
+    "optional": "optional",
+    "completedCount": "completed",
+    "others": "Other",
+    "presentations": "Presentations",
+    "files": "files",
     "requestRefresh": "Request refresh",
     "depth": "Depth",
-    "viewDoc": "View document"
+    "viewDoc": "View document",
+    "depthLabel": "Foundation Depth",
+    "warningMessage": "Foundation {pct}% complete — {pending} pillars pending"
   },
   "projects": {
     "title": "Projects",
