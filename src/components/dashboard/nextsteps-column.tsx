@@ -260,7 +260,7 @@ export function NextStepsColumn({ slug, onOpenDoc }: NextStepsColumnProps) {
         </div>
       )}
 
-      {/* Performance Recommendations */}
+      {/* Performance Recommendations — with action buttons (matches legacy) */}
       {topMonRecs.length > 0 && (
         <div className="mb-4">
           <div className="text-[11px] font-bold text-foreground mb-2">
@@ -275,6 +275,32 @@ export function NextStepsColumn({ slug, onOpenDoc }: NextStepsColumnProps) {
               escalate: "\u26A1",
             };
             const prioColor = rec.priority === "high" ? "#C45D35" : "#B8860B";
+            const projRef = rec.linked_project || rec.linkedProject || "";
+
+            const handleConvert = async (e: React.MouseEvent) => {
+              e.stopPropagation();
+              try {
+                await fetch("/api/monitoring/recommendation-action", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ slug, recommendationId: rec.id, action: "convert" }),
+                });
+                window.location.reload();
+              } catch { /* ignore */ }
+            };
+
+            const handleDismiss = async (e: React.MouseEvent) => {
+              e.stopPropagation();
+              try {
+                await fetch("/api/monitoring/recommendation-action", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ slug, recommendationId: rec.id, action: "dismiss" }),
+                });
+                window.location.reload();
+              } catch { /* ignore */ }
+            };
+
             return (
               <div
                 key={rec.id}
@@ -290,6 +316,20 @@ export function NextStepsColumn({ slug, onOpenDoc }: NextStepsColumnProps) {
                       {(rec.rationale || rec.description || "").length > 100 ? "..." : ""}
                     </div>
                     <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={handleConvert}
+                        className="text-[9px] font-semibold text-white bg-[#4A5D23] border-none rounded px-2 py-0.5 cursor-pointer hover:opacity-90"
+                      >
+                        {"\u2192"} {projRef ? `Tarea en ${projRef}` : "Crear tarea"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleDismiss}
+                        className="text-[9px] font-semibold text-muted-foreground bg-transparent border border-border rounded px-2 py-0.5 cursor-pointer hover:bg-muted"
+                      >
+                        Descartar
+                      </button>
                       <span className="flex-1" />
                       <span
                         className="text-[8px] font-bold uppercase"
@@ -307,57 +347,6 @@ export function NextStepsColumn({ slug, onOpenDoc }: NextStepsColumnProps) {
             <div className="text-center mt-1">
               <Link href={`/dashboard/${slug}/metrics`} className="text-[10px] text-rust">
                 Ver las {monRecs.length} recomendaciones {"\u2192"}
-              </Link>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Atalaya Recommendations */}
-      {topAtalaya.length > 0 && (
-        <div className="mb-4">
-          <div className="text-[11px] font-bold text-foreground mb-2">
-            {"\uD83C\uDFF0"} Ideas de Atalaya
-          </div>
-          {topAtalaya.map((rec: { id: string; title: string; source: string; priority: string }) => {
-            const srcIcons: Record<string, string> = {
-              "atalaya-profiles": "\uD83D\uDC64",
-              "atalaya-competitors": "\uD83C\uDFAF",
-              "atalaya-ads": "\uD83D\uDCE2",
-              "trust-engine": "\uD83D\uDD0D",
-            };
-            const prioColor = rec.priority === "high" ? "#C45D35" : "#B8860B";
-            return (
-              <div
-                key={rec.id}
-                className="my-0.5 p-2.5 bg-card border border-border rounded-md text-[11px]"
-                style={{ borderLeftWidth: 3, borderLeftColor: prioColor }}
-              >
-                <div className="flex items-start gap-1.5">
-                  <span className="text-[13px] shrink-0">{srcIcons[rec.source] || "\uD83D\uDCA1"}</span>
-                  <div className="flex-1">
-                    <div className="font-semibold mb-0.5">{rec.title}</div>
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-[9px] px-1.5 py-0.5 bg-muted rounded">
-                        {rec.source}
-                      </span>
-                      <span className="flex-1" />
-                      <span
-                        className="text-[8px] font-bold uppercase"
-                        style={{ color: prioColor }}
-                      >
-                        {rec.priority}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-          {atalayaRecs.length > topAtalaya.length && (
-            <div className="text-center mt-1">
-              <Link href={`/dashboard/${slug}/trust-engine`} className="text-[10px] text-rust">
-                Ver las {atalayaRecs.length} recomendaciones en Trust Engine {"\u2192"}
               </Link>
             </div>
           )}
