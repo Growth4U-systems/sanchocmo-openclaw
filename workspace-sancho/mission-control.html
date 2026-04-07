@@ -3023,6 +3023,398 @@ async function docPillarAction(slug, section, pillar, status) {
   }
 }
 
+// ==================================================================
+// mcChatSidebar — Reusable chat sidebar panel for any MC page
+// Usage:
+//   HTML: <div id="mc-sidebar-chat-anchor"></div>
+//         <button onclick="mcChatSidebar.toggle()">💬 Chat</button>
+//   JS:   mcChatSidebar.init({ anchorId, toggleBtnId, pageId })
+//   The sidebar mirrors the main dashboard chat (Col 4) — same threads,
+//   same messages, same mc-chat system. No duplication.
+// ==================================================================
+const mcChatSidebar = (() => {
+  let isOpen = false;
+  let panelEl = null;
+  let toggleBtnId = null;
+  let anchorId = null;
+  let syncInterval = null;
+  let lockedThreadId = null;  // If set, sidebar is locked to this thread
+  let lockedThreadName = null;
+  const PANEL_ID = 'mc-sidebar-chat-panel';
+
+  function createPanel(anchorId) {
+    const anchor = document.getElementById(anchorId);
+    if (!anchor) return;
+    if (document.getElementById(PANEL_ID)) { panelEl = document.getElementById(PANEL_ID); return; }
+
+    // Build thread bar: locked (fixed name + unlock button + pinned doc) or free (selector + new)
+    const threadBar = lockedThreadId
+      ? `<div style="padding:6px 18px;border-bottom:1px solid #313244;flex-shrink:0;display:flex;justify-content:space-between;align-items:center;">
+           <div style="font-size:12px;font-weight:700;color:#C45D35;font-family:'Space Grotesk',sans-serif;display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+             <span>${mcChatThreadIcon(lockedThreadId.split(':').slice(1).join(':'))} ${lockedThreadName || lockedThreadId.split(':').slice(1).join(':').replace(/-/g,' ')}</span>
+             ${(() => { const _m = mcChatGetThreadMeta(lockedThreadId) || {}; console.log('[createPanel badge] lockedThreadId:', lockedThreadId, 'meta:', JSON.stringify(_m), 'allMeta:', JSON.stringify(mcChatThreadMeta)); if (!_m.skill) return ''; const extra = (_m.skills && _m.skills.length > 1) ? ' <span style="opacity:0.7;">+' + (_m.skills.length - 1) + '</span>' : ''; return '<span onclick="openSkill(\'' + _m.skill + '\')" style="font-size:9px;background:color-mix(in srgb,#C45D35 15%,transparent);color:#C45D35;padding:1px 8px;border-radius:10px;font-weight:600;cursor:pointer;" title="Skills: ' + (_m.skills || [_m.skill]).join(', ') + '">' + _m.skill + extra + '</span>'; })()}
+           </div>
+           <div style="display:flex;gap:4px;">
+             <button id="sidebar-discord-btn" onclick="mcChatSidebar.toggleDiscordSync()" style="background:none;border:1px solid #45475a;border-radius:6px;color:#cdd6f4;cursor:pointer;font-size:10px;padding:2px 6px;" title="Sincronizar con Discord">📱</button>
+             <button onclick="mcChatSidebar.unlock()" style="background:none;border:1px solid #45475a;border-radius:6px;color:#cdd6f4;cursor:pointer;font-size:10px;padding:2px 6px;" title="Desbloquear — cambiar a modo libre">🔓</button>
+           </div>
+         </div>
+         <div id="sidebar-pinned-doc" style="display:none;padding:6px 18px;border-bottom:1px solid #313244;background:color-mix(in srgb,#1e1e2e 95%,#313244);flex-shrink:0;cursor:pointer;" onclick="mcChatOpenPinnedDoc()">
+           <div style="display:flex;justify-content:space-between;align-items:center;">
+             <span style="font-size:11px;color:#C45D35;font-family:'Space Grotesk',sans-serif;">📄 <span id="sidebar-pinned-label">Documento actual</span></span>
+             <span id="sidebar-pinned-date" style="font-size:10px;color:#666;"></span>
+           </div>
+         </div>`
+      : `<div style="display:flex;align-items:center;gap:6px;padding:8px 18px;border-bottom:1px solid #313244;flex-shrink:0;">
+           <span style="font-size:10px;color:#666;">Thread:</span>
+           <select id="sidebar-chat-threads" onchange="mcChatSwitchThread(this.value)" style="flex:1;min-width:0;padding:4px 8px;background:#313244;border:1px solid #3D3D5C;border-radius:6px;color:#cdd6f4;font-size:11px;">
+             <option value="">— selecciona —</option>
+           </select>
+           <button onclick="mcChatNewThread()" style="background:none;border:1px solid #3D3D5C;border-radius:6px;padding:4px 8px;color:#22A06B;font-size:11px;cursor:pointer;flex-shrink:0;" title="Nueva conversación">+</button>
+         </div>
+         <div id="sidebar-pinned-doc" style="display:none;padding:6px 18px;border-bottom:1px solid #313244;background:color-mix(in srgb,#1e1e2e 95%,#313244);flex-shrink:0;cursor:pointer;" onclick="mcChatOpenPinnedDoc()">
+           <div style="display:flex;justify-content:space-between;align-items:center;">
+             <span style="font-size:11px;color:#C45D35;font-family:'Space Grotesk',sans-serif;">📄 <span id="sidebar-pinned-label">Documento actual</span></span>
+             <span id="sidebar-pinned-date" style="font-size:10px;color:#666;"></span>
+           </div>
+         </div>`;
+
+    const html = `
+    <div id="${PANEL_ID}" class="v2-col v2-col-dark" style="display:none;position:fixed;right:0;top:0;bottom:0;width:380px;z-index:400;border-left:2px solid #313244;box-shadow:-4px 0 24px rgba(0,0,0,.3);overflow:hidden;flex-direction:column;border-radius:0;box-sizing:border-box;max-width:380px;">
+      <div class="v2-ch">
+        <span><span id="sidebar-chat-dot" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#666;"></span>&nbsp; Chat con Sancho</span>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <span id="sidebar-chat-status" style="font-size:10px;color:#666;"></span>
+          <button id="sidebar-expand-btn" onclick="mcChatSidebar.toggleFullscreen()" style="background:none;border:1px solid #45475a;border-radius:6px;color:#cdd6f4;cursor:pointer;font-size:18px;padding:2px 8px;line-height:1;" title="Pantalla completa">⤢</button>
+          <button onclick="mcChatSidebar.toggle()" style="background:none;border:1px solid #45475a;border-radius:6px;color:#cdd6f4;cursor:pointer;font-size:18px;padding:2px 8px;line-height:1;">✕</button>
+        </div>
+      </div>
+      <div class="v2-cb" style="padding:0;display:flex;flex-direction:column;min-height:0;flex:1;overflow-x:hidden;overflow-y:auto;max-width:100%;box-sizing:border-box;">
+        ${threadBar}
+        <div class="v2-chat-msgs" id="sidebar-chat-msgs" style="overflow-x:hidden;">
+          <div class="v2-msg v2-msg-b">${mcChatAgentWho('sancho')}${lockedThreadId ? '🔄 Cargando...' : 'Selecciona un thread para empezar.'}</div>
+        </div>
+        <div id="sidebar-chat-typing" style="display:none;padding:4px 18px;font-size:11px;color:#C45D35;font-style:italic;line-height:1.5;">
+          🔄 Sancho está pensando...
+        </div>
+        <div class="v2-chat-in">
+          <input type="text" id="sidebar-chat-input" placeholder="Escribe aquí..." onkeydown="if(event.key==='Enter')mcChatSidebarSend()" />
+          <button id="sidebar-chat-send-btn" onclick="mcChatSidebarSend()">→</button>
+          <button id="sidebar-chat-stop-btn" onclick="mcChatSidebarStop()" style="display:none;background:#C0392B;color:#fff;border:none;border-radius:8px;padding:6px 12px;cursor:pointer;font-size:14px;font-weight:700;" title="Parar">⏹</button>
+        </div>
+      </div>
+    </div>`;
+    anchor.innerHTML = html;
+    panelEl = document.getElementById(PANEL_ID);
+  }
+
+  let sidebarPollTimer = null;
+
+  async function loadSidebarMessages() {
+    if (!lockedThreadId) return;
+    try {
+      const res = await fetch(`${MC_BASE}/api/mc-chat/thread/${encodeURIComponent(lockedThreadId)}`);
+      const data = await res.json();
+      const msgs = data.messages || [];
+      const sideMsgs = document.getElementById('sidebar-chat-msgs');
+      if (!sideMsgs) return;
+      if (msgs.length === 0) return; // Keep welcome message if no real messages yet
+      // Check if user is near bottom before re-rendering
+      const wasAtBottom = (sideMsgs.scrollHeight - sideMsgs.scrollTop - sideMsgs.clientHeight) < 100;
+      const prevCount = sideMsgs.querySelectorAll('.v2-msg').length;
+      sideMsgs.innerHTML = msgs.map(m => {
+        const escaped = mcChatFormatMsg(m.text || '');
+        return m.role === 'user'
+          ? '<div class="v2-msg v2-msg-u">' + escaped + '</div>'
+          : '<div class="v2-msg v2-msg-b">' + mcChatAgentWho(m.agent) + escaped + '</div>';
+      }).join('');
+      // Only auto-scroll if user was at bottom or new messages arrived
+      if (wasAtBottom) {
+        sideMsgs.scrollTop = sideMsgs.scrollHeight;
+      }
+      // Hide typing if last message is from bot + restore send button
+      const last = msgs[msgs.length - 1];
+      if (last && last.role !== 'user') {
+        const sideTyping = document.getElementById('sidebar-chat-typing');
+        if (sideTyping) sideTyping.style.display = 'none';
+        mcChatToggleStopBtn(false);
+      }
+      // Update typing with live status from gateway
+      if (data.status) {
+        const sideTyping = document.getElementById('sidebar-chat-typing');
+        if (sideTyping) { sideTyping.style.display = ''; sideTyping.innerHTML = mcChatTypingWithContext(lockedThreadId, data.status.text); }
+      }
+    } catch {}
+  }
+
+  function syncFromMain() {
+    if (lockedThreadId) {
+      // Locked mode: load messages independently, don't sync from main
+      loadSidebarMessages();
+      return;
+    }
+    // Free mode: sync thread selector from main
+    const mainSelect = document.getElementById('ws-session-select');
+    const sideSelect = document.getElementById('sidebar-chat-threads');
+    if (mainSelect && sideSelect) {
+      sideSelect.innerHTML = mainSelect.innerHTML;
+      sideSelect.value = mainSelect.value;
+    }
+    // Sync messages from main
+    const mainMsgs = document.getElementById('v2-chat-msgs');
+    const sideMsgs = document.getElementById('sidebar-chat-msgs');
+    if (mainMsgs && sideMsgs) {
+      sideMsgs.innerHTML = mainMsgs.innerHTML;
+      sideMsgs.scrollTop = sideMsgs.scrollHeight;
+    }
+    // Sync status dot
+    const mainDot = document.getElementById('ws-status-dot');
+    const sideDot = document.getElementById('sidebar-chat-dot');
+    if (mainDot && sideDot) sideDot.style.background = mainDot.style.background;
+    // Sync typing
+    const mainTyping = document.getElementById('ws-typing');
+    const sideTyping = document.getElementById('sidebar-chat-typing');
+    if (mainTyping && sideTyping) { sideTyping.style.display = mainTyping.style.display; sideTyping.innerHTML = mainTyping.innerHTML; }
+  }
+
+  function loadPinnedDoc() {
+    if (!lockedThreadId || !mcChatCurrentSlug) return;
+    const shortId = lockedThreadId.split(':').slice(1).join(':');
+    const docPaths = PILLAR_DOC_PATHS[shortId];
+    // For non-Foundation threads, hide the pinned doc panel
+    if (!docPaths) {
+      const panel = document.getElementById('sidebar-pinned-doc');
+      if (panel) panel.style.display = 'none';
+      return;
+    }
+    // Try each path
+    (async () => {
+      for (const docPath of docPaths) {
+        try {
+          const res = await fetch(`${MC_BASE}/api/mc-chat/doc/${encodeURIComponent(mcChatCurrentSlug + '/' + docPath)}`);
+          const data = await res.json();
+          if (data.ok && data.content) {
+            const panel = document.getElementById('sidebar-pinned-doc');
+            const label = document.getElementById('sidebar-pinned-label');
+            const dateEl = document.getElementById('sidebar-pinned-date');
+            if (panel) panel.style.display = '';
+            if (label) label.textContent = 'Documento actual — ' + shortId.replace(/-/g, ' ');
+            const dateMatch = data.content.match(/(?:updated|fecha|date|actualizado)[:\s]*(\d{4}-\d{2}-\d{2})/i);
+            if (dateEl) dateEl.textContent = dateMatch ? '📅 ' + dateMatch[1] : '📄 current.md';
+            return;
+          }
+        } catch {}
+      }
+      // No doc
+      const panel = document.getElementById('sidebar-pinned-doc');
+      const label = document.getElementById('sidebar-pinned-label');
+      if (panel) panel.style.display = '';
+      if (label) label.textContent = shortId.replace(/-/g, ' ') + ' — sin documento';
+    })();
+  }
+
+  function toggle() {
+    isOpen = !isOpen;
+    if (panelEl) panelEl.style.display = isOpen ? 'flex' : 'none';
+    // Resize main content to make room for sidebar
+    document.documentElement.style.setProperty('--sidebar-w', isOpen ? '380px' : '0px');
+    const btn = document.getElementById(toggleBtnId);
+    if (btn) {
+      btn.style.background = isOpen ? '#1e1e2e' : '#C45D35';
+      btn.style.color = '#fff';
+      btn.style.borderColor = isOpen ? '#313244' : '#C45D35';
+    }
+    if (isOpen) {
+      if (lockedThreadId) {
+        // Set main chat to locked thread
+        mcChatCurrentThread = lockedThreadId;
+        if (!mcChatLocalThreads.includes(lockedThreadId)) mcChatLocalThreads.push(lockedThreadId);
+        mcChatSetStatus('Conectado · ' + (lockedThreadName || ''), '#22A06B');
+        mcChatCurrentSlug = mcChatCurrentSlug || (document.getElementById('clientSelector')?.value || '');
+        loadPinnedDoc();
+        // Load existing messages — if none, auto-send initial prompt
+        (async () => {
+          let shouldAutoPrompt = false;
+          try {
+            const res = await fetch(`${MC_BASE}/api/mc-chat/thread/${encodeURIComponent(lockedThreadId)}`);
+            const data = await res.json();
+            const msgs = data.messages || [];
+            if (msgs.length > 0) {
+              // Has history — just show it
+              await loadSidebarMessages();
+            } else {
+              // No history — auto-send initial prompt so Sancho responds with context
+              shouldAutoPrompt = true;
+              const slug = mcChatCurrentSlug;
+              const typing = document.getElementById('sidebar-chat-typing');
+              if (typing) { typing.style.display = ''; typing.innerHTML = mcChatTypingWithContext(lockedThreadId, null); }
+              mcChatToggleStopBtn(true);
+              const sideMsgs = document.getElementById('sidebar-chat-msgs');
+              if (sideMsgs) sideMsgs.innerHTML = '<div class="v2-msg v2-msg-b">' + mcChatAgentWho('sancho') + '🔄 Analizando contexto...</div>';
+              const _meta = mcChatGetThreadMeta(lockedThreadId);
+              const _autoText = _meta.threadState === 'create'
+                ? `Quiero crear "${lockedThreadName || lockedThreadId}". Usa el skill ${_meta.skill || 'asignado'} para generar el documento.`
+                : `Estoy abriendo el chat sobre "${lockedThreadName || lockedThreadId}". Dame un resumen rápido del estado actual y qué podemos hacer. Si necesitas algo de mí, dímelo.`;
+              await fetch(`${MC_BASE}/api/mc-chat/send`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  slug,
+                  threadId: lockedThreadId,
+                  text: _autoText,
+                  userName: 'Admin',
+                  ..._meta,
+                }),
+              });
+            }
+          } catch (e) {
+            console.error('[mc-chat] Error loading thread:', e);
+          }
+          // Start polling AFTER deciding whether to auto-prompt
+          if (!syncInterval) syncInterval = setInterval(syncFromMain, 2000);
+        })();
+      } else {
+        syncFromMain();
+      }
+      if (!lockedThreadId) syncFromMain();
+      const input = document.getElementById('sidebar-chat-input');
+      if (input) { input.disabled = false; input.focus(); }
+      if (!syncInterval) syncInterval = setInterval(syncFromMain, 2000);
+    } else {
+      if (syncInterval) { clearInterval(syncInterval); syncInterval = null; }
+    }
+  }
+
+  function close() {
+    if (isFullscreen) toggleFullscreen();
+    if (isOpen) toggle();
+  }
+
+  function init(opts = {}) {
+    anchorId = opts.anchorId || 'mc-sidebar-chat-anchor';
+    toggleBtnId = opts.toggleBtnId || 'metrics-chat-toggle';
+    // Support locked thread mode
+    lockedThreadId = opts.threadId || null;
+    lockedThreadName = opts.threadName || null;
+    // Recreate panel if switching modes
+    const existing = document.getElementById(PANEL_ID);
+    if (existing) existing.remove();
+    panelEl = null;
+    isOpen = false; // Reset state since panel was destroyed and recreated
+    createPanel(anchorId);
+  }
+
+  let isFullscreen = false;
+
+  function toggleFullscreen() {
+    isFullscreen = !isFullscreen;
+    if (!panelEl) return;
+    const btn = document.getElementById('sidebar-expand-btn');
+    if (isFullscreen) {
+      panelEl.style.width = 'calc(100vw - 220px)';
+      panelEl.style.maxWidth = 'calc(100vw - 220px)';
+      document.documentElement.style.setProperty('--sidebar-w', 'calc(100vw - 220px)');
+      if (btn) { btn.textContent = '⤡'; btn.title = 'Reducir'; }
+    } else {
+      panelEl.style.width = '380px';
+      panelEl.style.maxWidth = '380px';
+      document.documentElement.style.setProperty('--sidebar-w', '380px');
+      if (btn) { btn.textContent = '⤢'; btn.title = 'Pantalla completa'; }
+    }
+  }
+
+  function unlock() {
+    if (!isOpen || !lockedThreadId) return;
+    // Re-init in free mode
+    init({ anchorId, toggleBtnId });
+    // Sidebar is still open, just switched to free mode
+  }
+
+  async function toggleDiscordSync() {
+    if (!lockedThreadId) return;
+    const slug = mcChatCurrentSlug || (document.getElementById('clientSelector')?.value || '');
+    if (!slug) return;
+    const btn = document.getElementById('sidebar-discord-btn');
+    if (!btn) return;
+
+    // Check if already linked
+    try {
+      const res = await fetch(`${MC_BASE}/api/mc-chat/thread/${encodeURIComponent(lockedThreadId)}`);
+      const data = await res.json();
+      if (data.discordThreadId) {
+        // Already linked — unlink (TODO: implement unlink endpoint)
+        alert('Ya está sincronizado con Discord thread ' + data.discordThreadId);
+        return;
+      }
+    } catch (e) {
+      console.error('[mc-chat] Error checking Discord link:', e);
+      return;
+    }
+
+    // Not linked — create Discord thread and link
+    btn.disabled = true;
+    btn.textContent = '⏳';
+    try {
+      // Get client guild from clients.json
+      const clientsRes = await fetch(`${MC_BASE}/api/clients`);
+      const clientsData = await clientsRes.json();
+      const client = clientsData.clients.find(c => c.slug === slug);
+      if (!client || !client.guild) {
+        alert('Cliente no tiene guild de Discord configurado');
+        btn.disabled = false;
+        btn.textContent = '📱';
+        return;
+      }
+      const guildId = client.guild;
+      // Find a suitable channel (first text channel in guild)
+      // For now, hardcode a channel ID or let user pick — simpler: use a dedicated "mc-chat" channel
+      const channelId = client.mcChatChannelId || '1486120283612905644'; // fallback to #infra for now
+      // Create Discord thread via message tool
+      const threadName = (lockedThreadName || lockedThreadId.split(':').slice(1).join(':')).substring(0,80);
+      // Send initial message to create thread
+      const createRes = await fetch(`${MC_BASE}/api/discord/thread-create`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          guild: guildId,
+          channel: channelId,
+          name: threadName,
+          message: `🔗 Thread sincronizado con Mission Control: **${threadName}**`,
+        }),
+      });
+      const createData = await createRes.json();
+      if (!createData.ok || !createData.threadId) {
+        alert('Error creando Discord thread: ' + (createData.error || 'unknown'));
+        btn.disabled = false;
+        btn.textContent = '📱';
+        return;
+      }
+      const discordThreadId = createData.threadId;
+      // Link to MC thread
+      await fetch(`${MC_BASE}/api/mc-chat/link-discord`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          threadId: lockedThreadId,
+          discordThreadId,
+          discordChannelId: channelId,
+        }),
+      });
+      btn.textContent = '✅';
+      btn.style.color = '#22A06B';
+      btn.title = 'Sincronizado con Discord';
+      alert(`✅ Sincronizado con Discord thread: ${threadName}`);
+    } catch (e) {
+      console.error('[mc-chat] Discord sync error:', e);
+      alert('Error sincronizando con Discord: ' + e.message);
+      btn.disabled = false;
+      btn.textContent = '📱';
+    }
+  }
+
+  return { init, toggle, close, toggleFullscreen, unlock, toggleDiscordSync, get isOpen() { return isOpen; }, get _lockedThreadId() { return lockedThreadId; } };
+})();
+
 function openDocChatSidebar() {
   const slug = document.getElementById('clientSelector')?.value || '';
   if (!slug || !docChatThreadId) {
@@ -7025,398 +7417,6 @@ renderGuide();
 
 // ==================== METRICS DASHBOARD ====================
 // metricsData, moduleOrder, metricsRangeDays, currentClientId declared near MC_BASE init
-
-// ==================================================================
-// mcChatSidebar — Reusable chat sidebar panel for any MC page
-// Usage:
-//   HTML: <div id="mc-sidebar-chat-anchor"></div>
-//         <button onclick="mcChatSidebar.toggle()">💬 Chat</button>
-//   JS:   mcChatSidebar.init({ anchorId, toggleBtnId, pageId })
-//   The sidebar mirrors the main dashboard chat (Col 4) — same threads,
-//   same messages, same mc-chat system. No duplication.
-// ==================================================================
-const mcChatSidebar = (() => {
-  let isOpen = false;
-  let panelEl = null;
-  let toggleBtnId = null;
-  let anchorId = null;
-  let syncInterval = null;
-  let lockedThreadId = null;  // If set, sidebar is locked to this thread
-  let lockedThreadName = null;
-  const PANEL_ID = 'mc-sidebar-chat-panel';
-
-  function createPanel(anchorId) {
-    const anchor = document.getElementById(anchorId);
-    if (!anchor) return;
-    if (document.getElementById(PANEL_ID)) { panelEl = document.getElementById(PANEL_ID); return; }
-
-    // Build thread bar: locked (fixed name + unlock button + pinned doc) or free (selector + new)
-    const threadBar = lockedThreadId
-      ? `<div style="padding:6px 18px;border-bottom:1px solid #313244;flex-shrink:0;display:flex;justify-content:space-between;align-items:center;">
-           <div style="font-size:12px;font-weight:700;color:#C45D35;font-family:'Space Grotesk',sans-serif;display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
-             <span>${mcChatThreadIcon(lockedThreadId.split(':').slice(1).join(':'))} ${lockedThreadName || lockedThreadId.split(':').slice(1).join(':').replace(/-/g,' ')}</span>
-             ${(() => { const _m = mcChatGetThreadMeta(lockedThreadId) || {}; console.log('[createPanel badge] lockedThreadId:', lockedThreadId, 'meta:', JSON.stringify(_m), 'allMeta:', JSON.stringify(mcChatThreadMeta)); if (!_m.skill) return ''; const extra = (_m.skills && _m.skills.length > 1) ? ' <span style="opacity:0.7;">+' + (_m.skills.length - 1) + '</span>' : ''; return '<span onclick="openSkill(\'' + _m.skill + '\')" style="font-size:9px;background:color-mix(in srgb,#C45D35 15%,transparent);color:#C45D35;padding:1px 8px;border-radius:10px;font-weight:600;cursor:pointer;" title="Skills: ' + (_m.skills || [_m.skill]).join(', ') + '">' + _m.skill + extra + '</span>'; })()}
-           </div>
-           <div style="display:flex;gap:4px;">
-             <button id="sidebar-discord-btn" onclick="mcChatSidebar.toggleDiscordSync()" style="background:none;border:1px solid #45475a;border-radius:6px;color:#cdd6f4;cursor:pointer;font-size:10px;padding:2px 6px;" title="Sincronizar con Discord">📱</button>
-             <button onclick="mcChatSidebar.unlock()" style="background:none;border:1px solid #45475a;border-radius:6px;color:#cdd6f4;cursor:pointer;font-size:10px;padding:2px 6px;" title="Desbloquear — cambiar a modo libre">🔓</button>
-           </div>
-         </div>
-         <div id="sidebar-pinned-doc" style="display:none;padding:6px 18px;border-bottom:1px solid #313244;background:color-mix(in srgb,#1e1e2e 95%,#313244);flex-shrink:0;cursor:pointer;" onclick="mcChatOpenPinnedDoc()">
-           <div style="display:flex;justify-content:space-between;align-items:center;">
-             <span style="font-size:11px;color:#C45D35;font-family:'Space Grotesk',sans-serif;">📄 <span id="sidebar-pinned-label">Documento actual</span></span>
-             <span id="sidebar-pinned-date" style="font-size:10px;color:#666;"></span>
-           </div>
-         </div>`
-      : `<div style="display:flex;align-items:center;gap:6px;padding:8px 18px;border-bottom:1px solid #313244;flex-shrink:0;">
-           <span style="font-size:10px;color:#666;">Thread:</span>
-           <select id="sidebar-chat-threads" onchange="mcChatSwitchThread(this.value)" style="flex:1;min-width:0;padding:4px 8px;background:#313244;border:1px solid #3D3D5C;border-radius:6px;color:#cdd6f4;font-size:11px;">
-             <option value="">— selecciona —</option>
-           </select>
-           <button onclick="mcChatNewThread()" style="background:none;border:1px solid #3D3D5C;border-radius:6px;padding:4px 8px;color:#22A06B;font-size:11px;cursor:pointer;flex-shrink:0;" title="Nueva conversación">+</button>
-         </div>
-         <div id="sidebar-pinned-doc" style="display:none;padding:6px 18px;border-bottom:1px solid #313244;background:color-mix(in srgb,#1e1e2e 95%,#313244);flex-shrink:0;cursor:pointer;" onclick="mcChatOpenPinnedDoc()">
-           <div style="display:flex;justify-content:space-between;align-items:center;">
-             <span style="font-size:11px;color:#C45D35;font-family:'Space Grotesk',sans-serif;">📄 <span id="sidebar-pinned-label">Documento actual</span></span>
-             <span id="sidebar-pinned-date" style="font-size:10px;color:#666;"></span>
-           </div>
-         </div>`;
-
-    const html = `
-    <div id="${PANEL_ID}" class="v2-col v2-col-dark" style="display:none;position:fixed;right:0;top:0;bottom:0;width:380px;z-index:400;border-left:2px solid #313244;box-shadow:-4px 0 24px rgba(0,0,0,.3);overflow:hidden;flex-direction:column;border-radius:0;box-sizing:border-box;max-width:380px;">
-      <div class="v2-ch">
-        <span><span id="sidebar-chat-dot" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#666;"></span>&nbsp; Chat con Sancho</span>
-        <div style="display:flex;gap:6px;align-items:center;">
-          <span id="sidebar-chat-status" style="font-size:10px;color:#666;"></span>
-          <button id="sidebar-expand-btn" onclick="mcChatSidebar.toggleFullscreen()" style="background:none;border:1px solid #45475a;border-radius:6px;color:#cdd6f4;cursor:pointer;font-size:18px;padding:2px 8px;line-height:1;" title="Pantalla completa">⤢</button>
-          <button onclick="mcChatSidebar.toggle()" style="background:none;border:1px solid #45475a;border-radius:6px;color:#cdd6f4;cursor:pointer;font-size:18px;padding:2px 8px;line-height:1;">✕</button>
-        </div>
-      </div>
-      <div class="v2-cb" style="padding:0;display:flex;flex-direction:column;min-height:0;flex:1;overflow-x:hidden;overflow-y:auto;max-width:100%;box-sizing:border-box;">
-        ${threadBar}
-        <div class="v2-chat-msgs" id="sidebar-chat-msgs" style="overflow-x:hidden;">
-          <div class="v2-msg v2-msg-b">${mcChatAgentWho('sancho')}${lockedThreadId ? '🔄 Cargando...' : 'Selecciona un thread para empezar.'}</div>
-        </div>
-        <div id="sidebar-chat-typing" style="display:none;padding:4px 18px;font-size:11px;color:#C45D35;font-style:italic;line-height:1.5;">
-          🔄 Sancho está pensando...
-        </div>
-        <div class="v2-chat-in">
-          <input type="text" id="sidebar-chat-input" placeholder="Escribe aquí..." onkeydown="if(event.key==='Enter')mcChatSidebarSend()" />
-          <button id="sidebar-chat-send-btn" onclick="mcChatSidebarSend()">→</button>
-          <button id="sidebar-chat-stop-btn" onclick="mcChatSidebarStop()" style="display:none;background:#C0392B;color:#fff;border:none;border-radius:8px;padding:6px 12px;cursor:pointer;font-size:14px;font-weight:700;" title="Parar">⏹</button>
-        </div>
-      </div>
-    </div>`;
-    anchor.innerHTML = html;
-    panelEl = document.getElementById(PANEL_ID);
-  }
-
-  let sidebarPollTimer = null;
-
-  async function loadSidebarMessages() {
-    if (!lockedThreadId) return;
-    try {
-      const res = await fetch(`${MC_BASE}/api/mc-chat/thread/${encodeURIComponent(lockedThreadId)}`);
-      const data = await res.json();
-      const msgs = data.messages || [];
-      const sideMsgs = document.getElementById('sidebar-chat-msgs');
-      if (!sideMsgs) return;
-      if (msgs.length === 0) return; // Keep welcome message if no real messages yet
-      // Check if user is near bottom before re-rendering
-      const wasAtBottom = (sideMsgs.scrollHeight - sideMsgs.scrollTop - sideMsgs.clientHeight) < 100;
-      const prevCount = sideMsgs.querySelectorAll('.v2-msg').length;
-      sideMsgs.innerHTML = msgs.map(m => {
-        const escaped = mcChatFormatMsg(m.text || '');
-        return m.role === 'user'
-          ? '<div class="v2-msg v2-msg-u">' + escaped + '</div>'
-          : '<div class="v2-msg v2-msg-b">' + mcChatAgentWho(m.agent) + escaped + '</div>';
-      }).join('');
-      // Only auto-scroll if user was at bottom or new messages arrived
-      if (wasAtBottom) {
-        sideMsgs.scrollTop = sideMsgs.scrollHeight;
-      }
-      // Hide typing if last message is from bot + restore send button
-      const last = msgs[msgs.length - 1];
-      if (last && last.role !== 'user') {
-        const sideTyping = document.getElementById('sidebar-chat-typing');
-        if (sideTyping) sideTyping.style.display = 'none';
-        mcChatToggleStopBtn(false);
-      }
-      // Update typing with live status from gateway
-      if (data.status) {
-        const sideTyping = document.getElementById('sidebar-chat-typing');
-        if (sideTyping) { sideTyping.style.display = ''; sideTyping.innerHTML = mcChatTypingWithContext(lockedThreadId, data.status.text); }
-      }
-    } catch {}
-  }
-
-  function syncFromMain() {
-    if (lockedThreadId) {
-      // Locked mode: load messages independently, don't sync from main
-      loadSidebarMessages();
-      return;
-    }
-    // Free mode: sync thread selector from main
-    const mainSelect = document.getElementById('ws-session-select');
-    const sideSelect = document.getElementById('sidebar-chat-threads');
-    if (mainSelect && sideSelect) {
-      sideSelect.innerHTML = mainSelect.innerHTML;
-      sideSelect.value = mainSelect.value;
-    }
-    // Sync messages from main
-    const mainMsgs = document.getElementById('v2-chat-msgs');
-    const sideMsgs = document.getElementById('sidebar-chat-msgs');
-    if (mainMsgs && sideMsgs) {
-      sideMsgs.innerHTML = mainMsgs.innerHTML;
-      sideMsgs.scrollTop = sideMsgs.scrollHeight;
-    }
-    // Sync status dot
-    const mainDot = document.getElementById('ws-status-dot');
-    const sideDot = document.getElementById('sidebar-chat-dot');
-    if (mainDot && sideDot) sideDot.style.background = mainDot.style.background;
-    // Sync typing
-    const mainTyping = document.getElementById('ws-typing');
-    const sideTyping = document.getElementById('sidebar-chat-typing');
-    if (mainTyping && sideTyping) { sideTyping.style.display = mainTyping.style.display; sideTyping.innerHTML = mainTyping.innerHTML; }
-  }
-
-  function loadPinnedDoc() {
-    if (!lockedThreadId || !mcChatCurrentSlug) return;
-    const shortId = lockedThreadId.split(':').slice(1).join(':');
-    const docPaths = PILLAR_DOC_PATHS[shortId];
-    // For non-Foundation threads, hide the pinned doc panel
-    if (!docPaths) {
-      const panel = document.getElementById('sidebar-pinned-doc');
-      if (panel) panel.style.display = 'none';
-      return;
-    }
-    // Try each path
-    (async () => {
-      for (const docPath of docPaths) {
-        try {
-          const res = await fetch(`${MC_BASE}/api/mc-chat/doc/${encodeURIComponent(mcChatCurrentSlug + '/' + docPath)}`);
-          const data = await res.json();
-          if (data.ok && data.content) {
-            const panel = document.getElementById('sidebar-pinned-doc');
-            const label = document.getElementById('sidebar-pinned-label');
-            const dateEl = document.getElementById('sidebar-pinned-date');
-            if (panel) panel.style.display = '';
-            if (label) label.textContent = 'Documento actual — ' + shortId.replace(/-/g, ' ');
-            const dateMatch = data.content.match(/(?:updated|fecha|date|actualizado)[:\s]*(\d{4}-\d{2}-\d{2})/i);
-            if (dateEl) dateEl.textContent = dateMatch ? '📅 ' + dateMatch[1] : '📄 current.md';
-            return;
-          }
-        } catch {}
-      }
-      // No doc
-      const panel = document.getElementById('sidebar-pinned-doc');
-      const label = document.getElementById('sidebar-pinned-label');
-      if (panel) panel.style.display = '';
-      if (label) label.textContent = shortId.replace(/-/g, ' ') + ' — sin documento';
-    })();
-  }
-
-  function toggle() {
-    isOpen = !isOpen;
-    if (panelEl) panelEl.style.display = isOpen ? 'flex' : 'none';
-    // Resize main content to make room for sidebar
-    document.documentElement.style.setProperty('--sidebar-w', isOpen ? '380px' : '0px');
-    const btn = document.getElementById(toggleBtnId);
-    if (btn) {
-      btn.style.background = isOpen ? '#1e1e2e' : '#C45D35';
-      btn.style.color = '#fff';
-      btn.style.borderColor = isOpen ? '#313244' : '#C45D35';
-    }
-    if (isOpen) {
-      if (lockedThreadId) {
-        // Set main chat to locked thread
-        mcChatCurrentThread = lockedThreadId;
-        if (!mcChatLocalThreads.includes(lockedThreadId)) mcChatLocalThreads.push(lockedThreadId);
-        mcChatSetStatus('Conectado · ' + (lockedThreadName || ''), '#22A06B');
-        mcChatCurrentSlug = mcChatCurrentSlug || (document.getElementById('clientSelector')?.value || '');
-        loadPinnedDoc();
-        // Load existing messages — if none, auto-send initial prompt
-        (async () => {
-          let shouldAutoPrompt = false;
-          try {
-            const res = await fetch(`${MC_BASE}/api/mc-chat/thread/${encodeURIComponent(lockedThreadId)}`);
-            const data = await res.json();
-            const msgs = data.messages || [];
-            if (msgs.length > 0) {
-              // Has history — just show it
-              await loadSidebarMessages();
-            } else {
-              // No history — auto-send initial prompt so Sancho responds with context
-              shouldAutoPrompt = true;
-              const slug = mcChatCurrentSlug;
-              const typing = document.getElementById('sidebar-chat-typing');
-              if (typing) { typing.style.display = ''; typing.innerHTML = mcChatTypingWithContext(lockedThreadId, null); }
-              mcChatToggleStopBtn(true);
-              const sideMsgs = document.getElementById('sidebar-chat-msgs');
-              if (sideMsgs) sideMsgs.innerHTML = '<div class="v2-msg v2-msg-b">' + mcChatAgentWho('sancho') + '🔄 Analizando contexto...</div>';
-              const _meta = mcChatGetThreadMeta(lockedThreadId);
-              const _autoText = _meta.threadState === 'create'
-                ? `Quiero crear "${lockedThreadName || lockedThreadId}". Usa el skill ${_meta.skill || 'asignado'} para generar el documento.`
-                : `Estoy abriendo el chat sobre "${lockedThreadName || lockedThreadId}". Dame un resumen rápido del estado actual y qué podemos hacer. Si necesitas algo de mí, dímelo.`;
-              await fetch(`${MC_BASE}/api/mc-chat/send`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  slug,
-                  threadId: lockedThreadId,
-                  text: _autoText,
-                  userName: 'Admin',
-                  ..._meta,
-                }),
-              });
-            }
-          } catch (e) {
-            console.error('[mc-chat] Error loading thread:', e);
-          }
-          // Start polling AFTER deciding whether to auto-prompt
-          if (!syncInterval) syncInterval = setInterval(syncFromMain, 2000);
-        })();
-      } else {
-        syncFromMain();
-      }
-      if (!lockedThreadId) syncFromMain();
-      const input = document.getElementById('sidebar-chat-input');
-      if (input) { input.disabled = false; input.focus(); }
-      if (!syncInterval) syncInterval = setInterval(syncFromMain, 2000);
-    } else {
-      if (syncInterval) { clearInterval(syncInterval); syncInterval = null; }
-    }
-  }
-
-  function close() {
-    if (isFullscreen) toggleFullscreen();
-    if (isOpen) toggle();
-  }
-
-  function init(opts = {}) {
-    anchorId = opts.anchorId || 'mc-sidebar-chat-anchor';
-    toggleBtnId = opts.toggleBtnId || 'metrics-chat-toggle';
-    // Support locked thread mode
-    lockedThreadId = opts.threadId || null;
-    lockedThreadName = opts.threadName || null;
-    // Recreate panel if switching modes
-    const existing = document.getElementById(PANEL_ID);
-    if (existing) existing.remove();
-    panelEl = null;
-    isOpen = false; // Reset state since panel was destroyed and recreated
-    createPanel(anchorId);
-  }
-
-  let isFullscreen = false;
-
-  function toggleFullscreen() {
-    isFullscreen = !isFullscreen;
-    if (!panelEl) return;
-    const btn = document.getElementById('sidebar-expand-btn');
-    if (isFullscreen) {
-      panelEl.style.width = 'calc(100vw - 220px)';
-      panelEl.style.maxWidth = 'calc(100vw - 220px)';
-      document.documentElement.style.setProperty('--sidebar-w', 'calc(100vw - 220px)');
-      if (btn) { btn.textContent = '⤡'; btn.title = 'Reducir'; }
-    } else {
-      panelEl.style.width = '380px';
-      panelEl.style.maxWidth = '380px';
-      document.documentElement.style.setProperty('--sidebar-w', '380px');
-      if (btn) { btn.textContent = '⤢'; btn.title = 'Pantalla completa'; }
-    }
-  }
-
-  function unlock() {
-    if (!isOpen || !lockedThreadId) return;
-    // Re-init in free mode
-    init({ anchorId, toggleBtnId });
-    // Sidebar is still open, just switched to free mode
-  }
-
-  async function toggleDiscordSync() {
-    if (!lockedThreadId) return;
-    const slug = mcChatCurrentSlug || (document.getElementById('clientSelector')?.value || '');
-    if (!slug) return;
-    const btn = document.getElementById('sidebar-discord-btn');
-    if (!btn) return;
-
-    // Check if already linked
-    try {
-      const res = await fetch(`${MC_BASE}/api/mc-chat/thread/${encodeURIComponent(lockedThreadId)}`);
-      const data = await res.json();
-      if (data.discordThreadId) {
-        // Already linked — unlink (TODO: implement unlink endpoint)
-        alert('Ya está sincronizado con Discord thread ' + data.discordThreadId);
-        return;
-      }
-    } catch (e) {
-      console.error('[mc-chat] Error checking Discord link:', e);
-      return;
-    }
-
-    // Not linked — create Discord thread and link
-    btn.disabled = true;
-    btn.textContent = '⏳';
-    try {
-      // Get client guild from clients.json
-      const clientsRes = await fetch(`${MC_BASE}/api/clients`);
-      const clientsData = await clientsRes.json();
-      const client = clientsData.clients.find(c => c.slug === slug);
-      if (!client || !client.guild) {
-        alert('Cliente no tiene guild de Discord configurado');
-        btn.disabled = false;
-        btn.textContent = '📱';
-        return;
-      }
-      const guildId = client.guild;
-      // Find a suitable channel (first text channel in guild)
-      // For now, hardcode a channel ID or let user pick — simpler: use a dedicated "mc-chat" channel
-      const channelId = client.mcChatChannelId || '1486120283612905644'; // fallback to #infra for now
-      // Create Discord thread via message tool
-      const threadName = (lockedThreadName || lockedThreadId.split(':').slice(1).join(':')).substring(0,80);
-      // Send initial message to create thread
-      const createRes = await fetch(`${MC_BASE}/api/discord/thread-create`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          guild: guildId,
-          channel: channelId,
-          name: threadName,
-          message: `🔗 Thread sincronizado con Mission Control: **${threadName}**`,
-        }),
-      });
-      const createData = await createRes.json();
-      if (!createData.ok || !createData.threadId) {
-        alert('Error creando Discord thread: ' + (createData.error || 'unknown'));
-        btn.disabled = false;
-        btn.textContent = '📱';
-        return;
-      }
-      const discordThreadId = createData.threadId;
-      // Link to MC thread
-      await fetch(`${MC_BASE}/api/mc-chat/link-discord`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          threadId: lockedThreadId,
-          discordThreadId,
-          discordChannelId: channelId,
-        }),
-      });
-      btn.textContent = '✅';
-      btn.style.color = '#22A06B';
-      btn.title = 'Sincronizado con Discord';
-      alert(`✅ Sincronizado con Discord thread: ${threadName}`);
-    } catch (e) {
-      console.error('[mc-chat] Discord sync error:', e);
-      alert('Error sincronizando con Discord: ' + e.message);
-      btn.disabled = false;
-      btn.textContent = '📱';
-    }
-  }
-
-  return { init, toggle, close, toggleFullscreen, unlock, toggleDiscordSync, get isOpen() { return isOpen; }, get _lockedThreadId() { return lockedThreadId; } };
-})();
 
 // Load pinned doc bar in the SIDEBAR (separate from main pinned doc)
 async function mcChatLoadSidebarPinnedDoc(slug, shortId) {
