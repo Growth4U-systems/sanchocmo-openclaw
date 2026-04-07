@@ -434,11 +434,13 @@ function ProjectCard({
             const tDone = isDone(t.status);
             const tType = t.type || t.batch_type || "execution";
             const isFnd = tType === "foundation" && !!t.pillar;
+            const taskUrl = `/dashboard/${slug}/projects/${p.id}/tasks/${t.id}`;
             return (
-              <div
+              <Link
                 key={t.id}
+                href={taskUrl}
                 className={cn(
-                  "px-2.5 py-2 rounded-md bg-background/60",
+                  "block px-2.5 py-2 rounded-md bg-background/60 hover:bg-muted/40 transition-colors cursor-pointer",
                   tDone && "opacity-60"
                 )}
               >
@@ -498,7 +500,7 @@ function ProjectCard({
                     {t.description}
                   </p>
                 )}
-              </div>
+              </Link>
             );
           })}
         </div>
