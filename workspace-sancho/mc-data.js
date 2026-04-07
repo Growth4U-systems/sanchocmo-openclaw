@@ -1,5 +1,5 @@
 const MC_DATA = {
-  "generated": "2026-04-05T20:09:25.919508",
+  "generated": "2026-04-06T20:03:05.591065",
   "clients": [
     {
       "slug": "hospital-capilar",
@@ -1446,20 +1446,6 @@ const MC_DATA = {
       "client": "system"
     },
     {
-      "date": "2026-03-22",
-      "time": "",
-      "text": "⏰ weekly-activity-summary: ## 📊 Resumen Semanal — 16-22 Mar 2026  ### 🏥 Hospital Capilar (Phase 0 → avanzando) - **Niche Discovery v3** aprobada po",
-      "raw": "Cron run: weekly-activity-summary",
-      "client": "hospital-capilar"
-    },
-    {
-      "date": "2026-03-22",
-      "time": "",
-      "text": "⏰ weekly-changelog-update: ## 📦 SanchoCMO v2.7.0 — 2026-03-22  ### ✨ Added - **`larry`** — App growth agent (TikTok posting, RevenueCat, analytics,",
-      "raw": "Cron run: weekly-changelog-update",
-      "client": "sanchocmo"
-    },
-    {
       "date": "2026-03-21",
       "time": "",
       "text": "4 unread (2x Jordan Platten, Euge Oller, Lenny's). No urgente.",
@@ -1485,6 +1471,20 @@ const MC_DATA = {
       "time": "",
       "text": "3 unread (Jordan Platten x2, Euge Oller newsletter). No urgente.",
       "raw": "**Email:** 3 unread (Jordan Platten x2, Euge Oller newsletter). No urgente.",
+      "client": "system"
+    },
+    {
+      "date": "2026-03-21",
+      "time": "",
+      "text": "Share out sync 10:00, Spain Research 10:30, G4U Weekly 11:00, Spain GTM 12:00, Alfonso/Loz Qonto 16:00, Weekly sistemas 17:00.",
+      "raw": "**Calendar mañana (23-Mar):** Share out sync 10:00, Spain Research 10:30, G4U Weekly 11:00, Spain GTM 12:00, Alfonso/Loz Qonto 16:00, Weekly sistemas 17:00.",
+      "client": "growth4u"
+    },
+    {
+      "date": "2026-03-21",
+      "time": "",
+      "text": "Ningún evento.",
+      "raw": "**Próximas 2h:** Ningún evento.",
       "client": "system"
     }
   ],
@@ -77726,13 +77726,13 @@ const MC_DATA = {
   },
   "healthcheck": {
     "status": "fail",
-    "last_run": "2026-04-05T15:10:32Z",
+    "last_run": "2026-04-06T03:19:57Z",
     "summary": "20/21 ok, 1 errors",
     "failureCount": 1,
     "services": {
       "anthropic": {
         "status": "ok",
-        "lastCheck": "2026-04-05T15:10:32.668Z",
+        "lastCheck": "2026-04-06T03:19:58.035Z",
         "details": {
           "httpCode": "200"
         },
@@ -77740,7 +77740,7 @@ const MC_DATA = {
       },
       "openrouter": {
         "status": "ok",
-        "lastCheck": "2026-04-05T15:10:32.982Z",
+        "lastCheck": "2026-04-06T03:19:58.307Z",
         "details": {
           "httpCode": "200"
         },
@@ -77748,7 +77748,7 @@ const MC_DATA = {
       },
       "openai": {
         "status": "ok",
-        "lastCheck": "2026-04-05T15:10:33.286Z",
+        "lastCheck": "2026-04-06T03:19:58.536Z",
         "details": {
           "httpCode": "200"
         },
@@ -77756,7 +77756,7 @@ const MC_DATA = {
       },
       "gemini": {
         "status": "ok",
-        "lastCheck": "2026-04-05T15:10:34.134Z",
+        "lastCheck": "2026-04-06T03:19:59.327Z",
         "details": {
           "httpCode": "200"
         },
@@ -77764,7 +77764,7 @@ const MC_DATA = {
       },
       "xai": {
         "status": "ok",
-        "lastCheck": "2026-04-05T15:10:34.373Z",
+        "lastCheck": "2026-04-06T03:19:59.538Z",
         "details": {
           "httpCode": "200"
         },
@@ -77772,7 +77772,7 @@ const MC_DATA = {
       },
       "minimax": {
         "status": "ok",
-        "lastCheck": "2026-04-05T15:10:34.601Z",
+        "lastCheck": "2026-04-06T03:19:59.784Z",
         "details": {
           "note": "Key present, no lightweight verify endpoint"
         },
@@ -77780,7 +77780,7 @@ const MC_DATA = {
       },
       "brave": {
         "status": "not-configured",
-        "lastCheck": "2026-04-05T15:10:34.602Z",
+        "lastCheck": "2026-04-06T03:19:59.785Z",
         "details": {
           "error": "BRAVE_API_KEY not set"
         },
@@ -77788,7 +77788,7 @@ const MC_DATA = {
       },
       "apify": {
         "status": "ok",
-        "lastCheck": "2026-04-05T15:10:34.602Z",
+        "lastCheck": "2026-04-06T03:19:59.785Z",
         "details": {
           "username": "growth4u",
           "plan": ""
@@ -77797,7 +77797,7 @@ const MC_DATA = {
       },
       "firecrawl": {
         "status": "ok",
-        "lastCheck": "2026-04-05T15:10:35.222Z",
+        "lastCheck": "2026-04-06T03:20:00.398Z",
         "details": {
           "httpCode": "200"
         },
@@ -77805,7 +77805,7 @@ const MC_DATA = {
       },
       "serper": {
         "status": "ok",
-        "lastCheck": "2026-04-05T15:10:36.210Z",
+        "lastCheck": "2026-04-06T03:20:01.384Z",
         "details": {
           "httpCode": "200"
         },
@@ -77813,7 +77813,7 @@ const MC_DATA = {
       },
       "dataforseo": {
         "status": "ok",
-        "lastCheck": "2026-04-05T15:10:37.285Z",
+        "lastCheck": "2026-04-06T03:20:02.175Z",
         "details": {
           "httpCode": "200",
           "login": "accounts@growth4u.io"
@@ -77822,7 +77822,7 @@ const MC_DATA = {
       },
       "notion": {
         "status": "ok",
-        "lastCheck": "2026-04-05T15:10:37.958Z",
+        "lastCheck": "2026-04-06T03:20:03.624Z",
         "details": {
           "botName": "openclaw-Alfonso"
         },
@@ -77830,7 +77830,7 @@ const MC_DATA = {
       },
       "supabase": {
         "status": "ok",
-        "lastCheck": "2026-04-05T15:10:38.821Z",
+        "lastCheck": "2026-04-06T03:20:04.047Z",
         "details": {
           "httpCode": "200",
           "project": "psapmujzxhaxraphddlv"
@@ -77839,7 +77839,7 @@ const MC_DATA = {
       },
       "slack": {
         "status": "ok",
-        "lastCheck": "2026-04-05T15:10:39.168Z",
+        "lastCheck": "2026-04-06T03:20:04.399Z",
         "details": {
           "httpCode": "200"
         },
@@ -77847,7 +77847,7 @@ const MC_DATA = {
       },
       "fal": {
         "status": "ok",
-        "lastCheck": "2026-04-05T15:10:39.459Z",
+        "lastCheck": "2026-04-06T03:20:04.793Z",
         "details": {
           "note": "Key present"
         },
@@ -77855,7 +77855,7 @@ const MC_DATA = {
       },
       "wavespeed": {
         "status": "ok",
-        "lastCheck": "2026-04-05T15:10:39.459Z",
+        "lastCheck": "2026-04-06T03:20:04.793Z",
         "details": {
           "note": "Key present"
         },
@@ -77863,7 +77863,7 @@ const MC_DATA = {
       },
       "dumpling": {
         "status": "ok",
-        "lastCheck": "2026-04-05T15:10:39.459Z",
+        "lastCheck": "2026-04-06T03:20:04.794Z",
         "details": {
           "note": "Key present"
         },
@@ -77871,7 +77871,7 @@ const MC_DATA = {
       },
       "instantly": {
         "status": "not-configured",
-        "lastCheck": "2026-04-05T15:10:39.460Z",
+        "lastCheck": "2026-04-06T03:20:04.794Z",
         "details": {
           "note": "Web login — no API key in .env"
         },
@@ -77879,7 +77879,7 @@ const MC_DATA = {
       },
       "metricool": {
         "status": "not-configured",
-        "lastCheck": "2026-04-05T15:10:39.460Z",
+        "lastCheck": "2026-04-06T03:20:04.794Z",
         "details": {
           "note": "Web login — no API key in .env"
         },
@@ -77887,7 +77887,7 @@ const MC_DATA = {
       },
       "nanobanana": {
         "status": "ok",
-        "lastCheck": "2026-04-05T15:10:39.460Z",
+        "lastCheck": "2026-04-06T03:20:04.794Z",
         "details": {
           "note": "Uses Gemini API key (shared)",
           "engine": "gemini-2.0-flash-exp"
@@ -77896,7 +77896,7 @@ const MC_DATA = {
       },
       "remotion": {
         "status": "not-configured",
-        "lastCheck": "2026-04-05T15:10:39.460Z",
+        "lastCheck": "2026-04-06T03:20:04.794Z",
         "details": {
           "version": null,
           "note": "Local install"
@@ -77905,7 +77905,7 @@ const MC_DATA = {
       },
       "gog": {
         "status": "ok",
-        "lastCheck": "2026-04-05T15:10:39.470Z",
+        "lastCheck": "2026-04-06T03:20:04.810Z",
         "details": {
           "account": "alfonso@growth4u.io",
           "test": "gmail inbox"
@@ -77914,7 +77914,7 @@ const MC_DATA = {
       },
       "openclaw": {
         "status": "error",
-        "lastCheck": "2026-04-05T15:10:40.681Z",
+        "lastCheck": "2026-04-06T03:20:06.062Z",
         "details": {
           "error": "Command failed: /opt/homebrew/bin/openclaw status 2>&1"
         },
@@ -77922,7 +77922,7 @@ const MC_DATA = {
       },
       "discord": {
         "status": "ok",
-        "lastCheck": "2026-04-05T15:10:40.694Z",
+        "lastCheck": "2026-04-06T03:20:06.082Z",
         "details": {
           "httpCode": "200"
         },
@@ -77930,7 +77930,7 @@ const MC_DATA = {
       },
       "tailscale": {
         "status": "ok",
-        "lastCheck": "2026-04-05T15:10:32Z",
+        "lastCheck": "2026-04-06T03:19:57Z",
         "details": {
           "note": "tailscale status OK"
         },
@@ -79194,53 +79194,53 @@ const MC_DATA = {
   },
   "client_tasks": {},
   "apiHealth": {
-    "lastCheck": "2026-04-05T16:28:34.016Z",
+    "lastCheck": "2026-04-06T03:19:57Z",
     "services": {
       "anthropic": {
-        "status": "error",
-        "lastCheck": "2026-04-05T16:28:26.009Z",
+        "status": "ok",
+        "lastCheck": "2026-04-06T03:19:58.035Z",
         "details": {
-          "httpCode": "401"
+          "httpCode": "200"
         }
       },
       "openrouter": {
         "status": "ok",
-        "lastCheck": "2026-04-05T16:28:26.406Z",
+        "lastCheck": "2026-04-06T03:19:58.307Z",
         "details": {
           "httpCode": "200"
         }
       },
       "openai": {
         "status": "ok",
-        "lastCheck": "2026-04-05T16:28:26.685Z",
+        "lastCheck": "2026-04-06T03:19:58.536Z",
         "details": {
           "httpCode": "200"
         }
       },
       "gemini": {
         "status": "ok",
-        "lastCheck": "2026-04-05T16:28:27.773Z",
+        "lastCheck": "2026-04-06T03:19:59.327Z",
         "details": {
           "httpCode": "200"
         }
       },
       "xai": {
         "status": "ok",
-        "lastCheck": "2026-04-05T16:28:28.123Z",
+        "lastCheck": "2026-04-06T03:19:59.538Z",
         "details": {
           "httpCode": "200"
         }
       },
       "minimax": {
         "status": "ok",
-        "lastCheck": "2026-04-05T16:28:28.358Z",
+        "lastCheck": "2026-04-06T03:19:59.784Z",
         "details": {
           "note": "Key present, no lightweight verify endpoint"
         }
       },
       "apify": {
         "status": "ok",
-        "lastCheck": "2026-04-05T16:28:28.359Z",
+        "lastCheck": "2026-04-06T03:19:59.785Z",
         "details": {
           "username": "growth4u",
           "plan": ""
@@ -79248,21 +79248,21 @@ const MC_DATA = {
       },
       "firecrawl": {
         "status": "ok",
-        "lastCheck": "2026-04-05T16:28:28.989Z",
+        "lastCheck": "2026-04-06T03:20:00.398Z",
         "details": {
           "httpCode": "200"
         }
       },
       "serper": {
         "status": "ok",
-        "lastCheck": "2026-04-05T16:28:29.960Z",
+        "lastCheck": "2026-04-06T03:20:01.384Z",
         "details": {
           "httpCode": "200"
         }
       },
       "dataforseo": {
         "status": "ok",
-        "lastCheck": "2026-04-05T16:28:30.675Z",
+        "lastCheck": "2026-04-06T03:20:02.175Z",
         "details": {
           "httpCode": "200",
           "login": "accounts@growth4u.io"
@@ -79270,14 +79270,14 @@ const MC_DATA = {
       },
       "notion": {
         "status": "ok",
-        "lastCheck": "2026-04-05T16:28:31.309Z",
+        "lastCheck": "2026-04-06T03:20:03.624Z",
         "details": {
           "botName": "openclaw-Alfonso"
         }
       },
       "supabase": {
         "status": "ok",
-        "lastCheck": "2026-04-05T16:28:31.902Z",
+        "lastCheck": "2026-04-06T03:20:04.047Z",
         "details": {
           "httpCode": "200",
           "project": "psapmujzxhaxraphddlv"
@@ -79285,7 +79285,7 @@ const MC_DATA = {
       },
       "gog": {
         "status": "ok",
-        "lastCheck": "2026-04-05T16:28:32.671Z",
+        "lastCheck": "2026-04-06T03:20:04.810Z",
         "details": {
           "account": "alfonso@growth4u.io",
           "test": "gmail inbox"
@@ -79293,56 +79293,56 @@ const MC_DATA = {
       },
       "openclaw": {
         "status": "error",
-        "lastCheck": "2026-04-05T16:28:33.738Z",
+        "lastCheck": "2026-04-06T03:20:06.062Z",
         "details": {
           "error": "Command failed: /opt/homebrew/bin/openclaw status 2>&1"
         }
       },
       "fal": {
         "status": "ok",
-        "lastCheck": "2026-04-05T16:28:32.657Z",
+        "lastCheck": "2026-04-06T03:20:04.793Z",
         "details": {
           "note": "Key present"
         }
       },
       "wavespeed": {
         "status": "ok",
-        "lastCheck": "2026-04-05T16:28:32.657Z",
+        "lastCheck": "2026-04-06T03:20:04.793Z",
         "details": {
           "note": "Key present"
         }
       },
       "dumpling": {
         "status": "ok",
-        "lastCheck": "2026-04-05T16:28:32.657Z",
+        "lastCheck": "2026-04-06T03:20:04.794Z",
         "details": {
           "note": "Key present"
         }
       },
       "brave": {
         "status": "not-configured",
-        "lastCheck": "2026-04-05T16:28:28.359Z",
+        "lastCheck": "2026-04-06T03:19:59.785Z",
         "details": {
           "error": "BRAVE_API_KEY not set"
         }
       },
       "instantly": {
         "status": "not-configured",
-        "lastCheck": "2026-04-05T16:28:32.658Z",
+        "lastCheck": "2026-04-06T03:20:04.794Z",
         "details": {
           "note": "Web login — no API key in .env"
         }
       },
       "metricool": {
         "status": "not-configured",
-        "lastCheck": "2026-04-05T16:28:32.658Z",
+        "lastCheck": "2026-04-06T03:20:04.794Z",
         "details": {
           "note": "Web login — no API key in .env"
         }
       },
       "nanobanana": {
         "status": "ok",
-        "lastCheck": "2026-04-05T16:28:32.658Z",
+        "lastCheck": "2026-04-06T03:20:04.794Z",
         "details": {
           "note": "Uses Gemini API key (shared)",
           "engine": "gemini-2.0-flash-exp"
@@ -79357,21 +79357,21 @@ const MC_DATA = {
       },
       "discord": {
         "status": "ok",
-        "lastCheck": "2026-04-05T16:28:33.754Z",
+        "lastCheck": "2026-04-06T03:20:06.082Z",
         "details": {
           "httpCode": "200"
         }
       },
       "tailscale": {
         "status": "ok",
-        "lastCheck": "2026-04-05T15:10:32Z",
+        "lastCheck": "2026-04-06T03:19:57Z",
         "details": {
           "note": "tailscale status OK"
         }
       },
       "remotion": {
         "status": "not-configured",
-        "lastCheck": "2026-04-05T16:28:32.659Z",
+        "lastCheck": "2026-04-06T03:20:04.794Z",
         "details": {
           "version": null,
           "note": "Local install"
@@ -79379,7 +79379,7 @@ const MC_DATA = {
       },
       "slack": {
         "status": "ok",
-        "lastCheck": "2026-04-05T16:28:32.264Z",
+        "lastCheck": "2026-04-06T03:20:04.399Z",
         "details": {
           "httpCode": "200"
         }

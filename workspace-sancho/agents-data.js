@@ -1,11 +1,2 @@
-window.AGENTS_DATA = {
-  "generated": "2026-04-05T18:09:00Z",
-  "clients": 7,
-  "tasks": 54,
-  "events": 100,
-  "pillars": {
-    "total": 110,
-    "completed": 1,
-    "pending": 0
-  }
-};
+// agents-data.js — generated 2026-04-06T20:04:13.966316
+const AGENTS_DATA = { tasks: 0, events: 0, pillars: { total: 110, done: 5, pending: 0 }, clients: 9};
