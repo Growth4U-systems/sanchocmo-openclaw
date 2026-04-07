@@ -5707,6 +5707,38 @@ const mcServer = http.createServer((req, res) => {
     };
   }
 
+  // Admin: serve static data files directly after URL rewrite
+  // (avoids them being caught by intermediate handlers before reaching the static file handler)
+  if (req._adminToken && !url.startsWith('/api/') && !url.startsWith('/webhook/')) {
+    const adminFilename = path.basename(url);
+    const adminDataFiles = ['mc-data.js', 'mc-work.js', 'clients.js', 'skills-data.js', 'agents-data.js'];
+    const adminStaticFiles = [...adminDataFiles, 'mission-control.html', 'mc-work.css'];
+    if (adminStaticFiles.includes(adminFilename) && url === '/' + adminFilename) {
+      const fileDir = adminDataFiles.includes(adminFilename) ? MC_DATA_DIR : BASE;
+      const filePath = path.join(fileDir, adminFilename);
+      try {
+        let data = fs.readFileSync(filePath);
+        const ext = path.extname(adminFilename);
+        const ct = MIME[ext] || 'application/octet-stream';
+        if (req._adminBase && ext === '.js') {
+          let text = data.toString('utf-8');
+          text = text.replace(/\/mc\/(?!admin\/|portal\/)/g, req._adminBase + '/');
+          data = Buffer.from(text, 'utf-8');
+        }
+        const headers = { 'Content-Type': ct };
+        if (adminFilename === 'mc-data.js') {
+          headers['Cache-Control'] = 'no-store, no-cache, must-revalidate';
+          headers['Pragma'] = 'no-cache';
+        }
+        res.writeHead(200, headers);
+        res.end(data);
+      } catch {
+        res.writeHead(404); res.end('Not found');
+      }
+      return;
+    }
+  }
+
   // Block unauthenticated access to admin assets and APIs
   // Allow: /portal/*, /admin/* (handled above), / (landing)
   // Block everything else (mission-control.html, /docs/*, /api/*, /connect/*, /brand/*)
