@@ -414,6 +414,8 @@ export function NextStepsColumn({ slug, onOpenDoc }: NextStepsColumnProps) {
               openChat(slug, config);
             };
 
+            const projectUrl = `/dashboard/${slug}/projects/${p.id as string}`;
+
             return (
               <div
                 key={p.id as string}
@@ -421,7 +423,7 @@ export function NextStepsColumn({ slug, onOpenDoc }: NextStepsColumnProps) {
                   "mb-2 p-2.5 bg-card border border-border rounded-lg cursor-pointer hover:bg-muted/30 transition-colors",
                   isDone && "opacity-60"
                 )}
-                onClick={handleProjectChat}
+                onClick={() => window.location.href = projectUrl}
               >
                 <div className="flex items-center gap-2">
                   <span className="text-[13px]">{statusIcon}</span>
@@ -449,10 +451,10 @@ export function NextStepsColumn({ slug, onOpenDoc }: NextStepsColumnProps) {
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleTaskChat(nextTask);
+                        window.location.href = projectUrl;
                       }}
                       className="text-[11px] hover:scale-110 transition-transform"
-                      title="Ejecutar"
+                      title="Ver proyecto"
                     >
                       {"\u25B6\uFE0F"}
                     </button>
