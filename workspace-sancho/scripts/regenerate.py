@@ -852,6 +852,34 @@ def main():
     print(f"   Campaigns: {len(data['campaigns'])}")
     print(f"   System: gateway={data['system']['gateway']}")
 
+    # Write clients.js from clients.json (so mc-server can serve it)
+    clients_js_file = OUT / "clients.js"
+    try:
+        cfile = WORKSPACE / "clients.json"
+        if cfile.exists():
+            cdata = json.loads(cfile.read_text(encoding="utf-8"))
+            clients_obj = {}
+            for c in cdata.get("clients", []):
+                slug = c.get("slug", "")
+                if not slug:
+                    continue
+                clients_obj[slug] = {
+                    "name": c.get("name", slug),
+                    "emoji": c.get("emoji", "🏢"),
+                    "url": c.get("url", ""),
+                    "discord_guild": c.get("discord_guild_id", c.get("guild", "")),
+                    "supabase": c.get("supabase", {}),
+                    "workspace": c.get("workspace", ""),
+                    "phase": c.get("phase", 0),
+                }
+            with open(clients_js_file, "w", encoding="utf-8") as f:
+                f.write("const CLIENTS = ")
+                json.dump(clients_obj, f, ensure_ascii=False, indent=2)
+                f.write(";\n")
+            print(f"✅ clients.js: {len(clients_obj)} clients")
+    except Exception as e:
+        print(f"⚠️ clients.js generation failed: {e}")
+
 
 if __name__ == "__main__":
     main()
