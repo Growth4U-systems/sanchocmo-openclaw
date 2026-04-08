@@ -14,7 +14,12 @@
     "close": "Cerrar",
     "all": "Todos",
     "active": "Activo",
-    "inactive": "Inactivo"
+    "inactive": "Inactivo",
+    "connected": "Conectado",
+    "disconnected": "Desconectado",
+    "viewAll": "Ver todo",
+    "phase": "Fase",
+    "or": "o"
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -32,20 +37,47 @@
     "activity": "Actividad",
     "settings": "Ajustes",
     "guide": "Guía",
-    "changelog": "Changelog"
+    "changelog": "Changelog",
+    "documents": "Documentos",
+    "overview": "Vista general",
+    "work": "Trabajo",
+    "tools": "Herramientas",
+    "system": "Sistema"
   },
   "auth": {
     "signIn": "Iniciar sesión",
     "signOut": "Cerrar sesión",
-    "signInWith": "Iniciar sesión con {provider}"
+    "signInWith": "Iniciar sesión con {provider}",
+    "accessToken": "Token de acceso"
   },
   "dashboard": {
     "title": "Dashboard",
+    "global": "Dashboard Global",
+    "allClients": "Todos los clientes",
     "activeClients": "Clientes activos",
     "completedPillars": "Pilares completados",
     "activeProjects": "Proyectos activos",
     "pendingTasks": "Tareas pendientes",
-    "recentActivity": "Actividad reciente"
+    "recentActivity": "Actividad reciente",
+    "ideas": "Ideas",
+    "costs": "Costes",
+    "costsWithPeriod": "Costes {period}",
+    "integrations": "Integraciones",
+    "system": "Sistema",
+    "clients": "Clientes",
+    "costsGlobal": "Costes — Global",
+    "noCosts": "Sin datos de costes.",
+    "sessions": "Sesiones",
+    "turns": "Turnos",
+    "byAgent": "Por agente",
+    "byClient": "Por cliente",
+    "integrationsGlobal": "Integraciones — Global",
+    "connectedCount": "{count} conectadas",
+    "disconnectedCount": "{count} desconectadas",
+    "errorCount": "{count} con error",
+    "brandSnapshot": "Brand Snapshot",
+    "metricas": "Métricas",
+    "nextSteps": "Próximos Pasos"
   },
   "foundation": {
     "title": "Foundation",
@@ -99,7 +131,7 @@
       "total": "Total",
       "new": "Nuevas",
       "approved": "Aprobadas",
-      "approvalRate": "% Aprobaci\u00f3n"
+      "approvalRate": "% Aprobación"
     },
     "bulkActions": "Acciones en lote",
     "bulkApprove": "Aprobar",
@@ -107,8 +139,8 @@
     "selected": "seleccionada(s)",
     "selectAll": "Seleccionar todas",
     "priority": "Prioridad",
-    "description": "Descripci\u00f3n",
-    "action": "Acci\u00f3n",
+    "description": "Descripción",
+    "action": "Acción",
     "channels": "Canales",
     "source": "Fuente",
     "sourceAll": "Fuente: Todas",
@@ -119,12 +151,12 @@
     "pieces": "Piezas",
     "changeStatus": "Cambiar estado",
     "delete": "Eliminar idea",
-    "confirmDelete": "\u00bfEliminar esta idea?",
-    "yes": "S\u00ed, eliminar",
+    "confirmDelete": "¿Eliminar esta idea?",
+    "yes": "Sí, eliminar",
     "no": "Cancelar",
     "created": "Creada",
     "approved": "Aprobada",
-    "approval": "Aprobaci\u00f3n",
+    "approval": "Aprobación",
     "searchPlaceholder": "Buscar ideas...",
     "empty": "No hay ideas. Haz clic en \"+ Nueva Idea\" o ejecuta una tarea recurrente.",
     "analytics": "Analytics por Fuente",
@@ -133,7 +165,38 @@
     "score": "Score",
     "date": "Fecha",
     "actions": "Acciones",
-    "titleAction": "T\u00edtulo + Acci\u00f3n"
+    "titleAction": "Título + Acción",
+    "lists": {
+      "keywords": "Keywords para rankear",
+      "trending": "Contenido trending para crear",
+      "gaps": "Gaps vs competencia",
+      "repurpose": "Contenido para reutilizar",
+      "medios": "Medios donde aparecer",
+      "partners": "Partners para colaborar",
+      "influencers": "Influencers para contactar",
+      "outreach": "Prospects para contactar"
+    },
+    "listDescriptions": {
+      "keywords": "Oportunidades SEO detectadas",
+      "trending": "Temas en tendencia en el nicho",
+      "gaps": "Contenido que competidores no cubren bien",
+      "repurpose": "Ideas de atomización cross-canal",
+      "medios": "Blogs, revistas, podcasts para PR/guest posts",
+      "partners": "Empresas/personas para co-marketing",
+      "influencers": "Creadores relevantes en el nicho",
+      "outreach": "Leads para outreach directo"
+    },
+    "sources": {
+      "seo_geo": "SEO/GEO",
+      "signal": "Signal",
+      "competitor": "Competencia",
+      "meeting": "Reunión",
+      "manual": "Manual",
+      "trust_engine": "Trust Engine",
+      "paa": "PAA",
+      "trending": "Trending",
+      "serp_gaps": "SERP Gaps"
+    }
   },
   "recurringTasks": {
     "title": "Tareas Recurrentes",
@@ -143,28 +206,28 @@
     "toggleActive": "Activar/Desactivar"
   },
   "metrics": {
-    "title": "M\u00e9tricas",
+    "title": "Métricas",
     "range": {
       "1d": "Ayer",
-      "7d": "7 d\u00edas",
-      "30d": "30 d\u00edas",
+      "7d": "7 días",
+      "30d": "30 días",
       "all": "Todo"
     },
-    "nextSteps": "Pr\u00f3ximos pasos",
+    "nextSteps": "Próximos pasos",
     "health": "Health KPIs",
     "sources": "Fuentes conectadas",
-    "modules": "M\u00f3dulos",
-    "noModules": "No hay m\u00f3dulos de m\u00e9tricas configurados para este cliente.",
-    "emptyData": "Sin datos de m\u00e9tricas. El collector corre diariamente — los datos aparecer\u00e1n ma\u00f1ana.",
-    "manualBanner": "Faltan m\u00e9tricas manuales de esta semana",
-    "monitoring": "An\u00e1lisis de rendimiento",
+    "modules": "Módulos",
+    "noModules": "No hay módulos de métricas configurados para este cliente.",
+    "emptyData": "Sin datos de métricas. El collector corre diariamente — los datos aparecerán mañana.",
+    "manualBanner": "Faltan métricas manuales de esta semana",
+    "monitoring": "Análisis de rendimiento",
     "apis": "APIs",
     "plan": "Plan",
     "sheets": "Sheets"
   },
   "trustEngine": {
     "title": "Trust Engine",
-    "subtitle": "Pipeline de auditor\u00eda y an\u00e1lisis de confianza",
+    "subtitle": "Pipeline de auditoría y análisis de confianza",
     "completed": "completados",
     "running": "ejecutando",
     "pending": "pendientes",
@@ -187,5 +250,58 @@
     "es": "Español",
     "en": "English",
     "select": "Idioma"
+  },
+  "chat": {
+    "title": "Chat con Sancho",
+    "connected": "Conectado",
+    "waiting": "En espera",
+    "exitFullscreen": "Salir de pantalla completa",
+    "fullscreen": "Pantalla completa",
+    "closeSidebar": "Cerrar",
+    "loading": "Cargando...",
+    "selectThread": "Selecciona un thread para empezar.",
+    "selectThreadOption": "Seleccionar hilo...",
+    "newThread": "Nuevo hilo",
+    "syncDiscord": "Sincronizar con Discord",
+    "unlockFreeMode": "Desbloquear — modo libre",
+    "currentDoc": "Documento actual",
+    "thinking": "Sancho está pensando...",
+    "placeholder": "Escribe aquí...",
+    "stop": "Detener",
+    "send": "Enviar"
+  },
+  "settings": {
+    "title": "Ajustes",
+    "subtitle": "Configuración del sistema",
+    "tabs": {
+      "apis": "APIs",
+      "agents": "Agentes",
+      "skills": "Skills",
+      "dispatch": "Dispatch",
+      "strategies": "Estrategias",
+      "recurring": "Recurrentes",
+      "clients": "Clientes",
+      "preferences": "Preferencias"
+    },
+    "loadingClients": "Cargando clientes...",
+    "activeOf": "{active} activos de {total} totales",
+    "deactivate": "Desactivar",
+    "activate": "Activar",
+    "name": "Nombre",
+    "emoji": "Emoji",
+    "url": "URL",
+    "clientLanguage": "Idioma",
+    "apiStatus": {
+      "systemKey": "Key sistema",
+      "error": "Error",
+      "connected": "Conectado",
+      "notConfigured": "No configurado"
+    },
+    "howToStart": "¿Cómo empezar?"
+  },
+  "sidebar": {
+    "allClients": "Todos los clientes",
+    "admin": "Admin",
+    "client": "Cliente"
   }
 }

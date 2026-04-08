@@ -6,6 +6,7 @@ import { useAppStore } from "@/stores/app";
 
 export default function SignIn() {
   const t = useTranslations("auth");
+  const tCommon = useTranslations("common");
 
   // Reset selected client so login always lands on Global Dashboard
   useEffect(() => {
@@ -45,7 +46,7 @@ export default function SignIn() {
                 <div className="w-full border-t border-border" />
               </div>
               <div className="relative flex justify-center text-xs text-muted-foreground">
-                <span className="bg-card px-2">o</span>
+                <span className="bg-card px-2">{tCommon("or")}</span>
               </div>
             </div>
 
@@ -59,7 +60,7 @@ export default function SignIn() {
               <input
                 name="token"
                 type="password"
-                placeholder="Token de acceso"
+                placeholder={t("accessToken")}
                 className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:border-rust mb-3"
               />
               <button

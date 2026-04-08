@@ -1,7 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import fs from "fs";
 import path from "path";
-import { execSync } from "child_process";
 import { compose, withErrorHandler, withAuth } from "@/lib/api-middleware";
 import { BASE, foundationStateFile } from "@/lib/data/paths";
 import { safeWriteJSON } from "@/lib/data/json-io";
@@ -74,22 +73,9 @@ function syncTaskToPillar(slug: string, task: Record<string, unknown>, newStatus
         const obj = d as Record<string, unknown>;
         return !!obj.sections;
       });
-      try {
-        execSync("python3 scripts/regenerate.py", { cwd: BASE, timeout: 15000 });
-      } catch (e) {
-        console.error("[syncTaskToPillar] regenerate error:", (e as Error).message);
-      }
     }
   } catch (e) {
     console.error("[syncTaskToPillar] error:", (e as Error).message);
-  }
-}
-
-function regenerate(): void {
-  try {
-    execSync("python3 scripts/regenerate.py", { cwd: BASE, timeout: 15000 });
-  } catch (e) {
-    console.error("[task-status] regenerate error:", (e as Error).message);
   }
 }
 
@@ -157,9 +143,6 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       );
     }
   }
-
-  // Regenerate mc-data.js
-  regenerate();
 
   return res.status(200).json({ ok: true, taskId, oldStatus, newStatus: status });
 }

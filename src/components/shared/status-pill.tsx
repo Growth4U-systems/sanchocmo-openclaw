@@ -24,10 +24,18 @@ const DEFAULT_COLOR_MAP: Record<string, string> = {
 interface StatusPillProps {
   status: string;
   colorMap?: Record<string, string>;
-  size?: "sm" | "md";
+  size?: "sm" | "md" | "lg";
+  /** Override the displayed text (otherwise derived from status key) */
+  labelOverride?: string;
 }
 
-export function StatusPill({ status, colorMap, size = "sm" }: StatusPillProps) {
+const SIZE_CLASSES = {
+  sm: "text-[10px] px-2 py-0.5",
+  md: "text-[11px] px-2.5 py-0.5",
+  lg: "text-xs px-3 py-1",
+};
+
+export function StatusPill({ status, colorMap, size = "sm", labelOverride }: StatusPillProps) {
   const map = { ...DEFAULT_COLOR_MAP, ...colorMap };
   const colors = map[status.toLowerCase()] ?? "bg-muted text-muted-foreground";
 
@@ -36,10 +44,10 @@ export function StatusPill({ status, colorMap, size = "sm" }: StatusPillProps) {
       className={cn(
         "rounded-full font-semibold inline-flex items-center",
         colors,
-        size === "sm" ? "text-[10px] px-2 py-0.5" : "text-[11px] px-2.5 py-0.5",
+        SIZE_CLASSES[size],
       )}
     >
-      {status.replace(/[_-]/g, " ")}
+      {labelOverride ?? status.replace(/[_-]/g, " ")}
     </span>
   );
 }

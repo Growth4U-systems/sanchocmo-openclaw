@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef, useCallback, useMemo } from "react";
 import { useChatStore } from "@/stores/chat";
 import { getAutoPrompt, type ThreadConfig } from "@/lib/chat-openers";
 
@@ -21,6 +21,8 @@ interface ThreadListItem {
   messageCount: number;
   updatedAt: number;
   lastMessage: { role: string; text: string; ts: number } | null;
+  hasUnread: boolean;
+  lastBotTs: number | null;
 }
 
 /**
@@ -75,14 +77,19 @@ export function useThreadList(slug: string | null) {
             messageCount: 0,
             updatedAt: Date.now(),
             lastMessage: null,
+            hasUnread: false,
+            lastBotTs: null,
           });
         }
       }
 
-      // Sort: general first, then by updatedAt desc
+      // Sort: general first, then unread (by lastBotTs desc), then read (by updatedAt desc)
       threads.sort((a, b) => {
         if (a.shortId === "general") return -1;
         if (b.shortId === "general") return 1;
+        if (a.hasUnread && !b.hasUnread) return -1;
+        if (!a.hasUnread && b.hasUnread) return 1;
+        if (a.hasUnread && b.hasUnread) return (b.lastBotTs || 0) - (a.lastBotTs || 0);
         return (b.updatedAt || 0) - (a.updatedAt || 0);
       });
 
@@ -217,6 +224,37 @@ export function useAutoPrompt(config: ThreadConfig | null, hasMessages: boolean)
     sentRef.current = true;
     sendMessage.mutate({ text: prompt, threadId: config.threadId });
   }, [config, hasMessages, sendMessage]);
+}
+
+/**
+ * Mark a thread as read. Invalidates the thread list so badges update.
+ */
+export function useMarkThreadRead() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ slug, threadId }: { slug: string; threadId: string }) => {
+      await fetch("/api/chat/mark-read", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slug, threadId }),
+      });
+    },
+    onSuccess: (_data, vars) => {
+      qc.invalidateQueries({ queryKey: ["chat", "threads", vars.slug] });
+    },
+  });
+}
+
+/**
+ * Derive the total unread thread count from the thread list query.
+ */
+export function useUnreadCount(slug: string | null): number {
+  const { data } = useThreadList(slug);
+  return useMemo(() => {
+    if (!data) return 0;
+    return data.filter((t) => t.hasUnread).length;
+  }, [data]);
 }
 
 /**

@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { useFoundation } from "@/hooks/useFoundation";
@@ -56,6 +57,215 @@ function calcFoundationStats(foundation: FoundationState | undefined) {
 
 function displayName(key: string): string {
   return key.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+// ---- Recommendations Section (with inline project picker) ----
+
+interface RecType {
+  id: string;
+  title: string;
+  type: string;
+  rationale?: string;
+  description?: string;
+  priority: string;
+  linked_project?: string;
+  linkedProject?: string;
+}
+
+function RecommendationsSection({
+  recs,
+  allCount,
+  slug,
+  projects,
+}: {
+  recs: RecType[];
+  allCount: number;
+  slug: string;
+  projects: Array<Record<string, unknown>>;
+}) {
+  const [pickingProject, setPickingProject] = useState<string | null>(null);
+  const [projectSearch, setProjectSearch] = useState("");
+
+  const typeIcons: Record<string, string> = {
+    optimize: "\uD83D\uDD27",
+    investigate: "\uD83D\uDD0D",
+    launch: "\uD83D\uDE80",
+    pause: "\u23F8\uFE0F",
+    escalate: "\u26A1",
+  };
+
+  const doConvert = async (recId: string, projectOverride?: string) => {
+    const res = await fetch("/api/monitoring/recommendation-action", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        slug,
+        recommendationId: recId,
+        action: "convert",
+        ...(projectOverride ? { projectOverride } : {}),
+      }),
+    });
+    if (!res.ok) return false;
+    const data = await res.json();
+    // If a new project was created, navigate to the project detail page
+    if (projectOverride === "__NEW__" && data.projectId) {
+      window.location.href = `/dashboard/${slug}/projects/${data.projectId}`;
+      return true;
+    }
+    window.location.reload();
+    return true;
+  };
+
+  const handleConvert = async (e: React.MouseEvent, rec: RecType) => {
+    e.stopPropagation();
+    const projRef = rec.linked_project || rec.linkedProject;
+    if (!projRef) {
+      // No project — show picker
+      setPickingProject(rec.id);
+      return;
+    }
+    await doConvert(rec.id);
+  };
+
+  const handlePickProject = async (recId: string, projId: string) => {
+    setPickingProject(null);
+    await doConvert(recId, projId);
+  };
+
+  const handleDismiss = async (e: React.MouseEvent, recId: string) => {
+    e.stopPropagation();
+    await fetch("/api/monitoring/recommendation-action", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ slug, recommendationId: recId, action: "dismiss" }),
+    });
+    window.location.reload();
+  };
+
+  return (
+    <div className="mb-4">
+      <div className="text-[11px] font-bold text-foreground mb-2">
+        {"\uD83D\uDCC8"} Recomendaciones
+      </div>
+      {recs.map((rec) => {
+        const prioColor = rec.priority === "high" ? "#C45D35" : "#B8860B";
+        const projRef = rec.linked_project || rec.linkedProject || "";
+
+        return (
+          <div
+            key={rec.id}
+            className="my-0.5 p-2.5 bg-card border border-border rounded-md text-[11px]"
+            style={{ borderLeftWidth: 3, borderLeftColor: prioColor }}
+          >
+            <div className="flex items-start gap-1.5">
+              <span className="text-[13px] shrink-0">{typeIcons[rec.type] || "\uD83D\uDCCC"}</span>
+              <div className="flex-1">
+                <div className="font-semibold mb-0.5">{rec.title}</div>
+                <div className="text-[10px] text-muted-foreground leading-snug mb-1.5">
+                  {(rec.rationale || rec.description || "").slice(0, 100)}
+                  {(rec.rationale || rec.description || "").length > 100 ? "..." : ""}
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={(e) => handleConvert(e, rec)}
+                    className="text-[9px] font-semibold text-white bg-[#4A5D23] border-none rounded px-2 py-0.5 cursor-pointer hover:opacity-90"
+                  >
+                    {"\u2192"} {projRef ? `Tarea en ${projRef}` : "Crear tarea"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => handleDismiss(e, rec.id)}
+                    className="text-[9px] font-semibold text-muted-foreground bg-transparent border border-border rounded px-2 py-0.5 cursor-pointer hover:bg-muted"
+                  >
+                    Descartar
+                  </button>
+                  <span className="flex-1" />
+                  <span
+                    className="text-[8px] font-bold uppercase"
+                    style={{ color: prioColor }}
+                  >
+                    {rec.priority}
+                  </span>
+                </div>
+
+                {/* Inline project picker */}
+                {pickingProject === rec.id && (
+                  <div className="mt-2 p-2 bg-white border border-border rounded-md shadow-sm">
+                    <div className="text-[11px] font-bold text-foreground mb-2">Asignar a proyecto:</div>
+                    <input
+                      type="text"
+                      placeholder="Buscar proyecto..."
+                      value={projectSearch}
+                      onChange={(e) => setProjectSearch(e.target.value)}
+                      onClick={(e) => e.stopPropagation()}
+                      className="w-full text-[11px] px-2 py-1 mb-1.5 border border-border rounded bg-background outline-none focus:border-[#4A5D23]/50"
+                    />
+                    <div className="flex flex-col gap-0.5 max-h-40 overflow-y-auto">
+                      {projects
+                        .filter((p) => {
+                          if (["archived", "cancelled", "discarded"].includes(p.status as string)) return false;
+                          if (!projectSearch) return true;
+                          const q = projectSearch.toLowerCase();
+                          return (p.id as string).toLowerCase().includes(q) || (p.name as string).toLowerCase().includes(q);
+                        })
+                        .map((p) => (
+                        <button
+                          key={p.id as string}
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handlePickProject(rec.id, p.id as string);
+                          }}
+                          className="text-left text-[11px] px-2 py-1.5 rounded hover:bg-[#4A5D23]/10 transition-colors"
+                        >
+                          <span className="font-bold text-[#4A5D23]">{p.id as string}</span>{" "}
+                          <span className="text-foreground">{p.name as string}</span>
+                        </button>
+                      ))}
+                    </div>
+                    <div className="flex items-center gap-2 mt-2">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setPickingProject(null);
+                          setProjectSearch("");
+                          handlePickProject(rec.id, "__NEW__");
+                        }}
+                        className="text-[10px] font-semibold text-[#4A5D23] hover:text-[#4A5D23]/80"
+                      >
+                        + Crear nuevo proyecto
+                      </button>
+                      <span className="flex-1" />
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setPickingProject(null);
+                          setProjectSearch("");
+                        }}
+                        className="text-[10px] text-muted-foreground hover:text-foreground"
+                      >
+                        Cancelar
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+      })}
+      {allCount > recs.length && (
+        <div className="text-center mt-1">
+          <Link href={`/dashboard/${slug}/metrics`} className="text-[10px] text-rust">
+            Ver las {allCount} recomendaciones {"\u2192"}
+          </Link>
+        </div>
+      )}
+    </div>
+  );
 }
 
 interface NextStepsColumnProps {
@@ -262,95 +472,12 @@ export function NextStepsColumn({ slug, onOpenDoc }: NextStepsColumnProps) {
 
       {/* Performance Recommendations — with action buttons (matches legacy) */}
       {topMonRecs.length > 0 && (
-        <div className="mb-4">
-          <div className="text-[11px] font-bold text-foreground mb-2">
-            {"\uD83D\uDCC8"} Recomendaciones
-          </div>
-          {topMonRecs.map((rec: { id: string; title: string; type: string; rationale?: string; description?: string; priority: string; linked_project?: string; linkedProject?: string }) => {
-            const typeIcons: Record<string, string> = {
-              optimize: "\uD83D\uDD27",
-              investigate: "\uD83D\uDD0D",
-              launch: "\uD83D\uDE80",
-              pause: "\u23F8\uFE0F",
-              escalate: "\u26A1",
-            };
-            const prioColor = rec.priority === "high" ? "#C45D35" : "#B8860B";
-            const projRef = rec.linked_project || rec.linkedProject || "";
-
-            const handleConvert = async (e: React.MouseEvent) => {
-              e.stopPropagation();
-              try {
-                await fetch("/api/monitoring/recommendation-action", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ slug, recommendationId: rec.id, action: "convert" }),
-                });
-                window.location.reload();
-              } catch { /* ignore */ }
-            };
-
-            const handleDismiss = async (e: React.MouseEvent) => {
-              e.stopPropagation();
-              try {
-                await fetch("/api/monitoring/recommendation-action", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ slug, recommendationId: rec.id, action: "dismiss" }),
-                });
-                window.location.reload();
-              } catch { /* ignore */ }
-            };
-
-            return (
-              <div
-                key={rec.id}
-                className="my-0.5 p-2.5 bg-card border border-border rounded-md text-[11px]"
-                style={{ borderLeftWidth: 3, borderLeftColor: prioColor }}
-              >
-                <div className="flex items-start gap-1.5">
-                  <span className="text-[13px] shrink-0">{typeIcons[rec.type] || "\uD83D\uDCCC"}</span>
-                  <div className="flex-1">
-                    <div className="font-semibold mb-0.5">{rec.title}</div>
-                    <div className="text-[10px] text-muted-foreground leading-snug mb-1.5">
-                      {(rec.rationale || rec.description || "").slice(0, 100)}
-                      {(rec.rationale || rec.description || "").length > 100 ? "..." : ""}
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <button
-                        type="button"
-                        onClick={handleConvert}
-                        className="text-[9px] font-semibold text-white bg-[#4A5D23] border-none rounded px-2 py-0.5 cursor-pointer hover:opacity-90"
-                      >
-                        {"\u2192"} {projRef ? `Tarea en ${projRef}` : "Crear tarea"}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={handleDismiss}
-                        className="text-[9px] font-semibold text-muted-foreground bg-transparent border border-border rounded px-2 py-0.5 cursor-pointer hover:bg-muted"
-                      >
-                        Descartar
-                      </button>
-                      <span className="flex-1" />
-                      <span
-                        className="text-[8px] font-bold uppercase"
-                        style={{ color: prioColor }}
-                      >
-                        {rec.priority}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-          {monRecs.length > topMonRecs.length && (
-            <div className="text-center mt-1">
-              <Link href={`/dashboard/${slug}/metrics`} className="text-[10px] text-rust">
-                Ver las {monRecs.length} recomendaciones {"\u2192"}
-              </Link>
-            </div>
-          )}
-        </div>
+        <RecommendationsSection
+          recs={topMonRecs}
+          allCount={monRecs.length}
+          slug={slug}
+          projects={allProjects}
+        />
       )}
 
       {/* Projects section */}

@@ -41,7 +41,12 @@ export const useAppStore = create<AppState>()(
       toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
 
       locale: "es",
-      setLocale: (locale) => set({ locale }),
+      setLocale: (locale) => {
+        if (typeof document !== "undefined") {
+          document.cookie = `mc-locale=${locale};path=/;max-age=31536000;SameSite=Lax`;
+        }
+        set({ locale });
+      },
     }),
     {
       name: "mc-app-store",

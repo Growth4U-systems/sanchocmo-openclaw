@@ -43,13 +43,40 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   } else if (action === "convert") {
     rec.status = "converted";
     rec.actioned_at = now;
-    const projRef = projectOverride || rec.linked_project || rec.linkedProject;
+    const projectsDir = path.join(BASE, "brand", slug, "projects");
+    let projRef = projectOverride || rec.linked_project || rec.linkedProject;
+
+    // Create new project on the fly
+    if (projRef === "__NEW__") {
+      let maxId = 0;
+      try {
+        const dirs = fs.readdirSync(projectsDir, { withFileTypes: true });
+        for (const d of dirs) {
+          const m = d.name.match(/^P(\d+)/);
+          if (m) maxId = Math.max(maxId, parseInt(m[1], 10));
+        }
+      } catch { /* empty */ }
+      const nextNum = maxId + 1;
+      projRef = `P${String(nextNum).padStart(2, "0")}`;
+      const dirName = `${projRef}-${rec.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/-+$/, "").slice(0, 60)}`;
+      const newDir = path.join(projectsDir, dirName);
+      fs.mkdirSync(newDir, { recursive: true });
+      writeJSON(path.join(newDir, "project.json"), {
+        id: projRef,
+        slug: dirName,
+        name: rec.title,
+        status: "active",
+        created_at: now,
+        source: "recommendation",
+      });
+      writeJSON(path.join(newDir, "tasks.json"), []);
+    }
+
     if (!projRef) {
       return res.status(400).json({ error: "No linked project \u2014 assign a project first" });
     }
-    if (projectOverride) rec.linkedProject = projectOverride;
+    if (projectOverride) rec.linkedProject = projRef;
 
-    const projectsDir = path.join(BASE, "brand", slug, "projects");
     try {
       const dirs = fs.readdirSync(projectsDir, { withFileTypes: true });
       const projDir = dirs.find((d) => d.isDirectory() && d.name.startsWith(projRef));
@@ -72,6 +99,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         });
         writeJSON(tasksFile, tasks);
         rec.converted_to_task = taskId;
+        rec.converted_to_project = projRef;
       }
     } catch { /* empty */ }
   } else {
@@ -80,7 +108,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
   data.updated_at = now;
   writeJSON(recFile, data);
-  return res.status(200).json({ ok: true, recommendation: rec });
+  return res.status(200).json({ ok: true, recommendation: rec, projectId: rec.converted_to_project });
 }
 
 export default compose(withErrorHandler, withAuth)(handler);

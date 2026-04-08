@@ -28,7 +28,7 @@ import { cn } from "@/lib/utils";
 // ============================================================
 
 export default function DashboardPage() {
-  const t = useTranslations("dashboard");
+  const t = useTranslations();
   const { data: session } = useSession();
   const { selectedClient } = useAppStore();
   const isAdmin = (session?.user as { role?: string })?.role === "admin";
@@ -36,7 +36,7 @@ export default function DashboardPage() {
   return (
     <DashboardLayout fullBleed={!!selectedClient}>
       <Head>
-        <title>{t("title")} — Mission Control</title>
+        <title>{t("dashboard.title")} — Mission Control</title>
       </Head>
 
       {!selectedClient ? (
@@ -53,7 +53,7 @@ export default function DashboardPage() {
 // ============================================================
 
 function GlobalDashboard({ isAdmin }: { isAdmin: boolean }) {
-  const t = useTranslations("dashboard");
+  const t = useTranslations();
   const { data: stats, isLoading } = useGlobalStats();
   const { data: clients } = useClients();
   const { setSelectedClient } = useAppStore();
@@ -62,14 +62,14 @@ function GlobalDashboard({ isAdmin }: { isAdmin: boolean }) {
 
   return (
     <div>
-      <h1 className="font-heading text-2xl text-navy mb-1">Dashboard Global</h1>
-      <p className="text-sm text-muted-foreground mb-6">Todos los clientes</p>
+      <h1 className="font-heading text-2xl text-navy mb-1">{t("dashboard.global")}</h1>
+      <p className="text-sm text-muted-foreground mb-6">{t("dashboard.allClients")}</p>
 
       {/* Stats grid — 6 cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4 mb-8">
         <StatCard
           value={isLoading ? "..." : stats?.activeClients ?? 0}
-          label={t("activeClients")}
+          label={t("dashboard.activeClients")}
           color="text-rust"
           icon="🏢"
         />
@@ -79,25 +79,25 @@ function GlobalDashboard({ isAdmin }: { isAdmin: boolean }) {
               ? "..."
               : `${stats?.approvedPillars ?? 0}/${stats?.totalPillars ?? 0}`
           }
-          label={t("completedPillars")}
+          label={t("dashboard.completedPillars")}
           color="text-sage"
           icon="✅"
         />
         <StatCard
           value={isLoading ? "..." : stats?.activeProjects ?? 0}
-          label={t("activeProjects")}
+          label={t("dashboard.activeProjects")}
           color="text-navy"
           icon="📋"
         />
         <StatCard
           value={isLoading ? "..." : stats?.pendingTasks ?? 0}
-          label={t("pendingTasks")}
+          label={t("dashboard.pendingTasks")}
           color="text-rust"
           icon="📝"
         />
         <StatCard
           value={isLoading ? "..." : stats?.totalIdeas ?? 0}
-          label="Ideas"
+          label={t("dashboard.ideas")}
           color="text-yellow-600"
           icon="💡"
         />
@@ -107,7 +107,7 @@ function GlobalDashboard({ isAdmin }: { isAdmin: boolean }) {
               ? `€${costs.total_cost_eur?.toFixed(0)}`
               : "—"
           }
-          label={costs?.period ? `Costes ${costs.period}` : "Costes"}
+          label={costs?.period ? t("dashboard.costsWithPeriod", { period: costs.period }) : t("dashboard.costs")}
           color={costs?.period ? "text-rust" : "text-muted-foreground"}
           icon="💰"
         />
@@ -117,7 +117,7 @@ function GlobalDashboard({ isAdmin }: { isAdmin: boolean }) {
               ? `${integrations.connected}/${integrations.connected + integrations.disconnected + integrations.error}`
               : "—"
           }
-          label="Integraciones"
+          label={t("dashboard.integrations")}
           color={integrations ? "text-sage" : "text-muted-foreground"}
           icon="🔌"
         />
@@ -125,14 +125,14 @@ function GlobalDashboard({ isAdmin }: { isAdmin: boolean }) {
 
       {/* System card */}
       <ComicCard className="mb-5">
-        <h2 className="font-heading text-base text-navy mb-3">⚡ Sistema</h2>
+        <h2 className="font-heading text-base text-navy mb-3">⚡ {t("dashboard.system")}</h2>
         <SystemStatusRows />
       </ComicCard>
 
       {/* Clients grid */}
       {isAdmin && clients && clients.length > 0 && (
         <>
-          <h2 className="font-heading text-lg text-navy mb-3">Clientes</h2>
+          <h2 className="font-heading text-lg text-navy mb-3">{t("dashboard.clients")}</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-5">
             {clients
               .filter((c) => c.active)
@@ -159,12 +159,12 @@ function GlobalDashboard({ isAdmin }: { isAdmin: boolean }) {
       {/* Activity feed */}
       <ComicCard>
         <div className="flex justify-between items-center mb-3">
-          <h2 className="font-heading text-base text-navy">{"📡"} Actividad Reciente</h2>
+          <h2 className="font-heading text-base text-navy">{"📡"} {t("dashboard.recentActivity")}</h2>
           <Link
             href="/activity"
             className="text-xs font-semibold text-rust hover:underline"
           >
-            Ver todo {"→"}
+            {t("common.viewAll")} {"→"}
           </Link>
         </div>
         <GlobalActivityFeed />
@@ -233,6 +233,8 @@ function ClientCard({
   }
   const fPct = fTotal > 0 ? Math.round((fApproved / fTotal) * 100) : 0;
 
+  const t = useTranslations("common");
+
   return (
     <button
       type="button"
@@ -244,7 +246,7 @@ function ClientCard({
         <span className="font-heading font-bold text-base">{name}</span>
       </div>
       <div className="text-[11px] text-muted-foreground mb-2">
-        Fase {phase} {"·"} {slug}
+        {t("phase")} {phase} {"·"} {slug}
       </div>
       {fTotal > 0 && (
         <div>
@@ -291,13 +293,14 @@ function GlobalActivityFeed() {
 // ============================================================
 
 function ClientDashboardV2({ slug }: { slug: string }) {
+  const t = useTranslations("dashboard");
   const [activeTab, setActiveTab] = useState(0);
   const [docPath, setDocPath] = useState<string | null>(null);
 
   const tabs = [
-    { emoji: "🏢", label: "Brand" },
-    { emoji: "📈", label: "Metricas" },
-    { emoji: "🎯", label: "Pasos" },
+    { emoji: "🏢", label: t("brandSnapshot") },
+    { emoji: "📈", label: t("metricas") },
+    { emoji: "🎯", label: t("nextSteps") },
   ];
 
   return (
@@ -333,12 +336,12 @@ function ClientDashboardV2({ slug }: { slug: string }) {
         >
           {/* Column header */}
           <div className="flex items-center justify-between px-5 py-3 border-b border-border bg-muted/20">
-            <span className="text-xs font-bold">{"🏢"} Brand Snapshot</span>
+            <span className="text-xs font-bold">{"🏢"} {t("brandSnapshot")}</span>
             <Link
               href={`/dashboard/${slug}/foundation`}
               className="text-[10px] font-semibold text-rust hover:underline"
             >
-              Documents {"→"}
+              {t("brandSnapshot")} {"→"}
             </Link>
           </div>
           {/* Column body */}
@@ -355,12 +358,12 @@ function ClientDashboardV2({ slug }: { slug: string }) {
           )}
         >
           <div className="flex items-center justify-between px-5 py-3 border-b border-border bg-muted/20">
-            <span className="text-xs font-bold">{"📈"} Metricas</span>
+            <span className="text-xs font-bold">{"📈"} {t("metricas")}</span>
             <Link
               href={`/dashboard/${slug}/metrics`}
               className="text-[10px] font-semibold text-rust hover:underline"
             >
-              Dashboard {"→"}
+              {t("title")} {"→"}
             </Link>
           </div>
           <div className="px-5 py-3 overflow-y-auto flex-1">
@@ -371,12 +374,12 @@ function ClientDashboardV2({ slug }: { slug: string }) {
         {/* Col 3: Next Steps */}
         <div className={cn("bg-white dark:bg-card flex flex-col min-h-0", activeTab !== 2 && "hidden lg:flex")}>
           <div className="flex items-center justify-between px-5 py-3 border-b border-border bg-muted/20">
-            <span className="text-xs font-bold">{"🎯"} Proximos Pasos</span>
+            <span className="text-xs font-bold">{"🎯"} {t("nextSteps")}</span>
             <Link
               href={`/dashboard/${slug}/projects`}
               className="text-[10px] font-semibold text-rust hover:underline"
             >
-              Ver todo {"→"}
+              {t("nextSteps")} {"→"}
             </Link>
           </div>
           <div className="px-5 py-3 overflow-y-auto flex-1">
@@ -441,13 +444,14 @@ function useIntegrationsSummary() {
 // ============================================================
 
 function CostsCard() {
+  const t = useTranslations("dashboard");
   const { data } = useCosts();
 
   return (
     <ComicCard className="mb-5">
-      <h2 className="font-heading text-base text-navy mb-3">💰 Costes — Global</h2>
+      <h2 className="font-heading text-base text-navy mb-3">💰 {t("costsGlobal")}</h2>
       {!data?.period ? (
-        <p className="text-xs text-muted-foreground">Sin datos de costes.</p>
+        <p className="text-xs text-muted-foreground">{t("noCosts")}</p>
       ) : (
         <>
           <div className="flex gap-6 mb-3">
@@ -461,17 +465,17 @@ function CostsCard() {
             </div>
             <div>
               <div className="font-heading text-xl">{data.total_sessions}</div>
-              <div className="text-[10px] text-muted-foreground uppercase">Sesiones</div>
+              <div className="text-[10px] text-muted-foreground uppercase">{t("sessions")}</div>
             </div>
             <div>
               <div className="font-heading text-xl">{data.total_turns}</div>
-              <div className="text-[10px] text-muted-foreground uppercase">Turnos</div>
+              <div className="text-[10px] text-muted-foreground uppercase">{t("turns")}</div>
             </div>
           </div>
           {/* Agent breakdown */}
           {data.system?.agents && (
             <div className="border-t border-border pt-2 mt-2">
-              <div className="text-[10px] font-bold uppercase text-muted-foreground mb-1.5">Por agente</div>
+              <div className="text-[10px] font-bold uppercase text-muted-foreground mb-1.5">{t("byAgent")}</div>
               <div className="flex gap-4 flex-wrap">
                 {Object.entries(data.system.agents).map(([agent, info]) => (
                   <div key={agent} className="text-xs">
@@ -485,7 +489,7 @@ function CostsCard() {
           {/* Client breakdown */}
           {data.clients && Object.keys(data.clients).length > 0 && (
             <div className="border-t border-border pt-2 mt-2">
-              <div className="text-[10px] font-bold uppercase text-muted-foreground mb-1.5">Por cliente</div>
+              <div className="text-[10px] font-bold uppercase text-muted-foreground mb-1.5">{t("byClient")}</div>
               <div className="flex gap-4 flex-wrap">
                 {Object.entries(data.clients).map(([slug, info]) => (
                   <div key={slug} className="text-xs">
@@ -507,6 +511,7 @@ function CostsCard() {
 // ============================================================
 
 function IntegrationsCard() {
+  const t = useTranslations("dashboard");
   const { data } = useIntegrationsSummary();
 
   const SOURCE_NAMES: Record<string, string> = {
@@ -517,24 +522,24 @@ function IntegrationsCard() {
 
   return (
     <ComicCard className="mb-5">
-      <h2 className="font-heading text-base text-navy mb-3">🔌 Integraciones — Global</h2>
+      <h2 className="font-heading text-base text-navy mb-3">🔌 {t("integrationsGlobal")}</h2>
       {!data ? (
-        <p className="text-xs text-muted-foreground">Cargando...</p>
+        <p className="text-xs text-muted-foreground">{t("connectedCount", { count: "..." })}</p>
       ) : (
         <>
           <div className="flex gap-4 mb-3">
             <div className="flex items-center gap-1.5 text-xs">
               <span className="w-2.5 h-2.5 rounded-full bg-green-500" />
-              <span>{data.connected} conectadas</span>
+              <span>{t("connectedCount", { count: data.connected })}</span>
             </div>
             <div className="flex items-center gap-1.5 text-xs">
               <span className="w-2.5 h-2.5 rounded-full bg-border" />
-              <span>{data.disconnected} desconectadas</span>
+              <span>{t("disconnectedCount", { count: data.disconnected })}</span>
             </div>
             {data.error > 0 && (
               <div className="flex items-center gap-1.5 text-xs">
                 <span className="w-2.5 h-2.5 rounded-full bg-red-500" />
-                <span>{data.error} con error</span>
+                <span>{t("errorCount", { count: data.error })}</span>
               </div>
             )}
           </div>

@@ -7,6 +7,7 @@ import { useAppStore } from "@/stores/app";
 import { useChatStore } from "@/stores/chat";
 import { cn } from "@/lib/utils";
 import { useClients } from "@/hooks/useClients";
+import { useUnreadCount } from "@/hooks/useChat";
 
 /**
  * Sidebar — faithful replica of legacy mission-control.html <nav>.
@@ -35,7 +36,7 @@ import { useClients } from "@/hooks/useClients";
  */
 
 export function Sidebar() {
-  const t = useTranslations("nav");
+  const t = useTranslations();
   const router = useRouter();
   const { data: session } = useSession();
   const { selectedClient, sidebarOpen } = useAppStore();
@@ -50,6 +51,7 @@ export function Sidebar() {
 
   const isAdmin = (session?.user as { role?: string })?.role === "admin";
   const slug = selectedClient;
+  const unreadCount = useUnreadCount(slug);
 
   function clientHref(path: string) {
     return slug ? `/dashboard/${slug}${path}` : "/dashboard";
@@ -119,18 +121,23 @@ export function Sidebar() {
               useChatStore.getState().setCurrentSlug(slug);
               useChatStore.getState().toggleSidebar();
             }}
-            className="w-full flex items-center gap-2 px-3.5 py-2.5 mt-2 bg-rust text-white rounded-lg font-bold text-[13px] hover:opacity-90 justify-center"
+            className="w-full flex items-center gap-2 px-3.5 py-2.5 mt-2 bg-rust text-white rounded-lg font-bold text-[13px] hover:opacity-90 justify-center relative"
           >
-            💬 Chat con Sancho
+            💬 {t("chat.title")}
+            {unreadCount > 0 && (
+              <span className="ml-1.5 bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
+                {unreadCount}
+              </span>
+            )}
           </button>
         )}
 
         {/* ── Overview ── */}
-        <SectionLabel text="Overview" visible={sidebarOpen} />
+        <SectionLabel text={t("nav.overview")} visible={sidebarOpen} />
         <NavLink
           href="/dashboard"
           icon="📊"
-          label={t("dashboard")}
+          label={t("nav.dashboard")}
           active={isActive("/dashboard")}
           collapsed={!sidebarOpen}
         />
@@ -143,31 +150,38 @@ export function Sidebar() {
             <NavLink
               href={clientHref("/foundation")}
               icon="📂"
-              label="Documents"
+              label={t("nav.documents")}
               active={isActive(clientHref("/foundation"))}
               collapsed={!sidebarOpen}
             />
 
             {/* ── Trabajo ── */}
-            <SectionLabel text="Trabajo" visible={sidebarOpen} />
-            <NavLink href={clientHref("/projects")} icon="📋" label={t("projects")} active={isActive(clientHref("/projects"))} collapsed={!sidebarOpen} />
-            <NavLink href={clientHref("/ideas")} icon="💡" label={t("ideas")} active={isActive(clientHref("/ideas"))} collapsed={!sidebarOpen} />
-            <NavLink href={clientHref("/metrics")} icon="📈" label={t("metrics")} active={isActive(clientHref("/metrics"))} collapsed={!sidebarOpen} />
+            <SectionLabel text={t("nav.work")} visible={sidebarOpen} />
+            <NavLink href={clientHref("/projects")} icon="📋" label={t("nav.projects")} active={isActive(clientHref("/projects"))} collapsed={!sidebarOpen} />
+            <NavLink href={clientHref("/ideas")} icon="💡" label={t("nav.ideas")} active={isActive(clientHref("/ideas"))} collapsed={!sidebarOpen} />
+            <NavLink href={clientHref("/metrics")} icon="📈" label={t("nav.metrics")} active={isActive(clientHref("/metrics"))} collapsed={!sidebarOpen} />
 
             {/* ── Herramientas ── */}
-            <SectionLabel text="Herramientas" visible={sidebarOpen} />
-            <NavLink href={clientHref("/trust-engine")} icon="🔍" label={t("trustEngine")} active={isActive(clientHref("/trust-engine"))} collapsed={!sidebarOpen} />
-            <NavLink href={clientHref("/atalaya")} icon="🏰" label={t("atalaya")} active={isActive(clientHref("/atalaya"))} collapsed={!sidebarOpen} />
+            <SectionLabel text={t("nav.tools")} visible={sidebarOpen} />
+            <NavLink href={clientHref("/trust-engine")} icon="🔍" label={t("nav.trustEngine")} active={isActive(clientHref("/trust-engine"))} collapsed={!sidebarOpen} />
+            <NavLink href={clientHref("/atalaya")} icon="🏰" label={t("nav.atalaya")} active={isActive(clientHref("/atalaya"))} collapsed={!sidebarOpen} />
           </>
         )}
 
         {/* ── Sistema ── */}
-        <SectionLabel text="Sistema" visible={sidebarOpen} />
+        <SectionLabel text={t("nav.system")} visible={sidebarOpen} />
         <NavLink
           href="/dashboard/admin/activity"
           icon="📡"
-          label="Activity"
+          label={t("nav.activity")}
           active={isActive("/dashboard/admin/activity")}
+          collapsed={!sidebarOpen}
+        />
+        <NavLink
+          href="/dashboard/admin/settings"
+          icon="⚙️"
+          label={t("nav.settings")}
+          active={isActive("/dashboard/admin/settings")}
           collapsed={!sidebarOpen}
         />
 
@@ -226,6 +240,7 @@ function NavLink({
 }
 
 function ClientSelector() {
+  const t = useTranslations("sidebar");
   const { selectedClient, setSelectedClient } = useAppStore();
   const { data: clients } = useClients();
 
@@ -235,7 +250,7 @@ function ClientSelector() {
       onChange={(e) => setSelectedClient(e.target.value === "global" ? null : e.target.value)}
       className="w-full px-2 py-1.5 bg-background border border-border rounded-lg text-sm focus:outline-none focus:border-rust"
     >
-      <option value="global">🌐 Todos los clientes</option>
+      <option value="global">🌐 {t("allClients")}</option>
       {(clients || []).filter((c) => c.active).map((c) => (
         <option key={c.slug} value={c.slug}>
           {c.emoji || "🏢"} {c.name}
@@ -246,8 +261,7 @@ function ClientSelector() {
 }
 
 function UserFooter({ collapsed }: { collapsed: boolean }) {
-  const tAuth = useTranslations("auth");
-  const tTheme = useTranslations("theme");
+  const t = useTranslations();
   const router = useRouter();
   const { data: session } = useSession();
   const { toggleTheme, theme } = useAppStore();
@@ -255,7 +269,7 @@ function UserFooter({ collapsed }: { collapsed: boolean }) {
 
   const name = session?.user?.name || "Alfonso";
   const initial = name.charAt(0).toUpperCase();
-  const role = (session?.user as { role?: string })?.role === "admin" ? "Admin" : "Client";
+  const role = (session?.user as { role?: string })?.role === "admin" ? t("sidebar.admin") : t("sidebar.client");
 
   if (collapsed) {
     return (
@@ -278,27 +292,26 @@ function UserFooter({ collapsed }: { collapsed: boolean }) {
         <>
           <div className="fixed inset-0 z-[90]" onClick={() => setMenuOpen(false)} />
           <div className="absolute bottom-full left-0 right-0 mb-1 bg-card border border-border rounded-lg shadow-lg overflow-hidden z-[100]">
-            <DropdownItem icon="📜" label="Changelog" onClick={() => { router.push("/dashboard/changelog"); setMenuOpen(false); }} />
-            <DropdownItem icon="📖" label="¿Cómo empezar?" onClick={() => { router.push("/dashboard/guide"); setMenuOpen(false); }} />
+            <DropdownItem icon="📜" label={t("nav.changelog")} onClick={() => { router.push("/dashboard/changelog"); setMenuOpen(false); }} />
+            <DropdownItem icon="📖" label={t("settings.howToStart")} onClick={() => { router.push("/dashboard/guide"); setMenuOpen(false); }} />
             <DropdownItem
               icon="🌗"
-              label={theme === "light" ? tTheme("dark") : tTheme("light")}
+              label={theme === "light" ? t("theme.dark") : t("theme.light")}
               onClick={() => { toggleTheme(); setMenuOpen(false); }}
             />
             <DropdownItem
               icon="🌐"
-              label={useAppStore.getState().locale === "es" ? "English" : "Español"}
+              label={useAppStore.getState().locale === "es" ? t("language.en") : t("language.es")}
               onClick={() => {
                 useAppStore.getState().setLocale(useAppStore.getState().locale === "es" ? "en" : "es");
                 setMenuOpen(false);
               }}
             />
-            <DropdownItem icon="⚙️" label="Settings" onClick={() => { router.push("/dashboard/admin/settings"); setMenuOpen(false); }} />
             <button
               onClick={() => { signOut({ callbackUrl: "/auth/signin" }); setMenuOpen(false); }}
               className="w-full text-left px-3.5 py-2 text-xs text-red-500 hover:bg-background transition-colors"
             >
-              🚪 {tAuth("signOut")}
+              🚪 {t("auth.signOut")}
             </button>
           </div>
         </>

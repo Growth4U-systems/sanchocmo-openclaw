@@ -46,7 +46,7 @@ export function SlideOver({
       {/* Panel */}
       <div
         className={cn(
-          "fixed top-0 right-0 h-full bg-card border-l-[3px] border-ink overflow-y-auto",
+          "fixed top-0 right-0 h-full bg-white border-l border-[#E8E2D9] overflow-y-auto shadow-xl",
           "transform transition-transform duration-300 ease-out",
           open ? "translate-x-0" : "translate-x-full",
           width ?? "w-[75vw] max-w-3xl",
@@ -54,7 +54,7 @@ export function SlideOver({
       >
         {/* Header */}
         {(title || actions) && (
-          <div className="sticky top-0 z-10 flex items-center justify-between gap-4 bg-card border-b-2 border-border px-6 py-4">
+          <div className="sticky top-0 z-10 flex items-center justify-between gap-4 bg-white border-b border-[#E8E2D9] px-6 py-4">
             {title && (
               <h2 className="text-lg font-semibold text-foreground truncate">
                 {title}

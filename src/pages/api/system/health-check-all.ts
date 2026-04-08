@@ -1,0 +1,23 @@
+import type { NextApiRequest, NextApiResponse } from "next";
+import { compose, withErrorHandler, withAuth } from "@/lib/api-middleware";
+import { runHealthChecks } from "@/lib/health-check";
+
+/**
+ * GET /api/system/health-check-all?service=all|<serviceId>
+ * Runs health checks and persists results to api-health.json.
+ * Migrated from legacy mc-server.js proxy.
+ */
+async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== "GET") return res.status(405).json({ error: "Method not allowed" });
+
+  const service = (req.query.service as string) || "all";
+  const result = await runHealthChecks(service);
+
+  if (result.error) {
+    return res.status(400).json(result);
+  }
+
+  res.status(200).json(result);
+}
+
+export default compose(withErrorHandler, withAuth)(handler);

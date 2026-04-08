@@ -144,6 +144,12 @@ export function DocSlideOver({ slug, docPath, onClose }: DocSlideOverProps) {
     setEditing(false);
   }
 
+  const isJson = docPath?.endsWith(".json") || false;
+  const parsedJson = useMemo(() => {
+    if (!isJson || !content) return null;
+    try { return JSON.parse(content); } catch { return null; }
+  }, [isJson, content]);
+
   const btnClass = "inline-flex items-center gap-1.5 px-2.5 py-1 text-[13px] bg-transparent border border-[#E5E2DC] dark:border-[#313244] rounded-md cursor-pointer text-[#7A7A7A] dark:text-[#6c7086] hover:bg-[#E5E2DC] dark:hover:bg-[#313244] hover:text-[#1A1A1A] dark:hover:text-[#cdd6f4] transition-colors";
 
   return (
@@ -189,9 +195,11 @@ export function DocSlideOver({ slug, docPath, onClose }: DocSlideOverProps) {
               </select>
             )}
 
-            <button type="button" onClick={() => { if (editing) { setEditing(false); } else if (content) { setEditing(true); } }} className={btnClass}>
-              {editing ? "👁 Ver" : "✏️ Editar"}
-            </button>
+            {!isJson && !(docPath?.endsWith(".html") || (content && (content.trimStart().startsWith("<!DOCTYPE") || content.trimStart().startsWith("<html")))) && (
+              <button type="button" onClick={() => { if (editing) { setEditing(false); } else if (content) { setEditing(true); } }} className={btnClass}>
+                {editing ? "👁 Ver" : "✏️ Editar"}
+              </button>
+            )}
 
             <button type="button" onClick={handleOpenFull} className={btnClass} title="Abrir en Documents">
               ⤢ Abrir
@@ -213,14 +221,26 @@ export function DocSlideOver({ slug, docPath, onClose }: DocSlideOverProps) {
             {loading && <p className="text-sm text-muted-foreground text-center py-20">Cargando documento...</p>}
             {error && <p className="text-sm text-red-500 text-center py-20">{error}</p>}
             {content && (
-              <article className={cn(
-                "prose prose-sm max-w-none dark:prose-invert",
-                "prose-headings:font-heading prose-headings:text-rust prose-a:text-rust",
-                "prose-table:border-collapse prose-th:border prose-th:border-border prose-th:px-3 prose-th:py-2 prose-th:bg-muted/30 prose-th:text-left prose-th:text-xs prose-th:font-bold",
-                "prose-td:border prose-td:border-border prose-td:px-3 prose-td:py-2 prose-td:text-xs",
-              )}>
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
-              </article>
+              isJson && parsedJson ? (
+                <JsonViewer data={parsedJson} />
+              ) : (docPath?.endsWith(".html") || content.trimStart().startsWith("<!DOCTYPE") || content.trimStart().startsWith("<html")) ? (
+                <iframe
+                  srcDoc={content}
+                  className="w-full border-0 rounded-lg bg-white"
+                  style={{ minHeight: "calc(100vh - 120px)" }}
+                  sandbox="allow-same-origin"
+                  title={displayTitle}
+                />
+              ) : (
+                <article className={cn(
+                  "prose prose-sm max-w-none dark:prose-invert",
+                  "prose-headings:font-heading prose-headings:text-rust prose-a:text-rust",
+                  "prose-table:border-collapse prose-th:border prose-th:border-border prose-th:px-3 prose-th:py-2 prose-th:bg-muted/30 prose-th:text-left prose-th:text-xs prose-th:font-bold",
+                  "prose-td:border prose-td:border-border prose-td:px-3 prose-td:py-2 prose-td:text-xs",
+                )}>
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
+                </article>
+              )
             )}
           </div>
         )}
@@ -233,5 +253,141 @@ export function DocSlideOver({ slug, docPath, onClose }: DocSlideOverProps) {
         )}
       </div>
     </>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// JSON Viewer — renders structured JSON as readable cards and tables
+// ---------------------------------------------------------------------------
+
+function JsonViewer({ data }: { data: unknown }) {
+  if (data === null || data === undefined) return <span className="text-muted-foreground text-xs">null</span>;
+  if (typeof data !== "object") return <span className="text-sm">{String(data)}</span>;
+
+  // Top-level: show metadata header + render data section
+  const obj = data as Record<string, unknown>;
+  const metaKeys = ["module", "version", "created_at", "updated_at", "status", "metadata"];
+  const contentKeys = Object.keys(obj).filter((k) => !metaKeys.includes(k));
+  const hasMeta = metaKeys.some((k) => k in obj);
+
+  return (
+    <div className="space-y-4">
+      {/* Metadata header */}
+      {hasMeta && (
+        <div className="flex flex-wrap gap-3 pb-3 border-b border-border">
+          {obj.module ? <MetaBadge label="Modulo" value={String(obj.module)} /> : null}
+          {obj.status ? <MetaBadge label="Estado" value={String(obj.status)} /> : null}
+          {obj.version ? <MetaBadge label="Version" value={String(obj.version)} /> : null}
+          {obj.created_at ? <MetaBadge label="Creado" value={new Date(String(obj.created_at)).toLocaleDateString("es-ES", { day: "numeric", month: "short", year: "numeric" })} /> : null}
+          {obj.updated_at ? <MetaBadge label="Actualizado" value={new Date(String(obj.updated_at)).toLocaleDateString("es-ES", { day: "numeric", month: "short", year: "numeric" })} /> : null}
+        </div>
+      )}
+
+      {/* Content sections */}
+      {contentKeys.map((key) => (
+        <JsonSection key={key} label={key} data={obj[key]} depth={0} />
+      ))}
+    </div>
+  );
+}
+
+function MetaBadge({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-center gap-1.5 text-xs">
+      <span className="text-muted-foreground font-medium">{label}:</span>
+      <span className="font-semibold text-foreground bg-muted/50 px-2 py-0.5 rounded">{value}</span>
+    </div>
+  );
+}
+
+function JsonSection({ label, data, depth }: { label: string; data: unknown; depth: number }) {
+  const title = label.replace(/[_-]/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+
+  if (data === null || data === undefined) return null;
+
+  // Primitive
+  if (typeof data !== "object") {
+    return (
+      <div className="flex items-baseline gap-2 py-0.5">
+        <span className="text-xs text-muted-foreground font-medium min-w-[120px]">{title}</span>
+        <span className="text-sm">{String(data)}</span>
+      </div>
+    );
+  }
+
+  // Array of objects → table
+  if (Array.isArray(data) && data.length > 0 && typeof data[0] === "object" && data[0] !== null) {
+    const keys = Array.from(new Set(data.flatMap((row) => Object.keys(row as Record<string, unknown>)))).slice(0, 8);
+    return (
+      <div>
+        <h3 className="text-sm font-bold text-[#2C3E50] mb-2">{title}</h3>
+        <div className="overflow-x-auto rounded-lg border border-border">
+          <table className="w-full text-xs border-collapse">
+            <thead>
+              <tr className="bg-muted/30">
+                {keys.map((k) => (
+                  <th key={k} className="text-left px-3 py-2 font-bold border-b border-border text-muted-foreground">
+                    {k.replace(/[_-]/g, " ")}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {data.map((row, i) => {
+                const r = row as Record<string, unknown>;
+                return (
+                  <tr key={i} className="border-b border-border last:border-0 hover:bg-muted/10">
+                    {keys.map((k) => (
+                      <td key={k} className="px-3 py-2 max-w-[250px] truncate">
+                        {typeof r[k] === "object" && r[k] !== null
+                          ? Array.isArray(r[k]) ? (r[k] as unknown[]).length + " items" : JSON.stringify(r[k]).slice(0, 60)
+                          : String(r[k] ?? "")}
+                      </td>
+                    ))}
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+        {data.length > 20 && <p className="text-[10px] text-muted-foreground mt-1">{data.length} filas totales</p>}
+      </div>
+    );
+  }
+
+  // Array of primitives
+  if (Array.isArray(data)) {
+    return (
+      <div>
+        <h3 className="text-sm font-bold text-[#2C3E50] mb-1">{title}</h3>
+        <div className="flex flex-wrap gap-1">
+          {data.map((item, i) => (
+            <span key={i} className="text-xs bg-muted/40 px-2 py-0.5 rounded">{String(item)}</span>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // Nested object — card
+  const entries = Object.entries(data as Record<string, unknown>);
+  if (depth > 2) {
+    return (
+      <div className="py-0.5">
+        <span className="text-xs text-muted-foreground font-medium">{title}: </span>
+        <span className="text-xs">{JSON.stringify(data).slice(0, 100)}</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className={depth === 0 ? "bg-background border border-border rounded-lg p-4" : "pl-3 border-l-2 border-border"}>
+      <h3 className={cn("font-bold text-[#2C3E50] mb-2", depth === 0 ? "text-sm" : "text-xs")}>{title}</h3>
+      <div className="space-y-1.5">
+        {entries.map(([k, v]) => (
+          <JsonSection key={k} label={k} data={v} depth={depth + 1} />
+        ))}
+      </div>
+    </div>
   );
 }

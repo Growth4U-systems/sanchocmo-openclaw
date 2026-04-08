@@ -51,6 +51,38 @@ export function useUpdateIdeaStatus() {
   });
 }
 
+export function useUpdatePipelineStep() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (body: { slug: string; ideaId: string; pipeline_step: string }) => {
+      const res = await fetch("/api/ideas/status", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slug: body.slug, ideaId: body.ideaId, status: "approved", pipeline_step: body.pipeline_step }),
+      });
+      if (!res.ok) throw new Error("Failed to update pipeline step");
+      return res.json();
+    },
+    onSuccess: (_d, v) => { qc.invalidateQueries({ queryKey: ["ideas", v.slug] }); },
+  });
+}
+
+export function useUpdatePipelineStatus() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (body: { slug: string; ideaId: string; pipeline_status: string }) => {
+      const res = await fetch("/api/ideas/status", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slug: body.slug, ideaId: body.ideaId, status: "approved", pipeline_status: body.pipeline_status }),
+      });
+      if (!res.ok) throw new Error("Failed to update pipeline status");
+      return res.json();
+    },
+    onSuccess: (_d, v) => { qc.invalidateQueries({ queryKey: ["ideas", v.slug] }); },
+  });
+}
+
 export function useDeleteIdea() {
   const qc = useQueryClient();
   return useMutation({

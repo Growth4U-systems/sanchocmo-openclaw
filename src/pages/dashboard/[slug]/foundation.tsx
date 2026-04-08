@@ -14,7 +14,7 @@ import Head from "next/head";
 import { useState, useCallback, useEffect } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { useSlugSync } from "@/hooks/useSlugSync";
-import { useFoundation, useUpdatePillarStatus } from "@/hooks/useFoundation";
+import { useFoundation, useUpdatePillarStatus, useOtherDocs } from "@/hooks/useFoundation";
 import { useOpenChat } from "@/hooks/useChat";
 import { buildPillarThread } from "@/lib/chat-openers";
 import { DepthBar } from "@/components/foundation/depth-bar";
@@ -35,32 +35,7 @@ import type { FoundationState, Section, Pillar, PillarStatus } from "@/types";
 // DocViewerBody — just the markdown content, no breadcrumbs
 // ============================================================
 
-function DocViewerBody({ slug, docPath }: { slug: string; docPath: string }) {
-  const [content, setContent] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    setLoading(true);
-    setError(null);
-    setContent(null);
-    fetch(`/api/docs/${docPath}`)
-      .then((res) => { if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.json(); })
-      .then((data) => { if (data.ok && data.content) setContent(data.content); else setError(data.error || "Not found"); })
-      .catch((e) => setError(e.message))
-      .finally(() => setLoading(false));
-  }, [slug, docPath]);
-
-  if (loading) return <p className="text-sm text-muted-foreground text-center py-20">Cargando documento...</p>;
-  if (error) return <p className="text-sm text-red-500 text-center py-20">Error: {error}</p>;
-  if (!content) return null;
-
-  return (
-    <article className="prose prose-sm max-w-none dark:prose-invert prose-headings:font-heading prose-headings:text-rust prose-a:text-rust prose-table:border-collapse prose-th:border prose-th:border-border prose-th:px-3 prose-th:py-2 prose-th:bg-muted/30 prose-th:text-left prose-th:text-xs prose-th:font-bold prose-td:border prose-td:border-border prose-td:px-3 prose-td:py-2 prose-td:text-xs">
-      <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
-    </article>
-  );
-}
+// DocViewerBody removed — inlined into selectedDoc view
 
 // ============================================================
 // Status Dropdown — matches legacy renderStatusDropdown()
@@ -145,6 +120,8 @@ interface SelectedDoc {
   pillarKey: string;
   pillar: Pillar;
   docPath: string;
+  /** Parent pillar key for deep-dive docs (e.g. "competitor-analysis" for a competitor deep-dive) */
+  parentPillar?: string;
 }
 
 // ============================================================
@@ -155,6 +132,7 @@ export default function FoundationPage() {
   const slug = useSlugSync();
   const router = useRouter();
   const { data: foundation, isLoading } = useFoundation(slug);
+  const { data: otherDocs } = useOtherDocs(slug);
   const openChat = useOpenChat();
 
   const [selectedDoc, setSelectedDoc] = useState<SelectedDoc | null>(null);
@@ -202,14 +180,37 @@ export default function FoundationPage() {
     [],
   );
 
-  // Handle opening chat for a pillar
+  // Handle opening chat for a pillar (or deep-dive doc with parent pillar context)
   const handleOpenChat = useCallback(
     (pillarKey: string, docPath?: string) => {
       if (!slug) return;
-      const config = buildPillarThread(slug, pillarKey, docPath);
+      // For deep-dive docs, use the parent pillar for skill resolution
+      // but keep the specific doc name for the thread name
+      const skillPillar = selectedDoc?.parentPillar || pillarKey;
+      const config = buildPillarThread(slug, skillPillar, docPath);
+      // Override thread ID and name to be specific to this deep-dive doc
+      if (selectedDoc?.parentPillar && pillarKey !== skillPillar) {
+        config.threadId = `${slug}:${pillarKey}`;
+        config.threadName = pillarKey.replace(/-/g, " ");
+      }
       openChat(slug, config);
     },
-    [slug, openChat],
+    [slug, openChat, selectedDoc?.parentPillar],
+  );
+
+  // Handle selecting an "other doc" (no pillar/section), with optional parent pillar for deep-dives
+  const handleSelectOtherDoc = useCallback(
+    (docPath: string, docName: string, parentPillar?: string) => {
+      const pillarKey = docName.toLowerCase().replace(/\s+/g, "-");
+      setSelectedDoc({
+        sectionKey: "",
+        pillarKey,
+        pillar: { status: "approved" } as Pillar,
+        docPath,
+        parentPillar,
+      });
+    },
+    [],
   );
 
   // Handle going back to folder view
@@ -293,6 +294,15 @@ export default function FoundationPage() {
               />
             )}
 
+            {/* Download */}
+            <a
+              href={`/api/docs/${selectedDoc.docPath}?download=1`}
+              download
+              className={btnClass + " no-underline"}
+            >
+              ⬇ Descargar
+            </a>
+
             {/* Chat */}
             <button
               type="button"
@@ -302,15 +312,17 @@ export default function FoundationPage() {
               💬 Chat
             </button>
 
-            {/* Editar — toggle editor */}
-            <button
-              type="button"
-              onClick={() => setEditing(!editing)}
-              disabled={!docContent}
-              className={btnClass}
-            >
-              {editing ? "👁 Ver" : "✏️ Editar"}
-            </button>
+            {/* Editar — toggle editor (hide for HTML presentations) */}
+            {!(selectedDoc.docPath.endsWith(".html") || (docContent && (docContent.trimStart().startsWith("<!DOCTYPE") || docContent.trimStart().startsWith("<html")))) && (
+              <button
+                type="button"
+                onClick={() => setEditing(!editing)}
+                disabled={!docContent}
+                className={btnClass}
+              >
+                {editing ? "👁 Ver" : "✏️ Editar"}
+              </button>
+            )}
           </div>
         </div>
 
@@ -334,9 +346,19 @@ export default function FoundationPage() {
             />
           </div>
         ) : !docLoading && docContent ? (
-          <article className="prose prose-sm max-w-none dark:prose-invert prose-headings:font-heading prose-headings:text-rust prose-a:text-rust prose-table:border-collapse prose-th:border prose-th:border-border prose-th:px-3 prose-th:py-2 prose-th:bg-muted/30 prose-th:text-left prose-th:text-xs prose-th:font-bold prose-td:border prose-td:border-border prose-td:px-3 prose-td:py-2 prose-td:text-xs">
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>{docContent}</ReactMarkdown>
-          </article>
+          selectedDoc.docPath.endsWith(".html") || docContent.trimStart().startsWith("<!DOCTYPE") || docContent.trimStart().startsWith("<html") ? (
+            <iframe
+              srcDoc={docContent}
+              className="w-full border-0 rounded-lg bg-white"
+              style={{ minHeight: "80vh" }}
+              sandbox="allow-same-origin"
+              title={pillarTitle}
+            />
+          ) : (
+            <article className="prose prose-sm max-w-none dark:prose-invert prose-headings:font-heading prose-headings:text-rust prose-a:text-rust prose-table:border-collapse prose-th:border prose-th:border-border prose-th:px-3 prose-th:py-2 prose-th:bg-muted/30 prose-th:text-left prose-th:text-xs prose-th:font-bold prose-td:border prose-td:border-border prose-td:px-3 prose-td:py-2 prose-td:text-xs">
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>{docContent}</ReactMarkdown>
+            </article>
+          )
         ) : !docLoading ? (
           <p className="text-sm text-red-500 text-center py-20">Documento no encontrado</p>
         ) : null}
@@ -354,7 +376,7 @@ export default function FoundationPage() {
         <title>Documents &mdash; {slug} &mdash; Mission Control</title>
       </Head>
 
-      {/* Page title + breadcrumbs */}
+      {/* Page title + breadcrumbs + download */}
       <div className="flex items-center gap-3 mb-2 flex-wrap">
         <h1 className="font-heading text-2xl text-navy m-0">
           {"\uD83D\uDCC2"} Documents
@@ -362,6 +384,12 @@ export default function FoundationPage() {
         <div className="text-sm text-muted-foreground flex items-center gap-1.5">
           <span className="text-rust font-bold">{slug}</span>
         </div>
+        <a
+          href={`/api/foundation/download?slug=${encodeURIComponent(slug)}`}
+          className="ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-medium bg-transparent border border-[#E5E2DC] dark:border-[#313244] rounded-md text-[#7A7A7A] dark:text-[#6c7086] hover:bg-[#E5E2DC] dark:hover:bg-[#313244] hover:text-[#1A1A1A] dark:hover:text-[#cdd6f4] transition-colors no-underline"
+        >
+          ⬇ Descargar todo
+        </a>
       </div>
 
       {/* Foundation depth bar */}
@@ -374,7 +402,9 @@ export default function FoundationPage() {
       <FileTree
         slug={slug}
         foundation={foundation}
+        otherDocs={otherDocs}
         onSelectDoc={handleSelectDoc}
+        onSelectOtherDoc={handleSelectOtherDoc}
         onOpenChat={handleOpenChat}
       />
     </DashboardLayout>

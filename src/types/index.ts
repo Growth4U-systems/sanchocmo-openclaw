@@ -22,6 +22,7 @@ export interface Project {
   objective?: string | { description?: string; metric?: string; baseline?: number; target?: number; unit?: string };
   approach?: string;
   archive_reason?: string;
+  tool?: string;              // Research tool: "trust-engine", "atalaya", etc.
 }
 
 export interface ProjectRegistry {
@@ -34,7 +35,7 @@ export interface ProjectRegistry {
 // --- Tasks ---
 
 export type TaskStatus = "todo" | "ready" | "in_progress" | "in-progress" | "done" | "completed" | "blocked" | "pending" | "discarded" | "cancelled";
-export type TaskType = "content" | "outreach" | "foundation" | "research" | "analysis" | "execution";
+export type TaskType = "content" | "outreach" | "foundation" | "research" | "analysis" | "execution" | "tool";
 
 export interface Task {
   id: string;               // "P01-T01"
@@ -107,6 +108,31 @@ export interface Idea {
 
 export interface IdeaFile {
   ideas: Idea[];
+}
+
+// --- Recommendations ---
+
+export type RecommendationStatus = "pending" | "approved" | "dismissed" | "converted";
+
+export interface Recommendation {
+  id: string;
+  source: string;
+  type: string;               // content_idea | outreach_task | operational
+  priority: string;           // high | medium | low
+  title: string;
+  description: string;
+  rationale: string;
+  content?: { channels?: string[]; format?: string };
+  contact?: Record<string, unknown>;
+  operational?: {
+    linked_project: string | null;
+    linked_metric: string | null;
+    suggested_action: string;
+  };
+  status: RecommendationStatus;
+  created_at: string;
+  converted_to?: string | null;
+  _file?: string;
 }
 
 // --- Foundation ---

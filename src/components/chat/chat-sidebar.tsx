@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useEffect, useState, useCallback, type KeyboardEvent } from "react";
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import { useChatStore } from "@/stores/chat";
 import { useAppStore } from "@/stores/app";
@@ -9,8 +10,9 @@ import {
   useThreadList,
   useSendMessage,
   useCancelMessage,
+  useMarkThreadRead,
 } from "@/hooks/useChat";
-import { threadIcon } from "@/lib/chat-openers";
+import { threadIcon, getAutoPrompt } from "@/lib/chat-openers";
 
 // ---------------------------------------------------------------------------
 // Agent badge config
@@ -55,6 +57,7 @@ function formatMessage(text: string): string {
 // ---------------------------------------------------------------------------
 
 export function ChatSidebar() {
+  const t = useTranslations("chat");
   const {
     sidebarOpen,
     sidebarLocked,
@@ -72,6 +75,20 @@ export function ChatSidebar() {
   const { selectedClient } = useAppStore();
   const slug = selectedClient ?? "";
 
+  // Reset chat state when client changes — avoid cross-client thread leaks
+  useEffect(() => {
+    if (!slug) return;
+    // If locked to a thread from a different slug, close the sidebar
+    if (sidebarLocked && lockedThreadId && !lockedThreadId.startsWith(slug + ":")) {
+      closeSidebar();
+      return;
+    }
+    // If free mode thread belongs to another slug, clear it
+    if (currentThread && !currentThread.startsWith(slug + ":")) {
+      setCurrentThread(null);
+    }
+  }, [slug, sidebarLocked, lockedThreadId, currentThread, closeSidebar, setCurrentThread]);
+
   // Thread list (free mode)
   const threadListQuery = useThreadList(slug);
   const threads = threadListQuery.data ?? [];
@@ -84,9 +101,10 @@ export function ChatSidebar() {
   const messages = messagesQuery.data?.messages ?? [];
   const statusData = messagesQuery.data?.status;
 
-  // Send / cancel
+  // Send / cancel / mark-read
   const sendMutation = useSendMessage();
   const cancelMutation = useCancelMessage();
+  const markReadMutation = useMarkThreadRead();
 
   // Thread metadata
   const meta = activeThreadId ? threadMeta[activeThreadId] : undefined;
@@ -97,11 +115,49 @@ export function ChatSidebar() {
   // Input state
   const [input, setInput] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const autoPromptSentRef = useRef<string | null>(null);
+
+  // Auto-send initial prompt when opening a new empty thread
+  useEffect(() => {
+    if (!activeThreadId || !meta?.threadState) return;
+    if (messages.length > 0) return;
+    if (autoPromptSentRef.current === activeThreadId) return;
+    // Build a minimal ThreadConfig from meta to generate the prompt
+    const prompt = getAutoPrompt({
+      threadId: activeThreadId,
+      threadName: meta.threadName,
+      skill: meta.skill,
+      skills: meta.skills,
+      linkedTo: meta.linkedTo,
+      docPath: meta.docPath,
+      threadState: meta.threadState,
+      initialMessage: meta.initialMessage,
+    });
+    autoPromptSentRef.current = activeThreadId;
+    sendMutation.mutate({ text: prompt, threadId: activeThreadId });
+  }, [activeThreadId, meta, messages.length, sendMutation]);
 
   // Auto-scroll on new messages
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages.length]);
+
+  // Mark thread as read when opened
+  useEffect(() => {
+    if (!activeThreadId || !slug) return;
+    markReadMutation.mutate({ slug, threadId: activeThreadId });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeThreadId, slug]);
+
+  // Mark as read when new bot messages arrive while viewing the thread
+  useEffect(() => {
+    if (!activeThreadId || !slug || messages.length === 0) return;
+    const lastMsg = messages[messages.length - 1];
+    if (lastMsg.role !== "user") {
+      markReadMutation.mutate({ slug, threadId: activeThreadId });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [messages.length, activeThreadId, slug]);
 
   // Typing indicator
   const lastMsg = messages[messages.length - 1];
@@ -114,10 +170,13 @@ export function ChatSidebar() {
     if (!trimmed || !activeThreadId) return;
     sendMutation.mutate({ text: trimmed, threadId: activeThreadId });
     setInput("");
+    // Reset textarea height
+    const ta = document.querySelector<HTMLTextAreaElement>(".chat-textarea");
+    if (ta) ta.style.height = "auto";
   }, [input, activeThreadId, sendMutation]);
 
   const handleKeyDown = useCallback(
-    (e: KeyboardEvent<HTMLInputElement>) => {
+    (e: KeyboardEvent<HTMLTextAreaElement>) => {
       if (e.key === "Enter" && !e.shiftKey) {
         e.preventDefault();
         handleSend();
@@ -140,23 +199,23 @@ export function ChatSidebar() {
       <div className="flex items-center justify-between px-3 py-2 border-b border-[#313244] shrink-0">
         <div className="flex items-center gap-2">
           <span className="inline-block w-2 h-2 rounded-full bg-green-500 shrink-0" />
-          <span className="text-[12px] font-semibold text-[#cdd6f4]">Chat con Sancho</span>
+          <span className="text-[12px] font-semibold text-[#cdd6f4]">{t("title")}</span>
         </div>
         <div className="flex items-center gap-2">
           <span className="text-[10px] text-[#a6adc8]">
-            {statusData?.text || (isPolling ? "Conectado" : "En espera")}
+            {statusData?.text || (isPolling ? t("connected") : t("waiting"))}
           </span>
           <button
             onClick={toggleFullscreen}
             className="text-[#a6adc8] hover:text-[#cdd6f4] text-sm leading-none border border-[#45475a] rounded-md px-1.5 py-0.5"
-            title={isFullscreen ? "Salir de pantalla completa" : "Pantalla completa"}
+            title={isFullscreen ? t("exitFullscreen") : t("fullscreen")}
           >
             {isFullscreen ? "⤡" : "⤢"}
           </button>
           <button
             onClick={closeSidebar}
             className="text-[#a6adc8] hover:text-[#f38ba8] text-sm leading-none border border-[#45475a] rounded-md px-1.5 py-0.5"
-            title="Cerrar"
+            title={t("closeSidebar")}
           >
             ✕
           </button>
@@ -190,14 +249,14 @@ export function ChatSidebar() {
               <div className="flex items-center gap-1 shrink-0">
                 <button
                   className="text-[#a6adc8] hover:text-[#cdd6f4] text-sm border border-[#45475a] rounded-md px-1 py-0.5"
-                  title="Sincronizar con Discord"
+                  title={t("syncDiscord")}
                 >
                   📱
                 </button>
                 <button
                   onClick={unlockSidebar}
                   className="text-[#a6adc8] hover:text-[#cdd6f4] text-sm border border-[#45475a] rounded-md px-1 py-0.5"
-                  title="Desbloquear — modo libre"
+                  title={t("unlockFreeMode")}
                 >
                   🔓
                 </button>
@@ -208,7 +267,7 @@ export function ChatSidebar() {
             {meta?.docPath && (
               <div className="bg-[#313244] rounded-lg px-3 py-1.5 text-[11px] text-[#a6adc8] flex items-center gap-1.5 truncate cursor-pointer hover:bg-[#45475a] transition-colors">
                 <span>📄</span>
-                <span className="text-rust font-heading">Documento actual</span>
+                <span className="text-rust font-heading">{t("currentDoc")}</span>
                 <span className="text-[#6c7086]">—</span>
                 <span className="text-[#cdd6f4] truncate">{meta.docPath.split("/").pop()}</span>
               </div>
@@ -222,16 +281,16 @@ export function ChatSidebar() {
               onChange={(e) => setCurrentThread(e.target.value || null)}
               className="flex-1 bg-[#313244] text-[#cdd6f4] text-[12px] px-2 py-1.5 rounded-lg border border-[#45475a] focus:outline-none focus:border-rust truncate"
             >
-              <option value="">Seleccionar hilo...</option>
+              <option value="">{t("selectThreadOption")}</option>
               {threads.map((t) => (
                 <option key={t.id} value={t.id}>
-                  {threadIcon(t.shortId)} {t.name}
+                  {t.hasUnread ? "● " : ""}{threadIcon(t.shortId)} {t.name}
                 </option>
               ))}
             </select>
             <button
               className="bg-[#313244] hover:bg-[#45475a] text-green-500 w-7 h-7 rounded-lg flex items-center justify-center text-sm border border-[#45475a]"
-              title="Nuevo hilo"
+              title={t("newThread")}
             >
               +
             </button>
@@ -248,7 +307,7 @@ export function ChatSidebar() {
                 🤠 Sancho
               </span>
             </div>
-            {sidebarLocked ? "🔄 Cargando..." : "Selecciona un thread para empezar."}
+            {sidebarLocked ? `🔄 ${t("loading")}` : t("selectThread")}
           </div>
         )}
 
@@ -289,7 +348,7 @@ export function ChatSidebar() {
                   {primarySkill}
                 </span>
               )}
-              <span>· 🔄 Sancho está pensando...</span>
+              <span>· 🔄 {t("thinking")}</span>
             </div>
           </div>
         )}
@@ -299,21 +358,27 @@ export function ChatSidebar() {
 
       {/* INPUT BAR */}
       <div className="px-3 py-2 border-t border-[#313244] shrink-0">
-        <div className="flex items-center gap-2">
-          <input
-            type="text"
+        <div className="flex items-end gap-2">
+          <textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Escribe aquí..."
+            placeholder={t("placeholder")}
             disabled={!activeThreadId}
-            className="flex-1 bg-[#313244] text-[#cdd6f4] placeholder-[#6c7086] text-[12px] px-3 py-2 rounded-lg border border-[#45475a] focus:outline-none focus:border-rust disabled:opacity-50"
+            rows={1}
+            onInput={(e) => {
+              const el = e.currentTarget;
+              el.style.height = "auto";
+              el.style.height = Math.min(el.scrollHeight, 120) + "px";
+            }}
+            className="chat-textarea flex-1 bg-[#313244] text-[#cdd6f4] placeholder-[#6c7086] text-[12px] px-3 py-2 rounded-lg border border-[#45475a] focus:outline-none focus:border-rust disabled:opacity-50 resize-none overflow-y-auto leading-snug"
+            style={{ maxHeight: 120 }}
           />
           {showTyping || sendMutation.isPending ? (
             <button
               onClick={() => cancelMutation.mutate({ threadId: activeThreadId ?? undefined })}
               className="bg-red-600 hover:bg-red-700 text-white w-8 h-8 rounded-lg flex items-center justify-center text-sm shrink-0"
-              title="Detener"
+              title={t("stop")}
             >
               ⏹
             </button>
@@ -322,7 +387,7 @@ export function ChatSidebar() {
               onClick={handleSend}
               disabled={!activeThreadId || !input.trim()}
               className="bg-rust hover:opacity-90 text-white w-8 h-8 rounded-lg flex items-center justify-center text-sm shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
-              title="Enviar"
+              title={t("send")}
             >
               →
             </button>

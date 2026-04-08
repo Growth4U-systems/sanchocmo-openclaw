@@ -4,7 +4,6 @@ import path from "path";
 import { withAuth, withErrorHandler, compose } from "@/lib/api-middleware";
 import { foundationStateFile, BASE } from "@/lib/data/paths";
 import { safeWriteJSON } from "@/lib/data/json-io";
-import { execSync } from "child_process";
 
 const VALID_STATUSES = [
   "approved",
@@ -76,13 +75,6 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     const s = d as { sections?: unknown };
     return !!s.sections;
   });
-
-  // Regenerate mc-data.js
-  try {
-    execSync("python3 scripts/regenerate.py", { cwd: BASE, timeout: 15000 });
-  } catch (e) {
-    console.error("[api] regenerate after pillar status change failed:", e instanceof Error ? e.message : e);
-  }
 
   // Sync: update matching P00 foundation task status
   const syncTaskStatus = PILLAR_TO_TASK[status] || "todo";

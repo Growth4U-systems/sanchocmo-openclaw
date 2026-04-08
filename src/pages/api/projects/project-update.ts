@@ -1,7 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import fs from "fs";
 import path from "path";
-import { execSync } from "child_process";
 import { compose, withErrorHandler, withAuth } from "@/lib/api-middleware";
 import { BASE } from "@/lib/data/paths";
 
@@ -15,14 +14,6 @@ function resolveProjectDir(projectsDir: string, projectId: string): string | nul
     if (exact) return path.join(projectsDir, exact.name);
   } catch {}
   return null;
-}
-
-function regenerate(): void {
-  try {
-    execSync("python3 scripts/regenerate.py", { cwd: BASE, timeout: 15000 });
-  } catch (e) {
-    console.error("[project-update] regenerate error:", (e as Error).message);
-  }
 }
 
 const ALLOWED_PROJECT_FIELDS = [
@@ -72,8 +63,6 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     if (ALLOWED_PROJECT_FIELDS.includes(k)) project[k] = v;
   }
   fs.writeFileSync(projFile, JSON.stringify(project, null, 2));
-
-  regenerate();
 
   return res.status(200).json({ ok: true, project });
 }

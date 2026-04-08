@@ -327,7 +327,7 @@ export function MetricsColumn({ slug }: MetricsColumnProps) {
           </div>
         ) : (
           <Link
-            href="/apis"
+            href="/dashboard/admin/settings?tab=apis"
             className="block bg-[#FEF3EE] border border-rust rounded-lg p-3 mb-3"
           >
             <div className="flex items-center gap-2.5">
@@ -405,7 +405,7 @@ export function MetricsColumn({ slug }: MetricsColumnProps) {
 
       {/* Link to full metrics */}
       <div className="text-center mt-2">
-        <Link href="/metrics" className="text-xs text-rust hover:underline">
+        <Link href={`/dashboard/${slug}/metrics`} className="text-xs text-rust hover:underline">
           Ver metricas completas {"\u2192"}
         </Link>
       </div>

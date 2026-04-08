@@ -39,8 +39,21 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     return res.status(404).json({ error: "Idea not found" });
   }
 
+  const { pipeline_status: newPipelineStatus } = req.body;
+
   const oldStatus = idea.status;
   idea.status = status;
+
+  // Update pipeline_status if provided (outreach contacts)
+  if (newPipelineStatus !== undefined) {
+    (idea as Record<string, unknown>).pipeline_status = newPipelineStatus;
+  }
+
+  // Update pipeline_step if provided (content ideas)
+  const { pipeline_step: newPipelineStep } = req.body;
+  if (newPipelineStep !== undefined) {
+    (idea as Record<string, unknown>).pipeline_step = newPipelineStep;
+  }
 
   if (status === "approved") {
     idea.approved_at = new Date().toISOString();

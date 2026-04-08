@@ -9,8 +9,7 @@ import {
   useUpdateTaskStatus,
   useUpdateProject,
 } from "@/hooks/useProjects";
-import { useOpenChat } from "@/hooks/useChat";
-import { buildTaskThread, buildProjectThread } from "@/lib/chat-openers";
+
 import { PRJ_CHANNELS } from "@/lib/constants";
 import type { Project, Task } from "@/types";
 
@@ -76,7 +75,6 @@ export function WorkEditor({
 }: WorkEditorProps) {
   const updateTask = useUpdateTaskStatus();
   const updateProject = useUpdateProject();
-  const openChat = useOpenChat();
 
   // Form state
   const [name, setName] = useState("");
@@ -150,30 +148,7 @@ export function WorkEditor({
     }
   }, [entity, mode]);
 
-  // Also open chat sidebar when editor opens (matching legacy behavior)
-  useEffect(() => {
-    if (!open || !entity || !slug) return;
-
-    if (mode === "task") {
-      const t = entity as Task;
-      const tType = t.type || t.batch_type || "execution";
-      const config = buildTaskThread(slug, t.id, t.name, parentProjectId, {
-        taskSkill: t.skill,
-        taskChannel: t.channel,
-        taskStatus: t.status,
-        taskType: tType,
-        pillar: t.pillar,
-      });
-      openChat(slug, config);
-    } else {
-      const p = entity as Project;
-      const config = buildProjectThread(slug, p.id, p.name, {
-        strategy: p.strategy,
-        status: p.status,
-      });
-      openChat(slug, config);
-    }
-  }, [open, entity, mode, slug, parentProjectId, openChat]);
+  // Chat is no longer auto-opened with the editor — user can open it separately.
 
   const handleSave = useCallback(() => {
     if (!editId || !slug) return;
@@ -236,7 +211,7 @@ export function WorkEditor({
       <button
         onClick={handleSave}
         disabled={updateTask.isPending || updateProject.isPending}
-        className="px-3 py-1.5 bg-rust text-white rounded-lg text-xs font-semibold hover:opacity-90 disabled:opacity-50 transition-opacity"
+        className="px-3 py-1.5 bg-[#2C3E50] text-white rounded-lg text-xs font-semibold hover:bg-[#34495E] disabled:opacity-50 transition-all"
       >
         💾 Guardar
       </button>
@@ -257,7 +232,7 @@ export function WorkEditor({
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-card focus:outline-none focus:border-rust transition-colors"
+            className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:border-[#2C3E50] transition-colors"
           />
         </Field>
 
@@ -277,7 +252,7 @@ export function WorkEditor({
               <select
                 value={taskType}
                 onChange={(e) => setTaskType(e.target.value)}
-                className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-card focus:outline-none focus:border-rust transition-colors"
+                className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:border-[#2C3E50] transition-colors"
               >
                 {TASK_TYPE_OPTIONS.map((o) => (
                   <option key={o.value} value={o.value}>
@@ -311,7 +286,7 @@ export function WorkEditor({
                   <select
                     value={channel}
                     onChange={(e) => setChannel(e.target.value)}
-                    className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-card focus:outline-none focus:border-rust transition-colors"
+                    className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:border-[#2C3E50] transition-colors"
                   >
                     <option value="">—</option>
                     {PRJ_CHANNELS.map((c) => (
@@ -327,7 +302,7 @@ export function WorkEditor({
                   <select
                     value={taskStatus}
                     onChange={(e) => setTaskStatus(e.target.value)}
-                    className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-card focus:outline-none focus:border-rust transition-colors"
+                    className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:border-[#2C3E50] transition-colors"
                   >
                     {TASK_STATUS_OPTIONS.map((o) => (
                       <option key={o.value} value={o.value}>
@@ -343,7 +318,7 @@ export function WorkEditor({
               <input
                 value={owner}
                 onChange={(e) => setOwner(e.target.value)}
-                className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-card focus:outline-none focus:border-rust transition-colors"
+                className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:border-[#2C3E50] transition-colors"
               />
             </Field>
 
@@ -352,7 +327,7 @@ export function WorkEditor({
                 value={skill}
                 onChange={(e) => setSkill(e.target.value)}
                 placeholder="ej: seo-content, outreach-sequence-builder"
-                className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-card focus:outline-none focus:border-rust transition-colors"
+                className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:border-[#2C3E50] transition-colors"
               />
             </Field>
           </>
@@ -385,7 +360,7 @@ export function WorkEditor({
                   <select
                     value={projStatus}
                     onChange={(e) => setProjStatus(e.target.value)}
-                    className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-card focus:outline-none focus:border-rust transition-colors"
+                    className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:border-[#2C3E50] transition-colors"
                   >
                     {PROJECT_STATUS_OPTIONS.map((o) => (
                       <option key={o.value} value={o.value}>
@@ -401,7 +376,7 @@ export function WorkEditor({
                     type="date"
                     value={reviewDate}
                     onChange={(e) => setReviewDate(e.target.value)}
-                    className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-card focus:outline-none focus:border-rust transition-colors"
+                    className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:border-[#2C3E50] transition-colors"
                   />
                 </Field>
               </div>

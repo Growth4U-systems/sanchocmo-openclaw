@@ -57,6 +57,10 @@ export function chatThreadFile(slug: string, threadId: string) {
   return path.join(BASE, "brand", slug, "chat", `${threadId}.json`);
 }
 
+export function chatReadStateFile(slug: string) {
+  return path.join(BASE, "brand", slug, "chat", "_read-state.json");
+}
+
 export function atalayaDir(slug: string) {
   return path.join(BASE, "brand", slug, "atalaya");
 }

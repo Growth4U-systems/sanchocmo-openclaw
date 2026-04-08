@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { useFoundation } from "@/hooks/useFoundation";
 import { useOpenChat } from "@/hooks/useChat";
@@ -108,11 +109,23 @@ function displayName(key: string): string {
 
 interface BrandColumnProps {
   slug: string;
+  onOpenDoc?: (docPath: string) => void;
 }
 
-export function BrandColumn({ slug }: BrandColumnProps) {
+export function BrandColumn({ slug, onOpenDoc }: BrandColumnProps) {
   const { data: foundation, isLoading } = useFoundation(slug);
   const openChat = useOpenChat();
+  const [url, setUrl] = useState("");
+
+  const handleAnalyze = () => {
+    const trimmed = url.trim();
+    if (!trimmed) return;
+    const config = buildPillarThread(slug, "fast-foundation");
+    config.initialMessage = `Haz el Fast Foundation de esta empresa: ${trimmed}`;
+    config.threadState = "create";
+    openChat(slug, config);
+    setUrl("");
+  };
 
   if (isLoading) {
     return <div className="text-xs text-muted-foreground py-6 text-center">Cargando...</div>;
@@ -120,11 +133,29 @@ export function BrandColumn({ slug }: BrandColumnProps) {
 
   if (!foundation) {
     return (
-      <div className="py-6 text-center">
-        <p className="text-xs text-muted-foreground">
-          Foundation vacia. Introduce la URL arriba para empezar.
+      <div className="py-6 px-2">
+        <p className="text-xs text-muted-foreground mb-2 text-center">
+          Introduce la URL de la empresa para empezar.
         </p>
-        <Link href="/foundation" className="text-xs text-rust mt-2 inline-block">
+        <div className="flex gap-1.5">
+          <input
+            type="url"
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleAnalyze()}
+            placeholder="https://empresa.com"
+            className="flex-1 text-xs px-2 py-1.5 border border-border rounded-md bg-background focus:outline-none focus:ring-1 focus:ring-rust"
+          />
+          <button
+            type="button"
+            onClick={handleAnalyze}
+            disabled={!url.trim()}
+            className="text-xs px-3 py-1.5 bg-rust text-white rounded-md hover:bg-rust/90 transition-colors disabled:opacity-40"
+          >
+            Analizar
+          </button>
+        </div>
+        <Link href={`/dashboard/${slug}/foundation`} className="text-xs text-rust mt-3 inline-block">
           Brand Documents {"\u2192"}
         </Link>
       </div>
@@ -168,6 +199,8 @@ export function BrandColumn({ slug }: BrandColumnProps) {
               competitors: bs.competitors || [],
               positioning: bs.positioning || "",
             }}
+            slug={slug}
+            onOpenDoc={onOpenDoc}
           />
         </div>
       )}
@@ -194,7 +227,7 @@ export function BrandColumn({ slug }: BrandColumnProps) {
             return (
               <Link
                 key={sec.key}
-                href="/foundation"
+                href={`/dashboard/${slug}/foundation`}
                 className="flex items-center gap-1.5 py-1 text-xs hover:bg-muted/30 rounded px-1 transition-colors cursor-pointer"
               >
                 <span>{icon}</span>
@@ -209,6 +242,32 @@ export function BrandColumn({ slug }: BrandColumnProps) {
           })}
         </div>
       )}
+
+      {/* Foundation Depth */}
+      <div className="mb-3 px-3 py-2.5 rounded-lg bg-muted/30 border border-border">
+        <div className="flex items-center justify-between mb-1.5">
+          <span className="text-[11px] font-bold text-foreground">
+            {"\uD83C\uDFDB\uFE0F"} Foundation Depth
+          </span>
+          <span className="text-[11px] font-semibold" style={{
+            color: stats.pct >= 80 ? "#16a34a" : stats.pct >= 40 ? "#ca8a04" : "#dc2626"
+          }}>
+            {stats.approved}/{stats.total} {"\u00B7"} {stats.pct}%
+          </span>
+        </div>
+        <ProgressBar
+          value={stats.approved}
+          max={stats.total || 1}
+          color={
+            stats.pct >= 80
+              ? "bg-green-500"
+              : stats.pct >= 40
+                ? "bg-yellow-400"
+                : "bg-red-500"
+          }
+          height="md"
+        />
+      </div>
 
       {/* Full Foundation Pillar List */}
       <div className="border-t border-border pt-3">
@@ -305,7 +364,9 @@ export function BrandColumn({ slug }: BrandColumnProps) {
                             type="button"
                             onClick={(e) => {
                               e.stopPropagation();
-                              window.open(`/api/docs/${docUrl}`, "_blank");
+                              if (onOpenDoc) {
+                                onOpenDoc(docUrl);
+                              }
                             }}
                             className="text-[12px] hover:scale-110 transition-transform"
                             title="Ver documento"
@@ -334,33 +395,10 @@ export function BrandColumn({ slug }: BrandColumnProps) {
         })}
       </div>
 
-      {/* Foundation Depth Bar */}
-      <div className="mt-4 pt-3 border-t border-border">
-        <ProgressBar
-          value={stats.approved}
-          max={stats.total || 1}
-          color={
-            stats.pct >= 80
-              ? "bg-green-500"
-              : stats.pct >= 40
-                ? "bg-yellow-400"
-                : "bg-red-500"
-          }
-          label={`Foundation Depth`}
-          showPercent
-        />
-        <div className="flex justify-between text-[10px] text-muted-foreground mt-0.5">
-          <span>Foundation Depth</span>
-          <span>
-            {stats.approved}/{stats.total} {"\u00B7"} {stats.pct}%
-          </span>
-        </div>
-      </div>
-
       {/* Pending approvals notice */}
       {pendingCount > 0 && (
         <Link
-          href="/foundation"
+          href={`/dashboard/${slug}/foundation`}
           className="block mt-2.5 px-3 py-2 bg-[#FFF7ED] border border-[#FFD699] rounded-lg text-[11px] text-[#8B6914] hover:bg-[#FFF0DB] transition-colors"
         >
           {"\uD83D\uDFE1"} {pendingCount}{" "}
@@ -371,7 +409,7 @@ export function BrandColumn({ slug }: BrandColumnProps) {
       {/* Links */}
       <div className="mt-3 pb-2">
         <Link
-          href="/foundation"
+          href={`/dashboard/${slug}/foundation`}
           className="text-xs text-muted-foreground hover:text-rust transition-colors"
         >
           {"\uD83D\uDCC2"} Documents

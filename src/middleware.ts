@@ -6,9 +6,9 @@ export default withAuth(
     const token = req.nextauth.token;
     const pathname = req.nextUrl.pathname;
 
-    // Admin-only routes
-    const adminPaths = ["/dashboard/admin"];
-    if (adminPaths.some((p) => pathname.startsWith(p)) && token?.role !== "admin") {
+    // Admin-only routes (activity log)
+    // Settings is accessible to all authenticated users in local deployment
+    if (pathname.startsWith("/dashboard/admin/activity") && token?.role !== "admin") {
       return NextResponse.redirect(new URL("/dashboard", req.url));
     }
 

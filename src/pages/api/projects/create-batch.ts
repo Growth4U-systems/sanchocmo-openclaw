@@ -17,9 +17,35 @@ function resolveProjectDir(projectsDir: string, projectId: string): string | nul
   return null;
 }
 
+function createNewProject(projectsDir: string, name: string): string {
+  let maxId = 0;
+  try {
+    const dirs = fs.readdirSync(projectsDir, { withFileTypes: true });
+    for (const d of dirs) {
+      const m = d.name.match(/^P(\d+)/);
+      if (m) maxId = Math.max(maxId, parseInt(m[1], 10));
+    }
+  } catch { /* empty */ }
+  const projRef = `P${String(maxId + 1).padStart(2, "0")}`;
+  const dirName = `${projRef}-${name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/-+$/, "").slice(0, 60)}`;
+  const newDir = path.join(projectsDir, dirName);
+  fs.mkdirSync(newDir, { recursive: true });
+  fs.writeFileSync(path.join(newDir, "project.json"), JSON.stringify({
+    id: projRef,
+    slug: dirName,
+    name,
+    status: "active",
+    created_at: new Date().toISOString(),
+    source: "idea-bank",
+  }, null, 2));
+  fs.writeFileSync(path.join(newDir, "tasks.json"), "[]");
+  return projRef;
+}
+
 /**
  * POST /api/projects/create-batch — Create batch task from ideas.
  * Body: { slug, projectId, name, batchType?, ideaIds }
+ * projectId can be "__NEW__" to create a new project on the fly (uses task name as project name).
  */
 async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "POST") {
@@ -27,7 +53,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     return res.status(405).json({ error: `Method ${req.method} not allowed` });
   }
 
-  const { slug, projectId, name, batchType, ideaIds } = req.body;
+  let { slug, projectId, name, batchType, ideaIds } = req.body;
   if (!slug || !projectId || !name || !ideaIds || !ideaIds.length) {
     return res.status(400).json({ error: "Missing slug, projectId, name, or ideaIds" });
   }
@@ -36,8 +62,12 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     return res.status(403).json({ error: "Forbidden" });
   }
 
-  // Find the project directory
+  // Support __NEW__ to create a project on the fly
   const projDir = path.join(BASE, "brand", slug, "projects");
+  if (projectId === "__NEW__") {
+    projectId = createNewProject(projDir, name);
+  }
+
   const resolvedDir = resolveProjectDir(projDir, projectId);
   if (!resolvedDir) {
     return res.status(404).json({ error: "Project not found: " + projectId });

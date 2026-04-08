@@ -14,6 +14,8 @@ export interface ThreadConfig {
   linkedTo: string;
   docPath: string | null;
   threadState: "create" | "continue" | undefined;
+  /** Optional message to send immediately when the thread opens. */
+  initialMessage?: string;
 }
 
 /** Agent display config for message rendering */
@@ -42,6 +44,13 @@ export function buildTaskThread(
   projectId: string,
   opts: { taskSkill?: string; taskChannel?: string; taskStatus?: string; taskType?: string; pillar?: string }
 ): ThreadConfig {
+  // If the task is linked to a foundation pillar, reuse the pillar thread
+  // so all entry points (brand column, foundation page, project tasks, etc.)
+  // converge to the same thread.
+  if (opts.pillar) {
+    return buildPillarThread(slug, opts.pillar);
+  }
+
   const threadId = `${slug}:task:${taskId.toLowerCase()}`;
   const ctx: SkillContext = {
     taskSkill: opts.taskSkill,
@@ -124,14 +133,24 @@ export function buildRecurringThread(
   };
 }
 
+/**
+ * Pillar aliases: some pillars don't have their own skill and are always
+ * handled by another pillar's skill.  Map them to the canonical pillar
+ * so every entry point converges to one thread.
+ */
+const PILLAR_CANONICAL: Record<string, string> = {
+  "company-brief": "fast-foundation",
+};
+
 /** Build thread config for a foundation pillar */
 export function buildPillarThread(
   slug: string,
   pillarKey: string,
   docPath?: string
 ): ThreadConfig {
-  const threadId = `${slug}:${pillarKey}`;
-  const resolved = resolveThreadSkills({ pillar: pillarKey });
+  const canonical = PILLAR_CANONICAL[pillarKey] || pillarKey;
+  const threadId = `${slug}:${canonical}`;
+  const resolved = resolveThreadSkills({ pillar: canonical });
 
   return {
     threadId,
@@ -144,11 +163,63 @@ export function buildPillarThread(
   };
 }
 
+/** Build thread config for creating a new skill via chat */
+export function buildSkillCreatorThread(slug: string): ThreadConfig {
+  const threadId = `${slug}:skill-creator:${Date.now()}`;
+  return {
+    threadId,
+    threadName: "Crear nueva skill",
+    skill: "skill-creator",
+    skills: ["skill-creator"],
+    linkedTo: "skills/new",
+    docPath: null,
+    threadState: "create",
+    initialMessage: "Quiero crear una nueva skill para el workspace. Guíame paso a paso.",
+  };
+}
+
+/** Build thread for a Trust Engine module — same thread for all modules */
+export function buildTrustEngineModuleThread(
+  slug: string,
+  moduleId: string,
+  moduleName: string,
+  moduleFile: string,
+): ThreadConfig {
+  // Single thread for all Trust Engine modules — conversation persists across steps
+  const threadId = `${slug}:trust-engine`;
+
+  const moduleContexts: Record<string, string> = {
+    "foundation-import": `Estoy revisando la configuración del Trust Engine para ${slug}. Quiero verificar que los nichos, subnichos y competidores están bien definidos antes de continuar con las auditorías.`,
+    "seo-audit": `Estoy revisando el SEO Audit de ${slug}. Analiza los resultados: Lighthouse scores, Core Web Vitals, health checks e issues. Dime qué es crítico y qué acciones tomar primero.`,
+    "own-media-audit": `Estoy revisando el Own Media Audit de ${slug}. Analiza el blog, redes sociales, y presencia técnica. ¿Dónde hay quick wins y qué necesita mejora urgente?`,
+    "geo-analysis": `Estoy revisando el GEO Analysis de ${slug}. Analiza la visibilidad en IA (ChatGPT, Gemini, Perplexity). ¿Dónde nos mencionan, dónde no, y dónde hay oportunidades frente a competidores?`,
+    "serp-analysis": `Estoy revisando el SERP Analysis de ${slug}. Analiza las posiciones en Google: ¿en qué keywords estamos top 3, top 10, e invisible? ¿Qué competidores dominan?`,
+    "gap-analysis": `Estoy revisando el Gap Analysis de ${slug}. Muéstrame los gaps de presencia, densidad y tipo. ¿Dónde están nuestros competidores y nosotros no? Prioriza por oportunidad.`,
+    "recommendations": `Estoy revisando las recomendaciones del Trust Engine para ${slug}. Prioriza las más impactantes y dime el plan de acción concreto. ¿Qué hacemos primero?`,
+    "keywords": `Estoy revisando los keywords del Trust Engine para ${slug}. Analiza los top keywords por oportunidad, los layers de expansión, y la cobertura por subnicho. ¿Cuáles atacamos primero?`,
+    "influencers": `Estoy revisando los influencers y medios identificados para ${slug}. Analiza los accionables: ¿a quién contactar primero, con qué tipo de colaboración, y por qué?`,
+  };
+
+  return {
+    threadId,
+    threadName: `Trust Engine — ${moduleName}`,
+    skill: "trust-engine",
+    skills: ["trust-engine", "keyword-research", "seo-content", "outreach-sequence-builder"],
+    linkedTo: `trust-engine/${moduleId}`,
+    docPath: `brand/${slug}/trust-engine/${moduleFile}`,
+    threadState: "continue",
+    initialMessage: moduleContexts[moduleId] || `Estoy revisando ${moduleName} del Trust Engine para ${slug}. Analiza los datos y dime las conclusiones clave.`,
+  };
+}
+
 /**
  * Generate the initial auto-prompt message for a new thread.
  * Sent automatically when opening a thread that has no messages yet.
  */
 export function getAutoPrompt(config: ThreadConfig): string {
+  // If the caller provided an explicit initial message, use it
+  if (config.initialMessage) return config.initialMessage;
+
   if (config.threadState === "create") {
     return `Quiero crear "${config.threadName}". Usa el skill ${config.skill} para generar el documento.`;
   }

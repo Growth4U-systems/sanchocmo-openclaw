@@ -12,6 +12,7 @@ export interface ThreadMeta {
   docPath: string | null;
   threadName: string;
   threadState: "create" | "continue" | undefined;
+  initialMessage?: string;
 }
 
 interface ChatState {
@@ -104,6 +105,7 @@ export const useChatStore = create<ChatState>()((set, get) => ({
         docPath: config.docPath,
         threadName: config.threadName,
         threadState: config.threadState,
+        initialMessage: config.initialMessage,
       });
       // Register thread locally
       get().registerThread(config.threadId, config.threadName);

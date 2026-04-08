@@ -14,7 +14,12 @@
     "close": "Close",
     "all": "All",
     "active": "Active",
-    "inactive": "Inactive"
+    "inactive": "Inactive",
+    "connected": "Connected",
+    "disconnected": "Disconnected",
+    "viewAll": "View all",
+    "phase": "Phase",
+    "or": "or"
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -32,20 +37,47 @@
     "activity": "Activity",
     "settings": "Settings",
     "guide": "Guide",
-    "changelog": "Changelog"
+    "changelog": "Changelog",
+    "documents": "Documents",
+    "overview": "Overview",
+    "work": "Work",
+    "tools": "Tools",
+    "system": "System"
   },
   "auth": {
     "signIn": "Sign in",
     "signOut": "Sign out",
-    "signInWith": "Sign in with {provider}"
+    "signInWith": "Sign in with {provider}",
+    "accessToken": "Access token"
   },
   "dashboard": {
     "title": "Dashboard",
+    "global": "Global Dashboard",
+    "allClients": "All clients",
     "activeClients": "Active clients",
     "completedPillars": "Completed pillars",
     "activeProjects": "Active projects",
     "pendingTasks": "Pending tasks",
-    "recentActivity": "Recent activity"
+    "recentActivity": "Recent activity",
+    "ideas": "Ideas",
+    "costs": "Costs",
+    "costsWithPeriod": "Costs {period}",
+    "integrations": "Integrations",
+    "system": "System",
+    "clients": "Clients",
+    "costsGlobal": "Costs — Global",
+    "noCosts": "No cost data.",
+    "sessions": "Sessions",
+    "turns": "Turns",
+    "byAgent": "By agent",
+    "byClient": "By client",
+    "integrationsGlobal": "Integrations — Global",
+    "connectedCount": "{count} connected",
+    "disconnectedCount": "{count} disconnected",
+    "errorCount": "{count} with errors",
+    "brandSnapshot": "Brand Snapshot",
+    "metricas": "Metrics",
+    "nextSteps": "Next Steps"
   },
   "foundation": {
     "title": "Foundation",
@@ -133,7 +165,38 @@
     "score": "Score",
     "date": "Date",
     "actions": "Actions",
-    "titleAction": "Title + Action"
+    "titleAction": "Title + Action",
+    "lists": {
+      "keywords": "Keywords to rank",
+      "trending": "Trending content to create",
+      "gaps": "Gaps vs competitors",
+      "repurpose": "Content to repurpose",
+      "medios": "Media to appear in",
+      "partners": "Partners to collaborate with",
+      "influencers": "Influencers to contact",
+      "outreach": "Prospects to contact"
+    },
+    "listDescriptions": {
+      "keywords": "Detected SEO opportunities",
+      "trending": "Trending topics in the niche",
+      "gaps": "Content competitors don't cover well",
+      "repurpose": "Cross-channel atomization ideas",
+      "medios": "Blogs, magazines, podcasts for PR/guest posts",
+      "partners": "Companies/people for co-marketing",
+      "influencers": "Relevant creators in the niche",
+      "outreach": "Leads for direct outreach"
+    },
+    "sources": {
+      "seo_geo": "SEO/GEO",
+      "signal": "Signal",
+      "competitor": "Competitors",
+      "meeting": "Meeting",
+      "manual": "Manual",
+      "trust_engine": "Trust Engine",
+      "paa": "PAA",
+      "trending": "Trending",
+      "serp_gaps": "SERP Gaps"
+    }
   },
   "recurringTasks": {
     "title": "Recurring Tasks",
@@ -187,5 +250,58 @@
     "es": "Español",
     "en": "English",
     "select": "Language"
+  },
+  "chat": {
+    "title": "Chat with Sancho",
+    "connected": "Connected",
+    "waiting": "Waiting",
+    "exitFullscreen": "Exit fullscreen",
+    "fullscreen": "Fullscreen",
+    "closeSidebar": "Close",
+    "loading": "Loading...",
+    "selectThread": "Select a thread to start.",
+    "selectThreadOption": "Select thread...",
+    "newThread": "New thread",
+    "syncDiscord": "Sync with Discord",
+    "unlockFreeMode": "Unlock — free mode",
+    "currentDoc": "Current document",
+    "thinking": "Sancho is thinking...",
+    "placeholder": "Type here...",
+    "stop": "Stop",
+    "send": "Send"
+  },
+  "settings": {
+    "title": "Settings",
+    "subtitle": "System configuration",
+    "tabs": {
+      "apis": "APIs",
+      "agents": "Agents",
+      "skills": "Skills",
+      "dispatch": "Dispatch",
+      "strategies": "Strategies",
+      "recurring": "Recurring",
+      "clients": "Clients",
+      "preferences": "Preferences"
+    },
+    "loadingClients": "Loading clients...",
+    "activeOf": "{active} active of {total} total",
+    "deactivate": "Deactivate",
+    "activate": "Activate",
+    "name": "Name",
+    "emoji": "Emoji",
+    "url": "URL",
+    "clientLanguage": "Language",
+    "apiStatus": {
+      "systemKey": "System key",
+      "error": "Error",
+      "connected": "Connected",
+      "notConfigured": "Not configured"
+    },
+    "howToStart": "How to start?"
+  },
+  "sidebar": {
+    "allClients": "All clients",
+    "admin": "Admin",
+    "client": "Client"
   }
 }
