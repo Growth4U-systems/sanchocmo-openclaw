@@ -1,28 +1,34 @@
 {
   "client": "hospital-capilar",
   "period": "2026-04",
-  "updatedAt": "2026-04-04T08:02:24.474528",
-  "total_cost_usd": 0,
-  "total_cost_eur": 0.0,
-  "turns": 3,
-  "sessions": 1,
+  "updatedAt": "2026-04-07T23:01:43.526450",
+  "total_cost_usd": 0.436,
+  "total_cost_eur": 0.4011,
+  "turns": 10,
+  "sessions": 3,
   "agents": {
-    "sancho": {
+    "cervantes": {
       "cost_usd": 0,
       "cost_eur": 0.0,
-      "turns": 3,
+      "turns": 1,
       "sessions": 1
+    },
+    "sancho": {
+      "cost_usd": 0.436,
+      "cost_eur": 0.4011,
+      "turns": 9,
+      "sessions": 2
     }
   },
   "models": {
     "unknown": {
-      "input": 0,
-      "output": 0,
-      "cache_read": 0,
-      "cache_write": 0,
-      "cost_usd": 0,
-      "cost_eur": 0.0,
-      "turns": 3
+      "input": 5,
+      "output": 367,
+      "cache_read": 116432,
+      "cache_write": 58974,
+      "cost_usd": 0.436,
+      "cost_eur": 0.4011,
+      "turns": 10
     }
   },
   "days": {
@@ -33,6 +39,14 @@
     "2026-04-03": {
       "cost_usd": 0,
       "turns": 1
+    },
+    "2026-04-05": {
+      "cost_usd": 0,
+      "turns": 1
+    },
+    "2026-04-07": {
+      "cost_usd": 0.436,
+      "turns": 6
     }
   },
   "clientSpend": {

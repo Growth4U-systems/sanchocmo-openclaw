@@ -1,95 +1,34 @@
 {
   "client": "sanchocmo",
-  "period": "2026-03",
-  "updatedAt": "2026-03-31T23:00:32.219881",
-  "total_cost_usd": 126.2682,
-  "total_cost_eur": 116.1668,
-  "turns": 1339,
-  "sessions": 18,
+  "period": "2026-04",
+  "updatedAt": "2026-04-07T23:01:43.526450",
+  "total_cost_usd": 0.802,
+  "total_cost_eur": 0.7379,
+  "turns": 5,
+  "sessions": 1,
   "agents": {
     "sancho": {
-      "cost_usd": 126.2682,
-      "cost_eur": 116.1668,
-      "turns": 1339,
-      "sessions": 18
+      "cost_usd": 0.802,
+      "cost_eur": 0.7379,
+      "turns": 5,
+      "sessions": 1
     }
   },
   "models": {
     "unknown": {
-      "input": 1702771,
-      "output": 382651,
-      "cache_read": 87499806,
-      "cache_write": 11273761,
-      "cost_usd": 119.7904,
-      "cost_eur": 110.2072,
-      "turns": 1200
-    },
-    "claude-opus-4-6": {
-      "input": 279,
-      "output": 33810,
-      "cache_read": 4405213,
-      "cache_write": 592202,
-      "cost_usd": 6.4778,
-      "cost_eur": 5.9596,
-      "turns": 139
+      "input": 7,
+      "output": 1859,
+      "cache_read": 355158,
+      "cache_write": 92470,
+      "cost_usd": 0.802,
+      "cost_eur": 0.7379,
+      "turns": 5
     }
   },
   "days": {
-    "2026-03-03": {
-      "cost_usd": 1.5561,
-      "turns": 50
-    },
-    "2026-03-04": {
-      "cost_usd": 13.3219,
-      "turns": 94
-    },
-    "2026-03-05": {
-      "cost_usd": 15.3768,
-      "turns": 141
-    },
-    "2026-03-08": {
-      "cost_usd": 35.2704,
-      "turns": 446
-    },
-    "2026-03-09": {
-      "cost_usd": 6.3907,
-      "turns": 75
-    },
-    "2026-03-10": {
-      "cost_usd": 2.6823,
-      "turns": 53
-    },
-    "2026-03-16": {
-      "cost_usd": 3.1588,
-      "turns": 37
-    },
-    "2026-03-18": {
-      "cost_usd": 10.0897,
-      "turns": 109
-    },
-    "2026-03-20": {
-      "cost_usd": 12.4655,
-      "turns": 74
-    },
-    "2026-03-22": {
-      "cost_usd": 1.889,
-      "turns": 4
-    },
-    "2026-03-25": {
-      "cost_usd": 19.9481,
-      "turns": 176
-    },
-    "2026-03-26": {
-      "cost_usd": 0.999,
-      "turns": 12
-    },
-    "2026-03-27": {
-      "cost_usd": 1.8581,
-      "turns": 50
-    },
-    "2026-03-29": {
-      "cost_usd": 1.2619,
-      "turns": 18
+    "2026-04-07": {
+      "cost_usd": 0.802,
+      "turns": 5
     }
   },
   "clientSpend": {

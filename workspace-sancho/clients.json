@@ -32,7 +32,7 @@
       "name": "Growth4U",
       "language": "es",
       "guild": "1477741643762241548",
-      "active": false,
+      "active": true,
       "phase": 0,
       "paths": {
         "brand": "brand/"
@@ -184,6 +184,19 @@
       "active": true,
       "language": "es",
       "guild": "1486844082520195132"
+    },
+    {
+      "slug": "hulahoop",
+      "name": "Hulahoop",
+      "discord_guild_id": "1491032339243864225",
+      "phase": 0,
+      "paths": {
+        "brand": "brand/"
+      },
+      "supabase": {
+        "url": "https://psapmujzxhaxraphddlv.supabase.co",
+        "anon_key": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBzYXBtdWp6eGhheHJhcGhkZGx2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4OTAxNTEsImV4cCI6MjA4NzQ2NjE1MX0.RxanIQCJtjGfCUL_X0MqPi2IdGkXOkmfaEAJZvQJblI"
+      }
     }
   ],
   "adminToken": "cc9b8067c18c5214358611d75f151f6d"

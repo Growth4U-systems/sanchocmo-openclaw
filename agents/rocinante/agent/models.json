@@ -53,6 +53,55 @@
           },
           "contextWindow": 262144,
           "maxTokens": 65536
+        },
+        {
+          "id": "qwen/qwen3.6-plus:free",
+          "name": "Qwen 3.6 Plus (free)",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "cost": {
+            "input": 0,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0
+          },
+          "contextWindow": 1048576,
+          "maxTokens": 65536
+        },
+        {
+          "id": "qwen/qwen3-coder-480b:free",
+          "name": "Qwen3 Coder 480B (free)",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "cost": {
+            "input": 0,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0
+          },
+          "contextWindow": 262144,
+          "maxTokens": 65536
+        },
+        {
+          "id": "deepseek/deepseek-r1:free",
+          "name": "DeepSeek R1 (free)",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "cost": {
+            "input": 0,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0
+          },
+          "contextWindow": 163840,
+          "maxTokens": 65536
         }
       ],
       "apiKey": "OPENROUTER_API_KEY"
@@ -80,8 +129,8 @@
           "maxTokens": 8192
         },
         {
-          "id": "MiniMax-M2.5",
-          "name": "MiniMax M2.5",
+          "id": "MiniMax-M2.7",
+          "name": "MiniMax M2.7",
           "reasoning": true,
           "input": [
             "text"
@@ -89,15 +138,15 @@
           "cost": {
             "input": 0.3,
             "output": 1.2,
-            "cacheRead": 0.03,
-            "cacheWrite": 0.12
+            "cacheRead": 0.06,
+            "cacheWrite": 0.375
           },
-          "contextWindow": 200000,
-          "maxTokens": 8192
+          "contextWindow": 204800,
+          "maxTokens": 131072
         },
         {
-          "id": "MiniMax-M2.5-highspeed",
-          "name": "MiniMax M2.5 Highspeed",
+          "id": "MiniMax-M2.7-highspeed",
+          "name": "MiniMax M2.7 Highspeed",
           "reasoning": true,
           "input": [
             "text"
@@ -105,11 +154,11 @@
           "cost": {
             "input": 0.3,
             "output": 1.2,
-            "cacheRead": 0.03,
-            "cacheWrite": 0.12
+            "cacheRead": 0.06,
+            "cacheWrite": 0.375
           },
-          "contextWindow": 200000,
-          "maxTokens": 8192
+          "contextWindow": 204800,
+          "maxTokens": 131072
         }
       ],
       "apiKey": "MINIMAX_API_KEY"
@@ -137,8 +186,8 @@
           "maxTokens": 8192
         },
         {
-          "id": "MiniMax-M2.5",
-          "name": "MiniMax M2.5",
+          "id": "MiniMax-M2.7",
+          "name": "MiniMax M2.7",
           "reasoning": true,
           "input": [
             "text"
@@ -146,15 +195,15 @@
           "cost": {
             "input": 0.3,
             "output": 1.2,
-            "cacheRead": 0.03,
-            "cacheWrite": 0.12
+            "cacheRead": 0.06,
+            "cacheWrite": 0.375
           },
-          "contextWindow": 200000,
-          "maxTokens": 8192
+          "contextWindow": 204800,
+          "maxTokens": 131072
         },
         {
-          "id": "MiniMax-M2.5-highspeed",
-          "name": "MiniMax M2.5 Highspeed",
+          "id": "MiniMax-M2.7-highspeed",
+          "name": "MiniMax M2.7 Highspeed",
           "reasoning": true,
           "input": [
             "text"
@@ -162,11 +211,11 @@
           "cost": {
             "input": 0.3,
             "output": 1.2,
-            "cacheRead": 0.03,
-            "cacheWrite": 0.12
+            "cacheRead": 0.06,
+            "cacheWrite": 0.375
           },
-          "contextWindow": 200000,
-          "maxTokens": 8192
+          "contextWindow": 204800,
+          "maxTokens": 131072
         }
       ],
       "apiKey": "minimax-oauth"

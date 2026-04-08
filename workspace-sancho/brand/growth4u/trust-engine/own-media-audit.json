@@ -1,0 +1,228 @@
+{
+  "module": "own-media-audit",
+  "version": 1,
+  "created_at": "2026-04-07T13:08:00Z",
+  "updated_at": "2026-04-07T13:08:00Z",
+  "status": "completed",
+  "data": {
+    "content_score": {
+      "blog": {
+        "exists": true,
+        "url": "https://growth4u.io/blog/",
+        "post_count": "20+ articles confirmed",
+        "sample_articles": [
+          { "title": "Stack Martech para Fintech en España: guía completa", "url": "https://growth4u.io/blog/stack-martech-fintech-espana-guia-completa/" },
+          { "title": "GEO para Fintechs: guía completa para aparecer en ChatGPT, Perplexity", "url": "https://growth4u.io/blog/geo-para-fintechs-guia-completa-ia-chatgpt-perplexity/" },
+          { "title": "Unit Economics para Fintech: CAC, LTV y Payback", "url": "https://growth4u.io/blog/unit-economics-fintech-cac-ltv-payback/" }
+        ],
+        "word_count_sample": "~2,000-3,000 words per article",
+        "posting_frequency": "Batch launch Feb 2026 (20+ articles same day) — NO ongoing cadence confirmed",
+        "freshness": "Last posts Feb 2026 (~40 days ago as of Apr 2026)",
+        "geo_optimized": true,
+        "has_faqs": true,
+        "has_data_citations": true,
+        "categories": ["Growth", "Marketing", "Estrategia", "GEO"],
+        "categories_visible_on_index": false,
+        "issues": ["Batch launch pattern (all articles same day) — no freshness signal", "No confirmed posts in last 30 days", "Categories not visible on blog index page"]
+      },
+      "sub_score": 50,
+      "max_score": 100,
+      "breakdown": {
+        "blog_exists": 20,
+        "frequency_2_per_month": 0,
+        "word_count_800": 20,
+        "categories": 0,
+        "fresh_30_days": 0
+      }
+    },
+    "social_score": {
+      "platforms": {
+        "linkedin": {
+          "found": true,
+          "url": "https://www.linkedin.com/in/alfonsosbla",
+          "company_url": "https://www.linkedin.com/company/106949964",
+          "profile_type": "personal + company",
+          "followers": null,
+          "posts_count": null,
+          "posting_frequency": "Active (confirmed in self-intelligence)",
+          "last_post_date": null,
+          "engagement_rate": null,
+          "verified": false
+        },
+        "instagram": {
+          "found": false,
+          "url": null,
+          "followers": null,
+          "posts_count": null,
+          "posting_frequency": null,
+          "last_post_date": null,
+          "verified": false
+        },
+        "youtube": {
+          "found": false,
+          "url": null,
+          "followers": null,
+          "posts_count": null,
+          "posting_frequency": null,
+          "last_post_date": null,
+          "verified": false
+        },
+        "tiktok": {
+          "found": false,
+          "url": null,
+          "followers": null,
+          "posts_count": null,
+          "posting_frequency": null,
+          "last_post_date": null,
+          "verified": false
+        },
+        "twitter_x": {
+          "found": false,
+          "url": null,
+          "followers": null,
+          "posts_count": null,
+          "posting_frequency": null,
+          "last_post_date": null,
+          "verified": false
+        },
+        "facebook": {
+          "found": false,
+          "url": null,
+          "followers": null,
+          "posts_count": null,
+          "posting_frequency": null,
+          "last_post_date": null,
+          "verified": false
+        }
+      },
+      "platforms_checked": 6,
+      "platforms_found": 1,
+      "platforms_with_real_followers": 1,
+      "sub_score": 40,
+      "max_score": 100,
+      "breakdown": {
+        "per_platform_found_40pts": 40,
+        "per_platform_active_30pts": 30,
+        "profile_optimized_30pts": 30,
+        "platforms_checked": "linkedin (found), instagram (not found), youtube (not found), tiktok (not found), twitter/x (not found), facebook (not found)"
+      }
+    },
+    "technical_score": {
+      "ssl": { "status": "pass", "detail": "HTTPS confirmed" },
+      "mobile": { "status": "pass", "detail": "Lighthouse mobile score 82, viewport meta present" },
+      "cms": { "status": "pass", "detail": "Next.js detected (React-based framework)" },
+      "analytics": { "status": "pass", "detail": "Google Analytics 4 + Google Tag Manager confirmed" },
+      "cdn": { "status": "pass", "detail": "Cloudflare CDN detected (cf-ray headers)" },
+      "schemas": {
+        "status": "pass",
+        "types": ["Organization", "ProfessionalService", "FAQPage"],
+        "missing_recommended": ["LocalBusiness", "Service"]
+      },
+      "sub_score": 95,
+      "max_score": 100,
+      "breakdown": {
+        "ssl": 15,
+        "mobile": 15,
+        "cms": 15,
+        "analytics": 20,
+        "cdn": 15,
+        "schemas": 15
+      }
+    },
+    "reviews": {
+      "trustpilot": { "url": "https://trustpilot.com/review/growth4u.io", "rating": 3.5, "count": 1 },
+      "g2": { "url": null, "rating": null, "count": 0 },
+      "capterra": { "url": null, "rating": null, "count": 0 },
+      "clutch": { "url": null, "rating": null, "count": 0 },
+      "google_reviews": { "url": null, "rating": null, "count": 0 }
+    },
+    "tech_stack": {
+      "cms": "Next.js (React-based)",
+      "analytics": "GA4 + GTM",
+      "cdn": "Cloudflare",
+      "booking_widget": "LeadConnector (Go High Level)",
+      "tag_manager": "Google Tag Manager",
+      "cookies": "Google Cookies notice"
+    },
+    "overall_score": 61.5,
+    "scoring_breakdown": {
+      "content": { "weight": 0.35, "score": 50, "contribution": 17.5 },
+      "social": { "weight": 0.30, "score": 40, "contribution": 12.0 },
+      "technical": { "weight": 0.35, "score": 95, "contribution": 33.25 },
+      "total": 61.5
+    },
+    "issues": [
+      {
+        "id": "own-media-issue-001",
+        "source": "social",
+        "severity": "critical",
+        "title": "Growth4U tiene presencia en SOLO 1 de 6 redes sociales principales",
+        "description": "LinkedIn es la única red social con perfil confirmado. Instagram, YouTube, TikTok, Twitter/X y Facebook tienen presencia CERO. Para una consultora de growth marketing, esto es una paradoja crítica.",
+        "fix_steps": [
+          "Crear perfil de empresa en Instagram (rellenar bio, logo, enlaces)",
+          "Evaluar YouTube como canal prioritario (Alfonso grabando vídeos = founder-led content)",
+          "Crear perfil de empresa en TikTok si hay capacidad para contenido corto"
+        ],
+        "expected_impact_pct": 15
+      },
+      {
+        "id": "own-media-issue-002",
+        "source": "reviews",
+        "severity": "critical",
+        "title": "Solo 1 review en Trustpilot (3.5/5) — Paradoja del Trust Engine",
+        "description": "Growth4U vende 'Fortaleza de Confianza' pero tiene 1 sola review. Los competidores (Product Hackers, Snowball, TheGrowtHacker) tampoco tienen reviews significativas — pero la diferencia de messaging lo hace más urgente para G4U.",
+        "fix_steps": [
+          "Solicitar reviews a los primeros clientes Trust Engine",
+          "Pedir reviews en Trustpilot, G2 y Capterra",
+          "Crear case studies detallados para web"
+        ],
+        "expected_impact_pct": 10
+      },
+      {
+        "id": "own-media-issue-003",
+        "source": "content",
+        "severity": "high",
+        "title": "Blog sin frecuencia de publicación constante",
+        "description": "Los 20+ artículos se publicaron el mismo día (Feb 2026). No hay señal de publicación regular. Google premia la frecuencia — un artículo semanal o quincenal es mejor que un batch.",
+        "fix_steps": [
+          "Establecer cadencia de 1-2 artículos/semana",
+          "Repartir el contenido restante del 'contenido planificado' en las próximas semanas",
+          "Actualizar artículos existentes con fechas nuevas para signal de freshness"
+        ],
+        "expected_impact_pct": 8
+      },
+      {
+        "id": "own-media-issue-004",
+        "source": "social",
+        "severity": "medium",
+        "title": "LinkedIn sin métricas de seguidores públicas",
+        "description": "No se pudo confirmar el número de seguidores de LinkedIn Company page ni el engagement rate. Metrics ocultos = no se puede medir progreso.",
+        "fix_steps": [
+          "Hacer login en LinkedIn Company para obtener métricas exactas",
+          "Implementar tracking de seguidores por semana",
+          "Medir engagement rate mensual"
+        ],
+        "expected_impact_pct": 3
+      },
+      {
+        "id": "own-media-issue-005",
+        "source": "social",
+        "severity": "medium",
+        "title": "Sin newsletter ni comunidad propia",
+        "description": "No se encontró newsletter signup archive ni comunidad (Skool existe pero para Alfonso personalmente, no como comunidad Growth4U).",
+        "fix_steps": [
+          "Crear newsletter de Growth4U con archive público",
+          "Evaluar comunidad tipo Product Hackers Go! (Slack o Skool)",
+          "Implementar lead magnets (playbooks gratuitos)"
+        ],
+        "expected_impact_pct": 5
+      }
+    ]
+  },
+  "metadata": {
+    "duration_seconds": 120,
+    "apis_called": ["web_search × 3", "web_fetch (Trustpilot)", "web_fetch (homepage)", "web_fetch (blog)"],
+    "errors": [],
+    "quality_gate_passed": true
+  }
+}

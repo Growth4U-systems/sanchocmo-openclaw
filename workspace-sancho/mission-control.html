@@ -5674,10 +5674,14 @@ async function v2OpenProjectPanel(slug, projectId, projectName, focusTaskId, aut
   }, 100);
 }
 
+// Pillar aliases: pillars without their own skill converge to the canonical thread
+const PILLAR_CANONICAL = { 'company-brief': 'fast-foundation' };
+
 function resolveProjectThread(slug, projectId, taskId, taskName, projectName, taskType, taskPillar) {
   // Foundation tasks: thread = pillar (matches Brand Snapshot pillars)
   if (taskType === 'foundation' && taskPillar) {
-    return { threadId: `${slug}:${taskPillar}`, threadName: taskName || taskPillar };
+    const canonical = PILLAR_CANONICAL[taskPillar] || taskPillar;
+    return { threadId: `${slug}:${canonical}`, threadName: taskName || canonical };
   }
   // Regular tasks
   if (taskId) {
@@ -6133,7 +6137,8 @@ function mcChatOpenRecurring(slug, taskId, taskName, taskSkill) {
 
 function v2StartPillar(slug, pillar, skill, status) {
   mcChatCurrentSlug = slug;
-  mcChatCurrentThread = slug + ':' + pillar;
+  const canonical = PILLAR_CANONICAL[pillar] || pillar;
+  mcChatCurrentThread = slug + ':' + canonical;
   // Register locally
   if (!mcChatLocalThreads.includes(mcChatCurrentThread)) mcChatLocalThreads.push(mcChatCurrentThread);
   mcChatSetStatus('Conectado · ' + pillar.replace(/-/g, ' '), '#22A06B');
@@ -6141,7 +6146,7 @@ function v2StartPillar(slug, pillar, skill, status) {
   if (msgsEl) msgsEl.innerHTML = '<div class="v2-msg v2-msg-b"><div class="v2-msg-who">Sancho</div>Thread: <strong>' + pillar.replace(/-/g,' ') + '</strong>. ¿Empezamos?</div>';
   // Register thread metadata for gateway
   const docPath = (PILLAR_DOC_PATHS[pillar] || [])[0] || null;
-  const resolved = resolveThreadSkills({ pillar });
+  const resolved = resolveThreadSkills({ pillar: canonical });
   mcChatSetThreadMeta(mcChatCurrentThread, {
     skill: resolved.skill,
     skills: resolved.skills,
@@ -6150,13 +6155,13 @@ function v2StartPillar(slug, pillar, skill, status) {
     threadName: pillar.replace(/-/g, ' '),
     threadState: status === 'not-started' ? 'create' : 'continue',
   });
-  console.log('[v2StartPillar] pillar:', pillar, 'resolved:', JSON.stringify(resolved), 'threadId:', mcChatCurrentThread, 'meta:', JSON.stringify(mcChatGetThreadMeta(mcChatCurrentThread)));
+  console.log('[v2StartPillar] pillar:', pillar, 'canonical:', canonical, 'resolved:', JSON.stringify(resolved), 'threadId:', mcChatCurrentThread, 'meta:', JSON.stringify(mcChatGetThreadMeta(mcChatCurrentThread)));
   mcChatLoadThreads();
   mcChatLoadPinnedDoc(slug, pillar);
   mcChatStartPoll();
   // Open the chat sidebar with this pillar's thread
   try {
-    const threadId = slug + ':' + pillar;
+    const threadId = slug + ':' + canonical;
     const threadName = pillar.replace(/-/g, ' ');
     mcChatSidebar.init({ anchorId: 'mc-global-chat-anchor', toggleBtnId: 'global-chat-toggle', threadId: threadId, threadName: threadName });
     if (!mcChatSidebar.isOpen) mcChatSidebar.toggle();

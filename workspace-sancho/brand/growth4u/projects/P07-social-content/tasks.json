@@ -101,5 +101,20 @@
     "status": "todo",
     "owner": "Sancho",
     "created_at": "2026-04-03T22:00:57.035Z"
+  },
+  {
+    "id": "P07-social-content-T09",
+    "name": "Publicar 4 posts LinkedIn sobre IA y SaaS",
+    "description": "4 ideas de contenido agrupadas por el tema \"IA y SaaS\". Usar hooks y formatos del Content Playbook.",
+    "type": "content",
+    "idea_ids": [
+      "idea-002",
+      "idea-003",
+      "idea-006",
+      "idea-012"
+    ],
+    "status": "todo",
+    "owner": "Sancho",
+    "created_at": "2026-04-07T09:24:23.258Z"
   }
 ]

@@ -1,7 +1,7 @@
 # /servicios/trust-engine/ — Copy completo
 
 > Proyecto: [P01] Fontanería Web | Tarea: T04
-> Fecha: 2026-03-17 | Status: draft
+> Fecha: 2026-04-07 | Status: draft v2 (genérico tech, sin foco fintech)
 > Fuentes: ECP 1 (sistema repetible) + ECP 4 (quemado agencias) + pricing + brand voice
 
 ---
@@ -10,7 +10,7 @@
 
 ```
 Title: Trust Engine — El sistema de growth que se queda cuando nos vamos | Growth4U
-Description: 4 fases. 6 meses. €7K. Un motor de growth que tu equipo opera solo. Para startups tech post-PMF que necesitan dejar de improvisar.
+Description: 4 fases. 6 meses. Un motor de growth que tu equipo opera solo. Para startups tech post-PMF que necesitan dejar de improvisar.
 ```
 
 ---
@@ -148,10 +148,10 @@ Primera call con una agencia: el fundador. Segunda call: un junior de 6 meses. A
 **Alfonso lidera cada sesión de Trust Engine personalmente.** 45 minutos semanales. 24 semanas. El mismo que:
 
 - Llevó **Bnext de 0 a 400.000 usuarios activos** como CGO [Cinco Días]
-- Triplicó el **LTV de Bit2Me** en crypto regulado
+- Triplicó el **LTV de Bit2Me** en el mercado crypto
 - Multiplicó los **depósitos de Criptan por 10** con growth basado en confianza
 
-No hablo de growth. Lo he hecho. 15 años escalando startups tech bajo regulación CNMV/BdE.
+No hablo de growth. Lo he hecho. 15 años escalando startups tech.
 
 El que vende es el que ejecuta. Sin bait-and-switch.
 
@@ -164,7 +164,7 @@ El que vende es el que ejecuta. Sin bait-and-switch.
 | Empresa | Situación | Resultado |
 |---------|-----------|-----------|
 | **Bnext** | 0 usuarios, mercado saturado de neobancos | 400.000 usuarios activos. CAC de €50 → €12,40 [Cinco Días] |
-| **Bit2Me** | Crecimiento estancado, LTV bajo | LTV triplicado. Líder en crypto regulado en España |
+| **Bit2Me** | Crecimiento estancado, LTV bajo | LTV triplicado. Líder en crypto en España |
 | **Criptan** | Depósitos estancados | Depósitos ×10. +160% en 6 meses |
 
 *Nota: estos son resultados de Alfonso como CGO/Head of Growth en estas empresas, aplicando el mismo sistema que hoy es Trust Engine. Growth4U es nueva — Alfonso no. [Busca "Alfonso Bnext" en Google.]*
@@ -194,7 +194,7 @@ No te pedimos que confíes en nuestra palabra. Te pedimos que compruebes.
 
 | | Trust Engine | Agencia retainer | fCMO | Growth hire |
 |---|---|---|---|---|
-| **Inversión** | €7.000 (una vez) | €12-60K/año | €48-240K/año | €40-80K/año |
+| **Inversión** | Pago único | €12-60K/año | €48-240K/año | €40-80K/año |
 | **Duración** | 6 meses con exit date | Indefinido | Indefinido | Indefinido |
 | **Quién ejecuta** | Alfonso (15 años, Bnext/Bit2Me) | Junior rotativo | Senior que se va | Depende de a quién contrates |
 | **¿Qué te queda?** | Sistema + playbooks + dashboard | Nada | Nada | Depende |
@@ -237,12 +237,11 @@ Agenda 30 minutos. Diagnosticamos tu situación y te decimos si Trust Engine enc
 
 ---
 
-<!-- Self-QA: PASS | 2026-03-17 | 
+<!-- Self-QA: PASS v2 | 2026-04-07 | 
+- Foco fintech eliminado ✅ — genérico tech
+- "bajo regulación CNMV/BdE" eliminado ✅
+- "crypto regulado" → "mercado crypto" ✅
+- €7K eliminado de comparativa (pricing privado) ✅
 - Brand voice: Diagnóstico-Provocador ✅, Insider Vulnerable ✅, Directo con Datos ✅, Sistema sobre Táctica ✅
-- Fuentes: ECP1, ECP4, pricing, brand voice, messaging summary
-- Pricing: NO se muestra precio público (decisión Alfonso) ✅
 - CTA: now.growth4u.io ✅
-- Garantía: incluida con condiciones aprobadas ✅
-- Track record disclaimer: incluido ✅
-- Vocabulary: "instalar", "sistema", "motor" ✅ | No "solución integral", "growth hacking" ✅
 -->

@@ -1,0 +1,18 @@
+{
+  "messages": [
+    {
+      "role": "user",
+      "text": "Estoy abriendo el chat sobre \"null\". Dame un resumen rápido del estado actual y qué podemos hacer. Si necesitas algo de mí, dímelo.",
+      "ts": "2026-04-07T15:24:44.217Z"
+    },
+    {
+      "role": "bot",
+      "text": "¡Hola! Aquí va el resumen rápido de **HulaHoop**:\n\n## Estado actual\n\n📊 **Phase 0 — Foundation vacía.** Todos los pilares están en `not-started`. No hay ningún documento generado todavía.\n\nLa URL que tenemos registrada es **hulahoop.media/en**, pero no tenemos nada más: ni descripción de empresa, ni sector, ni ICPs, ni competidores, ni positioning.\n\n## ¿Qué toca?\n\nEl primer paso es construir la **Foundation** — el ADN estratégico de HulaHoop. Esto se hace por capas:\n\n1. **Layer 0 — Company Brief** (~5 min): Quiénes sois, qué hacéis, a quién servís\n2. **Layer 1 — Mercado + Competencia + Self-analysis** (~15 min cada uno)\n3. **Layer 2 — Síntesis de mercado**\n4. **Layer 3 — Nicho Discovery + Go-to-Market**\n5. **Layer 4 — Positioning + Pricing**\n6. **Layer 5 — Brand Voice + Identidad Visual**\n\n## Qué necesito de ti\n\nPara arrancar con el **Company Brief**, necesito que me cuentes (o confirmes si lo que saque de la web es correcto):\n\n- **¿Qué hace HulaHoop exactamente?** (producto/servicio, propuesta de valor)\n- **¿A quién vendéis?** (tipo de cliente ideal)\n- **¿Modelo de negocio?** (SaaS, servicios, marketplace...)\n- **¿Competidores principales?**\n- **¿Qué métrica os importa más?** (leads, signups, revenue...)\n\nSi prefieres, puedo empezar analizando vuestra web (hulahoop.media) y te presento lo que encuentre para que confirmes/corrijas. Suele ser más rápido. ¿Qué prefieres?",
+      "agent": "sancho",
+      "ts": "2026-04-07T15:25:58.743Z"
+    }
+  ],
+  "updatedAt": 1775575558743,
+  "discordThreadId": null,
+  "discordChannelId": null
+}

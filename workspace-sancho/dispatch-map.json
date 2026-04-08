@@ -102,7 +102,9 @@
       "persona_file": "./personas/investigador.md",
       "dispatch_for": ["market-intelligence", "competitor-intelligence", "deep-research", "thief-marketers"],
       "skills": ["daily-pulse", "meeting-intelligence", "signal-monitor", "thief-marketers", "pattern-detector", "competitor-intelligence", "market-intelligence"],
-      "brand_context": ["competitors.md", "market.md", "learnings.md"]
+      "brand_context": ["competitors.md", "market.md", "learnings.md"],
+      "model": "openrouter/qwen/qwen3.6-plus:free",
+      "model_note": "Qwen para research: 1M context window. NO enviar datos sensibles de clientes."
     }
   },
   "discord_channels": {

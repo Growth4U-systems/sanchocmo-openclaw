@@ -7295,7 +7295,7 @@ nav .nav-footer { display:none !important; }
         const scriptPath = path.join(BASE, 'scripts', 'new-client.sh');
         const child = spawn('bash', [scriptPath, '--slug', slug, '--name', name, '--guild', guild], {
           cwd: BASE,
-          env: { ...process.env }
+          env: { ...process.env, PATH: `/opt/homebrew/bin:${process.env.PATH || '/usr/bin:/bin'}` }
         });
         const sendSSE = (data) => { res.write(`data: ${data}\n\n`); };
         let outputBuffer = '';
@@ -7320,7 +7320,7 @@ nav .nav-footer { display:none !important; }
           res.end();
           _clientCreationInProgress = false;
         });
-        req.on('close', () => {
+        res.on('close', () => {
           child.kill('SIGTERM');
           clearTimeout(killTimer);
           _clientCreationInProgress = false;
@@ -8018,6 +8018,7 @@ nav .nav-footer { display:none !important; }
 
         // Search in all possible files
         const searchFiles = [
+          path.join(brandDir, 'recommendations.json'),
           path.join(brandDir, 'atalaya', 'profiles-pending.json'),
           path.join(brandDir, 'atalaya', 'competitors-pending.json'),
           path.join(brandDir, 'atalaya', 'ads-pending.json'),
@@ -8036,30 +8037,61 @@ nav .nav-footer { display:none !important; }
                 item.status = 'dismissed';
                 item.actioned_at = new Date().toISOString();
               } else if (action === 'approve') {
-                // Move to ideas.json
-                const ideasPath = path.join(brandDir, 'ideas.json');
-                let ideas = { ideas: [] };
-                try { ideas = JSON.parse(fs.readFileSync(ideasPath, 'utf-8')); } catch {}
-                if (!ideas.ideas) ideas.ideas = [];
-                const isContact = (item.type === 'contact' || item.contact);
-                ideas.ideas.push({
-                  id: item.id || recId,
-                  type: isContact ? 'contact' : 'content',
-                  status: 'new',
-                  title: item.title || item.adapted_idea?.title || '',
-                  description: item.description || item.adapted_idea?.description || '',
-                  source: item.source || 'atalaya',
-                  list: isContact ? (item.contact?.target_channel || 'outreach') : (item.content?.list || 'keywords'),
-                  channels: item.content?.channels || item.adapted_idea?.recommended_channels || [],
-                  target_channel: item.contact?.target_channel || '',
-                  priority_score: item.priority === 'high' ? 80 : item.priority === 'medium' ? 50 : 20,
-                  created_at: new Date().toISOString(),
-                  notes: item.rationale || ''
-                });
-                fs.writeFileSync(ideasPath, JSON.stringify(ideas, null, 2));
+                const isGroupedTask = item.idea_ids && item.idea_ids.length > 0;
+                if (isGroupedTask) {
+                  // Create task in project with idea_ids
+                  const pId = projectId || item.suggested_project || '';
+                  const projsDir = path.join(brandDir, 'projects');
+                  let targetProjDir, targetProjId = pId;
+                  if (pId) {
+                    const resolved = resolveProjectDir(projsDir, pId);
+                    if (resolved) targetProjDir = resolved;
+                  }
+                  if (!targetProjDir) {
+                    // Find first matching project or use first available
+                    const projDirs = fs.existsSync(projsDir) ? fs.readdirSync(projsDir).filter(d => d.startsWith('P') && fs.statSync(path.join(projsDir, d)).isDirectory()) : [];
+                    if (projDirs.length > 0) { targetProjDir = path.join(projsDir, projDirs[0]); targetProjId = projDirs[0].split('-')[0]; }
+                  }
+                  if (targetProjDir) {
+                    const tasksFile = path.join(targetProjDir, 'tasks.json');
+                    let tasks = [];
+                    try { tasks = JSON.parse(fs.readFileSync(tasksFile, 'utf-8')); } catch {}
+                    if (!Array.isArray(tasks)) tasks = [];
+                    const maxNum = tasks.reduce((m, t) => { const match = (t.id||'').match(/-T(\d+)$/); return match ? Math.max(m, parseInt(match[1])) : m; }, 0);
+                    const taskId = targetProjId + '-T' + String(maxNum + 1).padStart(2, '0');
+                    tasks.push({
+                      id: taskId, name: item.title || '', description: item.description || '',
+                      type: item.task_type || 'content', idea_ids: item.idea_ids,
+                      status: 'todo', owner: 'Sancho', created_at: new Date().toISOString()
+                    });
+                    fs.writeFileSync(tasksFile, JSON.stringify(tasks, null, 2));
+                    item.converted_to = 'task:' + taskId;
+                    // Mark linked ideas as assigned
+                    try {
+                      const ideasData = JSON.parse(fs.readFileSync(path.join(brandDir, 'ideas.json'), 'utf-8'));
+                      for (const idea of (ideasData.ideas || [])) {
+                        if (item.idea_ids.includes(idea.id)) { idea.status = 'assigned'; idea.updated_at = new Date().toISOString(); }
+                      }
+                      fs.writeFileSync(path.join(brandDir, 'ideas.json'), JSON.stringify(ideasData, null, 2));
+                    } catch {}
+                  }
+                } else {
+                  // Individual recommendation → move to ideas.json
+                  const ideasPath = path.join(brandDir, 'ideas.json');
+                  let ideas = { ideas: [] };
+                  try { ideas = JSON.parse(fs.readFileSync(ideasPath, 'utf-8')); } catch {}
+                  if (!ideas.ideas) ideas.ideas = [];
+                  const isContact = (item.type === 'contact' || item.contact);
+                  ideas.ideas.push({
+                    id: item.id || recId, type: isContact ? 'contact' : 'content', status: 'new',
+                    title: item.title || item.adapted_idea?.title || '', description: item.description || item.adapted_idea?.description || '',
+                    source: item.source || 'atalaya', priority_score: item.priority === 'high' ? 80 : item.priority === 'medium' ? 50 : 20,
+                    created_at: new Date().toISOString(), notes: item.rationale || ''
+                  });
+                  fs.writeFileSync(ideasPath, JSON.stringify(ideas, null, 2));
+                }
                 item.status = 'approved';
                 item.actioned_at = new Date().toISOString();
-                item.converted_to = 'idea:' + (item.id || recId);
               } else if (action === 'convert') {
                 // Convert to task in project
                 const pId = projectId || item.operational?.linked_project || item.linked_project || item.linkedProject;

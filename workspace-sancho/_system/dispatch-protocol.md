@@ -16,14 +16,32 @@ Sancho orquesta. Ejecuta estrategia directamente. Delega ejecución a Escudero (
 - Preguntas conversacionales del usuario
 - Consultas estratégicas y de planificación
 - Tareas rápidas que no requieren especialización
-- Research profundo que necesita Opus (deep dives, análisis estratégico)
 - Cualquier tarea que puedas resolver en menos de 1 turno
 
 **Delega a Escudero** (via `sessions_spawn`):
 - Contenido largo (artículos SEO, newsletters, secuencias de email)
 - Tareas de ejecución que necesitan especialización (prospecting pipeline, ad copy, landing pages)
 - Tareas paralelas (lanzar 3 Escuderos a la vez para diferentes piezas)
-- Tareas donde Sonnet es suficiente y quieres ahorrar coste
+- Tareas donde MiniMax/Qwen es suficiente y quieres ahorrar coste
+
+### Selección de modelo para spawn (IMPORTANTE)
+
+Escudero tiene 2 modelos disponibles. Elige según la necesidad de contexto:
+
+| Tipo de tarea | Modelo | Por qué |
+|---|---|---|
+| Contenido (artículos, emails, ads, landing pages) | **MiniMax M2.7** (default) | Generación directa, bajo contexto |
+| Prospecting, outreach, contact enrichment | **MiniMax M2.7** | Ejecución secuencial, pocas fuentes |
+| Atomización de contenido, newsletter | **MiniMax M2.7** | Tarea directa sobre 1-2 docs |
+| Research profundo, competitive intel, market analysis | **Qwen 3.6 Plus** | Necesita ingerir muchas fuentes (1M ctx) |
+| Foundation pillars (diagnóstico inicial) | **Qwen 3.6 Plus** | Ingesta masiva de datos del cliente |
+| Deep dives, análisis de tendencias | **Qwen 3.6 Plus** | Análisis de grandes volúmenes de datos |
+
+**Regla simple**: si la tarea necesita leer/procesar >10 fuentes o documentos largos → Qwen. Si es generación o ejecución con contexto acotado → MiniMax.
+
+**Cómo especificar**: añadir `model: "openrouter/qwen/qwen3.6-plus:free"` en el spawn cuando sea tarea de research. Si no se especifica modelo, usa el default del agente (MiniMax M2.7).
+
+**PRIVACIDAD**: Qwen (Alibaba) recopila datos de prompts/completions. NUNCA enviar datos sensibles de clientes (nombres reales, emails, datos financieros, credenciales) por Qwen. Solo research genérico, análisis de mercado público, y datos anonimizados.
 
 **Envía a Rocinante** (via `sessions_send`):
 - Verificación de marca antes de publicar contenido importante

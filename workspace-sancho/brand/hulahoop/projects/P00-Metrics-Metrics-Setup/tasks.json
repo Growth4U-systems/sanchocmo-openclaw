@@ -1,0 +1,71 @@
+{
+  "project_id": "P00-Metrics",
+  "tasks": [
+    {
+      "id": "P00-MET-T01",
+      "name": "L6 — Acquisition Metrics Plan",
+      "description": "Definir métricas clave de adquisición por canal: CPL, CAC, conversion rates, pipeline velocity.",
+      "deliverable": "go-to-market/metrics-plan.md con KPIs por canal.",
+      "done_criteria": "Métricas definidas y aprobadas. Tareas de conexión generadas automáticamente.",
+      "depends_on": "P00-FUL-T09",
+      "owner": "Sancho",
+      "status": "pending",
+      "channel": "intelligence",
+      "type": "foundation",
+      "skill": "metrics-setup",
+      "pillar": "metrics-setup",
+      "section": "metrics-setup"
+    },
+    {
+      "id": "P00-MET-T08",
+      "name": "Conectar reuniones (Meeting Intelligence)",
+      "description": "Comparte una carpeta de Google Drive con tus notas o grabaciones de reuniones. Sancho extraerá decisiones, acciones e insights automáticamente después de cada reunión.",
+      "deliverable": "Meeting Intelligence configurado y ejecutando automáticamente.",
+      "done_criteria": "google_drive_folder_id configurado y Meeting Intelligence ejecutado con al menos 1 reunión.",
+      "depends_on": null,
+      "owner": "Usuario",
+      "status": "todo",
+      "channel": "intelligence",
+      "type": "integration",
+      "skill": "meeting-intelligence",
+      "notes": "1) Crea o identifica una carpeta en Google Drive con tus notas de reuniones. 2) Comparte la carpeta con el agente. 3) Sancho configurará Meeting Intelligence automáticamente. Corre L-V a las 18h."
+    },
+    {
+      "id": "P00-MET-T09",
+      "name": "Configurar preparación de reuniones (Call Prep)",
+      "description": "Si tienes un CRM con calendario de reuniones (GHL, HubSpot, etc.), Sancho puede preparar briefings automáticos antes de cada llamada con un lead.",
+      "deliverable": "Call Prep configurado y generando briefings.",
+      "done_criteria": "Call Prep ejecutado con al menos 1 briefing generado.",
+      "depends_on": null,
+      "owner": "Usuario",
+      "status": "todo",
+      "channel": "intelligence",
+      "type": "integration",
+      "skill": "sales-call-prep",
+      "notes": "Requiere: acceso a tu calendario + CRM con datos de leads. Dile a Sancho qué CRM usas y él configurará la integración."
+    },
+    {
+      "id": "P00-MET-T10",
+      "name": "Conectar comunicaciones internas",
+      "description": "Sancho funciona mejor cuanto más contexto tiene de tu negocio. Al conectar tus canales de comunicación (email, Slack, etc.), puede leer tus conversaciones con clientes, propuestas, decisiones internas y oportunidades — y usar todo eso para darte recomendaciones más relevantes, priorizar mejor tu trabajo, y generar un Daily Pulse cada mañana con lo más importante del día anterior.",
+      "deliverable": "Al menos 1 canal de comunicación conectado y Daily Pulse ejecutando.",
+      "done_criteria": "Daily Pulse ejecutado con al menos 1 fuente conectada.",
+      "depends_on": null,
+      "owner": "Usuario",
+      "status": "todo",
+      "channel": "insights",
+      "type": "integration",
+      "skill": "daily-pulse",
+      "connectors": [
+        {"id": "gmail", "name": "Gmail", "icon": "📧", "status": "available", "config_hint": "Cuenta Gmail + labels a ignorar"},
+        {"id": "outlook", "name": "Outlook / Microsoft 365", "icon": "📨", "status": "available", "config_hint": "Cuenta Outlook + carpetas a monitorizar"},
+        {"id": "slack", "name": "Slack", "icon": "💬", "status": "available", "config_hint": "Bot token (xoxb-) + canales a monitorizar"},
+        {"id": "teams", "name": "Microsoft Teams", "icon": "🟣", "status": "coming_soon", "config_hint": "Requiere app registrada en Azure AD"},
+        {"id": "whatsapp", "name": "WhatsApp Business", "icon": "🟢", "status": "coming_soon", "config_hint": "API de WhatsApp Business"},
+        {"id": "intercom", "name": "Intercom", "icon": "🔵", "status": "coming_soon", "config_hint": "API key de Intercom"},
+        {"id": "zendesk", "name": "Zendesk", "icon": "🟠", "status": "coming_soon", "config_hint": "Subdomain + API token"}
+      ],
+      "notes": "Abre esta tarea y dile a Sancho qué herramientas de comunicación usa tu empresa. Él te guiará paso a paso para conectar cada una. Cuantas más fuentes conectes, más completo será tu Daily Pulse."
+    }
+  ]
+}

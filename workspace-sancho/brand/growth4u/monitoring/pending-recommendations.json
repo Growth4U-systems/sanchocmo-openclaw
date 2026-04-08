@@ -82,8 +82,9 @@
       "description": "GHL shows 0 opportunities and 0 pipeline value. Pipeline stages not being used or tracking gap.",
       "linkedProject": null,
       "createdAt": "2026-04-01",
-      "status": "active"
+      "status": "dismissed",
+      "actioned_at": "2026-04-07T22:03:28.396Z"
     }
   ],
-  "updated_at": "2026-04-01T21:09:28.171Z"
+  "updated_at": "2026-04-07T22:03:28.396Z"
 }

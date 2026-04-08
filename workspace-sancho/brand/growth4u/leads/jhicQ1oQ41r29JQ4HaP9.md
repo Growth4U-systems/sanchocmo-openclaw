@@ -6,7 +6,7 @@ phone: null
 company: null
 source: Instagram Paid Ad (campaign 120244652779970655)
 date_added: 2026-03-17
-last_enriched: 2026-03-27T21:00:00Z
+last_enriched: 2026-04-07T20:00:00Z
 enrichment_pending: true
 tags: [llamada-agendada, llamada-de-seguimiento]
 ---
@@ -42,7 +42,10 @@ Requiere:
 - **Timezone configurado**: Asia/Dubai → posible expatriado español en Emiratos
 
 ## Call Transcripts
-_No hay transcripts disponibles aún._
+
+### 2026-03-19 — 1era Llamada Estratégica
+- **Notas de llamada:** [Google Doc](https://docs.google.com/document/d/1uj8pW4H1j_fVo1N1ssEGJVRSevAEkIBUt-KAIlbjGvI/edit?tab=t.7ccsdbu45km1)
+- **Contexto:** Registrado en doc "Llamadas estratégicas Growth4U" (19/03), sin grabación de 1er contacto
 
 ## Campaign Performance Notes
 - Lead proveniente de Instagram Ads

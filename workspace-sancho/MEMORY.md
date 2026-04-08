@@ -31,6 +31,9 @@
 - Missing: alopecia androgenética tratamiento (1300/mo), PRP capilar (720/mo), caída pelo mujer (590/mo)
 - DATA: DataForSEO (credentials ok), Serper.dev (ok), Own media (IG 133K, YT 40K, LinkedIn 7.8K, TikTok 55K)
 
+## Semana
+- **Apr 7** — Back after weekend. Weekly Fellow<>G4U + Weekly Projects Philippe hoy 16:00-17:00. Llamada estratégica Thursday Apr 9 10:00 AM (cliente nuevo?).
+
 ## Pending
 - HC Foundation desde cero (DAG a seguir)
 - Scripts Python niche-discovery-100x: SIGTERM → workaround: web_search

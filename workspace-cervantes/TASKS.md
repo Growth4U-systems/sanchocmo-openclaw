@@ -77,7 +77,6 @@
 
 | ID | Tarea | Cat | Pri | Propuesto | Notas |
 |---|---|---|---|---|---|
-| T-010 | Migrar Mission Control a Next.js (dual view) | `[docs]` | P1 | Alfonso 2026-02-24 | Starter: michaelshimeles/nextjs-starter-kit. Keep Polar (pagos futuro) + PostHog (analytics). Auth con Google OAuth: cliente ve solo su marca, admin ve todo. Supabase como DB. 5 fases: Bootstrap → Auth+MultiTenant → Dashboard Core → Doc Viewer → Vistas secundarias. PRD completo en `~/.openclaw/workspace-cervantes/prd/t-010-mission-control-nextjs.md`. |
 
 
 
@@ -88,6 +87,7 @@
 | ID | Tarea | Cat | Pri | Propuesto | Notas |
 |---|---|---|---|---|---|
 
+| T-010 | Migrar Mission Control a Next.js (dual view) | [docs] | P1 | Alfonso 2026-02-24 | **Phase 1 COMPLETE.** Starter clonado, npm install OK (838 pkg). Error 500 expected (no DB). Commit 1e95719. Ready for Phase 2: Auth + Supabase. |
 
 ### ✔️ Completadas (recientes)
 

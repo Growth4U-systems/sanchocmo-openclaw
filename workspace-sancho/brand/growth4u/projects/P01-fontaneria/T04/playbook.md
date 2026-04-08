@@ -29,27 +29,27 @@ No hacemos marketing genérico. Construimos sistemas de growth que se quedan cua
 
 ---
 
-#### 🎯 [Growth Marketing Tech](/servicios/growth-marketing-fintech/)
+#### 🎯 [Growth Marketing Tech](/servicios/growth-marketing/)
 **Crecimiento por etapa: desde PMF hasta 500K usuarios**
 
 Infraestructura de growth escalable según tu fase. Desde validación de propuesta de valor (0→tracción) hasta sistemas de captación masiva (10K→500K) y go-to-market para nuevos mercados.
 
 → Para startups tech en cualquier etapa que necesitan crecer sin desperdiciar budget
 
-[Ver Growth Marketing →](/servicios/growth-marketing-fintech/)
+[Ver Growth Marketing →](/servicios/growth-marketing/)
 
 ---
 
-#### 🔍 [GEO — Generative Engine Optimization](/servicios/geo-para-fintechs/)
+#### 🔍 [GEO — Generative Engine Optimization](/servicios/geo/)
 **Sé la respuesta cuando tu cliente pregunta a ChatGPT**
 
 Optimizamos tu presencia en motores de IA generativa. Cuando alguien pregunta a ChatGPT, Gemini o Perplexity por soluciones en tu sector, tu marca aparece citada. Primeros resultados en 4-8 semanas.
 
 → Para empresas tech que quieren captar leads de alta intención desde IA
 
-**Resultado:** Growth4U #1-2 en Gemini para "agencia growth fintech España"
+**Resultado:** Growth4U #1-2 en Gemini para "agencia growth tech España"
 
-[Descubre GEO →](/servicios/geo-para-fintechs/)
+[Descubre GEO →](/servicios/geo/)
 
 ---
 

@@ -1,18 +1,18 @@
 {
   "url": "https://growth4u.io",
   "mobile": {
-    "performance": 77,
+    "performance": 73,
     "seo": 100,
     "accessibility": 92,
     "bestPractices": 100,
-    "lcp": 4.2,
-    "cls": 0.007,
-    "tbt": 55,
+    "lcp": 5.3,
+    "cls": 0,
+    "tbt": 48,
     "opportunities": [
       {
         "id": "unused-javascript",
         "title": "Reduce unused JavaScript",
-        "savings": 430,
+        "savings": 1050,
         "description": "Reduce unused JavaScript and defer loading scripts until they are required to decrease bytes consumed by network activity. [Learn how to reduce unused"
       }
     ],
@@ -20,11 +20,6 @@
       {
         "id": "image-delivery-insight",
         "title": "Improve image delivery",
-        "score": 0
-      },
-      {
-        "id": "landmark-one-main",
-        "title": "Document does not have a main landmark.",
         "score": 0
       },
       {
@@ -36,6 +31,16 @@
         "id": "color-contrast",
         "title": "Background and foreground colors do not have a sufficient contrast ratio.",
         "score": 0
+      },
+      {
+        "id": "cache-insight",
+        "title": "Use efficient cache lifetimes",
+        "score": 0
+      },
+      {
+        "id": "landmark-one-main",
+        "title": "Document does not have a main landmark.",
+        "score": 0
       }
     ]
   },
@@ -46,7 +51,7 @@
     "bestPractices": 100,
     "lcp": 1,
     "cls": 0.009,
-    "tbt": 0,
+    "tbt": 3,
     "opportunities": [
       {
         "id": "unused-javascript",
@@ -62,13 +67,13 @@
         "score": 0
       },
       {
-        "id": "landmark-one-main",
-        "title": "Document does not have a main landmark.",
+        "id": "heading-order",
+        "title": "Heading elements are not in a sequentially-descending order",
         "score": 0
       },
       {
-        "id": "heading-order",
-        "title": "Heading elements are not in a sequentially-descending order",
+        "id": "landmark-one-main",
+        "title": "Document does not have a main landmark.",
         "score": 0
       },
       {
@@ -78,5 +83,5 @@
       }
     ]
   },
-  "fetchedAt": "2026-04-05T17:28:06.763Z"
+  "fetchedAt": "2026-04-07T09:19:20.622Z"
 }

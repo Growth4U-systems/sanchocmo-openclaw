@@ -1,6 +1,6 @@
 ---
 ghl_id: kTWWSEk7rs2LoBzgjAPs
-last_enriched: 2026-04-01T22:00:00+02:00
+last_enriched: 2026-04-07T20:00:00Z
 enrichment_pending: false
 ---
 
@@ -26,4 +26,9 @@ enrichment_pending: false
 
 ## Call Transcripts
 
-_Sin transcripts disponibles (lead creado 2026-04-01)._
+### 2026-04-02 — 1er Contacto Juan Antonio
+- **Grabación disponible:** [Juan Antonio.m4a en Drive](https://drive.google.com/file/d/1h4RQpZDK3Cn5_Bye5riP3WWMoTpElVUB/view?usp=sharing)
+- **Formato:** Audio (m4a, ~20MB) — sin transcripción automática disponible
+- **Contexto:** Registrado en doc "Llamadas estratégicas Growth4U" como 1er contacto (01/04)
+
+<!-- Self-QA: PASS | 2026-04-07 -->

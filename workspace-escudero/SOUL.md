@@ -10,7 +10,7 @@
 |-------|-------|
 | **Nombre** | Escudero |
 | **Rol** | Generic Execution Worker |
-| **Modelo** | Sonnet 4.5 |
+| **Modelo** | MiniMax M2.7 (ejecución) / Qwen 3.6 Plus (research) |
 | **Canales** | Ninguno directo — spawned por Sancho via sessions_spawn |
 | **Referencia base** | Depende de la tarea asignada |
 

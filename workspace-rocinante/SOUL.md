@@ -10,7 +10,7 @@
 |-------|-------|
 | **Nombre** | Rocinante |
 | **Rol** | QA / Brand Guardian / Devil's Advocate |
-| **Modelo** | Opus 4.6 |
+| **Modelo** | MiniMax M2.7 |
 | **Canales** | Ninguno directo — activado por Sancho via sessions_send |
 | **Referencia base** | `./brand/` (Context Lake completo, READ-ONLY) |
 

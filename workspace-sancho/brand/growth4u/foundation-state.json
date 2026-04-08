@@ -12,7 +12,9 @@
         "company-brief": {
           "status": "approved",
           "output_file": "brand/growth4u/company-brief/current.md",
-          "skill": "fast-foundation"
+          "skill": "fast-foundation",
+          "updated_at": "2026-04-07T17:54:13.933Z",
+          "approved_at": "2026-04-07T17:54:13.933Z"
         },
         "self-l1": {
           "status": "approved",
@@ -193,9 +195,11 @@
               "output_file": "brand/growth4u/go-to-market/positioning/ecp5-invisible/current.md"
             }
           },
-          "notes": "5/5 ECPs approved. Shared Tier 2: value-criteria.md (25 criteria), assets.md (15 assets). Skill v5.0.",
+          "notes": "5/5 ECPs approved. Shared Tier 2: value-criteria.md (25 criteria), assets.md (15 assets). Skill v5.0. NO positioning/current.md centralizado — positioning es per-ECP. Gate check debe usar messaging-summary.md o ecps_completed.",
           "output_file": "brand/growth4u/go-to-market/positioning/shared/messaging-summary.md",
-          "updated_at": "2026-03-30T08:18:20.025Z"
+          "gate_check_file": "brand/growth4u/go-to-market/positioning/shared/messaging-summary.md",
+          "structure": "per-ecp",
+          "updated_at": "2026-04-07T12:56:00.000Z"
         },
         "pricing": {
           "status": "approved",
