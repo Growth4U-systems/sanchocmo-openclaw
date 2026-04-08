@@ -1,0 +1,185 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Weekly Performance Analysis Report",
+  "type": "object",
+  "required": ["week_start", "week_end", "slug", "executive_summary", "health_score", "nsm_progress", "anomalies", "recommendations"],
+  "properties": {
+    "week_start": { "type": "string", "format": "date" },
+    "week_end": { "type": "string", "format": "date" },
+    "slug": { "type": "string" },
+    "trigger": { "type": "string", "enum": ["cron", "manual"] },
+    "executive_summary": {
+      "type": "string",
+      "description": "One paragraph overview of the week's performance"
+    },
+    "health_score": {
+      "type": "object",
+      "required": ["overall", "trend", "by_category"],
+      "properties": {
+        "overall": { "type": "integer", "minimum": 0, "maximum": 100 },
+        "trend": { "type": "string", "enum": ["improving", "declining", "stable"] },
+        "previous_week": { "type": "integer", "minimum": 0, "maximum": 100 },
+        "by_category": {
+          "type": "object",
+          "properties": {
+            "traffic": { "$ref": "#/$defs/categoryScore" },
+            "paid": { "$ref": "#/$defs/categoryScore" },
+            "funnel": { "$ref": "#/$defs/categoryScore" },
+            "seo": { "$ref": "#/$defs/categoryScore" },
+            "social": { "$ref": "#/$defs/categoryScore" }
+          }
+        }
+      }
+    },
+    "nsm_progress": {
+      "type": "object",
+      "required": ["metric", "on_track"],
+      "properties": {
+        "metric": { "type": "string" },
+        "current_week": { "type": "number" },
+        "previous_week": { "type": "number" },
+        "monthly_target": { "type": "number" },
+        "monthly_actual": { "type": "number" },
+        "on_track": { "type": "boolean" }
+      }
+    },
+    "funnel_analysis": {
+      "type": "object",
+      "properties": {
+        "steps": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "step": { "type": "string" },
+              "count": { "type": "number" },
+              "prev_week": { "type": "number" },
+              "change_pct": { "type": "number" },
+              "conversion_to_next": { "type": "number" }
+            }
+          }
+        },
+        "bottleneck": { "type": "string" }
+      }
+    },
+    "anomalies": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["metric", "severity", "type"],
+        "properties": {
+          "metric": { "type": "string" },
+          "source": { "type": "string" },
+          "category": { "type": "string" },
+          "type": { "type": "string", "enum": ["spike", "drop", "stagnation"] },
+          "severity": { "type": "string", "enum": ["red", "yellow"] },
+          "current_value": { "type": "number" },
+          "baseline_7d": { "type": "number" },
+          "baseline_30d": { "type": "number" },
+          "deviation_pct": { "type": "number" },
+          "since": { "type": "string", "format": "date" },
+          "description": { "type": "string" }
+        }
+      }
+    },
+    "trends": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "metric": { "type": "string" },
+          "source": { "type": "string" },
+          "direction": { "type": "string", "enum": ["up", "down", "flat"] },
+          "7d_change_pct": { "type": "number" },
+          "30d_change_pct": { "type": "number" },
+          "consecutive_days": { "type": "integer" }
+        }
+      }
+    },
+    "opportunities": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "metric": { "type": "string" },
+          "source": { "type": "string" },
+          "description": { "type": "string" },
+          "potential_action": { "type": "string" }
+        }
+      }
+    },
+    "project_correlations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "project_id": { "type": "string" },
+          "project_name": { "type": "string" },
+          "weeks_active": { "type": "integer" },
+          "correlated_metrics": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "metric": { "type": "string" },
+                "source": { "type": "string" },
+                "change_pct": { "type": "number" },
+                "confidence": { "type": "string", "enum": ["high", "medium", "low"] }
+              }
+            }
+          },
+          "assessment": { "type": "string" }
+        }
+      }
+    },
+    "recommendations": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/recommendation" }
+    },
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "model": { "type": "string" },
+        "daily_reports_analyzed": { "type": "integer" },
+        "web_searches_performed": { "type": "integer" },
+        "processing_time_ms": { "type": "integer" }
+      }
+    }
+  },
+  "$defs": {
+    "categoryScore": {
+      "type": "object",
+      "properties": {
+        "score": { "type": "integer", "minimum": 0, "maximum": 100 },
+        "trend": { "type": "string", "enum": ["up", "down", "flat"] }
+      }
+    },
+    "recommendation": {
+      "type": "object",
+      "required": ["id", "type", "priority", "title", "rationale", "suggested_action", "status"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^rec-\\d{8}-\\d{3}$" },
+        "type": { "type": "string", "enum": ["optimize", "investigate", "launch", "pause", "escalate"] },
+        "priority": { "type": "string", "enum": ["high", "medium", "low"] },
+        "title": { "type": "string" },
+        "rationale": { "type": "string" },
+        "suggested_action": { "type": "string" },
+        "linked_project": { "type": ["string", "null"] },
+        "linked_metric": { "type": ["string", "null"] },
+        "estimated_impact": { "type": "string" },
+        "web_research": {
+          "type": "object",
+          "properties": {
+            "searched": { "type": "boolean" },
+            "query": { "type": "string" },
+            "findings": { "type": "string" },
+            "sources": { "type": "array", "items": { "type": "string" } }
+          }
+        },
+        "status": { "type": "string", "enum": ["pending", "approved", "dismissed", "converted", "auto_resolved"] },
+        "created_at": { "type": "string", "format": "date-time" },
+        "converted_to_task": { "type": ["string", "null"] }
+      }
+    }
+  }
+}

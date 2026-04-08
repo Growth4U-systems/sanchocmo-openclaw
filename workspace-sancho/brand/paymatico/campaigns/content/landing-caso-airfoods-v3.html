@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Caso de Éxito: Airfoods × Paymático — Control financiero en 20+ locales</title>
+<meta name="description" content="Descubre cómo Airfoods recuperó el control y visibilidad financiera de su red de 20+ locales en aeropuertos con Paymático.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Onest:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --navy: #0B132B;
+  --navy-mid: #0F1A35;
+  --navy-light: #162247;
+  --lime: #A9E815;
+  --lime-dim: #8BC712;
+  --lime-glow: rgba(169, 232, 21, 0.12);
+  --white: #FFFFFF;
+  --gray-100: #F4F6F9;
+  --gray-200: #E2E8F0;
+  --gray-400: #94A3B8;
+  --gray-600: #64748B;
+  --font-main: 'Onest', system-ui, sans-serif;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--font-main);
+  color: var(--white);
+  background: var(--navy);
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+.container { max-width: 1120px; margin: 0 auto; padding: 0 28px; }
+.eyebrow {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--lime);
+}
+
+/* ── HERO ── */
+.hero {
+  position: relative;
+  padding: 80px 0 60px;
+  overflow: hidden;
+}
+.hero-bg-glow {
+  position: absolute;
+  top: -100px; right: -100px;
+  width: 500px; height: 500px;
+  background: radial-gradient(circle, rgba(169,232,21,0.08) 0%, transparent 70%);
+  pointer-events: none;
+}
+.hero-inner {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 56px;
+  align-items: center;
+}
+.hero-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(169,232,21,0.08);
+  border: 1px solid rgba(169,232,21,0.2);
+  border-radius: 100px;
+  padding: 5px 14px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--lime);
+  margin-bottom: 20px;
+}
+.hero-eyebrow-dot {
+  width: 6px; height: 6px;
+  background: var(--lime);
+  border-radius: 50%;
+  animation: lpulse 2.5s ease-in-out infinite;
+}
+@keyframes lpulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+.hero h1 {
+  font-size: clamp(1.8rem, 3.5vw, 2.6rem);
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -0.025em;
+  margin-bottom: 18px;
+}
+.hero h1 em { font-style: normal; color: var(--lime); }
+.hero-sub {
+  font-size: 1rem;
+  color: var(--gray-400);
+  max-width: 460px;
+  margin-bottom: 28px;
+  line-height: 1.65;
+}
+.hero-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--lime);
+  color: var(--navy);
+  font-family: var(--font-main);
+  font-size: 0.9rem;
+  font-weight: 700;
+  padding: 13px 28px;
+  border-radius: 8px;
+  text-decoration: none;
+  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 2px 20px rgba(169,232,21,0.25);
+  letter-spacing: 0.01em;
+}
+.hero-cta:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 28px rgba(169,232,21,0.35);
+}
+.hero-cta svg { width: 16px; height: 16px; }
+
+/* Hero Card */
+.hero-card {
+  background: var(--navy-mid);
+  border: 1px solid rgba(169,232,21,0.1);
+  border-radius: 20px;
+  padding: 36px;
+  position: relative;
+  overflow: hidden;
+}
+.hero-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--lime), transparent);
+}
+.hero-logo-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.hero-logo-img {
+  width: 64px;
+  height: auto;
+  object-fit: contain;
+}
+.hero-logo-text { flex: 1; }
+.hero-logo-text h3 { font-size: 1rem; font-weight: 700; color: var(--white); margin-bottom: 2px; }
+.hero-logo-text p { font-size: 0.78rem; color: var(--gray-400); }
+.hero-tag {
+  display: inline-block;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--lime);
+  background: rgba(169,232,21,0.08);
+  border: 1px solid rgba(169,232,21,0.15);
+  border-radius: 4px;
+  padding: 2px 8px;
+  margin-bottom: 16px;
+}
+.stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.stat-box {
+  background: rgba(169,232,21,0.04);
+  border: 1px solid rgba(169,232,21,0.08);
+  border-radius: 10px;
+  padding: 14px 12px;
+  text-align: center;
+}
+.stat-num {
+  font-size: 1.7rem;
+  font-weight: 800;
+  color: var(--lime);
+  line-height: 1;
+  margin-bottom: 4px;
+}
+.stat-lbl { font-size: 0.72rem; color: var(--gray-400); font-weight: 500; }
+
+/* ── CONTEXT ── */
+.section { padding: 64px 0; }
+.section + .section { border-top: 1px solid rgba(255,255,255,0.04); }
+.section-dark { background: var(--navy-mid); }
+
+.two-col {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  gap: 56px;
+  align-items: start;
+}
+.two-col-eyebrow { margin-bottom: 12px; }
+.two-col h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--white);
+}
+.body-text p {
+  color: var(--gray-200);
+  margin-bottom: 14px;
+  font-size: 0.92rem;
+}
+.body-text p strong { color: var(--white); font-weight: 600; }
+.insight-box {
+  background: rgba(169,232,21,0.05);
+  border-left: 3px solid var(--lime);
+  padding: 16px 20px;
+  border-radius: 0 10px 10px 0;
+  margin-top: 20px;
+}
+.insight-box p {
+  color: var(--gray-200);
+  font-size: 0.88rem;
+  margin: 0;
+  line-height: 1.6;
+}
+
+/* ── SOLUTION PROSE ── */
+.sol-prose {
+  margin-bottom: 48px;
+  text-align: left;
+}
+.sol-item {
+  padding: 32px 0;
+  border-bottom: 1px solid rgba(169,232,21,0.08);
+}
+.sol-item:first-child { padding-top: 0; }
+.sol-item:last-child { border-bottom: none; padding-bottom: 0; }
+.sol-item h3 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--white);
+  margin-bottom: 12px;
+  letter-spacing: -0.01em;
+}
+.sol-item p {
+  font-size: 0.9rem;
+  color: var(--gray-200);
+  line-height: 1.8;
+}
+.sol-item-img {
+  margin-top: 20px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(169,232,21,0.08);
+}
+.sol-item-img img {
+  width: 100%;
+  height: auto;
+  display: block;
+  object-fit: cover;
+}
+
+/* ── PROBLEM FULL WIDTH ── */
+.problem-fullwidth {
+  max-width: 100%;
+  margin-top: 32px;
+}
+.problem-fullwidth p {
+  font-size: 0.95rem;
+  color: var(--gray-200);
+  line-height: 1.8;
+  margin-bottom: 16px;
+}
+.problem-fullwidth p:last-child { margin-bottom: 0; }
+
+/* ── PROBLEM ── */
+.section-header { text-align: center; max-width: 640px; margin: 0 auto 44px; }
+.section-header h2 { font-size: clamp(1.5rem, 2.5vw, 2rem); font-weight: 800; margin-top: 10px; }
+.problem-two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 48px;
+  align-items: start;
+  margin-bottom: 48px;
+}
+.problem-text p {
+  font-size: 0.95rem;
+  color: var(--gray-200);
+  line-height: 1.8;
+  margin-bottom: 16px;
+}
+.problem-text p:last-child { margin-bottom: 0; }
+.problem-img-wrap {
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid rgba(169,232,21,0.1);
+}
+.problem-img {
+  width: 100%;
+  height: auto;
+  display: block;
+  object-fit: cover;
+}
+
+/* ── QUOTE ── */
+.quote-box {
+  background: var(--navy-mid);
+  border: 1px solid rgba(169,232,21,0.12);
+  border-radius: 18px;
+  padding: 44px;
+  position: relative;
+  overflow: hidden;
+}
+.quote-box::before {
+  content: '\201C';
+  font-size: 10rem;
+  color: rgba(169,232,21,0.04);
+  position: absolute;
+  top: -30px; left: 16px;
+  line-height: 1;
+  pointer-events: none;
+  font-family: Georgia, serif;
+}
+.quote-with-photo {
+  display: grid;
+  grid-template-columns: 96px 1fr;
+  gap: 32px;
+  align-items: start;
+}
+.quote-photo {
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid rgba(169,232,21,0.2);
+  display: block;
+}
+.quote-fade {
+  font-size: 1.15rem;
+  font-style: italic;
+  font-weight: 300;
+  line-height: 1.65;
+  position: relative;
+  z-index: 1;
+  color: var(--gray-100);
+}
+.quote-attr { margin-top: 16px; }
+.quote-attr strong { color: var(--lime); font-weight: 700; font-size: 0.88rem; }
+.quote-attr span { display: block; color: var(--gray-400); font-size: 0.78rem; margin-top: 2px; }
+
+/* ── SOLUTION ── */
+.sol-card {
+  background: var(--navy-mid);
+  border: 1px solid rgba(255,255,255,0.05);
+  border-radius: 16px;
+  padding: 30px;
+  transition: border-color 0.3s, transform 0.3s;
+}
+.sol-card:hover {
+  border-color: rgba(169,232,21,0.25);
+  transform: translateY(-3px);
+}
+.sol-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px; height: 32px;
+  background: var(--lime);
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: var(--navy);
+  margin-bottom: 16px;
+}
+.sol-card h3 { font-size: 1rem; font-weight: 700; margin-bottom: 10px; }
+.sol-card p { font-size: 0.85rem; color: var(--gray-400); line-height: 1.65; }
+
+/* ── COMPARISON ── */
+.comp-table { max-width: 900px; margin: 0 auto; display: flex; flex-direction: column; gap: 0; border-radius: 16px; overflow: hidden; border: 1px solid rgba(169,232,21,0.12); }
+.comp-header-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+}
+.comp-header-cell {
+  padding: 14px 24px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  text-align: center;
+}
+.comp-header-before {
+  background: rgba(239,68,68,0.08);
+  color: #f87171;
+  border-bottom: 2px solid rgba(239,68,68,0.2);
+}
+.comp-header-after {
+  background: rgba(169,232,21,0.08);
+  color: var(--lime);
+  border-bottom: 2px solid rgba(169,232,21,0.2);
+}
+.comp-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.comp-row:last-child { border-bottom: none; }
+.comp-before-cell {
+  background: rgba(239,68,68,0.04);
+  padding: 18px 24px;
+  font-size: 0.88rem;
+  color: var(--gray-200);
+  line-height: 1.5;
+  border-right: 1px solid rgba(255,255,255,0.04);
+}
+.comp-after-cell {
+  background: rgba(169,232,21,0.04);
+  padding: 18px 24px;
+  font-size: 0.88rem;
+  color: var(--white);
+  line-height: 1.5;
+}
+
+/* ── CTA ── */
+.cta-band {
+  padding: 88px 0;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.cta-glow {
+  position: absolute;
+  bottom: -80px; left: 50%;
+  transform: translateX(-50%);
+  width: 600px; height: 300px;
+  background: radial-gradient(ellipse, rgba(169,232,21,0.07) 0%, transparent 70%);
+  pointer-events: none;
+}
+.cta-inner { position: relative; z-index: 1; }
+.cta-inner h2 { font-size: clamp(1.7rem, 3vw, 2.4rem); font-weight: 800; margin-bottom: 14px; }
+.cta-inner h2 em { font-style: normal; color: var(--lime); }
+.cta-inner p { color: var(--gray-400); font-size: 1rem; max-width: 480px; margin: 0 auto 30px; }
+.cta-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--lime);
+  color: var(--navy);
+  font-family: var(--font-main);
+  font-size: 0.95rem;
+  font-weight: 700;
+  padding: 15px 32px;
+  border-radius: 8px;
+  text-decoration: none;
+  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 4px 24px rgba(169,232,21,0.25);
+}
+.cta-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(169,232,21,0.35); }
+.cta-note { margin-top: 16px; font-size: 0.78rem; color: var(--gray-600); }
+
+/* ── FOOTER ── */
+.footer { padding: 28px 0; border-top: 1px solid rgba(255,255,255,0.04); text-align: center; font-size: 0.75rem; color: var(--gray-600); }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 768px) {
+  .hero-inner, .two-col { grid-template-columns: 1fr; }
+  .problem-two-col { grid-template-columns: 1fr; gap: 28px; }
+  .quote-with-photo { grid-template-columns: 1fr; gap: 20px; }
+  .quote-photo { width: 72px; height: 72px; }
+  .comp-row { grid-template-columns: 1fr; gap: 6px; }
+  .comp-before { text-align: left; }
+  .comp-arrow { transform: rotate(90deg); }
+  .stats-grid { grid-template-columns: 1fr 1fr; }
+}
+
+/* ── ANIMATIONS ── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.anim { opacity: 0; animation: fadeUp 0.55s ease-out forwards; }
+.d1 { animation-delay: 0.1s; }
+.d2 { animation-delay: 0.2s; }
+.d3 { animation-delay: 0.3s; }
+.d4 { animation-delay: 0.4s; }
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-bg-glow"></div>
+  <div class="container">
+    <div class="hero-inner">
+      <div class="anim">
+        <div class="hero-eyebrow"><div class="hero-eyebrow-dot"></div>Caso de Éxito</div>
+        <h1>Recuperando el control y visibilidad financiera en 20+ locales de restauración en aeropuertos</h1>
+        <p class="hero-sub">Cómo Airfoods pasó de conciliaciones manuales dato a dato a tener el control total de sus pagos en aeropuertos españoles con Paymático.</p>
+        <a href="https://paymatico.com/demo" class="hero-cta">
+          Reservar una demo
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"/></svg>
+        </a>
+      </div>
+      <div class="hero-card anim d2">
+        <div class="hero-logo-row">
+          <img src="data:image/png;base64,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" alt="Airfoods" class="hero-logo-img">
+          <div class="hero-logo-text">
+            <h3>Airfoods</h3>
+            <p>Smart food on the go</p>
+          </div>
+        </div>
+        <div class="hero-tag">Caso de éxito</div>
+        <div class="stats-grid">
+          <div class="stat-box">
+            <div class="stat-num">20+</div>
+            <div class="stat-lbl">Locales en aeropuertos</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-num">50%+</div>
+            <div class="stat-lbl">Operaciones con tarjeta</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-num">~8</div>
+            <div class="stat-lbl">Nuevos centros en 2025</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-num">~20</div>
+            <div class="stat-lbl">Migraciones de proveedor</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CLIENT CONTEXT -->
+<section class="section">
+  <div class="container">
+    <div class="two-col">
+      <div>
+        <p class="eyebrow two-col-eyebrow">El cliente</p>
+        <h2>Gastronomía para viajeros con exigencias de aeropuerto</h2>
+      </div>
+      <div class="body-text">
+        <p>Airfoods es una empresa española especializada en gastronomía para viajeros — <strong>"smart food on the go"</strong>. Opera una red de más de 20 locales de restauración en aeropuertos españoles bajo las especificaciones de AENA.</p>
+        <p>Hace tres años, un nuevo grupo inversor entró en la compañía y comenzó a profesionalizar y modernizar todas las operaciones legacy, incluida la gestión de pagos.</p>
+        <div class="insight-box">
+          <p>💡 Operar en aeropuertos españoles implica cumplir con homologaciones de AENA: software, hardware y pasarelas de pago autorizadas. Cada cambio requiere coordinar múltiples proveedores.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PROBLEM -->
+<section class="section section-dark">
+  <div class="container">
+    <div class="section-header">
+      <p class="eyebrow">El problema</p>
+      <h2>Gestión fragmentada, sin visibilidad ni control</h2>
+    </div>
+    <div class="problem-two-col">
+      <div class="problem-text">
+        <p>Cuando el nuevo grupo inversor entró en Airfoods hace tres años, la compañía venía de un periodo con otras prioridades distintas de optimizar procesos internos. Esto dejó una herencia operativa considerable, especialmente en la gestión de pagos.</p>
+        <p>Airfoods operaba con múltiples proveedores de adquirencia de forma desordenada. Su principal partner bancario había pasado por sucesivas transformaciones corporativas y cambios de titularidad, y con él ni siquiera contaban con personas de contacto claras. No había interlocución real: los ingresos aparecían en cuenta y poco más. El equipo financiero de Airfoods se veía obligado a introducir dato a dato cada transacción para intentar conciliar las ventas brutas con los ingresos reales en cuenta, calculando las comisiones prácticamente por diferencia. Era un proceso manual, lento y propenso a errores que consumía recursos valiosos del departamento de administración.</p>
+      </div>
+      <div class="problem-img-wrap">
+        <img src="IMAGE_AIRPORT_URL" alt="Interior de un aeropuerto español" class="problem-img">
+      </div>
+    </div>
+    <div class="problem-fullwidth">
+      <p>A esto se sumaba la complejidad inherente de operar en aeropuertos españoles: AENA exige el uso de pasarelas de pago y software homologado, lo que limita las opciones disponibles y añade capas de coordinación entre proveedores de software, hardware y servicios de pago. Cada apertura de un nuevo local o cada cambio de proveedor se convertía en un proyecto complejo que requería alinear a múltiples partes sin un facilitador que lo orquestara.</p>
+      <p style="margin-top: 50px;">Por si fuera poco, más del 50% de las operaciones de Airfoods se realizan con tarjeta, y todas las ventas están monitorizadas por AENA y ADIF. Esto significa que cualquier fallo en el sistema de pagos tiene un impacto directo e inmediato sobre la operativa del negocio.</p>
+    </div>
+
+    <div class="quote-box quote-with-photo anim">
+      <img src="IMAGE_CEO_URL" alt="Enrique López, CEO de Airfoods" class="quote-photo">
+      <div>
+        <p class="quote-fade">"Los pagos son como la luz de tu casa: no te das cuenta de que la tienes hasta el día que falla. Más del 50% de nuestras operaciones son con tarjeta, con lo cual es fundamental no fallar ahí. Paymático nos asegura que ese fallo no se produzca nunca."</p>
+        <div class="quote-attr"><strong>Enrique López</strong><span>CEO de Airfoods</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SOLUTION -->
+<section class="section">
+  <div class="container">
+    <div class="section-header">
+      <p class="eyebrow">La solución</p>
+      <h2>Cómo Paymático solucionó el problema</h2>
+    </div>
+    <div class="sol-prose">
+      <div class="sol-item">
+        <h3>Conciliaciones bancarias automatizadas</h3>
+        <p>El cambio más tangible e inmediato que Paymático trajo a Airfoods fue la automatización completa de las conciliaciones bancarias. Donde antes el equipo financiero tenía que dedicar horas a introducir manualmente cada dato, comparar ventas brutas con ingresos en cuenta y deducir las comisiones por diferencia: un proceso que era prácticamente una "liquidación por diferencia". Ahora cuentan con un desglose transparente y automatizado de cada transacción. Cada venta queda registrada con su traza completa: el importe bruto de la operación (por ejemplo, el euro de una Coca-Cola), la comisión exacta de Paymático, y el ingreso neto en cuenta. Todo esto se concilia de forma automática, liberando al departamento de administración de un trabajo manual que consumía tiempo y generaba incertidumbre.</p>
+        <div class="sol-item-img">
+          <img src="https://alarife.growth4u.io/api/uploaded/6823ca5a-c6e7-4a5e-81af-e40b0cbaf4c7.png" alt="Automatización de conciliaciones bancarias">
+        </div>
+      </div>
+      <div class="sol-item">
+        <h3>Rol de facilitador y project manager</h3>
+        <p>Durante todo 2025, que fue el año de transición completa hacia Paymático, Airfoods tuvo que realizar un cambio de proveedor aeropuerto por aeropuerto. Este proceso implicaba coordinar tres partes distintas: el software de pasarela homologado por AENA, el hardware (terminales, datáfonos, quioscos y TPVs portátiles, proporcionados por un proveedor independiente), y el servicio de adquirencia y pagos. Paymático asumió un rol que iba mucho más allá de ser un simple proveedor de pagos: se convirtió en el facilitador y project manager de todo el proceso de migración. Junto con el equipo de IT de Airfoods, Paymático coordinó cada una de las aproximadamente 8 aperturas de nuevos centros y cerca de 20 cambios de proveedor que se realizaron durante ese periodo.</p>
+        <div class="sol-item-img">
+          <img src="https://alarife.growth4u.io/api/uploaded/6823ca5a-c6e7-4a5e-81af-e40b0cbaf4c7.png" alt="Coordinación y project management">
+        </div>
+      </div>
+      <div class="sol-item">
+        <h3>Onboarding rápido y plug &amp; play</h3>
+        <p>La integración con Paymático fue muy rápida. Para locales en calle, Paymático facilita tanto el hardware (TPVs) como toda la configuración, convirtiendo el proceso en un verdadero plug and play. En el caso de Airfoods, la complejidad del ecosistema aeroportuario no supuso ningún problema y Paymático pudo adaptarse a un contexto en el que pocos proveedores pueden entrar tanto en detalle.</p>
+        <div class="sol-item-img">
+          <img src="https://alarife.growth4u.io/api/uploaded/6823ca5a-c6e7-4a5e-81af-e40b0cbaf4c7.png" alt="Integración plug and play">
+        </div>
+      </div>
+      <div class="sol-item">
+        <h3>Acceso a datos en tiempo real</h3>
+        <p>Más allá de la automatización de conciliaciones, Paymático proporcionó a Airfoods algo que antes simplemente no tenían: acceso a datos de pagos en tiempo real. Esta información es fundamental tanto para el departamento financiero, como para la dirección de operaciones, ya que permite tomar decisiones basadas en datos actualizados sobre el rendimiento de cada punto de venta. Para una empresa cuyas ventas están monitorizadas por AENA y donde más de la mitad de las transacciones son con tarjeta, disponer de esta visibilidad en tiempo real supone un salto cualitativo en la capacidad de gestión y dirección del negocio.</p>
+      </div>
+    </div>
+
+    <div class="quote-box quote-with-photo anim" style="margin-top: 0;">
+      <img src="IMAGE_CEO_URL" alt="Enrique López, CEO de Airfoods" class="quote-photo">
+      <div>
+        <p class="quote-fade">"Ahora con Paymático, tenemos el desglose de las comisiones. Nuestra venta es el euro de la Coca-Cola, y las comisiones se automatizan. Eso facilita mucho la vida en la gestión financiera."</p>
+        <div class="quote-attr"><strong>Enrique López</strong><span>CEO de Airfoods</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- COMPARISON -->
+<section class="section section-dark">
+  <div class="container">
+    <div class="section-header">
+      <p class="eyebrow">Resultados</p>
+      <h2>Antes vs. Después</h2>
+    </div>
+    <div class="comp-table">
+      <div class="comp-header-row">
+        <div class="comp-header-cell comp-header-before">Sin Paymático</div>
+        <div class="comp-header-cell comp-header-after">Con Paymático</div>
+      </div>
+      <div class="comp-row">
+        <div class="comp-before-cell">Conciliaciones manuales dato a dato</div>
+        <div class="comp-after-cell">Conciliaciones bancarias automatizadas</div>
+      </div>
+      <div class="comp-row">
+        <div class="comp-before-cell">Liquidación por diferencia (ventas brutas vs. ingresos)</div>
+        <div class="comp-after-cell">Desglose transparente de comisiones por transacción</div>
+      </div>
+      <div class="comp-row">
+        <div class="comp-before-cell">Múltiples proveedores sin interlocución clara</div>
+        <div class="comp-after-cell">Un único partner que coordina software, hardware y pagos</div>
+      </div>
+      <div class="comp-row">
+        <div class="comp-before-cell">Sin trazabilidad de datos</div>
+        <div class="comp-after-cell">Acceso a datos en tiempo real</div>
+      </div>
+      <div class="comp-row">
+        <div class="comp-before-cell">Aperturas complejas sin facilitador</div>
+        <div class="comp-after-cell">Paymático como project manager en cada apertura</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- QUOTE BREAK -->
+<section class="section">
+  <div class="container">
+    <div class="quote-box quote-with-photo" style="max-width: 820px; margin: 0 auto;">
+      <img src="IMAGE_CEO_URL" alt="Enrique López, CEO de Airfoods" class="quote-photo">
+      <div>
+        <p class="quote-fade">"Paymático ha sido casi un facilitador, un project manager para nosotros."</p>
+        <div class="quote-attr"><strong>Enrique López</strong><span>CEO de Airfoods</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-band">
+  <div class="cta-glow"></div>
+  <div class="container">
+    <div class="cta-inner">
+      <h2>¿Quieres resultados como los de <em>Airfoods</em>?</h2>
+      <p>Descubre cómo Paymático puede darte el control total de tus pagos. Reserva una demo personalizada con nuestro equipo.</p>
+      <a href="https://paymatico.com/demo" class="cta-btn">
+        Reservar una demo
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" style="width:14px;height:14px;"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"/></svg>
+      </a>
+      <p class="cta-note">Sin compromiso · 30 minutos · Adaptada a tu negocio</p>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="container">
+    <p>© 2026 Paymático — Entidad de pago regulada por el Banco de España</p>
+  </div>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,29 @@
+{
+  "messages": [
+    {
+      "role": "user",
+      "text": "Quiero crear una nueva tarea recurrente. Pregúntame qué quiero automatizar y ayúdame a definir: nombre, categoría, frecuencia, agente y prompt. Cuando tengamos todo claro, crea la tarea.",
+      "ts": "2026-03-31T17:48:04.449Z"
+    },
+    {
+      "role": "user",
+      "text": "Estoy abriendo el chat sobre \"Nueva tarea recurrente\". Dame un resumen rápido del estado actual y qué podemos hacer. Si necesitas algo de mí, dímelo.",
+      "ts": "2026-03-31T17:48:04.565Z"
+    },
+    {
+      "role": "bot",
+      "text": "¡Hola! Aquí va el resumen rápido de **Criptan**:\n\n## 📊 Estado actual\n\n**Foundation (Phase 0)** — En progreso, ~40% completada:\n\n| Pilar | Estado |\n|-------|--------|\n| Fast Foundation (L0) | ✅ Done |\n| Market Analysis (L1) | ✅ Aprobado |\n| Competitor Analysis (L1) | ✅ Aprobado |\n| Self Analysis (L1) | ⏳ Pendiente |\n| Market Synthesis (L2) | ⏳ Pendiente (necesita Self Analysis) |\n| Niche Discovery (L3) | ⏳ Pendiente |\n| Positioning + Pricing (L4) | ⏳ Pendiente |\n| Brand Voice/Identity (L5) | ⏳ Pendiente |\n| Metrics Setup (L6) | ✅ Done |\n| Strategic Plan (L7) | ✅ Aprobado (lite, pendiente refinar) |\n\n**North Star**: Primer depósito — objetivo 5.000 nuevos en 3-6 meses (CAC ~70€)\n\n---\n\n## 🔄 Tareas recurrentes — Qué podemos configurar\n\nAhora mismo **no hay tareas recurrentes activas** para Criptan. Podemos crear, por ejemplo:\n\n1. **Monitoreo de competencia** — Revisión periódica de movimientos de Bit2Me, Bitvavo, Binance, etc.\n2. **Content calendar check** — Revisión semanal del pipeline de contenido\n3. **Métricas / KPIs** — Revisión periódica de métricas clave (si hay integraciones conectadas)\n4. **Social listening** — Monitoreo de menciones y tendencias en crypto España\n5. **SEO tracking** — Seguimiento de posiciones en keywords objetivo\n6. **Foundation progress nudge** — Recordatorio para avanzar los pilares pendientes\n\n---\n\n## ¿Qué necesito de ti?\n\n- **¿Qué tarea recurrente quieres crear?** (una de las anteriores o algo diferente)\n- **¿Con qué frecuencia?** (diaria, semanal, quincenal...)\n- **¿A dónde quieres recibir los resultados?** (Discord, MC Chat, ambos)\n\nDime qué te interesa y lo montamos. 🚀",
+      "agent": "sancho",
+      "ts": "2026-03-31T17:49:33.994Z"
+    },
+    {
+      "role": "bot",
+      "text": "¡Vamos al lío! 🎯\n\nPara crear tu tarea recurrente necesito entender qué quieres automatizar. Cuéntame:\n\n**¿Qué tarea quieres que se ejecute automáticamente?**\n\nPor ejemplo:\n- Monitorizar algo (competencia, menciones, rankings...)\n- Generar contenido periódico (posts, newsletters...)\n- Revisar métricas o datos\n- Enviar reportes\n- Otra cosa\n\nDime la idea general y vamos definiendo los detalles juntos. 👇",
+      "agent": "sancho",
+      "ts": "2026-03-31T17:49:46.374Z"
+    }
+  ],
+  "updatedAt": 1774979386374,
+  "discordThreadId": null,
+  "discordChannelId": null
+}

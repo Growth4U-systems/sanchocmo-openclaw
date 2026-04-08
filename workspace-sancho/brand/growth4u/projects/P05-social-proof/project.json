@@ -1,0 +1,25 @@
+{
+  "id": "P05",
+  "name": "Social Proof & Reviews",
+  "objective": "Construir social proof verificable (resolver W1 SWOT)",
+  "metrics": {
+    "baseline": {
+      "reviews_total": 1,
+      "avg_rating": 3.5
+    },
+    "target": {
+      "reviews_total": 6,
+      "avg_rating": 4.5
+    }
+  },
+  "origin": "strategic-plan-v2",
+  "strategy": "#05",
+  "phase": 0,
+  "review_date": "2026-04-11",
+  "status": "active",
+  "discord": {
+    "project_thread_id": "1482772163449851986"
+  },
+  "description": "Growth4U tiene 0 social proof verificable como empresa (el SWOT lo identifica como W1). Los cases de Alfonso son personales, no de G4U. Necesitamos reviews de clientes reales de Growth4U.",
+  "approach": "Listamos todos los clientes actuales y pasados. Enviamos emails y mensajes personalizados pidiendo reviews en Trustpilot y Google. Pedimos LinkedIn recommendations a contactos clave. Creamos Google Business Profile si no existe."
+}

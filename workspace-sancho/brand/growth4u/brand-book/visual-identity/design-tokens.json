@@ -1,0 +1,136 @@
+{
+  "brand": "Growth4U",
+  "version": "1.0",
+  "approved": "2026-03-08",
+
+  "colors": {
+    "primary": {
+      "navy": { "value": "#032149", "use": "Líneas line art (light), fondos (dark), texto principal" },
+      "royal": { "value": "#1a3690", "use": "Fondos secundarios, gradientes" },
+      "electric": { "value": "#3f45fe", "use": "Acentos en ropa, elementos interactivos, hover states" },
+      "sky": { "value": "#45b6f7", "use": "Detalles terciarios, highlights suaves" },
+      "teal": { "value": "#0faec1", "use": "Highlights texto, gafas personajes, CTAs, datos positivos, logo 4U" },
+      "purple": { "value": "#6351d5", "use": "Detalles ropa, badges, gradiente logo, elementos premium" }
+    },
+    "neutral": {
+      "white": { "value": "#FFFFFF", "use": "Fondos light, texto en dark" },
+      "bg": { "value": "#f8f9fb", "use": "Fondo página, secciones alternas" },
+      "muted": { "value": "#94a3b8", "use": "Texto secundario, meta info" },
+      "body": { "value": "#475569", "use": "Cuerpo de texto en light" }
+    },
+    "gradients": {
+      "brand": {
+        "value": "linear-gradient(160deg, #032149 0%, #1a3690 35%, #0faec1 100%)",
+        "use": "Fondos social posts, hero web, portadas, carousel covers"
+      },
+      "logo": {
+        "value": "linear-gradient(90deg, #0faec1, #3f45fe, #6351d5)",
+        "use": "Logo '4U', badges premium"
+      },
+      "accent-bar": {
+        "value": "linear-gradient(90deg, #0faec1, #1a3690, #6351d5)",
+        "use": "Barras decorativas, dividers"
+      }
+    }
+  },
+
+  "typography": {
+    "families": {
+      "heading": {
+        "family": "Manrope",
+        "source": "https://fonts.google.com/specimen/Manrope",
+        "weights": [600, 700, 800]
+      },
+      "body": {
+        "family": "Roboto",
+        "source": "https://fonts.google.com/specimen/Roboto",
+        "weights": [400, 500]
+      }
+    },
+    "scale": {
+      "display": { "family": "Manrope", "weight": 800, "size": "56px", "lineHeight": 1.1, "letterSpacing": "-2px", "use": "Hero headlines" },
+      "h1": { "family": "Manrope", "weight": 800, "size": "48px", "lineHeight": 1.15, "letterSpacing": "-1.5px", "use": "Page titles" },
+      "h2": { "family": "Manrope", "weight": 700, "size": "36px", "lineHeight": 1.2, "letterSpacing": "-1px", "use": "Section titles" },
+      "h3": { "family": "Manrope", "weight": 700, "size": "24px", "lineHeight": 1.3, "use": "Subsections" },
+      "quote": { "family": "Manrope", "weight": 800, "size": "54px", "lineHeight": 1.2, "use": "Social post quotes (1080px canvas)" },
+      "data": { "family": "Manrope", "weight": 700, "size": "36px", "lineHeight": 1.1, "use": "Métricas, datos destacados" },
+      "label": { "family": "Manrope", "weight": 600, "size": "14px", "lineHeight": 1.4, "letterSpacing": "1.5px", "textTransform": "uppercase", "use": "Categorías, tags" },
+      "body": { "family": "Roboto", "weight": 400, "size": "18px", "lineHeight": 1.7, "use": "Párrafos, cuerpo" },
+      "meta": { "family": "Roboto", "weight": 500, "size": "14px", "lineHeight": 1.4, "use": "Autor, fecha, meta info" }
+    },
+    "minimums": {
+      "social_1080px": "24px",
+      "web_desktop": "16px",
+      "web_mobile": "14px"
+    }
+  },
+
+  "spacing": {
+    "xs": "8px",
+    "sm": "16px",
+    "md": "24px",
+    "lg": "32px",
+    "xl": "48px",
+    "xxl": "64px",
+    "section": "80px"
+  },
+
+  "radii": {
+    "sm": "4px",
+    "md": "8px",
+    "lg": "12px",
+    "xl": "16px",
+    "xxl": "20px",
+    "pill": "30px",
+    "round": "50%"
+  },
+
+  "shadows": {
+    "card": "0 2px 12px rgba(0,0,0,0.06)",
+    "elevated": "0 4px 20px rgba(0,0,0,0.08)",
+    "text-on-dark": "0 2px 8px rgba(3, 33, 73, 0.6)",
+    "logo-on-dark": "0 2px 12px rgba(3, 33, 73, 0.8)",
+    "teal-glow": "0 4px 20px rgba(15, 174, 193, 0.3)",
+    "purple-glow": "0 8px 24px rgba(99, 81, 213, 0.4)"
+  },
+
+  "illustration": {
+    "style": "Clean Line Art Editorial",
+    "lineColor": { "light": "#032149", "dark": "#FFFFFF" },
+    "lineWeight": "thin, consistent",
+    "accents": ["#0faec1", "#6351d5", "#45b6f7"],
+    "background": { "light": "#FFFFFF", "dark": "#032149" },
+    "rules": [
+      "Never mix photo + illustration in same piece",
+      "Same line weight across all elements",
+      "One character per image (except team scenes)",
+      "Data/metrics always in teal or amber"
+    ]
+  },
+
+  "logo": {
+    "full": "Growth4U",
+    "short": "G4U",
+    "colorRules": {
+      "onWhite": { "growth": "#032149", "4u": "gradient(teal→blue→purple)" },
+      "onGradient": { "growth": "#FFFFFF", "4u": "#FFFFFF" },
+      "onTeal": { "growth": "#FFFFFF", "4u": "#032149" }
+    },
+    "minSize": "44px on 1080px canvas"
+  },
+
+  "social": {
+    "linkedin": {
+      "post": { "width": 1080, "height": 1350, "background": "gradient-brand" },
+      "carousel-cover": { "width": 1200, "height": 628, "background": "white" },
+      "carousel-slide": { "width": 1200, "height": 628, "background": "white" }
+    },
+    "instagram": {
+      "post": { "width": 1080, "height": 1080, "background": "white" },
+      "story": { "width": 1080, "height": 1920, "background": "gradient-brand" }
+    },
+    "blog": {
+      "header": { "width": 1200, "height": 630, "background": "white" }
+    }
+  }
+}

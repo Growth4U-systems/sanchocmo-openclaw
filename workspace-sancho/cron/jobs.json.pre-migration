@@ -1,0 +1,186 @@
+{
+  "version": 1,
+  "jobs": [
+    {
+      "id": "2283eade-3d08-4f46-a508-eaa6d035a4d2",
+      "agentId": "sancho",
+      "name": "Daily Pulse",
+      "enabled": true,
+      "createdAtMs": 1771950688301,
+      "updatedAtMs": 1772006449592,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 9 * * 1-5",
+        "tz": "Europe/Madrid"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Lee brand/sources.json → sección daily_pulse. Para cada source habilitado: Gmail → gog gmail inbox (filtrar por labels configurados). Notion → leer DB con filter de últimas 24h. Slack → si hay token, escanear canales. Extrae insights (pain points, feature requests, success stories, trends). Clasifica por pilar/pain/tipo. Genera micro-briefs. Guarda en brand/daily-pulse/YYYY-MM-DD.json."
+      },
+      "delivery": {
+        "mode": "announce",
+        "channel": "discord",
+        "to": "channel:1475638253154603170"
+      },
+      "state": {
+        "nextRunAtMs": 1772092800000,
+        "lastRunAtMs": 1772006400013,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 49579,
+        "lastDelivered": true,
+        "lastDeliveryStatus": "delivered",
+        "consecutiveErrors": 0
+      }
+    },
+    {
+      "id": "33434fd7-8b66-4069-b7f7-983f66fc25c2",
+      "agentId": "sancho",
+      "name": "Weekly Synthesis",
+      "enabled": true,
+      "createdAtMs": 1771950696201,
+      "updatedAtMs": 1771950696201,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 10 * * 1",
+        "tz": "Europe/Madrid"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Síntesis semanal: 1) Lee memory/*.md de los últimos 7 días. 2) Lee brand/daily-pulse/*.json recientes. 3) Lee brand/learnings.md. 4) Identifica patrones, tendencias, y decisiones clave. 5) Actualiza brand/learnings.md con patrones confirmados. 6) Genera resumen ejecutivo con: qué aprendimos, qué cambió, qué hacer diferente. Publica en Discord #learning."
+      },
+      "delivery": {
+        "mode": "announce",
+        "channel": "discord",
+        "to": "channel:1475638272523763834"
+      },
+      "state": {
+        "nextRunAtMs": 1772442000000
+      }
+    },
+    {
+      "id": "8a4c8f89-58f0-4827-a076-df3f83660b3f",
+      "agentId": "sancho",
+      "name": "Regenerar Dashboard",
+      "enabled": true,
+      "createdAtMs": 1771950708148,
+      "updatedAtMs": 1772046000051,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 8,12,16,20 * * *",
+        "tz": "Europe/Madrid"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Regenera datos del dashboard: 1) Ejecuta python3 ~/.openclaw/workspace-sancho/scripts/regenerate.py 2) Regenera agents-data.js con el script Python inline. Responde solo con el resultado (cuántas tareas, eventos, pilares).",
+        "model": "sonnet"
+      },
+      "delivery": {
+        "mode": "announce",
+        "channel": "last"
+      },
+      "state": {
+        "nextRunAtMs": 1772089200000,
+        "lastRunAtMs": 1772046000014,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 37,
+        "lastDeliveryStatus": "unknown",
+        "consecutiveErrors": 5,
+        "lastError": "model not allowed: anthropic/sonnet"
+      }
+    },
+    {
+      "id": "6dac9a53-6736-490a-ae54-e028b8ebbbd1",
+      "agentId": "sancho",
+      "name": "Meeting Intelligence",
+      "enabled": true,
+      "createdAtMs": 1771950715725,
+      "updatedAtMs": 1772038806528,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 18 * * 1-5",
+        "tz": "Europe/Madrid"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Lee brand/sources.json → sección meetings. Para cada source habilitado: Notion → leer DB de meetings con filter últimas 24h. Google Drive → buscar docs modificados hoy en carpeta configurada (gog drive list). Fathom → si method=email-forward, buscar emails con label configurado (gog gmail search). Granola → si method=notion-sync, usar source Notion. Extrae de cada nota: decisiones (qué/por qué/quién), action items (owner+deadline), insights, quotes verbatim, riesgos. Guarda en brand/intelligence/YYYY-MM-DD.json."
+      },
+      "delivery": {
+        "mode": "announce",
+        "channel": "discord",
+        "to": "channel:1475638253154603170"
+      },
+      "state": {
+        "nextRunAtMs": 1772125200000,
+        "lastRunAtMs": 1772038800033,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 6495,
+        "lastDelivered": false,
+        "lastDeliveryStatus": "not-delivered",
+        "consecutiveErrors": 0
+      }
+    },
+    {
+      "id": "abc8abac-3097-4e27-8131-0a5d77717195",
+      "agentId": "sancho",
+      "name": "Memory Maintenance",
+      "enabled": true,
+      "createdAtMs": 1771950722307,
+      "updatedAtMs": 1771950722307,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 22 * * 0",
+        "tz": "Europe/Madrid"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Mantenimiento de memoria: 1) Lee memory/*.md de los últimos 7 días. 2) Lee MEMORY.md actual. 3) Extrae eventos significativos, lecciones, decisiones, opiniones que vale la pena recordar. 4) Actualiza MEMORY.md con lo nuevo (sin duplicar). 5) Elimina info obsoleta de MEMORY.md. 6) Reporta qué añadiste y qué eliminaste.",
+        "model": "sonnet"
+      },
+      "delivery": {
+        "mode": "announce",
+        "channel": "last"
+      },
+      "state": {
+        "nextRunAtMs": 1772398800000
+      }
+    },
+    {
+      "id": "0cd1e931-d374-4428-a452-e2394beac5b7",
+      "agentId": "sancho",
+      "name": "Thief Marketer",
+      "enabled": false,
+      "createdAtMs": 1771950950205,
+      "updatedAtMs": 1771950950205,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 8 * * 3",
+        "tz": "Europe/Madrid"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Lee brand/sources.json → sección thief_marketer. Para cada competidor: 1) Web scrape homepage + blog (web_fetch) → detectar contenido nuevo, cambios de copy, pricing. 2) LinkedIn → buscar posts recientes (web_search). 3) Instagram/YouTube → últimas publicaciones (web_search). 4) Google Ads Library → anuncios activos. 5) Newsletter → si hay suscripción, revisar últimos emails. Compara con última ejecución en brand/thief-marketer/. Genera reporte: qué hicieron nuevo, qué podemos robar/adaptar, oportunidades que dejaron. Guarda en brand/thief-marketer/YYYY-MM-DD.json."
+      },
+      "delivery": {
+        "mode": "announce",
+        "channel": "discord",
+        "to": "channel:1475638253154603170"
+      },
+      "state": {}
+    }
+  ]
+}

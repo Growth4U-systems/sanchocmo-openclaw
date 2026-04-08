@@ -1,0 +1,12 @@
+{
+  "versions": [
+    {
+      "version": 1,
+      "date": "2026-03-02",
+      "author": "sancho",
+      "source": "onboarding-conversacional",
+      "status": "pending-approval",
+      "notes": "Primera versión. Pre-lanzamiento Trust Engine. Datos de funnel/conversión unknown."
+    }
+  ]
+}

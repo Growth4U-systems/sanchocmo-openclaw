@@ -1,0 +1,211 @@
+{
+  "_generated": "2026-03-23T00:48:29.932Z",
+  "_generator": "acquisition-metrics-plan/generate-plan.js",
+  "slug": "growth4u",
+  "archetype": "lead-to-sale",
+  "subVariant": "b2b",
+  "label": "Lead-to-Sale (B2B Services)",
+  "activationEvent": "First Meeting",
+  "primaryKPI": "Meetings",
+  "benchmarks": {
+    "activationRate": "10-25%",
+    "cacPayback": "1-6 months",
+    "ltvCac": ">3x"
+  },
+  "funnel": [
+    {
+      "step": "Leads",
+      "source": "ghl",
+      "metric": "newContacts",
+      "manual": false
+    },
+    {
+      "step": "Meetings",
+      "source": "ghl",
+      "metric": "appointments",
+      "manual": false
+    },
+    {
+      "step": "Proposals",
+      "source": "ghl",
+      "metric": "opportunities",
+      "manual": false
+    },
+    {
+      "step": "Deals",
+      "source": null,
+      "metric": null,
+      "manual": true
+    }
+  ],
+  "kpis": [
+    {
+      "name": "Leads → Meetings Rate",
+      "formula": "ghl.appointments / ghl.newContacts * 100",
+      "sources": [
+        "ghl",
+        "ghl"
+      ],
+      "format": "percent",
+      "category": "funnel"
+    },
+    {
+      "name": "Meetings → Proposals Rate",
+      "formula": "ghl.opportunities / ghl.appointments * 100",
+      "sources": [
+        "ghl",
+        "ghl"
+      ],
+      "format": "percent",
+      "category": "funnel"
+    },
+    {
+      "name": "Sessions",
+      "source": "ga4",
+      "metric": "sessions",
+      "category": "traffic"
+    },
+    {
+      "name": "New Users",
+      "source": "ga4",
+      "metric": "newUsers",
+      "category": "traffic"
+    },
+    {
+      "name": "Engagement Rate",
+      "source": "ga4",
+      "metric": "engagementRate",
+      "format": "percent",
+      "category": "traffic"
+    },
+    {
+      "name": "Avg Duration",
+      "source": "ga4",
+      "metric": "averageSessionDuration",
+      "format": "seconds",
+      "category": "traffic"
+    },
+    {
+      "name": "SEO Impressions",
+      "source": "gsc",
+      "metric": "impressions",
+      "category": "seo"
+    },
+    {
+      "name": "Avg Position",
+      "source": "gsc",
+      "metric": "position",
+      "format": "decimal",
+      "category": "seo"
+    },
+    {
+      "name": "Ad Spend",
+      "source": "meta-ads",
+      "metric": "spend",
+      "format": "currency",
+      "category": "paid"
+    },
+    {
+      "name": "Ad CTR",
+      "source": "meta-ads",
+      "metric": "ctr",
+      "format": "percent",
+      "category": "paid"
+    },
+    {
+      "name": "CPC",
+      "source": "meta-ads",
+      "metric": "cpc",
+      "format": "currency",
+      "category": "paid"
+    },
+    {
+      "name": "Ad Clicks",
+      "source": "meta-ads",
+      "metric": "clicks",
+      "category": "paid"
+    },
+    {
+      "name": "CPL",
+      "formula": "meta-ads.spend / ghl.newContacts",
+      "sources": [
+        "meta-ads",
+        "ghl"
+      ],
+      "format": "currency",
+      "category": "efficiency"
+    },
+    {
+      "name": "Total Contacts",
+      "source": "ghl",
+      "metric": "totalContacts",
+      "category": "crm"
+    },
+    {
+      "name": "New Contacts",
+      "source": "ghl",
+      "metric": "newContacts",
+      "category": "crm"
+    },
+    {
+      "name": "Appointments",
+      "source": "ghl",
+      "metric": "appointments",
+      "category": "crm"
+    },
+    {
+      "name": "Social Engagement",
+      "source": "metricool",
+      "metric": "avgEngagement",
+      "format": "percent",
+      "category": "social"
+    },
+    {
+      "name": "Social Impressions",
+      "source": "metricool",
+      "metric": "impressions",
+      "category": "social"
+    }
+  ],
+  "integrationModules": [
+    "meta-ads",
+    "ghl",
+    "ga4",
+    "gsc",
+    "metricool"
+  ],
+  "channels": [
+    {
+      "group": "Organic",
+      "name": "LinkedIn Organic"
+    },
+    {
+      "group": "Paid SRN",
+      "name": "LinkedIn Ads"
+    },
+    {
+      "group": "Outbound",
+      "name": "Cold Email"
+    },
+    {
+      "group": "Outbound",
+      "name": "Networking"
+    },
+    {
+      "group": "Brand",
+      "name": "Content / Blog"
+    },
+    {
+      "group": "Referral",
+      "name": "Referral Partners"
+    },
+    {
+      "group": "Offline",
+      "name": "Events"
+    },
+    {
+      "group": "Organic",
+      "name": "SEO"
+    }
+  ]
+}

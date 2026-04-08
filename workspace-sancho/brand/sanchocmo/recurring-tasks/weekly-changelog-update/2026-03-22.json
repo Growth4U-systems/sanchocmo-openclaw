@@ -1,0 +1,11 @@
+{
+  "cronId": "f04c8094-eaf9-4995-bde8-9d5df88ef4d7",
+  "cronName": "Weekly Changelog Update",
+  "slug": "sanchocmo",
+  "date": "2026-03-22",
+  "runAtMs": 1774170184515,
+  "status": "ok",
+  "durationMs": 92448,
+  "model": "claude-opus-4-6",
+  "content": "## 📦 SanchoCMO v2.7.0 — 2026-03-22\n\n### ✨ Added\n- **`larry`** — App growth agent (TikTok posting, RevenueCat, analytics, competitor research, slides, daily reports)\n- **`tiktok-growth`** — TikTok growth playbook completo (analytics, competitors, content, posting, onboarding)\n- **`metricool`** — Metricool API (scheduling, best-time, brands, scheduled posts)\n- **`apify`** — Apify Actors via REST API + OpenAPI spec\n- **`gsc`** — Google Search Console directo (Python + Service Account)\n- **`native-google-analytics`** — GA4 nativo via Python + Analytics Data API\n- **`instagram-content`**, **`linkedin-content`**, **`twitter-content`** — Social content skills por plataforma\n- **`niche-presentation`** — Generador de presentaciones de nicho\n- **`new-client-protocol.md`** — Protocolo de onboarding automatizado (template Discord + `new-client.sh` + verificación)\n- **Escudero PRD suite** — 7 docs de arquitectura del bot Escudero + Bots Engagement PDR\n\n### 🔄 Changed\n- **SOUL.md** — Nueva regla P0 #14 (mandatory `read()` de references/). Fix URL pattern MC (`brand/{slug}/` obligatorio)\n- **`mc-links-protocol.md`** — URLs con segmento `brand/{slug}/` obligatorio + ejemplos\n- **`project-threads-protocol.md`** — Playbook link en hilos de tarea. Rename protocol por estado (✅❌⛔🔧). Sync bidireccional Discord ↔ JSON ↔ MC\n- **`competitor-intelligence`** — Refactor mayor + scraping reference guide\n- **`metrics-collector`** — Adapters GA4, GHL, Meta Ads actualizados\n- **6 skills más** actualizados (ad-creative, lead-magnet, insight-to-content-mapper, strategic-plan, content-calendar-planner, last30days)\n\n### 🗑️ Removed\n- **`content-miner`**, **`lead-magnets`**, **`product-marketing-context`** — Eliminados (consolidados o reemplazados)\n- **Legacy cleanup** — Workspace antiguo, brand/ legacy, config backups obsoletos\n\n📄 CHANGELOG completo: `CHANGELOG.md`"
+}

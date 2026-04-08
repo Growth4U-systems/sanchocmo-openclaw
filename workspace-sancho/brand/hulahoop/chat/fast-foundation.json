@@ -1,0 +1,70 @@
+{
+  "messages": [
+    {
+      "role": "user",
+      "text": "Analiza la empresa en https://hulahoop.media/en y ejecuta el Fast Foundation",
+      "ts": "2026-04-07T15:19:15.890Z"
+    },
+    {
+      "role": "user",
+      "text": "Analiza la empresa en https://hulahoop.media/en y ejecuta el Fast Foundation",
+      "ts": "2026-04-07T15:19:26.116Z"
+    },
+    {
+      "role": "user",
+      "text": "Comienza",
+      "ts": "2026-04-07T15:19:46.169Z"
+    },
+    {
+      "role": "bot",
+      "text": "La homepage devolvió muy poco contenido. Voy a explorar más páginas del sitio.",
+      "agent": "sancho",
+      "ts": "2026-04-07T15:22:02.223Z"
+    },
+    {
+      "role": "bot",
+      "text": "La web es muy JS-heavy, el contenido principal no se renderiza con fetch. Voy a usar el navegador y buscar más info.",
+      "agent": "sancho",
+      "ts": "2026-04-07T15:22:02.348Z"
+    },
+    {
+      "role": "bot",
+      "text": "Buena info. Voy a buscar más sobre competidores y redes sociales.",
+      "agent": "sancho",
+      "ts": "2026-04-07T15:22:02.353Z"
+    },
+    {
+      "role": "bot",
+      "text": "Tengo suficiente información del scraping y la búsqueda. Ahora voy a buscar perfiles sociales específicos y luego presentar la validación.",
+      "agent": "sancho",
+      "ts": "2026-04-07T15:22:02.357Z"
+    },
+    {
+      "role": "bot",
+      "text": "Tengo un panorama completo. Aquí va la validación antes de generar los documentos:\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n📋 **COMPANY BRIEF — Lo que he encontrado**\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n🏢 **Empresa:** Hulahoop Media S.L. — \"Financial and technological solutions for entertainment\"\n📍 **Sede:** Pier 01, Barcelona (hub tech) | Fundada 2022\n👩‍💼 **Co-CEOs:** Natasha Duran + Cristina De Vierna Fernández\n👥 **Equipo:** ~26 empleados | 6 cofundadores (Marc Borrell, Tomas Jegeus, Dario Duran, David Guerrero Astigarraga + las 2 CEOs)\n💰 **Funding:** $600K seed (Ona Capital, Pinama Inversiones, ISDI Accelerator)\n\n📦 **Producto:** Plataforma que conecta productores de cine con inversores (fondos e inversores retail). Los inversores se convierten en copropietarios de proyectos cinematográficos y sus derechos comerciales vía NFTs.\n\n🔧 **Tech stack:** Blockchain/DLT, NFTs, AI para automatización administrativa, dashboards analíticos para evaluación de proyectos.\n\n💼 **Modelo:** B2B2C — Cobran fees sobre capital captado + % de derechos comerciales del film. Dos lados: productores (oferta) e inversores (demanda).\n\n🎯 **Cliente ideal (inferido):**\n- **Lado productor:** Productoras de cine independiente buscando financiación alternativa\n- **Lado inversor:** Inversores retail/fans del cine que quieren participar en proyectos + fondos de inversión del sector entretenimiento\n\n🏆 **Competidores detectados:**\n- **Web3/NFT film:** Decentralized Pictures, Mogul Productions, Paus, Gala Film\n- **Financiación tradicional digital:** Slated, FilmHedge, Blue Fox Financing\n\n📱 **Redes sociales:** No encontradas públicamente (la web carga con JS pesado, posible LinkedIn company page pero no confirmada)\n\n💵 **Presupuesto marketing:** ❓ *Necesito que me cuentes*\n🎯 **Objetivo principal a 3-6 meses:** ❓ *Necesito que me cuentes*\n📊 **North Star Metric:** ❓ *Mi hipótesis: capital total captado a través de la plataforma (€ raised). ¿Correcto?*\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n**¿Esto es correcto? ¿Qué falta o está mal?**\n\nLos 3 gaps que necesito para completar:\n1. **Presupuesto mensual de marketing** (rango) y equipo disponible\n2. **Objetivo principal** a 3-6 meses\n3. **Confirmar/corregir** la North Star Metric\n\nCon eso genero los 5 documentos base. 🚀",
+      "agent": "sancho",
+      "ts": "2026-04-07T15:22:02.360Z"
+    },
+    {
+      "role": "bot",
+      "text": "🔄 Generando los 5 documentos de Fast Foundation para HulaHoop...\n\nVoy a generar los 5 docs con lo que tengo. Los gaps (presupuesto, objetivo, NSM) quedan marcados como pendientes — no bloquean.",
+      "agent": "sancho",
+      "ts": "2026-04-07T15:27:12.825Z"
+    },
+    {
+      "role": "bot",
+      "text": "Ahora actualizo el foundation-state.json:",
+      "agent": "sancho",
+      "ts": "2026-04-07T15:27:23.381Z"
+    },
+    {
+      "role": "bot",
+      "text": "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n✅ **FAST FOUNDATION — Completada**\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n📋 **Company Brief** ✅ — Identidad, modelo B2B2C marketplace, equipo (26 personas, Co-CEOs Natasha + Cristina), funding $600K seed\n🔍 **Self Intelligence L1** ✅ — Web SPA (JS-heavy, poco SEO), redes sociales no detectadas, prensa positiva (El Español), positioning \"democratizar inversión en entretenimiento\"\n📊 **Market Intelligence L1** ✅ — Sector entertainment financing con tendencias claras (tokenización, democratización, regulación MiCA), 6 competidores mapeados\n🎨 **Brand Voice Snapshot** ✅ — Tono innovador-profesional-accesible, mix fintech + cultura, bilingüe EN/ES\n👥 **Niche Discovery (ECPs)** ✅ — 3 perfiles: Productor Indie (supply), Inversor Retail Cinéfilo (demand), Fondo/Family Office (high-ticket)\n\n**Gaps pendientes para afinar (cuando tengáis la info):**\n- Presupuesto mensual de marketing\n- Objetivo principal a 3-6 meses\n- Confirmación de la North Star Metric (mi hipótesis: € captados en plataforma)\n- Perfiles de redes sociales\n- Métricas actuales del funnel (proyectos live, inversores registrados)\n\n**Siguiente paso:** Full Foundation para profundizar cada pilar — especialmente competitor intelligence (no existe lite) y self-intelligence Lens 2+3. ¿Queréis que avancemos con algún pilar concreto?",
+      "agent": "sancho",
+      "ts": "2026-04-07T15:28:03.425Z"
+    }
+  ],
+  "updatedAt": 1775575683426,
+  "discordThreadId": null,
+  "discordChannelId": null
+}

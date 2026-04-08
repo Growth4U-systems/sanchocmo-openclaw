@@ -1,0 +1,237 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sanchocmo.com/schemas/atalaya.schema.json",
+  "title": "Atalaya Report",
+  "description": "Output schema for Atalaya (Watchtower) competitive intelligence scan. Each execution generates one file: brand/{slug}/atalaya/YYYY-MM-DD.json",
+  "type": "object",
+  "required": ["run_date", "client_slug", "trigger", "competitors_analyzed", "followed_profiles_analyzed", "ideas_generated"],
+  "properties": {
+    "run_date": {
+      "type": "string",
+      "format": "date",
+      "description": "ISO date of the scan execution"
+    },
+    "client_slug": {
+      "type": "string"
+    },
+    "trigger": {
+      "type": "string",
+      "enum": ["manual", "cron"],
+      "description": "Whether the scan was triggered manually from MC or by the weekly cron"
+    },
+    "mode": {
+      "type": "string",
+      "enum": ["full", "light"],
+      "description": "full = Apify actors available, light = web_search/web_fetch fallback"
+    },
+    "competitors_analyzed": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "slug", "channels_scraped"],
+        "properties": {
+          "name": { "type": "string" },
+          "slug": { "type": "string" },
+          "channels_scraped": {
+            "type": "object",
+            "properties": {
+              "meta_ads": { "$ref": "#/$defs/channel_result_ads" },
+              "google_ads": { "$ref": "#/$defs/channel_result_ads" },
+              "blog": { "$ref": "#/$defs/channel_result_blog" },
+              "linkedin": { "$ref": "#/$defs/channel_result_social" },
+              "instagram": { "$ref": "#/$defs/channel_result_social" },
+              "twitter": { "$ref": "#/$defs/channel_result_twitter" }
+            }
+          }
+        }
+      }
+    },
+    "followed_profiles_analyzed": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "platform", "url"],
+        "properties": {
+          "name": { "type": "string" },
+          "platform": { "type": "string", "enum": ["linkedin", "twitter", "instagram"] },
+          "url": { "type": "string" },
+          "category": { "type": "string" },
+          "posts_found": { "type": "integer" },
+          "new_since_last_run": { "type": "integer" },
+          "content": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "full_text": { "type": "string" },
+                "date": { "type": "string", "format": "date" },
+                "url": { "type": "string" },
+                "reactions": { "type": "integer" },
+                "comments": { "type": "integer" },
+                "shares": { "type": "integer" },
+                "is_new": { "type": "boolean" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "ideas_generated": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "source_type", "source_name", "adapted_idea"],
+        "properties": {
+          "id": { "type": "string", "description": "Unique ID: idea-YYYYMMDD-NNN" },
+          "source_type": { "type": "string", "enum": ["competitor", "followed_profile"] },
+          "source_name": { "type": "string" },
+          "source_channel": { "type": "string" },
+          "source_content_snippet": { "type": "string", "maxLength": 300 },
+          "pattern_identified": { "type": "string" },
+          "adapted_idea": {
+            "type": "object",
+            "required": ["title", "description", "priority"],
+            "properties": {
+              "title": { "type": "string" },
+              "description": { "type": "string" },
+              "recommended_channels": {
+                "type": "array",
+                "items": { "type": "string" }
+              },
+              "priority": { "type": "string", "enum": ["high", "medium", "low"] },
+              "reasoning": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "contacts_detected": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "platform": { "type": "string" },
+          "role_or_context": { "type": "string" },
+          "url": { "type": "string" },
+          "source_competitor": { "type": "string" },
+          "relevance": { "type": "string" }
+        }
+      }
+    },
+    "comparison_with_last_run": {
+      "type": "object",
+      "properties": {
+        "last_run_date": { "type": ["string", "null"], "format": "date" },
+        "new_items_by_channel": {
+          "type": "object",
+          "additionalProperties": { "type": "integer" }
+        },
+        "removed_items": { "type": "integer" },
+        "notable_changes": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "channel_result_ads": {
+      "type": "object",
+      "properties": {
+        "status": { "type": "string", "enum": ["scraped", "error", "skipped", "not_available"] },
+        "error_message": { "type": "string" },
+        "items_found": { "type": "integer" },
+        "new_since_last_run": { "type": "integer" },
+        "content": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "full_text": { "type": "string" },
+              "headline": { "type": "string" },
+              "cta": { "type": "string" },
+              "url": { "type": "string" },
+              "platform": { "type": "string" },
+              "first_seen": { "type": "string", "format": "date" },
+              "is_new": { "type": "boolean" }
+            }
+          }
+        }
+      }
+    },
+    "channel_result_blog": {
+      "type": "object",
+      "properties": {
+        "status": { "type": "string", "enum": ["scraped", "error", "skipped", "not_available"] },
+        "error_message": { "type": "string" },
+        "items_found": { "type": "integer" },
+        "new_since_last_run": { "type": "integer" },
+        "content": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "title": { "type": "string" },
+              "full_text": { "type": "string", "description": "First 2000 chars of the article" },
+              "url": { "type": "string" },
+              "published_date": { "type": "string", "format": "date" },
+              "word_count": { "type": "integer" },
+              "is_new": { "type": "boolean" }
+            }
+          }
+        }
+      }
+    },
+    "channel_result_social": {
+      "type": "object",
+      "properties": {
+        "status": { "type": "string", "enum": ["scraped", "error", "skipped", "not_available"] },
+        "error_message": { "type": "string" },
+        "items_found": { "type": "integer" },
+        "new_since_last_run": { "type": "integer" },
+        "content": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "full_text": { "type": "string" },
+              "date": { "type": "string", "format": "date" },
+              "url": { "type": "string" },
+              "format": { "type": "string", "description": "text, image, carousel, video, reel" },
+              "reactions": { "type": "integer" },
+              "comments": { "type": "integer" },
+              "shares": { "type": "integer" },
+              "is_new": { "type": "boolean" }
+            }
+          }
+        }
+      }
+    },
+    "channel_result_twitter": {
+      "type": "object",
+      "properties": {
+        "status": { "type": "string", "enum": ["scraped", "error", "skipped", "not_available"] },
+        "error_message": { "type": "string" },
+        "items_found": { "type": "integer" },
+        "new_since_last_run": { "type": "integer" },
+        "content": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "full_text": { "type": "string" },
+              "date": { "type": "string", "format": "date" },
+              "url": { "type": "string" },
+              "likes": { "type": "integer" },
+              "retweets": { "type": "integer" },
+              "replies": { "type": "integer" },
+              "is_thread": { "type": "boolean" },
+              "is_new": { "type": "boolean" }
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "id": "P00-Strategic-Plan",
+  "name": "Strategic Plan",
+  "description": "Creación y ejecución del plan estratégico completo.",
+  "approach": "Sintetizar Foundation en SWOT ejecutivo → priorizar canales → crear roadmap → ejecutar.",
+  "objective": {
+    "description": "Plan creado y proyectos en ejecución",
+    "metric": "plan_status",
+    "baseline": "not-started",
+    "target": "executing",
+    "unit": ""
+  },
+  "origin": "onboarding",
+  "phase": -1,
+  "category": "foundation",
+  "review_date": null,
+  "status": "todo"
+}

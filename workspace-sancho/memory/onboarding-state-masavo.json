@@ -1,0 +1,18 @@
+{
+  "client": "masavo",
+  "status": "completed",
+  "current_step": 7,
+  "started_at": "2026-03-17T16:08:00Z",
+  "thread_id": null,
+  "sender_id": "1402171221747040369",
+  "responses": {
+    "step_1_empresa": "Café brunch en el barrio de Gracia, Barcelona. Espacio con buena música, buen wifi y comida excelente.",
+    "step_2_producto": "Objetivo principal: llenar el local y darlo a conocer. El producto a impulsar es el café-brunch en sí.",
+    "step_3_cliente_ideal": "Público abierto pero ideal: 20-40 años, perfil cool/hipster, amante del slow living. Entre semana: remote workers que van a trabajar desde el café. Fines de semana: familias, parejas y grupos de amigos. Local cerca de Sagrada Familia — mix histórico 50% turistas / 50% locales. Traspaso reciente (negocio ya funcionaba).",
+    "step_4_competidores": "Corgi Café (cercano al local).",
+    "step_5_recursos": "Etapa inicial, presupuesto muy bajo. Buscan ROI casi perfecto sobre la inversión. Sin equipo de marketing dedicado mencionado.",
+    "step_6_historial": "Abrieron hace 1 semana (traspaso). Instagram: 200 seguidores. Google Maps: 4.9 estrellas con 40 reviews. Marketing formal: prácticamente nada, empezando de cero."
+  },
+  "follow_ups_used": {},
+  "completed_at": "2026-03-27T21:26:00Z"
+}

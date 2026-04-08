@@ -1,0 +1,74 @@
+[
+  {
+    "id": "P06-T01",
+    "name": "Blitz directorios: submit a Clutch, GoodFirms, SortList, DesignRush, Crunchbase, F6S, Google Business (≥15)",
+    "owner": "Sancho",
+    "status": "todo",
+    "channel": "prospecting",
+    "description": "Registrar Growth4U en mínimo 15 directorios de agencias/servicios. Completar perfiles con descripción, servicios, cases, logo.",
+    "deliverable": "Perfiles creados en 15+ directorios con descripción, servicios y logo.",
+    "done_criteria": "15 directorios con perfil completo y visible públicamente.",
+    "type": "outreach",
+    "skill": "outreach-sequence-builder"
+  },
+  {
+    "id": "P06-T02",
+    "name": "Crear pitch template para guest posts",
+    "owner": "Sancho",
+    "status": "todo",
+    "channel": "content",
+    "description": "Redactar template de pitch personalizable para proponer artículos guest en medios del ecosistema tech/growth.",
+    "deliverable": "Template de pitch personalizable con ángulo, propuesta de artículo y bio.",
+    "done_criteria": "Template aprobado. Funciona para 3+ temáticas diferentes.",
+    "type": "execution",
+    "skill": "direct-response-copy"
+  },
+  {
+    "id": "P06-T03",
+    "name": "Lista de 20 medios target para guest posts",
+    "owner": "Sancho",
+    "status": "todo",
+    "channel": "research",
+    "description": "Investigar 20 medios/blogs españoles relevantes que acepten guest posts. Incluir: editor, email, requisitos, DR.",
+    "deliverable": "Spreadsheet: 20 medios con editor, email, requisitos, DR, temáticas.",
+    "done_criteria": "20 medios verificados que aceptan guest posts del sector.",
+    "type": "outreach",
+    "skill": "deep-research"
+  },
+  {
+    "id": "P06-T04",
+    "name": "Enviar 5 pitches guest post/semana",
+    "owner": "Sancho",
+    "status": "todo",
+    "channel": "content",
+    "description": "Envío semanal de 5 pitches personalizados. Seguimiento a los que no responden en 1 semana.",
+    "deliverable": "5 pitches enviados/semana con seguimiento a los que no responden.",
+    "done_criteria": "Tasa de aceptación >10%. Mínimo 1 guest post publicado/mes.",
+    "type": "content",
+    "skill": "outreach-sequence-builder"
+  },
+  {
+    "id": "P06-T05",
+    "name": "Registrarse en HARO/Featured.com/Qwoted + responder 5/semana",
+    "owner": "Equipo",
+    "status": "todo",
+    "channel": "partners",
+    "description": "Alfonso se registra como fuente experta. Responder a mínimo 5 queries/semana relevantes para growth/marketing.",
+    "deliverable": "Perfiles creados en HARO/Featured.com/Qwoted. 5+ respuestas/semana.",
+    "done_criteria": "Alfonso registrado y respondiendo activamente. Mínimo 1 mención/mes.",
+    "type": "outreach",
+    "skill": "trust-engine"
+  },
+  {
+    "id": "P06-T06",
+    "name": "Pitch a podcasts: Marketing Online, Itnig, Campamento Web, MAS QUE FINTECH",
+    "owner": "Equipo",
+    "status": "todo",
+    "channel": "partners",
+    "description": "Sancho prepara pitches. Alfonso envía y participa como invitado cuando acepten.",
+    "deliverable": "Pitches enviados a 4+ podcasts con propuesta de tema y bio.",
+    "done_criteria": "Mínimo 1 aparición en podcast agendada.",
+    "type": "outreach",
+    "skill": "outreach-sequence-builder"
+  }
+]

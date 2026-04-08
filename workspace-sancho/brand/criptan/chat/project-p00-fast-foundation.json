@@ -1,0 +1,18 @@
+{
+  "messages": [
+    {
+      "role": "user",
+      "text": "Estoy abriendo el chat sobre \"Fast Foundation (L0-L1)\". Dame un resumen rápido del estado actual y qué podemos hacer. Si necesitas algo de mí, dímelo.",
+      "ts": "2026-03-30T10:42:23.873Z"
+    },
+    {
+      "role": "bot",
+      "text": "Buenas 👋 Aquí va el resumen rápido de Criptan:\n\n## Estado actual — Fast Foundation (L0-L1)\n\n**✅ Layer 0 — Fast Foundation: COMPLETADO** (26 mar)\nLos 5 pilares iniciales están hechos:\n- Company Brief ✅\n- Self-Analysis L1 ✅\n- Market L1 ✅\n- Brand Voice Snapshot ✅\n- Niche/ECPs básico ✅\n\n**⏳ Layer 1 — Market & Us: NOT STARTED**\nEs el siguiente paso natural. Incluye:\n1. **Market Analysis** (market-intelligence)\n2. **Competitor Analysis** (competitor-intelligence) — Bit2Me, Bitvavo, Binance, Coinbase, eToro\n3. **Self-Analysis** profunda (self-intelligence)\n4. Después → **Market Synthesis** (L2) que consolida todo\n\n## Lo que podemos hacer ahora\n\nLa Layer 1 tiene 3 pilares independientes entre sí, así que se pueden ejecutar en paralelo:\n\n1. **Market Intelligence** — Análisis del mercado cripto en España, regulación MiCA, tendencias\n2. **Competitor Intelligence** — Deep dive en los 5 competidores identificados\n3. **Self-Intelligence** — Análisis profundo de Criptan (fortalezas, debilidades, assets)\n\nLos tres alimentan la **Market Synthesis** que da el mapa completo antes de pasar a GTM (L3+).\n\n## ¿Qué necesito de ti?\n\nPara arrancar L1 con la mejor calidad:\n- **¿Hay algo que haya cambiado desde el 26 de marzo?** (nuevo producto, cambio regulatorio, etc.)\n- **¿Tienes acceso a datos internos** que quieras compartir? (métricas, analytics, info de competidores que ya tengáis)\n- **¿Priorizo alguno de los 3?** Si no, lanzo los 3 en paralelo\n\nDime y arrancamos 🚀",
+      "agent": "sancho",
+      "ts": "2026-03-30T10:43:07.187Z"
+    }
+  ],
+  "updatedAt": 1774867387187,
+  "discordThreadId": null,
+  "discordChannelId": null
+}

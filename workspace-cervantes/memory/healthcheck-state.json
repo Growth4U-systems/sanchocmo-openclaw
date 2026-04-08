@@ -1,0 +1,222 @@
+{
+  "status": "fail",
+  "last_run": "2026-04-08T00:53:22Z",
+  "summary": "20/21 ok, 1 errors",
+  "failureCount": 1,
+  "services": {
+    "anthropic": {
+      "status": "ok",
+      "lastCheck": "2026-04-08T00:53:22.404Z",
+      "details": {
+        "httpCode": "200"
+      },
+      "error": ""
+    },
+    "openrouter": {
+      "status": "ok",
+      "lastCheck": "2026-04-08T00:53:22.641Z",
+      "details": {
+        "httpCode": "200"
+      },
+      "error": ""
+    },
+    "openai": {
+      "status": "ok",
+      "lastCheck": "2026-04-08T00:53:22.843Z",
+      "details": {
+        "httpCode": "200"
+      },
+      "error": ""
+    },
+    "gemini": {
+      "status": "ok",
+      "lastCheck": "2026-04-08T00:53:27.800Z",
+      "details": {
+        "httpCode": "200"
+      },
+      "error": ""
+    },
+    "xai": {
+      "status": "ok",
+      "lastCheck": "2026-04-08T00:53:28.104Z",
+      "details": {
+        "httpCode": "200"
+      },
+      "error": ""
+    },
+    "minimax": {
+      "status": "ok",
+      "lastCheck": "2026-04-08T00:53:28.350Z",
+      "details": {
+        "note": "Key present, no lightweight verify endpoint"
+      },
+      "error": ""
+    },
+    "brave": {
+      "status": "not-configured",
+      "lastCheck": "2026-04-08T00:53:28.350Z",
+      "details": {
+        "error": "BRAVE_API_KEY not set"
+      },
+      "error": "BRAVE_API_KEY not set"
+    },
+    "apify": {
+      "status": "ok",
+      "lastCheck": "2026-04-08T00:53:28.350Z",
+      "details": {
+        "username": "growth4u",
+        "plan": ""
+      },
+      "error": ""
+    },
+    "firecrawl": {
+      "status": "ok",
+      "lastCheck": "2026-04-08T00:53:29.046Z",
+      "details": {
+        "httpCode": "200"
+      },
+      "error": ""
+    },
+    "serper": {
+      "status": "ok",
+      "lastCheck": "2026-04-08T00:53:29.949Z",
+      "details": {
+        "httpCode": "200"
+      },
+      "error": ""
+    },
+    "dataforseo": {
+      "status": "ok",
+      "lastCheck": "2026-04-08T00:53:30.870Z",
+      "details": {
+        "httpCode": "200",
+        "login": "accounts@growth4u.io"
+      },
+      "error": ""
+    },
+    "notion": {
+      "status": "ok",
+      "lastCheck": "2026-04-08T00:53:31.572Z",
+      "details": {
+        "botName": "openclaw-Alfonso"
+      },
+      "error": ""
+    },
+    "supabase": {
+      "status": "ok",
+      "lastCheck": "2026-04-08T00:53:32.250Z",
+      "details": {
+        "httpCode": "200",
+        "project": "psapmujzxhaxraphddlv"
+      },
+      "error": ""
+    },
+    "slack": {
+      "status": "ok",
+      "lastCheck": "2026-04-08T00:53:32.567Z",
+      "details": {
+        "httpCode": "200"
+      },
+      "error": ""
+    },
+    "fal": {
+      "status": "ok",
+      "lastCheck": "2026-04-08T00:53:32.960Z",
+      "details": {
+        "note": "Key present"
+      },
+      "error": ""
+    },
+    "wavespeed": {
+      "status": "ok",
+      "lastCheck": "2026-04-08T00:53:32.961Z",
+      "details": {
+        "note": "Key present"
+      },
+      "error": ""
+    },
+    "dumpling": {
+      "status": "ok",
+      "lastCheck": "2026-04-08T00:53:32.961Z",
+      "details": {
+        "note": "Key present"
+      },
+      "error": ""
+    },
+    "instantly": {
+      "status": "not-configured",
+      "lastCheck": "2026-04-08T00:53:32.961Z",
+      "details": {
+        "note": "Web login \u2014 no API key in .env"
+      },
+      "error": ""
+    },
+    "metricool": {
+      "status": "not-configured",
+      "lastCheck": "2026-04-08T00:53:32.962Z",
+      "details": {
+        "note": "Web login \u2014 no API key in .env"
+      },
+      "error": ""
+    },
+    "nanobanana": {
+      "status": "ok",
+      "lastCheck": "2026-04-08T00:53:32.962Z",
+      "details": {
+        "note": "Uses Gemini API key (shared)",
+        "engine": "gemini-2.0-flash-exp"
+      },
+      "error": ""
+    },
+    "remotion": {
+      "status": "not-configured",
+      "lastCheck": "2026-04-08T00:53:32.962Z",
+      "details": {
+        "version": null,
+        "note": "Local install"
+      },
+      "error": ""
+    },
+    "gog": {
+      "status": "ok",
+      "lastCheck": "2026-04-08T00:53:32.977Z",
+      "details": {
+        "account": "alfonso@growth4u.io",
+        "test": "gmail inbox"
+      },
+      "error": ""
+    },
+    "openclaw": {
+      "status": "error",
+      "lastCheck": "2026-04-08T00:53:34.188Z",
+      "details": {
+        "error": "Command failed: /opt/homebrew/bin/openclaw status 2>&1"
+      },
+      "error": "Command failed: /opt/homebrew/bin/openclaw status 2>&1"
+    },
+    "discord": {
+      "status": "ok",
+      "lastCheck": "2026-04-08T00:53:34.209Z",
+      "details": {
+        "httpCode": "200"
+      },
+      "error": ""
+    },
+    "tailscale": {
+      "status": "ok",
+      "lastCheck": "2026-04-08T00:53:22Z",
+      "details": {
+        "note": "tailscale status OK"
+      },
+      "error": ""
+    }
+  },
+  "debounce": {
+    "newFailures": [],
+    "recoveries": [],
+    "ongoingFailures": [
+      "openclaw"
+    ],
+    "stateChanged": false
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "cronId": "8897bcf8-4382-453f-84a0-0e311ef1f61e",
+  "cronName": "Morning Metrics — Growth4U",
+  "slug": "growth4u",
+  "date": "2026-03-31",
+  "runAtMs": 1774938600009,
+  "status": "ok",
+  "durationMs": 70628,
+  "model": "claude-opus-4-6",
+  "content": "📊 **Morning Metrics — Growth4U** | 2026-03-31\n\n━━━ **META ADS** (ayer) ━━━\n💰 Spend: **€133.93** (media 7d: €128.77 ✅)\n👁️ Impressions: **9,357** (media 7d: 8,486)\n🖱️ Clicks: **189** | CTR: **2.02%** | CPC: **€0.71**\n🎯 Leads: **5** (media 7d: 3.9/día)\n\n**Desglose 7d:**\n```\nFecha         Spend     Imp  Clicks    CTR     CPC  Leads\n03-24      € 96.93   4,343     116  2.67% € 0.84     4\n03-25      €138.10   7,268     164  2.26% € 0.84     2\n03-26      €149.91   6,940     167  2.41% € 0.90     3\n03-27      €141.22   9,284     221  2.38% € 0.64     4\n03-28      €105.18   7,607     221  2.91% € 0.48     6 *\n03-29      €136.15  14,608     299  2.05% € 0.46     3\n03-30      €133.93   9,357     189  2.02% € 0.71     5\nMedia/d    €128.77   8,486     196  2.38% € 0.69   3.9\n```\n\n━━━ **GHL — CONTACTS** (últimas 24h) ━━━\n👤 Nuevos contactos: **25**\n• francisco cañueto — Facebook — 2026-03-31 00:19\n• antonio garcia morin — Facebook — 2026-03-30 23:09\n• editor mclanfranconi — guest posting partners — 2026-03-30 19:18\n• editor social you — guest posting partners — 2026-03-30 19:18\n• editor el blog del marketing — guest posting partners — 2026-03-30 19:18\n• cristina hortanilla — guest posting partners — 2026-03-30 19:18\n• editor genwords — guest posting partners — 2026-03-30 19:18\n• editor todostartups — guest posting partners — 2026-03-30 19:18\n• editor googiehost — guest posting partners — 2026-03-30 19:17\n• claudio inacio — guest posting partners — 2026-03-30 19:17\n... y 15 más\n\n━━━ **GHL — APPOINTMENTS** (últimas 24h) ━━━\n📅 Citas: **0**\n\n━━━ 🚨 **ALERTAS** ━━━\n🟡 **19 contacto(s) sin fuente** — posible test/spam o importación manual"
+}

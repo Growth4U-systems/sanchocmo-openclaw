@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SanchoCMO — Dashboard v2</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #F8F8F6; --card: #FFFFFF; --border: #E5E2DC; --border-strong: #D0CCC4;
+  --text: #1A1A1A; --muted: #7A7A7A; --dim: #B0B0B0;
+  --accent: #C45D35; --accent-light: #FEF3EE; --green: #22A06B; --green-light: #E3FCEF;
+  --red: #DE350B; --red-light: #FFEBE6; --yellow: #FF991F; --yellow-light: #FFFAE6;
+  --blue: #0065FF; --blue-light: #DEEBFF; --cyan: #00B8D9; --purple: #6554C0;
+  --terminal-bg: #1E1E2E; --terminal-border: #313244;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Inter',system-ui,sans-serif; background:var(--bg); color:var(--text); height:100vh; overflow:hidden; display:flex; }
+
+/* ========== SIDEBAR ========== */
+.sidebar {
+  width:210px; flex-shrink:0; background:var(--card); border-right:1px solid var(--border);
+  display:flex; flex-direction:column; height:100vh;
+}
+.sb-brand { padding:20px 18px 6px; font-size:16px; font-weight:800; color:var(--accent); letter-spacing:-.3px; }
+.sb-sub { padding:0 18px 16px; font-size:10px; color:var(--muted); }
+.sb-select { margin:0 14px 16px; padding:7px 10px; background:var(--bg); border:1px solid var(--border); border-radius:8px; font-family:'Inter'; font-size:11px; color:var(--text); cursor:pointer; width:calc(100% - 28px); }
+.sb-section { font-size:9px; font-weight:700; color:var(--dim); text-transform:uppercase; letter-spacing:1.2px; padding:16px 18px 6px; }
+.sb-link {
+  display:flex; align-items:center; gap:8px; padding:8px 18px; font-size:12px; color:var(--muted);
+  text-decoration:none; transition:all .1s; cursor:pointer; border-left:3px solid transparent;
+}
+.sb-link:hover { background:var(--bg); color:var(--text); }
+.sb-link.active { background:var(--accent-light); color:var(--accent); font-weight:600; border-left-color:var(--accent); }
+.sb-link .e { font-size:14px; width:20px; text-align:center; }
+.sb-spacer { flex:1; }
+.sb-footer { padding:14px 18px; border-top:1px solid var(--border); }
+.sb-status { display:flex; align-items:center; gap:6px; font-size:11px; color:var(--muted); }
+.sb-dot { width:6px; height:6px; border-radius:50%; background:var(--green); box-shadow:0 0 4px var(--green); }
+
+/* ========== MAIN ========== */
+.main { flex:1; display:flex; flex-direction:column; overflow:hidden; min-width:0; }
+
+/* ========== TERMINAL (collapsible) ========== */
+.term-toggle {
+  display:flex; align-items:center; gap:10px; padding:8px 20px; flex-shrink:0;
+  background:var(--terminal-bg); cursor:pointer; user-select:none;
+  border-bottom:1px solid var(--terminal-border);
+}
+.term-toggle:hover { background:#252538; }
+.term-toggle .arr { color:var(--green); font-size:10px; transition:transform .2s; font-family:'JetBrains Mono'; width:12px; }
+.term-toggle.open .arr { transform:rotate(90deg); }
+.term-toggle .live { width:6px; height:6px; border-radius:50%; background:var(--green); box-shadow:0 0 5px var(--green); animation:pulse 2s infinite; }
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.term-toggle .lbl { font-family:'JetBrains Mono'; font-size:11px; color:var(--green); }
+.term-toggle .dim { font-family:'JetBrains Mono'; font-size:10px; color:#666; }
+.term-toggle .notif { font-size:11px; color:var(--green); font-weight:600; margin-left:auto; font-family:'Inter'; }
+
+.terminal { background:var(--terminal-bg); overflow:hidden; transition:max-height .3s ease; flex-shrink:0; }
+.terminal.collapsed { max-height:0; }
+.terminal.expanded { max-height:260px; }
+.term-body {
+  font-family:'JetBrains Mono'; font-size:11px; color:#6c7086; padding:12px 20px 16px; line-height:1.9;
+}
+.term-body .p { color:var(--green); } .term-body .w { color:#cdd6f4; font-weight:500; }
+.term-body .y { color:#f9e2af; } .term-body .ok { color:var(--green); }
+.blink { display:inline-block; width:7px; height:13px; background:var(--green); animation:bl 1s step-end infinite; vertical-align:text-bottom; }
+@keyframes bl{0%,100%{opacity:1}50%{opacity:0}}
+
+/* ========== GRID ========== */
+.grid { display:grid; grid-template-columns:repeat(4,1fr); flex:1; min-height:0; }
+.col { display:flex; flex-direction:column; overflow:hidden; background:var(--card); }
+.col+.col { border-left:1px solid var(--border); }
+
+/* Column header: sticky, never scrolls */
+.ch {
+  font-size:13px; font-weight:700; color:var(--text); letter-spacing:-.2px;
+  padding:14px 20px; background:var(--card);
+  border-bottom:1px solid var(--border);
+  display:flex; align-items:center; justify-content:space-between; flex-shrink:0;
+}
+.ch .go { font-size:11px; font-weight:600; color:var(--accent); text-decoration:none; }
+.ch .go:hover { text-decoration:underline; }
+
+.cb { flex:1; overflow-y:auto; padding:16px 20px; }
+.cb::-webkit-scrollbar{width:3px} .cb::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+
+/* Chat dark column */
+.col.dark { background:var(--terminal-bg); }
+.col.dark .ch { background:var(--terminal-bg); color:#cdd6f4; border-bottom-color:var(--terminal-border); }
+.col.dark .ch .go { color:#888; }
+
+/* ========== FOUNDATION (interactive onboarding) ========== */
+.onboard-box {
+  background:var(--bg); border:1px dashed var(--border-strong); border-radius:12px;
+  padding:20px; text-align:center; margin-bottom:16px;
+}
+.onboard-box .title { font-size:14px; font-weight:700; margin-bottom:6px; }
+.onboard-box .desc { font-size:11px; color:var(--muted); margin-bottom:12px; line-height:1.5; }
+.onboard-input {
+  display:flex; gap:6px;
+}
+.onboard-input input {
+  flex:1; padding:9px 12px; border:1px solid var(--border); border-radius:8px;
+  font-family:'Inter'; font-size:12px; background:var(--card);
+}
+.onboard-input input:focus { outline:none; border-color:var(--accent); }
+.onboard-input button {
+  padding:9px 16px; background:var(--accent); color:#fff; border:none; border-radius:8px;
+  font-weight:700; cursor:pointer; font-size:12px; white-space:nowrap;
+}
+
+.prog { margin-bottom:16px; }
+.prog-bar { height:6px; background:var(--bg); border-radius:3px; overflow:hidden; }
+.prog-fill { height:100%; background:var(--green); border-radius:3px; }
+.prog-lbl { font-size:11px; color:var(--muted); margin-top:5px; text-align:center; }
+
+.fsec { margin-bottom:14px; }
+.fsec-t { font-size:10px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.8px; margin-bottom:6px; }
+
+.fp {
+  display:flex; align-items:center; gap:8px; padding:7px 10px; border-radius:8px;
+  font-size:12px; cursor:pointer; transition:all .12s; border:1px solid transparent;
+}
+.fp:hover { background:var(--bg); border-color:var(--border); }
+.fp.active { background:var(--accent-light); border-color:var(--accent); }
+.fp .icon { font-size:14px; width:20px; text-align:center; flex-shrink:0; }
+.fp .name { font-weight:500; }
+.fp .arrow { margin-left:auto; color:var(--dim); font-size:10px; opacity:0; transition:opacity .1s; }
+.fp:hover .arrow, .fp.active .arrow { opacity:1; }
+.fp.done .name { color:var(--green); } .fp.done .icon { color:var(--green); }
+.fp.wip .name { color:var(--yellow); } .fp.wip .icon { color:var(--yellow); }
+.fp.lock { opacity:.4; cursor:default; } .fp.lock:hover { background:transparent; border-color:transparent; }
+
+.flinks { margin-top:14px; padding-top:10px; border-top:1px solid var(--border); }
+.fl { display:block; padding:5px 10px; font-size:11px; color:var(--accent); text-decoration:none; font-weight:600; border-radius:6px; }
+.fl:hover { background:var(--accent-light); }
+
+/* ========== METRICS ========== */
+.kgrid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:16px; }
+.kpi { background:var(--bg); border:1px solid var(--border); border-radius:10px; padding:12px; text-align:center; transition:box-shadow .12s; }
+.kpi:hover { box-shadow:0 2px 8px rgba(0,0,0,.05); }
+.kv { font-size:26px; font-weight:800; letter-spacing:-.5px; }
+.kl { font-size:9px; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; margin-top:2px; }
+.kd { font-size:10px; font-weight:700; margin-top:3px; }
+.kd.up { color:var(--green); } .kd.dn { color:var(--red); }
+
+.src { margin-bottom:12px; }
+.src-h { font-size:10px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; margin-bottom:4px; display:flex; align-items:center; gap:5px; }
+.badge { font-size:8px; padding:2px 6px; background:var(--green-light); color:var(--green); border-radius:4px; font-weight:700; }
+.sr { display:flex; justify-content:space-between; padding:3px 0; font-size:12px; }
+.sr+.sr { border-top:1px solid var(--bg); }
+.sr .v { font-weight:700; }
+
+/* ========== ACTIONS ========== */
+.sub { margin-bottom:18px; }
+.sub-t { font-size:10px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; margin-bottom:8px; }
+
+.act-now {
+  display:flex; align-items:flex-start; gap:10px; padding:10px 12px; border-radius:10px;
+  margin-bottom:6px; cursor:pointer; transition:all .12s;
+}
+.act-now:hover { transform:translateX(2px); }
+.act-now.red { background:var(--red-light); border:1px solid #FFBDAD; }
+.act-now.green { background:var(--green-light); border:1px solid #ABF5D1; }
+.act-now.yellow { background:var(--yellow-light); border:1px solid #FFE380; }
+.act-icon { font-size:14px; flex-shrink:0; margin-top:1px; }
+.act-text { font-size:12px; font-weight:700; }
+.act-why { font-size:10px; color:var(--muted); margin-top:2px; }
+
+.strat { background:var(--bg); border:1px solid var(--border); border-radius:10px; padding:12px; margin-bottom:8px; cursor:pointer; transition:all .12s; }
+.strat:hover { border-color:var(--accent); }
+.strat-head { display:flex; justify-content:space-between; align-items:center; }
+.strat-name { font-size:12px; font-weight:700; } .strat-prog { font-size:11px; font-weight:700; color:var(--muted); }
+.strat-next { font-size:11px; color:var(--muted); margin-top:4px; }
+.strat-bar { height:4px; background:var(--border); border-radius:2px; margin-top:8px; overflow:hidden; }
+.strat-bf { height:100%; border-radius:2px; }
+
+.decision { padding:8px 10px; font-size:12px; border-left:3px solid var(--purple); margin-bottom:6px; background:var(--bg); border-radius:0 8px 8px 0; cursor:pointer; transition:background .1s; }
+.decision:hover { background:var(--blue-light); }
+
+/* ========== CHAT ========== */
+.chat-threads { padding:8px 12px; border-bottom:1px solid var(--terminal-border); flex-shrink:0; display:flex; gap:4px; overflow-x:auto; }
+.chat-thread {
+  padding:5px 10px; font-size:10px; border-radius:6px; cursor:pointer; white-space:nowrap;
+  background:#313244; color:#888; border:1px solid transparent; transition:all .1s;
+}
+.chat-thread:hover { color:#ccc; }
+.chat-thread.active { background:var(--accent); color:#fff; border-color:var(--accent); }
+
+.chat-msgs { flex:1; overflow-y:auto; padding:14px 18px; display:flex; flex-direction:column; gap:8px; }
+.msg { max-width:85%; padding:10px 14px; border-radius:14px; font-size:12px; line-height:1.5; }
+.msg.b { background:#313244; align-self:flex-start; border-bottom-left-radius:4px; color:#cdd6f4; }
+.msg.u { background:var(--accent); color:#fff; align-self:flex-end; border-bottom-right-radius:4px; }
+.msg .who { font-size:10px; color:#666; margin-bottom:2px; font-weight:600; }
+.msg.b .who { color:var(--accent); }
+
+.chat-in { display:flex; gap:8px; padding:12px 18px; border-top:1px solid var(--terminal-border); flex-shrink:0; }
+.chat-in input { flex:1; padding:10px 14px; background:#313244; border:1px solid var(--terminal-border); border-radius:10px; color:#cdd6f4; font-family:'Inter'; font-size:12px; }
+.chat-in input:focus { outline:none; border-color:var(--accent); }
+.chat-in button { padding:10px 20px; background:var(--accent); color:#fff; border:none; border-radius:10px; font-weight:700; cursor:pointer; font-size:12px; }
+
+/* Thread list */
+.thread-list { overflow-y:auto; flex:1; }
+.tl-header { display:flex; justify-content:space-between; align-items:center; padding:10px 18px; border-bottom:1px solid var(--terminal-border); }
+.tl-item { display:flex; align-items:flex-start; gap:10px; padding:10px 18px; border-bottom:1px solid var(--terminal-border); cursor:pointer; transition:background .1s; }
+.tl-item:hover { background:#252538; }
+.tl-item.active { background:#2A2A3E; border-left:3px solid var(--accent); }
+.tl-status { font-size:14px; flex-shrink:0; margin-top:1px; }
+.tl-info { flex:1; min-width:0; }
+.tl-name { font-size:12px; font-weight:600; color:#cdd6f4; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.tl-preview { font-size:10px; color:#666; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.tl-time { font-size:10px; color:#555; flex-shrink:0; }
+
+/* Thread view header */
+.tv-header { display:flex; align-items:center; gap:8px; padding:8px 18px; border-bottom:1px solid var(--terminal-border); cursor:pointer; flex-shrink:0; }
+.tv-header:hover { background:#252538; }
+.tv-back { color:#666; font-size:16px; }
+.tv-name { font-size:12px; font-weight:700; color:#cdd6f4; }
+.tv-status-badge { font-size:9px; padding:2px 8px; border-radius:4px; font-weight:700; margin-left:auto; }
+.tv-status-badge.pending { background:var(--yellow-light); color:#5C4813; }
+.tv-status-badge.confirmed { background:var(--green-light); color:var(--green); }
+.tv-status-badge.closed { background:#313244; color:#666; }
+
+.online { width:7px; height:7px; background:var(--green); border-radius:50%; box-shadow:0 0 4px var(--green); display:inline-block; }
+.tag { position:fixed; bottom:10px; left:50%; transform:translateX(-50%); background:var(--accent); color:#fff; padding:4px 14px; border-radius:14px; font-size:9px; font-weight:700; z-index:100; }
+</style>
+</head>
+<body>
+
+<div class="tag">MOCKUP v10</div>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="sb-brand">🏇 SanchoCMO</div>
+  <div class="sb-sub">Mission Control</div>
+  <select class="sb-select"><option>🏢 Growth4U</option><option>🏥 Hospital Capilar</option><option>💳 Paymatico</option><option>🏢 KLEVA</option></select>
+
+  <div class="sb-section">Principal</div>
+  <a class="sb-link active"><span class="e">📊</span> Dashboard</a>
+  <a class="sb-link"><span class="e">🏗️</span> Foundation</a>
+  <a class="sb-link"><span class="e">📈</span> Métricas</a>
+  <a class="sb-link"><span class="e">📋</span> Proyectos</a>
+
+  <div class="sb-section">Herramientas</div>
+  <a class="sb-link"><span class="e">🔌</span> Integraciones</a>
+  <a class="sb-link"><span class="e">📂</span> Documentos</a>
+  <a class="sb-link"><span class="e">💡</span> Ideas</a>
+
+  <div class="sb-section">Sistema</div>
+  <a class="sb-link"><span class="e">🤖</span> Agentes</a>
+  <a class="sb-link"><span class="e">📡</span> Activity</a>
+
+  <div class="sb-spacer"></div>
+  <div class="sb-footer">
+    <div class="sb-status"><span class="sb-dot"></span> 3 agentes online</div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- ACTIVITY TOGGLE -->
+  <div class="term-toggle open" onclick="toggleTerm()">
+    <span class="arr">▶</span>
+    <span class="live"></span>
+    <span class="lbl">Activity</span>
+    <span class="dim">— 3 agentes online · última acción hace 2m</span>
+    <span class="notif">✨ 5 leads hoy</span>
+  </div>
+  <div class="terminal expanded" id="term">
+    <div class="term-body">
+      <span class="p">14:30</span> <span class="ok">✓</span> Heartbeat OK — Sancho, Escudero, Rocinante online<br>
+      <span class="p">12:00</span> <span class="ok">✓</span> Métricas recopiladas — GA4 <span class="w">37 ses</span> · Meta <span class="w">€136 · 5 leads</span> · GSC 246 imp · GHL 5 new<br>
+      <span class="p">11:45</span> <span class="y">⚠</span> Alerta: Ángulo 2_V3 CTR 1.7% — recomendar pausa<br>
+      <span class="p">08:15</span> <span class="ok">✓</span> LinkedIn post publicado — "Una fintech me dijo que el influencer marketing no escala"<br>
+      <span class="p">08:00</span> <span class="ok">✓</span> Morning briefing enviado a Discord<br>
+      <span class="p">06:00</span> <span class="ok">✓</span> Cron métricas ejecutado — GA4 ✓ GSC ✓ Meta ✓ GHL ✓ Metricool ✓<br>
+      <span class="p">Ayer</span> <span class="ok">✓</span> Foundation: Pricing completado y aprobado<br>
+      <span class="p">Ayer</span> <span class="ok">✓</span> Escudero: 3 artículos SEO publicados en growth4u.io/blog<span class="blink"></span>
+    </div>
+  </div>
+
+  <script>
+  function toggleTerm(){
+    const t=document.getElementById('term'), b=document.querySelector('.term-toggle');
+    t.classList.toggle('expanded'); t.classList.toggle('collapsed');
+    b.classList.toggle('open');
+  }
+  function showThreadList(){
+    document.getElementById('thread-list').style.display='';
+    document.getElementById('thread-view').style.display='none';
+  }
+  function openThread(name){
+    document.getElementById('thread-list').style.display='none';
+    document.getElementById('thread-view').style.display='';
+  }
+  function newThread(){
+    document.getElementById('thread-list').style.display='none';
+    document.getElementById('thread-view').style.display='';
+  }
+  </script>
+
+  <!-- 4 COLUMNS -->
+  <div class="grid">
+
+    <!-- COL 1: FOUNDATION (onboarding) -->
+    <div class="col">
+      <div class="ch"><span>📋 Brand Foundation</span> <a href="#" class="go">Vista completa →</a></div>
+      <div class="cb">
+        <!-- Onboarding box (shows for new clients) -->
+        <div class="onboard-box">
+          <div class="title">Empieza aquí</div>
+          <div class="desc">Introduce la URL de la empresa para que Sancho genere el contexto inicial automáticamente.</div>
+          <div class="onboard-input">
+            <input type="text" placeholder="https://tuempresa.com" value="https://growth4u.io" />
+            <button>Analizar</button>
+          </div>
+        </div>
+
+        <div class="prog">
+          <div class="prog-bar"><div class="prog-fill" style="width:77%"></div></div>
+          <div class="prog-lbl">10 / 13 pilares · 4 síntesis · 2 presentaciones</div>
+        </div>
+
+        <div class="fsec">
+          <div class="fsec-t">🏢 Company Brief</div>
+          <div class="fp done"><span class="icon">✅</span><span class="name">Company Context</span><span class="arrow">›</span></div>
+          <div class="fp done"><span class="icon">✅</span><span class="name">Business Model</span><span class="arrow">›</span></div>
+          <div class="fp done"><span class="icon">✅</span><span class="name">Budget & Resources</span><span class="arrow">›</span></div>
+        </div>
+
+        <div class="fsec">
+          <div class="fsec-t">📊 Market & Us</div>
+          <div class="fp done"><span class="icon">✅</span><span class="name">Market Analysis</span><span class="arrow">›</span></div>
+          <div class="fp done"><span class="icon">✅</span><span class="name">Competitor Analysis</span><span class="arrow">›</span></div>
+          <div class="fp done"><span class="icon">✅</span><span class="name">Self Analysis</span><span class="arrow">›</span></div>
+          <div class="fp done"><span class="icon">✅</span><span class="name">SWOT</span><span class="arrow">›</span></div>
+          <div class="fp done"><span class="icon">✅</span><span class="name">Summary</span><span class="arrow" style="font-size:9px;color:var(--muted)">síntesis</span></div>
+          <div class="fp done"><span class="icon">✅</span><span class="name">OPE Canvas</span><span class="arrow" style="font-size:9px;color:var(--muted)">síntesis</span></div>
+          <div class="fp done" style="color:var(--cyan)"><span class="icon">🎬</span><span class="name" style="color:var(--cyan)">Foundation Report</span><span class="arrow">›</span></div>
+        </div>
+
+        <div class="fsec">
+          <div class="fsec-t">🎯 Go-To-Market</div>
+          <div class="fp done"><span class="icon">✅</span><span class="name">Niche Discovery (ECPs)</span><span class="arrow">›</span></div>
+          <div class="fp"><span class="icon">⬜</span><span class="name">Existing Customer Data</span><span class="arrow">›</span></div>
+          <div class="fp done"><span class="icon">✅</span><span class="name">Positioning</span><span class="arrow">›</span></div>
+          <div class="fp done"><span class="icon">✅</span><span class="name">Pricing</span><span class="arrow">›</span></div>
+          <div class="fp"><span class="icon">⬜</span><span class="name">ECP Validation</span><span class="arrow">›</span></div>
+          <div class="fp"><span class="icon">⬜</span><span class="name">Metrics Plan</span><span class="arrow">›</span></div>
+          <div class="fp done"><span class="icon">✅</span><span class="name">Messaging Summary</span><span class="arrow" style="font-size:9px;color:var(--muted)">síntesis</span></div>
+          <div class="fp done" style="color:var(--cyan)"><span class="icon">🎬</span><span class="name" style="color:var(--cyan)">Strategic Plan Q2</span><span class="arrow">›</span></div>
+        </div>
+
+        <div class="fsec">
+          <div class="fsec-t">🎨 Brand Identity</div>
+          <div class="fp done"><span class="icon">✅</span><span class="name">Brand Voice</span><span class="arrow">›</span></div>
+          <div class="fp done"><span class="icon">✅</span><span class="name">Visual Identity</span><span class="arrow">›</span></div>
+        </div>
+
+        <div class="fsec">
+          <div class="fsec-t">📋 Strategic Plan</div>
+          <div class="fp done"><span class="icon">✅</span><span class="name">Plan Estratégico</span><span class="arrow">›</span></div>
+        </div>
+
+        <div class="flinks">
+          <a class="fl" href="#">📂 Documentos</a>
+          <a class="fl" href="#">🔌 4 APIs conectadas</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- COL 2: METRICS -->
+    <div class="col">
+      <div class="ch"><span>📈 Métricas</span> <a href="#" class="go">Dashboard →</a></div>
+      <div class="cb">
+        <div class="kgrid">
+          <div class="kpi"><div class="kv" style="color:var(--blue)">37</div><div class="kl">Sesiones</div><div class="kd up">↑ 208%</div></div>
+          <div class="kpi"><div class="kv" style="color:var(--accent)">€136</div><div class="kl">Ad Spend</div><div class="kd dn">↓ 7%</div></div>
+          <div class="kpi"><div class="kv" style="color:var(--green)">5</div><div class="kl">Leads</div><div class="kd up">↑ 150%</div></div>
+          <div class="kpi"><div class="kv" style="color:var(--cyan)">212</div><div class="kl">CRM</div><div class="kd up">↑ 15/sem</div></div>
+        </div>
+        <div class="src"><div class="src-h">Google Analytics <span class="badge">OK</span></div><div class="sr"><span>Nuevos</span><span class="v">19</span></div><div class="sr"><span>Bounce</span><span class="v">40.5%</span></div><div class="sr"><span>Duración</span><span class="v">2:57</span></div></div>
+        <div class="src"><div class="src-h">Search Console <span class="badge">OK</span></div><div class="sr"><span>Impresiones</span><span class="v">246</span></div><div class="sr"><span>CTR</span><span class="v">0.41%</span></div><div class="sr"><span>Posición</span><span class="v">12.0</span></div></div>
+        <div class="src"><div class="src-h">Meta Ads <span class="badge">OK</span></div><div class="sr"><span>CTR</span><span class="v">3.39%</span></div><div class="sr"><span>CPC</span><span class="v">€0.87</span></div><div class="sr"><span>Leads</span><span class="v" style="color:var(--green)">5</span></div></div>
+        <div class="src"><div class="src-h">LinkedIn <span class="badge">OK</span></div><div class="sr"><span>Engagement</span><span class="v">7.69%</span></div></div>
+        <div class="src"><div class="src-h">CRM (GHL) <span class="badge">OK</span></div><div class="sr"><span>Nuevos</span><span class="v">5</span></div><div class="sr"><span>Total</span><span class="v">212</span></div></div>
+      </div>
+    </div>
+
+    <!-- COL 3: NEXT STEPS -->
+    <div class="col">
+      <div class="ch"><span>🎯 Próximos pasos</span> <a href="#" class="go">Ver todo →</a></div>
+      <div class="cb">
+        <div class="sub">
+          <div class="sub-t">⚡ Ahora</div>
+          <div class="act-now red"><span class="act-icon">🔴</span><div><div class="act-text">Pausar Ángulo 2_V3 y 1_V2</div><div class="act-why">CTR < 2%, CPC > €2 — quemando budget</div></div></div>
+          <div class="act-now green"><span class="act-icon">🟢</span><div><div class="act-text">Escalar Ángulo 4_V3 y 5_V2 (+30%)</div><div class="act-why">Mejores CTR + leads</div></div></div>
+          <div class="act-now yellow"><span class="act-icon">🟡</span><div><div class="act-text">Completar pilar Pricing</div><div class="act-why">Blocker de Foundation</div></div></div>
+        </div>
+
+        <div class="sub">
+          <div class="sub-t">📋 Estrategias</div>
+          <div class="strat"><div class="strat-head"><span class="strat-name">📣 LinkedIn Authority</span><span class="strat-prog">2/6</span></div><div class="strat-next">→ Publicar post "5 errores CAC"</div><div class="strat-bar"><div class="strat-bf" style="width:33%;background:var(--blue)"></div></div></div>
+          <div class="strat"><div class="strat-head"><span class="strat-name">🎯 Meta Ads Testing</span><span class="strat-prog">4/7</span></div><div class="strat-next">→ Pausar malos, escalar buenos</div><div class="strat-bar"><div class="strat-bf" style="width:57%;background:var(--accent)"></div></div></div>
+          <div class="strat"><div class="strat-head"><span class="strat-name">📝 SEO + GEO</span><span class="strat-prog">0/5</span></div><div class="strat-next">→ Keyword research</div><div class="strat-bar"><div class="strat-bf" style="width:5%;background:var(--dim)"></div></div></div>
+          <div class="strat"><div class="strat-head"><span class="strat-name">📧 Cold Email</span><span class="strat-prog" style="color:var(--dim)">Pend.</span></div><div class="strat-next" style="color:var(--dim)">→ Esperando Foundation</div></div>
+        </div>
+
+        <div class="sub">
+          <div class="sub-t">❓ Tu decisión</div>
+          <div class="decision">💡 ¿Lanzar webinar con fintech partner?</div>
+          <div class="decision">🎨 ¿Arrancar Visual Identity?</div>
+          <div class="decision">📧 ¿Priorizar Cold Email antes que SEO?</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- COL 4: CHAT (thread system) -->
+    <div class="col dark">
+      <div class="ch">
+        <span><span class="online"></span>&nbsp; Chat con Sancho</span>
+        <div style="display:flex;gap:6px;">
+          <a href="#" class="go" onclick="showThreadList()" id="btn-history">Historial</a>
+          <a href="#" class="go" onclick="newThread()" style="color:var(--green)">+ Nuevo</a>
+        </div>
+      </div>
+      <div class="cb" style="padding:0;display:flex;flex-direction:column;">
+
+        <!-- Thread list (historial) — hidden by default when a thread is open -->
+        <div class="thread-list" id="thread-list" style="display:none;">
+          <div class="tl-header">
+            <span style="font-size:12px;font-weight:700;color:#cdd6f4;">Conversaciones</span>
+            <span style="font-size:10px;color:#666;">12 threads</span>
+          </div>
+          <div class="tl-item active" onclick="openThread('pricing')">
+            <span class="tl-status" style="color:var(--yellow);">🟡</span>
+            <div class="tl-info">
+              <div class="tl-name">Pricing Strategy</div>
+              <div class="tl-preview">Sancho: "Perfecto, añado Ads management..."</div>
+            </div>
+            <span class="tl-time">2m</span>
+          </div>
+          <div class="tl-item" onclick="openThread('market')">
+            <span class="tl-status" style="color:var(--green);">✅</span>
+            <div class="tl-info">
+              <div class="tl-name">Market Analysis</div>
+              <div class="tl-preview">Confirmado · 3 archivos generados</div>
+            </div>
+            <span class="tl-time">Ayer</span>
+          </div>
+          <div class="tl-item" onclick="openThread('competitors')">
+            <span class="tl-status" style="color:var(--green);">✅</span>
+            <div class="tl-info">
+              <div class="tl-name">Competitor Analysis</div>
+              <div class="tl-preview">Confirmado · 12 competidores analizados</div>
+            </div>
+            <span class="tl-time">Mar 22</span>
+          </div>
+          <div class="tl-item">
+            <span class="tl-status" style="color:var(--green);">✅</span>
+            <div class="tl-info">
+              <div class="tl-name">Company Context</div>
+              <div class="tl-preview">Confirmado · generado desde URL</div>
+            </div>
+            <span class="tl-time">Mar 20</span>
+          </div>
+          <div class="tl-item">
+            <span class="tl-status" style="color:var(--green);">✅</span>
+            <div class="tl-info">
+              <div class="tl-name">SWOT</div>
+              <div class="tl-preview">Confirmado</div>
+            </div>
+            <span class="tl-time">Mar 21</span>
+          </div>
+          <div class="tl-item">
+            <span class="tl-status">📋</span>
+            <div class="tl-info">
+              <div class="tl-name">P01 · Fontanería Digital</div>
+              <div class="tl-preview">Sancho: "He configurado los 3 perfiles..."</div>
+            </div>
+            <span class="tl-time">1h</span>
+          </div>
+          <div class="tl-item">
+            <span class="tl-status">💬</span>
+            <div class="tl-info">
+              <div class="tl-name">Chat libre</div>
+              <div class="tl-preview">Tú: "¿Cómo van los ads de ayer?"</div>
+            </div>
+            <span class="tl-time">3h</span>
+          </div>
+        </div>
+
+        <!-- Active thread view -->
+        <div class="thread-view" id="thread-view">
+          <!-- Thread header -->
+          <div class="tv-header" onclick="showThreadList()">
+            <span class="tv-back">‹</span>
+            <span class="tv-name">🔧 Pricing Strategy</span>
+            <span class="tv-status-badge pending">Esperando confirmación</span>
+          </div>
+          <!-- Messages -->
+          <div class="chat-msgs">
+            <div class="msg b"><div class="who">Sancho</div>Vamos a definir la estrategia de pricing. He revisado tu posicionamiento y los competidores.<br><br>Tus competidores cobran:<br>• <strong>Agencias tradicionales:</strong> €3-5K/mes retainer<br>• <strong>Freelancers:</strong> €1-2K/mes<br>• <strong>AI-first (nosotros):</strong> nuevo modelo<br><br>¿Quieres un modelo de retainer, por proyecto, o success-based?</div>
+            <div class="msg u">Creo que retainer + success fee</div>
+            <div class="msg b"><div class="who">Sancho</div>Buena combinación. Propongo:<br><br><strong>Tier 1 — Growth Starter:</strong> €1.5K/mes<br>Foundation + 1 canal activo<br><br><strong>Tier 2 — Growth Pro:</strong> €3K/mes<br>Foundation + 3 canales + metrics<br><br><strong>Tier 3 — Growth Scale:</strong> €5K/mes + 10% de revenue incremental<br>Full stack + success fee<br><br>¿Ajustamos los tiers?</div>
+            <div class="msg u">El tier 2 debería incluir Ads management</div>
+            <div class="msg b"><div class="who">Sancho</div>Perfecto, añado Ads management al Tier 2. Genero el documento de pricing completo. Un momento... 🔧<br><br>📄 <a href="#" style="color:var(--accent);">pricing-strategy.md</a> — listo para revisión</div>
+          </div>
+        </div>
+
+        <div class="chat-in">
+          <input type="text" placeholder="Escribe a Sancho..." />
+          <button>Enviar</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+</body>
+</html>

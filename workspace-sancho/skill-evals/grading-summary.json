@@ -1,0 +1,86 @@
+{
+  "email-sequence": {
+    "eval-1-welcome": {
+      "assertions": {
+        "Checks for product-marketing-context.md": {"passed": true, "evidence": "Subagent confirmed checking for context files, none found"},
+        "Creates 5-7 email welcome sequence": {"passed": true, "evidence": "7 emails generated in emails/ directory"},
+        "Follows one email one job principle": {"passed": true, "evidence": "Each email has single primary job in brief.md sequence map"},
+        "Maps emails to trial timeline (14 days)": {"passed": true, "evidence": "Day 0,1,3,5,7,10,13 timeline in brief.md"},
+        "Includes timing between emails": {"passed": true, "evidence": "Every email has Send: with Day + rationale"},
+        "Each email has hook, context, value, CTA": {"passed": true, "evidence": "All 7 emails follow structure with body copy + CTA"},
+        "Includes subject lines for each email": {"passed": true, "evidence": "3 A/B/C variants per email (21 total subject lines)"},
+        "Aligns with stated aha moment": {"passed": true, "evidence": "Emails 1-3 target project creation, 4-6 target team invite per brief"},
+        "Output follows structured per-email format": {"passed": true, "evidence": "brief.md + 7 individual email .md files with metadata blocks"}
+      },
+      "summary": {"passed": 9, "failed": 0, "total": 9, "pass_rate": 1.0}
+    },
+    "eval-2-nurture": {
+      "assertions": {
+        "Creates 6-8 email lead nurture sequence": {"passed": true, "evidence": "8 emails generated"},
+        "Follows value before ask principle": {"passed": true, "evidence": "Emails 1-4 are value, conversion ramps from email 5"},
+        "Maps from awareness through consideration to decision": {"passed": true, "evidence": "Report delivery → findings → problem → framework → case study → diff → objection → offer"},
+        "Includes timing between emails": {"passed": true, "evidence": "All emails have Send: with specific day + rationale"},
+        "Each email has clear subject line and single CTA": {"passed": true, "evidence": "3 subject variants + single CTA per email confirmed"},
+        "Gradually increases commitment asks across the sequence": {"passed": true, "evidence": "Read content → Watch video → View case study → Book demo progression"},
+        "Connects to original download topic": {"passed": true, "evidence": "DevOps report referenced throughout sequence"}
+      },
+      "summary": {"passed": 7, "failed": 0, "total": 7, "pass_rate": 1.0}
+    },
+    "eval-3-open-rates": {
+      "assertions": {
+        "Triggers on casual phrasing": {"passed": true, "evidence": "Handled informal query correctly"},
+        "Diagnoses potential causes beyond just subject lines": {"passed": true, "evidence": "7 root causes identified: list hygiene, deliverability, fatigue, frequency, Apple MPP, content, segmentation"},
+        "Addresses sender reputation and deliverability": {"passed": true, "evidence": "Section B covers deliverability, inbox placement, domain reputation"},
+        "Recommends list hygiene or re-engagement": {"passed": true, "evidence": "Re-engagement campaign recommended as part of recovery plan"},
+        "Applies subject line strategy with specific patterns": {"passed": true, "evidence": "Subject line fix strategy with skill's 5 patterns + A/B variants"},
+        "Provides subject line formulas and examples": {"passed": true, "evidence": "Specific formulas from skill applied with examples"},
+        "Suggests testing framework": {"passed": true, "evidence": "90-day recovery playbook with A/B testing phases"}
+      },
+      "summary": {"passed": 7, "failed": 0, "total": 7, "pass_rate": 1.0}
+    }
+  },
+  "pricing-strategy": {
+    "eval-1-saas-pricing": {
+      "assertions": {
+        "Checks for product-marketing-context.md": {"passed": true, "evidence": "Subagent checked for Foundation docs"},
+        "Applies three pricing axes framework": {"passed": true, "evidence": "Packaging, pricing metric, price point all covered"},
+        "Evaluates multiple pricing metrics": {"passed": true, "evidence": "Per-agent vs per-ticket vs flat rate analyzed with pros/cons"},
+        "Discusses which metric aligns with value delivered": {"passed": true, "evidence": "Recommends per-agent with rationale re e-commerce seasonality"},
+        "Recommends good-better-best tier structure": {"passed": true, "evidence": "3 tiers $49/$99/$199 + Enterprise"},
+        "Addresses pricing psychology": {"passed": true, "evidence": "8 hooks applied: anchoring, decoy, social proof, fraccionamiento, etc."},
+        "Provides specific pricing recommendation with rationale": {"passed": true, "evidence": "Per-agent at $49/$99/$199 with market gap analysis"}
+      },
+      "summary": {"passed": 7, "failed": 0, "total": 7, "pass_rate": 1.0}
+    },
+    "eval-2-price-increase": {
+      "assertions": {
+        "Applies price increase strategies": {"passed": true, "evidence": "Full strategy with phased rollout"},
+        "Recommends grandfathering or grace period approach": {"passed": true, "evidence": "6-month grandfather period for existing customers"},
+        "Recommends tying increase to new value": {"passed": true, "evidence": "Restructure to 3 tiers framing value add"},
+        "Provides communication strategy": {"passed": true, "evidence": "60-day notice, communication templates"},
+        "Addresses new vs existing customer timing": {"passed": true, "evidence": "New customers first, existing with delay"},
+        "Suggests annual billing as softening measure": {"passed": true, "evidence": "Annual discount as part of tier structure"},
+        "Notes some churn is expected": {"passed": true, "evidence": "Decision gates and monitoring for acceptable churn"}
+      },
+      "summary": {"passed": 7, "failed": 0, "total": 7, "pass_rate": 1.0}
+    },
+    "eval-3-willingness": {
+      "assertions": {
+        "Triggers on casual phrasing": {"passed": true, "evidence": "Handled informal 'how do we figure out what people will actually pay'"},
+        "Applies Van Westendorp price sensitivity method": {"passed": true, "evidence": "Van Westendorp 4-question protocol included"},
+        "Applies MaxDiff for feature importance": {"passed": false, "evidence": "Used Gabor-Granger instead of MaxDiff. Conjoint mentioned but MaxDiff not explicitly applied"},
+        "Recommends competitive benchmarking": {"passed": true, "evidence": "Phase 1 is competitive benchmarking"},
+        "Explains how to run each method": {"passed": true, "evidence": "Sample sizes, costs, methodology detailed"},
+        "Suggests practical alternatives": {"passed": true, "evidence": "Qualitative interviews recommended as earliest stage"},
+        "Provides executable pricing research plan": {"passed": true, "evidence": "3-phase action plan with timeline"}
+      },
+      "summary": {"passed": 6, "failed": 1, "total": 7, "pass_rate": 0.86}
+    }
+  },
+  "overall": {
+    "total_assertions": 44,
+    "passed": 43,
+    "failed": 1,
+    "pass_rate": 0.977
+  }
+}

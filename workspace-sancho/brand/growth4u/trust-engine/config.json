@@ -1,0 +1,93 @@
+{
+  "project": {
+    "slug": "growth4u",
+    "name": "Growth4U",
+    "website": "https://growth4u.io",
+    "language": "es",
+    "market": "ES",
+    "country_code": "ES"
+  },
+  "brand": {
+    "name": "Growth4U",
+    "aliases": ["Growth4U.io", "Growth4U - Consultora de Growth"],
+    "domains": ["growth4u.io"]
+  },
+  "niches": [
+    {
+      "id": "n1",
+      "name": "Sistema de growth repetible",
+      "brief": "Startups tech post-PMF estancadas que necesitan un sistema de growth operable sin depender del fundador. Dolores: CAC insostenible, sin atribución, equipo pequeño, 6+ meses sin crecer.",
+      "subniches": [
+        { "id": "n1-s1", "name": "Growth frameworks y sistemas", "priority": "high", "keywords_seed": ["sistema growth startup", "growth framework España", "playbook growth startup"], "known_media": ["producthackers.com", "sumapositiva.com"] },
+        { "id": "n1-s2", "name": "Reducción de CAC y unit economics", "priority": "high", "keywords_seed": ["reducir CAC fintech", "unit economics startup España", "LTV CAC ratio"], "known_media": ["cincoillas.elpais.com", "alldefi.substack.com"] },
+        { "id": "n1-s3", "name": "Atribución y métricas", "priority": "medium", "keywords_seed": ["atribución marketing multicanal", "métricas growth startup", "dashboard metrics"], "known_media": ["producthackers.com"] },
+        { "id": "n1-s4", "name": "Construcción de equipo growth", "priority": "medium", "keywords_seed": ["equipo growth startup", "contratar growth manager", "rituales semanales growth"], "known_media": ["linkedin.com"] },
+        { "id": "n1-s5", "name": "Marketing multicanal", "priority": "high", "keywords_seed": ["diversificar canales marketing", "marketing multicanal startup", "growth channels"], "known_media": ["marketing4ecommerce.net", "boluda.com"] }
+      ]
+    },
+    {
+      "id": "n2",
+      "name": "Growth para fintechs reguladas",
+      "brief": "Fintechs reguladas CNMV/BdE/MiCA que necesitan crecer sin arriesgar la licencia. Dolores: legal tumba campañas, no saber qué sí se puede hacer, competidores no regulados avanzando.",
+      "subniches": [
+        { "id": "n2-s1", "name": "Marketing CNMV-compliant", "priority": "high", "keywords_seed": ["marketing CNMV España", "publicidad fintech regulada", "marketing criptoactivos España"], "known_media": ["elreferente.es", "dealflow.es"] },
+        { "id": "n2-s2", "name": "Cumplimiento regulatorio fintech", "priority": "high", "keywords_seed": ["MiCA regulación fintech", "PSD2 marketing", "CNMV publicidad productos financieros"], "known_media": ["aefi.org", "madfintech.com"] },
+        { "id": "n2-s3", "name": "Growth de neobancos y bancos digitales", "priority": "high", "keywords_seed": ["growth neobanco España", "banca digital marketing", "neobank adquisición clientes"], "known_media": ["cincoillas.elpais.com"] },
+        { "id": "n2-s4", "name": "Plataformas de inversión y brokers", "priority": "medium", "keywords_seed": ["broker online marketing España", "plataforma inversión crecimiento", "trading app adquisición"], "known_media": ["rankia.com"] }
+      ]
+    },
+    {
+      "id": "n3",
+      "name": "Diversificación de canales (canal principal muriendo)",
+      "brief": "Startups cuyo canal principal de adquisición (SEO, Google Ads, cold email) rinde cada vez peor. Necesitan construir activos de confianza multi-canal.",
+      "subniches": [
+        { "id": "n3-s1", "name": "GEO y visibilidad en IA (ChatGPT/Gemini)", "priority": "high", "keywords_seed": ["GEO marketing España", "posicionar en ChatGPT", "AI search optimization"], "known_media": ["producthackers.com", "boluda.com"] },
+        { "id": "n3-s2", "name": "Alternativas a SEO tradicional", "priority": "high", "keywords_seed": ["SEO muerto 2025", "alternativas Google Ads", "organic growth alternativas"], "known_media": ["boluda.com", "seopatia.com"] },
+        { "id": "n3-s3", "name": "Cold email y outbound", "priority": "medium", "keywords_seed": ["cold email B2B España", "outbound startup funciones", "email marketing B2B"], "known_media": ["producthackers.com"] },
+        { "id": "n3-s4", "name": "Content marketing que convierte", "priority": "medium", "keywords_seed": ["content marketing B2B España", "blog que genera leads", "SEO content strategy"], "known_media": ["marketing4ecommerce.net", "quondos.com"] }
+      ]
+    },
+    {
+      "id": "n4",
+      "name": "Founder quemado por agencias",
+      "brief": "Founders que han gastado €15-50K en agencias sin resultados. Buscan ayuda verificable antes de confiar. Pain 92 (máximo).",
+      "subniches": [
+        { "id": "n4-s1", "name": "Alternativas a agencias tradicionales", "priority": "high", "keywords_seed": ["alternativa agencia marketing", "fractional CMO España", "programa growth con fecha fin"], "known_media": ["reddit.com/r/saas", "producthackers.com"] },
+        { "id": "n4-s2", "name": "Verificación de track records", "priority": "high", "keywords_seed": ["verificar agencia growth", "Growth4U opiniones", "agency scam España"], "known_media": ["reddit.com/r/startups", "malt.es"] },
+        { "id": "n4-s3", "name": "Modelos sin retainer", "priority": "medium", "keywords_seed": ["pago único consultoría growth", "programa growth 7K euros", "trust engine modelo"], "known_media": ["producthackers.com"] }
+      ]
+    },
+    {
+      "id": "n5",
+      "name": "Visibilidad digital (invisible para el comprador)",
+      "brief": "Startups con buen producto pero zero presencia online verificable. Pierden deals porque no aparecen en Google, IA ni comunidades.",
+      "subniches": [
+        { "id": "n5-s1", "name": "Presencia en motores de IA", "priority": "high", "keywords_seed": ["aparecer en ChatGPT", "GEO fintech España", "optimización Gemini"], "known_media": ["producthackers.com"] },
+        { "id": "n5-s2", "name": "Social proof B2B y reviews", "priority": "high", "keywords_seed": ["reviews B2B España", "social proof startup", "testimonios cliente fintech"], "known_media": ["trustpilot.com", "g2.com", "capterra.com"] },
+        { "id": "n5-s3", "name": "PR y medios para startups", "priority": "medium", "keywords_seed": ["notas de prensa startup España", "prensa fintech", "pr coverage startup"], "known_media": ["expansion.com", "cincoillas.elpais.com", "elreferente.es"] }
+      ]
+    }
+  ],
+  "competitors": [
+    { "name": "Product Hackers", "domain": "producthackers.com", "niches": ["n1", "n2", "n3"], "threat_level": "high" },
+    { "name": "Snowball", "domain": "agenciasnowball.com", "niches": ["n1", "n3"], "threat_level": "medium" },
+    { "name": "TheGrowtHacker", "domain": "thegrowthacker.com", "niches": ["n1", "n3"], "threat_level": "medium" },
+    { "name": "iSocialWeb", "domain": "isocialweb.agency", "niches": ["n1", "n2", "n3"], "threat_level": "medium" },
+    { "name": "Glissmarket", "domain": "glissmarket.com", "niches": ["n2"], "threat_level": "medium" },
+    { "name": "TEAM LEWIS", "domain": "teamlewis.com", "niches": ["n2", "n5"], "threat_level": "low" },
+    { "name": "Flake Agency", "domain": "flake-agency.com", "niches": ["n2"], "threat_level": "medium" }
+  ],
+  "market_filter": {
+    "country": "ES",
+    "language": "es",
+    "exclude_domains_pattern": ["forbes.com", "techcrunch.com", "medium.com", "wikipedia.org"],
+    "prioritize_tlds": [".es", ".io"]
+  },
+  "ecps": [
+    { "id": "ecp1", "name": "Necesita sistema de growth repetible", "score": 79.00, "wave": 1 },
+    { "id": "ecp2", "name": "Crecer cumpliendo regulación", "score": 73.70, "wave": 1 },
+    { "id": "ecp3", "name": "Canal principal muriendo", "score": 73.50, "wave": 2 },
+    { "id": "ecp4", "name": "Quemado por agencias", "score": 66.45, "wave": 2 },
+    { "id": "ecp5", "name": "Invisible para el comprador", "score": 64.70, "wave": 2 }
+  ]
+}

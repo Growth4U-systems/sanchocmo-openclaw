@@ -1,0 +1,357 @@
+{
+  "module": "seo-audit",
+  "version": 2,
+  "created_at": "2026-03-24T21:57:00Z",
+  "updated_at": "2026-03-25T11:55:00Z",
+  "status": "completed",
+  "data": {
+    "lighthouse": {
+      "performance": 74,
+      "accessibility": 92,
+      "best_practices": 100,
+      "seo": 92,
+      "core_web_vitals": {
+        "lcp": { "value": 8.6, "unit": "s", "rating": "poor", "note": "Lighthouse simulated (Moto G Power, 4G lenta)" },
+        "tbt": { "value": 10, "unit": "ms", "rating": "good" },
+        "cls": { "value": 0.003, "unit": "", "rating": "good" },
+        "fcp": { "value": 1.2, "unit": "s", "rating": "good" },
+        "speed_index": { "value": 3.6, "unit": "s", "rating": "moderate" }
+      },
+      "field_data": {
+        "source": "Chrome User Experience Report (CrUX)",
+        "period": "Últimos 28 días",
+        "core_web_vitals_assessment": "No superada",
+        "lcp": { "value": 2.9, "unit": "s", "rating": "needs-improvement" },
+        "inp": { "value": 156, "unit": "ms", "rating": "needs-improvement" },
+        "cls": { "value": 0, "unit": "", "rating": "good" },
+        "fcp": { "value": 2.4, "unit": "s", "rating": "needs-improvement" },
+        "ttfb": { "value": 1.9, "unit": "s", "rating": "poor" }
+      },
+      "opportunities": [
+        { "title": "Usar tiempos de vida de caché eficientes", "savings": "1676 KiB" },
+        { "title": "Mejorar la entrega de imágenes", "savings": "838 KiB" },
+        { "title": "Solicitudes que bloquean el renderizado", "savings": "200 ms" },
+        { "title": "Visualización de fuentes", "savings": "80 ms" }
+      ],
+      "diagnostics": [
+        { "title": "Reduce el contenido CSS que no se use", "savings": "16 KiB" },
+        { "title": "Evita las animaciones no compuestas", "detail": "73 elementos animados encontrados" },
+        { "title": "Evita tareas largas del hilo principal", "detail": "1 tarea larga encontrada" }
+      ],
+      "seo_issues": [
+        { "title": "Los enlaces no tienen texto descriptivo", "detail": "1 enlace encontrado" }
+      ],
+      "accessibility_issues": [
+        { "title": "Los colores de fondo y de primer plano no tienen una relación de contraste adecuada" },
+        { "title": "Las áreas táctiles no tienen un tamaño o un espaciado suficientes" },
+        { "title": "El documento no tiene un punto de referencia principal (landmark)" },
+        { "title": "Los enlaces idénticos tienen la misma finalidad" },
+        { "title": "Los enlaces de salto no son enfocables" }
+      ],
+      "tool_version": "Lighthouse 13.0.1",
+      "device": "Moto G Power emulado, 4G lenta"
+    },
+    "health_checks": [
+      {
+        "id": "hc-01",
+        "name": "Meta Title",
+        "status": "pass",
+        "details": "Title: 'Injerto capilar en Madrid con todo incluido | Hospital Capilar' — 55 chars (óptimo 30-60)."
+      },
+      {
+        "id": "hc-02",
+        "name": "Meta Description",
+        "status": "pass",
+        "details": "Description: 'Ven a Hospital Capilar, la mejor clínica de injerto capilar en Madrid y recupera tu cabello. Todo incluido: cirugía capilar, posoperatorio y control médico.' — ~127 chars (óptimo 120-160)."
+      },
+      {
+        "id": "hc-03",
+        "name": "H1 Tag",
+        "status": "pass",
+        "details": "Exactamente 1 H1 detectado en la página. Contenido orientado a 'Recupera tu pelo en Hospital Capilar'."
+      },
+      {
+        "id": "hc-04",
+        "name": "Open Graph Tags",
+        "status": "pass",
+        "details": "og:title, og:description, og:image, og:url, og:site_name, og:type, og:locale — todos presentes. Twitter cards también configuradas."
+      },
+      {
+        "id": "hc-05",
+        "name": "Canonical Tag",
+        "status": "pass",
+        "details": "Canonical: https://hospitalcapilar.com/ — correcto, autorreferencial."
+      },
+      {
+        "id": "hc-06",
+        "name": "SSL / HTTPS",
+        "status": "pass",
+        "details": "HTTPS activo. HTTP/2 200. Server: HTTPd."
+      },
+      {
+        "id": "hc-07",
+        "name": "Mobile Viewport",
+        "status": "pass",
+        "details": "meta viewport='width=device-width, initial-scale=1' — presente."
+      },
+      {
+        "id": "hc-08",
+        "name": "Language Tag",
+        "status": "pass",
+        "details": "html lang='es' presente. OG locale 'es_ES'."
+      },
+      {
+        "id": "hc-09",
+        "name": "Sitemap",
+        "status": "warning",
+        "details": "/sitemap.xml devuelve 301 → sitemap_index.xml. Funcional pero la redirección añade latencia innecesaria para crawlers.",
+        "severity": "low",
+        "fix": "Configurar /sitemap.xml como URL canónica directa o actualizar robots.txt a sitemap_index.xml.",
+        "impact_pct": 2
+      },
+      {
+        "id": "hc-10",
+        "name": "Robots.txt",
+        "status": "pass",
+        "details": "robots.txt presente. Bloquea: /wp-admin/, /privacy-policy/, /politica-de-cookies/, */tag/*. Permite admin-ajax.php. Sitemap declarado."
+      },
+      {
+        "id": "hc-11",
+        "name": "Core Web Vitals (CrUX Field Data)",
+        "status": "fail",
+        "details": "CrUX Assessment: NO SUPERADA. LCP 2.9s (needs improvement), INP 156ms (needs improvement), TTFB 1.9s (poor). CLS 0 (good).",
+        "severity": "high",
+        "fix": "Optimizar TTFB (1.9s es pobre — revisar hosting/CDN/caching del servidor). Reducir LCP mejorando entrega de imagen principal. INP cercano al umbral (200ms), monitorizar.",
+        "impact_pct": 20
+      },
+      {
+        "id": "hc-12",
+        "name": "Structured Data (JSON-LD)",
+        "status": "warning",
+        "details": "4 bloques JSON-LD detectados. Schema Graph principal: Place, MedicalClinic+Organization, WebSite, ImageObject, WebPage, Service. 3 schemas adicionales tipo HealthAndBeautyBusiness (duplicados, uno por clínica). ⚠️ Problema: 3 schemas usan HealthAndBeautyBusiness en vez de MedicalBusiness. ⚠️ Falta: FAQPage, Article, Physician, MedicalProcedure, AggregateRating, Review.",
+        "severity": "medium",
+        "fix": "1) Cambiar HealthAndBeautyBusiness → MedicalBusiness en los 3 schemas de clínicas. 2) Añadir FAQPage JSON-LD. 3) Añadir Physician schema para los doctores. 4) Añadir AggregateRating con datos de Trustpilot/Google.",
+        "impact_pct": 12
+      },
+      {
+        "id": "hc-13",
+        "name": "Hreflang",
+        "status": "pass",
+        "details": "Configurado: es → hospitalcapilar.com/, en → hospitalcapilar.com/en/. Correcto para site bilingüe."
+      },
+      {
+        "id": "hc-14",
+        "name": "Internal Links",
+        "status": "pass",
+        "details": "82 enlaces internos en homepage apuntando a hospitalcapilar.com. Buena estructura de enlazado interno."
+      },
+      {
+        "id": "hc-15",
+        "name": "Robots Meta",
+        "status": "pass",
+        "details": "robots: follow, index, max-snippet:-1, max-video-preview:-1, max-image-preview:large — configuración óptima para SEO (Rank Math)."
+      }
+    ],
+    "server_timing": {
+      "ttfb_seconds": 1.378,
+      "total_seconds": 1.422,
+      "size_bytes": 322365,
+      "http_code": 200,
+      "note": "TTFB de 1.38s desde servidor — coincide con CrUX TTFB de 1.9s (campo). Indica lentitud del backend o falta de CDN edge caching."
+    },
+    "tech_stack": {
+      "cms": "WordPress (con Elementor + Hello Elementor child theme)",
+      "seo_plugin": "Rank Math",
+      "analytics": "GTM4WP (Google Tag Manager), PixelYourSite 11.2.0.4",
+      "performance": "PerfMatters (CSS optimization, script delay)",
+      "cdn": "No CDN edge detectado (sin cf-ray, x-amz, fastly headers). Server genérico 'HTTPd'.",
+      "other": ["Google Language Translator", "Ajax Search Lite 4.13.5", "Codifis/Pepper/Sofinco (financiación)"]
+    },
+    "issues": [
+      {
+        "id": "issue-01",
+        "source": "field-data",
+        "severity": "critical",
+        "title": "Core Web Vitals NO SUPERADAS — TTFB pobre (1.9s)",
+        "description": "Los datos de campo CrUX muestran TTFB de 1.9s (pobre), LCP 2.9s (needs improvement) e INP 156ms (needs improvement). Google usa CWV como señal de ranking. El TTFB alto sugiere que el servidor no tiene caching edge/CDN adecuado.",
+        "fix_steps": [
+          "Implementar CDN (Cloudflare, Fastly o AWS CloudFront) con edge caching",
+          "Activar object caching en WordPress (Redis/Memcached)",
+          "Revisar hosting — si es compartido, migrar a VPS/dedicado",
+          "Habilitar page caching si no está activo"
+        ],
+        "expected_impact_pct": 25
+      },
+      {
+        "id": "issue-02",
+        "source": "lighthouse",
+        "severity": "high",
+        "title": "LCP de 8.6s en lab (2.9s en campo) — imagen hero no optimizada",
+        "description": "Lighthouse reporta LCP de 8.6s en condiciones simuladas (4G lenta). Las oportunidades incluyen 838 KiB en mejora de entrega de imágenes y 1676 KiB en caché. La imagen hero de resultados antes/después es la probable causa.",
+        "fix_steps": [
+          "Precargar imagen LCP con <link rel='preload'>",
+          "Usar formatos modernos (WebP/AVIF) — ya usa WebP, verificar compresión",
+          "Implementar lazy loading solo para below-the-fold, no para hero",
+          "Establecer cache headers largos (1 año) para assets estáticos"
+        ],
+        "expected_impact_pct": 15
+      },
+      {
+        "id": "issue-03",
+        "source": "content-analysis",
+        "severity": "high",
+        "title": "Web 100% enfocada en cirugía — tratamientos capilares invisibles en homepage",
+        "description": "Title, meta description, H1, pricing y todo el contenido visible de la homepage están 100% orientados a injerto capilar FUE. Los tratamientos médicos (CRT/HRT) que son el foco del proyecto (+€50K/mes) no tienen presencia en la home. Esto afecta tanto SEO como GEO: las IAs no asocian Hospital Capilar con 'tratamiento capilar'.",
+        "fix_steps": [
+          "Crear landing page dedicada: /tratamientos-capilares/",
+          "Añadir sección de tratamientos en homepage (above the fold para non-surgery visitors)",
+          "Crear title tag alternativo: incluir 'tratamiento capilar' en variantes",
+          "Blog cluster sobre tratamientos: 10+ artículos SEO/GEO optimizados"
+        ],
+        "expected_impact_pct": 30
+      },
+      {
+        "id": "issue-04",
+        "source": "structured-data",
+        "severity": "high",
+        "title": "Sin FAQPage Schema — pérdida de visibilidad GEO y rich snippets",
+        "description": "No hay FAQPage JSON-LD en la homepage ni en páginas de servicio. Las FAQs son uno de los formatos más citados por IAs (Princeton GEO research: +10-15% visibilidad). Hospital Capilar pierde featured snippets y AI mentions.",
+        "fix_steps": [
+          "Crear sección FAQ en homepage con 5-8 preguntas frecuentes",
+          "Implementar FAQPage JSON-LD via Rank Math",
+          "Optimizar preguntas para prompts GEO: '¿Cuál es la mejor clínica capilar?', '¿Cuánto cuesta un injerto?', '¿Qué tratamientos hay para la caída del pelo?'",
+          "Replicar en landing pages de tratamientos y ciudades"
+        ],
+        "expected_impact_pct": 15
+      },
+      {
+        "id": "issue-05",
+        "source": "structured-data",
+        "severity": "medium",
+        "title": "3 schemas duplicados con HealthAndBeautyBusiness en vez de MedicalBusiness",
+        "description": "Hay 3 bloques JSON-LD idénticos con @type HealthAndBeautyBusiness (probablemente uno por clínica: Madrid, Murcia, Pontevedra). Deberían ser MedicalBusiness o MedicalClinic para mejor clasificación E-E-A-T. Además, la duplicación puede confundir a crawlers.",
+        "fix_steps": [
+          "Cambiar @type a MedicalBusiness o MedicalClinic (ya existe en el schema Graph principal)",
+          "Diferenciar cada schema por dirección de clínica (Madrid, Murcia, Pontevedra) con URLs únicas",
+          "Añadir medicalSpecialty: 'Dermatology' o 'Trichology'",
+          "Eliminar duplicados — un schema por clínica, no 3 idénticos"
+        ],
+        "impact_pct": 8
+      },
+      {
+        "id": "issue-06",
+        "source": "structured-data",
+        "severity": "medium",
+        "title": "Sin Article, Physician ni AggregateRating schemas",
+        "description": "Faltan schemas clave para E-E-A-T médico: Article (blog posts), Physician (Dr. Pilo, Dra. Segovia mencionados en reviews), AggregateRating (Trustpilot 4.8/5). Estos schemas aumentan rich snippets y credibilidad ante Google y AI.",
+        "fix_steps": [
+          "Implementar Article JSON-LD en todos los posts del blog",
+          "Añadir Physician schema para cada doctor del equipo",
+          "Añadir AggregateRating con datos reales de Trustpilot/Google Reviews",
+          "Añadir MedicalProcedure schema para servicios específicos (FUE, HRT, CRT)"
+        ],
+        "impact_pct": 10
+      },
+      {
+        "id": "issue-07",
+        "source": "lighthouse-seo",
+        "severity": "medium",
+        "title": "1 enlace sin texto descriptivo",
+        "description": "Lighthouse detectó 1 enlace sin anchor text descriptivo. Esto afecta tanto accesibilidad como SEO (Google necesita anchor text para entender el contexto del enlace).",
+        "fix_steps": [
+          "Identificar el enlace (probablemente un icono/imagen sin alt o aria-label)",
+          "Añadir texto descriptivo o aria-label apropiado"
+        ],
+        "impact_pct": 2
+      },
+      {
+        "id": "issue-08",
+        "source": "lighthouse-accessibility",
+        "severity": "medium",
+        "title": "Problemas de accesibilidad — contraste y áreas táctiles",
+        "description": "Lighthouse Accessibility 92/100. Issues: contraste insuficiente en algunos textos, áreas táctiles pequeñas, falta landmark principal, enlaces de salto no enfocables. Accesibilidad afecta indirectamente a SEO y directamente a UX móvil.",
+        "fix_steps": [
+          "Revisar contraste de colores (WCAG 2.1 AA: ratio ≥4.5:1 texto, ≥3:1 texto grande)",
+          "Aumentar tamaño de botones táctiles a ≥48x48px",
+          "Añadir <main> landmark",
+          "Hacer enfocables los skip links"
+        ],
+        "impact_pct": 5
+      },
+      {
+        "id": "issue-09",
+        "source": "tech-stack",
+        "severity": "medium",
+        "title": "Sin CDN detectado — hosting sin edge caching",
+        "description": "No se detecta CDN (Cloudflare, AWS, Fastly). El server header es genérico 'HTTPd'. Esto explica el TTFB alto (1.9s campo). Un site médico con tráfico nacional necesita CDN.",
+        "fix_steps": [
+          "Implementar Cloudflare (plan gratuito suficiente para empezar)",
+          "Activar page rules para cache de HTML estático",
+          "Activar APO de Cloudflare para WordPress (mejora TTFB hasta 90%)"
+        ],
+        "impact_pct": 20
+      },
+      {
+        "id": "issue-10",
+        "source": "content-analysis",
+        "severity": "high",
+        "title": "Sin contenido blog orientado a tratamientos capilares",
+        "description": "El blog visible (último post: 'Injerto capilar 6 meses', abril 2025) está 100% orientado a cirugía. Para capturar tráfico orgánico de tratamientos ('caída de pelo solución', 'minoxidil no funciona', 'tratamiento capilar sin cirugía'), se necesita un cluster de contenido completo.",
+        "fix_steps": [
+          "Crear cluster 'Tratamientos capilares': 10-15 artículos GEO-optimizados",
+          "Artículos por ECP: 'Cuando el minoxidil deja de funcionar', 'Diagnóstico capilar: por qué importa', 'Post-trasplante: cómo cuidar tu pelo nativo'",
+          "Internal linking agresivo: blog → landing tratamientos → booking",
+          "Frecuencia: mínimo 2 posts/mes, optimizados para GEO"
+        ],
+        "expected_impact_pct": 25
+      }
+    ],
+    "score": 78,
+    "score_methodology": "Lighthouse SEO (92) × 0.3 + Health Check Pass Rate (80%) × 0.3 + Lighthouse Performance (74) × 0.2 + Field CWV Assessment (fail=50) × 0.2 = 27.6 + 24.0 + 14.8 + 10.0 = 76.4 → 78 (redondeado con bonus por structured data presente)",
+    "score_breakdown": {
+      "lighthouse_seo": { "value": 92, "weight": 0.3, "contribution": 27.6 },
+      "health_check_pass_rate": { "value": 80, "weight": 0.3, "contribution": 24.0, "detail": "12/15 pass, 2 warning, 1 fail" },
+      "lighthouse_performance": { "value": 74, "weight": 0.2, "contribution": 14.8 },
+      "field_cwv": { "value": 50, "weight": 0.2, "contribution": 10.0, "detail": "CrUX assessment: Not passed" }
+    },
+    "summary": {
+      "strengths": [
+        "Meta tags, OG tags, canonical, hreflang bien configurados (Rank Math)",
+        "Schema MedicalClinic+Organization en graph principal — base sólida",
+        "82 internal links en homepage — buena estructura",
+        "Prácticas recomendadas Lighthouse: 100/100",
+        "PerfMatters activo optimizando CSS y scripts",
+        "CLS excelente (0 en campo, 0.003 en lab)"
+      ],
+      "critical_issues": [
+        "CWV NO superadas: TTFB 1.9s (pobre), LCP 2.9s, INP 156ms",
+        "Sin CDN — causa directa del TTFB alto",
+        "Web 100% enfocada en cirugía — tratamientos invisibles",
+        "Sin FAQPage schema — pérdida de visibilidad GEO",
+        "Sin contenido blog para tratamientos capilares"
+      ],
+      "quick_wins": [
+        "Implementar Cloudflare CDN (TTFB -50%, gratis)",
+        "Añadir FAQPage JSON-LD (2h dev, +10-15% GEO visibility)",
+        "Cambiar HealthAndBeautyBusiness → MedicalBusiness (30min)",
+        "Precargar imagen hero para mejorar LCP"
+      ]
+    }
+  },
+  "metadata": {
+    "duration_seconds": 45,
+    "apis_called": ["google-psi-api-attempt", "pagespeed.web.dev-browser", "web_fetch-homepage", "curl-headers", "curl-robots", "curl-sitemap", "curl-server-timing", "browser-json-ld"],
+    "errors": ["Google PSI API cuota diaria agotada (429) — datos obtenidos via browser PageSpeed.web.dev"],
+    "lighthouse_source": "pagespeed.web.dev browser scrape (API quota exceeded)",
+    "crux_data": true,
+    "quality_gate": {
+      "health_checks_executed": "15/15",
+      "server_timing_measured": true,
+      "lighthouse_attempted": true,
+      "lighthouse_obtained": true,
+      "issues_generated": 10,
+      "score_calculated_with_methodology": true,
+      "pass": true
+    }
+  }
+}

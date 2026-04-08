@@ -1,0 +1,24 @@
+{
+  "messages": [
+    {
+      "role": "user",
+      "text": "Estoy abriendo el chat sobre \"Social Proof & Reviews\". Dame un resumen rápido del estado actual y qué podemos hacer. Si necesitas algo de mí, dímelo.",
+      "ts": "2026-03-27T13:13:00.409Z"
+    },
+    {
+      "role": "bot",
+      "text": "Voy a revisar el estado actual de Social Proof & Reviews para Growth4U.",
+      "agent": "sancho",
+      "ts": "2026-03-27T13:14:38.859Z"
+    },
+    {
+      "role": "bot",
+      "text": "## 📊 Estado: P05 — Social Proof & Reviews\n\n**Fase:** 0 (Prerequisites)  \n**Review:** 11 abril 2026  \n**Status:** Tareas definidas, pendientes de ejecución\n\n---\n\n### 🎯 Objetivo\nGenerar social proof crítico: reviews Trustpilot/Google + LinkedIn recommendations. **Resuelve W1 del SWOT** (0 social proof como empresa).\n\n---\n\n### ✅ Lo que tenemos\n- **4 tareas planificadas:**\n  - **T01** — Lista de clientes (parcial, necesita tu input)\n  - **T02** — Email templates listos (3 variantes: clientes actuales / ex-colegas / WhatsApp)\n  - **T03** — Mensajes LinkedIn recommendations (Alfonso + Martín)\n  - **T04** — Setup Google Business Profile (pendiente)\n\n---\n\n### 🔴 Lo que necesito de ti\n1. **Completar lista de clientes actuales de G4U** (T01):\n   - ¿Quiénes son tus clientes con resultados medibles?\n   - ¿Contactos específicos para pedir reviews?\n   - Prioridad: clientes actuales > ex-colegas (resuelven directamente W1)\n\n2. **Confirmar datos Google Business** (T04):\n   - ¿Dirección física de la oficina en Madrid?\n   - ¿Ya tienes Google Business Profile activo?\n\n---\n\n### 🚀 Qué podemos hacer YA\n1. **Ejecutar T01** (si me das los clientes actuales)\n2. **Lanzar campaña de reviews** con los templates de T02/T03\n3. **Setup Google Business** con tus datos\n\n¿Por dónde empezamos?",
+      "agent": "sancho",
+      "ts": "2026-03-27T13:14:38.862Z"
+    }
+  ],
+  "updatedAt": 1774617278862,
+  "discordThreadId": null,
+  "discordChannelId": null
+}

@@ -1,0 +1,35 @@
+{
+  "id": "P01",
+  "name": "Contenido SEO BOFU",
+  "description": "Criptan no tiene NING\u00daN contenido de decisi\u00f3n de compra. Quien busca 'mejor exchange Espa\u00f1a', 'Criptan opiniones' o 'alternativa dep\u00f3sito bancario' no encuentra a Criptan. Este tr\u00e1fico de alta intenci\u00f3n va directamente a Bit2Me, Bitvavo y comparadores. Con las credenciales de Criptan (MiCA, seguro 250M\u20ac, Rankia 2025), el contenido BOFU se escribe solo.",
+  "approach": "Investigaci\u00f3n de keywords BOFU + creaci\u00f3n de 5 art\u00edculos pillar en el primer mes (comparativas, reviews, gu\u00edas de decisi\u00f3n) + presencia en comparadores (Rankia, Finect) + schema markup para rich snippets + estructura AIO para visibilidad en ChatGPT/Perplexity.",
+  "status": "active",
+  "created": "2026-03-30",
+  "review_date": "2026-04-30",
+  "origin": {
+    "type": "strategic-plan",
+    "version": 1,
+    "detail": "Gap cr\u00edtico: zero contenido BOFU. Market Intel confirma que nadie hace bien SEO BOFU en exchanges Espa\u00f1a."
+  },
+  "objective": {
+    "description": "Posicionar Criptan en keywords de alta intenci\u00f3n de compra",
+    "metric": "keywords_top_10",
+    "baseline": 0,
+    "target": 10,
+    "unit": "keywords"
+  },
+  "strategy": {
+    "catalog_id": "08",
+    "description": "SEO Content \u2014 art\u00edculos BOFU optimizados para ranking + AIO"
+  },
+  "channels": [
+    "content"
+  ],
+  "discord": {
+    "project_thread_id": null,
+    "project_channel": "projects"
+  },
+  "tasks_total": 5,
+  "tasks_completed": 0,
+  "value_review": null
+}

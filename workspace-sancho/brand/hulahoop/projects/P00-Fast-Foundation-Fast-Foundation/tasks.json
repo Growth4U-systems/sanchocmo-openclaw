@@ -1,0 +1,17 @@
+[
+  {
+    "id": "P00-FF-T01",
+    "name": "Ejecutar Fast Foundation",
+    "description": "Intake rápido (~30 min) donde Sancho te hace preguntas sobre tu empresa y genera los documentos base: Company Context, Business Model y Niche Discovery con ECPs iniciales. Todo se ejecuta en una sola conversación en #onboarding.",
+    "deliverable": "company-brief/company-context.md, company-brief/business-model.md, go-to-market/ecps/current.md",
+    "done_criteria": "Los 3 documentos lite generados y validados por el cliente.",
+    "depends_on": null,
+    "owner": "Sancho",
+    "status": "pending",
+    "channel": "onboarding",
+    "type": "foundation",
+    "skill": "fast-foundation",
+    "pillars": ["company-context", "business-model", "niche-discovery"],
+    "sections": ["company-brief", "go-to-market"]
+  }
+]

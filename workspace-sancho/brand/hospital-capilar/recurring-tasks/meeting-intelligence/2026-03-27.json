@@ -1,0 +1,11 @@
+{
+  "cronId": "6dac9a53-6736-490a-ae54-e028b8ebbbd1",
+  "cronName": "Meeting Intelligence",
+  "slug": "hospital-capilar",
+  "date": "2026-03-27",
+  "runAtMs": 1774630800011,
+  "status": "ok",
+  "durationMs": 254949,
+  "model": "MiniMax-M2.5",
+  "content": "🧠 Meeting Intelligence — 2026-03-27: No hay reuniones nuevas de Hospital Capilar esta semana. Última procesada: 18 de marzo."
+}

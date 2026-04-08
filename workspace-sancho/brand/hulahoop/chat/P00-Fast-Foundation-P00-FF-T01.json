@@ -1,0 +1,18 @@
+{
+  "messages": [
+    {
+      "role": "user",
+      "text": "Estoy abriendo el chat sobre \"P00-Fast-Foundation · Ejecutar Fast Foundation\". Dame un resumen rápido del estado actual y qué podemos hacer. Si necesitas algo de mí, dímelo.",
+      "ts": "2026-04-07T15:24:46.043Z"
+    },
+    {
+      "role": "bot",
+      "text": "## Estado actual: HulaHoop — Fast Foundation\n\n**Todo está en `not-started`.** La Foundation está completamente vacía — solo tenemos la URL: `https://hulahoop.media/en`.\n\n### ¿Qué es Fast Foundation?\n\nEs el arranque rápido (Layer 0) que genera 5 entregables base analizando la web:\n\n1. **Company Brief** — Quién sois, qué hacéis, modelo de negocio\n2. **Self-Analysis (L1)** — Fortalezas, debilidades, assets actuales\n3. **Market Analysis (L1)** — Panorama del mercado, tendencias\n4. **Brand Voice Snapshot** — Tono, estilo, personalidad de marca\n5. **Niche Básico (ECPs)** — Primeros perfiles de cliente ideal\n\nTiempo estimado: ~10-15 minutos de ejecución.\n\n### Lo que necesito de ti\n\nAntes de arrancar, me vendría bien confirmar:\n\n- **¿Idioma del cliente?** (la web tiene `/en`, ¿trabajamos en inglés o español?)\n- **¿Algún contexto adicional?** — sector, producto principal, público objetivo... Lo que tengas a mano. Si no, tiro de la web y listo.\n- **¿Hay algún brief, deck o doc que pueda revisar?**\n\nCon eso (o sin ello, tirando solo de la web) puedo arrancar el Fast Foundation. ¿Ejecuto?",
+      "agent": "sancho",
+      "ts": "2026-04-07T15:25:57.734Z"
+    }
+  ],
+  "updatedAt": 1775575557734,
+  "discordThreadId": null,
+  "discordChannelId": null
+}

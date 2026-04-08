@@ -1,0 +1,18 @@
+{
+  "id": "P00-Metrics",
+  "name": "Métricas y Conexiones",
+  "description": "Definir plan de métricas, conectar herramientas y generar dashboard.",
+  "approach": "Clasificar negocio → definir KPIs → conectar integraciones → dashboard.",
+  "objective": {
+    "description": "Dashboard operativo",
+    "metric": "integrations_connected",
+    "baseline": 0,
+    "target": 3,
+    "unit": " integrations"
+  },
+  "origin": "onboarding",
+  "phase": -1,
+  "category": "foundation",
+  "review_date": null,
+  "status": "todo"
+}

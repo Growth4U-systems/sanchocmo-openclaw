@@ -1,0 +1,33 @@
+{
+  "messages": [
+    {
+      "role": "user",
+      "text": "Hey",
+      "ts": "2026-03-26T15:37:17.865Z"
+    },
+    {
+      "role": "bot",
+      "text": "Hola Alfonso 👋\n\n¿En qué te puedo ayudar con Growth4U?",
+      "agent": "sancho",
+      "ts": "2026-03-26T15:37:27.182Z"
+    },
+    {
+      "role": "user",
+      "text": "Quiero que me mires el documento y añadas varias cosas, como que somos parte de chain4economy",
+      "ts": "2026-03-26T15:37:50.913Z"
+    },
+    {
+      "role": "bot",
+      "text": "El thread se llama \"self-analysis\", así que asumo que te refieres al Self Analysis. Déjame leerlo.",
+      "agent": "sancho",
+      "ts": "2026-03-26T15:38:24.412Z"
+    },
+    {
+      "role": "bot",
+      "text": "Ok, ya tengo el Self Analysis completo. Es un documento extenso y bien trabajado.\n\nQuiero añadir lo de **chain4economy**, pero mencionaste \"varias cosas\". ¿Qué más quieres que añada además de la pertenencia a chain4economy?\n\nY para contexto — ¿qué es exactamente chain4economy? ¿Un grupo empresarial, una aceleradora, un ecosistema...? Así lo posiciono correctamente en el doc.",
+      "agent": "sancho",
+      "ts": "2026-03-26T15:38:24.415Z"
+    }
+  ],
+  "updatedAt": 1774539504415
+}

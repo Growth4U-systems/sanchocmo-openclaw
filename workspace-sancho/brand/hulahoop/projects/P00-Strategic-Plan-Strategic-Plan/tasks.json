@@ -1,0 +1,30 @@
+[
+  {
+    "id": "P00-SP-T01",
+    "name": "L7 — Crear Strategic Plan",
+    "description": "Generar plan estratégico: SWOT ejecutivo, channel prioritization, roadmap de proyectos, KPIs.",
+    "deliverable": "strategic-plan/current.md",
+    "done_criteria": "Plan aprobado. Proyectos P01+ creados en Mission Control.",
+    "depends_on": "P00-MET-T01",
+    "owner": "Sancho",
+    "status": "pending",
+    "channel": "strategy",
+    "type": "foundation",
+    "skill": "strategic-plan",
+    "pillar": "strategic-plan",
+    "section": "strategic-plan"
+  },
+  {
+    "id": "P00-SP-T02",
+    "name": "Ejecutar Strategic Plan",
+    "description": "Crear los proyectos P01+ del roadmap con tareas, skills y canales asignados.",
+    "deliverable": "Proyectos P01+ creados en MC con tareas detalladas.",
+    "done_criteria": "Proyectos creados y en ejecución.",
+    "depends_on": "P00-SP-T01",
+    "owner": "Sancho",
+    "status": "pending",
+    "channel": "strategy",
+    "type": "execution",
+    "skill": "strategic-plan"
+  }
+]

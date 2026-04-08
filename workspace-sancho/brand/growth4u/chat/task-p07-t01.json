@@ -1,0 +1,16 @@
+{
+  "messages": [
+    {
+      "role": "user",
+      "text": "Estoy abriendo el chat sobre \"Configurar IG: bio, link in bio, branding visual\". Dame un resumen rápido del estado actual y qué podemos hacer. Si necesitas algo de mí, dímelo.",
+      "ts": "2026-03-26T16:23:50.672Z"
+    },
+    {
+      "role": "bot",
+      "text": "Perfecto, aquí va el resumen:\n\n## 📋 P07-T01: Configurar IG — Estado actual\n\n**Status:** `todo` — no se ha tocado aún.\n\n**Lo que ya tenemos (Foundation completa):**\n- ✅ **Visual Identity aprobada** — Paleta (#2563EB azul, #7C3AED violeta, #F97316 naranja), tipografía (Inter + JetBrains Mono), concepto \"The Growth Lab\", Alfonso como cara de marca\n- ✅ **Brand Voice aprobada** — Directo, científico, cercano, sin bullshit\n- ✅ **Messaging Summary** — 5 UVPs, 9 USPs, mensajes transversales, objeciones resueltas\n- ✅ **Positioning 5 ECPs** — Todo aprobado\n- ✅ **Template IG quote** ya existe como mockup en visual identity\n\n**Lo que puedo generar yo ahora (sin que hagas nada):**\n1. **Bio optimizada** — Propuesta de valor + keywords + CTA, alineada con positioning\n2. **Estructura de Link in Bio** — Qué links poner, en qué orden, con qué CTAs (Linktree o alternativa)\n3. **Checklist de branding visual del perfil** — Foto de perfil, highlights covers, grid aesthetic\n\n**Lo que necesito de ti:**\n- **¿Tenéis ya cuenta de IG?** Si sí, ¿cuál es el @handle? Así puedo auditar lo que hay\n- **Link in Bio tool**: ¿Usáis ya Linktree, Stan, o similar? ¿O lo montamos desde cero?\n- **Foto de perfil**: ¿Usamos la de Alfonso (headshot studio) o el logo G4U?\n\nDame esos datos y arranco con la propuesta completa.",
+      "agent": "sancho",
+      "ts": "2026-03-26T16:24:57.662Z"
+    }
+  ],
+  "updatedAt": 1774542297662
+}

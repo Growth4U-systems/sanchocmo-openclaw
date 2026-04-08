@@ -1,0 +1,15 @@
+{
+  "project_slug": "growth4u",
+  "completed_at": "2026-04-07T13:26:00Z",
+  "modules": {
+    "foundation-import": { "status": "completed", "completed_at": "2026-04-07T13:02:30Z", "version": 1 },
+    "seo-audit": { "status": "completed", "completed_at": "2026-04-07T13:06:00Z", "version": 1, "score": 94.33 },
+    "own-media-audit": { "status": "completed", "completed_at": "2026-04-07T13:08:00Z", "version": 1, "score": 61.5 },
+    "geo-analysis": { "status": "completed", "completed_at": "2026-04-07T13:12:00Z", "version": 1 },
+    "serp-analysis": { "status": "completed", "completed_at": "2026-04-07T13:15:00Z", "version": 1, "score": "partial - DataForSEO no usado" },
+    "gap-analysis": { "status": "completed", "completed_at": "2026-04-07T13:18:00Z", "version": 1 },
+    "recommendations": { "status": "completed", "completed_at": "2026-04-07T13:20:00Z", "version": 1 },
+    "keywords": { "status": "completed", "completed_at": "2026-04-07T13:22:00Z", "version": 1 },
+    "influencers": { "status": "completed", "completed_at": "2026-04-07T13:25:00Z", "version": 1 }
+  }
+}

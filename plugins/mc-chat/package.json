@@ -1,0 +1,28 @@
+{
+  "name": "mc-chat",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Mission Control webchat channel plugin for OpenClaw — connects the MC dashboard to Sancho",
+  "type": "module",
+  "openclaw": {
+    "extensions": ["./src/index.js"],
+    "setupEntry": "./src/setup-entry.js",
+    "channel": {
+      "id": "mc-chat",
+      "label": "Mission Control Chat",
+      "selectionLabel": "Mission Control (Dashboard)",
+      "detailLabel": "MC Chat",
+      "blurb": "Connect the Mission Control dashboard webchat to OpenClaw agents.",
+      "aliases": ["mc", "mission-control"],
+      "order": 100
+    }
+  },
+  "peerDependencies": {
+    "openclaw": ">=2026.3.22"
+  },
+  "peerDependenciesMeta": {
+    "openclaw": {
+      "optional": true
+    }
+  }
+}

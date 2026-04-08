@@ -1,0 +1,11 @@
+{
+  "cronId": "a68143d8-1309-46eb-a5dc-4c3fb35ee3d2",
+  "cronName": "Lead Sync — Growth4U",
+  "slug": "growth4u",
+  "date": "2026-04-03",
+  "runAtMs": 1775246400015,
+  "status": "ok",
+  "durationMs": 256052,
+  "model": "claude-sonnet-4-5",
+  "content": "📊 **Lead Sync — 2026-04-03 20:00 CEST**\n\n✅ **2 nuevos leads** creados (con `enrichment_pending: true`):\n- Mohamed Dakir (`iheUfdsmnFC88jbYaK7J`) — FB paid\n- Carlos T (`AFgY07q6aKhqKL30roDD`) — IG paid\n\n⚠️ **Ambos sin company intel** — Sin `companyName` ni `website` en GHL. Sin transcripts disponibles.\n\n📁 **4 leads existentes** revisados — Sin transcripts nuevos desde último enrichment.\n\n📈 **Total leads con `llamada-agendada`:** 6\n\n🔧 **Next action:** Enrichment manual post-llamada para los 2 nuevos leads."
+}

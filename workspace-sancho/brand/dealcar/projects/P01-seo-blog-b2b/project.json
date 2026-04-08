@@ -1,0 +1,32 @@
+{
+  "id": "P01",
+  "name": "SEO Blog B2B — Pivotar contenido a dealers",
+  "status": "active",
+  "created": "2026-03-26",
+  "review_date": "2026-04-26",
+  "origin": {
+    "type": "strategic-plan",
+    "version": 1,
+    "detail": "Blog actual orientado B2C. Pivotar a contenido B2B para captar dealers."
+  },
+  "objective": {
+    "description": "Rankear top 10 para keywords de software concesionario y generar leads orgánicos",
+    "metric": "keywords_top_10",
+    "baseline": 2,
+    "target": 8,
+    "unit": "keywords",
+    "horizon_days": 90
+  },
+  "strategy": {
+    "catalog_id": "#17",
+    "description": "SEO Content — 12 artículos B2B en 3 meses (BOFU→MOFU→TOFU)"
+  },
+  "channels": ["content"],
+  "discord": {
+    "project_thread_id": "1486634569280258161",
+    "project_channel": "projects"
+  },
+  "tasks_total": 4,
+  "tasks_completed": 0,
+  "value_review": null
+}

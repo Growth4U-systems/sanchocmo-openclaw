@@ -1,0 +1,17 @@
+{
+  "messages": [
+    {
+      "role": "user",
+      "text": "Lanza el scan de competidores. Lee brand/growth4u/market-and-us/competitors/sources.json para la lista de competidores y sus canales. Scrapea cada competidor (web, blog, LinkedIn, Meta Ads, Google Ads, Instagram, Twitter). Genera informe completo con contenido escrapeado y extrae ideas de contenido adaptadas a nuestra marca.",
+      "ts": "2026-04-01T21:36:27.438Z"
+    },
+    {
+      "role": "user",
+      "text": "Lanza el scan de competidores. Lee brand/growth4u/market-and-us/competitors/sources.json para la lista de competidores y sus canales. Scrapea cada competidor (web, blog, LinkedIn, Meta Ads, Google Ads, Instagram, Twitter). Genera informe completo con contenido escrapeado y extrae ideas de contenido adaptadas a nuestra marca.",
+      "ts": "2026-04-01T21:36:27.485Z"
+    }
+  ],
+  "updatedAt": 1775079387485,
+  "discordThreadId": null,
+  "discordChannelId": null
+}

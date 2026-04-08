@@ -1,0 +1,24 @@
+{
+  "messages": [
+    {
+      "role": "user",
+      "text": "Quiero crear \"company brief\". Usa el skill fast-foundation para generar el documento.",
+      "ts": "2026-03-30T08:50:30.572Z"
+    },
+    {
+      "role": "bot",
+      "text": "Veo que el Company Brief de Criptan ya se generó como parte del Fast Foundation. Déjame revisar el documento actual:",
+      "agent": "sancho",
+      "ts": "2026-03-30T08:51:05.727Z"
+    },
+    {
+      "role": "bot",
+      "text": "El Company Brief de Criptan ya está generado y bastante completo. Se creó como parte del Fast Foundation que ya se ejecutó.\n\nAquí tienes el resumen de lo que contiene:\n\n**📋 Company Brief — Criptan**\n\n**1. Company Identity**\n- Core Three: Plataforma fintech española de criptoactivos (compra, venta, custodia, Earn)\n- Elevator pitch con regulación BdE + MiCA, +100K clientes, seguro 250M€\n- 5 productos mapeados: Earn, Compra/Venta, Cestas, CriptanCard, CriptanPay\n- Equipo directivo completo (9 personas)\n- Todos los canales y URLs\n\n**2. Business Model**\n- B2C principal + B2B secundario\n- Revenue: comisiones trading + fees Earn + CriptanCard\n- Growth motion: Product-Led + content marketing\n- Funnel mapeado: Descubrimiento → Registro → KYC → Primer depósito → Recurrencia\n- 250 empresas clientes (10% del volumen) — segmento infraexplotado\n\n**3. Budget & Resources**\n- ~10K€/mes, escalable si payback baja a 2-3 meses\n- NSM: **Primer depósito** — objetivo 5.000 nuevos en 3-6 meses\n- CAC actual: ~70€ (vía creadores YouTube)\n- Equipo: Iván Sevilla (Growth), Alfonso (CGO), Sancho (AI CMO)\n\n📄 El documento está en `brand/criptan/company-brief/current.md`\n\n¿Quieres que actualice o amplíe alguna sección, o lo damos por bueno?",
+      "agent": "sancho",
+      "ts": "2026-03-30T08:51:05.731Z"
+    }
+  ],
+  "updatedAt": 1774860665731,
+  "discordThreadId": null,
+  "discordChannelId": null
+}

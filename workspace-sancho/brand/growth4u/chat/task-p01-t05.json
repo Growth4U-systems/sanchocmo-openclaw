@@ -1,0 +1,24 @@
+{
+  "messages": [
+    {
+      "role": "user",
+      "text": "Estoy abriendo el chat sobre \"Fixes menores web\". Dame un resumen rápido del estado actual y qué podemos hacer. Si necesitas algo de mí, dímelo.",
+      "ts": "2026-03-27T10:17:58.681Z"
+    },
+    {
+      "role": "bot",
+      "text": "Déjame revisar el estado actual de Growth4U y qué tenemos pendiente sobre fixes web.",
+      "agent": "sancho",
+      "ts": "2026-03-27T10:19:19.196Z"
+    },
+    {
+      "role": "bot",
+      "text": "**Estado P01-T05 (Fixes Menores Web):**\n\n**Tareas pendientes:**\n1. **Copyright footer**: cambiar `© 2025` → `© 2025-2026` o `© 2026`\n2. **OG Image**: crear 1200×630px con logo + claim + gradiente brand → subir a `growth4u.io/images/og-default.png` → actualizar meta tag\n3. **llms.txt**: crear archivo con info de Growth4U (servicios, track record, contacto)\n4. **Sitemap redirect**: 301 de `/sitemap.xml` → `/sitemap-index.xml`\n\n**Necesito de ti:**\n- **¿Tenéis acceso al hosting/CMS de growth4u.io?** (para subir OG image, crear llms.txt, y configurar redirect)\n- **¿Preferís que genere la OG image ahora o la hacéis vosotros?**\n\nSi me das luz verde, puedo generar la OG image con el gradiente brand de Growth4U. El resto necesita acceso a servidor/CMS.",
+      "agent": "sancho",
+      "ts": "2026-03-27T10:19:19.200Z"
+    }
+  ],
+  "updatedAt": 1774606759200,
+  "discordThreadId": null,
+  "discordChannelId": null
+}

@@ -1,0 +1,20 @@
+{
+  "id": "P00-Fast-Foundation",
+  "name": "Fast Foundation (L0-L1)",
+  "description": "Foundation rápida: Company Context, Business Model Audit, Niche Discovery básico.",
+  "approach": "Scrape URL + intake → generar docs lite de contexto, modelo y ECPs básicos.",
+  "objective": {
+    "description": "Foundation lite completada",
+    "metric": "docs_completed",
+    "baseline": 0,
+    "target": 3,
+    "unit": " docs"
+  },
+  "origin": "onboarding",
+  "phase": -1,
+  "category": "foundation",
+  "review_date": null,
+  "status": "archived",
+  "archived_at": "2026-03-30",
+  "archive_reason": "Terminado"
+}

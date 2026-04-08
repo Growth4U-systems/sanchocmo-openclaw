@@ -1,0 +1,2047 @@
+[
+  {
+    "slug": "criptan",
+    "collectedAt": "2026-03-30T15:20:34.608Z",
+    "dateRange": {
+      "from": "2026-03-29",
+      "to": "2026-03-29"
+    },
+    "sources": {
+      "ga4": {
+        "status": "ok",
+        "collectedAt": "2026-03-30T15:20:37.596Z",
+        "metrics": [
+          {
+            "name": "sessions",
+            "value": 95,
+            "date": "2026-03-29"
+          },
+          {
+            "name": "totalUsers",
+            "value": 82,
+            "date": "2026-03-29"
+          },
+          {
+            "name": "newUsers",
+            "value": 44,
+            "date": "2026-03-29"
+          },
+          {
+            "name": "bounceRate",
+            "value": 0.5157894736842106,
+            "date": "2026-03-29"
+          },
+          {
+            "name": "averageSessionDuration",
+            "value": 129.7494980736842,
+            "date": "2026-03-29"
+          },
+          {
+            "name": "conversions",
+            "value": 0,
+            "date": "2026-03-29"
+          },
+          {
+            "name": "screenPageViews",
+            "value": 136,
+            "date": "2026-03-29"
+          },
+          {
+            "name": "engagedSessions",
+            "value": 46,
+            "date": "2026-03-29"
+          },
+          {
+            "name": "engagementRate",
+            "value": 0.4842105263157895,
+            "date": "2026-03-29"
+          },
+          {
+            "name": "sessions",
+            "value": 64,
+            "date": "2026-03-29",
+            "dimensions": {
+              "channel": "Organic Search"
+            }
+          },
+          {
+            "name": "totalUsers",
+            "value": 53,
+            "date": "2026-03-29",
+            "dimensions": {
+              "channel": "Organic Search"
+            }
+          },
+          {
+            "name": "newUsers",
+            "value": 31,
+            "date": "2026-03-29",
+            "dimensions": {
+              "channel": "Organic Search"
+            }
+          },
+          {
+            "name": "engagedSessions",
+            "value": 34,
+            "date": "2026-03-29",
+            "dimensions": {
+              "channel": "Organic Search"
+            }
+          },
+          {
+            "name": "screenPageViews",
+            "value": 96,
+            "date": "2026-03-29",
+            "dimensions": {
+              "channel": "Organic Search"
+            }
+          },
+          {
+            "name": "sessions",
+            "value": 28,
+            "date": "2026-03-29",
+            "dimensions": {
+              "channel": "Direct"
+            }
+          },
+          {
+            "name": "totalUsers",
+            "value": 26,
+            "date": "2026-03-29",
+            "dimensions": {
+              "channel": "Direct"
+            }
+          },
+          {
+            "name": "newUsers",
+            "value": 12,
+            "date": "2026-03-29",
+            "dimensions": {
+              "channel": "Direct"
+            }
+          },
+          {
+            "name": "engagedSessions",
+            "value": 10,
+            "date": "2026-03-29",
+            "dimensions": {
+              "channel": "Direct"
+            }
+          },
+          {
+            "name": "screenPageViews",
+            "value": 32,
+            "date": "2026-03-29",
+            "dimensions": {
+              "channel": "Direct"
+            }
+          },
+          {
+            "name": "sessions",
+            "value": 2,
+            "date": "2026-03-29",
+            "dimensions": {
+              "channel": "Organic Video"
+            }
+          },
+          {
+            "name": "totalUsers",
+            "value": 2,
+            "date": "2026-03-29",
+            "dimensions": {
+              "channel": "Organic Video"
+            }
+          },
+          {
+            "name": "newUsers",
+            "value": 1,
+            "date": "2026-03-29",
+            "dimensions": {
+              "channel": "Organic Video"
+            }
+          },
+          {
+            "name": "engagedSessions",
+            "value": 1,
+            "date": "2026-03-29",
+            "dimensions": {
+              "channel": "Organic Video"
+            }
+          },
+          {
+            "name": "screenPageViews",
+            "value": 7,
+            "date": "2026-03-29",
+            "dimensions": {
+              "channel": "Organic Video"
+            }
+          },
+          {
+            "name": "sessions",
+            "value": 1,
+            "date": "2026-03-29",
+            "dimensions": {
+              "channel": "Organic Social"
+            }
+          },
+          {
+            "name": "totalUsers",
+            "value": 1,
+            "date": "2026-03-29",
+            "dimensions": {
+              "channel": "Organic Social"
+            }
+          },
+          {
+            "name": "newUsers",
+            "value": 0,
+            "date": "2026-03-29",
+            "dimensions": {
+              "channel": "Organic Social"
+            }
+          },
+          {
+            "name": "engagedSessions",
+            "value": 1,
+            "date": "2026-03-29",
+            "dimensions": {
+              "channel": "Organic Social"
+            }
+          },
+          {
+            "name": "screenPageViews",
+            "value": 1,
+            "date": "2026-03-29",
+            "dimensions": {
+              "channel": "Organic Social"
+            }
+          },
+          {
+            "name": "topPage",
+            "value": 85,
+            "date": "2026-03-29",
+            "dimensions": {
+              "page": "/",
+              "duration": 106,
+              "engagementRate": 52
+            }
+          },
+          {
+            "name": "topPage",
+            "value": 6,
+            "date": "2026-03-29",
+            "dimensions": {
+              "page": "/aprende/usdc-que-es-para-que-sirve-y-que-ventajas-tiene/",
+              "duration": 178,
+              "engagementRate": 40
+            }
+          },
+          {
+            "name": "topPage",
+            "value": 6,
+            "date": "2026-03-29",
+            "dimensions": {
+              "page": "/personal/",
+              "duration": 38,
+              "engagementRate": 33
+            }
+          },
+          {
+            "name": "topPage",
+            "value": 4,
+            "date": "2026-03-29",
+            "dimensions": {
+              "page": "/cestas/",
+              "duration": 36,
+              "engagementRate": 67
+            }
+          },
+          {
+            "name": "topPage",
+            "value": 3,
+            "date": "2026-03-29",
+            "dimensions": {
+              "page": "/criptan-x-invertir-para-conseguir/",
+              "duration": 36,
+              "engagementRate": 50
+            }
+          },
+          {
+            "name": "topPage",
+            "value": 3,
+            "date": "2026-03-29",
+            "dimensions": {
+              "page": "/team/",
+              "duration": 33,
+              "engagementRate": 100
+            }
+          },
+          {
+            "name": "topPage",
+            "value": 2,
+            "date": "2026-03-29",
+            "dimensions": {
+              "page": "/aprende/criptan-obtiene-autorizacion-mica/",
+              "duration": 0,
+              "engagementRate": 0
+            }
+          },
+          {
+            "name": "topPage",
+            "value": 2,
+            "date": "2026-03-29",
+            "dimensions": {
+              "page": "/aprende/donald-trump-anuncia-la-creacion-de-una-reserva-estrategica-de-criptomonedas-en-ee-uu/",
+              "duration": 43,
+              "engagementRate": 50
+            }
+          },
+          {
+            "name": "topPage",
+            "value": 2,
+            "date": "2026-03-29",
+            "dimensions": {
+              "page": "/aprende/mejores-comisiones-y-mas-beneficios-para-nuestros-clientes/",
+              "duration": 65,
+              "engagementRate": 100
+            }
+          },
+          {
+            "name": "topPage",
+            "value": 2,
+            "date": "2026-03-29",
+            "dimensions": {
+              "page": "/aprende/que-es-el-eurc-o-euro-coin/",
+              "duration": 77,
+              "engagementRate": 100
+            }
+          },
+          {
+            "name": "topPage",
+            "value": 2,
+            "date": "2026-03-29",
+            "dimensions": {
+              "page": "/earn-fijo/",
+              "duration": 28,
+              "engagementRate": 100
+            }
+          },
+          {
+            "name": "topPage",
+            "value": 2,
+            "date": "2026-03-29",
+            "dimensions": {
+              "page": "/earn-lottery/",
+              "duration": 45,
+              "engagementRate": 100
+            }
+          },
+          {
+            "name": "topPage",
+            "value": 2,
+            "date": "2026-03-29",
+            "dimensions": {
+              "page": "/equipo/",
+              "duration": 23,
+              "engagementRate": 100
+            }
+          },
+          {
+            "name": "topPage",
+            "value": 2,
+            "date": "2026-03-29",
+            "dimensions": {
+              "page": "/savings/",
+              "duration": 41,
+              "engagementRate": 100
+            }
+          },
+          {
+            "name": "topPage",
+            "value": 1,
+            "date": "2026-03-29",
+            "dimensions": {
+              "page": "/aprende/como-gana-dinero-criptan/",
+              "duration": 86,
+              "engagementRate": 100
+            }
+          },
+          {
+            "name": "sessions",
+            "value": 58,
+            "date": "2026-03-29",
+            "dimensions": {
+              "device": "desktop"
+            }
+          },
+          {
+            "name": "bounceRate",
+            "value": 0.5689655172413793,
+            "date": "2026-03-29",
+            "dimensions": {
+              "device": "desktop"
+            }
+          },
+          {
+            "name": "engagementRate",
+            "value": 0.43103448275862066,
+            "date": "2026-03-29",
+            "dimensions": {
+              "device": "desktop"
+            }
+          },
+          {
+            "name": "sessions",
+            "value": 37,
+            "date": "2026-03-29",
+            "dimensions": {
+              "device": "mobile"
+            }
+          },
+          {
+            "name": "bounceRate",
+            "value": 0.43243243243243246,
+            "date": "2026-03-29",
+            "dimensions": {
+              "device": "mobile"
+            }
+          },
+          {
+            "name": "engagementRate",
+            "value": 0.5675675675675675,
+            "date": "2026-03-29",
+            "dimensions": {
+              "device": "mobile"
+            }
+          }
+        ]
+      },
+      "gsc": {
+        "status": "ok",
+        "collectedAt": "2026-03-30T15:20:38.517Z",
+        "metrics": [
+          {
+            "name": "clicks",
+            "value": 172,
+            "date": "2026-03-26"
+          },
+          {
+            "name": "impressions",
+            "value": 4541,
+            "date": "2026-03-26"
+          },
+          {
+            "name": "ctr",
+            "value": 3.79,
+            "date": "2026-03-26"
+          },
+          {
+            "name": "position",
+            "value": 7.44,
+            "date": "2026-03-26"
+          },
+          {
+            "name": "clicks",
+            "value": 108,
+            "date": "2026-03-26",
+            "dimensions": {
+              "query": "criptan"
+            }
+          },
+          {
+            "name": "impressions",
+            "value": 163,
+            "date": "2026-03-26",
+            "dimensions": {
+              "query": "criptan"
+            }
+          },
+          {
+            "name": "ctr",
+            "value": 66.26,
+            "date": "2026-03-26",
+            "dimensions": {
+              "query": "criptan"
+            }
+          },
+          {
+            "name": "position",
+            "value": 1.2,
+            "date": "2026-03-26",
+            "dimensions": {
+              "query": "criptan"
+            }
+          },
+          {
+            "name": "clicks",
+            "value": 5,
+            "date": "2026-03-26",
+            "dimensions": {
+              "query": "criptan trade sl"
+            }
+          },
+          {
+            "name": "impressions",
+            "value": 9,
+            "date": "2026-03-26",
+            "dimensions": {
+              "query": "criptan trade sl"
+            }
+          },
+          {
+            "name": "ctr",
+            "value": 55.56,
+            "date": "2026-03-26",
+            "dimensions": {
+              "query": "criptan trade sl"
+            }
+          },
+          {
+            "name": "position",
+            "value": 1,
+            "date": "2026-03-26",
+            "dimensions": {
+              "query": "criptan trade sl"
+            }
+          },
+          {
+            "name": "clicks",
+            "value": 3,
+            "date": "2026-03-26",
+            "dimensions": {
+              "query": "kriptan"
+            }
+          },
+          {
+            "name": "impressions",
+            "value": 10,
+            "date": "2026-03-26",
+            "dimensions": {
+              "query": "kriptan"
+            }
+          },
+          {
+            "name": "ctr",
+            "value": 30,
+            "date": "2026-03-26",
+            "dimensions": {
+              "query": "kriptan"
+            }
+          },
+          {
+            "name": "position",
+            "value": 3.7,
+            "date": "2026-03-26",
+            "dimensions": {
+              "query": "kriptan"
+            }
+          },
+          {
+            "name": "clicks",
+            "value": 2,
+            "date": "2026-03-26",
+            "dimensions": {
+              "query": "criptain"
+            }
+          },
+          {
+            "name": "impressions",
+            "value": 2,
+            "date": "2026-03-26",
+            "dimensions": {
+              "query": "criptain"
+            }
+          },
+          {
+            "name": "ctr",
+            "value": 100,
+            "date": "2026-03-26",
+            "dimensions": {
+              "query": "criptain"
+            }
+          },
+          {
+            "name": "position",
+            "value": 1,
+            "date": "2026-03-26",
+            "dimensions": {
+              "query": "criptain"
+            }
+          },
+          {
+            "name": "clicks",
+            "value": 2,
+            "date": "2026-03-26",
+            "dimensions": {
+              "query": "criptan earn"
+            }
+          },
+          {
+            "name": "impressions",
+            "value": 2,
+            "date": "2026-03-26",
+            "dimensions": {
+              "query": "criptan earn"
+            }
+          },
+          {
+            "name": "ctr",
+            "value": 100,
+            "date": "2026-03-26",
+            "dimensions": {
+              "query": "criptan earn"
+            }
+          },
+          {
+            "name": "position",
+            "value": 1,
+            "date": "2026-03-26",
+            "dimensions": {
+              "query": "criptan earn"
+            }
+          },
+          {
+            "name": "clicks",
+            "value": 2,
+            "date": "2026-03-26",
+            "dimensions": {
+              "query": "cryptan"
+            }
+          },
+          {
+            "name": "impressions",
+            "value": 14,
+            "date": "2026-03-26",
+            "dimensions": {
+              "query": "cryptan"
+            }
+          },
+          {
+            "name": "ctr",
+            "value": 14.29,
+            "date": "2026-03-26",
+            "dimensions": {
+              "query": "cryptan"
+            }
+          },
+          {
+            "name": "position",
+            "value": 1.43,
+            "date": "2026-03-26",
+            "dimensions": {
+              "query": "cryptan"
+            }
+          },
+          {
+            "name": "clicks",
+            "value": 1,
+            "date": "2026-03-26",
+            "dimensions": {
+              "query": "criptam"
+            }
+          },
+          {
+            "name": "impressions",
+            "value": 1,
+            "date": "2026-03-26",
+            "dimensions": {
+              "query": "criptam"
+            }
+          },
+          {
+            "name": "ctr",
+            "value": 100,
+            "date": "2026-03-26",
+            "dimensions": {
+              "query": "criptam"
+            }
+          },
+          {
+            "name": "position",
+            "value": 1,
+            "date": "2026-03-26",
+            "dimensions": {
+              "query": "criptam"
+            }
+          },
+          {
+            "name": "clicks",
+            "value": 1,
+            "date": "2026-03-26",
+            "dimensions": {
+              "query": "criptan crypto"
+            }
+          },
+          {
+            "name": "impressions",
+            "value": 1,
+            "date": "2026-03-26",
+            "dimensions": {
+              "query": "criptan crypto"
+            }
+          },
+          {
+            "name": "ctr",
+            "value": 100,
+            "date": "2026-03-26",
+            "dimensions": {
+              "query": "criptan crypto"
+            }
+          },
+          {
+            "name": "position",
+            "value": 1,
+            "date": "2026-03-26",
+            "dimensions": {
+              "query": "criptan crypto"
+            }
+          },
+          {
+            "name": "clicks",
+            "value": 1,
+            "date": "2026-03-26",
+            "dimensions": {
+              "query": "criptan hacienda"
+            }
+          },
+          {
+            "name": "impressions",
+            "value": 2,
+            "date": "2026-03-26",
+            "dimensions": {
+              "query": "criptan hacienda"
+            }
+          },
+          {
+            "name": "ctr",
+            "value": 50,
+            "date": "2026-03-26",
+            "dimensions": {
+              "query": "criptan hacienda"
+            }
+          },
+          {
+            "name": "position",
+            "value": 1,
+            "date": "2026-03-26",
+            "dimensions": {
+              "query": "criptan hacienda"
+            }
+          },
+          {
+            "name": "clicks",
+            "value": 1,
+            "date": "2026-03-26",
+            "dimensions": {
+              "query": "euro coin"
+            }
+          },
+          {
+            "name": "impressions",
+            "value": 8,
+            "date": "2026-03-26",
+            "dimensions": {
+              "query": "euro coin"
+            }
+          },
+          {
+            "name": "ctr",
+            "value": 12.5,
+            "date": "2026-03-26",
+            "dimensions": {
+              "query": "euro coin"
+            }
+          },
+          {
+            "name": "position",
+            "value": 5.13,
+            "date": "2026-03-26",
+            "dimensions": {
+              "query": "euro coin"
+            }
+          },
+          {
+            "name": "clicks",
+            "value": 1,
+            "date": "2026-03-26",
+            "dimensions": {
+              "query": "que es criptan"
+            }
+          },
+          {
+            "name": "impressions",
+            "value": 2,
+            "date": "2026-03-26",
+            "dimensions": {
+              "query": "que es criptan"
+            }
+          },
+          {
+            "name": "ctr",
+            "value": 50,
+            "date": "2026-03-26",
+            "dimensions": {
+              "query": "que es criptan"
+            }
+          },
+          {
+            "name": "position",
+            "value": 2,
+            "date": "2026-03-26",
+            "dimensions": {
+              "query": "que es criptan"
+            }
+          },
+          {
+            "name": "clicks",
+            "value": 1,
+            "date": "2026-03-26",
+            "dimensions": {
+              "query": "que es usdc"
+            }
+          },
+          {
+            "name": "impressions",
+            "value": 91,
+            "date": "2026-03-26",
+            "dimensions": {
+              "query": "que es usdc"
+            }
+          },
+          {
+            "name": "ctr",
+            "value": 1.1,
+            "date": "2026-03-26",
+            "dimensions": {
+              "query": "que es usdc"
+            }
+          },
+          {
+            "name": "position",
+            "value": 4.26,
+            "date": "2026-03-26",
+            "dimensions": {
+              "query": "que es usdc"
+            }
+          },
+          {
+            "name": "clicks",
+            "value": 0,
+            "date": "2026-03-26",
+            "dimensions": {
+              "query": "\"@circleinternet-financialeurope.com\""
+            }
+          },
+          {
+            "name": "impressions",
+            "value": 2,
+            "date": "2026-03-26",
+            "dimensions": {
+              "query": "\"@circleinternet-financialeurope.com\""
+            }
+          },
+          {
+            "name": "ctr",
+            "value": 0,
+            "date": "2026-03-26",
+            "dimensions": {
+              "query": "\"@circleinternet-financialeurope.com\""
+            }
+          },
+          {
+            "name": "position",
+            "value": 4.5,
+            "date": "2026-03-26",
+            "dimensions": {
+              "query": "\"@circleinternet-financialeurope.com\""
+            }
+          },
+          {
+            "name": "clicks",
+            "value": 0,
+            "date": "2026-03-26",
+            "dimensions": {
+              "query": "\"circleinternet-financialeurope\""
+            }
+          },
+          {
+            "name": "impressions",
+            "value": 1,
+            "date": "2026-03-26",
+            "dimensions": {
+              "query": "\"circleinternet-financialeurope\""
+            }
+          },
+          {
+            "name": "ctr",
+            "value": 0,
+            "date": "2026-03-26",
+            "dimensions": {
+              "query": "\"circleinternet-financialeurope\""
+            }
+          },
+          {
+            "name": "position",
+            "value": 6,
+            "date": "2026-03-26",
+            "dimensions": {
+              "query": "\"circleinternet-financialeurope\""
+            }
+          },
+          {
+            "name": "clicks",
+            "value": 0,
+            "date": "2026-03-26",
+            "dimensions": {
+              "query": "\"circleinternet-financialeurope.com\""
+            }
+          },
+          {
+            "name": "impressions",
+            "value": 10,
+            "date": "2026-03-26",
+            "dimensions": {
+              "query": "\"circleinternet-financialeurope.com\""
+            }
+          },
+          {
+            "name": "ctr",
+            "value": 0,
+            "date": "2026-03-26",
+            "dimensions": {
+              "query": "\"circleinternet-financialeurope.com\""
+            }
+          },
+          {
+            "name": "position",
+            "value": 7.5,
+            "date": "2026-03-26",
+            "dimensions": {
+              "query": "\"circleinternet-financialeurope.com\""
+            }
+          },
+          {
+            "name": "clicks",
+            "value": 0,
+            "date": "2026-03-26",
+            "dimensions": {
+              "query": "\"registre sus datos para obtener una ventaja inmediata en el mercado de criptomoneda\""
+            }
+          },
+          {
+            "name": "impressions",
+            "value": 4,
+            "date": "2026-03-26",
+            "dimensions": {
+              "query": "\"registre sus datos para obtener una ventaja inmediata en el mercado de criptomoneda\""
+            }
+          },
+          {
+            "name": "ctr",
+            "value": 0,
+            "date": "2026-03-26",
+            "dimensions": {
+              "query": "\"registre sus datos para obtener una ventaja inmediata en el mercado de criptomoneda\""
+            }
+          },
+          {
+            "name": "position",
+            "value": 8.25,
+            "date": "2026-03-26",
+            "dimensions": {
+              "query": "\"registre sus datos para obtener una ventaja inmediata en el mercado de criptomoneda\""
+            }
+          },
+          {
+            "name": "clicks",
+            "value": 0,
+            "date": "2026-03-26",
+            "dimensions": {
+              "query": "(usdc)"
+            }
+          },
+          {
+            "name": "impressions",
+            "value": 1,
+            "date": "2026-03-26",
+            "dimensions": {
+              "query": "(usdc)"
+            }
+          },
+          {
+            "name": "ctr",
+            "value": 0,
+            "date": "2026-03-26",
+            "dimensions": {
+              "query": "(usdc)"
+            }
+          },
+          {
+            "name": "position",
+            "value": 12,
+            "date": "2026-03-26",
+            "dimensions": {
+              "query": "(usdc)"
+            }
+          },
+          {
+            "name": "clicks",
+            "value": 0,
+            "date": "2026-03-26",
+            "dimensions": {
+              "query": "1bitcon"
+            }
+          },
+          {
+            "name": "impressions",
+            "value": 1,
+            "date": "2026-03-26",
+            "dimensions": {
+              "query": "1bitcon"
+            }
+          },
+          {
+            "name": "ctr",
+            "value": 0,
+            "date": "2026-03-26",
+            "dimensions": {
+              "query": "1bitcon"
+            }
+          },
+          {
+            "name": "position",
+            "value": 1,
+            "date": "2026-03-26",
+            "dimensions": {
+              "query": "1bitcon"
+            }
+          },
+          {
+            "name": "clicks",
+            "value": 0,
+            "date": "2026-03-26",
+            "dimensions": {
+              "query": "abanca criptomonedas"
+            }
+          },
+          {
+            "name": "impressions",
+            "value": 1,
+            "date": "2026-03-26",
+            "dimensions": {
+              "query": "abanca criptomonedas"
+            }
+          },
+          {
+            "name": "ctr",
+            "value": 0,
+            "date": "2026-03-26",
+            "dimensions": {
+              "query": "abanca criptomonedas"
+            }
+          },
+          {
+            "name": "position",
+            "value": 10,
+            "date": "2026-03-26",
+            "dimensions": {
+              "query": "abanca criptomonedas"
+            }
+          },
+          {
+            "name": "clicks",
+            "value": 0,
+            "date": "2026-03-26",
+            "dimensions": {
+              "query": "acciones de cardano"
+            }
+          },
+          {
+            "name": "impressions",
+            "value": 28,
+            "date": "2026-03-26",
+            "dimensions": {
+              "query": "acciones de cardano"
+            }
+          },
+          {
+            "name": "ctr",
+            "value": 0,
+            "date": "2026-03-26",
+            "dimensions": {
+              "query": "acciones de cardano"
+            }
+          },
+          {
+            "name": "position",
+            "value": 2.93,
+            "date": "2026-03-26",
+            "dimensions": {
+              "query": "acciones de cardano"
+            }
+          },
+          {
+            "name": "clicks",
+            "value": 143,
+            "date": "2026-03-26",
+            "dimensions": {
+              "page": "https://criptan.com/"
+            }
+          },
+          {
+            "name": "impressions",
+            "value": 1534,
+            "date": "2026-03-26",
+            "dimensions": {
+              "page": "https://criptan.com/"
+            }
+          },
+          {
+            "name": "ctr",
+            "value": 9.32,
+            "date": "2026-03-26",
+            "dimensions": {
+              "page": "https://criptan.com/"
+            }
+          },
+          {
+            "name": "position",
+            "value": 7.88,
+            "date": "2026-03-26",
+            "dimensions": {
+              "page": "https://criptan.com/"
+            }
+          },
+          {
+            "name": "clicks",
+            "value": 4,
+            "date": "2026-03-26",
+            "dimensions": {
+              "page": "https://criptan.com/equipo/"
+            }
+          },
+          {
+            "name": "impressions",
+            "value": 95,
+            "date": "2026-03-26",
+            "dimensions": {
+              "page": "https://criptan.com/equipo/"
+            }
+          },
+          {
+            "name": "ctr",
+            "value": 4.21,
+            "date": "2026-03-26",
+            "dimensions": {
+              "page": "https://criptan.com/equipo/"
+            }
+          },
+          {
+            "name": "position",
+            "value": 1.81,
+            "date": "2026-03-26",
+            "dimensions": {
+              "page": "https://criptan.com/equipo/"
+            }
+          },
+          {
+            "name": "clicks",
+            "value": 2,
+            "date": "2026-03-26",
+            "dimensions": {
+              "page": "https://criptan.com/aprende/como-gana-dinero-criptan/"
+            }
+          },
+          {
+            "name": "impressions",
+            "value": 210,
+            "date": "2026-03-26",
+            "dimensions": {
+              "page": "https://criptan.com/aprende/como-gana-dinero-criptan/"
+            }
+          },
+          {
+            "name": "ctr",
+            "value": 0.95,
+            "date": "2026-03-26",
+            "dimensions": {
+              "page": "https://criptan.com/aprende/como-gana-dinero-criptan/"
+            }
+          },
+          {
+            "name": "position",
+            "value": 2,
+            "date": "2026-03-26",
+            "dimensions": {
+              "page": "https://criptan.com/aprende/como-gana-dinero-criptan/"
+            }
+          },
+          {
+            "name": "clicks",
+            "value": 2,
+            "date": "2026-03-26",
+            "dimensions": {
+              "page": "https://criptan.com/atencion-al-cliente/"
+            }
+          },
+          {
+            "name": "impressions",
+            "value": 166,
+            "date": "2026-03-26",
+            "dimensions": {
+              "page": "https://criptan.com/atencion-al-cliente/"
+            }
+          },
+          {
+            "name": "ctr",
+            "value": 1.2,
+            "date": "2026-03-26",
+            "dimensions": {
+              "page": "https://criptan.com/atencion-al-cliente/"
+            }
+          },
+          {
+            "name": "position",
+            "value": 1.37,
+            "date": "2026-03-26",
+            "dimensions": {
+              "page": "https://criptan.com/atencion-al-cliente/"
+            }
+          },
+          {
+            "name": "clicks",
+            "value": 2,
+            "date": "2026-03-26",
+            "dimensions": {
+              "page": "https://criptan.com/earn/"
+            }
+          },
+          {
+            "name": "impressions",
+            "value": 34,
+            "date": "2026-03-26",
+            "dimensions": {
+              "page": "https://criptan.com/earn/"
+            }
+          },
+          {
+            "name": "ctr",
+            "value": 5.88,
+            "date": "2026-03-26",
+            "dimensions": {
+              "page": "https://criptan.com/earn/"
+            }
+          },
+          {
+            "name": "position",
+            "value": 3.44,
+            "date": "2026-03-26",
+            "dimensions": {
+              "page": "https://criptan.com/earn/"
+            }
+          },
+          {
+            "name": "clicks",
+            "value": 1,
+            "date": "2026-03-26",
+            "dimensions": {
+              "page": "https://app.criptan.com/"
+            }
+          },
+          {
+            "name": "impressions",
+            "value": 28,
+            "date": "2026-03-26",
+            "dimensions": {
+              "page": "https://app.criptan.com/"
+            }
+          },
+          {
+            "name": "ctr",
+            "value": 3.57,
+            "date": "2026-03-26",
+            "dimensions": {
+              "page": "https://app.criptan.com/"
+            }
+          },
+          {
+            "name": "position",
+            "value": 1.89,
+            "date": "2026-03-26",
+            "dimensions": {
+              "page": "https://app.criptan.com/"
+            }
+          },
+          {
+            "name": "clicks",
+            "value": 1,
+            "date": "2026-03-26",
+            "dimensions": {
+              "page": "https://criptan.com/aprende/analisis-mercado-febrero-2026/"
+            }
+          },
+          {
+            "name": "impressions",
+            "value": 15,
+            "date": "2026-03-26",
+            "dimensions": {
+              "page": "https://criptan.com/aprende/analisis-mercado-febrero-2026/"
+            }
+          },
+          {
+            "name": "ctr",
+            "value": 6.67,
+            "date": "2026-03-26",
+            "dimensions": {
+              "page": "https://criptan.com/aprende/analisis-mercado-febrero-2026/"
+            }
+          },
+          {
+            "name": "position",
+            "value": 5.2,
+            "date": "2026-03-26",
+            "dimensions": {
+              "page": "https://criptan.com/aprende/analisis-mercado-febrero-2026/"
+            }
+          },
+          {
+            "name": "clicks",
+            "value": 1,
+            "date": "2026-03-26",
+            "dimensions": {
+              "page": "https://criptan.com/aprende/category/novedades/"
+            }
+          },
+          {
+            "name": "impressions",
+            "value": 2,
+            "date": "2026-03-26",
+            "dimensions": {
+              "page": "https://criptan.com/aprende/category/novedades/"
+            }
+          },
+          {
+            "name": "ctr",
+            "value": 50,
+            "date": "2026-03-26",
+            "dimensions": {
+              "page": "https://criptan.com/aprende/category/novedades/"
+            }
+          },
+          {
+            "name": "position",
+            "value": 5.5,
+            "date": "2026-03-26",
+            "dimensions": {
+              "page": "https://criptan.com/aprende/category/novedades/"
+            }
+          },
+          {
+            "name": "clicks",
+            "value": 1,
+            "date": "2026-03-26",
+            "dimensions": {
+              "page": "https://criptan.com/aprende/el-70-de-los-inversores-no-sabe-como-declarar-sus-criptomonedas/"
+            }
+          },
+          {
+            "name": "impressions",
+            "value": 15,
+            "date": "2026-03-26",
+            "dimensions": {
+              "page": "https://criptan.com/aprende/el-70-de-los-inversores-no-sabe-como-declarar-sus-criptomonedas/"
+            }
+          },
+          {
+            "name": "ctr",
+            "value": 6.67,
+            "date": "2026-03-26",
+            "dimensions": {
+              "page": "https://criptan.com/aprende/el-70-de-los-inversores-no-sabe-como-declarar-sus-criptomonedas/"
+            }
+          },
+          {
+            "name": "position",
+            "value": 6.87,
+            "date": "2026-03-26",
+            "dimensions": {
+              "page": "https://criptan.com/aprende/el-70-de-los-inversores-no-sabe-como-declarar-sus-criptomonedas/"
+            }
+          },
+          {
+            "name": "clicks",
+            "value": 1,
+            "date": "2026-03-26",
+            "dimensions": {
+              "page": "https://criptan.com/aprende/el-ecosistema-cripto-vive-una-semana-de-cambios-clave/"
+            }
+          },
+          {
+            "name": "impressions",
+            "value": 6,
+            "date": "2026-03-26",
+            "dimensions": {
+              "page": "https://criptan.com/aprende/el-ecosistema-cripto-vive-una-semana-de-cambios-clave/"
+            }
+          },
+          {
+            "name": "ctr",
+            "value": 16.67,
+            "date": "2026-03-26",
+            "dimensions": {
+              "page": "https://criptan.com/aprende/el-ecosistema-cripto-vive-una-semana-de-cambios-clave/"
+            }
+          },
+          {
+            "name": "position",
+            "value": 8.83,
+            "date": "2026-03-26",
+            "dimensions": {
+              "page": "https://criptan.com/aprende/el-ecosistema-cripto-vive-una-semana-de-cambios-clave/"
+            }
+          },
+          {
+            "name": "clicks",
+            "value": 1,
+            "date": "2026-03-26",
+            "dimensions": {
+              "page": "https://criptan.com/aprende/how-does-criptan-make-money/?lang=en"
+            }
+          },
+          {
+            "name": "impressions",
+            "value": 110,
+            "date": "2026-03-26",
+            "dimensions": {
+              "page": "https://criptan.com/aprende/how-does-criptan-make-money/?lang=en"
+            }
+          },
+          {
+            "name": "ctr",
+            "value": 0.91,
+            "date": "2026-03-26",
+            "dimensions": {
+              "page": "https://criptan.com/aprende/how-does-criptan-make-money/?lang=en"
+            }
+          },
+          {
+            "name": "position",
+            "value": 3.42,
+            "date": "2026-03-26",
+            "dimensions": {
+              "page": "https://criptan.com/aprende/how-does-criptan-make-money/?lang=en"
+            }
+          },
+          {
+            "name": "clicks",
+            "value": 1,
+            "date": "2026-03-26",
+            "dimensions": {
+              "page": "https://criptan.com/aprende/invertir-en-criptomonedas/"
+            }
+          },
+          {
+            "name": "impressions",
+            "value": 135,
+            "date": "2026-03-26",
+            "dimensions": {
+              "page": "https://criptan.com/aprende/invertir-en-criptomonedas/"
+            }
+          },
+          {
+            "name": "ctr",
+            "value": 0.74,
+            "date": "2026-03-26",
+            "dimensions": {
+              "page": "https://criptan.com/aprende/invertir-en-criptomonedas/"
+            }
+          },
+          {
+            "name": "position",
+            "value": 1.93,
+            "date": "2026-03-26",
+            "dimensions": {
+              "page": "https://criptan.com/aprende/invertir-en-criptomonedas/"
+            }
+          },
+          {
+            "name": "clicks",
+            "value": 1,
+            "date": "2026-03-26",
+            "dimensions": {
+              "page": "https://criptan.com/aprende/que-es-el-eurc-o-euro-coin/"
+            }
+          },
+          {
+            "name": "impressions",
+            "value": 205,
+            "date": "2026-03-26",
+            "dimensions": {
+              "page": "https://criptan.com/aprende/que-es-el-eurc-o-euro-coin/"
+            }
+          },
+          {
+            "name": "ctr",
+            "value": 0.49,
+            "date": "2026-03-26",
+            "dimensions": {
+              "page": "https://criptan.com/aprende/que-es-el-eurc-o-euro-coin/"
+            }
+          },
+          {
+            "name": "position",
+            "value": 4.92,
+            "date": "2026-03-26",
+            "dimensions": {
+              "page": "https://criptan.com/aprende/que-es-el-eurc-o-euro-coin/"
+            }
+          },
+          {
+            "name": "clicks",
+            "value": 1,
+            "date": "2026-03-26",
+            "dimensions": {
+              "page": "https://criptan.com/aprende/sacar-rentabilidad-dinero-con-criptan/"
+            }
+          },
+          {
+            "name": "impressions",
+            "value": 58,
+            "date": "2026-03-26",
+            "dimensions": {
+              "page": "https://criptan.com/aprende/sacar-rentabilidad-dinero-con-criptan/"
+            }
+          },
+          {
+            "name": "ctr",
+            "value": 1.72,
+            "date": "2026-03-26",
+            "dimensions": {
+              "page": "https://criptan.com/aprende/sacar-rentabilidad-dinero-con-criptan/"
+            }
+          },
+          {
+            "name": "position",
+            "value": 3.31,
+            "date": "2026-03-26",
+            "dimensions": {
+              "page": "https://criptan.com/aprende/sacar-rentabilidad-dinero-con-criptan/"
+            }
+          },
+          {
+            "name": "clicks",
+            "value": 1,
+            "date": "2026-03-26",
+            "dimensions": {
+              "page": "https://criptan.com/aprende/usdc-que-es-para-que-sirve-y-que-ventajas-tiene/"
+            }
+          },
+          {
+            "name": "impressions",
+            "value": 1555,
+            "date": "2026-03-26",
+            "dimensions": {
+              "page": "https://criptan.com/aprende/usdc-que-es-para-que-sirve-y-que-ventajas-tiene/"
+            }
+          },
+          {
+            "name": "ctr",
+            "value": 0.06,
+            "date": "2026-03-26",
+            "dimensions": {
+              "page": "https://criptan.com/aprende/usdc-que-es-para-que-sirve-y-que-ventajas-tiene/"
+            }
+          },
+          {
+            "name": "position",
+            "value": 8.16,
+            "date": "2026-03-26",
+            "dimensions": {
+              "page": "https://criptan.com/aprende/usdc-que-es-para-que-sirve-y-que-ventajas-tiene/"
+            }
+          },
+          {
+            "name": "clicks",
+            "value": 1,
+            "date": "2026-03-26",
+            "dimensions": {
+              "page": "https://criptan.com/personal/"
+            }
+          },
+          {
+            "name": "impressions",
+            "value": 192,
+            "date": "2026-03-26",
+            "dimensions": {
+              "page": "https://criptan.com/personal/"
+            }
+          },
+          {
+            "name": "ctr",
+            "value": 0.52,
+            "date": "2026-03-26",
+            "dimensions": {
+              "page": "https://criptan.com/personal/"
+            }
+          },
+          {
+            "name": "position",
+            "value": 1.68,
+            "date": "2026-03-26",
+            "dimensions": {
+              "page": "https://criptan.com/personal/"
+            }
+          },
+          {
+            "name": "clicks",
+            "value": 1,
+            "date": "2026-03-26",
+            "dimensions": {
+              "page": "https://criptan.com/personal/?lang=en"
+            }
+          },
+          {
+            "name": "impressions",
+            "value": 99,
+            "date": "2026-03-26",
+            "dimensions": {
+              "page": "https://criptan.com/personal/?lang=en"
+            }
+          },
+          {
+            "name": "ctr",
+            "value": 1.01,
+            "date": "2026-03-26",
+            "dimensions": {
+              "page": "https://criptan.com/personal/?lang=en"
+            }
+          },
+          {
+            "name": "position",
+            "value": 3.73,
+            "date": "2026-03-26",
+            "dimensions": {
+              "page": "https://criptan.com/personal/?lang=en"
+            }
+          },
+          {
+            "name": "clicks",
+            "value": 1,
+            "date": "2026-03-26",
+            "dimensions": {
+              "page": "https://criptan.com/savings/"
+            }
+          },
+          {
+            "name": "impressions",
+            "value": 11,
+            "date": "2026-03-26",
+            "dimensions": {
+              "page": "https://criptan.com/savings/"
+            }
+          },
+          {
+            "name": "ctr",
+            "value": 9.09,
+            "date": "2026-03-26",
+            "dimensions": {
+              "page": "https://criptan.com/savings/"
+            }
+          },
+          {
+            "name": "position",
+            "value": 9.36,
+            "date": "2026-03-26",
+            "dimensions": {
+              "page": "https://criptan.com/savings/"
+            }
+          },
+          {
+            "name": "clicks",
+            "value": 1,
+            "date": "2026-03-26",
+            "dimensions": {
+              "page": "https://criptan.com/terminos-y-condiciones-earn/?lang=en"
+            }
+          },
+          {
+            "name": "impressions",
+            "value": 47,
+            "date": "2026-03-26",
+            "dimensions": {
+              "page": "https://criptan.com/terminos-y-condiciones-earn/?lang=en"
+            }
+          },
+          {
+            "name": "ctr",
+            "value": 2.13,
+            "date": "2026-03-26",
+            "dimensions": {
+              "page": "https://criptan.com/terminos-y-condiciones-earn/?lang=en"
+            }
+          },
+          {
+            "name": "position",
+            "value": 5.21,
+            "date": "2026-03-26",
+            "dimensions": {
+              "page": "https://criptan.com/terminos-y-condiciones-earn/?lang=en"
+            }
+          },
+          {
+            "name": "clicks",
+            "value": 1,
+            "date": "2026-03-26",
+            "dimensions": {
+              "page": "https://criptan.com/terminos-y-condiciones/"
+            }
+          },
+          {
+            "name": "impressions",
+            "value": 33,
+            "date": "2026-03-26",
+            "dimensions": {
+              "page": "https://criptan.com/terminos-y-condiciones/"
+            }
+          },
+          {
+            "name": "ctr",
+            "value": 3.03,
+            "date": "2026-03-26",
+            "dimensions": {
+              "page": "https://criptan.com/terminos-y-condiciones/"
+            }
+          },
+          {
+            "name": "position",
+            "value": 2.24,
+            "date": "2026-03-26",
+            "dimensions": {
+              "page": "https://criptan.com/terminos-y-condiciones/"
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "slug": "criptan",
+    "collectedAt": "2026-03-31T19:16:57.971Z",
+    "dateRange": {
+      "from": "2026-03-30",
+      "to": "2026-03-30"
+    },
+    "sources": {
+      "sheets": {
+        "status": "ok",
+        "collectedAt": "2026-03-31T19:16:59.342Z",
+        "metrics": [
+          {
+            "name": "semana_del",
+            "value": 2026,
+            "date": "2026-03-30",
+            "dimensions": {
+              "source": "manual"
+            }
+          },
+          {
+            "name": "signups",
+            "value": 100,
+            "date": "2026-03-30",
+            "dimensions": {
+              "source": "manual"
+            }
+          },
+          {
+            "name": "kyc_completed",
+            "value": 50,
+            "date": "2026-03-30",
+            "dimensions": {
+              "source": "manual"
+            }
+          },
+          {
+            "name": "first_deposit",
+            "value": 40,
+            "date": "2026-03-30",
+            "dimensions": {
+              "source": "manual"
+            }
+          },
+          {
+            "name": "amount_deposited_eur",
+            "value": 135000,
+            "date": "2026-03-30",
+            "dimensions": {
+              "source": "manual"
+            }
+          },
+          {
+            "name": "notes",
+            "value": "Semana del 24-30 mar",
+            "date": "2026-03-30",
+            "dimensions": {
+              "source": "manual"
+            }
+          },
+          {
+            "name": "semana_del",
+            "value": 2026,
+            "date": "2026-03-30",
+            "dimensions": {
+              "source": "manual"
+            }
+          },
+          {
+            "name": "signups",
+            "value": 100,
+            "date": "2026-03-30",
+            "dimensions": {
+              "source": "manual"
+            }
+          },
+          {
+            "name": "kyc_completed",
+            "value": 50,
+            "date": "2026-03-30",
+            "dimensions": {
+              "source": "manual"
+            }
+          },
+          {
+            "name": "first_deposit",
+            "value": 40,
+            "date": "2026-03-30",
+            "dimensions": {
+              "source": "manual"
+            }
+          },
+          {
+            "name": "amount_deposited_eur",
+            "value": 135000,
+            "date": "2026-03-30",
+            "dimensions": {
+              "source": "manual"
+            }
+          },
+          {
+            "name": "notes",
+            "value": "Semana del 31 mar - 6 abr",
+            "date": "2026-03-30",
+            "dimensions": {
+              "source": "manual"
+            }
+          },
+          {
+            "name": "semana_del",
+            "value": 2026,
+            "date": "2026-03-30",
+            "dimensions": {
+              "source": "manual"
+            }
+          },
+          {
+            "name": "signups",
+            "value": 100,
+            "date": "2026-03-30",
+            "dimensions": {
+              "source": "manual"
+            }
+          },
+          {
+            "name": "kyc_completed",
+            "value": 50,
+            "date": "2026-03-30",
+            "dimensions": {
+              "source": "manual"
+            }
+          },
+          {
+            "name": "first_deposit",
+            "value": 40,
+            "date": "2026-03-30",
+            "dimensions": {
+              "source": "manual"
+            }
+          },
+          {
+            "name": "amount_deposited_eur",
+            "value": 135000,
+            "date": "2026-03-30",
+            "dimensions": {
+              "source": "manual"
+            }
+          },
+          {
+            "name": "semana_del",
+            "value": 2026,
+            "date": "2026-03-30",
+            "dimensions": {
+              "source": "manual"
+            }
+          },
+          {
+            "name": "signups",
+            "value": 100,
+            "date": "2026-03-30",
+            "dimensions": {
+              "source": "manual"
+            }
+          },
+          {
+            "name": "kyc_completed",
+            "value": 50,
+            "date": "2026-03-30",
+            "dimensions": {
+              "source": "manual"
+            }
+          },
+          {
+            "name": "first_deposit",
+            "value": 40,
+            "date": "2026-03-30",
+            "dimensions": {
+              "source": "manual"
+            }
+          },
+          {
+            "name": "amount_deposited_eur",
+            "value": 135000,
+            "date": "2026-03-30",
+            "dimensions": {
+              "source": "manual"
+            }
+          },
+          {
+            "name": "semana_del",
+            "value": 2026,
+            "date": "2026-03-30",
+            "dimensions": {
+              "source": "manual"
+            }
+          },
+          {
+            "name": "signups",
+            "value": 100,
+            "date": "2026-03-30",
+            "dimensions": {
+              "source": "manual"
+            }
+          },
+          {
+            "name": "kyc_completed",
+            "value": 50,
+            "date": "2026-03-30",
+            "dimensions": {
+              "source": "manual"
+            }
+          },
+          {
+            "name": "first_deposit",
+            "value": 40,
+            "date": "2026-03-30",
+            "dimensions": {
+              "source": "manual"
+            }
+          },
+          {
+            "name": "amount_deposited_eur",
+            "value": 135000,
+            "date": "2026-03-30",
+            "dimensions": {
+              "source": "manual"
+            }
+          },
+          {
+            "name": "semana_del",
+            "value": 2026,
+            "date": "2026-03-30",
+            "dimensions": {
+              "source": "manual"
+            }
+          },
+          {
+            "name": "signups",
+            "value": 100,
+            "date": "2026-03-30",
+            "dimensions": {
+              "source": "manual"
+            }
+          },
+          {
+            "name": "kyc_completed",
+            "value": 50,
+            "date": "2026-03-30",
+            "dimensions": {
+              "source": "manual"
+            }
+          },
+          {
+            "name": "first_deposit",
+            "value": 40,
+            "date": "2026-03-30",
+            "dimensions": {
+              "source": "manual"
+            }
+          },
+          {
+            "name": "amount_deposited_eur",
+            "value": 135000,
+            "date": "2026-03-30",
+            "dimensions": {
+              "source": "manual"
+            }
+          },
+          {
+            "name": "semana_del",
+            "value": 2026,
+            "date": "2026-03-30",
+            "dimensions": {
+              "source": "manual"
+            }
+          },
+          {
+            "name": "semana_del",
+            "value": 2026,
+            "date": "2026-03-30",
+            "dimensions": {
+              "source": "manual"
+            }
+          },
+          {
+            "name": "semana_del",
+            "value": 2026,
+            "date": "2026-03-30",
+            "dimensions": {
+              "source": "manual"
+            }
+          },
+          {
+            "name": "semana_del",
+            "value": 2026,
+            "date": "2026-03-30",
+            "dimensions": {
+              "source": "manual"
+            }
+          },
+          {
+            "name": "semana_del",
+            "value": 2026,
+            "date": "2026-03-30",
+            "dimensions": {
+              "source": "manual"
+            }
+          },
+          {
+            "name": "semana_del",
+            "value": 2026,
+            "date": "2026-03-30",
+            "dimensions": {
+              "source": "manual"
+            }
+          }
+        ]
+      }
+    }
+  }
+]

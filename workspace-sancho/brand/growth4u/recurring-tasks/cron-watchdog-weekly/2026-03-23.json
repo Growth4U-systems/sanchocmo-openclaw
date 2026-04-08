@@ -1,0 +1,11 @@
+{
+  "cronId": "2e1d6efd-5da7-4a5a-bcb0-e0892ff25b66",
+  "cronName": "cron-watchdog-weekly",
+  "slug": "growth4u",
+  "date": "2026-03-23",
+  "runAtMs": 1774260000020,
+  "status": "ok",
+  "durationMs": 49646,
+  "model": "MiniMax-M2.5",
+  "content": "🔍 **Cron Watchdog** — 2026-03-23\n\n**Crons con problemas:**\n\n🔴 **Memory Maintenance** (id: d46675e3)\n- Schedule: dom 22:00\n- Última ejecución: hace 77h (debería ser <48h)\n- Estado: STALE\n\n🔴 **Call Prep Weekly — Growth4U** (id: 6f136183)\n- Schedule: vie 22:30\n- Última ejecución: **NUNCA** (nunca ha corrido)\n- Estado: STALE\n\n**Recomendaciones:**\n1. Memory Maintenance: verificar ejecución manual o re-habilitar si fue deshabilitado accidentalmente\n2. Call Prep Weekly: este cron nunca ejecutó — revisar schedule o trigger manual para validar\n\nTotal: 24 crons ✅ OK, 2 crons 🔴 STALE, 0 crons 🟡 ERRORING"
+}

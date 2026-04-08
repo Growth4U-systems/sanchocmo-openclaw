@@ -1,0 +1,19 @@
+{
+  "versions": [
+    { "version": "v1.0", "date": "2026-03-03", "notes": "Primera versión. Messaging bilingüe EN/ES." },
+    { "version": "v2.0", "date": "2026-03-03", "trigger": "Philippe: messaging sin profundidad", "notes": "Messaging dolor-activado. Español principal." },
+    { "version": "v2.1", "date": "2026-03-03", "trigger": "Precio = €195, test bono vs directo", "notes": "Precio €50→€195. CTAs dual Test A/B." },
+    { "version": "v2.2", "date": "2026-03-04", "trigger": "QA Deep — 10 action items", "notes": "Correcciones factuales, caveats, advertencias legales." },
+    { "version": "v2.3", "date": "2026-03-04", "trigger": "Philippe: falta ECP mujeres + quiz", "notes": "ECP #6 Mujeres hormonales. Nota quiz. 6 ECPs." },
+    { "version": "v2.4", "date": "2026-03-05", "trigger": "Nichos v2 + speed videos", "notes": "Pain clusters v2. 6 Speed Videos con guión detallado." },
+    { "version": "v2.5", "date": "2026-03-10", "trigger": "Reunión HC — sub-perfiles mujeres", "notes": "ECP #6 ampliado con sub-perfiles." },
+    { "version": "v2.6", "date": "2026-03-10", "trigger": "Datos HC 2025", "notes": "82%/18% split, jóvenes 23-24, post-Turquía 10%." },
+    { "version": "v3.0", "date": "2026-03-05", "trigger": "Philippe: amplificar messaging cluster-nativo", "notes": "Rewrite completo UVPs/USPs con dolor vivido, no descrito." },
+    {
+      "version": "v4.0",
+      "date": "2026-03-16",
+      "trigger": "Philippe: presentación 'Estrategia de Nichos 2026' (Growth4U × HC)",
+      "notes": "7 nichos definitivos (postparto separado de menopausia). Posicionamiento macro: de clínica de trasplantes a hospital de salud capilar. Campañas propuestas por nicho (Meta, Google, Stories). Keywords target. Roadmap 12 semanas. Mapa competitivo por nicho. Presentación guardada como estrategia-nichos-2026.md."
+    }
+  ]
+}

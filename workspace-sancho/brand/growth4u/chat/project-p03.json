@@ -1,0 +1,18 @@
+{
+  "messages": [
+    {
+      "role": "user",
+      "text": "Estoy abriendo el chat sobre \"Cold Email Pipeline\". Dame un resumen rápido del estado actual y qué podemos hacer. Si necesitas algo de mí, dímelo.",
+      "ts": "2026-03-27T22:08:59.316Z"
+    },
+    {
+      "role": "bot",
+      "text": "## Cold Email Pipeline (P03) — Estado actual\n\n**Objetivo:** 5 meetings/mes cualificados, 5% reply rate, €35K pipeline/mes.\n\n**ECPs target:** ECP1 (startups tech post-PMF) + ECP2 (fintechs reguladas BdE).\n\n### Estado de tareas — todo en `todo` 🔴\n\n| Task | Qué | Status |\n|------|-----|--------|\n| T01 | Lista 200 startups tech post-PMF España | todo |\n| T02 | Lista 100 fintechs con licencia BdE | todo |\n| T03 | 3 secuencias × 4 emails por ECP (24 emails total) | todo |\n| T04 | Lanzar en Instantly: 50/día, 2 buzones | todo |\n| T05 | Gestión replies <4h + agendar calls | todo |\n\n### Resumen: no se ha ejecutado nada aún.\n\n---\n\n### Qué podemos hacer ahora (y qué necesito de ti)\n\n**Lo que puedo arrancar ya:**\n1. **T01 + T02 (listas de prospección)** — Puedo investigar y compilar las listas. Para T02 tengo el registro del BdE como fuente pública, bastante limpio.\n2. **T03 (secuencias de email)** — Con el positioning aprobado de ECP1 y ECP2, tengo todo para redactar las 6 secuencias (3 ángulos × 2 ECPs).\n\n**Lo que necesito de ti:**\n1. **Herramienta de envío** — ¿Ya tienes cuenta en Instantly u otra herramienta de cold email? ¿O hay que montar eso?\n2. **Buzones** — ¿Tienes los 2 dominios/buzones calentados listos, o hay que crear desde cero? (warming tarda ~2-3 semanas).\n3. **Prioridad entre T01 y T02** — ¿Arrancamos con ambas listas en paralelo, o prefieres empezar por un ECP concreto?\n\n**Mi recomendación:** Mientras se calientan buzones (si no están listos), yo empiezo con las listas + copy de secuencias. Así cuando estén listos los buzones, lanzamos directo.\n\n¿Qué tienes listo y por dónde quieres que empiece?",
+      "agent": "sancho",
+      "ts": "2026-03-27T22:09:43.928Z"
+    }
+  ],
+  "updatedAt": 1774649383928,
+  "discordThreadId": null,
+  "discordChannelId": null
+}

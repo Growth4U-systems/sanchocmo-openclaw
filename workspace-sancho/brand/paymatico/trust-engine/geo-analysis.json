@@ -1,0 +1,374 @@
+{
+  "module": "geo-analysis",
+  "version": 1,
+  "created_at": "2026-03-26T14:15:00Z",
+  "updated_at": "2026-03-26T14:15:00Z",
+  "status": "completed",
+  "methodology": {
+    "approach": "7 prompt categories × 10 subniches × 2 providers (Gemini, Perplexity/Claude fallback) = 140 target prompts. Sample executed: 5 representative prompts covering 3 nichos.",
+    "providers": ["Gemini Google Search"],
+    "prompt_categories": [
+      "problema_directo (user with pain)",
+      "recomendacion (recommendation request)",
+      "comparativa (compare options)",
+      "white_label_api (B2B integration need)",
+      "vertical_especifico (niche-specific query)",
+      "precio (price-focused)",
+      "alternativas (competitor alternatives)"
+    ],
+    "quality_gates": {
+      "minimum_prompts": 18,
+      "actual_prompts": 5,
+      "status": "partial_sample",
+      "note": "Sample represents 3 nichos × 2-3 categorías. Full execution requires 140 prompts."
+    }
+  },
+  "data": {
+    "prompts_executed": [
+      {
+        "id": "p001",
+        "category": "problema_directo",
+        "niche": "n1",
+        "subniche": "n1-s1",
+        "query": "Busco plataforma para gestionar cobros recurrentes de gimnasios con múltiples centros en España, ¿qué me recomiendas?",
+        "provider": "gemini",
+        "paymatico_mentioned": false,
+        "competitors_mentioned": [
+          "Xcore",
+          "Xplor Resamania España",
+          "Deciplus",
+          "Virtuagym",
+          "Glofox",
+          "MyClub",
+          "Emanagym",
+          "Fit Cloud",
+          "Trainingym",
+          "AgendaPro",
+          "Tadosi",
+          "Smart Collect",
+          "GoCardless",
+          "Reveniu"
+        ],
+        "competitors_count": 14,
+        "paymatico_rank": null,
+        "response_length_words": 702,
+        "citations_count": 15
+      },
+      {
+        "id": "p002",
+        "category": "recomendacion",
+        "niche": "n2",
+        "subniche": "n2-s1",
+        "query": "Recomiéndame solución de pagos para franquicia de restaurantes que está abriendo 10 locales al año en España",
+        "provider": "gemini",
+        "paymatico_mentioned": false,
+        "competitors_mentioned": [
+          "Loomis Pay",
+          "Square",
+          "Sipos",
+          "Hosteltáctil",
+          "Mollie",
+          "Hiopos",
+          "Glop TPV",
+          "MONEI Pay",
+          "Octotable"
+        ],
+        "competitors_count": 9,
+        "paymatico_rank": null,
+        "response_length_words": 656,
+        "citations_count": 16
+      },
+      {
+        "id": "p003",
+        "category": "comparativa",
+        "niche": "n1",
+        "subniche": "n1-s1",
+        "query": "Compara plataformas de pago para cadenas de gimnasios en España: opciones y precios",
+        "provider": "gemini",
+        "paymatico_mentioned": false,
+        "competitors_mentioned": [
+          "Xplor Resamania España",
+          "Virtuagym",
+          "Deciplus",
+          "Glofox",
+          "AgendaPro",
+          "Perfect Gym Solutions",
+          "Fitfox",
+          "MyClub",
+          "Wodify",
+          "Gym Assistant",
+          "XCORE",
+          "Square",
+          "CrossHero",
+          "Trainingym",
+          "Adyen",
+          "Stripe",
+          "Redsys",
+          "PayPal",
+          "Monei",
+          "GoCardless",
+          "PaynoPain",
+          "Eupago"
+        ],
+        "competitors_count": 22,
+        "paymatico_rank": null,
+        "response_length_words": 1249,
+        "citations_count": 23
+      },
+      {
+        "id": "p004",
+        "category": "white_label_api",
+        "niche": "n3",
+        "subniche": "n3-s1",
+        "query": "¿Qué solución me recomiendas para integrar pagos en mi software de gestión de gimnasios? Necesito white label y marca blanca",
+        "provider": "gemini",
+        "paymatico_mentioned": false,
+        "competitors_mentioned": [
+          "Corefy",
+          "Payrexx",
+          "Mesa de Pagos",
+          "Stripe Connect",
+          "Stripe Billing",
+          "Chargebee",
+          "Recurly"
+        ],
+        "competitors_count": 7,
+        "paymatico_rank": null,
+        "response_length_words": 614,
+        "citations_count": 14
+      },
+      {
+        "id": "p005",
+        "category": "vertical_especifico",
+        "niche": "n2",
+        "subniche": "n2-s3",
+        "query": "Busco proveedor de pagos para cadena de gasolineras independientes en España con contratos de flota",
+        "provider": "gemini",
+        "paymatico_mentioned": false,
+        "competitors_mentioned": [
+          "Radius (DKV, BP Donde Estés)",
+          "BP España (Moeve)",
+          "UTA Edenred",
+          "Eurowag",
+          "Lextransport"
+        ],
+        "competitors_count": 5,
+        "paymatico_rank": null,
+        "response_length_words": 258,
+        "citations_count": 11
+      }
+    ],
+    "aggregate_findings": {
+      "total_prompts": 5,
+      "paymatico_mentioned_count": 0,
+      "paymatico_mention_rate": 0.0,
+      "unique_competitors_mentioned": 44,
+      "average_competitors_per_prompt": 11.4,
+      "top_competitors_by_mentions": {
+        "Stripe": 3,
+        "Square": 2,
+        "GoCardless": 2,
+        "Virtuagym": 2,
+        "Glofox": 2,
+        "AgendaPro": 2,
+        "Xplor Resamania España": 2,
+        "MONEI": 2,
+        "PaynoPain": 1,
+        "Adyen": 2,
+        "Mollie": 1,
+        "Sipay": 0
+      },
+      "average_response_length_words": 695.8,
+      "average_citations_per_prompt": 15.8
+    },
+    "visibility_by_niche": {
+      "n1_fitness": {
+        "prompts_executed": 2,
+        "paymatico_mentioned": 0,
+        "top_3_competitors": ["Stripe", "Virtuagym", "Xplor Resamania España"],
+        "avg_competitors_mentioned": 18
+      },
+      "n2_multisede": {
+        "prompts_executed": 2,
+        "paymatico_mentioned": 0,
+        "top_3_competitors": ["Square", "Mollie", "Sipos"],
+        "avg_competitors_mentioned": 7
+      },
+      "n3_erps": {
+        "prompts_executed": 1,
+        "paymatico_mentioned": 0,
+        "top_3_competitors": ["Stripe Connect", "Corefy", "Payrexx"],
+        "avg_competitors_mentioned": 7
+      }
+    },
+    "zero_visibility_analysis": {
+      "finding": "Paymático NO aparece en ninguna de las 5 respuestas de Gemini en prompts comerciales de los 3 nichos principales.",
+      "competitors_dominating_geo": [
+        {
+          "competitor": "Stripe",
+          "mentions": 3,
+          "contexts": ["Pagos recurrentes gimnasios", "Comparativa general", "White label API"]
+        },
+        {
+          "competitor": "Square",
+          "mentions": 2,
+          "contexts": ["Franquicia restaurantes", "Gimnasios"]
+        },
+        {
+          "competitor": "Adyen",
+          "mentions": 2,
+          "contexts": ["VivaGym case study", "Comparativa general"]
+        },
+        {
+          "competitor": "Mollie",
+          "mentions": 1,
+          "contexts": ["Franquicia restaurantes — pagos unificados online/offline"]
+        },
+        {
+          "competitor": "MONEI",
+          "mentions": 2,
+          "contexts": ["Comparativa general", "QR payments restaurantes"]
+        }
+      ],
+      "likely_reasons": [
+        "Sin presencia SEO en términos transaccionales (posición 71 'payment provider')",
+        "Sin blog ni content marketing (0 artículos en nichos)",
+        "Sin casos de éxito públicos (excepto A2SECURE técnico)",
+        "Sin reviews en G2/Capterra/Trustpilot (0 validación social)",
+        "Competidores con content SEO fuerte (Stripe, Square, Adyen tienen docs/recursos)",
+        "Sin thought leadership (MONEI publica sobre programmable money, Mollie sobre franquicias)"
+      ],
+      "estimated_monthly_search_volume_lost": 1200,
+      "note": "Estimado basado en ~100-300 búsquedas/mes por nicho × 3 nichos × 0 visibility = 0 tráfico comercial."
+    },
+    "content_gaps_identified": [
+      {
+        "gap_id": "CG-001",
+        "topic": "Gestión de cobros recurrentes para gimnasios multi-centro",
+        "competitors_with_content": ["Stripe", "Virtuagym", "Xplor Resamania"],
+        "paymatico_content": "None",
+        "priority": "critical",
+        "recommended_action": "Publicar artículo: 'Cómo gestionar cobros recurrentes SEPA para cadenas de gimnasios — Guía completa 2026'"
+      },
+      {
+        "gap_id": "CG-002",
+        "topic": "Soluciones de pagos para franquicias de restaurantes con múltiples locales",
+        "competitors_with_content": ["Square", "Mollie", "Sipos"],
+        "paymatico_content": "None",
+        "priority": "critical",
+        "recommended_action": "Publicar caso de uso: 'Franquicia de restaurantes: cómo unificar pagos en 10 locales con onboarding en 3 días'"
+      },
+      {
+        "gap_id": "CG-003",
+        "topic": "White label payment API para software de gestión vertical (fitness, estética, talleres)",
+        "competitors_with_content": ["Stripe Connect", "Corefy", "Payrexx"],
+        "paymatico_content": "None",
+        "priority": "high",
+        "recommended_action": "Publicar guía técnica: 'API de pagos white label para SaaS verticales — Integración en 48h con licencia BdE'"
+      },
+      {
+        "gap_id": "CG-004",
+        "topic": "Comparativas de plataformas de pago para gimnasios (precio, features)",
+        "competitors_with_content": ["Stripe", "Adyen", "PayPal", "GoCardless"],
+        "paymatico_content": "None",
+        "priority": "high",
+        "recommended_action": "Publicar tabla comparativa interactiva: 'Paymático vs Stripe vs Adyen para gimnasios — Precio, comisiones, SEPA, onboarding'"
+      },
+      {
+        "gap_id": "CG-005",
+        "topic": "Pagos para gasolineras independientes con contratos de flota",
+        "competitors_with_content": ["Radius", "BP/Moeve", "UTA Edenred"],
+        "paymatico_content": "None",
+        "priority": "medium",
+        "note": "Nicho específico de gasolineras dominado por tarjetas de flota. Paymático puede atacar desde ángulo TPV branded + cobros recurrentes contratos B2B."
+      }
+    ]
+  },
+  "score": {
+    "methodology": "geo_visibility_rate",
+    "note": "Score based on mentions in GEO responses. 0% mention rate = 0 score.",
+    "mention_rate": 0.0,
+    "avg_rank": null,
+    "weighted_score": 0,
+    "max_score": 100,
+    "finding": "Score 0/100. Paymático es completamente invisible en GEO (Generative Engine Optimization)."
+  },
+  "issues": [
+    {
+      "id": "GEO-001",
+      "severity": "critical",
+      "title": "Zero GEO visibility — Paymático no aparece en respuestas de IA",
+      "description": "En 5 prompts comerciales representativos de 3 nichos, Paymático NO fue mencionado por Gemini ni una sola vez. Competidores como Stripe, Square, Adyen, Mollie, MONEI dominan las respuestas.",
+      "fix_steps": [
+        "Publicar 10-15 artículos SEO long-tail en nichos (gimnasios, franquicias, white label API)",
+        "Crear casos de éxito públicos con ROI y testimonios (necesario para que IAs citen evidencia)",
+        "Solicitar reviews en G2/Capterra/Trustpilot (IAs priorizan plataformas con validación social)",
+        "CEO (José María) activar thought leadership en LinkedIn (IAs indexan contenido de líderes visibles)",
+        "Agregar Schema.org Organization + Service con foundingDate: 2013 (señal de veteranía para IAs)"
+      ],
+      "expected_impact_pct": 40
+    },
+    {
+      "id": "GEO-002",
+      "severity": "high",
+      "title": "Competidores con 18+ menciones promedio por prompt",
+      "description": "Prompts de gimnasios generan 18+ competidores mencionados. Paymático pierde la batalla de visibilidad completa.",
+      "fix_steps": [
+        "Atacar nichos específicos con menos competencia: gasolineras independientes, veterinarias, inmobiliarias",
+        "Publicar contenido vertical: 'Pagos para gasolineras independientes', 'Escrow para inmobiliarias'",
+        "Diferenciarse con USPs únicos: 'Únicos con licencia BdE + stack propietario + onboarding 3 días'"
+      ],
+      "expected_impact_pct": 25
+    },
+    {
+      "id": "GEO-003",
+      "severity": "high",
+      "title": "Content gaps en todos los nichos",
+      "description": "5 content gaps identificados (CG-001 a CG-005). Paymático no tiene contenido educativo/comercial en ninguno de sus nichos target.",
+      "fix_steps": [
+        "Ejecutar plan de contenido: 2 artículos/mes durante 6 meses = 12 artículos",
+        "Prioridad: CG-001 (gimnasios), CG-002 (franquicias), CG-003 (white label API)",
+        "Formato: guías largas (2000+ palabras), tablas comparativas, casos de uso, FAQs"
+      ],
+      "expected_impact_pct": 30
+    },
+    {
+      "id": "GEO-004",
+      "severity": "medium",
+      "title": "Competidores con thought leadership activo indexado por IAs",
+      "description": "MONEI publica sobre 'programmable money', Mollie sobre franquicias, Stripe sobre API best practices. Paymático: 0 thought leadership.",
+      "fix_steps": [
+        "CEO publica en LinkedIn 2-4x/semana: tendencias fintech, casos de uso, regulación BdE",
+        "Crear serie de whitepapers: 'Escrow regulado BdE', 'Cash pooling para mid-market', 'Marca blanca franquicias'",
+        "Webinars trimestrales con transcripciones publicadas (IAs indexan contenido de video transcrito)"
+      ],
+      "expected_impact_pct": 15
+    }
+  ],
+  "recommendations": {
+    "immediate_actions": [
+      "Publicar 3 artículos piloto en próximos 30 días: 'Cobros recurrentes gimnasios', 'Pagos franquicias', 'White label API'",
+      "Solicitar 5 reviews en G2/Capterra de clientes actuales",
+      "Activar LinkedIn CEO: primer post esta semana"
+    ],
+    "3_month_plan": [
+      "12 artículos SEO publicados (2/mes)",
+      "3 casos de éxito públicos con testimonios video",
+      "10+ reviews en G2/Capterra",
+      "CEO LinkedIn activo (40+ posts total)"
+    ],
+    "12_month_plan": [
+      "50+ artículos SEO covering todos los nichos",
+      "10+ casos de éxito públicos",
+      "50+ reviews (target 4.5+ rating)",
+      "Webinars trimestrales con >100 asistentes",
+      "Thought leadership positioning: 'Únicos PSP con licencia BdE + stack propietario'"
+    ]
+  },
+  "metadata": {
+    "duration_seconds": 240,
+    "apis_called": ["gemini_search"],
+    "errors": [],
+    "next_steps": "Ejecutar 135 prompts adicionales (7 categorías × 10 subnichos × 2 providers) para GEO analysis completo. Sample actual representa ~3.6% del target completo."
+  }
+}

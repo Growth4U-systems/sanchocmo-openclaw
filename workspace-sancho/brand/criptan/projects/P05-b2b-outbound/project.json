@@ -1,0 +1,35 @@
+{
+  "id": "P05",
+  "name": "B2B Outbound \u2014 Empresas con Tesorer\u00eda",
+  "description": "Criptan ya tiene 250 empresas clientes que mueven el 10% del volumen total \u2014 el segmento B2B est\u00e1 validado y es de alt\u00edsimo valor. Pero no hay un go-to-market activo para captar m\u00e1s. Este proyecto monta el engine de outbound: identificar empresas target, enriquecer contactos, y lanzar secuencias de outreach multi-canal (email + LinkedIn) enfocadas en el dolor de tesorer\u00eda ociosa.",
+  "approach": "List building de 200-500 empresas target (pymes espa\u00f1olas con excedentes de tesorer\u00eda), enriquecimiento de contactos (CFO/Director Financiero), secuencia de outreach 3-5 touchpoints (email + LinkedIn). \u00c1ngulo: Criptan Earn B2B como alternativa regulada al dep\u00f3sito empresarial.",
+  "status": "active",
+  "created": "2026-03-30",
+  "review_date": "2026-04-30",
+  "origin": {
+    "type": "strategic-plan",
+    "version": 1,
+    "detail": "Decisi\u00f3n del cliente: outbound B2B activo complementando LinkedIn de Jorge"
+  },
+  "objective": {
+    "description": "Generar meetings cualificados con empresas para Criptan Earn B2B",
+    "metric": "meetings_booked_per_month",
+    "baseline": 0,
+    "target": 10,
+    "unit": "meetings/mes"
+  },
+  "strategy": {
+    "catalog_id": "01",
+    "description": "ICP List B2B Outreach"
+  },
+  "channels": [
+    "prospecting"
+  ],
+  "discord": {
+    "project_thread_id": null,
+    "project_channel": "projects"
+  },
+  "tasks_total": 4,
+  "tasks_completed": 0,
+  "value_review": null
+}

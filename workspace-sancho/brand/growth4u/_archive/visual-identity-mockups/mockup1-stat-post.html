@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap');
+  
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  
+  body {
+    width: 1080px;
+    height: 1080px;
+    background: #0F172A;
+    font-family: 'Inter', sans-serif;
+    color: white;
+    overflow: hidden;
+    position: relative;
+  }
+  
+  .container {
+    width: 100%;
+    height: 100%;
+    padding: 72px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    position: relative;
+  }
+  
+  .top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .logo {
+    font-family: 'Inter', sans-serif;
+    font-weight: 900;
+    font-size: 28px;
+    color: #2563EB;
+    letter-spacing: -0.5px;
+  }
+  
+  .tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 16px;
+    color: #64748B;
+    background: rgba(100, 116, 139, 0.15);
+    padding: 6px 16px;
+    border-radius: 4px;
+  }
+  
+  .main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 32px;
+  }
+  
+  .stat-line {
+    display: flex;
+    align-items: baseline;
+    gap: 20px;
+  }
+  
+  .stat-number {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 120px;
+    color: #F97316;
+    line-height: 1;
+    letter-spacing: -4px;
+  }
+  
+  .stat-unit {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 500;
+    font-size: 48px;
+    color: #F97316;
+    opacity: 0.7;
+  }
+  
+  .headline {
+    font-weight: 800;
+    font-size: 52px;
+    line-height: 1.15;
+    letter-spacing: -1.5px;
+    color: #F8FAFC;
+    max-width: 750px;
+  }
+  
+  .subline {
+    font-weight: 400;
+    font-size: 24px;
+    line-height: 1.5;
+    color: #94A3B8;
+    max-width: 650px;
+  }
+  
+  .bottom-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+  }
+  
+  .author {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+  
+  .author-photo {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #2563EB;
+  }
+  
+  .author-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  
+  .author-name {
+    font-weight: 700;
+    font-size: 20px;
+    color: #F8FAFC;
+  }
+  
+  .author-title {
+    font-weight: 400;
+    font-size: 16px;
+    color: #64748B;
+  }
+  
+  .cta {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 16px;
+    color: #2563EB;
+    border: 2px solid #2563EB;
+    padding: 12px 24px;
+    border-radius: 6px;
+  }
+  
+  /* Decorative grid lines */
+  .grid-accent {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 300px;
+    height: 300px;
+    opacity: 0.04;
+    background-image: 
+      linear-gradient(#2563EB 1px, transparent 1px),
+      linear-gradient(90deg, #2563EB 1px, transparent 1px);
+    background-size: 30px 30px;
+  }
+  
+  .accent-line {
+    position: absolute;
+    left: 72px;
+    top: 50%;
+    width: 4px;
+    height: 120px;
+    background: linear-gradient(180deg, #2563EB, #7C3AED);
+    border-radius: 2px;
+    transform: translateY(-50%);
+    opacity: 0.6;
+  }
+</style>
+</head>
+<body>
+  <div class="grid-accent"></div>
+  <div class="container">
+    <div class="top-bar">
+      <div class="logo">Growth4U</div>
+      <div class="tag">caso_real // bnext</div>
+    </div>
+    
+    <div class="main-content">
+      <div class="stat-line">
+        <span class="stat-number">-75%</span>
+        <span class="stat-unit">CAC</span>
+      </div>
+      <h1 class="headline">De €50 a €12.40 por usuario activado.</h1>
+      <p class="subline">Sin aumentar presupuesto. Construyendo activos de confianza que escalan solos.</p>
+    </div>
+    
+    <div class="bottom-bar">
+      <div class="author">
+        <img class="author-photo" src="../alfonso-office-teal.jpg" alt="Alfonso">
+        <div class="author-info">
+          <span class="author-name">Alfonso Sainz de Baranda</span>
+          <span class="author-title">Founder & CEO · Growth4U</span>
+        </div>
+      </div>
+      <div class="cta">growth4u.io →</div>
+    </div>
+  </div>
+</body>
+</html>

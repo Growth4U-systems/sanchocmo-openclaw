@@ -1,0 +1,356 @@
+{
+  "module": "recommendations",
+  "version": 1,
+  "created_at": "2026-04-07T13:20:00Z",
+  "updated_at": "2026-04-07T13:20:00Z",
+  "status": "completed",
+  "data": {
+    "recommendations": [
+      {
+        "id": "rec-001",
+        "source": "geo",
+        "severity": "critical",
+        "category": "geo-optimization",
+        "title": "Crear contenido CNMV marketing para dominio regulatorio en AI",
+        "description": "Growth4U tiene 0% visibilidad en queries de marketing CNMV/regulatorio. Las IAs citan FinReg360, CNMV, ajtapia.com — todos reguladores/consultoras. El claim de 'experiencia CNMV' necesita contenido que responda: 'qué SÍ puedes decir en publicidad fintech'.",
+        "fix_steps": [
+          "Crear artículo pillar: 'Guía de marketing CNMV-compliant para fintechs 2025' con ejemplos concretos",
+          "Incluir sección: 'Qué SÍ puedes decir en un anuncio fintech (con ejemplos)'",
+          "Añadir datos: multa 5M€ X/Twitter por CNMV como caso real",
+          "Estructurar para AI: respuesta directa + tabla comparativa + FAQ + fuentes citadas",
+          "Link building: contactar FinReg360, ajtapia.com, fundssociety.com para mención o guest post"
+        ],
+        "expected_impact_pct": 30,
+        "effort": "medium",
+        "priority_score": 4.0,
+        "data_source": "geo-analysis: CNMV query = 8 citations, 0 Growth4U. Opportunity score 95."
+      },
+      {
+        "id": "rec-002",
+        "source": "geo",
+        "severity": "critical",
+        "category": "brand",
+        "title": "Resolver crisis de brand confusion: 4 companies con mismo nombre",
+        "description": "Las IAs confunden growth4u.io con growth4u.org (US financing), growth4u.cl (Chile digital), growth4u.fr (France neuroscience). Potential clients pueden acabar en websites completamente diferentes. Impacto: pérdida de leads + daño a percepción de marca.",
+        "fix_steps": [
+          "Opción A: Rebranding a 'Growth4U by Alfonso Sainz' o similar único",
+          "Opción B: Crear contenido diferenciado claro (ej: 'Growth4U España — Growth Marketing para Fintech')",
+          "Incluir en cada página: '¿Es Growth4U.io? Somos la consultora de growth fundada por Alfonso Sainz — especializada en fintechs y empresas tech. Si buscabas otra Growth4U, aquí no es.'",
+          "Monitorear web_search para 'Growth4U opiniones' y corregir respuestas de AI que mezclen empresas"
+        ],
+        "expected_impact_pct": 25,
+        "effort": "high",
+        "priority_score": 4.0,
+        "data_source": "geo-analysis: 4 different companies cited under 'Growth4U' name. Opportunity score 85."
+      },
+      {
+        "id": "rec-003",
+        "source": "own-media",
+        "severity": "critical",
+        "category": "social",
+        "title": "Construir presencia en redes sociales ausentes",
+        "description": "Growth4U tiene presencia en 1/6 redes sociales (solo LinkedIn). No hay Instagram, YouTube, TikTok, Twitter/X ni Facebook. Para una consultora de growth marketing esto es una paradoja. El ECP4 (quemado) busca validación externa — sin presencia social, no hay confianza.",
+        "fix_steps": [
+          "Instagram: Crear perfil de empresa. Contenido mínimo: logo, bio con UVP, 5 posts iniciales con casos o insights",
+          "YouTube: Alfonso grabando vídeos cortos (3-5 min) sobre growth insights = founder-led content que convierte en B2B",
+          "TikTok: Evaluar si hay capacidad para contenido corto o delegar. Si no, skip por ahora",
+          "Twitter/X: Perfil mínimo con handle @growth4u_io y últimos tweets de Alfonso"
+        ],
+        "expected_impact_pct": 20,
+        "effort": "medium",
+        "priority_score": 3.5,
+        "data_source": "own-media-audit: 5/6 platforms not found. Score 61.5."
+      },
+      {
+        "id": "rec-004",
+        "source": "own-media",
+        "severity": "critical",
+        "category": "content",
+        "title": "Reviews: objetivo 5+ en Trustpilot, G2 y Capterra",
+        "description": "Solo 1 review en Trustpilot (3.5/5). El Trust Engine Fase 2 construye 'Fortaleza de Confianza' para CLIENTES — pero Growth4U como empresa tiene 0 social proof verificable. ECP4 (quemado) necesita VERIFICAR antes de confiar.",
+        "fix_steps": [
+          "Pedir reviews a los primeros 3-5 clientes Trust Engine — en persona, no email automático",
+          "Reviews target: Trustpilot (prioridad 1), G2 (prioridad 2), Capterra (prioridad 3)",
+          "Template de email de request: 'Nos ayudaría mucho si pudieras dedicar 2 min a dejar tu experiencia en Trustpilot — link aquí'",
+          "Premio o incentivo por deixar review (no obligatorio, ethically OK si es un regalo simbólico post-proyecto)"
+        ],
+        "expected_impact_pct": 20,
+        "effort": "low",
+        "priority_score": 3.8,
+        "data_source": "own-media-audit: 1 review Trustpilot (3.5/5). Competitors have 0 reviews."
+      },
+      {
+        "id": "rec-005",
+        "source": "seo-audit",
+        "severity": "high",
+        "category": "technical",
+        "title": "Optimizar LCP: objetivo reducir de 4.1s a <2.5s",
+        "description": "LCP de 4.1s (target <2.5s) afecta ranking y UX. Lighthouse estima 220KiB de ahorro en imágenes. Esto también mejora directamente la experiencia del usuario en mobile.",
+        "fix_steps": [
+          "Convertir todas las imágenes a WebP/AVIF",
+          "Añadir width/height explícitos a todos los <img>",
+          "Implementar lazy loading para imágenes below-the-fold",
+          "Lazy-load JS no crítico",
+          "Verificar si hay un CDN de imágenes configurado (actualmente Cloudflare pero no optimizado para imágenes)"
+        ],
+        "expected_impact_pct": 15,
+        "effort": "medium",
+        "priority_score": 3.0,
+        "data_source": "seo-audit: LCP 4.1s (fail), Lighthouse recommends 220KiB savings."
+      },
+      {
+        "id": "rec-006",
+        "source": "seo-audit",
+        "severity": "high",
+        "category": "technical",
+        "title": "Accesibilidad: añadir landmark principal + arreglar heading hierarchy",
+        "description": "Lighthouse accessibility score 91/100. Documento sin landmark <main> y heading hierarchy incorrecto (H2 salta a H3). Afecta SEO y accesibilidad. Score fácilmente subible a 95+ con cambios mínimos.",
+        "fix_steps": [
+          "Envolver contenido principal en <main> element",
+          "Revisar H2 → H3 → H4 hierarchy en toda la web",
+          "Verificar que no hay heading levels saltados",
+          "Añadir role=main si <main> no es soportado por el CMS"
+        ],
+        "expected_impact_pct": 5,
+        "effort": "low",
+        "priority_score": 2.8,
+        "data_source": "seo-audit: HC accessibility score 91. Missing landmark + heading hierarchy."
+      },
+      {
+        "id": "rec-007",
+        "source": "own-media",
+        "severity": "high",
+        "category": "content",
+        "title": "Establecer frecuencia de publicación blog (fin del batch launch)",
+        "description": "20+ artículos publicados el mismo día (Feb 2026) = señal de 'content farm' para Google. No hay historial de publicación regular. Google premia cadencia — 1-2 artículos/semana es mejor que batch.",
+        "fix_steps": [
+          "Publicar 1 artículo nuevo por semana mínimo",
+          "Repartir el contenido del blog backlog en las próximas 10-12 semanas",
+          "Actualizar fechas de artículos existentes para signal de freshness",
+          "Crear editorial calendar con topics por ECP y subnicho"
+        ],
+        "expected_impact_pct": 10,
+        "effort": "medium",
+        "priority_score": 2.5,
+        "data_source": "own-media-audit: batch launch Feb 2026, no ongoing cadence confirmed."
+      },
+      {
+        "id": "rec-008",
+        "source": "seo-audit",
+        "severity": "medium",
+        "category": "technical",
+        "title": "Añadir hreflang para versión inglesa /en/",
+        "description": "La web tiene versión /en/ pero no hay tags hreflang. Esto impide que Google entienda la relación entre versiones. Crítico si el target incluye fintechs latinas o empresas que buscan en inglés.",
+        "fix_steps": [
+          "Añadir <link rel='alternate' hreflang='es' href='https://growth4u.io/'> en /en/",
+          "Añadir <link rel='alternate' hreflang='en' href='https://growth4u.io/en/'> en homepage",
+          "Añadir <link rel='alternate' hreflang='x-default' href='https://growth4u.io/'> en ambas versiones"
+        ],
+        "expected_impact_pct": 3,
+        "effort": "low",
+        "priority_score": 1.5,
+        "data_source": "seo-audit: HC-15 hreflang failed."
+      },
+      {
+        "id": "rec-009",
+        "source": "geo",
+        "severity": "high",
+        "category": "partnerships",
+        "title": "Reddit strategy para ECP4 (quemado por agencias)",
+        "description": "ECP4 es pain 92/100 pero Growth4U tiene 0% visibilidad en queries de 'agencia scam/burned'. Reddit r/saas y r/emprendimiento son donde founders quemados buscan validación. Oportunidad de oro para posicionarse como la alternativa.",
+        "fix_steps": [
+          "Crear cuenta de Reddit para Alfonso o Growth4U",
+          "Responder GENUINAMENTE en hilos: 'hired agency, no results' — no vender, solo aportar framework",
+          "Contenido sugerido: 'Cómo verificar una agencia antes de contratar' (framework gratuito)",
+          "Link solo si preguntan directamente por Growth4U",
+          "Medir: trackers en Bitly para medir tráfico desde Reddit"
+        ],
+        "expected_impact_pct": 15,
+        "effort": "low",
+        "priority_score": 3.2,
+        "data_source": "geo-analysis: 'agency scam' queries cite no agencies. Reddit r/saas and r/emprendimiento are where burned founders validate."
+      },
+      {
+        "id": "rec-010",
+        "source": "gaps",
+        "severity": "high",
+        "category": "partnerships",
+        "title": "Inclusión en ranking iSocialWeb 'Mejores Agencias Growth España'",
+        "description": "iSocialWeb domina el ranking de 'mejores agencias growth España'. Growth4U NO aparece. Cada día que pasa sin aparecer, competitors capturan ese tráfico. iSocialWeb acepta submissions.",
+        "fix_steps": [
+          "Enviar email a iSocialWeb solicitando inclusión en el ranking",
+          "Pitch: 'Growth4U — especializada en growth para fintechs y tech, con casos como Bnext 0→500K usuarios'",
+          "Incluir link a web y a casos verificables (prensa)",
+          "Follow up en 2 semanas si no hay respuesta"
+        ],
+        "expected_impact_pct": 12,
+        "effort": "low",
+        "priority_score": 3.0,
+        "data_source": "gaps: gap-pres-004. iSocialWeb ranking dominated by Product Hackers, Flat 101. Growth4U invisible."
+      },
+      {
+        "id": "rec-011",
+        "source": "gaps",
+        "severity": "medium",
+        "category": "partnerships",
+        "title": "PR: статья en El Referente sobre marketing fintech",
+        "description": "El Referente cubre fintech y el ecosistema startup. Alfonso tiene background perfecto (Bnext, Bit2Me) para una entrevista o artículo. Es gratis y genera backlinks authority.",
+        "fix_steps": [
+          "Enviar pitch a El Referente: 'Por qué el marketing fintech regulado es diferente y cómo hacerlo bien'",
+          "Proponer 3 ángulos: (1) entrevista con Alfonso, (2) caso de estudio Múltiplo, (3) estado del sector",
+          "Incluir datos: mercado fintech ES, CAC benchmarks, examples de campañas que sí cumplían CNMV"
+        ],
+        "expected_impact_pct": 10,
+        "effort": "medium",
+        "priority_score": 2.5,
+        "data_source": "gaps: gap-type-005. El Referente is a media outlet covering fintech ecosystem."
+      },
+      {
+        "id": "rec-012",
+        "source": "own-media",
+        "severity": "medium",
+        "category": "social",
+        "title": "Newsletter y comunidad: crear infraestructura de inbound",
+        "description": "No hay newsletter archive público ni comunidad (Skool existe para Alfonso personalmente). Sin newsletter, no hay nurturing de leads que llegan al blog. Sin comunidad, no hay word-of-mouth.",
+        "fix_steps": [
+          "Newsletter: empezar con envío quincenal con 1 insight del blog + 1 caso o dato",
+          "Archive público de newsletter = content library = SEO + lead magnet",
+          "Evaluar comunidad tipo Product Hackers Go!: Slack o Skool con acceso a cambio de contenido y Q&A",
+          "Lead magnet inicial: 'Diagnóstico Growth gratuito' (1 página con 5 preguntas clave)"
+        ],
+        "expected_impact_pct": 8,
+        "effort": "high",
+        "priority_score": 2.0,
+        "data_source": "own-media-audit: no newsletter or community found."
+      }
+    ],
+    "tier_3_media_recommendations": {
+      "tier1_raw": {
+        "count": 18,
+        "description": "All domains from GEO + SERP gaps",
+        "domains": ["cnmv.es", "finreg360.com", "reddit.com", "isoccialweb.agency", "producthackers.com", "flake-agency.com", "fundssociety.com", "elreferente.es", "trustpilot.com", "malt.es", "ajtapia.com", "cincoill as.elpais.com"]
+      },
+      "tier2_filtered": {
+        "count": 9,
+        "description": "Actionable media only — no competitors, no social, no consultoras",
+        "domains": ["cnmv.es", "finreg360.com", "reddit.com", "fundssociety.com", "elreferente.es", "trustpilot.com", "malt.es", "ajtapia.com", "cincoill as.elpais.com"]
+      },
+      "tier3_acionable": [
+        {
+          "domain": "cnmv.es",
+          "domain_type": "editorial_authority",
+          "specific_urls": ["https://www.cnmv.es/DocPortal/Publicaciones/Fichas/GR13_Publicidad_financiera.pdf"],
+          "url_title": "CNMV Ficha GR13 - Publicidad de productos financieros",
+          "suggested_collaboration": "artículo",
+          "outreach_template": "press_pitch",
+          "geo_badge": "Citado 4 veces por AI",
+          "serp_badge": "Top 3 Google",
+          "per_subnicho": ["n2-s1", "n2-s2"],
+          "contact_note": "CNMV no hace colaboraciones pero la FICHA GR13 es referenced by AI — crear contenido que cite o complemente esta ficha"
+        },
+        {
+          "domain": "finreg360.com",
+          "domain_type": "editorial_authority",
+          "specific_urls": ["https://finreg360.com"],
+          "url_title": "FinReg360 - expertise regulatorio fintech",
+          "suggested_collaboration": "guest_post",
+          "outreach_template": "guest_post_pitch",
+          "geo_badge": "Citado 2 veces por AI",
+          "serp_badge": null,
+          "per_subnicho": ["n2-s1", "n2-s2"],
+          "contact_note": "Contacto vía formulario web o LinkedIn. Pitch: 'Cómo hacer marketing fintech sin arriesgar la licencia' — guía práctica para sus lectores que son compliance officers"
+        },
+        {
+          "domain": "reddit.com",
+          "domain_type": "community",
+          "specific_urls": ["https://reddit.com/r/emprendimiento", "https://reddit.com/r/saas"],
+          "url_title": "r/emprendimiento + r/saas communities",
+          "suggested_collaboration": "community_presence",
+          "outreach_template": "community_response",
+          "geo_badge": "Citado por AI",
+          "serp_badge": null,
+          "per_subnicho": ["n4-s1", "n4-s2"],
+          "contact_note": "No outreach — participación orgánica. Responder hilos de founders quemados con framework. No vender."
+        },
+        {
+          "domain": "fundssociety.com",
+          "domain_type": "media",
+          "specific_urls": ["https://fundssociety.com"],
+          "url_title": "Fund Society - fintech news",
+          "suggested_collaboration": "nota_prensa",
+          "outreach_template": "press_pitch",
+          "geo_badge": "Citado por AI",
+          "serp_badge": null,
+          "per_subnicho": ["n2-s1", "n2-s2"],
+          "contact_note": "Enviar nota de prensa sobre 'Estado del marketing fintech en España' — fundssociety cubre noticias del sector"
+        },
+        {
+          "domain": "elreferente.es",
+          "domain_type": "media",
+          "specific_urls": ["https://elreferente.es"],
+          "url_title": "El Referente - startup/fintech media",
+          "suggested_collaboration": "entrevista",
+          "outreach_template": "press_pitch",
+          "geo_badge": "Citado por AI",
+          "serp_badge": null,
+          "per_subnicho": ["n2-s1", "n5-s3"],
+          "contact_note": "Pitch: entrevista con Alfonso sobre marketing fintech regulado. Ángulo: 'Lo que la CNMV permite y los marketers no saben'"
+        },
+        {
+          "domain": "ajtapia.com",
+          "domain_type": "editorial_authority",
+          "specific_urls": ["https://ajtapia.com"],
+          "url_title": "Javier Tapia - abogado fintech",
+          "suggested_collaboration": "guest_post",
+          "outreach_template": "guest_post_pitch",
+          "geo_badge": "Citado por AI",
+          "serp_badge": null,
+          "per_subnicho": ["n2-s1", "n2-s2"],
+          "contact_note": "Javier Tapia es abogado especializado en fintech. Contactar vía LinkedIn. Pitch: 'Lo que SÍ puedes hacer en marketing fintech desde la perspectiva legal y de growth'"
+        },
+        {
+          "domain": "malt.es",
+          "domain_type": "directory",
+          "specific_urls": ["https://malt.es/profile/growth4u"],
+          "url_title": "Malt profile - Growth4U",
+          "suggested_collaboration": "perfil",
+          "outreach_template": "directory_listing",
+          "geo_badge": null,
+          "serp_badge": null,
+          "per_subnicho": ["n4-s1", "n4-s2", "n5-s2"],
+          "contact_note": "Crear perfil en Malt.es (es gratis). TheGrowtHacker ya tiene uno. Growth4U necesita tener presencia aquí."
+        },
+        {
+          "domain": "trustpilot.com",
+          "domain_type": "directory",
+          "specific_urls": ["https://trustpilot.com/review/growth4u.io"],
+          "url_title": "Growth4U Trustpilot",
+          "suggested_collaboration": "reviews",
+          "outreach_template": "review_request",
+          "geo_badge": "Citado 2 veces por AI",
+          "serp_badge": null,
+          "per_subnicho": ["n5-s2", "n4-s2"],
+          "contact_note": "1 review actual con 3.5/5. Pedir a clientes Trust Engine que dejen review aquí. Primeros 5 clientes = social proof crítica."
+        },
+        {
+          "domain": "isoccialweb.agency",
+          "domain_type": "portal_sectorial",
+          "specific_urls": ["https://isocialweb.agency/mejores-agencias-growth-hacking/"],
+          "url_title": "Ranking mejores agencias growth hacking España",
+          "suggested_collaboration": "inclusion_en_ranking",
+          "outreach_template": "directory_listing",
+          "geo_badge": null,
+          "serp_badge": "Top 5 Google",
+          "per_subnicho": ["n1-s1", "n1-s2"],
+          "contact_note": "Enviar email solicitando inclusión. iSocialWeb lista 'mejores agencias' — Growth4U necesita aparecer."
+        }
+      ]
+    }
+  },
+  "metadata": {
+    "duration_seconds": 60,
+    "apis_called": [],
+    "errors": [],
+    "quality_gate_passed": true
+  }
+}

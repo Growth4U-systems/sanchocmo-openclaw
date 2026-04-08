@@ -1,0 +1,90 @@
+{
+  "slug": "growth4u",
+  "updatedAt": "2026-04-01T10:41:00.000Z",
+  "recommendations": [
+    {
+      "id": "R001",
+      "type": "optimize",
+      "priority": "high",
+      "metric": "meta-ads.ctr",
+      "title": "Refresh ad creatives — CTR fatigue detected",
+      "description": "CTR has dropped from 4.6% to ~2.3% over 3 weeks. Rotate in new creatives for Ángulo 2 and Ángulo 3. Keep Ángulo 4_V3 and Ángulo 5_V2 as controls.",
+      "linkedProject": "P04-meta-ads",
+      "createdAt": "2026-04-01",
+      "status": "approved",
+      "approved_at": "2026-04-01T08:55:59.525Z"
+    },
+    {
+      "id": "R002",
+      "type": "investigate",
+      "priority": "high",
+      "metric": "ghl.newContacts",
+      "title": "Investigate Mar 30 contact spike (25 contacts)",
+      "description": "25 new contacts on a single day = 3.4x average. Determine if replicable.",
+      "linkedProject": "P00-Metrics",
+      "createdAt": "2026-04-01",
+      "status": "converted",
+      "actioned_at": "2026-04-01T12:31:48.215Z",
+      "converted_to_task": "P00-Metrics-T08"
+    },
+    {
+      "id": "R003",
+      "type": "optimize",
+      "priority": "high",
+      "metric": "ga4.engagementRate",
+      "title": "Fix website engagement — bounce rate at 100%",
+      "description": "Multiple days with 100% bounce rate and 0% engagement rate. Leaking paid traffic.",
+      "linkedProject": "P01-fontaneria",
+      "createdAt": "2026-04-01",
+      "status": "converted",
+      "converted_to_task": "P01-fontaneria-T07"
+    },
+    {
+      "id": "R004",
+      "type": "launch",
+      "priority": "medium",
+      "metric": "meta-ads.cpc",
+      "title": "Scale Meta Ads budget on winning creatives",
+      "description": "CPC at 0.45-0.48€ on best days. Increase daily budget 30-50% on Ángulo 4_V3 and 5_V2.",
+      "linkedProject": "P04-meta-ads",
+      "createdAt": "2026-04-01",
+      "status": "dismissed",
+      "actioned_at": "2026-04-01T21:09:28.171Z"
+    },
+    {
+      "id": "R005",
+      "type": "investigate",
+      "priority": "medium",
+      "metric": "ghl.appointments",
+      "title": "Understand appointment activation source",
+      "description": "Appointments went from 0 (Mar 13-21) to 4-6/day (Mar 22+). Most important signal of the month.",
+      "linkedProject": null,
+      "createdAt": "2026-04-01",
+      "status": "active"
+    },
+    {
+      "id": "R006",
+      "type": "optimize",
+      "priority": "medium",
+      "metric": "gsc.position",
+      "title": "Push SEO content into top 5",
+      "description": "Average position improved to 7.05. Add internal links to push top pages into click-generating positions (<5).",
+      "linkedProject": null,
+      "createdAt": "2026-04-01",
+      "status": "active"
+    },
+    {
+      "id": "R007",
+      "type": "escalate",
+      "priority": "medium",
+      "metric": "ghl.opportunities",
+      "title": "Pipeline tracking gap — 0 opportunities despite 44 appointments",
+      "description": "GHL shows 0 opportunities and 0 pipeline value. Pipeline stages not being used or tracking gap.",
+      "linkedProject": null,
+      "createdAt": "2026-04-01",
+      "status": "dismissed",
+      "actioned_at": "2026-04-07T22:03:28.396Z"
+    }
+  ],
+  "updated_at": "2026-04-07T22:03:28.396Z"
+}

@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Strategic Plan Q2 2026 — Growth4U</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --blue: #2563EB;
+    --purple: #7C3AED;
+    --orange: #F97316;
+    --dark: #0F172A;
+    --light: #FAFAF9;
+    --gray: #64748B;
+    --gray-light: #E2E8F0;
+    --gradient: linear-gradient(135deg, var(--blue), var(--purple));
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { font-size: 16px; scroll-behavior: smooth; }
+  body { font-family: 'Inter', sans-serif; background: var(--dark); color: var(--light); }
+
+  .slide {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 4rem 8%;
+    position: relative;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+  }
+  .slide:nth-child(even) { background: #111827; }
+
+  /* Title slide */
+  .slide-title {
+    background: var(--gradient);
+    text-align: center;
+    align-items: center;
+  }
+  .slide-title .company { 
+    font-size: 1rem; font-weight: 600; text-transform: uppercase; 
+    letter-spacing: 0.2em; opacity: 0.8; margin-bottom: 1.5rem; 
+  }
+  .slide-title h1 { 
+    font-size: 3.5rem; font-weight: 800; line-height: 1.1; 
+    max-width: 800px; margin-bottom: 1rem; 
+  }
+  .slide-title .subtitle { 
+    font-size: 1.25rem; font-weight: 400; opacity: 0.85; max-width: 600px; 
+  }
+
+  /* Section slides */
+  .slide h2 { 
+    font-size: 2.2rem; font-weight: 800; margin-bottom: 2rem; 
+    line-height: 1.2; max-width: 700px;
+  }
+  .slide h2 .accent { color: var(--orange); }
+
+  .highlights { list-style: none; max-width: 800px; }
+  .highlights li {
+    padding: 0.8rem 0;
+    font-size: 1.1rem;
+    line-height: 1.6;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+  .highlights li:last-child { border-bottom: none; }
+  .highlights .icon { 
+    flex-shrink: 0; font-size: 1.2rem; margin-top: 0.15rem; 
+  }
+
+  /* Metrics */
+  .metrics { display: flex; gap: 3rem; flex-wrap: wrap; margin-top: 1.5rem; }
+  .metric-card {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px;
+    padding: 2rem 2.5rem;
+    min-width: 220px;
+    flex: 1;
+  }
+  .metric-card .label { 
+    font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.1em; 
+    color: var(--gray); margin-bottom: 0.75rem; 
+  }
+  .metric-card .values { display: flex; align-items: baseline; gap: 1rem; }
+  .metric-card .baseline { 
+    font-family: 'JetBrains Mono', monospace; font-size: 1.8rem; 
+    font-weight: 700; color: var(--gray); text-decoration: line-through; 
+  }
+  .metric-card .arrow { font-size: 1.5rem; color: var(--orange); }
+  .metric-card .target { 
+    font-family: 'JetBrains Mono', monospace; font-size: 2.4rem; 
+    font-weight: 700; color: var(--orange); 
+  }
+
+  /* Tables */
+  .slide-table { 
+    width: 100%; max-width: 900px; border-collapse: collapse; margin-top: 1.5rem; 
+  }
+  .slide-table th { 
+    text-align: left; font-size: 0.75rem; text-transform: uppercase; 
+    letter-spacing: 0.1em; color: var(--gray); padding: 0.75rem 1rem; 
+    border-bottom: 2px solid rgba(255,255,255,0.1);
+  }
+  .slide-table td { 
+    padding: 0.75rem 1rem; font-size: 0.95rem; 
+    border-bottom: 1px solid rgba(255,255,255,0.05); 
+  }
+  .slide-table tr:hover td { background: rgba(255,255,255,0.02); }
+  .badge { 
+    display: inline-block; padding: 0.15rem 0.5rem; border-radius: 4px; 
+    font-size: 0.75rem; font-weight: 600; 
+  }
+  .badge-red { background: rgba(239,68,68,0.15); color: #EF4444; }
+  .badge-yellow { background: rgba(245,158,11,0.15); color: #F59E0B; }
+  .badge-green { background: rgba(34,197,94,0.15); color: #22C55E; }
+  .badge-blue { background: rgba(37,99,235,0.15); color: #60A5FA; }
+
+  /* LinkedIn cards */
+  .profile-cards { display: flex; gap: 1.5rem; flex-wrap: wrap; margin-top: 1.5rem; }
+  .profile-card {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px;
+    padding: 1.5rem;
+    flex: 1;
+    min-width: 240px;
+  }
+  .profile-card .name { 
+    font-weight: 700; font-size: 1.15rem; margin-bottom: 0.3rem; 
+  }
+  .profile-card .role { 
+    font-size: 0.85rem; color: var(--gray); margin-bottom: 0.75rem; 
+  }
+  .profile-card .pillars { 
+    font-size: 0.85rem; line-height: 1.8; 
+  }
+  .profile-card .pillars span {
+    display: inline-block; background: rgba(37,99,235,0.12); color: #93C5FD;
+    padding: 0.1rem 0.5rem; border-radius: 4px; margin: 0.15rem 0.2rem 0.15rem 0;
+    font-size: 0.8rem;
+  }
+
+  /* Roadmap */
+  .roadmap { display: flex; gap: 0; margin-top: 2rem; max-width: 900px; }
+  .phase {
+    flex: 1;
+    padding: 1.5rem;
+    border-top: 3px solid;
+    position: relative;
+  }
+  .phase:nth-child(1) { border-color: #EF4444; background: rgba(239,68,68,0.05); }
+  .phase:nth-child(2) { border-color: var(--blue); background: rgba(37,99,235,0.05); }
+  .phase:nth-child(3) { border-color: #22C55E; background: rgba(34,197,94,0.05); }
+  .phase .phase-label { 
+    font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; 
+    font-weight: 700; margin-bottom: 0.5rem; 
+  }
+  .phase:nth-child(1) .phase-label { color: #EF4444; }
+  .phase:nth-child(2) .phase-label { color: #60A5FA; }
+  .phase:nth-child(3) .phase-label { color: #22C55E; }
+  .phase .phase-title { font-weight: 700; font-size: 1.1rem; margin-bottom: 0.75rem; }
+  .phase ul { list-style: none; font-size: 0.85rem; line-height: 1.8; color: #CBD5E1; }
+
+  /* CTA slide */
+  .slide-cta {
+    background: var(--gradient);
+    text-align: center;
+    align-items: center;
+  }
+  .slide-cta h2 { text-align: center; }
+  .slide-cta .cta-text { 
+    font-size: 1.3rem; opacity: 0.9; margin-top: 1rem; max-width: 600px; 
+  }
+
+  /* Slide counter */
+  .slide-num {
+    position: absolute; bottom: 2rem; right: 3rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem; color: var(--gray); opacity: 0.5;
+  }
+
+  /* Score bar */
+  .score-row { display: flex; align-items: center; gap: 1rem; margin-bottom: 0.75rem; }
+  .score-label { min-width: 280px; font-size: 0.95rem; }
+  .score-bar-bg { 
+    flex: 1; height: 24px; background: rgba(255,255,255,0.06); 
+    border-radius: 12px; overflow: hidden; max-width: 300px; 
+  }
+  .score-bar-fill { 
+    height: 100%; border-radius: 12px; 
+    display: flex; align-items: center; justify-content: flex-end; padding-right: 8px;
+    font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; font-weight: 700;
+  }
+
+  @media (max-width: 768px) {
+    .slide { padding: 3rem 5%; }
+    .slide-title h1 { font-size: 2.2rem; }
+    .slide h2 { font-size: 1.6rem; }
+    .metrics { flex-direction: column; }
+    .profile-cards { flex-direction: column; }
+    .roadmap { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+
+<!-- SLIDE 1: Title -->
+<section class="slide slide-title">
+  <div class="company">Growth4U</div>
+  <h1>Strategic Plan Q2 2026</h1>
+  <div class="subtitle">De Foundation a pipeline cualificado en 90 días</div>
+  <span class="slide-num">1 / 8</span>
+</section>
+
+<!-- SLIDE 2: Dónde estamos -->
+<section class="slide">
+  <h2>Dónde estamos <span class="accent">hoy</span></h2>
+  <ul class="highlights">
+    <li><span class="icon">🎯</span> <span>GEO <strong>#1-2 en Gemini</strong> para "agencia growth fintech España" — ya aparecemos en búsquedas IA</span></li>
+    <li><span class="icon">📝</span> <span><strong>20+ artículos</strong> blog + <strong>9 lead magnets</strong> + <strong>4 case studies</strong> verificados (Bnext, Bit2Me, Criptan, GoCardless)</span></li>
+    <li><span class="icon">👥</span> <span>LinkedIn activo (3 perfiles: Alfonso, Martín, Philippe) pero <strong>0 leads generados</strong></span></li>
+    <li><span class="icon">📊</span> <span>Meta Ads sin pixel — ads corriendo <strong>a ciegas</strong></span></li>
+    <li><span class="icon">⭐</span> <span>1 review en Trustpilot (3.5★) — paradoja: vendemos confianza sin social proof</span></li>
+    <li><span class="icon">🛠️</span> <span>GHL + Instantly + Meta BM disponibles pero <strong>no activados</strong></span></li>
+  </ul>
+  <span class="slide-num">2 / 8</span>
+</section>
+
+<!-- SLIDE 3: Gaps -->
+<section class="slide">
+  <h2>3 gaps críticos que <span class="accent">bloquean todo</span></h2>
+  <ul class="highlights">
+    <li><span class="icon">🔴</span> <span><strong>Meta Pixel sin instalar</strong> — no podemos optimizar conversiones. Cada euro de ads se desperdicia</span></li>
+    <li><span class="icon">🔴</span> <span><strong>GA4 sin eventos custom</strong> — no sabemos qué canal trae leads reales</span></li>
+    <li><span class="icon">🔴</span> <span><strong>2 URLs de booking diferentes</strong> — atribución fragmentada entre dominios</span></li>
+    <li><span class="icon">🟡</span> <span><strong>LinkedIn sin funnel de conversión</strong> — publicamos pero no convertimos engagement en pipeline</span></li>
+    <li><span class="icon">🟡</span> <span><strong>0 social proof como empresa</strong> — los cases son de Alfonso como empleado, no de Growth4U</span></li>
+  </ul>
+  <span class="slide-num">3 / 8</span>
+</section>
+
+<!-- SLIDE 4: Objetivo -->
+<section class="slide">
+  <h2>Objetivo: <span class="accent">pipeline cualificado</span> en 90 días</h2>
+  <div class="metrics">
+    <div class="metric-card">
+      <div class="label">Calls cualificadas / semana</div>
+      <div class="values">
+        <span class="baseline">0</span>
+        <span class="arrow">→</span>
+        <span class="target">8-10</span>
+      </div>
+    </div>
+    <div class="metric-card">
+      <div class="label">Pipeline mensual</div>
+      <div class="values">
+        <span class="baseline">0€</span>
+        <span class="arrow">→</span>
+        <span class="target">70K€</span>
+      </div>
+    </div>
+    <div class="metric-card">
+      <div class="label">Reviews verificables</div>
+      <div class="values">
+        <span class="baseline">1</span>
+        <span class="arrow">→</span>
+        <span class="target">8+</span>
+      </div>
+    </div>
+  </div>
+  <span class="slide-num">4 / 8</span>
+</section>
+
+<!-- SLIDE 5: Estrategias -->
+<section class="slide">
+  <h2>7 estrategias, <span class="accent">3 canales de pipeline</span></h2>
+  <div style="margin-top:1rem; max-width:800px;">
+    <div class="score-row">
+      <span class="score-label">🥇 <strong>LinkedIn 3 perfiles</strong> → DM → Call</span>
+      <div class="score-bar-bg"><div class="score-bar-fill" style="width:82.5%;background:var(--gradient);">8.25</div></div>
+    </div>
+    <div class="score-row">
+      <span class="score-label">🥈 <strong>Cold Email B2B</strong> (300 empresas)</span>
+      <div class="score-bar-bg"><div class="score-bar-fill" style="width:82.5%;background:var(--gradient);">8.25</div></div>
+    </div>
+    <div class="score-row">
+      <span class="score-label">🥉 <strong>Meta Ads</strong> (reactivados con tracking)</span>
+      <div class="score-bar-bg"><div class="score-bar-fill" style="width:80%;background:var(--blue);">8.00</div></div>
+    </div>
+    <div class="score-row">
+      <span class="score-label">⭐ <strong>Social Proof</strong> (reviews + advocacy)</span>
+      <div class="score-bar-bg"><div class="score-bar-fill" style="width:80%;background:var(--blue);">8.00</div></div>
+    </div>
+    <div class="score-row">
+      <span class="score-label">📰 <strong>Free Media</strong> (directorios + guest posts)</span>
+      <div class="score-bar-bg"><div class="score-bar-fill" style="width:77.5%;background:rgba(255,255,255,0.15);">7.75</div></div>
+    </div>
+    <div class="score-row">
+      <span class="score-label">🐦 <strong>Twitter/X</strong> (build-in-public)</span>
+      <div class="score-bar-bg"><div class="score-bar-fill" style="width:70%;background:rgba(255,255,255,0.15);">7.00</div></div>
+    </div>
+    <div class="score-row">
+      <span class="score-label">📱 <strong>IG + TikTok</strong> (social content)</span>
+      <div class="score-bar-bg"><div class="score-bar-fill" style="width:65%;background:rgba(255,255,255,0.15);">6.50</div></div>
+    </div>
+  </div>
+  <span class="slide-num">5 / 8</span>
+</section>
+
+<!-- SLIDE 6: LinkedIn -->
+<section class="slide">
+  <h2>LinkedIn — <span class="accent">3 perfiles, 1 sistema</span></h2>
+  <div class="profile-cards">
+    <div class="profile-card">
+      <div class="name">Alfonso</div>
+      <div class="role">Founder / CEO — DMs a C-level</div>
+      <div class="pillars">
+        <span>🏗️ Sistemas</span>
+        <span>📊 Fintech</span>
+        <span>🎯 Casos</span>
+        <span>🔨 Build in Public</span>
+        <span>🤖 IA</span>
+      </div>
+    </div>
+    <div class="profile-card">
+      <div class="name">Martín</div>
+      <div class="role">COO / Socio — DMs a CTOs</div>
+      <div class="pillars">
+        <span>🏗️ Sistemas</span>
+        <span>⚙️ Ops</span>
+        <span>🎯 Casos</span>
+        <span>🔨 Build in Public</span>
+        <span>🤖 IA</span>
+      </div>
+    </div>
+    <div class="profile-card">
+      <div class="name">Philippe</div>
+      <div class="role">Growth — DMs a Growth Managers</div>
+      <div class="pillars">
+        <span>⚡ Tácticas</span>
+        <span>📈 Channels</span>
+        <span>🧪 Experimentos</span>
+      </div>
+    </div>
+  </div>
+  <ul class="highlights" style="margin-top:1.5rem;">
+    <li><span class="icon">📅</span> <span>Calendario coordinado: 7-10 posts/semana total, sin solapar temas</span></li>
+    <li><span class="icon">🔗</span> <span>9 lead magnets como CTA en cada post (Trust Score, CAC Sostenible, etc.)</span></li>
+    <li><span class="icon">🎯</span> <span>Target: <strong>≥5 calls cualificadas/semana</strong> en semana 6</span></li>
+  </ul>
+  <span class="slide-num">6 / 8</span>
+</section>
+
+<!-- SLIDE 7: Roadmap -->
+<section class="slide">
+  <h2>Roadmap: <span class="accent">3 fases, 12 semanas</span></h2>
+  <div class="roadmap">
+    <div class="phase">
+      <div class="phase-label">Fase 0 — Sem 1-2</div>
+      <div class="phase-title">Fontanería</div>
+      <ul>
+        <li>✓ Instalar Meta Pixel + CAPI</li>
+        <li>✓ Configurar GA4 conversiones</li>
+        <li>✓ Unificar booking URL</li>
+        <li>✓ Pedir reviews a clientes</li>
+        <li>✓ Warm-up dominios email</li>
+      </ul>
+    </div>
+    <div class="phase">
+      <div class="phase-label">Fase 1 — Sem 3-6</div>
+      <div class="phase-title">Activación</div>
+      <ul>
+        <li>✓ LinkedIn 3 perfiles + DMs</li>
+        <li>✓ Cold email 50/día</li>
+        <li>✓ Meta Ads 3 variantes</li>
+        <li>✓ Blitz directorios (≥15)</li>
+        <li>✓ IG + TikTok + Twitter/X</li>
+        <li>✓ Guest posts + HARO</li>
+      </ul>
+    </div>
+    <div class="phase">
+      <div class="phase-label">Fase 2 — Sem 7-12</div>
+      <div class="phase-title">Escalar</div>
+      <ul>
+        <li>✓ Duplicar canal ganador</li>
+        <li>✓ 2 case studies propios</li>
+        <li>✓ LinkedIn Ads si orgánico ok</li>
+        <li>✓ Podcast appearances</li>
+        <li>✓ Partnership VCs</li>
+      </ul>
+    </div>
+  </div>
+  <span class="slide-num">7 / 8</span>
+</section>
+
+<!-- SLIDE 8: Proyectos + CTA -->
+<section class="slide">
+  <h2><span class="accent">8 proyectos</span>, 41 tareas</h2>
+  <table class="slide-table">
+    <thead>
+      <tr><th>ID</th><th>Proyecto</th><th>Target</th><th>Review</th><th>Status</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>P01</td><td>Fontanería Web</td><td>Tracking 100%</td><td>28 mar</td><td><span class="badge badge-red">Fase 0</span></td></tr>
+      <tr><td>P02</td><td>LinkedIn Pipeline (3 perfiles)</td><td>≥5 calls/sem</td><td>25 abr</td><td><span class="badge badge-blue">Fase 1</span></td></tr>
+      <tr><td>P03</td><td>Cold Email Pipeline</td><td>≥5 meetings/mes</td><td>9 may</td><td><span class="badge badge-blue">Fase 1</span></td></tr>
+      <tr><td>P04</td><td>Meta Ads Reactivación</td><td>CPL <25€</td><td>9 may</td><td><span class="badge badge-yellow">Bloqueado</span></td></tr>
+      <tr><td>P05</td><td>Social Proof & Reviews</td><td>5+ reviews ≥4.5★</td><td>11 abr</td><td><span class="badge badge-red">Fase 0</span></td></tr>
+      <tr><td>P06</td><td>Free Media & Directories</td><td>≥15 dirs, ≥2 posts/mes</td><td>9 may</td><td><span class="badge badge-blue">Fase 1</span></td></tr>
+      <tr><td>P07</td><td>Social Content (IG + TikTok)</td><td>IG 500, TikTok 1K</td><td>13 jun</td><td><span class="badge badge-blue">Fase 1</span></td></tr>
+      <tr><td>P08</td><td>Twitter/X Build-in-Public</td><td>+500 followers</td><td>13 jun</td><td><span class="badge badge-blue">Fase 1</span></td></tr>
+    </tbody>
+  </table>
+  <span class="slide-num">8 / 8</span>
+</section>
+
+<!-- SLIDE 9: CTA -->
+<section class="slide slide-cta">
+  <h2>Empezamos el lunes</h2>
+  <div class="cta-text">Fase 0 — fontanería web + reviews.<br>El tracking funcional desbloquea todo lo demás.</div>
+  <span class="slide-num" style="color:rgba(255,255,255,0.4);">Growth4U × SanchoCMO</span>
+</section>
+
+</body>
+</html>

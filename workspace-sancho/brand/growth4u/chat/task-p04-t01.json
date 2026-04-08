@@ -1,0 +1,16 @@
+{
+  "messages": [
+    {
+      "role": "user",
+      "text": "Estoy abriendo el chat sobre \"Verificar pixel + conversiones funcionando (post-P01)\". Dame un resumen rápido del estado actual y qué podemos hacer. Si necesitas algo de mí, dímelo.",
+      "ts": "2026-03-27T07:46:53.988Z"
+    },
+    {
+      "role": "bot",
+      "text": "## 📋 Estado Actual — P04 (Meta Ads Reactivación)\n\n**Status:** `blocked` — esperando completar **P01-Fontanería** (Pixel + GA4 install)\n\n### Tarea P04-T01 (este chat)\n\"Verificar pixel + conversiones funcionando (post-P01)\"\n\n**Estado:** Blocked — pendiente de P01\n**Owner:** Sancho\n**Done criteria:** Meta Pixel Helper + GA4 DebugView confirman eventos en tiempo real\n\n---\n\n### 🎯 Qué podemos hacer\n\n**Opción A — Esperar P01**\nActualmente bloqueada por P01. La verificación real del pixel requiere que esté instalado primero.\n\n**Opción B — Adelantar trabajo previo (paralelo)**\nMientras tanto podemos arrancar **P04-T02** (creatividades) sin depender del pixel:\n- 3 hooks basados en los ECPs de Growth4U\n- Copy + visual + CTA para cada uno\n- Quedarían listos para cuando el tracking esté operativo\n\n**Opción C — Verificar estado de P01**\nRevisar si P01 ya está completo o cerca. Si el pixel/GA4 ya están instalados, podemos verificar ahora y desbloquear P04-T01.\n\n---\n\n### 🔍 ¿Qué necesito de ti?\n\n1. **¿Quieres que revise el estado de P01?** (para saber si ya está listo para verificar)\n2. **O prefieres que arranque directamente las creatividades (T02)?** (trabajo paralelo mientras se completa P01)\n3. **O hay algo específico que querías revisar sobre tracking/pixel?**\n\nDime cómo quieres avanzar.",
+      "agent": "sancho",
+      "ts": "2026-03-27T07:48:37.681Z"
+    }
+  ],
+  "updatedAt": 1774597717681
+}

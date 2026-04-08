@@ -1,0 +1,20 @@
+{
+  "client": "dealcar",
+  "status": "completed",
+  "current_step": 6,
+  "started_at": "2026-03-18T10:41:00Z",
+  "thread_id": "1483777119061409876",
+  "sender_id": "1402171221747040369",
+  "responses": {
+    "step_1_empresa": "Dealcar es un software SaaS todo-en-uno para concesionarios de vehículos de ocasión (B2B). Fundada en 2023, sede en Las Rozas de Madrid. Startup. Ayuda a concesionarios independientes a digitalizar su gestión: inventario, CRM, multipublicación en portales (Coches.net, Wallapop, Milanuncios, Autoscout, etc.), creación de webs, facturación, contratos con firma digital, expedientes, gestión de leads, app móvil, y ecosistema de partners (financiación, proveedores). +500 compraventas confían en ellos. Propuesta de valor: ahorrar hasta 30h/mes y reducir tiempo de rotación de vehículos. Planes desde 54€/mes (Starter, 15 coches) hasta 144€/mes (Profesional, 100 coches), sin permanencia. Ronda Seed €3M en Feb 2025 (Entourage, 4Founders Capital, Itnig, Demium, Bynd). Fundadores: Carlos Horno (CEO) y Sergio Guisado (CTO), ex-fintech (Qonto, Block, Bnext).",
+    "step_2_producto": "El software de gestión todo-en-uno para concesionarios de vehículos de ocasión (el producto core de Dealcar). Incluye CRM, inventario, multipublicación en portales, facturación Verifactu, contratos, expedientes digitales, informes DGT/CARFAX, Google Vehicle Ads, DealcarPay, financiación al cliente, mejora fotos con IA, app móvil.",
+    "step_3_cliente_ideal": "Segmento #1: Compraventas independientes de coches usados. #2: Concesionarios multimarca. #3: Dealers oficiales. Público secundario: partners financieros, colaboradores, afiliados. Decisor: dueño/gerente del concesionario. Usuario final: personal del concesionario (vendedores, administración). Base actual: +500 compraventas. Pendiente: criterios de cualificación, peor tipo de cliente, descalificación automática de leads.",
+    "step_4_competidores": "Directos España: Nextlane (DMS/CRM modular, pago por módulos, VN/VO), Walcu (CRM puro automoción, automatizaciones WhatsApp/SMS/email), ApexCRM (CRM + inventario + Wallapop, alta 24h sin permanencia), Motoreto (todo-en-uno con marketplace, digitalización integral VO), Motorflash (digitalización operativa), OmnisAuto (ecosistema GearTech stock/CRM), Portalclub. Directos Europa: MotorK (suite SaaS, +900 concesionarios), Epicor, Reynolds and Reynolds, Seez. Indirectos: Excel, gestión manual, publicación directa en portales, WhatsApp como CRM informal. Diferencial Dealcar: todo-en-uno moderno, mobile-first, IA fotos, DealcarPay, equipo ex-fintech. Moats: efecto red, DealcarPay lock-in, data +500 dealers, €3M Seed. Pendiente: contra quién pierden clientes, qué hacen mejor los competidores.",
+    "step_5_recursos": "Equipo marketing: 2 personas (Irene Pérez + Marina), tras la salida de Edu. Equipo total: 11-50 empleados. Presupuesto marketing, equipo ventas, CRM, herramientas email/automación, gestión ads: pendiente confirmar con Dealcar.",
+    "step_6_historial": "Presencia social: Instagram @dealcar.io (4.485 seguidores, 174 posts), LinkedIn, Facebook, X. Carlos Horno activo en LinkedIn (~9K seguidores). Contenido que funciona: video testimoniales (Everest Ocasión), blog SEO (guías dealers, comparadores Dealcar vs Nextlane/Portalclub). Canales: web CTA 'Probar ahora', WhatsApp directo, formulario contacto, blog, Academy (help.dealcar.io), comunidad recién lanzada, programa afiliados. Medios: EU-Startups, AIM Group, StartupsReal, Dealroom, PitchBook, Crunchbase. Pendiente: métricas por canal (inversión/leads/CPL/conversión), qué contenido ha funcionado peor, mensajes que generan rechazo."
+  },
+  "follow_ups_used": {},
+  "completed_at": null
+}
+-03-22T17:00:00Z"
+}

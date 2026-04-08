@@ -1,0 +1,46 @@
+[
+  {
+    "id": "P05-T01",
+    "name": "Listar clientes para reviews",
+    "owner": "Alfonso",
+    "status": "ready",
+    "channel": "research",
+    "deliverable": "playbook.md §T01 — tabla base con 4 cases + huecos para clientes actuales",
+    "discord_thread_id": "1482640202064466016",
+    "done_criteria": "Mínimo 5 clientes listados con email/teléfono y resultado documentado.",
+    "skill": "deep-research"
+  },
+  {
+    "id": "P05-T02",
+    "name": "Enviar emails pidiendo reviews",
+    "owner": "Alfonso",
+    "status": "ready",
+    "channel": "prospecting",
+    "deliverable": "playbook.md §T02 — 3 templates listos (formal, ex-colega, WhatsApp)",
+    "discord_thread_id": "1482640233894772746",
+    "done_criteria": "Templates con link directo a Trustpilot. Emails enviados a primeros 5 clientes.",
+    "skill": "outreach-sequence-builder"
+  },
+  {
+    "id": "P05-T03",
+    "name": "Pedir LinkedIn recommendations",
+    "owner": "Alfonso+Martín",
+    "status": "ready",
+    "channel": "prospecting",
+    "deliverable": "playbook.md §T03 — mensajes listos para Alfonso y Martín",
+    "discord_thread_id": "1482640267965366392",
+    "done_criteria": "Alfonso y Martín envían mínimo 5 requests cada uno.",
+    "skill": "outreach-sequence-builder"
+  },
+  {
+    "id": "P05-T04",
+    "name": "Crear Google Business Profile",
+    "owner": "Martín",
+    "status": "ready",
+    "channel": "web",
+    "deliverable": "playbook.md §T04 — instrucciones + descripción + datos optimizados",
+    "discord_thread_id": "1482640296218071101",
+    "done_criteria": "GBP visible en Google Maps con descripción, servicios y foto.",
+    "skill": "frontend-design"
+  }
+]

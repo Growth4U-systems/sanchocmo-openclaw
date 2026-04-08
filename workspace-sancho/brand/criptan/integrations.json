@@ -1,0 +1,109 @@
+{
+  "client": "criptan",
+  "updated_at": "2026-03-30T13:45:00Z",
+  "services": [
+    {
+      "id": "ga4",
+      "provider": "Google Analytics 4",
+      "status": "connected",
+      "ownership": "client",
+      "config": {
+        "PROPERTY_ID": "387759614"
+      },
+      "connected_at": "2026-03-30T12:13:23Z",
+      "notes": "Conectado. Property ID 387759614. Service Account con acceso Viewer."
+    },
+    {
+      "id": "gsc",
+      "provider": "Google Search Console",
+      "status": "connected",
+      "ownership": "system",
+      "config": {
+        "SITE_URL": "sc-domain:criptan.com"
+      },
+      "connected_at": "2026-03-30T12:19:34Z",
+      "notes": "Conectado. Site URL sc-domain:criptan.com. Service Account con acceso."
+    },
+    {
+      "id": "clevertap",
+      "provider": "CleverTap",
+      "status": "pending_connection",
+      "ownership": "client",
+      "config_needed": [
+        "ACCOUNT_ID",
+        "PASSCODE",
+        "REGION"
+      ],
+      "notes": "CRM/CDP principal. Tiene funnel in-app completo: registro → KYC → depósito → Earn."
+    }
+  ],
+  "dataSources": {
+    "ga4": {
+      "provider": "ga4",
+      "status": "connected",
+      "config": {
+        "PROPERTY_ID": "387759614"
+      },
+      "envVars": [],
+      "lastTestedAt": "2026-03-30T12:13:23.112Z"
+    },
+    "gsc": {
+      "provider": "gsc",
+      "status": "connected",
+      "config": {
+        "SITE_URL": "sc-domain:criptan.com"
+      },
+      "envVars": [],
+      "lastTestedAt": "2026-03-30T12:19:34.476Z"
+    },
+    "sheets": {
+      "provider": "sheets",
+      "status": "connected",
+      "config": {
+        "spreadsheetId": "1fb_uCEwmXiHGnmOjxcrUpUuqoe83ifXVHFoScbffqk4",
+        "range": "Summary!A:Z"
+      },
+      "envVars": [],
+      "lastTestedAt": "2026-03-31T09:00:00Z",
+      "notes": "Manual input: signups, kyc, deposits, earn, recurring"
+    }
+  },
+  "systemOverrides": {},
+  "updatedAt": "2026-03-30T12:19:34.477Z",
+  "metricsSheet": {
+    "spreadsheetId": "1fb_uCEwmXiHGnmOjxcrUpUuqoe83ifXVHFoScbffqk4",
+    "url": "https://docs.google.com/spreadsheets/d/1fb_uCEwmXiHGnmOjxcrUpUuqoe83ifXVHFoScbffqk4/edit"
+  },
+  "recommended": [
+    {
+      "apiId": "appstore",
+      "label": "App Store Connect",
+      "metric": "App Downloads",
+      "priority": "medium"
+    },
+    {
+      "apiId": "google_play",
+      "label": "Google Play Console",
+      "metric": "App Downloads",
+      "priority": "medium"
+    },
+    {
+      "apiId": "google_ads",
+      "label": "Google Ads",
+      "metric": "Paid Spend (when active)",
+      "priority": "high_when_needed"
+    },
+    {
+      "apiId": "meta_ads",
+      "label": "Meta Ads",
+      "metric": "Paid Spend (when active)",
+      "priority": "high_when_needed"
+    },
+    {
+      "apiId": "metricool",
+      "label": "Metricool",
+      "metric": "Social Engagement",
+      "priority": "low"
+    }
+  ]
+}

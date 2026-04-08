@@ -1,0 +1,189 @@
+{
+  "module": "foundation-import",
+  "version": 1,
+  "created_at": "2026-03-26T14:08:00Z",
+  "updated_at": "2026-03-26T14:08:00Z",
+  "status": "completed",
+  "project": {
+    "slug": "paymatico",
+    "name": "Paymático",
+    "website": "https://paymatico.com",
+    "language": "es",
+    "market": "España",
+    "country_code": "ES"
+  },
+  "brand": {
+    "name": "Paymático",
+    "aliases": ["Paymatico Payment Institution", "Paymatico"],
+    "domains": ["paymatico.com"]
+  },
+  "niches": [
+    {
+      "id": "n1",
+      "name": "Cadenas de Fitness con Problemas de Pagos",
+      "brief": "COO/CFO/Director de Operaciones de cadena de gimnasios (franquicia o corporativa, 15–200+ centros) con impagos. Churn involuntario, falta de control financiero, dispersión de fondos.",
+      "priority": "high",
+      "subniches": [
+        {
+          "id": "n1-s1",
+          "name": "Gimnasios franquiciados multi-sede",
+          "priority": "high",
+          "keywords_seed": ["pagos gimnasios", "gestión cobros recurrentes fitness", "recibos SEPA devueltos gimnasio"],
+          "known_media": ["fitnessrevolucionario.com", "palco23.com", "cmdsport.com"]
+        },
+        {
+          "id": "n1-s2",
+          "name": "Boxes CrossFit y estudios boutique",
+          "priority": "medium",
+          "keywords_seed": ["cobros recurrentes crossfit", "pagos box crossfit", "software pagos fitness"],
+          "known_media": ["wodmagazine.com", "menshealth.com"]
+        }
+      ]
+    },
+    {
+      "id": "n2",
+      "name": "Negocios Multisede en Etapa de Crecimiento",
+      "brief": "CEO/Director de Expansión de red multisede (franquicia o corporativa) abriendo 6-12 locales/año. Velocidad de apertura bloqueada por banco, conciliación que colapsa con el crecimiento.",
+      "priority": "high",
+      "subniches": [
+        {
+          "id": "n2-s1",
+          "name": "Franquicias de restauración (fast food, casual dining, bakery)",
+          "priority": "high",
+          "keywords_seed": ["pagos franquicia restaurante", "gestión cobros cadena restauración", "TPV marca blanca franquicia"],
+          "known_media": ["hosteleriayturismo.com", "infohoreca.com", "restauracioncolectiva.com"]
+        },
+        {
+          "id": "n2-s2",
+          "name": "Cadenas de belleza/estética y peluquerías",
+          "priority": "medium",
+          "keywords_seed": ["pagos franquicia belleza", "cobros clínica estética", "software pagos cadena peluquería"],
+          "known_media": ["bebeauty.es", "estética.es"]
+        },
+        {
+          "id": "n2-s3",
+          "name": "Gasolineras independientes y low-cost",
+          "priority": "high",
+          "keywords_seed": ["pagos gasolinera independiente", "TPV gasolinera", "cobros flota combustible"],
+          "known_media": ["elperiodicodelaenergia.com", "energiasdehoy.com"]
+        },
+        {
+          "id": "n2-s4",
+          "name": "Lavanderías autoservicio",
+          "priority": "low",
+          "keywords_seed": ["pagos lavandería autoservicio", "cobros recurrentes lavandería"],
+          "known_media": []
+        }
+      ]
+    },
+    {
+      "id": "n3",
+      "name": "ERPs sin Capacidad de Procesamiento de Pagos",
+      "brief": "CTO/CPO de software de gestión vertical (fitness, estética, dental, talleres) sin licencia ni infraestructura para ofrecer pagos a sus clientes. Pérdida de clientes frente a competidores con pagos integrados.",
+      "priority": "medium",
+      "subniches": [
+        {
+          "id": "n3-s1",
+          "name": "Software gestión fitness (WodBuster, Nubimed)",
+          "priority": "high",
+          "keywords_seed": ["white label pagos software fitness", "API pagos gimnasios", "marca blanca TPV fitness"],
+          "known_media": ["wodmagazine.com", "fitnessrevolucionario.com"]
+        },
+        {
+          "id": "n3-s2",
+          "name": "Software gestión estética/belleza (Treatwell Pro)",
+          "priority": "medium",
+          "keywords_seed": ["API pagos software estética", "white label pagos belleza"],
+          "known_media": ["bebeauty.es"]
+        },
+        {
+          "id": "n3-s3",
+          "name": "Software talleres (GDTaller)",
+          "priority": "medium",
+          "keywords_seed": ["API pagos software talleres", "white label pagos automoción"],
+          "known_media": ["posventa.info", "talleres.pro"]
+        },
+        {
+          "id": "n3-s4",
+          "name": "Software clínicas dentales (Nubimed)",
+          "priority": "medium",
+          "keywords_seed": ["API pagos software dental", "white label pagos clínica dental"],
+          "known_media": ["gacetadental.com", "dentistrytoday.es"]
+        }
+      ]
+    }
+  ],
+  "competitors": [
+    {
+      "name": "Stripe",
+      "domain": "stripe.com",
+      "niches": ["n1", "n2", "n3"],
+      "threat_level": "medium"
+    },
+    {
+      "name": "Adyen",
+      "domain": "adyen.com",
+      "niches": ["n2", "n3"],
+      "threat_level": "medium"
+    },
+    {
+      "name": "MultiSafepay",
+      "domain": "multisafepay.com",
+      "niches": ["n2", "n3"],
+      "threat_level": "low"
+    },
+    {
+      "name": "Sipay",
+      "domain": "sipay.es",
+      "niches": ["n1", "n2", "n3"],
+      "threat_level": "high"
+    },
+    {
+      "name": "Paynopain",
+      "domain": "paynopain.com",
+      "niches": ["n1", "n2", "n3"],
+      "threat_level": "high"
+    },
+    {
+      "name": "MONEI",
+      "domain": "monei.com",
+      "niches": ["n1", "n2", "n3"],
+      "threat_level": "high"
+    },
+    {
+      "name": "Pecunpay",
+      "domain": "pecunpay.com",
+      "niches": ["n1", "n2"],
+      "threat_level": "low"
+    },
+    {
+      "name": "Paycomet",
+      "domain": "paycomet.com",
+      "niches": ["n1", "n2", "n3"],
+      "threat_level": "medium"
+    },
+    {
+      "name": "Zettle",
+      "domain": "zettle.com",
+      "niches": ["n2"],
+      "threat_level": "low"
+    },
+    {
+      "name": "Mollie",
+      "domain": "mollie.com",
+      "niches": ["n2", "n3"],
+      "threat_level": "high"
+    }
+  ],
+  "market_filter": {
+    "country": "ES",
+    "language": "es",
+    "exclude_domains_pattern": ["forbes.com", "techcrunch.com", "cnbc.com", "businessinsider.com"],
+    "prioritize_tlds": [".es"]
+  },
+  "metadata": {
+    "duration_seconds": 120,
+    "apis_called": [],
+    "errors": []
+  }
+}

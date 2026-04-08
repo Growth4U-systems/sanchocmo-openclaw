@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sanchocmo.com/schemas/company-context.schema.json",
+  "title": "Company Context",
+  "description": "Core company information (what/want/believe) from company-context skill",
+  "type": "object",
+  "required": ["name", "industry", "what_they_do", "what_they_want", "what_they_believe"],
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Company name"
+    },
+    "industry": {
+      "type": "string",
+      "description": "Primary industry/sector",
+      "examples": ["Fintech", "SaaS", "E-commerce", "Healthtech"]
+    },
+    "business_model": {
+      "type": "string",
+      "description": "Revenue model",
+      "enum": ["B2B SaaS", "B2C App", "Marketplace", "Subscription", "Transactional", "Freemium", "Enterprise"]
+    },
+    "stage": {
+      "type": "string",
+      "enum": ["Pre-launch", "Early", "Growth", "Mature"],
+      "description": "Business maturity stage"
+    },
+    "what_they_do": {
+      "type": "string",
+      "description": "Product/service description (1-2 sentences)"
+    },
+    "what_they_want": {
+      "type": "string",
+      "description": "Goals, ambitions, where they're headed"
+    },
+    "what_they_believe": {
+      "type": "string",
+      "description": "Values, principles, brand philosophy"
+    },
+    "team_size": {
+      "type": "integer",
+      "description": "Estimated team size",
+      "minimum": 1
+    },
+    "tech_stack": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Detected tools (analytics, CRM, etc.)"
+    },
+    "urls": {
+      "type": "object",
+      "properties": {
+        "website": {"type": "string", "format": "uri"},
+        "app_store": {"type": "string", "format": "uri"},
+        "play_store": {"type": "string", "format": "uri"},
+        "linkedin": {"type": "string", "format": "uri"}
+      }
+    },
+    "last_updated": {
+      "type": "string",
+      "format": "date",
+      "description": "ISO 8601 date"
+    },
+    "updated_by": {
+      "type": "string",
+      "description": "Skill that last updated this"
+    }
+  }
+}

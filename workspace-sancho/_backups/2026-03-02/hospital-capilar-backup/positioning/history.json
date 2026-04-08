@@ -1,0 +1,20 @@
+{
+  "current": "v2.md",
+  "versions": [
+    {
+      "version": 1,
+      "date": "2026-02-26T23:49:16Z",
+      "skill": "positioning",
+      "qa": "pre-QA",
+      "score": null
+    },
+    {
+      "version": 2,
+      "date": "2026-02-27T21:10:00Z",
+      "skill": "positioning-messaging",
+      "qa": "PASS",
+      "score": null,
+      "changes": "Full rewrite with 6 ECPs from niche-discovery v1. Per-ECP value criteria, asset mapping, benefit-proof, messaging playbooks. Bilingual copy."
+    }
+  ]
+}

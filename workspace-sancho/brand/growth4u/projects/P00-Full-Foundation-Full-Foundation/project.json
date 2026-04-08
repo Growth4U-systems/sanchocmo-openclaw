@@ -1,0 +1,21 @@
+{
+  "id": "P00-Full-Foundation",
+  "name": "Full Foundation (L0-L5)",
+  "description": "Foundation completa con análisis profundo de mercado, competencia, posicionamiento y brand voice. Necesaria para contenido premium, brand building y escalado de canales.",
+  "approach": "Tras Fast Foundation, ejecutamos Market Intelligence (L2) para entender el mercado, Competitor Intelligence para mapear rivales, Self Intelligence para analizar fortalezas propias, y SWOT para sintetizar. Luego Positioning (L3) para definir cómo nos diferenciamos, Pricing Strategy y Metrics Plan (L4). Finalmente Brand Voice (L5) para contenido consistente y Visual Identity para diseño.",
+  "objective": {
+    "description": "Foundation completa ejecutada",
+    "metric": "pillars_completed",
+    "baseline": 0,
+    "target": 12,
+    "unit": " pillars"
+  },
+  "origin": "onboarding",
+  "phase": -1,
+  "category": "foundation",
+  "review_date": null,
+  "status": "completed",
+  "discord": {
+    "project_thread_id": null
+  }
+}

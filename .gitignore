@@ -2,6 +2,7 @@
 
 # dependencies
 /node_modules
+node_modules/
 /.pnp
 .pnp.js
 .yarn/install-state.gz
@@ -27,6 +28,7 @@ yarn-error.log*
 
 # local env files
 .env*.local
+.env
 
 # vercel
 .vercel
@@ -34,3 +36,66 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# === Secrets & Auth ===
+openclaw.json
+openclaw.json.bak*
+openclaw.json.pre-migration
+exec-approvals.json
+agents/*/agent/auth.json
+agents/*/agent/auth-profiles.json
+
+# === Session logs (large, contain secrets) ===
+agents/*/sessions/
+*.jsonl
+
+# === Browser data ===
+browser/
+
+# === Logs ===
+logs/
+*.log
+
+# === Backups (large, may contain secrets) ===
+backups/
+
+# === Caches & temp ===
+.cache/
+delivery-queue/
+update-check.json
+subagents/
+
+# === Workspace backups ===
+skills.bak.*
+.git-backup-temp
+
+# === Generated/large data files ===
+agents/*-data.js
+gateway-data.js
+
+# === Media (binary) ===
+media/
+
+# === Shell completions (installed by CLI) ===
+completions/
+
+# === Canvas (installed by CLI) ===
+canvas/
+
+# === Device state ===
+devices/
+
+# === OpenClaw internal workspace state ===
+.openclaw/workspace-state.json
+
+# === Identity ===
+identity/
+
+# === Nested workspace copies ===
+workspace-sancho/workspace-*/
+workspace-sancho/workspace/
+workspace-sancho/agents/
+
+# === SQLite memory indexes ===
+*.sqlite
+workspace-main/

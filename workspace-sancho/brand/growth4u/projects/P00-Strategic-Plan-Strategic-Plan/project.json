@@ -1,0 +1,28 @@
+{
+  "id": "P00-Strategic-Plan",
+  "name": "Strategic Plan",
+  "description": "Creación y ejecución del plan estratégico completo: análisis SWOT, priorización de canales, roadmap de proyectos y KPIs.",
+  "approach": "Tras Full Foundation, sintetizamos todo el contexto en un SWOT ejecutivo. Priorizamos canales (Outreach, Contenido, Partners, Ads) según ajuste al ICP y recursos. Creamos roadmap de proyectos con fases 0-3. Definimos métricas de éxito. Ejecutamos los proyectos del plan.",
+  "objective": {
+    "description": "Plan estratégico creado y proyectos en ejecución",
+    "metric": "plan_status",
+    "baseline": "not-started",
+    "target": "executing",
+    "unit": ""
+  },
+  "origin": "onboarding",
+  "phase": -1,
+  "category": "foundation",
+  "review_date": "2026-06-30",
+  "status": "active",
+  "documents": [
+    {
+      "name": "Strategic Plan Q2 2026",
+      "path": "brand/growth4u/strategic-plan/current.md",
+      "type": "primary"
+    }
+  ],
+  "discord": {
+    "project_thread_id": null
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "versions": [
+    {
+      "version": "v1",
+      "date": "2026-03-03T23:40:00Z",
+      "author": "sancho",
+      "changes": "Initial SWOT synthesis from 3 approved upstream pillars (self-intel, competitor-intel with 3 deep dives, market-intel). 7 strengths, 8 weaknesses, 10 opportunities, 7 threats. 13 TOWS strategies ICE-scored. 3-phase action plan.",
+      "status": "pending-approval"
+    }
+  ]
+}

@@ -1,0 +1,349 @@
+{
+  "module": "influencers",
+  "version": 1,
+  "created_at": "2026-03-26T14:21:00Z",
+  "updated_at": "2026-03-26T14:21:00Z",
+  "status": "completed",
+  "methodology": {
+    "approach": "Identify thought leaders, influencers, associations, and media in target verticals (fintech, fitness, franchises) for partnership, backlinks, content collaboration",
+    "data_sources": [
+      "Gemini search: fintech thought leaders España",
+      "Gemini search: fitness influencers España",
+      "Gemini search: asociación hostelería franquicias España"
+    ]
+  },
+  "data": {
+    "influencer_categories": [
+      {
+        "category_id": "I1",
+        "category_name": "Fintech / Pagos Thought Leaders",
+        "relevance": "critical",
+        "description": "Líderes de opinión en fintech y pagos en España. Target para: co-marketing, guest posts, webinars, LinkedIn engagement, quotes en artículos.",
+        "influencers": [
+          {
+            "name": "María Muñoz",
+            "title": "Top fintech influencer España",
+            "affiliation": "EFPA, colaboradora Expansión y Onda Cero",
+            "platforms": ["Twitter", "LinkedIn", "Blog"],
+            "estimated_reach": "100K+",
+            "relevance_score": 9,
+            "engagement_strategy": "Invitar a webinar sobre PSD3 y nuevos PSP regulados. Comentar sus posts en LinkedIn. Solicitar quote para artículo 'PSP regulado BdE'.",
+            "priority": "P0"
+          },
+          {
+            "name": "Phillipe Gelis",
+            "title": "CEO Kantox",
+            "affiliation": "Kantox (currency management)",
+            "platforms": ["LinkedIn"],
+            "estimated_reach": "120K+ LinkedIn followers",
+            "relevance_score": 8,
+            "engagement_strategy": "Comentar posts sobre payments y cross-border. Invitar a LinkedIn Live sobre 'Pagos internacionales para mid-market'.",
+            "priority": "P0"
+          },
+          {
+            "name": "Salvador Más",
+            "title": "CEO Finametrix, VP AEFI",
+            "affiliation": "AEFI (Asociación Española de Fintech y Insurtech)",
+            "platforms": ["LinkedIn", "Twitter"],
+            "estimated_reach": "50K+",
+            "relevance_score": 9,
+            "engagement_strategy": "Solicitar membership AEFI. Asistir a eventos AEFI. Proponer panel en evento AEFI: 'PSPs regulados vs neobancos'.",
+            "priority": "P0"
+          },
+          {
+            "name": "Carlos Blanco",
+            "title": "Fintech promoter, mentor Wayra",
+            "affiliation": "Founder Brokoli, Finteca, Housfy",
+            "platforms": ["LinkedIn", "Twitter"],
+            "estimated_reach": "70K+",
+            "relevance_score": 7,
+            "engagement_strategy": "Engagement en LinkedIn posts. Solicitar quote para caso de éxito. Invitar a asesorar portfolio Wayra con Paymático.",
+            "priority": "P1"
+          },
+          {
+            "name": "François Derbaix",
+            "title": "CEO Indexa Capital",
+            "affiliation": "Indexa Capital",
+            "platforms": ["LinkedIn", "Twitter"],
+            "estimated_reach": "60K+",
+            "relevance_score": 6,
+            "engagement_strategy": "Engagement ocasional. Menor relevancia (inversión vs pagos).",
+            "priority": "P2"
+          }
+        ]
+      },
+      {
+        "category_id": "I2",
+        "category_name": "Fitness / Gimnasios Influencers",
+        "relevance": "high",
+        "description": "Influencers fitness con audiencia de gimnasios/boxes. Target para: contenido colaborativo, testimonials, eventos, backlinks desde blogs.",
+        "influencers": [
+          {
+            "name": "David Marchante (Powerexplosive)",
+            "title": "Influencer fitness, enfoque fuerza/rendimiento",
+            "affiliation": "Powerexplosive",
+            "platforms": ["Instagram", "YouTube", "TikTok"],
+            "estimated_reach": "2M+ seguidores combinados",
+            "relevance_score": 8,
+            "engagement_strategy": "Comentar videos sobre gestión de gimnasios. Ofrecer entrevista: 'Cómo cobrar recurrente sin perder socios'. Patrocinio discreto en contenido gestión gimnasio.",
+            "priority": "P1"
+          },
+          {
+            "name": "Patry Jordán (Gym Virtual)",
+            "title": "Creadora Gym Virtual, autora libros fitness",
+            "affiliation": "Gym Virtual",
+            "platforms": ["Instagram", "YouTube"],
+            "estimated_reach": "3M+ seguidores combinados",
+            "relevance_score": 7,
+            "engagement_strategy": "Contenido colaborativo: 'Gestión de pagos para gimnasios online'. Backlink desde blog Gym Virtual. Menor relevancia (B2C vs B2B).",
+            "priority": "P2"
+          },
+          {
+            "name": "Sergio Peinado",
+            "title": "Influencer fitness, rutinas y motivación",
+            "affiliation": "Personal brand",
+            "platforms": ["Instagram", "YouTube"],
+            "estimated_reach": "1M+ seguidores",
+            "relevance_score": 6,
+            "engagement_strategy": "Similar a Patry. B2C focus, menor relevancia para Paymático B2B.",
+            "priority": "P2"
+          }
+        ]
+      },
+      {
+        "category_id": "I3",
+        "category_name": "Asociaciones / Gremios Verticales",
+        "relevance": "critical",
+        "description": "Asociaciones sectoriales. Target para: membership, eventos, directorios, whitepapers colaborativos, backlinks institucionales.",
+        "organizations": [
+          {
+            "name": "Asociación Española de Franquiciadores (AEF)",
+            "description": "Representa franquiciadores españoles. 2º sector con mayor peso: hostelería/restauración (198 enseñas, 62 operan en 70 países).",
+            "website": "aefranquicia.es",
+            "members_estimated": "500+ franquicias",
+            "relevance_score": 10,
+            "engagement_strategy": "Solicitar membership. Patrocinar evento AEF (ej: congreso anual). Publicar whitepaper: 'Pagos multi-ubicación para franquicias — Guía AEF x Paymático'. Solicitar featured listing en directorio.",
+            "priority": "P0"
+          },
+          {
+            "name": "Asociación Española de Fintech y Insurtech (AEFI)",
+            "description": "Representa sector fintech España. Salvador Más es VP.",
+            "website": "aefi.es",
+            "members_estimated": "300+ fintechs",
+            "relevance_score": 9,
+            "engagement_strategy": "Solicitar membership (si no están ya). Asistir eventos mensuales. Proponer panel: 'PSPs regulados BdE — veteranía vs nuevos entrantes'. Networking con peers.",
+            "priority": "P0"
+          },
+          {
+            "name": "Asociación Nacional de Gimnasios (ANEG)",
+            "description": "Representa gimnasios independientes y cadenas en España.",
+            "website": "aneg.es (verificar si existe)",
+            "members_estimated": "Unknown",
+            "relevance_score": 8,
+            "engagement_strategy": "Investigar si existe ANEG. Si no, buscar asociación regional (ej: Asociación de Gimnasios de Madrid). Solicitar partnership. Publicar whitepaper: 'Cobros recurrentes SEPA — Guía para gimnasios'.",
+            "priority": "P1"
+          },
+          {
+            "name": "Federación Española de Hostelería y Restauración (FEHR)",
+            "description": "Representa hostelería y restauración en España.",
+            "website": "fehr.es",
+            "members_estimated": "1000+ establecimientos",
+            "relevance_score": 7,
+            "engagement_strategy": "Asistir eventos. Solicitar backlink desde recursos. Menor relevancia vs AEF (FEHR es más genérico, AEF es franquicias específicas).",
+            "priority": "P2"
+          }
+        ]
+      },
+      {
+        "category_id": "I4",
+        "category_name": "Media / Publicaciones Verticales",
+        "relevance": "high",
+        "description": "Publicaciones especializadas en fintech, hostelería, fitness. Target para: guest posts, press releases, quotes, backlinks editoriales.",
+        "publications": [
+          {
+            "name": "Expansión",
+            "description": "Diario económico líder en España. Cubre fintech y pagos.",
+            "website": "expansion.com",
+            "estimated_reach": "500K+ lectores/mes",
+            "relevance_score": 9,
+            "engagement_strategy": "Pitch guest article: 'PSP regulado BdE desde 2013 — Lecciones de 12 años sin sanciones'. Pitch caso de éxito: 'Onboarding en 3 días — Caso Kviku'. Contactar María Muñoz (colaboradora).",
+            "priority": "P0"
+          },
+          {
+            "name": "Finnovating",
+            "description": "Portal especializado en fintech. Publica rankings de influencers fintech.",
+            "website": "finnovating.com",
+            "estimated_reach": "100K+ lectores/mes",
+            "relevance_score": 8,
+            "engagement_strategy": "Pitch artículo: 'PSPs regulados BdE — mapa del sector 2026'. Solicitar inclusión en ranking fintech. Patrocinar newsletter.",
+            "priority": "P0"
+          },
+          {
+            "name": "Palco23",
+            "description": "Publicación especializada en negocio del deporte (fitness, gimnasios).",
+            "website": "palco23.com",
+            "estimated_reach": "150K+ lectores/mes",
+            "relevance_score": 8,
+            "engagement_strategy": "Pitch artículo: 'Cobros recurrentes para cadenas de gimnasios — Cómo VivaGym centraliza pagos'. Guest post: 'Tecnología de pagos para gimnasios multicentro'.",
+            "priority": "P1"
+          },
+          {
+            "name": "Infohoreca",
+            "description": "Portal de noticias de hostelería.",
+            "website": "infohoreca.com",
+            "estimated_reach": "80K+ lectores/mes",
+            "relevance_score": 7,
+            "engagement_strategy": "Pitch artículo: 'Pagos multi-ubicación para franquicias de restaurantes'. Guest post: 'TPV marca blanca vs TPV genérico'.",
+            "priority": "P1"
+          },
+          {
+            "name": "RestauracciónNews",
+            "description": "Noticias de restauración y hostelería.",
+            "website": "restauracionnews.com",
+            "estimated_reach": "70K+ lectores/mes",
+            "relevance_score": 7,
+            "engagement_strategy": "Similar a Infohoreca. Pitch caso de éxito de franquicia cliente.",
+            "priority": "P2"
+          }
+        ]
+      }
+    ],
+    "engagement_plan": {
+      "immediate_30_days": [
+        {
+          "action": "Solicitar membership AEFI (Asociación Española de Fintech)",
+          "target": "Salvador Más (VP AEFI)",
+          "priority": "P0"
+        },
+        {
+          "action": "Solicitar membership AEF (Asociación Española de Franquiciadores)",
+          "target": "AEF directamente",
+          "priority": "P0"
+        },
+        {
+          "action": "Engagement LinkedIn con María Muñoz, Phillipe Gelis, Salvador Más",
+          "target": "Comentar 3-5 posts/semana, compartir su contenido",
+          "priority": "P0"
+        },
+        {
+          "action": "Pitch guest article a Expansión",
+          "target": "Redacción Expansión + María Muñoz",
+          "pitch": "'PSP regulado BdE desde 2013 — 12 años sin sanciones: lecciones aprendidas'",
+          "priority": "P0"
+        },
+        {
+          "action": "Pitch artículo a Finnovating",
+          "target": "Redacción Finnovating",
+          "pitch": "'PSPs regulados BdE — mapa del sector 2026 y diferencias con EMIs'",
+          "priority": "P0"
+        }
+      ],
+      "3_months": [
+        {
+          "action": "Asistir a evento AEFI",
+          "target": "Próximo evento mensual AEFI",
+          "priority": "P0"
+        },
+        {
+          "action": "Proponer panel en evento AEF",
+          "target": "AEF congreso anual",
+          "pitch": "'Pagos multi-ubicación para franquicias — Tendencias 2026'",
+          "priority": "P1"
+        },
+        {
+          "action": "Publicar whitepaper colaborativo con AEF",
+          "target": "AEF + 3 franquicias clientes",
+          "title": "'Pagos multi-ubicación para franquicias — Guía AEF x Paymático 2026'",
+          "priority": "P1"
+        },
+        {
+          "action": "Guest post en Palco23",
+          "target": "Redacción Palco23",
+          "pitch": "'Cobros recurrentes SEPA para cadenas de gimnasios — Caso VivaGym y otros'",
+          "priority": "P1"
+        },
+        {
+          "action": "Webinar con María Muñoz",
+          "target": "María Muñoz",
+          "topic": "'PSD3 y el futuro de PSPs regulados en España'",
+          "priority": "P1"
+        }
+      ],
+      "12_months": [
+        {
+          "action": "Patrocinar evento AEF (congreso anual franquicias)",
+          "target": "AEF",
+          "budget_eur": 5000,
+          "priority": "P1"
+        },
+        {
+          "action": "Colaboración contenido con influencer fitness (David Marchante Powerexplosive)",
+          "target": "Powerexplosive",
+          "format": "Video o artículo: 'Gestión de pagos para gimnasios independientes'",
+          "priority": "P2"
+        },
+        {
+          "action": "5+ guest posts publicados en media verticales",
+          "target": "Expansión, Finnovating, Palco23, Infohoreca, RestauracciónNews",
+          "priority": "P0"
+        },
+        {
+          "action": "Networking regular en eventos AEFI (asistir mensualmente)",
+          "target": "AEFI",
+          "priority": "P0"
+        }
+      ]
+    }
+  },
+  "recommendations": {
+    "priority_1_immediate": [
+      "Solicitar membership AEFI y AEF (ambas asociaciones críticas)",
+      "Engagement LinkedIn diario con top 3 fintech thought leaders (María Muñoz, Phillipe Gelis, Salvador Más)",
+      "Pitch 2 guest articles: Expansión + Finnovating"
+    ],
+    "priority_2_3_months": [
+      "Asistir a 1+ evento AEFI",
+      "Publicar whitepaper colaborativo con AEF",
+      "Guest post en Palco23",
+      "Webinar con thought leader fintech"
+    ],
+    "priority_3_12_months": [
+      "Patrocinar evento AEF",
+      "5+ guest posts publicados",
+      "Colaboración influencer fitness (Powerexplosive)",
+      "Networking mensual AEFI"
+    ]
+  },
+  "kpis": {
+    "month_3": {
+      "memberships": 2,
+      "events_attended": 1,
+      "guest_posts_published": 2,
+      "influencer_engagements": "30+ LinkedIn comments/shares",
+      "backlinks_earned": 3
+    },
+    "month_6": {
+      "memberships": 2,
+      "events_attended": 3,
+      "guest_posts_published": 4,
+      "influencer_engagements": "60+ LinkedIn comments/shares",
+      "backlinks_earned": 6,
+      "whitepapers_published": 1
+    },
+    "month_12": {
+      "memberships": 2,
+      "events_attended": 8,
+      "events_sponsored": 1,
+      "guest_posts_published": 8,
+      "influencer_engagements": "120+ LinkedIn comments/shares",
+      "backlinks_earned": 12,
+      "whitepapers_published": 2,
+      "webinars_hosted": 2
+    }
+  },
+  "metadata": {
+    "duration_seconds": 120,
+    "apis_called": ["gemini_search"],
+    "errors": []
+  }
+}

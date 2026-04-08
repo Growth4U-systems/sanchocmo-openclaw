@@ -1,0 +1,52 @@
+{
+  "messages": [
+    {
+      "role": "user",
+      "text": "Estoy abriendo el chat sobre \"Fast Foundation\". Dame un resumen rápido del estado actual y qué podemos hacer. Si necesitas algo de mí, dímelo.",
+      "ts": "2026-04-01T15:36:59.715Z"
+    },
+    {
+      "role": "user",
+      "text": "Analiza la empresa en https://www.dealcar.io/ y ejecuta el Fast Foundation",
+      "ts": "2026-04-01T15:37:00.195Z"
+    },
+    {
+      "role": "bot",
+      "text": "¡Vamos al lío! Aquí tienes el estado de Dealcar:\n\n## 📊 Estado Fast Foundation\n\n**Company Brief** → ✅ Completado (marzo 2026). Tenemos una base sólida: SaaS B2B todo-en-uno para concesionarios independientes, +500 clientes, ronda Seed €3M, equipo ex-fintech.\n\n**Pilares pendientes (4 de 5):**\n1. **Self-Analysis (L1)** — Análisis interno de Dealcar (fortalezas, debilidades, assets)\n2. **Market Analysis (L1)** — Mercado de software para concesionarios VO en España/EU\n3. **Brand Voice Snapshot** — Tono y voz de marca\n4. **Niche/ECP básico** — Perfiles de cliente ideal priorizados\n\n## ⚠️ Gaps importantes en el Company Brief\n\nHay bastante info pendiente de confirmar con el equipo de Dealcar que impactaría la calidad de los siguientes pilares:\n\n- **Unit economics** — MRR, CAC, LTV, churn, conversión (todo en blanco)\n- **Objeciones de clientes** — No tenemos las 3 principales\n- **Funnel actual** — Proceso de venta/onboarding sin documentar\n- **Presupuesto de marketing** — Desconocido\n- **Objetivos cuantitativos** — Sin metas a 3/6/12 meses\n\n## 🎯 Qué podemos hacer\n\n**Opción A — Avanzar con lo que hay:** Puedo ejecutar Self-Analysis y Market Analysis con la info pública + lo que tenemos. Serán versiones v1 que se enriquecerán después. Es lo más práctico.\n\n**Opción B — Primero completar gaps:** Si tienes acceso al equipo de Dealcar para conseguir los unit economics y objeciones, los pilares siguientes serán mucho más potentes.\n\n**Mi recomendación:** Opción A. Avanzar con Self + Market en paralelo, y cuando lleguen los datos del equipo, enriquecemos. La Foundation no se bloquea por datos pendientes.\n\n¿Qué prefieres? ¿Arrancamos con Self + Market Analysis?",
+      "agent": "sancho",
+      "ts": "2026-04-01T15:37:50.659Z"
+    },
+    {
+      "role": "bot",
+      "text": "Vamos al lío. Tengo la homepage de Dealcar. Necesito más datos para pre-rellenar bien los 5 docs. Déjame scrapear las páginas clave.",
+      "agent": "sancho",
+      "ts": "2026-04-01T15:39:31.812Z"
+    },
+    {
+      "role": "bot",
+      "text": "Buen material. Déjame buscar sus perfiles sociales y datos de mercado para completar.",
+      "agent": "sancho",
+      "ts": "2026-04-01T15:39:31.816Z"
+    },
+    {
+      "role": "bot",
+      "text": "Tengo toda la información. Aquí va lo que he extraído — necesito que valides antes de generar los 5 docs:\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n📋 **COMPANY BRIEF — Lo que he encontrado**\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n🏢 **Empresa:** Dealcar — \"La solución #1 para concesionarios de coches independientes\"\n📦 **Producto:** Plataforma SaaS todo-en-uno para concesionarios de vehículos de ocasión (gestión stock, web, CRM, facturación, contratos, multipublicación portales, app móvil, pagos, fotos IA, financiación)\n💼 **Modelo:** B2B SaaS — Suscripción mensual (54€-144€/mes según tier) + pay-per-use (fotos IA, boost, firma electrónica)\n🎯 **Cliente ideal:** Concesionarios/compraventas de coches independientes en España (15-100+ vehículos en stock)\n👥 **Fundadores:** Carlos Horno (ex-Qonto, Block, Bnext) + Sergio Guisado (tech lead)\n📅 **Fundación:** 2023\n💰 **Inversores:** Itnig Future One (Factorial founders), 4Founders Capital, Demium Capital, Entourage VC, Bynd VC\n📊 **Tracción:** +500 compraventas ya usan Dealcar\n🌐 **Web:** dealcar.io | **Portal:** portal.dealcar.io\n📱 **App:** iOS + Android\n🐦 **X:** @DealcarSoftware (17 seguidores, poco activo)\n\n**Productos clave:**\n- Gestión de vehículos + multipublicación a portales\n- Web personalizada para concesionarios\n- CRM de leads/ventas\n- DealcarPay (pasarela de pagos integrada)\n- Fotos con IA (~5€/coche)\n- Facturación electrónica (Verifactu)\n- Contratos y plantillas\n- Informe DGT & CARFAX\n- Google Vehicle Ads (Dealcar Boost)\n- Financiación a clientes\n- Próximamente: Agente de compras IA, Agente de ventas IA\n\n**Competidores directos:**\n- **Walcu** — CRM especializado automoción\n- **MotorK** — Suite modular (WebSparK, LeadSparK, StockSparK)\n- **Motorflash** — CRM + multipublicador\n- **Nextlane** — Plataforma digital concesionarios\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n❓ **Gaps que necesito confirmar:**\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n1. **Presupuesto marketing mensual** — ¿rango aproximado?\n2. **Equipo marketing** — ¿quién se dedica a marketing y cuántas horas/semana?\n3. **Herramientas actuales** — ¿CRM propio, analytics (GA4), ads activos?\n4. **Qué se ha probado antes en marketing** — ¿qué funcionó y qué no?\n5. **Objetivo principal a 3-6 meses** — ¿más signups? ¿más revenue? ¿expansión geográfica?\n6. **LinkedIn empresa** — ¿tienen perfil activo? No lo encontré enlazado en la web.\n\n¿Esto es correcto? ¿Qué falta, qué está mal, y qué puedes contarme de los gaps?",
+      "agent": "sancho",
+      "ts": "2026-04-01T15:39:31.817Z"
+    },
+    {
+      "role": "user",
+      "text": "5000€ al mes",
+      "ts": "2026-04-01T16:48:29.125Z"
+    },
+    {
+      "role": "bot",
+      "text": "Perfecto, 5.000€/mes anotado. 👍\n\nPara cerrar los gaps restantes rápido:\n\n1. **Equipo marketing** — ¿Quién se dedica a marketing? ¿Es interno, freelance, agencia? ¿Horas/semana aproximadas?\n2. **Herramientas actuales** — ¿Usáis GA4, algún CRM para vuestro propio marketing, Meta Ads, Google Ads...?\n3. **Qué habéis probado** — ¿Content marketing, paid ads, outbound, partnerships? ¿Algo que haya funcionado bien o mal?\n4. **Objetivo principal 3-6 meses** — ¿Más signups de concesionarios? ¿Subir revenue/ARPU? ¿Expansión?\n5. **LinkedIn empresa** — ¿Tenéis perfil activo?\n\nSi no tienes todos los datos ahora, dime lo que sepas y avanzo con lo que hay marcando el resto como gaps.",
+      "agent": "sancho",
+      "ts": "2026-04-01T16:48:49.424Z"
+    }
+  ],
+  "updatedAt": 1775062129424,
+  "discordThreadId": null,
+  "discordChannelId": null
+}

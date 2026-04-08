@@ -1,0 +1,15 @@
+[
+  {
+    "id": "P00-FF-T01",
+    "name": "Ejecutar Fast Foundation",
+    "description": "Intake rápido: URL o conversación → genera docs lite de company-brief, market, self, ecps, brand-voice + rellena brand_summary.",
+    "type": "foundation",
+    "skill": "fast-foundation",
+    "pillar": "fast-foundation",
+    "status": "completed",
+    "owner": "Sancho",
+    "channel": "strategy",
+    "depends_on": null,
+    "completed": "2026-03-30"
+  }
+]

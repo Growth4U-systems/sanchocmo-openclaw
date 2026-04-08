@@ -1,0 +1,18 @@
+{
+  "messages": [
+    {
+      "role": "user",
+      "text": "Estoy abriendo el chat sobre \"Nueva Estrategia\". Dame un resumen rápido del estado actual y qué podemos hacer. Si necesitas algo de mí, dímelo.",
+      "ts": "2026-03-27T18:34:49.808Z"
+    },
+    {
+      "role": "bot",
+      "text": "Perfecto Alfonso. Aquí tienes el estado de Growth4U:\n\n---\n\n## 📊 Estado Actual — Growth4U\n\n### ✅ Foundation COMPLETA (Layers 0-5)\nTodos los pilares aprobados: Company Brief, Market Intelligence, Competitors, SWOT, Niche Discovery (5 ECPs), Positioning (5 ECPs), Pricing, Brand Voice, Visual Identity.\n\n### ✅ Plan Estratégico Q2 2026 Aprobado\n7 estrategias, 8 proyectos (P01-P08). Horizonte 90 días. Objetivo: **pipeline cualificado**.\n\n### 📋 Estado de Proyectos\n\n| Proyecto | Status |\n|----------|--------|\n| **P01 Fontanería Web** (Pixel, GA4, URLs) | 🟡 Activo — review 28 mar (mañana) |\n| **P02 LinkedIn Pipeline** (3 perfiles) | 🟡 Activo |\n| **P03 Cold Email** (Instantly) | 🟡 Activo |\n| **P04 Meta Ads** | 🔴 Bloqueado por P01 |\n| **P05 Social Proof** | 🟡 Activo |\n| **P06 Free Media** | 🟡 Activo |\n\n### 🔴 Bloqueantes Críticos (P01)\n1. **Meta Pixel sin instalar** → Ads a ciegas\n2. **GA4 sin conversiones** → No se mide qué canal trae leads\n3. **2 URLs de booking** → Atribución fragmentada\n\n---\n\n## 🎯 Qué Podemos Hacer Ahora\n\n**Prioridad 1 — Desbloquear P01 (Fontanería):**\n- Instalar Meta Pixel + CAPI en growth4u.io (~1-2h tuyas)\n- Configurar conversiones GA4\n- Unificar URL de booking\n\n**Prioridad 2 — Arrancar ejecución:**\n- **LinkedIn**: Puedo generar calendarios de contenido y secuencias para los 3 perfiles\n- **Cold Email**: Puedo crear las secuencias por ECP para Instantly\n- **Social Proof**: Campaña de reviews a clientes actuales\n\n**Prioridad 3 — Contenido:**\n- Hub de /servicios/ (casi vacía)\n- Content pipeline por ECP\n\n---\n\n**¿Por dónde quieres empezar?** La fontanería web (P01) es lo que más ROI inmediato tiene — desbloquea Meta Ads y la medición de todo lo demás.",
+      "agent": "sancho",
+      "ts": "2026-03-27T18:35:26.778Z"
+    }
+  ],
+  "updatedAt": 1774636526778,
+  "discordThreadId": null,
+  "discordChannelId": null
+}

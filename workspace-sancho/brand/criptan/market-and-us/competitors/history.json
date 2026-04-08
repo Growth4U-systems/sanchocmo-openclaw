@@ -1,0 +1,13 @@
+{
+  "versions": [
+    {
+      "version": "v1",
+      "date": "2026-03-30T15:32:00Z",
+      "author": "sancho",
+      "skill": "competitor-intelligence",
+      "mode": "deep",
+      "changes": "Initial competitor intelligence: 5 direct (Bit2Me, Bitvavo, Coinbase, eToro, Crypto.com), 3 indirect (Binance, Kraken, BBVA), 2 emerging (Trade Republic, Revolut). Full 3-lens analysis, battle cards, landscape map.",
+      "file": "v1.md"
+    }
+  ]
+}

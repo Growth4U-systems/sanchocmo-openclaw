@@ -1,0 +1,11 @@
+{
+  "cronId": "36d0bff9-fea9-40d8-9bfd-bf1e5e58468b",
+  "cronName": "Call Prep Daily — Growth4U",
+  "slug": "paymatico",
+  "date": "2026-03-31",
+  "runAtMs": 1774989000014,
+  "status": "ok",
+  "durationMs": 122328,
+  "model": "claude-opus-4-6",
+  "content": "📞 No hay llamadas con leads programadas para mañana (miércoles 1 de abril).\n\nSe revisaron 10 eventos en Calendar vs 200+ contactos en GHL. Todos los eventos de mañana son reuniones internas G4U o bloques personales:\n• 11:30 — Review semanal Paymatico (interno)\n• 12:00 — Weekly G4U <> Inluentia (partner)\n• 12:30 — Mid-week G4U (interno)\n• 13:00 — Alfonso <> Martin (interno)\n• 17:00 — Q&A Oier (interno)\n• 17:30 — Publicar en LinkedIn (tarea)\n\nPróximo check: esta noche."
+}

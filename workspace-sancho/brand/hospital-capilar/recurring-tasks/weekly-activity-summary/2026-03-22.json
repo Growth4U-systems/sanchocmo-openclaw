@@ -1,0 +1,11 @@
+{
+  "cronId": "f10d84d4-0e6d-4db1-8e1d-824d34efbbc7",
+  "cronName": "Weekly Activity Summary",
+  "slug": "hospital-capilar",
+  "date": "2026-03-22",
+  "runAtMs": 1774170276963,
+  "status": "ok",
+  "durationMs": 74374,
+  "model": "claude-opus-4-6",
+  "content": "## 📊 Resumen Semanal — 16-22 Mar 2026\n\n### 🏥 Hospital Capilar (Phase 0 → avanzando)\n- **Niche Discovery v3** aprobada por Philippe (16-Mar) — nichos priorizados listos\n- **Positioning v3.0** generada + Estrategia Nichos 2026 doc (16-Mar)\n- **Fase 1 Google Ads** — 4 docs nuevos: keyword research, guiones ads, presentación cliente, QA (17-19 Mar)\n- **Niche Presentation** HTML generada con logos HC (20-Mar)\n- **Meeting** procesada: HC Lead Nurturing Madrid (18-Mar)\n- **Daily Pulse** trackeado Lun-Vie\n- 📍 **Next**: Positioning pendiente aprobación → Brand Identity\n\n### 💳 Paymatico (Phase 0)\n- Sin avance esta semana\n- 📍 **Blocker**: Positioning ECP-1 (Franquicias) pendiente aprobación de Alex G desde 4-Mar\n\n### ☕ Masabo / Masavo (Phase 0)\n- Workspace creado, estructura mínima (foundation-state + integrations)\n- 📍 **Next**: Iniciar company-context onboarding\n\n### 🔧 Sistema & Skills\n- **Skill audit** completado (16-Mar): 10 skills revisados (Q3-Q4), 3 con improvement hints activos (positioning-messaging, niche-discovery, copywriting)\n- **SanchoCMO brand**: Escudero PDR v3→v4, competitor analysis (Distribb, Jasper, Okara AI), Q2 strategic plan, website spec\n- **Growth4U projects**: P01 Fontanería (6 tareas), P05 Social Proof (4 tareas) con playbooks, métricas diarias trackeadas\n\n### ⚠️ Pendientes sistema\n- Revisar acceso API Claude (email Anthropic 18-Mar — puede afectar operación)\n\n---\n*Generado automáticamente — Domingo 22-Mar 10:04 CEST*"
+}

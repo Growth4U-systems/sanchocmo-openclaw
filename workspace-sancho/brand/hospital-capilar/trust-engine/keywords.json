@@ -1,0 +1,35 @@
+{
+  "module": "keywords",
+  "version": 2,
+  "created_at": "2026-03-24T22:24:00Z",
+  "updated_at": "2026-03-25T00:15:00Z",
+  "status": "completed",
+  "data": {
+    "keywords": [
+      { "id": "kw-001", "keyword": "finasteride efectos secundarios", "niche_id": "n2", "category": "solution", "volume": 4400, "cpc": 0, "kd": "LOW", "opportunity_score": 0.65, "current_position": null, "status": "suggested", "rationale": "Alto volumen. Informacional. HC podría crear contenido médico autoritativo." },
+      { "id": "kw-002", "keyword": "clinica capilar madrid", "niche_id": "n1", "category": "ranking", "volume": 1900, "cpc": 11.29, "kd": "MEDIUM", "opportunity_score": 0.92, "current_position": 1, "status": "suggested", "rationale": "HC ya #1. Mantener y defender." },
+      { "id": "kw-003", "keyword": "alopecia androgenetica tratamiento", "niche_id": "n2", "category": "solution", "volume": 1300, "cpc": 1.35, "kd": "HIGH", "opportunity_score": 0.88, "current_position": null, "status": "suggested", "rationale": "Alto volumen. HC invisible. CUN y Quirón dominan. Oportunidad de contenido GEO." },
+      { "id": "kw-004", "keyword": "tratamiento anticaida pelo", "niche_id": "n2", "category": "solution", "volume": 720, "cpc": 1.12, "kd": "HIGH", "opportunity_score": 0.82, "current_position": null, "status": "suggested", "rationale": "Volumen medio-alto. HC invisible." },
+      { "id": "kw-005", "keyword": "PRP capilar precio", "niche_id": "n2", "category": "comparison", "volume": 720, "cpc": 0.13, "kd": "HIGH", "opportunity_score": 0.78, "current_position": null, "status": "suggested", "rationale": "HC tiene CRT. No rankea para PRP genérico." },
+      { "id": "kw-006", "keyword": "mesoterapia capilar precio", "niche_id": "n2", "category": "comparison", "volume": 720, "cpc": 3.34, "kd": "HIGH", "opportunity_score": 0.76, "current_position": null, "status": "suggested", "rationale": "HC tiene HRT (mesoterapia propia). Alto CPC indica intent comercial." },
+      { "id": "kw-007", "keyword": "mejor clinica capilar madrid", "niche_id": "n1", "category": "ranking", "volume": 590, "cpc": 9.63, "kd": "MEDIUM", "opportunity_score": 0.85, "current_position": 4, "status": "suggested", "rationale": "HC #4. ABC y El Mundo dominan con comparativas. CPC altísimo." },
+      { "id": "kw-008", "keyword": "caida pelo mujer tratamiento", "niche_id": "n3", "category": "solution", "volume": 590, "cpc": 1.25, "kd": "HIGH", "opportunity_score": 0.80, "current_position": null, "status": "suggested", "rationale": "Segmento mujer (18% pacientes HC). Olisticscience y farmacias dominan." },
+      { "id": "kw-009", "keyword": "tratamiento alopecia", "niche_id": "n2", "category": "solution", "volume": 480, "cpc": 1.85, "kd": "HIGH", "opportunity_score": 0.85, "current_position": null, "status": "suggested", "rationale": "Keyword genérica pero de alto volumen. CUN y Mayo Clinic dominan. Necesita contenido E-E-A-T." },
+      { "id": "kw-010", "keyword": "implante capilar madrid", "niche_id": "n4", "category": "solution", "volume": 390, "cpc": 7.39, "kd": "HIGH", "opportunity_score": 0.70, "current_position": null, "status": "suggested", "rationale": "Variante de trasplante. HC debería rankear." },
+      { "id": "kw-011", "keyword": "tratamiento capilar madrid", "niche_id": "n1", "category": "solution", "volume": 320, "cpc": 7.27, "kd": "MEDIUM", "opportunity_score": 0.95, "current_position": null, "status": "suggested", "rationale": "KEYWORD CORE — HC invisible. Máxima prioridad. Alto CPC." },
+      { "id": "kw-012", "keyword": "PRP capilar madrid", "niche_id": "n2", "category": "solution", "volume": 320, "cpc": 0.40, "kd": "HIGH", "opportunity_score": 0.80, "current_position": 8, "status": "suggested", "rationale": "HC en #8. Velázquez #1. Oportunidad de subir con página CRT dedicada." },
+      { "id": "kw-013", "keyword": "mesoterapia capilar madrid", "niche_id": "n2", "category": "solution", "volume": 320, "cpc": 4.71, "kd": "HIGH", "opportunity_score": 0.78, "current_position": 4, "status": "suggested", "rationale": "HC en #4. Oportunidad de subir con contenido HRT." },
+      { "id": "kw-014", "keyword": "caida cabello tratamiento", "niche_id": "n3", "category": "solution", "volume": 320, "cpc": 1.93, "kd": "HIGH", "opportunity_score": 0.83, "current_position": null, "status": "suggested", "rationale": "Mayo Clinic domina. HC necesita guía médica completa." },
+      { "id": "kw-015", "keyword": "dermatologo capilar madrid", "niche_id": "n3", "category": "discovery", "volume": 260, "cpc": 10.75, "kd": "HIGH", "opportunity_score": 0.75, "current_position": null, "status": "suggested", "rationale": "CPC altísimo (€10.75). TopDoctors y consultas privadas dominan." },
+      { "id": "kw-016", "keyword": "tratamiento capilar plasma", "niche_id": "n2", "category": "solution", "volume": 170, "cpc": 1.44, "kd": "HIGH", "opportunity_score": 0.72, "current_position": null, "status": "suggested", "rationale": "Variante de PRP. HC tiene CRT." },
+      { "id": "kw-017", "keyword": "hospital capilar opiniones", "niche_id": "n5", "category": "ranking", "volume": 140, "cpc": 4.83, "kd": "MEDIUM", "opportunity_score": 0.68, "current_position": 1, "status": "suggested", "rationale": "Branded. Trustpilot #1. Mantener." },
+      { "id": "kw-018", "keyword": "tricoscopia capilar", "niche_id": "n3", "category": "discovery", "volume": 70, "cpc": 7.67, "kd": "MEDIUM", "opportunity_score": 0.70, "current_position": null, "status": "suggested", "rationale": "Nicho técnico. CPC alto. HC ofrece esto." },
+      { "id": "kw-019", "keyword": "tratamiento capilar sin cirugia", "niche_id": "n2", "category": "solution", "volume": 10, "cpc": 7.03, "kd": "HIGH", "opportunity_score": 0.90, "current_position": null, "status": "suggested", "rationale": "Bajo volumen PERO alto CPC (€7.03) y exactamente el posicionamiento de HC. Las IAs buscan este tipo de contenido." },
+      { "id": "kw-020", "keyword": "minoxidil no funciona", "niche_id": "n2", "category": "solution", "volume": 20, "cpc": 0, "kd": "LOW", "opportunity_score": 0.85, "current_position": null, "status": "suggested", "rationale": "Bajo volumen en DataForSEO pero Reddit domina SERP. ECP #2 exacto. Oportunidad GEO enorme." }
+    ],
+    "enrichment_source": "DataForSEO Google Ads Search Volume API",
+    "location": "España (2724)",
+    "language": "es"
+  },
+  "metadata": { "duration_seconds": 15, "apis_called": ["dataforseo"], "errors": [] }
+}

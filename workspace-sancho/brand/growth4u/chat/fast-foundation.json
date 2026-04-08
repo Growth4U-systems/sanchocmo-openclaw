@@ -1,0 +1,20 @@
+{
+  "messages": [
+    {
+      "role": "user",
+      "text": "Estoy abriendo el chat sobre \"company brief\". Dame un resumen rápido del estado actual y qué podemos hacer. Si necesitas algo de mí, dímelo.",
+      "ts": 1775584035032
+    },
+    {
+      "role": "user",
+      "text": "Estoy abriendo el chat sobre \"company brief\". Dame un resumen rápido del estado actual y qué podemos hacer. Si necesitas algo de mí, dímelo.",
+      "ts": 1775584463209
+    },
+    {
+      "role": "user",
+      "text": "Estoy abriendo el chat sobre \"company brief\". Dame un resumen rápido del estado actual y qué podemos hacer. Si necesitas algo de mí, dímelo.",
+      "ts": 1775597114896
+    }
+  ],
+  "updatedAt": 1775597114896
+}
