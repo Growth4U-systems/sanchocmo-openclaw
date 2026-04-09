@@ -5,7 +5,7 @@ import { execSync } from "child_process";
 import { compose, withErrorHandler, withAuth } from "@/lib/api-middleware";
 import { BASE } from "@/lib/data/paths";
 
-const EXEC_PATH = "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin";
+const EXEC_PATH = process.env.PATH || "/usr/local/bin:/usr/bin:/bin";
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "POST") {
@@ -26,7 +26,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   const tmpFile = path.join(BASE, "_system", ".tmp-cron-prompt-" + taskId.slice(0, 8) + ".txt");
   fs.writeFileSync(tmpFile, prompt);
 
-  const ocBin = fs.existsSync("/opt/homebrew/bin/openclaw") ? "/opt/homebrew/bin/openclaw" : "openclaw";
+  const ocBin = "openclaw";
   const envOpts = {
     timeout: 15000,
     encoding: "utf-8" as const,

@@ -3,7 +3,7 @@ import { execSync } from "child_process";
 import { compose, withErrorHandler, withAuth } from "@/lib/api-middleware";
 import { loadClients } from "@/lib/data/clients";
 
-const EXEC_PATH = "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin";
+const EXEC_PATH = process.env.PATH || "/usr/local/bin:/usr/bin:/bin";
 
 function enrichCronJob(job: Record<string, unknown>, clients: { slug: string; name: string }[]) {
   const name = ((job.name as string) || "").toLowerCase();

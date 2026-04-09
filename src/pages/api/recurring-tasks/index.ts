@@ -9,7 +9,7 @@ import { loadClients } from "@/lib/data/clients";
 import { BASE } from "@/lib/data/paths";
 import { readJSON } from "@/lib/data/json-io";
 
-const EXEC_PATH = "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin";
+const EXEC_PATH = process.env.PATH || "/usr/local/bin:/usr/bin:/bin";
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 function detectCronCategory(name: string, _prompt: string): string {

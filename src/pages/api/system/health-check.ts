@@ -17,7 +17,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     // Delegate to the legacy health check script
     const result = execSync(
-      `/opt/homebrew/bin/openclaw health-check ${service} --json 2>/dev/null || echo '{"error":"unavailable"}'`,
+      `openclaw health-check ${service} --json 2>/dev/null || echo '{"error":"unavailable"}'`,
       { timeout: 30000, encoding: "utf-8", cwd: BASE }
     );
     res.setHeader("Access-Control-Allow-Origin", "*");

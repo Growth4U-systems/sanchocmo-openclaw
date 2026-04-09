@@ -19,7 +19,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
   res.setHeader("Access-Control-Allow-Origin", "*");
   try {
-    execSync("/opt/homebrew/bin/openclaw gateway restart 2>&1", {
+    execSync("openclaw gateway restart 2>&1", {
       timeout: 30000,
       encoding: "utf-8",
     });

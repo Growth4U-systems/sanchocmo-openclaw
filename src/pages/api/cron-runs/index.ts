@@ -6,7 +6,7 @@ import { compose, withErrorHandler, withAuth } from "@/lib/api-middleware";
 import { loadClients } from "@/lib/data/clients";
 import { BASE } from "@/lib/data/paths";
 
-const EXEC_PATH = "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin";
+const EXEC_PATH = process.env.PATH || "/usr/local/bin:/usr/bin:/bin";
 
 function loadCronsFromOpenClaw(): Record<string, unknown>[] {
   try {

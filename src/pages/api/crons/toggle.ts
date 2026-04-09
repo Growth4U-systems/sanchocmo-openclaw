@@ -2,7 +2,7 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import { execSync } from "child_process";
 import { compose, withErrorHandler, withAuth } from "@/lib/api-middleware";
 
-const EXEC_PATH = "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin";
+const EXEC_PATH = process.env.PATH || "/usr/local/bin:/usr/bin:/bin";
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "POST") {

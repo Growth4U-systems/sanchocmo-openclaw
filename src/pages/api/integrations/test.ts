@@ -6,7 +6,7 @@ import { compose, withErrorHandler, withAuth } from "@/lib/api-middleware";
 import { BASE } from "@/lib/data/paths";
 import { readJSON, writeJSON } from "@/lib/data/json-io";
 
-const EXEC_PATH = "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin";
+const EXEC_PATH = process.env.PATH || "/usr/local/bin:/usr/bin:/bin";
 
 function extractTestError(e: unknown): string {
   const stdout = ((e as Record<string, unknown>).stdout || "").toString();
@@ -35,7 +35,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
   function runTest(srcId: string): { status: string; error?: string } {
     try {
-      execSync(`/opt/homebrew/bin/node "${testScript}" --slug ${slug} --source ${srcId}`, {
+      execSync(`node "${testScript}" --slug ${slug} --source ${srcId}`, {
         cwd: BASE,
         timeout: 30000,
         encoding: "utf-8",

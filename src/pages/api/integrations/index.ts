@@ -6,7 +6,7 @@ import { compose, withErrorHandler, withAuth } from "@/lib/api-middleware";
 import { BASE } from "@/lib/data/paths";
 import { readJSON, writeJSON } from "@/lib/data/json-io";
 
-const EXEC_PATH = "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin";
+const EXEC_PATH = process.env.PATH || "/usr/local/bin:/usr/bin:/bin";
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === "GET") {
@@ -116,7 +116,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     let testResult: Record<string, unknown> = { status: "pending" };
 
     try {
-      const testOutput = execSync(`/opt/homebrew/bin/node "${testScript}" --slug ${slug} --source ${source}`, {
+      const testOutput = execSync(`node "${testScript}" --slug ${slug} --source ${source}`, {
         cwd: BASE,
         timeout: 30000,
         encoding: "utf-8",

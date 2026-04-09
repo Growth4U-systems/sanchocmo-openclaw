@@ -178,7 +178,7 @@ function handlePost(req: NextApiRequest, res: NextApiResponse) {
 
   try {
     const output = execSync(
-      `/opt/homebrew/bin/node ${testScript} --slug ${slug} --source ${apiId}`,
+      `node ${testScript} --slug ${slug} --source ${apiId}`,
       {
         cwd: scriptDir,
         timeout: 30_000,
