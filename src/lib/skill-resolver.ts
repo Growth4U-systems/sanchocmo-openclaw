@@ -1,8 +1,11 @@
 // ============================================================
-// Skill Resolution Engine — ported from mission-control.html:5149-5254
-// This is the core context system that determines which skill(s)
-// execute for each chat thread in SanchoCMO.
+// Skill Resolution Engine
+// Reads from brand/{slug}/chat-config.json when available,
+// falls back to hardcoded maps for backwards compatibility.
 // ============================================================
+
+import { readJSON } from "./data/json-io";
+import { chatConfigFile } from "./data/paths";
 
 export interface SkillResolution {
   skill: string;
@@ -10,13 +13,52 @@ export interface SkillResolution {
 }
 
 export interface SkillContext {
+  slug?: string;
   taskSkill?: string;
   taskType?: string;
   channel?: string;
+  tool?: string;
   strategyId?: string;
   strategy?: string;
   pillar?: string;
 }
+
+// ---------------------------------------------------------------------------
+// chat-config.json reader (cached per slug for the lifetime of the request)
+// ---------------------------------------------------------------------------
+
+interface ChatConfig {
+  pillars?: Record<string, { skill?: string; skills?: string[]; canonical?: string }>;
+  tasks?: {
+    _defaults?: { skill?: string; skills?: string[] };
+    _byType?: Record<string, { skill?: string; skills?: string[] }>;
+    _byChannel?: Record<string, { skill?: string; skills?: string[] }>;
+    _byTool?: Record<string, { skill?: string; skills?: string[] }>;
+  };
+  strategies?: { _defaults?: { skill?: string; skills?: string[] } };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  [key: string]: any;
+}
+
+const configCache = new Map<string, { data: ChatConfig; ts: number }>();
+const CACHE_TTL = 30_000; // 30s
+
+function loadChatConfig(slug: string): ChatConfig {
+  const cached = configCache.get(slug);
+  if (cached && Date.now() - cached.ts < CACHE_TTL) return cached.data;
+  const data = readJSON<ChatConfig>(chatConfigFile(slug), {});
+  configCache.set(slug, { data, ts: Date.now() });
+  return data;
+}
+
+function toResolution(entry: { skill?: string; skills?: string[] } | undefined): SkillResolution | null {
+  if (!entry?.skill) return null;
+  return { skill: entry.skill, skills: entry.skills ?? [entry.skill] };
+}
+
+// ---------------------------------------------------------------------------
+// Hardcoded fallback maps (kept for backwards compat / no chat-config.json)
+// ---------------------------------------------------------------------------
 
 /** 25 strategies (#01-#25), each with primary skill + secondary skills */
 export const STRATEGY_SKILLS: Record<string, SkillResolution> = {
@@ -47,50 +89,26 @@ export const STRATEGY_SKILLS: Record<string, SkillResolution> = {
   "25": { skill: "keyword-research", skills: ["keyword-research", "content-calendar-planner"] },
 };
 
-/** 12+ content channels → skills */
-export const CONTENT_CHANNEL_SKILLS: Record<string, SkillResolution> = {
-  blog: { skill: "seo-content", skills: ["deep-research", "seo-content", "schema-markup", "qa-bot", "content-calendar-planner"] },
-  seo: { skill: "seo-content", skills: ["deep-research", "seo-content", "schema-markup", "qa-bot", "content-calendar-planner"] },
-  linkedin: { skill: "linkedin-content", skills: ["linkedin-content", "brand-voice", "qa-bot", "content-calendar-planner"] },
-  instagram: { skill: "instagram-content", skills: ["instagram-content", "brand-voice", "qa-bot", "content-calendar-planner"] },
-  twitter: { skill: "twitter-content", skills: ["twitter-content", "brand-voice", "qa-bot", "content-calendar-planner"] },
-  tiktok: { skill: "tiktok-growth", skills: ["tiktok-growth", "social-content", "brand-voice", "qa-bot", "content-calendar-planner"] },
-  email: { skill: "email-sequences", skills: ["email-sequences", "copywriting", "qa-bot"] },
-  newsletter: { skill: "email-sequences", skills: ["email-sequences", "copywriting", "qa-bot"] },
-  youtube: { skill: "copywriting", skills: ["deep-research", "copywriting", "qa-bot"] },
-  "guest-post": { skill: "seo-content", skills: ["seo-content", "copywriting", "outreach-sequence-builder", "qa-bot"] },
-  "paid-ads": { skill: "direct-response-copy", skills: ["direct-response-copy", "qa-bot"] },
-  web: { skill: "landing-pages", skills: ["landing-pages", "alarife-integration", "qa-bot"] },
-  landing: { skill: "landing-pages", skills: ["landing-pages", "alarife-integration", "qa-bot"] },
-  presentations: { skill: "frontend-slides", skills: ["frontend-slides", "qa-bot"] },
-};
-
-/** 15+ foundation pillars → skills */
-export const PILLAR_SKILLS: Record<string, SkillResolution> = {
-  "fast-foundation": { skill: "fast-foundation", skills: ["fast-foundation"] },
-  "company-brief": { skill: "fast-foundation", skills: ["fast-foundation"] },
-  "market-analysis": { skill: "market-intelligence", skills: ["market-intelligence", "deep-research"] },
-  "competitor-analysis": { skill: "competitor-intelligence", skills: ["competitor-intelligence", "deep-research"] },
-  "self-analysis": { skill: "self-intelligence", skills: ["self-intelligence", "deep-research"] },
-  "market-synthesis": { skill: "market-synthesis", skills: ["market-synthesis", "frontend-slides"] },
-  "niche-discovery": { skill: "niche-discovery-100x", skills: ["niche-discovery-100x", "deep-research"] },
-  positioning: { skill: "positioning-messaging", skills: ["positioning-messaging"] },
-  pricing: { skill: "pricing-strategy", skills: ["pricing-strategy"] },
-  "brand-voice": { skill: "brand-voice", skills: ["brand-voice"] },
-  "visual-identity": { skill: "visual-identity", skills: ["visual-identity"] },
-  "metrics-setup": { skill: "metrics-setup", skills: ["metrics-setup", "connect-api"] },
-  "strategic-plan": { skill: "strategic-plan", skills: ["strategic-plan"] },
-  "existing-customer-data": { skill: "existing-customer-data", skills: ["existing-customer-data"] },
-  "ecp-validation": { skill: "ecp-validation", skills: ["ecp-validation"] },
-  "foundation-presentation": { skill: "frontend-slides", skills: ["frontend-slides", "market-synthesis"] },
-  "strategic-presentation": { skill: "frontend-slides", skills: ["frontend-slides", "strategic-plan"] },
-};
+// ---------------------------------------------------------------------------
+// Main resolver
+// ---------------------------------------------------------------------------
 
 /**
  * Resolve which skill(s) should be used for a chat thread.
- * 5-tier hierarchy matching the legacy resolveThreadSkills().
+ * Priority:
+ *   1. Explicit task skill (from tasks.json)
+ *   2. foundation task → pillar skill from chat-config.json
+ *   3. content task + channel → _byChannel from chat-config.json
+ *   4. tool task + tool name → _byTool from chat-config.json
+ *   5. task type → _byType from chat-config.json
+ *   6. strategy ID → STRATEGY_SKILLS
+ *   7. strategy name pattern
+ *   8. pillar → chat-config.json pillars
+ *   9. Fallback → sancho-manager
  */
 export function resolveThreadSkills(ctx: SkillContext): SkillResolution {
+  const cfg = ctx.slug ? loadChatConfig(ctx.slug) : {};
+
   // 1. Explicit task skill
   if (ctx.taskSkill) {
     return { skill: ctx.taskSkill, skills: [ctx.taskSkill] };
@@ -98,31 +116,34 @@ export function resolveThreadSkills(ctx: SkillContext): SkillResolution {
 
   // 2. By task type
   if (ctx.taskType) {
-    if (ctx.taskType === "content") {
-      const ch = ctx.channel ? CONTENT_CHANNEL_SKILLS[ctx.channel] : null;
-      return ch || { skill: "content-strategy", skills: ["content-strategy", "qa-bot"] };
+    // 2a. Foundation → skill comes from the pillar
+    if (ctx.taskType === "foundation" && ctx.pillar) {
+      const fromConfig = toResolution(cfg.pillars?.[ctx.pillar]);
+      if (fromConfig) return fromConfig;
     }
-    if (ctx.taskType === "outreach") {
-      return {
-        skill: "outreach-sequence-builder",
-        skills: ["company-finder", "decision-maker-finder", "contact-enrichment", "outreach-sequence-builder"],
-      };
+
+    // 2b. Content + channel → _byChannel
+    if (ctx.taskType === "content" && ctx.channel) {
+      const fromConfig = toResolution(cfg.tasks?._byChannel?.[ctx.channel]);
+      if (fromConfig) return fromConfig;
     }
-    if (ctx.taskType === "foundation") {
-      return (ctx.pillar ? PILLAR_SKILLS[ctx.pillar] : null) || { skill: "doc-coauthoring", skills: ["doc-coauthoring"] };
+
+    // 2c. Tool + tool name → _byTool
+    if (ctx.taskType === "tool" && ctx.tool) {
+      const fromConfig = toResolution(cfg.tasks?._byTool?.[ctx.tool]);
+      if (fromConfig) return fromConfig;
     }
-    if (ctx.taskType === "research") {
-      return { skill: "deep-research", skills: ["deep-research", "last30days"] };
-    }
-    if (ctx.taskType === "analysis") {
-      return { skill: "deep-research", skills: ["deep-research"] };
-    }
-    if (ctx.taskType === "execution") {
-      return { skill: "doc-coauthoring", skills: ["doc-coauthoring"] };
-    }
+
+    // 2d. By type → _byType
+    const fromType = toResolution(cfg.tasks?._byType?.[ctx.taskType]);
+    if (fromType) return fromType;
+
+    // 2e. Fallback defaults from config
+    const fromDefaults = toResolution(cfg.tasks?._defaults);
+    if (fromDefaults) return fromDefaults;
   }
 
-  // 3. By strategy ID (extract number from "#01", "01", etc.)
+  // 3. By strategy ID
   if (ctx.strategyId) {
     const id = ctx.strategyId.replace(/^#/, "").padStart(2, "0");
     if (STRATEGY_SKILLS[id]) return STRATEGY_SKILLS[id];
@@ -138,7 +159,9 @@ export function resolveThreadSkills(ctx: SkillContext): SkillResolution {
     }
     if (lower.includes("strategic plan")) return { skill: "strategic-plan", skills: ["strategic-plan"] };
     if (lower.includes("metrics")) return { skill: "metrics-setup", skills: ["metrics-setup", "connect-api"] };
-    if (lower.includes("fast foundation")) return PILLAR_SKILLS["fast-foundation"];
+    if (lower.includes("fast foundation")) {
+      return toResolution(cfg.pillars?.["fast-foundation"]) ?? { skill: "fast-foundation", skills: ["fast-foundation"] };
+    }
     if (lower.includes("full foundation")) {
       return { skill: "market-intelligence", skills: ["market-intelligence", "competitor-intelligence", "self-intelligence"] };
     }
@@ -146,7 +169,8 @@ export function resolveThreadSkills(ctx: SkillContext): SkillResolution {
 
   // 5. By pillar
   if (ctx.pillar) {
-    return PILLAR_SKILLS[ctx.pillar] || { skill: "doc-coauthoring", skills: ["doc-coauthoring"] };
+    const fromConfig = toResolution(cfg.pillars?.[ctx.pillar]);
+    if (fromConfig) return fromConfig;
   }
 
   // 6. Fallback

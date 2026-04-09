@@ -53,6 +53,7 @@ export function buildTaskThread(
 
   const threadId = `${slug}:task:${taskId.toLowerCase()}`;
   const ctx: SkillContext = {
+    slug,
     taskSkill: opts.taskSkill,
     taskType: opts.taskType,
     channel: opts.taskChannel,
@@ -79,7 +80,7 @@ export function buildProjectThread(
   opts: { strategy?: string; status?: string }
 ): ThreadConfig {
   const threadId = `${slug}:project:${projectId.toLowerCase()}`;
-  const strategySkills = resolveThreadSkills({ strategy: opts.strategy });
+  const strategySkills = resolveThreadSkills({ slug, strategy: opts.strategy });
 
   return {
     threadId,
@@ -99,7 +100,7 @@ export function buildStrategyThread(
   strategyName: string
 ): ThreadConfig {
   const threadId = `${slug}:strategy:${strategyId.toLowerCase()}`;
-  const resolved = resolveThreadSkills({ strategyId });
+  const resolved = resolveThreadSkills({ slug, strategyId });
 
   return {
     threadId,
@@ -133,12 +134,8 @@ export function buildRecurringThread(
   };
 }
 
-/**
- * Pillar aliases: some pillars don't have their own skill and are always
- * handled by another pillar's skill.  Map them to the canonical pillar
- * so every entry point converges to one thread.
- */
-const PILLAR_CANONICAL: Record<string, string> = {
+/** Hardcoded pillar canonical fallback (overridden by chat-config.json if available) */
+const PILLAR_CANONICAL_FALLBACK: Record<string, string> = {
   "company-brief": "fast-foundation",
 };
 
@@ -146,11 +143,12 @@ const PILLAR_CANONICAL: Record<string, string> = {
 export function buildPillarThread(
   slug: string,
   pillarKey: string,
-  docPath?: string
+  docPath?: string,
+  pillarCfg?: { canonical?: string; docPath?: string }
 ): ThreadConfig {
-  const canonical = PILLAR_CANONICAL[pillarKey] || pillarKey;
+  const canonical = pillarCfg?.canonical || PILLAR_CANONICAL_FALLBACK[pillarKey] || pillarKey;
   const threadId = `${slug}:${canonical}`;
-  const resolved = resolveThreadSkills({ pillar: canonical });
+  const resolved = resolveThreadSkills({ slug, pillar: canonical });
 
   return {
     threadId,
@@ -158,7 +156,7 @@ export function buildPillarThread(
     skill: resolved.skill,
     skills: resolved.skills,
     linkedTo: `foundation/${pillarKey}`,
-    docPath: docPath || null,
+    docPath: docPath || pillarCfg?.docPath || null,
     threadState: "continue",
   };
 }
@@ -175,6 +173,25 @@ export function buildSkillCreatorThread(slug: string): ThreadConfig {
     docPath: null,
     threadState: "create",
     initialMessage: "Quiero crear una nueva skill para el workspace. Guíame paso a paso.",
+  };
+}
+
+/** Build thread config for editing an existing skill via chat */
+export function buildSkillEditorThread(
+  slug: string,
+  skillId: string,
+  skillName: string,
+  docPath?: string
+): ThreadConfig {
+  const threadId = `${slug}:skill:${skillId}`;
+  return {
+    threadId,
+    threadName: skillName,
+    skill: "skill-creator",
+    skills: ["skill-creator"],
+    linkedTo: `skills/${skillId}`,
+    docPath: docPath || null,
+    threadState: "continue",
   };
 }
 

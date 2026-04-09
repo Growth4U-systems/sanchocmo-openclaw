@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, useCallback, type ReactNode } from "react";
+import { useRouter } from "next/router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { useOpenChat } from "@/hooks/useChat";
@@ -65,6 +66,7 @@ function layerLabel(layer: string | undefined): string | null {
 
 export function SkillsPanel() {
   const qc = useQueryClient();
+  const router = useRouter();
   const openChat = useOpenChat();
   const slug = useAppStore((s) => s.selectedClient) || "";
 
@@ -177,9 +179,10 @@ export function SkillsPanel() {
   // ── SlideOver data ──
   const slideFiles = useMemo(() => {
     if (!skillDetail) return [];
-    const files = [{ name: "SKILL.md", content: skillDetail.skillMd }];
+    const label = displayName(skillDetail.id);
+    const files = [{ name: label, content: skillDetail.skillMd, fileName: "SKILL.md" }];
     for (const ref of skillDetail.references) {
-      files.push({ name: `references/${ref.name}`, content: ref.content });
+      files.push({ name: ref.name.replace(/\.md$/, ""), content: ref.content, fileName: `references/${ref.name}` });
     }
     return files;
   }, [skillDetail]);
@@ -370,6 +373,11 @@ export function SkillsPanel() {
         editable
         onSave={handleSave}
         onDelete={handleDelete}
+        onOpen={() => {
+          const id = selectedId;
+          setSelectedId(null);
+          router.push(`/dashboard/${slug}/skills/${id}`);
+        }}
         copyPathPrefix={selectedId ? `~/.openclaw/workspace-sancho/skills/${selectedId}` : undefined}
         headerContent={slideHeaderContent}
       />

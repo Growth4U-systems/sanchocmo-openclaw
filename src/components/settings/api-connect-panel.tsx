@@ -111,7 +111,7 @@ export function ApiConnectPanel({ slug, apiId, onClose }: ApiConnectPanelProps) 
     if (!catalogData?.categories) return null;
     for (const cat of Object.values(catalogData.categories)) {
       const apis = cat.apis || {};
-      if (apiId in apis) return apis[apiId];
+      if (apiId in apis) return (apis as unknown as Record<string, ApiCatalogEntry>)[apiId];
     }
     return null;
   }, [catalogData, apiId]);

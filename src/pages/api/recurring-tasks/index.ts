@@ -162,7 +162,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       try {
         const templatesFile = path.join(BASE, "_system", "cron-templates.json");
         const templates = readJSON<Record<string, { auto_onboarding?: boolean; name_template?: string; description?: string; requires?: string; p00_task?: unknown }>>(templatesFile, {});
-        const allTaskNames = [...openclawTasks, ...localTasks].map((c: Record<string, unknown>) => ((c.name as string) || "").toLowerCase());
+        const allTaskNames = [...openclawTasks, ...localTasks].map((c) => (((c as Record<string, unknown>).name as string) || "").toLowerCase());
         const available: unknown[] = [];
         for (const [key, tmpl] of Object.entries(templates)) {
           if (key === "$comment") continue;

@@ -14,10 +14,11 @@ interface SettingsSlideOverProps {
   onClose: () => void;
   title: string;
   subtitle?: string;
-  files: Array<{ name: string; content: string }>;
+  files: Array<{ name: string; content: string; fileName?: string }>;
   editable?: boolean;
   onSave?: (fileName: string, content: string) => Promise<void>;
   onDelete?: () => void;
+  onOpen?: () => void;
   copyPathPrefix?: string;
   headerContent?: ReactNode;
 }
@@ -35,6 +36,7 @@ export function SettingsSlideOver({
   editable = true,
   onSave,
   onDelete,
+  onOpen,
   copyPathPrefix,
   headerContent,
 }: SettingsSlideOverProps) {
@@ -70,14 +72,17 @@ export function SettingsSlideOver({
     return () => { document.body.style.overflow = ""; };
   }, [open]);
 
-  const fileContent = files.find((f) => f.name === activeFile)?.content ?? "";
+  const activeFileObj = files.find((f) => f.name === activeFile);
+  const fileContent = activeFileObj?.content ?? "";
+  // Use fileName (real path) if available, otherwise fall back to name (display)
+  const resolvedFileName = activeFileObj?.fileName ?? activeFile;
 
   const handleCopyPath = useCallback(() => {
     if (!copyPathPrefix) return;
-    navigator.clipboard.writeText(`${copyPathPrefix}/${activeFile}`);
+    navigator.clipboard.writeText(`${copyPathPrefix}/${resolvedFileName}`);
     setCopyStatus("📋 Copiado");
     setTimeout(() => setCopyStatus(""), 2000);
-  }, [copyPathPrefix, activeFile]);
+  }, [copyPathPrefix, resolvedFileName]);
 
   const handleStartEdit = useCallback(() => {
     setEditContent(fileContent);
@@ -90,7 +95,7 @@ export function SettingsSlideOver({
     setSaving(true);
     setSaveStatus("");
     try {
-      await onSave(activeFile, editContent);
+      await onSave(resolvedFileName, editContent);
       setSaveStatus("✅ Guardado");
       setEditing(false);
       setTimeout(() => setSaveStatus(""), 2000);
@@ -167,6 +172,12 @@ export function SettingsSlideOver({
                 className={btnClass}
               >
                 ✏️ Editar
+              </button>
+            )}
+
+            {onOpen && (
+              <button type="button" onClick={onOpen} className={btnClass}>
+                ⤢ Abrir
               </button>
             )}
 
@@ -258,7 +269,7 @@ export function SettingsSlideOver({
         {/* ── Footer ─────────────────────────────────────────── */}
         {!editing && copyPathPrefix && (
           <div className="flex items-center px-4 py-2 border-t border-[#E5E2DC] dark:border-[#313244] bg-[#FAFAF8] dark:bg-[#181825] text-[10px] text-muted-foreground shrink-0">
-            <span className="truncate">{copyPathPrefix}/{activeFile}</span>
+            <span className="truncate">{copyPathPrefix}/{resolvedFileName}</span>
           </div>
         )}
       </div>

@@ -257,7 +257,7 @@ export default function FoundationPage() {
       .replace(/\b\w/g, (c: string) => c.toUpperCase());
     const displayPath = selectedDoc.docPath.replace(/^brand\/[^/]+\//, "");
     const normStatus =
-      selectedDoc.pillar.status === "done" ? "approved"
+      (selectedDoc.pillar.status as string) === "done" ? "approved"
         : selectedDoc.pillar.status === "generated" ? "pending-review"
           : selectedDoc.pillar.status || "not-started";
 

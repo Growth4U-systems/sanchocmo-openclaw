@@ -24,7 +24,9 @@ export function MarkdownEditor({ initialContent, onSave, onCancel }: MarkdownEdi
 
     async function initEditor() {
       // Dynamic import to avoid SSR
+      // @ts-expect-error — @toast-ui/editor types don't resolve via package.json exports
       const { default: Editor } = await import("@toast-ui/editor");
+      // @ts-expect-error — CSS import has no type declarations
       await import("@toast-ui/editor/dist/toastui-editor.css");
 
       if (!mounted || !containerRef.current) return;

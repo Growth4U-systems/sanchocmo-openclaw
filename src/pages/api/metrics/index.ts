@@ -12,10 +12,10 @@ import { BASE, integrationsFile } from "@/lib/data/paths";
 const _metricsCache: Record<string, { json: string; ts: number }> = {};
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== "GET") return res.status(405).json({ error: "Method not allowed" });
+  if (req.method !== "GET") { res.status(405).json({ error: "Method not allowed" }); return; }
 
   const slug = req.query.slug as string;
-  if (!slug) return res.status(400).json({ error: "Missing slug parameter" });
+  if (!slug) { res.status(400).json({ error: "Missing slug parameter" }); return; }
 
   // Server-side cache: 5 min TTL per slug
   const now = Date.now();
@@ -23,7 +23,8 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (cached && (now - cached.ts) < 300_000) {
     res.setHeader("X-Cache", "hit");
     res.setHeader("Content-Type", "application/json");
-    return res.status(200).end(cached.json);
+    res.status(200).end(cached.json);
+    return;
   }
 
   const metricsFile = path.join(BASE, "brand", slug, "metrics", "metrics-data.json");

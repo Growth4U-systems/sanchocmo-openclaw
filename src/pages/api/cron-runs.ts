@@ -33,6 +33,7 @@ interface CronRun {
   client_slug: string | null;
   category: string;
   hasOutput: boolean;
+  structured?: Record<string, unknown>;
 }
 
 /** Read crons directly from jobs.json — avoids 11s execSync */
@@ -154,7 +155,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       try {
         if (fs.existsSync(outFile)) {
           const saved = JSON.parse(fs.readFileSync(outFile, "utf-8"));
-          if (saved.content) { run.summary = saved.content; run.hasOutput = true; continue; }
+          if (saved.content) { run.summary = saved.content; run.hasOutput = true; if (saved.structured) run.structured = saved.structured; continue; }
         }
       } catch { /* skip */ }
     }
@@ -169,6 +170,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
           if (saved.content) {
             run.summary = saved.content;
             run.hasOutput = true;
+            if (saved.structured) run.structured = saved.structured;
             if (saved.runAtMs) run.runAtMs = saved.runAtMs;
             break;
           }
@@ -211,6 +213,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
                 client_slug: slugParam,
                 category: detectCronCategory(saved.cronName || taskName, ""),
                 hasOutput: true,
+                structured: saved.structured || undefined,
               });
             } catch { /* skip */ }
           }

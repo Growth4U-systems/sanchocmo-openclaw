@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useCallback, useMemo } from "react";
 import { useChatStore } from "@/stores/chat";
-import { getAutoPrompt, type ThreadConfig } from "@/lib/chat-openers";
+import type { ThreadConfig } from "@/lib/chat-openers";
 
 // ============================================================
 // Chat Hooks — TanStack Query integration for MC Chat system
@@ -209,21 +209,97 @@ export function useLinkDiscord() {
   });
 }
 
+// ---------------------------------------------------------------------------
+// Quick-actions from chat-config.json
+// ---------------------------------------------------------------------------
+
+interface QuickAction {
+  label: string;
+  prompt: string;
+}
+
+interface ThreadMeta {
+  threadName: string;
+  skill: string;
+  skills: string[];
+  linkedTo: string;
+  docPath: string | null;
+  threadState?: "create" | "continue";
+  // Task-specific fields for resolving quick-actions
+  taskType?: string;
+  channel?: string;
+  tool?: string;
+  pillar?: string;
+  // Thread type prefix (project, task, pillar, strategy, idea, recurring, skill)
+  threadType?: string;
+}
+
 /**
- * Hook to auto-send initial prompt when opening a new empty thread.
+ * Resolves the thread type from the active thread ID or metadata.
  */
-export function useAutoPrompt(config: ThreadConfig | null, hasMessages: boolean) {
-  const sendMessage = useSendMessage();
-  const sentRef = useRef(false);
+function resolveThreadType(threadId: string | null, meta?: ThreadMeta): string {
+  if (meta?.threadType) return meta.threadType;
+  if (!threadId) return "general";
+  const short = threadId.includes(":") ? threadId.split(":").slice(1).join(":") : threadId;
+  if (short.startsWith("project:")) return "project";
+  if (short.startsWith("task:")) return "task";
+  if (short.startsWith("strategy:")) return "strategy";
+  if (short.startsWith("idea:")) return "idea";
+  if (short.startsWith("recurring:")) return "recurring";
+  if (short.startsWith("skill:") || short.startsWith("skill-creator:")) return "skill";
+  if (short === "trust-engine") return "task"; // Trust Engine is a tool task
+  // Foundation pillar threads don't have a prefix — they're just slug:pillar-name
+  return "pillar";
+}
 
-  useEffect(() => {
-    if (!config || hasMessages || sentRef.current) return;
-    if (!config.threadState) return;
+/**
+ * Hook to fetch quick-actions from chat-config.json via the API.
+ */
+export function useQuickActions(slug: string | undefined, meta?: ThreadMeta) {
+  const store = useChatStore();
+  const threadId = store.lockedThreadId;
+  const threadType = resolveThreadType(threadId, meta);
 
-    const prompt = getAutoPrompt(config);
-    sentRef.current = true;
-    sendMessage.mutate({ text: prompt, threadId: config.threadId });
-  }, [config, hasMessages, sendMessage]);
+  const { data } = useQuery({
+    queryKey: ["quick-actions", slug, threadType, meta?.taskType, meta?.channel, meta?.tool, meta?.pillar, meta?.linkedTo],
+    queryFn: async (): Promise<{ quickActions: QuickAction[] }> => {
+      if (!slug) return { quickActions: [] };
+
+      const params = new URLSearchParams({ slug });
+
+      if (threadType === "pillar") {
+        params.set("type", "pillar");
+        // Extract pillar key from linkedTo or threadId
+        const pillarKey = meta?.pillar || meta?.linkedTo?.replace("foundation/", "") || threadId?.split(":").pop() || "";
+        params.set("key", pillarKey);
+      } else if (threadType === "task") {
+        params.set("type", "task");
+        if (meta?.taskType) params.set("taskType", meta.taskType);
+        if (meta?.channel) params.set("channel", meta.channel);
+        if (meta?.tool) params.set("tool", meta.tool);
+      } else if (threadType === "project") {
+        params.set("type", "project");
+      } else if (threadType === "strategy") {
+        params.set("type", "strategy");
+      } else if (threadType === "idea") {
+        params.set("type", "idea");
+      } else if (threadType === "recurring") {
+        params.set("type", "recurring");
+      } else if (threadType === "skill") {
+        params.set("type", "skill");
+      } else {
+        params.set("type", "general");
+      }
+
+      const res = await fetch(`/api/chat/quick-actions?${params}`);
+      if (!res.ok) return { quickActions: [] };
+      return res.json();
+    },
+    enabled: !!slug,
+    staleTime: 60_000,
+  });
+
+  return { quickActions: data?.quickActions ?? [] };
 }
 
 /**

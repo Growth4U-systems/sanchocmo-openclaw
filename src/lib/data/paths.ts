@@ -92,3 +92,7 @@ export function sourcesFile(slug: string) {
 export function competitorsSourcesFile(slug: string) {
   return path.join(BASE, "brand", slug, "market-and-us", "competitors", "sources.json");
 }
+
+export function chatConfigFile(slug: string) {
+  return path.join(BASE, "brand", slug, "chat-config.json");
+}

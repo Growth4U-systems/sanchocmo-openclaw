@@ -312,10 +312,10 @@ export function RecommendationsTab({ slug }: { slug: string }) {
   // Projects for picker
   const { data: projectsData } = useProjects(slug);
   const projectList = useMemo(() =>
-    (projectsData || []).map((p: { project: Record<string, unknown> }) => ({
-      id: (p.project.id || "") as string,
-      name: (p.project.name || p.project.id || "") as string,
-      status: (p.project.status || "active") as string,
+    (projectsData || []).map((p) => ({
+      id: p.project.id || "",
+      name: p.project.name || p.project.id || "",
+      status: p.project.status || "active",
     })),
     [projectsData],
   );

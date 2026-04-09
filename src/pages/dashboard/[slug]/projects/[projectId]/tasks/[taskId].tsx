@@ -8,6 +8,7 @@ import { useProjects, useUpdateTask, useUpdateTaskStatus } from "@/hooks/useProj
 import { useIdeas, useUpdateIdeaStatus, useUpdatePipelineStatus, useUpdatePipelineStep } from "@/hooks/useIdeas";
 import { useOpenChat } from "@/hooks/useChat";
 import { buildTaskThread } from "@/lib/chat-openers";
+import { resolvePillarDocPath } from "@/lib/pillar-doc-paths";
 import { PRJ_CHANNELS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import type { Idea, Task } from "@/types";
@@ -188,6 +189,46 @@ export default function TaskDetailPage() {
 
   const taskType = task ? (task.type || task.batch_type || "execution") : "execution";
 
+  // ── Foundation: resolve pillar docs from foundation-state.json ──
+  const [foundationState, setFoundationState] = useState<Record<string, unknown> | null>(null);
+  const [chatAutoOpened, setChatAutoOpened] = useState(false);
+
+  useEffect(() => {
+    if (!slug || !task?.pillar) return;
+    fetch(`/api/foundation/state?slug=${slug}`)
+      .then((r) => r.ok ? r.json() : null)
+      .then((s) => { if (s) setFoundationState(s); })
+      .catch(() => {});
+  }, [slug, task?.pillar]);
+
+  // For foundation tasks, derive documents from pillar output_file if task.documents is empty
+  const pillarDocs = useMemo(() => {
+    if (!task?.pillar || (task.documents && task.documents.length > 0)) return null;
+    const docPath = resolvePillarDocPath(task.pillar, foundationState as Parameters<typeof resolvePillarDocPath>[1]);
+    if (!docPath) return null;
+    // Strip leading "brand/{slug}/" if present (task docs are relative to brand/{slug}/)
+    const relative = docPath.replace(/^brand\/[^/]+\//, "");
+    return [{ path: relative, name: task.name, title: task.name, status: "draft", created_at: undefined }];
+  }, [task?.pillar, task?.documents, task?.name, foundationState]);
+
+  // Auto-open doc + chat for foundation tasks on first load
+  useEffect(() => {
+    if (!task?.pillar || !slug || !project || chatAutoOpened) return;
+    const docPath = resolvePillarDocPath(task.pillar, foundationState as Parameters<typeof resolvePillarDocPath>[1]);
+    if (!docPath) return;
+    const relative = docPath.replace(/^brand\/[^/]+\//, "");
+    setOpenDocPath(relative);
+    const config = buildTaskThread(slug, task.id, task.name, project.id, {
+      taskSkill: task.skill,
+      taskChannel: task.channel,
+      taskStatus: task.status,
+      taskType,
+      pillar: task.pillar,
+    });
+    openChat(slug, config);
+    setChatAutoOpened(true);
+  }, [task, slug, project, foundationState, chatAutoOpened, taskType, openChat]);
+
   // Populate draft when entering edit mode
   useEffect(() => {
     if (editing && task) {
@@ -282,7 +323,7 @@ export default function TaskDetailPage() {
     }
   }
 
-  const docs = task.documents || [];
+  const docs = (task.documents && task.documents.length > 0) ? task.documents : (pillarDocs || []);
 
   return (
     <DashboardLayout>

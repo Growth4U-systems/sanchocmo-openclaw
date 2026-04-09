@@ -12,7 +12,8 @@ import {
   useCancelMessage,
   useMarkThreadRead,
 } from "@/hooks/useChat";
-import { threadIcon, getAutoPrompt } from "@/lib/chat-openers";
+import { threadIcon } from "@/lib/chat-openers";
+import { useQuickActions } from "@/hooks/useChat";
 
 // ---------------------------------------------------------------------------
 // Agent badge config
@@ -115,27 +116,9 @@ export function ChatSidebar() {
   // Input state
   const [input, setInput] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const autoPromptSentRef = useRef<string | null>(null);
-
-  // Auto-send initial prompt when opening a new empty thread
-  useEffect(() => {
-    if (!activeThreadId || !meta?.threadState) return;
-    if (messages.length > 0) return;
-    if (autoPromptSentRef.current === activeThreadId) return;
-    // Build a minimal ThreadConfig from meta to generate the prompt
-    const prompt = getAutoPrompt({
-      threadId: activeThreadId,
-      threadName: meta.threadName,
-      skill: meta.skill,
-      skills: meta.skills,
-      linkedTo: meta.linkedTo,
-      docPath: meta.docPath,
-      threadState: meta.threadState,
-      initialMessage: meta.initialMessage,
-    });
-    autoPromptSentRef.current = activeThreadId;
-    sendMutation.mutate({ text: prompt, threadId: activeThreadId });
-  }, [activeThreadId, meta, messages.length, sendMutation]);
+  // Quick-actions from chat-config.json
+  const { quickActions } = useQuickActions(slug, meta);
+  const showQuickActions = messages.length === 0 && quickActions.length > 0 && activeThreadId;
 
   // Auto-scroll on new messages
   useEffect(() => {
@@ -269,7 +252,16 @@ export function ChatSidebar() {
                 <span>📄</span>
                 <span className="text-rust font-heading">{t("currentDoc")}</span>
                 <span className="text-[#6c7086]">—</span>
-                <span className="text-[#cdd6f4] truncate">{meta.docPath.split("/").pop()}</span>
+                <span className="text-[#cdd6f4] truncate">{(() => {
+                  const parts = meta.docPath!.split("/");
+                  const file = parts.pop() || "";
+                  // For generic filenames, show parent folder name as readable label
+                  if (["SKILL.md", "SOUL.md", "IDENTITY.md", "current.md"].includes(file)) {
+                    const parent = parts.pop() || file;
+                    return parent.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+                  }
+                  return file;
+                })()}</span>
               </div>
             )}
           </div>
@@ -338,6 +330,30 @@ export function ChatSidebar() {
             </div>
           );
         })}
+
+        {/* Quick-actions for empty threads */}
+        {showQuickActions && (
+          <div className="flex flex-col items-center gap-3 py-8 px-4">
+            <span className="text-[11px] text-[#6c7086]">{t("quickActionsHint") || "Elige una acción o escribe directamente"}</span>
+            <div className="flex flex-wrap justify-center gap-2">
+              {quickActions.map((qa) => (
+                <button
+                  key={qa.label}
+                  onClick={() => {
+                    const prompt = qa.prompt
+                      .replace(/\{name\}/g, meta?.threadName ?? "")
+                      .replace(/\{deliverable\}/g, "")
+                      .replace(/\{channel\}/g, "");
+                    sendMutation.mutate({ text: prompt, threadId: activeThreadId! });
+                  }}
+                  className="px-3 py-1.5 text-[11px] font-medium rounded-full border border-rust/30 text-rust bg-rust/5 hover:bg-rust/15 transition-colors cursor-pointer"
+                >
+                  {qa.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Typing indicator */}
         {showTyping && (
