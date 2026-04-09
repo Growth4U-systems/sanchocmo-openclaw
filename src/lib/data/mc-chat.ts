@@ -38,7 +38,7 @@ export function consumeCancelled(threadId: string): boolean {
 
 // Gateway URL and secret
 export function getGatewayUrl(): string {
-  return process.env.MC_CHAT_GATEWAY || "http://localhost:18800";
+  return process.env.MC_CHAT_GATEWAY || "http://localhost:18789";
 }
 
 export function getChatSecret(): string | undefined {
