@@ -3,9 +3,8 @@ import fs from "fs";
 import path from "path";
 import { execSync } from "child_process";
 import { compose, withErrorHandler, withAuth } from "@/lib/api-middleware";
-import { BASE } from "@/lib/data/paths";
+import { BASE, EXEC_PATH } from "@/lib/data/paths";
 
-const EXEC_PATH = process.env.PATH || "/usr/local/bin:/usr/bin:/bin";
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "POST") {

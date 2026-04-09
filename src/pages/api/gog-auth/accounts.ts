@@ -1,8 +1,8 @@
+import { EXEC_PATH } from "@/lib/data/paths";
 import type { NextApiRequest, NextApiResponse } from "next";
 import { execSync } from "child_process";
 import { compose, withErrorHandler, withAuth } from "@/lib/api-middleware";
 
-const EXEC_PATH = process.env.PATH || "/usr/local/bin:/usr/bin:/bin";
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "GET") {

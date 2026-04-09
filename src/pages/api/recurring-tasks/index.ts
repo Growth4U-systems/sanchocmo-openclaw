@@ -6,10 +6,9 @@ import { execSync } from "child_process";
 import { compose, withErrorHandler, withAuth } from "@/lib/api-middleware";
 import { loadRecurringTasks, saveRecurringTasks } from "@/lib/data/recurring-tasks";
 import { loadClients } from "@/lib/data/clients";
-import { BASE } from "@/lib/data/paths";
+import { BASE, EXEC_PATH } from "@/lib/data/paths";
 import { readJSON } from "@/lib/data/json-io";
 
-const EXEC_PATH = process.env.PATH || "/usr/local/bin:/usr/bin:/bin";
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 function detectCronCategory(name: string, _prompt: string): string {
