@@ -50,7 +50,19 @@ function loadCronsFromOpenClaw(): CronJob[] {
   }
 }
 
-function extractSlugFromCron(cronName: string, clients: { slug: string; name: string }[]): string | null {
+function extractSlugFromCron(cronName: string, clients: { slug: string; name: string }[], prompt?: string): string | null {
+  // 1. Check brand/ paths in the prompt payload (most reliable)
+  if (prompt) {
+    const brandMatches = prompt.match(/brand\/([a-z0-9-]+)/g);
+    if (brandMatches) {
+      const clientSlugs = new Set(clients.map((c) => c.slug));
+      for (const m of brandMatches) {
+        const slug = m.replace("brand/", "");
+        if (clientSlugs.has(slug)) return slug;
+      }
+    }
+  }
+  // 2. Check cron name for client name/slug
   const lower = (cronName || "").toLowerCase();
   for (const c of clients) {
     if (lower.includes(c.name.toLowerCase()) || lower.includes(c.slug.toLowerCase())) return c.slug;
@@ -93,13 +105,10 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   const runs: CronRun[] = [];
 
   for (const cron of crons) {
-    const cronSlug = extractSlugFromCron(cron.name, clients);
+    const cronPrompt = cron.payload?.message || "";
+    const cronSlug = extractSlugFromCron(cron.name, clients, cronPrompt);
     if (slugParam) {
-      const prompt = (cron.payload?.message || "").toLowerCase();
-      const nameMatch = cronSlug === slugParam;
-      const promptMentions = prompt.includes(slugParam.toLowerCase());
-      const brandPathMatch = prompt.includes("brand/" + slugParam);
-      if (!nameMatch && !promptMentions && !brandPathMatch) continue;
+      if (cronSlug !== slugParam) continue;
     }
 
     const runFile = path.join(runsDir, cron.id + ".jsonl");
@@ -210,8 +219,20 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     } catch { /* skip */ }
   }
 
-  runs.sort((a, b) => (b.runAtMs || 0) - (a.runAtMs || 0));
-  res.status(200).json(runs);
+  // Deduplicate: keep only the most recent run per cron job per day
+  const seen = new Map<string, CronRun>();
+  for (const run of runs) {
+    const date = run.runAtMs ? new Date(run.runAtMs).toISOString().slice(0, 10) : "unknown";
+    const key = `${run.jobName}::${date}`;
+    const existing = seen.get(key);
+    if (!existing || (run.hasOutput && !existing.hasOutput) || (!existing.hasOutput && (run.runAtMs || 0) > (existing.runAtMs || 0))) {
+      seen.set(key, run);
+    }
+  }
+  const deduped = Array.from(seen.values());
+
+  deduped.sort((a, b) => (b.runAtMs || 0) - (a.runAtMs || 0));
+  res.status(200).json(deduped);
 }
 
 export default compose(withErrorHandler, withAuth)(handler);

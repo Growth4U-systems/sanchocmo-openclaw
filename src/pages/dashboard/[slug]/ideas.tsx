@@ -1,7 +1,6 @@
 import { useState, useMemo, useCallback } from "react";
 import Head from "next/head";
 import { useTranslations } from "next-intl";
-import { useQuery } from "@tanstack/react-query";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { useSlugSync } from "@/hooks/useSlugSync";
 import { Modal } from "@/components/shared/modal";
@@ -160,22 +159,6 @@ export default function IdeasPage() {
 
   // Cron runs for Insights tab
   const { data: cronRuns } = useCronRuns(slug, 20);
-
-  // Monitoring data for Insights tab
-  const { data: monitoringData } = useQuery<{
-    health_score?: { score: number; summary: string; categories?: Record<string, { score: number; trend?: string }> };
-    pending_recommendations?: { title: string; rationale?: string; linked_metric?: string; priority?: string }[] | { recommendations: { title: string; rationale?: string; linked_metric?: string; priority?: string }[] };
-    latest_weekly?: { summary?: string; highlights?: string[]; generated_at?: string };
-  }>({
-    queryKey: ["monitoring", slug],
-    queryFn: async () => {
-      const res = await fetch(`/api/monitoring?slug=${slug}`);
-      if (!res.ok) return {};
-      return res.json();
-    },
-    enabled: !!slug,
-    staleTime: 60_000,
-  });
 
   // Project filter for ideas
   const [projectFilter, setProjectFilter] = useState("");
@@ -686,121 +669,21 @@ export default function IdeasPage() {
         </>
       )}
 
-      {/* Insights tab — Performance Analysis results + recommendations */}
+      {/* Insights tab — Cron outputs feed */}
       {activeTab === "insights" && (() => {
-        const hs = monitoringData?.health_score;
-        const rawRecs = monitoringData?.pending_recommendations;
-        const recs = rawRecs
-          ? (Array.isArray(rawRecs) ? rawRecs : rawRecs.recommendations || [])
-          : [];
-        const weekly = monitoringData?.latest_weekly;
-        const hasInsights = hs || recs.length > 0 || weekly;
+        const hasCronRuns = cronRuns && Array.isArray(cronRuns) && cronRuns.length > 0;
 
         return (
           <div className="mt-6 space-y-5">
-            {!hasInsights && (
+            {!hasCronRuns && (
               <div className="bg-white border border-[#E8E2D9] rounded-[10px] p-10 text-center" style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}>
-                <div className="text-2xl mb-2">📊</div>
-                <p className="text-[#7F8C8D]">Sin insights aún. Los insights se generan automáticamente desde la tarea de Performance Analysis.</p>
+                <div className="text-2xl mb-2">📡</div>
+                <p className="text-[#7F8C8D]">Sin insights aún. Los insights se generan automáticamente desde las tareas recurrentes.</p>
               </div>
             )}
 
-            {/* Health Score card */}
-            {hs && (
-              <div className="bg-white border border-[#E8E2D9] rounded-[10px] p-6" style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}>
-                <div className="flex items-center gap-5 mb-4">
-                  <div
-                    className="w-16 h-16 rounded-full flex items-center justify-center text-white text-xl font-bold border-2"
-                    style={{
-                      background: (hs.score || 0) >= 70 ? "#4A5D23" : (hs.score || 0) >= 40 ? "#E6A817" : "#ef4444",
-                      borderColor: (hs.score || 0) >= 70 ? "#3a4d13" : (hs.score || 0) >= 40 ? "#c48f12" : "#dc2626",
-                    }}
-                  >
-                    {hs.score ?? "—"}
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-[15px] text-[#2C3E50]">Performance Analysis</h3>
-                    <p className="text-[13px] text-[#7F8C8D] mt-0.5">{hs.summary || "Health score"}</p>
-                  </div>
-                </div>
-
-                {/* Category breakdown */}
-                {hs.categories && Object.keys(hs.categories).length > 0 && (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 mt-4 pt-4 border-t border-[#E8E2D9]">
-                    {Object.entries(hs.categories).map(([cat, data]) => (
-                      <div key={cat} className="flex items-center gap-2 p-2 bg-[#F8F6F0] rounded-lg">
-                        <div
-                          className="w-8 h-8 rounded-full flex items-center justify-center text-white text-[12px] font-bold shrink-0"
-                          style={{ background: data.score >= 70 ? "#4A5D23" : data.score >= 40 ? "#E6A817" : "#ef4444" }}
-                        >
-                          {data.score}
-                        </div>
-                        <div className="min-w-0">
-                          <div className="text-[12px] font-semibold text-[#2C3E50] capitalize truncate">{cat}</div>
-                          {data.trend && <div className="text-[10px] text-[#7F8C8D]">{data.trend}</div>}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Recommendations — Next Steps */}
-            {recs.length > 0 && (
-              <div className="bg-white border border-[#E8E2D9] rounded-[10px] p-6" style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}>
-                <h3 className="font-semibold text-[15px] text-[#2C3E50] mb-4">→ Next Steps</h3>
-                <div className="space-y-3">
-                  {recs.map((rec, i) => (
-                    <div key={i} className="flex items-start gap-3 p-3 bg-[#F8F6F0] rounded-lg border border-[#E8E2D9]">
-                      <span className="text-[#A0522D] mt-0.5 shrink-0">→</span>
-                      <div className="flex-1 min-w-0">
-                        <div className="font-medium text-[13px] text-[#2C3E50]">{rec.title}</div>
-                        {rec.rationale && <p className="text-[12px] text-[#7F8C8D] mt-1">{rec.rationale}</p>}
-                        <div className="flex gap-2 mt-1.5">
-                          {rec.linked_metric && (
-                            <span className="text-[10px] px-2 py-0.5 bg-[#E3F2FD] text-[#1565C0] rounded-full">{rec.linked_metric}</span>
-                          )}
-                          {rec.priority && (
-                            <span className={cn(
-                              "text-[10px] px-2 py-0.5 rounded-full",
-                              rec.priority === "high" ? "bg-[#FFEBEE] text-[#C62828]" : rec.priority === "medium" ? "bg-[#FFF8E1] text-[#E6A817]" : "bg-[#F5F5F5] text-[#7F8C8D]"
-                            )}>
-                              {rec.priority}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Latest weekly report */}
-            {weekly && (
-              <div className="bg-white border border-[#E8E2D9] rounded-[10px] p-6" style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}>
-                <div className="flex justify-between items-center mb-3">
-                  <h3 className="font-semibold text-[15px] text-[#2C3E50]">📋 Weekly Report</h3>
-                  {weekly.generated_at && (
-                    <span className="text-[11px] text-[#7F8C8D]">{weekly.generated_at.slice(0, 10)}</span>
-                  )}
-                </div>
-                {weekly.summary && <p className="text-[13px] text-[#2C3E50] mb-3">{weekly.summary}</p>}
-                {weekly.highlights && weekly.highlights.length > 0 && (
-                  <ul className="space-y-1.5">
-                    {weekly.highlights.map((h, i) => (
-                      <li key={i} className="flex items-start gap-2 text-[13px]">
-                        <span className="text-[#4A5D23] mt-0.5 shrink-0">•</span>
-                        <span className="text-[#2C3E50]">{h}</span>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            )}
             {/* Cron Insights Feed */}
-            {cronRuns && Array.isArray(cronRuns) && cronRuns.length > 0 && (
+            {hasCronRuns && (
               <CronInsightsFeed runs={cronRuns} />
             )}
           </div>
