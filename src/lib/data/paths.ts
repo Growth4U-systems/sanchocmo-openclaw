@@ -82,7 +82,23 @@ export function strategiesCatalogFile() {
 }
 
 export function apiHealthFile() {
-  return path.join(BASE, "_system", "api-health.json");
+  return path.join(BASE, "memory", "state", "api-health.json");
+}
+
+export function mcDataFile() {
+  return path.join(BASE, "memory", "mc", "mc-data.js");
+}
+
+export function changelogFile() {
+  return path.join(BASE, "memory", "CHANGELOG.md");
+}
+
+export function costsGlobalFile() {
+  return path.join(BASE, "memory", "costs", "global.json");
+}
+
+export function costsDailyFile() {
+  return path.join(BASE, "memory", "costs", "daily.json");
 }
 
 export function sourcesFile(slug: string) {

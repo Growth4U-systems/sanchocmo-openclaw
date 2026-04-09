@@ -99,19 +99,31 @@ done
 echo "[entrypoint] Gateway ready (PID $GATEWAY_PID)."
 
 # ===========================================================
-# 7. START MC SERVER
+# 7. START MC SERVER (legacy, Strangler Fig fallback)
 # ===========================================================
-echo "[entrypoint] Starting Mission Control on :18790..."
+echo "[entrypoint] Starting Legacy Mission Control on :18790..."
 node workspace-sancho/scripts/mc-server.js &
 MC_PID=$!
 
-echo "[entrypoint] All services running. Gateway=$GATEWAY_PID MC=$MC_PID"
+# ===========================================================
+# 7b. START NEXT.JS MC (primary frontend on :3000)
+# ===========================================================
+echo "[entrypoint] Starting Next.js Mission Control on :3000..."
+cd /app/mc-nextjs
+MC_WORKSPACE=/root/.openclaw/workspace-sancho \
+LEGACY_PORT=18790 \
+NEXTAUTH_URL="${NEXTAUTH_URL:-${BASE_URL}}" \
+node_modules/.bin/next start -p 3000 &
+NEXTJS_PID=$!
+cd /root/.openclaw
+
+echo "[entrypoint] All services running. Gateway=$GATEWAY_PID LegacyMC=$MC_PID NextJS=$NEXTJS_PID"
 
 # ===========================================================
-# 8. WAIT — if either process dies, container stops
+# 8. WAIT — if any process dies, container stops
 # ===========================================================
-wait -n $GATEWAY_PID $MC_PID
+wait -n $GATEWAY_PID $MC_PID $NEXTJS_PID
 EXIT_CODE=$?
 echo "[entrypoint] A process exited with code $EXIT_CODE. Shutting down."
-kill $GATEWAY_PID $MC_PID 2>/dev/null
+kill $GATEWAY_PID $MC_PID $NEXTJS_PID 2>/dev/null
 exit $EXIT_CODE

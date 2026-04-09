@@ -1,8 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import fs from "fs";
-import path from "path";
 import { withAuth, withErrorHandler, compose } from "@/lib/api-middleware";
-import { BASE } from "@/lib/data/paths";
+import { mcDataFile } from "@/lib/data/paths";
 
 /**
  * GET /api/activity?slug=hospital-capilar&limit=15
@@ -28,7 +27,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
   // Read activity from mc-data.js
   try {
-    const mcDataPath = path.join(BASE, "mc-data.js");
+    const mcDataPath = mcDataFile();
     const raw = fs.readFileSync(mcDataPath, "utf-8");
     const jsonStart = raw.indexOf("{");
     const jsonEnd = raw.lastIndexOf("}");
