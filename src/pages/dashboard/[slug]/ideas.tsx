@@ -9,6 +9,9 @@ import { useIdeas, useCreateIdea, useUpdateIdeaStatus, useDeleteIdea } from "@/h
 import { useProjects } from "@/hooks/useProjects";
 import { useOpenChat } from "@/hooks/useChat";
 import { cn } from "@/lib/utils";
+import { useCronRuns } from "@/hooks/useRecurringTasks";
+import { CronInsightsFeed } from "@/components/insights/cron-insights-feed";
+import { RecommendationsTab } from "@/components/insights/recommendations-tab";
 import type { Idea, IdeaStatus, IdeaList } from "@/types";
 
 // ============================================================
@@ -68,7 +71,8 @@ const SOURCE_OPTIONS = [
 const MAIN_TABS = [
   { value: "ideas", icon: "📝", label: "Ideas" },
   { value: "contactos", icon: "👥", label: "Contactos" },
-  { value: "insights", icon: "🔧", label: "Insights" },
+  { value: "insights", icon: "📡", label: "Insights" },
+  { value: "recommendations", icon: "🎯", label: "Recommendations" },
 ];
 
 const STATUS_LABELS: Record<string, string> = {
@@ -153,6 +157,9 @@ export default function IdeasPage() {
     })),
     [projectsData]
   );
+
+  // Cron runs for Insights tab
+  const { data: cronRuns } = useCronRuns(slug, 20);
 
   // Monitoring data for Insights tab
   const { data: monitoringData } = useQuery<{
@@ -792,9 +799,18 @@ export default function IdeasPage() {
                 )}
               </div>
             )}
+            {/* Cron Insights Feed */}
+            {cronRuns && Array.isArray(cronRuns) && cronRuns.length > 0 && (
+              <CronInsightsFeed runs={cronRuns} />
+            )}
           </div>
         );
       })()}
+
+      {/* Recommendations tab */}
+      {activeTab === "recommendations" && (
+        <RecommendationsTab slug={slug} />
+      )}
 
       {/* Bulk action bar */}
       {selected.size > 0 && (

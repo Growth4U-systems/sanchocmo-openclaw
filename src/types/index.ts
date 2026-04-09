@@ -117,7 +117,7 @@ export type RecommendationStatus = "pending" | "approved" | "dismissed" | "conve
 export interface Recommendation {
   id: string;
   source: string;
-  type: string;               // content_idea | outreach_task | operational
+  type: string;               // optimize | investigate | launch | pause | escalate | content_idea | outreach_task | operational
   priority: string;           // high | medium | low
   title: string;
   description: string;
@@ -129,9 +129,19 @@ export interface Recommendation {
     linked_metric: string | null;
     suggested_action: string;
   };
+  linked_metric?: string;
+  linked_project?: string;
+  linkedProject?: string;
+  suggested_action?: string;
   status: RecommendationStatus;
   created_at: string;
+  approved_at?: string;
+  actioned_at?: string;
   converted_to?: string | null;
+  converted_to_task?: string;
+  converted_to_project?: string;
+  source_crons?: string[];
+  pieces?: Array<{ title: string; channel?: string; description?: string }>;
   _file?: string;
 }
 

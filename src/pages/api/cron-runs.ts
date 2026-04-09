@@ -85,7 +85,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "GET") return res.status(405).json({ error: "Method not allowed" });
 
   const slugParam = (req.query.slug as string) || null;
-  const limitParam = Math.max(1, Math.min(parseInt(req.query.limit as string || "3", 10), 20));
+  const limitParam = Math.max(1, Math.min(parseInt(req.query.limit as string || "3", 10), 50));
 
   const clients = loadClients();
   const crons = loadCronsFromOpenClaw();

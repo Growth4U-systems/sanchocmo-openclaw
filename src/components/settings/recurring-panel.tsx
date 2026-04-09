@@ -6,6 +6,7 @@ import { ComicCard } from "@/components/shared/comic-card";
 import { CollapsibleSection } from "@/components/shared/collapsible-section";
 import { Modal } from "@/components/shared/modal";
 import { cn } from "@/lib/utils";
+import { useAppStore } from "@/stores/app";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -28,6 +29,14 @@ interface CronTask {
   model?: string;
   client_slug?: string;
   scripts?: Array<{ name: string; path: string; lines: number; lang: string }>;
+}
+
+interface AvailableTemplate {
+  template_key: string;
+  name: string;
+  description: string;
+  requires: string;
+  p00_task: string | null;
 }
 
 type CategoryKey = "intelligence" | "metrics" | "outreach" | "content" | "system" | "other";
@@ -167,10 +176,12 @@ function PromptModal({
   task,
   open,
   onClose,
+  onSave,
 }: {
   task: CronTask | null;
   open: boolean;
   onClose: () => void;
+  onSave: (taskId: string, prompt: string) => void;
 }) {
   const [editing, setEditing] = useState(false);
   const [editText, setEditText] = useState("");
@@ -221,7 +232,7 @@ function PromptModal({
               </button>
               <button
                 onClick={() => {
-                  // TODO: save via API
+                  onSave(task.id, editText);
                   setEditing(false);
                 }}
                 className="px-3 py-1.5 text-xs bg-rust text-white rounded hover:opacity-90 transition-opacity"
@@ -252,16 +263,53 @@ function PromptModal({
 
 export function RecurringPanel() {
   const queryClient = useQueryClient();
+  const slug = useAppStore((s) => s.selectedClient) || "";
 
-  /* --- Data fetch --- */
-  const { data: rawData, isLoading } = useQuery<CronTask[]>({
-    queryKey: ["system", "recurring-tasks"],
+  /* --- Data fetch: tasks + templates from OpenClaw via API --- */
+  const { data, isLoading } = useQuery<{ tasks: CronTask[]; templates: AvailableTemplate[] }>({
+    queryKey: ["recurring-tasks", slug],
     queryFn: async () => {
-      const res = await fetch("/api/system/recurring-tasks");
+      const url = slug ? `/api/recurring-tasks?slug=${slug}` : "/api/recurring-tasks";
+      const res = await fetch(url);
       if (!res.ok) throw new Error("Failed to fetch recurring tasks");
-      return res.json();
+      const raw = await res.json();
+
+      // Extract templates
+      const templates: AvailableTemplate[] = raw._available_templates || [];
+
+      // Normalize tasks — API returns { slug: [...tasks] } or { slug1: [...], slug2: [...] }
+      const tasks: CronTask[] = [];
+      for (const [key, value] of Object.entries(raw)) {
+        if (key === "_available_templates") continue;
+        if (!Array.isArray(value)) continue;
+        for (const t of value as Record<string, unknown>[]) {
+          tasks.push({
+            id: t.id as string,
+            name: (t.name as string) || "—",
+            category: (t.task_type as string) || "other",
+            enabled: t.status === "active",
+            status: t.status as string,
+            schedule: (t.schedule_raw as CronTask["schedule"]) || (t.schedule as string),
+            last_run: t.last_run_at as string | undefined,
+            next_run: t.next_run_at as string | undefined,
+            last_status: t.last_status as string | undefined,
+            last_duration_ms: t.last_duration_ms as number | undefined,
+            consecutive_errors: t.consecutive_errors as number | undefined,
+            prompt: t.prompt as string | undefined,
+            agent: t.agent as string | undefined,
+            model: t.model as string | undefined,
+            client_slug: (t.client_slug as string) || (key !== "_system" ? key : undefined),
+            scripts: t.scripts as CronTask["scripts"],
+          });
+        }
+      }
+
+      return { tasks, templates };
     },
   });
+
+  const tasks = data?.tasks || [];
+  const templates = data?.templates || [];
 
   /* --- Toggle mutation --- */
   const toggleMut = useMutation({
@@ -275,7 +323,23 @@ export function RecurringPanel() {
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["system", "recurring-tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["recurring-tasks", slug] });
+    },
+  });
+
+  /* --- Save prompt mutation --- */
+  const saveMut = useMutation({
+    mutationFn: async ({ taskId, prompt }: { taskId: string; prompt: string }) => {
+      const res = await fetch("/api/recurring-tasks/update-prompt", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ taskId, prompt }),
+      });
+      if (!res.ok) throw new Error("Save prompt failed");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["recurring-tasks", slug] });
     },
   });
 
@@ -284,7 +348,6 @@ export function RecurringPanel() {
 
   /* --- Group tasks by category --- */
   const grouped = useMemo(() => {
-    const tasks = rawData || [];
     const groups: Record<string, CronTask[]> = {};
     for (const t of tasks) {
       const cat = t.category || "other";
@@ -292,13 +355,20 @@ export function RecurringPanel() {
       groups[cat].push(t);
     }
     return groups;
-  }, [rawData]);
+  }, [tasks]);
 
   const handleToggle = useCallback(
     (cronId: string, enable: boolean) => {
       toggleMut.mutate({ cronId, enable });
     },
     [toggleMut],
+  );
+
+  const handleSavePrompt = useCallback(
+    (taskId: string, prompt: string) => {
+      saveMut.mutate({ taskId, prompt });
+    },
+    [saveMut],
   );
 
   /* --- Render --- */
@@ -330,14 +400,14 @@ export function RecurringPanel() {
       )}
 
       {/* Category groups */}
-      {Object.entries(grouped).map(([cat, tasks]) => {
+      {Object.entries(grouped).map(([cat, catTasks]) => {
         const meta = CATEGORY_META[cat as CategoryKey] || CATEGORY_META.other;
         return (
           <ComicCard key={cat} className="p-3">
             <CollapsibleSection
               title={meta.label}
               icon={meta.icon}
-              count={tasks.length}
+              count={catTasks.length}
               defaultOpen
             >
               <div className="overflow-x-auto">
@@ -355,7 +425,7 @@ export function RecurringPanel() {
                     </tr>
                   </thead>
                   <tbody>
-                    {tasks.map((task) => (
+                    {catTasks.map((task) => (
                       <tr
                         key={task.id}
                         className={cn(
@@ -373,7 +443,7 @@ export function RecurringPanel() {
                           {task.name}
                           {(task.consecutive_errors ?? 0) > 0 && (
                             <span className="ml-1 text-red-500 text-[10px]">
-                              ({task.consecutive_errors} err)
+                              ({task.consecutive_errors} errores)
                             </span>
                           )}
                         </td>
@@ -413,10 +483,10 @@ export function RecurringPanel() {
                             {task.scripts?.map((s) => (
                               <button
                                 key={s.path}
-                                className="hover:bg-muted rounded px-1 transition-colors"
+                                className="hover:bg-muted rounded px-1 transition-colors text-[11px] bg-muted/50 px-1.5 py-0.5 border border-ink/10"
                                 title={`${s.name} (${s.lines} líneas, ${s.lang})`}
                               >
-                                📄
+                                📄 {s.name}
                               </button>
                             ))}
                           </div>
@@ -441,11 +511,50 @@ export function RecurringPanel() {
       })}
 
       {/* Empty state */}
-      {!isLoading && Object.keys(grouped).length === 0 && (
+      {!isLoading && tasks.length === 0 && (
         <ComicCard>
           <p className="text-sm text-muted-foreground text-center py-8">
             No hay tareas recurrentes configuradas.
           </p>
+        </ComicCard>
+      )}
+
+      {/* Available templates */}
+      {templates.length > 0 && (
+        <ComicCard className="p-3">
+          <CollapsibleSection
+            title="Disponibles"
+            icon="⏸"
+            count={templates.length}
+            defaultOpen={false}
+          >
+            <p className="text-xs text-muted-foreground mb-3">
+              Estas tareas recurrentes se pueden activar cuando configures las integraciones necesarias.
+            </p>
+            <div className="space-y-3">
+              {templates.map((tmpl) => (
+                <div
+                  key={tmpl.template_key}
+                  className="border border-ink/20 rounded p-3 bg-background"
+                >
+                  <p className="font-medium text-sm">{tmpl.name.replace("{NAME}", slug)}</p>
+                  {tmpl.description && (
+                    <p className="text-xs text-muted-foreground mt-1">{tmpl.description}</p>
+                  )}
+                  {tmpl.requires && (
+                    <p className="text-xs mt-1">
+                      <span className="font-semibold">Requiere:</span> {tmpl.requires}
+                    </p>
+                  )}
+                  {tmpl.p00_task && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      → Tarea: {tmpl.p00_task}
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+          </CollapsibleSection>
         </ComicCard>
       )}
 
@@ -454,6 +563,7 @@ export function RecurringPanel() {
         task={promptTask}
         open={!!promptTask}
         onClose={() => setPromptTask(null)}
+        onSave={handleSavePrompt}
       />
     </section>
   );

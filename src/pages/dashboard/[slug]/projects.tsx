@@ -550,8 +550,8 @@ function ProjectCard({
         setStatusOpen(false);
       }
     }
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
+    const t = setTimeout(() => document.addEventListener("click", handleClick), 0);
+    return () => { clearTimeout(t); document.removeEventListener("click", handleClick); };
   }, [statusOpen]);
 
   const handleStatusChange = (newStatus: string) => {

@@ -1,11 +1,12 @@
 import type { NextApiRequest, NextApiResponse } from "next";
+import { execSync } from "child_process";
 import { compose, withErrorHandler, withAuth } from "@/lib/api-middleware";
 
-const LEGACY_PORT = process.env.LEGACY_PORT || "18790";
+const EXEC_PATH = "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin";
 
 /**
  * POST /api/system/cron-toggle
- * Proxies to legacy mc-server for toggling cron tasks
+ * Toggles an OpenClaw cron task on/off
  * Body: { cronId: string, enable: boolean }
  */
 async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -18,13 +19,24 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     return res.status(403).json({ error: "Admin only" });
   }
 
-  const upstream = await fetch(`http://localhost:${LEGACY_PORT}/api/crons/toggle`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(req.body),
-  });
-  const data = await upstream.json();
-  res.status(upstream.status).json(data);
+  const { cronId, enable } = req.body;
+  if (!cronId || typeof enable !== "boolean") {
+    return res.status(400).json({ error: "Missing cronId or enable" });
+  }
+
+  try {
+    const cmd = enable ? "enable" : "disable";
+    execSync(`openclaw cron ${cmd} ${cronId} 2>/dev/null`, {
+      timeout: 10000,
+      encoding: "utf-8",
+      env: { ...process.env, PATH: EXEC_PATH },
+    });
+    return res.status(200).json({ ok: true, cronId, enabled: enable });
+  } catch (e) {
+    return res.status(500).json({
+      error: "Failed to toggle cron: " + (e instanceof Error ? e.message : String(e)),
+    });
+  }
 }
 
 export default compose(withErrorHandler, withAuth)(handler);

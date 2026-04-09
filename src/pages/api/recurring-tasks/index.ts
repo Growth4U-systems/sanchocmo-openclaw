@@ -107,24 +107,68 @@ function loadCronsFromOpenClaw(): unknown[] {
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === "GET") {
-    const slugParam = req.ctx?.clientSlug || (req.query.slug as string) || null;
+    const slugParam = (req.query.slug as string) || req.ctx?.clientSlug || null;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let result: Record<string, any> = {};
 
     if (slugParam) {
-      result[slugParam] = loadRecurringTasks(slugParam);
+      // Merge local JSON tasks with OpenClaw crons for this client
+      const localTasks = loadRecurringTasks(slugParam);
+      const allCrons = loadCronsFromOpenClaw();
+      const clients = loadClients();
+      const localIds = new Set(localTasks.map((t) => t.id));
+
+      // Build enriched tasks from OpenClaw crons that match this client
+      const openclawTasks: unknown[] = [];
+      for (const cron of allCrons as Record<string, unknown>[]) {
+        if (localIds.has(cron.id as string)) continue; // skip duplicates
+        let cronSlug = extractSlugFromCron(cron.name as string, clients as { slug: string; name: string }[]);
+        if (!cronSlug) {
+          const payload = cron.payload as { message?: string } | undefined;
+          const promptMatch = (payload?.message || "").match(/brand\/([a-z0-9_-]+)\//i);
+          if (promptMatch && (clients as { slug: string }[]).some((c) => c.slug === promptMatch[1])) cronSlug = promptMatch[1];
+        }
+        if (cronSlug !== slugParam) continue;
+        const payload = cron.payload as { message?: string; model?: string } | undefined;
+        const state = cron.state as { lastRunAtMs?: number; nextRunAtMs?: number; lastStatus?: string; lastDurationMs?: number; consecutiveErrors?: number } | undefined;
+        const sched = cron.schedule as Record<string, unknown> || {};
+        openclawTasks.push({
+          id: cron.id,
+          name: cron.name || "\u2014",
+          task_type: detectCronCategory(cron.name as string, payload?.message || ""),
+          schedule: humanizeCron(sched),
+          schedule_raw: sched,
+          status: cron.enabled ? "active" : "paused",
+          last_run_at: state?.lastRunAtMs ? new Date(state.lastRunAtMs).toISOString() : null,
+          next_run_at: state?.nextRunAtMs ? new Date(state.nextRunAtMs).toISOString() : null,
+          last_status: state?.lastStatus || null,
+          last_duration_ms: state?.lastDurationMs || null,
+          consecutive_errors: state?.consecutiveErrors || 0,
+          ideas_generated: 0,
+          agent: cron.agentId || "sancho",
+          model: payload?.model || "\u2014",
+          prompt: payload?.message || "",
+          description: cron.description || "",
+          scripts: extractScripts(payload?.message || ""),
+          client_slug: slugParam,
+          _source: "openclaw-cron",
+          created_at: (cron as { createdAtMs?: number }).createdAtMs ? new Date((cron as { createdAtMs: number }).createdAtMs).toISOString() : null,
+        });
+      }
+
+      result[slugParam] = [...openclawTasks, ...localTasks];
+
       // Also return available templates
       try {
         const templatesFile = path.join(BASE, "_system", "cron-templates.json");
         const templates = readJSON<Record<string, { auto_onboarding?: boolean; name_template?: string; description?: string; requires?: string; p00_task?: unknown }>>(templatesFile, {});
-        const activeCrons = result[slugParam] || [];
-        const activeNames = activeCrons.map((c: { name?: string }) => (c.name || "").toLowerCase());
+        const allTaskNames = [...openclawTasks, ...localTasks].map((c: Record<string, unknown>) => ((c.name as string) || "").toLowerCase());
         const available: unknown[] = [];
         for (const [key, tmpl] of Object.entries(templates)) {
           if (key === "$comment") continue;
           if (tmpl.auto_onboarding) continue;
           const cronName = (tmpl.name_template || "").replace("{NAME}", "").toLowerCase().trim().replace(/\s*[—–-]\s*$/, "");
-          const isActive = activeNames.some((n: string) => n.toLowerCase().includes(cronName));
+          const isActive = allTaskNames.some((n: string) => n.toLowerCase().includes(cronName));
           if (!isActive) {
             available.push({
               template_key: key,

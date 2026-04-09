@@ -13,11 +13,11 @@ export function useRecurringTasks(slug: string | null) {
   });
 }
 
-export function useCronRuns(slug: string | null) {
+export function useCronRuns(slug: string | null, limit = 5) {
   return useQuery({
-    queryKey: ["cron-runs", slug],
+    queryKey: ["cron-runs", slug, limit],
     queryFn: async () => {
-      const res = await fetch(`/api/cron-runs?slug=${slug}&limit=5`);
+      const res = await fetch(`/api/cron-runs?slug=${slug}&limit=${limit}`);
       if (!res.ok) throw new Error("Failed to fetch cron runs");
       return res.json();
     },

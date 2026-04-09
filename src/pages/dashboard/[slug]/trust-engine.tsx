@@ -9,7 +9,8 @@ import { useSlugSync } from "@/hooks/useSlugSync";
 import { useProjects } from "@/hooks/useProjects";
 import { Timeline, type TimelinePhase } from "@/components/shared/timeline";
 import { EmptyState } from "@/components/shared/empty-state";
-import { useOpenChat } from "@/hooks/useChat";
+import { useOpenChat, useSendMessage } from "@/hooks/useChat";
+import { useChatStore } from "@/stores/chat";
 import { buildTrustEngineModuleThread } from "@/lib/chat-openers";
 import { cn } from "@/lib/utils";
 
@@ -144,16 +145,25 @@ export default function TrustEnginePage() {
     setEditBuffer("");
   }, []);
 
-  // Open chat for a module — opens thread without sending a message
-  const handleOpenChat = useCallback((modId: string) => {
-    const mod = TE_MODULES.find((m) => m.id === modId);
-    if (mod && slug) {
-      const config = buildTrustEngineModuleThread(slug, mod.id, mod.name, mod.file);
-      // Remove initialMessage so it doesn't auto-send
-      config.initialMessage = undefined;
-      openChat(slug, config);
-    }
-  }, [slug, openChat]);
+  // Open chat — just toggle sidebar open on the trust-engine thread, never send a message
+  const { sidebarOpen: chatOpen, currentThread, openSidebar: rawOpenSidebar, setCurrentSlug } = useChatStore();
+  const handleOpenChat = useCallback((_modId: string) => {
+    if (!slug) return;
+    const teThreadId = `${slug}:trust-engine`;
+    setCurrentSlug(slug);
+    // If the trust-engine thread is already active and sidebar open, do nothing
+    if (chatOpen && currentThread === teThreadId) return;
+    // Open sidebar with trust-engine thread but NO threadState (prevents auto-prompt)
+    rawOpenSidebar({
+      threadId: teThreadId,
+      threadName: "Trust Engine",
+      skill: "trust-engine",
+      skills: ["trust-engine", "keyword-research", "seo-content", "outreach-sequence-builder"],
+      linkedTo: "trust-engine",
+      docPath: null,
+      threadState: undefined,
+    });
+  }, [slug, chatOpen, currentThread, rawOpenSidebar, setCurrentSlug]);
 
   // Fetch run state
   const { data: runState, isLoading } = useQuery<TERunState>({
@@ -237,11 +247,12 @@ export default function TrustEnginePage() {
   }, [getStatus]);
 
   // Launch a module via chat
-  // Rerun — opens chat WITH a specific message about what to re-execute
+  // Rerun — opens chat then sends a specific message about what to re-execute
+  const sendMessage = useSendMessage();
   const handleLaunch = useCallback(
     (modId: string) => {
       const mod = TE_MODULES.find((m) => m.id === modId);
-      if (!mod) return;
+      if (!mod || !slug) return;
       const phase = TE_PHASES.find((p) => p.modules.some((m) => m.id === modId));
 
       const rerunMessages: Record<string, string> = {
@@ -256,11 +267,18 @@ export default function TrustEnginePage() {
         "influencers": `Quiero re-ejecutar el descubrimiento de influencers y medios. Usa \`${mod.cmd}\` para buscar nuevos perfiles, medios y directorios del sector.`,
       };
 
-      const config = buildTrustEngineModuleThread(slug, mod.id, mod.name, mod.file);
-      config.initialMessage = rerunMessages[modId] || `Quiero volver a ejecutar el paso "${mod.name}" (Fase ${phase?.num}: ${phase?.title}). Usa \`${mod.cmd}\` para regenerar los datos.`;
-      openChat(slug, config);
+      const message = rerunMessages[modId] || `Quiero volver a ejecutar el paso "${mod.name}" (Fase ${phase?.num}: ${phase?.title}). Usa \`${mod.cmd}\` para regenerar los datos.`;
+      const teThreadId = `${slug}:trust-engine`;
+
+      // 1. Open the chat sidebar on the trust-engine thread (no auto-message)
+      handleOpenChat(modId);
+
+      // 2. Send the rerun message explicitly
+      setTimeout(() => {
+        sendMessage.mutate({ text: message, threadId: teThreadId });
+      }, 100);
     },
-    [slug, openChat]
+    [slug, handleOpenChat, sendMessage]
   );
 
   // Build Timeline phases

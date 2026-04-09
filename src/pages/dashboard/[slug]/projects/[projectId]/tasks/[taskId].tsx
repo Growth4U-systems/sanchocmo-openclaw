@@ -108,18 +108,18 @@ const CHANNEL_TO_PIPELINE: Record<string, string> = {
   youtube: "youtube",
 };
 
-// Outreach pipeline columns (ported from legacy PIPELINE_COLS)
+// Outreach pipeline columns
 const PIPELINE_COLS = [
-  { key: "pending", icon: "⬜", label: "Pendiente", color: "var(--muted)" },
-  { key: "finding_dm", icon: "🔍", label: "Buscando DM", color: "var(--blue)" },
-  { key: "enriching", icon: "📧", label: "Enriqueciendo", color: "var(--yellow)" },
-  { key: "ready", icon: "✅", label: "Listo", color: "var(--green)" },
-  { key: "contacted", icon: "📤", label: "Contactado", color: "var(--rust)" },
-  { key: "replied", icon: "💬", label: "Respondio", color: "#22A06B" },
-  { key: "interested", icon: "🤝", label: "Interesado", color: "#6554C0" },
-  { key: "call_booked", icon: "📅", label: "Call agendada", color: "#00B8D9" },
-  { key: "closed", icon: "✅", label: "Cerrado", color: "var(--green)" },
-  { key: "discarded", icon: "❌", label: "Descartado", color: "var(--red)" },
+  { key: "new", icon: "📥", label: "Nuevos", color: "#94A3B8" },
+  { key: "approved", icon: "✅", label: "Aprobados", color: "#22C55E" },
+  { key: "researching", icon: "🔍", label: "Investigando", color: "#3B82F6" },
+  { key: "ready", icon: "📋", label: "Listo", color: "#F59E0B" },
+  { key: "contacted", icon: "📤", label: "Contactado", color: "#C45D35" },
+  { key: "replied", icon: "💬", label: "Respondió", color: "#22A06B" },
+  { key: "negotiating", icon: "🤝", label: "Negociando", color: "#6554C0" },
+  { key: "scheduled", icon: "📅", label: "Agendado", color: "#00B8D9" },
+  { key: "closed", icon: "✅", label: "Cerrado", color: "#16A34A" },
+  { key: "discarded", icon: "❌", label: "Descartado", color: "#DC2626" },
 ];
 
 // ---------------------------------------------------------------------------
@@ -141,6 +141,7 @@ const TASK_TYPE_OPTIONS = [
   { value: "foundation", label: "Foundation" },
   { value: "research", label: "Research" },
   { value: "analysis", label: "Analysis" },
+  { value: "tool", label: "Tool" },
 ];
 
 export default function TaskDetailPage() {
@@ -160,7 +161,7 @@ export default function TaskDetailPage() {
   const statusRef = useRef<HTMLDivElement>(null);
   const [openDocPath, setOpenDocPath] = useState<string | null>(null);
 
-  // Close status dropdown on outside click
+  // Close status dropdown on outside click (use click, not mousedown, to avoid race)
   useEffect(() => {
     if (!statusOpen) return;
     function handleClick(e: MouseEvent) {
@@ -168,8 +169,9 @@ export default function TaskDetailPage() {
         setStatusOpen(false);
       }
     }
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
+    // Use setTimeout to avoid closing on the same click that opened it
+    const t = setTimeout(() => document.addEventListener("click", handleClick), 0);
+    return () => { clearTimeout(t); document.removeEventListener("click", handleClick); };
   }, [statusOpen]);
 
   // Find project and task
@@ -421,6 +423,19 @@ export default function TaskDetailPage() {
             </select>
           ) : <span>{task.owner || "Sancho"}</span>}
         </MetaCard>
+        {(editing ? draft.type === "tool" : taskType === "tool") && (
+          <MetaCard label="Tool" editing={editing}>
+            {editing ? (
+              <select value={draft.skill || ""} onChange={(e) => setDraft((d) => ({ ...d, skill: e.target.value }))} className="w-full border border-[#E8E2D9] rounded-lg px-2 py-1 text-[13px] bg-white focus:outline-none focus:border-[#2C3E50]">
+                <option value="">— Seleccionar —</option>
+                <option value="trust-engine">Trust Engine</option>
+                <option value="atalaya">Atalaya</option>
+                <option value="content-flywheel">Content Flywheel</option>
+                <option value="strategic-plan">Strategic Plan</option>
+              </select>
+            ) : <span>{task.skill || "—"}</span>}
+          </MetaCard>
+        )}
         {task.depends_on && !editing && (
           <MetaCard label="Depende de" editing={false}>
             <span>{task.depends_on}</span>
@@ -486,7 +501,35 @@ export default function TaskDetailPage() {
       {/* Content Pipeline */}
       {taskType === "content" && <ContentPipeline channel={task.channel} />}
 
-      {/* Tool tasks redirect to their dedicated page — see redirect above */}
+      {/* ===== IDEAS / CONTACTS (before docs for content/outreach) ===== */}
+      {(taskType === "content" || taskType === "outreach" || ideaIds.length > 0) && (
+        <div className="bg-white border border-[#E8E2D9] rounded-[10px] overflow-hidden mb-6" style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}>
+          <div className="px-4 py-3 border-b border-[#E8E2D9] flex items-center gap-2">
+            <span className="text-base">{taskType === "outreach" ? "👥" : "💡"}</span>
+            <span className="font-semibold text-sm text-[#2C3E50]">
+              {taskType === "outreach" ? "Contactos" : "Ideas"}
+            </span>
+            <span className="text-[10px] text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+              {ideaIds.length}
+            </span>
+          </div>
+          <div className="p-4">
+            {ideaIds.length === 0 ? (
+              <div className="text-center py-6 text-sm text-muted-foreground/50 italic">
+                Sin {taskType === "outreach" ? "contactos" : "ideas"} asignados.
+              </div>
+            ) : taskIdeas.length === 0 ? (
+              <div className="text-muted-foreground text-sm">Cargando...</div>
+            ) : taskType === "outreach" ? (
+              <OutreachKanban ideas={taskIdeas} slug={slug} projectTasks={pw?.tasks || []} currentDocs={docs} />
+            ) : (
+              <ContentIdeas ideas={taskIdeas} channel={task.channel || ""} slug={slug} onStatusChange={(ideaId, status) => {
+                updateIdeaStatus.mutate({ slug, ideaId, status });
+              }} />
+            )}
+          </div>
+        </div>
+      )}
 
       {/* ===== DOCUMENTS ===== */}
       <div className="bg-white border border-[#E8E2D9] rounded-[10px] overflow-hidden mb-6" style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}>
@@ -546,36 +589,6 @@ export default function TaskDetailPage() {
         </div>
       </div>
 
-      {/* ===== IDEAS / CONTACTS ===== */}
-      {(taskType === "content" || taskType === "outreach" || ideaIds.length > 0) && (
-        <div className="bg-white border border-[#E8E2D9] rounded-[10px] overflow-hidden mb-6" style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}>
-          <div className="px-4 py-3 border-b border-[#E8E2D9] flex items-center gap-2">
-            <span className="text-base">{taskType === "outreach" ? "👥" : "💡"}</span>
-            <span className="font-semibold text-sm text-[#2C3E50]">
-              {taskType === "outreach" ? "Contactos" : "Ideas"}
-            </span>
-            <span className="text-[10px] text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
-              {ideaIds.length}
-            </span>
-          </div>
-          <div className="p-4">
-            {ideaIds.length === 0 ? (
-              <div className="text-center py-6 text-sm text-muted-foreground/50 italic">
-                Sin {taskType === "outreach" ? "contactos" : "ideas"} asignados.
-              </div>
-            ) : taskIdeas.length === 0 ? (
-              <div className="text-muted-foreground text-sm">Cargando...</div>
-            ) : taskType === "outreach" ? (
-              <OutreachKanban ideas={taskIdeas} slug={slug} />
-            ) : (
-              <ContentIdeas ideas={taskIdeas} channel={task.channel || ""} slug={slug} onStatusChange={(ideaId, status) => {
-                updateIdeaStatus.mutate({ slug, ideaId, status });
-              }} />
-            )}
-          </div>
-        </div>
-      )}
-
       {/* Document SlideOver */}
       <DocSlideOver slug={slug} docPath={openDocPath ? `brand/${slug}/${openDocPath}` : null} onClose={() => setOpenDocPath(null)} />
     </DashboardLayout>
@@ -628,16 +641,57 @@ function ContentPipeline({ channel }: { channel: string }) {
 // Outreach Kanban (contacts by pipeline_status)
 // ---------------------------------------------------------------------------
 
-function OutreachKanban({ ideas, slug }: { ideas: Idea[]; slug: string }) {
+function OutreachKanban({ ideas, slug, projectTasks, currentDocs }: {
+  ideas: Idea[];
+  slug: string;
+  projectTasks: Task[];
+  currentDocs: { path: string; name?: string; title?: string; status?: string }[];
+}) {
   const [selectedContact, setSelectedContact] = useState<Idea | null>(null);
   const updatePipeline = useUpdatePipelineStatus();
+
+  // Detect prerequisites for moving to "contacted"
+  const prereqs = useMemo(() => {
+    // 1. Sequences: look for a doc with "secuencia" or "sequence" in the current task or project
+    const allDocs = [
+      ...currentDocs,
+      ...projectTasks.flatMap((t) => (t.documents || []))
+    ];
+    const hasSequences = allDocs.some((d) => {
+      const p = (d.path || d.name || d.title || "").toLowerCase();
+      return p.includes("secuencia") || p.includes("sequence") || p.includes("cadencia");
+    });
+
+    // Also check if there's a task about sequences that is done
+    const sequenceTask = projectTasks.find((t) => {
+      const name = t.name.toLowerCase();
+      return name.includes("secuencia") || name.includes("sequence") || name.includes("cadencia") || name.includes("email");
+    });
+    const sequenceTaskDone = sequenceTask && ["done", "completed"].includes(sequenceTask.status);
+
+    // 2. Infrastructure: warm-up, domains, sending tool
+    const infraTask = projectTasks.find((t) => {
+      const name = t.name.toLowerCase();
+      return name.includes("warm-up") || name.includes("warmup") || name.includes("infraestructura") || name.includes("buzón") || name.includes("dominio") || name.includes("instantly") || name.includes("lemlist");
+    });
+    const infraDone = infraTask && ["done", "completed"].includes(infraTask.status);
+
+    return {
+      hasSequences: hasSequences || !!sequenceTaskDone,
+      sequenceTask,
+      sequenceTaskDone: !!sequenceTaskDone,
+      infraTask,
+      infraDone: !!infraDone,
+      readyToSend: (hasSequences || !!sequenceTaskDone) && !!infraDone,
+    };
+  }, [currentDocs, projectTasks]);
 
   const groups = useMemo(() => {
     const map: Record<string, Idea[]> = {};
     for (const col of PIPELINE_COLS) map[col.key] = [];
     for (const idea of ideas) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const ps = (idea as any).pipeline_status || "pending";
+      const ps = (idea as any).pipeline_status || "new";
       if (!map[ps]) map[ps] = [];
       map[ps].push(idea);
     }
@@ -647,18 +701,18 @@ function OutreachKanban({ ideas, slug }: { ideas: Idea[]; slug: string }) {
   const visibleCols = PIPELINE_COLS.filter(
     (col) =>
       (groups[col.key]?.length || 0) > 0 ||
-      ["pending", "ready", "contacted", "interested"].includes(col.key)
+      ["new", "approved", "researching", "ready", "contacted"].includes(col.key)
   );
 
   const total = ideas.length;
   const contacted = ideas.filter((i) =>
-    ["contacted", "replied", "interested", "call_booked", "closed"].includes(
+    ["contacted", "replied", "negotiating", "scheduled", "closed"].includes(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (i as any).pipeline_status || ""
     )
   ).length;
   const replied = ideas.filter((i) =>
-    ["replied", "interested", "call_booked", "closed"].includes(
+    ["replied", "negotiating", "scheduled", "closed"].includes(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (i as any).pipeline_status || ""
     )
@@ -667,7 +721,7 @@ function OutreachKanban({ ideas, slug }: { ideas: Idea[]; slug: string }) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const selData = (selectedContact as any)?.source_data || {};
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const selPipelineStatus = (selectedContact as any)?.pipeline_status || "pending";
+  const selPipelineStatus = (selectedContact as any)?.pipeline_status || "new";
 
   return (
     <>
@@ -715,6 +769,33 @@ function OutreachKanban({ ideas, slug }: { ideas: Idea[]; slug: string }) {
         })}
       </div>
 
+      {/* Prerequisites check */}
+      {!prereqs.readyToSend && (groups.ready?.length || 0) > 0 && (
+        <div className="mt-3 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 space-y-1.5">
+          <div className="text-xs font-bold text-amber-800">⚠️ Prerrequisitos para enviar</div>
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center gap-2 text-xs">
+              <span>{prereqs.hasSequences ? "✅" : "❌"}</span>
+              <span className={prereqs.hasSequences ? "text-green-700" : "text-amber-800"}>
+                Secuencias de email
+                {prereqs.sequenceTask && !prereqs.sequenceTaskDone && (
+                  <span className="text-muted-foreground ml-1">({prereqs.sequenceTask.id} — {prereqs.sequenceTask.status})</span>
+                )}
+              </span>
+            </div>
+            <div className="flex items-center gap-2 text-xs">
+              <span>{prereqs.infraDone ? "✅" : "❌"}</span>
+              <span className={prereqs.infraDone ? "text-green-700" : "text-amber-800"}>
+                Infraestructura de envío (warm-up, dominios, buzones)
+                {prereqs.infraTask && !prereqs.infraDone && (
+                  <span className="text-muted-foreground ml-1">({prereqs.infraTask.id} — {prereqs.infraTask.status})</span>
+                )}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Summary stats */}
       <div className="flex gap-4 mt-3 px-3 py-2 bg-background rounded-md text-[11px]">
         <span><strong>{total}</strong> contactos</span>
@@ -727,18 +808,17 @@ function OutreachKanban({ ideas, slug }: { ideas: Idea[]; slug: string }) {
         open={!!selectedContact}
         onClose={() => setSelectedContact(null)}
         title={selData.company_name || selectedContact?.title || "Contacto"}
-        width="w-[500px] max-w-full"
+        width="w-[520px] max-w-full"
       >
         {selectedContact && (
-          <div className="space-y-5">
-            {/* Pipeline status selector */}
+          <div className="space-y-6">
+            {/* ── Pipeline status ── */}
             <div>
-              <label className="text-[11px] text-muted-foreground font-medium uppercase tracking-wide block mb-1.5">Estado pipeline</label>
+              <SectionLabel>Estado pipeline</SectionLabel>
               <select
                 value={selPipelineStatus}
                 onChange={(e) => {
                   updatePipeline.mutate({ slug, ideaId: selectedContact.id, pipeline_status: e.target.value });
-                  // Optimistic update for the local view
                   // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   (selectedContact as any).pipeline_status = e.target.value;
                   setSelectedContact({ ...selectedContact });
@@ -751,36 +831,164 @@ function OutreachKanban({ ideas, slug }: { ideas: Idea[]; slug: string }) {
               </select>
             </div>
 
-            {/* Contact info */}
-            <div className="grid grid-cols-2 gap-3">
-              {selData.first_name && <ContactField label="Nombre" value={`${selData.first_name || ""} ${selData.last_name || ""}`} />}
-              {selData.job_title && <ContactField label="Cargo" value={selData.job_title} />}
-              {selData.company_name && <ContactField label="Empresa" value={selData.company_name} />}
-              {selData.seniority && <ContactField label="Seniority" value={selData.seniority} />}
-              {selData.email && (
-                <ContactField
-                  label="Email"
-                  value={`${selData.email} ${selData.email_status === "verified" ? "✅" : selData.email_status === "catch-all" ? "⚠️" : ""}`}
-                />
-              )}
-              {selData.linkedin_url && <ContactField label="LinkedIn" value={selData.linkedin_url} isLink />}
-              {selData.company_url && <ContactField label="Web" value={selData.company_url} isLink />}
-              {selData.location && <ContactField label="Ubicación" value={selData.location} />}
-              {selData.industry && <ContactField label="Industria" value={selData.industry} />}
-              {selData.employees && <ContactField label="Empleados" value={String(selData.employees)} />}
-            </div>
-
-            {/* Description / notes */}
-            {selectedContact.description && (
-              <div>
-                <label className="text-[11px] text-muted-foreground font-medium uppercase tracking-wide block mb-1">Descripción</label>
-                <p className="text-sm text-foreground leading-relaxed">{selectedContact.description}</p>
+            {/* ── Contexto y estrategia ── */}
+            {(selectedContact.description || selectedContact.action || selectedContact.title) && (
+              <div className="bg-[#FDFCFA] border border-[#E8E2D9] rounded-lg p-4 space-y-3">
+                <SectionLabel>Contexto</SectionLabel>
+                {selectedContact.description && (
+                  <p className="text-sm text-foreground leading-relaxed">{selectedContact.description}</p>
+                )}
+                {selectedContact.action && (
+                  <div>
+                    <div className="text-[11px] text-muted-foreground font-medium mb-0.5">Acción sugerida</div>
+                    <p className="text-sm text-foreground leading-relaxed">{selectedContact.action}</p>
+                  </div>
+                )}
+                {/* eslint-disable @typescript-eslint/no-explicit-any */}
+                {(selectedContact as any).goal && (
+                  <div>
+                    <div className="text-[11px] text-muted-foreground font-medium mb-0.5">Objetivo</div>
+                    <p className="text-sm text-foreground">{(selectedContact as any).goal}</p>
+                  </div>
+                )}
+                {(selectedContact as any).theme && (
+                  <div>
+                    <div className="text-[11px] text-muted-foreground font-medium mb-0.5">Tema / Categoría</div>
+                    <p className="text-sm text-foreground">{(selectedContact as any).theme} {(selectedContact as any).category ? `· ${(selectedContact as any).category}` : ""}</p>
+                  </div>
+                )}
+                {/* eslint-enable @typescript-eslint/no-explicit-any */}
               </div>
             )}
-            {selectedContact.action && (
+
+            {/* ── Persona ── */}
+            {(selData.first_name || selData.job_title || selData.seniority) && (
               <div>
-                <label className="text-[11px] text-muted-foreground font-medium uppercase tracking-wide block mb-1">Acción</label>
-                <p className="text-sm text-foreground leading-relaxed">{selectedContact.action}</p>
+                <SectionLabel>Persona</SectionLabel>
+                <div className="grid grid-cols-2 gap-2">
+                  {selData.first_name && <ContactField label="Nombre completo" value={`${selData.first_name || ""} ${selData.last_name || ""}`.trim()} />}
+                  {selData.job_title && <ContactField label="Cargo" value={selData.job_title} />}
+                  {selData.seniority && <ContactField label="Seniority" value={selData.seniority} />}
+                  {selData.department && <ContactField label="Departamento" value={selData.department} />}
+                </div>
+              </div>
+            )}
+
+            {/* ── Canales de contacto ── */}
+            <div>
+              <SectionLabel>Canales de contacto</SectionLabel>
+              <div className="space-y-2">
+                {selData.email ? (
+                  <div className="flex items-center gap-2 bg-background border border-border rounded-lg px-3 py-2.5">
+                    <span className="text-base">📧</span>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-[10px] text-muted-foreground uppercase tracking-wide">Email</div>
+                      <a href={`mailto:${selData.email}`} className="text-sm font-medium text-rust hover:underline">{selData.email}</a>
+                    </div>
+                    <span className="text-xs shrink-0">
+                      {selData.email_status === "verified" ? "✅ Verificado" : selData.email_status === "catch-all" ? "⚠️ Catch-all" : selData.email_status === "invalid" ? "❌ Inválido" : "⏳ Sin verificar"}
+                    </span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 bg-background border border-dashed border-border rounded-lg px-3 py-2.5 text-muted-foreground">
+                    <span className="text-base">📧</span>
+                    <span className="text-sm italic">Email no disponible</span>
+                  </div>
+                )}
+
+                {selData.phone && (
+                  <div className="flex items-center gap-2 bg-background border border-border rounded-lg px-3 py-2.5">
+                    <span className="text-base">📱</span>
+                    <div className="flex-1">
+                      <div className="text-[10px] text-muted-foreground uppercase tracking-wide">Teléfono</div>
+                      <span className="text-sm font-medium">{selData.phone}</span>
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex gap-2">
+                  {selData.linkedin_url ? (
+                    <a href={selData.linkedin_url} target="_blank" rel="noreferrer" className="flex-1 flex items-center gap-2 bg-[#0A66C2]/5 border border-[#0A66C2]/20 rounded-lg px-3 py-2 text-sm font-medium text-[#0A66C2] hover:bg-[#0A66C2]/10 transition-colors">
+                      💼 LinkedIn
+                    </a>
+                  ) : (
+                    <div className="flex-1 flex items-center gap-2 bg-background border border-dashed border-border rounded-lg px-3 py-2 text-sm text-muted-foreground italic">
+                      💼 Sin LinkedIn
+                    </div>
+                  )}
+
+                  {selData.twitter_url ? (
+                    <a href={selData.twitter_url} target="_blank" rel="noreferrer" className="flex-1 flex items-center gap-2 bg-[#1DA1F2]/5 border border-[#1DA1F2]/20 rounded-lg px-3 py-2 text-sm font-medium text-[#1DA1F2] hover:bg-[#1DA1F2]/10 transition-colors">
+                      🐦 Twitter/X
+                    </a>
+                  ) : null}
+                </div>
+
+                {/* URL from idea itself */}
+                {selectedContact.title && !selData.linkedin_url && !selData.email && (
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  (selectedContact as any).url ? (
+                    <a
+                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                      href={(selectedContact as any).url}
+                      target="_blank" rel="noreferrer"
+                      className="flex items-center gap-2 bg-background border border-border rounded-lg px-3 py-2.5 text-sm font-medium text-rust hover:underline"
+                    >
+                      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                      🔗 {(selectedContact as any).url}
+                    </a>
+                  ) : null
+                )}
+              </div>
+            </div>
+
+            {/* ── Empresa ── */}
+            {(selData.company_name || selData.company_url || selData.industry) && (
+              <div>
+                <SectionLabel>Empresa</SectionLabel>
+                <div className="grid grid-cols-2 gap-2">
+                  {selData.company_name && <ContactField label="Nombre" value={selData.company_name} />}
+                  {selData.company_url && <ContactField label="Web" value={selData.company_url} isLink />}
+                  {selData.industry && <ContactField label="Industria" value={selData.industry} />}
+                  {selData.company_size && <ContactField label="Tamaño" value={selData.company_size} />}
+                  {selData.employees && <ContactField label="Empleados" value={String(selData.employees)} />}
+                  {selData.revenue && <ContactField label="Facturación" value={selData.revenue} />}
+                  {selData.location && <ContactField label="Ubicación" value={selData.location} />}
+                  {selData.founded && <ContactField label="Fundada" value={String(selData.founded)} />}
+                </div>
+                {selData.company_description && (
+                  <p className="text-xs text-muted-foreground mt-2 leading-relaxed">{selData.company_description}</p>
+                )}
+              </div>
+            )}
+
+            {/* ── Metadatos ── */}
+            <div className="flex flex-wrap gap-2 pt-2 border-t border-border">
+              {selectedContact.priority_score ? (
+                <span className="text-[11px] px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-700 font-medium">⭐ Prioridad: {selectedContact.priority_score}</span>
+              ) : null}
+              {/* eslint-disable @typescript-eslint/no-explicit-any */}
+              {(selectedContact as any).source && (
+                <span className="text-[11px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground font-medium">Fuente: {(selectedContact as any).source}</span>
+              )}
+              {(selectedContact as any).channels_suggested?.length > 0 && (
+                <span className="text-[11px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground font-medium">Canal: {(selectedContact as any).channels_suggested.join(", ")}</span>
+              )}
+              {/* eslint-enable @typescript-eslint/no-explicit-any */}
+              {selectedContact.approved_at && (
+                <span className="text-[11px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground font-medium">
+                  Aprobado: {new Date(selectedContact.approved_at).toLocaleDateString("es-ES", { day: "numeric", month: "short" })}
+                </span>
+              )}
+            </div>
+
+            {/* ── Notas ── */}
+            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+            {(selectedContact as any).notes && (
+              <div>
+                <SectionLabel>Notas</SectionLabel>
+                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                <p className="text-sm text-foreground leading-relaxed bg-[#FDFCFA] border border-[#E8E2D9] rounded-lg p-3">{(selectedContact as any).notes}</p>
               </div>
             )}
           </div>
@@ -788,6 +996,10 @@ function OutreachKanban({ ideas, slug }: { ideas: Idea[]; slug: string }) {
       </SlideOver>
     </>
   );
+}
+
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return <div className="text-[11px] text-muted-foreground font-bold uppercase tracking-wide mb-2">{children}</div>;
 }
 
 function ContactField({ label, value, isLink }: { label: string; value: string; isLink?: boolean }) {
@@ -910,11 +1122,23 @@ function ContentIdeas({ ideas, channel, slug, onStatusChange }: {
 
       {/* Rejected */}
       {rejectedIdeas.length > 0 && (
-        <div className="opacity-40">
+        <div className="opacity-50">
           <div className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-1">Rechazadas ({rejectedIdeas.length})</div>
           <div className="space-y-1">
             {rejectedIdeas.map((idea) => (
-              <div key={idea.id} className="px-3 py-1.5 text-[12px] text-muted-foreground line-through">{idea.title}</div>
+              <div
+                key={idea.id}
+                className="flex items-center justify-between px-3 py-1.5 rounded-md hover:bg-muted/20 cursor-pointer transition-colors"
+                onClick={() => setSelectedIdea(idea)}
+              >
+                <span className="text-[12px] text-muted-foreground line-through">{idea.title}</span>
+                <button
+                  className="text-[10px] px-1.5 py-0.5 rounded bg-[#E8F5E9] text-[#2E7D32] font-medium hover:bg-[#C8E6C9] transition-colors ml-2 shrink-0"
+                  onClick={(e) => { e.stopPropagation(); onStatusChange(idea.id, "approved"); }}
+                >
+                  ↩ Recuperar
+                </button>
+              </div>
             ))}
           </div>
         </div>
@@ -946,15 +1170,23 @@ function ContentIdeas({ ideas, channel, slug, onStatusChange }: {
         {selectedIdea && (
           <div className="space-y-5">
             {/* Pipeline step selector */}
-            {selectedIdea.status !== "new" && selectedIdea.status !== "rejected" && (
+            {selectedIdea.status !== "new" && (
               <div>
                 <label className="text-[11px] text-muted-foreground font-medium uppercase tracking-wide block mb-1.5">Paso del pipeline</label>
                 <select
-                  value={selStep || "_approved"}
+                  value={selectedIdea.status === "rejected" ? "_rejected" : selStep || "_approved"}
                   onChange={(e) => {
                     const val = e.target.value;
+                    if (val === "_rejected") {
+                      onStatusChange(selectedIdea.id, "rejected");
+                      setSelectedIdea(null);
+                      return;
+                    }
+                    // If coming from rejected, re-approve first
+                    if (selectedIdea.status === "rejected") {
+                      onStatusChange(selectedIdea.id, "approved");
+                    }
                     if (val === "_approved") {
-                      // Remove pipeline_step
                       updateStep.mutate({ slug, ideaId: selectedIdea.id, pipeline_step: "" });
                     } else {
                       updateStep.mutate({ slug, ideaId: selectedIdea.id, pipeline_step: val });
@@ -969,6 +1201,7 @@ function ContentIdeas({ ideas, channel, slug, onStatusChange }: {
                   {pipeline.steps.map((s) => (
                     <option key={s.key} value={s.key}>{s.icon} {s.label}</option>
                   ))}
+                  <option value="_rejected">❌ Descartada</option>
                 </select>
 
                 {/* Quick move buttons */}
