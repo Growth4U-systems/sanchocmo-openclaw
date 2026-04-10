@@ -4,8 +4,6 @@
 // falls back to hardcoded maps for backwards compatibility.
 // ============================================================
 
-import { readJSON } from "./data/json-io";
-import { chatConfigFile } from "./data/paths";
 
 export interface SkillResolution {
   skill: string;
@@ -27,8 +25,8 @@ export interface SkillContext {
 // chat-config.json reader (cached per slug for the lifetime of the request)
 // ---------------------------------------------------------------------------
 
-interface ChatConfig {
-  pillars?: Record<string, { skill?: string; skills?: string[]; canonical?: string }>;
+export interface ChatConfig {
+  pillars?: Record<string, { skill?: string; skills?: string[]; canonical?: string; docPath?: string }>;
   tasks?: {
     _defaults?: { skill?: string; skills?: string[] };
     _byType?: Record<string, { skill?: string; skills?: string[] }>;
@@ -38,17 +36,6 @@ interface ChatConfig {
   strategies?: { _defaults?: { skill?: string; skills?: string[] } };
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [key: string]: any;
-}
-
-const configCache = new Map<string, { data: ChatConfig; ts: number }>();
-const CACHE_TTL = 30_000; // 30s
-
-function loadChatConfig(slug: string): ChatConfig {
-  const cached = configCache.get(slug);
-  if (cached && Date.now() - cached.ts < CACHE_TTL) return cached.data;
-  const data = readJSON<ChatConfig>(chatConfigFile(slug), {});
-  configCache.set(slug, { data, ts: Date.now() });
-  return data;
 }
 
 function toResolution(entry: { skill?: string; skills?: string[] } | undefined): SkillResolution | null {
@@ -106,8 +93,7 @@ export const STRATEGY_SKILLS: Record<string, SkillResolution> = {
  *   8. pillar → chat-config.json pillars
  *   9. Fallback → sancho-manager
  */
-export function resolveThreadSkills(ctx: SkillContext): SkillResolution {
-  const cfg = ctx.slug ? loadChatConfig(ctx.slug) : {};
+export function resolveThreadSkills(ctx: SkillContext, cfg: ChatConfig = {}): SkillResolution {
 
   // 1. Explicit task skill
   if (ctx.taskSkill) {
