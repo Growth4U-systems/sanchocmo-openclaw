@@ -5,6 +5,62 @@ Scope: Features y cambios del producto SanchoCMO. Actividad operativa por client
 
 ---
 
+## [3.0.0] — 2026-04-10
+
+### 🚀 MC Dashboard — Migración completa a Next.js
+
+La migración de Mission Control de HTML monolítico (~9500 líneas) a **Next.js 14 (Pages Router)** está completa. Este es el release más grande en la historia de SanchoCMO: 139 archivos de código, ~24.000 líneas nuevas, ~60 API endpoints.
+
+**Repo:** `github.com/Growth4U-systems/sanchocmo-openclaw` (branch `alfonso-10-abril`)
+
+### Added
+- **MC Dashboard Next.js** — Aplicación completa en Next.js 14, TypeScript, Tailwind CSS, Zustand, TanStack Query. Reemplaza MC-Legacy (HTML).
+- **Dashboard V2** — Vista principal con 3 columnas: brand snapshot, métricas en tiempo real, próximos pasos.
+- **Foundation Browser** — File tree interactivo + doc viewer + markdown editor para los 15 pilares de estrategia. Endpoints: `pillar-status`, `pillar-docs`, `other-docs`, `download`, `state`.
+- **Projects CRUD completo** — Lista de proyectos con tareas colapsables, detail page por proyecto, task detail con edición inline (status, priority, notes, execution tasks). Endpoints: `create-batch`, `create-execution-tasks`, `create-tool-project`, `task-status`, `task-update`, `project-update`, `project-archive`.
+- **Idea Bank** — Banco de ideas con gestión de estados y filtros. Endpoint: `/api/ideas/status`.
+- **Trust Engine** — Score de confianza con signal cards mejoradas.
+- **Atalaya** — Inteligencia competitiva integrada en el dashboard.
+- **Metrics** — Vista de métricas por cliente. Endpoint: `/api/metrics`.
+- **Chat con Sancho** — Sistema de chat integrado con sidebar, skill picker, quick actions, conversation starters. Endpoints: `/api/chat/mark-read`, `/api/chat/quick-actions`.
+- **Skills Page** — Nueva página de detalle de skills en `/dashboard/[slug]/skills/[skillId]`.
+- **Settings Panel** — 7 paneles de configuración: agents, skills, strategies, dispatch, API connect, recurring tasks, API catalog. Slideover UI.
+- **Cron Insights Feed v2** — Feed de insights de crons con visualización mejorada y recommendations tab.
+- **Recurring Tasks Panel** — Gestión expandida de tareas recurrentes en settings.
+- **Admin Pages** — Activity log (`/admin/activity`), system settings (`/admin/settings`).
+- **System APIs** — 14 endpoints en `/api/system/*`: agents, skills, strategies, dispatch, costs, changelog, health-check-all, api-catalog, api-connect, connect-proxy, cron-toggle, recurring-tasks, activity, integrations-summary.
+- **Auth** — NextAuth.js con signin flow (`/auth/signin`).
+- **Pagos con Polar.sh** — Checkout, portal, subscription, webhook. 4 endpoints en `/api/polar/*`.
+- **DB con Drizzle ORM** — Schema PostgreSQL: user, session, account, verification, subscription, client. Config en `drizzle.config.ts`.
+- **i18n** — Soporte español/inglés con next-intl. Mensajes en `src/messages/`.
+- **Páginas públicas** — Pricing, terms of service, privacy policy, payment flow, success page.
+- **Upload de imágenes** — Endpoint `/api/upload-image` (preparado para R2).
+- **Integración OpenClaw** — Repo unificado con agents (cervantes, escudero, rocinante, sancho, main), cron jobs, workspaces, plugins, discord, flows.
+- **MIGRATION-PENDING.md** — Documento de items pendientes para deploy.
+
+### Changed
+- **Sidebar** — Replica fiel de la estructura del MC-Legacy con navegación mejorada. Links clickeables navegan en vez de abrir chat.
+- **Skill Resolver** — Refactored y simplificado.
+- **Chat Openers** — Nuevos conversation starters contextuales.
+- **Project Cards** — Colapsables, click en header para toggle de tareas.
+- **Task Rows** — Clickeables como links al detalle de la tarea.
+- **Recommendations** — Action buttons integrados, sección Atalaya standalone eliminada.
+- **.gitignore** — Unificado para Next.js + OpenClaw (sin secrets).
+
+### Fixed
+- **10+ bugs de QA** — Sidebar, project cards, task rows, recommendations, foundation state, TDZ errors, static file routing.
+- **Foundation state endpoint** — Corregido para reflejar estados reales de pilares.
+- **NextAuth session** — Soporte en API middleware.
+- **MC admin static routing** — JS/CSS servidos correctamente después de URL rewrite.
+
+### Infrastructure
+- **Stack**: Next.js 14.2, Pages Router, TypeScript, Tailwind CSS, Zustand, TanStack Query, NextAuth, Drizzle ORM, Polar SDK, next-intl
+- **DB**: PostgreSQL (Drizzle migrations pendientes)
+- **Deploy pendiente**: Vercel recomendado. Necesita: DATABASE_URL, NEXTAUTH_SECRET, NEXTAUTH_URL, POLAR_ACCESS_TOKEN, POLAR_WEBHOOK_SECRET, POLAR_ORGANIZATION_ID
+- **QA**: 18 screenshots del UI, 20 API endpoints verificados
+
+---
+
 ## [2.9.0] — 2026-03-29
 
 ### Added
