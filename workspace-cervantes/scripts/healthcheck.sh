@@ -8,6 +8,9 @@
 # Exit 2 = servicio recuperado (fail→ok — informational)
 set -uo pipefail
 
+# Source env vars for webhook
+[ -f "${OPENCLAW_HOME:-$HOME/.openclaw}/.env" ] && source "${OPENCLAW_HOME:-$HOME/.openclaw}/.env" 2>/dev/null || true
+
 OPENCLAW_HOME="${OPENCLAW_HOME:-$HOME/.openclaw}"
 export SANCHO_STATE="$OPENCLAW_HOME/workspace-sancho/memory/healthcheck-state.json"
 export CERVANTES_STATE="$OPENCLAW_HOME/workspace-cervantes/memory/healthcheck-state.json"
@@ -229,4 +232,15 @@ else:
 "
 
 EXIT_CODE=$?
+
+# --- Discord webhook fallback (runs without LLM) ---
+ALERT_SCRIPT="$(dirname "$0")/discord-alert.sh"
+if [ -f "$ALERT_SCRIPT" ] && [ -n "${DISCORD_WEBHOOK_CERVANTES:-}" ]; then
+  if [ "$EXIT_CODE" -eq 1 ]; then
+    "$ALERT_SCRIPT" "⚠️" "Health Check — $(date +%Y-%m-%d)" "New failures detected. Check healthcheck-state.json for details."
+  elif [ "$EXIT_CODE" -eq 2 ]; then
+    "$ALERT_SCRIPT" "✅" "Health Check Recovery — $(date +%Y-%m-%d)" "Services recovered."
+  fi
+fi
+
 exit $EXIT_CODE
