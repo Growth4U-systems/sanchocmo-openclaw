@@ -234,6 +234,14 @@ else:
 
 EXIT_CODE=$?
 
+# --- Trigger smart analysis on new failures ---
+if [ "$EXIT_CODE" -eq 1 ]; then
+  SMART_SCRIPT="$(dirname "$0")/cron-healthcheck-smart.sh"
+  if [ -f "$SMART_SCRIPT" ] && command -v claude &>/dev/null; then
+    nohup "$SMART_SCRIPT" &>/dev/null &
+  fi
+fi
+
 # --- Discord webhook fallback (runs without LLM) ---
 ALERT_SCRIPT="$(dirname "$0")/discord-alert.sh"
 if [ -f "$ALERT_SCRIPT" ] && [ -n "${DISCORD_WEBHOOK_CERVANTES:-}" ]; then
