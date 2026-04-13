@@ -22,19 +22,17 @@ except:
 # Agent definitions: name, workspace, model
 declare -A AGENT_WORKSPACES=(
   ["sancho"]="$OPENCLAW_ROOT/workspace-sancho"
-  ["cervantes"]="$OPENCLAW_ROOT/workspace-cervantes"
   ["escudero"]="$OPENCLAW_ROOT/workspace-escudero"
   ["rocinante"]="$OPENCLAW_ROOT/workspace-rocinante"
 )
 
 declare -A AGENT_MODELS=(
   ["sancho"]="anthropic/claude-opus-4-6"
-  ["cervantes"]="anthropic/claude-opus-4-6"
   ["escudero"]="anthropic/claude-sonnet-4-6"
   ["rocinante"]="anthropic/claude-opus-4-6"
 )
 
-for AGENT_NAME in sancho cervantes escudero rocinante; do
+for AGENT_NAME in sancho escudero rocinante; do
   if echo "$EXISTING" | grep -q "^${AGENT_NAME}$"; then
     echo "  ✓ $AGENT_NAME already registered"
     continue

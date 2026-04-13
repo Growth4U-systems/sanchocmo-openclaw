@@ -2,10 +2,9 @@
 /**
  * generate-openclaw-config.js — Auto-generate openclaw.json from env vars
  *
- * Reads DISCORD_BOT_TOKEN, CERVANTES_GUILD_ID, ANTHROPIC_API_KEY from env.
+ * Reads DISCORD_BOT_TOKEN, ANTHROPIC_API_KEY from env.
  * Auto-detects Discord guilds via API and creates bindings:
- *   - Cervantes guild → cervantes agent
- *   - All other guilds → sancho agent
+ *   - All guilds → sancho agent
  *
  * Idempotent: merges with existing config, preserves runtime state.
  */
@@ -33,7 +32,6 @@ async function main() {
   }
 
   const discordToken = process.env.DISCORD_BOT_TOKEN;
-  const cervantesGuild = process.env.CERVANTES_GUILD_ID || '';
   const anthropicKey = process.env.ANTHROPIC_API_KEY || '';
 
   // --- Auth profiles ---
@@ -55,11 +53,10 @@ async function main() {
   if (!config.agents.defaults.subagents) config.agents.defaults.subagents = {};
   config.agents.defaults.subagents.maxConcurrent = config.agents.defaults.subagents.maxConcurrent || 8;
 
-  // --- Session agents (escudero, rocinante, cervantes) ---
+  // --- Session agents (escudero, rocinante) ---
   config.agents.list = [
     { id: 'escudero', workspace: path.join(OPENCLAW_ROOT, 'workspace-escudero') },
-    { id: 'rocinante', workspace: path.join(OPENCLAW_ROOT, 'workspace-rocinante') },
-    { id: 'cervantes', workspace: path.join(OPENCLAW_ROOT, 'workspace-cervantes') }
+    { id: 'rocinante', workspace: path.join(OPENCLAW_ROOT, 'workspace-rocinante') }
   ];
 
   // --- Gateway ---
@@ -150,19 +147,16 @@ async function main() {
         if (!config.channels.discord.guilds) config.channels.discord.guilds = {};
 
         for (const guild of guilds) {
-          // Binding: cervantes guild → cervantes, all others → sancho
+          // Binding: all guilds → sancho
           const existingBinding = config.bindings.find(
             b => b.match && b.match.guildId === guild.id
           );
           if (!existingBinding) {
-            const agentId = (cervantesGuild && guild.id === cervantesGuild)
-              ? 'cervantes'
-              : 'sancho';
             config.bindings.push({
-              agentId,
+              agentId: 'sancho',
               match: { channel: 'discord', guildId: guild.id }
             });
-            console.log(`[config] Guild binding: ${guild.name} → ${agentId}`);
+            console.log(`[config] Guild binding: ${guild.name} → sancho`);
           }
 
           // requireMention: false (bot responds without @mention)

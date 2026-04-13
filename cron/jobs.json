@@ -7,7 +7,7 @@
       "name": "Daily Pulse",
       "enabled": true,
       "createdAtMs": 1771950688301,
-      "updatedAtMs": 1774425644434,
+      "updatedAtMs": 1775546039641,
       "schedule": {
         "kind": "cron",
         "expr": "0 9 * * 1-5",
@@ -17,8 +17,8 @@
       "wakeMode": "now",
       "payload": {
         "kind": "agentTurn",
-        "message": "CONTEXTO INFRA: Lee _system/instance.json para obtener los IDs de canales de infraestructura (discord.infra_channels). Usa esos IDs como target en los message() de Discord.\n\nEjecuta el Daily Pulse para Hospital Capilar (guild 1475635138108063746).\n\nPASO 0 — PRE-CHECK (AHORRO DE TOKENS):\nAntes de leer 50 msgs por canal, haz un pre-check rápido. Para CADA canal, lee solo 1 mensaje:\nmessage(action=read, channel=discord, target=<channelId>, limit=1)\nSi el último mensaje tiene >24h de antigüedad O es de un bot → SKIP ese canal.\nSolo haz el read completo (limit=50) en canales con actividad humana reciente (<24h).\n\nCanales y sus IDs:\n  general: 1475635138988609678\n  brand: 1475638249107095866\n  campaigns: 1475638251485401171\n  content: 1475638259425087629\n  intelligence: 1475638253154603170\n  onboarding: 1476491108421730334\n  soporte: {ADMIN_CHANNEL}\n  research: 1475638269109862463\n  paid-ads: 1475638261819900161\n\nPASO 1 — LEER FUENTES:\nPara cada canal que PASÓ el pre-check: message(action=read, channel=discord, target=<channelId>, limit=50)\n- Filtra mensajes de las últimas 24h (compara timestamps)\n- Excluye mensajes de bots (author.bot=true) y mensajes cortos (<30 chars)\n- Incluye threads activos\n\nGmail → gog gmail inbox (si habilitado en sources.json)\nNotion → leer DB con filter de últimas 24h (si habilitado)\n\nPASO 2 — EXTRAER INSIGHTS:\nExtrae insights (pain points, feature requests, success stories, trends, preguntas recurrentes).\nClasifica por categoría. Genera micro-briefs.\n\nPASO 3 — GUARDAR:\nGuarda en brand/hospital-capilar/daily-pulse/YYYY-MM-DD.json\n\nPASO 4 — PUBLICAR EN DISCORD (PATRÓN OBLIGATORIO DE HILO):\n1. Envía un mensaje corto (1 línea) al canal: message(action=send, channel=discord, target=1475638253154603170, message='📊 Daily Pulse — YYYY-MM-DD: [insight más relevante del día en 1 línea]')\n2. Del resultado del send, captura el messageId devuelto.\n3. Crea un hilo DESDE ese mensaje: message(action=thread-create, channel=discord, target=1475638253154603170, messageId=<messageId>, threadName='📊 Daily Pulse — YYYY-MM-DD')\n4. Del resultado del thread-create, captura el threadId.\n5. Publica el contenido completo DENTRO del hilo: message(action=send, channel=discord, target=<threadId>, message=<contenido completo>)\n6. NUNCA publiques el contenido completo directamente en el canal — SIEMPRE dentro del hilo.\n7. APLICA reglas de _system/client-context-isolation.md — solo info relevante al cliente, CERO info interna.\n8. Incluye al final: cuántos canales tenían actividad vs cuántos se saltaron (para tracking de eficiencia).",
-        "model": "minimax/MiniMax-M2.5"
+        "message": "Ejecuta el Daily Pulse para Hospital Capilar (guild 1475635138108063746).\n\nPASO 0 — PRE-CHECK (AHORRO DE TOKENS):\nAntes de leer 50 msgs por canal, haz un pre-check rápido. Para CADA canal, lee solo 1 mensaje:\nmessage(action=read, channel=discord, target=<channelId>, limit=1)\nSi el último mensaje tiene >24h de antigüedad O es de un bot → SKIP ese canal.\nSolo haz el read completo (limit=50) en canales con actividad humana reciente (<24h).\n\nCanales y sus IDs:\n  general: 1475635138988609678\n  brand: 1475638249107095866\n  campaigns: 1475638251485401171\n  content: 1475638259425087629\n  intelligence: 1475638253154603170\n  onboarding: 1476491108421730334\n  soporte: 1475638273501040681\n  research: 1475638269109862463\n  paid-ads: 1475638261819900161\n\nPASO 1 — LEER FUENTES:\nPara cada canal que PASÓ el pre-check: message(action=read, channel=discord, target=<channelId>, limit=50)\n- Filtra mensajes de las últimas 24h (compara timestamps)\n- Excluye mensajes de bots (author.bot=true) y mensajes cortos (<30 chars)\n- Incluye threads activos\n\nGmail → gog gmail inbox (si habilitado en sources.json)\nNotion → leer DB con filter de últimas 24h (si habilitado)\n\nPASO 2 — EXTRAER INSIGHTS:\nExtrae insights (pain points, feature requests, success stories, trends, preguntas recurrentes).\nClasifica por categoría. Genera micro-briefs.\n\nPASO 3 — GUARDAR:\nGuarda en brand/hospital-capilar/daily-pulse/YYYY-MM-DD.json\n\nPASO 4 — PUBLICAR EN DISCORD (PATRÓN OBLIGATORIO DE HILO):\n1. Envía un mensaje corto (1 línea) al canal: message(action=send, channel=discord, target=1475638253154603170, message='📊 Daily Pulse — YYYY-MM-DD: [insight más relevante del día en 1 línea]')\n2. Del resultado del send, captura el messageId devuelto.\n3. Crea un hilo DESDE ese mensaje: message(action=thread-create, channel=discord, target=1475638253154603170, messageId=<messageId>, threadName='📊 Daily Pulse — YYYY-MM-DD')\n4. Del resultado del thread-create, captura el threadId.\n5. Publica el contenido completo DENTRO del hilo: message(action=send, channel=discord, target=<threadId>, message=<contenido completo>)\n6. NUNCA publiques el contenido completo directamente en el canal — SIEMPRE dentro del hilo.\n7. APLICA reglas de _system/client-context-isolation.md — solo info relevante al cliente, CERO info interna.\n8. Incluye al final: cuántos canales tenían actividad vs cuántos se saltaron (para tracking de eficiencia).",
+        "model": "anthropic/claude-sonnet-4-5"
       },
       "delivery": {
         "mode": "none",
@@ -26,11 +26,11 @@
         "to": "channel:1475638253154603170"
       },
       "state": {
-        "nextRunAtMs": 1774512000000,
-        "lastRunAtMs": 1774425600012,
+        "nextRunAtMs": 1775631600000,
+        "lastRunAtMs": 1775545794211,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 44422,
+        "lastDurationMs": 245430,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0,
         "lastDelivered": false
@@ -42,7 +42,7 @@
       "name": "Weekly Synthesis",
       "enabled": true,
       "createdAtMs": 1771950696201,
-      "updatedAtMs": 1774256554380,
+      "updatedAtMs": 1775474601176,
       "schedule": {
         "kind": "cron",
         "expr": "0 10 * * 1",
@@ -52,8 +52,8 @@
       "wakeMode": "now",
       "payload": {
         "kind": "agentTurn",
-        "message": "CONTEXTO CLIENTE: Lee los IDs de canales de Discord desde brand/{slug}/sources.json (campo 'channels'). No uses IDs hardcodeados.\n\nSíntesis semanal: 1) Lee memory/daily/*.md de los últimos 7 días. 2) Lee brand/daily-pulse/*.json recientes. 3) Lee brand/learnings.md. 4) Lee memory/patterns.md (patrones detectados). 5) Identifica patrones, tendencias, y decisiones clave. 6) Actualiza brand/learnings.md con patrones confirmados. 7) Genera resumen ejecutivo con: qué aprendimos, qué cambió, qué hacer diferente.\n\nPUBLICAR EN DISCORD (PATRÓN OBLIGATORIO DE HILO):\n1. Envía un mensaje corto (1 línea) al canal #learning: message(action=send, channel=discord, target=1475638272523763834, message='📚 Síntesis Semanal — YYYY-MM-DD: [hallazgo principal en 1 línea]')\n2. Del resultado del send, captura el messageId devuelto.\n3. Crea un hilo DESDE ese mensaje: message(action=thread-create, channel=discord, target=1475638272523763834, messageId=<messageId>, threadName='📚 Síntesis Semanal — YYYY-MM-DD')\n4. Del resultado del thread-create, captura el threadId.\n5. Publica el resumen ejecutivo completo DENTRO del hilo: message(action=send, channel=discord, target=<threadId>, message=<resumen completo>)\n6. NUNCA publiques contenido directamente en el canal — SIEMPRE dentro del hilo.\n7. APLICA reglas de _system/client-context-isolation.md.",
-        "model": "minimax/MiniMax-M2.5"
+        "message": "Síntesis semanal: 1) Lee memory/daily/*.md de los últimos 7 días. 2) Lee brand/daily-pulse/*.json recientes. 3) Lee brand/learnings.md. 4) Lee memory/patterns.md (patrones detectados). 5) Identifica patrones, tendencias, y decisiones clave. 6) Actualiza brand/learnings.md con patrones confirmados. 7) Genera resumen ejecutivo con: qué aprendimos, qué cambió, qué hacer diferente.\n\nPUBLICAR EN DISCORD (PATRÓN OBLIGATORIO DE HILO):\n1. Envía un mensaje corto (1 línea) al canal #learning: message(action=send, channel=discord, target=1475638272523763834, message='📚 Síntesis Semanal — YYYY-MM-DD: [hallazgo principal en 1 línea]')\n2. Del resultado del send, captura el messageId devuelto.\n3. Crea un hilo DESDE ese mensaje: message(action=thread-create, channel=discord, target=1475638272523763834, messageId=<messageId>, threadName='📚 Síntesis Semanal — YYYY-MM-DD')\n4. Del resultado del thread-create, captura el threadId.\n5. Publica el resumen ejecutivo completo DENTRO del hilo: message(action=send, channel=discord, target=<threadId>, message=<resumen completo>)\n6. NUNCA publiques contenido directamente en el canal — SIEMPRE dentro del hilo.\n7. APLICA reglas de _system/client-context-isolation.md.",
+        "model": "anthropic/claude-sonnet-4-5"
       },
       "delivery": {
         "mode": "none",
@@ -61,14 +61,15 @@
         "to": "channel:1475638272523763834"
       },
       "state": {
-        "nextRunAtMs": 1774857600000,
-        "lastRunAtMs": 1774256400019,
-        "lastRunStatus": "ok",
-        "lastStatus": "ok",
-        "lastDurationMs": 154361,
-        "lastDelivered": false,
-        "lastDeliveryStatus": "not-delivered",
-        "consecutiveErrors": 0
+        "nextRunAtMs": 1776067200000,
+        "lastRunAtMs": 1775470941322,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 3659854,
+        "lastDeliveryStatus": "not-requested",
+        "consecutiveErrors": 1,
+        "lastError": "cron: job execution timed out",
+        "lastErrorReason": "timeout"
       }
     },
     {
@@ -77,7 +78,7 @@
       "name": "Regenerar Dashboard",
       "enabled": true,
       "createdAtMs": 1771950708148,
-      "updatedAtMs": 1774465395211,
+      "updatedAtMs": 1775584942627,
       "schedule": {
         "kind": "cron",
         "expr": "0 8,12,16,20 * * *",
@@ -87,19 +88,19 @@
       "wakeMode": "now",
       "payload": {
         "kind": "agentTurn",
-        "message": "Regenera datos del dashboard: 1) Ejecuta python3 scripts/regenerate.py 2) Regenera agents-data.js con el script Python inline. Responde solo con el resultado (cuántas tareas, eventos, pilares).",
-        "model": "minimax/MiniMax-M2.5"
+        "message": "Regenera datos del dashboard: 1) Ejecuta python3 ~/.openclaw/workspace-sancho/scripts/regenerate.py 2) Regenera agents-data.js con el script Python inline. Responde solo con el resultado (cuántas tareas, eventos, pilares).",
+        "model": "anthropic/claude-sonnet-4-5"
       },
       "delivery": {
         "mode": "none",
         "channel": "last"
       },
       "state": {
-        "nextRunAtMs": 1774508400000,
-        "lastRunAtMs": 1774465200010,
+        "nextRunAtMs": 1775628000000,
+        "lastRunAtMs": 1775584800012,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 195201,
+        "lastDurationMs": 142615,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0,
         "lastDelivered": false
@@ -111,7 +112,7 @@
       "name": "Meeting Intelligence",
       "enabled": true,
       "createdAtMs": 1771950715725,
-      "updatedAtMs": 1774458209638,
+      "updatedAtMs": 1775577818405,
       "schedule": {
         "kind": "cron",
         "expr": "0 18 * * 1-5",
@@ -121,8 +122,8 @@
       "wakeMode": "now",
       "payload": {
         "kind": "agentTurn",
-        "message": "CONTEXTO CLIENTE: Lee los IDs de canales de Discord desde brand/{slug}/sources.json (campo 'channels'). No uses IDs hardcodeados.\n\nEjecuta Meeting Intelligence para Hospital Capilar. Carpeta de Google Drive: ID 17FpwSgL-XLAqaaH5-UccpADHkCFRcCHY. Usa 'gog docs cat <docId>' para leer las notas. Busca documentos nuevos o modificados desde la última ejecución. Para cada reunión, extrae: decisiones, acciones, insights, participantes. Guarda en brand/hospital-capilar/intelligence/meetings/ como .md y actualiza meetings.json.\n\nNO ejecutes regenerate.py — el cron 'Regenerar Dashboard' se encarga (4x/día).\n\nPUBLICAR EN DISCORD (PATRÓN OBLIGATORIO DE HILO):\n1. Envía un mensaje corto (1 línea) al canal #intelligence: message(action=send, channel=discord, target=1475638253154603170, message='🧠 Meeting Intelligence — YYYY-MM-DD: [resumen principal en 1 línea]')\n2. Del resultado del send, captura el messageId devuelto.\n3. Crea un hilo DESDE ese mensaje: message(action=thread-create, channel=discord, target=1475638253154603170, messageId=<messageId>, threadName='🧠 Meeting Intelligence — YYYY-MM-DD')\n4. Del resultado del thread-create, captura el threadId.\n5. Publica el contenido completo DENTRO del hilo: message(action=send, channel=discord, target=<threadId>, message=<resumen completo de meetings>)\n6. NUNCA publiques contenido directamente en el canal — SIEMPRE dentro del hilo.\n7. APLICA reglas de _system/client-context-isolation.md — solo info relevante al cliente, CERO info interna.\n8. Si no hay meetings nuevos, envía igualmente el mensaje corto al canal informando que no hay novedades (sin crear hilo en ese caso).",
-        "model": "minimax/MiniMax-M2.5"
+        "message": "Ejecuta Meeting Intelligence para Hospital Capilar. Carpeta de Google Drive: ID 17FpwSgL-XLAqaaH5-UccpADHkCFRcCHY. Usa 'gog docs cat <docId>' para leer las notas. Busca documentos nuevos o modificados desde la última ejecución. Para cada reunión, extrae: decisiones, acciones, insights, participantes. Guarda en brand/hospital-capilar/intelligence/meetings/ como .md y actualiza meetings.json.\n\nNO ejecutes regenerate.py — el cron 'Regenerar Dashboard' se encarga (4x/día).\n\nPUBLICAR EN DISCORD (PATRÓN OBLIGATORIO DE HILO):\n1. Envía un mensaje corto (1 línea) al canal #intelligence: message(action=send, channel=discord, target=1475638253154603170, message='🧠 Meeting Intelligence — YYYY-MM-DD: [resumen principal en 1 línea]')\n2. Del resultado del send, captura el messageId devuelto.\n3. Crea un hilo DESDE ese mensaje: message(action=thread-create, channel=discord, target=1475638253154603170, messageId=<messageId>, threadName='🧠 Meeting Intelligence — YYYY-MM-DD')\n4. Del resultado del thread-create, captura el threadId.\n5. Publica el contenido completo DENTRO del hilo: message(action=send, channel=discord, target=<threadId>, message=<resumen completo de meetings>)\n6. NUNCA publiques contenido directamente en el canal — SIEMPRE dentro del hilo.\n7. APLICA reglas de _system/client-context-isolation.md — solo info relevante al cliente, CERO info interna.\n8. Si no hay meetings nuevos, envía igualmente el mensaje corto al canal informando que no hay novedades (sin crear hilo en ese caso).",
+        "model": "anthropic/claude-sonnet-4-5"
       },
       "delivery": {
         "mode": "none",
@@ -130,14 +131,14 @@
         "to": "channel:1475638253154603170"
       },
       "state": {
-        "nextRunAtMs": 1774544400000,
-        "lastRunAtMs": 1774458000012,
+        "nextRunAtMs": 1775664000000,
+        "lastRunAtMs": 1775577600009,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 209626,
-        "lastDelivered": false,
+        "lastDurationMs": 218396,
         "lastDeliveryStatus": "not-delivered",
-        "consecutiveErrors": 0
+        "consecutiveErrors": 0,
+        "lastDelivered": false
       }
     },
     {
@@ -146,7 +147,7 @@
       "name": "Memory Maintenance",
       "enabled": true,
       "createdAtMs": 1771950722307,
-      "updatedAtMs": 1774217567460,
+      "updatedAtMs": 1775420306429,
       "schedule": {
         "kind": "cron",
         "expr": "0 22 * * 0",
@@ -157,21 +158,22 @@
       "payload": {
         "kind": "agentTurn",
         "message": "Mantenimiento de memoria:\n1) Lee memory/daily/*.md de los últimos 7 días.\n2) Lee MEMORY.md actual.\n3) Lee brand/*/memory.md (client memories).\n4) Lee memory/patterns.md.\n5) Extrae eventos significativos, lecciones, decisiones, opiniones que vale la pena recordar.\n6) Actualiza MEMORY.md con lo nuevo (sin duplicar).\n7) Actualiza brand/{slug}/memory.md si hay info específica de cliente.\n8) Elimina info obsoleta de MEMORY.md.\n9) Ejecuta bash scripts/memory-decay.sh — si hay archivos stale, propón archivarlos.\n10) Ejecuta bash scripts/memory-index.sh — regenera INDEX.md.\n11) Reporta qué añadiste y qué eliminaste.",
-        "model": "minimax/MiniMax-M2.5"
+        "model": "anthropic/claude-sonnet-4-5"
       },
       "delivery": {
         "mode": "none",
         "channel": "last"
       },
       "state": {
-        "nextRunAtMs": 1774814400000,
-        "lastRunAtMs": 1774213200129,
-        "lastRunStatus": "ok",
-        "lastStatus": "ok",
-        "lastDurationMs": 101260,
-        "lastDelivered": false,
-        "lastDeliveryStatus": "not-delivered",
-        "consecutiveErrors": 0
+        "nextRunAtMs": 1776024000000,
+        "lastRunAtMs": 1775419349022,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 957407,
+        "lastDeliveryStatus": "not-requested",
+        "consecutiveErrors": 1,
+        "lastError": "FallbackSummaryError: All models failed (3): anthropic/claude-sonnet-4-5: LLM request rejected: Third-party apps now draw from your extra usage, not your plan limits. We've added a $200 credit to get you started. Claim it at claude.ai/settings/usage and keep going. (format) | minimax/MiniMax-M2.7: LLM request timed out. (unknown) | anthropic/claude-opus-4-6: LLM request rejected: Third-party apps now draw from your extra usage, not your plan limits. We've added a $200 credit to get you started. Claim it at claude.ai/settings/usage and keep going. (format)",
+        "lastErrorReason": "timeout"
       }
     },
     {
@@ -191,7 +193,7 @@
       "payload": {
         "kind": "agentTurn",
         "message": "Lee brand/sources.json → sección thief_marketer. Para cada competidor: 1) Web scrape homepage + blog (web_fetch) → detectar contenido nuevo, cambios de copy, pricing. 2) LinkedIn → buscar posts recientes (web_search). 3) Instagram/YouTube → últimas publicaciones (web_search). 4) Google Ads Library → anuncios activos. 5) Newsletter → si hay suscripción, revisar últimos emails. Compara con última ejecución en brand/thief-marketer/. Genera reporte: qué hicieron nuevo, qué podemos robar/adaptar, oportunidades que dejaron. Guarda en brand/thief-marketer/YYYY-MM-DD.json.",
-        "model": "minimax/MiniMax-M2.5"
+        "model": "anthropic/claude-sonnet-4-5"
       },
       "delivery": {
         "mode": "announce",
@@ -199,144 +201,6 @@
         "to": "channel:1475638253154603170"
       },
       "state": {}
-    },
-    {
-      "id": "618bc941-a980-4f0d-99c8-5e715060ce6b",
-      "agentId": "cervantes",
-      "name": "backup-sancho",
-      "enabled": true,
-      "createdAtMs": 1772069600272,
-      "updatedAtMs": 1774404308133,
-      "schedule": {
-        "kind": "cron",
-        "expr": "0 3 * * *"
-      },
-      "sessionTarget": "isolated",
-      "wakeMode": "now",
-      "payload": {
-        "kind": "agentTurn",
-        "message": "CONTEXTO INFRA: Lee _system/instance.json para obtener los IDs de canales de infraestructura (discord.infra_channels). Usa esos IDs como target en los message() de Discord.\n\nEjecuta: bash scripts/backup.sh. Luego lee memory/backup-state.json. Si lastBackup tiene más de 48h respecto a ahora, publica alerta en Discord #admin con PATRÓN DE HILO:\n1. Envía alerta corta (1 línea): message(action=send, channel=discord, target={ADMIN_CHANNEL}, message='⚠️ Backup Warning — YYYY-MM-DD: Backup de workspace-sancho lleva >48h sin ejecutarse')\n2. Del resultado del send, captura el messageId devuelto.\n3. Crea un hilo DESDE ese mensaje: message(action=thread-create, channel=discord, target={ADMIN_CHANNEL}, messageId=<messageId>, threadName='⚠️ Backup Alert — YYYY-MM-DD')\n4. Del resultado del thread-create, captura el threadId.\n5. Publica detalles (último backup, estado) DENTRO del hilo: message(action=send, channel=discord, target=<threadId>, message=<detalles>)\nSi todo OK, responde HEARTBEAT_OK.",
-        "model": "minimax/MiniMax-M2.5"
-      },
-      "delivery": {
-        "mode": "none",
-        "channel": "last"
-      },
-      "state": {
-        "nextRunAtMs": 1774490400000,
-        "lastRunAtMs": 1774404000014,
-        "lastRunStatus": "ok",
-        "lastStatus": "ok",
-        "lastDurationMs": 308119,
-        "lastDeliveryStatus": "not-delivered",
-        "consecutiveErrors": 0,
-        "lastDelivered": false,
-        "runningAtMs": 1774490400006
-      }
-    },
-    {
-      "id": "0c59e923-3267-4926-9a60-36bb81b6041f",
-      "agentId": "cervantes",
-      "name": "healthcheck",
-      "enabled": true,
-      "createdAtMs": 1772069609685,
-      "updatedAtMs": 1774479177702,
-      "schedule": {
-        "kind": "every",
-        "everyMs": 21600000,
-        "anchorMs": 1772069609685
-      },
-      "sessionTarget": "isolated",
-      "wakeMode": "now",
-      "payload": {
-        "kind": "agentTurn",
-        "message": "CONTEXTO INFRA: Lee _system/instance.json para obtener los IDs de canales de infraestructura (discord.infra_channels). Usa esos IDs como target en los message() de Discord.\n\nEjecuta el health check: bash scripts/healthcheck.sh\n\nInterpreta el EXIT CODE:\n- Exit 0 = todo OK o fallos sin cambio (debounced). Responde HEARTBEAT_OK.\n- Exit 1 = NUEVO fallo detectado (servicio pasó de ok→fail). DEBES alertar en Discord #admin:\n  1. message(action=send, channel=discord, target={ADMIN_CHANNEL}, message='⚠️ Health Check — [fecha]: [servicios nuevos caídos]')\n  2. Del resultado captura messageId\n  3. message(action=thread-create, channel=discord, target={ADMIN_CHANNEL}, messageId=<messageId>, threadName='⚠️ Health Check — [fecha]')\n  4. Del resultado captura threadId\n  5. message(action=send, channel=discord, target=<threadId>, message=<detalles: qué servicios fallaron, errores, qué servicios siguen OK>)\n- Exit 2 = servicio RECUPERADO (fail→ok). Informa en #admin:\n  1. message(action=send, channel=discord, target={ADMIN_CHANNEL}, message='✅ Health Check — [fecha]: [servicios recuperados]')\n\nNO ejecutes regenerate.py — el cron 'Regenerar Dashboard' se encarga (4x/día).",
-        "thinking": "off",
-        "timeoutSeconds": 120,
-        "model": "minimax/MiniMax-M2.5"
-      },
-      "delivery": {
-        "mode": "none",
-        "channel": "last"
-      },
-      "state": {
-        "nextRunAtMs": 1774500760229,
-        "lastRunAtMs": 1774479160229,
-        "lastRunStatus": "ok",
-        "lastStatus": "ok",
-        "lastDurationMs": 17473,
-        "lastDeliveryStatus": "not-delivered",
-        "consecutiveErrors": 0,
-        "lastDelivered": false
-      }
-    },
-    {
-      "id": "c977a378-093d-46b1-a7de-44d1b5a24486",
-      "agentId": "cervantes",
-      "name": "cost-tracker-daily",
-      "description": "T-022: Run cost-tracker.py daily at 23:00",
-      "enabled": true,
-      "createdAtMs": 1772069993394,
-      "updatedAtMs": 1774476127141,
-      "schedule": {
-        "kind": "cron",
-        "expr": "0 23 * * *"
-      },
-      "sessionTarget": "isolated",
-      "wakeMode": "now",
-      "payload": {
-        "kind": "agentTurn",
-        "message": "Ejecuta el cost tracker: python3 scripts/cost-tracker.py. Reporta el resultado.\n\nNO ejecutes regenerate.py — el cron 'Regenerar Dashboard' se encarga (4x/día).",
-        "model": "minimax/MiniMax-M2.5"
-      },
-      "delivery": {
-        "mode": "none",
-        "channel": "webchat"
-      },
-      "state": {
-        "nextRunAtMs": 1774562400000,
-        "lastRunAtMs": 1774476000013,
-        "lastRunStatus": "ok",
-        "lastStatus": "ok",
-        "lastDurationMs": 127128,
-        "lastDeliveryStatus": "not-delivered",
-        "consecutiveErrors": 0,
-        "lastDelivered": false
-      }
-    },
-    {
-      "id": "cedfbd22-cbd0-4a19-87a0-29337c4f2b37",
-      "agentId": "cervantes",
-      "name": "Cervantes observa a Sancho",
-      "enabled": true,
-      "createdAtMs": 1772115026027,
-      "updatedAtMs": 1774430948269,
-      "schedule": {
-        "kind": "cron",
-        "expr": "0 10 * * *",
-        "tz": "Europe/Madrid"
-      },
-      "sessionTarget": "isolated",
-      "wakeMode": "now",
-      "payload": {
-        "kind": "agentTurn",
-        "message": "CONTEXTO INFRA: Lee _system/instance.json para obtener los IDs de canales de infraestructura (discord.infra_channels). Usa esos IDs como target en los message() de Discord.\n\nObserva las sesiones recientes de Sancho (últimas 24h). Usa sessions_list y sessions_history para revisar: 1) Qué sesiones tuvo y en qué canales. 2) Errores o skills que fallaron. 3) Preguntas que Sancho no supo responder. 4) Si respetó las reglas de canal. 5) Patrones de mejora. Escribe resumen breve en memory/sancho-observations.md (append con fecha). Si hay algo urgente que requiera notificar a Alfonso en Discord #admin, usa PATRÓN DE HILO:\n1. Envía alerta corta (1 línea): message(action=send, channel=discord, target={ADMIN_CHANNEL}, message='🔍 Observación Sancho — YYYY-MM-DD: [problema detectado en 1 línea]')\n2. Del resultado del send, captura el messageId.\n3. Crea hilo DESDE ese mensaje: message(action=thread-create, channel=discord, target={ADMIN_CHANNEL}, messageId=<messageId>, threadName='🔍 Observación Sancho — YYYY-MM-DD')\n4. Del resultado del thread-create, captura el threadId.\n5. Publica detalles DENTRO del hilo: message(action=send, channel=discord, target=<threadId>, message=<detalles>)\nNUNCA publiques contenido largo directamente en el canal. Si todo bien, solo escribe en el archivo.",
-        "model": "minimax/MiniMax-M2.5"
-      },
-      "delivery": {
-        "mode": "none",
-        "channel": "last"
-      },
-      "state": {
-        "nextRunAtMs": 1774515600000,
-        "lastRunAtMs": 1774429962772,
-        "lastRunStatus": "ok",
-        "lastStatus": "ok",
-        "lastDurationMs": 985497,
-        "lastDeliveryStatus": "not-delivered",
-        "consecutiveErrors": 0,
-        "lastDelivered": false
-      }
     },
     {
       "id": "bf4b712d-1ed4-49df-acac-1c7ce4d19097",
@@ -373,7 +237,7 @@
       "name": "cost-tracker-daily",
       "enabled": true,
       "createdAtMs": 1772750911798,
-      "updatedAtMs": 1774422279643,
+      "updatedAtMs": 1775542222798,
       "schedule": {
         "kind": "cron",
         "expr": "0 8 * * *",
@@ -383,7 +247,7 @@
       "wakeMode": "now",
       "payload": {
         "kind": "agentTurn",
-        "message": "CONTEXTO INFRA: Lee _system/instance.json para obtener los IDs de canales de infraestructura (discord.infra_channels). Usa esos IDs como target en los message() de Discord.\n\nRun the cost tracker: `python3 scripts/cost-tracker.py --alert-threshold 0`. Read the output files costs-global.json and costs-daily.json.\n\nIMPORTANT CONTEXT: We use Claude Max $200/month plan (flat rate). Dollar costs are THEORETICAL (API-equivalent), NOT actual spend.\n\nANALYZE for anomalies:\n1. Calculate average daily turns/tokens from costs-daily.json\n2. If today's usage is >2x the daily average → ANOMALY DETECTED\n3. If no anomaly → reply HEARTBEAT_OK (do NOT post anything)\n\nIF ANOMALY DETECTED, post to the Costes APIs thread (target='{COSTS_THREAD}') in Cervantes Brain guild:\nmessage(action=send, channel=discord, target='{COSTS_THREAD}', message='📊 **Usage Anomaly** — {date}\\n\\n**Today:** {turns} turns | {tokens} tokens (est. ${cost_theoretical})\\n**Daily avg:** {avg_turns} turns | {avg_tokens} tokens\\n**Ratio:** {ratio}x above average\\n\\nℹ️ Plan Max $200/mes — coste fijo. Valores en $ son estimación API.\\n\\n**By client:**\\n{breakdown by client: turns + tokens}\\n\\n**Possible cause:** {hypothesis}')\n\nNEVER post to #infra directly. ALL cost-related messages go to thread {COSTS_THREAD}.",
+        "message": "Run the cost tracker: `python3 scripts/cost-tracker.py --alert-threshold 0`. Read the output files costs-global.json and costs-daily.json.\n\nIMPORTANT CONTEXT: We use Claude Max $200/month plan (flat rate). Dollar costs are THEORETICAL (API-equivalent), NOT actual spend.\n\nANALYZE for anomalies:\n1. Calculate average daily turns/tokens from costs-daily.json\n2. If today's usage is >2x the daily average → ANOMALY DETECTED\n3. If no anomaly → reply HEARTBEAT_OK (do NOT post anything)\n\nIF ANOMALY DETECTED, post to the Costes APIs thread (target='1481910083255406694') in Cervantes Brain guild:\nmessage(action=send, channel=discord, target='1481910083255406694', message='📊 **Usage Anomaly** — {date}\\n\\n**Today:** {turns} turns | {tokens} tokens (est. ${cost_theoretical})\\n**Daily avg:** {avg_turns} turns | {avg_tokens} tokens\\n**Ratio:** {ratio}x above average\\n\\nℹ️ Plan Max $200/mes — coste fijo. Valores en $ son estimación API.\\n\\n**By client:**\\n{breakdown by client: turns + tokens}\\n\\n**Possible cause:** {hypothesis}')\n\nNEVER post to #infra directly. ALL cost-related messages go to thread 1481910083255406694.",
         "model": "anthropic/claude-sonnet-4-5",
         "timeoutSeconds": 120
       },
@@ -391,14 +255,15 @@
         "mode": "none"
       },
       "state": {
-        "nextRunAtMs": 1774508400000,
-        "lastRunAtMs": 1774422247024,
-        "lastRunStatus": "ok",
-        "lastStatus": "ok",
-        "lastDurationMs": 32619,
-        "lastDelivered": false,
-        "lastDeliveryStatus": "not-delivered",
-        "consecutiveErrors": 0
+        "nextRunAtMs": 1775628000000,
+        "lastRunAtMs": 1775542070748,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 152050,
+        "lastDeliveryStatus": "not-requested",
+        "consecutiveErrors": 1,
+        "lastError": "cron: job execution timed out",
+        "lastErrorReason": "timeout"
       }
     },
     {
@@ -433,7 +298,7 @@
       "name": "image-optimizer",
       "enabled": true,
       "createdAtMs": 1773187213085,
-      "updatedAtMs": 1774256652386,
+      "updatedAtMs": 1775483854658,
       "schedule": {
         "kind": "cron",
         "expr": "0 10 * * 1",
@@ -443,9 +308,9 @@
       "wakeMode": "now",
       "payload": {
         "kind": "agentTurn",
-        "message": "Run the image optimization script: exec `bash scripts/optimize-all-brands.sh`. If images were optimized, report the count and savings. If none found, do nothing.",
+        "message": "Run the image optimization script: exec `cd /Users/ragi/.openclaw/workspace-sancho && ./scripts/optimize-all-brands.sh`. If images were optimized, report the count and savings. If none found, do nothing.",
         "timeoutSeconds": 120,
-        "model": "minimax/MiniMax-M2.5"
+        "model": "anthropic/claude-sonnet-4-5"
       },
       "delivery": {
         "mode": "announce",
@@ -453,14 +318,15 @@
         "to": "1480154276205433035"
       },
       "state": {
-        "nextRunAtMs": 1774857600000,
-        "lastRunAtMs": 1774256641057,
-        "lastRunStatus": "ok",
-        "lastStatus": "ok",
-        "lastDurationMs": 11329,
-        "lastDelivered": true,
-        "lastDeliveryStatus": "delivered",
-        "consecutiveErrors": 0
+        "nextRunAtMs": 1776067200000,
+        "lastRunAtMs": 1775482919437,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 935221,
+        "lastDeliveryStatus": "unknown",
+        "consecutiveErrors": 1,
+        "lastError": "cron: job execution timed out",
+        "lastErrorReason": "timeout"
       }
     },
     {
@@ -470,7 +336,7 @@
       "name": "update-skills",
       "enabled": true,
       "createdAtMs": 1773235919019,
-      "updatedAtMs": 1774413089393,
+      "updatedAtMs": 1775533505705,
       "schedule": {
         "kind": "cron",
         "expr": "30 5 * * *",
@@ -480,7 +346,7 @@
       "wakeMode": "now",
       "payload": {
         "kind": "agentTurn",
-        "message": "CONTEXTO INFRA: Lee _system/instance.json para obtener los IDs de canales de infraestructura (discord.infra_channels). Usa esos IDs como target en los message() de Discord.\n\nEjecuta el script de actualización de skills: bash scripts/update-skills.sh — Reporta el resultado completo al hilo {UPDATE_SKILLS_THREAD} del guild Cervantes Brain (discord). Si hubo cambios, menciona qué skills se actualizaron. Si todo está al día, di simplemente que no hubo cambios.",
+        "message": "Ejecuta el script de actualización de skills: bash ~/.openclaw/workspace-sancho/scripts/update-skills.sh — Reporta el resultado completo al hilo 1481220331845976125 del guild Cervantes Brain (discord). Si hubo cambios, menciona qué skills se actualizaron. Si todo está al día, di simplemente que no hubo cambios.",
         "timeoutSeconds": 300,
         "model": "anthropic/claude-sonnet-4-5"
       },
@@ -490,14 +356,15 @@
         "to": "1481220331845976125"
       },
       "state": {
-        "nextRunAtMs": 1774499400000,
-        "lastRunAtMs": 1774413000011,
-        "lastRunStatus": "ok",
-        "lastStatus": "ok",
-        "lastDurationMs": 89382,
-        "lastDeliveryStatus": "delivered",
-        "consecutiveErrors": 0,
-        "lastDelivered": true
+        "nextRunAtMs": 1775619000000,
+        "lastRunAtMs": 1775532600018,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 905687,
+        "lastDeliveryStatus": "unknown",
+        "consecutiveErrors": 2,
+        "lastErrorReason": "timeout",
+        "lastError": "cron: job execution timed out"
       }
     },
     {
@@ -507,7 +374,7 @@
       "name": "Weekly Changelog Update",
       "enabled": true,
       "createdAtMs": 1773249903776,
-      "updatedAtMs": 1774170276963,
+      "updatedAtMs": 1775380535050,
       "schedule": {
         "kind": "cron",
         "expr": "0 10 * * 0",
@@ -524,14 +391,15 @@
         "mode": "none"
       },
       "state": {
-        "nextRunAtMs": 1774771200000,
-        "lastRunAtMs": 1774170184515,
-        "lastRunStatus": "ok",
-        "lastStatus": "ok",
-        "lastDurationMs": 92448,
-        "lastDelivered": false,
-        "lastDeliveryStatus": "not-delivered",
-        "consecutiveErrors": 0
+        "nextRunAtMs": 1775980800000,
+        "lastRunAtMs": 1775380390371,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 144679,
+        "lastDeliveryStatus": "not-requested",
+        "consecutiveErrors": 1,
+        "lastError": "FallbackSummaryError: All models failed (3): anthropic/claude-opus-4-6: LLM request rejected: Third-party apps now draw from your extra usage, not your plan limits. We've added a $200 credit to get you started. Claim it at claude.ai/settings/usage and keep going. (format) | anthropic/claude-sonnet-4-5: No available auth profile for anthropic (all in cooldown or unavailable). (format) | minimax/MiniMax-M2.7: LLM request timed out. (unknown)",
+        "lastErrorReason": "timeout"
       }
     },
     {
@@ -541,7 +409,7 @@
       "name": "Weekly Activity Summary",
       "enabled": true,
       "createdAtMs": 1773249903895,
-      "updatedAtMs": 1774170351337,
+      "updatedAtMs": 1775380713385,
       "schedule": {
         "kind": "cron",
         "expr": "0 10 * * 0",
@@ -558,84 +426,14 @@
         "mode": "none"
       },
       "state": {
-        "nextRunAtMs": 1774771200000,
-        "lastRunAtMs": 1774170276963,
-        "lastRunStatus": "ok",
-        "lastStatus": "ok",
-        "lastDurationMs": 74374,
-        "lastDelivered": false,
-        "lastDeliveryStatus": "not-delivered",
-        "consecutiveErrors": 0
-      }
-    },
-    {
-      "id": "d46675e3-06e1-4887-a136-0537f3923299",
-      "agentId": "sancho",
-      "sessionKey": "agent:sancho:discord:channel:1480949333963575427",
-      "name": "Morning Metrics — Growth4U",
-      "enabled": true,
-      "createdAtMs": 1773274108369,
-      "updatedAtMs": 1774423831895,
-      "schedule": {
-        "kind": "cron",
-        "expr": "30 8 * * 1-5",
-        "tz": "Europe/Madrid"
-      },
-      "sessionTarget": "isolated",
-      "wakeMode": "now",
-      "payload": {
-        "kind": "agentTurn",
-        "message": "CONTEXTO CLIENTE: Lee los IDs de canales de Discord desde brand/{slug}/sources.json (campo 'channels'). No uses IDs hardcodeados.\n\nRun `bash scripts/morning-metrics-growth4u.sh` and capture the full output.\n\nThen publish to Growth4U #intelligence (channel 1477741644789842031) using the THREAD PATTERN:\n\n1. Send a SHORT 1-line summary to the channel: message(action=send, channel=discord, target='1477741644789842031', message='📊 Morning Metrics — Growth4U | {date}: {1-line headline}')\n2. From the send result, capture the messageId.\n3. Create thread FROM that message: message(action=thread-create, channel=discord, channelId='1477741644789842031', messageId=<messageId>, threadName='📊 Metrics {date} — Análisis')\n4. From thread-create result, capture the threadId.\n5. Post ALL data + analysis + alerts INSIDE the thread: message(action=send, channel=discord, target=<threadId>, message=<full metrics output>). If content is too long, split into max 3 messages to the same thread.\n6. NEVER post data/tables directly to the channel — ALL content goes inside the thread.\n7. If there are 🔴 alerts, add action proposals at the end of the thread.\n8. Reply NO_REPLY.",
-        "model": "anthropic/claude-sonnet-4-5",
-        "timeoutSeconds": 120
-      },
-      "state": {
-        "nextRunAtMs": 1774510200000,
-        "lastRunAtMs": 1774423800013,
+        "nextRunAtMs": 1775980800000,
+        "lastRunAtMs": 1775380535050,
         "lastRunStatus": "error",
         "lastStatus": "error",
-        "lastDurationMs": 31882,
-        "lastDeliveryStatus": "unknown",
-        "consecutiveErrors": 2,
-        "lastError": "Unsupported channel: discord"
-      },
-      "delivery": {
-        "mode": "announce"
-      }
-    },
-    {
-      "id": "ecd449f6-599a-4b8c-8285-2fb015e3a5a3",
-      "agentId": "sancho",
-      "sessionKey": "agent:sancho:discord:channel:1479920195299578116",
-      "name": "Daily Metrics Collector — Growth4U",
-      "enabled": true,
-      "createdAtMs": 1773518330038,
-      "updatedAtMs": 1774418431290,
-      "schedule": {
-        "kind": "cron",
-        "expr": "0 7 * * *",
-        "tz": "Europe/Madrid"
-      },
-      "sessionTarget": "isolated",
-      "wakeMode": "now",
-      "payload": {
-        "kind": "agentTurn",
-        "message": "CONTEXTO INFRA: Lee _system/instance.json para obtener los IDs de canales de infraestructura (discord.infra_channels). Usa esos IDs como target en los message() de Discord.\n\nRun the metrics collector for Growth4U:\n\n```\nnode skills/metrics-collector/scripts/collect.js --slug growth4u --all\n```\n\nCapture the full output. If all sources return ok, just reply HEARTBEAT_OK.\n\nIf any source has errors, report to #infra thread {INFRA_THREAD} in Cervantes Brain guild with:\nmessage(action=send, channel=discord, target='{INFRA_THREAD}', message='⚠️ Metrics Collector Growth4U: [error summary]')\n\nDo NOT publish to client channels — this is infrastructure only.",
-        "model": "anthropic/claude-sonnet-4-5",
-        "timeoutSeconds": 120
-      },
-      "delivery": {
-        "mode": "none"
-      },
-      "state": {
-        "nextRunAtMs": 1774504800000,
-        "lastRunAtMs": 1774418400012,
-        "lastRunStatus": "ok",
-        "lastStatus": "ok",
-        "lastDurationMs": 31278,
-        "lastDelivered": false,
-        "lastDeliveryStatus": "not-delivered",
-        "consecutiveErrors": 0
+        "lastDurationMs": 178335,
+        "lastDeliveryStatus": "not-requested",
+        "consecutiveErrors": 1,
+        "lastError": "FallbackSummaryError: All models failed (3): anthropic/claude-opus-4-6: LLM request rejected: Third-party apps now draw from your extra usage, not your plan limits. We've added a $200 credit to get you started. Claim it at claude.ai/settings/usage and keep going. (format) | anthropic/claude-sonnet-4-5: No available auth profile for anthropic (all in cooldown or unavailable). (format) | minimax/MiniMax-M2.7: LLM request rejected: Third-party apps now draw from your extra usage, not your plan limits. We've added a $200 credit to get you started. Claim it at claude.ai/settings/usage and keep going. (format)"
       }
     },
     {
@@ -645,7 +443,7 @@
       "name": "mejora-continua-weekly",
       "enabled": true,
       "createdAtMs": 1773560184099,
-      "updatedAtMs": 1774170589553,
+      "updatedAtMs": 1775381686200,
       "schedule": {
         "kind": "cron",
         "expr": "0 10 * * 0",
@@ -655,7 +453,7 @@
       "wakeMode": "now",
       "payload": {
         "kind": "agentTurn",
-        "message": "CONTEXTO INFRA: Lee _system/instance.json para obtener los IDs de canales de infraestructura (discord.infra_channels). Usa esos IDs como target en los message() de Discord.\n\n## Mejora Continua Diaria\n\nEjecuta el proceso de mejora continua:\n\n1. **Scan Notion Bibliografía**: Usa curl con la NOTION_API_KEY del .env para query la DB.\n\n```bash\nNOTION_KEY=$(echo $NOTION_API_KEY | cut -d= -f2)\nDATE_3DAYS=$(date -v-3d +%Y-%m-%dT00:00:00Z 2>/dev/null || date -d '3 days ago' +%Y-%m-%dT00:00:00Z)\ncurl -s -X POST 'https://api.notion.com/v1/data_sources/1395dacf-4f14-8172-adf7-000b1c098836/query' \\\n  -H \"Authorization: Bearer $NOTION_KEY\" \\\n  -H 'Notion-Version: 2025-09-03' \\\n  -H 'Content-Type: application/json' \\\n  -d \"{\\\"filter\\\":{\\\"and\\\":[{\\\"property\\\":\\\"Estado\\\",\\\"select\\\":{\\\"equals\\\":\\\"Processed\\\"}},{\\\"property\\\":\\\"Fecha de creación\\\",\\\"created_time\\\":{\\\"on_or_after\\\":\\\"$DATE_3DAYS\\\"}}]},\\\"page_size\\\":100}\"\n```\n\nIMPORTANTE: Usa Notion-Version `2025-09-03` y endpoint `/data_sources/` (NO `/databases/`). Si el primer intento falla, reintenta 1 vez.\n\n2. **Analizar TODOS los temas** (no filtrar): identifica qué entradas contienen ideas accionables para mejorar el sistema SanchoCMO (skills, workflows, arquitectura, costes, memoria, crons, contenido, SEO, ads, outreach, CRO...).\n\n3. **Deep dive**: Para los 2 temas más prometedores, haz web_search de las últimas 2 semanas para ampliar conocimiento.\n\n4. **Generar plan**: Escribe el plan en `_system/improvement-plans/YYYY-MM-DD.md` con: qué mejorar, fuente bibliográfica, impacto estimado, esfuerzo.\n\n5. **Notificar**: Envía resumen al hilo de Mejora Continua en #infra (thread {MEJORA_CONTINUA_THREAD}) del guild Cervantes Brain. Pide aprobación antes de ejecutar cualquier cambio. NUNCA ejecutes cambios automáticamente.\n\n6. **Si hay tareas nuevas**, crea hilos en #tasks (canal {TASKS_CHANNEL}) del guild {INFRA_GUILD} con el formato estándar (prioridad, esfuerzo, impacto, estado, fuente, contexto, acción, criterio de éxito).",
+        "message": "## Mejora Continua Diaria\n\nEjecuta el proceso de mejora continua:\n\n1. **Scan Notion Bibliografía**: Usa curl con la NOTION_API_KEY del .env para query la DB.\n\n```bash\nNOTION_KEY=$(grep NOTION_API_KEY ~/.openclaw/.env | cut -d= -f2)\nDATE_3DAYS=$(date -v-3d +%Y-%m-%dT00:00:00Z 2>/dev/null || date -d '3 days ago' +%Y-%m-%dT00:00:00Z)\ncurl -s -X POST 'https://api.notion.com/v1/data_sources/1395dacf-4f14-8172-adf7-000b1c098836/query' \\\n  -H \"Authorization: Bearer $NOTION_KEY\" \\\n  -H 'Notion-Version: 2025-09-03' \\\n  -H 'Content-Type: application/json' \\\n  -d \"{\\\"filter\\\":{\\\"and\\\":[{\\\"property\\\":\\\"Estado\\\",\\\"select\\\":{\\\"equals\\\":\\\"Processed\\\"}},{\\\"property\\\":\\\"Fecha de creación\\\",\\\"created_time\\\":{\\\"on_or_after\\\":\\\"$DATE_3DAYS\\\"}}]},\\\"page_size\\\":100}\"\n```\n\nIMPORTANTE: Usa Notion-Version `2025-09-03` y endpoint `/data_sources/` (NO `/databases/`). Si el primer intento falla, reintenta 1 vez.\n\n2. **Analizar TODOS los temas** (no filtrar): identifica qué entradas contienen ideas accionables para mejorar el sistema SanchoCMO (skills, workflows, arquitectura, costes, memoria, crons, contenido, SEO, ads, outreach, CRO...).\n\n3. **Deep dive**: Para los 2 temas más prometedores, haz web_search de las últimas 2 semanas para ampliar conocimiento.\n\n4. **Generar plan**: Escribe el plan en `_system/improvement-plans/YYYY-MM-DD.md` con: qué mejorar, fuente bibliográfica, impacto estimado, esfuerzo.\n\n5. **Notificar**: Envía resumen al hilo de Mejora Continua en #infra (thread 1482638140240953396) del guild Cervantes Brain. Pide aprobación antes de ejecutar cualquier cambio. NUNCA ejecutes cambios automáticamente.\n\n6. **Si hay tareas nuevas**, crea hilos en #tasks (canal 1478771960388386909) del guild 1478770422093709502 con el formato estándar (prioridad, esfuerzo, impacto, estado, fuente, contexto, acción, criterio de éxito).",
         "timeoutSeconds": 300,
         "model": "anthropic/claude-sonnet-4-5"
       },
@@ -665,14 +463,15 @@
         "to": "1482638140240953396"
       },
       "state": {
-        "nextRunAtMs": 1774771200000,
-        "lastRunAtMs": 1774170351337,
-        "lastRunStatus": "ok",
-        "lastStatus": "ok",
-        "lastDurationMs": 238216,
-        "lastDelivered": true,
-        "lastDeliveryStatus": "delivered",
-        "consecutiveErrors": 0
+        "nextRunAtMs": 1775980800000,
+        "lastRunAtMs": 1775380713385,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 972815,
+        "lastDeliveryStatus": "unknown",
+        "consecutiveErrors": 1,
+        "lastError": "cron: job execution timed out",
+        "lastErrorReason": "timeout"
       }
     },
     {
@@ -682,7 +481,7 @@
       "name": "skill-improvement-weekly",
       "enabled": true,
       "createdAtMs": 1773591436668,
-      "updatedAtMs": 1774170629742,
+      "updatedAtMs": 1775381808437,
       "schedule": {
         "kind": "cron",
         "expr": "0 10 * * 0",
@@ -700,49 +499,15 @@
         "channel": "1482642972712505395"
       },
       "state": {
-        "nextRunAtMs": 1774771200000,
-        "lastRunAtMs": 1774170589553,
-        "lastRunStatus": "ok",
-        "lastStatus": "ok",
-        "lastDurationMs": 40189,
-        "lastDelivered": true,
-        "lastDeliveryStatus": "delivered",
-        "consecutiveErrors": 0
-      }
-    },
-    {
-      "id": "476f5959-8aaf-4d2a-8f41-9b0187250e86",
-      "agentId": "cervantes",
-      "sessionKey": "agent:sancho:discord:channel:1482642745905512601",
-      "name": "Weekly Token Audit",
-      "enabled": true,
-      "createdAtMs": 1773650217981,
-      "updatedAtMs": 1774253001641,
-      "schedule": {
-        "kind": "cron",
-        "expr": "0 9 * * 1",
-        "tz": "Europe/Madrid"
-      },
-      "sessionTarget": "isolated",
-      "wakeMode": "now",
-      "payload": {
-        "kind": "agentTurn",
-        "message": "CONTEXTO INFRA: Lee _system/instance.json para obtener los IDs de canales de infraestructura (discord.infra_channels). Usa esos IDs como target en los message() de Discord.\n\n## Auditoría Semanal de Tokens/Costes\n\nEjecuta una auditoría completa y publica en el hilo Costes APIs (thread {COSTS_THREAD}) del guild Cervantes Brain.\n\n### Pasos:\n\n1. **Recopilar datos**: Ejecuta `python3 scripts/cost-tracker.py --alert-threshold 0` y lee `costs-daily.json` + `costs-global.json`.\n\n2. **Análisis semanal** (últimos 7 días vs semana anterior):\n   - Total USD teórico + turns + tokens\n   - Tendencia: subiendo/bajando/estable\n   - Top 3 días más caros y por qué (qué cliente/agente consumió más)\n   - % de `system_usd` (no atribuido) vs total → si >50%, investigar\n   - Desglose por cliente: quién consume más y si es proporcional al trabajo realizado\n   - Desglose por agente (si disponible en costs-global.json)\n\n3. **Detectar sesiones pesadas**: Lista sesiones activas con sessions_list y busca las que tengan contextos grandes (>100K tokens). Si las hay, recomienda /compact o split.\n\n4. **Check de config de optimización**:\n   - ¿Está `cacheRetention: \"long\"` activo? (gateway config.get → buscar cacheRetention)\n   - ¿Thinking levels por agente están optimizados?\n   - ¿Bootstrap files han crecido? (contar tokens aprox de MEMORY.md + AGENTS.md + TOOLS.md + SOUL.md)\n\n5. **Recomendaciones**: Lista 1-3 acciones concretas para la próxima semana.\n\n6. **Publicar**: Envía el resumen al hilo:\n   message(action=send, channel=discord, target='{COSTS_THREAD}', message='📊 **Auditoría Semanal Tokens** — {fecha}\\n\\n**Resumen 7 días:**\\n- Total: ${total} teóricos | {turns} turns\\n- Tendencia: {tendencia} vs semana anterior\\n- Promedio diario: ${avg}/día\\n\\n**Por cliente:**\\n{desglose}\\n\\n**System (no atribuido):** {system_pct}%\\n\\n**Config check:**\\n- Cache: {status}\\n- Thinking: {status}\\n- Bootstrap size: ~{tokens}K tokens\\n\\n**Recomendaciones:**\\n{lista}\\n\\nℹ️ Plan Max $200/mes — coste fijo. Valores teóricos.')\n\n7. Si hay algo urgente (>3x promedio, config sin optimizar), menciona a <@{ADMIN_USER_ALFONSO}>.\n\nCONTEXTO: Plan Claude Max $200/mes (flat rate). Los $ son teóricos. Alertar por anomalías de volumen, no por umbral de $.",
-        "model": "anthropic/claude-sonnet-4-5",
-        "timeoutSeconds": 300
-      },
-      "delivery": {
-        "mode": "none"
-      },
-      "state": {
-        "nextRunAtMs": 1774854000000,
-        "lastRunAtMs": 1774252904701,
-        "lastRunStatus": "ok",
-        "lastStatus": "ok",
-        "lastDurationMs": 96940,
-        "lastDelivered": false,
-        "lastDeliveryStatus": "not-delivered",
-        "consecutiveErrors": 0
+        "nextRunAtMs": 1775980800000,
+        "lastRunAtMs": 1775381686200,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 122237,
+        "lastDeliveryStatus": "unknown",
+        "consecutiveErrors": 1,
+        "lastError": "FallbackSummaryError: All models failed (3): anthropic/claude-opus-4-6: LLM request rejected: Third-party apps now draw from your extra usage, not your plan limits. We've added a $200 credit to get you started. Claim it at claude.ai/settings/usage and keep going. (format) | anthropic/claude-sonnet-4-5: No available auth profile for anthropic (all in cooldown or unavailable). (format) | minimax/MiniMax-M2.7: LLM request timed out. (unknown)",
+        "lastErrorReason": "timeout"
       }
     },
     {
@@ -752,7 +517,7 @@
       "name": "memory-compact-monthly",
       "enabled": true,
       "createdAtMs": 1773669805969,
-      "updatedAtMs": 1773669805969,
+      "updatedAtMs": 1775013020281,
       "schedule": {
         "kind": "cron",
         "expr": "0 3 1 * *",
@@ -762,13 +527,21 @@
       "wakeMode": "now",
       "payload": {
         "kind": "agentTurn",
-        "message": "Ejecuta compactación de memoria: 1) bash scripts/memory-compact.sh 2) bash scripts/memory-index.sh 3) Revisa el output. Si hubo archivos movidos, reporta cuántos. Si todo OK, responde HEARTBEAT_OK."
+        "message": "Ejecuta compactación de memoria: 1) bash ~/.openclaw/workspace-sancho/scripts/memory-compact.sh 2) bash ~/.openclaw/workspace-sancho/scripts/memory-index.sh 3) Revisa el output. Si hubo archivos movidos, reporta cuántos. Si todo OK, responde HEARTBEAT_OK."
       },
       "delivery": {
         "mode": "none"
       },
       "state": {
-        "nextRunAtMs": 1775005200000
+        "nextRunAtMs": 1777597200000,
+        "lastRunAtMs": 1775009210483,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 3809798,
+        "lastError": "cron: job execution timed out",
+        "lastErrorReason": "timeout",
+        "lastDeliveryStatus": "not-requested",
+        "consecutiveErrors": 1
       }
     },
     {
@@ -778,7 +551,7 @@
       "name": "cron-watchdog-weekly",
       "enabled": true,
       "createdAtMs": 1773680314014,
-      "updatedAtMs": 1774260049666,
+      "updatedAtMs": 1775484810335,
       "schedule": {
         "kind": "cron",
         "expr": "0 11 * * 1",
@@ -788,22 +561,23 @@
       "wakeMode": "now",
       "payload": {
         "kind": "agentTurn",
-        "message": "CONTEXTO INFRA: Lee _system/instance.json para obtener los IDs de canales de infraestructura (discord.infra_channels). Usa esos IDs como target en los message() de Discord.\n\n## Cron Watchdog — Verificar que todos los crons ejecutaron correctamente\n\nEres el watchdog de crons. Tu trabajo: detectar crons que dejaron de ejecutar silenciosamente.\n\n### Pasos:\n\n1. Lista todos los crons: usa cron(action=list, includeDisabled=false)\n\n2. Para CADA cron enabled, verifica:\n   - `lastRunAtMs` existe y es reciente (dentro de su ventana esperada)\n   - `consecutiveErrors` = 0\n   - `lastRunStatus` = 'ok'\n   - Si es un cron diario: lastRun < 48h. Si es cada 6h: lastRun < 24h. Si es semanal: lastRun < 8 días. Si es every 15min/1h: lastRun < 6h.\n\n3. Clasifica resultados:\n   - 🔴 STALE: no ejecutó en su ventana esperada\n   - 🟡 ERRORING: consecutiveErrors > 0\n   - ✅ OK: ejecutando normalmente\n\n4. Si hay algún 🔴 o 🟡: publica alerta en #infra thread {INFRA_THREAD}:\n   message(action=send, channel=discord, target='{INFRA_THREAD}', message='🔍 **Cron Watchdog** — {fecha}\\n\\n{lista de crons con problemas}\\n\\n{recomendaciones}')\n\n5. Si todo OK: responde HEARTBEAT_OK.\n\nIMPORTANTE: Este cron vigila a los demás. Si este falla, nadie vigila nada. Sé eficiente y rápido.",
-        "model": "minimax/MiniMax-M2.5",
+        "message": "## Cron Watchdog — Verificar que todos los crons ejecutaron correctamente\n\nEres el watchdog de crons. Tu trabajo: detectar crons que dejaron de ejecutar silenciosamente.\n\n### Pasos:\n\n1. Lista todos los crons: usa cron(action=list, includeDisabled=false)\n\n2. Para CADA cron enabled, verifica:\n   - `lastRunAtMs` existe y es reciente (dentro de su ventana esperada)\n   - `consecutiveErrors` = 0\n   - `lastRunStatus` = 'ok'\n   - Si es un cron diario: lastRun < 48h. Si es cada 6h: lastRun < 24h. Si es semanal: lastRun < 8 días. Si es every 15min/1h: lastRun < 6h.\n\n3. Clasifica resultados:\n   - 🔴 STALE: no ejecutó en su ventana esperada\n   - 🟡 ERRORING: consecutiveErrors > 0\n   - ✅ OK: ejecutando normalmente\n\n4. Si hay algún 🔴 o 🟡: publica alerta en #infra thread 1480273578770567319:\n   message(action=send, channel=discord, target='1480273578770567319', message='🔍 **Cron Watchdog** — {fecha}\\n\\n{lista de crons con problemas}\\n\\n{recomendaciones}')\n\n5. Si todo OK: responde HEARTBEAT_OK.\n\nIMPORTANTE: Este cron vigila a los demás. Si este falla, nadie vigila nada. Sé eficiente y rápido.",
+        "model": "anthropic/claude-sonnet-4-5",
         "timeoutSeconds": 120
       },
       "delivery": {
         "mode": "none"
       },
       "state": {
-        "nextRunAtMs": 1774861200000,
-        "lastRunAtMs": 1774260000020,
-        "lastRunStatus": "ok",
-        "lastStatus": "ok",
-        "lastDurationMs": 49646,
-        "lastDelivered": false,
-        "lastDeliveryStatus": "not-delivered",
-        "consecutiveErrors": 0
+        "nextRunAtMs": 1776070800000,
+        "lastRunAtMs": 1775483854658,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 955677,
+        "lastDeliveryStatus": "not-requested",
+        "consecutiveErrors": 1,
+        "lastError": "cron: job execution timed out",
+        "lastErrorReason": "timeout"
       }
     },
     {
@@ -813,7 +587,7 @@
       "name": "Lead Sync — Growth4U",
       "enabled": true,
       "createdAtMs": 1774192173315,
-      "updatedAtMs": 1774472515985,
+      "updatedAtMs": 1775592600809,
       "schedule": {
         "kind": "cron",
         "expr": "0 22 * * *",
@@ -830,14 +604,14 @@
         "mode": "none"
       },
       "state": {
-        "nextRunAtMs": 1774558800000,
-        "lastRunAtMs": 1774472400013,
+        "nextRunAtMs": 1775678400000,
+        "lastRunAtMs": 1775592000011,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 115972,
-        "lastDelivered": false,
+        "lastDurationMs": 600798,
         "lastDeliveryStatus": "not-delivered",
-        "consecutiveErrors": 0
+        "consecutiveErrors": 0,
+        "lastDelivered": false
       }
     },
     {
@@ -847,7 +621,7 @@
       "name": "Call Prep Daily — Growth4U",
       "enabled": true,
       "createdAtMs": 1774192180766,
-      "updatedAtMs": 1774474300609,
+      "updatedAtMs": 1775594216690,
       "schedule": {
         "kind": "cron",
         "expr": "30 22 * * 0-4",
@@ -864,14 +638,14 @@
         "mode": "none"
       },
       "state": {
-        "nextRunAtMs": 1774560600000,
-        "lastRunAtMs": 1774474200014,
+        "nextRunAtMs": 1775680200000,
+        "lastRunAtMs": 1775593800013,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 100595,
-        "lastDelivered": false,
+        "lastDurationMs": 416677,
         "lastDeliveryStatus": "not-delivered",
-        "consecutiveErrors": 0
+        "consecutiveErrors": 0,
+        "lastDelivered": false
       }
     },
     {
@@ -881,7 +655,7 @@
       "name": "Call Prep Weekly — Growth4U",
       "enabled": true,
       "createdAtMs": 1774192186720,
-      "updatedAtMs": 1774192186720,
+      "updatedAtMs": 1775248515774,
       "schedule": {
         "kind": "cron",
         "expr": "30 22 * * 5",
@@ -898,7 +672,14 @@
         "mode": "none"
       },
       "state": {
-        "nextRunAtMs": 1774647000000
+        "nextRunAtMs": 1775853000000,
+        "lastRunAtMs": 1775248200017,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 315757,
+        "lastDelivered": false,
+        "lastDeliveryStatus": "not-delivered",
+        "consecutiveErrors": 0
       }
     },
     {
@@ -908,7 +689,7 @@
       "name": "memory-pattern-detection",
       "enabled": true,
       "createdAtMs": 1774217538140,
-      "updatedAtMs": 1774217538140,
+      "updatedAtMs": 1775381948042,
       "schedule": {
         "kind": "cron",
         "expr": "0 10 * * 0",
@@ -924,43 +705,417 @@
         "mode": "none"
       },
       "state": {
-        "nextRunAtMs": 1774771200000
+        "nextRunAtMs": 1775980800000,
+        "lastRunAtMs": 1775381808437,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 139605,
+        "lastError": "⚠️ ✉️ Message failed",
+        "lastDelivered": false,
+        "lastDeliveryStatus": "not-delivered",
+        "lastDeliveryError": "⚠️ ✉️ Message failed",
+        "consecutiveErrors": 1
       }
     },
     {
-      "id": "8897bcf8-4382-453f-84a0-0e311ef1f61e",
+      "id": "7442ba81-9342-40b4-b8c0-87786890c84e",
       "agentId": "sancho",
-      "sessionKey": "agent:sancho:discord:channel:1480949333963575427",
-      "name": "Morning Metrics — Multi-Client",
+      "name": "SEO Weekly Review — Criptan",
       "enabled": true,
-      "createdAtMs": 1774217794921,
-      "updatedAtMs": 1774423859249,
+      "createdAtMs": 1774907384193,
+      "updatedAtMs": 1775461317401,
       "schedule": {
         "kind": "cron",
-        "expr": "30 8 * * 1-5",
+        "expr": "0 9 * * 1",
         "tz": "Europe/Madrid"
       },
       "sessionTarget": "isolated",
       "wakeMode": "now",
       "payload": {
         "kind": "agentTurn",
-        "message": "CONTEXTO CLIENTE: Lee los IDs de canales de Discord desde brand/{slug}/sources.json (campo 'channels'). No uses IDs hardcodeados.\n\nMORNING METRICS — MULTI-CLIENT RUN\n\nExecute the morning metrics for ALL clients that have APIs configured.\n\nFor each client:\n1. Run: `bash scripts/morning-metrics.sh {slug}` — if output starts with NO_APIS, skip that client.\n2. Post the report to the client's #intelligence channel using message(action=send, channel=discord, channelId=\"{intelligence_channel_id}\").\n3. Create a thread from the posted message: \"📊 Metrics {today's date}\"\n4. If there are 🔴 red alerts, add action proposals in the thread.\n\nClient registry (from clients.json):\n- growth4u → intelligence channel: 1477741644789842031 (has meta-ads + ghl)\n- hospital-capilar → intelligence: 1475638253154603170 (no APIs yet — skip)\n- paymatico → intelligence: 1477995838092476477 (no APIs yet — skip)\n- masavo → intelligence: 1483424294099882093 (no APIs yet — skip)\n\nRun growth4u FIRST (only one with APIs right now). As clients connect APIs, they get added to clients.json metrics.apis and the script picks them up automatically.\n\nIMPORTANT: Each report goes to ITS OWN client guild. Client context isolation. No internal info.",
+        "message": "Revisión SEO semanal para Criptan.\n\nPASO 1 — LEER CONTEXTO:\nLee brand/criptan/current-state.md y brand/criptan/projects/P01-seo-bofu/tasks.json para entender el estado actual.\n\nPASO 2 — CHECK GSC:\nUsa Google Search Console (sc-domain:criptan.com) para obtener:\n- Top queries últimos 7 días vs 7 días anteriores\n- Páginas con más impresiones/clics\n- Keywords BOFU (comprar crypto, mejor exchange españa, etc): posición, CTR, tendencia\n- Alertas: caídas de posición >5 puestos, pérdida de tráfico >15%\n\nPASO 3 — CHECK GA4:\nUsa GA4 (Property 387759614) para:\n- Tráfico orgánico semanal vs semana anterior\n- Páginas de destino top orgánicas\n- Conversiones desde orgánico (si hay eventos configurados)\n\nPASO 4 — GUARDAR:\nGuarda resumen en brand/criptan/metrics/seo-weekly-YYYY-MM-DD.md con formato:\n## SEO Weekly — [fecha]\n### KPIs\n- Clics orgánicos: X (Δ%)\n- Impresiones: X (Δ%)\n- CTR medio: X%\n- Posición media: X\n### Keywords BOFU tracking\n[tabla de keywords objetivo con posición actual y tendencia]\n### Alertas\n[caídas, oportunidades, anomalías]\n### Recomendaciones\n[3 acciones concretas para la semana]\n\nDespués ejecuta: python3 ~/.openclaw/workspace-sancho/scripts/regenerate.py\n\nAPLICA reglas de _system/client-context-isolation.md — solo info de Criptan.",
+        "model": "anthropic/claude-sonnet-4-5",
+        "timeoutSeconds": 120
+      },
+      "delivery": {
+        "mode": "none",
+        "channel": "last"
+      },
+      "state": {
+        "nextRunAtMs": 1776063600000,
+        "lastRunAtMs": 1775460378458,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 938943,
+        "lastError": "cron: job execution timed out",
+        "lastErrorReason": "timeout",
+        "lastDeliveryStatus": "not-requested",
+        "consecutiveErrors": 1
+      }
+    },
+    {
+      "id": "53f6b4d3-51b4-4f78-8907-2f68a82efc7b",
+      "agentId": "sancho",
+      "name": "Competitor Watch — Criptan",
+      "enabled": true,
+      "createdAtMs": 1774907441307,
+      "updatedAtMs": 1774907441307,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 10 * * 3",
+        "tz": "Europe/Madrid"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Monitoreo de competidores para Criptan.\n\nPASO 1 — LEER COMPETIDORES:\nLee brand/criptan/market-and-us/competitors/current.md para la lista de competidores principales.\n\nPASO 2 — SCRAPE COMPETIDORES:\nPara los top 5 competidores (Bit2Me, Binance, Coinbase, Kraken, Bitvavo):\n- web_fetch de su homepage y blog (cambios recientes)\n- web_search de noticias últimas 7 días\n- web_search de sus campañas/promociones activas\n- Revisar si tienen contenido BOFU nuevo que nos afecte\n\nPASO 3 — ANÁLISIS:\n- Movimientos relevantes (nuevas features, promos, partnerships)\n- Contenido nuevo que compita con nuestras keywords\n- Oportunidades que podemos capitalizar\n- Amenazas que requieren reacción\n\nPASO 4 — GUARDAR:\nGuarda en brand/criptan/intelligence/competitor-watch-YYYY-MM-DD.md con formato:\n## Competitor Watch — [fecha]\n### Movimientos clave\n### Oportunidades detectadas\n### Amenazas\n### Acciones recomendadas\n\nDespués ejecuta: python3 ~/.openclaw/workspace-sancho/scripts/regenerate.py\n\nAPLICA reglas de _system/client-context-isolation.md — solo info de Criptan.",
+        "model": "anthropic/claude-sonnet-4-5",
         "timeoutSeconds": 180
       },
       "delivery": {
-        "mode": "none"
+        "mode": "none",
+        "channel": "last"
       },
       "state": {
-        "nextRunAtMs": 1774510200000,
-        "lastRunAtMs": 1774423831895,
-        "lastRunStatus": "error",
-        "lastStatus": "error",
-        "lastDurationMs": 27354,
+        "nextRunAtMs": 1775635200000
+      }
+    },
+    {
+      "id": "df8aaf99-8b1b-4b5b-844b-5c53de641e5c",
+      "agentId": "sancho",
+      "name": "Social & Content Review — Criptan",
+      "enabled": true,
+      "createdAtMs": 1774907485233,
+      "updatedAtMs": 1775203483165,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 10 * * 5",
+        "tz": "Europe/Madrid"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Revisión semanal de social media y contenido para Criptan.\n\nPASO 1 — LEER CONTEXTO:\nLee brand/criptan/current-state.md para canales activos.\nLee brand/criptan/projects/P04-linkedin-b2b-jorge/tasks.json y brand/criptan/projects/P06-social-content-ai/tasks.json para estado de proyectos.\n\nPASO 2 — SOCIAL MONITORING:\n- web_search 'Criptan' últimas noticias y menciones\n- x_search 'criptan OR @criptanapp' últimos 7 días — engagement, sentiment, temas\n- web_search 'Criptan instagram' o 'Criptan linkedin jorge soriano' para actividad reciente\n- Buscar menciones en crypto communities españolas\n\nPASO 3 — CONTENT AUDIT:\n- web_fetch criptan.com/blog — ¿se publicó contenido nuevo esta semana?\n- ¿El contenido es BOFU o sigue siendo solo awareness?\n- ¿Hay gaps respecto al content calendar?\n\nPASO 4 — GUARDAR:\nGuarda en brand/criptan/intelligence/social-review-YYYY-MM-DD.md con formato:\n## Social & Content Review — [fecha]\n### Engagement resumen (X, IG, LinkedIn)\n### Menciones y sentiment\n### Contenido publicado esta semana\n### Gaps vs plan\n### Recomendaciones para próxima semana\n\nDespués ejecuta: python3 ~/.openclaw/workspace-sancho/scripts/regenerate.py\n\nAPLICA reglas de _system/client-context-isolation.md — solo info de Criptan.",
+        "model": "anthropic/claude-sonnet-4-5",
+        "timeoutSeconds": 120
+      },
+      "delivery": {
+        "mode": "none",
+        "channel": "last"
+      },
+      "state": {
+        "nextRunAtMs": 1775808000000,
+        "lastRunAtMs": 1775203385704,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 97461,
         "lastDelivered": false,
         "lastDeliveryStatus": "not-delivered",
-        "consecutiveErrors": 1,
-        "lastError": "⚠️ ✉️ Message failed",
-        "lastDeliveryError": "⚠️ ✉️ Message failed"
+        "consecutiveErrors": 0
+      }
+    },
+    {
+      "id": "854d8902-eea8-45aa-bb26-6afeb3a6c949",
+      "agentId": "sancho",
+      "name": "B2B Pipeline Review — Criptan",
+      "enabled": true,
+      "createdAtMs": 1774907548780,
+      "updatedAtMs": 1775136685033,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 11 * * 4",
+        "tz": "Europe/Madrid"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Revisión semanal del pipeline B2B y LinkedIn de Criptan.\n\nPASO 1 — LEER CONTEXTO:\nLee brand/criptan/current-state.md (sección B2B: 250 empresas clientes, sin GTM).\nLee brand/criptan/projects/P04-linkedin-b2b-jorge/tasks.json para LinkedIn de Jorge Soriano.\nLee brand/criptan/projects/P05-b2b-outbound/tasks.json para outbound empresas.\n\nPASO 2 — CHECK LINKEDIN JORGE:\n- web_search 'Jorge Soriano Criptan LinkedIn' — posts recientes, engagement\n- x_search 'jorge soriano criptan' — cross-platform activity\n- ¿Se publicó contenido esta semana? ¿Qué engagement tuvo?\n\nPASO 3 — B2B OUTBOUND STATUS:\n- Revisar estado de tareas en P05\n- ¿Hay secuencias activas? ¿Respuestas? ¿Reuniones?\n- Oportunidades de mejora en messaging/targeting\n\nPASO 4 — GUARDAR:\nGuarda en brand/criptan/intelligence/b2b-review-YYYY-MM-DD.md con formato:\n## B2B Pipeline Review — [fecha]\n### LinkedIn Jorge Soriano\n- Posts publicados: X\n- Engagement: [métricas]\n- Recomendaciones próxima semana\n### B2B Outbound\n- Estado pipeline\n- Respuestas/reuniones\n- Acciones pendientes\n### Prioridades semana siguiente\n\nDespués ejecuta: python3 ~/.openclaw/workspace-sancho/scripts/regenerate.py\n\nAPLICA reglas de _system/client-context-isolation.md — solo info de Criptan.",
+        "model": "anthropic/claude-sonnet-4-5",
+        "timeoutSeconds": 120
+      },
+      "delivery": {
+        "mode": "none",
+        "channel": "last"
+      },
+      "state": {
+        "nextRunAtMs": 1775725200000,
+        "lastRunAtMs": 1775136024235,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 660798,
+        "lastError": "cron: job execution timed out",
+        "lastErrorReason": "timeout",
+        "lastDeliveryStatus": "not-requested",
+        "consecutiveErrors": 1
+      }
+    },
+    {
+      "id": "41d660cb-c18f-4268-aa95-6275f2435f90",
+      "agentId": "sancho",
+      "name": "Weekly Strategy Report — Criptan",
+      "enabled": true,
+      "createdAtMs": 1774907616596,
+      "updatedAtMs": 1775199918817,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 9 * * 5",
+        "tz": "Europe/Madrid"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Informe estratégico semanal para Criptan.\n\nPASO 1 — LEER TODOS LOS REPORTES DE LA SEMANA:\nLee los reportes generados esta semana en brand/criptan/intelligence/ y brand/criptan/metrics/:\n- seo-weekly-*.md (más reciente)\n- competitor-watch-*.md (más reciente)\n- social-review-*.md (más reciente)\n- b2b-review-*.md (más reciente)\nLee también brand/criptan/current-state.md y brand/criptan/strategic-plan/current.md\n\nPASO 2 — SÍNTESIS:\nCruza toda la info de la semana y genera:\n- Top 3 wins de la semana\n- Top 3 riesgos/problemas\n- Progreso vs objetivos del plan estratégico\n- ¿Se están cerrando los gaps detectados?\n\nPASO 3 — PRIORIDADES:\nDefine las 5 prioridades para la semana siguiente, ordenadas por impacto.\n\nPASO 4 — GUARDAR:\nGuarda en brand/criptan/intelligence/weekly-report-YYYY-MM-DD.md con formato:\n## Weekly Strategy Report — Criptan — [fecha]\n### 🏆 Wins\n### ⚠️ Riesgos\n### 📊 Progreso vs Plan\n### 🎯 Prioridades semana siguiente\n1. [acción] — [por qué] — [owner]\n2. ...\n### 📝 Notas\n\nDespués ejecuta: python3 ~/.openclaw/workspace-sancho/scripts/regenerate.py\n\nAPLICA reglas de _system/client-context-isolation.md — solo info de Criptan.",
+        "model": "anthropic/claude-sonnet-4-5",
+        "timeoutSeconds": 120
+      },
+      "delivery": {
+        "mode": "none",
+        "channel": "last"
+      },
+      "state": {
+        "nextRunAtMs": 1775804400000,
+        "lastRunAtMs": 1775199797730,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 121087,
+        "lastError": "cron: job execution timed out",
+        "lastErrorReason": "timeout",
+        "lastDeliveryStatus": "not-requested",
+        "consecutiveErrors": 1
+      }
+    },
+    {
+      "id": "1b104cd3-74b6-42df-9d4e-b4a764acef21",
+      "agentId": "sancho",
+      "name": "Recordatorio Métricas Manuales — Criptan",
+      "description": "Recordatorio semanal lunes 09:00 para rellenar métricas manuales de Criptan",
+      "enabled": true,
+      "createdAtMs": 1774972377248,
+      "updatedAtMs": 1775465544418,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 9 * * 1",
+        "tz": "Europe/Madrid"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Es lunes. Recuérdame en el canal #intelligence de Criptan que hay que rellenar las métricas manuales de la semana anterior en la Google Sheet: https://docs.google.com/spreadsheets/d/1fb_uCEwmXiHGnmOjxcrUpUuqoe83ifXVHFoScbffqk4/edit — Columnas: signups, kyc_completed, first_deposit, amount_deposited, earn_activated, second_deposit, app_downloads, ad_spend. Manda el mensaje en el canal de Discord de Criptan intelligence. Sé breve y directo.",
+        "model": "anthropic/claude-sonnet-4-5"
+      },
+      "delivery": {
+        "mode": "announce",
+        "channel": "last"
+      },
+      "state": {
+        "nextRunAtMs": 1776063600000,
+        "lastRunAtMs": 1775461317401,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 4227017,
+        "lastError": "cron: job execution timed out",
+        "lastErrorReason": "timeout",
+        "lastDeliveryStatus": "unknown",
+        "consecutiveErrors": 1
+      }
+    },
+    {
+      "id": "00fa288d-d349-449e-85ff-1d3b2260f2d3",
+      "agentId": "sancho",
+      "name": "Daily Pulse — Growth4U",
+      "enabled": true,
+      "createdAtMs": 1775033081929,
+      "updatedAtMs": 1775547067255,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 9 * * 1-5",
+        "tz": "Europe/Madrid"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Ejecuta el Daily Pulse para Growth4U.\n\nPASO 0 — CARGAR CONFIG:\nLee brand/growth4u/client-config.json. Usa los IDs de ahí para TODO. NUNCA hardcodees IDs.\n\nPASO 1 — LEER FUENTES:\nDel campo 'crons.daily_pulse.read_channels' en client-config.json, lee mensajes de las últimas 24h de CADA canal usando: message(action=read, channel=discord, target=<channelId>, limit=50)\nFiltra mensajes de las últimas 24h. Excluye bots y mensajes <30 chars. Incluye threads activos.\n\nPASO 2 — EXTRAER INSIGHTS:\nExtrae insights (pain points, feature requests, success stories, trends, preguntas recurrentes). Clasifica por categoría. Genera micro-briefs.\n\nPASO 3 — GUARDAR:\nGuarda en brand/growth4u/daily-pulse/YYYY-MM-DD.json\nDespués ejecuta: python3 ~/.openclaw/workspace-sancho/scripts/regenerate.py\n\nPASO 3b — GUARDAR EN RECURRING TASKS:\nGuarda el resumen ejecutivo en brand/growth4u/recurring-tasks/daily-pulse/YYYY-MM-DD.json:\n{\"cronName\": \"Daily Pulse — Growth4U\", \"slug\": \"growth4u\", \"date\": \"YYYY-MM-DD\", \"runAtMs\": <timestamp_ms>, \"status\": \"ok\", \"content\": \"<resumen ejecutivo con insights y métricas de canales>\"}\n\nPASO 4 — PUBLICAR EN DISCORD (PATRÓN OBLIGATORIO DE HILO):\nDel client-config.json, busca el channel ID de 'crons.daily_pulse.publish_channel' (mapea nombre → channels.X).\n1. message(action=send, channel=discord, target=<publish_channel_id>, message='📊 Daily Pulse — YYYY-MM-DD: [insight más relevante en 1 línea]')\n2. Del resultado captura messageId.\n3. message(action=thread-create, channel=discord, target=<publish_channel_id>, messageId=<messageId>, threadName='📊 Daily Pulse — YYYY-MM-DD')\n4. Del resultado captura threadId.\n5. message(action=send, channel=discord, target=<threadId>, message=<contenido completo>)\n6. NUNCA publiques contenido completo directamente en el canal.\n7. APLICA reglas de _system/client-context-isolation.md — solo info de Growth4U, CERO info de otros clientes o del sistema.",
+        "model": "anthropic/claude-sonnet-4-5"
+      },
+      "delivery": {
+        "mode": "announce",
+        "channel": "last"
+      },
+      "state": {
+        "nextRunAtMs": 1775631600000,
+        "lastRunAtMs": 1775546039641,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 1027614,
+        "lastDeliveryStatus": "unknown",
+        "consecutiveErrors": 4,
+        "lastErrorReason": "timeout",
+        "lastError": "FallbackSummaryError: All models failed (3): anthropic/claude-sonnet-4-5: LLM request rejected: Third-party apps now draw from your extra usage, not your plan limits. We've added a $200 credit to get you started. Claim it at claude.ai/settings/usage and keep going. (format) | minimax/MiniMax-M2.7: LLM request timed out. (unknown) | anthropic/claude-opus-4-6: LLM request rejected: Third-party apps now draw from your extra usage, not your plan limits. We've added a $200 credit to get you started. Claim it at claude.ai/settings/usage and keep going. (format)"
+      }
+    },
+    {
+      "id": "eef29d29-0160-4708-8b9f-d5f0503b4964",
+      "agentId": "sancho",
+      "name": "Performance Analysis — Growth4U",
+      "enabled": true,
+      "createdAtMs": 1775033088949,
+      "updatedAtMs": 1775488729218,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 11 * * 1",
+        "tz": "Europe/Madrid"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Análisis de rendimiento semanal para Growth4U.\n\nEres la capa de inteligencia sobre métricas. NO recoges datos — ya están recogidos. Tu trabajo: leerlos, analizarlos, detectar qué va bien y qué va mal, correlacionar con proyectos activos, y generar recomendaciones accionables.\n\nLee la skill completa en skills/performance-analysis/SKILL.md para entender el workflow detallado y las fórmulas.\n\nPASO 0 — CARGAR DATOS EXISTENTES:\n1. Lee brand/growth4u/metrics-plan.json (KPIs, primary KPI, funnel, categorías)\n2. Lee brand/growth4u/metrics/metrics-data.json (rolling 90 días — baselines)\n3. Lee brand/growth4u/operational/metrics/*.json de los últimos 7 días (snapshots diarios)\n4. Lee brand/growth4u/strategic-plan/current.md (estrategia activa, NSM)\n5. Lee brand/growth4u/projects/*/project.json (proyectos activos con tareas)\n6. Lee brand/growth4u/operational/learnings.md (contexto acumulado)\n7. Lee brand/growth4u/monitoring/pending-recommendations.json si existe (recomendaciones previas)\n8. Lee brand/growth4u/monitoring/weekly/ — busca el informe más reciente para comparar con semana anterior\nSi metrics-plan.json no existe, PARA: 'No hay KPIs definidos. Ejecuta metrics-setup primero.'\nSi metrics-data.json no existe o está vacío, PARA: 'No hay datos de métricas. Ejecuta collect.js primero.'\n\nPASO 1 — CALCULAR BASELINES:\nPara cada KPI en metrics-plan.json:\n- Extrae valores de metrics-data.json de los últimos 7 y 30 días\n- Calcula: media_7d, media_30d\n- Determina tendencia: 3+ días consecutivos arriba/abajo = trending up/down\n- Para KPIs con fórmula (CPL, tasas de conversión): calcula desde componentes\n\nPASO 2 — DETECTAR ANOMALÍAS:\nUmbrales:\n- RED: valor > 2x media_7d O valor < 0.5x media_7d\n- YELLOW: valor > 1.5x media_7d O valor < 0.75x media_7d\n- Stagnation YELLOW: variación < 5% durante 7+ días\nMÉTRICAS INVERTIDAS (subida = malo): cpc, bounceRate, position, cpl → invertir lógica\n\nPASO 3 — IDENTIFICAR OPORTUNIDADES:\nMétrica consistentemente por encima de media_30d durante 3+ días → oportunidad con acción sugerida\n\nPASO 4 — HEALTH SCORE:\nPor KPI: >=110% avg→90-100, dentro 10%→70-89, 50-90%→40-69, <50%→0-39\nAjustes: +5 trending up 3d, -5 trending down 3d, -10 stagnant 7d\nPesos: funnel=35%, paid=25%, traffic=20%, seo=10%, social=10%\nOverall = media ponderada\n\nPASO 5 — CORRELACIÓN CON PROYECTOS:\nPara cada proyecto activo (status != blocked):\n1. Semanas desde inicio → métricas relacionadas por tipo de proyecto\n2. Cambio % de esas métricas desde que el proyecto inició\n3. Confidence: high (>30% cambio + >3 semanas), medium (10-30%), low (<10% o <2 semanas)\n4. Assessment en texto: 'Proyecto X parece estar impulsando Y'\n\nPASO 6 — PROGRESO NSM:\nPrimaryKPI de metrics-plan.json (ej: Meetings)\nCalcula: total esta semana, total semana anterior, total mes, on_track sí/no\nIdentifica bottleneck del funnel: step con peor conversión\n\nPASO 7 — GENERAR RECOMENDACIONES:\nPara cada anomalía persistente o underperformance:\n1. Recomendación específica al contexto del cliente\n2. Vincular a proyecto existente si aplica\n3. Tipo: optimize/investigate/launch/pause/escalate\n4. Prioridad: high/medium/low\n5. Si métrica underperforma 2+ semanas consecutivas → usa WebSearch para best practices (máx 2 búsquedas)\n6. ID: rec-YYYYMMDD-NNN\n\nLimpiar previas: si una recomendación anterior ya no aplica (métrica normalizada) → auto_resolved\n\nPASO 8 — GUARDAR:\n1. Crea directorio brand/growth4u/monitoring/weekly/ si no existe\n2. Guarda brand/growth4u/monitoring/weekly/YYYY-MM-DD.json (schema: skills/performance-analysis/schemas/weekly-report.schema.json)\n3. Guarda brand/growth4u/monitoring/pending-recommendations.json (solo activas, schema: skills/performance-analysis/schemas/recommendation.schema.json)\n4. Guarda brand/growth4u/monitoring/health-score.json (ligero, schema: skills/performance-analysis/schemas/health-score.schema.json)\n5. Append insights clave a brand/growth4u/operational/learnings.md\n6. Ejecuta: python3 ~/.openclaw/workspace-sancho/scripts/regenerate.py\n\nPASO 8b — GUARDAR EN RECURRING TASKS:\nGuarda en brand/growth4u/recurring-tasks/performance-analysis/YYYY-MM-DD.json:\n{\"cronName\": \"Performance Analysis — Growth4U\", \"slug\": \"growth4u\", \"date\": \"YYYY-MM-DD\", \"runAtMs\": <timestamp_ms>, \"status\": \"ok\", \"content\": \"<executive summary + anomalías + recomendaciones>\"}\n\nPASO 9 — PUBLICAR EN DISCORD (PATRÓN OBLIGATORIO DE HILO):\nDel client-config.json, busca el channel ID de 'crons.performance_analysis_weekly.publish_channel' (mapea nombre → channels.X).\n1. message(action=send, channel=discord, target=<publish_channel_id>, message='📈 Performance Analysis — Growth4U — Semana YYYY-WNN: Health Score XX (↑/↓/→) | NSM: X meetings (on track/behind)')\n2. Del resultado captura messageId.\n3. message(action=thread-create, channel=discord, target=<publish_channel_id>, messageId=<messageId>, threadName='📈 Performance Analysis — Semana YYYY-WNN')\n4. Del resultado captura threadId.\n5. message(action=send, channel=discord, target=<threadId>, message=<executive summary + top anomalías + recomendaciones high priority>)\n6. APLICA reglas de _system/client-context-isolation.md — solo info de Growth4U.",
+        "model": "anthropic/claude-sonnet-4-5"
+      },
+      "delivery": {
+        "mode": "announce",
+        "channel": "last"
+      },
+      "state": {
+        "nextRunAtMs": 1776070800000,
+        "lastRunAtMs": 1775484810335,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 3918883,
+        "lastError": "cron: job execution timed out",
+        "lastErrorReason": "timeout",
+        "lastDeliveryStatus": "unknown",
+        "consecutiveErrors": 1
+      }
+    },
+    {
+      "id": "a654ab5d-b65d-4718-bab6-906ee62601eb",
+      "agentId": "sancho",
+      "name": "Weekly Synthesis — Growth4U",
+      "enabled": true,
+      "createdAtMs": 1775033092306,
+      "updatedAtMs": 1775489472554,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 10 * * 1",
+        "tz": "Europe/Madrid"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Síntesis semanal para Growth4U.\n\nPASO 0 — CARGAR CONFIG:\nLee brand/growth4u/client-config.json. Usa los IDs de ahí para TODO.\n\nPASO 1 — LEER FUENTES:\n1) Lee brand/growth4u/daily-pulse/*.json recientes (últimos 7 días).\n2) Lee brand/growth4u/learnings.md si existe.\n3) Lee brand/growth4u/operational/learnings.md si existe.\n4) Identifica patrones, tendencias, decisiones clave.\n\nPASO 2 — ACTUALIZAR:\nActualiza brand/growth4u/learnings.md con patrones confirmados.\n\nPASO 2b — GUARDAR EN RECURRING TASKS:\nGuarda en brand/growth4u/recurring-tasks/weekly-synthesis/YYYY-MM-DD.json:\n{\"cronName\": \"Weekly Synthesis — Growth4U\", \"slug\": \"growth4u\", \"date\": \"YYYY-MM-DD\", \"runAtMs\": <timestamp_ms>, \"status\": \"ok\", \"content\": \"<síntesis semanal completa>\"}\n\nPASO 3 — PUBLICAR EN DISCORD (PATRÓN OBLIGATORIO DE HILO):\nDel client-config.json, busca el channel ID de 'crons.weekly_synthesis.publish_channel'.\n1. message(action=send, channel=discord, target=<publish_channel_id>, message='📚 Síntesis Semanal — YYYY-MM-DD: [hallazgo principal en 1 línea]')\n2. Del resultado captura messageId.\n3. message(action=thread-create, channel=discord, target=<publish_channel_id>, messageId=<messageId>, threadName='📚 Síntesis Semanal — YYYY-MM-DD')\n4. Del resultado captura threadId.\n5. message(action=send, channel=discord, target=<threadId>, message=<resumen ejecutivo>)\n6. APLICA reglas de _system/client-context-isolation.md — solo info de Growth4U.",
+        "model": "anthropic/claude-sonnet-4-5"
+      },
+      "delivery": {
+        "mode": "announce",
+        "channel": "last"
+      },
+      "state": {
+        "nextRunAtMs": 1776067200000,
+        "lastRunAtMs": 1775488729218,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 743336,
+        "lastError": "FallbackSummaryError: All models failed (3): anthropic/claude-sonnet-4-5: LLM request timed out. (unknown) | minimax/MiniMax-M2.7: LLM request timed out. (unknown) | anthropic/claude-opus-4-6: LLM request rejected: Third-party apps now draw from your extra usage, not your plan limits. We've added a $200 credit to get you started. Claim it at claude.ai/settings/usage and keep going. (format)",
+        "lastErrorReason": "timeout",
+        "lastDeliveryStatus": "unknown",
+        "consecutiveErrors": 1
+      }
+    },
+    {
+      "id": "09b92860-663d-4fb1-8f27-352c55e8a507",
+      "agentId": "sancho",
+      "name": "Morning Metrics — Growth4U",
+      "enabled": true,
+      "createdAtMs": 1775034097507,
+      "updatedAtMs": 1775544788615,
+      "schedule": {
+        "kind": "cron",
+        "expr": "30 8 * * *",
+        "tz": "Europe/Madrid"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Morning Metrics para Growth4U.\n\nPASO 1 — RECOGER MÉTRICAS:\nEjecuta los dos comandos en orden:\n1. cd /Users/ragi/.openclaw/workspace-sancho && node skills/metrics-collector/scripts/collect.js --slug growth4u --all\n   Esto descarga datos frescos de todas las APIs configuradas (GA4, GSC, Meta Ads, GHL, Metricool).\n   Si alguna fuente falla, registra el error pero continúa con las demás.\n2. bash scripts/morning-metrics.sh growth4u\n   Esto genera el reporte formateado a partir de los datos recién recogidos.\n   Si output empieza con NO_APIS → responde 'Sin APIs configuradas para Growth4U' y PARA.\nCaptura el output completo del paso 2 — este es el reporte de métricas.\n\nPASO 2 — ANALIZAR:\nSi hay alertas (leads bajos, CPC alto, CTR bajo) → genera propuestas de acción concretas.\nSi todo normal → resumen breve de tendencias.\n\nPASO 3 — GUARDAR EN RECURRING TASKS:\nGuarda el reporte completo en brand/growth4u/recurring-tasks/morning-metrics/YYYY-MM-DD.json:\n{\"cronName\": \"Morning Metrics — Growth4U\", \"slug\": \"growth4u\", \"date\": \"YYYY-MM-DD\", \"runAtMs\": <timestamp_ms>, \"status\": \"ok\", \"content\": \"<reporte completo con análisis>\"}\n\nPASO 4 — PUBLICAR EN DISCORD (PATRÓN OBLIGATORIO DE HILO):\nLee brand/growth4u/client-config.json. Del campo channels, busca el ID de 'insights' (o 'crons.morning_metrics.publish_channel').\n1. message(action=send, channel=discord, target=<channel_id>, message='📊 Morning Metrics — Growth4U | YYYY-MM-DD: [línea resumen con dato más relevante]')\n2. Captura messageId → message(action=thread-create, channel=discord, channelId=<channel_id>, messageId=<messageId>, threadName='📊 Metrics YYYY-MM-DD')\n3. Captura threadId → message(action=send, channel=discord, target=<threadId>, message=<reporte completo>)\n4. Si hay alertas rojas, añade propuestas de acción en el thread.\n5. APLICA reglas de _system/client-context-isolation.md — solo info de Growth4U.",
+        "model": "claude-opus-4-6"
+      },
+      "delivery": {
+        "mode": "announce",
+        "channel": "last"
+      },
+      "state": {
+        "nextRunAtMs": 1775629800000,
+        "lastRunAtMs": 1775543812472,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 976143,
+        "lastDeliveryStatus": "unknown",
+        "consecutiveErrors": 6,
+        "lastError": "FallbackSummaryError: All models failed (3): anthropic/claude-opus-4-6: LLM request rejected: Third-party apps now draw from your extra usage, not your plan limits. We've added a $200 credit to get you started. Claim it at claude.ai/settings/usage and keep going. (format) | anthropic/claude-sonnet-4-5: No available auth profile for anthropic (all in cooldown or unavailable). (format) | minimax/MiniMax-M2.7: LLM request timed out. (unknown)",
+        "lastErrorReason": "timeout"
+      }
+    },
+    {
+      "id": "9416a8bc-14f5-4626-99d2-c8065c4ab002",
+      "agentId": "sancho",
+      "name": "Morning Metrics — Hulahoop",
+      "enabled": true,
+      "createdAtMs": 1775563322560,
+      "updatedAtMs": 1775563322560,
+      "schedule": {
+        "kind": "cron",
+        "expr": "30 8 * * *",
+        "tz": "Europe/Madrid"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Morning Metrics para Hulahoop.\n\nPASO 1 — RECOGER MÉTRICAS:\nEjecuta los dos comandos en orden:\n1. cd /Users/ragi/.openclaw/workspace-sancho && node skills/metrics-collector/scripts/collect.js --slug hulahoop --all\n   Esto descarga datos frescos de todas las APIs configuradas (GA4, GSC, Meta Ads, GHL, Metricool).\n   Si alguna fuente falla, registra el error pero continúa con las demás.\n2. bash scripts/morning-metrics.sh hulahoop\n   Esto genera el reporte formateado a partir de los datos recién recogidos.\n   Si output empieza con NO_APIS → responde 'Sin APIs configuradas para Hulahoop' y PARA.\nCaptura el output completo del paso 2 — este es el reporte de métricas.\n\nPASO 2 — ANALIZAR:\nSi hay alertas (leads bajos, CPC alto, CTR bajo) → genera propuestas de acción concretas.\nSi todo normal → resumen breve de tendencias.\n\nPASO 3 — GUARDAR EN RECURRING TASKS:\nGuarda el reporte completo en brand/hulahoop/recurring-tasks/morning-metrics/YYYY-MM-DD.json:\n{\"cronName\": \"Morning Metrics — Hulahoop\", \"slug\": \"hulahoop\", \"date\": \"YYYY-MM-DD\", \"runAtMs\": <timestamp_ms>, \"status\": \"ok\", \"content\": \"<reporte completo con análisis>\"}\n\nPASO 4 — PUBLICAR EN DISCORD (PATRÓN OBLIGATORIO DE HILO):\nLee brand/hulahoop/client-config.json. Del campo channels, busca el ID de 'insights' (o 'crons.morning_metrics.publish_channel').\n1. message(action=send, channel=discord, target=<channel_id>, message='📊 Morning Metrics — Hulahoop | YYYY-MM-DD: [línea resumen con dato más relevante]')\n2. Captura messageId → message(action=thread-create, channel=discord, channelId=<channel_id>, messageId=<messageId>, threadName='📊 Metrics YYYY-MM-DD')\n3. Captura threadId → message(action=send, channel=discord, target=<threadId>, message=<reporte completo>)\n4. Si hay alertas rojas, añade propuestas de acción en el thread.\n5. APLICA reglas de _system/client-context-isolation.md — solo info de Hulahoop.",
+        "model": "claude-opus-4-6"
+      },
+      "delivery": {
+        "mode": "announce",
+        "channel": "last"
+      },
+      "state": {
+        "nextRunAtMs": 1775629800000
+      }
+    },
+    {
+      "id": "7d58dea0-fbeb-42f1-97e6-a33880cf6389",
+      "agentId": "sancho",
+      "name": "Performance Analysis — Hulahoop",
+      "enabled": true,
+      "createdAtMs": 1775563338599,
+      "updatedAtMs": 1775563338599,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 11 * * 1",
+        "tz": "Europe/Madrid"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Análisis de rendimiento semanal para Hulahoop.\n\nEres la capa de inteligencia sobre métricas. NO recoges datos — ya están recogidos. Tu trabajo: leerlos, analizarlos, detectar qué va bien y qué va mal, correlacionar con proyectos activos, y generar recomendaciones accionables.\n\nLee la skill completa en skills/performance-analysis/SKILL.md para entender el workflow detallado y las fórmulas.\n\nPASO 0 — CARGAR DATOS EXISTENTES:\n1. Lee brand/hulahoop/metrics-plan.json (KPIs, primary KPI, funnel, categorías)\n2. Lee brand/hulahoop/metrics/metrics-data.json (rolling 90 días — baselines)\n3. Lee brand/hulahoop/operational/metrics/*.json de los últimos 7 días (snapshots diarios)\n4. Lee brand/hulahoop/strategic-plan/current.md (estrategia activa, NSM)\n5. Lee brand/hulahoop/projects/*/project.json (proyectos activos con tareas)\n6. Lee brand/hulahoop/operational/learnings.md (contexto acumulado)\n7. Lee brand/hulahoop/monitoring/pending-recommendations.json si existe (recomendaciones previas)\n8. Lee brand/hulahoop/monitoring/weekly/ — busca el informe más reciente para comparar con semana anterior\nSi metrics-plan.json no existe, PARA: 'No hay KPIs definidos. Ejecuta metrics-setup primero.'\nSi metrics-data.json no existe o está vacío, PARA: 'No hay datos de métricas. Ejecuta collect.js primero.'\n\nPASO 1 — CALCULAR BASELINES:\nPara cada KPI en metrics-plan.json:\n- Extrae valores de metrics-data.json de los últimos 7 y 30 días\n- Calcula: media_7d, media_30d\n- Determina tendencia: 3+ días consecutivos arriba/abajo = trending up/down\n- Para KPIs con fórmula (CPL, tasas de conversión): calcula desde componentes\n\nPASO 2 — DETECTAR ANOMALÍAS:\nUmbrales:\n- RED: valor > 2x media_7d O valor < 0.5x media_7d\n- YELLOW: valor > 1.5x media_7d O valor < 0.75x media_7d\n- Stagnation YELLOW: variación < 5% durante 7+ días\nMÉTRICAS INVERTIDAS (subida = malo): cpc, bounceRate, position, cpl → invertir lógica\n\nPASO 3 — IDENTIFICAR OPORTUNIDADES:\nMétrica consistentemente por encima de media_30d durante 3+ días → oportunidad con acción sugerida\n\nPASO 4 — HEALTH SCORE:\nPor KPI: >=110% avg→90-100, dentro 10%→70-89, 50-90%→40-69, <50%→0-39\nAjustes: +5 trending up 3d, -5 trending down 3d, -10 stagnant 7d\nPesos: funnel=35%, paid=25%, traffic=20%, seo=10%, social=10%\nOverall = media ponderada\n\nPASO 5 — CORRELACIÓN CON PROYECTOS:\nPara cada proyecto activo (status != blocked):\n1. Semanas desde inicio → métricas relacionadas por tipo de proyecto\n2. Cambio % de esas métricas desde que el proyecto inició\n3. Confidence: high (>30% cambio + >3 semanas), medium (10-30%), low (<10% o <2 semanas)\n4. Assessment en texto: 'Proyecto X parece estar impulsando Y'\n\nPASO 6 — PROGRESO NSM:\nPrimaryKPI de metrics-plan.json (ej: Meetings)\nCalcula: total esta semana, total semana anterior, total mes, on_track sí/no\nIdentifica bottleneck del funnel: step con peor conversión\n\nPASO 7 — GENERAR RECOMENDACIONES:\nPara cada anomalía persistente o underperformance:\n1. Recomendación específica al contexto del cliente\n2. Vincular a proyecto existente si aplica\n3. Tipo: optimize/investigate/launch/pause/escalate\n4. Prioridad: high/medium/low\n5. Si métrica underperforma 2+ semanas consecutivas → usa WebSearch para best practices (máx 2 búsquedas)\n6. ID: rec-YYYYMMDD-NNN\n\nLimpiar previas: si una recomendación anterior ya no aplica (métrica normalizada) → auto_resolved\n\nPASO 8 — GUARDAR:\n1. Crea directorio brand/hulahoop/monitoring/weekly/ si no existe\n2. Guarda brand/hulahoop/monitoring/weekly/YYYY-MM-DD.json (schema: skills/performance-analysis/schemas/weekly-report.schema.json)\n3. Guarda brand/hulahoop/monitoring/pending-recommendations.json (solo activas, schema: skills/performance-analysis/schemas/recommendation.schema.json)\n4. Guarda brand/hulahoop/monitoring/health-score.json (ligero, schema: skills/performance-analysis/schemas/health-score.schema.json)\n5. Append insights clave a brand/hulahoop/operational/learnings.md\n6. Ejecuta: python3 ~/.openclaw/workspace-sancho/scripts/regenerate.py\n\nPASO 8b — GUARDAR EN RECURRING TASKS:\nGuarda en brand/hulahoop/recurring-tasks/performance-analysis/YYYY-MM-DD.json:\n{\"cronName\": \"Performance Analysis — Hulahoop\", \"slug\": \"hulahoop\", \"date\": \"YYYY-MM-DD\", \"runAtMs\": <timestamp_ms>, \"status\": \"ok\", \"content\": \"<executive summary + anomalías + recomendaciones>\"}\n\nPASO 9 — PUBLICAR EN DISCORD (PATRÓN OBLIGATORIO DE HILO):\nDel client-config.json, busca el channel ID de 'crons.performance_analysis_weekly.publish_channel' (mapea nombre → channels.X).\n1. message(action=send, channel=discord, target=<publish_channel_id>, message='📈 Performance Analysis — Hulahoop — Semana YYYY-WNN: Health Score XX (↑/↓/→) | NSM: X meetings (on track/behind)')\n2. Del resultado captura messageId.\n3. message(action=thread-create, channel=discord, target=<publish_channel_id>, messageId=<messageId>, threadName='📈 Performance Analysis — Semana YYYY-WNN')\n4. Del resultado captura threadId.\n5. message(action=send, channel=discord, target=<threadId>, message=<executive summary + top anomalías + recomendaciones high priority>)\n6. APLICA reglas de _system/client-context-isolation.md — solo info de Hulahoop.",
+        "model": "anthropic/claude-sonnet-4-5"
+      },
+      "delivery": {
+        "mode": "announce",
+        "channel": "last"
+      },
+      "state": {
+        "nextRunAtMs": 1776070800000
       }
     }
   ]
