@@ -16,6 +16,27 @@ START_SEC=$(date +%s)
 
 cd "$OPENCLAW_ROOT"
 
+# --- Pre-flight: check if previous backup is stale (>48h) ---
+ALERT_SCRIPT="$OPENCLAW_ROOT/workspace-cervantes/scripts/discord-alert.sh"
+if [ -f "$ALERT_SCRIPT" ] && [ -n "${DISCORD_WEBHOOK_CERVANTES:-}" ] && [ -f "$STATE_FILE" ]; then
+  LAST_TS=$(python3 -c "
+import json, datetime
+with open('$STATE_FILE') as f:
+    state = json.load(f)
+last = state.get('lastBackup', '')
+if last:
+    dt = datetime.datetime.fromisoformat(last.replace('Z', '+00:00'))
+    print(int(dt.timestamp()))
+else:
+    print(0)
+" 2>/dev/null || echo 0)
+  NOW_TS=$(date +%s)
+  DIFF=$(( NOW_TS - LAST_TS ))
+  if [ "$DIFF" -gt 172800 ]; then
+    "$ALERT_SCRIPT" "⚠️" "Backup Warning — $(date +%Y-%m-%d)" "Last backup was more than 48h ago."
+  fi
+fi
+
 # --- 1. Ensure git repo + remote ---
 if [ ! -d .git ]; then
   echo "❌ No git repo at $OPENCLAW_ROOT"
@@ -63,27 +84,3 @@ EOF
 echo "[$TIMESTAMP] commit=$COMMIT_HASH changes=$CHANGES duration=${DURATION}s" >> "$LOG_FILE"
 
 echo "📦 Backup complete (${DURATION}s)"
-
-# --- Discord webhook fallback (runs without LLM) ---
-ALERT_SCRIPT="$OPENCLAW_ROOT/workspace-cervantes/scripts/discord-alert.sh"
-if [ -f "$ALERT_SCRIPT" ] && [ -n "${DISCORD_WEBHOOK_CERVANTES:-}" ]; then
-  # Alert if last backup > 48h
-  if [ -f "$STATE_FILE" ]; then
-    LAST_TS=$(python3 -c "
-import json, datetime
-with open('$STATE_FILE') as f:
-    state = json.load(f)
-last = state.get('lastBackup', '')
-if last:
-    dt = datetime.datetime.fromisoformat(last.replace('Z', '+00:00'))
-    print(int(dt.timestamp()))
-else:
-    print(0)
-" 2>/dev/null || echo 0)
-    NOW_TS=$(date +%s)
-    DIFF=$(( NOW_TS - LAST_TS ))
-    if [ "$DIFF" -gt 172800 ]; then
-      "$ALERT_SCRIPT" "⚠️" "Backup Warning — $(date +%Y-%m-%d)" "Last backup was more than 48h ago."
-    fi
-  fi
-fi

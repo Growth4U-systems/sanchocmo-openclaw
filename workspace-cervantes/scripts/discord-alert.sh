@@ -15,10 +15,12 @@ if [ -z "$WEBHOOK_URL" ]; then
   exit 0
 fi
 
-# Escape special JSON characters in body
-BODY_ESCAPED=$(echo "$BODY" | sed 's/\\/\\\\/g; s/"/\\"/g; s/\n/\\n/g')
-
-PAYLOAD="{\"content\": \"${EMOJI} **${TITLE}**\n\n${BODY_ESCAPED}\"}"
+# Build JSON payload safely using Python
+PAYLOAD=$(python3 -c "
+import json, sys
+content = sys.argv[1] + ' **' + sys.argv[2] + '**\n\n' + sys.argv[3]
+print(json.dumps({'content': content}))
+" "$EMOJI" "$TITLE" "$BODY")
 
 HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
   -H "Content-Type: application/json" \

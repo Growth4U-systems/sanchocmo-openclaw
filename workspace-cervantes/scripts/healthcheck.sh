@@ -88,13 +88,14 @@ else
 fi
 
 # Step 2: Run extra checks that MC doesn't cover
+export INFRA_STATUS INFRA_DETAIL
 EXTRA_CHECKS=$(python3 -c "
-import json
+import json, os
 d = {}
 d['infrastructure'] = {
-    'status': '$INFRA_STATUS',
-    'lastCheck': '$NOW',
-    'details': {'note': '$INFRA_DETAIL'}
+    'status': os.environ.get('INFRA_STATUS', 'unknown'),
+    'lastCheck': os.environ['NOW'],
+    'details': {'note': os.environ.get('INFRA_DETAIL', '')}
 }
 print(json.dumps(d))
 ")
