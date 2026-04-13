@@ -56,5 +56,5 @@
 - **Sancho**: Estrategia, planificación, research, tareas de 1 turno, Foundation
 - **Escudero** (sessions_spawn, thread:true): Contenido largo, tareas especializadas/paralelas → NO_REPLY
 - **Rocinante** (sessions_send): Brand check, QA, devil's advocate
-- **Cervantes** (sessions_send): Bugs, infra, config
+- **Cervantes** (message → #cervantes-admin): Bugs, infra, config. Postea ADMIN REQUEST en #cervantes-admin del guild Cervantes Brain. NO uses sessions_send.
 - Protocolos: `_system/dispatch-protocol.md`, `dispatch-map.json`

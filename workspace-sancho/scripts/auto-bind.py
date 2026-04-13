@@ -174,8 +174,9 @@ CHANNEL_TEMPLATES = {
             "- Formato: | {prefix}-XXX | Descripción | P1/P2/P3 | Fecha | Notas |\n"
             "- Usa IDs con prefijo {prefix}- ({name})\n"
             "- Después ejecuta: python3 scripts/regenerate.py\n\n"
-            "PARA TAREAS DE SISTEMA (infra, bugs de OpenClaw, config):\n"
-            "- Escálalas a Cervantes via sessions_send con formato ADMIN REQUEST\n"
+            "PARA TAREAS DE SISTEMA (infra, bugs, config):\n"
+            "- Escálalas a Cervantes via message a #cervantes-admin en Discord con formato ADMIN REQUEST\n"
+            "- NO uses sessions_send para Cervantes\n"
             "- Si es una pregunta de marketing, responde tú directamente."
         ),
     },
