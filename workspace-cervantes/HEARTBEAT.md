@@ -2,34 +2,19 @@
 
 ## SIEMPRE (cada heartbeat)
 
-### 🔑 Device Pairing
-- Ejecutar: `openclaw devices list`
-- Si hay pending devices → notificar a Alfonso inmediatamente
-- NO aprobar automáticamente — solo notificar
+### Tareas pendientes
+- Revisar `memory/TASKS.md` — hay tareas aprobadas pendientes?
+- Revisar mensajes recientes en `#cervantes-admin`
 
 ## Rotación (hacer 2-3 por heartbeat, rotar)
 
-### 🏥 Gateway Health
-- Ejecutar: `openclaw status`
-- Si gateway no está running → notificar
-- Si hay critical warnings → notificar
-
-### 🔄 Updates Disponibles
-- Revisar si hay nueva versión de OpenClaw
-- Si hay update → notificar (no actualizar automáticamente)
-
 ### 🖥️ Mission Control Server
 - Verificar: `curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:18790/`
-- Si no responde 200 → reiniciar: `launchctl kickstart -k gui/$(id -u)/com.sancho.mc-server`
+- Si no responde 200 → verificar con `systemctl --user status mc-server` y notificar
 
-### 🤖 Discord Bot Status
-- Verificar bot conectado (revisar en `openclaw status`)
-- Si desconectado → notificar
-
-### 🔄 Regenerar Mission Control
-- Ejecutar: `python3 ~/.openclaw/workspace-sancho/scripts/regenerate.py`
-- Solo si ha pasado >2h desde la última regeneración
-- Trackear timestamp en heartbeat-state.json
+### 🏥 Servicios del sistema
+- Verificar servicios systemd relevantes: `systemctl --user list-units --state=failed`
+- Si hay servicios caídos → diagnosticar y notificar
 
 ### 📝 Memory Maintenance
 - Si es el primer heartbeat del día: crear memory/daily/YYYY-MM-DD.md
@@ -38,23 +23,17 @@
   - Instance state (clients, config, operational) → `memory/MEMORY.md`
 
 ### 👁️ Observar a Sancho (semanal)
-- Revisar sesiones recientes de Sancho (sessions_list/sessions_history)
+- Revisar actividad reciente de Sancho en `../workspace-sancho/`
 - Identificar patrones: ¿qué skills usa más? ¿dónde falla? ¿qué le falta?
 - Proponer mejoras como tareas en TASKS.md
 
 ### 🔨 Ejecutar una tarea aprobada
-- Leer TASKS.md → sección "✅ Aprobadas"
+- Leer TASKS.md → sección "Aprobadas"
 - Elegir UNA tarea (priorizar P1 > P2, y las que desbloquean más cosas)
 - Ejecutarla directamente (spawn sub-agente si es grande, hacerla tú si es pequeña)
-- Al completar: mover a "✔️ Completadas" en TASKS.md + regenerar MC
+- Al completar: mover a "Completadas" en TASKS.md
 - Documentar en memory/daily/YYYY-MM-DD.md qué hiciste
 - Si la tarea requiere aprobación de Alfonso (ej: cambios visibles al cliente), NO ejecutar — solo preparar y notificar
 
-### 📋 Actualizar CHANGELOG
-- Si hubo cambios desde la última entrada del CHANGELOG → añadir entrada
-- Archivo: `~/.openclaw/workspace-sancho/CHANGELOG.md`
-- Formato Keep a Changelog (Added/Changed/Fixed/Removed)
-- Solo si hay cambios reales — no crear entradas vacías
-
 ## Estado de checks
-Trackear en memory/heartbeat-state.json
+Trackear en `memory/heartbeat-state.json` (crear si no existe).

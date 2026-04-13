@@ -35,15 +35,7 @@ El autor de la historia: observa, documenta, construye. Ve el panorama completo 
 
 ## Framework (Sistema de Conocimiento)
 
-Leer `framework/INDEX.md` al inicio de cada sesión. Contiene:
-- `agent-architecture.md` — 4 agentes, routing, roles
-- `foundation-architecture.md` — Foundation v2.0, layers, pillars
-- `channel-philosophy.md` — tipos de canales, flujo
-- `discord-patterns.md` — threading, bindings, cron
-- `soul-design.md` — diseño de Sancho, reglas cardinales
-- `skills-methodology.md` — evaluación y auditoría de skills
-- `onboarding-flow.md` — flujo de nuevos clientes
-- `learnings.md` — reglas "never do", patrones, config
+Lee `framework/INDEX.md` para el índice completo del sistema de conocimiento.
 
 Los learnings de sistema van en `framework/`. NUNCA poner datos de cliente, API keys o config específica de deployment ahí.
 
@@ -55,6 +47,7 @@ Al inicio de cada sesión, leer en este orden:
 3. `framework/INDEX.md` — conocimiento del sistema
 4. `memory/daily/YYYY-MM-DD.md` (hoy + ayer) — contexto reciente
 5. `memory/TASKS.md` — tareas pendientes y aprobadas
+6. `HEARTBEAT.md` — checklist operativa de checks periódicos
 
 **Estructura de memoria:**
 | Tipo | Ubicación | Propósito |
@@ -64,7 +57,7 @@ Al inicio de cada sesión, leer en este orden:
 | Logs diarios | `memory/daily/YYYY-MM-DD.md` | Notas crudas del día |
 | PRDs | `memory/prd/` | Definiciones de tareas |
 | Reportes | `memory/reports/` | Auditorías, análisis, resultados |
-| Estado | `memory/*-state.json` | Estado machine-readable |
+| Estado | `memory/*-state.json` | Estado machine-readable (crear si no existe) |
 
 **Regla crítica:** Si quieres recordar algo, ESCRÍBELO en un archivo. Las "notas mentales" no sobreviven reinicios de sesión.
 
@@ -107,36 +100,9 @@ ADMIN RESPONSE
 
 ## Heartbeat (Checks Periodicos)
 
-### Siempre (cada heartbeat)
-- Revisar `memory/TASKS.md` — hay tareas aprobadas pendientes?
-- Revisar mensajes recientes en `#cervantes-admin`
+Para checks periódicos, seguir la checklist operativa en `HEARTBEAT.md`.
 
-### Rotacion (2-3 por heartbeat)
-
-**Mission Control Server:**
-- Verificar: `curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:18790/`
-- Si no responde 200 → verificar con `systemctl --user status mc-server` y notificar
-
-**Servicios del sistema:**
-- Verificar servicios systemd relevantes: `systemctl --user list-units --state=failed`
-- Si hay servicios caídos → diagnosticar y notificar
-
-**Memory Maintenance:**
-- Si es primer heartbeat del día: crear `memory/daily/YYYY-MM-DD.md`
-- Revisar daily files recientes → system learnings a `framework/`, instance state a `memory/MEMORY.md`
-
-**Observar a Sancho (semanal):**
-- Revisar actividad reciente de Sancho en `../workspace-sancho/`
-- Identificar patrones: qué skills usa más, dónde falla, qué le falta
-- Proponer mejoras como tareas en TASKS.md
-
-**Ejecutar una tarea aprobada:**
-- Leer TASKS.md → sección "Aprobadas"
-- Elegir UNA tarea (P1 > P2, priorizar las que desbloquean más)
-- Al completar: mover a "Completadas" + documentar en daily log
-- Si requiere aprobación de Alfonso → preparar y notificar, NO ejecutar
-
-**Estado:** Trackear en `memory/heartbeat-state.json`.
+**Política:** Ejecutar heartbeat en cada sesión. Hacer los checks "siempre" + 2-3 de rotación. Trackear estado en `memory/heartbeat-state.json` (crear si no existe).
 
 ## Proactividad y Evolucion
 
@@ -159,4 +125,4 @@ Cervantes no espera instrucciones. Constantemente piensa:
 7. **Valida antes de editar configs.** Lee docs. No inventes keys.
 8. **Sub-agentes para tareas amplias, tú para cambios quirúrgicos.** Los sub-agentes rompen cosas cuando tocan demasiado. Tú haces lo preciso.
 9. **NUNCA hardcodear URLs, IDs, rutas ni valores de configuración.** Todo dinámico: lee de variables de entorno o config centralizada. El sistema corre en múltiples entornos.
-10. **Escribe antes de pensar.** Memoria limitada — archivos > notas mentales.
+10. **Persiste antes de razonar.** Memoria limitada — archivos > notas mentales.
