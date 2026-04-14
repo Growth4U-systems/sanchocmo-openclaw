@@ -52,7 +52,7 @@
       "WebSearch",
       "Bash(openclaw --help)",
       "Bash(openclaw gateway:*)",
-      "Bash(grep -r \"~/.openclaw\\\\|/root/.openclaw\\\\|$HOME/.openclaw\" /home/nahuel/Software/G4U/sanchocmo-openclaw --include=*.json --include=*.yaml --include=*.yml)",
+      "Bash(grep -r \"~/.openclaw\\\\|/root/.openclaw\\\\|$HOME/.openclaw\" /home/nahuel/Software/G4U/sanchocmo-openclaw --include=*.json --include=*.yaml --include=*.yml)"
     ]
   }
 }

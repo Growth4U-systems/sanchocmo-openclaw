@@ -14,7 +14,10 @@ Deploy SanchoCMO to a VPS using Docker Compose and nginx.
 | Domain | A record pointing to VPS IP |
 | GitHub SSH key | On the VPS, for Cervantes backups |
 | Discord | Bot token + client ID + Message Content Intent enabled |
-| Anthropic | API key |
+| Discord (Cervantes) | Separate bot token for Cervantes Claude Code Channel + webhook URL for #cervantes-admin |
+| Anthropic | API key (for Sancho/Escudero/Rocinante via OpenClaw) |
+| Claude Code | OAuth token via `claude setup-token` (for Cervantes membership) |
+| Bun | Required for Claude Code Discord Channel plugin |
 
 > **No Hetzner volume?** Set `SNAPSHOT_DATA_DIR=/path/to/your/storage` in `.env` to store snapshots elsewhere.
 
@@ -99,12 +102,18 @@ nano .env
 Required values:
 
 ```env
+# OpenClaw (Sancho, Escudero, Rocinante)
 ANTHROPIC_API_KEY=sk-ant-...
 DISCORD_BOT_TOKEN=your_discord_bot_token
 DISCORD_BOT_CLIENT_ID=your_discord_bot_client_id
-CERVANTES_GUILD_ID=your_infra_guild_id
 BASE_URL=https://your-domain.com
+
+# Cervantes (Claude Code — runs outside Docker)
+CLAUDE_CODE_OAUTH_TOKEN=your_oauth_token_from_claude_setup_token
+DISCORD_WEBHOOK_CERVANTES=https://discord.com/api/webhooks/XXXX/YYYY
 ```
+
+> **Note:** `CERVANTES_GUILD_ID` is no longer needed — Cervantes no longer runs in OpenClaw.
 
 **`config/instance.json`** — copy from example and set Discord IDs:
 
@@ -126,7 +135,9 @@ nano config/clients.json
 docker compose up -d
 ```
 
-First launch builds the Docker image (~2-3 minutes), generates `openclaw.json`, registers agents (sancho, cervantes, escudero, rocinante), and auto-detects Discord guilds.
+First launch builds the Docker image (~2-3 minutes), generates `openclaw.json`, registers agents (sancho, escudero, rocinante), and auto-detects Discord guilds.
+
+> **Cervantes** does NOT run inside Docker. See step 8 below.
 
 ### 7. Verify
 
@@ -144,9 +155,9 @@ docker logs sanchocmo --tail 50 -f
 docker exec sanchocmo openclaw status
 ```
 
-### 8. Approve your Discord user
+### 8. Approve your Discord user (OpenClaw bot)
 
-The first time you message the bot, it will ask you to approve your device. Run the command it shows you:
+The first time you message the OpenClaw bot, it will ask you to approve your device. Run the command it shows you:
 
 ```bash
 docker exec sanchocmo openclaw pairing approve discord <PAIRING_CODE>
@@ -154,14 +165,80 @@ docker exec sanchocmo openclaw pairing approve discord <PAIRING_CODE>
 
 After approval, the bot will respond to your messages in all configured guilds.
 
+### 9. Set up Cervantes (Claude Code — outside Docker)
+
+Cervantes runs as a separate process on the VPS host, powered by Claude Code with a membership (not API key).
+
+```bash
+# Install Claude Code CLI
+npm install -g @anthropic-ai/claude-code
+
+# Install Bun (for Discord Channel plugin)
+curl -fsSL https://bun.sh/install | bash
+source ~/.bashrc
+
+# Generate OAuth token (on a machine with a browser):
+claude setup-token
+# Copy the token and add it to .env:
+# CLAUDE_CODE_OAUTH_TOKEN=<token>
+
+# Create Discord webhook for #cervantes-admin:
+# Discord → Cervantes Brain guild → #cervantes-admin → Integrations → Webhooks → New
+# Copy URL and add to .env:
+# DISCORD_WEBHOOK_CERVANTES=<webhook-url>
+
+# Run the setup script
+bash docker/setup-cervantes-cc.sh
+```
+
+This installs:
+- **systemd service** (`cervantes-claude-code`) — Claude Code with Discord Channel, auto-restart
+- **System crontab** — operational scripts (healthcheck, backup, snapshot, regenerate, cost-tracker)
+- **Logrotate** — log rotation for cron output
+
+After setup:
+
+```bash
+# Start the service
+systemctl start cervantes-claude-code
+systemctl enable cervantes-claude-code
+
+# Watch logs for Discord bot pairing instructions
+journalctl -u cervantes-claude-code -f
+```
+
+**Discord Channel pairing:**
+
+1. Create a separate Discord bot for Cervantes (Discord Developer Portal → New Application)
+2. Enable **Message Content Intent** in Bot settings
+3. Invite it to the Cervantes Brain guild
+4. Start Claude Code service, then in the logs:
+   - Configure: `/discord:configure <cervantes-bot-token>`
+   - DM the bot in Discord → get pairing code
+   - Pair: `/discord:access pair <code>`
+   - Lock down: `/discord:access policy allowlist`
+
+### 10. Verify Cervantes
+
+```bash
+# Check service status
+systemctl status cervantes-claude-code
+
+# Check crontab is installed
+crontab -l
+
+# Send a test message in #cervantes-admin on Discord
+# Cervantes should respond
+```
+
 ---
 
 ## What happens on first startup
 
 The entrypoint automatically:
 
-1. **Generates `openclaw.json`** — detects Discord guilds via API, binds client guilds to sancho and infra guild to cervantes. Also registers the `mc-chat` plugin (Mission Control webchat) and creates the `mc-chat → sancho` binding.
-2. **Registers agents** — sancho (Opus), cervantes (Opus), escudero (Sonnet), rocinante (Opus)
+1. **Generates `openclaw.json`** — detects Discord guilds via API, binds client guilds to sancho. Also registers the `mc-chat` plugin (Mission Control webchat) and creates the `mc-chat → sancho` binding.
+2. **Registers agents** — sancho (Opus), escudero (Sonnet), rocinante (Opus)
 3. **Injects env vars** — replaces `{MC_BASE_URL}`, `{CERVANTES_GUILD_ID}`, etc. in SOUL.md and protocol files
 4. **Installs dependencies** — `npm install` for MC server (ws module)
 5. **Generates dashboard** — runs `regenerate.py` for Mission Control HTML/JS
@@ -212,10 +289,10 @@ Two backup mechanisms run automatically:
 docker exec sanchocmo bash workspace-sancho/scripts/backup.sh
 ```
 
-**Data snapshots** (every 3h) — `snapshot-data.sh` creates tarballs of private data (brand, memory, config, SQLite) on the Hetzner volume:
+**Data snapshots** (every 3h) — `snapshot-data.sh` creates tarballs of private data (brand, memory, config, SQLite) on the Hetzner volume. Runs via system crontab (not inside Docker):
 
 ```bash
-docker exec sanchocmo bash workspace-cervantes/scripts/snapshot-data.sh
+bash ~/.openclaw/workspace-cervantes/scripts/snapshot-data.sh
 ```
 
 Snapshots are stored at `/mnt/data/snapshots/` (last 24 retained, ~3 days). To restore from a snapshot:
@@ -243,10 +320,26 @@ certbot renew
 
 ### Monitoring
 
-A healthcheck runs every 6 hours via cron. To run it manually:
+A healthcheck runs every 6 hours via system crontab. To run it manually:
 
 ```bash
-docker exec sanchocmo bash workspace-cervantes/scripts/healthcheck.sh
+bash ~/.openclaw/workspace-cervantes/scripts/healthcheck.sh
+```
+
+### Cervantes service
+
+```bash
+# View Cervantes logs
+journalctl -u cervantes-claude-code -f
+
+# Restart Cervantes
+systemctl restart cervantes-claude-code
+
+# Stop Cervantes
+systemctl stop cervantes-claude-code
+
+# Check cron job logs
+tail -f /var/log/cervantes-*.log
 ```
 
 ---
@@ -255,12 +348,17 @@ docker exec sanchocmo bash workspace-cervantes/scripts/healthcheck.sh
 
 ```
 Internet → nginx (:443, SSL) → Docker container
-                                  ├── OpenClaw Gateway (:18789)
+                                  ├── OpenClaw Gateway (:18789)  ← Sancho, Escudero, Rocinante
                                   └── MC Server (:18790)
 
-Persistent data: ~/.openclaw/        (bind-mounted into container)
+Discord → Claude Code (Cervantes)     ← runs on host, NOT in Docker
+            ├── Channel plugin (Discord)
+            └── CWD: ~/.openclaw/workspace-cervantes/
+
+Persistent data: ~/.openclaw/        (bind-mounted into container + accessed by Cervantes)
 SSH keys:        ~/.ssh/              (bind-mounted read-only for git push)
 Data snapshots:  /mnt/data/snapshots/ (Hetzner volume, every 3h)
+Cervantes logs:  /var/log/cervantes-* (logrotated weekly)
 ```
 
 **Auto-configuration flow:**
@@ -291,3 +389,7 @@ openclaw gateway run (reads config, connects to Discord)
 | Can't push to GitHub from container | `docker exec sanchocmo ssh -T git@github.com` — verify SSH key is mounted |
 | Port already in use | `ss -tlnp \| grep <port>` to find the conflicting process |
 | Need to reconfigure agents/guilds | `rm ~/.openclaw/.setup-complete && docker compose restart` |
+| Cervantes not responding in Discord | `systemctl status cervantes-claude-code` — check if running |
+| Cervantes OAuth token expired | Generate new token: `claude setup-token` on machine with browser, update `.env` |
+| Cron jobs not running | `crontab -l` — verify crontab is installed. Re-run `bash docker/setup-cervantes-cc.sh` |
+| Smart crons fail (claude -p) | Check `CLAUDE_CODE_OAUTH_TOKEN` in `.env` and rate limits |
