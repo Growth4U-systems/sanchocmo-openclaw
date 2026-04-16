@@ -4,6 +4,11 @@ import path from "path";
 import { compose, withErrorHandler, withAuth } from "@/lib/api-middleware";
 import { BASE } from "@/lib/data/paths";
 import { loadIdeas, saveIdeas } from "@/lib/data/ideas";
+import {
+  applyTaskAnchors,
+  TaskAnchorError,
+  type TaskCreateInput,
+} from "@/lib/data/task-create-helpers";
 
 function resolveProjectDir(projectsDir: string, projectId: string): string | null {
   if (!projectId) return null;
@@ -44,8 +49,11 @@ function createNewProject(projectsDir: string, name: string): string {
 
 /**
  * POST /api/projects/create-batch — Create batch task from ideas.
- * Body: { slug, projectId, name, batchType?, ideaIds }
+ * Body: { slug, projectId, name, batchType?, ideaIds, skill, deliverable_file }
  * projectId can be "__NEW__" to create a new project on the fly (uses task name as project name).
+ *
+ * REQUIRED anchors: `skill` and `deliverable_file` — enforced via
+ * `applyTaskAnchors`. See src/lib/data/task-create-helpers.ts for rationale.
  */
 async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "POST") {
@@ -53,7 +61,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     return res.status(405).json({ error: `Method ${req.method} not allowed` });
   }
 
-  let { slug, projectId, name, batchType, ideaIds } = req.body;
+  let { slug, projectId, name, batchType, ideaIds, skill, deliverable_file } = req.body;
   if (!slug || !projectId || !name || !ideaIds || !ideaIds.length) {
     return res.status(400).json({ error: "Missing slug, projectId, name, or ideaIds" });
   }
@@ -85,8 +93,9 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   }, 0);
   const taskId = `${projectId}-T${String(maxNum + 1).padStart(2, "0")}`;
 
-  // Create the batch task
-  const batchTask = {
+  // Create the batch task. Every task must be born with the 3 anchors:
+  // skill + deliverable_file + mc_chat_thread_id. See task-create-helpers.ts.
+  const batchTask: TaskCreateInput = {
     id: taskId,
     name,
     description: `Batch con ${ideaIds.length} ideas`,
@@ -96,8 +105,18 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     status: "todo",
     channel: batchType === "outreach" ? "prospecting" : "content",
     owner: "Sancho",
+    skill,
+    deliverable_file,
   };
-  tasks.push(batchTask);
+  try {
+    applyTaskAnchors(slug, batchTask);
+  } catch (err) {
+    if (err instanceof TaskAnchorError) {
+      return res.status(400).json({ error: err.message, missing: err.missing });
+    }
+    throw err;
+  }
+  tasks.push(batchTask as Record<string, unknown>);
   fs.writeFileSync(tasksFilePath, JSON.stringify(tasks, null, 2));
 
   // Update ideas: set status to 'assigned' and link batch_id

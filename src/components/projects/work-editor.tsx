@@ -11,7 +11,7 @@ import {
 } from "@/hooks/useProjects";
 
 import { PRJ_CHANNELS } from "@/lib/constants";
-import type { Project, Task } from "@/types";
+import type { Project, Task, TaskStatus } from "@/types";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -123,13 +123,20 @@ export function WorkEditor({
       setDeliverable(t.deliverable || "");
       setDoneCriteria(t.done_criteria || "");
       setChannel(t.channel || "");
-      // Normalize status
+      // Normalize status — map legacy aliases to canonical TaskStatus.
+      // Canonical set (hardcoded 2026-04-15): todo | in-progress |
+      // completed | blocked | cancelled.
+      const raw = (t.status as string) || "";
       const normSt =
-        t.status === "done"
+        raw === "done" || raw === "approved" || raw === "complete"
           ? "completed"
-          : t.status === "cancelled"
-          ? "discarded"
-          : t.status;
+          : raw === "in_progress" || raw === "running" || raw === "active"
+          ? "in-progress"
+          : raw === "discarded"
+          ? "cancelled"
+          : raw === "pending" || raw === "ready" || raw === "not-started" || raw === ""
+          ? "todo"
+          : (raw as TaskStatus);
       setTaskStatus(normSt || "todo");
       setOwner(t.owner || "Sancho");
       setSkill(t.skill || "");

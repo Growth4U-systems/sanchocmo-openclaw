@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { withErrorHandler } from "@/lib/api-middleware";
-import { addMessage, getGatewayUrl, getChatSecret } from "@/lib/data/mc-chat";
+import { addMessage, getGatewayUrl, getChatSecret, type ChatAttachment } from "@/lib/data/mc-chat";
 
 /**
  * POST /api/chat/send (was /api/mc-chat/send)
@@ -21,6 +21,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     skills,
     threadState,
     docPath,
+    attachments,
   } = req.body;
 
   if (!slug || !text) {
@@ -28,9 +29,11 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   }
 
   const tid = threadId || `${slug}:general`;
+  const parsedAttachments: ChatAttachment[] | undefined =
+    Array.isArray(attachments) && attachments.length > 0 ? attachments : undefined;
 
   // Store user message locally
-  addMessage(tid, "user", text);
+  addMessage(tid, "user", text, undefined, parsedAttachments);
 
   const isAdmin = true; // TODO: check auth context in Phase 2
   const senderRole = isAdmin ? "admin" : "client";
@@ -49,6 +52,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     skills: skills || undefined,
     threadState: threadState || undefined,
     docPath: docPath || undefined,
+    attachments: parsedAttachments,
     isAdmin,
     senderRole,
   };

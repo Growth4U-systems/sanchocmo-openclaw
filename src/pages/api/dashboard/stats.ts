@@ -86,7 +86,10 @@ function getClientStats(slug: string) {
   const activeProjects = projectData.filter((p) => p.project.status === "active").length;
   let pendingTasks = 0;
   for (const p of projectData) {
-    pendingTasks += p.tasks.filter((t) => t.status !== "done").length;
+    // Pending = anything that is not completed. Uses the canonical
+    // TaskStatus set (todo / in-progress / blocked / cancelled all count
+    // as pending for dashboard stats purposes — only "completed" is done).
+    pendingTasks += p.tasks.filter((t) => t.status !== "completed").length;
   }
 
   // Ideas

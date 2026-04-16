@@ -23,6 +23,7 @@ const FF_PILLAR_MAP: Record<string, string> = {
 
 const SECTION_DEFS = [
   { key: "company-brief", icon: "\uD83D\uDCCB", label: "Company Brief" },
+  { key: "site-audit", icon: "\uD83D\uDD0D", label: "Site Audit" },
   { key: "market-and-us", icon: "\uD83D\uDCCA", label: "Market & Us" },
   { key: "go-to-market", icon: "\uD83C\uDFAF", label: "Go-To-Market" },
   { key: "brand-book", icon: "\uD83C\uDFA8", label: "Brand Book" },

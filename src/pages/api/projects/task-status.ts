@@ -2,87 +2,107 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import fs from "fs";
 import path from "path";
 import { compose, withErrorHandler, withAuth } from "@/lib/api-middleware";
-import { BASE, foundationStateFile } from "@/lib/data/paths";
-import { safeWriteJSON } from "@/lib/data/json-io";
+import { setTaskStatus } from "@/lib/data/pillar-task-sync";
+import { BASE } from "@/lib/data/paths";
+import { VALID_TASK_STATUSES } from "@/types";
 
-/** Find project directory that starts with projectId prefix (e.g. "P01-" or exact match) */
-function resolveProjectDir(projectsDir: string, projectId: string): string | null {
-  if (!projectId) return null;
+/**
+ * POST /api/projects/task-status
+ *
+ * Update task status in tasks.json. If the task has a `pillar` field, the
+ * matching pillar in foundation-state.json is also updated.
+ *
+ * Strict vocabulary (2026-04-15): the `status` body param must be one of
+ * the canonical `VALID_TASK_STATUSES` — or one of the accepted aliases
+ * that the helper normalizes to them. Ambiguous values like "ready" are
+ * explicitly rejected at the API layer with a 400 so callers get a clear
+ * error instead of a silent drift to a weird status.
+ *
+ * Both writes go through the centralized `setTaskStatus` helper in
+ * `lib/data/pillar-task-sync.ts`.
+ *
+ * Body: { slug, taskId, status, sourceThread? }
+ */
+
+/** Aliases accepted by the API → normalized by the helper. */
+const ACCEPTED_ALIASES: Record<string, string> = {
+  done: "completed",
+  complete: "completed",
+  approved: "completed",
+  finished: "completed",
+  in_progress: "in-progress",
+  inprogress: "in-progress",
+  running: "in-progress",
+  active: "in-progress",
+  wip: "in-progress",
+  pending: "todo",
+  "not-started": "todo",
+  not_started: "todo",
+  new: "todo",
+  discarded: "cancelled",
+};
+
+/** Values that are explicitly REJECTED as ambiguous. */
+const REJECTED_STATUSES: Record<string, string> = {
+  ready:
+    "'ready' is ambiguous — use 'todo' if not started, or 'completed' if done.",
+};
+
+/**
+ * Look up `deliverable_file` for a task by scanning project tasks.json files.
+ * Returns string | string[] | null. Best-effort — if the task isn't found,
+ * returns null and the caller should surface the error.
+ */
+function readTaskDeliverableFile(
+  slug: string,
+  taskId: string
+): string | string[] | null {
+  const projectsDir = path.join(BASE, "brand", slug, "projects");
+  let dirs: fs.Dirent[];
   try {
-    const dirs = fs.readdirSync(projectsDir, { withFileTypes: true });
-    const match = dirs.find((d) => d.isDirectory() && d.name.startsWith(projectId + "-"));
-    if (match) return path.join(projectsDir, match.name);
-    const exact = dirs.find((d) => d.isDirectory() && d.name === projectId);
-    if (exact) return path.join(projectsDir, exact.name);
-  } catch {}
+    dirs = fs.readdirSync(projectsDir, { withFileTypes: true });
+  } catch {
+    return null;
+  }
+  const projectIdGuess = taskId.split("-").slice(0, 1).join("-");
+  const ordered = [
+    ...dirs.filter((d) => d.isDirectory() && d.name.startsWith(projectIdGuess + "-")),
+    ...dirs.filter((d) => d.isDirectory() && !d.name.startsWith(projectIdGuess + "-")),
+  ];
+  for (const d of ordered) {
+    const tasksPath = path.join(projectsDir, d.name, "tasks.json");
+    try {
+      const data = JSON.parse(fs.readFileSync(tasksPath, "utf-8"));
+      const tasks = Array.isArray(data) ? data : data.tasks || [];
+      const task = tasks.find((t: Record<string, unknown>) => t.id === taskId);
+      if (task) {
+        return (task.deliverable_file as string | string[] | undefined) ?? null;
+      }
+    } catch {
+      continue;
+    }
+  }
   return null;
 }
 
-const TASK_TO_PILLAR: Record<string, string> = {
-  completed: "approved",
-  done: "approved",
-  "in-progress": "in-progress",
-  todo: "not-started",
-};
-
-/** Sync foundation-state.json pillar status when a foundation task changes */
-function syncTaskToPillar(slug: string, task: Record<string, unknown>, newStatus: string): void {
-  if (!task.pillar) return;
-  const pillarStatus = TASK_TO_PILLAR[newStatus];
-  if (!pillarStatus) return;
-  try {
-    const stateFile = foundationStateFile(slug);
-    if (!fs.existsSync(stateFile)) return;
-    const state = JSON.parse(fs.readFileSync(stateFile, "utf-8"));
-    const sections = state.sections || {};
-    let changed = false;
-
-    // Case 1: task has section + pillar -- update specific pillar
-    if (task.section && sections[task.section as string]) {
-      const pillars = sections[task.section as string].pillars || {};
-      if (pillars[task.pillar as string] && pillars[task.pillar as string].status !== pillarStatus) {
-        console.log(
-          `[syncTaskToPillar] ${slug}: ${task.section}/${task.pillar} ${pillars[task.pillar as string].status} -> ${pillarStatus}`
-        );
-        pillars[task.pillar as string].status = pillarStatus;
-        pillars[task.pillar as string].updated_at = new Date().toISOString();
-        if (pillarStatus === "approved") pillars[task.pillar as string].approved_at = new Date().toISOString();
-        changed = true;
-      }
-    }
-
-    // Case 2: pillar name matches a section -- update all pillars in that section
-    if (sections[task.pillar as string]) {
-      const secPillars = sections[task.pillar as string].pillars || {};
-      for (const [pName, pInfo] of Object.entries(secPillars)) {
-        const info = pInfo as Record<string, unknown>;
-        if (info.status !== pillarStatus) {
-          console.log(
-            `[syncTaskToPillar] ${slug}: ${task.pillar}/${pName} ${info.status} -> ${pillarStatus}`
-          );
-          info.status = pillarStatus;
-          info.updated_at = new Date().toISOString();
-          if (pillarStatus === "approved") info.approved_at = new Date().toISOString();
-          changed = true;
-        }
-      }
-    }
-
-    if (changed) {
-      safeWriteJSON(stateFile, state, (d: unknown) => {
-        const obj = d as Record<string, unknown>;
-        return !!obj.sections;
-      });
-    }
-  } catch (e) {
-    console.error("[syncTaskToPillar] error:", (e as Error).message);
+/**
+ * Check that every path in `deliverable_file` exists on disk. Returns the
+ * list of missing paths (empty if all exist).
+ */
+function checkDeliverableFilesExist(
+  df: string | string[] | null
+): { missing: string[]; checked: string[] } {
+  const paths = Array.isArray(df) ? df : df ? [df] : [];
+  const missing: string[] = [];
+  for (const p of paths) {
+    if (!p || p.trim() === "") continue;
+    const rel = p.replace(/^\/+/, "");
+    const abs = rel.startsWith(BASE) ? rel : path.join(BASE, rel);
+    if (!fs.existsSync(abs)) missing.push(rel);
   }
+  return { missing, checked: paths };
 }
 
-/**
- * POST /api/projects/task-status — Update task status in tasks.json.
- * Body: { slug, taskId, status, sourceThread? }
- */
 async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "POST") {
     res.setHeader("Allow", "POST");
@@ -99,52 +119,74 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     return res.status(403).json({ error: "Forbidden" });
   }
 
-  const projectsDir = path.join(BASE, "brand", slug, "projects");
-  const projectId = taskId.split("-").slice(0, 1).join("-"); // P01 from P01-T01
-  const projDir = resolveProjectDir(projectsDir, projectId);
-  if (!projDir) {
-    return res.status(404).json({ error: "Project not found: " + projectId });
+  // Vocabulary validation
+  const lowered = String(status).toLowerCase();
+  if (REJECTED_STATUSES[lowered]) {
+    return res.status(400).json({
+      error: `Status '${status}' rejected: ${REJECTED_STATUSES[lowered]}`,
+      valid: VALID_TASK_STATUSES,
+    });
+  }
+  const canonical =
+    (VALID_TASK_STATUSES as readonly string[]).includes(lowered)
+      ? lowered
+      : ACCEPTED_ALIASES[lowered];
+  if (!canonical) {
+    return res.status(400).json({
+      error: `Status '${status}' is not a valid task status.`,
+      valid: VALID_TASK_STATUSES,
+      accepted_aliases: Object.keys(ACCEPTED_ALIASES),
+    });
   }
 
-  const tasksFilePath = path.join(projDir, "tasks.json");
-  let tasksData: unknown;
-  try {
-    tasksData = JSON.parse(fs.readFileSync(tasksFilePath, "utf-8"));
-  } catch {
-    return res.status(404).json({ error: "tasks.json not found" });
-  }
-
-  const tasks: Record<string, unknown>[] = Array.isArray(tasksData)
-    ? tasksData
-    : ((tasksData as Record<string, unknown>).tasks as Record<string, unknown>[]) || [];
-  const task = tasks.find((t) => t.id === taskId);
-  if (!task) {
-    return res.status(404).json({ error: "Task not found: " + taskId });
-  }
-
-  const oldStatus = task.status;
-  task.status = status;
-  if (status === "completed" || status === "done") {
-    task.completed = new Date().toISOString().slice(0, 10);
-  }
-
-  // Write back
-  const writeData = Array.isArray(tasksData)
-    ? tasks
-    : { ...(tasksData as Record<string, unknown>), tasks };
-  fs.writeFileSync(tasksFilePath, JSON.stringify(writeData, null, 2));
-
-  // Sync foundation pillar if status changed
-  if (oldStatus !== status) {
-    syncTaskToPillar(slug, task, status);
-    if ((task.type === "foundation" || task.batch_type === "foundation") && !task.pillar) {
-      console.warn(
-        `[syncTaskToPillar] Task ${taskId} is type=foundation but has no pillar field -- foundation-state.json will NOT be updated`
-      );
+  // Execution-time gate (2026-04-15): cannot transition to `completed`
+  // unless the task (a) has `deliverable_file` populated AND (b) the file(s)
+  // actually exist on disk. If the skill produced a different/additional
+  // file, use `task-update` with `fields: { status, deliverable_file }` to
+  // set both in one call. This endpoint is status-only.
+  if (canonical === "completed") {
+    const df = readTaskDeliverableFile(slug, taskId);
+    const hasDeliverable =
+      (typeof df === "string" && df.trim() !== "") ||
+      (Array.isArray(df) && df.length > 0);
+    if (!hasDeliverable) {
+      return res.status(400).json({
+        error:
+          `Cannot mark task '${taskId}' completed via task-status: the task ` +
+          `has no 'deliverable_file'. Every completed task must point at a ` +
+          `concrete file so the chat sidebar can link doc ↔ task without ` +
+          `heuristics. Use POST /api/projects/task-update with ` +
+          `fields: { status: "completed", deliverable_file: "<path>" } ` +
+          `to set the deliverable and close in one call.`,
+        missing: ["deliverable_file"],
+      });
+    }
+    const existCheck = checkDeliverableFilesExist(df);
+    if (existCheck.missing.length > 0) {
+      return res.status(400).json({
+        error:
+          `Cannot mark task '${taskId}' completed: 'deliverable_file' points ` +
+          `at ${existCheck.missing.length} file(s) that don't exist on disk. ` +
+          `The skill must produce the file before the task can be closed.`,
+        missing_files: existCheck.missing,
+      });
     }
   }
 
-  return res.status(200).json({ ok: true, taskId, oldStatus, newStatus: status });
+  const result = setTaskStatus(slug, taskId, canonical);
+
+  if (!result.ok) {
+    const code = result.error?.includes("not found") ? 404 : 500;
+    return res.status(code).json({ error: result.error || "sync failed" });
+  }
+
+  return res.status(200).json({
+    ok: true,
+    taskId,
+    oldStatus: result.oldStatus,
+    newStatus: result.newStatus,
+    pillarChanged: result.pillarChanged,
+  });
 }
 
 export default compose(withErrorHandler, withAuth)(handler);

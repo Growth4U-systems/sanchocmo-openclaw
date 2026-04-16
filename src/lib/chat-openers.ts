@@ -3,6 +3,70 @@
 // Each opener configures a thread with the correct context
 // (skill, linkedTo, docPath) and opens the chat sidebar.
 //
+// ============================================================
+// CONVERGENCE INVARIANT (added 2026-04-14 after user report)
+// ============================================================
+// Every task with a `pillar` field MUST open the SAME chat
+// thread regardless of which UI surface opened it. "Pillar" here
+// is the canonical identifier of the task's deliverable — it
+// covers BOTH:
+//
+//   - Foundation pillars (market-analysis, competitor-analysis,
+//     self-analysis, brand-voice, visual-identity, ...) which
+//     live in foundation-state.json
+//
+//   - Content Engine pillars (content-strategy, content-playbook,
+//     channel-setup-linkedin, content-calendar, activate-crons,
+//     keyword-research, ...) which live as tasks in the P-Content-
+//     Engine project's tasks.json
+//
+//   - Any future "project type" that attaches a canonical pillar
+//     name to its tasks (e.g. outreach pipeline, paid ads)
+//
+// The same conversation with Sancho persists whether you reach it
+// from any of these surfaces:
+//
+//   - Foundation page             (/foundation) — Foundation pillars only
+//   - Content Creation banner     (strategy-banner.tsx) — Content pillars only
+//   - Content Creation tabs       (StrategyDocsTab.tsx) — Content pillars only
+//   - Task detail page            (/projects/[pid]/tasks/[tid]) — any pillar
+//   - Projects list               (/projects) — any pillar
+//   - Project detail              (/projects/[pid]) — any pillar
+//   - Dashboard brand column      (brand-column.tsx) — Foundation pillars
+//   - Next-steps column           (nextsteps-column.tsx) — any pillar
+//
+// All of these share a single thread id per pillar:
+//   `${slug}:${canonical-pillar-key}`
+//
+// Foundation pillars and Content pillars DON'T collide because
+// their names are distinct (e.g. `market-analysis` only exists as
+// a Foundation pillar; `content-strategy` only exists as a Content
+// pillar). The key space is flat across project types.
+//
+// ENFORCEMENT RULE — DO NOT BREAK THIS:
+// ---------------------------------------
+// Never hand-roll a `threadId` template literal for a task with
+// a pillar. Always route through one of:
+//
+//   - `buildPillarThread(slug, pillar, docPath?, pillarCfg?)`
+//       when you only have the pillar key
+//   - `buildTaskThread(slug, taskId, taskName, projectId, opts)`
+//       when you have a full task object (delegates to
+//       buildPillarThread when `opts.pillar` is set)
+//   - `buildDocThread(slug, doc, projectId?)`
+//       when you have a content document shape (StrategyDocItem)
+//
+// If you find yourself writing `threadId: \`${slug}:...\`` in a
+// .tsx / .ts file OUTSIDE this module, STOP and add a builder
+// here instead. Hand-rolled thread ids fragment conversation
+// history by entry point and confuse the user — they think the
+// chat "reset itself" when it only forked due to a bug.
+//
+// Non-foundation entities (calendar items, ideas, crons, the
+// trust-engine tool view) may use their own namespace because
+// they don't map to a pillar — those are documented case-by-case.
+// ============================================================
+//
 // CLIENT-SAFE: This file is imported by client-side components.
 // It MUST NOT import Node.js modules (fs, path) or any file
 // that does (json-io.ts, paths.ts) — not even via dynamic
@@ -33,6 +97,103 @@ export const MC_CHAT_AGENTS: Record<string, { emoji: string; label: string; colo
   rocinante: { emoji: "🐴", label: "Rocinante", color: "#3B9EBF" },
   cervantes: { emoji: "✒️", label: "Cervantes", color: "#9B59B6" },
 };
+
+/**
+ * Find the task thread that "owns" a given doc path, if any. A task owns a
+ * doc if the path matches either its `deliverable_file` OR any entry in its
+ * `attachments[]`. Returns a ThreadConfig pointing at that task's thread
+ * (via buildTaskThread), or `null` if no task claims the doc.
+ *
+ * This is the convergence guarantee (2026-04-15): every document attached
+ * to a task shares ONE thread — the task's thread — no matter where the
+ * user opens it from (doc viewer, sidebar, links). New threads should
+ * never be created for docs that are already attached to a task.
+ *
+ * Caller passes `projectsData` from the `useProjects` hook (shape
+ * `{ project: Project, tasks: Task[] }[]`). If called from a surface that
+ * doesn't have projectsData yet (loading), returns null and the caller
+ * should fall back to its previous behavior.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function findTaskThreadForDoc(
+  slug: string,
+  docPath: string,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  projectsData: any[] | undefined
+): ThreadConfig | null {
+  if (!docPath || !projectsData || projectsData.length === 0) return null;
+
+  // Normalize the input path. We compare both the brand-relative form
+  // (`brand/{slug}/...`) and the slug-relative form (`...`) because
+  // different surfaces use different conventions.
+  const normalized = docPath.replace(/^\/+/, "");
+  const stripBrand = normalized.startsWith(`brand/${slug}/`)
+    ? normalized.slice(`brand/${slug}/`.length)
+    : normalized;
+  const withBrand = normalized.startsWith("brand/")
+    ? normalized
+    : `brand/${slug}/${normalized}`;
+
+  const matches = (candidate: unknown): boolean => {
+    if (!candidate) return false;
+    if (typeof candidate === "string") {
+      const c = candidate.replace(/^\/+/, "");
+      return c === normalized || c === stripBrand || c === withBrand;
+    }
+    if (Array.isArray(candidate)) {
+      return candidate.some((x) => matches(x));
+    }
+    return false;
+  };
+
+  for (const pw of projectsData) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const project = (pw as any).project || pw;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const tasks = (pw as any).tasks as any[] | undefined;
+    if (!Array.isArray(tasks)) continue;
+
+    for (const task of tasks) {
+      // Check deliverable_file
+      if (matches(task.deliverable_file)) {
+        return buildTaskThread(
+          slug,
+          task.id,
+          task.name || task.id,
+          project.id || "",
+          {
+            taskSkill: task.skill,
+            taskChannel: task.channel,
+            taskStatus: task.status,
+            taskType: task.type,
+            pillar: task.pillar,
+          }
+        );
+      }
+      // Check attachments[]
+      if (Array.isArray(task.attachments)) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const hit = task.attachments.some((a: any) => matches(a?.path));
+        if (hit) {
+          return buildTaskThread(
+            slug,
+            task.id,
+            task.name || task.id,
+            project.id || "",
+            {
+              taskSkill: task.skill,
+              taskChannel: task.channel,
+              taskStatus: task.status,
+              taskType: task.type,
+              pillar: task.pillar,
+            }
+          );
+        }
+      }
+    }
+  }
+  return null;
+}
 
 /** Thread icon by type prefix */
 export function threadIcon(shortId: string): string {
@@ -146,6 +307,94 @@ export function buildRecurringThread(
 const PILLAR_CANONICAL_FALLBACK: Record<string, string> = {
   "company-brief": "fast-foundation",
 };
+
+/**
+ * Build thread config for a "content document" — the shape rendered by
+ * `components/content/strategy-docs.tsx` and similar surfaces. This is a
+ * thin wrapper that picks the right underlying builder based on whether
+ * the doc is linked to a foundation pillar.
+ *
+ * Convergence guarantee: docs that share a pillar open the SAME thread,
+ * regardless of which doc row the user clicked. This avoids the bug
+ * reported on 2026-04-14 where clicking a doc in Content Creation opened
+ * a different thread than clicking the same pillar from /projects.
+ *
+ * Callers should prefer this over hand-rolling a thread config. If the
+ * doc has no pillar (rare — legacy strategy docs), the function falls
+ * back to a `${slug}:content:${docKey}` thread so the caller still gets
+ * something usable.
+ */
+export function buildDocThread(
+  slug: string,
+  doc: {
+    id?: string;
+    name?: string;
+    key?: string;
+    pillar?: string | null;
+    skill?: string | null;
+    channel?: string | null;
+    type?: string | null;
+    status?: string;
+    docPath?: string | null;
+    deliverable?: string | null;
+  },
+  projectId?: string
+): ThreadConfig {
+  const docKey = doc.key || doc.pillar || doc.id || doc.name || "doc";
+
+  // Preferred path: the doc is linked to a foundation pillar → use the
+  // canonical pillar thread so every surface that references this pillar
+  // shares history with this one.
+  if (doc.pillar) {
+    const config = buildTaskThread(
+      slug,
+      doc.id || docKey,
+      doc.name || docKey,
+      projectId || "",
+      {
+        taskSkill: doc.skill ?? undefined,
+        taskChannel: doc.channel ?? undefined,
+        taskStatus: doc.status,
+        taskType: doc.type ?? undefined,
+        pillar: doc.pillar,
+      }
+    );
+    // Attach the doc path if we have one AND the doc isn't pending (pending
+    // tasks don't have a file on disk yet → would 404).
+    const isPending =
+      doc.status === "pending" ||
+      doc.status === "not-started" ||
+      doc.status === "todo";
+    if (!isPending) {
+      const rawDocPath = doc.docPath || doc.deliverable;
+      if (rawDocPath) {
+        const normalized = rawDocPath.startsWith("brand/")
+          ? rawDocPath
+          : `brand/${slug}/${rawDocPath}`;
+        config.docPath = normalized;
+      }
+    }
+    return config;
+  }
+
+  // Fallback: no pillar. This is the legacy strategy-doc shape that lives
+  // outside Foundation. Use a content-namespaced thread id so at least
+  // it's distinct from pillar threads.
+  const rawDocPath = doc.docPath || doc.deliverable;
+  return {
+    threadId: `${slug}:content:${docKey}`,
+    threadName: (doc.name || docKey).replace(/-/g, " "),
+    skill: "sancho",
+    skills: ["sancho"],
+    linkedTo: `content-creation/${docKey}`,
+    docPath: rawDocPath
+      ? rawDocPath.startsWith("brand/")
+        ? rawDocPath
+        : `brand/${slug}/${rawDocPath}`
+      : null,
+    threadState: "continue",
+  };
+}
 
 /** Build thread config for a foundation pillar */
 export function buildPillarThread(

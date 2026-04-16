@@ -132,4 +132,38 @@ Se podría integrar la vista de orders/historial de pagos ahí en vez de en `/da
 - `drizzle-kit` (dev) — Migrations
 - `@polar-sh/sdk` — Pagos
 - `@aws-sdk/client-s3` — Upload R2
+
+---
+
+## Sancho-side: migración a `update-pillar-status.py` helper — ✅ HECHO (2026-04-14)
+
+**Contexto:** Bug #4 (2026-04-13) — drift entre `foundation-state.json` y `<project>/tasks.json` porque Sancho escribía `status: "done"` direct al JSON pero el endpoint MC rechazaba ese valor.
+
+**Lo aplicado en MC** (ya está en main):
+- Helper centralizado `src/lib/data/pillar-task-sync.ts` (`setPillarStatus`, `setTaskStatus`, `reconcilePillarTasks`) con atomic dual-write y status alias normalization.
+- `POST /api/foundation/pillar-status` ahora acepta `done` / `completed` / `approved` (todos aliases del mismo canonical).
+- `GET /api/foundation/state?slug=X` corre `reconcilePillarTasks(slug)` automáticamente antes de devolver — self-healing on read.
+- Rollup automático de section.status (de pillars) y project.status (de tasks).
+
+**Lo aplicado en Sancho-side**:
+- Helper Python `~/.openclaw/workspace-sancho/scripts/update-pillar-status.py` que:
+  1. Escribe atomically a `foundation-state.json` (.tmp + rename).
+  2. Marca `updated_at` y `approved_at` cuando el status es done/completed/approved.
+  3. Dispara `GET /api/foundation/state?slug={slug}` en MC para activar reconcile inmediato.
+  4. Si MC no está corriendo, el write directo sigue ocurriendo y MC reconciliará en el próximo fetch (no se pierde nada).
+- `~/.openclaw/workspace-sancho/skills/foundation-orchestrator/SKILL.md` actualizado para usar el helper en lugar de write directo cuando actualice pillar status.
+
+**Skills aún por migrar (opcional, no urgente)**:
+- Cualquier otra skill que escriba `foundation-state.json[sections.*.pillars.*.status]` directamente debería usar el helper. La búsqueda inicial encontró 5 archivos relevantes (foundation-orchestrator, strategic-plan, foundation-threads, sancho-manager, gtm-orchestrator) — solo foundation-orchestrator está migrada hoy.
+- **No es bloqueante** porque el reconcile-on-read en MC cubre cualquier escritura directa que Sancho siga haciendo. Migrar el resto es nice-to-have para que el sync sea instantáneo (no ON-load del UI).
+
+**Cómo invocar el helper desde un skill SKILL.md:**
+```bash
+python3 scripts/update-pillar-status.py \
+  --slug {slug} \
+  --section {section} \
+  --pillar {pillar} \
+  --status done \
+  [--comment "..."]
+```
 - `formidable`, `@types/formidable` — Multipart parsing

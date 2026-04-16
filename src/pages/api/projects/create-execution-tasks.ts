@@ -5,6 +5,11 @@ import { compose, withErrorHandler, withAuth } from "@/lib/api-middleware";
 import { BASE } from "@/lib/data/paths";
 import { readJSON, writeJSON } from "@/lib/data/json-io";
 import { loadIdeas, saveIdeas } from "@/lib/data/ideas";
+import {
+  applyTaskAnchors,
+  TaskAnchorError,
+  type TaskCreateInput,
+} from "@/lib/data/task-create-helpers";
 
 /**
  * POST /api/projects/create-execution-tasks — Auto-generate execution tasks with ideas.
@@ -15,10 +20,11 @@ import { loadIdeas, saveIdeas } from "@/lib/data/ideas";
  *   projectId,
  *   sourceTaskId,       // T01 that generated these
  *   tasks: [{
- *     name,             // Specific title: "Contactar influencers fitness en España"
- *     type,             // "content" | "outreach"
- *     skill?,           // "seo-content" | "outreach-sequence-builder"
- *     channel?,         // "web" | "linkedin" | etc.
+ *     name,              // Specific title: "Contactar influencers fitness en España"
+ *     type,              // "content" | "outreach"
+ *     skill?,            // "seo-content" | "outreach-sequence-builder" (auto-defaulted)
+ *     deliverable_file,  // REQUIRED — concrete output path. Enforced via applyTaskAnchors.
+ *     channel?,          // "web" | "linkedin" | etc.
  *     ideas: [{
  *       title,
  *       description?,
@@ -109,7 +115,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       });
     }
 
-    const task = {
+    const task: TaskCreateInput = {
       id: taskId,
       name: def.name || `Tarea ${taskCounter}`,
       description: def.description || "",
@@ -121,7 +127,19 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       idea_ids: ideaIds,
       source_task: sourceTaskId || null,
       created_at: now,
+      deliverable_file: def.deliverable_file,
     };
+    try {
+      applyTaskAnchors(slug, task);
+    } catch (err) {
+      if (err instanceof TaskAnchorError) {
+        return res.status(400).json({
+          error: `Task definition #${taskCounter - maxNum} invalid: ${err.message}`,
+          missing: err.missing,
+        });
+      }
+      throw err;
+    }
     existingTasks.push(task);
     createdTasks.push(task);
   }

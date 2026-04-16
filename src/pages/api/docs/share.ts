@@ -1,0 +1,71 @@
+/**
+ * POST /api/docs/share — Create a public share link for a document.
+ *
+ * Body: { slug, docPath }
+ * Returns: { ok, token, url, path }
+ *
+ * The returned URL is unauthenticated and can be shared with third parties.
+ * Validation:
+ *   - User must be authenticated (withAuth) AND have access to `slug`
+ *   - `docPath` must live under `brand/{slug}/` (no cross-brand leakage)
+ *   - File must exist on disk
+ */
+
+import type { NextApiRequest, NextApiResponse } from "next";
+import fs from "fs";
+import path from "path";
+import { compose, withErrorHandler, withAuth } from "@/lib/api-middleware";
+import { BASE } from "@/lib/data/paths";
+import { signShareToken, buildShareUrl } from "@/lib/share-tokens";
+
+async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== "POST") {
+    res.setHeader("Allow", "POST");
+    return res.status(405).json({ error: `Method ${req.method} not allowed` });
+  }
+
+  const { slug, docPath } = req.body;
+  if (!slug || !docPath) {
+    return res.status(400).json({ error: "Missing slug or docPath" });
+  }
+
+  if (req.ctx?.clientSlug && req.ctx.clientSlug !== slug) {
+    return res.status(403).json({ error: "Forbidden" });
+  }
+
+  // Normalize: accept both `brand/{slug}/...` and `...` (strip leading slashes)
+  let normalized = String(docPath).replace(/^\/+/, "");
+  if (!normalized.startsWith(`brand/${slug}/`)) {
+    if (normalized.startsWith("brand/")) {
+      // Different brand → reject
+      return res.status(400).json({ error: "docPath belongs to a different brand" });
+    }
+    normalized = `brand/${slug}/${normalized}`;
+  }
+  if (normalized.includes("..")) {
+    return res.status(400).json({ error: "Path traversal not allowed" });
+  }
+
+  // File must exist on disk so the share link doesn't 404 immediately
+  const absPath = path.join(BASE, normalized);
+  if (!fs.existsSync(absPath)) {
+    return res.status(404).json({
+      error: `File does not exist on disk: ${normalized}`,
+    });
+  }
+
+  const token = signShareToken({ slug, docPath: normalized });
+  // Prefer explicit env config over request headers — behind a reverse
+  // proxy (Tailscale, Cloudflare, ngrok) the Host header can be wrong.
+  // buildShareUrl handles the fallback chain MC_PUBLIC_URL → NEXTAUTH_URL.
+  const url = buildShareUrl(token);
+
+  return res.status(200).json({
+    ok: true,
+    token,
+    url,
+    path: normalized,
+  });
+}
+
+export default compose(withErrorHandler, withAuth)(handler);

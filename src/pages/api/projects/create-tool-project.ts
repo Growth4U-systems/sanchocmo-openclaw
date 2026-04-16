@@ -3,6 +3,13 @@ import fs from "fs";
 import path from "path";
 import { compose, withErrorHandler, withAuth } from "@/lib/api-middleware";
 import { BASE } from "@/lib/data/paths";
+import {
+  applyTaskAnchors,
+  applyProjectAnchors,
+  TaskAnchorError,
+  type TaskCreateInput,
+  type ProjectCreateInput,
+} from "@/lib/data/task-create-helpers";
 
 /**
  * POST /api/projects/create-tool-project — Create a project with a research tool.
@@ -73,7 +80,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
   const now = new Date().toISOString();
 
-  const project = {
+  const project: ProjectCreateInput = {
     id: projId,
     slug: dirName,
     name,
@@ -83,25 +90,39 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     category: "research",
     created_at: now,
   };
+  applyProjectAnchors(slug, project);
   fs.writeFileSync(path.join(projDir, "project.json"), JSON.stringify(project, null, 2));
 
-  // Create T01 research task
+  // Create T01 research task. Deliverable defaults to the tool's canonical
+  // report location inside the project dir so the sidebar can link directly
+  // from task → report without retro-active heuristics.
   const taskName = strategyConfig?.taskName
     ? `${strategyConfig.taskName} — ${name.replace(/^Trust Engine\s*[—-]\s*/i, "").replace(/^Atalaya\s*[—-]\s*/i, "")}`
     : `Research — ${name}`;
 
-  const task = {
+  const deliverableFile = `brand/${slug}/projects/${dirName}/${tool}-report.md`;
+
+  const task: TaskCreateInput = {
     id: `${projId}-T01`,
     name: taskName,
     description: `Ejecutar ${tool} para el proyecto "${name}"`,
     type: strategyConfig?.taskType || "research",
     skill: tool,
+    deliverable_file: deliverableFile,
     status: "todo",
     owner: "Sancho",
     channel: "intelligence",
     documents: [],
     created_at: now,
   };
+  try {
+    applyTaskAnchors(slug, task);
+  } catch (err) {
+    if (err instanceof TaskAnchorError) {
+      return res.status(400).json({ error: err.message, missing: err.missing });
+    }
+    throw err;
+  }
   fs.writeFileSync(path.join(projDir, "tasks.json"), JSON.stringify([task], null, 2));
 
   return res.status(200).json({

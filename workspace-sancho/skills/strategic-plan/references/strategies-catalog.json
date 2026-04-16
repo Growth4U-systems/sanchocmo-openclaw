@@ -1083,6 +1083,54 @@
         "ICP no busca en Google",
         "Sin capacidad de contenido"
       ]
+    },
+    {
+      "id": "26",
+      "name": "Content Engine (Estrategia + Playbook + Calendario + Crons)",
+      "quadrant": "1toN-organic",
+      "objetivo": "Sistema completo de contenido: estrategia definida, playbook operativo, calendario BOFU-first, generacion recurrente de ideas",
+      "prerequisitos": "Foundation completa (ECPs, positioning, brand-voice). Metricool para metricas sociales.",
+      "tiempoResultado": "1-2 semanas setup completo → ejecucion continua",
+      "b2b": "core",
+      "b2c": "core",
+      "sectores": [
+        "Cualquiera con estrategia de contenido — universal"
+      ],
+      "velocidad": "medio",
+      "objetivos": [
+        "awareness",
+        "lead-gen",
+        "autoridad"
+      ],
+      "skills": [
+        "content-strategy",
+        "content-playbook",
+        "channel-setup",
+        "keyword-research",
+        "content-calendar",
+        "idea-generation",
+        "seo-content",
+        "content-atomizer"
+      ],
+      "workflow": {
+        "objetivo": "Construir la maquina de contenido completa para un nicho: desde las 14 decisiones estrategicas hasta el calendario editorial con crons automaticos de ideas.",
+        "ideacion": "**Paso 1: Content Strategy (14 decisiones)**\nAnaliza Foundation (ECPs, positioning, competencia) y toma 14 decisiones: Content Tilt (donde eres la unica voz creible), Villano (enemigo comun de la audiencia), Trigger Events (que activa la compra), Beachhead, Playground Model (conceptual/estrategico/tactico vs TOFU/MOFU/BOFU), BOFU-first (que contenido bottom-funnel crear primero), Growth Loops, Growth Matrix 2x2, Zero-Click strategy, Canal Primario, Founder-Led decision, tangencialidad a otros nichos.\nBasado en: Pulizzi (Content Tilt), Verna (Loops + Villain), Bourgoin (Triggers), Voje (Beachhead), Faus (Playground), Walling (BOFU-first), Rachitsky (Growth Matrix), Natividad (Zero-Click).",
+        "creacion": "**Paso 2: Content Playbook (8-15 archivos)**\nGenera el cerebro operativo: pillars.md (3-5 pilares), writing-guide.md, hooks.md (28+ formulas en 8 categorias), repurpose-chain.md (orden de produccion por plataforma), platform-tone.md, audience-segments.md, y playbooks por plataforma (linkedin.md con Phase A/B, carousel specs, lead magnet formats; instagram.md, etc.).\n\n**Paso 3: Channel Setup**\nProfile CRO por plataforma: LinkedIn (headline formula, About section, Featured, Banner, Newsletter), Instagram (bio, highlights, link in bio), etc.\n\n**Paso 4: Keyword Research**\nKeywords guiados por pilares de contenido, BOFU-first ordering.\n\n**Paso 5: Content Calendar**\nCalendario editorial 4 semanas con BOFU-first, repurpose chain integrada, ideas aprobadas incorporadas.",
+        "ejecucion": "**Paso 6: Activar Crons**\n- Idea Generation (2x/semana): noticias sector, SERP gaps, PAA, trending\n- Atalaya (semanal): influencers + competencia via Apify\n- Performance Analysis (semanal): Metricool + actualizacion hooks.md\n- Calendar Refresh (semanal): regenera calendario con ideas + learnings",
+        "medicion": "| Metrica | Target |\n|---------|--------|\n| Documentos estrategicos | 8-15 archivos aprobados |\n| Pilares definidos | 3-5 |\n| Hook formulas | 28+ |\n| Ideas generadas/semana | 5-10 |\n| Calendario planificado | 4 semanas |\n| Canales configurados | 2-3 |\n| Crons activos | 4 |"
+      },
+      "cuandoUsar": [
+        "No hay estrategia de contenido definida",
+        "Publicando contenido sin sistema",
+        "Foundation completa pero sin content engine",
+        "Multiples canales sin playbook",
+        "Quiero automatizar la generacion de ideas"
+      ],
+      "cuandoNoUsar": [
+        "Foundation incompleta (falta ECPs o positioning)",
+        "Solo un canal sin ambicion de escalar",
+        "Ya tiene content engine operativo"
+      ]
     }
   ],
   "byObjective": {
@@ -1097,7 +1145,8 @@
       "17",
       "20",
       "21",
-      "23"
+      "23",
+      "26"
     ],
     "lead-gen": [
       "01",
@@ -1114,7 +1163,8 @@
       "18",
       "19",
       "21",
-      "23"
+      "23",
+      "26"
     ],
     "conversion": [
       "01",
@@ -1139,7 +1189,8 @@
       "17",
       "19",
       "20",
-      "23"
+      "23",
+      "26"
     ],
     "retencion": [
       "09",
@@ -1179,7 +1230,8 @@
       "07",
       "11",
       "19",
-      "21"
+      "21",
+      "26"
     ],
     "lento": [
       "06",

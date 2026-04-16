@@ -51,6 +51,31 @@
         }
       }
     },
+    "site-audit": {
+      "status": "approved",
+      "layer": 0,
+      "output_dir": "brand/growth4u/site-audit/",
+      "pillars": {
+        "seo-audit": {
+          "status": "approved",
+          "output_file": "brand/growth4u/trust-engine/seo-audit.json",
+          "skill": "trust-engine",
+          "requires": [],
+          "enriches_with": ["strategic-plan"],
+          "completed_at": "2026-04-07T18:00:00Z",
+          "approved_at": "2026-04-07T18:00:00Z"
+        },
+        "own-media-audit": {
+          "status": "approved",
+          "output_file": "brand/growth4u/trust-engine/own-media-audit.json",
+          "skill": "trust-engine",
+          "requires": [],
+          "enriches_with": ["strategic-plan"],
+          "completed_at": "2026-04-07T18:00:00Z",
+          "approved_at": "2026-04-07T18:00:00Z"
+        }
+      }
+    },
     "market-and-us": {
       "status": "approved",
       "layer": 1,

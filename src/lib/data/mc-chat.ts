@@ -45,9 +45,17 @@ export function getChatSecret(): string | undefined {
   return process.env.MC_CHAT_SECRET;
 }
 
+// Attachment type for chat messages
+export interface ChatAttachment {
+  url: string;
+  filename: string;
+  mimeType: string;
+  size: number;
+}
+
 // Thread persistence (disk-based, same as legacy)
 interface ThreadData {
-  messages: { role: string; text: string; ts: number; agent?: string }[];
+  messages: { role: string; text: string; ts: number; agent?: string; attachments?: ChatAttachment[] }[];
   discordThreadId?: string;
   discordChannelId?: string;
   updatedAt?: number;
@@ -72,9 +80,9 @@ export function saveThread(threadId: string, data: ThreadData) {
   writeJSON(threadFile(threadId), data);
 }
 
-export function addMessage(threadId: string, role: string, text: string, agent?: string) {
+export function addMessage(threadId: string, role: string, text: string, agent?: string, attachments?: ChatAttachment[]) {
   const thread = getThread(threadId);
-  thread.messages.push({ role, text, ts: Date.now(), agent });
+  thread.messages.push({ role, text, ts: Date.now(), agent, attachments: attachments?.length ? attachments : undefined });
   // Cap messages at 200
   if (thread.messages.length > 200) {
     thread.messages = thread.messages.slice(-200);

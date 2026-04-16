@@ -1,17 +1,16 @@
 import { useState, useMemo, useCallback } from "react";
 import { useRouter } from "next/router";
-import Link from "next/link";
 import Head from "next/head";
 import { useTranslations } from "next-intl";
 import { useQuery } from "@tanstack/react-query";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { useSlugSync } from "@/hooks/useSlugSync";
 import { useProjects } from "@/hooks/useProjects";
-import { Timeline, type TimelinePhase } from "@/components/shared/timeline";
 import { EmptyState } from "@/components/shared/empty-state";
+import { DocSlideOver } from "@/components/shared/doc-slideover";
+import { useFoundation } from "@/hooks/useFoundation";
 import { useOpenChat, useSendMessage } from "@/hooks/useChat";
 import { useChatStore } from "@/stores/chat";
-import { buildTrustEngineModuleThread } from "@/lib/chat-openers";
 import { cn } from "@/lib/utils";
 
 function EmbedWrapper({ children }: { children: React.ReactNode }) {
@@ -41,34 +40,17 @@ interface TEPhaseDef {
 const TE_PHASES: TEPhaseDef[] = [
   {
     num: 1,
-    title: "Configuraci\u00f3n",
-    desc: "Elegir el nicho a analizar y cargar datos del cliente",
+    title: "An\u00e1lisis",
+    desc: "Analizar presencia en IA y buscadores, identificar brechas",
     modules: [
-      { id: "foundation-import", name: "Choose Niche", icon: "\uD83C\uDFAF", cmd: "trust-engine init", skill: "trust-engine", file: "config.json" },
-    ],
-  },
-  {
-    num: 2,
-    title: "Auditor\u00eda",
-    desc: "Analizar SEO, medios propios y presencia en IA",
-    modules: [
-      { id: "seo-audit", name: "SEO Audit", icon: "\uD83D\uDD0D", cmd: "trust-engine seo-audit", skill: "trust-engine", file: "seo-audit.json" },
-      { id: "own-media-audit", name: "Own Media", icon: "\uD83C\uDF10", cmd: "trust-engine own-media", skill: "trust-engine", file: "own-media-audit.json" },
       { id: "geo-analysis", name: "GEO Analysis", icon: "\uD83E\uDD16", cmd: "trust-engine geo", skill: "trust-engine", file: "geo-analysis.json" },
       { id: "serp-analysis", name: "SERP Analysis", icon: "\uD83D\uDCCA", cmd: "trust-engine serp", skill: "trust-engine", file: "serp-analysis.json" },
-    ],
-  },
-  {
-    num: 3,
-    title: "An\u00e1lisis",
-    desc: "Identificar brechas y generar recomendaciones",
-    modules: [
       { id: "gap-analysis", name: "Gap Analysis", icon: "\uD83D\uDD17", cmd: "trust-engine gaps", skill: "trust-engine", file: "gap-analysis.json" },
       { id: "recommendations", name: "Recommendations", icon: "\u2705", cmd: "trust-engine recs", skill: "trust-engine", file: "recommendations.json" },
     ],
   },
   {
-    num: 4,
+    num: 2,
     title: "Acci\u00f3n",
     desc: "Generar activos ejecutables: keywords e influencers",
     modules: [
@@ -99,6 +81,67 @@ interface TERunState {
 // Component
 // ============================================================
 
+// ============================================================
+// Trust Engine intro content (shared between empty state and active view)
+// ============================================================
+
+function TrustEngineIntro({ defaultOpen = false }: { defaultOpen?: boolean }) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <div className="bg-white dark:bg-card border border-border rounded-xl mb-5 overflow-hidden">
+      <button
+        onClick={() => setOpen(!open)}
+        className="w-full flex items-center gap-2.5 px-4 py-3.5 text-left hover:bg-muted/20 transition-colors"
+      >
+        <span className={cn("text-[10px] text-muted-foreground transition-transform", open && "rotate-90")}>▶</span>
+        <span className="text-[13px] font-bold text-foreground">🔒 ¿Qué es el Trust Engine?</span>
+      </button>
+      {open && (
+        <div className="px-4 pb-5 pl-9 text-[13px] text-muted-foreground leading-[1.75]">
+          <p>
+            Antes de comprarte, tu cliente pasa por <strong className="text-rust font-bold">4 momentos</strong> donde necesita confiar en ti.
+            Hoy, esos puntos de contacto probablemente están vacíos — y eso mata la conversión.
+          </p>
+
+          <h4 className="text-foreground text-[13px] font-bold mt-4 mb-1.5">El Customer Journey de la confianza</h4>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 my-3">
+            {[
+              { before: "📱 Ve un post en redes sociales", after: "De alguien que le da confianza", label: "Cubierto por: Influencers" },
+              { before: "🖥️ Llega a tu landing", after: "Con incentivo y social proof", label: "Cubierto por: Own Media" },
+              { before: "📰 Lee un artículo sobre ti", after: "De un tercero independiente", label: "Cubierto por: SERP + Gap + Keywords" },
+              { before: "🔍 Te busca en Google", after: "Encuentra resultados positivos", label: "Cubierto por: SEO Audit + GEO Analysis" },
+            ].map((c) => (
+              <div key={c.label} className="bg-muted/10 border border-border/50 rounded-lg p-2.5">
+                <div className="text-[11px] text-muted-foreground mb-1">{c.before}</div>
+                <div className="text-[12px] text-rust font-semibold">→ {c.after}</div>
+                <div className="text-[10px] text-muted-foreground mt-1">{c.label}</div>
+              </div>
+            ))}
+          </div>
+
+          <p className="mb-2.5">
+            Búsquedas típicas de tu cliente:{" "}
+            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-blue-50 text-blue-700 rounded text-[11px] font-medium">&quot;opiniones de [tu marca]&quot;</span>{" "}
+            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-blue-50 text-blue-700 rounded text-[11px] font-medium">&quot;¿es seguro [tu marca]?&quot;</span>{" "}
+            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-blue-50 text-blue-700 rounded text-[11px] font-medium">&quot;alternativas a [tu marca]&quot;</span>
+          </p>
+
+          <h4 className="text-foreground text-[13px] font-bold mt-4 mb-1.5">¿Qué hace Trust Engine?</h4>
+          <ul className="list-disc ml-4 space-y-1">
+            <li><strong className="text-rust">Fase 1 — Auditoría:</strong> Analiza qué señales de confianza existen hoy (SEO, medios propios, IA, SERP)</li>
+            <li><strong className="text-rust">Fase 2 — Análisis:</strong> Detecta dónde falta cobertura de terceros y genera recomendaciones priorizadas</li>
+            <li><strong className="text-rust">Fase 3 — Acción:</strong> Genera 3 listas accionables: keywords para contenido, oportunidades en medios, e influencers/partners</li>
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ============================================================
+// Component
+// ============================================================
+
 export default function TrustEnginePage() {
   const router = useRouter();
   const isEmbed = router.query.embed === "1";
@@ -106,70 +149,95 @@ export default function TrustEnginePage() {
   const t = useTranslations("trustEngine");
   const openChat = useOpenChat();
 
-  // Find existing Trust Engine project
+  // ── Foundation: get niches (ICPs) ──
+  const { data: foundation } = useFoundation(slug);
+  const availableNiches = useMemo(() => {
+    if (!foundation?.brand_summary?.icps) return [];
+    return foundation.brand_summary.icps.map((item, i) => {
+      const name = typeof item === "string" ? item : (item as { name?: string }).name || String(item);
+      const nicheSlug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+      return { id: `icp-${i + 1}`, name, slug: nicheSlug };
+    });
+  }, [foundation]);
+
+  // ── All Trust Engine projects ──
   const { data: projectsData } = useProjects(slug);
-  const teProject = useMemo(() => {
-    if (!projectsData) return null;
-    return projectsData.find((p) => p.project.tool === "trust-engine") || null;
+  const teProjects = useMemo(() => {
+    if (!projectsData) return [];
+    return projectsData.filter((p) => p.project.tool === "trust-engine");
   }, [projectsData]);
 
-  // "Activar" state
-  const [activating, setActivating] = useState(false);
-  const [teName, setTeName] = useState("");
+  // Helper: derive niche slug from project name
+  const projectNicheSlug = useCallback((p: { name?: string }) => {
+    const name = p.name?.replace(/^Trust Engine\s*[—–-]\s*/i, "").trim() || "";
+    return name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  }, []);
 
-  const handleActivate = useCallback(async () => {
-    if (!slug || !teName.trim()) return;
+  // ── Selected niche ──
+  const [selectedNicheIdx, setSelectedNicheIdx] = useState(0);
+  const currentNiche = availableNiches[selectedNicheIdx] || null;
+  const currentNicheSlug = currentNiche?.slug;
+
+  // Find project for current niche
+  const currentNicheProject = useMemo(() => {
+    if (!currentNicheSlug || !teProjects.length) return null;
+    return teProjects.find((p) => projectNicheSlug(p.project) === currentNicheSlug) || null;
+  }, [teProjects, currentNicheSlug, projectNicheSlug]);
+
+  // ── State ──
+  const [openDocPath, setOpenDocPath] = useState<string | null>(null);
+  const [activating, setActivating] = useState(false);
+
+  // Create project for a niche
+  const handleCreateProject = useCallback(async (nicheName: string, _nicheSlug: string) => {
+    if (!slug || !nicheName) return;
     setActivating(true);
     try {
       await fetch("/api/projects/create-tool-project", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ slug, strategy: "#02", name: `Trust Engine — ${teName}` }),
+        body: JSON.stringify({ slug, strategy: "#02", name: `Trust Engine — ${nicheName}` }),
       });
       window.location.reload();
     } catch { /* empty */ } finally {
       setActivating(false);
     }
-  }, [slug, teName]);
+  }, [slug]);
 
-  // Module detail state
-  const [detailModId, setDetailModId] = useState<string | null>(null);
-  const [editingJson, setEditingJson] = useState(false);
-  const [editBuffer, setEditBuffer] = useState("");
-  const [saving, setSaving] = useState(false);
-
-  // Open module detail — just show the doc, don't send any chat message
-  const handleViewData = useCallback((modId: string) => {
-    setDetailModId(modId);
-    setEditingJson(false);
-    setEditBuffer("");
-  }, []);
+  // Open doc in slideover (per-niche path, fallback to root)
+  const handleViewDoc = useCallback((modId: string) => {
+    const mod = TE_MODULES.find((m) => m.id === modId);
+    if (!mod || !slug) return;
+    // Try niche subdir first, DocSlideOver/API will handle fallback
+    const subdir = currentNicheSlug ? `${currentNicheSlug}/` : "";
+    setOpenDocPath(`brand/${slug}/trust-engine/${subdir}${mod.file}`);
+  }, [slug, currentNicheSlug]);
 
   // Open chat — just toggle sidebar open on the trust-engine thread, never send a message
   const { sidebarOpen: chatOpen, currentThread, openSidebar: rawOpenSidebar, setCurrentSlug } = useChatStore();
   const handleOpenChat = useCallback((_modId: string) => {
     if (!slug) return;
-    const teThreadId = `${slug}:trust-engine`;
+    const teThreadId = currentNicheSlug ? `${slug}:trust-engine:${currentNicheSlug}` : `${slug}:trust-engine`;
     setCurrentSlug(slug);
-    // If the trust-engine thread is already active and sidebar open, do nothing
     if (chatOpen && currentThread === teThreadId) return;
-    // Open sidebar with trust-engine thread but NO threadState (prevents auto-prompt)
     rawOpenSidebar({
       threadId: teThreadId,
-      threadName: "Trust Engine",
+      threadName: currentNiche ? `Trust Engine — ${currentNiche.name}` : "Trust Engine",
       skill: "trust-engine",
       skills: ["trust-engine", "keyword-research", "seo-content", "outreach-sequence-builder"],
       linkedTo: "trust-engine",
       docPath: null,
       threadState: undefined,
     });
-  }, [slug, chatOpen, currentThread, rawOpenSidebar, setCurrentSlug]);
+  }, [slug, currentNicheSlug, currentNiche, chatOpen, currentThread, rawOpenSidebar, setCurrentSlug]);
 
-  // Fetch run state
+  // Fetch run state (per niche)
   const { data: runState, isLoading } = useQuery<TERunState>({
-    queryKey: ["trust-engine-state", slug],
+    queryKey: ["trust-engine-state", slug, currentNicheSlug],
     queryFn: async () => {
-      const res = await fetch(`/api/trust-engine/run-state?slug=${slug}`);
+      const params = new URLSearchParams({ slug: slug! });
+      if (currentNicheSlug) params.set("niche", currentNicheSlug);
+      const res = await fetch(`/api/trust-engine/run-state?${params}`);
       if (!res.ok) return { modules: {} };
       return res.json();
     },
@@ -177,51 +245,7 @@ export default function TrustEnginePage() {
     staleTime: 10_000,
   });
 
-  // Fetch individual module data when viewing detail
-  const { data: moduleDetail } = useQuery<Record<string, unknown>>({
-    queryKey: ["trust-engine-module", slug, detailModId],
-    queryFn: async () => {
-      if (!detailModId) return {};
-      const mod = TE_MODULES.find((m) => m.id === detailModId);
-      if (!mod) return {};
-      const res = await fetch(`/api/trust-engine/module?slug=${slug}&file=${mod.file}`);
-      if (!res.ok) return {};
-      return res.json();
-    },
-    enabled: !!slug && !!detailModId,
-    staleTime: 30_000,
-  });
-
-  // Start editing JSON
-  const handleStartEdit = useCallback(() => {
-    if (moduleDetail) {
-      setEditBuffer(JSON.stringify(moduleDetail, null, 2));
-      setEditingJson(true);
-    }
-  }, [moduleDetail]);
-
-  // Save edited JSON
-  const handleSaveJson = useCallback(async () => {
-    if (!slug || !detailModId) return;
-    const mod = TE_MODULES.find((m) => m.id === detailModId);
-    if (!mod) return;
-    setSaving(true);
-    try {
-      const parsed = JSON.parse(editBuffer);
-      const docPath = `brand/${slug}/trust-engine/${mod.file}`;
-      await fetch(`/api/docs/${docPath}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content: JSON.stringify(parsed, null, 2) }),
-      });
-      setEditingJson(false);
-      window.location.reload();
-    } catch (e) {
-      alert("JSON inválido: " + (e as Error).message);
-    } finally {
-      setSaving(false);
-    }
-  }, [slug, detailModId, editBuffer]);
+  // (Doc viewing/editing now handled by DocSlideOver)
 
   // Get effective status for a module
   const getStatus = useCallback(
@@ -246,6 +270,8 @@ export default function TrustEnginePage() {
     return c;
   }, [getStatus]);
 
+  const total = useMemo(() => Object.values(counts).reduce((a, b) => a + b, 0), [counts]);
+
   // Launch a module via chat
   // Rerun — opens chat then sends a specific message about what to re-execute
   const sendMessage = useSendMessage();
@@ -268,7 +294,7 @@ export default function TrustEnginePage() {
       };
 
       const message = rerunMessages[modId] || `Quiero volver a ejecutar el paso "${mod.name}" (Fase ${phase?.num}: ${phase?.title}). Usa \`${mod.cmd}\` para regenerar los datos.`;
-      const teThreadId = `${slug}:trust-engine`;
+      const teThreadId = currentNicheSlug ? `${slug}:trust-engine:${currentNicheSlug}` : `${slug}:trust-engine`;
 
       // 1. Open the chat sidebar on the trust-engine thread (no auto-message)
       handleOpenChat(modId);
@@ -281,51 +307,34 @@ export default function TrustEnginePage() {
     [slug, handleOpenChat, sendMessage]
   );
 
-  // Build Timeline phases
-  const timelinePhases: TimelinePhase[] = useMemo(() => {
-    return TE_PHASES.map((phase) => ({
-      number: phase.num,
-      title: phase.title,
-      description: phase.desc,
-      items: phase.modules.map((mod) => {
-        const status = getStatus(mod.id);
-        const modState = runState?.modules?.[mod.id];
-        const lastRun = modState?.last_run
-          ? new Date(modState.last_run).toLocaleDateString("es-ES", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })
-          : undefined;
 
-        const actions: { label: string; variant: "primary" | "secondary" | "navy"; onClick: () => void }[] = [];
+  // (Foundation niches and availableNiches defined above)
 
-        if (status === "completed") {
-          actions.push({ label: `\uD83D\uDC41 ${t("viewData")}`, variant: "navy", onClick: () => handleViewData(mod.id) });
-          actions.push({ label: `\uD83D\uDD04 ${t("rerun")}`, variant: "secondary", onClick: () => handleLaunch(mod.id) });
-        } else if (status === "pending") {
-          actions.push({ label: `\u25B6 ${t("launch")}`, variant: "primary", onClick: () => handleLaunch(mod.id) });
-        } else if (status === "error") {
-          actions.push({ label: `\uD83D\uDD04 ${t("retry")}`, variant: "primary", onClick: () => handleLaunch(mod.id) });
-        }
+  // Section open/close state
+  const [openSections, setOpenSections] = useState<Record<number, boolean>>(() =>
+    Object.fromEntries(TE_PHASES.map((p) => [p.num, true]))
+  );
+  const toggleSection = (num: number) => setOpenSections((s) => ({ ...s, [num]: !s[num] }));
 
-        // Always add chat button — opens thread without sending message
-        actions.push({
-          label: "\uD83D\uDCAC Chat",
-          variant: "secondary",
-          onClick: () => handleOpenChat(mod.id),
-        });
+  // Status helpers
+  const STATUS_BADGE: Record<string, string> = {
+    completed: "bg-green-100 text-green-700 border border-green-200",
+    running: "bg-yellow-50 text-yellow-700 border border-yellow-200",
+    pending: "bg-muted/50 text-muted-foreground border border-border",
+    locked: "bg-muted/50 text-muted-foreground border border-border",
+    error: "bg-red-50 text-red-700 border border-red-200",
+  };
+  const STATUS_LABEL: Record<string, string> = {
+    completed: "Completado",
+    running: "En progreso",
+    pending: "No iniciado",
+    locked: "No iniciado",
+    error: "Error",
+  };
 
-        return {
-          id: mod.id,
-          title: mod.name,
-          icon: mod.icon,
-          description: status === "running" ? "Ejecutando..." : lastRun ? `\u00DAltimo run: ${lastRun}` : undefined,
-          status,
-          meta: status === "locked"
-            ? `Necesita: ${(modState?.depends_on || []).join(", ")}`
-            : undefined,
-          actions,
-        };
-      }),
-    }));
-  }, [getStatus, runState, handleLaunch, handleViewData, handleOpenChat, t]);
+  // Niche name for display
+  const currentNicheName = currentNiche?.name || "";
+  const hasProjectForNiche = !!currentNicheProject;
 
   const content = (
     <>
@@ -337,211 +346,147 @@ export default function TrustEnginePage() {
             <title>{t("title")} — {slug} — Mission Control</title>
           </Head>
 
-          {/* Header — hidden when viewing a module (space saving) */}
-          {!detailModId && (
-            <>
-              {/* Breadcrumb back to project */}
-              {router.query.from && teProject && (
-                <div className="mb-3">
-                  <Link
-                    href={`/dashboard/${slug}/projects/${router.query.from}`}
-                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    ← Volver a {teProject.project.name}
-                  </Link>
-                </div>
-              )}
-
-              <div className="mb-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h1 className="font-heading text-2xl text-navy mb-1">{t("title")}</h1>
-                    <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
-                  </div>
-                  {teProject && !isEmbed && (
-                    <span className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#E3F2FD] text-[#1565C0] rounded-lg text-[12px] font-semibold">
-                      📋 {teProject.project.id} — {teProject.project.name}
-                    </span>
-                  )}
-                </div>
-                {!teProject && !isLoading && !isEmbed && (
-                  <div className="mt-4 bg-[#FDFCFA] border border-[#E8E2D9] rounded-[10px] p-5" style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}>
-                    <p className="text-[14px] text-[#2C3E50] font-semibold mb-2">Activar Trust Engine</p>
-                    <p className="text-[12px] text-[#7F8C8D] mb-3">
-                      Crea un proyecto de Trust Engine para analizar un nicho. Se generará la primera tarea de research.
-                    </p>
-                    <div className="flex items-center gap-3">
-                      <input
-                        type="text"
-                        placeholder="Nombre del nicho (ej: SaaS Fitness España)"
-                        value={teName}
-                        onChange={(e) => setTeName(e.target.value)}
-                        className="flex-1 px-3 py-2 border border-[#E8E2D9] rounded-lg text-sm bg-white focus:border-[#C45D35] outline-none"
-                      />
-                      <button
-                        onClick={handleActivate}
-                        disabled={activating || !teName.trim()}
-                        className="px-5 py-2 bg-[#2C3E50] text-white font-semibold rounded-lg text-sm hover:bg-[#34495E] transition-all disabled:opacity-50"
-                      >
-                        {activating ? "Creando..." : "Activar Trust Engine"}
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Summary bar */}
-              <div className="flex flex-wrap gap-2 mb-6">
-                {counts.completed > 0 && (
-                  <SummaryPill color="bg-sage" label={`${counts.completed} ${t("completed")}`} />
-                )}
-                {counts.running > 0 && (
-                  <SummaryPill color="bg-yellow-400" label={`${counts.running} ${t("running")}`} />
-                )}
-                {counts.pending > 0 && (
-                  <SummaryPill color="bg-border" label={`${counts.pending} ${t("pending")}`} />
-                )}
-                {counts.locked > 0 && (
-                  <SummaryPill color="bg-muted-foreground/30" label={`${counts.locked} ${t("locked")}`} />
-                )}
-                {counts.error > 0 && (
-                  <SummaryPill color="bg-destructive" label={`${counts.error} ${t("error")}`} />
-                )}
-              </div>
-            </>
-          )}
-
           {isLoading ? (
             <div className="flex items-center justify-center py-20">
               <p className="text-muted-foreground">Cargando Trust Engine...</p>
             </div>
-          ) : !detailModId ? (
-            /* Default view: full timeline */
-            <Timeline phases={timelinePhases} />
+          ) : availableNiches.length === 0 ? (
+            /* ── No niches in Foundation ────────────────────────── */
+            <div className="max-w-xl mx-auto py-16 px-4 text-center">
+              <div className="w-20 h-20 rounded-full bg-rust/10 flex items-center justify-center text-4xl mx-auto mb-5">🔒</div>
+              <h1 className="font-heading text-[26px] text-navy mb-2">Trust Engine</h1>
+              <p className="text-[14px] text-muted-foreground max-w-md mx-auto leading-relaxed mb-6">
+                Completa primero <strong className="text-foreground">Foundation</strong> para definir tus nichos (ECPs). Luego podrás crear proyectos de Trust Engine.
+              </p>
+              <TrustEngineIntro defaultOpen />
+            </div>
           ) : (
-            /* 2-column view: steps nav | document viewer — full height */
-            <div className="flex gap-0 -mx-8 -mt-6" style={{ height: "100vh", position: "sticky", top: 0 }}>
-              {/* Left: compact steps nav */}
-              <div className="w-[200px] shrink-0 border-r border-[#E8E2D9] bg-[#FDFCFA] overflow-y-auto py-3">
-                {TE_PHASES.map((phase) => (
-                  <div key={phase.num} className="mb-2">
-                    <div className="px-3 py-1 text-[10px] font-bold text-[#7F8C8D] uppercase tracking-wider">
-                      {phase.num}. {phase.title}
-                    </div>
-                    {phase.modules.map((mod) => {
-                      const status = getStatus(mod.id);
-                      const isActive = detailModId === mod.id;
-                      const statusDot = status === "completed" ? "bg-[#27AE60]" : status === "running" ? "bg-yellow-400" : status === "error" ? "bg-[#E74C3C]" : "bg-[#D5D0C8]";
-                      return (
-                        <button
-                          key={mod.id}
-                          onClick={() => handleViewData(mod.id)}
-                          className={cn(
-                            "w-full text-left px-3 py-2 flex items-center gap-2 text-[12px] transition-colors",
-                            isActive
-                              ? "bg-white border-r-2 border-r-[#C45D35] text-[#2C3E50] font-semibold"
-                              : "text-[#7F8C8D] hover:bg-white hover:text-[#2C3E50]"
-                          )}
-                        >
-                          <span className={cn("w-2 h-2 rounded-full shrink-0", statusDot)} />
-                          <span className="truncate">{mod.name}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                ))}
-                {/* Back to overview */}
-                <button
-                  onClick={() => setDetailModId(null)}
-                  className="w-full text-left px-3 py-2.5 mt-2 border-t border-[#E8E2D9] text-[11px] text-[#7F8C8D] hover:text-[#2C3E50] transition-colors"
-                >
-                  ← Vista general
-                </button>
+            /* ── Main view: header + niche selector + content ──── */
+            <div>
+              {/* Header */}
+              <div className="flex items-center justify-between mb-1 gap-3 flex-wrap">
+                <div className="flex items-center gap-3">
+                  <h1 className="font-heading text-2xl text-navy">🔒 Trust Engine</h1>
+                  <span className="text-sm text-rust font-bold">{slug}</span>
+                </div>
               </div>
 
-              {/* Right: document viewer */}
-              <div className="flex-1 overflow-y-auto">
-                {/* Doc header */}
-                <div className="sticky top-0 z-10 bg-white border-b border-[#E8E2D9] px-4 py-2 flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="text-base">{TE_MODULES.find((m) => m.id === detailModId)?.icon}</span>
-                    <h3 className="font-bold text-[14px] text-[#2C3E50]">
-                      {TE_MODULES.find((m) => m.id === detailModId)?.name}
-                    </h3>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    {editingJson ? (
-                      <>
-                        <button
-                          onClick={handleSaveJson}
-                          disabled={saving}
-                          className="px-3 py-1 bg-[#27AE60] text-white font-semibold rounded-lg text-[11px] hover:bg-[#229954] transition-all disabled:opacity-50"
-                        >
-                          {saving ? "..." : "✓ Guardar"}
-                        </button>
-                        <button
-                          onClick={() => setEditingJson(false)}
-                          className="px-3 py-1 border border-[#E8E2D9] rounded-lg bg-white text-[11px] font-semibold text-[#7F8C8D] hover:border-[#2C3E50] transition-all"
-                        >
-                          Cancelar
-                        </button>
-                      </>
-                    ) : (
-                      <>
-                        <button
-                          onClick={handleStartEdit}
-                          className="px-3 py-1 border border-[#E8E2D9] rounded-lg bg-white text-[11px] font-semibold text-[#7F8C8D] hover:border-[#2C3E50] hover:text-[#2C3E50] transition-all"
-                        >
-                          ✏️ Editar
-                        </button>
-                        <button
-                          onClick={() => handleLaunch(detailModId)}
-                          className="px-3 py-1 border border-[#E8E2D9] rounded-lg bg-white text-[11px] font-semibold text-[#7F8C8D] hover:border-[#2C3E50] hover:text-[#2C3E50] transition-all"
-                        >
-                          🔄 Rerun
-                        </button>
-                        <button
-                          onClick={() => handleOpenChat(detailModId)}
-                          className="px-3 py-1 bg-[#2C3E50] text-white font-semibold rounded-lg text-[11px] hover:bg-[#34495E] transition-all"
-                        >
-                          💬 Chat
-                        </button>
-                      </>
-                    )}
-                  </div>
-                </div>
-                {/* Doc content */}
-                <div className="p-5">
-                  {editingJson ? (
-                    <div className="border border-[#E8E2D9] rounded-lg overflow-hidden bg-[#1e1e1e]">
-                      <div className="flex items-center justify-between px-3 py-1.5 bg-[#2d2d2d] border-b border-[#404040]">
-                        <span className="text-[11px] text-[#858585] font-mono">{TE_MODULES.find((m) => m.id === detailModId)?.file}</span>
-                        <button
-                          onClick={() => {
-                            try { setEditBuffer(JSON.stringify(JSON.parse(editBuffer), null, 2)); } catch { /* invalid */ }
-                          }}
-                          className="text-[10px] text-[#858585] hover:text-white"
-                        >
-                          Formatear
-                        </button>
-                      </div>
-                      <textarea
-                        value={editBuffer}
-                        onChange={(e) => setEditBuffer(e.target.value)}
-                        className="w-full font-mono text-[12px] leading-[1.6] p-4 bg-[#1e1e1e] text-[#d4d4d4] resize-none focus:outline-none selection:bg-[#264f78]"
-                        style={{ height: "calc(100vh - 120px)" }}
-                        spellCheck={false}
-                      />
-                    </div>
-                  ) : moduleDetail ? (
-                    <ModuleDataView moduleId={detailModId} data={moduleDetail} />
-                  ) : (
-                    <p className="text-[#7F8C8D] text-center py-10">Cargando datos...</p>
-                  )}
-                </div>
+              {/* Niche selector bar */}
+              <div className="flex items-center gap-3 mb-5 flex-wrap">
+                <select
+                  value={selectedNicheIdx}
+                  onChange={(e) => setSelectedNicheIdx(Number(e.target.value))}
+                  className="text-[13px] font-semibold px-3 py-2 border-2 border-border rounded-lg bg-white dark:bg-card cursor-pointer"
+                >
+                  {availableNiches.map((n, i) => (
+                    <option key={n.id} value={i}>{n.name}</option>
+                  ))}
+                </select>
+                {hasProjectForNiche && (
+                  <span className="text-[10px] font-semibold text-sage bg-sage/10 border border-sage/20 px-2 py-0.5 rounded-full">
+                    Proyecto activo
+                  </span>
+                )}
               </div>
+
+              {!hasProjectForNiche ? (
+                /* ── Empty state for this niche ─────────────────── */
+                <div className="max-w-lg mx-auto py-10 text-center">
+                  <div className="w-16 h-16 rounded-full bg-rust/10 flex items-center justify-center text-3xl mx-auto mb-4">🎯</div>
+                  <h2 className="font-heading text-xl text-navy mb-2">
+                    {currentNicheName}
+                  </h2>
+                  <p className="text-[13px] text-muted-foreground mb-6 leading-relaxed max-w-md mx-auto">
+                    Este nicho aún no tiene un proyecto de Trust Engine. Crea uno para analizar la presencia y confianza en este segmento.
+                  </p>
+                  <button
+                    onClick={() => handleCreateProject(currentNicheName, currentNicheSlug || "")}
+                    disabled={activating}
+                    className={cn(
+                      "px-6 py-3 bg-rust text-white font-bold rounded-lg text-[14px] hover:bg-rust/90 transition-all shadow-sm",
+                      activating && "opacity-50 cursor-not-allowed"
+                    )}
+                  >
+                    {activating ? "Creando..." : `Crear proyecto para "${currentNicheName}"`}
+                  </button>
+
+                  <div className="mt-10 text-left">
+                    <TrustEngineIntro defaultOpen />
+                  </div>
+                </div>
+              ) : (
+                /* ── Active niche: progress + docs ─────────────── */
+                <>
+                  {/* Progress bar */}
+                  <div className="mb-5">
+                    <div className="flex justify-between text-[11px] text-muted-foreground font-semibold mb-1.5">
+                      <span>Progreso — {currentNicheName}</span>
+                      <span>{counts.completed}/{total} · {total > 0 ? Math.round((counts.completed / total) * 100) : 0}%</span>
+                    </div>
+                    <div className="h-2 bg-border rounded-full overflow-hidden">
+                      <div className="h-full rounded-full bg-sage transition-all duration-500" style={{ width: `${total > 0 ? Math.round((counts.completed / total) * 100) : 0}%` }} />
+                    </div>
+                  </div>
+
+                  {/* Intro (collapsed) */}
+                  <TrustEngineIntro />
+
+                  {/* Document sections */}
+                  {TE_PHASES.map((phase) => {
+                    const phaseCompleted = phase.modules.filter((m) => getStatus(m.id) === "completed").length;
+                    return (
+                      <div key={phase.num} className="bg-white dark:bg-card border border-border rounded-xl mb-4 overflow-hidden">
+                        <button
+                          onClick={() => toggleSection(phase.num)}
+                          className="w-full flex items-center gap-2.5 px-4 py-3.5 hover:bg-muted/20 transition-colors"
+                        >
+                          <span className={cn("text-[10px] text-muted-foreground transition-transform", openSections[phase.num] && "rotate-90")}>▶</span>
+                          <span className="text-[13px] font-bold text-foreground flex-1 text-left">{phase.title}: {currentNicheName}</span>
+                          <span className="text-[10px] text-muted-foreground bg-muted/30 px-2 py-0.5 rounded-full font-semibold">
+                            {phaseCompleted}/{phase.modules.length}
+                          </span>
+                        </button>
+
+                        {openSections[phase.num] && (
+                          <div className="border-t border-border">
+                            {phase.modules.map((mod) => {
+                              const status = getStatus(mod.id);
+                              const isDone = status === "completed";
+                              return (
+                                <div
+                                  key={mod.id}
+                                  className="flex items-center px-4 py-2.5 pl-10 gap-2.5 hover:bg-muted/10 transition-colors border-t border-border/50 first:border-t-0"
+                                >
+                                  <span className="text-[14px] shrink-0">{mod.icon}</span>
+                                  <div className="flex-1 min-w-0">
+                                    <div className="text-[12px] font-semibold text-foreground">{mod.name}</div>
+                                  </div>
+                                  <span className={cn("text-[10px] font-semibold px-2.5 py-0.5 rounded-full shrink-0", STATUS_BADGE[status] || STATUS_BADGE.pending)}>
+                                    {STATUS_LABEL[status] || "No iniciado"}
+                                  </span>
+                                  <div className="flex gap-0.5 shrink-0">
+                                    {isDone ? (
+                                      <button onClick={() => handleViewDoc(mod.id)} className="text-[14px] p-1 rounded-md opacity-40 hover:opacity-100 hover:bg-muted/30 hover:scale-110 transition-all" title="Ver documento">📄</button>
+                                    ) : (
+                                      <button onClick={() => handleLaunch(mod.id)} className="text-[14px] p-1 rounded-md opacity-60 hover:opacity-100 hover:bg-muted/30 hover:scale-110 transition-all" title="Ejecutar">▶️</button>
+                                    )}
+                                    <button onClick={() => handleOpenChat(mod.id)} className="text-[14px] p-1 rounded-md opacity-40 hover:opacity-100 hover:bg-muted/30 hover:scale-110 transition-all" title="Chat">💬</button>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </>
+              )}
             </div>
           )}
+
+          {/* DocSlideOver */}
+          {slug && <DocSlideOver slug={slug} docPath={openDocPath} onClose={() => setOpenDocPath(null)} />}
         </>
       )}
     </>
@@ -552,17 +497,8 @@ export default function TrustEnginePage() {
 }
 
 // ============================================================
-// Summary pill component
+// Summary pill component — moved to TrustEngineOverview
 // ============================================================
-
-function SummaryPill({ color, label }: { color: string; label: string }) {
-  return (
-    <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-card border border-border rounded-full text-[12px] font-medium">
-      <span className={cn("w-2 h-2 rounded-full shrink-0", color)} />
-      {label}
-    </div>
-  );
-}
 
 // ============================================================
 // Module Data Viewer — renders each module's JSON as readable cards
@@ -614,6 +550,7 @@ function ScoreBar({ score, max = 100, label }: { score: number; max?: number; la
   );
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function ModuleDataView({ moduleId, data: rawData }: { moduleId: string; data: Record<string, any> }) {
   const [showRaw, setShowRaw] = useState(false);
 

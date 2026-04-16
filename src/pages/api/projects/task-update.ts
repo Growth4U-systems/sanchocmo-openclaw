@@ -79,6 +79,7 @@ const ALLOWED_TASK_FIELDS = [
   "name",
   "description",
   "deliverable",
+  "deliverable_file",
   "done_criteria",
   "depends_on",
   "owner",
@@ -90,6 +91,8 @@ const ALLOWED_TASK_FIELDS = [
   "pillar",
   "section",
   "documents",
+  "mc_chat_thread_id",
+  "discord_thread_id",
 ];
 
 /**
@@ -139,7 +142,46 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   for (const [k, v] of Object.entries(fields as Record<string, unknown>)) {
     if (ALLOWED_TASK_FIELDS.includes(k)) task[k] = v;
   }
+
+  // Execution-time gate (2026-04-15): a task cannot be marked `completed`
+  // unless (a) `deliverable_file` is populated AND (b) the file(s) exist on
+  // disk. Every completed task must point at a concrete file so the chat
+  // sidebar and downstream surfaces can link from task → doc without
+  // heuristics. If the skill ran and produced a file, the closing call must
+  // include `deliverable_file` in `fields`.
   if (fields.status === "completed" || fields.status === "done") {
+    const df = task.deliverable_file as string | string[] | undefined;
+    const hasDeliverable =
+      (typeof df === "string" && df.trim() !== "") ||
+      (Array.isArray(df) && df.length > 0);
+    if (!hasDeliverable) {
+      return res.status(400).json({
+        error:
+          `Cannot mark task '${taskId}' completed without 'deliverable_file'. ` +
+          `Every completed task must point at a concrete file so the chat ` +
+          `sidebar can link doc ↔ task without retro-active heuristics. ` +
+          `Either include 'deliverable_file' in the update body, or fix the ` +
+          `skill that executed the task to write back the path it produced.`,
+        missing: ["deliverable_file"],
+      });
+    }
+    // Check every declared path exists on disk.
+    const paths = Array.isArray(df) ? df : [df as string];
+    const missingFiles: string[] = [];
+    for (const p of paths) {
+      if (!p || p.trim() === "") continue;
+      const rel = p.replace(/^\/+/, "");
+      const abs = rel.startsWith(BASE) ? rel : path.join(BASE, rel);
+      if (!fs.existsSync(abs)) missingFiles.push(rel);
+    }
+    if (missingFiles.length > 0) {
+      return res.status(400).json({
+        error:
+          `Cannot mark task '${taskId}' completed: 'deliverable_file' points ` +
+          `at ${missingFiles.length} file(s) that don't exist on disk.`,
+        missing_files: missingFiles,
+      });
+    }
     task.completed = new Date().toISOString().slice(0, 10);
   }
 
