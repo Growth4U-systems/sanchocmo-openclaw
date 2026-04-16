@@ -241,13 +241,27 @@ function NavLink({
 
 function ClientSelector() {
   const t = useTranslations("sidebar");
+  const router = useRouter();
   const { selectedClient, setSelectedClient } = useAppStore();
   const { data: clients } = useClients();
+
+  const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const value = e.target.value;
+    if (value === "global") {
+      setSelectedClient(null);
+      router.push("/dashboard");
+    } else {
+      setSelectedClient(value);
+      // Preserve current sub-path (e.g. /projects, /foundation) when switching clients
+      const subPath = router.asPath.replace(/^\/dashboard\/[^/]+/, "");
+      router.push(`/dashboard/${value}${subPath}`);
+    }
+  };
 
   return (
     <select
       value={selectedClient || "global"}
-      onChange={(e) => setSelectedClient(e.target.value === "global" ? null : e.target.value)}
+      onChange={handleChange}
       className="w-full px-2 py-1.5 bg-background border border-border rounded-lg text-sm focus:outline-none focus:border-rust"
     >
       <option value="global">🌐 {t("allClients")}</option>

@@ -2,6 +2,14 @@
 // Chat Openers — ported from mission-control.html
 // Each opener configures a thread with the correct context
 // (skill, linkedTo, docPath) and opens the chat sidebar.
+//
+// CLIENT-SAFE: This file is imported by client-side components.
+// It MUST NOT import Node.js modules (fs, path) or any file
+// that does (json-io.ts, paths.ts) — not even via dynamic
+// require(). Next.js statically traces require() calls and
+// bundles the dependency regardless of runtime guards.
+// Config from chat-config.json is loaded server-side via
+// /api/chat/quick-actions — NOT here.
 // ============================================================
 
 import { resolveThreadSkills, type SkillContext } from "./skill-resolver";

@@ -116,9 +116,6 @@ export function ChatSidebar() {
   // Input state
   const [input, setInput] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  // Quick-actions from chat-config.json
-  const { quickActions } = useQuickActions(slug, meta);
-  const showQuickActions = messages.length === 0 && quickActions.length > 0 && activeThreadId;
 
   // Auto-scroll on new messages
   useEffect(() => {
@@ -142,10 +139,18 @@ export function ChatSidebar() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [messages.length, activeThreadId, slug]);
 
-  // Typing indicator
+  // Typing indicator — show when polling OR when last message is from user (waiting for response)
   const lastMsg = messages[messages.length - 1];
-  const isBotThinking = isPolling && lastMsg?.role === "user";
-  const showTyping = isBotThinking || !!statusData?.text;
+  const waitingForReply = messages.length > 0 && lastMsg?.role === "user";
+  const isBotThinking = isPolling && waitingForReply;
+  const showTyping = isBotThinking || !!statusData?.text || (waitingForReply && sendMutation.isPending);
+
+  // Quick-actions from chat-config.json
+  // Show when: empty thread OR last message is from bot (user can pick an action)
+  // Hide only when: user just sent a message (sendMutation pending) or no thread
+  const { quickActions } = useQuickActions(slug, meta);
+  const lastMsgIsBot = messages.length > 0 && lastMsg?.role !== "user";
+  const showQuickActions = quickActions.length > 0 && !!activeThreadId && !sendMutation.isPending && (messages.length === 0 || lastMsgIsBot);
 
   // Handlers
   const handleSend = useCallback(() => {
@@ -331,30 +336,6 @@ export function ChatSidebar() {
           );
         })}
 
-        {/* Quick-actions for empty threads */}
-        {showQuickActions && (
-          <div className="flex flex-col items-center gap-3 py-8 px-4">
-            <span className="text-[11px] text-[#6c7086]">{t("quickActionsHint") || "Elige una acción o escribe directamente"}</span>
-            <div className="flex flex-wrap justify-center gap-2">
-              {quickActions.map((qa) => (
-                <button
-                  key={qa.label}
-                  onClick={() => {
-                    const prompt = qa.prompt
-                      .replace(/\{name\}/g, meta?.threadName ?? "")
-                      .replace(/\{deliverable\}/g, "")
-                      .replace(/\{channel\}/g, "");
-                    sendMutation.mutate({ text: prompt, threadId: activeThreadId! });
-                  }}
-                  className="px-3 py-1.5 text-[11px] font-medium rounded-full border border-rust/30 text-rust bg-rust/5 hover:bg-rust/15 transition-colors cursor-pointer"
-                >
-                  {qa.label}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
         {/* Typing indicator */}
         {showTyping && (
           <div className="flex justify-start">
@@ -371,6 +352,28 @@ export function ChatSidebar() {
 
         <div ref={messagesEndRef} />
       </div>
+
+      {/* QUICK-ACTIONS — suggested prompts above input (ChatGPT-style) */}
+      {showQuickActions && (
+        <div className="px-3 py-2 border-t border-[#313244]/50 shrink-0 flex flex-col gap-1.5 max-h-[180px] overflow-y-auto">
+          {quickActions.map((qa) => {
+            const promptText = qa.prompt
+              .replace(/\{name\}/g, meta?.threadName ?? "")
+              .replace(/\{deliverable\}/g, "")
+              .replace(/\{channel\}/g, "")
+              .trim();
+            return (
+              <button
+                key={qa.label}
+                onClick={() => sendMutation.mutate({ text: promptText, threadId: activeThreadId! })}
+                className="w-full text-left px-3 py-2 text-[12px] leading-snug rounded-lg border border-[#45475a] text-[#cdd6f4] bg-[#313244]/50 hover:bg-[#45475a] hover:border-rust/40 transition-colors cursor-pointer"
+              >
+                {promptText}
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       {/* INPUT BAR */}
       <div className="px-3 py-2 border-t border-[#313244] shrink-0">
