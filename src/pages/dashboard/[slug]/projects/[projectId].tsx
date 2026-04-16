@@ -553,7 +553,7 @@ export default function ProjectDetailPage() {
                             💬 Chat
                           </button>
                           {/* Quick status change buttons */}
-                          {!isDone(t.status) && t.status !== "in-progress" && t.status !== "in_progress" && (
+                          {!isDone(t.status) && t.status !== "in-progress" && (
                             <button
                               className="text-[10px] text-blue-600 hover:text-blue-800 transition-colors"
                               onClick={(e) => {

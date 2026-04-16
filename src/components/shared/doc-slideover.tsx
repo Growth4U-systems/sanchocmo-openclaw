@@ -1,10 +1,14 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
+import { useRouter } from "next/router";
 import dynamic from "next/dynamic";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { useFoundation } from "@/hooks/useFoundation";
+import { useProjects } from "@/hooks/useProjects";
+import { useOpenChat } from "@/hooks/useChat";
+import { findTaskThreadForDoc, buildPillarThread } from "@/lib/chat-openers";
 import { cn } from "@/lib/utils";
 
 const MarkdownEditor = dynamic(
@@ -76,6 +80,9 @@ export function DocSlideOver({ slug, docPath, onClose }: DocSlideOverProps) {
   const [error, setError] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
   const { data: foundation, refetch: refetchFoundation } = useFoundation(slug);
+  const { data: projectsData } = useProjects(slug || null);
+  const openChat = useOpenChat();
+  const router = useRouter();
   const isOpen = !!docPath;
 
   // Fetch doc content
@@ -127,8 +134,28 @@ export function DocSlideOver({ slug, docPath, onClose }: DocSlideOverProps) {
 
   function handleOpenFull() {
     onClose();
-    if (docPath) window.location.href = `/dashboard/${slug}/foundation?doc=${encodeURIComponent(docPath)}`;
-    else window.location.href = `/dashboard/${slug}/foundation`;
+    if (!docPath) {
+      router.push(`/dashboard/${slug}/foundation`);
+      return;
+    }
+    // Convergence rule (2026-04-15): before opening the full doc viewer,
+    // resolve the thread that owns this doc — if it's attached to a task,
+    // we open THAT thread (not a new pillar/content thread). Then we trigger
+    // openChat() so the chat sidebar is already populated when the user
+    // arrives at the foundation page. Finally we router.push (not
+    // window.location.href) so the navigation is client-side and instant.
+    const taskThread = findTaskThreadForDoc(slug, docPath, projectsData);
+    if (taskThread) {
+      openChat(slug, taskThread);
+    } else {
+      // Fallback: derive a pillar thread for the doc. linkedKey is the
+      // pillar slug we computed from the docPath.
+      if (linkedKey) {
+        const config = buildPillarThread(slug, linkedKey, docPath);
+        openChat(slug, config);
+      }
+    }
+    router.push(`/dashboard/${slug}/foundation?doc=${encodeURIComponent(docPath)}`);
   }
 
   async function handleSave(newContent: string) {
@@ -142,6 +169,35 @@ export function DocSlideOver({ slug, docPath, onClose }: DocSlideOverProps) {
     // Refresh content
     setContent(newContent);
     setEditing(false);
+  }
+
+  // ── Public share link ────────────────────────────────────────────────
+  // Generates a stateless HMAC-signed token via /api/docs/share, then
+  // copies the resulting public URL to the clipboard. Third parties can
+  // open the URL without needing MC login.
+  const [shareCopied, setShareCopied] = useState(false);
+  async function handleCopyShareLink() {
+    if (!docPath || !slug) return;
+    try {
+      const res = await fetch("/api/docs/share", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slug, docPath }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || `HTTP ${res.status}`);
+      }
+      const data = await res.json();
+      if (!data?.url) throw new Error("No URL returned");
+      await navigator.clipboard.writeText(data.url);
+      setShareCopied(true);
+      setTimeout(() => setShareCopied(false), 2000);
+    } catch (e) {
+      // Surface a soft error in the button state so the user knows it failed.
+      console.error("Share link copy failed:", (e as Error).message);
+      setShareCopied(false);
+    }
   }
 
   const isJson = docPath?.endsWith(".json") || false;
@@ -200,6 +256,15 @@ export function DocSlideOver({ slug, docPath, onClose }: DocSlideOverProps) {
                 {editing ? "👁 Ver" : "✏️ Editar"}
               </button>
             )}
+
+            <button
+              type="button"
+              onClick={handleCopyShareLink}
+              className={btnClass}
+              title="Copia un link público para compartir con terceros"
+            >
+              {shareCopied ? "✓ Copiado" : "🔗 Compartir"}
+            </button>
 
             <button type="button" onClick={handleOpenFull} className={btnClass} title="Abrir en Documents">
               ⤢ Abrir
@@ -300,6 +365,109 @@ function MetaBadge({ label, value }: { label: string; value: string }) {
   );
 }
 
+// Smart cell renderer — detects scores, URLs, types, severity, etc.
+function SmartCell({ colKey, value }: { colKey: string; value: unknown }) {
+  if (value === null || value === undefined) return <span className="text-muted-foreground">—</span>;
+  const str = String(value);
+  const key = colKey.toLowerCase();
+
+  // Score / numeric fields with color coding
+  if ((key.includes("score") || key === "kd" || key.includes("impact") || key.includes("relevance")) && typeof value === "number") {
+    const color = value >= 70 ? "text-green-700" : value >= 40 ? "text-yellow-700" : "text-muted-foreground";
+    return <span className={cn("font-bold tabular-nums", color)}>{value}</span>;
+  }
+
+  // Volume with K formatting
+  if ((key === "vol" || key === "volume" || key.includes("search_volume") || key === "subscribers") && typeof value === "number") {
+    const fmt = value >= 1000 ? `${(value / 1000).toFixed(1)}K` : String(value);
+    return <span className="tabular-nums font-medium">{fmt}</span>;
+  }
+
+  // Percentage
+  if (key.includes("pct") || key.includes("percent") || key.includes("rate") || key.includes("visibility")) {
+    const num = typeof value === "number" ? value : parseFloat(str);
+    if (!isNaN(num)) {
+      const color = num >= 70 ? "text-green-700" : num >= 40 ? "text-yellow-700" : "text-muted-foreground";
+      return <span className={cn("font-bold tabular-nums", color)}>{num.toFixed(1)}%</span>;
+    }
+  }
+
+  // Type / category / tag fields → colored badge
+  if (key === "type" || key === "category" || key === "content_type" || key === "recommendation_type" || key === "source" || key === "platform") {
+    const tagColors: Record<string, string> = {
+      keyword: "bg-blue-50 text-blue-700 border-blue-200",
+      prompt: "bg-purple-50 text-purple-700 border-purple-200",
+      critical: "bg-red-50 text-red-700 border-red-200",
+      high: "bg-orange-50 text-orange-700 border-orange-200",
+      medium: "bg-yellow-50 text-yellow-700 border-yellow-200",
+      low: "bg-muted/50 text-muted-foreground border-border",
+      youtube: "bg-red-50 text-red-700 border-red-200",
+      instagram: "bg-pink-50 text-pink-700 border-pink-200",
+      review: "bg-green-50 text-green-700 border-green-200",
+      ranking: "bg-blue-50 text-blue-700 border-blue-200",
+      guide: "bg-purple-50 text-purple-700 border-purple-200",
+    };
+    const cls = tagColors[str.toLowerCase()] || "bg-muted/40 text-foreground border-border";
+    return <span className={cn("inline-block text-[10px] font-semibold px-2 py-0.5 rounded-full border", cls)}>{str}</span>;
+  }
+
+  // Severity
+  if (key === "severity" || key === "priority" || key === "threat_level") {
+    const sevColors: Record<string, string> = {
+      critical: "bg-red-100 text-red-800",
+      high: "bg-orange-100 text-orange-800",
+      medium: "bg-yellow-100 text-yellow-800",
+      low: "bg-muted/50 text-muted-foreground",
+    };
+    const cls = sevColors[str.toLowerCase()] || "bg-muted/40";
+    return <span className={cn("inline-block text-[10px] font-bold px-2 py-0.5 rounded-full", cls)}>{str}</span>;
+  }
+
+  // Sentiment
+  if (key === "sentiment") {
+    const cls = str === "positive" ? "text-green-700" : str === "negative" ? "text-red-700" : "text-muted-foreground";
+    return <span className={cn("font-medium", cls)}>{str}</span>;
+  }
+
+  // URL / domain — linkify
+  if (key === "url" || key === "profile_url" || key === "source_url") {
+    return <a href={str} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline truncate block max-w-[200px]">{str.replace(/^https?:\/\/(www\.)?/, "")}</a>;
+  }
+  if (key === "domain") {
+    return <span className="font-medium text-foreground">{str}</span>;
+  }
+
+  // Boolean
+  if (typeof value === "boolean") {
+    return <span>{value ? "✓" : "✗"}</span>;
+  }
+
+  // Arrays in cells
+  if (Array.isArray(value)) {
+    if (value.length === 0) return <span className="text-muted-foreground">—</span>;
+    return (
+      <div className="flex flex-wrap gap-1">
+        {value.slice(0, 5).map((v, i) => (
+          <span key={i} className="text-[10px] bg-muted/40 px-1.5 py-0.5 rounded">{String(v)}</span>
+        ))}
+        {value.length > 5 && <span className="text-[10px] text-muted-foreground">+{value.length - 5}</span>}
+      </div>
+    );
+  }
+
+  // Nested objects in cells
+  if (typeof value === "object") {
+    return <span className="text-muted-foreground text-[10px]">{JSON.stringify(value).slice(0, 80)}</span>;
+  }
+
+  // Name/title fields — bold
+  if (key === "name" || key === "title" || key === "keyword" || key === "handle" || key === "display_name") {
+    return <span className="font-semibold">{str}</span>;
+  }
+
+  return <>{str}</>;
+}
+
 function JsonSection({ label, data, depth }: { label: string; data: unknown; depth: number }) {
   const title = label.replace(/[_-]/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
@@ -310,23 +478,34 @@ function JsonSection({ label, data, depth }: { label: string; data: unknown; dep
     return (
       <div className="flex items-baseline gap-2 py-0.5">
         <span className="text-xs text-muted-foreground font-medium min-w-[120px]">{title}</span>
-        <span className="text-sm">{String(data)}</span>
+        <SmartCell colKey={label} value={data} />
       </div>
     );
   }
 
-  // Array of objects → table
+  // Array of objects → table with smart cells
   if (Array.isArray(data) && data.length > 0 && typeof data[0] === "object" && data[0] !== null) {
-    const keys = Array.from(new Set(data.flatMap((row) => Object.keys(row as Record<string, unknown>)))).slice(0, 8);
+    const allKeys = Array.from(new Set(data.flatMap((row) => Object.keys(row as Record<string, unknown>))));
+    // Prioritize name/title/keyword first, then the rest, cap at 8
+    const priorityKeys = ["name", "title", "keyword", "handle", "display_name", "domain", "url"];
+    const sorted = [
+      ...priorityKeys.filter((k) => allKeys.includes(k)),
+      ...allKeys.filter((k) => !priorityKeys.includes(k)),
+    ];
+    const keys = sorted.slice(0, 8);
+
     return (
       <div>
-        <h3 className="text-sm font-bold text-[#2C3E50] mb-2">{title}</h3>
+        <div className="flex items-baseline justify-between mb-2">
+          <h3 className="text-sm font-bold text-foreground">{title}</h3>
+          <span className="text-[10px] text-muted-foreground font-medium">{data.length} registros</span>
+        </div>
         <div className="overflow-x-auto rounded-lg border border-border">
           <table className="w-full text-xs border-collapse">
             <thead>
               <tr className="bg-muted/30">
                 {keys.map((k) => (
-                  <th key={k} className="text-left px-3 py-2 font-bold border-b border-border text-muted-foreground">
+                  <th key={k} className="text-left px-3 py-2 font-bold border-b-2 border-border text-muted-foreground text-[10px] uppercase tracking-wider whitespace-nowrap">
                     {k.replace(/[_-]/g, " ")}
                   </th>
                 ))}
@@ -336,12 +515,10 @@ function JsonSection({ label, data, depth }: { label: string; data: unknown; dep
               {data.map((row, i) => {
                 const r = row as Record<string, unknown>;
                 return (
-                  <tr key={i} className="border-b border-border last:border-0 hover:bg-muted/10">
+                  <tr key={i} className="border-b border-border/50 last:border-0 hover:bg-muted/10 transition-colors">
                     {keys.map((k) => (
-                      <td key={k} className="px-3 py-2 max-w-[250px] truncate">
-                        {typeof r[k] === "object" && r[k] !== null
-                          ? Array.isArray(r[k]) ? (r[k] as unknown[]).length + " items" : JSON.stringify(r[k]).slice(0, 60)
-                          : String(r[k] ?? "")}
+                      <td key={k} className="px-3 py-2 max-w-[250px]">
+                        <SmartCell colKey={k} value={r[k]} />
                       </td>
                     ))}
                   </tr>
@@ -350,19 +527,19 @@ function JsonSection({ label, data, depth }: { label: string; data: unknown; dep
             </tbody>
           </table>
         </div>
-        {data.length > 20 && <p className="text-[10px] text-muted-foreground mt-1">{data.length} filas totales</p>}
+        {data.length > 50 && <p className="text-[10px] text-muted-foreground mt-1">Mostrando {Math.min(data.length, 50)} de {data.length} filas</p>}
       </div>
     );
   }
 
-  // Array of primitives
+  // Array of primitives — chips
   if (Array.isArray(data)) {
     return (
       <div>
-        <h3 className="text-sm font-bold text-[#2C3E50] mb-1">{title}</h3>
-        <div className="flex flex-wrap gap-1">
+        <h3 className="text-sm font-bold text-foreground mb-1">{title}</h3>
+        <div className="flex flex-wrap gap-1.5">
           {data.map((item, i) => (
-            <span key={i} className="text-xs bg-muted/40 px-2 py-0.5 rounded">{String(item)}</span>
+            <span key={i} className="text-xs bg-muted/40 px-2 py-0.5 rounded font-medium">{String(item)}</span>
           ))}
         </div>
       </div>
@@ -371,6 +548,34 @@ function JsonSection({ label, data, depth }: { label: string; data: unknown; dep
 
   // Nested object — card
   const entries = Object.entries(data as Record<string, unknown>);
+
+  // Summary card: if object has mostly numeric values at depth 0, show as score grid
+  if (depth === 0) {
+    const numericEntries = entries.filter(([, v]) => typeof v === "number");
+    if (numericEntries.length >= 3 && numericEntries.length === entries.length) {
+      return (
+        <div>
+          <h3 className="text-sm font-bold text-foreground mb-2">{title}</h3>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            {numericEntries.map(([k, v]) => {
+              const num = v as number;
+              const color = k.includes("error") || k.includes("critical") ? "text-red-700"
+                : num >= 70 ? "text-green-700" : num >= 40 ? "text-yellow-700" : "text-blue-700";
+              return (
+                <div key={k} className="bg-muted/10 border border-border rounded-lg p-3 text-center">
+                  <div className={cn("text-xl font-extrabold tabular-nums", color)}>{num}</div>
+                  <div className="text-[10px] text-muted-foreground font-semibold mt-1 uppercase tracking-wider">
+                    {k.replace(/[_-]/g, " ")}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      );
+    }
+  }
+
   if (depth > 2) {
     return (
       <div className="py-0.5">
@@ -382,7 +587,7 @@ function JsonSection({ label, data, depth }: { label: string; data: unknown; dep
 
   return (
     <div className={depth === 0 ? "bg-background border border-border rounded-lg p-4" : "pl-3 border-l-2 border-border"}>
-      <h3 className={cn("font-bold text-[#2C3E50] mb-2", depth === 0 ? "text-sm" : "text-xs")}>{title}</h3>
+      <h3 className={cn("font-bold text-foreground mb-2", depth === 0 ? "text-sm" : "text-xs")}>{title}</h3>
       <div className="space-y-1.5">
         {entries.map(([k, v]) => (
           <JsonSection key={k} label={k} data={v} depth={depth + 1} />

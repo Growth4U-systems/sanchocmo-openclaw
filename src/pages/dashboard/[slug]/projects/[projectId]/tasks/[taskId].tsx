@@ -1,5 +1,6 @@
 import { useRouter } from "next/router";
 import React, { useMemo, useCallback, useState, useEffect, useRef } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import Head from "next/head";
 import Link from "next/link";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
@@ -8,7 +9,7 @@ import { useProjects, useUpdateTask, useUpdateTaskStatus } from "@/hooks/useProj
 import { useIdeas, useUpdateIdeaStatus, useUpdatePipelineStatus, useUpdatePipelineStep } from "@/hooks/useIdeas";
 import { useOpenChat } from "@/hooks/useChat";
 import { buildTaskThread } from "@/lib/chat-openers";
-import { resolvePillarDocPath } from "@/lib/pillar-doc-paths";
+import { resolvePillarDocPath, resolveTaskDocPaths } from "@/lib/pillar-doc-paths";
 import { PRJ_CHANNELS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import type { Idea, Task } from "@/types";
@@ -189,6 +190,40 @@ export default function TaskDetailPage() {
 
   const taskType = task ? (task.type || task.batch_type || "execution") : "execution";
 
+  // ── Lazy auto-scan: hit task-attach-scan when the page mounts so any
+  // file the skill produced (in `T{NN}/` or `tasks/{taskId}/`) gets
+  // auto-registered in `task.attachments[]` and rendered in the Documents
+  // section without requiring a manual refresh. Same pattern the chat
+  // sidebar uses. Guarded by lastScannedRef so we don't loop on re-renders.
+  const queryClient = useQueryClient();
+  const lastScannedRef = useRef<string | null>(null);
+  const runAttachScan = useCallback(async () => {
+    if (!slug || !taskId) return false;
+    try {
+      const res = await fetch("/api/projects/task-attach-scan", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slug, taskId }),
+      });
+      if (!res.ok) return false;
+      const data = await res.json();
+      if (data?.added?.length > 0) {
+        queryClient.invalidateQueries({ queryKey: ["projects", slug] });
+        return true;
+      }
+      return false;
+    } catch {
+      return false;
+    }
+  }, [slug, taskId, queryClient]);
+  useEffect(() => {
+    if (!slug || !taskId) return;
+    const key = `${slug}:${taskId}`;
+    if (lastScannedRef.current === key) return;
+    lastScannedRef.current = key;
+    runAttachScan();
+  }, [slug, taskId, runAttachScan]);
+
   // ── Foundation: resolve pillar docs from foundation-state.json ──
   const [foundationState, setFoundationState] = useState<Record<string, unknown> | null>(null);
   const [chatAutoOpened, setChatAutoOpened] = useState(false);
@@ -201,23 +236,69 @@ export default function TaskDetailPage() {
       .catch(() => {});
   }, [slug, task?.pillar]);
 
-  // For foundation tasks, derive documents from pillar output_file if task.documents is empty
+  // For tasks without an explicit documents array, derive paths from
+  // task.deliverable_file → task.output_files → pillar output_file → fallback.
+  // Centralized in resolveTaskDocPaths so all callers stay in sync.
+  //
+  // IMPORTANT: when the task is pending/not-started the deliverable file
+  // doesn't exist on disk yet (the skill hasn't run). We return null in
+  // that case so the UI falls through to the "Sin documentos" empty state
+  // instead of rendering a doc row that 404s when clicked. Same reason
+  // applies to the auto-open effect below.
+  // Task is considered "not started yet" (no deliverable generated) when
+  // its status is any of the pending-ish values. We compare as string
+  // because the data files sometimes carry "pending" or "not-started" even
+  // though those aren't in the TaskStatus union type.
+  const taskStatusStr = (task?.status ?? "") as string;
+  const taskIsPendingOrNotStarted = !!task && (
+    taskStatusStr === "pending" ||
+    taskStatusStr === "not-started" ||
+    taskStatusStr === "todo" ||
+    taskStatusStr === "ready" ||
+    taskStatusStr === ""
+  );
   const pillarDocs = useMemo(() => {
-    if (!task?.pillar || (task.documents && task.documents.length > 0)) return null;
-    const docPath = resolvePillarDocPath(task.pillar, foundationState as Parameters<typeof resolvePillarDocPath>[1]);
-    if (!docPath) return null;
-    // Strip leading "brand/{slug}/" if present (task docs are relative to brand/{slug}/)
-    const relative = docPath.replace(/^brand\/[^/]+\//, "");
-    return [{ path: relative, name: task.name, title: task.name, status: "draft", created_at: undefined }];
-  }, [task?.pillar, task?.documents, task?.name, foundationState]);
+    if (!task || (task.documents && task.documents.length > 0)) return null;
+    if (taskIsPendingOrNotStarted) return null;
+    const paths = resolveTaskDocPaths(
+      task,
+      foundationState as Parameters<typeof resolveTaskDocPaths>[1]
+    );
+    if (paths.length === 0) return null;
+    return paths.map((p) => ({
+      path: p,
+      name: task.name,
+      title: task.name,
+      status: "draft",
+      created_at: undefined,
+    }));
+  }, [task, foundationState, taskIsPendingOrNotStarted]);
 
-  // Auto-open doc + chat for foundation tasks on first load
+  // Auto-open doc + chat for foundation tasks on first load.
+  // Uses the same resolver as pillarDocs so it always opens the file the
+  // skill actually wrote (via deliverable_file when present).
   useEffect(() => {
     if (!task?.pillar || !slug || !project || chatAutoOpened) return;
-    const docPath = resolvePillarDocPath(task.pillar, foundationState as Parameters<typeof resolvePillarDocPath>[1]);
-    if (!docPath) return;
-    const relative = docPath.replace(/^brand\/[^/]+\//, "");
-    setOpenDocPath(relative);
+    // Skip auto-opening a doc that doesn't exist yet.
+    if (taskIsPendingOrNotStarted) {
+      // Still open the chat so the user can start the task, just skip the doc panel.
+      const config = buildTaskThread(slug, task.id, task.name, project.id, {
+        taskSkill: task.skill,
+        taskChannel: task.channel,
+        taskStatus: task.status,
+        taskType,
+        pillar: task.pillar,
+      });
+      openChat(slug, config);
+      setChatAutoOpened(true);
+      return;
+    }
+    const paths = resolveTaskDocPaths(
+      task,
+      foundationState as Parameters<typeof resolveTaskDocPaths>[1]
+    );
+    if (paths.length === 0) return;
+    setOpenDocPath(paths[0]);
     const config = buildTaskThread(slug, task.id, task.name, project.id, {
       taskSkill: task.skill,
       taskChannel: task.channel,
@@ -227,11 +308,24 @@ export default function TaskDetailPage() {
     });
     openChat(slug, config);
     setChatAutoOpened(true);
-  }, [task, slug, project, foundationState, chatAutoOpened, taskType, openChat]);
+  }, [task, slug, project, foundationState, chatAutoOpened, taskType, openChat, taskIsPendingOrNotStarted]);
 
   // Populate draft when entering edit mode
   useEffect(() => {
     if (editing && task) {
+      // Normalize legacy status aliases into the canonical TaskStatus
+      // set (todo | in-progress | completed | blocked | cancelled).
+      const rawStatus = task.status as string;
+      const normalizedStatus: Task["status"] =
+        rawStatus === "done" || rawStatus === "approved"
+          ? "completed"
+          : rawStatus === "in_progress"
+          ? "in-progress"
+          : rawStatus === "discarded"
+          ? "cancelled"
+          : rawStatus === "ready" || rawStatus === "pending"
+          ? "todo"
+          : (task.status as Task["status"]);
       setDraft({
         name: task.name,
         description: task.description,
@@ -239,7 +333,7 @@ export default function TaskDetailPage() {
         skill: task.skill,
         channel: task.channel,
         owner: task.owner,
-        status: task.status === "done" ? "completed" : task.status === "cancelled" ? "discarded" : task.status,
+        status: normalizedStatus,
         deliverable: task.deliverable,
         done_criteria: task.done_criteria,
       });
@@ -323,7 +417,35 @@ export default function TaskDetailPage() {
     }
   }
 
-  const docs = (task.documents && task.documents.length > 0) ? task.documents : (pillarDocs || []);
+  // Unified docs list: merge legacy `task.documents`, the resolved pillar
+  // docs (deliverable_file → output_files → pillar fallback), and the new
+  // `task.attachments[]` array (everything the thread accumulated). Dedupe
+  // by path so a file that's both a deliverable AND an attachment shows
+  // once. Order: deliverable/legacy first, attachments second.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const baseDocs: any[] = (task.documents && task.documents.length > 0)
+    ? task.documents
+    : (pillarDocs || []);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const attachmentDocs: any[] = Array.isArray(task.attachments)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ? (task.attachments as any[]).map((a) => ({
+        path: a.path,
+        name: a.label || (a.path.split("/").pop() || a.path),
+        title: a.label,
+        status: "draft",
+        created_at: a.added_at,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        _source: a.source,
+      }))
+    : [];
+  const seenPaths = new Set<string>();
+  const docs = [...baseDocs, ...attachmentDocs].filter((d) => {
+    if (!d?.path) return false;
+    if (seenPaths.has(d.path)) return false;
+    seenPaths.add(d.path);
+    return true;
+  });
 
   return (
     <DashboardLayout>
@@ -580,6 +702,17 @@ export default function TaskDetailPage() {
           <span className="text-[10px] text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
             {docs.length}
           </span>
+          <button
+            type="button"
+            onClick={() => {
+              lastScannedRef.current = null;
+              runAttachScan();
+            }}
+            title="Refresh — re-scan task dir for new files written by skills"
+            className="ml-auto text-[12px] text-[#7A7A7A] hover:text-rust transition-colors"
+          >
+            🔄
+          </button>
         </div>
         <div className="p-4">
           {docs.length === 0 ? (
@@ -630,8 +763,22 @@ export default function TaskDetailPage() {
         </div>
       </div>
 
-      {/* Document SlideOver */}
-      <DocSlideOver slug={slug} docPath={openDocPath ? `brand/${slug}/${openDocPath}` : null} onClose={() => setOpenDocPath(null)} />
+      {/* Document SlideOver — accepts both legacy (relative to brand) and
+          brand-prefixed (`brand/{slug}/...`) paths. Attachments and new
+          deliverable_file values store the full brand-relative form, while
+          legacy `task.documents` and `pillarDocs` store paths relative to
+          brand. Detect which form we have to avoid double-prefixing. */}
+      <DocSlideOver
+        slug={slug}
+        docPath={
+          openDocPath
+            ? openDocPath.startsWith("brand/")
+              ? openDocPath
+              : `brand/${slug}/${openDocPath}`
+            : null
+        }
+        onClose={() => setOpenDocPath(null)}
+      />
     </DashboardLayout>
   );
 }

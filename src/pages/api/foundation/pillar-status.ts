@@ -1,12 +1,24 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import fs from "fs";
-import path from "path";
 import { withAuth, withErrorHandler, compose } from "@/lib/api-middleware";
-import { foundationStateFile, BASE } from "@/lib/data/paths";
-import { safeWriteJSON } from "@/lib/data/json-io";
+import {
+  setPillarStatus,
+  normalizePillarStatus,
+} from "@/lib/data/pillar-task-sync";
 
+/**
+ * Statuses accepted by the API. Aliases like `done` and `completed` are
+ * normalized to `approved` inside the helper, but we still validate the
+ * incoming string against this list to reject obvious garbage.
+ *
+ * NOTE: `done` and `completed` are explicitly accepted here because Sancho
+ * writes `done` to foundation-state.json directly. Rejecting them would
+ * force Sancho back to direct file writes (which is exactly the bug we are
+ * fixing).
+ */
 const VALID_STATUSES = [
   "approved",
+  "completed",
+  "done",
   "pending-review",
   "not-started",
   "in-progress",
@@ -15,19 +27,16 @@ const VALID_STATUSES = [
   "request-refresh",
 ];
 
-const PILLAR_TO_TASK: Record<string, string> = {
-  approved: "completed",
-  "in-progress": "in-progress",
-  "not-started": "todo",
-  "pending-review": "in-progress",
-  generated: "in-progress",
-};
-
 /**
  * POST /api/foundation/pillar-status
- * Ported from mc-server.js:5889-5979
- * Updates a pillar's status in foundation-state.json,
- * syncs to P00 foundation tasks, and regenerates mc-data.js
+ *
+ * Updates a pillar's status in foundation-state.json AND propagates the
+ * change to any matching foundation tasks in tasks.json files across all
+ * projects of the slug.
+ *
+ * Both writes happen via the centralized `setPillarStatus` helper in
+ * `lib/data/pillar-task-sync.ts` — see that module for the full sync
+ * contract and rationale.
  */
 async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "POST") {
@@ -37,7 +46,9 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   const { slug, section, pillar, status, comment } = req.body;
 
   if (!slug || !section || !pillar || !status) {
-    return res.status(400).json({ error: "Missing slug, section, pillar, or status" });
+    return res
+      .status(400)
+      .json({ error: "Missing slug, section, pillar, or status" });
   }
 
   // Portal clients can only access their own slug
@@ -49,62 +60,25 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     return res.status(400).json({ error: "Invalid status: " + status });
   }
 
-  const stateFile = foundationStateFile(slug);
-  if (!fs.existsSync(stateFile)) {
-    return res.status(404).json({ error: "foundation-state.json not found" });
+  const result = setPillarStatus(slug, section, pillar, status, { comment });
+
+  if (!result.ok) {
+    // Helper failed (file not found, section/pillar missing, write error...).
+    const code = result.error?.includes("not found") ? 404 : 500;
+    return res.status(code).json({ error: result.error || "sync failed" });
   }
 
-  const state = JSON.parse(fs.readFileSync(stateFile, "utf-8"));
-  const sec = (state.sections || {})[section];
-  if (!sec) {
-    return res.status(404).json({ error: "Section not found: " + section });
-  }
-
-  const pillars = sec.pillars || sec.skills || {};
-  if (!pillars[pillar]) {
-    return res.status(404).json({ error: "Pillar not found: " + pillar });
-  }
-
-  const oldStatus = pillars[pillar].status;
-  pillars[pillar].status = status;
-  pillars[pillar].updated_at = new Date().toISOString();
-  if (comment) pillars[pillar].comment = comment;
-  if (status === "approved") pillars[pillar].approved_at = new Date().toISOString();
-
-  safeWriteJSON(stateFile, state, (d: unknown) => {
-    const s = d as { sections?: unknown };
-    return !!s.sections;
+  return res.status(200).json({
+    ok: true,
+    slug,
+    section,
+    pillar,
+    oldStatus: result.oldStatus,
+    newStatus: result.newStatus,
+    canonicalStatus: normalizePillarStatus(status),
+    pillarChanged: result.pillarChanged,
+    tasksChanged: result.tasksChanged,
   });
-
-  // Sync: update matching P00 foundation task status
-  const syncTaskStatus = PILLAR_TO_TASK[status] || "todo";
-  try {
-    const projectsDir = path.join(BASE, "brand", slug, "projects");
-    if (fs.existsSync(projectsDir)) {
-      const dirs = fs
-        .readdirSync(projectsDir, { withFileTypes: true })
-        .filter((d) => d.isDirectory() && d.name.startsWith("P00"));
-      for (const d of dirs) {
-        const tf = path.join(projectsDir, d.name, "tasks.json");
-        if (!fs.existsSync(tf)) continue;
-        const td = JSON.parse(fs.readFileSync(tf, "utf-8"));
-        const tasks = Array.isArray(td) ? td : td.tasks || [];
-        const match = tasks.find((t: { pillar?: string }) => t.pillar === pillar);
-        if (match && match.status !== syncTaskStatus) {
-          match.status = syncTaskStatus;
-          if (syncTaskStatus === "completed") {
-            match.completed = new Date().toISOString().slice(0, 10);
-          }
-          const writeData = Array.isArray(td) ? tasks : { ...td, tasks };
-          fs.writeFileSync(tf, JSON.stringify(writeData, null, 2));
-        }
-      }
-    }
-  } catch (e) {
-    console.error("[api] sync pillar→task failed:", e instanceof Error ? e.message : e);
-  }
-
-  res.status(200).json({ ok: true, slug, section, pillar, oldStatus, newStatus: status });
 }
 
 export default compose(withErrorHandler, withAuth)(handler);

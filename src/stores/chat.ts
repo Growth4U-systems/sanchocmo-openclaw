@@ -43,6 +43,14 @@ interface ChatState {
   setThreadMeta: (threadId: string, meta: ThreadMeta) => void;
   getThreadMeta: (threadId: string) => ThreadMeta | undefined;
   registerThread: (threadId: string, name: string) => void;
+  /**
+   * Select a thread from a ThreadConfig without locking the sidebar.
+   * Used by the ThreadListPanel (fullscreen browser) — unlike
+   * `openSidebar(config)`, this keeps the sidebar in free mode so the
+   * panel stays visible and the user can keep browsing. Populates
+   * threadMeta so the doc panel and skill badges render correctly.
+   */
+  selectThread: (config: ThreadConfig) => void;
 
   // Sidebar actions
   openSidebar: (config?: ThreadConfig) => void;
@@ -87,6 +95,27 @@ export const useChatStore = create<ChatState>()((set, get) => ({
         : [...state.localThreads, threadId],
       localThreadNames: { ...state.localThreadNames, [threadId]: name },
     })),
+
+  selectThread: (config) => {
+    // Free-mode thread selection — keeps the sidebar unlocked so the
+    // ThreadListPanel stays visible. Updates currentThread and
+    // threadMeta so the chat view + doc panel render correctly.
+    set({
+      currentThread: config.threadId,
+      sidebarLocked: false,
+      lockedThreadId: null,
+    });
+    get().setThreadMeta(config.threadId, {
+      skill: config.skill,
+      skills: config.skills,
+      linkedTo: config.linkedTo,
+      docPath: config.docPath,
+      threadName: config.threadName,
+      threadState: config.threadState,
+      initialMessage: config.initialMessage,
+    });
+    get().registerThread(config.threadId, config.threadName);
+  },
 
   openSidebar: (config) => {
     if (config) {

@@ -34,14 +34,54 @@ export interface ProjectRegistry {
 
 // --- Tasks ---
 
-export type TaskStatus = "todo" | "ready" | "in_progress" | "in-progress" | "done" | "completed" | "blocked" | "pending" | "discarded" | "cancelled";
+/**
+ * Task status — hardcoded canonical vocabulary (2026-04-15).
+ *
+ * Only these 5 values are valid. Sancho (and any code path writing to
+ * tasks.json) MUST use one of these — no aliases, no creative naming.
+ * Enforced at runtime by:
+ *   - `src/lib/data/pillar-task-sync.ts` → `setTaskStatus` helper
+ *   - `src/pages/api/projects/task-status.ts` → MC API
+ *   - `~/.openclaw/workspace-sancho/scripts/update-task-status.py` → CLI
+ *
+ * If someone writes `"ready"` or `"pending"` directly to tasks.json, the
+ * reconcile pass in `reconcilePillarTasks` will (when it runs) bring the
+ * task back to `todo` — because non-canonical values fall through to the
+ * default bucket.
+ */
+export type TaskStatus =
+  | "todo"
+  | "in-progress"
+  | "completed"
+  | "blocked"
+  | "cancelled";
+
+/** Runtime allowlist — mirror of the TaskStatus type for validation. */
+export const VALID_TASK_STATUSES: readonly TaskStatus[] = [
+  "todo",
+  "in-progress",
+  "completed",
+  "blocked",
+  "cancelled",
+] as const;
 export type TaskType = "content" | "outreach" | "foundation" | "research" | "analysis" | "execution" | "tool";
 
 export interface Task {
   id: string;               // "P01-T01"
   name: string;
   description: string;
-  deliverable: string;
+  deliverable: string;       // Human-readable description ("market-and-us/competitors/ con fichas...")
+  /**
+   * Concrete file path(s) that this task produces, relative to brand/{slug}/.
+   * Used by the UI to wire the "Open document" button to the actual file
+   * the skill writes (which may NOT be `current.md` — e.g. the
+   * competitor-intelligence skill writes `competitive-analysis.current.md`).
+   *
+   * If absent, the UI falls back to `output_files`, then to the foundation
+   * pillar's `output_file`, then to the static `PILLAR_DOC_PATHS` map.
+   * Single string for one file, array for multiple deliverables.
+   */
+  deliverable_file?: string | string[];
   done_criteria: string;
   depends_on: string | null;
   owner: string;            // "Sancho" | "Equipo"
@@ -55,8 +95,34 @@ export interface Task {
   completed?: string;       // ISO8601
   output_files: string[];
   documents?: { path: string; name?: string; title?: string; status?: string; created_at?: string }[];
+  /**
+   * Everything the thread accumulates: primary deliverable, skill intermediate
+   * outputs, user-uploaded files, generated images. Populated via 3 channels:
+   *   1. Discord plugin hook on inbound attachments
+   *   2. Skill execution wrapper on outbound file writes
+   *   3. Manual API call to `POST /api/projects/task-attach`
+   * See `execution-gate.md` Fase B.2 + MC CHANGELOG [2.10.6].
+   */
+  attachments?: TaskAttachment[];
   discord_thread_id?: string;
+  mc_chat_thread_id?: string;
   idea_ids?: string[];      // Linked ideas
+}
+
+/** One artifact attached to a task — doc, image, csv, json, etc. */
+export interface TaskAttachment {
+  /** Brand-relative path, e.g. `brand/growth4u/projects/P01-.../tasks/P01-T08/attachments/foo.md` */
+  path: string;
+  /** MIME type — `image/png`, `text/markdown`, `application/json`, ... */
+  type?: string;
+  /** Where it came from: `discord`, `skill:<skill-id>`, `manual`, `upload` */
+  source?: string;
+  /** Short human-readable label, e.g. "Screenshot enviado por Alfonso". */
+  label?: string;
+  /** ISO-8601 timestamp. */
+  added_at: string;
+  /** User id / agent id who added it. */
+  added_by?: string;
 }
 
 export interface TaskFile {

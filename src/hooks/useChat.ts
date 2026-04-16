@@ -7,11 +7,19 @@ import type { ThreadConfig } from "@/lib/chat-openers";
 // Chat Hooks — TanStack Query integration for MC Chat system
 // ============================================================
 
+interface ChatAttachment {
+  url: string;
+  filename: string;
+  mimeType: string;
+  size: number;
+}
+
 interface ChatMessage {
   role: "user" | "bot" | "status";
   text: string;
   agent?: string;
   ts?: number;
+  attachments?: ChatAttachment[];
 }
 
 interface ThreadListItem {
@@ -83,13 +91,16 @@ export function useThreadList(slug: string | null) {
         }
       }
 
-      // Sort: general first, then unread (by lastBotTs desc), then read (by updatedAt desc)
+      // Sort: general PINNED at top (day-to-day chat + new task creation),
+      // everything else strictly by `updatedAt` desc (most recent first).
+      //
+      // NOTE: 2026-04-15 — removed the unread-first tier because it made the
+      // list look "random" to the user. Now the order is deterministic:
+      // general → most recently active → ... → oldest. Unread state is
+      // communicated via a dot badge, not via position.
       threads.sort((a, b) => {
-        if (a.shortId === "general") return -1;
-        if (b.shortId === "general") return 1;
-        if (a.hasUnread && !b.hasUnread) return -1;
-        if (!a.hasUnread && b.hasUnread) return 1;
-        if (a.hasUnread && b.hasUnread) return (b.lastBotTs || 0) - (a.lastBotTs || 0);
+        if (a.shortId === "general" && b.shortId !== "general") return -1;
+        if (b.shortId === "general" && a.shortId !== "general") return 1;
         return (b.updatedAt || 0) - (a.updatedAt || 0);
       });
 
@@ -108,7 +119,7 @@ export function useSendMessage() {
   const { currentThread, threadMeta, setPolling } = useChatStore();
 
   return useMutation({
-    mutationFn: async ({ text, threadId }: { text: string; threadId?: string }) => {
+    mutationFn: async ({ text, threadId, attachments }: { text: string; threadId?: string; attachments?: { url: string; filename: string; mimeType: string; size: number }[] }) => {
       const tid = threadId || currentThread;
       if (!tid) throw new Error("No thread selected");
       const meta = threadMeta[tid] || {};
@@ -123,6 +134,7 @@ export function useSendMessage() {
           text,
           userName: "Admin",
           ...meta,
+          ...(attachments?.length ? { attachments } : {}),
         }),
       });
       if (!res.ok) throw new Error("Failed to send message");

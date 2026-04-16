@@ -9,11 +9,13 @@ context_required:
 - brand/{slug}/strategic-plan/current.md
 - brand/{slug}/projects/*/project.json
 - brand/{slug}/operational/learnings.md
+- brand/{slug}/content-playbook/hooks.md
 context_writes:
 - brand/{slug}/monitoring/weekly/YYYY-MM-DD.json
 - brand/{slug}/monitoring/pending-recommendations.json
 - brand/{slug}/monitoring/health-score.json
 - brand/{slug}/operational/learnings.md
+- brand/{slug}/content-playbook/hooks.md
 ---
 
 # Performance Analysis — Weekly Intelligence Layer
@@ -143,6 +145,55 @@ For each anomaly, underperformance, or opportunity:
 Clean up previous recommendations:
 - Read pending-recommendations.json
 - If a previous recommendation's metric has normalized → mark as auto_resolved, exclude from new file
+
+### Step 7b: Content Performance Analysis (Optional — requires Metricool)
+
+> Analiza rendimiento de contenido a nivel de post. Solo se ejecuta si Metricool esta conectado.
+
+**Gate check**: Read `brand/{slug}/integrations.json`. If `metricool` is not present or `enabled: false`, skip this entire step. Log "Metricool not connected — skipping content analysis" and move on.
+
+**If Metricool is connected:**
+
+1. **Extract post-level data** from `metrics-data.json` (metricool section):
+   - For each post in the last 14 days: platform, format (reel/carousel/static/story/text), hook text (first line), publish date, and metrics
+   - **Resonance metrics** (primary): replies, saves, shares, DMs attributed
+   - **Reach metrics** (secondary): impressions, reach, likes
+   - Calculate `resonance_rate = (replies + saves + shares) / reach` per post
+   - Calculate `vanity_ratio = likes / (replies + saves + shares)` — flag posts where ratio > 10x as "vanity-heavy"
+
+2. **Categorize by hook type**:
+   - Extract first line of each post as the hook
+   - Classify hooks: question, bold-claim, statistic, story-opener, how-to, contrarian, pain-point, other
+   - Group resonance_rate by hook type and platform
+   - Identify top 3 hook types per platform by avg resonance_rate
+
+3. **Track format performance**:
+   - Group by format (reel, carousel, static, story, text post)
+   - Calculate avg resonance_rate and avg reach per format per platform
+   - Flag format with highest resonance_rate as "best performing format"
+
+4. **Update hooks.md**:
+   - Read `brand/{slug}/content-playbook/hooks.md`
+   - Append or update a `## Performance Tracking` section at the end with:
+     - Date of analysis
+     - Top 3 hooks by platform with resonance_rate
+     - Worst performing hook types to avoid
+     - Best format per platform
+   - Keep only the last 4 weeks of performance data (rolling window)
+
+5. **Content health score** (feeds into social category in Step 4):
+   - avg resonance_rate >= 3%  → score 90-100
+   - avg resonance_rate 1-3%  → score 70-89
+   - avg resonance_rate 0.5-1% → score 40-69
+   - avg resonance_rate < 0.5% → score 0-39
+   - Blend into the `social` category weight (50% existing social score + 50% content score)
+
+6. **Write content learnings** to `brand/{slug}/operational/learnings.md`:
+   - Best performing post of the period (link/summary + why it worked)
+   - Hook patterns trending up or down
+   - Format shifts worth noting
+
+---
 
 ### Step 8: Save and Publish
 1. Save `brand/{slug}/monitoring/weekly/YYYY-MM-DD.json` (full report per schema)

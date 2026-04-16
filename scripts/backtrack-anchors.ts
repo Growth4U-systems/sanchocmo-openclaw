@@ -1,0 +1,534 @@
+#!/usr/bin/env tsx
+/**
+ * scripts/backtrack-anchors.ts
+ *
+ * ONE-OFF migration (2026-04-15 / MC v2.10.8) that brings every existing
+ * task and project across all brands into compliance with the create-time
+ * anchor invariants introduced in v2.10.5:
+ *
+ *   1. Every task must have `skill` populated
+ *   2. Every task must have `deliverable_file` populated
+ *   3. Every task must have `mc_chat_thread_id = task-{id.lower()}`
+ *   4. Every project must have `mc_chat_thread_id = project-{id.lower()}`
+ *   5. The chat file `brand/{slug}/chat/{mc_chat_thread_id}.json` must exist
+ *   6. If the task is `completed`, `deliverable_file` must point at a real file
+ *
+ * Strategy:
+ *   - AUDIT pass: report what's wrong without touching anything
+ *   - FIX pass: apply automatic fixes where we're confident
+ *     - `mc_chat_thread_id` → always computable (canonical form)
+ *     - chat file → always creatable (empty `{messages: []}`)
+ *     - `skill` → infer from pillar → type → channel → project category
+ *     - `deliverable_file` → scan the task dir (T{NN}/ or tasks/{id}/) for
+ *       the most likely candidate; fall back to the `deliverable` human
+ *       string if it looks like a path
+ *     - `attachments[]` → scan task dir and register every file found
+ *   - FLAG: anything we can't auto-fix goes into a report file
+ *     (`backtrack-anchors-report.md`) for manual review
+ *
+ * Usage:
+ *   tsx scripts/backtrack-anchors.ts --dry-run   # preview
+ *   tsx scripts/backtrack-anchors.ts             # apply
+ *
+ * Only touches these brands (the active clients):
+ *   criptan, dealcar, growth4u, hulahoop
+ */
+
+import fs from "fs";
+import path from "path";
+
+const WORKSPACE = process.env.WORKSPACE_BASE || "/Users/ragi/.openclaw/workspace-sancho";
+const BRANDS = ["criptan", "dealcar", "growth4u", "hulahoop"];
+const DRY_RUN = process.argv.includes("--dry-run");
+
+interface TaskRow {
+  id: string;
+  name?: string;
+  description?: string;
+  deliverable?: string;
+  deliverable_file?: string | string[];
+  skill?: string;
+  pillar?: string;
+  type?: string;
+  channel?: string;
+  status?: string;
+  mc_chat_thread_id?: string;
+  discord_thread_id?: string | null;
+  attachments?: Array<{ path: string; type?: string; source?: string; label?: string; added_at: string; added_by?: string }>;
+  [key: string]: unknown;
+}
+
+interface ProjectRow {
+  id: string;
+  name?: string;
+  category?: string;
+  mc_chat_thread_id?: string;
+  discord_thread_id?: string | null;
+  [key: string]: unknown;
+}
+
+interface Flag {
+  slug: string;
+  projectId: string;
+  taskId?: string;
+  field: string;
+  reason: string;
+  suggestion?: string;
+}
+
+interface Stats {
+  tasksScanned: number;
+  projectsScanned: number;
+  tasksFixed: number;
+  projectsFixed: number;
+  chatFilesCreated: number;
+  attachmentsRegistered: number;
+  flags: Flag[];
+}
+
+const stats: Stats = {
+  tasksScanned: 0,
+  projectsScanned: 0,
+  tasksFixed: 0,
+  projectsFixed: 0,
+  chatFilesCreated: 0,
+  attachmentsRegistered: 0,
+  flags: [],
+};
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+function canonicalChatThreadId(taskId: string): string {
+  return `task-${taskId.toLowerCase()}`;
+}
+function canonicalProjectChatThreadId(projectId: string): string {
+  return `project-${projectId.toLowerCase()}`;
+}
+
+/** Ensure a chat file exists under brand/{slug}/chat/{id}.json */
+function ensureChatFile(slug: string, chatThreadId: string): boolean {
+  const chatDir = path.join(WORKSPACE, "brand", slug, "chat");
+  const filePath = path.join(chatDir, `${chatThreadId}.json`);
+  if (fs.existsSync(filePath)) return false;
+  if (DRY_RUN) {
+    console.log(`  [dry-run] would create chat file ${filePath}`);
+    return true;
+  }
+  fs.mkdirSync(chatDir, { recursive: true });
+  fs.writeFileSync(
+    filePath,
+    JSON.stringify({ messages: [], createdAt: new Date().toISOString() }, null, 2)
+  );
+  return true;
+}
+
+/** Brand-relative path for a path that lives under brand/{slug}/ */
+function brandRel(slug: string, absOrRel: string): string {
+  if (!absOrRel) return absOrRel;
+  const normalized = absOrRel.replace(/^\/+/, "");
+  if (normalized.startsWith(`brand/${slug}/`)) return normalized;
+  if (normalized.startsWith(WORKSPACE)) {
+    return normalized.slice(WORKSPACE.length).replace(/^\/+/, "");
+  }
+  return `brand/${slug}/${normalized}`;
+}
+
+/**
+ * Skill inference. We walk from most specific to most generic:
+ *   pillar → source field → type → channel → project category → guess
+ */
+function inferSkill(
+  task: TaskRow,
+  project: ProjectRow | undefined
+): string | undefined {
+  // 1. Pillar mapping — pillar id is usually a skill slug
+  if (task.pillar) {
+    const parts = task.pillar.split("-");
+    if (parts.length >= 2 && parts.slice(-2).join("-") === "content-strategy") {
+      return "content-strategy";
+    }
+    return task.pillar;
+  }
+
+  // 2. Source field — tasks generated by a specific system carry a `source`
+  // (e.g. `performance-analysis`, `atalaya`) that is itself the skill slug.
+  const source = (task as Record<string, unknown>).source;
+  if (typeof source === "string" && source.trim() !== "") {
+    return source;
+  }
+
+  // 3. Type-based inference
+  const typeMap: Record<string, string> = {
+    outreach: "outreach-sequence-builder",
+    content: "seo-content",
+    research: "market-intelligence",
+    analysis: "performance-analysis",
+    execution: "sancho-manager",
+    ops: "sancho-manager",
+    tool: "sancho-manager",
+  };
+  if (task.type && typeMap[task.type]) return typeMap[task.type];
+
+  // 4. Channel-based inference
+  const channelMap: Record<string, string> = {
+    web: "frontend-design",
+    prospecting: "outreach-sequence-builder",
+    intelligence: "market-intelligence",
+    content: "seo-content",
+    strategy: "content-strategy",
+  };
+  if (task.channel && channelMap[task.channel]) return channelMap[task.channel];
+
+  // 5. Project-category-based inference
+  if (project?.category) {
+    const catMap: Record<string, string> = {
+      research: "market-intelligence",
+      content: "seo-content",
+      outreach: "outreach-sequence-builder",
+    };
+    if (catMap[project.category]) return catMap[project.category];
+  }
+
+  // 6. Last resort — sancho-manager is the "I don't know what this is" skill
+  return "sancho-manager";
+}
+
+/**
+ * Deliverable file inference. Strategy:
+ *   1. If `deliverable` field looks like a path (has `.md`/`.html`/`.json`),
+ *      use it as brand-relative.
+ *   2. Scan `{projDir}/T{NN}/` and `{projDir}/tasks/{taskId}/` for files.
+ *      If exactly one `.md` file, use that. Otherwise, pick the largest.
+ *   3. As a last resort, construct a reasonable default path
+ *      (`{projDir}/tasks/{taskId}/deliverable.md`) — NOT created, just declared.
+ */
+function inferDeliverableFile(
+  slug: string,
+  projDirName: string,
+  task: TaskRow
+): { path: string | undefined; source: "deliverable_field" | "scan" | "default" } {
+  // 1. `deliverable` field parse
+  const del = task.deliverable;
+  if (typeof del === "string" && /\.(md|html|txt|json)$/i.test(del) && !del.includes(" ")) {
+    return { path: brandRel(slug, del), source: "deliverable_field" };
+  }
+
+  // 2. Scan task dirs
+  const taskNum = task.id.match(/-T(\d+)$/i)?.[1] || task.id.split("-").pop() || "";
+  const candidates = [
+    path.join(WORKSPACE, "brand", slug, "projects", projDirName, `T${taskNum}`),
+    path.join(WORKSPACE, "brand", slug, "projects", projDirName, "tasks", task.id),
+    path.join(WORKSPACE, "brand", slug, "projects", projDirName, "tasks", `T${taskNum}`),
+  ];
+  for (const dir of candidates) {
+    if (!fs.existsSync(dir) || !fs.statSync(dir).isDirectory()) continue;
+    const files = fs.readdirSync(dir).filter((f) => !f.startsWith("."));
+    if (files.length === 0) continue;
+    const mdFiles = files.filter((f) => /\.md$/i.test(f));
+    const pick = mdFiles.length === 1 ? mdFiles[0]
+      : mdFiles.length > 1
+        ? mdFiles.sort((a, b) => fs.statSync(path.join(dir, b)).size - fs.statSync(path.join(dir, a)).size)[0]
+        : files[0];
+    const rel = path.relative(WORKSPACE, path.join(dir, pick));
+    return { path: rel, source: "scan" };
+  }
+
+  // 3. Default (declared, not created)
+  return {
+    path: `brand/${slug}/projects/${projDirName}/tasks/${task.id}/deliverable.md`,
+    source: "default",
+  };
+}
+
+/**
+ * Scan a task's dir(s) for files and return them as attachment entries.
+ * Used to populate attachments[] when the task has associated files on disk.
+ */
+function scanAttachments(
+  slug: string,
+  projDirName: string,
+  task: TaskRow
+): Array<{ path: string; type?: string; source: string; added_at: string }> {
+  const taskNum = task.id.match(/-T(\d+)$/i)?.[1] || task.id.split("-").pop() || "";
+  const dirs = [
+    path.join(WORKSPACE, "brand", slug, "projects", projDirName, `T${taskNum}`),
+    path.join(WORKSPACE, "brand", slug, "projects", projDirName, "tasks", task.id),
+    path.join(WORKSPACE, "brand", slug, "projects", projDirName, "tasks", `T${taskNum}`),
+  ];
+  const out: Array<{ path: string; type?: string; source: string; added_at: string }> = [];
+  for (const dir of dirs) {
+    if (!fs.existsSync(dir) || !fs.statSync(dir).isDirectory()) continue;
+    for (const f of fs.readdirSync(dir)) {
+      if (f.startsWith(".")) continue;
+      const abs = path.join(dir, f);
+      if (!fs.statSync(abs).isFile()) continue;
+      const rel = path.relative(WORKSPACE, abs);
+      const ext = path.extname(f).toLowerCase();
+      const mime: Record<string, string> = {
+        ".md": "text/markdown", ".txt": "text/plain", ".json": "application/json",
+        ".csv": "text/csv", ".html": "text/html", ".png": "image/png",
+        ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".pdf": "application/pdf",
+      };
+      out.push({
+        path: rel,
+        type: mime[ext],
+        source: `backtrack:${task.skill || "unknown"}`,
+        added_at: new Date().toISOString(),
+      });
+    }
+  }
+  return out;
+}
+
+// ---------------------------------------------------------------------------
+// Core pass
+// ---------------------------------------------------------------------------
+
+function processProject(slug: string, projDirName: string): void {
+  const projDir = path.join(WORKSPACE, "brand", slug, "projects", projDirName);
+  const projFile = path.join(projDir, "project.json");
+  const tasksFile = path.join(projDir, "tasks.json");
+
+  // ---- Project.json ----
+  let project: ProjectRow | undefined;
+  if (fs.existsSync(projFile)) {
+    try {
+      project = JSON.parse(fs.readFileSync(projFile, "utf-8"));
+    } catch {
+      stats.flags.push({
+        slug, projectId: projDirName, field: "project.json",
+        reason: "Malformed JSON — cannot parse",
+      });
+      return;
+    }
+  }
+  if (project) {
+    stats.projectsScanned++;
+    let changed = false;
+    if (!project.mc_chat_thread_id) {
+      project.mc_chat_thread_id = canonicalProjectChatThreadId(project.id);
+      changed = true;
+    }
+    if (!("discord_thread_id" in project)) {
+      project.discord_thread_id = null;
+      changed = true;
+    }
+    const created = ensureChatFile(slug, project.mc_chat_thread_id!);
+    if (created) stats.chatFilesCreated++;
+    if (changed) {
+      stats.projectsFixed++;
+      if (!DRY_RUN) fs.writeFileSync(projFile, JSON.stringify(project, null, 2));
+      console.log(`  [project] ${slug}/${project.id} fixed`);
+    }
+  }
+
+  // ---- Tasks.json ----
+  if (!fs.existsSync(tasksFile)) return;
+  let tasksData: unknown;
+  try {
+    tasksData = JSON.parse(fs.readFileSync(tasksFile, "utf-8"));
+  } catch {
+    stats.flags.push({
+      slug, projectId: projDirName, field: "tasks.json",
+      reason: "Malformed JSON — cannot parse",
+    });
+    return;
+  }
+  const tasks: TaskRow[] = Array.isArray(tasksData)
+    ? (tasksData as TaskRow[])
+    : ((tasksData as Record<string, unknown>).tasks as TaskRow[]) || [];
+
+  let fileChanged = false;
+  for (const task of tasks) {
+    stats.tasksScanned++;
+    let changed = false;
+
+    // Anchor 1: skill
+    if (!task.skill || String(task.skill).trim() === "") {
+      const inferred = inferSkill(task, project);
+      if (inferred) {
+        task.skill = inferred;
+        changed = true;
+      } else {
+        stats.flags.push({
+          slug, projectId: projDirName, taskId: task.id, field: "skill",
+          reason: "No inference possible (no pillar/type/channel/category)",
+          suggestion: "Manual: set task.skill to a valid skill slug",
+        });
+      }
+    }
+
+    // Anchor 2: deliverable_file
+    const hasDeliverableFile =
+      (typeof task.deliverable_file === "string" && task.deliverable_file.trim() !== "") ||
+      (Array.isArray(task.deliverable_file) && task.deliverable_file.length > 0);
+    if (!hasDeliverableFile) {
+      const inferred = inferDeliverableFile(slug, projDirName, task);
+      if (inferred.path) {
+        task.deliverable_file = inferred.path;
+        changed = true;
+        if (inferred.source === "default") {
+          stats.flags.push({
+            slug, projectId: projDirName, taskId: task.id, field: "deliverable_file",
+            reason: "No real file found — declared a default path",
+            suggestion: `Declared: ${inferred.path}. Update when the skill produces the real file.`,
+          });
+        }
+      }
+    } else {
+      // Normalize existing deliverable_file values to brand-relative form.
+      // Some legacy tasks have bare paths like `content-playbook/current.md`
+      // that must be normalized to `brand/{slug}/content-playbook/current.md`
+      // so the task-attach endpoint, the file-exists gate, and the sidebar
+      // all agree on one canonical form.
+      const normalizeOne = (p: string): string => {
+        const clean = p.replace(/^\/+/, "");
+        if (clean.startsWith(`brand/${slug}/`)) return clean;
+        if (clean.startsWith("brand/")) return clean; // another brand? leave alone
+        return `brand/${slug}/${clean}`;
+      };
+      if (typeof task.deliverable_file === "string") {
+        const norm = normalizeOne(task.deliverable_file);
+        if (norm !== task.deliverable_file) {
+          task.deliverable_file = norm;
+          changed = true;
+        }
+      } else if (Array.isArray(task.deliverable_file)) {
+        const normalized = task.deliverable_file.map(normalizeOne);
+        if (JSON.stringify(normalized) !== JSON.stringify(task.deliverable_file)) {
+          task.deliverable_file = normalized;
+          changed = true;
+        }
+      }
+    }
+
+    // Completed-task gate: if status=completed, verify file exists
+    if (task.status === "completed") {
+      const paths = Array.isArray(task.deliverable_file)
+        ? task.deliverable_file
+        : task.deliverable_file ? [task.deliverable_file as string] : [];
+      for (const p of paths) {
+        const abs = p.startsWith(WORKSPACE) ? p : path.join(WORKSPACE, p);
+        if (!fs.existsSync(abs)) {
+          stats.flags.push({
+            slug, projectId: projDirName, taskId: task.id, field: "deliverable_file",
+            reason: `Task is completed but deliverable file does not exist: ${p}`,
+            suggestion: "Re-run the skill OR change status to in-progress",
+          });
+        }
+      }
+    }
+
+    // Anchor 3: mc_chat_thread_id
+    if (!task.mc_chat_thread_id) {
+      task.mc_chat_thread_id = canonicalChatThreadId(task.id);
+      changed = true;
+    }
+    // Discord thread id default (null if not set)
+    if (!("discord_thread_id" in task)) {
+      task.discord_thread_id = null;
+      changed = true;
+    }
+
+    // Chat file
+    const created = ensureChatFile(slug, task.mc_chat_thread_id!);
+    if (created) stats.chatFilesCreated++;
+
+    // Attachments backfill
+    if (!Array.isArray(task.attachments) || task.attachments.length === 0) {
+      const scanned = scanAttachments(slug, projDirName, task);
+      if (scanned.length > 0) {
+        task.attachments = scanned;
+        stats.attachmentsRegistered += scanned.length;
+        changed = true;
+      }
+    }
+
+    if (changed) {
+      stats.tasksFixed++;
+      fileChanged = true;
+      console.log(`  [task] ${slug}/${task.id} fixed (skill=${task.skill}, df=${task.deliverable_file})`);
+    }
+  }
+
+  if (fileChanged && !DRY_RUN) {
+    const writeData = Array.isArray(tasksData)
+      ? tasks
+      : { ...(tasksData as Record<string, unknown>), tasks };
+    fs.writeFileSync(tasksFile, JSON.stringify(writeData, null, 2));
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Main
+// ---------------------------------------------------------------------------
+
+function main() {
+  console.log(`\n=== Anchor Backtrack (${DRY_RUN ? "DRY RUN" : "APPLY"}) ===\n`);
+  for (const slug of BRANDS) {
+    const projectsDir = path.join(WORKSPACE, "brand", slug, "projects");
+    if (!fs.existsSync(projectsDir)) continue;
+    console.log(`\n--- ${slug} ---`);
+    const dirs = fs.readdirSync(projectsDir, { withFileTypes: true })
+      .filter((d) => d.isDirectory())
+      .map((d) => d.name);
+    for (const d of dirs) processProject(slug, d);
+  }
+
+  console.log(`\n=== Summary ===`);
+  console.log(`Tasks scanned:          ${stats.tasksScanned}`);
+  console.log(`Tasks fixed:            ${stats.tasksFixed}`);
+  console.log(`Projects scanned:       ${stats.projectsScanned}`);
+  console.log(`Projects fixed:         ${stats.projectsFixed}`);
+  console.log(`Chat files created:     ${stats.chatFilesCreated}`);
+  console.log(`Attachments registered: ${stats.attachmentsRegistered}`);
+  console.log(`Flags (manual review):  ${stats.flags.length}`);
+
+  // Write report
+  const reportPath = path.join(WORKSPACE, "backtrack-anchors-report.md");
+  const lines: string[] = [];
+  lines.push(`# Anchor Backtrack Report — ${new Date().toISOString()}`);
+  lines.push(``);
+  lines.push(`Mode: **${DRY_RUN ? "DRY RUN" : "APPLIED"}**`);
+  lines.push(``);
+  lines.push(`## Stats`);
+  lines.push(`- Tasks scanned: ${stats.tasksScanned}`);
+  lines.push(`- Tasks fixed: ${stats.tasksFixed}`);
+  lines.push(`- Projects scanned: ${stats.projectsScanned}`);
+  lines.push(`- Projects fixed: ${stats.projectsFixed}`);
+  lines.push(`- Chat files created: ${stats.chatFilesCreated}`);
+  lines.push(`- Attachments registered: ${stats.attachmentsRegistered}`);
+  lines.push(`- Flags: ${stats.flags.length}`);
+  lines.push(``);
+  if (stats.flags.length > 0) {
+    lines.push(`## Flags — manual review required`);
+    lines.push(``);
+    for (const f of stats.flags) {
+      lines.push(`### ${f.slug} · ${f.projectId}${f.taskId ? ` · ${f.taskId}` : ""}`);
+      lines.push(`- **Field**: \`${f.field}\``);
+      lines.push(`- **Reason**: ${f.reason}`);
+      if (f.suggestion) lines.push(`- **Suggestion**: ${f.suggestion}`);
+      lines.push(``);
+    }
+  }
+  const finalReportPath = DRY_RUN ? reportPath + ".dryrun" : reportPath;
+  fs.writeFileSync(finalReportPath, lines.join("\n"));
+  console.log(`\nReport written to: ${finalReportPath}`);
+
+  // Quick flag breakdown
+  if (stats.flags.length > 0) {
+    const byReason: Record<string, number> = {};
+    for (const f of stats.flags) {
+      const key = f.reason.split(":")[0].split("—")[0].trim();
+      byReason[key] = (byReason[key] || 0) + 1;
+    }
+    console.log(`\nFlag breakdown:`);
+    for (const [k, v] of Object.entries(byReason).sort((a, b) => b[1] - a[1])) {
+      console.log(`  ${v.toString().padStart(4)} × ${k}`);
+    }
+  }
+}
+
+main();

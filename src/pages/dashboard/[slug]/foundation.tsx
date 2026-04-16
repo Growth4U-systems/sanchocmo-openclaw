@@ -16,7 +16,8 @@ import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { useSlugSync } from "@/hooks/useSlugSync";
 import { useFoundation, useUpdatePillarStatus, useOtherDocs } from "@/hooks/useFoundation";
 import { useOpenChat } from "@/hooks/useChat";
-import { buildPillarThread } from "@/lib/chat-openers";
+import { useProjects } from "@/hooks/useProjects";
+import { buildPillarThread, findTaskThreadForDoc } from "@/lib/chat-openers";
 import { DepthBar } from "@/components/foundation/depth-bar";
 import { WarningsBanner } from "@/components/foundation/warnings-banner";
 import { FileTree } from "@/components/foundation/file-tree";
@@ -133,12 +134,14 @@ export default function FoundationPage() {
   const router = useRouter();
   const { data: foundation, isLoading } = useFoundation(slug);
   const { data: otherDocs } = useOtherDocs(slug);
+  const { data: projectsData } = useProjects(slug || null);
   const openChat = useOpenChat();
 
   const [selectedDoc, setSelectedDoc] = useState<SelectedDoc | null>(null);
   const [editing, setEditing] = useState(false);
   const [docContent, setDocContent] = useState<string | null>(null);
   const [docLoading, setDocLoading] = useState(false);
+  const [shareCopied, setShareCopied] = useState(false);
 
   // Fetch doc content whenever selectedDoc changes
   useEffect(() => {
@@ -180,10 +183,26 @@ export default function FoundationPage() {
     [],
   );
 
-  // Handle opening chat for a pillar (or deep-dive doc with parent pillar context)
+  // Handle opening chat for a pillar (or deep-dive doc with parent pillar context).
+  //
+  // Convergence rule (2026-04-15): before opening any new thread for a doc,
+  // check if the doc is already attached to a task (via `deliverable_file`
+  // or `attachments[]`). If yes, open the task's thread instead — every
+  // document attached to a task must share that ONE thread, never a new one.
   const handleOpenChat = useCallback(
     (pillarKey: string, docPath?: string) => {
       if (!slug) return;
+
+      // 1. Task-ownership lookup (first priority)
+      if (docPath) {
+        const taskThread = findTaskThreadForDoc(slug, docPath, projectsData);
+        if (taskThread) {
+          openChat(slug, taskThread);
+          return;
+        }
+      }
+
+      // 2. Pillar thread fallback
       // For deep-dive docs, use the parent pillar for skill resolution
       // but keep the specific doc name for the thread name
       const skillPillar = selectedDoc?.parentPillar || pillarKey;
@@ -195,7 +214,7 @@ export default function FoundationPage() {
       }
       openChat(slug, config);
     },
-    [slug, openChat, selectedDoc?.parentPillar],
+    [slug, openChat, selectedDoc?.parentPillar, projectsData],
   );
 
   // Handle selecting an "other doc" (no pillar/section), with optional parent pillar for deep-dives
@@ -213,10 +232,38 @@ export default function FoundationPage() {
     [],
   );
 
-  // Handle going back to folder view
+  // Handle going back. If the doc lives under a project (docPath contains
+  // `projects/{projDir}/...`), navigate to the project or task page instead
+  // of clearing back to the Foundation folder view — the user expects the
+  // breadcrumb to take them to the parent container, not to Foundation.
   const handleBack = useCallback(() => {
+    if (selectedDoc?.docPath) {
+      const m = selectedDoc.docPath.match(
+        /(?:brand\/[^/]+\/)?projects\/([^/]+)(?:\/(?:T(\d+)|tasks\/([^/]+)))?/i
+      );
+      if (m && slug) {
+        const projDir = m[1]; // e.g. "P01-fontaneria"
+        const projId = projDir.match(/^(P\d+)/)?.[1]; // e.g. "P01"
+        const taskNum = m[2]; // e.g. "08" from T08
+        const taskId = m[3]; // e.g. "P01-T08" from tasks/{taskId}
+
+        if (projId) {
+          if (taskNum) {
+            // Navigate to the task page
+            router.push(`/dashboard/${slug}/projects/${projId}/tasks/${projId}-T${taskNum}`);
+          } else if (taskId) {
+            router.push(`/dashboard/${slug}/projects/${projId}/tasks/${taskId}`);
+          } else {
+            // Navigate to the project page
+            router.push(`/dashboard/${slug}/projects/${projId}`);
+          }
+          setSelectedDoc(null);
+          return;
+        }
+      }
+    }
     setSelectedDoc(null);
-  }, []);
+  }, [selectedDoc, slug, router]);
 
 
   // --- Loading state ---
@@ -302,6 +349,35 @@ export default function FoundationPage() {
             >
               ⬇ Descargar
             </a>
+
+            {/* Share — public link */}
+            <button
+              type="button"
+              onClick={async () => {
+                try {
+                  const res = await fetch("/api/docs/share", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ slug, docPath: selectedDoc.docPath }),
+                  });
+                  if (!res.ok) {
+                    const err = await res.json().catch(() => ({}));
+                    throw new Error(err.error || `HTTP ${res.status}`);
+                  }
+                  const data = await res.json();
+                  if (!data?.url) throw new Error("No URL returned");
+                  await navigator.clipboard.writeText(data.url);
+                  setShareCopied(true);
+                  setTimeout(() => setShareCopied(false), 2000);
+                } catch (e) {
+                  console.error("Share link copy failed:", (e as Error).message);
+                }
+              }}
+              className={btnClass}
+              title="Copia un link público para compartir con terceros"
+            >
+              {shareCopied ? "✓ Copiado" : "🔗 Compartir"}
+            </button>
 
             {/* Chat */}
             <button

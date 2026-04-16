@@ -12,6 +12,8 @@
 export const PILLAR_DOC_PATHS: Record<string, string[]> = {
   "fast-foundation": ["company-brief/current.md"],
   "company-brief": ["company-brief/current.md"],
+  "seo-audit": ["site-audit/seo-audit/current.md", "trust-engine/seo-audit.json"],
+  "own-media-audit": ["site-audit/own-media-audit/current.md", "trust-engine/own-media-audit.json"],
   "market-analysis": ["market-and-us/market/current.md"],
   "competitor-analysis": ["market-and-us/competitors/current.md"],
   "self-analysis": ["market-and-us/self/current.md"],
@@ -56,4 +58,53 @@ export function resolvePillarDocPath(
   // Fallback to static mapping
   const paths = PILLAR_DOC_PATHS[pillarKey];
   return paths?.[0] || null;
+}
+
+/**
+ * Resolve doc path(s) for a task. Tries multiple sources in priority order:
+ *
+ *   1. `task.deliverable_file` — explicit field set on the task. This is the
+ *      authoritative source when present (skills know what file they write).
+ *   2. `task.output_files` — legacy field, also explicit.
+ *   3. `task.pillar` → `foundation-state.json.pillars[pillar].output_file`
+ *   4. `task.pillar` → static `PILLAR_DOC_PATHS` fallback
+ *
+ * Returns an array of relative paths (relative to `brand/{slug}/`). Empty
+ * array if nothing can be resolved. The first element is the primary.
+ *
+ * Why this exists:
+ *   The old `resolvePillarDocPath` only knew how to map pillar → conventional
+ *   `current.md` path. Skills like `competitor-intelligence` actually write
+ *   `competitive-analysis.current.md`, breaking the convention. This resolver
+ *   reads the explicit `deliverable_file` set by the skill (or by a migration
+ *   script) so the UI never has to guess.
+ */
+export function resolveTaskDocPaths(
+  task: {
+    deliverable_file?: string | string[];
+    output_files?: string[];
+    pillar?: string;
+  },
+  foundationState?: { sections?: Record<string, { pillars?: Record<string, { output_file?: string }> }> }
+): string[] {
+  const stripBrand = (p: string) => p.replace(/^brand\/[^/]+\//, "");
+
+  // 1) Explicit deliverable_file on the task (canonical when present)
+  if (task.deliverable_file) {
+    const arr = Array.isArray(task.deliverable_file) ? task.deliverable_file : [task.deliverable_file];
+    if (arr.length > 0) return arr.map(stripBrand);
+  }
+
+  // 2) Legacy output_files
+  if (task.output_files && task.output_files.length > 0) {
+    return task.output_files.map(stripBrand);
+  }
+
+  // 3 & 4) Fall back to pillar-based resolution
+  if (task.pillar) {
+    const docPath = resolvePillarDocPath(task.pillar, foundationState);
+    if (docPath) return [stripBrand(docPath)];
+  }
+
+  return [];
 }
