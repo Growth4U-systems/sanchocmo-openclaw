@@ -3,8 +3,9 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useFoundation } from "@/hooks/useFoundation";
+import { useProjects } from "@/hooks/useProjects";
 import { useOpenChat } from "@/hooks/useChat";
-import { buildPillarThread } from "@/lib/chat-openers";
+import { buildPillarThread, findTaskThreadForDoc } from "@/lib/chat-openers";
 import { ProgressBar } from "@/components/shared/progress-bar";
 import { BrandSnapshot } from "@/components/shared/brand-snapshot";
 import { cn } from "@/lib/utils";
@@ -114,6 +115,7 @@ interface BrandColumnProps {
 
 export function BrandColumn({ slug, onOpenDoc }: BrandColumnProps) {
   const { data: foundation, isLoading } = useFoundation(slug);
+  const { data: projectsData } = useProjects(slug || null);
   const openChat = useOpenChat();
   const [url, setUrl] = useState("");
 
@@ -320,6 +322,11 @@ export function BrandColumn({ slug, onOpenDoc }: BrandColumnProps) {
                 const hasDoc = !!docUrl;
 
                 const handleChat = () => {
+                  // Convergence: check if this doc belongs to a task first
+                  if (docUrl) {
+                    const taskThread = findTaskThreadForDoc(slug, docUrl, projectsData);
+                    if (taskThread) { openChat(slug, taskThread); return; }
+                  }
                   const config = buildPillarThread(slug, pName, docUrl || undefined);
                   openChat(slug, config);
                 };
