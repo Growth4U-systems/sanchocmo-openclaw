@@ -13,11 +13,14 @@ Deploy SanchoCMO to a VPS using Docker Compose and nginx.
 | Block storage | 10 GB volume mounted at `/mnt/data` (for data snapshots) |
 | Domain | A record pointing to VPS IP |
 | GitHub SSH key | On the VPS, for Cervantes backups |
-| Discord | Bot token + client ID + Message Content Intent enabled |
+| Discord (OpenClaw) | Bot token + client ID + Message Content Intent enabled |
 | Discord (Cervantes) | Separate bot token for Cervantes Claude Code Channel + webhook URL for #cervantes-admin |
 | Anthropic | API key (for Sancho/Escudero/Rocinante via OpenClaw) |
+| MiniMax (optional) | API key for MiniMax M2.7 — cheaper execution for Escudero/Rocinante |
 | Claude Code | OAuth token via `claude setup-token` (for Cervantes membership) |
 | Bun | Required for Claude Code Discord Channel plugin |
+| Neon / PostgreSQL | Database URL for Next.js Mission Control |
+| Google OAuth | Client ID + secret for Mission Control login |
 
 > **No Hetzner volume?** Set `SNAPSHOT_DATA_DIR=/path/to/your/storage` in `.env` to store snapshots elsewhere.
 
@@ -102,18 +105,51 @@ nano .env
 Required values:
 
 ```env
-# OpenClaw (Sancho, Escudero, Rocinante)
+# --- Required ---
+
+# Model provider (at least Anthropic)
 ANTHROPIC_API_KEY=sk-ant-...
+
+# Discord bot (OpenClaw agents)
 DISCORD_BOT_TOKEN=your_discord_bot_token
 DISCORD_BOT_CLIENT_ID=your_discord_bot_client_id
+
+# Domain
 BASE_URL=https://your-domain.com
+
+# Next.js Mission Control
+DATABASE_URL=postgresql://user:pass@ep-xxx.region.neon.tech/mc
+NEXTAUTH_URL=https://your-domain.com
+NEXTAUTH_SECRET=generate-with-openssl-rand-base64-32
+GOOGLE_CLIENT_ID=your-google-client-id
+GOOGLE_CLIENT_SECRET=your-google-client-secret
 
 # Cervantes (Claude Code — runs outside Docker)
 CLAUDE_CODE_OAUTH_TOKEN=your_oauth_token_from_claude_setup_token
 DISCORD_WEBHOOK_CERVANTES=https://discord.com/api/webhooks/XXXX/YYYY
 ```
 
-> **Note:** `CERVANTES_GUILD_ID` is no longer needed — Cervantes no longer runs in OpenClaw.
+Optional but recommended:
+
+```env
+# Alternative model providers (cheaper execution for Escudero/Rocinante)
+MINIMAX_API_KEY=...          # MiniMax M2.7 — used for task execution
+XAI_API_KEY=...              # xAI Grok models
+OPENROUTER_API_KEY=...       # OpenRouter proxy
+
+# Cloudflare R2 (image uploads in Mission Control)
+CLOUDFLARE_ACCOUNT_ID=...
+R2_UPLOAD_IMAGE_ACCESS_KEY_ID=...
+R2_UPLOAD_IMAGE_SECRET_ACCESS_KEY=...
+R2_UPLOAD_IMAGE_BUCKET_NAME=...
+R2_PUBLIC_URL=...
+
+# Search & scraping (used by Sancho skills)
+SERPER_API_KEY=...           # Google Search via Serper.dev
+FIRECRAWL_API_KEY=...        # Web scraping
+```
+
+> See `.env.example` for the full list of optional variables (payments, social media, analytics, etc.).
 
 **`config/instance.json`** — copy from example and set Discord IDs:
 
