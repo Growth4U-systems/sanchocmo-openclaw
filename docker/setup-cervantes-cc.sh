@@ -13,24 +13,35 @@ echo "[1/6] Checking prerequisites..."
 command -v claude >/dev/null 2>&1 || { echo "ERROR: claude CLI not installed. Run: curl -fsSL https://claude.ai/install.sh | sh"; exit 1; }
 command -v bun >/dev/null 2>&1 || { echo "ERROR: bun not installed. Run: curl -fsSL https://bun.sh/install | bash"; exit 1; }
 
-# 2. Check auth token
-echo "[2/6] Checking authentication..."
-if [ -z "${CLAUDE_CODE_OAUTH_TOKEN:-}" ]; then
-  if grep -q CLAUDE_CODE_OAUTH_TOKEN /root/.openclaw/.env 2>/dev/null; then
-    echo "Token found in .env"
+# 2. Verify workspace and Cervantes .env
+echo "[2/6] Verifying workspace..."
+WORKSPACE="/root/.openclaw/workspace-cervantes"
+if [ ! -f "$WORKSPACE/CLAUDE.md" ]; then
+  echo "ERROR: $WORKSPACE/CLAUDE.md not found. Create it first."
+  exit 1
+fi
+
+# The systemd service reads env from WORKSPACE/.env (isolated from the OpenClaw
+# .env to avoid DISCORD_BOT_TOKEN collisions). Create it from the example if missing.
+if [ ! -f "$WORKSPACE/.env" ]; then
+  if [ -f "$WORKSPACE/.env.example" ]; then
+    cp "$WORKSPACE/.env.example" "$WORKSPACE/.env"
+    chmod 600 "$WORKSPACE/.env"
+    echo "Created $WORKSPACE/.env from .env.example — edit it before starting the service."
+    echo "Required values: CLAUDE_CODE_OAUTH_TOKEN, DISCORD_BOT_TOKEN (Cervantes bot), DISCORD_WEBHOOK_CERVANTES."
+    exit 1
   else
-    echo "ERROR: CLAUDE_CODE_OAUTH_TOKEN not set."
-    echo "Generate on a machine with browser: claude setup-token"
-    echo "Then add to /root/.openclaw/.env: CLAUDE_CODE_OAUTH_TOKEN=<token>"
+    echo "ERROR: $WORKSPACE/.env not found and no .env.example to copy from."
     exit 1
   fi
 fi
 
-# 3. Verify workspace
-echo "[3/6] Verifying workspace..."
-WORKSPACE="/root/.openclaw/workspace-cervantes"
-if [ ! -f "$WORKSPACE/CLAUDE.md" ]; then
-  echo "ERROR: $WORKSPACE/CLAUDE.md not found. Create it first."
+# 3. Check auth token in the Cervantes env
+echo "[3/6] Checking authentication..."
+if ! grep -qE "^CLAUDE_CODE_OAUTH_TOKEN=.+" "$WORKSPACE/.env"; then
+  echo "ERROR: CLAUDE_CODE_OAUTH_TOKEN not set in $WORKSPACE/.env"
+  echo "Generate on a machine with browser: claude setup-token"
+  echo "Then add to $WORKSPACE/.env: CLAUDE_CODE_OAUTH_TOKEN=<token>"
   exit 1
 fi
 

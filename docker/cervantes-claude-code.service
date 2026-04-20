@@ -9,7 +9,7 @@ StartLimitBurst=5
 Type=simple
 User=root
 WorkingDirectory=/root/.openclaw/workspace-cervantes
-EnvironmentFile=/root/.openclaw/.env
+EnvironmentFile=/root/.openclaw/workspace-cervantes/.env
 Environment=PATH=/root/.local/bin:/root/.bun/bin:/usr/local/bin:/usr/bin:/bin
 ExecStart=/root/.local/bin/claude --channels plugin:discord@claude-plugins-official
 Restart=on-failure

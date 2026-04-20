@@ -130,6 +130,8 @@ DISCORD_WEBHOOK_CERVANTES=https://discord.com/api/webhooks/XXXX/YYYY
 
 > **Note:** `CERVANTES_GUILD_ID` is the Discord server where Cervantes operates. It's used to exclude that guild from Sancho's bindings — without it, Sancho responds to all messages in the Cervantes guild. Get it from Discord → Server Settings → Widget → Server ID.
 
+> **Heads up — two `.env` files:** this `/root/.openclaw/.env` is consumed by OpenClaw (Sancho) and by Cervantes's cron scripts. The Cervantes **systemd service** reads a separate `/root/.openclaw/workspace-cervantes/.env` (see step 9e) to avoid variable collisions — in particular `DISCORD_BOT_TOKEN`, which points to different bots for Sancho vs Cervantes. Don't put the Cervantes bot token in this file.
+
 Optional but recommended:
 
 ```env
@@ -262,14 +264,36 @@ claude plugin enable discord
    - Permissions: Send Messages, Read Message History
    - Copy the invite URL and open it to invite the bot to your Cervantes guild
 
-#### 9e. Configure Discord Channel (first time only)
+#### 9e. Create Cervantes's own `.env`
+
+The Cervantes systemd service reads from `~/.openclaw/workspace-cervantes/.env` — **not** the OpenClaw `.env`. This isolation matters because the Discord plugin reads `process.env.DISCORD_BOT_TOKEN` hardcoded, and that variable means different bots in each environment (Sancho in the OpenClaw `.env`, Cervantes here).
+
+```bash
+cd ~/.openclaw/workspace-cervantes
+cp .env.example .env
+chmod 600 .env
+nano .env
+```
+
+Required values:
+
+```env
+CLAUDE_CODE_OAUTH_TOKEN=<from step 9b>
+DISCORD_BOT_TOKEN=<Cervantes bot token from step 9d>
+CERVANTES_DISCORD_BOT_CLIENT_ID=<Cervantes bot client ID>
+CERVANTES_GUILD_ID=<same as in OpenClaw .env>
+DISCORD_WEBHOOK_CERVANTES=<filled in step 9f below>
+OPENCLAW_HOME=/root/.openclaw
+```
+
+#### 9f. Configure Discord Channel plugin (first-time pairing)
 
 ```bash
 cd ~/.openclaw/workspace-cervantes
 claude --channels plugin:discord@claude-plugins-official
 ```
 
-The plugin will create `~/.claude/channels/discord/.env` and ask for your bot token. Paste the token from step 9d.
+The plugin will create `~/.claude/channels/discord/.env`. You can leave that file with a placeholder — **the plugin ends up using the `DISCORD_BOT_TOKEN` from `workspace-cervantes/.env` at runtime** because a real env var wins over the file.
 
 Once Claude Code starts with the Discord channel active, you'll see:
 
@@ -284,21 +308,25 @@ Now pair your Discord user:
 
 Press `Ctrl+C` to stop the session.
 
-#### 9f. Create Discord webhook for alerts
+#### 9g. Create Discord webhook for alerts
 
 This webhook is used by healthcheck, backup, and alert scripts — it's separate from the bot.
 
 1. Discord → Cervantes guild → `#cervantes-admin` channel
 2. **Edit Channel** → **Integrations** → **Webhooks** → **New Webhook**
-3. Copy the webhook URL and add it to `~/.openclaw/.env`:
+3. Copy the webhook URL and set it in **both** env files:
 
 ```bash
-# Add to .env
+# Cervantes service env (used by Claude runtime)
+nano ~/.openclaw/workspace-cervantes/.env
+# DISCORD_WEBHOOK_CERVANTES=https://discord.com/api/webhooks/XXXX/YYYY
+
+# OpenClaw env (used by cron scripts that source it independently)
 nano ~/.openclaw/.env
 # DISCORD_WEBHOOK_CERVANTES=https://discord.com/api/webhooks/XXXX/YYYY
 ```
 
-#### 9g. Install systemd service and crons
+#### 9h. Install systemd service and crons
 
 ```bash
 cd ~/.openclaw
@@ -310,7 +338,7 @@ This installs:
 - **System crontab** — operational scripts (healthcheck, backup, snapshot, regenerate, cost-tracker)
 - **Logrotate** — log rotation for cron output
 
-#### 9h. Start the service
+#### 9i. Start the service
 
 ```bash
 systemctl start cervantes-claude-code
@@ -492,6 +520,7 @@ openclaw gateway run (reads config, connects to Discord)
 | Port already in use | `ss -tlnp \| grep <port>` to find the conflicting process |
 | Need to reconfigure agents/guilds | `rm ~/.openclaw/.setup-complete && docker compose restart` |
 | Cervantes not responding in Discord | `systemctl status cervantes-claude-code` — check if running |
+| Cervantes reads but never replies (logged in as Sancho) | `DISCORD_BOT_TOKEN` in `~/.openclaw/workspace-cervantes/.env` points to the wrong bot. Verify with `curl -H "Authorization: Bot $TOKEN" https://discord.com/api/v10/users/@me` — the `username` must be the Cervantes bot. Never set `DISCORD_BOT_TOKEN` in the OpenClaw `.env` expecting Cervantes to pick it up; the service only reads the workspace env file. |
 | Cervantes auth expired | Run `claude setup-token` on VPS, open URL in local browser, paste token back |
 | Sancho responds in Cervantes guild | Verify `CERVANTES_GUILD_ID` is set in `.env`, then `rm ~/.openclaw/.setup-complete && docker compose restart` |
 | Cron jobs not running | `crontab -l` — verify crontab is installed. Re-run `bash docker/setup-cervantes-cc.sh` |

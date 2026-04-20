@@ -71,6 +71,20 @@ Acceso via filesystem en `../workspace-sancho/`. Cervantes es el autor, Sancho e
 - Sancho NUNCA toca a Cervantes
 - **El workspace de Sancho es sagrado** — editar con cuidado, documentar cambios
 
+## Política de Hilos en Discord
+
+Lee `config/discord.json` para la lista de canales base y política de hilos.
+
+- Los canales base son los keys de `groups` en `/root/.claude/channels/discord/access.json`
+- Si `chat_id` está en esos keys → canal base → responder con `redirectMessage` y no continuar
+- Si `chat_id` NO está en esos keys → hilo o DM → responder normal
+- `threadPolicy: "require"` → redirección obligatoria. `"suggest"` → aviso sin bloquear. `"off"` → ignorar
+- **Nunca usar `reply_to` en hilos.** Solo usarlo en canales base (para crear referencia). En hilos, `reply` directo sin `reply_to` — el contexto ya está en el hilo.
+
+## Feedback Visual en Discord
+
+El CC harness maneja el ciclo de reacciones (⏳/🔄) automáticamente basado en `ackReactionCycle` en access.json. No uses `react` manualmente — ni en canales base ni en hilos. En hilos especialmente: nunca reaccionar, solo responder con `reply`.
+
 ## Escalaciones (ADMIN REQUEST via Discord)
 
 Los ADMIN REQUESTs llegan por Discord en `#cervantes-admin`. Formato:

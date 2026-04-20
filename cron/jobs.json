@@ -234,10 +234,10 @@
       "id": "b780c3f1-a760-453f-ab81-bc19e4257d11",
       "agentId": "sancho",
       "sessionKey": "agent:sancho:discord:channel:1478818415568224297",
-      "name": "cost-tracker-daily",
+      "name": "Cost Tracker Daily — Multi-Client",
       "enabled": true,
       "createdAtMs": 1772750911798,
-      "updatedAtMs": 1775542222798,
+      "updatedAtMs": 1776665868596,
       "schedule": {
         "kind": "cron",
         "expr": "0 8 * * *",

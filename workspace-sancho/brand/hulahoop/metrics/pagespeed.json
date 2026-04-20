@@ -1,35 +1,30 @@
 {
   "url": "https://hulahoop.media/en",
   "mobile": {
-    "performance": 64,
+    "performance": 55,
     "seo": 92,
     "accessibility": 90,
     "bestPractices": 100,
     "lcp": 14.2,
     "cls": 0,
-    "tbt": 51,
+    "tbt": 263,
     "opportunities": [
       {
         "id": "unused-javascript",
         "title": "Reduce unused JavaScript",
-        "savings": 850,
+        "savings": 900,
         "description": "Reduce unused JavaScript and defer loading scripts until they are required to decrease bytes consumed by network activity. [Learn how to reduce unused"
       }
     ],
     "diagnostics": [
-      {
-        "id": "mainthread-work-breakdown",
-        "title": "Minimize main-thread work",
-        "score": 0
-      },
       {
         "id": "render-blocking-insight",
         "title": "Render blocking requests",
         "score": 0
       },
       {
-        "id": "link-name",
-        "title": "Links do not have a discernible name",
+        "id": "image-delivery-insight",
+        "title": "Improve image delivery",
         "score": 0
       },
       {
@@ -38,30 +33,35 @@
         "score": 0
       },
       {
-        "id": "legacy-javascript-insight",
-        "title": "Legacy JavaScript",
+        "id": "mainthread-work-breakdown",
+        "title": "Minimize main-thread work",
         "score": 0
       },
       {
-        "id": "image-delivery-insight",
-        "title": "Improve image delivery",
+        "id": "link-name",
+        "title": "Links do not have a discernible name",
+        "score": 0
+      },
+      {
+        "id": "bootup-time",
+        "title": "Reduce JavaScript execution time",
         "score": 0
       }
     ]
   },
   "desktop": {
-    "performance": 71,
+    "performance": 77,
     "seo": 92,
     "accessibility": 85,
     "bestPractices": 100,
-    "lcp": 2.8,
+    "lcp": 2.6,
     "cls": 0,
-    "tbt": 285,
+    "tbt": 203,
     "opportunities": [
       {
         "id": "unused-javascript",
         "title": "Reduce unused JavaScript",
-        "savings": 100,
+        "savings": 50,
         "description": "Reduce unused JavaScript and defer loading scripts until they are required to decrease bytes consumed by network activity. [Learn how to reduce unused"
       }
     ],
@@ -93,5 +93,5 @@
       }
     ]
   },
-  "fetchedAt": "2026-04-07T15:20:26.261Z"
+  "fetchedAt": "2026-04-20T05:09:14.391Z"
 }

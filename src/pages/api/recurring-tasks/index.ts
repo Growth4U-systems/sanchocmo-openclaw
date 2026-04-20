@@ -2,22 +2,21 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import fs from "fs";
 import path from "path";
 import crypto from "crypto";
-import { execSync } from "child_process";
 import { compose, withErrorHandler, withAuth } from "@/lib/api-middleware";
 import { loadRecurringTasks, saveRecurringTasks } from "@/lib/data/recurring-tasks";
 import { loadClients } from "@/lib/data/clients";
-import { BASE, EXEC_PATH } from "@/lib/data/paths";
+import { BASE } from "@/lib/data/paths";
 import { readJSON } from "@/lib/data/json-io";
 
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 function detectCronCategory(name: string, _prompt: string): string {
   const n = (name || "").toLowerCase();
-  if (n.includes("metric") || n.includes("cost") || n.includes("dashboard") || n.includes("regenerar")) return "metrics";
+  if (n.includes("metric") || n.includes("cost")) return "metrics";
   if (n.includes("pulse") || n.includes("intelligence") || n.includes("synthesis") || n.includes("thief") || n.includes("signal") || n.includes("idea")) return "intelligence";
   if (n.includes("outreach") || n.includes("lead") || n.includes("call prep") || n.includes("prospecting")) return "outreach";
   if (n.includes("content") || n.includes("blog") || n.includes("social") || n.includes("newsletter")) return "content";
-  if (n.includes("health") || n.includes("backup") || n.includes("watchdog") || n.includes("memory") || n.includes("update") || n.includes("token") || n.includes("image-opt") || n.includes("compact") || n.includes("changelog") || n.includes("activity") || n.includes("mejora") || n.includes("skill-improvement") || n.includes("pattern")) return "system";
+  if (n.includes("health") || n.includes("backup") || n.includes("watchdog") || n.includes("memory") || n.includes("update") || n.includes("token") || n.includes("image-opt") || n.includes("compact") || n.includes("changelog") || n.includes("activity") || n.includes("mejora") || n.includes("skill-improvement") || n.includes("pattern") || n.includes("regenerar")) return "system";
   return "other";
 }
 
@@ -91,17 +90,10 @@ function extractScripts(prompt: string): unknown[] {
 }
 
 function loadCronsFromOpenClaw(): unknown[] {
-  try {
-    const raw = execSync("openclaw cron list --json 2>/dev/null", {
-      timeout: 10000,
-      encoding: "utf-8",
-      env: { ...process.env, PATH: EXEC_PATH },
-    });
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : parsed.jobs || [];
-  } catch {
-    return [];
-  }
+  const jobsFile = process.env.OPENCLAW_CRON_FILE
+    || path.join(process.env.HOME || "/root", ".openclaw", "cron", "jobs.json");
+  const data = readJSON<{ jobs?: unknown[] }>(jobsFile, { jobs: [] });
+  return Array.isArray(data) ? data : (data.jobs || []);
 }
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {

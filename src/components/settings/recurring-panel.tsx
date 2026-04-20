@@ -42,13 +42,15 @@ interface AvailableTemplate {
 type CategoryKey = "intelligence" | "metrics" | "outreach" | "content" | "system" | "other";
 
 const CATEGORY_META: Record<CategoryKey, { icon: string; label: string }> = {
-  intelligence: { icon: "🧠", label: "Intelligence" },
   metrics: { icon: "📊", label: "Metrics" },
+  intelligence: { icon: "🧠", label: "Intelligence" },
   outreach: { icon: "📨", label: "Outreach" },
   content: { icon: "✍️", label: "Content" },
   system: { icon: "⚙️", label: "System" },
   other: { icon: "📋", label: "Otros" },
 };
+
+const CATEGORY_ORDER: CategoryKey[] = ["metrics", "intelligence", "outreach", "content", "system", "other"];
 
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                            */
@@ -400,8 +402,9 @@ export function RecurringPanel() {
       )}
 
       {/* Category groups */}
-      {Object.entries(grouped).map(([cat, catTasks]) => {
-        const meta = CATEGORY_META[cat as CategoryKey] || CATEGORY_META.other;
+      {CATEGORY_ORDER.filter((cat) => grouped[cat]?.length).map((cat) => {
+        const catTasks = grouped[cat];
+        const meta = CATEGORY_META[cat] || CATEGORY_META.other;
         return (
           <ComicCard key={cat} className="p-3">
             <CollapsibleSection

@@ -824,7 +824,9 @@ if "$SLUG" not in slugs:
     data.setdefault("clients", []).append({
         "slug": "$SLUG",
         "name": "$NAME",
-        "discord_guild_id": "$GUILD",
+        "guild": "$GUILD",
+        "active": True,
+        "language": "es",
         "phase": 0,
         "paths": {"brand": "brand/"},
         "supabase": {
