@@ -5,9 +5,12 @@ set -euo pipefail
 
 echo "=== Cervantes Claude Code Setup ==="
 
+# Ensure locally-installed tools are in PATH (claude, bun)
+export PATH="$HOME/.local/bin:$HOME/.bun/bin:$PATH"
+
 # 1. Check prerequisites
 echo "[1/6] Checking prerequisites..."
-command -v claude >/dev/null 2>&1 || { echo "ERROR: claude CLI not installed. Run: npm install -g @anthropic-ai/claude-code"; exit 1; }
+command -v claude >/dev/null 2>&1 || { echo "ERROR: claude CLI not installed. Run: curl -fsSL https://claude.ai/install.sh | sh"; exit 1; }
 command -v bun >/dev/null 2>&1 || { echo "ERROR: bun not installed. Run: curl -fsSL https://bun.sh/install | bash"; exit 1; }
 
 # 2. Check auth token

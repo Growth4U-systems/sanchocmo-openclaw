@@ -10,7 +10,8 @@ Type=simple
 User=root
 WorkingDirectory=/root/.openclaw/workspace-cervantes
 EnvironmentFile=/root/.openclaw/.env
-ExecStart=/usr/local/bin/claude --channels plugin:discord@anthropic
+Environment=PATH=/root/.local/bin:/root/.bun/bin:/usr/local/bin:/usr/bin:/bin
+ExecStart=/root/.local/bin/claude --channels plugin:discord@claude-plugins-official
 Restart=on-failure
 RestartSec=30
 StandardOutput=journal

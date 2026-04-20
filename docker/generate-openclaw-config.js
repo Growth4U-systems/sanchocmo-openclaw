@@ -33,6 +33,7 @@ async function main() {
 
   const discordToken = process.env.DISCORD_BOT_TOKEN;
   const anthropicKey = process.env.ANTHROPIC_API_KEY || '';
+  const cervantesGuildId = process.env.CERVANTES_GUILD_ID || '';
 
   // --- Auth profiles ---
   if (anthropicKey) {
@@ -147,7 +148,13 @@ async function main() {
         if (!config.channels.discord.guilds) config.channels.discord.guilds = {};
 
         for (const guild of guilds) {
-          // Binding: all guilds → sancho
+          // Skip Cervantes guild — managed by Claude Code, not OpenClaw
+          if (cervantesGuildId && guild.id === cervantesGuildId) {
+            console.log(`[config] Skipping Cervantes guild: ${guild.name} (${guild.id})`);
+            continue;
+          }
+
+          // Binding: client guilds → sancho
           const existingBinding = config.bindings.find(
             b => b.match && b.match.guildId === guild.id
           );

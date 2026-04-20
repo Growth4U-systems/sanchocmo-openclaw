@@ -17,8 +17,8 @@ Deploy SanchoCMO to a VPS using Docker Compose and nginx.
 | Discord (Cervantes) | Separate bot token for Cervantes Claude Code Channel + webhook URL for #cervantes-admin |
 | Anthropic | API key (for Sancho/Escudero/Rocinante via OpenClaw) |
 | MiniMax (optional) | API key for MiniMax M2.7 — cheaper execution for Escudero/Rocinante |
-| Claude Code | OAuth token via `claude setup-token` (for Cervantes membership) |
-| Bun | Required for Claude Code Discord Channel plugin |
+| Claude Code | Membership auth via `claude setup-token` (for Cervantes) |
+| Bun + unzip | Required by the Claude Code Discord Channel plugin |
 | Neon / PostgreSQL | Database URL for Next.js Mission Control |
 | Google OAuth | Client ID + secret for Mission Control login |
 
@@ -112,7 +112,6 @@ ANTHROPIC_API_KEY=sk-ant-...
 
 # Discord bot (OpenClaw agents)
 DISCORD_BOT_TOKEN=your_discord_bot_token
-DISCORD_BOT_CLIENT_ID=your_discord_bot_client_id
 
 # Domain
 BASE_URL=https://your-domain.com
@@ -125,9 +124,11 @@ GOOGLE_CLIENT_ID=your-google-client-id
 GOOGLE_CLIENT_SECRET=your-google-client-secret
 
 # Cervantes (Claude Code — runs outside Docker)
-CLAUDE_CODE_OAUTH_TOKEN=your_oauth_token_from_claude_setup_token
+CERVANTES_GUILD_ID=your_cervantes_guild_id
 DISCORD_WEBHOOK_CERVANTES=https://discord.com/api/webhooks/XXXX/YYYY
 ```
+
+> **Note:** `CERVANTES_GUILD_ID` is the Discord server where Cervantes operates. It's used to exclude that guild from Sancho's bindings — without it, Sancho responds to all messages in the Cervantes guild. Get it from Discord → Server Settings → Widget → Server ID.
 
 Optional but recommended:
 
@@ -205,25 +206,102 @@ After approval, the bot will respond to your messages in all configured guilds.
 
 Cervantes runs as a separate process on the VPS host, powered by Claude Code with a membership (not API key).
 
+#### 9a. Install dependencies
+
 ```bash
 # Install Claude Code CLI
-npm install -g @anthropic-ai/claude-code
+curl -fsSL https://claude.ai/install.sh | sh
 
-# Install Bun (for Discord Channel plugin)
-curl -fsSL https://bun.sh/install | bash
+# Add to PATH (the installer puts it in ~/.local/bin/)
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
 source ~/.bashrc
 
-# Generate OAuth token (on a machine with a browser):
+# Verify
+claude --version
+
+# Install Bun (required by the Discord Channel plugin)
+apt install -y unzip
+curl -fsSL https://bun.sh/install | bash
+echo 'export PATH="$HOME/.bun/bin:$PATH"' >> ~/.bashrc
+source ~/.bashrc
+```
+
+#### 9b. Authenticate Claude Code
+
+Claude Code uses its own auth stored in `~/.claude/`, not a token in `.env`.
+
+```bash
+# Run from the Cervantes workspace directory
+cd ~/.openclaw/workspace-cervantes
 claude setup-token
-# Copy the token and add it to .env:
-# CLAUDE_CODE_OAUTH_TOKEN=<token>
+```
 
-# Create Discord webhook for #cervantes-admin:
-# Discord → Cervantes Brain guild → #cervantes-admin → Integrations → Webhooks → New
-# Copy URL and add to .env:
-# DISCORD_WEBHOOK_CERVANTES=<webhook-url>
+This prints a URL — **open it in your local machine's browser**, authorize, then paste the token back in the VPS terminal.
 
-# Run the setup script
+#### 9c. Install the Discord plugin
+
+```bash
+# Add the official Anthropic plugin marketplace
+claude plugin marketplace add anthropics/claude-plugins-official
+
+# Install the Discord plugin
+claude plugin install discord@claude-plugins-official
+
+# Enable the plugin (may be disabled by default)
+claude plugin enable discord
+```
+
+#### 9d. Create Discord bot for Cervantes
+
+1. Go to [Discord Developer Portal](https://discord.com/developers/applications) → **New Application**
+2. Go to **Bot** settings:
+   - Enable **Message Content Intent**
+   - Copy the **Bot Token**
+3. Go to **OAuth2** → **URL Generator**:
+   - Scopes: `bot`
+   - Permissions: Send Messages, Read Message History
+   - Copy the invite URL and open it to invite the bot to your Cervantes guild
+
+#### 9e. Configure Discord Channel (first time only)
+
+```bash
+cd ~/.openclaw/workspace-cervantes
+claude --channels plugin:discord@claude-plugins-official
+```
+
+The plugin will create `~/.claude/channels/discord/.env` and ask for your bot token. Paste the token from step 9d.
+
+Once Claude Code starts with the Discord channel active, you'll see:
+
+```
+Listening for channel messages from: plugin:discord@claude-plugins-official
+```
+
+Now pair your Discord user:
+1. DM the Cervantes bot in Discord — it will show a pairing code
+2. In the Claude Code session, type: `/discord:access pair <code>`
+3. Lock down access: `/discord:access policy allowlist`
+
+Press `Ctrl+C` to stop the session.
+
+#### 9f. Create Discord webhook for alerts
+
+This webhook is used by healthcheck, backup, and alert scripts — it's separate from the bot.
+
+1. Discord → Cervantes guild → `#cervantes-admin` channel
+2. **Edit Channel** → **Integrations** → **Webhooks** → **New Webhook**
+3. Copy the webhook URL and add it to `~/.openclaw/.env`:
+
+```bash
+# Add to .env
+nano ~/.openclaw/.env
+# DISCORD_WEBHOOK_CERVANTES=https://discord.com/api/webhooks/XXXX/YYYY
+```
+
+#### 9g. Install systemd service and crons
+
+```bash
+cd ~/.openclaw
 bash docker/setup-cervantes-cc.sh
 ```
 
@@ -232,27 +310,15 @@ This installs:
 - **System crontab** — operational scripts (healthcheck, backup, snapshot, regenerate, cost-tracker)
 - **Logrotate** — log rotation for cron output
 
-After setup:
+#### 9h. Start the service
 
 ```bash
-# Start the service
 systemctl start cervantes-claude-code
 systemctl enable cervantes-claude-code
 
-# Watch logs for Discord bot pairing instructions
+# Verify it's running
 journalctl -u cervantes-claude-code -f
 ```
-
-**Discord Channel pairing:**
-
-1. Create a separate Discord bot for Cervantes (Discord Developer Portal → New Application)
-2. Enable **Message Content Intent** in Bot settings
-3. Invite it to the Cervantes Brain guild
-4. Start Claude Code service, then in the logs:
-   - Configure: `/discord:configure <cervantes-bot-token>`
-   - DM the bot in Discord → get pairing code
-   - Pair: `/discord:access pair <code>`
-   - Lock down: `/discord:access policy allowlist`
 
 ### 10. Verify Cervantes
 
@@ -275,7 +341,7 @@ The entrypoint automatically:
 
 1. **Generates `openclaw.json`** — detects Discord guilds via API, binds client guilds to sancho. Also registers the `mc-chat` plugin (Mission Control webchat) and creates the `mc-chat → sancho` binding.
 2. **Registers agents** — sancho (Opus), escudero (Sonnet), rocinante (Opus)
-3. **Injects env vars** — replaces `{MC_BASE_URL}`, `{CERVANTES_GUILD_ID}`, etc. in SOUL.md and protocol files
+3. **Injects env vars** — replaces `{MC_BASE_URL}`, etc. in SOUL.md and protocol files
 4. **Installs dependencies** — `npm install` for MC server (ws module)
 5. **Generates dashboard** — runs `regenerate.py` for Mission Control HTML/JS
 
@@ -426,6 +492,7 @@ openclaw gateway run (reads config, connects to Discord)
 | Port already in use | `ss -tlnp \| grep <port>` to find the conflicting process |
 | Need to reconfigure agents/guilds | `rm ~/.openclaw/.setup-complete && docker compose restart` |
 | Cervantes not responding in Discord | `systemctl status cervantes-claude-code` — check if running |
-| Cervantes OAuth token expired | Generate new token: `claude setup-token` on machine with browser, update `.env` |
+| Cervantes auth expired | Run `claude setup-token` on VPS, open URL in local browser, paste token back |
+| Sancho responds in Cervantes guild | Verify `CERVANTES_GUILD_ID` is set in `.env`, then `rm ~/.openclaw/.setup-complete && docker compose restart` |
 | Cron jobs not running | `crontab -l` — verify crontab is installed. Re-run `bash docker/setup-cervantes-cc.sh` |
 | Smart crons fail (claude -p) | Check `CLAUDE_CODE_OAUTH_TOKEN` in `.env` and rate limits |
