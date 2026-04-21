@@ -282,9 +282,19 @@ export function ChatSidebar() {
           // builder would normalize to colon shape; we respect the legacy
           // dash shape so the chat history stays continuous).
           config.threadId = threadId;
-          if (foundTask.pillar && !config.docPath) {
-            const docPath = resolvePillarDocPath(foundTask.pillar, foundationLike);
-            if (docPath) config.docPath = docPath;
+          // Resolve the doc to show in the pill. Priority:
+          //   1. task.deliverable_file (ground truth from task anchors)
+          //   2. pillar output_file from foundation-state.json
+          //   3. null → "Sin documento asociado"
+          if (!config.docPath) {
+            const df = foundTask.deliverable_file;
+            const dfStr = typeof df === "string" ? df : Array.isArray(df) ? df[0] : null;
+            if (dfStr && dfStr.trim()) {
+              config.docPath = dfStr;
+            } else if (foundTask.pillar) {
+              const docPath = resolvePillarDocPath(foundTask.pillar, foundationLike);
+              if (docPath) config.docPath = docPath;
+            }
           }
           if (config.docPath && /tasks\.json$/i.test(config.docPath)) {
             config.docPath = null;
@@ -450,9 +460,16 @@ export function ChatSidebar() {
           // instead of normalizing to the pillar canonical id — the
           // history lives under the compound name.
           config.threadId = threadId;
-          if (bestMatch.task.pillar && !config.docPath) {
-            const docPath = resolvePillarDocPath(bestMatch.task.pillar, foundationLike);
-            if (docPath) config.docPath = docPath;
+          // Same priority as above: deliverable_file → pillar → null
+          if (!config.docPath) {
+            const df = bestMatch.task.deliverable_file;
+            const dfStr = typeof df === "string" ? df : Array.isArray(df) ? df[0] : null;
+            if (dfStr && dfStr.trim()) {
+              config.docPath = dfStr;
+            } else if (bestMatch.task.pillar) {
+              const docPath = resolvePillarDocPath(bestMatch.task.pillar, foundationLike);
+              if (docPath) config.docPath = docPath;
+            }
           }
           if (config.docPath && /tasks\.json$/i.test(config.docPath)) {
             config.docPath = null;

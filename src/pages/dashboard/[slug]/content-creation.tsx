@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import Head from "next/head";
+import Link from "next/link";
 import { useSlugSync } from "@/hooks/useSlugSync";
 import { useContentCreation } from "@/hooks/useContentCreation";
 import { useOpenChat } from "@/hooks/useChat";
@@ -10,7 +11,8 @@ import { FindIdeasTab } from "@/components/content/FindIdeasTab";
 import { IdeasTab } from "@/components/content/IdeasTab";
 import { CalendarTab } from "@/components/content/CalendarTab";
 import { StrategyBanner, type StrategyBannerTask } from "@/components/content/strategy-banner";
-import { buildDocThread } from "@/lib/chat-openers";
+import { useProjects } from "@/hooks/useProjects";
+import { buildDocThread, findTaskThreadForDoc } from "@/lib/chat-openers";
 
 const TABS = [
   { key: "strategy", label: "Strategy Docs" },
@@ -42,6 +44,7 @@ type TabKey = (typeof TABS)[number]["key"];
 export default function ContentCreationPage() {
   const slug = useSlugSync();
   const { data, isLoading } = useContentCreation(slug, null);
+  const { data: projectsData } = useProjects(slug || null);
   const openChat = useOpenChat();
   const [activeTab, setActiveTab] = useState<TabKey>("strategy");
 
@@ -83,6 +86,11 @@ export default function ContentCreationPage() {
   // conversation history.
   const handleOpenChatForTask = (task: StrategyBannerTask) => {
     if (!slug) return;
+    // Convergence: check if this doc belongs to a task first
+    if (task.docPath) {
+      const taskThread = findTaskThreadForDoc(slug, task.docPath, projectsData);
+      if (taskThread) { openChat(slug, taskThread); return; }
+    }
     const config = buildDocThread(
       slug,
       {
@@ -108,6 +116,14 @@ export default function ContentCreationPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-1">
         <h1 className="font-heading text-2xl text-navy">Content Creation</h1>
+        {data?.projectId && (
+          <Link
+            href={`/dashboard/${slug}/projects/${data.projectId}`}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[12px] bg-transparent border border-[#E5E2DC] rounded-md text-[#7A7A7A] hover:bg-[#E5E2DC] hover:text-[#1A1A1A] transition-colors no-underline"
+          >
+            📁 Proyecto: {data.projectId}
+          </Link>
+        )}
       </div>
       <p className="text-sm text-muted-foreground mb-6">{slug}</p>
 
