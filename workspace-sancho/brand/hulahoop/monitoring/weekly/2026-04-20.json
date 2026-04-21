@@ -1,0 +1,191 @@
+{
+  "date": "2026-04-20",
+  "week": "2026-W16",
+  "slug": "hulahoop",
+  "status": "partial",
+  "healthScore": null,
+  "primaryKPI": {
+    "name": "NSM no definido",
+    "value": null,
+    "target": null,
+    "onTrack": null,
+    "reason": "metrics-plan.json no existe. Foundation metrics-setup status: not-started."
+  },
+  "summary": "Semana 2 de operación (14-20 abril). Sin métricas de negocio configuradas — misma situación que semana 1. Foundation: Layer 2 (market-synthesis) completada + approved. Layer 3 (niche-discovery) pending review. Metrics-setup sigue sin ejecutar. Available data: Pagespeed (6 snapshots, 13 días). ANOMALÍA DETECTADA: TBT móvil spikeó a 801ms el 13-abril (RED threshold: >2x avg_7d=196ms). Avg TBT semana actual 81.5ms (YELLOW: 1.5x-2x baseline ~54ms). Performance móvil degradado 7.7% WoW. LCP estable pero crítico (~16s, 6x objetivo). SEO scores perfectos (92/100). Foundation avanzando bien pero medición sigue bloqueada.",
+  "anomalies": [
+    {
+      "id": "anom-20260420-001",
+      "metric": "tbt_mobile",
+      "severity": "red",
+      "date": "2026-04-13",
+      "value": 801,
+      "unit": "ms",
+      "threshold": "2x mean_7d (196ms)",
+      "current_value": 99,
+      "current_unit": "ms",
+      "current_severity": "yellow",
+      "trend": "spike recovered but still elevated",
+      "description": "TBT spikeó a 801ms el 13-abril (RED — 4x avg). Recovered a 23ms el 14-abril pero promedia 81.5ms en últimos 4 días vs baseline 54ms — sigue en YELLOW.",
+      "recommendation_id": "rec-20260413-001"
+    },
+    {
+      "id": "anom-20260420-002",
+      "metric": "performance_mobile",
+      "severity": "yellow",
+      "trend": "degrading",
+      "description": "Performance móvil promedia 57.4 esta semana vs 62.2 semana anterior — caída 7.7% WoW. Sigue dentro de ±10% pero dirección es descendente.",
+      "current_value": 58,
+      "mean_7d": 57.4,
+      "mean_30d": 59.3,
+      "threshold": "within 10% of avg → 70-89",
+      "note": "3 datos insufficient para trend detection formal"
+    },
+    {
+      "id": "anom-20260420-003",
+      "metric": "lcp_mobile",
+      "severity": "yellow",
+      "trend": "stagnant",
+      "description": "LCP móvil ~16s — 6x objetivo Google (<2.5s). Sin mejora en 13 días. CLS=0 (bien). LCP crítico para Core Web Vitals y SEO.",
+      "current_value": 16.3,
+      "mean_7d": 16.07,
+      "mean_30d": 15.5,
+      "threshold": "Google 'poor' >4s, Hulahoop 16s = crítico",
+      "note": "Stagnant — sin variación significativa en 13 días"
+    }
+  ],
+  "opportunities": [
+    {
+      "metric": "seo_mobile",
+      "severity": "green",
+      "description": "SEO score 92/100 consistent en todos los snapshots — excelente. Desktop y mobile. Arquitectura SEO sólida.",
+      "potential_action": "Mantener — no requiere intervención. Oportunidad: usar esta autoridad para contenido editorial."
+    },
+    {
+      "metric": "seo_desktop",
+      "severity": "green",
+      "description": "SEO score 92/100 — mismo rango excelente.",
+      "potential_action": "同上"
+    }
+  ],
+  "recommendations": [
+    {
+      "id": "rec-20260413-001",
+      "created": "2026-04-13",
+      "type": "launch",
+      "priority": "high",
+      "metric": "all",
+      "description": "Ejecutar metrics-setup para definir KPIs, conectar GA4, GSC, Meta Ads y GHL. Sin esto no hay medición posible.",
+      "linked_project": "P00-Metrics-Metrics-Setup",
+      "status": "active",
+      "weeks_active": 2,
+      "auto_resolved_reason": null,
+      "note": "Sin cambios vs semana 1 — BLOCKER sigue activo"
+    },
+    {
+      "id": "rec-20260413-002",
+      "created": "2026-04-13",
+      "type": "launch",
+      "priority": "high",
+      "metric": "all",
+      "description": "Completar strategic-plan para definir NSM (AUM target 22,5M€ 2026) y prioridades de revenue. Foundation stalled en layer 1-2.",
+      "linked_project": null,
+      "status": "active",
+      "weeks_active": 2,
+      "auto_resolved_reason": null,
+      "note": "Foundation avanzó: market-synthesis approved (Layer 2 ✓). Strategic plan aún not-started — sigo recommendation."
+    },
+    {
+      "id": "rec-20260420-001",
+      "created": "2026-04-20",
+      "type": "investigate",
+      "priority": "medium",
+      "metric": "pagespeed.tbt_mobile",
+      "description": "TBT mobile promedia 81.5ms esta semana vs 54ms baseline histórico — elevación 51% que no se explica por traffic. Check: (1) new JS/CSS deployed recently, (2) third-party scripts (chat/widgets), (3) ad network tags. El spike de 801ms el 13-abril sugiere un evento puntual pero la elevación persistente necesita debug.",
+      "linked_project": null,
+      "status": "active"
+    },
+    {
+      "id": "rec-20260420-002",
+      "created": "2026-04-20",
+      "type": "investigate",
+      "priority": "high",
+      "metric": "pagespeed.lcp_mobile",
+      "description": "LCP móvil ~16s es 6x el objetivo Google (<2.5s good, 4s needs improvement). Es el factor limitante del Core Web Vital. Check: (1) server response time (TTFB), (2) render-blocking resources, (3) image optimization (sirve con formato WebP/AVIF con lazy loading), (4) CDN usage. even baseline-level traffic will cause poor Core Web Vitals scores.",
+      "linked_project": null,
+      "status": "active"
+    },
+    {
+      "id": "rec-20260420-003",
+      "created": "2026-04-20",
+      "type": "investigate",
+      "priority": "low",
+      "metric": "pagespeed.performance_mobile",
+      "description": "Performance móvil degradado 7.7% WoW (62.2→57.4). Puede ser correlacionado con TBT elevation. Investigar same root cause que TBT.",
+      "linked_project": null,
+      "status": "active"
+    }
+  ],
+  "projectsCorrelation": [
+    {
+      "project_id": "P00-Metrics-Metrics-Setup",
+      "status": "pending",
+      "weeks_since_start": 2,
+      "related_metrics": ["all"],
+      "change_pct": null,
+      "confidence": null,
+      "assessment": "Proyecto no ha started — 0 progreso en 2 semanas. BLOCKER para toda medición."
+    },
+    {
+      "project_id": "P00-Full-Foundation-Full-Foundation",
+      "status": "active",
+      "weeks_since_start": 2,
+      "related_metrics": ["pagespeed", "seo"],
+      "change_pct": null,
+      "confidence": "low",
+      "assessment": "Foundation Layer 2 completada + approved. Layer 3 (niche-discovery) pending review. Sin impacto medible aún en métricas de negocio — PageSpeed solo técnica, no revenue."
+    },
+    {
+      "project_id": "P01-trust-engine-financiaci-n-audiovisual",
+      "status": "unknown",
+      "weeks_since_start": null,
+      "related_metrics": [],
+      "change_pct": null,
+      "confidence": "low",
+      "assessment": "Proyecto existe en filesystem pero sin datos de progreso. Estado 'unknown' — no se puede correlacionar."
+    }
+  ],
+  "dataAvailability": {
+    "metrics_plan": false,
+    "metrics_data": false,
+    "daily_snapshots": false,
+    "page_speed": true,
+    "page_speed_note": "6 snapshots: Apr 7, 9, 13, 14, 16, 20. Coverage: 13/14 días. Suficiente para detectar anomalies pero insuficiente para baseline robusto.",
+    "other_sources_note": "NO_APIS reportado por Morning Metrics — 0 integraciones conectadas (GA4, GSC, Meta Ads, GHL)."
+  },
+  "blockingReasons": [
+    "metrics-plan.json no existe → metrics-setup pillar status: not-started (2 semanas consecutivas)",
+    "metrics-data.json no existe → no hay datos de negocio (GA4/GSC/Meta Ads/GHL)",
+    "Strategic plan not-started → NSM sin definición formal (AUM 22.5M€ 2026 mentioned en company-brief pero no en strategic-plan)",
+    "Foundation Layer 3 (go-to-market) no completada — sin posicionamiento ni pricing formalizados"
+  ],
+  "weekData": {
+    "weekStart": "2026-04-14",
+    "weekEnd": "2026-04-20",
+    "daysWithData": 4,
+    "dataPointsAnalyzed": ["PageSpeed 2026-04-14", "PageSpeed 2026-04-16", "PageSpeed 2026-04-20"],
+    "pagespeed_summary": {
+      "performance_mobile": { "avg_this_week": 57.4, "avg_last_week": 62.2, "change_pct": -7.7, "trend": "degrading" },
+      "performance_desktop": { "avg_this_week": 80.3, "avg_last_week": 81.3, "change_pct": -1.2, "trend": "stable" },
+      "lcp_mobile": { "avg_this_week": 16.07, "avg_last_week": 15.87, "change_pct": 1.3, "trend": "stagnant" },
+      "tbt_mobile": { "avg_this_week": 81.5, "avg_last_week": 56.0, "change_pct": 45.5, "trend": "elevated" },
+      "seo_mobile": { "avg_this_week": 92, "avg_last_week": 92, "change_pct": 0, "trend": "stable_excellent" },
+      "seo_desktop": { "avg_this_week": 92, "avg_last_week": 92, "change_pct": 0, "trend": "stable_excellent" },
+      "cls_mobile": { "avg_this_week": 0, "avg_last_week": 0, "change_pct": 0, "trend": "stable_good" }
+    }
+  },
+  "progressNSM": {
+    "note": "NSM no definido formalmente. De company-brief: AUM 7.2M€ (2025) → 22.5M€ (2026). Sin datos de tracking — no se puede evaluar progreso."
+  },
+  "learningsAppended": true,
+  "executiveSummary": "Hulahoop — Semana 2 (W16, 14-20 abril). Foundation avanzando bien (Layer 2 approved, Layer 3 pending review). PERO métricas de negocio siguen sin configurar — mismo blocker que semana 1. Única señal disponible: PageSpeed. ANOMALÍA TÉCNICA: TBT mobile elevado (81.5ms avg vs 54ms baseline) — investigate prioritaria. LCP móvil crítico (16s) — 6x objetivo. SEO excelente (92/100). Sin métricas de acquisition/funnel/paid — imposible evaluar NSM. ACCIÓN CRÍTICA: ejecutar metrics-setup (P00-Metrics) para desbloquear el ciclo de medición."
+}

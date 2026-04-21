@@ -1,7 +1,7 @@
 {
   "version": "3.0",
   "started_at": "2026-03-01T19:03:21Z",
-  "updated_at": "2026-03-30T07:43:17Z",
+  "updated_at": "2026-04-14T01:29:00Z",
   "sections": {
     "fast-foundation": {
       "status": "approved",
@@ -10,29 +10,30 @@
       "skill": "fast-foundation",
       "pillars": {
         "company-brief": {
-          "status": "request-changes",
-          "output_file": "brand/growth4u/company-brief/current.md",
+          "status": "approved",
+          "output_file": "brand/growth4u/company-brief/company-brief.current.md",
           "skill": "fast-foundation",
-          "updated_at": "2026-04-07T17:46:51.333Z"
+          "updated_at": "2026-04-07T17:54:13.933Z",
+          "approved_at": "2026-04-07T17:54:13.933Z"
         },
         "self-l1": {
           "status": "approved",
-          "output_file": "brand/growth4u/market-and-us/self/current.md",
+          "output_file": "brand/growth4u/market-and-us/self/self.current.md",
           "skill": "fast-foundation"
         },
         "market-l1": {
           "status": "approved",
-          "output_file": "brand/growth4u/market-and-us/market/current.md",
+          "output_file": "brand/growth4u/market-and-us/market/market.current.md",
           "skill": "fast-foundation"
         },
         "brand-voice-snapshot": {
           "status": "approved",
-          "output_file": "brand/growth4u/brand-book/brand-voice/current.md",
+          "output_file": "brand/growth4u/brand-book/brand-voice/brand-voice.current.md",
           "skill": "fast-foundation"
         },
         "niche-basic": {
           "status": "approved",
-          "output_file": "brand/growth4u/go-to-market/ecps/current.md",
+          "output_file": "brand/growth4u/go-to-market/ecps/ecps.current.md",
           "skill": "fast-foundation"
         }
       }
@@ -45,7 +46,7 @@
         "company-brief": {
           "status": "approved",
           "skill": "fast-foundation",
-          "output_file": "brand/growth4u/company-brief/current.md",
+          "output_file": "brand/growth4u/company-brief/company-brief.current.md",
           "approved_at": "2026-03-01T00:00:00Z"
         }
       }
@@ -65,7 +66,7 @@
             "competitor-analysis",
             "self-analysis"
           ],
-          "output_file": "brand/growth4u/market-and-us/market/current.md",
+          "output_file": "brand/growth4u/market-and-us/market/market.current.md",
           "approved_at": "2026-03-03T18:56:00Z",
           "notes": "v4 — recentrado en empresas tech (no solo fintech). 70 fuentes, QA PASS.",
           "skill": "market-intelligence",
@@ -84,7 +85,7 @@
           "skill": "competitor-intelligence",
           "approved_at": "2026-03-03T23:34:00Z",
           "notes": "v2 — 3 deep dives (36 páginas scrapeadas), 3-lens analysis, battle cards, landscape enriched. TGH downgraded Tier B.",
-          "output_file": "brand/growth4u/market-and-us/competitors/current.md"
+          "output_file": "brand/growth4u/market-and-us/competitors/competitors.current.md"
         },
         "self-analysis": {
           "status": "approved",
@@ -96,7 +97,7 @@
             "market-analysis",
             "competitor-analysis"
           ],
-          "output_file": "brand/growth4u/market-and-us/self/current.md",
+          "output_file": "brand/growth4u/market-and-us/self/self.current.md",
           "approved_at": "2026-03-02T14:27:00Z",
           "skill": "self-intelligence"
         },
@@ -108,7 +109,7 @@
             "competitor-analysis",
             "self-analysis"
           ],
-          "output_file": "brand/growth4u/market-and-us/swot/current.md",
+          "output_file": "brand/growth4u/market-and-us/swot/swot.current.md",
           "skill": "market-synthesis",
           "completed_at": "2026-03-29T11:29:11.058Z",
           "approved_at": "2026-03-30T08:18:18.280Z",
@@ -167,34 +168,34 @@
               "status": "approved",
               "completed_at": "2026-03-06T02:00:00Z",
               "approved_at": "2026-03-06T15:58:00Z",
-              "output_file": "brand/growth4u/go-to-market/positioning/ecp1-sistema-repetible/current.md"
+              "output_file": "brand/growth4u/go-to-market/positioning/ecp1-sistema-repetible/ecp1-sistema-repetible.current.md"
             },
             "ecp2-regulacion": {
               "status": "approved",
               "completed_at": "2026-03-06T16:10:00Z",
               "approved_at": "2026-03-06T18:47:00Z",
-              "output_file": "brand/growth4u/go-to-market/positioning/ecp2-regulacion/current.md"
+              "output_file": "brand/growth4u/go-to-market/positioning/ecp2-regulacion/ecp2-regulacion.current.md"
             },
             "ecp3-canal-muriendo": {
               "status": "approved",
               "completed_at": "2026-03-06T16:10:00Z",
               "approved_at": "2026-03-06T18:47:00Z",
-              "output_file": "brand/growth4u/go-to-market/positioning/ecp3-canal-muriendo/current.md"
+              "output_file": "brand/growth4u/go-to-market/positioning/ecp3-canal-muriendo/ecp3-canal-muriendo.current.md"
             },
             "ecp4-quemado-agencias": {
               "status": "approved",
               "completed_at": "2026-03-06T16:10:00Z",
               "approved_at": "2026-03-06T18:47:00Z",
-              "output_file": "brand/growth4u/go-to-market/positioning/ecp4-quemado-agencias/current.md"
+              "output_file": "brand/growth4u/go-to-market/positioning/ecp4-quemado-agencias/ecp4-quemado-agencias.current.md"
             },
             "ecp5-invisible": {
               "status": "approved",
               "completed_at": "2026-03-06T16:10:00Z",
               "approved_at": "2026-03-06T18:47:00Z",
-              "output_file": "brand/growth4u/go-to-market/positioning/ecp5-invisible/current.md"
+              "output_file": "brand/growth4u/go-to-market/positioning/ecp5-invisible/ecp5-invisible.current.md"
             }
           },
-          "notes": "5/5 ECPs approved. Shared Tier 2: value-criteria.md (25 criteria), assets.md (15 assets). Skill v5.0. NO positioning/current.md centralizado — positioning es per-ECP. Gate check debe usar messaging-summary.md o ecps_completed.",
+          "notes": "5/5 ECPs approved. Shared Tier 2: value-criteria.md (25 criteria), assets.md (15 assets). Skill v5.0. NO positioning/positioning.current.md centralizado — positioning es per-ECP. Gate check debe usar messaging-summary.md o ecps_completed.",
           "output_file": "brand/growth4u/go-to-market/positioning/shared/messaging-summary.md",
           "gate_check_file": "brand/growth4u/go-to-market/positioning/shared/messaging-summary.md",
           "structure": "per-ecp",
@@ -209,7 +210,7 @@
           "enriches_with": [
             "positioning"
           ],
-          "output_file": "brand/growth4u/go-to-market/pricing/current.md",
+          "output_file": "brand/growth4u/go-to-market/pricing/pricing.current.md",
           "skill": "pricing-strategy",
           "approved_at": "2026-03-06T20:00:00Z",
           "notes": "v1.1 — 2 productos (TE 7K€ + Consultoría 30-50K€+), pricing privado, ROI guarantee 10K€, regla Yer escalación, 7 hooks. Aprobado por Alfonso."
@@ -261,7 +262,7 @@
       "requires": [
         "metrics-setup"
       ],
-      "output_file": "brand/growth4u/strategic-plan/current.md",
+      "output_file": "brand/growth4u/strategic-plan/strategic-plan.current.md",
       "approved_at": "2026-03-14T20:03:00Z",
       "notes": "v2 — 7 estrategias, 8 proyectos (P01-P08). LinkedIn 3 perfiles + Cold Email + Meta Ads + Free Media + IG/TikTok + Twitter/X + Social Proof.",
       "projects": "brand/growth4u/projects/registry.json",
@@ -269,7 +270,7 @@
         "strategic-plan": {
           "status": "approved",
           "skill": "strategic-plan",
-          "output_file": "brand/growth4u/strategic-plan/current.md"
+          "output_file": "brand/growth4u/strategic-plan/strategic-plan.current.md"
         },
         "strategic-presentation": {
           "status": "approved",
@@ -290,7 +291,7 @@
           "requires": [
             "positioning"
           ],
-          "output_file": "brand/growth4u/brand-book/brand-voice/current.md",
+          "output_file": "brand/growth4u/brand-book/brand-voice/brand-voice.current.md",
           "skill": "brand-voice",
           "mode": "full",
           "completed_at": "2026-03-06T21:55:00Z",
@@ -303,7 +304,7 @@
           "requires": [
             "brand-voice"
           ],
-          "output_file": "brand/growth4u/brand-identity/visual-identity/current.md",
+          "output_file": "brand/growth4u/brand-identity/visual-identity/visual-identity.current.md",
           "skill": "visual-identity",
           "mode": "full",
           "completed_at": "2026-03-08T10:54:00Z",
@@ -351,7 +352,7 @@
           ],
           "skill": "content-playbook",
           "notes": "Optional — only if Strategic Plan includes content strategy",
-          "output_file": "brand/growth4u/content-playbook/current.md",
+          "output_file": "brand/growth4u/content-playbook/content-playbook.current.md",
           "optional": true
         }
       }
@@ -370,7 +371,7 @@
           ],
           "skill": "outreach-playbook",
           "notes": "Optional — only if Strategic Plan includes outreach",
-          "output_file": "brand/growth4u/outreach-playbook/current.md",
+          "output_file": "brand/growth4u/outreach-playbook/outreach-playbook.current.md",
           "optional": true
         }
       }
@@ -398,29 +399,29 @@
     "icps": [
       {
         "name": "SaaS Post-PMF",
-        "link": "go-to-market/ecps/current.md"
+        "link": "go-to-market/ecps/ecps.current.md"
       },
       {
         "name": "Fintech Scaling",
-        "link": "go-to-market/ecps/current.md"
+        "link": "go-to-market/ecps/ecps.current.md"
       },
       {
         "name": "B2B Tech Services",
-        "link": "go-to-market/ecps/current.md"
+        "link": "go-to-market/ecps/ecps.current.md"
       }
     ],
     "competitors": [
       {
         "name": "Product Hackers",
-        "link": "market-and-us/competitors/product-hackers/current.md"
+        "link": "market-and-us/competitors/product-hackers/product-hackers.current.md"
       },
       {
         "name": "Snowball",
-        "link": "market-and-us/competitors/snowball/current.md"
+        "link": "market-and-us/competitors/snowball/snowball.current.md"
       },
       {
         "name": "TheGrowthHacker",
-        "link": "market-and-us/competitors/thegrowthhacker/current.md"
+        "link": "market-and-us/competitors/thegrowthhacker/thegrowthhack.current.md"
       }
     ],
     "positioning": "El sistema de growth para empresas tech en España que instala capacidad permanente, no dependencia.",
@@ -430,9 +431,9 @@
     "competitors": {
       "sources": "market-and-us/competitors/sources.json",
       "battle_cards": {
-        "product-hackers": "market-and-us/competitors/product-hackers/current.md",
-        "snowball": "market-and-us/competitors/snowball/current.md",
-        "thegrowthacker": "market-and-us/competitors/thegrowthacker/current.md"
+        "product-hackers": "market-and-us/competitors/product-hackers/product-hackers.current.md",
+        "snowball": "market-and-us/competitors/snowball/snowball.current.md",
+        "thegrowthacker": "market-and-us/competitors/thegrowthacker/thegrowthacker.current.md"
       }
     },
     "integrations": "integrations.json",
@@ -468,7 +469,7 @@
       "strategic-plan-q2-2026": "presentations/strategic-plan-q2-2026.html"
     },
     "seo_audit": {
-      "current": "seo-audit/current.md"
+      "current": "seo-audit/seo-audit.current.md"
     },
     "public": {
       "llms_txt": "llms.txt"
@@ -478,11 +479,32 @@
       "client_config": "client-config.json"
     },
     "memory": "memory.md",
+    "content_creation": {
+      "system-seekers": {
+        "content_strategy": "content-creation/system-seekers/content-strategy.md"
+      }
+    },
+    "campaigns": {
+      "outreach_influencers": {
+        "brief": "campaigns/outreach-influencers/brief.md",
+        "tracking": "campaigns/outreach-influencers/tracking.md",
+        "sequences_dir": "campaigns/outreach-influencers/sequences/",
+        "contact_dossier": "campaigns/outreach-influencers/contact-dossier.md"
+      }
+    },
     "atalaya": {
       "config": "atalaya/config.json",
       "profiles_scan_dir": "atalaya/profiles-scan/",
       "profiles_pending": "atalaya/profiles-pending.json",
       "latest_report": "atalaya/profiles-scan/2026-04-01-report.md"
+    },
+    "leads/pLoARoKTRiQeg1KTYWnW.md": {
+      "description": "Lead Marta Luis Ortiz Ortega — Growth4U, Reclamaciones legales",
+      "ghl_id": "pLoARoKTRiQeg1KTYWnW",
+      "tags": [
+        "llamada-agendada"
+      ],
+      "created": "2026-04-13T20:06:00Z"
     }
   }
 }

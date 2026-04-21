@@ -39,10 +39,13 @@
   "strategy": "#30",
   "phase": 1,
   "review_date": "2026-04-25",
-  "status": "active",
+  "status": "pending",
   "discord": {
     "project_thread_id": "1482771865390026870"
   },
   "description": "LinkedIn es donde están los decisores de startups tech en España. Con 3 perfiles coordinados (Alfonso→C-level, Martín→CTOs, Philippe→growth managers) podemos cubrir los 3 buyer personas sin solapar mensajes ni cansar a la audiencia.",
-  "approach": "Creamos un calendario editorial coordinado para los 3 perfiles con pilares diferenciados. Asignamos lead magnets por perfil. Redactamos templates de DM warm personalizados por segmento. Ejecutamos publicación + DMs + cross-engagement semanal. Trackeamos todo en GHL para medir conversión de DM a call."
+  "approach": "Creamos un calendario editorial coordinado para los 3 perfiles con pilares diferenciados. Asignamos lead magnets por perfil. Redactamos templates de DM warm personalizados por segmento. Ejecutamos publicación + DMs + cross-engagement semanal. Trackeamos todo en GHL para medir conversión de DM a call.",
+  "updated_at": "2026-04-14T14:42:38.056Z",
+  "mc_chat_thread_id": "project-p02",
+  "discord_thread_id": null
 }

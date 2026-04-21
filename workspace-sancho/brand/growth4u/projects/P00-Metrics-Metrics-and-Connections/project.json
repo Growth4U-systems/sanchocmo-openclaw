@@ -14,6 +14,8 @@
   "phase": -1,
   "category": "foundation",
   "review_date": null,
-  "status": "todo",
-  "strategy": "Foundation — Metrics Layer"
+  "status": "in-progress",
+  "strategy": "Foundation — Metrics Layer",
+  "mc_chat_thread_id": "project-p00-metrics",
+  "discord_thread_id": null
 }

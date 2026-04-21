@@ -1,0 +1,11 @@
+{
+  "cronId": "36d0bff9-fea9-40d8-9bfd-bf1e5e58468b",
+  "cronName": "Call Prep Daily — Growth4U",
+  "slug": "growth4u",
+  "date": "2026-04-08",
+  "runAtMs": 1775680200016,
+  "status": "ok",
+  "durationMs": 320502,
+  "model": "claude-opus-4-6",
+  "content": "📞 **LLAMADAS DE MAÑANA — Jueves 9 de abril**\n\n⚠️ **GHL API key expirada** — no se pudo cruzar contactos con el CRM. Briefing basado solo en Calendar.\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n**Reuniones con externos detectadas:**\n\n🔵 **12:00 – Aarón** (Growit School)\n   📋 Título: \"Aarón / Alfonso Sainz de Baranda - General Growth4U\"\n   👥 aaron@growitschool.com\n   📍 Google Meet\n   ⚠️ No está en GHL → sin historial de lead disponible\n   🎯 Objetivo probable: reunión de negocio/partnership (título genérico \"General Growth4U\")\n\n🔵 **16:00 – Gonzalo Albero** (Orbyn) + Philippe\n   📋 Título: \"Revisión propuesta\"\n   👥 gonzalo.albero@orbyn.com\n   📍 Google Meet\n   ⚠️ No está en GHL → sin historial de lead disponible\n   🎯 Objetivo probable: revisión de propuesta comercial (por título del evento)\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n**Reuniones internas (no-lead):**\n• 11:00 — ES Affiliates launch 🚀 (Monzo)\n• 12:00 — Q&A Oier (interno)\n• 12:30 — Sync Daily (interno)\n• 16:45 — 1to1 Paco (Monzo)\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n🔧 **Acción necesaria:** Renovar la API key de GHL para que el call prep funcione con datos completos del CRM."
+}

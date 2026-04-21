@@ -1,0 +1,12 @@
+{
+  "id": "P13",
+  "slug": "P13-trust-engine-saas-post-pmf",
+  "name": "Trust Engine — SaaS Post-PMF",
+  "strategy": "#02",
+  "tool": "trust-engine",
+  "status": "active",
+  "category": "research",
+  "created_at": "2026-04-13T21:01:41.836Z",
+  "mc_chat_thread_id": "project-p13",
+  "discord_thread_id": null
+}

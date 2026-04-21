@@ -7,12 +7,15 @@
     "done_criteria": "Plan aprobado. Proyectos P01+ creados en Mission Control.",
     "depends_on": "P00-MET-T01",
     "owner": "Sancho",
-    "status": "pending",
+    "status": "todo",
     "channel": "strategy",
     "type": "foundation",
     "skill": "strategic-plan",
     "pillar": "strategic-plan",
-    "section": "strategic-plan"
+    "section": "strategic-plan",
+    "deliverable_file": "brand/hulahoop/strategic-plan/strategic-plan.current.md",
+    "mc_chat_thread_id": "task-p00-sp-t01",
+    "discord_thread_id": null
   },
   {
     "id": "P00-SP-T02",
@@ -22,9 +25,12 @@
     "done_criteria": "Proyectos creados y en ejecución.",
     "depends_on": "P00-SP-T01",
     "owner": "Sancho",
-    "status": "pending",
+    "status": "todo",
     "channel": "strategy",
     "type": "execution",
-    "skill": "strategic-plan"
+    "skill": "strategic-plan",
+    "deliverable_file": "brand/hulahoop/projects/P00-Strategic-Plan-Strategic-Plan/tasks/P00-SP-T02/deliverable.md",
+    "mc_chat_thread_id": "task-p00-sp-t02",
+    "discord_thread_id": null
   }
 ]

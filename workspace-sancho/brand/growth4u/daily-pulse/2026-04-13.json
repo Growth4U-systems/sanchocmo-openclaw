@@ -1,0 +1,117 @@
+{
+  "date": "2026-04-13",
+  "slug": "growth4u",
+  "runAt": "2026-04-13T07:15:00Z",
+  "sources_read": [
+    "general",
+    "brand",
+    "projects",
+    "content",
+    "paid-ads",
+    "web",
+    "intelligence",
+    "soporte"
+  ],
+  "insights": [
+    {
+      "category": "metrics_alert",
+      "source": "intelligence",
+      "timestamp": "2026-04-13T06:31:54Z",
+      "headline": "0 leads ayer con €131.91 spend — CTR 0.76% por debajo de media",
+      "detail": "Morning metrics de hoy confirma día en rojo: 0 leads nuevos con €131.91 gastados. CTR 0.76% muy por debajo de la media 7d (~2.37%). Tendencia decreciente del CTR lleva 5+ días.",
+      "severity": "high",
+      "action": "Revisar creatives y audiencias — fatiga creativa o desajuste mensaje/audiencia"
+    },
+    {
+      "category": "lead_pipeline",
+      "source": "intelligence",
+      "timestamp": "2026-04-12T20:06:55Z",
+      "headline": "8 leads con tag 'llamada-agendada' — 0 transcripts nuevos",
+      "detail": "Lead sync de ayer: 8 leads pendientes de llamada, 0 transcripts nuevos en Drive. Manuel Campos Figal tiene doble tag (llamada-agendada + llamada-cancelada) — requiere revisión manual.",
+      "severity": "medium",
+      "action": "Revisar Manuel Campos Figal antes de reagendar. Revisar por qué no hay transcripts nuevos."
+    },
+    {
+      "category": "lead_pipeline",
+      "source": "intelligence",
+      "timestamp": "2026-04-11T20:06:55Z",
+      "headline": "1 lead nuevo: Jose Manuel Castro — CEO @ Grupo FirmaTel (A Coruña)",
+      "detail": "CEO de telecomunicaciones + Kit Digital, contactado vía Facebook. Teléfono enriquecido. Posible ICP para ECP Kit Digital.",
+      "severity": "low",
+      "action": "Confirmar si encaja en algún ECP. Agendar llamada."
+    },
+    {
+      "category": "conversion_risk",
+      "source": "intelligence",
+      "timestamp": "2026-04-11T20:06:55Z",
+      "headline": "Jose Antonio Martinez Marcos — 3 cancelaciones/no-show — riesgo de pérdida",
+      "detail": "3 cancelaciones o no-shows. Risk flag en GHL. Requiere reenganche por WhatsApp con link de reagendamiento.",
+      "severity": "high",
+      "action": "Enviar WhatsApp con link de reagendamiento vía GHL."
+    },
+    {
+      "category": "projects",
+      "source": "projects",
+      "timestamp": "2026-03-24T00:41:10Z",
+      "headline": "Nuevo proyecto: eventos en Rumanía — scoping activo",
+      "detail": "Alfonso abrió hilo para nuevo proyecto [P09] Eventos Rumanía. Hilo activo con 35 msgs. Todavía en fase de scoping.",
+      "severity": "low",
+      "action": "Esperar scoping de Alfonso o delegar a Escudero."
+    },
+    {
+      "category": "system",
+      "source": "soporte",
+      "timestamp": "2026-04-07T12:55:48Z",
+      "headline": "Gate check positioning: estructura per-ECP confirmada",
+      "detail": "Philippe confirmó que el positioning para Growth4U es per-ECP (no centralizado). Gate check ahora apunta al messaging-summary.md. Foundation-state.json actualizado.",
+      "severity": "low",
+      "action": "Documentación — no requiere acción inmediata."
+    }
+  ],
+  "micro_briefs": [
+    {
+      "id": "MB-001",
+      "type": "metric_alert",
+      "title": "Meta Ads: 0 leads, CTR en mínimos",
+      "description": "Yesterday: €131.91 spend, 0 leads, CTR 0.76% (avg 2.37%). Lleva 5+ días de deterioro. Possible creative fatigue.",
+      "priority": 1,
+      "owner": "Philippe"
+    },
+    {
+      "id": "MB-002",
+      "type": "lead_action",
+      "title": "Jose Antonio Martinez Marcos — reenganche",
+      "description": "3 cancelaciones/no-show. Enviar WhatsApp con link GHL para reagendar. Lead en riesgo.",
+      "priority": 1,
+      "owner": "Alfonso/Martín"
+    },
+    {
+      "id": "MB-003",
+      "type": "lead_action",
+      "title": "Manuel Campos Figal — revisión pre-agenda",
+      "description": "Tiene doble tag (agendada + cancelada). Revisar historial antes de reagendar. No hay transcripts nuevos.",
+      "priority": 2,
+      "owner": "equipo"
+    },
+    {
+      "id": "MB-004",
+      "type": "lead_nurture",
+      "title": "Jose Manuel Castro — CEO Grupo FirmaTel",
+      "description": "Nuevo lead, telecomunicaciones + Kit Digital, teléfono enriquecido. Confirmar encaje ECP y agendar.",
+      "priority": 2,
+      "owner": "equipo"
+    }
+  ],
+  "trend": "conversión",
+  "trend_detail": "Llevo 5+ días sin citas. La adquisición (leads) está inestable (0-6/día, CTR fluctuante) y la conversión (citas) está completamente bloqueada. El problema dejó de ser tráfico — es el funnel post-lead.",
+  "alerts": [
+    "🚨 0 leads ayer con €131.91 spend — CPC alto vs resultados",
+    "🚨 CTR 0.76% (media 7d ~2.37%) — deterioro sostenido",
+    "⚠️ 8 leads 'llamada-agendada' sin transcripts — pipeline frío",
+    "⚠️ Jose Antonio Martinez Marcos: 3 cancelaciones — riesgo de pérdida"
+  ],
+  "calls_scheduled_today": 0,
+  "new_leads_last_24h": 0,
+  "leads_total_tagged": 8,
+  "conversions_last_5d": 0
+}

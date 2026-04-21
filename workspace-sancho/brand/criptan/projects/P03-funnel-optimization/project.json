@@ -2,7 +2,7 @@
   "id": "P03",
   "name": "Optimización Funnel (Meta Ads + Referidos + Reviews)",
   "description": "CANCELADO — El cliente prefiere no optimizar Meta Ads en esta fase. Foco en orgánico + outbound.",
-  "status": "cancelled",
+  "status": "pending",
   "created": "2026-03-30",
   "cancelled_at": "2026-03-30",
   "review_date": null,
@@ -16,12 +16,18 @@
     "catalog_id": "04",
     "description": "Customer Advocacy (CANCELADO)"
   },
-  "channels": ["paid-ads", "content"],
+  "channels": [
+    "paid-ads",
+    "content"
+  ],
   "discord": {
     "project_thread_id": null,
     "project_channel": "projects"
   },
   "tasks_total": 4,
   "tasks_completed": 0,
-  "value_review": null
+  "value_review": null,
+  "updated_at": "2026-04-15T15:37:46.387Z",
+  "mc_chat_thread_id": "project-p03",
+  "discord_thread_id": null
 }

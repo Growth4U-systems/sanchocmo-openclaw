@@ -11,27 +11,27 @@
       "pillars": {
         "company-brief": {
           "status": "approved",
-          "output_file": "brand/paymatico/company-brief/current.md",
+          "output_file": "brand/paymatico/company-brief/company-brief.current.md",
           "skill": "fast-foundation"
         },
         "self-l1": {
           "status": "approved",
-          "output_file": "brand/paymatico/market-and-us/self/current.md",
+          "output_file": "brand/paymatico/market-and-us/self/self.current.md",
           "skill": "fast-foundation"
         },
         "market-l1": {
           "status": "approved",
-          "output_file": "brand/paymatico/market-and-us/market/current.md",
+          "output_file": "brand/paymatico/market-and-us/market/market.current.md",
           "skill": "fast-foundation"
         },
         "brand-voice-snapshot": {
           "status": "approved",
-          "output_file": "brand/paymatico/brand-voice/current.md",
+          "output_file": "brand/paymatico/brand-voice/brand-voi.current.md",
           "skill": "fast-foundation"
         },
         "niche-basic": {
           "status": "approved",
-          "output_file": "brand/paymatico/go-to-market/ecps/current.md",
+          "output_file": "brand/paymatico/go-to-market/ecps/ecps.current.md",
           "skill": "fast-foundation"
         }
       }
@@ -68,7 +68,7 @@
             "competitor-analysis",
             "self-analysis"
           ],
-          "output_file": "brand/paymatico/market-and-us/market/current.md",
+          "output_file": "brand/paymatico/market-and-us/market/market.current.md",
           "skill": "market-intelligence",
           "run_id": "c297c046-a1b2-4c9d-a06c-d547910c96fd",
           "started_at": "2026-03-04T12:57:00Z",
@@ -89,7 +89,7 @@
           "started_at": "2026-03-04T12:57:00Z",
           "completed_at": "2026-03-04T13:16:00Z",
           "approved_at": "2026-03-04T20:25:00Z",
-          "output_file": "brand/paymatico/market-and-us/competitors/current.md"
+          "output_file": "brand/paymatico/market-and-us/competitors/competitors.current.md"
         },
         "self-analysis": {
           "status": "approved",
@@ -101,7 +101,7 @@
             "market-analysis",
             "competitor-analysis"
           ],
-          "output_file": "brand/paymatico/market-and-us/self/current.md",
+          "output_file": "brand/paymatico/market-and-us/self/self.current.md",
           "skill": "self-intelligence",
           "run_id": "f9d93c13-69fa-49f9-8d08-cd48517782a5",
           "started_at": "2026-03-04T12:57:00Z",
@@ -121,7 +121,7 @@
             "competitor-analysis",
             "self-analysis"
           ],
-          "output_file": "brand/paymatico/market-and-us/swot/current.md",
+          "output_file": "brand/paymatico/market-and-us/swot/swot.current.md",
           "skill": "market-synthesis",
           "notes": "v2 merge con inputs Alex G (insider knowledge)"
         },
@@ -134,7 +134,7 @@
             "self-analysis",
             "market-synthesis"
           ],
-          "output_file": "brand/paymatico/market-and-us/ope-canvas/current.md",
+          "output_file": "brand/paymatico/market-and-us/ope-canvas/ope-canvas.current.md",
           "skill": "ope-canvas",
           "completed_at": "2026-03-30T17:50:00Z",
           "approved_at": "2026-03-30T17:50:00Z"
@@ -148,7 +148,7 @@
             "self-analysis",
             "market-synthesis"
           ],
-          "output_file": "brand/paymatico/market-and-us/summary/current.md",
+          "output_file": "brand/paymatico/market-and-us/summary/summary.current.md",
           "skill": "orchestrator",
           "completed_at": "2026-03-30T17:50:00Z",
           "approved_at": "2026-03-30T17:50:00Z"
@@ -156,7 +156,7 @@
       }
     },
     "go-to-market": {
-      "status": "not-started",
+      "status": "in-progress",
       "layer": 3,
       "output_dir": "brand/paymatico/go-to-market/",
       "pillars": {
@@ -170,7 +170,7 @@
           "enriches_with": [
             "existing-customer-data"
           ],
-          "output_file": "brand/paymatico/go-to-market/niche-discovery/current.md",
+          "output_file": "brand/paymatico/go-to-market/niche-discovery/niche-discovery.current.md",
           "skill": "niche-discovery-100x",
           "started_at": "2026-03-04T20:47:00Z",
           "completed_at": "2026-03-04T22:58:00Z",
@@ -184,7 +184,7 @@
             "fast-foundation"
           ],
           "optional": true,
-          "output_file": "brand/paymatico/go-to-market/existing-customer-data/current.md",
+          "output_file": "brand/paymatico/go-to-market/existing-customer-data/existing-customer-data.current.md",
           "skill": "existing-customer-data"
         },
         "positioning": {
@@ -193,13 +193,13 @@
           "requires": [
             "niche-discovery"
           ],
-          "output_pattern": "brand/paymatico/positioning/current.md",
+          "output_pattern": "brand/paymatico/positioning/positioning.current.md",
           "skill": "positioning-messaging",
           "started_at": "2026-03-04T22:20:00Z",
           "ecps": {
             "ecp-1-franquicias": {
               "status": "pending-approval",
-              "output_file": "brand/paymatico/positioning/current.md",
+              "output_file": "brand/paymatico/positioning/positioning.current.md",
               "version": "v1",
               "completed_at": "2026-03-04T22:20:00Z"
             },
@@ -221,7 +221,7 @@
           "enriches_with": [
             "positioning"
           ],
-          "output_file": "brand/paymatico/go-to-market/pricing/current.md",
+          "output_file": "brand/paymatico/go-to-market/pricing/pricing.current.md",
           "skill": "pricing-strategy"
         },
         "ecp-validation": {
@@ -233,7 +233,8 @@
           "optional": true,
           "skill": "ecp-validation"
         }
-      }
+      },
+      "updated_at": "2026-04-15T15:37:46.383Z"
     },
     "brand-identity": {
       "status": "not-started",
@@ -246,7 +247,7 @@
           "requires": [
             "positioning"
           ],
-          "output_file": "brand/paymatico/brand-identity/voice-profile/current.md",
+          "output_file": "brand/paymatico/brand-identity/voice-profile/voice-profil.current.md",
           "skill": "brand-voice"
         },
         "visual-identity": {
@@ -255,7 +256,7 @@
           "requires": [
             "brand-voice"
           ],
-          "output_file": "brand/paymatico/brand-identity/visual-identity/current.md",
+          "output_file": "brand/paymatico/brand-identity/visual-identity/visual-identity.current.md",
           "skill": "visual-identity"
         }
       }
@@ -286,7 +287,7 @@
       "requires": [
         "metrics-setup"
       ],
-      "output_file": "brand/paymatico/strategic-plan/current.md"
+      "output_file": "brand/paymatico/strategic-plan/strategic-pla.current.md"
     }
   },
   "brand_summary": {
@@ -317,18 +318,18 @@
   "file_index": {
     "competitors": {
       "battle_cards": {
-        "adyen": "market-and-us/competitors/adyen/current.md",
-        "mollie": "market-and-us/competitors/mollie/current.md",
-        "monei": "market-and-us/competitors/monei/current.md",
-        "multisafepay": "market-and-us/competitors/multisafepay/current.md",
-        "paycomet": "market-and-us/competitors/paycomet/current.md",
-        "paynopain": "market-and-us/competitors/paynopain/current.md",
-        "pecunpay": "market-and-us/competitors/pecunpay/current.md",
-        "sipay": "market-and-us/competitors/sipay/current.md",
-        "stripe": "market-and-us/competitors/stripe/current.md",
-        "zettle": "market-and-us/competitors/zettle/current.md"
+        "adyen": "market-and-us/competitors/adyen/adyen.current.md",
+        "mollie": "market-and-us/competitors/mollie/mollie.current.md",
+        "monei": "market-and-us/competitors/monei/monei.current.md",
+        "multisafepay": "market-and-us/competitors/multisafepay/multisafepay.current.md",
+        "paycomet": "market-and-us/competitors/paycomet/paycomet.current.md",
+        "paynopain": "market-and-us/competitors/paynopain/paynopain.current.md",
+        "pecunpay": "market-and-us/competitors/pecunpay/pecunpay.current.md",
+        "sipay": "market-and-us/competitors/sipay/sipay.current.md",
+        "stripe": "market-and-us/competitors/stripe/stripe.current.md",
+        "zettle": "market-and-us/competitors/zettle/zettle.current.md"
       },
-      "summary": "market-and-us/competitors/current.md"
+      "summary": "market-and-us/competitors/competitors.current.md"
     },
     "integrations": "integrations.json",
     "operational": {

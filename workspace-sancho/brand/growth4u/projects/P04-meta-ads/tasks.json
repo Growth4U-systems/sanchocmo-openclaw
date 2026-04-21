@@ -9,7 +9,10 @@
     "deliverable": "Verificación documentada de que Pixel + GA4 disparan correctamente.",
     "done_criteria": "Meta Pixel Helper + GA4 DebugView confirman eventos en tiempo real.",
     "depends_on": "P01",
-    "skill": "frontend-design"
+    "skill": "frontend-design",
+    "deliverable_file": "brand/growth4u/projects/P04-meta-ads/tasks/P04-T01/deliverable.md",
+    "mc_chat_thread_id": "task-p04-t01",
+    "discord_thread_id": null
   },
   {
     "id": "P04-T02",
@@ -20,7 +23,10 @@
     "description": "Escribir 3 creatividades de anuncio, cada una atacando un dolor específico de los ECPs. CTA: agendar llamada.",
     "deliverable": "3 creatividades de anuncio: headline, copy, visual, CTA. Un ángulo por ECP.",
     "done_criteria": "Creatividades aprobadas. Cada una ataca un dolor específico con CTA de agendar.",
-    "skill": "canvas-design"
+    "skill": "canvas-design",
+    "deliverable_file": "brand/growth4u/projects/P04-meta-ads/tasks/P04-T02/deliverable.md",
+    "mc_chat_thread_id": "task-p04-t02",
+    "discord_thread_id": null
   },
   {
     "id": "P04-T03",
@@ -32,7 +38,10 @@
     "deliverable": "Campaña Meta Ads activa: 20€/día, 3 variantes, audiencia configurada.",
     "done_criteria": "Campaña publicada y gastando. 3 ad sets con variantes diferentes.",
     "depends_on": "P04-T01",
-    "skill": "meta-ads"
+    "skill": "meta-ads",
+    "deliverable_file": "brand/growth4u/projects/P04-meta-ads/tasks/P04-T03/deliverable.md",
+    "mc_chat_thread_id": "task-p04-t03",
+    "discord_thread_id": null
   },
   {
     "id": "P04-T04",
@@ -44,6 +53,9 @@
     "deliverable": "Análisis de rendimiento: ganador identificado, perdedores pausados, budget escalado.",
     "done_criteria": "1 variante ganadora con CPL <25€. Presupuesto incrementado en ganador.",
     "depends_on": "P04-T03",
-    "skill": "meta-ads"
+    "skill": "meta-ads",
+    "deliverable_file": "brand/growth4u/projects/P04-meta-ads/tasks/P04-T04/deliverable.md",
+    "mc_chat_thread_id": "task-p04-t04",
+    "discord_thread_id": null
   }
 ]

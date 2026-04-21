@@ -1,0 +1,11 @@
+{
+  "cronId": "36d0bff9-fea9-40d8-9bfd-bf1e5e58468b",
+  "cronName": "Call Prep Daily — Growth4U",
+  "slug": "growth4u",
+  "date": "2026-04-12",
+  "runAtMs": 1776025800017,
+  "status": "ok",
+  "durationMs": 154103,
+  "model": "MiniMax-M2.7",
+  "content": "📞 LLAMADAS DE MAÑANA — lunes 13 abril\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n🔵 No hay llamadas de clientes programadas para mañana.\n\n**Revisado:** 8 leads con tag \"llamada-agendada\" en GHL — ninguno tiene evento en calendario mañana.\n\n**Otros eventos del día** (Awareness — no son calls de cliente GHL):\n• 11:00 — Cobee <> Growth4U | Sesión de lanzamiento (Pluxee Group)\n• 12:30 — Revisión propuesta (con gonzalo.albero@orbyn.com)\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+}

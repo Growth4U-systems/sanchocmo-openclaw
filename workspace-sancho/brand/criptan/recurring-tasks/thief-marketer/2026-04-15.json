@@ -1,0 +1,119 @@
+{
+  "cronName": "Thief Marketer — Criptan",
+  "slug": "criptan",
+  "date": "2026-04-15",
+  "runAtMs": 1744694100000,
+  "status": "partial",
+  "limitations": [
+    "x_search: xAI credits exhausted (429)",
+    "Bitvavo: Cloudflare 403 block",
+    "Coinbase: Cloudflare 403 block",
+    "BBVA crypto page: 404 (possible URL change or removal)",
+    "Google search: blocked by captcha",
+    "Google Ads Transparency: requires JS rendering"
+  ],
+  "content": {
+    "summary": "Análisis competitivo semanal parcial. Solo Bit2Me homepage accesible vía web_fetch. X search sin créditos. Bitvavo/Coinbase bloqueados por Cloudflare.",
+    "competitors": {
+      "bit2me": {
+        "tier": "A",
+        "homepage_changes": {
+          "cryptos_listed": 420,
+          "earn_max_rate": "25.1%",
+          "card_cashback": "30%",
+          "mica_status": "Primera fintech española con licencia MiCA",
+          "key_products": ["Buy/Sell (420 cryptos)", "Earn (hasta 25.1%)", "Card (30% cashback)", "Tax", "Pay", "Pro", "Loan (hasta 1M€)", "Launchpad", "STX (Bolsa de Valores blockchain)", "Wealth", "API", "Whitelabel", "Commerce", "Consulting", "Custody"],
+          "new_cryptos_added": ["OneFootball Club (OFC)", "tx (TX)", "Stable (STABLE)", "Openverse Network (BTG)", "NodeOps (NODE)"],
+          "top_performers_week": {"Beldex": "+71.72%", "RedStone": "+51.35%", "TrueFi": "+49.76%"},
+          "copy_headline": "Your easiest and most complete cryptocurrency app in the world",
+          "trust_signals": ["Operational since 2014", "First Spanish fintech with MiCA license", "ISO 37001/37301/27001/27701/22301", "UNE 19601", "CSA Star Level One", "Cointelegraph Certificate"],
+          "certifications_count": 7
+        },
+        "vs_criptan": {
+          "catalogo": "420 vs ~30+ (Criptan) — gap 14x",
+          "earn_headline": "25.1% vs 4.5% TAE — pero Bit2Me rate probablemente solo en B2M token; comparable en stablecoins",
+          "card": "Bit2Me Card 30% CB vs Criptan sin card — producto diferenciador",
+          "producto_suite": "15+ productos vs 3 core (Buy/Sell, Earn, Cestas) — gap significativo en breadth",
+          "positioning": "Bit2Me = ecosistema completo / Criptan = complemento del banco",
+          "trust": "Bit2Me 7 ISOs + Cointelegraph vs Criptan Banco de España D646 + seguro 250M",
+          "b2b": "Bit2Me tiene API, Whitelabel, Commerce, Consulting, Custody, Wealth — Criptan no tiene B2B visible"
+        }
+      },
+      "bitvavo": {
+        "tier": "A",
+        "status": "blocked_cloudflare_403",
+        "notes": "No se pudo acceder a homepage ni blog. Requiere browser automation para scraping."
+      },
+      "coinbase": {
+        "tier": "A",
+        "status": "blocked_cloudflare_403",
+        "notes": "No se pudo acceder. Requiere browser automation."
+      },
+      "bbva_crypto": {
+        "tier": "A",
+        "status": "404_on_crypto_page",
+        "urls_tested": ["bbva.es/personas/criptomonedas.html", "bbva.es/personas/productos/criptomonedas.html"],
+        "hypothesis": "BBVA puede haber movido/eliminado su página de criptomonedas, o cambiado la URL. Señal potencialmente importante: ¿retirada del servicio o restructuración?",
+        "action_required": "Verificar manualmente si BBVA sigue ofreciendo crypto y cuál es la URL actual."
+      }
+    },
+    "criptan_current_state": {
+      "homepage_headline": "Invierte y protege tu dinero",
+      "positioning": "Complemento perfecto de tu banco",
+      "earn_rates": {"USDC": "4.5% TAE", "EURC": "2.9% TAE", "BTC": "1.25% TAE", "ETH": "3% TAE"},
+      "trust_signals": ["Autorización MiCA", "Registro Banco de España D646", "Seguro 250M", "7 años en el sector", "100K+ clientes", "140+ países", "Rankia 2025 Mejor Exchange"],
+      "investors": ["Ex CEO Banco Santander", "Lanzadera (Juan Roig)", "Ex VP Inditex / Ex presidente Abanca", "Founder Ebury"],
+      "blog_last_post": "2026-03-02",
+      "blog_gap_days": 44,
+      "content_alert": "Sin publicación en blog desde hace 44 días. Gap de contenido crítico."
+    },
+    "oportunidades_robables": [
+      {
+        "id": "STEAL-001",
+        "source": "Bit2Me",
+        "what": "Certificaciones ISO como trust signals",
+        "action": "Criptan tiene Banco de España + MiCA + seguro 250M pero NO las muestra con iconos/badges visibles en homepage como Bit2Me. Añadir barra de trust con badges visuales.",
+        "effort": "bajo",
+        "impact": "medio"
+      },
+      {
+        "id": "STEAL-002",
+        "source": "Bit2Me",
+        "what": "Free Tax tool como lead magnet",
+        "action": "Bit2Me tiene Bit2Me Tax gratuito para declaración de impuestos. Criptan podría crear una guía fiscal o herramienta similar como lead magnet para temporada IRPF (mayo-junio).",
+        "effort": "medio",
+        "impact": "alto"
+      },
+      {
+        "id": "STEAL-003",
+        "source": "Bit2Me Academy",
+        "what": "Contenido educativo estructurado como funnel",
+        "action": "Bit2Me tiene Academy con cursos gratuitos (Bitcoin, NFTs, Fiscalidad, DeFi). Criptan tiene blog pero sin estructura de cursos. Crear mini-curso 'Crypto para ahorradores' alineado con ECP ahorrador-desencantado.",
+        "effort": "medio",
+        "impact": "alto"
+      },
+      {
+        "id": "STEAL-004",
+        "source": "BBVA",
+        "what": "Página crypto desaparecida = oportunidad SEO",
+        "action": "Si BBVA ha movido/eliminado su landing de criptomonedas, hay oportunidad de capturar tráfico SEO de búsquedas tipo 'BBVA criptomonedas alternativa'. Content piece comparativo.",
+        "effort": "bajo",
+        "impact": "medio"
+      },
+      {
+        "id": "STEAL-005",
+        "source": "Self-analysis",
+        "what": "Blog inactivo 44 días",
+        "action": "URGENTE: Criptan no ha publicado en blog desde 2 marzo. En un mercado donde Bit2Me publica regularmente en Academy/News, esto es un gap de autoridad y SEO. Reactivar con al menos 1 post semanal.",
+        "effort": "bajo",
+        "impact": "alto"
+      }
+    ],
+    "alertas": [
+      "🔴 BBVA crypto page returning 404 — verificar si han retirado el servicio o cambiado URL",
+      "🟡 Criptan blog inactivo 44 días — gap de contenido crítico vs competidores activos",
+      "🟡 Bit2Me añadiendo nuevas cryptos (5 esta semana) — gap de catálogo se amplía",
+      "🟡 X search sin créditos — próximas ejecuciones del cron necesitan créditos xAI"
+    ]
+  }
+}

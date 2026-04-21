@@ -26,7 +26,17 @@
       "schedule": "0 9 * * 1-5",
       "tz": "Europe/Madrid",
       "publish_channel": "intelligence",
-      "read_channels": ["general", "brand", "campaigns", "content", "intelligence", "onboarding", "soporte", "research", "paid-ads"]
+      "read_channels": [
+        "general",
+        "brand",
+        "campaigns",
+        "content",
+        "intelligence",
+        "onboarding",
+        "soporte",
+        "research",
+        "paid-ads"
+      ]
     },
     "meeting_intelligence": {
       "enabled": false,
@@ -42,7 +52,7 @@
       "publish_channel": "learning"
     },
     "thief_marketer": {
-      "enabled": false,
+      "enabled": true,
       "schedule": "0 8 * * 3",
       "tz": "Europe/Madrid",
       "publish_channel": "intelligence"

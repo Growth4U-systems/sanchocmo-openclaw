@@ -6,7 +6,7 @@ phone: +34669691805
 company: Máquinas Expendedoras (Vending)
 source: Facebook Ads (G4U - Testeo Creativos - Copy)
 date_added: 2026-03-27
-last_enriched: 2026-04-01T22:00:00+02:00
+last_enriched: 2026-04-14T20:00:00Z
 enrichment_pending: false
 tags: [llamada-agendada, secuencia-seguimiento]
 budget: 10k-25k€

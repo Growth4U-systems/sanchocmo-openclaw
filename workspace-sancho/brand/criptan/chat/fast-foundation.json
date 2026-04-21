@@ -56,9 +56,20 @@
       "text": "✅ **Docs actualizados** con toda la info que me has dado. Aquí el resumen de lo que ha cambiado:\n\n---\n\n### 📊 Datos clave incorporados\n\n| Métrica | Valor |\n|---------|-------|\n| **NSM** | Primer depósito (registro → KYC → depósito) |\n| **Objetivo** | 5.000 nuevos usuarios con depósito en 3-6 meses |\n| **Budget** | ~10.000€/mes (escalable si payback baja a 2-3 meses) |\n| **CAC actual** | ~70€ por primer depósito (vía YouTubers) |\n| **Equipo mktg** | Iván + Alfonso + Sancho |\n| **B2B** | 250 empresas, 10% del volumen total → prioridad Q2-Q3 |\n\n### 🔑 Oportunidades claras que detecto\n\n1. **Down-the-funnel content** — Tenéis awareness (podcasts, YouTubers) pero casi nada de contenido que capture demanda existente: artículos SEO tipo \"mejor exchange cripto España\", reviews, comparativas. Esto es fruta madura.\n\n2. **Reviews y presencia en terceros** — Rankia ya os dieron premio, pero ¿estáis activos en reviews de Trustpilot, Rankia comparativas, HelpMyCash? Ahí es donde busca el Ahorrador Desencantado antes de depositar.\n\n3. **B2B como segundo motor** — 250 empresas moviendo el 10% del volumen es una señal brutal. Con outreach directo (LinkedIn + cold email al CFO) y contenido específico B2B, podéis crecer ese segmento sin competir por el mismo presupuesto de adquisición B2C.\n\n---\n\n**Siguiente paso**: ¿Arranco la Full Foundation (Layer 1) — Market Intelligence profunda, Competitor Intelligence y Self Intelligence completa? Esto nos da la base para diseñar el plan de los 5.000 depósitos.",
       "agent": "sancho",
       "ts": "2026-03-30T08:50:41.723Z"
+    },
+    {
+      "role": "user",
+      "text": "Estoy abriendo el chat sobre \"company brief\". Dame un resumen rápido del estado actual y qué podemos hacer. Si necesitas algo de mí, dímelo.",
+      "ts": 1775762987427
+    },
+    {
+      "role": "bot",
+      "text": "**Resumen rápido — Criptan Foundation:**\n\n| Pilar | Estado |\n|-------|--------|\n| Company Brief | ✅ Done |\n| Market Analysis | ✅ Approved |\n| Competitor Analysis | ✅ Approved |\n| Self Analysis | ❌ Not started |\n| Market Synthesis | ❌ Not started (bloqueada por self analysis) |\n| Niche Discovery | ❌ Not started |\n| Positioning + Pricing | ❌ Not started |\n| Metrics Setup | ✅ Done |\n| Strategic Plan | ✅ Approved |\n\n**El cuello de botella actual es Self Analysis** — es la única pieza que bloquea la synthesis y todo el GTM.\n\n**¿Qué podemos hacer ahora?**\n\n1. **Ejecutar Self Analysis** → desbloquea Market Synthesis → desbloquea Niche Discovery → desbloquea Positioning. Es el paso más crítico.\n\n2. **Mientras tanto** — con lo que ya hay (brief + market + competitors), puedo preparar un primer draft del positioning messaging si quieres.\n\n3. **B2B** — Tenéis 250 empresas con 10% del volumen. Esto está infraexplotado y no necesita esperar a Foundation. Si quieres, puedo armar un outreach B2B paralelo.\n\n¿Qué quieres que haga?",
+      "ts": 1775763040008,
+      "agent": "sancho"
     }
   ],
-  "updatedAt": 1774860641723,
+  "updatedAt": 1775763040008,
   "discordThreadId": null,
   "discordChannelId": null
 }

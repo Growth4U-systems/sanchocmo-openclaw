@@ -15,8 +15,12 @@
       "skill": "company-finder",
       "created": "2026-03-30",
       "completed": "2026-03-30",
-      "output_files": ["brand/criptan/projects/P05-b2b-outbound/T01/icp-b2b-definition.md"],
-      "notes": "ICP definido con 7+ criterios medibles, 15 empresas ejemplo, scoring model, 3 buyer personas. Pendiente validar con datos reales de 250 clientes existentes."
+      "output_files": [
+        "brand/criptan/projects/P05-b2b-outbound/T01/icp-b2b-definition.md"
+      ],
+      "notes": "ICP definido con 7+ criterios medibles, 15 empresas ejemplo, scoring model, 3 buyer personas. Pendiente validar con datos reales de 250 clientes existentes.",
+      "deliverable_file": "brand/criptan/projects/P05-b2b-outbound/tasks/T01/deliverable.md",
+      "mc_chat_thread_id": "task-t01"
     },
     {
       "id": "T02",
@@ -25,7 +29,7 @@
       "deliverable": "Lista de 200 empresas con datos de contacto y señal de cualificación.",
       "done_criteria": "200 empresas con al menos nombre + sector + persona clave + LinkedIn.",
       "depends_on": "T01",
-      "status": "pending",
+      "status": "todo",
       "owner": "Sancho",
       "channel": "prospecting",
       "discord_thread_id": null,
@@ -33,7 +37,9 @@
       "created": "2026-03-30",
       "completed": null,
       "output_files": [],
-      "notes": ""
+      "notes": "",
+      "deliverable_file": "brand/criptan/projects/P05-b2b-outbound/tasks/T02/deliverable.md",
+      "mc_chat_thread_id": "task-t02"
     },
     {
       "id": "T03",
@@ -42,7 +48,7 @@
       "deliverable": "Lista enriquecida con email verificado y 1-2 señales de personalización por contacto.",
       "done_criteria": "Al menos 150 emails verificados con señal de personalización.",
       "depends_on": "T02",
-      "status": "pending",
+      "status": "todo",
       "owner": "Sancho",
       "channel": "prospecting",
       "discord_thread_id": null,
@@ -50,7 +56,9 @@
       "created": "2026-03-30",
       "completed": null,
       "output_files": [],
-      "notes": "Necesita herramienta de enrichment (Apollo, Hunter, etc.)"
+      "notes": "Necesita herramienta de enrichment (Apollo, Hunter, etc.)",
+      "deliverable_file": "brand/criptan/projects/P05-b2b-outbound/tasks/T03/deliverable.md",
+      "mc_chat_thread_id": "task-t03"
     },
     {
       "id": "T04",
@@ -59,7 +67,7 @@
       "deliverable": "Secuencia completa: 3 emails + 2 touchpoints LinkedIn, con variantes por sub-segmento.",
       "done_criteria": "Secuencia aprobada. Primeros 50 contactos activados con >15% reply rate.",
       "depends_on": "T03",
-      "status": "pending",
+      "status": "todo",
       "owner": "Sancho",
       "channel": "prospecting",
       "discord_thread_id": null,
@@ -67,7 +75,9 @@
       "created": "2026-03-30",
       "completed": null,
       "output_files": [],
-      "notes": "Necesita sequencer (Instantly, Lemlist, etc.) y dominio calentado"
+      "notes": "Necesita sequencer (Instantly, Lemlist, etc.) y dominio calentado",
+      "deliverable_file": "brand/criptan/projects/P05-b2b-outbound/tasks/T04/deliverable.md",
+      "mc_chat_thread_id": "task-t04"
     }
   ]
 }

@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Comunidad Growth4U — Propuesta de Copy v1</title>
+<style>
+  :root {
+    --black: #0a0a0a;
+    --white: #fafafa;
+    --gray-50: #f7f7f7;
+    --gray-100: #e8e8e8;
+    --gray-200: #d4d4d4;
+    --gray-400: #999;
+    --gray-500: #717171;
+    --gray-600: #555;
+    --gray-800: #2a2a2a;
+    --accent: #4f46e5;
+    --accent-light: #e0e7ff;
+    --green: #16a34a;
+    --green-light: #dcfce7;
+    --red: #dc2626;
+    --red-light: #fef2f2;
+    --orange: #ea580c;
+    --orange-light: #fff7ed;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    color: var(--gray-800);
+    line-height: 1.6;
+    background: var(--white);
+  }
+
+  /* --- Layout --- */
+  .container { max-width: 780px; margin: 0 auto; padding: 0 24px; }
+  section { padding: 80px 0; }
+  section + section { border-top: 1px solid var(--gray-100); }
+
+  /* --- Typography --- */
+  h1 { font-size: 2.6rem; line-height: 1.15; font-weight: 800; letter-spacing: -0.03em; color: var(--black); }
+  h2 { font-size: 1.8rem; line-height: 1.25; font-weight: 700; letter-spacing: -0.02em; color: var(--black); margin-bottom: 20px; }
+  h3 { font-size: 1.15rem; font-weight: 700; color: var(--black); margin-bottom: 8px; }
+  p { font-size: 1.05rem; color: var(--gray-600); margin-bottom: 16px; }
+  .lead { font-size: 1.2rem; color: var(--gray-500); }
+  .small { font-size: 0.9rem; color: var(--gray-400); }
+  strong { color: var(--black); }
+
+  /* --- Annotation bar (editorial notes) --- */
+  .annotation {
+    background: var(--orange-light);
+    border-left: 4px solid var(--orange);
+    padding: 12px 16px;
+    margin-bottom: 24px;
+    border-radius: 0 8px 8px 0;
+    font-size: 0.85rem;
+    color: var(--orange);
+    font-weight: 600;
+  }
+  .annotation span { font-weight: 400; color: var(--gray-600); }
+
+  /* --- Hero --- */
+  .hero { padding: 100px 0 80px; text-align: left; }
+  .hero h1 { margin-bottom: 24px; }
+  .hero .subtitle { font-size: 1.3rem; color: var(--gray-500); max-width: 600px; margin-bottom: 32px; }
+  .hero .cta-row { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
+
+  /* --- Buttons --- */
+  .btn-primary {
+    display: inline-block; padding: 14px 32px; background: var(--black); color: var(--white);
+    font-size: 1rem; font-weight: 600; border-radius: 8px; text-decoration: none;
+    transition: background 0.2s;
+  }
+  .btn-primary:hover { background: var(--gray-800); }
+  .btn-secondary {
+    display: inline-block; padding: 14px 32px; background: transparent; color: var(--black);
+    font-size: 1rem; font-weight: 600; border-radius: 8px; text-decoration: none;
+    border: 1.5px solid var(--gray-200); transition: border-color 0.2s;
+  }
+  .btn-secondary:hover { border-color: var(--gray-400); }
+
+  /* --- Comparison grid --- */
+  .compare-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin: 32px 0;
+  }
+  .compare-card {
+    padding: 28px; border-radius: 12px; border: 1.5px solid var(--gray-100);
+  }
+  .compare-card.bad { background: var(--red-light); border-color: #fecaca; }
+  .compare-card.good { background: var(--green-light); border-color: #bbf7d0; }
+  .compare-card .label { font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; }
+  .compare-card.bad .label { color: var(--red); }
+  .compare-card.good .label { color: var(--green); }
+  .compare-card h3 { margin-bottom: 12px; }
+  .compare-card p { font-size: 0.95rem; margin-bottom: 0; }
+
+  /* --- Video embed placeholder --- */
+  .video-embed {
+    width: 100%; aspect-ratio: 16/9; background: var(--gray-50);
+    border-radius: 12px; border: 1.5px solid var(--gray-100);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.1rem; color: var(--gray-400); margin: 32px 0;
+  }
+
+  /* --- Motor visual --- */
+  .motor-section { background: var(--gray-50); }
+  .motor-core {
+    background: var(--black); color: var(--white); border-radius: 12px;
+    padding: 32px; margin: 32px 0;
+  }
+  .motor-core h3 { color: var(--white); margin-bottom: 16px; }
+  .motor-tags { display: flex; flex-wrap: wrap; gap: 8px; }
+  .motor-tag {
+    background: rgba(255,255,255,0.12); padding: 6px 14px; border-radius: 6px;
+    font-size: 0.85rem; color: rgba(255,255,255,0.8);
+  }
+  .channels-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 24px; }
+  .channel-col h4 { font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--gray-400); margin-bottom: 12px; }
+  .channel-col li { font-size: 0.95rem; color: var(--gray-600); margin-bottom: 8px; list-style: none; padding-left: 20px; position: relative; }
+  .channel-col li::before { content: "→"; position: absolute; left: 0; color: var(--gray-400); }
+
+  /* --- Timeline --- */
+  .timeline { margin: 40px 0; }
+  .timeline-item { display: flex; gap: 24px; margin-bottom: 40px; }
+  .timeline-marker {
+    flex-shrink: 0; width: 48px; height: 48px; background: var(--black); color: var(--white);
+    border-radius: 10px; display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 1rem;
+  }
+  .timeline-content h3 { margin-bottom: 4px; }
+  .timeline-content p { margin-bottom: 0; font-size: 0.95rem; }
+
+  /* --- Cases --- */
+  .cases-grid { display: grid; grid-template-columns: 1fr; gap: 20px; margin: 32px 0; }
+  .case-card {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 24px 28px; border-radius: 12px; border: 1.5px solid var(--gray-100);
+    text-decoration: none; color: inherit; transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .case-card:hover { border-color: var(--gray-400); box-shadow: 0 4px 12px rgba(0,0,0,0.04); }
+  .case-left h3 { margin-bottom: 2px; }
+  .case-left .case-type { font-size: 0.85rem; color: var(--gray-400); }
+  .case-metric { text-align: right; }
+  .case-metric .big { font-size: 1.6rem; font-weight: 800; color: var(--black); }
+  .case-metric .desc { font-size: 0.8rem; color: var(--gray-400); }
+  .verify-link { font-size: 0.85rem; color: var(--accent); text-decoration: underline; margin-top: 4px; display: inline-block; }
+
+  /* --- Comunidad features --- */
+  .features-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 32px 0; }
+  .feature-card { padding: 24px; border-radius: 12px; border: 1.5px solid var(--gray-100); }
+  .feature-card .icon { font-size: 1.4rem; margin-bottom: 8px; }
+  .feature-card h3 { font-size: 1rem; }
+  .feature-card p { font-size: 0.9rem; margin-bottom: 0; }
+
+  /* --- Pricing --- */
+  .pricing-section { background: var(--gray-50); }
+  .pricing-box {
+    background: var(--white); border: 2px solid var(--black); border-radius: 16px;
+    padding: 48px 40px; text-align: center; max-width: 520px; margin: 32px auto;
+  }
+  .pricing-box .price { font-size: 3.2rem; font-weight: 800; color: var(--black); }
+  .pricing-box .price-desc { font-size: 1rem; color: var(--gray-400); margin-bottom: 24px; }
+  .pricing-box .btn-primary { width: 100%; text-align: center; margin-bottom: 16px; }
+
+  .anchor-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 32px 0; }
+  .anchor-card { text-align: center; padding: 20px; border-radius: 10px; background: var(--white); border: 1px solid var(--gray-100); }
+  .anchor-card .anchor-price { font-size: 1.3rem; font-weight: 800; color: var(--gray-400); text-decoration: line-through; }
+  .anchor-card .anchor-label { font-size: 0.8rem; color: var(--gray-400); }
+
+  /* --- Guarantee --- */
+  .guarantee-box {
+    background: var(--green-light); border: 1.5px solid #bbf7d0; border-radius: 12px;
+    padding: 32px; margin: 32px 0; text-align: center;
+  }
+  .guarantee-box h3 { color: var(--green); margin-bottom: 8px; }
+  .guarantee-box p { color: var(--gray-600); margin-bottom: 0; }
+
+  /* --- FAQ --- */
+  .faq-item { border-bottom: 1px solid var(--gray-100); padding: 24px 0; }
+  .faq-item:last-child { border-bottom: none; }
+  .faq-q { font-weight: 700; font-size: 1.05rem; color: var(--black); margin-bottom: 8px; }
+  .faq-a { font-size: 0.95rem; color: var(--gray-600); }
+
+  /* --- Final CTA --- */
+  .final-cta { text-align: center; padding: 100px 0; background: var(--black); color: var(--white); }
+  .final-cta h2 { color: var(--white); }
+  .final-cta p { color: rgba(255,255,255,0.6); }
+  .final-cta .btn-primary { background: var(--white); color: var(--black); margin-top: 24px; }
+  .final-cta .btn-primary:hover { background: var(--gray-100); }
+
+  /* --- Responsive --- */
+  @media (max-width: 640px) {
+    h1 { font-size: 1.9rem; }
+    h2 { font-size: 1.4rem; }
+    .compare-grid, .features-grid, .channels-grid, .anchor-grid { grid-template-columns: 1fr; }
+    .hero { padding: 60px 0 40px; }
+    section { padding: 60px 0; }
+    .pricing-box { padding: 32px 24px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     PROPUESTA DE ESTRUCTURA — /comunidad/
+     
+     Notas para Alfonso:
+     - Las barras naranjas son notas editoriales (no van en producción)
+     - Los links a casos ya apuntan a las URLs reales
+     - Precio confirmado: €7.500
+     - Copy siguiendo Brand Voice: Dolor → Diagnóstico → Puente
+     - Cada claim con dato concreto o link verificable
+     ============================================================ -->
+
+<!-- ==================== 1. HERO ==================== -->
+<section class="hero">
+  <div class="container">
+    <div class="annotation">
+      📝 NOTA EDITORIAL: Hero reescrito con patrón Dolor → Diagnóstico → Puente. 
+      <span>Eliminada la apertura genérica "Comunidad Growth4U · Construye tu motor de confianza".</span>
+    </div>
+    <h1>Cada euro en ads se evapora cuando paras.<br>Nosotros instalamos un sistema que se queda.</h1>
+    <p class="subtitle">El mismo método con el que llevamos Bnext de 0 a 500K usuarios y redujimos el CAC de Bit2Me un 70%. Ahora en formato comunidad: tú ejecutas con nuestro acompañamiento semanal.</p>
+    <div class="cta-row">
+      <a href="https://now.growth4u.io/widget/bookings/llamada-estrategica-alfonso-w" class="btn-primary">Hablemos — 30 min, sin compromiso</a>
+      <a href="#casos" class="btn-secondary">Ver casos verificados ↓</a>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== 2. EL PROBLEMA ==================== -->
+<section>
+  <div class="container">
+    <div class="annotation">
+      📝 NOTA EDITORIAL: Añadido caso personal Alfonso (Bnext CAC 50€→12,40€) para cumplir trait "Insider Vulnerable". 
+      <span>Dato concreto en vez de "el CAC sube" genérico.</span>
+    </div>
+    <h2>El modelo que usas tiene fecha de caducidad.</h2>
+    <p>Cada euro que metes en ads se evapora el día que paras. Cada llamada outbound, lo mismo. Los leads que pagaste se van si cortas el presupuesto. No es tu culpa — es el modelo. Estás alquilando atención en vez de construir algo que trabaje para ti mientras duermes.</p>
+    <p><strong>En Bnext, mi CAC era de 50€ por usuario. Cada trimestre subía.</strong> Dejé de depender de paid y bajó a 12,40€. No gasté más — cambié el modelo.</p>
+    <p class="small">— Alfonso Sainz de Baranda, Cofundador Growth4U</p>
+  </div>
+</section>
+
+<!-- ==================== 3. GASTO VS ACTIVO ==================== -->
+<section>
+  <div class="container">
+    <div class="annotation">
+      📝 NOTA EDITORIAL: Comparativa visual con datos concretos en vez de descripción genérica.
+    </div>
+    <h2>Dos modelos. Solo uno se queda.</h2>
+    <div class="compare-grid">
+      <div class="compare-card bad">
+        <div class="label">❌ Gasto recurrente</div>
+        <h3>Paid media + vendedores</h3>
+        <p>Inviertes, captas, paras, desaparece. Cada mes empiezas de cero. El CAC sube porque la conversión cae por falta de confianza. No te queda nada.</p>
+      </div>
+      <div class="compare-card good">
+        <div class="label">✅ Activo permanente</div>
+        <h3>Motor de confianza</h3>
+        <p>Inviertes una vez y queda. Reviews, artículos, señales en IA, creadores, posicionamiento. Trabaja 24/7 y potencia cada euro que metas en paid.</p>
+      </div>
+    </div>
+    <p>Los canales de paid suben de precio. Los de confianza bajan de coste. <strong>Por el precio de 1 mes de agencia, tienes 6 meses de sistema.</strong></p>
+  </div>
+</section>
+
+<!-- ==================== 4. ALFONSO TE LO EXPLICA ==================== -->
+<section>
+  <div class="container">
+    <div class="annotation">
+      📝 NOTA EDITORIAL: Credenciales ancladas en regulación (CNMV/BdE) + datos verificables. 
+      <span>No "primer neobanco español" (claim cuestionable) → "CGO del neobanco que pasó de 0 a 400K usuarios bajo CNMV".</span>
+    </div>
+    <h2>El mismo sistema que usé para llevar Bnext de 0 a 500K usuarios bajo CNMV.</h2>
+    <p>Sin paid. Sin depender de algoritmos. Contado por quien lo hizo.</p>
+    <div class="video-embed">▶ Vídeo de Alfonso explicando el método</div>
+    <p><strong>Alfonso Sainz de Baranda</strong> — CGO Bnext (0→500K usuarios, CNMV) · Head of Growth Bit2Me (cripto regulado, Banco de España) · Cofundador Growth4U</p>
+  </div>
+</section>
+
+<!-- ==================== 5. ESTRUCTURA: MOTOR + CANALES ==================== -->
+<section class="motor-section">
+  <div class="container">
+    <div class="annotation">
+      📝 NOTA EDITORIAL: Motor explicado con secuencialidad — no se montan 4 canales en paralelo. 
+      <span>Caso Bnext como prueba de la secuencia.</span>
+    </div>
+    <h2>Primero el motor. Después los canales.</h2>
+    <p>El motor define tres cosas: tu nicho real (no el que crees que tienes), tu mensaje para ese nicho, y la presencia que te hace visible donde tu buyer busca. Los canales distribuyen esa inteligencia — pero sin motor, cada canal quema presupuesto.</p>
+    <p class="small">En Bnext no empezamos con 4 canales. Empezamos con el motor. Los canales vinieron después, cuando hubo algo que distribuir.</p>
+
+    <div class="motor-core">
+      <h3>🔧 Motor de Confianza (activo permanente)</h3>
+      <div class="motor-tags">
+        <span class="motor-tag">Nicho real</span>
+        <span class="motor-tag">Messaging</span>
+        <span class="motor-tag">Reviews</span>
+        <span class="motor-tag">Presencia web</span>
+        <span class="motor-tag">Casos de éxito</span>
+        <span class="motor-tag">Autoridad de marca</span>
+        <span class="motor-tag">Señales en IA</span>
+      </div>
+    </div>
+
+    <div class="channels-grid">
+      <div class="channel-col">
+        <h4>Canales Inbound</h4>
+        <ul>
+          <li>Influencers y creadores de nicho</li>
+          <li>Contenido del founder en LinkedIn</li>
+          <li>SEO + posicionamiento en LLMs</li>
+          <li>Lead magnets</li>
+          <li>PR y medios</li>
+        </ul>
+      </div>
+      <div class="channel-col">
+        <h4>Canales Outbound</h4>
+        <ul>
+          <li>Signal-based outreach por email</li>
+          <li>LinkedIn outreach</li>
+          <li>Paid media como amplificador</li>
+          <li>Ventas B2B asistidas</li>
+        </ul>
+      </div>
+    </div>
+    <p style="margin-top: 24px; text-align: center;"><strong>Sin el motor, cada canal trabaja en frío.<br>Con el motor encendido, cada acción convierte más.</strong></p>
+  </div>
+</section>
+
+<!-- ==================== 6. LAS 3 FASES ==================== -->
+<section>
+  <div class="container">
+    <div class="annotation">
+      📝 NOTA EDITORIAL: Cada fase con resultado tangible específico. 
+      <span>"Resultados rápido" → especificar qué pasa en cada mes.</span>
+    </div>
+    <h2>6 meses. Cada fase alimenta la siguiente.</h2>
+    <p>No te puedes saltar ninguna. Pero los primeros resultados llegan en el mes 1.</p>
+
+    <div class="timeline">
+      <div class="timeline-item">
+        <div class="timeline-marker">01</div>
+        <div class="timeline-content">
+          <h3>Mes 1 — Diagnóstico, nicho y primeros movimientos</h3>
+          <p>ICP real identificado, hueco de mercado mapeado, primeros influencers activados. Medición funcionando desde el día 1. Primeras métricas reales este mes.</p>
+        </div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-marker">02</div>
+        <div class="timeline-content">
+          <h3>Meses 2-3 — Construcción de la Fortaleza de Confianza</h3>
+          <p>Reviews sistemáticas, artículos de autoridad, presencia en buscadores y LLMs, contenido de founder, casos de éxito. El motor empieza a trabajar solo.</p>
+        </div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-marker">03</div>
+        <div class="timeline-content">
+          <h3>Meses 4-6 — Escala, optimización y autonomía</h3>
+          <p>Tráfico a todo volumen. Outbound enriquecido con trust. Paid como amplificador, no como motor. Dashboard con las 4-5 métricas que importan. <strong>Tu equipo opera sin nosotros.</strong></p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== 7. CASOS VERIFICADOS ==================== -->
+<section id="casos">
+  <div class="container">
+    <div class="annotation">
+      📝 NOTA EDITORIAL: Cada caso con link a la página completa verificada. 
+      <span>Attribution a Alfonso como persona + resultados concretos. GoCardless añadido como 4º caso.</span>
+    </div>
+    <h2>No es teoría. Es lo que hice antes de fundar Growth4U.</h2>
+    <p>Cada caso tiene página completa con métricas, contexto y metodología. Verifica tú mismo.</p>
+
+    <div class="cases-grid">
+      <a href="https://growth4u.io/casos-de-exito/bnext/" class="case-card" target="_blank">
+        <div class="case-left">
+          <h3>Bnext · Neobanco</h3>
+          <span class="case-type">B2C Fintech · CNMV</span>
+          <span class="verify-link">Ver caso completo →</span>
+        </div>
+        <div class="case-metric">
+          <div class="big">0 → 500K</div>
+          <div class="desc">usuarios en 30 meses · CAC €12,50</div>
+        </div>
+      </a>
+      <a href="https://growth4u.io/casos-de-exito/bit2me/" class="case-card" target="_blank">
+        <div class="case-left">
+          <h3>Bit2Me · Crypto</h3>
+          <span class="case-type">B2C Crypto · Banco de España</span>
+          <span class="verify-link">Ver caso completo →</span>
+        </div>
+        <div class="case-metric">
+          <div class="big">-70% CAC</div>
+          <div class="desc">x7 usuarios · €686K revenue/cohorte</div>
+        </div>
+      </a>
+      <a href="https://growth4u.io/casos-de-exito/criptan/" class="case-card" target="_blank">
+        <div class="case-left">
+          <h3>Criptan · Crypto</h3>
+          <span class="case-type">B2C Crypto · Savings</span>
+          <span class="verify-link">Ver caso completo →</span>
+        </div>
+        <div class="case-metric">
+          <div class="big">+160%</div>
+          <div class="desc">volumen depósitos · de nota 3 a 4+ en Trustpilot</div>
+        </div>
+      </a>
+      <a href="https://growth4u.io/casos-de-exito/gocardless/" class="case-card" target="_blank">
+        <div class="case-left">
+          <h3>GoCardless · Pagos B2B</h3>
+          <span class="case-type">B2B Fintech · España + Portugal</span>
+          <span class="verify-link">Ver caso completo →</span>
+        </div>
+        <div class="case-metric">
+          <div class="big">€10K MRR</div>
+          <div class="desc">en 6 meses desde cero</div>
+        </div>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== 8. QUÉ INCLUYE ==================== -->
+<section>
+  <div class="container">
+    <div class="annotation">
+      📝 NOTA EDITORIAL: "Todo el conocimiento, toda la metodología" reescrito a términos concretos. 
+      <span>Anchoring explícito: Done For You vs Comunidad.</span>
+    </div>
+    <h2>El mismo sistema Trust Engine. Tú ejecutas, nosotros guiamos.</h2>
+    <p>Instalamos este mismo sistema para clientes en formato Done For You por €5-10K/mes (€30-60K en 6 meses). <strong>La Comunidad: €7.500 una vez.</strong> Tú y tu equipo ejecutando con nuestro acompañamiento.</p>
+    <p>No es un curso. Es el mismo sistema, con las mismas personas, a una fracción del precio.</p>
+
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="icon">📞</div>
+        <h3>Encuentro semanal en vivo</h3>
+        <p>45-60 minutos con los founders. Revisión de avance, decisiones, próximos pasos. Cada semana.</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon">💬</div>
+        <h3>Slack directo con los founders</h3>
+        <p>Acceso directo a Alfonso y Martín. Preguntas, revisiones y desbloqueos en tiempo real. Sin tickets.</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon">📚</div>
+        <h3>13 playbooks paso a paso</h3>
+        <p>Todos los playbooks del Trust Engine en vídeo y documentos. Templates, scripts, automatizaciones. Tuyos para siempre.</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon">🤖</div>
+        <h3>Herramientas IA propias</h3>
+        <p>SanchoCMO, Trust Score Analyzer, generador de lead magnets y el stack completo que usamos nosotros.</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon">🤝</div>
+        <h3>Negociación con partners</h3>
+        <p>Cuando toca cerrar con agencias, influencers o medios, nosotros negociamos. Te ahorramos la gestión y el markup.</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon">👥</div>
+        <h3>Comunidad de founders</h3>
+        <p>Otros fundadores construyendo su Trust Engine al mismo tiempo. Aprendes de sus casos, ellos del tuyo.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== 9. PRICING ==================== -->
+<section class="pricing-section">
+  <div class="container">
+    <div class="annotation">
+      📝 NOTA EDITORIAL: Anchoring con alternativas + fraccionamiento mensual + comparativa visual. 
+      <span>Precio confirmado: €7.500. Hooks 1, 2 y 7 del pricing doc integrados.</span>
+    </div>
+    <h2>Compara antes de decidir.</h2>
+
+    <div class="anchor-grid">
+      <div class="anchor-card">
+        <div class="anchor-price">€80K/año</div>
+        <div class="anchor-label">Growth hire full-time</div>
+      </div>
+      <div class="anchor-card">
+        <div class="anchor-price">€24-120K</div>
+        <div class="anchor-label">Fractional CMO (6 meses)</div>
+      </div>
+      <div class="anchor-card">
+        <div class="anchor-price">€30-90K</div>
+        <div class="anchor-label">Agencia growth (6 meses)</div>
+      </div>
+    </div>
+
+    <div class="pricing-box">
+      <p class="small" style="margin-bottom: 4px;">COMUNIDAD GROWTH4U · 6 MESES</p>
+      <div class="price">€7.500</div>
+      <div class="price-desc">Pago único. Sin retainer. Sin monthly fee.<br>€1.250/mes · €41/día</div>
+      <a href="https://now.growth4u.io/widget/bookings/llamada-estrategica-alfonso-w" class="btn-primary">Agendar llamada estratégica</a>
+      <p class="small">30 minutos. Te digo exactamente qué haríamos. Si no tiene sentido, lo decimos.</p>
+    </div>
+
+    <p style="text-align: center;"><strong>Somos 4 personas. Trabajamos con 6 clientes simultáneos máximo.</strong> Esto no es escasez de marketing — es que cada cliente recibe 1:1 con Alfonso.</p>
+  </div>
+</section>
+
+<!-- ==================== 10. GARANTÍA ==================== -->
+<section>
+  <div class="container">
+    <div class="annotation">
+      📝 NOTA EDITORIAL: Garantía específica de €10K (pricing.current.md Hook 6 APROBADO). 
+      <span>Reemplaza "no hemos hecho nuestro trabajo" por compromiso concreto con cifra.</span>
+    </div>
+    <div class="guarantee-box">
+      <h3>🎯 Garantía de resultado</h3>
+      <p>Si en 6 meses no generas <strong>€10.000 en oportunidades atribuibles al Trust Engine</strong>, tienes dos opciones: no pagas nada, o seguimos trabajando contigo hasta que lo consigas. Sin preguntas.</p>
+      <p style="margin-top: 12px;" class="small">Condición: asistir a las calls y aplicar los playbooks. Si ejecutas, nosotros respondemos.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== 11. FAQ ==================== -->
+<section>
+  <div class="container">
+    <div class="annotation">
+      📝 NOTA EDITORIAL: FAQ reescritas con respuestas ECP-específicas + datos concretos. 
+      <span>Añadidas 3 nuevas: regulación, verificación track record, GEO/IA.</span>
+    </div>
+    <h2>Preguntas frecuentes</h2>
+
+    <div class="faq-item">
+      <div class="faq-q">¿Esto funciona si mi sector es regulado (CNMV, Banco de España, MiCA)?</div>
+      <div class="faq-a">Sí. Lo hicimos bajo CNMV con Bnext (0→500K usuarios). Lo hicimos bajo regulación del Banco de España con Bit2Me (LTV x2). Si tu regulador es BdE, BdE. Si es AEMPS, AEMPS. El sistema es el mismo — lo que cambia es el copy y las restricciones de canal.</div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q">¿Cómo sé que funciona antes de pagar?</div>
+      <div class="faq-a">Busca "Alfonso Bnext" en Google. Lee los casos con métricas reales en <a href="https://growth4u.io/casos-de-exito/">nuestra web</a>. El track record de 15 años es público y verificable. Y €7.500 en 6 meses es el riesgo más bajo que has tomado comparado con lo que ya invertiste en agencias.</div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q">¿Y si Google, Meta o la IA cambian el algoritmo mañana?</div>
+      <div class="faq-a">Por eso no dependes de un solo canal. El Trust Engine instala presencia en IA, reviews, creadores y SEO en paralelo. Si un canal baja, los otros absorben. En 6 meses, no eres rehén de ningún algoritmo.</div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q">¿Esto aplica tanto a B2B como a B2C?</div>
+      <div class="faq-a">Sí. El Trust Engine funciona igual en los dos. Lo que cambia es la mezcla de canales: en B2B pesa más el outbound y LinkedIn, en B2C pesan más los influencers y el SEO de producto. El motor es el mismo.</div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q">¿Cuánto tiempo necesito dedicarle por semana?</div>
+      <div class="faq-a">Entre 4 y 6 horas. Una de esas horas es el encuentro semanal. El resto es trabajo en tu negocio con nuestros playbooks y templates.</div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q">¿Y si ya tengo agencia de paid o SEO?</div>
+      <div class="faq-a">No la reemplazamos. El Trust Engine aumenta la conversión de lo que ya inviertes. Con Bit2Me, el paid pasó de motor a amplificador — mismo presupuesto, x7 resultados. Tu agencia sigue; nosotros arreglamos lo que hay debajo.</div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q">¿Qué pasa si mi equipo no tiene experiencia en growth?</div>
+      <div class="faq-a">Precisamente por eso es acompañamiento, no formación. No necesitas ser experto. Te guiamos semana a semana con playbooks paso a paso. Al final del programa, tu equipo domina el sistema.</div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q">¿Cuándo empiezo a ver resultados?</div>
+      <div class="faq-a">Mes 1: nicho identificado, primeros influencers activados, medición funcionando. Meses 2-3: la fortaleza de confianza empieza a trabajar sola. Del mes 4 en adelante, compound effect fuerte — cada euro invertido rinde más.</div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q">¿Qué pasa cuando terminen los 6 meses?</div>
+      <div class="faq-a">Te quedas con todo: 13 playbooks, templates, automatizaciones, herramientas IA, el motor funcionando y tu equipo sabiendo operarlo. El objetivo es que no nos necesites después.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== 12. CTA FINAL ==================== -->
+<section class="final-cta">
+  <div class="container">
+    <div class="annotation" style="background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.3); color: rgba(255,255,255,0.8);">
+      📝 NOTA EDITORIAL: CTA con diagnóstico (Brand Voice Do/Don't #5) en vez de genérico "Reserva tu lugar".
+    </div>
+    <h2>¿Tu CAC lleva 2 trimestres subiendo?</h2>
+    <p>No necesitas más presupuesto. Necesitas un sistema que se quede.</p>
+    <p>Hablemos. 30 minutos. Te digo exactamente qué está mal y qué haríamos.<br>Si no tiene sentido, lo decimos.</p>
+    <a href="https://now.growth4u.io/widget/bookings/llamada-estrategica-alfonso-w" class="btn-primary">Agendar llamada estratégica →</a>
+  </div>
+</section>
+
+<!-- ==================== FOOTER NOTE ==================== -->
+<section style="padding: 40px 0; background: var(--gray-50);">
+  <div class="container" style="text-align: center;">
+    <p class="small" style="margin: 0;">
+      📋 <strong>Propuesta v1 — P01-T08</strong> · Auditoría de copy /comunidad/ · Growth4U<br>
+      Generado: 2026-04-15 · Las barras naranjas son notas editoriales (no van en producción)
+    </p>
+  </div>
+</section>
+
+</body>
+</html>

@@ -1,0 +1,11 @@
+{
+  "cronId": "a68143d8-1309-46eb-a5dc-4c3fb35ee3d2",
+  "cronName": "Lead Sync — Growth4U",
+  "slug": "growth4u",
+  "date": "2026-04-14",
+  "runAtMs": 1776196800016,
+  "status": "ok",
+  "durationMs": 510174,
+  "model": "claude-opus-4-6",
+  "content": "📊 **Lead Sync — 2026-04-14 22:00 CEST**\n\n• **18 contactos** procesados (tag `llamada-agendada`)\n• **0 nuevos** leads\n• **2 actualizados** con nuevos transcripts de hoy:\n  - **Marta Luis Ortiz Ortega** — Llamada estratégica con DMD Asesores Legales. Despacho de reclamaciones masivas, 40k€/mes en marketing (80% TikTok), CAC 140-400€ según producto, Trust Score 68. Interés en propuesta híbrida (comunidad + ejecución partnerships). Follow-up miércoles.\n  - **Josep M Gil** — Llamada estratégica con Heltech (startup healthtech pre-producto). ⚠️ Company intel anterior (Endurance Products) era incorrecta — corregida. Equipo de 6, buscando partner de growth orgánico. Acuerdo inicial 3 meses. Follow-up lunes 16:00.\n• **16 leads** sin cambios (timestamps actualizados)\n• **Slack sync:** deshabilitado\n• **Errores:** 0"
+}

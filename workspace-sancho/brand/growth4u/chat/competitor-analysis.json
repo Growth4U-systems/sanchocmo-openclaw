@@ -89,9 +89,20 @@
       "role": "user",
       "text": "Estoy abriendo el chat sobre \"competitor analysis\". Dame un resumen rápido del estado actual y qué podemos hacer. Si necesitas algo de mí, dímelo.",
       "ts": 1775597179783
+    },
+    {
+      "role": "user",
+      "text": "Estoy abriendo el chat sobre \"competitor analysis\". Dame un resumen rápido del estado actual y qué podemos hacer. Si necesitas algo de mí, dímelo.",
+      "ts": 1775687347759
+    },
+    {
+      "role": "bot",
+      "text": "Aquí va el resumen rápido:\n\n## 📊 Competitor Analysis — Estado actual\n\n**Status: ✅ Aprobado (v2)** — Generado el 3 de marzo, basado en 36 páginas scrapeadas + DataForSEO + web_search.\n\n### Los 3 competidores analizados:\n\n1. **Product Hackers** (Tier A) — El gorila del sector. 6M€ facturación, +110 personas, clientes enterprise (Zara, Mapfre). Vulnerabilidad: equipos junior rotativos, retainer-forever, se distraen con AI Hackers.\n\n2. **Snowball** (Tier A) — El más parecido a G4U en modelo (Growth Squad embedded). Vulnerabilidad: fundador con dedicación parcial (también Director of Engineering en Voxel), casos sólidos en CRO pero cero trust-building.\n\n3. **TheGrowtHacker** (Tier B) — El más débil. Sus \"casos de éxito\" son de empresas donde el fundador trabajaba antes como empleado. 0 keywords SEO. Barrera mínima para superarles.\n\n### Insight clave:\n> **Ningún competidor ofrece un programa productizado que instale growth en 6 meses y luego se retire.** Todos venden retainers continuos → oportunidad clara de positioning para G4U como \"la última agencia que necesitas\".\n\n---\n\n### ¿Qué podemos hacer desde aquí?\n\n- **Actualizar el análisis** — Han pasado 5 semanas desde v2. Puedo investigar si hay novedades (movimientos de competidores, contenido nuevo, cambios en pricing).\n- **Deep dive en un competidor nuevo** — Si has identificado algún player que no esté aquí.\n- **Battle cards para ventas** — Ya existen las 3 battle cards, pero puedo refinarlas si estás en conversaciones activas donde necesites argumentos concretos.\n- **Monitorización continua** — Activar seguimiento periódico de sus movimientos (contenido, SEO, pricing).\n\n¿Qué te interesa más? ¿O hay algo específico que necesites del análisis competitivo?",
+      "ts": 1775687611892,
+      "agent": "sancho"
     }
   ],
-  "updatedAt": 1775597179783,
+  "updatedAt": 1775687611892,
   "discordThreadId": null,
   "discordChannelId": null
 }

@@ -9,7 +9,10 @@
     "deliverable": "Calendario mensual con temas, fechas y perfil asignado. Sin solapamientos.",
     "done_criteria": "Calendario aprobado por Alfonso. Cada perfil tiene pilares distintos.",
     "type": "content",
-    "skill": "content-calendar-planner"
+    "skill": "content-calendar-planner",
+    "deliverable_file": "brand/growth4u/projects/P02-linkedin-pipeline/tasks/P02-T01/deliverable.md",
+    "mc_chat_thread_id": "task-p02-t01",
+    "discord_thread_id": null
   },
   {
     "id": "P02-T02",
@@ -21,7 +24,10 @@
     "deliverable": "Tabla: perfil × pilar → lead magnet asignado con link de descarga.",
     "done_criteria": "Cada perfil tiene al menos 1 lead magnet asignado por pilar relevante.",
     "type": "execution",
-    "skill": "lead-magnet"
+    "skill": "lead-magnet",
+    "deliverable_file": "brand/growth4u/projects/P02-linkedin-pipeline/tasks/P02-T02/deliverable.md",
+    "mc_chat_thread_id": "task-p02-t02",
+    "discord_thread_id": null
   },
   {
     "id": "P02-T03",
@@ -33,7 +39,10 @@
     "deliverable": "3 templates de DM warm (uno por persona/segmento) con secuencia de follow-up de 3 mensajes.",
     "done_criteria": "Templates aprobados. Personalizados por dolor del segmento.",
     "type": "outreach",
-    "skill": "outreach-sequence-builder"
+    "skill": "outreach-sequence-builder",
+    "deliverable_file": "brand/growth4u/projects/P02-linkedin-pipeline/tasks/P02-T03/deliverable.md",
+    "mc_chat_thread_id": "task-p02-t03",
+    "discord_thread_id": null
   },
   {
     "id": "P02-T04",
@@ -45,7 +54,10 @@
     "deliverable": "Ejecución semanal documentada: posts publicados, DMs enviados, engagement realizado.",
     "done_criteria": "7-10 posts/semana entre los 3 perfiles. 15+ DMs warm/semana. Cross-engagement diario.",
     "type": "outreach",
-    "skill": "linkedin-content"
+    "skill": "linkedin-content",
+    "deliverable_file": "brand/growth4u/projects/P02-linkedin-pipeline/tasks/P02-T04/deliverable.md",
+    "mc_chat_thread_id": "task-p02-t04",
+    "discord_thread_id": null
   },
   {
     "id": "P02-T05",
@@ -57,6 +69,9 @@
     "deliverable": "Pipeline en GHL con atribución por perfil: DM → reply → call → deal.",
     "done_criteria": "Cada lead trackeado con origen (quién envió el DM) y status actualizado.",
     "type": "execution",
-    "skill": "lead-intelligence-hub"
+    "skill": "lead-intelligence-hub",
+    "deliverable_file": "brand/growth4u/projects/P02-linkedin-pipeline/tasks/P02-T05/deliverable.md",
+    "mc_chat_thread_id": "task-p02-t05",
+    "discord_thread_id": null
   }
 ]

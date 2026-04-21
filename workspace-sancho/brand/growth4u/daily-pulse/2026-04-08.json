@@ -1,0 +1,74 @@
+{
+  "date": "2026-04-08",
+  "generated_at": "2026-04-08T07:02:00Z",
+  "channels_scanned": ["general", "brand", "projects", "content", "paid-ads", "web", "intelligence", "soporte"],
+  "messages_analyzed": 8,
+  "insights": [
+    {
+      "category": "ads_performance",
+      "type": "trend",
+      "title": "Meta Ads: 6 leads ayer (↑67% vs media 7d) pero CTR desplomado a 0.80%",
+      "detail": "Spend €199 estable. 6 leads generados (media 7d ~3.6). Sin embargo el CTR cayó a 0.80% desde niveles habituales de 2-2.5%. Señal de fatiga creativa que ya se detectó la semana pasada (CPC subió a €3.30 el 3 abril). El volumen de leads se mantiene por ahora pero la eficiencia está bajando.",
+      "severity": "warning",
+      "source": "intelligence"
+    },
+    {
+      "category": "pipeline",
+      "type": "pain_point",
+      "title": "0 citas agendadas — cuello de botella persistente en conversión lead→cita",
+      "detail": "A pesar de 6 leads ayer y 26 contactos en GHL, 0 citas nuevas agendadas. Este patrón se repite desde hace semanas. El funnel de nurturing post-lead necesita revisión urgente.",
+      "severity": "critical",
+      "source": "intelligence"
+    },
+    {
+      "category": "pipeline",
+      "type": "update",
+      "title": "4 nuevos leads en Lead Sync — pipeline a 13 contactos",
+      "detail": "Lead Sync del 7 abril: 13 contactos con tag llamada-agendada. 4 nuevos: Manuel Campos Figal (presupuesto 25k-50k€, FB Ads Ángulo 8_V3), Albert Totil (Bandarra Motor Classic, Lleida), Sofia Clark (⚠️ NO es lead — candidata laboral). 2 leads actualizados con nuevas grabaciones.",
+      "severity": "info",
+      "source": "intelligence"
+    },
+    {
+      "category": "data_quality",
+      "type": "pain_point",
+      "title": "Lead duplicado detectado — Manuel Campos Figal",
+      "detail": "Mismo nombre, otro email, tag llamada-cancelada. Recomendado merge en GHL para evitar confusión en pipeline.",
+      "severity": "warning",
+      "source": "intelligence"
+    },
+    {
+      "category": "sales",
+      "type": "update",
+      "title": "3 llamadas programadas para hoy 8 abril",
+      "detail": "Call Prep detectó 3 llamadas con leads para hoy. Preparación disponible en hilo de intelligence.",
+      "severity": "info",
+      "source": "intelligence"
+    },
+    {
+      "category": "foundation",
+      "type": "update",
+      "title": "Positioning per-ECP actualizado en foundation-state.json",
+      "detail": "Philippe confirmó que el positioning se hizo per-ECP en lugar de centralizado. foundation-state.json actualizado con gate_check_file apuntando a messaging-summary.md y estructura per-ECP marcada.",
+      "severity": "info",
+      "source": "soporte"
+    }
+  ],
+  "micro_briefs": [
+    {
+      "title": "Revisar nurturing automático post-lead",
+      "priority": "P0",
+      "rationale": "0 citas con 6 leads/día indica rotura en el flujo de conversión. Verificar secuencias GHL, tiempos de follow-up, y CTA de booking."
+    },
+    {
+      "title": "Refrescar creatividades Meta Ads",
+      "priority": "P1",
+      "rationale": "CTR 0.80% (vs 2%+ habitual) confirma fatiga creativa. Nuevos ángulos o formatos necesarios para mantener volumen de leads."
+    },
+    {
+      "title": "Merge duplicado Manuel Campos Figal en GHL",
+      "priority": "P2",
+      "rationale": "Duplicado detectado con tags contradictorios. Limpieza rápida para evitar confusión en pipeline."
+    }
+  ],
+  "summary": "Día fuerte en leads (6, +67% vs media) pero con señales de alerta: CTR desplomado a 0.80% y 0 citas agendadas. El pipeline crece (13 contactos) pero la conversión lead→cita sigue estancada. 3 llamadas hoy. Acción prioritaria: auditar flujo de nurturing GHL."
+}

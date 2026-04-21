@@ -8,7 +8,7 @@
       "deliverable": "Cuenta Google Ads operativa con conversiones trackeadas (registro + KYC + primer depósito).",
       "done_criteria": "Conversiones disparándose correctamente en Google Ads al realizar un depósito test.",
       "depends_on": null,
-      "status": "pending",
+      "status": "todo",
       "owner": "Equipo",
       "channel": "paid-ads",
       "discord_thread_id": null,
@@ -16,7 +16,9 @@
       "created": "2026-03-30",
       "completed": null,
       "output_files": [],
-      "notes": "Requiere acceso a cuenta Google Ads de Criptan + coordinación con dev para tracking de eventos in-app"
+      "notes": "Requiere acceso a cuenta Google Ads de Criptan + coordinación con dev para tracking de eventos in-app",
+      "deliverable_file": "brand/criptan/projects/P02-google-ads-mica/tasks/T01/deliverable.md",
+      "mc_chat_thread_id": "task-t01"
     },
     {
       "id": "T02",
@@ -25,7 +27,7 @@
       "deliverable": "Campaña Search activa con 3-5 ad groups, 15-20 keywords, y 3 variantes de ad copy.",
       "done_criteria": "Campaña live con impresiones, clicks y al menos 1 conversión en primera semana.",
       "depends_on": "T01",
-      "status": "pending",
+      "status": "todo",
       "owner": "Sancho",
       "channel": "paid-ads",
       "discord_thread_id": null,
@@ -33,7 +35,9 @@
       "created": "2026-03-30",
       "completed": null,
       "output_files": [],
-      "notes": "Disclaimers MiCA obligatorios en todos los ads"
+      "notes": "Disclaimers MiCA obligatorios en todos los ads",
+      "deliverable_file": "brand/criptan/projects/P02-google-ads-mica/tasks/T02/deliverable.md",
+      "mc_chat_thread_id": "task-t02"
     },
     {
       "id": "T03",
@@ -42,7 +46,7 @@
       "deliverable": "Campaña Display Retargeting activa con audiencias configuradas y creatividades.",
       "done_criteria": "Campaña live, audiencias de retargeting acumulando >1K usuarios.",
       "depends_on": "T01",
-      "status": "pending",
+      "status": "todo",
       "owner": "Sancho",
       "channel": "paid-ads",
       "discord_thread_id": null,
@@ -50,7 +54,9 @@
       "created": "2026-03-30",
       "completed": null,
       "output_files": [],
-      "notes": ""
+      "notes": "",
+      "deliverable_file": "brand/criptan/projects/P02-google-ads-mica/tasks/T03/deliverable.md",
+      "mc_chat_thread_id": "task-t03"
     }
   ]
 }

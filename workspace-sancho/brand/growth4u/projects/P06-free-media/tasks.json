@@ -9,7 +9,10 @@
     "deliverable": "Perfiles creados en 15+ directorios con descripción, servicios y logo.",
     "done_criteria": "15 directorios con perfil completo y visible públicamente.",
     "type": "outreach",
-    "skill": "outreach-sequence-builder"
+    "skill": "outreach-sequence-builder",
+    "deliverable_file": "brand/growth4u/projects/P06-free-media/tasks/P06-T01/deliverable.md",
+    "mc_chat_thread_id": "task-p06-t01",
+    "discord_thread_id": null
   },
   {
     "id": "P06-T02",
@@ -21,7 +24,10 @@
     "deliverable": "Template de pitch personalizable con ángulo, propuesta de artículo y bio.",
     "done_criteria": "Template aprobado. Funciona para 3+ temáticas diferentes.",
     "type": "execution",
-    "skill": "direct-response-copy"
+    "skill": "direct-response-copy",
+    "deliverable_file": "brand/growth4u/projects/P06-free-media/tasks/P06-T02/deliverable.md",
+    "mc_chat_thread_id": "task-p06-t02",
+    "discord_thread_id": null
   },
   {
     "id": "P06-T03",
@@ -33,7 +39,10 @@
     "deliverable": "Spreadsheet: 20 medios con editor, email, requisitos, DR, temáticas.",
     "done_criteria": "20 medios verificados que aceptan guest posts del sector.",
     "type": "outreach",
-    "skill": "deep-research"
+    "skill": "deep-research",
+    "deliverable_file": "brand/growth4u/projects/P06-free-media/tasks/P06-T03/deliverable.md",
+    "mc_chat_thread_id": "task-p06-t03",
+    "discord_thread_id": null
   },
   {
     "id": "P06-T04",
@@ -45,7 +54,10 @@
     "deliverable": "5 pitches enviados/semana con seguimiento a los que no responden.",
     "done_criteria": "Tasa de aceptación >10%. Mínimo 1 guest post publicado/mes.",
     "type": "content",
-    "skill": "outreach-sequence-builder"
+    "skill": "outreach-sequence-builder",
+    "deliverable_file": "brand/growth4u/projects/P06-free-media/tasks/P06-T04/deliverable.md",
+    "mc_chat_thread_id": "task-p06-t04",
+    "discord_thread_id": null
   },
   {
     "id": "P06-T05",
@@ -57,7 +69,10 @@
     "deliverable": "Perfiles creados en HARO/Featured.com/Qwoted. 5+ respuestas/semana.",
     "done_criteria": "Alfonso registrado y respondiendo activamente. Mínimo 1 mención/mes.",
     "type": "outreach",
-    "skill": "trust-engine"
+    "skill": "trust-engine",
+    "deliverable_file": "brand/growth4u/projects/P06-free-media/tasks/P06-T05/deliverable.md",
+    "mc_chat_thread_id": "task-p06-t05",
+    "discord_thread_id": null
   },
   {
     "id": "P06-T06",
@@ -69,6 +84,33 @@
     "deliverable": "Pitches enviados a 4+ podcasts con propuesta de tema y bio.",
     "done_criteria": "Mínimo 1 aparición en podcast agendada.",
     "type": "outreach",
-    "skill": "outreach-sequence-builder"
+    "skill": "outreach-sequence-builder",
+    "deliverable_file": "brand/growth4u/projects/P06-free-media/tasks/P06-T06/deliverable.md",
+    "mc_chat_thread_id": "task-p06-t06",
+    "discord_thread_id": null
+  },
+  {
+    "id": "P06-T07",
+    "name": "Validación medios guest post — Publisuites + Puromarketing",
+    "owner": "Escudero",
+    "status": "completed",
+    "channel": "research",
+    "description": "Analizar los medios propuestos por Publisuites (7 medios) y Puromarketing (por definir). Validar: DR real vs publicado, audiencia y ICP real (founders SaaS vs marketeros), calidad editorial, coste/enlace efectivo, riesgo de footprint guest posting, topics sugeridos y páginas destino. Comparar con outreach directo (P06-T03). Presentar scoring y recomendación go/no-go con selección optimizada al budget Growth4U (1,500-2,500€/batch).",
+    "deliverable": "Análisis de medios + scoring + brief de topics por medio + recomendación go/no-go + comparación con outreach directo.",
+    "done_criteria": "Decisión informada: qué medios contratar, cuáles descartar, topics asignados, páginas destino, CTAs. Comparativa con outreach propio.",
+    "type": "research",
+    "skill": "competitor-intelligence",
+    "deliverable_file": "brand/growth4u/projects/P06-free-media/tasks/P06-T07/validacion-medios-guest-post.md",
+    "mc_chat_thread_id": "task-p06-t07",
+    "discord_thread_id": null,
+    "completed": "2026-04-16",
+    "attachments": [
+      {
+        "path": "brand/growth4u/projects/P06-free-media/tasks/P06-T07/validacion-medios-guest-post.md",
+        "type": "text/markdown",
+        "source": "filesystem-scan",
+        "added_at": "2026-04-17T11:53:40.168Z"
+      }
+    ]
   }
 ]

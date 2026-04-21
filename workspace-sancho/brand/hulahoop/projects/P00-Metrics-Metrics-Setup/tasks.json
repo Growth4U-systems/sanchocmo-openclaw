@@ -9,12 +9,15 @@
       "done_criteria": "Métricas definidas y aprobadas. Tareas de conexión generadas automáticamente.",
       "depends_on": "P00-FUL-T09",
       "owner": "Sancho",
-      "status": "pending",
+      "status": "todo",
       "channel": "intelligence",
       "type": "foundation",
       "skill": "metrics-setup",
       "pillar": "metrics-setup",
-      "section": "metrics-setup"
+      "section": "metrics-setup",
+      "deliverable_file": "brand/hulahoop/projects/P00-Metrics-Metrics-Setup/tasks/P00-MET-T01/deliverable.md",
+      "mc_chat_thread_id": "task-p00-met-t01",
+      "discord_thread_id": null
     },
     {
       "id": "P00-MET-T08",
@@ -28,7 +31,10 @@
       "channel": "intelligence",
       "type": "integration",
       "skill": "meeting-intelligence",
-      "notes": "1) Crea o identifica una carpeta en Google Drive con tus notas de reuniones. 2) Comparte la carpeta con el agente. 3) Sancho configurará Meeting Intelligence automáticamente. Corre L-V a las 18h."
+      "notes": "1) Crea o identifica una carpeta en Google Drive con tus notas de reuniones. 2) Comparte la carpeta con el agente. 3) Sancho configurará Meeting Intelligence automáticamente. Corre L-V a las 18h.",
+      "deliverable_file": "brand/hulahoop/projects/P00-Metrics-Metrics-Setup/tasks/P00-MET-T08/deliverable.md",
+      "mc_chat_thread_id": "task-p00-met-t08",
+      "discord_thread_id": null
     },
     {
       "id": "P00-MET-T09",
@@ -42,7 +48,10 @@
       "channel": "intelligence",
       "type": "integration",
       "skill": "sales-call-prep",
-      "notes": "Requiere: acceso a tu calendario + CRM con datos de leads. Dile a Sancho qué CRM usas y él configurará la integración."
+      "notes": "Requiere: acceso a tu calendario + CRM con datos de leads. Dile a Sancho qué CRM usas y él configurará la integración.",
+      "deliverable_file": "brand/hulahoop/projects/P00-Metrics-Metrics-Setup/tasks/P00-MET-T09/deliverable.md",
+      "mc_chat_thread_id": "task-p00-met-t09",
+      "discord_thread_id": null
     },
     {
       "id": "P00-MET-T10",
@@ -57,15 +66,60 @@
       "type": "integration",
       "skill": "daily-pulse",
       "connectors": [
-        {"id": "gmail", "name": "Gmail", "icon": "📧", "status": "available", "config_hint": "Cuenta Gmail + labels a ignorar"},
-        {"id": "outlook", "name": "Outlook / Microsoft 365", "icon": "📨", "status": "available", "config_hint": "Cuenta Outlook + carpetas a monitorizar"},
-        {"id": "slack", "name": "Slack", "icon": "💬", "status": "available", "config_hint": "Bot token (xoxb-) + canales a monitorizar"},
-        {"id": "teams", "name": "Microsoft Teams", "icon": "🟣", "status": "coming_soon", "config_hint": "Requiere app registrada en Azure AD"},
-        {"id": "whatsapp", "name": "WhatsApp Business", "icon": "🟢", "status": "coming_soon", "config_hint": "API de WhatsApp Business"},
-        {"id": "intercom", "name": "Intercom", "icon": "🔵", "status": "coming_soon", "config_hint": "API key de Intercom"},
-        {"id": "zendesk", "name": "Zendesk", "icon": "🟠", "status": "coming_soon", "config_hint": "Subdomain + API token"}
+        {
+          "id": "gmail",
+          "name": "Gmail",
+          "icon": "📧",
+          "status": "available",
+          "config_hint": "Cuenta Gmail + labels a ignorar"
+        },
+        {
+          "id": "outlook",
+          "name": "Outlook / Microsoft 365",
+          "icon": "📨",
+          "status": "available",
+          "config_hint": "Cuenta Outlook + carpetas a monitorizar"
+        },
+        {
+          "id": "slack",
+          "name": "Slack",
+          "icon": "💬",
+          "status": "available",
+          "config_hint": "Bot token (xoxb-) + canales a monitorizar"
+        },
+        {
+          "id": "teams",
+          "name": "Microsoft Teams",
+          "icon": "🟣",
+          "status": "coming_soon",
+          "config_hint": "Requiere app registrada en Azure AD"
+        },
+        {
+          "id": "whatsapp",
+          "name": "WhatsApp Business",
+          "icon": "🟢",
+          "status": "coming_soon",
+          "config_hint": "API de WhatsApp Business"
+        },
+        {
+          "id": "intercom",
+          "name": "Intercom",
+          "icon": "🔵",
+          "status": "coming_soon",
+          "config_hint": "API key de Intercom"
+        },
+        {
+          "id": "zendesk",
+          "name": "Zendesk",
+          "icon": "🟠",
+          "status": "coming_soon",
+          "config_hint": "Subdomain + API token"
+        }
       ],
-      "notes": "Abre esta tarea y dile a Sancho qué herramientas de comunicación usa tu empresa. Él te guiará paso a paso para conectar cada una. Cuantas más fuentes conectes, más completo será tu Daily Pulse."
+      "notes": "Abre esta tarea y dile a Sancho qué herramientas de comunicación usa tu empresa. Él te guiará paso a paso para conectar cada una. Cuantas más fuentes conectes, más completo será tu Daily Pulse.",
+      "deliverable_file": "brand/hulahoop/projects/P00-Metrics-Metrics-Setup/tasks/P00-MET-T10/deliverable.md",
+      "mc_chat_thread_id": "task-p00-met-t10",
+      "discord_thread_id": null
     }
   ]
 }

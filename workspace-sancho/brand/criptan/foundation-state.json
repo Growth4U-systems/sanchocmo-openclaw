@@ -11,29 +11,29 @@
       "pillars": {
         "company-brief": {
           "status": "done",
-          "output_file": "brand/criptan/company-brief/current.md",
+          "output_file": "brand/criptan/company-brief/company-brief.current.md",
           "skill": "fast-foundation"
         },
         "self-l1": {
           "status": "done",
-          "output_file": "brand/criptan/market-and-us/self/current.md",
+          "output_file": "brand/criptan/market-and-us/self/self.current.md",
           "skill": "fast-foundation"
         },
         "market-l1": {
           "status": "approved",
-          "output_file": "brand/criptan/market-and-us/market/current.md",
+          "output_file": "brand/criptan/market-and-us/market/market.current.md",
           "skill": "fast-foundation",
           "updated_at": "2026-03-30T11:36:44.832Z",
           "approved_at": "2026-03-30T11:36:44.832Z"
         },
         "brand-voice-snapshot": {
           "status": "done",
-          "output_file": "brand/criptan/brand-voice/current.md",
+          "output_file": "brand/criptan/brand-voice/brand-voice.current.md",
           "skill": "fast-foundation"
         },
         "niche-basic": {
           "status": "done",
-          "output_file": "brand/criptan/go-to-market/ecps/current.md",
+          "output_file": "brand/criptan/go-to-market/ecps/ecps.current.md",
           "skill": "fast-foundation"
         }
       }
@@ -46,12 +46,12 @@
         "company-brief": {
           "status": "not-started",
           "skill": "fast-foundation",
-          "output_file": "brand/criptan/company-brief/current.md"
+          "output_file": "brand/criptan/company-brief/company-brief.current.md"
         }
       }
     },
     "market-and-us": {
-      "status": "not-started",
+      "status": "in-progress",
       "layer": 1,
       "output_dir": "brand/criptan/market-and-us/",
       "pillars": {
@@ -66,7 +66,7 @@
             "self-analysis"
           ],
           "skill": "market-intelligence",
-          "output_file": "brand/criptan/market-and-us/market/current.md",
+          "output_file": "brand/criptan/market-and-us/market/market.current.md",
           "completed_at": "2026-03-30T11:00:00Z",
           "updated_at": "2026-03-30T11:36:56.248Z",
           "approved_at": "2026-03-30T11:36:56.248Z"
@@ -85,7 +85,7 @@
           "completed_at": "2026-03-30T15:32:00Z",
           "updated_at": "2026-03-31T09:58:17.256Z",
           "approved_at": "2026-03-31T09:58:17.256Z",
-          "output_file": "brand/criptan/market-and-us/competitors/current.md"
+          "output_file": "brand/criptan/market-and-us/competitors/competitors.current.md"
         },
         "self-analysis": {
           "status": "not-started",
@@ -115,7 +115,8 @@
           "output_file": "brand/criptan/market-and-us/market-synthesis/foundation-report.html",
           "layer": 2
         }
-      }
+      },
+      "updated_at": "2026-04-15T15:37:46.387Z"
     },
     "go-to-market": {
       "status": "not-started",
@@ -195,30 +196,32 @@
           ],
           "skill": "metrics-setup",
           "completed_at": "2026-03-30T13:50:00Z",
-          "output_file": "brand/criptan/go-to-market/metrics-plan/current.md"
+          "output_file": "brand/criptan/go-to-market/metrics-plan/metrics-plan.current.md"
         }
       },
       "completed_at": "2026-03-30T13:50:00Z"
     },
     "strategic-plan": {
-      "status": "not-started",
+      "status": "approved",
       "layer": 7,
       "skill": "strategic-plan",
       "requires": [
         "metrics-setup"
       ],
-      "output_file": "brand/criptan/strategic-plan/current.md",
+      "output_file": "brand/criptan/strategic-plan/strategic-plan.current.md",
       "pillars": {
         "strategic-plan": {
           "status": "approved",
           "skill": "strategic-plan",
-          "output_file": "brand/criptan/strategic-plan/current.md",
+          "output_file": "brand/criptan/strategic-plan/strategic-plan.current.md",
           "completed_at": "2026-03-30T17:45:00Z",
           "note": "Plan lite v1 — pendiente Full Foundation para refinar",
           "updated_at": "2026-03-30T21:09:37.868Z",
           "approved_at": "2026-03-30T21:09:37.868Z"
         }
-      }
+      },
+      "updated_at": "2026-04-15T15:37:46.387Z",
+      "approved_at": "2026-04-15T15:37:46.387Z"
     },
     "brand-book": {
       "status": "not-started",
@@ -274,7 +277,7 @@
   "file_index": {
     "competitors": {
       "sources": "market-and-us/competitors/sources.json",
-      "summary": "market-and-us/competitors/current.md"
+      "summary": "market-and-us/competitors/competitors.current.md"
     },
     "integrations": "integrations.json",
     "metrics": {
@@ -282,7 +285,7 @@
       "data_dir": "metrics/"
     },
     "brand_assets": {
-      "brand_voice": "brand-voice/current.md"
+      "brand_voice": "brand-voice/brand-voice.current.md"
     },
     "operational": {
       "current_state": "current-state.md"

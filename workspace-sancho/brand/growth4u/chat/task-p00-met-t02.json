@@ -63,13 +63,28 @@
       "ts": "2026-04-01T12:43:14.318Z"
     },
     {
+      "role": "user",
+      "text": "Estoy abriendo el chat sobre \"Activar pipeline GHL — mover leads por stages\". Dame un resumen rápido del estado actual y qué podemos hacer. Si necesitas algo de mí, dímelo.",
+      "ts": 1775597153843
+    },
+    {
+      "role": "user",
+      "text": "Estoy abriendo el chat sobre \"Activar pipeline GHL — mover leads por stages\". Dame un resumen rápido del estado actual y qué podemos hacer. Si necesitas algo de mí, dímelo.",
+      "ts": 1775598925763
+    },
+    {
       "role": "bot",
       "text": "Aquí va el resumen rápido:\n\n## P00-MET-T02: Activar pipeline GHL — mover leads por stages\n\n**Estado:** `todo` | **Prioridad:** P0 | **Owner:** Alfonso (tú)\n\n### Contexto\nGHL está conectado (location `BnXWP5dcLVMgUudLv10O`, API key configurada). Tenéis 3 pipelines: **Closer, Sales, Setter**. El problema: todos los stages están a 0 — los contactos entran pero no se mueven de stage. Resultado: no podemos calcular conversion rates Lead→Agenda ni nada de pipeline velocity.\n\n### Criterio de \"done\"\nAl menos 1 pipeline con leads en stages distintos a \"New\". CR Lead→Agenda calculable.\n\n### Opciones\n1. **Automations en GHL** — configurar workflows que muevan leads automáticamente al cumplir condiciones (ej: tag \"llamada-agendada\" → stage \"Agenda\", respuesta a email → stage \"Contacted\")\n2. **Proceso manual** — definir reglas claras y que alguien mueva leads a mano (no escala, pero desbloquea datos rápido)\n3. **Híbrido** — mover manualmente los leads existentes + configurar automations para nuevos\n\n### Lo que necesito de ti\n- **¿Qué workflows/automations tenéis ya en GHL?** (aunque estén desactivados)\n- **¿Cuáles son los stages de cada pipeline?** (puedo consultarlo via API si prefieres)\n- **¿Hay algún criterio claro para mover leads?** Ej: \"cuando se agenda llamada → stage X\"\n\nSi quieres, puedo hacer un pull via API de GHL para ver los pipelines, stages y contactos actuales, y te doy una foto más concreta. ¿Tiro?",
       "agent": "sancho",
       "ts": "2026-04-07T21:57:04.347Z"
+    },
+    {
+      "role": "user",
+      "text": "Estoy abriendo el chat sobre \"Activar pipeline GHL — mover leads por stages\". Dame un resumen rápido del estado actual y qué podemos hacer. Si necesitas algo de mí, dímelo.",
+      "ts": 1775665202335
     }
   ],
-  "updatedAt": 1775599024347,
+  "updatedAt": 1775665202335,
   "discordThreadId": null,
   "discordChannelId": null
 }

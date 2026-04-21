@@ -7,7 +7,7 @@
     "done_criteria": "Métricas definidas y aprobadas por el cliente.",
     "depends_on": "P00-FUL-T08",
     "owner": "Sancho",
-    "status": "done",
+    "status": "completed",
     "channel": "intelligence",
     "type": "foundation",
     "skill": "metrics-setup",
@@ -17,7 +17,10 @@
     "output_files": [
       "brand/growth4u/go-to-market/metrics-plan.md",
       "brand/growth4u/metrics-plan.json"
-    ]
+    ],
+    "deliverable_file": "brand/growth4u/go-to-market/metrics-plan.md",
+    "mc_chat_thread_id": "task-p00-met-t01",
+    "discord_thread_id": null
   },
   {
     "id": "P00-MET-T02",
@@ -32,7 +35,11 @@
     "type": "ops",
     "priority": "P0",
     "completed": null,
-    "output_files": []
+    "output_files": [],
+    "skill": "sancho-manager",
+    "deliverable_file": "brand/growth4u/projects/P00-Metrics-Metrics-and-Connections/tasks/P00-MET-T02/deliverable.md",
+    "mc_chat_thread_id": "task-p00-met-t02",
+    "discord_thread_id": null
   },
   {
     "id": "P00-MET-T03",
@@ -47,7 +54,11 @@
     "type": "ops",
     "priority": "P0",
     "completed": null,
-    "output_files": []
+    "output_files": [],
+    "skill": "sancho-manager",
+    "deliverable_file": "brand/growth4u/projects/P00-Metrics-Metrics-and-Connections/tasks/P00-MET-T03/deliverable.md",
+    "mc_chat_thread_id": "task-p00-met-t03",
+    "discord_thread_id": null
   },
   {
     "id": "P00-MET-T04",
@@ -62,7 +73,11 @@
     "type": "ops",
     "priority": "P1",
     "completed": null,
-    "output_files": []
+    "output_files": [],
+    "skill": "sancho-manager",
+    "deliverable_file": "brand/growth4u/projects/P00-Metrics-Metrics-and-Connections/tasks/P00-MET-T04/deliverable.md",
+    "mc_chat_thread_id": "task-p00-met-t04",
+    "discord_thread_id": null
   },
   {
     "id": "P00-MET-T05",
@@ -77,7 +92,11 @@
     "type": "ops",
     "priority": "P1",
     "completed": null,
-    "output_files": []
+    "output_files": [],
+    "skill": "sancho-manager",
+    "deliverable_file": "brand/growth4u/projects/P00-Metrics-Metrics-and-Connections/tasks/P00-MET-T05/deliverable.md",
+    "mc_chat_thread_id": "task-p00-met-t05",
+    "discord_thread_id": null
   },
   {
     "id": "P00-MET-T06",
@@ -92,7 +111,11 @@
     "type": "ops",
     "priority": "P2",
     "completed": null,
-    "output_files": []
+    "output_files": [],
+    "skill": "sancho-manager",
+    "deliverable_file": "brand/growth4u/projects/P00-Metrics-Metrics-and-Connections/tasks/P00-MET-T06/deliverable.md",
+    "mc_chat_thread_id": "task-p00-met-t06",
+    "discord_thread_id": null
   },
   {
     "id": "P00-MET-T07",
@@ -107,7 +130,11 @@
     "type": "integration",
     "priority": "P1",
     "completed": null,
-    "output_files": []
+    "output_files": [],
+    "skill": "market-intelligence",
+    "deliverable_file": "brand/growth4u/projects/P00-Metrics-Metrics-and-Connections/tasks/P00-MET-T07/deliverable.md",
+    "mc_chat_thread_id": "task-p00-met-t07",
+    "discord_thread_id": null
   },
   {
     "id": "P00-Metrics-T08",
@@ -115,6 +142,12 @@
     "description": "25 new contacts on a single day = 3.4x average. Determine if replicable.\n\n**Accion sugerida:** ",
     "status": "todo",
     "source": "performance-analysis",
-    "created_at": "2026-04-01T12:31:48.215Z"
+    "created_at": "2026-04-01T12:31:48.215Z",
+    "deliverable": "Informe de análisis del spike de 25 contactos del 30 de marzo con causa raíz identificada",
+    "done_criteria": "Documento con fuente del tráfico, canal de adquisición, y recomendación de si es replicable o anomalía",
+    "skill": "performance-analysis",
+    "deliverable_file": "brand/growth4u/projects/P00-Metrics-Metrics-and-Connections/tasks/P00-Metrics-T08/deliverable.md",
+    "mc_chat_thread_id": "task-p00-metrics-t08",
+    "discord_thread_id": null
   }
 ]

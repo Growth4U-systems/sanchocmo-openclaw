@@ -11,27 +11,27 @@
       "pillars": {
         "company-brief": {
           "status": "approved",
-          "output_file": "brand/sanchocmo/company-brief/current.md",
+          "output_file": "brand/sanchocmo/company-brief/company-brief.current.md",
           "skill": "fast-foundation"
         },
         "self-l1": {
           "status": "approved",
-          "output_file": "brand/sanchocmo/market-and-us/self/current.md",
+          "output_file": "brand/sanchocmo/market-and-us/self/self.current.md",
           "skill": "fast-foundation"
         },
         "market-l1": {
           "status": "approved",
-          "output_file": "brand/sanchocmo/market-and-us/market/current.md",
+          "output_file": "brand/sanchocmo/market-and-us/market/market.current.md",
           "skill": "fast-foundation"
         },
         "brand-voice-snapshot": {
           "status": "approved",
-          "output_file": "brand/sanchocmo/brand-voice/current.md",
+          "output_file": "brand/sanchocmo/brand-voice/brand-voi.current.md",
           "skill": "fast-foundation"
         },
         "niche-basic": {
           "status": "approved",
-          "output_file": "brand/sanchocmo/go-to-market/ecps/current.md",
+          "output_file": "brand/sanchocmo/go-to-market/ecps/ecps.current.md",
           "skill": "fast-foundation"
         }
       }
@@ -69,7 +69,7 @@
             "competitor-analysis",
             "self-analysis"
           ],
-          "output_file": "brand/sanchocmo/market-and-us/market/current.md",
+          "output_file": "brand/sanchocmo/market-and-us/market/market.current.md",
           "skill": "market-intelligence"
         },
         "competitor-analysis": {
@@ -83,7 +83,7 @@
             "self-analysis"
           ],
           "skill": "competitor-intelligence",
-          "output_file": "brand/sanchocmo/market-and-us/competitors/current.md"
+          "output_file": "brand/sanchocmo/market-and-us/competitors/competitors.current.md"
         },
         "self-analysis": {
           "status": "approved",
@@ -95,7 +95,7 @@
             "market-analysis",
             "competitor-analysis"
           ],
-          "output_file": "brand/sanchocmo/market-and-us/self/current.md",
+          "output_file": "brand/sanchocmo/market-and-us/self/self.current.md",
           "skill": "self-intelligence"
         },
         "market-synthesis": {
@@ -107,7 +107,7 @@
             "competitor-analysis",
             "self-analysis"
           ],
-          "output_file": "brand/sanchocmo/market-and-us/swot/current.md",
+          "output_file": "brand/sanchocmo/market-and-us/swot/swot.current.md",
           "skill": "market-synthesis"
         }
       }
@@ -126,7 +126,7 @@
           "enriches_with": [
             "existing-customer-data"
           ],
-          "output_file": "brand/sanchocmo/go-to-market/ecps/current.md",
+          "output_file": "brand/sanchocmo/go-to-market/ecps/ecps.current.md",
           "skill": "niche-discovery-100x",
           "version": "v2.0",
           "approved_at": "2026-03-08T16:15:00Z",
@@ -139,7 +139,7 @@
             "fast-foundation"
           ],
           "optional": true,
-          "output_file": "brand/sanchocmo/go-to-market/existing-customer-data/current.md",
+          "output_file": "brand/sanchocmo/go-to-market/existing-customer-data/existing-customer-data.current.md",
           "skill": "existing-customer-data"
         },
         "positioning": {
@@ -167,7 +167,7 @@
           "enriches_with": [
             "positioning"
           ],
-          "output_file": "brand/sanchocmo/go-to-market/pricing/current.md",
+          "output_file": "brand/sanchocmo/go-to-market/pricing/pricing.current.md",
           "skill": "pricing-strategy",
           "version": "v1.0",
           "approved_at": "2026-03-08T17:10:00Z"
@@ -195,7 +195,7 @@
           "requires": [
             "positioning"
           ],
-          "output_file": "brand/sanchocmo/brand-voice/current.md",
+          "output_file": "brand/sanchocmo/brand-voice/brand-voi.current.md",
           "skill": "brand-voice",
           "version": "v1.0",
           "approved_at": "2026-03-08T17:55:00Z",
@@ -209,7 +209,7 @@
           "requires": [
             "brand-voice"
           ],
-          "output_file": "brand/sanchocmo/brand-identity/visual-identity/current.md",
+          "output_file": "brand/sanchocmo/brand-identity/visual-identity/visual-identity.current.md",
           "skill": "visual-identity",
           "version": "v1.0",
           "approved_at": "2026-03-08T19:56:00Z",
@@ -247,7 +247,7 @@
       "requires": [
         "metrics-setup"
       ],
-      "output_file": "brand/sanchocmo/strategic-plan/current.md"
+      "output_file": "brand/sanchocmo/strategic-plan/strategic-pla.current.md"
     }
   },
   "brand_summary": {
@@ -270,15 +270,15 @@
   "file_index": {
     "competitors": {
       "battle_cards": {
-        "okara-ai": "market-and-us/competitors/okara-ai/current.md",
-        "jasper": "market-and-us/competitors/jasper/current.md",
-        "distribb": "market-and-us/competitors/distribb/current.md"
+        "okara-ai": "market-and-us/competitors/okara-ai/okara-ai.current.md",
+        "jasper": "market-and-us/competitors/jasper/jasper.current.md",
+        "distribb": "market-and-us/competitors/distribb/distribb.current.md"
       },
-      "summary": "market-and-us/competitors/current.md"
+      "summary": "market-and-us/competitors/competitors.current.md"
     },
     "integrations": "integrations.json",
     "brand_assets": {
-      "visual_identity": "brand-identity/visual-identity/current.md"
+      "visual_identity": "brand-identity/visual-identity/visual-identity.current.md"
     },
     "operational": {
       "costs": "costs.json"

@@ -15,7 +15,10 @@
       "acb67f08-187c-4b1c-8fb7-d78baa735c1e",
       "8d9dbf51-7c36-4b43-87d1-2d3b48fb3d90"
     ],
-    "skill": "company-finder"
+    "skill": "company-finder",
+    "deliverable_file": "brand/growth4u/projects/P03-cold-email/tasks/P03-T01/deliverable.md",
+    "mc_chat_thread_id": "task-p03-t01",
+    "discord_thread_id": null
   },
   {
     "id": "P03-T02",
@@ -27,7 +30,10 @@
     "deliverable": "Spreadsheet con 100 fintechs: nombre, web, contacto, email, licencia BdE.",
     "done_criteria": "100 fintechs con licencia BdE verificada y contacto de decisor.",
     "type": "outreach",
-    "skill": "company-finder"
+    "skill": "company-finder",
+    "deliverable_file": "brand/growth4u/projects/P03-cold-email/tasks/P03-T02/deliverable.md",
+    "mc_chat_thread_id": "task-p03-t02",
+    "discord_thread_id": null
   },
   {
     "id": "P03-T03",
@@ -40,7 +46,10 @@
     "done_criteria": "Emails revisados. Cada secuencia tiene: hook, valor, case, CTA.",
     "type": "execution",
     "completed": "2026-03-27",
-    "skill": "outreach-sequence-builder"
+    "skill": "outreach-sequence-builder",
+    "deliverable_file": "brand/growth4u/projects/P03-cold-email/tasks/P03-T03/deliverable.md",
+    "mc_chat_thread_id": "task-p03-t03",
+    "discord_thread_id": null
   },
   {
     "id": "P03-T04",
@@ -52,7 +61,10 @@
     "deliverable": "Campaña activa en Instantly: 50 emails/día, 2 buzones, A/B de subject lines.",
     "done_criteria": "Deliverability >95%. Open rate >40%. Sin bounces significativos.",
     "type": "outreach",
-    "skill": "outreach-sequence-builder"
+    "skill": "outreach-sequence-builder",
+    "deliverable_file": "brand/growth4u/projects/P03-cold-email/tasks/P03-T04/deliverable.md",
+    "mc_chat_thread_id": "task-p03-t04",
+    "discord_thread_id": null
   },
   {
     "id": "P03-T05",
@@ -64,6 +76,9 @@
     "deliverable": "Replies gestionados en <4h. Calls agendadas en now.growth4u.io.",
     "done_criteria": "Tiempo medio de respuesta <4h. Todas las calls cualificadas agendadas.",
     "type": "execution",
-    "skill": "outreach-sequence-builder"
+    "skill": "outreach-sequence-builder",
+    "deliverable_file": "brand/growth4u/projects/P03-cold-email/tasks/P03-T05/deliverable.md",
+    "mc_chat_thread_id": "task-p03-t05",
+    "discord_thread_id": null
   }
 ]

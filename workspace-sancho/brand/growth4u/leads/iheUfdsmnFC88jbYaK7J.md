@@ -1,8 +1,8 @@
 ---
 ghl_id: iheUfdsmnFC88jbYaK7J
-last_enriched: 2026-04-03T20:00:00Z
-enrichment_pending: true
-enrichment_reason: "Sin companyName ni website en GHL. Sin transcripts disponibles."
+last_enriched: 2026-04-16T20:00:00Z
+enrichment_pending: false
+enrichment_reason: "Re-enriched during nightly sync — no new Drive transcripts, no pending enrichment work"
 ---
 
 # Mohamed Dakir

@@ -1,0 +1,27 @@
+{
+  "messages": [
+    {
+      "role": "user",
+      "text": "Estoy abriendo el chat sobre \"product hackers\". Dame un resumen rápido del estado actual y qué podemos hacer. Si necesitas algo de mí, dímelo.",
+      "ts": 1775668192105
+    },
+    {
+      "role": "bot",
+      "text": "Aquí tienes el resumen rápido de **Product Hackers** como competidor de Growth4U:\n\n## Estado actual\n\nTenemos un **battle card completo** (v1, marzo 2026) con 3 lentes de análisis, 9 páginas scrapeadas, 12+ casos públicos analizados, y perfiles de los 2 fundadores (Luis Díaz del Dedo + Corti).\n\n## Lo esencial\n\n- **Quiénes son:** El gorila del growth en España. 6M€ facturación, +110 personas, clientes enterprise (Zara, Mapfre, Wallapop, Holafly).\n- **Su modelo:** Retainer enterprise eterno (60% ingresos recurrentes). Ticket alto. Junior rotativo atiende al cliente.\n- **Donde brillan:** Contenido masivo (blog, podcast, 2 libros, newsletter, academia IA gratuita), prensa (Forbes, El País), y 2 fundadores con marca personal potente.\n- **Su debilidad vs Growth4U:** No sirven al segmento startup/post-PMF. No construyen trust (solo funnel/CRO). No te dejan ser autónomo.\n\n## Ángulo de ataque definido\n\n> *\"PH es para Zara. G4U es para ti.\"*\n> Acceso directo al fundador, no a un junior. 6 meses y eres autónomo. Trust como core, no solo experimentación.\n\n## Qué podemos hacer desde aquí\n\n1. **Actualizar el battle card** — Han pasado unos meses, podemos refrescar datos (web, redes, AI Hackers vertical)\n2. **Crear contenido de contraste** — Posts LinkedIn posicionando G4U vs el modelo \"agencia grande\" sin nombrarlos directamente\n3. **Monitorizar triggers** — PH bajando de segmento, creando producto para startups, o su vertical AI Hackers compitiendo en tickets bajos\n4. **Análisis de ads** — Falta revisar Meta Ad Library (estaba pendiente)\n5. **Análisis de redes actualizado** — Scraping de Instagram/LinkedIn de los fundadores para ver su estrategia de contenido actual\n\n¿Qué te interesa trabajar? ¿O hay algo específico sobre Product Hackers que quieras profundizar?",
+      "ts": 1775668240375,
+      "agent": "sancho"
+    },
+    {
+      "role": "user",
+      "text": "Estoy abriendo el chat sobre \"product hackers\". Dame un resumen rápido del estado actual y qué podemos hacer. Si necesitas algo de mí, dímelo.",
+      "ts": 1775668463964
+    },
+    {
+      "role": "bot",
+      "text": "Ya te di el resumen en el mensaje anterior 👆 — el battle card completo de Product Hackers está ahí arriba.\n\n¿Algo específico que quieras hacer? Actualizar datos, crear contenido de contraste, monitorizar... tú me dices.",
+      "ts": 1775668475240,
+      "agent": "sancho"
+    }
+  ],
+  "updatedAt": 1775668475240
+}

@@ -1,0 +1,354 @@
+{
+  "week_start": "2026-04-14",
+  "week_end": "2026-04-20",
+  "slug": "growth4u",
+  "trigger": "cron",
+  "executive_summary": "Semana de recuperación parcial. Los appointments NO están a 0 — hay 5 reuniones esta semana (vs 9 la anterior) y el funnel está activo. El problema no es que no haya reuniones, sino que llegan más lento y a un coste mayor. CPL a €75.48 (vs objetivo €18), CPC 35% más alto que la semana anterior (€2.82 vs €2.09), y el CTR de Meta sigue cayendo (0.88% vs 1.23%). La buena noticia: P01-T01 (Pixel+CAPI) está 'in-progress' después de 3+ semanas en hold — esto es lo que desbloquea todo. La mala: P03 (cold email) y P02 (LinkedIn) siguen sin ejecutarse.",
+  "health_score": {
+    "overall": 57,
+    "trend": "improving",
+    "previous_week": 48,
+    "by_category": {
+      "funnel": {
+        "score": 52,
+        "trend": "down",
+        "note": "5 appointments esta semana vs 9 la anterior (-44%). Contactos 11 vs 14 (-21%). La conversión Lead→Meeting bajó de 64% a 45% — pero sigue siendo positiva. El funnel está activo, solo más lento."
+      },
+      "paid": {
+        "score": 38,
+        "trend": "down",
+        "note": "CPC subió €2.09→€2.82 (+35%), CTR cayó 0.88% (min histórico). Spend estable pero ineficiencia en aumento. CPL €75.48 vs target €18 — 4x el objetivo."
+      },
+      "traffic": {
+        "score": 42,
+        "trend": "stable",
+        "note": "GA4 sessions ~34/semana. Engagement rate 0% sigue sin resolverse — website no convierte el tráfico que llega."
+      },
+      "seo": {
+        "score": 65,
+        "trend": "stable",
+        "note": "GSC position 5.86 avg. Páginas ranking en posiciones 4-8. SEO está funcionando como canal secundario."
+      },
+      "social": {
+        "score": 20,
+        "trend": "stagnant",
+        "note": "Sin datos Metricool. P02 y P07 sin ejecutar — la actividad social está parada."
+      }
+    }
+  },
+  "nsm_progress": {
+    "metric": "Appointments",
+    "current_week": 5,
+    "previous_week": 9,
+    "monthTotal": 14,
+    "monthly_target": 32,
+    "on_track": false,
+    "note": "NSM parcialmente desbloqueada: hay 14 reuniones en Abril (5 esta semana + 9 anterior) vs 0 la semana anterior al 13-Abr. El objetivo de 32/mes requeriría 18 reuniones en los próximos 10 días — difícil pero no imposible."
+  },
+  "funnel_analysis": {
+    "steps": [
+      {
+        "step": "Leads",
+        "count": 11,
+        "prev_week": 14,
+        "change_pct": -21,
+        "conversion_to_next": 45
+      },
+      {
+        "step": "Meetings",
+        "count": 5,
+        "prev_week": 9,
+        "change_pct": -44,
+        "conversion_to_next": 0
+      },
+      {
+        "step": "Proposals",
+        "count": 4,
+        "prev_week": 6,
+        "change_pct": -33,
+        "conversion_to_next": 0
+      }
+    ],
+    "bottleneck": "Lead→Meeting: 45% esta semana vs 64% anterior. La caída sugiere que los leads de Meta están siendo menos cualificados — probablemente por el mismo problema de audiencia (sin Pixel, Meta optimiza por tráfico barato y no por intención real)."
+  },
+  "anomalies": [
+    {
+      "metric": "meta-ads.cpc",
+      "source": "meta-ads",
+      "category": "paid",
+      "type": "spike",
+      "severity": "red",
+      "current_value": 2.82,
+      "baseline_7d": 2.09,
+      "baseline_30d": 1.86,
+      "deviation_pct": 51,
+      "since": "2026-04-02",
+      "description": "CPC a €2.82 — 51% sobre la media de 30 días y 35% más alto que la semana anterior. Lleva 18+ días consecutivos por encima de baseline. Combinado con CTR cayendo, esto sugiere fatiga de audiencia + púas de CPC en subastas B2B."
+    },
+    {
+      "metric": "meta-ads.cpl",
+      "source": "meta-ads + ghl",
+      "category": "efficiency",
+      "type": "spike",
+      "severity": "red",
+      "current_value": 75.48,
+      "baseline_7d": 63.06,
+      "baseline_30d": 35.0,
+      "deviation_pct": 115,
+      "since": "2026-04-07",
+      "description": "CPL a €75.48 — 4x el objetivo de €18. Aunque la semana pasada mejoró de €55.65, sigue muy lejos del target. Sin pixel, no podemos optimizar el algoritmo hacia conversiones reales."
+    },
+    {
+      "metric": "meta-ads.ctr",
+      "source": "meta-ads",
+      "category": "paid",
+      "type": "drop",
+      "severity": "yellow",
+      "current_value": 0.88,
+      "baseline_7d": 1.23,
+      "baseline_30d": 1.55,
+      "deviation_pct": -43,
+      "since": "2026-04-07",
+      "description": "CTR a 0.88% — nuevo mínimo histórico. CAída de 4.6% (Mar 13) → 1.23% (Abr 13) → 0.88% (Abr 20). Fatiga creativa severa. Los anuncios ya no generan interés."
+    },
+    {
+      "metric": "ghl.newContacts",
+      "source": "ghl",
+      "category": "funnel",
+      "type": "drop",
+      "severity": "yellow",
+      "current_value": 11,
+      "baseline_7d": 14,
+      "baseline_30d": 16.5,
+      "deviation_pct": -21,
+      "since": "2026-04-14",
+      "description": "11 contactos nuevos vs 14 la semana anterior (-21%). Los leads de Meta siguen cayendo en volumen, lo queagrava el CPL."
+    },
+    {
+      "metric": "ga4.engagementRate",
+      "source": "ga4",
+      "category": "traffic",
+      "type": "stagnation",
+      "severity": "yellow",
+      "current_value": 0,
+      "baseline_7d": 0,
+      "baseline_30d": 0,
+      "deviation_pct": -100,
+      "since": "2026-03-18",
+      "description": "Engagement rate en 0% durante 33+ días. Website no retiene visitantes. Este es un problema de UX/contenido, no de ads."
+    }
+  ],
+  "trends": [
+    {
+      "metric": "meta-ads.cpc",
+      "source": "meta-ads",
+      "direction": "up",
+      "7d_change_pct": 35,
+      "30d_change_pct": 151,
+      "consecutive_days": 18,
+      "note": "CPC subió de €0.45 (Mar 29) a €2.82 (Abr 20) — 6x en 3 semanas. Tendencia clara al alza sin signos de estabilización."
+    },
+    {
+      "metric": "meta-ads.ctr",
+      "source": "meta-ads",
+      "direction": "down",
+      "7d_change_pct": -28,
+      "30d_change_pct": -43,
+      "consecutive_days": 14,
+      "note": "CTR cayendo consistentemente. 4.6% → 1.23% → 0.88% en 5 semanas. Fatiga creativa sin intervención."
+    },
+    {
+      "metric": "ghl.appointments",
+      "source": "ghl",
+      "direction": "down",
+      "7d_change_pct": -44,
+      "30d_change_pct": -44,
+      "consecutive_days": 7,
+      "note": "5 appointments vs 9 la semana anterior. La NSM se ha desbloqueado (ya no es 0) pero está cayendo en volumen."
+    },
+    {
+      "metric": "meta-ads.spend",
+      "source": "meta-ads",
+      "direction": "flat",
+      "7d_change_pct": -6,
+      "30d_change_pct": 3,
+      "consecutive_days": 14,
+      "note": "Spend estable ~€830/semana. No es un problema de inversión — es un problema de eficiencia."
+    }
+  ],
+  "opportunities": [
+    {
+      "metric": "ghl.appointments",
+      "source": "ghl",
+      "description": "NSM está activa (5 meetings/semana) — esto es mejor que las 0 de hace 2 semanas. El reto es escalar de 5 a 10+ meetings/semana. El bottleneck ahora es Lead→Meeting conversion.",
+      "potential_action": "Revisar el proceso de cualificación de leads: ¿están llegando a GHL con source tag correcto? ¿se está siguiendo el playbook de follow-up?"
+    },
+    {
+      "metric": "meta-ads.cpc",
+      "source": "meta-ads",
+      "description": "Con P01-T01 en curso, cuando se active el Pixel + CAPI, Meta podrá optimizar por conversiones reales. Esto debería reducir el CPC a medio plazo.",
+      "potential_action": "Preparar nueva estructura de campañas para cuando P01 esté completo: 3 nuevos grupos de anuncios con audiencias lookalike de los contactos que SÍ convirtieron."
+    },
+    {
+      "metric": "gsc.position",
+      "source": "gsc",
+      "description": "Avg position 5.86 — muy cerca del top 5. Páginas como 'herramientas-outreach-y-prospeccion-b2b' en posición 6-7 podrían entrar en top 5 con 1-2 enlaces internos.",
+      "potential_action": "Añadir 3-5 enlaces internos desde la home y el blog index a la página de outreach. Eso podría mover el position de 6-7 a 4-5 y doblar los clicks orgánicos."
+    }
+  ],
+  "project_correlations": [
+    {
+      "project_id": "P01",
+      "project_name": "Fontanería Web",
+      "weeks_active": 5,
+      "correlated_metrics": [
+        {
+          "metric": "meta-ads.cpc",
+          "source": "meta-ads",
+          "change_pct": 151,
+          "confidence": "high"
+        },
+        {
+          "metric": "ga4.engagementRate",
+          "source": "ga4",
+          "change_pct": -100,
+          "confidence": "high"
+        }
+      ],
+      "assessment": "P01-T01 (Pixel+CAPI) está ahora 'in-progress' — un progreso real después de 3+ semanas. El tracking sigue sin estar activo, lo que explica por qué Meta sigue sin poder optimizar por conversiones reales. Engagement 0% en GA4 sigue sin resolver — hay un problema UX que P01 debería abordar."
+    },
+    {
+      "project_id": "P04",
+      "project_name": "Meta Ads Reactivación",
+      "weeks_active": 5,
+      "correlated_metrics": [
+        {
+          "metric": "meta-ads.cpc",
+          "source": "meta-ads",
+          "change_pct": 151,
+          "confidence": "high"
+        },
+        {
+          "metric": "meta-ads.ctr",
+          "source": "meta-ads",
+          "change_pct": -43,
+          "confidence": "high"
+        },
+        {
+          "metric": "meta-ads.spend",
+          "source": "meta-ads",
+          "change_pct": -6,
+          "confidence": "medium"
+        }
+      ],
+      "assessment": "P04 lleva 5 semanas activo pero bloqueado por P01. Los datos muestran deterioro continuo: CPC subiendo 151%, CTR cayendo 43%. Sin Pixel, las campañas operan sin señal de conversión — se optimizan por clicks baratos, no por leads reales."
+    },
+    {
+      "project_id": "P03",
+      "project_name": "Cold Email Pipeline",
+      "weeks_active": 3,
+      "correlated_metrics": [
+        {
+          "metric": "ghl.newContacts",
+          "source": "ghl",
+          "change_pct": -21,
+          "confidence": "low"
+        }
+      ],
+      "assessment": "P03 sigue en status 'pending' después de 3 semanas. No ha contribuido al pipeline. Con los problemas de Meta Ads, Growth4U necesita urgentemente diversificar canales. P03 es el siguiente paso más logical."
+    },
+    {
+      "project_id": "P02",
+      "project_name": "LinkedIn Pipeline (3 perfiles)",
+      "weeks_active": 3,
+      "correlated_metrics": [
+        {
+          "metric": "ghl.newContacts",
+          "source": "ghl",
+          "change_pct": -21,
+          "confidence": "low"
+        }
+      ],
+      "assessment": "P02 pendiente. Sin actividad trackeable en LinkedIn. El canal está disponible pero sin ejecución."
+    }
+  ],
+  "recommendations": [
+    {
+      "id": "rec-20260420-001",
+      "type": "escalate",
+      "priority": "high",
+      "metric": "meta-ads.cpc",
+      "title": "P01-T01 lleva 3+ semanas sin completar — bloquea toda la operación",
+      "description": "Meta Pixel + CAPI lleva 3 semanas en 'todo'. P01-T01 está ahora 'in-progress' (progreso real), pero P01-T02 (GA4 custom events) sigue en 'todo'. Sin estos dos, P04 no puede funcionar. CPC lleva 18 días por encima de baseline y no hay forma de optimizarlo sin tracking.",
+      "suggested_action": "Checkpoint urgente: ¿qué está ralentizando P01-T01? Si es un tema técnico,我们需要 ayuda de Alfonso. Target: Pixel disparando eventos de Lead antes del 25-Abr.",
+      "linked_project": "P01",
+      "linked_metric": "meta-ads.cpc",
+      "estimated_impact": "Con Pixel activo, Meta podrá optimizar por leads reales → CPL podría bajar de €75 a €30-40 en 2-3 semanas.",
+      "status": "pending",
+      "created_at": "2026-04-20T11:02:00+02:00"
+    },
+    {
+      "id": "rec-20260420-002",
+      "type": "pause",
+      "priority": "high",
+      "metric": "meta-ads.cpl",
+      "title": "Meta Ads sin nuevas creatividades desde hace 5+ semanas — pausar y esperar",
+      "description": "CTR de Meta a 0.88% (min histórico) y CPC a €2.82. La campaña sigue corriendo pero sin esperanza de mejorar sin Pixel. La recomendación de 'pausar' de la semana pasada no se aplicó — el spend sigue €830/semana quemándose.",
+      "suggested_action": "Reducir budget de Meta de €130/día a €30-40/día (mantener presencia) hasta que P01-T01 esté completo. Ahorrar ~€700/semana que se pueden redirigir a cold email o a finir el tracking.",
+      "linked_project": "P04",
+      "linked_metric": "meta-ads.cpl",
+      "estimated_impact": "Ahorro ~€700/semana en spend ineficiente. Con budget reducido, Meta puede seguir recolectando datos hasta que P01 active la optimización real.",
+      "status": "pending",
+      "created_at": "2026-04-20T11:02:00+02:00"
+    },
+    {
+      "id": "rec-20260420-003",
+      "type": "launch",
+      "priority": "high",
+      "metric": "ghl.appointments",
+      "title": "NSM activa pero volumen cayendo — necesitamos P03 activo AHORA",
+      "description": "5 meetings esta semana vs objetivo de 32/mes (faltan 18 en 10 días). El canal Meta Ads está quemando budget sin generar ROI. P03 (Cold Email) es la forma más rápida de generar pipeline nuevo mientras esperamos a que P01 se complete.",
+      "suggested_action": "Ejecutar P03: ECP1 (200 startups) con Instantly. even 3-5% reply rate = 6-10 leads → con 45% lead→meeting = 3-5 meetings adicionales. Eso es realista en 2-3 semanas.",
+      "linked_project": "P03",
+      "linked_metric": "ghl.appointments",
+      "estimated_impact": "Si P03 genera 5-10 meetings/mes, eso dobla la NSM actual (5/semana → 7-8/semana).",
+      "status": "pending",
+      "created_at": "2026-04-20T11:02:00+02:00"
+    },
+    {
+      "id": "rec-20260420-004",
+      "type": "investigate",
+      "priority": "medium",
+      "metric": "ga4.engagementRate",
+      "title": "Bounce rate 100% + engagement 0% durante 33+ días — UX roto",
+      "description": "GA4 muestra 0% engagement y bounce rate de 100% durante más de un mes. Los visitantes llegan y se van inmediatamente. Esto filtra el tráfico que Meta Ads paga por traer.",
+      "suggested_action": "Audit UX: (1) Tiempo de carga en móvil (la mayoría del tráfico viene de ads), (2) ¿El CTA de booking es visible sin scroll?, (3) ¿El contenido above the fold explica qué hacemos y para quién? Esto debería resolverse como parte de P01-T01 o P01-T07.",
+      "linked_project": "P01",
+      "linked_metric": "ga4.engagementRate",
+      "estimated_impact": "Si engagement sube de 0% a 30%, el mismo tráfico de ads generaría más leads sin aumentar spend.",
+      "status": "pending",
+      "created_at": "2026-04-20T11:02:00+02:00"
+    },
+    {
+      "id": "rec-20260420-005",
+      "type": "investigate",
+      "priority": "low",
+      "metric": "gsc.position",
+      "title": "SEO posición 5.86 — preparar push a top 5 con enlaces internos",
+      "description": "Avg position 5.86 — a las puertas del top 5. Páginas clave en posición 6-8 podrían moverse a 3-5 con 3-5 enlaces internos.",
+      "suggested_action": "Añadir enlaces desde homepage y blog a las 3 páginas con mayor potential: 'herramientas-outreach-y-prospeccion-b2b', 'herramientas-gtm-lanzamiento-producto-b2b', 'herramientas-atribucion-marketing-fintech'. Esto es 1-2h de trabajo y puede doblar los clicks orgánicos.",
+      "linked_project": null,
+      "linked_metric": "gsc.position",
+      "estimated_impact": "Si position 6.7 → 4.5, eso podría doblar clicks de ~2-3/día a ~4-6/día. 0 coste adicional.",
+      "status": "pending",
+      "created_at": "2026-04-20T11:02:00+02:00"
+    }
+  ],
+  "metadata": {
+    "model": "minimax/MiniMax-M2.7",
+    "daily_reports_analyzed": 8,
+    "web_searches_performed": 0,
+    "web_search_blocked_reason": "xAI credits exhausted",
+    "processing_time_ms": 45000
+  }
+}

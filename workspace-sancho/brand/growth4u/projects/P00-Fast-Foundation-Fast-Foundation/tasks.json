@@ -10,6 +10,11 @@
     "owner": "Sancho",
     "channel": "strategy",
     "depends_on": null,
-    "completed": "2026-04-07"
+    "completed": "2026-04-08",
+    "deliverable": "5 docs lite generados: company-brief, market, self, ecps, brand-voice + brand_summary rellenado",
+    "done_criteria": "Los 5 documentos existen en foundation/ y brand_summary tiene contenido válido",
+    "deliverable_file": "brand/growth4u/projects/P00-Fast-Foundation-Fast-Foundation/tasks/P00-FF-T01/deliverable.md",
+    "mc_chat_thread_id": "task-p00-ff-t01",
+    "discord_thread_id": null
   }
 ]

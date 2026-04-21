@@ -1,0 +1,1251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Market Synthesis — Hulahoop Media</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --electric-purple: #A855F7;
+      --electric-purple-dark: #7C3AED;
+      --electric-purple-light: #C084FC;
+      --electric-pink: #EC4899;
+      --electric-cyan: #06B6D4;
+      --electric-yellow: #EAB308;
+      --dark-bg: #09090B;
+      --dark-card: #18181B;
+      --dark-card-hover: #27272A;
+      --text-primary: #FAFAFA;
+      --text-secondary: #A1A1AA;
+      --text-muted: #71717A;
+      --border: #27272A;
+      --font-sans: 'Space Grotesk', system-ui, sans-serif;
+      --font-mono: 'Space Mono', monospace;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--font-sans);
+      background: var(--dark-bg);
+      color: var(--text-primary);
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* NAV */
+    nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      background: rgba(9,9,11,0.85);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 clamp(1rem, 4vw, 3rem);
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    nav .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-weight: 700;
+      font-size: 1rem;
+      letter-spacing: -0.02em;
+    }
+    nav .brand .dot { color: var(--electric-purple); }
+    nav .brand .badge {
+      font-size: 0.65rem;
+      font-family: var(--font-mono);
+      background: var(--electric-purple-dark);
+      color: white;
+      padding: 0.15rem 0.5rem;
+      border-radius: 4px;
+      letter-spacing: 0;
+    }
+    nav .meta {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+    }
+
+    /* SLIDES */
+    .slide {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 80px clamp(1.5rem, 8vw, 8rem) clamp(3rem, 8vh, 6rem);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .slide::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background:
+        radial-gradient(ellipse 80% 60% at 50% -20%, rgba(168,85,247,0.12) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 40% at 100% 100%, rgba(6,182,212,0.06) 0%, transparent 50%);
+      pointer-events: none;
+    }
+
+    .slide-num {
+      position: absolute;
+      top: 80px;
+      right: clamp(1.5rem, 8vw, 8rem);
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      letter-spacing: 0.1em;
+    }
+
+    .slide-tag {
+      display: inline-block;
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--electric-purple);
+      background: rgba(168,85,247,0.1);
+      border: 1px solid rgba(168,85,247,0.3);
+      padding: 0.25rem 0.75rem;
+      border-radius: 20px;
+      margin-bottom: 1.5rem;
+    }
+
+    .slide h1 {
+      font-size: clamp(2.5rem, 7vw, 5.5rem);
+      font-weight: 700;
+      line-height: 1.0;
+      letter-spacing: -0.04em;
+      margin-bottom: 1.5rem;
+      max-width: 16ch;
+    }
+
+    .slide h1 .highlight {
+      background: linear-gradient(135deg, var(--electric-purple), var(--electric-pink));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .slide h2 {
+      font-size: clamp(1.5rem, 3.5vw, 2.5rem);
+      font-weight: 700;
+      line-height: 1.15;
+      letter-spacing: -0.03em;
+      margin-bottom: 1.5rem;
+      max-width: 22ch;
+    }
+
+    .slide h3 {
+      font-size: clamp(1.1rem, 2vw, 1.4rem);
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      margin-bottom: 1rem;
+      color: var(--text-secondary);
+    }
+
+    .slide .subtitle {
+      font-size: clamp(1rem, 2vw, 1.25rem);
+      color: var(--text-secondary);
+      max-width: 50ch;
+      line-height: 1.6;
+    }
+
+    .slide .meta-line {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      margin-top: 2rem;
+      letter-spacing: 0.05em;
+    }
+
+    /* GRID */
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+    .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; }
+
+    /* CARDS */
+    .card {
+      background: var(--dark-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      position: relative;
+      overflow: hidden;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .card:hover {
+      border-color: rgba(168,85,247,0.4);
+      background: var(--dark-card-hover);
+    }
+    .card::after {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--electric-purple), var(--electric-pink));
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+    .card:hover::after { opacity: 1; }
+
+    .card .card-tag {
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-bottom: 0.75rem;
+    }
+    .card .card-tag.s { color: #22D3EE; }
+    .card .card-tag.w { color: #F87171; }
+    .card .card-tag.o { color: #34D399; }
+    .card .card-tag.t { color: #FB923C; }
+
+    .card h4 {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      letter-spacing: -0.01em;
+    }
+
+    .card p {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    .card .card-source {
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      color: var(--text-muted);
+      margin-top: 0.75rem;
+      display: block;
+    }
+
+    /* METRIC BLOCK */
+    .metric-block {
+      background: linear-gradient(135deg, rgba(168,85,247,0.1), rgba(236,72,153,0.05));
+      border: 1px solid rgba(168,85,247,0.3);
+      border-radius: 16px;
+      padding: 2rem;
+      margin: 2rem 0;
+    }
+
+    .metric-block .metric-label {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--electric-purple-light);
+      margin-bottom: 0.5rem;
+    }
+
+    .metric-block .metric-value {
+      font-size: clamp(2rem, 6vw, 4rem);
+      font-weight: 700;
+      letter-spacing: -0.04em;
+      line-height: 1;
+      margin-bottom: 0.5rem;
+    }
+
+    .metric-block .metric-baseline {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+    }
+
+    .metric-block .metric-baseline span {
+      color: var(--electric-yellow);
+      font-weight: 700;
+    }
+
+    .metric-block .metric-bar {
+      margin-top: 1rem;
+      height: 4px;
+      background: var(--border);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .metric-block .metric-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--electric-purple), var(--electric-pink));
+      border-radius: 2px;
+      transition: width 1s ease;
+    }
+
+    /* HIGHLIGHTS LIST */
+    .highlights {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+
+    .highlights li {
+      display: flex;
+      gap: 0.75rem;
+      align-items: flex-start;
+      font-size: clamp(0.9rem, 1.5vw, 1.05rem);
+      line-height: 1.5;
+    }
+
+    .highlights li .bullet {
+      flex-shrink: 0;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--electric-purple), var(--electric-pink));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.6rem;
+      font-weight: 700;
+      margin-top: 0.1rem;
+      color: white;
+    }
+
+    .highlights li .text { flex: 1; }
+
+    .highlights li .source {
+      display: block;
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      color: var(--text-muted);
+      margin-top: 0.2rem;
+      font-style: normal;
+    }
+
+    /* ACTION CARDS */
+    .action-card {
+      background: var(--dark-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .action-card .action-num {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      color: var(--electric-yellow);
+      letter-spacing: 0.1em;
+    }
+
+    .action-card h4 {
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+
+    .action-card p {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    .action-card .action-step {
+      background: rgba(168,85,247,0.1);
+      border-left: 2px solid var(--electric-purple);
+      padding: 0.75rem 1rem;
+      border-radius: 0 8px 8px 0;
+      font-size: 0.85rem;
+      color: var(--text-primary);
+    }
+
+    .action-card .action-step strong { color: var(--electric-purple-light); }
+
+    /* SWOT QUADRANTS */
+    .swot-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: auto auto;
+      gap: 1rem;
+      margin-top: 2rem;
+    }
+
+    .swot-card {
+      border-radius: 12px;
+      padding: 1.5rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .swot-card.s { background: linear-gradient(135deg, rgba(34,211,238,0.08), rgba(34,211,238,0.02)); border: 1px solid rgba(34,211,238,0.25); }
+    .swot-card.w { background: linear-gradient(135deg, rgba(248,113,113,0.08), rgba(248,113,113,0.02)); border: 1px solid rgba(248,113,113,0.25); }
+    .swot-card.o { background: linear-gradient(135deg, rgba(52,211,153,0.08), rgba(52,211,153,0.02)); border: 1px solid rgba(52,211,153,0.25); }
+    .swot-card.t { background: linear-gradient(135deg, rgba(251,146,60,0.08), rgba(251,146,60,0.02)); border: 1px solid rgba(251,146,60,0.25); }
+
+    .swot-card h4 {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      margin-bottom: 1rem;
+    }
+    .swot-card.s h4 { color: #22D3EE; }
+    .swot-card.w h4 { color: #F87171; }
+    .swot-card.o h4 { color: #34D399; }
+    .swot-card.t h4 { color: #FB923C; }
+
+    .swot-card ul {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .swot-card li {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      padding-left: 1rem;
+      position: relative;
+      line-height: 1.4;
+    }
+
+    .swot-card.s li::before { content: '→'; position: absolute; left: 0; color: #22D3EE; font-size: 0.7rem; top: 0.1rem; }
+    .swot-card.w li::before { content: '←'; position: absolute; left: 0; color: #F87171; font-size: 0.7rem; top: 0.1rem; }
+    .swot-card.o li::before { content: '↑'; position: absolute; left: 0; color: #34D399; font-size: 0.7rem; top: 0.1rem; }
+    .swot-card.t li::before { content: '⚠'; position: absolute; left: 0; color: #FB923C; font-size: 0.7rem; top: 0.1rem; }
+
+    /* DIVIDER */
+    .section-divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--border), transparent);
+      margin: 0 clamp(1.5rem, 8vw, 8rem);
+    }
+
+    /* PILL */
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      padding: 0.2rem 0.6rem;
+      border-radius: 20px;
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+    }
+    .pill.purple { background: rgba(168,85,247,0.2); color: var(--electric-purple-light); border: 1px solid rgba(168,85,247,0.3); }
+    .pill.green { background: rgba(52,211,153,0.15); color: #34D399; border: 1px solid rgba(52,211,153,0.3); }
+    .pill.red { background: rgba(248,113,113,0.15); color: #F87171; border: 1px solid rgba(248,113,113,0.3); }
+    .pill.orange { background: rgba(251,146,60,0.15); color: #FB923C; border: 1px solid rgba(251,146,60,0.3); }
+    .pill.yellow { background: rgba(234,179,8,0.15); color: var(--electric-yellow); border: 1px solid rgba(234,179,8,0.3); }
+    .pill.cyan { background: rgba(6,182,212,0.15); color: #22D3EE; border: 1px solid rgba(6,182,212,0.3); }
+
+    /* TABLE */
+    .kpi-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1.5rem;
+      font-size: 0.85rem;
+    }
+    .kpi-table th {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      text-align: left;
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .kpi-table td {
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid var(--border);
+      color: var(--text-secondary);
+      vertical-align: top;
+    }
+    .kpi-table tr:last-child td { border-bottom: none; }
+    .kpi-table .val { font-family: var(--font-mono); font-weight: 700; color: var(--text-primary); }
+    .kpi-table .status-ok { color: #34D399; }
+    .kpi-table .status-warn { color: var(--electric-yellow); }
+    .kpi-table .status-err { color: #F87171; }
+
+    /* FOOTER */
+    .slide-footer {
+      position: absolute;
+      bottom: clamp(1.5rem, 4vh, 3rem);
+      left: clamp(1.5rem, 8vw, 8rem);
+      right: clamp(1.5rem, 8vw, 8rem);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .slide-footer .footer-left {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      letter-spacing: 0.05em;
+    }
+    .slide-footer .footer-right {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .slide-footer .footer-right .logo-mark {
+      width: 24px;
+      height: 24px;
+      background: linear-gradient(135deg, var(--electric-purple), var(--electric-pink));
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.55rem;
+      font-weight: 700;
+      color: white;
+    }
+
+    /* DIVA LINE */
+    .diva-line {
+      width: 60px;
+      height: 3px;
+      background: linear-gradient(90deg, var(--electric-purple), var(--electric-pink));
+      border-radius: 2px;
+      margin-bottom: 1.5rem;
+    }
+
+    /* TWIN COLS */
+    .twin-cols {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 3rem;
+      align-items: start;
+    }
+
+    /* OPACITY ON GRID RESPONSIVE */
+    @media (max-width: 768px) {
+      .grid-2, .grid-3, .grid-4, .swot-grid, .twin-cols { grid-template-columns: 1fr; }
+      .slide { padding: 80px 1.5rem 4rem; }
+      .slide-num { right: 1.5rem; }
+    }
+
+    /* SCROLLBAR */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--dark-bg); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <div class="brand"><span class="dot">●</span> Hulahoop Media <span class="badge">FOUNDATION</span></div>
+    <div class="meta">Market Synthesis · Apr 2026</div>
+  </nav>
+
+  <!-- SLIDE 01: TITLE -->
+  <section class="slide" id="slide-01">
+    <span class="slide-num">01 / 14</span>
+    <div class="slide-tag">Market Synthesis — Foundation Report</div>
+    <h1>Where<br><span class="highlight">capital</span><br>meets culture.</h1>
+    <p class="subtitle">SWOT + TOWS · Market Summary · OPE Canvas<br>Hulahoop Media · Strategic Foundation · 2026</p>
+    <div class="slide-footer">
+      <div class="footer-left">Hulahoop Media · Market Synthesis · 2026-04-16</div>
+      <div class="footer-right"><div class="logo-mark">HH</div></div>
+    </div>
+  </section>
+
+  <div class="section-divider"></div>
+
+  <!-- SLIDE 02: CONTEXT -->
+  <section class="slide" id="slide-02">
+    <span class="slide-num">02 / 14</span>
+    <div class="slide-tag">Context</div>
+    <h2>Quién es Hulahoop y por qué importa</h2>
+    <div class="diva-line"></div>
+    <ul class="highlights">
+      <li>
+        <div class="bullet">1</div>
+        <div class="text">
+          Fintech de infraestructura financiera para entretenimiento · 3 filiales: Services, Pro Tax SaaS, Platform (PFP)
+          <span class="source">Company Brief — brand/hulahoop/company-brief/company-brief.current.md</span>
+        </div>
+      </li>
+      <li>
+        <div class="bullet">2</div>
+        <div class="text">
+          AUM 7,2M€ (2025) · Objetivo 22,5M€ (2026) · Ronda 2M€ en curso
+          <span class="source">Company Brief</span>
+        </div>
+      </li>
+      <li>
+        <div class="bullet">3</div>
+        <div class="text">
+          100% deuda devuelta · Track record impecable · Ningún proyecto ha fallado
+          <span class="source">Company Brief</span>
+        </div>
+      </li>
+      <li>
+        <div class="bullet">4</div>
+        <div class="text">
+          Único actor que integra anticipo + SaaS + PFP regulada simultáneamente
+          <span class="source">SWOT S1 — brand/hulahoop/market-and-us/swot/swot.current.md</span>
+        </div>
+      </li>
+    </ul>
+    <div class="slide-footer">
+      <div class="footer-left">Hulahoop Media · Market Synthesis · 2026-04-16</div>
+      <div class="footer-right"><div class="logo-mark">HH</div></div>
+    </div>
+  </section>
+
+  <div class="section-divider"></div>
+
+  <!-- SLIDE 03: SWOT OVERVIEW -->
+  <section class="slide" id="slide-03">
+    <span class="slide-num">03 / 14</span>
+    <div class="slide-tag">SWOT Analysis</div>
+    <h2>Los 4 cuadrantes estratégicos</h2>
+    <div class="diva-line"></div>
+    <div class="swot-grid">
+      <div class="swot-card s">
+        <h4>Strengths — Fortalezas</h4>
+        <ul>
+          <li>Propuesta integrada única — anticipo + SaaS + PFP</li>
+          <li>Credibilidad institucional: South Summit, IESE, SSIFF</li>
+          <li>Track record 100% deuda devuelta</li>
+          <li>Proyectos visibles: Torrente Presidente, Idris Elba</li>
+          <li>Tono diferenciado: marca con personalidad real</li>
+          <li>Transversalidad: cine + música + festivales + artes</li>
+        </ul>
+      </div>
+      <div class="swot-card w">
+        <h4>Weaknesses — Debilidades</h4>
+        <ul>
+          <li>Huella digital inexistente — web SPA no indexa</li>
+          <li>Sin motor de adquisición digital — 100% red 1:1</li>
+          <li>Sin CRM — David recuerda todo en la cabeza</li>
+          <li>Pro Tax con solo 2 clientes — 4,2-7M€ TAM sin captar</li>
+          <li>Sin social proof B2C pública</li>
+          <li>Equipo marketing = 1 persona + freelancers</li>
+        </ul>
+      </div>
+      <div class="swot-card o">
+        <h4>Opportunities — Oportunidades</h4>
+        <ul>
+          <li>80-100 despachos migrando I+D→cultural sin herramientas</li>
+          <li>PFP entertainment inexistente — primera en la UE</li>
+          <li>Legislación favorable: Art. 39.7 consolidado</li>
+          <li>Urbanitae valida el modelo PFP: 280M€/año</li>
+          <li>España hub audiovisual: grandes producciones internacionales</li>
+          <li>Reforma fiscal: base deducción 20%→25%</li>
+        </ul>
+      </div>
+      <div class="swot-card t">
+        <h4>Threats — Amenazas</h4>
+        <ul>
+          <li>TaxMM M&A — Pelícano Partners jul 2024, +100M€, KPMG</li>
+          <li>Proincentiva capturando despachos en Accountex</li>
+          <li>SFTL domina marca y contenido: newsletter semanal + podcast</li>
+          <li>Licencia CNMV: aprobación Q3 2026, todo depende de esto</li>
+          <li>Restricciones pre-licencia: sin hablar de rentabilidades</li>
+          <li>7% no impresiona a inversores financieros profesionales</li>
+        </ul>
+      </div>
+    </div>
+    <div class="slide-footer">
+      <div class="footer-left">Hulahoop Media · Market Synthesis · 2026-04-16</div>
+      <div class="footer-right"><div class="logo-mark">HH</div></div>
+    </div>
+  </section>
+
+  <div class="section-divider"></div>
+
+  <!-- SLIDE 04: TOP STRENGTHS -->
+  <section class="slide" id="slide-04">
+    <span class="slide-num">04 / 14</span>
+    <div class="slide-tag">Strengths</div>
+    <h2>Las 4 fortalezas que nos hacen ganables</h2>
+    <div class="diva-line"></div>
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-tag s">S1</div>
+        <h4>Propuesta única integrada</h4>
+        <p>Anticipo 60-70% + Pro Tax SaaS + PFP regulada CNMV. Ningún competidor hace las 3 cosas simultáneamente. Es el espacio de Hulahoop.</p>
+        <span class="card-source"><a href="https://sancho-cmo.taild48df2.ts.net/mc/portal/8ae49b366b51bf7dfbd54f7d9e36d508/docs/brand/hulahoop/company-brief/company-brief.current.md" target="_blank" style="color: var(--electric-purple-light); text-decoration: underline; font-size: 0.65rem;">Company Brief</a> · company-brief.current.md</span>
+      </div>
+      <div class="card">
+        <div class="card-tag s">S7</div>
+        <h4>Track record 100% deuda devuelta</h4>
+        <p>Ningún proyecto de deuda ha dejado de devolver. Garantía real mediante el propio incentivo fiscal como colateral. En un mercado de percepción de riesgo alto, el historial limpio es un activo de marketing.</p>
+        <span class="card-source"><a href="https://sancho-cmo.taild48df2.ts.net/mc/portal/8ae49b366b51bf7dfbd54f7d9e36d508/docs/brand/hulahoop/company-brief/company-brief.current.md" target="_blank" style="color: var(--electric-purple-light); text-decoration: underline; font-size: 0.65rem;">Company Brief</a> · company-brief.current.md</span>
+      </div>
+      <div class="card">
+        <div class="card-tag s">S2</div>
+        <h4>Credibilidad institucional validada</h4>
+        <p>South Summit, IESE WeGrow, SSIFF Startup Challenge, Clúster Audiovisual de Catalunya y Madrid. Reconocimientos ganados, no comprados.</p>
+        <span class="card-source"><a href="https://sancho-cmo.taild48df2.ts.net/mc/portal/8ae49b366b51bf7dfbd54f7d9e36d508/docs/brand/hulahoop/market-and-us/self/self.current.md" target="_blank" style="color: var(--electric-purple-light); text-decoration: underline; font-size: 0.65rem;">Self Intelligence L1</a>+L2 · self.current.md</span>
+      </div>
+      <div class="card">
+        <div class="card-tag s">S5</div>
+        <h4>Proyectos financiados visibles</h4>
+        <p>Torrente Presidente (900k espectadores, 7M€ primer fin de semana), Paid in Full EP Idris Elba, Un Prophète Canal+. Son proyectos que validan que Hulahoop no solo estructura — ejecuta.</p>
+        <span class="card-source"><a href="https://sancho-cmo.taild48df2.ts.net/mc/portal/8ae49b366b51bf7dfbd54f7d9e36d508/docs/brand/hulahoop/market-and-us/self/self.current.md" target="_blank" style="color: var(--electric-purple-light); text-decoration: underline; font-size: 0.65rem;">Self Intelligence L1</a>+L2 · self.current.md</span>
+      </div>
+    </div>
+    <div class="slide-footer">
+      <div class="footer-left">Hulahoop Media · Market Synthesis · 2026-04-16</div>
+      <div class="footer-right"><div class="logo-mark">HH</div></div>
+    </div>
+  </section>
+
+  <div class="section-divider"></div>
+
+  <!-- SLIDE 05: TOP WEAKNESSES -->
+  <section class="slide" id="slide-05">
+    <span class="slide-num">05 / 14</span>
+    <div class="slide-tag">Weaknesses</div>
+    <h2>Los 4 gaps que bloquean el crecimiento</h2>
+    <div class="diva-line"></div>
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-tag w">W1</div>
+        <h4>Huella digital inexistente</h4>
+        <p>Web SPA no indexa en Google. Sin Twitter/X, YouTube, Trustpilot, Google Maps. Invisible para el 95% del mercado potencial. El 80% del tráfico orgánico empieza en Google — Hulahoop no existe ahí.</p>
+        <span class="card-source"><a href="https://sancho-cmo.taild48df2.ts.net/mc/portal/8ae49b366b51bf7dfbd54f7d9e36d508/docs/brand/hulahoop/market-and-us/self/self.current.md" target="_blank" style="color: var(--electric-purple-light); text-decoration: underline; font-size: 0.65rem;">Self Intelligence L1</a>+L2 · self.current.md</span>
+      </div>
+      <div class="card">
+        <div class="card-tag w">W4</div>
+        <h4>Sin motor de adquisición digital</h4>
+        <p>100% captación por red personal de David Guerrero. Sin CRM, sin outbound digital, sin SEO activo. Insostenible para escalar a 22,5M€ AUM y 7.500 inversores objetivo 2030.</p>
+        <span class="card-source"><a href="https://sancho-cmo.taild48df2.ts.net/mc/portal/8ae49b366b51bf7dfbd54f7d9e36d508/docs/brand/hulahoop/market-and-us/self/self.current.md" target="_blank" style="color: var(--electric-purple-light); text-decoration: underline; font-size: 0.65rem;">Self Intelligence L1</a> + David Guerrero · self.current.md</span>
+      </div>
+      <div class="card">
+        <div class="card-tag w">W6</div>
+        <h4>Pipeline no documentado</h4>
+        <p>David recuerda todo en la cabeza. No hay sistema para tracking de deals activos, tasa de conversión, tiempo medio de cierre, ni cohort analysis. Cada baja en captación frena el crecimiento inmediatamente.</p>
+        <span class="card-source"><a href="https://sancho-cmo.taild48df2.ts.net/mc/portal/8ae49b366b51bf7dfbd54f7d9e36d508/docs/brand/hulahoop/market-and-us/self/self.current.md" target="_blank" style="color: var(--electric-purple-light); text-decoration: underline; font-size: 0.65rem;">Self Intelligence L1</a> + David Guerrero · self.current.md</span>
+      </div>
+      <div class="card">
+        <div class="card-tag w">W5</div>
+        <h4>Pro Tax invisible — solo 2 clientes</h4>
+        <p>SaaS con 4,2-7M€/año TAM y 2 clientes activos. Proincentiva está ocupando ese espacio en ferias. Cada mes sin despachos firmados es un mes que Proincentiva firma primero.</p>
+        <span class="card-source">Self Intelligence L1 + <a href="https://sancho-cmo.taild48df2.ts.net/mc/portal/8ae49b366b51bf7dfbd54f7d9e36d508/docs/brand/hulahoop/company-brief/company-brief.current.md" target="_blank" style="color: var(--electric-purple-light); text-decoration: underline; font-size: 0.65rem;">Company Brief</a> · self.current.md</span>
+      </div>
+    </div>
+    <div class="slide-footer">
+      <div class="footer-left">Hulahoop Media · Market Synthesis · 2026-04-16</div>
+      <div class="footer-right"><div class="logo-mark">HH</div></div>
+    </div>
+  </section>
+
+  <div class="section-divider"></div>
+
+  <!-- SLIDE 06: TOWS PRIORITIES -->
+  <section class="slide" id="slide-06">
+    <span class="slide-num">06 / 14</span>
+    <div class="slide-tag">TOWS Strategies</div>
+    <h2>14 estrategias · 4 cuadrantes · ICE priorizadas</h2>
+    <div class="diva-line"></div>
+    <div class="metric-block">
+      <div class="metric-label">Top ICE Score</div>
+      <div class="metric-value" style="font-size: 3rem;">8.3<span style="font-size: 1rem; color: var(--text-muted);"> / 10</span></div>
+      <div class="metric-baseline">ST2 · Re-posicionar 7% como seguridad + ciclo corto, no TIR · Defensivo</div>
+      <div class="metric-bar"><div class="metric-bar-fill" style="width: 83%"></div></div>
+    </div>
+    <div class="grid-4" style="margin-top: 1.5rem;">
+      <div class="card" style="text-align:center;">
+        <div class="pill purple" style="margin: 0 auto 0.75rem;">SO · Offensive</div>
+        <div style="font-family: var(--font-mono); font-size: 1.5rem; font-weight: 700; color: var(--electric-purple-light);">7.7</div>
+        <p style="font-size: 0.75rem; margin-top: 0.5rem;">Pro Tax para despachos I+D→cultural</p>
+      </div>
+      <div class="card" style="text-align:center;">
+        <div class="pill cyan" style="margin: 0 auto 0.75rem;">ST · Defensive</div>
+        <div style="font-family: var(--font-mono); font-size: 1.5rem; font-weight: 700; color: #22D3EE;">8.3</div>
+        <p style="font-size: 0.75rem; margin-top: 0.5rem;">Re-posicionar 7% para Arquetipo 2</p>
+      </div>
+      <div class="card" style="text-align:center;">
+        <div class="pill green" style="margin: 0 auto 0.75rem;">WO · Transform</div>
+        <div style="font-family: var(--font-mono); font-size: 1.5rem; font-weight: 700; color: #34D399;">8.0</div>
+        <p style="font-size: 0.75rem; margin-top: 0.5rem;">CRM HubSpot + Investment Institute inbound</p>
+      </div>
+      <div class="card" style="text-align:center;">
+        <div class="pill red" style="margin: 0 auto 0.75rem;">WT · Survival</div>
+        <div style="font-family: var(--font-mono); font-size: 1.5rem; font-weight: 700; color: #F87171;">8.3</div>
+        <p style="font-size: 0.75rem; margin-top: 0.5rem;">Documentar pipeline, reducir dependencia David</p>
+      </div>
+    </div>
+    <div class="slide-footer">
+      <div class="footer-left">Hulahoop Media · Market Synthesis · 2026-04-16</div>
+      <div class="footer-right"><div class="logo-mark">HH</div></div>
+    </div>
+  </section>
+
+  <div class="section-divider"></div>
+
+  <!-- SLIDE 07: TOP 3 ACTIONS -->
+  <section class="slide" id="slide-07">
+    <span class="slide-num">07 / 14</span>
+    <div class="slide-tag">Immediate Actions</div>
+    <h2>Las 3 acciones inmediatas</h2>
+    <div class="diva-line"></div>
+    <div class="grid-3">
+      <div class="action-card">
+        <div class="action-num">ACCIÓN #1 🔴</div>
+        <h4>CRM esta semana</h4>
+        <p>Estrategia WT2+WO1 · ICE 8.0-8.3<br>Configurar HubSpot con 3 pipelines. Documentar los 68 inversores históricos. David abre HubSpot hoy.</p>
+        <div class="action-step"><strong>First step:</strong> David abre HubSpot, crea 3 pipelines, empieza a meter los primeros 20 contactos. Revisión el viernes.</div>
+      </div>
+      <div class="action-card">
+        <div class="action-num">ACCIÓN #2 🔴</div>
+        <h4>Pro Tax outbound a despachos</h4>
+        <p>Estrategia SO1+WT1 · ICE 7.7<br>30 despachos más activos en cultural. Deck personalizado. Prioridad: País Vasco, Madrid, Cataluña.</p>
+        <div class="action-step"><strong>First step:</strong> Extraer 30 despachos de LinkedIn con keywords "incentivos fiscales culturales", "artículo 36". Outreach a los primeros 10 esta semana.</div>
+      </div>
+      <div class="action-card">
+        <div class="action-num">ACCIÓN #3 🔴</div>
+        <h4>Programa Referral esta semana</h4>
+        <p>Estrategia WO5 · ICE 8.3<br>David propone a los 10 inversores más activos: traes inversor que cierra → spread sube de 7% a 7.5-8%. Sin desarrollo, sin CRM. Solo una conversación.</p>
+        <div class="action-step"><strong>First step:</strong> David envía hoy a los primeros 5 inversores más activos: "Tengo una propuesta — traes a alguien y tu próximo deal lleva 7.5%. ¿Te cuento?"</div>
+      </div>
+    </div>
+    <div class="slide-footer">
+      <div class="footer-left">Hulahoop Media · Market Synthesis · 2026-04-16</div>
+      <div class="footer-right"><div class="logo-mark">HH</div></div>
+    </div>
+  </section>
+
+  <div class="section-divider"></div>
+
+  <!-- SLIDE 08: MARKET CONTEXT -->
+  <section class="slide" id="slide-08">
+    <span class="slide-num">08 / 14</span>
+    <div class="slide-tag">Market</div>
+    <h2>El mercado existe y está en aceleración</h2>
+    <div class="diva-line"></div>
+    <div class="metric-block">
+      <div class="metric-label">Mercado de intermediación cultural Spain</div>
+      <div class="metric-value">150-250M<span style="font-size: 1.2rem;">€/año</span></div>
+      <div class="metric-baseline">Estimación bottom-up · ~500M€ acumulados 2015-2024 · Aceleración post Art. 39.7 (2021)</div>
+      <div class="metric-bar"><div class="metric-bar-fill" style="width: 100%"></div></div>
+    </div>
+    <div class="metric-block" style="margin-top: 1.5rem; padding: 1.25rem 2rem;">
+      <div class="metric-label">Base real de inversores — Actualizada 15-Abr-2026</div>
+      <div class="grid-3" style="margin-top: 0.75rem; gap: 1.5rem;">
+        <div>
+          <div style="font-family: var(--font-mono); font-size: 1.8rem; font-weight: 700; color: var(--electric-purple-light);">68</div>
+          <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">inversores históricos</div>
+        </div>
+        <div>
+          <div style="font-family: var(--font-mono); font-size: 1.8rem; font-weight: 700; color: #34D399;">35</div>
+          <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">nuevos inversores (2025)</div>
+        </div>
+        <div>
+          <div style="font-family: var(--font-mono); font-size: 1.8rem; font-weight: 700; color: var(--electric-yellow);">25k€</div>
+          <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">ticket medio confirmado</div>
+        </div>
+      </div>
+      <div style="font-size: 0.65rem; color: var(--text-muted); margin-top: 0.5rem; font-family: var(--font-mono);">Fuente: David Guerrero · Reunión 15-Abr-2026 · Sin CRM documentado</div>
+    </div>
+    <div class="grid-3" style="margin-top: 1.5rem;">
+      <div class="card" style="text-align:center;">
+        <div class="pill cyan" style="margin: 0 auto 0.75rem;">+900</div>
+        <p style="font-size: 0.85rem;">Festivales de música en España (2024)</p>
+        <span class="card-source">TaxMM 2024</span>
+      </div>
+      <div class="card" style="text-align:center;">
+        <div class="pill green" style="margin: 0 auto 0.75rem;">120-150</div>
+        <p style="font-size: 0.85rem;">Despachos operando en cultural en España</p>
+        <span class="card-source">Datos internos Hulahoop</span>
+      </div>
+      <div class="card" style="text-align:center;">
+        <div class="pill orange" style="margin: 0 auto 0.75rem;">2+ años</div>
+        <p style="font-size: 0.85rem;">Ventaja regulatoria PFP entertainment Hulahoop vs. cualquier entrante</p>
+        <span class="card-source"><a href="https://sancho-cmo.taild48df2.ts.net/mc/portal/8ae49b366b51bf7dfbd54f7d9e36d508/docs/brand/hulahoop/market-and-us/market/market.current.md" target="_blank" style="color: var(--electric-purple-light); text-decoration: underline; font-size: 0.65rem;">Market Intelligence</a> · company-brief</span>
+      </div>
+      <div class="card" style="text-align:center;">
+        <div class="pill cyan" style="margin: 0 auto 0.75rem;">Norte</div>
+        <p style="font-size: 0.85rem;">Madrid + Barcelona + País Vasco: priorización geográfica</p>
+        <span class="card-source">OPE Canvas · <a href="https://sancho-cmo.taild48df2.ts.net/mc/portal/8ae49b366b51bf7dfbd54f7d9e36d508/docs/brand/hulahoop/company-brief/company-brief.current.md" target="_blank" style="color: var(--electric-purple-light); text-decoration: underline; font-size: 0.65rem;">Company Brief</a></span>
+      </div>
+    </div>
+    <div class="slide-footer">
+      <div class="footer-left">Hulahoop Media · Market Synthesis · 2026-04-16</div>
+      <div class="footer-right"><div class="logo-mark">HH</div></div>
+    </div>
+  </section>
+
+  <div class="section-divider"></div>
+
+  <!-- SLIDE 09: OPE CANVAS — OBVIOUS CHOICE + ICP -->
+  <section class="slide" id="slide-09">
+    <span class="slide-num">09 / 14</span>
+    <div class="slide-tag">OPE Canvas</div>
+    <h2>El mensaje correcto por segmento</h2>
+    <div class="diva-line"></div>
+    <div class="twin-cols">
+      <div>
+        <h3 style="color: var(--electric-purple-light); margin-bottom: 1rem;">3 razones únicas</h3>
+        <ul class="highlights">
+          <li>
+            <div class="bullet" style="background: linear-gradient(135deg, #22D3EE, #06B6D4);">1</div>
+            <div class="text">
+              <strong>Anticipo en 72h</strong> — Hasta el 70% del incentivo fiscal. Ningún otro actor tiene capital para esto.
+            </div>
+          </li>
+          <li>
+            <div class="bullet" style="background: linear-gradient(135deg, #A855F7, #EC4899);">2</div>
+            <div class="text">
+              <strong>Pro Tax</strong> — Único SaaS del mercado que digitaliza la gestión fiscal cultural.
+            </div>
+          </li>
+          <li>
+            <div class="bullet" style="background: linear-gradient(135deg, #34D399, #10B981);">3</div>
+            <div class="text">
+              <strong>PFP regulada CNMV</strong> — Primera PFP entertainment en la UE. 2+ años de ventaja regulatoria.
+            </div>
+          </li>
+        </ul>
+      </div>
+      <div>
+        <h3 style="color: var(--electric-purple-light); margin-bottom: 1rem;">Mensaje — por arquetipo</h3>
+        <ul class="highlights">
+          <li>
+            <div class="bullet" style="background: var(--electric-yellow); color: black;">A1</div>
+            <div class="text">
+              <strong>Arquetipo 1</strong> — 25-32 años · ticket 3k-25k€ · optimiza liquidez
+            </div>
+          </li>
+          <li>
+            <div class="bullet" style="background: #FB923C; color: black;">A2</div>
+            <div class="text">
+              <strong>50-60 años · 25k-80k€</strong> — Seguridad + ciclo corto + garantía estatal. <em>NO TIR.</em> El 7% no impresiona a quien tiene 10-12% en renta fija.
+            </div>
+          </li>
+          <li>
+            <div class="bullet" style="background: var(--electric-pink);">D</div>
+            <div class="text">
+              <strong>Asesor fiscal</strong> — El asesor es el <strong>gatekeeper</strong>: si no quiere mover el incentivo, no hay deal. Pro Tax lo convierte en aliado — no en obstáculo.
+            </div>
+          </li>
+        </ul>
+      </div>
+    </div>
+    <div class="slide-footer">
+      <div class="footer-left">Hulahoop Media · Market Synthesis · 2026-04-16</div>
+      <div class="footer-right"><div class="logo-mark">HH</div></div>
+    </div>
+  </section>
+
+  <div class="section-divider"></div>
+
+  <!-- SLIDE 10: OPE — MOATS + ENDGAME -->
+  <section class="slide" id="slide-10">
+    <span class="slide-num">10 / 14</span>
+    <div class="slide-tag">OPE Canvas</div>
+    <h2>Los 3 moats que nos hacen incopiables</h2>
+    <div class="diva-line"></div>
+    <div class="grid-3">
+      <div class="card">
+        <div class="pill purple" style="margin-bottom: 0.75rem;">MOAT #1</div>
+        <h4>Regulatory</h4>
+        <p>Licencia CNMV PFP entertainment. 12-18 meses de proceso. 2+ años de ventaja regulatoria para cualquier entrante. El más difícil de replicar.</p>
+      </div>
+      <div class="card">
+        <div class="pill purple" style="margin-bottom: 0.75rem;">MOAT #2</div>
+        <h4>Switching Costs + Data</h4>
+        <p>Pro Tax genera scoring propietario con cada operación. Contratos a 4 años. Más operaciones = mejor pricing = más deals. El que se va, pierde el histórico.</p>
+      </div>
+      <div class="card">
+        <div class="pill purple" style="margin-bottom: 0.75rem;">MOAT #3</div>
+        <h4>Flywheel</h4>
+        <p>Services → Pro Tax captura despachos → PFP escala retail → datos mejoran scoring → mejores condiciones → más deals. Cada línea alimenta a las demás.</p>
+      </div>
+    </div>
+    <div class="metric-block" style="margin-top: 2rem;">
+      <div class="metric-label">Endgame 2030</div>
+      <div class="grid-3" style="margin-top: 1rem; gap: 2rem;">
+        <div>
+          <div style="font-family: var(--font-mono); font-size: 2rem; font-weight: 700; color: var(--electric-purple-light);">+120M€</div>
+          <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.25rem;">AUM movilizado</div>
+        </div>
+        <div>
+          <div style="font-family: var(--font-mono); font-size: 2rem; font-weight: 700; color: var(--electric-purple-light);">+11M€</div>
+          <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.25rem;">Revenue</div>
+        </div>
+        <div>
+          <div style="font-family: var(--font-mono); font-size: 2rem; font-weight: 700; color: var(--electric-purple-light);">8.000</div>
+          <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.25rem;">Inversores PFP activos</div>
+        </div>
+      </div>
+    </div>
+    <div class="slide-footer">
+      <div class="footer-left">Hulahoop Media · Market Synthesis · 2026-04-16</div>
+      <div class="footer-right"><div class="logo-mark">HH</div></div>
+    </div>
+  </section>
+
+  <div class="section-divider"></div>
+
+  <!-- SLIDE 11: YEAR + QUARTER PICTURE -->
+  <section class="slide" id="slide-11">
+    <span class="slide-num">11 / 14</span>
+    <div class="slide-tag">OPE Canvas</div>
+    <h2>Year Picture 2026 + Quarterly milestones</h2>
+    <div class="diva-line"></div>
+    <div class="twin-cols">
+      <div>
+        <h3 style="color: var(--electric-purple-light); margin-bottom: 1rem;">5 objetivos 2026</h3>
+        <ul class="highlights">
+          <li><div class="bullet" style="background: var(--electric-yellow); color: black;">A</div><div class="text">AUM 22,5M€ (+213% YoY)</div></li>
+          <li><div class="bullet" style="background: var(--electric-yellow); color: black;">B</div><div class="text">5 clientes Pro Tax con casos de estudio</div></li>
+          <li><div class="bullet" style="background: var(--electric-yellow); color: black;">C</div><div class="text">Licencia CNMV aprobada Q3 2026</div></li>
+          <li><div class="bullet" style="background: var(--electric-yellow); color: black;">D</div><div class="text">Website PFP teaser + waitlist Sep 2026</div></li>
+          <li><div class="bullet" style="background: var(--electric-yellow); color: black;">E</div><div class="text">CRM operativo con pipeline visible</div></li>
+        </ul>
+      </div>
+      <div>
+        <h3 style="color: var(--electric-purple-light); margin-bottom: 1rem;">Quarterly milestones</h3>
+        <div style="display: flex; flex-direction: column; gap: 1rem;">
+          <div class="card" style="padding: 1rem;">
+            <div class="pill cyan" style="margin-bottom: 0.5rem;">Q2 · Abr-Jun</div>
+            <p style="font-size: 0.8rem; color: var(--text-secondary);">CRM operativo · 3-5 despachos Pro Tax activos · 2 inversores Arquetipo 2 cerrados</p>
+          </div>
+          <div class="card" style="padding: 1rem;">
+            <div class="pill purple" style="margin-bottom: 0.5rem;">Q3 · Jul-Sep</div>
+            <p style="font-size: 0.8rem; color: var(--text-secondary);">5+ despachos firmados · Waitlist PFP abierta (Sep) · CNMV aprobada o en vías</p>
+          </div>
+          <div class="card" style="padding: 1rem;">
+            <div class="pill orange" style="margin-bottom: 0.5rem;">Q4 · Oct-Dic</div>
+            <p style="font-size: 0.8rem; color: var(--text-secondary);">15M€ incentivos · 2-3M€ SPVs · 500-1.000 waitlist · go/no-go Q1 2027</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="slide-footer">
+      <div class="footer-left">Hulahoop Media · Market Synthesis · 2026-04-16</div>
+      <div class="footer-right"><div class="logo-mark">HH</div></div>
+    </div>
+  </section>
+
+  <div class="section-divider"></div>
+
+  <!-- SLIDE 12: RISKS -->
+  <section class="slide" id="slide-12">
+    <span class="slide-num">12 / 14</span>
+    <div class="slide-tag">Risk Management</div>
+    <h2>Riesgos a gestionar ahora</h2>
+    <div class="diva-line"></div>
+    <div class="grid-2">
+      <div class="card" style="border-color: rgba(248,113,113,0.4);">
+        <div class="card-tag t">T1</div>
+        <h4>TaxMM M&A — el que puede serlo todo</h4>
+        <p>Absorbió Pelícano Partners jul 2024. +100M€ invertidos, partners KPMG. Patrón de consolidación demostrado. Si desarrolla tech propia, su volumen + tecnología es el escenario más difícil.</p>
+        <div style="margin-top: 0.75rem;"><span class="pill red">Mitigación: acelerar Pro Tax hasta que switching cost sea alto</span></div>
+      </div>
+      <div class="card" style="border-color: rgba(251,146,60,0.4);">
+        <div class="card-tag t">T2</div>
+        <h4>Proincentiva capturando despachos</h4>
+        <p>"Alianza estratégica para asesores fiscales" en Accountex. Sello ministerial. Sin tech pero con marca y presencia en ferias. Cada mes que pasa es un mes que Proincentiva firma primero.</p>
+        <div style="margin-top: 0.75rem;"><span class="pill orange">Mitigación: outbound directo a 30 despachos activos esta semana</span></div>
+      </div>
+      <div class="card" style="border-color: rgba(234,179,8,0.3);">
+        <div class="card-tag t">T4</div>
+        <h4>Licencia CNMV — todo depende de esto</h4>
+        <p>Solicitud jul 2025. 2 requerimientos resueltos. Aprobación prevista Q3 2026. Cualquier retraso mueve el go-live más allá de Q1 2027. Es el critical path del negocio.</p>
+        <div style="margin-top: 0.75rem;"><span class="pill yellow">Tracking: revisión legal mensual</span></div>
+      </div>
+      <div class="card" style="border-color: rgba(236,72,153,0.3);">
+        <div class="card-tag t">T7</div>
+        <h4>7% no impresiona a inversores financieros</h4>
+        <p>El Arquetipo 2 (50-60 años con acceso a 10-12% en renta fija) no ve el 7% como diferenciador. El mensaje de "rentabilidad" está mal enfocado para este segmento.</p>
+        <div style="margin-top: 0.75rem;"><span class="pill" style="background: rgba(236,72,153,0.15); color: var(--electric-pink); border: 1px solid rgba(236,72,153,0.3);">Mitigación: re-posicionar en seguridad + ciclo corto + garantía estatal</span></div>
+      </div>
+      <div class="card" style="border-color: rgba(168,85,247,0.4);">
+        <div class="card-tag" style="color: var(--electric-purple);">T8</div>
+        <h4>El asesor fiscal como gatekeeper operativo</h4>
+        <p>El asesor fiscal tiene poder de veto en cada operación: si no quiere mover el incentivo, no hay deal. Es un bloqueo presente en <strong>cada negociación</strong>. No es competencia — es el guardián del sistema. Validado con David Guerrero (15-Abr-2026).</p>
+        <div style="margin-top: 0.75rem;"><span class="pill purple">Mitigación: convertir al asesor en aliado con Pro Tax — el case study debe incluir el benefit para el ASESOR, no solo para el despacho</span></div>
+      </div>
+    </div>
+    <div class="slide-footer">
+      <div class="footer-left">Hulahoop Media · Market Synthesis · 2026-04-16</div>
+      <div class="footer-right"><div class="logo-mark">HH</div></div>
+    </div>
+  </section>
+
+  <div class="section-divider"></div>
+
+  <!-- SLIDE 13: KPIs -->
+  <section class="slide" id="slide-13">
+    <span class="slide-num">13 / 14</span>
+    <div class="slide-tag">KPIs</div>
+    <h2>Los números que importan ahora</h2>
+    <div class="diva-line"></div>
+    <table class="kpi-table">
+      <thead>
+        <tr>
+          <th>KPI</th>
+          <th>Baseline (2025)</th>
+          <th>Target (Dic 2026)</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Revenue</td>
+          <td class="val">331k€</td>
+          <td class="val">1,7M€</td>
+          <td><span class="pill green">+413%</span></td>
+        </tr>
+        <tr>
+          <td>AUM total</td>
+          <td class="val">7,2M€</td>
+          <td class="val">22,5M€</td>
+          <td><span class="pill green">+213%</span></td>
+        </tr>
+        <tr>
+          <td>Pipeline SPVs documentado</td>
+          <td class="val status-err">❌ No</td>
+          <td class="val">100% visible</td>
+          <td><span class="pill red">🔴 CRM primero</span></td>
+        </tr>
+        <tr>
+          <td>Clientes Pro Tax</td>
+          <td class="val">2</td>
+          <td class="val">5</td>
+          <td><span class="pill orange">3 más este año</span></td>
+        </tr>
+        <tr>
+          <td>ARR Pro Tax</td>
+          <td class="val">~60k€</td>
+          <td class="val">120k€</td>
+          <td><span class="pill orange">3 nuevos despachos</span></td>
+        </tr>
+        <tr>
+          <td>Waitlist PFP</td>
+          <td class="val status-warn">0</td>
+          <td class="val">500-1.000</td>
+          <td><span class="pill yellow">Sep 2026</span></td>
+        </tr>
+        <tr>
+          <td>Testimonios inversores</td>
+          <td class="val status-err">0</td>
+          <td class="val">3-5 escritos</td>
+          <td><span class="pill orange">Post referral</span></td>
+        </tr>
+        <tr>
+          <td>Licencia CNMV</td>
+          <td class="val status-warn">En proceso</td>
+          <td class="val">Aprobada Q3</td>
+          <td><span class="pill yellow">2 requerim. resueltos</span></td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="slide-footer">
+      <div class="footer-left">Hulahoop Media · Market Synthesis · 2026-04-16</div>
+      <div class="footer-right"><div class="logo-mark">HH</div></div>
+    </div>
+  </section>
+
+  <div class="section-divider"></div>
+
+  <!-- SLIDE 14: NEXT STEP -->
+  <section class="slide" id="slide-14">
+    <span class="slide-num">14 / 14</span>
+    <div class="slide-tag">Next Step</div>
+    <h2>¿Validamos juntos<br>y<br><span class="highlight">pasamos a Positioning?</span></h2>
+    <div class="diva-line"></div>
+    <div class="twin-cols">
+      <div>
+        <p class="subtitle">Con las fortalezas confirmadas del SWOT y los gaps del mercado, el siguiente paso natural es definir el messaging específico por segmento.</p>
+        <ul class="highlights" style="margin-top: 1.5rem;">
+          <li><div class="bullet" style="background: linear-gradient(135deg, var(--electric-purple), var(--electric-pink));">→</div><div class="text">Arquetipo 1 (joven con liquidez): el mensaje del 7% vs. depósitos</div></li>
+          <li><div class="bullet" style="background: linear-gradient(135deg, var(--electric-purple), var(--electric-pink));">→</div><div class="text">Arquetipo 2 (patrimonio establecido): el mensaje de seguridad + ciclo corto</div></li>
+          <li><div class="bullet" style="background: linear-gradient(135deg, var(--electric-purple), var(--electric-pink));">→</div><div class="text">Despachos: el mensaje de Pro Tax como línea de negocio recurrente</div></li>
+          <li><div class="bullet" style="background: linear-gradient(135deg, var(--electric-purple), var(--electric-pink));">→</div><div class="text">Promotores: el mensaje de anticipo vs. banco tradicional</div></li>
+        </ul>
+      </div>
+      <div>
+        <div class="card" style="border-color: rgba(168,85,247,0.4);">
+          <div class="card-tag" style="color: var(--electric-purple);">Foundation Check</div>
+          <ul class="highlights" style="margin-top: 1rem;">
+            <li><div class="bullet" style="background: #34D399; color: black; font-size: 0.7rem;">✓</div><div class="text" style="font-size: 0.85rem;">Company Brief — Done</div></li>
+            <li><div class="bullet" style="background: #34D399; color: black; font-size: 0.7rem;">✓</div><div class="text" style="font-size: 0.85rem;">Self Intelligence — Approved</div></li>
+            <li><div class="bullet" style="background: #34D399; color: black; font-size: 0.7rem;">✓</div><div class="text" style="font-size: 0.85rem;">Market Intelligence — Done</div></li>
+            <li><div class="bullet" style="background: #34D399; color: black; font-size: 0.7rem;">✓</div><div class="text" style="font-size: 0.85rem;">Competitor Intelligence — Done</div></li>
+            <li><div class="bullet" style="background: #34D399; color: black; font-size: 0.7rem;">✓</div><div class="text" style="font-size: 0.85rem;">SWOT + TOWS — Done</div></li>
+            <li><div class="bullet" style="background: var(--electric-yellow); color: black; font-size: 0.7rem;">→</div><div class="text" style="font-size: 0.85rem; color: var(--electric-yellow);">Positioning & Messaging — Ready to start</div></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="slide-footer">
+      <div class="footer-left">Hulahoop Media · Market Synthesis · 2026-04-16 · Foundation completo</div>
+      <div class="footer-right"><div class="logo-mark">HH</div></div>
+    </div>
+  </section>
+
+  <div class="section-divider"></div>
+
+  <!-- SLIDE 15: QA — Quality Assurance -->
+  <section class="slide" id="slide-qa">
+    <span class="slide-num">QA</span>
+    <div class="slide-tag">Self-QA · Cross-Check vs Fuentes</div>
+    <h2>Quality Assurance</h2>
+    <div class="diva-line"></div>
+    <div class="grid-2" style="gap: 2rem;">
+      <div>
+        <h3 style="color: #34D399; margin-bottom: 1rem;">✅ Datos verificados</h3>
+        <ul class="highlights">
+          <li><div class="bullet" style="background: #34D399; color: black; font-size: 0.7rem;">✓</div><div class="text" style="font-size: 0.85rem;">ICE scores verificados con SWOT actual (16-Abr-2026)</div></li>
+          <li><div class="bullet" style="background: #34D399; color: black; font-size: 0.7rem;">✓</div><div class="text" style="font-size: 0.85rem;">T8 gatekeeper confirmado con David Guerrero (15-Abr-2026)</div></li>
+          <li><div class="bullet" style="background: #34D399; color: black; font-size: 0.7rem;">✓</div><div class="text" style="font-size: 0.85rem;">68 inversores históricos / 35 nuevos 2025 / 25k€ ticket — David Guerrero</div></li>
+          <li><div class="bullet" style="background: #34D399; color: black; font-size: 0.7rem;">✓</div><div class="text" style="font-size: 0.85rem;">AUM 7,2M€ / Revenue 331k€ / 22,5M€ target — Company Brief</div></li>
+          <li><div class="bullet" style="background: #34D399; color: black; font-size: 0.7rem;">✓</div><div class="bullet" style="background: #34D399; color: black; font-size: 0.7rem;">✓</div><div class="text" style="font-size: 0.85rem;">Arquetipos 1+2 validados con David Guerrero</div></li>
+          <li><div class="bullet" style="background: #34D399; color: black; font-size: 0.7rem;">✓</div><div class="text" style="font-size: 0.85rem;">T1 TaxMM / T2 Proincentiva / T4 CNMV — Competitor Intelligence</div></li>
+          <li><div class="bullet" style="background: #34D399; color: black; font-size: 0.7rem;">✓</div><div class="text" style="font-size: 0.85rem;">Mercado 150-250M€/año — Market Intelligence</div></li>
+          <li><div class="bullet" style="background: #34D399; color: black; font-size: 0.7rem;">✓</div><div class="text" style="font-size: 0.85rem;">Pro Tax 2 clientes / ARR ~60k€ / TAM 4,2-7M€ — Company Brief</div></li>
+          <li><div class="bullet" style="background: #34D399; color: black; font-size: 0.7rem;">✓</div><div class="text" style="font-size: 0.85rem;">3 Moats (Regulatory / Switching+Data / Flywheel) — OPE Canvas</div></li>
+          <li><div class="bullet" style="background: #34D399; color: black; font-size: 0.7rem;">✓</div><div class="text" style="font-size: 0.85rem;">Endgame 2030: +120M€ AUM / +11M€ revenue / 8.000 inversores — OPE Canvas</div></li>
+        </ul>
+      </div>
+      <div>
+        <h3 style="color: var(--electric-yellow); margin-bottom: 1rem;">⚠️ Notas y limitaciones</h3>
+        <ul class="highlights">
+          <li><div class="bullet" style="background: var(--electric-yellow); color: black; font-size: 0.7rem;">⚠</div><div class="text" style="font-size: 0.85rem;">T3 (SFTL domina marca) / T5 (commoditización) / T6 (restricciones pre-CNM) no shown como cards en slide Riesgos — son Medium impact, listed en SWOT grid</div></li>
+          <li><div class="bullet" style="background: var(--electric-yellow); color: black; font-size: 0.7rem;">⚠</div><div class="text" style="font-size: 0.85rem;">ICE scores 6.3-7.7 (SO2, ST3, WT3, WO4, SO4) no en top actions — presentes en SWOT completo</div></li>
+          <li><div class="bullet" style="background: var(--electric-yellow); color: black; font-size: 0.7rem;">⚠</div><div class="text" style="font-size: 0.85rem;">Founding team ~13 core + freelancers — cifra aproximada (Company Brief)</div></li>
+          <li><div class="bullet" style="background: var(--electric-yellow); color: black; font-size: 0.7rem;">⚠</div><div class="text" style="font-size: 0.85rem;">TAM Pro Tax 4,2-7M€/año — estimación internal, no validada externamente</div></li>
+          <li><div class="bullet" style="background: var(--electric-yellow); color: black; font-size: 0.7rem;">⚠</div><div class="text" style="font-size: 0.85rem;">Quarterly picture (Q2/Q3/Q4) basada en suposiciones — pendiente CRM para datos reales</div></li>
+          <li><div class="bullet" style="background: var(--electric-yellow); color: black; font-size: 0.7rem;">⚠</div><div class="text" style="font-size: 0.85rem;">Self Intelligence approved 14-Abr — si hay cambios post-reunión David 15-Abr, actualizar</div></li>
+        </ul>
+        <div class="card" style="margin-top: 1.5rem; border-color: rgba(168,85,247,0.4);">
+          <div class="card-tag" style="color: var(--electric-purple);">Fuentes por slide</div>
+          <ul class="highlights" style="margin-top: 0.75rem;">
+            <li><div class="bullet" style="background: var(--electric-purple); font-size: 0.55rem;">→</div><div class="text" style="font-size: 0.75rem;">Slides 02-07 → Company Brief + Self + SWOT + TOWS</div></li>
+            <li><div class="bullet" style="background: var(--electric-purple); font-size: 0.55rem;">→</div><div class="text" style="font-size: 0.75rem;">Slide 08 → Market Intelligence + Self + OPE Canvas</div></li>
+            <li><div class="bullet" style="background: var(--electric-purple); font-size: 0.55rem;">→</div><div class="text" style="font-size: 0.75rem;">Slides 09-10 → OPE Canvas + Company Brief</div></li>
+            <li><div class="bullet" style="background: var(--electric-purple); font-size: 0.55rem;">→</div><div class="text" style="font-size: 0.75rem;">Slide 11 → Competitor Intelligence + Market Intelligence</div></li>
+            <li><div class="bullet" style="background: var(--electric-purple); font-size: 0.55rem;">→</div><div class="text" style="font-size: 0.75rem;">Slide 12 → SWOT + Self + Market + Competitor</div></li>
+            <li><div class="bullet" style="background: var(--electric-purple); font-size: 0.55rem;">→</div><div class="text" style="font-size: 0.75rem;">Slide 13 → Company Brief + OPE Canvas + CRM data (pendiente)</div></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="slide-footer">
+      <div class="footer-left">Hulahoop Media · Market Synthesis · 2026-04-16 · QA: PASS ✅</div>
+      <div class="footer-right"><div class="logo-mark">HH</div></div>
+    </div>
+  </section>
+
+</body>
+</html>
