@@ -1,6 +1,6 @@
 {
   "period": "2026-04",
-  "updatedAt": "2026-04-07T23:01:43.526450",
+  "updatedAt": "2026-04-21T08:01:02.793877",
   "days": {
     "2026-04-01": {
       "total_usd": 19.1594,
@@ -13,6 +13,10 @@
         "growth4u": {
           "cost_usd": 0,
           "turns": 3
+        },
+        "paymatico": {
+          "cost_usd": 0,
+          "turns": 0
         },
         "sanchocmo": {
           "cost_usd": 0,
@@ -30,6 +34,10 @@
           "turns": 0
         },
         "growth4u": {
+          "cost_usd": 0,
+          "turns": 0
+        },
+        "paymatico": {
           "cost_usd": 0,
           "turns": 0
         },
@@ -52,12 +60,16 @@
           "cost_usd": 0,
           "turns": 3
         },
+        "paymatico": {
+          "cost_usd": 0,
+          "turns": 0
+        },
         "sanchocmo": {
           "cost_usd": 0,
           "turns": 0
         }
       },
-      "system_usd": 2.8637
+      "system_usd": 1.7749
     },
     "2026-04-04": {
       "total_usd": 1.5108,
@@ -70,6 +82,10 @@
         "growth4u": {
           "cost_usd": 0,
           "turns": 1
+        },
+        "paymatico": {
+          "cost_usd": 0,
+          "turns": 0
         },
         "sanchocmo": {
           "cost_usd": 0,
@@ -90,16 +106,20 @@
           "cost_usd": 0,
           "turns": 1
         },
+        "paymatico": {
+          "cost_usd": 0,
+          "turns": 0
+        },
         "sanchocmo": {
           "cost_usd": 0,
           "turns": 0
         }
       },
-      "system_usd": 0.2313
+      "system_usd": 0.1481
     },
     "2026-04-06": {
       "total_usd": 0.0747,
-      "total_turns": 60,
+      "total_turns": 56,
       "clients": {
         "hospital-capilar": {
           "cost_usd": 0,
@@ -109,16 +129,20 @@
           "cost_usd": 0,
           "turns": 0
         },
+        "paymatico": {
+          "cost_usd": 0,
+          "turns": 0
+        },
         "sanchocmo": {
           "cost_usd": 0,
           "turns": 0
         }
       },
-      "system_usd": 0.0377
+      "system_usd": 0.0217
     },
     "2026-04-07": {
-      "total_usd": 29.6388,
-      "total_turns": 735,
+      "total_usd": 34.0458,
+      "total_turns": 784,
       "clients": {
         "hospital-capilar": {
           "cost_usd": 0.436,
@@ -128,12 +152,338 @@
           "cost_usd": 2.043,
           "turns": 17
         },
+        "paymatico": {
+          "cost_usd": 0,
+          "turns": 0
+        },
         "sanchocmo": {
           "cost_usd": 0.802,
           "turns": 5
         }
       },
-      "system_usd": 14.2469
+      "system_usd": 8.7666
+    },
+    "2026-04-08": {
+      "total_usd": 45.2007,
+      "total_turns": 873,
+      "clients": {
+        "hospital-capilar": {
+          "cost_usd": 0,
+          "turns": 2
+        },
+        "growth4u": {
+          "cost_usd": 0,
+          "turns": 5
+        },
+        "paymatico": {
+          "cost_usd": 0,
+          "turns": 0
+        },
+        "sanchocmo": {
+          "cost_usd": 0,
+          "turns": 0
+        }
+      },
+      "system_usd": 1.7553
+    },
+    "2026-04-09": {
+      "total_usd": 10.1804,
+      "total_turns": 203,
+      "clients": {
+        "hospital-capilar": {
+          "cost_usd": 0,
+          "turns": 3
+        },
+        "growth4u": {
+          "cost_usd": 0,
+          "turns": 4
+        },
+        "paymatico": {
+          "cost_usd": 0,
+          "turns": 0
+        },
+        "sanchocmo": {
+          "cost_usd": 0,
+          "turns": 0
+        }
+      },
+      "system_usd": 0.5708
+    },
+    "2026-04-10": {
+      "total_usd": 0.889,
+      "total_turns": 109,
+      "clients": {
+        "hospital-capilar": {
+          "cost_usd": 0,
+          "turns": 3
+        },
+        "growth4u": {
+          "cost_usd": 0,
+          "turns": 4
+        },
+        "paymatico": {
+          "cost_usd": 0,
+          "turns": 0
+        },
+        "sanchocmo": {
+          "cost_usd": 0,
+          "turns": 0
+        }
+      },
+      "system_usd": 0.2419
+    },
+    "2026-04-11": {
+      "total_usd": 0.4311,
+      "total_turns": 59,
+      "clients": {
+        "hospital-capilar": {
+          "cost_usd": 0,
+          "turns": 1
+        },
+        "growth4u": {
+          "cost_usd": 0,
+          "turns": 2
+        },
+        "paymatico": {
+          "cost_usd": 0,
+          "turns": 0
+        },
+        "sanchocmo": {
+          "cost_usd": 0,
+          "turns": 0
+        }
+      },
+      "system_usd": 0.3173
+    },
+    "2026-04-12": {
+      "total_usd": 0.802,
+      "total_turns": 120,
+      "clients": {
+        "hospital-capilar": {
+          "cost_usd": 0,
+          "turns": 0
+        },
+        "growth4u": {
+          "cost_usd": 0,
+          "turns": 2
+        },
+        "paymatico": {
+          "cost_usd": 0,
+          "turns": 0
+        },
+        "sanchocmo": {
+          "cost_usd": 0,
+          "turns": 0
+        }
+      },
+      "system_usd": 0.3307
+    },
+    "2026-04-13": {
+      "total_usd": 4.8422,
+      "total_turns": 292,
+      "clients": {
+        "hospital-capilar": {
+          "cost_usd": 0,
+          "turns": 4
+        },
+        "growth4u": {
+          "cost_usd": 0,
+          "turns": 6
+        },
+        "paymatico": {
+          "cost_usd": 0,
+          "turns": 0
+        },
+        "sanchocmo": {
+          "cost_usd": 0,
+          "turns": 0
+        }
+      },
+      "system_usd": 0.628
+    },
+    "2026-04-14": {
+      "total_usd": 14.3134,
+      "total_turns": 199,
+      "clients": {
+        "hospital-capilar": {
+          "cost_usd": 0,
+          "turns": 2
+        },
+        "growth4u": {
+          "cost_usd": 0,
+          "turns": 4
+        },
+        "paymatico": {
+          "cost_usd": 0,
+          "turns": 0
+        },
+        "sanchocmo": {
+          "cost_usd": 0,
+          "turns": 0
+        }
+      },
+      "system_usd": 0.5808
+    },
+    "2026-04-15": {
+      "total_usd": 33.3802,
+      "total_turns": 563,
+      "clients": {
+        "hospital-capilar": {
+          "cost_usd": 0,
+          "turns": 4
+        },
+        "growth4u": {
+          "cost_usd": 0,
+          "turns": 5
+        },
+        "paymatico": {
+          "cost_usd": 0,
+          "turns": 1
+        },
+        "sanchocmo": {
+          "cost_usd": 0,
+          "turns": 0
+        }
+      },
+      "system_usd": 4.6535
+    },
+    "2026-04-16": {
+      "total_usd": 5.3177,
+      "total_turns": 601,
+      "clients": {
+        "hospital-capilar": {
+          "cost_usd": 0,
+          "turns": 3
+        },
+        "growth4u": {
+          "cost_usd": 0,
+          "turns": 4
+        },
+        "paymatico": {
+          "cost_usd": 0,
+          "turns": 0
+        },
+        "sanchocmo": {
+          "cost_usd": 0,
+          "turns": 0
+        }
+      },
+      "system_usd": 1.0974
+    },
+    "2026-04-17": {
+      "total_usd": 5.2972,
+      "total_turns": 507,
+      "clients": {
+        "hospital-capilar": {
+          "cost_usd": 0,
+          "turns": 3
+        },
+        "growth4u": {
+          "cost_usd": 0,
+          "turns": 5
+        },
+        "paymatico": {
+          "cost_usd": 0,
+          "turns": 0
+        },
+        "sanchocmo": {
+          "cost_usd": 0,
+          "turns": 0
+        }
+      },
+      "system_usd": 0.7426
+    },
+    "2026-04-18": {
+      "total_usd": 2.3894,
+      "total_turns": 173,
+      "clients": {
+        "hospital-capilar": {
+          "cost_usd": 0,
+          "turns": 0
+        },
+        "growth4u": {
+          "cost_usd": 0,
+          "turns": 0
+        },
+        "paymatico": {
+          "cost_usd": 0,
+          "turns": 0
+        },
+        "sanchocmo": {
+          "cost_usd": 0,
+          "turns": 0
+        }
+      },
+      "system_usd": 0.3408
+    },
+    "2026-04-19": {
+      "total_usd": 5.0874,
+      "total_turns": 383,
+      "clients": {
+        "hospital-capilar": {
+          "cost_usd": 0,
+          "turns": 0
+        },
+        "growth4u": {
+          "cost_usd": 0,
+          "turns": 0
+        },
+        "paymatico": {
+          "cost_usd": 0,
+          "turns": 0
+        },
+        "sanchocmo": {
+          "cost_usd": 0,
+          "turns": 0
+        }
+      },
+      "system_usd": 2.784
+    },
+    "2026-04-20": {
+      "total_usd": 6.235,
+      "total_turns": 693,
+      "clients": {
+        "hospital-capilar": {
+          "cost_usd": 0,
+          "turns": 2
+        },
+        "growth4u": {
+          "cost_usd": 0,
+          "turns": 1
+        },
+        "paymatico": {
+          "cost_usd": 0,
+          "turns": 0
+        },
+        "sanchocmo": {
+          "cost_usd": 0,
+          "turns": 0
+        }
+      },
+      "system_usd": 2.9045
+    },
+    "2026-04-21": {
+      "total_usd": 0.8122,
+      "total_turns": 61,
+      "clients": {
+        "hospital-capilar": {
+          "cost_usd": 0,
+          "turns": 0
+        },
+        "growth4u": {
+          "cost_usd": 0,
+          "turns": 0
+        },
+        "paymatico": {
+          "cost_usd": 0,
+          "turns": 0
+        },
+        "sanchocmo": {
+          "cost_usd": 0,
+          "turns": 0
+        }
+      },
+      "system_usd": 0.1395
     }
   }
 }

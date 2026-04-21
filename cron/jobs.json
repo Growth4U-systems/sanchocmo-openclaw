@@ -7,7 +7,7 @@
       "name": "Daily Pulse",
       "enabled": true,
       "createdAtMs": 1771950688301,
-      "updatedAtMs": 1775546039641,
+      "updatedAtMs": 1776756153380,
       "schedule": {
         "kind": "cron",
         "expr": "0 9 * * 1-5",
@@ -26,23 +26,24 @@
         "to": "channel:1475638253154603170"
       },
       "state": {
-        "nextRunAtMs": 1775631600000,
-        "lastRunAtMs": 1775545794211,
-        "lastRunStatus": "ok",
-        "lastStatus": "ok",
-        "lastDurationMs": 245430,
-        "lastDeliveryStatus": "not-delivered",
-        "consecutiveErrors": 0,
-        "lastDelivered": false
+        "nextRunAtMs": 1776841200000,
+        "lastRunAtMs": 1776754800020,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 1353360,
+        "lastDeliveryStatus": "not-requested",
+        "consecutiveErrors": 1,
+        "lastError": "FallbackSummaryError: All models failed (3): anthropic/claude-opus-4-6: Provider anthropic has billing issue (skipping all models) (billing) | minimax/MiniMax-M2.7: LLM request timed out. (timeout) | openrouter/qwen/qwen3.6-plus: Upstream error from Alibaba: Request rate increased too quickly. To ensure system stability, please adjust your client logic to scale requests more smoothly over time. (timeout)",
+        "lastErrorReason": "timeout"
       }
     },
     {
       "id": "33434fd7-8b66-4069-b7f7-983f66fc25c2",
       "agentId": "sancho",
-      "name": "Weekly Synthesis",
+      "name": "Weekly Synthesis — Hospital Capilar",
       "enabled": true,
       "createdAtMs": 1771950696201,
-      "updatedAtMs": 1775474601176,
+      "updatedAtMs": 1776672477947,
       "schedule": {
         "kind": "cron",
         "expr": "0 10 * * 1",
@@ -52,7 +53,7 @@
       "wakeMode": "now",
       "payload": {
         "kind": "agentTurn",
-        "message": "Síntesis semanal: 1) Lee memory/daily/*.md de los últimos 7 días. 2) Lee brand/daily-pulse/*.json recientes. 3) Lee brand/learnings.md. 4) Lee memory/patterns.md (patrones detectados). 5) Identifica patrones, tendencias, y decisiones clave. 6) Actualiza brand/learnings.md con patrones confirmados. 7) Genera resumen ejecutivo con: qué aprendimos, qué cambió, qué hacer diferente.\n\nPUBLICAR EN DISCORD (PATRÓN OBLIGATORIO DE HILO):\n1. Envía un mensaje corto (1 línea) al canal #learning: message(action=send, channel=discord, target=1475638272523763834, message='📚 Síntesis Semanal — YYYY-MM-DD: [hallazgo principal en 1 línea]')\n2. Del resultado del send, captura el messageId devuelto.\n3. Crea un hilo DESDE ese mensaje: message(action=thread-create, channel=discord, target=1475638272523763834, messageId=<messageId>, threadName='📚 Síntesis Semanal — YYYY-MM-DD')\n4. Del resultado del thread-create, captura el threadId.\n5. Publica el resumen ejecutivo completo DENTRO del hilo: message(action=send, channel=discord, target=<threadId>, message=<resumen completo>)\n6. NUNCA publiques contenido directamente en el canal — SIEMPRE dentro del hilo.\n7. APLICA reglas de _system/client-context-isolation.md.",
+        "message": "Síntesis semanal para Hospital Capilar.\n\nPASO 0 — CARGAR CONFIG:\nLee brand/hospital-capilar/client-config.json. Usa los IDs de ahí para TODO.\n\nPASO 1 — LEER FUENTES:\n1) Lee brand/hospital-capilar/daily-pulse/*.json recientes (últimos 7 días).\n2) Lee brand/hospital-capilar/learnings.md si existe.\n3) Lee brand/hospital-capilar/operational/learnings.md si existe.\n4) Identifica patrones, tendencias, decisiones clave.\n\nPASO 2 — ACTUALIZAR:\nActualiza brand/hospital-capilar/learnings.md con patrones confirmados.\n\nPASO 2b — GUARDAR EN RECURRING TASKS:\nGuarda en brand/hospital-capilar/recurring-tasks/weekly-synthesis/YYYY-MM-DD.json:\n{\"cronName\": \"Weekly Synthesis — Hospital Capilar\", \"slug\": \"hospital-capilar\", \"date\": \"YYYY-MM-DD\", \"runAtMs\": <timestamp_ms>, \"status\": \"ok\", \"content\": \"<síntesis semanal completa>\"}\n\nPASO 3 — PUBLICAR EN DISCORD (PATRÓN OBLIGATORIO DE HILO):\nDel client-config.json, busca el channel ID de 'crons.weekly_synthesis.publish_channel'.\n1. message(action=send, channel=discord, target=<publish_channel_id>, message='📚 Síntesis Semanal — YYYY-MM-DD: [hallazgo principal en 1 línea]')\n2. Del resultado captura messageId.\n3. message(action=thread-create, channel=discord, target=<publish_channel_id>, messageId=<messageId>, threadName='📚 Síntesis Semanal — YYYY-MM-DD')\n4. Del resultado captura threadId.\n5. message(action=send, channel=discord, target=<threadId>, message=<resumen ejecutivo>)\n6. APLICA reglas de _system/client-context-isolation.md — solo info de Hospital Capilar.",
         "model": "anthropic/claude-sonnet-4-5"
       },
       "delivery": {
@@ -61,24 +62,23 @@
         "to": "channel:1475638272523763834"
       },
       "state": {
-        "nextRunAtMs": 1776067200000,
-        "lastRunAtMs": 1775470941322,
-        "lastRunStatus": "error",
-        "lastStatus": "error",
-        "lastDurationMs": 3659854,
-        "lastDeliveryStatus": "not-requested",
-        "consecutiveErrors": 1,
-        "lastError": "cron: job execution timed out",
-        "lastErrorReason": "timeout"
+        "nextRunAtMs": 1777276800000,
+        "lastRunAtMs": 1776672000025,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 477922,
+        "lastDeliveryStatus": "not-delivered",
+        "consecutiveErrors": 0,
+        "lastDelivered": false
       }
     },
     {
       "id": "8a4c8f89-58f0-4827-a076-df3f83660b3f",
       "agentId": "sancho",
       "name": "Regenerar Dashboard",
-      "enabled": true,
+      "enabled": false,
       "createdAtMs": 1771950708148,
-      "updatedAtMs": 1775584942627,
+      "updatedAtMs": 1775720995031,
       "schedule": {
         "kind": "cron",
         "expr": "0 8,12,16,20 * * *",
@@ -96,11 +96,10 @@
         "channel": "last"
       },
       "state": {
-        "nextRunAtMs": 1775628000000,
-        "lastRunAtMs": 1775584800012,
+        "lastRunAtMs": 1775714400014,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 142615,
+        "lastDurationMs": 254776,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0,
         "lastDelivered": false
@@ -112,7 +111,7 @@
       "name": "Meeting Intelligence",
       "enabled": true,
       "createdAtMs": 1771950715725,
-      "updatedAtMs": 1775577818405,
+      "updatedAtMs": 1776787769476,
       "schedule": {
         "kind": "cron",
         "expr": "0 18 * * 1-5",
@@ -131,11 +130,11 @@
         "to": "channel:1475638253154603170"
       },
       "state": {
-        "nextRunAtMs": 1775664000000,
-        "lastRunAtMs": 1775577600009,
+        "nextRunAtMs": 1776873600000,
+        "lastRunAtMs": 1776787200022,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 218396,
+        "lastDurationMs": 569454,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0,
         "lastDelivered": false
@@ -144,10 +143,10 @@
     {
       "id": "abc8abac-3097-4e27-8131-0a5d77717195",
       "agentId": "sancho",
-      "name": "Memory Maintenance",
+      "name": "Memory Maintenance & Pattern Detection",
       "enabled": true,
       "createdAtMs": 1771950722307,
-      "updatedAtMs": 1775420306429,
+      "updatedAtMs": 1776629248077,
       "schedule": {
         "kind": "cron",
         "expr": "0 22 * * 0",
@@ -157,7 +156,7 @@
       "wakeMode": "now",
       "payload": {
         "kind": "agentTurn",
-        "message": "Mantenimiento de memoria:\n1) Lee memory/daily/*.md de los últimos 7 días.\n2) Lee MEMORY.md actual.\n3) Lee brand/*/memory.md (client memories).\n4) Lee memory/patterns.md.\n5) Extrae eventos significativos, lecciones, decisiones, opiniones que vale la pena recordar.\n6) Actualiza MEMORY.md con lo nuevo (sin duplicar).\n7) Actualiza brand/{slug}/memory.md si hay info específica de cliente.\n8) Elimina info obsoleta de MEMORY.md.\n9) Ejecuta bash scripts/memory-decay.sh — si hay archivos stale, propón archivarlos.\n10) Ejecuta bash scripts/memory-index.sh — regenera INDEX.md.\n11) Reporta qué añadiste y qué eliminaste.",
+        "message": "Mantenimiento de memoria y detección de patrones (fusión semanal):\n\nPARTE A — MANTENIMIENTO:\n1) Lee memory/daily/*.md de los últimos 7 días.\n2) Lee MEMORY.md actual.\n3) Lee brand/*/memory.md (client memories).\n4) Extrae eventos significativos, lecciones, decisiones, opiniones que vale la pena recordar.\n5) Actualiza MEMORY.md con lo nuevo (sin duplicar).\n6) Actualiza brand/{slug}/memory.md si hay info específica de cliente.\n7) Elimina info obsoleta de MEMORY.md.\n\nPARTE B — DETECCIÓN DE PATRONES:\n8) Lee memory/patterns.md actual.\n9) Identifica patrones recurrentes, tendencias, insights, y riesgos en los dailys de la semana.\n10) Actualiza memory/patterns.md con hallazgos.\n11) Si un patrón es específico de cliente, actualiza brand/{slug}/memory.md.\n12) Si es un aprendizaje sistémico, actualiza MEMORY.md.\n\nPARTE C — LIMPIEZA:\n13) Ejecuta bash scripts/memory-decay.sh — si hay archivos stale, propón archivarlos.\n14) Ejecuta bash scripts/memory-index.sh — regenera INDEX.md.\n\nReporta qué añadiste, qué eliminaste, y qué patrones detectaste. Si nada relevante en patrones, indica HEARTBEAT_OK para esa parte.",
         "model": "anthropic/claude-sonnet-4-5"
       },
       "delivery": {
@@ -165,24 +164,23 @@
         "channel": "last"
       },
       "state": {
-        "nextRunAtMs": 1776024000000,
-        "lastRunAtMs": 1775419349022,
-        "lastRunStatus": "error",
-        "lastStatus": "error",
-        "lastDurationMs": 957407,
-        "lastDeliveryStatus": "not-requested",
-        "consecutiveErrors": 1,
-        "lastError": "FallbackSummaryError: All models failed (3): anthropic/claude-sonnet-4-5: LLM request rejected: Third-party apps now draw from your extra usage, not your plan limits. We've added a $200 credit to get you started. Claim it at claude.ai/settings/usage and keep going. (format) | minimax/MiniMax-M2.7: LLM request timed out. (unknown) | anthropic/claude-opus-4-6: LLM request rejected: Third-party apps now draw from your extra usage, not your plan limits. We've added a $200 credit to get you started. Claim it at claude.ai/settings/usage and keep going. (format)",
-        "lastErrorReason": "timeout"
+        "nextRunAtMs": 1777233600000,
+        "lastRunAtMs": 1776628800021,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 448056,
+        "lastDeliveryStatus": "not-delivered",
+        "consecutiveErrors": 0,
+        "lastDelivered": false
       }
     },
     {
       "id": "0cd1e931-d374-4428-a452-e2394beac5b7",
       "agentId": "sancho",
-      "name": "Thief Marketer",
-      "enabled": false,
+      "name": "Thief Marketer — Hospital Capilar",
+      "enabled": true,
       "createdAtMs": 1771950950205,
-      "updatedAtMs": 1771950950205,
+      "updatedAtMs": 1776233237878,
       "schedule": {
         "kind": "cron",
         "expr": "0 8 * * 3",
@@ -192,7 +190,7 @@
       "wakeMode": "now",
       "payload": {
         "kind": "agentTurn",
-        "message": "Lee brand/sources.json → sección thief_marketer. Para cada competidor: 1) Web scrape homepage + blog (web_fetch) → detectar contenido nuevo, cambios de copy, pricing. 2) LinkedIn → buscar posts recientes (web_search). 3) Instagram/YouTube → últimas publicaciones (web_search). 4) Google Ads Library → anuncios activos. 5) Newsletter → si hay suscripción, revisar últimos emails. Compara con última ejecución en brand/thief-marketer/. Genera reporte: qué hicieron nuevo, qué podemos robar/adaptar, oportunidades que dejaron. Guarda en brand/thief-marketer/YYYY-MM-DD.json.",
+        "message": "Análisis competitivo semanal para Hospital Capilar.\n\nPASO 0 — CARGAR CONFIG:\nLee brand/hospital-capilar/client-config.json. Usa los IDs de ahí para TODO.\n\nPASO 1 — LEER FUENTES:\nLee brand/hospital-capilar/market-and-us/competitors/sources.json. Para cada competidor:\n1) Web scrape homepage + blog (web_fetch) → detectar contenido nuevo, cambios de copy, pricing.\n2) LinkedIn → buscar posts recientes (web_search).\n3) Instagram/YouTube → últimas publicaciones (web_search).\n4) Google Ads Library → anuncios activos.\n5) Newsletter → si hay suscripción, revisar últimos emails.\n\nPASO 2 — COMPARAR:\nCompara con última ejecución en brand/hospital-capilar/thief-marketer/.\n\nPASO 3 — GUARDAR:\nGuarda en brand/hospital-capilar/recurring-tasks/thief-marketer/YYYY-MM-DD.json:\n{\"cronName\": \"Thief Marketer — Hospital Capilar\", \"slug\": \"hospital-capilar\", \"date\": \"YYYY-MM-DD\", \"runAtMs\": <timestamp_ms>, \"status\": \"ok\", \"content\": \"<reporte completo>\"}\n\nPASO 4 — PUBLICAR EN DISCORD:\nDel client-config.json, busca el channel ID de 'crons.thief_marketer.publish_channel'.\n1. message(action=send, channel=discord, target=<publish_channel_id>, message='🕵️ Thief Marketer — YYYY-MM-DD: [hallazgo principal]')\n2. Captura messageId → crea hilo → publica reporte detallado en el hilo.\n3. APLICA reglas de _system/client-context-isolation.md — solo info de Hospital Capilar.",
         "model": "anthropic/claude-sonnet-4-5"
       },
       "delivery": {
@@ -200,7 +198,16 @@
         "channel": "discord",
         "to": "channel:1475638253154603170"
       },
-      "state": {}
+      "state": {
+        "nextRunAtMs": 1776837600000,
+        "lastRunAtMs": 1776232800024,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 437854,
+        "lastDelivered": true,
+        "lastDeliveryStatus": "delivered",
+        "consecutiveErrors": 0
+      }
     },
     {
       "id": "618bc941-a980-4f0d-99c8-5e715060ce6b",
@@ -208,7 +215,7 @@
       "name": "backup-sancho",
       "enabled": true,
       "createdAtMs": 1772069600272,
-      "updatedAtMs": 1775524122123,
+      "updatedAtMs": 1776733390181,
       "schedule": {
         "kind": "cron",
         "expr": "0 3 * * *"
@@ -225,15 +232,14 @@
         "channel": "last"
       },
       "state": {
-        "nextRunAtMs": 1775610000000,
-        "lastRunAtMs": 1775524091068,
+        "nextRunAtMs": 1776819600000,
+        "lastRunAtMs": 1776733200040,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 31055,
+        "lastDurationMs": 190141,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0,
-        "lastDelivered": false,
-        "runningAtMs": 1775610000006
+        "lastDelivered": false
       }
     },
     {
@@ -242,7 +248,7 @@
       "name": "healthcheck",
       "enabled": true,
       "createdAtMs": 1772069609685,
-      "updatedAtMs": 1775609622886,
+      "updatedAtMs": 1776797626264,
       "schedule": {
         "kind": "every",
         "everyMs": 21600000,
@@ -262,45 +268,11 @@
         "channel": "last"
       },
       "state": {
-        "nextRunAtMs": 1775631193209,
-        "lastRunAtMs": 1775609593209,
+        "nextRunAtMs": 1776819195522,
+        "lastRunAtMs": 1776797595522,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 29677,
-        "lastDeliveryStatus": "not-delivered",
-        "consecutiveErrors": 0,
-        "lastDelivered": false
-      }
-    },
-    {
-      "id": "c977a378-093d-46b1-a7de-44d1b5a24486",
-      "agentId": "cervantes",
-      "name": "cost-tracker-daily",
-      "description": "T-022: Run cost-tracker.py daily at 23:00",
-      "enabled": true,
-      "createdAtMs": 1772069993394,
-      "updatedAtMs": 1775595710959,
-      "schedule": {
-        "kind": "cron",
-        "expr": "0 23 * * *"
-      },
-      "sessionTarget": "isolated",
-      "wakeMode": "now",
-      "payload": {
-        "kind": "agentTurn",
-        "message": "Ejecuta el cost tracker: python3 ~/.openclaw/workspace-sancho/scripts/cost-tracker.py. Reporta el resultado.\n\nNO ejecutes regenerate.py — el cron 'Regenerar Dashboard' se encarga (4x/día).",
-        "model": "anthropic/claude-sonnet-4-5"
-      },
-      "delivery": {
-        "mode": "none",
-        "channel": "webchat"
-      },
-      "state": {
-        "nextRunAtMs": 1775682000000,
-        "lastRunAtMs": 1775595600013,
-        "lastRunStatus": "ok",
-        "lastStatus": "ok",
-        "lastDurationMs": 110946,
+        "lastDurationMs": 30742,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0,
         "lastDelivered": false
@@ -312,7 +284,7 @@
       "name": "Cervantes observa a Sancho",
       "enabled": true,
       "createdAtMs": 1772115026027,
-      "updatedAtMs": 1775548878541,
+      "updatedAtMs": 1776758743620,
       "schedule": {
         "kind": "cron",
         "expr": "0 10 * * *",
@@ -330,15 +302,14 @@
         "channel": "last"
       },
       "state": {
-        "nextRunAtMs": 1775635200000,
-        "lastRunAtMs": 1775548800012,
-        "lastRunStatus": "error",
-        "lastStatus": "error",
-        "lastDurationMs": 78529,
-        "lastDeliveryStatus": "not-requested",
-        "consecutiveErrors": 2,
-        "lastErrorReason": "timeout",
-        "lastError": "FallbackSummaryError: All models failed (3): anthropic/claude-sonnet-4-5: LLM request rejected: Third-party apps now draw from your extra usage, not your plan limits. We've added a $200 credit to get you started. Claim it at claude.ai/settings/usage and keep going. (format) | minimax/MiniMax-M2.7: LLM request timed out. (unknown) | anthropic/claude-opus-4-6: LLM request rejected: Third-party apps now draw from your extra usage, not your plan limits. We've added a $200 credit to get you started. Claim it at claude.ai/settings/usage and keep going. (format)"
+        "nextRunAtMs": 1776844800000,
+        "lastRunAtMs": 1776758400021,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 343599,
+        "lastDeliveryStatus": "not-delivered",
+        "consecutiveErrors": 0,
+        "lastDelivered": false
       }
     },
     {
@@ -373,10 +344,10 @@
       "id": "b780c3f1-a760-453f-ab81-bc19e4257d11",
       "agentId": "sancho",
       "sessionKey": "agent:sancho:discord:channel:1478818415568224297",
-      "name": "cost-tracker-daily",
+      "name": "Cost Tracker Daily — Multi-Client",
       "enabled": true,
       "createdAtMs": 1772750911798,
-      "updatedAtMs": 1775542222798,
+      "updatedAtMs": 1776751320095,
       "schedule": {
         "kind": "cron",
         "expr": "0 8 * * *",
@@ -386,7 +357,7 @@
       "wakeMode": "now",
       "payload": {
         "kind": "agentTurn",
-        "message": "Run the cost tracker: `python3 scripts/cost-tracker.py --alert-threshold 0`. Read the output files costs-global.json and costs-daily.json.\n\nIMPORTANT CONTEXT: We use Claude Max $200/month plan (flat rate). Dollar costs are THEORETICAL (API-equivalent), NOT actual spend.\n\nANALYZE for anomalies:\n1. Calculate average daily turns/tokens from costs-daily.json\n2. If today's usage is >2x the daily average → ANOMALY DETECTED\n3. If no anomaly → reply HEARTBEAT_OK (do NOT post anything)\n\nIF ANOMALY DETECTED, post to the Costes APIs thread (target='1481910083255406694') in Cervantes Brain guild:\nmessage(action=send, channel=discord, target='1481910083255406694', message='📊 **Usage Anomaly** — {date}\\n\\n**Today:** {turns} turns | {tokens} tokens (est. ${cost_theoretical})\\n**Daily avg:** {avg_turns} turns | {avg_tokens} tokens\\n**Ratio:** {ratio}x above average\\n\\nℹ️ Plan Max $200/mes — coste fijo. Valores en $ son estimación API.\\n\\n**By client:**\\n{breakdown by client: turns + tokens}\\n\\n**Possible cause:** {hypothesis}')\n\nNEVER post to #infra directly. ALL cost-related messages go to thread 1481910083255406694.",
+        "message": "Run the cost tracker: python3 scripts/cost-tracker.py --alert-threshold 0\nRead the output files: costs-global.json, costs-daily.json, and brand/*/costs.json (per-client).\n\nIMPORTANT CONTEXT: We use Claude Max $200/month plan (flat rate). Dollar costs are THEORETICAL (API-equivalent), NOT actual spend.\n\nANALYZE PER CLIENT:\n1. For each client in brand/*/costs.json:\n   - Calculate average daily turns/tokens\n   - If today's usage is >2x the daily average → ANOMALY for that client\n2. Also check global anomalies in costs-daily.json\n\nIF NO ANOMALIES → reply HEARTBEAT_OK (do NOT post anything)\n\nIF ANOMALY DETECTED for a specific client:\n1. Lee brand/{slug}/client-config.json para obtener el canal de Discord del cliente.\n2. Publica alerta en el canal intelligence del cliente afectado:\n   message(action=send, channel=discord, target=<intelligence_channel_id>, message='📊 Usage Anomaly — {date}\\n**Today:** {turns} turns | {tokens} tokens\\n**Daily avg:** {avg} turns\\nAnomaly: {description}')\n3. APLICA reglas de _system/client-context-isolation.md — no revelar datos de otros clientes.\n\nIF GLOBAL ANOMALY (no atribuible a un cliente):\nPost to Costes APIs thread (target='1481910083255406694') in Cervantes Brain guild.\n\nGuarda resumen en _system/recurring-tasks/cost-tracker-daily/YYYY-MM-DD.json.",
         "model": "anthropic/claude-sonnet-4-5",
         "timeoutSeconds": 120
       },
@@ -394,25 +365,25 @@
         "mode": "none"
       },
       "state": {
-        "nextRunAtMs": 1775628000000,
-        "lastRunAtMs": 1775542070748,
+        "nextRunAtMs": 1776837600000,
+        "lastRunAtMs": 1776751200063,
         "lastRunStatus": "error",
         "lastStatus": "error",
-        "lastDurationMs": 152050,
+        "lastDurationMs": 120032,
         "lastDeliveryStatus": "not-requested",
-        "consecutiveErrors": 1,
-        "lastError": "cron: job execution timed out",
-        "lastErrorReason": "timeout"
+        "consecutiveErrors": 15,
+        "lastErrorReason": "timeout",
+        "lastError": "cron: job execution timed out"
       }
     },
     {
       "id": "4eda3a87-1b19-4932-8c7d-d4b1971d53e3",
       "agentId": "sancho",
       "sessionKey": "agent:sancho:discord:channel:1477997447845511228",
-      "name": "Meta Ads → Slack Daily Report",
+      "name": "Meta Ads → Slack Daily Report — Growth4U",
       "enabled": false,
       "createdAtMs": 1773153244084,
-      "updatedAtMs": 1773181893013,
+      "updatedAtMs": 1775720982335,
       "schedule": {
         "kind": "cron",
         "expr": "0 9 * * *",
@@ -437,7 +408,7 @@
       "name": "image-optimizer",
       "enabled": true,
       "createdAtMs": 1773187213085,
-      "updatedAtMs": 1775483854658,
+      "updatedAtMs": 1776672654955,
       "schedule": {
         "kind": "cron",
         "expr": "0 10 * * 1",
@@ -457,15 +428,14 @@
         "to": "1480154276205433035"
       },
       "state": {
-        "nextRunAtMs": 1776067200000,
-        "lastRunAtMs": 1775482919437,
-        "lastRunStatus": "error",
-        "lastStatus": "error",
-        "lastDurationMs": 935221,
-        "lastDeliveryStatus": "unknown",
-        "consecutiveErrors": 1,
-        "lastError": "cron: job execution timed out",
-        "lastErrorReason": "timeout"
+        "nextRunAtMs": 1777276800000,
+        "lastRunAtMs": 1776672621120,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 33835,
+        "lastDeliveryStatus": "delivered",
+        "consecutiveErrors": 0,
+        "lastDelivered": true
       }
     },
     {
@@ -475,7 +445,7 @@
       "name": "update-skills",
       "enabled": true,
       "createdAtMs": 1773235919019,
-      "updatedAtMs": 1775533505705,
+      "updatedAtMs": 1776742500290,
       "schedule": {
         "kind": "cron",
         "expr": "30 5 * * *",
@@ -495,13 +465,13 @@
         "to": "1481220331845976125"
       },
       "state": {
-        "nextRunAtMs": 1775619000000,
-        "lastRunAtMs": 1775532600018,
+        "nextRunAtMs": 1776828600000,
+        "lastRunAtMs": 1776742200025,
         "lastRunStatus": "error",
         "lastStatus": "error",
-        "lastDurationMs": 905687,
+        "lastDurationMs": 300265,
         "lastDeliveryStatus": "unknown",
-        "consecutiveErrors": 2,
+        "consecutiveErrors": 4,
         "lastErrorReason": "timeout",
         "lastError": "cron: job execution timed out"
       }
@@ -513,7 +483,7 @@
       "name": "Weekly Changelog Update",
       "enabled": true,
       "createdAtMs": 1773249903776,
-      "updatedAtMs": 1775380535050,
+      "updatedAtMs": 1776586154371,
       "schedule": {
         "kind": "cron",
         "expr": "0 10 * * 0",
@@ -530,14 +500,14 @@
         "mode": "none"
       },
       "state": {
-        "nextRunAtMs": 1775980800000,
-        "lastRunAtMs": 1775380390371,
+        "nextRunAtMs": 1777190400000,
+        "lastRunAtMs": 1776585854359,
         "lastRunStatus": "error",
         "lastStatus": "error",
-        "lastDurationMs": 144679,
+        "lastDurationMs": 300012,
         "lastDeliveryStatus": "not-requested",
         "consecutiveErrors": 1,
-        "lastError": "FallbackSummaryError: All models failed (3): anthropic/claude-opus-4-6: LLM request rejected: Third-party apps now draw from your extra usage, not your plan limits. We've added a $200 credit to get you started. Claim it at claude.ai/settings/usage and keep going. (format) | anthropic/claude-sonnet-4-5: No available auth profile for anthropic (all in cooldown or unavailable). (format) | minimax/MiniMax-M2.7: LLM request timed out. (unknown)",
+        "lastError": "cron: job execution timed out",
         "lastErrorReason": "timeout"
       }
     },
@@ -548,7 +518,7 @@
       "name": "Weekly Activity Summary",
       "enabled": true,
       "createdAtMs": 1773249903895,
-      "updatedAtMs": 1775380713385,
+      "updatedAtMs": 1776586454393,
       "schedule": {
         "kind": "cron",
         "expr": "0 10 * * 0",
@@ -565,14 +535,15 @@
         "mode": "none"
       },
       "state": {
-        "nextRunAtMs": 1775980800000,
-        "lastRunAtMs": 1775380535050,
+        "nextRunAtMs": 1777190400000,
+        "lastRunAtMs": 1776586154371,
         "lastRunStatus": "error",
         "lastStatus": "error",
-        "lastDurationMs": 178335,
+        "lastDurationMs": 300022,
         "lastDeliveryStatus": "not-requested",
         "consecutiveErrors": 1,
-        "lastError": "FallbackSummaryError: All models failed (3): anthropic/claude-opus-4-6: LLM request rejected: Third-party apps now draw from your extra usage, not your plan limits. We've added a $200 credit to get you started. Claim it at claude.ai/settings/usage and keep going. (format) | anthropic/claude-sonnet-4-5: No available auth profile for anthropic (all in cooldown or unavailable). (format) | minimax/MiniMax-M2.7: LLM request rejected: Third-party apps now draw from your extra usage, not your plan limits. We've added a $200 credit to get you started. Claim it at claude.ai/settings/usage and keep going. (format)"
+        "lastError": "cron: job execution timed out",
+        "lastErrorReason": "timeout"
       }
     },
     {
@@ -582,7 +553,7 @@
       "name": "mejora-continua-weekly",
       "enabled": true,
       "createdAtMs": 1773560184099,
-      "updatedAtMs": 1775381686200,
+      "updatedAtMs": 1776586619201,
       "schedule": {
         "kind": "cron",
         "expr": "0 10 * * 0",
@@ -602,15 +573,14 @@
         "to": "1482638140240953396"
       },
       "state": {
-        "nextRunAtMs": 1775980800000,
-        "lastRunAtMs": 1775380713385,
-        "lastRunStatus": "error",
-        "lastStatus": "error",
-        "lastDurationMs": 972815,
-        "lastDeliveryStatus": "unknown",
-        "consecutiveErrors": 1,
-        "lastError": "cron: job execution timed out",
-        "lastErrorReason": "timeout"
+        "nextRunAtMs": 1777190400000,
+        "lastRunAtMs": 1776586454393,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 164808,
+        "lastDeliveryStatus": "delivered",
+        "consecutiveErrors": 0,
+        "lastDelivered": true
       }
     },
     {
@@ -620,7 +590,7 @@
       "name": "skill-improvement-weekly",
       "enabled": true,
       "createdAtMs": 1773591436668,
-      "updatedAtMs": 1775381808437,
+      "updatedAtMs": 1776586651431,
       "schedule": {
         "kind": "cron",
         "expr": "0 10 * * 0",
@@ -638,15 +608,15 @@
         "channel": "1482642972712505395"
       },
       "state": {
-        "nextRunAtMs": 1775980800000,
-        "lastRunAtMs": 1775381686200,
+        "nextRunAtMs": 1777190400000,
+        "lastRunAtMs": 1776586619201,
         "lastRunStatus": "error",
         "lastStatus": "error",
-        "lastDurationMs": 122237,
+        "lastDurationMs": 32230,
         "lastDeliveryStatus": "unknown",
         "consecutiveErrors": 1,
-        "lastError": "FallbackSummaryError: All models failed (3): anthropic/claude-opus-4-6: LLM request rejected: Third-party apps now draw from your extra usage, not your plan limits. We've added a $200 credit to get you started. Claim it at claude.ai/settings/usage and keep going. (format) | anthropic/claude-sonnet-4-5: No available auth profile for anthropic (all in cooldown or unavailable). (format) | minimax/MiniMax-M2.7: LLM request timed out. (unknown)",
-        "lastErrorReason": "timeout"
+        "lastError": "Unsupported channel: 1482642972712505395",
+        "lastErrorReason": "rate_limit"
       }
     },
     {
@@ -656,7 +626,7 @@
       "name": "Weekly Token Audit",
       "enabled": true,
       "createdAtMs": 1773650217981,
-      "updatedAtMs": 1775460378458,
+      "updatedAtMs": 1776669274297,
       "schedule": {
         "kind": "cron",
         "expr": "0 9 * * 1",
@@ -674,15 +644,14 @@
         "mode": "none"
       },
       "state": {
-        "nextRunAtMs": 1776063600000,
-        "lastRunAtMs": 1775459892527,
-        "lastRunStatus": "error",
-        "lastStatus": "error",
-        "lastDurationMs": 485931,
-        "lastDeliveryStatus": "not-requested",
-        "consecutiveErrors": 1,
-        "lastError": "cron: job execution timed out",
-        "lastErrorReason": "timeout"
+        "nextRunAtMs": 1777273200000,
+        "lastRunAtMs": 1776669069497,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 204800,
+        "lastDeliveryStatus": "not-delivered",
+        "consecutiveErrors": 0,
+        "lastDelivered": false
       }
     },
     {
@@ -726,7 +695,7 @@
       "name": "cron-watchdog-weekly",
       "enabled": true,
       "createdAtMs": 1773680314014,
-      "updatedAtMs": 1775484810335,
+      "updatedAtMs": 1776675720048,
       "schedule": {
         "kind": "cron",
         "expr": "0 11 * * 1",
@@ -744,15 +713,15 @@
         "mode": "none"
       },
       "state": {
-        "nextRunAtMs": 1776070800000,
-        "lastRunAtMs": 1775483854658,
+        "nextRunAtMs": 1777280400000,
+        "lastRunAtMs": 1776675600023,
         "lastRunStatus": "error",
         "lastStatus": "error",
-        "lastDurationMs": 955677,
+        "lastDurationMs": 120025,
         "lastDeliveryStatus": "not-requested",
-        "consecutiveErrors": 1,
-        "lastError": "cron: job execution timed out",
-        "lastErrorReason": "timeout"
+        "consecutiveErrors": 3,
+        "lastErrorReason": "timeout",
+        "lastError": "cron: job execution timed out"
       }
     },
     {
@@ -762,7 +731,7 @@
       "name": "Lead Sync — Growth4U",
       "enabled": true,
       "createdAtMs": 1774192173315,
-      "updatedAtMs": 1775592600809,
+      "updatedAtMs": 1776802022387,
       "schedule": {
         "kind": "cron",
         "expr": "0 22 * * *",
@@ -779,11 +748,11 @@
         "mode": "none"
       },
       "state": {
-        "nextRunAtMs": 1775678400000,
-        "lastRunAtMs": 1775592000011,
+        "nextRunAtMs": 1776888000000,
+        "lastRunAtMs": 1776801600021,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 600798,
+        "lastDurationMs": 422366,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0,
         "lastDelivered": false
@@ -796,7 +765,7 @@
       "name": "Call Prep Daily — Growth4U",
       "enabled": true,
       "createdAtMs": 1774192180766,
-      "updatedAtMs": 1775594216690,
+      "updatedAtMs": 1776803992502,
       "schedule": {
         "kind": "cron",
         "expr": "30 22 * * 0-4",
@@ -813,14 +782,16 @@
         "mode": "none"
       },
       "state": {
-        "nextRunAtMs": 1775680200000,
-        "lastRunAtMs": 1775593800013,
-        "lastRunStatus": "ok",
-        "lastStatus": "ok",
-        "lastDurationMs": 416677,
+        "nextRunAtMs": 1776889800000,
+        "lastRunAtMs": 1776803401100,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 591402,
         "lastDeliveryStatus": "not-delivered",
-        "consecutiveErrors": 0,
-        "lastDelivered": false
+        "consecutiveErrors": 1,
+        "lastDelivered": false,
+        "lastError": "⚠️ ✉️ Message failed",
+        "lastDeliveryError": "⚠️ ✉️ Message failed"
       }
     },
     {
@@ -830,7 +801,7 @@
       "name": "Call Prep Weekly — Growth4U",
       "enabled": true,
       "createdAtMs": 1774192186720,
-      "updatedAtMs": 1775248515774,
+      "updatedAtMs": 1776458426333,
       "schedule": {
         "kind": "cron",
         "expr": "30 22 * * 5",
@@ -847,49 +818,14 @@
         "mode": "none"
       },
       "state": {
-        "nextRunAtMs": 1775853000000,
-        "lastRunAtMs": 1775248200017,
+        "nextRunAtMs": 1777062600000,
+        "lastRunAtMs": 1776457800017,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 315757,
+        "lastDurationMs": 626316,
         "lastDelivered": false,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0
-      }
-    },
-    {
-      "id": "7bdf656a-6974-4cfb-99a5-8a843123e4d9",
-      "agentId": "sancho",
-      "sessionKey": "agent:sancho:discord:channel:1482643082393419969",
-      "name": "memory-pattern-detection",
-      "enabled": true,
-      "createdAtMs": 1774217538140,
-      "updatedAtMs": 1775381948042,
-      "schedule": {
-        "kind": "cron",
-        "expr": "0 10 * * 0",
-        "tz": "Europe/Madrid"
-      },
-      "sessionTarget": "isolated",
-      "wakeMode": "now",
-      "payload": {
-        "kind": "agentTurn",
-        "message": "Detección semanal de patrones en memoria.\n\n1) Lee scripts/memory-patterns.md para instrucciones completas.\n2) Lee memory/daily/*.md de los últimos 7 días.\n3) Lee MEMORY.md y memory/patterns.md actuales.\n4) Lee brand/*/memory.md de todos los clientes.\n5) Identifica patrones recurrentes, tendencias, insights, y riesgos.\n6) Actualiza memory/patterns.md con hallazgos.\n7) Si un patrón es específico de cliente, actualiza brand/{slug}/memory.md.\n8) Si es un aprendizaje sistémico, actualiza MEMORY.md.\n9) Reporta resumen breve de lo encontrado. Si nada relevante, HEARTBEAT_OK."
-      },
-      "delivery": {
-        "mode": "none"
-      },
-      "state": {
-        "nextRunAtMs": 1775980800000,
-        "lastRunAtMs": 1775381808437,
-        "lastRunStatus": "error",
-        "lastStatus": "error",
-        "lastDurationMs": 139605,
-        "lastError": "⚠️ ✉️ Message failed",
-        "lastDelivered": false,
-        "lastDeliveryStatus": "not-delivered",
-        "lastDeliveryError": "⚠️ ✉️ Message failed",
-        "consecutiveErrors": 1
       }
     },
     {
@@ -898,7 +834,7 @@
       "name": "SEO Weekly Review — Criptan",
       "enabled": true,
       "createdAtMs": 1774907384193,
-      "updatedAtMs": 1775461317401,
+      "updatedAtMs": 1776669394316,
       "schedule": {
         "kind": "cron",
         "expr": "0 9 * * 1",
@@ -917,15 +853,15 @@
         "channel": "last"
       },
       "state": {
-        "nextRunAtMs": 1776063600000,
-        "lastRunAtMs": 1775460378458,
+        "nextRunAtMs": 1777273200000,
+        "lastRunAtMs": 1776669274297,
         "lastRunStatus": "error",
         "lastStatus": "error",
-        "lastDurationMs": 938943,
-        "lastError": "cron: job execution timed out",
+        "lastDurationMs": 120019,
         "lastErrorReason": "timeout",
         "lastDeliveryStatus": "not-requested",
-        "consecutiveErrors": 1
+        "consecutiveErrors": 3,
+        "lastError": "cron: job execution timed out"
       }
     },
     {
@@ -934,7 +870,7 @@
       "name": "Competitor Watch — Criptan",
       "enabled": true,
       "createdAtMs": 1774907441307,
-      "updatedAtMs": 1774907441307,
+      "updatedAtMs": 1776240463248,
       "schedule": {
         "kind": "cron",
         "expr": "0 10 * * 3",
@@ -953,7 +889,15 @@
         "channel": "last"
       },
       "state": {
-        "nextRunAtMs": 1775635200000
+        "nextRunAtMs": 1776844800000,
+        "lastRunAtMs": 1776240283123,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 180125,
+        "lastErrorReason": "timeout",
+        "lastDeliveryStatus": "not-requested",
+        "consecutiveErrors": 2,
+        "lastError": "cron: job execution timed out"
       }
     },
     {
@@ -962,7 +906,7 @@
       "name": "Social & Content Review — Criptan",
       "enabled": true,
       "createdAtMs": 1774907485233,
-      "updatedAtMs": 1775203483165,
+      "updatedAtMs": 1776413255741,
       "schedule": {
         "kind": "cron",
         "expr": "0 10 * * 5",
@@ -981,14 +925,15 @@
         "channel": "last"
       },
       "state": {
-        "nextRunAtMs": 1775808000000,
-        "lastRunAtMs": 1775203385704,
-        "lastRunStatus": "ok",
-        "lastStatus": "ok",
-        "lastDurationMs": 97461,
-        "lastDelivered": false,
-        "lastDeliveryStatus": "not-delivered",
-        "consecutiveErrors": 0
+        "nextRunAtMs": 1777017600000,
+        "lastRunAtMs": 1776413135710,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 120031,
+        "lastDeliveryStatus": "not-requested",
+        "consecutiveErrors": 2,
+        "lastErrorReason": "timeout",
+        "lastError": "cron: job execution timed out"
       }
     },
     {
@@ -997,7 +942,7 @@
       "name": "B2B Pipeline Review — Criptan",
       "enabled": true,
       "createdAtMs": 1774907548780,
-      "updatedAtMs": 1775136685033,
+      "updatedAtMs": 1776330120042,
       "schedule": {
         "kind": "cron",
         "expr": "0 11 * * 4",
@@ -1016,15 +961,15 @@
         "channel": "last"
       },
       "state": {
-        "nextRunAtMs": 1775725200000,
-        "lastRunAtMs": 1775136024235,
+        "nextRunAtMs": 1776934800000,
+        "lastRunAtMs": 1776330000018,
         "lastRunStatus": "error",
         "lastStatus": "error",
-        "lastDurationMs": 660798,
-        "lastError": "cron: job execution timed out",
+        "lastDurationMs": 120024,
         "lastErrorReason": "timeout",
         "lastDeliveryStatus": "not-requested",
-        "consecutiveErrors": 1
+        "consecutiveErrors": 3,
+        "lastError": "cron: job execution timed out"
       }
     },
     {
@@ -1033,7 +978,7 @@
       "name": "Weekly Strategy Report — Criptan",
       "enabled": true,
       "createdAtMs": 1774907616596,
-      "updatedAtMs": 1775199918817,
+      "updatedAtMs": 1776409929563,
       "schedule": {
         "kind": "cron",
         "expr": "0 9 * * 5",
@@ -1052,15 +997,15 @@
         "channel": "last"
       },
       "state": {
-        "nextRunAtMs": 1775804400000,
-        "lastRunAtMs": 1775199797730,
+        "nextRunAtMs": 1777014000000,
+        "lastRunAtMs": 1776409809509,
         "lastRunStatus": "error",
         "lastStatus": "error",
-        "lastDurationMs": 121087,
-        "lastError": "cron: job execution timed out",
+        "lastDurationMs": 120054,
         "lastErrorReason": "timeout",
         "lastDeliveryStatus": "not-requested",
-        "consecutiveErrors": 1
+        "consecutiveErrors": 3,
+        "lastError": "cron: job execution timed out"
       }
     },
     {
@@ -1070,7 +1015,7 @@
       "description": "Recordatorio semanal lunes 09:00 para rellenar métricas manuales de Criptan",
       "enabled": true,
       "createdAtMs": 1774972377248,
-      "updatedAtMs": 1775465544418,
+      "updatedAtMs": 1776669566633,
       "schedule": {
         "kind": "cron",
         "expr": "0 9 * * 1",
@@ -1088,15 +1033,14 @@
         "channel": "last"
       },
       "state": {
-        "nextRunAtMs": 1776063600000,
-        "lastRunAtMs": 1775461317401,
+        "nextRunAtMs": 1777273200000,
+        "lastRunAtMs": 1776669394316,
         "lastRunStatus": "error",
         "lastStatus": "error",
-        "lastDurationMs": 4227017,
-        "lastError": "cron: job execution timed out",
-        "lastErrorReason": "timeout",
+        "lastDurationMs": 172317,
         "lastDeliveryStatus": "unknown",
-        "consecutiveErrors": 1
+        "consecutiveErrors": 3,
+        "lastError": "Channel is required when multiple channels are configured: discord, mc-chat Set delivery.channel explicitly or use a main session with a previous channel."
       }
     },
     {
@@ -1105,7 +1049,7 @@
       "name": "Daily Pulse — Growth4U",
       "enabled": true,
       "createdAtMs": 1775033081929,
-      "updatedAtMs": 1775547067255,
+      "updatedAtMs": 1776756836581,
       "schedule": {
         "kind": "cron",
         "expr": "0 9 * * 1-5",
@@ -1123,15 +1067,14 @@
         "channel": "last"
       },
       "state": {
-        "nextRunAtMs": 1775631600000,
-        "lastRunAtMs": 1775546039641,
+        "nextRunAtMs": 1776841200000,
+        "lastRunAtMs": 1776756153380,
         "lastRunStatus": "error",
         "lastStatus": "error",
-        "lastDurationMs": 1027614,
+        "lastDurationMs": 683201,
         "lastDeliveryStatus": "unknown",
-        "consecutiveErrors": 4,
-        "lastErrorReason": "timeout",
-        "lastError": "FallbackSummaryError: All models failed (3): anthropic/claude-sonnet-4-5: LLM request rejected: Third-party apps now draw from your extra usage, not your plan limits. We've added a $200 credit to get you started. Claim it at claude.ai/settings/usage and keep going. (format) | minimax/MiniMax-M2.7: LLM request timed out. (unknown) | anthropic/claude-opus-4-6: LLM request rejected: Third-party apps now draw from your extra usage, not your plan limits. We've added a $200 credit to get you started. Claim it at claude.ai/settings/usage and keep going. (format)"
+        "consecutiveErrors": 14,
+        "lastError": "Channel is required when multiple channels are configured: discord, mc-chat Set delivery.channel explicitly or use a main session with a previous channel."
       }
     },
     {
@@ -1140,7 +1083,7 @@
       "name": "Performance Analysis — Growth4U",
       "enabled": true,
       "createdAtMs": 1775033088949,
-      "updatedAtMs": 1775488729218,
+      "updatedAtMs": 1776676563394,
       "schedule": {
         "kind": "cron",
         "expr": "0 11 * * 1",
@@ -1158,15 +1101,14 @@
         "channel": "last"
       },
       "state": {
-        "nextRunAtMs": 1776070800000,
-        "lastRunAtMs": 1775484810335,
+        "nextRunAtMs": 1777280400000,
+        "lastRunAtMs": 1776675720048,
         "lastRunStatus": "error",
         "lastStatus": "error",
-        "lastDurationMs": 3918883,
-        "lastError": "cron: job execution timed out",
-        "lastErrorReason": "timeout",
+        "lastDurationMs": 843346,
         "lastDeliveryStatus": "unknown",
-        "consecutiveErrors": 1
+        "consecutiveErrors": 3,
+        "lastError": "Channel is required when multiple channels are configured: discord, mc-chat Set delivery.channel explicitly or use a main session with a previous channel."
       }
     },
     {
@@ -1175,7 +1117,7 @@
       "name": "Weekly Synthesis — Growth4U",
       "enabled": true,
       "createdAtMs": 1775033092306,
-      "updatedAtMs": 1775489472554,
+      "updatedAtMs": 1776672843157,
       "schedule": {
         "kind": "cron",
         "expr": "0 10 * * 1",
@@ -1193,15 +1135,14 @@
         "channel": "last"
       },
       "state": {
-        "nextRunAtMs": 1776067200000,
-        "lastRunAtMs": 1775488729218,
+        "nextRunAtMs": 1777276800000,
+        "lastRunAtMs": 1776672654955,
         "lastRunStatus": "error",
         "lastStatus": "error",
-        "lastDurationMs": 743336,
-        "lastError": "FallbackSummaryError: All models failed (3): anthropic/claude-sonnet-4-5: LLM request timed out. (unknown) | minimax/MiniMax-M2.7: LLM request timed out. (unknown) | anthropic/claude-opus-4-6: LLM request rejected: Third-party apps now draw from your extra usage, not your plan limits. We've added a $200 credit to get you started. Claim it at claude.ai/settings/usage and keep going. (format)",
-        "lastErrorReason": "timeout",
+        "lastDurationMs": 188202,
         "lastDeliveryStatus": "unknown",
-        "consecutiveErrors": 1
+        "consecutiveErrors": 3,
+        "lastError": "Channel is required when multiple channels are configured: discord, mc-chat Set delivery.channel explicitly or use a main session with a previous channel."
       }
     },
     {
@@ -1210,7 +1151,7 @@
       "name": "Morning Metrics — Growth4U",
       "enabled": true,
       "createdAtMs": 1775034097507,
-      "updatedAtMs": 1775544788615,
+      "updatedAtMs": 1776753267106,
       "schedule": {
         "kind": "cron",
         "expr": "30 8 * * *",
@@ -1228,15 +1169,14 @@
         "channel": "last"
       },
       "state": {
-        "nextRunAtMs": 1775629800000,
-        "lastRunAtMs": 1775543812472,
+        "nextRunAtMs": 1776839400000,
+        "lastRunAtMs": 1776753000033,
         "lastRunStatus": "error",
         "lastStatus": "error",
-        "lastDurationMs": 976143,
+        "lastDurationMs": 267073,
         "lastDeliveryStatus": "unknown",
-        "consecutiveErrors": 6,
-        "lastError": "FallbackSummaryError: All models failed (3): anthropic/claude-opus-4-6: LLM request rejected: Third-party apps now draw from your extra usage, not your plan limits. We've added a $200 credit to get you started. Claim it at claude.ai/settings/usage and keep going. (format) | anthropic/claude-sonnet-4-5: No available auth profile for anthropic (all in cooldown or unavailable). (format) | minimax/MiniMax-M2.7: LLM request timed out. (unknown)",
-        "lastErrorReason": "timeout"
+        "consecutiveErrors": 9,
+        "lastError": "Channel is required when multiple channels are configured: discord, mc-chat Set delivery.channel explicitly or use a main session with a previous channel."
       }
     },
     {
@@ -1245,7 +1185,7 @@
       "name": "Morning Metrics — Hulahoop",
       "enabled": true,
       "createdAtMs": 1775563322560,
-      "updatedAtMs": 1775563322560,
+      "updatedAtMs": 1776753349497,
       "schedule": {
         "kind": "cron",
         "expr": "30 8 * * *",
@@ -1263,7 +1203,14 @@
         "channel": "last"
       },
       "state": {
-        "nextRunAtMs": 1775629800000
+        "nextRunAtMs": 1776839400000,
+        "lastRunAtMs": 1776753267106,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 82391,
+        "lastDeliveryStatus": "unknown",
+        "consecutiveErrors": 14,
+        "lastError": "Channel is required when multiple channels are configured: discord, mc-chat Set delivery.channel explicitly or use a main session with a previous channel."
       }
     },
     {
@@ -1272,7 +1219,7 @@
       "name": "Performance Analysis — Hulahoop",
       "enabled": true,
       "createdAtMs": 1775563338599,
-      "updatedAtMs": 1775563338599,
+      "updatedAtMs": 1776677009937,
       "schedule": {
         "kind": "cron",
         "expr": "0 11 * * 1",
@@ -1290,7 +1237,111 @@
         "channel": "last"
       },
       "state": {
-        "nextRunAtMs": 1776070800000
+        "nextRunAtMs": 1777280400000,
+        "lastRunAtMs": 1776676563394,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 446543,
+        "lastDeliveryStatus": "unknown",
+        "consecutiveErrors": 2,
+        "lastError": "Channel is required when multiple channels are configured: discord, mc-chat Set delivery.channel explicitly or use a main session with a previous channel."
+      }
+    },
+    {
+      "id": "68c55ca5-7655-4ab5-9d5d-26925d6cdae6",
+      "agentId": "sancho",
+      "name": "Thief Marketer — Growth4U",
+      "enabled": false,
+      "createdAtMs": 1775721152540,
+      "updatedAtMs": 1776665908779,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 8 * * 3",
+        "tz": "Europe/Madrid"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Análisis competitivo semanal para Growth4U.\n\nPASO 0 — CARGAR CONFIG:\nLee brand/growth4u/client-config.json. Usa los IDs de ahí para TODO.\n\nPASO 1 — LEER FUENTES:\nLee brand/growth4u/market-and-us/competitors/sources.json. Para cada competidor:\n1) Web scrape homepage + blog (web_fetch) → detectar contenido nuevo, cambios de copy, pricing.\n2) LinkedIn → buscar posts recientes (web_search).\n3) Instagram/YouTube → últimas publicaciones (web_search).\n4) Google Ads Library → anuncios activos.\n5) Newsletter → si hay suscripción, revisar últimos emails.\n\nPASO 2 — COMPARAR:\nCompara con última ejecución en brand/growth4u/thief-marketer/.\n\nPASO 3 — GUARDAR:\nGuarda en brand/growth4u/recurring-tasks/thief-marketer/YYYY-MM-DD.json:\n{\"cronName\": \"Thief Marketer — Growth4U\", \"slug\": \"growth4u\", \"date\": \"YYYY-MM-DD\", \"runAtMs\": <timestamp_ms>, \"status\": \"ok\", \"content\": \"<reporte completo>\"}\n\nPASO 4 — PUBLICAR EN DISCORD:\nDel client-config.json, busca el channel ID de 'crons.thief_marketer.publish_channel'.\n1. message(action=send, channel=discord, target=<publish_channel_id>, message='🕵️ Thief Marketer — YYYY-MM-DD: [hallazgo principal]')\n2. Captura messageId → crea hilo → publica reporte detallado en el hilo.\n3. APLICA reglas de _system/client-context-isolation.md — solo info de Growth4U."
+      },
+      "delivery": {
+        "mode": "announce",
+        "channel": "last"
+      },
+      "state": {
+        "lastRunAtMs": 1776233357904,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 307573,
+        "lastError": "Channel is required when multiple channels are configured: discord, mc-chat Set delivery.channel explicitly or use a main session with a previous channel.",
+        "lastDeliveryStatus": "unknown",
+        "consecutiveErrors": 1
+      }
+    },
+    {
+      "id": "34f928f2-5534-47e9-85ce-0903fb9ab53e",
+      "agentId": "sancho",
+      "name": "Thief Marketer — Criptan",
+      "enabled": false,
+      "createdAtMs": 1775721162281,
+      "updatedAtMs": 1776665896026,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 8 * * 3",
+        "tz": "Europe/Madrid"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Análisis competitivo semanal para Criptan.\n\nPASO 0 — CARGAR CONFIG:\nLee brand/criptan/client-config.json. Usa los IDs de ahí para TODO.\n\nPASO 1 — LEER FUENTES:\nLee brand/criptan/market-and-us/competitors/sources.json. Para cada competidor:\n1) Web scrape homepage + blog (web_fetch) → detectar contenido nuevo, cambios de copy, pricing.\n2) LinkedIn → buscar posts recientes (web_search).\n3) Instagram/YouTube → últimas publicaciones (web_search).\n4) Google Ads Library → anuncios activos.\n5) Newsletter → si hay suscripción, revisar últimos emails.\n\nPASO 2 — COMPARAR:\nCompara con última ejecución en brand/criptan/thief-marketer/.\n\nPASO 3 — GUARDAR:\nGuarda en brand/criptan/recurring-tasks/thief-marketer/YYYY-MM-DD.json:\n{\"cronName\": \"Thief Marketer — Criptan\", \"slug\": \"criptan\", \"date\": \"YYYY-MM-DD\", \"runAtMs\": <timestamp_ms>, \"status\": \"ok\", \"content\": \"<reporte completo>\"}\n\nPASO 4 — PUBLICAR EN DISCORD:\nDel client-config.json, busca el channel ID de 'crons.thief_marketer.publish_channel'.\n1. message(action=send, channel=discord, target=<publish_channel_id>, message='🕵️ Thief Marketer — YYYY-MM-DD: [hallazgo principal]')\n2. Captura messageId → crea hilo → publica reporte detallado en el hilo.\n3. APLICA reglas de _system/client-context-isolation.md — solo info de Criptan."
+      },
+      "delivery": {
+        "mode": "announce",
+        "channel": "last"
+      },
+      "state": {
+        "lastRunAtMs": 1776233665477,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 231851,
+        "lastError": "Channel is required when multiple channels are configured: discord, mc-chat Set delivery.channel explicitly or use a main session with a previous channel.",
+        "lastDeliveryStatus": "unknown",
+        "consecutiveErrors": 1
+      }
+    },
+    {
+      "id": "19e4cf8d-4587-4b60-a300-364a955d9023",
+      "agentId": "sancho",
+      "name": "Thief Marketer — Paymatico",
+      "enabled": true,
+      "createdAtMs": 1775721174902,
+      "updatedAtMs": 1776234111824,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 8 * * 3",
+        "tz": "Europe/Madrid"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Análisis competitivo semanal para Paymatico.\n\nPASO 0 — CARGAR CONFIG:\nLee brand/paymatico/client-config.json. Usa los IDs de ahí para TODO.\n\nPASO 1 — LEER FUENTES:\nLee brand/paymatico/market-and-us/competitors/sources.json. Para cada competidor:\n1) Web scrape homepage + blog (web_fetch) → detectar contenido nuevo, cambios de copy, pricing.\n2) LinkedIn → buscar posts recientes (web_search).\n3) Instagram/YouTube → últimas publicaciones (web_search).\n4) Google Ads Library → anuncios activos.\n5) Newsletter → si hay suscripción, revisar últimos emails.\n\nPASO 2 — COMPARAR:\nCompara con última ejecución en brand/paymatico/thief-marketer/.\n\nPASO 3 — GUARDAR:\nGuarda en brand/paymatico/recurring-tasks/thief-marketer/YYYY-MM-DD.json:\n{\"cronName\": \"Thief Marketer — Paymatico\", \"slug\": \"paymatico\", \"date\": \"YYYY-MM-DD\", \"runAtMs\": <timestamp_ms>, \"status\": \"ok\", \"content\": \"<reporte completo>\"}\n\nPASO 4 — PUBLICAR EN DISCORD:\nDel client-config.json, busca el channel ID de 'crons.thief_marketer.publish_channel'.\n1. message(action=send, channel=discord, target=<publish_channel_id>, message='🕵️ Thief Marketer — YYYY-MM-DD: [hallazgo principal]')\n2. Captura messageId → crea hilo → publica reporte detallado en el hilo.\n3. APLICA reglas de _system/client-context-isolation.md — solo info de Paymatico."
+      },
+      "delivery": {
+        "mode": "announce",
+        "channel": "last"
+      },
+      "state": {
+        "nextRunAtMs": 1776837600000,
+        "lastRunAtMs": 1776233897328,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 214496,
+        "lastError": "Channel is required when multiple channels are configured: discord, mc-chat Set delivery.channel explicitly or use a main session with a previous channel.",
+        "lastDeliveryStatus": "unknown",
+        "consecutiveErrors": 1
       }
     }
   ]
