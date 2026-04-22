@@ -6,7 +6,7 @@ phone: null
 company: EIS Solutions (San Borja)
 source: Direct booking (GROWTH4U Llamada Estratégica)
 date_added: 2026-03-19
-last_enriched: 2026-03-29T20:10:00Z
+last_enriched: 2026-04-14T20:00:00Z
 enrichment_pending: false
 tags: [llamada-agendada, secuencia-seguimiento]
 ---
@@ -38,6 +38,51 @@ tags: [llamada-agendada, secuencia-seguimiento]
 - LinkedIn: No encontrado en búsqueda automática
 
 ## Call Transcripts
+### 2026-03-26 — Llamada Estratégica Completa (Gemini Notes)
+🔗 [Notas en Drive](https://docs.google.com/document/d/1f-IJmdvVrbEvmj4_PNF_dSoNe8Tb74mOj6WhlPztnYc/edit)
+
+**Resumen**: Revisión de estrategia de expansión europea para consultora peruana (EIS Solutions). Enfoque en nichos de mercado españoles vía programa de construcción de confianza digital.
+
+**Pain Points identificados:**
+- Empresa desconocida en Europa — sin marca, sin casos de éxito locales
+- Web con puntuación SEO 15/100 (falta robot.txt, sitemap, title tags, metadescription)
+- Sin contactos ni socios en Europa
+- Diferencia horaria de 6h para outsourcing
+- Enfoque marketing tradicional (Paid Ads) vs. Growth methodology
+- Presupuesto limitado: 2.000-3.000€ iniciales
+
+**Datos clave del negocio:**
+- Ticket promedio: 3.000€
+- ~10 empleados, outsourcing 100% remoto en Perú
+- Ventaja competitiva: skills técnicos de evaluación de personal
+- Enfoque geográfico inicial: España
+- Eduardo es la única persona dedicada a desarrollo de negocio Europa
+
+**Programa propuesto (Growth4U):**
+- **Fase 0**: Nicho, ICP, posicionamiento (primeras 2 semanas)
+- **Fase 1**: "Fortaleza de Confianza" — web, reviews, casos de éxito, SEO, personal branding LinkedIn
+- **Fase 2**: Signal-based outreach (LinkedIn + email) — identificar señales (ofertas de empleo → outsourcing)
+- **Fase 3**: Optimización 6 meses — dashboards, rituales semanales, escalar lo que funciona
+- **Precio**: 7.000€ pago único (6 meses acompañamiento, done-with-you)
+
+**Next Steps acordados:**
+- Martin envía auditoría SEO detallada por correo
+- Martin comparte documentación del programa
+- Eduardo analiza propuesta con Víctor (socio) y vuelve a conversar
+
+**Key Quotes:**
+> "No tenemos clientes en Europa, toda nuestra clientela está en Perú"
+> "Nuestros skills técnicos al evaluar personal son nuestra ventaja"
+> "El enfoque de Growth no nos resulta familiar, nos orientamos más al marketing tradicional"
+
+**Observaciones:**
+- Lead en fase early-stage de expansión internacional
+- Resistencia inicial al modelo Growth vs. Paid Ads → necesita educación
+- Potencial alto si acepta programa: nicho claro (staff aug/outsourcing tech para España)
+- Referencia de casos de éxito mencionados: Binex (banco digital), Múltiplo (agencia de valores)
+
+---
+
 ### 2026-03-28 — Pre-reunión reagendamiento
 🔗 [Audio en Drive](https://drive.google.com/file/d/1COkHBjDerUitYqtW0VQ3Mp4W__3jtPM2/view?usp=drivesdk) | Duración: ~3 minutos
 
@@ -72,4 +117,4 @@ tags: [llamada-agendada, secuencia-seguimiento]
 5. Propuesta: Plan 90 días → primeras 3 reuniones con prospects cualificados
 
 ---
-*Lead file creado: 2026-03-27 | Última actualización: 2026-03-29 (transcript procesado)*
+*Lead file creado: 2026-03-27 | Última actualización: 2026-04-08 (transcript llamada estratégica completa añadido)*

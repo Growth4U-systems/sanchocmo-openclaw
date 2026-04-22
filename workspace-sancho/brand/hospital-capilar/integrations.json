@@ -1,0 +1,17 @@
+{
+  "slug": "hospital-capilar",
+  "dataSources": {
+    "ga4": {
+      "provider": "ga4",
+      "status": "error",
+      "config": {
+        "PROPERTY_ID": "515424511"
+      },
+      "envVars": [],
+      "lastTestedAt": "2026-03-11T16:52:27.393Z",
+      "lastError": "Env var HOSPITAL_CAPILAR_GA4_SA_KEY not set"
+    }
+  },
+  "systemOverrides": {},
+  "updatedAt": "2026-03-11T16:52:27.394Z"
+}

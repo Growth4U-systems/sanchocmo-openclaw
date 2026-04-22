@@ -1,0 +1,31 @@
+{
+  "date": "2026-04-17",
+  "source": "morning-metrics",
+  "client": "growth4u",
+  "apis_pulled": [
+    "meta-ads",
+    "ghl"
+  ],
+  "alerts": [
+    {
+      "text": "🟡 **0 leads con €139.54 de spend**"
+    },
+    {
+      "text": "🟡 **1 contacto(s) sin fuente** — posible test/spam"
+    }
+  ],
+  "meta_ads": {
+    "days_with_data": 7,
+    "yesterday_available": true,
+    "total_spend_7d": 830.4,
+    "total_leads_7d": 10,
+    "avg_spend_day": 118.63,
+    "avg_cpc": 2.58,
+    "avg_ctr": 0.85,
+    "avg_leads_day": 1.4
+  },
+  "ghl": {
+    "contacts_24h": 5,
+    "appointments_24h": 0
+  }
+}

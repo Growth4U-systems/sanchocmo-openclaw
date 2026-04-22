@@ -10,7 +10,42 @@
       "text": "## P01-T01: Meta Pixel + CAPI en growth4u.io\n\n**Estado actual:** `ready` (playbook creado, pendiente de implementar)\n\n### Lo que ya tenemos:\n- ✅ **Meta Ads conectado** — Account `act_1507778460268244`, token configurado\n- ✅ **Playbook completo** con 5 pasos detallados\n- ✅ **GA4 conectado** — Property `515424511`\n\n### Lo que falta hacer (5 pasos):\n\n| Paso | Qué | Quién lo hace |\n|------|-----|---------------|\n| 1 | Obtener el Pixel ID en [Events Manager](https://business.facebook.com/events_manager) | Tú (acceso al Business Manager) |\n| 2 | Pegar el base code en el `<head>` de growth4u.io | Tú (acceso al CMS/código) |\n| 3 | Añadir eventos: `Lead` (booking), `CompleteRegistration` (Trust Score), `Lead` (lead magnets) | Tú |\n| 4 | Activar CAPI (server-side) desde Events Manager | Tú |\n| 5 | Verificar con Meta Pixel Helper | Tú |\n\n### Lo que necesito de ti:\n\n1. **¿Ya tienes un Meta Pixel creado?** Si sí, pásame el ID y actualizo el playbook con el código listo para copiar/pegar.\n2. **¿Qué CMS/stack usa growth4u.io?** (WordPress, custom, Webflow...) — para darte instrucciones específicas de CAPI. Si es WordPress hay plugins que hacen pixel + CAPI en un click.\n3. **¿Quieres que revise la web actual para confirmar que NO hay pixel instalado ya?**\n\nEsto es 100% ejecución técnica en tu lado (acceso al código de la web). Mi parte es darte el código exacto y verificar que funciona.",
       "agent": "sancho",
       "ts": "2026-03-26T22:32:18.679Z"
+    },
+    {
+      "role": "user",
+      "text": "Creo que ya está",
+      "ts": 1776251801620
+    },
+    {
+      "role": "bot",
+      "text": "¡Buena noticia! Vamos a verificarlo. Los criterios de \"done\" de esta tarea son:\n\n> **Meta Pixel Helper muestra PageView al visitar growth4u.io y Lead al completar un booking.**\n\nDéjame hacer un check rápido del código fuente para confirmar que el pixel está disparando:",
+      "ts": 1776251982535,
+      "agent": "sancho"
+    },
+    {
+      "role": "bot",
+      "text": "El extractor de texto no me muestra el código fuente. Déjame revisar el HTML directamente para buscar el pixel:",
+      "ts": 1776251982545,
+      "agent": "sancho"
+    },
+    {
+      "role": "bot",
+      "text": "Veo que hay un comentario `<!-- Cookie Banner (consent-based Meta Pixel) -->` y el componente `CookieBanner` cargado como Astro island. El pixel probablemente se carga dinámicamente tras el consentimiento de cookies. Déjame verificar el JS del CookieBanner:",
+      "ts": 1776251982551,
+      "agent": "sancho"
+    },
+    {
+      "role": "bot",
+      "text": "El pixel **sí está** en el código, cargado dinámicamente dentro del CookieBanner tras el consentimiento de cookies. Déjame extraer el Pixel ID para confirmar que es el correcto:",
+      "ts": 1776251982555,
+      "agent": "sancho"
+    },
+    {
+      "role": "bot",
+      "text": "Perfecto. Verificación completa:\n\n✅ **Meta Pixel instalado** — Pixel ID: `1330785362070217`\n- Se carga vía `connect.facebook.net/en_US/fbevents.js`\n- `fbq(\"init\", \"1330785362070217\")` + `fbq(\"track\", \"PageView\")` se ejecutan tras consentimiento de cookies\n- Implementación correcta: consent-based (GDPR compliant)\n\nAhora, lo que no puedo verificar desde aquí es la **segunda parte del criterio de done**: que dispare el evento `Lead` al completar un booking. Eso requiere hacer clic en \"Agendar Llamada\" y completar el formulario para ver si se dispara el evento.\n\n**¿Puedes confirmar estos dos puntos?**\n1. ¿Has verificado con el **Meta Pixel Helper** (extensión de Chrome) que se muestra PageView al visitar la web?\n2. ¿Se dispara el evento Lead/CompleteRegistration al completar un booking?\n\nSi ambos dan OK, marco la tarea como **done** ✅",
+      "ts": 1776251982559,
+      "agent": "sancho"
     }
   ],
-  "updatedAt": 1774564338679
+  "updatedAt": 1776251982559
 }

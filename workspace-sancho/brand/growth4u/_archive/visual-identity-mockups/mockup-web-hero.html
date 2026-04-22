@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap');
+  
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  
+  body {
+    width: 1440px;
+    height: 900px;
+    background: #FFFFFF;
+    font-family: 'Inter', sans-serif;
+    overflow: hidden;
+    position: relative;
+  }
+  
+  /* Nav */
+  .nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 24px 80px;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 10;
+  }
+  
+  .nav-logo {
+    font-weight: 900;
+    font-size: 24px;
+    color: #032149;
+    letter-spacing: -0.5px;
+  }
+  
+  .nav-logo span {
+    color: #3f45fe;
+  }
+  
+  .nav-links {
+    display: flex;
+    gap: 36px;
+    align-items: center;
+  }
+  
+  .nav-link {
+    font-weight: 500;
+    font-size: 15px;
+    color: #032149;
+    text-decoration: none;
+    opacity: 0.7;
+  }
+  
+  .nav-cta {
+    font-weight: 600;
+    font-size: 15px;
+    color: white;
+    background: linear-gradient(135deg, #3f45fe, #6351d5);
+    padding: 10px 24px;
+    border-radius: 8px;
+    text-decoration: none;
+  }
+  
+  /* Hero */
+  .hero {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 80px;
+    height: 100%;
+    position: relative;
+  }
+  
+  .hero-left {
+    max-width: 600px;
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+    z-index: 5;
+  }
+  
+  .hero-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: #0faec1;
+    background: rgba(15, 174, 193, 0.08);
+    border: 1px solid rgba(15, 174, 193, 0.2);
+    padding: 6px 16px;
+    border-radius: 100px;
+    width: fit-content;
+    letter-spacing: 0.5px;
+  }
+  
+  .hero-title {
+    font-weight: 900;
+    font-size: 52px;
+    line-height: 1.1;
+    letter-spacing: -2px;
+    color: #032149;
+  }
+  
+  .hero-title .gradient-text {
+    background: linear-gradient(135deg, #3f45fe, #6351d5);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  
+  .hero-title .strikethrough {
+    text-decoration: line-through;
+    text-decoration-color: #f59e0b;
+    text-decoration-thickness: 4px;
+    opacity: 0.5;
+  }
+  
+  .hero-subtitle {
+    font-weight: 400;
+    font-size: 20px;
+    line-height: 1.6;
+    color: #032149;
+    opacity: 0.6;
+    max-width: 500px;
+  }
+  
+  .hero-buttons {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+  }
+  
+  .btn-primary {
+    font-weight: 700;
+    font-size: 16px;
+    color: white;
+    background: linear-gradient(135deg, #3f45fe, #6351d5);
+    padding: 16px 32px;
+    border-radius: 10px;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 4px 20px rgba(63, 69, 254, 0.3);
+  }
+  
+  .btn-secondary {
+    font-weight: 600;
+    font-size: 16px;
+    color: #032149;
+    padding: 16px 32px;
+    border-radius: 10px;
+    text-decoration: none;
+    border: 2px solid rgba(3, 33, 73, 0.15);
+  }
+  
+  .hero-proof {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-top: 8px;
+  }
+  
+  .proof-logos {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+  
+  .proof-dot {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #effcfd;
+    border: 2px solid white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 700;
+    color: #032149;
+    margin-left: -8px;
+  }
+  
+  .proof-dot:first-child { margin-left: 0; background: #0faec1; color: white; }
+  .proof-dot:nth-child(2) { background: #3f45fe; color: white; }
+  .proof-dot:nth-child(3) { background: #6351d5; color: white; }
+  
+  .proof-text {
+    font-size: 14px;
+    color: #032149;
+    opacity: 0.5;
+  }
+  
+  .proof-text strong {
+    color: #3f45fe;
+    opacity: 1;
+  }
+  
+  /* Character */
+  .hero-right {
+    position: absolute;
+    right: 40px;
+    bottom: 0;
+    width: 480px;
+    height: 90%;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    z-index: 4;
+  }
+  
+  .hero-right img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    object-position: bottom center;
+    filter: drop-shadow(0 10px 40px rgba(3, 33, 73, 0.1));
+  }
+  
+  /* Speech bubble */
+  .speech-bubble {
+    position: absolute;
+    right: 420px;
+    top: 200px;
+    background: #032149;
+    color: white;
+    padding: 16px 24px;
+    border-radius: 16px;
+    border-bottom-right-radius: 4px;
+    font-weight: 600;
+    font-size: 15px;
+    max-width: 260px;
+    line-height: 1.4;
+    z-index: 6;
+    box-shadow: 0 4px 20px rgba(3, 33, 73, 0.15);
+  }
+  
+  .speech-bubble .stat {
+    font-family: 'JetBrains Mono', monospace;
+    color: #f59e0b;
+    font-weight: 700;
+  }
+  
+  /* Decorative bg */
+  .bg-blob {
+    position: absolute;
+    right: -50px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 650px;
+    height: 650px;
+    background: radial-gradient(circle, rgba(15, 174, 193, 0.06) 0%, rgba(63, 69, 254, 0.04) 50%, transparent 70%);
+    border-radius: 50%;
+    z-index: 1;
+  }
+  
+  .bg-grid {
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 50%;
+    height: 100%;
+    opacity: 0.03;
+    background-image: 
+      linear-gradient(#3f45fe 1px, transparent 1px),
+      linear-gradient(90deg, #3f45fe 1px, transparent 1px);
+    background-size: 40px 40px;
+    z-index: 0;
+  }
+</style>
+</head>
+<body>
+  <div class="bg-blob"></div>
+  <div class="bg-grid"></div>
+  
+  <nav class="nav">
+    <div class="nav-logo">Growth<span>4U</span></div>
+    <div class="nav-links">
+      <a class="nav-link" href="#">Problema</a>
+      <a class="nav-link" href="#">Trust Engine</a>
+      <a class="nav-link" href="#">Resultados</a>
+      <a class="nav-link" href="#">Servicios</a>
+      <a class="nav-link" href="#">Blog</a>
+      <a class="nav-cta" href="#">Agendar Llamada</a>
+    </div>
+  </nav>
+  
+  <section class="hero">
+    <div class="hero-left">
+      <div class="hero-tag">⚡ Especialistas en Growth para Tech B2B & B2C</div>
+      
+      <h1 class="hero-title">
+        Tu empresa tech puede crecer más rápido,<br>
+        <span class="strikethrough">sin invertir más en marketing.</span>
+      </h1>
+      
+      <p class="hero-subtitle">
+        Te ayudamos a crear un motor de crecimiento que perdura en el tiempo y reduce tu CAC apoyándonos en el valor de la confianza.
+      </p>
+      
+      <div class="hero-buttons">
+        <a class="btn-primary" href="#">Empieza ahora →</a>
+        <a class="btn-secondary" href="#">Ver servicios</a>
+      </div>
+      
+      <div class="hero-proof">
+        <div class="proof-logos">
+          <div class="proof-dot">Bn</div>
+          <div class="proof-dot">Cr</div>
+          <div class="proof-dot">B2</div>
+        </div>
+        <span class="proof-text">Bnext, Criptan, Bit2Me... <strong>+15 clientes tech</strong></span>
+      </div>
+    </div>
+    
+    <div class="speech-bubble">
+      En Bnext bajamos el CAC de <span class="stat">€50 a €12.40</span>. Sin aumentar presupuesto.
+    </div>
+    
+    <div class="hero-right">
+      <img src="style-D-pointing.png" alt="Alfonso — Growth4U">
+    </div>
+  </section>
+</body>
+</html>

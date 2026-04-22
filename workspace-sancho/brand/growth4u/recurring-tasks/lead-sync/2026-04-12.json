@@ -1,0 +1,11 @@
+{
+  "cronId": "a68143d8-1309-46eb-a5dc-4c3fb35ee3d2",
+  "cronName": "Lead Sync — Growth4U",
+  "slug": "growth4u",
+  "date": "2026-04-12",
+  "runAtMs": 1776024150394,
+  "status": "ok",
+  "durationMs": 296565,
+  "model": "MiniMax-M2.7",
+  "content": "📊 **Lead Sync — 2026-04-12**\n\n- 9 leads `llamada-agendada` revisados\n- 0 transcripts nuevos en Drive (última búsqueda: 2026-04-12T20:06Z)\n- 6 enrichment_pending resueltos (sin nuevos datos disponibles)\n- 0 notes Slack sincronizadas (Slack MCP deshabilitado)\n- 0 nuevos leads\n\n**Notas:**\n- V6NatPHuXvX7cYAYOISx (Manuel Campos Figal — manuelcamposbusiness@gmail.com) tiene `llamada-cancelada` además de `llamada-agendada` — revisar antes de agendar\n- Drive no tiene grabaciones de llamadas para estos 9 contactos en esta noche"
+}

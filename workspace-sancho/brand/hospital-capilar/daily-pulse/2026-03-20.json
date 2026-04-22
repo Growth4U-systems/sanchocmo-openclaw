@@ -1,0 +1,20 @@
+{
+  "date": "2026-03-20",
+  "guild_id": "1475635138108063746",
+  "channels_checked": 9,
+  "channels_with_human_activity": 0,
+  "channels_skipped": 9,
+  "insights": [],
+  "notes": [
+    "Sin actividad humana en ningún canal en las últimas 24h",
+    "Canales con actividad de bots (no contable):",
+    "  - #intelligence: Meeting Intelligence (2026-03-19 17:01 UTC)",
+    "  - #soporte: Health Check recuperado (2026-03-20 04:52 UTC)",
+    "Último mensaje humano: #general el 2026-02-28 (20 días atrás)",
+    "El cliente tiene actividad esporádica; no hay patrón diario de interacción"
+  ],
+  "recommendations": [
+    "Considerar outreach proactivo si se requiere más interacción",
+    "La baja frecuencia de mensajes puede indicar que el cliente opera con comunicación asíncrona/por demanda"
+  ]
+}

@@ -1,0 +1,61 @@
+{
+  "$schema": "../../_system/sources.schema.json",
+  "slug": "paymatico",
+  "name": "Paymatico",
+  "guild_id": "1477995837719056458",
+  "language": "es",
+  "channels": {
+    "general": "1477995837719056461",
+    "onboarding": "1477995837719056463",
+    "brand": "1477995837719056464",
+    "campaigns": "1477995837719056465",
+    "partners": "1477995837719056467",
+    "prospecting": "1477995838092476468",
+    "content": "1477995838092476470",
+    "paid-ads": "1477995838092476471",
+    "web": "1477995838092476472",
+    "creatives": "1477995838092476474",
+    "research": "1477995838092476475",
+    "intelligence": "1477995838092476477",
+    "learning": "1477995838256189592",
+    "soporte": "1477995838256189593"
+  },
+  "crons": {
+    "daily_pulse": {
+      "enabled": false,
+      "schedule": "0 9 * * 1-5",
+      "tz": "Europe/Madrid",
+      "publish_channel": "intelligence",
+      "read_channels": [
+        "general",
+        "brand",
+        "campaigns",
+        "content",
+        "intelligence",
+        "onboarding",
+        "soporte",
+        "research",
+        "paid-ads"
+      ]
+    },
+    "meeting_intelligence": {
+      "enabled": false,
+      "schedule": "0 18 * * 1-5",
+      "tz": "Europe/Madrid",
+      "publish_channel": "intelligence",
+      "google_drive_folder_id": ""
+    },
+    "weekly_synthesis": {
+      "enabled": false,
+      "schedule": "0 10 * * 1",
+      "tz": "Europe/Madrid",
+      "publish_channel": "learning"
+    },
+    "thief_marketer": {
+      "enabled": true,
+      "schedule": "0 8 * * 3",
+      "tz": "Europe/Madrid",
+      "publish_channel": "intelligence"
+    }
+  }
+}

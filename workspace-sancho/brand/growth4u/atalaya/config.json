@@ -83,7 +83,140 @@
         "last_scan": "2026-04-01"
       }
     ],
-    "twitter": [],
+    "twitter": [
+      {
+        "id": "tw-001-boringmarketer",
+        "handle": "BoringMarketer",
+        "name": "Boring Marketer",
+        "url": "https://twitter.com/BoringMarketer",
+        "category": "Marketing",
+        "active": true,
+        "added_at": "2026-04-08T20:03:00.000Z",
+        "posts_monitored": 20,
+        "last_scan": null
+      },
+      {
+        "id": "tw-001b-gregisenberg",
+        "handle": "gregisenberg",
+        "name": "Greg Isenberg",
+        "url": "https://twitter.com/gregisenberg",
+        "category": "Marketing",
+        "active": true,
+        "added_at": "2026-04-08T20:03:00.000Z",
+        "posts_monitored": 20,
+        "last_scan": null
+      },
+      {
+        "id": "tw-002-codybschneider",
+        "handle": "codybschneider",
+        "name": "Cody Schneider",
+        "url": "https://twitter.com/codybschneider",
+        "category": "Growth",
+        "active": true,
+        "added_at": "2026-04-08T20:03:00.000Z",
+        "posts_monitored": 20,
+        "last_scan": null
+      },
+      {
+        "id": "tw-003-mikefutia",
+        "handle": "mikefutia",
+        "name": "Mike Futia",
+        "url": "https://twitter.com/mikefutia",
+        "category": "Growth",
+        "active": true,
+        "added_at": "2026-04-08T20:03:00.000Z",
+        "posts_monitored": 20,
+        "last_scan": null
+      },
+      {
+        "id": "tw-004-adrianeshwager",
+        "handle": "adrianeshwager",
+        "name": "Adriane Shwager",
+        "url": "https://twitter.com/adrianeshwager",
+        "category": "Marketing",
+        "active": true,
+        "added_at": "2026-04-08T20:03:00.000Z",
+        "posts_monitored": 20,
+        "last_scan": null
+      },
+      {
+        "id": "tw-005-jessepujji",
+        "handle": "jessepujji",
+        "name": "Jesse Pujji",
+        "url": "https://twitter.com/jessepujji",
+        "category": "Growth",
+        "active": true,
+        "added_at": "2026-04-08T20:03:00.000Z",
+        "posts_monitored": 20,
+        "last_scan": null
+      },
+      {
+        "id": "tw-006-gsnchez",
+        "handle": "Gsnchez",
+        "name": "Gerard - BQuant",
+        "url": "https://twitter.com/Gsnchez",
+        "category": "Founder",
+        "active": true,
+        "added_at": "2026-04-08T20:03:00.000Z",
+        "posts_monitored": 20,
+        "last_scan": null
+      },
+      {
+        "id": "tw-007-ivangrisa",
+        "handle": "ivangrisa",
+        "name": "Ivan Grisa - Neto App",
+        "url": "https://twitter.com/Ivangrisa",
+        "category": "Founder",
+        "active": true,
+        "added_at": "2026-04-08T20:03:00.000Z",
+        "posts_monitored": 20,
+        "last_scan": null
+      },
+      {
+        "id": "tw-008-javilop",
+        "handle": "javilop",
+        "name": "Javi López - Freepik/Magnific",
+        "url": "https://twitter.com/javilop",
+        "category": "Founder",
+        "active": true,
+        "added_at": "2026-04-08T20:03:00.000Z",
+        "posts_monitored": 20,
+        "last_scan": null
+      },
+      {
+        "id": "tw-009-juancecereigido",
+        "handle": "JuanCereigido",
+        "name": "Juan Carlos Cereijo",
+        "url": "https://twitter.com/JuanCereigido",
+        "category": "Founder",
+        "active": true,
+        "added_at": "2026-04-08T20:03:00.000Z",
+        "posts_monitored": 20,
+        "last_scan": null
+      },
+      {
+        "id": "tw-010-fazttech",
+        "handle": "FaztTech",
+        "name": "Fazt - Spanish Dev",
+        "url": "https://twitter.com/FaztTech",
+        "category": "Founder",
+        "active": true,
+        "added_at": "2026-04-08T20:03:00.000Z",
+        "posts_monitored": 20,
+        "last_scan": null
+      },
+      {
+        "id": "tw-011-antonioescudero",
+        "handle": "AntonioEscudero",
+        "name": "Antonio Escudero",
+        "url": "https://twitter.com/AntonioEscudero",
+        "category": "Founder",
+        "active": true,
+        "added_at": "2026-04-08T20:03:00.000Z",
+        "posts_monitored": 20,
+        "last_scan": null
+      }
+    ],
     "instagram": []
   },
   "competitor_overrides": {},

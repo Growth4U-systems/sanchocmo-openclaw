@@ -1,0 +1,80 @@
+{
+  "date": "2026-03-05",
+  "guild": "1475635138108063746",
+  "sources": {
+    "discord": {
+      "enabled": true,
+      "channels_read": ["intelligence", "onboarding", "soporte"]
+    },
+    "gmail": {
+      "enabled": true,
+      "query": "after:2026/03/04"
+    },
+    "notion": {
+      "enabled": false
+    }
+  },
+  "insights": [
+    {
+      "category": "onboarding",
+      "priority": "high",
+      "title": "Onboarding Philippe progresando — Quiz Diagnóstico en diseño",
+      "description": "Philippe continúa con Foundation (L1-L4).-thread de Quiz Diagnóstico activo, discutiendo arquitectura de preguntas y supuestos. Philippe pide diseñar: 1) preguntas del quiz, 2) supuestos (ej: temas hormonales excluyen tratamiento). Buscan identificar nichos y definir acciones por segmento (consulta, llamada, bono).",
+      "source": "Discord #onboarding",
+      "timestamp": "2026-03-04T15:57:23Z"
+    },
+    {
+      "category": "operational",
+      "priority": "medium",
+      "title": "Health Check — Fallo en brave detectado",
+      "description": "Cron de health check detectó nuevo fallo: servicio 'brave' no responde (5 marzo 02:03 UTC). Google Workspace sigue caído desde hace días.",
+      "source": "Discord #soporte",
+      "timestamp": "2026-03-05T02:03:26Z"
+    },
+    {
+      "category": "operational",
+      "priority": "medium",
+      "title": "Philippe reporta falta de respuesta en hilo",
+      "description": "Philippe indica que Sancho no está respondiendo en el hilo de Quiz Diagnóstico. Requiere atención.",
+      "source": "Discord #soporte",
+      "timestamp": "2026-03-04T16:21:02Z"
+    },
+    {
+      "category": "pipeline",
+      "priority": "high",
+      "title": "LinkedIn Pipeline — 110+ ideas pendientes",
+      "description": "Email de Alfonso@s Growth4U sobre LinkedIn Pipeline con 110+ ideas pendientes de procesar. Señal de alta actividad de outreach.",
+      "source": "Gmail",
+      "timestamp": "2026-03-05T08:04:00Z"
+    },
+    {
+      "category": "sales",
+      "priority": "medium",
+      "title": "Competidores construyendo pipeline",
+      "description": "Email de Amir Ashkenazi (AirTop): 'competitors are building your pipeline' — posible señal competitiva o mensaje de venta.",
+      "source": "Gmail",
+      "timestamp": "2026-03-05T09:00:00Z"
+    },
+    {
+      "category": "marketing",
+      "priority": "low",
+      "title": "Meta ad aprobado",
+      "description": "Notificación de Meta for Business indicando que un anuncio fue aprobado. Actividad de ads activa.",
+      "source": "Gmail",
+      "timestamp": "2026-03-05T06:19:00Z"
+    }
+  ],
+  "action_items": [
+    {
+      "item": "Responder a Philippe en hilo de Quiz Diagnóstico",
+      "priority": "p1",
+      "owner": "sancho"
+    },
+    {
+      "item": "Investigar fallo de brave en health check",
+      "priority": "p2",
+      "owner": "cervantes"
+    }
+  ],
+  "summary": "Onboarding HC progresando (Quiz Diagnóstico). LinkedIn pipeline con 110+ ideas pendientes. Fallos operativos: brave caído, Google Workspace sigue caído. Philippe reporta falta de respuesta — requiere intervención."
+}

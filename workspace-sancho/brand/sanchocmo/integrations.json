@@ -1,0 +1,18 @@
+{
+  "client": "sanchocmo",
+  "services": [],
+  "dataSources": {},
+  "systemOverrides": {
+    "alarife": {
+      "provider": "alarife",
+      "status": "pending",
+      "config": {
+        "BASE_URL": "alarife.growth4u.io"
+      },
+      "envVars": [
+        "SANCHOCMO_ALARIFE_API_KEY"
+      ]
+    }
+  },
+  "updatedAt": "2026-03-23T11:59:21.473Z"
+}

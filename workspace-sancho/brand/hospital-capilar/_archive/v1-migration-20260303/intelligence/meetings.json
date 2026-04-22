@@ -1,0 +1,46 @@
+{
+  "version": 1,
+  "lastRun": "2026-03-02T18:00:00Z",
+  "meetings": [
+    {
+      "id": "mtg-2026-02-19-ramiro-entrevista-final",
+      "title": "Ramiro Entrevista Final",
+      "date": "2026-02-19",
+      "sourceId": "18k6gYbuLqrXBqEcYb-tTIbmJruJOAHcQYzisZQMuBQo",
+      "processed": true,
+      "folder": "brand/hospital-capilar/intelligence/meetings/2026-02-19-ramiro-entrevista-final"
+    },
+    {
+      "id": "mtg-2026-02-17-ramiro-briefing-tecnico",
+      "title": "Ramiro Briefing Tecnico",
+      "date": "2026-02-17",
+      "sourceId": "1YTGedhyWETWvAyz7NFmtSE7sl7D-Hcsjax7d5vZWLQI",
+      "processed": true,
+      "folder": "brand/hospital-capilar/intelligence/meetings/2026-02-17-ramiro-briefing-tecnico"
+    },
+    {
+      "id": "mtg-2026-02-07-heiver-ghl-tecnico",
+      "title": "Heiver Ghl Tecnico",
+      "date": "2026-02-07",
+      "sourceId": "1knNkCRakIM2xAIM5NHKcXmxDPLSlhUp3p3MOnO0rFNU",
+      "processed": true,
+      "folder": "brand/hospital-capilar/intelligence/meetings/2026-02-07-heiver-ghl-tecnico"
+    },
+    {
+      "id": "mtg-2026-02-06-sales-presentation",
+      "title": "Sales Presentation",
+      "date": "2026-02-06",
+      "sourceId": "11B5kOingoKO1535iZN8htQjoDHfIgUVFbhWoeufMCqI",
+      "processed": true,
+      "folder": "brand/hospital-capilar/intelligence/meetings/2026-02-06-sales-presentation"
+    },
+    {
+      "id": "mtg-2026-01-29-kickoff-hospital-capilar",
+      "title": "Kickoff Hospital Capilar",
+      "date": "2026-01-29",
+      "sourceId": "1kWhI6MslDemmN0U7vLe4VY6kb5DH5fOWjk5GW_a78E8",
+      "processed": true,
+      "folder": "brand/hospital-capilar/intelligence/meetings/2026-01-29-kickoff-hospital-capilar"
+    }
+  ]
+}

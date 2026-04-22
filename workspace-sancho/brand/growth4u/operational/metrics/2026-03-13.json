@@ -1,0 +1,26 @@
+{
+  "date": "2026-03-13",
+  "source": "morning-metrics",
+  "meta_ads": {
+    "days_with_data": 5,
+    "yesterday_available": false,
+    "total_spend_7d": 124.04,
+    "total_leads_7d": 5,
+    "avg_spend_day": 24.81,
+    "avg_cpc": 0.93,
+    "avg_ctr": 2.31,
+    "avg_leads_day": 1.0
+  },
+  "ghl": {
+    "contacts_24h": 5,
+    "appointments_24h": 0
+  },
+  "alerts": [
+    {
+      "text": "🟡 **0 leads con €25.40 de spend** — Tráfico sin conversión"
+    },
+    {
+      "text": "🟡 **Sin datos de ayer** — Posible lag de reporting o campañas pausadas"
+    }
+  ]
+}

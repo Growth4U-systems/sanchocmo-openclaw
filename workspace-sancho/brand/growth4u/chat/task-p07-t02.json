@@ -1,0 +1,16 @@
+{
+  "messages": [
+    {
+      "role": "user",
+      "text": "Estoy abriendo el chat sobre \"Crear cuenta TikTok si no existe\". Dame un resumen rápido del estado actual y qué podemos hacer. Si necesitas algo de mí, dímelo.",
+      "ts": 1775686432855
+    },
+    {
+      "role": "bot",
+      "text": "Aquí va el resumen rápido:\n\n## P07-T02: Crear cuenta TikTok Business — Estado actual\n\n**Status:** `todo` — no se ha empezado.\n\n**Objetivo:** Crear y configurar la cuenta TikTok Business de Growth4U con:\n- Bio con propuesta de valor\n- Foto de perfil (alineada con visual identity)\n- Link a growth4u.io\n\n**Done criteria:** Cuenta activa y publicable.\n\n**Contexto del proyecto P07:**\n- El handle de TikTok está marcado como \"TBD\" — no hay cuenta aún\n- Target: 1.000 followers en TikTok\n- El proyecto incluye después keyword research (T03), content pillars (T05) y producción de vídeos (T06-T07)\n\n---\n\n**Lo que necesito de ti:**\n\n1. **¿Ya tienes cuenta TikTok creada?** Esto es manual — crear la cuenta, poner email/contraseña, activar modo Business. Yo no puedo hacerlo por ti.\n\n2. **¿Qué handle quieres?** Opciones lógicas: `@growth4u`, `@growth4u_io`, `@growth4u_systems` (para alinear con IG).\n\n3. Una vez creada, yo puedo preparar:\n   - **Bio optimizada** basada en tu positioning\n   - **Specs de foto de perfil** alineada con tu visual identity\n   - **Checklist de configuración** (link, categoría, etc.)\n\n¿Creamos primero la bio y el brief visual para que tengas todo listo cuando abras la cuenta?",
+      "ts": 1775686512107,
+      "agent": "sancho"
+    }
+  ],
+  "updatedAt": 1775686512107
+}

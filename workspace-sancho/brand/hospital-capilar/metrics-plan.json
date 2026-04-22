@@ -1,0 +1,115 @@
+{
+  "_generated": "2026-03-23T00:48:16.931Z",
+  "_generator": "acquisition-metrics-plan/generate-plan.js",
+  "slug": "hospital-capilar",
+  "archetype": "lead-to-sale",
+  "subVariant": "local",
+  "label": "Lead-to-Sale (Local Services)",
+  "activationEvent": "First Visit/Consultation",
+  "primaryKPI": "First Visits",
+  "benchmarks": {
+    "activationRate": "10-25%",
+    "cacPayback": "1-6 months",
+    "ltvCac": ">3x"
+  },
+  "funnel": [
+    {
+      "step": "Searches/Visits",
+      "source": null,
+      "metric": null,
+      "manual": true
+    },
+    {
+      "step": "Calls/Forms",
+      "source": null,
+      "metric": null,
+      "manual": true
+    },
+    {
+      "step": "Appointments",
+      "source": null,
+      "metric": null,
+      "manual": true
+    },
+    {
+      "step": "First Visits",
+      "source": null,
+      "metric": null,
+      "manual": true
+    },
+    {
+      "step": "Treatments/Services",
+      "source": null,
+      "metric": null,
+      "manual": true
+    }
+  ],
+  "kpis": [],
+  "integrationModules": [],
+  "missingIntegrations": [
+    {
+      "metric": "Web Traffic",
+      "suggestedSource": "GA4",
+      "frequency": "Daily"
+    },
+    {
+      "metric": "Leads / Contacts",
+      "suggestedSource": "CRM / Google Sheets",
+      "frequency": "Daily"
+    },
+    {
+      "metric": "Outbound Activity",
+      "suggestedSource": "Instantly / Lemlist",
+      "frequency": "Daily"
+    },
+    {
+      "metric": "Paid Spend",
+      "suggestedSource": "Google Ads / LinkedIn Ads",
+      "frequency": "Daily"
+    },
+    {
+      "metric": "SEO Performance",
+      "suggestedSource": "Google Search Console",
+      "frequency": "Daily"
+    },
+    {
+      "metric": "Social Engagement",
+      "suggestedSource": "Metricool",
+      "frequency": "Daily"
+    }
+  ],
+  "channels": [
+    {
+      "group": "Organic",
+      "name": "Google Business Profile"
+    },
+    {
+      "group": "Organic",
+      "name": "Local SEO"
+    },
+    {
+      "group": "Paid SRN",
+      "name": "Google Ads (Local)"
+    },
+    {
+      "group": "Paid SRN",
+      "name": "Meta Ads (Geo-targeted)"
+    },
+    {
+      "group": "Directories",
+      "name": "Doctoralia / Sector Directory"
+    },
+    {
+      "group": "Referral",
+      "name": "Word of Mouth"
+    },
+    {
+      "group": "Referral",
+      "name": "Referral Partners"
+    },
+    {
+      "group": "Offline",
+      "name": "Local Events"
+    }
+  ]
+}

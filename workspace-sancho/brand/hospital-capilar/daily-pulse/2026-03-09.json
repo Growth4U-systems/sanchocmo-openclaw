@@ -1,0 +1,33 @@
+{
+  "date": "2026-03-09",
+  "slug": "hospital-capilar",
+  "language": "es",
+  "insights": [],
+  "activity": {
+    "discord": {
+      "general": { "messages": 0, "relevant": 0 },
+      "brand": { "messages": 0, "relevant": 0 },
+      "campaigns": { "messages": 0, "relevant": 0 },
+      "content": { "messages": 0, "relevant": 0 },
+      "intelligence": { "messages": 0, "relevant": 0 },
+      "onboarding": { "messages": 0, "relevant": 0 },
+      "soporte": { "messages": 2, "relevant": 0, "note": "Health checks automáticos del sistema" },
+      "research": { "messages": 0, "relevant": 0 }
+    },
+    "gmail": { "enabled": false },
+    "notion": { "enabled": false }
+  },
+  "summary": "Sin actividad relevante del cliente en las últimas 24h. Solo health checks automáticos del sistema. Fin de semana bajo en actividad.",
+  "pain_points": [],
+  "feature_requests": [],
+  "success_stories": [],
+  "trends": [],
+  "recurring_questions": [],
+  "micro_briefs": [],
+  "sources": {
+    "discord_channels_read": ["general", "brand", "campaigns", "content", "intelligence", "onboarding", "soporte", "research"],
+    "gmail": "no configurado",
+    "notion": "no configurado"
+  },
+  "generated_at": "2026-03-09T08:00:00Z"
+}

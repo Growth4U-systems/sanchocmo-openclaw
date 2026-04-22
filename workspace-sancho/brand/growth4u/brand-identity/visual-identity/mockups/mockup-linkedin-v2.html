@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap');
+  
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  
+  body {
+    width: 1080px;
+    height: 1350px;
+    font-family: 'Manrope', sans-serif;
+    overflow: hidden;
+    position: relative;
+    background: linear-gradient(160deg, #032149 0%, #1a3690 35%, #0faec1 100%);
+  }
+  
+  /* Subtle decorative elements */
+  .pill {
+    position: absolute;
+    border-radius: 30px;
+    opacity: 0.06;
+  }
+  .pill-1 {
+    width: 240px; height: 50px;
+    background: #0faec1;
+    transform: rotate(-12deg);
+    top: 120px; right: -60px;
+  }
+  .pill-2 {
+    width: 180px; height: 44px;
+    background: #6351d5;
+    transform: rotate(18deg);
+    bottom: 380px; left: -40px;
+  }
+  
+  .container {
+    position: relative;
+    z-index: 5;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  /* Top bar with logo */
+  .top-bar {
+    padding: 48px 64px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .logo-text {
+    font-weight: 800;
+    font-size: 28px;
+    color: white;
+  }
+  .logo-text .g4u {
+    background: linear-gradient(90deg, #0faec1, #3f45fe, #6351d5);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  
+  /* Character - LARGE and prominent */
+  .character-area {
+    flex: 1;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    position: relative;
+    padding: 0 40px;
+  }
+  .character-area img {
+    height: 680px;
+    object-fit: contain;
+    filter: drop-shadow(0 0 40px rgba(15, 174, 193, 0.15));
+  }
+  
+  /* Quote overlay at bottom */
+  .quote-area {
+    background: rgba(3, 33, 73, 0.75);
+    backdrop-filter: blur(16px);
+    border-top: 2px solid rgba(15, 174, 193, 0.3);
+    padding: 48px 64px 56px;
+  }
+  
+  .quote-text {
+    font-weight: 700;
+    font-size: 40px;
+    line-height: 1.25;
+    color: #FFFFFF;
+    margin-bottom: 28px;
+  }
+  .quote-text .highlight {
+    color: #0faec1;
+  }
+  
+  .author-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .author-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .author-name {
+    font-weight: 800;
+    font-size: 22px;
+    color: white;
+  }
+  .author-role {
+    font-weight: 500;
+    font-size: 16px;
+    color: rgba(255,255,255,0.5);
+  }
+  
+  .url-tag {
+    font-weight: 600;
+    font-size: 16px;
+    color: #0faec1;
+    border: 1.5px solid rgba(15, 174, 193, 0.4);
+    padding: 8px 20px;
+    border-radius: 8px;
+  }
+</style>
+</head>
+<body>
+  <div class="pill pill-1"></div>
+  <div class="pill pill-2"></div>
+  
+  <div class="container">
+    <div class="top-bar">
+      <span class="logo-text">Growth<span class="g4u">4U</span></span>
+    </div>
+    
+    <div class="character-area">
+      <img src="alfonso-ref-dark.png" alt="Alfonso">
+    </div>
+    
+    <div class="quote-area">
+      <p class="quote-text">A veces <span class="highlight">decir que no a 50K</span> es la única forma de proteger lo que te permite <span class="highlight">facturar otros 50K</span> en el futuro.</p>
+      <div class="author-row">
+        <div class="author-info">
+          <span class="author-name">Alfonso Sainz de Baranda</span>
+          <span class="author-role">CEO & Founder · Growth4U</span>
+        </div>
+        <span class="url-tag">growth4u.io</span>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

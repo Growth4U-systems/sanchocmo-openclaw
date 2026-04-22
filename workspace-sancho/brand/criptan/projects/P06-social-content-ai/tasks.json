@@ -15,8 +15,12 @@
       "skill": "keyword-research",
       "created": "2026-03-30",
       "completed": "2026-03-30",
-      "output_files": ["brand/criptan/projects/P06-social-content-ai/T01/social-seo-keywords.md"],
-      "notes": "55 keywords sociales investigadas y categorizadas en 6 clusters. Top 10 priorizadas para arrancar."
+      "output_files": [
+        "brand/criptan/projects/P06-social-content-ai/T01/social-seo-keywords.md"
+      ],
+      "notes": "55 keywords sociales investigadas y categorizadas en 6 clusters. Top 10 priorizadas para arrancar.",
+      "deliverable_file": "brand/criptan/projects/P06-social-content-ai/tasks/T01/deliverable.md",
+      "mc_chat_thread_id": "task-t01"
     },
     {
       "id": "T02",
@@ -32,8 +36,12 @@
       "skill": "visual-identity",
       "created": "2026-03-30",
       "completed": "2026-03-30",
-      "output_files": ["brand/criptan/projects/P06-social-content-ai/T02/visual-style-templates.md"],
-      "notes": "Guía de estilo visual + 4 templates (explicación, comparativa, tip, noticia). Colores extraídos de criptan.com. Adaptado a IG Reels + TikTok."
+      "output_files": [
+        "brand/criptan/projects/P06-social-content-ai/T02/visual-style-templates.md"
+      ],
+      "notes": "Guía de estilo visual + 4 templates (explicación, comparativa, tip, noticia). Colores extraídos de criptan.com. Adaptado a IG Reels + TikTok.",
+      "deliverable_file": "brand/criptan/projects/P06-social-content-ai/tasks/T02/deliverable.md",
+      "mc_chat_thread_id": "task-t02"
     },
     {
       "id": "T03",
@@ -42,7 +50,7 @@
       "deliverable": "Calendario mensual con 20+ contenidos: título, hook de 3 segundos, script, keywords de optimización, hashtags.",
       "done_criteria": "Calendario aprobado. Primeros 5 contenidos producidos y publicados.",
       "depends_on": "T01",
-      "status": "pending",
+      "status": "todo",
       "owner": "Sancho",
       "channel": "content",
       "discord_thread_id": null,
@@ -50,7 +58,9 @@
       "created": "2026-03-30",
       "completed": null,
       "output_files": [],
-      "notes": ""
+      "notes": "",
+      "deliverable_file": "brand/criptan/projects/P06-social-content-ai/tasks/T03/deliverable.md",
+      "mc_chat_thread_id": "task-t03"
     },
     {
       "id": "T04",
@@ -59,7 +69,7 @@
       "deliverable": "4-5 contenidos listos para publicar por semana.",
       "done_criteria": "Contenidos publicados con métricas crecientes de views from search.",
       "depends_on": "T02",
-      "status": "pending",
+      "status": "todo",
       "owner": "Sancho",
       "channel": "content",
       "discord_thread_id": null,
@@ -67,7 +77,9 @@
       "created": "2026-03-30",
       "completed": null,
       "output_files": [],
-      "notes": "Tarea recurrente — repetir semanalmente. Herramientas AI video: pendiente definir"
+      "notes": "Tarea recurrente — repetir semanalmente. Herramientas AI video: pendiente definir",
+      "deliverable_file": "brand/criptan/projects/P06-social-content-ai/tasks/T04/deliverable.md",
+      "mc_chat_thread_id": "task-t04"
     }
   ]
 }

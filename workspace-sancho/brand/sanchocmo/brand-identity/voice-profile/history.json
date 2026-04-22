@@ -1,0 +1,14 @@
+{
+  "versions": [
+    {
+      "version": "v1.0",
+      "date": "2026-03-08",
+      "mode": "full",
+      "approach": "build",
+      "author": "sancho",
+      "source": "5 preguntas fundador + positioning upstream (ECPs 1-2)",
+      "changes": "Initial brand voice — Full mode. 3 traits, 5-dim spectrum, 15 USE/15 AVOID, 10 DTNT pairs, 2 ECP adaptations, 6 channel guidelines, AI Brand Kit, Voice Test passed.",
+      "file": "v1.md"
+    }
+  ]
+}

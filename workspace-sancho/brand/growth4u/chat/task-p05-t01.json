@@ -1,0 +1,22 @@
+{
+  "messages": [
+    {
+      "role": "user",
+      "text": "Quiero crear \"Listar clientes para reviews\". Usa el skill deep-research para generar el documento.",
+      "ts": 1775654897033
+    },
+    {
+      "role": "bot",
+      "text": "El skill `deep-research` está diseñado para **enriquecer documentos existentes** (dice explícitamente: *NOT for: generating documents from scratch*). No genera desde cero — necesita un documento base como input.\n\n**Opciones:**\n\n1. **¿Ya existe un documento** sobre \"clientes para reviews\"? Dame la ruta del `.md` y aplico deep-research para profundizarlo.\n\n2. **Si quieres crear algo nuevo**, necesitaría entender qué tipo de documento necesitas:\n   - **Research sobre cómo pedir reviews a clientes** (estrategia, mejores prácticas, templates)?\n   - **Listado de clientes de Growth4U** que podrían dar testimonials?\n   - **Guía para generar reviews en Google/LinkedIn** para los clientes de Growth4U?\n\n3. **Usar otro skill** si es un documento nuevo — por ejemplo `cold-email`, `referral-program`, o `lead-intelligence-hub` podrían ser más adecuados dependiendo del objetivo.\n\n¿Qué formato quieres que tenga el documento y para qué se usará? Así puedo recomendar el skill correcto o pedirte el archivo base para aplicar deep-research.",
+      "agent": "sancho",
+      "ts": "2026-04-08T13:32:31.875Z"
+    },
+    {
+      "role": "bot",
+      "text": "Sigo sin poder ejecutar esto — `deep-research` no genera documentos desde cero.\n\nPero quiero ayudarte. Déjame interpretar el contexto:\n\n**\"Listar clientes para reviews\"** — ¿te refieres a qué clientes de Growth4U deberían recibir una petición de testimonial/review? \n\nSi es eso, podría:\n1. Hacer una búsqueda rápida sobre mejores prácticas para pedir reviews a clientes B2B\n2. Aplicar eso al contexto de Growth4U (clientes como Bnext, Múltiplo, etc.)\n\n**¿Confirmas que es esto?** Si sí → ejecuto con `deep-research` en un documento base que crearé primero (research sobre best practices de review requests en B2B consulting).\n\nO si prefieres, indícame:\n- ¿Qué formato quieres? (lista, informe, guía?)\n- ¿Para qué canal? (LinkedIn, Google Business, case study en web?)\n- ¿Review de qué tipo? (testimonial, caso de éxito, rating en plataformas?)\n\nDime qué objetivo tiene el documento y ajusto el skill.",
+      "agent": "sancho",
+      "ts": "2026-04-08T13:37:13.574Z"
+    }
+  ],
+  "updatedAt": 1775655433574
+}

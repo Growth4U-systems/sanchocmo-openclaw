@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap');
+  
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  
+  body {
+    width: 1200px;
+    height: 630px;
+    background: #FFFFFF;
+    font-family: 'Inter', sans-serif;
+    overflow: hidden;
+    position: relative;
+  }
+  
+  .container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    position: relative;
+  }
+  
+  .left {
+    flex: 1;
+    padding: 56px 48px 56px 56px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    z-index: 2;
+  }
+  
+  .top-bar {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  
+  .logo {
+    font-weight: 900;
+    font-size: 20px;
+    color: #032149;
+  }
+  
+  .logo span { color: #3f45fe; }
+  
+  .divider {
+    width: 1px;
+    height: 20px;
+    background: #CBD5E1;
+  }
+  
+  .category {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    font-weight: 700;
+    color: #0faec1;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    background: rgba(15, 174, 193, 0.08);
+    padding: 4px 12px;
+    border-radius: 4px;
+  }
+  
+  .title-block {
+    max-width: 580px;
+  }
+  
+  .title {
+    font-weight: 900;
+    font-size: 38px;
+    line-height: 1.15;
+    letter-spacing: -1.5px;
+    color: #032149;
+    margin-bottom: 16px;
+  }
+  
+  .title .highlight {
+    color: #3f45fe;
+  }
+  
+  .subtitle {
+    font-weight: 400;
+    font-size: 17px;
+    line-height: 1.5;
+    color: #64748B;
+    max-width: 480px;
+  }
+  
+  .meta {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  
+  .author-photo {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #effcfd;
+    border: 2px solid #0faec1;
+    overflow: hidden;
+  }
+  
+  .author-photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  
+  .author-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  
+  .author-name {
+    font-weight: 600;
+    font-size: 14px;
+    color: #032149;
+  }
+  
+  .reading-time {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: #94A3B8;
+  }
+  
+  /* Illustration side */
+  .right {
+    width: 420px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 32px;
+    position: relative;
+  }
+  
+  .right img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+  }
+  
+  /* Decorative */
+  .accent-bar {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 5px;
+    height: 100%;
+    background: linear-gradient(180deg, #3f45fe, #0faec1, #f59e0b);
+  }
+  
+  .bg-pattern {
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 420px;
+    height: 100%;
+    background: #FAFBFF;
+    z-index: 0;
+  }
+  
+  .corner-dots {
+    position: absolute;
+    bottom: 24px;
+    right: 24px;
+    display: grid;
+    grid-template-columns: repeat(3, 6px);
+    gap: 8px;
+    opacity: 0.15;
+  }
+  
+  .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #3f45fe;
+  }
+</style>
+</head>
+<body>
+  <div class="accent-bar"></div>
+  <div class="bg-pattern"></div>
+  
+  <div class="container">
+    <div class="left">
+      <div class="top-bar">
+        <div class="logo">Growth<span>4U</span></div>
+        <div class="divider"></div>
+        <div class="category">Growth</div>
+      </div>
+      
+      <div class="title-block">
+        <h1 class="title">Unit Economics para Fintech: <span class="highlight">CAC, LTV y Payback</span> — cómo medirlos bien</h1>
+        <p class="subtitle">El 90% de las fintechs los calcula mal. Esta guía explica las fórmulas correctas y qué hacer cuando las métricas no cuadran.</p>
+      </div>
+      
+      <div class="meta">
+        <div class="author-photo">
+          <img src="../alfonso-character-final.png" alt="Alfonso">
+        </div>
+        <div class="author-text">
+          <span class="author-name">Alfonso Sainz de Baranda</span>
+          <span class="reading-time">8 min lectura · 25 feb 2026</span>
+        </div>
+      </div>
+    </div>
+    
+    <div class="right" style="z-index:1">
+      <img src="blog-header-unit-economics.png" alt="Unit Economics">
+    </div>
+  </div>
+  
+  <div class="corner-dots">
+    <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+    <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+    <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+  </div>
+</body>
+</html>

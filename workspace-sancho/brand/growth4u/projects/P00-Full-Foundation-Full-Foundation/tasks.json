@@ -7,7 +7,7 @@
     "done_criteria": "Análisis aprobado con datos verificables. Tamaño de mercado, tendencias y segmentación documentados.",
     "depends_on": "P00-FF-T03",
     "owner": "Sancho",
-    "status": "done",
+    "status": "completed",
     "channel": "strategy",
     "skill": "market-intelligence",
     "completed": "2026-03-17",
@@ -17,7 +17,9 @@
     ],
     "type": "foundation",
     "pillar": "market-analysis",
-    "section": "market-and-us"
+    "section": "market-and-us",
+    "deliverable_file": "brand/growth4u/market-and-us/market/market.current.md",
+    "mc_chat_thread_id": "task-p00-ful-t01"
   },
   {
     "id": "P00-FUL-T02",
@@ -27,7 +29,7 @@
     "done_criteria": "Mínimo 5 competidores mapeados. Battle cards creadas con fortalezas/debilidades.",
     "depends_on": "P00-FF-T03",
     "owner": "Sancho",
-    "status": "done",
+    "status": "completed",
     "channel": "strategy",
     "skill": "competitor-intelligence",
     "completed": "2026-03-17",
@@ -37,7 +39,9 @@
     ],
     "type": "foundation",
     "pillar": "competitor-analysis",
-    "section": "market-and-us"
+    "section": "market-and-us",
+    "deliverable_file": "brand/growth4u/market-and-us/competitors/competitors.current.md",
+    "mc_chat_thread_id": "task-p00-ful-t02"
   },
   {
     "id": "P00-FUL-T03",
@@ -47,7 +51,7 @@
     "done_criteria": "Assets únicos identificados. Casos de éxito documentados.",
     "depends_on": "P00-FF-T03",
     "owner": "Sancho",
-    "status": "done",
+    "status": "completed",
     "channel": "strategy",
     "skill": "self-intelligence",
     "completed": "2026-03-17",
@@ -57,7 +61,9 @@
     ],
     "type": "foundation",
     "pillar": "self-analysis",
-    "section": "market-and-us"
+    "section": "market-and-us",
+    "deliverable_file": "brand/growth4u/market-and-us/self/self.current.md",
+    "mc_chat_thread_id": "task-p00-ful-t03"
   },
   {
     "id": "P00-FUL-T04",
@@ -77,7 +83,9 @@
     ],
     "type": "foundation",
     "pillar": "market-synthesis",
-    "section": "market-and-us"
+    "section": "market-and-us",
+    "deliverable_file": "brand/growth4u/market-and-us/swot/swot.current.md",
+    "mc_chat_thread_id": "task-p00-ful-t04"
   },
   {
     "id": "P00-FUL-T05",
@@ -97,7 +105,9 @@
     ],
     "type": "foundation",
     "pillar": "positioning",
-    "section": "go-to-market"
+    "section": "go-to-market",
+    "deliverable_file": "brand/growth4u/go-to-market/positioning/shared/messaging-summary.md",
+    "mc_chat_thread_id": "task-p00-ful-t05"
   },
   {
     "id": "P00-FUL-T06",
@@ -107,7 +117,7 @@
     "done_criteria": "Pricing aprobado. Tiers y hooks documentados.",
     "depends_on": "P00-FUL-T05",
     "owner": "Sancho",
-    "status": "done",
+    "status": "completed",
     "channel": "strategy",
     "skill": "pricing-strategy",
     "completed": "2026-03-19",
@@ -117,7 +127,9 @@
     ],
     "type": "foundation",
     "pillar": "pricing",
-    "section": "go-to-market"
+    "section": "go-to-market",
+    "deliverable_file": "brand/growth4u/go-to-market/pricing/pricing.current.md",
+    "mc_chat_thread_id": "task-p00-ful-t06"
   },
   {
     "id": "P00-FUL-T07",
@@ -130,14 +142,16 @@
     "status": "completed",
     "channel": "strategy",
     "skill": "acquisition-metrics-plan",
-    "completed": "2026-04-20",
+    "completed": "2026-03-20",
     "discord_thread_id": null,
     "output_files": [
       "brand/growth4u/go-to-market/metrics-plan.md"
     ],
     "type": "foundation",
     "pillar": "metrics-setup",
-    "section": "metrics-setup"
+    "section": "metrics-setup",
+    "deliverable_file": "brand/growth4u/go-to-market/metrics-plan.md",
+    "mc_chat_thread_id": "task-p00-ful-t07"
   },
   {
     "id": "P00-FUL-T07",
@@ -147,7 +161,7 @@
     "done_criteria": "Voice guide aprobado. AI Brand Kit ready para uso en skills de contenido.",
     "depends_on": "P00-FUL-T05",
     "owner": "Sancho",
-    "status": "done",
+    "status": "completed",
     "channel": "strategy",
     "skill": "brand-voice",
     "completed": "2026-03-20",
@@ -157,7 +171,9 @@
     ],
     "type": "foundation",
     "pillar": "brand-voice",
-    "section": "brand-identity"
+    "section": "brand-identity",
+    "deliverable_file": "brand/growth4u/brand-book/brand-voice/brand-voice.current.md",
+    "mc_chat_thread_id": "task-p00-ful-t07"
   },
   {
     "id": "P00-FUL-T08",
@@ -167,7 +183,7 @@
     "done_criteria": "Visual identity aprobada. Assets exportados y listos para uso.",
     "depends_on": "P00-FUL-T08",
     "owner": "Sancho",
-    "status": "done",
+    "status": "completed",
     "channel": "strategy",
     "skill": "visual-identity",
     "completed": "2026-03-21",
@@ -177,6 +193,8 @@
     ],
     "type": "foundation",
     "pillar": "visual-identity",
-    "section": "brand-identity"
+    "section": "brand-identity",
+    "deliverable_file": "brand/growth4u/brand-identity/visual-identity/visual-identity.current.md",
+    "mc_chat_thread_id": "task-p00-ful-t08"
   }
 ]

@@ -8,7 +8,7 @@
       "deliverable": "CleverTap conectado con dashboard de funnel in-app visible. Baseline de activation rate documentado.",
       "done_criteria": "Datos de funnel disponibles con al menos 7 días de data. Baseline de activation rate calculado.",
       "depends_on": null,
-      "status": "pending",
+      "status": "todo",
       "owner": "Equipo",
       "channel": "research",
       "discord_thread_id": null,
@@ -16,7 +16,9 @@
       "created": "2026-03-30",
       "completed": null,
       "output_files": [],
-      "notes": "Requiere Account ID + Passcode + Region de CleverTap. Gestionar via Mission Control."
+      "notes": "Requiere Account ID + Passcode + Region de CleverTap. Gestionar via Mission Control.",
+      "deliverable_file": "brand/criptan/projects/P03-funnel-optimization/tasks/T01/deliverable.md",
+      "mc_chat_thread_id": "task-t01"
     },
     {
       "id": "T02",
@@ -25,7 +27,7 @@
       "deliverable": "Informe de auditoría con top 3 creatividades, top 3 audiencias, campañas a pausar, y propuesta de redistribución de budget.",
       "done_criteria": "Informe entregado con acciones concretas implementables.",
       "depends_on": null,
-      "status": "pending",
+      "status": "todo",
       "owner": "Sancho",
       "channel": "paid-ads",
       "discord_thread_id": null,
@@ -33,7 +35,9 @@
       "created": "2026-03-30",
       "completed": null,
       "output_files": [],
-      "notes": "Necesita acceso a Meta Ads Manager de Criptan"
+      "notes": "Necesita acceso a Meta Ads Manager de Criptan",
+      "deliverable_file": "brand/criptan/projects/P03-funnel-optimization/tasks/T02/deliverable.md",
+      "mc_chat_thread_id": "task-t02"
     },
     {
       "id": "T03",
@@ -42,7 +46,7 @@
       "deliverable": "Plan de campaña de reviews con templates de solicitud, triggers definidos, y plataformas priorizadas.",
       "done_criteria": "Primeras 20+ reviews nuevas generadas en el primer mes. Rating promedio >4.5★.",
       "depends_on": null,
-      "status": "pending",
+      "status": "todo",
       "owner": "Sancho",
       "channel": "content",
       "discord_thread_id": null,
@@ -50,7 +54,9 @@
       "created": "2026-03-30",
       "completed": null,
       "output_files": [],
-      "notes": ""
+      "notes": "",
+      "deliverable_file": "brand/criptan/projects/P03-funnel-optimization/tasks/T03/deliverable.md",
+      "mc_chat_thread_id": "task-t03"
     },
     {
       "id": "T04",
@@ -59,7 +65,7 @@
       "deliverable": "Propuesta de optimización del programa de referidos con nuevo incentivo, copy de comunicación, y triggers.",
       "done_criteria": "Propuesta aprobada. Incremento de referidos activos >50% vs baseline.",
       "depends_on": "T01",
-      "status": "pending",
+      "status": "todo",
       "owner": "Sancho",
       "channel": "content",
       "discord_thread_id": null,
@@ -67,7 +73,9 @@
       "created": "2026-03-30",
       "completed": null,
       "output_files": [],
-      "notes": ""
+      "notes": "",
+      "deliverable_file": "brand/criptan/projects/P03-funnel-optimization/tasks/T04/deliverable.md",
+      "mc_chat_thread_id": "task-t04"
     }
   ]
 }

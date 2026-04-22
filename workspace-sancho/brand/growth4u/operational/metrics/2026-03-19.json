@@ -1,0 +1,19 @@
+{
+  "date": "2026-03-19",
+  "source": "morning-metrics",
+  "meta_ads": {
+    "days_with_data": 6,
+    "yesterday_available": true,
+    "total_spend_7d": 777.97,
+    "total_leads_7d": 20,
+    "avg_spend_day": 129.66,
+    "avg_cpc": 0.97,
+    "avg_ctr": 3.32,
+    "avg_leads_day": 3.3
+  },
+  "ghl": {
+    "contacts_24h": 4,
+    "appointments_24h": 0
+  },
+  "alerts": []
+}

@@ -7,12 +7,16 @@
     "done_criteria": "Análisis aprobado con datos verificables.",
     "depends_on": "P00-FF-T01",
     "owner": "Sancho",
-    "status": "in-progress",
+    "status": "completed",
+    "completed": "2026-04-13",
     "channel": "strategy",
     "type": "foundation",
     "skill": "market-intelligence",
     "pillar": "market-analysis",
-    "section": "market-and-us"
+    "section": "market-and-us",
+    "deliverable_file": "brand/hulahoop/market-and-us/market/market.current.md",
+    "mc_chat_thread_id": "task-p00-ful-t01",
+    "discord_thread_id": null
   },
   {
     "id": "P00-FUL-T02",
@@ -22,12 +26,16 @@
     "done_criteria": "Mínimo 5 competidores mapeados.",
     "depends_on": "P00-FF-T01",
     "owner": "Sancho",
-    "status": "pending",
+    "status": "completed",
+    "completed": "2026-04-13",
     "channel": "strategy",
     "type": "foundation",
     "skill": "competitor-intelligence",
     "pillar": "competitor-analysis",
-    "section": "market-and-us"
+    "section": "market-and-us",
+    "deliverable_file": "brand/hulahoop/market-and-us/competitors/competitive-analysis.current.md",
+    "mc_chat_thread_id": "task-p00-ful-t02",
+    "discord_thread_id": null
   },
   {
     "id": "P00-FUL-T03",
@@ -37,12 +45,16 @@
     "done_criteria": "3 lenses completas. Assets únicos identificados.",
     "depends_on": "P00-FF-T01",
     "owner": "Sancho",
-    "status": "in-progress",
+    "status": "completed",
     "channel": "strategy",
     "type": "foundation",
     "skill": "self-intelligence",
     "pillar": "self-analysis",
-    "section": "market-and-us"
+    "section": "market-and-us",
+    "deliverable_file": "brand/hulahoop/market-and-us/self/self.current.md",
+    "completed": "2026-04-14",
+    "mc_chat_thread_id": "task-p00-ful-t03",
+    "discord_thread_id": null
   },
   {
     "id": "P00-FUL-T04",
@@ -52,12 +64,16 @@
     "done_criteria": "Summary aprobado. SWOT con oportunidades y amenazas priorizadas. Presentación lista.",
     "depends_on": "P00-FUL-T01,P00-FUL-T02,P00-FUL-T03",
     "owner": "Sancho",
-    "status": "pending",
+    "status": "completed",
     "channel": "strategy",
     "type": "foundation",
     "skill": "market-summary",
     "pillar": "market-synthesis",
-    "section": "market-and-us"
+    "section": "market-and-us",
+    "deliverable_file": "brand/hulahoop/projects/P00-Full-Foundation-Full-Foundation/tasks/P00-FUL-T04/deliverable.md",
+    "mc_chat_thread_id": "task-p00-ful-t04",
+    "discord_thread_id": null,
+    "completed": "2026-04-16"
   },
   {
     "id": "P00-FUL-T05",
@@ -72,7 +88,10 @@
     "type": "foundation",
     "skill": "niche-discovery-100x",
     "pillar": "niche-discovery",
-    "section": "go-to-market"
+    "section": "go-to-market",
+    "deliverable_file": "brand/hulahoop/go-to-market/ecps/ecps.current.md",
+    "mc_chat_thread_id": "task-p00-ful-t05",
+    "discord_thread_id": null
   },
   {
     "id": "P00-FUL-T06",
@@ -82,12 +101,15 @@
     "done_criteria": "Posicionamiento aprobado. Mensajes diferenciados para cada ECP.",
     "depends_on": "P00-FUL-T05",
     "owner": "Sancho",
-    "status": "pending",
+    "status": "todo",
     "channel": "strategy",
     "type": "foundation",
     "skill": "positioning-messaging",
     "pillar": "positioning",
-    "section": "go-to-market"
+    "section": "go-to-market",
+    "deliverable_file": "brand/hulahoop/go-to-market/positioning/shared/messaging-summary.md",
+    "mc_chat_thread_id": "task-p00-ful-t06",
+    "discord_thread_id": null
   },
   {
     "id": "P00-FUL-T07",
@@ -97,12 +119,15 @@
     "done_criteria": "Pricing aprobado. Tiers documentados.",
     "depends_on": "P00-FUL-T06",
     "owner": "Sancho",
-    "status": "pending",
+    "status": "todo",
     "channel": "strategy",
     "type": "foundation",
     "skill": "pricing-strategy",
     "pillar": "pricing",
-    "section": "go-to-market"
+    "section": "go-to-market",
+    "deliverable_file": "brand/hulahoop/go-to-market/pricing/pricing.current.md",
+    "mc_chat_thread_id": "task-p00-ful-t07",
+    "discord_thread_id": null
   },
   {
     "id": "P00-FUL-T08",
@@ -117,7 +142,10 @@
     "type": "foundation",
     "skill": "brand-voice",
     "pillar": "brand-voice",
-    "section": "brand-identity"
+    "section": "brand-identity",
+    "deliverable_file": "brand/hulahoop/brand-book/brand-voice/brand-voice.current.md",
+    "mc_chat_thread_id": "task-p00-ful-t08",
+    "discord_thread_id": null
   },
   {
     "id": "P00-FUL-T09",
@@ -127,12 +155,15 @@
     "done_criteria": "Visual identity aprobada. Assets exportados.",
     "depends_on": "P00-FUL-T08",
     "owner": "Sancho",
-    "status": "pending",
+    "status": "todo",
     "channel": "strategy",
     "type": "foundation",
     "skill": "visual-identity",
     "pillar": "visual-identity",
-    "section": "brand-identity"
+    "section": "brand-identity",
+    "deliverable_file": "brand/hulahoop/brand-book/visual-identity/visual-identity.current.md",
+    "mc_chat_thread_id": "task-p00-ful-t09",
+    "discord_thread_id": null
   },
   {
     "id": "P00-FUL-T10",
@@ -146,6 +177,9 @@
     "channel": "intelligence",
     "type": "integration",
     "skill": "atalaya",
-    "notes": "Se configura después de completar Competitor Intelligence. Requiere Apify MCP para scraping de contenido."
+    "notes": "Se configura después de completar Competitor Intelligence. Requiere Apify MCP para scraping de contenido.",
+    "deliverable_file": "brand/hulahoop/projects/P00-Full-Foundation-Full-Foundation/tasks/P00-FUL-T10/deliverable.md",
+    "mc_chat_thread_id": "task-p00-ful-t10",
+    "discord_thread_id": null
   }
 ]

@@ -1,0 +1,71 @@
+{
+  "date": "2026-04-13",
+  "timestamp_utc": "2026-04-13T07:00:00Z",
+  "precheck_channels": {
+    "general": {
+      "last_msg": "2026-03-30",
+      "author": "system/bot",
+      "skipped": true,
+      "reason": ">24h"
+    },
+    "brand": {
+      "last_msg": "2026-02-28",
+      "author": "AlfonsoSBLA",
+      "skipped": true,
+      "reason": ">24h"
+    },
+    "campaigns": {
+      "last_msg": "2026-03-24",
+      "author": "SanchoCMO/bot",
+      "skipped": true,
+      "reason": ">24h"
+    },
+    "content": {
+      "last_msg": "2026-02-28",
+      "author": "AlfonsoSBLA",
+      "skipped": true,
+      "reason": ">24h"
+    },
+    "intelligence": {
+      "last_msg": "2026-04-10",
+      "author": "SanchoCMO/bot",
+      "skipped": true,
+      "reason": "~47h"
+    },
+    "onboarding": {
+      "last_msg": "2026-04-07",
+      "author": "SanchoCMO/bot",
+      "skipped": true,
+      "reason": ">24h"
+    },
+    "soporte": {
+      "last_msg": "2026-04-11",
+      "author": "SanchoCMO/bot",
+      "skipped": true,
+      "reason": "~47h"
+    },
+    "research": {
+      "last_msg": "2026-03-01",
+      "author": "Martin",
+      "skipped": true,
+      "reason": "archived + >24h"
+    },
+    "paid-ads": {
+      "last_msg": "N/A",
+      "author": "N/A",
+      "skipped": true,
+      "reason": "Unknown Channel"
+    }
+  },
+  "channels_passed_precheck": [],
+  "channels_scanned": 0,
+  "insights": [],
+  "gmail_checked": false,
+  "notion_checked": false,
+  "summary": "Silencio en todos los canales de HC. Sin mensajes humanos en las últimas 24h.",
+  "insight_delivery": {
+    "channel": "1475638253154603170",
+    "teaser_sent": false,
+    "reason": "Sin actividad no hay contenido relevante que reportar"
+  }
+}

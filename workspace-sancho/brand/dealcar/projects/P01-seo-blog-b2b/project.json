@@ -21,12 +21,16 @@
     "catalog_id": "#17",
     "description": "SEO Content — 12 artículos B2B en 3 meses (BOFU→MOFU→TOFU)"
   },
-  "channels": ["content"],
+  "channels": [
+    "content"
+  ],
   "discord": {
     "project_thread_id": "1486634569280258161",
     "project_channel": "projects"
   },
   "tasks_total": 4,
   "tasks_completed": 0,
-  "value_review": null
+  "value_review": null,
+  "mc_chat_thread_id": "project-p01",
+  "discord_thread_id": null
 }

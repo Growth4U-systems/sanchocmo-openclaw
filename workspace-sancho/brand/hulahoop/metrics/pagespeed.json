@@ -1,25 +1,42 @@
 {
-  "url": "https://hulahoop.media/en",
+  "url": "https://hulahoop.media",
   "mobile": {
-    "performance": 55,
-    "seo": 92,
-    "accessibility": 90,
-    "bestPractices": 100,
-    "lcp": 14.2,
+    "performance": 62,
+    "seo": 80,
+    "accessibility": 54,
+    "bestPractices": 96,
+    "lcp": 12.5,
     "cls": 0,
-    "tbt": 263,
+    "tbt": 214,
     "opportunities": [
+      {
+        "id": "redirects",
+        "title": "Avoid multiple page redirects",
+        "savings": 751,
+        "description": "Redirects introduce additional delays before the page can be loaded. [Learn how to avoid page redirects](https://developer.chrome.com/docs/lighthouse/"
+      },
       {
         "id": "unused-javascript",
         "title": "Reduce unused JavaScript",
-        "savings": 900,
+        "savings": 150,
         "description": "Reduce unused JavaScript and defer loading scripts until they are required to decrease bytes consumed by network activity. [Learn how to reduce unused"
+      },
+      {
+        "id": "server-response-time",
+        "title": "Initial server response time was short",
+        "savings": 11,
+        "description": "Keep the server response time for the main document short because all other requests depend on it. [Learn more about the Time to First Byte metric](ht"
       }
     ],
     "diagnostics": [
       {
-        "id": "render-blocking-insight",
-        "title": "Render blocking requests",
+        "id": "html-has-lang",
+        "title": "`<html>` element does not have a `[lang]` attribute",
+        "score": 0
+      },
+      {
+        "id": "errors-in-console",
+        "title": "Browser errors were logged to the console",
         "score": 0
       },
       {
@@ -28,13 +45,59 @@
         "score": 0
       },
       {
+        "id": "landmark-one-main",
+        "title": "Document does not have a main landmark.",
+        "score": 0
+      },
+      {
+        "id": "render-blocking-insight",
+        "title": "Render blocking requests",
+        "score": 0
+      },
+      {
+        "id": "document-title",
+        "title": "Document doesn't have a `<title>` element",
+        "score": 0
+      }
+    ]
+  },
+  "desktop": {
+    "performance": 81,
+    "seo": 92,
+    "accessibility": 86,
+    "bestPractices": 100,
+    "lcp": 2.8,
+    "cls": 0.006,
+    "tbt": 106,
+    "opportunities": [
+      {
+        "id": "redirects",
+        "title": "Avoid multiple page redirects",
+        "savings": 203,
+        "description": "Redirects introduce additional delays before the page can be loaded. [Learn how to avoid page redirects](https://developer.chrome.com/docs/lighthouse/"
+      },
+      {
+        "id": "unused-javascript",
+        "title": "Reduce unused JavaScript",
+        "savings": 160,
+        "description": "Reduce unused JavaScript and defer loading scripts until they are required to decrease bytes consumed by network activity. [Learn how to reduce unused"
+      },
+      {
+        "id": "server-response-time",
+        "title": "Initial server response time was short",
+        "savings": 26,
+        "description": "Keep the server response time for the main document short because all other requests depend on it. [Learn more about the Time to First Byte metric](ht"
+      }
+    ],
+    "diagnostics": [
+      {
         "id": "label",
         "title": "Form elements do not have associated labels",
         "score": 0
       },
       {
-        "id": "mainthread-work-breakdown",
-        "title": "Minimize main-thread work",
+        "id": "render-blocking-insight",
+        "title": "Render blocking requests",
         "score": 0
       },
       {
@@ -42,30 +105,6 @@
         "title": "Links do not have a discernible name",
         "score": 0
       },
-      {
-        "id": "bootup-time",
-        "title": "Reduce JavaScript execution time",
-        "score": 0
-      }
-    ]
-  },
-  "desktop": {
-    "performance": 77,
-    "seo": 92,
-    "accessibility": 85,
-    "bestPractices": 100,
-    "lcp": 2.6,
-    "cls": 0,
-    "tbt": 203,
-    "opportunities": [
-      {
-        "id": "unused-javascript",
-        "title": "Reduce unused JavaScript",
-        "savings": 50,
-        "description": "Reduce unused JavaScript and defer loading scripts until they are required to decrease bytes consumed by network activity. [Learn how to reduce unused"
-      }
-    ],
-    "diagnostics": [
       {
         "id": "image-delivery-insight",
         "title": "Improve image delivery",
@@ -75,23 +114,8 @@
         "id": "button-name",
         "title": "Buttons do not have an accessible name",
         "score": 0
-      },
-      {
-        "id": "link-name",
-        "title": "Links do not have a discernible name",
-        "score": 0
-      },
-      {
-        "id": "label",
-        "title": "Form elements do not have associated labels",
-        "score": 0
-      },
-      {
-        "id": "render-blocking-insight",
-        "title": "Render blocking requests",
-        "score": 0
       }
     ]
   },
-  "fetchedAt": "2026-04-20T05:09:14.391Z"
+  "fetchedAt": "2026-04-21T09:49:46.472Z"
 }

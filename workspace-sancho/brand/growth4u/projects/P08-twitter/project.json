@@ -1,0 +1,28 @@
+{
+  "id": "P08",
+  "name": "Twitter/X Build-in-Public",
+  "objective": "Reactivar @AlfonsoSB con estrategia build-in-public",
+  "metrics": {
+    "baseline": {
+      "followers": 1444,
+      "impressions_month": 0
+    },
+    "target": {
+      "followers": 1944,
+      "impressions_month": 50000
+    }
+  },
+  "account": "@AlfonsoSB",
+  "origin": "strategic-plan-v2",
+  "strategy": "Twitter/X BIP",
+  "phase": 1,
+  "review_date": "2026-06-13",
+  "status": "active",
+  "discord": {
+    "project_thread_id": "1482772461341901115"
+  },
+  "description": "Alfonso tiene 1,444 seguidores en Twitter pero la cuenta está inactiva. Twitter/X es el canal natural para build-in-public y networking con el ecosistema tech español.",
+  "approach": "Actualizamos bio con posicionamiento actual. Seguimos 100-200 cuentas del ecosistema. Warm-up de 2 semanas con 10-20 replies de valor/día. Publicación diaria: 1-3 tweets + 1 thread semanal sobre growth.",
+  "mc_chat_thread_id": "project-p08",
+  "discord_thread_id": null
+}

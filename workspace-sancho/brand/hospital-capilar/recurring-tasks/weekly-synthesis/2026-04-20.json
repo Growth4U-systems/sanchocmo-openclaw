@@ -1,0 +1,68 @@
+{
+  "cronName": "Weekly Synthesis — Hospital Capilar",
+  "slug": "hospital-capilar",
+  "date": "2026-04-20",
+  "runAtMs": 1745140800000,
+  "status": "ok",
+  "content": {
+    "periodo": "2026-04-14 → 2026-04-20",
+    "hallazgo_principal": "Semana 2 de silencio total — servidor en pausa estratégica, 0 actividad humana en todos los canales",
+    "secciones": {
+      "actividad_discord": {
+        "resumen": "Sin actividad humana en ningún canal de HC durante los 7 días. Segunda semana consecutiva de silencio total.",
+        "ultima_actividad_humana": "Philippe pidiendo enlace Mission Control — 2026-04-07 (hace 13 días)",
+        "canales_archivados": "#paid-ads (Unknown Channel), #research (último msg 2026-03-01)",
+        "canales_6_semanas_sin_humanos": "#brand, #content"
+      },
+      "sistemas": {
+        "incidentes_semana": [
+          {
+            "tipo": "Supabase HTTP 401",
+            "detectado": "2026-04-09 00:53 UTC",
+            "estado": "Sin confirmación explícita de resolución",
+            "severidad": "medium"
+          },
+          {
+            "tipo": "xAI HTTP 429 rate limit",
+            "detectado": "2026-04-15",
+            "estado": "Resuelto posteriormente",
+            "severidad": "low"
+          }
+        ]
+      },
+      "reuniones": {
+        "resumen": "0 reuniones nuevas — 5 semanas sin sincronización.",
+        "ultima_reunion": "HC Lead-Nurturing Madrid — 2026-03-18 (Philippe + Ramiro)"
+      },
+      "inteligencia_establecida": {
+        "trust_engine_v5": {
+          "fortaleza": "#1 en keywords de cirugía (clinica capilar madrid — 1900/mes)",
+          "gap_crítico": "INVISIBLE en TODAS las keywords de tratamiento (0/12 en top 10)",
+          "volumen_perdido_mensual": ">4.000 búsquedas sin capturar",
+          "competidores_en_tratamientos": "IMD, Insparya, Grupo Pedro Jaén"
+        },
+        "patrones_históricos_philippe": [
+          "Web completa (2026-03-27): Preguntó qué elementos esenciales faltan (FAQ, políticas, páginas tratamientos)",
+          "Links MC mal construidos en campañas (2026-03-17)",
+          "Gap de atención: no respondía cuando pacientes enviaban fotos (2026-03-06)"
+        ]
+      },
+      "estado_foundation": {
+        "resumen": "VACÍA — completion_pct = 0. Sin inicio de nuevo ciclo. Positioning draft referenciado pero no formalizado.",
+        "proximos_pasos_prioridad": [
+          "Formalizar Positioning draft en Foundation-state.json",
+          "Iniciar Foundation con Alfonso para definir NSM e ICPs",
+          "Contenido: atacar gap treatment keywords (>4.000 búsquedas/mes)",
+          "Generar contenido: páginas esenciales (FAQ, políticas, tratamientos)"
+        ]
+      }
+    },
+    "prioridades_siguiente_semana": [
+      "1. Contactar a Alfonso — reactivar Foundation (server en pausa estratégica)",
+      "2. Formalizar estado de Positioning en Foundation-state.json",
+      "3. Plan de contenido para treatment keywords — recuperar >4.000 búsquedas/mes",
+      "4. Resolver gap de contenido: FAQ, políticas, páginas tratamientos"
+    ],
+    "self_qa": "PASS | 2026-04-20"
+  }
+}

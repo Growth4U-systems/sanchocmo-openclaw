@@ -7,7 +7,7 @@
     "done_criteria": "Plan aprobado. Proyectos P01-P08+ creados en Mission Control con tareas detalladas.",
     "depends_on": "P00-MET-T01",
     "owner": "Sancho",
-    "status": "done",
+    "status": "completed",
     "channel": "strategy",
     "skill": "strategic-plan",
     "completed": "2026-03-22",
@@ -24,7 +24,9 @@
     ],
     "type": "foundation",
     "pillar": "strategic-plan",
-    "section": "strategic-plan"
+    "section": "strategic-plan",
+    "deliverable_file": "brand/growth4u/strategic-plan/strategic-plan.current.md",
+    "mc_chat_thread_id": "task-p00-sp-t01"
   },
   {
     "id": "P00-SP-T02",
@@ -34,11 +36,13 @@
     "done_criteria": "Fase 1 (Foundation + Quick Wins) completada. Fases 2-3 en progreso o completadas.",
     "depends_on": "P00-SP-T01",
     "owner": "Sancho",
-    "status": "active",
+    "status": "in-progress",
     "channel": "strategy",
     "skill": "strategic-plan",
     "discord_thread_id": null,
     "output_files": [],
-    "type": "execution"
+    "type": "execution",
+    "deliverable_file": "brand/growth4u/projects/P00-Strategic-Plan-Strategic-Plan/tasks/P00-SP-T02/deliverable.md",
+    "mc_chat_thread_id": "task-p00-sp-t02"
   }
 ]

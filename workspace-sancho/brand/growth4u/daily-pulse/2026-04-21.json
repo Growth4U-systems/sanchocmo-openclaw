@@ -1,0 +1,74 @@
+{
+  "date": "2026-04-21",
+  "generated_at": "2026-04-21T07:28:04.782458Z",
+  "channels_scanned": [
+    "general",
+    "brand",
+    "projects",
+    "content",
+    "paid-ads",
+    "web",
+    "intelligence",
+    "soporte"
+  ],
+  "human_messages_24h": 0,
+  "bot_messages_24h": 2,
+  "insights": [
+    {
+      "category": "ads_performance",
+      "severity": "warning",
+      "title": "Leads ayer: 1 (vs media 2.7/día) — peor día de la semana",
+      "detail": "Solo 1 lead ayer 20/04 en Meta Ads. CTR 0.67% < media 0.83% y CPC €3.82 > media €3.07. La combinación de peor CTR + peor CPC confirma fatiga creativa. El pico de 04-19 (7 leads, CTR 1.09%, CPC €2.41) sigue siendo la referencia a replicar.",
+      "source": "intelligence",
+      "timestamp": "2026-04-20T23:59:00Z"
+    },
+    {
+      "category": "pipeline",
+      "severity": "info",
+      "title": "4 contactos nuevos en GHL (lead magnet sequence)",
+      "detail": "óscar, kiko requena, jose – los 3 capturados vía lead magnet 'Cómo Montar un Sistema de Atribución con Influencers usando Claude Code' + secuencia de oferta. daniel vía Facebook. Ninguna cita agendada todavía.",
+      "source": "intelligence",
+      "timestamp": "2026-04-20T21:19:00Z"
+    },
+    {
+      "category": "conversion_crisis",
+      "severity": "critical",
+      "title": "16° día sin citas — el funnel de booking sigue completamente roto",
+      "detail": "Situación sigue igual: se generan leads (~3/día) pero 0 citas agendadas. El problema es conversión, no adquisición. No hay evidencia de que los nuevos contactos hayan avanzado en el funnel.",
+      "source": "intelligence",
+      "timestamp": "2026-04-21T07:00:00Z"
+    },
+    {
+      "category": "discord_activity",
+      "severity": "info",
+      "title": "0 mensajes humanos en Discord en las últimas 24h",
+      "detail": "Confirmado por segunda vez consecutiva: el servidor Growth4U tiene actividad nula de miembros. Solo crons de sistema activos en #intelligence.",
+      "source": "intelligence",
+      "timestamp": "2026-04-20T09:00:00Z"
+    }
+  ],
+  "micro_briefs": [
+    {
+      "id": "MB-001",
+      "title": "Auditoría urgente del flujo booking GHL — día 16 sin citas",
+      "action": "El problema no es adquisición (se generan leads) sino conversión. Revisar funnel: lead → email/WhatsApp automático → enlace booking → cita. El 04-19 generó 7 leads en un día — qué pasó después con esos leads?",
+      "priority": "P0",
+      "owner": "Alfonso"
+    },
+    {
+      "id": "MB-002",
+      "title": "Rotación de creativos Meta Ads — CTR 0.67%, CPC €3.82 (ambos por debajo de media)",
+      "action": "Revisar qué creatividades usó el 04-19 (mejor día: 7 leads). Preparar variaciones frescas para los 3-4 ads actuales. El CPC elevado con CTR bajo indica que la creatividad no está enganchando lo suficiente.",
+      "priority": "P1",
+      "owner": "Oier"
+    },
+    {
+      "id": "MB-003",
+      "title": "Follow-up 4 contactos nuevos (óscar, kiko requena, jose, daniel)",
+      "action": "Revisar si ya se les envió secuencia de onboarding. Si no, priorizarlos. El lead magnet 'Atribución con Influencers' tiene demanda (3 de 4 contacts came from it). Evaluar crear contenido adicional sobre ese tema.",
+      "priority": "P1",
+      "owner": "equipo"
+    }
+  ],
+  "executive_summary": "Martes 21 abril — día 16 sin citas. Meta Ads: 1 lead ayer (vs media 2.7/día) — peor día de la semana. CTR 0.67% < media 0.83%, CPC €3.82 > media €3.07. 4 contactos nuevos en GHL (óscar, kiko requena, jose vía lead magnet + daniel Facebook), 0 citas. Servidor Discord con 0 mensajes humanos. La crisis de conversión se mantiene: se generan leads pero no llegan a booking. ACCIÓN CRÍTICA: аудит del flujo booking GHL."
+}

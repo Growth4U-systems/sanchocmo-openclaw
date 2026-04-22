@@ -1,0 +1,11 @@
+{
+  "cronId": "2283eade-3d08-4f46-a508-eaa6d035a4d2",
+  "cronName": "Daily Pulse",
+  "slug": "hospital-capilar",
+  "date": "2026-04-14",
+  "runAtMs": 1776150000025,
+  "status": "ok",
+  "durationMs": 265250,
+  "model": "claude-opus-4-6",
+  "content": "📊 **Daily Pulse — Hospital Capilar — 14 abril 2026**\n\n**Estado:** Sin actividad humana en las últimas 24h.\n\n---\n\n**📋 Pre-check de canales (9 revisados / 0 con actividad):**\n\n✅ Skipped:\n• `#general` — Último msg: 30 mar (join de usuario)\n• `#brand` — Último msg: 28 feb\n• `#campaigns` — Último msg: 24 mar (bot)\n• `#content` — Último msg: 28 feb\n• `#intelligence` — Último msg: 13 abr (bot — Meeting Intelligence)\n• `#onboarding` — Último msg: 7 abr (bot)\n• `#soporte` — Último msg: 13 abr (bot — observación interna)\n• `#research` — Último msg: 1 mar\n• `#paid-ads` — Canal no encontrado\n\n---\n\n**🔎 Observaciones:**\n• El servidor lleva varias semanas con baja actividad humana. La última interacción significativa de un humano no-admin fue Philippe pidiendo el link de Mission Control el 7 de abril.\n• La actividad reciente es exclusivamente de bots (Meeting Intelligence, observaciones automáticas).\n\n**💡 Recomendación:**\nConsiderar una acción de reactivación: enviar un update de progreso o propuesta de contenido a Philippe para retomar el engagement.\n\n---\n*Eficiencia: 9 canales pre-checked con 1 msg cada uno → 0 lecturas completas necesarias.*"
+}

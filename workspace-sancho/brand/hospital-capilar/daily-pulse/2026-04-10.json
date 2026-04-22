@@ -1,0 +1,93 @@
+{
+  "date": "2026-04-10",
+  "generated_at": "2026-04-10T07:00:00Z",
+  "guild_id": "1475635138108063746",
+  "channels_checked": 9,
+  "channels_passed_precheck": 2,
+  "channels_with_human_activity": 0,
+  "canales_lectura": [
+    {
+      "channel_id": "1475635138988609678",
+      "name": "general",
+      "result": "SKIP (>24h)"
+    },
+    {
+      "channel_id": "1475638249107095866",
+      "name": "brand",
+      "result": "SKIP (>24h)"
+    },
+    {
+      "channel_id": "1475638251485401171",
+      "name": "campaigns",
+      "result": "SKIP (bot + >24h)"
+    },
+    {
+      "channel_id": "1475638259425087629",
+      "name": "content",
+      "result": "SKIP (>24h)"
+    },
+    {
+      "channel_id": "1475638253154603170",
+      "name": "intelligence",
+      "result": "PASS (bot msg <24h)",
+      "human_messages_24h": 0,
+      "bot_messages_24h": 2,
+      "notes": "Daily Pulse 09/04 + Meeting Intelligence 09/04 — todo bot"
+    },
+    {
+      "channel_id": "1476491108421730334",
+      "name": "onboarding",
+      "result": "SKIP (>24h)"
+    },
+    {
+      "channel_id": "1475638273501040681",
+      "name": "soporte",
+      "result": "PASS (bot msg <24h)",
+      "human_messages_24h": 0,
+      "bot_messages_24h": 1,
+      "notes": "Health Check: Supabase caído (HTTP 401) — 09/04 00:53 UTC"
+    },
+    {
+      "channel_id": "1475638269109862463",
+      "name": "research",
+      "result": "SKIP (Unknown Channel error)"
+    },
+    {
+      "channel_id": "1475638261819900161",
+      "name": "paid-ads",
+      "result": "SKIP (Unknown Channel)"
+    }
+  ],
+  "insights": {
+    "systems": [
+      {
+        "category": "System Health",
+        "type": "alert",
+        "source": "#soporte",
+        "message": "Supabase caído (HTTP 401) — detectado 2026-04-09 00:53 UTC",
+        "severity": "medium",
+        "resolved": "unknown",
+        "note": "Solo se detectaron mensajes de Health Check. No hay confirmación de recuperación en las últimas 24h."
+      }
+    ],
+    "activity": [
+      {
+        "category": "Meeting Intelligence",
+        "type": "scheduled_report",
+        "source": "#intelligence",
+        "message": "Sin reuniones nuevas desde 18/03. 13 reuniones procesadas en total.",
+        "date": "2026-04-09T16:04:00Z"
+      }
+    ]
+  },
+  "summary": "Día tranquilo en Discord — 0/9 canales con actividad humana en las últimas 24h. No hay mensajes de Philippe ni Alfonso en ningún canal. El único evento notable es una alerta de Supabase caído (HTTP 401) en #soporte (09/04 00:53 UTC) que requiere seguimiento.",
+  "actions_needed": [
+    {
+      "priority": "medium",
+      "description": "Verificar estado de Supabase — la alerta de HTTP 401 (09/04 00:53 UTC) no muestra recuperación confirmada en los mensajes de las últimas 24h"
+    }
+  ],
+  "gmail_check": "not_enabled",
+  "notion_check": "not_enabled",
+  "self_qa": "PASS"
+}

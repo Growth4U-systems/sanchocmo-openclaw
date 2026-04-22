@@ -1,0 +1,16 @@
+{
+  "messages": [
+    {
+      "role": "user",
+      "text": "Estoy abriendo el chat sobre \"existing customer data\". Dame un resumen rápido del estado actual y qué podemos hacer. Si necesitas algo de mí, dímelo.",
+      "ts": 1775626713212
+    },
+    {
+      "role": "bot",
+      "text": "Aquí va el resumen rápido:\n\n## 📊 Existing Customer Data — Estado: No iniciado\n\nEste pilar es **opcional** y sirve para analizar los datos reales de clientes de Paymático: segmentación RFM, perfil de mejores clientes, patrones de churn, LTV por segmento y triggers de upgrade.\n\n**Prerequisitos** (✅ cumplidos):\n- Fast Foundation aprobada\n- Company Brief aprobado\n\n**Para poder ejecutarlo necesito:**\n\n1. **¿Paymático tiene >50 clientes activos?** — Si son menos o estáis en pre-lanzamiento, se salta este pilar sin problema (es opcional).\n\n2. **Acceso a datos de clientes** — Alguna de estas opciones:\n   - **CSV/Excel** de CRM con campos tipo: email, fecha alta, plan/producto, MRR/facturación, sector, tamaño empresa\n   - **API de CRM** (HubSpot, Salesforce, Pipedrive…) — lo conecto desde Mission Control\n   - **Resumen manual** — si no hay CRM estructurado, con un resumen de los principales clientes ya puedo hacer un análisis limitado\n\n3. **Campos mínimos**: identificador cliente, fecha de alta, producto/plan contratado, y algún dato de facturación (MRR o similar).\n\n**¿Qué te daría?**\n- Perfil de \"Champions\" (mejores clientes) → afina los ICPs del niche-discovery\n- Patrones de churn → contenido y retención\n- LTV por segmento → pricing y priorización\n- Triggers de upgrade → diseño de funnel\n\n**En resumen**: si tenéis datos de clientes, esto enriquece mucho el niche-discovery que ya tenéis aprobado (v4, 24 sub-nichos). Si no hay datos o son pocos, lo saltamos y seguimos con positioning.\n\n¿Qué me dices — hay datos disponibles?",
+      "agent": "sancho",
+      "ts": "2026-04-08T05:39:45.879Z"
+    }
+  ],
+  "updatedAt": 1775626785879
+}

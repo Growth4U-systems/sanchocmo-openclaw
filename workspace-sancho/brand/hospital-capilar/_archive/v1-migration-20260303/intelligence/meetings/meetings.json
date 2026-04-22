@@ -1,0 +1,74 @@
+{
+  "lastUpdated": "2026-03-03T18:00:00Z",
+  "sourceFolder": "17FpwSgL-XLAqaaH5-UccpADHkCFRcCHY",
+  "meetings": [
+    {
+      "id": "2026-02-19-ramiro-growth4u",
+      "date": "2026-02-19",
+      "title": "Ramiro <> Growth4U",
+      "docId": "18k6gYbuLqrXBqEcYb-tTIbmJruJOAHcQYzisZQMuBQo",
+      "file": "2026-02-19-ramiro-growth4u.md",
+      "participants": ["Alfonso Sainz de Baranda", "Philippe Sainthubert", "Ramiro Perez"],
+      "decisions": [
+        "Ramiro será el experto interno en Go High Level",
+        "Primera factura vía Shakers, las siguientes directamente",
+        "Priorizar estabilidad sobre innovación avanzada"
+      ],
+      "actions": 3,
+      "keyInsight": "El desafío principal es entender la intención del cliente para automatizar con precisión"
+    },
+    {
+      "id": "2026-02-17-ramiro-growth4u",
+      "date": "2026-02-17",
+      "title": "Ramiro Perez <> Growth4U",
+      "docId": "1YTGedhyWETWvAyz7NFmtSE7sl7D-Hcsjax7d5vZWLQI",
+      "file": "2026-02-17-ramiro-growth4u.md",
+      "participants": ["Philippe Sainthubert", "Ramiro Perez"],
+      "decisions": [
+        "Nuevo embudo B2C para tratamientos",
+        "Go High Level separado de Salesforce",
+        "Objetivo: 45 tratamientos mensuales por clínica"
+      ],
+      "actions": 2,
+      "keyInsight": "Tratamientos = 90% margen vs Cirugías = 40%"
+    },
+    {
+      "id": "2026-02-07-heiver-g4u",
+      "date": "2026-02-07",
+      "title": "Heiver <> G4U",
+      "docId": "1knNkCRakIM2xAIM5NHKcXmxDPLSlhUp3p3MOnO0rFNU",
+      "file": "2026-02-07-heiver-g4u.md",
+      "participants": ["Heiver Gomez", "Martin Fila"],
+      "decisions": [
+        "Usar lógica de formularios de Go High Level",
+        "Estrategia bicanal (email + WhatsApp)",
+        "Dominio propio para email marketing",
+        "Plazo de implementación: 3-4 semanas"
+      ],
+      "actions": 6,
+      "keyInsight": "GHL permite lógica condicional multi-paso para precualificación"
+    },
+    {
+      "id": "2026-01-29-hospital-capilar-growth4u",
+      "date": "2026-01-29",
+      "title": "Hospital Capilar - Growth4U",
+      "docId": "1kWhI6MslDemmN0U7vLe4VY6kb5DH5fOWjk5GW_a78E8",
+      "file": "2026-01-29-hospital-capilar-growth4u.md",
+      "participants": ["Gerardo Redondo", "Alfonso Sainz de Baranda", "Óscar Mendoza", "Philippe Sainthubert"],
+      "decisions": [
+        "Proyecto piloto paralelo para tratamientos",
+        "Foco exclusivo en tratamientos",
+        "Cobrar €195 por consulta diagnóstica",
+        "Usar mini stack si Salesforce es lento"
+      ],
+      "actions": 4,
+      "keyInsight": "Tratamientos 2x crecimiento sin marketing = oportunidad masiva"
+    }
+  ],
+  "summary": {
+    "totalMeetings": 4,
+    "totalDecisions": 13,
+    "totalActions": 15,
+    "dateRange": "2026-01-29 to 2026-02-19"
+  }
+}

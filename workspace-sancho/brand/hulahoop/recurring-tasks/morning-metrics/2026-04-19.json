@@ -1,0 +1,8 @@
+{
+  "cronName": "Morning Metrics — Hulahoop",
+  "slug": "hulahoop",
+  "date": "2026-04-19",
+  "runAtMs": 1745054100000,
+  "status": "no_apis",
+  "content": "Sin APIs configuradas — ninguna fuente de datos (GA4, GSC, Meta Ads, GHL, Metricool) disponible para este cliente."
+}

@@ -1,0 +1,39 @@
+{
+  "client": "sanchocmo",
+  "period": "2026-04",
+  "updatedAt": "2026-04-21T08:01:02.793877",
+  "total_cost_usd": 0.802,
+  "total_cost_eur": 0.7379,
+  "turns": 5,
+  "sessions": 1,
+  "agents": {
+    "sancho": {
+      "cost_usd": 0.802,
+      "cost_eur": 0.7379,
+      "turns": 5,
+      "sessions": 1
+    }
+  },
+  "models": {
+    "unknown": {
+      "input": 7,
+      "output": 1859,
+      "cache_read": 355158,
+      "cache_write": 92470,
+      "cost_usd": 0.802,
+      "cost_eur": 0.7379,
+      "turns": 5
+    }
+  },
+  "days": {
+    "2026-04-07": {
+      "cost_usd": 0.802,
+      "turns": 5
+    }
+  },
+  "clientSpend": {
+    "google-ads": 0,
+    "meta-ads": 0,
+    "total": 0
+  }
+}

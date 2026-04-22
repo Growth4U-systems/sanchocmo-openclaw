@@ -1,0 +1,16 @@
+{
+  "messages": [
+    {
+      "role": "user",
+      "text": "test ping",
+      "ts": 1776119802759
+    },
+    {
+      "role": "bot",
+      "text": "Pong 🏓",
+      "ts": 1776119819458,
+      "agent": "sancho"
+    }
+  ],
+  "updatedAt": 1776119819458
+}

@@ -1,0 +1,27 @@
+{
+  "id": "mn58pt5y-ytc5",
+  "name": "Company Context",
+  "status": "open",
+  "linkedTo": "company-context",
+  "skill": "company-context",
+  "createdAt": "2026-03-24T23:22:55.846Z",
+  "updatedAt": "2026-03-24T23:22:59.132Z",
+  "messages": [
+    {
+      "role": "user",
+      "text": "Hoal",
+      "ts": "2026-03-24T23:22:59.109Z"
+    },
+    {
+      "role": "bot",
+      "text": "🔄 Sancho está pensando...",
+      "ts": "2026-03-24T23:22:59.116Z",
+      "typing": true
+    },
+    {
+      "role": "bot",
+      "text": "Error: Command failed: /opt/homebrew/bin/openclaw agent --agent sancho -m \"[Context: working on \\\"Company Context\\\" (pilar: company-context, skill: company-context) for client growth4u]\\n\\nUsuario dice: Hoal",
+      "ts": "2026-03-24T23:22:59.132Z"
+    }
+  ]
+}

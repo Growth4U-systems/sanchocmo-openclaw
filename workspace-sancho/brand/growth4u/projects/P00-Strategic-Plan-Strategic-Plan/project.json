@@ -14,7 +14,7 @@
   "phase": -1,
   "category": "foundation",
   "review_date": "2026-06-30",
-  "status": "active",
+  "status": "in-progress",
   "documents": [
     {
       "name": "Strategic Plan Q2 2026",
@@ -24,5 +24,8 @@
   ],
   "discord": {
     "project_thread_id": null
-  }
+  },
+  "updated_at": "2026-04-14T14:42:38.055Z",
+  "mc_chat_thread_id": "project-p00-strategic-plan",
+  "discord_thread_id": null
 }

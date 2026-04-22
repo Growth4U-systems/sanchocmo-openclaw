@@ -1,0 +1,50 @@
+{
+  "company_name": "Hospital Capilar",
+  "slug": "hospital-capilar",
+  "industry": "Tratamientos capilares médicos / Medicina capilar",
+  "product": "Tratamientos capilares no quirúrgicos (HRT mesoterapia dutasteride, CRT PRP, diagnóstico capilar)",
+  "target": "Hombres y mujeres con alopecia en España que buscan solución médica profesional",
+  "country": "es",
+  "context_type": "B2C",
+  "market_mode": "forum",
+  "life_contexts": [
+    "se me cae el pelo",
+    "entradas pelo",
+    "calvicie joven",
+    "caída pelo postparto",
+    "alopecia 20 años",
+    "pelo fino",
+    "miedo quedarme calvo",
+    "autoestima pelo",
+    "injerto capilar mantenimiento",
+    "finasteride efectos secundarios",
+    "minoxidil no funciona",
+    "operación pelo Turquía",
+    "tratamiento capilar opiniones"
+  ],
+  "product_words": [
+    "mesoterapia capilar",
+    "PRP capilar",
+    "tratamiento alopecia",
+    "clínica capilar",
+    "tricología",
+    "dutasteride pelo",
+    "injerto capilar post",
+    "caída cabello tratamiento",
+    "minoxidil oral",
+    "diagnóstico capilar"
+  ],
+  "sources": {
+    "reddit_subreddits": ["r/tressless", "r/HairLoss", "r/HairTransplants", "r/askspain", "r/spain"],
+    "thematic_forums": ["enfemenino.com", "trustpilot.com"],
+    "general_forums": ["forocoches.com", "mediavida.com", "burbuja.info"]
+  },
+  "frustration_indicators_es": [
+    "me frustra", "estoy harto", "no aguanto más", "es una pesadilla",
+    "no funciona", "estafa", "timo", "decepcionado", "no sirve"
+  ],
+  "frustration_indicators_en": [
+    "frustrated", "sick of", "doesn't work", "waste of money",
+    "scam", "disappointed", "giving up", "nothing works"
+  ]
+}

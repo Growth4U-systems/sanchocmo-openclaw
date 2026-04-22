@@ -1,0 +1,93 @@
+{
+  "date": "2026-04-09",
+  "slug": "growth4u",
+  "generated_at": "2026-04-09T07:03:00Z",
+  "channels_scanned": ["general", "brand", "projects", "content", "paid-ads", "web", "intelligence", "soporte"],
+  "messages_analyzed": 12,
+  "insights": [
+    {
+      "category": "ads_performance",
+      "severity": "high",
+      "title": "Volume crash en Meta Ads — Impressions -45%, Spend -28%",
+      "detail": "Ayer: €139.51 spend, 5,117 impressions, 94 clicks, CTR 1.84%, CPC €1.48, 3 leads. Media 7d: €192.64, 9,252 imp, 3.9 leads/d. El CTR sube (señal de que el creative funciona) pero el volumen cae drásticamente. Posible presupuesto agotado, campaña pausada o fatiga de audiencia.",
+      "source": "#intelligence — Morning Metrics 2026-04-09"
+    },
+    {
+      "category": "conversion_bottleneck",
+      "severity": "critical",
+      "title": "0 citas agendadas — 5° día consecutivo sin bookings",
+      "detail": "Con 4 contactos nuevos en GHL y 15 leads con tag llamada-agendada, sigue sin convertirse ninguno en cita. El gap lead→booking es el principal cuello de botella del funnel.",
+      "source": "#intelligence — Morning Metrics + Lead Sync"
+    },
+    {
+      "category": "pipeline",
+      "severity": "medium",
+      "title": "2 nuevos leads cualificados en pipeline",
+      "detail": "Alfonso Pascual Griñán Benítez (Facebook, budget 10k-25k€, enrichment pendiente) y Alfonso Nistal (IASAF, consultora subvenciones 25+ años, referido directo, email corporativo). Eduardo Zuñiga actualizado con transcript de llamada estratégica (expansión europea, programa 7k€).",
+      "source": "#intelligence — Lead Sync 2026-04-08"
+    },
+    {
+      "category": "meetings",
+      "severity": "info",
+      "title": "2 reuniones con externos hoy",
+      "detail": "12:00 — Aarón (Growit School), reunión general Growth4U. 16:00 — Gonzalo Albero (Orbyn) + Philippe, revisión de propuesta. GHL API key expirada = sin datos CRM cruzados.",
+      "source": "#intelligence — Call Prep 9 abril"
+    },
+    {
+      "category": "system_issue",
+      "severity": "medium",
+      "title": "GHL API key sigue expirada",
+      "detail": "Limita call prep, lead sync y cruce de datos CRM. Acción requerida: renovar API key de GoHighLevel.",
+      "source": "#intelligence — Call Prep + Lead Sync"
+    },
+    {
+      "category": "data_quality",
+      "severity": "low",
+      "title": "1 contacto sin fuente + posible spam",
+      "detail": "Contacto 'al chat' sin fuente identificada. Lead 'besimlipa633@gmail.com' potencialmente spam.",
+      "source": "#intelligence — Morning Metrics"
+    }
+  ],
+  "metrics_snapshot": {
+    "meta_ads_yesterday": {
+      "spend": 139.51,
+      "impressions": 5117,
+      "clicks": 94,
+      "ctr": 1.84,
+      "cpc": 1.48,
+      "leads": 3
+    },
+    "meta_ads_7d_avg": {
+      "spend": 192.64,
+      "impressions": 9252,
+      "leads_per_day": 3.9
+    },
+    "ghl": {
+      "new_contacts_24h": 4,
+      "appointments_24h": 0,
+      "total_llamada_agendada": 15
+    }
+  },
+  "actions_recommended": [
+    {
+      "priority": "P0",
+      "action": "Auditar campañas Meta — ¿presupuesto agotado o campaña pausada? Spend cayó €53 vs media",
+      "owner": "Philippe"
+    },
+    {
+      "priority": "P0",
+      "action": "Auditar secuencias de nurturing en GHL — 0 citas con 15 leads activos es inaceptable",
+      "owner": "equipo"
+    },
+    {
+      "priority": "P1",
+      "action": "Renovar API key de GHL para restaurar funcionalidad completa de call prep y lead sync",
+      "owner": "Alfonso"
+    },
+    {
+      "priority": "P2",
+      "action": "Escalar el creative del 05-abr (274 clicks, CPC €0.82) — mejor rendimiento de la semana",
+      "owner": "Philippe"
+    }
+  ]
+}
