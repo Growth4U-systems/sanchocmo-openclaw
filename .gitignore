@@ -76,9 +76,6 @@ workspace-sancho/*-data.js
 workspace-sancho/mc-data/
 workspace-sancho/mc/
 workspace-sancho/clients.js
-workspace-sancho/costs-daily.json
-workspace-sancho/costs-global.json
-workspace-sancho/crons-backup.json
 
 # === Media (binary) ===
 media/

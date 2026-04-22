@@ -11,6 +11,10 @@ workspace-sancho/
 ├── IDENTITY.md                    # Brief identity card
 ├── HEARTBEAT.md                   # Periodic check definitions
 │
+├── USER.md                        # Human profile (instance, auto-injected by OpenClaw)
+├── TOOLS.md                       # Deployment-specific config (instance, auto-injected)
+├── MEMORY.md                      # Curated instance wisdom (instance, read by OpenClaw)
+│
 ├── skills/                        # 120+ marketing skills (framework)
 │   └── {skill-name}/SKILL.md
 ├── personas/                      # 9 worker personas (framework)
@@ -34,7 +38,7 @@ workspace-sancho/
 │
 ├── templates/                     # Seeds for new instances (framework)
 │   ├── brand/                     # Empty brand structure (Foundation v2.0)
-│   └── instance/                  # MEMORY.md, TASKS.md (copied to memory/)
+│   └── instance/                  # MEMORY.md (→ workspace root), TASKS.md (→ memory/)
 │
 ├── brand/                         # Client data (gitignored except example/)
 │   ├── example/                   # Template reference (versionado)
@@ -89,15 +93,16 @@ NEVER put client data, API keys, or deployment-specific info in framework files.
 
 ## First Run
 
-If `memory/MEMORY.md` does not exist, this is a fresh instance:
+If `MEMORY.md` does not exist at workspace root, this is a fresh instance:
 
 1. Create `memory/` and `memory/daily/` if needed
-2. Copy `MEMORY.md`, `TASKS.md` from `templates/instance/` into `memory/`
-3. Copy `templates/brand/` structure for each new client into `brand/{slug}/`
-4. Fill in `USER.md` (workspace root) with your human's info
-5. Fill in `TOOLS.md` (workspace root) with deployment-specific values
+2. Copy `MEMORY.md` from `templates/instance/` to workspace root
+3. Copy `TASKS.md` from `templates/instance/` to `memory/`
+4. Copy `templates/brand/` structure for each new client into `brand/{slug}/`
+5. Fill in `USER.md` (workspace root) with your human's info
+6. Fill in `TOOLS.md` (workspace root) with deployment-specific values
 
-Note: `USER.md` and `TOOLS.md` live in the workspace root (OpenClaw auto-creates and injects them into every session). `memory/` is for files the agent manages: MEMORY.md, TASKS.md, daily logs.
+Note: OpenClaw reads `USER.md`, `TOOLS.md`, `AGENTS.md`, `SOUL.md`, `IDENTITY.md`, and `MEMORY.md` from the workspace root and auto-injects them into sessions. `memory/` holds additional state the agent manages: TASKS.md, CHANGELOG.md, daily logs, costs/, state/, archive/.
 
 ## Every Session
 
@@ -107,7 +112,7 @@ Before doing anything else:
 2. Read `USER.md` — this is who you're helping (workspace root, auto-injected)
 3. Read `TOOLS.md` — deployment config (workspace root, auto-injected)
 4. Read `memory/daily/YYYY-MM-DD.md` (today + yesterday) for recent context
-5. **If in MAIN SESSION** (direct chat with human): Also read `memory/MEMORY.md`
+5. **If in MAIN SESSION** (direct chat with human): Also read `MEMORY.md` (workspace root, auto-injected by OpenClaw at DM session start)
 
 ---
 
