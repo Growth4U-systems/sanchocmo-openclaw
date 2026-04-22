@@ -15,9 +15,9 @@ context_required:
   - brand/{slug}/foundation-state.json
   - brand/{slug}/company-brief/current.md
 context_writes:
-  - brand/{slug}/projects/P{XX}-{slug}/project.json
-  - brand/{slug}/projects/P{XX}-{slug}/tasks.json
-  - brand/{slug}/projects/P{XX}-{slug}/playbook.md
+  - brand/{slug}/projects/P{XX}/project.json
+  - brand/{slug}/projects/P{XX}/tasks.json
+  - brand/{slug}/projects/P{XX}/playbook.md
 ---
 
 # Sancho Manager — Comodín de Gestión
@@ -62,7 +62,7 @@ Si no hay directorios `P*/` en `projects/`, el primer proyecto será P01.
 Si otros archivos no existen, continuar sin ellos (warning, no bloqueo).
 
 Al presentar archivos al usuario, usar siempre links tokenizados de MC (leer `clients.json` para obtener `mcToken`):
-`{MC_BASE}/docs/brand/{slug}/projects/P{XX}-{slug}/playbook.md`
+`{MC_BASE}/docs/brand/{slug}/projects/P{XX}/playbook.md`
 
 ### Paso 1: Entender el Objetivo (~1 min)
 
@@ -144,7 +144,7 @@ T02 → {nombre} | depende de T01 | #{canal} | ...
 Al aprobar:
 
 1. **Asignar P{XX}** — Escanear directorios `projects/P*/`, tomar el número más alto + 1
-2. **Crear `projects/P{XX}-{slug}/project.json`** — Seguir schema de [data-model.md](../strategic-plan/references/data-model.md):
+2. **Crear `projects/P{XX}/project.json`** — Seguir schema de [data-model.md](../strategic-plan/references/data-model.md):
    ```json
    {
      "id": "P{XX}",
@@ -164,7 +164,7 @@ Al aprobar:
      "value_review": null
    }
    ```
-3. **Crear `projects/P{XX}-{slug}/tasks.json`** — Array de tareas:
+3. **Crear `projects/P{XX}/tasks.json`** — Array de tareas:
    ```json
    {
      "project_id": "P{XX}",
@@ -189,8 +189,8 @@ Al aprobar:
      ]
    }
    ```
-4. **Crear `projects/P{XX}-{slug}/playbook.md`** — Resumen con links a playbooks de tareas
-5. **Crear `projects/P{XX}-{slug}/T{YY}/playbook.md`** — Por cada tarea, instrucciones detalladas
+4. **Crear `projects/P{XX}/playbook.md`** — Resumen con links a playbooks de tareas
+5. **Crear `projects/P{XX}/T{YY}/playbook.md`** — Por cada tarea, instrucciones detalladas
 6. **Regenerar MC data:** `python3 scripts/regenerate.py` (para que MC refleje el nuevo proyecto)
 8. **Ofrecer crear hilos Discord** — "¿Creo los hilos en Discord?" → Si sí, seguir `_system/project-threads-protocol.md` (resolver channel IDs desde `brand/{slug}/discord-channels.json` primero; si no existe, ejecutar `message(action=channel-list)` para crearlo)
 
@@ -198,7 +198,7 @@ Al aprobar:
 
 ## Mode PROJECT — Gestión dentro de un proyecto existente
 
-Leer `projects/P{XX}-{slug}/project.json` + `tasks.json`.
+Leer `projects/P{XX}/project.json` + `tasks.json`.
 
 Detectar sub-modo:
 
@@ -360,7 +360,7 @@ Antes de crear/presentar cualquier proyecto o tarea, verificar:
 - [ ] Channels asignados corresponden al tipo de tarea (web → #web, no #content)
 - [ ] Skills asignados existen en `skills/` directory
 - [ ] Owner = "Sancho" por defecto, "Equipo" solo si requiere acción humana genuina
-- [ ] Carpeta `P{XX}-{slug}/` creada con `project.json` válido
+- [ ] Carpeta `P{XX}/` creada con `project.json` válido
 - [ ] Alignment check ejecutado vs strategic plan (si existe)
 - [ ] Estimaciones usan velocidad-AI (no timelines de agencia)
 - [ ] `description` y `approach` escritos para ser legibles por cualquiera (no técnico)
@@ -381,6 +381,6 @@ Antes de crear/presentar cualquier proyecto o tarea, verificar:
 | Lee de | `foundation-state.json` | Estado de Foundation |
 | Lee de | `skills/strategic-plan/references/strategies-catalog.json` | Vincular tareas a estrategias del catálogo (poblar `strategy.catalog_id` en project.json) |
 | Escribe | project.json, tasks.json, playbook.md | Artefactos de proyecto |
-| Escribe | projects/P{XX}-{slug}/project.json | Datos del proyecto (el filesystem es el registro) |
+| Escribe | projects/P{XX}/project.json | Datos del proyecto (el filesystem es el registro) |
 | Encadena con | Skills de ejecución | Via dispatch para ejecutar tareas |
 | Encadena con | `project-threads-protocol.md` | Para creación de hilos Discord |

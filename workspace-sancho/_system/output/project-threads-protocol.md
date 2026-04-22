@@ -4,7 +4,7 @@
 
 ## Prerequisitos
 - `strategic-plan/current.md` aprobado
-- `projects/P{XX}-{slug}/project.json` + `tasks.json` creados
+- `projects/P{XX}/project.json` + `tasks.json` creados
 - Canal `#projects` existe en el guild del cliente
 - Canales temáticos existen (web, content, prospecting, etc.)
 
@@ -87,7 +87,7 @@ Primer mensaje en el hilo de la tarea (**MENCIONAR al usuario + LINK al proyecto
 {descripción}
 
 📂 **Proyecto:** [P{XX}] {nombre_proyecto} → <https://discord.com/channels/{guild}/{project_thread_id}>
-📖 **Playbook:** <{MC_BASE}/docs/brand/{slug}/projects/P{XX}-{slug}/T{YY}/playbook.md>
+📖 **Playbook:** <{MC_BASE}/docs/brand/{slug}/projects/P{XX}/T{YY}/playbook.md>
 🔗 **Mission Control:** <{MC_BASE}/projects/>
 
 ¿La ejecuto? Esperando confirmación.
