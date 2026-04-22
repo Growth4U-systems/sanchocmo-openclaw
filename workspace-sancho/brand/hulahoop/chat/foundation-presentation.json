@@ -104,7 +104,58 @@
       "text": "La presentación de Foundation se genera vía **market-synthesis** (skill de Layer 2), que consume los outputs de 3 skills anteriores:\n\n| Skill | Layer | Qué aporta |\n|-------|-------|-----------|\n| `market-intelligence` | 1 | Datos de mercado, TAM, regulaciones |\n| `competitor-intelligence` | 1 | Mapa competitivo, vulnerabilidades |\n| `self-intelligence` | 1 | Fortalezas/debilidades confirmadas |\n| **`market-synthesis`** | **2** | **SWOT + TOWS + OPE Canvas + Presentación HTML** |\n\nEl skill market-synthesis está en `foundation-state.json` como `foundation-presentation` con status **pending-review** — todavía no fue aprobado, así que la presentación existe pero está pendiente de tu visto bueno.\n\nEl output va a: `brand/hulahoop/presentations/foundation-report.html`\n\n¿Quieres que revise el contenido actual de la presentación para ver qué necesita?",
       "ts": 1776678265833,
       "agent": "sancho"
+    },
+    {
+      "role": "user",
+      "text": "Usa el formato de la skill de markey syntesis",
+      "ts": 1776876284216
+    },
+    {
+      "role": "bot",
+      "text": "**Skills usadas para la Foundation Presentation de Hulahoop:**\n\n| Skill | Layer | Rol | Docs que consume |\n|-------|-------|-----|------------------|\n| `market-intelligence` | 1 | Datos de mercado, TAM, regulación, tendencias | `brand/hulahoop/market-and-us/market/current.md` |\n| `competitor-intelligence` | 1 | Mapa competitivo, vulnerabilidades de rivals | `brand/hulahoop/market-and-us/competitors/current.md` |\n| `self-intelligence` | 1 | Fortalezas/debilidades confirmadas con evidencia | `brand/hulahoop/market-and-us/self/current.md` |\n| **`market-synthesis`** | **2** | **SWOT+TOWS+ICE + OPE Canvas + Presentación HTML** | Consume los 3 de arriba |\n\n**Flujo de datos (según market-synthesis SKILL.md):**\n\n```\nmarket-intelligence    → O/T del SWOT, datos de mercado\ncompetitor-intelligence → O/T del SWOT, vulnerabilidades  \nself-intelligence     → S/W del SWOT, assets confirmados\ncompany-brief         → contexto empresa para OPE Canvas\n\nmarket-synthesis OUTPUT:\n  brand/hulahoop/market-and-us/swot/current.md\n  brand/hulahoop/market-and-us/summary/current.md\n  brand/hulahoop/market-and-us/ope-canvas/current.md\n  brand/hulahoop/presentations/foundation-report.html\n```\n\n**Skills downstream que consumen estos outputs:**\n- `niche-discovery-100x` ← SWOT quadrants (Triple Filter)\n- `positioning-messaging` ← strengths confirmadas, estrategias SO\n- `strategic-plan` ← top 3 estrategias ICE, OPE Canvas\n- `pricing-strategy` ← competitive position\n\nLa presentación actual es el output de Layer 2 (market-synthesis), que sintetiza los 3 pilares de Layer 1.",
+      "agent": "sancho",
+      "ts": "2026-04-22T16:45:23.136Z"
+    },
+    {
+      "role": "user",
+      "text": "Volve a generar utilizando la skill de market syntesis",
+      "ts": 1776876372259
+    },
+    {
+      "role": "user",
+      "text": "?",
+      "ts": 1776876553322
+    },
+    {
+      "role": "bot",
+      "text": "Sí, aquí estoy.\n\n¿Qué necesitas que gestione en este hilo?",
+      "agent": "sancho",
+      "ts": "2026-04-22T16:49:38.644Z"
+    },
+    {
+      "role": "bot",
+      "text": "Voy a regenerarla con market-synthesis usando los docs de market, competitors, self y company brief, y luego rehago el HTML final.",
+      "agent": "sancho",
+      "ts": "2026-04-22T16:53:09.906Z"
+    },
+    {
+      "role": "bot",
+      "text": "Ya tengo los tres inputs principales. Ahora cargo company brief y la base visual para rehacer también el HTML final.",
+      "agent": "sancho",
+      "ts": "2026-04-22T16:53:09.910Z"
+    },
+    {
+      "role": "bot",
+      "text": "No había outputs previos de market-synthesis en disco, así que los estoy reconstruyendo desde cero y luego rehago la presentación.",
+      "agent": "sancho",
+      "ts": "2026-04-22T16:53:09.912Z"
+    },
+    {
+      "role": "bot",
+      "text": "Listo.\n\nRegeneré la Foundation usando **market-synthesis** y dejé estos outputs nuevos:\n\n- `brand/hulahoop/market-and-us/swot/current.md`\n- `brand/hulahoop/market-and-us/summary/current.md`\n- `brand/hulahoop/market-and-us/ope-canvas/current.md`\n- `brand/hulahoop/presentations/foundation-report.html`\n\nQA rápido:\n- ✅ SWOT, Summary y OPE cuentan la misma historia\n- ✅ Incluí TOWS + ICE + top 3 acciones inmediatas\n- ✅ El HTML ahora sigue una estructura más alineada con la skill\n- ✅ Dejé links a los documentos fuente dentro de la presentación\n- ⚠️ Hay una limitación real: `self/current.md` está en modo **lite**, así que parte del SWOT interno tiene confianza media, no máxima\n- ⚠️ No encontré `brand-identity/visual-identity/current.md`, así que usé estilo base\n\nSi quieres, siguiente paso hago una de estas dos:\n1. **QA más duro slide por slide**, o\n2. **ajusto la narrativa** para que quede más cerca del tono que queréis presentar al cliente.",
+      "agent": "sancho",
+      "ts": "2026-04-22T16:53:09.913Z"
     }
   ],
-  "updatedAt": 1776678265833
+  "updatedAt": 1776876789913
 }

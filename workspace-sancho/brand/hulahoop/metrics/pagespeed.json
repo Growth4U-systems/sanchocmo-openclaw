@@ -2,12 +2,12 @@
   "url": "https://hulahoop.media",
   "mobile": {
     "performance": 62,
-    "seo": 80,
-    "accessibility": 54,
-    "bestPractices": 96,
-    "lcp": 12.5,
+    "seo": 92,
+    "accessibility": 91,
+    "bestPractices": 100,
+    "lcp": 16.1,
     "cls": 0,
-    "tbt": 214,
+    "tbt": 189,
     "opportunities": [
       {
         "id": "redirects",
@@ -18,35 +18,24 @@
       {
         "id": "unused-javascript",
         "title": "Reduce unused JavaScript",
-        "savings": 150,
+        "savings": 750,
         "description": "Reduce unused JavaScript and defer loading scripts until they are required to decrease bytes consumed by network activity. [Learn how to reduce unused"
-      },
-      {
-        "id": "server-response-time",
-        "title": "Initial server response time was short",
-        "savings": 11,
-        "description": "Keep the server response time for the main document short because all other requests depend on it. [Learn more about the Time to First Byte metric](ht"
       }
     ],
     "diagnostics": [
       {
-        "id": "html-has-lang",
-        "title": "`<html>` element does not have a `[lang]` attribute",
+        "id": "mainthread-work-breakdown",
+        "title": "Minimize main-thread work",
         "score": 0
       },
       {
-        "id": "errors-in-console",
-        "title": "Browser errors were logged to the console",
+        "id": "label",
+        "title": "Form elements do not have associated labels",
         "score": 0
       },
       {
-        "id": "image-delivery-insight",
-        "title": "Improve image delivery",
-        "score": 0
-      },
-      {
-        "id": "landmark-one-main",
-        "title": "Document does not have a main landmark.",
+        "id": "link-name",
+        "title": "Links do not have a discernible name",
         "score": 0
       },
       {
@@ -55,38 +44,37 @@
         "score": 0
       },
       {
-        "id": "document-title",
-        "title": "Document doesn't have a `<title>` element",
+        "id": "image-delivery-insight",
+        "title": "Improve image delivery",
+        "score": 0
+      },
+      {
+        "id": "legacy-javascript-insight",
+        "title": "Legacy JavaScript",
         "score": 0
       }
     ]
   },
   "desktop": {
-    "performance": 81,
+    "performance": 84,
     "seo": 92,
-    "accessibility": 86,
+    "accessibility": 91,
     "bestPractices": 100,
-    "lcp": 2.8,
-    "cls": 0.006,
-    "tbt": 106,
+    "lcp": 2.9,
+    "cls": 0,
+    "tbt": 45,
     "opportunities": [
       {
         "id": "redirects",
         "title": "Avoid multiple page redirects",
-        "savings": 203,
+        "savings": 202,
         "description": "Redirects introduce additional delays before the page can be loaded. [Learn how to avoid page redirects](https://developer.chrome.com/docs/lighthouse/"
       },
       {
         "id": "unused-javascript",
         "title": "Reduce unused JavaScript",
-        "savings": 160,
+        "savings": 80,
         "description": "Reduce unused JavaScript and defer loading scripts until they are required to decrease bytes consumed by network activity. [Learn how to reduce unused"
-      },
-      {
-        "id": "server-response-time",
-        "title": "Initial server response time was short",
-        "savings": 26,
-        "description": "Keep the server response time for the main document short because all other requests depend on it. [Learn more about the Time to First Byte metric](ht"
       }
     ],
     "diagnostics": [
@@ -109,13 +97,8 @@
         "id": "image-delivery-insight",
         "title": "Improve image delivery",
         "score": 0
-      },
-      {
-        "id": "button-name",
-        "title": "Buttons do not have an accessible name",
-        "score": 0
       }
     ]
   },
-  "fetchedAt": "2026-04-21T09:49:46.472Z"
+  "fetchedAt": "2026-04-22T15:01:10.318Z"
 }
