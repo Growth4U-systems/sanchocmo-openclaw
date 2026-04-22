@@ -242,8 +242,8 @@ export default function FoundationPage() {
         /(?:brand\/[^/]+\/)?projects\/([^/]+)(?:\/(?:T(\d+)|tasks\/([^/]+)))?/i
       );
       if (m && slug) {
-        const projDir = m[1]; // e.g. "P01-fontaneria"
-        const projId = projDir.match(/^(P\d+)/)?.[1]; // e.g. "P01"
+        const projDir = m[1];
+        const projId = projDir.match(/^(P\d+)/)?.[1];
         const taskNum = m[2]; // e.g. "08" from T08
         const taskId = m[3]; // e.g. "P01-T08" from tasks/{taskId}
 

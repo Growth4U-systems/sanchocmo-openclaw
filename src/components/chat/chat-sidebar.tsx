@@ -294,10 +294,8 @@ export function ChatSidebar() {
         }
         // Task data not loaded yet — set a minimal meta so the pill still
         // shows with a task-page link. Strip the `task-`/`task:` prefix,
-        // upper-case for display, and guess the projectId from the first
-        // P-prefixed segment. `{slug}-t{NN}` middle segments (like
-        // `fontaneria` in `P01-fontaneria-T07`) break this heuristic but
-        // the full lookup above covers them once projectsData loads.
+        // upper-case for display, and take the projectId from the first
+        // P-prefixed segment (task IDs are `P{N}-T{NN}` post-rename).
         const rawId = shortId.replace(/^task[-:]/i, "");
         const taskIdUpper = rawId.toUpperCase();
         const firstSegment = taskIdUpper.split("-")[0] || "";
