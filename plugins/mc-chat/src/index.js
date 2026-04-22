@@ -5,6 +5,8 @@
  * from Mission Control server.
  */
 
+import fs from "node:fs";
+import path from "node:path";
 import { defineChannelPluginEntry } from "openclaw/plugin-sdk/core";
 import {
   finalizeInboundContext,
@@ -15,6 +17,89 @@ import { mcChatPlugin } from "./channel.js";
 
 const CHANNEL_KEY = "mc-chat";
 const DEFAULT_ACCOUNT_ID = "default";
+
+// ─── Rehydration tuning ───
+// When the runtime session for a thread has gone idle beyond session.threadBindings.idleHours,
+// OpenClaw releases its in-memory context. The next inbound message arrives to a fresh
+// session with no history, so the agent ends up asking the user to re-supply information
+// that is already on disk in the thread JSON log.
+//
+// To recover, when we detect the session is likely cold (last assistant message older
+// than REHYDRATE_THRESHOLD_MS) we read the last REHYDRATE_MAX_MESSAGES from the thread JSON
+// and prepend them to the body passed to the agent, under a [PRIOR CONVERSATION] block.
+// Each message is truncated at REHYDRATE_MAX_CHARS.
+const REHYDRATE_THRESHOLD_MS = 24 * 60 * 60 * 1000; // match session.threadBindings.idleHours (openclaw.json)
+const REHYDRATE_MAX_MESSAGES = 30;
+const REHYDRATE_MAX_CHARS = 1500;
+
+function mcChatThreadFile(workspace, slug, threadId) {
+  // Must match src/lib/data/mc-chat.ts threadFile(): strip leading "{slug}:" if present,
+  // then replace ":" → "-" and strip anything outside [A-Za-z0-9_-].
+  const colonIdx = threadId.indexOf(":");
+  const shortId = colonIdx < 0 ? threadId : threadId.slice(colonIdx + 1);
+  const safeId = shortId.replace(/:/g, "-").replace(/[^a-zA-Z0-9\-_]/g, "");
+  return path.join(workspace, "brand", slug, "chat", `${safeId}.json`);
+}
+
+function loadThreadMessages(workspace, slug, threadId) {
+  try {
+    if (!workspace) return [];
+    const file = mcChatThreadFile(workspace, slug, threadId);
+    if (!fs.existsSync(file)) return [];
+    const data = JSON.parse(fs.readFileSync(file, "utf8"));
+    return Array.isArray(data?.messages) ? data.messages : [];
+  } catch {
+    return [];
+  }
+}
+
+function lastAssistantTs(messages) {
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const m = messages[i];
+    if (!m || m.role === "user") continue;
+    const raw = m.ts;
+    if (raw == null) continue;
+    const ts = typeof raw === "number" ? raw : new Date(raw).getTime();
+    if (Number.isFinite(ts) && ts > 0) return ts;
+  }
+  return 0;
+}
+
+function formatPriorConversation(messages) {
+  // Exclude the last entry — the current inbound user message is already stored on disk
+  // before dispatch (see src/pages/api/chat/send.ts:36) and gets passed separately as `text`.
+  const history = messages.slice(Math.max(0, messages.length - 1 - REHYDRATE_MAX_MESSAGES), messages.length - 1);
+  if (history.length === 0) return "";
+  const lines = [];
+  for (const m of history) {
+    if (!m || !m.text || m.role === "status") continue;
+    const speaker = m.role === "user" ? "User" : (m.agent ? m.agent : "Assistant");
+    let body = String(m.text);
+    const truncated = body.length > REHYDRATE_MAX_CHARS;
+    if (truncated) body = body.slice(0, REHYDRATE_MAX_CHARS) + "… [truncated]";
+    lines.push(`[${speaker}]\n${body}`);
+  }
+  return lines.join("\n\n---\n\n");
+}
+
+function buildRehydrationBlock(cfg, slug, threadId) {
+  const workspace = cfg?.agents?.defaults?.workspace;
+  const messages = loadThreadMessages(workspace, slug, threadId);
+  if (messages.length <= 1) return "";
+  const lastTs = lastAssistantTs(messages);
+  if (!lastTs) return "";
+  if (Date.now() - lastTs < REHYDRATE_THRESHOLD_MS) return "";
+  const body = formatPriorConversation(messages);
+  if (!body) return "";
+  return [
+    `[PRIOR CONVERSATION — session was idle >${Math.round(REHYDRATE_THRESHOLD_MS / 3600000)}h, rehydrating from thread log]`,
+    `Treat this as ground truth already established with the user. Do NOT ask the user to repeat anything that is present here; instead reference it directly. If a deliverable was already produced (path mentioned below), read it before replying.`,
+    ``,
+    body,
+    ``,
+    `[/PRIOR CONVERSATION]`,
+  ].join("\n");
+}
 
 export default defineChannelPluginEntry({
   id: "mc-chat",
@@ -109,10 +194,23 @@ export default defineChannelPluginEntry({
         if (linkedTo) contextLines.push(`linked_to: ${linkedTo}`);
         if (skill) contextLines.push(`skill: ${skill}`);
         contextLines.push(`IMPORTANT: You are responding via MC Chat, NOT Discord. Do NOT use the message tool to reply. Just respond with text directly — your reply will be delivered to the user automatically via the MC Chat callback. Do NOT create Discord threads or send Discord messages for this conversation. Read files from disk (brand/${slug}/), never via HTTP/web_fetch to localhost.`);
+        contextLines.push(`Before replying, if a [PRIOR CONVERSATION] block is present below, treat it as authoritative prior context for this thread — do not ask the user for information that is already there.`);
         contextLines.push(`⚠️ EXECUTION GUARDRAIL: Aprobar un plan o crear proyectos NO es autorización para ejecutar tareas. Siempre preguntar "¿Ejecuto [tarea específica]?" y esperar confirmación explícita antes de generar deliverables. "Apruebo el plan" y "Ejecuta" son pasos DIFERENTES.`);
         contextLines.push(`[/MC Chat Context]`);
 
-        const bodyForAgent = contextLines.join('\n') + '\n\n' + text;
+        let rehydrationBlock = "";
+        try {
+          rehydrationBlock = buildRehydrationBlock(cfg, slug, threadId);
+          if (rehydrationBlock) {
+            logger.info(`[mc-chat] Rehydrating cold session for ${slug}/${threadId} — injecting prior conversation`);
+          }
+        } catch (err) {
+          logger.warn(`[mc-chat] Rehydration failed for ${slug}/${threadId}: ${err?.message || err}`);
+        }
+
+        const bodyForAgent = contextLines.join('\n')
+          + (rehydrationBlock ? '\n\n' + rehydrationBlock : '')
+          + '\n\n' + text;
 
         // Resolve sender identity based on admin/client role
         // This maps to toolsBySender keys in openclaw.json:
