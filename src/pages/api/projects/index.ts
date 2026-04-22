@@ -36,6 +36,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         id: d.name.split("-")[0],
         slug: d.name,
         name: d.name,
+        status: "todo",
       };
       let tasks: unknown[] = [];
       try {
@@ -44,6 +45,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
           ...JSON.parse(fs.readFileSync(path.join(dirPath, "project.json"), "utf-8")),
         };
       } catch {}
+      if (!project.status) project.status = "todo";
       try {
         const td = JSON.parse(fs.readFileSync(path.join(dirPath, "tasks.json"), "utf-8"));
         tasks = Array.isArray(td) ? td : td.tasks || [];

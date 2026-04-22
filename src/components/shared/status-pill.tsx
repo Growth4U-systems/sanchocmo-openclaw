@@ -36,8 +36,9 @@ const SIZE_CLASSES = {
 };
 
 export function StatusPill({ status, colorMap, size = "sm", labelOverride }: StatusPillProps) {
+  const safeStatus = status ?? "unknown";
   const map = { ...DEFAULT_COLOR_MAP, ...colorMap };
-  const colors = map[status.toLowerCase()] ?? "bg-muted text-muted-foreground";
+  const colors = map[safeStatus.toLowerCase()] ?? "bg-muted text-muted-foreground";
 
   return (
     <span
@@ -47,7 +48,7 @@ export function StatusPill({ status, colorMap, size = "sm", labelOverride }: Sta
         SIZE_CLASSES[size],
       )}
     >
-      {labelOverride ?? status.replace(/[_-]/g, " ")}
+      {labelOverride ?? safeStatus.replace(/[_-]/g, " ")}
     </span>
   );
 }
