@@ -11,7 +11,7 @@
 - Si hay evento en <2h → notificar
 
 ### 📝 Memory Maintenance
-- Si es el primer heartbeat del día: crear memory/daily/YYYY-MM-DD.md
+- Si es el primer heartbeat del día: crear memory/YYYY-MM-DD.md
 - Cada 3 días: revisar daily files recientes → actualizar MEMORY.md
 
 ## Estado de checks

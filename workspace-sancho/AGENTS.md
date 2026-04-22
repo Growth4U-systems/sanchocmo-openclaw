@@ -52,13 +52,10 @@ workspace-sancho/
 │       └── foundation-state.json  # Pillar completion status
 │
 ├── memory/                        # Instance state (gitignored)
-│   ├── USER.md                    # Human profile
-│   ├── TOOLS.md                   # Deployment-specific config
-│   ├── MEMORY.md                  # Curated instance wisdom
 │   ├── TASKS.md                   # Active task board
 │   ├── CHANGELOG.md               # Instance history
 │   ├── INDEX.md                   # File index
-│   ├── daily/                     # One file per day: YYYY-MM-DD.md
+│   ├── YYYY-MM-DD.md              # Daily notes (flat, per openClaw convention)
 │   ├── clients/                   # Per-client memory: {slug}.md
 │   ├── costs/                     # Cost tracking (global.json, daily.json)
 │   ├── state/                     # Operational JSON (api-health, intelligence, etc.)
@@ -74,7 +71,7 @@ workspace-sancho/
 | Type | Location | Example |
 |---|---|---|
 | Client brand data | `brand/{slug}/` following Foundation structure | `brand/acme/company-brief/current.md` |
-| Daily log | `memory/daily/YYYY-MM-DD.md` | `memory/daily/2026-04-06.md` |
+| Daily log | `memory/YYYY-MM-DD.md` | `memory/2026-04-06.md` |
 | Client memory | `memory/clients/{slug}.md` | `memory/clients/hospital-capilar.md` |
 | Task definition | `memory/archive/prds/T-NNN.md` | `memory/archive/prds/T-060.md` |
 | Operational state | `memory/state/` | `memory/state/api-health.json` |
@@ -95,7 +92,7 @@ NEVER put client data, API keys, or deployment-specific info in framework files.
 
 If `MEMORY.md` does not exist at workspace root, this is a fresh instance:
 
-1. Create `memory/` and `memory/daily/` if needed
+1. Create `memory/` if needed
 2. Copy `MEMORY.md` from `templates/instance/` to workspace root
 3. Copy `TASKS.md` from `templates/instance/` to `memory/`
 4. Copy `templates/brand/` structure for each new client into `brand/{slug}/`
@@ -111,7 +108,7 @@ Before doing anything else:
 1. Read `SOUL.md` — this is who you are
 2. Read `USER.md` — this is who you're helping (workspace root, auto-injected)
 3. Read `TOOLS.md` — deployment config (workspace root, auto-injected)
-4. Read `memory/daily/YYYY-MM-DD.md` (today + yesterday) for recent context
+4. Read `memory/YYYY-MM-DD.md` (today + yesterday) for recent context
 5. **If in MAIN SESSION** (direct chat with human): Also read `MEMORY.md` (workspace root, auto-injected by OpenClaw at DM session start)
 
 ---
@@ -181,8 +178,8 @@ Lee `_system/instance.json` al inicio de cada sesión para resolver:
 
 You wake up fresh each session. These files are your continuity:
 
-- **Daily notes:** `memory/daily/YYYY-MM-DD.md` — raw logs of what happened
-- **Long-term:** `memory/MEMORY.md` — curated instance wisdom
+- **Daily notes:** `memory/YYYY-MM-DD.md` — raw logs of what happened
+- **Long-term:** `MEMORY.md` (workspace root) — curated instance wisdom
 - **Per-client:** `memory/clients/{slug}.md` — client-specific memory
 - **Instance config:** `USER.md`, `TOOLS.md` (workspace root, auto-injected), `memory/TASKS.md`
 
@@ -191,9 +188,9 @@ Capture what matters. Decisions, context, things to remember. "Remember this" �
 ### Memory Maintenance (During Heartbeats)
 
 Periodically, use a heartbeat to:
-1. Read recent `memory/daily/YYYY-MM-DD.md` files
-2. Distill instance wisdom → update `memory/MEMORY.md`
-3. Remove outdated info from `memory/MEMORY.md`
+1. Read recent `memory/YYYY-MM-DD.md` files
+2. Distill instance wisdom → update `MEMORY.md` (workspace root)
+3. Remove outdated info from `MEMORY.md`
 
 ---
 

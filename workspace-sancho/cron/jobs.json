@@ -52,7 +52,7 @@
       "wakeMode": "now",
       "payload": {
         "kind": "agentTurn",
-        "message": "Síntesis semanal: 1) Lee memory/daily/*.md de los últimos 7 días. 2) Lee brand/daily-pulse/*.json recientes. 3) Lee brand/learnings.md. 4) Identifica patrones, tendencias, y decisiones clave. 5) Actualiza brand/learnings.md con patrones confirmados. 6) Genera resumen ejecutivo con: qué aprendimos, qué cambió, qué hacer diferente. Publica en Discord #learning.",
+        "message": "Síntesis semanal: 1) Lee memory/20*.md (daily notes flat) de los últimos 7 días. 2) Lee brand/daily-pulse/*.json recientes. 3) Lee brand/learnings.md. 4) Identifica patrones, tendencias, y decisiones clave. 5) Actualiza brand/learnings.md con patrones confirmados. 6) Genera resumen ejecutivo con: qué aprendimos, qué cambió, qué hacer diferente. Publica en Discord #learning.",
         "model": "anthropic/claude-sonnet-4-5"
       },
       "delivery": {
@@ -149,7 +149,7 @@
       "wakeMode": "now",
       "payload": {
         "kind": "agentTurn",
-        "message": "Mantenimiento de memoria: 1) Lee memory/daily/*.md de los últimos 7 días. 2) Lee MEMORY.md actual. 3) Extrae eventos significativos, lecciones, decisiones, opiniones que vale la pena recordar. 4) Actualiza MEMORY.md con lo nuevo (sin duplicar). 5) Elimina info obsoleta de MEMORY.md. 6) Reporta qué añadiste y qué eliminaste.",
+        "message": "Mantenimiento de memoria: 1) Lee memory/20*.md (daily notes flat) de los últimos 7 días. 2) Lee MEMORY.md actual. 3) Extrae eventos significativos, lecciones, decisiones, opiniones que vale la pena recordar. 4) Actualiza MEMORY.md con lo nuevo (sin duplicar). 5) Elimina info obsoleta de MEMORY.md. 6) Reporta qué añadiste y qué eliminaste.",
         "model": "anthropic/claude-sonnet-4-5"
       },
       "delivery": {

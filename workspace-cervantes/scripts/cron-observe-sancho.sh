@@ -20,7 +20,7 @@ YESTERDAY=$(date -d "yesterday" +%Y-%m-%d 2>/dev/null || date -v-1d +%Y-%m-%d)
 
 claude -p "Observa las sesiones recientes de Sancho (ultimas 24h).
 
-1. Lee ../workspace-sancho/memory/daily/$TODAY.md y ../workspace-sancho/memory/daily/$YESTERDAY.md si existen.
+1. Lee ../workspace-sancho/memory/$TODAY.md y ../workspace-sancho/memory/$YESTERDAY.md si existen.
 2. Lee memory/MEMORY.md para contexto.
 3. Identifica: errores, skills que fallaron, preguntas sin respuesta, patrones de mejora.
 4. Escribe resumen breve en memory/daily/$TODAY.md (append con timestamp).

@@ -15,7 +15,7 @@ cat > "$INDEX_FILE" << 'HEADER'
 ## Structure
 ```
 memory/
-├── daily/          ← Daily notes (YYYY-MM-DD.md)
+├── YYYY-MM-DD.md   ← Daily notes (flat, per openClaw convention)
 ├── topics/         ← Topic-specific deep dives
 ├── clients/        ← Per-client curated memory
 ├── archive/        ← Old daily notes (>30d) + monthly summaries
@@ -27,12 +27,12 @@ memory/
 
 HEADER
 
-# Daily notes
-echo "## Daily Notes (memory/daily/)" >> "$INDEX_FILE"
-DAILY_COUNT=$(ls "$MEMORY_DIR/daily/"*.md 2>/dev/null | wc -l | tr -d ' ')
+# Daily notes (flat: memory/YYYY-MM-DD.md)
+echo "## Daily Notes (memory/YYYY-MM-DD.md)" >> "$INDEX_FILE"
+DAILY_COUNT=$(ls "$MEMORY_DIR/"20*.md 2>/dev/null | wc -l | tr -d ' ')
 echo "Active: $DAILY_COUNT files" >> "$INDEX_FILE"
 echo "" >> "$INDEX_FILE"
-for f in $(ls -r "$MEMORY_DIR/daily/"*.md 2>/dev/null | head -5); do
+for f in $(ls -r "$MEMORY_DIR/"20*.md 2>/dev/null | head -5); do
     echo "- $(basename $f)" >> "$INDEX_FILE"
 done
 [ "$DAILY_COUNT" -gt 5 ] && echo "- ... and $((DAILY_COUNT - 5)) more" >> "$INDEX_FILE"
