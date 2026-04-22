@@ -7,7 +7,7 @@
       "name": "Daily Pulse",
       "enabled": true,
       "createdAtMs": 1771950688301,
-      "updatedAtMs": 1776756153380,
+      "updatedAtMs": 1776815932631,
       "schedule": {
         "kind": "cron",
         "expr": "0 9 * * 1-5",
@@ -27,14 +27,13 @@
       },
       "state": {
         "nextRunAtMs": 1776841200000,
-        "lastRunAtMs": 1776754800020,
-        "lastRunStatus": "error",
-        "lastStatus": "error",
-        "lastDurationMs": 1353360,
-        "lastDeliveryStatus": "not-requested",
-        "consecutiveErrors": 1,
-        "lastError": "FallbackSummaryError: All models failed (3): anthropic/claude-opus-4-6: Provider anthropic has billing issue (skipping all models) (billing) | minimax/MiniMax-M2.7: LLM request timed out. (timeout) | openrouter/qwen/qwen3.6-plus: Upstream error from Alibaba: Request rate increased too quickly. To ensure system stability, please adjust your client logic to scale requests more smoothly over time. (timeout)",
-        "lastErrorReason": "timeout"
+        "lastRunAtMs": 1776815022025,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 910606,
+        "lastDeliveryStatus": "not-delivered",
+        "consecutiveErrors": 0,
+        "lastDelivered": false
       }
     },
     {
@@ -111,7 +110,7 @@
       "name": "Meeting Intelligence",
       "enabled": true,
       "createdAtMs": 1771950715725,
-      "updatedAtMs": 1776787769476,
+      "updatedAtMs": 1776816419339,
       "schedule": {
         "kind": "cron",
         "expr": "0 18 * * 1-5",
@@ -131,10 +130,10 @@
       },
       "state": {
         "nextRunAtMs": 1776873600000,
-        "lastRunAtMs": 1776787200022,
+        "lastRunAtMs": 1776815932631,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 569454,
+        "lastDurationMs": 486708,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0,
         "lastDelivered": false
@@ -239,7 +238,8 @@
         "lastDurationMs": 190141,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0,
-        "lastDelivered": false
+        "lastDelivered": false,
+        "runningAtMs": 1776819600012
       }
     },
     {
@@ -248,7 +248,7 @@
       "name": "healthcheck",
       "enabled": true,
       "createdAtMs": 1772069609685,
-      "updatedAtMs": 1776797626264,
+      "updatedAtMs": 1776816470424,
       "schedule": {
         "kind": "every",
         "everyMs": 21600000,
@@ -268,11 +268,11 @@
         "channel": "last"
       },
       "state": {
-        "nextRunAtMs": 1776819195522,
-        "lastRunAtMs": 1776797595522,
+        "nextRunAtMs": 1776838019339,
+        "lastRunAtMs": 1776816419339,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 30742,
+        "lastDurationMs": 51085,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0,
         "lastDelivered": false
@@ -284,7 +284,7 @@
       "name": "Cervantes observa a Sancho",
       "enabled": true,
       "createdAtMs": 1772115026027,
-      "updatedAtMs": 1776758743620,
+      "updatedAtMs": 1776816544234,
       "schedule": {
         "kind": "cron",
         "expr": "0 10 * * *",
@@ -303,10 +303,10 @@
       },
       "state": {
         "nextRunAtMs": 1776844800000,
-        "lastRunAtMs": 1776758400021,
+        "lastRunAtMs": 1776816470424,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 343599,
+        "lastDurationMs": 73810,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0,
         "lastDelivered": false
@@ -347,7 +347,7 @@
       "name": "Cost Tracker Daily — Multi-Client",
       "enabled": true,
       "createdAtMs": 1772750911798,
-      "updatedAtMs": 1776751320095,
+      "updatedAtMs": 1776816664194,
       "schedule": {
         "kind": "cron",
         "expr": "0 8 * * *",
@@ -366,14 +366,13 @@
       },
       "state": {
         "nextRunAtMs": 1776837600000,
-        "lastRunAtMs": 1776751200063,
-        "lastRunStatus": "error",
-        "lastStatus": "error",
-        "lastDurationMs": 120032,
-        "lastDeliveryStatus": "not-requested",
-        "consecutiveErrors": 15,
-        "lastErrorReason": "timeout",
-        "lastError": "cron: job execution timed out"
+        "lastRunAtMs": 1776816544234,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 119960,
+        "lastDeliveryStatus": "not-delivered",
+        "consecutiveErrors": 0,
+        "lastDelivered": false
       }
     },
     {
@@ -445,7 +444,7 @@
       "name": "update-skills",
       "enabled": true,
       "createdAtMs": 1773235919019,
-      "updatedAtMs": 1776742500290,
+      "updatedAtMs": 1776816812973,
       "schedule": {
         "kind": "cron",
         "expr": "30 5 * * *",
@@ -466,14 +465,13 @@
       },
       "state": {
         "nextRunAtMs": 1776828600000,
-        "lastRunAtMs": 1776742200025,
+        "lastRunAtMs": 1776816664194,
         "lastRunStatus": "error",
         "lastStatus": "error",
-        "lastDurationMs": 300265,
+        "lastDurationMs": 148779,
         "lastDeliveryStatus": "unknown",
-        "consecutiveErrors": 4,
-        "lastErrorReason": "timeout",
-        "lastError": "cron: job execution timed out"
+        "consecutiveErrors": 5,
+        "lastError": "Error [ERR_MODULE_NOT_FOUND]: Cannot find module '/opt/homebrew/lib/node_modules/openclaw/dist/delivery-subagent-registry.runtime-D5LghaIJ.js' imported from /opt/homebrew/lib/node_modules/openclaw/dist/run-delivery.runtime-B3VEtNIu.js"
       }
     },
     {
@@ -731,7 +729,7 @@
       "name": "Lead Sync — Growth4U",
       "enabled": true,
       "createdAtMs": 1774192173315,
-      "updatedAtMs": 1776802022387,
+      "updatedAtMs": 1776817000022,
       "schedule": {
         "kind": "cron",
         "expr": "0 22 * * *",
@@ -749,10 +747,10 @@
       },
       "state": {
         "nextRunAtMs": 1776888000000,
-        "lastRunAtMs": 1776801600021,
+        "lastRunAtMs": 1776816812973,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 422366,
+        "lastDurationMs": 187049,
         "lastDeliveryStatus": "not-delivered",
         "consecutiveErrors": 0,
         "lastDelivered": false
@@ -765,7 +763,7 @@
       "name": "Call Prep Daily — Growth4U",
       "enabled": true,
       "createdAtMs": 1774192180766,
-      "updatedAtMs": 1776803992502,
+      "updatedAtMs": 1776817232045,
       "schedule": {
         "kind": "cron",
         "expr": "30 22 * * 0-4",
@@ -783,15 +781,13 @@
       },
       "state": {
         "nextRunAtMs": 1776889800000,
-        "lastRunAtMs": 1776803401100,
-        "lastRunStatus": "error",
-        "lastStatus": "error",
-        "lastDurationMs": 591402,
+        "lastRunAtMs": 1776817000022,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 232023,
         "lastDeliveryStatus": "not-delivered",
-        "consecutiveErrors": 1,
-        "lastDelivered": false,
-        "lastError": "⚠️ ✉️ Message failed",
-        "lastDeliveryError": "⚠️ ✉️ Message failed"
+        "consecutiveErrors": 0,
+        "lastDelivered": false
       }
     },
     {
@@ -1049,7 +1045,7 @@
       "name": "Daily Pulse — Growth4U",
       "enabled": true,
       "createdAtMs": 1775033081929,
-      "updatedAtMs": 1776756836581,
+      "updatedAtMs": 1776818687753,
       "schedule": {
         "kind": "cron",
         "expr": "0 9 * * 1-5",
@@ -1068,12 +1064,12 @@
       },
       "state": {
         "nextRunAtMs": 1776841200000,
-        "lastRunAtMs": 1776756153380,
+        "lastRunAtMs": 1776817232045,
         "lastRunStatus": "error",
         "lastStatus": "error",
-        "lastDurationMs": 683201,
+        "lastDurationMs": 1455708,
         "lastDeliveryStatus": "unknown",
-        "consecutiveErrors": 14,
+        "consecutiveErrors": 15,
         "lastError": "Channel is required when multiple channels are configured: discord, mc-chat Set delivery.channel explicitly or use a main session with a previous channel."
       }
     },
@@ -1151,7 +1147,7 @@
       "name": "Morning Metrics — Growth4U",
       "enabled": true,
       "createdAtMs": 1775034097507,
-      "updatedAtMs": 1776753267106,
+      "updatedAtMs": 1776818775837,
       "schedule": {
         "kind": "cron",
         "expr": "30 8 * * *",
@@ -1170,12 +1166,12 @@
       },
       "state": {
         "nextRunAtMs": 1776839400000,
-        "lastRunAtMs": 1776753000033,
+        "lastRunAtMs": 1776818687753,
         "lastRunStatus": "error",
         "lastStatus": "error",
-        "lastDurationMs": 267073,
+        "lastDurationMs": 88084,
         "lastDeliveryStatus": "unknown",
-        "consecutiveErrors": 9,
+        "consecutiveErrors": 10,
         "lastError": "Channel is required when multiple channels are configured: discord, mc-chat Set delivery.channel explicitly or use a main session with a previous channel."
       }
     },
@@ -1185,7 +1181,7 @@
       "name": "Morning Metrics — Hulahoop",
       "enabled": true,
       "createdAtMs": 1775563322560,
-      "updatedAtMs": 1776753349497,
+      "updatedAtMs": 1776818828767,
       "schedule": {
         "kind": "cron",
         "expr": "30 8 * * *",
@@ -1204,12 +1200,12 @@
       },
       "state": {
         "nextRunAtMs": 1776839400000,
-        "lastRunAtMs": 1776753267106,
+        "lastRunAtMs": 1776818775837,
         "lastRunStatus": "error",
         "lastStatus": "error",
-        "lastDurationMs": 82391,
+        "lastDurationMs": 52930,
         "lastDeliveryStatus": "unknown",
-        "consecutiveErrors": 14,
+        "consecutiveErrors": 15,
         "lastError": "Channel is required when multiple channels are configured: discord, mc-chat Set delivery.channel explicitly or use a main session with a previous channel."
       }
     },

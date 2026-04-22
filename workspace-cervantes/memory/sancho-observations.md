@@ -1,114 +1,100 @@
-# Observaciones Sancho
+# Sancho — Observaciones de Cervantes
+## 2026-04-22
 
 ---
 
-## 2026-04-21 — Cervantes observa a Sancho (08:00 UTC / 10:00 CEST)
+## 📊 Sesiones de las últimas 24h
 
-### Sesiones activas (últimas 24h): ~29 sesiones detectadas
-
-| Sesión | Canal | Estado | Notas |
+| Sesión | Canal | Status | Notas |
 |--------|-------|--------|-------|
-| Morning Metrics — Growth4U | cron | ⚠️ Partial | Ejecutó correctamente, guardó JSON. **No logró publicar en Discord** — múltiples intentos fallidos (subagent, browser, exec API). Reporte salvado en `brand/growth4u/recurring-tasks/morning-metrics/2026-04-21.json` pero NO llegó a Discord. |
-| Daily Pulse — Growth4U | cron → Discord | ✅ OK | 0 actividad humana 8 canales. Reportó correctamente sin publicar hilo (protocolo: sin datos = sin hilo). |
-| Daily Pulse — Hospital Capilar | cron → Discord | ✅ OK | 0/9 canales activos. Reportó correctamente. |
-| Call Prep Daily — Growth4U | cron → Discord | ✅ OK | 2 llamadas hoy (Alfonso Nistal IASAF 13:00 + Josep M Gil Heltech 16:00). Briefing enviado a hilo #intelligence via subagent. |
-| Lead Sync — Growth4U | cron | ✅ OK | Sin leads nuevos. 4 enrichment pending. |
-| Morning Metrics — Hulahoop | cron | ⚠️ NO_APIS | Sin APIs configuradas. Comportamiento correcto. |
-| Performance Analysis — Growth4U | cron | ✅ OK | Completó (datos de ayer). |
-| Performance Analysis — Hulahoop | cron | ⚠️ NO_DATA | Brand nueva (sin métricas). Correcto. |
-| Weekly Synthesis — Growth4U | cron | ✅ OK | Completó. |
-| Weekly Synthesis — HC | cron → Discord | ✅ OK | Síntesis enviada a #intelligence con hilo. 0 actividad 7 días. |
-| Meeting Intelligence | cron | ✅ OK | Sin reuniones nuevas. Mensaje informativo. |
-| Cost Tracker Daily | cron | ✅ OK | Sin anomalías. |
-| update-skills | cron | ⚠️ Running | Aún ejecutándose. |
-| image-optimizer | cron | ⚠️ Running | Aún ejecutándose. |
-| cron-watchdog-weekly | cron | ⚠️ Running | Aún ejecutándose. |
-| MC Chat P06-T07 (Growth4U) | MC Chat | ✅ OK | Sesión interactiva sobre guest posts con Publisuites + Puromarketing. Iteraciones para definir topics. Captó error con caracteres chinos y se autocorrigió. |
-| MC Chat — Trust Engine (Hulahoop) | MC Chat | ✅ OK | Sesión completada correctamente. |
-| MC Chat Paymatico | MC Chat | ✅ Idle | Sin actividad reciente. |
-| Heartbeats (noche/madrugada) | webchat | ✅ OK | HEARTBEAT_OK en quiet hours (23:00–06:00). Correcto. |
-| Discord #admin (Nahuel greeted) | discord | ✅ OK | Greeted apropiadamente. |
-
-### Errores y problemas activos
-
-1. **🔴 Morning Metrics Growth4U — NO se publicó en Discord**: El cron ejecutó bien (recogió datos, analizó, guardó JSON en `recurring-tasks/`), pero cuando intentó publicar en `#intelligence` de Growth4U, todos los mecanismos fallaron:
-   - Intento directo via Discord REST API con bot token → 403 Forbidden (token de HC no tiene permisos en guild Growth4U)
-   - Intento via subagent → funcionó parcialmente (el subagent pudo enviar Call Prep pero Morning Metrics se perdió en el proceso)
-   - **Resultado**: El reporte quedó en `brand/growth4u/recurring-tasks/morning-metrics/2026-04-21.json` pero **no se entregó a Discord**. Esto es una degradación del sistema de reporting — Alfonso no recibió las métricas de la mañana.
-   - **Causa raíz**: Los crons que ejecutan via `exec-event` no tienen acceso al `message` tool nativo de las sesiones interactivas. El bot token disponible es de la guild HC, no de la guild Growth4U.
-
-2. **⚠️ Instantly campaigns error** — `(campaigns || []) is not iterable`. Error conocido desde hace semanas. Afecta solo a la fuente Instantly en Morning Metrics; el resto de APIs (GA4, GSC, Meta Ads, GHL) funcionan OK.
-
-3. **⚠️ update-skills, image-optimizer, cron-watchdog** — Todos en estado "running" desde hace horas. Posible timeout o doble-trigger. Monitorizar.
-
-### Datos de marketing Growth4U (de Morning Metrics 2026-04-21)
-
-| Métrica | Valor | vs Media 7d | Estado |
-|---------|-------|-------------|--------|
-| Spend | €133.79 | €137.99 | ✅ OK |
-| Impresiones | 5,248 | 5,854 | ✅ OK |
-| Clics | 35 | 47 | ⚠️ Bajo |
-| CTR | 0.67% | 0.83% | ⚠️ Bajo |
-| CPC | €3.82 | €3.07 | ⚠️ Alto |
-| Leads | 1 | 2.7/día | ⚠️ **Día bajo** |
-| Contactos GHL nuevos | 4 | — | ✅ 4 contactos (óscar, kiko requena, jose via lead magnet + daniel Facebook) |
-| Citas GHL | 0 | — | ⚠️ Sigue sin haber citas |
-
-**Análisis**: 1 solo lead (vs 2.7 media) es bajo pero no crítico — podría ser ruido de lunes. Lo más preocupante es el patrón simultáneo: CTR bajo + CPC alto + leads bajos. Esto sugiere fatiga de audiencia o creatividades que no resuenan. El día 04-19 tuvo 7 leads con CTR 1.09% y CPC €2.41 — ese es el benchmark a replicar.
-
-### Interacción MC Chat — Guest Posts (P06-T07)
-
-Sesión interactiva de ~30 minutos con Admin sobre validación de medios para guest posts. Sancho fue iterativo y receptivo:
-- Captó que faltaba Puromarketing cuando Admin lo señaló
-- Captó y autocorrigióerror de caracteres chinos en texto para Alfonso
-- Pidió clarificación cuando el topic "El problema de growth que no es un problema de marketing" no fue entendido
-- Respetó el execution guardrail: no ejecutó hasta tener aprobación
-
-**Resultado**: Mensaje listo para enviar al equipo sobre los 3 medios (todostartups.com, josefacchin.com, Puromarketing) con topics diferenciados atados a Trust Engine. Pendiente de que Alfonso lo envíe.
-
-### Reglas de canal
-
-✅ **Correcto:**
-- Call Prep → usó hilo en #intelligence (correcto)
-- Daily Pulse HC → 0 actividad → sin публикация (protocolo correcto)
-- MC Chat → se quedó en MC Chat (no invadió Discord)
-- Discord greeting → apropiado
-- Contenido largo → siempre en hilos, no en canal directo
-
-❌ **Problemático:**
-- Morning Metrics Growth4U → **no llegó a Discord**. Reporte salvado localmente pero no entregado.
-
-### ¿Qué hizo bien Sancho
-
-- ✅ **Call Prep de alta calidad** — 2 briefings detallados con company intel, historial, y objetivos claros para cada llamada
-- ✅ **Detección proactiva de anomalías** — CTR 0.67%, CPC €3.82, 1 lead. Identificó correctamente que el día 04-19 (7 leads) fue outlier positivo y recomienda analizar qué cambió
-- ✅ **MC Chat interactivo y receptivo** — autocorrige errores, pide clarificación cuando no entiende, no假设
-- ✅ **Respectó quiet hours** — todos los heartbeats nocturnos fueron HEARTBEAT_OK
-- ✅ **Client isolation** — Growth4U datos solo en canales Growth4U, HC solo en HC
-
-### Patrones de mejora
-
-1. **Discord publishing desde exec-event** — Morning Metrics lleva semanas sin poder publicar en Discord desde contexto cron. La causa es estructural: el bot token de HC no tiene acceso a la guild Growth4U. **Fix necesario**: Obtener bot token con acceso a guild Growth4U (1477741643762241548) o cambiar la arquitectura de delivery para estos crons.
-
-2. **Topics para Puromarketing** — Llevamos varías sesiones en P06-T07 iterando sobre los topics para Puromarketing. La confusión sugiere que no tenemos claro el angle para ese medio en particular. Proponer a Alfonso definir los 2 topics para Puromarketing en la próxima sesión.
-
-3. **Hulahoop sin APIs** — Lleva semanas quemando tokens. Considerar pausar hasta que configuren хотя бы una fuente de datos.
-
-4. **Skill execution log** — Sin entradas nuevas desde 2026-04-14 (último entry: cost-tracker failure, Q=2). No podemos medir `skill_quality_score` objetivamente. Esto rompe el metric de calidad.
-
-### Valoración general
-
-**6.5/10** — Día operativo con degradación notable: Morning Metrics NO llegó a Discord (reportó guardar en JSON pero no publicó). Esto significa que Alfonso no vio las métricas de la mañana. Los crons que SÍ funcionan (Daily Pulse, Call Prep, Lead Sync) lo hacen bien. La calidad del análisis de métricas es buena — las alertas están bien identificadas y priorizadas. El problema es delivery, no contenido.
-
-**Urgencia: Baja-Media.** No hay bloqueante sistémico, pero la degradación de Morning Metrics significa pérdida de visibilidad operativa. Si esto persiste otro día, tendré que alertar a Alfonso.
-
-### Acciones para Cervantes
-
-- [ ] **Investigar bot token Growth4U** — Obtener Discord bot token con permisos en guild `1477741643762241548`. Sin esto, los crons de Growth4U no pueden publicar en Discord.
-- [ ] **Fix skill-execution-log** — Los crons no están escribiendo al log. Necesitamos asegurar que cada skill execution registre su quality score.
-- [ ] **Deshabilitar Hulahoop Morning Metrics** hasta que configuren APIs.
-- [ ] **topics Puromarketing** — Definir en próxima sesión con Admin.
+| Cron: Daily Pulse — HC | exec | ❌ **BLOCKED** | `message` tool no disponible en exec. Subagent → cross-context denied |
+| Cron: Meeting Intelligence — HC | exec | ✅ OK | Publicó a HC #intelligence (msgId: 1496301234964009134) |
+| Cron: Lead Sync — Growth4U | exec | ✅ OK | 1 lead nuevo (Laura Donadio). Publicó a G4U #intelligence via curl |
+| Cron: Morning Metrics — Growth4U | exec | ⚠️ PARTIAL | Archivos OK, MC regenerado. `openclaw message send` → SIGKILL |
+| Cron: Morning Metrics — Hulahoop | exec | ✅ OK | Sin APIs configuradas. Guardó estado. Sin Discord. |
+| Cron: Call Prep Daily — Growth4U | exec | ⚠️ PARTIAL | Briefing guardado (2 leads: Blas Nieto + Marta). Discord → 403 |
+| Cron: Daily Pulse — Growth4U | exec | ❌ **BLOCKED** | Mismo patrón SIGKILL que Morning Metrics |
+| Cron: cost-tracker-daily | exec | ✅ OK | Sin anomalías |
+| Sancho main (heartbeat) | webchat | ✅ OK | Responde ping/pong correctamente |
 
 ---
 
-*Fin observaciones 2026-04-21*
+## 🔴 Errores y Skills Fallidos
+
+### 1. `message` tool inaccesible desde exec/cron
+**Afecta:** Daily Pulse (HC + Growth4U)
+- La herramienta `message()` no está disponible en sesiones exec/isolated
+- El skill `discord` declara `allowed-tools: ["message"]` pero no está en el toolset del runtime
+- Subagent intentaron publicar → "cross-context messaging denied"
+- **Impacto:** 2 crons de Daily Pulse completamente bloqueados de Discord
+
+### 2. `openclaw message send` → SIGKILL
+**Afecta:** Morning Metrics, Daily Pulse (Growth4U)
+- Cada ejecución de `openclaw message send` recibe SIGKILL (timeout/kill del proceso)
+- Plugin mc-chat carga pero luego se mata el proceso
+- **Error del sistema:** `[plugins] [mc-chat] api.registerOutboundHook not available in this SDK version`
+- **Impacto:** Growth4U no puede publicar en Discord desde crons
+
+### 3. Discord API direct → 403
+**Afecta:** Call Prep Daily (Growth4U)
+- `curl -X POST https://discord.com/api/v10/channels/...` → 403 Forbidden
+- El bot token no tiene permisos para ese canal (o canal no encontrado)
+- **Impacto:** Briefing guardado pero no publicado
+
+---
+
+## ✅ Lo que funcionó bien
+
+1. **Meeting Intelligence (HC):** Publicó correctamente a HC #intelligence (msgId: 1496301234964009134). Subagent con message tool disponible.
+2. **Lead Sync (Growth4U):** 1 lead nuevo creado, publicado correctamente a #intelligence vía curl
+3. **Call Prep:** Generó briefing de 2 leads correctamente (Blas Nieto, Marta DMD Asesores)
+4. **Cost Tracker:** Sin anomalías. Todo en umbral.
+
+---
+
+## 📝 Preguntas que Sancho no supo responder
+*(ninguna en las últimas 24h — solo respuestas pong/ping)*
+
+---
+
+## ⚠️ Si respetó las reglas de canal
+- **HC #intelligence:** ✅ Mensaje de Meeting Intelligence enviado correctamente
+- **Growth4U #intelligence:** ✅ Lead Sync enviado correctamente
+- **webchat:** ✅ Responde ping/pong
+
+---
+
+## 🔧 Patrones de mejora
+
+### P0 — Fix urgente: Discord tool routing para crons
+**Problema:** Los crons no tienen acceso a la herramienta `message`. Esto bloquea completamente el Daily Pulse de ambos clientes.
+
+**Solución requerida:** Cervantes debe investigar:
+1. Por qué `message` tool no está disponible en sesiones exec/isolated
+2. Si el cron template necesita ejecutarse en contexto Discord en lugar de exec
+3. Alternativa: usar `sessions_spawn` con runtime="acp" para publicar en Discord desde crons
+
+### P1 — Fix: `openclaw message send` SIGKILL
+**Problema:** Los comandos `openclaw message send` se matan con SIGKILL durante cron execution.
+**Solución:** Verificar si es un tema de timeout, memoria, o seguridad.
+
+### P1 — Discord 403 en Call Prep
+**Problema:** El bot no tiene permisos para el canal #intelligence de Growth4U.
+**Solución:** Verificar que el bot esté en el servidor Growth4U y tenga permisos de lectura/escritura en ese canal.
+
+### P2 — Hulahoop sin APIs
+**Problema:** Morning Metrics no puede ejecutarse porque no hay APIs configuradas.
+**Recomendación:** Alfonso debería conectar al menos GA4 o Metricool para Hulahoop.
+
+---
+
+## 📏 Métricas del sistema
+
+- **system_uptime_without_intervention:** ⚠️ DECAYING — Crons fallando sin auto-recuperación
+- **Daily Pulse blocked:** 2/2 clientes (HC + Growth4U) — modo BLOCKED
+- **Discord posting:** ~50% success rate (funciona via curl directo, falla via openclaw CLI)
+- **Costo últimas 24h (Sancho):** ~$60 USD estimado
+
+---
+
+*Cervantes — 2026-04-22 00:07 UTC*

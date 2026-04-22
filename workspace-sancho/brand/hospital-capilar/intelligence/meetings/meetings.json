@@ -107,6 +107,6 @@
     }
   ],
   "lastUpdated": "2026-04-17T16:07:41Z",
-  "_lastCheckStatus": "No new meetings found since last execution. Discord notification skipped: gateway timeout.",
-  "_lastCheckTime": "2026-04-21T16:00:00Z"
+  "_lastCheckStatus": "No new meetings found. Folder scanned (14 docs), last processed: 2026-04-14. Discord notification sent.",
+  "_lastCheckTime": "2026-04-21T23:58:00Z"
 }

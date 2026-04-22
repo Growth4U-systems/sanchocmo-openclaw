@@ -1,12 +1,13 @@
 {
   "sales_call_prep": {
-    "last_run": "2026-04-21T20:30:00Z",
+    "last_run": "2026-04-22T00:16:00Z",
     "mode": "daily",
-    "calls_found": 2,
+    "calls_found": 0,
     "no_ghl_match": 0,
-    "matched_leads": ["Blas Nieto (Synapsale)", "Marta (DMD Asesores)"],
-    "briefing_file": "brand/growth4u/intelligence/call-preps/2026-04-22.md",
-    "ghl_api_status": "working (417 contacts)",
-    "discord_send_status": "failed_403_direct_api"
+    "matched_leads": [],
+    "date_checked": "2026-04-23",
+    "calendar_source": "gog calendar + GHL contacts API",
+    "ghl_api_status": "working (200 contacts)",
+    "notes": "No calls in calendar for tomorrow 2026-04-23. 19 leads with llamada-agendada tag but no calendar events match."
   }
 }
