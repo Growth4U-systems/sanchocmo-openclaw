@@ -15,8 +15,12 @@
       "skill": "keyword-research",
       "created": "2026-03-30",
       "completed": "2026-03-30",
-      "output_files": ["brand/criptan/projects/P01-seo-bofu/T01/keyword-research-bofu.md"],
-      "notes": "28 keywords BOFU en 5 clusters. 12 artículos mapeados. Top 3 prioridad: pillar page exchanges, review Criptan, Criptan vs Bit2Me."
+      "output_files": [
+        "brand/criptan/projects/P01-seo-bofu/T01/keyword-research-bofu.md"
+      ],
+      "notes": "28 keywords BOFU en 5 clusters. 12 artículos mapeados. Top 3 prioridad: pillar page exchanges, review Criptan, Criptan vs Bit2Me.",
+      "deliverable_file": "brand/criptan/projects/P01-seo-bofu/tasks/T01/deliverable.md",
+      "mc_chat_thread_id": "task-t01"
     },
     {
       "id": "T02",
@@ -25,7 +29,7 @@
       "deliverable": "Artículo SEO optimizado de 2.500-3.500 palabras, listo para publicar en WordPress.",
       "done_criteria": "Artículo publicado, optimizado para 'mejor exchange españa 2026' + variantes, con schema markup FAQ.",
       "depends_on": "T01",
-      "status": "pending",
+      "status": "todo",
       "owner": "Sancho",
       "channel": "content",
       "discord_thread_id": null,
@@ -33,7 +37,9 @@
       "created": "2026-03-30",
       "completed": null,
       "output_files": [],
-      "notes": ""
+      "notes": "",
+      "deliverable_file": "brand/criptan/projects/P01-seo-bofu/tasks/T02/deliverable.md",
+      "mc_chat_thread_id": "task-t02"
     },
     {
       "id": "T03",
@@ -42,7 +48,7 @@
       "deliverable": "Artículo SEO optimizado de 2.000-3.000 palabras.",
       "done_criteria": "Artículo publicado, optimizado para 'Criptan opiniones' + 'Criptan review' + 'Criptan es seguro'.",
       "depends_on": "T01",
-      "status": "pending",
+      "status": "todo",
       "owner": "Sancho",
       "channel": "content",
       "discord_thread_id": null,
@@ -50,7 +56,9 @@
       "created": "2026-03-30",
       "completed": null,
       "output_files": [],
-      "notes": ""
+      "notes": "",
+      "deliverable_file": "brand/criptan/projects/P01-seo-bofu/tasks/T03/deliverable.md",
+      "mc_chat_thread_id": "task-t03"
     },
     {
       "id": "T04",
@@ -59,7 +67,7 @@
       "deliverable": "3 artículos SEO de 1.500-2.500 palabras cada uno.",
       "done_criteria": "3 artículos publicados con schema markup y CTAs a descarga de app.",
       "depends_on": "T01",
-      "status": "pending",
+      "status": "todo",
       "owner": "Sancho",
       "channel": "content",
       "discord_thread_id": null,
@@ -67,7 +75,9 @@
       "created": "2026-03-30",
       "completed": null,
       "output_files": [],
-      "notes": ""
+      "notes": "",
+      "deliverable_file": "brand/criptan/projects/P01-seo-bofu/tasks/T04/deliverable.md",
+      "mc_chat_thread_id": "task-t04"
     },
     {
       "id": "T05",
@@ -76,7 +86,7 @@
       "deliverable": "Perfiles activos y completos en al menos 3 plataformas de comparación.",
       "done_criteria": "Perfiles verificados y visibles en búsquedas. Plan de solicitud de reviews a clientes existentes.",
       "depends_on": null,
-      "status": "pending",
+      "status": "todo",
       "owner": "Equipo",
       "channel": "content",
       "discord_thread_id": null,
@@ -84,7 +94,9 @@
       "created": "2026-03-30",
       "completed": null,
       "output_files": [],
-      "notes": "Requiere acceso a cuentas de Criptan en estas plataformas"
+      "notes": "Requiere acceso a cuentas de Criptan en estas plataformas",
+      "deliverable_file": "brand/criptan/projects/P01-seo-bofu/tasks/T05/deliverable.md",
+      "mc_chat_thread_id": "task-t05"
     }
   ]
 }

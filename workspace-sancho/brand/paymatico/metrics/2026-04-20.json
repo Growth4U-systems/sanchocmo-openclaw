@@ -1,0 +1,46 @@
+{
+  "sources": {
+    "pagespeed": {
+      "status": "ok",
+      "metrics": [
+        {
+          "name": "performance_mobile",
+          "value": 64,
+          "date": "2026-04-20"
+        },
+        {
+          "name": "seo_mobile",
+          "value": 100,
+          "date": "2026-04-20"
+        },
+        {
+          "name": "performance_desktop",
+          "value": 81,
+          "date": "2026-04-20"
+        },
+        {
+          "name": "seo_desktop",
+          "value": 100,
+          "date": "2026-04-20"
+        },
+        {
+          "name": "lcp_mobile",
+          "value": 7.2,
+          "date": "2026-04-20"
+        },
+        {
+          "name": "cls_mobile",
+          "value": 0.078,
+          "date": "2026-04-20"
+        },
+        {
+          "name": "tbt_mobile",
+          "value": 134,
+          "date": "2026-04-20"
+        }
+      ]
+    }
+  },
+  "slug": "paymatico",
+  "collectedAt": "2026-04-20T09:12:22.272Z"
+}

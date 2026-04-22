@@ -1,0 +1,10 @@
+{
+  "messages": [
+    {
+      "role": "user",
+      "text": "Message 1",
+      "ts": 1775626251544
+    }
+  ],
+  "updatedAt": 1775626251544
+}

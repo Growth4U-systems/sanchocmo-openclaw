@@ -21,7 +21,29 @@
       "text": "¡Hola! 👋\n\nEstoy en el hilo de **Configurar conversiones GA4** (P01-T02). ¿En qué te puedo ayudar?",
       "agent": "sancho",
       "ts": "2026-03-28T07:20:16.913Z"
+    },
+    {
+      "role": "user",
+      "text": "No estoy seguro si está hecho o no",
+      "ts": 1776251787501
+    },
+    {
+      "role": "bot",
+      "text": "La tarea **P01-T02 \"Configurar conversiones GA4\"** está en estado **`ready`** — es decir, **no está hecha todavía**.\n\n**Lo que hay:**\n- El playbook está redactado con las instrucciones paso a paso (vía GTM o gtag.js directo)\n- GA4 ya está instalado (`G-4YBYPVQDT6`)\n\n**Lo que falta:**\n1. **Crear los 3 eventos custom** en GA4: `booking_started`, `form_submit`, `trust_score_completed`\n2. **Marcarlos como conversiones** en GA4 Admin\n3. **Verificar** que disparan correctamente\n\nEsto es una tarea manual en GTM o en el código de la web — no es algo que pueda ejecutar yo directamente. ¿Quieres que te pase el playbook detallado o necesitas ayuda con algún paso concreto?",
+      "ts": 1776251903288,
+      "agent": "sancho"
+    },
+    {
+      "role": "user",
+      "text": "Me puedes guiar sobre como hacerlo? Y para que me va a servir?",
+      "ts": 1776251965004
+    },
+    {
+      "role": "bot",
+      "text": "Claro, vamos al lío.\n\n## ¿Para qué sirve?\n\nAhora mismo GA4 trackea visitas a la web, pero **no sabe distinguir una visita random de alguien que realmente hizo algo valioso** (agendar una llamada, rellenar un formulario, completar el Trust Score). Sin conversiones configuradas:\n\n- **No puedes medir ROI** de ningún canal (orgánico, ads, LinkedIn, cold email...)\n- **No puedes optimizar Meta Ads** — el algoritmo no sabe qué es un \"buen\" visitante\n- **No puedes saber qué páginas convierten** y cuáles solo reciben tráfico vacío\n\nCon las 3 conversiones configuradas, cada vez que alguien haga una acción importante, GA4 lo registra y puedes ver: de dónde vino, qué página visitó antes, en qué dispositivo... Todo lo que necesitas para tomar decisiones con datos.\n\n---\n\n## Guía paso a paso\n\nTu web usa **gtag.js directo** (no GTM), así que la vía más rápida es añadir código en los puntos de conversión.\n\n### Paso 1: Verificar que GA4 está instalado\n\nAbre [growth4u.io](https://growth4u.io), haz clic derecho → \"Ver código fuente\" y busca `G-4YBYPVQDT6`. Debería aparecer en el `<head>`. Si lo ves, perfecto — sigue al paso 2.\n\n### Paso 2: Añadir los eventos en el código\n\nNecesitas que estos 3 snippets se disparen en el momento correcto:\n\n**1. Cuando alguien clica \"Agendar Llamada\":**\n```javascript\ngtag('event', 'booking_started', { method: 'header_cta' });\n```\n→ Añádelo al `onclick` del botón de booking, o en el evento que detecta el clic.\n\n**2. Cuando se envía un formulario de contacto:**\n```javascript\ngtag('event', 'form_submit', { form_name: 'contacto' });\n```\n→ En el handler de submit del formulario, justo antes o después de enviar los datos.\n\n**3. Cuando alguien completa el Trust Score:**\n```javascript\ngtag('event', 'trust_score_completed', { tool: 'trust_score_analyzer' });\n```\n→ En la página de resultados del Trust Score, o cuando se muestra el resultado final.\n\n### Paso 3: Verificar que disparan\n\n1. Abre tu web en Chrome\n2. Instala la extensión **[GA4 DebugView](https://support.google.com/analytics/answer/7201382)** o usa **Analytics → Admin → DebugView**\n3. Haz las 3 acciones (clic booking, enviar formulario, completar Trust Score)\n4. Deberías ver los eventos aparecer en tiempo real\n\n### Paso 4: Marcar como conversiones en GA4\n\n1. Ve a [GA4](https://analytics.google.com) → tu propiedad `G-4YBYPVQDT6`\n2. **Admin → Events** (puede tardar hasta 24h en aparecer los eventos nuevos)\n3. Cuando aparezcan `booking_started`, `form_submit` y `trust_score_completed`, activa el toggle **\"Mark as key event\"**\n\n---\n\n## ¿Dónde se implementa el código?\n\nEso depende de cómo está construida la web. ¿Sabes si la web está en WordPress, Webflow, código custom, o algún builder tipo GHL/HighLevel? Con eso te puedo decir exactamente dónde pegar cada snippet.",
+      "ts": 1776251998557,
+      "agent": "sancho"
     }
   ],
-  "updatedAt": 1774682416913
+  "updatedAt": 1776251998557
 }

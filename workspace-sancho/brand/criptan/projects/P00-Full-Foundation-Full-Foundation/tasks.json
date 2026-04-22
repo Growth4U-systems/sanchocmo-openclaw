@@ -13,7 +13,10 @@
     "skill": "market-intelligence",
     "pillar": "market-analysis",
     "section": "market-and-us",
-    "completed": "2026-03-30"
+    "completed": "2026-03-30",
+    "deliverable_file": "brand/criptan/market-and-us/market/market.current.md",
+    "mc_chat_thread_id": "task-p00-ful-t01",
+    "discord_thread_id": null
   },
   {
     "id": "P00-FUL-T02",
@@ -29,7 +32,10 @@
     "skill": "competitor-intelligence",
     "pillar": "competitor-analysis",
     "section": "market-and-us",
-    "completed": "2026-03-31"
+    "completed": "2026-03-31",
+    "deliverable_file": "brand/criptan/market-and-us/competitors/competitors.current.md",
+    "mc_chat_thread_id": "task-p00-ful-t02",
+    "discord_thread_id": null
   },
   {
     "id": "P00-FUL-T03",
@@ -44,7 +50,10 @@
     "type": "foundation",
     "skill": "self-intelligence",
     "pillar": "self-analysis",
-    "section": "market-and-us"
+    "section": "market-and-us",
+    "deliverable_file": "brand/criptan/market-and-us/self/current.md",
+    "mc_chat_thread_id": "task-p00-ful-t03",
+    "discord_thread_id": null
   },
   {
     "id": "P00-FUL-T04",
@@ -59,7 +68,10 @@
     "type": "foundation",
     "skill": "swot-analysis",
     "pillar": "market-synthesis",
-    "section": "market-and-us"
+    "section": "market-and-us",
+    "deliverable_file": "brand/criptan/swot/current.md",
+    "mc_chat_thread_id": "task-p00-ful-t04",
+    "discord_thread_id": null
   },
   {
     "id": "P00-FUL-T05",
@@ -74,7 +86,10 @@
     "type": "foundation",
     "skill": "positioning-messaging",
     "pillar": "positioning",
-    "section": "go-to-market"
+    "section": "go-to-market",
+    "deliverable_file": "brand/criptan/go-to-market/positioning/{ecp-slug}/current.md",
+    "mc_chat_thread_id": "task-p00-ful-t05",
+    "discord_thread_id": null
   },
   {
     "id": "P00-FUL-T06",
@@ -89,7 +104,10 @@
     "type": "foundation",
     "skill": "pricing-strategy",
     "pillar": "pricing",
-    "section": "go-to-market"
+    "section": "go-to-market",
+    "deliverable_file": "brand/criptan/go-to-market/pricing/current.md",
+    "mc_chat_thread_id": "task-p00-ful-t06",
+    "discord_thread_id": null
   },
   {
     "id": "P00-FUL-T07",
@@ -104,7 +122,10 @@
     "type": "foundation",
     "skill": "brand-voice",
     "pillar": "brand-voice",
-    "section": "brand-identity"
+    "section": "brand-identity",
+    "deliverable_file": "brand/criptan/brand-voice/current.md",
+    "mc_chat_thread_id": "task-p00-ful-t07",
+    "discord_thread_id": null
   },
   {
     "id": "P00-FUL-T08",
@@ -119,6 +140,9 @@
     "type": "foundation",
     "skill": "visual-identity",
     "pillar": "visual-identity",
-    "section": "brand-identity"
+    "section": "brand-identity",
+    "deliverable_file": "brand/criptan/brand-identity/visual-identity/current.md",
+    "mc_chat_thread_id": "task-p00-ful-t08",
+    "discord_thread_id": null
   }
 ]

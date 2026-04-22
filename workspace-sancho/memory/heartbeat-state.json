@@ -1,26 +1,12 @@
 {
-  "last_heartbeat": "2026-04-07T23:04:00+02:00",
-  "checks_done": [],
-  "next_rotate": [
-    "daily_file",
-    "memory_maintenance",
-    "email",
-    "calendar"
-  ],
-  "lead_sync": {
-    "last_run": "2026-04-07T22:00:00+02:00",
-    "new_leads": 4,
-    "updated_leads": 2,
-    "slack_notes_synced": 0,
-    "errors": 0,
-    "notes": "4 nuevos: Manuel Campos x2 (1 cancelada, duplicado), Albert Totil, Sofia Clark (candidata, no cliente). 2 actualizados: Juan Antonio (+grabación call), Daniel Serrano (+link notas). Slack disabled."
-  },
   "sales_call_prep": {
-    "last_run": "2026-04-07T20:30:00Z",
+    "last_run": "2026-04-21T20:30:00Z",
     "mode": "daily",
-    "calls_found": 3,
-    "ghl_match": 3,
+    "calls_found": 2,
     "no_ghl_match": 0,
-    "notes": "Gon (Gonzalo Albero), Albert Totil, Moh Dak — todas de Calendario. 3 leads en secuencia. Sin transcripts para Albert ni Mohamed."
+    "matched_leads": ["Blas Nieto (Synapsale)", "Marta (DMD Asesores)"],
+    "briefing_file": "brand/growth4u/intelligence/call-preps/2026-04-22.md",
+    "ghl_api_status": "working (417 contacts)",
+    "discord_send_status": "failed_403_direct_api"
   }
 }

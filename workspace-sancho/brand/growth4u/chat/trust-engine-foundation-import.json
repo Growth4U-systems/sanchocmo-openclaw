@@ -1,0 +1,44 @@
+{
+  "messages": [
+    {
+      "role": "user",
+      "text": "Estoy revisando la configuración del Trust Engine para growth4u. Quiero verificar que los nichos, subnichos y competidores están bien definidos antes de continuar con las auditorías.",
+      "ts": 1775683542022
+    },
+    {
+      "role": "bot",
+      "text": "Vamos al lío. Déjame revisar lo que tenemos configurado.",
+      "ts": 1775683605560,
+      "agent": "sancho"
+    },
+    {
+      "role": "bot",
+      "text": "Aquí tienes el resumen de la configuración del Trust Engine para Growth4U:\n\n---\n\n## 🎯 5 Nichos configurados\n\n| ID | Nicho | Subnichos | Prioridad |\n|----|-------|-----------|-----------|\n| **n1** | Sistema de growth repetible | 5 (3 high, 2 medium) | Wave 1 — Score 79.00 |\n| **n2** | Growth para fintechs reguladas | 4 (3 high, 1 medium) | Wave 1 — Score 73.70 🏆 |\n| **n3** | Canal principal muriendo | 4 (2 high, 2 medium) | Wave 2 — Score 73.50 |\n| **n4** | Founder quemado por agencias | 3 (2 high, 1 medium) | Wave 2 — Score 66.45 |\n| **n5** | Invisible para el comprador | 3 (2 high, 1 medium) | Wave 2 — Score 64.70 |\n\n**Total: 19 subnichos** (12 high priority, 7 medium)\n\n---\n\n## 🏢 7 Competidores\n\n| Competidor | Dominio | Nichos | Amenaza |\n|------------|---------|--------|---------|\n| Product Hackers | producthackers.com | n1, n2, n3 | 🔴 High |\n| Snowball | agenciasnowball.com | n1, n3 | 🟡 Medium |\n| TheGrowtHacker | thegrowthacker.com | n1, n3 | 🟡 Medium |\n| iSocialWeb | isocialweb.agency | n1, n2, n3 | 🟡 Medium |\n| Glissmarket | glissmarket.com | n2 | 🟡 Medium |\n| TEAM LEWIS | teamlewis.com | n2, n5 | 🟢 Low |\n| Flake Agency | flake-agency.com | n2 | 🟡 Medium |\n\n---\n\n## 📊 ECPs (5 perfiles de cliente)\n\nTodos aprobados con positioning completo (5/5):\n1. **ECP1** — Necesita sistema de growth repetible (79.00)\n2. **ECP2** — Crecer cumpliendo regulación (73.70)\n3. **ECP3** — Canal principal muriendo (73.50)\n4. **ECP4** — Quemado por agencias (66.45)\n5. **ECP5** — Invisible para el comprador (64.70)\n\n---\n\n## ✅ Lo que se ve bien\n- Los nichos están bien mapeados con keywords semilla, known_media e influencers\n- Cada nicho tiene JTBD Synthesis, Trust Map, Search Map y Channel Map detallados\n- Los competidores están asignados a nichos relevantes\n- El scoring Pain/Reachability/SAM es coherente\n\n## ⚠️ Puntos a revisar\n1. **Solapamiento n3-s1 / n5-s1** — GEO y visibilidad en IA aparece en ambos nichos con keywords muy similares. ¿Es intencional o habría que diferenciar mejor el ángulo?\n2. **Product Hackers** es el único competidor high — ¿hay algún nuevo player que haya surgido desde marzo que deberíamos añadir?\n3. **Subnicho n4-s3 \"Modelos sin retainer\"** tiene keywords muy branded (Trust Engine, Growth4U) — en auditorías SEO/GEO eso puede sesgar resultados. ¿Preferimos keywords más genéricas?\n\n¿Quieres que profundice en alguno de estos puntos, o está todo correcto para avanzar con las auditorías?",
+      "ts": 1775683605584,
+      "agent": "sancho"
+    },
+    {
+      "role": "user",
+      "text": "Estoy revisando la configuración del Trust Engine para growth4u. Quiero verificar que los nichos, subnichos y competidores están bien definidos antes de continuar con las auditorías.",
+      "ts": 1775684613909
+    },
+    {
+      "role": "user",
+      "text": "Estoy revisando la configuración del Trust Engine para growth4u. Quiero verificar que los nichos, subnichos y competidores están bien definidos antes de continuar con las auditorías.",
+      "ts": 1775684637226
+    },
+    {
+      "role": "bot",
+      "text": "Acabo de revisar esto en detalle en mi mensaje anterior. Aquí te dejo el resumen rápido:\n\n**Estado actual:**\n- ✅ **5 nichos** bien definidos con 19 subnichos (12 high, 7 medium)\n- ✅ **7 competidores** mapeados por nicho y nivel de amenaza\n- ✅ **5 ECPs** todos aprobados con positioning completo\n- ✅ JTBD, Trust Maps, Search Maps y Channel Maps detallados para cada uno\n\n**Los 3 puntos que te señalé para revisar antes de auditorías:**\n\n1. **Solapamiento n3-s1 / n5-s1** — GEO/visibilidad IA aparece en ambos nichos con keywords casi idénticas. ¿Diferenciamos el ángulo o lo dejamos así?\n\n2. **¿Algún competidor nuevo?** — Product Hackers sigue siendo el único \"high threat\". La config es de marzo — ¿ha aparecido alguien más?\n\n3. **Keywords branded en n4-s3** — \"Trust Engine\", \"Growth4U\" como seeds en el subnicho de \"modelos sin retainer\" puede sesgar auditorías. ¿Cambiamos a keywords más genéricas?\n\n¿Resolvemos estos puntos o damos visto bueno y avanzamos con las auditorías?",
+      "ts": 1775684639290,
+      "agent": "sancho"
+    },
+    {
+      "role": "bot",
+      "text": "Parece que el mensaje se envió varias veces. Ya revisé la config en detalle — aquí va el resumen compacto:\n\n**✅ Config verificada:**\n- 5 nichos, 19 subnichos, 7 competidores, 5 ECPs aprobados\n- Todo con JTBD, Trust/Search/Channel Maps\n\n**⚠️ 3 puntos pendientes de tu decisión:**\n1. Solapamiento GEO/IA entre n3-s1 y n5-s1\n2. ¿Nuevos competidores desde marzo?\n3. Keywords branded en n4-s3\n\nDime si resolvemos estos o si está todo OK para lanzar auditorías.",
+      "ts": 1775684658105,
+      "agent": "sancho"
+    }
+  ],
+  "updatedAt": 1775684658105
+}

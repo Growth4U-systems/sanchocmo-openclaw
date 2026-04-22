@@ -21,12 +21,16 @@
     "catalog_id": null,
     "description": "Setup técnico: verificar/instalar GA4 + GSC + definir eventos de conversión"
   },
-  "channels": ["web"],
+  "channels": [
+    "web"
+  ],
   "discord": {
     "project_thread_id": "1486634140932640789",
     "project_channel": "projects"
   },
   "tasks_total": 2,
   "tasks_completed": 0,
-  "value_review": null
+  "value_review": null,
+  "mc_chat_thread_id": "project-p03",
+  "discord_thread_id": null
 }

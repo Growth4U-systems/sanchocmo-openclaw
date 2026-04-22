@@ -11,13 +11,26 @@
     "unit": " tareas"
   },
   "metrics": {
-    "baseline": { "pixel": false, "ga4_conversions": false, "booking_unified": false },
-    "target": { "pixel": true, "ga4_conversions": true, "booking_unified": true }
+    "baseline": {
+      "pixel": false,
+      "ga4_conversions": false,
+      "booking_unified": false
+    },
+    "target": {
+      "pixel": true,
+      "ga4_conversions": true,
+      "booking_unified": true
+    }
   },
   "origin": "strategic-plan-v2",
   "phase": 0,
   "strategy": "Fase 0 — Prerequisites",
   "review_date": "2026-03-28",
-  "status": "active",
-  "discord": { "project_thread_id": "1482771762566664252" }
+  "status": "in-progress",
+  "discord": {
+    "project_thread_id": "1482771762566664252"
+  },
+  "updated_at": "2026-04-14T14:42:38.056Z",
+  "mc_chat_thread_id": "project-p01",
+  "discord_thread_id": null
 }

@@ -1,0 +1,46 @@
+{
+  "sources": {
+    "pagespeed": {
+      "status": "ok",
+      "metrics": [
+        {
+          "name": "performance_mobile",
+          "value": 62,
+          "date": "2026-04-21"
+        },
+        {
+          "name": "seo_mobile",
+          "value": 80,
+          "date": "2026-04-21"
+        },
+        {
+          "name": "performance_desktop",
+          "value": 81,
+          "date": "2026-04-21"
+        },
+        {
+          "name": "seo_desktop",
+          "value": 92,
+          "date": "2026-04-21"
+        },
+        {
+          "name": "lcp_mobile",
+          "value": 12.5,
+          "date": "2026-04-21"
+        },
+        {
+          "name": "cls_mobile",
+          "value": 0,
+          "date": "2026-04-21"
+        },
+        {
+          "name": "tbt_mobile",
+          "value": 214,
+          "date": "2026-04-21"
+        }
+      ]
+    }
+  },
+  "slug": "hulahoop",
+  "collectedAt": "2026-04-21T09:49:46.473Z"
+}

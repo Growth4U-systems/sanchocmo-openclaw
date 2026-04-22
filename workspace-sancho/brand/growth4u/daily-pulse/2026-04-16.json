@@ -1,0 +1,113 @@
+{
+  "date": "2026-04-16",
+  "runAtUtc": "2026-04-16T07:06:00Z",
+  "sources": {
+    "intelligence": {
+      "messagesCount": 15,
+      "last24h": [
+        {
+          "id": "1494224432271589376",
+          "type": "morning_metrics",
+          "content": "📊 Morning Metrics — Growth4U | 2026-04-16: Spend €147 (+26% vs media) generó 3 leads pero CTR cayó a 0.73% — posible fatiga de creativos.",
+          "timestamp": "2026-04-16T06:34:26Z"
+        },
+        {
+          "id": "1494073452414631947",
+          "type": "call_prep",
+          "content": "📞 Llamadas de mañana — Jueves 16 Abril 2026",
+          "timestamp": "2026-04-15T20:34:29Z"
+        },
+        {
+          "id": "1494066573089046628",
+          "type": "lead_sync",
+          "content": "Lista limpia de 11 contacts para calls de mañana. 0 errores.",
+          "timestamp": "2026-04-15T20:07:09Z"
+        },
+        {
+          "id": "1494066571260199023",
+          "type": "lead_sync",
+          "content": "📊 Lead Sync — 2026-04-15: 11 contacts, 1 nuevo (Sergi Candel @ XHYPE)",
+          "timestamp": "2026-04-15T20:07:09Z"
+        },
+        {
+          "id": "1493870117870899210",
+          "type": "daily_pulse",
+          "content": "📊 Daily Pulse — 2026-04-15: CTR cae a 0.60% (fatiga creativa confirmada), día 15 sin citas — follow-up Marta (DMD, 40k€/mes) pendiente hoy",
+          "timestamp": "2026-04-15T07:06:30Z"
+        }
+      ]
+    },
+    "projects": {
+      "messagesCount": 1,
+      "last24h": [
+        {
+          "id": "1485800610602156185",
+          "type": "thread_starter",
+          "content": "/trust-engine",
+          "timestamp": "2026-03-24T00:41:10Z",
+          "thread": {
+            "name": "/trust-engine — ¿Qué necesitas?",
+            "archived": false,
+            "msgCount": 35
+          }
+        }
+      ]
+    },
+    "web": { "messagesCount": 0, "last24h": [] },
+    "paid-ads": { "messagesCount": 0, "last24h": [] },
+    "soporte": { "messagesCount": 0, "last24h": [] },
+    "general": { "messagesCount": 0, "last24h": [] },
+    "brand": { "messagesCount": 0, "last24h": [] },
+    "content": { "messagesCount": 0, "last24h": [] }
+  },
+  "insights": [
+    {
+      "category": "ads_metrics",
+      "type": "⚠️ Alerta",
+      "insight": "CTR cae a 0.73% con spend +26% sobre media — fatiga creativa confirmada",
+      "detail": "Spend €147 (+26% vs media €117), 3 leads. CTR 0.73% (bajo, fatiga). Posible necesidad de nuevos creativos.",
+      "source": "Morning Metrics 2026-04-16"
+    },
+    {
+      "category": "funnel_conversion",
+      "type": "🚨 Bloqueo",
+      "insight": "15+ días sin citas — el funnel de booking sigue roto",
+      "detail": "Día 15+ sin citas GHL. Leads entrando pero no hay conversión a llamada. Follow-up de Marta (DMD, 40k€/mes) pendiente.",
+      "source": "Daily Pulse 2026-04-15 + seguimiento"
+    },
+    {
+      "category": "lead_intake",
+      "type": "✅ Nuevo lead",
+      "insight": "Sergi Candel (sergi@xhype.io) — XHYPE, Superwallet for Crypto Spending",
+      "detail": "Lead nuevo de yesterday's Lead Sync. Source: llamada-agendada. Sin enrichment completado aún.",
+      "source": "Lead Sync 2026-04-15"
+    },
+    {
+      "category": "call_pipeline",
+      "type": "📞 Calls pendientes",
+      "insight": "10 contactos con tag 'llamada-agendada' en GHL. Ninguno con evento en calendario para hoy.",
+      "detail": "Lista limpia de contacts verificada (11 contacts, 0 errores). Follow-up con Marta Luis pendiente. Josep M Gil (Heltech) con follow-up lunes 16:00.",
+      "source": "Call Prep 2026-04-15 + Lead Sync 2026-04-15"
+    }
+  ],
+  "micro_briefs": [
+    {
+      "topic": "Fatiga creativa Meta Ads",
+      "brief": "CTR ha caído del 1.84% (9 abr) al 0.73% (16 abr) mientras el spend sube +26%. Indicador claro de fatiga de creativos. Necesarios nuevos creatives ASAP."
+    },
+    {
+      "topic": "Funnel booking roto",
+      "brief": "15+ días sin citas pese a leads activos. El problema ya no es adquisición (Meta Ads generando 2-6 leads/día) sino la conversión. Prioridad: revisar flujo GHL → booking y proceso de follow-up."
+    },
+    {
+      "topic": "Follow-up Marta Luis (DMD)",
+      "brief": "DMD Asesores Legales, 40k€/mes en marketing, Trust Score 68, interés en propuesta híbrida (comunidad + ejecución). Pendiente follow-up. Oportunidad de 40k€/mes."
+    }
+  ],
+  "status": {
+    "health_score": "🔴 Crítico (0 citas, CTR cayendo, spend subiendo)",
+    "nsn_status": "🚨 NSM: 0 meetings — 15+ días bloqueado",
+    "ads_trend": "↓ CTR cayendo, spend subiendo",
+    "funnel_trend": "↓ Leads entrando pero sin conversión a calls"
+  }
+}

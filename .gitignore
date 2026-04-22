@@ -99,3 +99,4 @@ workspace-sancho/agents/
 # === SQLite memory indexes ===
 *.sqlite
 workspace-main/
+workspace/

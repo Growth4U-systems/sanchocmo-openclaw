@@ -11,27 +11,27 @@
       "pillars": {
         "company-brief": {
           "status": "not-started",
-          "output_file": "brand/kleva/company-brief/current.md",
+          "output_file": "brand/kleva/company-brief/company-brief.current.md",
           "skill": "fast-foundation"
         },
         "self-l1": {
           "status": "not-started",
-          "output_file": "brand/kleva/market-and-us/self/current.md",
+          "output_file": "brand/kleva/market-and-us/self/self.current.md",
           "skill": "fast-foundation"
         },
         "market-l1": {
           "status": "not-started",
-          "output_file": "brand/kleva/market-and-us/market/current.md",
+          "output_file": "brand/kleva/market-and-us/market/mark.current.md",
           "skill": "fast-foundation"
         },
         "brand-voice-snapshot": {
           "status": "not-started",
-          "output_file": "brand/kleva/brand-voice/current.md",
+          "output_file": "brand/kleva/brand-voice/brand-voi.current.md",
           "skill": "fast-foundation"
         },
         "niche-basic": {
           "status": "not-started",
-          "output_file": "brand/kleva/go-to-market/ecps/current.md",
+          "output_file": "brand/kleva/go-to-market/ecps/ecps.current.md",
           "skill": "fast-foundation"
         }
       }
@@ -210,7 +210,7 @@
       "requires": [
         "metrics-setup"
       ],
-      "output_file": "brand/kleva/strategic-plan/current.md"
+      "output_file": "brand/kleva/strategic-plan/strategic-pla.current.md"
     }
   },
   "file_index": {

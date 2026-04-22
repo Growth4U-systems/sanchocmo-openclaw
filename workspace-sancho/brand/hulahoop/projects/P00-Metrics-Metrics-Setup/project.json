@@ -14,5 +14,7 @@
   "phase": -1,
   "category": "foundation",
   "review_date": null,
-  "status": "pending"
+  "status": "pending",
+  "mc_chat_thread_id": "project-p00-metrics",
+  "discord_thread_id": null
 }

@@ -1,0 +1,16 @@
+{
+  "messages": [
+    {
+      "role": "user",
+      "text": "Quiero crear una nueva skill para el workspace. Guíame paso a paso.",
+      "ts": 1775687800673
+    },
+    {
+      "role": "bot",
+      "text": "¡Vamos al lío! Crear una skill nueva es un proceso iterativo, pero empezamos con lo más importante: **entender qué quieres que haga**.\n\nNecesito que me respondas estas 4 preguntas:\n\n1. **¿Qué debe hacer esta skill?** — ¿Qué tarea o workflow quieres automatizar? Cuanto más concreto, mejor.\n\n2. **¿Cuándo debería activarse?** — ¿Qué frases o contextos del usuario deberían disparar esta skill? (ej: \"cuando alguien pide un análisis de competencia\", \"cuando se menciona crear una landing page\")\n\n3. **¿Cuál es el output esperado?** — ¿Un archivo markdown? ¿Un JSON? ¿Un documento con estructura específica? ¿Acciones en herramientas externas?\n\n4. **¿Necesitamos test cases?** — Si el output es verificable objetivamente (transformar datos, generar archivos con estructura fija), los tests ayudan mucho. Si es más subjetivo (estilo de escritura, creatividad), quizá no.\n\nResponde lo que tengas claro y pregunta lo que no — vamos construyendo juntos. 🛠️",
+      "ts": 1775687869258,
+      "agent": "sancho"
+    }
+  ],
+  "updatedAt": 1775687869258
+}

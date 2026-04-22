@@ -1,0 +1,11 @@
+{
+  "cronId": "6dac9a53-6736-490a-ae54-e028b8ebbbd1",
+  "cronName": "Meeting Intelligence",
+  "slug": "hospital-capilar",
+  "date": "2026-04-16",
+  "runAtMs": 1776355200027,
+  "status": "ok",
+  "durationMs": 498399,
+  "model": "MiniMax-M2.7",
+  "content": "## 🧠 Meeting Intelligence — Hospital Capilar | 2026-04-16\n\n2 reuniones nuevas procesadas (08 y 14 abr).\n\n---\n\n### 📅 2026-04-08 — Actualización HC: Correos, WhatsApp\n**Foco:** Protocolos operativos para lançar кампанию diagnóstico Madrid\n\n**Decisiones clave:**\n- ✅ Automatización multi-canal: WhatsApp (templates Meta) + email para reducir no-shows\n- ✅ Integración API Coibox directa (widget no servía)\n- ✅ Geolocalización estricta Madrid — máquina análisis hormonales solo en Madrid\n- ✅ Período de prueba 1 mes antes de escalar a 3 clínicas / 7 nichos\n\n**Acciones pendientes:**\n- Revisar plantillas comunicación → equipo HC\n- Grabar video mostrando emails → Philippe\n- Revisar/subtitular videos anuncios → Miguel Ángel\n- Revisar textos Google Ads → Miguel Ángel\n- Finalizar protocolo médico + organizar agendas Madrid → equipo HC\n\n**Insights:**\n- 11 interesados, 2 citas agendadas\n- Precio €125 mejor que €195 — aún sin pagos concretados\n- Google Ads copy: \"diagnóstico médico real\", \"antes de gastar en vitaminas\"\n\n---\n\n### 📅 2026-04-14 — Weekly Projects Philippe\n**Foco:** Dashboard con inconsistencias + métricas por nicho\n\n**Decisiones clave:**\n- ✅ Dashboard debe segmentar por nicho (leads, citas, conversiones)\n- ✅ Reunión inmediata con comercial para investigar why leads mujeres no pagan\n- ✅ Envío semanal métricas: Telegram + email a Óscar/Gerardo\n- ✅ Reorganizar agendas GHL: separar perfil hombre (gratis) vs mujer (€125)\n\n**Acciones pendientes:**\n- Reorganizar lógica agendas HC → Philippe\n- Reunión con comercial (urgente) → Philippe\n- Corregir datos sección citas dashboard → Philippe\n- Segmentar dashboard por nicho → Philippe\n\n**Insights:**\n- 21 leads totales — 2 hombres con citas (24 y 21 abr). **Ninguna mujer ha pagado.**\n- Dashboard inconsistente: 20 quizzes / 23 leads / citas \"sin dato\"\n- Hipótesis: tema de precio o fricción en el pago\n\n---\n\n### 📊 Estado actual\n- Meetings procesados: 15 total | **2 nuevos**\n- Meetings.json actualizado\n- Archivos guardados en `brand/hospital-capilar/intelligence/meetings/`"
+}

@@ -11,27 +11,27 @@
       "pillars": {
         "company-brief": {
           "status": "approved",
-          "output_file": "brand/hospital-capilar/company-brief/current.md",
+          "output_file": "brand/hospital-capilar/company-brief/company-brief.current.md",
           "skill": "fast-foundation"
         },
         "self-l1": {
           "status": "approved",
-          "output_file": "brand/hospital-capilar/market-and-us/self/current.md",
+          "output_file": "brand/hospital-capilar/market-and-us/self/self.current.md",
           "skill": "fast-foundation"
         },
         "market-l1": {
           "status": "approved",
-          "output_file": "brand/hospital-capilar/market-and-us/market/current.md",
+          "output_file": "brand/hospital-capilar/market-and-us/market/market.current.md",
           "skill": "fast-foundation"
         },
         "brand-voice-snapshot": {
           "status": "approved",
-          "output_file": "brand/hospital-capilar/brand-voice/current.md",
+          "output_file": "brand/hospital-capilar/brand-voice/brand-voi.current.md",
           "skill": "fast-foundation"
         },
         "niche-basic": {
           "status": "approved",
-          "output_file": "brand/hospital-capilar/go-to-market/ecps/current.md",
+          "output_file": "brand/hospital-capilar/go-to-market/ecps/ecps.current.md",
           "skill": "fast-foundation"
         }
       }
@@ -70,7 +70,7 @@
             "competitor-analysis",
             "self-analysis"
           ],
-          "output_file": "brand/hospital-capilar/market-and-us/market/current.md",
+          "output_file": "brand/hospital-capilar/market-and-us/market/market.current.md",
           "skill": "market-intelligence",
           "approved_at": "2026-03-03T11:33:00Z"
         },
@@ -87,7 +87,7 @@
           "skill": "competitor-intelligence",
           "approved_at": "2026-03-03T11:57:00Z",
           "notes": "Competitor deep-dive files (insparya, svenson, capilclinic, medical-hair, imd) referenced in original but not created as files. To be generated when competitors/ subfolder structure is populated.",
-          "output_file": "brand/hospital-capilar/market-and-us/competitors/current.md"
+          "output_file": "brand/hospital-capilar/market-and-us/competitors/competitors.current.md"
         },
         "self-analysis": {
           "status": "approved",
@@ -99,7 +99,7 @@
             "market-analysis",
             "competitor-analysis"
           ],
-          "output_file": "brand/hospital-capilar/market-and-us/self/current.md",
+          "output_file": "brand/hospital-capilar/market-and-us/self/self.current.md",
           "skill": "self-intelligence",
           "completed_at": "2026-03-03T12:05:00Z",
           "approved_at": "2026-03-03T12:05:00Z"
@@ -112,7 +112,7 @@
             "competitor-analysis",
             "self-analysis"
           ],
-          "output_file": "brand/hospital-capilar/market-and-us/swot/current.md",
+          "output_file": "brand/hospital-capilar/market-and-us/swot/swot.current.md",
           "skill": "market-synthesis",
           "started_at": "2026-03-03T12:06:00Z",
           "completed_at": "2026-03-03T12:12:00Z",
@@ -121,7 +121,7 @@
       }
     },
     "go-to-market": {
-      "status": "not-started",
+      "status": "in-progress",
       "layer": 3,
       "output_dir": "brand/hospital-capilar/go-to-market/",
       "pillars": {
@@ -134,7 +134,7 @@
           "enriches_with": [
             "existing-customer-data"
           ],
-          "output_file": "brand/hospital-capilar/go-to-market/ecps/current.md",
+          "output_file": "brand/hospital-capilar/go-to-market/ecps/ecps.current.md",
           "skill": "niche-discovery-100x",
           "version": 3,
           "approved_at": "2026-03-16T15:05:00Z",
@@ -155,7 +155,7 @@
           "requires": [
             "niche-discovery"
           ],
-          "output_file": "brand/hospital-capilar/go-to-market/positioning/current.md",
+          "output_file": "brand/hospital-capilar/go-to-market/positioning/positioning.current.md",
           "skill": "positioning-messaging",
           "version": 1,
           "drafted_at": "2026-03-03T15:45:00Z"
@@ -169,7 +169,7 @@
           "enriches_with": [
             "positioning"
           ],
-          "output_file": "brand/hospital-capilar/go-to-market/pricing/current.md",
+          "output_file": "brand/hospital-capilar/go-to-market/pricing/pricing.current.md",
           "skill": "pricing-strategy"
         },
         "ecp-validation": {
@@ -181,7 +181,8 @@
           "optional": true,
           "skill": "ecp-validation"
         }
-      }
+      },
+      "updated_at": "2026-04-15T15:37:46.392Z"
     },
     "brand-identity": {
       "status": "not-started",
@@ -194,7 +195,7 @@
           "requires": [
             "positioning"
           ],
-          "output_file": "brand/hospital-capilar/brand-identity/voice-profile/current.md",
+          "output_file": "brand/hospital-capilar/brand-identity/voice-profile/voice-profil.current.md",
           "skill": "brand-voice"
         },
         "visual-identity": {
@@ -203,7 +204,7 @@
           "requires": [
             "brand-voice"
           ],
-          "output_file": "brand/hospital-capilar/brand-identity/visual-identity/current.md",
+          "output_file": "brand/hospital-capilar/brand-identity/visual-identity/visual-identity.current.md",
           "skill": "visual-identity"
         }
       }
@@ -234,7 +235,7 @@
       "requires": [
         "metrics-setup"
       ],
-      "output_file": "brand/hospital-capilar/strategic-plan/current.md"
+      "output_file": "brand/hospital-capilar/strategic-plan/strategic-pla.current.md"
     }
   },
   "presentations": [

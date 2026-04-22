@@ -1,0 +1,16 @@
+{
+  "messages": [
+    {
+      "role": "user",
+      "text": "Quiero crear una nueva skill para el workspace. Guíame paso a paso.",
+      "ts": 1775744901403
+    },
+    {
+      "role": "bot",
+      "text": "¡Vamos al lío! Crear una skill es un proceso bastante directo. Necesito entender qué quieres construir antes de escribir nada.\n\n**Paso 1 — Capturar la idea.** Respóndeme estas preguntas:\n\n1. **¿Qué debe hacer la skill?** — ¿Qué tarea o workflow quieres que Claude ejecute cuando se active?\n2. **¿Cuándo debería activarse?** — ¿Qué frases o contextos del usuario deberían disparar esta skill?\n3. **¿Cuál es el output esperado?** — ¿Un archivo markdown, un JSON, una acción en Discord, un análisis...?\n4. **¿Hay dependencias?** — ¿Necesita leer archivos del cliente (`brand/{slug}/`), usar APIs externas, ejecutar scripts?\n\nSi ya tienes una idea clara, cuéntamela con todo el detalle que puedas. Si es algo que ya hemos hecho manualmente en alguna conversación y quieres convertirlo en skill, dímelo también — puedo extraer el workflow de ahí.",
+      "ts": 1775744935862,
+      "agent": "sancho"
+    }
+  ],
+  "updatedAt": 1775744935862
+}

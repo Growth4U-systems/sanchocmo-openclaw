@@ -90,7 +90,23 @@
       "source": "Google Drive - 1Y3Th4w4KK3N7TiFreMZk__kX9dWxK69W0avG3J-k8d4",
       "processed": true,
       "file": "2026-03-10-analisis-mercado-competidores.md"
+    },
+    {
+      "id": "2026-04-08-actualizacion-hc",
+      "date": "2026-04-08",
+      "source": "Google Drive - 1fck1rlKxpU6rzymTV5T5tpowpL84uvZPO2i8sVHvt_M",
+      "processed": true,
+      "file": "2026-04-08-actualizacion-hc/summary.md"
+    },
+    {
+      "id": "2026-04-14-weekly-projects-philippe",
+      "date": "2026-04-14",
+      "source": "Google Drive - 1XM-VXZR9Iwr4h6hTVmXEySAAPvJlc5uICNPYj0oFvjI",
+      "processed": true,
+      "file": "2026-04-14-weekly-projects-philippe/summary.md"
     }
   ],
-  "lastUpdated": "2026-03-31T16:00:00Z"
+  "lastUpdated": "2026-04-17T16:07:41Z",
+  "_lastCheckStatus": "No new meetings found since last execution. Discord notification skipped: gateway timeout.",
+  "_lastCheckTime": "2026-04-21T16:00:00Z"
 }

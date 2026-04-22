@@ -1,0 +1,11 @@
+{
+  "cronId": "a68143d8-1309-46eb-a5dc-4c3fb35ee3d2",
+  "cronName": "Lead Sync — Growth4U",
+  "slug": "growth4u",
+  "date": "2026-04-15",
+  "runAtMs": 1776283200035,
+  "status": "ok",
+  "durationMs": 443805,
+  "model": "qwen/qwen3.6-plus",
+  "content": "📊 **Lead Sync — 2026-04-15**\n\n**Tags scanned**: llamada-agendada\n**Total contacts con tag**: 11\n**✅ Nuevos leads**: 1\n- Sergi Candel (sergi@xhype.io) → XHYPE, Superwallet for Crypto Spending\n\n**🔄 Leads existentes**: 10 (revisados, sin transcripts nuevos)\n**📝 Notas Slack**: 0 sincronizadas (slack_enabled = false)\n**🎙️ Transcripts Drive**: 0 nuevos encontrados\n\n**Resumen por lead:**\n\n| Lead | Email | Estado | Pipeline |\n|------|-------|--------|----------|\n| Sergio Candel | sergi@xhype.io | 🆕 NUEVO | — |\n| Jose Manuel Castro | josemanuel.castro@firmatel.com | existente | FirmaTel |\n| Marta Luis | martaluisaortizortega1@gmail.com | existente | — |\n| Josep | leadership@gutendurance.com | existente | GutEndurance |\n| Alfonso Pascual | alfonsopascual1111@gmail.com | existente (call cancelada) | — |\n| Manuel Campos | smart.academy.ppal@gmail.com | existente | — |\n| Manuel Campos (2) | manuelcamposbusiness@gmail.com | existente (call cancelada) | — |\n| Albert Totil | bandarramotorclassic@gmail.com | existente | — |\n| Moh Dak | mohammeddakir735@gmail.com | existente | — |\n| Carlos Arquiv | arquiv123@gmail.com | existente | — |\n| Juan Antonio | juanantonio@jugavi.com | existente | JuaGavi |\n\n⚡ Todo limpio, 0 errores."
+}

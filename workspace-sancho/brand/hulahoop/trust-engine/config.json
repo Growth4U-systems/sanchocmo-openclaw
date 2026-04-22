@@ -1,0 +1,95 @@
+{
+  "project": {
+    "slug": "hulahoop",
+    "name": "HulaHoop Media",
+    "website": "https://hulahoop.media",
+    "language": "es",
+    "market": "España (base) + inversores internacionales (UK, USA, Canadá, Francia, Bélgica, Irlanda, Finlandia, Holanda, Serbia, Australia, Argentina, México)",
+    "country_code": "ES"
+  },
+  "brand": {
+    "name": "HulaHoop Media",
+    "aliases": ["HulaHoop", "Hulahoop Media", "HulaHoop Platform"],
+    "domains": ["hulahoop.media"]
+  },
+  "niches": [
+    {
+      "id": "n1",
+      "name": "Financiación Audiovisual",
+      "brief": "Inversores profesionales y promotores de cine/series buscan estructurar incentivos fiscales y financiación de proyectos. ECP: Productor Indie Hambriento de Financiación",
+      "subniches": [
+        { "id": "n1-s1", "name": "Productoras independientes de cine", "priority": "high", "keywords_seed": ["financiación cine independiente España", "inversores para películas", "crowdfunding cinematográfico", "incentivo fiscal cine España"], "known_media": ["cinemania", "fotogramas", "elconfidencial"] },
+        { "id": "n1-s2", "name": "Series y producciones televisivas", "priority": "medium", "keywords_seed": ["financiación series España", "inversores para series tv", "tax rebate producciones"], "known_media": ["seriesandome", "vertele"] },
+        { "id": "n1-s3", "name": "Festivales y mercados de coproducción", "priority": "medium", "keywords_seed": ["mercados cinematográficos España", "coproducción internacional cine", "festivales cine financiación"], "known_media": ["sansebastianfestival", "malagacine"] }
+      ]
+    },
+    {
+      "id": "n2",
+      "name": "Inversión Cultural con Incentivo Fiscal",
+      "brief": "Inversores (profesionales, retail, family offices) buscan deducciones fiscales a través de activos culturales. ECP: Inversor Retail Cinéfilo + Fondo/Family Office",
+      "subniches": [
+        { "id": "n2-s1", "name": "Inversores profesionales con IS significativa", "priority": "high", "keywords_seed": ["deducción fiscal cultural IS", "invertir en cine con ventaja fiscal", "incentivo fiscal artístico empresas"], "known_media": ["cinco dias", "expansion"] },
+        { "id": "n2-s2", "name": "Inversores retail pasión por cine/cultura", "priority": "high", "keywords_seed": ["invertir en películas España", "crowdfunding cine回报", "películas con incentivo fiscal"], "known_media": ["cinemania", "reddit españa inversiones"] },
+        { "id": "n2-s3", "name": "Family offices y fondos buscando diversificación", "priority": "medium", "keywords_seed": ["inversión alternativa entretenimiento", "diversificación activos culturales", "incentivos fiscales cultura España"], "known_media": ["eleconomista", "cincodias"] },
+        { "id": "n2-s4", "name": "Autónomos y empresas con IRPF/IS", "priority": "medium", "keywords_seed": ["deducción IRPF cultura", "incentivo fiscal autónomo cine", "optimización fiscal artista"], "known_media": [] }
+      ]
+    },
+    {
+      "id": "n3",
+      "name": "Música y Eventos en Vivo",
+      "brief": "Promotores de música y festivales buscan estructurar financiación y deducciones fiscales. Oportunidad cross-vertical con dominance de SFTL/Incentiva Music.",
+      "subniches": [
+        { "id": "n3-s1", "name": "Festivales y promotores de conciertos", "priority": "high", "keywords_seed": ["financiación festivales música España", "incentivo fiscal festivales", "inversores para conciertos"], "known_media": ["jenediz", "motor"] },
+        { "id": "n3-s2", "name": "Productoras musicales y discográficas", "priority": "medium", "keywords_seed": ["inversión discográficas España", "financiación producción musical", "incentivo fiscal música"], "known_media": [" Billboard España", "jenesais"] }
+      ]
+    },
+    {
+      "id": "n4",
+      "name": "SaaS para Asesores Fiscales",
+      "brief": "Despachos, consultoras y asesores fiscales que gestionan incentivos fiscales culturales para sus clientes. Target de Pro Tax.",
+      "subniches": [
+        { "id": "n4-s1", "name": "Despachos legales y asesoría fiscal", "priority": "high", "keywords_seed": ["software gestión incentivos fiscales culturales", "gestión deducciones cine Spain", "digitalización tax equity"], "known_media": ["economist"] },
+        { "id": "n4-s2", "name": "Consultoras y Firms de estructuración", "priority": "high", "keywords_seed": ["consultora fiscal entretenimiento", "estructuración incentivos culturales Spain"], "known_media": [" CincoDías"] }
+      ]
+    },
+    {
+      "id": "n5",
+      "name": "Videojuegos y Entretenimiento Digital",
+      "brief": "Vertical emergente. Partners: BNP Paribas, Steam/Holmgang. Scoring de riesgo acumulado para videojuegos en desarrollo.",
+      "subniches": [
+        { "id": "n5-s1", "name": "Productoras de videojuegos", "priority": "medium", "keywords_seed": ["financiación videojuegos España", "inversión gaming España", "crowdfunding videojuegos"], "known_media": [] }
+      ]
+    }
+  ],
+  "competitors": [
+    { "name": "SEGO Creative", "domain": "segofinance.com", "niches": ["n1", "n2"], "threat_level": "high" },
+    { "name": "TaxMM (+ Pelícano Partners)", "domain": "taxmm.es", "niches": ["n2", "n1"], "threat_level": "high" },
+    { "name": "SFTL / Incentiva Music", "domain": "incentivamusic.com", "niches": ["n3", "n1"], "threat_level": "high" },
+    { "name": "Taxlease", "domain": "taxlease.es", "niches": ["n2"], "threat_level": "medium" },
+    { "name": "Urbanitae", "domain": "urbanitae.com", "niches": ["n2"], "threat_level": "low" },
+    { "name": "Fellow Funders", "domain": "fellowfunders.com", "niches": ["n2"], "threat_level": "low" },
+    { "name": "Bolsa Social", "domain": "bolsasocial.com", "niches": ["n2"], "threat_level": "low" }
+  ],
+  "market_filter": {
+    "country": "ES",
+    "language": "es",
+    "exclude_domains_patterns": ["forbes.com", "techcrunch.com", "bloomberg.com", "wsj.com"],
+    "prioritize_tlds": [".es", ".com"]
+  },
+  "context_import": {
+    "has_company_brief": true,
+    "has_ecps": true,
+    "has_messaging_summary": false,
+    "has_competitors": true,
+    "has_self": true,
+    "has_brand_voice": true
+  },
+  "notes": [
+    "Web: SPA JS-heavy (no SEO indexable). Implicaciones para own-media audit.",
+    "Messaging summary vacío (pendiente de completar)",
+    "ECPs preliminars (lite mode) — algunos gaps pendientes según doc",
+    "Competitive analysis completa (Apr 13, 2026) — 7 competidores mapeados",
+    "Licencia CNMV PFP pendiente — go-live Q1 2027",
+    "Pre-lanzamiento PFP: restricciones CNMV limitan captación pública hasta Q1 2027"
+  ]
+}

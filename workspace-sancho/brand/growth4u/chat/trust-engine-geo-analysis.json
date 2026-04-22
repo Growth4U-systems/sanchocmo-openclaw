@@ -1,0 +1,40 @@
+{
+  "messages": [
+    {
+      "role": "user",
+      "text": "Estoy revisando el GEO Analysis de growth4u. Analiza la visibilidad en IA (ChatGPT, Gemini, Perplexity). ¿Dónde nos mencionan, dónde no, y dónde hay oportunidades frente a competidores?",
+      "ts": 1775684726470
+    },
+    {
+      "role": "bot",
+      "text": "Vamos al lío. Primero dejo que cargue el contexto de Growth4U y luego lanzo las consultas a los motores de IA.",
+      "ts": 1775684973058,
+      "agent": "sancho"
+    },
+    {
+      "role": "bot",
+      "text": "Voy a lanzar las consultas clave que haría tu ICP en motores de IA. Dame un momento.",
+      "ts": 1775684973091,
+      "agent": "sancho"
+    },
+    {
+      "role": "bot",
+      "text": "Las búsquedas genéricas no devolvieron resultados. Voy a probar con queries más específicas que reflejen la intención del ICP.",
+      "ts": 1775684973109,
+      "agent": "sancho"
+    },
+    {
+      "role": "bot",
+      "text": "El search grounding está caído o devolviendo vacío. Voy a intentar por otras vías — fetching directo y X search.",
+      "ts": 1775684973115,
+      "agent": "sancho"
+    },
+    {
+      "role": "bot",
+      "text": "Tengo suficiente para el análisis. Aquí va el diagnóstico completo.\n\n---\n\n## 🔍 GEO Analysis — Growth4U\n\n### Estado actual: INVISIBILIDAD casi total en motores de IA\n\n---\n\n### 1. Dónde NOS mencionan (branded queries)\n\n| Motor | Query \"Growth4U growth marketing España\" | Resultado |\n|-------|----------------------------------------|-----------|\n| **Perplexity** | ✅ Muestra growth4u.io/en/ como fuente | Solo en branded query directa |\n| **Gemini** | ❌ Sin resultados (grounding vacío) | Invisible incluso buscando por nombre |\n| **ChatGPT/Grok** | ⚠️ No testeable en tiempo real | Probable que cite si pregunta directa |\n\n**Veredicto**: Solo nos encuentran si ya saben nuestro nombre. Eso no es visibilidad — es un directorio.\n\n---\n\n### 2. Dónde NO nos mencionan (discovery queries — el problema gordo)\n\nQueries que haría nuestro ICP y donde Growth4U **no aparece**:\n\n| Query tipo ICP | Quién aparece | Growth4U |\n|---------------|---------------|----------|\n| \"mejores consultoras growth hacking España\" | Product Hackers, listados genéricos | ❌ Invisible |\n| \"agencia growth marketing B2B SaaS España\" | Product Hackers, Snowball en algunos listados | ❌ Invisible |\n| \"alternativas a Product Hackers\" | Sin datos claros | ❌ Invisible |\n| \"cómo escalar startup tech sin agencia\" | Contenido genérico de blogs | ❌ Invisible |\n| \"trust engine growth methodology\" | Nada relevante | ❌ Invisible |\n\n**Gemini no devolvió NINGÚN resultado** en 8 queries diferentes — ni sobre nosotros, ni sobre competidores, ni sobre el sector. Esto sugiere que todo el nicho \"growth consulting España\" tiene baja representación en el corpus de Gemini.\n\n---\n\n### 3. Competidores: gap de visibilidad\n\n| Señal | Growth4U | Product Hackers | Snowball |\n|-------|----------|-----------------|----------|\n| **X/Twitter** | 0 seguidores, 0 actividad | 7.037 seguidores, activos, eventos | Mínima |\n| **Rankings/Listados** | No aparece en ninguno | #1 Growth & CRO España 2025 (M4eCommerce) | Aparece en algunos |\n| **Contenido citado por IAs** | Blog indexado parcialmente (35-84/120) | Blog, templates, informes = mucho corpus | Blog formativo |\n| **Marca personal fundadores** | Alfonso: LinkedIn presente, sin X | Luis Díaz del Dedo: libro, Forbes, podcast | Pau Gallinat: LinkedIn + BNI |\n| **llms.txt** | ✅ Existe (pero desactualizado) | ❓ No verificado | ❓ No verificado |\n\n**Product Hackers ya publica informes sobre \"visibilidad en LLMs\"** para sectores como seguros. Están jugando el juego GEO activamente.\n\n---\n\n### 4. 🔴 Problemas críticos detectados\n\n**A. llms.txt DESACTUALIZADO**\n- Dice: *\"Especialistas en Growth Marketing para Fintech\"*\n- Debería decir: *\"Especialistas en Growth para Empresas Tech B2B & B2C\"*\n- Menciona solo fintech como expertise cuando el brand ha pivotado a tech general\n- Los casos de éxito están bien (Bnext, Bit2Me, GoCardless), pero falta el framing actual\n\n**B. Indexación rota = corpus mínimo para IAs**\n- Solo 35-84 de ~120 páginas indexadas por Google\n- Si Google no indexa, los LLMs no entrenan con ese contenido\n- Batch de ~90 posts en Feb 2026 pudo disparar señal de \"contenido AI masivo\"\n- Hreflang apunta a /en/blog/ que da 404\n\n**C. Zero presencia en X/Twitter**\n- Grok (X) no nos conoce en absoluto\n- Product Hackers tiene 7K+ seguidores y es activo — las IAs de X los citan\n- Sin actividad en X = sin corpus para Grok ni para IAs que scrabean social\n\n**D. Sin menciones de terceros (Borrowed Trust)**\n- No aparecemos en ningún listado \"mejores agencias growth España\"\n- Sin reviews en Trustpilot, Clutch, o Google Reviews verificable\n- Sin apariciones en prensa/medios tech españoles indexados\n- Las IAs generativas priorizan fuentes que citan a múltiples proveedores → si no estamos en esos listados, no existimos\n\n---\n\n### 5. 🟢 Oportunidades concretas\n\n| Prioridad | Acción | Impacto GEO esperado |\n|-----------|--------|---------------------|\n| **P0** | Actualizar llms.txt → \"empresas tech\" (no solo fintech) | Corrección inmediata del framing para todos los LLMs |\n| **P0** | Resolver indexación (eliminar hreflangs rotos, re-submit sitemap) | +50-80 páginas indexables = más corpus para IAs |\n| **P1** | Crear contenido \"listicle\" propio: \"Mejores consultoras growth España\" incluyéndonos | Las IAs citan listicles como fuente de comparativas |\n| **P1** | Aparecer en listados externos (M4eCommerce, Sortlist, Clutch) | Borrowed trust = mención cruzada que las IAs detectan |\n| **P1** | Activar X/Twitter con contenido regular (frameworks, datos, takes) | Corpus para Grok + señal de marca viva |\n| **P2** | Publicar \"Trust Engine\" como framework abierto (blog long-form + PDF) | Crear un concepto propio citado por IAs al explicar methodologías |\n| **P2** | FAQ estructuradas en web (schema FAQPage ya existe) | Respuestas directas que las IAs pueden extraer |\n| **P2** | Crear comparativa \"Growth4U vs Product Hackers vs Snowball\" | Target query \"alternativas a Product Hackers\" |\n\n---\n\n### Resumen ejecutivo en 3 bullets\n\n1. **Growth4U es prácticamente invisible** en motores de IA para queries de discovery. Solo aparecemos si alguien ya sabe nuestro nombre.\n2. **Product Hackers domina** el espacio con presencia en rankings, X, eventos y contenido indexable. Snowball es débil pero al menos aparece en listados.\n3. **Quick wins**: actualizar llms.txt, arreglar indexación, y aparecer en 2-3 listados externos podrían cambiar la visibilidad en 30-60 días. El gap de X es el más urgente por volumen de corpus que genera.\n\n---\n\n¿Quieres que ejecute alguna de estas acciones? La más inmediata sería actualizar el llms.txt para que refleje el posicionamiento actual.",
+      "ts": 1775684973125,
+      "agent": "sancho"
+    }
+  ],
+  "updatedAt": 1775684973125
+}

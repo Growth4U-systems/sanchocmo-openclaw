@@ -1,0 +1,11 @@
+{
+  "cronId": "a68143d8-1309-46eb-a5dc-4c3fb35ee3d2",
+  "cronName": "Lead Sync — Growth4U",
+  "slug": "growth4u",
+  "date": "2026-04-08",
+  "runAtMs": 1775678400013,
+  "status": "ok",
+  "durationMs": 528171,
+  "model": "claude-opus-4-6",
+  "content": "📊 **Lead Sync — 2026-04-08 22:00 CEST**\n\n**15** contactos con tag `llamada-agendada` procesados (349 total en GHL)\n\n🆕 **2 leads nuevos:**\n• **Alfonso Pascual Griñán Benítez** — Facebook, budget 10k-25k€, sin empresa identificada (`enrichment_pending`)\n• **Alfonso Nistal** — IASAF (consultora subvenciones, 25+ años), referido directo, email corporativo ✅\n\n🔄 **1 lead actualizado:**\n• **Eduardo Zuñiga** — Añadido transcript completo de llamada estratégica 26/03 (expansión europea EIS Solutions, programa 7k€ propuesto, pendiente decisión con socio Víctor)\n\n📋 **12 leads** sin cambios (ya actualizados ayer o sin transcripts nuevos)\n⚠️ Slack sync deshabilitado | Drive: sin nuevos recordings para los 12 restantes"
+}

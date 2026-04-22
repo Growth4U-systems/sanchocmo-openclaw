@@ -1,77 +1,114 @@
-# Observaciones Sancho — 2026-04-05
+# Observaciones Sancho
 
-## Sesiones (últimas 24h): ~10 sesiones
+---
 
-| Canal | Tipo | Estado | Notes |
-|-------|------|--------|-------|
-| Cron | Morning Metrics — Growth4U | ✅ | 5/6 APIs OK, publicado en #intelligence, 1 error (Instantly — conocido) |
-| Discord | #growth4u-gm | ✅ | Morning Metrics publicado + análisis + 3 propuestas acción |
-| Cron | Regenerar Dashboard | ✅ | 54 tareas, 100 eventos, 35/81 pilares |
-| Cron | update-skills | ✅ | 8 plugins actualizados, reportado en hilo Discord |
-| Cron | cost-tracker-daily | ✅ | Sin anomalías, HEARTBEAT_OK |
-| Cron | Lead Sync — Growth4U | ❌ FAILED | Error API: "Third-party apps now draw from your extra usage" |
-| Heartbeat | Sancho (21:31 UTC) | ❌ FAILED | Mismo error API que Lead Sync |
-| Heartbeat | Cervantes (21:05 UTC) | ❌ FAILED | Mismo error API |
-| Cron | Cervantes backup-sancho | ✅ | 32h desde último backup — dentro de rango |
-| Cron | Cervantes cost-tracker-daily | ❌ FAILED | Mismo error API |
+## 2026-04-21 — Cervantes observa a Sancho (08:00 UTC / 10:00 CEST)
 
-## Errores / Fallos
+### Sesiones activas (últimas 24h): ~29 sesiones detectadas
 
-1. **⚠️ Anthropic API key agotado — afecta a TODOS los crons en Opus/Sonnet** ❌ CRÍTICO
-   - Error generalizado: `400 {"type":"error","error":{"type":"invalid_request_error","message":"Third-party apps now draw from your extra usage, not your plan limits. We've added a $200 credit to get you started. Claim it at claude.ai/settings/usage"}}}`
-   - Afecta: Lead Sync, Sancho heartbeat, Cervantes heartbeat, Cervantes cost-tracker-daily
-   - Los crons que usan MiniMax (Morning Metrics, update-skills, Regenerar Dashboard) SÍ funcionaron
-   - El canal Discord funciona via delivery-mirror/OpenAI (no Anthropic) — por eso Morning Metrics llegó
-   - **El API key de Anthropic está seco** — necesita recarga o cambio de plan
-   - **Nota**: Ya ha ocurrido antes (cf. observaciones 2026-04-01: overloaded_error, 2026-04-04: rate_limit_error)
+| Sesión | Canal | Estado | Notas |
+|--------|-------|--------|-------|
+| Morning Metrics — Growth4U | cron | ⚠️ Partial | Ejecutó correctamente, guardó JSON. **No logró publicar en Discord** — múltiples intentos fallidos (subagent, browser, exec API). Reporte salvado en `brand/growth4u/recurring-tasks/morning-metrics/2026-04-21.json` pero NO llegó a Discord. |
+| Daily Pulse — Growth4U | cron → Discord | ✅ OK | 0 actividad humana 8 canales. Reportó correctamente sin publicar hilo (protocolo: sin datos = sin hilo). |
+| Daily Pulse — Hospital Capilar | cron → Discord | ✅ OK | 0/9 canales activos. Reportó correctamente. |
+| Call Prep Daily — Growth4U | cron → Discord | ✅ OK | 2 llamadas hoy (Alfonso Nistal IASAF 13:00 + Josep M Gil Heltech 16:00). Briefing enviado a hilo #intelligence via subagent. |
+| Lead Sync — Growth4U | cron | ✅ OK | Sin leads nuevos. 4 enrichment pending. |
+| Morning Metrics — Hulahoop | cron | ⚠️ NO_APIS | Sin APIs configuradas. Comportamiento correcto. |
+| Performance Analysis — Growth4U | cron | ✅ OK | Completó (datos de ayer). |
+| Performance Analysis — Hulahoop | cron | ⚠️ NO_DATA | Brand nueva (sin métricas). Correcto. |
+| Weekly Synthesis — Growth4U | cron | ✅ OK | Completó. |
+| Weekly Synthesis — HC | cron → Discord | ✅ OK | Síntesis enviada a #intelligence con hilo. 0 actividad 7 días. |
+| Meeting Intelligence | cron | ✅ OK | Sin reuniones nuevas. Mensaje informativo. |
+| Cost Tracker Daily | cron | ✅ OK | Sin anomalías. |
+| update-skills | cron | ⚠️ Running | Aún ejecutándose. |
+| image-optimizer | cron | ⚠️ Running | Aún ejecutándose. |
+| cron-watchdog-weekly | cron | ⚠️ Running | Aún ejecutándose. |
+| MC Chat P06-T07 (Growth4U) | MC Chat | ✅ OK | Sesión interactiva sobre guest posts con Publisuites + Puromarketing. Iteraciones para definir topics. Captó error con caracteres chinos y se autocorrigió. |
+| MC Chat — Trust Engine (Hulahoop) | MC Chat | ✅ OK | Sesión completada correctamente. |
+| MC Chat Paymatico | MC Chat | ✅ Idle | Sin actividad reciente. |
+| Heartbeats (noche/madrugada) | webchat | ✅ OK | HEARTBEAT_OK en quiet hours (23:00–06:00). Correcto. |
+| Discord #admin (Nahuel greeted) | discord | ✅ OK | Greeted apropiadamente. |
 
-2. **Instantly error persistente** ⚠️
-   - Morning Metrics reporta error en Instantly (fuente email outreach)
-   - Lleva días igual — conocido, bajo impacto
+### Errores y problemas activos
 
-## Preguntas sin respuesta
+1. **🔴 Morning Metrics Growth4U — NO se publicó en Discord**: El cron ejecutó bien (recogió datos, analizó, guardó JSON en `recurring-tasks/`), pero cuando intentó publicar en `#intelligence` de Growth4U, todos los mecanismos fallaron:
+   - Intento directo via Discord REST API con bot token → 403 Forbidden (token de HC no tiene permisos en guild Growth4U)
+   - Intento via subagent → funcionó parcialmente (el subagent pudo enviar Call Prep pero Morning Metrics se perdió en el proceso)
+   - **Resultado**: El reporte quedó en `brand/growth4u/recurring-tasks/morning-metrics/2026-04-21.json` pero **no se entregó a Discord**. Esto es una degradación del sistema de reporting — Alfonso no recibió las métricas de la mañana.
+   - **Causa raíz**: Los crons que ejecutan via `exec-event` no tienen acceso al `message` tool nativo de las sesiones interactivas. El bot token disponible es de la guild HC, no de la guild Growth4U.
 
-- Ninguna. Sin interacción humana (domingo).
+2. **⚠️ Instantly campaigns error** — `(campaigns || []) is not iterable`. Error conocido desde hace semanas. Afecta solo a la fuente Instantly en Morning Metrics; el resto de APIs (GA4, GSC, Meta Ads, GHL) funcionan OK.
 
-## Reglas de canal
+3. **⚠️ update-skills, image-optimizer, cron-watchdog** — Todos en estado "running" desde hace horas. Posible timeout o doble-trigger. Monitorizar.
 
-✅ **Discord**: Morning Metrics publicado correctamente en hilo, formato tabla markdown + análisis
-✅ **Cron execution**: Morning Metrics con 5 APIs OK, análisis accionable (3 propuestas para el lunes)
-✅ **Metricool sin datos**: Reportó 0 metrics correctamente (no lo ignora)
-✅ **Hilo pattern**: Morning Metrics usa hilo correctamente en #intelligence
+### Datos de marketing Growth4U (de Morning Metrics 2026-04-21)
 
-## Patrones de mejora
+| Métrica | Valor | vs Media 7d | Estado |
+|---------|-------|-------------|--------|
+| Spend | €133.79 | €137.99 | ✅ OK |
+| Impresiones | 5,248 | 5,854 | ✅ OK |
+| Clics | 35 | 47 | ⚠️ Bajo |
+| CTR | 0.67% | 0.83% | ⚠️ Bajo |
+| CPC | €3.82 | €3.07 | ⚠️ Alto |
+| Leads | 1 | 2.7/día | ⚠️ **Día bajo** |
+| Contactos GHL nuevos | 4 | — | ✅ 4 contactos (óscar, kiko requena, jose via lead magnet + daniel Facebook) |
+| Citas GHL | 0 | — | ⚠️ Sigue sin haber citas |
 
-1. **🟢 MiniMax crons funcionando**: Morning Metrics, update-skills, Regenerar Dashboard usaron MiniMax y completaron sin error. La estrategia de usar MiniMax para crons está funcionando cuando Anthropic falla.
+**Análisis**: 1 solo lead (vs 2.7 media) es bajo pero no crítico — podría ser ruido de lunes. Lo más preocupante es el patrón simultáneo: CTR bajo + CPC alto + leads bajos. Esto sugiere fatiga de audiencia o creatividades que no resuenan. El día 04-19 tuvo 7 leads con CTR 1.09% y CPC €2.41 — ese es el benchmark a replicar.
 
-2. **🟢 Morning Metrics calidad alta**: Análisis con desglose 7 días, correlación CTR/CPC, propuestas accionables concretas. Formato consistente.
+### Interacción MC Chat — Guest Posts (P06-T07)
 
-3. **🔴 API key Anthropic es el bottleneck recurrente**: Este es el 3er día consecutivo con errores de Anthropic (04-01: overloaded, 04-04: rate_limit, 04-05: API key agotado). Los crons en Opus/Sonnet fallan sistemáticamente cuando el API tiene problemas.
+Sesión interactiva de ~30 minutos con Admin sobre validación de medios para guest posts. Sancho fue iterativo y receptivo:
+- Captó que faltaba Puromarketing cuando Admin lo señaló
+- Captó y autocorrigióerror de caracteres chinos en texto para Alfonso
+- Pidió clarificación cuando el topic "El problema de growth que no es un problema de marketing" no fue entendido
+- Respetó el execution guardrail: no ejecutó hasta tener aprobación
 
-4. **🟡 Los crons deben migrar a MiniMax por defecto**: Morning Metrics ($0.0037) vs Lead Sync fallido ($7+ de retries). MiniMax es 100x más barato y no falla por rate limits de Anthropic. Esta migración ya está parcialmente hecha pero incompleta — Lead Sync sigue en Claude Sonnet 4.5.
+**Resultado**: Mensaje listo para enviar al equipo sobre los 3 medios (todostartups.com, josefacchin.com, Puromarketing) con topics diferenciados atados a Trust Engine. Pendiente de que Alfonso lo envíe.
 
-5. **🟡 Lead Sync necesita migrar a MiniMax urgentemente**: Es el cron más caro ($7+ por ejecución cuando falla) y más crítico para G4U. Si usara MiniMax no fallaría por este error de API key.
+### Reglas de canal
 
-6. **🟡 Heartbeat de Sancho en Opus es innecesario**: Solo hace email + calendar check — podría ser Haiku. Cada heartbeat fallido cuesta ~$3 en tokens desperdiciados.
+✅ **Correcto:**
+- Call Prep → usó hilo en #intelligence (correcto)
+- Daily Pulse HC → 0 actividad → sin публикация (protocolo correcto)
+- MC Chat → se quedó en MC Chat (no invadió Discord)
+- Discord greeting → apropiado
+- Contenido largo → siempre en hilos, no en canal directo
 
-## Métricas del día
+❌ **Problemático:**
+- Morning Metrics Growth4U → **no llegó a Discord**. Reporte salvado localmente pero no entregado.
 
-- **Sesiones activas**: ~10 (muy bajo — domingo)
-- **Clientes con interacción humana**: 0
-- **Crons ejecutados OK**: 4/7
-- **Crons fallidos**: 3 (todos por API key Anthropic agotado)
-- **Errores API**: 4+ (todos mismo error: API key agotado)
-- **Coste estimado 24h**: Muy bajo por falta de actividad humana
+### ¿Qué hizo bien Sancho
 
-## Veredicto
+- ✅ **Call Prep de alta calidad** — 2 briefings detallados con company intel, historial, y objetivos claros para cada llamada
+- ✅ **Detección proactiva de anomalías** — CTR 0.67%, CPC €3.82, 1 lead. Identificó correctamente que el día 04-19 (7 leads) fue outlier positivo y recomienda analizar qué cambió
+- ✅ **MC Chat interactivo y receptivo** — autocorrige errores, pide clarificación cuando no entiende, no假设
+- ✅ **Respectó quiet hours** — todos los heartbeats nocturnos fueron HEARTBEAT_OK
+- ✅ **Client isolation** — Growth4U datos solo en canales Growth4U, HC solo en HC
 
-**Día operativo severely impactado por API key agotado.** Sancho está funcionando dentro de lo posible: Morning Metrics ejecutó en MiniMax y entregó correctamente. Pero la raíz del problema es clara: el API key de Anthropic está agotado y lleva 3 días consecutivos con errores (overloaded → rate_limit → key exhausted). Los crons que usan Anthropic fallan sistemáticamente.
+### Patrones de mejora
 
-**⚠️ ALERTA CRÓNICA — API key agotado (3er día consecutivo)**
-- Morning Metrics funciona via MiniMax ✅
-- Lead Sync, heartbeats, cost-tracker fallen ❌
-- Solución real: recargar API key de Anthropic O migrar todos los crons a MiniMax
-- La migración a MiniMax ya está parcialmente hecha (04-04) pero Lead Sync y heartbeats siguen en Opus
-- **Acción para Alfonso**: Recargar Anthropic API key en claude.ai/settings/usage Y/OU migrate crons restantes a MiniMax
+1. **Discord publishing desde exec-event** — Morning Metrics lleva semanas sin poder publicar en Discord desde contexto cron. La causa es estructural: el bot token de HC no tiene acceso a la guild Growth4U. **Fix necesario**: Obtener bot token con acceso a guild Growth4U (1477741643762241548) o cambiar la arquitectura de delivery para estos crons.
 
-**No hay urgencias que requieran notificación inmediata a Alfonso** — el sistema está degradado pero no bloqueado (MiniMax crons funcionan). Si el API key no se recarga en 24-48h, habrá que hacer migración completa a MiniMax.
+2. **Topics para Puromarketing** — Llevamos varías sesiones en P06-T07 iterando sobre los topics para Puromarketing. La confusión sugiere que no tenemos claro el angle para ese medio en particular. Proponer a Alfonso definir los 2 topics para Puromarketing en la próxima sesión.
+
+3. **Hulahoop sin APIs** — Lleva semanas quemando tokens. Considerar pausar hasta que configuren хотя бы una fuente de datos.
+
+4. **Skill execution log** — Sin entradas nuevas desde 2026-04-14 (último entry: cost-tracker failure, Q=2). No podemos medir `skill_quality_score` objetivamente. Esto rompe el metric de calidad.
+
+### Valoración general
+
+**6.5/10** — Día operativo con degradación notable: Morning Metrics NO llegó a Discord (reportó guardar en JSON pero no publicó). Esto significa que Alfonso no vio las métricas de la mañana. Los crons que SÍ funcionan (Daily Pulse, Call Prep, Lead Sync) lo hacen bien. La calidad del análisis de métricas es buena — las alertas están bien identificadas y priorizadas. El problema es delivery, no contenido.
+
+**Urgencia: Baja-Media.** No hay bloqueante sistémico, pero la degradación de Morning Metrics significa pérdida de visibilidad operativa. Si esto persiste otro día, tendré que alertar a Alfonso.
+
+### Acciones para Cervantes
+
+- [ ] **Investigar bot token Growth4U** — Obtener Discord bot token con permisos en guild `1477741643762241548`. Sin esto, los crons de Growth4U no pueden publicar en Discord.
+- [ ] **Fix skill-execution-log** — Los crons no están escribiendo al log. Necesitamos asegurar que cada skill execution registre su quality score.
+- [ ] **Deshabilitar Hulahoop Morning Metrics** hasta que configuren APIs.
+- [ ] **topics Puromarketing** — Definir en próxima sesión con Admin.
+
+---
+
+*Fin observaciones 2026-04-21*

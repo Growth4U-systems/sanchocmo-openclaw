@@ -1,90 +1,72 @@
 {
   "slug": "growth4u",
-  "updatedAt": "2026-04-01T10:41:00.000Z",
+  "updatedAt": "2026-04-20T11:02:00.000Z",
   "recommendations": [
     {
-      "id": "R001",
-      "type": "optimize",
+      "id": "rec-20260413-001",
+      "type": "pause",
       "priority": "high",
-      "metric": "meta-ads.ctr",
-      "title": "Refresh ad creatives — CTR fatigue detected",
-      "description": "CTR has dropped from 4.6% to ~2.3% over 3 weeks. Rotate in new creatives for Ángulo 2 and Ángulo 3. Keep Ángulo 4_V3 and Ángulo 5_V2 as controls.",
-      "linkedProject": "P04-meta-ads",
-      "createdAt": "2026-04-01",
-      "status": "approved",
-      "approved_at": "2026-04-01T08:55:59.525Z"
-    },
-    {
-      "id": "R002",
-      "type": "investigate",
-      "priority": "high",
-      "metric": "ghl.newContacts",
-      "title": "Investigate Mar 30 contact spike (25 contacts)",
-      "description": "25 new contacts on a single day = 3.4x average. Determine if replicable.",
-      "linkedProject": "P00-Metrics",
-      "createdAt": "2026-04-01",
-      "status": "converted",
-      "actioned_at": "2026-04-01T12:31:48.215Z",
-      "converted_to_task": "P00-Metrics-T08"
-    },
-    {
-      "id": "R003",
-      "type": "optimize",
-      "priority": "high",
-      "metric": "ga4.engagementRate",
-      "title": "Fix website engagement — bounce rate at 100%",
-      "description": "Multiple days with 100% bounce rate and 0% engagement rate. Leaking paid traffic.",
-      "linkedProject": "P01-fontaneria",
-      "createdAt": "2026-04-01",
-      "status": "converted",
-      "converted_to_task": "P01-fontaneria-T07"
-    },
-    {
-      "id": "R004",
-      "type": "launch",
-      "priority": "medium",
       "metric": "meta-ads.cpc",
-      "title": "Scale Meta Ads budget on winning creatives",
-      "description": "CPC at 0.45-0.48€ on best days. Increase daily budget 30-50% on Ángulo 4_V3 and 5_V2.",
-      "linkedProject": "P04-meta-ads",
-      "createdAt": "2026-04-01",
-      "status": "dismissed",
-      "actioned_at": "2026-04-01T21:09:28.171Z"
+      "title": "Pausar Meta Ads ahora — CPC 3x y sin conversión",
+      "description": "CPC a €2.21 (vs baseline €0.67), CPL a €55.65 (vs target €18), appointments recuperado a 5/semana pero CPL sigue 4x target. Nota:上周建议no se aplicó — spend sigue €830/semana. Ver nueva recomendación rec-20260420-002.",
+      "linked_project": "P04",
+      "createdAt": "2026-04-13",
+      "status": "pending"
     },
     {
-      "id": "R005",
+      "id": "rec-20260420-001",
+      "type": "escalate",
+      "priority": "high",
+      "metric": "meta-ads.cpc",
+      "title": "P01-T01 lleva 3+ semanas sin completar — bloquea toda la operación",
+      "description": "Meta Pixel + CAPI lleva 3 semanas en 'todo'. P01-T01 ahora 'in-progress'. P01-T02 (GA4 custom events) sigue en 'todo'. Sin estos, P04 no puede funcionar. CPC lleva 18 días por encima de baseline.",
+      "linked_project": "P01",
+      "createdAt": "2026-04-20",
+      "status": "pending"
+    },
+    {
+      "id": "rec-20260420-002",
+      "type": "pause",
+      "priority": "high",
+      "metric": "meta-ads.cpl",
+      "title": "Meta Ads sin nuevas creatividades — reducir budget un 70%",
+      "description": "CTR 0.88% (min histórico), CPC €2.82. La campaña sigue corriendo sin esperanza de mejorar sin Pixel. Reducir budget de €130/día a €30-40/día hasta que P01-T01 esté completo.",
+      "linked_project": "P04",
+      "createdAt": "2026-04-20",
+      "status": "pending"
+    },
+    {
+      "id": "rec-20260420-003",
+      "type": "launch",
+      "priority": "high",
+      "metric": "ghl.appointments",
+      "title": "NSM activa pero volumen cayendo — ejecutar P03 AHORA",
+      "description": "5 meetings/semana vs objetivo 32/mes (faltan 18 en 10 días). Meta Ads quemando budget sin ROI. P03 (Cold Email) es la forma más rápida de generar pipeline nuevo.",
+      "linked_project": "P03",
+      "createdAt": "2026-04-20",
+      "status": "pending"
+    },
+    {
+      "id": "rec-20260420-004",
       "type": "investigate",
       "priority": "medium",
-      "metric": "ghl.appointments",
-      "title": "Understand appointment activation source",
-      "description": "Appointments went from 0 (Mar 13-21) to 4-6/day (Mar 22+). Most important signal of the month.",
-      "linkedProject": null,
-      "createdAt": "2026-04-01",
-      "status": "active"
+      "metric": "ga4.engagementRate",
+      "title": "Bounce rate 100% + engagement 0% — UX roto",
+      "description": "GA4 muestra 0% engagement y bounce 100% durante 33+ días. Visitas de ads se van inmediatamente. Audit UX + page speed móvil.",
+      "linked_project": "P01",
+      "createdAt": "2026-04-20",
+      "status": "pending"
     },
     {
-      "id": "R006",
-      "type": "optimize",
-      "priority": "medium",
+      "id": "rec-20260420-005",
+      "type": "investigate",
+      "priority": "low",
       "metric": "gsc.position",
-      "title": "Push SEO content into top 5",
-      "description": "Average position improved to 7.05. Add internal links to push top pages into click-generating positions (<5).",
-      "linkedProject": null,
-      "createdAt": "2026-04-01",
-      "status": "active"
-    },
-    {
-      "id": "R007",
-      "type": "escalate",
-      "priority": "medium",
-      "metric": "ghl.opportunities",
-      "title": "Pipeline tracking gap — 0 opportunities despite 44 appointments",
-      "description": "GHL shows 0 opportunities and 0 pipeline value. Pipeline stages not being used or tracking gap.",
-      "linkedProject": null,
-      "createdAt": "2026-04-01",
-      "status": "dismissed",
-      "actioned_at": "2026-04-07T22:03:28.396Z"
+      "title": "SEO posición 5.86 — push a top 5 con enlaces internos",
+      "description": "Avg position 5.86 — a las puertas del top 5. 3-5 enlaces internos podrían mover páginas de posición 6-8 a 3-5.",
+      "linked_project": null,
+      "createdAt": "2026-04-20",
+      "status": "pending"
     }
-  ],
-  "updated_at": "2026-04-07T22:03:28.396Z"
+  ]
 }

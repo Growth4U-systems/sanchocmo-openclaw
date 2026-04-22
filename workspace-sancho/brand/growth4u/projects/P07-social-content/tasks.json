@@ -9,7 +9,10 @@
     "deliverable": "Perfil IG optimizado: bio con propuesta de valor, link in bio, highlights.",
     "done_criteria": "Bio actualizada. Link in bio funcional con links a servicios.",
     "type": "execution",
-    "skill": "instagram-content"
+    "skill": "instagram-content",
+    "deliverable_file": "brand/growth4u/projects/P07-social-content/tasks/P07-T01/deliverable.md",
+    "mc_chat_thread_id": "task-p07-t01",
+    "discord_thread_id": null
   },
   {
     "id": "P07-T02",
@@ -21,7 +24,10 @@
     "deliverable": "Cuenta TikTok Business creada con bio, foto y link a web.",
     "done_criteria": "Cuenta activa y publicable.",
     "type": "execution",
-    "skill": "tiktok-growth"
+    "skill": "tiktok-growth",
+    "deliverable_file": "brand/growth4u/projects/P07-social-content/tasks/P07-T02/deliverable.md",
+    "mc_chat_thread_id": "task-p07-t02",
+    "discord_thread_id": null
   },
   {
     "id": "P07-T03",
@@ -33,7 +39,10 @@
     "deliverable": "Lista de keywords y preguntas por plataforma mapeadas a content pillars.",
     "done_criteria": "Mínimo 30 keywords/preguntas por plataforma categorizadas.",
     "type": "execution",
-    "skill": "keyword-research"
+    "skill": "keyword-research",
+    "deliverable_file": "brand/growth4u/projects/P07-social-content/tasks/P07-T03/deliverable.md",
+    "mc_chat_thread_id": "task-p07-t03",
+    "discord_thread_id": null
   },
   {
     "id": "P07-T04",
@@ -52,7 +61,10 @@
       "860f146f-6263-494a-b169-508894a0efd3",
       "50bf0d02-37a1-4165-8713-6c998f59822d"
     ],
-    "skill": "canvas-design"
+    "skill": "canvas-design",
+    "deliverable_file": "brand/growth4u/projects/P07-social-content/tasks/P07-T04/deliverable.md",
+    "mc_chat_thread_id": "task-p07-t04",
+    "discord_thread_id": null
   },
   {
     "id": "P07-T05",
@@ -64,7 +76,10 @@
     "deliverable": "3-5 content pillars definidos para IG y TikTok con ejemplos de formato.",
     "done_criteria": "Pillars alineados con ECPs y posicionamiento. Documentados.",
     "type": "execution",
-    "skill": "content-calendar-planner"
+    "skill": "content-calendar-planner",
+    "deliverable_file": "brand/growth4u/projects/P07-social-content/tasks/P07-T05/deliverable.md",
+    "mc_chat_thread_id": "task-p07-t05",
+    "discord_thread_id": null
   },
   {
     "id": "P07-T06",
@@ -76,7 +91,10 @@
     "deliverable": "5-10 vídeos cortos grabados y editados listos para publicar.",
     "done_criteria": "Vídeos con buena calidad de audio/vídeo. Alfonso/Martín como cara visible.",
     "type": "content",
-    "skill": "canvas-design"
+    "skill": "canvas-design",
+    "deliverable_file": "brand/growth4u/projects/P07-social-content/tasks/P07-T06/deliverable.md",
+    "mc_chat_thread_id": "task-p07-t06",
+    "discord_thread_id": null
   },
   {
     "id": "P07-T07",
@@ -88,7 +106,10 @@
     "deliverable": "Calendario de publicación semanal ejecutado: 3-4 IG + 3-5 TikTok.",
     "done_criteria": "Publicación constante durante 4 semanas. Scheduling automático configurado.",
     "type": "content",
-    "skill": "social-content"
+    "skill": "social-content",
+    "deliverable_file": "brand/growth4u/projects/P07-social-content/tasks/P07-T07/deliverable.md",
+    "mc_chat_thread_id": "task-p07-t07",
+    "discord_thread_id": null
   },
   {
     "id": "P07-social-content-T08",
@@ -100,7 +121,11 @@
     ],
     "status": "todo",
     "owner": "Sancho",
-    "created_at": "2026-04-03T22:00:57.035Z"
+    "created_at": "2026-04-03T22:00:57.035Z",
+    "skill": "seo-content",
+    "deliverable_file": "brand/growth4u/projects/P07-social-content/tasks/P07-social-content-T08/deliverable.md",
+    "mc_chat_thread_id": "task-p07-social-content-t08",
+    "discord_thread_id": null
   },
   {
     "id": "P07-social-content-T09",
@@ -115,6 +140,10 @@
     ],
     "status": "todo",
     "owner": "Sancho",
-    "created_at": "2026-04-07T09:24:23.258Z"
+    "created_at": "2026-04-07T09:24:23.258Z",
+    "skill": "seo-content",
+    "deliverable_file": "brand/growth4u/projects/P07-social-content/tasks/P07-social-content-T09/deliverable.md",
+    "mc_chat_thread_id": "task-p07-social-content-t09",
+    "discord_thread_id": null
   }
 ]

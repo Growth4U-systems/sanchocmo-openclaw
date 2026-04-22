@@ -10,6 +10,11 @@
     "owner": "Sancho",
     "channel": "strategy",
     "depends_on": null,
-    "completed": "2026-03-30"
+    "completed": "2026-03-30",
+    "deliverable": "5 docs lite generados: company-brief, market, self, ecps, brand-voice + brand_summary rellenado en foundation-state.json",
+    "done_criteria": "Los 5 documentos existen en el directorio foundation/ y brand_summary tiene contenido válido",
+    "deliverable_file": "brand/criptan/projects/P00-Fast-Foundation-Fast-Foundation/tasks/P00-FF-T01/deliverable.md",
+    "mc_chat_thread_id": "task-p00-ff-t01",
+    "discord_thread_id": null
   }
 ]

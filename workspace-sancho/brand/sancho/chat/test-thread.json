@@ -1,0 +1,16 @@
+{
+  "messages": [
+    {
+      "role": "user",
+      "text": "Test message",
+      "ts": 1775626180955
+    },
+    {
+      "role": "bot",
+      "text": "¡Hola! 👋 Mensaje de test recibido en MC Chat. Todo funcionando correctamente.\n\n¿En qué te puedo ayudar?",
+      "agent": "sancho",
+      "ts": "2026-04-08T05:32:48.998Z"
+    }
+  ],
+  "updatedAt": 1775626368998
+}

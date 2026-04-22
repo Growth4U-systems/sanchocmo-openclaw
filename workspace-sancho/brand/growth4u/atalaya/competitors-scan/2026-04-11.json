@@ -1,0 +1,463 @@
+{
+  "scan_date": "2026-04-11",
+  "competitors_scraped": {
+    "direct": ["snowball", "product-hackers", "thegrowthacker"],
+    "indirect": ["isocialweb", "flat101", "glissmarket", "team-lewis"]
+  },
+  "channels_scraped": ["web", "blog", "linkedin-company", "linkedin-personal", "twitter-x"],
+  "channels_failed": ["instagram (blocked)", "meta-ads (no api)", "google-ads (blocked)"],
+  "summary": {
+    "total_competitors": 7,
+    "webs_scraped": 7,
+    "linkedin_profiles": 6,
+    "twitter_profiles": 4,
+    "blogs_scraped": 3,
+    "new_content_found": 9,
+    "ideas_generated": 12
+  },
+  "competitors": [
+    {
+      "name": "Snowball",
+      "slug": "snowball",
+      "tier": "A",
+      "channels": {
+        "web": {
+          "url": "https://agenciasnowball.com",
+          "status": "ok",
+          "content": "Consultora Growth Marketing. 'Te ayudamos a hacer crecer tu empresa en tus propios términos.' Setup en 1 semana. Trabaja por sprints con reporting automatizado. 'No escribimos para Google.' Blog con contenidos formativos extensos. LinkedIn lives semanales. Planting 10 trees per new client (650+ trees). Slogan: 'We are growth. We build growth.' Equipo 11-50 employees, Barcelona. Pricing: no mencionado (sistema de reuniones via Pipedrive)."
+        },
+        "blog": {
+          "url": "https://agenciasnowball.com/blog",
+          "status": "ok",
+          "content": "Artículos extensos con alto valor formativo. Webinars sobre growth y casos de éxito. Directos en LinkedIn donde crean estrategias básicas de growth en tiempo real."
+        },
+        "linkedin_company": {
+          "url": "https://www.linkedin.com/company/snowball-consultora-growth/",
+          "status": "ok",
+          "followers": "2,328",
+          "content": "Liderazgo: 'Captación de tráfico sin incrementar el CPL.' Onboarding rompedor en activación. Retención y fidelización. Se integran en la empresa como departamento más. Setup en 1 semana. Hiring: Paid Specialist, SEO Specialist.claim: 'Todo es medido, analizado y trackeado en un data studio personalizado.'"
+        },
+        "linkedin_founder": {
+          "url": "https://www.linkedin.com/in/pau-gallinat",
+          "status": "ok",
+          "followers": "22K",
+          "content": "Artículos: 'El cubo buggereado' (Mar 2026), 'BL01. Think slow and move fast' (Nov 2025). Tono personal, storytelling. Título: Co-CEO & Founder. Trayectoria: 'Todo empezó con una boda, un despido, un salto de fe y muy pocos ahorros.'"
+        }
+      },
+      "content_patterns": [
+        "Setup rápido 1 semana",
+        "Reporting automatizado en tiempo real",
+        "Integración como departamento interno",
+        "Medición con data studio personalizado",
+        "Metodología propia sin nombre fancy",
+        "LinkedIn Lives semanales",
+        "Storytelling personal del founder"
+      ],
+      "gaps": [
+        "No menciona pricing",
+        "No tiene casos de estudio públicos detallados",
+        "No habla de regulación",
+        "No diferencia por verticales de cliente"
+      ]
+    },
+    {
+      "name": "Product Hackers",
+      "slug": "product-hackers",
+      "tier": "A",
+      "channels": {
+        "web": {
+          "url": "https://producthackers.com",
+          "status": "ok",
+          "content": "Full Business Growth. 'Diseñamos, activamos y escalamos sistemas de crecimiento reales conectando datos, tecnología y negocio.' Metodología: GOI Tree (Goals, Opportunities, Ideas), Mothership (ideas alto impacto), PH Canvas, IAF (Iteración de Alta Frecuencia). 140+ grandes marcas: Zara, MAPFRE, Sony Music, Heineken, Wallapop, Verti, Decathlon, Hawkers, Sanitas, El Confidencial. 51-200 empleados. Madrid."
+        },
+        "blog": {
+          "url": "https://producthackers.com/es/blog/",
+          "status": "ok",
+          "recent_articles": [
+            "El GEO es al SEO lo que las redes sociales fueron a Internet (Mar 2026) - José Carlos Cortizo",
+            "Cómo medir el crecimiento: por qué los nuevos estándares de atención van a redefinirlo todo",
+            "Menos complejidad, más impacto: cómo centralizar tu stack de marketing automation para crecer",
+            "Las 4 palancas de Growth: cómo diseñar una estrategia de crecimiento con impacto",
+            "Añadir fricción para crecer mejor: por qué no siempre debes hacerle la vida fácil al usuario",
+            "¿Google Tag Manager sin consentimiento es ilegal en Alemania?",
+            "Best practices en experimentación: cómo ejecutarlas para impulsar tu crecimiento",
+            "El nuevo manual de Go To Market (GTM) para 2025",
+            "El nuevo Growth es invisible: cómo crecer en el Dark Social cuando los canales clásicos se agotan"
+          ]
+        },
+        "linkedin_company": {
+          "url": "https://www.linkedin.com/company/producthackers/",
+          "status": "ok",
+          "followers": "28,371",
+          "content": "28K followers. Hiring: Business Development Manager (1d ago). Remote-first. MacBook Pro + tarjeta empresa. 25 días de descanso. 'Producto que la gente verdaderamente quiera usar.'"
+        },
+        "linkedin_ceo": {
+          "url": "https://www.linkedin.com/in/luisdiazdeldedo/",
+          "status": "ok",
+          "followers": "23K",
+          "content": "CEO. Libro: 'Growth Hacking - Supera el reto de crear productos digitales exponenciales' (Anaya, 2019). Casos: Hawkers +16.97% pedidos, Havaianas. Flywheel secreto. Título del último post: 'La clave del crecimiento de Product Hackers: Nuestro Flywheel secreto y más importante!'"
+        },
+        "linkedin_cmo": {
+          "url": "https://www.linkedin.com/in/jccortizo/",
+          "status": "ok",
+          "followers": "26K",
+          "content": "CMO & Partner. Artículos: 'El éxito nunca viaja solo', 'Estar siempre empezando', 'Ahora empiezo a entender'. Newsletter: sobrecrecer.substack.com. Podcast: Growth (Product Hackers), En.Digital. Book: PsychoGrowth. Blog activo con posts largos sobre measurement, experimentación."
+        }
+      },
+      "x_twitter": {
+        "status": "active",
+        "handles": ["@Product_Hackers", "@josek_net"],
+        "recent_activity": "Events promotion (Growth para SaaS 2025 Barcelona/Málaga), Black Friday post-mortem, prioritization in experimentation. José Carlos spoke at Growth para SaaS Barcelona 2025."
+      },
+      "content_patterns": [
+        "Metodología con nombre propio (GOI Tree, Mothership, PH Canvas, IAF)",
+        "Portafolio de grandes clientes (Zara, MAPFRE...) como social proof",
+        "GEO como tema emergente (José Carlos escribé Mar 2026 sobre GEO)",
+        "Experimentación iterativa como core",
+        "Podcast + Newsletter + Blog como sistema de contenido",
+        "Dark social como nuevo canal",
+        "Measurement como diferenciador"
+      ],
+      "gaps": [
+        "No habla de pricing",
+        "Metodología genérica — aplica a cualquier vertical",
+        "No tiene diferenciación en regulación/fintech",
+        "Tono corporativo — distante del founder personal"
+      ]
+    },
+    {
+      "name": "TheGrowtHacker",
+      "slug": "thegrowthacker",
+      "tier": "A",
+      "channels": {
+        "web": {
+          "url": "https://thegrowthacker.com",
+          "status": "ok",
+          "content": "Agencia de Growth Hacking. 'No se trata de marketing digital, sino de crecer y ganar más.' ROI en publicidad. Leads cualificados. Más conversiones. Equipo: Dani Ruiz (CEO & Growth), Oriol Duarrí (Ads & Analytics), Mar Santamaría (Creativa & Branding), Iván Calero (SEO), Javi Ruiz (Web Designer), David Barrero (Video & Social Media), Lorena Otero (Growth Junior), ChatGPT (joke en el equipo). Google Partner Certified."
+        },
+        "blog": {
+          "url": "https://thegrowthacker.com/blog",
+          "status": "ok",
+          "articles": [
+            "Requisitos para crear una startup: lo que necesitas antes de lanzarte",
+            "Cómo montar una startup paso a paso",
+            "Herramientas para startups, cuál es la más importante",
+            "Estrategias de branding para startups: cómo construir una marca que conecte y escale",
+            "Cómo crear un plan de marketing para una startup (sin morir en el intento)",
+            "Marketing digital para startups: estrategias que sí funcionan en fases tempranas",
+            "Selección Mundial de los Mejores Growth Hackers: 11 titular",
+            "AB Testing",
+            "Inbound marketing para e-commerce"
+          ]
+        }
+      },
+      "content_patterns": [
+        "Equipo visible con nombre y foto",
+        "ChatGPT como 'experto' — tono irreverente",
+        "Foco en startups early-stage",
+        "Google Partner certification",
+        "Artículos educativos genéricos de growth",
+        "No menciona pricing ni modelos de engagement"
+      ],
+      "gaps": [
+        "Tono muy informal — no inspira confianza enterprise",
+        "No tiene casos de estudio con números",
+        "Content educativo básico — no hay diferenciación",
+        "No tiene presencia activa en LinkedIn personal del founder"
+      ]
+    },
+    {
+      "name": "iSocialWeb",
+      "slug": "isocialweb",
+      "tier": "C",
+      "channels": {
+        "web": {
+          "url": "https://www.isocialweb.agency/",
+          "status": "ok",
+          "content": "#1 Agencia SEO de España según The Huffington Post. 'Generación de tráfico y conversión.' Metodología propia: desde captación en buscadores hasta fidelización. Especializados en situaciones complejas:하이퍼crecimiento, recuperaciones post-migración. 5 empresas creadas, 2 vendidas, 400M+ usuarios generados, 1,000M+ usuarios gestionados. Álvaro Peña: Co-CEO & Head of SEO & IA. Arnau Vendrell: Co-CEO & Head of CRO."
+        },
+        "linkedin_founder": {
+          "url": "https://www.linkedin.com/in/alvaro-pena-de-luna/",
+          "status": "ok",
+          "followers": "16K",
+          "content": "Director SEO e IA. Co-CEO de iSocialWeb. Artículo más reciente: 'Las 10 mejores herramientas de generación de video con IA 2025'. Google Developer Group Speaker. Universidad. Premio transformación digital."
+        }
+      },
+      "content_patterns": [
+        "Claim de #1 en España (Huffington Post)",
+        "Credenciales cuantificables: 400M usuarios, 5 empresas",
+        "SEO como core diferenciado",
+        "Speaker y profesor universitario",
+        "Casos de estudio por vertical (legal, housfy)"
+      ],
+      "gaps": [
+        "No tiene metodología de growth sistémico",
+        "No habla de measurement ni attribution",
+        "Tono técnico-SEO — no conecta con dolor de cliente",
+        "No tiene pricing transparente"
+      ]
+    },
+    {
+      "name": "Flat 101",
+      "slug": "flat101",
+      "tier": "C",
+      "channels": {
+        "web": {
+          "url": "https://www.flat101.es/",
+          "status": "ok",
+          "content": "Aceleración de negocios digitales. Enfoque BXOp: CRO y conversión. 'Te ayudamos a crecer más rápido y a mejorar tu conversión.' IA aplicada. Generación de audiencias. Fidelización. Parte de Minsait (Indra). 300 empleados. Madrid, Barcelona, Zaragoza, London. Ricardo Tayar (CEO): CRO.CAFE podcast (60+ episodios), LinkedIn Top Voice, books sobre CRO."
+        }
+      },
+      "content_patterns": [
+        "BXOp como framework propio",
+        "IA como tema central",
+        "CRO como especialización",
+        "Podcast propio (CRO.CAFE)",
+        "LinkedIn Top Voice como credencial",
+        "Parte de Minsait — empresa grande"
+      ],
+      "gaps": [
+        "Tono corporativo-empresa grande",
+        "No hay diferenciación personal del founder",
+        "No tiene pricing ni modelo de engagement",
+        "No habla de measurement"
+      ]
+    },
+    {
+      "name": "Glissmarket",
+      "slug": "glissmarket",
+      "tier": "B",
+      "channels": {
+        "web": {
+          "url": "https://www.glissmarket.com",
+          "status": "ok",
+          "content": "Digital Business with Intelligence. 'La agencia de marketing digital que usa experiencia y lógica para hacer crecer tu negocio.' Servicios: SEO, SEM, Analítica, Ecommerce, Email, Eventos. 'La agencia con skin in the game' — leen a Taleb. Google Partner. Facebook Ads Partner. Amazon Ads Partner. Hubspot Certified. Foco en legal (marketing jurídico). Casos: despacho de abogados."
+        }
+      },
+      "content_patterns": [
+        "Skin in the game — reference to Taleb",
+        "Foco en vertical legal",
+        "Google/Facebook/Amazon/Hubspot certifications",
+        "Casos de estudio con resultado",
+        "Tono más directo y simple"
+      ],
+      "gaps": [
+        "No tiene metodología propia",
+        "No hay founder personal branding activo",
+        "No tiene contenido blog activo reciente"
+      ]
+    },
+    {
+      "name": "TEAM LEWIS",
+      "slug": "team-lewis",
+      "tier": "C",
+      "channels": {
+        "web": {
+          "url": "https://www.teamlewis.com/es/",
+          "status": "ok",
+          "content": "Agencia marketing global. 24 oficinas, 500+ empleados. España: Madrid + Barcelona, 60+ profesionales. Casos: Pizza Hut (marketing), Google (creatividad), Schneider Electric (estrategia), Blackberry (PR). Campañas por causa: Music Man Project, Flint Public Art."
+        }
+      },
+      "content_patterns": [
+        "Marca global + casos globales",
+        "PR y comunicación como servicios",
+        "Campañas por causas benéficas",
+        "Cliente enterprise"
+      ],
+      "gaps": [
+        "Totalmente corporativo — nada personal",
+        "No tiene pricing ni modelo",
+        "No tiene blog con insights de growth",
+        "No hay diferenciación para startup/tech"
+      ]
+    }
+  ],
+  "cross_competitor_patterns": {
+    "strengths": [
+      "Todos tienen LinkedIn company page activa",
+      "Todos crean contenido blog/recursos educativos",
+      "Product Hackers y Snowball tienen metodología con nombre propio",
+      "Product Hackers lidera en contenido sobre GEO (tema emergente)"
+    ],
+    "weaknesses": [
+      "0/7 competitors menciona pricing de forma transparente",
+      "0/7 tiene diferenciación clara en fintech/regulación",
+      "0/7 habla de 'sistema con exit date' — todos son retainer",
+      "Solo Glissmarket menciona 'skin in the game' de forma explícita",
+      "Solo Snowball y TheGrowtHacker muestran equipo con fotos",
+      "Ninguno tiene caso de estudio verificable con cifra concreta"
+    ]
+  },
+  "new_content_since_last_scan": {
+    "product-hackers": [
+      {
+        "title": "El GEO es al SEO lo que las redes sociales fueron a Internet",
+        "date": "Mar 2026",
+        "author": "José Carlos Cortizo",
+        "channel": "blog",
+        "summary": "GEO como nuevo paradigma de posicionamiento — no solo para Google sino para IAs. Post más reciente del scan."
+      },
+      {
+        "title": "Cómo medir el crecimiento: nuevos estándares de atención",
+        "date": "2026",
+        "channel": "blog",
+        "summary": "Measurement como diferenciador — métricas de atención vs métricas tradicionales."
+      }
+    ],
+    "snowball": [
+      {
+        "title": "El cubo buggereado",
+        "date": "Mar 2026",
+        "author": "Pau Gallinat",
+        "channel": "linkedin-article",
+        "summary": "Storytelling personal sobre producto/entrega de cliente."
+      },
+      {
+        "title": "BL01. Think slow and move fast",
+        "date": "Nov 2025",
+        "author": "Pau Gallinat",
+        "channel": "linkedin-article",
+        "summary": "Reflexión sobre planificación y velocidad en growth."
+      }
+    ]
+  },
+  "ideas_for_growth4u": [
+    {
+      "id": 1,
+      "competitor_pattern": "Product Hackers - GEO como tema emergente (Mar 2026)",
+      "idea": "Post: 'Pedí a Gemini quién es la mejor agencia growth fintech España. Salimos #1. Con 20 artículos. Así funciona GEO.'",
+      "rationale": "Walk-the-talk GEO — demuestra que G4U aparece en ChatGPT/Gemini. Dato concreto, tono provocador.",
+      "brand_adaptation": "Usa cifra del propio scan. Abre con dato provocador. Cierra con insight de sistema. Tono: 80% Alfonso (Rankia).",
+      "priority": "high",
+      "channels": ["linkedin"],
+      "ecp": ["ECP 3 (Canal muriendo)", "ECP 5 (Invisible)"]
+    },
+    {
+      "id": 2,
+      "competitor_pattern": "Snowball - Setup rápido + reporting en tiempo real",
+      "idea": "Post: 'En 7 días montamos motor de growth. En 6 meses tienes fecha de salida. Esto no es otro retainer.'",
+      "rationale": "Diferenciador de Speed (setup 1 semana) + Exit Date. Ningún competidor menciona fecha de fin.",
+      "brand_adaptation": "Tono directo con dato. Comparativa implícita con retainer. No pide confianza — invita a verificar.",
+      "priority": "high",
+      "channels": ["linkedin"],
+      "ecp": ["ECP 1 (Sistema repetible)", "ECP 4 (Quemado por agencias)"]
+    },
+    {
+      "id": 3,
+      "competitor_pattern": "iSocialWeb - '5 empresas creadas, 2 vendidas, 400M+ usuarios'",
+      "idea": "Post: 'Bnext: de CAC 50€ a 12,40€. Lo hicimos nosotros primero. Verificable. Sin affiliate links.'",
+      "rationale": "Alfonso tiene casos propios verificables — esto es walk-the-talk real. Ningún competidor puede mostrar esto.",
+      "brand_adaptation": "Insider vulnerable con cifra concreta + challenge al lector para verificar. Bold. Datos, no promesas.",
+      "priority": "high",
+      "channels": ["linkedin", "blog"],
+      "ecp": ["ECP 1 (Sistema repetible)", "ECP 4 (Quemado por agencias)", "ECP 2 (Regulación)"]
+    },
+    {
+      "id": 4,
+      "competitor_pattern": "Product Hackers - '140 grandes marcas como social proof'",
+      "idea": "Post: 'El problema no es cuántas empresas tienes en tu lista. Es si las tuyas siguen creciendo un año después de irte.'",
+      "rationale": "Counter-play a portfolio genérico. Positioning como sistema que se queda vs agencia que cobra y se va.",
+      "brand_adaptation": "Diagnóstico-provocador. Sin nombre de cliente (los tiene pero no los necesita). Directo con dato implícito.",
+      "priority": "high",
+      "channels": ["linkedin"],
+      "ecp": ["ECP 4 (Quemado por agencias)", "ECP 1 (Sistema repetible)"]
+    },
+    {
+      "id": 5,
+      "competitor_pattern": "Glissmarket - 'La agencia con skin in the game'",
+      "idea": "Post: 'Un growth hire cuesta 80K€/año. Un fCMO cobra mientras no решения. Trust Engine: 7K€. Una vez. Fin.'",
+      "rationale": "Pricing transparente como feature. Ningún competidor lo hace. Esto es verificable y diferenciador puro.",
+      "brand_adaptation": "Bold. Cifras concretas. Sin corporate speak. Cierre con fecha de salida. 80% Alfonso.",
+      "priority": "high",
+      "channels": ["linkedin"],
+      "ecp": ["ECP 4 (Quemado por agencias)", "ECP 1 (Sistema repetible)"]
+    },
+    {
+      "id": 6,
+      "competitor_pattern": "Product Hackers - Dark Social como nuevo canal",
+      "idea": "Post: 'El 60% de las decisiones de compra SaaS ocurren en communities privadas antes de que te encuentren. ¿Dónde estás tú?'",
+      "rationale": "Niche Discovery insight sobre Reddit/communities. Propio pero no explotado aún en content. ECPs lo confirman.",
+      "brand_adaptation": "Dato del propio research. Abre con tensión. Cierra con pregunta diagnóstica. Empático.",
+      "priority": "medium",
+      "channels": ["linkedin", "blog"],
+      "ecp": ["ECP 3 (Canal muriendo)", "ECP 1 (Sistema repetible)"]
+    },
+    {
+      "id": 7,
+      "competitor_pattern": "iSocialWeb - 'Recuperaciones post-migración'",
+      "idea": "Post: 'Llevas 12 meses quemando presupuesto en ads. El CAC sube 40% cada año. Esto no es normal. El modelo está roto.'",
+      "rationale": "ECP 8 (Google Ads Addict) es dolor real. Ningún competidor lo aborda con este nivel de provocación directa.",
+      "brand_adaptation": "Apertura con dato. Diagnóstico de modelo. Puente a sistema. Tono: diagnóstico-provocador.",
+      "priority": "medium",
+      "channels": ["linkedin"],
+      "ecp": ["ECP 3 (Canal muriendo)", "ECP 1 (Sistema repetible)"]
+    },
+    {
+      "id": 8,
+      "competitor_pattern": "Product Hackers - Newsletter Substack + Podcast",
+      "idea": "Newsletter: 'Growth para el que no tiene presupuesto para agency de retained.' Format: case study + insight + CTA.",
+      "rationale": "Añadir canal propio newsletter a contenido Alfonso. Substack ya existe (sobrecrecer) — podemos replicar modelo.",
+      "brand_adaptation": "Tono 60% Alfonso. Subject líneas provocativas. Body corto (300-600 words). Caso real + insight.",
+      "priority": "medium",
+      "channels": ["email"],
+      "ecp": ["ECP 1 (Sistema repetible)", "ECP 4 (Quemado por agencias)"]
+    },
+    {
+      "id": 9,
+      "competitor_pattern": "Snowball - LinkedIn Lives semanales",
+      "idea": "Experimentar con LinkedIn Live: 'Café de 30 mins' — sesión semanal corta con un insight de Trust Engine.",
+      "rationale": "Snowball lo hace y funciona para engagement. Alfonso ya tiene Credenciales — podemos adaptarlo.",
+      "brand_adaptation": "Formato corto (30 min). Dato o caso. Pregunta de audiencia. Cierre con CTA soft.",
+      "priority": "medium",
+      "channels": ["linkedin"],
+      "ecp": ["ECP 1 (Sistema repetible)", "ECP 2 (Regulación)"]
+    },
+    {
+      "id": 10,
+      "competitor_pattern": "Flat 101 - BXOp framework con nombre propio",
+      "idea": "Documentar 'Trust Engine' con nombre, fases y métricas — para que sea exportable y referenciable.",
+      "rationale": "Product Hackers lo hace con GOI Tree. Glissmarket con BXOp. G4U tiene Trust Engine — necesita nombre y docs.",
+      "brand_adaptation": "Framework naming: 4 fases con nombre claro. Docs públicos. Caso de estudio por fase.",
+      "priority": "medium",
+      "channels": ["blog", "linkedin"],
+      "ecp": ["ECP 1 (Sistema repetible)", "ECP 5 (Invisible)"]
+    },
+    {
+      "id": 11,
+      "competitor_pattern": "TheGrowtHacker - ChatGPT como miembro del equipo",
+      "idea": "Post: 'No necesitas un growth hacker. Necesitas un sistema que funcione cuando el growth hacker se vaya.'",
+      "rationale": "Counter-play al trend de AI-everything. TGH usa ChatGPT como broma. G4U puede convertirlo en insight real.",
+      "brand_adaptation": "Insight en lugar de broma. Sistémico. Sin ironía hiriente. Directo.",
+      "priority": "low",
+      "channels": ["linkedin"],
+      "ecp": ["ECP 1 (Sistema repetible)", "ECP 3 (Canal muriendo)"]
+    },
+    {
+      "id": 12,
+      "competitor_pattern": "TEAM LEWIS - Casos por causa",
+      "idea": "Post: 'Un caso de estudio real. De 0 a 400K bajo CNMV. Sin comentarios de clientes. Sin testimonials. Con números.'",
+      "rationale": "Regulación como diferenciador premium. ECP 13 (CNMV-Shackled) es el más alto en score (90). Ningún competidor lo toca.",
+      "brand_adaptation": "Bold + dato. Sin fanfarria. Verificable. El track record de Alfonso es imbatible en fintech.",
+      "priority": "high",
+      "channels": ["linkedin", "blog"],
+      "ecp": ["ECP 2 (Regulación)"]
+    }
+  ],
+  "execution_notes": {
+    "scan_performed": "2026-04-11T09:34-09:36 UTC",
+    "scrapers_used": ["web_fetch", "x_search"],
+    "limitations": [
+      "Instagram: todos los perfiles blocked sin acceso JS",
+      "Meta Ads: no hay API disponible para scraping público",
+      "Google Ads Transparency: blocked sin autenticación",
+      "LinkedIn posts: solo perfiles públicos — no hay scraping de posts sin Apify",
+      "Twitter/X: cuentas de competidores inactivas o sin contenido relevante"
+    ],
+    "missing_data": [
+      "No se pudo extraer pricing de ningún competidor",
+      "No se pudieron obtener métricas de ads (Meta, Google)",
+      "No se accedió a Instagram de ningún competidor",
+      "No se scrapeó contenido de blog de Snowball (solo listado)"
+    ]
+  }
+}

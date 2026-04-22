@@ -1,0 +1,19 @@
+{
+  "date": "2026-04-21",
+  "total_cost_usd": 197.84,
+  "total_turns": 6571,
+  "today_summary": {
+    "total_usd": 0.81,
+    "total_turns": 61,
+    "system_usd": 0.14
+  },
+  "clients": {
+    "hospital-capilar": { "today_turns": 0, "daily_avg_turns": 2.6, "cost_today_usd": 0, "anomaly": false },
+    "growth4u": { "today_turns": 0, "daily_avg_turns": 4.2, "cost_today_usd": 0, "anomaly": false },
+    "kleva": { "today_turns": 0, "daily_avg_turns": 26.2, "cost_today_usd": 0, "anomaly": false },
+    "paymatico": { "today_turns": 0, "daily_avg_turns": 1.0, "cost_today_usd": 0, "anomaly": false },
+    "sanchocmo": { "today_turns": 0, "daily_avg_turns": 5.0, "cost_today_usd": 0, "anomaly": false }
+  },
+  "anomalies": [],
+  "status": "HEARTBEAT_OK"
+}

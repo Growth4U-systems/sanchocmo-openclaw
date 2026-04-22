@@ -7,11 +7,22 @@
     "done_criteria": "Los 3 documentos lite generados y validados por el cliente.",
     "depends_on": null,
     "owner": "Sancho",
-    "status": "pending",
+    "status": "completed",
     "channel": "onboarding",
     "type": "foundation",
     "skill": "fast-foundation",
-    "pillars": ["company-context", "business-model", "niche-discovery"],
-    "sections": ["company-brief", "go-to-market"]
+    "pillars": [
+      "company-context",
+      "business-model",
+      "niche-discovery"
+    ],
+    "sections": [
+      "company-brief",
+      "go-to-market"
+    ],
+    "completed": "2026-04-15",
+    "deliverable_file": "brand/hulahoop/projects/P00-Fast-Foundation-Fast-Foundation/tasks/P00-FF-T01/deliverable.md",
+    "mc_chat_thread_id": "task-p00-ff-t01",
+    "discord_thread_id": null
   }
 ]

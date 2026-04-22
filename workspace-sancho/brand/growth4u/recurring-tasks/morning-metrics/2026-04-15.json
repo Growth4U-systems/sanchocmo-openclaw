@@ -1,0 +1,9 @@
+{
+  "cronName": "Morning Metrics — Growth4U",
+  "slug": "growth4u",
+  "date": "2026-04-15",
+  "runAtMs": 1744698600000,
+  "status": "ok",
+  "collectionErrors": ["Instantly: (campaigns || []) is not iterable"],
+  "content": "📊 **Morning Metrics — Growth4U** | 2026-04-15\n\n━━━ **META ADS** (ayer) ━━━\n💰 Spend: **€126.66** (media 7d: €116.07 ✅)\n👁️ Impressions: **7,525** (media 7d: 5,016)\n🖱️ Clicks: **45** | CTR: **0.60%** | CPC: **€2.81**\n🎯 Leads: **2** (media 7d: 1.9/día)\n\n━━━ **GHL — CONTACTS** (últimas 24h) ━━━\n👤 Nuevos contactos: **6**\n- aida_dss — Facebook\n- robert martínez troya — Facebook\n- xavi — Growth4U Dashboard de Attribution para Fintech (lead-magnet, secuencia-de-oferta)\n- cristobal — Facebook\n- sexo man gomez — Facebook\n- marta — Trust Score Analyzer (trust-score)\n\n━━━ **GHL — APPOINTMENTS** (últimas 24h) ━━━\n📅 Citas: **0**\n\n━━━ **ANÁLISIS** ━━━\n⚠️ CTR cayó a 0.60% (media 7d: 1.15%) — posible fatiga de creativos o audiencia saturada.\n⚠️ CPC subió a €2.81 (media 7d: €2.32) — correlación directa con la caída de CTR.\n✅ Leads on target (2 vs 1.9 avg). Impressions arriba (7,525 vs 5,016) sugiere que Meta amplió reach.\n✅ 6 contactos nuevos en GHL — 4 de Facebook + 2 de lead magnets (buen mix).\n⚠️ 0 citas — monitorizar si se mantiene mañana.\n\n**Tendencia:** Más impressions pero menor engagement → el alcance crece pero los creativos pierden fuerza. Si CTR sigue <0.80% mañana, rotar creativos."
+}

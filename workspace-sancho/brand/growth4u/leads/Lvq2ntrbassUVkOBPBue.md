@@ -3,9 +3,9 @@ ghl_id: Lvq2ntrbassUVkOBPBue
 contact_name: Albert Totil
 email: bandarramotorclassic@gmail.com
 phone: null
-last_enriched: 2026-04-07T20:00:00Z
-enrichment_pending: true
-enrichment_reason: "Sin custom fields (no sabemos negocio/presupuesto). Sin transcript disponible."
+last_enriched: 2026-04-16T20:00:00Z
+enrichment_pending: false
+enrichment_reason: "Re-enriched during nightly sync — no new Drive transcripts, no pending enrichment work"
 ---
 
 ## Company Intelligence

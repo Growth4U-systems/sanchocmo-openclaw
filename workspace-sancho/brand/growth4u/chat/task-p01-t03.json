@@ -10,7 +10,70 @@
       "text": "Aquí va el resumen:\n\n## P01-T03: Unificar URL de Booking → `now.growth4u.io`\n\n**Problema actual:** Growth4U tiene 2 URLs de booking diferentes:\n- **Home/Servicios** → `api.leadconnectorhq.com/widget/booking/XsVb9H5fZjGeVArLn2EN` (genérica, sin branding)\n- **Recursos** → `now.growth4u.io/widget/bookings/growth4u_demo` (branded)\n\n**Objetivo:** Todo apuntando a `https://now.growth4u.io/widget/bookings/llamada-estrategica-alfonso-w` (branded, más confianza).\n\n**Status:** `todo` — no se ha tocado aún.\n\n---\n\n**Pasos del playbook:**\n\n1. ✅ Verificar en GHL → Calendars que ambos calendarios son el mismo (o consolidar)\n2. 🔄 Reemplazar TODOS los links de booking en la web por la URL unificada\n3. 🔄 Buscar en el código fuente de growth4u.io todas las instancias de `leadconnectorhq.com`\n4. 🔄 Verificar que UTMs se pasan correctamente al nuevo link\n\n---\n\n**Lo que necesito de ti:**\n\n1. **Acceso al código fuente de growth4u.io** — ¿Está en un repo de GitHub? ¿O es un builder tipo WordPress/Webflow/GHL Sites? Según dónde esté, el approach cambia.\n2. **Confirmar la URL final** — ¿Es `llamada-estrategica-alfonso-w` la correcta, o hay que verificar en GHL?\n3. **¿El calendario de GHL ya está consolidado?** — Es decir, ¿hay un solo calendario detrás o son dos configuraciones distintas?\n\nCon eso puedo mapear dónde hay que hacer los cambios y darte el plan de ejecución concreto.",
       "agent": "sancho",
       "ts": "2026-03-26T16:20:28.369Z"
+    },
+    {
+      "role": "user",
+      "text": "Creo que ya está hecho",
+      "ts": 1776251770551
+    },
+    {
+      "role": "bot",
+      "text": "Vamos a verificarlo. El criterio de \"done\" es que no quede ninguna instancia de `leadconnectorhq.com` en la web.",
+      "ts": 1776251890633,
+      "agent": "sancho"
+    },
+    {
+      "role": "bot",
+      "text": "Todavía **no está hecho**. He encontrado **3 instancias** de `api.leadconnectorhq.com` en la home de growth4u.io:\n\n1. **Header (desktop CTA)** — botón \"Agendar Llamada\" → `api.leadconnectorhq.com/widget/booking/XsVb9H5fZjGeVArLn2EN`\n2. **Header (mobile menu)** — mismo botón en menú móvil → misma URL\n3. **Hero section** — botón \"Empezar ahora\" → misma URL\n4. **Footer** — botón \"Agendar Llamada\" → misma URL\n\nLas 4 deberían apuntar a `https://now.growth4u.io/widget/bookings/llamada-estrategica-alfonso-w` según el playbook.\n\nTambién habría que revisar las páginas internas (`/servicios/`, `/en/`, las páginas de servicio individuales) por si tienen más instancias.\n\n¿Quieres que haga un escaneo completo de todas las páginas, o ya sabes dónde cambiarlo y lo haces tú?",
+      "ts": 1776251890643,
+      "agent": "sancho"
+    },
+    {
+      "role": "user",
+      "text": "Please, haz el escaneo completo",
+      "ts": 1776252152121
+    },
+    {
+      "role": "bot",
+      "text": "Aquí va el resultado completo:\n\n## Escaneo `leadconnectorhq.com` en growth4u.io\n\n| Página | Instancias | Notas |\n|---|---|---|\n| `/` (home) | ❌ 4 | Header desktop + mobile + hero + footer |\n| `/en/` | ❌ 4 | Mismas 4 (header + hero + footer) |\n| `/servicios/` | ❌ 4 | Header + footer + CTAs internos |\n| `/servicios/trust-engine/` | ❌ 5 | +1 CTA extra en el body |\n| `/servicios/growth-marketing-fintech/` | ❌ 5 | +1 CTA extra en el body |\n| `/servicios/geo-para-fintechs/` | ❌ 5 | +1 CTA extra en el body |\n| `/trust-score/` | ✅ 0 | Limpia |\n| `/recursos/` | ✅ 0 | Limpia |\n| `/casos-de-exito/` | ❌ 3 | Header + footer + CTA |\n| `/equipo/` | ❌ 2 | Header + footer |\n| `/blog/` | ❌ 3 | Header + footer + CTA |\n| `/privacidad/` | ✅ 0 | Limpia |\n| `/cookies/` | ✅ 0 | Limpia |\n\n**Todas apuntan a la misma URL:** `api.leadconnectorhq.com/widget/booking/XsVb9H5fZjGeVArLn2EN`\n\n**Reemplazo:** → `https://now.growth4u.io/widget/bookings/llamada-estrategica-alfonso-w`\n\nLa buena noticia es que parece un componente compartido (header/footer) más algunos CTAs en body. Si el sitio está en Astro, probablemente basta con cambiar 2-3 archivos fuente:\n- **Layout/Header component** (cubre header desktop + mobile)\n- **Footer component**\n- **CTA component** de las páginas de servicios\n\n¿Sabes en qué repo está el código, o lo localizo yo?",
+      "ts": 1776252198698,
+      "agent": "sancho"
+    },
+    {
+      "role": "user",
+      "text": "Vuelve a mirar",
+      "ts": 1776262125834
+    },
+    {
+      "role": "bot",
+      "text": "Unexpected non-whitespace character after JSON at position 1254 (line 1 column 1255)",
+      "ts": 1776262226613,
+      "agent": "sancho"
+    },
+    {
+      "role": "bot",
+      "text": "Voy a re-escanear la web para ver si ya se han cambiado los links.",
+      "ts": 1776262226624,
+      "agent": "sancho"
+    },
+    {
+      "role": "bot",
+      "text": "El extractor de texto no muestra las URLs de los links. Voy a mirar el HTML fuente directamente.",
+      "ts": 1776262226628,
+      "agent": "sancho"
+    },
+    {
+      "role": "bot",
+      "text": "Voy a verificar también las páginas internas que antes tenían instancias.",
+      "ts": 1776262226632,
+      "agent": "sancho"
+    },
+    {
+      "role": "bot",
+      "text": "✅ **Hecho al 100%.** Cero instancias de `leadconnectorhq.com` en toda la web.\n\n| Página | leadconnectorhq | now.growth4u.io |\n|---|---|---|\n| `/` (home) | ✅ 0 | 4 |\n| `/en/` | ✅ 0 | 4 |\n| `/servicios/` | ✅ 0 | 4 |\n| `/servicios/trust-engine/` | ✅ 0 | 5 |\n| `/servicios/growth-marketing-fintech/` | ✅ 0 | 5 |\n| `/servicios/geo-para-fintechs/` | ✅ 0 | 5 |\n| `/casos-de-exito/` | ✅ 0 | 3 |\n| `/equipo/` | ✅ 0 | 2 |\n| `/blog/` | ✅ 0 | 3 |\n\nTodos los botones apuntan a `now.growth4u.io/widget/bookings/llamada-estrategica-alfonso-w`. Tarea completada — marco como **done**.",
+      "ts": 1776262226636,
+      "agent": "sancho"
     }
   ],
-  "updatedAt": 1774542028369
+  "updatedAt": 1776262226636
 }

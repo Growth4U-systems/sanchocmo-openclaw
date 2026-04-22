@@ -1,0 +1,23 @@
+{
+  "messages": [
+    {
+      "role": "user",
+      "text": "Quiero trabajar las landings de Paymatico contigo, como puedo hacerlo?",
+      "ts": "2026-04-14T14:01:54.024Z"
+    },
+    {
+      "role": "user",
+      "text": "Estoy abriendo el chat sobre \"null\". Dame un resumen rápido del estado actual y qué podemos hacer. Si necesitas algo de mí, dímelo.",
+      "ts": "2026-04-14T14:05:46.130Z"
+    },
+    {
+      "role": "bot",
+      "text": "Aquí tienes el resumen rápido de **Paymático**:\n\n## 📊 Estado Foundation\n\n| Capa | Estado |\n|------|--------|\n| **L0 - Company Brief** | ✅ Aprobado |\n| **L1 - Market, Competidores, Self** | ✅ Aprobado |\n| **L2 - SWOT + OPE Canvas** | ✅ Aprobado |\n| **L3 - Niche Discovery** | ✅ Aprobado (24 sub-nichos, top: gasolineras, talleres, fast food) |\n| **L4 - Positioning** | 🟡 ECP-1 Franquicias hecho, **pendiente aprobación Alex G**. ECPs 2-3 sin empezar |\n| **L4 - Pricing** | ⬜ No empezado |\n| **L5 - Brand Voice/Visual** | ⬜ No empezado |\n| **L6-7 - Metrics + Plan** | ⬜ No empezado |\n\n## 🎯 Líneas de trabajo disponibles ahora\n\n1. **Landings** — justo estábamos hablando de esto. Puedo auditar las actuales (paymatico.com) o crear copy+estructura para nuevas, por segmento\n2. **Positioning ECPs 2-3** — completar positioning para Corporates y Fiduciarios\n3. **Pricing strategy** — definir modelo de precios por segmento\n4. **Brand Voice** — requiere positioning aprobado primero\n\n## ¿Qué necesito de ti?\n\n- **Aprobación de Alex G** para el positioning de Franquicias (ECP-1) → desbloquea el resto de L4-L5\n- Si quieres ir por **landings**: ¿auditamos las actuales o creamos nuevas? ¿Para qué segmento?\n\n¿Por dónde quieres tirar?",
+      "ts": 1776175569199,
+      "agent": "sancho"
+    }
+  ],
+  "updatedAt": 1776175569199,
+  "discordThreadId": null,
+  "discordChannelId": null
+}

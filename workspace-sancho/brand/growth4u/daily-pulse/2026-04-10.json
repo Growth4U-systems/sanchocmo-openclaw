@@ -1,0 +1,124 @@
+{
+  "date": "2026-04-10",
+  "slug": "growth4u",
+  "runAt": "2026-04-10T07:04:00Z",
+  "sources": {
+    "intelligence": {
+      "lastMessageTs": "2026-04-10T06:31:34Z",
+      "channelId": "1477741644789842031"
+    }
+  },
+  "insights": [
+    {
+      "category": "meta-ads",
+      "severity": "red",
+      "title": "ALERTA: 5° día sin citas — cuello de botella en booking",
+      "detail": "Morning Metrics 10/04: 3 leads Meta, €128.90 spend, 0 citas GHL. El Daily Pulse del 09/04 ya registró crash de volumen (-45% imp, -28% spend) con CTR al alza (1.84%) — pero leads no se convierten en calls. Posible problema en flujo de booking post-lead.",
+      "trend": "declining"
+    },
+    {
+      "category": "meta-ads",
+      "severity": "yellow",
+      "title": "Inconsistencia CTR: 0.80% ayer vs 1.84% día anterior",
+      "detail": "Morning Metrics 08/04 (publicado 09/04): CTR cayó a 0.80% con 6 leads. Morning Metrics 09/04: CTR repuntó a 1.84% tras decisión de suspender campaña? O error de lectura? — Necesita verificación.",
+      "trend": "inconsistent"
+    },
+    {
+      "category": "meta-ads",
+      "severity": "yellow",
+      "title": "Volumen Meta bajo y errático",
+      "detail": "Las últimas 48h muestran volumen bajo (3-6 leads/día) con variaciones grandes de CPC (€0.45 a €1.60). Media 7d ~4 leads/día pero con picos de €3.30 CPC (fatiga creativa señal). Spend estable €130-200/día.",
+      "trend": "flat"
+    },
+    {
+      "category": "leads",
+      "severity": "yellow",
+      "title": "Leads pendientes de enrichment — 4 sin company data",
+      "detail": "Lead Sync 09/04: 7 leads activos con tag 'llamada-agendada'. 4 sin datos de empresa — Alfonso Griñán, Albert Totil, Moh Dak, Carlos T. Requieren enrichment manual post-llamada.",
+      "trend": "pending"
+    },
+    {
+      "category": "leads",
+      "severity": "yellow",
+      "title": "Lead duplicado en GHL — Manuel Campos Figal",
+      "detail": "Lead Sync 07/04: mismo nombre (Manuel Campos Figal) con 2 emails diferentes, uno con tag 'llamada-cancelada'. Recomendado merge manual en GHL.",
+      "trend": "pending"
+    },
+    {
+      "category": "pipeline",
+      "severity": "yellow",
+      "title": "GHL API key expirada — Call prep funciona parcialmente",
+      "detail": "La API key de GHL expiró y el call prep solo puede acceder a Calendar, no a datos completos del CRM. Afecta capacidad de preparar llamadas con contexto de lead.",
+      "trend": "known-issue"
+    },
+    {
+      "category": "calls",
+      "severity": "neutral",
+      "title": "Viernes 10 abril — 3 reuniones, 1 lead externo",
+      "detail": "1 llamada confirmada con lead externo: Aarón (Growit School) — reunión general Growth4U a las 12:00. Más 2 reuniones internas restantes. Día de bajo volumen de llamadas.",
+      "trend": "normal"
+    },
+    {
+      "category": "projects",
+      "severity": "green",
+      "title": "Proyecto P09 Eventos Rumanía — scping activo",
+      "detail": "Alfonso abrió thread en #projects (16/03) para iniciar proyecto de eventos en Rumanía. Fase de scoping. Ningún otro movimiento en projects en las últimas 2 semanas.",
+      "trend": "new"
+    }
+  ],
+  "metrics": {
+    "metaAds": {
+      "leads_10apr": 3,
+      "spend_10apr": 128.90,
+      "leads_09apr": 6,
+      "spend_09apr": 199,
+      "cpc_avg_7d": 0.68,
+      "leads_avg_7d": "4.0/día",
+      "citas_ghl": 0,
+      "dias_sin_citas": 5
+    },
+    "ghl": {
+      "leads_activos": 7,
+      "leads_nuevos_24h": 0,
+      "leads_sin_company_data": 4
+    },
+    "calls": {
+      "viernes_10": {
+        "externas": 1,
+        "internas": 2,
+        "leads_identificados": ["Aarón (Growit School)"]
+      }
+    }
+  },
+  "alerts": [
+    "🚨 CRÍTICA: 5 días consecutivos sin citas en GHL — revisar flujo post-lead",
+    "🟡 GHL API key expirada — call prep sin acceso completo a CRM",
+    "🟡 4 leads pendientes de enrichment sin company data",
+    "🟡 Lead duplicado Manuel Campos Figal en GHL — necesita merge"
+  ],
+  "actions": [
+    {
+      "priority": "high",
+      "owner": "Alfonso/Philippe",
+      "action": "Revisar flujo de booking — leads entran pero no reservan demo. Testar journey completo desde click en anuncio hasta confirmación de cita."
+    },
+    {
+      "priority": "high",
+      "owner": "Sancho",
+      "action": "Renovar API key de GHL para restaurar call prep completo."
+    },
+    {
+      "priority": "medium",
+      "owner": "Philippe",
+      "action": "Merge manual del lead duplicado Manuel Campos Figal en GHL."
+    },
+    {
+      "priority": "medium",
+      "owner": "Sancho",
+      "action": "Post-llamada con Aarón (Growit School): enrichment y next steps."
+    }
+  ],
+  "bot_messages_24h": 6,
+  "human_messages_24h": 0,
+  "most_recent_activity": "2026-04-10T06:31:34Z"
+}

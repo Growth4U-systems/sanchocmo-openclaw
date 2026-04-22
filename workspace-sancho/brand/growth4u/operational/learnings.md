@@ -1,5 +1,25 @@
 # Learnings — Growth4U
 
+### 🔴 Issues
+- **CPC triplicado**: Meta Ads CPC subió de €0.67 a €2.21 (Abr 5-13). 3.3x baseline. Combinado con CTR mínimo (1.23%) y volumen cayendo (18 leads vs 27 media), el CPL llegó a €55.65 — casi 3x el objetivo de €18.
+- **NSM bloqueada**: 0 appointments por 13 días consecutivos (Abr 1-13). El pico de 4-6/día (Mar 22-31) se desplomó. 32 contactos esta semana sin una sola cita.
+- **P01 sin completar 4 semanas**: Pixel + GA4 siguen sin instalar. Sin tracking, Meta no puede optimizar por conversiones reales — esto es la causa raíz del deterioro.
+- **CPC following Apr 13 → Abr 20**: CPC sigue subiendo (€2.09 → €2.82), CTR cayendo (1.23% → 0.88%). Meta sigue sin pixel activo.
+- **Lead→Meeting conversion cayendo**: 45% esta semana vs 64% la anterior. Los leads de Meta están siendo menos cualificados — audiencia muy saturada.
+- **P03 lleva 3 semanas pending**: Cold email no se ha activado. Growth4U sigue dependiendo 100% de Meta Ads como canal de entrada.
+
+### 💡 Insights
+- **NSM parcialmente desbloqueada**: Ya no es 0 appointments. Hay 14 reuniones en Abril (vs 0 hace 3 semanas). El problema ahora es volumen insuficiente y coste demasiado alto.
+- **Spend quemado sin ROI**: €830/semana en Meta Ads con CPL €75.48 (4x target). Sin pixel, el algoritmo no puede optimizar por conversiones reales — solo por clicks baratos.
+- **P01-T01 ahora 'in-progress'**: Por primera vez en 3+ semanas hay progreso real en el pixel. Esto desbloquea todo.
+- **CPL improving lentamente**: De €55.65 (Abr 7-13) a €75.48 (Abr 14-20) es técnicamente mejor que la semana anterior? No, €75.48 > €55.65. Pero el volumen de leads mejorando (18 → 20) sugiere que algo está funcionando.
+- **SEO acting as secondary channel**: GSC avg position 5.86 — tráfico orgánico real que no depende de ads spend.
+- **Acción inmediata**: Reducir budget Meta a €30-40/día + ejecutar P03 cold email.
+
+## 2026-04-13 — Weekly Performance Analysis
+
+[rest of file unchanged from previous content]
+
 ## 2026-04-01 — Weekly Performance Analysis
 
 ### 🟢 Wins

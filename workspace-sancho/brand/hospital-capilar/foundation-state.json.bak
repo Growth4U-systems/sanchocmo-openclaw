@@ -1,0 +1,265 @@
+{
+  "version": "3.0",
+  "started_at": "2026-03-03T10:06:00Z",
+  "updated_at": "2026-03-27T21:39:27Z",
+  "sections": {
+    "fast-foundation": {
+      "status": "approved",
+      "layer": 0,
+      "output_dir": "brand/hospital-capilar/company-brief/",
+      "skill": "fast-foundation",
+      "pillars": {
+        "company-brief": {
+          "status": "approved",
+          "output_file": "brand/hospital-capilar/company-brief/company-brief.current.md",
+          "skill": "fast-foundation"
+        },
+        "self-l1": {
+          "status": "approved",
+          "output_file": "brand/hospital-capilar/market-and-us/self/self.current.md",
+          "skill": "fast-foundation"
+        },
+        "market-l1": {
+          "status": "approved",
+          "output_file": "brand/hospital-capilar/market-and-us/market/market.current.md",
+          "skill": "fast-foundation"
+        },
+        "brand-voice-snapshot": {
+          "status": "approved",
+          "output_file": "brand/hospital-capilar/brand-voice/brand-voi.current.md",
+          "skill": "fast-foundation"
+        },
+        "niche-basic": {
+          "status": "approved",
+          "output_file": "brand/hospital-capilar/go-to-market/ecps/ecps.current.md",
+          "skill": "fast-foundation"
+        }
+      }
+    },
+    "company-brief": {
+      "status": "approved",
+      "layer": 0,
+      "output_dir": "brand/hospital-capilar/company-brief/",
+      "approved_at": "2026-03-03T11:13:00Z",
+      "skills": {
+        "company-context": {
+          "status": "approved",
+          "started_at": "2026-03-03T11:05:00Z",
+          "approved_at": "2026-03-03T11:13:00Z"
+        },
+        "business-model": {
+          "status": "approved"
+        },
+        "budget": {
+          "status": "approved"
+        }
+      }
+    },
+    "market-and-us": {
+      "status": "approved",
+      "layer": 1,
+      "output_dir": "brand/hospital-capilar/market-and-us/",
+      "pillars": {
+        "market-analysis": {
+          "status": "approved",
+          "layer": 1,
+          "requires": [
+            "fast-foundation"
+          ],
+          "enriches_with": [
+            "competitor-analysis",
+            "self-analysis"
+          ],
+          "output_file": "brand/hospital-capilar/market-and-us/market/market.current.md",
+          "skill": "market-intelligence",
+          "approved_at": "2026-03-03T11:33:00Z"
+        },
+        "competitor-analysis": {
+          "status": "approved",
+          "layer": 1,
+          "requires": [
+            "fast-foundation"
+          ],
+          "enriches_with": [
+            "market-analysis",
+            "self-analysis"
+          ],
+          "skill": "competitor-intelligence",
+          "approved_at": "2026-03-03T11:57:00Z",
+          "notes": "Competitor deep-dive files (insparya, svenson, capilclinic, medical-hair, imd) referenced in original but not created as files. To be generated when competitors/ subfolder structure is populated.",
+          "output_file": "brand/hospital-capilar/market-and-us/competitors/competitors.current.md"
+        },
+        "self-analysis": {
+          "status": "approved",
+          "layer": 1,
+          "requires": [
+            "fast-foundation"
+          ],
+          "enriches_with": [
+            "market-analysis",
+            "competitor-analysis"
+          ],
+          "output_file": "brand/hospital-capilar/market-and-us/self/self.current.md",
+          "skill": "self-intelligence",
+          "completed_at": "2026-03-03T12:05:00Z",
+          "approved_at": "2026-03-03T12:05:00Z"
+        },
+        "market-synthesis": {
+          "status": "approved",
+          "layer": 2,
+          "requires": [
+            "market-analysis",
+            "competitor-analysis",
+            "self-analysis"
+          ],
+          "output_file": "brand/hospital-capilar/market-and-us/swot/swot.current.md",
+          "skill": "market-synthesis",
+          "started_at": "2026-03-03T12:06:00Z",
+          "completed_at": "2026-03-03T12:12:00Z",
+          "approved_at": "2026-03-03T12:33:00Z"
+        }
+      }
+    },
+    "go-to-market": {
+      "status": "not-started",
+      "layer": 3,
+      "output_dir": "brand/hospital-capilar/go-to-market/",
+      "pillars": {
+        "niche-discovery": {
+          "status": "approved",
+          "layer": 3,
+          "requires": [
+            "market-synthesis"
+          ],
+          "enriches_with": [
+            "existing-customer-data"
+          ],
+          "output_file": "brand/hospital-capilar/go-to-market/ecps/ecps.current.md",
+          "skill": "niche-discovery-100x",
+          "version": 3,
+          "approved_at": "2026-03-16T15:05:00Z",
+          "approved_by": "Philippe"
+        },
+        "existing-customer-data": {
+          "status": "not-started",
+          "layer": 3,
+          "requires": [
+            "fast-foundation"
+          ],
+          "optional": true,
+          "skill": "existing-customer-data"
+        },
+        "positioning": {
+          "status": "draft",
+          "layer": 4,
+          "requires": [
+            "niche-discovery"
+          ],
+          "output_file": "brand/hospital-capilar/go-to-market/positioning/positioning.current.md",
+          "skill": "positioning-messaging",
+          "version": 1,
+          "drafted_at": "2026-03-03T15:45:00Z"
+        },
+        "pricing": {
+          "status": "not-started",
+          "layer": 4,
+          "requires": [
+            "niche-discovery"
+          ],
+          "enriches_with": [
+            "positioning"
+          ],
+          "output_file": "brand/hospital-capilar/go-to-market/pricing/pricing.current.md",
+          "skill": "pricing-strategy"
+        },
+        "ecp-validation": {
+          "status": "not-started",
+          "layer": 4,
+          "requires": [
+            "niche-discovery"
+          ],
+          "optional": true,
+          "skill": "ecp-validation"
+        }
+      }
+    },
+    "brand-identity": {
+      "status": "not-started",
+      "layer": 5,
+      "output_dir": "brand/hospital-capilar/brand-identity/",
+      "pillars": {
+        "brand-voice": {
+          "status": "not-started",
+          "layer": 5,
+          "requires": [
+            "positioning"
+          ],
+          "output_file": "brand/hospital-capilar/brand-identity/voice-profile/voice-profil.current.md",
+          "skill": "brand-voice"
+        },
+        "visual-identity": {
+          "status": "not-started",
+          "layer": 5,
+          "requires": [
+            "brand-voice"
+          ],
+          "output_file": "brand/hospital-capilar/brand-identity/visual-identity/visual-identity.current.md",
+          "skill": "visual-identity"
+        }
+      }
+    },
+    "metrics-setup": {
+      "status": "not-started",
+      "layer": 6,
+      "skill": "metrics-setup",
+      "requires": [
+        "positioning",
+        "pricing"
+      ],
+      "pillars": {
+        "metrics-setup": {
+          "status": "not-started",
+          "requires": [
+            "positioning",
+            "pricing"
+          ],
+          "skill": "metrics-setup"
+        }
+      }
+    },
+    "strategic-plan": {
+      "status": "not-started",
+      "layer": 7,
+      "skill": "strategic-plan",
+      "requires": [
+        "metrics-setup"
+      ],
+      "output_file": "brand/hospital-capilar/strategic-plan/strategic-pla.current.md"
+    }
+  },
+  "presentations": [
+    {
+      "name": "Mercado Competidores",
+      "file": "brand/hospital-capilar/presentations/mercado-competidores/index.html",
+      "type": "html",
+      "section": "market-and-us"
+    }
+  ],
+  "file_index": {
+    "presentations": {
+      "niche-presentation": "presentations/niche-presentation.html"
+    },
+    "integrations": "integrations.json",
+    "metrics": {
+      "plan_json": "metrics-plan.json"
+    },
+    "operational": {
+      "costs": "costs.json",
+      "ideas": "ideas.json"
+    },
+    "memory": "memory.md",
+    "discord": {
+      "client_config": "client-config.json"
+    }
+  }
+}

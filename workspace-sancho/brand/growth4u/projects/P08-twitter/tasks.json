@@ -8,7 +8,10 @@
     "description": "Reescribir bio de Twitter con posicionamiento actual: Growth4U, Trust Engine, propuesta de valor clara, link a web.",
     "deliverable": "Bio de Twitter actualizada con Growth4U, Trust Engine, link a web.",
     "done_criteria": "Bio live en @AlfonsoSB con posicionamiento actual.",
-    "skill": "twitter-content"
+    "skill": "twitter-content",
+    "deliverable_file": "brand/growth4u/projects/P08-twitter/tasks/P08-T01/deliverable.md",
+    "mc_chat_thread_id": "task-p08-t01",
+    "discord_thread_id": null
   },
   {
     "id": "P08-T02",
@@ -19,7 +22,10 @@
     "description": "Investigar y seguir 100-200 cuentas relevantes del ecosistema startup/growth/fintech español para building audience.",
     "deliverable": "100-200 cuentas relevantes del ecosistema seguidas.",
     "done_criteria": "Siguiendo founders, growth, fintech del ecosistema ES. Lista documentada.",
-    "skill": "twitter-content"
+    "skill": "twitter-content",
+    "deliverable_file": "brand/growth4u/projects/P08-twitter/tasks/P08-T02/deliverable.md",
+    "mc_chat_thread_id": "task-p08-t02",
+    "discord_thread_id": null
   },
   {
     "id": "P08-T03",
@@ -30,7 +36,10 @@
     "description": "Alfonso interactúa activamente con la comunidad: replies con valor añadido, quote tweets con opinión, retweets selectivos.",
     "deliverable": "2 semanas de warm-up: 10-20 replies de valor/día documentados.",
     "done_criteria": "Engagement visible. Primeras respuestas y conexiones generadas.",
-    "skill": "twitter-content"
+    "skill": "twitter-content",
+    "deliverable_file": "brand/growth4u/projects/P08-twitter/tasks/P08-T03/deliverable.md",
+    "mc_chat_thread_id": "task-p08-t03",
+    "discord_thread_id": null
   },
   {
     "id": "P08-T04",
@@ -41,6 +50,9 @@
     "description": "Crear y programar contenido: tweets diarios con insights de growth + 1 thread semanal profundo sobre un tema de expertise.",
     "deliverable": "Contenido diario publicado: tweets + 1 thread semanal.",
     "done_criteria": "Publicación constante durante 4 semanas. Impressions creciendo.",
-    "skill": "twitter-content"
+    "skill": "twitter-content",
+    "deliverable_file": "brand/growth4u/projects/P08-twitter/tasks/P08-T04/deliverable.md",
+    "mc_chat_thread_id": "task-p08-t04",
+    "discord_thread_id": null
   }
 ]

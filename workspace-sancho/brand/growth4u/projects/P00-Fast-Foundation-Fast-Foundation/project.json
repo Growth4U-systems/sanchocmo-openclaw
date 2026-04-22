@@ -17,5 +17,7 @@
   "status": "completed",
   "discord": {
     "project_thread_id": null
-  }
+  },
+  "mc_chat_thread_id": "project-p00-fast-foundation",
+  "discord_thread_id": null
 }

@@ -15,8 +15,12 @@
       "skill": "brand-voice",
       "created": "2026-03-30",
       "completed": "2026-03-30",
-      "output_files": ["brand/criptan/projects/P04-linkedin-b2b-jorge/T01/linkedin-profile-audit.md"],
-      "notes": "Jorge debe aprobar y publicar los cambios. Auditoría completada con propuesta de headline, about, featured, banner y prioridades de implementación."
+      "output_files": [
+        "brand/criptan/projects/P04-linkedin-b2b-jorge/T01/linkedin-profile-audit.md"
+      ],
+      "notes": "Jorge debe aprobar y publicar los cambios. Auditoría completada con propuesta de headline, about, featured, banner y prioridades de implementación.",
+      "deliverable_file": "brand/criptan/projects/P04-linkedin-b2b-jorge/tasks/T01/deliverable.md",
+      "mc_chat_thread_id": "task-t01"
     },
     {
       "id": "T02",
@@ -25,7 +29,7 @@
       "deliverable": "Calendario con 12-20 posts para el primer mes, cada uno con hook, cuerpo, CTA y formato sugerido.",
       "done_criteria": "Calendario aprobado por el cliente. Primeros 5 posts publicados.",
       "depends_on": "T01",
-      "status": "pending",
+      "status": "todo",
       "owner": "Sancho",
       "channel": "prospecting",
       "discord_thread_id": null,
@@ -33,7 +37,9 @@
       "created": "2026-03-30",
       "completed": null,
       "output_files": [],
-      "notes": ""
+      "notes": "",
+      "deliverable_file": "brand/criptan/projects/P04-linkedin-b2b-jorge/tasks/T02/deliverable.md",
+      "mc_chat_thread_id": "task-t02"
     },
     {
       "id": "T03",
@@ -42,7 +48,7 @@
       "deliverable": "3-5 borradores de posts listos para revisión de Jorge.",
       "done_criteria": "Posts publicados con engagement creciente semana a semana.",
       "depends_on": "T02",
-      "status": "pending",
+      "status": "todo",
       "owner": "Sancho",
       "channel": "prospecting",
       "discord_thread_id": null,
@@ -50,7 +56,9 @@
       "created": "2026-03-30",
       "completed": null,
       "output_files": [],
-      "notes": "Tarea recurrente — repetir semanalmente"
+      "notes": "Tarea recurrente — repetir semanalmente",
+      "deliverable_file": "brand/criptan/projects/P04-linkedin-b2b-jorge/tasks/T03/deliverable.md",
+      "mc_chat_thread_id": "task-t03"
     },
     {
       "id": "T04",
@@ -59,7 +67,7 @@
       "deliverable": "Lista de 100 empresas con contacto clave y LinkedIn URL.",
       "done_criteria": "Lista completa con al menos 80 perfiles de LinkedIn verificados.",
       "depends_on": null,
-      "status": "pending",
+      "status": "todo",
       "owner": "Sancho",
       "channel": "prospecting",
       "discord_thread_id": null,
@@ -67,7 +75,9 @@
       "created": "2026-03-30",
       "completed": null,
       "output_files": [],
-      "notes": ""
+      "notes": "",
+      "deliverable_file": "brand/criptan/projects/P04-linkedin-b2b-jorge/tasks/T04/deliverable.md",
+      "mc_chat_thread_id": "task-t04"
     },
     {
       "id": "T05",
@@ -76,7 +86,7 @@
       "deliverable": "Playbook de DMs warm con 3 templates por tipo de prospect y flujo de 3 touchpoints.",
       "done_criteria": "Flujo documentado. Primeros 15 DMs enviados con >30% reply rate.",
       "depends_on": "T04",
-      "status": "pending",
+      "status": "todo",
       "owner": "Sancho",
       "channel": "prospecting",
       "discord_thread_id": null,
@@ -84,7 +94,9 @@
       "created": "2026-03-30",
       "completed": null,
       "output_files": [],
-      "notes": "Jorge ejecuta los DMs — Sancho prepara los templates"
+      "notes": "Jorge ejecuta los DMs — Sancho prepara los templates",
+      "deliverable_file": "brand/criptan/projects/P04-linkedin-b2b-jorge/tasks/T05/deliverable.md",
+      "mc_chat_thread_id": "task-t05"
     }
   ]
 }
