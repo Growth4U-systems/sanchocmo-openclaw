@@ -390,8 +390,8 @@ IJSON
 echo "📋 Creando proyectos core..."
 
 # P00-Fast-Foundation
-mkdir -p "$BRAND_DIR/projects/P00-Fast-Foundation-Fast-Foundation"
-cat > "$BRAND_DIR/projects/P00-Fast-Foundation-Fast-Foundation/project.json" << PROJJSON
+mkdir -p "$BRAND_DIR/projects/P00-Fast-Foundation"
+cat > "$BRAND_DIR/projects/P00-Fast-Foundation/project.json" << PROJJSON
 {
   "id": "P00-Fast-Foundation",
   "name": "Fast Foundation",
@@ -412,7 +412,7 @@ cat > "$BRAND_DIR/projects/P00-Fast-Foundation-Fast-Foundation/project.json" << 
 }
 PROJJSON
 
-cat > "$BRAND_DIR/projects/P00-Fast-Foundation-Fast-Foundation/tasks.json" << TASKSJSON
+cat > "$BRAND_DIR/projects/P00-Fast-Foundation/tasks.json" << TASKSJSON
 [
   {
     "id": "P00-FF-T01",
@@ -433,8 +433,8 @@ cat > "$BRAND_DIR/projects/P00-Fast-Foundation-Fast-Foundation/tasks.json" << TA
 TASKSJSON
 
 # P00-Full-Foundation
-mkdir -p "$BRAND_DIR/projects/P00-Full-Foundation-Full-Foundation"
-cat > "$BRAND_DIR/projects/P00-Full-Foundation-Full-Foundation/project.json" << PROJJSON2
+mkdir -p "$BRAND_DIR/projects/P00-Full-Foundation"
+cat > "$BRAND_DIR/projects/P00-Full-Foundation/project.json" << PROJJSON2
 {
   "id": "P00-Full-Foundation",
   "name": "Full Foundation",
@@ -455,7 +455,7 @@ cat > "$BRAND_DIR/projects/P00-Full-Foundation-Full-Foundation/project.json" << 
 }
 PROJJSON2
 
-cat > "$BRAND_DIR/projects/P00-Full-Foundation-Full-Foundation/tasks.json" << TASKSJSON2
+cat > "$BRAND_DIR/projects/P00-Full-Foundation/tasks.json" << TASKSJSON2
 [
   {
     "id": "P00-FUL-T01",
@@ -610,8 +610,8 @@ cat > "$BRAND_DIR/projects/P00-Full-Foundation-Full-Foundation/tasks.json" << TA
 TASKSJSON2
 
 # P00-Metrics-Setup
-mkdir -p "$BRAND_DIR/projects/P00-Metrics-Metrics-Setup"
-cat > "$BRAND_DIR/projects/P00-Metrics-Metrics-Setup/project.json" << PROJJSON_MS
+mkdir -p "$BRAND_DIR/projects/P00-Metrics"
+cat > "$BRAND_DIR/projects/P00-Metrics/project.json" << PROJJSON_MS
 {
   "id": "P00-Metrics",
   "name": "Métricas y Conexiones",
@@ -632,7 +632,7 @@ cat > "$BRAND_DIR/projects/P00-Metrics-Metrics-Setup/project.json" << PROJJSON_M
 }
 PROJJSON_MS
 
-cat > "$BRAND_DIR/projects/P00-Metrics-Metrics-Setup/tasks.json" << TASKSJSON_MS
+cat > "$BRAND_DIR/projects/P00-Metrics/tasks.json" << TASKSJSON_MS
 {
   "project_id": "P00-Metrics",
   "tasks": [
@@ -707,8 +707,8 @@ cat > "$BRAND_DIR/projects/P00-Metrics-Metrics-Setup/tasks.json" << TASKSJSON_MS
 TASKSJSON_MS
 
 # P00-Strategic-Plan
-mkdir -p "$BRAND_DIR/projects/P00-Strategic-Plan-Strategic-Plan"
-cat > "$BRAND_DIR/projects/P00-Strategic-Plan-Strategic-Plan/project.json" << PROJJSON3
+mkdir -p "$BRAND_DIR/projects/P00-Strategic-Plan"
+cat > "$BRAND_DIR/projects/P00-Strategic-Plan/project.json" << PROJJSON3
 {
   "id": "P00-Strategic-Plan",
   "name": "Strategic Plan",
@@ -729,7 +729,7 @@ cat > "$BRAND_DIR/projects/P00-Strategic-Plan-Strategic-Plan/project.json" << PR
 }
 PROJJSON3
 
-cat > "$BRAND_DIR/projects/P00-Strategic-Plan-Strategic-Plan/tasks.json" << TASKSJSON3
+cat > "$BRAND_DIR/projects/P00-Strategic-Plan/tasks.json" << TASKSJSON3
 [
   {
     "id": "P00-SP-T01",
