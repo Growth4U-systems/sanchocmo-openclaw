@@ -188,8 +188,10 @@ Cada una versiona (`v{N}.md` + `history.json`) **por separado** — permite re-c
 `brand/{slug}/company-brief/current.md` es una **vista consolidada auto-regenerada** de los 3 standalones. NO es editable a mano (se sobreescribe en cada regeneración).
 
 **Quién regenera el merge view:**
-1. **fast-foundation** al final del flujo inicial (después de los 3 intakes)
-2. **Cada skill productora** al final de su step 6 (cuando se re-corre standalone)
+
+Solo **fast-foundation** (al final del flujo inicial de intake, después de los 3 standalones).
+
+> ⚠️ **Stale view conocido**: si una skill productora (`company-context`, `business-model-audit`, `budget-constraints`) se corre standalone fuera de fast-foundation, su standalone queda actualizado pero el merge view no. Aceptado por ahora. Mitigación hasta resolver: consumers que necesitan info fresca leen el standalone directamente. TODO de resolución documentado inline en [foundation-protocol.md](../../_system/foundation/foundation-protocol.md) (buscar `TODO(merge-regeneration)`).
 
 **Formato del merge view:**
 ```markdown

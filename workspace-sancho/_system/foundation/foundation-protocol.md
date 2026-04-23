@@ -145,6 +145,11 @@ Si X no está approved → **funcionar sin él**. Notificar: "Nota: [X] no está
 **Flujo Fast-Foundation:**
 El orchestrator lanza las 3 skills en secuencia sin aprobación intermedia. Al final, regenera el merge view y presenta el Company Brief consolidado para una sola aprobación.
 
+**Quién regenera el merge view:**
+Solo `fast-foundation`. Las skills productoras standalone NO lo tocan — solo escriben su propio standalone.
+
+<!-- TODO(merge-regeneration): si una skill productora standalone (company-context, business-model-audit, budget-constraints) se corre fuera de fast-foundation, el merge view queda stale hasta la próxima corrida completa. Opciones para resolver: (a) script determinístico scripts/merge-company-brief.py invocable desde cualquier skill o cron; (b) file-watcher hook que dispare al modificar un standalone; (c) regeneración lazy en Mission Control al leer el merge view. Diferido hasta que el staleness genere fricción real. -->
+
 **Detalles operativos del merge** (formato, placeholders, quién lo dispara): ver [fast-foundation/SKILL.md](../../skills/fast-foundation/SKILL.md) — sección "Company Brief — Arquitectura standalone + merge view".
 
 ---
