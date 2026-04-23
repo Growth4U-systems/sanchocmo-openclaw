@@ -12,15 +12,16 @@ const nextConfig = {
     ignoreBuildErrors: true,
   },
   async rewrites() {
+    const legacyBase = `http://localhost:${process.env.LEGACY_PORT || 18790}`;
     return {
+      // Strangler Fig: only explicitly-listed paths proxy to the legacy
+      // Mission Control server. Everything else Next.js doesn't handle
+      // falls through to pages/404.tsx.
       fallback: [
-        // Strangler Fig: everything Next.js doesn't handle → legacy server,
-        // except /dashboard/* which is fully owned by Next.js so unmatched
-        // paths there fall through to pages/404.tsx instead of legacy.
-        {
-          source: "/:rest((?!dashboard(?:/|$)).*)",
-          destination: `http://localhost:${process.env.LEGACY_PORT || 18790}/:rest`,
-        },
+        { source: "/mc/:path*", destination: `${legacyBase}/mc/:path*` },
+        { source: "/api/pagespeed", destination: `${legacyBase}/api/pagespeed` },
+        { source: "/api/metrics-collect", destination: `${legacyBase}/api/metrics-collect` },
+        { source: "/api/recommendations", destination: `${legacyBase}/api/recommendations` },
       ],
     };
   },

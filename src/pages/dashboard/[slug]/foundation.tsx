@@ -11,7 +11,7 @@
 
 import { useRouter } from "next/router";
 import Head from "next/head";
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { useSlugSync } from "@/hooks/useSlugSync";
 import { useFoundation, useUpdatePillarStatus, useOtherDocs } from "@/hooks/useFoundation";
@@ -137,13 +137,43 @@ export default function FoundationPage() {
   const { data: projectsData } = useProjects(slug || null);
   const openChat = useOpenChat();
 
-  const [selectedDoc, setSelectedDoc] = useState<SelectedDoc | null>(null);
   const [editing, setEditing] = useState(false);
   const [docContent, setDocContent] = useState<string | null>(null);
   const [docLoading, setDocLoading] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
 
-  // Fetch doc content whenever selectedDoc changes
+  // selectedDoc is derived from ?doc=… in the URL, not a separate state — so
+  // it stays in sync when the client (slug) or the doc query param changes.
+  const docParam = router.query.doc as string | undefined;
+  const parentPillarParam = router.query.parentPillar as string | undefined;
+  const selectedDoc = useMemo<SelectedDoc | null>(() => {
+    if (!docParam) return null;
+    if (foundation?.sections) {
+      for (const [secKey, secData] of Object.entries(foundation.sections)) {
+        for (const [pKey, pInfo] of Object.entries(secData.pillars || {})) {
+          if (pInfo.output_file === docParam) {
+            return {
+              sectionKey: secKey,
+              pillarKey: pKey,
+              pillar: pInfo,
+              docPath: docParam,
+              ...(parentPillarParam ? { parentPillar: parentPillarParam } : {}),
+            };
+          }
+        }
+      }
+    }
+    // No pillar match — open as a free-standing doc.
+    return {
+      sectionKey: "",
+      pillarKey: docParam.split("/").pop()?.replace(".md", "") || "",
+      pillar: { status: "approved" } as Pillar,
+      docPath: docParam,
+      ...(parentPillarParam ? { parentPillar: parentPillarParam } : {}),
+    };
+  }, [docParam, parentPillarParam, foundation]);
+
+  // Fetch doc content whenever the selected doc path changes.
   useEffect(() => {
     if (!selectedDoc?.docPath) { setDocContent(null); return; }
     setDocLoading(true);
@@ -156,31 +186,19 @@ export default function FoundationPage() {
       .finally(() => setDocLoading(false));
   }, [selectedDoc?.docPath]);
 
-  // Open doc from query param ?doc=brand/slug/path
-  useEffect(() => {
-    const docParam = router.query.doc as string | undefined;
-    if (!docParam || !foundation?.sections || selectedDoc) return;
-    // Find the pillar matching this doc path
-    for (const [secKey, secData] of Object.entries(foundation.sections)) {
-      for (const [pKey, pInfo] of Object.entries(secData.pillars || {})) {
-        if (pInfo.output_file === docParam) {
-          setSelectedDoc({ sectionKey: secKey, pillarKey: pKey, pillar: pInfo, docPath: docParam });
-          return;
-        }
-      }
-    }
-    // If no pillar match, still open the doc
-    setSelectedDoc({ sectionKey: "", pillarKey: docParam.split("/").pop()?.replace(".md", "") || "", pillar: { status: "approved" } as Pillar, docPath: docParam });
-  }, [router.query.doc, foundation, selectedDoc]);
-
-  // Handle selecting a doc from the file tree
+  // Handle selecting a doc from the file tree — writes ?doc=… to the URL so
+  // the selection survives refresh and stays scoped to the active client.
   const handleSelectDoc = useCallback(
-    (sectionKey: string, pillarKey: string, pillar: Pillar) => {
+    (_sectionKey: string, _pillarKey: string, pillar: Pillar) => {
       const docPath = pillar.output_file;
-      if (!docPath) return;
-      setSelectedDoc({ sectionKey, pillarKey, pillar, docPath });
+      if (!docPath || !slug) return;
+      router.push(
+        { pathname: `/dashboard/${slug}/foundation`, query: { doc: docPath } },
+        undefined,
+        { shallow: true },
+      );
     },
-    [],
+    [slug, router],
   );
 
   // Handle opening chat for a pillar (or deep-dive doc with parent pillar context).
@@ -217,19 +235,21 @@ export default function FoundationPage() {
     [slug, openChat, selectedDoc?.parentPillar, projectsData],
   );
 
-  // Handle selecting an "other doc" (no pillar/section), with optional parent pillar for deep-dives
+  // Handle selecting an "other doc" (no pillar/section), with optional parent
+  // pillar for deep-dives. Both go in the URL so the view is reproducible.
   const handleSelectOtherDoc = useCallback(
-    (docPath: string, docName: string, parentPillar?: string) => {
-      const pillarKey = docName.toLowerCase().replace(/\s+/g, "-");
-      setSelectedDoc({
-        sectionKey: "",
-        pillarKey,
-        pillar: { status: "approved" } as Pillar,
-        docPath,
-        parentPillar,
-      });
+    (docPath: string, _docName: string, parentPillar?: string) => {
+      if (!slug) return;
+      router.push(
+        {
+          pathname: `/dashboard/${slug}/foundation`,
+          query: parentPillar ? { doc: docPath, parentPillar } : { doc: docPath },
+        },
+        undefined,
+        { shallow: true },
+      );
     },
-    [],
+    [slug, router],
   );
 
   // Handle going back. If the doc lives under a project (docPath contains
@@ -249,20 +269,19 @@ export default function FoundationPage() {
 
         if (projId) {
           if (taskNum) {
-            // Navigate to the task page
             router.push(`/dashboard/${slug}/projects/${projId}/tasks/${projId}-T${taskNum}`);
           } else if (taskId) {
             router.push(`/dashboard/${slug}/projects/${projId}/tasks/${taskId}`);
           } else {
-            // Navigate to the project page
             router.push(`/dashboard/${slug}/projects/${projId}`);
           }
-          setSelectedDoc(null);
           return;
         }
       }
     }
-    setSelectedDoc(null);
+    if (slug) {
+      router.push(`/dashboard/${slug}/foundation`, undefined, { shallow: true });
+    }
   }, [selectedDoc, slug, router]);
 
 
