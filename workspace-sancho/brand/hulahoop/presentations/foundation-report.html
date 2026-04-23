@@ -7,326 +7,627 @@
   <style>
     :root {
       --bg: #0b1020;
-      --panel: #121933;
-      --panel-2: #182246;
+      --bg-2: #111936;
+      --panel: rgba(18, 25, 51, 0.82);
+      --panel-strong: rgba(24, 34, 70, 0.94);
       --text: #f5f7ff;
-      --muted: #a9b3d1;
-      --purple: #8b5cf6;
-      --pink: #ec4899;
+      --muted: #b7c0df;
+      --line: rgba(255,255,255,0.1);
+      --purple: #a855f7;
+      --purple-2: #8b5cf6;
       --cyan: #22d3ee;
       --green: #34d399;
       --orange: #fb923c;
       --red: #f87171;
-      --border: rgba(255,255,255,0.08);
+      --yellow: #facc15;
     }
     * { box-sizing: border-box; }
     html { scroll-behavior: smooth; }
     body {
       margin: 0;
-      font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-      background: radial-gradient(circle at top, rgba(139,92,246,0.18), transparent 30%), var(--bg);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(168,85,247,0.18), transparent 30%),
+        radial-gradient(circle at top right, rgba(34,211,238,0.1), transparent 25%),
+        linear-gradient(180deg, #0a0f1f 0%, #0b1020 45%, #10162e 100%);
     }
+    a { color: inherit; }
     nav {
       position: fixed;
-      inset: 0 0 auto 0;
-      height: 56px;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 58px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 0 20px;
-      background: rgba(11,16,32,0.84);
+      padding: 0 22px;
+      background: rgba(10,15,31,0.78);
       backdrop-filter: blur(14px);
-      border-bottom: 1px solid var(--border);
-      z-index: 10;
+      border-bottom: 1px solid var(--line);
+      z-index: 30;
     }
-    nav a { color: var(--muted); text-decoration: none; margin-left: 14px; font-size: 13px; }
-    .brand { font-weight: 700; }
-    .brand span { color: var(--purple); }
+    .nav-brand {
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+    .nav-brand span { color: var(--purple); }
+    .nav-links {
+      display: flex;
+      gap: 14px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .nav-links a {
+      text-decoration: none;
+      color: var(--muted);
+    }
     .slide {
       min-height: 100vh;
-      padding: 84px 6vw 48px;
+      padding: 84px 5.8vw 44px;
       display: flex;
       flex-direction: column;
       justify-content: center;
-      gap: 24px;
-      border-bottom: 1px solid rgba(255,255,255,0.04);
+      gap: 26px;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
     }
     .eyebrow {
       color: var(--cyan);
       text-transform: uppercase;
-      letter-spacing: 0.12em;
       font-size: 12px;
-      font-weight: 700;
+      font-weight: 800;
+      letter-spacing: 0.14em;
     }
-    h1, h2 { margin: 0; line-height: 1.05; letter-spacing: -0.03em; }
-    h1 { font-size: clamp(44px, 7vw, 88px); max-width: 11ch; }
-    h2 { font-size: clamp(32px, 4.5vw, 56px); max-width: 14ch; }
-    p.lead { font-size: clamp(18px, 2vw, 24px); color: var(--muted); max-width: 52rem; }
-    .grid { display: grid; gap: 16px; }
+    h1, h2, h3, p { margin: 0; }
+    h1 {
+      font-size: clamp(42px, 7vw, 84px);
+      line-height: 0.98;
+      letter-spacing: -0.04em;
+      max-width: 11ch;
+    }
+    h2 {
+      font-size: clamp(30px, 4.2vw, 56px);
+      line-height: 1.02;
+      letter-spacing: -0.035em;
+      max-width: 14ch;
+    }
+    .lead {
+      max-width: 56rem;
+      font-size: clamp(18px, 2vw, 23px);
+      line-height: 1.45;
+      color: var(--muted);
+    }
+    .hero-kpis {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+      max-width: 1100px;
+    }
+    .kpi, .card, .metric, .banner {
+      background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.14);
+    }
+    .kpi {
+      padding: 18px 18px 16px;
+    }
+    .kpi-value {
+      font-size: clamp(24px, 3vw, 38px);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      margin-bottom: 5px;
+    }
+    .kpi-label {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+    .metric, .banner {
+      padding: 22px 24px;
+      max-width: 980px;
+    }
+    .metric strong, .banner strong {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 18px;
+    }
+    .metric p, .banner p {
+      color: var(--muted);
+      line-height: 1.5;
+      font-size: 16px;
+    }
+    .grid {
+      display: grid;
+      gap: 16px;
+      width: 100%;
+      max-width: 1180px;
+    }
     .g2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .g3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .g4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
     .card {
-      background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
-      border: 1px solid var(--border);
-      border-radius: 18px;
       padding: 20px;
     }
-    .card h3 { margin: 0 0 10px; font-size: 20px; }
-    .card p, .card li { color: var(--muted); font-size: 16px; line-height: 1.5; }
-    .pill {
-      display: inline-block;
+    .card h3 {
+      font-size: 20px;
+      margin-bottom: 10px;
+      letter-spacing: -0.02em;
+    }
+    .card p, .card li {
+      color: var(--muted);
+      line-height: 1.5;
+      font-size: 15px;
+    }
+    .card ul {
+      margin: 0;
+      padding-left: 18px;
+    }
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
       padding: 6px 10px;
       border-radius: 999px;
       font-size: 12px;
-      font-weight: 700;
-      margin-bottom: 10px;
+      font-weight: 800;
+      margin-bottom: 12px;
+      letter-spacing: 0.02em;
     }
-    .s { background: rgba(52,211,153,0.14); color: var(--green); }
-    .w { background: rgba(248,113,113,0.14); color: var(--red); }
-    .o { background: rgba(34,211,238,0.14); color: var(--cyan); }
-    .t { background: rgba(251,146,60,0.14); color: var(--orange); }
-    .metric {
-      background: linear-gradient(135deg, rgba(139,92,246,0.18), rgba(236,72,153,0.12));
-      border: 1px solid rgba(139,92,246,0.25);
-      border-radius: 20px;
-      padding: 24px;
-      max-width: 900px;
+    .tag.s { background: rgba(52,211,153,0.14); color: var(--green); }
+    .tag.w { background: rgba(248,113,113,0.14); color: var(--red); }
+    .tag.o { background: rgba(34,211,238,0.14); color: var(--cyan); }
+    .tag.t { background: rgba(251,146,60,0.14); color: var(--orange); }
+    .pill-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
     }
-    .metric strong { font-size: 22px; display: block; margin-bottom: 6px; }
-    ul { margin: 0; padding-left: 18px; }
-    .sources a {
-      display: inline-block;
-      margin: 6px 10px 0 0;
-      color: var(--text);
-      text-decoration: none;
-      border-bottom: 1px dashed rgba(255,255,255,0.35);
-      font-size: 14px;
+    .pill {
+      padding: 7px 11px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.04);
+      font-size: 12px;
+      color: var(--muted);
     }
-    .ranking { width: 100%; border-collapse: collapse; }
-    .ranking th, .ranking td {
+    .ranking {
+      width: 100%;
+      max-width: 1100px;
+      border-collapse: collapse;
+      background: rgba(18,25,51,0.5);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      overflow: hidden;
+    }
+    .ranking th,
+    .ranking td {
+      padding: 13px 14px;
       text-align: left;
-      padding: 12px 10px;
       border-bottom: 1px solid rgba(255,255,255,0.08);
-      font-size: 15px;
+      font-size: 14px;
+      vertical-align: top;
     }
-    .ranking th { color: var(--muted); font-weight: 600; }
-    .footer-note { font-size: 13px; color: var(--muted); }
-    @media (max-width: 900px) {
-      .g2, .g3 { grid-template-columns: 1fr; }
-      nav .links { display: none; }
+    .ranking th {
+      color: var(--muted);
+      font-weight: 700;
+      background: rgba(255,255,255,0.03);
+    }
+    .ranking tr:last-child td { border-bottom: none; }
+    .score {
+      font-weight: 800;
+      color: var(--yellow);
+    }
+    .source-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      max-width: 1100px;
+    }
+    .source-links a {
+      text-decoration: none;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.03);
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .footer-note {
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .accent { color: var(--purple); }
+    .warn { color: var(--yellow); }
+    .ok { color: var(--green); }
+    @media (max-width: 980px) {
+      .hero-kpis, .g4, .g3, .g2 { grid-template-columns: 1fr; }
+      .nav-links { display: none; }
+      .slide { padding-left: 20px; padding-right: 20px; }
     }
   </style>
 </head>
 <body>
   <nav>
-    <div class="brand">HulaHoop <span>Foundation Report</span></div>
-    <div class="links">
-      <a href="#summary">Summary</a>
+    <div class="nav-brand">Hulahoop <span>Foundation Report</span></div>
+    <div class="nav-links">
+      <a href="#market">Market</a>
       <a href="#swot">SWOT</a>
-      <a href="#ice">ICE</a>
+      <a href="#tows">TOWS</a>
       <a href="#ope">OPE</a>
       <a href="#qa">QA</a>
     </div>
   </nav>
 
-  <section class="slide">
-    <div class="eyebrow">Market Synthesis</div>
-    <h1>HulaHoop puede ocupar una categoría que hoy <span style="color:var(--purple)">nadie posee</span>.</h1>
-    <p class="lead">El mercado está fragmentado entre despachos, colocadores y plataformas parciales. HulaHoop destaca por combinar anticipo, software y especialización en entertainment, pero todavía no gana la batalla de visibilidad.</p>
+  <section class="slide" id="hero">
+    <div class="eyebrow">Market Synthesis · Foundation Presentation</div>
+    <h1>Hulahoop puede ser la <span class="accent">infraestructura</span> del entretenimiento.</h1>
+    <p class="lead">La tesis no es “otra firma más” del incentivo fiscal. La tesis es más ambiciosa: anticipo, software para despachos y plataforma regulada bajo una sola estructura, en un mercado que todavía opera de forma artesanal.</p>
+    <div class="hero-kpis">
+      <div class="kpi">
+        <div class="kpi-value">7,2M€</div>
+        <div class="kpi-label">AUM 2025</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-value">22,5M€</div>
+        <div class="kpi-label">Objetivo AUM 2026</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-value">68 + 35</div>
+        <div class="kpi-label">Inversores históricos + nuevos 2025</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-value">25k€</div>
+        <div class="kpi-label">Ticket medio confirmado</div>
+      </div>
+    </div>
     <div class="metric">
       <strong>Conclusión ejecutiva</strong>
-      El producto parece más fuerte que la marca. La prioridad no es inventar una nueva oferta, sino traducir mejor la actual en narrativa, canal y distribución.
+      <p>El producto parece más fuerte que la distribución. La oportunidad existe, pero el cuello de botella está en visibilidad, sistema comercial y captura del asesor fiscal como gatekeeper.</p>
     </div>
   </section>
 
-  <section class="slide" id="summary">
+  <section class="slide" id="market">
     <div class="eyebrow">Market Summary</div>
-    <h2>Qué está pasando realmente</h2>
+    <h2>Posición en el mercado</h2>
     <div class="grid g2">
       <div class="card">
-        <h3>Posición</h3>
-        <p>HulaHoop no encaja en una sola casilla. Tiene rasgos de fintech, plataforma de inversión, operador de tax equity y software vertical. Esa mezcla es su oportunidad de categoría.</p>
+        <h3>Espacio único y defendible</h3>
+        <p>Hulahoop es el único actor que integra simultáneamente anticipo de incentivos fiscales, Pro Tax SaaS y futura PFP regulada para entertainment.</p>
+      </div>
+      <div class="card">
+        <h3>Mercado real, no hipotético</h3>
+        <p>España acumula ~500M€ en incentivos fiscales culturales desde 2015. El mercado se acelera con el Art. 39.7, más de 900 festivales y el auge audiovisual.</p>
+      </div>
+      <div class="card">
+        <h3>Competencia fragmentada</h3>
+        <p>SFTL domina marca, TaxMM volumen, SEGO plataforma audiovisual. Ninguno une las tres patas que sí tiene Hulahoop.</p>
       </div>
       <div class="card">
         <h3>Problema central</h3>
-        <p>El sector sufre fragmentación, lentitud y dependencia de intermediarios. HulaHoop puede simplificar ese sistema, pero necesita comunicarlo con mucha más claridad.</p>
+        <p>El gap no es de producto, es de ejecución comercial y discoverability. Hoy el mercado encuentra antes a los jugadores visibles que al jugador más completo.</p>
+      </div>
+    </div>
+    <div class="pill-list">
+      <div class="pill">Mercado 150-250M€/año en intermediación</div>
+      <div class="pill">+900 festivales/año</div>
+      <div class="pill">CNMV como moat regulatorio</div>
+      <div class="pill">Madrid + Barcelona + País Vasco</div>
+    </div>
+  </section>
+
+  <section class="slide">
+    <div class="eyebrow">Confirmed advantages</div>
+    <h2>Ventajas competitivas confirmadas</h2>
+    <div class="grid g4">
+      <div class="card">
+        <h3>Propuesta integrada</h3>
+        <p>Anticipo 60-70%, Pro Tax y PFP. Es la tesis central y la principal diferencia frente al mercado.</p>
       </div>
       <div class="card">
-        <h3>Ventaja real</h3>
-        <p>Anticipo + Pro Tax + foco entertainment. Ningún competidor mapeado combina esas tres piezas con esa especialización.</p>
+        <h3>Credibilidad institucional</h3>
+        <p>South Summit, IESE, SSIFF y clusters. Señales fuertes de legitimidad sectorial.</p>
       </div>
       <div class="card">
-        <h3>Gap más urgente</h3>
-        <p>Discoverability. La debilidad principal no parece ser de producto, sino de SEO, contenido, presencia y segmentación del mensaje.</p>
+        <h3>Track record</h3>
+        <p>100% de deuda devuelta. En un producto donde la seguridad importa, esto es un activo comercial clave.</p>
+      </div>
+      <div class="card">
+        <h3>Proyectos visibles</h3>
+        <p>Torrente Presidente, Paid in Full, Un Prophète. Prueba social tangible, no abstracta.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide">
+    <div class="eyebrow">Critical gaps</div>
+    <h2>Gaps principales a cerrar</h2>
+    <div class="grid g2">
+      <div class="card">
+        <h3>Huella digital insuficiente</h3>
+        <p>La web no indexa bien, no hay presencia sólida en buscadores ni prueba social pública. Eso bloquea la transición de club privado a plataforma escalable.</p>
+      </div>
+      <div class="card">
+        <h3>Sin sistema comercial visible</h3>
+        <p>Hoy David es la máquina de captación. Sin CRM ni pipeline documentado, el crecimiento depende demasiado de memoria y relaciones personales.</p>
+      </div>
+      <div class="card">
+        <h3>Pro Tax aún invisible</h3>
+        <p>El activo más defendible para capturar despachos tiene solo 2 clientes activos. La ventana existe, pero no va a esperar.</p>
+      </div>
+      <div class="card">
+        <h3>Gap ambición-alcance</h3>
+        <p>La promesa es democratizar la inversión en entretenimiento, pero el funcionamiento real sigue siendo club cerrado y red 1:1.</p>
       </div>
     </div>
   </section>
 
   <section class="slide" id="swot">
     <div class="eyebrow">SWOT</div>
-    <h2>Fortalezas y debilidades</h2>
-    <div class="grid g3">
-      <div class="card"><div class="pill s">Strength</div><h3>Producto completo</h3><p>Anticipo, software para despachos y futura capa PFP en una sola historia.</p></div>
-      <div class="card"><div class="pill s">Strength</div><h3>Foco sectorial</h3><p>Especialización real en entertainment, no una vertical marginal dentro de una plataforma generalista.</p></div>
-      <div class="card"><div class="pill s">Strength</div><h3>Moat operativo</h3><p>Pro Tax puede capturar el canal despacho y convertirlo en lock-in.</p></div>
-      <div class="card"><div class="pill w">Weakness</div><h3>Baja visibilidad</h3><p>Web poco amigable para SEO y motor orgánico muy débil.</p></div>
-      <div class="card"><div class="pill w">Weakness</div><h3>Gap de marca</h3><p>SEGO, TaxMM y SFTL juegan con más reconocimiento, volumen o share of voice.</p></div>
-      <div class="card"><div class="pill w">Weakness</div><h3>Mensaje genérico</h3><p>Hoy se explica mejor la empresa que el dolor concreto que resuelve para cada ICP.</p></div>
+    <h2>Las 4 fuerzas del diagnóstico</h2>
+    <div class="grid g4">
+      <div class="card">
+        <div class="tag s">Strengths</div>
+        <h3>S</h3>
+        <ul>
+          <li>S1 Propuesta integrada única</li>
+          <li>S2 Credibilidad institucional</li>
+          <li>S5 Proyectos financiados visibles</li>
+          <li>S7 100% deuda devuelta</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="tag w">Weaknesses</div>
+        <h3>W</h3>
+        <ul>
+          <li>W1 Web y discoverability débiles</li>
+          <li>W2 Sin social proof B2C pública</li>
+          <li>W4 Sin CRM ni motor comercial sistematizado</li>
+          <li>W5 Pro Tax con muy poca tracción visible</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="tag o">Opportunities</div>
+        <h3>O</h3>
+        <ul>
+          <li>O1 80-100 despachos migrando I+D → cultural</li>
+          <li>O2 Legislación favorable consolidada</li>
+          <li>O3 No existe PFP entertainment equivalente</li>
+          <li>O4 Urbanitae ya validó el comportamiento del inversor</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="tag t">Threats</div>
+        <h3>T</h3>
+        <ul>
+          <li>T1 TaxMM y consolidación M&A</li>
+          <li>T2 Proincentiva capturando despachos</li>
+          <li>T4 Retraso CNMV</li>
+          <li>T8 Asesor fiscal como gatekeeper operativo</li>
+        </ul>
+      </div>
+    </div>
+    <div class="banner">
+      <strong>Insight clave</strong>
+      <p>La amenaza más inmediata no es solo un competidor. Es el gatekeeper: si el asesor no mueve el deal, el producto nunca llega al inversor. Por eso Pro Tax no es solo software, es estrategia de distribución.</p>
     </div>
   </section>
 
-  <section class="slide">
-    <div class="eyebrow">SWOT</div>
-    <h2>Oportunidades y amenazas</h2>
-    <div class="grid g3">
-      <div class="card"><div class="pill o">Opportunity</div><h3>White space de categoría</h3><p>“Infraestructura del entertainment” sigue sin dueño claro.</p></div>
-      <div class="card"><div class="pill o">Opportunity</div><h3>Canal despacho</h3><p>Despachos que migran a cultural necesitan tooling y pueden convertirse en distribución.</p></div>
-      <div class="card"><div class="pill o">Opportunity</div><h3>Content engine</h3><p>El gap de visibilidad se puede cerrar sin esperar cambios de producto.</p></div>
-      <div class="card"><div class="pill t">Threat</div><h3>Incumbentes fuertes</h3><p>SEGO, TaxMM y SFTL pueden bloquear conversaciones por marca, relaciones o escala.</p></div>
-      <div class="card"><div class="pill t">Threat</div><h3>Fricción regulatoria</h3><p>El relato crypto/NFT exige máxima disciplina de compliance y framing.</p></div>
-      <div class="card"><div class="pill t">Threat</div><h3>Gatekeeper advisor</h3><p>El asesor fiscal puede acelerar o frenar deals y también comprimir margen.</p></div>
-    </div>
-  </section>
-
-  <section class="slide">
+  <section class="slide" id="tows">
     <div class="eyebrow">TOWS</div>
-    <h2>Qué hacer con este diagnóstico</h2>
+    <h2>De diagnóstico a estrategia</h2>
     <div class="grid g2">
       <div class="card">
-        <h3>SO / ST</h3>
+        <div class="tag s">SO / Offensive</div>
+        <h3>Usar lo mejor de Hulahoop para capturar el mercado</h3>
         <ul>
-          <li>Usar el producto completo para articular una categoría nueva.</li>
-          <li>Vender anticipo como caja inmediata, no como battle de volumen.</li>
-          <li>Usar Pro Tax para neutralizar al asesor como gatekeeper.</li>
+          <li>Pro Tax como infraestructura para despachos antes de que el mercado se cierre.</li>
+          <li>PFP entertainment como first mover cuando CNMV se materialice.</li>
+          <li>Investment Institute como capa de credibilidad y generación de demanda.</li>
         </ul>
       </div>
       <div class="card">
-        <h3>WO / WT</h3>
+        <div class="tag t">ST / Defensive</div>
+        <h3>Usar fortalezas para neutralizar riesgos</h3>
         <ul>
-          <li>Corregir discoverability y messaging por segmento.</li>
-          <li>Crear content engine como acelerador de confianza.</li>
-          <li>Protocolizar compliance y claims antes de escalar marketing.</li>
+          <li>Re-posicionar el 7% como seguridad + ciclo corto, no como TIR.</li>
+          <li>Usar track record y credibilidad para competir contra players con más volumen.</li>
+          <li>Defenderse del gatekeeper convirtiéndolo en aliado operativo.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="tag o">WO / Transformative</div>
+        <h3>Corregir debilidades que desbloquean crecimiento</h3>
+        <ul>
+          <li>CRM y pipeline visibles antes de escalar.</li>
+          <li>Referral program sobre spread 7-8% como growth inmediato.</li>
+          <li>Content engine segmentado por ICP para reducir dependencia de red personal.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="tag w">WT / Survival</div>
+        <h3>Reducir fragilidad operativa</h3>
+        <ul>
+          <li>Documentar pipeline para no depender de una sola persona.</li>
+          <li>Acelerar casos de estudio Pro Tax antes de que otro player capture el relato.</li>
+          <li>Usar compliance y secuencia correcta para no quemar mercado antes de tiempo.</li>
         </ul>
       </div>
     </div>
   </section>
 
-  <section class="slide" id="ice">
-    <div class="eyebrow">ICE Ranking</div>
+  <section class="slide">
+    <div class="eyebrow">ICE Prioritization</div>
     <h2>Qué va primero</h2>
     <table class="ranking">
       <thead>
-        <tr><th>Rank</th><th>Estrategia</th><th>Tipo</th><th>ICE</th></tr>
+        <tr>
+          <th>Rank</th>
+          <th>Estrategia</th>
+          <th>Tipo</th>
+          <th>ICE</th>
+          <th>Qué significa</th>
+        </tr>
       </thead>
       <tbody>
-        <tr><td>1</td><td>Construir content engine por segmentos y canales</td><td>WO</td><td>8.0</td></tr>
-        <tr><td>2</td><td>Convertir Pro Tax en canal de captación de despachos</td><td>SO</td><td>7.7</td></tr>
-        <tr><td>3</td><td>Vender anticipo como solución de caja inmediata</td><td>ST</td><td>7.7</td></tr>
-        <tr><td>4</td><td>Reescribir mensajes por ICP y activar referral</td><td>WO</td><td>7.3</td></tr>
-        <tr><td>5</td><td>Protocolizar compliance y claims permitidos</td><td>WT</td><td>7.3</td></tr>
+        <tr>
+          <td>1</td>
+          <td>Programa referral para inversores existentes</td>
+          <td>WO5</td>
+          <td class="score">8.3</td>
+          <td>Crecimiento inmediato sin desarrollo ni gasto fuerte</td>
+        </tr>
+        <tr>
+          <td>2</td>
+          <td>Re-posicionar el 7% como seguridad + ciclo corto</td>
+          <td>ST2</td>
+          <td class="score">8.3</td>
+          <td>Corrige el mensaje para el arquetipo que hoy más objeta</td>
+        </tr>
+        <tr>
+          <td>3</td>
+          <td>CRM + pipeline documentado</td>
+          <td>WT2 / WO1</td>
+          <td class="score">8.3</td>
+          <td>Sin esto, no hay escala ni aprendizaje comercial acumulado</td>
+        </tr>
+        <tr>
+          <td>4</td>
+          <td>Pro Tax como ofensiva a despachos</td>
+          <td>SO1+WT1</td>
+          <td class="score">7.7</td>
+          <td>Convierte el canal despacho en moat antes que Proincentiva</td>
+        </tr>
       </tbody>
     </table>
   </section>
 
   <section class="slide">
     <div class="eyebrow">Immediate actions</div>
-    <h2>Las 3 acciones inmediatas</h2>
+    <h2>Top 3 acciones inmediatas</h2>
     <div class="grid g3">
       <div class="card">
-        <h3>1. Content engine</h3>
-        <p>Crear tres narrativas maestras: promotores, despachos e inversores.</p>
+        <h3>#1 Referral</h3>
+        <p>David propone a los 10 inversores más activos un upgrade de spread a cambio de traer nuevos inversores que cierren.</p>
       </div>
       <div class="card">
-        <h3>2. Pro Tax channel</h3>
-        <p>Preparar demo, argumento de ahorro/velocidad y lista priorizada de 20 despachos target.</p>
+        <h3>#2 One-pager Arquetipo 2</h3>
+        <p>Mensaje explícito: seguridad, ciclo corto, garantía estatal. <span class="warn">No TIR</span> como claim principal.</p>
       </div>
       <div class="card">
-        <h3>3. Reposicionar anticipo</h3>
-        <p>Rehacer homepage y deck alrededor de cash flow inmediato, seguridad y velocidad.</p>
-      </div>
-    </div>
-  </section>
-
-  <section class="slide" id="ope">
-    <div class="eyebrow">OPE Canvas</div>
-    <h2>El endgame estratégico</h2>
-    <div class="metric">
-      <strong>Obvious Choice</strong>
-      Ser la opción obvia para financiación y estructuración del entertainment, porque junta capital, workflow y tecnología en una sola capa.
-    </div>
-    <div class="grid g2">
-      <div class="card">
-        <h3>ICP</h3>
-        <p>Promotores y productores, despachos fiscales culturales, e inversores o clubs con interés en entertainment.</p>
-      </div>
-      <div class="card">
-        <h3>Core problem</h3>
-        <p>Hoy el mercado obliga a coordinar demasiados actores parciales para resolver una operación.</p>
-      </div>
-      <div class="card">
-        <h3>Moats</h3>
-        <p>Anticipo, Pro Tax, foco vertical, datos operativos y futura capa regulada.</p>
-      </div>
-      <div class="card">
-        <h3>Strategy choice</h3>
-        <p>Primero narrativa, canal despacho y distribución. Después escala y categoría.</p>
+        <h3>#3 CRM Setup</h3>
+        <p>HubSpot con 3 pipelines y datos históricos visibles. Sin eso, el resto del plan queda cojo.</p>
       </div>
     </div>
   </section>
 
   <section class="slide">
-    <div class="eyebrow">Execution picture</div>
+    <div class="eyebrow">Execution sequence</div>
+    <h2>La secuencia correcta, no el impulso</h2>
+    <div class="grid g3">
+      <div class="card">
+        <h3>Semana 1</h3>
+        <p>Setup CRM, deck Pro Tax, case study cuantificado, lista de 30 despachos y templates.</p>
+      </div>
+      <div class="card">
+        <h3>Semana 2</h3>
+        <p>David hace outreach a los primeros 10 despachos y activa el referral con inversores activos.</p>
+      </div>
+      <div class="card">
+        <h3>Semana 3</h3>
+        <p>Ajuste de messaging según respuestas y expansión al siguiente bloque de cuentas.</p>
+      </div>
+    </div>
+    <div class="banner">
+      <strong>Regla operativa</strong>
+      <p>No quemar leads buenos por salir antes de tiempo. Primero estructura, luego outreach. En este caso, la preparación es parte de la ejecución.</p>
+    </div>
+  </section>
+
+  <section class="slide" id="ope">
+    <div class="eyebrow">OPE Canvas</div>
+    <h2>La visión estratégica en una página</h2>
+    <div class="grid g2">
+      <div class="card">
+        <h3>Obvious Choice</h3>
+        <p>Elegir Hulahoop porque junta financiación inmediata, infraestructura para despachos y futura plataforma regulada en una sola capa.</p>
+      </div>
+      <div class="card">
+        <h3>ICP</h3>
+        <p>Tres perfiles claros: joven con liquidez, patrimonio establecido y asesor fiscal como buyer clave de Pro Tax.</p>
+      </div>
+      <div class="card">
+        <h3>Core Problem</h3>
+        <p>Promotores sin caja, inversores sin acceso claro, asesores sin herramienta fiable para ejecutar el incentivo cultural.</p>
+      </div>
+      <div class="card">
+        <h3>Moats</h3>
+        <p>Licencia CNMV, Pro Tax + datos, y flywheel entre services, despachos e inversores.</p>
+      </div>
+      <div class="card">
+        <h3>Strategy Choice</h3>
+        <p><span class="ok">Sales-led + platform effect</span>. Primero vender con red y proceso. Después dejar que la plataforma amplifique.</p>
+      </div>
+      <div class="card">
+        <h3>Endgame 2030</h3>
+        <p>+120M€ AUM, +11M€ revenue, +8.000 inversores activos, 150+ despachos en Pro Tax y presencia europea.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide">
+    <div class="eyebrow">2026 picture</div>
     <h2>Year, quarter, month</h2>
     <div class="grid g3">
       <div class="card">
-        <h3>12 meses</h3>
-        <p>Narrativa dominante, red de despachos significativa y motor de demanda menos dependiente de relaciones.</p>
+        <h3>Year Picture</h3>
+        <p>22,5M€ AUM, 5 clientes Pro Tax, licencia CNMV aprobada, teaser PFP live y CRM operativo.</p>
       </div>
       <div class="card">
-        <h3>90 días</h3>
-        <p>Nuevo messaging por ICP, outreach estructurado a despachos, cadencia editorial y deck/homepage reposicionados.</p>
+        <h3>Quarter Picture</h3>
+        <p>Q2: CRM y primeras conversaciones Pro Tax. Q3: waitlist PFP y más despachos. Q4: temporada alta de incentivos y go/no-go para PFP.</p>
       </div>
       <div class="card">
-        <h3>Este mes</h3>
-        <p>Mensajes maestros, demo Pro Tax, top 20 despachos, rehacer homepage/deck y primeras piezas de thought leadership.</p>
+        <h3>Monthly Picture</h3>
+        <p>Falta instrumentación. El primer KPI mensual real no es AUM, es visibilidad del pipeline.</p>
       </div>
     </div>
   </section>
 
   <section class="slide" id="qa">
-    <div class="eyebrow">QA</div>
-    <h2>Chequeo de consistencia</h2>
+    <div class="eyebrow">Self-QA</div>
+    <h2>Chequeo final</h2>
     <div class="grid g2">
       <div class="card">
-        <h3>PASS</h3>
+        <h3>QA PASS</h3>
         <ul>
-          <li>El SWOT está alineado con self, market, competitors y company brief.</li>
-          <li>Hay mínimo 8 estrategias TOWS, con ranking ICE completo.</li>
-          <li>Summary, OPE y presentación cuentan la misma historia central.</li>
-          <li>No se inventaron métricas duras no presentes en las fuentes leídas en esta regeneración.</li>
+          <li>La narrativa de la presentación coincide con <code>summary/current.md</code>, <code>swot/current.md</code> y <code>ope-canvas/current.md</code>.</li>
+          <li>Las prioridades mostradas respetan el ranking ICE actual.</li>
+          <li>Se incorporan T8 gatekeeper, referral WO5 y la secuencia correcta de ejecución.</li>
+          <li>No se usó visual identity inexistente, se aplicó estilo base tipo Electric Studio.</li>
         </ul>
       </div>
       <div class="card">
         <h3>Limitaciones documentadas</h3>
         <ul>
-          <li>Self-intelligence disponible en modo lite, no full Lens 3.</li>
-          <li>No había visual identity actual en disco.</li>
-          <li>Faltan targets cuantitativos oficiales para Year/Quarter picture.</li>
-          <li>Geografía detallada y valores formales siguen parcialmente inferidos.</li>
+          <li>No existe <code>brand-identity/visual-identity/current.md</code> en disco.</li>
+          <li>El protocolo <code>_system/presentation-summary-protocol.md</code> no estaba disponible en la ruta esperada.</li>
+          <li>Las metas de quarterly/monthly siguen parcialmente condicionadas a instrumentación CRM.</li>
+          <li>La presentación se basa en outputs vigentes de market-synthesis ya regenerados.</li>
         </ul>
       </div>
     </div>
-    <div class="sources">
-      <a href="../market-and-us/swot/current.md">SWOT completo</a>
+    <div class="source-links">
       <a href="../market-and-us/summary/current.md">Market Summary</a>
+      <a href="../market-and-us/swot/current.md">SWOT + TOWS</a>
       <a href="../market-and-us/ope-canvas/current.md">OPE Canvas</a>
       <a href="../market-and-us/self/current.md">Self Intelligence</a>
       <a href="../market-and-us/competitors/current.md">Competitor Intelligence</a>
       <a href="../market-and-us/market/current.md">Market Intelligence</a>
       <a href="../company-brief/current.md">Company Brief</a>
     </div>
-    <p class="footer-note">Generated by market-synthesis, 2026-04-22.</p>
+    <p class="footer-note"><!-- Self-QA: PASS | 2026-04-23 | items: 9✅ 2⚠️ 0❌ --></p>
   </section>
 </body>
 </html>

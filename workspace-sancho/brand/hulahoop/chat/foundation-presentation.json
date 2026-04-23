@@ -155,7 +155,35 @@
       "text": "Listo.\n\nRegeneré la Foundation usando **market-synthesis** y dejé estos outputs nuevos:\n\n- `brand/hulahoop/market-and-us/swot/current.md`\n- `brand/hulahoop/market-and-us/summary/current.md`\n- `brand/hulahoop/market-and-us/ope-canvas/current.md`\n- `brand/hulahoop/presentations/foundation-report.html`\n\nQA rápido:\n- ✅ SWOT, Summary y OPE cuentan la misma historia\n- ✅ Incluí TOWS + ICE + top 3 acciones inmediatas\n- ✅ El HTML ahora sigue una estructura más alineada con la skill\n- ✅ Dejé links a los documentos fuente dentro de la presentación\n- ⚠️ Hay una limitación real: `self/current.md` está en modo **lite**, así que parte del SWOT interno tiene confianza media, no máxima\n- ⚠️ No encontré `brand-identity/visual-identity/current.md`, así que usé estilo base\n\nSi quieres, siguiente paso hago una de estas dos:\n1. **QA más duro slide por slide**, o\n2. **ajusto la narrativa** para que quede más cerca del tono que queréis presentar al cliente.",
       "agent": "sancho",
       "ts": "2026-04-22T16:53:09.913Z"
+    },
+    {
+      "role": "user",
+      "text": "volve a crear la presentacion siguiendo lo que indica la skill",
+      "ts": 1776971878011
+    },
+    {
+      "role": "user",
+      "text": "Y?",
+      "ts": 1776972007110
+    },
+    {
+      "role": "bot",
+      "text": "Estoy rehaciendo la presentación desde los outputs de `market-synthesis`, no solo retocando el HTML actual. Ahora voy a alinear estructura, fuentes y QA con lo que pide la skill.",
+      "agent": "sancho",
+      "ts": "2026-04-23T19:20:23.872Z"
+    },
+    {
+      "role": "bot",
+      "text": "Ya tengo claro el gap: el HTML actual no sigue el `Presentation Summary` de los docs regenerados, y además mezcla una narrativa vieja con otra nueva. Voy a reemplazarlo por una versión alineada con `swot/current.md`, `summary/current.md` y `ope-canvas/current.md`.",
+      "agent": "sancho",
+      "ts": "2026-04-23T19:20:23.876Z"
+    },
+    {
+      "role": "bot",
+      "text": "Listo.\n\nVolví a crear la presentación siguiendo la lógica de la skill `market-synthesis` y dejé reemplazado el HTML en:\n\n`brand/hulahoop/presentations/foundation-report.html`\n\nQué corregí:\n- Rehice la narrativa para que siga los outputs actuales de:\n  - `market-and-us/summary/current.md`\n  - `market-and-us/swot/current.md`\n  - `market-and-us/ope-canvas/current.md`\n- Metí explícitamente:\n  - T8, asesor fiscal como gatekeeper\n  - WO5, programa referral\n  - Top 3 acciones inmediatas con ICE 8.3\n  - Secuencia correcta semana 1 / 2 / 3\n- Añadí self-QA al final\n- Usé estilo base, porque no existe `brand-identity/visual-identity/current.md`\n\nLimitaciones detectadas:\n- No encontré `brand-identity/visual-identity/current.md`\n- Tampoco estaba disponible `_system/presentation-summary-protocol.md` en la ruta esperada\n\nSi quieres, siguiente paso hago una de estas dos:\n1. **QA slide por slide de contenido y links**\n2. **ajuste fino del tono para que quede más “cliente-facing”**",
+      "agent": "sancho",
+      "ts": "2026-04-23T19:20:23.879Z"
     }
   ],
-  "updatedAt": 1776876789913
+  "updatedAt": 1776972023879
 }

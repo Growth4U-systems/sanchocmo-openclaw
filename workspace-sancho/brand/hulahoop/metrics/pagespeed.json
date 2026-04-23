@@ -1,13 +1,13 @@
 {
   "url": "https://hulahoop.media",
   "mobile": {
-    "performance": 62,
+    "performance": 44,
     "seo": 92,
     "accessibility": 91,
     "bestPractices": 100,
     "lcp": 16.1,
     "cls": 0,
-    "tbt": 189,
+    "tbt": 1133,
     "opportunities": [
       {
         "id": "redirects",
@@ -24,8 +24,8 @@
     ],
     "diagnostics": [
       {
-        "id": "mainthread-work-breakdown",
-        "title": "Minimize main-thread work",
+        "id": "image-delivery-insight",
+        "title": "Improve image delivery",
         "score": 0
       },
       {
@@ -34,35 +34,40 @@
         "score": 0
       },
       {
+        "id": "mainthread-work-breakdown",
+        "title": "Minimize main-thread work",
+        "score": 0
+      },
+      {
         "id": "link-name",
         "title": "Links do not have a discernible name",
-        "score": 0
-      },
-      {
-        "id": "render-blocking-insight",
-        "title": "Render blocking requests",
-        "score": 0
-      },
-      {
-        "id": "image-delivery-insight",
-        "title": "Improve image delivery",
         "score": 0
       },
       {
         "id": "legacy-javascript-insight",
         "title": "Legacy JavaScript",
         "score": 0
+      },
+      {
+        "id": "bootup-time",
+        "title": "Reduce JavaScript execution time",
+        "score": 0
+      },
+      {
+        "id": "render-blocking-insight",
+        "title": "Render blocking requests",
+        "score": 0
       }
     ]
   },
   "desktop": {
-    "performance": 84,
+    "performance": 68,
     "seo": 92,
     "accessibility": 91,
     "bestPractices": 100,
     "lcp": 2.9,
     "cls": 0,
-    "tbt": 45,
+    "tbt": 290,
     "opportunities": [
       {
         "id": "redirects",
@@ -73,14 +78,19 @@
       {
         "id": "unused-javascript",
         "title": "Reduce unused JavaScript",
-        "savings": 80,
+        "savings": 120,
         "description": "Reduce unused JavaScript and defer loading scripts until they are required to decrease bytes consumed by network activity. [Learn how to reduce unused"
       }
     ],
     "diagnostics": [
       {
-        "id": "label",
-        "title": "Form elements do not have associated labels",
+        "id": "link-name",
+        "title": "Links do not have a discernible name",
+        "score": 0
+      },
+      {
+        "id": "mainthread-work-breakdown",
+        "title": "Minimize main-thread work",
         "score": 0
       },
       {
@@ -89,8 +99,8 @@
         "score": 0
       },
       {
-        "id": "link-name",
-        "title": "Links do not have a discernible name",
+        "id": "label",
+        "title": "Form elements do not have associated labels",
         "score": 0
       },
       {
@@ -100,5 +110,5 @@
       }
     ]
   },
-  "fetchedAt": "2026-04-22T15:01:10.318Z"
+  "fetchedAt": "2026-04-23T19:00:09.851Z"
 }

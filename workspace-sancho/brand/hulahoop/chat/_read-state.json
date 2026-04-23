@@ -1,6 +1,6 @@
 {
   "general": {
-    "lastReadTs": 1776870065234
+    "lastReadTs": 1776970769047
   },
   "skill-acquisition-metrics-plan": {
     "lastReadTs": 1775746612881
@@ -12,16 +12,16 @@
     "lastReadTs": 1775750500972
   },
   "P00-Fast-Foundation-P00-FF-T01": {
-    "lastReadTs": 1775750508991
+    "lastReadTs": 1776970774853
   },
   "market-analysis": {
-    "lastReadTs": 1776260148743
+    "lastReadTs": 1776970776364
   },
   "competitor-analysis": {
     "lastReadTs": 1776260165969
   },
   "trust-engine": {
-    "lastReadTs": 1776113007857
+    "lastReadTs": 1776970779267
   },
   "self-analysis": {
     "lastReadTs": 1776260166247
@@ -36,7 +36,7 @@
     "lastReadTs": 1776348224344
   },
   "foundation-presentation": {
-    "lastReadTs": 1776876897011
+    "lastReadTs": 1776972024451
   },
   "skill-market-synthesis": {
     "lastReadTs": 1776870095224
@@ -64,5 +64,8 @@
   },
   "niche-discovery": {
     "lastReadTs": 1776877536641
+  },
+  "foundation-report": {
+    "lastReadTs": 1776970783471
   }
 }
