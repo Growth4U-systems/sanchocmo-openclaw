@@ -99,7 +99,7 @@
           "status": "done",
           "layer": 1,
           "skill": "competitor-intelligence",
-          "output_file": "brand/hulahoop/market-and-us/competitors/competitive-analysis.current.md",
+          "output_file": "brand/hulahoop/market-and-us/competitors/current.md",
           "completed_at": "2026-04-13T22:23:00Z",
           "updated_at": "2026-04-13T22:23:00Z"
         },
@@ -254,7 +254,7 @@
   },
   "file_index": {
     "competitors": {
-      "competitive-analysis": "market-and-us/competitors/competitive-analysis.current.md"
+      "competitive-analysis": "market-and-us/competitors/current.md"
     },
     "integrations": "integrations.json",
     "metrics": {},

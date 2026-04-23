@@ -89,7 +89,7 @@
           "started_at": "2026-03-04T12:57:00Z",
           "completed_at": "2026-03-04T13:16:00Z",
           "approved_at": "2026-03-04T20:25:00Z",
-          "output_file": "brand/paymatico/market-and-us/competitors/competitors.current.md"
+          "output_file": "brand/paymatico/market-and-us/competitors/current.md"
         },
         "self-analysis": {
           "status": "approved",
@@ -329,7 +329,7 @@
         "stripe": "market-and-us/competitors/stripe/stripe.current.md",
         "zettle": "market-and-us/competitors/zettle/zettle.current.md"
       },
-      "summary": "market-and-us/competitors/competitors.current.md"
+      "summary": "market-and-us/competitors/current.md"
     },
     "integrations": "integrations.json",
     "operational": {

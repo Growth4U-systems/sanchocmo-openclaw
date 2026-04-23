@@ -85,7 +85,7 @@
           "completed_at": "2026-03-30T15:32:00Z",
           "updated_at": "2026-03-31T09:58:17.256Z",
           "approved_at": "2026-03-31T09:58:17.256Z",
-          "output_file": "brand/criptan/market-and-us/competitors/competitors.current.md"
+          "output_file": "brand/criptan/market-and-us/competitors/current.md"
         },
         "self-analysis": {
           "status": "not-started",
@@ -277,7 +277,7 @@
   "file_index": {
     "competitors": {
       "sources": "market-and-us/competitors/sources.json",
-      "summary": "market-and-us/competitors/competitors.current.md"
+      "summary": "market-and-us/competitors/current.md"
     },
     "integrations": "integrations.json",
     "metrics": {

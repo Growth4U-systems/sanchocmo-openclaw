@@ -83,7 +83,7 @@
             "self-analysis"
           ],
           "skill": "competitor-intelligence",
-          "output_file": "brand/sanchocmo/market-and-us/competitors/competitors.current.md"
+          "output_file": "brand/sanchocmo/market-and-us/competitors/current.md"
         },
         "self-analysis": {
           "status": "approved",
@@ -274,7 +274,7 @@
         "jasper": "market-and-us/competitors/jasper/jasper.current.md",
         "distribb": "market-and-us/competitors/distribb/distribb.current.md"
       },
-      "summary": "market-and-us/competitors/competitors.current.md"
+      "summary": "market-and-us/competitors/current.md"
     },
     "integrations": "integrations.json",
     "brand_assets": {
