@@ -170,7 +170,6 @@ export default defineChannelPluginEntry({
           skill,
           agentId,
           isAdmin,
-          senderRole,
           _source, // "discord" if relayed from Discord
         } = payload;
 
@@ -256,8 +255,8 @@ export default defineChannelPluginEntry({
 
         // Dispatch to agent asynchronously
         try {
-          const mcUrl = channelCfg?.mcServerUrl || "http://localhost:18790";
-          const callbackUrl = `${mcUrl}/webhook/mc-chat/response`;
+          const mcUrl = channelCfg?.mcServerUrl || "http://localhost:3000";
+          const callbackUrl = `${mcUrl}/api/chat/webhook`;
           const secret = channelCfg?.sharedSecret;
 
           await dispatchInboundMessageWithBufferedDispatcher({
@@ -284,7 +283,7 @@ export default defineChannelPluginEntry({
                 // Check if thread is linked to Discord
                 let discordLink = null;
                 try {
-                  const threadRes = await fetch(`${mcUrl}/api/mc-chat/thread/${encodeURIComponent(chatId)}`);
+                  const threadRes = await fetch(`${mcUrl}/api/chat/thread/${encodeURIComponent(chatId)}`);
                   const threadData = await threadRes.json();
                   if (threadData.discordThreadId && threadData.discordChannelId) {
                     discordLink = { threadId: threadData.discordThreadId, channelId: threadData.discordChannelId };
@@ -462,11 +461,11 @@ export default defineChannelPluginEntry({
         if (!msgCtx.ThreadId) return;
         const discordThreadId = msgCtx.ThreadId;
         // Check if this Discord thread is linked to an MC thread
-        const mcUrl = channelCfg?.mcServerUrl || "http://localhost:18790";
+        const mcUrl = channelCfg?.mcServerUrl || "http://localhost:3000";
         let mcThreadId = null;
         try {
           // Search all MC threads for this discordThreadId
-          const searchRes = await fetch(`${mcUrl}/api/mc-chat/find-by-discord/${encodeURIComponent(discordThreadId)}`);
+          const searchRes = await fetch(`${mcUrl}/api/chat/find-by-discord/${encodeURIComponent(discordThreadId)}`);
           const searchData = await searchRes.json();
           if (searchData.ok && searchData.threadId) {
             mcThreadId = searchData.threadId;
@@ -483,7 +482,7 @@ export default defineChannelPluginEntry({
         text = text.replace(/\|\|?\[_mc_relay\]\|\|?/g, "").trim(); // Remove marker
         if (!text.trim()) return;
         try {
-          await fetch(`${mcUrl}/api/mc-chat/send`, {
+          await fetch(`${mcUrl}/api/chat/send`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
