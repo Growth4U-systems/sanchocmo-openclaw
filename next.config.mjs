@@ -14,10 +14,12 @@ const nextConfig = {
   async rewrites() {
     return {
       fallback: [
-        // Strangler Fig: everything Next.js doesn't handle → legacy server
+        // Strangler Fig: everything Next.js doesn't handle → legacy server,
+        // except /dashboard/* which is fully owned by Next.js so unmatched
+        // paths there fall through to pages/404.tsx instead of legacy.
         {
-          source: "/:path*",
-          destination: `http://localhost:${process.env.LEGACY_PORT || 18790}/:path*`,
+          source: "/:rest((?!dashboard(?:/|$)).*)",
+          destination: `http://localhost:${process.env.LEGACY_PORT || 18790}/:rest`,
         },
       ],
     };

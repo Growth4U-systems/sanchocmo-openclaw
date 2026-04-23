@@ -261,8 +261,10 @@ function ClientSelector() {
       router.push("/dashboard");
     } else {
       setSelectedClient(value);
-      // Preserve current sub-path (e.g. /projects, /foundation) when switching clients
-      const subPath = router.asPath.replace(/^\/dashboard\/[^/]+/, "");
+      // Preserve current sub-path (e.g. /projects, /foundation) when switching clients.
+      // The optional /:slug segment also matches bare /dashboard (global view),
+      // otherwise subPath would retain "/dashboard" and produce /dashboard/<new>/dashboard.
+      const subPath = router.asPath.replace(/^\/dashboard(?:\/[^/?]+)?(?=\/|$|\?)/, "");
       router.push(`/dashboard/${value}${subPath}`);
     }
   };

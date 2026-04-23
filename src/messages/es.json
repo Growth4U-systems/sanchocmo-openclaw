@@ -303,5 +303,10 @@
     "allClients": "Todos los clientes",
     "admin": "Admin",
     "client": "Cliente"
+  },
+  "notFound": {
+    "title": "Página no encontrada",
+    "description": "La página que buscás no existe o fue movida.",
+    "backToDashboard": "Volver al dashboard"
   }
 }
