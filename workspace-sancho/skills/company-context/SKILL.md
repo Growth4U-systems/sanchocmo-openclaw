@@ -68,7 +68,7 @@ context_writes:
 - Si ya existe → backup como `v{N+1}.md`, sobreescribe `current.md`, actualiza `history.json`
 - Link: `{MC_BASE_URL}/docs/brand/{slug}/company-context/current.md`
 
-> **Merge view `company-brief/current.md`**: lo regenera únicamente `fast-foundation` (no esta skill). Si esta skill se corre standalone, el merge view puede quedar desfasado hasta la próxima corrida completa de fast-foundation — es aceptado por ahora. TODO para resolver: ver nota en [foundation-protocol.md](../../_system/foundation/foundation-protocol.md).
+> **Merge view `company-brief/current.md`**: lo regenera únicamente `fast-foundation` (no esta skill). Si esta skill se corre standalone, el merge view queda desfasado hasta la próxima corrida completa de fast-foundation — es aceptado por ahora.
 
 ---
 

@@ -191,7 +191,7 @@ Cada una versiona (`v{N}.md` + `history.json`) **por separado** — permite re-c
 
 Solo **fast-foundation** (al final del flujo inicial de intake, después de los 3 standalones).
 
-> ⚠️ **Stale view conocido**: si una skill productora (`company-context`, `business-model-audit`, `budget-constraints`) se corre standalone fuera de fast-foundation, su standalone queda actualizado pero el merge view no. Aceptado por ahora. Mitigación hasta resolver: consumers que necesitan info fresca leen el standalone directamente. TODO de resolución documentado inline en [foundation-protocol.md](../../_system/foundation/foundation-protocol.md) (buscar `TODO(merge-regeneration)`).
+> ⚠️ **Stale view conocido**: si una skill productora (`company-context`, `business-model-audit`, `budget-constraints`) se corre standalone fuera de fast-foundation, su standalone queda actualizado pero el merge view no. Aceptado por ahora. Mitigación: consumers que necesitan info fresca leen el standalone directamente.
 
 **Formato del merge view:**
 ```markdown
