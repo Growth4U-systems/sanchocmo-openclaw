@@ -101,6 +101,11 @@ function buildRehydrationBlock(cfg, slug, threadId) {
   ].join("\n");
 }
 
+// Tracks Discord↔MC relay wiring so /mc-chat/health can report it.
+// See registerOutboundHook guard below — we can only relay if the SDK
+// exposes api.registerOutboundHook (added in openclaw 2026.3.22).
+const relayStatus = { enabled: false, reason: "not-registered" };
+
 export default defineChannelPluginEntry({
   id: "mc-chat",
   name: "Mission Control Chat",
@@ -165,7 +170,6 @@ export default defineChannelPluginEntry({
           skill,
           agentId,
           isAdmin,
-          senderRole,
           _source, // "discord" if relayed from Discord
         } = payload;
 
@@ -251,8 +255,8 @@ export default defineChannelPluginEntry({
 
         // Dispatch to agent asynchronously
         try {
-          const mcUrl = channelCfg?.mcServerUrl || "http://localhost:18790";
-          const callbackUrl = `${mcUrl}/webhook/mc-chat/response`;
+          const mcUrl = channelCfg?.mcServerUrl || "http://localhost:3000";
+          const callbackUrl = `${mcUrl}/api/chat/webhook`;
           const secret = channelCfg?.sharedSecret;
 
           await dispatchInboundMessageWithBufferedDispatcher({
@@ -279,7 +283,7 @@ export default defineChannelPluginEntry({
                 // Check if thread is linked to Discord
                 let discordLink = null;
                 try {
-                  const threadRes = await fetch(`${mcUrl}/api/mc-chat/thread/${encodeURIComponent(chatId)}`);
+                  const threadRes = await fetch(`${mcUrl}/api/chat/thread/${encodeURIComponent(chatId)}`);
                   const threadData = await threadRes.json();
                   if (threadData.discordThreadId && threadData.discordChannelId) {
                     discordLink = { threadId: threadData.discordThreadId, channelId: threadData.discordChannelId };
@@ -384,6 +388,7 @@ export default defineChannelPluginEntry({
           channel: "mc-chat",
           version: "0.2.0",
           ts: new Date().toISOString(),
+          discordRelay: { ...relayStatus },
         }));
         return true;
       },
@@ -433,11 +438,22 @@ export default defineChannelPluginEntry({
       },
     });
 
-    // Outbound hook: watch Discord messages and relay to MC if thread is linked
-    // NOTE: registerOutboundHook may not exist in all SDK versions — guard it
+    // Outbound hook: watch Discord messages and relay to MC if thread is linked.
+    // Requires api.registerOutboundHook (openclaw >= 2026.3.22). Older runtimes
+    // silently lose Discord→MC traffic, so surface the failure loudly here and
+    // expose the status at GET /mc-chat/health (field: discordRelay).
     if (typeof api.registerOutboundHook !== "function") {
-      logger.warn("[mc-chat] api.registerOutboundHook not available in this SDK version — Discord↔MC relay disabled");
+      relayStatus.enabled = false;
+      relayStatus.reason = "sdk-missing-registerOutboundHook";
+      logger.error(
+        "[mc-chat] Discord↔MC relay DISABLED: api.registerOutboundHook missing " +
+        "(requires openclaw >= 2026.3.22). Messages from Discord threads linked to " +
+        "MC will not reach the dashboard. Upgrade the gateway or expect silent drops. " +
+        "Status exposed at /mc-chat/health (field: discordRelay)."
+      );
     } else {
+    relayStatus.enabled = true;
+    relayStatus.reason = "registered";
     api.registerOutboundHook({
       provider: "discord",
       handler: async (msgCtx) => {
@@ -445,11 +461,11 @@ export default defineChannelPluginEntry({
         if (!msgCtx.ThreadId) return;
         const discordThreadId = msgCtx.ThreadId;
         // Check if this Discord thread is linked to an MC thread
-        const mcUrl = channelCfg?.mcServerUrl || "http://localhost:18790";
+        const mcUrl = channelCfg?.mcServerUrl || "http://localhost:3000";
         let mcThreadId = null;
         try {
           // Search all MC threads for this discordThreadId
-          const searchRes = await fetch(`${mcUrl}/api/mc-chat/find-by-discord/${encodeURIComponent(discordThreadId)}`);
+          const searchRes = await fetch(`${mcUrl}/api/chat/find-by-discord/${encodeURIComponent(discordThreadId)}`);
           const searchData = await searchRes.json();
           if (searchData.ok && searchData.threadId) {
             mcThreadId = searchData.threadId;
@@ -466,7 +482,7 @@ export default defineChannelPluginEntry({
         text = text.replace(/\|\|?\[_mc_relay\]\|\|?/g, "").trim(); // Remove marker
         if (!text.trim()) return;
         try {
-          await fetch(`${mcUrl}/api/mc-chat/send`, {
+          await fetch(`${mcUrl}/api/chat/send`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({

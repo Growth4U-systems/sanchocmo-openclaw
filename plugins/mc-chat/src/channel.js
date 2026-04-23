@@ -30,7 +30,7 @@ function resolveAccount(cfg, accountId) {
   if (!section) {
     return {
       accountId: accountId ?? DEFAULT_ACCOUNT_ID,
-      mcServerUrl: "http://localhost:18790",
+      mcServerUrl: "http://localhost:3000",
       sharedSecret: "",
       allowFrom: [],
       dmPolicy: "allowlist",
@@ -38,7 +38,7 @@ function resolveAccount(cfg, accountId) {
   }
   return {
     accountId: accountId ?? DEFAULT_ACCOUNT_ID,
-    mcServerUrl: section.mcServerUrl || "http://localhost:18790",
+    mcServerUrl: section.mcServerUrl || "http://localhost:3000",
     sharedSecret: section.sharedSecret || "",
     allowFrom: section.allowFrom || [],
     dmPolicy: section.dmSecurity || "allowlist",
@@ -56,6 +56,15 @@ function isConfigured(cfg) {
 export const mcChatPlugin = createChatChannelPlugin({
   base: createChannelPluginBase({
     id: CHANNEL_KEY,
+    meta: {
+      id: CHANNEL_KEY,
+      label: "Mission Control Chat",
+      selectionLabel: "Mission Control (Dashboard)",
+      detailLabel: "MC Chat",
+      docsPath: "/channels/mc-chat",
+      blurb: "Connect the Mission Control dashboard webchat to OpenClaw agents.",
+      aliases: ["mc", "mission-control"],
+    },
     capabilities: {
       chatTypes: ["dm"],
       reactions: false,
@@ -127,8 +136,8 @@ export const mcChatPlugin = createChatChannelPlugin({
         const slug = parts[2] || "unknown";
         const threadId = parts.slice(3).join(":") || "unknown";
 
-        const mcUrl = account?.mcServerUrl || "http://localhost:18790";
-        const callbackUrl = `${mcUrl}/webhook/mc-chat/response`;
+        const mcUrl = account?.mcServerUrl || "http://localhost:3000";
+        const callbackUrl = `${mcUrl}/api/chat/webhook`;
 
         try {
           const response = await fetch(callbackUrl, {
@@ -167,8 +176,8 @@ export const mcChatPlugin = createChatChannelPlugin({
         const slug = parts[2] || "unknown";
         const threadId = parts.slice(3).join(":") || "unknown";
 
-        const mcUrl = account?.mcServerUrl || "http://localhost:18790";
-        const callbackUrl = `${mcUrl}/webhook/mc-chat/response`;
+        const mcUrl = account?.mcServerUrl || "http://localhost:3000";
+        const callbackUrl = `${mcUrl}/api/chat/webhook`;
 
         try {
           await fetch(callbackUrl, {
