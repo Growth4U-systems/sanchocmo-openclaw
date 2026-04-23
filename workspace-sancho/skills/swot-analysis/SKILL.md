@@ -49,7 +49,7 @@ context_writes:
 - Solo pregunta campos listados en "Campos genuinamente nuevos"
 
 ### 1. Verificar prerequisites
-- Carga `brand/{slug}/product-analysis/current.md`, `brand/{slug}/competitors/current.md`, `brand/{slug}/market/current.md`
+- Carga `brand/{slug}/product-analysis/current.md`, `brand/{slug}/market-and-us/competitors/current.md`, `brand/{slug}/market-and-us/market/current.md`
 - Si falta algún upstream: "No puedo construir un SWOT robusto sin [pillar]. ¿Procedo con baja confianza o completamos primero?"
 
 ### 2. Ejecutar el prompt
