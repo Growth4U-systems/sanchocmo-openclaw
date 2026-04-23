@@ -58,7 +58,9 @@ context_writes:
 ### 1. Recopilar TODA la Información Disponible
 **Lee TODOS los documentos existentes del cliente, no solo los 4 de La Empresa:**
 ```
-brand/{slug}/company-brief/current.md              ← secciones: Company Identity, Business Model, Budget & Resources
+brand/{slug}/company-context/current.md            ← standalone: identidad
+brand/{slug}/business-model/current.md             ← standalone: modelo
+brand/{slug}/budget/current.md                     ← standalone: budget
 brand/{slug}/market-and-us/self/current.md
 brand/{slug}/market-and-us/market/current.md       ← si existe
 brand/{slug}/market-and-us/competitors/current.md     ← si existe

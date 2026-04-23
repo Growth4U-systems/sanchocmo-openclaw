@@ -62,28 +62,63 @@ echo "🔨 Onboarding: $NAME (slug: $SLUG, guild: $GUILD)"
 
 # --- 1. Crear estructura de archivos ---
 echo "📁 Creando estructura..."
-mkdir -p "$BRAND_DIR"/{company-brief,market-and-us/{market,competitors,self,market-synthesis,sources},go-to-market/{ecps,positioning/shared,pricing,existing-customer-data,ecp-validation},brand-book/{brand-voice,visual-identity},strategic-plan,operational,_archive,projects,monitoring/weekly}
+mkdir -p "$BRAND_DIR"/{company-context,business-model,budget,company-brief,market-and-us/{market,competitors,self,market-synthesis,sources},go-to-market/{ecps,positioning/shared,pricing,existing-customer-data,ecp-validation},brand-book/{brand-voice,visual-identity},strategic-plan,operational,_archive,projects,monitoring/weekly}
 
 # --- 1b. Crear placeholders de documentos ---
 echo "📄 Creando placeholders..."
 
-cat > "$BRAND_DIR/company-brief/current.md" << 'PLACEHOLDER'
+cat > "$BRAND_DIR/company-context/current.md" << 'PLACEHOLDER'
 <!-- mode: placeholder | status: not-started -->
-# Company Brief — {NOMBRE}
+# Company Context — {NOMBRE}
 
-> Documento único: identidad, modelo de negocio, equipo, diferenciadores y recursos.
+> STANDALONE (fuente de verdad). Lo escribe la skill `company-context`.
 
 ## Identidad
 <!-- Nombre, tipo de empresa, sector, año fundación, equipo -->
 
+## Diferenciadores
+<!-- Qué hace diferente a esta empresa, assets únicos -->
+PLACEHOLDER
+sed -i "s/{NOMBRE}/$NAME/g" "$BRAND_DIR/company-context/current.md"
+
+cat > "$BRAND_DIR/business-model/current.md" << 'PLACEHOLDER'
+<!-- mode: placeholder | status: not-started -->
+# Business Model — {NOMBRE}
+
+> STANDALONE (fuente de verdad). Lo escribe la skill `business-model-audit`.
+
 ## Modelo de Negocio
 <!-- Qué vende, a quién, cómo cobra, ticket medio, unit economics -->
+PLACEHOLDER
+sed -i "s/{NOMBRE}/$NAME/g" "$BRAND_DIR/business-model/current.md"
+
+cat > "$BRAND_DIR/budget/current.md" << 'PLACEHOLDER'
+<!-- mode: placeholder | status: not-started -->
+# Budget & Resources — {NOMBRE}
+
+> STANDALONE (fuente de verdad). Lo escribe la skill `budget-constraints`.
 
 ## Recursos y Budget
 <!-- Equipo actual, herramientas, presupuesto marketing, restricciones -->
+PLACEHOLDER
+sed -i "s/{NOMBRE}/$NAME/g" "$BRAND_DIR/budget/current.md"
 
-## Diferenciadores
-<!-- Qué hace diferente a esta empresa, assets únicos -->
+cat > "$BRAND_DIR/company-brief/current.md" << 'PLACEHOLDER'
+<!-- auto-generated from: company-context/, business-model/, budget/ -->
+<!-- DO NOT EDIT HERE — edits will be overwritten on next regeneration -->
+<!-- mode: placeholder | status: not-started -->
+# Company Brief — {NOMBRE}
+
+> MERGE VIEW consolidado de los 3 standalones. No editar aquí.
+
+## Company Identity
+_pendiente — correr company-context_
+
+## Business Model
+_pendiente — correr business-model-audit_
+
+## Budget & Resources
+_pendiente — correr budget-constraints_
 PLACEHOLDER
 sed -i "s/{NOMBRE}/$NAME/g" "$BRAND_DIR/company-brief/current.md"
 
@@ -308,7 +343,10 @@ cat > "$BRAND_DIR/foundation-state.json" << FJSON
       "layer": 0,
       "output_dir": "brand/$SLUG/company-brief/",
       "pillars": {
-        "company-brief": {"status": "not-started", "skill": "fast-foundation", "output_file": "brand/$SLUG/company-brief/current.md"}
+        "company-context": {"status": "not-started", "skill": "company-context", "output_file": "brand/$SLUG/company-context/current.md"},
+        "business-model": {"status": "not-started", "skill": "business-model-audit", "output_file": "brand/$SLUG/business-model/current.md"},
+        "budget": {"status": "not-started", "skill": "budget-constraints", "output_file": "brand/$SLUG/budget/current.md"},
+        "company-brief": {"status": "not-started", "skill": "fast-foundation", "output_file": "brand/$SLUG/company-brief/current.md", "note": "merge view auto-generated"}
       }
     },
     "market-and-us": {

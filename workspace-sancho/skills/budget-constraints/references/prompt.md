@@ -8,8 +8,8 @@
 
 **Lee `references/hydration.md`** para el mapeo completo.
 
-1. Leer `brand/{slug}/company-brief/current.md` → sección `## Company Identity` (obligatorio)
-2. Leer del mismo doc la sección `## Business Model` (si ya fue escrita — aporta revenue model, growth motion, unit economics)
+1. Leer `brand/{slug}/company-context/current.md` (obligatorio — fuente de verdad standalone)
+2. Leer `brand/{slug}/business-model/current.md` (si existe — aporta revenue model, growth motion, unit economics)
 3. Extraer campos mapeados en hydration.md
 4. Presentar al usuario agrupados:
 

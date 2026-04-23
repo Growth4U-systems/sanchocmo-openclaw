@@ -13,7 +13,8 @@ metadata:
 context_required:
 - brand/{slug}/company-brief/current.md
 context_writes:
-- brand/{slug}/company-brief/current.md (section: Budget & Resources)
+- brand/{slug}/budget/current.md
+- brand/{slug}/company-brief/current.md (merge view, regenerado desde los 3 standalones)
 - brand/{slug}/operational/learnings.md
 ---
 
@@ -22,7 +23,7 @@ context_writes:
 > Mapea el dinero, el tiempo, las personas y las herramientas. Cada decisión downstream está acotada por estos constraints.
 
 **Input**: Conversación con cliente + company-context existente
-**Output**: Budget Constraints Profile → `brand/{slug}/company-brief/current.md` (se fusiona como sección `## Budget & Resources`)
+**Output**: Budget Constraints Profile → `brand/{slug}/budget/current.md` (fuente de verdad standalone). Además, regenera `brand/{slug}/company-brief/current.md` como merge view de los 3 standalones.
 
 ## References
 
@@ -74,9 +75,12 @@ context_writes:
 - Metadata: `<!-- Self-QA: PASS | fecha | items: X✅ Y⚠️ 0❌ -->`
 
 ### 6. Guardar con versionado
-- Ruta: `brand/{slug}/company-brief/current.md` (sección `## Budget & Resources`)
-- Preservar las demás secciones (Company Identity, Business Model) y sobrescribir SOLO `## Budget & Resources`
-- Versionado: `v{N+1}.md` del company-brief completo + `history.json`
+
+**6a. Standalone (fuente de verdad)**
+- Ruta: `brand/{slug}/budget/current.md`
+- Si ya existe → backup como `v{N+1}.md`, sobreescribe `current.md`, actualiza `history.json`
+
+**6b. Regenerar merge view `company-brief/current.md`** — ver protocolo en [company-context/SKILL.md](../company-context/SKILL.md) sección 6b. Resumen: leer los 3 standalones (o placeholder si falta) y reescribir `company-brief/current.md` con header `<!-- auto-generated, DO NOT EDIT -->`.
 
 ---
 
@@ -110,4 +114,4 @@ brand/{{slug}}/budget/
 1. Identifica slug desde systemPrompt (`[CLIENTE: ... | slug: ...]`)
 2. Si existe `current.md` → backup como `v{N+1}.md`, pide confirmación
 3. Si no existe → crea carpeta + `current.md` + `v1.md` + `history.json`
-4. Link: `{MC_BASE_URL}/docs/brand/{slug}/company-brief/current.md`
+4. Link primary: `{MC_BASE_URL}/docs/brand/{slug}/budget/current.md` (lo que generaste) + secondary: `{MC_BASE_URL}/docs/brand/{slug}/company-brief/current.md` (merge view)

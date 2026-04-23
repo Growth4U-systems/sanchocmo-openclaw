@@ -12,7 +12,8 @@ metadata:
   changes: v4 — Restructured per skill-creator principles. SKILL.md lean. Concepts/methodology moved to references.
 context_required: []
 context_writes:
-- brand/{slug}/company-brief/current.md (section: Company Identity)
+- brand/{slug}/company-context/current.md
+- brand/{slug}/company-brief/current.md (merge view, regenerado desde los 3 standalones)
 - brand/{slug}/operational/learnings.md
 ---
 
@@ -21,7 +22,7 @@ context_writes:
 > Captura QUIÉN es la empresa, QUÉ quieren y POR QUÉ existen. Bedrock de todos los pillars downstream.
 
 **Input**: URL, documentos, conversación con cliente
-**Output**: Company Context Profile → `brand/{slug}/company-brief/current.md` (se fusiona como sección `## Company Identity`; las secciones Business Model y Budget & Resources las escriben las otras dos skills que absorbe fast-foundation)
+**Output**: Company Context Profile → `brand/{slug}/company-context/current.md` (fuente de verdad standalone). Además, regenera `brand/{slug}/company-brief/current.md` como merge view de los 3 standalones (company-context + business-model + budget).
 
 ## References
 
@@ -64,11 +65,31 @@ context_writes:
 - Metadata: `<!-- Self-QA: PASS | fecha | items: X✅ Y⚠️ 0❌ -->`
 
 ### 6. Guardar con versionado
-- Ruta: `brand/{slug}/company-brief/current.md` (sección `## Company Identity`)
-- Si el doc no existe → créalo con la sección Company Identity; las otras dos secciones (Business Model, Budget & Resources) quedan como placeholders hasta que corran sus skills
-- Si el doc existe → preservar las demás secciones y sobrescribir SOLO `## Company Identity`
-- Versionado: `v{N+1}.md` del company-brief completo + `history.json`
-- Link: `{MC_BASE_URL}/docs/brand/{slug}/company-brief/current.md`
+
+**6a. Standalone (fuente de verdad)**
+- Ruta: `brand/{slug}/company-context/current.md`
+- Si ya existe → backup como `v{N+1}.md`, sobreescribe `current.md`, actualiza `history.json`
+- Es el único archivo que esta skill "posee".
+
+**6b. Regenerar merge view `company-brief/current.md`**
+- Leer los standalones existentes:
+  - `brand/{slug}/company-context/current.md` (acabamos de escribir)
+  - `brand/{slug}/business-model/current.md` (si existe)
+  - `brand/{slug}/budget/current.md` (si existe)
+- Escribir `brand/{slug}/company-brief/current.md` concatenando las 3 secciones en este orden:
+  1. `## Company Identity` ← de company-context
+  2. `## Business Model` ← de business-model (o placeholder `_pendiente de business-model-audit_` si no existe)
+  3. `## Budget & Resources` ← de budget (o placeholder si no existe)
+- Header obligatorio en el merge view:
+  ```
+  <!-- auto-generated from: company-context/, business-model/, budget/ -->
+  <!-- DO NOT EDIT HERE — edits will be overwritten on next regeneration -->
+  ```
+- Versionar el merge view (`v{N+1}.md` + `history.json`) con un note que indique qué skill disparó la regeneración.
+
+**6c. Link al usuario**
+- Primary: `{MC_BASE_URL}/docs/brand/{slug}/company-context/current.md` (lo que acabás de generar)
+- Secondary: `{MC_BASE_URL}/docs/brand/{slug}/company-brief/current.md` (merge view actualizado)
 
 ---
 
