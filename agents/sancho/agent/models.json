@@ -795,8 +795,8 @@
       "apiKey": "MINIMAX_API_KEY"
     },
     "google": {
-      "apiKey": "GEMINI_API_KEY",
       "baseUrl": "https://generativelanguage.googleapis.com/v1beta",
+      "apiKey": "GEMINI_API_KEY",
       "models": []
     }
   }

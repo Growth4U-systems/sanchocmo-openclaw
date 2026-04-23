@@ -1,13 +1,25 @@
 {
+  "lead_sync": {
+    "last_run": "2026-04-22T20:00:00Z",
+    "total_contacts_fetched": 417,
+    "leads_with_tag": 22,
+    "new_leads": 0,
+    "updated_leads": 2,
+    "updated_lead_ids": ["dWNa5BY8sfps2shr0eNm", "rnk4eGKcfTINvsJzDIuh"],
+    "slack_notes_synced": 0,
+    "transcripts_added": 2,
+    "errors": 0,
+    "notes": "All 22 llamada-agendada leads had existing files. Added transcripts: Blas Nieto (2026-04-22 call), Josep (2026-04-21 2nd call). Slack disabled, Drive enabled and working."
+  },
   "sales_call_prep": {
-    "last_run": "2026-04-22T00:16:00Z",
+    "last_run": "2026-04-22T20:30:00Z",
     "mode": "daily",
-    "calls_found": 0,
+    "calls_found": 2,
     "no_ghl_match": 0,
-    "matched_leads": [],
+    "matched_leads": ["n0nIQeYkFFVB1TulRIT5", "Gwga8zrjoKxj7AcfoeYm"],
     "date_checked": "2026-04-23",
-    "calendar_source": "gog calendar + GHL contacts API",
-    "ghl_api_status": "working (200 contacts)",
-    "notes": "No calls in calendar for tomorrow 2026-04-23. 19 leads with llamada-agendada tag but no calendar events match."
+    "calendar_source": "gog calendar (primary calendar)",
+    "ghl_api_status": "working",
+    "notes": "2 calls found: Laura Donadio 13:00 (new lead, discovery) + Sergi Candel 17:00 (proposal follow-up). Both with llamada-agendada tag."
   }
 }

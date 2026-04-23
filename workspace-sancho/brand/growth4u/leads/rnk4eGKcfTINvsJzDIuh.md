@@ -3,7 +3,7 @@ ghl_id: rnk4eGKcfTINvsJzDIuh
 contact_name: Josep M Gil
 email: leadership@gutendurance.com
 phone: null
-last_enriched: 2026-04-16T20:00:00Z
+last_enriched: 2026-04-22T20:00:00Z
 enrichment_pending: false
 ---
 
@@ -57,6 +57,21 @@ enrichment_pending: false
 - Transcript disponible pero no directamente sobre este lead
 - 🔗 [Notes by Gemini](https://drive.google.com/file/d/1zsA2aTd7plTj06L4kCZkrmjeLuShm_pZYD9l7GrcgQo/view)
 
+### 2026-04-21 — 2da Llamada Estratégica Josep & Growth4U
+- **Pain points:**
+  - Startup pre-producto (Heltech) avanzando hacia MVP
+  - Necesidad de partner de marketing que ejecute mientras validan producto
+  - Coordinación entre equipo técnico (Josep) y equipo marketing/growth (socia)
+- **Next steps:**
+  - Revisión de propuesta actualizada post-llamada
+  - Decisión sobre período inicial de 3 meses
+  - Evaluación de sinergias entre ejecución de Growth4U y mediabuyers existentes
+- **Key quotes:**
+  - Segunda llamada estratégica → interés alto, continuando conversations
+  - Enfoque en arrancar antes del launch del producto
+- 🔗 [Recording en Drive](https://drive.google.com/file/d/1MvdzVQwGJrqP44aagRm3FXoosIj7NClM/view)
+- 🔗 [Notas Gemini en Drive](https://drive.google.com/file/d/1THjK1J5uYfwblyhx3P0KZ5Wr5-VFVWJsFMogcpqyH00/edit)
+
 ### 2026-04-16 — Sync Daily Growth4U: Revisión Propuesta Gutendurance
 - **Temas tratados:**
   - Revisión de propuesta comercial Gutendurance: se estandariza modelo a 7.500 € base (6 meses acompañamiento) + add-ons de ejecución
@@ -71,4 +86,4 @@ enrichment_pending: false
 - 🔗 [Propuesta Gutendurance v2 en Drive](https://drive.google.com/file/d/1umQhYf14UvlkCjwyn_o0ByE7cgidMPu5qbwsBtFTexQ/view)
 - 🔗 [Acuerdo Marco Growth4U <> Gutendurance](https://drive.google.com/file/d/1wzhyYPYE9fXcfhTDEY-d0GyWjziRhSZB0fopg4Dtptw/view)
 
-<!-- Self-QA: PASS | 2026-04-16T20:00Z | Sync Daily 16/04 añadido — propuesta en fase de revisión -->
+<!-- Self-QA: PASS | 2026-04-22T22:00Z | Transcript 2026-04-21 añadido desde Drive (2nda llamada). Notas Gemini: [1THjK1J5uYfwblyhx3P0KZ5Wr5-VFVWJsFMogcpqyH00](https://drive.google.com/file/d/1THjK1J5uYfwblyhx3P0KZ5Wr5-VFVWJsFMogcpqyH00/edit). -->

@@ -3,7 +3,7 @@ ghl_id: dWNa5BY8sfps2shr0eNm
 contact_name: Blas Nieto
 email: blas@synapsale.com
 phone: "+34639893441"
-last_enriched: 2026-04-18T20:00:00Z
+last_enriched: 2026-04-22T20:00:00Z
 enrichment_pending: false
 ---
 
@@ -32,6 +32,21 @@ enrichment_pending: false
 - **Company**: Synapsale (confirmed via domain + web)
 
 ## Call Transcripts
-No Drive access configured (GOG_TOKEN not set). Transcription sync skipped.
+
+### 2026-04-22 — Llamada Estratégica Blas Nieto & Growth4U
+- **Pain points:**
+  - Necesita automatizar prospección B2B con su plataforma Synapsale
+  - Presupuesto definido: 10k-25k€ para inversión en growth/marketing
+  - Requiere partner de marketing que entienda producto SaaS/AI
+- **Next steps:**
+  - Seguimiento post-llamada estratégica
+  - Evaluación de propuesta comercial
+- **Key quotes:**
+  - Blas representa a Synapsale — plataforma de ventas B2B con IA contextual
+  - Perfil técnicamente orientado (blas@synapsale.com)
+- 🔗 [Recording en Drive](https://drive.google.com/file/d/112hM5CQjTZzVkDJIND0TOJKWLSZ0DSBv/view)
+- 🔗 [Notas Gemini en Drive](https://drive.google.com/file/d/16kWu2rlRHyn4mazEt1l89WFo1wCE1pqXabB8g4CrRy4/edit)
+
+<!-- Self-QA: PASS | 2026-04-22T22:00Z | Transcript 2026-04-22 añadido desde Drive. Notas Gemini: [16kWu2rlRHyn4mazEt1l89WFo1wCE1pqXabB8g4CrRy4](https://drive.google.com/file/d/16kWu2rlRHyn4mazEt1l89WFo1wCE1pqXabB8g4CrRy4/edit). -->
 
 <!-- Self-QA: PASS | 2026-04-18T20:00Z | New lead created via lead-intelligence-hub cron. dry_run=false — file written. -->

@@ -1,0 +1,498 @@
+{
+  "version": 1,
+  "jobs": {
+    "2283eade-3d08-4f46-a508-eaa6d035a4d2": {
+      "updatedAtMs": 1776841509834,
+      "state": {
+        "nextRunAtMs": 1776927600000,
+        "lastRunAtMs": 1776841200013,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 309821,
+        "lastDeliveryStatus": "not-requested",
+        "consecutiveErrors": 0
+      }
+    },
+    "33434fd7-8b66-4069-b7f7-983f66fc25c2": {
+      "updatedAtMs": 1776672477947,
+      "state": {
+        "nextRunAtMs": 1777276800000,
+        "lastRunAtMs": 1776672000025,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 477922,
+        "lastDeliveryStatus": "not-delivered",
+        "consecutiveErrors": 0,
+        "lastDelivered": false
+      }
+    },
+    "8a4c8f89-58f0-4827-a076-df3f83660b3f": {
+      "updatedAtMs": 1775720995031,
+      "state": {
+        "lastRunAtMs": 1775714400014,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 254776,
+        "lastDeliveryStatus": "not-delivered",
+        "consecutiveErrors": 0,
+        "lastDelivered": false
+      }
+    },
+    "6dac9a53-6736-490a-ae54-e028b8ebbbd1": {
+      "updatedAtMs": 1776873896594,
+      "state": {
+        "nextRunAtMs": 1776960000000,
+        "lastRunAtMs": 1776873600019,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 296575,
+        "lastDeliveryStatus": "not-requested",
+        "consecutiveErrors": 0
+      }
+    },
+    "abc8abac-3097-4e27-8131-0a5d77717195": {
+      "updatedAtMs": 1776629248077,
+      "state": {
+        "nextRunAtMs": 1777233600000,
+        "lastRunAtMs": 1776628800021,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 448056,
+        "lastDeliveryStatus": "not-delivered",
+        "consecutiveErrors": 0,
+        "lastDelivered": false
+      }
+    },
+    "0cd1e931-d374-4428-a452-e2394beac5b7": {
+      "updatedAtMs": 1776838593523,
+      "state": {
+        "nextRunAtMs": 1777442400000,
+        "lastRunAtMs": 1776838345125,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 248398,
+        "lastDelivered": true,
+        "lastDeliveryStatus": "delivered",
+        "consecutiveErrors": 0
+      }
+    },
+    "618bc941-a980-4f0d-99c8-5e715060ce6b": {
+      "updatedAtMs": 1776819759993,
+      "state": {
+        "nextRunAtMs": 1776906000000,
+        "lastRunAtMs": 1776819600015,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 159978,
+        "lastDeliveryStatus": "not-delivered",
+        "consecutiveErrors": 0,
+        "lastDelivered": false,
+        "runningAtMs": 1776906000014
+      }
+    },
+    "0c59e923-3267-4926-9a60-36bb81b6041f": {
+      "updatedAtMs": 1776903831080,
+      "state": {
+        "nextRunAtMs": 1776925399166,
+        "lastRunAtMs": 1776903799166,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 31914,
+        "lastDeliveryStatus": "not-requested",
+        "consecutiveErrors": 0
+      }
+    },
+    "cedfbd22-cbd0-4a19-87a0-29337c4f2b37": {
+      "updatedAtMs": 1776845011296,
+      "state": {
+        "nextRunAtMs": 1776931200000,
+        "lastRunAtMs": 1776844800013,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 211283,
+        "lastDeliveryStatus": "not-requested",
+        "consecutiveErrors": 0
+      }
+    },
+    "bf4b712d-1ed4-49df-acac-1c7ce4d19097": {
+      "updatedAtMs": 1772567425141,
+      "state": {}
+    },
+    "b780c3f1-a760-453f-ab81-bc19e4257d11": {
+      "updatedAtMs": 1776838713551,
+      "state": {
+        "nextRunAtMs": 1776924000000,
+        "lastRunAtMs": 1776838593523,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 120028,
+        "lastDeliveryStatus": "not-requested",
+        "consecutiveErrors": 1,
+        "lastError": "cron: job execution timed out",
+        "lastErrorReason": "timeout"
+      }
+    },
+    "4eda3a87-1b19-4932-8c7d-d4b1971d53e3": {
+      "updatedAtMs": 1775720982335,
+      "state": {}
+    },
+    "c586f8ed-7b4b-47b7-b5ca-89ebb7baaf3b": {
+      "updatedAtMs": 1776672654955,
+      "state": {
+        "nextRunAtMs": 1777276800000,
+        "lastRunAtMs": 1776672621120,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 33835,
+        "lastDeliveryStatus": "delivered",
+        "consecutiveErrors": 0,
+        "lastDelivered": true
+      }
+    },
+    "1e64347a-7151-482d-ac27-8ad88cb62896": {
+      "updatedAtMs": 1776828881881,
+      "state": {
+        "nextRunAtMs": 1776915000000,
+        "lastRunAtMs": 1776828600015,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 281866,
+        "lastDeliveryStatus": "unknown",
+        "consecutiveErrors": 6,
+        "lastError": "Error [ERR_MODULE_NOT_FOUND]: Cannot find module '/opt/homebrew/lib/node_modules/openclaw/dist/delivery-subagent-registry.runtime-D5LghaIJ.js' imported from /opt/homebrew/lib/node_modules/openclaw/dist/run-delivery.runtime-B3VEtNIu.js"
+      }
+    },
+    "f04c8094-eaf9-4995-bde8-9d5df88ef4d7": {
+      "updatedAtMs": 1776586154371,
+      "state": {
+        "nextRunAtMs": 1777190400000,
+        "lastRunAtMs": 1776585854359,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 300012,
+        "lastDeliveryStatus": "not-requested",
+        "consecutiveErrors": 1,
+        "lastError": "cron: job execution timed out",
+        "lastErrorReason": "timeout"
+      }
+    },
+    "f10d84d4-0e6d-4db1-8e1d-824d34efbbc7": {
+      "updatedAtMs": 1776586454393,
+      "state": {
+        "nextRunAtMs": 1777190400000,
+        "lastRunAtMs": 1776586154371,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 300022,
+        "lastDeliveryStatus": "not-requested",
+        "consecutiveErrors": 1,
+        "lastError": "cron: job execution timed out",
+        "lastErrorReason": "timeout"
+      }
+    },
+    "953c7fcd-9358-4dd6-8092-6ddde9c775a0": {
+      "updatedAtMs": 1776586619201,
+      "state": {
+        "nextRunAtMs": 1777190400000,
+        "lastRunAtMs": 1776586454393,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 164808,
+        "lastDeliveryStatus": "delivered",
+        "consecutiveErrors": 0,
+        "lastDelivered": true
+      }
+    },
+    "3c0b79c9-01e5-499d-bd98-c88c963c9b82": {
+      "updatedAtMs": 1776586651431,
+      "state": {
+        "nextRunAtMs": 1777190400000,
+        "lastRunAtMs": 1776586619201,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 32230,
+        "lastDeliveryStatus": "unknown",
+        "consecutiveErrors": 1,
+        "lastError": "Unsupported channel: 1482642972712505395",
+        "lastErrorReason": "rate_limit"
+      }
+    },
+    "476f5959-8aaf-4d2a-8f41-9b0187250e86": {
+      "updatedAtMs": 1776669274297,
+      "state": {
+        "nextRunAtMs": 1777273200000,
+        "lastRunAtMs": 1776669069497,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 204800,
+        "lastDeliveryStatus": "not-delivered",
+        "consecutiveErrors": 0,
+        "lastDelivered": false
+      }
+    },
+    "f78ba296-fe22-4ddc-a9a4-a6602465c13e": {
+      "updatedAtMs": 1775013020281,
+      "state": {
+        "nextRunAtMs": 1777597200000,
+        "lastRunAtMs": 1775009210483,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 3809798,
+        "lastError": "cron: job execution timed out",
+        "lastErrorReason": "timeout",
+        "lastDeliveryStatus": "not-requested",
+        "consecutiveErrors": 1
+      }
+    },
+    "2e1d6efd-5da7-4a5a-bcb0-e0892ff25b66": {
+      "updatedAtMs": 1776675720048,
+      "state": {
+        "nextRunAtMs": 1777280400000,
+        "lastRunAtMs": 1776675600023,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 120025,
+        "lastDeliveryStatus": "not-requested",
+        "consecutiveErrors": 3,
+        "lastErrorReason": "timeout",
+        "lastError": "cron: job execution timed out"
+      }
+    },
+    "a68143d8-1309-46eb-a5dc-4c3fb35ee3d2": {
+      "updatedAtMs": 1776888570117,
+      "state": {
+        "nextRunAtMs": 1776974400000,
+        "lastRunAtMs": 1776888000014,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 570103,
+        "lastDeliveryStatus": "not-requested",
+        "consecutiveErrors": 0
+      }
+    },
+    "36d0bff9-fea9-40d8-9bfd-bf1e5e58468b": {
+      "updatedAtMs": 1776890080897,
+      "state": {
+        "nextRunAtMs": 1776976200000,
+        "lastRunAtMs": 1776889800012,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 280885,
+        "lastDeliveryStatus": "not-requested",
+        "consecutiveErrors": 1,
+        "lastError": "⚠️ ✉️ Message: `1496609975189897377` failed"
+      }
+    },
+    "6f136183-673c-4a60-9aca-d923d3c00480": {
+      "updatedAtMs": 1776458426333,
+      "state": {
+        "nextRunAtMs": 1777062600000,
+        "lastRunAtMs": 1776457800017,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 626316,
+        "lastDelivered": false,
+        "lastDeliveryStatus": "not-delivered",
+        "consecutiveErrors": 0
+      }
+    },
+    "7442ba81-9342-40b4-b8c0-87786890c84e": {
+      "updatedAtMs": 1776669394316,
+      "state": {
+        "nextRunAtMs": 1777273200000,
+        "lastRunAtMs": 1776669274297,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 120019,
+        "lastErrorReason": "timeout",
+        "lastDeliveryStatus": "not-requested",
+        "consecutiveErrors": 3,
+        "lastError": "cron: job execution timed out"
+      }
+    },
+    "53f6b4d3-51b4-4f78-8907-2f68a82efc7b": {
+      "updatedAtMs": 1776845191314,
+      "state": {
+        "nextRunAtMs": 1777449600000,
+        "lastRunAtMs": 1776845011296,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 180018,
+        "lastErrorReason": "timeout",
+        "lastDeliveryStatus": "not-requested",
+        "consecutiveErrors": 3,
+        "lastError": "cron: job execution timed out"
+      }
+    },
+    "df8aaf99-8b1b-4b5b-844b-5c53de641e5c": {
+      "updatedAtMs": 1776413255741,
+      "state": {
+        "nextRunAtMs": 1777017600000,
+        "lastRunAtMs": 1776413135710,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 120031,
+        "lastDeliveryStatus": "not-requested",
+        "consecutiveErrors": 2,
+        "lastErrorReason": "timeout",
+        "lastError": "cron: job execution timed out"
+      }
+    },
+    "854d8902-eea8-45aa-bb26-6afeb3a6c949": {
+      "updatedAtMs": 1776330120042,
+      "state": {
+        "nextRunAtMs": 1776934800000,
+        "lastRunAtMs": 1776330000018,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 120024,
+        "lastErrorReason": "timeout",
+        "lastDeliveryStatus": "not-requested",
+        "consecutiveErrors": 3,
+        "lastError": "cron: job execution timed out"
+      }
+    },
+    "41d660cb-c18f-4268-aa95-6275f2435f90": {
+      "updatedAtMs": 1776409929563,
+      "state": {
+        "nextRunAtMs": 1777014000000,
+        "lastRunAtMs": 1776409809509,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 120054,
+        "lastErrorReason": "timeout",
+        "lastDeliveryStatus": "not-requested",
+        "consecutiveErrors": 3,
+        "lastError": "cron: job execution timed out"
+      }
+    },
+    "1b104cd3-74b6-42df-9d4e-b4a764acef21": {
+      "updatedAtMs": 1776669566633,
+      "state": {
+        "nextRunAtMs": 1777273200000,
+        "lastRunAtMs": 1776669394316,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 172317,
+        "lastDeliveryStatus": "unknown",
+        "consecutiveErrors": 3,
+        "lastError": "Channel is required when multiple channels are configured: discord, mc-chat Set delivery.channel explicitly or use a main session with a previous channel."
+      }
+    },
+    "00fa288d-d349-449e-85ff-1d3b2260f2d3": {
+      "updatedAtMs": 1776841664873,
+      "state": {
+        "nextRunAtMs": 1776927600000,
+        "lastRunAtMs": 1776841509834,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 155039,
+        "lastDeliveryStatus": "unknown",
+        "consecutiveErrors": 16,
+        "lastError": "Channel is required when multiple channels are configured: discord, mc-chat Set delivery.channel explicitly or use a main session with a previous channel.; the agent used the message tool, but OpenClaw could not verify that message matched the cron delivery target"
+      }
+    },
+    "eef29d29-0160-4708-8b9f-d5f0503b4964": {
+      "updatedAtMs": 1776676563394,
+      "state": {
+        "nextRunAtMs": 1777280400000,
+        "lastRunAtMs": 1776675720048,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 843346,
+        "lastDeliveryStatus": "unknown",
+        "consecutiveErrors": 3,
+        "lastError": "Channel is required when multiple channels are configured: discord, mc-chat Set delivery.channel explicitly or use a main session with a previous channel."
+      }
+    },
+    "a654ab5d-b65d-4718-bab6-906ee62601eb": {
+      "updatedAtMs": 1776672843157,
+      "state": {
+        "nextRunAtMs": 1777276800000,
+        "lastRunAtMs": 1776672654955,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 188202,
+        "lastDeliveryStatus": "unknown",
+        "consecutiveErrors": 3,
+        "lastError": "Channel is required when multiple channels are configured: discord, mc-chat Set delivery.channel explicitly or use a main session with a previous channel."
+      }
+    },
+    "09b92860-663d-4fb1-8f27-352c55e8a507": {
+      "updatedAtMs": 1776839681433,
+      "state": {
+        "nextRunAtMs": 1776925800000,
+        "lastRunAtMs": 1776839400012,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 281421,
+        "lastDeliveryStatus": "unknown",
+        "consecutiveErrors": 11,
+        "lastError": "Channel is required when multiple channels are configured: discord, mc-chat Set delivery.channel explicitly or use a main session with a previous channel.; the agent used the message tool, but OpenClaw could not verify that message matched the cron delivery target"
+      }
+    },
+    "9416a8bc-14f5-4626-99d2-c8065c4ab002": {
+      "updatedAtMs": 1776839754286,
+      "state": {
+        "nextRunAtMs": 1776925800000,
+        "lastRunAtMs": 1776839681433,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 72853,
+        "lastDeliveryStatus": "unknown",
+        "consecutiveErrors": 16,
+        "lastError": "Channel is required when multiple channels are configured: discord, mc-chat Set delivery.channel explicitly or use a main session with a previous channel.; the agent used the message tool, but OpenClaw could not verify that message matched the cron delivery target"
+      }
+    },
+    "7d58dea0-fbeb-42f1-97e6-a33880cf6389": {
+      "updatedAtMs": 1776677009937,
+      "state": {
+        "nextRunAtMs": 1777280400000,
+        "lastRunAtMs": 1776676563394,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 446543,
+        "lastDeliveryStatus": "unknown",
+        "consecutiveErrors": 2,
+        "lastError": "Channel is required when multiple channels are configured: discord, mc-chat Set delivery.channel explicitly or use a main session with a previous channel."
+      }
+    },
+    "68c55ca5-7655-4ab5-9d5d-26925d6cdae6": {
+      "updatedAtMs": 1776665908779,
+      "state": {
+        "lastRunAtMs": 1776233357904,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 307573,
+        "lastError": "Channel is required when multiple channels are configured: discord, mc-chat Set delivery.channel explicitly or use a main session with a previous channel.",
+        "lastDeliveryStatus": "unknown",
+        "consecutiveErrors": 1
+      }
+    },
+    "34f928f2-5534-47e9-85ce-0903fb9ab53e": {
+      "updatedAtMs": 1776665896026,
+      "state": {
+        "lastRunAtMs": 1776233665477,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 231851,
+        "lastError": "Channel is required when multiple channels are configured: discord, mc-chat Set delivery.channel explicitly or use a main session with a previous channel.",
+        "lastDeliveryStatus": "unknown",
+        "consecutiveErrors": 1
+      }
+    },
+    "19e4cf8d-4587-4b60-a300-364a955d9023": {
+      "updatedAtMs": 1776838999108,
+      "state": {
+        "nextRunAtMs": 1777442400000,
+        "lastRunAtMs": 1776838713551,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 285557,
+        "lastDeliveryStatus": "unknown",
+        "consecutiveErrors": 2,
+        "lastError": "Channel is required when multiple channels are configured: discord, mc-chat Set delivery.channel explicitly or use a main session with a previous channel.; the agent used the message tool, but OpenClaw could not verify that message matched the cron delivery target"
+      }
+    }
+  }
+}

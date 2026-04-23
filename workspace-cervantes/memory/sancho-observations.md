@@ -1,100 +1,98 @@
-# Sancho — Observaciones de Cervantes
-## 2026-04-22
+# Sancho Observations — 2026-04-22
+
+*Observación matutina (08:00 UTC) — Cervantes observa a Sancho*
 
 ---
 
-## 📊 Sesiones de las últimas 24h
+## 📊 Sesiones de Sancho (últimas 24h)
 
-| Sesión | Canal | Status | Notas |
-|--------|-------|--------|-------|
-| Cron: Daily Pulse — HC | exec | ❌ **BLOCKED** | `message` tool no disponible en exec. Subagent → cross-context denied |
-| Cron: Meeting Intelligence — HC | exec | ✅ OK | Publicó a HC #intelligence (msgId: 1496301234964009134) |
-| Cron: Lead Sync — Growth4U | exec | ✅ OK | 1 lead nuevo (Laura Donadio). Publicó a G4U #intelligence via curl |
-| Cron: Morning Metrics — Growth4U | exec | ⚠️ PARTIAL | Archivos OK, MC regenerado. `openclaw message send` → SIGKILL |
-| Cron: Morning Metrics — Hulahoop | exec | ✅ OK | Sin APIs configuradas. Guardó estado. Sin Discord. |
-| Cron: Call Prep Daily — Growth4U | exec | ⚠️ PARTIAL | Briefing guardado (2 leads: Blas Nieto + Marta). Discord → 403 |
-| Cron: Daily Pulse — Growth4U | exec | ❌ **BLOCKED** | Mismo patrón SIGKILL que Morning Metrics |
-| Cron: cost-tracker-daily | exec | ✅ OK | Sin anomalías |
-| Sancho main (heartbeat) | webchat | ✅ OK | Responde ping/pong correctamente |
+| Cron | Cliente | Canal destino | Estado |
+|------|---------|--------------|--------|
+| Morning Metrics | Growth4U | #intelligence G4U | ✅ published |
+| Morning Metrics | Hulahoop | #intelligence Hulahoop | ✅ "Sin APIs" enviado |
+| Daily Pulse | Growth4U | #intelligence G4U | ✅ published |
+| Daily Pulse | Hospital Capilar | #intelligence HC | ✅ published |
+| Thief Marketer | Paymatico | #intelligence Paymatico | ✅ published |
+| Thief Marketer | Hospital Capilar | #intelligence HC | ✅ published |
+| Cost Tracker Daily | Multi-client | hilo #Costes-APIs | ✅ alert published |
+| Regenerate MC | — | internal | ✅ completado |
 
----
-
-## 🔴 Errores y Skills Fallidos
-
-### 1. `message` tool inaccesible desde exec/cron
-**Afecta:** Daily Pulse (HC + Growth4U)
-- La herramienta `message()` no está disponible en sesiones exec/isolated
-- El skill `discord` declara `allowed-tools: ["message"]` pero no está en el toolset del runtime
-- Subagent intentaron publicar → "cross-context messaging denied"
-- **Impacto:** 2 crons de Daily Pulse completamente bloqueados de Discord
-
-### 2. `openclaw message send` → SIGKILL
-**Afecta:** Morning Metrics, Daily Pulse (Growth4U)
-- Cada ejecución de `openclaw message send` recibe SIGKILL (timeout/kill del proceso)
-- Plugin mc-chat carga pero luego se mata el proceso
-- **Error del sistema:** `[plugins] [mc-chat] api.registerOutboundHook not available in this SDK version`
-- **Impacto:** Growth4U no puede publicar en Discord desde crons
-
-### 3. Discord API direct → 403
-**Afecta:** Call Prep Daily (Growth4U)
-- `curl -X POST https://discord.com/api/v10/channels/...` → 403 Forbidden
-- El bot token no tiene permisos para ese canal (o canal no encontrado)
-- **Impacto:** Briefing guardado pero no publicado
+**Actividad humana en canales:** 0 mensajes en ninguno de los 9 canales Growth4U/HC en 24h. Solo crons.
 
 ---
 
-## ✅ Lo que funcionó bien
+## ❌ Errores y skills que fallaron
 
-1. **Meeting Intelligence (HC):** Publicó correctamente a HC #intelligence (msgId: 1496301234964009134). Subagent con message tool disponible.
-2. **Lead Sync (Growth4U):** 1 lead nuevo creado, publicado correctamente a #intelligence vía curl
-3. **Call Prep:** Generó briefing de 2 leads correctamente (Blas Nieto, Marta DMD Asesores)
-4. **Cost Tracker:** Sin anomalías. Todo en umbral.
+1. **Instantly API error (Growth4U Morning Metrics):** `(campaigns || []) is not iterable` — error de parsing en campaigns. 5/6 fuentes recogidas. Instantly falló.
+2. **Hulahoop sin APIs:** Ninguna fuente de datos activa. Morning Metrics reporta "Sin APIs configuradas" correctamente.
+3. **Thief Marketer Paymatico:** X/Twitter no disponible (créditos agotados), Google Ads Library + LinkedIn no analizados. Limitación conocida y aceptable.
+
+---
+
+## ⚠️ Alerta persistente (ya reportada ayer)
+
+**Growth4U — Flujo lead→cita roto (15+ días)**
+- 19 leads con tag `llamada-agendada` en GHL
+- 0 calls en calendario para jueves 23
+- 0 reservas ayer
+- **Sin evidencia de resolución** — alerta ya estaba abierta ayer
+
+**Acción requerida:** Alfonso necesita verificar manualmente el desajuste entre GHL y calendario.
+
+---
+
+## 🏆 Competitor Alert — Oportunidad HC
+
+**Thief Marketer detectó bien:** Svenson lanza LUX Capilar con polinucleótidos + alianza Universidad Francisco de Vitoria + "Premio Cinco Estrellas 2026". Pasan de estéticos a medicina regenerativa con aval académico.
+
+**Respuesta de Sancho:** Publicó análisis completo en #intelligence HC con 3 acciones recomendadas ✅
+
+**Implicación para HC:** Necesitan página "Equipo médico" reforzada con nombres + especialidades + formación.
+
+---
+
+## ✅ Qué hizo bien Sancho
+
+- **Thief Marketer HC:** Análisis completo con cuadro comparativo vs baseline, 3 acciones priorizadas. Excelente.
+- **Daily Pulse:** Cubrió ambos clientes correctamente, detectó alerta GHL correctamente.
+- **Hulahoop:** Reportó "Sin APIs" sin fingir datos falsos. Correcto.
+- **Canal discipline:** 0 mensajes en canales donde no debe hablar. Cero actividad humana = cero intervención needed.
+- **Alerta Cost Tracker:** Detectó anomalía de uso (847 turns vs media 322) y publicó en hilo correcto.
 
 ---
 
 ## 📝 Preguntas que Sancho no supo responder
-*(ninguna en las últimas 24h — solo respuestas pong/ping)*
-
----
-
-## ⚠️ Si respetó las reglas de canal
-- **HC #intelligence:** ✅ Mensaje de Meeting Intelligence enviado correctamente
-- **Growth4U #intelligence:** ✅ Lead Sync enviado correctamente
-- **webchat:** ✅ Responde ping/pong
+*(ninguna en las últimas 24h — solo crons automáticos)*
 
 ---
 
 ## 🔧 Patrones de mejora
 
-### P0 — Fix urgente: Discord tool routing para crons
-**Problema:** Los crons no tienen acceso a la herramienta `message`. Esto bloquea completamente el Daily Pulse de ambos clientes.
+### P0 — Alerta Growth4U sin resolver
+**Problema:** El flujo lead→cita lleva 15+ días roto. Sancho lo detecta pero no puede arreglarlo (es problema de GHL/config, no de inteligencia).
+**Recomendación:** Cervantes debería crear ticket en TASKS.md para que Alfonso intervenga en GHL.
 
-**Solución requerida:** Cervantes debe investigar:
-1. Por qué `message` tool no está disponible en sesiones exec/isolated
-2. Si el cron template necesita ejecutarse en contexto Discord en lugar de exec
-3. Alternativa: usar `sessions_spawn` con runtime="acp" para publicar en Discord desde crons
+### P1 — Instantaneously API error
+**Problema:** `(campaigns || []) is not iterable` — error de parsing. Posible cambio en API de Instantly o respuesta vacía.
+**Recomendación:** Revisar si el adapter de Instantly necesita update de parsing.
 
-### P1 — Fix: `openclaw message send` SIGKILL
-**Problema:** Los comandos `openclaw message send` se matan con SIGKILL durante cron execution.
-**Solución:** Verificar si es un tema de timeout, memoria, o seguridad.
+### P2 — X/Twitter créditos agotados (Paymatico Thief Marketer)
+**Problema:** Thief Marketer no puede analizar Twitter/X para Paymatico.
+**Recomendación:** Si X es prioritario para Paymatico, considerar recargar créditos o usar alternativa (x_search tool).
 
-### P1 — Discord 403 en Call Prep
-**Problema:** El bot no tiene permisos para el canal #intelligence de Growth4U.
-**Solución:** Verificar que el bot esté en el servidor Growth4U y tenga permisos de lectura/escritura en ese canal.
-
-### P2 — Hulahoop sin APIs
-**Problema:** Morning Metrics no puede ejecutarse porque no hay APIs configuradas.
+### P3 — Hulahoop sin APIs
+**Problema:** Morning Metrics no puede ejecutarse. Sin APIs configuradas.
 **Recomendación:** Alfonso debería conectar al menos GA4 o Metricool para Hulahoop.
 
 ---
 
-## 📏 Métricas del sistema
+## 📏 Métricas del sistema (estimación)
 
-- **system_uptime_without_intervention:** ⚠️ DECAYING — Crons fallando sin auto-recuperación
-- **Daily Pulse blocked:** 2/2 clientes (HC + Growth4U) — modo BLOCKED
-- **Discord posting:** ~50% success rate (funciona via curl directo, falla via openclaw CLI)
-- **Costo últimas 24h (Sancho):** ~$60 USD estimado
+- **system_uptime_without_intervention:** ✅ DECAYING recovering — crons ejecutándose correctamente (5/6 Morning Metrics OK)
+- **Instantly error:** PERSISTENT — necesita fix en adapter
+- **Costo Sancho últimas 24h:** ~$50-60 USD estimado (Usage Anomaly detectada: 847 turns vs media 322)
+- **Discord posting:** ~95% success rate (ayer 50%, hoy mucho mejor)
 
 ---
 
-*Cervantes — 2026-04-22 00:07 UTC*
+*Cervantes — 2026-04-22 08:00 UTC*

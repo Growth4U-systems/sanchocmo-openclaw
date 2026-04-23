@@ -65,7 +65,7 @@
       }
     },
     "go-to-market": {
-      "status": "in-progress",
+      "status": "not-started",
       "layer": 3,
       "output_dir": "brand/masavo/go-to-market/",
       "pillars": {
@@ -93,10 +93,11 @@
           ],
           "skill": "pricing-strategy"
         }
-      }
+      },
+      "updated_at": "2026-04-22T16:14:07.209Z"
     },
     "brand-identity": {
-      "status": "in-progress",
+      "status": "not-started",
       "layer": 5,
       "output_dir": "brand/masavo/brand-identity/",
       "pillars": {
@@ -116,7 +117,8 @@
           ],
           "skill": "visual-identity"
         }
-      }
+      },
+      "updated_at": "2026-04-22T16:14:07.209Z"
     }
   },
   "brand_summary": {
