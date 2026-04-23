@@ -95,9 +95,16 @@ export function Sidebar() {
             <>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/logo.webp" alt="SanchoCMO" className="w-full h-auto block" />
-              <span className="inline-block bg-rust text-white text-[10px] font-semibold px-2.5 py-0.5 rounded-md border-2 border-ink mt-1">
-                v2.0
-              </span>
+              <div className="flex items-center gap-1 mt-1 flex-wrap">
+                <span className="inline-block bg-rust text-white text-[10px] font-semibold px-2.5 py-0.5 rounded-md border-2 border-ink">
+                  v2.0
+                </span>
+                {process.env.NEXT_PUBLIC_ENV_LABEL && (
+                  <span className="inline-block bg-amber-400 text-ink text-[10px] font-semibold px-2.5 py-0.5 rounded-md border-2 border-ink uppercase">
+                    {process.env.NEXT_PUBLIC_ENV_LABEL}
+                  </span>
+                )}
+              </div>
             </>
           ) : (
             <div className="flex justify-center">

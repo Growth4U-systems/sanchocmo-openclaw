@@ -1,6 +1,9 @@
 services:
   sanchocmo:
-    build: .
+    build:
+      context: .
+      args:
+        NEXT_PUBLIC_ENV_LABEL: ${NEXT_PUBLIC_ENV_LABEL:-}
     container_name: sanchocmo
     restart: unless-stopped
     ports:
