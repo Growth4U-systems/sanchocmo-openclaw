@@ -25,7 +25,7 @@ context_writes:
 > Entiende el campo de juego antes de jugar. TAM, segmentos, competidores, clientes, regulación, tendencias.
 
 **Input**: company-context (industria, vertical, producto)
-**Output**: Informe 5 partes → `brand/{slug}/market/current.md`
+**Output**: Informe 5 partes → `brand/{slug}/market-and-us/market/current.md`
 
 ## References
 
@@ -111,9 +111,9 @@ Después del Self-QA, genera el bloque `## Slide Summary` al final del informe (
 - Debe ser autosuficiente: con solo este bloque se genera la slide sin leer el resto
 
 ### 5. Guardar con versionado
-- Ruta: `brand/{slug}/market/current.md`
+- Ruta: `brand/{slug}/market-and-us/market/current.md`
 - Si ya existe → backup como `v{N+1}.md`, sobreescribe `current.md`, actualiza `history.json`
-- Link al usuario: `{MC_BASE_URL}/docs/brand/{slug}/market/current.md`
+- Link al usuario: `{MC_BASE_URL}/docs/brand/{slug}/market-and-us/market/current.md`
 
 ---
 
@@ -153,7 +153,7 @@ Toda cifra con URL inline + sección `## Fuentes` al final con lista numerada co
 ## 📁 Almacenamiento (OBLIGATORIO)
 
 ```
-brand/{{slug}}/market/
+brand/{{slug}}/market-and-us/market/
 ├── current.md      ← versión activa
 ├── v1.md, v2.md... ← versiones anteriores
 ├── history.json    ← log de versiones
@@ -163,4 +163,4 @@ brand/{{slug}}/market/
 1. Identifica slug desde systemPrompt (`[CLIENTE: ... | slug: ...]`)
 2. Si existe `current.md` → backup como `v{N+1}.md`, pide confirmación
 3. Si no existe → crea carpeta + `current.md` + `v1.md` + `history.json`
-4. Link: `{MC_BASE_URL}/docs/brand/{slug}/market/current.md`
+4. Link: `{MC_BASE_URL}/docs/brand/{slug}/market-and-us/market/current.md`

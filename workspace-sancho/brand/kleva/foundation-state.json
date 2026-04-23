@@ -11,12 +11,12 @@
       "pillars": {
         "company-brief": {
           "status": "not-started",
-          "output_file": "brand/kleva/company-brief/company-brief.current.md",
+          "output_file": "brand/kleva/company-brief/current.md",
           "skill": "fast-foundation"
         },
         "self-l1": {
           "status": "not-started",
-          "output_file": "brand/kleva/market-and-us/self/self.current.md",
+          "output_file": "brand/kleva/market-and-us/self/current.md",
           "skill": "fast-foundation"
         },
         "market-l1": {

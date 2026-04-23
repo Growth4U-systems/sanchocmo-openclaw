@@ -13,7 +13,7 @@ metadata:
 context_required:
 - brand/{slug}/company-brief/current.md
 context_writes:
-- brand/{slug}/company-brief/current.md (section: Budget & Resources)
+- brand/{slug}/budget/current.md
 - brand/{slug}/operational/learnings.md
 ---
 
@@ -22,7 +22,7 @@ context_writes:
 > Mapea el dinero, el tiempo, las personas y las herramientas. Cada decisión downstream está acotada por estos constraints.
 
 **Input**: Conversación con cliente + company-context existente
-**Output**: Budget Constraints Profile → `brand/{slug}/budget/current.md`
+**Output**: Budget Constraints Profile → `brand/{slug}/budget/current.md` (standalone — la única fuente de verdad que esta skill escribe).
 
 ## References
 
@@ -74,8 +74,10 @@ context_writes:
 - Metadata: `<!-- Self-QA: PASS | fecha | items: X✅ Y⚠️ 0❌ -->`
 
 ### 6. Guardar con versionado
-- Ruta: `brand/{slug}/budget/current.md`
-- Backup + history.json si ya existe
+- Ruta: `brand/{slug}/budget/current.md` (standalone, único archivo que esta skill escribe)
+- Si ya existe → backup como `v{N+1}.md`, sobreescribe `current.md`, actualiza `history.json`
+
+> **Merge view `company-brief/current.md`**: lo regenera únicamente `fast-foundation` (no esta skill). Si esta skill se corre standalone, el merge view queda desfasado hasta la próxima corrida completa — aceptado por ahora.
 
 ---
 

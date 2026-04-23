@@ -10,9 +10,21 @@ La Foundation genera documentos organizados en 4 secciones + operacional:
 
 ```
 brand/{slug}/
+├── company-context/
+│   ├── current.md        ← STANDALONE (fuente de verdad): Identity
+│   ├── v1.md, v2.md...
+│   └── history.json
+├── business-model/
+│   ├── current.md        ← STANDALONE (fuente de verdad): Model
+│   ├── v1.md, v2.md...
+│   └── history.json
+├── budget/
+│   ├── current.md        ← STANDALONE (fuente de verdad): Resources (money + time + team + tools)
+│   ├── v1.md, v2.md...
+│   └── history.json
 ├── company-brief/
-│   ├── current.md        ← Doc único con 3 secciones (Identity, Business Model, Budget)
-│   ├── v1.md, v2.md...   ← Versiones históricas
+│   ├── current.md        ← MERGE VIEW (auto-generated): Identity + Model + Resources (label semántica; la carpeta se llama `budget/` por compat histórica)
+│   ├── v1.md, v2.md...   ← snapshots del merge view
 │   └── history.json
 ├── market-and-us/
 │   ├── market/current.md           ← TAM, segmentos, tendencias, regulación
@@ -111,18 +123,32 @@ Si X no está approved → **funcionar sin él**. Notificar: "Nota: [X] no está
 
 ---
 
-## Company Brief — Flujo Continuo
+## Company Brief — Arquitectura "standalone + merge view"
 
-Las 3 skills (company-context, business-model, budget) se ejecutan en secuencia como un solo flujo conversacional:
+**Cada skill escribe su propio standalone (fuente de verdad).** El `company-brief/current.md` es un **merge view auto-generado** de los 3 standalones — no se edita a mano.
 
-1. **company-context** → escribe sección `## Company Identity` en company-brief/current.md
-2. **business-model** → escribe sección `## Business Model` en company-brief/current.md
-3. **budget** → escribe sección `## Budget & Resources` en company-brief/current.md
+1. **company-context** → escribe `brand/{slug}/company-context/current.md` (standalone). Regenera el merge view.
+2. **business-model-audit** → escribe `brand/{slug}/business-model/current.md` (standalone). Regenera el merge view.
+3. **budget-constraints** → escribe `brand/{slug}/budget/current.md` (standalone). Regenera el merge view.
 
-El orchestrator las lanza una tras otra SIN pedir aprobación intermedia.
-Al final, presenta el Company Brief completo para **una sola aprobación**.
+**Beneficios del diseño:**
+- Cada skill se puede re-correr standalone con versionado granular propio (puedo tener business-model v5 sin que afecte a company-context v2).
+- El merge view siempre refleja el estado consolidado.
+- Consumers que necesitan info parcial leen el standalone directamente; los que necesitan la foto leen el merge view.
 
-Las skills internas siguen siendo modulares (diferentes prompts, hydration maps), pero el usuario ve un solo momento: "esto es tu empresa, ¿correcto?"
+**Warning header obligatorio en el merge view:**
+```
+<!-- auto-generated from: company-context/, business-model/, budget/ -->
+<!-- DO NOT EDIT HERE — edits will be overwritten on next regeneration -->
+```
+
+**Flujo Fast-Foundation:**
+El orchestrator lanza las 3 skills en secuencia sin aprobación intermedia. Al final, regenera el merge view y presenta el Company Brief consolidado para una sola aprobación.
+
+**Quién regenera el merge view:**
+Solo `fast-foundation`. Las skills productoras standalone NO lo tocan — solo escriben su propio standalone. Si una productora se corre fuera de fast-foundation, el merge view queda stale hasta la próxima corrida completa — comportamiento aceptado por ahora.
+
+**Detalles operativos del merge** (formato, placeholders, quién lo dispara): ver [fast-foundation/SKILL.md](../../skills/fast-foundation/SKILL.md) — sección "Company Brief — Arquitectura standalone + merge view".
 
 ---
 

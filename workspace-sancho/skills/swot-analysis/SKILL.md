@@ -106,7 +106,7 @@ Si el usuario dice "profundizar": invoca `deep-research` con la ruta del documen
 ## 📁 Almacenamiento (OBLIGATORIO)
 
 ```
-brand/{{slug}}/swot/
+brand/{{slug}}/market-and-us/swot/
 ├── current.md      ← versión activa
 ├── v1.md, v2.md... ← versiones anteriores
 ├── history.json    ← log de versiones

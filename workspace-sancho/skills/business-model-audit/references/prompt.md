@@ -6,7 +6,7 @@
 
 **Lee `references/hydration.md`** para el mapeo completo.
 
-1. Leer `brand/{slug}/company-context/current.md` (obligatorio)
+1. Leer `brand/{slug}/company-context/current.md` (obligatorio — fuente de verdad standalone)
 2. Leer `brand/{slug}/market-and-us/competitors/current.md` (si existe — aporta competitor growth motions)
 3. Extraer campos mapeados en hydration.md
 4. Presentar al usuario agrupados:

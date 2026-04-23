@@ -11,17 +11,17 @@
       "pillars": {
         "company-brief": {
           "status": "done",
-          "output_file": "brand/criptan/company-brief/company-brief.current.md",
+          "output_file": "brand/criptan/company-brief/current.md",
           "skill": "fast-foundation"
         },
         "self-l1": {
           "status": "done",
-          "output_file": "brand/criptan/market-and-us/self/self.current.md",
+          "output_file": "brand/criptan/market-and-us/self/current.md",
           "skill": "fast-foundation"
         },
         "market-l1": {
           "status": "approved",
-          "output_file": "brand/criptan/market-and-us/market/market.current.md",
+          "output_file": "brand/criptan/market-and-us/market/current.md",
           "skill": "fast-foundation",
           "updated_at": "2026-03-30T11:36:44.832Z",
           "approved_at": "2026-03-30T11:36:44.832Z"
@@ -46,7 +46,7 @@
         "company-brief": {
           "status": "not-started",
           "skill": "fast-foundation",
-          "output_file": "brand/criptan/company-brief/company-brief.current.md"
+          "output_file": "brand/criptan/company-brief/current.md"
         }
       }
     },
@@ -66,7 +66,7 @@
             "self-analysis"
           ],
           "skill": "market-intelligence",
-          "output_file": "brand/criptan/market-and-us/market/market.current.md",
+          "output_file": "brand/criptan/market-and-us/market/current.md",
           "completed_at": "2026-03-30T11:00:00Z",
           "updated_at": "2026-03-30T11:36:56.248Z",
           "approved_at": "2026-03-30T11:36:56.248Z"
@@ -112,7 +112,7 @@
         "foundation-presentation": {
           "status": "not-started",
           "skill": "market-synthesis",
-          "output_file": "brand/criptan/market-and-us/market-synthesis/foundation-report.html",
+          "output_file": "brand/criptan/presentations/foundation-report.html",
           "layer": 2
         }
       },

@@ -15,7 +15,7 @@ context_required:
 - brand/{slug}/company-brief/current.md
 - brand/{slug}/market-and-us/competitors/current.md
 context_writes:
-- brand/{slug}/company-brief/current.md (section: Business Model)
+- brand/{slug}/business-model/current.md
 - brand/{slug}/operational/learnings.md
 ---
 
@@ -24,7 +24,7 @@ context_writes:
 > Entiende CÓMO la empresa adquiere y monetiza clientes. El modelo de negocio determina qué growth levers existen.
 
 **Input**: company-context (necesita elevator_pitch, product_type, b2b_b2c mínimo)
-**Output**: Business Model Profile → `brand/{slug}/business-model/current.md`
+**Output**: Business Model Profile → `brand/{slug}/business-model/current.md` (standalone — la única fuente de verdad que esta skill escribe).
 
 ## References
 
@@ -74,7 +74,10 @@ context_writes:
 - Metadata QA en documento
 
 ### 6. Guardar con versionado
-- Ruta: `brand/{slug}/business-model/current.md`
+- Ruta: `brand/{slug}/business-model/current.md` (standalone, único archivo que esta skill escribe)
+- Si ya existe → backup como `v{N+1}.md`, sobreescribe `current.md`, actualiza `history.json`
+
+> **Merge view `company-brief/current.md`**: lo regenera únicamente `fast-foundation` (no esta skill). Si esta skill se corre standalone, el merge view queda desfasado hasta la próxima corrida completa — aceptado por ahora.
 
 ---
 

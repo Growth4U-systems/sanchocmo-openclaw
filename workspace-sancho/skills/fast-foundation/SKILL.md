@@ -140,7 +140,10 @@ Escribir los 5 documentos en sus carpetas:
 
 | Doc | Path | Contenido |
 |-----|------|-----------|
-| Company Brief | `brand/{slug}/company-brief/current.md` | Identity + Business Model + Budget (secciones del merge company-context + business-model-audit + budget-constraints) |
+| Company Context (standalone) | `brand/{slug}/company-context/current.md` | Identidad — fuente de verdad de company-context skill |
+| Business Model (standalone) | `brand/{slug}/business-model/current.md` | Modelo — fuente de verdad de business-model-audit skill |
+| Budget & Resources (standalone) | `brand/{slug}/budget/current.md` | Resources — fuente de verdad de budget-constraints skill |
+| Company Brief (merge view) | `brand/{slug}/company-brief/current.md` | Vista consolidada auto-regenerada de los 3 standalones. Warning header: `<!-- DO NOT EDIT — auto-generated -->`. |
 | Self Intelligence L1 | `brand/{slug}/market-and-us/self/current.md` | Lens 1 only: autopercepción (web, sociales, assets). Header: `<!-- mode: lite | source: fast-foundation -->` |
 | Market Intelligence L1 | `brand/{slug}/market-and-us/market/current.md` | Datos básicos del mercado. Header: `<!-- mode: lite | source: fast-foundation -->` |
 | Brand Voice Snapshot | `brand/{slug}/brand-voice/current.md` | Quick snapshot: 3 adjetivos, espectro formal↔casual, Do/Don't (3+ pares), ejemplos (3 canales). Header: `<!-- mode: quick | source: fast-foundation -->` |
@@ -154,7 +157,10 @@ Escribir los 5 documentos en sus carpetas:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ✅ FAST FOUNDATION — Completada
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📋 Company Brief      ✅ brand/{slug}/company-brief/current.md
+📋 Company Context     ✅ brand/{slug}/company-context/current.md (standalone)
+📋 Business Model      ✅ brand/{slug}/business-model/current.md (standalone)
+📋 Budget & Resources  ✅ brand/{slug}/budget/current.md (standalone)
+📋 Company Brief       ✅ brand/{slug}/company-brief/current.md (merge view auto-generated)
 🔍 Self Intelligence   ✅ brand/{slug}/market-and-us/self/current.md (L1)
 📊 Market Intelligence ✅ brand/{slug}/market-and-us/market/current.md (L1)
 🎨 Brand Voice         ✅ brand/{slug}/brand-voice/current.md (Snapshot)
@@ -166,11 +172,53 @@ Siguiente paso: Full Foundation para profundizar en cada pilar.
 
 ---
 
-## Company Brief — Secciones (merge de 3 skills)
+## Company Brief — Arquitectura "standalone + merge view"
 
-El doc `company-brief/current.md` contiene 3 secciones:
+### Principio
 
-### Sección 1: Company Identity (de company-context)
+Cada una de las 3 skills (company-context, business-model-audit, budget-constraints) es **standalone autoritativa** sobre su propio doc:
+- `brand/{slug}/company-context/current.md` ← fuente de verdad de company-context
+- `brand/{slug}/business-model/current.md` ← fuente de verdad de business-model-audit
+- `brand/{slug}/budget/current.md` ← fuente de verdad de budget-constraints
+
+Cada una versiona (`v{N}.md` + `history.json`) **por separado** — permite re-correr una sin afectar a las otras.
+
+### Merge view
+
+`brand/{slug}/company-brief/current.md` es una **vista consolidada auto-regenerada** de los 3 standalones. NO es editable a mano (se sobreescribe en cada regeneración).
+
+**Quién regenera el merge view:**
+
+Solo **fast-foundation** (al final del flujo inicial de intake, después de los 3 standalones).
+
+> ⚠️ **Stale view conocido**: si una skill productora (`company-context`, `business-model-audit`, `budget-constraints`) se corre standalone fuera de fast-foundation, su standalone queda actualizado pero el merge view no. Aceptado por ahora. Mitigación: consumers que necesitan info fresca leen el standalone directamente.
+
+**Formato del merge view:**
+```markdown
+# Company Brief — {Cliente}
+<!-- auto-generated from: company-context/, business-model/, budget/ -->
+<!-- DO NOT EDIT HERE — edits will be overwritten on next regeneration -->
+<!-- regenerated: YYYY-MM-DD by {skill-name} -->
+
+## Company Identity
+{contenido de company-context/current.md, sin frontmatter}
+
+## Business Model
+{contenido de business-model/current.md, o placeholder "_pendiente — correr business-model-audit_"}
+
+## Budget & Resources
+{contenido de budget/current.md, o placeholder "_pendiente — correr budget-constraints_"}
+```
+
+**Por qué este diseño:**
+- Permite correr cada skill standalone con versionado granular propio
+- Los consumers que necesitan info parcial leen el standalone directamente (`company-context/`)
+- Los consumers que necesitan la foto completa leen el merge view (`company-brief/`)
+- No duplica información canónica — el merge view es view, no storage
+
+### Contenido de cada standalone
+
+**company-context/current.md** (Identity)
 - The Core Three: quién eres, qué vendes, a quién
 - Elevator pitch (2-3 frases)
 - Producto/servicio principal + diferenciadores
@@ -179,14 +227,14 @@ El doc `company-brief/current.md` contiene 3 secciones:
 - URLs y perfiles sociales
 - Fuentes por campo (extracted from URL, user input, etc.)
 
-### Sección 2: Business Model (de business-model-audit)
+**business-model/current.md** (Model)
 - Clasificación: B2B/B2C/Hybrid + modelo de revenue
 - Growth motion: Sales-Led, Marketing-Led, Product-Led, Community-Led
 - Funnel actual mapeado (etapas, conversiones conocidas)
 - Unit economics básicos (si disponibles): ACV, churn estimado, LTV estimado
 - Canales actuales de adquisición
 
-### Sección 3: Budget & Resources (de budget-constraints)
+**budget/current.md** (Resources)
 - Presupuesto mensual marketing (rango)
 - Timeline: horizonte para primeros resultados
 - Equipo: quién está disponible, horas/semana

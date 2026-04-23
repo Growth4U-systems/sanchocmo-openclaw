@@ -12,7 +12,7 @@ metadata:
   changes: v4 — Restructured per skill-creator principles. SKILL.md lean. Concepts/methodology moved to references.
 context_required: []
 context_writes:
-- brand/{slug}/company-brief/current.md (section: Company Identity)
+- brand/{slug}/company-context/current.md
 - brand/{slug}/operational/learnings.md
 ---
 
@@ -21,7 +21,7 @@ context_writes:
 > Captura QUIÉN es la empresa, QUÉ quieren y POR QUÉ existen. Bedrock de todos los pillars downstream.
 
 **Input**: URL, documentos, conversación con cliente
-**Output**: Company Context Profile → `brand/{slug}/company-context/current.md`
+**Output**: Company Context Profile → `brand/{slug}/company-context/current.md` (standalone — la única fuente de verdad que esta skill escribe).
 
 ## References
 
@@ -64,9 +64,11 @@ context_writes:
 - Metadata: `<!-- Self-QA: PASS | fecha | items: X✅ Y⚠️ 0❌ -->`
 
 ### 6. Guardar con versionado
-- Ruta: `brand/{slug}/company-context/current.md`
+- Ruta: `brand/{slug}/company-context/current.md` (standalone, único archivo que esta skill escribe)
 - Si ya existe → backup como `v{N+1}.md`, sobreescribe `current.md`, actualiza `history.json`
 - Link: `{MC_BASE_URL}/docs/brand/{slug}/company-context/current.md`
+
+> **Merge view `company-brief/current.md`**: lo regenera únicamente `fast-foundation` (no esta skill). Si esta skill se corre standalone, el merge view queda desfasado hasta la próxima corrida completa de fast-foundation — es aceptado por ahora.
 
 ---
 
@@ -107,4 +109,4 @@ brand/{{slug}}/company-context/
 1. Identifica slug desde systemPrompt (`[CLIENTE: ... | slug: ...]`)
 2. Si existe `current.md` → backup como `v{N+1}.md`, pide confirmación
 3. Si no existe → crea carpeta + `current.md` + `v1.md` + `history.json`
-4. Link: `{MC_BASE_URL}/docs/brand/{slug}/company-context/current.md`
+4. Link: `{MC_BASE_URL}/docs/brand/{slug}/company-brief/current.md`
