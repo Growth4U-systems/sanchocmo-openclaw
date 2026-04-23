@@ -11,17 +11,17 @@
       "pillars": {
         "company-brief": {
           "status": "approved",
-          "output_file": "brand/hospital-capilar/company-brief/company-brief.current.md",
+          "output_file": "brand/hospital-capilar/company-brief/current.md",
           "skill": "fast-foundation"
         },
         "self-l1": {
           "status": "approved",
-          "output_file": "brand/hospital-capilar/market-and-us/self/self.current.md",
+          "output_file": "brand/hospital-capilar/market-and-us/self/current.md",
           "skill": "fast-foundation"
         },
         "market-l1": {
           "status": "approved",
-          "output_file": "brand/hospital-capilar/market-and-us/market/market.current.md",
+          "output_file": "brand/hospital-capilar/market-and-us/market/current.md",
           "skill": "fast-foundation"
         },
         "brand-voice-snapshot": {
@@ -70,7 +70,7 @@
             "competitor-analysis",
             "self-analysis"
           ],
-          "output_file": "brand/hospital-capilar/market-and-us/market/market.current.md",
+          "output_file": "brand/hospital-capilar/market-and-us/market/current.md",
           "skill": "market-intelligence",
           "approved_at": "2026-03-03T11:33:00Z"
         },
@@ -99,7 +99,7 @@
             "market-analysis",
             "competitor-analysis"
           ],
-          "output_file": "brand/hospital-capilar/market-and-us/self/self.current.md",
+          "output_file": "brand/hospital-capilar/market-and-us/self/current.md",
           "skill": "self-intelligence",
           "completed_at": "2026-03-03T12:05:00Z",
           "approved_at": "2026-03-03T12:05:00Z"

@@ -40,19 +40,19 @@
       "pillars": {
         "company-brief": {
           "status": "done",
-          "output_file": "brand/hulahoop/company-brief/company-brief.current.md",
+          "output_file": "brand/hulahoop/company-brief/current.md",
           "skill": "fast-foundation",
           "completed_at": "2026-04-07T15:20:00Z"
         },
         "self-l1": {
           "status": "done",
-          "output_file": "brand/hulahoop/market-and-us/self/self.current.md",
+          "output_file": "brand/hulahoop/market-and-us/self/current.md",
           "skill": "fast-foundation",
           "completed_at": "2026-04-07T15:20:00Z"
         },
         "market-l1": {
           "status": "done",
-          "output_file": "brand/hulahoop/market-and-us/market/market.current.md",
+          "output_file": "brand/hulahoop/market-and-us/market/current.md",
           "skill": "fast-foundation",
           "completed_at": "2026-04-07T15:20:00Z"
         },
@@ -78,7 +78,7 @@
         "company-brief": {
           "status": "done",
           "skill": "fast-foundation",
-          "output_file": "brand/hulahoop/company-brief/company-brief.current.md"
+          "output_file": "brand/hulahoop/company-brief/current.md"
         }
       }
     },
@@ -91,7 +91,7 @@
           "status": "done",
           "layer": 1,
           "skill": "market-intelligence",
-          "output_file": "brand/hulahoop/market-and-us/market/market.current.md",
+          "output_file": "brand/hulahoop/market-and-us/market/current.md",
           "completed_at": "2026-04-13T12:00:00Z",
           "updated_at": "2026-04-13T12:00:00Z"
         },
@@ -107,7 +107,7 @@
           "status": "approved",
           "layer": 1,
           "skill": "self-intelligence",
-          "output_file": "brand/hulahoop/market-and-us/self/self.current.md",
+          "output_file": "brand/hulahoop/market-and-us/self/current.md",
           "updated_at": "2026-04-14T15:17:02.761Z",
           "approved_at": "2026-04-14T15:17:02.761Z"
         },

@@ -11,17 +11,17 @@
       "pillars": {
         "company-brief": {
           "status": "approved",
-          "output_file": "brand/sanchocmo/company-brief/company-brief.current.md",
+          "output_file": "brand/sanchocmo/company-brief/current.md",
           "skill": "fast-foundation"
         },
         "self-l1": {
           "status": "approved",
-          "output_file": "brand/sanchocmo/market-and-us/self/self.current.md",
+          "output_file": "brand/sanchocmo/market-and-us/self/current.md",
           "skill": "fast-foundation"
         },
         "market-l1": {
           "status": "approved",
-          "output_file": "brand/sanchocmo/market-and-us/market/market.current.md",
+          "output_file": "brand/sanchocmo/market-and-us/market/current.md",
           "skill": "fast-foundation"
         },
         "brand-voice-snapshot": {
@@ -69,7 +69,7 @@
             "competitor-analysis",
             "self-analysis"
           ],
-          "output_file": "brand/sanchocmo/market-and-us/market/market.current.md",
+          "output_file": "brand/sanchocmo/market-and-us/market/current.md",
           "skill": "market-intelligence"
         },
         "competitor-analysis": {
@@ -95,7 +95,7 @@
             "market-analysis",
             "competitor-analysis"
           ],
-          "output_file": "brand/sanchocmo/market-and-us/self/self.current.md",
+          "output_file": "brand/sanchocmo/market-and-us/self/current.md",
           "skill": "self-intelligence"
         },
         "market-synthesis": {

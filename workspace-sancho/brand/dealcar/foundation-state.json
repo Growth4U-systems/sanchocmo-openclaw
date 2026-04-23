@@ -11,12 +11,12 @@
       "pillars": {
         "company-brief": {
           "status": "in-progress",
-          "output_file": "brand/dealcar/company-brief/company-brief.current.md",
+          "output_file": "brand/dealcar/company-brief/current.md",
           "skill": "fast-foundation"
         },
         "self-l1": {
           "status": "not-started",
-          "output_file": "brand/dealcar/market-and-us/self/self.current.md",
+          "output_file": "brand/dealcar/market-and-us/self/current.md",
           "skill": "fast-foundation"
         },
         "market-l1": {
