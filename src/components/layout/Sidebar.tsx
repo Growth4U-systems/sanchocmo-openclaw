@@ -40,7 +40,7 @@ export function Sidebar() {
   const t = useTranslations();
   const router = useRouter();
   const { data: session } = useSession();
-  const { selectedClient, sidebarOpen } = useAppStore();
+  const sidebarOpen = useAppStore((s) => s.sidebarOpen);
   const [mobileOpen, setMobileOpen] = useState(false);
 
   // Close mobile sidebar on route change
@@ -51,7 +51,10 @@ export function Sidebar() {
   }, [router]);
 
   const isAdmin = (session?.user as { role?: string })?.role === "admin";
-  const slug = selectedClient;
+  // Sidebar scope is derived from the URL, not the Zustand store: on admin or
+  // global routes we never render client-only sections, even if the store
+  // still holds the last client the user was working with.
+  const slug = (router.query.slug as string | undefined) || null;
   const unreadCount = useUnreadCount(slug);
 
   const dashboardHref = slug ? `/dashboard/${slug}` : "/dashboard";
@@ -274,19 +277,20 @@ function NavLink({
 function ClientSelector() {
   const t = useTranslations("sidebar");
   const router = useRouter();
-  const selectedClient = useAppStore((s) => s.selectedClient);
   const { data: clients } = useClients();
+
+  // The selector mirrors the URL, not a parallel store. On admin/global
+  // routes there is no slug in the URL, so the dropdown shows "global".
+  const urlSlug = (router.query.slug as string | undefined) || null;
 
   const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value;
-    // Navigation is the single action; the store is then updated by the
-    // centralised URL → store sync (useClientUrlSync) as the route changes.
     navigateToClient(router, value === "global" ? null : value);
   };
 
   return (
     <select
-      value={selectedClient || "global"}
+      value={urlSlug || "global"}
       onChange={handleChange}
       className="w-full px-2 py-1.5 bg-background border border-border rounded-lg text-sm focus:outline-none focus:border-rust"
     >
