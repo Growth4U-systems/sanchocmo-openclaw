@@ -302,7 +302,9 @@
   "sidebar": {
     "allClients": "Todos los clientes",
     "admin": "Admin",
-    "client": "Cliente"
+    "client": "Cliente",
+    "collapse": "Colapsar menú",
+    "expand": "Expandir menú"
   },
   "notFound": {
     "title": "Página no encontrada",
