@@ -15,7 +15,8 @@ context_required:
 - brand/{slug}/company-brief/current.md
 - brand/{slug}/go-to-market/positioning/*/current.md
 context_writes:
-- brand/{slug}/market-and-us/competitor-{nombre}.md
+- brand/{slug}/market-and-us/competitors/current.md
+- brand/{slug}/market-and-us/competitors/{nombre}/current.md
 - brand/{slug}/operational/learnings.md
 ---
 
@@ -24,7 +25,11 @@ context_writes:
 > Analiza competidores a través de 3 lentes: lo que ELLOS dicen, lo que OTROS dicen, lo que CLIENTES dicen.
 
 **Input**: company-context + URLs/nombres de competidores (o discovery autónomo)
-**Output**: Battle Cards + Landscape Map → `brand/{slug}/competitors/current.md`
+**Output**:
+- Roll-up (landscape + lista): `brand/{slug}/market-and-us/competitors/current.md`
+- Deep-dive 3-lens por competidor: `brand/{slug}/market-and-us/competitors/{nombre}/current.md`
+
+El roll-up se **genera/sintetiza** desde los subdirs — no editar a mano.
 
 ---
 
@@ -133,7 +138,7 @@ En TODOS los modos: check datos existentes primero, presenta hallazgos iniciales
    - ⚠️ = investigado pero no disponible (con razón específica)
    - ❌ = falta — VOLVER A INVESTIGAR
 3. **Si hay algún ❌ → NO entregar. Volver al step correspondiente.**
-4. Solo cuando 0 ❌ → guardar en `brand/{slug}/competitors/current.md`
+4. Solo cuando 0 ❌ → guardar roll-up en `brand/{slug}/market-and-us/competitors/current.md` y deep-dives en `brand/{slug}/market-and-us/competitors/{nombre}/current.md`
 5. Versionar según `_system/foundation/versioning-protocol.md`
 6. Incluir oferta de deep-research al entregar
 

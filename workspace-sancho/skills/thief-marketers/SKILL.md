@@ -3,6 +3,7 @@ name: thief-marketers
 description: "Reverse-engineer competitor marketing strategies and steal what works. Monitors competitor channels (web, social, ads, newsletters, content) to identify winning tactics, content themes, and campaign patterns. Generates actionable content ideas adapted to client's brand. Weekly cron recommended."
 context_required:
 - brand/{slug}/market-and-us/competitors/current.md
+- brand/{slug}/market-and-us/competitors/*/current.md
 - brand/{slug}/company-brief/current.md
 - brand/{slug}/brand-voice/current.md
 - brand/{slug}/go-to-market/ecps/current.md

@@ -55,7 +55,7 @@ Si company-context o el cliente nombran competidores:
 1. ANTES de investigar el mercado, scrapear cada uno: `web_fetch(homepage)`, `web_fetch(/pricing)`, `web_fetch(/features)`
 2. Estos datos son INPUT del análisis, no output
 3. No asumir NADA sobre un competidor nombrado sin verificar su web primero
-4. Si un competidor heredado ya tiene datos en `competitors/current.md`, verificar que siguen vigentes con scraping fresco
+4. Si un competidor heredado ya tiene datos en `market-and-us/competitors/current.md`, verificar que siguen vigentes con scraping fresco
 
 ## Nota
 

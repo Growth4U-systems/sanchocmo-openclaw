@@ -12,6 +12,7 @@ metadata:
     - brand/{slug}/go-to-market/ecps/current.md
     - brand/{slug}/go-to-market/positioning/current.md
     - brand/{slug}/market-and-us/competitors/current.md
+    - brand/{slug}/market-and-us/competitors/*/current.md
     - brand/{slug}/market-and-us/self/current.md
   context_writes:
     - brand/{slug}/trust-engine/config.json

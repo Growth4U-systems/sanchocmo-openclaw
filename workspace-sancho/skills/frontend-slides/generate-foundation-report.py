@@ -71,7 +71,7 @@ def parse_visual_identity(md):
     return colors
 
 def parse_competitors(md):
-    """Extract competitor battle cards from competitor-intelligence/current.md"""
+    """Extract competitor battle cards from market-and-us/competitors/current.md"""
     competitors = []
     
     # Split by Battle Card sections

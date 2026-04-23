@@ -111,10 +111,10 @@ Incluir `## Presentation Summary` al final (ver protocolo).
 ### Fase 2: Market Summary (~15 min)
 
 Síntesis ejecutiva de 1-2 páginas. Leer:
-- market-analysis/current.md
-- todos los competitor-{x}/current.md
-- self-analysis/current.md
-- swot/current.md (recién generado)
+- `brand/{slug}/market-and-us/market/current.md`
+- `brand/{slug}/market-and-us/competitors/current.md` (roll-up)
+- `brand/{slug}/market-and-us/self/current.md`
+- `brand/{slug}/market-and-us/swot/current.md` (recién generado)
 
 Formato:
 ```markdown

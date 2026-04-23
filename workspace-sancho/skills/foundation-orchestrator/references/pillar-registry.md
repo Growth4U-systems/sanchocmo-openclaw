@@ -38,7 +38,9 @@
 ### competitor-analysis
 **Skill**: `competitor-intelligence`
 **Thread**: `{slug}:competitor-analysis`
-**Output**: `brand/{slug}/market-and-us/competitors/{nombre}/current.md` (1 por competidor)
+**Output**:
+- `brand/{slug}/market-and-us/competitors/current.md` (roll-up: landscape + lista, generado desde subdirs)
+- `brand/{slug}/market-and-us/competitors/{nombre}/current.md` (deep-dive 3-lens, 1 por competidor)
 **requires**: fast-foundation
 **enriches_with**: market-analysis, self-analysis
 **Lite done**: Top 3 competidores directos + Lens 1 (qué dicen de sí mismos)
