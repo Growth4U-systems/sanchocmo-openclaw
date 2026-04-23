@@ -62,7 +62,7 @@ echo "🔨 Onboarding: $NAME (slug: $SLUG, guild: $GUILD)"
 
 # --- 1. Crear estructura de archivos ---
 echo "📁 Creando estructura..."
-mkdir -p "$BRAND_DIR"/{company-context,business-model,budget,company-brief,market-and-us/{market,competitors,self,market-synthesis,sources},go-to-market/{ecps,positioning/shared,pricing,existing-customer-data,ecp-validation},brand-book/{brand-voice,visual-identity},strategic-plan,operational,_archive,projects,monitoring/weekly}
+mkdir -p "$BRAND_DIR"/{company-context,business-model,budget,company-brief,market-and-us/{market,competitors,self,swot,summary,ope-canvas,sources},go-to-market/{ecps,positioning/shared,pricing,existing-customer-data,ecp-validation},brand-book/{brand-voice,visual-identity},presentations,strategic-plan,operational,_archive,projects,monitoring/weekly}
 
 # --- 1b. Crear placeholders de documentos ---
 echo "📄 Creando placeholders..."
@@ -164,7 +164,7 @@ cat > "$BRAND_DIR/market-and-us/self/current.md" << 'PLACEHOLDER'
 PLACEHOLDER
 sed -i "s/{NOMBRE}/$NAME/g" "$BRAND_DIR/market-and-us/self/current.md"
 
-cat > "$BRAND_DIR/market-and-us/market-synthesis/swot.md" << 'PLACEHOLDER'
+cat > "$BRAND_DIR/market-and-us/swot/current.md" << 'PLACEHOLDER'
 <!-- mode: placeholder | status: not-started -->
 # SWOT Analysis — {NOMBRE}
 
@@ -183,9 +183,9 @@ cat > "$BRAND_DIR/market-and-us/market-synthesis/swot.md" << 'PLACEHOLDER'
 ## TOWS Matrix
 <!-- Estrategias cruzadas SO, WO, ST, WT -->
 PLACEHOLDER
-sed -i "s/{NOMBRE}/$NAME/g" "$BRAND_DIR/market-and-us/market-synthesis/swot.md"
+sed -i "s/{NOMBRE}/$NAME/g" "$BRAND_DIR/market-and-us/swot/current.md"
 
-cat > "$BRAND_DIR/market-and-us/market-synthesis/summary.md" << 'PLACEHOLDER'
+cat > "$BRAND_DIR/market-and-us/summary/current.md" << 'PLACEHOLDER'
 <!-- mode: placeholder | status: not-started -->
 # Market Summary — {NOMBRE}
 
@@ -195,9 +195,9 @@ cat > "$BRAND_DIR/market-and-us/market-synthesis/summary.md" << 'PLACEHOLDER'
 ## Conclusiones Clave
 <!-- Top insights para la estrategia -->
 PLACEHOLDER
-sed -i "s/{NOMBRE}/$NAME/g" "$BRAND_DIR/market-and-us/market-synthesis/summary.md"
+sed -i "s/{NOMBRE}/$NAME/g" "$BRAND_DIR/market-and-us/summary/current.md"
 
-cat > "$BRAND_DIR/market-and-us/market-synthesis/ope-canvas.md" << 'PLACEHOLDER'
+cat > "$BRAND_DIR/market-and-us/ope-canvas/current.md" << 'PLACEHOLDER'
 <!-- mode: placeholder | status: not-started -->
 # OPE Canvas — {NOMBRE}
 
@@ -210,7 +210,7 @@ cat > "$BRAND_DIR/market-and-us/market-synthesis/ope-canvas.md" << 'PLACEHOLDER'
 ## Ejecución
 <!-- Cómo se ejecuta la solución -->
 PLACEHOLDER
-sed -i "s/{NOMBRE}/$NAME/g" "$BRAND_DIR/market-and-us/market-synthesis/ope-canvas.md"
+sed -i "s/{NOMBRE}/$NAME/g" "$BRAND_DIR/market-and-us/ope-canvas/current.md"
 
 cat > "$BRAND_DIR/go-to-market/ecps/current.md" << 'PLACEHOLDER'
 <!-- mode: placeholder | status: not-started -->
@@ -358,7 +358,7 @@ cat > "$BRAND_DIR/foundation-state.json" << FJSON
         "competitor-analysis": {"status": "not-started", "layer": 1, "skill": "competitor-intelligence"},
         "self-analysis": {"status": "not-started", "layer": 1, "skill": "self-intelligence", "output_file": "brand/$SLUG/market-and-us/self/current.md"},
         "market-synthesis": {"status": "not-started", "layer": 2, "skill": "market-synthesis"},
-        "foundation-presentation": {"status": "not-started", "layer": 2, "skill": "market-synthesis", "output_file": "brand/$SLUG/market-and-us/market-synthesis/foundation-report.html"}
+        "foundation-presentation": {"status": "not-started", "layer": 2, "skill": "market-synthesis", "output_file": "brand/$SLUG/presentations/foundation-report.html"}
       }
     },
     "go-to-market": {
