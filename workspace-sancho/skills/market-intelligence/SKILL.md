@@ -50,7 +50,7 @@ context_writes:
 - Solo pregunta campos listados en "Campos genuinamente nuevos"
 
 ### 1. Preparar contexto
-- Lee `brand/{slug}/company-context/current.md` y `brand/{slug}/market-and-us/competitors/current.md`
+- Lee `brand/{slug}/company-brief/current.md` y `brand/{slug}/market-and-us/competitors/current.md`
 - Identifica: industria, vertical, producto, geografía, equipo
 
 ### 1.5. Primary Source Verification (OBLIGATORIO)

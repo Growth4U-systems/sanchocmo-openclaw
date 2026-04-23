@@ -58,11 +58,9 @@ context_writes:
 ### 1. Recopilar TODA la Información Disponible
 **Lee TODOS los documentos existentes del cliente, no solo los 4 de La Empresa:**
 ```
-brand/{slug}/company-context/current.md
-brand/{slug}/business-model/current.md
-brand/{slug}/budget/current.md
-brand/{slug}/self-intelligence/current.md
-brand/{slug}/market-and-us/market/current.md          ← si existe
+brand/{slug}/company-brief/current.md              ← secciones: Company Identity, Business Model, Budget & Resources
+brand/{slug}/market-and-us/self/current.md
+brand/{slug}/market-and-us/market/current.md       ← si existe
 brand/{slug}/market-and-us/competitors/current.md     ← si existe
 brand/{slug}/positioning/current.md     ← si existe
 brand/{slug}/ope-canvas/briefing.md     ← si existe (datos pre-validados)

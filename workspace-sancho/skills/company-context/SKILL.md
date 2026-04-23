@@ -21,7 +21,7 @@ context_writes:
 > Captura QUIÉN es la empresa, QUÉ quieren y POR QUÉ existen. Bedrock de todos los pillars downstream.
 
 **Input**: URL, documentos, conversación con cliente
-**Output**: Company Context Profile → `brand/{slug}/company-context/current.md`
+**Output**: Company Context Profile → `brand/{slug}/company-brief/current.md` (se fusiona como sección `## Company Identity`; las secciones Business Model y Budget & Resources las escriben las otras dos skills que absorbe fast-foundation)
 
 ## References
 
@@ -64,9 +64,11 @@ context_writes:
 - Metadata: `<!-- Self-QA: PASS | fecha | items: X✅ Y⚠️ 0❌ -->`
 
 ### 6. Guardar con versionado
-- Ruta: `brand/{slug}/company-context/current.md`
-- Si ya existe → backup como `v{N+1}.md`, sobreescribe `current.md`, actualiza `history.json`
-- Link: `{MC_BASE_URL}/docs/brand/{slug}/company-context/current.md`
+- Ruta: `brand/{slug}/company-brief/current.md` (sección `## Company Identity`)
+- Si el doc no existe → créalo con la sección Company Identity; las otras dos secciones (Business Model, Budget & Resources) quedan como placeholders hasta que corran sus skills
+- Si el doc existe → preservar las demás secciones y sobrescribir SOLO `## Company Identity`
+- Versionado: `v{N+1}.md` del company-brief completo + `history.json`
+- Link: `{MC_BASE_URL}/docs/brand/{slug}/company-brief/current.md`
 
 ---
 
@@ -107,4 +109,4 @@ brand/{{slug}}/company-context/
 1. Identifica slug desde systemPrompt (`[CLIENTE: ... | slug: ...]`)
 2. Si existe `current.md` → backup como `v{N+1}.md`, pide confirmación
 3. Si no existe → crea carpeta + `current.md` + `v1.md` + `history.json`
-4. Link: `{MC_BASE_URL}/docs/brand/{slug}/company-context/current.md`
+4. Link: `{MC_BASE_URL}/docs/brand/{slug}/company-brief/current.md`

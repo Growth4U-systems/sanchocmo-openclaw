@@ -22,7 +22,7 @@ context_writes:
 > Mapea el dinero, el tiempo, las personas y las herramientas. Cada decisión downstream está acotada por estos constraints.
 
 **Input**: Conversación con cliente + company-context existente
-**Output**: Budget Constraints Profile → `brand/{slug}/budget/current.md`
+**Output**: Budget Constraints Profile → `brand/{slug}/company-brief/current.md` (se fusiona como sección `## Budget & Resources`)
 
 ## References
 
@@ -74,8 +74,9 @@ context_writes:
 - Metadata: `<!-- Self-QA: PASS | fecha | items: X✅ Y⚠️ 0❌ -->`
 
 ### 6. Guardar con versionado
-- Ruta: `brand/{slug}/budget/current.md`
-- Backup + history.json si ya existe
+- Ruta: `brand/{slug}/company-brief/current.md` (sección `## Budget & Resources`)
+- Preservar las demás secciones (Company Identity, Business Model) y sobrescribir SOLO `## Budget & Resources`
+- Versionado: `v{N+1}.md` del company-brief completo + `history.json`
 
 ---
 
@@ -109,4 +110,4 @@ brand/{{slug}}/budget/
 1. Identifica slug desde systemPrompt (`[CLIENTE: ... | slug: ...]`)
 2. Si existe `current.md` → backup como `v{N+1}.md`, pide confirmación
 3. Si no existe → crea carpeta + `current.md` + `v1.md` + `history.json`
-4. Link: `{MC_BASE_URL}/docs/brand/{slug}/budget/current.md`
+4. Link: `{MC_BASE_URL}/docs/brand/{slug}/company-brief/current.md`
