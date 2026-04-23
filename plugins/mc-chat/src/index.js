@@ -101,6 +101,11 @@ function buildRehydrationBlock(cfg, slug, threadId) {
   ].join("\n");
 }
 
+// Tracks Discord↔MC relay wiring so /mc-chat/health can report it.
+// See registerOutboundHook guard below — we can only relay if the SDK
+// exposes api.registerOutboundHook (added in openclaw 2026.3.22).
+const relayStatus = { enabled: false, reason: "not-registered" };
+
 export default defineChannelPluginEntry({
   id: "mc-chat",
   name: "Mission Control Chat",
@@ -384,6 +389,7 @@ export default defineChannelPluginEntry({
           channel: "mc-chat",
           version: "0.2.0",
           ts: new Date().toISOString(),
+          discordRelay: { ...relayStatus },
         }));
         return true;
       },
@@ -433,11 +439,22 @@ export default defineChannelPluginEntry({
       },
     });
 
-    // Outbound hook: watch Discord messages and relay to MC if thread is linked
-    // NOTE: registerOutboundHook may not exist in all SDK versions — guard it
+    // Outbound hook: watch Discord messages and relay to MC if thread is linked.
+    // Requires api.registerOutboundHook (openclaw >= 2026.3.22). Older runtimes
+    // silently lose Discord→MC traffic, so surface the failure loudly here and
+    // expose the status at GET /mc-chat/health (field: discordRelay).
     if (typeof api.registerOutboundHook !== "function") {
-      logger.warn("[mc-chat] api.registerOutboundHook not available in this SDK version — Discord↔MC relay disabled");
+      relayStatus.enabled = false;
+      relayStatus.reason = "sdk-missing-registerOutboundHook";
+      logger.error(
+        "[mc-chat] Discord↔MC relay DISABLED: api.registerOutboundHook missing " +
+        "(requires openclaw >= 2026.3.22). Messages from Discord threads linked to " +
+        "MC will not reach the dashboard. Upgrade the gateway or expect silent drops. " +
+        "Status exposed at /mc-chat/health (field: discordRelay)."
+      );
     } else {
+    relayStatus.enabled = true;
+    relayStatus.reason = "registered";
     api.registerOutboundHook({
       provider: "discord",
       handler: async (msgCtx) => {

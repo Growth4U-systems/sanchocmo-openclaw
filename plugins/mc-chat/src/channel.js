@@ -56,6 +56,15 @@ function isConfigured(cfg) {
 export const mcChatPlugin = createChatChannelPlugin({
   base: createChannelPluginBase({
     id: CHANNEL_KEY,
+    meta: {
+      id: CHANNEL_KEY,
+      label: "Mission Control Chat",
+      selectionLabel: "Mission Control (Dashboard)",
+      detailLabel: "MC Chat",
+      docsPath: "/channels/mc-chat",
+      blurb: "Connect the Mission Control dashboard webchat to OpenClaw agents.",
+      aliases: ["mc", "mission-control"],
+    },
     capabilities: {
       chatTypes: ["dm"],
       reactions: false,
