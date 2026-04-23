@@ -129,7 +129,7 @@ Si el usuario dice "profundizar": relee el documento, haz 10-20 búsquedas adici
 ## 📁 Almacenamiento (OBLIGATORIO)
 
 ```
-brand/{{slug}}/self-intelligence/
+brand/{{slug}}/market-and-us/self/
 ├── current.md      ← versión activa
 ├── v1.md, v2.md... ← versiones anteriores
 ├── history.json    ← log de versiones

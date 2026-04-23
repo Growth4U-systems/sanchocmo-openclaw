@@ -153,7 +153,7 @@ Toda cifra con URL inline + sección `## Fuentes` al final con lista numerada co
 ## 📁 Almacenamiento (OBLIGATORIO)
 
 ```
-brand/{{slug}}/market/
+brand/{{slug}}/market-and-us/market/
 ├── current.md      ← versión activa
 ├── v1.md, v2.md... ← versiones anteriores
 ├── history.json    ← log de versiones
