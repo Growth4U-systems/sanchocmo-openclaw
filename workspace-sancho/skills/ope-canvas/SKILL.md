@@ -62,7 +62,7 @@ brand/{slug}/company-context/current.md
 brand/{slug}/business-model/current.md
 brand/{slug}/budget/current.md
 brand/{slug}/self-intelligence/current.md
-brand/{slug}/market/current.md          ← si existe
+brand/{slug}/market-and-us/market/current.md          ← si existe
 brand/{slug}/market-and-us/competitors/current.md     ← si existe
 brand/{slug}/positioning/current.md     ← si existe
 brand/{slug}/ope-canvas/briefing.md     ← si existe (datos pre-validados)
