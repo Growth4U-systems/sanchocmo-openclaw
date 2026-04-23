@@ -8,6 +8,7 @@ import { useChatStore } from "@/stores/chat";
 import { cn } from "@/lib/utils";
 import { useClients } from "@/hooks/useClients";
 import { useUnreadCount } from "@/hooks/useChat";
+import { navigateToClient } from "@/lib/navigation";
 
 /**
  * Sidebar — faithful replica of legacy mission-control.html <nav>.
@@ -263,25 +264,14 @@ function NavLink({
 function ClientSelector() {
   const t = useTranslations("sidebar");
   const router = useRouter();
-  const { selectedClient, setSelectedClient } = useAppStore();
+  const selectedClient = useAppStore((s) => s.selectedClient);
   const { data: clients } = useClients();
 
   const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value;
-    if (value === "global") {
-      setSelectedClient(null);
-      router.push("/dashboard");
-    } else {
-      setSelectedClient(value);
-      // Preserve the current sub-path (e.g. /projects, /foundation) on client
-      // switch, but drop the query string since its params (?doc=…, ?tab=…,
-      // filters) are typically scoped to the previous client.
-      // Segments: ["", "dashboard", <slug?>, ...sub].
-      const segments = router.asPath.split("?")[0].split("/");
-      const sub = segments.slice(3).join("/");
-      const subPath = sub ? `/${sub}` : "";
-      router.push(`/dashboard/${value}${subPath}`);
-    }
+    // Navigation is the single action; the store is then updated by the
+    // centralised URL → store sync (useClientUrlSync) as the route changes.
+    navigateToClient(router, value === "global" ? null : value);
   };
 
   return (
