@@ -19,11 +19,11 @@ brand/{slug}/
 │   ├── v1.md, v2.md...
 │   └── history.json
 ├── budget/
-│   ├── current.md        ← STANDALONE (fuente de verdad): Resources
+│   ├── current.md        ← STANDALONE (fuente de verdad): Resources (money + time + team + tools)
 │   ├── v1.md, v2.md...
 │   └── history.json
 ├── company-brief/
-│   ├── current.md        ← MERGE VIEW (auto-generated): Identity + Model + Resources
+│   ├── current.md        ← MERGE VIEW (auto-generated): Identity + Model + Resources (label semántica; la carpeta se llama `budget/` por compat histórica)
 │   ├── v1.md, v2.md...   ← snapshots del merge view
 │   └── history.json
 ├── market-and-us/
