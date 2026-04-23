@@ -54,12 +54,22 @@ export function Sidebar() {
   const slug = selectedClient;
   const unreadCount = useUnreadCount(slug);
 
+  const dashboardHref = slug ? `/dashboard/${slug}` : "/dashboard";
+
   function clientHref(path: string) {
     return slug ? `/dashboard/${slug}${path}` : "/dashboard";
   }
 
   function isActive(href: string) {
-    return router.asPath === href || router.asPath.startsWith(href + "/");
+    const path = router.asPath.split("?")[0];
+    return path === href || path.startsWith(href + "/");
+  }
+
+  // Home routes (global or client dashboard) should match only the exact
+  // URL — otherwise the Dashboard link would show active on every sub-page
+  // since it is a prefix of their paths.
+  function isExact(href: string) {
+    return router.asPath.split("?")[0] === href;
   }
 
   return (
@@ -160,10 +170,10 @@ export function Sidebar() {
           {/* ── Overview ── */}
           <SectionLabel text={t("nav.overview")} visible={sidebarOpen} />
           <NavLink
-            href="/dashboard"
+            href={dashboardHref}
             icon="📊"
             label={t("nav.dashboard")}
-            active={isActive("/dashboard")}
+            active={isExact(dashboardHref)}
             collapsed={!sidebarOpen}
           />
 
