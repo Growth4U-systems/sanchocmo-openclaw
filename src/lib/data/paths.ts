@@ -98,14 +98,6 @@ export function changelogFile() {
   return path.join(BASE, "memory", "CHANGELOG.md");
 }
 
-export function costsGlobalFile() {
-  return path.join(BASE, "memory", "costs", "global.json");
-}
-
-export function costsDailyFile() {
-  return path.join(BASE, "memory", "costs", "daily.json");
-}
-
 export function sourcesFile(slug: string) {
   return path.join(BASE, "brand", slug, "sources.json");
 }
