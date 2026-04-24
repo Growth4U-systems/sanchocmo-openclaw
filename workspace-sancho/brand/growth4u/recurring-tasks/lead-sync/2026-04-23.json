@@ -1,0 +1,11 @@
+{
+  "cronId": "a68143d8-1309-46eb-a5dc-4c3fb35ee3d2",
+  "cronName": "Lead Sync — Growth4U",
+  "slug": "growth4u",
+  "date": "2026-04-23",
+  "runAtMs": 1776974400014,
+  "status": "ok",
+  "durationMs": 479734,
+  "model": "qwen/qwen3.6-plus",
+  "content": "📊 **Lead Sync — 2026-04-23**\n\n**1 lead nuevo**, **9 leads actualizados**, **0 errores**\n\n**Nuevo:**\n- Alicia Orriols (aliciaorriols@gmail.com) — Clínica Dental, presupuesto +50k€, Facebook/IG Ads → recién captada\n\n**Actualizados:**\n- Laura Donadio (imhoit.com) — enrichment pendiente por dominio bloqueado\n- Enric Majó Prats (verdalia.com) — tiene llamada-cancelada\n- Blas Nieto (synapsale.com) — transcript del 22/04 ya registrado\n- Josemi G — enrichment pendiente (email personal, sin empresa)\n- Sergi Candel (xhype.io) — proposal follow-up pendiente\n- Jose Manuel Castro (firmatel.com) — sin nuevos transcripts\n- Marta Luis Ortiz Ortega (DMD Asesores) — sin nuevos transcripts\n- Josep (gutendurance.com/Heltech) — sin nuevos transcripts\n- Alfonso Pascual — sin nuevos transcripts\n\n**Notas:** x_search rate-limited (créditos agotados), Slack sync disabled, Apollo AP no configurada. Enriquecimiento de leads nuevos/research pendiente."
+}

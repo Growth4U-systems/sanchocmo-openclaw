@@ -3,7 +3,7 @@ ghl_id: rnk4eGKcfTINvsJzDIuh
 contact_name: Josep M Gil
 email: leadership@gutendurance.com
 phone: null
-last_enriched: 2026-04-22T20:00:00Z
+last_enriched: 2026-04-23T20:05:00Z
 enrichment_pending: false
 ---
 

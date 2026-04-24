@@ -3,7 +3,7 @@ ghl_id: 2KFOnZrZH4H0Nr8hGQnp
 contact_name: JoseMi G
 email: josemixxi@gmail.com
 phone: "+34610513634"
-last_enriched: 2026-04-17T20:00:00Z
+last_enriched: 2026-04-23T20:05:00Z
 enrichment_pending: true
 ---
 

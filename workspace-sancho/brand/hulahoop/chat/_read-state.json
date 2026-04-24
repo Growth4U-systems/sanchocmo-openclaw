@@ -15,7 +15,7 @@
     "lastReadTs": 1775750508991
   },
   "market-analysis": {
-    "lastReadTs": 1776260148743
+    "lastReadTs": 1776960292898
   },
   "competitor-analysis": {
     "lastReadTs": 1776260165969
@@ -40,5 +40,8 @@
   },
   "skill-market-synthesis": {
     "lastReadTs": 1776784092863
+  },
+  "positioning": {
+    "lastReadTs": 1776960398954
   }
 }

@@ -1,28 +1,23 @@
 {
   "url": "https://growth4u.io",
   "mobile": {
-    "performance": 81,
+    "performance": 85,
     "seo": 92,
     "accessibility": 92,
     "bestPractices": 100,
     "lcp": 3.5,
     "cls": 0.007,
-    "tbt": 68,
+    "tbt": 94,
     "opportunities": [],
     "diagnostics": [
-      {
-        "id": "image-delivery-insight",
-        "title": "Improve image delivery",
-        "score": 0
-      },
       {
         "id": "color-contrast",
         "title": "Background and foreground colors do not have a sufficient contrast ratio.",
         "score": 0
       },
       {
-        "id": "landmark-one-main",
-        "title": "Document does not have a main landmark.",
+        "id": "image-delivery-insight",
+        "title": "Improve image delivery",
         "score": 0
       },
       {
@@ -33,35 +28,40 @@
       {
         "id": "heading-order",
         "title": "Heading elements are not in a sequentially-descending order",
+        "score": 0
+      },
+      {
+        "id": "landmark-one-main",
+        "title": "Document does not have a main landmark.",
         "score": 0
       }
     ]
   },
   "desktop": {
-    "performance": 97,
+    "performance": 96,
     "seo": 92,
     "accessibility": 92,
     "bestPractices": 100,
     "lcp": 1,
     "cls": 0.009,
-    "tbt": 88,
+    "tbt": 96,
     "opportunities": [
       {
         "id": "unused-javascript",
         "title": "Reduce unused JavaScript",
-        "savings": 150,
+        "savings": 160,
         "description": "Reduce unused JavaScript and defer loading scripts until they are required to decrease bytes consumed by network activity. [Learn how to reduce unused"
       }
     ],
     "diagnostics": [
       {
-        "id": "landmark-one-main",
-        "title": "Document does not have a main landmark.",
+        "id": "heading-order",
+        "title": "Heading elements are not in a sequentially-descending order",
         "score": 0
       },
       {
-        "id": "heading-order",
-        "title": "Heading elements are not in a sequentially-descending order",
+        "id": "color-contrast",
+        "title": "Background and foreground colors do not have a sufficient contrast ratio.",
         "score": 0
       },
       {
@@ -70,8 +70,8 @@
         "score": 0
       },
       {
-        "id": "color-contrast",
-        "title": "Background and foreground colors do not have a sufficient contrast ratio.",
+        "id": "landmark-one-main",
+        "title": "Document does not have a main landmark.",
         "score": 0
       },
       {
@@ -81,5 +81,5 @@
       }
     ]
   },
-  "fetchedAt": "2026-04-22T16:13:56.773Z"
+  "fetchedAt": "2026-04-23T16:22:06.796Z"
 }

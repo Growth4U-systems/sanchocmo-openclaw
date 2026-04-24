@@ -96,3 +96,65 @@
 ---
 
 *Cervantes — 2026-04-22 08:00 UTC*
+
+---
+
+# 2026-04-23
+
+## 📋 Sesiones en últimas 24h
+
+| Sesión | Canal | Modelo | Resultado |
+|--------|-------|--------|----------|
+| Daily Pulse — Growth4U (cron) | #intelligence → hilo | Opus 4.6 → MiniMax-M2.7 | ✅ OK |
+| Daily Pulse — Hospital Capilar (cron) | #intelligence HC → hilo | Qwen 3.6 Plus | ✅ OK |
+| Morning Metrics — Growth4U (cron) | — | — | ✅ OK |
+
+**Total: 3 sesiones automáticas (crons), 0 interacciones humanas.**
+
+---
+
+## ❌ Errores y skills que fallaron
+
+**Ninguno.** Las 3 sesiones cron se ejecutaron sin errores.
+
+---
+
+## ✅ Qué hizo bien Sancho
+
+- **Daily Pulse Growth4U:** Detectó CPC spike (€8.21, 2x media), publicó en hilo correcto con datos accionables. Health Score sube (48→57).
+- **Daily Pulse HC:** Identificó correctamente 0 actividad humana en 9 canales. Llevó forward la alerta de Cervantes sobre flujo lead→cita.
+- **Thread discipline:** Ambos Dailies publicaron 1-liner + hilo con detalles. ✅ Patrón correcto.
+- **Canal rules:** 0 mensajes fuera de canal. Zero actividad humana = zero intervención needed.
+- **Archivos guardados:** `daily-pulse/2026-04-23.json` en ambos clientes OK.
+
+---
+
+## ⚠️ Observaciones
+
+1. **CPC €8.21 Growth4U** — Sancho alertó correctamente pero sin root cause analysis. Podría sugerir pausar adsets específicos o revisar pujas, no solo "evaluar rotación de audiencia".
+2. **Typo en Daily Pulse** — "competetición" en lugar de "competencia". Detalle menor.
+3. **Flujo lead→cita — 16 días** (día 16): Sancho lo reporta pero no puede más. Sigue en manos de Alfonso.
+
+---
+
+## 📝 Preguntas que Sancho no supo responder
+*(Ninguna — solo crons automáticos, 0 interacciones humanas)*
+
+---
+
+## 🔧 Patrones de mejora
+
+### P0 — Sin cambios vs ayer
+- GHL booking flow sigue roto, 16 días. No es problema de Sancho.
+
+### P1 — CPC spike sin análisis profundo
+**Pattern:** Sancho reporta el número (€8.21) pero no baja a nivel adset. Morning Metrics debería dar: adset CPC, creative CTR por ad, audiencia performance.
+**Recomendación:** Mejorar adapter de Ads para granularidad por adset.
+
+### P2 — Cero actividad humana creciente
+**Pattern:** Última interacción humana fue 20+ días atrás (#general, 30-mar). Daily Pulse pierde valor sin input humano.
+**Recomendación:** Sugerir a Alfonso que active más al equipo en Discord o pivote Daily Pulse a auto-analysis-only.
+
+---
+
+*Cervantes — 2026-04-23 08:00 UTC*
