@@ -202,25 +202,26 @@ export function Sidebar() {
               <SectionLabel text={t("nav.tools")} visible={sidebarOpen} />
               <NavLink href={clientHref("/trust-engine")} icon="🔍" label={t("nav.trustEngine")} active={isActive(clientHref("/trust-engine"))} collapsed={!sidebarOpen} />
               <NavLink href={clientHref("/atalaya")} icon="🏰" label={t("nav.atalaya")} active={isActive(clientHref("/atalaya"))} collapsed={!sidebarOpen} />
-              <NavLink href={clientHref("/activity")} icon="📡" label={t("nav.activity")} active={isActive(clientHref("/activity"))} collapsed={!sidebarOpen} />
-              <NavLink href={clientHref("/settings")} icon="⚙️" label={t("nav.settings")} active={isActive(clientHref("/settings"))} collapsed={!sidebarOpen} />
             </>
           )}
 
-          {/* ── Sistema ── */}
+          {/* ── Sistema ── Activity and Settings adapt to the current scope:
+              when a client is selected they point at the per-client pages;
+              otherwise they point at the global admin ones. There is one
+              entry per item, never both at once. */}
           <SectionLabel text={t("nav.system")} visible={sidebarOpen} />
           <NavLink
-            href="/dashboard/admin/activity"
+            href={slug ? clientHref("/activity") : "/dashboard/admin/activity"}
             icon="📡"
             label={t("nav.activity")}
-            active={isActive("/dashboard/admin/activity")}
+            active={isActive(slug ? clientHref("/activity") : "/dashboard/admin/activity")}
             collapsed={!sidebarOpen}
           />
           <NavLink
-            href="/dashboard/admin/settings"
+            href={slug ? clientHref("/settings") : "/dashboard/admin/settings"}
             icon="⚙️"
             label={t("nav.settings")}
-            active={isActive("/dashboard/admin/settings")}
+            active={isActive(slug ? clientHref("/settings") : "/dashboard/admin/settings")}
             collapsed={!sidebarOpen}
           />
         </nav>
