@@ -202,6 +202,8 @@ export function Sidebar() {
               <SectionLabel text={t("nav.tools")} visible={sidebarOpen} />
               <NavLink href={clientHref("/trust-engine")} icon="🔍" label={t("nav.trustEngine")} active={isActive(clientHref("/trust-engine"))} collapsed={!sidebarOpen} />
               <NavLink href={clientHref("/atalaya")} icon="🏰" label={t("nav.atalaya")} active={isActive(clientHref("/atalaya"))} collapsed={!sidebarOpen} />
+              <NavLink href={clientHref("/activity")} icon="📡" label={t("nav.activity")} active={isActive(clientHref("/activity"))} collapsed={!sidebarOpen} />
+              <NavLink href={clientHref("/settings")} icon="⚙️" label={t("nav.settings")} active={isActive(clientHref("/settings"))} collapsed={!sidebarOpen} />
             </>
           )}
 
