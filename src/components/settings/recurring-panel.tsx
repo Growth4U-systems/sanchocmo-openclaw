@@ -263,9 +263,15 @@ function PromptModal({
 /*  Main component                                                     */
 /* ------------------------------------------------------------------ */
 
-export function RecurringPanel() {
+interface RecurringPanelProps {
+  /** Client slug — falls back to the active client from the store. */
+  slug?: string;
+}
+
+export function RecurringPanel({ slug: slugProp }: RecurringPanelProps = {}) {
   const queryClient = useQueryClient();
-  const slug = useAppStore((s) => s.selectedClient) || "";
+  const storeSlug = useAppStore((s) => s.selectedClient) || "";
+  const slug = slugProp ?? storeSlug;
 
   /* --- Data fetch: tasks + templates from OpenClaw via API --- */
   const { data, isLoading } = useQuery<{ tasks: CronTask[]; templates: AvailableTemplate[] }>({

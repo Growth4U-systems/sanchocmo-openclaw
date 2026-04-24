@@ -183,5 +183,8 @@ memory/
 docs/superpowers
 .claude/plans
 
+# === mc-inspect script output ===
+screenshots/mc-inspect/
+
 # === Main workspace (from origin/main) ===
 workspace-main/

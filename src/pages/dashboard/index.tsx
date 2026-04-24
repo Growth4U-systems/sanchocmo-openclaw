@@ -1,12 +1,10 @@
 "use client";
 
-import { useState } from "react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import Head from "next/head";
 import Link from "next/link";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import { useAppStore } from "@/stores/app";
 import { useGlobalStats } from "@/hooks/useDashboardStats";
 import { useClients } from "@/hooks/useClients";
 import { useFoundation } from "@/hooks/useFoundation";
@@ -14,36 +12,24 @@ import { StatCard } from "@/components/shared/stat-card";
 import { ComicCard } from "@/components/shared/comic-card";
 import { ProgressBar } from "@/components/shared/progress-bar";
 import { ActivityFeed, type ActivityItem } from "@/components/shared/activity-feed";
-import { ActivityBar } from "@/components/dashboard/activity-bar";
-import { BrandColumn } from "@/components/dashboard/brand-column";
-import { MetricsColumn } from "@/components/dashboard/metrics-column";
-import { NextStepsColumn } from "@/components/dashboard/nextsteps-column";
 import { useQuery } from "@tanstack/react-query";
-import { DocSlideOver } from "@/components/shared/doc-slideover";
 import { cn } from "@/lib/utils";
 
-// ============================================================
-// Dashboard Page — Faithful replica of legacy Mission Control
-// Two modes: global (no client) and client V2 (selected client)
-// ============================================================
-
+/**
+ * /dashboard — global overview across all clients.
+ * The per-client variant lives at /dashboard/[slug].
+ */
 export default function DashboardPage() {
   const t = useTranslations();
   const { data: session } = useSession();
-  const { selectedClient } = useAppStore();
   const isAdmin = (session?.user as { role?: string })?.role === "admin";
 
   return (
-    <DashboardLayout fullBleed={!!selectedClient}>
+    <DashboardLayout>
       <Head>
         <title>{t("dashboard.title")} — Mission Control</title>
       </Head>
-
-      {!selectedClient ? (
-        <GlobalDashboard isAdmin={isAdmin} />
-      ) : (
-        <ClientDashboardV2 slug={selectedClient} />
-      )}
+      <GlobalDashboard isAdmin={isAdmin} />
     </DashboardLayout>
   );
 }
@@ -56,7 +42,6 @@ function GlobalDashboard({ isAdmin }: { isAdmin: boolean }) {
   const t = useTranslations();
   const { data: stats, isLoading } = useGlobalStats();
   const { data: clients } = useClients();
-  const { setSelectedClient } = useAppStore();
   const { data: costs } = useCosts();
   const { data: integrations } = useIntegrationsSummary();
 
@@ -143,7 +128,6 @@ function GlobalDashboard({ isAdmin }: { isAdmin: boolean }) {
                   name={client.name}
                   emoji={client.emoji || "🏢"}
                   phase={client.phase}
-                  onClick={() => setSelectedClient(client.slug)}
                 />
               ))}
           </div>
@@ -207,13 +191,11 @@ function ClientCard({
   name,
   emoji,
   phase,
-  onClick,
 }: {
   slug: string;
   name: string;
   emoji: string;
   phase: number;
-  onClick: () => void;
 }) {
   const { data: foundation } = useFoundation(slug);
 
@@ -236,10 +218,9 @@ function ClientCard({
   const t = useTranslations("common");
 
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="rounded-lg border-[3px] border-ink bg-card p-4 shadow-comic-sm hover:shadow-comic transition-shadow text-left w-full"
+    <Link
+      href={`/dashboard/${slug}`}
+      className="block rounded-lg border-[3px] border-ink bg-card p-4 shadow-comic-sm hover:shadow-comic transition-shadow text-left w-full"
     >
       <div className="flex items-center gap-2 mb-2">
         <span className="text-xl">{emoji}</span>
@@ -261,7 +242,7 @@ function ClientCard({
           </p>
         </div>
       )}
-    </button>
+    </Link>
   );
 }
 
@@ -285,113 +266,6 @@ function GlobalActivityFeed() {
   });
 
   return <ActivityFeed items={data || []} limit={10} />;
-}
-
-// ============================================================
-// Client Dashboard V2 — 3-column layout with activity bar
-// Faithful replica of legacy view-client with v2-grid
-// ============================================================
-
-function ClientDashboardV2({ slug }: { slug: string }) {
-  const t = useTranslations("dashboard");
-  const [activeTab, setActiveTab] = useState(0);
-  const [docPath, setDocPath] = useState<string | null>(null);
-
-  const tabs = [
-    { emoji: "🏢", label: t("brandSnapshot") },
-    { emoji: "📈", label: t("metricas") },
-    { emoji: "🎯", label: t("nextSteps") },
-  ];
-
-  return (
-    <div className="flex flex-col h-screen">
-      {/* Activity Bar (collapsible terminal) */}
-      <ActivityBar slug={slug} />
-
-      {/* Mobile tab bar — visible < lg */}
-      <div className="flex lg:hidden bg-card border-b-2 border-ink p-1">
-        {tabs.map((tab, i) => (
-          <button
-            key={tab.label}
-            type="button"
-            onClick={() => setActiveTab(i)}
-            className={cn(
-              "flex-1 px-3 py-2 rounded text-xs font-semibold transition-colors text-center",
-              activeTab === i ? "bg-rust text-white" : "hover:bg-muted"
-            )}
-          >
-            {tab.emoji} {tab.label}
-          </button>
-        ))}
-      </div>
-
-      {/* 3-Column Grid — desktop: all visible, mobile: tab-switched */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 flex-1 min-h-0 overflow-hidden">
-        {/* Col 1: Brand + Foundation */}
-        <div
-          className={cn(
-            "lg:border-r border-border bg-white dark:bg-card flex flex-col min-h-0",
-            activeTab !== 0 && "hidden lg:flex"
-          )}
-        >
-          {/* Column header */}
-          <div className="flex items-center justify-between px-5 py-3 border-b border-border bg-muted/20">
-            <span className="text-xs font-bold">{"🏢"} {t("brandSnapshot")}</span>
-            <Link
-              href={`/dashboard/${slug}/foundation`}
-              className="text-[10px] font-semibold text-rust hover:underline"
-            >
-              {t("brandSnapshot")} {"→"}
-            </Link>
-          </div>
-          {/* Column body */}
-          <div className="px-5 py-3 overflow-y-auto flex-1">
-            <BrandColumn slug={slug} onOpenDoc={setDocPath} />
-          </div>
-        </div>
-
-        {/* Col 2: Metrics */}
-        <div
-          className={cn(
-            "lg:border-r border-border bg-white dark:bg-card flex flex-col min-h-0",
-            activeTab !== 1 && "hidden lg:flex"
-          )}
-        >
-          <div className="flex items-center justify-between px-5 py-3 border-b border-border bg-muted/20">
-            <span className="text-xs font-bold">{"📈"} {t("metricas")}</span>
-            <Link
-              href={`/dashboard/${slug}/metrics`}
-              className="text-[10px] font-semibold text-rust hover:underline"
-            >
-              {t("title")} {"→"}
-            </Link>
-          </div>
-          <div className="px-5 py-3 overflow-y-auto flex-1">
-            <MetricsColumn slug={slug} />
-          </div>
-        </div>
-
-        {/* Col 3: Next Steps */}
-        <div className={cn("bg-white dark:bg-card flex flex-col min-h-0", activeTab !== 2 && "hidden lg:flex")}>
-          <div className="flex items-center justify-between px-5 py-3 border-b border-border bg-muted/20">
-            <span className="text-xs font-bold">{"🎯"} {t("nextSteps")}</span>
-            <Link
-              href={`/dashboard/${slug}/projects`}
-              className="text-[10px] font-semibold text-rust hover:underline"
-            >
-              {t("nextSteps")} {"→"}
-            </Link>
-          </div>
-          <div className="px-5 py-3 overflow-y-auto flex-1">
-            <NextStepsColumn slug={slug} onOpenDoc={setDocPath} />
-          </div>
-        </div>
-      </div>
-
-      {/* Doc slide-over */}
-      <DocSlideOver slug={slug} docPath={docPath} onClose={() => setDocPath(null)} />
-    </div>
-  );
 }
 
 // ============================================================

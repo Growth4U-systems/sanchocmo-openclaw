@@ -13,7 +13,6 @@ import { cn } from "@/lib/utils";
 import { useTranslations } from "next-intl";
 import { useAppStore } from "@/stores/app";
 import { AgentsPanel } from "@/components/settings/agents-panel";
-import { SkillsPanel } from "@/components/settings/skills-panel";
 import { DispatchPanel } from "@/components/settings/dispatch-panel";
 import { StrategiesPanel } from "@/components/settings/strategies-panel";
 import { RecurringPanel } from "@/components/settings/recurring-panel";
@@ -30,9 +29,9 @@ interface ClientFull {
   enabledFeatures: string[];
 }
 
-const TAB_KEYS = ["apis", "agents", "skills", "dispatch", "strategies", "recurring", "clients", "preferences"] as const;
+const TAB_KEYS = ["apis", "agents", "dispatch", "strategies", "recurring", "clients", "preferences"] as const;
 const TAB_ICONS: Record<string, string> = {
-  apis: "🔌", agents: "🤖", skills: "🧰", dispatch: "📡",
+  apis: "🔌", agents: "🤖", dispatch: "📡",
   strategies: "🎯", recurring: "🔄", clients: "👥", preferences: "⚙️",
 };
 
@@ -85,7 +84,6 @@ export default function SettingsPage() {
 
       {activeTab === "apis" && <ApisPanel />}
       {activeTab === "agents" && <AgentsPanel />}
-      {activeTab === "skills" && <SkillsPanel />}
       {activeTab === "dispatch" && <DispatchPanel />}
       {activeTab === "strategies" && <StrategiesPanel />}
       {activeTab === "recurring" && <RecurringPanel />}
