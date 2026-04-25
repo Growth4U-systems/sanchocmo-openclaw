@@ -93,7 +93,7 @@
     "lastReadTs": 1775746609562
   },
   "project-p00-strategic-plan": {
-    "lastReadTs": 1775776174715
+    "lastReadTs": 1777048717303
   },
   "task-p04-t01": {
     "lastReadTs": 1776259794524
@@ -132,7 +132,7 @@
     "lastReadTs": 1776263202572
   },
   "task-p01-t01": {
-    "lastReadTs": 1776262965445
+    "lastReadTs": 1777048722971
   },
   "competitor-scan": {
     "lastReadTs": 1776263918118
@@ -163,5 +163,8 @@
   },
   "foundation-report": {
     "lastReadTs": 1776970683185
+  },
+  "task-p01-t05": {
+    "lastReadTs": 1777048759381
   }
 }
