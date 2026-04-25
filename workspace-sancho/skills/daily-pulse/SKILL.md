@@ -534,3 +534,38 @@ Read these for detailed guidance:
 ```
 
 **Never re-report signals already captured in a previous pulse.**
+
+---
+
+## Content Engine Integration (added 2026-04-25)
+
+### Cron Mode (daily 7am)
+
+When called by the Content Engine cron, output goes to:
+`brand/{slug}/content/research-signals/{YYYY-MM-DD}-pulse.json`
+
+Format each insight as a research signal compatible with the Content Engine pipeline:
+```json
+{
+  "id": "pulse-{date}-{seq}",
+  "type": "pulse",
+  "pillar_id": "P1",
+  "title": "Insight title",
+  "summary": "2-3 sentence summary",
+  "source": "slack-channel-name / notion-page / transcript",
+  "source_type": "internal",
+  "date": "2026-04-25",
+  "created_at": "2026-04-25T07:00:00Z"
+}
+```
+
+The insight-classifier cron (7:30am) will add signal_type[] tags.
+The insight-to-content-mapper cron (8am) will convert to ideas with angle_draft.
+
+### Output path change
+
+Legacy: `brand/transitory/daily-pulse/`
+Content Engine: `brand/{slug}/content/research-signals/{date}-pulse.json`
+
+Write to BOTH paths during migration. Once Content Engine is fully
+operational, legacy path can be deprecated.
