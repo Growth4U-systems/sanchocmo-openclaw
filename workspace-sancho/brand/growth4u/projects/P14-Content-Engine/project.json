@@ -1,14 +1,14 @@
 {
   "id": "P14",
   "name": "Content Engine",
-  "description": "Sistema completo de contenido: estrategia, playbook, canales, keywords, calendario y crons.",
-  "approach": "Estrategia #26 del catalogo: Content Engine con 14 decisiones estrategicas, Content Playbook, channel setup, keyword research BOFU-first, calendario editorial y tareas recurrentes.",
+  "description": "Content Engine Setup — Proceso 1: Strategy + Pillars + Configs. Se ejecuta 1 vez. La produccion continua (Proceso 2) vive en proyectos semanales P-Content-Semana-NN.",
+  "approach": "4 procesos independientes: Setup (1 vez), Produccion (continuo semanal), Ad-hoc (bajo demanda), Performance (periodico). Ver _system/content-engine-architecture.md.",
   "objective": {
-    "description": "Content Engine operativo con calendario y crons activos",
-    "metric": "documents_approved",
+    "description": "Content Engine Setup completado: strategy + pillars + configs + crons activos",
+    "metric": "tasks_completed",
     "baseline": 0,
-    "target": 6,
-    "unit": "documentos"
+    "target": 3,
+    "unit": "tareas"
   },
   "origin": "strategic-plan-v2",
   "phase": 0,
