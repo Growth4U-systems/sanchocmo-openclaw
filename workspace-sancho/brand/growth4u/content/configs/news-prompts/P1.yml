@@ -1,0 +1,19 @@
+# News Prompts — P1
+# Used by news-monitor to find relevant news for this pillar.
+# Tool: Brave Search API / Perplexity
+# Frequency: daily 7am
+
+pillar_id: P1
+pillar_name: "Sistemas de Growth Repetibles"
+prompts:
+  - "startup growth systems frameworks 2026"
+  - "B2B SaaS growth playbook repeatable"
+  - "growth hacking vs growth systems debate"
+  - "startup growth stagnation post-PMF solutions"
+  - "unit economics CAC LTV SaaS startups Spain"
+sector_filters:
+  - "B2B SaaS"
+  - "startup growth"
+  - "martech"
+language: [es, en]
+exclude_sources: []

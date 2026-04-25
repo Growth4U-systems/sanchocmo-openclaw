@@ -1,0 +1,18 @@
+# News Prompts — P4
+# Used by news-monitor to find relevant news for this pillar.
+# Tool: Brave Search API / Perplexity
+# Frequency: daily 7am
+
+pillar_id: P4
+pillar_name: "El Modelo Agencia Esta Roto"
+prompts:
+  - "marketing agency model broken 2026"
+  - "fractional CMO vs agency vs in-house"
+  - "marketing agency transparency accountability"
+  - "startup burned by marketing agency stories"
+  - "in-house marketing vs outsource decision"
+sector_filters:
+  - "marketing agencies"
+  - "B2B services"
+language: [es, en]
+exclude_sources: []

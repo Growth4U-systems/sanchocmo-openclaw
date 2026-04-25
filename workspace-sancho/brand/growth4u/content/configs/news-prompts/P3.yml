@@ -1,0 +1,20 @@
+# News Prompts — P3
+# Used by news-monitor to find relevant news for this pillar.
+# Tool: Brave Search API / Perplexity
+# Frequency: daily 7am
+
+pillar_id: P3
+pillar_name: "Growth en Sectores Regulados"
+prompts:
+  - "fintech marketing regulation CNMV Spain"
+  - "MiCA crypto marketing compliance Europe 2026"
+  - "healthtech marketing compliance GDPR"
+  - "regulated industry growth hacking legal"
+  - "fintech advertising rules Spain EU"
+sector_filters:
+  - "fintech"
+  - "crypto"
+  - "healthtech"
+  - "regulation"
+language: [es, en]
+exclude_sources: []

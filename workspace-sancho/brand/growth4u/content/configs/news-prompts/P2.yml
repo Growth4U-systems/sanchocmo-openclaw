@@ -1,0 +1,20 @@
+# News Prompts — P2
+# Used by news-monitor to find relevant news for this pillar.
+# Tool: Brave Search API / Perplexity
+# Frequency: daily 7am
+
+pillar_id: P2
+pillar_name: "Adquisicion Multi-Canal y Confianza"
+prompts:
+  - "GEO generative engine optimization 2026"
+  - "AI search optimization ChatGPT Gemini Perplexity"
+  - "multi-channel acquisition B2B without increasing team"
+  - "trust-based marketing B2B SaaS"
+  - "LinkedIn organic reach decline alternatives"
+  - "cold email deliverability warm outbound 2026"
+sector_filters:
+  - "digital marketing"
+  - "SEO AI"
+  - "B2B acquisition"
+language: [es, en]
+exclude_sources: []

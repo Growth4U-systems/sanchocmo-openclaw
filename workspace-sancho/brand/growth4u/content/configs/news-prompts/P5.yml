@@ -1,0 +1,20 @@
+# News Prompts — P5
+# Used by news-monitor to find relevant news for this pillar.
+# Tool: Brave Search API / Perplexity
+# Frequency: daily 7am
+
+pillar_id: P5
+pillar_name: "Growth con IA: Ejecucion No Hype"
+prompts:
+  - "AI marketing agents execution 2026"
+  - "AI content marketing automation real results"
+  - "marketing AI agents vs tools debate"
+  - "AI replacing marketing agencies"
+  - "LLM agents for B2B growth operations"
+  - "AI marketing stack solopreneur small team"
+sector_filters:
+  - "AI marketing"
+  - "martech AI"
+  - "agents"
+language: [es, en]
+exclude_sources: []
