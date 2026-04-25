@@ -356,6 +356,10 @@ def get_x_source_with_method(config: dict[str, Any]) -> tuple[str | None, str]:
     if config.get("AUTH_TOKEN") and config.get("CT0"):
         method = config.get("_AUTH_TOKEN_SOURCE", "env")
         return "bird", method
+    # Fall back to xurl CLI (official X API v2, OAuth2, free developer app)
+    from . import xurl_x
+    if xurl_x.is_available():
+        return "xurl", "oauth2"
     return None, "none"
 
 
@@ -401,6 +405,7 @@ def get_x_source(config: dict[str, Any]) -> str | None:
     Returns:
         'bird' if Bird is installed and explicit cookies are configured,
         'xai' if XAI_API_KEY is configured,
+        'xurl' if xurl CLI is installed and authenticated,
         None if no X source available.
     """
     # Import here to avoid circular dependency
@@ -420,6 +425,11 @@ def get_x_source(config: dict[str, Any]) -> str | None:
         return 'xai'
     if has_bird_creds and bird_x.is_bird_installed():
         return 'bird'
+
+    # Fall back to xurl CLI (official X API v2, OAuth2, free developer app)
+    from . import xurl_x
+    if xurl_x.is_available():
+        return 'xurl'
 
     return None
 
@@ -602,14 +612,18 @@ def get_x_source_status(config: dict[str, Any]) -> dict[str, Any]:
     elif xai_available:
         source = 'xai'
     else:
-        source = None
+        # Fall back to xurl CLI
+        from . import xurl_x as _xurl_check
+        source = 'xurl' if _xurl_check.is_available() else None
 
+    from . import xurl_x as _xurl_x
     return {
         "source": source,
         "bird_installed": bird_status["installed"],
         "bird_authenticated": bird_status["authenticated"],
         "bird_username": bird_status["username"],
         "xai_available": xai_available,
+        "xurl_available": _xurl_x.is_available(),
         "can_install_bird": bird_status["can_install"],
     }
 

@@ -5,6 +5,70 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.1.0] - 2026-04-22
+
+Consolidates the 3.0.10 to 3.0.14 dev cycle (commenter handles, `--competitors`, per-entity Step 0.55, vs-mode N passes, comparison title attribution) and republishes the OpenClaw bundle, which had been frozen on ClawHub at `3.0.0-open` since April 8.
+
+### Added
+
+- **OpenClaw republish.** `clawhub install last30days-official` now resolves to `3.1.0-open`, matching current main. Closes [#307](https://github.com/mvanhorn/last30days-skill/issues/307), [#195](https://github.com/mvanhorn/last30days-skill/issues/195), [#236](https://github.com/mvanhorn/last30days-skill/issues/236). The ClawHub bundle had shipped a broken `env.py get_config()` and stale SKILL.md path references since April; both are fixed at source on main and the republish carries the fixes to installers.
+
+### Fixed
+
+- **Claude Code plugin manifest path-escape.** The `.claude-plugin/plugin.json` `skills` key was removed in commit `93fbed2` but never shipped in a tagged release. Installing via `/plugin install last30days-skill` could hit `/doctor`'s `Path escapes plugin directory: ./ (skills)` error. This release ships the fix. Closes [#306](https://github.com/mvanhorn/last30days-skill/issues/306).
+- **Broken README link.** The README's "source of truth" link pointed at `skills/last30days/SKILL.md`, a path that does not exist. Fixed to point at root `SKILL.md`.
+
+### Dev cycle journal (3.0.10 - 3.0.14, not separately tagged)
+
+Individual changelog entries for 3.0.10 through 3.0.14 below document the incremental work consolidated into this release.
+
+## [3.0.14] - 2026-04-22
+
+### Changed
+
+- **Comparison-mode title attribution.** The synthesis title for vs-mode and `--competitors` outputs changes from `What the Community Says (Last 30 Days)` to `What the Community Says (/Last30Days)`. Surfaces the slash-command identity instead of restating the date range. Three SKILL.md occurrences updated; pure documentation change.
+
+## [3.0.13] - 2026-04-22
+
+### Changed
+
+- **vs mode runs N full passes in parallel, one per entity.** Architectural revert of the 3-pass → 1-pass latency optimization from an earlier version. `/last30days "OpenAI vs Anthropic vs xAI"` now runs three full `pipeline.run()` calls in parallel via the same fanout `--competitors` uses, producing three `*-raw.md` save files plus a merged comparison output. Each entity gets its own Step 0.55-grade targeting, own primary X handle weight, own subreddit scoping — apples-to-apples depth instead of the one-pool merged retrieval the single-pass path produced. Parallel execution keeps wall clock ≈ single pass.
+- **`--competitors` is now a SKILL.md-level shortcut for vs-mode with auto-discovery.** The hosting reasoning model (Claude Code, Codex, Hermes, Gemini, any agent with WebSearch) performs discovery and Step 0.55 per entity via its own WebSearch tool, then invokes the engine with a vs-topic and `--competitors-plan` JSON. The engine flag remains for headless/cron use with BRAVE/EXA/SERPER/PARALLEL/OPENROUTER keys (engine-internal `auto_resolve` stays as fallback).
+- **LAW 7-style stderr for `--competitors` with no backend** now leads with the hosting-model path (WebSearch + Step 0.55 + `--competitors-plan`) instead of `BRAVE_API_KEY`. API-key framing moved to a secondary "headless" section.
+
+### Added
+
+- **`--competitors-plan` JSON flag** for per-entity Step 0.55 targeting. Schema: `{entity_name: {x_handle?, x_related?, subreddits?, github_user?, github_repos?, context?}}`. Accepts inline JSON or a file path (matches `--plan`). When present for an entity, skips engine-internal `auto_resolve` and uses the provided values; missing fields fall back to `auto_resolve` (if backend) or planner defaults. Case-insensitive entity matching. The `subrun_kwargs_for` helper is the single source of truth for per-entity kwargs — no closure-default fallthrough from main scope.
+- **Per-entity save files** when `--save-dir` is set on a vs-mode or `--competitors` run. Each entity's sub-run produces its own `{slug}-raw.md` with a single-row Resolved Entities block — matches historical vs-mode behavior (N passes → N save files).
+- **`--polymarket-keywords "kw1,kw2"`** to filter Polymarket matches for ambiguous single-token topics (e.g., "Warriors" → `nba,gsw,golden-state` kills Glasgow Warriors rugby and Honor of Kings Rogue Warriors noise).
+
+### Fixed
+
+- **BRAVE/SERPER footer nudge suppressed** when `--plan` or `--competitors-plan` is present. The nudge told Claude Code users to set an API key when they already have WebSearch via the hosting model. Nudge still fires for true headless runs (no `--plan`, no backend) where the advice is correct.
+- **Override-leak regression testing.** 3.0.12 already fixed the main-topic `--subreddits` / `--x-handle` / `--github-*` from leaking into peer sub-runs via explicit per-entity kwargs scrubbing. This release adds a 4-test regression suite (`test_competitor_subrun_isolation.py`) locking in the invariant.
+
+## [3.0.12] - 2026-04-22
+
+### Fixed
+
+- **Per-entity Step 0.55 resolution for competitor sub-runs.** In 3.0.11, only the main topic got X handle / subreddit / GitHub resolution; competitor sub-runs ran with planner defaults and produced visibly thinner evidence (Reddit 403 fallbacks, single-word queries). Each competitor sub-run now calls `resolve.auto_resolve()` inside `fanout.run_competitor_fanout` when a web backend is available, mirroring the main topic's pre-flight resolution. Per-entity X handle, subreddit list, GitHub user/repos, and news context are threaded into each sub-run's `pipeline.run()` call. Deep-copied config per sub-run prevents `_auto_resolve_context` cross-leak. Surfaces in a new `## Resolved Entities` output block so the resolution coverage is visible without reading stderr.
+- **LAW 7 false-positive on internal fan-out sub-runs.** Each competitor sub-run was emitting the `[Planner] No --plan passed... YOU ARE the planner` stderr warning. LAW 7 targets the hosting-reasoning-model path, not engine-internal fan-out. New `internal_subrun=True` keyword on `planner.plan_query` and `pipeline.run` suppresses the warning for sub-runs only; the default path is unchanged.
+- **Marketplace-stale SKILL.md trap.** Added a STEP 0 canonical-path self-check at the top of SKILL.md. Two of three 2026-04-22 test runs loaded SKILL.md from `plugins/marketplaces/last30days-skill/` (Claude-Code-managed git clone pinned to origin/main, lagging the versioned cache), then ran `--help` against the same stale path, did not see `--competitors`, and fell back to a manual comparison plan. The STEP 0 block forces any reader to verify they loaded from `plugins/cache/last30days-skill/last30days/{VERSION}/SKILL.md` and re-read from the versioned cache if not.
+
+### Changed
+
+- **Default `--competitors` count is now 2 (3-way total: original + 2 peers).** Previously 3. `--competitors=N` still customizes (range 1..6). Matches the feature description's canonical example (`Kanye vs Drake vs Kendrick`).
+
+### Added
+
+- **`## Resolved Entities` block** in `render_comparison_multi` output. Shows per-entity X handle, subreddits, GitHub user/repos, and truncated context for every entity in the comparison. Block is omitted entirely when no entity has a resolved payload (mock mode, no backend).
+
+## [3.0.11] - 2026-04-22
+
+### Added
+
+- **`--competitors` flag for auto-discovered comparison fan-out.** Pass `--competitors` on a single-entity topic and the engine discovers 2-6 peer entities via web search, then runs the full pipeline on each in parallel and emits one N-way comparison. `last30days Kanye West --competitors` resolves Drake, Kendrick Lamar, and one more peer. `last30days OpenAI --competitors` resolves Anthropic, xAI, Google Gemini. `--competitors=N` controls count, `--competitors-list="A,B,C"` skips discovery and uses the explicit list. Discovery mirrors the `auto_resolve` pattern (Brave / Exa / Serper / Parallel) with deterministic text extraction - no internal LLM call. Sub-runs inherit the main `--quick`/`--deep`/`--days`, run in a `ThreadPoolExecutor`, and degrade gracefully when at least 2 entities survive. Output reuses the existing 9-axis `## Head-to-Head` scaffold.
+
 ## [3.0.10] - 2026-04-21
 
 ### Added

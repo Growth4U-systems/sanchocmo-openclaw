@@ -1,29 +1,20 @@
 {
   "client": "growth4u",
   "period": "2026-04",
-  "updatedAt": "2026-04-22T02:10:05.695873",
-  "total_cost_usd": 2.043,
-  "total_cost_eur": 1.8795,
-  "turns": 67,
-  "sessions": 3,
+  "updatedAt": "2026-04-24T08:00:39.109369",
+  "total_cost_usd": 0,
+  "total_cost_eur": 0.0,
+  "turns": 7,
+  "sessions": 1,
   "agents": {
     "sancho": {
-      "cost_usd": 2.043,
-      "cost_eur": 1.8795,
-      "turns": 67,
-      "sessions": 3
+      "cost_usd": 0,
+      "cost_eur": 0.0,
+      "turns": 7,
+      "sessions": 1
     }
   },
   "models": {
-    "claude-opus-4-6": {
-      "input": 23,
-      "output": 3336,
-      "cache_read": 1640560,
-      "cache_write": 182271,
-      "cost_usd": 2.043,
-      "cost_eur": 1.8795,
-      "turns": 15
-    },
     "unknown": {
       "input": 0,
       "output": 0,
@@ -31,73 +22,17 @@
       "cache_write": 0,
       "cost_usd": 0,
       "cost_eur": 0.0,
-      "turns": 52
+      "turns": 7
     }
   },
   "days": {
-    "2026-04-01": {
+    "2026-04-22": {
+      "cost_usd": 0,
+      "turns": 4
+    },
+    "2026-04-23": {
       "cost_usd": 0,
       "turns": 3
-    },
-    "2026-04-03": {
-      "cost_usd": 0,
-      "turns": 3
-    },
-    "2026-04-04": {
-      "cost_usd": 0,
-      "turns": 1
-    },
-    "2026-04-05": {
-      "cost_usd": 0,
-      "turns": 1
-    },
-    "2026-04-07": {
-      "cost_usd": 2.043,
-      "turns": 17
-    },
-    "2026-04-08": {
-      "cost_usd": 0,
-      "turns": 5
-    },
-    "2026-04-09": {
-      "cost_usd": 0,
-      "turns": 4
-    },
-    "2026-04-10": {
-      "cost_usd": 0,
-      "turns": 4
-    },
-    "2026-04-11": {
-      "cost_usd": 0,
-      "turns": 2
-    },
-    "2026-04-12": {
-      "cost_usd": 0,
-      "turns": 2
-    },
-    "2026-04-13": {
-      "cost_usd": 0,
-      "turns": 6
-    },
-    "2026-04-14": {
-      "cost_usd": 0,
-      "turns": 4
-    },
-    "2026-04-15": {
-      "cost_usd": 0,
-      "turns": 5
-    },
-    "2026-04-16": {
-      "cost_usd": 0,
-      "turns": 4
-    },
-    "2026-04-17": {
-      "cost_usd": 0,
-      "turns": 5
-    },
-    "2026-04-20": {
-      "cost_usd": 0,
-      "turns": 1
     }
   },
   "clientSpend": {

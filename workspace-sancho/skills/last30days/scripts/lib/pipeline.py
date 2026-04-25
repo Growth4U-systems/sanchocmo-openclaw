@@ -40,6 +40,7 @@ from . import (
     xai_x,
     xiaohongshu_api,
     xquik,
+    xurl_x,
     youtube_yt,
 )
 from .cluster import cluster_candidates
@@ -177,6 +178,7 @@ def run(
     lookback_days: int = 30,
     github_user: str | None = None,
     github_repos: list[str] | None = None,
+    internal_subrun: bool = False,
 ) -> schema.Report:
     settings = DEPTH_SETTINGS[depth]
     requested_sources = normalize_requested_sources(requested_sources)
@@ -214,6 +216,7 @@ def run(
             provider=None if mock else reasoning_provider,
             model=None if mock else runtime.planner_model,
             context=config.get("_auto_resolve_context", ""),
+            internal_subrun=internal_subrun,
         )
         # Source labelling: the fallback path annotates notes with "fallback-plan"
         # or "deterministic-comparison-plan"; anything else came from the LLM.
@@ -440,7 +443,7 @@ def run(
         if bundle.items_by_source.get(source):
             del bundle.errors_by_source[source]
 
-    items_by_source = _finalize_items_by_source(bundle.items_by_source, topic=topic)
+    items_by_source = _finalize_items_by_source(bundle.items_by_source, topic=topic, config=config)
     candidates = weighted_rrf(bundle.items_by_source_and_query, plan, pool_limit=settings["pool_limit"])
     ranked_candidates = rerank.rerank_candidates(
         topic=topic,
@@ -508,6 +511,7 @@ def _normalize_score_dedupe(
 def _finalize_items_by_source(
     items_by_source_raw: dict[str, list[schema.SourceItem]],
     topic: str = "",
+    config: dict | None = None,
 ) -> dict[str, list[schema.SourceItem]]:
     finalized = {}
     for source, items in items_by_source_raw.items():
@@ -520,6 +524,11 @@ def _finalize_items_by_source(
         # (e.g., WTI crude oil, Elon tweet counts) before footer emission.
         if source == "polymarket" and topic:
             items = polymarket.filter_items_against_topic(topic, items)
+            # --polymarket-keywords (via config): additional keyword filter
+            # for ambiguous single-token topics (e.g., "Warriors" → nba,gsw).
+            keywords = config.get("_polymarket_keywords") if isinstance(config, dict) else None
+            if keywords:
+                items = polymarket.filter_items_against_keywords(items, keywords)
         finalized[source] = items
     return finalized
 
@@ -895,6 +904,9 @@ def _retrieve_stream(
                 depth=depth,
             )
             return xai_x.parse_x_response(result), {}
+        if backend == "xurl":
+            result = xurl_x.search_x(subquery.search_query, depth=depth)
+            return xurl_x.parse_x_response(result, topic=subquery.search_query), {}
         raise RuntimeError("No X backend is available.")
     if source == "youtube":
         # Use raw_topic so expand_youtube_queries() generates diverse variants

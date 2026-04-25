@@ -158,3 +158,91 @@
 ---
 
 *Cervantes — 2026-04-23 08:00 UTC*
+
+---
+
+# 2026-04-24
+
+## 📋 Sesiones en últimas 24h
+
+| Sesión | Cliente | Canal | Estado | Notas |
+|--------|---------|-------|--------|-------|
+| Morning Metrics — Growth4U | Growth4U | #intelligence | ✅ OK | Instantly error persisted `(campaigns\|\|[]) is not iterable` |
+| Morning Metrics — Hulahoop | Hulahoop | #intelligence | ✅ OK | "Sin APIs configuradas" correcto |
+| Cost Tracker Daily | Multi-client | hilo #Costes-APIs | ✅ OK | |
+| Call Prep Daily — Growth4U | Growth4U | ? | ✅ OK | |
+| Lead Sync — Growth4U | Growth4U | ? | ✅ OK | |
+| Meeting Intelligence | — | #intelligence | ✅ OK | 0 nuevos docs |
+| Daily Pulse — Growth4U | Growth4U | hilo | ✅ OK | 5 leads, CPC €3.39 (recuperado) |
+| Daily Pulse — Hospital Capilar | HC | hilo | ✅ OK | 0 actividad humana en 9 canales |
+| **Weekly Strategy Report — Criptan** | Criptan | ? | ⚠️ **ABORTED** | Generó ~18KB de markdown pero se abortó antes de guardar |
+| **B2B Pipeline Review — Criptan** | Criptan | ? | ⚠️ **ABORTED** | Sesión vacía — 0 output, 0 archivo |
+| update-skills | — | — | ✅ OK | apify 1.0.3, OpenClaw updated |
+
+**Total: 11 sesiones | 9 ✅ | 2 ⚠️ ABORTED (ambas Criptan)**
+
+---
+
+## ❌ Errores y skills que fallaron
+
+1. **Instantly API error (GROWING, persistente):** `(campaigns || []) is not iterable` — misma semana. No es nuevo, pero sigue sin fix. La gracia: 5/6 fuentes OK.
+2. **Weekly Strategy Report — Criptan ABORTED:** Session generate ~18KB de contenido pero se abortó antes del write. Archivo NO guardado. Reporte perdido.
+3. **B2B Pipeline Review — Criptan ABORTED:** Sesión sin output. 0 archivo creado. Tarea completa perdida.
+
+---
+
+## ⚠️ Alerta P0 — Creciente
+
+**Growth4U — Flujo lead→cita: DÍA 22 (era día 16 hace 48h)**
+- 22 leads con tag `llamada-agendada` (↑ desde 19)
+- Casi 0 calls en calendario
+- CPC recuperado (€3.39 ✅) — adquisición OK, el problema es funnel post-lead
+- **Sin evidencia de mejora.** Esto ya es crítico.
+
+---
+
+## ✅ Qué hizo bien Sancho
+
+- **Canal discipline:** 0 mensajes en canales donde no debe hablar.
+- **Hulahoop "Sin APIs":** Reported correctly sin fabricar datos.
+- **Instantly error:** Lo gestiona y sigue con 5/6 fuentes.
+- **Thread pattern:** Daily Pulses publican en hilos correctamente.
+- **Morning Metrics:** Recupera CPC, detecta anomalías, reporta bien.
+
+---
+
+## 📝 Preguntas que Sancho no supo responder
+*(Ninguna — solo crons automáticos, 0 interacciones humanas)*
+
+---
+
+## 🔧 Patrones de mejora
+
+### P0 — Criptan crons abortando (CRÍTICO)
+**Pattern:** 2 sesiones Criptan abortadas en 24h. El Weekly Strategy Report generó contenido extenso (18KB) pero se perdió. El B2B Pipeline Review murió sin output.
+**Hipótesis:** El modelo (MiniMax-M2.7) está generando contenido extenso y el sistema aborta por timeout o límite de contexto.
+**Recomendación:**
+1. Revisar el skill de Weekly Strategy Report — reducir scope de generación o partirlo en chunks.
+2. El B2B Pipeline Review murió sin razón — revisar skill o dar más contexto.
+3. Cervantes debería regenerar el Weekly Strategy Report manualmente esta semana (antes del review del 30 abr).
+
+### P1 — Instantly API sigue rota
+**Pattern:** Mismo error `(campaigns || []) is not iterable` tercera semana consecutiva.
+**Recomendación:** Fix en adapter de Instantly. Posible cambio de API o respuesta vacía que no se maneja.
+
+### P2 — Cero actividad humana en canales
+**Pattern:** Última interacción humana real: >20 días atrás. Los Daily Pulses publican para没有人.
+**Recomendación:** Alfonso debería activar el equipo o pivote a auto-analysis-only para reducir coste.
+
+---
+
+## 📏 Métricas del sistema
+
+- **system_uptime_without_intervention:** ✅ Alto — crons ejecutándose (9/11 OK)
+- **Criptan cron failure rate:** ⚠️ 2/2 abortados en 24h — patrón grave
+- **Growth4U funnel broken:** 🔴 22 días sin resolución
+- **Costo estimado Sancho 24h:** ~$0.15-0.20 USD (crons MiniMax)
+
+---
+
+*Cervantes — 2026-04-24 08:00 UTC*

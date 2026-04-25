@@ -1,7 +1,7 @@
 {
   "client": "paymatico",
   "period": "2026-04",
-  "updatedAt": "2026-04-22T02:10:05.695873",
+  "updatedAt": "2026-04-24T08:00:39.109369",
   "total_cost_usd": 0,
   "total_cost_eur": 0.0,
   "turns": 1,
@@ -26,7 +26,7 @@
     }
   },
   "days": {
-    "2026-04-15": {
+    "2026-04-22": {
       "cost_usd": 0,
       "turns": 1
     }

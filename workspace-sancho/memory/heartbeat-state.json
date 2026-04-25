@@ -1,24 +1,19 @@
 {
   "lead_sync": {
-    "last_run": "2026-04-23T20:05:00Z",
+    "last_run": "2026-04-24T20:00:00Z",
     "new_leads": 1,
-    "updated_leads": 9,
+    "updated_leads": 3,
     "slack_notes_synced": 0,
     "errors": 0,
     "new_lead_ids": [
-      "24D0J425o7t6UpVkB92o"
+      "iKsRNTxHV0IHOS9NSxRH"
     ],
     "updated_lead_ids": [
       "n0nIQeYkFFVB1TulRIT5",
       "Lq27yCsxIuA3rYJqy3mi",
-      "dWNa5BY8sfps2shr0eNm",
-      "2KFOnZrZH4H0Nr8hGQnp",
-      "Gwga8zrjoKxj7AcfoeYm",
-      "pjrUZmftgCh3Chu4wWUS",
-      "pLoARoKTRiQeg1KTYWnW",
-      "rnk4eGKcfTINvsJzDIuh",
-      "GpUQkyooWWamdZdxTsss"
-    ]
+      "Gwga8zrjoKxj7AcfoeYm"
+    ],
+    "notes": "11 leads con tag 'llamada-agendada' en GHL. Drive transcripts encontrados para Enric Majó Prats (call cancelled 2min), Laura Donadio (€12.500 proposal) y Sergi Candel (payment terms). Slack sync disabled. Enrichment tools no disponibles (Apollo, x_search rate-limited)."
   },
   "sales_call_prep": {
     "last_run": "2026-04-23T20:30:00Z",
@@ -30,5 +25,15 @@
     "calendar_source": "gog calendar (primary calendar)",
     "ghl_api_status": "working",
     "notes": "1 GHL call: Enric Majó Prats (Verdalia) 11:30. CESPPED ARTIFICIAL +50k€. 8 other calendar events are internal/client meetings. Discord channel via raw HTTP (channelId not resolving in tool)."
+  }
+}
+{
+  "sales_call_prep": {
+    "last_run": "2026-04-24T20:30:00Z",
+    "mode": "weekly",
+    "calls_found": 0,
+    "week_range": "2026-04-27 to 2026-05-01",
+    "discord_thread": "1497334904717836338",
+    "discord_posted": true
   }
 }

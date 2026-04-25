@@ -1,24 +1,24 @@
 {
   "url": "https://hulahoop.media",
   "mobile": {
-    "performance": 40,
+    "performance": 57,
     "seo": 92,
     "accessibility": 91,
     "bestPractices": 100,
-    "lcp": 16.1,
+    "lcp": 16.3,
     "cls": 0,
-    "tbt": 1728,
+    "tbt": 117,
     "opportunities": [
       {
         "id": "redirects",
         "title": "Avoid multiple page redirects",
-        "savings": 751,
+        "savings": 752,
         "description": "Redirects introduce additional delays before the page can be loaded. [Learn how to avoid page redirects](https://developer.chrome.com/docs/lighthouse/"
       },
       {
         "id": "unused-javascript",
         "title": "Reduce unused JavaScript",
-        "savings": 600,
+        "savings": 750,
         "description": "Reduce unused JavaScript and defer loading scripts until they are required to decrease bytes consumed by network activity. [Learn how to reduce unused"
       }
     ],
@@ -29,18 +29,13 @@
         "score": 0
       },
       {
-        "id": "mainthread-work-breakdown",
-        "title": "Minimize main-thread work",
-        "score": 0
-      },
-      {
-        "id": "bootup-time",
-        "title": "Reduce JavaScript execution time",
-        "score": 0
-      },
-      {
         "id": "image-delivery-insight",
         "title": "Improve image delivery",
+        "score": 0
+      },
+      {
+        "id": "mainthread-work-breakdown",
+        "title": "Minimize main-thread work",
         "score": 0
       },
       {
@@ -49,30 +44,30 @@
         "score": 0
       },
       {
-        "id": "legacy-javascript-insight",
-        "title": "Legacy JavaScript",
+        "id": "label",
+        "title": "Form elements do not have associated labels",
         "score": 0
       },
       {
-        "id": "label",
-        "title": "Form elements do not have associated labels",
+        "id": "legacy-javascript-insight",
+        "title": "Legacy JavaScript",
         "score": 0
       }
     ]
   },
   "desktop": {
-    "performance": 82,
+    "performance": 73,
     "seo": 92,
     "accessibility": 91,
     "bestPractices": 100,
     "lcp": 2.9,
-    "cls": 0.006,
-    "tbt": 60,
+    "cls": 0,
+    "tbt": 241,
     "opportunities": [
       {
         "id": "redirects",
         "title": "Avoid multiple page redirects",
-        "savings": 203,
+        "savings": 202,
         "description": "Redirects introduce additional delays before the page can be loaded. [Learn how to avoid page redirects](https://developer.chrome.com/docs/lighthouse/"
       },
       {
@@ -84,8 +79,8 @@
     ],
     "diagnostics": [
       {
-        "id": "render-blocking-insight",
-        "title": "Render blocking requests",
+        "id": "label",
+        "title": "Form elements do not have associated labels",
         "score": 0
       },
       {
@@ -99,11 +94,11 @@
         "score": 0
       },
       {
-        "id": "label",
-        "title": "Form elements do not have associated labels",
+        "id": "render-blocking-insight",
+        "title": "Render blocking requests",
         "score": 0
       }
     ]
   },
-  "fetchedAt": "2026-04-22T17:08:44.228Z"
+  "fetchedAt": "2026-04-24T12:33:05.843Z"
 }

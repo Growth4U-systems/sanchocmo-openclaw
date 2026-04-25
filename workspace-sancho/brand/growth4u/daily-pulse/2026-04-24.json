@@ -1,0 +1,120 @@
+{
+  "date": "2026-04-24",
+  "slug": "growth4u",
+  "runAtMs": 1777014300000,
+  "channelsScanned": ["general", "brand", "projects", "content", "paid-ads", "web", "intelligence", "soporte"],
+  "messagesLast24h": {
+    "total": 4,
+    "byChannel": {
+      "intelligence": 4,
+      "general": 0,
+      "brand": 0,
+      "projects": 0,
+      "content": 0,
+      "paid-ads": 0,
+      "web": 0,
+      "soporte": 0
+    }
+  },
+  "insights": {
+    "adsPerformance": {
+      "label": "Métricas Meta Ads",
+      "status": "🟢 Recovering",
+      "leadsYesterday": 5,
+      "media7d": "3.3/día",
+      "cpc": "€3.39",
+      "cpcStatus": "dentro de rango",
+      "notes": "CPC €3.39 OK tras pico €8.21 del 23 abr. Spend ayer ~€130-147."
+    },
+    "funnelAlert": {
+      "label": "Conversión Lead → Cita",
+      "status": "🔴 Crítico",
+      "evidence": "22 leads con tag 'llamada-agendada' vs 0-1 calls en calendario. Lleva ~7+ días sin citas.",
+      "notes": "El flujo booking sigue sin funcionar. El problema no es adquisición (5 leads/día OK) sino la conversión lead→cita."
+    },
+    "leadsPipeline": {
+      "label": "Pipeline GHL",
+      "status": "🟡 Activo",
+      "totalContacts": 417,
+      "llamadaAgendada": 22,
+      "newYesterday": 1,
+      "newLead": "Alicia Orriols - Clínica Dental - presupuesto +50k€ - Facebook/IG Ads",
+      "notes": "1 lead nuevo (23 abr). 9 leads actualizados. Enrichment pendiente para algunos por APIs rate-limited."
+    },
+    "callsScheduled": {
+      "label": "Calls programadas",
+      "status": "🟡 Baja",
+      "callsTomorrow": 1,
+      "notes": "1 llamada confirmada con lead de GHL para mañana viernes 24. Calls seguir siendo escasas."
+    },
+    "enrichmentBlockers": {
+      "label": "APIs de Enrichment",
+      "status": "🟡 Parcialmente bloqueado",
+      "notes": "x_search rate-limited (créditos agotados), Slack sync disabled, Apollo AP no configurada. Enriquecimiento de leads nuevos/research pendiente."
+    },
+    "projects": {
+      "label": "Proyectos activos",
+      "status": "🟡 En curso",
+      "activeThreads": [
+        "P01 Fontanería Web - Hub /servicios/ (thread abierto, 18 msgs)",
+        "Trust Engine - thread activo (35 msgs)"
+      ],
+      "notes": "P01-T04 Hub /servicios/ sigue con thread abierto. P01-T05 Fixes menores archivado."
+    }
+  },
+  "microBriefs": [
+    {
+      "id": "MB-001",
+      "priority": "P0",
+      "category": "funnel",
+      "title": "Flujo booking sigue roto",
+      "description": "22 leads 'llamada-agendada' en GHL vs casi 0 calls en calendario. El problema no es adquisición (~5 leads/día OK) sino la conversión lead→cita.",
+      "owner": "Equipo",
+      "action": "Auditar flujo GHL → booking: ¿dónde se pierde el lead entre que marca 'llamada-agendada' y se agenda en calendar?"
+    },
+    {
+      "id": "MB-002",
+      "priority": "P1",
+      "category": "ads",
+      "title": "CPC recuperado a €3.39",
+      "description": "CPC volvió a rango normal tras pico €8.21 del 23 abr. 5 leads ayer (media 7d: 3.3/día). Seguir monitorizando.",
+      "owner": "Oier",
+      "action": "Mantener rotación de creativos - CTR del 16-17 abr cayó a 0.73% (fatiga creativa)"
+    },
+    {
+      "id": "MB-003",
+      "priority": "P1",
+      "category": "pipeline",
+      "title": "1 llamada mañana - baja actividad",
+      "description": "Solo 1 call confirmada con lead GHL para mañana viernes. Volumen de calls muy por debajo del objetivo.",
+      "owner": "Alfonso",
+      "action": "Follow-up con leads que tienen tag 'llamada-agendada' pero sin cita en calendar"
+    },
+    {
+      "id": "MB-004",
+      "priority": "P2",
+      "category": "enrichment",
+      "title": "Enrichment bloqueado",
+      "description": "x_search rate-limited, Apollo AP sin configurar, Slack sync disabled. Leads nuevos no enriquecidos.",
+      "owner": "Sancho",
+      "action": "Revisar configuración Apollo y recuperar créditos x_search"
+    }
+  ],
+  "executiveSummary": "5 leads ayer (mejor que media 7d: 3.3/día) y CPC €3.39 dentro de rango (recuperado del pico €8.21 del 23). PERO el problema crónico sigue: 22 leads con 'llamada-agendada' vs casi 0 calls en calendario — el flujo lead→cita sigue roto. Solo 1 llamada confirmada para mañana. Health Score 57. 0 actividad humana en canales Discord (solo crons).",
+  "alerts": [
+    {
+      "level": "🔴 Crítico",
+      "text": "Conversión lead→cita sigue rota (~7+ días sin citas consistentes)"
+    },
+    {
+      "level": "🟡 Alerta",
+      "text": "CPC €8.21 el 23 abr (2x media) — monitorizar si se repite"
+    },
+    {
+      "level": "🟡 Pendiente",
+      "text": "Enrichment APIs bloqueadas — leads sin enrichecer"
+    }
+  ],
+  "nsnStatus": "5 leads ayer - CPC OK - Health 57 - Funnel roto sigue",
+  "humanActivityLast24h": 0
+}

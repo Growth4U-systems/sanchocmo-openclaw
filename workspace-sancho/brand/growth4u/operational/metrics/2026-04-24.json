@@ -1,0 +1,28 @@
+{
+  "date": "2026-04-24",
+  "source": "morning-metrics",
+  "client": "growth4u",
+  "apis_pulled": [
+    "meta-ads",
+    "ghl"
+  ],
+  "alerts": [
+    {
+      "text": "🟡 **1 contacto(s) sin fuente** — posible test/spam"
+    }
+  ],
+  "meta_ads": {
+    "days_with_data": 7,
+    "yesterday_available": true,
+    "total_spend_7d": 970.74,
+    "total_leads_7d": 23,
+    "avg_spend_day": 138.68,
+    "avg_cpc": 4.02,
+    "avg_ctr": 0.85,
+    "avg_leads_day": 3.3
+  },
+  "ghl": {
+    "contacts_24h": 7,
+    "appointments_24h": 0
+  }
+}

@@ -41,6 +41,31 @@ enrichment_reason: "Company domain blocked (403), x_search rate-limited, Apollo 
 - **Nota**: Traffic desde Instagram paid → probable persona con presupuesto marketing digital
 
 ## Call Transcripts
-No transcripts found (lead created today, 2026-04-21)
+
+### 2026-04-23 — Llamada Estratégica Laura Donadio & Growth4U
+- **Pain points:**
+  - Laura es única persona ejecutando marketing (LinkedIn + contenido) — sin equipo ni infraestructura
+  - Producto Atlas (SaaS omnicanal con IA) sin web publicada ni posicionamiento claro
+  - Modelo de pricing aún no definido (setup €3.500–€15.000 + €299/mes)
+  -弥 (sin proceso de ventas sistemático)
+  - Quiere delegar ejecución para concentrarse en ventas
+- **Next steps:**
+  - [Martin Fila] Enviar acuerdo y propuesta a Laura
+  - [Laura] Revisar propuesta con socio/marido para decisión
+  - [Martin Fila] Enviar enlaces web GRforu.eo y herramienta de visualización en España
+  - [Martin Fila] Agendar reunión de seguimiento miércoles 12:30
+  - [Martin Fila] Revisar web Atlas y ofrecer consejos de marketing
+- **Key quotes:**
+  - "Nosotras queremos escalar el negocio, el único canal que usamos es LinkedIn"
+  - "Atlas se diferencia de Zendesk porque tenemos más funciones y tecnología más potente"
+  - "La propuesta es construir un Trust Engine — reducir coste de adquisición con el tiempo"
+- **Resumen ejecutivo:**
+  - Propuesta Trust Engine 6 meses: €12.500
+  - Producto: Atlas — plataforma SaaS omnicanal con IA para atención al cliente
+  - Modelo transición: de desarrollos grandes (€43k) a SaaS accesible
+  - Inversión en medios estimada (mes 2): ~€1.500/mes en 2-3 influencers
+  - Lead motivada pero debe consultar con socio — decisión esta semana
+- 🔗 [Notas de Gemini en Drive](https://drive.google.com/file/d/1bNaWU1ybOOA0nLRXgzF5v4zMaBWQk8OgSz3MEJ1usBk/view)
+- 🔗 [Recording](https://drive.google.com/file/d/1Hec1poq6L_eVt-anNZHtkJy1M1CGRenw/view)
 
 <!-- Self-QA: PASS | 2026-04-21T20:00Z | New lead from GHL — enrichment tools rate-limited/blocked. Lead file created. -->

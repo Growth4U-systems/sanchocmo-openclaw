@@ -38,6 +38,12 @@ enrichment_reason: "APOLLO_API_KEY no configurada — enrichment limitado. No ne
 - **Nota**: Custom field "+50k€" sugiere presupuesto disponible para inversión en marketing
 
 ## Call Transcripts
+
+### 2026-04-24 — Llamada Estratégica Enric Majó Prats & Growth4U
+- ⚠️ **Llamada muy corta (2 minutos)** — la reunión duró solo 00:02:02. El transcript indica "La reunión finalizó después de 00:02:02". Posible cancelación o reconfirmación.
+- 🔗 [Transcript en Drive](https://drive.google.com/file/d/1-lLWegganSIWNZ3UdmeAIFfoMSwOfZaFb1eoO4y3rTo/view)
+- **Nota**: Este lead también tiene tag `llamada-cancelada`. Verificar con GHL si la llamada se reprogramó.
+
 No se encontraron transcripts en Drive para este lead.
 
 <!-- Self-QA: PASS | 2026-04-20 | Lead creado — enrichment pendiente por falta de API keys -->
