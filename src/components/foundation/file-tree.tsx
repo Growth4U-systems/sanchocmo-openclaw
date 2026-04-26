@@ -200,12 +200,13 @@ function DeepDiveRow({ sf, onSelectOtherDoc, parentPillar }: { sf: SubfolderEntr
 }
 
 /** Pillar row with inline indicators + expandable deep-dives/versions */
-function PillarRow({ slug, sectionKey, pillarKey, hasDoc, docUrl, name, isOptional, statusCls, statusLabel, onSelectDoc, onSelectOtherDoc, onOpenChat, pillar }: {
+function PillarRow({ slug, sectionKey, pillarKey, hasDoc, docUrl, name, isOptional, statusCls, statusLabel, onSelectDoc, onSelectOtherDoc, onOpenChat, onOpenTask, pillar }: {
   slug: string; sectionKey: string; pillarKey: string; hasDoc: boolean; docUrl: string;
   name: string; isOptional: boolean; statusCls: string; statusLabel: string;
   onSelectDoc: (sectionKey: string, pillarKey: string, pillar: Pillar) => void;
   onSelectOtherDoc: (docPath: string, docName: string, parentPillar?: string) => void;
   onOpenChat: (pillarKey: string, docPath?: string) => void;
+  onOpenTask?: (docPath: string) => void;
   pillar: Pillar;
 }) {
   const t = useTranslations("foundation");
@@ -285,6 +286,12 @@ function PillarRow({ slug, sectionKey, pillarKey, hasDoc, docUrl, name, isOption
             className="text-sm hover:scale-110 transition-transform p-1 rounded-md hover:bg-muted/40" title="Chat con Sancho">
             {"\uD83D\uDCAC"}
           </button>
+          {onOpenTask && docUrl && (
+            <button type="button" onClick={(e) => { e.stopPropagation(); onOpenTask(docUrl); }}
+              className="text-sm hover:scale-110 transition-transform p-1 rounded-md hover:bg-muted/40" title="Ir a tarea">
+              📋
+            </button>
+          )}
         </div>
       </div>
 
@@ -360,10 +367,11 @@ interface FileTreeProps {
   onSelectDoc: (sectionKey: string, pillarKey: string, pillar: Pillar) => void;
   onSelectOtherDoc: (docPath: string, docName: string, parentPillar?: string) => void;
   onOpenChat: (pillarKey: string, docPath?: string) => void;
+  onOpenTask?: (docPath: string) => void;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-export function FileTree({ slug, foundation, otherDocs, onSelectDoc, onSelectOtherDoc, onOpenChat }: FileTreeProps) {
+export function FileTree({ slug, foundation, otherDocs, onSelectDoc, onSelectOtherDoc, onOpenChat, onOpenTask }: FileTreeProps) {
   const t = useTranslations("foundation");
   const sections = foundation.sections || {};
   const ffDone = ffDonePillars(sections);
@@ -557,6 +565,7 @@ export function FileTree({ slug, foundation, otherDocs, onSelectDoc, onSelectOth
                             onSelectDoc={onSelectDoc}
                             onSelectOtherDoc={onSelectOtherDoc}
                             onOpenChat={onOpenChat}
+                            onOpenTask={onOpenTask}
                             pillar={p}
                           />
                         );

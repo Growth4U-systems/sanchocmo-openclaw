@@ -502,6 +502,13 @@ export default function FoundationPage() {
         onSelectDoc={handleSelectDoc}
         onSelectOtherDoc={handleSelectOtherDoc}
         onOpenChat={handleOpenChat}
+        onOpenTask={(docPath) => {
+          if (!slug || !projectsData) return;
+          const taskThread = findTaskThreadForDoc(slug, docPath, projectsData);
+          if (!taskThread?.linkedTo) return;
+          const m = taskThread.linkedTo.match(/^projects\/([^/]+)\/tasks\/([^/]+)/i);
+          if (m) router.push(`/dashboard/${slug}/projects/${m[1]}/tasks/${m[2]}`);
+        }}
       />
     </DashboardLayout>
   );
