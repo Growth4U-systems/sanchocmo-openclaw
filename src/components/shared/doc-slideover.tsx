@@ -76,6 +76,7 @@ function findPillarInfo(
 
 export function DocSlideOver({ slug, docPath, onClose }: DocSlideOverProps) {
   const [content, setContent] = useState<string | null>(null);
+  const [lastModified, setLastModified] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
@@ -95,7 +96,7 @@ export function DocSlideOver({ slug, docPath, onClose }: DocSlideOverProps) {
 
     fetch(`/api/docs/${docPath}`)
       .then((res) => { if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.json(); })
-      .then((data) => { if (data.ok && data.content) setContent(data.content); else setError(data.error || "Not found"); })
+      .then((data) => { if (data.ok && data.content) { setContent(data.content); setLastModified(data.lastModified || null); } else setError(data.error || "Not found"); })
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
   }, [docPath]);
@@ -312,8 +313,13 @@ export function DocSlideOver({ slug, docPath, onClose }: DocSlideOverProps) {
 
         {/* Footer */}
         {docPath && !editing && (
-          <div className="flex items-center px-4 py-2 border-t border-[#E5E2DC] dark:border-[#313244] bg-[#FAFAF8] dark:bg-[#181825] text-[10px] text-muted-foreground shrink-0">
+          <div className="flex items-center justify-between px-4 py-2 border-t border-[#E5E2DC] dark:border-[#313244] bg-[#FAFAF8] dark:bg-[#181825] text-[10px] text-muted-foreground shrink-0">
             <span className="truncate">{docPath}</span>
+            {lastModified && (
+              <span className="flex-shrink-0 ml-3">
+                Editado: {new Date(lastModified).toLocaleDateString("es-ES", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+              </span>
+            )}
           </div>
         )}
       </div>

@@ -39,7 +39,14 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     }
     try {
       const content = fs.readFileSync(fullPath, "utf-8");
-      res.status(200).json({ ok: true, path: docPath, content });
+      const stat = fs.statSync(fullPath);
+      res.status(200).json({
+        ok: true,
+        path: docPath,
+        content,
+        lastModified: stat.mtime.toISOString(),
+        size: stat.size,
+      });
     } catch {
       res.status(404).json({ ok: false, error: "Not found" });
     }

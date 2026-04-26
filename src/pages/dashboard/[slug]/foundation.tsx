@@ -140,18 +140,25 @@ export default function FoundationPage() {
   const [selectedDoc, setSelectedDoc] = useState<SelectedDoc | null>(null);
   const [editing, setEditing] = useState(false);
   const [docContent, setDocContent] = useState<string | null>(null);
+  const [docLastModified, setDocLastModified] = useState<string | null>(null);
   const [docLoading, setDocLoading] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
 
   // Fetch doc content whenever selectedDoc changes
   useEffect(() => {
-    if (!selectedDoc?.docPath) { setDocContent(null); return; }
+    if (!selectedDoc?.docPath) { setDocContent(null); setDocLastModified(null); return; }
     setDocLoading(true);
     setDocContent(null);
+    setDocLastModified(null);
     setEditing(false);
     fetch(`/api/docs/${selectedDoc.docPath}`)
       .then((res) => res.json())
-      .then((data) => { if (data.ok && data.content) setDocContent(data.content); })
+      .then((data) => {
+        if (data.ok && data.content) {
+          setDocContent(data.content);
+          setDocLastModified(data.lastModified || null);
+        }
+      })
       .catch(() => {})
       .finally(() => setDocLoading(false));
   }, [selectedDoc?.docPath]);
@@ -329,6 +336,11 @@ export default function FoundationPage() {
           <span className="text-sm font-bold text-foreground truncate">
             {pillarTitle}
           </span>
+          {docLastModified && (
+            <span className="text-[10px] text-muted-foreground flex-shrink-0">
+              Editado: {new Date(docLastModified).toLocaleDateString("es-ES", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+            </span>
+          )}
 
           <div className="ml-auto flex items-center gap-2">
             {/* Status dropdown */}
