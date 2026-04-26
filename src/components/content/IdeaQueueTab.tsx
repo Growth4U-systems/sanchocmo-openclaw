@@ -106,6 +106,35 @@ export function IdeaQueueTab({ slug }: Props) {
   // Expanded idea for draft editing
   const [expandedIdea, setExpandedIdea] = useState<string | null>(null);
 
+  // Dispatch state
+  const [dispatchSlots, setDispatchSlots] = useState<{ channel: string; candidates: Idea[] }[] | null>(null);
+  const [dispatching, setDispatching] = useState(false);
+  const [dispatchTaskId, setDispatchTaskId] = useState<string | null>(null);
+
+  const runDispatch = useCallback(async () => {
+    setDispatching(true);
+    try {
+      const res = await fetch("/api/content-engine/editorial-dispatch", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slug }),
+      });
+      const data = await res.json();
+      if (data.ok && data.slots) {
+        // Map candidates back to full Idea objects
+        const allIdeas = ideas.length > 0 ? ideas : [];
+        const slots = data.slots.map((s: { channel: string; candidates: { id: string }[] }) => ({
+          channel: s.channel,
+          candidates: s.candidates.map((c: { id: string }) => allIdeas.find((i: Idea) => i.id === c.id) || c),
+        }));
+        setDispatchSlots(slots);
+        setDispatchTaskId(data.taskId);
+        fetchIdeas(); // Refresh to get updated dispatch_date etc
+      }
+    } catch { /* ignore */ }
+    setDispatching(false);
+  }, [slug, ideas, fetchIdeas]);
+
   if (loading) return <p className="text-muted-foreground text-sm py-8 text-center">Cargando ideas...</p>;
 
   const FILTERS = [
@@ -119,15 +148,68 @@ export function IdeaQueueTab({ slug }: Props) {
 
   return (
     <div>
-      {/* Settings link */}
-      <div className="flex items-center justify-end mb-3">
+      {/* Dispatch + Settings */}
+      <div className="flex items-center justify-between mb-3">
+        <button
+          type="button"
+          onClick={runDispatch}
+          disabled={dispatching}
+          className="text-[11px] px-3 py-1.5 bg-rust text-white rounded-md hover:bg-rust/90 transition-colors font-medium disabled:opacity-50"
+        >
+          {dispatching ? "Seleccionando..." : "📬 Editorial Dispatch (seleccionar ideas de hoy)"}
+        </button>
         <a
           href={`/dashboard/${slug}/settings`}
           className="text-[11px] text-muted-foreground hover:text-rust transition-colors flex items-center gap-1"
         >
-          ⚙️ Configurar canal de aprobacion (Settings)
+          ⚙️ Canal de aprobacion
         </a>
       </div>
+
+      {/* Dispatch slots — shows when dispatch has been run */}
+      {dispatchSlots && dispatchSlots.length > 0 && (
+        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-4">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-semibold text-amber-800">📬 Contenido de hoy — selecciona que publicar</h3>
+            {dispatchTaskId && (
+              <span className="text-[10px] text-amber-600 bg-amber-100 px-2 py-0.5 rounded">📋 {dispatchTaskId}</span>
+            )}
+          </div>
+          {dispatchSlots.map((slot) => (
+            <div key={slot.channel} className="mb-3 last:mb-0">
+              <h4 className="text-xs font-semibold text-amber-700 mb-1.5 flex items-center gap-1.5">
+                <span>{CHANNEL_ICONS[slot.channel] || "📄"}</span>
+                <span className="capitalize">{slot.channel}</span>
+                <span className="text-[10px] font-normal text-amber-600">— elige 1 de {slot.candidates.length}</span>
+              </h4>
+              <div className="space-y-1.5">
+                {slot.candidates.map((idea) => (
+                  <div key={idea.id} className="bg-white border border-amber-200 rounded px-3 py-2 flex items-start gap-2">
+                    <div className="flex-1 min-w-0">
+                      <div className="text-[11px] text-[#2C3E50] leading-relaxed">{idea.angle_draft?.slice(0, 150)}...</div>
+                      <div className="text-[10px] text-muted-foreground mt-0.5">
+                        {idea.pillar_id} · {idea.content_type} · Confianza: {Math.round((idea.pov_confidence || 0) * 100)}%
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => updateIdea(idea.id, { status: "approved", approved_at: new Date().toISOString(), approved_via: "mc-ui-dispatch" })}
+                      className="text-[11px] px-2.5 py-1 bg-green-50 text-green-700 border border-green-200 rounded hover:bg-green-100 transition-colors font-medium flex-shrink-0"
+                    >
+                      ✅ Esta
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+          <button
+            onClick={() => setDispatchSlots(null)}
+            className="text-[10px] text-amber-600 hover:underline mt-2"
+          >
+            Cerrar dispatch
+          </button>
+        </div>
+      )}
 
       {/* Filter tabs */}
       <div className="flex gap-1.5 mb-4 overflow-x-auto">
