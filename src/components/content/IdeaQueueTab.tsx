@@ -233,12 +233,30 @@ export function IdeaQueueTab({ slug }: Props) {
                 )}
 
                 {idea.status === "approved" && (
-                  <button
-                    onClick={() => setExpandedIdea(expandedIdea === idea.id ? null : idea.id)}
-                    className="text-[11px] px-3 py-1 bg-rust/10 text-rust border border-rust/20 rounded-md hover:bg-rust/20 transition-colors font-medium"
-                  >
-                    {expandedIdea === idea.id ? "▾ Cerrar drafts" : "✏️ Ver/Editar drafts"}
-                  </button>
+                  <div className="flex gap-1.5">
+                    {(!idea.drafts || idea.drafts.length === 0) && (
+                      <button
+                        onClick={async () => {
+                          await fetch("/api/content-engine/generate-drafts", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ slug, ideaId: idea.id }),
+                          });
+                          fetchIdeas();
+                          setExpandedIdea(idea.id);
+                        }}
+                        className="text-[11px] px-3 py-1 bg-rust text-white rounded-md hover:bg-rust/90 transition-colors font-medium"
+                      >
+                        ✍️ Generar drafts
+                      </button>
+                    )}
+                    <button
+                      onClick={() => setExpandedIdea(expandedIdea === idea.id ? null : idea.id)}
+                      className="text-[11px] px-3 py-1 bg-rust/10 text-rust border border-rust/20 rounded-md hover:bg-rust/20 transition-colors font-medium"
+                    >
+                      {expandedIdea === idea.id ? "▾ Cerrar" : `✏️ Drafts${idea.drafts?.length ? ` (${idea.drafts.length})` : ""}`}
+                    </button>
+                  </div>
                 )}
               </div>
 
