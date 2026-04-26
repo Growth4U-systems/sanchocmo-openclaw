@@ -1,20 +1,17 @@
-# News Prompts — P2
-# Used by news-monitor to find relevant news for this pillar.
+# News Prompts — P2: Adquisicion Multi-Canal y Confianza
+# Dynamic prompt that generates different searches each day.
 # Tool: Brave Search API / Perplexity
 # Frequency: daily 7am
 
 pillar_id: P2
 pillar_name: "Adquisicion Multi-Canal y Confianza"
-prompts:
-  - "GEO generative engine optimization 2026"
-  - "AI search optimization ChatGPT Gemini Perplexity"
-  - "multi-channel acquisition B2B without increasing team"
-  - "trust-based marketing B2B SaaS"
-  - "LinkedIn organic reach decline alternatives"
-  - "cold email deliverability warm outbound 2026"
-sector_filters:
-  - "digital marketing"
-  - "SEO AI"
-  - "B2B acquisition"
+
+prompt: >
+  What are the 5 most interesting, innovative and relevant news stories
+  from the last 48 hours covering GEO (Generative Engine Optimization), AI search visibility (ChatGPT, Gemini, Perplexity), multi-channel acquisition strategies, trust-based marketing, LinkedIn organic reach, cold email deliverability, and attribution models for B2B?
+  For each give the headline, source, date, a 2 sentence summary explaining
+  why it matters for a B2B growth consultant, and the URL.
+  Prioritize underground/niche sources over mainstream tech press.
+
+sector: "B2B SaaS growth consulting"
 language: [es, en]
-exclude_sources: []
