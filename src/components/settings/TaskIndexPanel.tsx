@@ -175,7 +175,26 @@ export function TaskIndexPanel({ slug }: Props) {
                         </Link>
                       ) : "❌"}
                     </td>
-                    <td className="text-center px-2 py-2">{task.threadFileExists ? "✅" : "❌"}</td>
+                    <td className="text-center px-2 py-2">
+                      {task.threadFileExists ? (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            // Open the chat sidebar with this thread
+                            // Navigate to foundation or task page to trigger the chat
+                            if (task.docExists) {
+                              window.location.href = `/dashboard/${slug}/foundation?doc=${encodeURIComponent(task.deliverableFile)}`;
+                            } else {
+                              window.location.href = `/dashboard/${slug}/projects/${task.projectId}/tasks/${task.taskId}`;
+                            }
+                          }}
+                          className="text-green-600 hover:text-green-800"
+                          title={`Abrir thread: ${task.mcChatThreadId}`}
+                        >
+                          ✅
+                        </button>
+                      ) : "❌"}
+                    </td>
                     <td className="text-center px-2 py-2">
                       <span className={cn("text-[9px] px-1.5 py-0.5 rounded-full font-medium",
                         task.status === "completed" ? "bg-green-50 text-green-700" :
