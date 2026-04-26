@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useEffect, useState, useCallback, type KeyboardEvent, type DragEvent, type ClipboardEvent } from "react";
+import { useRef, useEffect, useState, useCallback, useMemo, type KeyboardEvent, type DragEvent, type ClipboardEvent } from "react";
 import { useTranslations } from "next-intl";
 import { useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
@@ -20,6 +20,7 @@ import {
   buildTaskThread,
   buildProjectThread,
   resolveFullThreadConfig,
+  buildTaskIndex,
 } from "@/lib/chat-openers";
 import { useQuickActions } from "@/hooks/useChat";
 import { ThreadListPanel } from "./thread-list-panel";
@@ -229,18 +230,19 @@ export function ChatSidebar() {
    * through). For idea/recurring/general we fall back to a minimal config
    * that at least has the right threadName + a placeholder skill.
    */
+  // Task index: built ONCE from projectsData, enables O(1) thread lookups.
+  const taskIndex = useMemo(() => buildTaskIndex(projectsData), [projectsData]);
+
   const handleSelectFromPanel = useCallback(
     (threadId: string) => {
       if (!slug) return;
-      // Centralized resolver — ALL thread resolution goes through ONE function.
-      // See chat-openers.ts `resolveFullThreadConfig` for the complete logic.
       const config = resolveFullThreadConfig(
-        slug, threadId, projectsData, foundationState,
-        (pk, st) => resolvePillarDocPath(pk, st as Parameters<typeof resolvePillarDocPath>[1]),
+        slug, threadId, taskIndex,
+        (pk) => resolvePillarDocPath(pk, foundationState as Parameters<typeof resolvePillarDocPath>[1]),
       );
       selectThread(config);
     },
-    [slug, foundationState, projectsData, selectThread]
+    [slug, foundationState, taskIndex, selectThread]
   );
 
   // ── DEPRECATED: old handleSelectFromPanel body ──────────────
