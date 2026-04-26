@@ -22,6 +22,8 @@ interface Idea {
   status: string;
   approved_at?: string;
   drafts?: Draft[];
+  project_task_id?: string;
+  project_id?: string;
 }
 
 interface IdeasCounts {
@@ -233,22 +235,11 @@ export function IdeaQueueTab({ slug }: Props) {
                 )}
 
                 {idea.status === "approved" && (
-                  <div className="flex gap-1.5">
-                    {(!idea.drafts || idea.drafts.length === 0) && (
-                      <button
-                        onClick={async () => {
-                          await fetch("/api/content-engine/generate-drafts", {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({ slug, ideaId: idea.id }),
-                          });
-                          fetchIdeas();
-                          setExpandedIdea(idea.id);
-                        }}
-                        className="text-[11px] px-3 py-1 bg-rust text-white rounded-md hover:bg-rust/90 transition-colors font-medium"
-                      >
-                        ✍️ Generar drafts
-                      </button>
+                  <div className="flex gap-1.5 items-center">
+                    {idea.project_task_id && (
+                      <span className="text-[10px] text-muted-foreground bg-muted/40 px-2 py-0.5 rounded">
+                        📋 {idea.project_task_id}
+                      </span>
                     )}
                     <button
                       onClick={() => setExpandedIdea(expandedIdea === idea.id ? null : idea.id)}

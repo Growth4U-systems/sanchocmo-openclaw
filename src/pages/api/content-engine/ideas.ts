@@ -103,11 +103,33 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     const idea = ideas.find((i) => i.id === ideaId);
     if (!idea) return res.status(404).json({ error: "Idea not found" });
 
+    const oldStatus = idea.status;
     const allowed = ["status", "approved_at", "approved_via", "target_date", "project_task_id", "angle_draft", "pillar_id", "target_channel", "content_type"];
     for (const [k, v] of Object.entries(fields)) {
       if (allowed.includes(k)) (idea as unknown as Record<string, unknown>)[k] = v;
     }
     saveIdeas(slug, ideas);
+
+    // Auto-trigger: when status changes to "approved", generate drafts + create task
+    if (oldStatus !== "approved" && fields.status === "approved") {
+      try {
+        // Internal call to generate-drafts — same server, no auth needed
+        const baseUrl = `http://localhost:${process.env.PORT || 3000}`;
+        await fetch(`${baseUrl}/api/content-engine/generate-drafts`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ slug, ideaId }),
+        });
+        // Re-read to get the updated idea with drafts
+        const updatedIdeas = loadIdeas(slug);
+        const updatedIdea = updatedIdeas.find((i) => i.id === ideaId);
+        return res.status(200).json({ ok: true, idea: updatedIdea, draftsGenerated: true });
+      } catch (e) {
+        // Draft generation failed but approval succeeded
+        return res.status(200).json({ ok: true, idea, draftsGenerated: false, draftError: (e as Error).message });
+      }
+    }
+
     return res.status(200).json({ ok: true, idea });
   }
 

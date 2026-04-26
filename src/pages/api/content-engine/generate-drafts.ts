@@ -72,6 +72,78 @@ function generateNewsletterDraft(angle: string, signal: string): string {
   return `## Esta semana en Growth\n\n${signal}\n\n### Mi take\n\n${angle}\n\n### Que puedes hacer con esto\n\n1. [Accion concreta 1]\n2. [Accion concreta 2]\n3. [Accion concreta 3]\n\n---\n\n*Si alguien te reenvio esto, [suscribete aqui](link)*`;
 }
 
+/** Get or create the weekly content project + daily task */
+function ensureWeeklyProjectAndTask(slug: string): { projectId: string; taskId: string } {
+  const now = new Date();
+  const weekNum = Math.ceil(((now.getTime() - new Date(now.getFullYear(), 0, 1).getTime()) / 86400000 + 1) / 7);
+  const projectId = `P-Content-Semana-${weekNum}`;
+  const dateStr = now.toISOString().slice(0, 10);
+  const dayOfWeek = now.getDay(); // 0=Sun, 1=Mon...
+  const taskNum = dayOfWeek === 0 ? 7 : dayOfWeek;
+  const taskId = `${projectId}-T${String(taskNum).padStart(2, "0")}`;
+
+  const projectsDir = path.join(BASE, "brand", slug, "projects");
+  // Find or create project dir
+  let projDir = "";
+  try {
+    const dirs = fs.readdirSync(projectsDir, { withFileTypes: true });
+    const match = dirs.find(d => d.isDirectory() && d.name.startsWith(projectId));
+    if (match) {
+      projDir = path.join(projectsDir, match.name);
+    }
+  } catch { /* ignore */ }
+
+  if (!projDir) {
+    const dirName = projectId;
+    projDir = path.join(projectsDir, dirName);
+    fs.mkdirSync(projDir, { recursive: true });
+    fs.writeFileSync(path.join(projDir, "project.json"), JSON.stringify({
+      id: projectId, name: `Content Semana ${weekNum}`,
+      description: `Contenido semanal — semana ${weekNum} de ${now.getFullYear()}`,
+      status: "active", category: "content",
+      created_at: now.toISOString(),
+    }, null, 2));
+    fs.writeFileSync(path.join(projDir, "tasks.json"), "[]");
+  }
+
+  // Find or create daily task
+  const tasksPath = path.join(projDir, "tasks.json");
+  let tasks: Record<string, unknown>[] = [];
+  try { tasks = JSON.parse(fs.readFileSync(tasksPath, "utf-8")); } catch { /* ignore */ }
+
+  if (!tasks.find(t => t.id === taskId)) {
+    const chatThreadId = `task-${taskId.toLowerCase()}`;
+    tasks.push({
+      id: taskId,
+      name: `Contenido ${dateStr}`,
+      description: `Ideas de contenido aprobadas para ${dateStr}`,
+      type: "content",
+      status: "in-progress",
+      skill: "social-writer",
+      deliverable_file: `brand/${slug}/content/published/${dateStr}.json`,
+      mc_chat_thread_id: chatThreadId,
+      discord_thread_id: null,
+      owner: "Escudero Content",
+      created_at: now.toISOString(),
+      idea_ids: [],
+    });
+    fs.writeFileSync(tasksPath, JSON.stringify(tasks, null, 2));
+
+    // Create chat thread file
+    const chatDir = path.join(BASE, "brand", slug, "chat");
+    fs.mkdirSync(chatDir, { recursive: true });
+    const chatFile = path.join(chatDir, `${chatThreadId}.json`);
+    if (!fs.existsSync(chatFile)) {
+      fs.writeFileSync(chatFile, JSON.stringify({ messages: [], createdAt: now.toISOString() }, null, 2));
+    }
+  }
+
+  // Add idea to the task's idea_ids
+  const task = tasks.find(t => t.id === taskId) as Record<string, unknown>;
+
+  return { projectId, taskId };
+}
+
 async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
@@ -134,6 +206,11 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     });
   }
 
+  // Create/find weekly project + daily task
+  const { projectId, taskId } = ensureWeeklyProjectAndTask(slug);
+  idea.project_task_id = taskId;
+  idea.project_id = projectId;
+
   // Merge with existing drafts
   idea.drafts = [...(idea.drafts || []), ...drafts];
   saveIdeas(slug, ideas);
@@ -143,6 +220,8 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     ideaId,
     draftsGenerated: drafts.length,
     channels: drafts.map(d => d.channel),
+    projectId,
+    taskId,
   });
 }
 
