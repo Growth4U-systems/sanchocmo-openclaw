@@ -22,6 +22,8 @@ import { DepthBar } from "@/components/foundation/depth-bar";
 import { WarningsBanner } from "@/components/foundation/warnings-banner";
 import { FileTree } from "@/components/foundation/file-tree";
 import { EmptyState } from "@/components/shared/empty-state";
+import { TaskSlideOver } from "@/components/shared/task-slideover";
+import { DocSlideOver } from "@/components/shared/doc-slideover";
 import dynamic from "next/dynamic";
 import ReactMarkdown from "react-markdown";
 
@@ -138,6 +140,8 @@ export default function FoundationPage() {
   const openChat = useOpenChat();
 
   const [selectedDoc, setSelectedDoc] = useState<SelectedDoc | null>(null);
+  const [taskSlideOver, setTaskSlideOver] = useState<{ projectId: string; taskId: string } | null>(null);
+  const [docSlideOverPath, setDocSlideOverPath] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
   const [docContent, setDocContent] = useState<string | null>(null);
   const [docLastModified, setDocLastModified] = useState<string | null>(null);
@@ -504,10 +508,6 @@ export default function FoundationPage() {
         onOpenChat={handleOpenChat}
         onOpenTask={(docPath) => {
           if (!slug || !projectsData) return;
-          // Search projectsData directly for the task that owns this doc.
-          // We can't use findTaskThreadForDoc here because its ThreadConfig
-          // linkedTo is "foundation/{pillar}" for pillar tasks, not
-          // "projects/{id}/tasks/{id}" — wrong format for navigation.
           const norm = docPath.replace(/^brand\/[^/]+\//, "");
           const withBrand = docPath.startsWith("brand/") ? docPath : `brand/${slug}/${docPath}`;
           for (const pw of projectsData) {
@@ -517,23 +517,60 @@ export default function FoundationPage() {
               const dfStr = typeof df === "string" ? df : Array.isArray(df) ? df[0] : null;
               if (!dfStr) continue;
               if (dfStr === docPath || dfStr === norm || dfStr === withBrand) {
-                router.push(`/dashboard/${slug}/projects/${pw.project.id}/tasks/${task.id}`);
+                setTaskSlideOver({ projectId: pw.project.id, taskId: task.id });
                 return;
               }
-              // Also check attachments
               if (task.attachments) {
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const hit = (task.attachments as any[]).some((a: {path?: string}) =>
                   a?.path === docPath || a?.path === norm || a?.path === withBrand
                 );
                 if (hit) {
-                  router.push(`/dashboard/${slug}/projects/${pw.project.id}/tasks/${task.id}`);
+                  setTaskSlideOver({ projectId: pw.project.id, taskId: task.id });
                   return;
                 }
               }
             }
           }
         }}
+      />
+
+      {/* Task Slide-Over */}
+      <TaskSlideOver
+        slug={slug || ""}
+        projectId={taskSlideOver?.projectId || null}
+        taskId={taskSlideOver?.taskId || null}
+        onClose={() => setTaskSlideOver(null)}
+        onOpenDoc={(docPath) => {
+          setTaskSlideOver(null);
+          setDocSlideOverPath(docPath);
+        }}
+        onOpenChat={() => {
+          if (!taskSlideOver || !slug || !projectsData) return;
+          for (const pw of projectsData) {
+            const task = pw.tasks.find(t => t.id === taskSlideOver.taskId);
+            if (task) {
+              const df = task.deliverable_file;
+              const dfStr = typeof df === "string" ? df : undefined;
+              handleOpenChat(task.pillar || task.id, dfStr);
+              break;
+            }
+          }
+          setTaskSlideOver(null);
+        }}
+      />
+
+      {/* Doc Slide-Over (opened from Task Slide-Over) */}
+      <DocSlideOver
+        slug={slug || ""}
+        docPath={
+          docSlideOverPath
+            ? docSlideOverPath.startsWith("brand/")
+              ? docSlideOverPath
+              : `brand/${slug}/${docSlideOverPath}`
+            : null
+        }
+        onClose={() => setDocSlideOverPath(null)}
       />
     </DashboardLayout>
   );
