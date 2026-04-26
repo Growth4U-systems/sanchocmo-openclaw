@@ -15,13 +15,6 @@
     "done_criteria": "Los 5 documentos existen en foundation/ y brand_summary tiene contenido válido",
     "deliverable_file": "brand/growth4u/company-brief/company-brief.current.md",
     "mc_chat_thread_id": "task-p00-ff-t01",
-    "discord_thread_id": null,
-    "attachments": [
-      {"path": "brand/growth4u/company-brief/company-brief.current.md", "type": "text/markdown", "source": "skill:fast-foundation"},
-      {"path": "brand/growth4u/market-and-us/market/market.current.md", "type": "text/markdown", "source": "skill:fast-foundation"},
-      {"path": "brand/growth4u/market-and-us/self/self.current.md", "type": "text/markdown", "source": "skill:fast-foundation"},
-      {"path": "brand/growth4u/go-to-market/ecps/ecps.current.md", "type": "text/markdown", "source": "skill:fast-foundation"},
-      {"path": "brand/growth4u/brand-book/brand-voice/brand-voice.current.md", "type": "text/markdown", "source": "skill:fast-foundation"}
-    ]
+    "discord_thread_id": null
   }
 ]
