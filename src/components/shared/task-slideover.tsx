@@ -205,6 +205,8 @@ export function TaskSlideOver({ slug, projectId, taskId, onClose, onOpenDoc, onO
           <button
             type="button"
             onClick={() => {
+              // Navigate to task page + open chat (no doc slide-over)
+              if (projectId && taskId && onOpenChat) onOpenChat();
               onClose();
               if (projectId && taskId) router.push(`/dashboard/${slug}/projects/${projectId}/tasks/${taskId}`);
             }}
@@ -215,11 +217,6 @@ export function TaskSlideOver({ slug, projectId, taskId, onClose, onOpenDoc, onO
           {onOpenChat && (
             <button type="button" onClick={() => { onClose(); onOpenChat(); }} className={btnClass}>
               💬 Chat
-            </button>
-          )}
-          {dfStr && onOpenDoc && (
-            <button type="button" onClick={() => { onClose(); onOpenDoc(dfStr); }} className={btnClass}>
-              📄 Ver documento
             </button>
           )}
         </div>
