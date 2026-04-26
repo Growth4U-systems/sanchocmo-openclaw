@@ -269,32 +269,11 @@ export default function TaskDetailPage() {
     }));
   }, [task, foundationState, taskIsPendingOrNotStarted]);
 
-  // Auto-open doc + chat for foundation tasks on first load.
-  // Uses the same resolver as pillarDocs so it always opens the file the
-  // skill actually wrote (via deliverable_file when present).
+  // Auto-open chat for foundation tasks on first load.
+  // The doc is NOT auto-opened — the user can click on docs in the
+  // Documents section if they want to view them.
   useEffect(() => {
     if (!task?.pillar || !slug || !project || chatAutoOpened) return;
-    // Skip auto-opening a doc that doesn't exist yet.
-    if (taskIsPendingOrNotStarted) {
-      // Still open the chat so the user can start the task, just skip the doc panel.
-      const config = buildTaskThread(slug, task.id, task.name, project.id, {
-        taskSkill: task.skill,
-        taskChannel: task.channel,
-        taskStatus: task.status,
-        taskType,
-        pillar: task.pillar,
-        deliverableFile: typeof task.deliverable_file === "string" ? task.deliverable_file : undefined,
-      });
-      openChat(slug, config);
-      setChatAutoOpened(true);
-      return;
-    }
-    const paths = resolveTaskDocPaths(
-      task,
-      foundationState as Parameters<typeof resolveTaskDocPaths>[1]
-    );
-    if (paths.length === 0) return;
-    setOpenDocPath(paths[0]);
     const config = buildTaskThread(slug, task.id, task.name, project.id, {
       taskSkill: task.skill,
       taskChannel: task.channel,
