@@ -504,10 +504,35 @@ export default function FoundationPage() {
         onOpenChat={handleOpenChat}
         onOpenTask={(docPath) => {
           if (!slug || !projectsData) return;
-          const taskThread = findTaskThreadForDoc(slug, docPath, projectsData);
-          if (!taskThread?.linkedTo) return;
-          const m = taskThread.linkedTo.match(/^projects\/([^/]+)\/tasks\/([^/]+)/i);
-          if (m) router.push(`/dashboard/${slug}/projects/${m[1]}/tasks/${m[2]}`);
+          // Search projectsData directly for the task that owns this doc.
+          // We can't use findTaskThreadForDoc here because its ThreadConfig
+          // linkedTo is "foundation/{pillar}" for pillar tasks, not
+          // "projects/{id}/tasks/{id}" — wrong format for navigation.
+          const norm = docPath.replace(/^brand\/[^/]+\//, "");
+          const withBrand = docPath.startsWith("brand/") ? docPath : `brand/${slug}/${docPath}`;
+          for (const pw of projectsData) {
+            for (const task of pw.tasks) {
+              const df = task.deliverable_file;
+              if (!df) continue;
+              const dfStr = typeof df === "string" ? df : Array.isArray(df) ? df[0] : null;
+              if (!dfStr) continue;
+              if (dfStr === docPath || dfStr === norm || dfStr === withBrand) {
+                router.push(`/dashboard/${slug}/projects/${pw.project.id}/tasks/${task.id}`);
+                return;
+              }
+              // Also check attachments
+              if (task.attachments) {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const hit = (task.attachments as any[]).some((a: {path?: string}) =>
+                  a?.path === docPath || a?.path === norm || a?.path === withBrand
+                );
+                if (hit) {
+                  router.push(`/dashboard/${slug}/projects/${pw.project.id}/tasks/${task.id}`);
+                  return;
+                }
+              }
+            }
+          }
         }}
       />
     </DashboardLayout>

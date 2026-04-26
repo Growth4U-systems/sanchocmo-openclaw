@@ -267,27 +267,56 @@ export function DocSlideOver({ slug, docPath, onClose }: DocSlideOverProps) {
               {shareCopied ? "✓ Copiado" : "🔗 Compartir"}
             </button>
 
-            {/* Task link — find the task that owns this doc */}
+            {/* Task link — find the task that owns this doc by searching projectsData directly */}
             {(() => {
-              const taskThread = docPath ? findTaskThreadForDoc(slug, docPath, projectsData) : null;
-              if (!taskThread?.linkedTo) return null;
-              const taskMatch = taskThread.linkedTo.match(/^projects\/([^/]+)\/tasks\/([^/]+)/i);
-              if (!taskMatch) return null;
-              const projId = taskMatch[1];
-              const taskId = taskMatch[2];
-              return (
-                <button
-                  type="button"
-                  onClick={() => {
-                    onClose();
-                    router.push(`/dashboard/${slug}/projects/${projId}/tasks/${taskId}`);
-                  }}
-                  className={btnClass}
-                  title={`Ir a tarea ${taskId}`}
-                >
-                  📋 Tarea
-                </button>
-              );
+              if (!docPath || !projectsData) return null;
+              const norm = docPath.replace(/^brand\/[^/]+\//, "");
+              const withBrand = docPath.startsWith("brand/") ? docPath : `brand/${slug}/${docPath}`;
+              for (const pw of projectsData) {
+                for (const task of pw.tasks) {
+                  const df = task.deliverable_file;
+                  const dfStr = typeof df === "string" ? df : Array.isArray(df) ? df[0] : null;
+                  if (!dfStr) continue;
+                  if (dfStr === docPath || dfStr === norm || dfStr === withBrand) {
+                    return (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          onClose();
+                          router.push(`/dashboard/${slug}/projects/${pw.project.id}/tasks/${task.id}`);
+                        }}
+                        className={btnClass}
+                        title={`Ir a tarea ${task.id}`}
+                      >
+                        📋 Tarea
+                      </button>
+                    );
+                  }
+                  // Check attachments too
+                  if (task.attachments) {
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    const hit = (task.attachments as any[]).some((a: {path?: string}) =>
+                      a?.path === docPath || a?.path === norm || a?.path === withBrand
+                    );
+                    if (hit) {
+                      return (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            onClose();
+                            router.push(`/dashboard/${slug}/projects/${pw.project.id}/tasks/${task.id}`);
+                          }}
+                          className={btnClass}
+                          title={`Ir a tarea ${task.id}`}
+                        >
+                          📋 Tarea
+                        </button>
+                      );
+                    }
+                  }
+                }
+              }
+              return null;
             })()}
 
             <button type="button" onClick={handleOpenFull} className={btnClass} title="Abrir en Documents">

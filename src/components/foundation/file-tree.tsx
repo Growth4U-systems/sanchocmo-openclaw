@@ -518,6 +518,12 @@ export function FileTree({ slug, foundation, otherDocs, onSelectDoc, onSelectOth
                             className="text-sm hover:scale-110 transition-transform p-1 rounded-md hover:bg-muted/40" title="Chat con Sancho">
                             {"\uD83D\uDCAC"}
                           </button>
+                          {onOpenTask && docUrl && (
+                            <button type="button" onClick={(e) => { e.stopPropagation(); onOpenTask(docUrl); }}
+                              className="text-sm hover:scale-110 transition-transform p-1 rounded-md hover:bg-muted/40" title="Ir a tarea">
+                              📋
+                            </button>
+                          )}
                         </div>
                       </div>
                     </div>
