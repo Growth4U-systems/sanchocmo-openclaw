@@ -18,6 +18,7 @@ import { DispatchPanel } from "@/components/settings/dispatch-panel";
 import { StrategiesPanel } from "@/components/settings/strategies-panel";
 import { RecurringPanel } from "@/components/settings/recurring-panel";
 import { ApiConnectPanel } from "@/components/settings/api-connect-panel";
+import { TaskIndexPanel } from "@/components/settings/TaskIndexPanel";
 
 interface ClientFull {
   slug: string;
@@ -30,10 +31,10 @@ interface ClientFull {
   enabledFeatures: string[];
 }
 
-const TAB_KEYS = ["apis", "agents", "skills", "dispatch", "strategies", "recurring", "clients", "preferences"] as const;
+const TAB_KEYS = ["apis", "agents", "skills", "dispatch", "strategies", "recurring", "task-index", "clients", "preferences"] as const;
 const TAB_ICONS: Record<string, string> = {
   apis: "🔌", agents: "🤖", skills: "🧰", dispatch: "📡",
-  strategies: "🎯", recurring: "🔄", clients: "👥", preferences: "⚙️",
+  strategies: "🎯", recurring: "🔄", "task-index": "📋", clients: "👥", preferences: "⚙️",
 };
 
 export default function SettingsPage() {
@@ -89,6 +90,7 @@ export default function SettingsPage() {
       {activeTab === "dispatch" && <DispatchPanel />}
       {activeTab === "strategies" && <StrategiesPanel />}
       {activeTab === "recurring" && <RecurringPanel />}
+      {activeTab === "task-index" && slug && <TaskIndexPanel slug={slug} />}
       {activeTab === "clients" && <ClientsPanel />}
       {activeTab === "preferences" && <PreferencesPanel />}
     </DashboardLayout>
