@@ -44,5 +44,24 @@
     "type": "execution",
     "deliverable_file": "brand/growth4u/projects/P00-Strategic-Plan-Strategic-Plan/tasks/P00-SP-T02/deliverable.md",
     "mc_chat_thread_id": "task-p00-sp-t02"
+  },
+  {
+    "id": "P00-SP-T02",
+    "name": "Strategic Plan Presentation",
+    "description": "Presentacion HTML del Strategic Plan Q2 2026.",
+    "deliverable": "Presentacion interactiva del Strategic Plan.",
+    "done_criteria": "HTML generado y accesible.",
+    "depends_on": "P00-SP-T01",
+    "owner": "Sancho",
+    "status": "completed",
+    "completed": "2026-04-01",
+    "channel": "strategy",
+    "skill": "strategic-plan",
+    "type": "foundation",
+    "pillar": "strategic-presentation",
+    "section": "strategic-plan",
+    "deliverable_file": "brand/growth4u/strategic-plan/strategic-plan-q2-2026.html",
+    "mc_chat_thread_id": "task-p00-sp-t02",
+    "discord_thread_id": null
   }
 ]
