@@ -3,6 +3,8 @@
 import { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { useOpenChat } from "@/hooks/useChat";
+import { buildTaskThread } from "@/lib/chat-openers";
 
 interface TaskIndexEntry {
   projectId: string;
@@ -39,6 +41,7 @@ export function TaskIndexPanel({ slug }: Props) {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"all" | "ok" | "issues">("all");
   const [search, setSearch] = useState("");
+  const openChat = useOpenChat();
 
   useEffect(() => {
     fetch(`/api/system/task-index?slug=${slug}`)
@@ -180,16 +183,14 @@ export function TaskIndexPanel({ slug }: Props) {
                         <button
                           type="button"
                           onClick={() => {
-                            // Open the chat sidebar with this thread
-                            // Navigate to foundation or task page to trigger the chat
-                            if (task.docExists) {
-                              window.location.href = `/dashboard/${slug}/foundation?doc=${encodeURIComponent(task.deliverableFile)}`;
-                            } else {
-                              window.location.href = `/dashboard/${slug}/projects/${task.projectId}/tasks/${task.taskId}`;
-                            }
+                            const config = buildTaskThread(
+                              slug, task.taskId, task.taskName, task.projectId,
+                              { taskSkill: task.skill, pillar: task.pillar || undefined, deliverableFile: task.deliverableFile || undefined }
+                            );
+                            openChat(slug, config);
                           }}
                           className="text-green-600 hover:text-green-800"
-                          title={`Abrir thread: ${task.mcChatThreadId}`}
+                          title={`Abrir chat: ${task.mcChatThreadId}`}
                         >
                           ✅
                         </button>
