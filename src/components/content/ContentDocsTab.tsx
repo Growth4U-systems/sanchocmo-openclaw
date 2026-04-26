@@ -1,0 +1,189 @@
+"use client";
+
+import { useEffect, useState, useMemo } from "react";
+import { cn } from "@/lib/utils";
+import { DocSlideOver } from "@/components/shared/doc-slideover";
+
+interface DocItem {
+  path: string;
+  name: string;
+  description: string;
+  status: string;
+  lastModified?: string;
+  section: string;
+  taskId?: string;
+}
+
+interface Props {
+  slug: string;
+}
+
+const STATUS_STYLES: Record<string, { bg: string; text: string; label: string }> = {
+  "in-progress": { bg: "bg-blue-50", text: "text-blue-700", label: "En progreso" },
+  "completed": { bg: "bg-green-50", text: "text-green-700", label: "Completado" },
+  "todo": { bg: "bg-gray-50", text: "text-gray-500", label: "Pendiente" },
+  "active": { bg: "bg-green-50", text: "text-green-700", label: "Activo" },
+};
+
+export function ContentDocsTab({ slug }: Props) {
+  const [docs, setDocs] = useState<DocItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [openDocPath, setOpenDocPath] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!slug) return;
+    Promise.all([
+      // Fetch tasks from P14
+      fetch(`/api/projects?slug=${slug}`).then((r) => r.json()).catch(() => ({ projects: [] })),
+      // Fetch pillars
+      fetch(`/api/content-engine/pillars?slug=${slug}`).then((r) => r.json()).catch(() => ({ exists: false })),
+    ]).then(([projData, pillarsData]) => {
+      const items: DocItem[] = [];
+
+      // Find Content Engine project tasks
+      const projects = projData.projects || [];
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const ceProject = projects.find((p: any) =>
+        p.name?.includes("Content Engine") || p.id === "P14"
+      );
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const tasks = (ceProject?.tasks || []) as any[];
+
+      for (const task of tasks) {
+        if (task.deliverable_file) {
+          items.push({
+            path: task.deliverable_file,
+            name: task.name,
+            description: task.description?.slice(0, 120) || "",
+            status: task.status || "todo",
+            taskId: task.id,
+            section: task.phase <= 1 ? "setup" : task.niche ? "niche" : "setup",
+          });
+        }
+      }
+
+      // Check for messaging docs (Phase 3 niche docs)
+      // These might exist even without tasks (e.g., migrated data)
+      if (pillarsData.exists) {
+        // Pillars doc is already covered by tasks, but verify
+        const hasPillarsTask = items.some((i) => i.path.includes("content-pillars"));
+        if (!hasPillarsTask) {
+          items.push({
+            path: `brand/${slug}/content/content-pillars.md`,
+            name: "Content Pillars",
+            description: `${pillarsData.pillars?.length || 0} pillars definidos`,
+            status: "active",
+            section: "setup",
+          });
+        }
+      }
+
+      // Fetch last modified for each doc
+      Promise.all(
+        items.map((item) =>
+          fetch(`/api/docs/${item.path}`)
+            .then((r) => r.json())
+            .then((data) => ({ ...item, lastModified: data.lastModified || null }))
+            .catch(() => item)
+        )
+      ).then((enriched) => {
+        setDocs(enriched);
+        setLoading(false);
+      });
+    });
+  }, [slug]);
+
+  const setupDocs = useMemo(() => docs.filter((d) => d.section === "setup"), [docs]);
+  const nicheDocs = useMemo(() => docs.filter((d) => d.section === "niche"), [docs]);
+
+  const completedCount = docs.filter((d) => d.status === "completed" || d.status === "active" || d.status === "in-progress").length;
+
+  if (loading) return <p className="text-muted-foreground text-sm py-8 text-center">Cargando documentos...</p>;
+
+  if (docs.length === 0) {
+    return (
+      <div className="text-center py-12">
+        <span className="text-4xl mb-3 block">📄</span>
+        <p className="text-sm text-muted-foreground mb-2">No hay documentos del Content Engine todavia</p>
+        <p className="text-xs text-muted-foreground">Ejecuta el Proceso 1 (Content Strategy → Pillars → Setup) para generar los primeros documentos</p>
+      </div>
+    );
+  }
+
+  const renderDoc = (doc: DocItem) => {
+    const st = STATUS_STYLES[doc.status] || STATUS_STYLES["todo"];
+    const filename = doc.path.split("/").pop() || doc.path;
+    return (
+      <button
+        key={doc.path}
+        type="button"
+        onClick={() => setOpenDocPath(doc.path)}
+        className="w-full bg-white border border-[#E8E2D9] rounded-lg px-4 py-3 flex items-center gap-3 text-left hover:border-rust/40 transition-colors"
+        style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}
+      >
+        <span className="text-lg flex-shrink-0">📄</span>
+        <div className="flex-1 min-w-0">
+          <span className="text-sm font-semibold text-[#2C3E50] block truncate">{doc.name}</span>
+          <span className="text-[11px] text-muted-foreground block mt-0.5">
+            {filename}
+            {doc.lastModified && (
+              <> · Editado: {new Date(doc.lastModified).toLocaleDateString("es-ES", { day: "numeric", month: "short", year: "numeric" })}</>
+            )}
+          </span>
+        </div>
+        <span className={cn("text-[10px] font-semibold px-2.5 py-1 rounded-full", st.bg, st.text)}>
+          {st.label}
+        </span>
+        <span className="text-[#7A7A7A] text-xs flex-shrink-0">▸</span>
+      </button>
+    );
+  };
+
+  return (
+    <div>
+      {/* Progress bar */}
+      <div className="flex items-center gap-3 mb-4">
+        <span className="text-xs text-muted-foreground font-medium">Progreso: {completedCount}/{docs.length}</span>
+        <div className="flex-1 h-1.5 bg-muted/30 rounded-full overflow-hidden">
+          <div
+            className="h-full bg-rust rounded-full transition-all"
+            style={{ width: `${docs.length ? (completedCount / docs.length) * 100 : 0}%` }}
+          />
+        </div>
+      </div>
+
+      {/* Setup docs */}
+      {setupDocs.length > 0 && (
+        <div className="mb-6">
+          <h3 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">Content Engine Setup</h3>
+          <div className="space-y-2">
+            {setupDocs.map(renderDoc)}
+          </div>
+        </div>
+      )}
+
+      {/* Niche docs */}
+      {nicheDocs.length > 0 && (
+        <div>
+          <h3 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">Messaging Per Niche</h3>
+          <div className="space-y-2">
+            {nicheDocs.map(renderDoc)}
+          </div>
+        </div>
+      )}
+
+      {/* Doc SlideOver */}
+      <DocSlideOver
+        slug={slug}
+        docPath={
+          openDocPath
+            ? openDocPath.startsWith("brand/")
+              ? openDocPath
+              : `brand/${slug}/${openDocPath}`
+            : null
+        }
+        onClose={() => setOpenDocPath(null)}
+      />
+    </div>
+  );
+}
