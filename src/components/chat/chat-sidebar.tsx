@@ -498,6 +498,51 @@ export function ChatSidebar() {
       }
 
       // --- Pillar thread (shortId is a pillar name or "general") -------
+      // Before falling back to a simple pillar thread, try to find the
+      // owning task so we get the full context (doc + task link + skill).
+      // This handles the case where shortId = "market-analysis" and the
+      // compound match above didn't fire (projectsData not loaded, or
+      // exact-match instead of suffix-match).
+      if (projectsData) {
+        for (const pw of projectsData) {
+          const matchingTask = pw.tasks.find(t =>
+            t.pillar && t.pillar.toLowerCase() === shortId.toLowerCase()
+          );
+          if (matchingTask) {
+            const config = buildTaskThread(
+              slug,
+              matchingTask.id,
+              matchingTask.name,
+              pw.project.id,
+              {
+                taskSkill: matchingTask.skill,
+                taskChannel: matchingTask.channel,
+                taskStatus: matchingTask.status,
+                taskType: matchingTask.type,
+                pillar: matchingTask.pillar,
+              }
+            );
+            config.threadId = threadId;
+            if (!config.docPath) {
+              const df = matchingTask.deliverable_file;
+              const dfStr = typeof df === "string" ? df : Array.isArray(df) ? df[0] : null;
+              if (dfStr && dfStr.trim()) {
+                config.docPath = dfStr;
+              } else {
+                const dp = resolvePillarDocPath(shortId, foundationLike);
+                if (dp) config.docPath = dp;
+              }
+            }
+            if (config.docPath && /tasks\.json$/i.test(config.docPath)) {
+              config.docPath = null;
+            }
+            selectThread(config);
+            return;
+          }
+        }
+      }
+
+      // Truly generic pillar fallback (no task found)
       const docPath = resolvePillarDocPath(shortId, foundationLike) || undefined;
       const config = buildPillarThread(slug, shortId, docPath);
       selectThread(config);
