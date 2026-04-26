@@ -8,9 +8,8 @@ import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { cn } from "@/lib/utils";
 import { PillarsTab } from "@/components/content/PillarsTab";
 import { StrategyDocsTab } from "@/components/content/StrategyDocsTab";
-import { FindIdeasTab } from "@/components/content/FindIdeasTab";
+import { InputsTab } from "@/components/content/InputsTab";
 import { IdeaQueueTab } from "@/components/content/IdeaQueueTab";
-import { IdeasTab } from "@/components/content/IdeasTab";
 import { CalendarTab } from "@/components/content/CalendarTab";
 import { StrategyBanner, type StrategyBannerTask } from "@/components/content/strategy-banner";
 import { useProjects } from "@/hooks/useProjects";
@@ -173,8 +172,8 @@ export default function ContentCreationPage() {
       {!isLoading && tabData && activeTab === "strategy" && (
         <StrategyDocsTab slug={slug} data={tabData} openChat={openChat} />
       )}
-      {!isLoading && tabData && activeTab === "ideas-sources" && (
-        <FindIdeasTab slug={slug} data={tabData} openChat={openChat} />
+      {!isLoading && slug && activeTab === "ideas-sources" && (
+        <InputsTab slug={slug} />
       )}
       {!isLoading && slug && activeTab === "ideas" && (
         <IdeaQueueTab slug={slug} />
