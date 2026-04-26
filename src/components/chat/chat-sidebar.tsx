@@ -998,6 +998,42 @@ export function ChatSidebar() {
             );
           })()}
 
+          {/* Task/Project link pill — shows the associated task/project */}
+          {activeThreadId && meta?.linkedTo && (() => {
+            const taskMatch = meta.linkedTo.match(/^projects\/([^/]+)\/tasks\/([^/]+)/i);
+            const projMatch = !taskMatch && meta.linkedTo.match(/^projects\/([^/]+)/i);
+            if (!taskMatch && !projMatch) return null;
+
+            if (taskMatch) {
+              const projId = taskMatch[1];
+              const taskId = taskMatch[2];
+              return (
+                <Link
+                  href={`/dashboard/${slug}/projects/${projId}/tasks/${taskId}`}
+                  className="w-full bg-[#313244] rounded-lg px-3 py-1.5 text-[12px] text-[#a6adc8] flex items-center gap-2 hover:bg-[#45475a] hover:text-[#cdd6f4] transition-colors no-underline"
+                >
+                  <span>📋</span>
+                  <span className="truncate flex-1">Tarea: {taskId}</span>
+                  <span className="text-[11px] text-[#6c7086]">↗</span>
+                </Link>
+              );
+            }
+            if (projMatch) {
+              const projId = projMatch[1];
+              return (
+                <Link
+                  href={`/dashboard/${slug}/projects/${projId}`}
+                  className="w-full bg-[#313244] rounded-lg px-3 py-1.5 text-[12px] text-[#a6adc8] flex items-center gap-2 hover:bg-[#45475a] hover:text-[#cdd6f4] transition-colors no-underline"
+                >
+                  <span>📁</span>
+                  <span className="truncate flex-1">Proyecto: {projId}</span>
+                  <span className="text-[11px] text-[#6c7086]">↗</span>
+                </Link>
+              );
+            }
+            return null;
+          })()}
+
           {/* Task attachments — every file accumulated by the thread
               (primary deliverable + Discord uploads + skill intermediate
               outputs). Only rendered when the active thread is a task.

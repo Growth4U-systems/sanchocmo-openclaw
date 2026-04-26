@@ -181,6 +181,15 @@ export function ContentDocsTab({ slug }: Props) {
           >
             💬 Chat
           </button>
+          {doc.taskId && (
+            <a
+              href={`/dashboard/${slug}/projects/P14/tasks/${doc.taskId}`}
+              className="text-[11px] px-2.5 py-1 rounded-md border border-[#E5E2DC] text-[#7A7A7A] hover:bg-[#E5E2DC] hover:text-[#1A1A1A] transition-colors no-underline"
+              title={`Ir a tarea ${doc.taskId}`}
+            >
+              📋 Tarea
+            </a>
+          )}
           <button
             type="button"
             onClick={() => handleOpenFull(doc)}

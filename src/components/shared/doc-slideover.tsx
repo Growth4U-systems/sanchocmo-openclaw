@@ -267,6 +267,29 @@ export function DocSlideOver({ slug, docPath, onClose }: DocSlideOverProps) {
               {shareCopied ? "✓ Copiado" : "🔗 Compartir"}
             </button>
 
+            {/* Task link — find the task that owns this doc */}
+            {(() => {
+              const taskThread = docPath ? findTaskThreadForDoc(slug, docPath, projectsData) : null;
+              if (!taskThread?.linkedTo) return null;
+              const taskMatch = taskThread.linkedTo.match(/^projects\/([^/]+)\/tasks\/([^/]+)/i);
+              if (!taskMatch) return null;
+              const projId = taskMatch[1];
+              const taskId = taskMatch[2];
+              return (
+                <button
+                  type="button"
+                  onClick={() => {
+                    onClose();
+                    router.push(`/dashboard/${slug}/projects/${projId}/tasks/${taskId}`);
+                  }}
+                  className={btnClass}
+                  title={`Ir a tarea ${taskId}`}
+                >
+                  📋 Tarea
+                </button>
+              );
+            })()}
+
             <button type="button" onClick={handleOpenFull} className={btnClass} title="Abrir en Documents">
               ⤢ Abrir
             </button>
