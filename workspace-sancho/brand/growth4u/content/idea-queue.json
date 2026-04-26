@@ -1,1 +1,145 @@
-[]
+[
+  {
+    "id": "idea-2026-04-26-1",
+    "pillar_id": "P2",
+    "content_type": "Hot Take",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Las sesiones referidas por IA crecieron 527% interanual. El 60% de busquedas en Google terminan sin click. El 47% de las marcas aun no tiene estrategia GEO.",
+      "source": "Search Engine Land",
+      "url": "https://searchengineland.com/plan-for-geo-2026-evolve-search-strategy-463399",
+      "date": "2026-04-26"
+    },
+    "angle_draft": "El 60% de las busquedas en Google ya no generan click. Leelo otra vez. Tu estrategia SEO esta optimizando para un juego que ya no existe.\n\nNosotros lo vimos venir hace 18 meses. Growth4U es top 1-2 en Gemini para queries de growth fintech en Espania. No porque seamos videntes, sino porque dejamos de perseguir rankings y empezamos a construir activos que los LLMs citan. Case studies con numeros reales (Bnext 0-400K, Bit2Me LTV 3x) son citation magnets. Tus articulos genericos de 'mejores practicas' no lo son. El 47% de las marcas ni siquiera tiene estrategia GEO. Si eres del otro 53%, la ventana de first-mover se cierra este trimestre.",
+    "pov_confidence": 0.93,
+    "source_signals": [
+      "news-2026-04-26-004",
+      "news-2026-04-26-006"
+    ],
+    "created_at": "2026-04-26T07:30:00Z",
+    "status": "approved",
+    "approved_at": "2026-04-26T10:44:19.771Z",
+    "approved_via": "mc-ui"
+  },
+  {
+    "id": "idea-2026-04-26-2",
+    "pillar_id": "P3",
+    "content_type": "Framework",
+    "target_channel": "blog",
+    "signal": {
+      "summary": "La CNMV ha publicado reglas de transicion MiCA para plataformas crypto en Espania con deadline 1 julio 2026. Notificacion obligatoria 10 dias antes de campanas masivas (+100K). Influencer marketing clasificado como actividad regulada. Multas hasta 5M EUR o 10% facturacion.",
+      "source": "Cryptopolitan / Unit21",
+      "url": "https://www.cryptopolitan.com/spains-cnmv-sets-out-mica-transition-rules/",
+      "date": "2026-04-26"
+    },
+    "angle_draft": "1 de julio de 2026. Esa es la fecha en la que tu plataforma crypto deja de operar en la UE si no tienes autorizacion MiCA. Y no es solo el registro: cada campania de marketing de +100K personas necesita notificacion previa a la CNMV con 10 dias de antelacion. Tu influencer de Twitter? Actividad regulada.\n\nHe vivido esto en primera persona. En Bnext escalamos de 0 a 400K usuarios bajo supervision CNMV. En Bit2Me triplicamos LTV mientras la regulacion se endurecía. Hay un playbook que funciona, pero la mayoria de equipos de compliance lo estan construyendo a ciegas. Este framework cubre los 5 pasos que toda plataforma crypto en Espania necesita antes del deadline: desde la estructura de campania pre-aprobada hasta el modelo de atribucion que compliance puede firmar.",
+    "pov_confidence": 0.95,
+    "source_signals": [
+      "news-2026-04-26-007",
+      "news-2026-04-26-008",
+      "news-2026-04-26-009"
+    ],
+    "created_at": "2026-04-26T07:30:00Z",
+    "status": "ready"
+  },
+  {
+    "id": "idea-2026-04-26-3",
+    "pillar_id": "P4",
+    "content_type": "Proof Post",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Gartner: 39% de CMOs recortaran gasto en agencias. Las agencias reportan deliverables pero no son responsables de pipeline ni revenue. El mercado de fractional CMO crecio 245%.",
+      "source": "CMSWire / Brango Solutions",
+      "url": "https://www.cmswire.com/digital-marketing/why-the-cmo-job-is-being-rewritten-in-real-time-and-how-to-land-on-the-right-side/",
+      "date": "2026-04-26"
+    },
+    "angle_draft": "Gartner acaba de confirmar lo que llevamos diciendo dos anios: el 39% de los CMOs van a recortar gasto en agencias. No por el presupuesto. Porque estan hartos de pagar por deliverables que no mueven pipeline.\n\nMientras tanto, el mercado de fractional CMOs crecio 245%. El mercado ya ha votado. El modelo de retainer infinito donde un senior te vende y un junior ejecuta se esta muriendo. Pero ojo: el fractional CMO tambien puede ser humo si no tiene skin in the game. La pregunta correcta no es 'agencia o fractional CMO'. Es: quien se responsabiliza de mis metricas de revenue, no de mis metricas de vanidad? Si la respuesta es 'nadie', ese es tu problema.",
+    "pov_confidence": 0.91,
+    "source_signals": [
+      "news-2026-04-26-010",
+      "news-2026-04-26-011",
+      "news-2026-04-26-012"
+    ],
+    "created_at": "2026-04-26T07:30:00Z",
+    "status": "ready"
+  },
+  {
+    "id": "idea-2026-04-26-4",
+    "pillar_id": "P5",
+    "content_type": "Case Study",
+    "target_channel": "newsletter",
+    "signal": {
+      "summary": "Solo el 6% de marketers tienen IA totalmente implementada en operaciones. BCG: proyecto de 6 analistas/semana reducido a 1 empleado + agente en <1 hora. El 88% usa IA pero solo un tercio ha pasado de experimentos aislados.",
+      "source": "MarTech / Spark Novus",
+      "url": "https://martech.org/how-ai-agents-will-reshape-every-part-of-marketing-in-2026/",
+      "date": "2026-04-26"
+    },
+    "angle_draft": "El 88% de los marketers dice que usa IA. Solo el 6% la tiene realmente integrada en operaciones. Esa brecha del 82% es donde esta el dinero.\n\nBCG lo demostro con un caso concreto: un proyecto que requeria 6 analistas durante una semana ahora lo hace 1 persona con un agente en menos de una hora. Esto no es teoria. Nosotros operamos clientes con SanchoCMO: un sistema multi-agente que ejecuta foundation, contenido, outreach y analytics. No es 'IA que genera posts'. Es un sistema operativo de growth donde los agentes hacen el 70% del trabajo estructural y el humano orquesta la estrategia. En este newsletter te cuento exactamente como funciona por dentro: que hacen los agentes, que hace el humano, y donde esta el ROI real.",
+    "pov_confidence": 0.92,
+    "source_signals": [
+      "news-2026-04-26-013",
+      "news-2026-04-26-015"
+    ],
+    "created_at": "2026-04-26T07:30:00Z",
+    "status": "ready"
+  },
+  {
+    "id": "idea-2026-04-26-5",
+    "pillar_id": "P1",
+    "content_type": "Framework",
+    "target_channel": "twitter",
+    "signal": {
+      "summary": "Los 'Systems of Record' estan siendo reemplazados por 'Systems of Action' que eliminan la latencia humana del ciclo de revenue. Growth en 2026 es sistema, no coleccion de tacticas.",
+      "source": "Presta / AllTopStartups",
+      "url": "https://wearepresta.com/startup-gtm-framework-2026-the-strategic-blueprint-for-intelligent-scaling/",
+      "date": "2026-04-26"
+    },
+    "angle_draft": "Thread: Los 'Systems of Record' se estan muriendo. En 2026 ganan los 'Systems of Action'.\n\nLa diferencia: un System of Record te dice que paso. Un System of Action ejecuta lo que deberia pasar sin esperar a que un humano mueva la ficha. Tu CRM es un System of Record. Tu growth system deberia ser un System of Action. La mayoria de startups tienen 6 herramientas, 3 dashboards y cero sistema. Coleccionan tacticas como cromos. Aqui van las 4 piezas del growth system que instalamos en Trust Engine y que cualquier startup puede empezar a construir maniana con equipo de 1-3 personas.",
+    "pov_confidence": 0.88,
+    "source_signals": [
+      "news-2026-04-26-001",
+      "news-2026-04-26-003"
+    ],
+    "created_at": "2026-04-26T07:30:00Z",
+    "status": "ready"
+  },
+  {
+    "id": "idea-2026-04-26-6",
+    "pillar_id": "P2",
+    "content_type": "Listicle",
+    "target_channel": "blog",
+    "signal": {
+      "summary": "El 31.3% de la poblacion US usara busqueda generativa en 2026. Los datos originales y case studies con numeros especificos son 'citation magnets' para LLMs.",
+      "source": "eMarketer / Digital Agency Network",
+      "url": "https://www.emarketer.com/content/faq-on-geo-aeo--where-ai-search-seo-overlap-2026",
+      "date": "2026-04-26"
+    },
+    "angle_draft": "Los LLMs no citan a cualquiera. Citan a quien tiene datos originales. Si tu blog es 'Las 7 mejores estrategias de growth para startups' con zero-party data, Gemini y ChatGPT te van a ignorar. Pero si publicas 'Como escalamos Bnext de 0 a 400K usuarios bajo regulacion CNMV' con numeros reales de CAC, cohortes y payback, te conviertes en un citation magnet.\n\nEste articulo cubre los 5 tipos de activos de contenido que los LLMs priorizan para citacion, con ejemplos reales de como los hemos construido en Growth4U. No es teoria GEO de una agencia SEO que nunca ha rankeado en Gemini. Es el playbook que nos puso top 1-2 en queries fintech Espania.",
+    "pov_confidence": 0.89,
+    "source_signals": [
+      "news-2026-04-26-005",
+      "news-2026-04-26-006"
+    ],
+    "created_at": "2026-04-26T07:30:00Z",
+    "status": "ready"
+  },
+  {
+    "id": "idea-2026-04-26-7",
+    "pillar_id": "P5",
+    "content_type": "Hot Take",
+    "target_channel": "twitter",
+    "signal": {
+      "summary": "El 90% de compras B2B seran mediadas por agentes IA para 2028. Los agentes manejan el 70% del trabajo estructural, desplazando el rol humano hacia orquestacion estrategica.",
+      "source": "IT Munch",
+      "url": "https://itmunch.com/ai-agents-b2b-marketing-productivity-2026/",
+      "date": "2026-04-26"
+    },
+    "angle_draft": "Para 2028, el 90% de las compras B2B van a ser mediadas por agentes IA. No 'asistidas'. Mediadas. Tu comprador no va a hablar con tu SDR. Va a hablar con el agente de tu comprador.\n\nY el 80% de las agencias sigue vendiendo 'estrategia de contenido con IA' que es basicamente ChatGPT con un prompt bonito. Hay una diferencia entre usar IA y operar con IA. La primera es un tool. La segunda es un sistema. Si tu proveedor de marketing no puede ensenarte su stack de agentes operando en produccion, te esta vendiendo PowerPoint, no ejecucion.",
+    "pov_confidence": 0.9,
+    "source_signals": [
+      "news-2026-04-26-014"
+    ],
+    "created_at": "2026-04-26T07:30:00Z",
+    "status": "ready"
+  }
+]
