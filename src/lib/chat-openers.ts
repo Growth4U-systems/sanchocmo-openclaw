@@ -197,6 +197,162 @@ export function findTaskThreadForDoc(
   return null;
 }
 
+/**
+ * resolveFullThreadConfig — SINGLE SOURCE OF TRUTH for thread resolution.
+ *
+ * Given a threadId (in any format), resolves the COMPLETE ThreadConfig with:
+ *   - doc (from task.deliverable_file → pillar output_file → null)
+ *   - task link (projects/{projectId}/tasks/{taskId})
+ *   - skill (from task.skill → pillar skill → fallback)
+ *   - threadName (from task.name → formatted shortId)
+ *
+ * This function replaces the scattered resolution logic that was duplicated
+ * in handleSelectFromPanel (chat-sidebar.tsx) across multiple branches.
+ * ALL thread opening should route through this function.
+ *
+ * @param slug - client slug
+ * @param threadId - full thread ID (e.g. "growth4u:market-analysis")
+ * @param projectsData - from useProjects hook (may be undefined if loading)
+ * @param foundationState - from useFoundation hook (may be undefined)
+ * @param resolvePillarDoc - function to resolve pillar → doc path from foundation-state
+ */
+export function resolveFullThreadConfig(
+  slug: string,
+  threadId: string,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  projectsData: any[] | undefined,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  foundationState: any,
+  resolvePillarDoc?: (pillarKey: string, state: unknown) => string | null | undefined,
+): ThreadConfig {
+  const shortId = threadId.startsWith(slug + ":")
+    ? threadId.slice(slug.length + 1)
+    : threadId;
+
+  // ── Step 1: Try to find the owning task ──────────────────────
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let foundTask: any = null;
+  let foundProjectId = "";
+
+  if (projectsData) {
+    // Match by task ID (task:xxx or task-xxx)
+    if (shortId.startsWith("task:") || shortId.startsWith("task-")) {
+      for (const pw of projectsData) {
+        const match = pw.tasks?.find((t: { id: string }) => {
+          const colonShape = `task:${t.id.toLowerCase()}`;
+          const dashShape = `task-${t.id.toLowerCase()}`;
+          return shortId === colonShape || shortId === dashShape;
+        });
+        if (match) { foundTask = match; foundProjectId = pw.project?.id || ""; break; }
+      }
+    }
+
+    // Match by pillar field (market-analysis, content-strategy, etc.)
+    if (!foundTask) {
+      for (const pw of projectsData) {
+        const match = pw.tasks?.find((t: { pillar?: string }) => {
+          if (!t.pillar) return false;
+          const pl = t.pillar.toLowerCase();
+          return shortId === pl || shortId.endsWith(`-${pl}`) || shortId.endsWith(`:${pl}`);
+        });
+        if (match) {
+          // Prefer longer pillar match (more specific)
+          if (!foundTask || (match.pillar?.length || 0) > (foundTask.pillar?.length || 0)) {
+            foundTask = match;
+            foundProjectId = pw.project?.id || "";
+          }
+        }
+      }
+    }
+
+    // Match by project (project:xxx or project-xxx)
+    if (!foundTask && (shortId.startsWith("project:") || shortId.startsWith("project-"))) {
+      for (const pw of projectsData) {
+        const colonShape = `project:${pw.project?.id?.toLowerCase()}`;
+        const dashShape = `project-${pw.project?.id?.toLowerCase()}`;
+        if (shortId === colonShape || shortId === dashShape) {
+          return buildProjectThread(slug, pw.project.id, pw.project.name, {
+            strategy: pw.project.strategy, status: pw.project.status,
+          });
+        }
+      }
+    }
+  }
+
+  // ── Step 2: Build ThreadConfig from task (if found) ──────────
+  if (foundTask && foundProjectId) {
+    const df = foundTask.deliverable_file;
+    const deliverableFile = typeof df === "string" ? df : Array.isArray(df) ? df[0] : undefined;
+
+    const config = buildTaskThread(
+      slug, foundTask.id, foundTask.name, foundProjectId,
+      {
+        taskSkill: foundTask.skill,
+        taskChannel: foundTask.channel,
+        taskStatus: foundTask.status,
+        taskType: foundTask.type,
+        pillar: foundTask.pillar,
+        deliverableFile,
+      }
+    );
+
+    // Preserve the original threadId (legacy format compatibility)
+    config.threadId = threadId;
+
+    // Ensure docPath is set (deliverableFile should flow through
+    // buildTaskThread → buildPillarThread, but double-check)
+    if (!config.docPath && deliverableFile) {
+      config.docPath = deliverableFile;
+    }
+    if (!config.docPath && foundTask.pillar && resolvePillarDoc) {
+      const dp = resolvePillarDoc(foundTask.pillar, foundationState);
+      if (dp) config.docPath = dp;
+    }
+
+    // Filter out non-doc paths
+    if (config.docPath && /tasks\.json$/i.test(config.docPath)) {
+      config.docPath = null;
+    }
+
+    return config;
+  }
+
+  // ── Step 3: Typed threads (strategy, idea, recurring, etc.) ──
+  if (shortId.startsWith("project:") || shortId.startsWith("project-")) {
+    const rawId = shortId.replace(/^project[-:]/, "").toUpperCase();
+    return {
+      threadId, threadName: rawId, skill: "sancho-manager",
+      skills: ["sancho-manager"], linkedTo: `projects/${rawId}`,
+      docPath: null, threadState: "continue",
+    };
+  }
+
+  // Competitor/cron-style threads
+  if (/^(competitor-scan|meta-ads-scan|linkedin-scan)$/i.test(shortId)) {
+    return {
+      threadId, threadName: shortId.replace(/-/g, " "), skill: "atalaya",
+      skills: ["atalaya"], linkedTo: "tool/atalaya",
+      docPath: null, threadState: "continue",
+    };
+  }
+
+  // Strategy/idea/recurring typed threads
+  if (shortId.includes(":") && /^(strategy|idea|recurring)[-:]/i.test(shortId)) {
+    const m = shortId.match(/^([a-z]+)[-:](.+)$/i);
+    if (m) {
+      return {
+        threadId, threadName: shortId.replace(/[-_:]/g, " "), skill: "sancho",
+        skills: ["sancho"], linkedTo: `${m[1]}/${m[2]}`,
+        docPath: null, threadState: "continue",
+      };
+    }
+  }
+
+  // ── Step 4: Pillar fallback (no task found) ──────────────────
+  const pillarDoc = resolvePillarDoc?.(shortId, foundationState) || undefined;
+  return buildPillarThread(slug, shortId, pillarDoc);
+}
+
 /** Thread icon by type prefix */
 export function threadIcon(shortId: string): string {
   if (shortId.startsWith("project:")) return "📋";

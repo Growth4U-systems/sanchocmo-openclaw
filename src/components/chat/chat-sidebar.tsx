@@ -19,6 +19,7 @@ import {
   buildPillarThread,
   buildTaskThread,
   buildProjectThread,
+  resolveFullThreadConfig,
 } from "@/lib/chat-openers";
 import { useQuickActions } from "@/hooks/useChat";
 import { ThreadListPanel } from "./thread-list-panel";
@@ -229,6 +230,22 @@ export function ChatSidebar() {
    * that at least has the right threadName + a placeholder skill.
    */
   const handleSelectFromPanel = useCallback(
+    (threadId: string) => {
+      if (!slug) return;
+      // Centralized resolver — ALL thread resolution goes through ONE function.
+      // See chat-openers.ts `resolveFullThreadConfig` for the complete logic.
+      const config = resolveFullThreadConfig(
+        slug, threadId, projectsData, foundationState,
+        (pk, st) => resolvePillarDocPath(pk, st as Parameters<typeof resolvePillarDocPath>[1]),
+      );
+      selectThread(config);
+    },
+    [slug, foundationState, projectsData, selectThread]
+  );
+
+  // ── DEPRECATED: old handleSelectFromPanel body ──────────────
+  // Kept temporarily for reference. Will be deleted after validation.
+  const _oldHandleSelectFromPanel = useCallback(
     (threadId: string) => {
       if (!slug) return;
 
