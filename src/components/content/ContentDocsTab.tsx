@@ -140,35 +140,35 @@ export function ContentDocsTab({ slug }: Props) {
     );
   }
 
-  const btnClass = "text-[11px] px-2 py-1 rounded-md border transition-colors";
-
   const renderDoc = (doc: DocItem) => {
     const st = STATUS_STYLES[doc.status] || STATUS_STYLES["todo"];
     const filename = doc.path.split("/").pop() || doc.path;
     return (
       <div
         key={doc.path}
-        className="bg-white border border-[#E8E2D9] rounded-lg px-4 py-3 flex items-center gap-3 hover:border-rust/40 transition-colors"
+        className="bg-white border border-[#E8E2D9] rounded-lg px-4 py-3 hover:border-rust/40 transition-colors"
         style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}
       >
-        <span className="text-lg flex-shrink-0">📄</span>
-        <div className="flex-1 min-w-0">
-          <span className="text-sm font-semibold text-[#2C3E50] block truncate">{doc.name}</span>
-          <span className="text-[11px] text-muted-foreground block mt-0.5">
-            {filename}
-            {doc.lastModified && (
-              <> · Editado: {new Date(doc.lastModified).toLocaleDateString("es-ES", { day: "numeric", month: "short", year: "numeric" })}</>
-            )}
+        {/* Top row: name + status */}
+        <div className="flex items-center gap-2 mb-1">
+          <span className="text-sm font-semibold text-[#2C3E50] truncate flex-1">{doc.name}</span>
+          <span className={cn("text-[10px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0", st.bg, st.text)}>
+            {st.label}
           </span>
         </div>
-        <span className={cn("text-[10px] font-semibold px-2.5 py-1 rounded-full flex-shrink-0", st.bg, st.text)}>
-          {st.label}
-        </span>
-        <div className="flex items-center gap-1.5 flex-shrink-0">
+        {/* Meta row: filename + date */}
+        <div className="text-[11px] text-muted-foreground mb-2">
+          {filename}
+          {doc.lastModified && (
+            <> · {new Date(doc.lastModified).toLocaleDateString("es-ES", { day: "numeric", month: "short", year: "numeric" })}</>
+          )}
+        </div>
+        {/* Action buttons */}
+        <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={() => setOpenDocPath(doc.path)}
-            className={cn(btnClass, "border-[#E5E2DC] text-[#7A7A7A] hover:bg-[#E5E2DC] hover:text-[#1A1A1A]")}
+            className="text-[11px] px-2.5 py-1 rounded-md border border-[#E5E2DC] text-[#7A7A7A] hover:bg-[#E5E2DC] hover:text-[#1A1A1A] transition-colors"
             title="Ver documento"
           >
             📄 Ver
@@ -176,7 +176,7 @@ export function ContentDocsTab({ slug }: Props) {
           <button
             type="button"
             onClick={() => handleOpenChat(doc)}
-            className={cn(btnClass, "border-[#E5E2DC] text-[#7A7A7A] hover:bg-[#E5E2DC] hover:text-[#1A1A1A]")}
+            className="text-[11px] px-2.5 py-1 rounded-md border border-[#E5E2DC] text-[#7A7A7A] hover:bg-[#E5E2DC] hover:text-[#1A1A1A] transition-colors"
             title="Abrir chat"
           >
             💬 Chat
@@ -184,7 +184,7 @@ export function ContentDocsTab({ slug }: Props) {
           <button
             type="button"
             onClick={() => handleOpenFull(doc)}
-            className={cn(btnClass, "border-[#E5E2DC] text-[#7A7A7A] hover:bg-[#E5E2DC] hover:text-[#1A1A1A]")}
+            className="text-[11px] px-2.5 py-1 rounded-md border border-[#E5E2DC] text-[#7A7A7A] hover:bg-[#E5E2DC] hover:text-[#1A1A1A] transition-colors"
             title="Abrir en vista completa"
           >
             ⤢ Abrir
