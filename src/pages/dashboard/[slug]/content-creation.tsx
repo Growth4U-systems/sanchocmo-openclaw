@@ -6,8 +6,10 @@ import { useContentCreation } from "@/hooks/useContentCreation";
 import { useOpenChat } from "@/hooks/useChat";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { cn } from "@/lib/utils";
+import { PillarsTab } from "@/components/content/PillarsTab";
 import { StrategyDocsTab } from "@/components/content/StrategyDocsTab";
 import { FindIdeasTab } from "@/components/content/FindIdeasTab";
+import { IdeaQueueTab } from "@/components/content/IdeaQueueTab";
 import { IdeasTab } from "@/components/content/IdeasTab";
 import { CalendarTab } from "@/components/content/CalendarTab";
 import { StrategyBanner, type StrategyBannerTask } from "@/components/content/strategy-banner";
@@ -15,10 +17,11 @@ import { useProjects } from "@/hooks/useProjects";
 import { buildDocThread, findTaskThreadForDoc } from "@/lib/chat-openers";
 
 const TABS = [
-  { key: "strategy", label: "Strategy Docs" },
-  { key: "ideas-sources", label: "Encuentra Ideas" },
-  { key: "ideas", label: "Ideas" },
-  { key: "calendar", label: "Calendar" },
+  { key: "pillars", label: "Pillars", icon: "🏛️" },
+  { key: "strategy", label: "Strategy", icon: "📋" },
+  { key: "ideas-sources", label: "Inputs", icon: "🔍" },
+  { key: "ideas", label: "Ideas", icon: "💡" },
+  { key: "calendar", label: "Calendar", icon: "📅" },
 ] as const;
 
 type TabKey = (typeof TABS)[number]["key"];
@@ -46,7 +49,7 @@ export default function ContentCreationPage() {
   const { data, isLoading } = useContentCreation(slug, null);
   const { data: projectsData } = useProjects(slug || null);
   const openChat = useOpenChat();
-  const [activeTab, setActiveTab] = useState<TabKey>("strategy");
+  const [activeTab, setActiveTab] = useState<TabKey>("pillars");
 
   // Split documents into client-global (no niche) vs per-niche.
   // Rule: niche === null (or undefined) means the task applies to the whole
@@ -144,36 +147,37 @@ export default function ContentCreationPage() {
       )}
 
       {/* Tabs */}
-      <div className="flex gap-2 mb-6">
+      <div className="flex gap-2 mb-6 overflow-x-auto">
         {TABS.map((tab) => (
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
             className={cn(
-              "px-4 py-2 rounded-lg text-sm font-semibold border-2 transition-all",
+              "px-4 py-2 rounded-lg text-sm font-semibold border-2 transition-all whitespace-nowrap flex items-center gap-1.5",
               activeTab === tab.key
                 ? "bg-rust text-white border-rust"
                 : "border-border hover:border-rust"
             )}
           >
+            <span>{tab.icon}</span>
             {tab.label}
-            {tab.key === "ideas" && data?.ideaCounts
-              ? ` (${data.ideaCounts.total})`
-              : ""}
           </button>
         ))}
       </div>
 
       {/* Content */}
       {isLoading && <p className="text-muted-foreground">Cargando...</p>}
+      {!isLoading && slug && activeTab === "pillars" && (
+        <PillarsTab slug={slug} />
+      )}
       {!isLoading && tabData && activeTab === "strategy" && (
         <StrategyDocsTab slug={slug} data={tabData} openChat={openChat} />
       )}
       {!isLoading && tabData && activeTab === "ideas-sources" && (
         <FindIdeasTab slug={slug} data={tabData} openChat={openChat} />
       )}
-      {!isLoading && tabData && activeTab === "ideas" && (
-        <IdeasTab slug={slug} data={tabData} openChat={openChat} />
+      {!isLoading && slug && activeTab === "ideas" && (
+        <IdeaQueueTab slug={slug} />
       )}
       {!isLoading && tabData && activeTab === "calendar" && (
         <CalendarTab slug={slug} data={tabData} openChat={openChat} />
