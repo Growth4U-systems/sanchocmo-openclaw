@@ -156,10 +156,24 @@ export function TaskIndexPanel({ slug }: Props) {
                       <span className="text-muted-foreground ml-1.5">{task.taskName.slice(0, 40)}</span>
                     </td>
                     <td className="text-center px-2 py-2">
-                      {task.docExists ? "✅" : task.deliverableFile.includes("deliverable.md") ? "⏳" : "❌"}
+                      {task.docExists ? (
+                        <Link href={`/dashboard/${slug}/foundation?doc=${encodeURIComponent(task.deliverableFile)}`}
+                          className="text-green-600 hover:text-green-800 no-underline" title={task.deliverableFile}>
+                          ✅
+                        </Link>
+                      ) : task.deliverableFile.includes("deliverable.md") ? (
+                        <span title={task.deliverableFile}>⏳</span>
+                      ) : (
+                        <span title={task.deliverableFile}>❌</span>
+                      )}
                     </td>
                     <td className="text-center px-2 py-2">
-                      {task.skillOk ? <span className="text-[9px] bg-muted/40 px-1.5 py-0.5 rounded">{task.skill}</span> : "❌"}
+                      {task.skillOk ? (
+                        <Link href={`/dashboard/${slug}/skills/${task.skill}`}
+                          className="text-[9px] bg-rust/10 text-rust px-1.5 py-0.5 rounded-full hover:bg-rust/20 no-underline transition-colors">
+                          {task.skill}
+                        </Link>
+                      ) : "❌"}
                     </td>
                     <td className="text-center px-2 py-2">{task.threadFileExists ? "✅" : "❌"}</td>
                     <td className="text-center px-2 py-2">
