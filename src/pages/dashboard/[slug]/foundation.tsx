@@ -239,29 +239,37 @@ export default function FoundationPage() {
     [],
   );
 
-  // Handle going back. If the doc lives under a project (docPath contains
-  // `projects/{projDir}/...`), navigate to the project or task page instead
-  // of clearing back to the Foundation folder view — the user expects the
-  // breadcrumb to take them to the parent container, not to Foundation.
+  // Handle going back. Navigate to the appropriate parent page based on
+  // where the doc lives:
+  //   - `content/...` → Content Creation page
+  //   - `projects/{projDir}/T{NN}/...` → task page
+  //   - `projects/{projDir}/...` → project page
+  //   - anything else → Foundation folder view
   const handleBack = useCallback(() => {
-    if (selectedDoc?.docPath) {
+    if (selectedDoc?.docPath && slug) {
+      // Content Engine docs → back to Content Creation
+      if (/(?:brand\/[^/]+\/)?content\//.test(selectedDoc.docPath)) {
+        router.push(`/dashboard/${slug}/content-creation`);
+        setSelectedDoc(null);
+        return;
+      }
+
+      // Project/task docs
       const m = selectedDoc.docPath.match(
         /(?:brand\/[^/]+\/)?projects\/([^/]+)(?:\/(?:T(\d+)|tasks\/([^/]+)))?/i
       );
-      if (m && slug) {
-        const projDir = m[1]; // e.g. "P01-fontaneria"
-        const projId = projDir.match(/^(P\d+)/)?.[1]; // e.g. "P01"
-        const taskNum = m[2]; // e.g. "08" from T08
-        const taskId = m[3]; // e.g. "P01-T08" from tasks/{taskId}
+      if (m) {
+        const projDir = m[1];
+        const projId = projDir.match(/^(P\d+)/)?.[1];
+        const taskNum = m[2];
+        const taskId = m[3];
 
         if (projId) {
           if (taskNum) {
-            // Navigate to the task page
             router.push(`/dashboard/${slug}/projects/${projId}/tasks/${projId}-T${taskNum}`);
           } else if (taskId) {
             router.push(`/dashboard/${slug}/projects/${projId}/tasks/${taskId}`);
           } else {
-            // Navigate to the project page
             router.push(`/dashboard/${slug}/projects/${projId}`);
           }
           setSelectedDoc(null);
