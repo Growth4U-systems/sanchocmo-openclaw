@@ -273,9 +273,11 @@ export function DocSlideOver({ slug, docPath, onClose }: DocSlideOverProps) {
           </div>
         </div>
 
-        {/* Body — viewer or editor */}
+        {/* Body — viewer or editor.
+            Key forces clean remount when docPath changes, preventing
+            Toast UI editor DOM desync (removeChild crash). */}
         {editing && content !== null ? (
-          <div className="flex-1 min-h-0">
+          <div className="flex-1 min-h-0" key={`editor-${docPath}`}>
             <MarkdownEditor
               initialContent={content}
               onSave={handleSave}

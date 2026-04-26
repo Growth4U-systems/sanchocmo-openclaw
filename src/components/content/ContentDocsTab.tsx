@@ -1,8 +1,12 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
+import { useRouter } from "next/router";
 import { cn } from "@/lib/utils";
 import { DocSlideOver } from "@/components/shared/doc-slideover";
+import { useOpenChat } from "@/hooks/useChat";
+import { useProjects } from "@/hooks/useProjects";
+import { findTaskThreadForDoc, buildTaskThread } from "@/lib/chat-openers";
 
 interface DocItem {
   path: string;
@@ -29,6 +33,32 @@ export function ContentDocsTab({ slug }: Props) {
   const [docs, setDocs] = useState<DocItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [openDocPath, setOpenDocPath] = useState<string | null>(null);
+  const openChat = useOpenChat();
+  const { data: projectsData } = useProjects(slug || null);
+  const router = useRouter();
+
+  const handleOpenChat = useCallback((doc: DocItem) => {
+    if (!slug) return;
+    // Try task thread convergence first
+    const taskThread = findTaskThreadForDoc(slug, doc.path, projectsData);
+    if (taskThread) { openChat(slug, taskThread); return; }
+    // Fallback: open chat for the task if we have a taskId
+    if (doc.taskId) {
+      const config = buildTaskThread(slug, doc.taskId, doc.name, "P14", {
+        taskSkill: undefined,
+        taskStatus: doc.status,
+      });
+      openChat(slug, config);
+    }
+  }, [slug, projectsData, openChat]);
+
+  const handleOpenFull = useCallback((doc: DocItem) => {
+    if (!slug) return;
+    // Open in foundation doc viewer with chat pre-opened
+    handleOpenChat(doc);
+    const docPath = doc.path.startsWith("brand/") ? doc.path : `brand/${slug}/${doc.path}`;
+    router.push(`/dashboard/${slug}/foundation?doc=${encodeURIComponent(docPath)}`);
+  }, [slug, router, handleOpenChat]);
 
   useEffect(() => {
     if (!slug) return;
@@ -110,15 +140,15 @@ export function ContentDocsTab({ slug }: Props) {
     );
   }
 
+  const btnClass = "text-[11px] px-2 py-1 rounded-md border transition-colors";
+
   const renderDoc = (doc: DocItem) => {
     const st = STATUS_STYLES[doc.status] || STATUS_STYLES["todo"];
     const filename = doc.path.split("/").pop() || doc.path;
     return (
-      <button
+      <div
         key={doc.path}
-        type="button"
-        onClick={() => setOpenDocPath(doc.path)}
-        className="w-full bg-white border border-[#E8E2D9] rounded-lg px-4 py-3 flex items-center gap-3 text-left hover:border-rust/40 transition-colors"
+        className="bg-white border border-[#E8E2D9] rounded-lg px-4 py-3 flex items-center gap-3 hover:border-rust/40 transition-colors"
         style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}
       >
         <span className="text-lg flex-shrink-0">📄</span>
@@ -131,11 +161,36 @@ export function ContentDocsTab({ slug }: Props) {
             )}
           </span>
         </div>
-        <span className={cn("text-[10px] font-semibold px-2.5 py-1 rounded-full", st.bg, st.text)}>
+        <span className={cn("text-[10px] font-semibold px-2.5 py-1 rounded-full flex-shrink-0", st.bg, st.text)}>
           {st.label}
         </span>
-        <span className="text-[#7A7A7A] text-xs flex-shrink-0">▸</span>
-      </button>
+        <div className="flex items-center gap-1.5 flex-shrink-0">
+          <button
+            type="button"
+            onClick={() => setOpenDocPath(doc.path)}
+            className={cn(btnClass, "border-[#E5E2DC] text-[#7A7A7A] hover:bg-[#E5E2DC] hover:text-[#1A1A1A]")}
+            title="Ver documento"
+          >
+            📄 Ver
+          </button>
+          <button
+            type="button"
+            onClick={() => handleOpenChat(doc)}
+            className={cn(btnClass, "border-[#E5E2DC] text-[#7A7A7A] hover:bg-[#E5E2DC] hover:text-[#1A1A1A]")}
+            title="Abrir chat"
+          >
+            💬 Chat
+          </button>
+          <button
+            type="button"
+            onClick={() => handleOpenFull(doc)}
+            className={cn(btnClass, "border-[#E5E2DC] text-[#7A7A7A] hover:bg-[#E5E2DC] hover:text-[#1A1A1A]")}
+            title="Abrir en vista completa"
+          >
+            ⤢ Abrir
+          </button>
+        </div>
+      </div>
     );
   };
 
