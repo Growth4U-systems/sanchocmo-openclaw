@@ -276,6 +276,7 @@ export function ChatSidebar() {
               taskStatus: foundTask.status,
               taskType: foundTask.type,
               pillar: foundTask.pillar,
+              deliverableFile: typeof foundTask.deliverable_file === "string" ? foundTask.deliverable_file : undefined,
             }
           );
           // Force the threadId to match the one the user clicked (the
@@ -454,6 +455,7 @@ export function ChatSidebar() {
               taskStatus: bestMatch.task.status,
               taskType: bestMatch.task.type,
               pillar: bestMatch.task.pillar,
+              deliverableFile: typeof bestMatch.task.deliverable_file === "string" ? bestMatch.task.deliverable_file : undefined,
             }
           );
           // Preserve the user-clicked threadId (legacy compound form)
@@ -520,6 +522,7 @@ export function ChatSidebar() {
                 taskStatus: matchingTask.status,
                 taskType: matchingTask.type,
                 pillar: matchingTask.pillar,
+              deliverableFile: typeof matchingTask.deliverable_file === "string" ? matchingTask.deliverable_file : undefined,
               }
             );
             config.threadId = threadId;

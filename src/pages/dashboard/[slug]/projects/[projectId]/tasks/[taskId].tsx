@@ -283,6 +283,7 @@ export default function TaskDetailPage() {
         taskStatus: task.status,
         taskType,
         pillar: task.pillar,
+        deliverableFile: typeof task.deliverable_file === "string" ? task.deliverable_file : undefined,
       });
       openChat(slug, config);
       setChatAutoOpened(true);
@@ -300,6 +301,7 @@ export default function TaskDetailPage() {
       taskStatus: task.status,
       taskType,
       pillar: task.pillar,
+        deliverableFile: typeof task.deliverable_file === "string" ? task.deliverable_file : undefined,
     });
     openChat(slug, config);
     setChatAutoOpened(true);
@@ -358,6 +360,7 @@ export default function TaskDetailPage() {
       taskStatus: task.status,
       taskType,
       pillar: task.pillar,
+        deliverableFile: typeof task.deliverable_file === "string" ? task.deliverable_file : undefined,
     });
     openChat(slug, config);
   }, [slug, project, task, taskType, openChat]);

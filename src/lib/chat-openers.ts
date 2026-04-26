@@ -167,6 +167,7 @@ export function findTaskThreadForDoc(
             taskStatus: task.status,
             taskType: task.type,
             pillar: task.pillar,
+            deliverableFile: typeof task.deliverable_file === "string" ? task.deliverable_file : undefined,
           }
         );
       }
@@ -186,6 +187,7 @@ export function findTaskThreadForDoc(
               taskStatus: task.status,
               taskType: task.type,
               pillar: task.pillar,
+            deliverableFile: typeof task.deliverable_file === "string" ? task.deliverable_file : undefined,
             }
           );
         }
@@ -211,22 +213,26 @@ export function buildTaskThread(
   taskId: string,
   taskName: string,
   projectId: string,
-  opts: { taskSkill?: string; taskChannel?: string; taskStatus?: string; taskType?: string; pillar?: string }
+  opts: {
+    taskSkill?: string; taskChannel?: string; taskStatus?: string;
+    taskType?: string; pillar?: string;
+    /** Pass the task's deliverable_file so the doc pill shows the right doc */
+    deliverableFile?: string;
+  }
 ): ThreadConfig {
   // If the task is linked to a foundation pillar, reuse the pillar thread
   // so all entry points (brand column, foundation page, project tasks, etc.)
-  // converge to the same thread. We pass through the task's skill so the
-  // pill shows the correct skill instead of falling back to sancho-manager
-  // when the pillar isn't in chat-config.json (e.g. Content Engine pillars
-  // like content-strategy, content-calendar).
+  // converge to the same thread.
   if (opts.pillar) {
-    const config = buildPillarThread(slug, opts.pillar);
+    const config = buildPillarThread(slug, opts.pillar, opts.deliverableFile);
     // Override skill if the task has an explicit one and the pillar
     // resolution fell back to sancho-manager.
     if (opts.taskSkill && config.skill === "sancho-manager") {
       config.skill = opts.taskSkill;
       config.skills = [opts.taskSkill];
     }
+    // Ensure linkedTo points to the actual task for navigation
+    config.linkedTo = `projects/${projectId}/tasks/${taskId}`;
     return config;
   }
 
