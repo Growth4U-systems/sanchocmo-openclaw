@@ -1,0 +1,17 @@
+{
+  "date": "2026-04-25",
+  "runAt": "2026-04-25T08:00:23Z",
+  "result": "HEARTBEAT_OK",
+  "today": {
+    "total_turns": 38,
+    "total_usd": 0.1493,
+    "clients": {
+      "hospital-capilar": {"turns": 0, "cost_usd": 0},
+      "growth4u": {"turns": 0, "cost_usd": 0},
+      "paymatico": {"turns": 0, "cost_usd": 0}
+    }
+  },
+  "dailyAvg_turns": 144.5,
+  "anomalies": [],
+  "notes": "Día de muy baja actividad. Sin spikes. Proyección mensual $261 vs flat $200."
+}

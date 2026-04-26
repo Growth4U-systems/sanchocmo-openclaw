@@ -1,22 +1,22 @@
 {
   "client": "hospital-capilar",
   "period": "2026-04",
-  "updatedAt": "2026-04-24T08:00:39.109369",
+  "updatedAt": "2026-04-25T08:00:23.988115",
   "total_cost_usd": 0,
   "total_cost_eur": 0.0,
-  "turns": 6,
+  "turns": 9,
   "sessions": 2,
   "agents": {
     "cervantes": {
       "cost_usd": 0,
       "cost_eur": 0.0,
-      "turns": 1,
+      "turns": 2,
       "sessions": 1
     },
     "sancho": {
       "cost_usd": 0,
       "cost_eur": 0.0,
-      "turns": 5,
+      "turns": 7,
       "sessions": 1
     }
   },
@@ -28,7 +28,7 @@
       "cache_write": 0,
       "cost_usd": 0,
       "cost_eur": 0.0,
-      "turns": 6
+      "turns": 9
     }
   },
   "days": {
@@ -39,6 +39,10 @@
     "2026-04-23": {
       "cost_usd": 0,
       "turns": 2
+    },
+    "2026-04-24": {
+      "cost_usd": 0,
+      "turns": 3
     }
   },
   "clientSpend": {

@@ -32,7 +32,8 @@
 - DATA: DataForSEO (credentials ok), Serper.dev (ok), Own media (IG 133K, YT 40K, LinkedIn 7.8K, TikTok 55K)
 
 ## Semana
-- **Apr 7** — Back after weekend. Weekly Fellow<>G4U + Weekly Projects Philippe hoy 16:00-17:00. Llamada estratégica Thursday Apr 9 10:00 AM (cliente nuevo?).
+- **Abr 22-25** — Llamadas estratégicas: Blas Nieto, Paymatico review, Laura Donadio, Sergi Candel, Chloe/Monzo, Alba Weekly, Enric Majó (Hulahoop), Impact demo. Growit grabación en curso.
+- **Semana anterior** —HC visibility audit + Trust Engine v5 execution.
 
 ## Pending
 - HC Foundation desde cero (DAG a seguir)

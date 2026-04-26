@@ -1,20 +1,5 @@
 {
-  "lead_sync": {
-    "last_run": "2026-04-24T20:00:00Z",
-    "new_leads": 1,
-    "updated_leads": 3,
-    "slack_notes_synced": 0,
-    "errors": 0,
-    "new_lead_ids": [
-      "iKsRNTxHV0IHOS9NSxRH"
-    ],
-    "updated_lead_ids": [
-      "n0nIQeYkFFVB1TulRIT5",
-      "Lq27yCsxIuA3rYJqy3mi",
-      "Gwga8zrjoKxj7AcfoeYm"
-    ],
-    "notes": "11 leads con tag 'llamada-agendada' en GHL. Drive transcripts encontrados para Enric Majó Prats (call cancelled 2min), Laura Donadio (€12.500 proposal) y Sergi Candel (payment terms). Slack sync disabled. Enrichment tools no disponibles (Apollo, x_search rate-limited)."
-  },
+  "lead_sync": {"last_run": "2026-04-25T20:00:00Z", "new_leads": 0, "updated_leads": 0, "slack_notes_synced": 0, "errors": 0, "notes": "11 leads con 'llamada-agendada' procesados. Todos los archivos existen. No hay cambios en GHL ni nuevos transcripts en Drive. Slack sync disabled (config). dry_run=false pero sin cambios que escribir."},
   "sales_call_prep": {
     "last_run": "2026-04-23T20:30:00Z",
     "mode": "daily",

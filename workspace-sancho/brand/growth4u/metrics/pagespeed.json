@@ -1,15 +1,27 @@
 {
   "url": "https://growth4u.io",
   "mobile": {
-    "performance": 85,
+    "performance": 87,
     "seo": 92,
     "accessibility": 92,
     "bestPractices": 100,
-    "lcp": 3.5,
+    "lcp": 3.4,
     "cls": 0.007,
-    "tbt": 94,
-    "opportunities": [],
+    "tbt": 81,
+    "opportunities": [
+      {
+        "id": "server-response-time",
+        "title": "Initial server response time was short",
+        "savings": 6,
+        "description": "Keep the server response time for the main document short because all other requests depend on it. [Learn more about the Time to First Byte metric](ht"
+      }
+    ],
     "diagnostics": [
+      {
+        "id": "robots-txt",
+        "title": "robots.txt is not valid",
+        "score": 0
+      },
       {
         "id": "color-contrast",
         "title": "Background and foreground colors do not have a sufficient contrast ratio.",
@@ -18,11 +30,6 @@
       {
         "id": "image-delivery-insight",
         "title": "Improve image delivery",
-        "score": 0
-      },
-      {
-        "id": "robots-txt",
-        "title": "robots.txt is not valid",
         "score": 0
       },
       {
@@ -38,32 +45,22 @@
     ]
   },
   "desktop": {
-    "performance": 96,
+    "performance": 98,
     "seo": 92,
     "accessibility": 92,
     "bestPractices": 100,
     "lcp": 1,
     "cls": 0.009,
-    "tbt": 96,
+    "tbt": 20,
     "opportunities": [
       {
         "id": "unused-javascript",
         "title": "Reduce unused JavaScript",
-        "savings": 160,
+        "savings": 140,
         "description": "Reduce unused JavaScript and defer loading scripts until they are required to decrease bytes consumed by network activity. [Learn how to reduce unused"
       }
     ],
     "diagnostics": [
-      {
-        "id": "heading-order",
-        "title": "Heading elements are not in a sequentially-descending order",
-        "score": 0
-      },
-      {
-        "id": "color-contrast",
-        "title": "Background and foreground colors do not have a sufficient contrast ratio.",
-        "score": 0
-      },
       {
         "id": "image-delivery-insight",
         "title": "Improve image delivery",
@@ -78,8 +75,18 @@
         "id": "robots-txt",
         "title": "robots.txt is not valid",
         "score": 0
+      },
+      {
+        "id": "color-contrast",
+        "title": "Background and foreground colors do not have a sufficient contrast ratio.",
+        "score": 0
+      },
+      {
+        "id": "heading-order",
+        "title": "Heading elements are not in a sequentially-descending order",
+        "score": 0
       }
     ]
   },
-  "fetchedAt": "2026-04-23T16:22:06.796Z"
+  "fetchedAt": "2026-04-25T19:11:03.661Z"
 }
