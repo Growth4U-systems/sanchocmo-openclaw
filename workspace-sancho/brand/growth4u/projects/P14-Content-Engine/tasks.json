@@ -38,7 +38,7 @@
   {
     "id": "P14-T03",
     "name": "Setup configs por pillar",
-    "description": "Proceso 1 — Para cada pillar, generar configs derivados: news-prompts, paa-queries, keywords-seed, competitors, reference-creators, cadence-config. Workshop con el humano. Activar crons al terminar.",
+    "description": "Proceso 1 — Rellenar los configs existentes con datos del cliente. La infraestructura (carpetas + YAMLs + crons) ya existe via content-engine-setup.js. Esta tarea solo MODIFICA los campos editables: queries de news-prompts, lista de competitors, reference-creators, keywords-seed, paa-queries, y cadence (canales, frecuencias, perfiles). NO crea estructura nueva. Lee content-pillars.md + Foundation para derivar los valores.",
     "phase": 1,
     "type": "execution",
     "channel": "strategy",
