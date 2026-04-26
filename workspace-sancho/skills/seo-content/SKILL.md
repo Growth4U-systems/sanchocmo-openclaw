@@ -162,3 +162,18 @@ Present standard prompt after saving. Log to `brand/{slug}/operational/learnings
 | `references/examples.md` | Full invocation flow, end-to-end example, before/after humanization |
 | `references/quality.md` | All QA checklists, The Test, error states, feedback, implementation notes |
 | `references/eeat-examples.md` | 20 best-in-class E-E-A-T content examples across verticals |
+
+---
+
+## Clarify Protocol Integration (added 2026-04-26)
+
+Before generating any blog draft, execute the Clarify protocol
+(see `_system/clarify-protocol.md`). NEVER skip.
+
+### Questions for Blog SEO:
+1. **Keyword target** — Prediction: "{primary keyword from brief}" (confidence based on keyword-plan match)
+2. **Structure** — Prediction: "hub/spoke/template/how-to" (confidence based on SERP analysis)
+3. **Gating** — Prediction: "gated with LM / ungated" (confidence based on funnel_role from pillar)
+
+Present predictions to human. Wait for confirmation.
+After Clarify, save to `brand/{slug}/content/clarify-history.json`.

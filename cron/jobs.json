@@ -1419,6 +1419,52 @@
       "id": "1846c8cf-3c46-4e4f-bdd5-37782fc0ff5b",
       "createdAtMs": 1777157954012,
       "state": {}
+    },
+    {
+      "id": "510489d9-51c7-4dba-9ba5-1502e2828066",
+      "agentId": "sancho",
+      "name": "Content: POV Bank Refresh",
+      "enabled": true,
+      "createdAtMs": 1777188277000,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 9 1 * *",
+        "tz": "Europe/Madrid"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "POV Bank Refresh mensual.\n\nPara CADA cliente activo con content engine (growth4u, hulahoop, hospital-capilar, paymatico):\n\n1. Lee brand/{SLUG}/content/clarify-history.json\n2. Si tiene >10 entries desde el ultimo refresh:\n   - Analiza patrones: que angulos elige el humano, que tono prefiere, que CTAs usa\n   - Lee brand/{SLUG}/brand-book/brand-voice/brand-voice.current.md\n   - Propone refinamientos a la Brand Voice basados en los patrones del Clarify\n   - Si hay cambios significativos, actualiza brand-voice con versionado\n3. Guarda resumen en brand/{SLUG}/recurring-tasks/content-pov-bank/{YYYY-MM-DD}.json\n4. Si <10 entries: skip, no hay suficiente data aun",
+        "model": "anthropic/claude-sonnet-4-5"
+      },
+      "delivery": {
+        "mode": "none"
+      },
+      "state": {}
+    },
+    {
+      "id": "c9156fd2-3839-4c9d-82ef-15747a3f1f5a",
+      "agentId": "sancho",
+      "name": "Content: Keyword Research — Growth4U",
+      "enabled": true,
+      "createdAtMs": 1777188327000,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 6 * * 1",
+        "tz": "Europe/Madrid"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Keyword Research semanal para Growth4U.\n\nPASO 1 — LEER:\nLee brand/growth4u/content/configs/keywords-seed/*.yml (5 archivos, uno por pillar)\nLee brand/growth4u/content/content-pillars.md\n\nPASO 2 — INVESTIGAR:\nPara cada pillar, usa WebSearch para:\n- Buscar cada keyword seed\n- Extraer volumen estimado, dificultad, intent\n- Identificar long-tail opportunities\n- Detectar keywords nuevos relacionados\nPrioridad BOFU-first.\n\nPASO 3 — GUARDAR:\nEscribe resultados en brand/growth4u/content/research-signals/{YYYY-MM-DD}-keywords.json\nCada item: {id, type: keyword, pillar_id, keyword, volume_estimate, difficulty, intent, buyer_stage, url_ranking}\n\nPASO 4 — GUARDAR EN RECURRING TASKS:\nGuarda resumen en brand/growth4u/recurring-tasks/content-keyword-research/{YYYY-MM-DD}.json",
+        "model": "anthropic/claude-sonnet-4-5"
+      },
+      "delivery": {
+        "mode": "none"
+      },
+      "state": {}
     }
   ]
 }

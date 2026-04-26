@@ -1568,3 +1568,18 @@ Follow `_system/output-format.md` exactly. The newsletter output should use this
   Or tell me what you're working on and I'll
   route you.
 ```
+
+---
+
+## Clarify Protocol Integration (added 2026-04-26)
+
+Before generating any newsletter draft, execute the Clarify protocol
+(see `_system/clarify-protocol.md`). NEVER skip.
+
+### Questions for Newsletter:
+1. **Theme** — Prediction: "{topic from approved idea}" (confidence based on recent clarify-history patterns)
+2. **Tone** — Prediction: "teaching/storytelling/digest" (confidence based on brand-voice + past choices)
+3. **CTA** — Prediction: "{primary CTA}" (confidence based on funnel_role)
+
+Present predictions to human. Wait for confirmation.
+After Clarify, save to `brand/{slug}/content/clarify-history.json`.
