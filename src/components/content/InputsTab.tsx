@@ -5,10 +5,11 @@ import { cn } from "@/lib/utils";
 
 interface NewsPromptConfig {
   file: string; pillarId: string; pillarName: string;
-  prompts: string[]; sectorFilters: string[]; language: string[];
+  prompt: string; sector: string; language: string[];
 }
 interface PaaConfig {
-  file: string; pillarId: string; pillarName: string; queries: string[];
+  file: string; pillarId: string; pillarName: string;
+  prompt: string; language: string[];
 }
 interface KeywordsConfig {
   file: string; pillarId: string; pillarName: string;
@@ -158,20 +159,9 @@ function NewsPromptsForm({ configs, slug, onSaved }: { configs: NewsPromptConfig
   const [data, setData] = useState(configs);
   const [saving, setSaving] = useState(false);
 
-  const updatePrompt = (pi: number, qi: number, val: string) => {
+  const updatePrompt = (pi: number, val: string) => {
     const next = [...data];
-    next[pi] = { ...next[pi], prompts: [...next[pi].prompts] };
-    next[pi].prompts[qi] = val;
-    setData(next);
-  };
-  const addPrompt = (pi: number) => {
-    const next = [...data];
-    next[pi] = { ...next[pi], prompts: [...next[pi].prompts, ""] };
-    setData(next);
-  };
-  const removePrompt = (pi: number, qi: number) => {
-    const next = [...data];
-    next[pi] = { ...next[pi], prompts: next[pi].prompts.filter((_, i) => i !== qi) };
+    next[pi] = { ...next[pi], prompt: val };
     setData(next);
   };
   const save = async () => {
@@ -193,32 +183,25 @@ function NewsPromptsForm({ configs, slug, onSaved }: { configs: NewsPromptConfig
           {saving ? "Guardando..." : "💾 Guardar"}
         </button>
       </div>
+      <div className="bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 text-[11px] text-blue-700">
+        <strong>Como funciona:</strong> Cada prompt se ejecuta diariamente (7am L-V) via Brave Search / Perplexity.
+        Genera resultados DIFERENTES cada dia segun lo que sea trending. Edita el prompt para ajustar que tipo de noticias buscas por pillar.
+      </div>
       {data.map((pillar, pi) => (
         <div key={pillar.pillarId} className="bg-white border border-[#E8E2D9] rounded-lg p-4" style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}>
-          <h3 className="text-xs font-semibold text-[#2C3E50] mb-2">{pillar.pillarId}: {pillar.pillarName}</h3>
-          <div className="space-y-1.5">
-            {pillar.prompts.map((q, qi) => (
-              <div key={qi} className="flex items-center gap-1.5">
-                <input
-                  type="text" value={q} onChange={(e) => updatePrompt(pi, qi, e.target.value)}
-                  className="flex-1 text-[12px] border border-[#E8E2D9] rounded px-2 py-1.5 focus:outline-none focus:border-rust"
-                  placeholder="Query de busqueda..."
-                />
-                <button onClick={() => removePrompt(pi, qi)} className="text-red-400 hover:text-red-600 text-xs px-1">🗑️</button>
-              </div>
-            ))}
-            <button onClick={() => addPrompt(pi)} className="text-[11px] text-rust hover:underline">+ Anadir query</button>
-          </div>
-          <div className="flex items-center gap-2 mt-2">
-            <span className="text-[10px] text-muted-foreground">Filtros:</span>
-            {pillar.sectorFilters.map((f, i) => (
-              <span key={i} className="text-[10px] bg-muted/40 px-1.5 py-0.5 rounded">{f}</span>
-            ))}
-            <span className="text-[10px] text-muted-foreground ml-2">Idiomas:</span>
+          <div className="flex items-center gap-2 mb-2">
+            <h3 className="text-xs font-semibold text-[#2C3E50]">{pillar.pillarId}: {pillar.pillarName}</h3>
+            {pillar.sector && <span className="text-[9px] bg-muted/40 px-1.5 py-0.5 rounded">{pillar.sector}</span>}
             {pillar.language.map((l, i) => (
-              <span key={i} className="text-[10px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded">{l}</span>
+              <span key={i} className="text-[9px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded">{l}</span>
             ))}
           </div>
+          <textarea
+            value={pillar.prompt}
+            onChange={(e) => updatePrompt(pi, e.target.value)}
+            className="w-full text-[12px] border border-[#E8E2D9] rounded-lg p-3 min-h-[100px] resize-y focus:outline-none focus:border-rust leading-relaxed"
+            placeholder="Prompt para buscar noticias relevantes a este pillar..."
+          />
         </div>
       ))}
     </div>
@@ -355,20 +338,9 @@ function PaaForm({ configs, slug, onSaved }: { configs: PaaConfig[]; slug: strin
   const [data, setData] = useState(configs);
   const [saving, setSaving] = useState(false);
 
-  const updateQ = (pi: number, qi: number, val: string) => {
+  const updatePrompt = (pi: number, val: string) => {
     const next = [...data];
-    next[pi] = { ...next[pi], queries: [...next[pi].queries] };
-    next[pi].queries[qi] = val;
-    setData(next);
-  };
-  const addQ = (pi: number) => {
-    const next = [...data];
-    next[pi] = { ...next[pi], queries: [...next[pi].queries, ""] };
-    setData(next);
-  };
-  const removeQ = (pi: number, qi: number) => {
-    const next = [...data];
-    next[pi] = { ...next[pi], queries: next[pi].queries.filter((_, i) => i !== qi) };
+    next[pi] = { ...next[pi], prompt: val };
     setData(next);
   };
   const save = async () => {
@@ -390,19 +362,25 @@ function PaaForm({ configs, slug, onSaved }: { configs: PaaConfig[]; slug: strin
           {saving ? "Guardando..." : "💾 Guardar"}
         </button>
       </div>
+      <div className="bg-purple-50 border border-purple-200 rounded-lg px-3 py-2 text-[11px] text-purple-700">
+        <strong>Como funciona:</strong> Cada prompt se ejecuta semanalmente (lunes 6am).
+        Busca preguntas REALES que la audiencia hace en Reddit, Quora, LinkedIn y Google PAA.
+        Las preguntas descubiertas alimentan el Idea Queue como fuente de contenido.
+      </div>
       {data.map((pillar, pi) => (
         <div key={pillar.pillarId} className="bg-white border border-[#E8E2D9] rounded-lg p-4" style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}>
-          <h3 className="text-xs font-semibold text-[#2C3E50] mb-2">{pillar.pillarId}: {pillar.pillarName}</h3>
-          <div className="space-y-1.5">
-            {pillar.queries.map((q, qi) => (
-              <div key={qi} className="flex items-center gap-1.5">
-                <input type="text" value={q} onChange={(e) => updateQ(pi, qi, e.target.value)}
-                  className="flex-1 text-[12px] border border-[#E8E2D9] rounded px-2 py-1.5 focus:outline-none focus:border-rust" placeholder="Query seed..." />
-                <button onClick={() => removeQ(pi, qi)} className="text-red-400 hover:text-red-600 text-xs px-1">🗑️</button>
-              </div>
+          <div className="flex items-center gap-2 mb-2">
+            <h3 className="text-xs font-semibold text-[#2C3E50]">{pillar.pillarId}: {pillar.pillarName}</h3>
+            {pillar.language.map((l, i) => (
+              <span key={i} className="text-[9px] bg-purple-50 text-purple-600 px-1.5 py-0.5 rounded">{l}</span>
             ))}
-            <button onClick={() => addQ(pi)} className="text-[11px] text-rust hover:underline">+ Anadir query</button>
           </div>
+          <textarea
+            value={pillar.prompt}
+            onChange={(e) => updatePrompt(pi, e.target.value)}
+            className="w-full text-[12px] border border-[#E8E2D9] rounded-lg p-3 min-h-[100px] resize-y focus:outline-none focus:border-rust leading-relaxed"
+            placeholder="Prompt para descubrir preguntas reales de la audiencia..."
+          />
         </div>
       ))}
     </div>

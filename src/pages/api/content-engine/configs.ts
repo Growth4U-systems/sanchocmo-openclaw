@@ -48,8 +48,8 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         file: f,
         pillarId: data?.pillar_id || f.replace(".yml", ""),
         pillarName: data?.pillar_name || "",
-        prompts: (data?.prompts as string[]) || [],
-        sectorFilters: (data?.sector_filters as string[]) || [],
+        prompt: (data?.prompt as string) || "",
+        sector: (data?.sector as string) || "",
         language: (data?.language as string[]) || ["es", "en"],
       };
     });
@@ -63,7 +63,8 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         file: f,
         pillarId: data?.pillar_id || f.replace(".yml", ""),
         pillarName: data?.pillar_name || "",
-        queries: (data?.queries as string[]) || [],
+        prompt: (data?.prompt as string) || "",
+        language: (data?.language as string[]) || ["es", "en"],
       };
     });
 
