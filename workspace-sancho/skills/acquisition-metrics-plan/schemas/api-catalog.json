@@ -174,6 +174,23 @@
           "config": [],
           "docs": "https://developers.notion.com"
         },
+        "google_workspace": {
+          "provider": "Google Workspace",
+          "icon": "📧",
+          "desc": "Gmail, Calendar, Drive (gog CLI)",
+          "ownership": "client",
+          "customOAuth": "gog",
+          "credentials": [],
+          "config": [
+            { "key": "EMAIL", "label": "Email de Google", "type": "string", "sensitive": false, "help": "La cuenta de Gmail/Workspace del cliente (ej: info@suempresa.com)" }
+          ],
+          "docs": "https://developers.google.com/workspace"
+        }
+      }
+    },
+    "communication": {
+      "label": "💬 Comunicación",
+      "apis": {
         "slack": {
           "provider": "Slack",
           "icon": "💬",
@@ -194,8 +211,8 @@
         },
         "discord": {
           "provider": "Discord Bot",
-          "icon": "💬",
-          "desc": "Bot SanchoCMO",
+          "icon": "🎮",
+          "desc": "Bot SanchoCMO en Discord",
           "ownership": "client",
           "credentials": [
             { "key": "BOT_TOKEN", "label": "Bot Token", "type": "string", "sensitive": true, "help": "discord.com/developers → Applications → Bot → Token" }
@@ -204,18 +221,6 @@
             { "key": "GUILD_ID", "label": "Server ID", "type": "string", "sensitive": false, "help": "Discord → Server Settings → Widget → Server ID" }
           ],
           "docs": "https://discord.com/developers/docs"
-        },
-        "google_workspace": {
-          "provider": "Google Workspace",
-          "icon": "📧",
-          "desc": "Gmail, Calendar, Drive (gog CLI)",
-          "ownership": "client",
-          "customOAuth": "gog",
-          "credentials": [],
-          "config": [
-            { "key": "EMAIL", "label": "Email de Google", "type": "string", "sensitive": false, "help": "La cuenta de Gmail/Workspace del cliente (ej: info@suempresa.com)" }
-          ],
-          "docs": "https://developers.google.com/workspace"
         }
       }
     },
