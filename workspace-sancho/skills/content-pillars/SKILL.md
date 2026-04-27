@@ -1,6 +1,6 @@
 ---
 name: content-pillars
-description: "Define and maintain Content Pillars for a client. Pillars = TOPICS the brand will own. POV is NOT decided here — POV lives at piece level during angle/clarify. Reads Foundation (ECPs, Positioning, Brand Voice) as input. Outputs content-pillars.md as readable markdown with rich context per pillar."
+description: "Define and maintain Content Pillars for a client. Uses a 5-layer methodology: Content Tilt → Pain-Based+JTBD → BOFU-First Prioritization → Topic Cluster Structure → Playground Tagging. Outputs readable markdown with rich context per pillar. Pillars = TOPICS the brand will own. POV is NOT decided here — POV lives at piece level during angle/clarify."
 context_required:
 - brand/{slug}/company-brief/company-brief.current.md
 - brand/{slug}/brand-book/brand-voice/brand-voice.current.md
@@ -12,178 +12,243 @@ context_writes:
 - brand/{slug}/content/content-pillars.md
 ---
 
-# Content Pillars
+# Content Pillars — 5-Layer Methodology
 
-> Define 3-5 content pillars (TOPICS) for the client's Content Engine.
-> Pillars = themes the brand will own. NOT POV — POV is decided per piece
-> during angle/clarify.
+> Define 3-5 content pillars using a structured 5-layer process.
+> Each layer adds depth and specificity. The result is pillars that are
+> differentiated, pain-anchored, conversion-oriented, SEO-structured,
+> and non-linearly tagged for complex buyer journeys.
 
 ## Before Starting
 
 Read ALL Foundation context listed in `context_required`. Do NOT skip any.
-If a file doesn't exist, note what's missing and proceed with what's available.
-
 Also check for optional enrichment:
-- `brand/{slug}/content/strategy-decisions.md` — if Content Strategy (14 decisions) was already executed, use it as additional input
-- Transcripts via `meeting-intelligence` — if available, extract real customer pain quotes to validate/enrich pillars. OPTIONAL.
+- `brand/{slug}/content/strategy-decisions.md` — if Content Strategy was executed
+- Transcripts via `meeting-intelligence` — OPTIONAL
 
-## Framework: Authority Pillars
+---
 
-Pillars are the intersection of:
-1. **Customer Pain** — what problems does the ICP face? (from ECPs + Positioning)
-2. **Brand Expertise** — what unique knowledge/experience does the brand have? (from company-brief + Brand Voice)
-3. **Topic Defensibility** — can the brand credibly own this topic long-term?
+## Layer 1 — Content Tilt (Joe Pulizzi)
 
-Good pillars should:
-- Align with the product/service
-- Match what the audience cares about (validated by ECPs)
-- Have enough depth for many subtopics (hub & spoke potential)
-- Connect to the business model's funnel
+**Question**: "At what intersection is this brand the ONLY credible voice?"
 
-## Workflow
+Before defining any pillars, find the Content Tilt — the unique angle
+that makes this brand's content impossible to replicate.
 
-### 1. Read Foundation
-- Company brief: who they are, what they do, stage
-- ECPs: all pain clusters + personas + JTBD + pain scores
-- Positioning: UVPs per ECP, value criteria, messaging summary
-- Brand Voice: tone, words, personality
-- Strategic Plan: objectives, channels, target metrics
+**Process**:
+1. Read company-brief: what does the brand do differently?
+2. Read ECPs: what do customers desperately need?
+3. Read positioning: what's the brand's unfair advantage?
+4. Find the INTERSECTION:
+   ```
+   Content Tilt = (Brand's unique expertise)
+                × (Audience's urgent need)
+                × (Gap no one else fills)
+   ```
 
-### 2. Extract Pillar Seeds
-Take the per-niche content pillars from `positioning-messaging` (step 7 of
-positioning) as the STARTING POINT. Do NOT duplicate — extend.
+**Output**: One sentence that captures the tilt.
+Example (Growth4U): "Sistemas de growth con exit date a 6 meses para
+startups post-PMF — el unico programa que instala un motor y se va."
 
-Cross-reference with:
-- Pain clusters from ECPs (which pains are most common across personas? Use pain scores.)
-- Expertise from company-brief (where is the brand's unfair knowledge advantage?)
-- Strategic Plan objectives (which topics serve the current quarter's goals?)
+**Rule**: If you can't articulate a clear tilt, STOP and workshop with
+the human. Without a tilt, pillars will be generic.
 
-### 3. Optional: Enrich with Transcripts
-If `meeting-intelligence` output exists:
-- Extract real customer quotes that validate or adjust pillar seeds
-- Flag any pillar that has NO transcript validation (lower confidence)
+---
 
-### 4. Assign funnel_role per Pillar
-Based on `business_model` from strategy-decisions.md or company-brief:
+## Layer 2 — Pain-Based + JTBD Pillars
 
-**B2B:**
-- `top`: demand creation, thought leadership, ungated (LinkedIn, X)
-- `middle`: audience building, newsletter, community
-- `bottom`: capture, blog SEO, gated lead magnets
+**Framework**: Each pillar = intersection of:
+- **Customer Pain** (from ECPs — use pain SCORES to prioritize)
+- **Brand Expertise** (from company-brief — concrete track record, not claims)
+- **Topic Defensibility** (can the brand credibly own this topic for years?)
 
-**B2C:**
-- `top`: awareness, social, ungated
-- `middle`: email capture, free resources gated
-- `bottom`: product, cohort, conversion
+**Process**:
+1. List all pain clusters from ECPs with their scores
+2. List all brand expertise areas with concrete proof (names, numbers, results)
+3. Cross-reference: which pains match which expertise?
+4. Group into 3-5 pillars (not more — dilutes authority)
+5. For each pillar, define the JTBD:
+   ```
+   "When [situation], I want [motivation], so I can [outcome]."
+   ```
 
-### 5. Confirm with Human
-Present 3-5 pillars. Ask human to confirm/edit. This is a DECISION step — wait for approval.
+**Each pillar MUST have**:
+- A pain score reference (from ECPs)
+- A concrete expertise proof (not "we're experts in X" — "we grew Bnext 0→400K under CNMV")
+- A JTBD statement
+- A connection to the product/service
 
-### 6. Output
+**Rule**: "Growth strategies" is BAD. "Sistemas de growth repetibles para
+startups post-PMF 5-50 personas" is GOOD. Be specific or redo.
 
-Write `brand/{slug}/content/content-pillars.md` as **readable markdown** (NOT YAML).
+---
 
-**Output format** — follow this structure exactly:
+## Layer 3 — BOFU-First Prioritization (Rob Walling)
+
+**Principle**: Within each pillar, prioritize content that CONVERTS before
+content that generates awareness. Start at the bottom of the funnel.
+
+**Process**:
+1. For each pillar, assign a `funnel_role`:
+   - `bottom` — captures intent (blog SEO, comparison pages, use cases). GATED with lead magnets.
+   - `middle` — builds audience (newsletter, community, deep-dives). GATED email.
+   - `top` — creates demand (LinkedIn, X, thought leadership). UNGATED.
+
+2. Within each pillar, list subtopics and score them:
+   ```
+   BOFU score = (Purchase intent × 0.4) + (Search volume × 0.3)
+              + (Competition gap × 0.2) + (Brand proof × 0.1)
+   ```
+
+3. The pillar's first 3 content pieces should be BOFU.
+
+**Assign per business_model**:
+- **B2B**: bottom = blog SEO gated; middle = newsletter; top = LinkedIn/X ungated
+- **B2C**: bottom = product/cohort; middle = email gated; top = social ungated
+
+---
+
+## Layer 4 — Topic Cluster Structure (HubSpot Model)
+
+**For each pillar, define the hub-and-spoke architecture**:
+
+```
+PILLAR HUB (comprehensive overview page)
+├── Spoke 1: [specific subtopic] — searchable
+├── Spoke 2: [specific subtopic] — searchable
+├── Spoke 3: [specific subtopic] — shareable
+├── Spoke 4: [specific subtopic] — searchable
+├── Spoke 5: [specific subtopic] — shareable
+└── Spoke 6: [specific subtopic] — searchable
+```
+
+**Rules**:
+- Hub = broad topic. Spokes = specific long-tail.
+- Each spoke MUST be specific enough to be a single content piece
+- Interlink: every spoke links to the hub, hub links to all spokes
+- Mix searchable (60%) + shareable (25%) + both (15%)
+- 6-8 spokes per pillar minimum
+
+**Each spoke needs**: title, searchable/shareable/both, buyer stage
+(awareness/consideration/decision/implementation), target keyword hint.
+
+---
+
+## Layer 5 — Playground Model Tagging (Ashley Faus, Atlassian)
+
+**Replace the linear funnel with a non-linear playground**.
+
+Tag each spoke with a DEPTH level:
+- **Conceptual** — "what is X and why does it matter?" (awareness, inspiration)
+- **Strategic** — "how should I think about X?" (frameworks, comparisons, decisions)
+- **Tactical** — "how do I DO X step by step?" (tutorials, templates, playbooks)
+
+**Why**: Buyers don't move linearly top→mid→bottom. They jump between
+depths. A CTO might start with a tactical template, then read a strategic
+framework, then share a conceptual hot take on LinkedIn. Content should
+work at any entry point.
+
+**Each pillar should have content at all 3 depths**.
+
+---
+
+## Output Format
+
+Write `brand/{slug}/content/content-pillars.md` as **readable markdown**:
 
 ```markdown
 # Content Pillars — {Client Name}
 
 > Generado: {date} | Status: approved
+> Content Tilt: {one-sentence tilt}
 > Inputs: {list of Foundation docs used}
-> Aprobado por: {human name}
 
 ---
 
+## Content Tilt
+
+{2-3 sentences explaining the tilt and why this brand is uniquely
+positioned to own this content space}
+
 ## Resumen
 
-{N} pillars que definen los temas que {Client} va a poseer en contenido.
-
-| # | Pillar | Funnel | Diferenciador |
-|---|--------|--------|---------------|
-| P1 | {name} | {Top/Middle/Bottom} | {1 line differentiator} |
-| P2 | ... | ... | ... |
-
-**Distribucion por funnel**: {summary}
+| # | Pillar | Funnel | BOFU Priority | Diferenciador |
+|---|--------|--------|---------------|---------------|
+| P1 | {name} | {Top/Middle/Bottom} | {first BOFU subtopic} | {1 line} |
 
 ---
 
 ## P1 — {Pillar Name}
 
+**Content Tilt connection**: {how this pillar serves the overall tilt}
+
 **Rol en funnel**: {Top/Middle/Bottom} ({channels, gating})
+**JTBD**: "When {situation}, I want {motivation}, so I can {outcome}."
 
-**Por que este pillar**: {2-3 sentences explaining WHY this is a pillar
-for this client. Reference specific data: pain scores, market size,
-competitive advantage. Be specific, not generic.}
+**Por que este pillar**: {2-3 sentences with SPECIFIC data — pain scores,
+market size, track record numbers. NOT generic.}
 
-**Clusters de dolor que cubre**:
-- **Cluster {X}: {Name}** (Pain {score}) — {1 line description}
-- **Cluster {Y}: {Name}** (Pain {score}) — {1 line description}
+**Clusters de dolor**:
+- **Cluster {X}: {Name}** (Pain {score}) — {description}
 
-**Expertise de {founder/brand}**:
-- {Specific experience, track record, unique knowledge}
-- {Another expertise point with concrete data}
+**Expertise**:
+- {Specific achievement with data}
 
-**Subtopics**:
-- {Subtopic 1 — specific enough to be a content piece}
-- {Subtopic 2}
-- {Subtopic 3}
-- {Subtopic 4}
-- {Subtopic 5}
-- {Subtopic 6}
+**Topic Cluster** (hub + spokes):
+| # | Spoke | Type | Buyer Stage | Depth | Keyword hint |
+|---|-------|------|-------------|-------|-------------|
+| Hub | {pillar overview} | Both | All | Strategic | {keyword} |
+| 1 | {subtopic} | Searchable | Decision | Tactical | {keyword} |
+| 2 | {subtopic} | Shareable | Awareness | Conceptual | {keyword} |
+| 3 | ... | ... | ... | ... | ... |
 
-**Lead magnets asociados**: {list or "pendiente"}
+**BOFU priority**: {first 3 pieces to produce, all bottom-funnel}
 
----
-
-## P2 — {Next Pillar}
-{...same structure...}
+**Lead magnets**: {list}
 
 ---
-
-## Conexion a {Product/Service}
-
-| Pillar | Conexion |
-|--------|----------|
-| P1 {name} | {How this pillar connects to the product} |
-| P2 {name} | ... |
 ```
 
 ## Quality Checklist
 
-Before presenting to the human, verify:
+Before presenting to the human:
 
-- [ ] Each pillar has a SPECIFIC "Por que" — not generic. References pain scores, market data, or track record.
-- [ ] Subtopics are SPECIFIC enough to be individual content pieces — not vague categories.
-- [ ] Every pillar connects to the product/service.
-- [ ] Pain clusters are cited with scores.
-- [ ] Expertise references real data (client names, metrics, achievements).
-- [ ] Funnel distribution is balanced (not all top, not all bottom).
-- [ ] 3-5 pillars total (not more, not fewer).
-- [ ] No POV assigned to pillars (POV is per piece, during clarify).
+- [ ] Content Tilt articulated in 1 sentence — specific, not generic
+- [ ] 3-5 pillars, each with JTBD statement
+- [ ] Pain scores cited from ECPs
+- [ ] Expertise references real data (client names, metrics)
+- [ ] Every pillar has funnel_role assigned (balanced distribution)
+- [ ] Every pillar has 6+ spokes in topic cluster table
+- [ ] Every spoke has depth tag (conceptual/strategic/tactical)
+- [ ] BOFU-first: first 3 pieces per pillar are bottom-funnel
+- [ ] Each pillar connects to product/service
+- [ ] No POV assigned to pillars (POV is per piece, during clarify)
+- [ ] Content Tilt connection explained per pillar
 
 ## Rules
 
-- **Pillars = TOPICS, not POV.** Never assign a stance/opinion to a pillar.
-- **No `is_contrarian` flag.** Contrarian angles are piece-level decisions.
-- **No SEO filter at this layer.** SEO targeting happens during blog redaction.
-- **3-5 pillars max.** More dilutes authority. Fewer limits diversity.
+- **Pillars = TOPICS, not POV.** POV is decided per piece during clarify.
+- **No `is_contrarian` flag.** Contrarian angles are piece-level.
+- **3-5 pillars max.** More dilutes authority.
 - **Every pillar must connect to the product/service.**
-- **Output is MARKDOWN, not YAML.** The document must be readable by a human in a doc viewer without any technical formatting.
-- **Be specific, not generic.** "Growth strategies" is bad. "Sistemas de Growth Repetibles para startups post-PMF 5-50 personas" is good.
+- **Output is MARKDOWN, not YAML.** Human-readable in doc viewer.
+- **Be specific, not generic.** If a competitor could claim the same pillar, it's not specific enough.
+- **Content Tilt FIRST.** Without it, pillars are commodity.
+- **BOFU FIRST.** Within each pillar, prioritize what converts.
 
 ## Versioning
 
-Pillars are reviewed quarterly (Proceso 4 Performance). When updating:
+Reviewed quarterly (Proceso 4 Performance). When updating:
 1. Read existing `content-pillars.md`
-2. Compare with new data (Atalaya, performance metrics, new ECPs)
-3. Propose changes to human for approval
-4. Note the update date in the header
+2. Compare with new data (Atalaya, performance, ECPs)
+3. Propose changes for approval
+4. Note update date
 
 ## Related Skills
 
-- `content-strategy` — defines the 14 global decisions BEFORE pillars
-- `positioning-messaging` — provides per-niche pillar SEEDS (step 7)
-- `brand-voice` — defines tone/vocabulary (NOT POV)
-- `insight-to-content-mapper` — turns signals into ideas WITHIN these pillars
-- `content-calendar-planner` — schedules content ACROSS these pillars
-- `content-engine-setup` — populates configs derived from these pillars
+- `content-strategy` — 14 global decisions BEFORE pillars
+- `positioning-messaging` — per-niche pillar SEEDS (step 7)
+- `brand-voice` — tone/vocabulary (NOT POV)
+- `insight-to-content-mapper` — signals → ideas WITHIN pillars
+- `content-calendar-planner` — schedules content ACROSS pillars
+- `content-engine-setup` — configs derived FROM pillars
