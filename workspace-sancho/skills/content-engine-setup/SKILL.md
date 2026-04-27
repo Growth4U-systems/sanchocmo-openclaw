@@ -1,6 +1,6 @@
 ---
 name: content-engine-setup
-description: "Populates Content Engine config files with client-specific data. The infrastructure (folders, YAML templates, cron jobs) already exists — this skill only FILLS IN the client-editable fields. Reads content-pillars.md + Foundation to derive values. Does NOT create structure."
+description: "Populates Content Engine config files with client-specific data and writes a narrative setup.md explaining what was set up and which crons consume it. The infrastructure (folders, YAML templates, cron jobs) already exists — this skill only FILLS IN the client-editable fields and DOCUMENTS what was done."
 context_required:
 - brand/{slug}/content/content-pillars.md
 - brand/{slug}/company-brief/company-brief.current.md
@@ -11,117 +11,252 @@ context_writes:
 - brand/{slug}/content/configs/news-prompts/*.yml
 - brand/{slug}/content/configs/paa-queries/*.yml
 - brand/{slug}/content/configs/keywords-seed/*.yml
-- brand/{slug}/content/configs/competitors/all-pillars.yml
-- brand/{slug}/content/configs/reference-creators/all-pillars.yml
+- brand/{slug}/market-and-us/competitors/sources.json
 - brand/{slug}/content/configs/cadence-config.yml
+- brand/{slug}/content/configs/setup.md
 ---
 
-# Content Engine Setup — Populate Configs
+# Content Engine Setup — Populate Configs + Write Narrative Doc
 
-> The infrastructure is ALREADY created by `scripts/content-engine-setup.js`.
-> This skill only FILLS IN the client-specific data.
-> It does NOT create folders, files, or cron jobs.
+> The infrastructure (folders, YAML templates, cron jobs) is already created.
+> This skill only FILLS IN client-specific data and writes a narrative
+> document explaining the decisions.
+>
+> The doc (`setup.md`) is the deliverable for the human — short, in plain
+> language, with links to each cron that consumes the configs. It is NOT
+> a dump of the YAMLs (those are already visible in MC UI → Inputs).
 
 ## What already exists (DO NOT recreate)
 
 ```
 brand/{slug}/content/
 ├── configs/
-│   ├── news-prompts/P1.yml ... P5.yml    ← FILL these
-│   ├── paa-queries/P1.yml ... P5.yml     ← FILL these
-│   ├── keywords-seed/P1.yml ... P5.yml   ← FILL these
-│   ├── competitors/all-pillars.yml       ← FILL this
-│   ├── reference-creators/all-pillars.yml ← FILL this
-│   └── cadence-config.yml                ← FILL this
-├── content-pillars.md                    ← READ this (input)
-├── idea-queue.json                       ← DO NOT touch
-└── clarify-history.json                  ← DO NOT touch
+│   ├── news-prompts/P1.yml ... P{N}.yml    ← FILL these
+│   ├── paa-queries/P1.yml ... P{N}.yml     ← FILL these
+│   ├── keywords-seed/P1.yml ... P{N}.yml   ← FILL these
+│   ├── cadence-config.yml                  ← FILL this
+│   └── setup.md                            ← WRITE this (narrative)
+├── content-pillars.md                      ← READ (input)
+├── idea-queue.json                         ← DO NOT touch
+└── clarify-history.json                    ← DO NOT touch
+
+brand/{slug}/market-and-us/competitors/
+└── sources.json (schema v2)                ← FILL profiles[] here
 ```
+
+## Output schema reminders
+
+### sources.json (schema v2 — single flat list)
+
+The legacy `competitors.{direct,indirect}` + nested founders + separate
+`reference-creators/all-pillars.yml` were unified into one `profiles[]`
+array. Schema:
+
+```json
+{
+  "version": 2,
+  "profiles": [
+    {
+      "id": "snowball",
+      "type": "company",
+      "name": "Snowball",
+      "tier": "A",
+      "platforms": { "web": "...", "linkedin": "...", "twitter": "...", "instagram": "...", "youtube": "...", "newsletter": "...", "podcast": "...", "blog": "..." },
+      "pillars_relevant": ["P1","P2"]
+    },
+    {
+      "id": "snowball__pau-gallinat",
+      "type": "person",
+      "name": "Pau Gallinat",
+      "parent_company_id": "snowball",
+      "role": "CEO & Founder",
+      "platforms": { "linkedin": "...", "twitter": "..." },
+      "pillars_relevant": ["P1"]
+    },
+    {
+      "id": "creator__amanda-natividad",
+      "type": "person",
+      "name": "Amanda Natividad",
+      "role": "Zero-click content, VOI over ROI",
+      "platforms": { "linkedin": "..." },
+      "pillars_relevant": ["P2","P5"]
+    }
+  ],
+  "updated_at": "..."
+}
+```
+
+- `type: "company"` for competitor companies
+- `type: "person"` for founders (with `parent_company_id`) AND for industry voices ("voces del sector") with no parent
+- `pillars_relevant` lives on every profile
+
+### news-prompts/{pillar_id}.yml — single dynamic prompt (NOT array)
+
+```yaml
+pillar_id: P1
+pillar_name: "..."
+prompt: >
+  What are the 5 most interesting and relevant news stories from the last 48 hours
+  covering {topics specific to this pillar} for {sector}? For each give the
+  headline, source, date, a 2-sentence summary, and the URL.
+sector: "..."
+language: [es, en]
+```
+
+The runtime substitutes nothing — the prompt is sent verbatim to Brave/Perplexity.
+
+### paa-queries/{pillar_id}.yml — single dynamic prompt (NOT array)
+
+```yaml
+pillar_id: P1
+pillar_name: "..."
+prompt: >
+  Extract People Also Ask questions from Google for queries about {pillar topics}.
+  Use DataforSEO API. Return the top 10 questions real users are asking, grouped
+  by sub-topic.
+language: [es, en]
+```
+
+### keywords-seed/{pillar_id}.yml — array of seed keywords
+
+```yaml
+pillar_id: P1
+pillar_name: "..."
+keywords_seed: ["...", "...", "..."]
+target: blog_seo_bofu_first
+language: [es, en]
+```
+
+### cadence-config.yml — channels + frequency + profiles
+
+Editable via MC UI → Inputs → Cadencia. Same shape as before:
+`channels.{linkedin,twitter,blog,newsletter}.{active, frequency, best_days, best_times, profiles, gating, content_types}`.
 
 ## Workflow
 
 ### 1. Read inputs
 
-- `content-pillars.md` — the 3-5 pillars with names, pain_origin, expertise, related_topics
+- `content-pillars.md` — names, pain_origin, expertise, related_topics
 - `company-brief` — sector, business model
-- `ecps` — ICP clusters (for audience context)
-- `competitors/sources.json` — competitor list with URLs + social profiles
-- `brand-voice` — tone (for content type decisions)
+- `ecps` — ICP clusters
+- `sources.json` — existing profiles (may be empty for new brands)
+- `brand-voice` — tone
 
 ### 2. For EACH pillar, populate per-pillar configs
 
-#### news-prompts/{pillar_id}.yml
-ONLY modify these fields:
-- `pillar_name`: from content-pillars.md
-- `prompts`: 4-6 WebSearch queries relevant to this pillar's topics
-- `sector_filters`: 2-3 sector terms from company-brief
-- `language`: [es, en] (or client-specific)
+For each `P{n}.yml` in news-prompts/, paa-queries/, keywords-seed/:
+- Set `pillar_name` from content-pillars.md
+- For news: write a SINGLE rich `prompt` (not an array of prompts) covering the pillar's topics + sector context
+- For PAA: write a SINGLE `prompt` describing the DataforSEO query for that pillar
+- For keywords: 5-8 BOFU-first seeds in `keywords_seed[]`
 
-DO NOT modify: `pillar_id`, structure, comments.
+DO NOT touch: `pillar_id`, file structure.
 
-#### paa-queries/{pillar_id}.yml
-ONLY modify:
-- `pillar_name`: from content-pillars.md
-- `queries`: 5-8 seed queries that real people would ask about this pillar
+### 3. Populate sources.json (profiles)
 
-#### keywords-seed/{pillar_id}.yml
-ONLY modify:
-- `pillar_name`: from content-pillars.md
-- `keywords_seed`: 5-8 keywords for SEO targeting. BOFU-first ordering.
-- `language`: [es, en]
+- Read `market-and-us/competitors/sources.json`
+- Use schema v2 (`{ version: 2, profiles: [...] }`)
+- Add competitor companies as `type: "company"`
+- For each company's known founders, add `type: "person"` with `parent_company_id`
+- Add industry voices/thought leaders as `type: "person"` with no parent
+- Assign `pillars_relevant` to every profile (1-3 pillars per profile)
+- DO NOT use the legacy `competitors.direct/indirect` shape — that file format has been deprecated
 
-### 3. Populate competitors config
-
-Read `competitors/sources.json` from Foundation.
-Write to `configs/competitors/all-pillars.yml`:
-
-ONLY modify:
-- `competitors.direct[]`: name, slug, tier, web, linkedin_company, founder (from sources.json)
-- `competitors.indirect[]`: name, slug (from sources.json)
-- `pillars_relevant`: assign each competitor to 1-3 pillars based on their positioning
-
-DO NOT modify: structure, monitoring section.
-
-### 4. Populate reference-creators config
-
-WebSearch for thought leaders in the client's sector.
-Write to `configs/reference-creators/all-pillars.yml`:
-
-For each creator:
-- `name`: full name
-- `platforms`: { linkedin, newsletter, blog, twitter, youtube } — URLs
-- `focus`: 1-line description of their content focus
-- `pillars_relevant`: which pillars they're relevant to
-
-Target: 8-12 creators.
-
-### 5. Populate cadence config
+### 4. Populate cadence config
 
 Workshop with human. Ask:
-1. What channels are active? (LinkedIn, X, Blog, Newsletter, Instagram, TikTok)
-2. How many posts per week per channel?
-3. Who are the publishing profiles? (names + handles)
-4. What are the best posting times?
-5. What content types per channel?
-6. What's gated vs ungated?
+1. Active channels (LinkedIn, X/Twitter, Blog, Newsletter, …)
+2. Frequency per channel
+3. Publishing profiles (names + handles + posts/week)
+4. Best days + times
+5. Gating (ungated / gated_top_funnel / gated_bottom_funnel)
+6. Content types per channel
 
-Write to `configs/cadence-config.yml`.
+Write to `cadence-config.yml`. Preserve top-level keys not in the form
+(`batch_workflow`, `rules`).
 
-ONLY modify:
-- `channels.*`: active, frequency, best_days, best_times, profiles, gating, content_types
+### 5. Write the narrative `setup.md` (THE DELIVERABLE)
 
-DO NOT modify: `client_id`, `business_model`, `batch_workflow`, `rules`.
+Path: `brand/{slug}/content/configs/setup.md`
+
+This is the human-facing document. Keep it short and explanatory.
+Structure:
+
+```markdown
+# Content Engine Setup — {Client Name}
+
+_Última actualización: YYYY-MM-DD por content-engine-setup_
+
+## Por qué hicimos esto
+
+{2-3 frases explicando que el Content Engine necesita configs por pillar
+para que los crones puedan ejecutarse: monitorear noticias, sacar PAA,
+investigar keywords, vigilar competidores y planificar la cadencia
+editorial.}
+
+## Decisiones por pillar
+
+### P1 — {Nombre del pillar}
+- **Por qué este pillar**: {1 frase del pain_origin / expertise}
+- **News prompt**: {qué tipo de noticias buscamos para este pillar}
+- **PAA**: {qué preguntas extraemos de Google}
+- **Keywords**: {breve mención de los 2-3 más importantes}
+- **Pillars asignados a profiles**: X profiles vigilados para este pillar
+
+### P2 — ... (idem)
+
+## Profiles a monitorizar
+
+- {N} empresas competidoras
+- {M} founders
+- {K} voces del sector
+- Asignación a pillars: {breve resumen}
+
+Ver lista completa en MC UI → Inputs → 🕵️ Perfiles a monitorizar.
+
+## Cadencia editorial
+
+- **LinkedIn**: {frecuencia}, mejores días {L,M,X,J}, {N} perfiles
+- **Twitter**: {frecuencia}, ...
+- **Blog**: {frecuencia}, ...
+- **Newsletter**: {frecuencia}, ...
+
+Ver y editar en MC UI → Inputs → ⏰ Cadencia.
+
+## Crones conectados (qué consume cada config)
+
+| Cron | Cuándo | Lee | Escribe |
+|------|--------|-----|---------|
+| 📰 [News Monitor]({MC_BASE}/dashboard/{slug}/system?cron=News+Monitor) | 7am L-V | `news-prompts/*.yml` | `research-signals/{date}-news.json` |
+| 🕵️ [Competitor Monitor]({MC_BASE}/dashboard/{slug}/system?cron=Competitor+Monitor) | 7am L-V | `sources.json` (profiles) | `research-signals/{date}-creators.json` |
+| 🔑 [Keyword Research]({MC_BASE}/dashboard/{slug}/system?cron=Keyword+Research) | semanal | `keywords-seed/*.yml` | `research-signals/{date}-keywords.json` |
+| ❓ [PAA Monitor]({MC_BASE}/dashboard/{slug}/system?cron=PAA+Monitor) | semanal lunes 6am | `paa-queries/*.yml` | `research-signals/{date}-paa.json` |
+| 📬 [Editorial Dispatch]({MC_BASE}/dashboard/{slug}/system?cron=Editorial+Dispatch) | 8:30 L-V | `idea-queue.json` + `cadence-config.yml` | Discord/Slack del cliente |
+
+## Cómo iterar
+
+- Para regenerar TODOS los configs: pídeselo a Sancho en este chat ("regenera el setup")
+- Para editar un config concreto sin regenerar: MC UI → Inputs → sección que toque
+- Para añadir/quitar profiles a vigilar: MC UI → Inputs → 🕵️ Perfiles a monitorizar
+- Para ajustar la cadencia: MC UI → Inputs → ⏰ Cadencia
+```
+
+Sustituye `{MC_BASE}` por la URL real del MC del cliente (típicamente `https://localhost:3000` en dev, o la URL de producción del cliente).
 
 ### 6. Confirm with human
 
-Present a summary of ALL populated configs.
-Human reviews in the MC UI (tab "Inputs").
-Each config is editable via the visual forms.
+Tras escribir todos los archivos:
+1. Resume los cambios en 3-5 líneas
+2. Da el path al `setup.md` para que el humano lo abra desde MC UI → Inputs → ⚙️ Setup configs por pillar → 📄 Ver doc
+3. Recuerda que cada config es editable independientemente desde la UI
 
 ## Rules
 
-- **NEVER create files** — they already exist. Only write to existing paths.
-- **NEVER modify structure** — keep the YAML keys as they are. Only change values.
-- **Ask the human** for cadence decisions — don't assume posting frequency.
-- **Use Foundation data** for competitors and sector — don't invent.
-- **BOFU-first** for keywords — decision stage keywords before awareness.
+- **NEVER create files** que ya existen — solo escribe a paths que estén en `context_writes`
+- **NEVER modify structure** — mantén las claves YAML, solo cambia valores
+- **Use schema v2** para sources.json — NO uses la estructura legacy `competitors.direct/indirect`
+- **News + PAA usan `prompt: >` (string)**, no `prompts: []` ni `queries: []`
+- **Ask the human** para decisiones de cadencia — no asumas frecuencias
+- **Use Foundation data** para competidores y sector — no inventes
+- **BOFU-first** para keywords — decision-stage antes que awareness
+- **Setup.md es corto y narrativo** — no copies los YAMLs ahí dentro

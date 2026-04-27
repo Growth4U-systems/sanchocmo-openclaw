@@ -1,221 +1,491 @@
 {
-  "confirmed_at": "2026-03-03T22:42:00+01:00",
-  "confirmed_by": "Alfonso",
-  "competitors": {
-    "direct": [
-      {
-        "name": "Snowball",
-        "slug": "snowball",
-        "tier": "A",
-        "company": {
-          "web": "https://agenciasnowball.com",
-          "linkedin": "https://www.linkedin.com/company/snowball-consultora-growth/"
-        },
-        "founder": {
-          "name": "Pau Gallinat O'Callaghan",
-          "role": "CEO & Founder",
-          "linkedin": "https://www.linkedin.com/in/pau-gallinat",
-          "contra": "https://contra.com/pau_gallinat_v05jlnvy",
-          "medium": true,
-          "qonto_blog": true
-        },
+  "version": 2,
+  "profiles": [
+    {
+      "id": "snowball",
+      "type": "company",
+      "name": "Snowball",
+      "tier": "A",
+      "platforms": {
+        "web": "https://agenciasnowball.com",
+        "linkedin": "https://www.linkedin.com/company/snowball-consultora-growth/"
+      },
+      "pillars_relevant": [
+        "P1",
+        "P2",
+        "P4"
+      ],
+      "metadata": {
         "trustpilot": null,
         "google_maps": null,
         "capterra": null,
-        "g2": null,
-        "_type": "direct"
-      },
-      {
-        "name": "Product Hackers",
-        "slug": "product-hackers",
-        "tier": "A",
-        "company": {
-          "web": "https://producthackers.com",
-          "instagram": "https://www.instagram.com/product_hackers/",
-          "facebook": "https://www.facebook.com/producthackers/",
-          "linkedin": "https://www.linkedin.com/company/producthackers/",
-          "twitter": "https://twitter.com/Product_Hackers",
-          "youtube": "https://www.youtube.com/channel/UCv9-1P6eFth9jsXSpmyigAw",
-          "google_maps": true,
-          "emagister": true
-        },
-        "founders": [
-          {
-            "name": "Luis Díaz del Dedo",
-            "role": "CEO",
-            "linkedin": "https://www.linkedin.com/in/luisdiazdeldedo/",
-            "twitter": "https://twitter.com/luisdiazdeldedo",
-            "youtube": "https://www.youtube.com/channel/UC-6FrYZEoDOcGP4NK7-3Rng",
-            "book": "Growth Hacking: Supera el reto de crear productos digitales exponenciales",
-            "press": [
-              "Forbes",
-              "El País",
-              "Capital",
-              "PRNoticias"
-            ]
-          },
-          {
-            "name": "José Carlos Cortizo (Corti)",
-            "role": "CMO & Partner",
-            "linkedin": "https://www.linkedin.com/in/jccortizo/",
-            "twitter": "https://twitter.com/josek_net",
-            "instagram": "https://www.instagram.com/josek_net/",
-            "web": "https://josek.net",
-            "newsletter": "https://sobrecrecer.substack.com",
-            "book": "PsychoGrowth",
-            "podcast": [
-              "Growth (Product Hackers)",
-              "En.Digital"
-            ]
-          }
-        ],
-        "trustpilot": null,
-        "capterra": null,
-        "g2": null,
-        "_type": "direct"
-      },
-      {
-        "name": "TheGrowtHacker",
-        "slug": "thegrowthacker",
-        "tier": "A",
-        "company": {
-          "web": "https://thegrowthacker.com",
-          "google_partner": "https://www.google.com/partners/agency?id=1989055187"
-        },
-        "founder": {
-          "name": "Dani Ruiz Alba",
-          "role": "CEO & Growth",
-          "malt": "https://en.malt.es/profile/daniruizalba"
-        },
-        "trustpilot": null,
-        "google_maps": null,
-        "capterra": null,
-        "g2": null,
-        "_type": "direct"
+        "g2": null
       }
-    ],
-    "indirect": [
-      {
-        "name": "iSocialWeb",
-        "slug": "isocialweb",
-        "tier": "C",
-        "_type": "indirect",
-        "company": {
-          "web": "https://isocialweb.agency",
-          "linkedin": "https://www.linkedin.com/company/isocialweb/",
-          "twitter": "https://x.com/isocialweb",
-          "youtube": true,
-          "_notes": "Twitter @isocialweb está inactivo desde 2014. Álvaro publica desde @isocialwebseo"
-        },
-        "founders": [
-          {
-            "name": "Álvaro Peña de Luna",
-            "role": "Co-CEO & Head of SEO & AI",
-            "twitter": "https://x.com/isocialwebseo",
-            "linkedin": "https://www.linkedin.com/in/alvaro-pena-de-luna/",
-            "web": "https://es.wix.com/blog/profile/alvaro-pena-de-luna/author",
-            "_linkedin_verified": false,
-            "_twitter_verified": true,
-            "also": ["Co-Founder Growwer (link building tool)", "R&D Lead Virality Media (150M+ monthly visits)"],
-            "speaker": true,
-            "university_lecturer": true
-          },
-          {
-            "name": "Arnau Vendrell",
-            "role": "Co-CEO & Head of CRO",
-            "web": "https://arvendrell.com",
-            "linkedin": "https://www.linkedin.com/in/arnauvendrell/",
-            "twitter": null,
-            "_linkedin_verified": false,
-            "_twitter_verified": true,
-            "_notes": "No Twitter encontrado. LinkedIn enlazado desde arvendrell.com pero no extraíble sin JS"
-          }
+    },
+    {
+      "id": "snowball__pau-gallinat-o-callaghan",
+      "type": "person",
+      "name": "Pau Gallinat O'Callaghan",
+      "parent_company_id": "snowball",
+      "role": "CEO & Founder",
+      "platforms": {
+        "linkedin": "https://www.linkedin.com/in/pau-gallinat"
+      },
+      "pillars_relevant": [
+        "P1",
+        "P2",
+        "P4"
+      ],
+      "metadata": {
+        "contra": "https://contra.com/pau_gallinat_v05jlnvy",
+        "medium": true,
+        "qonto_blog": true
+      }
+    },
+    {
+      "id": "product-hackers",
+      "type": "company",
+      "name": "Product Hackers",
+      "tier": "A",
+      "platforms": {
+        "web": "https://producthackers.com",
+        "linkedin": "https://www.linkedin.com/company/producthackers/",
+        "twitter": "https://twitter.com/Product_Hackers",
+        "instagram": "https://www.instagram.com/product_hackers/",
+        "youtube": "https://www.youtube.com/channel/UCv9-1P6eFth9jsXSpmyigAw",
+        "facebook": "https://www.facebook.com/producthackers/"
+      },
+      "pillars_relevant": [
+        "P1",
+        "P5"
+      ],
+      "metadata": {
+        "trustpilot": null,
+        "capterra": null,
+        "g2": null
+      }
+    },
+    {
+      "id": "product-hackers__luis-diaz-del-dedo",
+      "type": "person",
+      "name": "Luis Díaz del Dedo",
+      "parent_company_id": "product-hackers",
+      "role": "CEO",
+      "platforms": {
+        "linkedin": "https://www.linkedin.com/in/luisdiazdeldedo/",
+        "twitter": "https://twitter.com/luisdiazdeldedo",
+        "youtube": "https://www.youtube.com/channel/UC-6FrYZEoDOcGP4NK7-3Rng"
+      },
+      "pillars_relevant": [
+        "P1",
+        "P5"
+      ],
+      "metadata": {
+        "book": "Growth Hacking: Supera el reto de crear productos digitales exponenciales",
+        "press": [
+          "Forbes",
+          "El País",
+          "Capital",
+          "PRNoticias"
         ]
-      },
-      {
-        "name": "Flat 101",
-        "slug": "flat101",
-        "tier": "C",
-        "_type": "indirect",
-        "company": {
-          "web": "https://flat101.es",
-          "linkedin": "https://www.linkedin.com/company/flat101/",
-          "twitter": "https://x.com/SomosFlat101",
-          "facebook": true,
-          "_notes": "Parte de Minsait (Indra). Oficinas: Madrid, Barcelona, Zaragoza, London. ~300 empleados"
-        },
-        "founder": {
-          "name": "Ricardo Tayar",
-          "role": "CEO & Founder",
-          "linkedin": "https://www.linkedin.com/in/ricardotayar/",
-          "twitter": "https://x.com/ricardotayar",
-          "_linkedin_verified": true,
-          "_twitter_verified": true,
-          "podcast": "CRO.CAFE (host, 60+ episodios)",
-          "books": ["CRO, diseño y desarrollo de negocios digitales", "CRO. Estrategia y práctica"],
-          "linkedin_top_voice": true,
-          "kschool": "Director Máster CRO"
-        }
-      },
-      {
-        "name": "Glissmarket",
-        "slug": "glissmarket",
-        "tier": "B",
-        "_type": "indirect",
-        "company": {
-          "web": "https://www.glissmarket.com",
-          "linkedin": "https://www.linkedin.com/company/glissmarket/",
-          "twitter": "https://x.com/glissmarket",
-          "_twitter_verified": true,
-          "_linkedin_verified": false,
-          "_notes": "Agencia pequeña (~6 personas). Foco: SEO, SEM, Email, CRO. Nicho fuerte en marketing jurídico/legal"
-        },
-        "founder": {
-          "name": "Pablo Clavero",
-          "role": "CEO & Founder",
-          "twitter": "https://x.com/pclavero",
-          "linkedin": "https://www.linkedin.com/in/pablo-clavero/",
-          "_twitter_verified": true,
-          "_linkedin_verified": false,
-          "podcast": "Yo no soy abogado, pero… (Glissmarket)",
-          "also": ["Co-founder @powerbargain", "CMO @leibent", "Co-organizer @jotb22"]
-        }
-      },
-      {
-        "name": "TEAM LEWIS",
-        "slug": "team-lewis",
-        "tier": "C",
-        "_type": "indirect",
-        "company": {
-          "web": "https://www.teamlewis.com/es/",
-          "linkedin": "https://www.linkedin.com/company/teamlewis/",
-          "youtube": "https://www.youtube.com/@teamlewisespana8570",
-          "twitter": null,
-          "instagram": null,
-          "_notes": "Agencia global (24 oficinas, 500+ empleados). España: Madrid + Barcelona, 60+ profesionales. No tiene cuentas sociales específicas de España en Twitter/IG"
-        },
-        "founder_global": {
-          "name": "Chris Lewis",
-          "role": "CEO & Founder (Global)",
-          "linkedin": "https://www.linkedin.com/in/chrislewis4/",
-          "twitter": "https://x.com/largeburrito",
-          "_linkedin_verified": true,
-          "_twitter_verified": true,
-          "books": ["Too Fast to Think", "The Leadership Lab", "Greater: Britain After the Storm"],
-          "founded": 1995
-        },
-        "head_spain": {
-          "name": "Nuria Mañá",
-          "role": "Head of TEAM LEWIS Spain",
-          "linkedin": "https://www.linkedin.com/in/nuriamanafdez/",
-          "twitter": "https://x.com/nuriamanaf",
-          "_linkedin_verified": true,
-          "_twitter_verified": true,
-          "since": "2011 en TEAM LEWIS, Head of Spain desde abril 2022",
-          "previous": ["FC Barcelona", "Radio Nacional de España", "OgilvyOne"]
-        }
       }
-    ]
-  },
-  "updated_at": "2026-04-01T10:10:00.000Z"
+    },
+    {
+      "id": "product-hackers__jose-carlos-cortizo-corti",
+      "type": "person",
+      "name": "José Carlos Cortizo (Corti)",
+      "parent_company_id": "product-hackers",
+      "role": "CMO & Partner",
+      "platforms": {
+        "linkedin": "https://www.linkedin.com/in/jccortizo/",
+        "twitter": "https://twitter.com/josek_net",
+        "instagram": "https://www.instagram.com/josek_net/",
+        "web": "https://josek.net",
+        "newsletter": "https://sobrecrecer.substack.com"
+      },
+      "pillars_relevant": [
+        "P1",
+        "P5"
+      ],
+      "metadata": {
+        "book": "PsychoGrowth",
+        "podcast": [
+          "Growth (Product Hackers)",
+          "En.Digital"
+        ]
+      }
+    },
+    {
+      "id": "thegrowthacker",
+      "type": "company",
+      "name": "TheGrowtHacker",
+      "tier": "A",
+      "platforms": {
+        "web": "https://thegrowthacker.com"
+      },
+      "pillars_relevant": [
+        "P1",
+        "P2"
+      ],
+      "metadata": {
+        "trustpilot": null,
+        "google_maps": null,
+        "capterra": null,
+        "g2": null
+      }
+    },
+    {
+      "id": "thegrowthacker__dani-ruiz-alba",
+      "type": "person",
+      "name": "Dani Ruiz Alba",
+      "parent_company_id": "thegrowthacker",
+      "role": "CEO & Growth",
+      "platforms": {},
+      "pillars_relevant": [
+        "P1",
+        "P2"
+      ],
+      "metadata": {
+        "malt": "https://en.malt.es/profile/daniruizalba"
+      }
+    },
+    {
+      "id": "isocialweb",
+      "type": "company",
+      "name": "iSocialWeb",
+      "tier": "C",
+      "platforms": {
+        "web": "https://isocialweb.agency",
+        "linkedin": "https://www.linkedin.com/company/isocialweb/",
+        "twitter": "https://x.com/isocialweb"
+      },
+      "pillars_relevant": [
+        "P2"
+      ]
+    },
+    {
+      "id": "isocialweb__alvaro-pena-de-luna",
+      "type": "person",
+      "name": "Álvaro Peña de Luna",
+      "parent_company_id": "isocialweb",
+      "role": "Co-CEO & Head of SEO & AI",
+      "platforms": {
+        "linkedin": "https://www.linkedin.com/in/alvaro-pena-de-luna/",
+        "twitter": "https://x.com/isocialwebseo",
+        "web": "https://es.wix.com/blog/profile/alvaro-pena-de-luna/author"
+      },
+      "pillars_relevant": [
+        "P2"
+      ],
+      "metadata": {
+        "_linkedin_verified": false,
+        "_twitter_verified": true,
+        "also": [
+          "Co-Founder Growwer (link building tool)",
+          "R&D Lead Virality Media (150M+ monthly visits)"
+        ],
+        "speaker": true,
+        "university_lecturer": true
+      }
+    },
+    {
+      "id": "isocialweb__arnau-vendrell",
+      "type": "person",
+      "name": "Arnau Vendrell",
+      "parent_company_id": "isocialweb",
+      "role": "Co-CEO & Head of CRO",
+      "platforms": {
+        "linkedin": "https://www.linkedin.com/in/arnauvendrell/",
+        "web": "https://arvendrell.com"
+      },
+      "pillars_relevant": [
+        "P2"
+      ],
+      "metadata": {
+        "_linkedin_verified": false,
+        "_twitter_verified": true,
+        "_notes": "No Twitter encontrado. LinkedIn enlazado desde arvendrell.com pero no extraíble sin JS"
+      }
+    },
+    {
+      "id": "flat101",
+      "type": "company",
+      "name": "Flat 101",
+      "tier": "C",
+      "platforms": {
+        "web": "https://flat101.es",
+        "linkedin": "https://www.linkedin.com/company/flat101/",
+        "twitter": "https://x.com/SomosFlat101"
+      },
+      "pillars_relevant": []
+    },
+    {
+      "id": "flat101__ricardo-tayar",
+      "type": "person",
+      "name": "Ricardo Tayar",
+      "parent_company_id": "flat101",
+      "role": "CEO & Founder",
+      "platforms": {
+        "linkedin": "https://www.linkedin.com/in/ricardotayar/",
+        "twitter": "https://x.com/ricardotayar",
+        "podcast": "CRO.CAFE (host, 60+ episodios)"
+      },
+      "pillars_relevant": [],
+      "metadata": {
+        "_linkedin_verified": true,
+        "_twitter_verified": true,
+        "podcast": "CRO.CAFE (host, 60+ episodios)",
+        "books": [
+          "CRO, diseño y desarrollo de negocios digitales",
+          "CRO. Estrategia y práctica"
+        ],
+        "linkedin_top_voice": true,
+        "kschool": "Director Máster CRO"
+      }
+    },
+    {
+      "id": "glissmarket",
+      "type": "company",
+      "name": "Glissmarket",
+      "tier": "B",
+      "platforms": {
+        "web": "https://www.glissmarket.com",
+        "linkedin": "https://www.linkedin.com/company/glissmarket/",
+        "twitter": "https://x.com/glissmarket"
+      },
+      "pillars_relevant": [
+        "P1"
+      ]
+    },
+    {
+      "id": "glissmarket__pablo-clavero",
+      "type": "person",
+      "name": "Pablo Clavero",
+      "parent_company_id": "glissmarket",
+      "role": "CEO & Founder",
+      "platforms": {
+        "linkedin": "https://www.linkedin.com/in/pablo-clavero/",
+        "twitter": "https://x.com/pclavero",
+        "podcast": "Yo no soy abogado, pero… (Glissmarket)"
+      },
+      "pillars_relevant": [
+        "P1"
+      ],
+      "metadata": {
+        "_twitter_verified": true,
+        "_linkedin_verified": false,
+        "podcast": "Yo no soy abogado, pero… (Glissmarket)",
+        "also": [
+          "Co-founder @powerbargain",
+          "CMO @leibent",
+          "Co-organizer @jotb22"
+        ]
+      }
+    },
+    {
+      "id": "team-lewis",
+      "type": "company",
+      "name": "TEAM LEWIS",
+      "tier": "C",
+      "platforms": {
+        "web": "https://www.teamlewis.com/es/",
+        "linkedin": "https://www.linkedin.com/company/teamlewis/",
+        "youtube": "https://www.youtube.com/@teamlewisespana8570"
+      },
+      "pillars_relevant": [
+        "P2",
+        "P4"
+      ]
+    },
+    {
+      "id": "team-lewis__chris-lewis",
+      "type": "person",
+      "name": "Chris Lewis",
+      "parent_company_id": "team-lewis",
+      "role": "CEO & Founder (Global)",
+      "platforms": {
+        "linkedin": "https://www.linkedin.com/in/chrislewis4/",
+        "twitter": "https://x.com/largeburrito"
+      },
+      "pillars_relevant": [
+        "P2",
+        "P4"
+      ],
+      "metadata": {
+        "_linkedin_verified": true,
+        "_twitter_verified": true,
+        "books": [
+          "Too Fast to Think",
+          "The Leadership Lab",
+          "Greater: Britain After the Storm"
+        ],
+        "founded": 1995
+      }
+    },
+    {
+      "id": "team-lewis__nuria-mana",
+      "type": "person",
+      "name": "Nuria Mañá",
+      "parent_company_id": "team-lewis",
+      "role": "Head of TEAM LEWIS Spain",
+      "platforms": {
+        "linkedin": "https://www.linkedin.com/in/nuriamanafdez/",
+        "twitter": "https://x.com/nuriamanaf"
+      },
+      "pillars_relevant": [
+        "P2",
+        "P4"
+      ],
+      "metadata": {
+        "_linkedin_verified": true,
+        "_twitter_verified": true,
+        "since": "2011 en TEAM LEWIS, Head of Spain desde abril 2022",
+        "previous": [
+          "FC Barcelona",
+          "Radio Nacional de España",
+          "OgilvyOne"
+        ]
+      }
+    },
+    {
+      "id": "creator__elena-verna",
+      "type": "person",
+      "name": "Elena Verna",
+      "role": "Growth loops, trust as growth engine, PLG",
+      "platforms": {
+        "linkedin": "https://www.linkedin.com/in/elenaverna/",
+        "newsletter": "https://www.elenaverna.com/"
+      },
+      "pillars_relevant": [
+        "P1",
+        "P5"
+      ]
+    },
+    {
+      "id": "creator__lenny-rachitsky",
+      "type": "person",
+      "name": "Lenny Rachitsky",
+      "role": "Product-led growth, startup playbooks, content as product",
+      "platforms": {
+        "newsletter": "https://www.lennysnewsletter.com/",
+        "linkedin": "https://www.linkedin.com/in/lennyrachitsky/"
+      },
+      "pillars_relevant": [
+        "P1"
+      ]
+    },
+    {
+      "id": "creator__maja-voje",
+      "type": "person",
+      "name": "Maja Voje",
+      "role": "GTM strategy, ECP before ICP, learning velocity",
+      "platforms": {
+        "newsletter": "https://knowledge.gtmstrategist.com/",
+        "linkedin": "https://www.linkedin.com/in/majavoje/"
+      },
+      "pillars_relevant": [
+        "P1",
+        "P2"
+      ]
+    },
+    {
+      "id": "creator__ross-simmonds",
+      "type": "person",
+      "name": "Ross Simmonds",
+      "role": "Create once distribute forever, content distribution",
+      "platforms": {
+        "linkedin": "https://www.linkedin.com/in/rosssimmonds/",
+        "blog": "https://foundationinc.co/"
+      },
+      "pillars_relevant": [
+        "P2"
+      ]
+    },
+    {
+      "id": "creator__amanda-natividad",
+      "type": "person",
+      "name": "Amanda Natividad",
+      "role": "Zero-click content, VOI over ROI",
+      "platforms": {
+        "linkedin": "https://www.linkedin.com/in/amandanat/"
+      },
+      "pillars_relevant": [
+        "P2",
+        "P5"
+      ]
+    },
+    {
+      "id": "creator__rob-walling",
+      "type": "person",
+      "name": "Rob Walling",
+      "role": "SaaS bootstrapping, 5 stages of awareness, BOFU-first",
+      "platforms": {
+        "linkedin": "https://www.linkedin.com/in/robwalling/",
+        "youtube": "https://www.youtube.com/@MicroConf"
+      },
+      "pillars_relevant": [
+        "P1",
+        "P5"
+      ]
+    },
+    {
+      "id": "creator__alex-hormozi",
+      "type": "person",
+      "name": "Alex Hormozi",
+      "role": "Volume + system, offers, scaling",
+      "platforms": {
+        "youtube": "https://www.youtube.com/@AlexHormozi",
+        "linkedin": "https://www.linkedin.com/in/alexhormozi/"
+      },
+      "pillars_relevant": [
+        "P1",
+        "P5"
+      ]
+    },
+    {
+      "id": "creator__joe-pulizzi",
+      "type": "person",
+      "name": "Joe Pulizzi",
+      "role": "Content Inc, Content Tilt, owned media",
+      "platforms": {
+        "blog": "https://www.joepulizzi.com/"
+      },
+      "pillars_relevant": [
+        "P2",
+        "P4"
+      ]
+    },
+    {
+      "id": "creator__katelyn-bourgoin",
+      "type": "person",
+      "name": "Katelyn Bourgoin",
+      "role": "Buyer psychology, trigger technique, customer research",
+      "platforms": {
+        "newsletter": "https://learnwhywebuy.com/",
+        "linkedin": "https://www.linkedin.com/in/katelynbourgoin/"
+      },
+      "pillars_relevant": [
+        "P1",
+        "P4"
+      ]
+    },
+    {
+      "id": "creator__alfonso-de-la-nuez-growth4u",
+      "type": "person",
+      "name": "Alfonso de la Nuez (Growth4U)",
+      "role": "Own brand — monitor own performance",
+      "platforms": {
+        "linkedin": "https://www.linkedin.com/in/alfonsosbla/",
+        "twitter": "https://x.com/alfonsosbla"
+      },
+      "pillars_relevant": [
+        "P1",
+        "P2",
+        "P3",
+        "P4",
+        "P5"
+      ]
+    }
+  ],
+  "updated_at": "2026-04-27T17:56:36.287Z"
 }

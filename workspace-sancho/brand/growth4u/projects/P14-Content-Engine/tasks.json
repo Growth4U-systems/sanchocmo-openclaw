@@ -39,18 +39,18 @@
   {
     "id": "P14-T03",
     "name": "Setup configs por pillar",
-    "description": "Proceso 1 — Rellenar los configs existentes con datos del cliente. La infraestructura (carpetas + YAMLs + crons) ya existe via content-engine-setup.js. Esta tarea solo MODIFICA los campos editables: queries de news-prompts, lista de competitors, reference-creators, keywords-seed, paa-queries, y cadence (canales, frecuencias, perfiles). NO crea estructura nueva. Lee content-pillars.md + Foundation para derivar los valores.",
+    "description": "Rellena los configs existentes (news-prompts, paa-queries, keywords-seed, sources.json profiles, cadence-config.yml) con datos derivados de content-pillars.md + Foundation. Genera además un setup.md narrativo que explica el por qué de cada decisión y enlaza con los crones que consumen cada config. La infraestructura (carpetas + YAMLs + crons) ya existe — esta tarea solo MODIFICA los campos editables y DOCUMENTA.",
     "phase": 1,
     "type": "execution",
     "channel": "strategy",
     "niche": null,
     "status": "in-progress",
-    "deliverable": "Configs por pillar + cadence config + crons activados",
-    "deliverable_file": "brand/growth4u/content/configs/cadence-config.yml",
-    "output_files": ["cadence-config.yml"],
+    "deliverable": "Configs por pillar + cadence + sources.json profiles + setup.md narrativo",
+    "deliverable_file": "brand/growth4u/content/configs/setup.md",
+    "output_files": ["setup.md", "cadence-config.yml", "news-prompts/*.yml", "paa-queries/*.yml", "keywords-seed/*.yml", "../../market-and-us/competitors/sources.json"],
     "depends_on": "P14-T02",
     "owner": "Sancho",
-    "skill": "sancho-manager",
+    "skill": "content-engine-setup",
     "mc_chat_thread_id": "task-p14-t03",
     "discord_thread_id": null
   }

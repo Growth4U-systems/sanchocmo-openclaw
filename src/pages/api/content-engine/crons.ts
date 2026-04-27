@@ -1,16 +1,19 @@
 /**
- * GET/PATCH /api/content-engine/crons — Manage Content Engine cron jobs
+ * GET/PATCH/POST /api/content-engine/crons — Manage Content Engine cron jobs
  *
  * GET ?slug=X → returns all Content Engine crons for this client
  * PATCH { jobId, fields } → update job (enabled, schedule)
+ * POST  { jobId, action: "run" } → trigger one-shot manual execution (fire-and-forget)
  */
 
 import type { NextApiRequest, NextApiResponse } from "next";
 import fs from "fs";
 import path from "path";
+import { spawn } from "child_process";
 import { withErrorHandler } from "@/lib/api-middleware";
 
 const CRON_FILE = path.join(process.env.HOME || "", ".openclaw", "cron", "jobs.json");
+const EXEC_PATH = "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin";
 
 interface CronJob {
   id: string;
@@ -152,6 +155,38 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
     saveJobs(data);
     return res.status(200).json({ ok: true, job: { id: job.id, name: job.name, enabled: job.enabled, schedule: job.schedule.expr } });
+  }
+
+  if (req.method === "POST") {
+    const { jobId, action } = req.body || {};
+    if (action !== "run") return res.status(400).json({ error: "Unknown action: " + action });
+    if (!jobId) return res.status(400).json({ error: "Missing jobId" });
+
+    // Verify job exists
+    const data = loadJobs();
+    const job = data.jobs.find((j) => j.id === jobId);
+    if (!job) return res.status(404).json({ error: "Job not found" });
+
+    // Fire-and-forget: spawn `openclaw cron run <id>` detached.
+    // The job runs via the Gateway and writes results to cron/runs/<id>.jsonl.
+    try {
+      const child = spawn("openclaw", ["cron", "run", jobId], {
+        detached: true,
+        stdio: "ignore",
+        env: { ...process.env, PATH: EXEC_PATH },
+      });
+      child.unref();
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      return res.status(500).json({ error: "Failed to spawn cron run: " + msg });
+    }
+
+    return res.status(202).json({
+      ok: true,
+      message: "Triggered manual run",
+      jobId,
+      jobName: job.name,
+    });
   }
 
   res.status(405).json({ error: "Method not allowed" });
