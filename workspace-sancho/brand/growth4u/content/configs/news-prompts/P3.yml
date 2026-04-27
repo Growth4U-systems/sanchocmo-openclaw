@@ -1,17 +1,26 @@
-# News Prompts — P3: Growth en Sectores Regulados
-# Dynamic prompt that generates different searches each day.
-# Tool: Brave Search API / Perplexity
-# Frequency: daily 7am
-
 pillar_id: P3
-pillar_name: "Growth en Sectores Regulados"
+pillar_name: Growth en Sectores Regulados
+prompt: |
+  What are the 5 most interesting, innovative and relevant news stories from the last 48 hours covering fintech
+  marketing under regulation (CNMV, MiCA, GDPR), crypto marketing compliance in Europe, healthtech growth strategies,
+  regulated industry advertising rules, and compliance as competitive advantage?
 
-prompt: >
-  What are the 5 most interesting, innovative and relevant news stories
-  from the last 48 hours covering fintech marketing under regulation (CNMV, MiCA, GDPR), crypto marketing compliance in Europe, healthtech growth strategies, regulated industry advertising rules, and compliance as competitive advantage?
-  For each give the headline, source, date, a 2 sentence summary explaining
-  why it matters for a B2B growth consultant, and the URL.
-  Prioritize underground/niche sources over mainstream tech press.
+  For each story return:
+  - headline (exact, as published)
+  - source (publication name + author if available)
+  - date (publication date in YYYY-MM-DD format)
+  - url
+  - a detailed summary of 5-7 sentences covering, in this order:
+    (1) WHAT HAPPENED — the actual fact/event with named companies, products, or people involved
+    (2) KEY DATA — specific numbers, percentages, dollar amounts, dates, regulation articles, or direct quotes cited
+    (3) WHY IT MATTERS for a B2B growth consultant advising regulated-industry clients — be specific about the
+        operational impact (e.g. "this requires X campaign to be pre-approved by CNMV"), not vague
+    (4) CONCRETE EXAMPLES mentioned (companies fined or compliant, frameworks demonstrated, etc.)
 
-sector: "B2B SaaS growth consulting"
-language: [es, en]
+  Avoid: vague claims, generic "industry insights" language, and recycled mainstream takes.
+  Prioritize underground/niche sources (operator newsletters, regulatory analysis blogs, compliance
+  podcasts, Reddit/forum threads with specifics) over big tech press.
+sector: B2B SaaS growth consulting
+language:
+  - es
+  - en

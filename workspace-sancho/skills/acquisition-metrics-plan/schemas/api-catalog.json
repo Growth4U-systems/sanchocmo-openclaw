@@ -177,14 +177,19 @@
         "slack": {
           "provider": "Slack",
           "icon": "💬",
-          "desc": "Mensajería y canales de equipo",
+          "desc": "Mensajería + Editorial Dispatch + futura aprobación con botones",
           "ownership": "client",
+          "setupGuide": "_system/integrations/slack-setup.md",
           "credentials": [
-            { "key": "BOT_TOKEN", "label": "Bot User OAuth Token", "type": "string", "sensitive": true, "help": "api.slack.com/apps → tu app → OAuth & Permissions → Bot User OAuth Token (xoxb-...)" }
+            { "key": "BOT_TOKEN", "label": "Bot User OAuth Token", "type": "string", "sensitive": true, "help": "Empieza con xoxb-... | api.slack.com/apps → tu app → OAuth & Permissions → Bot User OAuth Token. Ver guía de setup completa." },
+            { "key": "SIGNING_SECRET", "label": "Signing Secret", "type": "string", "sensitive": true, "help": "Necesario para validar callbacks de botones interactivos. api.slack.com/apps → tu app → Basic Information → App Credentials → Signing Secret" }
           ],
           "config": [
-            { "key": "WORKSPACE", "label": "Nombre del workspace", "type": "string", "sensitive": false, "help": "El nombre de tu workspace de Slack (ej: growth4u, miempresa)" }
+            { "key": "WORKSPACE", "label": "Nombre del workspace", "type": "string", "sensitive": false, "help": "El nombre de tu workspace de Slack (ej: growth4u, miempresa)" },
+            { "key": "DISPATCH_CHANNEL_ID", "label": "Channel ID para Editorial Dispatch", "type": "string", "sensitive": false, "help": "Empieza con C (canal público) o G (privado). En Slack: click derecho en el canal → Copy link → coger lo que va después de /archives/. Ej: C0123ABCDEF" },
+            { "key": "APPROVAL_CHANNEL_ID", "label": "Channel ID para aprobaciones (opcional, si distinto)", "type": "string", "sensitive": false, "help": "Si las aprobaciones de ideas van a un canal distinto. Si lo dejas vacío, usa el mismo que DISPATCH_CHANNEL_ID." }
           ],
+          "scopesRequired": ["chat:write", "chat:write.public", "channels:read", "groups:read", "channels:history", "groups:history", "commands"],
           "docs": "https://api.slack.com/docs"
         },
         "discord": {

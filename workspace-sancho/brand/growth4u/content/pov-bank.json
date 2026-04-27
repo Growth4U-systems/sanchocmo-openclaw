@@ -1,0 +1,189 @@
+{
+  "version": 2,
+  "global": {
+    "one_liner": "Instalamos el sistema de growth que opera sin ti — y nos vamos.",
+    "villain": "El retainer infinito que te cobra por ejecutar tácticas sin transferencia de capacidad",
+    "voice_traits": [
+      "plain-spoken",
+      "data-driven",
+      "founder-empathetic"
+    ]
+  },
+  "pov_per_pillar": {
+    "P1": {
+      "pillar_name": "Sistemas de Growth Repetibles",
+      "core_belief": "Growth es un sistema, no una colección de tácticas. Si tu modelo de crecimiento depende de una persona o un canal, no es un motor — es respiración asistida.",
+      "we_say_yes_to": [
+        "Frameworks que sobreviven al cambio de CMO o fundador",
+        "Storytelling con números: CAC, LTV, payback, cohortes",
+        "Rituales semanales de growth (dashboards, métricas clave)",
+        "Diagnóstico de cuello de botella antes de escalar",
+        "Sistemas que operan sin la persona que los construyó"
+      ],
+      "we_say_no_to": [
+        "Growth hacking (tácticas sueltas, charlatanes)",
+        "Métricas de vanidad (registros, seguidores, tráfico sin conversión)",
+        "Dependencia de un solo canal (paid, orgánico, referral)",
+        "Reclutar growth hackers sin infraestructura",
+        "Escalar sin atribución multicanal"
+      ],
+      "preferred_angles": [
+        "Contrarian: 'El growth team que vas a contratar va a fallar'",
+        "Framework: '3 preguntas antes de escalar growth'",
+        "Proof: 'Bnext 0→400K usuarios, CAC 50€→12,40€'",
+        "Data: 'El 73% de startups tech no logra ventas recurrentes'",
+        "Personal: 'En Bnext nos pasó exactamente esto'"
+      ],
+      "evidence_we_cite": [
+        "Bnext: 0→400K usuarios activos bajo CNMV, CAC 50€→12,40€ (Cinco Días)",
+        "Bit2Me: LTV 3x en un año bajo regulación CNMV",
+        "Criptan: 100→1.000 primeros depósitos/mes, ticket medio 5.000€",
+        "BCG: proyecto de 6 analistas/semana reducido a 1 persona + agente en <1 hora",
+        "SaaStr 2026: growth sin aceleración = company sin palanca real"
+      ]
+    },
+    "P2": {
+      "pillar_name": "Adquisicion Multi-Canal y Confianza",
+      "core_belief": "Alquilar atención (paid) es un modelo frágil. Un motor de growth real diversifica canales y construye activos de confianza que no desaparecen cuando dejas de pagar.",
+      "we_say_yes_to": [
+        "GEO (Generative Engine Optimization): aparecer en ChatGPT, Gemini, Perplexity",
+        "Diversificación secuencial de canales (no paralela)",
+        "Trust-based acquisition: reviews, social proof, PR",
+        "LinkedIn personal branding para founders B2B",
+        "Atribución multicanal (saber qué canal trae clientes reales)"
+      ],
+      "we_say_no_to": [
+        "Estrategia paid-only (modelo frágil, CAC sube cada trimestre)",
+        "SEO genérico sin datos originales (no citará ningún LLM)",
+        "Creer que los canales son permanentes (Google CPC +40% en 2 años)",
+        "Ignorar que LinkedIn es ya fuente #1 para LLMs en queries B2B",
+        "Construir marca personal 100% dependent del algoritmo"
+      ],
+      "preferred_angles": [
+        "Proof: '#1-2 en Gemini para queries fintech España — con 20 artículos'",
+        "Contrarian: 'El 47% de marcas no tiene estrategia GEO'",
+        "Data: 'El 60% de búsquedas en Google ya no generan click'",
+        "Framework: '3 canales para dejar de alquilar atención'",
+        "Signal-based: 'Respuesta 53%, aceptación 71% en LinkedIn outbound'"
+      ],
+      "evidence_we_cite": [
+        "Growth4U #1-2 en Gemini para queries growth fintech España (walk-the-talk)",
+        "LinkedIn es fuente #1 para ChatGPT/Gemini en queries B2B (Axios, 2026)",
+        "CTR Google下降 8.9%, CPC上涨 40% (datos degradación canales)",
+        "Múltiplo: 93 leads cualificados → 17 clientes, ROI recuperado en semanas",
+        "XLY Yoga: 99% tráfico orgánico, conversión 5.8% (3x baseline)"
+      ]
+    },
+    "P3": {
+      "pillar_name": "Growth en Sectores Regulados",
+      "core_belief": "La regulación no es el enemigo — es un filtro que elimina a los que no saben jugar con las reglas. Quien domina compliance bajo CNMV/BdE/MiCA tiene una ventaja competitiva que los no-regulados no pueden copiar.",
+      "we_say_yes_to": [
+        "Compliance como ventaja competitiva, no como freno",
+        "Playbooks de marketing pre-autorización regulatoria",
+        "Franjas específicas por regulación: CNMV, BdE, MiCA",
+        "Case studies con números bajo regulación verificable",
+        "Lo que SÍ puedes hacer (frame de oportunidad, no restricción)"
+      ],
+      "we_say_no_to": [
+        "Usar growth hacking en sectores regulados (ilegal + contraproducente)",
+        "Ignorar la regulación esperando a que pase",
+        "Pedir 'amplia experiencia' sin especificar regulación",
+        "Compararse con competidores no regulados",
+        "Lanzar campañas sin tener el marco compliance mapeado"
+      ],
+      "preferred_angles": [
+        "Proof: 'Escalé Bnext 0→400K bajo supervisión CNMV'",
+        "Deadlines concretos: '1 julio 2026 — deadline MiCA'",
+        "Framework: '5 pasos para cumplir MiCA y seguir haciendo growth'",
+        "Contrarian: 'Tu agencia preguntó qué es la CNMV en la primera call'",
+        "Risk: 'Multa 5M€ o 10% facturación por campañas sin notificar'"
+      ],
+      "evidence_we_cite": [
+        "Bnext: 0→400K usuarios bajo CNMV, retención 55% a 6 meses (prensa)",
+        "Bit2Me: LTV 90€→270€ (3x) bajo regulación crypto",
+        "CNMV España: reglas transición MiCA, deadline 1 julio 2026",
+        "Multa 5M€ a X/Twitter como ejemplo del riesgo de incumplimiento",
+        "Criptan: 17M€ generados por canal afiliación bajo regulación"
+      ]
+    },
+    "P4": {
+      "pillar_name": "El Modelo Agencia Esta Roto",
+      "core_belief": "El modelo de agencia retainer es una máquina de generar deliverables sin responsabilidad por resultados. Si quien vende no es quien ejecuta, estás pagando por esperanza, no por growth.",
+      "we_say_yes_to": [
+        "Skin in the game: pricing fijo, fecha de salida, garantía",
+        "Transparencia radical: pricing público, track record verificable",
+        "El que diseña el sistema es el que lo instala",
+        "Modelos donde el proveedor se va y el sistema se queda",
+        "Verificabilidad: 'búscalo tú mismo en Google'"
+      ],
+      "we_say_no_to": [
+        "Retainer infinito (modelo de agencia tradicional)",
+        "Bait-and-switch: senior vende, junior ejecuta",
+        "Dashboards bonitos con cero correlación en revenue",
+        "Métricas de vanidad como KPI principal",
+        "Proveedores que no tienen skin in the game"
+      ],
+      "preferred_angles": [
+        "Contrarian: 'El fractional CMO también puede ser humo sin skin in the game'",
+        "Data: '39% de CMOs recortan gasto en agencias (Gartner)'",
+        "Proof: '€47K entre tres agencias. Zero revenue.'",
+        "Framework: 'Qué preguntar antes de contratar una agencia de growth'",
+        "Personal: '€700 por un gimnasio, fui 29 días — lo entiendo'"
+      ],
+      "evidence_we_cite": [
+        "Gartner: 39% CMOs recortarán gasto en agencias (CMSWire 2026)",
+        "Mercado fractional CMO creció 245% (dato de mercado)",
+        "Trust Engine: €7,5K una vez, 6 meses, fecha de salida, sistema que se queda",
+        "Press verificable: Cinco Días, El Referente (casos públicos)",
+        "Pricing directo: growth hire €80K/año vs fCMO €4-20K/mes vs Trust Engine €7,5K"
+      ]
+    },
+    "P5": {
+      "pillar_name": "Growth con IA: Ejecucion, No Hype",
+      "core_belief": "El 88% de empresas usa IA pero solo el 6% la tiene implementada en operaciones reales. La diferencia no es la herramienta — es que unos ejecutan y otros discuten sobre prompts.",
+      "we_say_yes_to": [
+        "IA como sistema de ejecución (no como generador de ideas)",
+        "Stack multi-agente operando en producción (no demos)",
+        "IA que hace el 70% del trabajo estructural, humano orquestando",
+        "Caso propio como proof: operamos clientes con SanchoCMO",
+        "GEO + IA: optimizar para LLMs, no solo para Google"
+      ],
+      "we_say_no_to": [
+        "IA como buzzword de marketing sin implementación real",
+        "Prompt engineering como estrategia de growth",
+        "Agencias que venden 'estrategia con IA' (ChatGPT + prompt bonito)",
+        "Creer que un agente de IA sustituye un sistema de growth",
+        "Content sobre IA sin demostrar que se usa IA"
+      ],
+      "preferred_angles": [
+        "Data: '88% usa IA, solo 6% la tiene implementada operacionalmente'",
+        "Contrarian: 'El 80% de agencias sigue vendiendo PowerPoint, no ejecución'",
+        "Proof: 'BCG: 6 analistas/semana → 1 persona + agente en <1 hora'",
+        "Framework: 'Qué pueden hacer los agentes de marketing hoy vs qué no'",
+        "Personal: 'SanchoCMO opera clientes — lo hacemos nosotros primero'"
+      ],
+      "evidence_we_cite": [
+        "BCG: proyecto 6 analistas/semana → 1 persona + agente en <1 hora (MarTech)",
+        "88% marketers usa IA, solo 6% implementada operacionalmente (MarTech 2026)",
+        "90% compras B2B serán mediadas por agentes IA para 2028 (IT Munch)",
+        "SanchoCMO como caso propio: sistema multi-agente ejecutando en producción",
+        "GPT-4o como citation source para queries B2B — content con datos originals es citation magnet"
+      ]
+    }
+  },
+  "updated_at": "2026-04-27T20:18:00.000Z",
+  "version_history": [
+    {
+      "version": 1,
+      "date": "2026-04-27",
+      "trigger": "scaffold",
+      "changes": "Bootstrap inicial — pendiente de poblar via skill pov-bank-builder (chat task P14-T04)"
+    },
+    {
+      "version": 2,
+      "date": "2026-04-27",
+      "trigger": "manual",
+      "changes": "Poblado completo desde brand-voice + content-pillars + company-brief + idea-queue. 5/5 pilares con core_belief, yes/no, angles, evidence. Global: one_liner + villain + voice_traits."
+    }
+  ]
+}

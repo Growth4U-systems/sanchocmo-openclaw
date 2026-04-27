@@ -1,17 +1,26 @@
-# News Prompts — P1: Sistemas de Growth Repetibles
-# Dynamic prompt that generates different searches each day.
-# Tool: Brave Search API / Perplexity
-# Frequency: daily 7am
-
 pillar_id: P1
-pillar_name: "Sistemas de Growth Repetibles"
+pillar_name: Sistemas de Growth Repetibles
+prompt: |
+  What are the 5 most interesting, innovative and relevant news stories from the last 48 hours covering growth systems,
+  repeatable growth frameworks, startup scaling methodologies, systematic approaches vs one-off tactics, unit economics,
+  growth team operations, and CAC/LTV optimization for B2B SaaS?
 
-prompt: >
-  What are the 5 most interesting, innovative and relevant news stories
-  from the last 48 hours covering growth systems, repeatable growth frameworks, startup scaling methodologies, systematic approaches vs one-off tactics, unit economics, growth team operations, and CAC/LTV optimization for B2B SaaS?
-  For each give the headline, source, date, a 2 sentence summary explaining
-  why it matters for a B2B growth consultant, and the URL.
-  Prioritize underground/niche sources over mainstream tech press.
+  For each story return:
+  - headline (exact, as published)
+  - source (publication name + author if available)
+  - date (publication date in YYYY-MM-DD format)
+  - url
+  - a detailed summary of 5-7 sentences covering, in this order:
+    (1) WHAT HAPPENED — the actual fact/event with named companies, products, or people involved
+    (2) KEY DATA — specific numbers, percentages, dollar amounts, dates, or direct quotes cited in the source
+    (3) WHY IT MATTERS for a B2B growth consultant advising post-PMF startups — be specific about the mechanism
+        (e.g. "this changes CAC payback because…"), not vague ("this is important")
+    (4) CONCRETE EXAMPLES mentioned in the article (companies that did X, frameworks demonstrated, etc.)
 
-sector: "B2B SaaS growth consulting"
-language: [es, en]
+  Avoid: vague claims, generic "industry insights" language, and recycled mainstream takes.
+  Prioritize underground/niche sources (operator newsletters, independent blogs, founder podcasts,
+  Reddit threads with specifics) over big tech press (TechCrunch, The Verge, etc.).
+sector: B2B SaaS growth consulting
+language:
+  - es
+  - en

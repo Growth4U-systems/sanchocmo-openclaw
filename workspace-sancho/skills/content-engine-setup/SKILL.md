@@ -3,6 +3,7 @@ name: content-engine-setup
 description: "Populates Content Engine config files with client-specific data and writes a narrative setup.md explaining what was set up and which crons consume it. The infrastructure (folders, YAML templates, cron jobs) already exists — this skill only FILLS IN the client-editable fields and DOCUMENTS what was done."
 context_required:
 - brand/{slug}/content/content-pillars.md
+- brand/{slug}/content/pov-bank.json
 - brand/{slug}/company-brief/company-brief.current.md
 - brand/{slug}/go-to-market/ecps/ecps.current.md
 - brand/{slug}/market-and-us/competitors/sources.json
@@ -25,6 +26,24 @@ context_writes:
 > The doc (`setup.md`) is the deliverable for the human — short, in plain
 > language, with links to each cron that consumes the configs. It is NOT
 > a dump of the YAMLs (those are already visible in MC UI → Inputs).
+
+## ⚠️ Prerequisite check (ANTES de ejecutar)
+
+Esta skill se ejecuta **EL ÚLTIMO** del setup. Solo debe correr si los 3 anteriores están completed:
+
+1. Lee `brand/{slug}/projects/P14-Content-Engine/tasks.json`
+2. Verifica que existen y están `status: completed`:
+   - La task con `skill: "content-strategy"` (P14-T01)
+   - La task con `skill: "content-pillars"` (P14-T02)
+   - **La task con `skill: "pov-bank-builder"` (P14-T04) ← imprescindible**
+3. Si alguna NO está completed:
+   - **NO ejecutes la skill**
+   - Responde al humano:
+     > "❌ Pre-requisito no cumplido: la task **{taskId} ({skill})** está en `status: {status}`. El setup de configs depende de tener strategy + pillars + POV Bank aprobados, porque cada config se afina en función del POV (ej: el news prompt prioriza fuentes que cita evidence_we_cite del pillar). Completa la task pendiente y vuelve."
+   - Termina sin escribir nada
+4. Si los 3 están completed → continúa con el workflow abajo
+
+**Por qué este orden**: News prompts, perfiles a vigilar, keywords, y cadencia se afinan mejor cuando ya conoces el POV per pillar. Si configuras los inputs sin POV, los signals que llegan son genéricos y los angle_drafts del idea-builder serán débiles.
 
 ## What already exists (DO NOT recreate)
 
@@ -231,7 +250,9 @@ Ver y editar en MC UI → Inputs → ⏰ Cadencia.
 | 🕵️ [Competitor Monitor]({MC_BASE}/dashboard/{slug}/system?cron=Competitor+Monitor) | 7am L-V | `sources.json` (profiles) | `research-signals/{date}-creators.json` |
 | 🔑 [Keyword Research]({MC_BASE}/dashboard/{slug}/system?cron=Keyword+Research) | semanal | `keywords-seed/*.yml` | `research-signals/{date}-keywords.json` |
 | ❓ [PAA Monitor]({MC_BASE}/dashboard/{slug}/system?cron=PAA+Monitor) | semanal lunes 6am | `paa-queries/*.yml` | `research-signals/{date}-paa.json` |
+| 🧠 [Classify + Ideas]({MC_BASE}/dashboard/{slug}/system?cron=Classify+%2B+Ideas) | 7:30 L-V | `research-signals/*.json` + **`pov-bank.json`** + `content-pillars.md` + `cadence-config.yml` | `idea-queue.json` (con angle_draft = 1 párrafo POV) |
 | 📬 [Editorial Dispatch]({MC_BASE}/dashboard/{slug}/system?cron=Editorial+Dispatch) | 8:30 L-V | `idea-queue.json` + `cadence-config.yml` | Discord/Slack del cliente |
+| 🎯 POV Bank Refresh | 1 del mes 9am | `clarify-history.json` (último mes) | `pov-bank.json` (refinado, versionado) |
 
 ## Cómo iterar
 
@@ -248,7 +269,9 @@ Sustituye `{MC_BASE}` por la URL real del MC del cliente (típicamente `https://
 Tras escribir todos los archivos:
 1. Resume los cambios en 3-5 líneas
 2. Da el path al `setup.md` para que el humano lo abra desde MC UI → Inputs → ⚙️ Setup configs por pillar → 📄 Ver doc
-3. Recuerda que cada config es editable independientemente desde la UI
+3. Recuerda que cada config es editable independientemente desde la UI:
+   - 📰 News Prompts, ❓ PAA, 🔑 Keywords, 🕵️ Perfiles, ⏰ Cadencia, **🎯 POV Bank**
+4. Recuerda que el POV Bank ya estaba poblado antes de este setup (precondition), pero puede refrescarse manualmente desde su sección o esperar al cron mensual POV Bank Refresh.
 
 ## Rules
 

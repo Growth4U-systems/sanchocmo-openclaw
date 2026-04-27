@@ -37,6 +37,22 @@ interface CadenceChannel {
   profiles: { name: string; handle: string; role: string; postsPerWeek: number }[];
 }
 
+interface PillarPov {
+  pillar_name?: string;
+  core_belief: string | null;
+  we_say_yes_to: string[];
+  we_say_no_to: string[];
+  preferred_angles: string[];
+  evidence_we_cite: string[];
+}
+interface PovBank {
+  version: number;
+  global: { one_liner: string | null; villain: string | null; voice_traits: string[] };
+  pov_per_pillar: Record<string, PillarPov>;
+  updated_at?: string;
+  version_history?: { version: number; date: string; trigger: string; changes: string }[];
+}
+
 interface SetupTask {
   projectId: string;
   taskId: string;
@@ -55,6 +71,7 @@ interface AllConfigs {
   monitoredProfiles: Profile[];
   cadence: { businessModel: string; channels: CadenceChannel[] };
   setupTask: SetupTask | null;
+  povBank: PovBank | null;
 }
 
 interface CronInfo {
@@ -81,9 +98,10 @@ function formatLastRun(iso: string | undefined | null): string | null {
 
 interface Props { slug: string; openChat: (slug: string, config: ThreadConfig) => void; }
 
-type Section = "news" | "profiles" | "keywords" | "paa" | "cadence";
+type Section = "news" | "profiles" | "keywords" | "paa" | "cadence" | "pov";
 
 const SECTIONS: { key: Section; icon: string; label: string }[] = [
+  { key: "pov", icon: "🎯", label: "POV Bank" },
   { key: "news", icon: "📰", label: "News Prompts" },
   { key: "profiles", icon: "🕵️", label: "Perfiles a monitorizar" },
   { key: "keywords", icon: "🔑", label: "Keywords SEO" },
@@ -190,7 +208,12 @@ export function InputsTab({ slug, openChat }: Props) {
   if (loading) return <p className="text-muted-foreground text-sm py-8 text-center">Cargando...</p>;
   if (!configs) return <p className="text-muted-foreground text-sm py-8 text-center">Sin configuracion</p>;
 
+  const povPillars = configs.povBank ? Object.values(configs.povBank.pov_per_pillar || {}) : [];
+  const povFilled = povPillars.filter((p) => p.core_belief).length;
   const counts: Record<Section, string> = {
+    pov: configs.povBank
+      ? `${povFilled}/${povPillars.length} pillars con POV`
+      : "Sin POV Bank",
     news: `${configs.newsPrompts.length} pillars`,
     profiles: `${configs.monitoredProfiles.length} perfiles`,
     keywords: `${configs.keywordsSeed.length} pillars`,
@@ -199,6 +222,7 @@ export function InputsTab({ slug, openChat }: Props) {
   };
 
   const cronMap: Record<Section, string> = {
+    pov: "POV Bank Refresh",
     news: "News Monitor", profiles: "Competitor Monitor",
     keywords: "Keyword Research", paa: "PAA Monitor", cadence: "",
   };
@@ -396,7 +420,232 @@ export function InputsTab({ slug, openChat }: Props) {
       {activeSection === "keywords" && <KeywordsForm configs={configs.keywordsSeed} slug={slug} onSaved={fetchAll} />}
       {activeSection === "paa" && <PaaForm configs={configs.paaQueries} slug={slug} onSaved={fetchAll} />}
       {activeSection === "cadence" && <CadenceForm cadence={configs.cadence} slug={slug} onSaved={fetchAll} />}
+      {activeSection === "pov" && <PovBankForm povBank={configs.povBank} pillars={pillars} slug={slug} onSaved={fetchAll} />}
       {docSlideOver}
+    </div>
+  );
+}
+
+// ── POV BANK FORM ─────────────────────────────────────────────
+function PovBankForm({
+  povBank, pillars, slug, onSaved,
+}: {
+  povBank: PovBank | null;
+  pillars: { id: string; name: string }[];
+  slug: string;
+  onSaved: () => void;
+}) {
+  const initial: PovBank = povBank || {
+    version: 1,
+    global: { one_liner: null, villain: null, voice_traits: [] },
+    pov_per_pillar: Object.fromEntries(pillars.map((p) => [p.id, {
+      pillar_name: p.name, core_belief: null, we_say_yes_to: [], we_say_no_to: [],
+      preferred_angles: [], evidence_we_cite: [],
+    }])),
+    updated_at: new Date().toISOString(),
+    version_history: [],
+  };
+  const [data, setData] = useState<PovBank>(initial);
+  const [saving, setSaving] = useState(false);
+  const [changeNote, setChangeNote] = useState("");
+
+  const updateGlobal = (patch: Partial<PovBank["global"]>) => {
+    setData((prev) => ({ ...prev, global: { ...prev.global, ...patch } }));
+  };
+
+  const updatePillar = (pillarId: string, patch: Partial<PillarPov>) => {
+    setData((prev) => ({
+      ...prev,
+      pov_per_pillar: {
+        ...prev.pov_per_pillar,
+        [pillarId]: { ...prev.pov_per_pillar[pillarId], ...patch },
+      },
+    }));
+  };
+
+  const updateList = (pillarId: string, key: "we_say_yes_to" | "we_say_no_to" | "preferred_angles" | "evidence_we_cite", csv: string) => {
+    const items = csv.split("\n").map((s) => s.trim()).filter(Boolean);
+    updatePillar(pillarId, { [key]: items } as Partial<PillarPov>);
+  };
+
+  const save = async () => {
+    setSaving(true);
+    await fetch("/api/content-engine/configs", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        slug,
+        configId: "pov-bank",
+        data: { ...data, _change_note: changeNote || "Edición manual desde MC UI" },
+      }),
+    });
+    setChangeNote("");
+    onSaved();
+    setSaving(false);
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <h2 className="text-sm font-bold text-[#2C3E50]">🎯 POV Bank</h2>
+        <button
+          onClick={save}
+          disabled={saving}
+          className="text-xs px-3 py-1.5 rounded-md bg-rust text-white font-medium hover:bg-rust/90 disabled:opacity-50"
+        >
+          {saving ? "Guardando..." : "💾 Guardar"}
+        </button>
+      </div>
+
+      <div className="bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 text-xs text-amber-800">
+        <strong>POV Bank:</strong> opiniones del cliente por pillar. Es la fuente que <code>idea-builder</code> consulta para generar
+        angle_drafts diferenciados (no genéricos). Se construye en setup (task <code>P14-T04</code>) y se refresca con el cron mensual
+        POV Bank Refresh basado en patrones del clarify-history. Editable manualmente desde aquí.
+      </div>
+
+      {/* Global */}
+      <div className="bg-white border border-[#E8E2D9] rounded-lg p-4 space-y-2" style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}>
+        <h3 className="text-xs font-semibold text-[#2C3E50]">🌐 Global</h3>
+        <div className="space-y-1.5">
+          <label className="text-[11px] text-muted-foreground block">One-liner (statement de posicionamiento más afilado)</label>
+          <input
+            type="text"
+            value={data.global.one_liner || ""}
+            onChange={(e) => updateGlobal({ one_liner: e.target.value || null })}
+            placeholder="Ej: 'We design growth systems your team can keep running after we leave.'"
+            className="w-full text-xs border border-[#E8E2D9] rounded px-2 py-1.5 focus:outline-none focus:border-rust"
+          />
+        </div>
+        <div className="space-y-1.5">
+          <label className="text-[11px] text-muted-foreground block">Villano (contra qué nos posicionamos)</label>
+          <input
+            type="text"
+            value={data.global.villain || ""}
+            onChange={(e) => updateGlobal({ villain: e.target.value || null })}
+            placeholder="Ej: 'The 18-month agency retainer that produces no compound asset'"
+            className="w-full text-xs border border-[#E8E2D9] rounded px-2 py-1.5 focus:outline-none focus:border-rust"
+          />
+        </div>
+        <div className="space-y-1.5">
+          <label className="text-[11px] text-muted-foreground block">Voice traits (separados por coma)</label>
+          <input
+            type="text"
+            value={data.global.voice_traits.join(", ")}
+            onChange={(e) => updateGlobal({ voice_traits: e.target.value.split(",").map((s) => s.trim()).filter(Boolean) })}
+            placeholder="plain-spoken, data-driven, founder-empathetic"
+            className="w-full text-xs border border-[#E8E2D9] rounded px-2 py-1.5 focus:outline-none focus:border-rust"
+          />
+        </div>
+      </div>
+
+      {/* Per-pillar */}
+      {pillars.map((p) => {
+        const pov = data.pov_per_pillar[p.id] || {
+          pillar_name: p.name, core_belief: null, we_say_yes_to: [], we_say_no_to: [],
+          preferred_angles: [], evidence_we_cite: [],
+        };
+        const filled = !!pov.core_belief;
+        return (
+          <div
+            key={p.id}
+            className={cn(
+              "bg-white border rounded-lg p-4 space-y-2",
+              filled ? "border-[#E8E2D9]" : "border-yellow-300"
+            )}
+            style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}
+          >
+            <div className="flex items-center gap-2 flex-wrap">
+              <h3 className="text-xs font-semibold text-[#2C3E50]">
+                <span className="font-bold">{p.id}</span>
+                <span className="ml-1 text-muted-foreground font-normal">{p.name}</span>
+              </h3>
+              {!filled && (
+                <span className="text-[10px] bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded">⚠️ Sin POV</span>
+              )}
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-[11px] text-muted-foreground block">Core belief — la postura central (1 frase argumentable, no descripción)</label>
+              <input
+                type="text"
+                value={pov.core_belief || ""}
+                onChange={(e) => updatePillar(p.id, { core_belief: e.target.value || null })}
+                placeholder="Ej: 'Growth is a system, not a sequence of tactics.'"
+                className="w-full text-xs border border-[#E8E2D9] rounded px-2 py-1.5 focus:outline-none focus:border-rust"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <label className="text-[11px] text-muted-foreground block">✅ We say YES to (uno por línea)</label>
+                <textarea
+                  value={pov.we_say_yes_to.join("\n")}
+                  onChange={(e) => updateList(p.id, "we_say_yes_to", e.target.value)}
+                  placeholder={"Frameworks que sobrevivan al cambio de CMO\nStorytelling con números\nFounder-led hasta 50 personas"}
+                  className="w-full text-[11px] border border-[#E8E2D9] rounded p-2 min-h-[80px] focus:outline-none focus:border-rust leading-relaxed"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[11px] text-muted-foreground block">❌ We say NO to (uno por línea)</label>
+                <textarea
+                  value={pov.we_say_no_to.join("\n")}
+                  onChange={(e) => updateList(p.id, "we_say_no_to", e.target.value)}
+                  placeholder={"Hype tactics ('this 1 hack')\nVanity metrics\nRetainers eternos"}
+                  className="w-full text-[11px] border border-[#E8E2D9] rounded p-2 min-h-[80px] focus:outline-none focus:border-rust leading-relaxed"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-[11px] text-muted-foreground block">🎯 Preferred angles — patrones de ángulo con prefijo de tipo (uno por línea)</label>
+              <textarea
+                value={pov.preferred_angles.join("\n")}
+                onChange={(e) => updateList(p.id, "preferred_angles", e.target.value)}
+                placeholder={"Contrarian: 'el growth team que vas a contratar va a fallar'\nFramework: '3 preguntas antes de escalar growth'\nProof: 'Bnext 0→400K, qué funcionó'"}
+                className="w-full text-[11px] border border-[#E8E2D9] rounded p-2 min-h-[70px] focus:outline-none focus:border-rust leading-relaxed"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-[11px] text-muted-foreground block">🧾 Evidence we cite — fuentes recurrentes (uno por línea)</label>
+              <textarea
+                value={pov.evidence_we_cite.join("\n")}
+                onChange={(e) => updateList(p.id, "evidence_we_cite", e.target.value)}
+                placeholder={"Bnext 0→400K usuarios bajo CNMV\nBit2Me LTV 3x bajo regulación"}
+                className="w-full text-[11px] border border-[#E8E2D9] rounded p-2 min-h-[60px] focus:outline-none focus:border-rust leading-relaxed"
+              />
+            </div>
+          </div>
+        );
+      })}
+
+      {/* Change note */}
+      <div className="bg-[#FAFAF8] border border-[#E8E2D9] rounded-lg p-3 space-y-1">
+        <label className="text-[11px] text-muted-foreground block">Nota de cambio (se añade al version_history al guardar)</label>
+        <input
+          type="text"
+          value={changeNote}
+          onChange={(e) => setChangeNote(e.target.value)}
+          placeholder="Ej: 'Refinado P3 con casos Bit2Me y Bnext post Clarify del 2026-04-27'"
+          className="w-full text-xs border border-[#E8E2D9] rounded px-2 py-1.5 focus:outline-none focus:border-rust"
+        />
+      </div>
+
+      {/* Version history */}
+      {data.version_history && data.version_history.length > 0 && (
+        <details className="bg-white border border-[#E8E2D9] rounded-lg p-3">
+          <summary className="text-xs font-semibold text-muted-foreground cursor-pointer">
+            📜 Version history ({data.version_history.length})
+          </summary>
+          <div className="mt-2 space-y-1">
+            {data.version_history.slice().reverse().map((v, i) => (
+              <div key={i} className="text-[11px] text-muted-foreground border-l-2 border-[#E8E2D9] pl-2">
+                <strong>v{v.version}</strong> · {v.date} · {v.trigger} — {v.changes}
+              </div>
+            ))}
+          </div>
+        </details>
+      )}
     </div>
   );
 }

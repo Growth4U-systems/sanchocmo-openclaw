@@ -335,6 +335,12 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     }
     configs.setupTask = setupTask;
 
+    // POV Bank — opinions per pillar that idea-builder consults
+    const povBankPath = path.join(BASE, "brand", slug, "content", "pov-bank.json");
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const povBank = readJSON<any>(povBankPath, null);
+    configs.povBank = povBank;
+
     // Cadence
     const cadenceFile = path.join(configDir, "cadence-config.yml");
     const cadenceData = readYaml(cadenceFile) as Record<string, unknown> | null;
@@ -421,6 +427,32 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       const body = yaml.dump(next, { lineWidth: 120, quotingType: '"', forceQuotes: false });
       fs.mkdirSync(path.dirname(cadencePath), { recursive: true });
       fs.writeFileSync(cadencePath, header + body);
+    } else if (configId === "pov-bank") {
+      // data: full pov-bank.json shape
+      const povBankPath = path.join(BASE, "brand", slug, "content", "pov-bank.json");
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const existing = readJSON<any>(povBankPath, null);
+      // Append a version_history entry if version bumps or substantive change.
+      const incoming = data || {};
+      const newVersion = (incoming.version || existing?.version || 1);
+      const history = Array.isArray(existing?.version_history) ? [...existing.version_history] : [];
+      history.push({
+        version: newVersion,
+        date: new Date().toISOString().slice(0, 10),
+        trigger: "manual-ui-edit",
+        changes: incoming._change_note || "Edición manual desde MC UI",
+      });
+      // Keep last 10
+      while (history.length > 10) history.shift();
+      // Strip helper field
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { _change_note, ...rest } = incoming;
+      writeJSON(povBankPath, {
+        ...rest,
+        version: newVersion,
+        updated_at: new Date().toISOString(),
+        version_history: history,
+      });
     } else if (configId === "monitored-profiles") {
       // data: Profile[] — full replacement of the profiles array
       if (!Array.isArray(data)) {
