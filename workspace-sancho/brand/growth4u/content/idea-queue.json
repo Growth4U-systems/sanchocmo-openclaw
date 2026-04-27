@@ -40,7 +40,35 @@
       "news-2026-04-26-009"
     ],
     "created_at": "2026-04-26T07:30:00Z",
-    "status": "ready"
+    "status": "approved",
+    "approved_at": "2026-04-26T22:01:53.730Z",
+    "approved_via": "mc-ui",
+    "project_task_id": "P-Content-Semana-17-T01",
+    "project_id": "P-Content-Semana-17",
+    "drafts": [
+      {
+        "channel": "blog",
+        "content": "# [Titulo SEO — incluir keyword principal]\n\n## TL;DR\n\n1 de julio de 2026. Esa es la fecha en la que tu plataforma crypto deja de operar en la UE si no tienes autorizacion MiCA. Y no es solo el registro: cada campania de marketing de +100K personas necesita notificacion previa a la CNMV con 10 dias de antelacion. Tu influencer de Twitter? Actividad regulada.\n\nHe vivido esto en primera persona. En Bnext escalamos de 0 a 400K usuarios bajo supervision CNMV. En Bit2Me triplicamos LTV mientras la regulacion se endurecía. Hay un playbook que funciona, pero la mayoria de equipos de compliance lo estan construyendo a ciegas. Este framework cubre los 5 pasos que toda plataforma crypto en Espania necesita antes del deadline: desde la estructura de campania pre-aprobada hasta el modelo de atribucion que compliance puede firmar.\n\n## Contexto\n\nLa CNMV ha publicado reglas de transicion MiCA para plataformas crypto en Espania con deadline 1 julio 2026. Notificacion obligatoria 10 dias antes de campanas masivas (+100K). Influencer marketing clasificado como actividad regulada. Multas hasta 5M EUR o 10% facturacion.\n\n## Analisis\n\n[Desarrollar el argumento principal con datos y ejemplos]\n\n## Que significa esto para tu startup\n\n[Aplicacion practica]\n\n## Conclusion\n\n[Resumen + CTA]\n\n---\n\n*¿Quieres que analicemos tu caso? [Agenda una llamada diagnostica](link)*",
+        "status": "edited",
+        "iterations": [],
+        "created_at": "2026-04-26T22:01:53.850Z",
+        "updated_at": "2026-04-26T23:26:06.508Z"
+      },
+      {
+        "channel": "linkedin",
+        "content": "Llevo anos usando este framework. Funciona.\n\n1 de julio de 2026. Esa es la fecha en la que tu plataforma crypto deja de operar en la UE si no tienes autorizacion MiCA. Y no es solo el registro: cada campania de marketing de +100K personas necesita notificacion previa a la CNMV con 10 dias de antelacion. Tu influencer de Twitter? Actividad regulada.\n\nHe vivido esto en primera persona. En Bnext escalamos de 0 a 400K usuarios bajo supervision CNMV. En Bit2Me triplicamos LTV mientras la regulacion se endurecía. Hay un playbook que funciona, pero la mayoria de equipos de compliance lo estan construyendo a ciegas. Este framework cubre los 5 pasos que toda plataforma crypto en Espania necesita antes del deadline: desde la estructura de campania pre-aprobada hasta el modelo de atribucion que compliance puede firmar.\n\n---\n\n📰 Contexto: La CNMV ha publicado reglas de transicion MiCA para plataformas crypto en Espania con deadline 1 julio 2026. Notificacion obligatoria 10 dias antes de campanas masivas (+100K). Influencer marketing clasificado como actividad regulada. Multas hasta 5M EUR o 10% facturacion.\n\n¿Que opinas? Dejame tu comentario 👇",
+        "status": "draft",
+        "iterations": [
+          {
+            "role": "user",
+            "text": "hook más potente",
+            "ts": "2026-04-26T22:02:11.931Z"
+          }
+        ],
+        "created_at": "2026-04-26T22:01:53.850Z",
+        "updated_at": "2026-04-26T22:02:11.931Z"
+      }
+    ]
   },
   {
     "id": "idea-2026-04-26-3",
@@ -61,7 +89,27 @@
       "news-2026-04-26-012"
     ],
     "created_at": "2026-04-26T07:30:00Z",
-    "status": "ready"
+    "status": "approved",
+    "approved_at": "2026-04-26T11:13:03.093Z",
+    "approved_via": "mc-ui",
+    "drafts": [
+      {
+        "channel": "linkedin",
+        "content": "Los datos no mienten.\n\nGartner acaba de confirmar lo que llevamos diciendo dos anios: el 39% de los CMOs van a recortar gasto en agencias. No por el presupuesto. Porque estan hartos de pagar por deliverables que no mueven pipeline.\n\nMientras tanto, el mercado de fractional CMOs crecio 245%. El mercado ya ha votado. El modelo de retainer infinito donde un senior te vende y un junior ejecuta se esta muriendo. Pero ojo: el fractional CMO tambien puede ser humo si no tiene skin in the game. La pregunta correcta no es 'agencia o fractional CMO'. Es: quien se responsabiliza de mis metricas de revenue, no de mis metricas de vanidad? Si la respuesta es 'nadie', ese es tu problema.\n\n---\n\n📰 Contexto: Gartner: 39% de CMOs recortaran gasto en agencias. Las agencias reportan deliverables pero no son responsables de pipeline ni revenue. El mercado de fractional CMO crecio 245%.\n\n¿Que opinas? Dejame tu comentario 👇",
+        "status": "draft",
+        "iterations": [],
+        "created_at": "2026-04-26T11:16:06.276Z",
+        "updated_at": "2026-04-26T11:16:06.276Z"
+      },
+      {
+        "channel": "twitter",
+        "content": "Gartner acaba de confirmar lo que llevamos diciendo dos anios: el 39% de los CMOs van a recortar gasto en agencias.\n\nGartner acaba de confirmar lo que llevamos diciendo dos anios: el 39% de los CMOs van a recortar gasto en agencias. No por el presupuesto. Porque estan hartos de pagar por deliverables que no mueven p...",
+        "status": "draft",
+        "iterations": [],
+        "created_at": "2026-04-26T11:16:06.276Z",
+        "updated_at": "2026-04-26T11:16:06.276Z"
+      }
+    ]
   },
   {
     "id": "idea-2026-04-26-4",
@@ -81,7 +129,19 @@
       "news-2026-04-26-015"
     ],
     "created_at": "2026-04-26T07:30:00Z",
-    "status": "ready"
+    "status": "approved",
+    "approved_at": "2026-04-26T11:17:23.664Z",
+    "approved_via": "mc-ui",
+    "drafts": [
+      {
+        "channel": "newsletter",
+        "content": "## Esta semana en Growth\n\nSolo el 6% de marketers tienen IA totalmente implementada en operaciones. BCG: proyecto de 6 analistas/semana reducido a 1 empleado + agente en <1 hora. El 88% usa IA pero solo un tercio ha pasado de experimentos aislados.\n\n### Mi take\n\nEl 88% de los marketers dice que usa IA. Solo el 6% la tiene realmente integrada en operaciones. Esa brecha del 82% es donde esta el dinero.\n\nBCG lo demostro con un caso concreto: un proyecto que requeria 6 analistas durante una semana ahora lo hace 1 persona con un agente en menos de una hora. Esto no es teoria. Nosotros operamos clientes con SanchoCMO: un sistema multi-agente que ejecuta foundation, contenido, outreach y analytics. No es 'IA que genera posts'. Es un sistema operativo de growth donde los agentes hacen el 70% del trabajo estructural y el humano orquesta la estrategia. En este newsletter te cuento exactamente como funciona por dentro: que hacen los agentes, que hace el humano, y donde esta el ROI real.\n\n### Que puedes hacer con esto\n\n1. [Accion concreta 1]\n2. [Accion concreta 2]\n3. [Accion concreta 3]\n\n---\n\n*Si alguien te reenvio esto, [suscribete aqui](link)*",
+        "status": "draft",
+        "iterations": [],
+        "created_at": "2026-04-26T11:17:24.617Z",
+        "updated_at": "2026-04-26T11:17:24.617Z"
+      }
+    ]
   },
   {
     "id": "idea-2026-04-26-5",
@@ -101,7 +161,29 @@
       "news-2026-04-26-003"
     ],
     "created_at": "2026-04-26T07:30:00Z",
-    "status": "ready"
+    "status": "approved",
+    "approved_at": "2026-04-26T23:25:23.350Z",
+    "approved_via": "mc-ui",
+    "project_task_id": "P-Content-Semana-17-T01",
+    "project_id": "P-Content-Semana-17",
+    "drafts": [
+      {
+        "channel": "twitter",
+        "content": "🧵 Thread:\n\n1/ Thread: Los 'Systems of Record' se estan muriendo.\n\n2/ [desarrolla el primer punto]\n\n3/ [segundo punto]\n\n4/ [tercer punto]\n\n5/ La leccion: [conclusion]\n\nGuarda este thread si te fue util 🔖",
+        "status": "draft",
+        "iterations": [],
+        "created_at": "2026-04-26T23:25:23.563Z",
+        "updated_at": "2026-04-26T23:25:23.563Z"
+      },
+      {
+        "channel": "linkedin",
+        "content": "Llevo anos usando este framework. Funciona.\n\nThread: Los 'Systems of Record' se estan muriendo. En 2026 ganan los 'Systems of Action'.\n\nLa diferencia: un System of Record te dice que paso. Un System of Action ejecuta lo que deberia pasar sin esperar a que un humano mueva la ficha. Tu CRM es un System of Record. Tu growth system deberia ser un System of Action. La mayoria de startups tienen 6 herramientas, 3 dashboards y cero sistema. Coleccionan tacticas como cromos. Aqui van las 4 piezas del growth system que instalamos en Trust Engine y que cualquier startup puede empezar a construir maniana con equipo de 1-3 personas.\n\n---\n\n📰 Contexto: Los 'Systems of Record' estan siendo reemplazados por 'Systems of Action' que eliminan la latencia humana del ciclo de revenue. Growth en 2026 es sistema, no coleccion de tacticas.\n\n¿Que opinas? Dejame tu comentario 👇",
+        "status": "draft",
+        "iterations": [],
+        "created_at": "2026-04-26T23:25:23.563Z",
+        "updated_at": "2026-04-26T23:25:23.563Z"
+      }
+    ]
   },
   {
     "id": "idea-2026-04-26-6",

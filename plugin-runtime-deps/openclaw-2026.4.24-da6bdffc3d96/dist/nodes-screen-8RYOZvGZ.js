@@ -1,0 +1,1 @@
+/opt/homebrew/lib/node_modules/openclaw/dist/nodes-screen-8RYOZvGZ.js

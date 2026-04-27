@@ -1,0 +1,1 @@
+/opt/homebrew/lib/node_modules/openclaw/dist/config-schema-BEuj464I.js

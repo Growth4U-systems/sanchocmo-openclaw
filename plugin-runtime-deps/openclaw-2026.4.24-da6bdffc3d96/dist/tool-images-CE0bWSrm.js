@@ -1,0 +1,1 @@
+/opt/homebrew/lib/node_modules/openclaw/dist/tool-images-CE0bWSrm.js

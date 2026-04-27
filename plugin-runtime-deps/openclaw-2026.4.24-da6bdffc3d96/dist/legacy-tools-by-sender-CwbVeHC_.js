@@ -1,0 +1,1 @@
+/opt/homebrew/lib/node_modules/openclaw/dist/legacy-tools-by-sender-CwbVeHC_.js

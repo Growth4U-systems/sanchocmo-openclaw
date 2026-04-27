@@ -1,0 +1,1 @@
+/opt/homebrew/lib/node_modules/openclaw/dist/binding-scope-amGt2T8S.js

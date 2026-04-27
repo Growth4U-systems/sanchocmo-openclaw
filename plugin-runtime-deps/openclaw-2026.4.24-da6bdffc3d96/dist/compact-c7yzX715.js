@@ -1,0 +1,1 @@
+/opt/homebrew/lib/node_modules/openclaw/dist/compact-c7yzX715.js

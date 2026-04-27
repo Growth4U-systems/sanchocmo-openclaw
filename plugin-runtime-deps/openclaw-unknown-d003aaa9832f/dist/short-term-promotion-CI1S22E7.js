@@ -1,0 +1,1 @@
+/Users/ragi/.openclaw/plugin-runtime-deps/openclaw-2026.4.24-da6bdffc3d96/dist/short-term-promotion-CI1S22E7.js

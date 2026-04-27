@@ -1,0 +1,1 @@
+/opt/homebrew/lib/node_modules/openclaw/dist/doctor-workspace-status-BuD2n6RJ.js

@@ -1,0 +1,1 @@
+/opt/homebrew/lib/node_modules/openclaw/dist/register-command-groups-DyXNtX0R.js

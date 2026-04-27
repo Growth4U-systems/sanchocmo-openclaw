@@ -1,0 +1,1 @@
+/opt/homebrew/lib/node_modules/openclaw/dist/nextcloud-talk-C4XoFgIs.js

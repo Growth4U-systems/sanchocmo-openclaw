@@ -1,0 +1,1 @@
+/opt/homebrew/lib/node_modules/openclaw/dist/defaults-DM8yIn8C.js

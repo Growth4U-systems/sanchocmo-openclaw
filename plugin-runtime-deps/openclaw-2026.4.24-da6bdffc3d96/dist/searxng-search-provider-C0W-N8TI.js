@@ -1,0 +1,1 @@
+/opt/homebrew/lib/node_modules/openclaw/dist/searxng-search-provider-C0W-N8TI.js

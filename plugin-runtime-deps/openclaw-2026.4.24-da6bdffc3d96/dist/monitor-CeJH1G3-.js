@@ -1,0 +1,1 @@
+/opt/homebrew/lib/node_modules/openclaw/dist/monitor-CeJH1G3-.js

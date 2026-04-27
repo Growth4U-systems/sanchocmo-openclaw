@@ -1,0 +1,1 @@
+/opt/homebrew/lib/node_modules/openclaw/dist/docs-path-BkI2kE_Q.js

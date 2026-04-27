@@ -1,0 +1,1 @@
+/opt/homebrew/lib/node_modules/openclaw/dist/register.agent-smX5T8OO.js

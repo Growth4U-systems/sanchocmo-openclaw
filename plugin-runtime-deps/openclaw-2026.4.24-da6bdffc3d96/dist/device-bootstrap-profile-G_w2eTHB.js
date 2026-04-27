@@ -1,0 +1,1 @@
+/opt/homebrew/lib/node_modules/openclaw/dist/device-bootstrap-profile-G_w2eTHB.js

@@ -1,0 +1,1 @@
+/opt/homebrew/lib/node_modules/openclaw/dist/acp-cli-BtnJkx1W.js

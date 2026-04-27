@@ -1,0 +1,1 @@
+/opt/homebrew/lib/node_modules/openclaw/dist/tmp-openclaw-dir-CoGSA-7K.js

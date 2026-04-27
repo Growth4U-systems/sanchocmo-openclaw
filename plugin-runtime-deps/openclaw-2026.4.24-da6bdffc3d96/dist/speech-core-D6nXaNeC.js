@@ -1,0 +1,1 @@
+/opt/homebrew/lib/node_modules/openclaw/dist/speech-core-D6nXaNeC.js

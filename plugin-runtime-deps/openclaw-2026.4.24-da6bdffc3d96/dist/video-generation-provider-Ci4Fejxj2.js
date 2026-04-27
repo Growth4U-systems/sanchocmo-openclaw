@@ -1,0 +1,1 @@
+/opt/homebrew/lib/node_modules/openclaw/dist/video-generation-provider-Ci4Fejxj2.js

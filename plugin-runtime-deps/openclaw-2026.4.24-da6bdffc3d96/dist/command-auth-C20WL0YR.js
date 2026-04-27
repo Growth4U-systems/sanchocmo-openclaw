@@ -1,0 +1,1 @@
+/opt/homebrew/lib/node_modules/openclaw/dist/command-auth-C20WL0YR.js

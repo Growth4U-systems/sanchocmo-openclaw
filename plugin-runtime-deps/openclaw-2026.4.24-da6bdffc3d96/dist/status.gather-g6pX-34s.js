@@ -1,0 +1,1 @@
+/opt/homebrew/lib/node_modules/openclaw/dist/status.gather-g6pX-34s.js

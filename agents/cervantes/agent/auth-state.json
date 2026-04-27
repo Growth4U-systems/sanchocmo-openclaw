@@ -7,21 +7,21 @@
     "anthropic:sanchocmo-openclaw": {
       "lastUsed": 1776279213368,
       "errorCount": 1,
-      "lastFailureAt": 1777163007482,
+      "lastFailureAt": 1777249412716,
       "failureCounts": {
         "billing": 1
       },
-      "disabledUntil": 1777181007482,
+      "disabledUntil": 1777267412716,
       "disabledReason": "billing"
     },
     "anthropic:manual": {
       "lastUsed": 1776215128421,
       "errorCount": 1,
-      "lastFailureAt": 1777163005982,
+      "lastFailureAt": 1777249411288,
       "failureCounts": {
         "billing": 1
       },
-      "disabledUntil": 1777181005982,
+      "disabledUntil": 1777267411288,
       "disabledReason": "billing"
     }
   }

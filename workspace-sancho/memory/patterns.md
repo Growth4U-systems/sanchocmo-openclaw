@@ -103,4 +103,32 @@ See brand/learnings.md for patterns prior to March 2026.
 ### 8. GEO is a Parallel Visibility Channel
 - **Status**: 🟡 Needs expansion (pending)
 
-*Last updated: 2026-04-05*
+---
+
+## Active Patterns (Confirmed 23 Apr - 26 Apr)
+
+### 13. HC Foundation ATASCADA = Bloqueo Crónico
+- **First detected**: 2026-04-26 (retrospectiva: mismo pending desde Mar)
+- **Evidence**: "HC Foundation desde cero" aparece en dailys Apr 22, 23, 25, 26 — sin avance. No es recordatorio, es parálisis.
+- **Recurrence**: Crónico (>1 mes sin progreso)
+- **Status**: 🔴 Risk — requiere acción directa, no más nudges
+
+### 14. Semana Intensidad Variables — Mar/Jue es pico
+- **First detected**: 2026-04-26
+- **Evidence**: 
+  - Apr 22 (Wed): 9+ reuniones (Growit, Blas Nieto, Paymatico review, G4U/Inluentia, Q&A Oier, LinkedIn)
+  - Apr 23 (Thu): 8 reuniones (Sync, Alba Weekly, Chloe, Impact demo, 1to1 Paco, Sergi Candel)
+  - Apr 21 (Tue): Grabación Growit + conflicto agenda 13h
+  - Apr 25-26 (Sat-Sun): 0 reuniones
+- **Recurrence**: Confirmado — Tue/Wed/Thu pico, Mon variable, Fri/Sat/Sun vacío
+- **Status**: 🟢 Stable — útil para planificar trabajos pesados en Fri-Mon
+
+### 15. Growit = Proyecto Activo Recurrente
+- **First detected**: 2026-04-21
+- **Evidence**: Grabación en curso (sesiones múltiples: Abr 21, 22). Proyecto transversal Growth4U/Propia.
+- **Recurrence**: Multiple sessions Apr 21-22
+- **Status**: 🟡 Tracking — output desconocido aún
+
+---
+
+*Last updated: 2026-04-26*

@@ -1,0 +1,1 @@
+/Users/ragi/.openclaw/plugin-runtime-deps/openclaw-2026.4.24-da6bdffc3d96/dist/embedding-provider-DmG4V0h_.js

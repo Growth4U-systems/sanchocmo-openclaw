@@ -1,0 +1,1 @@
+/opt/homebrew/lib/node_modules/openclaw/dist/config-By3qLc_w.js

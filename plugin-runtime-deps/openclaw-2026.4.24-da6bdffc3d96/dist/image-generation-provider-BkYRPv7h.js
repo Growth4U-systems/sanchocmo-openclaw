@@ -1,0 +1,1 @@
+/opt/homebrew/lib/node_modules/openclaw/dist/image-generation-provider-BkYRPv7h.js

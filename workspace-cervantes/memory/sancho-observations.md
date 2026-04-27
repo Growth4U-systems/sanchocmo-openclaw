@@ -93,3 +93,102 @@
 ---
 
 _Generado por Cervantes — cron:cedfbd22-cbd0-4a19-87a0-29337c4f2b37 — 2026-04-25 08:00 UTC_
+
+---
+
+# Sancho Observations — 2026-04-26
+
+## Resumen sesiones (últimas 24h)
+
+| Sesión | Canal | Output | Estado |
+|--------|-------|--------|--------|
+| Morning Metrics Growth4U | Discord (#intelligence Growth4U, hilo) | Reporte + alertas | ✅ OK |
+| Morning Metrics Hulahoop | — | "Sin APIs configuradas" | ✅ OK (correcto) |
+| Cost Tracker Daily | — | Sin anomalías, sin posts | ✅ OK |
+| update-skills | — | Corey Haines + Anthropic actualizados | ✅ OK |
+| Lead Sync Growth4U | Discord (#intelligence) | 11 leads procesados (ninguno nuevo) | ✅ OK |
+| Heartbeat (3:20 AM) | — | Sin eventos | ✅ OK |
+
+**Nota**: No hubo Daily Pulse hoy — posible que no esté configurado para domingos o aún no ha ejecutando (son 10 AM).
+
+---
+
+## Errores y skills fallidos
+
+### 🟡 Growth4U — 0 leads Meta Ads (SEGUNDO DÍA CONSECUTIVO)
+- **Sesión**: Morning Metrics Growth4U
+- **Datos ayer (25 abr)**:
+  - Spend: €106.30 (el más bajo de la semana, -24% vs media €139.26)
+  - Leads: **0** (segundo día sin leads — 24 abr ya tuvo 1)
+  - CPC: €4.62 (↑ vs €4.22 del 24 abr)
+  - CTR: 0.79% (bajo)
+- **Contexto**: Ayer Alfonso tenía el día libre (sábado) — possível que no supervisara campañas
+- **Alerta**: Ya no es anomalía de un día — es tendencia de 2 días. Si mañana (domingo) sigue sin leads, hay que actuar.
+- **Progreso**: Cervantes ya alertó ayer. Alfonso no ha respondido aún.
+
+### 🟡 update-skills — canal Discord no registrado
+- **Canal**: `1481220331845976125` (intentado por update-skills)
+- **Problema**: Canal no existe en openclaw.json — mismo error que ayer
+- **Impacto**: No crítico (el cron delivery usa su propia ruta), pero el message tool explícito falla
+- **Acción requerida**: Cervantes — registrar el canal o investigar por qué el cron intenta usar message tool directamente
+
+### 🟡 Instantly campaigns error
+- **Error**: `(campaigns || []) is not iterable` en metrics-collector
+- **Sesión**: Morning Metrics Growth4U (secundario, no bloquó el reporte)
+- **Impacto**: Campañas de Instantly no incluidas en reporte
+- **Acción requerida**: Cervantes — fix en metrics-collector ( Skill Quality)
+
+---
+
+## Preguntas sin responder / conocimientos no disponibles
+- N/A — todas las sesiones fueron crons automatizados, no hubo interacción humana
+
+---
+
+## Reglas de canal — cumplimiento
+- ✅ Growth4U — Morning Metrics publicó correctamente en hilo de Discord
+- ✅ Hulahoop — Respondió "Sin APIs configuradas" sin publicar en Discord
+- ✅ Context isolation — sin leaks entre clientes
+- ✅ Lead Sync usó raw HTTP curl para publicar cuando message tool falló — workaround efectivo
+- ⚠️ Canal 1481220331845976125 sigue sin existir en openclaw.json
+
+---
+
+## Patrones de mejora
+
+### 1. Growth4U — Degradación продолжается (День 2)
+**Métricas**:
+- 24 abr: 1 lead, €160 spend, CPC €4.22
+- 25 abr: 0 leads, €106.30 spend, CPC €4.62
+- Tendencia: spend ↓ pero leads ↓↓ (más ineficiente)
+- **Hipótesis**: Creative burnout o audiencia desalineada
+- **Umbral de actuación**: Si mañana (domingo) 0 leads → proponer test A/B o revisión de creativo
+
+### 2. Criptan Weekly Strategy Report — NO se ejecutó hoy (era ayer)
+- **Patrón detectado ayer**: crons de Criptan abortan consistentemente
+- **Sesión Weekly Strategy**: No aparece en la lista de últimas 24h → o no se ejecutó o se abortó silenciosamente
+- **Review**: 30 abr (en ~4 días) — Criptan necesita el reporte
+- **Acción requerida**: Cervantes — regenerar manualmente si no existe archivo
+
+### 3. Discord channel access — inconsistency sigue
+- Morning Metrics: publicó correctamente (message tool)
+- Lead Sync: falló message tool → usó curl HTTP workaround
+- **Hipótesis**: accountId routing diferente o timing de guild resolution
+- **Acción requerida**: Cervantes — documentar el workaround en skills que lo necesiten
+
+---
+
+## Acciones recomendadas
+
+| Prioridad | Acción | Owner |
+|----------|--------|-------|
+| P0 | Si mañana 0 leads Growth4U → proposer test A/B creativo | Sancho (cron) |
+| P1 | Registrar canal 1481220331845976125 en openclaw.json | Cervantes |
+| P1 | Regenerar Weekly Strategy Report Criptan (review 30 abr) | Cervantes |
+| P2 | Fix Instantly `(campaigns \|\| []) is not iterable` en metrics-collector | Cervantes |
+| P2 | Documentar workaround HTTP curl en Lead Sync skill | Cervantes |
+| P3 | Verificar que Daily Pulse existe y está configurado para domingos | Cervantes |
+
+---
+
+_Generado por Cervantes — cron:cedfbd22-cbd0-4a19-87a0-29337c4f2b37 — 2026-04-26 08:00 UTC_

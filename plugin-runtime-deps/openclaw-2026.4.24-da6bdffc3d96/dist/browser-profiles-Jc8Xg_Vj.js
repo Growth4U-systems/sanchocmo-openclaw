@@ -1,0 +1,1 @@
+/opt/homebrew/lib/node_modules/openclaw/dist/browser-profiles-Jc8Xg_Vj.js

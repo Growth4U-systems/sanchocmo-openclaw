@@ -1,0 +1,1 @@
+/opt/homebrew/lib/node_modules/openclaw/dist/command-registration-lrx31fSB.js

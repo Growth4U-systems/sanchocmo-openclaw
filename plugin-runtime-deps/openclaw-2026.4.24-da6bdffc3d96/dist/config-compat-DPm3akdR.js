@@ -1,0 +1,1 @@
+/opt/homebrew/lib/node_modules/openclaw/dist/config-compat-DPm3akdR.js

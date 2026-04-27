@@ -1,0 +1,1 @@
+/opt/homebrew/lib/node_modules/openclaw/dist/registry-CWj0q4ZO.js

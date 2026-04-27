@@ -1,0 +1,1 @@
+/opt/homebrew/lib/node_modules/openclaw/dist/doctor-plugin-manifests-CVqusIo7.js

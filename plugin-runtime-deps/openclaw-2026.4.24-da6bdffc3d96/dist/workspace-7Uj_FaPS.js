@@ -1,0 +1,1 @@
+/opt/homebrew/lib/node_modules/openclaw/dist/workspace-7Uj_FaPS.js

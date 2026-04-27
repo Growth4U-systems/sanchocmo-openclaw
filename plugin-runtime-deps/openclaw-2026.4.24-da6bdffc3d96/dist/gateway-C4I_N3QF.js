@@ -1,0 +1,1 @@
+/opt/homebrew/lib/node_modules/openclaw/dist/gateway-C4I_N3QF.js

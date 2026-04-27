@@ -1,12 +1,12 @@
 {
-  "updatedAt": "2026-04-25T08:00:23.988115",
+  "updatedAt": "2026-04-26T08:00:54.678629",
   "threshold_usd": 0.0,
   "alerts": [],
   "projection": {
-    "days_elapsed": 25,
+    "days_elapsed": 26,
     "days_in_month": 30,
-    "daily_avg_usd": 8.72,
-    "projected_month_usd": 261.47,
-    "projected_month_eur": 240.55
+    "daily_avg_usd": 8.39,
+    "projected_month_usd": 251.55,
+    "projected_month_eur": 231.43
   }
 }

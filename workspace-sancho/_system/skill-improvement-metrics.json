@@ -165,7 +165,32 @@
           }
         ]
       ]
+    },
+    {
+      "date": "2026-04-26",
+      "total_skills_active": 1,
+      "total_executions": 1,
+      "avg_quality": 3.0,
+      "skills_below_3": [],
+      "top_priority": [
+        [
+          "daily-pulse",
+          {
+            "executions": 1,
+            "avg_quality": 3.0,
+            "priority_score": 2.0,
+            "outcomes": {
+              "partial": 1
+            },
+            "top_issues": [],
+            "hints": [
+              "No human activity in any channel >24h"
+            ],
+            "failure_rate": 100.0
+          }
+        ]
+      ]
     }
   ],
-  "last_updated": "2026-03-22"
+  "last_updated": "2026-04-26"
 }

@@ -1,0 +1,1 @@
+/opt/homebrew/lib/node_modules/openclaw/dist/x-search-config-BoH5v_CJ.js

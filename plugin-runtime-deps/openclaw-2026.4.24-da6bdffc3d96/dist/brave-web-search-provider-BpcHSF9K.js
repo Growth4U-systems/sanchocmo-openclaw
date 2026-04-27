@@ -1,0 +1,1 @@
+/opt/homebrew/lib/node_modules/openclaw/dist/brave-web-search-provider-BpcHSF9K.js
