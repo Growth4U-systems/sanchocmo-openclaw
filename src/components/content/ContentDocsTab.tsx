@@ -70,12 +70,15 @@ export function ContentDocsTab({ slug }: Props) {
     ]).then(([projData, pillarsData]) => {
       const items: DocItem[] = [];
 
-      // Find Content Engine project tasks
+      // Find the Content Engine SETUP project (P14) — strategy/pillars/setup/POV docs.
+      // Match by id === "P14" first (most specific). Falling back to a generic "Content Engine"
+      // .includes match would also catch weekly content projects like "Content Engine - Semana 18"
+      // which is NOT what this tab shows.
       const projects = projData.projects || [];
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const ceProject = projects.find((p: any) =>
-        p.name?.includes("Content Engine") || p.id === "P14"
-      );
+      const ceProject = projects.find((p: any) => p.id === "P14")
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        || projects.find((p: any) => p.name === "Content Engine");
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const tasks = (ceProject?.tasks || []) as any[];
 

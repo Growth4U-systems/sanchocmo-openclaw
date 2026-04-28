@@ -79,6 +79,14 @@ interface CronInfo {
   lastExecution?: { date: string; status: string } | null;
 }
 
+interface DispatchChannelConfig {
+  transport: "slack" | "discord";
+  channel_id: string;
+  channel_name?: string;
+  configured_at?: string;
+  configured_by?: string;
+}
+
 function formatLastRun(iso: string | undefined | null): string | null {
   if (!iso) return null;
   // ISO date strings or YYYY-MM-DD; both parse fine with new Date.
@@ -98,10 +106,10 @@ function formatLastRun(iso: string | undefined | null): string | null {
 
 interface Props { slug: string; openChat: (slug: string, config: ThreadConfig) => void; }
 
-type Section = "news" | "profiles" | "keywords" | "paa" | "cadence" | "pov";
+type Section = "dispatch-channel" | "news" | "profiles" | "keywords" | "paa" | "cadence";
 
 const SECTIONS: { key: Section; icon: string; label: string }[] = [
-  { key: "pov", icon: "🎯", label: "POV Bank" },
+  { key: "dispatch-channel", icon: "📬", label: "Canal de envío" },
   { key: "news", icon: "📰", label: "News Prompts" },
   { key: "profiles", icon: "🕵️", label: "Perfiles a monitorizar" },
   { key: "keywords", icon: "🔑", label: "Keywords SEO" },
@@ -118,19 +126,22 @@ export function InputsTab({ slug, openChat }: Props) {
   const [configs, setConfigs] = useState<AllConfigs | null>(null);
   const [crons, setCrons] = useState<CronInfo[]>([]);
   const [ideas, setIdeas] = useState<IdeaLite[]>([]);
+  const [dispatchChannel, setDispatchChannel] = useState<DispatchChannelConfig | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeSection, setActiveSection] = useState<Section | null>(null);
   const [openDocPath, setOpenDocPath] = useState<string | null>(null);
 
   const fetchAll = useCallback(async () => {
-    const [cfgRes, cronRes, ideasRes] = await Promise.all([
+    const [cfgRes, cronRes, ideasRes, dispatchRes] = await Promise.all([
       fetch(`/api/content-engine/configs?slug=${slug}`).then(r => r.json()).catch(() => ({ configs: null })),
       fetch(`/api/content-engine/crons?slug=${slug}`).then(r => r.json()).catch(() => ({ crons: [] })),
       fetch(`/api/content-engine/ideas?slug=${slug}&status=ready`).then(r => r.json()).catch(() => ({ ideas: [] })),
+      fetch(`/api/content-engine/dispatch-channel?slug=${slug}`).then(r => r.json()).catch(() => ({ config: null })),
     ]);
     setConfigs(cfgRes.configs || null);
     setCrons(cronRes.crons || []);
     setIdeas(ideasRes.ideas || []);
+    setDispatchChannel(dispatchRes.config || null);
     setLoading(false);
   }, [slug]);
 
@@ -208,12 +219,12 @@ export function InputsTab({ slug, openChat }: Props) {
   if (loading) return <p className="text-muted-foreground text-sm py-8 text-center">Cargando...</p>;
   if (!configs) return <p className="text-muted-foreground text-sm py-8 text-center">Sin configuracion</p>;
 
-  const povPillars = configs.povBank ? Object.values(configs.povBank.pov_per_pillar || {}) : [];
-  const povFilled = povPillars.filter((p) => p.core_belief).length;
+  const dispatchChannelLabel = dispatchChannel
+    ? `${dispatchChannel.transport === "slack" ? "💬" : "🎮"} ${dispatchChannel.channel_name || dispatchChannel.channel_id}`
+    : "Sin configurar";
+
   const counts: Record<Section, string> = {
-    pov: configs.povBank
-      ? `${povFilled}/${povPillars.length} pillars con POV`
-      : "Sin POV Bank",
+    "dispatch-channel": dispatchChannelLabel,
     news: `${configs.newsPrompts.length} pillars`,
     profiles: `${configs.monitoredProfiles.length} perfiles`,
     keywords: `${configs.keywordsSeed.length} pillars`,
@@ -222,7 +233,7 @@ export function InputsTab({ slug, openChat }: Props) {
   };
 
   const cronMap: Record<Section, string> = {
-    pov: "POV Bank Refresh",
+    "dispatch-channel": "Editorial Dispatch",
     news: "News Monitor", profiles: "Competitor Monitor",
     keywords: "Keyword Research", paa: "PAA Monitor", cadence: "",
   };
@@ -408,6 +419,7 @@ export function InputsTab({ slug, openChat }: Props) {
         ← Volver a Inputs
       </button>
 
+      {activeSection === "dispatch-channel" && <DispatchChannelForm slug={slug} current={dispatchChannel} onSaved={fetchAll} />}
       {activeSection === "news" && <NewsPromptsForm configs={configs.newsPrompts} slug={slug} onSaved={fetchAll} />}
       {activeSection === "profiles" && (
         <MonitoredProfilesForm
@@ -1610,6 +1622,184 @@ function CadenceForm({
           </div>
         ))}
       </div>
+    </div>
+  );
+}
+
+// ── DISPATCH CHANNEL FORM ─────────────────────────────────────
+interface ChannelOption { id: string; name: string; is_private?: boolean; is_member?: boolean }
+interface TransportOption {
+  transport: "slack" | "discord";
+  label: string;
+  emoji: string;
+  channels: ChannelOption[];
+  error?: string;
+}
+
+function DispatchChannelForm({
+  slug, current, onSaved,
+}: {
+  slug: string;
+  current: DispatchChannelConfig | null;
+  onSaved: () => void;
+}) {
+  const [options, setOptions] = useState<TransportOption[]>([]);
+  const [selectedTransport, setSelectedTransport] = useState<"slack" | "discord" | "">("");
+  const [selectedChannelId, setSelectedChannelId] = useState<string>("");
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch(`/api/integrations/communication-options?slug=${slug}`)
+      .then((r) => r.json())
+      .then((data) => {
+        const transports: TransportOption[] = data.transports || [];
+        setOptions(transports);
+        if (current) {
+          setSelectedTransport(current.transport);
+          setSelectedChannelId(current.channel_id);
+        } else if (transports.length > 0) {
+          setSelectedTransport(transports[0].transport);
+        }
+      })
+      .catch((e) => setError(e.message))
+      .finally(() => setLoading(false));
+  }, [slug, current]);
+
+  const currentTransport = options.find((o) => o.transport === selectedTransport);
+  const channels = currentTransport?.channels || [];
+
+  const save = async () => {
+    if (!selectedTransport || !selectedChannelId) return;
+    setSaving(true);
+    setError(null);
+    const channelName = channels.find((c) => c.id === selectedChannelId)?.name;
+    try {
+      const res = await fetch("/api/content-engine/dispatch-channel", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          slug,
+          transport: selectedTransport,
+          channel_id: selectedChannelId,
+          channel_name: channelName,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Save failed");
+      onSaved();
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) return <p className="text-sm text-ink/70 py-8 text-center">Cargando opciones de canal...</p>;
+
+  if (options.length === 0) {
+    return (
+      <div className="space-y-4">
+        <h2 className="font-heading text-base font-bold text-ink">📬 Canal de envío del Editorial Dispatch</h2>
+        <div className="bg-yellow border-2 border-ink rounded-lg p-4 text-sm text-ink">
+          <strong>Sin transports conectados.</strong>
+          <p className="mt-2">Para enviar el Editorial Dispatch necesitas conectar al menos un transport de comunicación
+          (Slack o Discord). Ve a <strong>Settings → 🔌 APIs → 💬 Comunicación</strong> y conecta uno.</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <h2 className="font-heading text-base font-bold text-ink">📬 Canal de envío</h2>
+        <button
+          onClick={save}
+          disabled={saving || !selectedTransport || !selectedChannelId}
+          className="font-heading text-sm font-bold px-4 py-2 rounded-md bg-rust text-white border-2 border-ink shadow-comic-sm hover:-translate-y-0.5 disabled:opacity-50 transition-transform"
+        >
+          {saving ? "Guardando..." : "💾 Guardar"}
+        </button>
+      </div>
+
+      <div className="bg-amber-50 border-2 border-ink rounded-lg p-4 text-xs text-ink/80">
+        <strong>El cron Editorial Dispatch</strong> enviará las candidatas diarias al canal configurado aquí.
+        Para conectar más transports → <strong>Settings → 🔌 APIs → 💬 Comunicación</strong>.
+      </div>
+
+      {/* Current */}
+      {current && (
+        <div className="bg-card border-2 border-ink rounded-lg p-3 text-xs">
+          <span className="text-ink/60 font-heading uppercase tracking-wider">Actual:</span>{" "}
+          <strong className="text-ink">
+            {current.transport === "slack" ? "💬 Slack" : "🎮 Discord"}
+            {" · "}
+            {current.channel_name || current.channel_id}
+          </strong>
+          {current.configured_at && (
+            <span className="ml-2 text-ink/60">({formatLastRun(current.configured_at)})</span>
+          )}
+        </div>
+      )}
+
+      {/* Transport selector */}
+      <div className="space-y-1.5">
+        <label className="font-heading text-xs text-ink/70 uppercase tracking-wider">Transport</label>
+        <div className="flex gap-2 flex-wrap">
+          {options.map((opt) => (
+            <button
+              key={opt.transport}
+              onClick={() => { setSelectedTransport(opt.transport); setSelectedChannelId(""); }}
+              className={cn(
+                "font-heading text-sm font-bold px-4 py-2 rounded-md border-2 border-ink shadow-comic-sm transition-transform hover:-translate-y-0.5",
+                selectedTransport === opt.transport ? "bg-rust text-white" : "bg-card text-ink"
+              )}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Channel dropdown */}
+      {selectedTransport && (
+        <div className="space-y-1.5">
+          <label className="font-heading text-xs text-ink/70 uppercase tracking-wider">Canal</label>
+          {currentTransport?.error ? (
+            <div className="bg-rust text-white border-2 border-ink rounded-md p-3 text-sm">
+              ⚠️ {currentTransport.error}
+            </div>
+          ) : channels.length === 0 ? (
+            <p className="text-sm text-ink/70 italic">Sin canales disponibles. Verifica que el bot está añadido al workspace/server.</p>
+          ) : (
+            <select
+              value={selectedChannelId}
+              onChange={(e) => setSelectedChannelId(e.target.value)}
+              className="font-heading text-sm font-bold px-3 py-2 rounded-md border-2 border-ink bg-card text-ink shadow-comic-sm focus:outline-none w-full max-w-md"
+            >
+              <option value="">— elige canal —</option>
+              {channels.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.is_private ? "🔒" : "#"}{c.name} {c.is_member === false ? "(no miembro)" : ""}
+                </option>
+              ))}
+            </select>
+          )}
+          {selectedTransport === "slack" && (
+            <p className="text-xs text-ink/60">
+              ⚠️ El bot debe estar invitado al canal con <code>/invite @SanchoCMO</code> para poder publicar.
+            </p>
+          )}
+        </div>
+      )}
+
+      {error && (
+        <div className="bg-rust text-white border-2 border-ink rounded-md p-3 text-sm font-heading font-bold">
+          ❌ {error}
+        </div>
+      )}
     </div>
   );
 }

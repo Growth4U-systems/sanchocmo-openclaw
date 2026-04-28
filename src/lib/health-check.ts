@@ -165,6 +165,20 @@ async function checkService(serviceId: string, envVars: Record<string, string>):
         if (!key) return notConfigured("MINIMAX_API_KEY");
         return keyFormatCheck(key);
       }
+      case "perplexity": {
+        const key = getKey(envVars, "PERPLEXITY_API_KEY");
+        if (!key) return notConfigured("PERPLEXITY_API_KEY");
+        // Perplexity has no GET /models. Cheapest auth check: POST /chat/completions
+        // with max_tokens=1 — costs ~1-3 tokens.
+        const r = await httpPost(
+          "https://api.perplexity.ai/chat/completions",
+          { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+          { model: "sonar", messages: [{ role: "user", content: "ping" }], max_tokens: 1 }
+        );
+        if (r.ok) return ok({ httpCode: r.httpCode });
+        if (r.httpCode === 401) return error("invalid_auth (HTTP 401)", { httpCode: r.httpCode });
+        return error(`HTTP ${r.httpCode}`, { httpCode: r.httpCode });
+      }
 
       // ── Search & Data ──
       case "brave": {

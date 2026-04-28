@@ -76,11 +76,35 @@ A signal can have multiple types.
    - +0.15 if signal is recent (≤7 days)
    - +0.15 if angle pattern matches a `preferred_angles` template
 
-### 3. Generate angle_draft (THE CRITICAL PART)
+### 3a. Generate the TITLE (one line, scannable)
+
+The `title` is what the human sees FIRST in MC UI cards and Slack dispatches.
+It must be a complete, standalone idea statement — NOT the angle text, NOT the signal summary.
+
+**Format requirements — strict:**
+- **One line, 40-90 chars** (max ~12 words)
+- Title-case OR sentence case (your call), no all-caps
+- DO NOT start with "Nuestro POV:", "Hot take:", "Framework:", etc — no labels
+- DO NOT end with question mark unless it really IS a question
+- Should be IMMEDIATELY clear what the piece is about
+- Think "headline of a newsletter article" or "LinkedIn post first line"
+
+**Good titles:**
+- "Compliance es moat: por qué MiCA es ventaja competitiva, no freno"
+- "El 60% de búsquedas Google ya no generan click. SEO está muerto."
+- "El error de contratar un growth manager senior con 30 personas"
+- "Bnext 0→400K usuarios bajo CNMV: 5 movimientos que funcionaron"
+
+**Bad titles:**
+- ❌ "Nuestro POV: el GEO es el nuevo SEO defensivo" (no usar prefijos)
+- ❌ "MiCA entra en vigor el 1 de julio" (eso es el signal, no la idea)
+- ❌ "Reflexiones sobre growth en sectores regulados" (vago, sin punch)
+
+### 3b. Generate angle_draft (POV PARAGRAPH)
 
 **Format requirements — strict:**
 - **1 paragraph max, 60-80 words** (not a full draft, not an article)
-- Open with "Nuestro POV:" (or equivalent if english)
+- DO NOT start with "Nuestro POV:" — el header del UI/Slack ya dice "Nuestro ángulo". El texto debe entrar directamente en la postura sin preámbulo.
 - State the POSITION we take on the signal (taken from pov-bank `core_belief` or `preferred_angles`)
 - Cite ONE concrete piece of evidence from the signal (number, name, quote)
 - Optionally cite ONE piece of `evidence_we_cite` from the POV bank
@@ -91,18 +115,19 @@ A signal can have multiple types.
 - ❌ Don't write copy formatted for LinkedIn / X / Blog
 - ❌ Don't paraphrase the signal as the angle (signal ≠ angle)
 - ❌ Don't write generic "industry insights" angles
+- ❌ Don't repeat the title at the start of the angle
 
-**Good example (~70 words):**
-> Nuestro POV: las nuevas reglas MiCA validan lo que decimos desde Bnext —
+**Good example (~70 words, sin "Nuestro POV:" prefix):**
+> Las nuevas reglas MiCA validan lo que decimos desde Bnext —
 > compliance no frena growth, lo escala. Quien tenga el playbook de
 > notificaciones pre-aprobado podrá lanzar mientras la competencia espera
 > permisos de la CNMV. La regulación es un cheat code competitivo, no un
 > obstáculo. Frame: 'compliance-as-moat' (preferred angle del pillar P3).
 
 **Bad examples:**
-- ❌ Paraphrase: "MiCA entra en vigor el 1 de julio. Tu plataforma necesita autorización." (eso es el signal, no nuestro POV)
-- ❌ Article hook: "1 de julio de 2026. Esa es la fecha en la que tu plataforma…" (eso es la primera frase del copy, no el angle)
-- ❌ Generic: "Las regulaciones afectan al growth de fintechs." (sin postura)
+- ❌ "Nuestro POV: las nuevas reglas MiCA…" (no usar el prefijo, ya viene del UI)
+- ❌ Paraphrase: "MiCA entra en vigor el 1 de julio. Tu plataforma necesita autorización." (eso es el signal)
+- ❌ Article hook: "1 de julio de 2026. Esa es la fecha…" (eso es copy)
 
 ### 4. Append to idea-queue.json
 
@@ -110,6 +135,7 @@ Per idea:
 ```json
 {
   "id": "idea-{date}-{n}",
+  "title": "<one-line scannable title, 40-90 chars, no 'Nuestro POV:' prefix>",
   "pillar_id": "P3",
   "content_type": "Hot Take",
   "target_channel": "linkedin",
@@ -120,7 +146,7 @@ Per idea:
     "date": "<signal date YYYY-MM-DD>"
   },
   "signal_type": ["contrarian", "system"],
-  "angle_draft": "<the 60-80 word POV paragraph>",
+  "angle_draft": "<the 60-80 word POV paragraph, WITHOUT 'Nuestro POV:' prefix>",
   "pov_confidence": 0.87,
   "source_signals": ["<signal_id_1>", "<signal_id_2>"],
   "created_at": "<now ISO>",

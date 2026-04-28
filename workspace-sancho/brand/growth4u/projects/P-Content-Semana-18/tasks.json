@@ -1,0 +1,22 @@
+[
+  {
+    "id": "P-Content-Semana-18-T01",
+    "name": "Contenido 28/04",
+    "description": "Contenido editorial del día — ideas seleccionadas en el dispatch del 28 abr 2026.",
+    "type": "content",
+    "channel": "content",
+    "status": "in-progress",
+    "skill": "social-writer",
+    "idea_ids": [
+      "idea-2026-04-28-8",
+      "idea-2026-04-28-10",
+      "idea-2026-04-28-11",
+      "idea-2026-04-28-12",
+      "idea-2026-04-28-13"
+    ],
+    "owner": "Escudero Content",
+    "created_at": "2026-04-28T09:53:00Z",
+    "mc_chat_thread_id": "task-p-content-semana-18-t01",
+    "discord_thread_id": null
+  }
+]

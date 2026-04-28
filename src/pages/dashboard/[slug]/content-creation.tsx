@@ -95,7 +95,7 @@ export default function ContentCreationPage() {
         <InputsTab slug={slug} openChat={openChat} />
       )}
       {!isLoading && slug && activeTab === "ideas" && (
-        <IdeaQueueTab slug={slug} />
+        <IdeaQueueTab slug={slug} openChat={openChat} />
       )}
       {!isLoading && slug && data && activeTab === "calendar" && (
         <CalendarTab slug={slug} data={data} openChat={openChat} />

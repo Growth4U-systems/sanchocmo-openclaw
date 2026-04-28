@@ -74,6 +74,19 @@
           ],
           "config": [],
           "docs": "https://www.minimaxi.com/en"
+        },
+        "perplexity": {
+          "provider": "Perplexity",
+          "icon": "🔭",
+          "desc": "Sonar — modelos LLM con web-search en tiempo real (usado por News Monitor + research)",
+          "ownership": "system",
+          "credentials": [
+            { "key": "API_KEY", "label": "API Key", "type": "string", "sensitive": true, "help": "Empieza con pplx-... | perplexity.ai/settings/api → Generate. Necesita cuenta Pro o créditos prepago." }
+          ],
+          "config": [
+            { "key": "DEFAULT_MODEL", "label": "Modelo por defecto", "type": "string", "sensitive": false, "help": "Ej: sonar, sonar-pro, sonar-reasoning. Si lo dejas vacío usa sonar." }
+          ],
+          "docs": "https://docs.perplexity.ai"
         }
       }
     },
@@ -202,10 +215,9 @@
             { "key": "SIGNING_SECRET", "label": "Signing Secret", "type": "string", "sensitive": true, "help": "Necesario para validar callbacks de botones interactivos. api.slack.com/apps → tu app → Basic Information → App Credentials → Signing Secret" }
           ],
           "config": [
-            { "key": "WORKSPACE", "label": "Nombre del workspace", "type": "string", "sensitive": false, "help": "El nombre de tu workspace de Slack (ej: growth4u, miempresa)" },
-            { "key": "DISPATCH_CHANNEL_ID", "label": "Channel ID para Editorial Dispatch", "type": "string", "sensitive": false, "help": "Empieza con C (canal público) o G (privado). En Slack: click derecho en el canal → Copy link → coger lo que va después de /archives/. Ej: C0123ABCDEF" },
-            { "key": "APPROVAL_CHANNEL_ID", "label": "Channel ID para aprobaciones (opcional, si distinto)", "type": "string", "sensitive": false, "help": "Si las aprobaciones de ideas van a un canal distinto. Si lo dejas vacío, usa el mismo que DISPATCH_CHANNEL_ID." }
+            { "key": "WORKSPACE", "label": "Nombre del workspace", "type": "string", "sensitive": false, "help": "El nombre de tu workspace de Slack (ej: growth4u, miempresa)" }
           ],
+          "_note": "Channel selection lives en Content Creation → Inputs → 📬 Canal de envío (no aquí). Aquí solo se conecta la cuenta.",
           "scopesRequired": ["chat:write", "chat:write.public", "channels:read", "groups:read", "channels:history", "groups:history", "commands"],
           "docs": "https://api.slack.com/docs"
         },

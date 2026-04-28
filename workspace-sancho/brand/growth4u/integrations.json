@@ -61,10 +61,25 @@
         "GROWTH4U_INSTANTLY_API_KEY"
       ],
       "lastTestedAt": "2026-04-01T12:37:53.752Z"
+    },
+    "slack": {
+      "config": {
+        "WORKSPACE": "growth4u",
+        "DISPATCH_CHANNEL_ID": "C09P1E99A79"
+      },
+      "status": "connected",
+      "lastTestedAt": "2026-04-28T05:42:10.136Z"
+    },
+    "perplexity": {
+      "config": {
+        "DEFAULT_MODEL": "sonar-pro"
+      },
+      "status": "connected",
+      "lastTestedAt": "2026-04-28T09:55:13.680Z"
     }
   },
   "systemOverrides": {},
-  "updatedAt": "2026-04-01T12:37:53.754Z",
+  "updatedAt": "2026-04-28T09:55:13.681Z",
   "metricsSheet": {
     "spreadsheetId": "16d5sxuu5bRTV_Y69g-ZkHoxUb_3hDm5KyYSuP51o4m4",
     "folderId": "1ZujxjkBZs6EEQ6KXyBmZMe6IfU9DJ0lY",

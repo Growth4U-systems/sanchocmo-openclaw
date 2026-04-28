@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { buildTaskThread, type ThreadConfig } from "@/lib/chat-openers";
 
 interface Draft {
   channel: string;
@@ -13,6 +14,7 @@ interface Draft {
 
 interface Idea {
   id: string;
+  title?: string;
   pillar_id: string;
   content_type: string;
   target_channel: string;
@@ -28,6 +30,14 @@ interface Idea {
   dispatch_date?: string;
   dispatch_slot?: string;
   source_signals?: string[];
+}
+
+// Strip "Nuestro POV:" / "POV:" / etc prefix from angle text. The UI/Slack
+// already shows a "✍️ Nuestro ángulo" header, so the prefix is redundant.
+function stripPovPrefix(text: string): string {
+  return (text || "")
+    .replace(/^\s*(nuestro\s+pov|our\s+pov|pov)\s*:\s*/i, "")
+    .trim();
 }
 
 interface PillarLite { id: string; name: string }
@@ -55,12 +65,27 @@ function signalRecencyDays(date: string | undefined): number | null {
   return Math.floor((Date.now() - d.getTime()) / 86400000);
 }
 
+// Pick the best title to render: prefer the dedicated `title` field set by
+// `idea-builder`, else derive from the angle (stripping the redundant
+// "Nuestro POV:" prefix), else fall back to the signal summary.
+function getIdeaTitle(idea: { title?: string; angle_draft?: string; signal?: { summary?: string }; id: string }): string {
+  if (idea.title && idea.title.trim()) return idea.title.trim();
+  const cleanAngle = stripPovPrefix(idea.angle_draft || "");
+  const candidate = cleanAngle || (idea.signal?.summary || "").trim();
+  if (!candidate) return idea.id;
+  // First sentence between 12-160 chars
+  const m = candidate.match(/^([^.!?\n]{12,160}[.!?])/);
+  const out = m ? m[1] : candidate.split("\n")[0];
+  return out.length > 140 ? out.slice(0, 137).trimEnd() + "…" : out;
+}
+
+// Comic UI palette for recency
 function recencyBadge(days: number | null): { color: string; label: string } | null {
   if (days === null) return null;
-  if (days <= 3)  return { color: "bg-green-100 text-green-700",   label: `${days}d` };
-  if (days <= 14) return { color: "bg-yellow-100 text-yellow-700", label: `${days}d` };
-  if (days <= 45) return { color: "bg-orange-100 text-orange-700", label: `${Math.round(days/7)} sem` };
-  return                { color: "bg-red-100 text-red-700",        label: `>${Math.round(days/30)} mes` };
+  if (days <= 3)  return { color: "bg-sage   text-white", label: `${days}d · reciente` };
+  if (days <= 14) return { color: "bg-yellow text-ink",   label: `${days}d · esta semana` };
+  if (days <= 45) return { color: "bg-aged   text-ink",   label: `${Math.round(days/7)} sem` };
+  return                { color: "bg-rust   text-white", label: `> ${Math.round(days/30)} mes` };
 }
 
 function formatLastRun(iso: string | undefined | null): string | null {
@@ -89,14 +114,32 @@ interface IdeasCounts {
 
 interface Props {
   slug: string;
+  openChat?: (slug: string, config: ThreadConfig) => void;
 }
 
-const STATUS_COLORS: Record<string, string> = {
-  ready: "bg-blue-50 text-blue-700 border-blue-200",
-  approved: "bg-green-50 text-green-700 border-green-200",
-  stale: "bg-gray-50 text-gray-500 border-gray-200",
-  archived: "bg-red-50 text-red-600 border-red-200",
-  published: "bg-emerald-50 text-emerald-700 border-emerald-200",
+// Comic UI palette — only rust/navy/sage/yellow/aged + ink
+const STATUS_VISUAL: Record<string, string> = {
+  ready:     "bg-card    text-ink",
+  approved:  "bg-sage    text-white",
+  stale:     "bg-aged    text-ink",
+  archived:  "bg-rust    text-white",
+  published: "bg-navy    text-white",
+};
+
+// Content type → comic color (rust = hot, sage = proof, navy = framework, yellow = personal, aged = listicle)
+const CONTENT_TYPE_VISUAL: Record<string, { label: string; bg: string; emoji: string }> = {
+  "Hot Take":       { label: "HOT TAKE",  bg: "bg-rust    text-white", emoji: "🔥" },
+  "Proof Post":     { label: "PROOF",     bg: "bg-sage    text-white", emoji: "📚" },
+  Framework:        { label: "FRAMEWORK", bg: "bg-navy    text-white", emoji: "🧩" },
+  "Personal Story": { label: "PERSONAL",  bg: "bg-yellow  text-ink",   emoji: "💬" },
+  Listicle:         { label: "LISTICLE",  bg: "bg-aged    text-ink",   emoji: "📋" },
+};
+
+const CHANNEL_VISUAL: Record<string, { label: string; emoji: string }> = {
+  linkedin:   { label: "LinkedIn",    emoji: "💼" },
+  twitter:    { label: "X / Twitter", emoji: "🐦" },
+  blog:       { label: "Blog",        emoji: "📝" },
+  newsletter: { label: "Newsletter",  emoji: "📧" },
 };
 
 const CHANNEL_ICONS: Record<string, string> = {
@@ -106,7 +149,14 @@ const CHANNEL_ICONS: Record<string, string> = {
   newsletter: "📧",
 };
 
-export function IdeaQueueTab({ slug }: Props) {
+// Pick a writer skill based on the idea's target_channel
+function writerSkillFor(channel: string): string {
+  if (channel === "blog") return "seo-content";
+  if (channel === "newsletter") return "newsletter";
+  return "social-writer"; // linkedin, twitter, default
+}
+
+export function IdeaQueueTab({ slug, openChat }: Props) {
   const [ideas, setIdeas] = useState<Idea[]>([]);
   const [counts, setCounts] = useState<IdeasCounts | null>(null);
   const [pillars, setPillars] = useState<PillarLite[]>([]);
@@ -234,7 +284,7 @@ export function IdeaQueueTab({ slug }: Props) {
     { key: "ready", label: "Ready", count: counts?.ready },
     { key: "approved", label: "Aprobadas", count: counts?.approved },
     { key: "stale", label: "Stale", count: counts?.stale },
-    { key: "archived", label: "Archivadas", count: counts?.archived },
+    { key: "archived", label: "Descartadas", count: counts?.archived },
     { key: "published", label: "Publicadas", count: counts?.published },
   ];
 
@@ -269,16 +319,16 @@ export function IdeaQueueTab({ slug }: Props) {
 
   return (
     <div>
-      {/* Dispatch action bar */}
-      <div className="bg-white border border-[#E8E2D9] rounded-lg p-3 mb-4 flex items-center gap-3 flex-wrap" style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}>
-        <div className="flex items-center gap-2 flex-1 min-w-[200px]">
-          <span className="text-xl">📬</span>
+      {/* Dispatch action bar — Comic UI */}
+      <div className="bg-card border-[3px] border-ink shadow-comic-sm rounded-xl p-4 mb-4 flex items-center gap-3 flex-wrap">
+        <div className="flex items-center gap-3 flex-1 min-w-[220px]">
+          <span className="text-2xl">📬</span>
           <div className="flex-1 min-w-0">
-            <div className="text-sm font-semibold text-[#2C3E50]">Editorial Dispatch</div>
-            <div className="text-xs text-muted-foreground">
+            <div className="font-heading text-base font-bold text-ink">Editorial Dispatch</div>
+            <div className="text-xs text-ink/70">
               Selecciona candidatas según cadencia y las envía a Discord/Slack para que elijas allí.
               {dispatchCron?.lastExecution && (
-                <> · Última: <strong>{formatLastRun(dispatchCron.lastExecution.date)}</strong> ({dispatchCron.lastExecution.status})</>
+                <> · Última: <strong className="text-ink">{formatLastRun(dispatchCron.lastExecution.date)}</strong> ({dispatchCron.lastExecution.status})</>
               )}
               {!dispatchCron?.lastExecution && <> · Sin ejecuciones</>}
               {dispatchCron && <> · Cron diario 08:30</>}
@@ -289,7 +339,7 @@ export function IdeaQueueTab({ slug }: Props) {
           type="button"
           onClick={runDispatchCron}
           disabled={dispatching || !dispatchCron}
-          className="text-sm px-4 py-2 bg-rust text-white rounded-md hover:bg-rust/90 transition-colors font-medium disabled:opacity-50"
+          className="font-heading text-sm font-bold px-4 py-2 rounded-md bg-rust text-white border-2 border-ink shadow-comic-sm hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed transition-transform"
           title={dispatchCron ? "Lanzar dispatch ahora" : "Cron Editorial Dispatch no encontrado"}
         >
           {dispatching ? "Lanzando..." : dispatchPolling ? "⏳ En curso" : "▶ Ejecutar ahora"}
@@ -298,7 +348,7 @@ export function IdeaQueueTab({ slug }: Props) {
           <button
             type="button"
             onClick={() => { fetchIdeas(); fetchPillarsAndCrons(); }}
-            className="text-xs text-muted-foreground hover:text-rust"
+            className="font-heading text-sm font-bold px-3 py-2 rounded-md bg-card text-ink border-2 border-ink shadow-comic-sm hover:-translate-y-0.5 transition-transform"
             title="Refrescar manualmente"
           >
             🔄
@@ -307,24 +357,24 @@ export function IdeaQueueTab({ slug }: Props) {
       </div>
       {dispatchFlash && (
         <div className={cn(
-          "mb-3 text-xs px-3 py-2 rounded border",
-          dispatchFlash.status === "ok" ? "bg-green-50 text-green-700 border-green-200" : "bg-red-50 text-red-700 border-red-200"
+          "mb-3 text-xs font-heading font-bold px-3 py-2 rounded-md border-2 border-ink",
+          dispatchFlash.status === "ok" ? "bg-sage text-white" : "bg-rust text-white"
         )}>
           {dispatchFlash.status === "ok" ? "✅" : "❌"} {dispatchFlash.message}
         </div>
       )}
 
-      {/* Status filter chips */}
-      <div className="flex gap-1.5 mb-2 overflow-x-auto">
+      {/* Status filter chips — Comic UI */}
+      <div className="flex gap-2 mb-3 overflow-x-auto">
         {FILTERS.map((f) => (
           <button
             key={f.key}
             onClick={() => setFilter(f.key)}
             className={cn(
-              "text-xs px-3 py-1.5 rounded-md whitespace-nowrap transition-colors font-medium",
+              "font-heading font-bold text-sm px-4 py-2 rounded-md border-2 border-ink whitespace-nowrap transition-transform",
               filter === f.key
-                ? "bg-rust text-white"
-                : "bg-muted/40 text-muted-foreground hover:bg-muted"
+                ? "bg-rust text-white shadow-comic-sm"
+                : "bg-card text-ink shadow-comic-sm hover:-translate-y-0.5"
             )}
           >
             {f.label}{f.count !== undefined ? ` (${f.count})` : ""}
@@ -332,24 +382,25 @@ export function IdeaQueueTab({ slug }: Props) {
         ))}
       </div>
 
-      {/* Secondary filters */}
-      <div className="flex gap-2 mb-4 flex-wrap items-center text-xs">
+      {/* Secondary filters — Comic UI */}
+      <div className="flex gap-2 mb-4 flex-wrap items-center">
         <button
           onClick={() => setTodayOnly((v) => !v)}
           className={cn(
-            "px-2.5 py-1 rounded-md font-medium transition-colors border",
+            "font-heading font-bold text-xs px-3 py-1.5 rounded-md border-2 border-ink shadow-comic-sm transition-transform hover:-translate-y-0.5 inline-flex items-center gap-1.5",
             todayOnly
-              ? "bg-green-100 text-green-700 border-green-300"
-              : "bg-white text-muted-foreground border-[#E8E2D9] hover:border-rust/40"
+              ? "bg-rust text-white ring-2 ring-ink ring-offset-1"
+              : "bg-card text-ink"
           )}
-          title="Filtrar por dispatch de hoy"
+          title={todayOnly ? "✓ Mostrando solo dispatch de hoy. Click para quitar el filtro." : "Filtrar para mostrar solo dispatch de hoy"}
         >
-          📬 Hoy ({todayCount})
+          {todayOnly ? "✓" : "📬"} Solo HOY ({todayCount})
+          {todayOnly && <span className="ml-1 text-[10px] opacity-80">· quitar</span>}
         </button>
         <select
           value={filterChannel}
           onChange={(e) => setFilterChannel(e.target.value)}
-          className="px-2 py-1 rounded border border-[#E8E2D9] bg-white focus:outline-none focus:border-rust"
+          className="font-heading font-bold text-xs px-2.5 py-1.5 rounded-md border-2 border-ink bg-card text-ink shadow-comic-sm focus:outline-none"
           title="Canal"
         >
           <option value="all">Canal: Todos</option>
@@ -361,7 +412,7 @@ export function IdeaQueueTab({ slug }: Props) {
         <select
           value={filterPillar}
           onChange={(e) => setFilterPillar(e.target.value)}
-          className="px-2 py-1 rounded border border-[#E8E2D9] bg-white focus:outline-none focus:border-rust"
+          className="font-heading font-bold text-xs px-2.5 py-1.5 rounded-md border-2 border-ink bg-card text-ink shadow-comic-sm focus:outline-none"
           title="Pillar"
         >
           <option value="all">Pillar: Todos</option>
@@ -372,7 +423,7 @@ export function IdeaQueueTab({ slug }: Props) {
         <select
           value={filterDate}
           onChange={(e) => setFilterDate(e.target.value as typeof filterDate)}
-          className="px-2 py-1 rounded border border-[#E8E2D9] bg-white focus:outline-none focus:border-rust"
+          className="font-heading font-bold text-xs px-2.5 py-1.5 rounded-md border-2 border-ink bg-card text-ink shadow-comic-sm focus:outline-none"
           title="Recencia del signal"
         >
           <option value="all">Fecha signal: Todas</option>
@@ -383,7 +434,7 @@ export function IdeaQueueTab({ slug }: Props) {
         <select
           value={filterSource}
           onChange={(e) => setFilterSource(e.target.value as typeof filterSource)}
-          className="px-2 py-1 rounded border border-[#E8E2D9] bg-white focus:outline-none focus:border-rust"
+          className="font-heading font-bold text-xs px-2.5 py-1.5 rounded-md border-2 border-ink bg-card text-ink shadow-comic-sm focus:outline-none"
           title="Cron de origen"
         >
           <option value="all">Fuente: Todas</option>
@@ -393,7 +444,7 @@ export function IdeaQueueTab({ slug }: Props) {
           <option value="competitors">🕵️ Competidores</option>
           <option value="other">Otra</option>
         </select>
-        <span className="text-[11px] text-muted-foreground ml-auto">
+        <span className="font-heading text-xs font-bold text-ink/70 ml-auto">
           {visibleIdeas.length} de {ideas.length}
         </span>
       </div>
@@ -418,132 +469,169 @@ export function IdeaQueueTab({ slug }: Props) {
             const rec = recencyBadge(recDays);
             const isToday = idea.dispatch_date === today;
             const pillarName = pillars.find((p) => p.id === idea.pillar_id)?.name;
+            const tv = CONTENT_TYPE_VISUAL[idea.content_type] || { label: idea.content_type.toUpperCase(), bg: "bg-aged text-ink", emoji: "📄" };
+            const cv = CHANNEL_VISUAL[idea.target_channel] || { label: idea.target_channel, emoji: "📄" };
+            const conf = Math.round((idea.pov_confidence || 0) * 100);
             return (
             <div
               key={idea.id}
               className={cn(
-                "bg-white border rounded-lg p-4",
-                isToday ? "border-green-300 ring-1 ring-green-200" : "border-[#E8E2D9]"
+                "bg-card rounded-xl p-5 border-[3px] border-ink",
+                isToday ? "shadow-comic" : "shadow-comic-sm"
               )}
-              style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}
             >
-              {/* Header */}
-              <div className="flex items-start gap-2 mb-2 flex-wrap">
-                <span className="text-xl">{CHANNEL_ICONS[idea.target_channel] || "📄"}</span>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1 flex-wrap">
-                    <span className={cn("text-xs font-semibold px-2 py-0.5 rounded-full border", STATUS_COLORS[idea.status] || "bg-muted")}>
+              {/* Header — canal grande PRIMERO + tipo color comic */}
+              <div className="flex items-center justify-between gap-3 mb-4 pb-3 border-b-2 border-dashed border-ink/30 flex-wrap">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-parchment border-2 border-ink text-ink font-heading font-bold text-base">
+                    <span className="text-xl leading-none">{cv.emoji}</span>
+                    {cv.label}
+                  </span>
+                  <span className={cn("inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border-2 border-ink font-heading font-bold text-sm", tv.bg)}>
+                    <span className="text-base">{tv.emoji}</span>
+                    {tv.label}
+                  </span>
+                  {idea.status === "approved" && (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-sage text-white border-2 border-ink text-xs font-heading font-bold">
+                      ✓ APROBADA
+                    </span>
+                  )}
+                  {idea.status !== "approved" && idea.status !== "ready" && (
+                    <span className={cn("inline-flex items-center px-2.5 py-1 rounded-md border-2 border-ink text-xs font-heading font-bold uppercase", STATUS_VISUAL[idea.status] || "bg-aged text-ink")}>
                       {idea.status}
                     </span>
-                    {isToday && (
-                      <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-green-100 text-green-700 border border-green-300" title="Dispatch de hoy">
-                        📬 Hoy
-                      </span>
-                    )}
-                    <span className="text-xs text-muted-foreground" title={pillarName || ""}>
-                      <span className="font-semibold">{idea.pillar_id}</span>
-                      {pillarName && <span className="ml-1 opacity-80">{pillarName}</span>}
+                  )}
+                  {isToday && (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-yellow text-ink border-2 border-ink text-xs font-heading font-bold">
+                      📬 HOY
                     </span>
-                    <span className="text-xs text-muted-foreground">·</span>
-                    <span className="text-xs text-muted-foreground">{idea.content_type}</span>
-                    <span className="text-xs text-muted-foreground">·</span>
-                    <span className="text-xs text-muted-foreground capitalize">{idea.target_channel}</span>
-                  </div>
+                  )}
                 </div>
-                <span className="text-xs text-muted-foreground whitespace-nowrap" title={`Idea creada: ${idea.created_at}`}>
-                  Idea {new Date(idea.created_at).toLocaleDateString("es-ES", { day: "numeric", month: "short" })}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-ink/60 font-heading uppercase tracking-wider">Confianza</span>
+                  <div className="w-24 h-3 bg-aged border-2 border-ink rounded-full overflow-hidden">
+                    <div
+                      className={cn("h-full", conf >= 80 ? "bg-sage" : conf >= 60 ? "bg-yellow" : "bg-rust")}
+                      style={{ width: `${conf}%` }}
+                    />
+                  </div>
+                  <span className="text-base font-heading font-bold text-ink tabular-nums">{conf}%</span>
+                </div>
               </div>
 
+              {/* Título — del campo idea.title (nuevo, generado por idea-builder)
+                  con fallback al angle stripeado por compat. */}
+              <h2 className="font-heading text-lg font-bold text-ink leading-tight mb-3">
+                {getIdeaTitle(idea)}
+              </h2>
+
               {/* Signal */}
-              <div className="bg-muted/20 rounded px-3 py-2.5 mb-2.5">
-                <div className="flex items-center justify-between gap-2 mb-1 flex-wrap">
-                  <p className="text-xs text-muted-foreground font-medium">📰 Signal</p>
-                  <div className="flex items-center gap-1.5 flex-wrap">
-                    {idea.signal?.date && (
-                      <span className="text-[11px] text-muted-foreground" title="Fecha del signal (artículo/noticia)">
-                        📅 {idea.signal.date}
-                      </span>
-                    )}
-                    {rec && (
-                      <span className={cn("text-[10px] font-semibold px-1.5 py-0.5 rounded", rec.color)} title={`Antigüedad del signal: ${recDays} días`}>
-                        {rec.label}
-                      </span>
-                    )}
-                  </div>
-                </div>
-                <p className="text-sm text-[#2C3E50] leading-relaxed">{idea.signal?.summary}</p>
-                <p className="text-xs text-muted-foreground mt-1.5 flex items-center gap-1.5 flex-wrap">
-                  {idea.signal?.source && <span>🏷️ {idea.signal.source}</span>}
-                  {idea.signal?.url && (
+              <div className="bg-parchment border-2 border-ink rounded-lg p-4 mb-4">
+                <div className="flex items-center gap-2 mb-2 flex-wrap">
+                  <span className="font-heading font-bold text-ink uppercase tracking-wider text-xs">📰 Signal</span>
+                  {idea.signal?.source && (
                     <>
-                      <span>·</span>
-                      <a href={idea.signal.url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
-                        🔗 Ver fuente
-                      </a>
+                      <span className="text-ink/40">·</span>
+                      <span className="text-xs font-bold text-ink">{idea.signal.source}</span>
                     </>
                   )}
-                </p>
+                  {idea.signal?.date && (
+                    <>
+                      <span className="text-ink/40">·</span>
+                      <span className="text-xs text-ink/70">📅 {idea.signal.date}</span>
+                    </>
+                  )}
+                  {rec && (
+                    <span className={cn("text-[11px] font-heading font-bold px-2 py-0.5 rounded-full border-2 border-ink", rec.color)} title={`Antigüedad del signal: ${recDays} días`}>
+                      {rec.label}
+                    </span>
+                  )}
+                </div>
+                <p className="text-sm text-ink leading-relaxed mb-2">{idea.signal?.summary}</p>
+                {idea.signal?.url && (
+                  <a href={idea.signal.url} target="_blank" rel="noopener noreferrer" className="text-xs text-rust hover:underline font-bold inline-flex items-center gap-1">
+                    🔗 Ver fuente original
+                  </a>
+                )}
               </div>
 
               {/* Angle draft */}
-              <div className="mb-3">
-                <p className="text-xs text-muted-foreground font-medium mb-1">✍️ Ángulo</p>
-                <p className="text-sm text-[#2C3E50] leading-relaxed whitespace-pre-wrap">{idea.angle_draft}</p>
+              <div className="mb-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="font-heading font-bold text-rust uppercase tracking-wider text-xs">✍️ Nuestro ángulo</span>
+                </div>
+                <p className="text-sm text-ink leading-relaxed whitespace-pre-wrap">{stripPovPrefix(idea.angle_draft)}</p>
               </div>
 
-              {/* Confidence + Actions */}
-              <div className="flex items-center justify-between flex-wrap gap-2">
+              {/* Pillar + Actions */}
+              <div className="flex items-center justify-between gap-3 flex-wrap pt-3 border-t-2 border-dashed border-ink/30">
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-muted-foreground">Confianza:</span>
-                  <div className="w-20 h-1.5 bg-muted/40 rounded-full overflow-hidden">
-                    <div
-                      className="h-full rounded-full bg-rust"
-                      style={{ width: `${(idea.pov_confidence || 0) * 100}%` }}
-                    />
-                  </div>
-                  <span className="text-xs text-muted-foreground font-semibold">{Math.round((idea.pov_confidence || 0) * 100)}%</span>
+                  <span className="text-xs text-ink/60 font-heading uppercase tracking-wider">Pillar</span>
+                  <span className="text-xs font-heading font-bold bg-aged text-ink px-2.5 py-1 rounded-md border-2 border-ink" title={pillarName || idea.pillar_id}>
+                    {idea.pillar_id}{pillarName ? ` · ${pillarName}` : ""}
+                  </span>
                 </div>
 
                 {idea.status === "ready" && (
-                  <div className="flex gap-1.5">
+                  <div className="flex gap-2">
                     <button
                       onClick={() => updateIdea(idea.id, { status: "approved", approved_at: new Date().toISOString(), approved_via: "mc-ui" })}
-                      className="text-xs px-3 py-1.5 bg-green-50 text-green-700 border border-green-200 rounded-md hover:bg-green-100 transition-colors font-medium"
+                      className="font-heading text-sm font-bold px-4 py-2 rounded-md bg-sage text-white border-2 border-ink shadow-comic-sm hover:-translate-y-0.5 transition-transform"
                     >
-                      ✅ Aprobar
+                      ✓ Aprobar
                     </button>
                     <button
                       onClick={() => updateIdea(idea.id, { status: "archived" })}
-                      className="text-xs px-3 py-1.5 bg-red-50 text-red-600 border border-red-200 rounded-md hover:bg-red-100 transition-colors font-medium"
+                      className="font-heading text-sm font-bold px-4 py-2 rounded-md bg-card text-ink border-2 border-ink shadow-comic-sm hover:-translate-y-0.5 transition-transform"
                     >
-                      ❌ Descartar
+                      ✕ Descartar
                     </button>
                   </div>
                 )}
 
                 {idea.status === "approved" && (
-                  <div className="flex gap-1.5 items-center">
+                  <div className="flex gap-2 items-center">
                     {idea.project_task_id && (
                       idea.project_id ? (
                         <Link
                           href={`/dashboard/${slug}/projects/${idea.project_id}/tasks/${idea.project_task_id}`}
-                          className="text-xs text-muted-foreground hover:text-rust bg-muted/40 hover:bg-muted/60 px-2 py-0.5 rounded transition-colors no-underline"
+                          className="font-heading text-xs font-bold bg-parchment text-ink px-2.5 py-1.5 rounded-md border-2 border-ink shadow-comic-sm hover:-translate-y-0.5 transition-transform no-underline"
                           title="Abrir tarea del proyecto"
                         >
                           📋 {idea.project_task_id}
                         </Link>
                       ) : (
-                        <span className="text-xs text-muted-foreground bg-muted/40 px-2 py-0.5 rounded">
+                        <span className="font-heading text-xs font-bold bg-aged text-ink px-2.5 py-1.5 rounded-md border-2 border-ink">
                           📋 {idea.project_task_id}
                         </span>
                       )
                     )}
                     <button
-                      onClick={() => setExpandedIdea(expandedIdea === idea.id ? null : idea.id)}
-                      className="text-xs px-3 py-1.5 bg-rust/10 text-rust border border-rust/20 rounded-md hover:bg-rust/20 transition-colors font-medium"
+                      onClick={() => {
+                        if (!openChat || !idea.project_task_id || !idea.project_id) {
+                          // Fallback: legacy inline expand if openChat not wired
+                          setExpandedIdea(expandedIdea === idea.id ? null : idea.id);
+                          return;
+                        }
+                        const skill = writerSkillFor(idea.target_channel);
+                        const cfg = buildTaskThread(
+                          slug,
+                          idea.project_task_id,
+                          `${idea.content_type} · ${idea.pillar_id}`,
+                          idea.project_id,
+                          {
+                            taskSkill: skill,
+                            taskChannel: idea.target_channel,
+                            taskType: "content",
+                            deliverableFile: undefined,
+                          }
+                        );
+                        openChat(slug, cfg);
+                      }}
+                      className="font-heading text-sm font-bold px-4 py-2 rounded-md bg-rust text-white border-2 border-ink shadow-comic-sm hover:-translate-y-0.5 transition-transform inline-flex items-center gap-1.5"
+                      title={`Abrir chat para redactar el ${idea.target_channel} (skill: ${writerSkillFor(idea.target_channel)})`}
                     >
-                      {expandedIdea === idea.id ? "▾ Cerrar" : `✏️ Drafts${idea.drafts?.length ? ` (${idea.drafts.length})` : ""}`}
+                      💬 Redactar {idea.drafts?.length ? `(${idea.drafts.length} drafts)` : ""}
                     </button>
                   </div>
                 )}

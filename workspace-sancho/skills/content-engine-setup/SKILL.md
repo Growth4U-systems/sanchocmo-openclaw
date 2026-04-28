@@ -14,6 +14,7 @@ context_writes:
 - brand/{slug}/content/configs/keywords-seed/*.yml
 - brand/{slug}/market-and-us/competitors/sources.json
 - brand/{slug}/content/configs/cadence-config.yml
+- brand/{slug}/content/configs/dispatch-channel.yml
 - brand/{slug}/content/configs/setup.md
 ---
 
@@ -193,6 +194,31 @@ Workshop with human. Ask:
 
 Write to `cadence-config.yml`. Preserve top-level keys not in the form
 (`batch_workflow`, `rules`).
+
+### 4b. Configure dispatch channel (transport + canal)
+
+Workshop con el humano para decidir DÓNDE recibirá el Editorial Dispatch:
+
+1. Llama a `GET /api/integrations/communication-options?slug={slug}` para obtener la lista de transports `connected` (Slack, Discord, futuros) y sus canales disponibles.
+2. Si NO hay transports conectados:
+   - Pídele al humano que conecte uno desde MC UI → Settings → 🔌 APIs → 💬 Comunicación.
+   - Cuando esté conectado, vuelve a esta tarea.
+3. Si hay UN solo transport con canales:
+   - Pregunta: "Slack está conectado a workspace `{ws}`. ¿En qué canal quieres recibir el Editorial Dispatch? Aquí van los canales disponibles: 1. #content (C09P1E99A79) 2. #marketing 3. #general… Responde con número o nombre."
+4. Si hay VARIOS transports:
+   - Pregunta primero "¿Slack o Discord?" (lista los `connected`).
+   - Después pregunta el canal del transport elegido.
+5. Escribe la decisión en `brand/{slug}/content/configs/dispatch-channel.yml`:
+   ```yaml
+   transport: slack    # o discord
+   channel_id: C09P1E99A79
+   channel_name: "#content"
+   configured_at: "{ISO now}"
+   configured_by: "{nombre del humano}"
+   ```
+6. Recordatorio al humano: "Slack requiere que el bot esté invitado al canal con `/invite @SanchoCMO`. Verifica antes de la primera ejecución del dispatch a las 8:30am."
+
+DO NOT touch: integrations.json (la conexión y el token viven en Settings → APIs, no aquí).
 
 ### 5. Write the narrative `setup.md` (THE DELIVERABLE)
 

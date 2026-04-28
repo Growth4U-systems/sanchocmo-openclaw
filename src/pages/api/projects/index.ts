@@ -30,10 +30,15 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
     const dirs = fs.readdirSync(projectsDir, { withFileTypes: true });
     for (const d of dirs) {
-      if (!d.isDirectory() || !d.name.match(/^P\d+/)) continue;
+      // Accept both P{nn} and P-{name} prefixes (e.g. P14, P-Content-Semana-18)
+      if (!d.isDirectory() || !d.name.match(/^P[\d-]/)) continue;
       const dirPath = path.join(projectsDir, d.name);
+      // For "P-Content-Semana-18" the dir name is itself the canonical id;
+      // for "P14-Content-Engine" the canonical id is "P14" (set in project.json).
+      // The split("-")[0] works for the latter; we fix the former by reading
+      // project.json#id below (which overrides this initial guess).
       let project: Record<string, unknown> = {
-        id: d.name.split("-")[0],
+        id: d.name.startsWith("P-") ? d.name : d.name.split("-")[0],
         slug: d.name,
         name: d.name,
       };
