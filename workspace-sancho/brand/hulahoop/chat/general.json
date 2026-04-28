@@ -277,9 +277,159 @@
       "text": "Competitive Analysis ya tiene los datos de sesión (Pinama 2%, Clubes Granada/Mallorca, talks en vivo). No necesita cambios.\n\n**Resumen real de lo actualizado:**\n\n| Doc | Cambio |\n|-----|--------|\n| **Market Analysis** | ✅ AÑADIDO: Segmentación geográfica interna España (Norte maduro I+D / Sur virgen) |\n| **ECPs** | ✅ Reescrito completamente — arquetipos validados + ICP incentivo + gatekeeper asesor |\n| **Company Brief** | ✅ Corregido ticket mínimo (10k€→3.000-5.000€) + insight Pro Tax/asesor |\n| **Foundation-state** | ✅ ECPs: lite→done |\n\nMarket Analysis y Competitive Analysis ya estaban correctos. Self Analysis ya estaba completo.\n\n**Estado Foundation post-sesión 15-Abr:**\n\n| Pillar | Estado |\n|--------|--------|\n| Fast Foundation | ✅ Done |\n| Company Brief | ✅ Done |\n| Market Analysis | ✅ Done (actualizado geographic segmentation) |\n| Competitor Analysis | ✅ Done |\n| Self Analysis | ✅ Done |\n| **ECPs** | ✅ Done (hecho nuevo, antes lite) |\n| **Market Synthesis** | ⏳ Not started — siguiente |\n| **Foundation Report HTML** | ⏳ Not started |\n| Positioning | ⏳ Not started |\n| Pricing | ⏳ Not started |\n| Brand Book | ⏳ Not started |\n| Metrics Setup | ⏳ Not started |\n| Strategic Plan | ⏳ Not started |\n\n¿Siguiente paso — Market Synthesis?",
       "ts": 1776339777978,
       "agent": "sancho"
+    },
+    {
+      "role": "user",
+      "text": "Project Status.md\n\nHemos actualizado muchas cosas del foundation después de las reuniones con el cliente. lee todo el documento de project status, revisar bien toda la documentación que hay que actualizar para después poder avanzar con los nichos y los posicionamiento.s",
+      "ts": 1777277566476
+    },
+    {
+      "role": "user",
+      "text": "?",
+      "ts": 1777278099311
+    },
+    {
+      "role": "user",
+      "text": "Estas ahi?",
+      "ts": 1777294752058
+    },
+    {
+      "role": "user",
+      "text": "Continuemos",
+      "ts": 1777295571880
+    },
+    {
+      "role": "user",
+      "text": "?",
+      "ts": 1777295620731
+    },
+    {
+      "role": "user",
+      "text": "Project Status.md\n\nHemos actualizado muchas cosas del foundation después de las reuniones con el cliente. lee todo el documento de project status, revisar bien toda la documentación que hay que actualizar para después poder avanzar con los nichos y los posicionamiento.s",
+      "ts": 1777297594935
+    },
+    {
+      "role": "bot",
+      "text": "test response",
+      "ts": 1777298120871,
+      "agent": "sancho"
+    },
+    {
+      "role": "bot",
+      "text": "test",
+      "ts": 1777298358132,
+      "agent": "sancho"
+    },
+    {
+      "role": "bot",
+      "text": "test fetch",
+      "ts": 1777298362741,
+      "agent": "sancho"
+    },
+    {
+      "role": "bot",
+      "text": "Sí, conexión OK. Te leo bien 👍",
+      "ts": 1777298504249,
+      "agent": "sancho"
+    },
+    {
+      "role": "user",
+      "text": "Project Status.md\n\nHemos actualizado muchas cosas del foundation después de las reuniones con el cliente. lee todo el documento de project status, revisar bien toda la documentación que hay que actualizar para después poder avanzar con los nichos y los posicionamiento.s",
+      "ts": 1777298573095
+    },
+    {
+      "role": "bot",
+      "text": "Entendido. Ejecutando.\n\nVoy a:\n- leer `Project Status.md`\n- revisar la documentación de `brand/hulahoop/`\n- señalar qué hay que actualizar antes de avanzar con nichos y posicionamiento\n\nSiguiente: abro el status y el árbol de docs relevantes.",
+      "ts": 1777298604899,
+      "agent": "sancho"
+    },
+    {
+      "role": "user",
+      "text": "Me avisas cuando esté done?",
+      "ts": 1777299576383
+    },
+    {
+      "role": "bot",
+      "text": "Sí. Te aviso en cuanto quede revisado y cerrado.",
+      "ts": 1777299606967,
+      "agent": "sancho"
+    },
+    {
+      "role": "user",
+      "text": "tiempo?",
+      "ts": 1777300304376
+    },
+    {
+      "role": "bot",
+      "text": "ETA: **20–30 min**.\n\nMe queda:\n- leer el `Project Status`/estado real de foundation\n- cruzarlo con docs clave de `brand/hulahoop/`\n- devolverte la lista exacta de documentación a actualizar antes de nichos y positioning\n\nCuando lo cierre, te aviso.",
+      "ts": 1777300317562,
+      "agent": "sancho"
+    },
+    {
+      "role": "user",
+      "text": "?",
+      "ts": 1777301270707
+    },
+    {
+      "role": "bot",
+      "text": "⚠️ You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.",
+      "ts": 1777301277484,
+      "agent": "sancho"
+    },
+    {
+      "role": "user",
+      "text": "hecho sancho",
+      "ts": 1777319070801
+    },
+    {
+      "role": "bot",
+      "text": "🔄 Update: ya crucé reunión clave + ECPs actuales + positioning actual. Estoy validando dónde quedó desactualizada la documentación base antes de tocar nichos/posicionamiento. Siguiente: strategic plan + summary + self. ETA: ~10-15 min.",
+      "ts": 1777319142038,
+      "agent": "sancho"
+    },
+    {
+      "role": "bot",
+      "text": "🔄 Update: detectado el núcleo del problema. Foundation tiene partes profundas actualizadas, pero la capa de go-to-market está desalineada: `ecps/current.md` sigue en versión lite antigua y `positioning/shared/messaging-summary.md` + `strategic-plan/current.md` están en placeholder. Estoy cerrando el mapa exacto de archivos a tocar y el orden correcto. ETA: ~5-10 min.",
+      "ts": 1777319142044,
+      "agent": "sancho"
+    },
+    {
+      "role": "bot",
+      "text": "Sí. **Hecho el review.**\n\n**Nota:** no encontré un archivo literal `Project Status.md`. Tomé como source of truth:\n- `brand/hulahoop/foundation-state.json`\n- `meeting-notes/2026-04-15-reunion-david.md`\n- `company-brief/current.md`\n- `market-and-us/self/current.md`\n- `market-and-us/summary/current.md`\n- `go-to-market/ecps/current.md`\n- `go-to-market/positioning/shared/messaging-summary.md`\n- `strategic-plan/current.md`\n- proyectos `P00-*` y `P01`\n\n## Diagnóstico\nLa base de research **sí está bastante avanzada**, pero la capa que necesita nichos + positioning está **desalineada**.\n\n### Lo que está bien / usable\n- `company-brief/current.md` → bastante sólido y actualizado\n- `market-and-us/self/current.md` → actualizado con la reunión del 15-Abr\n- `market-and-us/summary/current.md` → bueno, ya incorpora insights clave\n- `meeting-notes/2026-04-15-reunion-david.md` → contiene los cambios más importantes\n\n### Lo que está roto o desactualizado\n1. **`go-to-market/ecps/current.md`**\n   - Está en versión **lite vieja**.\n   - Sigue hablando de:\n     - productor indie\n     - inversor retail cinéfilo\n     - fondo/family office\n   - **No refleja** los segmentos validados en reunión:\n     - Arquetipo 1 inversor anticipo (25-32, 3k-10k)\n     - Arquetipo 2 inversor patrimonio (50-60, 25k-80k)\n     - empresa familiar / dueño con IS alto para incentivo fiscal\n     - asesor fiscal / despacho como gatekeeper\n   - Para mí, este es el **bloqueador principal**.\n\n2. **`go-to-market/positioning/shared/messaging-summary.md`**\n   - Está en **placeholder total**.\n   - Ahora mismo no hay base documental real para positioning.\n\n3. **`strategic-plan/current.md`**\n   - También está en **placeholder**.\n   - No existe aún un plan consolidado que traduzca los aprendizajes de foundation en foco GTM real.\n\n4. **`foundation-state.json`**\n   - Refleja estados generales, pero se nota **desfase entre estado y calidad real del entregable**.\n   - Ejemplo: niche discovery figura como avanzado/pending-review, pero el doc actual sigue siendo el lite antiguo.\n\n5. **`go-to-market/pricing/current.md`**\n   - Placeholder.\n   - **No bloquea** el refresh de nichos, pero sí bloqueará la capa posterior de pricing/messaging más fina.\n\n## Qué documentación hay que actualizar antes de avanzar\n### Prioridad 1 — obligatoria\n- `brand/hulahoop/go-to-market/ecps/current.md`\n- `brand/hulahoop/strategic-plan/current.md`\n- `brand/hulahoop/go-to-market/positioning/shared/messaging-summary.md`\n- `brand/hulahoop/foundation-state.json`\n\n### Prioridad 2 — recomendable\n- `brand/hulahoop/company-brief/current.md`  \n  Solo pequeños ajustes de consistencia terminológica si al rehacer ECPs salen diferencias.\n- `brand/hulahoop/go-to-market/pricing/current.md`  \n  Después de positioning, no antes.\n\n## Orden correcto\n1. **Refrescar ECPs** con los segmentos reales post-reunión\n2. **Alinear strategic plan** con esos segmentos\n3. **Crear messaging summary base** para positioning\n4. **Sincronizar foundation-state**\n5. Luego sí: **nicho final + positioning completo**\n\n## Recomendación\nNo avanzaría aún con positioning “de verdad” sobre el doc actual.  \nPrimero haría un **refresh documental base** para no construir sobre supuestos viejos.\n\n## Siguiente paso\n¿**Ejecuto la actualización documental base** de estos 4 archivos?\n- `go-to-market/ecps/current.md`\n- `strategic-plan/current.md`\n- `go-to-market/positioning/shared/messaging-summary.md`\n- `foundation-state.json`",
+      "ts": 1777319142048,
+      "agent": "sancho"
+    },
+    {
+      "role": "user",
+      "text": "si pero crea versiones separadas",
+      "ts": 1777319247885
+    },
+    {
+      "role": "bot",
+      "text": "🔄 Update: ya vi el patrón de versionado. Voy a crear **archivos nuevos versionados**, sin tocar los `current.md`/placeholders existentes. En concreto: refresh de ECPs, strategic plan nuevo, messaging summary nuevo y snapshot separado del foundation state.",
+      "ts": 1777319406395,
+      "agent": "sancho"
+    },
+    {
+      "role": "bot",
+      "text": "🔄 Update: confirmé que había una inconsistencia importante: `ecps.current.md` y `current.md` no están alineados. Voy a dejar una **capa nueva limpia y separada** para evitar pisar nada: versión nueva de ECPs, strategic plan draft, messaging summary draft y snapshot del foundation state.",
+      "ts": 1777319406399,
+      "agent": "sancho"
+    },
+    {
+      "role": "bot",
+      "text": "🔄 Update: ya están creadas las **4 versiones separadas** sin tocar los `current`. Estoy haciendo una verificación rápida de contenido y luego te paso los paths exactos + la siguiente decisión recomendada.",
+      "ts": 1777319406403,
+      "agent": "sancho"
+    },
+    {
+      "role": "bot",
+      "text": "Hecho. **Creé versiones separadas** y no toqué los `current`.\n\n### Archivos creados\n- `brand/hulahoop/go-to-market/ecps/v2.md`\n- `brand/hulahoop/strategic-plan/v1-draft.md`\n- `brand/hulahoop/go-to-market/positioning/shared/messaging-summary.v1.md`\n- `brand/hulahoop/foundation-state.review-2026-04-27.json`\n\n### Qué contiene cada uno\n- **`ecps/v2.md`**  \n  Refresh limpio de segmentos reales:\n  - Arquetipo A\n  - Arquetipo B\n  - Empresa con IS alto\n  - Asesor/despacho como gatekeeper y canal\n\n- **`strategic-plan/v1-draft.md`**  \n  Plan estratégico ya aterrizado a:\n  - referral\n  - trust assets\n  - outbound a despachos\n  - content engine\n  - secuencia correcta de ejecución\n\n- **`messaging-summary.v1.md`**  \n  Base de positioning:\n  - categoría a reclamar\n  - one-liner\n  - message house\n  - value prop por segmento\n  - claims a usar / evitar\n\n- **`foundation-state.review-2026-04-27.json`**  \n  Snapshot de revisión con:\n  - hallazgos\n  - blockers\n  - secuencia recomendada\n  - paths de las nuevas versiones\n\n### Importante\nTambién confirmé que había **desalineación entre**:\n- `go-to-market/ecps/current.md`\n- `go-to-market/ecps/ecps.current.md`\n\nAsí que dejar versiones separadas era la decisión correcta.\n\n### Siguiente paso recomendado\nRevisar estas 3 primero:\n1. `ecps/v2.md`\n2. `strategic-plan/v1-draft.md`\n3. `messaging-summary.v1.md`\n\nY después decidir qué promovemos a `current`.\n\n¿**Ejecuto ahora la promoción controlada** de estas versiones a los `current` correspondientes, o prefieres revisarlas antes?",
+      "ts": 1777319406407,
+      "agent": "sancho"
     }
   ],
-  "updatedAt": 1776339777978,
+  "updatedAt": 1777319406407,
   "discordThreadId": null,
   "discordChannelId": null
 }

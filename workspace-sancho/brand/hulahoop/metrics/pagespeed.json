@@ -1,18 +1,18 @@
 {
   "url": "https://hulahoop.media",
   "mobile": {
-    "performance": 44,
+    "performance": 56,
     "seo": 92,
     "accessibility": 91,
     "bestPractices": 100,
-    "lcp": 16.1,
+    "lcp": 16.3,
     "cls": 0,
-    "tbt": 1133,
+    "tbt": 236,
     "opportunities": [
       {
         "id": "redirects",
         "title": "Avoid multiple page redirects",
-        "savings": 751,
+        "savings": 753,
         "description": "Redirects introduce additional delays before the page can be loaded. [Learn how to avoid page redirects](https://developer.chrome.com/docs/lighthouse/"
       },
       {
@@ -24,8 +24,8 @@
     ],
     "diagnostics": [
       {
-        "id": "image-delivery-insight",
-        "title": "Improve image delivery",
+        "id": "render-blocking-insight",
+        "title": "Render blocking requests",
         "score": 0
       },
       {
@@ -34,18 +34,8 @@
         "score": 0
       },
       {
-        "id": "mainthread-work-breakdown",
-        "title": "Minimize main-thread work",
-        "score": 0
-      },
-      {
-        "id": "link-name",
-        "title": "Links do not have a discernible name",
-        "score": 0
-      },
-      {
-        "id": "legacy-javascript-insight",
-        "title": "Legacy JavaScript",
+        "id": "image-delivery-insight",
+        "title": "Improve image delivery",
         "score": 0
       },
       {
@@ -54,20 +44,25 @@
         "score": 0
       },
       {
-        "id": "render-blocking-insight",
-        "title": "Render blocking requests",
+        "id": "link-name",
+        "title": "Links do not have a discernible name",
+        "score": 0
+      },
+      {
+        "id": "mainthread-work-breakdown",
+        "title": "Minimize main-thread work",
         "score": 0
       }
     ]
   },
   "desktop": {
-    "performance": 68,
+    "performance": 83,
     "seo": 92,
     "accessibility": 91,
     "bestPractices": 100,
     "lcp": 2.9,
     "cls": 0,
-    "tbt": 290,
+    "tbt": 17,
     "opportunities": [
       {
         "id": "redirects",
@@ -84,16 +79,6 @@
     ],
     "diagnostics": [
       {
-        "id": "link-name",
-        "title": "Links do not have a discernible name",
-        "score": 0
-      },
-      {
-        "id": "mainthread-work-breakdown",
-        "title": "Minimize main-thread work",
-        "score": 0
-      },
-      {
         "id": "render-blocking-insight",
         "title": "Render blocking requests",
         "score": 0
@@ -104,11 +89,16 @@
         "score": 0
       },
       {
+        "id": "link-name",
+        "title": "Links do not have a discernible name",
+        "score": 0
+      },
+      {
         "id": "image-delivery-insight",
         "title": "Improve image delivery",
         "score": 0
       }
     ]
   },
-  "fetchedAt": "2026-04-23T19:00:09.851Z"
+  "fetchedAt": "2026-04-27T08:47:15.597Z"
 }

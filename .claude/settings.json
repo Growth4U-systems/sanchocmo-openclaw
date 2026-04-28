@@ -5,5 +5,8 @@
       "Bash(git add *)",
       "Bash(GIT_EDITOR=true git rebase --continue)"
     ]
+  },
+  "enabledPlugins": {
+    "skill-creator@claude-plugins-official": true
   }
 }
