@@ -7,6 +7,7 @@ import Head from "next/head";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { ComicCard } from "@/components/shared/comic-card";
+import { SlackIntegrationCard } from "@/components/admin/slack-integration-card";
 import { TabGroup } from "@/components/shared/tab-group";
 import { StatusPill } from "@/components/shared/status-pill";
 import { cn } from "@/lib/utils";
@@ -481,6 +482,8 @@ function ApisPanel() {
     <div>
       {/* Title + actions */}
       <h2 className="font-heading text-lg text-navy mb-3">🔌 APIs & Servicios</h2>
+
+      <SlackIntegrationCard slug={slug} />
 
       <div className="flex items-center gap-2 flex-wrap mb-4">
         <button
