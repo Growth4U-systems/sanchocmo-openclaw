@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { verifySlackSignature } from "@/lib/slack-signing";
 import { findSlugByTeamId } from "@/lib/data/integrations";
+import { postMessage } from "@/lib/slack-web-api";
 
 // Slack Events API endpoint.
 // To enable: api.slack.com/apps → Event Subscriptions →
@@ -107,9 +108,61 @@ async function handleEvent(envelope: SlackEventEnvelope): Promise<void> {
     thread_ts: ev.thread_ts,
   });
 
+  if (ev.type === "app_mention") {
+    await handleAppMention(ev, slug);
+    return;
+  }
+
   // TODO per-event handlers:
-  //   ev.type === "app_mention"        → trigger Sancho with the message
   //   ev.type === "message"            → if in a thread we own, hand to mc-chat
   //   ev.type === "app_home_opened"    → render Home tab
   //   ev.type === "channel_left"       → mark integration stale
+}
+
+async function handleAppMention(ev: SlackEvent, slug: string | null): Promise<void> {
+  if (!slug) {
+    console.warn("[slack/events] app_mention: no slug for team");
+    return;
+  }
+  if (!ev.channel || !ev.user) return;
+
+  // Strip the leading "<@BOT_USER_ID>" out of the text.
+  const cleanText = (ev.text || "").replace(/<@[A-Z0-9]+>\s*/g, "").trim();
+
+  // Forward the message to OpenClaw's gateway so Sancho can answer with the
+  // same brain it uses on Discord. The gateway runs on 127.0.0.1:18789 inside
+  // the container; for now we POST a hint and let the gateway pick it up.
+  // If the gateway integration isn't ready yet, we still ack with a friendly
+  // placeholder so the user knows we received the mention.
+  let replyText: string;
+  try {
+    const gatewayRes = await fetch("http://127.0.0.1:18789/__openclaw__/slack/mention", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${process.env.OPENCLAW_REMOTE_TOKEN || ""}`,
+      },
+      body: JSON.stringify({
+        slug,
+        channel: ev.channel,
+        thread_ts: ev.thread_ts || ev.ts,
+        user: ev.user,
+        text: cleanText,
+      }),
+      signal: AbortSignal.timeout(2000),
+    });
+    if (gatewayRes.ok) {
+      // Gateway will post the reply itself.
+      return;
+    }
+    replyText = `:wave: Hola <@${ev.user}>, recibí tu mensaje pero el gateway de Sancho no respondió a tiempo. Lo tengo registrado.`;
+  } catch {
+    replyText = `:wave: Hola <@${ev.user}>, recibí tu mención. (Gateway de Sancho aún no enrutado a Slack — próximo PR.)`;
+  }
+
+  await postMessage(slug, {
+    channel: ev.channel,
+    thread_ts: ev.thread_ts || ev.ts,
+    text: replyText,
+  });
 }
