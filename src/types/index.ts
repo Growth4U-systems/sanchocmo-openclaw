@@ -320,10 +320,23 @@ export interface DataSource {
   lastTestedAt: string;
 }
 
+export interface SlackIntegration {
+  status: "connected" | "disconnected" | "error";
+  team_id: string;          // Slack workspace ID (T012345)
+  team_name: string;
+  bot_user_id: string;      // U012345
+  bot_token_encrypted: string;
+  scope: string;            // Comma-separated granted scopes
+  authed_user_id: string;   // User who authorized
+  installed_at: string;     // ISO8601
+  last_error?: string;
+}
+
 export interface Integration {
   client: string;
   dataSources: Record<string, DataSource>;
   metricsSheet?: { spreadsheetId: string; folderId: string; url: string };
+  slack?: SlackIntegration;
   updatedAt: string;
 }
 
