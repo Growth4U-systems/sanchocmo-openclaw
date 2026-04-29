@@ -44,6 +44,55 @@
 - Include a "most people skip step N" callout
 - Best for: system signals
 
+### 6. Document/Carousel (PDF)
+Use when `content_type == "Carousel"` or the angle is dense / multi-step.
+
+8-12 slides total. Per slide:
+- **Title**: max 6 words, bold, scannable
+- **Body**: max 40 words, one idea per slide
+- **Visual hint**: icon / chart / diagram suggestion (text-only draft, ship visual brief alongside)
+
+Slide arc:
+- Slide 1: Hook — provocative question or impact stat
+- Slide 2: Context — the problem or stakes
+- Slides 3 to N-1: One key point per slide (title + 2-3 lines)
+- Penultimate slide: Summary / key takeaways
+- Last slide: CTA + "Sígueme para más" + brand mark
+
+Caption template:
+> [Hook line — same as slide 1]
+>
+> Guardé todo en este documento de N slides 👇
+>
+> [1-line CTA — comment / DM / save]
+
+Best for: system, metric, framework signals where one slide can't carry it.
+
+### 7. Article (long-form)
+Use when `content_type == "Article"` or there's a parent blog to atomize.
+
+- Title: opinion-driven, more provocative than the source blog
+- Intro: 1 personal paragraph — why YOU are writing this
+- Length: 800-1500 words (shorter than the blog)
+- No H1 (LinkedIn renders the title)
+- Subheaders every 200-300 words
+- More opinion + lived experience, less SEO scaffolding
+- Backlink to source blog at the end with a one-line CTA
+
+## Strategic Comments (engagement format, not a draft format)
+Used when `content_type == "Strategic Comments"` — output 5 ready-to-use replies for posts in the niche.
+
+Per comment:
+- **Where**: type of post to drop it on (e.g. "post sobre tendencias en {sector}")
+- **Comment**: 50-100 words, contributes value, NO auto-promotion
+- **Goal**: visibility / networking / authority
+
+Rules:
+- Never self-promote. Never link to own content in the comment.
+- Always add insight, data, or own experience
+- End with a smart question that invites reply
+- Keep brand voice but lean conversational
+
 ## Posting Strategy
 - 3-5x/week
 - Best times: 08:30, 12:00, 17:30 (audience timezone)

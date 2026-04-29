@@ -4,12 +4,28 @@ import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { buildTaskThread, type ThreadConfig } from "@/lib/chat-openers";
+import { DocSlideOver } from "@/components/shared/doc-slideover";
 
+/**
+ * Draft shape returned by `/api/content-engine/drafts`.
+ * The persistent storage is `brand/{slug}/content/drafts/{idea-id}/{channel}.md`
+ * with YAML frontmatter; the API parses it and returns this shape.
+ */
 interface Draft {
-  channel: string;
-  content: string;
-  status: "draft" | "edited" | "approved" | "published";
-  iterations: { role: string; text: string; ts: string }[];
+  meta: {
+    idea_id: string;
+    channel: string;
+    iteration: number;
+    status: "pending" | "researching" | "clarify-needed" | "drafting" | "draft" | "approved" | "published";
+    content_task_id?: string;
+    parent_task_id?: string;
+    research_used?: boolean;
+    clarify_status?: "pending" | "answered" | "skipped";
+    updated_at?: string;
+  };
+  body: string;
+  relPath: string;
+  absPath: string;
 }
 
 interface Idea {
@@ -24,7 +40,8 @@ interface Idea {
   created_at: string;
   status: string;
   approved_at?: string;
-  drafts?: Draft[];
+  /** @deprecated drafts now live as files under content/drafts/{idea-id}/{channel}.md */
+  drafts?: unknown;
   project_task_id?: string;
   project_id?: string;
   dispatch_date?: string;
@@ -207,23 +224,34 @@ export function IdeaQueueTab({ slug, openChat }: Props) {
     fetchIdeas();
   }, [slug, fetchIdeas]);
 
-  const saveDraft = useCallback(async (ideaId: string, channel: string, content: string, status?: string) => {
+  const saveDraft = useCallback(async (ideaId: string, channel: string, body: string, status?: string) => {
     await fetch("/api/content-engine/drafts", {
-      method: "PUT",
+      method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ slug, ideaId, channel, content, status }),
+      body: JSON.stringify({ slug, ideaId, channel, body, meta: status ? { status } : undefined }),
     });
     fetchIdeas();
   }, [slug, fetchIdeas]);
 
   const requestIteration = useCallback(async (ideaId: string, channel: string, instruction: string) => {
-    await fetch("/api/content-engine/drafts", {
-      method: "PUT",
+    // Iteration goes to a dedicated endpoint that re-runs the writer skill
+    // against the current draft + the user's feedback. Falls back to recording
+    // the request if the endpoint isn't ready yet.
+    await fetch("/api/content-engine/iterate-draft", {
+      method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ slug, ideaId, channel, iteration: { role: "user", text: instruction } }),
+      body: JSON.stringify({ slug, ideaId, channel, instruction }),
     });
     fetchIdeas();
   }, [slug, fetchIdeas]);
+
+  // DocSlideOver state — opened when the user clicks a draft card to view/edit
+  // the markdown file directly via /api/docs/.
+  const [openDocPath, setOpenDocPath] = useState<string | null>(null);
+  const openDraftDoc = useCallback((ideaId: string, channel: string) => {
+    if (!slug) return;
+    setOpenDocPath(`brand/${slug}/content/drafts/${ideaId}/${channel}.md`);
+  }, [slug]);
 
   // Expanded idea for draft editing
   const [expandedIdea, setExpandedIdea] = useState<string | null>(null);
@@ -631,7 +659,7 @@ export function IdeaQueueTab({ slug, openChat }: Props) {
                       className="font-heading text-sm font-bold px-4 py-2 rounded-md bg-rust text-white border-2 border-ink shadow-comic-sm hover:-translate-y-0.5 transition-transform inline-flex items-center gap-1.5"
                       title={`Abrir chat para redactar el ${idea.target_channel} (skill: ${writerSkillFor(idea.target_channel)})`}
                     >
-                      💬 Redactar {idea.drafts?.length ? `(${idea.drafts.length} drafts)` : ""}
+                      💬 Redactar
                     </button>
                   </div>
                 )}
@@ -644,6 +672,7 @@ export function IdeaQueueTab({ slug, openChat }: Props) {
                   slug={slug}
                   onSaveDraft={saveDraft}
                   onRequestIteration={requestIteration}
+                  onOpenDoc={openDraftDoc}
                   onRefresh={fetchIdeas}
                 />
               )}
@@ -652,24 +681,42 @@ export function IdeaQueueTab({ slug, openChat }: Props) {
           })}
         </div>
       )}
+
+      {/* Draft viewer/editor — shared slideover used by all DraftCards */}
+      <DocSlideOver
+        slug={slug}
+        docPath={openDocPath}
+        onClose={() => setOpenDocPath(null)}
+      />
     </div>
   );
 }
 
 // ── DRAFT CARDS COMPONENT ─────────────────────────────────────
 function DraftCards({
-  idea, slug, onSaveDraft, onRequestIteration, onRefresh,
+  idea, slug, onSaveDraft, onRequestIteration, onOpenDoc, onRefresh,
 }: {
   idea: Idea; slug: string;
-  onSaveDraft: (ideaId: string, channel: string, content: string, status?: string) => Promise<void>;
+  onSaveDraft: (ideaId: string, channel: string, body: string, status?: string) => Promise<void>;
   onRequestIteration: (ideaId: string, channel: string, instruction: string) => Promise<void>;
+  onOpenDoc: (ideaId: string, channel: string) => void;
   onRefresh: () => void;
 }) {
-  const drafts = idea.drafts || [];
-  const [editingChannel, setEditingChannel] = useState<string | null>(null);
-  const [editContent, setEditContent] = useState("");
+  const [drafts, setDrafts] = useState<Draft[]>([]);
+  const [loading, setLoading] = useState(false);
   const [iterationInput, setIterationInput] = useState("");
   const [iteratingChannel, setIteratingChannel] = useState<string | null>(null);
+
+  // Pull drafts from the markdown-file storage. Re-fetch on refresh signals.
+  useEffect(() => {
+    if (!slug) return;
+    setLoading(true);
+    fetch(`/api/content-engine/drafts?slug=${slug}&ideaId=${idea.id}`)
+      .then((r) => r.json())
+      .then((data) => setDrafts(data?.drafts || []))
+      .catch(() => setDrafts([]))
+      .finally(() => setLoading(false));
+  }, [slug, idea.id]);
 
   // Channels this idea should have drafts for
   const channels = idea.target_channel === "linkedin"
@@ -681,8 +728,11 @@ function DraftCards({
     : [idea.target_channel, "linkedin"];
 
   const DRAFT_STATUS: Record<string, { bg: string; text: string; label: string }> = {
+    pending: { bg: "bg-gray-50", text: "text-gray-700", label: "Pendiente" },
+    researching: { bg: "bg-purple-50", text: "text-purple-700", label: "Researching" },
+    "clarify-needed": { bg: "bg-amber-50", text: "text-amber-700", label: "Necesita aclaración" },
+    drafting: { bg: "bg-blue-50", text: "text-blue-700", label: "Escribiendo" },
     draft: { bg: "bg-yellow-50", text: "text-yellow-700", label: "Borrador" },
-    edited: { bg: "bg-blue-50", text: "text-blue-700", label: "Editado" },
     approved: { bg: "bg-green-50", text: "text-green-700", label: "Aprobado" },
     published: { bg: "bg-emerald-50", text: "text-emerald-700", label: "Publicado" },
   };
@@ -691,15 +741,16 @@ function DraftCards({
     <div className="mt-3 pt-3 border-t border-[#E8E2D9] space-y-3">
       <div className="flex items-center justify-between">
         <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Drafts por canal</span>
-        {drafts.length === 0 && (
-          <span className="text-[10px] text-muted-foreground italic">Escudero Content generara los drafts automaticamente tras el Clarify</span>
+        {!loading && drafts.length === 0 && (
+          <span className="text-[10px] text-muted-foreground italic">Escudero Content generará los drafts automáticamente tras el Clarify</span>
         )}
       </div>
 
       {channels.map((channel) => {
-        const draft = drafts.find(d => d.channel === channel);
-        const st = draft ? (DRAFT_STATUS[draft.status] || DRAFT_STATUS.draft) : null;
-        const isEditing = editingChannel === channel;
+        const draft = drafts.find((d) => d.meta.channel === channel);
+        const status = draft?.meta.status;
+        const st = status ? DRAFT_STATUS[status] : null;
+        const isTerminal = status === "approved" || status === "published";
 
         return (
           <div key={channel} className="bg-[#FAFAF8] border border-[#E8E2D9] rounded-lg p-3">
@@ -712,57 +763,50 @@ function DraftCards({
                   {st.label}
                 </span>
               )}
+              {draft?.meta.iteration ? (
+                <span className="text-[9px] text-muted-foreground">v{draft.meta.iteration}</span>
+              ) : null}
               <div className="ml-auto flex gap-1.5">
-                {draft && draft.status !== "approved" && draft.status !== "published" && (
-                  <>
-                    <button
-                      onClick={() => {
-                        if (isEditing) {
-                          onSaveDraft(idea.id, channel, editContent, "edited");
-                          setEditingChannel(null);
-                        } else {
-                          setEditContent(draft.content);
-                          setEditingChannel(channel);
-                        }
-                      }}
-                      className="text-[10px] px-2 py-0.5 rounded border border-[#E5E2DC] text-[#7A7A7A] hover:bg-[#E5E2DC] transition-colors"
-                    >
-                      {isEditing ? "💾 Guardar" : "✏️ Editar"}
-                    </button>
-                    <button
-                      onClick={() => onSaveDraft(idea.id, channel, draft.content, "approved")}
-                      className="text-[10px] px-2 py-0.5 rounded border border-green-200 text-green-700 bg-green-50 hover:bg-green-100 transition-colors"
-                    >
-                      ✅ Aprobar
-                    </button>
-                  </>
+                {draft && (
+                  <button
+                    onClick={() => onOpenDoc(idea.id, channel)}
+                    className="text-[10px] px-2 py-0.5 rounded border border-[#E5E2DC] text-[#7A7A7A] hover:bg-[#E5E2DC] transition-colors"
+                    title="Abrir el draft en el editor de documentos"
+                  >
+                    📄 Abrir
+                  </button>
                 )}
-                {draft?.status === "approved" && (
+                {draft && !isTerminal && (
+                  <button
+                    onClick={() => onSaveDraft(idea.id, channel, draft.body, "approved")}
+                    className="text-[10px] px-2 py-0.5 rounded border border-green-200 text-green-700 bg-green-50 hover:bg-green-100 transition-colors"
+                  >
+                    ✅ Aprobar
+                  </button>
+                )}
+                {status === "approved" && (
                   <span className="text-[10px] text-green-600 font-medium">✓ Listo para publicar</span>
                 )}
               </div>
             </div>
 
-            {/* Draft content */}
+            {/* Body preview (read-only — full editing happens in the slideover) */}
             {!draft ? (
               <p className="text-[11px] text-muted-foreground italic py-2">
-                Sin draft todavia. Se generara automaticamente cuando Escudero Content ejecute el Clarify + Writer.
+                Sin draft todavía. Se generará automáticamente cuando Escudero Content ejecute deep-research → Clarify → writer.
               </p>
-            ) : isEditing ? (
-              <textarea
-                value={editContent}
-                onChange={(e) => setEditContent(e.target.value)}
-                className="w-full text-[12px] border border-[#E8E2D9] rounded p-2 min-h-[120px] resize-y focus:outline-none focus:border-rust leading-relaxed"
-                placeholder="Contenido del draft..."
-              />
             ) : (
-              <div className="text-[12px] text-[#2C3E50] whitespace-pre-wrap leading-relaxed py-1">
-                {draft.content || "(vacio)"}
+              <div
+                className="text-[12px] text-[#2C3E50] whitespace-pre-wrap leading-relaxed py-1 max-h-32 overflow-hidden cursor-pointer hover:bg-white"
+                onClick={() => onOpenDoc(idea.id, channel)}
+                title="Click para abrir y editar"
+              >
+                {draft.body.trim() || "(vacío — Escudero está trabajando)"}
               </div>
             )}
 
             {/* Iteration request */}
-            {draft && draft.status !== "approved" && draft.status !== "published" && (
+            {draft && !isTerminal && (
               <div className="mt-2">
                 {iteratingChannel === channel ? (
                   <div className="flex gap-1.5">
@@ -771,7 +815,7 @@ function DraftCards({
                       value={iterationInput}
                       onChange={(e) => setIterationInput(e.target.value)}
                       className="flex-1 text-[11px] border border-[#E8E2D9] rounded px-2 py-1 focus:outline-none focus:border-rust"
-                      placeholder='Ej: "hook mas fuerte", "mas corto", "cita datos de Bnext"'
+                      placeholder='Ej: "hook más fuerte", "más corto", "cita datos de Bnext"'
                       onKeyDown={(e) => {
                         if (e.key === "Enter" && iterationInput.trim()) {
                           onRequestIteration(idea.id, channel, iterationInput);
@@ -792,19 +836,8 @@ function DraftCards({
                     onClick={() => setIteratingChannel(channel)}
                     className="text-[10px] text-rust hover:underline"
                   >
-                    🔄 Pedir iteracion
+                    🔄 Pedir iteración
                   </button>
-                )}
-
-                {/* Show iteration history */}
-                {draft.iterations.length > 0 && (
-                  <div className="mt-1.5 space-y-1">
-                    {draft.iterations.map((it, i) => (
-                      <div key={i} className="text-[10px] text-muted-foreground bg-white rounded px-2 py-1 border border-[#E8E2D9]">
-                        <span className="font-medium">{it.role === "user" ? "Tu" : "Escudero"}:</span> {it.text}
-                      </div>
-                    ))}
-                  </div>
                 )}
               </div>
             )}

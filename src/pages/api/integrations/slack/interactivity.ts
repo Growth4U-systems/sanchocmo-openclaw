@@ -29,7 +29,7 @@ import fs from "fs";
 import path from "path";
 import yaml from "js-yaml";
 import { BASE } from "@/lib/data/paths";
-import { readJSON, writeJSON } from "@/lib/data/json-io";
+import { readJSON } from "@/lib/data/json-io";
 
 export const config = { api: { bodyParser: false } };
 
@@ -138,8 +138,10 @@ function getSigningSecret(slug: string): string | null {
     || null;
 }
 
-// ── Update idea-queue.json with approval ──────────────────────
-function updateIdeaStatus(slug: string, ideaId: string, action: "approve" | "later" | "reject", actor: string): { ok: boolean; error?: string; idea?: IdeaQueueEntry } {
+// ── Idea precheck ─────────────────────────────────────────────
+// Verifies the idea exists before we kick off the async PATCH. Returns
+// the idea so the caller has it for downstream message-edit + logging.
+function findIdea(slug: string, ideaId: string): { ok: boolean; error?: string; idea?: IdeaQueueEntry } {
   const queuePath = path.join(BASE, "brand", slug, "content", "idea-queue.json");
   if (!fs.existsSync(queuePath)) return { ok: false, error: "idea-queue.json not found" };
   let queue: IdeaQueueEntry[];
@@ -147,24 +149,26 @@ function updateIdeaStatus(slug: string, ideaId: string, action: "approve" | "lat
   catch (e) { return { ok: false, error: `parse: ${(e as Error).message}` }; }
   const idea = queue.find((i) => i.id === ideaId);
   if (!idea) return { ok: false, error: `Idea ${ideaId} not found` };
-  const now = new Date().toISOString();
-  if (action === "approve") {
-    idea.status = "approved";
-    idea.approved_at = now;
-    idea.approved_via = "slack-button";
-    idea.approved_by = actor;
-  } else if (action === "reject") {
-    idea.status = "archived";
-    idea.archived_at = now;
-    idea.archived_via = "slack-button";
-    idea.archived_by = actor;
-  } else if (action === "later") {
-    idea.deferred_at = now;
-    idea.deferred_by = actor;
-    // Keep status=ready
-  }
-  writeJSON(queuePath, queue);
   return { ok: true, idea };
+}
+
+// ── Fire-and-forget PATCH to /api/content-engine/ideas ────────
+// Routing the update through the canonical endpoint guarantees the
+// approve→generate-drafts auto-trigger runs (the source of truth for
+// status transitions and side effects). We do NOT await — Slack expects
+// an ACK in <3s and generate-drafts can take longer.
+function dispatchIdeaUpdate(slug: string, ideaId: string, action: "approve" | "later" | "reject", actor: string) {
+  const now = new Date().toISOString();
+  const fields: Record<string, string> =
+    action === "approve" ? { status: "approved", approved_at: now, approved_via: "slack-button", approved_by: actor }
+    : action === "reject" ? { status: "archived", archived_at: now, archived_via: "slack-button", archived_by: actor }
+    : { deferred_at: now, deferred_by: actor }; // later: keep status=ready
+  const baseUrl = `http://localhost:${process.env.PORT || 3000}`;
+  fetch(`${baseUrl}/api/content-engine/ideas`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ slug, ideaId, fields }),
+  }).catch((e) => console.error("[slack-interactivity] PATCH failed:", (e as Error).message));
 }
 
 // ── Update the original Slack message via response_url ────────
@@ -283,10 +287,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   const actor = payload.user.username || payload.user.name || payload.user.id;
-  const result = updateIdeaStatus(slug, ideaId, actionVerb as "approve" | "later" | "reject", actor);
-  if (!result.ok) {
-    return res.status(200).json({ text: `❌ Error: ${result.error}` });
+  // Sync precheck so we can return a friendly error to Slack if the idea is gone.
+  const found = findIdea(slug, ideaId);
+  if (!found.ok) {
+    return res.status(200).json({ text: `❌ Error: ${found.error}` });
   }
+  // Route the actual mutation through the canonical PATCH endpoint so the
+  // approve→generate-drafts auto-trigger fires. Fire-and-forget — Slack
+  // expects an ACK in <3s.
+  dispatchIdeaUpdate(slug, ideaId, actionVerb as "approve" | "later" | "reject", actor);
 
   // Update the message: preserve everything, replace ONLY the action row
   // of the clicked idea with a "✅ APROBADA por @user · 📝 Redactar en MC" context.

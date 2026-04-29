@@ -107,6 +107,97 @@ export interface Task {
   discord_thread_id?: string;
   mc_chat_thread_id?: string;
   idea_ids?: string[];      // Linked ideas
+  /**
+   * Nested ContentTask children. Only meaningful when `type === "content"` —
+   * for any other task type this field is empty/absent and validators reject
+   * non-empty values. Each child represents one approved idea moving through
+   * the redacción pipeline (research → clarify → draft → review → ready → published).
+   */
+  content_tasks?: ContentTask[];
+}
+
+/**
+ * Status canónicos para una `ContentTask` (sub-task del Content Engine).
+ *
+ * Estos estados NO son los `TaskStatus` generales — el flujo de redacción
+ * tiene su propio ciclo de vida. La transición es lineal con dos terminales
+ * (`Published` y `Discarded`), más `Deferred` que vuelve la idea a la queue.
+ *
+ * - `New`: idea recién generada por el cron Idea Builder, con angle.
+ * - `Approved`: aprobada (Slack/Discord/UI). El pipeline (deep-research →
+ *   Clarify → writing) corre durante este estado. Para visibilidad usa el
+ *   sub-estado `pipeline_state` ("researching" | "clarify-needed" | "drafting").
+ * - `Draft`: drafts iniciales generados, listos para iterar.
+ * - `Media`: drafts listos pero esperando media (imagen, video, carrusel).
+ * - `Review`: todo listo (texto + media), esperando sign-off final.
+ * - `Ready`: aprobado para publicar, fecha asignada (queda esperando fase 6).
+ * - `Published`: publicado.
+ * - `Discarded`: descartado ("Rechazar" en Slack o manual).
+ * - `Deferred`: "Más tarde" en Slack — vuelve al pool sin publicar hoy.
+ */
+export type ContentTaskStatus =
+  | "New"
+  | "Approved"
+  | "Draft"
+  | "Media"
+  | "Review"
+  | "Ready"
+  | "Published"
+  | "Discarded"
+  | "Deferred";
+
+/** Runtime allowlist — mirror of ContentTaskStatus for validation. */
+export const VALID_CONTENT_TASK_STATUSES: readonly ContentTaskStatus[] = [
+  "New",
+  "Approved",
+  "Draft",
+  "Media",
+  "Review",
+  "Ready",
+  "Published",
+  "Discarded",
+  "Deferred",
+] as const;
+
+/**
+ * Sub-estado visible en UI mientras `status === "Approved"` y la skill de
+ * Escudero Content corre el pipeline. Permite renderizar un badge concreto
+ * sin inflar el enum principal con estados de minutos/horas.
+ */
+export type ContentTaskPipelineState =
+  | "researching"
+  | "clarify-needed"
+  | "drafting";
+
+/**
+ * `ContentTask`: tarea anidada bajo una task `type: "content"` (la task del
+ * día creada por Editorial Dispatch). Cada idea aprobada se convierte en una
+ * ContentTask con su propio thread, skill y documentos (drafts).
+ *
+ * Constraint: `parent_task_id` SOLO puede apuntar a una `Task` con
+ * `type: "content"`. Validar en `setContentTaskStatus` y endpoints.
+ */
+export interface ContentTask {
+  id: string;                       // "P-Content-Semana-18-T01-C01"
+  parent_task_id: string;           // "P-Content-Semana-18-T01" — must be type=content
+  idea_id: string;                  // Linked idea in idea-queue.json
+  name: string;
+  status: ContentTaskStatus;
+  pipeline_state?: ContentTaskPipelineState;  // Visible only while status === "Approved"
+  clarify_status?: "pending" | "answered" | "skipped";
+  skill: string;                    // social-writer | seo-content | instagram-content | newsletter
+  target_channels: string[];        // ["linkedin", "twitter"] — drafts produced for these
+  documents: { path: string; name?: string; channel?: string }[];
+  mc_chat_thread_id?: string;
+  discord_thread_id?: string;
+  owner?: string;                   // "Escudero Content"
+  created_at: string;               // ISO8601
+  updated_at?: string;
+  approved_at?: string;
+  published_at?: string;
+  discarded_at?: string;
+  deferred_at?: string;
+  scheduled_for?: string;           // Set when status moves to Ready
 }
 
 /** One artifact attached to a task — doc, image, csv, json, etc. */

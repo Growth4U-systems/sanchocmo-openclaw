@@ -3,7 +3,10 @@ name: newsletter
 version: 7.0
 description: Newsletter strategy and content.
 context_required:
-- brand/{slug}/brand-voice/current.md
+- brand/{slug}/brand-book/brand-voice/brand-voice.current.md
+- brand/{slug}/content/content-pillars.md
+- brand/{slug}/content/pov-bank.json
+- brand/{slug}/content/strategy-decisions.md
 - brand/{slug}/go-to-market/ecps/current.md
 - brand/{slug}/operational/learnings.md
 context_writes:
@@ -30,11 +33,11 @@ Follow all output formatting rules from `_system/output-format.md`
 
 This skill reads brand context to ensure every newsletter edition sounds like the user's brand, speaks to their actual audience, and builds on what has worked before. It also checks the learnings journal for send-time data, subject line performance, and format preferences.
 
-**Reads:** `brand-voice/current.md`, `audience.md`, `learnings.md` (all optional)
+**Reads:** `brand-book/brand-voice/brand-voice.current.md`, `audience.md`, `learnings.md` (all optional)
 
 On invocation, check for `./brand/` and load available context:
 
-1. **Load `brand-voice/current.md`** (if exists):
+1. **Load `brand-book/brand-voice/brand-voice.current.md`** (if exists):
    - Match the brand's tone, vocabulary, and sentence rhythm in every section
    - Apply voice DNA to subject lines, hooks, body copy, and sign-offs
    - A "direct, proof-heavy" voice writes different newsletters than a "warm, story-driven" voice
@@ -87,6 +90,27 @@ Brand context loaded:
 ├── Learnings         ✗ none yet
 └── Past Editions     ✗ first edition
 ```
+
+---
+
+## Required pre-steps (when invoked from Content Engine flow)
+
+When this skill runs because an idea was approved (Content Engine: idea has `target_channel: newsletter` + `signal` + `angle_draft`), execute BOTH of these BEFORE drafting:
+
+### Pre-step A: Deep Research (ALWAYS)
+Invoke the `deep-research` skill with `angle_draft` + `signal.url` + `signal.summary`. Verify the data point in the signal, surface adjacent stats / quotes / studies, and pull 1-2 named examples to cite. Output a `research_pack` object that the Clarify step shows the human and the draft cites.
+
+Skip ONLY for purely personal-story signals — record `research_pack: { skipped: true, reason: "personal-story" }`.
+
+### Pre-step B: Clarify (ALWAYS — see `_system/clarify-protocol.md`)
+Generate 2-3 questions with predictions + confidence:
+- **Angle / framing** — which slice of the topic for this audience this week
+- **Tone** — teaching / digest / story / contrarian
+- **CTA** — reply-bait question / forward / book a call / no-cta
+
+Present to human. Wait for confirmation or adjustment. Append the result to `brand/{slug}/content/clarify-history.json`.
+
+(For freestanding manual newsletter requests — i.e. not from an approved idea — Clarify is still strongly recommended, but `deep-research` only when a specific data claim needs verification.)
 
 ---
 
@@ -1448,7 +1472,7 @@ When a user invokes this skill, follow this sequence:
 
 ```
 1. Load brand context
-   ├── Read brand-voice/current.md, audience.md, learnings.md
+   ├── Read brand-book/brand-voice/brand-voice.current.md, audience.md, learnings.md
    ├── Check ./campaigns/newsletters/ for past editions
    └── Display context loading tree
 

@@ -30,6 +30,12 @@ interface Idea {
   status: "ready" | "approved" | "stale" | "archived" | "published";
   approved_at?: string;
   approved_via?: string;
+  approved_by?: string;
+  archived_at?: string;
+  archived_via?: string;
+  archived_by?: string;
+  deferred_at?: string;
+  deferred_by?: string;
   target_date?: string;
   project_task_id?: string;
 }
@@ -104,7 +110,12 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     if (!idea) return res.status(404).json({ error: "Idea not found" });
 
     const oldStatus = idea.status;
-    const allowed = ["status", "approved_at", "approved_via", "target_date", "project_task_id", "angle_draft", "pillar_id", "target_channel", "content_type"];
+    const allowed = [
+      "status", "approved_at", "approved_via", "approved_by",
+      "archived_at", "archived_via", "archived_by",
+      "deferred_at", "deferred_by",
+      "target_date", "project_task_id", "angle_draft", "pillar_id", "target_channel", "content_type",
+    ];
     for (const [k, v] of Object.entries(fields)) {
       if (allowed.includes(k)) (idea as unknown as Record<string, unknown>)[k] = v;
     }

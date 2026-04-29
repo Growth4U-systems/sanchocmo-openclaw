@@ -6,9 +6,11 @@
 Cuando el usuario pide crear contenido para Instagram, generar posts de IG, crear carruseles, escribir captions, o preparar contenido social para IG.
 
 ## Prerequisitos
-- Artículo de blog generado (preferido) O keyword/topic del cliente
-- `brand_voice` del cliente (desde Foundation: `brand/{slug}/brand-voice/current.md`)
-- ECPs del cliente (desde Foundation: `brand/{slug}/niche-discovery/current.md`)
+- Idea aprobada con `signal + angle_draft + target_channel: instagram` (Content Engine flow), O artículo de blog / keyword (modos legacy)
+- `brand_voice` del cliente: `brand/{slug}/brand-book/brand-voice/brand-voice.current.md`
+- Pillars + POV: `brand/{slug}/content/content-pillars.md` + `brand/{slug}/content/pov-bank.json`
+- Strategy guardrails: `brand/{slug}/content/strategy-decisions.md`
+- ECPs (opcional): `brand/{slug}/go-to-market/ecps/current.md`
 
 ## Pipeline
 
@@ -18,12 +20,31 @@ SI hay artículo de blog → usar como fuente (atomizer mode)
 SI no hay artículo → usar keyword/topic directamente (standalone mode)
 ```
 
-### Paso 2: Leer Brand Voice + ECPs
+### Paso 2: Leer Brand Voice + Pillars + POV
 ```python
-# Leer brand voice del cliente
-brand_voice = read(f"brand/{slug}/brand-voice/current.md")
-ecps = read(f"brand/{slug}/niche-discovery/current.md")
+brand_voice = read(f"brand/{slug}/brand-book/brand-voice/brand-voice.current.md")
+pillars = read(f"brand/{slug}/content/content-pillars.md")
+pov_bank = read_json(f"brand/{slug}/content/pov-bank.json")
+strategy = read(f"brand/{slug}/content/strategy-decisions.md")
+ecps = read(f"brand/{slug}/go-to-market/ecps/current.md")  # opcional
 ```
+
+### Paso 2.5: Deep Research (ALWAYS — pre-step before Clarify)
+
+Invoca el skill `deep-research` con `angle_draft` + `signal.url` + `signal.summary`. Verifica el dato del signal y trae stats/quotes/ejemplos adyacentes. Captura todo en un `research_pack` object para alimentar Clarify y el draft.
+
+Skip SOLO si el signal es `personal-story` puro y no hay nada externo a verificar — registra `research_pack: { skipped: true, reason: "personal-story" }`.
+
+### Paso 2.6: Clarify (ALWAYS — see _system/clarify-protocol.md)
+
+Genera 2-3 preguntas con predictions + confidence (formato Clarify Protocol):
+- **Angle** — qué encuadre del topic encaja mejor con la audiencia IG (relatable / aspirational / behind-the-scenes / educational)
+- **Visual hint** — qué tipo de imagen/carousel anclará el caption (foto producto, cita en card, antes/después, screenshot, frame video, etc.)
+- **CTA** — comment-bait pregunta / save-this-post / link in bio / DM word
+
+Presenta al humano. Espera confirmación o ajuste. NUNCA saltar.
+
+Guarda el resultado en `brand/{slug}/content/clarify-history.json`.
 
 ### Paso 3: Generar Contenido
 

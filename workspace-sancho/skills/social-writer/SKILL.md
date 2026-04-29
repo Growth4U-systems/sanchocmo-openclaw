@@ -39,6 +39,25 @@ An approved idea from `idea-queue.json`:
 - Clarify History (learn from past decisions)
 - Cadence Config (channel rules)
 
+### 1.5 Deep Research (ALWAYS — pre-step before Clarify)
+
+Invoke the `deep-research` skill with:
+- Input: `angle_draft` + `signal.url` + `signal.summary`
+- Goal: verify the data point in the signal, surface adjacent stats / quotes / studies that strengthen the angle, and pull 1-2 named examples we can cite.
+- Constraint: do NOT rewrite the angle here — only enrich the evidence.
+
+Output goes into a `research_pack` object that the Clarify step shows the human and the draft step cites:
+```json
+{
+  "verified_data_points": [{ "claim": "...", "source": "...", "url": "..." }],
+  "supporting_examples": [{ "name": "...", "outcome": "...", "source": "..." }],
+  "counter_evidence": [{ "claim": "...", "source": "..." }],
+  "summary": "1-2 sentence brief"
+}
+```
+
+Skip ONLY if `signal_type` is purely `personal-story` and there's nothing external to verify. In that case write `research_pack: { skipped: true, reason: "personal-story" }` so the next step still has the field.
+
 ### 2. Clarify (ALWAYS — see _system/clarify-protocol.md)
 
 Generate 2-3 questions with predictions + confidence:
@@ -73,30 +92,43 @@ read("references/linkedin-formats.md")
 - Personal narratives win ("I learned...", "3 months ago I...")
 - Use brand voice but adapted to LinkedIn professional tone
 
-**Formats**:
-1. Personal Narrative — "I [did/learned/failed]..."
-2. Listicle — "N things I learned about..."
-3. Contrarian Take — "Everyone says X. Here's why that's wrong."
-4. Case Study — Challenge → Solution → Results
-5. Document/Carousel — (describe the carousel, text-only draft)
+**Format selection by `content_type`**:
+| `content_type` | Section in linkedin-formats.md |
+|---|---|
+| Hot Take, Personal Story, Vulnerability | Personal Narrative |
+| Listicle, Tips | Listicle |
+| Contrarian | Contrarian Take |
+| Proof Post, Case Study | Case Study |
+| Framework, System | Framework/Playbook |
+| **Carousel** | **Document/Carousel** (slide-by-slide draft + caption) |
+| **Article** | **Article** (long-form, 800-1500 words) |
+| **Strategic Comments** | **Strategic Comments** (5 reply drafts, no main post) |
+
+If `content_type` is unset, infer from `signal_type[]` and `angle_draft` length.
 
 ### 4. Write Draft — X/Twitter
 
 read("references/x-formats.md")
 
 **Rules**:
-- 280 chars tweet, 1,000-2,000 chars long-form sweet spot
+- 280 chars tweet (sweet spot 200-240), 1,000-2,000 chars long-form sweet spot
 - Casual, lowercase default, punchy
 - No hashtags ever
 - Links in reply, never in main tweet
 - Line breaks between every thought
 
-**Formats**:
-1. Step-by-Step Thread — "Here's N steps to [outcome]:"
-2. Short Take — 2-4 lines, bold claim + context + punchline
-3. Proof Post — "[Metric] → [metric] in [timeframe]" + breakdown
-4. Resource Drop — "I just found [thing] — [why it matters]"
-5. Long-Form Tweet — 1,000-2,000 chars deep breakdown
+**Format selection by `content_type`**:
+| `content_type` | Section in x-formats.md |
+|---|---|
+| Framework, System, How-to | Step-by-Step Thread (numbered `x/n`) |
+| Hot Take, Contrarian | Short Take |
+| Proof Post, Case Study | Proof Post |
+| Resource, Tip | Resource Drop |
+| Long Take, Deep Dive | Long-Form Tweet |
+| **Quote Tweet** | **Quote Tweet** (3 variants on the source tweet/news) |
+| **Strategic Replies** | **Strategic Replies** (5 reply drafts, no main tweet) |
+
+For threads: spend disproportionate time on tweet 1 — the hook is 80% of thread success.
 
 ### 5. CRITICAL RULE
 

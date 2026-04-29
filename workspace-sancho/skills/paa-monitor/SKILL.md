@@ -15,9 +15,19 @@ context_writes:
 
 ## Tool
 
-Primary: **DataforSEO** People Also Ask endpoint.
-Fallback: **WebSearch** with "site:google.com" PAA extraction, or manual
-`WebFetch` of Google SERP.
+**DataforSEO SERP API** — Google Organic Live Advanced endpoint. Devuelve
+los items `people_also_ask_element` ya estructurados (preguntas reales que
+Google muestra), sin necesidad de scraping.
+
+- MCP tool name: busca un tool DataforSEO de la familia
+  `serp_google_organic_live_advanced` (o equivalente que exponga PAA en la
+  respuesta). Si la cuenta solo tiene SERP regular, usa la respuesta SERP
+  estandar y filtra los items con `type == "people_also_ask_element"`.
+- Auth: credenciales ya configuradas en `_system/api-catalog.json`
+  (LOGIN + PASSWORD en `auth-profiles.json`). El MCP server gestiona la
+  autenticacion automaticamente; no leas las credenciales en el codigo.
+- NO uses `WebSearch` ni `WebFetch` como fallback. Si DataforSEO falla,
+  reporta el error en el resumen y skip esa semana — no scrapees.
 
 ## Why separate from keyword-research?
 
@@ -35,10 +45,14 @@ Fallback: **WebSearch** with "site:google.com" PAA extraction, or manual
 - Each config has seed queries per pillar
 
 ### 2. Query per pillar
-For each query in the config:
-- Hit DataforSEO PAA endpoint (or fallback)
-- Extract all "People Also Ask" questions
-- Group by pillar_id
+For each seed query in the config:
+- Llama al MCP tool de DataforSEO SERP Google Organic Live Advanced con
+  `keyword: <seed>`, `location_code: 2724` (Spain) o el adecuado, y
+  `language_code: es`.
+- Recorre `tasks[0].result[0].items` y filtra los que tengan
+  `type == "people_also_ask_element"`. Cada uno trae un array de
+  preguntas con `title`, `xpath`, `expanded_element`. Quedate con `title`.
+- Agrupa por pillar_id usando el seed query del config.
 
 ### 3. Extract signals
 ```json
@@ -68,5 +82,8 @@ Deduplicate against previous weeks (same question = skip).
 
 ## Error handling
 
-If DataforSEO fails, try WebSearch fallback. If both fail, skip this week
-(questions don't change fast — missing one week is OK).
+If DataforSEO fails (auth, rate limit, missing scope), reporta el error
+en `recurring-tasks/content-paa-monitor/{date}.json` con
+`status: "failed"` y skip esa semana. NO uses WebSearch ni WebFetch como
+fallback — las preguntas extraidas asi son ruido y rompen la deduplicacion.
+Las preguntas no cambian rapido; perder una semana esta bien.
