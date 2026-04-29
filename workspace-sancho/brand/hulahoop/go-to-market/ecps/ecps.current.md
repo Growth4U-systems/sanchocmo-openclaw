@@ -1,160 +1,226 @@
-# ECPs — HulaHoop Media
-<!-- mode: validated | source: Reunión David Guerrero 2026-04-15 -->
-<!-- Self-QA: PASS | 2026-04-16 -->
+# ECPs — Hulahoop Media
+<!-- mode: refreshed | source: meeting-notes + self-intelligence + market-summary | date: 2026-04-27 -->
+<!-- status: current | promoted_from: v2.md | promoted_at: 2026-04-28 -->
 
 ---
 
-## ECP 1: Inversor Anticipo — Arquetipo A (Joven con Liquidez)
+## Resumen Ejecutivo
 
-### Perfil
-- **Edad:** 25-32 años
-- **Perfil:** Universitario, buen sueldo, interés en inversión
-- **Situación:** Sin hijos, sin hipoteca, sin compra de piso inminente
-- **Ticket:** 3.000-10.000€ (entrada)
-- **Canal:** Red directa / family & friends
-- **Motivación:** Optimizar liquidez disponible
+La segmentación válida para Hulahoop ya no debe apoyarse en el frame antiguo de "productor indie / inversor retail cinéfilo / fondo" como foco principal de go-to-market inmediato.
 
-### Dolor Principal
-"Tengo dinero parado en la cuenta y no sé dónde meterlo. Los depósitos dan 1.5-3% y no me llega para vivir de eso. Quiero algo seguro, simple, que no me quite tiempo."
+Tras la reunión con David Guerrero del **15 de abril de 2026**, el foco comercial real queda así:
 
-### Cuándo Convierte
-- El 7% vs. depósitos bancarios (diferencial claro y tangible)
-- Menos de 12 meses de compromiso
-- Cobras 31 de enero (fecha top-of-mind fiscal)
-- Garantía desconectada del ciclo económico (incentivo fiscal estatal)
-- Sin complejidad: 3 pasos, sin papeles raros
+1. **Inversor Anticipo — Arquetipo A** → liquidez joven, ticket de entrada, producto simple y corto
+2. **Inversor Anticipo — Arquetipo B** → patrimonio establecido, decisión por seguridad y garantía, no por yield
+3. **Empresa con IS alto** → cliente final del incentivo fiscal cultural
+4. **Asesor fiscal / despacho** → gatekeeper del incentivo y canal prioritario para escalar Pro Tax
 
-### Objeciones Previsibles
-- "¿Y si el proyecto cultural no funciona?" → Garantía estatal, HulaHoop controla el producto completo
-- "¿No hay riesgo?" → Default casi imposible, 100% deuda devuelta históricamente
-- "¿Qué pasa si necesito el dinero antes?" → Producto <12 meses, no es illíquido
-
-### Cómo Alcanzarlo
-- LinkedIn DM privado (no mensaje público): "Club de inversión privado enfocado en entretenimiento, productos interesantes, tu perfil encaja"
-- A través de la red de David Guerrero + referidos de existentes
-- Mensaje: NO rentabilidad ni producto financiero en público
+**Conclusión:** el mercado inmediato de Hulahoop no se organiza por “cine vs inversión alternativa”, sino por **tipo de decisión financiera y rol dentro del deal**.
 
 ---
 
-## ECP 2: Inversor Anticipo — Arquetipo B (Patrimonio Establecido)
+## Priorización por Horizonte
 
-### Perfil
-- **Edad:** 50-60 años
-- **Perfil:** Profesional establecido (juez, director hospital, empresario)
-- **Situación:** Casa pagada, patrimonio acumulado, buscando fixed income
-- **Ticket:** 25.000-80.000€
-- **Canal:** A través de sus hijos o red de pares
-- **Motivación:** Fixed income con garantía sólida, no especular
+### Horizonte Ahora (abril–verano 2026)
+- **ECP 1** — Inversor Anticipo Arquetipo A
+- **ECP 2** — Inversor Anticipo Arquetipo B
+- **ECP 4** — Asesor fiscal / despacho migrando de I+D a cultural
 
-### Dolor Principal
-"Tengo patrimonio acumulado y quiero que trabaje sin riesgo. Los depósitos son demasiado conservadores y los productos que me ofrecen en el banco tienen más riesgo del que quiero asumir."
+### Horizonte Verano–Q4 2026
+- **ECP 3** — Empresa con IS alto (incentivo fiscal)
 
-### Cuándo Convierte
-- La garantía es el gancho: incentivo fiscal estatal, desconectado del ciclo económico
-- 7% anual vs. alternativas de similar riesgo (no vs. productos financieros de alto riesgo)
-- Simplicidad: "Cobras el 31 de enero, sin hacer nada"
-- HulaHoop controla el producto completo: estructuración + contabilidad + promoción
-
-### Objeciones Previsibles
-- "El 7% no impresiona comparado con lo que me ofrece mi banco/asesor" → Validar si el arquetipo B tiene exposición a productos 10-12% (con más riesgo). Si la tiene, el messaging debe girar a garantía > rentabilidad
-- "¿No es arriesgado invertir en cine?" → La garantía es fiscal, no el proyecto
-- "¿Y si necesito el dinero?" → <12 meses, no es illíquido
-
-### Cómo Alcanzarlo
-- A través de sus hijos (20-35 años, los que referencian a Arquetipo A)
-- Red de pares (clubes de inversión, networking profesional)
-- LinkedIn DM privado: "Club de inversión privado enfocado en entretenimiento, productos interesantes, tu perfil encaja"
-
-### Tension Importante
-> Con inversores profesionales del mundo financiero, el 7% NO impresiona — tienen productos al 10-12% con más riesgo. **El messaging para Arquetipo B debe girar a garantía y simplicidad, no a rentabilidad.** El producto compite en seguridad, no en yield.
+### Horizonte Q1 2027+
+- Inversor retail PFP
+- Productor/promotor como segmento de scale-up o supply-side
 
 ---
 
-## ECP 3: Empresa con IS — Incentivo Fiscal Cultural (Art. 36/39 LIS)
+## ECP 1 — Inversor Anticipo / Arquetipo A (Joven con Liquidez)
 
 ### Perfil
-- **Quién:** Empresa familiar mediana, dueño = decision maker
-- **IS objetivo:** 500.000€+ anuales
+- **Edad:** 25–32
+- **Situación:** sin hijos, sin hipoteca, liquidez disponible
+- **Ticket:** 3.000€–10.000€
+- **Origen:** red directa, family & friends, referidos
+- **Mentalidad:** quiere mover dinero parado sin entrar en algo complejo
+
+### Job to Be Done
+"Quiero poner a trabajar mi liquidez en algo fácil de entender, razonablemente seguro y con un plazo corto."
+
+### Qué le duele
+- depósitos mediocres
+- exceso de ruido en productos de inversión
+- miedo a meterse en algo opaco
+- poca paciencia para procesos largos o burocráticos
+
+### Qué le convence
+- 7% vs depósito bancario
+- plazo corto (<12 meses)
+- fecha clara de cobro
+- garantía vinculada al incentivo fiscal estatal
+- sensación de acceso a una oportunidad privada y filtrada
+
+### Mensaje que mejor encaja
+- **Core message:** "Haz trabajar tu liquidez en un producto privado, corto y estructurado."
+- **Ángulo:** simplicidad + plazo corto + seguridad razonable
+
+### Objeciones previsibles
+- "¿Y si falla el proyecto?"
+- "¿Es muy complicado entrar?"
+- "¿Voy a estar atado mucho tiempo?"
+
+### Canal principal
+- referidos
+- DM privado
+- network de David
+- programa de referral sobre base actual
+
+---
+
+## ECP 2 — Inversor Anticipo / Arquetipo B (Patrimonio Establecido)
+
+### Perfil
+- **Edad:** 50–60
+- **Situación:** patrimonio acumulado, vivienda resuelta, perfil conservador
+- **Ticket:** 25.000€–80.000€
+- **Origen:** hijos, red de pares, clubes, networking profesional
+- **Mentalidad:** busca preservar y rotar capital con control
+
+### Job to Be Done
+"Quiero una opción de rendimiento razonable, corta y con una lógica de garantía entendible."
+
+### Qué le duele
+- depósitos poco atractivos
+- productos financieros que no controla
+- exceso de complejidad o riesgo implícito
+- rechazo automático a anything que "suene a cine" si no se explica bien
+
+### Qué le convence
+- garantía y estructura por encima del yield
+- ciclo corto
+- histórico de deuda devuelta
+- producto gestionado de extremo a extremo
+- claridad documental
+
+### Mensaje que mejor encaja
+- **Core message:** "No compite por promesa de rentabilidad; compite por seguridad estructurada, plazo corto y claridad."
+- **Ángulo:** seguridad + garantía + sencillez operativa
+
+### Objeción crítica
+- **El 7% no impresiona** si compara contra productos más agresivos.
+- Por tanto, **NO** vender como "alta rentabilidad".
+- **SÍ** vender como alternativa clara, corta y garantizada en lógica fiscal.
+
+### Canal principal
+- referrals intergeneracionales
+- red de pares
+- one-pager / trust asset
+- conversaciones privadas
+
+---
+
+## ECP 3 — Empresa con IS Alto / Incentivo Fiscal Cultural
+
+### Perfil
+- **Tipo:** empresa familiar mediana o empresa rentable
+- **Decision maker:** dueño o dirección con poder real
+- **Señal:** IS anual alto (500k€+ ideal)
 - **Ticket:** 10.000€ mínimo
-- **Ciclo:** Mayo-diciembre (temporada de incentivo)
-- **Decisión:** Rápida, sin comités (el dueño decide solo)
+- **Temporada:** mayo–diciembre
 
-### Dolor Principal
-"Este año voy a pagar X de IS y no tengo forma合法的 de reducirlo legalmente sin meterme en líos. Mi asesor me dice que Looken I+D pero eso está muerto."
+### Job to Be Done
+"Quiero optimizar fiscalmente parte de lo que voy a pagar sin meterme en una estructura que mi asesor perciba como problemática."
 
-### El Gatekeeper: El Asesor Fiscal
-**Este es el insight más crítico de la sesión del 15-Abr.**
+### Qué le duele
+- pagar IS alto sin alternativas claras
+- no saber cuánto cupo tiene realmente
+- dependencia total del criterio del asesor
+- miedo a entrar en algo que no entiende
 
-El asesor fiscal es simultáneamente el mayor facilitador y el mayor detractor:
-- La gente no sabe cuánto IS va a pagar → no sabe cuánto puede invertir
-- Si el asesor dice "esto no es para ti" → el deal muere
-- El asesor puede ser detractor: "esto es para grandes empresas", "mejor no meterse"
+### Qué le convence
+- ahorro fiscal claro y legal
+- proceso guiado
+- velocidad de decisión
+- validación del asesor
+- caso parecido al suyo
 
-**La jugada estratégica: ir al asesor primero, no al cliente final.**
+### Mensaje que mejor encaja
+- **Core message:** "Convierte un pago fiscal inevitable en una optimización estructurada y entendible."
+- **Ángulo:** ahorro + seguridad jurídica + acompañamiento
 
-### La Economía del Asesor
-| Rol del Asesor | Lo que recibe | Lo que pierde el cliente |
-|----------------|---------------|-------------------------|
-| Detractor | 0 | 15-20% ahorro fiscal |
-| Asesor adoptado | 5% del retorno (~0.5-1% del ticket) | 15% del retorno |
-| Asesor que referencia directamente | Fee 2-4% (se come ~50% del margen HulaHoop) | Optimiza su propio margen |
-
-**⚠️ Implicación:** Cada inversor que viene vía asesor optimiza el margen del asesor pero erosiona el margen de HulaHoop (8% medio). Cada inversor directo maximiza el margen.
-
-### Perfil Ideal de Asesor Target
-- 80-100 despachos migrando de I+D a cultural
-- Asesor con clientes empresa familiar mediana
-- Asesor que ya trabaja con productores/promotores culturales
-- Asesor que no sabe cómo dar el servicio de incentivo fiscal
-
-### Cómo Alcanzarlo
-- Pro Tax como caballo de Troya: el SaaS convierte al asesor en partner
-- "Tu cliente te pide esto y no sabe cómo dárselo — nosotros te damos la herramienta"
-- Outbound directo a despachos fiscales (target: los 80-100 migrando de I+D a cultural)
-
-### Cuándo Convierte (Asesor)
-- Pro Tax le ahorra tiempo (gestión multiplicada x4 con el mismo equipo)
-- Puede cobrar fee adicional a su cliente sin perderlo
-- Incentive Fiscal se lo da HulaHoop listo para colocar
+### Riesgo principal
+Este segmento rara vez convierte si el asesor no lo habilita. Por eso **no debe trabajarse aislado del ECP 4**.
 
 ---
 
-## Datos Duros Confirmados (Reunión 15-Abr-2026)
+## ECP 4 — Asesor Fiscal / Despacho (Gatekeeper + Canal)
 
-| Métrica | Valor |
-|---------|-------|
-| Inversores 2025 | ~35 nuevos |
-| Inversores 2024 | ~33 nuevos |
-| Total equity holders | 81 |
-| Inversores históricos | ~68 |
-| Ticket medio | 25.000€ |
-| Ticket mínimo real | 3.000-5.000€ |
-| Captación | 100% family & friends + referidos |
-| Reinversión | Prácticamente absoluta (>50% recurrentes) |
-| AUM 2025 | 7,2M€ |
-| Target AUM 2026 | 22,5M€ |
-| Gap AUM | ~15,3M€ |
+### Perfil
+- **Tipo:** despacho fiscal, legal o consultora
+- **Subgrupo prioritario:** 80–100 despachos migrando de I+D a cultural
+- **Rol real:** prescriptor, desbloqueador o detractor
+- **Necesidad:** ofrecer incentivo fiscal cultural sin montar capacidad operativa propia
+
+### Job to Be Done
+"Necesito poder ofrecer incentivo fiscal cultural a mis clientes sin aumentar demasiado la carga operativa ni asumir un riesgo reputacional alto."
+
+### Qué le duele
+- oportunidad comercial que no sabe operar
+- procesos manuales y documentación compleja
+- miedo a equivocarse ante su cliente
+- perder clientes si no puede dar respuesta
+
+### Qué le convence
+- Pro Tax como infraestructura
+- multiplicación de capacidad con el mismo equipo
+- nueva línea de ingreso
+- refuerzo de relación con su cliente
+- convertirse en partner en vez de quedarse fuera del deal
+
+### Mensaje que mejor encaja
+- **Core message:** "No te pedimos que aprendas un producto nuevo desde cero; te damos la infraestructura para operarlo bien y retener a tu cliente."
+- **Ángulo:** control + eficiencia + nueva facturación + retención
+
+### Nota estratégica
+Este ya no es un segmento secundario. Es el **canal prioritario** para escalar el incentivo fiscal y el caballo de Troya de Pro Tax.
 
 ---
 
-## Gaps Pendientes de Validación
+## Segmentos Depriorizados (no eliminados)
 
-- [ ] Patrones de recurrentes (>50%): qué tienen en común
-- [ ] Datos de referidos: cuántos, perfil, ticket vs. promedio
-- [ ] Pipeline actual: deals activos, tiempo de cierre, tasa de conversión
-- [ ] Test de pricing: qué número convierte mejor por segmento (7%, 7.5%, 8%)
-- [ ] Objeciones concretas antes de cerrar (más allá de "el asesor dice que no")
-- [ ] Norte de España como mercado más receptivo (datos)
-- [ ] Competidores nuevos detectados
+### Productor / promotor cultural
+Sigue siendo importante en supply, pero no es el mejor punto de entrada para ordenar el GTM inmediato.
+
+### Inversor retail PFP
+Es estratégico, pero corresponde al horizonte de licencia y lanzamiento **Q1 2027+**.
+
+### Fondo / Family Office
+Puede existir como subsegmento de ticket alto, pero hoy no debe estructurar la narrativa principal.
 
 ---
 
-## Restricciones Legales (Anticipo vs. Incentivo)
+## Implicaciones para Positioning
 
-| Canal | Anticipo (pre-licencia PFP) | Incentivo Fiscal |
-|-------|---------------------------|------------------|
-| **Comunicación pública** | ❌ NO — no hablar de rentabilidad ni producto financiero | ✅ SÍ — es deducción fiscal, no inversión |
-| **DMs privados (LinkedIn)** | ✅ SÍ — mensaje genérico: "club de inversión privado, entretenimiento, tu perfil encaja" | ✅ SÍ — libre |
-| **Qué NO decir (anticipo)** | "Festival X, anticipo fiscal, 7% anual" | — |
-| **Temporada** | AHORA (abril-verano) | Empieza en verano |
+1. Hulahoop debe posicionarse primero como **infraestructura financiera especializada**, no como marca “de cine para inversores”.
+2. El mensaje cambia según segmento:
+   - Arquetipo A → liquidez + simplicidad
+   - Arquetipo B → seguridad + garantía
+   - Empresa IS → ahorro + claridad
+   - Asesor/despacho → infraestructura + retención de cliente
+3. El gran pivote de positioning es este:
+   - **antes:** marketplace / entretenimiento / acceso a inversión
+   - **ahora:** infraestructura financiera para entretenimiento con 4 puertas de entrada diferentes
 
+---
+
+## Gaps Pendientes
+- patrones de recurrentes y referidos
+- tamaño y priorización real de despachos objetivo
+- verticales sectoriales más fértiles por geografía
+- señales de cierre por arquetipo
+- objeciones exactas antes del sí final
+
+---
+
+## Recomendación de Uso
+Este documento debe ser la base del siguiente entregable de positioning, pero **sin sustituir todavía** los `current.md` hasta revisión final.

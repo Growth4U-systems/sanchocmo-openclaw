@@ -1,19 +1,25 @@
 {
   "url": "https://paymatico.com",
   "mobile": {
-    "performance": 71,
+    "performance": 69,
     "seo": 100,
     "accessibility": 88,
     "bestPractices": 96,
-    "lcp": 4.9,
-    "cls": 0.083,
-    "tbt": 20,
+    "lcp": 7.1,
+    "cls": 0.084,
+    "tbt": 85,
     "opportunities": [
       {
         "id": "redirects",
         "title": "Avoid multiple page redirects",
         "savings": 780,
         "description": "Redirects introduce additional delays before the page can be loaded. [Learn how to avoid page redirects](https://developer.chrome.com/docs/lighthouse/"
+      },
+      {
+        "id": "unused-javascript",
+        "title": "Reduce unused JavaScript",
+        "savings": 300,
+        "description": "Reduce unused JavaScript and defer loading scripts until they are required to decrease bytes consumed by network activity. [Learn how to reduce unused"
       },
       {
         "id": "unused-css-rules",
@@ -24,6 +30,26 @@
     ],
     "diagnostics": [
       {
+        "id": "render-blocking-insight",
+        "title": "Render blocking requests",
+        "score": 0
+      },
+      {
+        "id": "cache-insight",
+        "title": "Use efficient cache lifetimes",
+        "score": 0
+      },
+      {
+        "id": "errors-in-console",
+        "title": "Browser errors were logged to the console",
+        "score": 0
+      },
+      {
+        "id": "link-name",
+        "title": "Links do not have a discernible name",
+        "score": 0
+      },
+      {
         "id": "color-contrast",
         "title": "Background and foreground colors do not have a sufficient contrast ratio.",
         "score": 0
@@ -39,30 +65,20 @@
         "score": 0
       },
       {
-        "id": "render-blocking-insight",
-        "title": "Render blocking requests",
-        "score": 0
-      },
-      {
-        "id": "link-name",
-        "title": "Links do not have a discernible name",
-        "score": 0
-      },
-      {
-        "id": "errors-in-console",
-        "title": "Browser errors were logged to the console",
+        "id": "font-display-insight",
+        "title": "Font display",
         "score": 0
       }
     ]
   },
   "desktop": {
-    "performance": 83,
+    "performance": 82,
     "seo": 100,
     "accessibility": 88,
     "bestPractices": 77,
     "lcp": 1.6,
-    "cls": 0.173,
-    "tbt": 23,
+    "cls": 0.184,
+    "tbt": 51,
     "opportunities": [
       {
         "id": "redirects",
@@ -71,19 +87,49 @@
         "description": "Redirects introduce additional delays before the page can be loaded. [Learn how to avoid page redirects](https://developer.chrome.com/docs/lighthouse/"
       },
       {
-        "id": "unused-css-rules",
-        "title": "Reduce unused CSS",
-        "savings": 40,
-        "description": "Reduce unused rules from stylesheets and defer CSS not used for above-the-fold content to decrease bytes consumed by network activity. [Learn how to r"
-      },
-      {
         "id": "unused-javascript",
         "title": "Reduce unused JavaScript",
         "savings": 40,
         "description": "Reduce unused JavaScript and defer loading scripts until they are required to decrease bytes consumed by network activity. [Learn how to reduce unused"
+      },
+      {
+        "id": "unused-css-rules",
+        "title": "Reduce unused CSS",
+        "savings": 40,
+        "description": "Reduce unused rules from stylesheets and defer CSS not used for above-the-fold content to decrease bytes consumed by network activity. [Learn how to r"
       }
     ],
     "diagnostics": [
+      {
+        "id": "errors-in-console",
+        "title": "Browser errors were logged to the console",
+        "score": 0
+      },
+      {
+        "id": "link-name",
+        "title": "Links do not have a discernible name",
+        "score": 0
+      },
+      {
+        "id": "landmark-one-main",
+        "title": "Document does not have a main landmark.",
+        "score": 0
+      },
+      {
+        "id": "layout-shifts",
+        "title": "Avoid large layout shifts",
+        "score": 0
+      },
+      {
+        "id": "render-blocking-insight",
+        "title": "Render blocking requests",
+        "score": 0
+      },
+      {
+        "id": "deprecations",
+        "title": "Uses deprecated APIs",
+        "score": 0
+      },
       {
         "id": "color-contrast",
         "title": "Background and foreground colors do not have a sufficient contrast ratio.",
@@ -93,38 +139,8 @@
         "id": "target-size",
         "title": "Touch targets do not have sufficient size or spacing.",
         "score": 0
-      },
-      {
-        "id": "errors-in-console",
-        "title": "Browser errors were logged to the console",
-        "score": 0
-      },
-      {
-        "id": "layout-shifts",
-        "title": "Avoid large layout shifts",
-        "score": 0
-      },
-      {
-        "id": "landmark-one-main",
-        "title": "Document does not have a main landmark.",
-        "score": 0
-      },
-      {
-        "id": "deprecations",
-        "title": "Uses deprecated APIs",
-        "score": 0
-      },
-      {
-        "id": "render-blocking-insight",
-        "title": "Render blocking requests",
-        "score": 0
-      },
-      {
-        "id": "link-name",
-        "title": "Links do not have a discernible name",
-        "score": 0
       }
     ]
   },
-  "fetchedAt": "2026-04-21T09:40:51.191Z"
+  "fetchedAt": "2026-04-28T12:31:50.835Z"
 }

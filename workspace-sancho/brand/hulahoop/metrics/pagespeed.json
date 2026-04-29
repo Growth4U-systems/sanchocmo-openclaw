@@ -1,18 +1,18 @@
 {
   "url": "https://hulahoop.media",
   "mobile": {
-    "performance": 56,
+    "performance": 63,
     "seo": 92,
-    "accessibility": 91,
+    "accessibility": 96,
     "bestPractices": 100,
     "lcp": 16.3,
     "cls": 0,
-    "tbt": 236,
+    "tbt": 218,
     "opportunities": [
       {
         "id": "redirects",
         "title": "Avoid multiple page redirects",
-        "savings": 753,
+        "savings": 752,
         "description": "Redirects introduce additional delays before the page can be loaded. [Learn how to avoid page redirects](https://developer.chrome.com/docs/lighthouse/"
       },
       {
@@ -24,18 +24,18 @@
     ],
     "diagnostics": [
       {
+        "id": "image-delivery-insight",
+        "title": "Improve image delivery",
+        "score": 0
+      },
+      {
         "id": "render-blocking-insight",
         "title": "Render blocking requests",
         "score": 0
       },
       {
-        "id": "label",
-        "title": "Form elements do not have associated labels",
-        "score": 0
-      },
-      {
-        "id": "image-delivery-insight",
-        "title": "Improve image delivery",
+        "id": "mainthread-work-breakdown",
+        "title": "Minimize main-thread work",
         "score": 0
       },
       {
@@ -47,22 +47,17 @@
         "id": "link-name",
         "title": "Links do not have a discernible name",
         "score": 0
-      },
-      {
-        "id": "mainthread-work-breakdown",
-        "title": "Minimize main-thread work",
-        "score": 0
       }
     ]
   },
   "desktop": {
-    "performance": 83,
+    "performance": 77,
     "seo": 92,
-    "accessibility": 91,
+    "accessibility": 96,
     "bestPractices": 100,
     "lcp": 2.9,
     "cls": 0,
-    "tbt": 17,
+    "tbt": 163,
     "opportunities": [
       {
         "id": "redirects",
@@ -79,13 +74,8 @@
     ],
     "diagnostics": [
       {
-        "id": "render-blocking-insight",
-        "title": "Render blocking requests",
-        "score": 0
-      },
-      {
-        "id": "label",
-        "title": "Form elements do not have associated labels",
+        "id": "image-delivery-insight",
+        "title": "Improve image delivery",
         "score": 0
       },
       {
@@ -94,11 +84,11 @@
         "score": 0
       },
       {
-        "id": "image-delivery-insight",
-        "title": "Improve image delivery",
+        "id": "render-blocking-insight",
+        "title": "Render blocking requests",
         "score": 0
       }
     ]
   },
-  "fetchedAt": "2026-04-27T08:47:15.597Z"
+  "fetchedAt": "2026-04-28T16:42:18.219Z"
 }

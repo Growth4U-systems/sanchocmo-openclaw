@@ -1,136 +1,226 @@
-# Niche Discovery — ECPs Preliminares
-<!-- mode: lite | source: fast-foundation | date: 2026-04-07 -->
-<!-- Self-QA: PASS | 2026-04-07 -->
+# ECPs — Hulahoop Media
+<!-- mode: refreshed | source: meeting-notes + self-intelligence + market-summary | date: 2026-04-27 -->
+<!-- status: current | promoted_from: v2.md | promoted_at: 2026-04-28 -->
 
 ---
 
-## ECP 1: El Productor Indie Hambriento de Financiación
+## Resumen Ejecutivo
+
+La segmentación válida para Hulahoop ya no debe apoyarse en el frame antiguo de "productor indie / inversor retail cinéfilo / fondo" como foco principal de go-to-market inmediato.
+
+Tras la reunión con David Guerrero del **15 de abril de 2026**, el foco comercial real queda así:
+
+1. **Inversor Anticipo — Arquetipo A** → liquidez joven, ticket de entrada, producto simple y corto
+2. **Inversor Anticipo — Arquetipo B** → patrimonio establecido, decisión por seguridad y garantía, no por yield
+3. **Empresa con IS alto** → cliente final del incentivo fiscal cultural
+4. **Asesor fiscal / despacho** → gatekeeper del incentivo y canal prioritario para escalar Pro Tax
+
+**Conclusión:** el mercado inmediato de Hulahoop no se organiza por “cine vs inversión alternativa”, sino por **tipo de decisión financiera y rol dentro del deal**.
+
+---
+
+## Priorización por Horizonte
+
+### Horizonte Ahora (abril–verano 2026)
+- **ECP 1** — Inversor Anticipo Arquetipo A
+- **ECP 2** — Inversor Anticipo Arquetipo B
+- **ECP 4** — Asesor fiscal / despacho migrando de I+D a cultural
+
+### Horizonte Verano–Q4 2026
+- **ECP 3** — Empresa con IS alto (incentivo fiscal)
+
+### Horizonte Q1 2027+
+- Inversor retail PFP
+- Productor/promotor como segmento de scale-up o supply-side
+
+---
+
+## ECP 1 — Inversor Anticipo / Arquetipo A (Joven con Liquidez)
 
 ### Perfil
-- **Quién:** Productor/a de cine independiente (España, Europa, LatAm)
-- **Empresa:** Productora pequeña-mediana (2-20 personas)
-- **Experiencia:** Ha producido 1-5 largos o series cortas. Conoce el sector pero no tiene acceso a grandes fondos.
-- **Edad/perfil:** 30-50 años, background creativo, cada vez más abierto a tech
+- **Edad:** 25–32
+- **Situación:** sin hijos, sin hipoteca, liquidez disponible
+- **Ticket:** 3.000€–10.000€
+- **Origen:** red directa, family & friends, referidos
+- **Mentalidad:** quiere mover dinero parado sin entrar en algo complejo
 
-### Dolor Principal
-"Tengo un proyecto increíble pero no consigo financiación. Los bancos no entienden el cine, los fondos públicos son lentos y competidos, y los inversores privados piden condiciones abusivas."
+### Job to Be Done
+"Quiero poner a trabajar mi liquidez en algo fácil de entender, razonablemente seguro y con un plazo corto."
 
-### Dolores Secundarios
-- Procesos administrativos/financieros complejos y manuales
-- Falta de transparencia en la cadena de financiación
-- Dificultad para encontrar inversores que entiendan el sector
-- Tiempo perdido en buscar financiación vs. producir
+### Qué le duele
+- depósitos mediocres
+- exceso de ruido en productos de inversión
+- miedo a meterse en algo opaco
+- poca paciencia para procesos largos o burocráticos
 
-### Cómo Busca Solución
-- **Google:** "financiación cine independiente", "inversores para películas", "crowdfunding cine España"
-- **Network:** Eventos del sector (festivales, mercados de coproducción), peers
-- **Institucional:** Subvenciones ICAA, ICEC, Eurimages, Creative Europe
-- **LinkedIn:** Busca contactos en fondos, inversores ángel
+### Qué le convence
+- 7% vs depósito bancario
+- plazo corto (<12 meses)
+- fecha clara de cobro
+- garantía vinculada al incentivo fiscal estatal
+- sensación de acceso a una oportunidad privada y filtrada
 
-### Dónde Está
-- Festivales de cine (San Sebastián, Málaga, Ventana Sur, European Film Market)
-- LinkedIn (networking profesional)
-- Foros/comunidades de productores
-- Asociaciones del sector (FAPAE, CREA)
+### Mensaje que mejor encaja
+- **Core message:** "Haz trabajar tu liquidez en un producto privado, corto y estructurado."
+- **Ángulo:** simplicidad + plazo corto + seguridad razonable
 
-### Qué le Convencería
-- Casos de éxito reales: "Esta película se financió con Hulahoop y recaudó X"
-- Proceso simple y rápido vs. meses de burocracia
-- Mantener control creativo + derechos justos
-- Fee razonable vs. lo que cobran intermediarios tradicionales
+### Objeciones previsibles
+- "¿Y si falla el proyecto?"
+- "¿Es muy complicado entrar?"
+- "¿Voy a estar atado mucho tiempo?"
+
+### Canal principal
+- referidos
+- DM privado
+- network de David
+- programa de referral sobre base actual
 
 ---
 
-## ECP 2: El Inversor Retail Cinéfilo
+## ECP 2 — Inversor Anticipo / Arquetipo B (Patrimonio Establecido)
 
 ### Perfil
-- **Quién:** Persona con capital disponible, apasionada por el cine/cultura
-- **Background:** Profesional 30-55 años, familiarizado con inversión (acciones, crypto, real estate)
-- **Capital disponible:** €500 - €50,000 por proyecto
-- **Perfil tech:** Cómodo con plataformas digitales, posiblemente early adopter de crypto/NFTs
+- **Edad:** 50–60
+- **Situación:** patrimonio acumulado, vivienda resuelta, perfil conservador
+- **Ticket:** 25.000€–80.000€
+- **Origen:** hijos, red de pares, clubes, networking profesional
+- **Mentalidad:** busca preservar y rotar capital con control
 
-### Dolor Principal
-"Quiero invertir en algo que me apasione y tenga retorno. Las acciones son aburridas, el crypto es volátil sin utilidad, y no tengo acceso a invertir en cine."
+### Job to Be Done
+"Quiero una opción de rendimiento razonable, corta y con una lógica de garantía entendible."
 
-### Dolores Secundarios
-- Falta de opciones de inversión en activos culturales
-- Opacidad: no sabe dónde va su dinero ni qué derechos tiene
-- Miedo al NFT por los scams del pasado — necesita confianza
-- No sabe evaluar si un proyecto cinematográfico es viable
+### Qué le duele
+- depósitos poco atractivos
+- productos financieros que no controla
+- exceso de complejidad o riesgo implícito
+- rechazo automático a anything que "suene a cine" si no se explica bien
 
-### Cómo Busca Solución
-- **Google:** "invest in movies", "film investment platform", "NFT utility real use case"
-- **Social:** Twitter/X crypto communities, Reddit r/investing, r/filmmaking
-- **Content:** Podcasts de inversión alternativa, YouTube channels de finanzas
-- **Word of mouth:** Amigos que han invertido en proyectos culturales
+### Qué le convence
+- garantía y estructura por encima del yield
+- ciclo corto
+- histórico de deuda devuelta
+- producto gestionado de extremo a extremo
+- claridad documental
 
-### Dónde Está
-- Twitter/X (fintech, crypto con utilidad)
-- Reddit (r/investing, r/movies, r/cryptocurrency)
-- YouTube (canales de inversión alternativa)
-- LinkedIn (si es profesional/inversor)
-- Newsletters de inversión alternativa
+### Mensaje que mejor encaja
+- **Core message:** "No compite por promesa de rentabilidad; compite por seguridad estructurada, plazo corto y claridad."
+- **Ángulo:** seguridad + garantía + sencillez operativa
 
-### Qué le Convencería
-- Transparencia total: ver exactamente qué derechos adquiere
-- Track record: proyectos anteriores financiados + retorno obtenido
-- Regulación clara: saber que no es un scam
-- Experiencia premium: sentirse parte de algo exclusivo (premières, créditos)
-- Facilidad: invertir en 3 clicks, no 30 documentos
+### Objeción crítica
+- **El 7% no impresiona** si compara contra productos más agresivos.
+- Por tanto, **NO** vender como "alta rentabilidad".
+- **SÍ** vender como alternativa clara, corta y garantizada en lógica fiscal.
+
+### Canal principal
+- referrals intergeneracionales
+- red de pares
+- one-pager / trust asset
+- conversaciones privadas
 
 ---
 
-## ECP 3: El Fondo / Family Office Buscando Diversificación
+## ECP 3 — Empresa con IS Alto / Incentivo Fiscal Cultural
 
 ### Perfil
-- **Quién:** Gestor de fondo de inversión o family office buscando diversificación en activos alternativos
-- **Tipo:** VC, PE pequeño, family office, business angel profesional
-- **Ticket:** €50K - €500K+
-- **Motivación:** Diversificación + beneficios fiscales (deducciones cine España hasta 30%)
+- **Tipo:** empresa familiar mediana o empresa rentable
+- **Decision maker:** dueño o dirección con poder real
+- **Señal:** IS anual alto (500k€+ ideal)
+- **Ticket:** 10.000€ mínimo
+- **Temporada:** mayo–diciembre
 
-### Dolor Principal
-"Necesito diversificar en activos descorrelacionados del mercado. El entretenimiento es interesante pero no tengo las herramientas ni el conocimiento para evaluar proyectos."
+### Job to Be Done
+"Quiero optimizar fiscalmente parte de lo que voy a pagar sin meterme en una estructura que mi asesor perciba como problemática."
 
-### Dolores Secundarios
-- Falta de due diligence estructurada en proyectos de entretenimiento
-- No tiene red en la industria del cine
-- Procesos manuales, poca digitalización del sector
-- Riesgo percibido alto sin datos comparables
+### Qué le duele
+- pagar IS alto sin alternativas claras
+- no saber cuánto cupo tiene realmente
+- dependencia total del criterio del asesor
+- miedo a entrar en algo que no entiende
 
-### Cómo Busca Solución
-- **Advisors:** Consultoras, asesores fiscales que conocen incentivos al cine
-- **Events:** Foros de inversión alternativa, conferencias fintech
-- **Direct outreach:** Plataformas que se acercan con propuestas estructuradas
-- **Research:** Informes sectoriales, benchmarks
+### Qué le convence
+- ahorro fiscal claro y legal
+- proceso guiado
+- velocidad de decisión
+- validación del asesor
+- caso parecido al suyo
 
-### Dónde Está
-- LinkedIn (tomadores de decisiones)
-- Eventos fintech/inversión (South Summit, 4YFN, DealFlow)
-- Redes de business angels (AEBAN, Business Angels Network)
-- Despachos de abogados / asesores fiscales
+### Mensaje que mejor encaja
+- **Core message:** "Convierte un pago fiscal inevitable en una optimización estructurada y entendible."
+- **Ángulo:** ahorro + seguridad jurídica + acompañamiento
 
-### Qué le Convencería
-- Due diligence sólida por proyecto (financiera + creativa)
-- Track record verificable
-- Estructura legal clara y regulada
-- Beneficios fiscales bien documentados
-- Dashboard profesional de seguimiento de inversiones
+### Riesgo principal
+Este segmento rara vez convierte si el asesor no lo habilita. Por eso **no debe trabajarse aislado del ECP 4**.
 
 ---
 
-## Priorización Preliminar
+## ECP 4 — Asesor Fiscal / Despacho (Gatekeeper + Canal)
 
-| ECP | Volumen | Ticket Medio | Facilidad de Alcanzar | Prioridad |
-|-----|---------|-------------|----------------------|-----------|
-| Productor Indie | Medio | Fee sobre proyecto | Media (sector relacional) | 🔴 Alta — supply side es crítico |
-| Inversor Retail Cinéfilo | Alto | €500-€50K | Media-alta (digital) | 🔴 Alta — demand side escala |
-| Fondo / Family Office | Bajo | €50K-€500K+ | Baja (outreach directo) | 🟡 Media — alto valor pero ciclo largo |
+### Perfil
+- **Tipo:** despacho fiscal, legal o consultora
+- **Subgrupo prioritario:** 80–100 despachos migrando de I+D a cultural
+- **Rol real:** prescriptor, desbloqueador o detractor
+- **Necesidad:** ofrecer incentivo fiscal cultural sin montar capacidad operativa propia
+
+### Job to Be Done
+"Necesito poder ofrecer incentivo fiscal cultural a mis clientes sin aumentar demasiado la carga operativa ni asumir un riesgo reputacional alto."
+
+### Qué le duele
+- oportunidad comercial que no sabe operar
+- procesos manuales y documentación compleja
+- miedo a equivocarse ante su cliente
+- perder clientes si no puede dar respuesta
+
+### Qué le convence
+- Pro Tax como infraestructura
+- multiplicación de capacidad con el mismo equipo
+- nueva línea de ingreso
+- refuerzo de relación con su cliente
+- convertirse en partner en vez de quedarse fuera del deal
+
+### Mensaje que mejor encaja
+- **Core message:** "No te pedimos que aprendas un producto nuevo desde cero; te damos la infraestructura para operarlo bien y retener a tu cliente."
+- **Ángulo:** control + eficiencia + nueva facturación + retención
+
+### Nota estratégica
+Este ya no es un segmento secundario. Es el **canal prioritario** para escalar el incentivo fiscal y el caballo de Troya de Pro Tax.
 
 ---
 
-## Gaps para Niche Discovery Completo
-- Validación con datos reales de usuarios actuales de la plataforma
-- Search volume por ECP (keyword research)
-- Entrevistas con productores e inversores existentes
-- Análisis de competidores por ECP (quién ataca a quién)
-- Sizing: cuántos productores indie hay en España/Europa, cuántos inversores retail crypto-savvy
+## Segmentos Depriorizados (no eliminados)
+
+### Productor / promotor cultural
+Sigue siendo importante en supply, pero no es el mejor punto de entrada para ordenar el GTM inmediato.
+
+### Inversor retail PFP
+Es estratégico, pero corresponde al horizonte de licencia y lanzamiento **Q1 2027+**.
+
+### Fondo / Family Office
+Puede existir como subsegmento de ticket alto, pero hoy no debe estructurar la narrativa principal.
+
+---
+
+## Implicaciones para Positioning
+
+1. Hulahoop debe posicionarse primero como **infraestructura financiera especializada**, no como marca “de cine para inversores”.
+2. El mensaje cambia según segmento:
+   - Arquetipo A → liquidez + simplicidad
+   - Arquetipo B → seguridad + garantía
+   - Empresa IS → ahorro + claridad
+   - Asesor/despacho → infraestructura + retención de cliente
+3. El gran pivote de positioning es este:
+   - **antes:** marketplace / entretenimiento / acceso a inversión
+   - **ahora:** infraestructura financiera para entretenimiento con 4 puertas de entrada diferentes
+
+---
+
+## Gaps Pendientes
+- patrones de recurrentes y referidos
+- tamaño y priorización real de despachos objetivo
+- verticales sectoriales más fértiles por geografía
+- señales de cierre por arquetipo
+- objeciones exactas antes del sí final
+
+---
+
+## Recomendación de Uso
+Este documento debe ser la base del siguiente entregable de positioning, pero **sin sustituir todavía** los `current.md` hasta revisión final.
