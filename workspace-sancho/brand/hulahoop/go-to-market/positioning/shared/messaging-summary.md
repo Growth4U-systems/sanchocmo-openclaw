@@ -190,4 +190,4 @@ Este summary debe alimentar:
 3. one-pager de trust anticipo
 4. mensajes outbound por segmento
 
-No sustituye todavía el documento final de positioning. Es una base alineada y utilizable.
+Es la base vigente de messaging. El documento final de positioning deberá expandirla, no rehacerla.

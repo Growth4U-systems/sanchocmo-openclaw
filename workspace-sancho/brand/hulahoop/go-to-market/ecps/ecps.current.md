@@ -1,21 +1,25 @@
 # ECPs — Hulahoop Media
-<!-- mode: refreshed | source: meeting-notes + self-intelligence + market-summary | date: 2026-04-27 -->
-<!-- status: current | promoted_from: v2.md | promoted_at: 2026-04-28 -->
+<!-- mode: current | source: meeting-notes + market-summary + feedback-growth4u | date: 2026-04-29 -->
+<!-- status: current | updated_from_feedback: 2026-04-29 -->
 
 ---
 
 ## Resumen Ejecutivo
 
-La segmentación válida para Hulahoop ya no debe apoyarse en el frame antiguo de "productor indie / inversor retail cinéfilo / fondo" como foco principal de go-to-market inmediato.
+La segmentación operativa de Hulahoop ya no debe organizarse con el frame antiguo de "productor indie / inversor retail cinéfilo / fondo" como eje principal de go-to-market.
 
-Tras la reunión con David Guerrero del **15 de abril de 2026**, el foco comercial real queda así:
+Tras la reunión con David Guerrero del **15 de abril de 2026** y el feedback operativo consolidado el **28 de abril de 2026**, el foco comercial real queda así:
 
-1. **Inversor Anticipo — Arquetipo A** → liquidez joven, ticket de entrada, producto simple y corto
-2. **Inversor Anticipo — Arquetipo B** → patrimonio establecido, decisión por seguridad y garantía, no por yield
-3. **Empresa con IS alto** → cliente final del incentivo fiscal cultural
-4. **Asesor fiscal / despacho** → gatekeeper del incentivo y canal prioritario para escalar Pro Tax
+### 4 puertas de entrada externas al deal
+1. **ECP 1 — Inversor Anticipo / Arquetipo A** → liquidez joven, ticket de entrada, producto simple y corto
+2. **ECP 2 — Inversor Anticipo / Arquetipo B** → patrimonio establecido, decisión por seguridad y garantía, no por yield
+3. **ECP 3 — Empresa con IS alto** → cliente final del incentivo fiscal cultural, con 4 subsegmentos distintos
+4. **ECP 4 — Asesor fiscal** → desbloqueador del deal de incentivo fiscal, no target de captación masiva Pro Tax en 2026
 
-**Conclusión:** el mercado inmediato de Hulahoop no se organiza por “cine vs inversión alternativa”, sino por **tipo de decisión financiera y rol dentro del deal**.
+### 1 palanca de crecimiento sobre base existente
+5. **ECP 5 — Inversor recurrente / promotor de referrals** → segmento más rentable a corto plazo por confianza previa, CAC casi cero y alta probabilidad de cierre
+
+**Conclusión:** el mercado inmediato de Hulahoop no se organiza por “cine vs inversión alternativa”, sino por **rol dentro del deal, nivel de sofisticación financiera y momento comercial**.
 
 ---
 
@@ -24,14 +28,50 @@ Tras la reunión con David Guerrero del **15 de abril de 2026**, el foco comerci
 ### Horizonte Ahora (abril–verano 2026)
 - **ECP 1** — Inversor Anticipo Arquetipo A
 - **ECP 2** — Inversor Anticipo Arquetipo B
-- **ECP 4** — Asesor fiscal / despacho migrando de I+D a cultural
+- **ECP 5** — Inversor recurrente / referral
+- **ECP 4** — Asesor fiscal como desbloqueador del deal
 
 ### Horizonte Verano–Q4 2026
-- **ECP 3** — Empresa con IS alto (incentivo fiscal)
+- **ECP 3A** — Family Office / empresa familiar grande
+- **ECP 3B** — Private Equity
+- **ECP 3C** — Farmacéuticas
+- **ECP 3D** — Notarios
 
 ### Horizonte Q1 2027+
 - Inversor retail PFP
-- Productor/promotor como segmento de scale-up o supply-side
+- Productor / promotor como segmento de scale-up o supply-side
+
+---
+
+## Reglas Absolutas de Comunicación
+
+Estas reglas aplican a **todos** los ECPs relacionados con anticipo:
+
+- ❌ **Nunca** comparar el anticipo con bonos del Estado
+- ❌ **Nunca** vender “rentabilidad asegurada”
+- ❌ **Nunca** usar la lógica “7% espectacular” ante perfiles sofisticados
+- ✅ Transparencia sobre riesgo, estructura y límites del producto
+- ✅ Adaptar el mensaje al perfil financiero real de la persona
+- ✅ Priorizar claridad, garantía entendible y proceso por encima de hype financiero
+
+### Caso ancla: Andorra
+El caso Andorra confirmó que un mensaje válido para perfil generalista puede romper la confianza si enfrente hay un perfil o una red financiera sofisticada. El error no fue de producto, fue de calibración del mensaje.
+
+---
+
+## Nota Crítica de Validación
+
+**Estos ECPs todavía no están testeados en mercado de forma sistemática.**
+
+La validación previa —landings sectoriales, eventos, entrevistas, y mapping cualitativo de los 100+ inversores actuales— es prerequisito antes de escalar campañas.
+
+**Operar sin validación = quemar leads, dañar confianza y sacar conclusiones falsas sobre el producto.**
+
+Además:
+- **ECP 1 y ECP 2** siguen muy apoyados en percepción de David y evidencia comercial interna
+- **ECP 3** requiere validación por subsegmento
+- **ECP 4** requiere confirmación fina con Sandra/Beto sobre volumen real de despachos prioritarios
+- **ECP 5** está respaldado por recurrencia observada, pero falta sistematizar patrones y triggers
 
 ---
 
@@ -45,7 +85,7 @@ Tras la reunión con David Guerrero del **15 de abril de 2026**, el foco comerci
 - **Mentalidad:** quiere mover dinero parado sin entrar en algo complejo
 
 ### Job to Be Done
-"Quiero poner a trabajar mi liquidez en algo fácil de entender, razonablemente seguro y con un plazo corto."
+"Quiero poner a trabajar mi liquidez en algo fácil de entender, razonablemente estructurado y con un plazo corto."
 
 ### Qué le duele
 - depósitos mediocres
@@ -54,11 +94,11 @@ Tras la reunión con David Guerrero del **15 de abril de 2026**, el foco comerci
 - poca paciencia para procesos largos o burocráticos
 
 ### Qué le convence
-- 7% vs depósito bancario
+- acceso privado
 - plazo corto (<12 meses)
 - fecha clara de cobro
 - garantía vinculada al incentivo fiscal estatal
-- sensación de acceso a una oportunidad privada y filtrada
+- sensación de oportunidad filtrada y entendible
 
 ### Mensaje que mejor encaja
 - **Core message:** "Haz trabajar tu liquidez en un producto privado, corto y estructurado."
@@ -69,11 +109,28 @@ Tras la reunión con David Guerrero del **15 de abril de 2026**, el foco comerci
 - "¿Es muy complicado entrar?"
 - "¿Voy a estar atado mucho tiempo?"
 
+### Bandera roja
+**Excluir** perfiles con red familiar financiera sofisticada:
+- padres en banca
+- entorno Family Office
+- círculo muy financiero
+- residencia o contexto tipo Andorra
+
+Si aparece esta señal, hay que:
+- escalar a **ECP 2**, o
+- cambiar vendedor / cambiar framing
+
+### Cualificadores geográficos
+- **Madrid + Barcelona:** mejor encaje inicial por proximidad y red core
+- **Norte España:** posible encaje si el mensaje sube de nivel técnico
+- **Andorra:** no usar mensaje simplificado de David; requiere otro approach
+- **Sur España:** potencial, pero necesita más educación previa
+
 ### Canal principal
 - referidos
 - DM privado
 - network de David
-- programa de referral sobre base actual
+- activación sobre base relacional
 
 ---
 
@@ -81,19 +138,19 @@ Tras la reunión con David Guerrero del **15 de abril de 2026**, el foco comerci
 
 ### Perfil
 - **Edad:** 50–60
-- **Situación:** patrimonio acumulado, vivienda resuelta, perfil conservador
+- **Situación:** patrimonio acumulado, vivienda resuelta, perfil conservador o semi-sofisticado
 - **Ticket:** 25.000€–80.000€
 - **Origen:** hijos, red de pares, clubes, networking profesional
 - **Mentalidad:** busca preservar y rotar capital con control
 
 ### Job to Be Done
-"Quiero una opción de rendimiento razonable, corta y con una lógica de garantía entendible."
+"Quiero una opción corta, clara y estructurada, donde entienda bien la garantía y el proceso."
 
 ### Qué le duele
 - depósitos poco atractivos
 - productos financieros que no controla
-- exceso de complejidad o riesgo implícito
-- rechazo automático a anything que "suene a cine" si no se explica bien
+- complejidad innecesaria
+- rechazo automático a anything que “suene a cine” si no se explica bien
 
 ### Qué le convence
 - garantía y estructura por encima del yield
@@ -107,82 +164,176 @@ Tras la reunión con David Guerrero del **15 de abril de 2026**, el foco comerci
 - **Ángulo:** seguridad + garantía + sencillez operativa
 
 ### Objeción crítica
-- **El 7% no impresiona** si compara contra productos más agresivos.
-- Por tanto, **NO** vender como "alta rentabilidad".
-- **SÍ** vender como alternativa clara, corta y garantizada en lógica fiscal.
+- **El 7% no impresiona** si compara contra alternativas más agresivas
+- Por tanto, **NO** vender como "alta rentabilidad"
+- **SÍ** vender como alternativa clara, corta y garantizada en lógica fiscal
+
+### Cualificadores geográficos
+- **Madrid + Barcelona:** encaje alto por red relacional existente
+- **Norte España:** buen encaje si el discurso sube en precisión financiera
+- **Andorra:** ultra-sofisticado; evitar mensaje David, requiere vendedor distinto
 
 ### Canal principal
 - referrals intergeneracionales
 - red de pares
 - one-pager / trust asset
 - conversaciones privadas
+- clubes de inversión
 
 ---
 
 ## ECP 3 — Empresa con IS Alto / Incentivo Fiscal Cultural
 
-### Perfil
-- **Tipo:** empresa familiar mediana o empresa rentable
-- **Decision maker:** dueño o dirección con poder real
-- **Señal:** IS anual alto (500k€+ ideal)
-- **Ticket:** 10.000€ mínimo
-- **Temporada:** mayo–diciembre
+Este ECP **no debe tratarse como un solo bloque**. El mensaje, canal y vendedor cambian según subsegmento.
 
-### Job to Be Done
-"Quiero optimizar fiscalmente parte de lo que voy a pagar sin meterme en una estructura que mi asesor perciba como problemática."
+### Tesis común
+Buscan optimizar una carga fiscal relevante sin entrar en una estructura que perciban como opaca, poco controlable o difícil de defender ante su asesor.
 
-### Qué le duele
-- pagar IS alto sin alternativas claras
-- no saber cuánto cupo tiene realmente
-- dependencia total del criterio del asesor
-- miedo a entrar en algo que no entiende
+### Riesgo estructural
+Este ECP rara vez convierte si el asesor no lo habilita. Por eso **debe trabajarse siempre en coordinación con el ECP 4**.
 
-### Qué le convence
-- ahorro fiscal claro y legal
-- proceso guiado
-- velocidad de decisión
-- validación del asesor
-- caso parecido al suyo
+### ECP 3A — Family Office / Empresa Familiar Grande
 
-### Mensaje que mejor encaja
-- **Core message:** "Convierte un pago fiscal inevitable en una optimización estructurada y entendible."
-- **Ángulo:** ahorro + seguridad jurídica + acompañamiento
+**Cualificador:** patrimonio relevante, decisor concentrado, flexibilidad alta
 
-### Riesgo principal
-Este segmento rara vez convierte si el asesor no lo habilita. Por eso **no debe trabajarse aislado del ECP 4**.
+**Job to Be Done:**
+"Quiero una estructura fiscal eficiente, clara y ejecutable sin meter fricción innecesaria en mi entorno de decisión."
+
+**Canal probable:**
+- network directo
+- advisors
+- relaciones de confianza
+
+**Mensaje guía:**
+"Optimiza fiscalmente con una estructura entendible y acompañada, sin abrir un frente operativo nuevo."
+
+### ECP 3B — Private Equity
+
+**Cualificador:** gestiona capital de terceros, sofisticación financiera alta, filtro reputacional fuerte
+
+**Job to Be Done:**
+"Quiero evaluar si esta estructura tiene sentido sin poner en riesgo mis estándares de control y reputación."
+
+**Canal probable:**
+- LinkedIn ejecutivo
+- industry events
+- introducción cualificada
+
+**Mensaje guía:**
+"No es una oportunidad oportunista; es una estructura fiscal operable que exige lectura técnica seria."
+
+### ECP 3C — Farmacéuticas
+
+**Cualificador:** IS alto recurrente, vertical donde la carga fiscal puede ser material y repetida
+
+**Job to Be Done:**
+"Quiero explorar una palanca fiscal relevante que encaje con mi realidad financiera y no me consuma tiempo interno."
+
+**Canal probable:**
+- vertical específico
+- conexiones cualificadas
+- acercamiento no genérico
+
+**Mensaje guía:**
+"Hay una forma estructurada de convertir carga fiscal recurrente en optimización real, con acompañamiento experto."
+
+### ECP 3D — Notarios
+
+**Cualificador:** profesional liberal con renta alta, decisión individual o de círculo de pares, red colegiada
+
+**Job to Be Done:**
+"Quiero entender si esto encaja conmigo sin sentir que estoy entrando en algo ajeno a mi marco profesional."
+
+**Canal probable:**
+- colegios profesionales
+- referidos entre pares
+- red cerrada
+
+**Mensaje guía:**
+"Optimización fiscal clara, acompañada y defendible, sin necesidad de convertirte en experto en entretenimiento."
+
+### Cualificadores geográficos del ECP 3
+- **Norte España:** despachos y perfiles más acostumbrados a estructuras I+D; mejor terreno técnico
+- **Madrid + Barcelona:** acceso más fácil por red, pero más ruido competitivo
+- **Sur España:** territorio menos explotado, probablemente requiere más educación
 
 ---
 
-## ECP 4 — Asesor Fiscal / Despacho (Gatekeeper + Canal)
+## ECP 4 — Asesor Fiscal / Desbloqueador del Deal de Incentivo
 
 ### Perfil
-- **Tipo:** despacho fiscal, legal o consultora
-- **Subgrupo prioritario:** 80–100 despachos migrando de I+D a cultural
+- **Tipo:** asesor fiscal, despacho o consultora con relación de confianza con cliente final
 - **Rol real:** prescriptor, desbloqueador o detractor
-- **Necesidad:** ofrecer incentivo fiscal cultural sin montar capacidad operativa propia
+- **Prioridad 2026:** alta como canal del deal de incentivo
+- **No confundir con:** target de captación masiva Pro Tax
 
 ### Job to Be Done
-"Necesito poder ofrecer incentivo fiscal cultural a mis clientes sin aumentar demasiado la carga operativa ni asumir un riesgo reputacional alto."
+"Necesito poder recomendar o validar una operación de incentivo fiscal sin poner en riesgo la relación con mi cliente ni mi criterio profesional."
 
 ### Qué le duele
-- oportunidad comercial que no sabe operar
-- procesos manuales y documentación compleja
 - miedo a equivocarse ante su cliente
-- perder clientes si no puede dar respuesta
+- reputación profesional en juego
+- sensación de complejidad o falta de control
+- tendencia a bloquear lo que no entiende bien
 
 ### Qué le convence
-- Pro Tax como infraestructura
-- multiplicación de capacidad con el mismo equipo
-- nueva línea de ingreso
-- refuerzo de relación con su cliente
-- convertirse en partner en vez de quedarse fuera del deal
+- claridad operativa
+- capacidad de entender el caso
+- control del proceso
+- facilidad para defender la decisión ante el cliente
+- material que reduzca fricción, no que le venda encima
 
 ### Mensaje que mejor encaja
-- **Core message:** "No te pedimos que aprendas un producto nuevo desde cero; te damos la infraestructura para operarlo bien y retener a tu cliente."
-- **Ángulo:** control + eficiencia + nueva facturación + retención
+- **Core message:** "No necesitas cambiar tu rol; necesitas entender y desbloquear una operación que puede tener sentido para tu cliente."
+- **Ángulo:** control + claridad + protección de la relación con el cliente
 
-### Nota estratégica
-Este ya no es un segmento secundario. Es el **canal prioritario** para escalar el incentivo fiscal y el caballo de Troya de Pro Tax.
+### Regla estratégica
+En 2026 este ECP debe trabajarse como **desbloqueador del deal**, no como frente de venta masiva de Pro Tax.
+
+**Pro Tax puede aparecer como activo accesorio o refuerzo de relación, pero no como objetivo comercial principal en este documento.**
+
+### Cualificadores geográficos
+- **Norte España:** mayor sofisticación y experiencia en estructuras parecidas
+- **Madrid + Barcelona:** más acceso por red actual
+- **Sur España:** menos competencia, pero más trabajo pedagógico
+
+---
+
+## ECP 5 — Inversor Recurrente / Promotor de Referrals
+
+### Perfil
+- ya invirtió antes
+- base actual de 100+ inversores / miembros / históricos relacionados
+- confianza previa en David y en la operación
+- alta probabilidad de reinversión
+
+### Por qué es crítico
+- recurrencia descrita como "prácticamente absoluta"
+- más del 50% reinvierte en operaciones siguientes
+- coste de adquisición casi cero
+- mejor base para referral program
+- es la palanca de growth más inmediata
+
+### Job to Be Done
+"Quiero seguir accediendo a operaciones que ya entiendo y, si además puedo mejorar condiciones trayendo a alguien, mejor."
+
+### Qué le convence
+- relación ya construida
+- fricción mínima
+- continuidad
+- mejora de spread o condición económica
+
+### Mensaje que mejor encaja
+- **Core message:** "Si ya confías en la operación, puedes repetir y mejorar tu próxima entrada trayendo a la persona adecuada."
+- **Ángulo:** continuidad + confianza + incentivo económico
+
+### Palanca comercial
+- spread mejorado: **7,5–8%** en próximo deal por referral
+- owner natural: **David**
+- canal natural: relación personal directa
+
+### Riesgo
+Aún no hay sistematización de patrones de quién refiere mejor, quién reinvierte más y qué trigger activa la repetición.
 
 ---
 
@@ -194,33 +345,56 @@ Sigue siendo importante en supply, pero no es el mejor punto de entrada para ord
 ### Inversor retail PFP
 Es estratégico, pero corresponde al horizonte de licencia y lanzamiento **Q1 2027+**.
 
-### Fondo / Family Office
-Puede existir como subsegmento de ticket alto, pero hoy no debe estructurar la narrativa principal.
+### Fondo / Family Office como bloque genérico
+Puede existir, pero hoy debe tratarse solo dentro del subsegmento concreto correspondiente, no como etiqueta amplia.
+
+---
+
+## Elevator Pitch Interno por ECP
+
+- **ECP 1:** liquidez joven que quiere algo privado, corto y entendible
+- **ECP 2:** patrimonio que prioriza garantía, claridad y control
+- **ECP 3A:** decisor patrimonial que busca eficiencia fiscal sin fricción
+- **ECP 3B:** perfil técnico que exige seriedad y lectura financiera real
+- **ECP 3C:** vertical con IS alto donde el mensaje debe ser específico
+- **ECP 3D:** profesional liberal que necesita encaje claro y defendible
+- **ECP 4:** asesor que debe desbloquear, no bloquear, el deal
+- **ECP 5:** inversor que ya confía y puede volver con referral
 
 ---
 
 ## Implicaciones para Positioning
 
 1. Hulahoop debe posicionarse primero como **infraestructura financiera especializada**, no como marca “de cine para inversores”.
-2. El mensaje cambia según segmento:
-   - Arquetipo A → liquidez + simplicidad
-   - Arquetipo B → seguridad + garantía
-   - Empresa IS → ahorro + claridad
-   - Asesor/despacho → infraestructura + retención de cliente
+2. El mensaje cambia según sofisticación, rol y momento del deal.
 3. El gran pivote de positioning es este:
    - **antes:** marketplace / entretenimiento / acceso a inversión
-   - **ahora:** infraestructura financiera para entretenimiento con 4 puertas de entrada diferentes
+   - **ahora:** infraestructura financiera para entretenimiento con segmentación comercial real
+4. La prioridad de messaging no es solo atraer; es **no romper confianza por mala calibración**.
 
 ---
 
 ## Gaps Pendientes
 - patrones de recurrentes y referidos
-- tamaño y priorización real de despachos objetivo
-- verticales sectoriales más fértiles por geografía
-- señales de cierre por arquetipo
 - objeciones exactas antes del sí final
+- validación real por subsegmentos del ECP 3
+- confirmación del volumen real de despachos prioritarios
+- mapping cualitativo de base actual de inversores
+- mejor lectura geográfica por vendedor / mensaje / canal
 
 ---
 
 ## Recomendación de Uso
-Este documento debe ser la base del siguiente entregable de positioning, pero **sin sustituir todavía** los `current.md` hasta revisión final.
+
+Este documento ya puede usarse como **base operativa de segmentación**, pero con una condición:
+
+**no debe escalarse a campañas o outreach sistemático sin validación previa.**
+
+Uso recomendado inmediato:
+- positioning por segmento
+- trust assets de anticipo
+- guías de conversación por perfil
+- diseño del programa de referral
+- priorización comercial de testing
+
+No usar todavía como verdad cerrada de mercado, sino como **hipótesis operativa fuerte para validación controlada**.

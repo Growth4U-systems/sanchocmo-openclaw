@@ -1,7 +1,7 @@
 {
   "version": "3.1",
   "started_at": "2026-04-07T12:01:18Z",
-  "updated_at": "2026-04-16T13:47:00Z",
+  "updated_at": "2026-04-29T08:18:00Z",
   "brand_summary": {
     "company_name": "Hulahoop Media S.L.",
     "sector": "Fintech × Entertainment (Entertainment Financing / Infrastructure)",
@@ -115,7 +115,7 @@
           "status": "approved",
           "layer": 2,
           "skill": "market-synthesis",
-          "output_file": "brand/hulahoop/market-and-us/swot/swot.current.md",
+          "output_file": "brand/hulahoop/market-and-us/swot/current.md",
           "completed_at": "2026-04-16T15:45:00.000Z",
           "updated_at": "2026-04-16T15:45:00.000Z",
           "approved_at": "2026-04-16T13:42:35.207Z"
@@ -124,7 +124,7 @@
           "status": "approved",
           "layer": 2,
           "skill": "market-synthesis",
-          "output_file": "brand/hulahoop/market-and-us/summary/summary.current.md",
+          "output_file": "brand/hulahoop/market-and-us/summary/current.md",
           "completed_at": "2026-04-16T15:54:00.000Z",
           "updated_at": "2026-04-16T13:55:05.558Z",
           "approved_at": "2026-04-16T13:55:05.558Z"
@@ -133,7 +133,7 @@
           "status": "approved",
           "layer": 2,
           "skill": "market-synthesis",
-          "output_file": "brand/hulahoop/market-and-us/ope-canvas/ope-canvas.current.md",
+          "output_file": "brand/hulahoop/market-and-us/ope-canvas/current.md",
           "completed_at": "2026-04-16T13:47:00Z",
           "updated_at": "2026-04-16T14:04:20.437Z",
           "approved_at": "2026-04-16T14:04:20.437Z"
@@ -157,13 +157,14 @@
       "output_dir": "brand/hulahoop/go-to-market/",
       "pillars": {
         "niche-discovery": {
-          "status": "pending-review",
+          "status": "approved",
           "layer": 3,
           "skill": "niche-discovery-100x",
-          "output_file": "brand/hulahoop/go-to-market/ecps/ecps.current.md",
-          "completed_at": "2026-04-16T11:30:00Z",
-          "note": "Validado con datos reales sesión David Guerrero 15-Abr-2026",
-          "updated_at": "2026-04-16T11:35:39.757Z"
+          "output_file": "brand/hulahoop/go-to-market/ecps/current.md",
+          "completed_at": "2026-04-28T13:46:52Z",
+          "note": "ECPs refresh alineado con reunión David 2026-04-15 y promovido a current",
+          "updated_at": "2026-04-28T13:46:52Z",
+          "approved_at": "2026-04-28T13:46:52Z"
         },
         "existing-customer-data": {
           "status": "not-started",
@@ -172,10 +173,13 @@
           "skill": "existing-customer-data"
         },
         "positioning": {
-          "status": "not-started",
+          "status": "done",
           "layer": 4,
           "skill": "positioning-messaging",
-          "output_file": "brand/hulahoop/go-to-market/positioning/shared/messaging-summary.md"
+          "output_file": "brand/hulahoop/go-to-market/positioning/shared/messaging-summary.md",
+          "completed_at": "2026-04-28T13:46:52Z",
+          "updated_at": "2026-04-28T13:46:52Z",
+          "note": "Messaging summary base alineado con ECP refresh; pendiente positioning completo por deliverable separado"
         },
         "pricing": {
           "status": "not-started",
@@ -196,7 +200,7 @@
           "output_file": "brand/hulahoop/go-to-market/gtm-report.html"
         }
       },
-      "updated_at": "2026-04-14T12:13:49.769Z"
+      "updated_at": "2026-04-29T08:18:00Z"
     },
     "brand-book": {
       "status": "in-progress",
@@ -237,21 +241,26 @@
       }
     },
     "strategic-plan": {
-      "status": "not-started",
+      "status": "in-progress",
       "layer": 7,
-      "output_file": "brand/hulahoop/strategic-plan/strategic-plan.current.md",
+      "output_file": "brand/hulahoop/strategic-plan/current.md",
       "pillars": {
         "strategic-plan": {
-          "status": "not-started",
+          "status": "approved",
           "skill": "strategic-plan",
-          "output_file": "brand/hulahoop/strategic-plan/strategic-plan.current.md"
+          "output_file": "brand/hulahoop/strategic-plan/current.md",
+          "completed_at": "2026-04-28T16:47:41Z",
+          "updated_at": "2026-04-28T16:47:41Z",
+          "approved_at": "2026-04-28T16:47:41Z"
         },
         "strategic-presentation": {
           "status": "not-started",
           "skill": "strategic-plan",
           "output_file": "brand/hulahoop/strategic-plan/strategic-presentation.html"
         }
-      }
+      },
+      "updated_at": "2026-04-29T11:44:36.347Z",
+      "approved_at": "2026-04-28T16:47:41Z"
     }
   },
   "file_index": {
@@ -266,9 +275,9 @@
       "dir": "projects/"
     },
     "market-and-us": {
-      "swot": "market-and-us/swot/swot.current.md",
-      "market-summary": "market-and-us/summary/summary.current.md",
-      "ope-canvas": "market-and-us/ope-canvas/ope-canvas.current.md"
+      "swot": "market-and-us/swot/current.md",
+      "market-summary": "market-and-us/summary/current.md",
+      "ope-canvas": "market-and-us/ope-canvas/current.md"
     },
     "presentations": {
       "foundation-report": "presentations/foundation-report.html"
@@ -279,6 +288,11 @@
     },
     "meeting_prep": {
       "2026-04-15": "meeting-prep-2026-04-15.md"
-    }
+    },
+    "go_to_market": {
+      "ecps": "go-to-market/ecps/current.md",
+      "messaging_summary": "go-to-market/positioning/shared/messaging-summary.md"
+    },
+    "strategic_plan": "strategic-plan/current.md"
   }
 }
