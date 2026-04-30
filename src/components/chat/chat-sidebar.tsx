@@ -23,6 +23,7 @@ import {
   buildTaskIndex,
 } from "@/lib/chat-openers";
 import { useQuickActions } from "@/hooks/useChat";
+import { useRetriggerWriter } from "@/hooks/useContentTasks";
 import { ThreadListPanel } from "./thread-list-panel";
 import { DocSlideOver } from "@/components/shared/doc-slideover";
 import { useFoundation } from "@/hooks/useFoundation";
@@ -703,6 +704,22 @@ export function ChatSidebar() {
   const isBotThinking = isPolling && waitingForReply;
   const showTyping = isBotThinking || !!statusData?.text || (waitingForReply && sendMutation.isPending);
 
+  // Gateway-down detection: when a ContentTask thread's last system marker
+  // ("Pidiendo a Escudero…") has been sitting for >60s without an agent
+  // reply, the OpenClaw gateway is most likely down. Surface a banner with
+  // a "Reintentar" button that re-fires `triggerWriter`.
+  const GATEWAY_STALE_MS = 60 * 1000;
+  const ctIdFromLinked = meta?.linkedTo?.match(/\/content\/([^/]+)/i)?.[1];
+  const lastIsTriggerMarker =
+    !!lastMsg &&
+    lastMsg.role !== "user" &&
+    typeof lastMsg.text === "string" &&
+    /Pidiendo a (Escudero|Sancho que itere)/.test(lastMsg.text);
+  const triggerStale = !lastMsg?.ts || Date.now() - lastMsg.ts > GATEWAY_STALE_MS;
+  const gatewayLikelyDown =
+    !!ctIdFromLinked && lastIsTriggerMarker && triggerStale && !sendMutation.isPending;
+  const retriggerWriter = useRetriggerWriter();
+
   // Quick-actions from chat-config.json.
   //
   // Show when:
@@ -1067,20 +1084,26 @@ export function ChatSidebar() {
 
           {/* Task/Project link pill — shows the associated task/project */}
           {activeThreadId && meta?.linkedTo && (() => {
-            const taskMatch = meta.linkedTo.match(/^projects\/([^/]+)\/tasks\/([^/]+)/i);
+            const taskMatch = meta.linkedTo.match(/^projects\/([^/]+)\/tasks\/([^/]+)(?:\/content\/([^/]+))?/i);
             const projMatch = !taskMatch && meta.linkedTo.match(/^projects\/([^/]+)/i);
             if (!taskMatch && !projMatch) return null;
 
             if (taskMatch) {
               const projId = taskMatch[1];
               const taskId = taskMatch[2];
+              const ctId = taskMatch[3];
+              const href = ctId
+                ? `/dashboard/${slug}/projects/${projId}/tasks/${taskId}/content/${ctId}`
+                : `/dashboard/${slug}/projects/${projId}/tasks/${taskId}`;
               return (
                 <Link
-                  href={`/dashboard/${slug}/projects/${projId}/tasks/${taskId}`}
+                  href={href}
                   className="w-full bg-[#313244] rounded-lg px-3 py-1.5 text-[12px] text-[#a6adc8] flex items-center gap-2 hover:bg-[#45475a] hover:text-[#cdd6f4] transition-colors no-underline"
                 >
-                  <span>📋</span>
-                  <span className="truncate flex-1">Tarea: {taskId}</span>
+                  <span>{ctId ? "✍️" : "📋"}</span>
+                  <span className="truncate flex-1">
+                    {ctId ? `${taskId} → ${ctId}` : `Tarea: ${taskId}`}
+                  </span>
                   <span className="text-[11px] text-[#6c7086]">↗</span>
                 </Link>
               );
@@ -1204,6 +1227,38 @@ export function ChatSidebar() {
               </span>
             </div>
             {sidebarLocked ? `🔄 ${t("loading")}` : t("selectThread")}
+          </div>
+        )}
+
+        {gatewayLikelyDown && ctIdFromLinked && (
+          <div className="border border-amber-500/40 bg-amber-500/10 text-amber-200 rounded-lg px-3 py-2 text-[13px] leading-snug">
+            <div className="font-semibold mb-1">⚠ Escudero parece no haber respondido</div>
+            <p className="text-[12px] text-amber-100/80 mb-2">
+              Puede que el gateway de OpenClaw esté caído. Comprueba <code className="bg-black/30 px-1 rounded">openclaw gateway status</code> y pulsa Reintentar.
+            </p>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  if (!slug || !ctIdFromLinked) return;
+                  retriggerWriter.mutate({ slug, contentTaskId: ctIdFromLinked });
+                }}
+                disabled={retriggerWriter.isPending}
+                className="text-[12px] px-3 py-1 bg-amber-500/20 hover:bg-amber-500/30 disabled:opacity-50 rounded border border-amber-500/40 transition-colors"
+              >
+                {retriggerWriter.isPending ? "Reintentando..." : "Reintentar"}
+              </button>
+              {retriggerWriter.isError && (
+                <span className="text-[11px] text-red-300">
+                  {(retriggerWriter.error as Error).message}
+                </span>
+              )}
+              {retriggerWriter.isSuccess && retriggerWriter.data?.writerTriggered === false && (
+                <span className="text-[11px] text-amber-300/80">
+                  Sigue caído: {retriggerWriter.data.writerError || "sin respuesta"}
+                </span>
+              )}
+            </div>
           </div>
         )}
 

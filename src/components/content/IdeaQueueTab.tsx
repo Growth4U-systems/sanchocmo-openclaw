@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
+import { useRouter } from "next/router";
 import { cn } from "@/lib/utils";
 import { buildTaskThread, type ThreadConfig } from "@/lib/chat-openers";
 import { DocSlideOver } from "@/components/shared/doc-slideover";
@@ -44,6 +45,8 @@ interface Idea {
   drafts?: unknown;
   project_task_id?: string;
   project_id?: string;
+  content_task_id?: string;
+  content_task_channels?: string[];
   dispatch_date?: string;
   dispatch_slot?: string;
   source_signals?: string[];
@@ -174,6 +177,7 @@ function writerSkillFor(channel: string): string {
 }
 
 export function IdeaQueueTab({ slug, openChat }: Props) {
+  const router = useRouter();
   const [ideas, setIdeas] = useState<Idea[]>([]);
   const [counts, setCounts] = useState<IdeasCounts | null>(null);
   const [pillars, setPillars] = useState<PillarLite[]>([]);
@@ -347,89 +351,128 @@ export function IdeaQueueTab({ slug, openChat }: Props) {
 
   return (
     <div>
-      {/* Dispatch action bar — Comic UI */}
-      <div className="bg-card border-[3px] border-ink shadow-comic-sm rounded-xl p-4 mb-4 flex items-center gap-3 flex-wrap">
-        <div className="flex items-center gap-3 flex-1 min-w-[220px]">
-          <span className="text-2xl">📬</span>
-          <div className="flex-1 min-w-0">
-            <div className="font-heading text-base font-bold text-ink">Editorial Dispatch</div>
-            <div className="text-xs text-ink/70">
-              Selecciona candidatas según cadencia y las envía a Discord/Slack para que elijas allí.
-              {dispatchCron?.lastExecution && (
-                <> · Última: <strong className="text-ink">{formatLastRun(dispatchCron.lastExecution.date)}</strong> ({dispatchCron.lastExecution.status})</>
-              )}
-              {!dispatchCron?.lastExecution && <> · Sin ejecuciones</>}
-              {dispatchCron && <> · Cron diario 08:30</>}
-            </div>
+      {/* DispatchBanner — Sancho Comic */}
+      <div
+        className="rounded-sc-lg border-[3px] grid grid-cols-[52px_1fr_auto_auto] gap-3.5 items-center p-3.5 mb-3.5"
+        style={{
+          background: "var(--sc-paper-2)",
+          borderColor: "var(--sc-ink)",
+          boxShadow: "var(--pop-md)",
+        }}
+      >
+        <span className="sc-burst grid place-items-center w-[52px] h-[52px] text-[10px] font-heading text-center leading-none">
+          SLACK<br />NEXT
+        </span>
+        <div className="flex flex-col gap-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="font-heading uppercase text-sm tracking-wider font-bold" style={{ color: "var(--sc-ink)" }}>
+              Editorial Dispatch
+            </span>
+            <span
+              className="font-heading uppercase text-[10px] tracking-wider px-2 py-0.5 rounded-sc-pill border inline-flex items-center gap-1"
+              style={{ background: "var(--sc-rust-100)", borderColor: "var(--sc-ink)", color: "var(--sc-ink)" }}
+            >⚡ AUTO</span>
           </div>
+          <span className="text-xs" style={{ color: "var(--sc-fg-muted)" }}>
+            Selecciona candidatas según cadencia y las envía a Slack/Discord para que elijas allí.
+            {dispatchCron?.lastExecution && (
+              <> · Última: <b style={{ color: "var(--sc-ink)" }}>{formatLastRun(dispatchCron.lastExecution.date)}</b></>
+            )}
+            {!dispatchCron?.lastExecution && <> · Sin ejecuciones</>}
+            {dispatchCron && <> · Cron diario 08:30</>}
+          </span>
         </div>
         <button
           type="button"
           onClick={runDispatchCron}
           disabled={dispatching || !dispatchCron}
-          className="font-heading text-sm font-bold px-4 py-2 rounded-md bg-rust text-white border-2 border-ink shadow-comic-sm hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed transition-transform"
-          title={dispatchCron ? "Lanzar dispatch ahora" : "Cron Editorial Dispatch no encontrado"}
+          className="font-heading uppercase text-[12px] tracking-wider px-3 py-2 rounded-sc-md border-2 sc-pop-hover disabled:opacity-50 disabled:cursor-not-allowed"
+          style={{
+            background: "var(--sc-rust-500)",
+            color: "var(--sc-paper-3)",
+            borderColor: "var(--sc-ink)",
+            boxShadow: "var(--pop-sm)",
+          }}
+          title={dispatchCron ? "Lanzar dispatch ahora" : "Cron no encontrado"}
         >
-          {dispatching ? "Lanzando..." : dispatchPolling ? "⏳ En curso" : "▶ Ejecutar ahora"}
+          {dispatching ? "⏳ Lanzando" : dispatchPolling ? "⏳ En curso" : "▶ Ejecutar ahora"}
         </button>
         {dispatchPolling && (
           <button
             type="button"
             onClick={() => { fetchIdeas(); fetchPillarsAndCrons(); }}
-            className="font-heading text-sm font-bold px-3 py-2 rounded-md bg-card text-ink border-2 border-ink shadow-comic-sm hover:-translate-y-0.5 transition-transform"
-            title="Refrescar manualmente"
-          >
-            🔄
-          </button>
+            className="font-heading uppercase text-[12px] tracking-wider px-2.5 py-2 rounded-sc-md border-2 sc-pop-hover"
+            style={{ background: "var(--sc-paper-3)", borderColor: "var(--sc-ink)", boxShadow: "var(--pop-xs)" }}
+            title="Refrescar"
+          >🔄</button>
         )}
       </div>
       {dispatchFlash && (
-        <div className={cn(
-          "mb-3 text-xs font-heading font-bold px-3 py-2 rounded-md border-2 border-ink",
-          dispatchFlash.status === "ok" ? "bg-sage text-white" : "bg-rust text-white"
-        )}>
-          {dispatchFlash.status === "ok" ? "✅" : "❌"} {dispatchFlash.message}
+        <div
+          className="mb-3 text-xs font-heading font-bold px-3 py-2 rounded-sc-md border-2"
+          style={{
+            background: dispatchFlash.status === "ok" ? "var(--sc-sage-100)" : "var(--sc-brick-bg)",
+            borderColor: dispatchFlash.status === "ok" ? "var(--sc-sage-500)" : "var(--sc-brick-500)",
+            color: dispatchFlash.status === "ok" ? "var(--sc-ink)" : "var(--sc-brick-500)",
+          }}
+        >
+          {dispatchFlash.status === "ok" ? "✓" : "✗"} {dispatchFlash.message}
         </div>
       )}
 
-      {/* Status filter chips — Comic UI */}
-      <div className="flex gap-2 mb-3 overflow-x-auto">
-        {FILTERS.map((f) => (
-          <button
-            key={f.key}
-            onClick={() => setFilter(f.key)}
-            className={cn(
-              "font-heading font-bold text-sm px-4 py-2 rounded-md border-2 border-ink whitespace-nowrap transition-transform",
-              filter === f.key
-                ? "bg-rust text-white shadow-comic-sm"
-                : "bg-card text-ink shadow-comic-sm hover:-translate-y-0.5"
-            )}
-          >
-            {f.label}{f.count !== undefined ? ` (${f.count})` : ""}
-          </button>
-        ))}
-      </div>
-
-      {/* Secondary filters — Comic UI */}
-      <div className="flex gap-2 mb-4 flex-wrap items-center">
+      {/* FilterBar — Sancho Comic */}
+      <div
+        className="rounded-sc-lg border-[2.5px] p-3 mb-3.5 flex gap-2 flex-wrap items-center"
+        style={{ background: "var(--sc-paper-3)", borderColor: "var(--sc-ink)", boxShadow: "var(--pop-sm)" }}
+      >
+        <div className="flex">
+          {FILTERS.map((f, i, arr) => {
+            const active = filter === f.key;
+            return (
+              <button
+                key={f.key}
+                onClick={() => setFilter(f.key)}
+                className="font-heading uppercase text-[12px] tracking-wider px-3 py-1.5 border-[2.5px] inline-flex items-center gap-1.5 transition-all"
+                style={{
+                  background: active ? "var(--sc-rust-500)" : "var(--sc-paper-3)",
+                  color: active ? "var(--sc-paper-3)" : "var(--sc-ink)",
+                  borderColor: "var(--sc-ink)",
+                  borderRadius: i === 0 ? "8px 0 0 8px" : i === arr.length - 1 ? "0 8px 8px 0" : "0",
+                  borderRightWidth: i === arr.length - 1 ? 2.5 : 0,
+                }}
+              >
+                {f.label}
+                {f.count !== undefined && (
+                  <span
+                    className="font-mono text-[10.5px] px-1.5 py-0.5 rounded-sc-pill border"
+                    style={{
+                      background: active ? "var(--sc-sun-300)" : "var(--sc-paper-3)",
+                      borderColor: "var(--sc-ink)",
+                      color: "var(--sc-ink)",
+                    }}
+                  >{f.count}</span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+        <div className="flex-1" />
         <button
           onClick={() => setTodayOnly((v) => !v)}
-          className={cn(
-            "font-heading font-bold text-xs px-3 py-1.5 rounded-md border-2 border-ink shadow-comic-sm transition-transform hover:-translate-y-0.5 inline-flex items-center gap-1.5",
-            todayOnly
-              ? "bg-rust text-white ring-2 ring-ink ring-offset-1"
-              : "bg-card text-ink"
-          )}
-          title={todayOnly ? "✓ Mostrando solo dispatch de hoy. Click para quitar el filtro." : "Filtrar para mostrar solo dispatch de hoy"}
+          className="font-heading uppercase text-[11px] tracking-wider px-2.5 py-1.5 rounded-sc-md border-2 sc-pop-hover inline-flex items-center gap-1.5"
+          style={{
+            background: todayOnly ? "var(--sc-sun-300)" : "var(--sc-paper-3)",
+            borderColor: "var(--sc-ink)",
+            boxShadow: "var(--pop-xs)",
+          }}
         >
           {todayOnly ? "✓" : "📬"} Solo HOY ({todayCount})
-          {todayOnly && <span className="ml-1 text-[10px] opacity-80">· quitar</span>}
         </button>
         <select
           value={filterChannel}
           onChange={(e) => setFilterChannel(e.target.value)}
-          className="font-heading font-bold text-xs px-2.5 py-1.5 rounded-md border-2 border-ink bg-card text-ink shadow-comic-sm focus:outline-none"
-          title="Canal"
+          className="font-heading uppercase text-[11px] tracking-wider px-2.5 py-1.5 rounded-sc-md border-2 focus:outline-none"
+          style={{ background: "var(--sc-paper-3)", borderColor: "var(--sc-ink)", boxShadow: "var(--pop-xs)" }}
         >
           <option value="all">Canal: Todos</option>
           <option value="linkedin">💼 LinkedIn</option>
@@ -440,21 +483,21 @@ export function IdeaQueueTab({ slug, openChat }: Props) {
         <select
           value={filterPillar}
           onChange={(e) => setFilterPillar(e.target.value)}
-          className="font-heading font-bold text-xs px-2.5 py-1.5 rounded-md border-2 border-ink bg-card text-ink shadow-comic-sm focus:outline-none"
-          title="Pillar"
+          className="font-heading uppercase text-[11px] tracking-wider px-2.5 py-1.5 rounded-sc-md border-2 focus:outline-none"
+          style={{ background: "var(--sc-paper-3)", borderColor: "var(--sc-ink)", boxShadow: "var(--pop-xs)" }}
         >
           <option value="all">Pillar: Todos</option>
           {pillars.map((p) => (
-            <option key={p.id} value={p.id} title={p.name}>{p.id} — {p.name.slice(0, 30)}{p.name.length > 30 ? "…" : ""}</option>
+            <option key={p.id} value={p.id}>{p.id} — {p.name.slice(0, 28)}{p.name.length > 28 ? "…" : ""}</option>
           ))}
         </select>
         <select
           value={filterDate}
           onChange={(e) => setFilterDate(e.target.value as typeof filterDate)}
-          className="font-heading font-bold text-xs px-2.5 py-1.5 rounded-md border-2 border-ink bg-card text-ink shadow-comic-sm focus:outline-none"
-          title="Recencia del signal"
+          className="font-heading uppercase text-[11px] tracking-wider px-2.5 py-1.5 rounded-sc-md border-2 focus:outline-none"
+          style={{ background: "var(--sc-paper-3)", borderColor: "var(--sc-ink)", boxShadow: "var(--pop-xs)" }}
         >
-          <option value="all">Fecha signal: Todas</option>
+          <option value="all">Fecha: Todas</option>
           <option value="today">Hoy</option>
           <option value="week">≤ 7 días</option>
           <option value="month">≤ 30 días</option>
@@ -462,8 +505,8 @@ export function IdeaQueueTab({ slug, openChat }: Props) {
         <select
           value={filterSource}
           onChange={(e) => setFilterSource(e.target.value as typeof filterSource)}
-          className="font-heading font-bold text-xs px-2.5 py-1.5 rounded-md border-2 border-ink bg-card text-ink shadow-comic-sm focus:outline-none"
-          title="Cron de origen"
+          className="font-heading uppercase text-[11px] tracking-wider px-2.5 py-1.5 rounded-sc-md border-2 focus:outline-none"
+          style={{ background: "var(--sc-paper-3)", borderColor: "var(--sc-ink)", boxShadow: "var(--pop-xs)" }}
         >
           <option value="all">Fuente: Todas</option>
           <option value="news">📰 News</option>
@@ -472,12 +515,15 @@ export function IdeaQueueTab({ slug, openChat }: Props) {
           <option value="competitors">🕵️ Competidores</option>
           <option value="other">Otra</option>
         </select>
-        <span className="font-heading text-xs font-bold text-ink/70 ml-auto">
-          {visibleIdeas.length} de {ideas.length}
-        </span>
       </div>
 
-      {/* Ideas list */}
+      {/* Hint + count above table */}
+      <div className="flex gap-1.5 items-center text-xs mb-2.5" style={{ color: "var(--sc-fg-muted)" }}>
+        <span>ℹ</span>
+        <span>Mostrando <b style={{ color: "var(--sc-ink)" }}>{visibleIdeas.length} de {ideas.length}</b> ideas. La aprobación normalmente ocurre en Slack/Discord — esta vista es para auditar y aprobar en bulk.</span>
+      </div>
+
+      {/* Ideas WIDE TABLE */}
       {visibleIdeas.length === 0 ? (
         <div className="text-center py-12">
           <span className="text-4xl mb-3 block">💡</span>
@@ -491,195 +537,297 @@ export function IdeaQueueTab({ slug, openChat }: Props) {
           </p>
         </div>
       ) : (
-        <div className="space-y-3">
-          {visibleIdeas.map((idea) => {
-            const recDays = signalRecencyDays(idea.signal?.date);
-            const rec = recencyBadge(recDays);
-            const isToday = idea.dispatch_date === today;
-            const pillarName = pillars.find((p) => p.id === idea.pillar_id)?.name;
-            const tv = CONTENT_TYPE_VISUAL[idea.content_type] || { label: idea.content_type.toUpperCase(), bg: "bg-aged text-ink", emoji: "📄" };
-            const cv = CHANNEL_VISUAL[idea.target_channel] || { label: idea.target_channel, emoji: "📄" };
-            const conf = Math.round((idea.pov_confidence || 0) * 100);
-            return (
-            <div
-              key={idea.id}
-              className={cn(
-                "bg-card rounded-xl p-5 border-[3px] border-ink",
-                isToday ? "shadow-comic" : "shadow-comic-sm"
-              )}
-            >
-              {/* Header — canal grande PRIMERO + tipo color comic */}
-              <div className="flex items-center justify-between gap-3 mb-4 pb-3 border-b-2 border-dashed border-ink/30 flex-wrap">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-parchment border-2 border-ink text-ink font-heading font-bold text-base">
-                    <span className="text-xl leading-none">{cv.emoji}</span>
-                    {cv.label}
-                  </span>
-                  <span className={cn("inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border-2 border-ink font-heading font-bold text-sm", tv.bg)}>
-                    <span className="text-base">{tv.emoji}</span>
-                    {tv.label}
-                  </span>
-                  {idea.status === "approved" && (
-                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-sage text-white border-2 border-ink text-xs font-heading font-bold">
-                      ✓ APROBADA
-                    </span>
-                  )}
-                  {idea.status !== "approved" && idea.status !== "ready" && (
-                    <span className={cn("inline-flex items-center px-2.5 py-1 rounded-md border-2 border-ink text-xs font-heading font-bold uppercase", STATUS_VISUAL[idea.status] || "bg-aged text-ink")}>
-                      {idea.status}
-                    </span>
-                  )}
-                  {isToday && (
-                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-yellow text-ink border-2 border-ink text-xs font-heading font-bold">
-                      📬 HOY
-                    </span>
-                  )}
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-ink/60 font-heading uppercase tracking-wider">Confianza</span>
-                  <div className="w-24 h-3 bg-aged border-2 border-ink rounded-full overflow-hidden">
-                    <div
-                      className={cn("h-full", conf >= 80 ? "bg-sage" : conf >= 60 ? "bg-yellow" : "bg-rust")}
-                      style={{ width: `${conf}%` }}
-                    />
-                  </div>
-                  <span className="text-base font-heading font-bold text-ink tabular-nums">{conf}%</span>
-                </div>
-              </div>
-
-              {/* Título — del campo idea.title (nuevo, generado por idea-builder)
-                  con fallback al angle stripeado por compat. */}
-              <h2 className="font-heading text-lg font-bold text-ink leading-tight mb-3">
-                {getIdeaTitle(idea)}
-              </h2>
-
-              {/* Signal */}
-              <div className="bg-parchment border-2 border-ink rounded-lg p-4 mb-4">
-                <div className="flex items-center gap-2 mb-2 flex-wrap">
-                  <span className="font-heading font-bold text-ink uppercase tracking-wider text-xs">📰 Signal</span>
-                  {idea.signal?.source && (
-                    <>
-                      <span className="text-ink/40">·</span>
-                      <span className="text-xs font-bold text-ink">{idea.signal.source}</span>
-                    </>
-                  )}
-                  {idea.signal?.date && (
-                    <>
-                      <span className="text-ink/40">·</span>
-                      <span className="text-xs text-ink/70">📅 {idea.signal.date}</span>
-                    </>
-                  )}
-                  {rec && (
-                    <span className={cn("text-[11px] font-heading font-bold px-2 py-0.5 rounded-full border-2 border-ink", rec.color)} title={`Antigüedad del signal: ${recDays} días`}>
-                      {rec.label}
-                    </span>
-                  )}
-                </div>
-                <p className="text-sm text-ink leading-relaxed mb-2">{idea.signal?.summary}</p>
-                {idea.signal?.url && (
-                  <a href={idea.signal.url} target="_blank" rel="noopener noreferrer" className="text-xs text-rust hover:underline font-bold inline-flex items-center gap-1">
-                    🔗 Ver fuente original
-                  </a>
-                )}
-              </div>
-
-              {/* Angle draft */}
-              <div className="mb-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="font-heading font-bold text-rust uppercase tracking-wider text-xs">✍️ Nuestro ángulo</span>
-                </div>
-                <p className="text-sm text-ink leading-relaxed whitespace-pre-wrap">{stripPovPrefix(idea.angle_draft)}</p>
-              </div>
-
-              {/* Pillar + Actions */}
-              <div className="flex items-center justify-between gap-3 flex-wrap pt-3 border-t-2 border-dashed border-ink/30">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-ink/60 font-heading uppercase tracking-wider">Pillar</span>
-                  <span className="text-xs font-heading font-bold bg-aged text-ink px-2.5 py-1 rounded-md border-2 border-ink" title={pillarName || idea.pillar_id}>
-                    {idea.pillar_id}{pillarName ? ` · ${pillarName}` : ""}
-                  </span>
-                </div>
-
-                {idea.status === "ready" && (
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => updateIdea(idea.id, { status: "approved", approved_at: new Date().toISOString(), approved_via: "mc-ui" })}
-                      className="font-heading text-sm font-bold px-4 py-2 rounded-md bg-sage text-white border-2 border-ink shadow-comic-sm hover:-translate-y-0.5 transition-transform"
-                    >
-                      ✓ Aprobar
-                    </button>
-                    <button
-                      onClick={() => updateIdea(idea.id, { status: "archived" })}
-                      className="font-heading text-sm font-bold px-4 py-2 rounded-md bg-card text-ink border-2 border-ink shadow-comic-sm hover:-translate-y-0.5 transition-transform"
-                    >
-                      ✕ Descartar
-                    </button>
-                  </div>
-                )}
-
-                {idea.status === "approved" && (
-                  <div className="flex gap-2 items-center">
-                    {idea.project_task_id && (
-                      idea.project_id ? (
-                        <Link
-                          href={`/dashboard/${slug}/projects/${idea.project_id}/tasks/${idea.project_task_id}`}
-                          className="font-heading text-xs font-bold bg-parchment text-ink px-2.5 py-1.5 rounded-md border-2 border-ink shadow-comic-sm hover:-translate-y-0.5 transition-transform no-underline"
-                          title="Abrir tarea del proyecto"
-                        >
-                          📋 {idea.project_task_id}
-                        </Link>
-                      ) : (
-                        <span className="font-heading text-xs font-bold bg-aged text-ink px-2.5 py-1.5 rounded-md border-2 border-ink">
-                          📋 {idea.project_task_id}
-                        </span>
-                      )
-                    )}
-                    <button
-                      onClick={() => {
-                        if (!openChat || !idea.project_task_id || !idea.project_id) {
-                          // Fallback: legacy inline expand if openChat not wired
-                          setExpandedIdea(expandedIdea === idea.id ? null : idea.id);
-                          return;
-                        }
-                        const skill = writerSkillFor(idea.target_channel);
-                        const cfg = buildTaskThread(
-                          slug,
-                          idea.project_task_id,
-                          `${idea.content_type} · ${idea.pillar_id}`,
-                          idea.project_id,
-                          {
-                            taskSkill: skill,
-                            taskChannel: idea.target_channel,
-                            taskType: "content",
-                            deliverableFile: undefined,
-                          }
-                        );
-                        openChat(slug, cfg);
+        <>
+        <div
+          className="rounded-sc-lg overflow-hidden border-[3px]"
+          style={{ background: "var(--sc-paper-3)", borderColor: "var(--sc-ink)", boxShadow: "var(--pop-md)" }}
+        >
+          <div className="overflow-x-auto relative">
+            <table style={{ borderCollapse: "collapse", fontSize: 13, tableLayout: "fixed", minWidth: "100%" }}>
+              <colgroup>
+                <col style={{ width: 70 }} />
+                <col style={{ width: 540 }} />
+                <col style={{ width: 420 }} />
+                <col style={{ width: 80 }} />
+                <col style={{ width: 140 }} />
+                <col style={{ width: 130 }} />
+                <col style={{ width: 110 }} />
+                <col style={{ width: 100 }} />
+                <col style={{ width: 90 }} />
+              </colgroup>
+              <thead>
+                <tr style={{ background: "var(--sc-paper-2)", borderBottom: "2.5px solid var(--sc-ink)" }}>
+                  {[
+                    { l: "Canal", w: 70 },
+                    { l: "Idea · descripción · fuente", w: 540 },
+                    { l: "Ángulo editorial", w: 420 },
+                    { l: "Fecha", w: 80 },
+                    { l: "Acciones", w: 140 },
+                    { l: "Pillar", w: 130, extra: true },
+                    { l: "Framework", w: 110, extra: true },
+                    { l: "Confianza", w: 100, extra: true },
+                    { l: "Estado", w: 90, extra: true },
+                  ].map((h, i, all) => (
+                    <th
+                      key={h.l}
+                      style={{
+                        padding: "12px 14px",
+                        textAlign: "left",
+                        fontFamily: "var(--font-heading)",
+                        fontSize: 11,
+                        letterSpacing: "0.08em",
+                        textTransform: "uppercase",
+                        color: h.extra ? "var(--sc-fg-muted)" : "var(--sc-ink)",
+                        fontWeight: 700,
+                        whiteSpace: "nowrap",
+                        background: h.extra ? "var(--sc-paper-3)" : "var(--sc-paper-2)",
+                        borderLeft: h.extra && i > 0 && !all[i - 1]?.extra ? "2.5px solid var(--sc-ink)" : "none",
                       }}
-                      className="font-heading text-sm font-bold px-4 py-2 rounded-md bg-rust text-white border-2 border-ink shadow-comic-sm hover:-translate-y-0.5 transition-transform inline-flex items-center gap-1.5"
-                      title={`Abrir chat para redactar el ${idea.target_channel} (skill: ${writerSkillFor(idea.target_channel)})`}
-                    >
-                      💬 Redactar
-                    </button>
-                  </div>
-                )}
-              </div>
+                    >{h.l}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {visibleIdeas.map((idea, idx) => {
+                  const recDays = signalRecencyDays(idea.signal?.date);
+                  const isToday = idea.dispatch_date === today;
+                  const pillarName = pillars.find((p) => p.id === idea.pillar_id)?.name;
+                  const tv = CONTENT_TYPE_VISUAL[idea.content_type] || { label: idea.content_type.toUpperCase(), bg: "bg-aged text-ink", emoji: "📄" };
+                  const cv = CHANNEL_VISUAL[idea.target_channel] || { label: idea.target_channel, emoji: "📄" };
+                  const conf = Math.round((idea.pov_confidence || 0) * 100);
+                  const cellBase: React.CSSProperties = { padding: "16px 12px", verticalAlign: "top", background: isToday ? "var(--sc-sun-50)" : "var(--sc-paper-3)" };
+                  const cellExtra: React.CSSProperties = { ...cellBase, background: "var(--sc-paper-2)" };
+                  const last = idx === visibleIdeas.length - 1;
+                  const isReady = idea.status === "ready";
+                  const isApproved = idea.status === "approved";
+                  return (
+                    <tr key={idea.id} style={{ borderBottom: last ? "none" : "2.5px solid var(--sc-ink)" }}>
+                      {/* Canal */}
+                      <td style={cellBase}>
+                        <div className="flex flex-col items-start gap-1">
+                          <span className="text-xl">{cv.emoji}</span>
+                          <span className="font-heading uppercase text-[11px] tracking-wider font-bold" style={{ color: "var(--sc-ink)" }}>
+                            {cv.label}
+                          </span>
+                          {isToday && (
+                            <span
+                              className="font-heading uppercase text-[9px] tracking-wider px-1.5 py-0.5 rounded-sc-pill border"
+                              style={{ background: "var(--sc-sun-300)", borderColor: "var(--sc-ink)", color: "var(--sc-ink)" }}
+                            >📬 HOY</span>
+                          )}
+                        </div>
+                      </td>
 
-              {/* Draft cards — shown when idea is approved and expanded */}
-              {idea.status === "approved" && expandedIdea === idea.id && (
-                <DraftCards
-                  idea={idea}
-                  slug={slug}
-                  onSaveDraft={saveDraft}
-                  onRequestIteration={requestIteration}
-                  onOpenDoc={openDraftDoc}
-                  onRefresh={fetchIdeas}
-                />
-              )}
-            </div>
-            );
-          })}
+                      {/* Idea · descripción · fuente */}
+                      <td style={{ ...cellBase, padding: "16px 16px 16px 12px" }}>
+                        <div
+                          className="font-heading font-extrabold leading-tight mb-2"
+                          style={{ fontSize: 18, color: "var(--sc-ink)", textWrap: "balance" }}
+                        >
+                          {getIdeaTitle(idea)}
+                        </div>
+                        <div className="text-[13px] leading-relaxed mb-2" style={{ color: "var(--sc-fg-soft)" }}>
+                          {idea.signal?.summary}
+                        </div>
+                        <div className="flex flex-wrap gap-1.5 items-center text-xs" style={{ color: "var(--sc-fg-muted)" }}>
+                          <span>🌐</span>
+                          <span>Fuente:</span>
+                          {idea.signal?.source && (
+                            <b style={{ color: "var(--sc-fg-soft)" }}>{idea.signal.source}</b>
+                          )}
+                          {idea.signal?.url && (
+                            <a
+                              href={idea.signal.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="font-mono text-[11px] underline"
+                              style={{ color: "var(--sc-navy-500)", textUnderlineOffset: 3 }}
+                              title={idea.signal.url}
+                            >{idea.signal.url.replace(/^https?:\/\/(www\.)?/, "").slice(0, 38)}{idea.signal.url.length > 45 ? "…" : ""} ↗</a>
+                          )}
+                          {idea.signal?.date && (
+                            <>
+                              <span>·</span>
+                              <span>📅 {idea.signal.date}{recDays !== null && ` (${recDays}d)`}</span>
+                            </>
+                          )}
+                        </div>
+                      </td>
+
+                      {/* Ángulo editorial */}
+                      <td style={cellBase}>
+                        <div className="flex gap-2 items-stretch">
+                          <span style={{ width: 3, alignSelf: "stretch", background: "var(--sc-rust-500)", borderRadius: 1.5, flexShrink: 0 }} />
+                          <span
+                            className="text-[13px] leading-relaxed italic"
+                            style={{ color: "var(--sc-ink)", textWrap: "pretty" }}
+                          >{stripPovPrefix(idea.angle_draft)}</span>
+                        </div>
+                      </td>
+
+                      {/* Fecha contenido */}
+                      <td style={cellBase}>
+                        <div className="flex flex-col gap-1">
+                          <span className="font-mono text-[13px] font-bold" style={{ color: "var(--sc-ink)" }}>
+                            {idea.signal?.date ? new Date(idea.signal.date).toLocaleDateString("es-ES", { day: "numeric", month: "short" }) : "—"}
+                          </span>
+                          <span className="text-[10px]" style={{ color: "var(--sc-fg-muted)" }}>
+                            {idea.signal?.date ? new Date(idea.signal.date).getFullYear() : ""}
+                          </span>
+                          {idea.dispatch_date && (
+                            <span className="text-[10px]" style={{ color: "var(--sc-rust-500)" }}>
+                              dispatch {idea.dispatch_date.slice(5)}
+                            </span>
+                          )}
+                        </div>
+                      </td>
+
+                      {/* Acciones — vertical stack */}
+                      <td style={{ ...cellBase, padding: "16px 12px" }}>
+                        {!isReady && !isApproved && (
+                          <span className="text-xs italic" style={{ color: "var(--sc-fg-muted)" }}>
+                            {idea.status === "archived" ? "Descartada" : idea.status}
+                          </span>
+                        )}
+                        {isReady && (
+                          <div className="flex flex-col gap-1.5">
+                            <button
+                              onClick={() => updateIdea(idea.id, { status: "approved", approved_at: new Date().toISOString(), approved_via: "mc-ui" })}
+                              className="font-heading uppercase text-[12px] tracking-wider px-2.5 py-1.5 rounded border-2 sc-pop-hover inline-flex items-center justify-center gap-1.5"
+                              style={{ background: "var(--sc-sage-500)", color: "var(--sc-paper-3)", borderColor: "var(--sc-ink)", boxShadow: "var(--pop-xs)" }}
+                            >✓ Aprobar</button>
+                            <button
+                              onClick={() => {
+                                if (!openChat) return setExpandedIdea(expandedIdea === idea.id ? null : idea.id);
+                                if (idea.project_task_id && idea.project_id) {
+                                  const cfg = buildTaskThread(slug, idea.project_task_id, `${idea.content_type} · ${idea.pillar_id}`, idea.project_id, { taskSkill: writerSkillFor(idea.target_channel), taskChannel: idea.target_channel, taskType: "content" });
+                                  openChat(slug, cfg);
+                                }
+                              }}
+                              className="font-heading uppercase text-[11px] tracking-wider px-2.5 py-1.5 rounded border-2 sc-pop-hover inline-flex items-center justify-center gap-1.5"
+                              style={{ background: "var(--sc-rust-500)", color: "var(--sc-paper-3)", borderColor: "var(--sc-ink)", boxShadow: "var(--pop-xs)" }}
+                            >✍ Redactar</button>
+                            <button
+                              onClick={() => updateIdea(idea.id, { status: "archived" })}
+                              className="font-heading uppercase text-[11px] tracking-wider px-2.5 py-1.5 rounded border-2 sc-pop-hover inline-flex items-center justify-center gap-1.5"
+                              style={{ background: "var(--sc-paper-3)", color: "var(--sc-ink)", borderColor: "var(--sc-ink)", boxShadow: "var(--pop-xs)" }}
+                            >✗ Descartar</button>
+                          </div>
+                        )}
+                        {isApproved && (
+                          <div className="flex flex-col gap-1.5">
+                            <button
+                              onClick={() => {
+                                if (idea.content_task_id && idea.project_id && idea.project_task_id) {
+                                  const channel = idea.content_task_channels?.[0] || idea.target_channel || "linkedin";
+                                  router.push(`/dashboard/${slug}/projects/${idea.project_id}/tasks/${idea.project_task_id}/content/${idea.content_task_id}/draft/${channel}`);
+                                  return;
+                                }
+                                if (!openChat || !idea.project_task_id || !idea.project_id) {
+                                  setExpandedIdea(expandedIdea === idea.id ? null : idea.id);
+                                  return;
+                                }
+                                const cfg = buildTaskThread(slug, idea.project_task_id, `${idea.content_type} · ${idea.pillar_id}`, idea.project_id, { taskSkill: writerSkillFor(idea.target_channel), taskChannel: idea.target_channel, taskType: "content" });
+                                openChat(slug, cfg);
+                              }}
+                              className="font-heading uppercase text-[12px] tracking-wider px-2.5 py-1.5 rounded border-2 sc-pop-hover inline-flex items-center justify-center gap-1.5"
+                              style={{ background: "var(--sc-rust-500)", color: "var(--sc-paper-3)", borderColor: "var(--sc-ink)", boxShadow: "var(--pop-xs)" }}
+                            >💬 Abrir draft</button>
+                            {idea.project_task_id && idea.project_id && (
+                              <Link
+                                href={`/dashboard/${slug}/projects/${idea.project_id}/tasks/${idea.project_task_id}`}
+                                className="font-heading uppercase text-[11px] tracking-wider px-2.5 py-1.5 rounded border-2 sc-pop-hover inline-flex items-center justify-center gap-1.5 no-underline"
+                                style={{ background: "var(--sc-paper-3)", color: "var(--sc-ink)", borderColor: "var(--sc-ink)", boxShadow: "var(--pop-xs)" }}
+                                title={idea.project_task_id}
+                              >📋 Tarea</Link>
+                            )}
+                          </div>
+                        )}
+                      </td>
+
+                      {/* === Extra (scroll) === */}
+                      <td style={{ ...cellExtra, borderLeft: "2.5px solid var(--sc-ink)" }}>
+                        <span
+                          className="font-mono text-[11px] font-bold inline-flex items-center px-2 py-1 rounded-sc-pill border"
+                          style={{ background: "var(--sc-rust-100)", color: "var(--sc-rust-700)", borderColor: "var(--sc-rust-500)" }}
+                          title={pillarName || idea.pillar_id}
+                        >{idea.pillar_id}</span>
+                      </td>
+                      <td style={cellExtra}>
+                        <span
+                          className={cn("font-heading uppercase text-[10px] tracking-wider px-2 py-1 rounded-sc-pill border-[1.5px] inline-flex items-center gap-1", tv.bg)}
+                          style={{ borderColor: "var(--sc-ink)" }}
+                        >
+                          <span>{tv.emoji}</span>{tv.label}
+                        </span>
+                      </td>
+                      <td style={cellExtra}>
+                        <div className="flex items-center gap-1.5">
+                          <span
+                            className="inline-block h-2 w-12 rounded-sc-pill border overflow-hidden"
+                            style={{ borderColor: "var(--sc-ink)", background: "var(--sc-paper-3)" }}
+                          >
+                            <span
+                              className="block h-full"
+                              style={{
+                                width: `${conf}%`,
+                                background: conf >= 80 ? "var(--sc-sage-500)" : conf >= 60 ? "var(--sc-sun-300)" : "var(--sc-brick-500)",
+                              }}
+                            />
+                          </span>
+                          <span className="font-mono text-[11px] font-bold">{conf}%</span>
+                        </div>
+                      </td>
+                      <td style={cellExtra}>
+                        <span
+                          className="font-heading uppercase text-[10px] tracking-wider px-1.5 py-0.5 rounded-sc-pill border inline-flex items-center"
+                          style={{
+                            background:
+                              idea.status === "ready" ? "var(--sc-sage-100)"
+                              : idea.status === "approved" ? "var(--sc-navy-500)"
+                              : idea.status === "archived" ? "var(--sc-brick-bg)"
+                              : "var(--sc-sun-100)",
+                            color:
+                              idea.status === "approved" ? "var(--sc-paper-3)"
+                              : idea.status === "archived" ? "var(--sc-brick-500)"
+                              : "var(--sc-ink)",
+                            borderColor: "var(--sc-ink)",
+                          }}
+                        >{idea.status}</span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+          <div
+            className="flex gap-1.5 items-center text-xs px-3.5 py-2.5 border-t-[2.5px]"
+            style={{ background: "var(--sc-paper-2)", borderColor: "var(--sc-ink)", color: "var(--sc-fg-muted)" }}
+          >
+            <span>→</span>
+            <span>Desliza horizontalmente para ver <b style={{ color: "var(--sc-ink)" }}>Pillar · Framework · Confianza · Estado</b></span>
+          </div>
         </div>
+
+        {/* Draft expansion (legacy fallback) */}
+        {expandedIdea && (() => {
+          const idea = visibleIdeas.find((i) => i.id === expandedIdea);
+          if (!idea || idea.status !== "approved") return null;
+          return (
+            <div className="mt-4">
+              <DraftCards
+                idea={idea}
+                slug={slug}
+                onSaveDraft={saveDraft}
+                onRequestIteration={requestIteration}
+                onOpenDoc={openDraftDoc}
+                onRefresh={fetchIdeas}
+              />
+            </div>
+          );
+        })()}
+        </>
       )}
 
       {/* Draft viewer/editor — shared slideover used by all DraftCards */}

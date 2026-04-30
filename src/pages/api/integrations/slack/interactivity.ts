@@ -30,6 +30,7 @@ import path from "path";
 import yaml from "js-yaml";
 import { BASE } from "@/lib/data/paths";
 import { readJSON } from "@/lib/data/json-io";
+import { logActivity } from "@/lib/data/activity-log";
 
 export const config = { api: { bodyParser: false } };
 
@@ -169,6 +170,27 @@ function dispatchIdeaUpdate(slug: string, ideaId: string, action: "approve" | "l
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ slug, ideaId, fields }),
   }).catch((e) => console.error("[slack-interactivity] PATCH failed:", (e as Error).message));
+
+  // Activity log (Engine/Estado feed)
+  try {
+    if (action === "approve") {
+      logActivity(slug, {
+        type: "approve",
+        text: `<b>${actor}</b> aprobó <span class="font-mono">${ideaId}</span> desde Slack`,
+        icon: "✓", accent: "sage",
+        meta: { ideaId, actor, via: "slack-button" },
+      });
+    } else if (action === "reject") {
+      logActivity(slug, {
+        type: "discard",
+        text: `<b>${actor}</b> descartó <span class="font-mono">${ideaId}</span> desde Slack`,
+        icon: "✗", accent: "brick",
+        meta: { ideaId, actor, via: "slack-button" },
+      });
+    }
+  } catch (e) {
+    console.error("[slack-interactivity] activity log failed:", (e as Error).message);
+  }
 }
 
 // ── Update the original Slack message via response_url ────────

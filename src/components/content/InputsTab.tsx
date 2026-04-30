@@ -104,7 +104,12 @@ function formatLastRun(iso: string | undefined | null): string | null {
   return d.toLocaleDateString("es-ES", { day: "numeric", month: "short" });
 }
 
-interface Props { slug: string; openChat: (slug: string, config: ThreadConfig) => void; }
+interface Props {
+  slug: string;
+  openChat: (slug: string, config: ThreadConfig) => void;
+  /** When set, InputsTab opens directly in this section (no list, no calendar/setup banners). For embedding inside a slide-over from the pipeline. */
+  embedded?: { section: Section };
+}
 
 type Section = "dispatch-channel" | "news" | "profiles" | "keywords" | "paa" | "cadence";
 
@@ -122,13 +127,13 @@ interface IdeaLite {
   pov_confidence?: number; angle_draft?: string; signal?: { date?: string; summary?: string };
 }
 
-export function InputsTab({ slug, openChat }: Props) {
+export function InputsTab({ slug, openChat, embedded }: Props) {
   const [configs, setConfigs] = useState<AllConfigs | null>(null);
   const [crons, setCrons] = useState<CronInfo[]>([]);
   const [ideas, setIdeas] = useState<IdeaLite[]>([]);
   const [dispatchChannel, setDispatchChannel] = useState<DispatchChannelConfig | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeSection, setActiveSection] = useState<Section | null>(null);
+  const [activeSection, setActiveSection] = useState<Section | null>(embedded?.section ?? null);
   const [openDocPath, setOpenDocPath] = useState<string | null>(null);
 
   const fetchAll = useCallback(async () => {
@@ -415,9 +420,11 @@ export function InputsTab({ slug, openChat }: Props) {
   // Render detail section
   return (
     <div>
-      <button type="button" onClick={() => setActiveSection(null)} className="text-xs text-muted-foreground hover:text-rust mb-4 flex items-center gap-1">
-        ← Volver a Inputs
-      </button>
+      {!embedded && (
+        <button type="button" onClick={() => setActiveSection(null)} className="text-xs text-muted-foreground hover:text-rust mb-4 flex items-center gap-1">
+          ← Volver a Inputs
+        </button>
+      )}
 
       {activeSection === "dispatch-channel" && <DispatchChannelForm slug={slug} current={dispatchChannel} onSaved={fetchAll} />}
       {activeSection === "news" && <NewsPromptsForm configs={configs.newsPrompts} slug={slug} onSaved={fetchAll} />}
@@ -432,7 +439,6 @@ export function InputsTab({ slug, openChat }: Props) {
       {activeSection === "keywords" && <KeywordsForm configs={configs.keywordsSeed} slug={slug} onSaved={fetchAll} />}
       {activeSection === "paa" && <PaaForm configs={configs.paaQueries} slug={slug} onSaved={fetchAll} />}
       {activeSection === "cadence" && <CadenceForm cadence={configs.cadence} slug={slug} onSaved={fetchAll} />}
-      {activeSection === "pov" && <PovBankForm povBank={configs.povBank} pillars={pillars} slug={slug} onSaved={fetchAll} />}
       {docSlideOver}
     </div>
   );

@@ -48,9 +48,26 @@ function humanizeCron(expr: string): string {
   return `${time} ${dayStr}`;
 }
 
-/** Get the last execution from recurring-tasks */
-function getLastExecution(slug: string, cronName: string): { date: string; status: string } | null {
-  // Map cron names to recurring-tasks folder names
+/** Read raw jobs-state.json once per request */
+let _jobsStateCache: { mtime: number; data: Record<string, { state?: { lastRunAtMs?: number; lastRunStatus?: string } }> } | null = null;
+function loadJobsState(): Record<string, { state?: { lastRunAtMs?: number; lastRunStatus?: string } }> {
+  const f = path.join(process.env.HOME || "", ".openclaw", "cron", "jobs-state.json");
+  if (!fs.existsSync(f)) return {};
+  try {
+    const stat = fs.statSync(f);
+    if (_jobsStateCache && _jobsStateCache.mtime === stat.mtimeMs) return _jobsStateCache.data;
+    const parsed = JSON.parse(fs.readFileSync(f, "utf-8"));
+    const data = parsed.jobs || {};
+    _jobsStateCache = { mtime: stat.mtimeMs, data };
+    return data;
+  } catch {
+    return {};
+  }
+}
+
+/** Get the last execution. Prefers per-day recurring-tasks JSON, falls back to jobs-state.json. */
+function getLastExecution(slug: string, cronName: string, jobId: string): { date: string; status: string } | null {
+  // 1) Try recurring-tasks (richer info: status from cron output)
   const BASE = path.join(process.env.HOME || "", ".openclaw", "workspace-sancho");
   const nameMap: Record<string, string> = {
     "News Monitor": "content-news-monitor",
@@ -61,27 +78,32 @@ function getLastExecution(slug: string, cronName: string): { date: string; statu
     "Keyword Research": "content-keyword-research",
     "POV Bank Refresh": "content-pov-bank",
   };
-
-  // Extract the base name (remove "Content: " prefix and " — {client}" suffix)
   const baseName = cronName.replace(/^Content:\s*/, "").replace(/\s*—\s*.*$/, "").trim();
   const folderName = nameMap[baseName];
-  if (!folderName) return null;
-
-  const dir = path.join(BASE, "brand", slug, "recurring-tasks", folderName);
-  if (!fs.existsSync(dir)) return null;
-
-  const files = fs.readdirSync(dir)
-    .filter((f) => f.endsWith(".json"))
-    .sort()
-    .reverse();
-  if (files.length === 0) return null;
-
-  try {
-    const data = JSON.parse(fs.readFileSync(path.join(dir, files[0]), "utf-8"));
-    return { date: data.date || files[0].replace(".json", ""), status: data.status || "ok" };
-  } catch {
-    return { date: files[0].replace(".json", ""), status: "unknown" };
+  if (folderName) {
+    const dir = path.join(BASE, "brand", slug, "recurring-tasks", folderName);
+    if (fs.existsSync(dir)) {
+      const files = fs.readdirSync(dir).filter((f) => f.endsWith(".json")).sort().reverse();
+      if (files.length > 0) {
+        try {
+          const data = JSON.parse(fs.readFileSync(path.join(dir, files[0]), "utf-8"));
+          return { date: data.date || files[0].replace(".json", ""), status: data.status || "ok" };
+        } catch {
+          return { date: files[0].replace(".json", ""), status: "unknown" };
+        }
+      }
+    }
   }
+
+  // 2) Fallback to runtime jobs-state.json (always written by the cron runner)
+  const state = loadJobsState()[jobId];
+  if (state?.state?.lastRunAtMs) {
+    return {
+      date: new Date(state.state.lastRunAtMs).toISOString(),
+      status: state.state.lastRunStatus || "unknown",
+    };
+  }
+  return null;
 }
 
 /** Short description for each cron type */
@@ -120,7 +142,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
           scheduleHuman: humanizeCron(j.schedule.expr),
           timezone: j.schedule.tz,
           model: j.payload?.model || "unknown",
-          lastExecution: getLastExecution(slug, j.name),
+          lastExecution: getLastExecution(slug, j.name, j.id),
           promptPreview: (j.payload?.message || "").slice(0, 200) + "...",
           promptFull: j.payload?.message || "",
         };

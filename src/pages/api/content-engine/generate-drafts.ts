@@ -35,6 +35,7 @@ import { withErrorHandler } from "@/lib/api-middleware";
 import { BASE } from "@/lib/data/paths";
 import { createContentTask, attachDocumentToContentTask } from "@/lib/data/content-tasks";
 import { createEmptyDraft, draftRelPath } from "@/lib/data/drafts";
+import { triggerWriter } from "@/lib/data/writer-trigger";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function loadIdeas(slug: string): any[] {
@@ -212,11 +213,29 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     provisioned.push(channel);
   }
 
-  // 4. Mirror project_id / project_task_id back to the idea (kept for legacy
-  //    consumers — UIs that hop from idea-queue to the task).
+  // 4. Mirror project_id / project_task_id / content_task_id back to the idea
+  //    so the Idea Bank can link directly to the Content Task and its drafts.
   idea.project_task_id = taskId;
   idea.project_id = projectId;
+  idea.content_task_id = contentTask.id;
+  idea.content_task_channels = channels;
   saveIdeas(slug, ideas);
+
+  // 5. Lanzar la skill de escritura. Posteamos al thread del ContentTask vía
+  //    el gateway de OpenClaw para que Escudero Content corra deep-research →
+  //    Clarify → writer y sobreescriba los .md. Best-effort: si el gateway no
+  //    responde, los drafts quedan pendientes y se pueden disparar a mano
+  //    desde el chat del ContentTask.
+  const trigger = await triggerWriter({
+    slug,
+    contentTaskId: contentTask.id,
+    parentTaskId: taskId,
+    ideaId,
+    channels,
+    skill,
+    instruction: "",
+    kind: "initial",
+  });
 
   return res.status(200).json({
     ok: true,
@@ -226,7 +245,8 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     taskId,
     channelsProvisioned: provisioned,
     skill,
-    note: "ContentTask + draft files provisioned. Escudero Content runs the writer skill out-of-band; drafts stay in `pending` until that lands.",
+    writerTriggered: trigger.forwardedToGateway,
+    writerError: trigger.error,
   });
 }
 

@@ -145,5 +145,58 @@ export function snapshotDraft(slug: string, ideaId: string, channel: string): st
   return `content/drafts/${ideaId}/${snapshotName}`;
 }
 
+export type DraftStatus = DraftFrontmatter["status"];
+
+/**
+ * Read the `status` of every draft file in `target_channels[]` for the given
+ * idea. Channels with no `.md` on disk yet map to `"pending"`. Used by the
+ * kanban to show a per-channel status chip in each ContentTask card.
+ */
+export function getDraftStatuses(
+  slug: string,
+  ideaId: string,
+  channels: string[],
+): Record<string, DraftStatus> {
+  const out: Record<string, DraftStatus> = {};
+  for (const ch of channels) {
+    const draft = loadDraft(slug, ideaId, ch);
+    out[ch] = draft?.meta.status ?? "pending";
+  }
+  return out;
+}
+
+/**
+ * Aggregate per-channel statuses into a single phase the kanban can use to
+ * place the card in a column. Strategy: take the *least-advanced* channel —
+ * the card represents what's still pending. Returns one of:
+ *   "pending" | "drafting" | "draft" | "approved" | "published"
+ */
+const DRAFT_STATUS_RANK: Record<DraftStatus, number> = {
+  pending: 0,
+  researching: 1,
+  "clarify-needed": 1,
+  drafting: 2,
+  draft: 3,
+  approved: 4,
+  published: 5,
+};
+
+export function aggregateDraftStatus(
+  statuses: Record<string, DraftStatus>,
+): DraftStatus | null {
+  const entries = Object.values(statuses);
+  if (entries.length === 0) return null;
+  let minRank = Infinity;
+  let minStatus: DraftStatus = entries[0];
+  for (const s of entries) {
+    const r = DRAFT_STATUS_RANK[s] ?? 0;
+    if (r < minRank) {
+      minRank = r;
+      minStatus = s;
+    }
+  }
+  return minStatus;
+}
+
 /** Re-export utilities used by API layer. */
 export { parseFrontmatter, serializeFrontmatter };

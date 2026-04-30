@@ -12,7 +12,7 @@ import { buildTaskThread } from "@/lib/chat-openers";
 import { resolvePillarDocPath, resolveTaskDocPaths } from "@/lib/pillar-doc-paths";
 import { PRJ_CHANNELS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
-import type { Idea, Task } from "@/types";
+import type { ContentTask, Idea, Task } from "@/types";
 
 import { StatusPill } from "@/components/shared/status-pill";
 import { EmptyState } from "@/components/shared/empty-state";
@@ -639,10 +639,9 @@ export default function TaskDetailPage() {
       )}
 
       {/* Content Pipeline */}
-      {taskType === "content" && <ContentPipeline channel={task.channel} />}
-
-      {/* ===== IDEAS / CONTACTS (before docs for content/outreach) ===== */}
-      {(taskType === "content" || taskType === "outreach" || ideaIds.length > 0) && (
+      {/* ===== CONTACTS (outreach) / legacy ideas (other types) =====
+           Para taskType="content" se usa la sección "Content Tasks" más abajo. */}
+      {(taskType === "outreach" || (taskType !== "content" && ideaIds.length > 0)) && (
         <div className="bg-white border border-[#E8E2D9] rounded-[10px] overflow-hidden mb-6" style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}>
           <div className="px-4 py-3 border-b border-[#E8E2D9] flex items-center gap-2">
             <span className="text-base">{taskType === "outreach" ? "👥" : "💡"}</span>
@@ -669,6 +668,16 @@ export default function TaskDetailPage() {
             )}
           </div>
         </div>
+      )}
+
+      {/* ===== CONTENT TASKS (only for type=content parents) ===== */}
+      {taskType === "content" && (
+        <ContentTasksSection
+          slug={slug}
+          projectId={projectId}
+          parentTaskId={taskId}
+          contentTasks={task.content_tasks || []}
+        />
       )}
 
       {/* ===== DOCUMENTS ===== */}
@@ -774,29 +783,217 @@ function MetaCard({ label, editing, children }: { label: string; editing: boolea
 }
 
 // ---------------------------------------------------------------------------
-// Content Pipeline visual
+// Content Tasks section — kanban de subtareas de redacción dentro de una
+// task type=content. Vive entre la sección "Ideas" y "Documentos".
 // ---------------------------------------------------------------------------
 
-function ContentPipeline({ channel }: { channel: string }) {
-  const pipelineKey = CHANNEL_TO_PIPELINE[channel] || "blog";
-  const pipeline = CONTENT_PIPELINES[pipelineKey] || CONTENT_PIPELINES.blog;
+const CONTENT_TASK_STATUS_STYLES: Record<string, string> = {
+  New: "bg-[#F1F2F4] text-[#5C6470] border-[#D8DCE0]",
+  Approved: "bg-[#FEF3C7] text-[#92400E] border-[#FCD34D]",
+  Draft: "bg-[#DBEAFE] text-[#1E40AF] border-[#93C5FD]",
+  Media: "bg-[#FCE7F3] text-[#9D174D] border-[#F9A8D4]",
+  Review: "bg-[#EDE9FE] text-[#5B21B6] border-[#C4B5FD]",
+  Ready: "bg-[#D1FAE5] text-[#065F46] border-[#6EE7B7]",
+  Published: "bg-[#A7F3D0] text-[#064E3B] border-[#34D399]",
+  Discarded: "bg-[#E5E7EB] text-[#6B7280] border-[#D1D5DB]",
+  Deferred: "bg-[#FFEDD5] text-[#9A3412] border-[#FDBA74]",
+};
+
+const PIPELINE_STATE_LABEL: Record<string, string> = {
+  researching: "🔍 Researching",
+  "clarify-needed": "❓ Clarify",
+  drafting: "✍️ Drafting",
+};
+
+// Columnas del kanban — agrupan los 9 estados de ContentTask en 4 fases
+// del flujo editorial. New / Discarded / Deferred quedan fuera (contador en header).
+const CONTENT_TASK_KANBAN_COLUMNS: { key: string; label: string; icon: string; statuses: ContentTask["status"][] }[] = [
+  { key: "approved", label: "Aprobadas", icon: "📋", statuses: ["Approved"] },
+  { key: "draft", label: "Draft", icon: "✍️", statuses: ["Draft", "Media"] },
+  { key: "review", label: "Review", icon: "👀", statuses: ["Review", "Ready"] },
+  { key: "published", label: "Publicadas", icon: "✅", statuses: ["Published"] },
+];
+
+// Per-channel draft status (from frontmatter) → palette for the inline chip.
+const DRAFT_STATUS_STYLES: Record<string, string> = {
+  pending: "bg-[#F1F2F4] text-[#5C6470] border-[#D8DCE0]",
+  researching: "bg-[#FEF3C7] text-[#92400E] border-[#FCD34D]",
+  "clarify-needed": "bg-[#FED7AA] text-[#9A3412] border-[#FDBA74]",
+  drafting: "bg-[#DBEAFE] text-[#1E40AF] border-[#93C5FD]",
+  draft: "bg-[#DBEAFE] text-[#1E40AF] border-[#93C5FD]",
+  approved: "bg-[#EDE9FE] text-[#5B21B6] border-[#C4B5FD]",
+  published: "bg-[#A7F3D0] text-[#064E3B] border-[#34D399]",
+};
+
+// Map per-channel draft status → kanban column key. Used when the CT carries
+// `draft_statuses` (post-Feature C). Keeps the worst channel in front so the
+// card sits in the column for the channel still pending.
+const DRAFT_STATUS_TO_COLUMN: Record<string, string> = {
+  pending: "approved",
+  researching: "approved",
+  "clarify-needed": "approved",
+  drafting: "draft",
+  draft: "draft",
+  approved: "review",
+  published: "published",
+};
+
+function aggregateDraftStatus(statuses: Record<string, string> | undefined): string | null {
+  if (!statuses) return null;
+  const entries = Object.values(statuses);
+  if (entries.length === 0) return null;
+  const RANK: Record<string, number> = {
+    pending: 0, researching: 1, "clarify-needed": 1,
+    drafting: 2, draft: 3, approved: 4, published: 5,
+  };
+  let min = entries[0];
+  for (const s of entries) {
+    if ((RANK[s] ?? 0) < (RANK[min] ?? 0)) min = s;
+  }
+  return min;
+}
+
+function ContentTasksSection({
+  slug,
+  projectId,
+  parentTaskId,
+  contentTasks,
+}: {
+  slug: string;
+  projectId: string;
+  parentTaskId: string;
+  contentTasks: ContentTask[];
+}) {
+  const grouped = useMemo(() => {
+    const map: Record<string, ContentTask[]> = {};
+    for (const col of CONTENT_TASK_KANBAN_COLUMNS) map[col.key] = [];
+    const archived: ContentTask[] = [];
+    for (const ct of contentTasks) {
+      // Prefer draft_statuses (per-channel, source of truth for editorial
+      // workflow) when present; fall back to ct.status (legacy/empty CTs).
+      const aggDraft = aggregateDraftStatus(ct.draft_statuses);
+      let colKey: string | undefined;
+      if (aggDraft) {
+        colKey = DRAFT_STATUS_TO_COLUMN[aggDraft];
+      } else {
+        colKey = CONTENT_TASK_KANBAN_COLUMNS.find((c) => c.statuses.includes(ct.status))?.key;
+      }
+      if (colKey && map[colKey]) map[colKey].push(ct);
+      else archived.push(ct);
+    }
+    return { map, archived };
+  }, [contentTasks]);
 
   return (
-    <div className="border-t-2 border-border pt-4 mt-4 mb-4">
-      <div className="font-heading text-sm font-semibold text-navy mb-2.5">
-        🔄 Pipeline: {pipeline.label}
-      </div>
-      <div className="flex gap-1 items-center flex-wrap">
-        {pipeline.steps.map((step, i) => (
-          <span key={step.key} className="contents">
-            <span className="text-[11px] px-2 py-0.5 rounded bg-rust/8 text-rust font-medium">
-              {step.icon} {step.label}
-            </span>
-            {i < pipeline.steps.length - 1 && (
-              <span className="text-[10px] text-muted-foreground">→</span>
-            )}
+    <div
+      className="bg-white border border-[#E8E2D9] rounded-[10px] overflow-hidden mb-6"
+      style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}
+    >
+      <div className="px-4 py-3 border-b border-[#E8E2D9] flex items-center gap-2">
+        <span className="text-base">✍️</span>
+        <span className="font-semibold text-sm text-[#2C3E50]">Content Tasks</span>
+        <span className="text-[10px] text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+          {contentTasks.length}
+        </span>
+        {grouped.archived.length > 0 && (
+          <span className="text-[10px] text-muted-foreground italic ml-auto">
+            +{grouped.archived.length} archivadas
           </span>
-        ))}
+        )}
+      </div>
+      <div className="p-4">
+        {contentTasks.length === 0 ? (
+          <div className="text-center py-6 text-sm text-muted-foreground/50 italic">
+            Sin content tasks. Aprueba una idea para crear la primera.
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {CONTENT_TASK_KANBAN_COLUMNS.map((col) => {
+              const items = grouped.map[col.key] || [];
+              return (
+                <div
+                  key={col.key}
+                  className="bg-[#FAFAF7] border border-[#E8E2D9] rounded-lg p-2 min-h-[120px]"
+                >
+                  <div className="flex items-center gap-1.5 px-1 pb-2 mb-2 border-b border-[#E8E2D9]">
+                    <span>{col.icon}</span>
+                    <span className="text-[11px] font-semibold text-[#2C3E50] uppercase tracking-[0.5px]">
+                      {col.label}
+                    </span>
+                    <span className="text-[10px] text-muted-foreground ml-auto">{items.length}</span>
+                  </div>
+                  <div className="space-y-1.5">
+                    {items.length === 0 ? (
+                      <div className="text-center py-3 text-[11px] text-muted-foreground/40 italic">—</div>
+                    ) : (
+                      items.map((ct) => {
+                        const statusClass =
+                          CONTENT_TASK_STATUS_STYLES[ct.status] ||
+                          "bg-muted text-muted-foreground border-border";
+                        return (
+                          <Link
+                            key={ct.id}
+                            href={`/dashboard/${slug}/projects/${projectId}/tasks/${parentTaskId}/content/${ct.id}`}
+                            className="block bg-white border border-[#E8E2D9] rounded-lg px-2.5 py-2 hover:border-rust hover:shadow-sm transition-all"
+                          >
+                            <div className="text-[12px] font-semibold text-[#2C3E50] leading-snug line-clamp-2">
+                              {ct.name}
+                            </div>
+                            <div className="flex items-center gap-1 flex-wrap mt-1.5">
+                              <span
+                                className={cn(
+                                  "text-[9px] font-medium border rounded-full px-1.5 py-0.5",
+                                  statusClass,
+                                )}
+                              >
+                                {ct.status}
+                              </span>
+                              {ct.pipeline_state && ct.status === "Approved" && (
+                                <span className="text-[9px] bg-[#F1F2F4] text-[#5C6470] border border-[#D8DCE0] rounded-full px-1.5 py-0.5">
+                                  {PIPELINE_STATE_LABEL[ct.pipeline_state] || ct.pipeline_state}
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-1 flex-wrap mt-1 text-[10px] text-[#7F8C8D]">
+                              {ct.skill && <span className="truncate">🛠️ {ct.skill}</span>}
+                              {ct.documents?.length ? (
+                                <span className="ml-auto">📄 {ct.documents.length}</span>
+                              ) : null}
+                            </div>
+                            {ct.target_channels?.length ? (
+                              <div className="flex items-center gap-1 flex-wrap mt-1">
+                                {ct.target_channels.map((c) => {
+                                  const dstatus = ct.draft_statuses?.[c];
+                                  const dstyle = dstatus
+                                    ? DRAFT_STATUS_STYLES[dstatus] ||
+                                      "bg-[#F1F2F4] text-[#5C6470] border-[#D8DCE0]"
+                                    : "bg-[#F1F2F4] text-[#5C6470] border-[#D8DCE0]";
+                                  return (
+                                    <span
+                                      key={c}
+                                      className={cn(
+                                        "text-[9px] border rounded px-1 py-0.5",
+                                        dstyle,
+                                      )}
+                                      title={dstatus ? `${c} · ${dstatus}` : c}
+                                    >
+                                      {c}
+                                      {dstatus ? <span className="opacity-70"> · {dstatus}</span> : null}
+                                    </span>
+                                  );
+                                })}
+                              </div>
+                            ) : null}
+                          </Link>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );

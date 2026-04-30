@@ -4,7 +4,7 @@ import { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { useOpenChat } from "@/hooks/useChat";
-import { buildTaskThread } from "@/lib/chat-openers";
+import { buildTaskThread, buildContentTaskThread } from "@/lib/chat-openers";
 
 interface TaskIndexEntry {
   projectId: string;
@@ -20,6 +20,11 @@ interface TaskIndexEntry {
   threadFileExists: boolean;
   pillar: string | null;
   type: string;
+  parentTaskId?: string;
+  ideaId?: string;
+  targetChannels?: string[];
+  channelSkills?: { channel: string; skill: string }[];
+  isContentTask?: boolean;
 }
 
 interface Stats {
@@ -149,21 +154,44 @@ export function TaskIndexPanel({ slug }: Props) {
                 </tr>
               </thead>
               <tbody>
-                {tasks.map(task => (
+                {tasks.map(task => {
+                  const taskHref = task.isContentTask && task.parentTaskId
+                    ? `/dashboard/${slug}/projects/${task.projectId}/tasks/${task.parentTaskId}/content/${task.taskId}`
+                    : `/dashboard/${slug}/projects/${task.projectId}/tasks/${task.taskId}`;
+                  return (
                   <tr key={task.taskId} className="border-b border-[#E8E2D9]/50 last:border-0 hover:bg-muted/10">
                     <td className="px-3 py-2">
-                      <Link href={`/dashboard/${slug}/projects/${task.projectId}/tasks/${task.taskId}`}
+                      {task.isContentTask && (
+                        <span className="text-muted-foreground/60 mr-1" title="ContentTask">↳</span>
+                      )}
+                      <Link href={taskHref}
                         className="text-[#2C3E50] hover:text-rust no-underline font-medium">
                         {task.taskId}
                       </Link>
                       <span className="text-muted-foreground ml-1.5">{task.taskName.slice(0, 40)}</span>
+                      {task.isContentTask && (
+                        <span className="ml-1.5 text-[9px] bg-rust/10 text-rust px-1.5 py-0.5 rounded-full">
+                          ✍️ content
+                          {task.targetChannels?.length ? ` · ${task.targetChannels.join("/")}` : ""}
+                        </span>
+                      )}
                     </td>
                     <td className="text-center px-2 py-2">
                       {task.docExists ? (
-                        <Link href={`/dashboard/${slug}/foundation?doc=${encodeURIComponent(task.deliverableFile)}`}
-                          className="text-green-600 hover:text-green-800 no-underline" title={task.deliverableFile}>
-                          ✅
-                        </Link>
+                        task.isContentTask && task.parentTaskId ? (
+                          <Link
+                            href={`/dashboard/${slug}/projects/${task.projectId}/tasks/${task.parentTaskId}/content/${task.taskId}/draft/${task.targetChannels?.[0] || "linkedin"}`}
+                            className="text-green-600 hover:text-green-800 no-underline"
+                            title={task.deliverableFile}
+                          >
+                            ✅
+                          </Link>
+                        ) : (
+                          <Link href={`/dashboard/${slug}/foundation?doc=${encodeURIComponent(task.deliverableFile)}`}
+                            className="text-green-600 hover:text-green-800 no-underline" title={task.deliverableFile}>
+                            ✅
+                          </Link>
+                        )
                       ) : task.deliverableFile.includes("deliverable.md") ? (
                         <span title={task.deliverableFile}>⏳</span>
                       ) : (
@@ -171,7 +199,20 @@ export function TaskIndexPanel({ slug }: Props) {
                       )}
                     </td>
                     <td className="text-center px-2 py-2">
-                      {task.skillOk ? (
+                      {task.isContentTask && task.channelSkills && task.channelSkills.length > 0 ? (
+                        <div className="flex flex-wrap gap-1 justify-center">
+                          {task.channelSkills.map((cs) => (
+                            <Link
+                              key={cs.channel}
+                              href={`/dashboard/${slug}/skills/${cs.skill}`}
+                              className="text-[9px] bg-rust/10 text-rust px-1.5 py-0.5 rounded-full hover:bg-rust/20 no-underline transition-colors"
+                              title={`${cs.channel} → ${cs.skill}`}
+                            >
+                              {cs.channel}: {cs.skill}
+                            </Link>
+                          ))}
+                        </div>
+                      ) : task.skillOk ? (
                         <Link href={`/dashboard/${slug}/skills/${task.skill}`}
                           className="text-[9px] bg-rust/10 text-rust px-1.5 py-0.5 rounded-full hover:bg-rust/20 no-underline transition-colors">
                           {task.skill}
@@ -183,6 +224,22 @@ export function TaskIndexPanel({ slug }: Props) {
                         <button
                           type="button"
                           onClick={() => {
+                            if (task.isContentTask && task.parentTaskId) {
+                              const config = buildContentTaskThread(
+                                slug,
+                                task.parentTaskId,
+                                task.taskId,
+                                task.taskName,
+                                task.projectId,
+                                {
+                                  skill: task.skill,
+                                  status: task.status,
+                                  docPath: task.deliverableFile || undefined,
+                                },
+                              );
+                              openChat(slug, config);
+                              return;
+                            }
                             const config = buildTaskThread(
                               slug, task.taskId, task.taskName, task.projectId,
                               { taskSkill: task.skill, pillar: task.pillar || undefined, deliverableFile: task.deliverableFile || undefined }
@@ -198,13 +255,14 @@ export function TaskIndexPanel({ slug }: Props) {
                     </td>
                     <td className="text-center px-2 py-2">
                       <span className={cn("text-[9px] px-1.5 py-0.5 rounded-full font-medium",
-                        task.status === "completed" ? "bg-green-50 text-green-700" :
-                        task.status === "in-progress" ? "bg-blue-50 text-blue-700" :
+                        task.status === "completed" || task.status === "Published" ? "bg-green-50 text-green-700" :
+                        task.status === "in-progress" || task.status === "Draft" || task.status === "Approved" ? "bg-blue-50 text-blue-700" :
                         "bg-gray-50 text-gray-500"
                       )}>{task.status}</span>
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>

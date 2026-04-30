@@ -3,6 +3,8 @@ import fs from "fs";
 import path from "path";
 import { compose, withErrorHandler, withAuth } from "@/lib/api-middleware";
 import { BASE } from "@/lib/data/paths";
+import { getDraftStatuses } from "@/lib/data/drafts";
+import type { ContentTask } from "@/types";
 
 /**
  * GET /api/projects?slug=X — List all projects for a client.
@@ -53,6 +55,16 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         const td = JSON.parse(fs.readFileSync(path.join(dirPath, "tasks.json"), "utf-8"));
         tasks = Array.isArray(td) ? td : td.tasks || [];
       } catch {}
+      // Enrich each ContentTask with draft_statuses (per-channel) so the
+      // kanban can render the per-channel chips without extra round-trips.
+      for (const t of tasks as Record<string, unknown>[]) {
+        const cts = t.content_tasks as ContentTask[] | undefined;
+        if (!cts?.length) continue;
+        t.content_tasks = cts.map((ct) => ({
+          ...ct,
+          draft_statuses: getDraftStatuses(slug, ct.idea_id, ct.target_channels || []),
+        }));
+      }
       results.push({ ...project, tasks });
     }
   } catch {}

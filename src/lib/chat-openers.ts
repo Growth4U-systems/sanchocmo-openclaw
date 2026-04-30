@@ -197,6 +197,13 @@ export function findTaskThreadForDoc(
   return null;
 }
 
+export interface TaskIndexEntry {
+  task: Record<string, unknown>;
+  projectId: string;
+  /** When present, the entry is for a ContentTask nested under `task` (which is the parent type=content task). */
+  contentTask?: Record<string, unknown>;
+}
+
 /**
  * buildTaskIndex — Create a lookup map from threadId patterns → task+project.
  *
@@ -205,20 +212,21 @@ export function findTaskThreadForDoc(
  *
  * Keys in the map:
  *   - `task:{taskId.lower}` and `task-{taskId.lower}` — for task threads
+ *   - `content:{ctId.lower}` and `content-{ctId.lower}` — for ContentTask threads
  *   - `{pillar.lower}` — for pillar threads (e.g. "market-analysis")
  *   - `project:{projectId.lower}` and `project-{projectId.lower}` — for project threads
  */
 export function buildTaskIndex(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   projectsData: any[] | undefined,
-): Map<string, { task: Record<string, unknown>; projectId: string }> {
-  const index = new Map<string, { task: Record<string, unknown>; projectId: string }>();
+): Map<string, TaskIndexEntry> {
+  const index = new Map<string, TaskIndexEntry>();
   if (!projectsData) return index;
 
   for (const pw of projectsData) {
     const projectId = pw.project?.id || "";
     for (const task of pw.tasks || []) {
-      const entry = { task, projectId };
+      const entry: TaskIndexEntry = { task, projectId };
       // Index by task ID (both formats)
       const id = (task.id || "").toLowerCase();
       index.set(`task:${id}`, entry);
@@ -228,6 +236,15 @@ export function buildTaskIndex(
         const pl = task.pillar.toLowerCase();
         // Only set if not already taken (first task with this pillar wins)
         if (!index.has(pl)) index.set(pl, entry);
+      }
+      // Index nested ContentTasks (only for type=content parents)
+      const cts = (task.content_tasks as Record<string, unknown>[] | undefined) || [];
+      for (const ct of cts) {
+        const ctEntry: TaskIndexEntry = { task, projectId, contentTask: ct };
+        const ctId = ((ct.id as string) || "").toLowerCase();
+        if (!ctId) continue;
+        index.set(`content:${ctId}`, ctEntry);
+        index.set(`content-${ctId}`, ctEntry);
       }
     }
   }
@@ -247,7 +264,7 @@ export function buildTaskIndex(
 export function resolveFullThreadConfig(
   slug: string,
   threadId: string,
-  taskIndex: Map<string, { task: Record<string, unknown>; projectId: string }>,
+  taskIndex: Map<string, TaskIndexEntry>,
   resolvePillarDoc?: (pillarKey: string) => string | null | undefined,
 ): ThreadConfig {
   const shortId = threadId.startsWith(slug + ":")
@@ -263,6 +280,24 @@ export function resolveFullThreadConfig(
       }
       return undefined;
     })();
+
+  // ── ContentTask entry: build via buildContentTaskThread ──────
+  if (entry?.contentTask) {
+    const { task: parentTask, projectId, contentTask: ct } = entry;
+    const docs = (ct.documents as { path: string }[] | undefined) || [];
+    return buildContentTaskThread(
+      slug,
+      parentTask.id as string,
+      ct.id as string,
+      (ct.name as string) || (ct.id as string),
+      projectId,
+      {
+        skill: ct.skill as string | undefined,
+        status: ct.status as string | undefined,
+        docPath: docs[0]?.path,
+      },
+    );
+  }
 
   // ── Task found: read ALL data from task fields ───────────────
   if (entry) {
@@ -395,6 +430,34 @@ export function buildTaskThread(
     linkedTo: `projects/${projectId}/tasks/${taskId}`,
     docPath: `projects/${projectId}/tasks.json`,
     threadState: opts.taskStatus === "ready" || opts.taskStatus === "pending" ? "create" : "continue",
+  };
+}
+
+/** Build thread config for a ContentTask (sub-task under a parent type=content task). */
+export function buildContentTaskThread(
+  slug: string,
+  parentTaskId: string,
+  contentTaskId: string,
+  contentTaskName: string,
+  projectId: string,
+  opts: {
+    skill?: string;
+    status?: string;
+    /** First/primary document path for the doc pill */
+    docPath?: string;
+  }
+): ThreadConfig {
+  const threadId = `${slug}:content:${contentTaskId.toLowerCase()}`;
+  const skill = opts.skill || "escudero-content";
+
+  return {
+    threadId,
+    threadName: contentTaskName,
+    skill,
+    skills: [skill],
+    linkedTo: `projects/${projectId}/tasks/${parentTaskId}/content/${contentTaskId}`,
+    docPath: opts.docPath || `projects/${projectId}/tasks.json`,
+    threadState: opts.status === "Approved" || opts.status === "New" ? "create" : "continue",
   };
 }
 

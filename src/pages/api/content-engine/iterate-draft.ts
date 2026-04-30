@@ -23,6 +23,7 @@ import path from "path";
 import { withErrorHandler } from "@/lib/api-middleware";
 import { BASE } from "@/lib/data/paths";
 import { loadDraft, snapshotDraft, updateDraft } from "@/lib/data/drafts";
+import { maybePromoteContentTaskFromDrafts } from "@/lib/data/content-tasks";
 
 interface ChatMessage {
   role: "user" | "assistant" | "system";
@@ -76,6 +77,14 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       status: "drafting",
     },
   });
+
+  // Reactive promotion: re-evaluate the CT's overall status now that one
+  // channel has gone back to drafting (this can demote Review → Draft).
+  if (updated.meta.content_task_id) {
+    try {
+      maybePromoteContentTaskFromDrafts(slug, updated.meta.content_task_id);
+    } catch { /* non-fatal */ }
+  }
 
   // Mirror the request in the parent ContentTask's chat thread so a human
   // can read the conversation in MC. The writer skill will respond there

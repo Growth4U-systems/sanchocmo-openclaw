@@ -27,6 +27,7 @@ import path from "path";
 import yaml from "js-yaml";
 import { compose, withErrorHandler, withAuth } from "@/lib/api-middleware";
 import { BASE } from "@/lib/data/paths";
+import { logActivity } from "@/lib/data/activity-log";
 
 interface DispatchChannelConfig {
   transport: "slack" | "discord";
@@ -252,11 +253,28 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     }
 
     const errors = results.filter((r) => !r.ok).map((r) => `${r.channel}: ${r.error}`);
+    const messagesSent = results.filter((r) => r.ok).length;
+
+    // Activity log — Editorial Dispatch enviado
+    if (messagesSent > 0) {
+      try {
+        const channelList = results.filter((r) => r.ok).map((r) => r.channel).join(", ");
+        logActivity(slug, {
+          type: "publish",
+          text: `Editorial Dispatch enviado a Slack — <b>${ideas.length} ideas</b> en ${channelList}`,
+          icon: "📤", accent: "navy",
+          meta: { ideaCount: ideas.length, channels: results.map((r) => r.channel), errors },
+        });
+      } catch (e) {
+        console.error("[send-dispatch] activity log failed:", (e as Error).message);
+      }
+    }
+
     return res.status(200).json({
       ok: errors.length === 0,
       transport: "slack",
       channel_id: dispatch.channel_id,
-      messages_sent: results.filter((r) => r.ok).length,
+      messages_sent: messagesSent,
       total_ideas: ideas.length,
       grouped_by_channel: Array.from(byChannel.keys()),
       errors,

@@ -113,6 +113,11 @@ export function createContentTask(slug: string, input: CreateContentTaskInput): 
   const id = `${input.parent_task_id}-C${seq}`;
 
   const now = new Date().toISOString();
+  // Canonical thread id matches the convention used by buildContentTaskThread
+  // (`${slug}:content:${id.lower()}`) — the threadFile sanitizer turns that
+  // into `content-{id.lower()}.json` on disk. Older code used `task-` here
+  // by mistake, leaving a dead pointer; we always use `content-` now.
+  const threadId = input.mc_chat_thread_id || `content-${id.toLowerCase()}`;
   const contentTask: ContentTask = {
     id,
     parent_task_id: input.parent_task_id,
@@ -123,7 +128,7 @@ export function createContentTask(slug: string, input: CreateContentTaskInput): 
     skill: input.skill,
     target_channels: input.target_channels,
     documents: input.documents || [],
-    mc_chat_thread_id: input.mc_chat_thread_id || `task-${id.toLowerCase()}`,
+    mc_chat_thread_id: threadId,
     owner: input.owner || "Escudero Content",
     created_at: now,
     updated_at: now,
@@ -131,6 +136,20 @@ export function createContentTask(slug: string, input: CreateContentTaskInput): 
 
   parent.content_tasks = [...list, contentTask];
   saveProjectTasks(file);
+
+  // Pre-create the chat thread file so the index always finds it, even if the
+  // user hasn't opened the chat yet. Empty state matches what mc-chat would
+  // create on the first message.
+  const chatDir = path.join(BASE, "brand", slug, "chat");
+  fs.mkdirSync(chatDir, { recursive: true });
+  const chatFile = path.join(chatDir, `${threadId}.json`);
+  if (!fs.existsSync(chatFile)) {
+    fs.writeFileSync(
+      chatFile,
+      JSON.stringify({ messages: [], createdAt: now }, null, 2),
+    );
+  }
+
   return contentTask;
 }
 
@@ -183,6 +202,172 @@ export function attachDocumentToContentTask(
     ct.documents = [...ct.documents, doc];
     ct.updated_at = new Date().toISOString();
     saveProjectTasks(file);
+  }
+  return ct;
+}
+
+/** Remove a document reference from a ContentTask's `documents[]` by path. Idempotent. */
+export function removeDocumentFromContentTask(
+  slug: string,
+  parentTaskId: string,
+  contentTaskId: string,
+  docPath: string,
+): ContentTask {
+  const { file, parent } = requireContentParent(slug, parentTaskId);
+  const list = (parent.content_tasks as ContentTask[] | undefined) || [];
+  const ct = list.find((c) => c.id === contentTaskId);
+  if (!ct) throw new Error(`ContentTask ${contentTaskId} not found under ${parentTaskId}`);
+  const before = ct.documents.length;
+  ct.documents = ct.documents.filter((d) => d.path !== docPath);
+  if (ct.documents.length !== before) {
+    ct.updated_at = new Date().toISOString();
+    saveProjectTasks(file);
+  }
+  return ct;
+}
+
+/**
+ * Editable fields for a ContentTask via PATCH. `id`, `parent_task_id`,
+ * `idea_id`, `created_at` and the lifecycle timestamps are read-only here —
+ * status changes go through `setContentTaskStatus`.
+ */
+export type ContentTaskUpdateInput = Partial<
+  Pick<
+    ContentTask,
+    | "name"
+    | "skill"
+    | "target_channels"
+    | "documents"
+    | "mc_chat_thread_id"
+    | "discord_thread_id"
+    | "owner"
+    | "scheduled_for"
+    | "clarify_status"
+  >
+>;
+
+const UPDATABLE_FIELDS: readonly (keyof ContentTaskUpdateInput)[] = [
+  "name",
+  "skill",
+  "target_channels",
+  "documents",
+  "mc_chat_thread_id",
+  "discord_thread_id",
+  "owner",
+  "scheduled_for",
+  "clarify_status",
+] as const;
+
+/**
+ * Generic field update for a ContentTask. Whitelists writable fields so the
+ * caller can't overwrite identity (`id`, `parent_task_id`, `idea_id`) or
+ * status timestamps. Status itself flows through `setContentTaskStatus`.
+ */
+export function updateContentTask(
+  slug: string,
+  parentTaskId: string,
+  contentTaskId: string,
+  fields: ContentTaskUpdateInput,
+): ContentTask {
+  const { file, parent } = requireContentParent(slug, parentTaskId);
+  const list = (parent.content_tasks as ContentTask[] | undefined) || [];
+  const ct = list.find((c) => c.id === contentTaskId);
+  if (!ct) throw new Error(`ContentTask ${contentTaskId} not found under ${parentTaskId}`);
+
+  let dirty = false;
+  for (const key of UPDATABLE_FIELDS) {
+    if (key in fields && fields[key] !== undefined) {
+      (ct as unknown as Record<string, unknown>)[key] = fields[key];
+      dirty = true;
+    }
+  }
+  if (dirty) {
+    ct.updated_at = new Date().toISOString();
+    saveProjectTasks(file);
+  }
+  return ct;
+}
+
+/**
+ * Find a ContentTask by its id, scanning all projects of the brand. Useful
+ * for entry points that only know `contentTaskId` (drafts, retry triggers,
+ * deep-linked URLs) and need to recover the parent context.
+ */
+export function findContentTaskByIdAcrossProjects(
+  slug: string,
+  contentTaskId: string,
+): { ct: ContentTask; parentTaskId: string; projectDir: string } | null {
+  const root = projectsDir(slug);
+  if (!fs.existsSync(root)) return null;
+  for (const entry of fs.readdirSync(root, { withFileTypes: true })) {
+    if (!entry.isDirectory()) continue;
+    const tasksPath = path.join(root, entry.name, "tasks.json");
+    if (!fs.existsSync(tasksPath)) continue;
+    let tasks: Record<string, unknown>[];
+    try {
+      tasks = JSON.parse(fs.readFileSync(tasksPath, "utf-8"));
+    } catch { continue; }
+    for (const t of tasks) {
+      const cts = (t.content_tasks as ContentTask[] | undefined) || [];
+      const match = cts.find((c) => c.id === contentTaskId);
+      if (match) {
+        return {
+          ct: match,
+          parentTaskId: t.id as string,
+          projectDir: path.join(root, entry.name),
+        };
+      }
+    }
+  }
+  return null;
+}
+
+/**
+ * Promote the ContentTask's status reactively based on the per-channel draft
+ * statuses (read from the `.md` frontmatters). Called after any draft is
+ * saved (PATCH /api/content-engine/drafts or iterate-draft) so the kanban
+ * column reflects reality without manual user action.
+ *
+ * Promotion rules (least-advanced channel wins):
+ *   - all `published`           → CT.status = "Published"
+ *   - all in [approved+]        → CT.status = "Ready"
+ *   - all in [draft+]           → CT.status = "Review"
+ *   - all in [drafting+]        → CT.status = "Draft"
+ *   - else                      → leave CT.status untouched
+ *
+ * No-op if the CT is currently in a terminal state (Discarded/Deferred).
+ */
+export function maybePromoteContentTaskFromDrafts(
+  slug: string,
+  contentTaskId: string,
+): ContentTask | null {
+  const found = findContentTaskByIdAcrossProjects(slug, contentTaskId);
+  if (!found) return null;
+  const { ct, parentTaskId } = found;
+  if (ct.status === "Discarded" || ct.status === "Deferred") return ct;
+
+  // Read every channel's frontmatter status. Lazy require to avoid a
+  // circular import at module load (drafts.ts ↔ content-tasks.ts).
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { getDraftStatuses } = require("./drafts") as typeof import("./drafts");
+  const statuses = getDraftStatuses(slug, ct.idea_id, ct.target_channels || []);
+
+  const RANK: Record<string, number> = {
+    pending: 0, researching: 1, "clarify-needed": 1,
+    drafting: 2, draft: 3, approved: 4, published: 5,
+  };
+  const values = Object.values(statuses);
+  if (values.length === 0) return ct;
+  const min = values.reduce((acc, s) => (RANK[s] ?? 0) < (RANK[acc] ?? 0) ? s : acc, values[0]);
+
+  let target: ContentTaskStatus | null = null;
+  if (min === "published") target = "Published";
+  else if (min === "approved") target = "Ready";
+  else if (min === "draft") target = "Review";
+  else if (min === "drafting") target = "Draft";
+
+  if (target && ct.status !== target) {
+    return setContentTaskStatus(slug, parentTaskId, contentTaskId, target);
   }
   return ct;
 }

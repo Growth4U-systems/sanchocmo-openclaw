@@ -15,6 +15,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { withErrorHandler } from "@/lib/api-middleware";
 import { loadDraft, listDrafts, updateDraft } from "@/lib/data/drafts";
+import { maybePromoteContentTaskFromDrafts } from "@/lib/data/content-tasks";
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
   const slug = (req.query.slug || req.body?.slug) as string;
@@ -39,6 +40,17 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     if (!ideaId || !channel) return res.status(400).json({ error: "Missing ideaId or channel" });
     try {
       const updated = updateDraft(slug, ideaId, channel, { meta, body });
+
+      // Reactive promotion: if the saved draft is linked to a ContentTask,
+      // re-evaluate the CT's overall status against ALL its channels'
+      // frontmatter statuses and bump it (Draft → Review → Ready → Published).
+      const ctId = updated.meta.content_task_id;
+      if (ctId) {
+        try {
+          maybePromoteContentTaskFromDrafts(slug, ctId);
+        } catch { /* non-fatal */ }
+      }
+
       return res.status(200).json({ ok: true, draft: updated });
     } catch (e) {
       return res.status(404).json({ error: (e as Error).message });

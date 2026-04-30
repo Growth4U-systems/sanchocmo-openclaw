@@ -198,6 +198,14 @@ export interface ContentTask {
   discarded_at?: string;
   deferred_at?: string;
   scheduled_for?: string;           // Set when status moves to Ready
+  /**
+   * Per-channel draft status. Computed server-side by reading the frontmatter
+   * `status` of each `brand/{slug}/content/drafts/{idea_id}/{channel}.md`.
+   * Channels without a draft on disk default to `"pending"`. Used by the
+   * kanban card to render a chip per channel and decide which column the
+   * card lives in (status of the least-advanced channel wins).
+   */
+  draft_statuses?: Record<string, string>;
 }
 
 /** One artifact attached to a task — doc, image, csv, json, etc. */
