@@ -1,13 +1,13 @@
 {
   "url": "https://paymatico.com",
   "mobile": {
-    "performance": 69,
+    "performance": 70,
     "seo": 100,
     "accessibility": 88,
     "bestPractices": 96,
     "lcp": 7.1,
     "cls": 0.084,
-    "tbt": 85,
+    "tbt": 25,
     "opportunities": [
       {
         "id": "redirects",
@@ -35,28 +35,13 @@
         "score": 0
       },
       {
-        "id": "cache-insight",
-        "title": "Use efficient cache lifetimes",
+        "id": "target-size",
+        "title": "Touch targets do not have sufficient size or spacing.",
         "score": 0
       },
       {
         "id": "errors-in-console",
         "title": "Browser errors were logged to the console",
-        "score": 0
-      },
-      {
-        "id": "link-name",
-        "title": "Links do not have a discernible name",
-        "score": 0
-      },
-      {
-        "id": "color-contrast",
-        "title": "Background and foreground colors do not have a sufficient contrast ratio.",
-        "score": 0
-      },
-      {
-        "id": "target-size",
-        "title": "Touch targets do not have sufficient size or spacing.",
         "score": 0
       },
       {
@@ -65,51 +50,39 @@
         "score": 0
       },
       {
-        "id": "font-display-insight",
-        "title": "Font display",
+        "id": "color-contrast",
+        "title": "Background and foreground colors do not have a sufficient contrast ratio.",
         "score": 0
-      }
-    ]
-  },
-  "desktop": {
-    "performance": 82,
-    "seo": 100,
-    "accessibility": 88,
-    "bestPractices": 77,
-    "lcp": 1.6,
-    "cls": 0.184,
-    "tbt": 51,
-    "opportunities": [
-      {
-        "id": "redirects",
-        "title": "Avoid multiple page redirects",
-        "savings": 230,
-        "description": "Redirects introduce additional delays before the page can be loaded. [Learn how to avoid page redirects](https://developer.chrome.com/docs/lighthouse/"
       },
       {
-        "id": "unused-javascript",
-        "title": "Reduce unused JavaScript",
-        "savings": 40,
-        "description": "Reduce unused JavaScript and defer loading scripts until they are required to decrease bytes consumed by network activity. [Learn how to reduce unused"
-      },
-      {
-        "id": "unused-css-rules",
-        "title": "Reduce unused CSS",
-        "savings": 40,
-        "description": "Reduce unused rules from stylesheets and defer CSS not used for above-the-fold content to decrease bytes consumed by network activity. [Learn how to r"
-      }
-    ],
-    "diagnostics": [
-      {
-        "id": "errors-in-console",
-        "title": "Browser errors were logged to the console",
+        "id": "cache-insight",
+        "title": "Use efficient cache lifetimes",
         "score": 0
       },
       {
         "id": "link-name",
         "title": "Links do not have a discernible name",
         "score": 0
-      },
+      }
+    ]
+  },
+  "desktop": {
+    "performance": 87,
+    "seo": 100,
+    "accessibility": 88,
+    "bestPractices": 77,
+    "lcp": 1.3,
+    "cls": 0.167,
+    "tbt": 8,
+    "opportunities": [
+      {
+        "id": "redirects",
+        "title": "Avoid multiple page redirects",
+        "savings": 230,
+        "description": "Redirects introduce additional delays before the page can be loaded. [Learn how to avoid page redirects](https://developer.chrome.com/docs/lighthouse/"
+      }
+    ],
+    "diagnostics": [
       {
         "id": "landmark-one-main",
         "title": "Document does not have a main landmark.",
@@ -121,13 +94,13 @@
         "score": 0
       },
       {
-        "id": "render-blocking-insight",
-        "title": "Render blocking requests",
+        "id": "link-name",
+        "title": "Links do not have a discernible name",
         "score": 0
       },
       {
-        "id": "deprecations",
-        "title": "Uses deprecated APIs",
+        "id": "render-blocking-insight",
+        "title": "Render blocking requests",
         "score": 0
       },
       {
@@ -136,11 +109,21 @@
         "score": 0
       },
       {
+        "id": "deprecations",
+        "title": "Uses deprecated APIs",
+        "score": 0
+      },
+      {
         "id": "target-size",
         "title": "Touch targets do not have sufficient size or spacing.",
+        "score": 0
+      },
+      {
+        "id": "errors-in-console",
+        "title": "Browser errors were logged to the console",
         "score": 0
       }
     ]
   },
-  "fetchedAt": "2026-04-28T12:31:50.835Z"
+  "fetchedAt": "2026-04-30T07:13:51.653Z"
 }
