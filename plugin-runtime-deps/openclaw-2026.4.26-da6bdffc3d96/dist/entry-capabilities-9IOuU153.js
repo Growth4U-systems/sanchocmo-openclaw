@@ -1,0 +1,1 @@
+/opt/homebrew/lib/node_modules/openclaw/dist/entry-capabilities-9IOuU153.js

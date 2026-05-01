@@ -1,0 +1,1 @@
+/opt/homebrew/lib/node_modules/openclaw/dist/status.command.text-runtime-DbX4m_Vw.js

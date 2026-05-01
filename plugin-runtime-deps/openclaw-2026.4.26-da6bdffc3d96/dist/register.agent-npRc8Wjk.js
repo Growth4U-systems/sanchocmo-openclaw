@@ -1,0 +1,1 @@
+/opt/homebrew/lib/node_modules/openclaw/dist/register.agent-npRc8Wjk.js

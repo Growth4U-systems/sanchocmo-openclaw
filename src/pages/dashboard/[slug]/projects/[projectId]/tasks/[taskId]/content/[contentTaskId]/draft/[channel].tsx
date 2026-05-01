@@ -185,6 +185,31 @@ export default function DraftFullScreenPage() {
   const iteration = draft?.meta.iteration ?? 0;
   const placeholderBody = draft ? isPlaceholderBody(draft.body) : false;
   const channels = ct?.target_channels ?? [];
+
+  // Special non-channel docs (proposal/research/clarify) shown as extra tabs
+  // before the per-channel drafts. We render them only when the file exists
+  // on disk (the API layer reflects this via ct.documents — entries with
+  // channel="proposal"/"research"/"clarify" are the markers).
+  const SPECIAL_TABS = useMemo(() => {
+    const have = new Set(
+      (ct?.documents || [])
+        .filter((d) => d.channel && ["proposal", "research", "clarify"].includes(d.channel))
+        .map((d) => d.channel as string),
+    );
+    return [
+      { key: "proposal", label: "Propuesta", icon: "📋" },
+      { key: "research", label: "Research", icon: "🔍" },
+      { key: "clarify", label: "Clarify", icon: "❓" },
+    ].filter((t) => have.has(t.key));
+  }, [ct]);
+  const tabs = useMemo(
+    () => [
+      ...SPECIAL_TABS,
+      ...channels.map((ch) => ({ key: ch, label: ch, icon: "✍️" })),
+    ],
+    [SPECIAL_TABS, channels],
+  );
+  const isSpecialChannel = ["proposal", "research", "clarify"].includes(channel);
   const ctStatusClass = useMemo(() => {
     if (!ct) return "";
     return CT_STATUS_STYLES[ct.status] || "bg-muted text-muted-foreground border-border";
@@ -313,31 +338,39 @@ export default function DraftFullScreenPage() {
           </div>
         </div>
 
-        {/* Channel switcher */}
-        {channels.length > 1 && (
-          <div className="flex items-center gap-2 px-4 py-2 border-b border-[#E5E2DC] bg-white shrink-0">
+        {/* Tab switcher — special docs (Propuesta / Research / Clarify) first,
+            then per-channel drafts. Always rendered when there's at least 2
+            tabs total (otherwise it's noise). */}
+        {tabs.length > 1 && (
+          <div className="flex items-center gap-2 px-4 py-2 border-b border-[#E5E2DC] bg-white shrink-0 flex-wrap">
             <span className="text-[10px] uppercase tracking-[0.5px] text-[#7F8C8D] mr-1">
-              Canal
+              Documentos
             </span>
-            {channels.map((ch) => {
-              const active = ch === channel;
+            {tabs.map((tab, i) => {
+              const active = tab.key === channel;
+              const isLastSpecial = i === SPECIAL_TABS.length - 1 && SPECIAL_TABS.length > 0 && channels.length > 0;
               return (
-                <button
-                  key={ch}
-                  type="button"
-                  onClick={() => handleSwitchChannel(ch)}
-                  className={cn(
-                    "text-xs px-3 py-1 rounded-full border transition-colors",
-                    active
-                      ? "bg-[#2C3E50] text-white border-[#2C3E50]"
-                      : "bg-white text-[#5C6470] border-[#E8E2D9] hover:border-[#2C3E50]",
+                <span key={tab.key} className="contents">
+                  <button
+                    type="button"
+                    onClick={() => handleSwitchChannel(tab.key)}
+                    className={cn(
+                      "text-xs px-3 py-1 rounded-full border transition-colors flex items-center gap-1",
+                      active
+                        ? "bg-[#2C3E50] text-white border-[#2C3E50]"
+                        : "bg-white text-[#5C6470] border-[#E8E2D9] hover:border-[#2C3E50]",
+                    )}
+                  >
+                    <span>{tab.icon}</span>
+                    <span>{tab.label}</span>
+                  </button>
+                  {isLastSpecial && (
+                    <span className="text-[#D8DCE0] mx-1" aria-hidden>|</span>
                   )}
-                >
-                  {ch}
-                </button>
+                </span>
               );
             })}
-            {iteration > 0 && (
+            {iteration > 0 && !isSpecialChannel && (
               <span className="ml-auto text-[10px] text-muted-foreground font-mono">
                 v{iteration}
               </span>

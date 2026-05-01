@@ -17,9 +17,16 @@
       "news-2026-04-26-006"
     ],
     "created_at": "2026-04-26T07:30:00Z",
-    "status": "approved",
+    "status": "Approved",
     "approved_at": "2026-04-26T10:44:19.771Z",
-    "approved_via": "mc-ui"
+    "approved_via": "mc-ui",
+    "project_task_id": "P-Content-Semana-18-T04",
+    "project_id": "P-Content-Semana-18",
+    "content_task_id": "P-Content-Semana-18-T04-C01",
+    "content_task_channels": [
+      "linkedin",
+      "twitter"
+    ]
   },
   {
     "id": "idea-2026-04-26-2",
@@ -40,7 +47,7 @@
       "news-2026-04-26-009"
     ],
     "created_at": "2026-04-26T07:30:00Z",
-    "status": "ready"
+    "status": "New"
   },
   {
     "id": "idea-2026-04-26-3",
@@ -61,7 +68,7 @@
       "news-2026-04-26-012"
     ],
     "created_at": "2026-04-26T07:30:00Z",
-    "status": "ready"
+    "status": "New"
   },
   {
     "id": "idea-2026-04-26-4",
@@ -81,7 +88,7 @@
       "news-2026-04-26-015"
     ],
     "created_at": "2026-04-26T07:30:00Z",
-    "status": "ready"
+    "status": "New"
   },
   {
     "id": "idea-2026-04-26-5",
@@ -101,7 +108,7 @@
       "news-2026-04-26-003"
     ],
     "created_at": "2026-04-26T07:30:00Z",
-    "status": "ready"
+    "status": "New"
   },
   {
     "id": "idea-2026-04-26-6",
@@ -121,7 +128,7 @@
       "news-2026-04-26-006"
     ],
     "created_at": "2026-04-26T07:30:00Z",
-    "status": "ready"
+    "status": "New"
   },
   {
     "id": "idea-2026-04-26-7",
@@ -140,7 +147,7 @@
       "news-2026-04-26-014"
     ],
     "created_at": "2026-04-26T07:30:00Z",
-    "status": "ready"
+    "status": "New"
   },
   {
     "id": "idea-2026-04-28-1",
@@ -163,7 +170,11 @@
       "news-2026-04-26-007"
     ],
     "created_at": "2026-04-28T01:41:00Z",
-    "status": "ready"
+    "status": "New",
+    "dispatch_date": "2026-04-30",
+    "dispatch_slot": "linkedin-content-generation",
+    "project_task_id": "P-Content-Semana-18-T05",
+    "project_id": "P-Content-Semana-18"
   },
   {
     "id": "idea-2026-04-28-2",
@@ -186,7 +197,11 @@
       "news-2026-04-26-015"
     ],
     "created_at": "2026-04-28T01:41:00Z",
-    "status": "ready"
+    "status": "New",
+    "dispatch_date": "2026-04-30",
+    "dispatch_slot": "linkedin-content-generation",
+    "project_task_id": "P-Content-Semana-18-T05",
+    "project_id": "P-Content-Semana-18"
   },
   {
     "id": "idea-2026-04-28-3",
@@ -209,11 +224,11 @@
       "s004"
     ],
     "created_at": "2026-04-28T01:41:00Z",
-    "status": "approved",
+    "status": "Approved",
     "approved_at": "2026-04-28T10:28:09.150Z",
     "approved_via": "mc-ui",
-    "project_task_id": "P-Content-Semana-17-T02",
-    "project_id": "P-Content-Semana-17",
+    "project_task_id": "P-Content-Semana-18-T04",
+    "project_id": "P-Content-Semana-18",
     "drafts": [
       {
         "channel": "blog",
@@ -231,6 +246,11 @@
         "created_at": "2026-04-28T10:28:09.488Z",
         "updated_at": "2026-04-28T10:28:09.488Z"
       }
+    ],
+    "content_task_id": "P-Content-Semana-18-T04-C02",
+    "content_task_channels": [
+      "blog",
+      "linkedin"
     ]
   },
   {
@@ -254,7 +274,7 @@
       "s001"
     ],
     "created_at": "2026-04-28T01:41:00Z",
-    "status": "ready"
+    "status": "New"
   },
   {
     "id": "idea-2026-04-28-5",
@@ -278,7 +298,11 @@
       "news-2026-04-26-009"
     ],
     "created_at": "2026-04-28T01:41:00Z",
-    "status": "ready"
+    "status": "New",
+    "dispatch_date": "2026-04-30",
+    "dispatch_slot": "linkedin-content-generation",
+    "project_task_id": "P-Content-Semana-18-T05",
+    "project_id": "P-Content-Semana-18"
   },
   {
     "id": "idea-2026-04-28-6",
@@ -301,7 +325,7 @@
       "s005"
     ],
     "created_at": "2026-04-28T01:41:00Z",
-    "status": "ready"
+    "status": "New"
   },
   {
     "id": "idea-2026-04-28-7",
@@ -324,7 +348,16 @@
       "news-2026-04-26-014"
     ],
     "created_at": "2026-04-28T01:41:00Z",
-    "status": "ready"
+    "status": "Approved",
+    "approved_at": "2026-04-30T09:11:14.345Z",
+    "approved_via": "mc-ui",
+    "project_task_id": "P-Content-Semana-18-T04",
+    "project_id": "P-Content-Semana-18",
+    "content_task_id": "P-Content-Semana-18-T04-C07",
+    "content_task_channels": [
+      "twitter",
+      "linkedin"
+    ]
   },
   {
     "id": "idea-2026-04-28-8",
@@ -350,15 +383,20 @@
     ],
     "pov_ref": "P3 core_belief: regulacion como ventaja competitiva. Preferred angle: deadline concreto + proof Bnext.",
     "created_at": "2026-04-28T05:56:10.034698Z",
-    "status": "approved",
+    "status": "Approved",
     "dispatch_date": "2026-04-28",
     "dispatch_slot": "linkedin-content-generation",
-    "project_task_id": "P-Content-Semana-18-T01",
+    "project_task_id": "P-Content-Semana-18-T04",
     "project_id": "P-Content-Semana-18",
     "approved_at": "2026-04-28T10:10:04.393Z",
     "approved_via": "slack-button",
     "approved_by": "alfonso",
-    "title": "MiCA en julio 2026: el playbook compliance que escala growth crypto"
+    "title": "MiCA en julio 2026: el playbook compliance que escala growth crypto",
+    "content_task_id": "P-Content-Semana-18-T04-C03",
+    "content_task_channels": [
+      "blog",
+      "linkedin"
+    ]
   },
   {
     "id": "idea-2026-04-28-9",
@@ -385,7 +423,18 @@
     ],
     "pov_ref": "P1 core_belief: systems de growth. Preferred angle: metric + contrarian + unit economics.",
     "created_at": "2026-04-28T05:56:10.034922Z",
-    "status": "ready"
+    "status": "Approved",
+    "dispatch_date": "2026-04-30",
+    "dispatch_slot": "linkedin-content-generation",
+    "project_task_id": "P-Content-Semana-18-T05",
+    "project_id": "P-Content-Semana-18",
+    "approved_at": "2026-04-30T22:32:20.069Z",
+    "approved_via": "mc-ui",
+    "content_task_id": "P-Content-Semana-18-T05-C01",
+    "content_task_channels": [
+      "linkedin",
+      "twitter"
+    ]
   },
   {
     "id": "idea-2026-04-28-10",
@@ -411,7 +460,7 @@
     ],
     "pov_ref": "P2 core_belief: alquiler atencion vs construir activos. Preferred angle: proof #1-2 Gemini + data.",
     "created_at": "2026-04-28T05:56:10.034924Z",
-    "status": "archived",
+    "status": "Discarded",
     "dispatch_date": "2026-04-28",
     "dispatch_slot": "linkedin-content-generation",
     "project_task_id": "P-Content-Semana-18-T01",
@@ -444,15 +493,20 @@
     ],
     "pov_ref": "P2 preferred angles: proof #1-2 Gemini + framework. Core belief: construir activos de confianza.",
     "created_at": "2026-04-28T05:56:10.034925Z",
-    "status": "approved",
+    "status": "Approved",
     "dispatch_date": "2026-04-28",
     "dispatch_slot": "linkedin-content-generation",
-    "project_task_id": "P-Content-Semana-18-T01",
+    "project_task_id": "P-Content-Semana-18-T04",
     "project_id": "P-Content-Semana-18",
     "approved_at": "2026-04-28T10:18:50.976Z",
     "approved_via": "slack-button",
     "approved_by": "alfonso",
-    "title": "Zero-click marketing: por qué tu contenido SEO ya no genera clicks"
+    "title": "Zero-click marketing: por qué tu contenido SEO ya no genera clicks",
+    "content_task_id": "P-Content-Semana-18-T04-C04",
+    "content_task_channels": [
+      "linkedin",
+      "twitter"
+    ]
   },
   {
     "id": "idea-2026-04-28-12",
@@ -479,15 +533,20 @@
     ],
     "pov_ref": "P4 core_belief: retainer infinito rota. Preferred angles: data + contrarian + skin in the game.",
     "created_at": "2026-04-28T05:56:10.034926Z",
-    "status": "approved",
+    "status": "Approved",
     "dispatch_date": "2026-04-28",
     "dispatch_slot": "linkedin-content-generation",
-    "project_task_id": "P-Content-Semana-18-T01",
+    "project_task_id": "P-Content-Semana-18-T04",
     "project_id": "P-Content-Semana-18",
     "approved_at": "2026-04-28T10:30:16.887Z",
     "approved_via": "slack-button",
     "approved_by": "alfonso",
-    "title": "El 39% de CMOs recortan agencias. La señal que llevábamos años esperando."
+    "title": "El 39% de CMOs recortan agencias. La señal que llevábamos años esperando.",
+    "content_task_id": "P-Content-Semana-18-T04-C05",
+    "content_task_channels": [
+      "linkedin",
+      "twitter"
+    ]
   },
   {
     "id": "idea-2026-04-28-13",
@@ -513,15 +572,20 @@
     ],
     "pov_ref": "P5 core_belief: 88% usa IA, 6% implementada. Preferred angles: proof + data + contrarian.",
     "created_at": "2026-04-28T05:56:10.034928Z",
-    "status": "approved",
+    "status": "Approved",
     "dispatch_date": "2026-04-28",
     "dispatch_slot": "linkedin-content-generation",
-    "project_task_id": "P-Content-Semana-18-T01",
+    "project_task_id": "P-Content-Semana-18-T04",
     "project_id": "P-Content-Semana-18",
     "approved_at": "2026-04-28T10:29:58.830Z",
     "approved_via": "slack-button",
     "approved_by": "alfonso",
-    "title": "El 88% usa IA, solo el 6% la opera. La brecha que define ganadores."
+    "title": "El 88% usa IA, solo el 6% la opera. La brecha que define ganadores.",
+    "content_task_id": "P-Content-Semana-18-T04-C06",
+    "content_task_channels": [
+      "linkedin",
+      "twitter"
+    ]
   },
   {
     "id": "idea-2026-28-14",
@@ -547,6 +611,6 @@
     ],
     "pov_ref": "P2 core_belief: alquilar atencion vs construir activos. Preferred angles: proof + framework + GEO.",
     "created_at": "2026-04-28T05:56:10.034931Z",
-    "status": "ready"
+    "status": "New"
   }
 ]

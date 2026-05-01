@@ -1,0 +1,1 @@
+/opt/homebrew/lib/node_modules/openclaw/dist/route-auth-SJhaf4nx.js

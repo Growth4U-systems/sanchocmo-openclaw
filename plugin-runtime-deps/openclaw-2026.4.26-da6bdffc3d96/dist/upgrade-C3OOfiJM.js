@@ -1,0 +1,1 @@
+/opt/homebrew/lib/node_modules/openclaw/dist/upgrade-C3OOfiJM.js

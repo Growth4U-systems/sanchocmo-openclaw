@@ -1,0 +1,1 @@
+/opt/homebrew/lib/node_modules/openclaw/dist/api-DP82C2-M.js

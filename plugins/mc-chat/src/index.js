@@ -110,6 +110,11 @@ export default defineChannelPluginEntry({
         if (skill) contextLines.push(`skill: ${skill}`);
         contextLines.push(`IMPORTANT: You are responding via MC Chat, NOT Discord. Do NOT use the message tool to reply. Just respond with text directly — your reply will be delivered to the user automatically via the MC Chat callback. Do NOT create Discord threads or send Discord messages for this conversation. Read files from disk (brand/${slug}/), never via HTTP/web_fetch to localhost.`);
         contextLines.push(`⚠️ EXECUTION GUARDRAIL: Aprobar un plan o crear proyectos NO es autorización para ejecutar tareas. Siempre preguntar "¿Ejecuto [tarea específica]?" y esperar confirmación explícita antes de generar deliverables. "Apruebo el plan" y "Ejecuta" son pasos DIFERENTES.`);
+        contextLines.push(`💬 INTERACTIVE QUESTIONS: Cuando necesites una decisión del usuario entre opciones FINITAS y CONOCIDAS (ej. elegir un nicho de una lista, un tono, un pilar, un ICP), emite un bloque ":::ask" en vez de preguntar en texto libre. Formato:`);
+        contextLines.push(`:::ask`);
+        contextLines.push(`{"id":"q_<short>","prompt":"<pregunta>","mode":"single"|"multi","options":[{"id":"<key>","label":"<texto>"}]}`);
+        contextLines.push(`:::`);
+        contextLines.push(`Usa "single" para radios (1 opción) y "multi" para checkboxes. Incluye siempre una opción {"id":"other","label":"Otro (lo escribo)"} para no encajonar al usuario. NO uses ":::ask" para preguntas abiertas (ej. "cuéntame sobre tu negocio") — solo para decisiones discretas. La respuesta del usuario llegará como un mensaje de texto plano: "[ask:<id>] respuesta: <label1>, <label2>".`);
         contextLines.push(`[/MC Chat Context]`);
 
         const bodyForAgent = contextLines.join('\n') + '\n\n' + text;

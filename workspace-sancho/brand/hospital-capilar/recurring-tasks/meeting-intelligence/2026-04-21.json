@@ -1,0 +1,11 @@
+{
+  "cronId": "6dac9a53-6736-490a-ae54-e028b8ebbbd1",
+  "cronName": "Meeting Intelligence",
+  "slug": "hospital-capilar",
+  "date": "2026-04-21",
+  "runAtMs": 1776787200022,
+  "status": "ok",
+  "durationMs": 569454,
+  "model": "qwen/qwen3.6-plus",
+  "content": "🧠 Meeting Intelligence — 2026-04-21: Sin novedades — no hay reuniones nuevas para Hospital Capilar desde la última ejecución"
+}

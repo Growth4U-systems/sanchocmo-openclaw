@@ -1,0 +1,1 @@
+/opt/homebrew/lib/node_modules/openclaw/dist/workspace-default-ClDnTm-0.js

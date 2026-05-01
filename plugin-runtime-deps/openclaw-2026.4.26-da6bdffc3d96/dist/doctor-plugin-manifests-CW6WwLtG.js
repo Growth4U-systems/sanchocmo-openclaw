@@ -1,0 +1,1 @@
+/opt/homebrew/lib/node_modules/openclaw/dist/doctor-plugin-manifests-CW6WwLtG.js

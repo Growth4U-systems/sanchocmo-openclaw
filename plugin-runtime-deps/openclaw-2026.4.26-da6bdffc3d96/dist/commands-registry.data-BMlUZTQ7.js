@@ -1,0 +1,1 @@
+/opt/homebrew/lib/node_modules/openclaw/dist/commands-registry.data-BMlUZTQ7.js

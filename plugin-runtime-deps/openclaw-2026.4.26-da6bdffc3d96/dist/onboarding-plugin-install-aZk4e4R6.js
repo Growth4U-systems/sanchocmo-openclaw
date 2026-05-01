@@ -1,0 +1,1 @@
+/opt/homebrew/lib/node_modules/openclaw/dist/onboarding-plugin-install-aZk4e4R6.js

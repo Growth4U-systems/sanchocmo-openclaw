@@ -1,0 +1,1 @@
+/opt/homebrew/lib/node_modules/openclaw/dist/server-startup-log-BsVmC7gG.js

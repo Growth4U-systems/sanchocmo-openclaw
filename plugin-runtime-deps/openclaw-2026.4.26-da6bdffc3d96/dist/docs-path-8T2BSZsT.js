@@ -1,0 +1,1 @@
+/opt/homebrew/lib/node_modules/openclaw/dist/docs-path-8T2BSZsT.js

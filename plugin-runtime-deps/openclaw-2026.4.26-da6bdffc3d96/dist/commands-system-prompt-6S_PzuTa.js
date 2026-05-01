@@ -1,0 +1,1 @@
+/opt/homebrew/lib/node_modules/openclaw/dist/commands-system-prompt-6S_PzuTa.js

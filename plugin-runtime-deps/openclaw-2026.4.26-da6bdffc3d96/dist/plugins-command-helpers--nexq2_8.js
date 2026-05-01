@@ -1,0 +1,1 @@
+/opt/homebrew/lib/node_modules/openclaw/dist/plugins-command-helpers--nexq2_8.js

@@ -15,7 +15,7 @@ interface ChatAttachment {
 }
 
 interface ChatMessage {
-  role: "user" | "bot" | "status";
+  role: "user" | "bot" | "status" | "system";
   text: string;
   agent?: string;
   ts?: number;

@@ -1,0 +1,1 @@
+/opt/homebrew/lib/node_modules/openclaw/dist/empty-allowlist-scan-BbHb6K0j.js

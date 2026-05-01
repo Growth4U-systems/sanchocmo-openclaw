@@ -1,0 +1,1 @@
+/opt/homebrew/lib/node_modules/openclaw/dist/setup.secret-input-G1v9x6qg.js

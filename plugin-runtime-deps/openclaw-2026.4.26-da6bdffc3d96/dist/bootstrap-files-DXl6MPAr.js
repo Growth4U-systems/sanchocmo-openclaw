@@ -1,0 +1,1 @@
+/opt/homebrew/lib/node_modules/openclaw/dist/bootstrap-files-DXl6MPAr.js

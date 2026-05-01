@@ -25,6 +25,7 @@ import {
 import { useQuickActions } from "@/hooks/useChat";
 import { useRetriggerWriter } from "@/hooks/useContentTasks";
 import { ThreadListPanel } from "./thread-list-panel";
+import { AskQuestion, parseMessageSegments } from "./ask-question";
 import { DocSlideOver } from "@/components/shared/doc-slideover";
 import { useFoundation } from "@/hooks/useFoundation";
 import { useProjects } from "@/hooks/useProjects";
@@ -698,9 +699,17 @@ export function ChatSidebar() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [messages.length, activeThreadId, slug]);
 
-  // Typing indicator — show when polling OR when last message is from user (waiting for response)
+  // Typing indicator — show when polling OR when last substantive message is from user (waiting for response)
+  // System messages (failover/billing notices) are ignored here so the typing indicator
+  // stays visible while a bot reply is still pending after a system event.
   const lastMsg = messages[messages.length - 1];
-  const waitingForReply = messages.length > 0 && lastMsg?.role === "user";
+  const lastSubstantiveMsg = (() => {
+    for (let i = messages.length - 1; i >= 0; i--) {
+      if (messages[i].role !== "system") return messages[i];
+    }
+    return undefined;
+  })();
+  const waitingForReply = messages.length > 0 && lastSubstantiveMsg?.role === "user";
   const isBotThinking = isPolling && waitingForReply;
   const showTyping = isBotThinking || !!statusData?.text || (waitingForReply && sendMutation.isPending);
 
@@ -1263,6 +1272,16 @@ export function ChatSidebar() {
         )}
 
         {messages.map((msg: { role: string; text: string; agent?: string; ts?: number }, i: number) => {
+          if (msg.role === "system") {
+            return (
+              <div key={i} className="flex justify-center">
+                <div className="max-w-[90%] px-3 py-1.5 rounded-md text-[12px] leading-snug bg-amber-500/10 text-amber-200 border border-amber-500/30 italic">
+                  <div dangerouslySetInnerHTML={{ __html: formatMessage(msg.text || "") }} />
+                </div>
+              </div>
+            );
+          }
+
           const isUser = msg.role === "user";
           const badge = !isUser ? agentBadge(msg.agent) : null;
 
@@ -1284,7 +1303,24 @@ export function ChatSidebar() {
                     </span>
                   </div>
                 )}
-                <div dangerouslySetInnerHTML={{ __html: formatMessage(msg.text || "") }} />
+                {parseMessageSegments(msg.text || "").map((seg, segIdx) =>
+                  seg.type === "text" ? (
+                    <div
+                      key={segIdx}
+                      dangerouslySetInnerHTML={{ __html: formatMessage(seg.content) }}
+                    />
+                  ) : (
+                    <AskQuestion
+                      key={segIdx}
+                      question={seg.question}
+                      threadId={activeThreadId ?? ""}
+                      onSubmit={(text) =>
+                        activeThreadId &&
+                        sendMutation.mutate({ text, threadId: activeThreadId })
+                      }
+                    />
+                  ),
+                )}
                 {/* Attachments */}
                 {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                 {(msg as any).attachments?.length > 0 && (

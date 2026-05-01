@@ -1,0 +1,1 @@
+/opt/homebrew/lib/node_modules/openclaw/dist/bundled-plugin-metadata-Ds2SxpYG.js

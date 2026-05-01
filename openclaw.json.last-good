@@ -1,7 +1,7 @@
 {
   "meta": {
-    "lastTouchedVersion": "2026.4.14",
-    "lastTouchedAt": "2026-04-15T03:37:48.294Z"
+    "lastTouchedVersion": "2026.4.26",
+    "lastTouchedAt": "2026-04-28T03:34:46.876Z"
   },
   "env": {
     "GEMINI_API_KEY": "AIzaSyAehBHbdBleoL0vSkd5PTsrtVZ5lw_kRa0",
@@ -14,8 +14,8 @@
     "GOOGLE_CLIENT_SECRET": "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"
   },
   "wizard": {
-    "lastRunAt": "2026-03-12T11:08:32.346Z",
-    "lastRunVersion": "2026.3.11",
+    "lastRunAt": "2026-04-28T03:34:46.781Z",
+    "lastRunVersion": "2026.4.26",
     "lastRunCommand": "doctor",
     "lastRunMode": "local"
   },
@@ -83,9 +83,6 @@
       },
       "imageGenerationModel": {
         "primary": "google/gemini-3-pro-image-preview"
-      },
-      "llm": {
-        "idleTimeoutSeconds": 180
       },
       "timeoutSeconds": 3600
     },
@@ -834,21 +831,21 @@
             ]
           },
           "toolsBySender": {
-            "1334604955687977042": {
+            "id:1334604955687977042": {
               "alsoAllow": [
                 "gateway",
                 "exec",
                 "cron"
               ]
             },
-            "1402171221747040369": {
+            "id:1402171221747040369": {
               "alsoAllow": [
                 "gateway",
                 "exec",
                 "cron"
               ]
             },
-            "1475772310614048858": {
+            "id:1475772310614048858": {
               "alsoAllow": [
                 "gateway",
                 "exec",
@@ -918,21 +915,21 @@
             ]
           },
           "toolsBySender": {
-            "1334604955687977042": {
+            "id:1334604955687977042": {
               "alsoAllow": [
                 "gateway",
                 "exec",
                 "cron"
               ]
             },
-            "1402171221747040369": {
+            "id:1402171221747040369": {
               "alsoAllow": [
                 "gateway",
                 "exec",
                 "cron"
               ]
             },
-            "1475772310614048858": {
+            "id:1475772310614048858": {
               "alsoAllow": [
                 "gateway",
                 "exec",
@@ -1044,21 +1041,21 @@
             ]
           },
           "toolsBySender": {
-            "1334604955687977042": {
+            "id:1334604955687977042": {
               "alsoAllow": [
                 "gateway",
                 "exec",
                 "cron"
               ]
             },
-            "1402171221747040369": {
+            "id:1402171221747040369": {
               "alsoAllow": [
                 "gateway",
                 "exec",
                 "cron"
               ]
             },
-            "1475772310614048858": {
+            "id:1475772310614048858": {
               "alsoAllow": [
                 "gateway",
                 "exec",
@@ -1111,21 +1108,21 @@
             ]
           },
           "toolsBySender": {
-            "1334604955687977042": {
+            "id:1334604955687977042": {
               "alsoAllow": [
                 "gateway",
                 "exec",
                 "cron"
               ]
             },
-            "1402171221747040369": {
+            "id:1402171221747040369": {
               "alsoAllow": [
                 "gateway",
                 "exec",
                 "cron"
               ]
             },
-            "1475772310614048858": {
+            "id:1475772310614048858": {
               "alsoAllow": [
                 "gateway",
                 "exec",
@@ -1204,6 +1201,15 @@
       }
     }
   },
+  "models": {
+    "providers": {
+      "google": {
+        "apiKey": "AIzaSyAehBHbdBleoL0vSkd5PTsrtVZ5lw_kRa0",
+        "baseUrl": "https://generativelanguage.googleapis.com/v1beta",
+        "models": []
+      }
+    }
+  },
   "plugins": {
     "load": {
       "paths": [
@@ -1228,24 +1234,6 @@
       },
       "slack": {
         "enabled": true
-      }
-    },
-    "installs": {
-      "mc-chat": {
-        "source": "path",
-        "sourcePath": "/Users/ragi/.openclaw/plugins/mc-chat",
-        "installPath": "/Users/ragi/.openclaw/plugins/mc-chat",
-        "version": "0.1.0",
-        "installedAt": "2026-03-25T09:46:56.036Z"
-      }
-    }
-  },
-  "models": {
-    "providers": {
-      "google": {
-        "apiKey": "AIzaSyAehBHbdBleoL0vSkd5PTsrtVZ5lw_kRa0",
-        "baseUrl": "https://generativelanguage.googleapis.com/v1beta",
-        "models": []
       }
     }
   }

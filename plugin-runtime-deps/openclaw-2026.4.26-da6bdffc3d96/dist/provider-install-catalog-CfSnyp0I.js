@@ -1,0 +1,1 @@
+/opt/homebrew/lib/node_modules/openclaw/dist/provider-install-catalog-CfSnyp0I.js

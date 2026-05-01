@@ -51,7 +51,7 @@ interface CronJob {
 }
 
 interface JobsState {
-  jobs: Record<string, { state?: { lastRunAtMs?: number; lastRunStatus?: string } }>;
+  jobs: Record<string, { state?: { lastRunAtMs?: number; lastRunStatus?: string; lastError?: string } }>;
 }
 
 interface ActivityEvent {
@@ -130,6 +130,21 @@ const ANTENA_FOLDERS: Record<string, string> = {
   "Keyword Research": "content-keyword-research",
 };
 
+/** Pick the most useful 1-2 line preview out of a recurring-task `content` markdown blob. */
+function previewFromContent(content: string): string {
+  // Trim, strip leading emoji-only/heading-only lines, and grab the first content paragraph.
+  const lines = content.split("\n").map((l) => l.trim()).filter(Boolean);
+  // Skip lines that are pure markdown bars/headers (e.g. ━━━ or ## heading or **bold-only-line**)
+  const meaty = lines.filter((l) =>
+    !/^[━─=─\-_]+$/.test(l) &&
+    !/^#+\s/.test(l) &&
+    !/^\*\*[^*]+\*\*$/.test(l)
+  );
+  const text = meaty.slice(0, 3).join(" ").replace(/\s+/g, " ");
+  // Cap at ~240 chars
+  return text.length > 240 ? text.slice(0, 237) + "…" : text;
+}
+
 /** Reads the latest YYYY-MM-DD.json from recurring-tasks/{folder}/ for one antena. */
 function readLastFinding(slug: string, folder: string): { date: string | null; finding: string | null; count: number | null; status: string | null } {
   const dir = path.join(BASE, "brand", slug, "recurring-tasks", folder);
@@ -138,9 +153,10 @@ function readLastFinding(slug: string, folder: string): { date: string | null; f
   if (files.length === 0) return { date: null, finding: null, count: null, status: null };
   try {
     const data = JSON.parse(fs.readFileSync(path.join(dir, files[0]), "utf-8"));
-    const finding: string | null = (data.last_finding as string)
-      || (data.summary as string)
-      || (typeof data.content === "string" ? data.content.slice(0, 240) : null);
+    let finding: string | null = (data.last_finding as string) || (data.summary as string) || null;
+    if (!finding && typeof data.content === "string" && data.content.trim()) {
+      finding = previewFromContent(data.content);
+    }
     const count: number | null = data.total_new_questions ?? data.candidates_sent ?? data.signals_count ?? null;
     return {
       date: data.runAtMs ? new Date(data.runAtMs).toISOString() : (data.date ? new Date(data.date).toISOString() : null),
@@ -192,26 +208,26 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       || j.name.toLowerCase().includes(slug.toLowerCase());
   });
 
-  // ─── KPIs ─────────────────────────────────────────────────
+  // ─── KPIs (canonical pipeline status — see content-engine/ideas.ts) ─────
   const queue = {
     total: ideas.length,
-    ready: ideas.filter((i) => i.status === "ready").length,
-    approved: ideas.filter((i) => i.status === "approved").length,
-    pending: ideas.filter((i) => i.status === "pending" || i.status === "new").length,
-    archived: ideas.filter((i) => i.status === "archived" || i.status === "stale" || i.status === "discarded").length,
-    published: ideas.filter((i) => i.status === "published").length,
+    new: ideas.filter((i) => i.status === "New").length,
+    approved: ideas.filter((i) => i.status === "Approved").length,
+    deferred: ideas.filter((i) => i.status === "Deferred").length,
+    discarded: ideas.filter((i) => i.status === "Discarded").length,
+    published: ideas.filter((i) => i.status === "Published").length,
   };
 
   // Posts published this month (approved counts as proxy if no published_at exists)
   const publishedThisMonth = ideas.filter((i) =>
     inCurrentMonth(i.published_at) ||
-    (i.status === "published" && inCurrentMonth(i.approved_at))
+    (i.status === "Published" && inCurrentMonth(i.approved_at))
   ).length;
 
   // Approval rate (30d): of ideas created in last 30d, what % have been approved or published
   const created30d = ideas.filter((i) => inWindow(i.created_at, 30));
   const approved30d = created30d.filter((i) =>
-    i.status === "approved" || i.status === "published"
+    i.status === "Approved" || i.status === "Published"
   );
   const approvalRate30d = created30d.length === 0 ? 0 : approved30d.length / created30d.length;
 
@@ -243,18 +259,28 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     const baseName = j.name.replace(/^Content:\s*/, "").replace(/\s*—\s*.*$/, "").trim();
     const folder = ANTENA_FOLDERS[baseName];
     const finding = folder ? readLastFinding(slug, folder) : { date: null, finding: null, count: null, status: null };
-    const stateLastRun = jobsState[j.id]?.state?.lastRunAtMs;
+    const runtimeState = jobsState[j.id]?.state;
+    const status = finding.status || runtimeState?.lastRunStatus || null;
+    // When the cron failed (no recurring-tasks file written), surface the runtime error
+    // as the finding so the UI explains *why* there's no signal data.
+    let findingText: string | null = finding.finding;
+    if (!findingText && status === "error" && runtimeState?.lastError) {
+      const err = runtimeState.lastError.length > 240
+        ? runtimeState.lastError.slice(0, 237) + "…"
+        : runtimeState.lastError;
+      findingText = `<b>Última corrida falló:</b> ${err}`;
+    }
     return {
       cron: j.name,
       baseName,
       jobId: j.id,
       enabled: j.enabled,
       schedule: j.schedule.expr,
-      lastRunAt: finding.date || (stateLastRun ? new Date(stateLastRun).toISOString() : null),
-      finding: finding.finding,
+      lastRunAt: finding.date || (runtimeState?.lastRunAtMs ? new Date(runtimeState.lastRunAtMs).toISOString() : null),
+      finding: findingText,
       source: folder ? `lee ${folder}/` : null,
       count: finding.count,
-      status: finding.status || (jobsState[j.id]?.state?.lastRunStatus || null),
+      status,
     };
   });
 

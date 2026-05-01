@@ -1,0 +1,1 @@
+/opt/homebrew/lib/node_modules/openclaw/dist/security-path-j0cjy6Wa.js

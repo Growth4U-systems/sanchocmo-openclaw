@@ -19,11 +19,20 @@ import {
  * so the existing `doc-slideover` can render them with no special-casing.
  */
 
+/** What this `.md` represents inside the ContentTask folder.
+ *  - `channel-draft`: a publishable per-channel draft (linkedin/blog/twitter/...)
+ *  - `proposal`: the initial brief (idea + angle + signal). Read-only artifact.
+ *  - `research`: the deep-research dump (sources, queries, key findings).
+ *  - `clarify`: clarify questions + human answers, used to update POV DB. */
+export type DraftKind = "channel-draft" | "proposal" | "research" | "clarify";
+
 export interface DraftFrontmatter {
   idea_id: string;
   content_task_id?: string;
   parent_task_id?: string;
   channel: string;
+  /** Document kind. Defaults to "channel-draft" when missing for back-compat. */
+  kind?: DraftKind;
   iteration: number;
   status: "pending" | "researching" | "clarify-needed" | "drafting" | "draft" | "approved" | "published";
   model?: string;
@@ -81,6 +90,41 @@ export function listDrafts(slug: string, ideaId: string): Draft[] {
 }
 
 /**
+ * Create the proposal/research/clarify markdown files that live next to the
+ * per-channel drafts under `content/drafts/{ideaId}/`. Idempotent — if the
+ * file already exists, leaves it alone (so re-running generate-drafts on a
+ * re-approval doesn't wipe human edits).
+ */
+export function createSpecialDoc(
+  slug: string,
+  ideaId: string,
+  kind: "proposal" | "research" | "clarify",
+  contentTaskId: string,
+  parentTaskId: string,
+  body: string,
+): { path: string; created: boolean } {
+  const channel = kind; // store under the same field for filesystem layout
+  const absPath = draftAbsPath(slug, ideaId, channel);
+  if (fs.existsSync(absPath)) {
+    return { path: draftRelPath(ideaId, channel), created: false };
+  }
+  const now = new Date().toISOString();
+  const fm: DraftFrontmatter = {
+    idea_id: ideaId,
+    content_task_id: contentTaskId,
+    parent_task_id: parentTaskId,
+    channel,
+    kind,
+    iteration: 0,
+    status: "pending",
+    created_at: now,
+    updated_at: now,
+  };
+  writeFrontmatterFile(absPath, fm, body);
+  return { path: draftRelPath(ideaId, channel), created: true };
+}
+
+/**
  * Create an empty draft scaffold (frontmatter only) when generate-drafts
  * provisions a ContentTask. The body is the angle_draft as starter content
  * so the user has something to read before the writer skill fills it in.
@@ -92,12 +136,21 @@ export function createEmptyDraft(
   meta: Partial<DraftFrontmatter> & { idea_id: string; channel: string },
   starterBody = "",
 ): Draft {
+  const absPath = draftAbsPath(slug, ideaId, channel);
+  // Idempotent: if the file already exists, return it untouched. Re-running
+  // generate-drafts on a re-approval (or a backfill) must NOT clobber human
+  // or agent edits already on disk.
+  if (fs.existsSync(absPath)) {
+    const existing = loadDraft(slug, ideaId, channel);
+    if (existing) return existing;
+  }
   const now = new Date().toISOString();
   const fm: DraftFrontmatter = {
     idea_id: meta.idea_id,
     content_task_id: meta.content_task_id,
     parent_task_id: meta.parent_task_id,
     channel: meta.channel,
+    kind: meta.kind ?? "channel-draft",
     iteration: meta.iteration ?? 0,
     status: meta.status ?? "pending",
     model: meta.model,
@@ -107,12 +160,15 @@ export function createEmptyDraft(
     created_at: meta.created_at ?? now,
     updated_at: meta.updated_at ?? now,
   };
-  const absPath = draftAbsPath(slug, ideaId, channel);
   writeFrontmatterFile(absPath, fm, starterBody);
   return { meta: fm, body: starterBody, relPath: draftRelPath(ideaId, channel), absPath };
 }
 
-/** Update an existing draft. Pass `meta` partials to merge over current frontmatter. */
+const VALID_CLARIFY_STATUSES = ["pending", "answered", "skipped"] as const;
+
+/** Update an existing draft. Pass `meta` partials to merge over current frontmatter.
+ *  Throws if `meta.status` or `meta.clarify_status` are non-canonical values —
+ *  callers (including the agent's writer skill) must use the enum strictly. */
 export function updateDraft(
   slug: string,
   ideaId: string,
@@ -121,6 +177,42 @@ export function updateDraft(
 ): Draft {
   const existing = loadDraft(slug, ideaId, channel);
   if (!existing) throw new Error(`Draft not found: ${ideaId}/${channel}`);
+
+  if (patch.meta?.status !== undefined && !VALID_DRAFT_STATUSES.includes(patch.meta.status)) {
+    throw new Error(
+      `Invalid draft status: "${patch.meta.status}". ` +
+      `Allowed: ${VALID_DRAFT_STATUSES.join(", ")}.`,
+    );
+  }
+  if (
+    patch.meta?.clarify_status !== undefined &&
+    !VALID_CLARIFY_STATUSES.includes(patch.meta.clarify_status)
+  ) {
+    throw new Error(
+      `Invalid clarify_status: "${patch.meta.clarify_status}". ` +
+      `Allowed: ${VALID_CLARIFY_STATUSES.join(", ")}.`,
+    );
+  }
+
+  // Hard gate: cannot transition into drafting/draft while clarify is still
+  // pending. The writer skill must wait for human answers (or explicit skip)
+  // before producing a draft. Only applies to channel-drafts — proposal /
+  // research / clarify docs are exempt.
+  const isChannelDraft = (patch.meta?.kind ?? existing.meta.kind ?? "channel-draft") === "channel-draft";
+  const newStatus = patch.meta?.status ?? existing.meta.status;
+  const newClarify = patch.meta?.clarify_status ?? existing.meta.clarify_status;
+  if (
+    isChannelDraft &&
+    (newStatus === "drafting" || newStatus === "draft") &&
+    newClarify === "pending"
+  ) {
+    throw new Error(
+      `Cannot move draft to "${newStatus}" while clarify_status is "pending". ` +
+      `The agent must post clarify questions, wait for answers, then set ` +
+      `clarify_status="answered" (or "skipped") before drafting.`,
+    );
+  }
+
   const meta: DraftFrontmatter = {
     ...existing.meta,
     ...patch.meta,
@@ -152,6 +244,16 @@ export type DraftStatus = DraftFrontmatter["status"];
  * idea. Channels with no `.md` on disk yet map to `"pending"`. Used by the
  * kanban to show a per-channel status chip in each ContentTask card.
  */
+export const VALID_DRAFT_STATUSES: readonly DraftStatus[] = [
+  "pending",
+  "researching",
+  "clarify-needed",
+  "drafting",
+  "draft",
+  "approved",
+  "published",
+] as const;
+
 export function getDraftStatuses(
   slug: string,
   ideaId: string,
@@ -160,7 +262,12 @@ export function getDraftStatuses(
   const out: Record<string, DraftStatus> = {};
   for (const ch of channels) {
     const draft = loadDraft(slug, ideaId, ch);
-    out[ch] = draft?.meta.status ?? "pending";
+    const raw = draft?.meta.status;
+    // If the file on disk has been corrupted with a non-canonical status,
+    // surface it as `pending` so the kanban still places the card and the
+    // user can re-run the agent. The validation in `updateDraft` prevents
+    // this from being introduced going forward.
+    out[ch] = raw && VALID_DRAFT_STATUSES.includes(raw) ? raw : "pending";
   }
   return out;
 }
@@ -171,6 +278,10 @@ export function getDraftStatuses(
  * the card represents what's still pending. Returns one of:
  *   "pending" | "drafting" | "draft" | "approved" | "published"
  */
+// Numeric rank for ordering draft statuses by progress. Only the canonical
+// values from `DraftFrontmatter.status` are accepted — anything else is a
+// data error (the validation in `updateDraft` rejects writes with non-canonical
+// values, so this map is the single source of truth).
 const DRAFT_STATUS_RANK: Record<DraftStatus, number> = {
   pending: 0,
   researching: 1,
@@ -189,8 +300,8 @@ export function aggregateDraftStatus(
   let minRank = Infinity;
   let minStatus: DraftStatus = entries[0];
   for (const s of entries) {
-    const r = DRAFT_STATUS_RANK[s] ?? 0;
-    if (r < minRank) {
+    const r = DRAFT_STATUS_RANK[s];
+    if (r !== undefined && r < minRank) {
       minRank = r;
       minStatus = s;
     }

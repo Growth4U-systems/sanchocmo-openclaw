@@ -1,0 +1,1 @@
+/opt/homebrew/lib/node_modules/openclaw/dist/lifecycle-startup-C87c6Gwa.js

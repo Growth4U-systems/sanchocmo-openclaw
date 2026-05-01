@@ -140,7 +140,7 @@ export function InputsTab({ slug, openChat, embedded }: Props) {
     const [cfgRes, cronRes, ideasRes, dispatchRes] = await Promise.all([
       fetch(`/api/content-engine/configs?slug=${slug}`).then(r => r.json()).catch(() => ({ configs: null })),
       fetch(`/api/content-engine/crons?slug=${slug}`).then(r => r.json()).catch(() => ({ crons: [] })),
-      fetch(`/api/content-engine/ideas?slug=${slug}&status=ready`).then(r => r.json()).catch(() => ({ ideas: [] })),
+      fetch(`/api/content-engine/ideas?slug=${slug}&status=New`).then(r => r.json()).catch(() => ({ ideas: [] })),
       fetch(`/api/content-engine/dispatch-channel?slug=${slug}`).then(r => r.json()).catch(() => ({ config: null })),
     ]);
     setConfigs(cfgRes.configs || null);
@@ -517,8 +517,8 @@ function PovBankForm({
 
       <div className="bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 text-xs text-amber-800">
         <strong>POV Bank:</strong> opiniones del cliente por pillar. Es la fuente que <code>idea-builder</code> consulta para generar
-        angle_drafts diferenciados (no genéricos). Se construye en setup (task <code>P14-T04</code>) y se refresca con el cron mensual
-        POV Bank Refresh basado en patrones del clarify-history. Editable manualmente desde aquí.
+        angle_drafts diferenciados (no genéricos). Se construye en setup (task <code>P14-T04</code>) y se refresca con la antena mensual
+        POV Bank Refresh basada en patrones del clarify-history. Editable manualmente desde aquí.
       </div>
 
       {/* Global */}
@@ -1464,7 +1464,7 @@ function CadenceForm({
 
       <div className="bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 text-[11px] text-amber-800">
         <strong>Cadencia editable:</strong> define para cada canal cuándo y con qué frecuencia
-        se publica. El cron Editorial Dispatch lee esto cada mañana para decidir los slots del día.
+        se publica. La antena Editorial Dispatch lee esto cada mañana para decidir los slots del día.
         El archivo guardado es <code>content/configs/cadence-config.yml</code>.
       </div>
 
@@ -1731,7 +1731,7 @@ function DispatchChannelForm({
       </div>
 
       <div className="bg-amber-50 border-2 border-ink rounded-lg p-4 text-xs text-ink/80">
-        <strong>El cron Editorial Dispatch</strong> enviará las candidatas diarias al canal configurado aquí.
+        <strong>La antena Editorial Dispatch</strong> enviará las candidatas diarias al canal configurado aquí.
         Para conectar más transports → <strong>Settings → 🔌 APIs → 💬 Comunicación</strong>.
       </div>
 

@@ -15,7 +15,9 @@
   "strategy": "#26",
   "category": "content",
   "review_date": "2026-05-13",
-  "status": "active",
+  "status": "completed",
   "mc_chat_thread_id": "project-p14",
-  "discord_thread_id": null
+  "discord_thread_id": null,
+  "updated_at": "2026-04-29T20:12:29.669Z",
+  "completed_at": "2026-04-29T20:12:29.669Z"
 }

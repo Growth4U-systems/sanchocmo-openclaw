@@ -1,0 +1,1 @@
+/opt/homebrew/lib/node_modules/openclaw/dist/plugin-registry-CZ8QXP5l.js

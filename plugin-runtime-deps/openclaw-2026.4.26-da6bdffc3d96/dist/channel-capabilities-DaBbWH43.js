@@ -1,0 +1,1 @@
+/opt/homebrew/lib/node_modules/openclaw/dist/channel-capabilities-DaBbWH43.js

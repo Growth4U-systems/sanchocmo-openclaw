@@ -1,0 +1,1 @@
+/opt/homebrew/lib/node_modules/openclaw/dist/pairing-cli-DHu_2hM5.js

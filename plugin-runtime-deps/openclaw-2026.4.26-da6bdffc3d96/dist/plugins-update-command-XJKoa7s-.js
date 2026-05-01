@@ -1,0 +1,1 @@
+/opt/homebrew/lib/node_modules/openclaw/dist/plugins-update-command-XJKoa7s-.js

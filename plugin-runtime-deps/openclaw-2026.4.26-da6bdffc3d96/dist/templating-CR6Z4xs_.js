@@ -1,0 +1,1 @@
+/opt/homebrew/lib/node_modules/openclaw/dist/templating-CR6Z4xs_.js

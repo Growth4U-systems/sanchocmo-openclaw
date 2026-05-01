@@ -192,3 +192,86 @@ _Generado por Cervantes — cron:cedfbd22-cbd0-4a19-87a0-29337c4f2b37 — 2026-0
 ---
 
 _Generado por Cervantes — cron:cedfbd22-cbd0-4a19-87a0-29337c4f2b37 — 2026-04-26 08:00 UTC_
+
+---
+
+# Sancho Observations — 2026-04-30
+
+## Resumen sesiones (últimas 24h)
+
+| Sesión | Canal | Output | Estado |
+|--------|-------|--------|--------|
+| MiCA Playbook Content Generation | MC-Chat (Growth4U content) | Blog SEO ~2.5K + LinkedIn post | ✅ OK |
+| Editorial Dispatch (P-Content-Semana-18-T02) | MC-Chat (group) | 5 ideas seleccionadas, bloqueado por Slack | 🟡 Parcial |
+| Heartbeat | — | Sin eventos | ✅ OK |
+
+---
+
+## Errores y skills fallidos
+
+### 🟡 Editorial Dispatch — Slack missing_scope
+- **Sesión**: `aa5f1561` | **Model**: Opus 4.6
+- **Problema**: `missing_scope` — Slack Bot Token no tiene `chat:write` para publicar en `#linkedin-content-generation`
+- **Impacto**: 5 piezas de contenido listas pero NO publicadas en Slack
+- **Acción requerida**: Añadir scope `chat:write` + `chat:write.public` al Slack App de Growth4U
+- **Nota**: Contenido está generado correctamente, solo bloqueado por config. P-Content-Semana-18-T02 creada y esperando.
+
+### 🟡 Heartbeat — `gog` command no existe (recurrente)
+- **Sesión**: `7c666419` | **Model**: MiniMax-M2.7 (heartbeat, no T3)
+- **Problema**: HEARTBEAT.md referencia `gog gmail inbox` pero el comando no existe en OpenClaw CLI actual
+- **Patrón**: Ya detectado el 27 abr. Sancho intentó troubleshooting pero no pudo resolverlo
+- **Impacto**: Bajo — heartbeat completó con HEARTBEAT_OK sin email check
+- **Acción**: Cervantes necesita decidir si instalar skill `gog` o quitar la referencia de HEARTBEAT.md
+
+---
+
+## Preguntas sin responder
+- N/A — todas las sesiones fueron crons automatizados o MC-Chat tasks, sin interacción humana directa
+
+---
+
+## Reglas de canal — cumplimiento
+- ✅ Growth4U MiCA content — output guardado en archivos correctos (`brand/growth4u/campaigns/content/`)
+- ✅ Editorial Dispatch — intentó publicar en Slack canal correcto, falló por scope (no por regla de canal)
+- ✅ Context isolation — sin leaks entre clientes
+- ✅ Heartbeat — NO_REPLY correcto para async notifications
+
+---
+
+## Patrones de mejora
+
+### 1. MiCA Research Mode — ejecución impecable
+**Observación**: Sancho ejecutó research mode con 7 queries, 30+ fuentes, y generó contenido completo (blog + LinkedIn) sin errores
+**Calidad**: Schema Article + FAQ JSON-LD incluido, keyword targeting correcto, brand voice P3 aplicada
+**Tendencia**: Positiva — content generation working well después de los problemas de semanas anteriores
+
+### 2. Slack scope — problema de configuración pendiente (DÍA 4+)
+**Patrón**: Editorial Dispatch falla consistentemente por `chat:write` scope
+**Histórico**: Primer reporte el 26-27 abr, aún sin resolución
+**Impacto acumulado**: Pipeline de contenido bloqueado para publicación en Slack
+**Acción requerida**: Alfonso necesita actualizar Slack App scopes — esto depende de infra, no de Sancho
+
+### 3. Heartbeat usando MiniMax-M2.7 en lugar de Haiku (T3)
+**Observación**: Heartbeat sessions están corriendo con MiniMax-M2.7, no Haiku/T3 como especificado en TOOLS.md
+**Impacto**: Coste mayor por heartbeat (~$0.01 vs ~$0.001), pero funcional
+**Nota**: Puede ser configuración intencional mientras Haiku no esté configurado como fallback
+
+### 4. MC-Chat como canal principal de content ops
+**Observación**: Sancho está generando contenido via MC-Chat tasks, no via Discord
+**Tendencia**: MC-Chat → Slack pipeline (bloqueado) + archivos locales → manual publishing
+**Nota**: Flujo funciona pero el gap Slack needs resolución para automatización completa
+
+---
+
+## Acciones recomendadas
+
+| Prioridad | Acción | Owner |
+|----------|--------|-------|
+| P1 | Alfonso: actualizar Slack App scopes (`chat:write` + `chat:write.public`) | Alfonso |
+| P2 | Decidir: instalar skill `gog` o quitar referencia de HEARTBEAT.md | Cervantes |
+| P2 | Documentar estado de P-Content-Semana-18-T02 (contenido listo, esperando Slack) | Cervantes |
+| P3 | Verificar si heartbeats deberían usar Haiku (T3) en vez de MiniMax | Cervantes |
+
+---
+
+_Generado por Cervantes — cron:cedfbd22-cbd0-4a19-87a0-29337c4f2b37 — 2026-04-30 10:00 CEST_

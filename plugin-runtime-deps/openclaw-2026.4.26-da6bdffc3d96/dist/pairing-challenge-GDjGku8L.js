@@ -1,0 +1,1 @@
+/opt/homebrew/lib/node_modules/openclaw/dist/pairing-challenge-GDjGku8L.js

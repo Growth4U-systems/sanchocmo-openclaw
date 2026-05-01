@@ -6,28 +6,7 @@ import { useRouter } from "next/router";
 import { cn } from "@/lib/utils";
 import { buildTaskThread, type ThreadConfig } from "@/lib/chat-openers";
 import { DocSlideOver } from "@/components/shared/doc-slideover";
-
-/**
- * Draft shape returned by `/api/content-engine/drafts`.
- * The persistent storage is `brand/{slug}/content/drafts/{idea-id}/{channel}.md`
- * with YAML frontmatter; the API parses it and returns this shape.
- */
-interface Draft {
-  meta: {
-    idea_id: string;
-    channel: string;
-    iteration: number;
-    status: "pending" | "researching" | "clarify-needed" | "drafting" | "draft" | "approved" | "published";
-    content_task_id?: string;
-    parent_task_id?: string;
-    research_used?: boolean;
-    clarify_status?: "pending" | "answered" | "skipped";
-    updated_at?: string;
-  };
-  body: string;
-  relPath: string;
-  absPath: string;
-}
+import { DraftCards } from "@/components/content/DraftCards";
 
 interface Idea {
   id: string;
@@ -125,10 +104,10 @@ function formatLastRun(iso: string | undefined | null): string | null {
 
 interface IdeasCounts {
   total: number;
-  ready: number;
+  new: number;
   approved: number;
-  stale: number;
-  archived: number;
+  deferred: number;
+  discarded: number;
   published: number;
 }
 
@@ -139,11 +118,11 @@ interface Props {
 
 // Comic UI palette — only rust/navy/sage/yellow/aged + ink
 const STATUS_VISUAL: Record<string, string> = {
-  ready:     "bg-card    text-ink",
-  approved:  "bg-sage    text-white",
-  stale:     "bg-aged    text-ink",
-  archived:  "bg-rust    text-white",
-  published: "bg-navy    text-white",
+  New:       "bg-card    text-ink",
+  Approved:  "bg-sage    text-white",
+  Deferred:  "bg-aged    text-ink",
+  Discarded: "bg-rust    text-white",
+  Published: "bg-navy    text-white",
 };
 
 // Content type → comic color (rust = hot, sage = proof, navy = framework, yellow = personal, aged = listicle)
@@ -160,13 +139,6 @@ const CHANNEL_VISUAL: Record<string, { label: string; emoji: string }> = {
   twitter:    { label: "X / Twitter", emoji: "🐦" },
   blog:       { label: "Blog",        emoji: "📝" },
   newsletter: { label: "Newsletter",  emoji: "📧" },
-};
-
-const CHANNEL_ICONS: Record<string, string> = {
-  linkedin: "💼",
-  twitter: "🐦",
-  blog: "📝",
-  newsletter: "📧",
 };
 
 // Pick a writer skill based on the idea's target_channel
@@ -189,6 +161,8 @@ export function IdeaQueueTab({ slug, openChat }: Props) {
   const [filterPillar, setFilterPillar] = useState<string>("all");
   const [filterDate, setFilterDate] = useState<"all" | "today" | "week" | "month">("all");
   const [filterSource, setFilterSource] = useState<"all" | "news" | "paa" | "keywords" | "competitors" | "other">("all");
+  const [filterFramework, setFilterFramework] = useState<string>("all");
+  const [sortBy, setSortBy] = useState<"dispatch" | "confidence" | "date" | "pillar">("dispatch");
   const [todayOnly, setTodayOnly] = useState<boolean>(false);
 
   const fetchIdeas = useCallback(() => {
@@ -267,7 +241,7 @@ export function IdeaQueueTab({ slug, openChat }: Props) {
 
   const runDispatchCron = useCallback(async () => {
     if (!dispatchCron) {
-      setDispatchFlash({ status: "error", message: "Cron Editorial Dispatch no encontrado" });
+      setDispatchFlash({ status: "error", message: "Antena Editorial Dispatch no encontrada" });
       return;
     }
     setDispatching(true);
@@ -313,11 +287,11 @@ export function IdeaQueueTab({ slug, openChat }: Props) {
 
   const FILTERS = [
     { key: "all", label: "Todas", count: counts?.total },
-    { key: "ready", label: "Ready", count: counts?.ready },
-    { key: "approved", label: "Aprobadas", count: counts?.approved },
-    { key: "stale", label: "Stale", count: counts?.stale },
-    { key: "archived", label: "Descartadas", count: counts?.archived },
-    { key: "published", label: "Publicadas", count: counts?.published },
+    { key: "New", label: "Nuevas", count: counts?.new },
+    { key: "Approved", label: "Aprobadas", count: counts?.approved },
+    { key: "Deferred", label: "Diferidas", count: counts?.deferred },
+    { key: "Discarded", label: "Descartadas", count: counts?.discarded },
+    { key: "Published", label: "Publicadas", count: counts?.published },
   ];
 
   const today = todayKey();
@@ -336,12 +310,20 @@ export function IdeaQueueTab({ slug, openChat }: Props) {
       return true;
     })
     .filter((i) => filterSource === "all" || classifySignalSource(i) === filterSource)
+    .filter((i) => filterFramework === "all" || i.content_type === filterFramework)
     .filter((i) => !todayOnly || i.dispatch_date === today)
     .sort((a, b) => {
+      if (sortBy === "confidence") return (b.pov_confidence || 0) - (a.pov_confidence || 0);
+      if (sortBy === "pillar") return a.pillar_id.localeCompare(b.pillar_id);
+      if (sortBy === "date") {
+        const aD = new Date(a.signal?.date || a.created_at).getTime();
+        const bD = new Date(b.signal?.date || b.created_at).getTime();
+        return bD - aD;
+      }
+      // default: dispatch — today first, then by signal date desc
       const aToday = a.dispatch_date === today ? 1 : 0;
       const bToday = b.dispatch_date === today ? 1 : 0;
       if (aToday !== bToday) return bToday - aToday;
-      // Then by signal date (most recent first)
       const aDate = new Date(a.signal?.date || a.created_at).getTime();
       const bDate = new Date(b.signal?.date || b.created_at).getTime();
       return bDate - aDate;
@@ -379,7 +361,7 @@ export function IdeaQueueTab({ slug, openChat }: Props) {
               <> · Última: <b style={{ color: "var(--sc-ink)" }}>{formatLastRun(dispatchCron.lastExecution.date)}</b></>
             )}
             {!dispatchCron?.lastExecution && <> · Sin ejecuciones</>}
-            {dispatchCron && <> · Cron diario 08:30</>}
+            {dispatchCron && <> · Antena diaria 08:30</>}
           </span>
         </div>
         <button
@@ -393,7 +375,7 @@ export function IdeaQueueTab({ slug, openChat }: Props) {
             borderColor: "var(--sc-ink)",
             boxShadow: "var(--pop-sm)",
           }}
-          title={dispatchCron ? "Lanzar dispatch ahora" : "Cron no encontrado"}
+          title={dispatchCron ? "Lanzar dispatch ahora" : "Antena no encontrada"}
         >
           {dispatching ? "⏳ Lanzando" : dispatchPolling ? "⏳ En curso" : "▶ Ejecutar ahora"}
         </button>
@@ -515,6 +497,31 @@ export function IdeaQueueTab({ slug, openChat }: Props) {
           <option value="competitors">🕵️ Competidores</option>
           <option value="other">Otra</option>
         </select>
+        <select
+          value={filterFramework}
+          onChange={(e) => setFilterFramework(e.target.value)}
+          className="font-heading uppercase text-[11px] tracking-wider px-2.5 py-1.5 rounded-sc-md border-2 focus:outline-none"
+          style={{ background: "var(--sc-paper-3)", borderColor: "var(--sc-ink)", boxShadow: "var(--pop-xs)" }}
+        >
+          <option value="all">Framework: Todos</option>
+          <option value="Hot Take">🔥 Hot Take</option>
+          <option value="Proof Post">📚 Proof</option>
+          <option value="Framework">🧩 Framework</option>
+          <option value="Personal Story">💬 Personal</option>
+          <option value="Listicle">📋 Listicle</option>
+        </select>
+        <select
+          value={sortBy}
+          onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+          className="font-heading uppercase text-[11px] tracking-wider px-2.5 py-1.5 rounded-sc-md border-2 focus:outline-none"
+          style={{ background: "var(--sc-paper-3)", borderColor: "var(--sc-ink)", boxShadow: "var(--pop-xs)" }}
+          title="Ordenar"
+        >
+          <option value="dispatch">↕ Dispatch primero</option>
+          <option value="confidence">↕ Confianza</option>
+          <option value="date">↕ Fecha</option>
+          <option value="pillar">↕ Pillar</option>
+        </select>
       </div>
 
       {/* Hint + count above table */}
@@ -546,28 +553,20 @@ export function IdeaQueueTab({ slug, openChat }: Props) {
             <table style={{ borderCollapse: "collapse", fontSize: 13, tableLayout: "fixed", minWidth: "100%" }}>
               <colgroup>
                 <col style={{ width: 70 }} />
-                <col style={{ width: 540 }} />
-                <col style={{ width: 420 }} />
+                <col style={{ width: 720 }} />
+                <col style={{ width: 520 }} />
                 <col style={{ width: 80 }} />
                 <col style={{ width: 140 }} />
-                <col style={{ width: 130 }} />
-                <col style={{ width: 110 }} />
-                <col style={{ width: 100 }} />
-                <col style={{ width: 90 }} />
               </colgroup>
               <thead>
                 <tr style={{ background: "var(--sc-paper-2)", borderBottom: "2.5px solid var(--sc-ink)" }}>
                   {[
                     { l: "Canal", w: 70 },
-                    { l: "Idea · descripción · fuente", w: 540 },
-                    { l: "Ángulo editorial", w: 420 },
+                    { l: "Idea · meta · descripción · fuente", w: 720 },
+                    { l: "Ángulo editorial", w: 520 },
                     { l: "Fecha", w: 80 },
                     { l: "Acciones", w: 140 },
-                    { l: "Pillar", w: 130, extra: true },
-                    { l: "Framework", w: 110, extra: true },
-                    { l: "Confianza", w: 100, extra: true },
-                    { l: "Estado", w: 90, extra: true },
-                  ].map((h, i, all) => (
+                  ].map((h) => (
                     <th
                       key={h.l}
                       style={{
@@ -577,11 +576,10 @@ export function IdeaQueueTab({ slug, openChat }: Props) {
                         fontSize: 11,
                         letterSpacing: "0.08em",
                         textTransform: "uppercase",
-                        color: h.extra ? "var(--sc-fg-muted)" : "var(--sc-ink)",
+                        color: "var(--sc-ink)",
                         fontWeight: 700,
                         whiteSpace: "nowrap",
-                        background: h.extra ? "var(--sc-paper-3)" : "var(--sc-paper-2)",
-                        borderLeft: h.extra && i > 0 && !all[i - 1]?.extra ? "2.5px solid var(--sc-ink)" : "none",
+                        background: "var(--sc-paper-2)",
                       }}
                     >{h.l}</th>
                   ))}
@@ -596,10 +594,9 @@ export function IdeaQueueTab({ slug, openChat }: Props) {
                   const cv = CHANNEL_VISUAL[idea.target_channel] || { label: idea.target_channel, emoji: "📄" };
                   const conf = Math.round((idea.pov_confidence || 0) * 100);
                   const cellBase: React.CSSProperties = { padding: "16px 12px", verticalAlign: "top", background: isToday ? "var(--sc-sun-50)" : "var(--sc-paper-3)" };
-                  const cellExtra: React.CSSProperties = { ...cellBase, background: "var(--sc-paper-2)" };
                   const last = idx === visibleIdeas.length - 1;
-                  const isReady = idea.status === "ready";
-                  const isApproved = idea.status === "approved";
+                  const isNew = idea.status === "New";
+                  const isApproved = idea.status === "Approved";
                   return (
                     <tr key={idea.id} style={{ borderBottom: last ? "none" : "2.5px solid var(--sc-ink)" }}>
                       {/* Canal */}
@@ -618,8 +615,53 @@ export function IdeaQueueTab({ slug, openChat }: Props) {
                         </div>
                       </td>
 
-                      {/* Idea · descripción · fuente */}
+                      {/* Idea · meta · descripción · fuente */}
                       <td style={{ ...cellBase, padding: "16px 16px 16px 12px" }}>
+                        {/* Meta strip — pillar · framework · status · confianza */}
+                        <div className="flex flex-wrap gap-1.5 items-center mb-2">
+                          <span
+                            className="font-mono text-[10.5px] font-bold inline-flex items-center px-1.5 py-0.5 rounded-sc-pill border"
+                            style={{ background: "var(--sc-rust-100)", color: "var(--sc-rust-700)", borderColor: "var(--sc-rust-500)" }}
+                            title={pillarName || idea.pillar_id}
+                          >{idea.pillar_id}{pillarName ? ` · ${pillarName.slice(0, 28)}${pillarName.length > 28 ? "…" : ""}` : ""}</span>
+                          <span
+                            className={cn("font-heading uppercase text-[9.5px] tracking-wider px-1.5 py-0.5 rounded-sc-pill border-[1.5px] inline-flex items-center gap-1", tv.bg)}
+                            style={{ borderColor: "var(--sc-ink)" }}
+                          >
+                            <span>{tv.emoji}</span>{tv.label}
+                          </span>
+                          <span
+                            className="font-heading uppercase text-[9.5px] tracking-wider px-1.5 py-0.5 rounded-sc-pill border inline-flex items-center"
+                            style={{
+                              background:
+                                idea.status === "New" ? "var(--sc-sage-100)"
+                                : idea.status === "Approved" ? "var(--sc-navy-500)"
+                                : idea.status === "Discarded" ? "var(--sc-brick-bg)"
+                                : "var(--sc-sun-100)",
+                              color:
+                                idea.status === "Approved" ? "var(--sc-paper-3)"
+                                : idea.status === "Discarded" ? "var(--sc-brick-500)"
+                                : "var(--sc-ink)",
+                              borderColor: "var(--sc-ink)",
+                            }}
+                          >{idea.status}</span>
+                          <span className="inline-flex items-center gap-1.5" title={`Confianza ${conf}%`}>
+                            <span
+                              className="inline-block h-2 w-12 rounded-sc-pill border overflow-hidden"
+                              style={{ borderColor: "var(--sc-ink)", background: "var(--sc-paper-3)" }}
+                            >
+                              <span
+                                className="block h-full"
+                                style={{
+                                  width: `${conf}%`,
+                                  background: conf >= 80 ? "var(--sc-sage-500)" : conf >= 60 ? "var(--sc-sun-300)" : "var(--sc-brick-500)",
+                                }}
+                              />
+                            </span>
+                            <span className="font-mono text-[10.5px] font-bold">{conf}%</span>
+                          </span>
+                        </div>
+
                         <div
                           className="font-heading font-extrabold leading-tight mb-2"
                           style={{ fontSize: 18, color: "var(--sc-ink)", textWrap: "balance" }}
@@ -684,15 +726,15 @@ export function IdeaQueueTab({ slug, openChat }: Props) {
 
                       {/* Acciones — vertical stack */}
                       <td style={{ ...cellBase, padding: "16px 12px" }}>
-                        {!isReady && !isApproved && (
+                        {!isNew && !isApproved && (
                           <span className="text-xs italic" style={{ color: "var(--sc-fg-muted)" }}>
-                            {idea.status === "archived" ? "Descartada" : idea.status}
+                            {idea.status === "Discarded" ? "Descartada" : idea.status}
                           </span>
                         )}
-                        {isReady && (
+                        {isNew && (
                           <div className="flex flex-col gap-1.5">
                             <button
-                              onClick={() => updateIdea(idea.id, { status: "approved", approved_at: new Date().toISOString(), approved_via: "mc-ui" })}
+                              onClick={() => updateIdea(idea.id, { status: "Approved", approved_at: new Date().toISOString(), approved_via: "mc-ui" })}
                               className="font-heading uppercase text-[12px] tracking-wider px-2.5 py-1.5 rounded border-2 sc-pop-hover inline-flex items-center justify-center gap-1.5"
                               style={{ background: "var(--sc-sage-500)", color: "var(--sc-paper-3)", borderColor: "var(--sc-ink)", boxShadow: "var(--pop-xs)" }}
                             >✓ Aprobar</button>
@@ -708,7 +750,7 @@ export function IdeaQueueTab({ slug, openChat }: Props) {
                               style={{ background: "var(--sc-rust-500)", color: "var(--sc-paper-3)", borderColor: "var(--sc-ink)", boxShadow: "var(--pop-xs)" }}
                             >✍ Redactar</button>
                             <button
-                              onClick={() => updateIdea(idea.id, { status: "archived" })}
+                              onClick={() => updateIdea(idea.id, { status: "Discarded" })}
                               className="font-heading uppercase text-[11px] tracking-wider px-2.5 py-1.5 rounded border-2 sc-pop-hover inline-flex items-center justify-center gap-1.5"
                               style={{ background: "var(--sc-paper-3)", color: "var(--sc-ink)", borderColor: "var(--sc-ink)", boxShadow: "var(--pop-xs)" }}
                             >✗ Descartar</button>
@@ -735,85 +777,34 @@ export function IdeaQueueTab({ slug, openChat }: Props) {
                             >💬 Abrir draft</button>
                             {idea.project_task_id && idea.project_id && (
                               <Link
-                                href={`/dashboard/${slug}/projects/${idea.project_id}/tasks/${idea.project_task_id}`}
+                                href={
+                                  idea.content_task_id
+                                    ? `/dashboard/${slug}/projects/${idea.project_id}/tasks/${idea.project_task_id}/content/${idea.content_task_id}`
+                                    : `/dashboard/${slug}/projects/${idea.project_id}/tasks/${idea.project_task_id}`
+                                }
                                 className="font-heading uppercase text-[11px] tracking-wider px-2.5 py-1.5 rounded border-2 sc-pop-hover inline-flex items-center justify-center gap-1.5 no-underline"
                                 style={{ background: "var(--sc-paper-3)", color: "var(--sc-ink)", borderColor: "var(--sc-ink)", boxShadow: "var(--pop-xs)" }}
-                                title={idea.project_task_id}
-                              >📋 Tarea</Link>
+                                title={idea.content_task_id || idea.project_task_id}
+                              >
+                                {idea.content_task_id ? "✍️ Content Task" : "📋 Tarea"}
+                              </Link>
                             )}
                           </div>
                         )}
                       </td>
 
-                      {/* === Extra (scroll) === */}
-                      <td style={{ ...cellExtra, borderLeft: "2.5px solid var(--sc-ink)" }}>
-                        <span
-                          className="font-mono text-[11px] font-bold inline-flex items-center px-2 py-1 rounded-sc-pill border"
-                          style={{ background: "var(--sc-rust-100)", color: "var(--sc-rust-700)", borderColor: "var(--sc-rust-500)" }}
-                          title={pillarName || idea.pillar_id}
-                        >{idea.pillar_id}</span>
-                      </td>
-                      <td style={cellExtra}>
-                        <span
-                          className={cn("font-heading uppercase text-[10px] tracking-wider px-2 py-1 rounded-sc-pill border-[1.5px] inline-flex items-center gap-1", tv.bg)}
-                          style={{ borderColor: "var(--sc-ink)" }}
-                        >
-                          <span>{tv.emoji}</span>{tv.label}
-                        </span>
-                      </td>
-                      <td style={cellExtra}>
-                        <div className="flex items-center gap-1.5">
-                          <span
-                            className="inline-block h-2 w-12 rounded-sc-pill border overflow-hidden"
-                            style={{ borderColor: "var(--sc-ink)", background: "var(--sc-paper-3)" }}
-                          >
-                            <span
-                              className="block h-full"
-                              style={{
-                                width: `${conf}%`,
-                                background: conf >= 80 ? "var(--sc-sage-500)" : conf >= 60 ? "var(--sc-sun-300)" : "var(--sc-brick-500)",
-                              }}
-                            />
-                          </span>
-                          <span className="font-mono text-[11px] font-bold">{conf}%</span>
-                        </div>
-                      </td>
-                      <td style={cellExtra}>
-                        <span
-                          className="font-heading uppercase text-[10px] tracking-wider px-1.5 py-0.5 rounded-sc-pill border inline-flex items-center"
-                          style={{
-                            background:
-                              idea.status === "ready" ? "var(--sc-sage-100)"
-                              : idea.status === "approved" ? "var(--sc-navy-500)"
-                              : idea.status === "archived" ? "var(--sc-brick-bg)"
-                              : "var(--sc-sun-100)",
-                            color:
-                              idea.status === "approved" ? "var(--sc-paper-3)"
-                              : idea.status === "archived" ? "var(--sc-brick-500)"
-                              : "var(--sc-ink)",
-                            borderColor: "var(--sc-ink)",
-                          }}
-                        >{idea.status}</span>
-                      </td>
                     </tr>
                   );
                 })}
               </tbody>
             </table>
           </div>
-          <div
-            className="flex gap-1.5 items-center text-xs px-3.5 py-2.5 border-t-[2.5px]"
-            style={{ background: "var(--sc-paper-2)", borderColor: "var(--sc-ink)", color: "var(--sc-fg-muted)" }}
-          >
-            <span>→</span>
-            <span>Desliza horizontalmente para ver <b style={{ color: "var(--sc-ink)" }}>Pillar · Framework · Confianza · Estado</b></span>
-          </div>
         </div>
 
         {/* Draft expansion (legacy fallback) */}
         {expandedIdea && (() => {
           const idea = visibleIdeas.find((i) => i.id === expandedIdea);
-          if (!idea || idea.status !== "approved") return null;
+          if (!idea || idea.status !== "Approved") return null;
           return (
             <div className="mt-4">
               <DraftCards
@@ -840,158 +831,3 @@ export function IdeaQueueTab({ slug, openChat }: Props) {
   );
 }
 
-// ── DRAFT CARDS COMPONENT ─────────────────────────────────────
-function DraftCards({
-  idea, slug, onSaveDraft, onRequestIteration, onOpenDoc, onRefresh,
-}: {
-  idea: Idea; slug: string;
-  onSaveDraft: (ideaId: string, channel: string, body: string, status?: string) => Promise<void>;
-  onRequestIteration: (ideaId: string, channel: string, instruction: string) => Promise<void>;
-  onOpenDoc: (ideaId: string, channel: string) => void;
-  onRefresh: () => void;
-}) {
-  const [drafts, setDrafts] = useState<Draft[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [iterationInput, setIterationInput] = useState("");
-  const [iteratingChannel, setIteratingChannel] = useState<string | null>(null);
-
-  // Pull drafts from the markdown-file storage. Re-fetch on refresh signals.
-  useEffect(() => {
-    if (!slug) return;
-    setLoading(true);
-    fetch(`/api/content-engine/drafts?slug=${slug}&ideaId=${idea.id}`)
-      .then((r) => r.json())
-      .then((data) => setDrafts(data?.drafts || []))
-      .catch(() => setDrafts([]))
-      .finally(() => setLoading(false));
-  }, [slug, idea.id]);
-
-  // Channels this idea should have drafts for
-  const channels = idea.target_channel === "linkedin"
-    ? ["linkedin", "twitter"]
-    : idea.target_channel === "blog"
-    ? ["blog", "linkedin"]
-    : idea.target_channel === "newsletter"
-    ? ["newsletter"]
-    : [idea.target_channel, "linkedin"];
-
-  const DRAFT_STATUS: Record<string, { bg: string; text: string; label: string }> = {
-    pending: { bg: "bg-gray-50", text: "text-gray-700", label: "Pendiente" },
-    researching: { bg: "bg-purple-50", text: "text-purple-700", label: "Researching" },
-    "clarify-needed": { bg: "bg-amber-50", text: "text-amber-700", label: "Necesita aclaración" },
-    drafting: { bg: "bg-blue-50", text: "text-blue-700", label: "Escribiendo" },
-    draft: { bg: "bg-yellow-50", text: "text-yellow-700", label: "Borrador" },
-    approved: { bg: "bg-green-50", text: "text-green-700", label: "Aprobado" },
-    published: { bg: "bg-emerald-50", text: "text-emerald-700", label: "Publicado" },
-  };
-
-  return (
-    <div className="mt-3 pt-3 border-t border-[#E8E2D9] space-y-3">
-      <div className="flex items-center justify-between">
-        <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Drafts por canal</span>
-        {!loading && drafts.length === 0 && (
-          <span className="text-[10px] text-muted-foreground italic">Escudero Content generará los drafts automáticamente tras el Clarify</span>
-        )}
-      </div>
-
-      {channels.map((channel) => {
-        const draft = drafts.find((d) => d.meta.channel === channel);
-        const status = draft?.meta.status;
-        const st = status ? DRAFT_STATUS[status] : null;
-        const isTerminal = status === "approved" || status === "published";
-
-        return (
-          <div key={channel} className="bg-[#FAFAF8] border border-[#E8E2D9] rounded-lg p-3">
-            {/* Channel header */}
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-sm">{CHANNEL_ICONS[channel] || "📄"}</span>
-              <span className="text-xs font-semibold text-[#2C3E50] capitalize">{channel}</span>
-              {st && (
-                <span className={cn("text-[9px] font-semibold px-2 py-0.5 rounded-full", st.bg, st.text)}>
-                  {st.label}
-                </span>
-              )}
-              {draft?.meta.iteration ? (
-                <span className="text-[9px] text-muted-foreground">v{draft.meta.iteration}</span>
-              ) : null}
-              <div className="ml-auto flex gap-1.5">
-                {draft && (
-                  <button
-                    onClick={() => onOpenDoc(idea.id, channel)}
-                    className="text-[10px] px-2 py-0.5 rounded border border-[#E5E2DC] text-[#7A7A7A] hover:bg-[#E5E2DC] transition-colors"
-                    title="Abrir el draft en el editor de documentos"
-                  >
-                    📄 Abrir
-                  </button>
-                )}
-                {draft && !isTerminal && (
-                  <button
-                    onClick={() => onSaveDraft(idea.id, channel, draft.body, "approved")}
-                    className="text-[10px] px-2 py-0.5 rounded border border-green-200 text-green-700 bg-green-50 hover:bg-green-100 transition-colors"
-                  >
-                    ✅ Aprobar
-                  </button>
-                )}
-                {status === "approved" && (
-                  <span className="text-[10px] text-green-600 font-medium">✓ Listo para publicar</span>
-                )}
-              </div>
-            </div>
-
-            {/* Body preview (read-only — full editing happens in the slideover) */}
-            {!draft ? (
-              <p className="text-[11px] text-muted-foreground italic py-2">
-                Sin draft todavía. Se generará automáticamente cuando Escudero Content ejecute deep-research → Clarify → writer.
-              </p>
-            ) : (
-              <div
-                className="text-[12px] text-[#2C3E50] whitespace-pre-wrap leading-relaxed py-1 max-h-32 overflow-hidden cursor-pointer hover:bg-white"
-                onClick={() => onOpenDoc(idea.id, channel)}
-                title="Click para abrir y editar"
-              >
-                {draft.body.trim() || "(vacío — Escudero está trabajando)"}
-              </div>
-            )}
-
-            {/* Iteration request */}
-            {draft && !isTerminal && (
-              <div className="mt-2">
-                {iteratingChannel === channel ? (
-                  <div className="flex gap-1.5">
-                    <input
-                      type="text"
-                      value={iterationInput}
-                      onChange={(e) => setIterationInput(e.target.value)}
-                      className="flex-1 text-[11px] border border-[#E8E2D9] rounded px-2 py-1 focus:outline-none focus:border-rust"
-                      placeholder='Ej: "hook más fuerte", "más corto", "cita datos de Bnext"'
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" && iterationInput.trim()) {
-                          onRequestIteration(idea.id, channel, iterationInput);
-                          setIterationInput("");
-                          setIteratingChannel(null);
-                        }
-                      }}
-                    />
-                    <button
-                      onClick={() => { setIteratingChannel(null); setIterationInput(""); }}
-                      className="text-[10px] text-muted-foreground hover:text-[#2C3E50]"
-                    >
-                      ✕
-                    </button>
-                  </div>
-                ) : (
-                  <button
-                    onClick={() => setIteratingChannel(channel)}
-                    className="text-[10px] text-rust hover:underline"
-                  >
-                    🔄 Pedir iteración
-                  </button>
-                )}
-              </div>
-            )}
-          </div>
-        );
-      })}
-    </div>
-  );
-}

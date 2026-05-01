@@ -1,0 +1,1 @@
+/opt/homebrew/lib/node_modules/openclaw/dist/anthropic-payload-policy-uBFg2xW5.js

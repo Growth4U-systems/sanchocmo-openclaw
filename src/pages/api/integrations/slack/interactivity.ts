@@ -161,9 +161,9 @@ function findIdea(slug: string, ideaId: string): { ok: boolean; error?: string; 
 function dispatchIdeaUpdate(slug: string, ideaId: string, action: "approve" | "later" | "reject", actor: string) {
   const now = new Date().toISOString();
   const fields: Record<string, string> =
-    action === "approve" ? { status: "approved", approved_at: now, approved_via: "slack-button", approved_by: actor }
-    : action === "reject" ? { status: "archived", archived_at: now, archived_via: "slack-button", archived_by: actor }
-    : { deferred_at: now, deferred_by: actor }; // later: keep status=ready
+    action === "approve" ? { status: "Approved", approved_at: now, approved_via: "slack-button", approved_by: actor }
+    : action === "reject" ? { status: "Discarded", archived_at: now, archived_via: "slack-button", archived_by: actor }
+    : { deferred_at: now, deferred_by: actor }; // later: keep status=New
   const baseUrl = `http://localhost:${process.env.PORT || 3000}`;
   fetch(`${baseUrl}/api/content-engine/ideas`, {
     method: "PATCH",

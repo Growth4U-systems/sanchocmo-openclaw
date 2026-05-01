@@ -1,0 +1,1 @@
+/opt/homebrew/lib/node_modules/openclaw/dist/gateway-status-Ced77zP8.js

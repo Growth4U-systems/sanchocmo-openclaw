@@ -1,0 +1,1 @@
+/opt/homebrew/lib/node_modules/openclaw/dist/doctor-claude-cli-BPzdEVS6.js

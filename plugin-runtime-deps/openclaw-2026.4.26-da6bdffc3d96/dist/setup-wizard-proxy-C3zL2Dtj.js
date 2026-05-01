@@ -1,0 +1,1 @@
+/opt/homebrew/lib/node_modules/openclaw/dist/setup-wizard-proxy-C3zL2Dtj.js

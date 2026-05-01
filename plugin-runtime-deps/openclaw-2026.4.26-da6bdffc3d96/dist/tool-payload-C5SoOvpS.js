@@ -1,0 +1,1 @@
+/opt/homebrew/lib/node_modules/openclaw/dist/tool-payload-C5SoOvpS.js

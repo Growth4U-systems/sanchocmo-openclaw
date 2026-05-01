@@ -1,0 +1,1 @@
+/opt/homebrew/lib/node_modules/openclaw/dist/workspace-dirs-CL3dx6tV.js

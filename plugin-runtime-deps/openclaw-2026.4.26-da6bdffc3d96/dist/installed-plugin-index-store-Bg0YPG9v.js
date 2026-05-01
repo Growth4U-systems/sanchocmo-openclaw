@@ -1,0 +1,1 @@
+/opt/homebrew/lib/node_modules/openclaw/dist/installed-plugin-index-store-Bg0YPG9v.js

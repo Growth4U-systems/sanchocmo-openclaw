@@ -1,0 +1,1 @@
+/opt/homebrew/lib/node_modules/openclaw/dist/config--k_1dtUP.js

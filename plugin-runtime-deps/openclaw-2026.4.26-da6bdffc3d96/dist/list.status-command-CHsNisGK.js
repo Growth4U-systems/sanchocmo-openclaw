@@ -1,0 +1,1 @@
+/opt/homebrew/lib/node_modules/openclaw/dist/list.status-command-CHsNisGK.js

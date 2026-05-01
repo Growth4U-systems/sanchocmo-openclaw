@@ -1,0 +1,1 @@
+/opt/homebrew/lib/node_modules/openclaw/dist/run-log-CR-7Y-p2.js

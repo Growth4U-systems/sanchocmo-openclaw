@@ -5308,6 +5308,192 @@ function mcChatAddMessage(threadId, role, text, agent) {
   return msg;
 }
 
+// ═══════════════════════════════════════════════════════════════
+// GATEWAY LOG MONITOR — surface failover/billing/timeout/stuck events
+// as system messages in the chat. Coalesces repeated events of the same
+// type into "first + (+N reintentos)" to avoid flooding.
+// ═══════════════════════════════════════════════════════════════
+const SYSTEM_MSG_COALESCE_MS = 5 * 60_000;
+const ACTIVE_THREAD_WINDOW_MS = 10 * 60_000;
+const STUCK_AGE_THRESHOLD_S = 90;
+const STUCK_COOLDOWN_MS = 60_000;
+
+const systemMsgState = new Map(); // `${threadId}|${type}` → { sysId, count, baseText, lastTs }
+const activeThreads = []; // [{ threadId, ts }] — most recent first
+const lastStuckEmit = new Map(); // threadId → ts (rate-limit stuck spam)
+
+function trackActiveThread(threadId) {
+  if (!threadId) return;
+  const now = Date.now();
+  for (let i = activeThreads.length - 1; i >= 0; i--) {
+    if (activeThreads[i].threadId === threadId) activeThreads.splice(i, 1);
+  }
+  activeThreads.push({ threadId, ts: now });
+  // Trim entries older than the active window
+  while (activeThreads.length > 0 && now - activeThreads[0].ts > ACTIVE_THREAD_WINDOW_MS) {
+    activeThreads.shift();
+  }
+}
+
+function mostRecentActiveThread() {
+  const now = Date.now();
+  for (let i = activeThreads.length - 1; i >= 0; i--) {
+    if (now - activeThreads[i].ts < ACTIVE_THREAD_WINDOW_MS) return activeThreads[i].threadId;
+  }
+  return null;
+}
+
+function emitSystemMessage(threadId, type, baseText) {
+  if (!threadId || !baseText) return;
+  const key = `${threadId}|${type}`;
+  const now = Date.now();
+  const existing = systemMsgState.get(key);
+
+  if (existing && now - existing.lastTs < SYSTEM_MSG_COALESCE_MS) {
+    existing.count++;
+    existing.lastTs = now;
+    const thread = mcChatLoadThread(threadId);
+    const target = thread.messages.find((m) => m._sysId === existing.sysId);
+    if (target) {
+      target.text = `${existing.baseText} (+${existing.count} reintento${existing.count === 1 ? '' : 's'})`;
+      thread.updatedAt = now;
+      mcChatSaveThread(threadId, thread);
+      return;
+    }
+    // Original message was trimmed by MC_CHAT_MAX_MSGS — emit fresh below.
+  }
+
+  const sysId = `sys-${type}-${now}-${Math.floor(Math.random() * 1000)}`;
+  const thread = mcChatLoadThread(threadId);
+  thread.messages.push({
+    role: 'system',
+    text: baseText,
+    ts: new Date().toISOString(),
+    _sysId: sysId,
+  });
+  if (thread.messages.length > MC_CHAT_MAX_MSGS) {
+    thread.messages = thread.messages.slice(-MC_CHAT_MAX_MSGS);
+  }
+  thread.updatedAt = now;
+  mcChatSaveThread(threadId, thread);
+  systemMsgState.set(key, { sysId, count: 0, baseText, lastTs: now });
+  console.log(`[gw-monitor] system msg → ${threadId} [${type}] ${baseText.slice(0, 60)}`);
+}
+
+const GATEWAY_LOG_PATTERNS = [
+  // Track active threads from inbound user messages
+  {
+    type: '_inbound',
+    regex: /\[mc-chat\] Inbound from .* → [^/]+\/(\S+?):\s/,
+    handler: (m) => trackActiveThread(m[1]),
+  },
+  // Track active threads from lane assignments (more authoritative)
+  {
+    type: '_lane',
+    regex: /lane=session:channel:mc-chat:(\S+?)\s/,
+    handler: (m) => trackActiveThread(m[1]),
+  },
+  // Stuck session — has its own threadId via sessionKey
+  {
+    type: 'stuck',
+    regex: /\[diagnostic\] stuck session: .*sessionKey=channel:mc-chat:(\S+?) state=processing age=(\d+)s/,
+    handler: (m) => {
+      const tid = m[1];
+      const ageSec = parseInt(m[2], 10);
+      if (ageSec < STUCK_AGE_THRESHOLD_S) return;
+      const last = lastStuckEmit.get(tid) || 0;
+      if (Date.now() - last < STUCK_COOLDOWN_MS) return;
+      lastStuckEmit.set(tid, Date.now());
+      const min = Math.floor(ageSec / 60);
+      const sec = ageSec % 60;
+      emitSystemMessage(tid, 'stuck', `⏳ Sancho lleva ${min}:${String(sec).padStart(2, '0')} trabajando — sigue en marcha`);
+    },
+  },
+  // Billing failure (covers rotate_profile too — same root cause)
+  {
+    type: 'billing',
+    regex: /\[agent\/embedded\] auth profile failure state updated: .*reason=billing/,
+    handler: () => {
+      const tid = mostRecentActiveThread();
+      if (tid) emitSystemMessage(tid, 'billing', '💳 Sin saldo en Anthropic — probando perfil alternativo (~30s)');
+    },
+  },
+  // Fallback to a different model
+  {
+    type: 'fallback_model',
+    regex: /\[agent\/embedded\] embedded run failover decision: .*decision=fallback_model.*from=(\S+?)\s/,
+    handler: (m) => {
+      const tid = mostRecentActiveThread();
+      if (tid) emitSystemMessage(tid, 'fallback_model', `⚙️ Cambiando a modelo de respaldo (anterior: ${m[1]})`);
+    },
+  },
+  // Rate limit
+  {
+    type: 'rate_limit',
+    regex: /(rate_limit_error|"type":"rate_limit_error"|HTTP[ /]?429|status[: =]+429)/i,
+    handler: () => {
+      const tid = mostRecentActiveThread();
+      if (tid) emitSystemMessage(tid, 'rate_limit', '⏱️ Rate limit alcanzado — esperando reintento (~30s)');
+    },
+  },
+  // Generic request timeouts
+  {
+    type: 'timeout',
+    regex: /(TimeoutError: The operation was aborted due to timeout|request handler.*timeout|fetch failed \(timeout)/,
+    handler: () => {
+      const tid = mostRecentActiveThread();
+      if (tid) emitSystemMessage(tid, 'timeout', '⌛ Timeout en la petición — reintentando');
+    },
+  },
+];
+
+function processGatewayLogLine(line) {
+  for (const p of GATEWAY_LOG_PATTERNS) {
+    const m = line.match(p.regex);
+    if (m) {
+      try { p.handler(m); } catch (e) { console.error('[gw-monitor]', p.type, 'handler error:', e.message); }
+    }
+  }
+}
+
+let _gwMonitorChild = null;
+function startGatewayLogMonitor() {
+  const logPath = path.join(process.env.HOME || '/tmp', '.openclaw', 'logs', 'gateway.log');
+  if (!fs.existsSync(logPath)) {
+    console.warn('[gw-monitor] gateway.log not found at', logPath, '— monitor disabled');
+    return;
+  }
+  if (_gwMonitorChild) {
+    try { _gwMonitorChild.kill(); } catch {}
+  }
+  const child = spawn('tail', ['-n', '0', '-F', logPath], { stdio: ['ignore', 'pipe', 'pipe'] });
+  _gwMonitorChild = child;
+  let buf = '';
+  child.stdout.on('data', (chunk) => {
+    buf += chunk.toString();
+    let nl;
+    while ((nl = buf.indexOf('\n')) >= 0) {
+      const line = buf.slice(0, nl);
+      buf = buf.slice(nl + 1);
+      if (line) processGatewayLogLine(line);
+    }
+  });
+  child.stderr.on('data', (chunk) => {
+    const txt = chunk.toString().trim();
+    if (txt) console.error('[gw-monitor] tail stderr:', txt);
+  });
+  child.on('exit', (code) => {
+    _gwMonitorChild = null;
+    if (code !== 0) console.warn('[gw-monitor] tail exited code=', code, '— restarting in 5s');
+    setTimeout(startGatewayLogMonitor, 5000);
+  });
+  console.log('[gw-monitor] tailing', logPath);
+}
+
+// Test hook: feed a synthetic log line through the parser. Used by smoke tests.
+function _gwMonitorInject(line) { processGatewayLogLine(line); }
+// ═══════════════════════════════════════════════════════════════
+
 const mcServer = http.createServer((req, res) => {
   let url = req.url.split('?')[0];
   if (url.startsWith('/mc/')) url = url.slice(3);
@@ -10433,6 +10619,7 @@ mcServer.listen(PORT, '127.0.0.1', () => {
   console.log(`WS proxy at ws://127.0.0.1:${PORT}/ws/chat`);
   // WS proxy disabled — using mc-chat channel plugin instead
   // setTimeout(() => gwConnect(), 1000);
+  try { startGatewayLogMonitor(); } catch (e) { console.error('[gw-monitor] start failed:', e.message); }
 });
 
 // ═══════════════════════════════════════════════════════════════

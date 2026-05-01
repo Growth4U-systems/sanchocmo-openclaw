@@ -1,0 +1,1 @@
+/opt/homebrew/lib/node_modules/openclaw/dist/bootstrap-prompt-CUu4OJpU.js

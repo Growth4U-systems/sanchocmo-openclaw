@@ -1,0 +1,1 @@
+/opt/homebrew/lib/node_modules/openclaw/dist/chrome-mcp-unA3qM7M.js

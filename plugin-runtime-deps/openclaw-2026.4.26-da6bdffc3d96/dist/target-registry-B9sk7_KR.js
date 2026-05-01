@@ -1,0 +1,1 @@
+/opt/homebrew/lib/node_modules/openclaw/dist/target-registry-B9sk7_KR.js

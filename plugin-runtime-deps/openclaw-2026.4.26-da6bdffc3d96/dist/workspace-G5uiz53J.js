@@ -1,0 +1,1 @@
+/opt/homebrew/lib/node_modules/openclaw/dist/workspace-G5uiz53J.js

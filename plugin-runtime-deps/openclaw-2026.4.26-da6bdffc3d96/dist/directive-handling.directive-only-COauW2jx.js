@@ -1,0 +1,1 @@
+/opt/homebrew/lib/node_modules/openclaw/dist/directive-handling.directive-only-COauW2jx.js

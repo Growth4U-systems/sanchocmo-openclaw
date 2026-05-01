@@ -1,0 +1,1 @@
+/opt/homebrew/lib/node_modules/openclaw/dist/bootstrap-mode-kx3ImgVx.js

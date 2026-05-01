@@ -1,0 +1,1 @@
+/opt/homebrew/lib/node_modules/openclaw/dist/installed-plugin-index-records-Z8-yA-Tm.js

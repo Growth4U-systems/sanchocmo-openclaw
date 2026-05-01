@@ -1,0 +1,1 @@
+/opt/homebrew/lib/node_modules/openclaw/dist/plugins-install-command-C3h0UVnS.js

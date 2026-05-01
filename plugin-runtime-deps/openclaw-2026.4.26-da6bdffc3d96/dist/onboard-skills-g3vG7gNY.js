@@ -1,0 +1,1 @@
+/opt/homebrew/lib/node_modules/openclaw/dist/onboard-skills-g3vG7gNY.js

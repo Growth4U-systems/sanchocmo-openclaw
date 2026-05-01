@@ -1,0 +1,1 @@
+/opt/homebrew/lib/node_modules/openclaw/dist/channel-config-schema-legacy-Aq4IqXEL.js

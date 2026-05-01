@@ -1,0 +1,1 @@
+/opt/homebrew/lib/node_modules/openclaw/dist/bonjour-discovery-DB3Cv5Tw.js

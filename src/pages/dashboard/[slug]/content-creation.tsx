@@ -9,7 +9,7 @@ import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { cn } from "@/lib/utils";
 import { EngineTab } from "@/components/content/EngineTab";
 import { IdeaQueueTab } from "@/components/content/IdeaQueueTab";
-import { CalendarTab } from "@/components/content/CalendarTab";
+import { EditorialCalendarTab } from "@/components/content/EditorialCalendarTab";
 
 const TABS = [
   { key: "engine", label: "Engine", icon: "🔧" },
@@ -86,8 +86,8 @@ export default function ContentCreationPage() {
       {!isLoading && slug && activeTab === "ideas" && (
         <IdeaQueueTab slug={slug} openChat={openChat} />
       )}
-      {!isLoading && slug && data && activeTab === "calendar" && (
-        <CalendarTab slug={slug} data={data} openChat={openChat} />
+      {!isLoading && slug && activeTab === "calendar" && (
+        <EditorialCalendarTab slug={slug} />
       )}
     </DashboardLayout>
   );

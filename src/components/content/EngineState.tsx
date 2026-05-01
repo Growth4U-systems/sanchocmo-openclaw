@@ -274,9 +274,22 @@ function SignalRow({ signal }: { signal: Signal }) {
             {ok ? "✓" : "✗"} {signal.status || "ok"}
           </span>
         </div>
-        <div className="text-[12.5px] mt-0.5 leading-snug" style={{ color: "var(--sc-fg-soft)" }}>
-          {signal.finding ?? <em style={{ color: "var(--sc-fg-subtle)" }}>El cron aún no ha publicado un last_finding. (Se rellena cuando la antena escribe en recurring-tasks.)</em>}
-        </div>
+        {signal.finding ? (
+          <div
+            className="text-[12.5px] mt-0.5 leading-snug"
+            style={{ color: "var(--sc-fg-soft)" }}
+            // finding may include <b> tags for emphasis (server-side controlled)
+            dangerouslySetInnerHTML={{ __html: signal.finding }}
+          />
+        ) : (
+          <div className="text-[12.5px] mt-0.5 leading-snug">
+            <em style={{ color: "var(--sc-fg-subtle)" }}>
+              {signal.lastRunAt
+                ? "Sin contenido en la última corrida (se rellena cuando la próxima escribe en recurring-tasks)."
+                : "Aún no hay corridas registradas."}
+            </em>
+          </div>
+        )}
         <div className="flex gap-2 text-[11px] mt-1" style={{ color: "var(--sc-fg-muted)" }}>
           {signal.source && <span>🌐 {signal.source}</span>}
           {signal.count != null && (
@@ -352,7 +365,13 @@ function ActivityItem({ event }: { event: ActivityEvent }) {
           borderColor: ACCENT_FG[accent],
         }}
       >{event.icon || "•"}</span>
-      <span className="text-[12.5px] flex-1 leading-snug" style={{ color: "var(--sc-ink)" }}>{event.text}</span>
+      <span
+        className="text-[12.5px] flex-1 leading-snug"
+        style={{ color: "var(--sc-ink)" }}
+        // Activity log entries use <b>...</b> for emphasis. Content is server-controlled
+        // (written by integrations/slack/interactivity.ts and send-dispatch.ts).
+        dangerouslySetInnerHTML={{ __html: event.text }}
+      />
       <span
         className="font-mono text-[10.5px] flex-shrink-0"
         style={{ color: "var(--sc-fg-muted)" }}

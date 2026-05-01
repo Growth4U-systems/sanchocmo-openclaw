@@ -1,0 +1,1 @@
+/opt/homebrew/lib/node_modules/openclaw/dist/bash-tools.descriptions-5h8EWMob.js

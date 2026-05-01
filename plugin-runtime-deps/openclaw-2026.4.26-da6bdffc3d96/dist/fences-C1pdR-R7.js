@@ -1,0 +1,1 @@
+/opt/homebrew/lib/node_modules/openclaw/dist/fences-C1pdR-R7.js

@@ -1,0 +1,1 @@
+/opt/homebrew/lib/node_modules/openclaw/dist/gpt5-prompt-overlay-CYwbSgxN.js

@@ -1,0 +1,1 @@
+/opt/homebrew/lib/node_modules/openclaw/dist/manifest-command-aliases-DLn3d24t.js

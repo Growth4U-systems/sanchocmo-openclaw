@@ -1,0 +1,1 @@
+/opt/homebrew/lib/node_modules/openclaw/dist/setup-group-access-BbBZMMY4.js

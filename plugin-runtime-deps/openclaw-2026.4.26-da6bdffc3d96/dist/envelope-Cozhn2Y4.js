@@ -1,0 +1,1 @@
+/opt/homebrew/lib/node_modules/openclaw/dist/envelope-Cozhn2Y4.js

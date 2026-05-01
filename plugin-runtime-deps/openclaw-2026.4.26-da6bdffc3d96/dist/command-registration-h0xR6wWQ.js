@@ -1,0 +1,1 @@
+/opt/homebrew/lib/node_modules/openclaw/dist/command-registration-h0xR6wWQ.js

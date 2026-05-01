@@ -1,0 +1,1 @@
+/opt/homebrew/lib/node_modules/openclaw/dist/manifest-registry-installed-B7YTYcgb.js

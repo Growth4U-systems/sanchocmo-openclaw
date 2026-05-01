@@ -12,6 +12,18 @@ import path from "path";
 import { withErrorHandler } from "@/lib/api-middleware";
 import { BASE } from "@/lib/data/paths";
 
+/**
+ * Status pipeline for content-engine ideas in `brand/{slug}/content/idea-queue.json`.
+ *
+ * Subset of `ContentTaskStatus` (see types/index.ts) — the values applicable
+ * to an idea before/around the moment it becomes a formal ContentTask.
+ * `Draft | Media | Review | Ready` only apply once the idea has been
+ * promoted to a ContentTask with thread + skill running.
+ */
+type IdeaStatus = "New" | "Approved" | "Discarded" | "Deferred" | "Published";
+
+const VALID_IDEA_STATUSES: readonly IdeaStatus[] = ["New", "Approved", "Discarded", "Deferred", "Published"] as const;
+
 interface Idea {
   id: string;
   pillar_id: string;
@@ -27,7 +39,7 @@ interface Idea {
   pov_confidence: number;
   source_signals?: string[];
   created_at: string;
-  status: "ready" | "approved" | "stale" | "archived" | "published";
+  status: IdeaStatus;
   approved_at?: string;
   approved_via?: string;
   approved_by?: string;
@@ -37,14 +49,37 @@ interface Idea {
   deferred_at?: string;
   deferred_by?: string;
   target_date?: string;
+  dispatch_date?: string;
+  dispatch_slot?: string;
+  published_at?: string;
   project_task_id?: string;
+}
+
+// Migration map for legacy values still present on disk. Applied at read time
+// so the API always returns canonical values, even if older idea-queue.json
+// files (or skill writes) still carry the legacy strings.
+const LEGACY_STATUS_MAP: Record<string, IdeaStatus> = {
+  ready: "New",
+  approved: "Approved",
+  archived: "Discarded",
+  discarded: "Discarded",
+  stale: "Deferred",
+  deferred: "Deferred",
+  published: "Published",
+};
+
+function canonicalizeStatus(raw: unknown): IdeaStatus {
+  if (typeof raw !== "string") return "New";
+  if ((VALID_IDEA_STATUSES as readonly string[]).includes(raw)) return raw as IdeaStatus;
+  return LEGACY_STATUS_MAP[raw.toLowerCase()] || "New";
 }
 
 function loadIdeas(slug: string): Idea[] {
   const filePath = path.join(BASE, "brand", slug, "content", "idea-queue.json");
   if (!fs.existsSync(filePath)) return [];
   try {
-    return JSON.parse(fs.readFileSync(filePath, "utf-8"));
+    const raw = JSON.parse(fs.readFileSync(filePath, "utf-8")) as Idea[];
+    return raw.map((i) => ({ ...i, status: canonicalizeStatus(i.status) }));
   } catch {
     return [];
   }
@@ -64,18 +99,21 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     const ideas = loadIdeas(slug);
     const { status, pillar, channel } = req.query;
     let filtered = ideas;
-    if (status) filtered = filtered.filter((i) => i.status === status);
+    if (status) {
+      const canonical = canonicalizeStatus(status as string);
+      filtered = filtered.filter((i) => i.status === canonical);
+    }
     if (pillar) filtered = filtered.filter((i) => i.pillar_id === pillar);
     if (channel) filtered = filtered.filter((i) => i.target_channel === channel);
 
-    // Counts by status
+    // Counts by canonical status
     const counts = {
       total: ideas.length,
-      ready: ideas.filter((i) => i.status === "ready").length,
-      approved: ideas.filter((i) => i.status === "approved").length,
-      stale: ideas.filter((i) => i.status === "stale").length,
-      archived: ideas.filter((i) => i.status === "archived").length,
-      published: ideas.filter((i) => i.status === "published").length,
+      new: ideas.filter((i) => i.status === "New").length,
+      approved: ideas.filter((i) => i.status === "Approved").length,
+      deferred: ideas.filter((i) => i.status === "Deferred").length,
+      discarded: ideas.filter((i) => i.status === "Discarded").length,
+      published: ideas.filter((i) => i.status === "Published").length,
     };
 
     return res.status(200).json({ ok: true, ideas: filtered, counts });
@@ -95,7 +133,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       pov_confidence: idea.pov_confidence ?? 0.5,
       source_signals: idea.source_signals || [],
       created_at: new Date().toISOString(),
-      status: "ready",
+      status: "New",
     };
     ideas.push(newIdea);
     saveIdeas(slug, ideas);
@@ -114,15 +152,27 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       "status", "approved_at", "approved_via", "approved_by",
       "archived_at", "archived_via", "archived_by",
       "deferred_at", "deferred_by",
-      "target_date", "project_task_id", "angle_draft", "pillar_id", "target_channel", "content_type",
+      "target_date", "dispatch_date", "dispatch_slot", "published_at",
+      "project_task_id", "angle_draft", "pillar_id", "target_channel", "content_type",
     ];
     for (const [k, v] of Object.entries(fields)) {
-      if (allowed.includes(k)) (idea as unknown as Record<string, unknown>)[k] = v;
+      if (!allowed.includes(k)) continue;
+      if (v === null || v === undefined) {
+        delete (idea as unknown as Record<string, unknown>)[k];
+      } else if (k === "status") {
+        idea.status = canonicalizeStatus(v);
+      } else {
+        (idea as unknown as Record<string, unknown>)[k] = v;
+      }
     }
     saveIdeas(slug, ideas);
 
-    // Auto-trigger: when status changes to "approved", generate drafts + create task
-    if (oldStatus !== "approved" && fields.status === "approved") {
+    // Auto-trigger: when status transitions to Approved (any casing), generate
+    // drafts + create the ContentTask. Older callers used lowercase, the new
+    // Idea Bank UI uses PascalCase — handle both transparently.
+    const oldApproved = String(oldStatus || "").toLowerCase() === "approved";
+    const newApproved = String(idea.status || "").toLowerCase() === "approved";
+    if (!oldApproved && newApproved) {
       try {
         // Internal call to generate-drafts — same server, no auth needed
         const baseUrl = `http://localhost:${process.env.PORT || 3000}`;

@@ -1,0 +1,1 @@
+/opt/homebrew/lib/node_modules/openclaw/dist/tool-fs-policy-n-6SdjUp.js

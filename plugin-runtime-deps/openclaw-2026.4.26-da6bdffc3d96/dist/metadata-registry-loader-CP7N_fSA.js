@@ -1,0 +1,1 @@
+/opt/homebrew/lib/node_modules/openclaw/dist/metadata-registry-loader-CP7N_fSA.js

@@ -1,0 +1,1 @@
+/opt/homebrew/lib/node_modules/openclaw/dist/cli-CV0y9_ll.js

@@ -34,7 +34,7 @@ import path from "path";
 import { withErrorHandler } from "@/lib/api-middleware";
 import { BASE } from "@/lib/data/paths";
 import { createContentTask, attachDocumentToContentTask } from "@/lib/data/content-tasks";
-import { createEmptyDraft, draftRelPath } from "@/lib/data/drafts";
+import { createEmptyDraft, createSpecialDoc, draftRelPath } from "@/lib/data/drafts";
 import { triggerWriter } from "@/lib/data/writer-trigger";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -161,7 +161,9 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   const ideas = loadIdeas(slug);
   const idea = ideas.find((i) => i.id === ideaId);
   if (!idea) return res.status(404).json({ error: "Idea not found" });
-  if (idea.status !== "approved") {
+  // Case-insensitive: the new Idea Bank UI persists PascalCase ("Approved")
+  // while older callers used lowercase. Both must trigger draft generation.
+  if (String(idea.status || "").toLowerCase() !== "approved") {
     return res.status(400).json({ error: "Idea must be approved before generating drafts" });
   }
 
@@ -197,6 +199,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       {
         idea_id: ideaId,
         channel,
+        kind: "channel-draft",
         content_task_id: contentTask.id,
         parent_task_id: taskId,
         status: "pending",
@@ -211,6 +214,63 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       channel,
     });
     provisioned.push(channel);
+  }
+
+  // 3b. Create proposal/research/clarify supporting docs and attach them.
+  // proposal.md = the brief the human will refer back to (idea + angle + signal).
+  // research.md, clarify.md = scaffolds the writer skill fills in.
+  const proposalBody = [
+    `# Propuesta — ${(idea.title as string) || ideaId}`,
+    ``,
+    `## Ángulo aprobado`,
+    angle || "_(sin ángulo registrado)_",
+    ``,
+    `## Signal`,
+    signal || "_(sin signal registrado)_",
+    ``,
+    `## Canales objetivo`,
+    channels.map((c) => `- ${c}`).join("\n"),
+    ``,
+    `## Skill principal`,
+    skill,
+  ].join("\n");
+
+  const researchBody = [
+    `# Research — ${(idea.title as string) || ideaId}`,
+    ``,
+    `_Pendiente. Escudero rellenará este documento con el deep-research:_`,
+    `_fuentes consultadas, queries usadas y key findings._`,
+    ``,
+    `## Sources`,
+    ``,
+    `## Queries`,
+    ``,
+    `## Key findings`,
+    ``,
+  ].join("\n");
+
+  const clarifyBody = [
+    `# Clarify — ${(idea.title as string) || ideaId}`,
+    ``,
+    `_Pendiente. Escudero postará aquí las preguntas necesarias antes de redactar._`,
+    `_Cada pregunta tendrá una sección "Respuesta humana:" para que la rellenes._`,
+    `_Cuando estén todas respondidas, el agente avanzará al draft._`,
+    ``,
+  ].join("\n");
+
+  for (const [kind, body] of [
+    ["proposal", proposalBody],
+    ["research", researchBody],
+    ["clarify", clarifyBody],
+  ] as const) {
+    const result = createSpecialDoc(slug, ideaId, kind, contentTask.id, taskId, body);
+    if (result.created) {
+      attachDocumentToContentTask(slug, taskId, contentTask.id, {
+        path: result.path,
+        name: kind.charAt(0).toUpperCase() + kind.slice(1),
+        channel: kind,
+      });
+    }
   }
 
   // 4. Mirror project_id / project_task_id / content_task_id back to the idea

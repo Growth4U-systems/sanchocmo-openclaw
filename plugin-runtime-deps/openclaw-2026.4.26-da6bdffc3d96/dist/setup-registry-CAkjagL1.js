@@ -1,0 +1,1 @@
+/opt/homebrew/lib/node_modules/openclaw/dist/setup-registry-CAkjagL1.js

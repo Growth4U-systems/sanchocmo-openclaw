@@ -1,0 +1,1 @@
+/opt/homebrew/lib/node_modules/openclaw/dist/capability-provider-runtime-Uo7x1rbl.js

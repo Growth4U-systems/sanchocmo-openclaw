@@ -1,0 +1,1 @@
+/opt/homebrew/lib/node_modules/openclaw/dist/stale-plugin-config-659hZm3k.js

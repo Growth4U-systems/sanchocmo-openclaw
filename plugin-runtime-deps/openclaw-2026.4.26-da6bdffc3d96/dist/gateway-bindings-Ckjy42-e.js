@@ -1,0 +1,1 @@
+/opt/homebrew/lib/node_modules/openclaw/dist/gateway-bindings-Ckjy42-e.js

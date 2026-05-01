@@ -1,0 +1,1 @@
+/opt/homebrew/lib/node_modules/openclaw/dist/runtime-registry-loader-BjhzkGx1.js

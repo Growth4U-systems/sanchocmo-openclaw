@@ -150,11 +150,11 @@ export function ConfigurationPipeline({ slug, openChat, onRequestEditor, onOpenI
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const allIdeas = (ideasData.ideas || []) as any[];
     setIdeaCounts({
-      ready: allIdeas.filter((i) => i.status === "ready").length,
-      approved: allIdeas.filter((i) => i.status === "approved").length,
-      pending: allIdeas.filter((i) => i.status === "pending" || i.status === "new").length,
-      archived: allIdeas.filter((i) => i.status === "archived" || i.status === "discarded" || i.status === "stale").length,
-      published: allIdeas.filter((i) => i.status === "published" || i.status === "used").length,
+      ready: allIdeas.filter((i) => i.status === "New").length,
+      approved: allIdeas.filter((i) => i.status === "Approved").length,
+      pending: allIdeas.filter((i) => i.status === "Deferred").length,
+      archived: allIdeas.filter((i) => i.status === "Discarded").length,
+      published: allIdeas.filter((i) => i.status === "Published").length,
       total: allIdeas.length,
     });
 

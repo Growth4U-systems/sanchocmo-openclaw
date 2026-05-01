@@ -815,6 +815,7 @@ const CONTENT_TASK_KANBAN_COLUMNS: { key: string; label: string; icon: string; s
 ];
 
 // Per-channel draft status (from frontmatter) → palette for the inline chip.
+// Strictly canonical — the API rejects non-canonical writes in `updateDraft`.
 const DRAFT_STATUS_STYLES: Record<string, string> = {
   pending: "bg-[#F1F2F4] text-[#5C6470] border-[#D8DCE0]",
   researching: "bg-[#FEF3C7] text-[#92400E] border-[#FCD34D]",
@@ -825,9 +826,6 @@ const DRAFT_STATUS_STYLES: Record<string, string> = {
   published: "bg-[#A7F3D0] text-[#064E3B] border-[#34D399]",
 };
 
-// Map per-channel draft status → kanban column key. Used when the CT carries
-// `draft_statuses` (post-Feature C). Keeps the worst channel in front so the
-// card sits in the column for the channel still pending.
 const DRAFT_STATUS_TO_COLUMN: Record<string, string> = {
   pending: "approved",
   researching: "approved",
@@ -838,17 +836,23 @@ const DRAFT_STATUS_TO_COLUMN: Record<string, string> = {
   published: "published",
 };
 
+const DRAFT_RANK: Record<string, number> = {
+  pending: 0,
+  researching: 1,
+  "clarify-needed": 1,
+  drafting: 2,
+  draft: 3,
+  approved: 4,
+  published: 5,
+};
+
 function aggregateDraftStatus(statuses: Record<string, string> | undefined): string | null {
   if (!statuses) return null;
   const entries = Object.values(statuses);
   if (entries.length === 0) return null;
-  const RANK: Record<string, number> = {
-    pending: 0, researching: 1, "clarify-needed": 1,
-    drafting: 2, draft: 3, approved: 4, published: 5,
-  };
   let min = entries[0];
   for (const s of entries) {
-    if ((RANK[s] ?? 0) < (RANK[min] ?? 0)) min = s;
+    if ((DRAFT_RANK[s] ?? 0) < (DRAFT_RANK[min] ?? 0)) min = s;
   }
   return min;
 }

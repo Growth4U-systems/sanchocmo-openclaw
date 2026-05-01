@@ -1,0 +1,1 @@
+/opt/homebrew/lib/node_modules/openclaw/dist/manifest-registry-CXpW6f0a.js

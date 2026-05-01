@@ -1,0 +1,1 @@
+/opt/homebrew/lib/node_modules/openclaw/dist/identity-avatar-Cj-E-v3U.js

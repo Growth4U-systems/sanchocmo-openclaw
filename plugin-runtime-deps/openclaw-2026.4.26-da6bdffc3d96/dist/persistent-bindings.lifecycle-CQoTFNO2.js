@@ -1,0 +1,1 @@
+/opt/homebrew/lib/node_modules/openclaw/dist/persistent-bindings.lifecycle-CQoTFNO2.js

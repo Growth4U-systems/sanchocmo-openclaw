@@ -1,0 +1,1 @@
+/opt/homebrew/lib/node_modules/openclaw/dist/fatal-error-hooks-4xzPL8p8.js

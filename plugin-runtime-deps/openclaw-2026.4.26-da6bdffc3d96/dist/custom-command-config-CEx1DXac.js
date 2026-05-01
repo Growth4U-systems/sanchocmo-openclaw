@@ -1,0 +1,1 @@
+/opt/homebrew/lib/node_modules/openclaw/dist/custom-command-config-CEx1DXac.js

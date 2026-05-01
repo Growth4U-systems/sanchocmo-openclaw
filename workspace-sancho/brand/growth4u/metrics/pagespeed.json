@@ -1,19 +1,25 @@
 {
   "url": "https://growth4u.io",
   "mobile": {
-    "performance": 76,
+    "performance": 75,
     "seo": 92,
     "accessibility": 92,
     "bestPractices": 100,
     "lcp": 4.2,
     "cls": 0.007,
-    "tbt": 58,
+    "tbt": 69,
     "opportunities": [
       {
         "id": "unused-javascript",
         "title": "Reduce unused JavaScript",
-        "savings": 310,
+        "savings": 420,
         "description": "Reduce unused JavaScript and defer loading scripts until they are required to decrease bytes consumed by network activity. [Learn how to reduce unused"
+      },
+      {
+        "id": "server-response-time",
+        "title": "Initial server response time was short",
+        "savings": 113,
+        "description": "Keep the server response time for the main document short because all other requests depend on it. [Learn more about the Time to First Byte metric](ht"
       }
     ],
     "diagnostics": [
@@ -28,13 +34,13 @@
         "score": 0
       },
       {
-        "id": "color-contrast",
-        "title": "Background and foreground colors do not have a sufficient contrast ratio.",
+        "id": "robots-txt",
+        "title": "robots.txt is not valid",
         "score": 0
       },
       {
-        "id": "robots-txt",
-        "title": "robots.txt is not valid",
+        "id": "color-contrast",
+        "title": "Background and foreground colors do not have a sufficient contrast ratio.",
         "score": 0
       },
       {
@@ -45,13 +51,13 @@
     ]
   },
   "desktop": {
-    "performance": 96,
+    "performance": 97,
     "seo": 92,
     "accessibility": 92,
     "bestPractices": 100,
-    "lcp": 1.1,
+    "lcp": 1,
     "cls": 0.009,
-    "tbt": 107,
+    "tbt": 59,
     "opportunities": [
       {
         "id": "unused-javascript",
@@ -62,13 +68,13 @@
     ],
     "diagnostics": [
       {
-        "id": "landmark-one-main",
-        "title": "Document does not have a main landmark.",
+        "id": "color-contrast",
+        "title": "Background and foreground colors do not have a sufficient contrast ratio.",
         "score": 0
       },
       {
-        "id": "color-contrast",
-        "title": "Background and foreground colors do not have a sufficient contrast ratio.",
+        "id": "image-delivery-insight",
+        "title": "Improve image delivery",
         "score": 0
       },
       {
@@ -82,11 +88,11 @@
         "score": 0
       },
       {
-        "id": "image-delivery-insight",
-        "title": "Improve image delivery",
+        "id": "landmark-one-main",
+        "title": "Document does not have a main landmark.",
         "score": 0
       }
     ]
   },
-  "fetchedAt": "2026-04-26T19:50:59.451Z"
+  "fetchedAt": "2026-04-30T16:07:20.106Z"
 }
