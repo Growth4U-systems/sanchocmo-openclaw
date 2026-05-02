@@ -612,5 +612,205 @@
     "pov_ref": "P2 core_belief: alquilar atencion vs construir activos. Preferred angles: proof + framework + GEO.",
     "created_at": "2026-04-28T05:56:10.034931Z",
     "status": "New"
+  },
+  {
+    "id": "idea-2026-05-01-1",
+    "title": "Growth ya no es optimización de funnel — es un problema de confianza",
+    "pillar_id": "P1",
+    "content_type": "Hot Take",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Elena Verna argumenta que el growth ya no es un problema de optimización de funnel sino un problema de confianza. Cita que Lovable alcanzó $350-400M ARR en poco más de un año sin paid ads, SEO ni playbooks convencionales. Su tesis central: cuando cualquiera puede construir software similar, la confianza es el único moat real. Propone que la marca es un 'product job', no una función de marketing — cada interacción construye o destruye confianza. El formato es ensayo largo tipo thesis con datos de Lovable como case study. Abre con la provocación de que paid ads son una 'death trap' para startups AI-native, lo que genera debate inmediato.",
+      "source": "Elena Verna",
+      "url": "https://www.elenaverna.com/p/growth-is-now-a-trust-problem",
+      "date": "2026-04-28"
+    },
+    "signal_type": [
+      "contrarian",
+      "aha-moment"
+    ],
+    "angle_draft": "Lovable alcanzó $350-400M ARR sin paid ads, SEO ni playbooks convencionales. La tesis de Elena Verna es clara: cuando cualquiera puede construir software similar, la confianza es el único moat real. Nosotros llevamos dos años instalando exactamente eso — Trust Engine no optimiza tu funnel, construye el sistema de confianza que opera sin ti. Si tu modelo de crecimiento depende de un canal pagado, no es un motor. Es respiración asistida con fecha de caducidad. Frame: 'trust-as-growth-system'.",
+    "pov_confidence": 0.8,
+    "source_signals": [
+      "sig-20260501-001",
+      "sig-20260501-003"
+    ],
+    "created_at": "2026-05-01T06:42:00Z",
+    "status": "New",
+    "dispatch_date": "2026-05-01",
+    "dispatch_slot": "linkedin-content-generation",
+    "project_task_id": "P-Content-Semana-18-T06",
+    "project_id": "P-Content-Semana-18"
+  },
+  {
+    "id": "idea-2026-05-01-2",
+    "title": "Ghost citations: la IA usa tu contenido sin darte crédito ni clicks",
+    "pillar_id": "P2",
+    "content_type": "Hot Take",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "ARC Intermedia publica roundup de abril 2026 sobre 'ghost citations': las IAs usan contenido de marcas sin dar crédito explícito ni generar clics directos. Los usuarios luego cross-referencian con búsqueda tradicional. Métricas tradicionales de atribución fallan.",
+      "source": "ARC Intermedia",
+      "url": "https://www.arcintermedia.com/shoptalk/organic-ai-visibility-news-april-2026-roundup/",
+      "date": "2026-04-28"
+    },
+    "signal_type": [
+      "contrarian",
+      "aha-moment"
+    ],
+    "angle_draft": "ARC Intermedia acaba de documentar las 'ghost citations': las IAs usan tu contenido como fuente sin darte crédito ni generar un solo click. Tu Google Analytics dice cero, pero la IA está entrenando a tu próximo buyer con TU información. Esto rompe toda atribución tradicional. Nosotros lo sabemos porque somos #1-2 en Gemini para queries fintech España — y nuestro contenido se cita sin link. La métrica no es CTR. Es VOI (Value of Impression). Si tu dashboard no lo mide, estás volando a ciegas en 2026. Frame: 'ghost-citations-break-attribution'.",
+    "pov_confidence": 0.7,
+    "source_signals": [
+      "news-2026-05-01-P2-003"
+    ],
+    "created_at": "2026-05-01T06:42:00Z",
+    "status": "New"
+  },
+  {
+    "id": "idea-2026-05-01-3",
+    "title": "Europa quiere registrar finfluencers en ESMA — tu playbook de influencers acaba de romperse",
+    "pillar_id": "P3",
+    "content_type": "Deep-dive",
+    "target_channel": "newsletter",
+    "signal": {
+      "summary": "El Parlamento Europeo propone que los 'finfluencers' se registren con ESMA y que las firmas financieras sean responsables de las afirmaciones de los influencers que contratan. Esto cambia radicalmente el playbook de influencer marketing en fintech.",
+      "source": "EU Perspectives",
+      "url": "https://euperspectives.eu/2026/03/brussels-curb-financial-advertising-as-entertainment/",
+      "date": "2026-04-29"
+    },
+    "signal_type": [
+      "contrarian",
+      "system"
+    ],
+    "angle_draft": "El Parlamento Europeo propone que finfluencers se registren con ESMA y que las firmas sean responsables de sus claims. Esto no es un matiz regulatorio — es el fin del influencer marketing 'easy mode' en fintech. Quien tiene el playbook de compliance integrado en su proceso de influencer marketing puede seguir escalando. Quien contrata creadores sin governance regulatoria se expone a multas y a responsabilidad directa. En Bnext construimos procesos de marketing con supervisión CNMV real. La regulación separa a los que saben jugar con las reglas de los que pagan la multa. Frame: 'compliance-as-moat, influencer-edition'.",
+    "pov_confidence": 0.8,
+    "source_signals": [
+      "news-2026-05-01-P3-003"
+    ],
+    "created_at": "2026-05-01T06:42:00Z",
+    "status": "New",
+    "dispatch_date": "2026-05-01",
+    "dispatch_slot": "linkedin-content-generation",
+    "project_task_id": "P-Content-Semana-18-T06",
+    "project_id": "P-Content-Semana-18"
+  },
+  {
+    "id": "idea-2026-05-01-4",
+    "title": "Forrester: el 87% de profesionales de agencia admite que su modelo está roto",
+    "pillar_id": "P4",
+    "content_type": "Proof Post",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Forrester publica predicciones: 87% de profesionales de agencia (92% de seniors) creen que el modelo tradicional está roto o lo estará en 3-5 años. Prevén 15% de recorte de empleos en agencias en 2026 (tras 8% en 2025). 33% de billings vendrán de principal media.",
+      "source": "Forrester / The Drum / AdNews",
+      "url": "https://www.forrester.com/blogs/predictions-2026-marketing-agencies-resign-their-agency/",
+      "date": "2026-04-25"
+    },
+    "signal_type": [
+      "metric",
+      "conflict"
+    ],
+    "angle_draft": "Forrester acaba de publicar el dato que cierra el debate: el 87% de profesionales de agencia (92% de seniors) reconocen que su modelo está roto o lo estará en 3-5 años. Prevén 15% de recorte de empleos en 2026. No lo dicen los clientes frustrados — lo dicen ellos mismos. Mientras tanto, Hormozi genera más engagement en LinkedIn con texto plano (76.2% de sus posts) que la mayoría de agencias con carruseles. El secreto no es el formato. Es tener algo que decir y skin in the game al decirlo. Frame: 'agency-model-self-destruction'.",
+    "pov_confidence": 0.9,
+    "source_signals": [
+      "news-2026-05-01-P4-001",
+      "sig-20260501-005"
+    ],
+    "created_at": "2026-05-01T06:42:00Z",
+    "status": "New",
+    "dispatch_date": "2026-05-01",
+    "dispatch_slot": "linkedin-content-generation",
+    "project_task_id": "P-Content-Semana-18-T06",
+    "project_id": "P-Content-Semana-18"
+  },
+  {
+    "id": "idea-2026-05-01-5",
+    "title": "El 40% de apps tendrán agentes IA — pero el 40% de proyectos morirá antes de 2027",
+    "pillar_id": "P5",
+    "content_type": "Hot Take",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Gartner proyecta que el 40% de aplicaciones enterprise tendrán agentes IA task-specific para fin de 2026, subiendo desde <5% en 2025. Pero simultáneamente predice que >40% de proyectos de agentic AI serán cancelados antes de 2027 — no por la tecnología, sino por falta de estrategia, governance y 'agent washing' (vendors renombrando chatbots como agentes).",
+      "source": "Gartner Newsroom / Search Engine Land",
+      "url": "https://www.gartner.com/en/newsroom/press-releases/2025-08-26-gartner-predicts-40-percent-of-enterprise-apps-will-feature-task-specific-ai-agents-by-2026-up-from-less-than-5-percent-in-2025",
+      "date": "2026-04-30"
+    },
+    "signal_type": [
+      "milestone",
+      "aha-moment",
+      "contrarian"
+    ],
+    "angle_draft": "Gartner proyecta que el 40% de apps enterprise tendrán agentes IA para fin de 2026. Pero simultáneamente predice que >40% de proyectos de agentic AI serán cancelados antes de 2027. La razón no es la tecnología — es 'agent washing': vendors renombrando chatbots como agentes. La brecha entre tener IA y operar con IA sigue intacta. BCG lo demostró: 6 analistas/semana → 1 persona + agente en <1 hora. Eso es ejecución real, no un slide de producto. Si tu proveedor no puede enseñarte sus agentes en producción, te está vendiendo washing. Frame: 'agent-washing-is-the-new-greenwashing'.",
+    "pov_confidence": 0.8,
+    "source_signals": [
+      "news-2026-05-01-P5-001",
+      "news-2026-05-01-P5-002"
+    ],
+    "created_at": "2026-05-01T06:42:00Z",
+    "status": "Approved",
+    "dispatch_date": "2026-05-01",
+    "dispatch_slot": "linkedin-content-generation",
+    "project_task_id": "P-Content-Semana-18-T05",
+    "project_id": "P-Content-Semana-18",
+    "approved_at": "2026-05-01T13:07:53.197Z",
+    "approved_via": "mc-ui",
+    "content_task_id": "P-Content-Semana-18-T05-C02",
+    "content_task_channels": [
+      "linkedin",
+      "twitter"
+    ]
+  },
+  {
+    "id": "idea-2026-05-01-6",
+    "title": "CAC payback en B2B SaaS ya roza los 18 meses — PLG lo hace en 6",
+    "pillar_id": "P1",
+    "content_type": "Listicle",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Múltiples reportes de abril 2026 confirman que el CAC payback mediano en B2B SaaS se ha estirado a 15-18 meses, con costes de adquisición subiendo 40-60% desde 2023. Las empresas PLG mantienen payback de 6-12 meses vs 18-24 meses en enterprise.",
+      "source": "GSquared CFO / Data-Mania / Proven SaaS",
+      "url": "https://www.gsquaredcfo.com/blog/saas-benchmarks-2026",
+      "date": "2026-04-28"
+    },
+    "signal_type": [
+      "metric",
+      "aha-moment"
+    ],
+    "angle_draft": "El CAC payback mediano en B2B SaaS se ha estirado a 15-18 meses con costes de adquisición subiendo 40-60% desde 2023. Pero las empresas PLG mantienen payback de 6-12 meses. La diferencia no es el producto — es el sistema. Si tu único motor es paid y tu payback supera 12 meses, no tienes un problema de presupuesto. Tienes un cuello de botella de sistema que más dinero no va a resolver. En Bnext bajamos CAC de 50€ a 12,40€ con un sistema, no con más budget. El diagnóstico del cuello de botella es siempre el primer paso. Frame: 'diagnose-before-scale'.",
+    "pov_confidence": 0.8,
+    "source_signals": [
+      "news-2026-05-01-P1-001"
+    ],
+    "created_at": "2026-05-01T06:42:00Z",
+    "status": "New",
+    "dispatch_date": "2026-05-01",
+    "dispatch_slot": "linkedin-content-generation",
+    "project_task_id": "P-Content-Semana-18-T06",
+    "project_id": "P-Content-Semana-18"
+  },
+  {
+    "id": "idea-2026-05-01-7",
+    "title": "Rob Walling: la IA no resuelve churn — lo acelera",
+    "pillar_id": "P5",
+    "content_type": "Hot Take",
+    "target_channel": "twitter",
+    "signal": {
+      "summary": "Walling presenta 9 'verdades incómodas' para founders SaaS en 2026. Highlights: (1) tener audiencia en redes 'hace muy poco' para vender SaaS salvo que sea exactamente tu ICP — mejor construir network que audiencia; (2) el churn es una batalla constante que erosiona momentum; (3) horizontal SaaS bootstrapped sufrirá 'headwinds masivos' porque capital VC + AI están saturando esos mercados; (4) AI no está resolviendo churn — lo está acelerando, con retention rates menores en productos AI-native vs SaaS tradicional. Aconseja nichar en vertical o 'orthogonal SaaS'. Formato: video largo con listicle numerado.",
+      "source": "Rob Walling",
+      "url": "https://www.startupsfortherestofus.com/episodes/episode-813-saas-predictions-for-2026-reflections-on-2025",
+      "date": "2026-04-25"
+    },
+    "signal_type": [
+      "contrarian",
+      "metric"
+    ],
+    "angle_draft": "Rob Walling, inversor en 230+ startups, presenta un dato que nadie quiere oír: los productos AI-native tienen gross retention rates significativamente más bajos que el SaaS tradicional. La IA hace más fácil construir, lo que significa más competencia y más switching. La IA sin sistema de retención es gasolina sin motor — más rápido al mismo sitio: ninguno. El problema no es la tecnología. Es que la mayoría opera con IA como tool, no como sistema. Quien tiene el sistema de growth instalado primero, retiene después. Frame: 'ai-amplifies-your-gaps'.",
+    "pov_confidence": 0.8,
+    "source_signals": [
+      "sig-20260501-012",
+      "sig-20260501-007"
+    ],
+    "created_at": "2026-05-01T06:42:00Z",
+    "status": "New"
   }
 ]

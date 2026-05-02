@@ -25,7 +25,7 @@ import {
 import { useQuickActions } from "@/hooks/useChat";
 import { useRetriggerWriter } from "@/hooks/useContentTasks";
 import { ThreadListPanel } from "./thread-list-panel";
-import { AskQuestion, parseMessageSegments } from "./ask-question";
+import { AskQuestionGroup, parseMessageSegments } from "./ask-question";
 import { DocSlideOver } from "@/components/shared/doc-slideover";
 import { useFoundation } from "@/hooks/useFoundation";
 import { useProjects } from "@/hooks/useProjects";
@@ -1303,24 +1303,20 @@ export function ChatSidebar() {
                     </span>
                   </div>
                 )}
-                {parseMessageSegments(msg.text || "").map((seg, segIdx) =>
-                  seg.type === "text" ? (
+                <AskQuestionGroup
+                  segments={parseMessageSegments(msg.text || "")}
+                  threadId={activeThreadId ?? ""}
+                  renderText={(text, key) => (
                     <div
-                      key={segIdx}
-                      dangerouslySetInnerHTML={{ __html: formatMessage(seg.content) }}
+                      key={key}
+                      dangerouslySetInnerHTML={{ __html: formatMessage(text) }}
                     />
-                  ) : (
-                    <AskQuestion
-                      key={segIdx}
-                      question={seg.question}
-                      threadId={activeThreadId ?? ""}
-                      onSubmit={(text) =>
-                        activeThreadId &&
-                        sendMutation.mutate({ text, threadId: activeThreadId })
-                      }
-                    />
-                  ),
-                )}
+                  )}
+                  onSubmit={(text) =>
+                    activeThreadId &&
+                    sendMutation.mutate({ text, threadId: activeThreadId })
+                  }
+                />
                 {/* Attachments */}
                 {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                 {(msg as any).attachments?.length > 0 && (
@@ -1450,7 +1446,7 @@ export function ChatSidebar() {
             className="chat-textarea flex-1 bg-[#313244] text-[#cdd6f4] placeholder-[#6c7086] text-base px-3 py-2 rounded-lg border border-[#45475a] focus:outline-none focus:border-rust disabled:opacity-50 resize-none overflow-y-auto leading-snug"
             style={{ maxHeight: 120 }}
           />
-          {showTyping || sendMutation.isPending || uploading ? (
+          {waitingForReply || showTyping || sendMutation.isPending || cancelMutation.isPending || uploading ? (
             <button
               onClick={() => cancelMutation.mutate({ threadId: activeThreadId ?? undefined })}
               className="bg-red-600 hover:bg-red-700 text-white w-8 h-8 rounded-lg flex items-center justify-center text-sm shrink-0"

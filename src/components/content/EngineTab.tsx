@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/router";
 import { ConfigurationPipeline } from "./ConfigurationPipeline";
 import { EngineState } from "./EngineState";
+import { CarouselSetupPanel } from "./CarouselSetupPanel";
+import { ImageGenSetupPanel } from "./ImageGenSetupPanel";
 import { InputsTab } from "./InputsTab";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import type { ThreadConfig } from "@/lib/chat-openers";
@@ -96,13 +98,16 @@ function ConfigurationPanel({ slug, openChat }: Props) {
   };
 
   return (
-    <div>
+    <div className="space-y-6">
       <ConfigurationPipeline
         slug={slug}
         openChat={openChat}
         onRequestEditor={setEditorSection}
         onOpenIdeas={handleOpenIdeas}
       />
+
+      <ImageGenSetupPanel slug={slug} />
+      <CarouselSetupPanel slug={slug} />
 
       <Sheet open={editorSection !== null} onOpenChange={(open) => !open && setEditorSection(null)}>
         <SheetContent

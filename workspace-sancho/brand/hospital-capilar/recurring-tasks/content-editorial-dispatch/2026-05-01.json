@@ -1,0 +1,63 @@
+{
+  "date": "2026-05-01",
+  "day_of_week": "friday",
+  "dispatched_at": "2026-05-01T08:52:00+02:00",
+  "ideas_total": 7,
+  "ideas_dispatched": 5,
+  "stale_marked": 0,
+  "cadence_config": "not_found — used defaults",
+  "selected_ideas": [
+    {
+      "id": "idea-2026-05-01-002",
+      "rank": 1,
+      "recency_score": 1.0,
+      "pov_confidence": 0.92,
+      "pillar": "P2-tratamientos",
+      "channel": "blog",
+      "type": "Framework"
+    },
+    {
+      "id": "idea-2026-05-01-005",
+      "rank": 2,
+      "recency_score": 1.0,
+      "pov_confidence": 0.90,
+      "pillar": "P2-tratamientos",
+      "channel": "blog",
+      "type": "Framework"
+    },
+    {
+      "id": "idea-2026-05-01-003",
+      "rank": 3,
+      "recency_score": 1.0,
+      "pov_confidence": 0.88,
+      "pillar": "P4-bienestar",
+      "channel": "linkedin",
+      "type": "Personal Story"
+    },
+    {
+      "id": "idea-2026-05-01-007",
+      "rank": 4,
+      "recency_score": 1.0,
+      "pov_confidence": 0.87,
+      "pillar": "P2-tratamientos",
+      "channel": "linkedin",
+      "type": "Proof Post"
+    },
+    {
+      "id": "idea-2026-05-01-001",
+      "rank": 5,
+      "recency_score": 1.0,
+      "pov_confidence": 0.85,
+      "pillar": "P1-investigacion",
+      "channel": "linkedin",
+      "type": "Hot Take"
+    }
+  ],
+  "not_selected": [
+    "idea-2026-05-01-006",
+    "idea-2026-05-01-004"
+  ],
+  "discord_message_id": "1499665231499235531",
+  "discord_channel_id": "1475638259425087629",
+  "status": "awaiting_response"
+}

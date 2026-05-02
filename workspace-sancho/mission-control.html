@@ -5175,20 +5175,20 @@ const STRATEGY_SKILLS = {
 };
 
 const CONTENT_CHANNEL_SKILLS = {
-  'blog':          { skill: 'seo-content', skills: ['deep-research', 'seo-content', 'schema-markup', 'qa-bot', 'content-calendar-planner'] },
-  'seo':           { skill: 'seo-content', skills: ['deep-research', 'seo-content', 'schema-markup', 'qa-bot', 'content-calendar-planner'] },
-  'linkedin':      { skill: 'linkedin-content', skills: ['linkedin-content', 'brand-voice', 'qa-bot', 'content-calendar-planner'] },
-  'instagram':     { skill: 'instagram-content', skills: ['instagram-content', 'brand-voice', 'qa-bot', 'content-calendar-planner'] },
-  'twitter':       { skill: 'twitter-content', skills: ['twitter-content', 'brand-voice', 'qa-bot', 'content-calendar-planner'] },
-  'tiktok':        { skill: 'tiktok-growth', skills: ['tiktok-growth', 'social-content', 'brand-voice', 'qa-bot', 'content-calendar-planner'] },
-  'email':         { skill: 'email-sequences', skills: ['email-sequences', 'copywriting', 'qa-bot'] },
-  'newsletter':    { skill: 'email-sequences', skills: ['email-sequences', 'copywriting', 'qa-bot'] },
-  'youtube':       { skill: 'copywriting', skills: ['deep-research', 'copywriting', 'qa-bot'] },
-  'guest-post':    { skill: 'seo-content', skills: ['seo-content', 'copywriting', 'outreach-sequence-builder', 'qa-bot'] },
-  'paid-ads':      { skill: 'direct-response-copy', skills: ['direct-response-copy', 'qa-bot'] },
-  'web':           { skill: 'landing-pages', skills: ['landing-pages', 'alarife-integration', 'qa-bot'] },
-  'landing':       { skill: 'landing-pages', skills: ['landing-pages', 'alarife-integration', 'qa-bot'] },
-  'presentations': { skill: 'frontend-slides', skills: ['frontend-slides', 'qa-bot'] },
+  'blog':          { skill: 'seo-content', skills: ['deep-research', 'seo-content', 'schema-markup', 'content-calendar-planner'] },
+  'seo':           { skill: 'seo-content', skills: ['deep-research', 'seo-content', 'schema-markup', 'content-calendar-planner'] },
+  'linkedin':      { skill: 'linkedin-content', skills: ['linkedin-content', 'brand-voice', 'content-calendar-planner'] },
+  'instagram':     { skill: 'instagram-content', skills: ['instagram-content', 'brand-voice', 'content-calendar-planner'] },
+  'twitter':       { skill: 'twitter-content', skills: ['twitter-content', 'brand-voice', 'content-calendar-planner'] },
+  'tiktok':        { skill: 'tiktok-growth', skills: ['tiktok-growth', 'social-content', 'brand-voice', 'content-calendar-planner'] },
+  'email':         { skill: 'email-sequences', skills: ['email-sequences', 'copywriting'] },
+  'newsletter':    { skill: 'email-sequences', skills: ['email-sequences', 'copywriting'] },
+  'youtube':       { skill: 'copywriting', skills: ['deep-research', 'copywriting'] },
+  'guest-post':    { skill: 'seo-content', skills: ['seo-content', 'copywriting', 'outreach-sequence-builder'] },
+  'paid-ads':      { skill: 'direct-response-copy', skills: ['direct-response-copy'] },
+  'web':           { skill: 'landing-pages', skills: ['landing-pages', 'alarife-integration'] },
+  'landing':       { skill: 'landing-pages', skills: ['landing-pages', 'alarife-integration'] },
+  'presentations': { skill: 'frontend-slides', skills: ['frontend-slides'] },
 };
 
 const PILLAR_SKILLS = {
@@ -5219,7 +5219,7 @@ function resolveThreadSkills(ctx) {
   if (ctx.taskType) {
     if (ctx.taskType === 'content') {
       const ch = CONTENT_CHANNEL_SKILLS[ctx.channel];
-      return ch || { skill: 'content-strategy', skills: ['content-strategy', 'qa-bot'] };
+      return ch || { skill: 'content-strategy', skills: ['content-strategy'] };
     }
     if (ctx.taskType === 'outreach') return { skill: 'outreach-sequence-builder', skills: ['company-finder', 'decision-maker-finder', 'contact-enrichment', 'outreach-sequence-builder'] };
     if (ctx.taskType === 'foundation') return PILLAR_SKILLS[ctx.pillar] || { skill: 'doc-coauthoring', skills: ['doc-coauthoring'] };

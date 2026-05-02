@@ -1,6 +1,7 @@
 import fs from "fs";
 import path from "path";
 import { BASE } from "@/lib/data/paths";
+import type { DraftStatus } from "@/lib/data/drafts";
 import {
   ContentTask,
   ContentTaskStatus,
@@ -185,6 +186,99 @@ export function setContentTaskStatus(
 
   saveProjectTasks(file);
   return ct;
+}
+
+/**
+ * Map the aggregated draft status (from per-channel frontmatters) to the
+ * canonical ContentTask (status, pipeline_state). Returns `null` when no
+ * change is warranted: either the current state is already correct, the CT
+ * is in a manual/terminal state that shouldn't be auto-managed, or the
+ * aggregated value is missing.
+ *
+ * Pipeline-driven states reconcile from drafts:
+ *   draft-aggregate → CT.status / pipeline_state
+ *   pending          → Approved / researching
+ *   researching      → Approved / researching
+ *   clarify-needed   → Approved / clarify-needed
+ *   drafting         → Approved / drafting
+ *   draft            → Draft / null
+ *   approved         → Review / null
+ *   published        → Published / null
+ *
+ * Manual states (Media, Review, Ready, Discarded, Deferred) and the terminal
+ * Published state are respected — once a human moves the CT past Draft, the
+ * pipeline stops auto-managing it.
+ */
+export function inferContentTaskState(
+  current: { status: ContentTaskStatus; pipeline_state?: ContentTaskPipelineState | null },
+  aggregated: DraftStatus | null,
+): { status: ContentTaskStatus; pipeline_state: ContentTaskPipelineState | null } | null {
+  if (
+    current.status === "Discarded" ||
+    current.status === "Deferred" ||
+    current.status === "Published" ||
+    current.status === "Media" ||
+    current.status === "Review" ||
+    current.status === "Ready"
+  ) {
+    return null;
+  }
+  if (!aggregated) return null;
+
+  let target: { status: ContentTaskStatus; pipeline_state: ContentTaskPipelineState | null };
+  switch (aggregated) {
+    case "pending":
+    case "researching":
+      target = { status: "Approved", pipeline_state: "researching" };
+      break;
+    case "clarify-needed":
+      target = { status: "Approved", pipeline_state: "clarify-needed" };
+      break;
+    case "drafting":
+      target = { status: "Approved", pipeline_state: "drafting" };
+      break;
+    case "draft":
+      target = { status: "Draft", pipeline_state: null };
+      break;
+    case "approved":
+      target = { status: "Review", pipeline_state: null };
+      break;
+    case "published":
+      target = { status: "Published", pipeline_state: null };
+      break;
+    default:
+      return null;
+  }
+
+  const currentPipeline = (current.pipeline_state ?? null) as ContentTaskPipelineState | null;
+  if (target.status === current.status && target.pipeline_state === currentPipeline) {
+    return null;
+  }
+  return target;
+}
+
+/**
+ * Self-healing reconciliation: when the persisted ContentTask state in
+ * tasks.json drifts from what the per-channel draft frontmatters reflect,
+ * persist the corrected state. Designed to be called on read from API
+ * endpoints — idempotent, cheap, and the only mechanism that closes the
+ * loop between Escudero (writes drafts on disk) and the project tasks.json
+ * (rendered by the UI). Returns the (possibly updated) ContentTask.
+ */
+export function reconcileContentTaskState(
+  slug: string,
+  ct: ContentTask,
+  aggregated: DraftStatus | null,
+): ContentTask {
+  const inferred = inferContentTaskState(ct, aggregated);
+  if (!inferred) return ct;
+  return setContentTaskStatus(
+    slug,
+    ct.parent_task_id,
+    ct.id,
+    inferred.status,
+    inferred.pipeline_state,
+  );
 }
 
 /** Append a document reference to a ContentTask's `documents[]`. Idempotent by path. */

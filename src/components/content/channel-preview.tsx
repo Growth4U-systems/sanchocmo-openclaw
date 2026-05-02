@@ -1,8 +1,10 @@
 "use client";
 
 import type { ReactNode } from "react";
+import Image from "next/image";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import type { MediaAsset } from "@/lib/data/drafts";
 
 /**
  * Channel-native preview for a draft body. Renders the markdown wrapped in
@@ -14,11 +16,16 @@ export function ChannelPreview({
   channel,
   body,
   brandSlug,
+  media,
 }: {
   channel: string;
   body: string;
   brandSlug: string;
+  media?: MediaAsset[];
 }) {
+  // Skip non-image entries (e.g. the carousel PDF that lives at media[0])
+  // so the preview always renders the cover slide as the visual.
+  const primaryMedia = media?.find((m) => m.type.startsWith("image/")) ?? null;
   const ch = channel.toLowerCase();
   const handle = `@${brandSlug}`;
 
@@ -40,6 +47,18 @@ export function ChannelPreview({
           <div className="px-4 pb-3 text-sm text-[#000000E6] whitespace-pre-wrap leading-relaxed">
             {stripMarkdownLight(body)}
           </div>
+          {primaryMedia && (
+            <div className="relative w-full aspect-[1.91/1] bg-black">
+              <Image
+                src={primaryMedia.url}
+                alt={primaryMedia.prompt || "Post media"}
+                fill
+                sizes="(max-width: 768px) 100vw, 600px"
+                className="object-cover"
+                unoptimized
+              />
+            </div>
+          )}
           <div className="border-t border-[#E0E0E0] flex items-center justify-around py-1">
             {["👍 Recomendar", "💬 Comentar", "🔁 Compartir", "📨 Enviar"].map((label) => (
               <span key={label} className="text-xs text-[#00000099] font-semibold py-2">
@@ -68,6 +87,18 @@ export function ChannelPreview({
               <div className="text-sm text-[#0F1419] mt-0.5 whitespace-pre-wrap leading-snug">
                 {stripMarkdownLight(body)}
               </div>
+              {primaryMedia && (
+                <div className="relative w-full aspect-[16/9] mt-2 rounded-2xl overflow-hidden border border-[#E1E8ED]">
+                  <Image
+                    src={primaryMedia.url}
+                    alt={primaryMedia.prompt || "Post media"}
+                    fill
+                    sizes="(max-width: 768px) 100vw, 500px"
+                    className="object-cover"
+                    unoptimized
+                  />
+                </div>
+              )}
               <div className="flex items-center justify-between mt-3 max-w-md text-[#536471] text-xs">
                 <span>💬 12</span>
                 <span>🔁 34</span>
@@ -96,8 +127,19 @@ export function ChannelPreview({
             <span className="text-sm font-semibold text-[#262626] flex-1">{brandSlug}</span>
             <span className="text-[#262626] text-lg">⋯</span>
           </div>
-          <div className="aspect-square bg-gradient-to-br from-[#F5F5F5] to-[#E8E8E8] flex items-center justify-center">
-            <span className="text-[#999] text-sm">[Imagen / Carrusel]</span>
+          <div className="relative aspect-square bg-gradient-to-br from-[#F5F5F5] to-[#E8E8E8] flex items-center justify-center">
+            {primaryMedia ? (
+              <Image
+                src={primaryMedia.url}
+                alt={primaryMedia.prompt || "Post media"}
+                fill
+                sizes="(max-width: 768px) 100vw, 384px"
+                className="object-cover"
+                unoptimized
+              />
+            ) : (
+              <span className="text-[#999] text-sm">[Imagen / Carrusel]</span>
+            )}
           </div>
           <div className="px-3 py-2 space-y-1">
             <div className="flex gap-3 text-xl">❤️ 💬 ✈️</div>

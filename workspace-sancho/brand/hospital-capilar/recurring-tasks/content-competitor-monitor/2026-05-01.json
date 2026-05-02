@@ -1,0 +1,17 @@
+{
+  "task": "content-competitor-monitor",
+  "ran_at": "2026-05-01T05:16:00Z",
+  "status": "completed",
+  "signals_file": "brand/hospital-capilar/content/research-signals/2026-05-01-creators.json",
+  "signals_count": 13,
+  "competitors_monitored": ["Insparya", "Svenson", "Capilclinic", "Medical Hair", "IMD", "Manual.co", "mediQuo"],
+  "reference_creators_monitored": ["Dr. Sergio Vañó Galván", "Helena Rodero", "Dr. De Felipe"],
+  "platforms_checked": ["web/blog", "LinkedIn (via search)", "X/Twitter (unavailable - API credits exhausted)", "press/PR"],
+  "last_finding": "Insparya celebra 7 años en España con PR masivo pero pierde 13% facturación; Svenson lanza 'LUX Capilar con Polinucleótidos' y gana Premio Cinco Estrellas 2026; Capilclinic domina SEO con guía de precios y artículo de biotecnología capilar; investigación española logra revertir alopecia en ratones con stem cells (cobertura Infobae). El cuadrante vacío 'tratamientos + credibilidad médica' sigue sin ocupar — oportunidad intacta para HC.",
+  "notes": [
+    "X/Twitter search unavailable (xAI API credits exhausted)",
+    "Config files (competitors/all-pillars.yml, reference-creators/all-pillars.yml, content-pillars.md) don't exist yet — used competitor data from foundation-state competitors.current.md",
+    "LinkedIn direct post scraping limited — used web search proxy"
+  ],
+  "next_run": "2026-05-08T05:16:00Z"
+}

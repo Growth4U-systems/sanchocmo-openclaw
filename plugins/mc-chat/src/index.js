@@ -114,7 +114,7 @@ export default defineChannelPluginEntry({
         contextLines.push(`:::ask`);
         contextLines.push(`{"id":"q_<short>","prompt":"<pregunta>","mode":"single"|"multi","options":[{"id":"<key>","label":"<texto>"}]}`);
         contextLines.push(`:::`);
-        contextLines.push(`Usa "single" para radios (1 opción) y "multi" para checkboxes. Incluye siempre una opción {"id":"other","label":"Otro (lo escribo)"} para no encajonar al usuario. NO uses ":::ask" para preguntas abiertas (ej. "cuéntame sobre tu negocio") — solo para decisiones discretas. La respuesta del usuario llegará como un mensaje de texto plano: "[ask:<id>] respuesta: <label1>, <label2>".`);
+        contextLines.push(`Usa "single" para radios (1 opción) y "multi" para checkboxes. OBLIGATORIO: la ÚLTIMA opción debe ser SIEMPRE {"id":"other","label":"Otro (lo escribo)"} — no es opcional, es un requisito del componente para que el usuario pueda dar respuesta libre. Si la omites, el usuario queda encajonado. NO uses ":::ask" para preguntas abiertas (ej. "cuéntame sobre tu negocio") — solo para decisiones discretas. Puedes incluir VARIOS bloques ":::ask" en un mismo mensaje (ej. preguntar tono + formato + audiencia a la vez); el componente espera a que el usuario responda TODAS antes de devolverte un único mensaje con todas las respuestas en líneas separadas: "[ask:q1] respuesta: …\\n[ask:q2] respuesta: …". NO ejecutes nada hasta recibir ese mensaje completo. Si el usuario eligió "Otro" verás su texto literal en lugar de la etiqueta.`);
         contextLines.push(`[/MC Chat Context]`);
 
         const bodyForAgent = contextLines.join('\n') + '\n\n' + text;

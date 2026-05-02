@@ -163,7 +163,7 @@ function dispatchIdeaUpdate(slug: string, ideaId: string, action: "approve" | "l
   const fields: Record<string, string> =
     action === "approve" ? { status: "Approved", approved_at: now, approved_via: "slack-button", approved_by: actor }
     : action === "reject" ? { status: "Discarded", archived_at: now, archived_via: "slack-button", archived_by: actor }
-    : { deferred_at: now, deferred_by: actor }; // later: keep status=New
+    : { status: "Deferred", deferred_at: now, deferred_by: actor }; // later: park in Deferred queue
   const baseUrl = `http://localhost:${process.env.PORT || 3000}`;
   fetch(`${baseUrl}/api/content-engine/ideas`, {
     method: "PATCH",

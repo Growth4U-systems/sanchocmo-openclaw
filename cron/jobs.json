@@ -1009,29 +1009,6 @@
     },
     {
       "agentId": "sancho",
-      "name": "Content: Classify + Ideas — Growth4U",
-      "enabled": true,
-      "schedule": {
-        "kind": "cron",
-        "expr": "30 7 * * 1-5",
-        "tz": "Europe/Madrid"
-      },
-      "sessionTarget": "isolated",
-      "wakeMode": "now",
-      "payload": {
-        "kind": "agentTurn",
-        "message": "Ejecuta idea-builder para Growth4U.\n\nESTE CRON SUSTITUYE A insight-classifier + insight-to-content-mapper (deprecated). Todo el trabajo lo hace idea-builder en una sola pasada consultando el POV Bank.\n\nPASO 1 — LEER INPUTS:\n- Todos los archivos brand/growth4u/content/research-signals/{HOY}-*.json (news, creators, paa, keywords, pulse)\n- brand/growth4u/content/content-pillars.md\n- brand/growth4u/content/pov-bank.json  ← FUENTE PRINCIPAL del POV por pillar\n- brand/growth4u/content/configs/cadence-config.yml (canales activos + content_types)\n- (opcional) brand/growth4u/brand-book/brand-voice/brand-voice.current.md\n- (opcional) brand/growth4u/content/clarify-history.json (últimas 20 entries)\n\nPASO 2 — CLASIFICAR + GENERAR IDEAS:\nPara cada signal:\n  a) Clasifica en 1+ de los 7 tipos (aha-moment, conflict, contrarian, system, milestone, vulnerability, metric). Escribe signal_type[] back al archivo del signal.\n  b) Match al pillar más relevante por topic.\n  c) Selecciona target_channel y content_type según cadence-config.\n  d) Genera angle_draft: PÁRRAFO de 60-80 palabras como POV STATEMENT. NO es un artículo, NO es copy. Empieza con 'Nuestro POV:' y deriva la postura del pov-bank (core_belief + preferred_angles del pillar). Cita UN dato del signal y opcionalmente UNA pieza de evidence_we_cite. Termina con el frame usado.\n  e) Compute pov_confidence (0-1) según rúbrica del SKILL.md de idea-builder.\nMax 5-8 ideas por día. NO duplicar ideas existentes (check por signal URL + pillar).\n\nPASO 3 — GUARDAR:\nAppend ideas nuevas a brand/growth4u/content/idea-queue.json con status=ready.\n\nPASO 4 — GUARDAR EN RECURRING TASKS:\nGuarda resumen en brand/growth4u/recurring-tasks/content-ideas/{YYYY-MM-DD}.json:\n{\"cronName\": \"Content: Classify + Ideas — Growth4U\", \"slug\": \"growth4u\", \"date\": \"YYYY-MM-DD\", \"runAtMs\": <timestamp_ms>, \"status\": \"ok\", \"content\": \"<N signals clasificados, M ideas generadas con pillars y channels. Si algún pillar tiene pov-bank vacío (core_belief: null), señalarlo.>\"}",
-        "model": "anthropic/claude-sonnet-4-5"
-      },
-      "delivery": {
-        "mode": "none"
-      },
-      "id": "3087b273-f6c4-44e7-89d7-637cf3911e33",
-      "createdAtMs": 1777353600000,
-      "state": {}
-    },
-    {
-      "agentId": "sancho",
       "name": "Content: Editorial Dispatch — Growth4U",
       "enabled": true,
       "schedule": {
@@ -1119,29 +1096,6 @@
         "mode": "none"
       },
       "id": "61272e4c-e42e-4634-bd78-da8c7f266936",
-      "createdAtMs": 1777157953992,
-      "state": {}
-    },
-    {
-      "agentId": "sancho",
-      "name": "Content: Classify + Ideas — Hospital Capilar",
-      "enabled": true,
-      "schedule": {
-        "kind": "cron",
-        "expr": "30 7 * * 1-5",
-        "tz": "Europe/Madrid"
-      },
-      "sessionTarget": "isolated",
-      "wakeMode": "now",
-      "payload": {
-        "kind": "agentTurn",
-        "message": "Ejecuta insight-classifier + insight-to-content-mapper para Hospital Capilar.\n\nPASO 1 — CLASIFICAR SIGNALS:\nLee brand/hospital-capilar/content/research-signals/{HOY}-*.json (todos los archivos de hoy: news, creators, pulse, paa).\nPara cada signal sin campo signal_type, clasifica en 1+ de 7 tipos: aha-moment, conflict, contrarian, system, milestone, vulnerability, metric.\nEscribe el campo signal_type[] de vuelta al archivo.\n\nPASO 2 — GENERAR IDEAS:\nLee brand/hospital-capilar/content/content-pillars.md\nLee brand/hospital-capilar/brand-book/brand-voice/brand-voice.current.md\nPara cada signal clasificado, genera una idea con:\n- pillar_id (match por topic)\n- content_type (Hot Take, Proof Post, Framework, Personal Story, etc.)\n- target_channel (linkedin, twitter, blog, newsletter — segun cadence-config)\n- signal (summary, source, url, date del signal original)\n- angle_draft (1-2 parrafos: el angulo posible para nuestro contenido)\n- pov_confidence (0-1)\nMax 5-8 ideas por dia.\n\nPASO 3 — GUARDAR:\nAppend ideas a brand/hospital-capilar/content/idea-queue.json con status=ready.\nNo duplicar ideas que ya esten en el queue (check por signal URL).\n\nPASO 4 — GUARDAR EN RECURRING TASKS:\nGuarda resumen en brand/hospital-capilar/recurring-tasks/content-ideas/{YYYY-MM-DD}.json:\n{\"cronName\": \"Content: Classify + Ideas — Hospital Capilar\", \"slug\": \"hospital-capilar\", \"date\": \"YYYY-MM-DD\", \"runAtMs\": <timestamp_ms>, \"status\": \"ok\", \"content\": \"<N signals clasificados, M ideas generadas con pillars y channels>\"}",
-        "model": "anthropic/claude-sonnet-4-5"
-      },
-      "delivery": {
-        "mode": "none"
-      },
-      "id": "515f8afb-d616-45ed-9bfc-2649fd9939bc",
       "createdAtMs": 1777157953992,
       "state": {}
     },
@@ -1239,29 +1193,6 @@
     },
     {
       "agentId": "sancho",
-      "name": "Content: Classify + Ideas — Hulahoop",
-      "enabled": true,
-      "schedule": {
-        "kind": "cron",
-        "expr": "30 7 * * 1-5",
-        "tz": "Europe/Madrid"
-      },
-      "sessionTarget": "isolated",
-      "wakeMode": "now",
-      "payload": {
-        "kind": "agentTurn",
-        "message": "Ejecuta insight-classifier + insight-to-content-mapper para Hulahoop.\n\nPASO 1 — CLASIFICAR SIGNALS:\nLee brand/hulahoop/content/research-signals/{HOY}-*.json (todos los archivos de hoy: news, creators, pulse, paa).\nPara cada signal sin campo signal_type, clasifica en 1+ de 7 tipos: aha-moment, conflict, contrarian, system, milestone, vulnerability, metric.\nEscribe el campo signal_type[] de vuelta al archivo.\n\nPASO 2 — GENERAR IDEAS:\nLee brand/hulahoop/content/content-pillars.md\nLee brand/hulahoop/brand-book/brand-voice/brand-voice.current.md\nPara cada signal clasificado, genera una idea con:\n- pillar_id (match por topic)\n- content_type (Hot Take, Proof Post, Framework, Personal Story, etc.)\n- target_channel (linkedin, twitter, blog, newsletter — segun cadence-config)\n- signal (summary, source, url, date del signal original)\n- angle_draft (1-2 parrafos: el angulo posible para nuestro contenido)\n- pov_confidence (0-1)\nMax 5-8 ideas por dia.\n\nPASO 3 — GUARDAR:\nAppend ideas a brand/hulahoop/content/idea-queue.json con status=ready.\nNo duplicar ideas que ya esten en el queue (check por signal URL).\n\nPASO 4 — GUARDAR EN RECURRING TASKS:\nGuarda resumen en brand/hulahoop/recurring-tasks/content-ideas/{YYYY-MM-DD}.json:\n{\"cronName\": \"Content: Classify + Ideas — Hulahoop\", \"slug\": \"hulahoop\", \"date\": \"YYYY-MM-DD\", \"runAtMs\": <timestamp_ms>, \"status\": \"ok\", \"content\": \"<N signals clasificados, M ideas generadas con pillars y channels>\"}",
-        "model": "anthropic/claude-sonnet-4-5"
-      },
-      "delivery": {
-        "mode": "none"
-      },
-      "id": "dcd4e463-e3b2-44f4-a03b-42e1877215bc",
-      "createdAtMs": 1777157953998,
-      "state": {}
-    },
-    {
-      "agentId": "sancho",
       "name": "Content: Editorial Dispatch — Hulahoop",
       "enabled": true,
       "schedule": {
@@ -1349,29 +1280,6 @@
         "mode": "none"
       },
       "id": "2d9b3847-5a0a-405f-b222-f76fdae9c854",
-      "createdAtMs": 1777157954012,
-      "state": {}
-    },
-    {
-      "agentId": "sancho",
-      "name": "Content: Classify + Ideas — Paymatico",
-      "enabled": true,
-      "schedule": {
-        "kind": "cron",
-        "expr": "30 7 * * 1-5",
-        "tz": "Europe/Madrid"
-      },
-      "sessionTarget": "isolated",
-      "wakeMode": "now",
-      "payload": {
-        "kind": "agentTurn",
-        "message": "Ejecuta insight-classifier + insight-to-content-mapper para Paymatico.\n\nPASO 1 — CLASIFICAR SIGNALS:\nLee brand/paymatico/content/research-signals/{HOY}-*.json (todos los archivos de hoy: news, creators, pulse, paa).\nPara cada signal sin campo signal_type, clasifica en 1+ de 7 tipos: aha-moment, conflict, contrarian, system, milestone, vulnerability, metric.\nEscribe el campo signal_type[] de vuelta al archivo.\n\nPASO 2 — GENERAR IDEAS:\nLee brand/paymatico/content/content-pillars.md\nLee brand/paymatico/brand-book/brand-voice/brand-voice.current.md\nPara cada signal clasificado, genera una idea con:\n- pillar_id (match por topic)\n- content_type (Hot Take, Proof Post, Framework, Personal Story, etc.)\n- target_channel (linkedin, twitter, blog, newsletter — segun cadence-config)\n- signal (summary, source, url, date del signal original)\n- angle_draft (1-2 parrafos: el angulo posible para nuestro contenido)\n- pov_confidence (0-1)\nMax 5-8 ideas por dia.\n\nPASO 3 — GUARDAR:\nAppend ideas a brand/paymatico/content/idea-queue.json con status=ready.\nNo duplicar ideas que ya esten en el queue (check por signal URL).\n\nPASO 4 — GUARDAR EN RECURRING TASKS:\nGuarda resumen en brand/paymatico/recurring-tasks/content-ideas/{YYYY-MM-DD}.json:\n{\"cronName\": \"Content: Classify + Ideas — Paymatico\", \"slug\": \"paymatico\", \"date\": \"YYYY-MM-DD\", \"runAtMs\": <timestamp_ms>, \"status\": \"ok\", \"content\": \"<N signals clasificados, M ideas generadas con pillars y channels>\"}",
-        "model": "anthropic/claude-sonnet-4-5"
-      },
-      "delivery": {
-        "mode": "none"
-      },
-      "id": "8034bdec-0449-44a2-883c-147844b171f2",
       "createdAtMs": 1777157954012,
       "state": {}
     },

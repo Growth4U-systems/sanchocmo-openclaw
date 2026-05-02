@@ -1,0 +1,30 @@
+{
+  "date": "2026-05-01",
+  "period": "2026-05",
+  "plan": "Claude Max $200/month (flat rate)",
+  "note": "Dollar costs are theoretical API-equivalent, not actual spend",
+  "global": {
+    "total_usd": 22.80,
+    "total_eur": 20.98,
+    "total_turns": 2748,
+    "total_sessions": 129,
+    "projection_monthly_usd": 706.88,
+    "system_usd": 8.11,
+    "unclassified_usd": 14.70
+  },
+  "today": {
+    "usd": 5.59,
+    "turns": 98,
+    "system_usd": 5.59,
+    "client_usd": 0
+  },
+  "clients": {
+    "growth4u": {"period": "2026-04", "stale": true, "turns_today": 0},
+    "hospital-capilar": {"period": "2026-04", "stale": true, "turns_today": 0},
+    "kleva": {"period": "2026-03", "stale": true, "turns_today": 0},
+    "paymatico": {"period": "2026-04", "stale": true, "turns_today": 0},
+    "sanchocmo": {"period": "2026-04", "stale": true, "turns_today": 0}
+  },
+  "anomalies": [],
+  "result": "HEARTBEAT_OK"
+}

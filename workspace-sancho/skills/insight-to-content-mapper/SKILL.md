@@ -409,7 +409,7 @@ Append to `brand/{slug}/content/idea-queue.json`:
   "pov_confidence": 0.78,
   "source_signals": ["news-2026-04-25-003"],
   "created_at": "2026-04-25T08:00:00Z",
-  "status": "ready"
+  "status": "New"
 }
 ```
 

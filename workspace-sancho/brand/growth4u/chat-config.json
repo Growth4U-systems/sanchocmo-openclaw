@@ -203,7 +203,7 @@
       },
       "content": {
         "skill": "content-strategy",
-        "skills": ["content-strategy", "qa-bot"],
+        "skills": ["content-strategy"],
         "quickActions": [
           { "label": "Crear contenido", "prompt": "Genera el contenido para {name}. Primero investiga buenas prácticas y referencias, luego redacta." },
           { "label": "Revisar borrador", "prompt": "Revisa el borrador: tono de marca, estructura, CTA, SEO si aplica. Sugiere mejoras concretas." },
@@ -315,7 +315,7 @@
     "_byChannel": {
       "blog": {
         "skill": "seo-content",
-        "skills": ["deep-research", "seo-content", "schema-markup", "qa-bot", "content-calendar-planner"],
+        "skills": ["deep-research", "seo-content", "schema-markup", "content-calendar-planner"],
         "quickActions": [
           { "label": "Escribir artículo", "prompt": "Investiga el tema, analiza qué posiciona en Google, y escribe un artículo optimizado para SEO con schema markup." },
           { "label": "Auditar SEO", "prompt": "Revisa el artículo: keywords, meta tags, estructura H1-H3, internal linking y schema markup." }
@@ -323,7 +323,7 @@
       },
       "seo": {
         "skill": "seo-content",
-        "skills": ["deep-research", "seo-content", "schema-markup", "qa-bot", "content-calendar-planner"],
+        "skills": ["deep-research", "seo-content", "schema-markup", "content-calendar-planner"],
         "quickActions": [
           { "label": "Auditar", "prompt": "Haz una auditoría SEO completa: indexación, velocidad, keywords, contenido thin, oportunidades." },
           { "label": "Keywords", "prompt": "Identifica keywords de alta oportunidad que no estamos cubriendo. Prioriza por volumen, dificultad e intención." }
@@ -331,7 +331,7 @@
       },
       "linkedin": {
         "skill": "linkedin-content",
-        "skills": ["linkedin-content", "brand-voice", "qa-bot", "content-calendar-planner"],
+        "skills": ["linkedin-content", "brand-voice", "content-calendar-planner"],
         "quickActions": [
           { "label": "Crear post", "prompt": "Investiga qué funciona en LinkedIn para nuestro sector, y crea un post con hook potente, valor real y CTA claro." },
           { "label": "Planificar semana", "prompt": "Planifica 5 posts de LinkedIn para esta semana: temas, formatos y horarios óptimos." }
@@ -339,7 +339,7 @@
       },
       "instagram": {
         "skill": "instagram-content",
-        "skills": ["instagram-content", "brand-voice", "qa-bot", "content-calendar-planner"],
+        "skills": ["instagram-content", "brand-voice", "content-calendar-planner"],
         "quickActions": [
           { "label": "Crear contenido", "prompt": "Genera una pieza de Instagram: copy, concepto visual, hashtags y hora de publicación." },
           { "label": "Planificar semana", "prompt": "Planifica el grid de Instagram para esta semana: mix de formatos (carrusel, reel, story)." }
@@ -347,7 +347,7 @@
       },
       "twitter": {
         "skill": "twitter-content",
-        "skills": ["twitter-content", "brand-voice", "qa-bot", "content-calendar-planner"],
+        "skills": ["twitter-content", "brand-voice", "content-calendar-planner"],
         "quickActions": [
           { "label": "Crear tweets", "prompt": "Genera una serie de tweets/thread sobre el tema de esta tarea. Tono de marca, valor en cada tweet." },
           { "label": "Planificar semana", "prompt": "Planifica el contenido de Twitter/X para esta semana: tweets, threads y replies strategy." }
@@ -355,7 +355,7 @@
       },
       "tiktok": {
         "skill": "tiktok-growth",
-        "skills": ["tiktok-growth", "social-content", "brand-voice", "qa-bot", "content-calendar-planner"],
+        "skills": ["tiktok-growth", "social-content", "brand-voice", "content-calendar-planner"],
         "quickActions": [
           { "label": "Ideas de vídeo", "prompt": "Investiga tendencias actuales en TikTok para nuestro sector y genera 5 ideas de vídeo con hook, estructura y CTA." },
           { "label": "Guión", "prompt": "Escribe el guión completo para el próximo vídeo: hook (3s), desarrollo, CTA, texto en pantalla y audio." }
@@ -363,7 +363,7 @@
       },
       "email": {
         "skill": "email-sequence",
-        "skills": ["email-sequence", "copywriting", "qa-bot"],
+        "skills": ["email-sequence", "copywriting"],
         "quickActions": [
           { "label": "Crear secuencia", "prompt": "Genera la secuencia de emails: asuntos, body, CTAs, timing entre envíos y criterios de segmentación." },
           { "label": "Revisar copy", "prompt": "Revisa el copy de los emails: asunto (open rate), primer párrafo (engagement), CTA (conversión)." }
@@ -371,7 +371,7 @@
       },
       "newsletter": {
         "skill": "email-sequence",
-        "skills": ["email-sequence", "copywriting", "qa-bot"],
+        "skills": ["email-sequence", "copywriting"],
         "quickActions": [
           { "label": "Crear newsletter", "prompt": "Genera la newsletter: asunto, intro, secciones de contenido, CTA y formato responsive." },
           { "label": "Revisar", "prompt": "Revisa la newsletter: ¿el asunto genera curiosidad? ¿La estructura es scannable? ¿El CTA es claro?" }
@@ -379,7 +379,7 @@
       },
       "youtube": {
         "skill": "copywriting",
-        "skills": ["deep-research", "copywriting", "qa-bot"],
+        "skills": ["deep-research", "copywriting"],
         "quickActions": [
           { "label": "Guión", "prompt": "Investiga el tema, analiza los vídeos top en YouTube sobre esto, y escribe un guión completo con intro, desarrollo y CTA." },
           { "label": "Optimizar SEO", "prompt": "Optimiza título, descripción, tags y thumbnail concept para maximizar CTR y retention." }
@@ -387,7 +387,7 @@
       },
       "guest-post": {
         "skill": "seo-content",
-        "skills": ["seo-content", "copywriting", "outreach-sequence-builder", "qa-bot"],
+        "skills": ["seo-content", "copywriting", "outreach-sequence-builder"],
         "quickActions": [
           { "label": "Escribir", "prompt": "Escribe el guest post adaptado al estilo del medio objetivo. Incluye bio, links internos y CTA." },
           { "label": "Buscar medios", "prompt": "Busca medios relevantes donde publicar: DA, audiencia, temática y proceso de submission." }
@@ -395,7 +395,7 @@
       },
       "paid-ads": {
         "skill": "direct-response-copy",
-        "skills": ["direct-response-copy", "qa-bot"],
+        "skills": ["direct-response-copy"],
         "quickActions": [
           { "label": "Crear anuncios", "prompt": "Genera 3-5 variaciones de copy para anuncios: headline, body, CTA. Optimizados para conversión." },
           { "label": "Analizar rendimiento", "prompt": "Analiza el rendimiento de los anuncios actuales: CTR, CPC, conversión. Propón mejoras de copy y targeting." }
@@ -403,7 +403,7 @@
       },
       "web": {
         "skill": "frontend-design",
-        "skills": ["frontend-design", "alarife-integration", "qa-bot"],
+        "skills": ["frontend-design", "alarife-integration"],
         "quickActions": [
           { "label": "Diseñar página", "prompt": "Diseña la página web: estructura, copy, CTAs y componentes visuales." },
           { "label": "Optimizar CRO", "prompt": "Revisa la página desde CRO: ¿el copy persuade? ¿Los CTAs son visibles? ¿El flujo es intuitivo?" }
@@ -411,7 +411,7 @@
       },
       "landing": {
         "skill": "frontend-design",
-        "skills": ["frontend-design", "alarife-integration", "qa-bot"],
+        "skills": ["frontend-design", "alarife-integration"],
         "quickActions": [
           { "label": "Crear landing", "prompt": "Crea la landing page: headline, subheadline, beneficios, social proof, CTA y above-the-fold." },
           { "label": "Optimizar CRO", "prompt": "Analiza la landing: tiempo de carga, copy above the fold, claridad del CTA, trust signals." }
@@ -419,7 +419,7 @@
       },
       "presentations": {
         "skill": "frontend-slides",
-        "skills": ["frontend-slides", "qa-bot"],
+        "skills": ["frontend-slides"],
         "quickActions": [
           { "label": "Crear presentación", "prompt": "Genera la presentación: estructura narrativa, mensajes clave por slide, datos de apoyo y diseño." },
           { "label": "Revisar", "prompt": "Revisa la presentación: ¿el story arc funciona? ¿Los datos apoyan el mensaje? ¿Es visualmente limpia?" }

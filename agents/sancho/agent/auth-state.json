@@ -1,28 +1,18 @@
 {
   "version": 1,
   "lastGood": {
-    "anthropic": "anthropic:sanchocmo-openclaw"
+    "anthropic": "anthropic:manual"
   },
   "usageStats": {
     "anthropic:sanchocmo-openclaw": {
-      "lastUsed": 1776281111166,
-      "errorCount": 1,
-      "lastFailureAt": 1777579248176,
-      "disabledUntil": 1777597248176,
-      "disabledReason": "billing",
-      "failureCounts": {
-        "billing": 1
-      }
+      "lastUsed": 1777667980206,
+      "errorCount": 0,
+      "lastFailureAt": 1777579248176
     },
     "anthropic:manual": {
-      "lastUsed": 1776281055430,
-      "errorCount": 1,
-      "lastFailureAt": 1777579234818,
-      "disabledUntil": 1777597234818,
-      "disabledReason": "billing",
-      "failureCounts": {
-        "billing": 1
-      }
+      "lastUsed": 1777677945743,
+      "errorCount": 0,
+      "lastFailureAt": 1777579234818
     }
   }
 }

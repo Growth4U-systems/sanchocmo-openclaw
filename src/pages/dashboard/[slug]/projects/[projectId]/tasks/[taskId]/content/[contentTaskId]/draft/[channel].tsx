@@ -18,6 +18,8 @@ import { useOpenChat } from "@/hooks/useChat";
 import { useChatStore } from "@/stores/chat";
 import { buildContentTaskThread } from "@/lib/chat-openers";
 import { ChannelPreview, isPlaceholderBody } from "@/components/content/channel-preview";
+import { MediaPanel } from "@/components/content/MediaPanel";
+import { PublishBar } from "@/components/content/PublishBar";
 import { SkillPicker } from "@/components/shared/skill-picker";
 import { cn } from "@/lib/utils";
 import {
@@ -426,7 +428,35 @@ export default function DraftFullScreenPage() {
             )}
 
             {draft && (
-              <ChannelPreview channel={channel} body={draft.body} brandSlug={slug} />
+              <ChannelPreview
+                channel={channel}
+                body={draft.body}
+                brandSlug={slug}
+                media={draft.meta.media}
+              />
+            )}
+
+            {/* Media panel — only for channel drafts (not proposal/research/clarify). */}
+            {draft && !isSpecialChannel && ideaId && (
+              <MediaPanel
+                slug={slug}
+                ideaId={ideaId}
+                channel={channel}
+                media={draft.meta.media || []}
+              />
+            )}
+
+            {/* Publish bar — visible once the draft is approved (also kept
+                visible after publishing so the user can see status / link). */}
+            {draft && !isSpecialChannel && ideaId &&
+              (draft.meta.status === "approved" || draft.meta.status === "published") && (
+              <PublishBar
+                slug={slug}
+                ideaId={ideaId}
+                channel={channel}
+                draft={draft}
+                onPublishedToast={showToast}
+              />
             )}
 
             {/* Adjuntos (subproductos: research, fuentes, etc.) */}

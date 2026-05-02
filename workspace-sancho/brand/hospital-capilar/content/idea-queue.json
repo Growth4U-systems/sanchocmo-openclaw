@@ -1,1 +1,135 @@
-[]
+[
+  {
+    "id": "idea-2026-05-01-001",
+    "pillar_id": "P1-investigacion",
+    "content_type": "Hot Take",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Investigación española revierte alopecia en ratones con células madre + ATP (100% éxito en machos)",
+      "source": "Infobae España / Farmacosalud",
+      "url": "https://www.infobae.com/espana/2026/04/15/una-inyeccion-contra-la-calvicie-una-investigacion-logra-revertir-la-alopecia-en-ratones/",
+      "date": "2026-04-15"
+    },
+    "angle_draft": "Investigadores españoles han logrado revertir la alopecia en ratones al 100% usando células madre + ATP. Es un avance esperanzador, pero ojo: de ratones a humanos hay un camino largo. En Hospital Capilar ya aplicamos medicina regenerativa (protocolos CRT) con resultados reales en pacientes. Este estudio valida la dirección, pero hoy ya puedes actuar.\n\nÁngulo: contextualizar el hype científico con realismo médico. HC como quien ya aplica regeneración capilar con evidencia clínica, no solo promesas de laboratorio.",
+    "pov_confidence": 0.85,
+    "source_signals": [
+      "news-2026-05-01-001"
+    ],
+    "created_at": "2026-05-01T08:49:00+02:00",
+    "status": "ready"
+  },
+  {
+    "id": "idea-2026-05-01-002",
+    "pillar_id": "P2-tratamientos",
+    "content_type": "Framework",
+    "target_channel": "blog",
+    "signal": {
+      "summary": "Insparya advierte sobre aumento de caída capilar vinculado a fármacos GLP-1 (Ozempic/semaglutida)",
+      "source": "Infosalus",
+      "url": "https://www.infosalus.com/estetica/noticia-empresas-insparya-advierte-aumento-caida-cabello-vinculado-nuevos-farmacos-perder-peso-20260327131456.html",
+      "date": "2026-03-27"
+    },
+    "angle_draft": "Insparya alerta sobre caída capilar por Ozempic/semaglutida (GLP-1). Oportunidad enorme: millones de personas toman estos fármacos y nadie les advierte del efecto secundario capilar. HC puede crear LA guía definitiva: '¿Tomas Ozempic? Lo que nadie te cuenta sobre tu pelo'.\n\nÁngulo: contenido educativo que captura una audiencia masiva (usuarios de GLP-1) con un problema que aún no saben que tienen. Posicionar a los médicos de HC como los que conectan los puntos entre pérdida de peso y salud capilar.",
+    "pov_confidence": 0.92,
+    "source_signals": [
+      "news-2026-05-01-010"
+    ],
+    "created_at": "2026-05-01T08:49:00+02:00",
+    "status": "ready"
+  },
+  {
+    "id": "idea-2026-05-01-003",
+    "pillar_id": "P4-bienestar",
+    "content_type": "Personal Story",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Estudio King's College: estigma social de alopecia causa más ansiedad que la propia enfermedad — 80% reporta síntomas",
+      "source": "British Journal of Dermatology / Libertad Digital",
+      "url": "https://www.libertaddigital.com/ciencia-tecnologia/salud/2025-07-20/el-estigma-asociado-a-la-alopecia-genera-mas-ansiedad-y-depresion-que-la-propia-enfermedad-7277294/",
+      "date": "2025-07-20"
+    },
+    "angle_draft": "El 80% de pacientes con alopecia sufren ansiedad/depresión — y el estigma social causa más daño que la enfermedad en sí (King's College, BJD). Es el dato perfecto para reforzar el posicionamiento de HC: la alopecia es una enfermedad, no un capricho estético. Y merece atención médica de verdad.\n\nÁngulo: humanizar el dato con historias reales de pacientes de HC (con permiso). Formato: dato impactante + historia + llamada a normalizar buscar ayuda. Conecta con ECP #1 (jóvenes) y #5 (insatisfechos con experiencias previas).",
+    "pov_confidence": 0.88,
+    "source_signals": [
+      "news-2026-05-01-014"
+    ],
+    "created_at": "2026-05-01T08:49:00+02:00",
+    "status": "ready"
+  },
+  {
+    "id": "idea-2026-05-01-004",
+    "pillar_id": "P3-mercado",
+    "content_type": "Proof Post",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Insparya pierde 13% facturación España 2024 — Georgina sale del accionariado",
+      "source": "Insparya",
+      "url": "https://www.elespanol.com/corazon/famosos/20260225/empresa-capilar-cristiano-ronaldo-resentida-salida-georgina-pierde-millones-presenta-deudas/1003744142962_0.html",
+      "date": "2026-05-01"
+    },
+    "angle_draft": "Insparya pierde un 13% de facturación en España y Georgina sale del accionariado. Sin atacar directamente, HC puede posicionar su modelo: crecimiento orgánico (+88% sin marketing), Trustpilot 4.8/5, y enfoque en calidad médica sobre celebrity branding.\n\nÁngulo: contraposición sutil — mientras otros invierten en celebrities, HC invierte en médicos. Los resultados hablan por sí solos. Formato: datos propios de HC vs tendencia del sector. Sin nombrar competidores, el lector conecta solo.",
+    "pov_confidence": 0.75,
+    "source_signals": [
+      "sig-20260501-03"
+    ],
+    "created_at": "2026-05-01T08:49:00+02:00",
+    "status": "ready"
+  },
+  {
+    "id": "idea-2026-05-01-005",
+    "pillar_id": "P2-tratamientos",
+    "content_type": "Framework",
+    "target_channel": "blog",
+    "signal": {
+      "summary": "Capilclinic ataca keyword transaccional con guía de precios injerto 2026",
+      "source": "Capilclinic",
+      "url": "https://www.capilclinic.es/blog/que-cuesta-un-injerto-capilar/",
+      "date": "2026-05-01"
+    },
+    "angle_draft": "Capilclinic domina el SEO con su guía de precios de trasplante (desde €2.190). HC tiene un hueco enorme: crear LA guía de precios de TRATAMIENTOS capilares en España 2026. Los tratamientos son mucho más accesibles que la cirugía y nadie está posicionándose ahí.\n\nÁngulo: transparencia de precios como arma SEO + confianza. '¿Cuánto cuesta un tratamiento capilar en 2026?' — capturar intent transaccional de personas que aún no saben que hay alternativas al trasplante. Keywords: 'precio tratamiento capilar', 'alternativas al trasplante capilar'.",
+    "pov_confidence": 0.9,
+    "source_signals": [
+      "sig-20260501-07"
+    ],
+    "created_at": "2026-05-01T08:49:00+02:00",
+    "status": "ready"
+  },
+  {
+    "id": "idea-2026-05-01-006",
+    "pillar_id": "P2-tratamientos",
+    "content_type": "Hot Take",
+    "target_channel": "twitter",
+    "signal": {
+      "summary": "Svenson lanza LUX Capilar con Polinucleótidos — medicina regenerativa",
+      "source": "Svenson",
+      "url": "https://www.svenson.es/blog/lux-capilar-polinucleotidos-tratamiento-regenerativo/",
+      "date": "2026-05-01"
+    },
+    "angle_draft": "Svenson lanza 'LUX Capilar con Polinucleótidos' — un nombre bonito, pero ¿quién te lo pone importa tanto como qué te ponen? Los polinucleótidos están de moda en estética, pero en salud capilar necesitas supervisión médica real. HC puede posicionar: 'Polinucleótidos capilares: por qué importa quién te los pone'.\n\nÁngulo: contraposición esteticista vs médico. Los tratamientos regenerativos requieren diagnóstico previo (tricoscopia + analítica) y supervisión médica. Sin diagnóstico, estás tirando dinero. HC tiene la credibilidad clínica que Svenson no tiene (Trustpilot 4.8 vs 1.5).",
+    "pov_confidence": 0.82,
+    "source_signals": [
+      "sig-20260501-05"
+    ],
+    "created_at": "2026-05-01T08:49:00+02:00",
+    "status": "ready"
+  },
+  {
+    "id": "idea-2026-05-01-007",
+    "pillar_id": "P2-tratamientos",
+    "content_type": "Proof Post",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "PRP capilar alcanza 70-80% de éxito en alopecia androgenética leve-moderada según estudios actualizados",
+      "source": "Santé Clinics / Múltiples fuentes médicas",
+      "url": "https://santeclinics.com/es/blog/prp-hair-treatment-platelet-rich-plasma",
+      "date": "2026-04-18"
+    },
+    "angle_draft": "Datos actualizados confirman que el PRP tiene un 70-80% de éxito en alopecia androgenética leve-moderada, con un 93% de detención de caída en 2 meses. HC aplica PRP dentro de su protocolo CRT — no como tratamiento aislado, sino integrado en un plan personalizado con seguimiento trimestral.\n\nÁngulo: dato científico + cómo HC lo aplica de forma diferencial. No es solo 'hacemos PRP' — es 'hacemos PRP dentro de un protocolo médico completo'. Diferenciación por sistema, no por ingrediente.",
+    "pov_confidence": 0.87,
+    "source_signals": [
+      "news-2026-05-01-006"
+    ],
+    "created_at": "2026-05-01T08:49:00+02:00",
+    "status": "ready"
+  }
+]

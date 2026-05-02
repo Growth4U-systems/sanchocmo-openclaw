@@ -1,6 +1,6 @@
 # Cadence Config — growth4u
 # Defines posting frequency, channels, and scheduling rules.
-# Last edited: 2026-04-30 (via MC Inputs UI)
+# Last edited: 2026-05-01 (via MC Inputs UI)
 
 client_id: growth4u
 business_model: B2B
@@ -69,8 +69,10 @@ channels:
       - hub-spoke
       - template-library
     keyword_driven: true
-    best_days: []
-    best_times: []
+    best_days:
+      - monday
+    best_times:
+      - "8:30"
     profiles: []
   newsletter:
     active: true

@@ -23,7 +23,7 @@ Access Google Analytics with managed OAuth authentication. This skill covers bot
 # List account summaries (Admin API)
 python <<'EOF'
 import urllib.request, os, json
-req = urllib.request.Request('https://gateway.maton.ai/google-analytics-admin/v1beta/accountSummaries')
+req = urllib.request.Request('https://api.maton.ai/google-analytics-admin/v1beta/accountSummaries')
 req.add_header('Authorization', f'Bearer {os.environ["MATON_API_KEY"]}')
 print(json.dumps(json.load(urllib.request.urlopen(req)), indent=2))
 EOF
@@ -32,7 +32,7 @@ EOF
 python <<'EOF'
 import urllib.request, os, json
 data = json.dumps({'dateRanges': [{'startDate': '30daysAgo', 'endDate': 'today'}], 'dimensions': [{'name': 'city'}], 'metrics': [{'name': 'activeUsers'}]}).encode()
-req = urllib.request.Request('https://gateway.maton.ai/google-analytics-data/v1beta/properties/{propertyId}:runReport', data=data, method='POST')
+req = urllib.request.Request('https://api.maton.ai/google-analytics-data/v1beta/properties/{propertyId}:runReport', data=data, method='POST')
 req.add_header('Authorization', f'Bearer {os.environ["MATON_API_KEY"]}')
 req.add_header('Content-Type', 'application/json')
 print(json.dumps(json.load(urllib.request.urlopen(req)), indent=2))
@@ -43,15 +43,15 @@ EOF
 
 **Admin API** (manage accounts, properties, data streams):
 ```
-https://gateway.maton.ai/google-analytics-admin/{native-api-path}
+https://api.maton.ai/google-analytics-admin/{native-api-path}
 ```
 
 **Data API** (run reports):
 ```
-https://gateway.maton.ai/google-analytics-data/{native-api-path}
+https://api.maton.ai/google-analytics-data/{native-api-path}
 ```
 
-Replace `{native-api-path}` with the actual Google Analytics API endpoint path. The gateway proxies requests to `analyticsadmin.googleapis.com` and `analyticsdata.googleapis.com` and automatically injects your OAuth token.
+Maton proxies requests to `analyticsadmin.googleapis.com` and `analyticsdata.googleapis.com` and automatically injects your OAuth token.
 
 ## Authentication
 
@@ -75,7 +75,7 @@ export MATON_API_KEY="YOUR_API_KEY"
 
 ## Connection Management
 
-Manage your Google OAuth connections at `https://ctrl.maton.ai`.
+Manage your Google OAuth connections at `https://api.maton.ai`.
 
 **Important:** The Admin API and Data API use separate connections:
 - `google-analytics-admin` - Required for Admin API endpoints (manage accounts, properties, data streams)
@@ -89,7 +89,7 @@ Create the connection(s) you need based on which API you want to use.
 # List Admin API connections
 python <<'EOF'
 import urllib.request, os, json
-req = urllib.request.Request('https://ctrl.maton.ai/connections?app=google-analytics-admin&status=ACTIVE')
+req = urllib.request.Request('https://api.maton.ai/connections?app=google-analytics-admin&status=ACTIVE')
 req.add_header('Authorization', f'Bearer {os.environ["MATON_API_KEY"]}')
 print(json.dumps(json.load(urllib.request.urlopen(req)), indent=2))
 EOF
@@ -97,7 +97,7 @@ EOF
 # List Data API connections
 python <<'EOF'
 import urllib.request, os, json
-req = urllib.request.Request('https://ctrl.maton.ai/connections?app=google-analytics-data&status=ACTIVE')
+req = urllib.request.Request('https://api.maton.ai/connections?app=google-analytics-data&status=ACTIVE')
 req.add_header('Authorization', f'Bearer {os.environ["MATON_API_KEY"]}')
 print(json.dumps(json.load(urllib.request.urlopen(req)), indent=2))
 EOF
@@ -110,7 +110,7 @@ EOF
 python <<'EOF'
 import urllib.request, os, json
 data = json.dumps({'app': 'google-analytics-admin'}).encode()
-req = urllib.request.Request('https://ctrl.maton.ai/connections', data=data, method='POST')
+req = urllib.request.Request('https://api.maton.ai/connections', data=data, method='POST')
 req.add_header('Authorization', f'Bearer {os.environ["MATON_API_KEY"]}')
 req.add_header('Content-Type', 'application/json')
 print(json.dumps(json.load(urllib.request.urlopen(req)), indent=2))
@@ -120,7 +120,7 @@ EOF
 python <<'EOF'
 import urllib.request, os, json
 data = json.dumps({'app': 'google-analytics-data'}).encode()
-req = urllib.request.Request('https://ctrl.maton.ai/connections', data=data, method='POST')
+req = urllib.request.Request('https://api.maton.ai/connections', data=data, method='POST')
 req.add_header('Authorization', f'Bearer {os.environ["MATON_API_KEY"]}')
 req.add_header('Content-Type', 'application/json')
 print(json.dumps(json.load(urllib.request.urlopen(req)), indent=2))
@@ -132,7 +132,7 @@ EOF
 ```bash
 python <<'EOF'
 import urllib.request, os, json
-req = urllib.request.Request('https://ctrl.maton.ai/connections/{connection_id}')
+req = urllib.request.Request('https://api.maton.ai/connections/{connection_id}')
 req.add_header('Authorization', f'Bearer {os.environ["MATON_API_KEY"]}')
 print(json.dumps(json.load(urllib.request.urlopen(req)), indent=2))
 EOF
@@ -142,7 +142,7 @@ EOF
 ```json
 {
   "connection": {
-    "connection_id": "21fd90f9-5935-43cd-b6c8-bde9d915ca80",
+    "connection_id": "{connection_id}",
     "status": "ACTIVE",
     "creation_time": "2025-12-08T07:20:53.488460Z",
     "last_updated_time": "2026-01-31T20:03:32.593153Z",
@@ -160,7 +160,7 @@ Open the returned `url` in a browser to complete OAuth authorization.
 ```bash
 python <<'EOF'
 import urllib.request, os, json
-req = urllib.request.Request('https://ctrl.maton.ai/connections/{connection_id}', method='DELETE')
+req = urllib.request.Request('https://api.maton.ai/connections/{connection_id}', method='DELETE')
 req.add_header('Authorization', f'Bearer {os.environ["MATON_API_KEY"]}')
 print(json.dumps(json.load(urllib.request.urlopen(req)), indent=2))
 EOF
@@ -173,14 +173,19 @@ If you have multiple Google Analytics connections, specify which one to use with
 ```bash
 python <<'EOF'
 import urllib.request, os, json
-req = urllib.request.Request('https://gateway.maton.ai/google-analytics-admin/v1beta/accountSummaries')
+req = urllib.request.Request('https://api.maton.ai/google-analytics-admin/v1beta/accountSummaries')
 req.add_header('Authorization', f'Bearer {os.environ["MATON_API_KEY"]}')
-req.add_header('Maton-Connection', '21fd90f9-5935-43cd-b6c8-bde9d915ca80')
+req.add_header('Maton-Connection', '{connection_id}')
 print(json.dumps(json.load(urllib.request.urlopen(req)), indent=2))
 EOF
 ```
 
-If omitted, the gateway uses the default (oldest) active connection.
+If you have multiple connections, always include this header to ensure requests go to the intended account.
+
+## Security & Permissions
+
+- Access is scoped to properties, data streams, reports, and analytics data within the connected Google Analytics account.
+- **All write operations require explicit user approval.** Before executing any create, update, or delete call, confirm the target resource and intended effect with the user.
 
 ## Admin API Reference
 
@@ -366,7 +371,7 @@ GET /google-analytics-data/v1beta/properties/{propertyId}/metadata
 ```javascript
 // List account summaries (Admin API)
 const accounts = await fetch(
-  'https://gateway.maton.ai/google-analytics-admin/v1beta/accountSummaries',
+  'https://api.maton.ai/google-analytics-admin/v1beta/accountSummaries',
   {
     headers: {
       'Authorization': `Bearer ${process.env.MATON_API_KEY}`
@@ -376,7 +381,7 @@ const accounts = await fetch(
 
 // Run a report (Data API)
 const report = await fetch(
-  'https://gateway.maton.ai/google-analytics-data/v1beta/properties/123456:runReport',
+  'https://api.maton.ai/google-analytics-data/v1beta/properties/123456:runReport',
   {
     method: 'POST',
     headers: {
@@ -400,13 +405,13 @@ import requests
 
 # List account summaries (Admin API)
 accounts = requests.get(
-    'https://gateway.maton.ai/google-analytics-admin/v1beta/accountSummaries',
+    'https://api.maton.ai/google-analytics-admin/v1beta/accountSummaries',
     headers={'Authorization': f'Bearer {os.environ["MATON_API_KEY"]}'}
 )
 
 # Run a report (Data API)
 report = requests.post(
-    'https://gateway.maton.ai/google-analytics-data/v1beta/properties/123456:runReport',
+    'https://api.maton.ai/google-analytics-data/v1beta/properties/123456:runReport',
     headers={'Authorization': f'Bearer {os.environ["MATON_API_KEY"]}'},
     json={
         'dateRanges': [{'startDate': '30daysAgo', 'endDate': 'today'}],
@@ -450,7 +455,7 @@ echo $MATON_API_KEY
 ```bash
 python <<'EOF'
 import urllib.request, os, json
-req = urllib.request.Request('https://ctrl.maton.ai/connections')
+req = urllib.request.Request('https://api.maton.ai/connections')
 req.add_header('Authorization', f'Bearer {os.environ["MATON_API_KEY"]}')
 print(json.dumps(json.load(urllib.request.urlopen(req)), indent=2))
 EOF
@@ -463,9 +468,9 @@ EOF
    - For Data API: use `google-analytics-data`
 
 Examples:
-- Correct: `https://gateway.maton.ai/google-analytics-admin/v1beta/accountSummaries`
-- Correct: `https://gateway.maton.ai/google-analytics-data/v1beta/properties/123456:runReport`
-- Incorrect: `https://gateway.maton.ai/analytics/v1beta/accountSummaries`
+- Correct: `https://api.maton.ai/google-analytics-admin/v1beta/accountSummaries`
+- Correct: `https://api.maton.ai/google-analytics-data/v1beta/properties/123456:runReport`
+- Incorrect: `https://api.maton.ai/analytics/v1beta/accountSummaries`
 
 ## Resources
 

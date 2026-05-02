@@ -1,0 +1,14 @@
+{
+  "image_generation": {
+    "mode": "ask",
+    "provider": null,
+    "model": null
+  },
+  "carousel": {
+    "logo_url": null,
+    "footer_text": null,
+    "primary_color": null,
+    "accent_color": null,
+    "enabled_templates": []
+  }
+}

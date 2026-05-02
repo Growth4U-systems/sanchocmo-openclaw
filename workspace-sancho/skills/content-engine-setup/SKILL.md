@@ -220,6 +220,100 @@ Workshop con el humano para decidir DÓNDE recibirá el Editorial Dispatch:
 
 DO NOT touch: integrations.json (la conexión y el token viven en Settings → APIs, no aquí).
 
+### 4c. Visual & Carousel setup (auto-detect → ask only what's missing)
+
+El Content Engine ahora también renderiza carruseles (LinkedIn 9-slide PDF, Instagram, etc.). Ese rendering necesita 4 piezas: paleta primary/accent, logo PNG, footer text/handle, y el provider de generación de imagen por defecto. La regla: **lee primero `brand-book/visual-identity/`, pregunta SOLO lo que falte**.
+
+Persistencia única: `brand/{slug}/content/config.json` (no en `configs/`). Ese archivo guarda solo overrides — los valores que el brand-book ya cubre se quedan donde están y MC los resuelve en runtime vía `getEffectiveContentConfig`.
+
+#### 1. Auto-detect lectura
+
+Lee `brand/{slug}/brand-book/visual-identity/design-tokens.json` y reporta al chat lo que se detectó, p.ej.:
+
+> Detectado del brand-book: **Growth4U** · primary `#032149` (navy) · accent `#0faec1` (teal) · heading `Manrope` · body `Roboto`.
+> Logo PNG: ✓ presente en `brand-book/visual-identity/logo-light.png`.
+
+Comprueba físicamente:
+- `test -f brand/{slug}/brand-book/visual-identity/logo-light.png` → ¿existe el archivo?
+- `cat brand/{slug}/brand-book/visual-identity/design-tokens.json | jq '.logo.missing'` → ¿está marcado como missing registered?
+
+Tres estados posibles:
+
+| Estado | Condición | Qué hacer |
+|---|---|---|
+| `present` | archivo existe | reportar ✓, NO preguntar |
+| `missing-registered` | `logo.missing === true` en design-tokens.json | reportar como "registrado sin logo (cliente sin marca)", NO preguntar |
+| `pending` | ni archivo ni flag | bloquear y pedir al usuario que lance la skill `visual-identity` antes de seguir — esa skill es la que coloca el logo, no esta |
+
+#### 2. Pregunta SOLO lo que el upstream no resuelve
+
+Usa AskUserQuestion (no chat plano). El logo NO se pregunta aquí — es responsabilidad de `visual-identity`. Si el estado es `pending`, dile al usuario:
+
+> "Falta el intake de visual-identity. Lanza la skill `visual-identity` (Step -1: Brand Assets Intake) antes de seguir con content-engine-setup. Esa skill coloca el logo en `brand-book/visual-identity/logo-light.png` o lo marca como `missing: true` si el cliente no tiene. Cuando esté hecho, reanuda este setup."
+
+Y para. NO improvises preguntando al usuario por el logo — duplica trabajo y el override que pongas aquí queda fuera del brand-book.
+
+**Q: Footer text / handle** — siempre (no hay equivalente en design-tokens):
+- (a) `@{slug}` · default
+- (b) `@{slug} · {Brand Name}` · más explícito
+- (c) Otro · texto libre
+
+**Q: Image-gen default** — solo si hay ≥1 provider configurado:
+- "Cuando generes imágenes, ¿prefieres elegir cada vez o fijar un provider?"
+  - (a) Preguntar cada vez
+  - (b) Usar siempre {primer provider configurado}
+  - (c) Otro provider · listar los configurados
+
+#### 3. Persiste
+
+Escribe a `brand/{slug}/content/config.json` (PATCH vía endpoint o crea/edita el archivo directo):
+
+```json
+{
+  "image_generation": {
+    "mode": "ask" | "fixed",
+    "provider": "nanobanana" | "replicate" | "fal" | null,
+    "model": null
+  },
+  "carousel": {
+    "logo_url": null,
+    "footer_text": "@growth4u · Growth Systems",
+    "primary_color": null,
+    "accent_color": null,
+    "enabled_templates": null
+  }
+}
+```
+
+`logo_url: null` siempre — el logo lo gestiona la skill `visual-identity` directamente sobre el brand-book. Si esta skill alguna vez lo override-a, está duplicando responsabilidad.
+
+`null` en colores/typography significa "el brand-book ya lo tiene, no sobrescribir". DO NOT escribir colores ni typography aquí si ya están en design-tokens.json.
+
+#### 4. Reportar al setup.md
+
+Añade al narrative `setup.md` (Step 5) una sección:
+
+```markdown
+## Visual & Carousel
+
+**Detectado del brand-book**:
+- Primary: `#032149` (navy) · Accent: `#0faec1` (teal)
+- Heading: Manrope · Body: Roboto
+- Logo: ✓ presente en `brand-book/visual-identity/logo-light.png`
+
+**Llenado en setup**:
+- Footer text: `@growth4u · Growth Systems`
+- Image-gen default: Nano Banana (Gemini)
+```
+
+Si el logo está marcado `missing: true`:
+
+```
+- Logo: registrado como missing (cliente sin logo, se usará wordmark de texto)
+```
+
+Si `pending` cuando entraste a esta sección, no debiste haber llegado aquí — el bloqueo del paso 2 te debió haber parado.
+
 ### 5. Write the narrative `setup.md` (THE DELIVERABLE)
 
 Path: `brand/{slug}/content/configs/setup.md`

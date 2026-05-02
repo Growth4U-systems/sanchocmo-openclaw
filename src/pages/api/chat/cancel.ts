@@ -26,7 +26,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         "Content-Type": "application/json",
         ...(secret ? { "X-MC-Secret": secret } : {}),
       },
-      body: JSON.stringify({ slug, threadId, text: "/stop", userName: "Admin" }),
+      body: JSON.stringify({ slug, threadId, text: "/stop", userName: "Admin", isAdmin: true }),
     });
   } catch (err) {
     console.error(`[mc-chat] Gateway /stop failed: ${err instanceof Error ? err.message : err}`);

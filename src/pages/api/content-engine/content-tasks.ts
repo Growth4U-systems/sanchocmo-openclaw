@@ -19,16 +19,24 @@ import {
   updateContentTask,
   attachDocumentToContentTask,
   removeDocumentFromContentTask,
+  reconcileContentTaskState,
   ContentTaskUpdateInput,
 } from "@/lib/data/content-tasks";
-import { getDraftStatuses } from "@/lib/data/drafts";
+import { aggregateDraftStatus, getDraftStatuses } from "@/lib/data/drafts";
 import { ContentTaskStatus, ContentTaskPipelineState, VALID_CONTENT_TASK_STATUSES, type ContentTask } from "@/types";
 
+/**
+ * Hydrate a ContentTask with its per-channel draft statuses, and self-heal
+ * its persisted (status, pipeline_state) by reconciling against the actual
+ * draft frontmatters on disk. This is the only mechanism that closes the
+ * loop between Escudero writing drafts and the UI reading tasks.json — skills
+ * stay backend-agnostic; we converge on read.
+ */
 function withDraftStatuses(slug: string, ct: ContentTask): ContentTask & { draft_statuses: Record<string, string> } {
-  return {
-    ...ct,
-    draft_statuses: getDraftStatuses(slug, ct.idea_id, ct.target_channels || []),
-  };
+  const draft_statuses = getDraftStatuses(slug, ct.idea_id, ct.target_channels || []);
+  const aggregated = aggregateDraftStatus(draft_statuses);
+  const reconciled = reconcileContentTaskState(slug, ct, aggregated);
+  return { ...reconciled, draft_statuses };
 }
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {

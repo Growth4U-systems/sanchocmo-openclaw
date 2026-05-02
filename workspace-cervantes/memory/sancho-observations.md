@@ -275,3 +275,92 @@ _Generado por Cervantes — cron:cedfbd22-cbd0-4a19-87a0-29337c4f2b37 — 2026-0
 ---
 
 _Generado por Cervantes — cron:cedfbd22-cbd0-4a19-87a0-29337c4f2b37 — 2026-04-30 10:00 CEST_
+
+---
+
+# Observación Sancho — 2026-05-01 (viernes, festivo 1 mayo)
+
+## Resumen ejecutivo
+
+**~30 sesiones Sancho en 24h** — pipeline de contenido ejecutándose a pleno para 4 clientes (Growth4U, Hospital Capilar, Hulahoop, Paymatico) + Criptan con problemas. Día festivo; solo actividad automatizada (crons), cero interacción humana en Discord.
+
+## 1. Sesiones por canal/tipo
+
+| Tipo | Count | Clientes |
+|------|-------|----------|
+| Content pipeline (news+competitor+classify+dispatch) | 16 | G4U, HC, Hulahoop, Paymatico |
+| Morning Metrics / Daily Pulse | 5 | G4U, Hulahoop |
+| Criptan (weekly report, B2B review) | 2 | Criptan |
+| MC-Chat (content clarify/drafts) | 8 | G4U |
+| Utility (cost tracker, lead sync, meeting intel, memory compact, update-skills) | 6 | Multi |
+| Heartbeat | 1 | — |
+
+## 2. Errores y fallos detectados
+
+### 🔴 Criptan B2B Pipeline Review — ABORTADO
+- Sesión `854d8902` (30 abr, 11:00) — modelo MiniMax-M2.7 abortó inmediatamente sin ejecutar nada
+- **Causa probable**: MiniMax no maneja bien el prompt largo multi-paso de este cron
+- **Impacto**: Revisión B2B semanal de Criptan no se hizo
+- **Acción**: Cambiar modelo de este cron a Opus o Sonnet
+
+### 🟡 Criptan Weekly Strategy Report — TRUNCADO
+- Sesión `41d660cb` — el report se estaba escribiendo y fue abortado (`stopReason: aborted`)
+- Se alcanzó a escribir ~60% del report (wins + riesgos + tabla de progreso cortada)
+- **Impacto**: Report incompleto guardado en `brand/criptan/intelligence/weekly-report-2026-05-01.md`
+- **Causa probable**: timeout o límite de sesión
+
+### 🟡 X/Twitter API credits agotados
+- Afecta: Competitor Monitor de Hospital Capilar y Paymatico
+- Sancho lo maneja bien (nota el error, sigue con otras fuentes), pero pierde cobertura social
+- Mencionado en al menos 3 sesiones diferentes
+
+### 🟡 Instantly API error (Growth4U)
+- Cold email outreach inactivo — collector de Instantly falló
+- Reportado en Morning Metrics y Daily Pulse
+
+### 🟢 Hulahoop Morning Metrics — NO_APIS
+- Correcto: no hay APIs configuradas aún para Hulahoop
+- Sancho maneja esto limpiamente (skip con nota explicativa)
+
+## 3. Preguntas sin responder
+
+- No se observaron preguntas de usuarios que Sancho no supiera responder (no hubo interacción humana hoy)
+- Las sesiones MC-Chat de ayer (T04, T05) muestran buen clarify flow — Sancho hace preguntas relevantes antes de redactar
+
+## 4. Cumplimiento de reglas de canal
+
+✅ **Discord**: Publicaciones en canales correctos (#intelligence para pulses/metrics, #content para editorial dispatch)
+✅ **Hilos**: Sancho crea hilos para detalles largos en Discord
+✅ **MC-Chat**: Flujo clarify → research → draft funcionando
+✅ **Client isolation**: No se detectaron leaks de contexto entre clientes
+✅ **Formato**: Sin markdown tables en Discord (usa formato texto/bloques)
+
+## 5. Patrones y tendencias
+
+### 📈 Positivo
+- **Content engine maduro**: 4 clientes con pipeline news→competitor→classify→ideas→dispatch funcionando diariamente
+- **Calidad de ideas**: confidence scores 0.70-0.92, buena distribución por pillar
+- **Cost awareness**: Daily Pulse detecta correctamente anomalías (CTR cayendo, gap lead→cita, Instantly roto)
+- **Eficiencia**: Pre-check de canales Discord ahorra ~90% de tokens al saltear canales sin actividad
+- **Memory compact**: Archivó 25 daily notes de marzo correctamente
+
+### 📉 A mejorar
+- **Criptan ejecuta con modelo equivocado**: B2B review usa MiniMax que no puede con prompts complejos multi-paso
+- **Criptan weekly report timeout**: Necesita más margen o dividir en pasos
+- **X/Twitter sin créditos**: Semana entera sin cobertura social de competidores
+- **Costo diario alto**: $5.59 solo hoy (día 1 de mayo, solo crons), con proyección mensual de $706 (vs $200 plan). Sancho usa Opus para TODO — los crons de contenido podrían usar Sonnet
+
+## Acciones recomendadas
+
+| Prioridad | Acción | Owner |
+|----------|--------|-------|
+| P1 | Cambiar modelo del cron B2B Pipeline Review Criptan (MiniMax → Opus/Sonnet) | Cervantes |
+| P1 | Investigar abort del Weekly Strategy Report Criptan — timeout o context limit | Cervantes |
+| P2 | Recargar créditos xAI/X API para competitor monitors | Alfonso |
+| P2 | Revisar Instantly API config para Growth4U (cold email roto) | Alfonso |
+| P2 | Evaluar downgrade de crons de contenido a Sonnet (reducir costes ~60%) | Cervantes |
+| P3 | Configurar APIs para Hulahoop Morning Metrics cuando estén disponibles | Alfonso/equipo |
+
+---
+
+_Generado por Cervantes — cron:cedfbd22-cbd0-4a19-87a0-29337c4f2b37 — 2026-05-01 10:00 CEST_

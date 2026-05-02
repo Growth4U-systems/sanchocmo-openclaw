@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 
 export interface AskQuestionData {
@@ -10,62 +10,58 @@ export interface AskQuestionData {
   options: { id: string; label: string }[];
 }
 
+interface QuestionState {
+  selected: Set<string>;
+  otherText: string;
+}
+
 interface AskQuestionProps {
   question: AskQuestionData;
-  threadId: string;
-  onSubmit: (canonicalText: string) => void;
+  state: QuestionState;
+  submittedLabels: string[] | null;
+  onChange: (next: QuestionState) => void;
 }
 
 function storageKey(threadId: string, questionId: string) {
   return `ask:${threadId}:${questionId}`;
 }
 
-export function AskQuestion({ question, threadId, onSubmit }: AskQuestionProps) {
-  const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [submitted, setSubmitted] = useState<string[] | null>(null);
+function isQuestionAnswered(question: AskQuestionData, state: QuestionState): boolean {
+  if (state.selected.size === 0) return false;
+  if (state.selected.has("other") && state.otherText.trim().length === 0) return false;
+  return true;
+}
 
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem(storageKey(threadId, question.id));
-      if (raw) {
-        const parsed = JSON.parse(raw) as { labels: string[] };
-        if (Array.isArray(parsed.labels)) setSubmitted(parsed.labels);
-      }
-    } catch {
-      // ignore
-    }
-  }, [threadId, question.id]);
+function buildAnswerLabels(question: AskQuestionData, state: QuestionState): string[] {
+  return question.options
+    .filter((o) => state.selected.has(o.id))
+    .map((o) => (o.id === "other" ? state.otherText.trim() : o.label));
+}
 
+/**
+ * Single question UI (controlled). Rendering only — no submission logic.
+ * Submission is owned by `<AskQuestionGroup>` so multi-question messages
+ * can send all answers together in a single chat message.
+ */
+function AskQuestion({ question, state, submittedLabels, onChange }: AskQuestionProps) {
   const isMulti = question.mode === "multi";
+  const isLocked = submittedLabels !== null;
+  const otherSelected = state.selected.has("other");
 
   const toggle = (id: string) => {
-    if (submitted) return;
-    const next = new Set(isMulti ? selected : []);
+    if (isLocked) return;
+    const next = new Set(isMulti ? state.selected : []);
     if (next.has(id)) next.delete(id);
     else next.add(id);
-    setSelected(next);
+    onChange({ ...state, selected: next });
   };
 
-  const handleSend = () => {
-    if (submitted || selected.size === 0) return;
-    const chosen = question.options.filter((o) => selected.has(o.id));
-    const labels = chosen.map((o) => o.label);
-    const canonical = `[ask:${question.id}] respuesta: ${labels.join(", ")}`;
-    try {
-      localStorage.setItem(storageKey(threadId, question.id), JSON.stringify({ labels }));
-    } catch {
-      // ignore
-    }
-    setSubmitted(labels);
-    onSubmit(canonical);
-  };
-
-  if (submitted) {
+  if (isLocked) {
     return (
       <div className="my-2 rounded-lg border border-[#45475a] bg-[#1e1e2e]/70 p-3">
         <div className="text-[13px] text-[#a6adc8] mb-1.5">{question.prompt}</div>
         <div className="flex flex-wrap gap-1.5">
-          {submitted.map((label, i) => (
+          {submittedLabels.map((label, i) => (
             <span
               key={i}
               className="inline-flex items-center gap-1 text-[12px] text-white bg-rust/80 rounded px-2 py-0.5"
@@ -81,9 +77,9 @@ export function AskQuestion({ question, threadId, onSubmit }: AskQuestionProps) 
   return (
     <div className="my-2 rounded-lg border border-[#45475a] bg-[#1e1e2e]/70 p-3">
       <div className="text-[14px] text-[#cdd6f4] font-medium mb-2">{question.prompt}</div>
-      <div className="flex flex-col gap-1.5 mb-3">
+      <div className="flex flex-col gap-1.5 mb-2">
         {question.options.map((opt) => {
-          const isSelected = selected.has(opt.id);
+          const isSelected = state.selected.has(opt.id);
           return (
             <button
               key={opt.id}
@@ -110,17 +106,166 @@ export function AskQuestion({ question, threadId, onSubmit }: AskQuestionProps) 
           );
         })}
       </div>
-      <div className="flex justify-end">
-        <button
-          type="button"
-          onClick={handleSend}
-          disabled={selected.size === 0}
-          className="bg-rust hover:opacity-90 text-white text-[12px] px-3 py-1.5 rounded-md disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer border-none"
-        >
-          Enviar{isMulti && selected.size > 1 ? ` (${selected.size})` : ""}
-        </button>
-      </div>
+      {otherSelected && (
+        <textarea
+          value={state.otherText}
+          onChange={(e) => onChange({ ...state, otherText: e.target.value })}
+          placeholder="Escribe tu respuesta…"
+          rows={2}
+          className="w-full bg-[#313244] text-[#cdd6f4] placeholder-[#6c7086] text-[13px] px-2.5 py-1.5 rounded-md border border-[#45475a] focus:outline-none focus:border-rust resize-none"
+          autoFocus
+        />
+      )}
     </div>
+  );
+}
+
+interface AskQuestionGroupProps {
+  segments: MessageSegment[];
+  threadId: string;
+  /** Renders inline text segments — passes through `formatMessage` from the parent. */
+  renderText: (text: string, key: number) => React.ReactNode;
+  onSubmit: (canonicalText: string) => void;
+}
+
+/**
+ * Renders an entire bot message that contains one or more `:::ask` blocks.
+ * Holds local state for every question and submits ALL answers in a single
+ * chat message when the user clicks the group's "Enviar respuestas" button.
+ *
+ * This mirrors how Claude Code's AskUserQuestion works: when the assistant
+ * asks N questions in a single turn, the user answers all N before the
+ * assistant proceeds.
+ */
+export function AskQuestionGroup({
+  segments,
+  threadId,
+  renderText,
+  onSubmit,
+}: AskQuestionGroupProps) {
+  const questions = useMemo(
+    () =>
+      segments
+        .filter((s): s is Extract<MessageSegment, { type: "ask" }> => s.type === "ask")
+        .map((s) => s.question),
+    [segments],
+  );
+
+  const [states, setStates] = useState<Record<string, QuestionState>>(() => {
+    const init: Record<string, QuestionState> = {};
+    for (const q of questions) {
+      init[q.id] = { selected: new Set(), otherText: "" };
+    }
+    return init;
+  });
+
+  // Streaming: new questions can appear after the first render. Add empty
+  // state for any id we don't have yet so AskQuestion never receives undefined.
+  useEffect(() => {
+    setStates((prev) => {
+      const missing = questions.filter((q) => !prev[q.id]);
+      if (missing.length === 0) return prev;
+      const next = { ...prev };
+      for (const q of missing) {
+        next[q.id] = { selected: new Set(), otherText: "" };
+      }
+      return next;
+    });
+  }, [questions]);
+
+  const [submittedLabelsByQ, setSubmittedLabelsByQ] = useState<Record<string, string[]> | null>(
+    null,
+  );
+
+  // Restore from localStorage: only if EVERY question has a stored answer.
+  // The group is atomic — partial restores would create inconsistent state.
+  useEffect(() => {
+    try {
+      const restored: Record<string, string[]> = {};
+      for (const q of questions) {
+        const raw = localStorage.getItem(storageKey(threadId, q.id));
+        if (!raw) return;
+        const parsed = JSON.parse(raw) as { labels?: string[] };
+        if (!Array.isArray(parsed?.labels)) return;
+        restored[q.id] = parsed.labels;
+      }
+      if (Object.keys(restored).length === questions.length && questions.length > 0) {
+        setSubmittedLabelsByQ(restored);
+      }
+    } catch {
+      // ignore
+    }
+  }, [threadId, questions]);
+
+  const allAnswered =
+    questions.length > 0 &&
+    questions.every((q) => states[q.id] && isQuestionAnswered(q, states[q.id]));
+
+  const isLocked = submittedLabelsByQ !== null;
+
+  const handleSubmit = () => {
+    if (!allAnswered || isLocked) return;
+    const labelsByQ: Record<string, string[]> = {};
+    const lines: string[] = [];
+    for (const q of questions) {
+      const labels = buildAnswerLabels(q, states[q.id]);
+      labelsByQ[q.id] = labels;
+      lines.push(`[ask:${q.id}] respuesta: ${labels.join(", ")}`);
+    }
+    try {
+      for (const q of questions) {
+        localStorage.setItem(
+          storageKey(threadId, q.id),
+          JSON.stringify({ labels: labelsByQ[q.id] }),
+        );
+      }
+    } catch {
+      // ignore
+    }
+    setSubmittedLabelsByQ(labelsByQ);
+    onSubmit(lines.join("\n"));
+  };
+
+  const totalQuestions = questions.length;
+  const answeredCount = questions.filter(
+    (q) => states[q.id] && isQuestionAnswered(q, states[q.id]),
+  ).length;
+
+  return (
+    <>
+      {segments.map((seg, i) =>
+        seg.type === "text" ? (
+          renderText(seg.content, i)
+        ) : (
+          <AskQuestion
+            key={i}
+            question={seg.question}
+            state={states[seg.question.id] ?? { selected: new Set(), otherText: "" }}
+            submittedLabels={submittedLabelsByQ?.[seg.question.id] ?? null}
+            onChange={(next) =>
+              setStates((prev) => ({ ...prev, [seg.question.id]: next }))
+            }
+          />
+        ),
+      )}
+      {!isLocked && totalQuestions > 0 && (
+        <div className="flex items-center justify-end gap-2 mt-1">
+          {totalQuestions > 1 && (
+            <span className="text-[11px] text-[#a6adc8]">
+              {answeredCount}/{totalQuestions} respondidas
+            </span>
+          )}
+          <button
+            type="button"
+            onClick={handleSubmit}
+            disabled={!allAnswered}
+            className="bg-rust hover:opacity-90 text-white text-[12px] px-3 py-1.5 rounded-md disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer border-none"
+          >
+            {totalQuestions > 1 ? "Enviar respuestas" : "Enviar"}
+          </button>
+        </div>
+      )}
+    </>
   );
 }
 
@@ -143,7 +288,6 @@ export function parseMessageSegments(text: string): MessageSegment[] {
     return [{ type: "text", content: text }];
   }
 
-  // Mark code fence ranges as off-limits.
   const codeRanges: Array<[number, number]> = [];
   for (const m of text.matchAll(CODE_FENCE_REGEX)) {
     if (m.index === undefined) continue;
@@ -181,7 +325,7 @@ export function parseMessageSegments(text: string): MessageSegment[] {
         parsed = json as AskQuestionData;
       }
     } catch {
-      // fall through — leave raw text
+      // fall through
     }
 
     if (!parsed) continue;

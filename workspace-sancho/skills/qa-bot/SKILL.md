@@ -1,17 +1,21 @@
 ---
 name: qa-bot
-description: 'QA check: brand voice, SEO, consistency.'
-user-invocable: false
+description: >
+  Critical review using Chain of Verification (CoVe) in 4 phases: extract topics,
+  generate verification questions, research independently, then compare against the
+  document. Finds errors, logic gaps, missing elements, and unverifiable claims. Use
+  when user says "QA this", "review this critically", "find the problems", "devil's
+  advocate", "QA bot", "/qa-bot [file]". Also invoked automatically by deep-research
+  Phase 6 (mandatory QA verification). Supports Quick QA (5-7 questions) and
+  Deep QA (10-15 questions, default).
+user-invocable: true
 metadata:
   author: Alfonso Sainz de Baranda (Growth4U)
-  version: '1.0'
-  system: Growth Raistlin
-context_required:
-- brand/{slug}/company-brief/current.md
-- brand/{slug}/brand-voice/current.md
-- brand/{slug}/go-to-market/positioning/*/current.md
-context_writes:
-- brand/{slug}/operational/learnings.md
+  version: '1.1'
+  system: SanchoCMO
+  agent: rocinante
+  updated: '2026-05-01'
+  changes: 'v1.1 — Frontmatter cleanup. Previous version had a placeholder description and brand-file context_required that did not match the CoVe body. Body unchanged.'
 ---
 
 # QA Bot (CoVe Verification)

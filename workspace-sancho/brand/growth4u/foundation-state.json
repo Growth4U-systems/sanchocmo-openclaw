@@ -513,6 +513,18 @@
     "leads/iKsRNTxHV0IHOS9NSxRH.md": {
       "description": "Lead: Nereida Candelo",
       "last_modified": "2026-04-24T20:00:00Z"
+    },
+    "leads/u7vMVe3Y1bHXBxxVLlYP.md": {
+      "description": "Lead: Francisco Franco — Sector ropa, email personal",
+      "ghl_id": "u7vMVe3Y1bHXBxxVLlYP",
+      "tags": ["llamada-agendada"],
+      "created": "2026-05-01T20:00:00Z"
+    },
+    "leads/lRXoZGlFAdJOGdSRMXIl.md": {
+      "description": "Lead: Reyes Saiz — EADIC (EdTech formación ingeniería)",
+      "ghl_id": "lRXoZGlFAdJOGdSRMXIl",
+      "tags": ["llamada-agendada"],
+      "created": "2026-05-01T20:00:00Z"
     }
   }
 }

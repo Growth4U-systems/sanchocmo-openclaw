@@ -83,7 +83,12 @@
       "text": "✅ **Draft iniciales generados — P-Content-Semana-18-T04-C03**\n\n**Research.md** — 11 sources, 7 queries, key findings sobre MiCA deadline, ESMA statement, CNMV rules, Google/Meta policy.\n\n**Clarify.md** — skipped (ángulo aprobado + research vivo suficientes).\n\n**blog.md** — `status: draft` | ~2.638 palabras | Schema Article + FAQ (6 PAA) | Keyword \"MiCA julio 2026\" targetado en title/H1/H2/meta.\n\n**linkedin.md** — `status: draft` | ~220 palabras | Brand voice P3 (Regulación) | compliance-as-moat frame | Bnext case citada con cifras.\n\n---\n\n**Flujo seguido:** research.md → clarify (skipped) → blog.md + linkedin.md ✅\n\nListo para review y approval.",
       "agent": "sancho",
       "ts": "2026-04-30T13:37:19.445Z"
+    },
+    {
+      "role": "user",
+      "text": "Vale, sigo viendo esto y la verdad es que cada vez me gusta más. Me gusta todo lo que son cambios que hemos hecho, pero creo que la calidad sigue siendo mala. Entonces me gustaría volver a empezar un post como el que te estoy mostrando. Me gustaría que aplicaras ahora todos los pasos que tienes que hacer, ¿vale? Desde cero.",
+      "ts": 1777640499647
     }
   ],
-  "updatedAt": 1777556239445
+  "updatedAt": 1777640499647
 }

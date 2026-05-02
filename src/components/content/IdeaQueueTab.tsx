@@ -750,11 +750,23 @@ export function IdeaQueueTab({ slug, openChat }: Props) {
                               style={{ background: "var(--sc-rust-500)", color: "var(--sc-paper-3)", borderColor: "var(--sc-ink)", boxShadow: "var(--pop-xs)" }}
                             >✍ Redactar</button>
                             <button
+                              onClick={() => updateIdea(idea.id, { status: "Deferred", deferred_at: new Date().toISOString(), deferred_by: "mc-ui" })}
+                              className="font-heading uppercase text-[11px] tracking-wider px-2.5 py-1.5 rounded border-2 sc-pop-hover inline-flex items-center justify-center gap-1.5"
+                              style={{ background: "var(--sc-sun-300)", color: "var(--sc-ink)", borderColor: "var(--sc-ink)", boxShadow: "var(--pop-xs)" }}
+                            >🕒 Más tarde</button>
+                            <button
                               onClick={() => updateIdea(idea.id, { status: "Discarded" })}
                               className="font-heading uppercase text-[11px] tracking-wider px-2.5 py-1.5 rounded border-2 sc-pop-hover inline-flex items-center justify-center gap-1.5"
                               style={{ background: "var(--sc-paper-3)", color: "var(--sc-ink)", borderColor: "var(--sc-ink)", boxShadow: "var(--pop-xs)" }}
                             >✗ Descartar</button>
                           </div>
+                        )}
+                        {idea.status === "Deferred" && (
+                          <button
+                            onClick={() => updateIdea(idea.id, { status: "New", deferred_at: null, deferred_by: null })}
+                            className="font-heading uppercase text-[11px] tracking-wider px-2.5 py-1.5 rounded border-2 sc-pop-hover inline-flex items-center justify-center gap-1.5"
+                            style={{ background: "var(--sc-sage-100)", color: "var(--sc-ink)", borderColor: "var(--sc-ink)", boxShadow: "var(--pop-xs)" }}
+                          >↺ Volver a queue</button>
                         )}
                         {isApproved && (
                           <div className="flex flex-col gap-1.5">

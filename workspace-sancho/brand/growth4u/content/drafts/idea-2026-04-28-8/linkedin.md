@@ -4,45 +4,44 @@ content_task_id: P-Content-Semana-18-T04-C03
 parent_task_id: P-Content-Semana-18-T04
 channel: linkedin
 kind: channel-draft
-iteration: 1
+iteration: 2
 status: draft
-clarify_status: skipped
 created_at: '2026-04-29T22:30:52.341Z'
-updated_at: '2026-04-30T15:37:00.000Z'
+updated_at: '2026-05-01T15:10:00.000Z'
 ---
 
 # LinkedIn Post — MiCA julio 2026
 
-El 1 de julio de 2026, la mitad del marketing crypto en España se va a parar.
+486 millones de euros en multas. 63 licencias revocadas. 19% de las acciones de enforcement por marketing.
 
-No por la regulación. Porque no está preparado.
+Y eso fue solo en 2025. Antes del deadline.
 
-ESMA lo dejó claro el 17 de abril: los CASP sin autorización MiCA deben cesar operaciones en la UE. Sin excusas. Sin prórrogas.
+El 1 de julio de 2026 se acaba el período transitorio de MiCA. Los CASP sin autorización cierran. Sin prórrogas — ESMA lo confirmó el 17 de abril.
 
-Pero aquí va lo que nadie te está contando.
+Pero la parte que nadie cuenta:
 
-El deadline no es una cuenta atrás para DEJAR de hacer marketing. Es una cuenta atrás para tener el playbook INSTALADO.
+El día que esas plataformas cierren, sus usuarios van a buscar alternativas. Van a abrir Google, van a preguntar a ChatGPT "exchange regulado España."
 
-Porque el 2 de julio, los usuarios de plataformas no autorizadas van a buscar alternativas. Y los que tengan licencia + marketing listo van a capturar todo ese tráfico.
+¿Sabes quién va a aparecer?
 
-Google ya exige licencia MiCA para anuncios crypto en Europa desde abril de 2025. Meta, lo mismo. Los CASP sin licencia ni siquiera pueden anunciarse.
+No el que tenga la mejor licencia. El que tenga licencia + marketing listo.
 
-Compliance no es tu freno. Es tu moat.
+Porque Google ya exige licencia MiCA para anuncios crypto desde abril de 2025. Sin licencia, no pujas. Con licencia y sin contenido, no existes.
 
-En Bnext escalamos de 0 a 400K usuarios bajo supervisión CNMV. CAC bajó de 50€ a 12,40€. No fue suerte — fue un sistema de marketing compliance-friendly que construimos antes del deadline.
+Lo viví en Bnext. Escalamos de 0 a 400K usuarios bajo CNMV. CAC de 50€ a 12,40€.
 
-Lo que necesitas tener antes de julio:
+No fue presupuesto. Fue sistema.
 
-✅ Plantillas de comunicación pre-aprobadas (no aprobar cada pieza desde cero)
-✅ Workflow de notificación a CNMV para campañas de +100K personas (10 días antes)
-✅ Equipo de marketing que entiende los 6 requisitos de MiCA
-✅ Contenido de blog auditado para claims verificables
-✅ Influencers y partners entrenados en las reglas
+Un playbook de 20 páginas pre-aprobado por legal. Templates de social que ya cumplían los 6 requisitos de MiCA. Un workflow de notificación a CNMV que completábamos en 2 horas. Marketing operando libremente dentro del marco.
 
-Si tu equipo de legal solo te dice lo que NO puedes hacer — y nadie te dice lo que SÍ — tienes un problema. El marketing compliance-friendly existe. Y escala.
+Tu agencia te dice lo que NO puedes hacer.
 
-Artículo completo con el playbook en bio.
+¿Quién te dice lo que SÍ?
 
-#MiCA #Crypto #Spain #Regulation #GrowthMarketing #Fintech
+Porque compliance y growth no son opuestos. Son el mismo sistema.
 
-<!-- Self-QA: PASS | 2026-04-30 | Brand voice P3 (Regulados) | Bold con datos | Bnext case citada | compliance-as-moat frame | ~220 palabras -->
+61 días. El reloj ya empezó.
+
+#MiCA #CryptoMarketing #Compliance #Fintech #CNMV #Growth
+
+<!-- Self-QA: PASS | 2026-05-01 | Brand voice P3 (Regulados) — Bold+Datos | Apertura con dato concreto nuevo (486M€) | Bnext case con cifras | compliance-as-moat frame | ~210 palabras | Sin AI-isms -->

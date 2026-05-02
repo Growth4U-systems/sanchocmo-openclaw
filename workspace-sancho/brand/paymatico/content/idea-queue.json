@@ -1,1 +1,121 @@
-[]
+[
+  {
+    "id": "idea-2026-05-01-001",
+    "title": "Cuando tu proveedor de pagos es adquirido: qué cambia para tu franquicia",
+    "pillar_id": "competencia-fintech",
+    "content_type": "Hot Take",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Euronet (NASDAQ) adquiere Paynopain. Cierre Q3 2026. Paynopain deja de ser fintech independiente.",
+      "source": "Paynopain / Euronet / FintechNews",
+      "url": "https://fintechnews.ch/fintechspain/euronet-paynopain-acquisition-spain-portugal-payments/83219/",
+      "date": "2026-04-14"
+    },
+    "angle_draft": "Cuando un gigante global compra tu proveedor de pagos, las prioridades cambian. Lo que era cercanía y soporte ágil se convierte en roadmap corporativo y prioridades globales. Para una red de franquicias que depende de su proveedor de pagos para split automáticos, reconciliación y marca blanca, la pregunta no es si el servicio seguirá — es quién decide la hoja de ruta. Paymático lleva regulada por BdE desde 2013, sin dependencia de inversores que decidan vender. La independencia no es un claim — es una arquitectura de negocio.",
+    "pov_confidence": 0.85,
+    "status": "ready",
+    "created_at": "2026-05-01T07:03:00Z"
+  },
+  {
+    "id": "idea-2026-05-01-002",
+    "title": "Dinero programable: MONEI lo experimenta, Paymático ya lo tiene en producción",
+    "pillar_id": "tecnologia-pagos",
+    "content_type": "Contrarian Take",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "MONEI completa pruebas del Euro Digital con BCE. JP Morgan lanza Kinexys para pagos programables. Forrester predice 1/3 de ops B2B con AI agents.",
+      "source": "MONEI / JP Morgan / Forrester",
+      "url": "https://monei.com/es/blog/monei-completa-las-pruebas-del-euro-digital/",
+      "date": "2026-04"
+    },
+    "angle_draft": "Todo el sector habla de 'dinero programable' como si fuera el futuro. MONEI experimenta con el BCE. JP Morgan lanza blockchain para pagos condicionales. Pero las cuentas programables de Paymático ya automatizan split payments, escrow y regalías en producción — hoy, sin esperar al Euro Digital de 2029. El futuro de los pagos no es una promesa: es una feature que ya funciona. Para redes de franquicias, la diferencia entre 'estamos explorando' y 'ya lo usamos' es la diferencia entre brochure y P&L.",
+    "pov_confidence": 0.90,
+    "status": "ready",
+    "created_at": "2026-05-01T07:03:00Z"
+  },
+  {
+    "id": "idea-2026-05-01-003",
+    "title": "PSD3 y tu red de franquicias: 3 cosas que debes saber antes de 2028",
+    "pillar_id": "regulacion-pagos",
+    "content_type": "Framework",
+    "target_channel": "blog",
+    "signal": {
+      "summary": "PSD3/PSR textos finales esperados H1 2026. Todas las entidades de pago deben re-autorizarse. Verificación IBAN obligatoria. Open Finance amplía banca abierta.",
+      "source": "DLA Piper / Checkout.com",
+      "url": "https://www.dlapiper.com/en/insights/publications/2026/03/psd3-and-psr",
+      "date": "2026-03"
+    },
+    "angle_draft": "PSD3 va a obligar a todas las entidades de pago a re-solicitar autorización. Para una red de franquicias, esto significa una cosa: tu proveedor de pagos va a estar ocupado adaptándose. Los que llevan 13 años cumpliendo con BdE (como Paymático) tienen ventaja. Los que operan con licencias de otros países van a tener que elegir: pedir licencia local o depender de passporting. Framework: 1) Verifica que tu proveedor tiene licencia BdE directa. 2) Pregunta cómo afecta la verificación IBAN a tus conciliaciones. 3) Evalúa si Open Finance te da acceso a datos que hoy no tienes.",
+    "pov_confidence": 0.80,
+    "status": "ready",
+    "created_at": "2026-05-01T07:03:00Z"
+  },
+  {
+    "id": "idea-2026-05-01-004",
+    "title": "Bizum llega a TPVs físicos el 18 mayo — lo que importa para cadenas con 200 puntos de venta",
+    "pillar_id": "tecnologia-pagos",
+    "content_type": "Proof Post",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Bizum se podrá usar en TPVs físicos desde el 18 mayo 2026. Comienza con CaixaBank, Sabadell, Bankinter.",
+      "source": "Mundo Deportivo / Asociación Fintech",
+      "url": "https://www.mundodeportivo.com/actualidad/20260425/1004175033/oficial-espana-cambia-normas-partir-18-mayo-todos-espanoles-tendran-derecho-pagar-bizum-tienda-fisica-dct.html",
+      "date": "2026-04-25"
+    },
+    "angle_draft": "Bizum en tiendas físicas es un hito para el pago en España. Pero para una cadena de franquicias con 200 establecimientos, la pregunta no es '¿puedo aceptar Bizum?' — eso es table stakes. La pregunta es: '¿cómo reconcilio los pagos Bizum de 200 TPVs, asigno comisiones por franquiciado y genero un panel consolidado en tiempo real?' Ahí es donde la mayoría de soluciones se quedan cortas. Panel único + marca blanca + split automático = Bizum resuelto para redes, no solo para tiendas sueltas.",
+    "pov_confidence": 0.88,
+    "status": "ready",
+    "created_at": "2026-05-01T07:03:00Z"
+  },
+  {
+    "id": "idea-2026-05-01-005",
+    "title": "Hacienda sin mínimos en cobros digitales: oportunidad o dolor de cabeza para franquicias",
+    "pillar_id": "franquicias-multisede",
+    "content_type": "Hot Take",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Desde 2026 se elimina el umbral de €3.000 para reportar transacciones digitales. Todas las operaciones con tarjeta, Bizum y monederos se reportan mensualmente a Hacienda.",
+      "source": "El Español / CINC",
+      "url": "https://www.cinc.com/es/hacienda-y-cobros-digitales-que-cambia-en-2026-con-los-pagos-con-tarjeta-y-bizum/",
+      "date": "2026-04"
+    },
+    "angle_draft": "A partir de 2026, Hacienda ve CADA transacción digital — sin mínimo. Para un autónomo, es un cambio. Para una red de franquicias con cientos de TPVs, es un tsunami de datos fiscales. La buena noticia: si tu sistema de pagos ya centraliza y reconcilia automáticamente por punto de venta, el reporting fiscal pasa de pesadilla a non-event. La mala noticia: si cada franquiciado gestiona sus propios cobros con soluciones distintas, la reconciliación fiscal es manual y el riesgo de errores se multiplica.",
+    "pov_confidence": 0.82,
+    "status": "ready",
+    "created_at": "2026-05-01T07:03:00Z"
+  },
+  {
+    "id": "idea-2026-05-01-006",
+    "title": "Pagos para hostelería vs pagos para CADENAS de hostelería — la diferencia que importa",
+    "pillar_id": "franquicias-multisede",
+    "content_type": "Contrarian Take",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Sipay adquiere 100% de Sipos — primer POS español con pagos nativos para Horeca. También crece 60% en 2025.",
+      "source": "Sipay / HostelVending / Forbes",
+      "url": "https://www.hostelvending.com/noticias-vending/sipos-se-convierte-en-el-primer-pos-espa-ol-con-pagos-nativos",
+      "date": "2026-04"
+    },
+    "angle_draft": "Sipay compra Sipos y crea el primer POS con pagos nativos para hostelería. Perfecto para un bar. Pero una cadena de 50 restaurantes no necesita un POS — necesita un sistema que gestione 50 POS, reparta automáticamente los fondos entre franquiciador y franquiciado, cobre regalías al cierre del día, y dé visibilidad consolidada en tiempo real. Resolver un bar ≠ resolver una red. La diferencia entre 'pagos para hostelería' y 'pagos para cadenas de hostelería' es la misma que entre una furgoneta y una flota.",
+    "pov_confidence": 0.85,
+    "status": "ready",
+    "created_at": "2026-05-01T07:03:00Z"
+  },
+  {
+    "id": "idea-2026-05-01-007",
+    "title": "Nueva Ley de Franquicias: cómo afecta a la gestión financiera de tu red",
+    "pillar_id": "franquicias-multisede",
+    "content_type": "Framework",
+    "target_channel": "blog",
+    "signal": {
+      "summary": "España publica la Ley para la Regulación y el Impulso de las Franquicias (Ley 10867, marzo 2026).",
+      "source": "Tirant / T4 Franquicias",
+      "url": "https://prime.tirant.com/cr/actualidad-prime/nueva-ley-para-la-regulacion-y-el-impulso-de-las-franquicias/",
+      "date": "2026-03"
+    },
+    "angle_draft": "La nueva Ley de Franquicias busca dar seguridad jurídica y fomentar el emprendimiento franquiciador. Pero más allá del marco legal, hay implicaciones financieras directas: cómo se reportan los flujos franquiciador→franquiciado, cómo se garantiza la transparencia en comisiones, y qué infraestructura de pagos necesita una red para cumplir con los nuevos requisitos de disclosure. Oportunidad de ser referencia en 'gestión financiera de franquicias post-nueva ley'.",
+    "pov_confidence": 0.72,
+    "status": "ready",
+    "created_at": "2026-05-01T07:03:00Z"
+  }
+]

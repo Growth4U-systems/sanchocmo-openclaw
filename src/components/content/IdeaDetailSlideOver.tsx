@@ -285,11 +285,27 @@ export function IdeaDetailSlideOver({ slug, idea, onClose, onUpdate }: Props) {
               <button
                 type="button"
                 disabled={busy}
+                onClick={() => patch({ status: "Deferred", deferred_at: new Date().toISOString(), deferred_by: "mc-ui" })}
+                className="font-heading uppercase text-[12px] tracking-wider px-3 py-2 rounded-sc-md border-2 sc-pop-hover disabled:opacity-50"
+                style={{ background: "var(--sc-sun-300)", color: "var(--sc-ink)", borderColor: "var(--sc-ink)", boxShadow: "var(--pop-xs)" }}
+              >🕒 Más tarde</button>
+              <button
+                type="button"
+                disabled={busy}
                 onClick={() => patch({ status: "Discarded", archived_at: new Date().toISOString(), archived_via: "mc-ui" })}
                 className="font-heading uppercase text-[12px] tracking-wider px-3 py-2 rounded-sc-md border-2 sc-pop-hover disabled:opacity-50"
                 style={{ background: "var(--sc-paper-3)", color: "var(--sc-ink)", borderColor: "var(--sc-ink)", boxShadow: "var(--pop-xs)" }}
               >✗ Descartar</button>
             </>
+          )}
+          {idea.status === "Deferred" && (
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => patch({ status: "New", deferred_at: null, deferred_by: null })}
+              className="font-heading uppercase text-[12px] tracking-wider px-3 py-2 rounded-sc-md border-2 sc-pop-hover disabled:opacity-50"
+              style={{ background: "var(--sc-sage-100)", color: "var(--sc-ink)", borderColor: "var(--sc-ink)", boxShadow: "var(--pop-xs)" }}
+            >↺ Volver a la queue</button>
           )}
           {isApproved && idea.project_id && idea.project_task_id && idea.content_task_id && (
             <Link

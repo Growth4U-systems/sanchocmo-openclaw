@@ -1,6 +1,32 @@
 ---
 name: idea-builder
-description: "Single-pass skill that turns research signals into ideas with brand-aligned angle drafts. Replaces the legacy combo of insight-classifier + insight-to-content-mapper. Reads research-signals + pov-bank.json + content-pillars + cadence-config to produce ideas with: pillar match, signal_type classification, target channel, and a SHORT POV paragraph (max ~80 words) — not a full article copy."
+description: "[DEPRECATED] Single-pass skill that turned research signals into ideas with brand-aligned angle drafts. Superseded by inline idea-building inside each research cron (news-monitor, thief-marketers, …)."
+deprecated: true
+context_required: []
+context_writes: []
+---
+
+> ## ⚠️ DEPRECATED
+>
+> **This skill is no longer part of the active content pipeline.**
+>
+> The two-step flow `news-monitor → research-signals → idea-builder → idea-queue.json`
+> has been collapsed: each research cron (`news-monitor`, `thief-marketers`, …)
+> now writes ideas with angles directly to `idea-queue.json` in a single pass.
+> See those skills for the current end-to-end flow.
+>
+> This file is kept for historical reference and in case any cron in
+> `~/.openclaw/cron/jobs.json` still invokes `idea-builder` by name —
+> if so, replace the cron's prompt to invoke the relevant research skill instead.
+>
+> The instructions below describe the legacy behaviour and should NOT be
+> followed by new code or new cron jobs.
+
+---
+
+## Original frontmatter (legacy)
+
+```
 context_required:
 - brand/{slug}/content/research-signals/
 - brand/{slug}/content/content-pillars.md
@@ -12,7 +38,7 @@ context_optional:
 context_writes:
 - brand/{slug}/content/idea-queue.json
 - brand/{slug}/content/research-signals/*.json (in place — adds signal_type)
----
+```
 
 # Idea Builder — From Signal to POV-Driven Idea
 
@@ -140,7 +166,7 @@ Per idea:
   "content_type": "Hot Take",
   "target_channel": "linkedin",
   "signal": {
-    "summary": "<from research-signals>",
+    "summary": "<COPY FULL summary from research-signals — NEVER truncate, NEVER add '...'. Must be the complete sentence(s).>",
     "source": "<source name>",
     "url": "<url>",
     "date": "<signal date YYYY-MM-DD>"
@@ -150,7 +176,7 @@ Per idea:
   "pov_confidence": 0.87,
   "source_signals": ["<signal_id_1>", "<signal_id_2>"],
   "created_at": "<now ISO>",
-  "status": "ready"
+  "status": "New"
 }
 ```
 

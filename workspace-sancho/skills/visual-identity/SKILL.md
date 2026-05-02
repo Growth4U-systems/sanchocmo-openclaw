@@ -96,9 +96,53 @@ Cuando generas personajes basados en fotos de personas reales:
    - "¿Paleta de colores y tipografías ya definidos?"
 5. Si brandbook existe → CARGARLO Y ANALIZARLO antes de continuar
 6. Documentar: qué assets tenemos, qué falta, fuente de cada dato
+7. Persistir el logo siguiendo la convención canónica (sección de abajo).
 ```
 
-**Output**: Inventario de assets existentes con fuente primaria de cada uno.
+**Output**: Inventario de assets existentes con fuente primaria de cada uno + logo registrado on-disk o marcado como `missing: true`.
+
+#### Logo: convención canónica (no negociable)
+
+Mission Control y la skill de carrusel esperan el logo en una ruta fija:
+
+```
+brand/{slug}/brand-book/visual-identity/logo-light.png   # OBLIGATORIO si hay logo
+brand/{slug}/brand-book/visual-identity/logo-dark.png    # opcional (variante para fondos oscuros)
+```
+
+PNG con transparencia, ratio horizontal o cuadrado, ancho mínimo 800px (para que aguante en carruseles 1080×1350 sin pixelar).
+
+Reglas durante el intake:
+
+- **Si encontraste logo en la web del cliente** (web_fetch encontró un asset claro en `/assets`, `/brand` o el header de la home): descárgalo, conviértelo a PNG con fondo transparente si hace falta, y escríbelo a `brand/{slug}/brand-book/visual-identity/logo-light.png`. Si tienes versión sobre fondo oscuro, también `logo-dark.png`.
+- **Si el cliente te aportó el archivo** (vía AskUserQuestion con upload o URL pegada): mismo destino canónico.
+- **Si NO hay logo y el cliente confirma que no tiene**: NO inventes uno. Marca el flag de "missing registered" en `design-tokens.json`:
+
+  ```json
+  {
+    "logo": {
+      "full": "Growth4U",
+      "short": "G4U",
+      "colorRules": { ... },
+      "missing": true,
+      "reason": "cliente sin logo: usaremos wordmark de texto"
+    }
+  }
+  ```
+
+  Importante: con el flag, MC distingue "registrado como inexistente" (no preguntes más downstream) de "skill upstream no ha corrido todavía" (lanza la skill). Sin el flag, content-engine-setup y el carrusel tendrán que volver a preguntar al usuario.
+
+- **Si dudas**: prefiere `missing: true` con `reason: "no encontrado en web ni aportado por cliente; pendiente de revisión"` antes que dejar el campo silencioso.
+
+**NO** dejes el logo solo en `mockups/` o `_archive/`. Esos son working dirs; `logo-light.png` en la raíz de `visual-identity/` es la fuente de verdad.
+
+Para clientes existentes con logos colocados en otros sitios (mockups antiguos, brand-identity legacy), corre el backfill desde la raíz de Mission Control:
+
+```bash
+tsx scripts/backfill-brand-logo.mts --slug={slug}
+```
+
+Mueve cualquier candidato razonable al path canónico y, si no hay nada, escribe `logo.missing: true`.
 
 ### Step 0: Context Hydration
 - Lee `references/hydration.md` para el mapeo específico

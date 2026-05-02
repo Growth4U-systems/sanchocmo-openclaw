@@ -372,7 +372,7 @@ When called by the Content Engine cron, use this specific workflow:
 
 **Selection criteria (recency-aware):**
 ```
-WHERE status = 'ready'
+WHERE status = 'New'
   AND age(created_at) <= 14 days
   AND content_type matches slot for today's channel(s)
 ORDER BY recency_score DESC, pov_confidence DESC
@@ -381,7 +381,7 @@ LIMIT 3-5
 
 Where `recency_score = exp(-age_in_days / 5)` — rapid decay favoring fresh ideas.
 
-**Stale policy:** Ideas older than 14 days → `status = 'stale'`, auto-archived.
+**Stale policy:** Ideas older than 14 days → `status = 'Deferred'`, parked for later.
 Can be re-promoted manually if still relevant.
 
 **Dispatch to Discord (Idea Approval Loop):**
@@ -396,7 +396,7 @@ For each selected idea, send to Discord following `_system/idea-approval-protoco
 [✅ Si] [⏰ Mas tarde] [❌ No]
 ```
 
-**After approval:**
-- ✅ → update `status = 'approved'` in idea-queue.json, respond with link to MC UI thread
-- ⏰ → keep `status = 'ready'`, add `revisit_after` flag
-- ❌ → update `status = 'archived'`
+**After approval (canonical pipeline — see content-engine/ideas.ts):**
+- ✅ → update `status = 'Approved'` in idea-queue.json, respond with link to MC UI thread
+- ⏰ → update `status = 'Deferred'` + set `deferred_at` / `deferred_by`
+- ❌ → update `status = 'Discarded'`

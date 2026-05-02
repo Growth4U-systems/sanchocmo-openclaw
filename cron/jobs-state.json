@@ -2,17 +2,17 @@
   "version": 1,
   "jobs": {
     "2283eade-3d08-4f46-a508-eaa6d035a4d2": {
-      "updatedAtMs": 1777532400072,
+      "updatedAtMs": 1777619551365,
       "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"0 9 * * 1-5\",\"tz\":\"Europe/Madrid\"}}",
       "state": {
-        "nextRunAtMs": 1777618800000,
-        "lastRunAtMs": 1777532400030,
-        "lastRunStatus": "error",
-        "lastStatus": "error",
-        "lastDurationMs": 42,
+        "nextRunAtMs": 1777878000000,
+        "lastRunAtMs": 1777619463567,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 87798,
         "lastDeliveryStatus": "not-requested",
-        "consecutiveErrors": 2,
-        "lastError": "TypeError: (0 , _providerModelShared.resolveClaudeThinkingProfile) is not a function"
+        "consecutiveErrors": 0,
+        "consecutiveSkipped": 0
       }
     },
     "33434fd7-8b66-4069-b7f7-983f66fc25c2": {
@@ -43,14 +43,14 @@
       }
     },
     "6dac9a53-6736-490a-ae54-e028b8ebbbd1": {
-      "updatedAtMs": 1777565018060,
+      "updatedAtMs": 1777651462110,
       "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"0 18 * * 1-5\",\"tz\":\"Europe/Madrid\"}}",
       "state": {
-        "nextRunAtMs": 1777651200000,
-        "lastRunAtMs": 1777564800035,
+        "nextRunAtMs": 1777910400000,
+        "lastRunAtMs": 1777651200017,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 218025,
+        "lastDurationMs": 262093,
         "lastDeliveryStatus": "not-requested",
         "consecutiveErrors": 0,
         "consecutiveSkipped": 0
@@ -84,42 +84,43 @@
       }
     },
     "618bc941-a980-4f0d-99c8-5e715060ce6b": {
-      "updatedAtMs": 1777510800060,
+      "updatedAtMs": 1777597369929,
       "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"0 3 * * *\"}}",
       "state": {
-        "nextRunAtMs": 1777597200000,
-        "lastRunAtMs": 1777510800032,
-        "lastRunStatus": "error",
-        "lastStatus": "error",
-        "lastDurationMs": 28,
+        "nextRunAtMs": 1777683600000,
+        "lastRunAtMs": 1777597200036,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 169893,
         "lastDeliveryStatus": "not-requested",
-        "consecutiveErrors": 2,
-        "runningAtMs": 1777597200028
+        "consecutiveErrors": 0,
+        "consecutiveSkipped": 0,
+        "runningAtMs": 1777683600959
       }
     },
     "0c59e923-3267-4926-9a60-36bb81b6041f": {
-      "updatedAtMs": 1777580058201,
+      "updatedAtMs": 1777666435741,
       "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"every\",\"everyMs\":21600000,\"anchorMs\":1772069609685}}",
       "state": {
-        "nextRunAtMs": 1777601581162,
-        "lastRunAtMs": 1777579981162,
+        "nextRunAtMs": 1777687981273,
+        "lastRunAtMs": 1777666381273,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 77039,
+        "lastDurationMs": 54468,
         "lastDeliveryStatus": "not-requested",
         "consecutiveErrors": 0,
         "consecutiveSkipped": 0
       }
     },
     "cedfbd22-cbd0-4a19-87a0-29337c4f2b37": {
-      "updatedAtMs": 1777536386323,
+      "updatedAtMs": 1777622685209,
       "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"0 10 * * *\",\"tz\":\"Europe/Madrid\"}}",
       "state": {
-        "nextRunAtMs": 1777622400000,
-        "lastRunAtMs": 1777536000039,
+        "nextRunAtMs": 1777708800000,
+        "lastRunAtMs": 1777622400051,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 386284,
+        "lastDurationMs": 285158,
         "lastDeliveryStatus": "not-requested",
         "consecutiveErrors": 0,
         "consecutiveSkipped": 0
@@ -131,17 +132,17 @@
       "state": {}
     },
     "b780c3f1-a760-453f-ab81-bc19e4257d11": {
-      "updatedAtMs": 1777528800103,
+      "updatedAtMs": 1777617528806,
       "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"0 8 * * *\",\"tz\":\"Europe/Madrid\"}}",
       "state": {
-        "nextRunAtMs": 1777615200000,
-        "lastRunAtMs": 1777528800035,
-        "lastRunStatus": "error",
-        "lastStatus": "error",
-        "lastDurationMs": 68,
+        "nextRunAtMs": 1777701600000,
+        "lastRunAtMs": 1777617454594,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 74212,
         "lastDeliveryStatus": "not-requested",
-        "consecutiveErrors": 7,
-        "lastError": "TypeError: (0 , _providerModelShared.resolveClaudeThinkingProfile) is not a function"
+        "consecutiveErrors": 0,
+        "consecutiveSkipped": 0
       }
     },
     "4eda3a87-1b19-4932-8c7d-d4b1971d53e3": {
@@ -164,17 +165,18 @@
       }
     },
     "1e64347a-7151-482d-ac27-8ad88cb62896": {
-      "updatedAtMs": 1777519800094,
+      "updatedAtMs": 1777606434951,
       "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"30 5 * * *\",\"tz\":\"Europe/Madrid\"}}",
       "state": {
-        "nextRunAtMs": 1777606200000,
-        "lastRunAtMs": 1777519800033,
-        "lastRunStatus": "error",
-        "lastStatus": "error",
-        "lastDurationMs": 61,
-        "lastDeliveryStatus": "unknown",
-        "consecutiveErrors": 4,
-        "lastError": "TypeError: (0 , _providerModelShared.resolveClaudeThinkingProfile) is not a function"
+        "nextRunAtMs": 1777692600000,
+        "lastRunAtMs": 1777606200043,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 234908,
+        "lastDeliveryStatus": "delivered",
+        "consecutiveErrors": 0,
+        "lastDelivered": true,
+        "consecutiveSkipped": 0
       }
     },
     "f04c8094-eaf9-4995-bde8-9d5df88ef4d7": {
@@ -249,18 +251,17 @@
       }
     },
     "f78ba296-fe22-4ddc-a9a4-a6602465c13e": {
-      "updatedAtMs": 1775013020281,
+      "updatedAtMs": 1777597417724,
       "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"0 3 1 * *\",\"tz\":\"Europe/Madrid\"}}",
       "state": {
-        "nextRunAtMs": 1777597200000,
-        "lastRunAtMs": 1775009210483,
-        "lastRunStatus": "error",
-        "lastStatus": "error",
-        "lastDurationMs": 3809798,
-        "lastErrorReason": "timeout",
+        "nextRunAtMs": 1780275600000,
+        "lastRunAtMs": 1777597369929,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 47795,
         "lastDeliveryStatus": "not-requested",
-        "consecutiveErrors": 1,
-        "runningAtMs": 1777597200028
+        "consecutiveErrors": 0,
+        "consecutiveSkipped": 0
       }
     },
     "2e1d6efd-5da7-4a5a-bcb0-e0892ff25b66": {
@@ -278,14 +279,14 @@
       }
     },
     "a68143d8-1309-46eb-a5dc-4c3fb35ee3d2": {
-      "updatedAtMs": 1777579578433,
+      "updatedAtMs": 1777665940760,
       "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"0 22 * * *\",\"tz\":\"Europe/Madrid\"}}",
       "state": {
-        "nextRunAtMs": 1777665600000,
-        "lastRunAtMs": 1777579200043,
+        "nextRunAtMs": 1777752000000,
+        "lastRunAtMs": 1777665600288,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 378390,
+        "lastDurationMs": 340472,
         "lastDeliveryStatus": "not-requested",
         "consecutiveErrors": 0,
         "consecutiveSkipped": 0
@@ -307,17 +308,17 @@
       }
     },
     "6f136183-673c-4a60-9aca-d923d3c00480": {
-      "updatedAtMs": 1777062884349,
+      "updatedAtMs": 1777667980402,
       "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"30 22 * * 5\",\"tz\":\"Europe/Madrid\"}}",
       "state": {
-        "nextRunAtMs": 1777667400000,
-        "lastRunAtMs": 1777062600022,
-        "lastRunStatus": "error",
-        "lastStatus": "error",
-        "lastDurationMs": 284327,
+        "nextRunAtMs": 1778272200000,
+        "lastRunAtMs": 1777667400434,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 579968,
         "lastDeliveryStatus": "not-requested",
-        "consecutiveErrors": 1,
-        "lastError": "⚠️ ✉️ Message failed"
+        "consecutiveErrors": 0,
+        "consecutiveSkipped": 0
       }
     },
     "7442ba81-9342-40b4-b8c0-87786890c84e": {
@@ -349,16 +350,19 @@
       }
     },
     "df8aaf99-8b1b-4b5b-844b-5c53de641e5c": {
-      "updatedAtMs": 1777017949536,
+      "updatedAtMs": 1777622806354,
       "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"0 10 * * 5\",\"tz\":\"Europe/Madrid\"}}",
       "state": {
-        "nextRunAtMs": 1777622400000,
-        "lastRunAtMs": 1777017852129,
-        "lastRunStatus": "ok",
-        "lastStatus": "ok",
-        "lastDurationMs": 97407,
+        "nextRunAtMs": 1778227200000,
+        "lastRunAtMs": 1777622685209,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 121145,
         "lastDeliveryStatus": "not-requested",
-        "consecutiveErrors": 0
+        "consecutiveErrors": 1,
+        "lastError": "cron: job execution timed out",
+        "lastErrorReason": "timeout",
+        "consecutiveSkipped": 0
       }
     },
     "854d8902-eea8-45aa-bb26-6afeb3a6c949": {
@@ -378,18 +382,19 @@
       }
     },
     "41d660cb-c18f-4268-aa95-6275f2435f90": {
-      "updatedAtMs": 1777014356917,
+      "updatedAtMs": 1777619672515,
       "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"0 9 * * 5\",\"tz\":\"Europe/Madrid\"}}",
       "state": {
-        "nextRunAtMs": 1777618800000,
-        "lastRunAtMs": 1777014236803,
+        "nextRunAtMs": 1778223600000,
+        "lastRunAtMs": 1777619551365,
         "lastRunStatus": "error",
         "lastStatus": "error",
-        "lastDurationMs": 120114,
+        "lastDurationMs": 121150,
         "lastErrorReason": "timeout",
         "lastDeliveryStatus": "not-requested",
-        "consecutiveErrors": 4,
-        "lastError": "cron: job execution timed out"
+        "consecutiveErrors": 5,
+        "lastError": "cron: job execution timed out",
+        "consecutiveSkipped": 0
       }
     },
     "1b104cd3-74b6-42df-9d4e-b4a764acef21": {
@@ -407,17 +412,18 @@
       }
     },
     "00fa288d-d349-449e-85ff-1d3b2260f2d3": {
-      "updatedAtMs": 1777532400114,
+      "updatedAtMs": 1777619824028,
       "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"0 9 * * 1-5\",\"tz\":\"Europe/Madrid\"}}",
       "state": {
-        "nextRunAtMs": 1777618800000,
-        "lastRunAtMs": 1777532400072,
+        "nextRunAtMs": 1777878000000,
+        "lastRunAtMs": 1777619672515,
         "lastRunStatus": "error",
         "lastStatus": "error",
-        "lastDurationMs": 42,
+        "lastDurationMs": 151513,
         "lastDeliveryStatus": "unknown",
-        "consecutiveErrors": 20,
-        "lastError": "TypeError: (0 , _providerModelShared.resolveClaudeThinkingProfile) is not a function"
+        "consecutiveErrors": 21,
+        "lastError": "Channel is required when multiple channels are configured: discord, mc-chat Set delivery.channel explicitly or use a main session with a previous channel.; the agent used the message tool, but OpenClaw could not verify that message matched the cron delivery target",
+        "consecutiveSkipped": 0
       }
     },
     "eef29d29-0160-4708-8b9f-d5f0503b4964": {
@@ -449,31 +455,33 @@
       }
     },
     "09b92860-663d-4fb1-8f27-352c55e8a507": {
-      "updatedAtMs": 1777530600076,
+      "updatedAtMs": 1777617686946,
       "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"30 8 * * *\",\"tz\":\"Europe/Madrid\"}}",
       "state": {
-        "nextRunAtMs": 1777617000000,
-        "lastRunAtMs": 1777530600029,
+        "nextRunAtMs": 1777703400000,
+        "lastRunAtMs": 1777617528806,
         "lastRunStatus": "error",
         "lastStatus": "error",
-        "lastDurationMs": 47,
+        "lastDurationMs": 158140,
         "lastDeliveryStatus": "unknown",
-        "consecutiveErrors": 17,
-        "lastError": "TypeError: (0 , _providerModelShared.resolveClaudeThinkingProfile) is not a function"
+        "consecutiveErrors": 18,
+        "lastError": "Channel is required when multiple channels are configured: discord, mc-chat Set delivery.channel explicitly or use a main session with a previous channel.; the agent used the message tool, but OpenClaw could not verify that message matched the cron delivery target",
+        "consecutiveSkipped": 0
       }
     },
     "9416a8bc-14f5-4626-99d2-c8065c4ab002": {
-      "updatedAtMs": 1777530600113,
+      "updatedAtMs": 1777617742473,
       "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"30 8 * * *\",\"tz\":\"Europe/Madrid\"}}",
       "state": {
-        "nextRunAtMs": 1777617000000,
-        "lastRunAtMs": 1777530600076,
+        "nextRunAtMs": 1777703400000,
+        "lastRunAtMs": 1777617686946,
         "lastRunStatus": "error",
         "lastStatus": "error",
-        "lastDurationMs": 37,
+        "lastDurationMs": 55527,
         "lastDeliveryStatus": "unknown",
-        "consecutiveErrors": 22,
-        "lastError": "TypeError: (0 , _providerModelShared.resolveClaudeThinkingProfile) is not a function"
+        "consecutiveErrors": 23,
+        "lastError": "Channel is required when multiple channels are configured: discord, mc-chat Set delivery.channel explicitly or use a main session with a previous channel.",
+        "consecutiveSkipped": 0
       }
     },
     "7d58dea0-fbeb-42f1-97e6-a33880cf6389": {
@@ -531,59 +539,44 @@
       }
     },
     "365caf56-5aaf-4109-8b3b-e3547d5a2b41": {
-      "updatedAtMs": 1777588181068,
+      "updatedAtMs": 1777612023616,
       "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"0 7 * * 1-5\",\"tz\":\"Europe/Madrid\"}}",
       "state": {
-        "nextRunAtMs": 1777611600000,
-        "lastRunAtMs": 1777588020711,
+        "nextRunAtMs": 1777870800000,
+        "lastRunAtMs": 1777611600041,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 160357,
+        "lastDurationMs": 423575,
         "lastDeliveryStatus": "not-requested",
         "consecutiveErrors": 0,
         "consecutiveSkipped": 0
       }
     },
     "35c584a0-5558-44f0-81a4-9bc56a963a1a": {
-      "updatedAtMs": 1777588728508,
+      "updatedAtMs": 1777612374738,
       "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"0 7 * * 1-5\",\"tz\":\"Europe/Madrid\"}}",
       "state": {
-        "nextRunAtMs": 1777611600000,
-        "lastRunAtMs": 1777588181078,
+        "nextRunAtMs": 1777870800000,
+        "lastRunAtMs": 1777612023616,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 547430,
+        "lastDurationMs": 351122,
         "lastDeliveryStatus": "not-requested",
         "consecutiveErrors": 0,
         "consecutiveSkipped": 0
       }
     },
-    "3087b273-f6c4-44e7-89d7-637cf3911e33": {
-      "updatedAtMs": 1777527000100,
-      "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"30 7 * * 1-5\",\"tz\":\"Europe/Madrid\"}}",
-      "state": {
-        "nextRunAtMs": 1777613400000,
-        "lastRunAtMs": 1777527000033,
-        "lastRunStatus": "error",
-        "lastStatus": "error",
-        "lastDurationMs": 67,
-        "lastDeliveryStatus": "not-requested",
-        "consecutiveErrors": 2,
-        "lastError": "TypeError: (0 , _providerModelShared.resolveClaudeThinkingProfile) is not a function"
-      }
-    },
     "72fa033f-a19e-476c-83f9-2fc201374216": {
-      "updatedAtMs": 1777573109450,
+      "updatedAtMs": 1777618167360,
       "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"30 8 * * 1-5\",\"tz\":\"Europe/Madrid\"}}",
       "state": {
-        "nextRunAtMs": 1777617000000,
-        "lastRunAtMs": 1777572923146,
-        "lastRunStatus": "error",
-        "lastStatus": "error",
-        "lastDurationMs": 186304,
+        "nextRunAtMs": 1777876200000,
+        "lastRunAtMs": 1777617970546,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 196814,
         "lastDeliveryStatus": "not-requested",
-        "consecutiveErrors": 5,
-        "lastError": "⚠️ 📝 Edit: `in brand/growth4u/content/idea-queue.json` failed",
+        "consecutiveErrors": 0,
         "consecutiveSkipped": 0
       }
     },
@@ -602,59 +595,45 @@
       }
     },
     "85b808b7-b427-46be-8f6f-b85b017d1700": {
-      "updatedAtMs": 1777525200159,
+      "updatedAtMs": 1777612616659,
       "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"0 7 * * 1-5\",\"tz\":\"Europe/Madrid\"}}",
       "state": {
-        "nextRunAtMs": 1777611600000,
-        "lastRunAtMs": 1777525200128,
-        "lastRunStatus": "error",
-        "lastStatus": "error",
-        "lastDurationMs": 31,
+        "nextRunAtMs": 1777870800000,
+        "lastRunAtMs": 1777612374738,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 241921,
         "lastDeliveryStatus": "not-requested",
-        "consecutiveErrors": 2,
-        "lastError": "TypeError: (0 , _providerModelShared.resolveClaudeThinkingProfile) is not a function"
+        "consecutiveErrors": 0,
+        "consecutiveSkipped": 0
       }
     },
     "61272e4c-e42e-4634-bd78-da8c7f266936": {
-      "updatedAtMs": 1777525200189,
+      "updatedAtMs": 1777612924248,
       "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"0 7 * * 1-5\",\"tz\":\"Europe/Madrid\"}}",
       "state": {
-        "nextRunAtMs": 1777611600000,
-        "lastRunAtMs": 1777525200159,
-        "lastRunStatus": "error",
-        "lastStatus": "error",
-        "lastDurationMs": 30,
+        "nextRunAtMs": 1777870800000,
+        "lastRunAtMs": 1777612616659,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 307589,
         "lastDeliveryStatus": "not-requested",
-        "consecutiveErrors": 2,
-        "lastError": "TypeError: (0 , _providerModelShared.resolveClaudeThinkingProfile) is not a function"
-      }
-    },
-    "515f8afb-d616-45ed-9bfc-2649fd9939bc": {
-      "updatedAtMs": 1777527000131,
-      "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"30 7 * * 1-5\",\"tz\":\"Europe/Madrid\"}}",
-      "state": {
-        "nextRunAtMs": 1777613400000,
-        "lastRunAtMs": 1777527000100,
-        "lastRunStatus": "error",
-        "lastStatus": "error",
-        "lastDurationMs": 31,
-        "lastDeliveryStatus": "not-requested",
-        "consecutiveErrors": 2,
-        "lastError": "TypeError: (0 , _providerModelShared.resolveClaudeThinkingProfile) is not a function"
+        "consecutiveErrors": 0,
+        "consecutiveSkipped": 0
       }
     },
     "69d0d14d-e02c-437b-bc38-17d2606c3bdc": {
-      "updatedAtMs": 1777530600174,
+      "updatedAtMs": 1777618477697,
       "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"30 8 * * 1-5\",\"tz\":\"Europe/Madrid\"}}",
       "state": {
-        "nextRunAtMs": 1777617000000,
-        "lastRunAtMs": 1777530600144,
-        "lastRunStatus": "error",
-        "lastStatus": "error",
-        "lastDurationMs": 30,
+        "nextRunAtMs": 1777876200000,
+        "lastRunAtMs": 1777618352949,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 124748,
         "lastDeliveryStatus": "not-requested",
-        "consecutiveErrors": 2,
-        "lastError": "TypeError: (0 , _providerModelShared.resolveClaudeThinkingProfile) is not a function"
+        "consecutiveErrors": 0,
+        "consecutiveSkipped": 0
       }
     },
     "7624d72f-c443-4f79-be22-b1b1479f8e69": {
@@ -672,59 +651,47 @@
       }
     },
     "bd8a9780-4b83-448c-9b0d-e7ff7485eba5": {
-      "updatedAtMs": 1777525200223,
+      "updatedAtMs": 1777613125293,
       "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"0 7 * * 1-5\",\"tz\":\"Europe/Madrid\"}}",
       "state": {
-        "nextRunAtMs": 1777611600000,
-        "lastRunAtMs": 1777525200189,
-        "lastRunStatus": "error",
-        "lastStatus": "error",
-        "lastDurationMs": 34,
+        "nextRunAtMs": 1777870800000,
+        "lastRunAtMs": 1777612924248,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 201045,
         "lastDeliveryStatus": "not-requested",
-        "consecutiveErrors": 2,
-        "lastError": "TypeError: (0 , _providerModelShared.resolveClaudeThinkingProfile) is not a function"
+        "consecutiveErrors": 0,
+        "consecutiveSkipped": 0
       }
     },
     "67259a6e-55df-45d5-a8d5-fc5d5bfd27ab": {
-      "updatedAtMs": 1777525200253,
+      "updatedAtMs": 1777616726357,
       "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"0 7 * * 1-5\",\"tz\":\"Europe/Madrid\"}}",
       "state": {
-        "nextRunAtMs": 1777611600000,
-        "lastRunAtMs": 1777525200223,
+        "nextRunAtMs": 1777870800000,
+        "lastRunAtMs": 1777613125293,
         "lastRunStatus": "error",
         "lastStatus": "error",
-        "lastDurationMs": 30,
+        "lastDurationMs": 3601064,
         "lastDeliveryStatus": "not-requested",
-        "consecutiveErrors": 2,
-        "lastError": "TypeError: (0 , _providerModelShared.resolveClaudeThinkingProfile) is not a function"
-      }
-    },
-    "dcd4e463-e3b2-44f4-a03b-42e1877215bc": {
-      "updatedAtMs": 1777527000167,
-      "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"30 7 * * 1-5\",\"tz\":\"Europe/Madrid\"}}",
-      "state": {
-        "nextRunAtMs": 1777613400000,
-        "lastRunAtMs": 1777527000131,
-        "lastRunStatus": "error",
-        "lastStatus": "error",
-        "lastDurationMs": 36,
-        "lastDeliveryStatus": "not-requested",
-        "consecutiveErrors": 2,
-        "lastError": "TypeError: (0 , _providerModelShared.resolveClaudeThinkingProfile) is not a function"
+        "consecutiveErrors": 3,
+        "lastError": "cron: job execution timed out",
+        "lastErrorReason": "timeout",
+        "consecutiveSkipped": 0
       }
     },
     "6946f3e7-e8f4-4501-a824-c05b0e60e341": {
-      "updatedAtMs": 1777530600207,
+      "updatedAtMs": 1777619032254,
       "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"30 8 * * 1-5\",\"tz\":\"Europe/Madrid\"}}",
       "state": {
-        "nextRunAtMs": 1777617000000,
-        "lastRunAtMs": 1777530600174,
-        "lastRunStatus": "error",
-        "lastStatus": "error",
-        "lastDurationMs": 33,
+        "nextRunAtMs": 1777876200000,
+        "lastRunAtMs": 1777618632599,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 399655,
         "lastDeliveryStatus": "not-requested",
-        "consecutiveErrors": 2,
-        "lastError": "TypeError: (0 , _providerModelShared.resolveClaudeThinkingProfile) is not a function"
+        "consecutiveErrors": 0,
+        "consecutiveSkipped": 0
       }
     },
     "369c003e-c170-4f6d-bf9d-5cf380028d45": {
@@ -742,59 +709,45 @@
       }
     },
     "3bd0764d-7cfe-4692-9a72-8043894129ba": {
-      "updatedAtMs": 1777525200284,
+      "updatedAtMs": 1777617152805,
       "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"0 7 * * 1-5\",\"tz\":\"Europe/Madrid\"}}",
       "state": {
-        "nextRunAtMs": 1777611600000,
-        "lastRunAtMs": 1777525200253,
-        "lastRunStatus": "error",
-        "lastStatus": "error",
-        "lastDurationMs": 31,
+        "nextRunAtMs": 1777870800000,
+        "lastRunAtMs": 1777616726357,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 426448,
         "lastDeliveryStatus": "not-requested",
-        "consecutiveErrors": 2,
-        "lastError": "TypeError: (0 , _providerModelShared.resolveClaudeThinkingProfile) is not a function"
+        "consecutiveErrors": 0,
+        "consecutiveSkipped": 0
       }
     },
     "2d9b3847-5a0a-405f-b222-f76fdae9c854": {
-      "updatedAtMs": 1777525200316,
+      "updatedAtMs": 1777617452406,
       "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"0 7 * * 1-5\",\"tz\":\"Europe/Madrid\"}}",
       "state": {
-        "nextRunAtMs": 1777611600000,
-        "lastRunAtMs": 1777525200284,
-        "lastRunStatus": "error",
-        "lastStatus": "error",
-        "lastDurationMs": 32,
+        "nextRunAtMs": 1777870800000,
+        "lastRunAtMs": 1777617152805,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 299601,
         "lastDeliveryStatus": "not-requested",
-        "consecutiveErrors": 2,
-        "lastError": "TypeError: (0 , _providerModelShared.resolveClaudeThinkingProfile) is not a function"
-      }
-    },
-    "8034bdec-0449-44a2-883c-147844b171f2": {
-      "updatedAtMs": 1777527000196,
-      "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"30 7 * * 1-5\",\"tz\":\"Europe/Madrid\"}}",
-      "state": {
-        "nextRunAtMs": 1777613400000,
-        "lastRunAtMs": 1777527000167,
-        "lastRunStatus": "error",
-        "lastStatus": "error",
-        "lastDurationMs": 29,
-        "lastDeliveryStatus": "not-requested",
-        "consecutiveErrors": 2,
-        "lastError": "TypeError: (0 , _providerModelShared.resolveClaudeThinkingProfile) is not a function"
+        "consecutiveErrors": 0,
+        "consecutiveSkipped": 0
       }
     },
     "fda4363f-983f-4681-93b6-13f0521c9b7f": {
-      "updatedAtMs": 1777530600237,
+      "updatedAtMs": 1777619461343,
       "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"30 8 * * 1-5\",\"tz\":\"Europe/Madrid\"}}",
       "state": {
-        "nextRunAtMs": 1777617000000,
-        "lastRunAtMs": 1777530600207,
-        "lastRunStatus": "error",
-        "lastStatus": "error",
-        "lastDurationMs": 30,
+        "nextRunAtMs": 1777876200000,
+        "lastRunAtMs": 1777619319056,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 142287,
         "lastDeliveryStatus": "not-requested",
-        "consecutiveErrors": 2,
-        "lastError": "TypeError: (0 , _providerModelShared.resolveClaudeThinkingProfile) is not a function"
+        "consecutiveErrors": 0,
+        "consecutiveSkipped": 0
       }
     },
     "1846c8cf-3c46-4e4f-bdd5-37782fc0ff5b": {
@@ -812,10 +765,17 @@
       }
     },
     "510489d9-51c7-4dba-9ba5-1502e2828066": {
-      "updatedAtMs": 1777188277000,
+      "updatedAtMs": 1777619895790,
       "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"0 9 1 * *\",\"tz\":\"Europe/Madrid\"}}",
       "state": {
-        "nextRunAtMs": 1777618800000
+        "nextRunAtMs": 1780297200000,
+        "lastRunAtMs": 1777619824028,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 71762,
+        "lastDeliveryStatus": "not-requested",
+        "consecutiveErrors": 0,
+        "consecutiveSkipped": 0
       }
     },
     "c9156fd2-3839-4c9d-82ef-15747a3f1f5a": {

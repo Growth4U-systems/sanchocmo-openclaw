@@ -1,1 +1,128 @@
-[]
+[
+  {
+    "id": "idea-2026-05-01-001",
+    "created_at": "2026-05-01T06:56:59.123828Z",
+    "status": "ready",
+    "pillar_id": "pfp-regulacion",
+    "pillar_name": "PFP / Crowdfunding Regulado",
+    "content_type": "Hot Take",
+    "target_channel": "linkedin",
+    "signal": {
+      "id": "hh-news-20260501-001",
+      "summary": "Propuesta de elevar umbral ECSP de 5M€ a 12M€ en la UE",
+      "source": "European Digital Finance Association / EuroCrowd",
+      "url": "https://europeandigitalfinance.eu/letter-raising-ecsp-threshold/",
+      "date": "2026-04"
+    },
+    "angle_draft": "Si el umbral ECSP sube de 5M€ a 12M€, el crowdfunding regulado deja de ser 'financiación alternativa' para convertirse en una vía real de capitalización para la industria del entretenimiento. Para producciones que hoy necesitan fragmentar rondas o buscar co-inversores institucionales, esto cambia las reglas del juego. Hulahoop, como única PFP exclusiva de entretenimiento bajo CNMV, está posicionada para canalizar rondas más grandes en un mercado que mueve +500M€/año solo en España.",
+    "pov_confidence": 0.85
+  },
+  {
+    "id": "idea-2026-05-01-002",
+    "created_at": "2026-05-01T06:56:59.124396Z",
+    "status": "ready",
+    "pillar_id": "pfp-regulacion",
+    "pillar_name": "PFP / Crowdfunding Regulado",
+    "content_type": "Proof Post",
+    "target_channel": "linkedin",
+    "signal": {
+      "id": "hh-news-20260501-003",
+      "summary": "Sego Finance supera 200M€ canalizados y 40.000 inversores",
+      "source": "Autónomos y Emprendedor / FundsSociety",
+      "url": "https://www.autonomosyemprendedor.es/articulo/tu-historia/javier-villaseca-sego-finance-como-invertir-startups-que-buscan-realmente-inversores/20260409140000052936.html",
+      "date": "2026-04-09"
+    },
+    "angle_draft": "Sego Finance acaba de pasar 200M€ y 40k inversores. Prueba de que el crowdfunding regulado en España ya no es un experimento — es infraestructura financiera real. Lo que falta es una plataforma que haga lo mismo exclusivamente para entretenimiento: con la lógica de derechos, anticipos fiscales y flujos de recaudación que solo este sector tiene. Ese es exactamente el hueco que Hulahoop llena. Análisis comparativo de métricas PFP vertical vs generalista.",
+    "pov_confidence": 0.8
+  },
+  {
+    "id": "idea-2026-05-01-003",
+    "created_at": "2026-05-01T06:56:59.124397Z",
+    "status": "ready",
+    "pillar_id": "incentivos-fiscales",
+    "pillar_name": "Incentivos Fiscales Culturales",
+    "content_type": "Hot Take",
+    "target_channel": "linkedin",
+    "signal": {
+      "id": "hh-news-20260501-004",
+      "summary": "Reforma Art. 36.3 LIS para artes escénicas y música sigue bloqueada — más de 2 años",
+      "source": "Sympathy for the Lawyer / Demócrata",
+      "url": "https://sympathyforthelawyer.com/blog/reforma-articulo-36-3-lis-deducciones-fiscales-culturales-espana/",
+      "date": "2026-03"
+    },
+    "angle_draft": "Llevamos más de 2 años esperando que el Congreso suba la deducción del 20% al 25% y el tope de 500k€ a 1M€ para artes escénicas y música. Mientras tanto, el cine ya disfruta del 30% y tope 10M€. ¿La lección? No puedes depender de la legislación para financiar cultura. Necesitas infraestructura que funcione con las reglas actuales y se adapte cuando cambien. Eso es exactamente lo que construimos con Pro Tax: una plataforma que optimiza lo que HAY, no lo que debería haber.",
+    "pov_confidence": 0.9
+  },
+  {
+    "id": "idea-2026-05-01-004",
+    "created_at": "2026-05-01T06:56:59.124399Z",
+    "status": "ready",
+    "pillar_id": "incentivos-fiscales",
+    "pillar_name": "Incentivos Fiscales Culturales",
+    "content_type": "Framework",
+    "target_channel": "linkedin",
+    "signal": {
+      "id": "hh-news-20260501-006",
+      "summary": "Carrillo Asesores publica guía de incentivos fiscales culturales — competidor directo",
+      "source": "Carrillo Asesores",
+      "url": "https://carrilloasesores.com/post/incentivos-fiscales-en-cultura-empresas/",
+      "date": "2026-04"
+    },
+    "angle_draft": "Los despachos fiscales publican guías de incentivos culturales (nosotros también lo hacíamos). Pero hay un problema con el modelo 'asesoría manual': no escala, depende de personas, y cada expediente empieza de cero. Framework: Asesoría Artesanal vs. Infraestructura Automatizada — por qué Pro Tax no compite con despachos sino que los convierte en aliados. Mostrar el modelo de caballo de Troya: despachos que adoptan Pro Tax dejan de ser competencia.",
+    "pov_confidence": 0.82
+  },
+  {
+    "id": "idea-2026-05-01-005",
+    "created_at": "2026-05-01T06:56:59.124400Z",
+    "status": "ready",
+    "pillar_id": "financiacion-entretenimiento",
+    "pillar_name": "Financiación Industria Entretenimiento",
+    "content_type": "Hot Take",
+    "target_channel": "linkedin",
+    "signal": {
+      "id": "hh-news-20260501-008",
+      "summary": "Ley General Audiovisual genera 544M€ inversión obligatoria de plataformas streaming",
+      "source": "Hollywood Reporter ES / El País",
+      "url": "https://es.hollywoodreporter.com/ley-general-audiovisual-genera-inversion-de-544-millones-de-euros-en-producciones-espanolas/",
+      "date": "2026-03"
+    },
+    "angle_draft": "544 millones de euros. Eso es lo que las plataformas de streaming están obligadas a invertir en producción española por la Ley General Audiovisual. 71% va a series, 22% a cine. Ese dinero necesita vehículos de estructuración, trazabilidad y co-inversión. Hoy se gestiona con Excel y contratos bilaterales. Mañana — con infraestructura financiera digital. El mercado no tiene un problema de dinero. Tiene un problema de fontanería financiera.",
+    "pov_confidence": 0.88
+  },
+  {
+    "id": "idea-2026-05-01-006",
+    "created_at": "2026-05-01T06:56:59.124401Z",
+    "status": "ready",
+    "pillar_id": "tokenizacion-rwa",
+    "pillar_name": "Tokenización / RWA Activos Culturales",
+    "content_type": "Proof Post",
+    "target_channel": "linkedin",
+    "signal": {
+      "id": "hh-news-20260501-009",
+      "summary": "Tokenización RWA se triplica a 18.000M$ — BCE piloto 'Pontes' Q3 2026",
+      "source": "Ecosistema Startup / Bolsamanía",
+      "url": "https://ecosistemastartup.com/tokenizacion-2026-18b-en-activos-y-oportunidad-para-tu-fintech/",
+      "date": "2026-04"
+    },
+    "angle_draft": "De 5.500M$ a 18.000M$ en 12 meses. La tokenización de activos reales ya no es una promesa — es un mercado que se triplicó. Inmobiliario, crédito, commodities ya están tokenizados. ¿Qué falta? Activos culturales: derechos de distribución, recaudación de taquilla, anticipos fiscales. El BCE prepara el piloto 'Pontes' para Q3 2026. Cuando la liquidación mayorista con dinero de banco central esté lista, los activos culturales tokenizados serán la siguiente frontera. Hulahoop ya está construyendo esa infraestructura.",
+    "pov_confidence": 0.78
+  },
+  {
+    "id": "idea-2026-05-01-007",
+    "created_at": "2026-05-01T06:56:59.124402Z",
+    "status": "ready",
+    "pillar_id": "financiacion-entretenimiento",
+    "pillar_name": "Financiación Industria Entretenimiento",
+    "content_type": "Personal Story",
+    "target_channel": "linkedin",
+    "signal": {
+      "id": "hh-news-20260501-007",
+      "summary": "RTVE invierte 14M€ en 30 largometrajes — primera mesa cine 2026",
+      "source": "Box-Office.es",
+      "url": "https://box-office.es/news/mesa-de-cine-rtve-2026-la-corporacion-invertira-casi-14-millones-en-30-largometrajes/",
+      "date": "2026-04"
+    },
+    "angle_draft": "RTVE acaba de aprobar 14M€ para 30 largometrajes en su primera mesa de 2026. Cada uno de esos proyectos necesita cerrar el resto de la financiación: coproducción, preventa, anticipo fiscal, inversor privado. La mesa de RTVE es el 'sí' que desbloquea todo lo demás. ¿Cuántos productores tienen la infraestructura para estructurar 4-5 fuentes de financiación distintas para un solo proyecto? Ahí es donde entra Hulahoop Services.",
+    "pov_confidence": 0.75
+  }
+]

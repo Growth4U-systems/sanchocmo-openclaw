@@ -11,7 +11,8 @@
       "description": "CPC a €2.21 (vs baseline €0.67), CPL a €55.65 (vs target €18), appointments recuperado a 5/semana pero CPL sigue 4x target. Nota:上周建议no se aplicó — spend sigue €830/semana. Ver nueva recomendación rec-20260420-002.",
       "linked_project": "P04",
       "createdAt": "2026-04-13",
-      "status": "pending"
+      "status": "dismissed",
+      "actioned_at": "2026-05-01T10:49:30.377Z"
     },
     {
       "id": "rec-20260420-001",
@@ -68,5 +69,6 @@
       "createdAt": "2026-04-20",
       "status": "pending"
     }
-  ]
+  ],
+  "updated_at": "2026-05-01T10:49:30.377Z"
 }

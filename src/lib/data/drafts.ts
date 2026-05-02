@@ -26,6 +26,52 @@ import {
  *  - `clarify`: clarify questions + human answers, used to update POV DB. */
 export type DraftKind = "channel-draft" | "proposal" | "research" | "clarify";
 
+/** Classification of the item this draft is about. The Clarify step uses
+ *  this to pick the right Q1-Q4 templates so questions extract real angle
+ *  instead of producing generic drafts. See
+ *  `workspace-sancho/skills/_shared/clarify-by-type.md`. */
+export type ContentItemType =
+  | "dato_cifra"
+  | "hot_take"
+  | "launch"
+  | "framework_playbook"
+  | "caso_historia"
+  | "tendencia_report"
+  | "plataforma_cambia";
+
+export const VALID_CONTENT_ITEM_TYPES: readonly ContentItemType[] = [
+  "dato_cifra",
+  "hot_take",
+  "launch",
+  "framework_playbook",
+  "caso_historia",
+  "tendencia_report",
+  "plataforma_cambia",
+] as const;
+
+/** A media asset attached to a draft (uploaded image or AI-generated). */
+export interface MediaAsset {
+  url: string;
+  type: string;                       // mime, e.g. "image/png"
+  source: "uploaded" | "ai-generated";
+  prompt?: string;                    // only when source === "ai-generated"
+  model?: string;                     // only when source === "ai-generated"
+  aspect_ratio?: string;              // e.g. "1.91:1", "1:1"
+  created_at: string;
+}
+
+/** Publishing lifecycle metadata. Complementary to `status`; only present
+ *  once the user kicks off publishing (publish-now or schedule). */
+export interface PublishingMeta {
+  status: "scheduled" | "publishing" | "published" | "failed" | "canceled";
+  provider: string;                   // PublishProvider.id
+  scheduled_at?: string;              // ISO; absent when published immediately
+  published_at?: string | null;
+  external_job_id?: string;           // provider-side scheduled post id
+  external_url?: string | null;       // canonical URL once published
+  error?: string | null;
+}
+
 export interface DraftFrontmatter {
   idea_id: string;
   content_task_id?: string;
@@ -39,6 +85,10 @@ export interface DraftFrontmatter {
   research_used?: boolean;
   clarify_status?: "pending" | "answered" | "skipped";
   clarify_answers?: Record<string, string>;
+  /** Set by the Clarify step. Drives Q1-Q4 templates and writer adaptations. */
+  item_type?: ContentItemType;
+  media?: MediaAsset[];
+  publishing?: PublishingMeta;
   created_at: string;
   updated_at: string;
 }
@@ -191,6 +241,15 @@ export function updateDraft(
     throw new Error(
       `Invalid clarify_status: "${patch.meta.clarify_status}". ` +
       `Allowed: ${VALID_CLARIFY_STATUSES.join(", ")}.`,
+    );
+  }
+  if (
+    patch.meta?.item_type !== undefined &&
+    !VALID_CONTENT_ITEM_TYPES.includes(patch.meta.item_type)
+  ) {
+    throw new Error(
+      `Invalid item_type: "${patch.meta.item_type}". ` +
+      `Allowed: ${VALID_CONTENT_ITEM_TYPES.join(", ")}.`,
     );
   }
 
