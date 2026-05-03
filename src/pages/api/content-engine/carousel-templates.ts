@@ -21,7 +21,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
   const enabledList = listCarouselTemplates({ slug, channel });
   const enabledIds = new Set(enabledList.map((t) => t.id));
-  const source = showAll ? listAllCarouselTemplates(channel) : enabledList;
+  const source = showAll ? listAllCarouselTemplates(channel, slug) : enabledList;
 
   const templates = source.map((t) => ({
     id: t.id,

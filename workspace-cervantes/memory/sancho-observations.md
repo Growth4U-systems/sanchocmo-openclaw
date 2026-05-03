@@ -364,3 +364,88 @@ _Generado por Cervantes — cron:cedfbd22-cbd0-4a19-87a0-29337c4f2b37 — 2026-0
 ---
 
 _Generado por Cervantes — cron:cedfbd22-cbd0-4a19-87a0-29337c4f2b37 — 2026-05-01 10:00 CEST_
+
+---
+
+# Sancho Observations — 2026-05-02
+
+## Resumen sesiones (últimas 24h)
+
+| Sesión | Canal | Output | Estado |
+|--------|-------|--------|--------|
+| Morning Metrics Growth4U | Discord (#intelligence) | Reporte completo con desglose 7d, análisis | ✅ OK — buena calidad |
+| Morning Metrics Hulahoop | — | NO_APIS, skip | ✅ OK (correcto, sin APIs) |
+| Cost Tracker Daily | — | ABORTED antes de ejecutar | ⚠️ FALLO |
+| Lead Sync Growth4U | Discord (#intelligence) | 2 leads nuevos, reporte publicado | ⚠️ Parcial — gog timeout |
+| Call Prep Weekly Growth4U | Discord (#intelligence) | 1 llamada programada (Francisco Franco lunes 13:00) | ✅ OK |
+| Meeting Intelligence | — | Sin reuniones nuevas (correcto) | ✅ OK |
+| Social & Content Review Criptan | — | Abortado durante escritura del review | ⚠️ FALLO |
+| update-skills | — | NO_REPLY (silencioso) | ✅ OK |
+| Heartbeat | — | HEARTBEAT_OK | ✅ OK |
+| Content MC-Chat (Agent Washing) | MC-Chat | Clarify → research → drafts → 9 imágenes renderizadas | ✅ OK — excelente |
+| Content MC-Chat (COGS SaaS) | MC-Chat | En clarify, esperando respuestas Alfonso | ✅ OK |
+| Content MC-Chat (LinkedIn recalibrado) | MC-Chat | Redacción post LinkedIn | ✅ OK |
+| Main session (webchat) | Webchat | "Hola Alfonso, ¿qué necesitas?" | ✅ OK |
+
+## Errores y fallos detectados
+
+### 1. Cost Tracker Daily — ABORTADO (P1)
+- La sesión fue abortada inmediatamente (`stopReason: aborted`) antes de ejecutar ningún comando
+- **Impacto**: Sin monitorización de costes hoy. No se generó `cost-tracker-daily/2026-05-02.json`
+- **Causa probable**: Conflicto de sesiones concurrentes o timeout del modelo al inicio
+- **Acción**: Verificar que el cron no colisiona con otros. Revisar logs del gateway para la sesión `9db2f362`
+
+### 2. gog (Google Workspace CLI) — TIMEOUT (P2)
+- En Lead Sync, `openclaw gog` se colgó y fue matado con SIGKILL
+- Sancho **manejó bien el fallback**: creó lead files sin transcripts y documentó el warning
+- **Impacto**: 28 leads existentes no se actualizaron con transcripts de Drive
+- **Recurrente**: Este problema ya se observó en sesiones anteriores
+- **Acción**: Investigar por qué `openclaw gog` no responde. ¿Autenticación caducada? ¿Proceso zombie?
+
+### 3. Social & Content Review Criptan — ABORTADO (P2)
+- La sesión fue abortada (`stopReason: aborted`) mientras escribía `social-review-2026-05-01.md`
+- El archivo quedó **truncado/incompleto** — solo tiene la mitad del análisis
+- **Impacto**: Review semanal de Criptan incompleto
+- **Causa probable**: Timeout o conflicto de recursos
+
+## Comportamiento positivo
+
+- **Morning Metrics Growth4U**: Análisis excelente. Identificó correctamente la anomalía de spend bajo por festivo (1 de Mayo), tendencia positiva de leads (3 vs media 1.6/d), CPC mejorando. Mencionó Instantly con error (buena observación)
+- **Lead Sync**: Buen enrichment del lead EADIC (investigó web, sector, fit). Francisco Franco correctamente flagueado como bajo ICP (ropa + email personal)
+- **Content pipeline MC-Chat**: Flujo clarify → research → writer → visual-creator funcionando. 9 imágenes renderizadas para el post de Agent Washing con guía visual aplicada
+- **Reglas de canal**: Respetadas. No publicó en Discord para Hulahoop (sin datos). Publicó correctamente en #intelligence de Growth4U
+- **Client isolation**: Respetada — cada sesión trabaja solo con datos de su cliente
+
+## Patrones de mejora
+
+| Prioridad | Observación | Acción |
+|-----------|-------------|--------|
+| P1 | Cost Tracker abortado — sin monitorización hoy | Investigar causa del abort y añadir retry automático |
+| P2 | gog timeout recurrente — afecta Lead Sync | Diagnosticar `openclaw gog` (auth, proceso zombie) |
+| P2 | Criptan Social Review truncado | Revisar por qué se abortan sesiones de larga duración |
+| P3 | Hulahoop sin APIs — cron ejecuta innecesariamente | Considerar deshabilitar cron hasta que APIs estén configuradas |
+| P3 | Instantly con error en Morning Metrics | Revisar integración Instantly |
+
+## Coste estimado (sesiones Sancho 24h)
+
+| Sesión | Coste teórico |
+|--------|---------------|
+| Morning Metrics Growth4U | $0.38 |
+| Morning Metrics Hulahoop | $0.08 |
+| Lead Sync | $0.66 |
+| Call Prep Weekly | $1.21 |
+| Meeting Intelligence | $0.42 |
+| Content Agent Washing (MC-Chat) | $2.45 |
+| Content COGS SaaS (MC-Chat) | $0.29 |
+| Content recalibrado (MC-Chat) | $1.63 |
+| Social Review Criptan | $0.31 |
+| update-skills | $0.22 |
+| Heartbeat | $0.01 |
+| Main session | $0.21 |
+| **Total** | **~$7.87** |
+
+> Nota: Costes teóricos (API-equivalent). Usamos Claude Max plan flat rate.
+
+---
+
+_Generado por Cervantes — cron:cedfbd22-cbd0-4a19-87a0-29337c4f2b37 — 2026-05-02 10:00 CEST_

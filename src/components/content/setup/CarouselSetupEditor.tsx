@@ -228,11 +228,10 @@ export function CarouselSetupEditor({ slug }: { slug: string }) {
                 }}
               >
                 <TemplateThumbnail
-                  preview={t.preview}
+                  slug={slug}
+                  templateId={t.id}
                   width={t.width}
                   height={t.height}
-                  primaryColor={eff.primary_color.value}
-                  accentColor={eff.accent_color.value}
                 />
                 <div className="flex items-center gap-2 mt-2.5">
                   <span className="font-heading font-bold text-sm flex-1 truncate" style={{ color: "var(--sc-ink)" }}>

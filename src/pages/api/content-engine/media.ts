@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { withErrorHandler } from "@/lib/api-middleware";
 import { loadDraft, updateDraft } from "@/lib/data/drafts";
+import { maybePromoteContentTaskFromMedia } from "@/lib/data/content-tasks";
 
 /**
  * /api/content-engine/media
@@ -40,6 +41,12 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === "DELETE") {
     const next = current.filter((_, i) => i !== idx);
     const updated = updateDraft(slug, ideaId, channel, { meta: { media: next } });
+    // If this was the last media for the CT, the promoter rolls the parent
+    // back from "Media" to whatever the draft.status implies (Draft / Review).
+    const ctId = updated.meta.content_task_id;
+    if (ctId) {
+      try { maybePromoteContentTaskFromMedia(slug, ctId); } catch { /* non-fatal */ }
+    }
     return res.status(200).json({ ok: true, draft: updated });
   }
 

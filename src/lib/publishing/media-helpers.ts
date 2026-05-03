@@ -2,6 +2,7 @@ import path from "path";
 import fs from "fs";
 import { brandDir } from "@/lib/data/paths";
 import { loadDraft, updateDraft } from "@/lib/data/drafts";
+import { maybePromoteContentTaskFromMedia } from "@/lib/data/content-tasks";
 import type { MediaAsset } from "@/lib/data/drafts";
 
 /**
@@ -42,7 +43,12 @@ export function readVisualIdentityPrefix(slug: string): string {
   return "";
 }
 
-/** Append a MediaAsset to the draft's `media[]`. Idempotent on URL. */
+/** Append a MediaAsset to the draft's `media[]`. Idempotent on URL.
+ *
+ *  Side effect: bumps the parent ContentTask to `Media` status (best-effort)
+ *  the first time any channel of the idea picks up media. This matches the
+ *  CT lifecycle: New → Approved → Draft → **Media** → Review → Ready.
+ */
 export function attachMediaToDraft(
   slug: string,
   ideaId: string,
@@ -54,5 +60,13 @@ export function attachMediaToDraft(
   const current = draft.meta.media || [];
   if (current.some((m) => m.url === asset.url)) return draft;
   const next = [...current, asset];
-  return updateDraft(slug, ideaId, channel, { meta: { media: next } });
+  const updated = updateDraft(slug, ideaId, channel, { meta: { media: next } });
+
+  const ctId = updated.meta.content_task_id;
+  if (ctId) {
+    try {
+      maybePromoteContentTaskFromMedia(slug, ctId);
+    } catch { /* non-fatal — the draft is saved, status sync can lag */ }
+  }
+  return updated;
 }

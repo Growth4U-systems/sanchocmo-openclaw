@@ -1,24 +1,31 @@
-import { linkedinQuoteTemplate } from "@/lib/carousel/templates/linkedin-quote";
-import { linkedin9SlideTemplate } from "@/lib/carousel/templates/linkedin-9-slide";
-import { instagram3SlideTemplate } from "@/lib/carousel/templates/instagram-3-slide";
+import { loadBrandTemplates } from "@/lib/carousel/file-templates";
 import { getContentConfig } from "@/lib/data/content-config";
 import type { CarouselTemplate } from "@/lib/carousel/types";
 
 /**
- * Built-in template library. To add a template, drop a TS file in
- * `templates/` exporting a `CarouselTemplate` and register it here. Per-brand
- * customization (logo, colors, enabled subset) is layered on top via
- * `brand/{slug}/content/config.json` — not by editing this list.
+ * Templates are file-backed and per-brand:
+ *
+ *   - Source of truth: `brand/{slug}/content/carousel-templates/{id}/`.
+ *   - Bootstrap: `workspace-sancho/skills/_shared/carousel-templates/{id}/`
+ *     (the seed). The first time a brand's loader runs it copies any missing
+ *     templates from the seed to the brand directory. After that, the brand's
+ *     copies are independent — edits never leak back to the seed.
+ *
+ * To add a new official template that every brand should get: drop the
+ * directory in the seed. To customize one brand only: edit the brand's copy.
+ *
+ * `slug` is required because there are no brand-agnostic templates anymore.
+ * Calling these without a slug returns an empty list.
  */
-const ALL_TEMPLATES: CarouselTemplate[] = [
-  linkedinQuoteTemplate,
-  linkedin9SlideTemplate,
-  instagram3SlideTemplate,
-];
+function resolveTemplates(slug?: string): CarouselTemplate[] {
+  if (!slug) return [];
+  return loadBrandTemplates(slug);
+}
 
 export function listCarouselTemplates(opts?: { slug?: string; channel?: string }): CarouselTemplate[] {
+  const all = resolveTemplates(opts?.slug);
   const ch = opts?.channel?.toLowerCase();
-  let filtered = ch ? ALL_TEMPLATES.filter((t) => t.channel === ch) : ALL_TEMPLATES;
+  let filtered = ch ? all.filter((t) => t.channel === ch) : all;
 
   // Brand can opt-out of templates (or pick a curated subset) via config.
   // `null` means "all enabled" — that's the default.
@@ -29,14 +36,17 @@ export function listCarouselTemplates(opts?: { slug?: string; channel?: string }
   return filtered;
 }
 
-export function getCarouselTemplate(id: string): CarouselTemplate | null {
-  return ALL_TEMPLATES.find((t) => t.id === id) ?? null;
+export function getCarouselTemplate(id: string, slug?: string): CarouselTemplate | null {
+  return resolveTemplates(slug).find((t) => t.id === id) ?? null;
 }
 
 /** Used by the Setup UI to show every template (even disabled ones) so the
- *  user can flip them on/off. Skips the per-brand filter. */
-export function listAllCarouselTemplates(channel?: string): CarouselTemplate[] {
-  if (!channel) return ALL_TEMPLATES;
+ *  user can flip them on/off. Skips the per-brand `enabled_templates` filter
+ *  but still resolves brand overrides (so a brand-authored template appears
+ *  with its real name/preview). */
+export function listAllCarouselTemplates(channel?: string, slug?: string): CarouselTemplate[] {
+  const all = resolveTemplates(slug);
+  if (!channel) return all;
   const ch = channel.toLowerCase();
-  return ALL_TEMPLATES.filter((t) => t.channel === ch);
+  return all.filter((t) => t.channel === ch);
 }

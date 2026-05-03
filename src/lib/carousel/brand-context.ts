@@ -41,13 +41,35 @@ export function loadBrandContext(slug: string): BrandContext {
       : `${baseUrl.replace(/\/$/, "")}${rawLogo}`
     : null;
 
+  const primary = eff.primary_color.value || "#032149";
+  const accent = eff.accent_color.value || "#0faec1";
+
   return {
     slug,
     name: tokens.brand || slug,
-    primaryColor: eff.primary_color.value || undefined,
-    accentColor: eff.accent_color.value || undefined,
+    primaryColor: primary,
+    primaryDarkColor: shiftLightness(primary, -0.15),
+    primaryLightColor: shiftLightness(primary, 0.15),
+    accentColor: accent,
+    accentDarkColor: shiftLightness(accent, -0.15),
     logoUrl: logoAbsoluteUrl,
     font: tokens.typography?.families?.heading?.family || "Inter",
     footerText: eff.footer_text.value || undefined,
   };
+}
+
+/** Shift lightness of a hex color by `pct` (-1..+1). Used so templates can
+ *  build multi-stop gradients from the brand's two declared colors without
+ *  the design-tokens needing to spell every shade. */
+function shiftLightness(hex: string, pct: number): string {
+  if (!/^#[0-9A-Fa-f]{6}$/.test(hex)) return hex;
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  const adjust = (c: number) => {
+    if (pct >= 0) return Math.round(c + (255 - c) * pct);
+    return Math.round(c * (1 + pct));
+  };
+  const toHex = (n: number) => Math.max(0, Math.min(255, n)).toString(16).padStart(2, "0");
+  return `#${toHex(adjust(r))}${toHex(adjust(g))}${toHex(adjust(b))}`;
 }

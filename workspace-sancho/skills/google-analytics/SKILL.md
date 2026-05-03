@@ -1,7 +1,7 @@
 ---
 name: google-analytics
 description: |
-  Google Analytics API integration with managed OAuth. Manage accounts, properties, and data streams (Admin API). Run reports on sessions, users, page views, and conversions (Data API). Use this skill when users want to configure or query Google Analytics. For other third party apps, use the api-gateway skill (https://clawhub.ai/byungkyu/api-gateway).
+  Google Analytics API integration with managed OAuth. This skill includes two separate APIs: the Admin API (write-capable — can create, update, and delete accounts, properties, and data streams) and the Data API (read-only — runs reports on sessions, users, page views, and conversions). Prefer the Data API connection for reporting-only tasks. Use the Admin API only when administrative changes are explicitly needed. All Admin API write operations require explicit user approval with specific resource identifiers before execution. For other third party apps, use the api-gateway skill (https://clawhub.ai/byungkyu/api-gateway).
 compatibility: Requires network access and valid Maton API key
 metadata:
   author: maton
@@ -41,15 +41,17 @@ EOF
 
 ## Base URLs
 
-**Admin API** (manage accounts, properties, data streams):
+**Data API** (read-only — run reports):
+```
+https://api.maton.ai/google-analytics-data/{native-api-path}
+```
+
+**Admin API** (write-capable — manage accounts, properties, data streams):
 ```
 https://api.maton.ai/google-analytics-admin/{native-api-path}
 ```
 
-**Data API** (run reports):
-```
-https://api.maton.ai/google-analytics-data/{native-api-path}
-```
+Prefer the Data API for reporting tasks. Use the Admin API only when the user explicitly needs to create, update, or delete analytics configuration. Admin API mutations are high-impact — changes to properties and data streams affect analytics data collection.
 
 Maton proxies requests to `analyticsadmin.googleapis.com` and `analyticsdata.googleapis.com` and automatically injects your OAuth token.
 
@@ -184,8 +186,14 @@ If you have multiple connections, always include this header to ensure requests 
 
 ## Security & Permissions
 
-- Access is scoped to properties, data streams, reports, and analytics data within the connected Google Analytics account.
-- **All write operations require explicit user approval.** Before executing any create, update, or delete call, confirm the target resource and intended effect with the user.
+- **Prefer the Data API connection for reporting tasks.** The Data API is read-only and cannot modify analytics configuration. Only create an Admin API connection when the user explicitly needs administrative changes.
+- Access is scoped to properties, data streams, reports, and analytics data within the connected Google Analytics account. Revoke unused connections promptly — especially Admin API connections when administrative work is complete.
+- **Default to read-only operations.** Always start by listing or retrieving resources to confirm account, property, and data stream identifiers before proposing any changes.
+- **All Admin API write operations require explicit user approval with specific identifiers.** Before executing any POST, PATCH, or DELETE call:
+  1. Retrieve and display the target resource (property name/ID, data stream name, account) so the user can verify.
+  2. Clearly describe the intended effect (e.g., "This will delete data stream 'Web - example.com' (ID: 123456) from property 'My Site' — this will stop data collection").
+  3. Wait for explicit user confirmation before proceeding.
+- **Admin API changes are high-impact and may be irreversible.** Deleting properties or data streams stops data collection permanently. Modifying property settings can affect reporting accuracy. These actions must include a summary of consequences and require confirmation.
 
 ## Admin API Reference
 

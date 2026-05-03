@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>{{per_slide.slide_title}}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@600;700;800;900&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    width: 1080px; height: 1350px;
+    background: {{brand.primary_dark}};
+    font-family: 'Roboto', system-ui, sans-serif;
+    color: #fff;
+    overflow: hidden;
+    position: relative;
+  }
+  .bg { position: absolute; inset: 0; background: linear-gradient(160deg, {{brand.primary}} 0%, {{brand.primary_dark}} 70%, {{brand.primary}} 100%); }
+  .bokeh { position: absolute; border-radius: 50%; filter: blur(70px); }
+  .bokeh.b1 { width: 380px; height: 380px; top: -100px; right: -120px; background: {{brand.accent}}; opacity: 0.20; }
+  .bokeh.b2 { width: 320px; height: 320px; bottom: 100px; left: -80px; background: {{brand.primary_light}}; opacity: 0.30; }
+  .stripe {
+    position: absolute; top: 0; bottom: 0; left: 0; width: 8px;
+    background: linear-gradient(180deg, {{brand.accent}} 0%, {{brand.primary_light}} 100%);
+  }
+
+  .slide-num {
+    position: absolute;
+    top: 60px; right: 72px;
+    font-family: 'Manrope', sans-serif;
+    font-size: 200px; font-weight: 900;
+    color: transparent;
+    -webkit-text-stroke: 3px rgba(255, 255, 255, 0.20);
+    line-height: 1;
+    z-index: 2;
+  }
+
+  .stage {
+    position: relative; z-index: 3;
+    height: 100%;
+    padding: 96px 88px;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    gap: 28px;
+  }
+
+  .kicker {
+    align-self: flex-start;
+    display: inline-flex; align-items: center; gap: 12px;
+    padding: 10px 22px;
+    border: 1.5px solid rgba(255, 255, 255, 0.30);
+    background: rgba(255, 255, 255, 0.06);
+    border-radius: 999px;
+    font-family: 'Manrope', sans-serif;
+    font-weight: 700;
+    font-size: 18px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: {{brand.accent}};
+    width: fit-content;
+  }
+  .kicker .dot { width: 10px; height: 10px; border-radius: 50%; background: {{brand.accent}}; }
+
+  .body {
+    display: flex; flex-direction: column; justify-content: center;
+    gap: 36px; padding-bottom: 48px;
+  }
+  .heading {
+    font-family: 'Manrope', sans-serif;
+    font-weight: 800;
+    font-size: 72px;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    color: #ffffff;
+    max-width: 880px;
+  }
+  .heading::before {
+    content: '';
+    display: block;
+    width: 96px; height: 6px;
+    background: linear-gradient(90deg, {{brand.accent}}, {{brand.primary_light}});
+    border-radius: 6px;
+    margin-bottom: 32px;
+  }
+  .text {
+    font-family: 'Roboto', sans-serif;
+    font-weight: 400;
+    font-size: 38px;
+    line-height: 1.40;
+    color: rgba(255, 255, 255, 0.92);
+    max-width: 880px;
+    white-space: pre-line;
+  }
+
+  .footer {
+    display: flex; align-items: center; gap: 24px;
+    padding-top: 28px;
+    border-top: 1.5px solid rgba(255, 255, 255, 0.18);
+  }
+  .footer .pager {
+    font-family: 'Manrope', sans-serif;
+    font-weight: 700;
+    font-size: 22px;
+    color: rgba(255, 255, 255, 0.55);
+    flex: 1;
+  }
+  .footer .pager strong { color: {{brand.accent}}; }
+  .footer .logo-block {
+    display: flex; align-items: center; gap: 14px;
+  }
+  .footer .logo-block img { height: 44px; width: auto; object-fit: contain; opacity: 0.85; }
+  .footer .logo-block .handle {
+    font-family: 'Manrope', sans-serif;
+    font-weight: 700;
+    font-size: 18px;
+    color: rgba(255, 255, 255, 0.55);
+  }
+
+  .accent-bar {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    height: 12px;
+    background: linear-gradient(90deg, {{brand.accent}} 0%, {{brand.primary_light}} 100%);
+    z-index: 4;
+  }
+</style>
+</head>
+<body>
+  <div class="bg"></div>
+  <div class="bokeh b1"></div>
+  <div class="bokeh b2"></div>
+  <div class="stripe"></div>
+
+  <div class="slide-num">{{slide_number_padded}}</div>
+
+  <div class="stage">
+    <div class="kicker">
+      <span class="dot"></span>
+      <span>{{per_slide.slide_title}}</span>
+    </div>
+
+    <div class="body">
+      <h2 class="heading">{{per_slide.slide_title}}</h2>
+      <div class="text">{{per_slide.slide_text}}</div>
+    </div>
+
+    <div class="footer">
+      <span class="pager"><strong>{{slide_number_padded}}</strong> / {{total_slides}}</span>
+      <div class="logo-block">
+        <img src="{{brand.logo}}" alt="" />
+        <span class="handle">{{brand.footer}}</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="accent-bar"></div>
+</body>
+</html>

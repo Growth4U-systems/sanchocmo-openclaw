@@ -9,6 +9,9 @@
     "footer_text": null,
     "primary_color": null,
     "accent_color": null,
-    "enabled_templates": []
+    "enabled_templates": [
+      "blog-post",
+      "linkedin-quote"
+    ]
   }
 }

@@ -41,7 +41,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!loadDraft(slug, ideaId, channel)) {
     return res.status(404).json({ error: "Draft not found" });
   }
-  const template = getCarouselTemplate(templateId);
+  const template = getCarouselTemplate(templateId, slug);
   if (!template) return res.status(400).json({ error: `Unknown template: ${templateId}` });
   if (template.channel !== channel.toLowerCase()) {
     return res.status(400).json({

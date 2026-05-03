@@ -467,6 +467,70 @@ export function maybePromoteContentTaskFromDrafts(
 }
 
 /**
+ * Promote a ContentTask into the `Media` lane the moment a draft picks up
+ * its first media asset (image, carousel PDF, etc.). Mirrors
+ * `maybePromoteContentTaskFromDrafts` but reacts to media[] changes instead
+ * of draft.status changes.
+ *
+ * Behavior matrix:
+ *   - CT in {Draft, Approved}    → has media on any channel → bump to "Media"
+ *   - CT in {Media}              → no media anywhere → revert to whatever
+ *                                   `maybePromoteContentTaskFromDrafts` would
+ *                                   choose (typically "Draft" or "Review")
+ *   - CT in {Review, Ready,
+ *            Published, Discarded,
+ *            Deferred, New}      → no auto change. Past Media is human-driven.
+ *
+ * Called from `attachMediaToDraft` and the DELETE media endpoint.
+ */
+export function maybePromoteContentTaskFromMedia(
+  slug: string,
+  contentTaskId: string,
+): ContentTask | null {
+  const found = findContentTaskByIdAcrossProjects(slug, contentTaskId);
+  if (!found) return null;
+  const { ct, parentTaskId } = found;
+
+  // Only auto-manage Draft, Approved, and Media. Everything else is human-driven.
+  if (ct.status !== "Draft" && ct.status !== "Approved" && ct.status !== "Media") {
+    return ct;
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { listDrafts } = require("./drafts") as typeof import("./drafts");
+  const drafts = listDrafts(slug, ct.idea_id);
+  const channelDrafts = drafts.filter(
+    (d) => (d.meta.kind ?? "channel-draft") === "channel-draft",
+  );
+  const hasMedia = channelDrafts.some((d) => (d.meta.media?.length ?? 0) > 0);
+
+  if (hasMedia && ct.status !== "Media") {
+    return setContentTaskStatus(slug, parentTaskId, contentTaskId, "Media");
+  }
+  if (!hasMedia && ct.status === "Media") {
+    // No media anywhere → revert based on the aggregate draft.status.
+    // We bypass `inferContentTaskState` (which treats Media as terminal) and
+    // map directly to the simplest sensible state.
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { getDraftStatuses } = require("./drafts") as typeof import("./drafts");
+    const statuses = getDraftStatuses(slug, ct.idea_id, ct.target_channels || []);
+    const RANK: Record<string, number> = {
+      pending: 0, researching: 1, "clarify-needed": 1,
+      drafting: 2, draft: 3, approved: 4, published: 5,
+    };
+    const values = Object.values(statuses);
+    if (values.length === 0) return ct;
+    const min = values.reduce((acc, s) => (RANK[s] ?? 0) < (RANK[acc] ?? 0) ? s : acc, values[0]);
+    let target: ContentTaskStatus = "Draft";
+    if (min === "approved") target = "Review";
+    else if (min === "draft") target = "Draft";
+    else if (min === "drafting") target = "Draft";
+    return setContentTaskStatus(slug, parentTaskId, contentTaskId, target);
+  }
+  return ct;
+}
+
+/**
  * Helper used by external callers to look up the parent task type. Useful
  * before invoking other helpers that assume content type.
  */

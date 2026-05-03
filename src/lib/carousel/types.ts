@@ -20,11 +20,14 @@ export interface CarouselSlot {
 export interface BrandContext {
   slug: string;
   name?: string;
-  primaryColor?: string;     // CSS color
+  primaryColor?: string;       // CSS color
+  primaryDarkColor?: string;   // ~15% darker than primary, for gradient stops
+  primaryLightColor?: string;  // ~15% lighter than primary
   accentColor?: string;
+  accentDarkColor?: string;    // ~15% darker than accent
   logoUrl?: string | null;
   font?: string;
-  footerText?: string;       // handle/CTA shown in slide footer (e.g. "@growth4u · Growth Systems")
+  footerText?: string;         // handle/CTA shown in slide footer (e.g. "@growth4u · Growth Systems")
 }
 
 export interface RenderSlideInput {
