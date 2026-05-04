@@ -274,7 +274,11 @@
       "s001"
     ],
     "created_at": "2026-04-28T01:41:00Z",
-    "status": "New"
+    "status": "New",
+    "dispatch_date": "2026-05-04",
+    "dispatch_slot": "linkedin-content-generation",
+    "project_task_id": "P-Content-Semana-19-T01",
+    "project_id": "P-Content-Semana-19"
   },
   {
     "id": "idea-2026-04-28-5",
@@ -611,7 +615,11 @@
     ],
     "pov_ref": "P2 core_belief: alquilar atencion vs construir activos. Preferred angles: proof + framework + GEO.",
     "created_at": "2026-04-28T05:56:10.034931Z",
-    "status": "New"
+    "status": "New",
+    "dispatch_date": "2026-05-04",
+    "dispatch_slot": "linkedin-content-generation",
+    "project_task_id": "P-Content-Semana-19-T01",
+    "project_id": "P-Content-Semana-19"
   },
   {
     "id": "idea-2026-05-01-1",
@@ -664,7 +672,11 @@
       "news-2026-05-01-P2-003"
     ],
     "created_at": "2026-05-01T06:42:00Z",
-    "status": "New"
+    "status": "New",
+    "dispatch_date": "2026-05-04",
+    "dispatch_slot": "linkedin-content-generation",
+    "project_task_id": "P-Content-Semana-19-T01",
+    "project_id": "P-Content-Semana-19"
   },
   {
     "id": "idea-2026-05-01-3",
@@ -811,6 +823,10 @@
       "sig-20260501-007"
     ],
     "created_at": "2026-05-01T06:42:00Z",
-    "status": "New"
+    "status": "New",
+    "dispatch_date": "2026-05-04",
+    "dispatch_slot": "linkedin-content-generation",
+    "project_task_id": "P-Content-Semana-19-T01",
+    "project_id": "P-Content-Semana-19"
   }
 ]

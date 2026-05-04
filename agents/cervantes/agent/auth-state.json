@@ -1,16 +1,16 @@
 {
   "version": 1,
   "lastGood": {
-    "anthropic": "anthropic:sanchocmo-openclaw"
+    "anthropic": "anthropic:manual"
   },
   "usageStats": {
     "anthropic:sanchocmo-openclaw": {
-      "lastUsed": 1777839308034,
+      "lastUsed": 1777882509469,
       "errorCount": 0,
       "lastFailureAt": 1777580027004
     },
     "anthropic:manual": {
-      "lastUsed": 1777817710847,
+      "lastUsed": 1777904117402,
       "errorCount": 0,
       "lastFailureAt": 1777580013972
     }

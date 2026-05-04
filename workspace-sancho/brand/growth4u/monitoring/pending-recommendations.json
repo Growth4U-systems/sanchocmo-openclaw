@@ -1,74 +1,88 @@
 {
   "slug": "growth4u",
-  "updatedAt": "2026-04-20T11:02:00.000Z",
+  "updatedAt": "2026-05-04T11:07:03+02:00",
   "recommendations": [
     {
-      "id": "rec-20260413-001",
-      "type": "pause",
-      "priority": "high",
-      "metric": "meta-ads.cpc",
-      "title": "Pausar Meta Ads ahora — CPC 3x y sin conversión",
-      "description": "CPC a €2.21 (vs baseline €0.67), CPL a €55.65 (vs target €18), appointments recuperado a 5/semana pero CPL sigue 4x target. Nota:上周建议no se aplicó — spend sigue €830/semana. Ver nueva recomendación rec-20260420-002.",
-      "linked_project": "P04",
-      "createdAt": "2026-04-13",
-      "status": "dismissed",
-      "actioned_at": "2026-05-01T10:49:30.377Z"
-    },
-    {
-      "id": "rec-20260420-001",
+      "id": "rec-20260504-001",
       "type": "escalate",
       "priority": "high",
       "metric": "meta-ads.cpc",
-      "title": "P01-T01 lleva 3+ semanas sin completar — bloquea toda la operación",
-      "description": "Meta Pixel + CAPI lleva 3 semanas en 'todo'. P01-T01 ahora 'in-progress'. P01-T02 (GA4 custom events) sigue en 'todo'. Sin estos, P04 no puede funcionar. CPC lleva 18 días por encima de baseline.",
+      "title": "P01 lleva 7 semanas — completar Pixel ESTA SEMANA o pausar Meta Ads",
+      "description": "P01-T01 (Pixel+CAPI) lleva 7 semanas 'in-progress'. Sin tracking, Meta quema €909/semana con CPL 3.9x target. El CPC mejoró esta semana (-22%) pero sin Pixel, la mejora es temporal. DEADLINE: completar antes del 11-May o reducir budget a €20/día.",
+      "suggested_action": "Checkpoint urgente con Alfonso: ¿qué bloquea P01-T01? Si es tema técnico, asignar 2h de foco esta semana. Si no es posible completar antes del 11-May, reducir Meta spend a €20/día (€140/semana vs €909 actual).",
       "linked_project": "P01",
-      "createdAt": "2026-04-20",
-      "status": "pending"
+      "estimated_impact": "Con Pixel activo, CPL podría bajar de €70 a €25-35 en 2-3 semanas. Sin él, seguimos quemando ~€3,600/mes sin ROI medible.",
+      "status": "pending",
+      "created_at": "2026-05-04T11:07:03+02:00",
+      "evolves_from": "rec-20260420-001"
     },
     {
-      "id": "rec-20260420-002",
-      "type": "pause",
+      "id": "rec-20260504-002",
+      "type": "optimize",
       "priority": "high",
-      "metric": "meta-ads.cpl",
-      "title": "Meta Ads sin nuevas creatividades — reducir budget un 70%",
-      "description": "CTR 0.88% (min histórico), CPC €2.82. La campaña sigue corriendo sin esperanza de mejorar sin Pixel. Reducir budget de €130/día a €30-40/día hasta que P01-T01 esté completo.",
+      "metric": "meta-ads.ctr",
+      "title": "CTR 0.58% — creatividades necesitan reemplazo TOTAL, no refresh",
+      "description": "CTR cayó de 4.6% (Mar) a 0.58% (May). Los creativos actuales están agotados. El Ángulo 2_V1, 3_V3, 4_V3, 5_V2 llevan 7+ semanas activos. Necesitan reemplazo completo, no iteración.",
+      "suggested_action": "Producir 4 creativos nuevos con ángulos completamente distintos. Usar los ECPs actualizados y el Content Engine recién completado (P14) como base. Probar formatos video corto + UGC-style.",
       "linked_project": "P04",
-      "createdAt": "2026-04-20",
-      "status": "pending"
+      "estimated_impact": "Si CTR vuelve a 1.5-2% (nivel de Marzo), CPL bajaría a €30-40 sin cambiar nada más.",
+      "status": "pending",
+      "created_at": "2026-05-04T11:07:03+02:00"
     },
     {
-      "id": "rec-20260420-003",
+      "id": "rec-20260504-003",
       "type": "launch",
       "priority": "high",
       "metric": "ghl.appointments",
-      "title": "NSM activa pero volumen cayendo — ejecutar P03 AHORA",
-      "description": "5 meetings/semana vs objetivo 32/mes (faltan 18 en 10 días). Meta Ads quemando budget sin ROI. P03 (Cold Email) es la forma más rápida de generar pipeline nuevo.",
+      "title": "P03 lleva 5 semanas pending — lanzar cold email AHORA",
+      "description": "Growth4U depende 100% de Meta Ads para pipeline. Con CPL a €70 y appointments cayendo, necesita un segundo canal URGENTEMENTE. Instantly ya está conectado. P03 es la diversificación más rápida.",
+      "suggested_action": "Ejecutar P03: compilar lista de 100 startups (ECP1) + 50 fintechs (ECP2). Lanzar 3 secuencias de 4 emails. 50 emails/día desde buzones calentados. Target: primera reply en <10 días.",
       "linked_project": "P03",
-      "createdAt": "2026-04-20",
-      "status": "pending"
+      "estimated_impact": "Con 3-5% reply rate sobre 150 empresas = 5-8 replies → 2-4 meetings adicionales/mes. Eso es +50-100% sobre los 4 meetings/semana actuales.",
+      "status": "pending",
+      "created_at": "2026-05-04T11:07:03+02:00",
+      "evolves_from": "rec-20260420-003"
+    },
+    {
+      "id": "rec-20260504-004",
+      "type": "investigate",
+      "priority": "medium",
+      "metric": "gsc.position",
+      "title": "SEO position empeoró 79% — investigar causa de la caída",
+      "description": "Avg position pasó de 5.86 (mid-Abr) a 10.5 (fin-Abr/May). Las posiciones top-5 ganadas en Marzo se están perdiendo. Posibles causas: competencia, falta de contenido nuevo, o cambio de algoritmo.",
+      "suggested_action": "Audit rápido: (1) Verificar si las páginas principales (outreach B2B, herramientas GTM) perdieron posiciones, (2) Comprobar si hay nuevos competidores, (3) Con P14 completado, planificar publicación de 2-3 artículos nuevos para recuperar momentum.",
+      "linked_project": "P06",
+      "estimated_impact": "Recuperar position 5-6 podría doblar clicks orgánicos de ~2/día a ~4-5/día. Coste: 0€.",
+      "status": "pending",
+      "created_at": "2026-05-04T11:07:03+02:00"
+    },
+    {
+      "id": "rec-20260504-005",
+      "type": "optimize",
+      "priority": "medium",
+      "metric": "ghl.appointments",
+      "title": "40% Lead→Meeting rate — optimizar follow-up para recuperar meetings perdidos",
+      "description": "10 contacts pero solo 4 meetings (40%). 6 leads se pierden en el proceso. Con Ads generando menos leads, cada uno cuenta más.",
+      "suggested_action": "Revisar secuencia de follow-up en GHL: (1) ¿Tiempo de respuesta <1h?, (2) ¿Hay secuencia automatizada de 3+ touchpoints?, (3) ¿Los leads de Meta tienen suficiente info para cualificar?",
+      "linked_project": null,
+      "estimated_impact": "Si Lead→Meeting sube de 40% a 60%, eso genera 2 meetings más por semana sin coste adicional (4→6/semana).",
+      "status": "pending",
+      "created_at": "2026-05-04T11:07:03+02:00"
+    },
+    {
+      "id": "rec-20260420-002",
+      "status": "auto_resolved",
+      "reason": "Evolved into rec-20260504-001 with deadline",
+      "resolved_at": "2026-05-04T11:07:03+02:00"
     },
     {
       "id": "rec-20260420-004",
+      "status": "pending",
       "type": "investigate",
       "priority": "medium",
-      "metric": "ga4.engagementRate",
-      "title": "Bounce rate 100% + engagement 0% — UX roto",
-      "description": "GA4 muestra 0% engagement y bounce 100% durante 33+ días. Visitas de ads se van inmediatamente. Audit UX + page speed móvil.",
-      "linked_project": "P01",
-      "createdAt": "2026-04-20",
-      "status": "pending"
-    },
-    {
-      "id": "rec-20260420-005",
-      "type": "investigate",
-      "priority": "low",
-      "metric": "gsc.position",
-      "title": "SEO posición 5.86 — push a top 5 con enlaces internos",
-      "description": "Avg position 5.86 — a las puertas del top 5. 3-5 enlaces internos podrían mover páginas de posición 6-8 a 3-5.",
-      "linked_project": null,
-      "createdAt": "2026-04-20",
-      "status": "pending"
+      "title": "Engagement 0% — UX roto (47+ días)",
+      "metric": "ga4.engagementRate"
     }
   ],
-  "updated_at": "2026-05-01T10:49:30.377Z"
+  "updated_at": "2026-05-04T11:07:03+02:00"
 }

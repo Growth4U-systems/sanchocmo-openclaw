@@ -1,0 +1,141 @@
+{
+  "date": "2026-05-04",
+  "source": "web_search_paa_extraction",
+  "method": "Google Search via Gemini — PAA-style questions extracted from search results",
+  "pillars": {
+    "P1-alopecia-temprana": {
+      "name": "Alopecia temprana y pérdida de cabello joven",
+      "questions": [
+        "¿Cuáles son los primeros signos de alopecia androgenética?",
+        "¿Se puede frenar la calvicie a los 20 años?",
+        "¿Por qué se me cae el pelo siendo joven?",
+        "¿Qué diferencia hay entre alopecia androgenética y efluvio telógeno?",
+        "¿La calvicie es hereditaria por parte de madre o padre?",
+        "¿Cuánto pelo es normal perder al día?",
+        "¿Cuándo debo preocuparme por la caída del cabello?",
+        "¿Las entradas a los 20 años significan que me voy a quedar calvo?",
+        "¿El estrés puede causar calvicie permanente?",
+        "¿Qué pruebas se hacen para diagnosticar alopecia temprana?",
+        "¿El adelgazamiento del pelo en la coronilla es reversible?",
+        "¿Se puede recuperar el pelo perdido por alopecia androgenética?",
+        "¿Qué papel juega la DHT en la caída del cabello?",
+        "¿La alopecia en jóvenes se puede prevenir?",
+        "¿Cuándo consultar a un dermatólogo por caída de pelo?",
+        "¿Qué significa que el pelo se vuelve más fino y débil?",
+        "¿La dieta influye en la caída del pelo en hombres jóvenes?",
+        "¿El retroceso de la línea del cabello siempre es alopecia?",
+        "¿Hay tratamientos para frenar la alopecia sin medicamentos?",
+        "¿A qué edad empieza la calvicie de patrón masculino?"
+      ]
+    },
+    "P2-tratamientos-capilares": {
+      "name": "Tratamientos capilares médicos (más allá del OTC)",
+      "questions": [
+        "¿Qué hacer si el minoxidil no me funciona?",
+        "¿Cuáles son las alternativas al minoxidil para la caída del pelo?",
+        "¿El finasteride tiene efectos secundarios sexuales?",
+        "¿Qué es el Redensyl y funciona como alternativa al minoxidil?",
+        "¿La mesoterapia capilar realmente funciona?",
+        "¿Cuántas sesiones de mesoterapia capilar se necesitan?",
+        "¿Cuánto tarda el PRP capilar en dar resultados?",
+        "¿El plasma rico en plaquetas funciona para la alopecia?",
+        "¿Qué es mejor: PRP o mesoterapia capilar?",
+        "¿El dutasteride es más efectivo que el finasteride?",
+        "¿El saw palmetto es una alternativa natural al finasteride?",
+        "¿La terapia láser de baja intensidad funciona para el pelo?",
+        "¿Se puede combinar minoxidil oral con finasteride?",
+        "¿Cuánto cuesta la mesoterapia capilar en España?",
+        "¿Los tratamientos capilares hay que mantenerlos de por vida?",
+        "¿Qué es el microneedling capilar y cómo ayuda?",
+        "¿El aceite de romero es tan efectivo como el minoxidil?",
+        "¿Cuánto tiempo hay que usar finasteride para ver resultados?",
+        "¿Qué tasa de éxito tiene el PRP capilar en 2025-2026?",
+        "¿El minoxidil oral a dosis bajas es seguro?"
+      ]
+    },
+    "P3-diagnostico-capilar": {
+      "name": "Diagnóstico capilar y consulta médica",
+      "questions": [
+        "¿Cuál es la diferencia entre un tricólogo y un dermatólogo?",
+        "¿La tricología es una especialidad médica en España?",
+        "¿Qué pruebas hace un dermatólogo para diagnosticar alopecia?",
+        "¿Qué tipos de alopecia existen y cómo se diferencian?",
+        "¿Por qué se cae el pelo a las mujeres después del parto?",
+        "¿Cuánto dura la caída del pelo postparto?",
+        "¿El efluvio telógeno se cura solo?",
+        "¿Qué causa la alopecia areata?",
+        "¿La caída del pelo por estrés es reversible?",
+        "¿Cuándo debo ir al médico por caída de pelo?",
+        "¿Qué es una tricoscopia y para qué sirve?",
+        "¿La deficiencia de hierro causa caída de pelo?",
+        "¿Los problemas de tiroides provocan alopecia?",
+        "¿La caída de pelo estacional es normal?",
+        "¿Las mujeres pueden tener alopecia androgenética?",
+        "¿Qué relación hay entre la menopausia y la caída del pelo?",
+        "¿Se puede diagnosticar alopecia con una consulta online?",
+        "¿Qué vitaminas son esenciales para evitar la caída del pelo?",
+        "¿La dermatitis seborreica causa caída de cabello permanente?",
+        "¿Cuánto pelo se pierde normalmente al día?"
+      ]
+    },
+    "P4-trasplante-capilar": {
+      "name": "Trasplante capilar y post-cirugía",
+      "questions": [
+        "¿Cuánto cuesta un trasplante capilar en España en 2026?",
+        "¿Qué diferencia hay entre técnica FUE y DHI?",
+        "¿Cuánto tarda en crecer el pelo después de un injerto capilar?",
+        "¿Qué es el shock loss tras un trasplante capilar?",
+        "¿Cuándo se ven los resultados definitivos de un injerto?",
+        "¿Es normal que se caiga el pelo trasplantado al mes?",
+        "¿Cuántas unidades foliculares se pueden trasplantar en una sesión?",
+        "¿Se necesita un segundo trasplante capilar?",
+        "¿Cuándo es necesario un segundo injerto capilar?",
+        "¿Cuánto dura un trasplante capilar?",
+        "¿Los injertos capilares son permanentes?",
+        "¿Qué cuidados hay que tener después de un trasplante?",
+        "¿Se puede hacer deporte después de un injerto capilar?",
+        "¿El trasplante capilar deja cicatrices visibles?",
+        "¿A qué edad es mejor hacerse un trasplante capilar?",
+        "¿Qué pasa si la zona donante no tiene suficiente pelo?",
+        "¿Se puede teñir el pelo después de un trasplante?",
+        "¿El resultado del injerto es natural?",
+        "¿Cuánto dura la recuperación de un trasplante FUE?",
+        "¿Es necesario tratamiento médico después del trasplante?"
+      ]
+    },
+    "P5-confianza-clinicas": {
+      "name": "Confianza en clínicas capilares",
+      "questions": [
+        "¿Cómo elegir una clínica capilar fiable en España?",
+        "¿Qué señales de alerta indican una clínica capilar fraudulenta?",
+        "¿Es fiable hacerse un trasplante capilar en Turquía?",
+        "¿Qué es el 'médico de pasillo' en clínicas capilares?",
+        "¿Precios bajos en trasplante capilar significan mala calidad?",
+        "¿Cómo verificar las credenciales de un cirujano capilar?",
+        "¿Qué debo pedir en la primera consulta capilar?",
+        "¿Las fotos de antes y después de las clínicas son reales?",
+        "¿Qué diferencia hay entre una clínica capilar y un hospital?",
+        "¿El seguimiento postoperatorio está incluido en el precio?",
+        "¿Qué hacer si mi trasplante capilar salió mal?",
+        "¿Puedo reclamar si la clínica no cumplió lo prometido?",
+        "¿Las clínicas low cost de injerto capilar son seguras?",
+        "¿Qué certificaciones debe tener una clínica capilar?",
+        "¿Cuántas intervenciones al año debería hacer un buen cirujano?",
+        "¿Hospital Capilar vs clínicas low cost: qué diferencia hay?",
+        "¿El ISHRS es una garantía de calidad en cirugía capilar?",
+        "¿Qué papel tiene Equipo Investigación en la denuncia de clínicas capilares?",
+        "¿Las clínicas capilares en España están reguladas?",
+        "¿Por qué desconfiar de ofertas con injertos ilimitados?"
+      ]
+    }
+  },
+  "total_questions": 100,
+  "questions_per_pillar": 20,
+  "notable_signals": [
+    "La Sexta / Equipo Investigación ha emitido reportaje denunciando 'médico de pasillo' y clínicas low cost — oportunidad de contenido trust/transparencia",
+    "PRP capilar: nuevos estudios 2025 muestran 70-80% tasa éxito y 30-40% aumento densidad — dato clave para content",
+    "Búsqueda de alternativas naturales al finasteride (saw palmetto, aceite romero) en auge — oportunidad contenido educativo",
+    "Hospital Capilar aparece citado en resultados de 'calvicie 20 años' y 'segundo trasplante' — autoridad orgánica ya presente",
+    "Precios trasplante España 2026: rango 2.500-7.000€, competidores como Capilclinic desde 2.990€"
+  ]
+}

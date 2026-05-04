@@ -366,13 +366,15 @@ Ver y editar en MC UI → Inputs → ⏰ Cadencia.
 
 | Cron | Cuándo | Lee | Escribe |
 |------|--------|-----|---------|
-| 📰 [News Monitor]({MC_BASE}/dashboard/{slug}/system?cron=News+Monitor) | 7am L-V | `news-prompts/*.yml` | `research-signals/{date}-news.json` |
-| 🕵️ [Competitor Monitor]({MC_BASE}/dashboard/{slug}/system?cron=Competitor+Monitor) | 7am L-V | `sources.json` (profiles) | `research-signals/{date}-creators.json` |
+| 📰 [News Monitor]({MC_BASE}/dashboard/{slug}/system?cron=News+Monitor) | 7am L-V | `news-prompts/*.yml` + `pov-bank.json` + `content-pillars.md` + `cadence-config.yml` | `idea-queue.json` (con angle_draft) + `research-signals/{date}-news.json` (audit log) |
+| 🕵️ [Competitor Monitor]({MC_BASE}/dashboard/{slug}/system?cron=Competitor+Monitor) | 7am L-V | `sources.json` + `pov-bank.json` + `content-pillars.md` + `cadence-config.yml` | `idea-queue.json` (con angle_draft) + `research-signals/{date}-creators.json` (audit log) |
 | 🔑 [Keyword Research]({MC_BASE}/dashboard/{slug}/system?cron=Keyword+Research) | semanal | `keywords-seed/*.yml` | `research-signals/{date}-keywords.json` |
 | ❓ [PAA Monitor]({MC_BASE}/dashboard/{slug}/system?cron=PAA+Monitor) | semanal lunes 6am | `paa-queries/*.yml` | `research-signals/{date}-paa.json` |
-| 🧠 [Classify + Ideas]({MC_BASE}/dashboard/{slug}/system?cron=Classify+%2B+Ideas) | 7:30 L-V | `research-signals/*.json` + **`pov-bank.json`** + `content-pillars.md` + `cadence-config.yml` | `idea-queue.json` (con angle_draft = 1 párrafo POV) |
 | 📬 [Editorial Dispatch]({MC_BASE}/dashboard/{slug}/system?cron=Editorial+Dispatch) | 8:30 L-V | `idea-queue.json` + `cadence-config.yml` | Discord/Slack del cliente |
+| 🔍 [Idea Dedupe Audit]({MC_BASE}/dashboard/{slug}/system?cron=Idea+Dedupe+Audit) | lunes 9am | `idea-queue.json` (últimos 7d) | `recurring-tasks/content-dedupe-audit/{date}.json` (solo reporte, no modifica) |
 | 🎯 POV Bank Refresh | 1 del mes 9am | `clarify-history.json` (último mes) | `pov-bank.json` (refinado, versionado) |
+
+**Nota arquitectura**: News Monitor y Competitor Monitor escriben ideas con `angle_draft` directamente en `idea-queue.json` (flujo unificado). Los archivos en `research-signals/` son log auditable, no input intermedio. La antigua skill `idea-builder` está deprecada.
 
 ## Cómo iterar
 
@@ -384,7 +386,32 @@ Ver y editar en MC UI → Inputs → ⏰ Cadencia.
 
 Sustituye `{MC_BASE}` por la URL real del MC del cliente (típicamente `https://localhost:3000` en dev, o la URL de producción del cliente).
 
-### 6. Confirm with human
+### 6. Register Content Engine crons
+
+Como ÚLTIMO paso técnico antes de cerrar con el humano, registra los 5 crones de Content Engine para este cliente. Sin esto, los configs están en disco pero el motor no arranca mañana.
+
+Ejecuta:
+
+```bash
+bash ~/.openclaw/workspace-sancho/scripts/setup-content-engine-crons.sh {slug}
+```
+
+El script:
+- Lee la plantilla canónica `_system/content-engine-cron-jobs.json`
+- Sustituye `{SLUG}` y `{NAME}` por los valores del cliente
+- Registra cada cron vía `openclaw cron add` (los 5: News Monitor, Competitor Monitor, Editorial Dispatch, PAA Monitor, Idea Dedupe Audit)
+- Es idempotente: si un cron ya existe (por nombre exacto), lo skipea
+- Devuelve exit 1 si algún `openclaw cron add` falla
+
+Si el script termina con errores:
+- NO marques esta skill como completed
+- Reporta los crones que sí se crearon y los que fallaron
+- Indica al humano qué hacer (ej. ejecutar el script a mano)
+
+Si exit 0:
+- Continúa al paso 7 (confirm with human)
+
+### 7. Confirm with human
 
 Tras escribir todos los archivos:
 1. Resume los cambios en 3-5 líneas

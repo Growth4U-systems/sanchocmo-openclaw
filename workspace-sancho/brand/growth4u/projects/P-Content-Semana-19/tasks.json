@@ -1,0 +1,17 @@
+[
+  {
+    "id": "P-Content-Semana-19-T01",
+    "name": "Contenido 04/05",
+    "type": "content",
+    "channel": "content",
+    "status": "in-progress",
+    "skill": "social-writer",
+    "idea_ids": [
+      "idea-2026-05-01-7",
+      "idea-2026-05-01-2",
+      "idea-2026-28-14",
+      "idea-2026-04-28-4"
+    ],
+    "created_at": "2026-05-04T06:33:00Z"
+  }
+]

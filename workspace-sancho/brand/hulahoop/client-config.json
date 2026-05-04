@@ -4,7 +4,9 @@
   "name": "Hulahoop",
   "guild_id": "1491032339243864225",
   "language": "es",
-  "channels": {},
+  "channels": {
+    "content": "1491032340208812042"
+  },
   "crons": {
     "morning_metrics": {
       "enabled": true,

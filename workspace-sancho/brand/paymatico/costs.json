@@ -1,16 +1,16 @@
 {
   "client": "paymatico",
-  "period": "2026-04",
-  "updatedAt": "2026-04-25T08:00:23.988115",
+  "period": "2026-05",
+  "updatedAt": "2026-05-04T09:05:19.568727",
   "total_cost_usd": 0,
   "total_cost_eur": 0.0,
-  "turns": 1,
+  "turns": 2,
   "sessions": 1,
   "agents": {
     "sancho": {
       "cost_usd": 0,
       "cost_eur": 0.0,
-      "turns": 1,
+      "turns": 2,
       "sessions": 1
     }
   },
@@ -22,11 +22,15 @@
       "cache_write": 0,
       "cost_usd": 0,
       "cost_eur": 0.0,
-      "turns": 1
+      "turns": 2
     }
   },
   "days": {
-    "2026-04-22": {
+    "2026-05-01": {
+      "cost_usd": 0,
+      "turns": 1
+    },
+    "2026-05-04": {
       "cost_usd": 0,
       "turns": 1
     }

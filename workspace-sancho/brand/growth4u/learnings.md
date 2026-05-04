@@ -1,5 +1,24 @@
 # Learnings — Growth4U
 
+## 2026-05-04 — Weekly Synthesis (semana 28 abr – 4 may)
+
+### 🔴 HALLAZGO PRINCIPAL
+**Gap lead→cita es ya crónico (4+ semanas). Health Score mínimo histórico: 22.** El problema es estructural, no un incidente.
+
+### Patrones Confirmados
+
+1. **Conversión lead→cita: crisis crónica (semana 4+)** — 28 leads 'llamada-agendada' en GHL vs ~0 citas. 0 transcripts nuevos. Health Score 22 (mínimo histórico, desde 57 hace 2 semanas).
+2. **Meta Ads: deterioro sostenido** — CPC €2.65-€8.21 (benchmark €0.67). CTR cayó de 1.01% a 0.50%. Sin pixel = sin optimización por conversiones.
+3. **Engagement equipo: cero 9+ semanas** — 0 msgs humanos en Discord. Solo crons activos.
+4. **APIs bloqueadas** — Instantly falló, Apollo sin config, Slack scope bloqueando dispatch desde 28/04.
+5. **Señales positivas aisladas** — Lead magnet LinkedIn funciona (1 lead orgánico). SEO posición ~5.86. Impresiones Meta +55% el 4 mayo.
+
+### Patrón Nuevo Confirmado
+- **H3 validándose**: Sin pixel activo → Meta optimiza por clicks baratos → leads de peor calidad → menor conversión. El CPC 4-12x por encima del benchmark es síntoma, no causa.
+- **H4 nueva**: Equipo ha abandonado Discord como canal operativo (9+ semanas sin actividad humana). La operación ocurre por otro canal no monitorizado.
+
+---
+
 ## 2026-04-20 — Weekly Synthesis (semana 14-20 abril)
 
 ### 🔴 HALLAZGO PRINCIPAL

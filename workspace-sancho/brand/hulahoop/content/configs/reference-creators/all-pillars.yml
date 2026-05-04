@@ -1,0 +1,43 @@
+# Reference creators to monitor — Hulahoop
+# Thought leaders and media in fintech entertainment / cultural tax / crowdfunding
+# Updated: 2026-05-04
+
+reference_creators:
+  - name: "Sympathy for the Lawyer"
+    slug: sftl-blog
+    type: media
+    web: "https://sympathyforthelawyer.com/blog"
+    linkedin: null
+    twitter: null
+    pillars: [incentivos-fiscales, financiacion-entretenimiento]
+
+  - name: "Spain Audiovisual Hub"
+    slug: spain-av-hub
+    type: institutional
+    web: "https://spainaudiovisualhub.digital.gob.es"
+    linkedin: "https://www.linkedin.com/company/spain-audiovisual-hub/"
+    twitter: "@SpainAVHub"
+    pillars: [financiacion-entretenimiento, incentivos-fiscales]
+
+  - name: "Crowdcube / Crowdfunding News ES"
+    slug: crowdfunding-es
+    type: media
+    web: "https://www.crowdfunding.es"
+    linkedin: null
+    twitter: null
+    pillars: [pfp-regulacion]
+
+  - name: "Diego Bañuelos (CEO Urbanitae)"
+    slug: diego-banuelos
+    type: founder
+    linkedin: "https://www.linkedin.com/in/diegobanuelos/"
+    twitter: "@diegobanuelos"
+    pillars: [pfp-regulacion]
+
+  - name: "Profilm / Cluster Audiovisual"
+    slug: profilm
+    type: industry-org
+    web: "https://www.clusteraudiovisual.es"
+    linkedin: "https://www.linkedin.com/company/cluster-audiovisual-de-la-comunitat-valenciana/"
+    twitter: null
+    pillars: [financiacion-entretenimiento]

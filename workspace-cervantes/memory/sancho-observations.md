@@ -498,3 +498,72 @@ _Generado por Cervantes — cron:cedfbd22-cbd0-4a19-87a0-29337c4f2b37 — 2026-0
 Sancho funcionó bien. El Cost Tracker abortado es la única incidencia real. No hay preguntas sin responder ni violaciones de reglas de canal. La calidad de los reportes de métricas es buena (análisis con contexto, tendencias, señales).
 
 _Generado por Cervantes — cron:cedfbd22-cbd0-4a19-87a0-29337c4f2b37 — 2026-05-03 10:00 CEST_
+
+---
+
+# Observación Sancho — 2026-05-04 (Lunes)
+
+## Resumen
+~30 sesiones en 24h. 4 clientes activos (Growth4U, Hospital Capilar, Hulahoop, Paymatico) + Criptan. Actividad dominada por crons del domingo noche / lunes mañana: news monitors, competitor monitors, editorial dispatches, dedupe audits, daily pulses, morning metrics.
+
+## 1. Sesiones y canales
+
+| Tipo | Cantidad | Clientes |
+|------|----------|----------|
+| News Monitor | 4 | G4U, HC, Hulahoop, Paymatico |
+| Competitor Monitor | 4 | G4U, HC, Hulahoop, Paymatico |
+| Editorial Dispatch | 4 | G4U, HC, Hulahoop, Paymatico |
+| Dedupe Audit | 4 | G4U, HC, Hulahoop, Paymatico |
+| Daily Pulse | 2 | G4U, HC |
+| Morning Metrics | 2 | G4U, Hulahoop |
+| Weekly Synthesis | 1 | HC |
+| SEO Weekly Review | 1 | Criptan |
+| Keyword Research | 1 | G4U |
+| PAA Monitor | 1 | Paymatico |
+| Cost Tracker | 1 | Multi-client |
+| Recordatorio métricas | 1 | Criptan |
+| Discord channel sessions | 4 | G4U, HC (×2), G4U-metrics |
+
+## 2. Errores y fallos
+
+### 🔴 Cost Tracker Daily — ABORTADO
+Sesión terminó inmediatamente con "This operation was aborted" sin ejecutar nada. **Segundo día consecutivo** que falla. No hay tracking de costes.
+
+### 🟡 Criptan SEO Weekly Review — ABORTADO
+No hay MATON_API_KEY configurada ni GSC API habilitada. Sancho intentó OAuth directo para GA4 pero la sesión fue abortada antes de completar. Property ID 387759614 sin acceso.
+
+### 🟡 X/Twitter Search no disponible
+Créditos xAI agotados. Afecta a competitor monitors de G4U, Hulahoop y Paymatico. Sancho compensó con web search ampliada — degradación graceful, no fallo total.
+
+### 🟡 Slack `chat:write` scope — Growth4U
+Editorial Dispatch no puede publicar en Slack desde 28/04. Sancho lo reporta correctamente en Daily Pulse como blocker. Fix pendiente: añadir `chat:write` + `chat:write.public` al Slack App.
+
+## 3. Preguntas sin responder
+Ninguna. No hubo interacción humana en ningún canal (0 mensajes humanos en 24h en todos los clientes).
+
+## 4. Reglas de canal
+✅ Respetadas. Sancho publicó en los canales correctos (#intelligence, #content, #learning). Usó hilos para detalles. No publicó en canales inactivos sin motivo.
+
+## 5. Configs faltantes
+- `cadence-config.yml` no existe para Paymatico, Hulahoop ni Hospital Capilar — Sancho usa defaults (4 posts/lunes). Debería crearse para cada cliente.
+- `mcToken` no configurado en Hulahoop — no genera links de Mission Control.
+
+## 6. Patrones de mejora
+
+### Positivo
+- **Research pipeline sólido**: 4 news monitors + 4 competitor monitors generaron ~60 signals de calidad. La cobertura de pillars es completa.
+- **Dedupe audits limpios**: 0 duplicados en 3 de 4 clientes. G4U detectó 3 pares — bien identificados.
+- **Editorial Dispatch funcionando**: 4 clientes recibieron propuestas de contenido. G4U incluso creó proyecto semanal y envió a Slack.
+- **Degradación graceful**: Cuando X/Twitter no estuvo disponible, Sancho compensó sin crashear.
+
+### A mejorar
+- **Cost Tracker lleva 2 días abortándose** — investigar por qué (¿timeout? ¿concurrencia?). Sin tracking de costes no hay visibilidad de gasto.
+- **Criptan sin datos SEO** — necesita MATON_API_KEY o habilitar GSC API. El cron gasta tokens sin producir nada útil.
+- **Hospital Capilar en hibernación semana 4** — Sancho reporta correctamente pero nadie actúa. 0% Foundation, 0 reuniones desde 18/03.
+- **Hulahoop Morning Metrics vacío** — sin APIs configuradas (GA4, GSC, Metricool). El cron corre pero no tiene datos.
+- **Todos los clientes con 0 engagement humano en Discord** — patrón sistémico. Sancho genera reportes que nadie lee.
+
+## Evaluación general
+Sancho operó bien dentro de sus capacidades. Los crons de content intelligence (news, competitors, PAA, keywords) son el punto fuerte — producen signals accionables de alta calidad. Los fallos son de infraestructura (API keys, scopes, aborts), no de lógica de Sancho. El problema más preocupante es el Cost Tracker abortado 2 días seguidos — es el único cron que debería funcionar siempre.
+
+_Generado por Cervantes — cron:cedfbd22-cbd0-4a19-87a0-29337c4f2b37 — 2026-05-04 10:04 CEST_

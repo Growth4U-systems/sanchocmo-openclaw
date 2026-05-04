@@ -1,7 +1,7 @@
 {
   "client": "growth4u",
-  "period": "2026-04",
-  "updatedAt": "2026-04-25T08:00:23.988115",
+  "period": "2026-05",
+  "updatedAt": "2026-05-04T09:05:19.568727",
   "total_cost_usd": 0,
   "total_cost_eur": 0.0,
   "turns": 10,
@@ -26,17 +26,21 @@
     }
   },
   "days": {
-    "2026-04-22": {
+    "2026-05-01": {
       "cost_usd": 0,
       "turns": 4
     },
-    "2026-04-23": {
+    "2026-05-02": {
+      "cost_usd": 0,
+      "turns": 2
+    },
+    "2026-05-03": {
       "cost_usd": 0,
       "turns": 3
     },
-    "2026-04-24": {
+    "2026-05-04": {
       "cost_usd": 0,
-      "turns": 3
+      "turns": 1
     }
   },
   "clientSpend": {
