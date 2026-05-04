@@ -6,7 +6,7 @@ phone: null
 company: EIS Solutions (San Borja)
 source: Direct booking (GROWTH4U Llamada Estratégica)
 date_added: 2026-03-19
-last_enriched: 2026-04-14T20:00:00Z
+last_enriched: 2026-05-03T20:04:00Z
 enrichment_pending: false
 tags: [llamada-agendada, secuencia-seguimiento]
 ---

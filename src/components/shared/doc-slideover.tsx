@@ -207,6 +207,49 @@ export function DocSlideOver({ slug, docPath, onClose }: DocSlideOverProps) {
     try { return JSON.parse(content); } catch { return null; }
   }, [isJson, content]);
 
+  // ── HTML 2-col edit/preview state ─────────────────────────────────
+  // For any `.html` document we render a split view: text editor (left) +
+  // live iframe preview (right). For carousel templates specifically, the
+  // preview goes through the template-preview-html endpoint so `{{slot.*}}`
+  // and `{{brand.*}}` placeholders get resolved to the brand's actual
+  // values — that way you see the real render, not the template source.
+  const isHtmlDoc = !!(docPath?.endsWith(".html") || (content && (content.trimStart().startsWith("<!DOCTYPE") || content.trimStart().startsWith("<html"))));
+  const [htmlDraft, setHtmlDraft] = useState<string>("");
+  const [savingHtml, setSavingHtml] = useState(false);
+  const [previewRevision, setPreviewRevision] = useState(0);
+  useEffect(() => {
+    if (isHtmlDoc && content !== null) setHtmlDraft(content);
+  }, [isHtmlDoc, content]);
+
+  const templateInfo = useMemo(() => {
+    if (!docPath) return null;
+    const m = docPath.match(/^brand\/([^/]+)\/brand-book\/visual-identity\/templates\/([^/]+)\/(slide-cover|slide-body|slide-cta|template)\.html$/);
+    if (!m) return null;
+    return { slug: m[1], id: m[2], file: m[3] };
+  }, [docPath]);
+
+  const previewSrc = templateInfo
+    ? `/api/content-engine/template-preview-html?slug=${encodeURIComponent(templateInfo.slug)}&id=${encodeURIComponent(templateInfo.id)}&file=${templateInfo.file}&_=${previewRevision}`
+    : null;
+  const isHtmlDirty = isHtmlDoc && content !== null && htmlDraft !== content;
+
+  async function handleSaveHtml() {
+    if (!docPath || htmlDraft === null) return;
+    setSavingHtml(true);
+    try {
+      const res = await fetch(`/api/docs/${docPath}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: htmlDraft }),
+      });
+      if (!res.ok) throw new Error("Save failed");
+      setContent(htmlDraft);
+      setPreviewRevision((r) => r + 1);  // bust iframe cache
+    } finally {
+      setSavingHtml(false);
+    }
+  }
+
   const btnClass = "inline-flex items-center gap-1.5 px-2.5 py-1 text-[13px] bg-transparent border border-[#E5E2DC] dark:border-[#313244] rounded-md cursor-pointer text-[#7A7A7A] dark:text-[#6c7086] hover:bg-[#E5E2DC] dark:hover:bg-[#313244] hover:text-[#1A1A1A] dark:hover:text-[#cdd6f4] transition-colors";
 
   return (
@@ -252,9 +295,21 @@ export function DocSlideOver({ slug, docPath, onClose }: DocSlideOverProps) {
               </select>
             )}
 
-            {!isJson && !(docPath?.endsWith(".html") || (content && (content.trimStart().startsWith("<!DOCTYPE") || content.trimStart().startsWith("<html")))) && (
+            {!isJson && !isHtmlDoc && (
               <button type="button" onClick={() => { if (editing) { setEditing(false); } else if (content) { setEditing(true); } }} className={btnClass}>
                 {editing ? "👁 Ver" : "✏️ Editar"}
+              </button>
+            )}
+
+            {isHtmlDoc && (
+              <button
+                type="button"
+                onClick={handleSaveHtml}
+                disabled={!isHtmlDirty || savingHtml}
+                className={cn(btnClass, isHtmlDirty && "!bg-rust !text-white !border-rust hover:!bg-rust/90")}
+                title={isHtmlDirty ? "Guardar cambios y refrescar preview" : "No hay cambios pendientes"}
+              >
+                {savingHtml ? "Guardando..." : isHtmlDirty ? "💾 Guardar" : "💾 Guardado"}
               </button>
             )}
 
@@ -336,6 +391,44 @@ export function DocSlideOver({ slug, docPath, onClose }: DocSlideOverProps) {
               onCancel={() => setEditing(false)}
             />
           </div>
+        ) : isHtmlDoc && content !== null ? (
+          <div className="flex-1 min-h-0 grid grid-cols-2 divide-x divide-[#E5E2DC] dark:divide-[#313244]">
+            {/* HTML editor (left) */}
+            <div className="flex flex-col min-h-0 bg-[#1e1e2e]">
+              <div className="px-3 py-1.5 text-[11px] font-mono uppercase tracking-wider text-[#a6adc8] border-b border-[#313244] bg-[#181825] flex items-center justify-between">
+                <span>HTML · {docPath?.split("/").pop()}</span>
+                {isHtmlDirty && <span className="text-[10px] text-[#f9e2af]">● sin guardar</span>}
+              </div>
+              <textarea
+                value={htmlDraft}
+                onChange={(e) => setHtmlDraft(e.target.value)}
+                className="flex-1 w-full font-mono text-[12px] leading-relaxed p-4 bg-[#1e1e2e] text-[#cdd6f4] border-0 focus:outline-none resize-none"
+                spellCheck={false}
+              />
+            </div>
+            {/* Preview (right) */}
+            <div className="flex flex-col min-h-0 bg-[#fafafa] dark:bg-[#181825]">
+              <div className="px-3 py-1.5 text-[11px] font-mono uppercase tracking-wider text-[#7A7A7A] dark:text-[#6c7086] border-b border-[#E5E2DC] dark:border-[#313244] bg-[#FAFAF8] dark:bg-[#181825] flex items-center justify-between">
+                <span>
+                  {templateInfo ? "Preview con slots de prueba (sustituye {{...}})" : "Preview HTML"}
+                </span>
+                {isHtmlDirty && (
+                  <span className="text-[10px] text-rust">guarda para refrescar</span>
+                )}
+              </div>
+              <div className="flex-1 overflow-auto p-4">
+                <iframe
+                  key={`preview-${previewRevision}`}
+                  src={previewSrc || undefined}
+                  srcDoc={previewSrc ? undefined : (isHtmlDirty ? htmlDraft : content)}
+                  className="w-full border border-[#E5E2DC] rounded-lg bg-white"
+                  style={{ minHeight: "calc(100vh - 160px)" }}
+                  sandbox="allow-same-origin"
+                  title={displayTitle}
+                />
+              </div>
+            </div>
+          </div>
         ) : (
           <div className="flex-1 overflow-y-auto p-6">
             {loading && <p className="text-sm text-muted-foreground text-center py-20">Cargando documento...</p>}
@@ -343,14 +436,6 @@ export function DocSlideOver({ slug, docPath, onClose }: DocSlideOverProps) {
             {content && (
               isJson && parsedJson ? (
                 <JsonViewer data={parsedJson} />
-              ) : (docPath?.endsWith(".html") || content.trimStart().startsWith("<!DOCTYPE") || content.trimStart().startsWith("<html")) ? (
-                <iframe
-                  srcDoc={content}
-                  className="w-full border-0 rounded-lg bg-white"
-                  style={{ minHeight: "calc(100vh - 120px)" }}
-                  sandbox="allow-same-origin"
-                  title={displayTitle}
-                />
               ) : (
                 <article className={cn(
                   "prose prose-sm max-w-none dark:prose-invert",

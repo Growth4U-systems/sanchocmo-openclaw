@@ -101,25 +101,23 @@ Mission Control consume **plantillas HTML por canal** que viven SIEMPRE en
 el directorio del cliente:
 
 ```
-brand/{slug}/content/carousel-templates/{template-id}/
+brand/{slug}/brand-book/visual-identity/templates/{template-id}/
 ├── meta.json
 ├── template.html        # single-slide
 └── slide-cover/body/cta.html   # multi-slide
 ```
 
-**Bootstrap automático**: hay un directorio seed (read-only) en
-`workspace-sancho/skills/_shared/carousel-templates/` con las 5 plantillas
-oficiales en formato neutral (gradients y colores usan `{{brand.primary}}`,
-`{{brand.accent}}` en lugar de hex hardcoded). La primera vez que MC carga
-las plantillas para un brand, copia desde seed los archivos que falten al
-directorio del cliente. Después, los archivos del cliente son la fuente de
-verdad — ediciones nunca tocan el seed, ni el seed sobrescribe ediciones del
-cliente.
+**Las plantillas son output obligatorio de esta skill.** No hay defaults
+del sistema ni fallbacks genéricos. Si esta skill no se ha ejecutado para
+una brand, la brand no tiene plantillas y Mission Control muestra un empty
+state pidiendo lanzar `visual-identity` para crearlas.
 
-Implicación: si añades una plantilla nueva al seed, todas las brands la
-reciben automáticamente al siguiente render. Si quitas un archivo del brand
-dir, también se recopia desde el seed (no es destructivo — solo rellena
-huecos).
+Las plantillas viven dentro del pillar `visual-identity` de Foundation, así
+que el cliente las edita desde MC → Foundation → Brand Book → Visual
+Identity → templates → click sobre el archivo HTML → vista 2-col (HTML
+editor a la izquierda + iframe preview en vivo a la derecha). El thread de
+chat del pillar visual-identity es el que recibe pedidos de cambios — esta
+skill NO crea threads ni tasks separados por plantilla.
 
 Las 5 plantillas oficiales que esta skill mantiene:
 
@@ -176,31 +174,120 @@ formulario que rellena el redactor humano).
 - **Personaje**: filtro `drop-shadow(-12px 12px 0 rgba(2,19,42,0.45))` para integrarlo con el gradient
 - **Footer**: divider 1.5px `rgba(255,255,255,0.18)` + logo 32-56px + handle del brand
 
-### Cómo iterar / regenerar las plantillas
+### Flow de regeneración brand-specific (la "verdadera" calidad)
 
-Cuando el cliente pide cambios visuales (cambia paleta, añade carrusel nuevo,
-ajusta el ratio de blog-title):
+Esta es la operación principal de la skill. Cuando se invoca
+`growth4u-visual-generator regenerate-templates` (o equivalente para otra
+brand: `paymatico-visual-generator`, etc.), produce las 5 plantillas con la
+DNA visual del brand: personajes, fotos integradas, multi-stop gradients
+específicos, layouts custom. Si la brand no tiene plantillas todavía, esta
+skill las crea desde cero — no hay defaults del sistema.
 
-**Para una sola brand**:
-1. **Editar** `brand/{slug}/content/carousel-templates/{id}/template.html`
-   o crear uno nuevo con su `meta.json`. Los cambios solo afectan a esa brand.
-2. **Validar** el render desde MC UI → Content Creation → Configuración → 🎨
-   Carrusel → click sobre la plantilla. La preview se actualiza al instante
-   (es un iframe del HTML real escalado).
-3. **Asegurar** que el resultado respeta los mínimos de tamaño de texto que
-   manda la skill `visual-identity` R5 (24px body en 1080×1080, etc.).
-4. Si la plantilla necesita un personaje nuevo (pose/expresión que no existe),
-   primero genera el PNG con `nano-banana-pro` (siguiendo las reglas de arriba
-   de esta skill), súbelo a R2, y referencia su URL como `slot.hero_image_url`
-   default en el `meta.json`.
+**Flujo paso a paso** (ejecutado por la skill al ser invocada):
 
-**Para todas las brands a la vez** (cambios al diseño "oficial"):
-1. **Editar** `workspace-sancho/skills/_shared/carousel-templates/{id}/...`
-   — el seed. Mantener `{{brand.*}}` tokens (no hex) para que cada brand
-   aplique su paleta automáticamente.
-2. **Reset opcional** en una brand: borra su `brand/{slug}/content/carousel-templates/{id}/`
-   y al siguiente load se recopia desde seed. Brands con overrides intencionales
-   los conservan (el seed solo rellena lo que falta).
+#### Step 1 — Lectura de contexto (read-only)
+
+- `brand/{slug}/brand-book/visual-identity/design-tokens.json` — paleta,
+  typography, gradients oficiales (incluido el `gradient.brand` multi-stop).
+- `brand/{slug}/brand-book/visual-identity/visual-identity.current.md` —
+  reglas de composición, personajes, anti-pegote.
+- `brand/{slug}/brand-book/brand-voice/brand-voice.current.md` — tone of
+  voice, anti-AI-writing, signature patterns.
+- `brand/{slug}/brand-book/visual-identity/templates/{id}/` — versión actual del brand
+  si existe. Si hay overrides del cliente, RESPETARLOS — no machacar
+  ediciones manuales sin permiso. Si la primera vez, generar desde cero.
+
+#### Step 2 — Decisiones de assets
+
+Por plantilla, decide:
+
+| Template | Asset clave | Default decision |
+|---|---|---|
+| `linkedin-quote` | `hero_image_url` (personaje) | Alfonso pose "presentando" en gradient. Genera con nano-banana-pro si no existe en R2. |
+| `linkedin-9-slide` | `hero_image_url` (cover) + `cta_image_url` (CTA) | Cover: Alfonso "presentando". CTA: Alfonso "saludando". |
+| `instagram-3-slide` | `hero_image_url` + `cta_image_url` | Idem, en cuadrado 1080×1080. |
+| `blog-post` | `hero_image_url` | Alfonso "señalando dato" o pose contextual al post. |
+| `blog-title` | (sin personaje) | Solo título + autor. Tipografía dominante. |
+
+Si el personaje requerido no existe en R2, la skill lo genera primero (sigue
+las reglas de la sección "Cómo generar imágenes" de arriba) y persiste la URL
+pública en R2.
+
+#### Step 3 — Regenerar/sobrescribir HTMLs
+
+Para cada plantilla:
+
+1. Si ya existe una versión del cliente en
+   `brand/{slug}/brand-book/visual-identity/templates/{id}/`: cargarla como
+   base (preserva ediciones puntuales del cliente). Si no existe (primera
+   vez): generar el HTML desde cero usando el sistema visual SC-G4U
+   documentado más arriba.
+2. Aplica/refresca las customizaciones brand-specific:
+   - **Gradients multi-stop**: usa la versión completa de `gradient.brand`
+     del design-tokens, no solo 2 colores
+     (ej. growth4u: `linear-gradient(160deg, #032149, #1a3690 35%, #0faec1)`).
+   - **Stripe lateral**: usa la versión multi-color completa
+     (ej. growth4u: `#0faec1, #3f45fe, #6351d5` en 3 stops).
+   - **Bokeh blobs**: añade un 3º blob con color secundario (purple, sky).
+   - **Default `hero_image_url`** en `meta.json` apuntando a la URL del
+     personaje generado en Step 2.
+   - Mantener `{{brand.*}}` tokens donde aplique para que MC sustituya en
+     runtime.
+3. Guarda en `brand/{slug}/brand-book/visual-identity/templates/{id}/`. El
+   loader de MC lee directamente de ahí.
+4. Si el cliente tenía overrides manuales de un archivo, ABRIR pregunta
+   (AskUserQuestion): "Detecté ediciones en X. ¿Sobrescribir o conservar?".
+   Default conservador: conservar.
+
+#### Step 4 — Validación
+
+- Renderizar cada plantilla con datos de prueba via Playwright.
+- Verificar que respeta los mínimos de R5 (visual-identity SKILL): texto ≥
+  24px en 1080, contraste ≥ 4.5:1, personaje no se sale del canvas, etc.
+- Si falla algún chequeo: generar versión nueva (max 10 iteraciones / R3).
+
+#### Step 5 — Reportar
+
+Output en chat:
+```
+✓ growth4u — 5 plantillas regeneradas
+  · linkedin-quote: Alfonso presentando (R2: alfonso-gradient-v3.png)
+  · linkedin-9-slide: cover + CTA con Alfonso, gradient multi-stop
+  · instagram-3-slide: cover + CTA cuadrado
+  · blog-post: Alfonso señalando dato
+  · blog-title: tipografía dominante (sin personaje)
+Validation: pasa R5 en las 5. 0 iteraciones extra.
+```
+
+### Iteraciones puntuales (sin regenerar todo)
+
+**Cliente quiere ajuste en 1 plantilla** (ej. "el blog-title se ve
+demasiado pequeño el título"):
+
+1. Editar directamente desde MC UI → Foundation → Brand Book → Visual
+   Identity → templates → click sobre el archivo HTML → vista 2-col (HTML
+   editor a la izquierda + iframe preview en vivo a la derecha) → Guardar.
+2. Alternativa por chat: usar el thread del pillar visual-identity y pedir
+   el cambio. Esta skill (o `visual-identity` parent) edita el archivo
+   `brand/{slug}/brand-book/visual-identity/templates/{id}/template.html`
+   directamente.
+3. Cambios de diseño que aplican a TODAS las brands se propagan
+   re-ejecutando esta skill (o el `[brand]-visual-generator` equivalente)
+   por brand. No hay seed compartido — cada brand mantiene sus propios
+   archivos.
+
+### Reset / regenerar una brand desde cero
+
+Caso: el cliente arruinó las plantillas y quiere volver a empezar.
+
+```bash
+rm -rf workspace-sancho/brand/{slug}/brand-book/visual-identity/templates
+```
+
+La UI mostrará el empty state "esta brand no tiene plantillas todavía".
+Re-ejecutar esta skill (`growth4u-visual-generator`, o el equivalente para
+otra brand) para que las regenere desde cero leyendo design-tokens y
+visual-identity, con calidad real brand-specific.
 
 ### Slot conventions (para que el redactor pueda rellenarlas con AskUserQuestion)
 

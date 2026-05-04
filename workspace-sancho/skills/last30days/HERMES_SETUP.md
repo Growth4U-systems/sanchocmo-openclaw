@@ -18,7 +18,7 @@ git clone https://github.com/mvanhorn/last30days-skill.git
 cd last30days-skill
 
 # Run the sync script
-bash scripts/sync.sh
+bash skills/last30days/scripts/sync.sh
 ```
 
 This will auto-detect Hermes and deploy to `~/.hermes/skills/research/last30days/`
@@ -30,8 +30,8 @@ This will auto-detect Hermes and deploy to `~/.hermes/skills/research/last30days
 mkdir -p ~/.hermes/skills/research/last30days
 
 # Copy files
-cp -r scripts ~/.hermes/skills/research/last30days/
-cp .hermes-plugin/SKILL.md ~/.hermes/skills/research/last30days/
+cp skills/last30days/SKILL.md ~/.hermes/skills/research/last30days/
+cp -r skills/last30days/scripts ~/.hermes/skills/research/last30days/
 ```
 
 ## Usage
@@ -111,7 +111,7 @@ To update to the latest version:
 ```bash
 cd last30days-skill
 git pull
-bash scripts/sync.sh
+bash skills/last30days/scripts/sync.sh
 ```
 
 ## Support

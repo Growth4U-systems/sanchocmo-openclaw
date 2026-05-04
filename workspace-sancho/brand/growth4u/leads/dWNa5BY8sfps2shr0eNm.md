@@ -3,7 +3,7 @@ ghl_id: dWNa5BY8sfps2shr0eNm
 contact_name: Blas Nieto
 email: blas@synapsale.com
 phone: "+34639893441"
-last_enriched: 2026-04-22T20:00:00Z
+last_enriched: 2026-05-03T20:04:00Z
 enrichment_pending: false
 ---
 

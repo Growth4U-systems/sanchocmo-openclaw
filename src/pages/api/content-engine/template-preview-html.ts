@@ -4,45 +4,59 @@ import { getCarouselTemplate } from "@/lib/carousel/templates";
 import { loadBrandContext } from "@/lib/carousel/brand-context";
 
 /**
- * GET /api/content-engine/template-preview-html?slug=X&id=Y[&slide=N]
+ * Render the real HTML the template would produce for a given slide.
  *
- * Returns the *real* HTML the template would produce for slide `N` (default 0)
- * with placeholder slot values (taken from each slot's `placeholder` field
- * in `meta.json`, falling back to the slot label).
+ *   GET  ?slug=X&id=Y[&slide=N|&file=slide-cover|...]
+ *      → uses each slot's `placeholder` from meta.json. Used by the panel
+ *        thumbnails (no slot data available client-side).
  *
- * The Setup UI loads this via an `<iframe>` scaled down with CSS transform —
- * cheaper than spinning up Playwright per preview, and shows the *exact*
- * thing the user is going to publish, not a CSS-only approximation.
+ *   POST { slug, id, file?, slots, perSlide }
+ *      → uses the slot values supplied in the body. Used by the live
+ *        editor in Foundation > Visual Identity > template — every keystroke
+ *        produces a fresh preview without persisting anything.
+ *
+ * Same code path otherwise: tokens like `{{slot.title}}`, `{{brand.primary}}`,
+ * etc. get substituted, conditionals (`<!-- if:slot.x -->`) collapsed.
  */
 async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== "GET") {
-    res.setHeader("Allow", "GET");
+  if (req.method !== "GET" && req.method !== "POST") {
+    res.setHeader("Allow", "GET, POST");
     return res.status(405).json({ error: "Method not allowed" });
   }
-  const slug = req.query.slug as string;
-  const id = req.query.id as string;
-  const slideParam = req.query.slide as string | undefined;
+  const slug = (req.query.slug || req.body?.slug) as string;
+  const id = (req.query.id || req.body?.id) as string;
+  const slideParam = (req.query.slide || req.body?.slide) as string | undefined;
+  const fileParam = (req.query.file || req.body?.file) as string | undefined;
   if (!slug || !id) return res.status(400).json({ error: "Missing slug or id" });
 
   const template = getCarouselTemplate(id, slug);
   if (!template) return res.status(404).json({ error: `Unknown template: ${id}` });
 
-  const slideIndex = Math.max(0, Math.min(template.slideCount - 1, Number(slideParam ?? 0) || 0));
+  // Resolve slide index. Filename takes precedence over the explicit param.
+  let slideIndex = Math.max(0, Math.min(template.slideCount - 1, Number(slideParam ?? 0) || 0));
+  if (fileParam === "slide-cover") slideIndex = 0;
+  else if (fileParam === "slide-cta") slideIndex = template.slideCount - 1;
+  else if (fileParam === "slide-body") slideIndex = Math.min(1, template.slideCount - 1);
   const brand = loadBrandContext(slug);
 
-  // Build placeholder slot values: prefer the slot's declared placeholder,
-  // then fall back to the label. For per-slide slots, build an array sized
-  // to the slideCount so every slide has something to render.
+  // POST-supplied slot values take precedence; otherwise we fill from each
+  // slot's declared placeholder so the preview always renders something.
+  const overrideSlots = (req.body?.slots ?? {}) as Record<string, string>;
+  const overridePerSlide = (req.body?.perSlide ?? {}) as Record<string, string[]>;
   const slots: Record<string, string> = {};
   const perSlide: Record<string, string[]> = {};
   for (const slot of template.slots) {
     const placeholder = slot.placeholder || slot.label || "";
     if (slot.perSlide) {
-      perSlide[slot.key] = Array.from({ length: template.slideCount }, (_, i) =>
-        template.slideCount > 1 ? `${placeholder} (slide ${i + 1})` : placeholder,
-      );
+      const incoming = overridePerSlide[slot.key];
+      perSlide[slot.key] = Array.from({ length: template.slideCount }, (_, i) => {
+        const override = incoming?.[i];
+        if (override !== undefined && override !== "") return override;
+        return template.slideCount > 1 ? `${placeholder} (slide ${i + 1})` : placeholder;
+      });
     } else {
-      slots[slot.key] = placeholder;
+      const override = overrideSlots[slot.key];
+      slots[slot.key] = override !== undefined && override !== "" ? override : placeholder;
     }
   }
 

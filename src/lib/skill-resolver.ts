@@ -157,8 +157,30 @@ export function resolveThreadSkills(ctx: SkillContext, cfg: ChatConfig = {}): Sk
   if (ctx.pillar) {
     const fromConfig = toResolution(cfg.pillars?.[ctx.pillar]);
     if (fromConfig) return fromConfig;
+    // 5b. Convention: meta-skill pillars have a homonymous skill installed
+    // alongside them. When the brand hasn't customized chat-config we fall
+    // through to that convention before going to the generic manager — so
+    // visual-identity → "visual-identity" skill, brand-voice → "brand-voice", etc.
+    if (HOMONYMOUS_SKILL_PILLARS.has(ctx.pillar)) {
+      return { skill: ctx.pillar, skills: [ctx.pillar] };
+    }
   }
 
   // 6. Fallback
   return { skill: "sancho-manager", skills: ["sancho-manager"] };
 }
+
+/** Pillars that ship with a child skill of the same name. Used by step 5b
+ *  of `resolveThreadSkills` so threads land on the right skill even when
+ *  `chat-config.json` doesn't list the pillar. */
+const HOMONYMOUS_SKILL_PILLARS = new Set([
+  "visual-identity",
+  "brand-voice",
+  "content-strategy",
+  "content-pillars",
+  "content-playbook",
+  "niche-discovery-100x",
+  "positioning-messaging",
+  "pricing",
+  "company-brief",
+]);

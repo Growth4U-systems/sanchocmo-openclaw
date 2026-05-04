@@ -32,10 +32,10 @@
 - DATA: DataForSEO (credentials ok), Serper.dev (ok), Own media (IG 133K, YT 40K, LinkedIn 7.8K, TikTok 55K)
 
 ## Semana
-- **Abr 27 - May 3** — G4U Weekly, Spain GTM weekly, Affiliate Spain Weekly, Spain Readiness sync, Q&A Oier.
-- **Abr 22-26** — Llamadas estratégicas: Blas Nieto, Paymatico review, Laura Donadio, Sergi Candel, Chloe/Monzo, Alba Weekly, Enric Majó (Hulahoop), Impact demo. Growit grabación en curso.
-- **Abr 21-23** — Weeks muy intensas en meetings (9+ reuniones/día Apr 22). Conflictos de agenda resueltos. Growit grabaciones.
-- **Pending crítico** — HC Foundation sigue ATASCADA (>1 mes). Mismo pendiente desde hace semanas. No es falta de recordatorio — necesita acción.
+- **May 3** — Semana muy silenciosa. Solo 1 daily log (Apr 27). Sin dailies Apr 28–May 3 (gap de 6 días).
+- **Abr 27** — G4U Weekly, Spain GTM weekly, Affiliate Spain Weekly, Spain Readiness sync, Q&A Oier.
+- **Abr 22-26** — Semana intensa: 9+ reuniones/día Apr 22. Llamadas: Blas Nieto, Paymatico review, Laura Donadio, Sergi Candel, Chloe/Monzo, Alba Weekly, Impact demo. Growit grabaciones.
+- **Pending crítico** — HC Foundation sigue ATASCADA (>2 meses desde reset Mar 2). Parálisis crónica confirmada.
 
 ## Pending
 - HC Foundation desde cero (DAG a seguir)

@@ -6,7 +6,7 @@ phone: "+34615013071"
 company: IASAF
 source: "Growth4U | Reunión"
 date_added: 2026-02-27
-last_enriched: 2026-04-14T20:00:00Z
+last_enriched: 2026-05-03T20:04:00Z
 enrichment_pending: false
 tags: [llamada-agendada, secuencia-seguimiento]
 ---

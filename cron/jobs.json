@@ -1374,6 +1374,98 @@
         "mode": "none"
       },
       "state": {}
+    },
+    {
+      "agentId": "sancho",
+      "name": "Content: Idea Dedupe Audit — Growth4U",
+      "enabled": true,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 9 * * 1",
+        "tz": "Europe/Madrid"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Audita posibles ideas duplicadas en idea-queue.json de Growth4U.\n\nPASO 1 — CARGA:\nLee brand/growth4u/content/idea-queue.json. Filtra solo ideas con status \"New\" o \"Approved\" creadas en los últimos 7 días (created_at).\n\nPASO 2 — DETECCIÓN:\nAgrupa pares de ideas que parezcan tratar el mismo tema. Criterios (en este orden):\n  (a) Mismo pillar_id Y solapamiento >=4 palabras clave significativas en `title` o `signal.summary`.\n  (b) Misma URL en signal.url (caso obvio).\n  (c) Mismo signal_type Y referencias a la misma fuente/autor/empresa principal.\nExcluye stopwords y nombres de marca propia al comparar. Sé conservador — mejor false negative que false positive.\n\nPASO 3 — REPORTE (NO BORRAR):\nNO modifiques idea-queue.json. Solo reportar. Para cada par detectado, anota: idea_id_a, idea_id_b, razón corta (1 frase), recomendación (\"merge\" / \"keep both\" / \"discard younger\").\n\nPASO 4 — last_finding:\nGenera un `last_finding` (1-2 frases en español) con el conteo de pares y el caso más representativo. Ejemplo: \"3 pares duplicados detectados. idea-2026-05-01-4 ≈ idea-2026-05-02-1 (ambas sobre Forrester agencias).\" Si no hay duplicados: \"Sin duplicados detectados esta semana.\"\n\nPASO 5 — GUARDAR REPORTE:\nEscribe el reporte en brand/growth4u/recurring-tasks/content-dedupe-audit/{YYYY-MM-DD}.json con este schema:\n{\"cronName\": \"Content: Idea Dedupe Audit — Growth4U\", \"slug\": \"growth4u\", \"date\": \"YYYY-MM-DD\", \"runAtMs\": <timestamp_ms>, \"status\": \"ok\", \"last_finding\": \"<frase del paso 4>\", \"content\": \"<reporte markdown con la tabla de pares detectados>\", \"pairs_count\": <N>, \"pairs\": [{\"a\":\"...\",\"b\":\"...\",\"reason\":\"...\",\"recommendation\":\"...\"}, ...]}\n\nREGLAS:\n- NUNCA modificar idea-queue.json en este cron.\n- NUNCA marcar ideas como Discarded automáticamente. El usuario decide en la UI.\n- Si idea-queue.json no existe o está vacío, status=\"ok\" pairs_count=0 y termina.",
+        "model": "anthropic/claude-sonnet-4-5"
+      },
+      "delivery": {
+        "mode": "none"
+      },
+      "id": "c8577592-e1af-47fd-a15a-ccd968f18220",
+      "createdAtMs": 1777837031844,
+      "state": {}
+    },
+    {
+      "agentId": "sancho",
+      "name": "Content: Idea Dedupe Audit — Hospital Capilar",
+      "enabled": true,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 9 * * 1",
+        "tz": "Europe/Madrid"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Audita posibles ideas duplicadas en idea-queue.json de Hospital Capilar.\n\nPASO 1 — CARGA:\nLee brand/hospital-capilar/content/idea-queue.json. Filtra solo ideas con status \"New\" o \"Approved\" creadas en los últimos 7 días (created_at).\n\nPASO 2 — DETECCIÓN:\nAgrupa pares de ideas que parezcan tratar el mismo tema. Criterios (en este orden):\n  (a) Mismo pillar_id Y solapamiento >=4 palabras clave significativas en `title` o `signal.summary`.\n  (b) Misma URL en signal.url (caso obvio).\n  (c) Mismo signal_type Y referencias a la misma fuente/autor/empresa principal.\nExcluye stopwords y nombres de marca propia al comparar. Sé conservador — mejor false negative que false positive.\n\nPASO 3 — REPORTE (NO BORRAR):\nNO modifiques idea-queue.json. Solo reportar. Para cada par detectado, anota: idea_id_a, idea_id_b, razón corta (1 frase), recomendación (\"merge\" / \"keep both\" / \"discard younger\").\n\nPASO 4 — last_finding:\nGenera un `last_finding` (1-2 frases en español) con el conteo de pares y el caso más representativo. Ejemplo: \"3 pares duplicados detectados. idea-2026-05-01-4 ≈ idea-2026-05-02-1 (ambas sobre Forrester agencias).\" Si no hay duplicados: \"Sin duplicados detectados esta semana.\"\n\nPASO 5 — GUARDAR REPORTE:\nEscribe el reporte en brand/hospital-capilar/recurring-tasks/content-dedupe-audit/{YYYY-MM-DD}.json con este schema:\n{\"cronName\": \"Content: Idea Dedupe Audit — Hospital Capilar\", \"slug\": \"hospital-capilar\", \"date\": \"YYYY-MM-DD\", \"runAtMs\": <timestamp_ms>, \"status\": \"ok\", \"last_finding\": \"<frase del paso 4>\", \"content\": \"<reporte markdown con la tabla de pares detectados>\", \"pairs_count\": <N>, \"pairs\": [{\"a\":\"...\",\"b\":\"...\",\"reason\":\"...\",\"recommendation\":\"...\"}, ...]}\n\nREGLAS:\n- NUNCA modificar idea-queue.json en este cron.\n- NUNCA marcar ideas como Discarded automáticamente. El usuario decide en la UI.\n- Si idea-queue.json no existe o está vacío, status=\"ok\" pairs_count=0 y termina.",
+        "model": "anthropic/claude-sonnet-4-5"
+      },
+      "delivery": {
+        "mode": "none"
+      },
+      "id": "91058115-935f-48e8-88b6-c8a543914ad8",
+      "createdAtMs": 1777837031844,
+      "state": {}
+    },
+    {
+      "agentId": "sancho",
+      "name": "Content: Idea Dedupe Audit — Hulahoop",
+      "enabled": true,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 9 * * 1",
+        "tz": "Europe/Madrid"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Audita posibles ideas duplicadas en idea-queue.json de Hulahoop.\n\nPASO 1 — CARGA:\nLee brand/hulahoop/content/idea-queue.json. Filtra solo ideas con status \"New\" o \"Approved\" creadas en los últimos 7 días (created_at).\n\nPASO 2 — DETECCIÓN:\nAgrupa pares de ideas que parezcan tratar el mismo tema. Criterios (en este orden):\n  (a) Mismo pillar_id Y solapamiento >=4 palabras clave significativas en `title` o `signal.summary`.\n  (b) Misma URL en signal.url (caso obvio).\n  (c) Mismo signal_type Y referencias a la misma fuente/autor/empresa principal.\nExcluye stopwords y nombres de marca propia al comparar. Sé conservador — mejor false negative que false positive.\n\nPASO 3 — REPORTE (NO BORRAR):\nNO modifiques idea-queue.json. Solo reportar. Para cada par detectado, anota: idea_id_a, idea_id_b, razón corta (1 frase), recomendación (\"merge\" / \"keep both\" / \"discard younger\").\n\nPASO 4 — last_finding:\nGenera un `last_finding` (1-2 frases en español) con el conteo de pares y el caso más representativo. Ejemplo: \"3 pares duplicados detectados. idea-2026-05-01-4 ≈ idea-2026-05-02-1 (ambas sobre Forrester agencias).\" Si no hay duplicados: \"Sin duplicados detectados esta semana.\"\n\nPASO 5 — GUARDAR REPORTE:\nEscribe el reporte en brand/hulahoop/recurring-tasks/content-dedupe-audit/{YYYY-MM-DD}.json con este schema:\n{\"cronName\": \"Content: Idea Dedupe Audit — Hulahoop\", \"slug\": \"hulahoop\", \"date\": \"YYYY-MM-DD\", \"runAtMs\": <timestamp_ms>, \"status\": \"ok\", \"last_finding\": \"<frase del paso 4>\", \"content\": \"<reporte markdown con la tabla de pares detectados>\", \"pairs_count\": <N>, \"pairs\": [{\"a\":\"...\",\"b\":\"...\",\"reason\":\"...\",\"recommendation\":\"...\"}, ...]}\n\nREGLAS:\n- NUNCA modificar idea-queue.json en este cron.\n- NUNCA marcar ideas como Discarded automáticamente. El usuario decide en la UI.\n- Si idea-queue.json no existe o está vacío, status=\"ok\" pairs_count=0 y termina.",
+        "model": "anthropic/claude-sonnet-4-5"
+      },
+      "delivery": {
+        "mode": "none"
+      },
+      "id": "0b7aadcc-e694-475b-a8ba-b6eb3418807f",
+      "createdAtMs": 1777837031844,
+      "state": {}
+    },
+    {
+      "agentId": "sancho",
+      "name": "Content: Idea Dedupe Audit — Paymatico",
+      "enabled": true,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 9 * * 1",
+        "tz": "Europe/Madrid"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Audita posibles ideas duplicadas en idea-queue.json de Paymatico.\n\nPASO 1 — CARGA:\nLee brand/paymatico/content/idea-queue.json. Filtra solo ideas con status \"New\" o \"Approved\" creadas en los últimos 7 días (created_at).\n\nPASO 2 — DETECCIÓN:\nAgrupa pares de ideas que parezcan tratar el mismo tema. Criterios (en este orden):\n  (a) Mismo pillar_id Y solapamiento >=4 palabras clave significativas en `title` o `signal.summary`.\n  (b) Misma URL en signal.url (caso obvio).\n  (c) Mismo signal_type Y referencias a la misma fuente/autor/empresa principal.\nExcluye stopwords y nombres de marca propia al comparar. Sé conservador — mejor false negative que false positive.\n\nPASO 3 — REPORTE (NO BORRAR):\nNO modifiques idea-queue.json. Solo reportar. Para cada par detectado, anota: idea_id_a, idea_id_b, razón corta (1 frase), recomendación (\"merge\" / \"keep both\" / \"discard younger\").\n\nPASO 4 — last_finding:\nGenera un `last_finding` (1-2 frases en español) con el conteo de pares y el caso más representativo. Ejemplo: \"3 pares duplicados detectados. idea-2026-05-01-4 ≈ idea-2026-05-02-1 (ambas sobre Forrester agencias).\" Si no hay duplicados: \"Sin duplicados detectados esta semana.\"\n\nPASO 5 — GUARDAR REPORTE:\nEscribe el reporte en brand/paymatico/recurring-tasks/content-dedupe-audit/{YYYY-MM-DD}.json con este schema:\n{\"cronName\": \"Content: Idea Dedupe Audit — Paymatico\", \"slug\": \"paymatico\", \"date\": \"YYYY-MM-DD\", \"runAtMs\": <timestamp_ms>, \"status\": \"ok\", \"last_finding\": \"<frase del paso 4>\", \"content\": \"<reporte markdown con la tabla de pares detectados>\", \"pairs_count\": <N>, \"pairs\": [{\"a\":\"...\",\"b\":\"...\",\"reason\":\"...\",\"recommendation\":\"...\"}, ...]}\n\nREGLAS:\n- NUNCA modificar idea-queue.json en este cron.\n- NUNCA marcar ideas como Discarded automáticamente. El usuario decide en la UI.\n- Si idea-queue.json no existe o está vacío, status=\"ok\" pairs_count=0 y termina.",
+        "model": "anthropic/claude-sonnet-4-5"
+      },
+      "delivery": {
+        "mode": "none"
+      },
+      "id": "42dbd1ef-e58d-4fe9-a211-c48030f4e0c1",
+      "createdAtMs": 1777837031844,
+      "state": {}
     }
   ]
 }

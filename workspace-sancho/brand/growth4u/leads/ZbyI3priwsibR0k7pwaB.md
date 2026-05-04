@@ -4,7 +4,7 @@ contact_name: Luis Ayuso Elu
 email: luis@infonite.tech
 phone: null
 created: 2026-04-30T20:00:00Z
-last_enriched: 2026-05-02T20:00:00Z
+last_enriched: 2026-05-03T20:04:00Z
 enrichment_pending: false
 source: "GROWTH4U |  Llamada Estratégica"
 tags: [llamada-agendada, secuencia-seguimiento]

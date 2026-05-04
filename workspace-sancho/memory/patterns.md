@@ -131,4 +131,22 @@ See brand/learnings.md for patterns prior to March 2026.
 
 ---
 
-*Last updated: 2026-04-26*
+## Active Patterns (Confirmed 27 Apr - 3 May)
+
+### 16. Daily Log Gaps = Monitoring Blind Spots
+- **First detected**: 2026-05-03
+- **Evidence**: Only 1 daily file (Apr 27) in 7-day window. Zero entries Apr 28–May 3. Heartbeats ran but didn’t generate meaningful daily summaries.
+- **Recurrence**: First significant gap this long. Prior weeks had at least 3-4 entries.
+- **Status**: 🟡 Risk — sin dailies no hay señal para pattern detection ni memory fusion. Revisar si heartbeats están generando dailies correctamente.
+
+### 13 (UPDATE). HC Foundation ATASCADA = Bloqueo Crónico (>2 meses)
+- **Update 2026-05-03**: Mismo pending desde Mar 2. Aparece en CADA daily desde entonces. Ya no es patrón — es deuda estructural.
+- **Status**: 🔴 Escalar — requiere decisión explícita: ejecutar o descartar
+
+### 14 (UPDATE). Semana Intensidad Variable
+- **Update 2026-05-03**: Apr 27 (Mon) = 5 meetings. Apr 28–May 3 = sin datos. Patrón Tue-Thu pico se mantiene.
+- **Status**: 🟢 Stable
+
+---
+
+*Last updated: 2026-05-03*

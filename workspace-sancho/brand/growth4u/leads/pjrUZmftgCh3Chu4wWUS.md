@@ -3,7 +3,7 @@ ghl_id: pjrUZmftgCh3Chu4wWUS
 contact_name: Jose Manuel Castro
 email: josemanuel.castro@firmatel.com
 phone: "+34649786679"
-last_enriched: 2026-04-23T20:05:00Z
+last_enriched: 2026-05-03T20:04:00Z
 enrichment_pending: false
 ---
 

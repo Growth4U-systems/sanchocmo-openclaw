@@ -11,23 +11,26 @@
     "transcripts_new": 0,
     "slack_notes_synced": 0,
     "errors": 0,
-    "notes": "All 3 leads (Laura Donadio, Blas Nieto, Enric Majó Prats) already had Drive transcripts from sync of 2026-04-24. No new transcripts to add this run. Slack sync disabled (slack_enabled=false)."
+    "notes": "All 3 leads (Laura Donadio, Blas Nieto, Enric Maj\u00f3 Prats) already had Drive transcripts from sync of 2026-04-24. No new transcripts to add this run. Slack sync disabled (slack_enabled=false)."
   },
   "lead_sync": {
-    "last_run": "2026-05-02T20:00:00Z",
+    "last_run": "2026-05-03T20:04:00Z",
     "new_leads": 0,
-    "updated_leads": 1,
+    "updated_leads": 28,
     "slack_notes_synced": 0,
-    "transcripts_added": 1,
-    "errors": 0,
+    "transcripts_added": 0,
+    "errors": 1,
     "total_contacts": 28,
-    "notes": "Luis Ayuso Elu: transcript 2026-04-30 added. Sergi Candel already had 04-23 transcript. No new leads. Slack disabled."
+    "notes": "28 llamada-agendada leads synced (last_enriched bumped). 0 new leads. Drive unavailable (no Google Service Account configured) \u2014 transcript search skipped. Slack disabled."
   },
   "sales_call_prep": {
-    "last_run": "2026-05-01T20:39:00Z",
-    "mode": "weekly",
+    "last_run": "2026-05-03T20:33:00Z",
+    "mode": "daily",
     "calls_found": 1,
+    "leads_matched": [
+      "u7vMVe3Y1bHXBxxVLlYP"
+    ],
     "no_ghl_match": 0,
-    "week_range": "2026-05-04 to 2026-05-08"
+    "target_date": "2026-05-04"
   }
 }

@@ -7,6 +7,63 @@ Scope: Features y cambios del producto SanchoCMO. Actividad operativa por client
 
 ---
 
+## [3.2.0] — 2026-05-03
+
+### 🚀 Content Engine Fase B + Task System + Slack Integration
+
+Semana de consolidación del Content Engine con drafts-as-docs, editorial dispatch inteligente, integración Slack completa, y una reescritura profunda del sistema de tareas en Mission Control.
+
+### Added
+
+#### Content Engine — Fase B
+- **ContentTask UI** — Panel kanban para gestionar tareas de contenido con visor de borradores integrado.
+- **Drafts-as-docs** — Los borradores generados se almacenan como documentos navegables en MC, no como blobs en JSON.
+- **"Generar drafts" button** — Crea borradores específicos por canal desde una idea aprobada.
+- **Draft cards + iteration system** — Tarjetas visuales para ideas aprobadas con sistema de iteración (v1, v2…).
+- **Auto-generate drafts** — Al aprobar una idea, se generan borradores y se crea la tarea automáticamente.
+- **Editorial Dispatch cadence-aware** — Selección de ideas respeta la cadencia configurada por slot/canal.
+- **Content Engine Setup skill** — Nuevo skill que puebla configs existentes en vez de crearlas desde cero.
+- **Visual forms for CE configs** — Formularios visuales para configurar el Content Engine (adiós YAML manual).
+
+#### Slack Integration
+- **Slack end-to-end** — Integración completa: auth, channel selector en Inputs, detección en APIs panel.
+- **APIs panel** — Slack y Discord categorizados en "Comunicación"; fix de falso positivo en detección Slack.
+
+#### Task System (Mission Control)
+- **Task Index panel** — Vista completa de todas las tareas (anchors) desde Settings.
+- **Task Slide-Over** — Ver detalles de tarea sin salir de la página actual.
+- **Clickable links en Task Index** — Doc abre visor, skill abre página del skill.
+- **Task link button (📋)** — Botón en filas de documentos Foundation para ir a la tarea asociada.
+- **Task/project link en todas las superficies** — Acceso a tarea desde cualquier vista de documento.
+
+#### UI — Mission Control
+- **Inputs tab** — Editores basados en prompts + banners de contexto + panel de gestión de crons.
+- **Estrategia tab unificada** — Pillars + Strategy fusionados en una sola pestaña "Estrategia".
+- **Last-edited date** — Fecha de última edición visible en todas las vistas de documentos.
+- **POV Bank + idea-builder consolidado** — POV Bank integrado con idea-builder y prerequisitos de skills.
+- **Content Engine UI** — Perfiles unificados, Calendar, Setup card, cadencia editable, Ideas refactor.
+
+### Changed
+- **content-pillars skill** — Reescrito con metodología de 5 capas. Output como markdown legible con quality checklist (no YAML dump).
+- **resolveFullThreadConfig** — Refactorizado como single source of truth para TODAS las resoluciones de hilos.
+- **Task index** — Refactorizado para resolución O(1) de hilos (eliminado escaneo lineal).
+- **InputsTab** — Muestra configs del cliente, no system prompts.
+- **News + PAA configs** — Prompts dinámicos en vez de keywords estáticas.
+
+### Fixed
+- **Foundation tasks** — Añadidas tareas faltantes para docs huérfanos.
+- **Fast Foundation task** — Links corregidos a documentos reales; eliminados attachments incorrectos.
+- **Task statuses** — Estados correctos + botón back para rutas content/.
+- **Thread click** — Abre chat sidebar in-place sin navegación.
+- **Task Slide-Over** — Abre tarea con chat, eliminado botón de doc redundante.
+- **Doc slide-over** — Ya no se abre automáticamente al cargar la página de tareas.
+- **Pillar threads** — Resuelven task + doc correctamente desde projectsData.
+- **Task button** — 2 bugs encontrados y corregidos via debug trace completo.
+- **Responsive layout** — ContentDocsTab corregido para móvil.
+- **Toast UI crash** — Fix de crash + añadidos botones chat/open en docs de Estrategia.
+
+---
+
 ## [3.1.0] — 2026-04-26
 
 ### 🚀 Content Engine — Sistema de motor de contenido multi-tenant

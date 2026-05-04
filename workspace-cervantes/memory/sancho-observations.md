@@ -449,3 +449,52 @@ _Generado por Cervantes — cron:cedfbd22-cbd0-4a19-87a0-29337c4f2b37 — 2026-0
 ---
 
 _Generado por Cervantes — cron:cedfbd22-cbd0-4a19-87a0-29337c4f2b37 — 2026-05-02 10:00 CEST_
+
+---
+
+## 2026-05-03 — Observación Sancho (10:00 CEST)
+
+### Sesiones revisadas (7 en últimas 24h)
+
+| Sesión | Estado | Notas |
+|--------|--------|-------|
+| Morning Metrics — Growth4U | ✅ OK | Recopiló Meta Ads + GHL, publicó con thread pattern correcto. Error menor: Instantly API falló |
+| Morning Metrics — Hulahoop | ✅ OK | Sin APIs configuradas → no publicó. Comportamiento correcto |
+| Cost Tracker Daily | ❌ ABORTED | Sesión abortada antes de ejecutar. No se generó reporte de costes |
+| update-skills | ✅ OK | 11 skills ClawHub actualizados + last30days. Reportó al thread correcto |
+| Lead Sync — Growth4U | ✅ OK | 28 contactos, 1 transcript añadido. Error menor: olvidó `channel=discord` en primer intento, se autocorrigió |
+| Heartbeat (Qwen) | ✅ OK | Quiet hours, HEARTBEAT_OK. Verificó email una vez |
+
+### Problemas detectados
+
+1. **Cost Tracker Daily ABORTADO** — La sesión se mató antes de producir output. Sin reporte de costes hoy. Posible timeout o conflicto de recursos. Monitorizar mañana.
+
+2. **Instantly API error recurrente** — `(campaigns || []) is not iterable` en el collector de Growth4U. El script continúa con las demás fuentes (correcto), pero la data de Instantly no se recoge.
+
+3. **Lead Sync: param `channel` omitido** — Sancho olvidó `channel=discord` en la primera llamada a `message()`. Se autocorrigió en el segundo intento. Patrón que se repite ocasionalmente.
+
+### Reglas de canal
+- ✅ Growth4U: Thread pattern respetado en Morning Metrics
+- ✅ Lead Sync: Publicó en canal correcto (#intelligence de Growth4U)
+- ✅ update-skills: Publicó en thread existente de Cervantes Brain
+- ✅ Hulahoop: No publicó nada (correcto, no hay datos)
+
+### Costes teóricos (sesiones Sancho)
+- Morning Metrics Growth4U: ~$0.38
+- Morning Metrics Hulahoop: ~$0.08
+- Lead Sync: ~$1.30 (sesión pesada, 72K tokens)
+- update-skills: ~$0.23
+- Cost Tracker: $0 (abortado)
+- Heartbeats (Qwen): ~$0.01
+
+**Total Sancho ~24h: ~$2.00** (teórico, flat rate real)
+
+### Patrones de mejora
+- **Lead Sync costoso**: $1.30 por sesión con 72K tokens. Podría optimizarse para hacer diffs más ligeros en vez de procesar los 28 contactos cada vez.
+- **Hulahoop cron innecesario**: Ejecuta Morning Metrics diario sin APIs configuradas. Considerar desactivar hasta que se conecten las APIs para ahorrar ~$0.08/día.
+- **Instantly adapter roto**: Necesita fix en el script `collect.js` para manejar el caso de `campaigns` null/undefined.
+
+### Evaluación general
+Sancho funcionó bien. El Cost Tracker abortado es la única incidencia real. No hay preguntas sin responder ni violaciones de reglas de canal. La calidad de los reportes de métricas es buena (análisis con contexto, tendencias, señales).
+
+_Generado por Cervantes — cron:cedfbd22-cbd0-4a19-87a0-29337c4f2b37 — 2026-05-03 10:00 CEST_

@@ -24,6 +24,7 @@ import { FileTree } from "@/components/foundation/file-tree";
 import { EmptyState } from "@/components/shared/empty-state";
 import { TaskSlideOver } from "@/components/shared/task-slideover";
 import { DocSlideOver } from "@/components/shared/doc-slideover";
+import { TemplateLiveEditor } from "@/components/foundation/template-live-editor";
 import dynamic from "next/dynamic";
 import ReactMarkdown from "react-markdown";
 
@@ -148,6 +149,7 @@ export default function FoundationPage() {
   const [docLoading, setDocLoading] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
 
+
   // Fetch doc content whenever selectedDoc changes
   useEffect(() => {
     if (!selectedDoc?.docPath) { setDocContent(null); setDocLastModified(null); return; }
@@ -179,6 +181,34 @@ export default function FoundationPage() {
           return;
         }
       }
+    }
+    // Special-case: carousel templates live under the visual-identity pillar.
+    // Match `brand/{slug}/brand-book/visual-identity/templates/{id}/...` and
+    // route the chat thread / status to the parent pillar instead of falling
+    // back to the file basename (which would create a stray "template" thread).
+    const templateMatch = docParam.match(/^brand\/[^/]+\/brand-book\/visual-identity\/templates\/[^/]+\//);
+    if (templateMatch) {
+      // Try to find the actual visual-identity pillar so we inherit its status/skill.
+      for (const [secKey, secData] of Object.entries(foundation.sections)) {
+        const viPillar = secData.pillars?.["visual-identity"];
+        if (viPillar) {
+          setSelectedDoc({
+            sectionKey: secKey,
+            pillarKey: "visual-identity",
+            pillar: viPillar,
+            docPath: docParam,
+          });
+          return;
+        }
+      }
+      // Fallback: synthesize a visual-identity entry so the chat thread is right.
+      setSelectedDoc({
+        sectionKey: "",
+        pillarKey: "visual-identity",
+        pillar: { status: "approved" } as Pillar,
+        docPath: docParam,
+      });
+      return;
     }
     // If no pillar match, still open the doc
     setSelectedDoc({ sectionKey: "", pillarKey: docParam.split("/").pop()?.replace(".md", "") || "", pillar: { status: "approved" } as Pillar, docPath: docParam });
@@ -412,7 +442,7 @@ export default function FoundationPage() {
               💬 Chat
             </button>
 
-            {/* Editar — toggle editor (hide for HTML presentations) */}
+            {/* Editar — for non-HTML docs only. HTML uses the inline editor below. */}
             {!(selectedDoc.docPath.endsWith(".html") || (docContent && (docContent.trimStart().startsWith("<!DOCTYPE") || docContent.trimStart().startsWith("<html")))) && (
               <button
                 type="button"
@@ -446,19 +476,39 @@ export default function FoundationPage() {
             />
           </div>
         ) : !docLoading && docContent ? (
-          selectedDoc.docPath.endsWith(".html") || docContent.trimStart().startsWith("<!DOCTYPE") || docContent.trimStart().startsWith("<html") ? (
-            <iframe
-              srcDoc={docContent}
-              className="w-full border-0 rounded-lg bg-white"
-              style={{ minHeight: "80vh" }}
-              sandbox="allow-same-origin"
-              title={pillarTitle}
-            />
-          ) : (
-            <article className="prose prose-sm max-w-none dark:prose-invert prose-headings:font-heading prose-headings:text-rust prose-a:text-rust prose-table:border-collapse prose-th:border prose-th:border-border prose-th:px-3 prose-th:py-2 prose-th:bg-muted/30 prose-th:text-left prose-th:text-xs prose-th:font-bold prose-td:border prose-td:border-border prose-td:px-3 prose-td:py-2 prose-td:text-xs">
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>{docContent}</ReactMarkdown>
-            </article>
-          )
+          (() => {
+            const isHtml = selectedDoc.docPath.endsWith(".html") ||
+              docContent.trimStart().startsWith("<!DOCTYPE") || docContent.trimStart().startsWith("<html");
+            if (!isHtml) {
+              return (
+                <article className="prose prose-sm max-w-none dark:prose-invert prose-headings:font-heading prose-headings:text-rust prose-a:text-rust prose-table:border-collapse prose-th:border prose-th:border-border prose-th:px-3 prose-th:py-2 prose-th:bg-muted/30 prose-th:text-left prose-th:text-xs prose-th:font-bold prose-td:border prose-td:border-border prose-td:px-3 prose-td:py-2 prose-td:text-xs">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{docContent}</ReactMarkdown>
+                </article>
+              );
+            }
+            // For carousel templates: rich slot-fields editor with live preview.
+            const tplMatch = selectedDoc.docPath.match(/^brand\/([^/]+)\/brand-book\/visual-identity\/templates\/([^/]+)\/(slide-cover|slide-body|slide-cta|template)\.html$/);
+            if (tplMatch) {
+              return (
+                <TemplateLiveEditor
+                  slug={tplMatch[1]}
+                  templateId={tplMatch[2]}
+                  fileKey={tplMatch[3] as "template" | "slide-cover" | "slide-body" | "slide-cta"}
+                  htmlDocPath={selectedDoc.docPath}
+                />
+              );
+            }
+            // Generic HTML doc (e.g. visual-identity-guide.html) → simple iframe.
+            return (
+              <iframe
+                srcDoc={docContent}
+                className="w-full border border-[#E5E2DC] rounded-lg bg-white"
+                style={{ minHeight: "80vh" }}
+                sandbox="allow-same-origin"
+                title={pillarTitle}
+              />
+            );
+          })()
         ) : !docLoading ? (
           <p className="text-sm text-red-500 text-center py-20">Documento no encontrado</p>
         ) : null}

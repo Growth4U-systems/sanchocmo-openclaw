@@ -190,7 +190,37 @@
           }
         ]
       ]
+    },
+    {
+      "date": "2026-05-03",
+      "total_skills_active": 1,
+      "total_executions": 1,
+      "avg_quality": 4.0,
+      "skills_below_3": [],
+      "top_priority": [
+        [
+          "thief-marketers",
+          {
+            "executions": 1,
+            "avg_quality": 4.0,
+            "priority_score": 1.0,
+            "outcomes": {
+              "success": 1
+            },
+            "top_issues": [
+              [
+                "No competitor X/Twitter activity found \u2014 no active handles for HC competitors on X",
+                1
+              ]
+            ],
+            "hints": [
+              "Consider adding LinkedIn monitoring for individual doctors (Dr. Pedraz, Dr. De Felipe, Dr. Va\u00f1\u00f3) as reference creators"
+            ],
+            "failure_rate": 0.0
+          }
+        ]
+      ]
     }
   ],
-  "last_updated": "2026-04-26"
+  "last_updated": "2026-05-03"
 }

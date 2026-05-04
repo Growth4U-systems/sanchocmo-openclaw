@@ -10,8 +10,8 @@
     "primary_color": null,
     "accent_color": null,
     "enabled_templates": [
-      "blog-post",
-      "linkedin-quote"
+      "linkedin-quote",
+      "blog-post"
     ]
   }
 }

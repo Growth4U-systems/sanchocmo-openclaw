@@ -6,7 +6,7 @@ phone: "+34632280951"
 company: null
 source: Facebook
 date_added: 2026-04-08
-last_enriched: 2026-04-23T20:05:00Z
+last_enriched: 2026-05-03T20:04:00Z
 enrichment_pending: false
 enrichment_reason: "Re-enriched during nightly sync — no new Drive transcripts, no pending enrichment work"
 tags: [llamada-agendada, secuencia-seguimiento]

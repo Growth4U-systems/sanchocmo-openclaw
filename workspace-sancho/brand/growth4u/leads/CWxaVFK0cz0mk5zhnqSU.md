@@ -3,7 +3,7 @@ ghl_id: CWxaVFK0cz0mk5zhnqSU
 contact_name: Manuel Campos Figal
 email: smart.academy.ppal@gmail.com
 phone: "+34626529815"
-last_enriched: 2026-04-16T20:00:00Z
+last_enriched: 2026-05-03T20:04:00Z
 enrichment_pending: false
 ---
 

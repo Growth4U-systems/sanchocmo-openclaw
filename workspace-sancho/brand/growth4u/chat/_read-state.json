@@ -174,7 +174,7 @@
     "lastReadTs": 1777239245827
   },
   "visual-identity": {
-    "lastReadTs": 1777240702884
+    "lastReadTs": 1777840823306
   },
   "market-synthesis": {
     "lastReadTs": 1777240824111
@@ -223,5 +223,8 @@
   },
   "content-p-content-semana-18-t05-c02": {
     "lastReadTs": 1777764443716
+  },
+  "templatehtml": {
+    "lastReadTs": 1777837121116
   }
 }

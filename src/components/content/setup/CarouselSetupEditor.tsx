@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { useRouter } from "next/router";
 import { useMemo, useState, type ReactNode } from "react";
 import {
   useAllCarouselTemplates,
@@ -70,6 +71,7 @@ export function CarouselSetupEditor({ slug }: { slug: string }) {
   const config = useEffectiveContentConfig(slug);
   const templatesQ = useAllCarouselTemplates(slug);
   const update = useUpdateContentConfig();
+  const router = useRouter();
 
   // Optimistic enabled set — null means "use server snapshot".
   const [optimistic, setOptimistic] = useState<Set<string> | null>(null);
@@ -207,68 +209,131 @@ export function CarouselSetupEditor({ slug }: { slug: string }) {
 
       {/* Templates */}
       <div className="pt-4 border-t-2 border-dashed space-y-2" style={{ borderColor: "var(--sc-ink)" }}>
-        <ScLabel>Plantillas habilitadas</ScLabel>
-        <p className="text-xs" style={{ color: "var(--sc-fg-soft)" }}>
-          Click sobre la plantilla para activarla o desactivarla. El cambio es inmediato.
-        </p>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-2">
-          {(templatesQ.data || []).map((t) => {
-            const isActive = enabledSet.has(t.id);
-            return (
-              <button
-                key={t.id}
-                type="button"
-                onClick={() => handleToggleTemplate(t.id)}
-                className="text-left p-3 rounded-sc-md border-[2px] sc-pop-hover w-full"
-                style={{
-                  background: isActive ? "var(--sc-sun-100)" : "var(--sc-paper-3)",
-                  borderColor: "var(--sc-ink)",
-                  boxShadow: "var(--pop-sm)",
-                  opacity: isActive ? 1 : 0.65,
-                }}
-              >
-                <TemplateThumbnail
-                  slug={slug}
-                  templateId={t.id}
-                  width={t.width}
-                  height={t.height}
-                />
-                <div className="flex items-center gap-2 mt-2.5">
-                  <span className="font-heading font-bold text-sm flex-1 truncate" style={{ color: "var(--sc-ink)" }}>
-                    {t.name}
-                  </span>
-                  <span
-                    className="font-heading uppercase text-[10px] tracking-wider px-1.5 py-0.5 rounded-sc-pill border shrink-0"
+        <ScLabel>Plantillas</ScLabel>
+
+        {(templatesQ.data || []).length === 0 ? (
+          <EmptyTemplatesState slug={slug} />
+        ) : (
+          <>
+            <p className="text-xs" style={{ color: "var(--sc-fg-soft)" }}>
+              Click sobre una plantilla para abrirla y editarla en Foundation → Visual Identity.
+              El switch de la derecha la activa/desactiva en el panel.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-2">
+              {(templatesQ.data || []).map((t) => {
+                const isActive = enabledSet.has(t.id);
+                const entryFile = t.slideCount > 1 ? "slide-cover.html" : "template.html";
+                const docPath = `brand/${slug}/brand-book/visual-identity/templates/${t.id}/${entryFile}`;
+                const editorHref = `/dashboard/${slug}/foundation?doc=${encodeURIComponent(docPath)}`;
+                return (
+                  <div
+                    key={t.id}
+                    className="rounded-sc-md border-[2px] overflow-hidden"
                     style={{
-                      background: "var(--sc-paper-2)",
+                      background: isActive ? "var(--sc-paper-3)" : "var(--sc-paper-2)",
                       borderColor: "var(--sc-ink)",
-                      color: "var(--sc-fg-muted)",
+                      boxShadow: "var(--pop-sm)",
+                      opacity: isActive ? 1 : 0.7,
                     }}
                   >
-                    {t.channel}
-                  </span>
-                </div>
-                <div className="text-xs mt-1" style={{ color: "var(--sc-fg-muted)" }}>
-                  {t.description}
-                </div>
-                <div className="flex items-center justify-between mt-1.5">
-                  <span className="text-[10px] font-mono" style={{ color: "var(--sc-fg-subtle)" }}>
-                    {t.width}×{t.height} · {t.slideCount} slide{t.slideCount > 1 ? "s" : ""}
-                  </span>
-                  <span
-                    className="font-heading uppercase text-[10px] tracking-wider"
-                    style={{ color: isActive ? "var(--sc-sage-500)" : "var(--sc-fg-subtle)" }}
-                  >
-                    {isActive ? "✓ Activa" : "Inactiva"}
-                  </span>
-                </div>
-              </button>
-            );
-          })}
-        </div>
+                    <button
+                      type="button"
+                      onClick={() => router.push(editorHref)}
+                      className="text-left p-3 w-full hover:bg-[var(--sc-sun-50)] transition-colors"
+                    >
+                      <TemplateThumbnail
+                        slug={slug}
+                        templateId={t.id}
+                        width={t.width}
+                        height={t.height}
+                      />
+                      <div className="flex items-center gap-2 mt-2.5">
+                        <span className="font-heading font-bold text-sm flex-1 truncate" style={{ color: "var(--sc-ink)" }}>
+                          {t.name}
+                        </span>
+                        <span
+                          className="font-heading uppercase text-[10px] tracking-wider px-1.5 py-0.5 rounded-sc-pill border shrink-0"
+                          style={{
+                            background: "var(--sc-paper-2)",
+                            borderColor: "var(--sc-ink)",
+                            color: "var(--sc-fg-muted)",
+                          }}
+                        >
+                          {t.channel}
+                        </span>
+                      </div>
+                      <div className="text-xs mt-1" style={{ color: "var(--sc-fg-muted)" }}>
+                        {t.description}
+                      </div>
+                      <div className="text-[10px] font-mono mt-1.5" style={{ color: "var(--sc-fg-subtle)" }}>
+                        {t.width}×{t.height} · {t.slideCount} slide{t.slideCount > 1 ? "s" : ""}
+                      </div>
+                    </button>
+                    <div
+                      className="flex items-center justify-between gap-2 px-3 py-2 border-t"
+                      style={{ borderColor: "var(--sc-ink)" }}
+                    >
+                      <span
+                        className="font-heading uppercase text-[10px] tracking-wider"
+                        style={{ color: isActive ? "var(--sc-sage-500)" : "var(--sc-fg-subtle)" }}
+                      >
+                        {isActive ? "✓ Activa" : "Inactiva"}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => handleToggleTemplate(t.id)}
+                        className="font-heading uppercase text-[10px] tracking-wider px-2 py-1 rounded border-2 sc-pop-hover"
+                        style={{
+                          background: isActive ? "var(--sc-paper-3)" : "var(--sc-sun-100)",
+                          borderColor: "var(--sc-ink)",
+                          color: "var(--sc-ink)",
+                        }}
+                      >
+                        {isActive ? "Desactivar" : "Activar"}
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </>
+        )}
       </div>
 
       {update.isError && <ScErrorBox>{update.error.message}</ScErrorBox>}
+    </div>
+  );
+}
+
+/** Shown when the brand has no templates yet — visual-identity hasn't run.
+ *  CTAs route the user to where they can fix this. */
+function EmptyTemplatesState({ slug }: { slug: string }) {
+  return (
+    <div
+      className="mt-2 px-4 py-5 rounded-sc-md border-2 border-dashed space-y-3 text-center"
+      style={{ borderColor: "var(--sc-ink)", background: "var(--sc-sun-50)" }}
+    >
+      <div className="text-3xl">🎨</div>
+      <div className="font-heading font-bold text-base" style={{ color: "var(--sc-ink)" }}>
+        Esta brand no tiene plantillas todavía
+      </div>
+      <p className="text-xs leading-relaxed mx-auto max-w-md" style={{ color: "var(--sc-fg-soft)" }}>
+        Las 5 plantillas (LinkedIn cita, LinkedIn carrusel, Instagram carrusel, blog post,
+        blog title) son output de la skill <code style={{ background: "var(--sc-paper-2)" }}>visual-identity</code>.
+        Cuando se ejecuta, deja los HTMLs en{" "}
+        <code style={{ background: "var(--sc-paper-2)" }}>brand-book/visual-identity/templates/</code>.
+      </p>
+      <a
+        href={`/dashboard/${slug}/foundation`}
+        className="inline-flex items-center gap-2 font-heading uppercase text-[11px] tracking-wider px-3 py-2 rounded-sc-md border-2 sc-pop-hover"
+        style={{
+          background: "var(--sc-rust-500)",
+          borderColor: "var(--sc-ink)",
+          color: "var(--sc-paper-3)",
+        }}
+      >
+        Ir a Foundation → Visual Identity
+      </a>
     </div>
   );
 }

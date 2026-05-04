@@ -57,16 +57,17 @@
       }
     },
     "abc8abac-3097-4e27-8131-0a5d77717195": {
-      "updatedAtMs": 1777233951546,
+      "updatedAtMs": 1777838666234,
       "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"0 22 * * 0\",\"tz\":\"Europe/Madrid\"}}",
       "state": {
-        "nextRunAtMs": 1777838400000,
-        "lastRunAtMs": 1777233600030,
+        "nextRunAtMs": 1778443200000,
+        "lastRunAtMs": 1777838400034,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 351516,
+        "lastDurationMs": 266200,
         "lastDeliveryStatus": "not-requested",
-        "consecutiveErrors": 0
+        "consecutiveErrors": 0,
+        "consecutiveSkipped": 0
       }
     },
     "0cd1e931-d374-4428-a452-e2394beac5b7": {
@@ -84,43 +85,43 @@
       }
     },
     "618bc941-a980-4f0d-99c8-5e715060ce6b": {
-      "updatedAtMs": 1777683758712,
+      "updatedAtMs": 1777770208523,
       "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"0 3 * * *\"}}",
       "state": {
-        "nextRunAtMs": 1777770000000,
-        "lastRunAtMs": 1777683600960,
+        "nextRunAtMs": 1777856400000,
+        "lastRunAtMs": 1777770000036,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 157752,
+        "lastDurationMs": 208487,
         "lastDeliveryStatus": "not-requested",
         "consecutiveErrors": 0,
         "consecutiveSkipped": 0,
-        "runningAtMs": 1777770000030
+        "runningAtMs": 1777856400077
       }
     },
     "0c59e923-3267-4926-9a60-36bb81b6041f": {
-      "updatedAtMs": 1777752833819,
+      "updatedAtMs": 1777839308069,
       "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"every\",\"everyMs\":21600000,\"anchorMs\":1772069609685}}",
       "state": {
-        "nextRunAtMs": 1777774384301,
-        "lastRunAtMs": 1777752784301,
+        "nextRunAtMs": 1777860858311,
+        "lastRunAtMs": 1777839258311,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 49518,
+        "lastDurationMs": 49758,
         "lastDeliveryStatus": "not-requested",
         "consecutiveErrors": 0,
         "consecutiveSkipped": 0
       }
     },
     "cedfbd22-cbd0-4a19-87a0-29337c4f2b37": {
-      "updatedAtMs": 1777709013021,
+      "updatedAtMs": 1777795477252,
       "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"0 10 * * *\",\"tz\":\"Europe/Madrid\"}}",
       "state": {
-        "nextRunAtMs": 1777795200000,
-        "lastRunAtMs": 1777708800252,
+        "nextRunAtMs": 1777881600000,
+        "lastRunAtMs": 1777795200038,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 212769,
+        "lastDurationMs": 277214,
         "lastDeliveryStatus": "not-requested",
         "consecutiveErrors": 0,
         "consecutiveSkipped": 0
@@ -132,19 +133,19 @@
       "state": {}
     },
     "b780c3f1-a760-453f-ab81-bc19e4257d11": {
-      "updatedAtMs": 1777701723144,
+      "updatedAtMs": 1777788121502,
       "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"0 8 * * *\",\"tz\":\"Europe/Madrid\"}}",
       "state": {
-        "nextRunAtMs": 1777788000000,
-        "lastRunAtMs": 1777701601820,
+        "nextRunAtMs": 1777874400000,
+        "lastRunAtMs": 1777788000030,
         "lastRunStatus": "error",
         "lastStatus": "error",
-        "lastDurationMs": 121324,
+        "lastDurationMs": 121472,
         "lastDeliveryStatus": "not-requested",
-        "consecutiveErrors": 1,
+        "consecutiveErrors": 2,
         "consecutiveSkipped": 0,
-        "lastError": "cron: job execution timed out",
-        "lastErrorReason": "timeout"
+        "lastErrorReason": "timeout",
+        "lastError": "cron: job execution timed out"
       }
     },
     "4eda3a87-1b19-4932-8c7d-d4b1971d53e3": {
@@ -167,14 +168,14 @@
       }
     },
     "1e64347a-7151-482d-ac27-8ad88cb62896": {
-      "updatedAtMs": 1777692828468,
+      "updatedAtMs": 1777779248606,
       "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"30 5 * * *\",\"tz\":\"Europe/Madrid\"}}",
       "state": {
-        "nextRunAtMs": 1777779000000,
-        "lastRunAtMs": 1777692601630,
+        "nextRunAtMs": 1777865400000,
+        "lastRunAtMs": 1777779000027,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 226838,
+        "lastDurationMs": 248579,
         "lastDeliveryStatus": "delivered",
         "consecutiveErrors": 0,
         "lastDelivered": true,
@@ -182,60 +183,62 @@
       }
     },
     "f04c8094-eaf9-4995-bde8-9d5df88ef4d7": {
-      "updatedAtMs": 1777191032476,
+      "updatedAtMs": 1777795613894,
       "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"0 10 * * 0\",\"tz\":\"Europe/Madrid\"}}",
       "state": {
-        "nextRunAtMs": 1777795200000,
-        "lastRunAtMs": 1777190732455,
-        "lastRunStatus": "error",
-        "lastStatus": "error",
-        "lastDurationMs": 300021,
+        "nextRunAtMs": 1778400000000,
+        "lastRunAtMs": 1777795477252,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 136642,
         "lastDeliveryStatus": "not-requested",
-        "consecutiveErrors": 2,
-        "lastErrorReason": "timeout",
-        "lastError": "cron: job execution timed out"
+        "consecutiveErrors": 0,
+        "consecutiveSkipped": 0
       }
     },
     "f10d84d4-0e6d-4db1-8e1d-824d34efbbc7": {
-      "updatedAtMs": 1777191130271,
+      "updatedAtMs": 1777795795080,
       "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"0 10 * * 0\",\"tz\":\"Europe/Madrid\"}}",
       "state": {
-        "nextRunAtMs": 1777795200000,
-        "lastRunAtMs": 1777191032476,
+        "nextRunAtMs": 1778400000000,
+        "lastRunAtMs": 1777795613894,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 97795,
+        "lastDurationMs": 181186,
         "lastDeliveryStatus": "not-requested",
-        "consecutiveErrors": 0
+        "consecutiveErrors": 0,
+        "consecutiveSkipped": 0
       }
     },
     "953c7fcd-9358-4dd6-8092-6ddde9c775a0": {
-      "updatedAtMs": 1777191185298,
+      "updatedAtMs": 1777795988574,
       "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"0 10 * * 0\",\"tz\":\"Europe/Madrid\"}}",
       "state": {
-        "nextRunAtMs": 1777795200000,
-        "lastRunAtMs": 1777191130271,
+        "nextRunAtMs": 1778400000000,
+        "lastRunAtMs": 1777795795080,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 55027,
+        "lastDurationMs": 193494,
         "lastDeliveryStatus": "delivered",
         "consecutiveErrors": 0,
-        "lastDelivered": true
+        "lastDelivered": true,
+        "consecutiveSkipped": 0
       }
     },
     "3c0b79c9-01e5-499d-bd98-c88c963c9b82": {
-      "updatedAtMs": 1777191224615,
+      "updatedAtMs": 1777796056031,
       "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"0 10 * * 0\",\"tz\":\"Europe/Madrid\"}}",
       "state": {
-        "nextRunAtMs": 1777795200000,
-        "lastRunAtMs": 1777191185298,
+        "nextRunAtMs": 1778400000000,
+        "lastRunAtMs": 1777795988574,
         "lastRunStatus": "error",
         "lastStatus": "error",
-        "lastDurationMs": 39317,
+        "lastDurationMs": 67457,
         "lastDeliveryStatus": "unknown",
-        "consecutiveErrors": 2,
+        "consecutiveErrors": 3,
         "lastErrorReason": "rate_limit",
-        "lastError": "Unsupported channel: 1482642972712505395"
+        "lastError": "Unsupported channel: 1482642972712505395; the agent used the message tool, but OpenClaw could not verify that message matched the cron delivery target",
+        "consecutiveSkipped": 0
       }
     },
     "476f5959-8aaf-4d2a-8f41-9b0187250e86": {
@@ -281,31 +284,30 @@
       }
     },
     "a68143d8-1309-46eb-a5dc-4c3fb35ee3d2": {
-      "updatedAtMs": 1777752467179,
+      "updatedAtMs": 1777838936318,
       "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"0 22 * * *\",\"tz\":\"Europe/Madrid\"}}",
       "state": {
-        "nextRunAtMs": 1777838400000,
-        "lastRunAtMs": 1777752000028,
+        "nextRunAtMs": 1777924800000,
+        "lastRunAtMs": 1777838666234,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 467151,
+        "lastDurationMs": 270084,
         "lastDeliveryStatus": "not-requested",
         "consecutiveErrors": 0,
         "consecutiveSkipped": 0
       }
     },
     "36d0bff9-fea9-40d8-9bfd-bf1e5e58468b": {
-      "updatedAtMs": 1777581409861,
+      "updatedAtMs": 1777840428561,
       "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"30 22 * * 0-4\",\"tz\":\"Europe/Madrid\"}}",
       "state": {
-        "nextRunAtMs": 1777840200000,
-        "lastRunAtMs": 1777581000009,
-        "lastRunStatus": "error",
-        "lastStatus": "error",
-        "lastDurationMs": 409852,
+        "nextRunAtMs": 1777926600000,
+        "lastRunAtMs": 1777840200036,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 228525,
         "lastDeliveryStatus": "not-requested",
-        "consecutiveErrors": 3,
-        "lastError": "⚠️ Agent couldn't generate a response. Note: some tool actions may have already been executed — please verify before retrying.",
+        "consecutiveErrors": 0,
         "consecutiveSkipped": 0
       }
     },
@@ -457,31 +459,31 @@
       }
     },
     "09b92860-663d-4fb1-8f27-352c55e8a507": {
-      "updatedAtMs": 1777703658011,
+      "updatedAtMs": 1777790095167,
       "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"30 8 * * *\",\"tz\":\"Europe/Madrid\"}}",
       "state": {
-        "nextRunAtMs": 1777789800000,
-        "lastRunAtMs": 1777703400266,
+        "nextRunAtMs": 1777876200000,
+        "lastRunAtMs": 1777789800035,
         "lastRunStatus": "error",
         "lastStatus": "error",
-        "lastDurationMs": 257745,
+        "lastDurationMs": 295132,
         "lastDeliveryStatus": "unknown",
-        "consecutiveErrors": 19,
+        "consecutiveErrors": 20,
         "consecutiveSkipped": 0,
         "lastError": "Channel is required when multiple channels are configured: discord, mc-chat Set delivery.channel explicitly or use a main session with a previous channel.; the agent used the message tool, but OpenClaw could not verify that message matched the cron delivery target"
       }
     },
     "9416a8bc-14f5-4626-99d2-c8065c4ab002": {
-      "updatedAtMs": 1777703720008,
+      "updatedAtMs": 1777790162420,
       "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"30 8 * * *\",\"tz\":\"Europe/Madrid\"}}",
       "state": {
-        "nextRunAtMs": 1777789800000,
-        "lastRunAtMs": 1777703658011,
+        "nextRunAtMs": 1777876200000,
+        "lastRunAtMs": 1777790095167,
         "lastRunStatus": "error",
         "lastStatus": "error",
-        "lastDurationMs": 61997,
+        "lastDurationMs": 67253,
         "lastDeliveryStatus": "unknown",
-        "consecutiveErrors": 24,
+        "consecutiveErrors": 25,
         "consecutiveSkipped": 0,
         "lastError": "Channel is required when multiple channels are configured: discord, mc-chat Set delivery.channel explicitly or use a main session with a previous channel."
       }
@@ -794,6 +796,34 @@
         "lastError": "cron: job interrupted by gateway restart",
         "lastDelivered": false,
         "lastDeliveryError": "cron: job interrupted by gateway restart"
+      }
+    },
+    "c8577592-e1af-47fd-a15a-ccd968f18220": {
+      "updatedAtMs": 1777837031844,
+      "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"0 9 * * 1\",\"tz\":\"Europe/Madrid\"}}",
+      "state": {
+        "nextRunAtMs": 1777878000000
+      }
+    },
+    "91058115-935f-48e8-88b6-c8a543914ad8": {
+      "updatedAtMs": 1777837031844,
+      "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"0 9 * * 1\",\"tz\":\"Europe/Madrid\"}}",
+      "state": {
+        "nextRunAtMs": 1777878000000
+      }
+    },
+    "0b7aadcc-e694-475b-a8ba-b6eb3418807f": {
+      "updatedAtMs": 1777837031844,
+      "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"0 9 * * 1\",\"tz\":\"Europe/Madrid\"}}",
+      "state": {
+        "nextRunAtMs": 1777878000000
+      }
+    },
+    "42dbd1ef-e58d-4fe9-a211-c48030f4e0c1": {
+      "updatedAtMs": 1777837031844,
+      "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"0 9 * * 1\",\"tz\":\"Europe/Madrid\"}}",
+      "state": {
+        "nextRunAtMs": 1777878000000
       }
     }
   }

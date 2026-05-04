@@ -5,7 +5,7 @@ last_name: candel
 email: sergi@xhype.io
 phone: null
 company: XHYPE
-last_enriched: 2026-04-23T20:05:00Z
+last_enriched: 2026-05-03T20:04:00Z
 enrichment_pending: false
 ---
 

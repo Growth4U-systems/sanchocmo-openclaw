@@ -1,6 +1,6 @@
 import fs from "fs";
 import path from "path";
-import { brandDir, BASE } from "@/lib/data/paths";
+import { brandDir } from "@/lib/data/paths";
 import { wrapHtmlDoc } from "@/lib/carousel/render";
 import type { CarouselTemplate, RenderSlideInput } from "@/lib/carousel/types";
 
@@ -49,57 +49,15 @@ export interface FileTemplateMeta {
   preview?: CarouselTemplate["preview"];
 }
 
-const TEMPLATES_REL = path.join("content", "carousel-templates");
-const SEED_DIR = path.join(BASE, "skills", "_shared", "carousel-templates");
+/** Templates live INSIDE the visual-identity pillar — they're a sub-output
+ *  of that pillar, produced by the brand's `[brand]-visual-generator` skill
+ *  during Foundation Layer 5. No system-wide defaults exist; if a brand
+ *  hasn't completed visual-identity, no templates show up.
+ */
+const TEMPLATES_REL = path.join("brand-book", "visual-identity", "templates");
 
 function templatesDir(slug: string): string {
   return path.join(brandDir(slug), TEMPLATES_REL);
-}
-
-function listSeedIds(): string[] {
-  if (!fs.existsSync(SEED_DIR)) return [];
-  return fs
-    .readdirSync(SEED_DIR, { withFileTypes: true })
-    .filter((e) => e.isDirectory() && !e.name.startsWith("."))
-    .map((e) => e.name);
-}
-
-/** Recursively copy a seed template directory into the brand's directory.
- *  Idempotent at the file level — never overwrites a file the brand already
- *  owns, so authors can edit any single file (template.html, meta.json,
- *  slide-cover.html…) and the rest still gets seeded. */
-function copyMissingFiles(srcDir: string, dstDir: string): void {
-  fs.mkdirSync(dstDir, { recursive: true });
-  for (const entry of fs.readdirSync(srcDir, { withFileTypes: true })) {
-    const src = path.join(srcDir, entry.name);
-    const dst = path.join(dstDir, entry.name);
-    if (entry.isDirectory()) {
-      copyMissingFiles(src, dst);
-    } else if (entry.isFile() && !fs.existsSync(dst)) {
-      fs.copyFileSync(src, dst);
-    }
-  }
-}
-
-/**
- * Ensure that every seed template has been materialized into the brand's
- * `content/carousel-templates/` directory. Called lazily before listing.
- *
- *   - Brand has no copy of seed `id` → directory copied wholesale.
- *   - Brand already has the directory but is missing some files (a new
- *     slide-*.html added to seed after the brand was created) → just those
- *     missing files are copied.
- *   - Brand has its own customized files → never touched.
- *
- * Net effect: every brand sees the same 5 (or N) official templates the
- * moment the loader runs, without anyone having to bootstrap manually.
- */
-function ensureSeedTemplates(slug: string): void {
-  const targetRoot = templatesDir(slug);
-  fs.mkdirSync(targetRoot, { recursive: true });
-  for (const id of listSeedIds()) {
-    copyMissingFiles(path.join(SEED_DIR, id), path.join(targetRoot, id));
-  }
 }
 
 /** List ids of every template directory under `brand/{slug}/content/carousel-templates/`. */
@@ -258,12 +216,20 @@ function buildTemplate(slug: string, meta: FileTemplateMeta): CarouselTemplate {
   };
 }
 
-/** Load every file-backed template the brand has, materializing seed
- *  templates into the brand directory the first time they're needed. */
+/** Load every template the brand's `[brand]-visual-generator` skill has
+ *  produced under `brand-book/visual-identity/templates/`. Returns empty if
+ *  the brand hasn't completed visual-identity yet — UI shows an empty state
+ *  pointing to the skill. */
 export function loadBrandTemplates(slug: string): CarouselTemplate[] {
-  ensureSeedTemplates(slug);
   return listTemplateIds(slug)
     .map((id) => readMeta(slug, id))
     .filter((m): m is FileTemplateMeta => !!m)
     .map((meta) => buildTemplate(slug, meta));
+}
+
+/** Brand-relative path to a template file (template.html, meta.json,
+ *  slide-cover.html, …). Used by the UI to deep-link into the Foundation
+ *  doc-tree where the file actually lives. */
+export function templateFileRelPath(templateId: string, fileName = "template.html"): string {
+  return path.join(TEMPLATES_REL, templateId, fileName);
 }

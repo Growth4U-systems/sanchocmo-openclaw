@@ -181,8 +181,48 @@ Mueve cualquier candidato razonable al path canónico y, si no hay nada, escribe
 9. **Visual Do's / Don'ts** con pares de ejemplo
 10. **Generar Child Skills** (si templates disponibles):
     - `[brand]-ui-system` → tokens + componentes
-    - `[brand]-visual-generator` → 3 layers + nano-banana-pro config
+    - `[brand]-visual-generator` → 3 layers + nano-banana-pro config + **5 plantillas HTML de carrusel** (ver siguiente bloque)
     - Verificar: YAML válido, archivos existen, test invocation
+
+#### 5 plantillas HTML de carrusel (output obligatorio del child skill)
+
+Cuando esta skill genera `[brand]-visual-generator`, ese child skill **debe**
+producir las 5 plantillas oficiales que Mission Control consume desde el
+panel de carrusel. Path canónico:
+
+```
+brand/{slug}/brand-book/visual-identity/templates/{template-id}/
+├── meta.json                    # slots, dims, slideCount, channel, name, description, preview
+├── template.html                # single-slide
+└── slide-cover/body/cta.html    # multi-slide
+```
+
+Las 5 plantillas obligatorias:
+
+| Template ID | Canal | Tamaño | Slides |
+|---|---|---|---|
+| `linkedin-quote` | linkedin | 1080×1350 | 1 |
+| `linkedin-9-slide` | linkedin | 1080×1350 | 9 |
+| `instagram-3-slide` | instagram | 1080×1080 | 3 |
+| `blog-post` | blog | 1200×630 | 1 |
+| `blog-title` | blog | 1200×630 | 1 |
+
+Las plantillas usan `{{brand.primary}}`, `{{brand.accent}}`,
+`{{brand.primary_dark}}`, `{{brand.primary_light}}`, `{{brand.accent_dark}}`,
+`{{brand.logo}}`, `{{brand.footer}}` para que MC inyecte la paleta del
+design-tokens.json al renderizar — los HTMLs nunca traen hex hardcoded.
+
+Ver `[brand]-visual-generator/SKILL.md` (ej: `growth4u-visual-generator`)
+para el flow detallado de cómo se generan: lectura de design-tokens y
+visual-identity, decisión de personajes (Alfonso/Martín/Philippe), generación
+con nano-banana-pro de los assets que faltan, y persistencia en el path
+canónico.
+
+**Edición posterior**: el cliente edita las plantillas desde Mission Control
+→ Foundation → Brand Book → Visual Identity → templates → click en el HTML
+→ vista 2-col (HTML editor + iframe preview en vivo). El thread de chat de
+visual-identity es el que recibe los pedidos de cambios. NO hay TemplateTask
+ni thread separado — la plantilla es un sub-doc del pillar.
 11. **Assemblar Visual DNA Kit** como HTML presentable
 
 ---

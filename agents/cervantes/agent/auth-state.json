@@ -5,12 +5,12 @@
   },
   "usageStats": {
     "anthropic:sanchocmo-openclaw": {
-      "lastUsed": 1777752833779,
+      "lastUsed": 1777839308034,
       "errorCount": 0,
       "lastFailureAt": 1777580027004
     },
     "anthropic:manual": {
-      "lastUsed": 1777731232487,
+      "lastUsed": 1777817710847,
       "errorCount": 0,
       "lastFailureAt": 1777580013972
     }
