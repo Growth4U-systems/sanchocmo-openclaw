@@ -63,12 +63,15 @@
     "lastReadTs": 1777397335337
   },
   "niche-discovery": {
-    "lastReadTs": 1777468182581
+    "lastReadTs": 1777910098391
   },
   "foundation-report": {
     "lastReadTs": 1776970783471
   },
   "task-p01-t05": {
     "lastReadTs": 1777048762058
+  },
+  "metrics-setup": {
+    "lastReadTs": 1777913916148
   }
 }

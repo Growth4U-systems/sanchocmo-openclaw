@@ -1,13 +1,13 @@
 {
   "url": "https://hulahoop.media",
   "mobile": {
-    "performance": 63,
+    "performance": 69,
     "seo": 92,
     "accessibility": 96,
     "bestPractices": 100,
     "lcp": 16.3,
     "cls": 0,
-    "tbt": 218,
+    "tbt": 87,
     "opportunities": [
       {
         "id": "redirects",
@@ -20,44 +20,50 @@
         "title": "Reduce unused JavaScript",
         "savings": 750,
         "description": "Reduce unused JavaScript and defer loading scripts until they are required to decrease bytes consumed by network activity. [Learn how to reduce unused"
+      },
+      {
+        "id": "server-response-time",
+        "title": "Initial server response time was short",
+        "savings": 243,
+        "description": "Keep the server response time for the main document short because all other requests depend on it. [Learn more about the Time to First Byte metric](ht"
       }
     ],
     "diagnostics": [
-      {
-        "id": "image-delivery-insight",
-        "title": "Improve image delivery",
-        "score": 0
-      },
       {
         "id": "render-blocking-insight",
         "title": "Render blocking requests",
         "score": 0
       },
       {
-        "id": "mainthread-work-breakdown",
-        "title": "Minimize main-thread work",
+        "id": "image-delivery-insight",
+        "title": "Improve image delivery",
         "score": 0
       },
       {
-        "id": "bootup-time",
-        "title": "Reduce JavaScript execution time",
+        "id": "legacy-javascript-insight",
+        "title": "Legacy JavaScript",
         "score": 0
       },
       {
         "id": "link-name",
         "title": "Links do not have a discernible name",
         "score": 0
+      },
+      {
+        "id": "mainthread-work-breakdown",
+        "title": "Minimize main-thread work",
+        "score": 0
       }
     ]
   },
   "desktop": {
-    "performance": 77,
+    "performance": 73,
     "seo": 92,
     "accessibility": 96,
     "bestPractices": 100,
     "lcp": 2.9,
     "cls": 0,
-    "tbt": 163,
+    "tbt": 230,
     "opportunities": [
       {
         "id": "redirects",
@@ -79,16 +85,21 @@
         "score": 0
       },
       {
-        "id": "link-name",
-        "title": "Links do not have a discernible name",
+        "id": "render-blocking-insight",
+        "title": "Render blocking requests",
         "score": 0
       },
       {
-        "id": "render-blocking-insight",
-        "title": "Render blocking requests",
+        "id": "mainthread-work-breakdown",
+        "title": "Minimize main-thread work",
+        "score": 0
+      },
+      {
+        "id": "link-name",
+        "title": "Links do not have a discernible name",
         "score": 0
       }
     ]
   },
-  "fetchedAt": "2026-04-28T16:42:18.219Z"
+  "fetchedAt": "2026-05-04T16:47:57.610Z"
 }

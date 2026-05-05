@@ -1,43 +1,28 @@
 {
   "url": "https://www.dealcar.io/",
   "mobile": {
-    "performance": 30,
+    "performance": 35,
     "seo": 100,
-    "accessibility": 90,
-    "bestPractices": 54,
-    "lcp": 17.9,
-    "cls": 0.093,
-    "tbt": 1120,
+    "accessibility": 91,
+    "bestPractices": 96,
+    "lcp": 15.7,
+    "cls": 0.022,
+    "tbt": 1325,
     "opportunities": [
+      {
+        "id": "redirects",
+        "title": "Avoid multiple page redirects",
+        "savings": 780,
+        "description": "Redirects introduce additional delays before the page can be loaded. [Learn how to avoid page redirects](https://developer.chrome.com/docs/lighthouse/"
+      },
       {
         "id": "unused-javascript",
         "title": "Reduce unused JavaScript",
-        "savings": 5180,
+        "savings": 750,
         "description": "Reduce unused JavaScript and defer loading scripts until they are required to decrease bytes consumed by network activity. [Learn how to reduce unused"
-      },
-      {
-        "id": "unused-css-rules",
-        "title": "Reduce unused CSS",
-        "savings": 680,
-        "description": "Reduce unused rules from stylesheets and defer CSS not used for above-the-fold content to decrease bytes consumed by network activity. [Learn how to r"
       }
     ],
     "diagnostics": [
-      {
-        "id": "render-blocking-insight",
-        "title": "Render blocking requests",
-        "score": 0
-      },
-      {
-        "id": "inspector-issues",
-        "title": "Issues were logged in the `Issues` panel in Chrome Devtools",
-        "score": 0
-      },
-      {
-        "id": "cache-insight",
-        "title": "Use efficient cache lifetimes",
-        "score": 0
-      },
       {
         "id": "errors-in-console",
         "title": "Browser errors were logged to the console",
@@ -46,60 +31,6 @@
       {
         "id": "link-name",
         "title": "Links do not have a discernible name",
-        "score": 0
-      },
-      {
-        "id": "bootup-time",
-        "title": "Reduce JavaScript execution time",
-        "score": 0
-      },
-      {
-        "id": "deprecations",
-        "title": "Uses deprecated APIs",
-        "score": 0
-      },
-      {
-        "id": "color-contrast",
-        "title": "Background and foreground colors do not have a sufficient contrast ratio.",
-        "score": 0
-      },
-      {
-        "id": "image-delivery-insight",
-        "title": "Improve image delivery",
-        "score": 0
-      },
-      {
-        "id": "font-display-insight",
-        "title": "Font display",
-        "score": 0
-      }
-    ]
-  },
-  "desktop": {
-    "performance": 47,
-    "seo": 100,
-    "accessibility": 92,
-    "bestPractices": 54,
-    "lcp": 2.8,
-    "cls": 0.035,
-    "tbt": 865,
-    "opportunities": [
-      {
-        "id": "unused-javascript",
-        "title": "Reduce unused JavaScript",
-        "savings": 120,
-        "description": "Reduce unused JavaScript and defer loading scripts until they are required to decrease bytes consumed by network activity. [Learn how to reduce unused"
-      }
-    ],
-    "diagnostics": [
-      {
-        "id": "inspector-issues",
-        "title": "Issues were logged in the `Issues` panel in Chrome Devtools",
-        "score": 0
-      },
-      {
-        "id": "mainthread-work-breakdown",
-        "title": "Minimize main-thread work",
         "score": 0
       },
       {
@@ -108,23 +39,8 @@
         "score": 0
       },
       {
-        "id": "link-name",
-        "title": "Links do not have a discernible name",
-        "score": 0
-      },
-      {
-        "id": "third-party-cookies",
-        "title": "Uses third-party cookies",
-        "score": 0
-      },
-      {
-        "id": "bootup-time",
-        "title": "Reduce JavaScript execution time",
-        "score": 0
-      },
-      {
-        "id": "deprecations",
-        "title": "Uses deprecated APIs",
+        "id": "listitem",
+        "title": "List items (`<li>`) are not contained within `<ul>`, `<ol>` or `<menu>` parent elements.",
         "score": 0
       },
       {
@@ -133,16 +49,76 @@
         "score": 0
       },
       {
-        "id": "render-blocking-insight",
-        "title": "Render blocking requests",
+        "id": "mainthread-work-breakdown",
+        "title": "Minimize main-thread work",
+        "score": 0
+      },
+      {
+        "id": "bootup-time",
+        "title": "Reduce JavaScript execution time",
+        "score": 0
+      }
+    ]
+  },
+  "desktop": {
+    "performance": 36,
+    "seo": 100,
+    "accessibility": 91,
+    "bestPractices": 96,
+    "lcp": 5.6,
+    "cls": 0.008,
+    "tbt": 1457,
+    "opportunities": [
+      {
+        "id": "unused-javascript",
+        "title": "Reduce unused JavaScript",
+        "savings": 800,
+        "description": "Reduce unused JavaScript and defer loading scripts until they are required to decrease bytes consumed by network activity. [Learn how to reduce unused"
+      },
+      {
+        "id": "redirects",
+        "title": "Avoid multiple page redirects",
+        "savings": 230,
+        "description": "Redirects introduce additional delays before the page can be loaded. [Learn how to avoid page redirects](https://developer.chrome.com/docs/lighthouse/"
+      }
+    ],
+    "diagnostics": [
+      {
+        "id": "link-name",
+        "title": "Links do not have a discernible name",
+        "score": 0
+      },
+      {
+        "id": "cache-insight",
+        "title": "Use efficient cache lifetimes",
+        "score": 0
+      },
+      {
+        "id": "mainthread-work-breakdown",
+        "title": "Minimize main-thread work",
         "score": 0
       },
       {
         "id": "errors-in-console",
         "title": "Browser errors were logged to the console",
         "score": 0
+      },
+      {
+        "id": "heading-order",
+        "title": "Heading elements are not in a sequentially-descending order",
+        "score": 0
+      },
+      {
+        "id": "bootup-time",
+        "title": "Reduce JavaScript execution time",
+        "score": 0
+      },
+      {
+        "id": "listitem",
+        "title": "List items (`<li>`) are not contained within `<ul>`, `<ol>` or `<menu>` parent elements.",
+        "score": 0
       }
     ]
   },
-  "fetchedAt": "2026-04-01T15:38:19.545Z"
+  "fetchedAt": "2026-05-04T17:19:30.683Z"
 }

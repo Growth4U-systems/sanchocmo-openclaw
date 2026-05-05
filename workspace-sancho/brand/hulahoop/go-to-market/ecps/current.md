@@ -266,6 +266,7 @@ Este ECP rara vez convierte si el asesor no lo habilita. Por eso **debe trabajar
 - **Rol real:** prescriptor, desbloqueador o detractor
 - **Prioridad 2026:** alta como canal del deal de incentivo
 - **No confundir con:** target de captación masiva Pro Tax
+- **Persona operativa:** asesor fiscal que necesita validar una operación nueva sin riesgo reputacional
 
 ### Job to Be Done
 "Necesito poder recomendar o validar una operación de incentivo fiscal sin poner en riesgo la relación con mi cliente ni mi criterio profesional."
@@ -284,8 +285,32 @@ Este ECP rara vez convierte si el asesor no lo habilita. Por eso **debe trabajar
 - material que reduzca fricción, no que le venda encima
 
 ### Mensaje que mejor encaja
-- **Core message:** "No necesitas cambiar tu rol; necesitas entender y desbloquear una operación que puede tener sentido para tu cliente."
-- **Ángulo:** control + claridad + protección de la relación con el cliente
+- **Core message:** "No necesitas venderle nada nuevo a tu cliente; necesitas poder validar con criterio una operación que puede tener sentido para él."
+- **Ángulo:** control + claridad + defensa reputacional
+
+### Subtipos operativos dentro del ECP 4
+
+#### 4A — Despacho mediano de provincia
+- cartera local
+- poco tiempo para estudiar estructuras nuevas
+- alta aversión a equivocarse
+- **Approach:** simplicidad, protección de relación cliente y facilidad de explicación
+
+#### 4B — Boutique fiscal en Madrid / Barcelona
+- sofisticación técnica más alta
+- ya compara contra otras estructuras fiscales
+- filtro reputacional y documental exigente
+- **Approach:** mensaje técnico, seriedad y capacidad de defensa
+
+#### 4C — Despachos migrando de I+D a cultural
+- subsegmento especialmente interesante si ya entiende la lógica de incentivo fiscal
+- puede ver la categoría cultural como extensión natural, pero exigirá claridad jurídica y operativa
+- **Approach:** transición de categoría, continuidad conceptual y material de soporte fino
+
+#### 4D — Big 4 y equivalentes
+- hoy **no prioritario**
+- ciclos más largos, barrera de entrada más alta y baja utilidad táctica en esta fase
+- **Approach:** excluir del foco comercial activo 2026 salvo intro excepcional
 
 ### Regla estratégica
 En 2026 este ECP debe trabajarse como **desbloqueador del deal**, no como frente de venta masiva de Pro Tax.
@@ -350,6 +375,74 @@ Puede existir, pero hoy debe tratarse solo dentro del subsegmento concreto corre
 
 ---
 
+## Routing de Leads Fuera de Scope
+
+No todo lead que entre en el sistema va a encajar limpiamente en **ECP 1, 2, 3A-3D, 4 o 5**. Eso no debe dejar leads “huérfanos” en CRM.
+
+### Regla operativa
+Si un lead no encaja en ningún ECP activo, debe clasificarse explícitamente en uno de estos buckets:
+
+- **WAITLIST_PFP** → perfil potencial para producto regulado / PFP en horizonte **Q1 2027+**
+- **SUPPLY_CINE** → productor, promotor o perfil del lado supply; derivar al frente correspondiente, no al pipeline comercial de estos ECPs
+- **OUT_OF_SCOPE** → lead que no encaja ni por perfil, ni por momento, ni por producto; se responde con cortesía y no entra en pipeline activo
+
+### Ejemplos típicos
+- lead que llega por LinkedIn, muestra interés, pero no encaja ni como anticipo, ni como incentivo fiscal, ni como recurrente → **OUT_OF_SCOPE** o **WAITLIST_PFP** según madurez y timing
+- perfil claramente vinculado a producción cultural → **SUPPLY_CINE**
+- inversor retail curioso pero prematuro para el momento regulatorio actual → **WAITLIST_PFP**
+
+### Siguiente acción por bucket
+- **WAITLIST_PFP** → etiquetar, meter en nurturing, no pasar a pipeline comercial activo y revisar cuando exista ventana regulatoria real
+- **SUPPLY_CINE** → derivar al frente correcto, cerrar el loop interno y sacarlo del pipeline comercial de ECPs
+- **OUT_OF_SCOPE** → respuesta cordial, cierre limpio y sin seguimiento comercial insistente
+
+### Objetivo de este bucket
+- evitar CRM desordenado
+- no forzar encaje artificial en un ECP equivocado
+- preservar la calidad del pipeline real
+- dejar clara la siguiente acción por tipo de lead
+
+---
+
+## Etiquetas Recomendadas para CRM
+
+### Tags principales de segmentación
+- **ECP1**
+- **ECP2**
+- **ECP3A**
+- **ECP3B**
+- **ECP3C**
+- **ECP3D**
+- **ECP4**
+- **ECP5**
+- **WAITLIST_PFP**
+- **SUPPLY_CINE**
+- **OUT_OF_SCOPE**
+
+### Sub-tags geográficos
+- **GEO_MAD**
+- **GEO_BCN**
+- **GEO_NORTH**
+- **GEO_AND**
+- **GEO_SOUTH**
+
+### Regla de uso
+Cada lead debe llevar:
+
+1. **un tag principal** de segmentación
+2. **cero o un sub-tag geográfico**
+
+No usar dos ECPs principales simultáneamente salvo revisión manual clara. Si el lead evoluciona, se cambia el tag principal; no se acumulan etiquetas contradictorias.
+
+### Beneficio operativo
+Esta nomenclatura permite:
+- filtrar campañas y outreach por segmento real
+- ordenar reporting por tipo de lead
+- preparar automatizaciones en Go High Level sin crear un sistema ambiguo
+- distinguir claramente pipeline activo vs waitlist vs descarte
+
+---
+
 ## Elevator Pitch Interno por ECP
 
 - **ECP 1:** liquidez joven que quiere algo privado, corto y entendible
@@ -358,7 +451,7 @@ Puede existir, pero hoy debe tratarse solo dentro del subsegmento concreto corre
 - **ECP 3B:** perfil técnico que exige seriedad y lectura financiera real
 - **ECP 3C:** vertical con IS alto donde el mensaje debe ser específico
 - **ECP 3D:** profesional liberal que necesita encaje claro y defendible
-- **ECP 4:** asesor que debe desbloquear, no bloquear, el deal
+- **ECP 4:** asesor fiscal que necesita validar una operación nueva sin riesgo reputacional
 - **ECP 5:** inversor que ya confía y puede volver con referral
 
 ---
