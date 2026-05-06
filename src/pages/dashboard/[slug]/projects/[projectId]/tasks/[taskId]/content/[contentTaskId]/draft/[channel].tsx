@@ -20,6 +20,7 @@ import { buildContentTaskThread } from "@/lib/chat-openers";
 import { ChannelPreview, isPlaceholderBody } from "@/components/content/channel-preview";
 import { MediaPanel } from "@/components/content/MediaPanel";
 import { PublishBar } from "@/components/content/PublishBar";
+import { SelfQAPanel } from "@/components/content/self-qa-panel";
 import { SkillPicker } from "@/components/shared/skill-picker";
 import { cn } from "@/lib/utils";
 import {
@@ -433,6 +434,13 @@ export default function DraftFullScreenPage() {
                 body={draft.body}
                 brandSlug={slug}
                 media={draft.meta.media}
+              />
+            )}
+
+            {draft?.meta.self_qa && (
+              <SelfQAPanel
+                verdict={draft.meta.self_qa}
+                notes={draft.meta.self_qa_notes}
               />
             )}
 

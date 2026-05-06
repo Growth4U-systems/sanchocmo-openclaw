@@ -43,7 +43,56 @@ function scanDir(dir: string, baseResolve: string): { subfolders: SubfolderEntry
         const s = fs.statSync(path.join(subDir, f));
         return s.isFile() && (f.endsWith(".md") || f.endsWith(".html"));
       });
-      if (subFiles.length === 0) continue;
+
+      // Special case: directories that ONLY contain other directories (like
+      // `templates/` which holds `blog-post/`, `linkedin-quote/`, …) are
+      // expanded one extra level so each nested template surfaces as its
+      // own subfolder row. Without this `templates/` is invisible because
+      // it has no doc files directly.
+      if (subFiles.length === 0) {
+        const nestedDirs = fs.readdirSync(subDir, { withFileTypes: true })
+          .filter((e) => e.isDirectory() && !e.name.startsWith(".") && !IGNORED_DIRS.has(e.name));
+        for (const nested of nestedDirs) {
+          const nestedDir = path.join(subDir, nested.name);
+          const nestedFiles = fs.readdirSync(nestedDir).filter((f) => {
+            const s = fs.statSync(path.join(nestedDir, f));
+            return s.isFile() && (f.endsWith(".md") || f.endsWith(".html"));
+          });
+          if (nestedFiles.length === 0) continue;
+
+          // Pick the entry file. Multi-slide templates use `slide-cover.html`,
+          // single-slide use `template.html`.
+          const nestedMain =
+            nestedFiles.find((f) => f === "template.html") ||
+            nestedFiles.find((f) => f === "slide-cover.html") ||
+            nestedFiles.find((f) => f.includes(".current.")) ||
+            nestedFiles[0];
+
+          const nestedVersions: DocEntry[] = [];
+          const nestedOther: DocEntry[] = [];
+          for (const nf of nestedFiles) {
+            if (nf === nestedMain) continue;
+            const rel = path.relative(baseResolve, path.join(nestedDir, nf));
+            if (VERSION_RE.test(nf)) {
+              nestedVersions.push({ name: nf.replace(/\.md$/, ""), fullPath: rel });
+            } else {
+              nestedOther.push({
+                name: nf.replace(/\.(md|html)$/, "").replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
+                fullPath: rel,
+              });
+            }
+          }
+
+          const prettyChild = nested.name.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+          subfolders.push({
+            name: `${entry.name} / ${prettyChild}`,
+            mainDoc: path.relative(baseResolve, path.join(nestedDir, nestedMain)),
+            files: nestedOther,
+            versions: nestedVersions,
+          });
+        }
+        continue;
+      }
 
       const subCurrent = subFiles.find((f) => f.includes(".current.")) || subFiles[0];
       const subVersions: DocEntry[] = [];

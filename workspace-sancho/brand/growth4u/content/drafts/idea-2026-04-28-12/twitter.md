@@ -10,6 +10,4 @@ created_at: '2026-04-30T13:32:10.035Z'
 updated_at: '2026-04-30T15:32:00.000Z'
 ---
 
-# twitter draft
-
 _Pendiente de Clarify. Esperando respuestas._

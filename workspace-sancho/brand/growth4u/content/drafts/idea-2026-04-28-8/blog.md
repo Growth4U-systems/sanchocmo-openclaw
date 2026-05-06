@@ -86,6 +86,18 @@ schema_faq: |
       }
     ]
   }
+self_qa: PASS
+self_qa_notes:
+  - "Keyword \"MiCA julio 2026\" en title, H1, first 100 words, meta description, H2"
+  - "6 PAA respondidas en FAQ con schema JSON-LD"
+  - "Schema Article + FAQ generados"
+  - "Brand voice P3 (Regulados): Bold (4/5), Sofisticado (4.5/5), Formal (3/5)"
+  - "Traits aplicados: Diagnóstico-Provocador (apertura con tensión/deadline), Insider Vulnerable (Bnext/Bit2Me con cifras), Directo con Datos (486M€ multas, 63 CASP revocados, CAC 50→12.40), Sistema sobre Táctica (playbook 5 pasos)"
+  - "Humanización: sin AI-isms, ritmo variable, opiniones directas, admisión de limitaciones, experiencia personal"
+  - "Fuentes citadas: ESMA statement, Cinco Días, FinReg360, GoMiCA, Ganado Advocates, AML Watcher, SQ Magazine"
+  - "Word count: ~2842"
+  - "Internal links: pendiente (depende de content publicado)"
+  - "External links: 7 (ESMA PDF, Cinco Días, FinReg360, GoMiCA, Ganado, AML Watcher, SQ Magazine)"
 ---
 
 # MiCA julio 2026: el playbook de marketing que separa a los que escalan de los que cierran
@@ -302,16 +314,3 @@ Y el reloj ya empezó.
 ---
 
 *Alfonso — CGO en Bnext (0→400K usuarios bajo CNMV). Head of Growth en Bit2Me (LTV 3x bajo regulación crypto). Fundador de Growth4U.*
-
-<!-- Self-QA: PASS | 2026-05-01
-- Keyword "MiCA julio 2026" en title, H1, first 100 words, meta description, H2
-- 6 PAA respondidas en FAQ con schema JSON-LD
-- Schema Article + FAQ generados
-- Brand voice P3 (Regulados): Bold (4/5), Sofisticado (4.5/5), Formal (3/5)
-- Traits aplicados: Diagnóstico-Provocador (apertura con tensión/deadline), Insider Vulnerable (Bnext/Bit2Me con cifras), Directo con Datos (486M€ multas, 63 CASP revocados, CAC 50→12.40), Sistema sobre Táctica (playbook 5 pasos)
-- Humanización: sin AI-isms, ritmo variable, opiniones directas, admisión de limitaciones, experiencia personal
-- Fuentes citadas: ESMA statement, Cinco Días, FinReg360, GoMiCA, Ganado Advocates, AML Watcher, SQ Magazine
-- Word count: ~2842
-- Internal links: pendiente (depende de content publicado)
-- External links: 7 (ESMA PDF, Cinco Días, FinReg360, GoMiCA, Ganado, AML Watcher, SQ Magazine)
--->

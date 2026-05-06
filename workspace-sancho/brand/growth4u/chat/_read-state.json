@@ -174,7 +174,7 @@
     "lastReadTs": 1777239245827
   },
   "visual-identity": {
-    "lastReadTs": 1777840823306
+    "lastReadTs": 1778011650158
   },
   "market-synthesis": {
     "lastReadTs": 1777240824111
@@ -216,7 +216,7 @@
     "lastReadTs": 1777589171619
   },
   "content-p-content-semana-18-t05-c01": {
-    "lastReadTs": 1777640353879
+    "lastReadTs": 1778011501423
   },
   "task-p-content-semana-18-t06": {
     "lastReadTs": 1777641080862
@@ -226,5 +226,8 @@
   },
   "templatehtml": {
     "lastReadTs": 1777837121116
+  },
+  "content-p-content-semana-18-t02-c01": {
+    "lastReadTs": 1778021388629
   }
 }

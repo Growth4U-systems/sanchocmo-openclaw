@@ -123,6 +123,14 @@ Save to `campaigns/content/{keyword-slug}.md` with YAML frontmatter (title, meta
 
 → `references/templates.md` §File Output for exact format.
 
+**Body discipline (applies to every content file this skill writes, including `content/drafts/{ideaId}/blog.md` when invoked from the Content Engine):**
+
+Follow the system spec at `_system/draft-file-format.md`. Specifically for blog:
+- **H1 in body is REQUIRED** — it is the article title. Renderer extracts it for the hero card.
+- Use **H2 (`##`)** for top-level sections; renderer slices the preview into one card per H2.
+- **No HTML comments** anywhere in the body. If you self-validate, write the result as `self_qa: PASS|FAIL` + `self_qa_notes: [...]` in the frontmatter.
+- **No trailing `---` separators.**
+
 ---
 
 ## Key Rules

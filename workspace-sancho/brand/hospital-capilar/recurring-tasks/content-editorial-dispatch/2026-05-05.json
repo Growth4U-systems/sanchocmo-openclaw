@@ -1,0 +1,53 @@
+{
+  "date": "2026-05-05",
+  "dispatched_at": "2026-05-05T08:44:00+02:00",
+  "discord_message_id": "1501112840046772306",
+  "channel_id": "1475638259425087629",
+  "candidates_presented": [
+    {
+      "position": 1,
+      "idea_id": "idea-2026-05-01-002",
+      "pillar": "P2-tratamientos",
+      "channel": "blog",
+      "type": "Framework",
+      "pov_confidence": 0.92,
+      "recency_score": 0.449,
+      "age_days": 4
+    },
+    {
+      "position": 2,
+      "idea_id": "idea-2026-05-01-005",
+      "pillar": "P2-tratamientos",
+      "channel": "blog",
+      "type": "Framework",
+      "pov_confidence": 0.90,
+      "recency_score": 0.449,
+      "age_days": 4
+    },
+    {
+      "position": 3,
+      "idea_id": "idea-2026-05-01-003",
+      "pillar": "P4-bienestar",
+      "channel": "linkedin",
+      "type": "Personal Story",
+      "pov_confidence": 0.88,
+      "recency_score": 0.449,
+      "age_days": 4
+    },
+    {
+      "position": 4,
+      "idea_id": "idea-2026-05-01-007",
+      "pillar": "P2-tratamientos",
+      "channel": "linkedin",
+      "type": "Proof Post",
+      "pov_confidence": 0.87,
+      "recency_score": 0.449,
+      "age_days": 4
+    }
+  ],
+  "ideas_total": 7,
+  "ideas_ready": 7,
+  "ideas_stale": 0,
+  "awaiting_response": true,
+  "response": null
+}

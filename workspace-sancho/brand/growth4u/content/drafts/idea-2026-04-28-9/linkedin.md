@@ -4,23 +4,48 @@ content_task_id: P-Content-Semana-18-T05-C01
 parent_task_id: P-Content-Semana-18-T05
 channel: linkedin
 kind: channel-draft
-iteration: 0
-status: clarify-needed
-clarify_status: pending
+iteration: 1
+status: draft
+self_qa: PASS
+self_qa_notes:
+  - "Hook con dato concreto (Cursor + rango de margen): ✅"
+  - "Estructura Dolor → Diagnóstico → Puente: ✅"
+  - "Cifras concretas ancladas: ✅ (40-55%, 80-90%, 30-55%, 35-50%, 45% vs 85%)"
+  - "Tono provocador/challenge: ✅"
+  - "Empresa nombrada (Cursor): ✅"
+  - "CTA: repensar pricing/COGS: ✅"
+  - "Audiencia founders AI-first: ✅"
+  - "Sin corporate speak: ✅"
+  - "Sin hedge language: ✅"
+  - "Longitud: ~1.200 chars: ✅ (dentro del rango 800-1.500)"
+  - "Fuentes research: gross margins basados en research.md (Harvey 30-40%, Cursor 40-55%, Abridge 45-55%)"
 created_at: '2026-04-30T22:39:13.703Z'
-updated_at: '2026-05-01T00:39:00.000Z'
+updated_at: '2026-05-05T19:15:00.000Z'
 ---
 
-# linkedin draft
+Cursor factura cientos de millones. Y su gross margin está entre el 40-55%.
 
-## Ángulo aprobado
+En SaaS tradicional, eso sería una alarma roja. Pero como crece rápido, nadie dice nada.
 
-Nuestro POV: todo el mundo esta obsesionado con AI-first SaaS porque escala rapido. Nadie esta hablando del problema que viene despues: los margenes. 25-60% de gross margin frente al 80-90% del SaaS tradicional. Eso no es una startup con problemas de unit economics. Es un modelo de negocio con un problema estructural que nadie esta diagnosticando. Si estas evaluando una startup AI-first o estas construyendo una, la pregunta no es cuanto creces. Es cuanto margen te queda despues del coste de los modelos. Frame: margin-compression-no-one-talks-about.
+El problema es estructural:
 
-## Signal
+→ SaaS tradicional: 80-90% gross margin. Tu infra cuesta <15% del revenue.
+→ AI-first SaaS: 30-55% gross margin. Solo las llamadas al modelo se comen el 35-50%.
 
-SaaS AI-first tienen gross margins 25-60% vs 80-90% del SaaS tradicional. Con margenes mas bajos, el payback period se alarga.
+Y aquí viene lo que nadie te cuenta: esos costes de inferencia NO bajan con escala. No puedes negociar mejores tarifas con OpenAI porque tengas más usuarios. Tu COGS crece linealmente con tu base.
 
----
+Haz las cuentas:
 
-_Pendiente: Escudero Content ejecutará deep-research → Clarify → writer y reemplazará este placeholder con el draft real._
+Si tu gross margin es 45% en vez de 85%, tu payback period se duplica. Tu LTV:CAC se desploma. Y el unit economics que le presentaste al investor en la Series A... era mentira.
+
+No es un problema de ejecución.
+Es un problema de modelo de negocio.
+
+Y la mayoría de founders AI-first no lo están viendo porque están midiendo growth, no márgenes.
+
+Si estás construyendo un producto AI-first, antes de tu próximo board meeting, responde una pregunta:
+
+¿Cuánto de cada euro de revenue se lo queda tu provider de modelos?
+
+Si la respuesta es >30%, no tienes un problema de escala.
+Tienes un problema de pricing.

@@ -10,8 +10,6 @@ created_at: '2026-04-29T22:30:52.341Z'
 updated_at: '2026-05-01T15:10:00.000Z'
 ---
 
-# LinkedIn Post — MiCA julio 2026
-
 486 millones de euros en multas. 63 licencias revocadas. 19% de las acciones de enforcement por marketing.
 
 Y eso fue solo en 2025. Antes del deadline.
@@ -43,5 +41,3 @@ Porque compliance y growth no son opuestos. Son el mismo sistema.
 61 días. El reloj ya empezó.
 
 #MiCA #CryptoMarketing #Compliance #Fintech #CNMV #Growth
-
-<!-- Self-QA: PASS | 2026-05-01 | Brand voice P3 (Regulados) — Bold+Datos | Apertura con dato concreto nuevo (486M€) | Bnext case con cifras | compliance-as-moat frame | ~210 palabras | Sin AI-isms -->

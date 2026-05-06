@@ -116,13 +116,36 @@ Por story:
 ```
 
 ### Paso 4: Output
-Guardar en `brand/{slug}/content/instagram/{fecha}-{topic-slug}.md` con formato:
+
+Para flujos legacy (standalone topic), guardar en
+`brand/{slug}/content/instagram/{fecha}-{topic-slug}.md`. Para Content
+Engine, guardar en `content/drafts/{ideaId}/instagram.md`.
+
+**File format (STRICT)** — sigue `_system/draft-file-format.md`:
+
+- **Frontmatter** con metadatos operativos (idea_id, channel, status,
+  source, ecp, fecha) + Self-QA si aplica.
+- **Body** = solo el contenido publicable. **No H1** (Instagram no
+  renderiza título). **No HTML comments**. **No `---` decorativos.**
+- **Self-QA va en el frontmatter**, nunca inline. Si el verdict aún no
+  se ha calculado, omite el campo (no escribas `PENDING`).
 
 ```markdown
-# Instagram Content — {topic}
-Generated: {fecha}
-Source: {artículo_id o "standalone"}
-ECP: {ecp_name}
+---
+idea_id: {ideaId}
+channel: instagram
+kind: channel-draft
+iteration: 1
+status: draft
+source: {artículo_id o "standalone"}
+ecp: {ecp_name}
+self_qa: PASS  # opcional, una vez auto-validado
+self_qa_notes:
+  - "Hook scroll-stopping: ✅"
+  - "Carrusel 5-10 slides: ✅"
+created_at: '{ISO date}'
+updated_at: '{ISO date}'
+---
 
 ## Caption Post
 {caption}
@@ -135,9 +158,6 @@ ECP: {ecp_name}
 
 ## Story Sequence
 {stories}
-
----
-<!-- Self-QA: PENDING | {fecha} -->
 ```
 
 ### Paso 5: Revisión Humana

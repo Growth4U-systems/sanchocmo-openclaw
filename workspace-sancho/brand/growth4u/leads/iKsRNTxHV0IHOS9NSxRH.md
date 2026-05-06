@@ -4,7 +4,7 @@ contact_name: Nereida Candelo
 email: n.evolucion19@gmail.com
 phone: "+34623033500"
 company: null
-last_enriched: 2026-05-03T20:04:00Z
+last_enriched: 2026-05-05T20:00:00Z
 enrichment_pending: true
 enrichment_reason: "Nuevo lead. Enrichment tools (Apollo, SignalHire) no disponibles en esta ejecución. GHL custom fields sugieren sector 'Ley de la Segunda Oportunidad' — nicho específico a investigar."
 ---

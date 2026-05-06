@@ -10,8 +10,6 @@ created_at: '2026-04-30T13:32:09.828Z'
 updated_at: '2026-04-30T15:35:00.000Z'
 ---
 
-# twitter draft
-
 _Pendiente de Clarify. Esperando respuesta humana._
 
 ## Ángulo aprobado

@@ -10,6 +10,4 @@ created_at: '2026-04-30T13:32:09.936Z'
 updated_at: '2026-04-30T15:34:00.000Z'
 ---
 
-# twitter draft
-
 _Pendiente de fase clarify._

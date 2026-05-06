@@ -1,6 +1,6 @@
 ---
 ghl_id: nP2UDwfj2970Hiq2aNLE
-last_enriched: 2026-05-04T22:00:00+02:00
+last_enriched: 2026-05-05T20:00:00Z
 enrichment_pending: true
 ---
 

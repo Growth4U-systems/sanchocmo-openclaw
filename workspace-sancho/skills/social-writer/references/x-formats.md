@@ -1,5 +1,11 @@
 # X / Twitter Formats Reference
 
+## File Output Rules (apply to ALL formats below)
+- **No H1/H2 anywhere in the body.** The task page already shows the title; a heading on top duplicates it and leaks into the preview.
+- **No HTML comments** (`<!-- ... -->`). The renderer shows them.
+- **No trailing `---` decorative separators.**
+- **Self-QA goes in the frontmatter** (`self_qa`, `self_qa_notes`), never inline. See SKILL.md §5.5.
+
 ## Platform DNA
 - 280 chars per tweet, long-form up to 25,000 (sweet spot 1,000-2,000)
 - Fast, casual, opinion-driven. Lowercase default.

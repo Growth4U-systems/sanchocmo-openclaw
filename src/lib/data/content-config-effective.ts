@@ -75,7 +75,15 @@ interface DesignTokens {
   };
 }
 
-const LOGO_LIGHT_REL = "brand-book/visual-identity/logo-light.png";
+/** Filename candidates for the brand logo, in preference order. We accept
+ *  any common raster/vector extension because brand-asset pipelines vary
+ *  (some skills export to PNG, others to WEBP, vector designers ship SVG). */
+const LOGO_LIGHT_CANDIDATES = [
+  "brand-book/visual-identity/logo-light.png",
+  "brand-book/visual-identity/logo-light.webp",
+  "brand-book/visual-identity/logo-light.svg",
+  "brand-book/visual-identity/logo-light.jpg",
+];
 
 /** Read the brand-book + check the on-disk logo asset and produce a snapshot
  *  the UI can compare against the override layer. Pure read; no side effects.
@@ -107,16 +115,18 @@ export function readBrandBookSnapshot(slug: string): BrandBookSnapshot {
     Object.values(palette).slice(1, 2)[0]?.value ||
     null;
 
-  const logoAbs = path.join(brandDir(slug), LOGO_LIGHT_REL);
-  const logoOnDisk = fs.existsSync(logoAbs);
+  // Pick the first logo candidate that exists on disk (accepts png/webp/svg/jpg).
+  const logoRelPath = LOGO_LIGHT_CANDIDATES.find((rel) =>
+    fs.existsSync(path.join(brandDir(slug), rel)),
+  );
   const logoFlaggedMissing = tokens.logo?.missing === true;
 
   let logoStatus: LogoStatus;
   let logoUrl: string | null;
   let logoReason: string | null;
-  if (logoOnDisk) {
+  if (logoRelPath) {
     logoStatus = "present";
-    logoUrl = `/api/brand-asset/${slug}/${LOGO_LIGHT_REL}`;
+    logoUrl = `/api/brand-asset/${slug}/${logoRelPath}`;
     logoReason = null;
   } else if (logoFlaggedMissing) {
     logoStatus = "missing-registered";
@@ -135,7 +145,7 @@ export function readBrandBookSnapshot(slug: string): BrandBookSnapshot {
     logo_status: logoStatus,
     logo_asset_url: logoUrl,
     logo_missing_reason: logoReason,
-    logo_asset_present: logoOnDisk,
+    logo_asset_present: !!logoRelPath,
     typography: {
       heading: tokens.typography?.families?.heading?.family || null,
       body: tokens.typography?.families?.body?.family || null,

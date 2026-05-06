@@ -124,6 +124,25 @@ Transform your content, curation, or ideas into **publication-ready newsletters*
 
 ---
 
+## Output File Format (STRICT)
+
+When invoked from the Content Engine, this skill writes to
+`content/drafts/{ideaId}/email.md` (or `newsletter.md`). Follow the system
+spec at `_system/draft-file-format.md`.
+
+Newsletter-specific reminders:
+- **H1 (`#`) is the email's hero header / subject line** — required at the
+  top of the body. The renderer extracts it for the email "subject"
+  display.
+- **H2 (`##`) for sections** (Intro, Main Story, Quick Hits, CTA…). They
+  render as visual section breaks.
+- **No HTML comments** anywhere in the body. If you self-validate, write
+  the result as `self_qa: PASS|FAIL` + `self_qa_notes: [...]` in the
+  frontmatter, never inline.
+- **No decorative `---` separators at the end.**
+
+---
+
 ## First: What type of newsletter?
 
 Different formats serve different purposes. Pick your archetype:

@@ -1,0 +1,32 @@
+{
+  "date": "2026-05-05",
+  "generated_at": "2026-05-05T07:00:00Z",
+  "channels_checked": 9,
+  "channels_with_activity": 0,
+  "channels_skipped": 9,
+  "skip_reasons": {
+    "general": "last_message_older_than_24h (2026-03-30)",
+    "brand": "last_message_older_than_24h (2026-02-28)",
+    "campaigns": "last_message_from_bot (2026-03-24)",
+    "content": "last_message_from_bot (2026-05-05)",
+    "intelligence": "last_message_from_bot (2026-05-04)",
+    "onboarding": "last_message_older_than_24h (2026-04-07)",
+    "soporte": "last_message_older_than_24h (2026-04-28)",
+    "research": "last_message_older_than_24h (2026-03-01)",
+    "paid-ads": "channel_not_accessible"
+  },
+  "insights": [],
+  "summary": "Sin actividad humana en Discord en las últimas 24h. Día tranquilo — los bots (content suggestions, meeting intelligence) fueron los únicos activos.",
+  "notable_bot_activity": [
+    {
+      "channel": "content",
+      "action": "Content suggestions publicadas (news-monitor)",
+      "timestamp": "2026-05-05T06:46:30Z"
+    },
+    {
+      "channel": "intelligence",
+      "action": "Meeting Intelligence check — sin reuniones nuevas",
+      "timestamp": "2026-05-04T16:04:16Z"
+    }
+  ]
+}

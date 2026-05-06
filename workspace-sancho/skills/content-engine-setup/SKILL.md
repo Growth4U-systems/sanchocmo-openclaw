@@ -314,6 +314,14 @@ Si el logo está marcado `missing: true`:
 
 Si `pending` cuando entraste a esta sección, no debiste haber llegado aquí — el bloqueo del paso 2 te debió haber parado.
 
+> **Nota**: la creación de la task `Visual Templates` en P14 NO es responsabilidad
+> de esta skill. Esa task nace con el proyecto Content Engine (definida en
+> el template de `create-project.ts`, `T07`). Si la brand es legacy (P14
+> creado antes de que T07 existiese, p.ej. growth4u), Mission Control la
+> añade retroactivamente vía `POST /api/content-engine/templates/ensure-task`
+> al pulsar el CTA del empty state del panel de carrusel. Esta skill no
+> tiene que tocarla.
+
 ### 5. Write the narrative `setup.md` (THE DELIVERABLE)
 
 Path: `brand/{slug}/content/configs/setup.md`

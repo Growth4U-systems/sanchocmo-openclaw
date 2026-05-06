@@ -4,7 +4,7 @@ contact_name: JoseMi G
 email: josemixxi@gmail.com
 phone: "+34610513634"
 created: 2026-04-30T20:00:00Z
-last_enriched: 2026-05-03T20:04:00Z
+last_enriched: 2026-05-05T20:00:00Z
 enrichment_pending: true
 enrichment_reason: "Email genérico gmail, sin empresa. Llamada cancelada."
 source: Facebook

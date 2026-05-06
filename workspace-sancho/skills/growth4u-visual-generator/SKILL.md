@@ -185,6 +185,38 @@ skill las crea desde cero — no hay defaults del sistema.
 
 **Flujo paso a paso** (ejecutado por la skill al ser invocada):
 
+#### Step 0 — Prerequisito (BLOCKING)
+
+Antes de hacer NADA, verifica que el pillar `visual-identity` está
+`approved` (o `done`) en Foundation L5. Es el pillar que produce
+`design-tokens.json` (paleta + tipografía) y `visual-identity.current.md`
+(reglas de composición, personajes). Sin esos dos archivos no se puede
+producir ningún template — los templates los CONSUMEN, no los crean.
+
+```bash
+# Comprobación
+jq -r '.sections | to_entries[] | .value.pillars["visual-identity"].status // empty' \
+  brand/{slug}/foundation-state.json
+```
+
+Si el resultado NO es `approved` o `done`:
+
+```
+✗ Prerequisito no cumplido: visual-identity está en estado <X>.
+  Lanza primero la skill visual-identity (Foundation Layer 5):
+  · Define paleta navy/teal/etc.
+  · Aprueba design-tokens.json
+  · Genera personajes (Alfonso, Martín, Philippe)
+  Cuando esté approved, reanuda esta skill.
+PARA. No produzcas templates.
+```
+
+Mission Control aplica el mismo check al endpoint que crea la task de P14
+(`POST /api/content-engine/templates/ensure-task` → 409 si no está
+approved con un mensaje equivalente). Por tanto este Step 0 es la red de
+seguridad final cuando se invoca la skill por otras vías (ej. directo desde
+gateway sin pasar por MC).
+
 #### Step 1 — Lectura de contexto (read-only)
 
 - `brand/{slug}/brand-book/visual-identity/design-tokens.json` — paleta,

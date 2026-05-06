@@ -305,9 +305,45 @@ export function CarouselSetupEditor({ slug }: { slug: string }) {
   );
 }
 
-/** Shown when the brand has no templates yet — visual-identity hasn't run.
- *  CTAs route the user to where they can fix this. */
+/** Shown when the brand has no templates yet. Drops a P14-T05 task into the
+ *  Content Engine project (idempotent) and routes the user to it — that's
+ *  where they execute the brand's visual-generator skill to produce the
+ *  5 HTMLs. The task lives there permanently as the canonical entry point. */
 function EmptyTemplatesState({ slug }: { slug: string }) {
+  const router = useRouter();
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleCreateTask() {
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/content-engine/templates/ensure-task", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slug }),
+      });
+      const data = (await res.json().catch(() => ({}))) as {
+        ok?: boolean;
+        task?: { id: string };
+        projectId?: string;
+        projectSlug?: string;
+        error?: string;
+      };
+      if (!res.ok || !data.ok || !data.task || !data.projectId) {
+        throw new Error(data.error || "No se pudo crear la tarea");
+      }
+      // The task page route uses the bare project id (e.g. "P14"), not the
+      // project folder slug ("P14-Content-Engine") — the page resolves the
+      // task by `project.id === projectId`.
+      router.push(`/dashboard/${slug}/projects/${data.projectId}/tasks/${data.task.id}`);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <div
       className="mt-2 px-4 py-5 rounded-sc-md border-2 border-dashed space-y-3 text-center"
@@ -319,21 +355,26 @@ function EmptyTemplatesState({ slug }: { slug: string }) {
       </div>
       <p className="text-xs leading-relaxed mx-auto max-w-md" style={{ color: "var(--sc-fg-soft)" }}>
         Las 5 plantillas (LinkedIn cita, LinkedIn carrusel, Instagram carrusel, blog post,
-        blog title) son output de la skill <code style={{ background: "var(--sc-paper-2)" }}>visual-identity</code>.
-        Cuando se ejecuta, deja los HTMLs en{" "}
-        <code style={{ background: "var(--sc-paper-2)" }}>brand-book/visual-identity/templates/</code>.
+        blog title) son output del skill{" "}
+        <code style={{ background: "var(--sc-paper-2)" }}>{slug}-visual-generator</code>.
+        Esa skill es lo que ejecuta una <strong>task del Content Engine</strong> que vamos a crear ahora.
       </p>
-      <a
-        href={`/dashboard/${slug}/foundation`}
-        className="inline-flex items-center gap-2 font-heading uppercase text-[11px] tracking-wider px-3 py-2 rounded-sc-md border-2 sc-pop-hover"
+      <button
+        type="button"
+        onClick={handleCreateTask}
+        disabled={busy}
+        className="inline-flex items-center gap-2 font-heading uppercase text-[11px] tracking-wider px-3 py-2 rounded-sc-md border-2 sc-pop-hover disabled:opacity-60"
         style={{
           background: "var(--sc-rust-500)",
           borderColor: "var(--sc-ink)",
           color: "var(--sc-paper-3)",
         }}
       >
-        Ir a Foundation → Visual Identity
-      </a>
+        {busy ? "Creando..." : "Crear tarea Visual Templates en P14"}
+      </button>
+      {error && (
+        <p className="text-[11px]" style={{ color: "var(--sc-brick-500)" }}>{error}</p>
+      )}
     </div>
   );
 }

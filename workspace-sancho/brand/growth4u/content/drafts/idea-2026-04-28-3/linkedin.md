@@ -10,4 +10,3 @@ created_at: '2026-04-30T13:32:09.858Z'
 updated_at: '2026-04-30T15:35:00.000Z'
 ---
 
-# LinkedIn draft — pending clarify

@@ -136,6 +136,20 @@ For threads: spend disproportionate time on tweet 1 — the hook is 80% of threa
 Each platform gets a piece that THINKS about the topic differently.
 Same topic, different angle, hook, voice, structure, and format.
 
+### 5.5 Output File Format (STRICT)
+
+This skill writes draft files at `content/drafts/{ideaId}/{channel}.md`.
+**Follow the system spec at `_system/draft-file-format.md` exactly** — it
+defines the file anatomy, body prohibitions (no HTML comments, no
+decorative `---`, no scaffolding labels), per-channel H1 rules, and the
+`self_qa` / `self_qa_notes` frontmatter convention.
+
+Channel-specific reminders for this skill:
+- **LinkedIn (`linkedin.md`)**: no H1 in the body — start with the hook line.
+- **Twitter (`twitter.md`)**: for threads, number tweets as `1/n`, `2/n`,
+  ... (one per paragraph block). Do NOT use `**Tweet 1 (hook)**`-style
+  scaffolding — it leaks into the preview.
+
 ### 6. Save Clarify to POV Bank
 
 Append to `content/clarify-history.json`:

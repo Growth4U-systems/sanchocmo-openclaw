@@ -963,75 +963,6 @@
     },
     {
       "agentId": "sancho",
-      "name": "Content: News Monitor — Growth4U",
-      "enabled": true,
-      "schedule": {
-        "kind": "cron",
-        "expr": "0 7 * * 1-5",
-        "tz": "Europe/Madrid"
-      },
-      "sessionTarget": "isolated",
-      "wakeMode": "now",
-      "payload": {
-        "kind": "agentTurn",
-        "message": "Ejecuta news-monitor para Growth4U.\n\nPASO 1 — LEER CONFIGS:\nLee brand/growth4u/content/configs/news-prompts/*.yml (un archivo por pillar).\nLee brand/growth4u/content/content-pillars.md para contexto.\n\nPASO 2 — BUSCAR POR PILLAR:\nPara cada pillar, ejecuta WebSearch con los prompts configurados.\nFiltra por sector_filters y language. Max 10 resultados relevantes por pillar.\nDeduplica por URL contra research-signals de ayer.\n\nPASO 3 — EXTRAER SIGNALS:\nPara cada resultado, extrae: id, type=news, pillar_id, title, summary (2-3 frases de POR QUE es relevante al pillar), source, url, date, relevance_score (0-1).\nSkip: press releases sin insight, listicles superficiales.\n\nPASO 4 — GUARDAR:\nEscribe en brand/growth4u/content/research-signals/{YYYY-MM-DD}-news.json.\nSi el archivo ya existe, merge y deduplica.\n\nPASO X — GENERAR last_finding:\nAntes de guardar en recurring-tasks (paso siguiente), genera un campo `last_finding` con un RESUMEN DE 1-2 FRASES en español de lo más relevante de esta corrida. Ejemplo: \"MiCA julio 2026: nueva guía ESMA sobre CASPs sin autorización. 3 medios cubren — gap claro de POV.\" Este texto se muestra en la card \"Antenas de contenido\" del Engine UI; debe ser concreto y citar lo concreto encontrado, no genérico.\n\nPASO 5 — GUARDAR EN RECURRING TASKS:\nGuarda resumen en brand/growth4u/recurring-tasks/content-news-monitor/{YYYY-MM-DD}.json:\n{\"cronName\": \"Content: News Monitor — Growth4U\", \"slug\": \"growth4u\", \"date\": \"YYYY-MM-DD\", \"runAtMs\": <timestamp_ms>, \"status\": \"ok\", \"last_finding\": \"<la frase de 1-2 oraciones del PASO X>\", \"content\": \"<N signals encontrados por pillar>\"}",
-        "model": "anthropic/claude-sonnet-4-5"
-      },
-      "delivery": {
-        "mode": "none"
-      },
-      "id": "365caf56-5aaf-4109-8b3b-e3547d5a2b41",
-      "createdAtMs": 1777353600000,
-      "state": {}
-    },
-    {
-      "agentId": "sancho",
-      "name": "Content: Competitor Monitor — Growth4U",
-      "enabled": true,
-      "schedule": {
-        "kind": "cron",
-        "expr": "0 7 * * 1-5",
-        "tz": "Europe/Madrid"
-      },
-      "sessionTarget": "isolated",
-      "wakeMode": "now",
-      "payload": {
-        "kind": "agentTurn",
-        "message": "Ejecuta thief-marketers para Growth4U.\n\nPASO 1 — LEER CONFIGS:\nLee brand/growth4u/content/configs/competitors/all-pillars.yml\nLee brand/growth4u/content/configs/reference-creators/all-pillars.yml\nLee brand/growth4u/content/content-pillars.md\n\nPASO 2 — MONITOREAR COMPETIDORES Y CREATORS:\nPara cada competidor y reference-creator, busca su contenido reciente:\n- LinkedIn: WebSearch \"site:linkedin.com/posts {nombre}\" o WebFetch de su perfil publico\n- Blog: WebFetch de su web/blog\n- X/Twitter: WebSearch \"site:x.com {handle}\"\nExtrae top 5 posts por engagement de los ultimos 7 dias.\n\nPASO 3 — EXTRAER + CLASIFICAR SIGNALS:\nPara cada contenido top, extrae los siguientes campos:\n- id, type=creator, pillar_id, title (titular o primera linea exacta del post)\n- source (nombre del competidor/creator), source_type (competitor o reference-creator)\n- platform (linkedin/twitter/blog/youtube/podcast), url, date (fecha de publicacion en YYYY-MM-DD)\n- engagement (likes/comentarios/shares con numeros concretos si estan visibles)\n- signal_type[]: clasifica en 1+ de los 7 tipos canonicos. OBLIGATORIO; idea-builder lo necesita para enrutar el angle.\n    - aha-moment: insight contraintuitivo, descubrimiento\n    - conflict: enfrentamiento entre actores o tesis\n    - contrarian: postura opuesta al consenso de la categoria\n    - system: framework, metodologia, playbook estructurado\n    - milestone: hito, lanzamiento, anuncio importante\n    - vulnerability: cesion personal, error reconocido, crisis\n    - metric: dato/numero notable o benchmark\n  Si encaja en varios, lista los 2-3 mas claros (no fuerces los 7).\n- summary: resumen DETALLADO de 5-7 frases cubriendo en este orden:\n    (1) QUE DICE — el argumento o hallazgo principal del post, con cifras o ejemplos exactos que cite\n    (2) FORMATO — estructura usada (hook + storytelling + CTA, listicle, framework numerado, case study, etc.)\n    (3) DATOS / EVIDENCIA — numeros, nombres de empresas, citas literales que use\n    (4) GANCHO — como abre el post (la primera frase o pregunta) y por que engancha\n  Evita resumenes genericos tipo \"habla sobre growth\". Tiene que ser concreto y citar lo que el creator escribio.\n- why_it_worked: 3-4 frases sobre la mecanica del exito (timing, formato, dato controvertido, prueba social, etc.)\n- angle_for_us: 2-3 frases sobre como Growth4U podria usar esta signal — angulo opuesto, framework para extender, o caso para refutar.\nMax 15 signals totales.\n\nPASO 4 — GUARDAR:\nEscribe en brand/growth4u/content/research-signals/{YYYY-MM-DD}-creators.json. Verifica que CADA signal tiene signal_type[] no-vacio antes de guardar; si falta en alguno, vuelve al PASO 3 y completalo.\n\nPASO X — GENERAR last_finding:\nAntes de guardar en recurring-tasks (paso siguiente), genera un campo `last_finding` con un RESUMEN DE 1-2 FRASES en español de lo más relevante de esta corrida. Ejemplo: \"MiCA julio 2026: nueva guía ESMA sobre CASPs sin autorización. 3 medios cubren — gap claro de POV.\" Este texto se muestra en la card \"Antenas de contenido\" del Engine UI; debe ser concreto y citar lo concreto encontrado, no genérico.\n\nPASO 5 — GUARDAR EN RECURRING TASKS:\nGuarda resumen en brand/growth4u/recurring-tasks/content-competitor-monitor/{YYYY-MM-DD}.json.",
-        "model": "anthropic/claude-sonnet-4-5"
-      },
-      "delivery": {
-        "mode": "none"
-      },
-      "id": "35c584a0-5558-44f0-81a4-9bc56a963a1a",
-      "createdAtMs": 1777353600000,
-      "state": {}
-    },
-    {
-      "agentId": "sancho",
-      "name": "Content: Editorial Dispatch — Growth4U",
-      "enabled": true,
-      "schedule": {
-        "kind": "cron",
-        "expr": "30 8 * * 1-5",
-        "tz": "Europe/Madrid"
-      },
-      "sessionTarget": "isolated",
-      "wakeMode": "now",
-      "payload": {
-        "kind": "agentTurn",
-        "message": "Ejecuta editorial dispatch para Growth4U.\n\nPASO 1 — LEER CONFIGS:\n- brand/growth4u/content/idea-queue.json\n- brand/growth4u/content/configs/cadence-config.yml\n- brand/growth4u/content/configs/dispatch-channel.yml ← FUENTE DEL TRANSPORT + CHANNEL\n  (transport: slack|discord, channel_id, channel_name)\n  Si no existe → enviar al thread interno de MC con un aviso 'Falta configurar Canal de envío en MC UI → Inputs → 📬 Canal de envío' y terminar.\n\nPASO 2 — SELECCIONAR CANDIDATAS:\nFiltra ideas donde status=ready AND age<=14 dias.\nCalcula recency_score = exp(-age_days/5).\nOrdena por recency_score DESC, pov_confidence DESC.\nSelecciona 3-5 ideas según los slots del día (cadence-config.best_days).\nIdeas >14 días → status=stale automáticamente.\n\nPASO 3 — ASEGURAR PROYECTO + TAREA DEL DÍA (estricto, NUNCA duplicar):\n\n3a. CALCULAR semana ISO correcta para hoy:\n  Usa el comando `date +%V` o un equivalente en Python: `from datetime import date; date.today().isocalendar()[1]`. NO uses aproximaciones tipo `ceil((dayOfYear+1)/7)` — están mal.\n  Verbose: imprime la fecha de hoy YYYY-MM-DD + número ISO calculado antes de continuar. Si el número parece raro, ABORTA y reporta — NO sigas.\n\n3b. ASEGURAR PROYECTO (LISTA primero, NO crees a ciegas):\n  Lista `brand/growth4u/projects/` (bash `ls`). BUSCA exactamente `P-Content-Semana-{NN}` (NN = el número ISO calculado en 3a).\n  - Si EXISTE → usa ese projectId. NO leas project.json para verificar — el directorio es la verdad.\n  - Si NO EXISTE → créalo con project.json + tasks.json:[]\n\n3c. ASEGURAR TAREA DEL DÍA dentro de ese proyecto:\n  Lee `projects/P-Content-Semana-{NN}/tasks.json`.\n  BUSCA una tarea con `type: \"content\"` Y created_at del día de hoy (compara solo YYYY-MM-DD).\n  - Si EXISTE → reusa (taskId = su id). Append idea_ids nuevos sin duplicar.\n  - Si NO existe → crea UNA tarea (UNA, no T01+T02):\n    {\n      \"id\": \"P-Content-Semana-{NN}-T{índice}\",  // T01 si está vacío, T02 si ya hay 1, etc.\n      \"name\": \"Contenido {DD/MM}\",\n      \"type\": \"content\",  ← \"content\", NO \"editorial\"\n      \"channel\": \"content\",\n      \"status\": \"in-progress\",\n      \"skill\": \"social-writer\",\n      \"idea_ids\": [<ids de hoy>],\n      \"created_at\": \"{ISO now}\"\n    }\n\n3d. VALIDACIÓN antes de marcar PASO 3 como ok:\n  - El proyecto debe ser P-Content-Semana-{NN} con NN = ISO week de hoy\n  - La tarea debe estar en ese proyecto (no en otro)\n  - idea_ids debe contener TODAS las ids de hoy sin duplicar\n  Si alguna fallar, ABORTA y reporta el error. NO sigas con PASO 4.\n\nPASO 4 — MARCAR DISPATCH EN IDEAS:\nPara cada candidata: idea.dispatch_date=hoy(YYYY-MM-DD), idea.dispatch_slot=channel, idea.project_task_id=taskId, idea.project_id=projectId.\nGuarda idea-queue.json.\n\nPASO 5 — DELEGAR EL ENVÍO AL ENDPOINT SERVER-SIDE:\n\nNO hagas la llamada a Slack/Discord tú mismo. Llama a este endpoint que hace todo el trabajo de formateo + post + retry:\n\nPOST https://sancho-cmo.taild48df2.ts.net:8443/api/integrations/send-dispatch\nContent-Type: application/json\n\nBody:\n{\n  \"slug\": \"growth4u\",\n  \"ideaIds\": [\"<id1>\", \"<id2>\", ...],  // las 3-5 que seleccionaste\n  \"projectId\": \"P-Content-Semana-XX\",\n  \"taskId\": \"P-Content-Semana-XX-TYY\"\n}\n\nEl endpoint:\n- Lee dispatch-channel.yml para saber transport + channel\n- Para cada idea, postea a Slack con block_kit (header + signal + POV + 3 botones Aprobar/Más tarde/Rechazar)\n- Devuelve { ok, sent, total, errors[] }\n\nSi devuelve errors, repórtalos en el summary. Cuando el humano pulsa un botón, el endpoint /api/integrations/slack/interactivity actualiza idea-queue automáticamente — NO necesitas esperar respuesta.\n\nPASO 6 — GUARDAR EN RECURRING TASKS:\nGuarda resumen en brand/growth4u/recurring-tasks/content-editorial-dispatch/{YYYY-MM-DD}.json:\n{\"date\":\"YYYY-MM-DD\",\"transport\":\"slack|discord\",\"channel_id\":\"...\",\"candidates_sent\":N,\"task_id\":\"P-Content-Semana-XX-TYY\",\"status\":\"ok\"}",
-        "model": "claude-opus-4-6"
-      },
-      "delivery": {
-        "mode": "none"
-      },
-      "id": "72fa033f-a19e-476c-83f9-2fc201374216",
-      "createdAtMs": 1777353600000,
-      "state": {}
-    },
-    {
-      "agentId": "sancho",
       "name": "Content: PAA Monitor — Growth4U",
       "enabled": true,
       "schedule": {
@@ -1051,75 +982,6 @@
       },
       "id": "caae560f-344f-44a8-9ddb-4a4ce8c6e913",
       "createdAtMs": 1777353600000,
-      "state": {}
-    },
-    {
-      "agentId": "sancho",
-      "name": "Content: News Monitor — Hospital Capilar",
-      "enabled": true,
-      "schedule": {
-        "kind": "cron",
-        "expr": "0 7 * * 1-5",
-        "tz": "Europe/Madrid"
-      },
-      "sessionTarget": "isolated",
-      "wakeMode": "now",
-      "payload": {
-        "kind": "agentTurn",
-        "message": "Ejecuta news-monitor para Hospital Capilar.\n\nPASO 1 — LEER CONFIGS:\nLee brand/hospital-capilar/content/configs/news-prompts/*.yml (un archivo por pillar).\nLee brand/hospital-capilar/content/content-pillars.md para contexto.\n\nPASO 2 — BUSCAR POR PILLAR:\nPara cada pillar, ejecuta WebSearch con los prompts configurados.\nFiltra por sector_filters y language. Max 10 resultados relevantes por pillar.\nDeduplica por URL contra research-signals de ayer.\n\nPASO 3 — EXTRAER SIGNALS:\nPara cada resultado, extrae: id, type=news, pillar_id, title, summary (2-3 frases de POR QUE es relevante al pillar), source, url, date, relevance_score (0-1).\nSkip: press releases sin insight, listicles superficiales.\n\nPASO 4 — GUARDAR:\nEscribe en brand/hospital-capilar/content/research-signals/{YYYY-MM-DD}-news.json.\nSi el archivo ya existe, merge y deduplica.\n\nPASO X — GENERAR last_finding:\nAntes de guardar en recurring-tasks (paso siguiente), genera un campo `last_finding` con un RESUMEN DE 1-2 FRASES en español de lo más relevante de esta corrida. Ejemplo: \"MiCA julio 2026: nueva guía ESMA sobre CASPs sin autorización. 3 medios cubren — gap claro de POV.\" Este texto se muestra en la card \"Antenas de contenido\" del Engine UI; debe ser concreto y citar lo concreto encontrado, no genérico.\n\nPASO 5 — GUARDAR EN RECURRING TASKS:\nGuarda resumen en brand/hospital-capilar/recurring-tasks/content-news-monitor/{YYYY-MM-DD}.json:\n{\"cronName\": \"Content: News Monitor — Hospital Capilar\", \"slug\": \"hospital-capilar\", \"date\": \"YYYY-MM-DD\", \"runAtMs\": <timestamp_ms>, \"status\": \"ok\", \"last_finding\": \"<la frase de 1-2 oraciones del PASO X>\", \"content\": \"<N signals encontrados por pillar>\"}",
-        "model": "anthropic/claude-sonnet-4-5"
-      },
-      "delivery": {
-        "mode": "none"
-      },
-      "id": "85b808b7-b427-46be-8f6f-b85b017d1700",
-      "createdAtMs": 1777157953992,
-      "state": {}
-    },
-    {
-      "agentId": "sancho",
-      "name": "Content: Competitor Monitor — Hospital Capilar",
-      "enabled": true,
-      "schedule": {
-        "kind": "cron",
-        "expr": "0 7 * * 1-5",
-        "tz": "Europe/Madrid"
-      },
-      "sessionTarget": "isolated",
-      "wakeMode": "now",
-      "payload": {
-        "kind": "agentTurn",
-        "message": "Ejecuta thief-marketers para Hospital Capilar.\n\nPASO 1 — LEER CONFIGS:\nLee brand/hospital-capilar/content/configs/competitors/all-pillars.yml\nLee brand/hospital-capilar/content/configs/reference-creators/all-pillars.yml\nLee brand/hospital-capilar/content/content-pillars.md\n\nPASO 2 — MONITOREAR COMPETIDORES Y CREATORS:\nPara cada competidor y reference-creator, busca su contenido reciente:\n- LinkedIn: WebSearch \"site:linkedin.com/posts {nombre}\" o WebFetch de su perfil publico\n- Blog: WebFetch de su web/blog\n- X/Twitter: WebSearch \"site:x.com {handle}\"\nExtrae top 5 posts por engagement de los ultimos 7 dias.\n\nPASO 3 — EXTRAER SIGNALS:\nPara cada contenido top, extrae: id, type=creator, pillar_id, title, summary, source (nombre), source_type (competitor/reference-creator), platform, url, engagement, why_it_worked (2-3 frases), angle_for_us (como podemos usar esta signal).\nMax 15 signals totales.\n\nPASO 4 — GUARDAR:\nEscribe en brand/hospital-capilar/content/research-signals/{YYYY-MM-DD}-creators.json.\n\nPASO X — GENERAR last_finding:\nAntes de guardar en recurring-tasks (paso siguiente), genera un campo `last_finding` con un RESUMEN DE 1-2 FRASES en español de lo más relevante de esta corrida. Ejemplo: \"MiCA julio 2026: nueva guía ESMA sobre CASPs sin autorización. 3 medios cubren — gap claro de POV.\" Este texto se muestra en la card \"Antenas de contenido\" del Engine UI; debe ser concreto y citar lo concreto encontrado, no genérico.\n\nPASO 5 — GUARDAR EN RECURRING TASKS:\nGuarda resumen en brand/hospital-capilar/recurring-tasks/content-competitor-monitor/{YYYY-MM-DD}.json.",
-        "model": "anthropic/claude-sonnet-4-5"
-      },
-      "delivery": {
-        "mode": "none"
-      },
-      "id": "61272e4c-e42e-4634-bd78-da8c7f266936",
-      "createdAtMs": 1777157953992,
-      "state": {}
-    },
-    {
-      "agentId": "sancho",
-      "name": "Content: Editorial Dispatch — Hospital Capilar",
-      "enabled": true,
-      "schedule": {
-        "kind": "cron",
-        "expr": "30 8 * * 1-5",
-        "tz": "Europe/Madrid"
-      },
-      "sessionTarget": "isolated",
-      "wakeMode": "now",
-      "payload": {
-        "kind": "agentTurn",
-        "message": "Ejecuta editorial dispatch para Hospital Capilar.\n\nPASO 1 — LEER:\nLee brand/hospital-capilar/content/idea-queue.json\nLee brand/hospital-capilar/content/configs/cadence-config.yml\n\nPASO 2 — SELECCIONAR CANDIDATOS:\nFiltra ideas donde status=ready AND age<=14 dias.\nCalcula recency_score = exp(-age_days/5).\nOrdena por recency_score DESC, pov_confidence DESC.\nSelecciona 3-5 ideas para los slots del dia segun cadence-config.\nIdeas >14 dias → marca status=stale automaticamente.\n\nPASO 3 — ENVIAR A DISCORD:\nLee brand/hospital-capilar/client-config.json para el channel ID de content.\nPara cada idea seleccionada, envia al canal de Discord:\n\n📰 Esto paso: {signal.summary}\n   📅 {signal.date} · 🔗 {signal.source}\n✍️ Tu posible angulo: {angle_draft}\n🎯 Pillar: {pillar_id} · Canal: {channel} · Tipo: {type}\n\nAl final del mensaje: '¿Cuales quieres que desarrolle hoy? Responde con los numeros (ej: 1, 3) o \"ninguno\"'\n\nPASO 4 — ESPERAR RESPUESTA:\nCuando el humano responda con los numeros:\n- Ideas seleccionadas → status=approved, target_date=hoy\n- Las demas → mantener status=ready\n\nPASO 5 — CREAR TAREA SEMANAL (si no existe):\nVerifica si existe proyecto P-Content-Semana-{NN} para esta semana.\nSi no, crea el proyecto + tarea del dia.\nSi si, crea solo la tarea del dia dentro del proyecto existente.\nResponde con link al thread de MC para que el humano continue alli.\n\nPASO 6 — GUARDAR EN RECURRING TASKS:\nGuarda en brand/hospital-capilar/recurring-tasks/content-editorial-dispatch/{YYYY-MM-DD}.json.",
-        "model": "claude-opus-4-6"
-      },
-      "delivery": {
-        "mode": "none"
-      },
-      "id": "69d0d14d-e02c-437b-bc38-17d2606c3bdc",
-      "createdAtMs": 1777157953992,
       "state": {}
     },
     {
@@ -1147,75 +1009,6 @@
     },
     {
       "agentId": "sancho",
-      "name": "Content: News Monitor — Hulahoop",
-      "enabled": true,
-      "schedule": {
-        "kind": "cron",
-        "expr": "0 7 * * 1-5",
-        "tz": "Europe/Madrid"
-      },
-      "sessionTarget": "isolated",
-      "wakeMode": "now",
-      "payload": {
-        "kind": "agentTurn",
-        "message": "Ejecuta news-monitor para Hulahoop.\n\nPASO 1 — LEER CONFIGS:\nLee brand/hulahoop/content/configs/news-prompts/*.yml (un archivo por pillar).\nLee brand/hulahoop/content/content-pillars.md para contexto.\n\nPASO 2 — BUSCAR POR PILLAR:\nPara cada pillar, ejecuta WebSearch con los prompts configurados.\nFiltra por sector_filters y language. Max 10 resultados relevantes por pillar.\nDeduplica por URL contra research-signals de ayer.\n\nPASO 3 — EXTRAER SIGNALS:\nPara cada resultado, extrae: id, type=news, pillar_id, title, summary (2-3 frases de POR QUE es relevante al pillar), source, url, date, relevance_score (0-1).\nSkip: press releases sin insight, listicles superficiales.\n\nPASO 4 — GUARDAR:\nEscribe en brand/hulahoop/content/research-signals/{YYYY-MM-DD}-news.json.\nSi el archivo ya existe, merge y deduplica.\n\nPASO X — GENERAR last_finding:\nAntes de guardar en recurring-tasks (paso siguiente), genera un campo `last_finding` con un RESUMEN DE 1-2 FRASES en español de lo más relevante de esta corrida. Ejemplo: \"MiCA julio 2026: nueva guía ESMA sobre CASPs sin autorización. 3 medios cubren — gap claro de POV.\" Este texto se muestra en la card \"Antenas de contenido\" del Engine UI; debe ser concreto y citar lo concreto encontrado, no genérico.\n\nPASO 5 — GUARDAR EN RECURRING TASKS:\nGuarda resumen en brand/hulahoop/recurring-tasks/content-news-monitor/{YYYY-MM-DD}.json:\n{\"cronName\": \"Content: News Monitor — Hulahoop\", \"slug\": \"hulahoop\", \"date\": \"YYYY-MM-DD\", \"runAtMs\": <timestamp_ms>, \"status\": \"ok\", \"last_finding\": \"<la frase de 1-2 oraciones del PASO X>\", \"content\": \"<N signals encontrados por pillar>\"}",
-        "model": "anthropic/claude-sonnet-4-5"
-      },
-      "delivery": {
-        "mode": "none"
-      },
-      "id": "bd8a9780-4b83-448c-9b0d-e7ff7485eba5",
-      "createdAtMs": 1777157953998,
-      "state": {}
-    },
-    {
-      "agentId": "sancho",
-      "name": "Content: Competitor Monitor — Hulahoop",
-      "enabled": true,
-      "schedule": {
-        "kind": "cron",
-        "expr": "0 7 * * 1-5",
-        "tz": "Europe/Madrid"
-      },
-      "sessionTarget": "isolated",
-      "wakeMode": "now",
-      "payload": {
-        "kind": "agentTurn",
-        "message": "Ejecuta thief-marketers para Hulahoop.\n\nPASO 1 — LEER CONFIGS:\nLee brand/hulahoop/content/configs/competitors/all-pillars.yml\nLee brand/hulahoop/content/configs/reference-creators/all-pillars.yml\nLee brand/hulahoop/content/content-pillars.md\n\nPASO 2 — MONITOREAR COMPETIDORES Y CREATORS:\nPara cada competidor y reference-creator, busca su contenido reciente:\n- LinkedIn: WebSearch \"site:linkedin.com/posts {nombre}\" o WebFetch de su perfil publico\n- Blog: WebFetch de su web/blog\n- X/Twitter: WebSearch \"site:x.com {handle}\"\nExtrae top 5 posts por engagement de los ultimos 7 dias.\n\nPASO 3 — EXTRAER SIGNALS:\nPara cada contenido top, extrae: id, type=creator, pillar_id, title, summary, source (nombre), source_type (competitor/reference-creator), platform, url, engagement, why_it_worked (2-3 frases), angle_for_us (como podemos usar esta signal).\nMax 15 signals totales.\n\nPASO 4 — GUARDAR:\nEscribe en brand/hulahoop/content/research-signals/{YYYY-MM-DD}-creators.json.\n\nPASO X — GENERAR last_finding:\nAntes de guardar en recurring-tasks (paso siguiente), genera un campo `last_finding` con un RESUMEN DE 1-2 FRASES en español de lo más relevante de esta corrida. Ejemplo: \"MiCA julio 2026: nueva guía ESMA sobre CASPs sin autorización. 3 medios cubren — gap claro de POV.\" Este texto se muestra en la card \"Antenas de contenido\" del Engine UI; debe ser concreto y citar lo concreto encontrado, no genérico.\n\nPASO 5 — GUARDAR EN RECURRING TASKS:\nGuarda resumen en brand/hulahoop/recurring-tasks/content-competitor-monitor/{YYYY-MM-DD}.json.",
-        "model": "anthropic/claude-sonnet-4-5"
-      },
-      "delivery": {
-        "mode": "none"
-      },
-      "id": "67259a6e-55df-45d5-a8d5-fc5d5bfd27ab",
-      "createdAtMs": 1777157953998,
-      "state": {}
-    },
-    {
-      "agentId": "sancho",
-      "name": "Content: Editorial Dispatch — Hulahoop",
-      "enabled": true,
-      "schedule": {
-        "kind": "cron",
-        "expr": "30 8 * * 1-5",
-        "tz": "Europe/Madrid"
-      },
-      "sessionTarget": "isolated",
-      "wakeMode": "now",
-      "payload": {
-        "kind": "agentTurn",
-        "message": "Ejecuta editorial dispatch para Hulahoop.\n\nPASO 1 — LEER:\nLee brand/hulahoop/content/idea-queue.json\nLee brand/hulahoop/content/configs/cadence-config.yml\n\nPASO 2 — SELECCIONAR CANDIDATOS:\nFiltra ideas donde status=ready AND age<=14 dias.\nCalcula recency_score = exp(-age_days/5).\nOrdena por recency_score DESC, pov_confidence DESC.\nSelecciona 3-5 ideas para los slots del dia segun cadence-config.\nIdeas >14 dias → marca status=stale automaticamente.\n\nPASO 3 — ENVIAR A DISCORD:\nLee brand/hulahoop/client-config.json para el channel ID de content.\nPara cada idea seleccionada, envia al canal de Discord:\n\n📰 Esto paso: {signal.summary}\n   📅 {signal.date} · 🔗 {signal.source}\n✍️ Tu posible angulo: {angle_draft}\n🎯 Pillar: {pillar_id} · Canal: {channel} · Tipo: {type}\n\nAl final del mensaje: '¿Cuales quieres que desarrolle hoy? Responde con los numeros (ej: 1, 3) o \"ninguno\"'\n\nPASO 4 — ESPERAR RESPUESTA:\nCuando el humano responda con los numeros:\n- Ideas seleccionadas → status=approved, target_date=hoy\n- Las demas → mantener status=ready\n\nPASO 5 — CREAR TAREA SEMANAL (si no existe):\nVerifica si existe proyecto P-Content-Semana-{NN} para esta semana.\nSi no, crea el proyecto + tarea del dia.\nSi si, crea solo la tarea del dia dentro del proyecto existente.\nResponde con link al thread de MC para que el humano continue alli.\n\nPASO 6 — GUARDAR EN RECURRING TASKS:\nGuarda en brand/hulahoop/recurring-tasks/content-editorial-dispatch/{YYYY-MM-DD}.json.",
-        "model": "claude-opus-4-6"
-      },
-      "delivery": {
-        "mode": "none"
-      },
-      "id": "6946f3e7-e8f4-4501-a824-c05b0e60e341",
-      "createdAtMs": 1777157953998,
-      "state": {}
-    },
-    {
-      "agentId": "sancho",
       "name": "Content: PAA Monitor — Hulahoop",
       "enabled": true,
       "schedule": {
@@ -1235,75 +1028,6 @@
       },
       "id": "369c003e-c170-4f6d-bf9d-5cf380028d45",
       "createdAtMs": 1777157953998,
-      "state": {}
-    },
-    {
-      "agentId": "sancho",
-      "name": "Content: News Monitor — Paymatico",
-      "enabled": true,
-      "schedule": {
-        "kind": "cron",
-        "expr": "0 7 * * 1-5",
-        "tz": "Europe/Madrid"
-      },
-      "sessionTarget": "isolated",
-      "wakeMode": "now",
-      "payload": {
-        "kind": "agentTurn",
-        "message": "Ejecuta news-monitor para Paymatico.\n\nPASO 1 — LEER CONFIGS:\nLee brand/paymatico/content/configs/news-prompts/*.yml (un archivo por pillar).\nLee brand/paymatico/content/content-pillars.md para contexto.\n\nPASO 2 — BUSCAR POR PILLAR:\nPara cada pillar, ejecuta WebSearch con los prompts configurados.\nFiltra por sector_filters y language. Max 10 resultados relevantes por pillar.\nDeduplica por URL contra research-signals de ayer.\n\nPASO 3 — EXTRAER SIGNALS:\nPara cada resultado, extrae: id, type=news, pillar_id, title, summary (2-3 frases de POR QUE es relevante al pillar), source, url, date, relevance_score (0-1).\nSkip: press releases sin insight, listicles superficiales.\n\nPASO 4 — GUARDAR:\nEscribe en brand/paymatico/content/research-signals/{YYYY-MM-DD}-news.json.\nSi el archivo ya existe, merge y deduplica.\n\nPASO X — GENERAR last_finding:\nAntes de guardar en recurring-tasks (paso siguiente), genera un campo `last_finding` con un RESUMEN DE 1-2 FRASES en español de lo más relevante de esta corrida. Ejemplo: \"MiCA julio 2026: nueva guía ESMA sobre CASPs sin autorización. 3 medios cubren — gap claro de POV.\" Este texto se muestra en la card \"Antenas de contenido\" del Engine UI; debe ser concreto y citar lo concreto encontrado, no genérico.\n\nPASO 5 — GUARDAR EN RECURRING TASKS:\nGuarda resumen en brand/paymatico/recurring-tasks/content-news-monitor/{YYYY-MM-DD}.json:\n{\"cronName\": \"Content: News Monitor — Paymatico\", \"slug\": \"paymatico\", \"date\": \"YYYY-MM-DD\", \"runAtMs\": <timestamp_ms>, \"status\": \"ok\", \"last_finding\": \"<la frase de 1-2 oraciones del PASO X>\", \"content\": \"<N signals encontrados por pillar>\"}",
-        "model": "anthropic/claude-sonnet-4-5"
-      },
-      "delivery": {
-        "mode": "none"
-      },
-      "id": "3bd0764d-7cfe-4692-9a72-8043894129ba",
-      "createdAtMs": 1777157954012,
-      "state": {}
-    },
-    {
-      "agentId": "sancho",
-      "name": "Content: Competitor Monitor — Paymatico",
-      "enabled": true,
-      "schedule": {
-        "kind": "cron",
-        "expr": "0 7 * * 1-5",
-        "tz": "Europe/Madrid"
-      },
-      "sessionTarget": "isolated",
-      "wakeMode": "now",
-      "payload": {
-        "kind": "agentTurn",
-        "message": "Ejecuta thief-marketers para Paymatico.\n\nPASO 1 — LEER CONFIGS:\nLee brand/paymatico/content/configs/competitors/all-pillars.yml\nLee brand/paymatico/content/configs/reference-creators/all-pillars.yml\nLee brand/paymatico/content/content-pillars.md\n\nPASO 2 — MONITOREAR COMPETIDORES Y CREATORS:\nPara cada competidor y reference-creator, busca su contenido reciente:\n- LinkedIn: WebSearch \"site:linkedin.com/posts {nombre}\" o WebFetch de su perfil publico\n- Blog: WebFetch de su web/blog\n- X/Twitter: WebSearch \"site:x.com {handle}\"\nExtrae top 5 posts por engagement de los ultimos 7 dias.\n\nPASO 3 — EXTRAER SIGNALS:\nPara cada contenido top, extrae: id, type=creator, pillar_id, title, summary, source (nombre), source_type (competitor/reference-creator), platform, url, engagement, why_it_worked (2-3 frases), angle_for_us (como podemos usar esta signal).\nMax 15 signals totales.\n\nPASO 4 — GUARDAR:\nEscribe en brand/paymatico/content/research-signals/{YYYY-MM-DD}-creators.json.\n\nPASO X — GENERAR last_finding:\nAntes de guardar en recurring-tasks (paso siguiente), genera un campo `last_finding` con un RESUMEN DE 1-2 FRASES en español de lo más relevante de esta corrida. Ejemplo: \"MiCA julio 2026: nueva guía ESMA sobre CASPs sin autorización. 3 medios cubren — gap claro de POV.\" Este texto se muestra en la card \"Antenas de contenido\" del Engine UI; debe ser concreto y citar lo concreto encontrado, no genérico.\n\nPASO 5 — GUARDAR EN RECURRING TASKS:\nGuarda resumen en brand/paymatico/recurring-tasks/content-competitor-monitor/{YYYY-MM-DD}.json.",
-        "model": "anthropic/claude-sonnet-4-5"
-      },
-      "delivery": {
-        "mode": "none"
-      },
-      "id": "2d9b3847-5a0a-405f-b222-f76fdae9c854",
-      "createdAtMs": 1777157954012,
-      "state": {}
-    },
-    {
-      "agentId": "sancho",
-      "name": "Content: Editorial Dispatch — Paymatico",
-      "enabled": true,
-      "schedule": {
-        "kind": "cron",
-        "expr": "30 8 * * 1-5",
-        "tz": "Europe/Madrid"
-      },
-      "sessionTarget": "isolated",
-      "wakeMode": "now",
-      "payload": {
-        "kind": "agentTurn",
-        "message": "Ejecuta editorial dispatch para Paymatico.\n\nPASO 1 — LEER:\nLee brand/paymatico/content/idea-queue.json\nLee brand/paymatico/content/configs/cadence-config.yml\n\nPASO 2 — SELECCIONAR CANDIDATOS:\nFiltra ideas donde status=ready AND age<=14 dias.\nCalcula recency_score = exp(-age_days/5).\nOrdena por recency_score DESC, pov_confidence DESC.\nSelecciona 3-5 ideas para los slots del dia segun cadence-config.\nIdeas >14 dias → marca status=stale automaticamente.\n\nPASO 3 — ENVIAR A DISCORD:\nLee brand/paymatico/client-config.json para el channel ID de content.\nPara cada idea seleccionada, envia al canal de Discord:\n\n📰 Esto paso: {signal.summary}\n   📅 {signal.date} · 🔗 {signal.source}\n✍️ Tu posible angulo: {angle_draft}\n🎯 Pillar: {pillar_id} · Canal: {channel} · Tipo: {type}\n\nAl final del mensaje: '¿Cuales quieres que desarrolle hoy? Responde con los numeros (ej: 1, 3) o \"ninguno\"'\n\nPASO 4 — ESPERAR RESPUESTA:\nCuando el humano responda con los numeros:\n- Ideas seleccionadas → status=approved, target_date=hoy\n- Las demas → mantener status=ready\n\nPASO 5 — CREAR TAREA SEMANAL (si no existe):\nVerifica si existe proyecto P-Content-Semana-{NN} para esta semana.\nSi no, crea el proyecto + tarea del dia.\nSi si, crea solo la tarea del dia dentro del proyecto existente.\nResponde con link al thread de MC para que el humano continue alli.\n\nPASO 6 — GUARDAR EN RECURRING TASKS:\nGuarda en brand/paymatico/recurring-tasks/content-editorial-dispatch/{YYYY-MM-DD}.json.",
-        "model": "claude-opus-4-6"
-      },
-      "delivery": {
-        "mode": "none"
-      },
-      "id": "fda4363f-983f-4681-93b6-13f0521c9b7f",
-      "createdAtMs": 1777157954012,
       "state": {}
     },
     {
@@ -1465,6 +1189,294 @@
       },
       "id": "42dbd1ef-e58d-4fe9-a211-c48030f4e0c1",
       "createdAtMs": 1777837031844,
+      "state": {}
+    },
+    {
+      "id": "7352736a-f369-4559-8342-9157f7320d25",
+      "agentId": "sancho",
+      "name": "Content: News Monitor — Growth4U",
+      "enabled": true,
+      "createdAtMs": 1778017421757,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 7 * * 1-5",
+        "tz": "Europe/Madrid"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Ejecuta news-monitor para Growth4U.\n\nLa skill produce ideas COMPLETAS (con angle_draft) directamente en idea-queue.json — NO escribe solo signals crudos. El antiguo paso de Classify + Ideas (idea-builder) está deprecado y absorbido aquí.\n\nPASO 1 — LEER CONFIGS:\n- brand/growth4u/content/configs/news-prompts/*.yml (uno por pillar)\n- brand/growth4u/content/content-pillars.md\n- brand/growth4u/content/configs/cadence-config.yml\n- brand/growth4u/content/pov-bank.json (fuente del POV por pillar)\n\nPASO 2 — BUSCAR POR PILLAR:\nPara cada pillar, ejecuta WebSearch con los prompts configurados.\nFiltra por sector_filters y language. Excluye exclude_sources. Deduplica por URL contra idea-queue.json de los últimos 7 días.\nMax 10 resultados relevantes por pillar.\n\nPASO 3 — CONSTRUIR IDEAS (todo en una pasada):\nPara cada resultado que pase los filtros, genera UNA idea completa con:\n- id: idea-{YYYY-MM-DD}-{n}\n- title: 40-90 chars, sin prefijo 'Nuestro POV:'\n- pillar_id: el pillar que matchea\n- content_type: Hot Take | Proof Post | Framework | Personal Story | Listicle\n- target_channel: linkedin | twitter | blog | newsletter (según cadence + signal type)\n- signal: { summary (2-3 frases FACTUALES de lo que dice el artículo — datos, citas, hallazgos. NUNCA truncar, NUNCA añadir '...'. NUNCA mencionar marca propia/cliente como Growth4U, P{N}, ICPs, productos internos. La interpretación va en angle_draft, no aquí.), source, url, date }\n- signal_type: array de [milestone, aha-moment, contrarian, data-point, cautionary-tale, framework, proof-point]\n- angle_draft: 60-80 palabras con el POV de la marca (referencia core_belief / preferred_angles del pov-bank), termina con Frame: '...'. SIN prefijo 'Nuestro POV:'.\n- pov_confidence: 0-1 (+0.2 si cita data concreta, +0.2 si fuente en evidence_we_cite, +0.15 si ≤7 días, +0.15 si core_belief encaja, -0.2 si especulativo)\n- source_signals: ['news-{YYYY-MM-DD}-{hash}']  (id del audit log)\n- created_at: ISO ahora\n- status: 'New'\n\nDescarta resultados con pov_confidence < 0.5.\n\nPASO 4 — APPEND A IDEA-QUEUE:\nAppend cada idea a brand/growth4u/content/idea-queue.json. NUNCA modificar ideas existentes — solo añadir.\n\nPASO 5 — AUDIT LOG:\nEscribe el signal raw en brand/growth4u/content/research-signals/{YYYY-MM-DD}-news.json (id, type, pillar_id, title, summary FACTUAL, source, url, date, relevance_score, created_at). Solo log — ningún otro skill lo lee.\n\nPASO 6 — last_finding (1-2 frases para Engine UI):\nGenera un last_finding concreto y citable, ejemplo: \"5 ideas nuevas hoy. Highlight: idea-2026-05-04-3 sobre nueva regulación MiCA (Search Engine Land), pov_confidence 0.92.\"\n\nPASO 7 — RECURRING TASKS:\nGuarda en brand/growth4u/recurring-tasks/content-news-monitor/{YYYY-MM-DD}.json:\n{\"cronName\": \"Content: News Monitor — Growth4U\", \"slug\": \"growth4u\", \"date\": \"YYYY-MM-DD\", \"runAtMs\": <ts>, \"status\": \"ok\", \"last_finding\": \"<frase del paso 6>\", \"content\": \"<N ideas creadas, desglose por pillar>\", \"ideas_created\": <N>}",
+        "model": "anthropic/claude-sonnet-4-5"
+      },
+      "delivery": {
+        "mode": "announce",
+        "channel": "last"
+      },
+      "state": {}
+    },
+    {
+      "id": "945531aa-9e66-487b-92ab-aff060671424",
+      "agentId": "sancho",
+      "name": "Content: Competitor Monitor — Growth4U",
+      "enabled": true,
+      "createdAtMs": 1778017424386,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 7 * * 1-5",
+        "tz": "Europe/Madrid"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Ejecuta thief-marketers para Growth4U.\n\nLa skill produce ideas COMPLETAS (con angle_draft) directamente en idea-queue.json — NO escribe solo signals crudos. El antiguo paso de Classify + Ideas (idea-builder) está deprecado y absorbido aquí.\n\nPASO 1 — LEER CONFIGS:\n- brand/growth4u/content/configs/competitors/*.yml\n- brand/growth4u/content/configs/reference-creators/*.yml\n- brand/growth4u/content/content-pillars.md\n- brand/growth4u/content/configs/cadence-config.yml\n- brand/growth4u/content/pov-bank.json\n- brand/growth4u/brand-book/brand-voice/brand-voice.current.md\n\nPASO 2 — MONITOREAR:\nPara cada competidor y reference-creator, busca su contenido reciente:\n- LinkedIn: WebSearch \"site:linkedin.com/posts {nombre}\" o WebFetch del perfil público\n- Blog: WebFetch web/blog\n- X/Twitter: WebSearch \"site:x.com {handle}\"\nÚltimos 7 días, top 5 por engagement por plataforma.\n\nPASO 3 — CONSTRUIR IDEAS (todo en una pasada):\nPara cada pieza top que matchee un pillar, genera UNA idea completa:\n- id: idea-{YYYY-MM-DD}-{n}\n- title: 40-90 chars\n- pillar_id\n- content_type: Hot Take | Proof Post | Framework | Personal Story | Listicle\n- target_channel\n- signal: { summary (2-3 frases FACTUALES de lo que dice el post — claims, datos, framework. NUNCA truncar, NUNCA mencionar marca propia/cliente. La interpretación / why-it-worked / how-WE-respond va en angle_draft.), source (nombre del autor), source_type ('competitor' o 'reference-creator'), platform, url, engagement {likes, comments, shares}, date }\n- signal_type: array de [milestone, aha-moment, contrarian, data-point, cautionary-tale, framework, proof-point]\n- angle_draft: 60-80 palabras con POV de la marca, termina con Frame: '...'. Tono según source_type: competitor → counter/contrast; reference-creator → learn/adapt.\n- pov_confidence: 0-1\n- source_signals: ['creators-{YYYY-MM-DD}-{hash}']\n- created_at: ISO ahora\n- status: 'New'\n\nDescarta piezas que no matcheen ningún pillar o pov_confidence < 0.5.\nMax 15 ideas totales.\n\nPASO 4 — APPEND A IDEA-QUEUE:\nAppend cada idea a brand/growth4u/content/idea-queue.json. Deduplica por URL contra ideas existentes.\n\nPASO 5 — AUDIT LOG:\nEscribe los signals raw en brand/growth4u/content/research-signals/{YYYY-MM-DD}-creators.json. Solo log.\n\nPASO 6 — last_finding (1-2 frases):\nEjemplo: \"7 ideas nuevas (4 reference-creators, 3 competitors). Highlight: idea-2026-05-04-7 — Elena Verna sobre PLG death (LinkedIn, 800+ likes), pov_confidence 0.88.\"\n\nPASO 7 — RECURRING TASKS:\nGuarda en brand/growth4u/recurring-tasks/content-competitor-monitor/{YYYY-MM-DD}.json con cronName, slug, date, runAtMs, status, last_finding, content, ideas_created.",
+        "model": "anthropic/claude-sonnet-4-5"
+      },
+      "delivery": {
+        "mode": "announce",
+        "channel": "last"
+      },
+      "state": {}
+    },
+    {
+      "id": "9fd8d340-9760-4130-9fc6-2079fb6fd0f9",
+      "agentId": "sancho",
+      "name": "Content: News Monitor — Hospital Capilar",
+      "enabled": true,
+      "createdAtMs": 1778017531363,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 7 * * 1-5",
+        "tz": "Europe/Madrid"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Ejecuta news-monitor para Hospital Capilar.\n\nLa skill produce ideas COMPLETAS (con angle_draft) directamente en idea-queue.json — NO escribe solo signals crudos. El antiguo paso de Classify + Ideas (idea-builder) está deprecado y absorbido aquí.\n\nPASO 1 — LEER CONFIGS:\n- brand/hospital-capilar/content/configs/news-prompts/*.yml (uno por pillar)\n- brand/hospital-capilar/content/content-pillars.md\n- brand/hospital-capilar/content/configs/cadence-config.yml\n- brand/hospital-capilar/content/pov-bank.json (fuente del POV por pillar)\n\nPASO 2 — BUSCAR POR PILLAR:\nPara cada pillar, ejecuta WebSearch con los prompts configurados.\nFiltra por sector_filters y language. Excluye exclude_sources. Deduplica por URL contra idea-queue.json de los últimos 7 días.\nMax 10 resultados relevantes por pillar.\n\nPASO 3 — CONSTRUIR IDEAS (todo en una pasada):\nPara cada resultado que pase los filtros, genera UNA idea completa con:\n- id: idea-{YYYY-MM-DD}-{n}\n- title: 40-90 chars, sin prefijo 'Nuestro POV:'\n- pillar_id: el pillar que matchea\n- content_type: Hot Take | Proof Post | Framework | Personal Story | Listicle\n- target_channel: linkedin | twitter | blog | newsletter (según cadence + signal type)\n- signal: { summary (2-3 frases FACTUALES de lo que dice el artículo — datos, citas, hallazgos. NUNCA truncar, NUNCA añadir '...'. NUNCA mencionar marca propia/cliente como Hospital Capilar, P{N}, ICPs, productos internos. La interpretación va en angle_draft, no aquí.), source, url, date }\n- signal_type: array de [milestone, aha-moment, contrarian, data-point, cautionary-tale, framework, proof-point]\n- angle_draft: 60-80 palabras con el POV de la marca (referencia core_belief / preferred_angles del pov-bank), termina con Frame: '...'. SIN prefijo 'Nuestro POV:'.\n- pov_confidence: 0-1 (+0.2 si cita data concreta, +0.2 si fuente en evidence_we_cite, +0.15 si ≤7 días, +0.15 si core_belief encaja, -0.2 si especulativo)\n- source_signals: ['news-{YYYY-MM-DD}-{hash}']  (id del audit log)\n- created_at: ISO ahora\n- status: 'New'\n\nDescarta resultados con pov_confidence < 0.5.\n\nPASO 4 — APPEND A IDEA-QUEUE:\nAppend cada idea a brand/hospital-capilar/content/idea-queue.json. NUNCA modificar ideas existentes — solo añadir.\n\nPASO 5 — AUDIT LOG:\nEscribe el signal raw en brand/hospital-capilar/content/research-signals/{YYYY-MM-DD}-news.json (id, type, pillar_id, title, summary FACTUAL, source, url, date, relevance_score, created_at). Solo log — ningún otro skill lo lee.\n\nPASO 6 — last_finding (1-2 frases para Engine UI):\nGenera un last_finding concreto y citable, ejemplo: \"5 ideas nuevas hoy. Highlight: idea-2026-05-04-3 sobre nueva regulación MiCA (Search Engine Land), pov_confidence 0.92.\"\n\nPASO 7 — RECURRING TASKS:\nGuarda en brand/hospital-capilar/recurring-tasks/content-news-monitor/{YYYY-MM-DD}.json:\n{\"cronName\": \"Content: News Monitor — Hospital Capilar\", \"slug\": \"hospital-capilar\", \"date\": \"YYYY-MM-DD\", \"runAtMs\": <ts>, \"status\": \"ok\", \"last_finding\": \"<frase del paso 6>\", \"content\": \"<N ideas creadas, desglose por pillar>\", \"ideas_created\": <N>}",
+        "model": "anthropic/claude-sonnet-4-5"
+      },
+      "delivery": {
+        "mode": "announce",
+        "channel": "last"
+      },
+      "state": {}
+    },
+    {
+      "id": "a31fe0f8-7328-40a0-80d6-fa6194925c93",
+      "agentId": "sancho",
+      "name": "Content: Competitor Monitor — Hospital Capilar",
+      "enabled": true,
+      "createdAtMs": 1778017533531,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 7 * * 1-5",
+        "tz": "Europe/Madrid"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Ejecuta thief-marketers para Hospital Capilar.\n\nLa skill produce ideas COMPLETAS (con angle_draft) directamente en idea-queue.json — NO escribe solo signals crudos. El antiguo paso de Classify + Ideas (idea-builder) está deprecado y absorbido aquí.\n\nPASO 1 — LEER CONFIGS:\n- brand/hospital-capilar/content/configs/competitors/*.yml\n- brand/hospital-capilar/content/configs/reference-creators/*.yml\n- brand/hospital-capilar/content/content-pillars.md\n- brand/hospital-capilar/content/configs/cadence-config.yml\n- brand/hospital-capilar/content/pov-bank.json\n- brand/hospital-capilar/brand-book/brand-voice/brand-voice.current.md\n\nPASO 2 — MONITOREAR:\nPara cada competidor y reference-creator, busca su contenido reciente:\n- LinkedIn: WebSearch \"site:linkedin.com/posts {nombre}\" o WebFetch del perfil público\n- Blog: WebFetch web/blog\n- X/Twitter: WebSearch \"site:x.com {handle}\"\nÚltimos 7 días, top 5 por engagement por plataforma.\n\nPASO 3 — CONSTRUIR IDEAS (todo en una pasada):\nPara cada pieza top que matchee un pillar, genera UNA idea completa:\n- id: idea-{YYYY-MM-DD}-{n}\n- title: 40-90 chars\n- pillar_id\n- content_type: Hot Take | Proof Post | Framework | Personal Story | Listicle\n- target_channel\n- signal: { summary (2-3 frases FACTUALES de lo que dice el post — claims, datos, framework. NUNCA truncar, NUNCA mencionar marca propia/cliente. La interpretación / why-it-worked / how-WE-respond va en angle_draft.), source (nombre del autor), source_type ('competitor' o 'reference-creator'), platform, url, engagement {likes, comments, shares}, date }\n- signal_type: array de [milestone, aha-moment, contrarian, data-point, cautionary-tale, framework, proof-point]\n- angle_draft: 60-80 palabras con POV de la marca, termina con Frame: '...'. Tono según source_type: competitor → counter/contrast; reference-creator → learn/adapt.\n- pov_confidence: 0-1\n- source_signals: ['creators-{YYYY-MM-DD}-{hash}']\n- created_at: ISO ahora\n- status: 'New'\n\nDescarta piezas que no matcheen ningún pillar o pov_confidence < 0.5.\nMax 15 ideas totales.\n\nPASO 4 — APPEND A IDEA-QUEUE:\nAppend cada idea a brand/hospital-capilar/content/idea-queue.json. Deduplica por URL contra ideas existentes.\n\nPASO 5 — AUDIT LOG:\nEscribe los signals raw en brand/hospital-capilar/content/research-signals/{YYYY-MM-DD}-creators.json. Solo log.\n\nPASO 6 — last_finding (1-2 frases):\nEjemplo: \"7 ideas nuevas (4 reference-creators, 3 competitors). Highlight: idea-2026-05-04-7 — Elena Verna sobre PLG death (LinkedIn, 800+ likes), pov_confidence 0.88.\"\n\nPASO 7 — RECURRING TASKS:\nGuarda en brand/hospital-capilar/recurring-tasks/content-competitor-monitor/{YYYY-MM-DD}.json con cronName, slug, date, runAtMs, status, last_finding, content, ideas_created.",
+        "model": "anthropic/claude-sonnet-4-5"
+      },
+      "delivery": {
+        "mode": "announce",
+        "channel": "last"
+      },
+      "state": {}
+    },
+    {
+      "id": "1f841116-56c4-4b04-a10f-901cb96749d7",
+      "agentId": "sancho",
+      "name": "Content: News Monitor — Hulahoop",
+      "enabled": true,
+      "createdAtMs": 1778017535830,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 7 * * 1-5",
+        "tz": "Europe/Madrid"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Ejecuta news-monitor para Hulahoop.\n\nLa skill produce ideas COMPLETAS (con angle_draft) directamente en idea-queue.json — NO escribe solo signals crudos. El antiguo paso de Classify + Ideas (idea-builder) está deprecado y absorbido aquí.\n\nPASO 1 — LEER CONFIGS:\n- brand/hulahoop/content/configs/news-prompts/*.yml (uno por pillar)\n- brand/hulahoop/content/content-pillars.md\n- brand/hulahoop/content/configs/cadence-config.yml\n- brand/hulahoop/content/pov-bank.json (fuente del POV por pillar)\n\nPASO 2 — BUSCAR POR PILLAR:\nPara cada pillar, ejecuta WebSearch con los prompts configurados.\nFiltra por sector_filters y language. Excluye exclude_sources. Deduplica por URL contra idea-queue.json de los últimos 7 días.\nMax 10 resultados relevantes por pillar.\n\nPASO 3 — CONSTRUIR IDEAS (todo en una pasada):\nPara cada resultado que pase los filtros, genera UNA idea completa con:\n- id: idea-{YYYY-MM-DD}-{n}\n- title: 40-90 chars, sin prefijo 'Nuestro POV:'\n- pillar_id: el pillar que matchea\n- content_type: Hot Take | Proof Post | Framework | Personal Story | Listicle\n- target_channel: linkedin | twitter | blog | newsletter (según cadence + signal type)\n- signal: { summary (2-3 frases FACTUALES de lo que dice el artículo — datos, citas, hallazgos. NUNCA truncar, NUNCA añadir '...'. NUNCA mencionar marca propia/cliente como Hulahoop, P{N}, ICPs, productos internos. La interpretación va en angle_draft, no aquí.), source, url, date }\n- signal_type: array de [milestone, aha-moment, contrarian, data-point, cautionary-tale, framework, proof-point]\n- angle_draft: 60-80 palabras con el POV de la marca (referencia core_belief / preferred_angles del pov-bank), termina con Frame: '...'. SIN prefijo 'Nuestro POV:'.\n- pov_confidence: 0-1 (+0.2 si cita data concreta, +0.2 si fuente en evidence_we_cite, +0.15 si ≤7 días, +0.15 si core_belief encaja, -0.2 si especulativo)\n- source_signals: ['news-{YYYY-MM-DD}-{hash}']  (id del audit log)\n- created_at: ISO ahora\n- status: 'New'\n\nDescarta resultados con pov_confidence < 0.5.\n\nPASO 4 — APPEND A IDEA-QUEUE:\nAppend cada idea a brand/hulahoop/content/idea-queue.json. NUNCA modificar ideas existentes — solo añadir.\n\nPASO 5 — AUDIT LOG:\nEscribe el signal raw en brand/hulahoop/content/research-signals/{YYYY-MM-DD}-news.json (id, type, pillar_id, title, summary FACTUAL, source, url, date, relevance_score, created_at). Solo log — ningún otro skill lo lee.\n\nPASO 6 — last_finding (1-2 frases para Engine UI):\nGenera un last_finding concreto y citable, ejemplo: \"5 ideas nuevas hoy. Highlight: idea-2026-05-04-3 sobre nueva regulación MiCA (Search Engine Land), pov_confidence 0.92.\"\n\nPASO 7 — RECURRING TASKS:\nGuarda en brand/hulahoop/recurring-tasks/content-news-monitor/{YYYY-MM-DD}.json:\n{\"cronName\": \"Content: News Monitor — Hulahoop\", \"slug\": \"hulahoop\", \"date\": \"YYYY-MM-DD\", \"runAtMs\": <ts>, \"status\": \"ok\", \"last_finding\": \"<frase del paso 6>\", \"content\": \"<N ideas creadas, desglose por pillar>\", \"ideas_created\": <N>}",
+        "model": "anthropic/claude-sonnet-4-5"
+      },
+      "delivery": {
+        "mode": "announce",
+        "channel": "last"
+      },
+      "state": {}
+    },
+    {
+      "id": "1d6ed4c5-91ed-487a-a993-98cf6a641410",
+      "agentId": "sancho",
+      "name": "Content: Competitor Monitor — Hulahoop",
+      "enabled": true,
+      "createdAtMs": 1778017538162,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 7 * * 1-5",
+        "tz": "Europe/Madrid"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Ejecuta thief-marketers para Hulahoop.\n\nLa skill produce ideas COMPLETAS (con angle_draft) directamente en idea-queue.json — NO escribe solo signals crudos. El antiguo paso de Classify + Ideas (idea-builder) está deprecado y absorbido aquí.\n\nPASO 1 — LEER CONFIGS:\n- brand/hulahoop/content/configs/competitors/*.yml\n- brand/hulahoop/content/configs/reference-creators/*.yml\n- brand/hulahoop/content/content-pillars.md\n- brand/hulahoop/content/configs/cadence-config.yml\n- brand/hulahoop/content/pov-bank.json\n- brand/hulahoop/brand-book/brand-voice/brand-voice.current.md\n\nPASO 2 — MONITOREAR:\nPara cada competidor y reference-creator, busca su contenido reciente:\n- LinkedIn: WebSearch \"site:linkedin.com/posts {nombre}\" o WebFetch del perfil público\n- Blog: WebFetch web/blog\n- X/Twitter: WebSearch \"site:x.com {handle}\"\nÚltimos 7 días, top 5 por engagement por plataforma.\n\nPASO 3 — CONSTRUIR IDEAS (todo en una pasada):\nPara cada pieza top que matchee un pillar, genera UNA idea completa:\n- id: idea-{YYYY-MM-DD}-{n}\n- title: 40-90 chars\n- pillar_id\n- content_type: Hot Take | Proof Post | Framework | Personal Story | Listicle\n- target_channel\n- signal: { summary (2-3 frases FACTUALES de lo que dice el post — claims, datos, framework. NUNCA truncar, NUNCA mencionar marca propia/cliente. La interpretación / why-it-worked / how-WE-respond va en angle_draft.), source (nombre del autor), source_type ('competitor' o 'reference-creator'), platform, url, engagement {likes, comments, shares}, date }\n- signal_type: array de [milestone, aha-moment, contrarian, data-point, cautionary-tale, framework, proof-point]\n- angle_draft: 60-80 palabras con POV de la marca, termina con Frame: '...'. Tono según source_type: competitor → counter/contrast; reference-creator → learn/adapt.\n- pov_confidence: 0-1\n- source_signals: ['creators-{YYYY-MM-DD}-{hash}']\n- created_at: ISO ahora\n- status: 'New'\n\nDescarta piezas que no matcheen ningún pillar o pov_confidence < 0.5.\nMax 15 ideas totales.\n\nPASO 4 — APPEND A IDEA-QUEUE:\nAppend cada idea a brand/hulahoop/content/idea-queue.json. Deduplica por URL contra ideas existentes.\n\nPASO 5 — AUDIT LOG:\nEscribe los signals raw en brand/hulahoop/content/research-signals/{YYYY-MM-DD}-creators.json. Solo log.\n\nPASO 6 — last_finding (1-2 frases):\nEjemplo: \"7 ideas nuevas (4 reference-creators, 3 competitors). Highlight: idea-2026-05-04-7 — Elena Verna sobre PLG death (LinkedIn, 800+ likes), pov_confidence 0.88.\"\n\nPASO 7 — RECURRING TASKS:\nGuarda en brand/hulahoop/recurring-tasks/content-competitor-monitor/{YYYY-MM-DD}.json con cronName, slug, date, runAtMs, status, last_finding, content, ideas_created.",
+        "model": "anthropic/claude-sonnet-4-5"
+      },
+      "delivery": {
+        "mode": "announce",
+        "channel": "last"
+      },
+      "state": {}
+    },
+    {
+      "id": "58d06ca7-4411-4a82-a4ec-07cc4d7125b6",
+      "agentId": "sancho",
+      "name": "Content: News Monitor — Paymatico",
+      "enabled": true,
+      "createdAtMs": 1778017542451,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 7 * * 1-5",
+        "tz": "Europe/Madrid"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Ejecuta news-monitor para Paymatico.\n\nLa skill produce ideas COMPLETAS (con angle_draft) directamente en idea-queue.json — NO escribe solo signals crudos. El antiguo paso de Classify + Ideas (idea-builder) está deprecado y absorbido aquí.\n\nPASO 1 — LEER CONFIGS:\n- brand/paymatico/content/configs/news-prompts/*.yml (uno por pillar)\n- brand/paymatico/content/content-pillars.md\n- brand/paymatico/content/configs/cadence-config.yml\n- brand/paymatico/content/pov-bank.json (fuente del POV por pillar)\n\nPASO 2 — BUSCAR POR PILLAR:\nPara cada pillar, ejecuta WebSearch con los prompts configurados.\nFiltra por sector_filters y language. Excluye exclude_sources. Deduplica por URL contra idea-queue.json de los últimos 7 días.\nMax 10 resultados relevantes por pillar.\n\nPASO 3 — CONSTRUIR IDEAS (todo en una pasada):\nPara cada resultado que pase los filtros, genera UNA idea completa con:\n- id: idea-{YYYY-MM-DD}-{n}\n- title: 40-90 chars, sin prefijo 'Nuestro POV:'\n- pillar_id: el pillar que matchea\n- content_type: Hot Take | Proof Post | Framework | Personal Story | Listicle\n- target_channel: linkedin | twitter | blog | newsletter (según cadence + signal type)\n- signal: { summary (2-3 frases FACTUALES de lo que dice el artículo — datos, citas, hallazgos. NUNCA truncar, NUNCA añadir '...'. NUNCA mencionar marca propia/cliente como Paymatico, P{N}, ICPs, productos internos. La interpretación va en angle_draft, no aquí.), source, url, date }\n- signal_type: array de [milestone, aha-moment, contrarian, data-point, cautionary-tale, framework, proof-point]\n- angle_draft: 60-80 palabras con el POV de la marca (referencia core_belief / preferred_angles del pov-bank), termina con Frame: '...'. SIN prefijo 'Nuestro POV:'.\n- pov_confidence: 0-1 (+0.2 si cita data concreta, +0.2 si fuente en evidence_we_cite, +0.15 si ≤7 días, +0.15 si core_belief encaja, -0.2 si especulativo)\n- source_signals: ['news-{YYYY-MM-DD}-{hash}']  (id del audit log)\n- created_at: ISO ahora\n- status: 'New'\n\nDescarta resultados con pov_confidence < 0.5.\n\nPASO 4 — APPEND A IDEA-QUEUE:\nAppend cada idea a brand/paymatico/content/idea-queue.json. NUNCA modificar ideas existentes — solo añadir.\n\nPASO 5 — AUDIT LOG:\nEscribe el signal raw en brand/paymatico/content/research-signals/{YYYY-MM-DD}-news.json (id, type, pillar_id, title, summary FACTUAL, source, url, date, relevance_score, created_at). Solo log — ningún otro skill lo lee.\n\nPASO 6 — last_finding (1-2 frases para Engine UI):\nGenera un last_finding concreto y citable, ejemplo: \"5 ideas nuevas hoy. Highlight: idea-2026-05-04-3 sobre nueva regulación MiCA (Search Engine Land), pov_confidence 0.92.\"\n\nPASO 7 — RECURRING TASKS:\nGuarda en brand/paymatico/recurring-tasks/content-news-monitor/{YYYY-MM-DD}.json:\n{\"cronName\": \"Content: News Monitor — Paymatico\", \"slug\": \"paymatico\", \"date\": \"YYYY-MM-DD\", \"runAtMs\": <ts>, \"status\": \"ok\", \"last_finding\": \"<frase del paso 6>\", \"content\": \"<N ideas creadas, desglose por pillar>\", \"ideas_created\": <N>}",
+        "model": "anthropic/claude-sonnet-4-5"
+      },
+      "delivery": {
+        "mode": "announce",
+        "channel": "last"
+      },
+      "state": {}
+    },
+    {
+      "id": "abfabbb1-1bbb-4865-b81a-90ac2b6bb9b0",
+      "agentId": "sancho",
+      "name": "Content: Competitor Monitor — Paymatico",
+      "enabled": true,
+      "createdAtMs": 1778017544691,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 7 * * 1-5",
+        "tz": "Europe/Madrid"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Ejecuta thief-marketers para Paymatico.\n\nLa skill produce ideas COMPLETAS (con angle_draft) directamente en idea-queue.json — NO escribe solo signals crudos. El antiguo paso de Classify + Ideas (idea-builder) está deprecado y absorbido aquí.\n\nPASO 1 — LEER CONFIGS:\n- brand/paymatico/content/configs/competitors/*.yml\n- brand/paymatico/content/configs/reference-creators/*.yml\n- brand/paymatico/content/content-pillars.md\n- brand/paymatico/content/configs/cadence-config.yml\n- brand/paymatico/content/pov-bank.json\n- brand/paymatico/brand-book/brand-voice/brand-voice.current.md\n\nPASO 2 — MONITOREAR:\nPara cada competidor y reference-creator, busca su contenido reciente:\n- LinkedIn: WebSearch \"site:linkedin.com/posts {nombre}\" o WebFetch del perfil público\n- Blog: WebFetch web/blog\n- X/Twitter: WebSearch \"site:x.com {handle}\"\nÚltimos 7 días, top 5 por engagement por plataforma.\n\nPASO 3 — CONSTRUIR IDEAS (todo en una pasada):\nPara cada pieza top que matchee un pillar, genera UNA idea completa:\n- id: idea-{YYYY-MM-DD}-{n}\n- title: 40-90 chars\n- pillar_id\n- content_type: Hot Take | Proof Post | Framework | Personal Story | Listicle\n- target_channel\n- signal: { summary (2-3 frases FACTUALES de lo que dice el post — claims, datos, framework. NUNCA truncar, NUNCA mencionar marca propia/cliente. La interpretación / why-it-worked / how-WE-respond va en angle_draft.), source (nombre del autor), source_type ('competitor' o 'reference-creator'), platform, url, engagement {likes, comments, shares}, date }\n- signal_type: array de [milestone, aha-moment, contrarian, data-point, cautionary-tale, framework, proof-point]\n- angle_draft: 60-80 palabras con POV de la marca, termina con Frame: '...'. Tono según source_type: competitor → counter/contrast; reference-creator → learn/adapt.\n- pov_confidence: 0-1\n- source_signals: ['creators-{YYYY-MM-DD}-{hash}']\n- created_at: ISO ahora\n- status: 'New'\n\nDescarta piezas que no matcheen ningún pillar o pov_confidence < 0.5.\nMax 15 ideas totales.\n\nPASO 4 — APPEND A IDEA-QUEUE:\nAppend cada idea a brand/paymatico/content/idea-queue.json. Deduplica por URL contra ideas existentes.\n\nPASO 5 — AUDIT LOG:\nEscribe los signals raw en brand/paymatico/content/research-signals/{YYYY-MM-DD}-creators.json. Solo log.\n\nPASO 6 — last_finding (1-2 frases):\nEjemplo: \"7 ideas nuevas (4 reference-creators, 3 competitors). Highlight: idea-2026-05-04-7 — Elena Verna sobre PLG death (LinkedIn, 800+ likes), pov_confidence 0.88.\"\n\nPASO 7 — RECURRING TASKS:\nGuarda en brand/paymatico/recurring-tasks/content-competitor-monitor/{YYYY-MM-DD}.json con cronName, slug, date, runAtMs, status, last_finding, content, ideas_created.",
+        "model": "anthropic/claude-sonnet-4-5"
+      },
+      "delivery": {
+        "mode": "announce",
+        "channel": "last"
+      },
+      "state": {}
+    },
+    {
+      "id": "659cfb91-f536-4d75-82a7-582067a55133",
+      "agentId": "sancho",
+      "name": "Content: Editorial Dispatch — Growth4U",
+      "enabled": true,
+      "createdAtMs": 1778017746600,
+      "schedule": {
+        "kind": "cron",
+        "expr": "30 8 * * 1-5",
+        "tz": "Europe/Madrid"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Ejecuta editorial dispatch para Growth4U.\n\nPASO 1 — LEER:\n- brand/growth4u/content/idea-queue.json\n- brand/growth4u/content/configs/cadence-config.yml\n- brand/growth4u/content/configs/dispatch-channel.yml (transport + channel_id)\n\nPASO 2 — SELECCIONAR CANDIDATOS:\nFiltra ideas con status='New' AND age<=14 días.\nCalcula recency_score = exp(-age_days/5).\nOrdena por recency_score DESC, pov_confidence DESC.\nSelecciona 3-5 ideas para los slots de hoy según cadence-config.\nIdeas >14 días → marca status='Deferred' automáticamente (PATCH a /api/content-engine/ideas).\n\nPASO 3 — ENVIAR vía endpoint server-side (NO USES MCP DE SLACK/DISCORD):\n\nIMPORTANTE — leer con atención:\nNUNCA llames a Slack o Discord vía MCP tools directamente. El MCP de Slack reporta erróneamente que falta el scope chat:write aunque el bot SÍ lo tenga (bug conocido). Usa SIEMPRE el endpoint server-side, que se encarga del formateo y posting.\n\n3.1 — Lee el admin token desde ~/.openclaw/workspace-sancho/clients.json (campo `adminToken`, string de 32 chars). Si el archivo o el campo no existe, ABORTA reportando el error y sin intentar enviar a Slack/Discord directamente.\n\n3.2 — POST al endpoint server-side. Ajusta el host según el entorno (en dev típicamente http://localhost:3000):\n\n  POST http://localhost:3000/api/integrations/send-dispatch\n  Headers:\n    Content-Type: application/json\n    x-admin-token: <el adminToken leído del paso 3.1>\n  Body:\n  {\n    \"slug\": \"growth4u\",\n    \"ideaIds\": [\"<id1>\", \"<id2>\", ...],\n    \"projectId\": \"P-Content-Semana-XX\",\n    \"taskId\": \"P-Content-Semana-XX-TYY\"\n  }\n\nEl endpoint:\n- Lee dispatch-channel.yml para saber transport + channel\n- Postea cada idea a Slack/Discord con block_kit (header + signal + POV + 3 botones Aprobar/Más tarde/Rechazar)\n- Devuelve { ok: true, sent: N, errors: [...] }\n\nSi recibe 403 → el token no es válido. Verifica que leíste correctamente clients.json.\nSi recibe ECONNREFUSED → MC server no está corriendo. Reporta y aborta.\nSi devuelve { ok: true } → continuar al paso 4.\n\nPASO 4 — ESPERAR RESPUESTA:\nCuando el humano pulse un botón, el endpoint /api/integrations/slack/interactivity (o /api/integrations/discord/interactivity) actualiza idea.status:\n- ✓ Aprobar → 'Approved' + approved_at\n- ⏰ Más tarde → 'Deferred' + deferred_at\n- ✗ Rechazar → 'Discarded' + archived_at\n\nNo necesitas hacer polling — el flujo de respuesta es asíncrono y manejado por interactivity.ts.\n\nPASO 5 — CREAR TAREA SEMANAL (si no existe):\nVerifica si existe proyecto P-Content-Semana-{NN} para esta semana.\nSi no, crea el proyecto + tarea del día.\nSi sí, crea solo la tarea del día dentro del proyecto existente.\n\nPASO 6 — RECURRING TASKS:\nGuarda en brand/growth4u/recurring-tasks/content-editorial-dispatch/{YYYY-MM-DD}.json:\n{\"cronName\": \"Content: Editorial Dispatch — Growth4U\", \"slug\": \"growth4u\", \"date\": \"YYYY-MM-DD\", \"runAtMs\": <ts>, \"status\": \"ok\"|\"error\", \"transport\": \"slack|discord\", \"channel_id\": \"...\", \"candidates_selected\": N, \"candidates_sent\": N, \"idea_ids\": [...], \"task_id\": \"...\", \"project_id\": \"...\", \"error\": null|\"...\"}",
+        "model": "claude-opus-4-6"
+      },
+      "delivery": {
+        "mode": "announce",
+        "channel": "last"
+      },
+      "state": {}
+    },
+    {
+      "id": "538d8c16-86fe-4dba-9895-e7b339c5d515",
+      "agentId": "sancho",
+      "name": "Content: Editorial Dispatch — Hospital Capilar",
+      "enabled": true,
+      "createdAtMs": 1778017750508,
+      "schedule": {
+        "kind": "cron",
+        "expr": "30 8 * * 1-5",
+        "tz": "Europe/Madrid"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Ejecuta editorial dispatch para Hospital Capilar.\n\nPASO 1 — LEER:\n- brand/hospital-capilar/content/idea-queue.json\n- brand/hospital-capilar/content/configs/cadence-config.yml\n- brand/hospital-capilar/content/configs/dispatch-channel.yml (transport + channel_id)\n\nPASO 2 — SELECCIONAR CANDIDATOS:\nFiltra ideas con status='New' AND age<=14 días.\nCalcula recency_score = exp(-age_days/5).\nOrdena por recency_score DESC, pov_confidence DESC.\nSelecciona 3-5 ideas para los slots de hoy según cadence-config.\nIdeas >14 días → marca status='Deferred' automáticamente (PATCH a /api/content-engine/ideas).\n\nPASO 3 — ENVIAR vía endpoint server-side (NO USES MCP DE SLACK/DISCORD):\n\nIMPORTANTE — leer con atención:\nNUNCA llames a Slack o Discord vía MCP tools directamente. El MCP de Slack reporta erróneamente que falta el scope chat:write aunque el bot SÍ lo tenga (bug conocido). Usa SIEMPRE el endpoint server-side, que se encarga del formateo y posting.\n\n3.1 — Lee el admin token desde ~/.openclaw/workspace-sancho/clients.json (campo `adminToken`, string de 32 chars). Si el archivo o el campo no existe, ABORTA reportando el error y sin intentar enviar a Slack/Discord directamente.\n\n3.2 — POST al endpoint server-side. Ajusta el host según el entorno (en dev típicamente http://localhost:3000):\n\n  POST http://localhost:3000/api/integrations/send-dispatch\n  Headers:\n    Content-Type: application/json\n    x-admin-token: <el adminToken leído del paso 3.1>\n  Body:\n  {\n    \"slug\": \"hospital-capilar\",\n    \"ideaIds\": [\"<id1>\", \"<id2>\", ...],\n    \"projectId\": \"P-Content-Semana-XX\",\n    \"taskId\": \"P-Content-Semana-XX-TYY\"\n  }\n\nEl endpoint:\n- Lee dispatch-channel.yml para saber transport + channel\n- Postea cada idea a Slack/Discord con block_kit (header + signal + POV + 3 botones Aprobar/Más tarde/Rechazar)\n- Devuelve { ok: true, sent: N, errors: [...] }\n\nSi recibe 403 → el token no es válido. Verifica que leíste correctamente clients.json.\nSi recibe ECONNREFUSED → MC server no está corriendo. Reporta y aborta.\nSi devuelve { ok: true } → continuar al paso 4.\n\nPASO 4 — ESPERAR RESPUESTA:\nCuando el humano pulse un botón, el endpoint /api/integrations/slack/interactivity (o /api/integrations/discord/interactivity) actualiza idea.status:\n- ✓ Aprobar → 'Approved' + approved_at\n- ⏰ Más tarde → 'Deferred' + deferred_at\n- ✗ Rechazar → 'Discarded' + archived_at\n\nNo necesitas hacer polling — el flujo de respuesta es asíncrono y manejado por interactivity.ts.\n\nPASO 5 — CREAR TAREA SEMANAL (si no existe):\nVerifica si existe proyecto P-Content-Semana-{NN} para esta semana.\nSi no, crea el proyecto + tarea del día.\nSi sí, crea solo la tarea del día dentro del proyecto existente.\n\nPASO 6 — RECURRING TASKS:\nGuarda en brand/hospital-capilar/recurring-tasks/content-editorial-dispatch/{YYYY-MM-DD}.json:\n{\"cronName\": \"Content: Editorial Dispatch — Hospital Capilar\", \"slug\": \"hospital-capilar\", \"date\": \"YYYY-MM-DD\", \"runAtMs\": <ts>, \"status\": \"ok\"|\"error\", \"transport\": \"slack|discord\", \"channel_id\": \"...\", \"candidates_selected\": N, \"candidates_sent\": N, \"idea_ids\": [...], \"task_id\": \"...\", \"project_id\": \"...\", \"error\": null|\"...\"}",
+        "model": "claude-opus-4-6"
+      },
+      "delivery": {
+        "mode": "announce",
+        "channel": "last"
+      },
+      "state": {}
+    },
+    {
+      "id": "c9bfd568-f98e-4999-82f0-b486626f4ede",
+      "agentId": "sancho",
+      "name": "Content: Editorial Dispatch — Hulahoop",
+      "enabled": true,
+      "createdAtMs": 1778017752915,
+      "schedule": {
+        "kind": "cron",
+        "expr": "30 8 * * 1-5",
+        "tz": "Europe/Madrid"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Ejecuta editorial dispatch para Hulahoop.\n\nPASO 1 — LEER:\n- brand/hulahoop/content/idea-queue.json\n- brand/hulahoop/content/configs/cadence-config.yml\n- brand/hulahoop/content/configs/dispatch-channel.yml (transport + channel_id)\n\nPASO 2 — SELECCIONAR CANDIDATOS:\nFiltra ideas con status='New' AND age<=14 días.\nCalcula recency_score = exp(-age_days/5).\nOrdena por recency_score DESC, pov_confidence DESC.\nSelecciona 3-5 ideas para los slots de hoy según cadence-config.\nIdeas >14 días → marca status='Deferred' automáticamente (PATCH a /api/content-engine/ideas).\n\nPASO 3 — ENVIAR vía endpoint server-side (NO USES MCP DE SLACK/DISCORD):\n\nIMPORTANTE — leer con atención:\nNUNCA llames a Slack o Discord vía MCP tools directamente. El MCP de Slack reporta erróneamente que falta el scope chat:write aunque el bot SÍ lo tenga (bug conocido). Usa SIEMPRE el endpoint server-side, que se encarga del formateo y posting.\n\n3.1 — Lee el admin token desde ~/.openclaw/workspace-sancho/clients.json (campo `adminToken`, string de 32 chars). Si el archivo o el campo no existe, ABORTA reportando el error y sin intentar enviar a Slack/Discord directamente.\n\n3.2 — POST al endpoint server-side. Ajusta el host según el entorno (en dev típicamente http://localhost:3000):\n\n  POST http://localhost:3000/api/integrations/send-dispatch\n  Headers:\n    Content-Type: application/json\n    x-admin-token: <el adminToken leído del paso 3.1>\n  Body:\n  {\n    \"slug\": \"hulahoop\",\n    \"ideaIds\": [\"<id1>\", \"<id2>\", ...],\n    \"projectId\": \"P-Content-Semana-XX\",\n    \"taskId\": \"P-Content-Semana-XX-TYY\"\n  }\n\nEl endpoint:\n- Lee dispatch-channel.yml para saber transport + channel\n- Postea cada idea a Slack/Discord con block_kit (header + signal + POV + 3 botones Aprobar/Más tarde/Rechazar)\n- Devuelve { ok: true, sent: N, errors: [...] }\n\nSi recibe 403 → el token no es válido. Verifica que leíste correctamente clients.json.\nSi recibe ECONNREFUSED → MC server no está corriendo. Reporta y aborta.\nSi devuelve { ok: true } → continuar al paso 4.\n\nPASO 4 — ESPERAR RESPUESTA:\nCuando el humano pulse un botón, el endpoint /api/integrations/slack/interactivity (o /api/integrations/discord/interactivity) actualiza idea.status:\n- ✓ Aprobar → 'Approved' + approved_at\n- ⏰ Más tarde → 'Deferred' + deferred_at\n- ✗ Rechazar → 'Discarded' + archived_at\n\nNo necesitas hacer polling — el flujo de respuesta es asíncrono y manejado por interactivity.ts.\n\nPASO 5 — CREAR TAREA SEMANAL (si no existe):\nVerifica si existe proyecto P-Content-Semana-{NN} para esta semana.\nSi no, crea el proyecto + tarea del día.\nSi sí, crea solo la tarea del día dentro del proyecto existente.\n\nPASO 6 — RECURRING TASKS:\nGuarda en brand/hulahoop/recurring-tasks/content-editorial-dispatch/{YYYY-MM-DD}.json:\n{\"cronName\": \"Content: Editorial Dispatch — Hulahoop\", \"slug\": \"hulahoop\", \"date\": \"YYYY-MM-DD\", \"runAtMs\": <ts>, \"status\": \"ok\"|\"error\", \"transport\": \"slack|discord\", \"channel_id\": \"...\", \"candidates_selected\": N, \"candidates_sent\": N, \"idea_ids\": [...], \"task_id\": \"...\", \"project_id\": \"...\", \"error\": null|\"...\"}",
+        "model": "claude-opus-4-6"
+      },
+      "delivery": {
+        "mode": "announce",
+        "channel": "last"
+      },
+      "state": {}
+    },
+    {
+      "id": "d0851106-f61d-437a-bfd0-62eb10c7345f",
+      "agentId": "sancho",
+      "name": "Content: Editorial Dispatch — Paymatico",
+      "enabled": true,
+      "createdAtMs": 1778017755518,
+      "schedule": {
+        "kind": "cron",
+        "expr": "30 8 * * 1-5",
+        "tz": "Europe/Madrid"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Ejecuta editorial dispatch para Paymatico.\n\nPASO 1 — LEER:\n- brand/paymatico/content/idea-queue.json\n- brand/paymatico/content/configs/cadence-config.yml\n- brand/paymatico/content/configs/dispatch-channel.yml (transport + channel_id)\n\nPASO 2 — SELECCIONAR CANDIDATOS:\nFiltra ideas con status='New' AND age<=14 días.\nCalcula recency_score = exp(-age_days/5).\nOrdena por recency_score DESC, pov_confidence DESC.\nSelecciona 3-5 ideas para los slots de hoy según cadence-config.\nIdeas >14 días → marca status='Deferred' automáticamente (PATCH a /api/content-engine/ideas).\n\nPASO 3 — ENVIAR vía endpoint server-side (NO USES MCP DE SLACK/DISCORD):\n\nIMPORTANTE — leer con atención:\nNUNCA llames a Slack o Discord vía MCP tools directamente. El MCP de Slack reporta erróneamente que falta el scope chat:write aunque el bot SÍ lo tenga (bug conocido). Usa SIEMPRE el endpoint server-side, que se encarga del formateo y posting.\n\n3.1 — Lee el admin token desde ~/.openclaw/workspace-sancho/clients.json (campo `adminToken`, string de 32 chars). Si el archivo o el campo no existe, ABORTA reportando el error y sin intentar enviar a Slack/Discord directamente.\n\n3.2 — POST al endpoint server-side. Ajusta el host según el entorno (en dev típicamente http://localhost:3000):\n\n  POST http://localhost:3000/api/integrations/send-dispatch\n  Headers:\n    Content-Type: application/json\n    x-admin-token: <el adminToken leído del paso 3.1>\n  Body:\n  {\n    \"slug\": \"paymatico\",\n    \"ideaIds\": [\"<id1>\", \"<id2>\", ...],\n    \"projectId\": \"P-Content-Semana-XX\",\n    \"taskId\": \"P-Content-Semana-XX-TYY\"\n  }\n\nEl endpoint:\n- Lee dispatch-channel.yml para saber transport + channel\n- Postea cada idea a Slack/Discord con block_kit (header + signal + POV + 3 botones Aprobar/Más tarde/Rechazar)\n- Devuelve { ok: true, sent: N, errors: [...] }\n\nSi recibe 403 → el token no es válido. Verifica que leíste correctamente clients.json.\nSi recibe ECONNREFUSED → MC server no está corriendo. Reporta y aborta.\nSi devuelve { ok: true } → continuar al paso 4.\n\nPASO 4 — ESPERAR RESPUESTA:\nCuando el humano pulse un botón, el endpoint /api/integrations/slack/interactivity (o /api/integrations/discord/interactivity) actualiza idea.status:\n- ✓ Aprobar → 'Approved' + approved_at\n- ⏰ Más tarde → 'Deferred' + deferred_at\n- ✗ Rechazar → 'Discarded' + archived_at\n\nNo necesitas hacer polling — el flujo de respuesta es asíncrono y manejado por interactivity.ts.\n\nPASO 5 — CREAR TAREA SEMANAL (si no existe):\nVerifica si existe proyecto P-Content-Semana-{NN} para esta semana.\nSi no, crea el proyecto + tarea del día.\nSi sí, crea solo la tarea del día dentro del proyecto existente.\n\nPASO 6 — RECURRING TASKS:\nGuarda en brand/paymatico/recurring-tasks/content-editorial-dispatch/{YYYY-MM-DD}.json:\n{\"cronName\": \"Content: Editorial Dispatch — Paymatico\", \"slug\": \"paymatico\", \"date\": \"YYYY-MM-DD\", \"runAtMs\": <ts>, \"status\": \"ok\"|\"error\", \"transport\": \"slack|discord\", \"channel_id\": \"...\", \"candidates_selected\": N, \"candidates_sent\": N, \"idea_ids\": [...], \"task_id\": \"...\", \"project_id\": \"...\", \"error\": null|\"...\"}",
+        "model": "claude-opus-4-6"
+      },
+      "delivery": {
+        "mode": "announce",
+        "channel": "last"
+      },
       "state": {}
     }
   ]

@@ -89,6 +89,9 @@ export interface DraftFrontmatter {
   item_type?: ContentItemType;
   media?: MediaAsset[];
   publishing?: PublishingMeta;
+  /** Self-QA verdict written by the writer skill — never inline in the body. */
+  self_qa?: "PASS" | "FAIL";
+  self_qa_notes?: string[];
   created_at: string;
   updated_at: string;
 }

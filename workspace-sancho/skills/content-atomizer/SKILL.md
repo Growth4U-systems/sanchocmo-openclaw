@@ -206,6 +206,27 @@ Transform source content into **platform-native assets** that:
 
 ---
 
+## Output File Format (STRICT)
+
+When this skill writes per-channel drafts (e.g.
+`content/drafts/{ideaId}/linkedin.md`, `.../twitter.md`, etc.), follow the
+system spec at `_system/draft-file-format.md` exactly.
+
+Quick checklist per file:
+- Frontmatter YAML with metadata (idea_id, channel, status, …) + optional
+  `self_qa` / `self_qa_notes`.
+- Body = only what would be published on the platform.
+- **Sociales (LinkedIn, Twitter, Instagram, Threads, Bluesky, Reddit)**:
+  no H1 in the body. Twitter threads use `1/n`, `2/n` numbering — never
+  `**Tweet 1 (hook)**` scaffolding.
+- **Long-form (blog, email, article)**: H1 in body is the title, H2s are
+  section breaks.
+- **Never** write `<!-- Self-QA: ... -->` HTML comments inline. If you
+  self-validate, put the verdict in the frontmatter.
+- No decorative trailing `---`.
+
+---
+
 ## Input Types
 
 ### What Can Be Atomized

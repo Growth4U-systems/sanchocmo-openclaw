@@ -567,3 +567,66 @@ Ninguna. No hubo interacción humana en ningún canal (0 mensajes humanos en 24h
 Sancho operó bien dentro de sus capacidades. Los crons de content intelligence (news, competitors, PAA, keywords) son el punto fuerte — producen signals accionables de alta calidad. Los fallos son de infraestructura (API keys, scopes, aborts), no de lógica de Sancho. El problema más preocupante es el Cost Tracker abortado 2 días seguidos — es el único cron que debería funcionar siempre.
 
 _Generado por Cervantes — cron:cedfbd22-cbd0-4a19-87a0-29337c4f2b37 — 2026-05-04 10:04 CEST_
+
+---
+
+# Observación Sancho — 2026-05-05 (Martes)
+
+## 1. Sesiones (últimas 24h)
+
+**20 sesiones** — 18 crons + 2 Discord channel outputs.
+
+| Tipo | Clientes | Modelo |
+|------|----------|--------|
+| News Monitor | G4U, HC, Hulahoop, Paymatico | Opus |
+| Competitor Monitor | G4U, HC, Hulahoop, Paymatico | Opus |
+| Editorial Dispatch | G4U, HC, Hulahoop, Paymatico | Opus |
+| Daily Pulse | G4U, HC | Opus |
+| Morning Metrics | G4U (MiniMax), Hulahoop (Opus) | Mix |
+| Cost Tracker | Multi-client | Opus |
+| update-skills | — | Opus |
+
+**Coste estimado total: ~$10.72** (API-equivalent, plan flat $200/mo).
+
+## 2. Errores y fallos
+
+| Issue | Estado | Impacto |
+|-------|--------|--------|
+| **Slack `chat:write` scope** (Growth4U) | Recurrente (día 2+) | Editorial Dispatch G4U no puede enviar a Slack |
+| **xAI credits agotados** | Afecta a TODOS los competitor monitors | Sin monitoreo X/Twitter en 4 clientes |
+| **Hulahoop Morning Metrics sin APIs** | Conocido | Gasta tokens sin producir nada |
+| **Drive (gog) no disponible** para transcripts | Conocido | Daily Pulse G4U no accede a meeting transcripts |
+
+## 3. Preguntas sin respuesta
+
+Ninguna detectada — Sancho no recibió preguntas humanas (0 mensajes de humanos en 24h en todos los servidores).
+
+## 4. Reglas de canal
+
+✅ Respetadas. Daily Pulse publicados con hilos en #intelligence. Editorial Dispatch en #content. Sin contenido largo en canales principales.
+
+## 5. Patrones de mejora
+
+### Positivo
+- **Cost Tracker funcionó** (ayer estaba abortando — corregido)
+- **Research pipeline impecable**: ~70 signals de calidad entre news+competitors
+- **MiniMax en Morning Metrics G4U**: buena señal de cost-efficiency (solo $0.008 vs $0.05+ con Opus)
+- **Deduplicación funcionando**: 0 duplicados en la mayoría de monitors
+
+### A mejorar
+- **Slack scope sigue sin fix** — blocker para Growth4U content pipeline. Día 2+ sin resolverse.
+- **xAI credits agotados** — sin X/Twitter monitoring para ningún cliente. Impacto en competitor signals.
+- **Hulahoop Morning Metrics sigue corriendo sin APIs** — desperdicio de ~$0.05/día en Opus. Debería desactivarse o usar Haiku.
+- **0 engagement humano en Discord** — patrón sistémico día 4+. Sancho genera reportes que nadie lee.
+- **Editorial Dispatch G4U costó $2.28** — anormalmente alto (vs $0.23-0.27 otros clientes). Probable causa: retries por fallo Slack.
+
+## Evaluación general
+
+Sancho operó correctamente. Los fallos son 100% infraestructura (API keys/scopes/credits), no lógica. Calidad de outputs alta. El sistema está maduro pero tiene 3 blockers de infra que reducen su valor: Slack scope, xAI credits, y APIs de métricas sin configurar.
+
+**Prioridades para Cervantes:**
+1. Fix Slack `chat:write` (o migrar dispatch a Discord para G4U)
+2. Resolver xAI credits (recargar o desactivar X monitoring)
+3. Desactivar/downgrade Hulahoop Morning Metrics hasta tener APIs
+
+_Generado por Cervantes — cron:cedfbd22-cbd0-4a19-87a0-29337c4f2b37 — 2026-05-05 10:00 CEST_

@@ -1,5 +1,11 @@
 # LinkedIn Formats Reference
 
+## File Output Rules (apply to ALL formats below)
+- **No H1/H2 anywhere in the body.** Not for posts, not for Articles, not for Carousels. The task page already shows the title; a heading on top duplicates it and leaks into the preview.
+- **No HTML comments** (`<!-- ... -->`). The renderer shows them.
+- **No trailing `---` decorative separators.**
+- **Self-QA goes in the frontmatter** (`self_qa`, `self_qa_notes`), never inline. See SKILL.md §5.5.
+
 ## Platform DNA
 - Sweet spot: 1,300-2,000 chars for posts, up to 3,000 for articles
 - First line truncates at ~210 chars with "see more" → hook MUST be there

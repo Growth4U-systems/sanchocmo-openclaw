@@ -1,0 +1,9 @@
+{
+  "cronName": "Content: News Monitor — Hospital Capilar",
+  "slug": "hospital-capilar",
+  "date": "2026-05-05",
+  "runAtMs": 1746421020000,
+  "status": "ok",
+  "last_finding": "Clascoterone (fase 3) muestra 539% mejora relativa vs placebo y busca aprobación regulatoria primavera 2026 — primer antiandrógeno tópico sin efectos sistémicos. PP405 inicia fase 3. Infobae publica nuevo estudio confirmando que GLP-1 triplica riesgo caída capilar.",
+  "content": "9 signals: investigacion-capilar (5), tratamientos-regenerativos (1), mercado-competidores (2), bienestar-paciente (1). Deduplicados contra 28 URLs de corridas previas (mayo 1 y 4)."
+}

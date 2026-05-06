@@ -1,8 +1,8 @@
 {
   "image_generation": {
-    "mode": "ask",
-    "provider": null,
-    "model": null
+    "mode": "fixed",
+    "provider": "nanobanana",
+    "model": "gemini-2.5-flash-image-preview"
   },
   "carousel": {
     "logo_url": null,
