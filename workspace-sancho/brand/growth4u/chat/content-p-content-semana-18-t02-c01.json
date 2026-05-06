@@ -75,8 +75,13 @@
       "text": "Draft aprobado → status `approved`. Listo para el siguiente paso del pipeline (revisión/maquetación/programación — lo que el Content Engine tenga configurado como siguiente fase).",
       "agent": "sancho",
       "ts": "2026-05-05T22:52:22.246Z"
+    },
+    {
+      "role": "user",
+      "text": "ok. Hagamos la imagen",
+      "ts": 1778046735077
     }
   ],
   "createdAt": "2026-05-05T17:15:09.118Z",
-  "updatedAt": 1778021542246
+  "updatedAt": 1778046735077
 }

@@ -1,0 +1,90 @@
+[
+  {
+    "id": "creators-2026-05-06-cc01",
+    "source": "Capilclinic",
+    "source_type": "competitor",
+    "platform": "blog",
+    "url": "https://www.capilclinic.es/blog/revolucion-biotecnologia-capilar-2026-fin-definitivo-alopecia/",
+    "title": "La revolución de la biotecnología capilar: ¿Es 2026 el fin definitivo de la alopecia?",
+    "date": "2026-04-07",
+    "summary": "Capilclinic promueve Micro Time FUE como evolución del injerto capilar. Habla de biotecnología, BHT y clonación folicular experimental.",
+    "detected_at": "2026-05-06T07:24:00+02:00"
+  },
+  {
+    "id": "creators-2026-05-06-imd01",
+    "source": "IMD Dermatológico",
+    "source_type": "competitor",
+    "platform": "blog",
+    "url": "https://imdermatologico.com/blogimd/cuidados-y-consejos/prepara-tu-cabello-para-el-verano/",
+    "title": "Caída de pelo en verano: por qué es ahora el momento de actuar",
+    "date": "2026-04-30",
+    "summary": "Urgencia estacional: preparar cabello en mayo vs julio. Calendario de acción. Perfiles de riesgo.",
+    "detected_at": "2026-05-06T07:24:00+02:00"
+  },
+  {
+    "id": "creators-2026-05-06-imd02",
+    "source": "IMD Dermatológico",
+    "source_type": "competitor",
+    "platform": "blog",
+    "url": "https://imdermatologico.com/blogimd/cuidados-y-consejos/miedo-ensenar-pelo-verano-gorra-alopecia/",
+    "title": "¿Gorra todo el verano? Cuando proteger tu pelo se convierte en esconderlo",
+    "date": "2026-04-16",
+    "summary": "Ángulo emocional sobre inseguridad capilar. La gorra como refugio progresivo. Impacto psicológico de la alopecia.",
+    "detected_at": "2026-05-06T07:24:00+02:00"
+  },
+  {
+    "id": "creators-2026-05-06-sv01",
+    "source": "Svenson / Ignacio Sevilla",
+    "source_type": "competitor",
+    "platform": "prensa",
+    "url": "https://www.elperiodico.com/es/gente/20260308/ignacio-sevilla-doctor-svenson-alopecia-femenina-entrevista-consultas-incrementado-estres-cronico-127350506",
+    "title": "Ignacio Sevilla: consultas femeninas crecen por estrés crónico",
+    "date": "2026-03-08",
+    "summary": "40% de mujeres experimentará alopecia. Estrés crónico y cambios hormonales como factores clave.",
+    "detected_at": "2026-05-06T07:24:00+02:00"
+  },
+  {
+    "id": "creators-2026-05-06-sv02",
+    "source": "Dr. Sergio Vañó Galván",
+    "source_type": "reference-creator",
+    "platform": "publicación científica / prensa",
+    "url": "https://isanidad.com/347063/existen-mas-de-100-tipos-distintos-de-alopecia-y-es-esencial-un-diagnostico-preciso-para-seleccionar-el-tratamiento-adecuado/",
+    "title": "Dutasteride low-dose: 66% mejora. Efecto nocebo. 100+ tipos de alopecia.",
+    "date": "2026-02-01",
+    "summary": "Dutasteride oral low-dose con 66% mejora. Finasterida tópica como alternativa sin efectos sistémicos. Efecto nocebo en efectos secundarios sexuales.",
+    "detected_at": "2026-05-06T07:24:00+02:00"
+  },
+  {
+    "id": "creators-2026-05-06-hr01",
+    "source": "Helena Rodero",
+    "source_type": "reference-creator",
+    "platform": "web/redes",
+    "url": "https://helenarodero.com/Cursos/programa-hr-recupera-tu-cabello-danado-en-6-semanas/",
+    "title": "Programa HR 2ª edición + skinificación capilar",
+    "date": "2026-04-07",
+    "summary": "Programa online de 6 semanas para cabello dañado. Skinificación capilar como tendencia. HairHR suplemento.",
+    "detected_at": "2026-05-06T07:24:00+02:00"
+  },
+  {
+    "id": "creators-2026-05-06-df01",
+    "source": "Dr. De Felipe",
+    "source_type": "reference-creator",
+    "platform": "blog",
+    "url": "https://drdefelipe.com/alopecia-tratamientos-innovadores-que-llegan-en-2026/",
+    "title": "Alopecia: tratamientos innovadores que llegan en 2026",
+    "date": "2026-02-11",
+    "summary": "Guía completa de tratamientos capilares 2026. 100+ tipos de alopecia. Enfoque empático y diagnóstico como primer paso.",
+    "detected_at": "2026-05-06T07:24:00+02:00"
+  },
+  {
+    "id": "creators-2026-05-06-in01",
+    "source": "Insparya",
+    "source_type": "competitor",
+    "platform": "prensa",
+    "url": "https://opinioniberica.com/internacional/insparya-celebra-7-anos-de-innovacion-en-salud-capilar-y-alcanza-70000-trasplantes-globales/",
+    "title": "Insparya: 70.000 trasplantes, 15 clínicas, expansión global",
+    "date": "2026-04-27",
+    "summary": "7 años, 70K trasplantes, 15 clínicas en 5 países. Riad como última apertura. Pero -13% facturación España.",
+    "detected_at": "2026-05-06T07:24:00+02:00"
+  }
+]

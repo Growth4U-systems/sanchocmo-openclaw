@@ -168,9 +168,26 @@ Append to `content/clarify-history.json`:
 ### 7. Output Draft
 
 Present draft to human in the thread. Human can:
-- Approve as-is → publish to Metricool
+- Approve as-is → **media gate** (genera carrusel/visual con `[brand]-visual-generator` o explicito "skip media") → publish to Metricool
 - Edit inline → re-approve
 - Give instructions ("hook mas fuerte", "mas corto", "cita X") → regenerate
+
+### 7b. Media Gate (post-approval, pre-publish)
+
+Tras la aprobacion humana NUNCA se salta directamente a Metricool. La
+ContentTask pasa a estado `Media` (ver `src/lib/data/content-tasks.ts`)
+y se ofrece:
+
+- **Generar visual** → invocar `[brand]-visual-generator` con la(s)
+  plantilla(s) que el canal requiera (LinkedIn carousel = `linkedin-9-slide`
+  o `linkedin-quote` segun la pieza; X = card/quote opcional).
+- **Skip media** (explicito) → solo si la pieza no necesita visual y el
+  usuario lo confirma. Persistir `media_status: "skipped"` en el draft
+  frontmatter para auditoria.
+- **Subir asset propio** → el usuario adjunta una imagen pre-existente.
+
+Solo cuando `media_status` sea `ready` o `skipped` la ContentTask puede
+pasar a `Ready` y dispatch a Metricool.
 
 ## Gating Rules (from cadence-config)
 

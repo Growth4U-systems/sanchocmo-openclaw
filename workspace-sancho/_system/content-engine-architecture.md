@@ -81,8 +81,14 @@ que toque) conviven en el mismo thread.
 3. Ideas aprobadas → Clarify (SIEMPRE, no se salta)
 4. Writer genera drafts (social-writer / seo-content / newsletter)
 5. Drafts aparecen en el thread como attachments
-6. Humano edita / aprueba
-7. Aprobado → Metricool publica
+6. Humano edita / aprueba (draft.status = approved, NO se publica)
+7. Aprobado → genera media (hero/header image + atomizations sociales si aplica)
+8. Aprobado + media listos → Metricool publica
+
+**Gate explicito**: el paso 7 NO es opcional. Una pieza nunca pasa de
+"approved" a "published" sin haber generado (o explicitamente "skip media")
+los assets visuales que el canal requiera. El estado `Media` en
+`ContentTask` (ver `src/lib/data/content-tasks.ts`) modela este gate.
 
 ---
 

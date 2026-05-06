@@ -85,29 +85,28 @@
       }
     },
     "618bc941-a980-4f0d-99c8-5e715060ce6b": {
-      "updatedAtMs": 1777942868226,
+      "updatedAtMs": 1778029411020,
       "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"0 3 * * *\"}}",
       "state": {
-        "nextRunAtMs": 1778029200000,
-        "lastRunAtMs": 1777942800031,
+        "nextRunAtMs": 1778115600000,
+        "lastRunAtMs": 1778029200030,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 68195,
+        "lastDurationMs": 210990,
         "lastDeliveryStatus": "not-requested",
         "consecutiveErrors": 0,
-        "consecutiveSkipped": 0,
-        "runningAtMs": 1778029200022
+        "consecutiveSkipped": 0
       }
     },
     "0c59e923-3267-4926-9a60-36bb81b6041f": {
-      "updatedAtMs": 1778012114589,
+      "updatedAtMs": 1778033715079,
       "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"every\",\"everyMs\":21600000,\"anchorMs\":1772069609685}}",
       "state": {
-        "nextRunAtMs": 1778033663192,
-        "lastRunAtMs": 1778012063192,
+        "nextRunAtMs": 1778055263222,
+        "lastRunAtMs": 1778033663222,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 51397,
+        "lastDurationMs": 51857,
         "lastDeliveryStatus": "not-requested",
         "consecutiveErrors": 0,
         "consecutiveSkipped": 0
@@ -169,14 +168,14 @@
       }
     },
     "1e64347a-7151-482d-ac27-8ad88cb62896": {
-      "updatedAtMs": 1777952044687,
+      "updatedAtMs": 1778038441502,
       "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"30 5 * * *\",\"tz\":\"Europe/Madrid\"}}",
       "state": {
-        "nextRunAtMs": 1778038200000,
-        "lastRunAtMs": 1777951800033,
+        "nextRunAtMs": 1778124600000,
+        "lastRunAtMs": 1778038200034,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 244654,
+        "lastDurationMs": 241468,
         "lastDeliveryStatus": "delivered",
         "consecutiveErrors": 0,
         "lastDelivered": true,
@@ -695,56 +694,64 @@
       "updatedAtMs": 1778017421757,
       "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"0 7 * * 1-5\",\"tz\":\"Europe/Madrid\"}}",
       "state": {
-        "nextRunAtMs": 1778043600000
+        "nextRunAtMs": 1778043600000,
+        "runningAtMs": 1778043600031
       }
     },
     "945531aa-9e66-487b-92ab-aff060671424": {
       "updatedAtMs": 1778017424386,
       "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"0 7 * * 1-5\",\"tz\":\"Europe/Madrid\"}}",
       "state": {
-        "nextRunAtMs": 1778043600000
+        "nextRunAtMs": 1778043600000,
+        "runningAtMs": 1778043600031
       }
     },
     "9fd8d340-9760-4130-9fc6-2079fb6fd0f9": {
       "updatedAtMs": 1778017531363,
       "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"0 7 * * 1-5\",\"tz\":\"Europe/Madrid\"}}",
       "state": {
-        "nextRunAtMs": 1778043600000
+        "nextRunAtMs": 1778043600000,
+        "runningAtMs": 1778043600031
       }
     },
     "a31fe0f8-7328-40a0-80d6-fa6194925c93": {
       "updatedAtMs": 1778017533531,
       "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"0 7 * * 1-5\",\"tz\":\"Europe/Madrid\"}}",
       "state": {
-        "nextRunAtMs": 1778043600000
+        "nextRunAtMs": 1778043600000,
+        "runningAtMs": 1778043600031
       }
     },
     "1f841116-56c4-4b04-a10f-901cb96749d7": {
       "updatedAtMs": 1778017535830,
       "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"0 7 * * 1-5\",\"tz\":\"Europe/Madrid\"}}",
       "state": {
-        "nextRunAtMs": 1778043600000
+        "nextRunAtMs": 1778043600000,
+        "runningAtMs": 1778043600031
       }
     },
     "1d6ed4c5-91ed-487a-a993-98cf6a641410": {
       "updatedAtMs": 1778017538162,
       "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"0 7 * * 1-5\",\"tz\":\"Europe/Madrid\"}}",
       "state": {
-        "nextRunAtMs": 1778043600000
+        "nextRunAtMs": 1778043600000,
+        "runningAtMs": 1778043600031
       }
     },
     "58d06ca7-4411-4a82-a4ec-07cc4d7125b6": {
       "updatedAtMs": 1778017542451,
       "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"0 7 * * 1-5\",\"tz\":\"Europe/Madrid\"}}",
       "state": {
-        "nextRunAtMs": 1778043600000
+        "nextRunAtMs": 1778043600000,
+        "runningAtMs": 1778043600031
       }
     },
     "abfabbb1-1bbb-4865-b81a-90ac2b6bb9b0": {
       "updatedAtMs": 1778017544691,
       "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"0 7 * * 1-5\",\"tz\":\"Europe/Madrid\"}}",
       "state": {
-        "nextRunAtMs": 1778043600000
+        "nextRunAtMs": 1778043600000,
+        "runningAtMs": 1778043600031
       }
     },
     "659cfb91-f536-4d75-82a7-582067a55133": {

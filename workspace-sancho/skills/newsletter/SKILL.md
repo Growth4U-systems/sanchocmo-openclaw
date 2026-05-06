@@ -1529,7 +1529,23 @@ When a user invokes this skill, follow this sequence:
    ├── → "Iterate" (revise subject line or sections)
    ├── → "Different format" (try another archetype)
    └── → Feedback prompt
+
+8. Post-Approval Media Gate (cuando el humano aprueba el draft)
+   ├── ContentTask pasa a status "Media", NO a "Published"
+   ├── Ofrecer (en este orden):
+   │     1. /creative o [brand]-visual-generator → hero/header image
+   │     2. /content-atomizer → versiones LinkedIn/X de la edicion
+   │     3. (Opcional) subir asset propio del usuario
+   ├── Si el humano dice "skip media" explicitamente:
+   │     persistir media_status: "skipped" en el frontmatter del draft
+   └── Solo cuando media_status ∈ {ready, skipped} se permite el envio
+       a la plataforma (Beehiiv/Substack/Metricool/etc.)
 ```
+
+**Por que este gate**: el draft escrito es solo el cuerpo. Una newsletter
+sin hero image se ve incompleta en mobile preview, y atomizar despues
+de enviar pierde el momento. La regla es: aprobar texto → producir
+visuales → publicar. Nunca aprobar → publicar directo.
 
 ### Output Format
 
@@ -1590,23 +1606,31 @@ Follow `_system/output-format.md` exactly. The newsletter output should use this
   ./campaigns/newsletters/{file}.md    ✓ (new)
   ./brand/{slug}/operational/assets.md                    ✓ (1 entry added)
 
-  WHAT'S NEXT
+  WHAT'S NEXT  —  MEDIA GATE (required before send)
 
-  Your newsletter edition is ready. Before sending:
+  Your newsletter edition is approved. NOT sent yet.
+  Pre-send checklist:
 
-  → /creative           Build it — HTML template,
-                        header design, or visual
-                        assets (~15 min)
-  → "Skip visuals"      Continue to distribution ↓
+  → /creative           Build hero/header image +
+    (or [brand]-        visual assets (~15 min)
+     visual-generator)  ★ default next step
+
+  → /content-atomizer   Atomize for social (~10 min)
+                        ★ recommended for distribution
+
+  → "Skip media"        Skip visuals (you must confirm
+                        — persists media_status:skipped
+                        in frontmatter)
 
   ──────────────────────────────────────────────
 
-  → /content-atomizer   Atomize for social (~10 min)
-  → /email-sequences    Build subscriber welcome
-                        sequence (~15 min)
-  → "Iterate"           Revise sections or subject
+  Send only unlocks once media is ready or skipped:
+
+  → "Send now"          Dispatch to platform
+  → "Schedule send"     Pick day + time
+  → /email-sequences    Build welcome sequence
+  → "Iterate"           Revise subject or sections
   → "Different format"  Try another archetype
-  → "Send tips"         Platform-specific send advice
 
   Or tell me what you're working on and I'll
   route you.
