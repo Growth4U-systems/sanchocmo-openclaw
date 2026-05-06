@@ -8,28 +8,46 @@
       "version": 1
     },
     "seo-audit": {
-      "status": "pending"
+      "status": "completed",
+      "completed_at": "2026-05-05T13:32:40Z",
+      "version": 1
     },
     "own-media-audit": {
-      "status": "pending"
+      "status": "failed",
+      "completed_at": "2026-05-05T13:32:40Z",
+      "version": 1,
+      "reason": "Could not verify required social metrics from current host; browser fallback unavailable."
     },
     "geo-analysis": {
       "status": "pending"
     },
     "serp-analysis": {
-      "status": "pending"
+      "status": "failed",
+      "completed_at": "2026-05-05T13:35:41Z",
+      "version": 1,
+      "reason": "SERP fetched successfully, but DataForSEO enrichment returned no usable volume/CPC data."
     },
     "gap-analysis": {
       "status": "pending",
-      "depends_on": ["geo-analysis", "serp-analysis"]
+      "depends_on": [
+        "geo-analysis",
+        "serp-analysis"
+      ]
     },
     "recommendations": {
       "status": "pending",
-      "depends_on": ["seo-audit", "own-media-audit", "geo-analysis", "gap-analysis"]
+      "depends_on": [
+        "seo-audit",
+        "own-media-audit",
+        "geo-analysis",
+        "gap-analysis"
+      ]
     },
     "keywords": {
-      "status": "pending",
-      "depends_on": ["serp-analysis"]
+      "status": "failed",
+      "completed_at": "2026-05-05T13:35:41Z",
+      "version": 1,
+      "reason": "Keyword expansion generated successfully, but DataForSEO coverage was below quality gate."
     },
     "influencers": {
       "status": "pending"

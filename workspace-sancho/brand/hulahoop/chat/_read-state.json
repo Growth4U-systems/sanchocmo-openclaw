@@ -1,6 +1,6 @@
 {
   "general": {
-    "lastReadTs": 1777386298552
+    "lastReadTs": 1777984120306
   },
   "skill-acquisition-metrics-plan": {
     "lastReadTs": 1775746612881
@@ -73,5 +73,8 @@
   },
   "metrics-setup": {
     "lastReadTs": 1777913916148
+  },
+  "pricing": {
+    "lastReadTs": 1777995522224
   }
 }

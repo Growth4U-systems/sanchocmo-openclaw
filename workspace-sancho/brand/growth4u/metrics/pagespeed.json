@@ -1,47 +1,41 @@
 {
   "url": "https://growth4u.io",
   "mobile": {
-    "performance": 73,
+    "performance": 69,
     "seo": 92,
     "accessibility": 91,
     "bestPractices": 100,
     "lcp": 4.5,
     "cls": 0.064,
-    "tbt": 25,
+    "tbt": 180,
     "opportunities": [
       {
         "id": "redirects",
         "title": "Avoid multiple page redirects",
-        "savings": 876,
+        "savings": 852,
         "description": "Redirects introduce additional delays before the page can be loaded. [Learn how to avoid page redirects](https://developer.chrome.com/docs/lighthouse/"
       },
       {
         "id": "unused-javascript",
         "title": "Reduce unused JavaScript",
-        "savings": 540,
+        "savings": 620,
         "description": "Reduce unused JavaScript and defer loading scripts until they are required to decrease bytes consumed by network activity. [Learn how to reduce unused"
-      },
-      {
-        "id": "server-response-time",
-        "title": "Initial server response time was short",
-        "savings": 4,
-        "description": "Keep the server response time for the main document short because all other requests depend on it. [Learn more about the Time to First Byte metric](ht"
       }
     ],
     "diagnostics": [
-      {
-        "id": "color-contrast",
-        "title": "Background and foreground colors do not have a sufficient contrast ratio.",
-        "score": 0
-      },
       {
         "id": "heading-order",
         "title": "Heading elements are not in a sequentially-descending order",
         "score": 0
       },
       {
-        "id": "image-delivery-insight",
-        "title": "Improve image delivery",
+        "id": "robots-txt",
+        "title": "robots.txt is not valid",
+        "score": 0
+      },
+      {
+        "id": "cache-insight",
+        "title": "Use efficient cache lifetimes",
         "score": 0
       },
       {
@@ -50,49 +44,43 @@
         "score": 0
       },
       {
-        "id": "robots-txt",
-        "title": "robots.txt is not valid",
+        "id": "image-delivery-insight",
+        "title": "Improve image delivery",
+        "score": 0
+      },
+      {
+        "id": "color-contrast",
+        "title": "Background and foreground colors do not have a sufficient contrast ratio.",
         "score": 0
       }
     ]
   },
   "desktop": {
-    "performance": 95,
+    "performance": 93,
     "seo": 92,
     "accessibility": 91,
     "bestPractices": 100,
-    "lcp": 1,
+    "lcp": 1.1,
     "cls": 0.083,
-    "tbt": 30,
+    "tbt": 118,
     "opportunities": [
       {
         "id": "redirects",
         "title": "Avoid multiple page redirects",
-        "savings": 221,
+        "savings": 211,
         "description": "Redirects introduce additional delays before the page can be loaded. [Learn how to avoid page redirects](https://developer.chrome.com/docs/lighthouse/"
       },
       {
         "id": "unused-javascript",
         "title": "Reduce unused JavaScript",
-        "savings": 120,
+        "savings": 160,
         "description": "Reduce unused JavaScript and defer loading scripts until they are required to decrease bytes consumed by network activity. [Learn how to reduce unused"
-      },
-      {
-        "id": "server-response-time",
-        "title": "Initial server response time was short",
-        "savings": 7,
-        "description": "Keep the server response time for the main document short because all other requests depend on it. [Learn more about the Time to First Byte metric](ht"
       }
     ],
     "diagnostics": [
       {
-        "id": "robots-txt",
-        "title": "robots.txt is not valid",
-        "score": 0
-      },
-      {
-        "id": "color-contrast",
-        "title": "Background and foreground colors do not have a sufficient contrast ratio.",
+        "id": "image-delivery-insight",
+        "title": "Improve image delivery",
         "score": 0
       },
       {
@@ -101,16 +89,21 @@
         "score": 0
       },
       {
-        "id": "landmark-one-main",
-        "title": "Document does not have a main landmark.",
+        "id": "color-contrast",
+        "title": "Background and foreground colors do not have a sufficient contrast ratio.",
         "score": 0
       },
       {
-        "id": "image-delivery-insight",
-        "title": "Improve image delivery",
+        "id": "robots-txt",
+        "title": "robots.txt is not valid",
+        "score": 0
+      },
+      {
+        "id": "landmark-one-main",
+        "title": "Document does not have a main landmark.",
         "score": 0
       }
     ]
   },
-  "fetchedAt": "2026-04-27T23:58:26.970Z"
+  "fetchedAt": "2026-05-05T16:13:05.342Z"
 }
