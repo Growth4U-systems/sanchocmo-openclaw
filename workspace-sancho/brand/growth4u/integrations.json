@@ -64,7 +64,7 @@
     }
   },
   "systemOverrides": {},
-  "updatedAt": "2026-04-01T12:37:53.754Z",
+  "updatedAt": "2026-04-28T09:50:47.852Z",
   "metricsSheet": {
     "spreadsheetId": "16d5sxuu5bRTV_Y69g-ZkHoxUb_3hDm5KyYSuP51o4m4",
     "folderId": "1ZujxjkBZs6EEQ6KXyBmZMe6IfU9DJ0lY",
@@ -77,5 +77,15 @@
       "metric": "Outbound Activity",
       "priority": "medium"
     }
-  ]
+  ],
+  "slack": {
+    "status": "connected",
+    "team_id": "T08HEPKDUB0",
+    "team_name": "Growth4U",
+    "bot_user_id": "U0AV5QJCPFZ",
+    "bot_token_encrypted": "66b9f30bfd357b5e0b661b48:224e9b931623548b461c350918339622:9c45ca495f9aad4934a013eaf84f6a5e2d7fb42e8758170da5137beb6cd13736e734993ff7022570afcd028f37d55fc9ecbbcf664febf5e0615c",
+    "scope": "channels:history,channels:read,files:read,users:read,chat:write,chat:write.public,groups:read,im:write,mpim:write,commands,incoming-webhook",
+    "authed_user_id": "U08HRRNFDPE",
+    "installed_at": "2026-04-28T09:50:47.851Z"
+  }
 }
