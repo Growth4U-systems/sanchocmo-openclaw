@@ -1,0 +1,20 @@
+{
+  "date": "2026-05-06",
+  "period": "2026-05",
+  "total_usd": 282.28,
+  "projection_monthly_usd": 1458.46,
+  "avg_daily_usd": 47.05,
+  "plan": "Claude Max $200/month (flat rate)",
+  "note": "Dollar costs are theoretical API-equivalent, not actual spend",
+  "global": {
+    "avg_daily_turns": 261,
+    "today_turns": 134,
+    "anomaly": false
+  },
+  "clients": {
+    "hospital-capilar": {"avg_daily_turns": 1.8, "today_turns": 1, "anomaly": false},
+    "paymatico": {"avg_daily_turns": 0.5, "today_turns": 0, "anomaly": false},
+    "growth4u": {"avg_daily_turns": 3.2, "today_turns": 0, "anomaly": false}
+  },
+  "result": "HEARTBEAT_OK"
+}

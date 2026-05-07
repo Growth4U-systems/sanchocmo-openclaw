@@ -630,3 +630,50 @@ Sancho operó correctamente. Los fallos son 100% infraestructura (API keys/scope
 3. Desactivar/downgrade Hulahoop Morning Metrics hasta tener APIs
 
 _Generado por Cervantes — cron:cedfbd22-cbd0-4a19-87a0-29337c4f2b37 — 2026-05-05 10:00 CEST_
+
+---
+
+## 2026-05-06 (Miércoles) — Observación Sancho
+
+### Sesiones (últimas 24h): ~18 sesiones activas
+- **Canales:** Discord (5 guild channels), Slack (Growth4U dispatch), MC-Chat (content production)
+- **Clientes:** Growth4U, Hospital Capilar, Paymatico, Hulahoop
+- **Tipos:** Morning Metrics, Daily Pulse, Editorial Dispatch, Thief Marketer, Competitor Monitor, News Monitor, Cost Tracker, Content Production
+
+### Errores / Skills con problemas
+1. **Hulahoop Morning Metrics** — Sin APIs configuradas. Cron gasta tokens ($0.05) para decir "no puedo". *Pendiente desde ayer.*
+2. **Paymatico Thief Marketer** — Skipped: no hay competidores en `sources.json`. Informa correctamente en Discord.
+3. **Endpoint 501** — `/api/integrations/send-dispatch` (Discord transport) sigue sin implementar. Afecta Editorial Dispatch de HC, Hulahoop y Paymatico. Sancho usa fallback directo (funciona), pero genera ruido en logs.
+4. **Instantly** — Error de integración en Growth4U Morning Metrics ("no reportó datos"). Posible scope o auth expirado.
+
+### Preguntas no respondidas
+- Ninguna — todas las sesiones son cron-driven, sin interacción humana directa.
+
+### Cumplimiento de reglas de canal
+- ✅ Publica en canales correctos por cliente
+- ✅ Usa hilos para contenido largo (Daily Pulse Growth4U)
+- ✅ Formato adecuado (tablas en Discord para métricas, bullet points para dispatch)
+- ✅ No publica en canales que no le corresponden
+
+### Patrones de mejora
+1. **Coste excesivo content production** — $3.05 para una sola task (mc-chat session con 86K tokens). Investigar si es por contexto acumulado o retries.
+2. **Hospital Capilar: >1 mes sin interacción humana** — Sancho lo detecta y lo reporta. Churn signal real.
+3. **Thief Marketer HC exitoso** — Análisis competitivo completo con 7 competidores, detectó IMD (dominio parked) y Medical Hair (web caída). Buen output por $1.16.
+4. **Daily Pulse Growth4U** — $1.08 para un pulse. Sigue siendo caro para un resumen diario. Considerar T2 (Sonnet) para esta tarea.
+
+### Costes teóricos hoy (parcial, hasta 10:00)
+- Total sesiones Sancho observadas: ~$10.7 (6 horas de crons)
+- Sessions más caras: Content Production ($3.05), Thief HC ($1.16), Competitor Monitor Paymatico ($1.10), Daily Pulse G4U ($1.08)
+- Cost Tracker reporta $282 acumulados en 6 días ($47/día media)
+
+### Acciones pendientes (carry-over de ayer + nuevas)
+1. ~~Fix Slack `chat:write`~~ → Growth4U dispatch ahora funciona vía endpoint ✅
+2. Desactivar Hulahoop Morning Metrics hasta tener APIs (sigue pendiente)
+3. Implementar Discord transport en send-dispatch endpoint (o aceptar fallback como solución)
+4. Investigar coste content production ($3.05/task) — ¿contexto excesivo?
+5. Evaluar mover Daily Pulse a Sonnet (T2) para reducir costes
+
+### Veredicto
+**Sistema operativo, sin fallos críticos.** Los crons ejecutan correctamente con workarounds para endpoints no implementados. El principal issue es eficiencia de costes — Sancho usa Opus para todo, incluyendo tareas que podrían ser T2.
+
+_Generado por Cervantes — cron:cedfbd22-cbd0-4a19-87a0-29337c4f2b37 — 2026-05-06 10:00 CEST_

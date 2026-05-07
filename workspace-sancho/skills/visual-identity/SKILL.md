@@ -181,36 +181,58 @@ Mueve cualquier candidato razonable al path canónico y, si no hay nada, escribe
 9. **Visual Do's / Don'ts** con pares de ejemplo
 10. **Generar Child Skills** (si templates disponibles):
     - `[brand]-ui-system` → tokens + componentes
-    - `[brand]-visual-generator` → 3 layers + nano-banana-pro config + **5 plantillas HTML de carrusel** (ver siguiente bloque)
+    - `[brand]-visual-generator` → 3 layers + nano-banana-pro config + **catálogo brand-as-skill** (ver siguiente bloque)
     - Verificar: YAML válido, archivos existen, test invocation
 
-#### 5 plantillas HTML de carrusel (output obligatorio del child skill)
+#### Outputs obligatorios del `[brand]-visual-generator`
 
-Cuando esta skill genera `[brand]-visual-generator`, ese child skill **debe**
-producir las 5 plantillas oficiales que Mission Control consume desde el
-panel de carrusel. Path canónico:
+Cuando esta meta-skill genera `[brand]-visual-generator`, ese child skill
+mantiene **TODA la layer de produccion visual del cliente** — no solo los
+5 carruseles. Es la "marca como infraestructura" en el sentido del Patron
+Wyndo / Claude Design Brand. Path canónico:
 
 ```
-brand/{slug}/brand-book/visual-identity/templates/{template-id}/
-├── meta.json                    # slots, dims, slideCount, channel, name, description, preview
-├── template.html                # single-slide
-└── slide-cover/body/cta.html    # multi-slide
+brand/{slug}/brand-book/visual-identity/
+├── design-tokens.json            # ← lo escribe ESTA skill (visual-identity)
+├── visual-identity.current.md    # ← lo escribe ESTA skill
+├── logo-light.{png,webp,svg}     # ← lo escribe ESTA skill
+├── manifest.json                 # ← lo escribe el child (índice del catálogo)
+├── style-references/             # ← lo escribe el child (5-10 imgs ref)
+│   └── *.webp
+└── templates/                    # ← lo escribe el child
+    ├── linkedin-quote/           # 1080×1350, single
+    ├── linkedin-9-slide/         # 1080×1350, 9 slides
+    ├── instagram-3-slide/        # 1080×1080, 3 slides
+    ├── blog-post/                # 1200×630, single
+    ├── blog-title/               # 1200×630, single (cover/OG)
+    └── newsletter-header/        # 1200×600, single (hero email)
 ```
 
-Las 5 plantillas obligatorias:
+**Reparto explicito**:
 
-| Template ID | Canal | Tamaño | Slides |
-|---|---|---|---|
-| `linkedin-quote` | linkedin | 1080×1350 | 1 |
-| `linkedin-9-slide` | linkedin | 1080×1350 | 9 |
-| `instagram-3-slide` | instagram | 1080×1080 | 3 |
-| `blog-post` | blog | 1200×630 | 1 |
-| `blog-title` | blog | 1200×630 | 1 |
+| Output | Lo escribe | Cuando |
+|---|---|---|
+| `design-tokens.json`, `visual-identity.current.md`, logos | `visual-identity` (esta meta-skill) | Foundation L5: 1 vez al onboarding + refresh |
+| `manifest.json`, `style-references/`, `templates/*` | `[brand]-visual-generator` (child) | T07 del P14 + cada vez que el cliente extiende el catalogo |
+
+Las 5 plantillas iniciales obligatorias del child siguen siendo las 5
+canónicas (linkedin-quote, linkedin-9-slide, instagram-3-slide, blog-post,
+blog-title) + `newsletter-header` cuando el cliente activa el canal email.
+Cualquier categoría adicional (ad creatives, web hero, podcast cover) se
+añade extendiendo el child skill, no reabriendo esta meta-skill.
 
 Las plantillas usan `{{brand.primary}}`, `{{brand.accent}}`,
 `{{brand.primary_dark}}`, `{{brand.primary_light}}`, `{{brand.accent_dark}}`,
 `{{brand.logo}}`, `{{brand.footer}}` para que MC inyecte la paleta del
 design-tokens.json al renderizar — los HTMLs nunca traen hex hardcoded.
+
+`manifest.json` es el INDICE que `content-image` consulta antes de
+generar/renderizar nada. Su esquema vive en
+`[brand]-visual-generator/SKILL.md` (seccion "Brand-as-Skill — catalogo
+completo de outputs"). Las writer skills (newsletter, social-writer, etc.)
+NUNCA invocan al `[brand]-visual-generator` directamente — leen los
+artefactos via `content-image`. Esta separacion productor/consumidor es
+critica: ver `_system/content-engine-architecture.md`.
 
 Ver `[brand]-visual-generator/SKILL.md` (ej: `growth4u-visual-generator`)
 para el flow detallado de cómo se generan: lectura de design-tokens y
@@ -218,11 +240,23 @@ visual-identity, decisión de personajes (Alfonso/Martín/Philippe), generación
 con nano-banana-pro de los assets que faltan, y persistencia en el path
 canónico.
 
+**Ciclo de vida de los threads**:
+
+- El thread del pillar `visual-identity` (en Foundation L5) está activo
+  ÚNICAMENTE durante el onboarding: definir DNA visual + generar el child
+  skill `[brand]-visual-generator`. Cuando el child existe, este thread
+  queda cerrado — no es el home operativo de las plantillas.
+- A partir de ahí TODA la operación visual del cliente vive en el thread
+  del child skill: la task **T07 de P14-Content-Engine**
+  (`[brand]-visual-generator`). Bootstrap de plantillas, refrescos,
+  extensiones del catálogo, ediciones puntuales — todo ahí.
+
 **Edición posterior**: el cliente edita las plantillas desde Mission Control
 → Foundation → Brand Book → Visual Identity → templates → click en el HTML
-→ vista 2-col (HTML editor + iframe preview en vivo). El thread de chat de
-visual-identity es el que recibe los pedidos de cambios. NO hay TemplateTask
-ni thread separado — la plantilla es un sub-doc del pillar.
+→ vista 2-col (HTML editor + iframe preview en vivo). Los pedidos de
+cambios por chat van al **thread de T07 (`[brand]-visual-generator`)**, no
+al thread del pillar visual-identity. NO hay TemplateTask ni thread
+separado por plantilla — todas conviven en T07.
 11. **Assemblar Visual DNA Kit** como HTML presentable
 
 ---

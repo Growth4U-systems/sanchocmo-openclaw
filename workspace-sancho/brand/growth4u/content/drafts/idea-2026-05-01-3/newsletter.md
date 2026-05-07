@@ -9,7 +9,12 @@ iteration: 1
 status: approved
 clarify_status: answered
 created_at: '2026-05-05T17:15:09.118Z'
-updated_at: '2026-05-05T23:50:00Z'
+updated_at: '2026-05-06T20:18:45.047Z'
+media:
+  - type: image
+    role: header
+    localPath: content/drafts/idea-2026-05-01-3/newsletter-header.jpg
+    alt: 'Editorial header — EU regulation breaking the finfluencer playbook'
 ---
 
 Subject: Tu playbook de influencers acaba de romperse — y la mayoría no se ha enterado

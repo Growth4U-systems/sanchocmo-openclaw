@@ -8,9 +8,9 @@ import {
 } from "@/hooks/useMedia";
 
 /**
- * Picker + slot form for carousel templates. Renders inline in the MediaPanel
- * when the user toggles to carousel mode. The endpoint does the Playwright
- * rendering and attaches each slide PNG to the draft's `media[]`.
+ * Picker + slot form for carousel templates. Renders inline in the Media
+ * editor when the user toggles to carousel mode. The endpoint does the
+ * Playwright rendering and attaches each slide PNG to the draft's `media[]`.
  */
 export function CarouselComposer({
   slug,

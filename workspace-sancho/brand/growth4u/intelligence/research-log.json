@@ -1,0 +1,34 @@
+[
+  {
+    "date": "2026-05-06",
+    "idea_id": "idea-2026-05-06-7",
+    "content_task_id": "P-Content-Semana-19-T03-C01",
+    "document": "brand/growth4u/content/drafts/idea-2026-05-06-7/research.md",
+    "qa_report": "brand/growth4u/content/drafts/idea-2026-05-06-7/QA-REPORT-research.md",
+    "topic": "Agency > Skills en la era IA — Max Schoening (Notion) en Lenny's Podcast",
+    "sources_found": 14,
+    "searches_executed": 12,
+    "qa_score": 8.5,
+    "gaps_remaining": [
+      "Transcript completo del podcast es de pago — claims verificados via metadata pública + corroboración terceros"
+    ],
+    "duration_seconds": 420
+  },
+  {
+    "date": "2026-05-06",
+    "idea_id": "idea-2026-05-06-2",
+    "content_task_id": "P-Content-Semana-19-T03-C02",
+    "document": "brand/growth4u/content/drafts/idea-2026-05-06-2/research.md",
+    "qa_report": "brand/growth4u/content/drafts/idea-2026-05-06-2/QA-REPORT-research.md",
+    "topic": "Conversión tráfico AI (ChatGPT) vs Google Orgánico — el canal invisible",
+    "sources_found": 15,
+    "searches_executed": 12,
+    "qa_score": 8.5,
+    "gaps_remaining": [
+      "Cifra '8.6%' del signal original sin fuente primaria clara — reemplazar por rango verificado",
+      "Conflicto Claude conversion rate entre fuentes (5% vs 16.8%) — contextos diferentes",
+      "Walk-the-talk Growth4U #1-2 en Gemini requiere verificación manual"
+    ],
+    "duration_seconds": 480
+  }
+]

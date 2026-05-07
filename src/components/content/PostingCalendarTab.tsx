@@ -1,0 +1,765 @@
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+import {
+  DndContext,
+  DragOverlay,
+  PointerSensor,
+  useDraggable,
+  useDroppable,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+  type DragStartEvent,
+} from "@dnd-kit/core";
+import {
+  usePostingCalendar,
+  useInvalidatePostingCalendar,
+  type CalendarEvent,
+  type ReadyDraft,
+} from "@/hooks/usePostingCalendar";
+import {
+  useCancelPublishing,
+  usePublishDraft,
+  usePublishProviders,
+} from "@/hooks/usePublishing";
+import type { ProviderInfo } from "@/lib/publishing/types";
+import { ConnectPublishingButton } from "@/components/content/ConnectPublishingButton";
+
+/**
+ * Posting Calendar — operational hub for scheduling Ready drafts to platforms.
+ *
+ * Drafts whose ContentTask is in status `Ready` (and not yet scheduled) appear
+ * in the left sidebar (ReadyQueue). Drag onto a day to open the schedule
+ * modal; on confirm, calls `POST /api/publishing/publish` with `schedule.publishAt`
+ * and the post lands on the calendar with status `scheduled`.
+ *
+ * Click on an existing event to preview body, see status, or cancel scheduled
+ * posts. Reschedule = drag a scheduled event onto a new day (cancel + publish).
+ */
+
+const CHANNEL_VISUAL: Record<string, { label: string; emoji: string; bg: string; fg: string }> = {
+  linkedin:   { label: "LinkedIn",  emoji: "💼", bg: "var(--sc-navy-500)", fg: "var(--sc-paper-3)" },
+  twitter:    { label: "X",         emoji: "🐦", bg: "var(--sc-ink)",      fg: "var(--sc-paper-3)" },
+  instagram:  { label: "Instagram", emoji: "📷", bg: "var(--sc-rust-500)", fg: "var(--sc-paper-3)" },
+  blog:       { label: "Blog",      emoji: "📝", bg: "var(--sc-sage-500)", fg: "var(--sc-paper-3)" },
+  newsletter: { label: "Newsletter",emoji: "📧", bg: "var(--sc-sun-300)",  fg: "var(--sc-ink)" },
+};
+
+const STATUS_VISUAL: Record<CalendarEvent["status"], { label: string; bg: string; fg: string }> = {
+  scheduled:  { label: "⏰ Programado", bg: "var(--sc-sun-100)", fg: "var(--sc-ink)" },
+  publishing: { label: "🚀 Publicando", bg: "var(--sc-rust-100)", fg: "var(--sc-rust-700)" },
+  published:  { label: "✓ Publicado",   bg: "var(--sc-sage-100)", fg: "var(--sc-ink)" },
+  failed:     { label: "✗ Falló",       bg: "var(--sc-brick-bg)", fg: "var(--sc-brick-500)" },
+  canceled:   { label: "Cancelado",     bg: "var(--sc-paper-2)",  fg: "var(--sc-fg-muted)" },
+};
+
+const DAY_LABELS = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
+
+function isoDate(d: Date): string {
+  return d.toISOString().slice(0, 10);
+}
+
+/** Monday of the week containing `d`, normalized to local 00:00. */
+function startOfWeek(d: Date): Date {
+  const out = new Date(d);
+  const day = (out.getDay() + 6) % 7; // 0=Mon
+  out.setDate(out.getDate() - day);
+  out.setHours(0, 0, 0, 0);
+  return out;
+}
+
+function addDays(d: Date, n: number): Date {
+  const out = new Date(d);
+  out.setDate(out.getDate() + n);
+  return out;
+}
+
+function formatRange(weekStart: Date): string {
+  const end = addDays(weekStart, 6);
+  const sameMonth = weekStart.getMonth() === end.getMonth();
+  const fmt = (date: Date, withMonth: boolean) =>
+    `${date.getDate()}${withMonth ? ` ${date.toLocaleDateString("es-ES", { month: "short" })}` : ""}`;
+  return `${fmt(weekStart, !sameMonth)} – ${fmt(end, true)} ${end.getFullYear()}`;
+}
+
+function timeOf(iso: string): string {
+  const d = new Date(iso);
+  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+}
+
+export function PostingCalendarTab({ slug, focusKey }: { slug: string; focusKey?: string | null }) {
+  const [weekStart, setWeekStart] = useState<Date>(() => startOfWeek(new Date()));
+  const fromIso = isoDate(weekStart);
+  const toIso = isoDate(addDays(weekStart, 6));
+  const todayIso = isoDate(new Date());
+
+  const calendar = usePostingCalendar(slug, fromIso, toIso);
+  const invalidate = useInvalidatePostingCalendar();
+
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
+  const [draggedItem, setDraggedItem] = useState<{ kind: "ready"; draft: ReadyDraft } | { kind: "event"; event: CalendarEvent } | null>(null);
+  const [scheduleTarget, setScheduleTarget] = useState<{ dayIso: string; draft: ReadyDraft; rescheduleFrom?: CalendarEvent } | null>(null);
+  const [previewEvent, setPreviewEvent] = useState<CalendarEvent | null>(null);
+
+  const { scheduled, ready_queue } = calendar.data ?? { scheduled: [] as CalendarEvent[], ready_queue: [] as ReadyDraft[] };
+
+  // Group scheduled events by day for fast lookup
+  const eventsByDay = useMemo(() => {
+    const map: Record<string, CalendarEvent[]> = {};
+    for (const ev of scheduled) {
+      const day = ev.scheduled_at.slice(0, 10);
+      (map[day] ||= []).push(ev);
+    }
+    for (const day of Object.keys(map)) {
+      map[day].sort((a, b) => a.scheduled_at.localeCompare(b.scheduled_at));
+    }
+    return map;
+  }, [scheduled]);
+
+  // Auto-scroll to focused card when opening via ?focus={ideaId}:{channel}
+  useEffect(() => {
+    if (!focusKey) return;
+    const el = document.querySelector(`[data-focus="${focusKey}"]`);
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      el.classList.add("ring-4", "ring-rust-500");
+      setTimeout(() => el.classList.remove("ring-4", "ring-rust-500"), 2000);
+    }
+  }, [focusKey, calendar.data]);
+
+  function handleDragStart(e: DragStartEvent) {
+    const data = e.active.data.current as { kind?: "ready" | "event"; draft?: ReadyDraft; event?: CalendarEvent } | undefined;
+    if (data?.kind === "ready" && data.draft) setDraggedItem({ kind: "ready", draft: data.draft });
+    else if (data?.kind === "event" && data.event) setDraggedItem({ kind: "event", event: data.event });
+  }
+
+  function handleDragEnd(e: DragEndEvent) {
+    const dropId = typeof e.over?.id === "string" ? e.over.id : null;
+    setDraggedItem(null);
+    if (!dropId || !dropId.startsWith("day-")) return;
+    const dayIso = dropId.slice(4);
+
+    const data = e.active.data.current as { kind?: "ready" | "event"; draft?: ReadyDraft; event?: CalendarEvent } | undefined;
+    if (data?.kind === "ready" && data.draft) {
+      setScheduleTarget({ dayIso, draft: data.draft });
+    } else if (data?.kind === "event" && data.event) {
+      const ev = data.event;
+      setScheduleTarget({
+        dayIso,
+        draft: {
+          ideaId: ev.ideaId,
+          contentTaskId: ev.contentTaskId,
+          parentTaskId: ev.parentTaskId,
+          channel: ev.channel,
+          title: ev.title,
+          ready_at: ev.scheduled_at,
+          hero_media_url: ev.hero_media_url,
+          has_media: !!ev.hero_media_url,
+        },
+        rescheduleFrom: ev,
+      });
+    }
+  }
+
+  if (calendar.isLoading) {
+    return <p className="text-muted-foreground text-sm py-8 text-center">Cargando calendario…</p>;
+  }
+
+  if (calendar.isError) {
+    return (
+      <p className="text-sm py-8 text-center" style={{ color: "var(--sc-brick-500)" }}>
+        Error cargando calendario: {(calendar.error as Error).message}
+      </p>
+    );
+  }
+
+  return (
+    <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+      {/* Week navigation */}
+      <div className="flex items-center gap-2 mb-3.5">
+        <button
+          type="button"
+          onClick={() => setWeekStart((w) => addDays(w, -7))}
+          className="font-heading uppercase text-[12px] tracking-wider px-2.5 py-1.5 rounded-sc-md border-2 sc-pop-hover"
+          style={{ background: "var(--sc-paper-3)", borderColor: "var(--sc-ink)", boxShadow: "var(--pop-xs)" }}
+          aria-label="Semana anterior"
+        >
+          ‹
+        </button>
+        <button
+          type="button"
+          onClick={() => setWeekStart(startOfWeek(new Date()))}
+          className="font-heading uppercase text-[12px] tracking-wider px-3 py-1.5 rounded-sc-md border-2 sc-pop-hover"
+          style={{ background: "var(--sc-sun-300)", borderColor: "var(--sc-ink)", boxShadow: "var(--pop-xs)" }}
+        >
+          📬 Hoy
+        </button>
+        <button
+          type="button"
+          onClick={() => setWeekStart((w) => addDays(w, 7))}
+          className="font-heading uppercase text-[12px] tracking-wider px-2.5 py-1.5 rounded-sc-md border-2 sc-pop-hover"
+          style={{ background: "var(--sc-paper-3)", borderColor: "var(--sc-ink)", boxShadow: "var(--pop-xs)" }}
+          aria-label="Semana siguiente"
+        >
+          ›
+        </button>
+        <span className="font-heading uppercase text-sm tracking-wider font-bold ml-2" style={{ color: "var(--sc-ink)" }}>
+          {formatRange(weekStart)}
+        </span>
+        <span className="flex-1" />
+        <ConnectPublishingButton slug={slug} variant="ghost">
+          🔌 Conectar herramienta de publishing
+        </ConnectPublishingButton>
+      </div>
+
+      <div className="grid gap-3.5" style={{ gridTemplateColumns: "300px 1fr" }}>
+        <ReadyQueueSidebar slug={slug} drafts={ready_queue} />
+        <WeekGrid weekStart={weekStart} eventsByDay={eventsByDay} todayIso={todayIso} onSelectEvent={setPreviewEvent} />
+      </div>
+
+      <DragOverlay>
+        {draggedItem?.kind === "ready" ? <ReadyDraftCard draft={draggedItem.draft} dragging /> : null}
+        {draggedItem?.kind === "event" ? <EventCard event={draggedItem.event} dragging onClick={() => undefined} /> : null}
+      </DragOverlay>
+
+      {scheduleTarget && (
+        <ScheduleConfirmModal
+          slug={slug}
+          dayIso={scheduleTarget.dayIso}
+          draft={scheduleTarget.draft}
+          rescheduleFrom={scheduleTarget.rescheduleFrom}
+          onClose={() => setScheduleTarget(null)}
+          onDone={() => { setScheduleTarget(null); invalidate(); }}
+        />
+      )}
+
+      {previewEvent && (
+        <PostPreviewSlideOver
+          slug={slug}
+          event={previewEvent}
+          onClose={() => setPreviewEvent(null)}
+          onCanceled={() => { setPreviewEvent(null); invalidate(); }}
+        />
+      )}
+    </DndContext>
+  );
+}
+
+/* ---------- Ready Queue (sidebar) ---------- */
+
+function ReadyQueueSidebar({ slug, drafts }: { slug: string; drafts: ReadyDraft[] }) {
+  return (
+    <div
+      className="rounded-sc-lg border-[3px] flex flex-col overflow-hidden"
+      style={{ background: "var(--sc-paper-3)", borderColor: "var(--sc-ink)", boxShadow: "var(--pop-md)" }}
+    >
+      <div
+        className="px-3 py-2.5 border-b-2 flex items-center justify-between"
+        style={{ borderColor: "var(--sc-ink)", background: "var(--sc-paper-2)" }}
+      >
+        <span className="font-heading uppercase text-sm tracking-wider font-bold" style={{ color: "var(--sc-ink)" }}>
+          📥 Listos para programar
+        </span>
+        <span
+          className="font-mono text-[11px] px-1.5 py-0.5 rounded-sc-pill border"
+          style={{ background: "var(--sc-paper-3)", borderColor: "var(--sc-ink)" }}
+        >
+          {drafts.length}
+        </span>
+      </div>
+      <div className="flex flex-col" style={{ maxHeight: "70vh", overflowY: "auto" }}>
+        {drafts.length === 0 ? (
+          <div className="p-4 text-xs text-center" style={{ color: "var(--sc-fg-muted)" }}>
+            <p>No hay drafts en estado <b>Ready</b>.</p>
+            <p className="mt-2">
+              Marca un ContentTask como Ready (kanban o editor) y aparecerá aquí
+              para arrastrar al día que quieras publicar.
+            </p>
+          </div>
+        ) : (
+          drafts.map((d) => (
+            <ReadyDraftCard key={`${d.ideaId}:${d.channel}`} draft={d} slug={slug} />
+          ))
+        )}
+      </div>
+    </div>
+  );
+}
+
+function ReadyDraftCard({ draft, slug, dragging }: { draft: ReadyDraft; slug?: string; dragging?: boolean }) {
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+    id: `ready-${draft.ideaId}-${draft.channel}`,
+    data: { kind: "ready" as const, draft },
+  });
+  const cv = CHANNEL_VISUAL[draft.channel] || CHANNEL_VISUAL.blog;
+
+  const editorHref = slug
+    ? `/dashboard/${slug}/projects/${draft.parentTaskId.split("-T")[0] ? draft.parentTaskId.replace(/-T\d+$/, "") : ""}/tasks/${draft.parentTaskId}/content/${draft.contentTaskId}/draft/${draft.channel}`
+    : null;
+
+  return (
+    <div
+      ref={setNodeRef}
+      data-focus={`${draft.ideaId}:${draft.channel}`}
+      className="px-2.5 py-2 border-b border-dashed transition-opacity"
+      style={{ borderColor: "rgba(31,20,16,0.15)", opacity: isDragging || dragging ? 0.4 : 1, background: "var(--sc-paper-3)" }}
+    >
+      <div
+        {...attributes}
+        {...listeners}
+        className="flex items-start gap-2 cursor-grab active:cursor-grabbing"
+        title="Arrastra a un día del calendario para programar"
+      >
+        <span
+          className="grid place-items-center w-6 h-6 rounded text-xs border flex-shrink-0 mt-0.5"
+          style={{ background: cv.bg, color: cv.fg, borderColor: "var(--sc-ink)" }}
+        >{cv.emoji}</span>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-1 mb-0.5 flex-wrap">
+            <span
+              className="font-heading uppercase text-[9px] tracking-wider px-1 py-0.5 rounded-sc-pill border"
+              style={{ background: "var(--sc-paper-3)", borderColor: "var(--sc-ink)", color: "var(--sc-ink)" }}
+            >{cv.label}</span>
+            {!draft.has_media && (
+              <span
+                className="font-heading uppercase text-[9px] tracking-wider px-1 py-0.5 rounded-sc-pill border"
+                style={{ background: "var(--sc-sun-100)", borderColor: "var(--sc-ink)", color: "var(--sc-ink)" }}
+                title="Sin media adjunta"
+              >sin media</span>
+            )}
+          </div>
+          <div className="text-[12px] leading-snug font-medium" style={{ color: "var(--sc-ink)" }}>
+            {draft.title}
+          </div>
+          {editorHref && !dragging && (
+            <a
+              href={editorHref}
+              className="text-[10px] underline mt-1 inline-block"
+              style={{ color: "var(--sc-navy-500)", textUnderlineOffset: 2 }}
+              onClick={(e) => e.stopPropagation()}
+            >Abrir editor ↗</a>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ---------- Week Grid (7 day columns) ---------- */
+
+function WeekGrid({
+  weekStart,
+  eventsByDay,
+  todayIso,
+  onSelectEvent,
+}: {
+  weekStart: Date;
+  eventsByDay: Record<string, CalendarEvent[]>;
+  todayIso: string;
+  onSelectEvent: (e: CalendarEvent) => void;
+}) {
+  const days = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
+  return (
+    <div className="grid gap-2" style={{ gridTemplateColumns: "repeat(7, minmax(0, 1fr))" }}>
+      {days.map((day, idx) => (
+        <DayColumn
+          key={isoDate(day)}
+          day={day}
+          dayIndex={idx}
+          events={eventsByDay[isoDate(day)] || []}
+          isToday={isoDate(day) === todayIso}
+          onSelectEvent={onSelectEvent}
+        />
+      ))}
+    </div>
+  );
+}
+
+function DayColumn({
+  day,
+  dayIndex,
+  events,
+  isToday,
+  onSelectEvent,
+}: {
+  day: Date;
+  dayIndex: number;
+  events: CalendarEvent[];
+  isToday: boolean;
+  onSelectEvent: (e: CalendarEvent) => void;
+}) {
+  const dayIso = isoDate(day);
+  const { setNodeRef, isOver } = useDroppable({ id: `day-${dayIso}` });
+
+  return (
+    <div
+      ref={setNodeRef}
+      className="rounded-sc-md border-[2px] flex flex-col overflow-hidden"
+      style={{
+        background: isOver ? "var(--sc-sun-100)" : isToday ? "var(--sc-sun-50)" : "var(--sc-paper-3)",
+        borderColor: isOver ? "var(--sc-rust-500)" : "var(--sc-ink)",
+        boxShadow: isOver ? "var(--pop-md)" : isToday ? "var(--pop-sm)" : "var(--pop-xs)",
+        minHeight: 320,
+        transition: "background 120ms, border-color 120ms",
+      }}
+    >
+      <div
+        className="px-2 py-1.5 border-b-2 flex items-center justify-between"
+        style={{ background: isToday ? "var(--sc-sun-300)" : "var(--sc-paper-2)", borderColor: "var(--sc-ink)" }}
+      >
+        <span className="font-heading uppercase text-[12px] tracking-wider font-bold" style={{ color: "var(--sc-ink)" }}>
+          {DAY_LABELS[dayIndex]} {day.getDate()}
+        </span>
+        <span className="font-mono text-[10px]" style={{ color: isToday ? "var(--sc-rust-700)" : "var(--sc-fg-muted)" }}>
+          {events.length}
+        </span>
+      </div>
+
+      <div className="flex flex-col gap-1.5 p-1.5">
+        {events.length === 0 ? (
+          <div className="px-1 py-3 text-[11px] italic text-center" style={{ color: "var(--sc-fg-muted)" }}>
+            arrastra aquí
+          </div>
+        ) : (
+          events.map((ev) => (
+            <EventCard key={`${ev.ideaId}:${ev.channel}`} event={ev} onClick={() => onSelectEvent(ev)} />
+          ))
+        )}
+      </div>
+    </div>
+  );
+}
+
+function EventCard({ event, onClick, dragging }: { event: CalendarEvent; onClick: () => void; dragging?: boolean }) {
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+    id: `event-${event.contentTaskId}-${event.channel}`,
+    data: { kind: "event" as const, event },
+  });
+  const cv = CHANNEL_VISUAL[event.channel] || CHANNEL_VISUAL.blog;
+  const sv = STATUS_VISUAL[event.status] || STATUS_VISUAL.scheduled;
+
+  // Only allow drag for cancellable / failed / scheduled — not while in-flight
+  const isDraggable = event.status === "scheduled" || event.status === "failed";
+
+  return (
+    <button
+      ref={setNodeRef}
+      type="button"
+      onClick={onClick}
+      data-focus={`${event.ideaId}:${event.channel}`}
+      className="text-left rounded border-[1.5px] px-1.5 py-1.5 transition-opacity"
+      style={{
+        background: "var(--sc-paper-2)",
+        borderColor: "var(--sc-ink)",
+        opacity: isDragging || dragging ? 0.4 : 1,
+        cursor: isDraggable ? "grab" : "pointer",
+      }}
+      {...(isDraggable ? attributes : {})}
+      {...(isDraggable ? listeners : {})}
+    >
+      <div className="flex items-center gap-1 mb-0.5 flex-wrap">
+        <span
+          className="grid place-items-center w-4 h-4 rounded text-[9px] border"
+          style={{ background: cv.bg, color: cv.fg, borderColor: "var(--sc-ink)" }}
+        >{cv.emoji}</span>
+        <span className="font-mono text-[10px] font-bold" style={{ color: "var(--sc-ink)" }}>
+          {timeOf(event.scheduled_at)}
+        </span>
+      </div>
+      <div className="text-[11px] leading-tight font-medium" style={{ color: "var(--sc-ink)" }}>
+        {event.title.slice(0, 64)}{event.title.length > 64 ? "…" : ""}
+      </div>
+      <div
+        className="font-heading uppercase text-[8.5px] tracking-wider px-1 py-0.5 rounded-sc-pill border inline-flex items-center mt-1"
+        style={{ background: sv.bg, color: sv.fg, borderColor: "var(--sc-ink)" }}
+      >{sv.label}</div>
+    </button>
+  );
+}
+
+/* ---------- Schedule Confirm Modal ---------- */
+
+function ScheduleConfirmModal({
+  slug,
+  dayIso,
+  draft,
+  rescheduleFrom,
+  onClose,
+  onDone,
+}: {
+  slug: string;
+  dayIso: string;
+  draft: ReadyDraft;
+  rescheduleFrom?: CalendarEvent;
+  onClose: () => void;
+  onDone: () => void;
+}) {
+  const providersQ = usePublishProviders(slug, draft.channel);
+  const publish = usePublishDraft();
+  const cancel = useCancelPublishing();
+
+  const configured = useMemo<ProviderInfo[]>(() => (providersQ.data || []).filter((p) => p.configured), [providersQ.data]);
+  const [providerId, setProviderId] = useState<string>(rescheduleFrom?.provider || "");
+  const [time, setTime] = useState<string>("09:00");
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!providerId && configured.length > 0) setProviderId(configured[0].id);
+  }, [configured, providerId]);
+
+  async function confirm() {
+    setError(null);
+    if (!providerId) {
+      setError("Conecta una herramienta de publishing antes de programar.");
+      return;
+    }
+    const publishAt = `${dayIso}T${time}:00`;
+    const isoLocal = new Date(publishAt).toISOString();
+
+    try {
+      if (rescheduleFrom) {
+        // Cancel previous schedule first to avoid double-publish
+        await cancel.mutateAsync({ slug, ideaId: draft.ideaId, channel: draft.channel });
+      }
+      await publish.mutateAsync({
+        slug,
+        ideaId: draft.ideaId,
+        channel: draft.channel,
+        providerId,
+        schedule: { publishAt: isoLocal },
+      });
+      onDone();
+    } catch (e) {
+      setError((e as Error).message || "Error al programar");
+    }
+  }
+
+  const noProviders = configured.length === 0;
+  const busy = publish.isPending || cancel.isPending;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center" onClick={onClose}>
+      <div className="absolute inset-0 bg-black/40" />
+      <div
+        className="relative w-full max-w-md rounded-sc-lg border-[3px] p-5"
+        style={{ background: "var(--sc-paper-3)", borderColor: "var(--sc-ink)", boxShadow: "var(--pop-lg)" }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h3 className="font-heading uppercase text-base tracking-wider font-bold mb-1" style={{ color: "var(--sc-ink)" }}>
+          {rescheduleFrom ? "Reprogramar post" : "Programar post"}
+        </h3>
+        <p className="text-xs mb-3" style={{ color: "var(--sc-fg-muted)" }}>
+          {draft.channel.toUpperCase()} · {draft.title.slice(0, 80)}
+        </p>
+
+        <div className="flex flex-col gap-3">
+          <div>
+            <label className="font-heading uppercase text-[10px] tracking-wider block mb-1" style={{ color: "var(--sc-ink)" }}>
+              Día
+            </label>
+            <input
+              type="date"
+              value={dayIso}
+              readOnly
+              className="w-full px-2 py-1.5 text-sm rounded-sc-md border-2 bg-card"
+              style={{ borderColor: "var(--sc-ink)" }}
+            />
+          </div>
+          <div>
+            <label className="font-heading uppercase text-[10px] tracking-wider block mb-1" style={{ color: "var(--sc-ink)" }}>
+              Hora
+            </label>
+            <input
+              type="time"
+              value={time}
+              onChange={(e) => setTime(e.target.value)}
+              className="w-full px-2 py-1.5 text-sm rounded-sc-md border-2 bg-card"
+              style={{ borderColor: "var(--sc-ink)" }}
+            />
+          </div>
+          <div>
+            <label className="font-heading uppercase text-[10px] tracking-wider block mb-1" style={{ color: "var(--sc-ink)" }}>
+              Provider
+            </label>
+            {noProviders ? (
+              <ConnectPublishingButton slug={slug} variant="warning" className="w-full">
+                ⚠️ Conectar herramienta de publishing
+              </ConnectPublishingButton>
+            ) : (
+              <select
+                value={providerId}
+                onChange={(e) => setProviderId(e.target.value)}
+                className="w-full px-2 py-1.5 text-sm rounded-sc-md border-2 bg-card"
+                style={{ borderColor: "var(--sc-ink)" }}
+              >
+                {configured.map((p) => (
+                  <option key={p.id} value={p.id}>{p.name}</option>
+                ))}
+              </select>
+            )}
+          </div>
+        </div>
+
+        {error && (
+          <p className="text-xs mt-3 px-2 py-1.5 rounded-sc-md border" style={{ borderColor: "var(--sc-brick-500)", background: "var(--sc-brick-bg)", color: "var(--sc-brick-500)" }}>
+            {error}
+          </p>
+        )}
+
+        <div className="flex gap-2 mt-4 justify-end">
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={busy}
+            className="font-heading uppercase text-[12px] tracking-wider px-3 py-1.5 rounded-sc-md border-2 sc-pop-hover"
+            style={{ background: "var(--sc-paper-3)", borderColor: "var(--sc-ink)", boxShadow: "var(--pop-xs)" }}
+          >Cancelar</button>
+          <button
+            type="button"
+            onClick={confirm}
+            disabled={busy || noProviders}
+            className="font-heading uppercase text-[12px] tracking-wider px-3 py-1.5 rounded-sc-md border-2 sc-pop-hover disabled:opacity-50"
+            style={{ background: "var(--sc-rust-500)", color: "var(--sc-paper-3)", borderColor: "var(--sc-ink)", boxShadow: "var(--pop-xs)" }}
+          >
+            {busy ? "Programando…" : rescheduleFrom ? "Reprogramar" : "Programar"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ---------- Post Preview SlideOver ---------- */
+
+function PostPreviewSlideOver({
+  slug,
+  event,
+  onClose,
+  onCanceled,
+}: {
+  slug: string;
+  event: CalendarEvent;
+  onClose: () => void;
+  onCanceled: () => void;
+}) {
+  const cancel = useCancelPublishing();
+  const [error, setError] = useState<string | null>(null);
+
+  async function doCancel() {
+    setError(null);
+    try {
+      await cancel.mutateAsync({ slug, ideaId: event.ideaId, channel: event.channel });
+      onCanceled();
+    } catch (e) {
+      setError((e as Error).message || "Error cancelando");
+    }
+  }
+
+  const cv = CHANNEL_VISUAL[event.channel] || CHANNEL_VISUAL.blog;
+  const sv = STATUS_VISUAL[event.status] || STATUS_VISUAL.scheduled;
+  const projectId = event.parentTaskId.replace(/-T\d+$/, "");
+  const editorHref = `/dashboard/${slug}/projects/${projectId}/tasks/${event.parentTaskId}/content/${event.contentTaskId}/draft/${event.channel}`;
+
+  return (
+    <div className="fixed inset-0 z-50 flex justify-end" onClick={onClose}>
+      <div className="absolute inset-0 bg-black/30" />
+      <div
+        className="relative w-full max-w-[520px] h-full bg-card flex flex-col border-l-[3px]"
+        style={{ borderColor: "var(--sc-ink)" }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div
+          className="flex items-center justify-between px-4 py-3 border-b-2"
+          style={{ borderColor: "var(--sc-ink)", background: "var(--sc-paper-2)" }}
+        >
+          <div className="flex items-center gap-2 min-w-0">
+            <span
+              className="grid place-items-center w-7 h-7 rounded text-sm border"
+              style={{ background: cv.bg, color: cv.fg, borderColor: "var(--sc-ink)" }}
+            >{cv.emoji}</span>
+            <h3 className="font-heading text-sm text-navy truncate">{event.title}</h3>
+          </div>
+          <button onClick={onClose} className="text-muted-foreground hover:text-foreground text-lg px-1" aria-label="Cerrar">
+            ✕
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3">
+          <div className="flex flex-wrap gap-1.5">
+            <span
+              className="font-heading uppercase text-[10px] tracking-wider px-2 py-0.5 rounded-sc-pill border"
+              style={{ background: sv.bg, color: sv.fg, borderColor: "var(--sc-ink)" }}
+            >{sv.label}</span>
+            <span
+              className="font-mono text-[11px] px-2 py-0.5 rounded-sc-pill border"
+              style={{ background: "var(--sc-paper-3)", borderColor: "var(--sc-ink)", color: "var(--sc-ink)" }}
+            >{cv.label}</span>
+            <span
+              className="font-mono text-[11px] px-2 py-0.5 rounded-sc-pill border"
+              style={{ background: "var(--sc-paper-3)", borderColor: "var(--sc-ink)", color: "var(--sc-ink)" }}
+              title={event.scheduled_at}
+            >📅 {new Date(event.scheduled_at).toLocaleString("es-ES", { dateStyle: "medium", timeStyle: "short" })}</span>
+            <span
+              className="font-mono text-[11px] px-2 py-0.5 rounded-sc-pill border"
+              style={{ background: "var(--sc-paper-3)", borderColor: "var(--sc-ink)", color: "var(--sc-ink)" }}
+            >via {event.provider || "—"}</span>
+          </div>
+
+          {event.hero_media_url && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={event.hero_media_url}
+              alt=""
+              className="w-full rounded-sc-md border-2"
+              style={{ borderColor: "var(--sc-ink)" }}
+            />
+          )}
+
+          {event.external_url && (
+            <a
+              href={event.external_url}
+              target="_blank"
+              rel="noreferrer"
+              className="font-heading uppercase text-[12px] tracking-wider px-3 py-1.5 rounded-sc-md border-2 sc-pop-hover inline-flex items-center justify-center gap-1.5 no-underline"
+              style={{ background: "var(--sc-sage-100)", color: "var(--sc-ink)", borderColor: "var(--sc-ink)", boxShadow: "var(--pop-xs)" }}
+            >
+              ✓ Ver post publicado ↗
+            </a>
+          )}
+
+          <a
+            href={editorHref}
+            className="font-heading uppercase text-[12px] tracking-wider px-3 py-1.5 rounded-sc-md border-2 sc-pop-hover inline-flex items-center justify-center gap-1.5 no-underline"
+            style={{ background: "var(--sc-paper-3)", color: "var(--sc-ink)", borderColor: "var(--sc-ink)", boxShadow: "var(--pop-xs)" }}
+          >
+            ✍ Abrir editor
+          </a>
+
+          {error && (
+            <p className="text-xs px-2 py-1.5 rounded-sc-md border" style={{ borderColor: "var(--sc-brick-500)", background: "var(--sc-brick-bg)", color: "var(--sc-brick-500)" }}>
+              {error}
+            </p>
+          )}
+        </div>
+
+        {event.status === "scheduled" && (
+          <div
+            className="border-t-2 px-4 py-3 flex justify-end"
+            style={{ borderColor: "var(--sc-ink)", background: "var(--sc-paper-2)" }}
+          >
+            <button
+              type="button"
+              onClick={doCancel}
+              disabled={cancel.isPending}
+              className="font-heading uppercase text-[12px] tracking-wider px-3 py-1.5 rounded-sc-md border-2 sc-pop-hover disabled:opacity-50"
+              style={{ background: "var(--sc-brick-bg)", color: "var(--sc-brick-500)", borderColor: "var(--sc-brick-500)", boxShadow: "var(--pop-xs)" }}
+            >
+              {cancel.isPending ? "Cancelando…" : "✗ Cancelar programación"}
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

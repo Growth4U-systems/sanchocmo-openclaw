@@ -29,7 +29,7 @@
       "date": "2026-04"
     },
     "angle_draft": "Todo el sector habla de 'dinero programable' como si fuera el futuro. MONEI experimenta con el BCE. JP Morgan lanza blockchain para pagos condicionales. Pero las cuentas programables de Paymático ya automatizan split payments, escrow y regalías en producción — hoy, sin esperar al Euro Digital de 2029. El futuro de los pagos no es una promesa: es una feature que ya funciona. Para redes de franquicias, la diferencia entre 'estamos explorando' y 'ya lo usamos' es la diferencia entre brochure y P&L.",
-    "pov_confidence": 0.90,
+    "pov_confidence": 0.9,
     "status": "ready",
     "created_at": "2026-05-01T07:03:00Z"
   },
@@ -46,7 +46,7 @@
       "date": "2026-03"
     },
     "angle_draft": "PSD3 va a obligar a todas las entidades de pago a re-solicitar autorización. Para una red de franquicias, esto significa una cosa: tu proveedor de pagos va a estar ocupado adaptándose. Los que llevan 13 años cumpliendo con BdE (como Paymático) tienen ventaja. Los que operan con licencias de otros países van a tener que elegir: pedir licencia local o depender de passporting. Framework: 1) Verifica que tu proveedor tiene licencia BdE directa. 2) Pregunta cómo afecta la verificación IBAN a tus conciliaciones. 3) Evalúa si Open Finance te da acceso a datos que hoy no tienes.",
-    "pov_confidence": 0.80,
+    "pov_confidence": 0.8,
     "status": "ready",
     "created_at": "2026-05-01T07:03:00Z"
   },
@@ -117,5 +117,484 @@
     "pov_confidence": 0.72,
     "status": "ready",
     "created_at": "2026-05-01T07:03:00Z"
+  },
+  {
+    "id": "idea-2026-05-06-001",
+    "title": "Adyen nombrada líder por Forrester — qué significa para redes que eligen proveedor de pagos",
+    "pillar_id": "competencia-fintech",
+    "content_type": "Hot Take",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Adyen ha sido reconocida como Líder en The Forrester Wave: Merchant Payment Providers, Q1 2026, publicado el 5 de marzo de 2026. Recibió la puntuación máxima en 14 de 24 criterios, incluyendo Innovación, Roadmap, y Data/Analytics/Insights. Su CCO Roelant Prins destaca el enfoque de plataforma única sin adquisiciones ni dependencias de terceros.",
+      "source": "Forrester / Adyen",
+      "url": "https://www.adyen.com/press-and-media/adyen-recognized-as-leader-in-merchant-payment-providers-evaluation",
+      "date": "2026-03-05"
+    },
+    "signal_type": [
+      "data-point",
+      "milestone"
+    ],
+    "angle_draft": "Forrester nombra a Adyen líder en pagos para merchants — y su argumento es 'plataforma única, sin adquisiciones'. Suena bien para e-commerce enterprise. Pero para una red de franquicias española, 'plataforma única' sin licencia BdE directa significa depender de passporting holandés. Y 'sin adquisiciones' también significa sin knowledge local. La pregunta para una cadena con 200 puntos de venta: ¿quieres un líder global o un partner que entienda splits, regalías y conciliación multi-sede? Frame: 'Líder global ≠ mejor opción local.'",
+    "pov_confidence": 0.8,
+    "source_signals": [
+      "news-2026-05-06-adyen01"
+    ],
+    "created_at": "2026-05-06T05:48:00Z",
+    "status": "New"
+  },
+  {
+    "id": "idea-2026-05-06-002",
+    "title": "Mollie aterriza en España con pagos para franquicias — nuevo competidor directo en el terreno",
+    "pillar_id": "competencia-fintech",
+    "content_type": "Hot Take",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Mollie lanzó oficialmente sus servicios en España en noviembre 2025, con una página específica de pagos para franquicias. Ofrece gestión centralizada de pedidos, unificación de pagos online/offline, más de 35 métodos de pago incluyendo Bizum, y conciliación/liquidación automatizada. Es miembro principal del European Payments Initiative (EPI) y acelera la adopción de Wero en Europa.",
+      "source": "Mollie / Alimarket / InfoHoreca",
+      "url": "https://www.mollie.com/es/solutions/payments-for-franchises",
+      "date": "2025-11"
+    },
+    "signal_type": [
+      "milestone",
+      "data-point"
+    ],
+    "angle_draft": "Mollie, la fintech holandesa con €800M+ de funding, acaba de lanzar una página específica de pagos para franquicias en España. Señal clara: el mercado de pagos multi-sede es lo suficientemente grande como para atraer players europeos. Ofrecen conciliación centralizada y 35+ métodos de pago. La pregunta es: ¿pueden resolver splits automáticos de regalías y cuentas programables sin licencia BdE? Competir en checkout es fácil. Competir en infraestructura financiera regulada para redes es otra historia. Frame: 'Más competidores validan el mercado — la diferenciación está en la regulación.'",
+    "pov_confidence": 0.85,
+    "source_signals": [
+      "news-2026-05-06-molli01"
+    ],
+    "created_at": "2026-05-06T05:48:00Z",
+    "status": "New"
+  },
+  {
+    "id": "idea-2026-05-06-003",
+    "title": "PSD3/PSR textos finales publicados el 23 de abril — 3 impactos para tu red de franquicias",
+    "pillar_id": "regulacion-pagos",
+    "content_type": "Framework",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Los textos finales de compromiso de PSD3/PSR fueron publicados el 23 de abril de 2026 tras el acuerdo político provisional de noviembre 2025. El Parlamento Europeo votará en mayo 2026. PSD3 fusiona el régimen de entidades de dinero electrónico con entidades de pago en una licencia única. PSR introduce verificación obligatoria del beneficiario (VoP) en todas las transferencias y nuevas reglas de responsabilidad del PSP por fraude de suplantación. Aplicación prevista: 21 meses tras publicación en OJEU.",
+      "source": "Arthur Cox / Freshfields / Morrison Foerster",
+      "url": "https://www.arthurcox.com/insights/psd3-and-psr-final-compromise-texts-published/",
+      "date": "2026-04-23"
+    },
+    "signal_type": [
+      "milestone",
+      "data-point",
+      "framework"
+    ],
+    "angle_draft": "Los textos finales de PSD3/PSR ya están publicados (23 abril 2026). Tres impactos directos para redes de franquicias: 1) Verificación obligatoria del beneficiario en toda transferencia — si tu sistema de splits no la implementa, problema. 2) Fusión de licencias e-money y pagos — quienes operan con licencia de otro país necesitarán re-autorizarse. 3) Responsabilidad del PSP por fraude de suplantación. Para proveedores con licencia BdE directa, es evolución natural. Para los que dependen de passporting, es disrupción. Frame: 'PSD3 premia a los regulados de origen.'",
+    "pov_confidence": 0.9,
+    "source_signals": [
+      "news-2026-05-06-psd301"
+    ],
+    "created_at": "2026-05-06T05:48:00Z",
+    "status": "New"
+  },
+  {
+    "id": "idea-2026-05-06-004",
+    "title": "Pagos instantáneos SEPA ya son obligatorios — qué cambia para la tesorería de tu cadena",
+    "pillar_id": "regulacion-pagos",
+    "content_type": "Proof Post",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Desde abril 2026, los PSPs deben reportar obligatoriamente a reguladores sobre disponibilidad, adopción y cumplimiento de pagos instantáneos SEPA. Los bancos de la eurozona ya deben enviar y recibir transferencias instantáneas en 10 segundos, 24/7, sin coste adicional al consumidor. La verificación del beneficiario (VoP) es obligatoria y gratuita. PSPs no bancarios tienen hasta abril 2027 para cumplir.",
+      "source": "EU Regulation 2024/886 / Contextual Solutions / Brite Payments",
+      "url": "https://www.contextualsolutions.de/blog/eu-instant-payments-regulation-april-2026",
+      "date": "2026-04"
+    },
+    "signal_type": [
+      "milestone",
+      "data-point"
+    ],
+    "angle_draft": "Los pagos instantáneos SEPA ya no son opcionales — son obligatorios desde abril 2026. Para una red de franquicias, esto transforma la tesorería: liquidación en 10 segundos, 24/7, sin coste extra. Pero el verdadero impacto es operativo: si tu proveedor puede ejecutar splits automáticos sobre rails instantáneos, cada franquiciado ve sus fondos al momento. Si no, sigues esperando D+1 con conciliación manual. Cuentas programables sobre SEPA Instant convierten la liquidación en tiempo real en feature, no proyecto. Frame: 'Instant payments sin automatización es velocidad desperdiciada.'",
+    "pov_confidence": 0.85,
+    "source_signals": [
+      "news-2026-05-06-sepa01"
+    ],
+    "created_at": "2026-05-06T05:48:00Z",
+    "status": "New"
+  },
+  {
+    "id": "idea-2026-05-06-005",
+    "title": "MiCA cierra plazo el 1 de julio — pregunta clave para tu proveedor de pagos",
+    "pillar_id": "regulacion-pagos",
+    "content_type": "Hot Take",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "El 1 de julio de 2026 es la fecha límite absoluta para que CASPs existentes obtengan autorización MiCA en la UE. Después de esa fecha, cualquier CASP sin autorización debe cesar operaciones reguladas en la UE. A abril 2026 hay 38 emisores de E-money Token (EMT) acreditados. La Comisión Europea debe adoptar un acto delegado antes del 30 de junio de 2026 para especificar elementos técnicos de las definiciones MiCA.",
+      "source": "Unit21 / Sumsub / Agencia Tributaria España",
+      "url": "https://www.unit21.ai/blog/mica-regulation-2026-faqs-what-crypto-compliance-teams-need-to-know",
+      "date": "2026-05"
+    },
+    "signal_type": [
+      "milestone",
+      "cautionary-tale"
+    ],
+    "angle_draft": "El 1 de julio de 2026, MiCA cierra la puerta a los CASPs no autorizados en la UE. Para redes de franquicias parece lejano, pero no lo es: si tu proveedor de pagos ofrece stablecoins, wallets cripto o tokenización, necesita licencia MiCA además de su licencia de pagos. La pregunta que debes hacer: '¿tienes autorización MiCA o dependes del período transitorio que expira en julio?' Proveedores regulados por BdE con doble licencia tienen ventaja estructural frente a los que improvisan. Frame: 'MiCA separa a los regulados de los que improvisan.'",
+    "pov_confidence": 0.7,
+    "source_signals": [
+      "news-2026-05-06-mica01"
+    ],
+    "created_at": "2026-05-06T05:48:00Z",
+    "status": "New"
+  },
+  {
+    "id": "idea-2026-05-06-006",
+    "title": "Embedded finance B2B mueve $4.1 billones — las franquicias son el caso de uso perfecto",
+    "pillar_id": "tecnologia-pagos",
+    "content_type": "Proof Post",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "El mercado de embedded finance B2B se estima en $4.1 billones en 2026, con proyección de $15.6 billones en 2030 según Galileo Financial Technologies. Gartner prevé que más del 50% de las transacciones financieras de consumidor se iniciarán en plataformas digitales de terceros para 2026. Los volúmenes globales de embedded payments se acercan a $7 billones en 2026.",
+      "source": "Galileo FT / Gartner / FintechFutures",
+      "url": "https://www.galileo-ft.com/blog/embedded-b2b-finance-2026-next-frontier/",
+      "date": "2026"
+    },
+    "signal_type": [
+      "data-point",
+      "aha-moment"
+    ],
+    "angle_draft": "El embedded finance B2B mueve $4.1 billones en 2026 según Galileo FT. Las redes de franquicias son el caso de uso perfecto: cada franquiciado necesita cobros, splits, adelantos y conciliación integrados en su operativa diaria — no como apps separadas, sino como infraestructura invisible. La diferencia entre 'tenemos una pasarela de pagos' y 'los pagos están embebidos en tu gestión' es la diferencia entre un tool y un sistema operativo financiero. Las cuentas programables son embedded finance nativo para multi-sede. Frame: 'Embedded finance no es un buzzword — es operativa de pagos invisible.'",
+    "pov_confidence": 0.75,
+    "source_signals": [
+      "news-2026-05-06-embfi01"
+    ],
+    "created_at": "2026-05-06T05:48:00Z",
+    "status": "New"
+  },
+  {
+    "id": "idea-2026-05-06-007",
+    "title": "Wero avanza en Europa para competir con Bizum — qué debe saber tu red de franquicias",
+    "pillar_id": "tecnologia-pagos",
+    "content_type": "Hot Take",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Wero, la iniciativa de pagos paneuropea (EPI), ya opera en e-commerce en Alemania desde noviembre 2025, y en Francia y Bélgica desde enero 2026. En 2026 planea lanzar pagos en punto de venta (POS). España está en fase 'Exploring' según el Wero Tracker de marzo 2026. Mollie es miembro principal de EPI y acelera su adopción. El objetivo declarado es crear una alternativa europea a Visa y Mastercard para pagos instantáneos cross-border.",
+      "source": "European Payments Council / Banking Vision / Clearing Post",
+      "url": "https://banking.vision/en/development-wero-2025-2026/",
+      "date": "2026-03"
+    },
+    "signal_type": [
+      "milestone",
+      "aha-moment"
+    ],
+    "angle_draft": "Europa construye su 'Bizum continental' con Wero — ya funciona en Alemania, Francia y Bélgica. España está en fase 'Exploring'. Para redes de franquicias con presencia en varios países europeos, Wero promete un método de pago unificado cross-border basado en instant payments. Pero la pregunta operativa sigue siendo la misma: ¿quién reconcilia los pagos Wero de 200 TPVs, reparte fondos y da visibilidad consolidada? El método de pago es commodity. La inteligencia sobre ese pago es el diferenciador. Frame: 'Wero cambia cómo pagan tus clientes — no cómo gestionas esos pagos.'",
+    "pov_confidence": 0.72,
+    "source_signals": [
+      "news-2026-05-06-wero01"
+    ],
+    "created_at": "2026-05-06T05:48:00Z",
+    "status": "New"
+  },
+  {
+    "id": "idea-2026-05-06-008",
+    "title": "PaynoPain apuesta por 'Agentic Commerce' — ¿el futuro de los pagos o humo tecnológico?",
+    "pillar_id": "competencia-fintech",
+    "content_type": "Hot Take",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "PaynoPain publica su blog de tendencias 2026 destacando el 'Agentic Commerce' — agentes autónomos de IA que realizan compras completas en nombre del usuario (buscar, comparar, pagar). También señalan la consolidación de IA para detección de fraude en tiempo real y la integración de Revolut Pay y Klarna para pagos fraccionados.",
+      "source": "PaynoPain",
+      "source_type": "competitor",
+      "platform": "blog",
+      "url": "https://paynopain.com/blog/tendencias-pago-2026-ia-euro-digital-y-pagos-instantaneos/",
+      "engagement": {
+        "likes": 0,
+        "comments": 0,
+        "shares": 0
+      },
+      "date": "2026-01"
+    },
+    "signal_type": [
+      "aha-moment",
+      "framework"
+    ],
+    "angle_draft": "PaynoPain habla de 'Agentic Commerce' — agentes IA que compran solos. Suena futurista para e-commerce B2C. Pero para una red de franquicias, el 'agente' que necesitas no compra productos: automatiza splits de regalías, ejecuta conciliaciones y aplica reglas financieras sin intervención humana. Eso no es Agentic Commerce — son cuentas programables. Mientras el sector persigue la IA del consumidor, el verdadero impacto está en la automatización financiera B2B que ya existe. Frame: 'El agente que tu franquicia necesita no es un chatbot — es una cuenta programable.'",
+    "pov_confidence": 0.82,
+    "source_signals": [
+      "creators-2026-05-06-51244d8e"
+    ],
+    "created_at": "2026-05-06T05:59:00Z",
+    "status": "New"
+  },
+  {
+    "id": "idea-2026-05-06-009",
+    "title": "PaynoPain procesa 1.200M€ y crece 50% en clientes — qué dice eso del mercado",
+    "pillar_id": "competencia-fintech",
+    "content_type": "Proof Post",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "PaynoPain procesó 1.200 millones de euros en pagos en 2025 y aumentó su base de clientes un 50%, superando los 3.000 comercios activos. Obtuvo certificación como adquirente de Visa Direct y Mastercard Send. Consolida expansión internacional en Rumanía, Colombia, México y Guatemala.",
+      "source": "PaynoPain / Demócrata",
+      "source_type": "competitor",
+      "platform": "web",
+      "url": "https://www.democrata.es/economia/paynopain-procesa-1-200-millones-de-euros-en-pagos-en-2025/",
+      "engagement": {
+        "likes": 0,
+        "comments": 0,
+        "shares": 0
+      },
+      "date": "2026-01"
+    },
+    "signal_type": [
+      "data-point",
+      "milestone"
+    ],
+    "angle_draft": "PaynoPain procesa 1.200M€ y supera 3.000 comercios — crecimiento sólido en e-commerce generalista. Pero 3.000 comercios individuales ≠ redes de franquicias. Un solo franquiciador con 200 locales genera más complejidad financiera que 200 tiendas independientes: splits, regalías, conciliación multi-sede, marca blanca. El volumen valida que el mercado de pagos español crece. La oportunidad está en quién resuelve la complejidad, no solo el checkout. Frame: 'Volumen es vanidad — complejidad resuelta es la métrica que importa.'",
+    "pov_confidence": 0.78,
+    "source_signals": [
+      "creators-2026-05-06-51244d8e"
+    ],
+    "created_at": "2026-05-06T05:59:00Z",
+    "status": "New"
+  },
+  {
+    "id": "idea-2026-05-06-010",
+    "title": "Sabadell cancela la venta de Paycomet a Nexi y apuesta por desarrollar internamente su TPV",
+    "pillar_id": "competencia-fintech",
+    "content_type": "Hot Take",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Banco Sabadell canceló la venta del 80% de Paycomet a Nexi (valorada en €280-350M) tras el fracaso de la OPA hostil de BBVA. Sabadell decide mantener y desarrollar internamente su negocio de TPV. Nexi declaró en noviembre 2025 que ya no estaba obligado a la compra bajo los términos originales.",
+      "source": "Negocios.com / EuropaPress / Business People",
+      "source_type": "competitor",
+      "platform": "web",
+      "url": "https://www.negocios.com/articulo/empresas/sabadell-mantendra-internamente-negocio-tpv-cancelar-venta-paycomet-nexi/20260223164048480243.html",
+      "engagement": {
+        "likes": 0,
+        "comments": 0,
+        "shares": 0
+      },
+      "date": "2026-02-23"
+    },
+    "signal_type": [
+      "milestone",
+      "cautionary-tale"
+    ],
+    "angle_draft": "Sabadell cancela la venta de Paycomet y decide desarrollar internamente su negocio de TPV. Señal interesante: un banco español concluye que los pagos son demasiado estratégicos para vender. Pero 'desarrollar internamente' con ADN bancario significa roadmaps de 18 meses, no sprints de 2 semanas. Para redes de franquicias que necesitan agilidad — nuevos métodos de pago, splits personalizados, integración rápida — la pregunta es si un hub de innovación dentro de un banco puede competir con fintechs nativas. Frame: 'Estratégico no siempre significa ágil.'",
+    "pov_confidence": 0.8,
+    "source_signals": [
+      "creators-2026-05-06-51244d8e"
+    ],
+    "created_at": "2026-05-06T05:59:00Z",
+    "status": "New"
+  },
+  {
+    "id": "idea-2026-05-06-011",
+    "title": "Adyen Retail Report 2026: el 35% de compradores ya usan IA para comprar — implicaciones para pagos",
+    "pillar_id": "tecnologia-pagos",
+    "content_type": "Proof Post",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "El Adyen Retail Report 2026 revela que el uso de asistentes IA por compradores en EE.UU. se triplicó en un año (del 12% al 35%). El 88% de retailers están abiertos a que IA facilite compras en nombre del consumidor. El unified commerce supuso el 32% del volumen total de Adyen en 2025, con crecimiento del 30% en H2. Volumen total procesado: €1.4 billones en 2025.",
+      "source": "Adyen",
+      "source_type": "competitor",
+      "platform": "web",
+      "url": "https://www.adyen.com/press-and-media/retail-report-2026-us",
+      "engagement": {
+        "likes": 0,
+        "comments": 0,
+        "shares": 0
+      },
+      "date": "2026-01"
+    },
+    "signal_type": [
+      "data-point",
+      "aha-moment"
+    ],
+    "angle_draft": "Adyen procesa €1.4 billones y publica que el 35% de compradores ya usan IA para comprar. Datos impresionantes del retail global. Pero Adyen juega en enterprise e-commerce — su mínimo mensual de €1.000 y su target son cadenas globales tipo H&M o McDonald's. Para una red de franquicias española de 50-200 locales, el dato relevante no es cuántos shoppers usan IA — es cómo automatizar la tesorería multi-sede que Adyen no resuelve para mid-market. Frame: 'Los datos de Adyen definen tendencias — pero su producto no resuelve tu problema.'",
+    "pov_confidence": 0.76,
+    "source_signals": [
+      "creators-2026-05-06-51244d8e"
+    ],
+    "created_at": "2026-05-06T05:59:00Z",
+    "status": "New"
+  },
+  {
+    "id": "idea-2026-05-06-012",
+    "title": "Stripe Sessions 2026: embedded finance para plataformas — la amenaza silenciosa para pagos B2B",
+    "pillar_id": "tecnologia-pagos",
+    "content_type": "Hot Take",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "En Stripe Sessions 2026, Stripe lanzó componentes embebidos para que plataformas ofrezcan Treasury y tarjetas de gasto con código mínimo. Nuevo global business account con 15 divisas. Transferencias gratuitas e instantáneas entre negocios en Stripe (EE.UU.). Integración con ChatGPT para operar Treasury. Cashback del 2% en pagos con tarjeta. Payouts a 100 países en fiat y 160 en stablecoins.",
+      "source": "Stripe",
+      "source_type": "competitor",
+      "platform": "blog",
+      "url": "https://stripe.com/blog/everything-we-announced-at-sessions-2026",
+      "engagement": {
+        "likes": 0,
+        "comments": 0,
+        "shares": 0
+      },
+      "date": "2026-05"
+    },
+    "signal_type": [
+      "milestone",
+      "framework"
+    ],
+    "angle_draft": "Stripe lanza componentes embebidos para Treasury: cualquier plataforma puede ofrecer cuentas financieras con mínimo código. Es la jugada más ambiciosa de embedded finance en 2026. Pero hay dos realidades: Stripe Treasury opera bajo regulación FDIC americana, no BdE. Y sus componentes están diseñados para plataformas SaaS, no para redes de franquicias con splits de regalías y escrow regulado. El concepto es correcto — embeber finanzas en la operativa. La ejecución para España requiere licencia local y expertise sectorial. Frame: 'Stripe define el futuro global — pero el presente español tiene reglas distintas.'",
+    "pov_confidence": 0.85,
+    "source_signals": [
+      "creators-2026-05-06-51244d8e"
+    ],
+    "created_at": "2026-05-06T05:59:00Z",
+    "status": "New"
+  },
+  {
+    "id": "idea-2026-05-06-013",
+    "title": "MONEI publica guía de 'dinero programable' — thought leadership sin producto",
+    "pillar_id": "competencia-fintech",
+    "content_type": "Hot Take",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "MONEI publica una guía extensa sobre 'dinero programable' en su blog: definición de moneda digital con reglas integradas que gobiernan cómo, cuándo y por quién se usa. Casos de uso: marketplaces Web3, pagos médicos, corporate treasury. Su CEO Alex Saiz enfatiza que el dinero programable reduce fricción sin controlar el gasto. MONEI no ofrece cuentas programables como producto — su oferta principal es payments orchestration y checkout.",
+      "source": "MONEI",
+      "source_type": "competitor",
+      "platform": "blog",
+      "url": "https://monei.com/blog/what-is-programmable-money/",
+      "engagement": {
+        "likes": 0,
+        "comments": 0,
+        "shares": 0
+      },
+      "date": "2026"
+    },
+    "signal_type": [
+      "framework",
+      "contrarian"
+    ],
+    "angle_draft": "MONEI publica una guía sobre 'dinero programable' con casos de uso en Web3, salud y corporate treasury. El contenido es sólido como thought leadership. Pero hay un gap: MONEI no ofrece cuentas programables como producto — su core es payments orchestration y checkout. Publicar sobre dinero programable sin tenerlo en producción es como escribir un cookbook sin cocina. Las cuentas programables con escrow regulado por BdE ya existen — y no como artículo de blog. Frame: 'Content marketing sobre lo que no vendes valida a quien sí lo tiene.'",
+    "pov_confidence": 0.88,
+    "source_signals": [
+      "creators-2026-05-06-51244d8e"
+    ],
+    "created_at": "2026-05-06T05:59:00Z",
+    "status": "New"
+  },
+  {
+    "id": "idea-2026-05-06-014",
+    "title": "Alex Saiz (MONEI): 'Bizum superará a Visa en e-commerce en 5 años' — bold claim analizado",
+    "pillar_id": "tecnologia-pagos",
+    "content_type": "Hot Take",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Alex Saiz, CEO de MONEI, predice que Bizum superará a Visa y Mastercard en comercio online en España en cinco años. Publica artículo en El Español sobre 'el nuevo estándar del pago flexible' donde argumenta que las opciones de pago flexibles han pasado de funcionalidad a infraestructura del consumo digital. También menciona propuestas regulatorias en España para reformar crédito al consumo y pagos aplazados.",
+      "source": "Alex Saiz / MONEI / El Español",
+      "source_type": "competitor",
+      "platform": "web",
+      "url": "https://www.elespanol.com/invertia/disruptores/opinion/20260121/nuevo-estandar-pago-flexible/1003744096498_12.html",
+      "engagement": {
+        "likes": 0,
+        "comments": 0,
+        "shares": 0
+      },
+      "date": "2026-01-21"
+    },
+    "signal_type": [
+      "contrarian",
+      "data-point"
+    ],
+    "angle_draft": "El CEO de MONEI predice que Bizum superará a Visa en e-commerce español en 5 años. Bold claim. Si se cumple, el impacto para redes de franquicias es claro: necesitan un proveedor que ya soporte Bizum en TPVs físicos Y online, con conciliación unificada. Pero la predicción es sobre volumen de checkout — no sobre quién gestiona la complejidad post-pago. Sea Bizum, Visa o Wero, la pregunta sigue: ¿quién reconcilia, reparte y reporta? El método de pago cambia; la necesidad de inteligencia financiera multi-sede no. Frame: 'Da igual qué método gane — la gestión post-pago es el verdadero juego.'",
+    "pov_confidence": 0.8,
+    "source_signals": [
+      "creators-2026-05-06-51244d8e"
+    ],
+    "created_at": "2026-05-06T05:59:00Z",
+    "status": "New"
+  },
+  {
+    "id": "idea-2026-05-06-015",
+    "title": "Fintech Takes: 'Embedded payments van de feature a infraestructura' — qué significa para franquicias",
+    "pillar_id": "tecnologia-pagos",
+    "content_type": "Framework",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Alex Johnson (Fintech Takes) publica análisis sobre la evolución de embedded payments: de feature bolted-on a infraestructura invisible. Argumenta que los pagos embebidos están 'cerrando el círculo' — primero se añadían después, luego se diseñaban en el producto, ahora desaparecen de vista por madurez operativa. Los ganadores serán los que traten pagos como infraestructura duradera, no como experimento de crecimiento. La clave: confianza construida cuando los pagos son invisibles.",
+      "source": "Alex Johnson / Fintech Takes",
+      "source_type": "reference-creator",
+      "platform": "blog",
+      "url": "https://fintechtakes.com/articles/2026-02-26/embedded-payments-from-product-feature-to-infrastructure/",
+      "engagement": {
+        "likes": 0,
+        "comments": 0,
+        "shares": 0
+      },
+      "date": "2026-02-26"
+    },
+    "signal_type": [
+      "framework",
+      "aha-moment"
+    ],
+    "angle_draft": "Alex Johnson de Fintech Takes describe la evolución perfecta: embedded payments pasan de feature → diseño → infraestructura invisible. Para redes de franquicias, esto es exactamente el viaje: fase 1 (añadir pasarela de pagos), fase 2 (diseñar splits y conciliación), fase 3 (pagos invisibles que se ejecutan solos). Las cuentas programables son la fase 3 — infraestructura financiera que desaparece de vista porque funciona. Los 'quiet winners' son los construidos para el largo plazo: regulación, resiliencia, automatización. Frame: 'Los ganadores en pagos son los que se vuelven invisibles.'",
+    "pov_confidence": 0.85,
+    "source_signals": [
+      "creators-2026-05-06-51244d8e"
+    ],
+    "created_at": "2026-05-06T05:59:00Z",
+    "status": "New"
+  },
+  {
+    "id": "idea-2026-05-06-016",
+    "title": "JP Morgan: 5 shifts en pagos 2026 — y 'Agentic Commerce' lidera la lista",
+    "pillar_id": "tecnologia-pagos",
+    "content_type": "Listicle",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "JP Morgan Payments Outlook 2026 identifica 5 shifts: 1) Liquidity Reimagined (tesorería always-on con automatización programable), 2) Fraud Defense (autenticación conductual continua), 3) Payments Evolution (agentic commerce + embedded payments), 4) Connected Treasury (IA + blockchain + APIs), 5) Blockchain Unlocked (stablecoins + tokenización). JP Morgan señala un 'execution gap' entre ambición y realidad en la industria.",
+      "source": "JP Morgan Payments",
+      "source_type": "reference-creator",
+      "platform": "web",
+      "url": "https://www.jpmorgan.com/insights/payments/trends-innovation/payments-outlook-trends-2026",
+      "engagement": {
+        "likes": 0,
+        "comments": 0,
+        "shares": 0
+      },
+      "date": "2026"
+    },
+    "signal_type": [
+      "framework",
+      "data-point"
+    ],
+    "angle_draft": "JP Morgan identifica 5 shifts en pagos para 2026 — y el insight más relevante es el 'execution gap': la distancia entre ambición tecnológica e implementación real. Para franquicias españolas, los 5 shifts se traducen en una pregunta: ¿tu proveedor de pagos ya automatiza tesorería, previene fraude con IA, ofrece pagos embebidos y usa rails instantáneos? ¿O sigue hablando de roadmaps? Las cuentas programables cierran el execution gap: tesorería always-on + splits automáticos + conciliación en tiempo real. Ya en producción. Frame: 'El execution gap separa a los que prometen de los que entregan.'",
+    "pov_confidence": 0.82,
+    "source_signals": [
+      "creators-2026-05-06-51244d8e"
+    ],
+    "created_at": "2026-05-06T05:59:00Z",
+    "status": "New"
+  },
+  {
+    "id": "idea-2026-05-06-017",
+    "title": "JP Morgan: embedded payments es la clave de crecimiento SaaS para franquicias — caso de uso directo",
+    "pillar_id": "franquicias-multisede",
+    "content_type": "Proof Post",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "JP Morgan identifica explícitamente 'Franchise and restaurants' como sector donde embedded payments pueden impulsar el crecimiento SaaS. Argumenta que embedded payments construyen ventajas competitivas, desbloquean nuevas fuentes de ingreso y profundizan la relación con clientes al integrar pagos directamente en la operativa. Un 20% de drop-off rate con gateways tradicionales vs experiencia nativa embebida.",
+      "source": "JP Morgan Payments",
+      "source_type": "reference-creator",
+      "platform": "web",
+      "url": "https://www.jpmorgan.com/insights/payments/embedded-finance-baas/embedded-payments-saas-growth-ai",
+      "engagement": {
+        "likes": 0,
+        "comments": 0,
+        "shares": 0
+      },
+      "date": "2026"
+    },
+    "signal_type": [
+      "proof-point",
+      "data-point"
+    ],
+    "angle_draft": "JP Morgan nombra explícitamente 'franchises and restaurants' como caso de uso ideal para embedded payments. El dato clave: un 20% de abandono con gateways tradicionales vs experiencia embebida nativa. Para una red de 200 locales, ese 20% no es solo checkout — es cada interacción financiera que requiere salir del sistema operativo de la franquicia. Cuando los pagos, splits y conciliación están embebidos en la gestión diaria, la fricción desaparece y la operativa financiera se vuelve invisible. Frame: 'JP Morgan valida lo que ya existe: pagos embebidos para franquicias no es futuro — es presente.'",
+    "pov_confidence": 0.88,
+    "source_signals": [
+      "creators-2026-05-06-51244d8e"
+    ],
+    "created_at": "2026-05-06T05:59:00Z",
+    "status": "New"
   }
 ]

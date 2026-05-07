@@ -803,14 +803,16 @@ const PIPELINE_STATE_LABEL: Record<string, string> = {
   researching: "🔍 Researching",
   "clarify-needed": "❓ Clarify",
   drafting: "✍️ Drafting",
+  "generating-media": "🎨 Awaiting media",
+  "media-review": "👀 Media review",
 };
 
-// Columnas del kanban — agrupan los 9 estados de ContentTask en 4 fases
+// Columnas del kanban — agrupan los estados activos de ContentTask en 4 fases
 // del flujo editorial. New / Discarded / Deferred quedan fuera (contador en header).
 const CONTENT_TASK_KANBAN_COLUMNS: { key: string; label: string; icon: string; statuses: ContentTask["status"][] }[] = [
   { key: "approved", label: "Aprobadas", icon: "📋", statuses: ["Approved"] },
-  { key: "draft", label: "Draft", icon: "✍️", statuses: ["Draft", "Media"] },
-  { key: "review", label: "Review", icon: "👀", statuses: ["Review", "Ready"] },
+  { key: "draft", label: "Draft", icon: "✍️", statuses: ["Draft"] },
+  { key: "review", label: "Review", icon: "👀", statuses: ["Pending Media", "Ready"] },
   { key: "published", label: "Publicadas", icon: "✅", statuses: ["Published"] },
 ];
 

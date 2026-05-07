@@ -26,6 +26,20 @@ Read `./brand/` per `_system/brand-memory.md`
 
 Follow all output formatting rules from `_system/output-format.md`
 
+## Media Persistence (obligatorio)
+
+Esta skill cumple `_system/media-persistence-protocol.md`. Reglas duras:
+
+- **Nunca** afirmar "imagen generada" / "carrusel listo" / "visual hecho"
+  sin URL real devuelta por un endpoint. Si solo describes un concepto,
+  di "te propongo este concepto, ¿lo genero?".
+- Persistir media via `POST /api/content-engine/generate-image`,
+  `/api/content-engine/render-carousel` o
+  `/api/content-engine/upload-media`. **Nunca** editar
+  `frontmatter.media` a mano con Edit/Write.
+- **Nunca** escribir `status: published` al frontmatter desde el agente.
+  Solo lo pone el dispatcher tras envio real con confirmacion.
+
 ---
 
 ## Brand Memory Integration

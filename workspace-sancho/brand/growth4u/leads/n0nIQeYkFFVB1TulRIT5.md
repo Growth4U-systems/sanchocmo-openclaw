@@ -3,7 +3,7 @@ ghl_id: n0nIQeYkFFVB1TulRIT5
 contact_name: Laura Donadio
 email: vdonadio@imhoit.com
 phone: null
-last_enriched: 2026-05-05T20:00:00Z
+last_enriched: 2026-05-06T20:00:00Z
 enrichment_pending: true
 enrichment_reason: "Company domain blocked (403), x_search rate-limited, Apollo not configured. No new transcripts found."
 ---

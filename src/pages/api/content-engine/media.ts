@@ -41,8 +41,9 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === "DELETE") {
     const next = current.filter((_, i) => i !== idx);
     const updated = updateDraft(slug, ideaId, channel, { meta: { media: next } });
-    // If this was the last media for the CT, the promoter rolls the parent
-    // back from "Media" to whatever the draft.status implies (Draft / Review).
+    // While the CT is in "Pending Media", the promoter syncs pipeline_state
+    // between `media-review` (any media present) and `generating-media` (none).
+    // Status changes outside of Pending Media are user-driven.
     const ctId = updated.meta.content_task_id;
     if (ctId) {
       try { maybePromoteContentTaskFromMedia(slug, ctId); } catch { /* non-fatal */ }

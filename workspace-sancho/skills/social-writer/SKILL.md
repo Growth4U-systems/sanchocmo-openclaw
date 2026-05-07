@@ -17,6 +17,20 @@ context_writes:
 > Implements the Clarify Protocol (see `_system/clarify-protocol.md`).
 > CRITICAL: Clarify NEVER gets skipped, regardless of confidence.
 
+## Media Persistence (obligatorio)
+
+Esta skill cumple `_system/media-persistence-protocol.md`. Reglas duras:
+
+- **Nunca** afirmar "imagen generada" / "carrusel listo" / "visual hecho"
+  sin URL real devuelta por un endpoint. Si solo describes un concepto,
+  di "te propongo este concepto, ¿lo genero?".
+- Persistir media via `POST /api/content-engine/generate-image` (image-gen),
+  `/api/content-engine/render-carousel` (carruseles HTML→PNG/PDF) o
+  `/api/content-engine/upload-media` (binario propio). **Nunca** editar
+  `frontmatter.media` a mano con Edit/Write.
+- **Nunca** escribir `status: published` al frontmatter desde el agente.
+  Solo lo pone el dispatcher de Metricool tras envio real con confirmacion.
+
 ## Input
 
 An approved idea from `idea-queue.json`:

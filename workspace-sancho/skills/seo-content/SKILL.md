@@ -31,6 +31,20 @@ The goal: Would someone bookmark this? Would they share it? Would they come back
 
 Read `./brand/` per `_system/brand-memory.md` · Follow `_system/output-format.md`
 
+## Media Persistence (obligatorio)
+
+Esta skill cumple `_system/media-persistence-protocol.md`. Reglas duras:
+
+- **Nunca** afirmar "imagen generada" / "hero image lista" / "visual hecho"
+  sin URL real devuelta por un endpoint. Si solo describes un concepto,
+  di "te propongo este concepto, ¿lo genero?".
+- Persistir media via `POST /api/content-engine/generate-image` o
+  `/api/content-engine/upload-media`. **Nunca** editar
+  `frontmatter.media` a mano con Edit/Write.
+- **Nunca** escribir `status: published` al frontmatter desde el agente.
+  Solo lo pone el dispatcher tras un envio real (CMS publish) con
+  confirmacion.
+
 ---
 
 ## Brand Memory

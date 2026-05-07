@@ -216,3 +216,40 @@ export function useDetachDocumentFromContentTask() {
     },
   });
 }
+
+interface ContentTaskActionBody {
+  slug: string;
+  parentTaskId: string;
+  id: string;
+}
+
+function makeActionHook(action: string, errorLabel: string) {
+  return function useContentTaskAction() {
+    const qc = useQueryClient();
+    return useMutation({
+      mutationFn: async (body: ContentTaskActionBody) => {
+        const res = await fetch("/api/content-engine/content-tasks", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ...body, action }),
+        });
+        if (!res.ok) {
+          const err = (await res.json().catch(() => ({}))) as { error?: string };
+          throw new Error(err.error || errorLabel);
+        }
+        return (await res.json()) as ContentTaskOneResponse;
+      },
+      onSuccess: (_d, v) => {
+        qc.invalidateQueries({ queryKey: ["content-tasks", v.slug, v.parentTaskId] });
+        qc.invalidateQueries({ queryKey: ["content-task", v.slug, v.parentTaskId, v.id] });
+        qc.invalidateQueries({ queryKey: ["projects", v.slug] });
+      },
+    });
+  };
+}
+
+export const useApproveDraft = makeActionHook("approve-draft", "Failed to approve draft");
+export const useApproveMedia = makeActionHook("approve-media", "Failed to approve media");
+export const usePublishContentTask = makeActionHook("publish", "Failed to publish");
+export const useDiscardContentTask = makeActionHook("discard", "Failed to discard");
+export const useDeferContentTask = makeActionHook("defer", "Failed to defer");

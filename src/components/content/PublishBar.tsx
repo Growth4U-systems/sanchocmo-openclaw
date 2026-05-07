@@ -3,12 +3,14 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import type { Draft, PublishingMeta } from "@/lib/data/drafts";
+import type { ContentTaskStatus } from "@/types";
 import {
   useCancelPublishing,
   usePublishDraft,
   usePublishProviders,
   usePublishingStatus,
 } from "@/hooks/usePublishing";
+import { ConnectPublishingButton } from "@/components/content/ConnectPublishingButton";
 
 /**
  * Sticky footer that lets the user pick a publishing provider, schedule a
@@ -26,12 +28,15 @@ export function PublishBar({
   ideaId,
   channel,
   draft,
+  ctStatus,
   onPublishedToast,
 }: {
   slug: string;
   ideaId: string;
   channel: string;
   draft: Draft;
+  /** ContentTask.status; when "Ready" we surface the calendar handoff. */
+  ctStatus?: ContentTaskStatus;
   onPublishedToast?: (msg: string) => void;
 }) {
   const providersQuery = usePublishProviders(slug, channel);
@@ -100,12 +105,9 @@ export function PublishBar({
     <div className="sticky bottom-3 z-10 mx-auto max-w-3xl bg-white border border-[#E5E2DC] rounded-xl px-4 py-2.5 flex items-center gap-3 shadow-[0_4px_16px_rgba(0,0,0,0.06)]">
       {/* Provider selector */}
       {configured.length === 0 ? (
-        <Link
-          href={`/dashboard/${slug}/settings`}
-          className="text-xs px-3 py-1.5 bg-[#FFFBEB] border border-[#FCD34D] text-[#92400E] rounded-md font-medium hover:bg-[#FEF3C7] transition-colors"
-        >
+        <ConnectPublishingButton slug={slug}>
           ⚠️ Conectar herramienta de publishing
-        </Link>
+        </ConnectPublishingButton>
       ) : (
         <div className="flex items-center gap-2 px-2.5 py-1 bg-[#E6F4E8] rounded-md text-xs">
           <span className="w-1.5 h-1.5 rounded-full bg-[#2F7D3B]" />
@@ -205,6 +207,16 @@ export function PublishBar({
         >
           Ver post ↗
         </a>
+      )}
+
+      {ctStatus === "Ready" && showPublishControls && (
+        <Link
+          href={`/dashboard/${slug}/content-creation?tab=calendar&focus=${encodeURIComponent(`${ideaId}:${channel}`)}`}
+          className="text-xs px-3 py-1.5 bg-white border border-[#E8E2D9] rounded-md hover:border-[#2C3E50] transition-colors no-underline text-foreground"
+          title="Abrir el calendario y programar este post desde ahí"
+        >
+          📅 Programar en calendario
+        </Link>
       )}
 
       {error && (

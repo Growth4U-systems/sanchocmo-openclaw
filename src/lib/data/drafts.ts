@@ -121,12 +121,31 @@ export function loadDraft(slug: string, ideaId: string, channel: string): Draft 
   const absPath = draftAbsPath(slug, ideaId, channel);
   const parsed = readFrontmatterFile<DraftFrontmatter>(absPath);
   if (!parsed) return null;
+  // Non-fatal warn so legacy media schemas surface in dev/prod logs without
+  // breaking the page. Run `pnpm migrate:media` to fix.
+  warnIfLegacyMedia(parsed.data?.media, draftRelPath(ideaId, channel));
   return {
     meta: parsed.data,
     body: parsed.body,
     relPath: draftRelPath(ideaId, channel),
     absPath,
   };
+}
+
+function warnIfLegacyMedia(media: unknown, where: string): void {
+  if (!Array.isArray(media)) return;
+  for (const entry of media) {
+    if (!entry || typeof entry !== "object") continue;
+    const m = entry as Record<string, unknown>;
+    if ("localPath" in m || "role" in m || typeof m.url !== "string" || !m.url) {
+      // eslint-disable-next-line no-console
+      console.warn(
+        `[drafts] ${where} has legacy media schema; UI cannot render it. ` +
+        `Run 'pnpm migrate:media' to fix.`,
+      );
+      return;
+    }
+  }
 }
 
 export function listDrafts(slug: string, ideaId: string): Draft[] {
@@ -218,6 +237,53 @@ export function createEmptyDraft(
 }
 
 const VALID_CLARIFY_STATUSES = ["pending", "answered", "skipped"] as const;
+const VALID_MEDIA_SOURCES: ReadonlyArray<MediaAsset["source"]> = [
+  "uploaded",
+  "ai-generated",
+];
+
+/** Throw a clear error if any entry in `media[]` doesn't conform to the
+ *  canonical `MediaAsset` shape. Catches the legacy schema (`localPath`,
+ *  `role: header`, `type: image`) that an agent editing the frontmatter
+ *  by hand would produce, instead of letting it persist and silently
+ *  break the UI later. See `_system/media-persistence-protocol.md`. */
+export function validateMediaArray(input: unknown, where = "media"): void {
+  if (input == null) return;
+  if (!Array.isArray(input)) {
+    throw new Error(`${where} must be an array of MediaAsset, got ${typeof input}`);
+  }
+  input.forEach((entry, i) => {
+    const ctx = `${where}[${i}]`;
+    if (!entry || typeof entry !== "object") {
+      throw new Error(`${ctx} must be an object`);
+    }
+    const m = entry as Record<string, unknown>;
+    // Reject legacy fields explicitly so the offender knows what they did.
+    const legacyFields = ["localPath", "role", "alt"].filter((f) => f in m);
+    if (legacyFields.length > 0) {
+      throw new Error(
+        `${ctx} uses legacy schema (${legacyFields.join(", ")}). ` +
+        `Use MediaAsset { url, type (mime), source, ... } and persist via ` +
+        `/api/content-engine/upload-media or /generate-image — not by hand. ` +
+        `Run 'pnpm migrate:media' to convert legacy entries.`,
+      );
+    }
+    if (typeof m.url !== "string" || !m.url) {
+      throw new Error(`${ctx}.url is required (must be a non-empty string)`);
+    }
+    if (typeof m.type !== "string" || !m.type.includes("/")) {
+      throw new Error(`${ctx}.type must be a MIME string like "image/png", got ${JSON.stringify(m.type)}`);
+    }
+    if (typeof m.source !== "string" || !VALID_MEDIA_SOURCES.includes(m.source as MediaAsset["source"])) {
+      throw new Error(
+        `${ctx}.source must be one of ${VALID_MEDIA_SOURCES.join(" | ")}, got ${JSON.stringify(m.source)}`,
+      );
+    }
+    if (typeof m.created_at !== "string" || !m.created_at) {
+      throw new Error(`${ctx}.created_at is required (ISO timestamp)`);
+    }
+  });
+}
 
 /** Update an existing draft. Pass `meta` partials to merge over current frontmatter.
  *  Throws if `meta.status` or `meta.clarify_status` are non-canonical values —
@@ -254,6 +320,22 @@ export function updateDraft(
       `Invalid item_type: "${patch.meta.item_type}". ` +
       `Allowed: ${VALID_CONTENT_ITEM_TYPES.join(", ")}.`,
     );
+  }
+  if (patch.meta?.media !== undefined) {
+    // Validate only entries that didn't exist before — legacy entries that
+    // were already on disk are tolerated until the migration runs. This
+    // prevents the guard from locking the draft when something legitimate
+    // (an upload, a delete) wants to mutate `media[]` on a heredeped draft.
+    const existingKeys = new Set(
+      (existing.meta.media || []).map((m) => JSON.stringify(m)),
+    );
+    const newEntries = (patch.meta.media as unknown[]).filter((entry) => {
+      if (!entry || typeof entry !== "object") return true;
+      return !existingKeys.has(JSON.stringify(entry));
+    });
+    if (newEntries.length > 0) {
+      validateMediaArray(newEntries, `media on ${ideaId}/${channel} (new entries)`);
+    }
   }
 
   // Hard gate: cannot transition into drafting/draft while clarify is still

@@ -2,6 +2,20 @@
 
 > Genera contenido nativo de Instagram: captions, carruseles (slides), reel scripts y stories a partir de un artículo de blog o topic.
 
+## Media Persistence (obligatorio)
+
+Esta skill cumple `_system/media-persistence-protocol.md`. Reglas duras:
+
+- **Nunca** afirmar "carrusel generado" / "imagen lista" / "slide creado"
+  sin URL real devuelta por un endpoint. Si solo describes un concepto,
+  di "te propongo este concepto, ¿lo genero?".
+- Persistir media via `POST /api/content-engine/generate-image`,
+  `/api/content-engine/render-carousel` (carruseles HTML→PNG/PDF) o
+  `/api/content-engine/upload-media`. **Nunca** editar `frontmatter.media`
+  a mano con Edit/Write.
+- **Nunca** escribir `status: published` al frontmatter desde el agente.
+  Solo lo pone el dispatcher de Metricool tras envio real con confirmacion.
+
 ## Trigger
 Cuando el usuario pide crear contenido para Instagram, generar posts de IG, crear carruseles, escribir captions, o preparar contenido social para IG.
 

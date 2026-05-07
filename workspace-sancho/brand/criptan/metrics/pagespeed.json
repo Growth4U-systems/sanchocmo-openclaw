@@ -1,51 +1,31 @@
 {
   "url": "https://criptan.com",
   "mobile": {
-    "performance": 36,
+    "performance": 40,
     "seo": 92,
     "accessibility": 84,
-    "bestPractices": 100,
-    "lcp": 14.7,
-    "cls": 0.176,
-    "tbt": 735,
+    "bestPractices": 96,
+    "lcp": 14.8,
+    "cls": 0.177,
+    "tbt": 520,
     "opportunities": [
+      {
+        "id": "unused-css-rules",
+        "title": "Reduce unused CSS",
+        "savings": 230,
+        "description": "Reduce unused rules from stylesheets and defer CSS not used for above-the-fold content to decrease bytes consumed by network activity. [Learn how to r"
+      },
       {
         "id": "unused-javascript",
         "title": "Reduce unused JavaScript",
         "savings": 150,
         "description": "Reduce unused JavaScript and defer loading scripts until they are required to decrease bytes consumed by network activity. [Learn how to reduce unused"
-      },
-      {
-        "id": "unused-css-rules",
-        "title": "Reduce unused CSS",
-        "savings": 70,
-        "description": "Reduce unused rules from stylesheets and defer CSS not used for above-the-fold content to decrease bytes consumed by network activity. [Learn how to r"
       }
     ],
     "diagnostics": [
       {
-        "id": "layout-shifts",
-        "title": "Avoid large layout shifts",
-        "score": 0
-      },
-      {
-        "id": "bootup-time",
-        "title": "Reduce JavaScript execution time",
-        "score": 0
-      },
-      {
         "id": "mainthread-work-breakdown",
         "title": "Minimize main-thread work",
-        "score": 0
-      },
-      {
-        "id": "image-delivery-insight",
-        "title": "Improve image delivery",
-        "score": 0
-      },
-      {
-        "id": "font-display-insight",
-        "title": "Font display",
         "score": 0
       },
       {
@@ -54,8 +34,8 @@
         "score": 0
       },
       {
-        "id": "meta-viewport",
-        "title": "`[user-scalable=\"no\"]` is used in the `<meta name=\"viewport\">` element or the `[maximum-scale]` attribute is less than 5.",
+        "id": "link-in-text-block",
+        "title": "Links rely on color to be distinguishable.",
         "score": 0
       },
       {
@@ -69,32 +49,89 @@
         "score": 0
       },
       {
-        "id": "link-in-text-block",
-        "title": "Links rely on color to be distinguishable.",
+        "id": "link-name",
+        "title": "Links do not have a discernible name",
+        "score": 0
+      },
+      {
+        "id": "image-delivery-insight",
+        "title": "Improve image delivery",
+        "score": 0
+      },
+      {
+        "id": "layout-shifts",
+        "title": "Avoid large layout shifts",
+        "score": 0
+      },
+      {
+        "id": "font-display-insight",
+        "title": "Font display",
+        "score": 0
+      },
+      {
+        "id": "meta-viewport",
+        "title": "`[user-scalable=\"no\"]` is used in the `<meta name=\"viewport\">` element or the `[maximum-scale]` attribute is less than 5.",
         "score": 0
       }
     ]
   },
   "desktop": {
-    "performance": 61,
+    "performance": 49,
     "seo": 92,
     "accessibility": 84,
-    "bestPractices": 100,
+    "bestPractices": 96,
     "lcp": 4.5,
     "cls": 0.034,
-    "tbt": 263,
+    "tbt": 538,
     "opportunities": [
       {
         "id": "unused-javascript",
         "title": "Reduce unused JavaScript",
         "savings": 40,
         "description": "Reduce unused JavaScript and defer loading scripts until they are required to decrease bytes consumed by network activity. [Learn how to reduce unused"
+      },
+      {
+        "id": "unminified-css",
+        "title": "Minify CSS",
+        "savings": 40,
+        "description": "Minifying CSS files can reduce network payload sizes. [Learn how to minify CSS](https://developer.chrome.com/docs/lighthouse/performance/unminified-cs"
+      },
+      {
+        "id": "unused-css-rules",
+        "title": "Reduce unused CSS",
+        "savings": 40,
+        "description": "Reduce unused rules from stylesheets and defer CSS not used for above-the-fold content to decrease bytes consumed by network activity. [Learn how to r"
       }
     ],
     "diagnostics": [
       {
+        "id": "link-name",
+        "title": "Links do not have a discernible name",
+        "score": 0
+      },
+      {
+        "id": "image-delivery-insight",
+        "title": "Improve image delivery",
+        "score": 0
+      },
+      {
+        "id": "font-display-insight",
+        "title": "Font display",
+        "score": 0
+      },
+      {
+        "id": "link-in-text-block",
+        "title": "Links rely on color to be distinguishable.",
+        "score": 0
+      },
+      {
         "id": "mainthread-work-breakdown",
         "title": "Minimize main-thread work",
+        "score": 0
+      },
+      {
+        "id": "heading-order",
+        "title": "Heading elements are not in a sequentially-descending order",
         "score": 0
       },
       {
@@ -103,18 +140,8 @@
         "score": 0
       },
       {
-        "id": "link-in-text-block",
-        "title": "Links rely on color to be distinguishable.",
-        "score": 0
-      },
-      {
-        "id": "heading-order",
-        "title": "Heading elements are not in a sequentially-descending order",
-        "score": 0
-      },
-      {
-        "id": "meta-viewport",
-        "title": "`[user-scalable=\"no\"]` is used in the `<meta name=\"viewport\">` element or the `[maximum-scale]` attribute is less than 5.",
+        "id": "render-blocking-insight",
+        "title": "Render blocking requests",
         "score": 0
       },
       {
@@ -123,26 +150,11 @@
         "score": 0
       },
       {
-        "id": "font-display-insight",
-        "title": "Font display",
-        "score": 0
-      },
-      {
-        "id": "color-contrast",
-        "title": "Background and foreground colors do not have a sufficient contrast ratio.",
-        "score": 0
-      },
-      {
-        "id": "image-delivery-insight",
-        "title": "Improve image delivery",
-        "score": 0
-      },
-      {
-        "id": "render-blocking-insight",
-        "title": "Render blocking requests",
+        "id": "errors-in-console",
+        "title": "Browser errors were logged to the console",
         "score": 0
       }
     ]
   },
-  "fetchedAt": "2026-04-09T19:29:11.815Z"
+  "fetchedAt": "2026-05-06T17:52:10.113Z"
 }

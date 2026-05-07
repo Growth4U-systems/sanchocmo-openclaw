@@ -1,0 +1,73 @@
+{
+  "date": "2026-05-06",
+  "generated_at": "2026-05-06T07:04:00Z",
+  "channels_scanned": ["general", "brand", "projects", "content", "paid-ads", "web", "intelligence", "soporte"],
+  "human_messages_24h": 0,
+  "bot_messages_24h": 4,
+  "insights": [
+    {
+      "category": "ads_performance",
+      "type": "trend",
+      "signal": "Meta Ads CPC en mínimo semanal (€2.64) con CTR mejorando. 3 leads ayer.",
+      "source": "Morning Metrics 2026-05-06",
+      "priority": "high",
+      "action": "Eficiencia al alza — monitorizar si la tendencia se mantiene"
+    },
+    {
+      "category": "pipeline",
+      "type": "opportunity",
+      "signal": "Frank Nava (Rentakia, PropTech/tokenización) — muy interesado en Trust Engine. Pain: 6K leads en 8 meses con retorno pobre. Objeción: pago único 9K€. Follow-up jueves 8 mayo 17:00h con su socio Víctor.",
+      "source": "Lead Sync 2026-05-05",
+      "priority": "high",
+      "action": "Preparar propuesta alternativa (plan escalonado?) antes del follow-up del jueves"
+    },
+    {
+      "category": "pipeline",
+      "type": "metric",
+      "signal": "CRM: 457 contactos, 32 con tag llamada-agendada. 0 nuevos leads, 31 actualizados. Health Score recupera a 37 (desde 22).",
+      "source": "Lead Sync + Daily Pulse 2026-05-05",
+      "priority": "medium",
+      "action": "Health Score mejorando pero gap lead→cita sigue como blocker #1"
+    },
+    {
+      "category": "calendar",
+      "type": "info",
+      "signal": "No hay llamadas programadas para hoy miércoles 6 mayo.",
+      "source": "Call Prep 2026-05-05",
+      "priority": "low",
+      "action": "Día disponible para outreach, contenido o follow-ups pendientes"
+    },
+    {
+      "category": "engagement",
+      "type": "warning",
+      "signal": "0 mensajes humanos en Discord en las últimas 24h. Toda la actividad es del sistema (métricas, lead sync, call prep).",
+      "source": "Scan de canales",
+      "priority": "medium",
+      "action": "Sin interacción humana — el equipo no está usando Discord como canal activo"
+    }
+  ],
+  "micro_briefs": [
+    {
+      "id": "mb-2026-05-06-01",
+      "title": "Preparar follow-up Frank Nava",
+      "description": "Lead caliente con objeción de precio. Preparar propuesta escalonada o ROI case antes del jueves 8 mayo 17:00h.",
+      "priority": "P0",
+      "owner": "equipo comercial"
+    },
+    {
+      "id": "mb-2026-05-06-02",
+      "title": "Capitalizar eficiencia Meta Ads",
+      "description": "CPC en mínimo (€2.64), CPL bajó 50%. Evaluar si escalar spend manteniendo eficiencia.",
+      "priority": "P1",
+      "owner": "Philippe"
+    },
+    {
+      "id": "mb-2026-05-06-03",
+      "title": "Resolver gap lead→cita",
+      "description": "Health Score en 37 (subiendo) pero la conversión lead→cita sigue como blocker principal. Revisar secuencia de follow-up automático.",
+      "priority": "P1",
+      "owner": "equipo"
+    }
+  ],
+  "executive_summary": "Meta Ads en su mejor momento de eficiencia (CPC €2.64 mínimo semanal, CPL ↓50%). 3 leads ayer. Frank Nava (Rentakia, PropTech) es el lead más caliente — follow-up jueves 8 mayo con su socio. Health Score recupera a 37 pero el gap lead→cita sigue como blocker #1. 0 msgs humanos en Discord. Día sin llamadas — ideal para avanzar en follow-ups y contenido."
+}

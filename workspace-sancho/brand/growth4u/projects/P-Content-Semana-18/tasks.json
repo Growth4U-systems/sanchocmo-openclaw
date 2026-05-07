@@ -90,7 +90,7 @@
         "parent_task_id": "P-Content-Semana-18-T05",
         "idea_id": "idea-2026-05-01-5",
         "name": "El 40% de apps tendrán agentes IA — pero el 40% de proyectos morirá antes de 2027",
-        "status": "Media",
+        "status": "Pending Media",
         "skill": "social-writer",
         "target_channels": [
           "linkedin",
@@ -127,7 +127,9 @@
         "owner": "Escudero Content",
         "created_at": "2026-05-01T13:07:53.647Z",
         "updated_at": "2026-05-01T23:22:07.283Z",
-        "approved_at": "2026-05-01T13:11:20.204Z"
+        "approved_at": "2026-05-01T13:11:20.204Z",
+        "pipeline_state": "media-review",
+        "pending_media_at": "2026-05-06T08:41:56.979Z"
       }
     ]
   },
@@ -506,8 +508,7 @@
         "parent_task_id": "P-Content-Semana-18-T02",
         "idea_id": "idea-2026-05-01-3",
         "name": "Europa quiere registrar finfluencers en ESMA — tu playbook de influencers acaba de romperse",
-        "status": "Approved",
-        "pipeline_state": "clarify-needed",
+        "status": "Pending Media",
         "skill": "newsletter",
         "target_channels": [
           "newsletter"
@@ -537,8 +538,10 @@
         "mc_chat_thread_id": "content-p-content-semana-18-t02-c01",
         "owner": "Escudero Content",
         "created_at": "2026-05-05T17:15:09.118Z",
-        "updated_at": "2026-05-05T21:43:46.838Z",
-        "approved_at": "2026-05-05T21:43:46.838Z"
+        "updated_at": "2026-05-06T08:39:18.184Z",
+        "approved_at": "2026-05-05T21:43:46.838Z",
+        "pipeline_state": "generating-media",
+        "pending_media_at": "2026-05-06T08:39:18.184Z"
       }
     ]
   }

@@ -3,7 +3,7 @@ ghl_id: V6NatPHuXvX7cYAYOISx
 contact_name: Manuel Campos Figal
 email: manuelcamposbusiness@gmail.com
 phone: null
-last_enriched: 2026-05-05T20:00:00Z
+last_enriched: 2026-05-06T20:00:00Z
 enrichment_pending: false
 ---
 

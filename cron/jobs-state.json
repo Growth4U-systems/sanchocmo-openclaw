@@ -2,14 +2,14 @@
   "version": 1,
   "jobs": {
     "2283eade-3d08-4f46-a508-eaa6d035a4d2": {
-      "updatedAtMs": 1777964635613,
+      "updatedAtMs": 1778051063660,
       "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"0 9 * * 1-5\",\"tz\":\"Europe/Madrid\"}}",
       "state": {
-        "nextRunAtMs": 1778050800000,
-        "lastRunAtMs": 1777964400040,
+        "nextRunAtMs": 1778137200000,
+        "lastRunAtMs": 1778050800031,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 235573,
+        "lastDurationMs": 263629,
         "lastDeliveryStatus": "not-requested",
         "consecutiveErrors": 0,
         "consecutiveSkipped": 0
@@ -43,14 +43,14 @@
       }
     },
     "6dac9a53-6736-490a-ae54-e028b8ebbbd1": {
-      "updatedAtMs": 1777997051979,
+      "updatedAtMs": 1778083449096,
       "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"0 18 * * 1-5\",\"tz\":\"Europe/Madrid\"}}",
       "state": {
-        "nextRunAtMs": 1778083200000,
-        "lastRunAtMs": 1777996800035,
+        "nextRunAtMs": 1778169600000,
+        "lastRunAtMs": 1778083200038,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 251944,
+        "lastDurationMs": 249058,
         "lastDeliveryStatus": "not-requested",
         "consecutiveErrors": 0,
         "consecutiveSkipped": 0
@@ -71,17 +71,18 @@
       }
     },
     "0cd1e931-d374-4428-a452-e2394beac5b7": {
-      "updatedAtMs": 1777493581021,
+      "updatedAtMs": 1778047819496,
       "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"0 8 * * 3\",\"tz\":\"Europe/Madrid\"}}",
       "state": {
-        "nextRunAtMs": 1778047200000,
-        "lastRunAtMs": 1777493580989,
-        "lastRunStatus": "error",
-        "lastStatus": "error",
-        "lastDurationMs": 32,
-        "lastDeliveryStatus": "unknown",
-        "consecutiveErrors": 1,
-        "lastError": "TypeError: (0 , _providerModelShared.resolveClaudeThinkingProfile) is not a function"
+        "nextRunAtMs": 1778652000000,
+        "lastRunAtMs": 1778047487497,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 331999,
+        "lastDeliveryStatus": "delivered",
+        "consecutiveErrors": 0,
+        "lastDelivered": true,
+        "consecutiveSkipped": 0
       }
     },
     "618bc941-a980-4f0d-99c8-5e715060ce6b": {
@@ -95,32 +96,33 @@
         "lastDurationMs": 210990,
         "lastDeliveryStatus": "not-requested",
         "consecutiveErrors": 0,
-        "consecutiveSkipped": 0
+        "consecutiveSkipped": 0,
+        "runningAtMs": 1778115600026
       }
     },
     "0c59e923-3267-4926-9a60-36bb81b6041f": {
-      "updatedAtMs": 1778033715079,
+      "updatedAtMs": 1778098517898,
       "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"every\",\"everyMs\":21600000,\"anchorMs\":1772069609685}}",
       "state": {
-        "nextRunAtMs": 1778055263222,
-        "lastRunAtMs": 1778033663222,
+        "nextRunAtMs": 1778120063484,
+        "lastRunAtMs": 1778098463484,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 51857,
+        "lastDurationMs": 54414,
         "lastDeliveryStatus": "not-requested",
         "consecutiveErrors": 0,
         "consecutiveSkipped": 0
       }
     },
     "cedfbd22-cbd0-4a19-87a0-29337c4f2b37": {
-      "updatedAtMs": 1777968283170,
+      "updatedAtMs": 1778054677253,
       "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"0 10 * * *\",\"tz\":\"Europe/Madrid\"}}",
       "state": {
-        "nextRunAtMs": 1778054400000,
-        "lastRunAtMs": 1777968000040,
+        "nextRunAtMs": 1778140800000,
+        "lastRunAtMs": 1778054400035,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 283130,
+        "lastDurationMs": 277218,
         "lastDeliveryStatus": "not-requested",
         "consecutiveErrors": 0,
         "consecutiveSkipped": 0
@@ -132,19 +134,17 @@
       "state": {}
     },
     "b780c3f1-a760-453f-ab81-bc19e4257d11": {
-      "updatedAtMs": 1777960921564,
+      "updatedAtMs": 1778047924456,
       "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"0 8 * * *\",\"tz\":\"Europe/Madrid\"}}",
       "state": {
-        "nextRunAtMs": 1778047200000,
-        "lastRunAtMs": 1777960800030,
-        "lastRunStatus": "error",
-        "lastStatus": "error",
-        "lastDurationMs": 121534,
+        "nextRunAtMs": 1778133600000,
+        "lastRunAtMs": 1778047819496,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 104960,
         "lastDeliveryStatus": "not-requested",
-        "consecutiveErrors": 4,
-        "consecutiveSkipped": 0,
-        "lastErrorReason": "timeout",
-        "lastError": "cron: job execution timed out"
+        "consecutiveErrors": 0,
+        "consecutiveSkipped": 0
       }
     },
     "4eda3a87-1b19-4932-8c7d-d4b1971d53e3": {
@@ -286,28 +286,28 @@
       }
     },
     "a68143d8-1309-46eb-a5dc-4c3fb35ee3d2": {
-      "updatedAtMs": 1778011674666,
+      "updatedAtMs": 1778098105351,
       "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"0 22 * * *\",\"tz\":\"Europe/Madrid\"}}",
       "state": {
-        "nextRunAtMs": 1778097600000,
-        "lastRunAtMs": 1778011200026,
+        "nextRunAtMs": 1778184000000,
+        "lastRunAtMs": 1778097600042,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 474640,
+        "lastDurationMs": 505309,
         "lastDeliveryStatus": "not-requested",
         "consecutiveErrors": 0,
         "consecutiveSkipped": 0
       }
     },
     "36d0bff9-fea9-40d8-9bfd-bf1e5e58468b": {
-      "updatedAtMs": 1778013302593,
+      "updatedAtMs": 1778099906629,
       "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"30 22 * * 0-4\",\"tz\":\"Europe/Madrid\"}}",
       "state": {
-        "nextRunAtMs": 1778099400000,
-        "lastRunAtMs": 1778013000027,
+        "nextRunAtMs": 1778185800000,
+        "lastRunAtMs": 1778099400041,
         "lastRunStatus": "ok",
         "lastStatus": "ok",
-        "lastDurationMs": 302566,
+        "lastDurationMs": 506588,
         "lastDeliveryStatus": "not-requested",
         "consecutiveErrors": 0,
         "consecutiveSkipped": 0
@@ -344,17 +344,19 @@
       }
     },
     "53f6b4d3-51b4-4f78-8907-2f68a82efc7b": {
-      "updatedAtMs": 1777493581309,
+      "updatedAtMs": 1778054858935,
       "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"0 10 * * 3\",\"tz\":\"Europe/Madrid\"}}",
       "state": {
-        "nextRunAtMs": 1778054400000,
-        "lastRunAtMs": 1777493581278,
+        "nextRunAtMs": 1778659200000,
+        "lastRunAtMs": 1778054677253,
         "lastRunStatus": "error",
         "lastStatus": "error",
-        "lastDurationMs": 31,
+        "lastDurationMs": 181682,
         "lastDeliveryStatus": "not-requested",
-        "consecutiveErrors": 4,
-        "lastError": "TypeError: (0 , _providerModelShared.resolveClaudeThinkingProfile) is not a function"
+        "consecutiveErrors": 5,
+        "lastError": "cron: job execution timed out",
+        "lastErrorReason": "timeout",
+        "consecutiveSkipped": 0
       }
     },
     "df8aaf99-8b1b-4b5b-844b-5c53de641e5c": {
@@ -421,16 +423,16 @@
       }
     },
     "00fa288d-d349-449e-85ff-1d3b2260f2d3": {
-      "updatedAtMs": 1777964794194,
+      "updatedAtMs": 1778051247568,
       "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"0 9 * * 1-5\",\"tz\":\"Europe/Madrid\"}}",
       "state": {
-        "nextRunAtMs": 1778050800000,
-        "lastRunAtMs": 1777964635613,
+        "nextRunAtMs": 1778137200000,
+        "lastRunAtMs": 1778051063660,
         "lastRunStatus": "error",
         "lastStatus": "error",
-        "lastDurationMs": 158581,
+        "lastDurationMs": 183908,
         "lastDeliveryStatus": "unknown",
-        "consecutiveErrors": 23,
+        "consecutiveErrors": 24,
         "consecutiveSkipped": 0,
         "lastError": "Channel is required when multiple channels are configured: discord, mc-chat Set delivery.channel explicitly or use a main session with a previous channel.; the agent used the message tool, but OpenClaw could not verify that message matched the cron delivery target"
       }
@@ -466,31 +468,31 @@
       }
     },
     "09b92860-663d-4fb1-8f27-352c55e8a507": {
-      "updatedAtMs": 1777962985572,
+      "updatedAtMs": 1778049282305,
       "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"30 8 * * *\",\"tz\":\"Europe/Madrid\"}}",
       "state": {
-        "nextRunAtMs": 1778049000000,
-        "lastRunAtMs": 1777962600036,
+        "nextRunAtMs": 1778135400000,
+        "lastRunAtMs": 1778049000052,
         "lastRunStatus": "error",
         "lastStatus": "error",
-        "lastDurationMs": 385536,
+        "lastDurationMs": 282253,
         "lastDeliveryStatus": "unknown",
-        "consecutiveErrors": 22,
+        "consecutiveErrors": 23,
         "consecutiveSkipped": 0,
-        "lastError": "Channel is required when multiple channels are configured: discord, mc-chat Set delivery.channel explicitly or use a main session with a previous channel."
+        "lastError": "Channel is required when multiple channels are configured: discord, mc-chat Set delivery.channel explicitly or use a main session with a previous channel.; the agent used the message tool, but OpenClaw could not verify that message matched the cron delivery target"
       }
     },
     "9416a8bc-14f5-4626-99d2-c8065c4ab002": {
-      "updatedAtMs": 1777963045631,
+      "updatedAtMs": 1778049352918,
       "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"30 8 * * *\",\"tz\":\"Europe/Madrid\"}}",
       "state": {
-        "nextRunAtMs": 1778049000000,
-        "lastRunAtMs": 1777962985572,
+        "nextRunAtMs": 1778135400000,
+        "lastRunAtMs": 1778049282305,
         "lastRunStatus": "error",
         "lastStatus": "error",
-        "lastDurationMs": 60059,
+        "lastDurationMs": 70613,
         "lastDeliveryStatus": "unknown",
-        "consecutiveErrors": 27,
+        "consecutiveErrors": 28,
         "consecutiveSkipped": 0,
         "lastError": "Channel is required when multiple channels are configured: discord, mc-chat Set delivery.channel explicitly or use a main session with a previous channel."
       }
@@ -537,17 +539,18 @@
       }
     },
     "19e4cf8d-4587-4b60-a300-364a955d9023": {
-      "updatedAtMs": 1777493581582,
+      "updatedAtMs": 1778047985311,
       "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"0 8 * * 3\",\"tz\":\"Europe/Madrid\"}}",
       "state": {
-        "nextRunAtMs": 1778047200000,
-        "lastRunAtMs": 1777493581550,
+        "nextRunAtMs": 1778652000000,
+        "lastRunAtMs": 1778047924456,
         "lastRunStatus": "error",
         "lastStatus": "error",
-        "lastDurationMs": 32,
+        "lastDurationMs": 60855,
         "lastDeliveryStatus": "unknown",
-        "consecutiveErrors": 3,
-        "lastError": "TypeError: (0 , _providerModelShared.resolveClaudeThinkingProfile) is not a function"
+        "consecutiveErrors": 4,
+        "lastError": "Channel is required when multiple channels are configured: discord, mc-chat Set delivery.channel explicitly or use a main session with a previous channel.; the agent used the message tool, but OpenClaw could not verify that message matched the cron delivery target",
+        "consecutiveSkipped": 0
       }
     },
     "caae560f-344f-44a8-9ddb-4a4ce8c6e913": {
@@ -691,95 +694,183 @@
       }
     },
     "7352736a-f369-4559-8342-9157f7320d25": {
-      "updatedAtMs": 1778017421757,
+      "updatedAtMs": 1778044225532,
       "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"0 7 * * 1-5\",\"tz\":\"Europe/Madrid\"}}",
       "state": {
-        "nextRunAtMs": 1778043600000,
-        "runningAtMs": 1778043600031
+        "nextRunAtMs": 1778130000000,
+        "lastRunAtMs": 1778043600036,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 625496,
+        "lastError": "Channel is required when multiple channels are configured: discord, mc-chat Set delivery.channel explicitly or use a main session with a previous channel.",
+        "lastDeliveryStatus": "unknown",
+        "consecutiveErrors": 1,
+        "consecutiveSkipped": 0
       }
     },
     "945531aa-9e66-487b-92ab-aff060671424": {
-      "updatedAtMs": 1778017424386,
+      "updatedAtMs": 1778044710456,
       "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"0 7 * * 1-5\",\"tz\":\"Europe/Madrid\"}}",
       "state": {
-        "nextRunAtMs": 1778043600000,
-        "runningAtMs": 1778043600031
+        "nextRunAtMs": 1778130000000,
+        "lastRunAtMs": 1778044225532,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 484924,
+        "lastError": "Channel is required when multiple channels are configured: discord, mc-chat Set delivery.channel explicitly or use a main session with a previous channel.",
+        "lastDeliveryStatus": "unknown",
+        "consecutiveErrors": 1,
+        "consecutiveSkipped": 0
       }
     },
     "9fd8d340-9760-4130-9fc6-2079fb6fd0f9": {
-      "updatedAtMs": 1778017531363,
+      "updatedAtMs": 1778045045099,
       "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"0 7 * * 1-5\",\"tz\":\"Europe/Madrid\"}}",
       "state": {
-        "nextRunAtMs": 1778043600000,
-        "runningAtMs": 1778043600031
+        "nextRunAtMs": 1778130000000,
+        "lastRunAtMs": 1778044710456,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 334643,
+        "lastError": "Channel is required when multiple channels are configured: discord, mc-chat Set delivery.channel explicitly or use a main session with a previous channel.",
+        "lastDeliveryStatus": "unknown",
+        "consecutiveErrors": 1,
+        "consecutiveSkipped": 0
       }
     },
     "a31fe0f8-7328-40a0-80d6-fa6194925c93": {
-      "updatedAtMs": 1778017533531,
+      "updatedAtMs": 1778045463432,
       "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"0 7 * * 1-5\",\"tz\":\"Europe/Madrid\"}}",
       "state": {
-        "nextRunAtMs": 1778043600000,
-        "runningAtMs": 1778043600031
+        "nextRunAtMs": 1778130000000,
+        "lastRunAtMs": 1778045045099,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 418333,
+        "lastError": "Channel is required when multiple channels are configured: discord, mc-chat Set delivery.channel explicitly or use a main session with a previous channel.",
+        "lastDeliveryStatus": "unknown",
+        "consecutiveErrors": 1,
+        "consecutiveSkipped": 0
       }
     },
     "1f841116-56c4-4b04-a10f-901cb96749d7": {
-      "updatedAtMs": 1778017535830,
+      "updatedAtMs": 1778045851805,
       "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"0 7 * * 1-5\",\"tz\":\"Europe/Madrid\"}}",
       "state": {
-        "nextRunAtMs": 1778043600000,
-        "runningAtMs": 1778043600031
+        "nextRunAtMs": 1778130000000,
+        "lastRunAtMs": 1778045463432,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 388373,
+        "lastError": "Channel is required when multiple channels are configured: discord, mc-chat Set delivery.channel explicitly or use a main session with a previous channel.",
+        "lastDeliveryStatus": "unknown",
+        "consecutiveErrors": 1,
+        "consecutiveSkipped": 0
       }
     },
     "1d6ed4c5-91ed-487a-a993-98cf6a641410": {
-      "updatedAtMs": 1778017538162,
+      "updatedAtMs": 1778046480502,
       "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"0 7 * * 1-5\",\"tz\":\"Europe/Madrid\"}}",
       "state": {
-        "nextRunAtMs": 1778043600000,
-        "runningAtMs": 1778043600031
+        "nextRunAtMs": 1778130000000,
+        "lastRunAtMs": 1778045851805,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 628697,
+        "lastError": "Channel is required when multiple channels are configured: discord, mc-chat Set delivery.channel explicitly or use a main session with a previous channel.",
+        "lastDeliveryStatus": "unknown",
+        "consecutiveErrors": 1,
+        "consecutiveSkipped": 0
       }
     },
     "58d06ca7-4411-4a82-a4ec-07cc4d7125b6": {
-      "updatedAtMs": 1778017542451,
+      "updatedAtMs": 1778046847762,
       "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"0 7 * * 1-5\",\"tz\":\"Europe/Madrid\"}}",
       "state": {
-        "nextRunAtMs": 1778043600000,
-        "runningAtMs": 1778043600031
+        "nextRunAtMs": 1778130000000,
+        "lastRunAtMs": 1778046480502,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 367260,
+        "lastError": "Channel is required when multiple channels are configured: discord, mc-chat Set delivery.channel explicitly or use a main session with a previous channel.",
+        "lastDeliveryStatus": "unknown",
+        "consecutiveErrors": 1,
+        "consecutiveSkipped": 0
       }
     },
     "abfabbb1-1bbb-4865-b81a-90ac2b6bb9b0": {
-      "updatedAtMs": 1778017544691,
+      "updatedAtMs": 1778047484926,
       "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"0 7 * * 1-5\",\"tz\":\"Europe/Madrid\"}}",
       "state": {
-        "nextRunAtMs": 1778043600000,
-        "runningAtMs": 1778043600031
+        "nextRunAtMs": 1778130000000,
+        "lastRunAtMs": 1778046847762,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 637164,
+        "lastError": "Channel is required when multiple channels are configured: discord, mc-chat Set delivery.channel explicitly or use a main session with a previous channel.",
+        "lastDeliveryStatus": "unknown",
+        "consecutiveErrors": 1,
+        "consecutiveSkipped": 0
       }
     },
     "659cfb91-f536-4d75-82a7-582067a55133": {
-      "updatedAtMs": 1778017746600,
+      "updatedAtMs": 1778049479615,
       "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"30 8 * * 1-5\",\"tz\":\"Europe/Madrid\"}}",
       "state": {
-        "nextRunAtMs": 1778049000000
+        "nextRunAtMs": 1778135400000,
+        "lastRunAtMs": 1778049352918,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 126697,
+        "lastError": "Channel is required when multiple channels are configured: discord, mc-chat Set delivery.channel explicitly or use a main session with a previous channel.",
+        "lastDeliveryStatus": "unknown",
+        "consecutiveErrors": 1,
+        "consecutiveSkipped": 0
       }
     },
     "538d8c16-86fe-4dba-9895-e7b339c5d515": {
-      "updatedAtMs": 1778017750508,
+      "updatedAtMs": 1778049667996,
       "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"30 8 * * 1-5\",\"tz\":\"Europe/Madrid\"}}",
       "state": {
-        "nextRunAtMs": 1778049000000
+        "nextRunAtMs": 1778135400000,
+        "lastRunAtMs": 1778049479615,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 188381,
+        "lastError": "Channel is required when multiple channels are configured: discord, mc-chat Set delivery.channel explicitly or use a main session with a previous channel.; the agent used the message tool, but OpenClaw could not verify that message matched the cron delivery target",
+        "lastDeliveryStatus": "unknown",
+        "consecutiveErrors": 1,
+        "consecutiveSkipped": 0
       }
     },
     "c9bfd568-f98e-4999-82f0-b486626f4ede": {
-      "updatedAtMs": 1778017752915,
+      "updatedAtMs": 1778049995022,
       "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"30 8 * * 1-5\",\"tz\":\"Europe/Madrid\"}}",
       "state": {
-        "nextRunAtMs": 1778049000000
+        "nextRunAtMs": 1778135400000,
+        "lastRunAtMs": 1778049667996,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 327026,
+        "lastError": "Channel is required when multiple channels are configured: discord, mc-chat Set delivery.channel explicitly or use a main session with a previous channel.; the agent used the message tool, but OpenClaw could not verify that message matched the cron delivery target",
+        "lastDeliveryStatus": "unknown",
+        "consecutiveErrors": 1,
+        "consecutiveSkipped": 0
       }
     },
     "d0851106-f61d-437a-bfd0-62eb10c7345f": {
-      "updatedAtMs": 1778017755518,
+      "updatedAtMs": 1778050196481,
       "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"30 8 * * 1-5\",\"tz\":\"Europe/Madrid\"}}",
       "state": {
-        "nextRunAtMs": 1778049000000
+        "nextRunAtMs": 1778135400000,
+        "lastRunAtMs": 1778049995022,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 201459,
+        "lastError": "Channel is required when multiple channels are configured: discord, mc-chat Set delivery.channel explicitly or use a main session with a previous channel.; the agent used the message tool, but OpenClaw could not verify that message matched the cron delivery target",
+        "lastDeliveryStatus": "unknown",
+        "consecutiveErrors": 1,
+        "consecutiveSkipped": 0
       }
     }
   }

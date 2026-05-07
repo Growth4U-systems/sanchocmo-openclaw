@@ -6,7 +6,7 @@ phone: null
 company: null
 source: Instagram Paid Ad (campaign 120244652779970655)
 date_added: 2026-03-17
-last_enriched: 2026-05-05T20:00:00Z
+last_enriched: 2026-05-06T20:00:00Z
 enrichment_pending: true
 tags: [llamada-agendada, llamada-de-seguimiento]
 ---

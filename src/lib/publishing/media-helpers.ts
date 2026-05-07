@@ -1,7 +1,7 @@
 import path from "path";
 import fs from "fs";
 import { brandDir } from "@/lib/data/paths";
-import { loadDraft, updateDraft } from "@/lib/data/drafts";
+import { loadDraft, updateDraft, validateMediaArray } from "@/lib/data/drafts";
 import { maybePromoteContentTaskFromMedia } from "@/lib/data/content-tasks";
 import type { MediaAsset } from "@/lib/data/drafts";
 
@@ -55,6 +55,7 @@ export function attachMediaToDraft(
   channel: string,
   asset: MediaAsset,
 ) {
+  validateMediaArray([asset], `attachMediaToDraft ${ideaId}/${channel}`);
   const draft = loadDraft(slug, ideaId, channel);
   if (!draft) throw new Error("Draft not found");
   const current = draft.meta.media || [];

@@ -90,6 +90,99 @@ que toque) conviven en el mismo thread.
 los assets visuales que el canal requiera. El estado `Media` en
 `ContentTask` (ver `src/lib/data/content-tasks.ts`) modela este gate.
 
+### Como persistir media en el draft (obligatorio)
+
+Las imagenes/PDFs viven en `frontmatter.media[]` del draft markdown
+(`brand/{slug}/content/drafts/{ideaId}/{channel}.md`). El MediaPanel de
+MC lee de ahi. Hay UNA sola forma correcta de añadirlas y es **siempre
+via endpoint**:
+
+| Caso | Endpoint | Lo que hace |
+|---|---|---|
+| Generar imagen desde prompt | `POST /api/content-engine/generate-image` | Llama al provider configurado, sube a R2, anade a `media[]` |
+| Subir binario propio (Sancho lo genero local con nano-banana-pro / usuario adjunto) | `POST /api/content-engine/upload-media` (multipart) | Sube a R2, anade a `media[]` |
+| Renderizar carrusel HTML→PNG/PDF | `POST /api/content-engine/render-carousel` | Renderiza con Playwright, sube a R2, anade a `media[]` |
+
+Body comun: `{ slug, ideaId, channel, ... }`. Response incluye `url` y
+el `draft` actualizado.
+
+PROHIBIDO al agente:
+- Editar `frontmatter.media` con `Edit`/`Write`. Rompe el contrato de
+  `attachMediaToDraft` y deja R2 desincronizado.
+- Decir "imagen generada" sin tener URL real devuelta por uno de los
+  endpoints anteriores.
+- Tocar `frontmatter.status`. Solo el dispatcher escribe `published`.
+
+Detalle completo y rationale: `_system/media-persistence-protocol.md`.
+
+### Skill puente: `content-image`
+
+Para que el agente del chat pueda invocar estos endpoints sin recordar
+HTTP/payloads, existe la skill `content-image` (en
+`workspace-sancho/skills/content-image/`). Envuelve `generate-image` y
+`upload-media`, lee `slug/ideaId/channel` del thread context, y devuelve
+la URL de R2. Es la unica via legitima que el agente debe usar para
+producir media.
+
+### Productor / Consumidor — separacion de responsabilidades
+
+La identidad visual del cliente es "infraestructura": vive en un solo
+sitio (`brand/{slug}/brand-book/visual-identity/`) y multiples
+consumidores la leen. Tres actores, sin solapes:
+
+```
+visual-identity (meta-skill, sistema)
+   │  Thread: Foundation L5 → pillar visual-identity
+   │  Vida del thread: SOLO onboarding. Cierra al generar el child.
+   │
+   ├──→ design-tokens.json
+   ├──→ visual-identity.current.md
+   ├──→ logo-light.{png,webp,svg}
+   │
+   └──→ genera el child skill:
+        [brand]-visual-generator (skill per-brand)
+              │  Thread: P14-Content-Engine → T07
+              │  Vida del thread: PERMANENTE. Bootstrap +
+              │  refrescos + extensiones + ediciones.
+              │
+              ├──→ templates/{carousels, newsletter-header, ad, ...}/
+              ├──→ style-references/*.webp
+              └──→ manifest.json
+                          │  readonly
+                          ↓
+                content-image (skill puente, sistema)
+                          │  Thread: el del writer que la invoca
+                          │  (ej. content task chat de la pieza)
+                          │
+                          ↓
+                frontmatter.media[] del draft
+                          ↑
+                writer skills (newsletter, social-writer, seo-content,
+                instagram-content, content-atomizer)
+                  └──→ llaman a content-image, NUNCA al brand skill
+```
+
+Reglas duras:
+
+- **Las writer skills NO conocen `[brand]-visual-generator`.** Solo
+  conocen `content-image`. El brand skill es invisible desde el flujo
+  de produccion de contenido.
+- **`content-image` SIEMPRE lee `manifest.json` antes de cualquier
+  operacion.** Si no existe el manifest o falta una plantilla, redirige
+  al **thread de T07** (`[brand]-visual-generator`), no al thread del
+  pillar visual-identity.
+- **`[brand]-visual-generator` solo se invoca para extender o refrescar
+  el catalogo visual.** No participa en la creacion per-pieza. Su thread
+  permanente vive en T07 de P14-Content-Engine.
+- **`visual-identity` (meta-skill) solo se invoca al onboarding o
+  cuando la marca cambia su DNA.** Su thread (Foundation L5 pillar) se
+  cierra cuando el child existe. No se ejecuta como parte del Content
+  Engine en operacion continua.
+
+Patron de referencia: design tokens W3C 2026 / Wyndo Claude Design Brand
+System (ver investigacion 2026-05-06). Ver tambien
+`_system/media-persistence-protocol.md`.
+
 ---
 
 ## Proceso 3 — Ad-hoc (bajo demanda)

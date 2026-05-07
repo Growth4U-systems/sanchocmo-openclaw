@@ -119,28 +119,28 @@ export interface Task {
 /**
  * Status canónicos para una `ContentTask` (sub-task del Content Engine).
  *
- * Estos estados NO son los `TaskStatus` generales — el flujo de redacción
- * tiene su propio ciclo de vida. La transición es lineal con dos terminales
- * (`Published` y `Discarded`), más `Deferred` que vuelve la idea a la queue.
+ * Regla: cada estado describe **qué está pendiente / quién actúa próximo**.
+ * Los terminales son `Published` y `Discarded`; `Deferred` permite reactivar.
  *
- * - `New`: idea recién generada por el cron Idea Builder, con angle.
- * - `Approved`: aprobada (Slack/Discord/UI). El pipeline (deep-research →
- *   Clarify → writing) corre durante este estado. Para visibilidad usa el
- *   sub-estado `pipeline_state` ("researching" | "clarify-needed" | "drafting").
- * - `Draft`: drafts iniciales generados, listos para iterar.
- * - `Media`: drafts listos pero esperando media (imagen, video, carrusel).
- * - `Review`: todo listo (texto + media), esperando sign-off final.
- * - `Ready`: aprobado para publicar, fecha asignada (queda esperando fase 6).
- * - `Published`: publicado.
- * - `Discarded`: descartado ("Rechazar" en Slack o manual).
- * - `Deferred`: "Más tarde" en Slack — vuelve al pool sin publicar hoy.
+ * - `New`: idea creada, pendiente que el usuario apruebe o descarte.
+ * - `Approved`: idea aprobada; sistema produciendo el draft. `pipeline_state`
+ *   refleja la fase: `researching` → `clarify-needed` → `drafting`. La
+ *   transición a `Draft` es automática al terminar el draft.
+ * - `Draft`: texto listo, pendiente review del usuario. La iteración del draft
+ *   ocurre dentro del thread del contenido (chat-driven), sin transición.
+ * - `Pending Media`: usuario aprobó el texto. Fase de media. `pipeline_state`:
+ *   `generating-media` (sin media aún) → `media-review` (media añadida,
+ *   pendiente OK del usuario).
+ * - `Ready`: usuario aprobó la pieza completa, queue de publicación.
+ * - `Published`: publicado (terminal).
+ * - `Discarded`: descartado (terminal, alcanzable desde cualquier estado).
+ * - `Deferred`: pospuesto, vuelve al pool sin publicar.
  */
 export type ContentTaskStatus =
   | "New"
   | "Approved"
   | "Draft"
-  | "Media"
-  | "Review"
+  | "Pending Media"
   | "Ready"
   | "Published"
   | "Discarded"
@@ -151,8 +151,7 @@ export const VALID_CONTENT_TASK_STATUSES: readonly ContentTaskStatus[] = [
   "New",
   "Approved",
   "Draft",
-  "Media",
-  "Review",
+  "Pending Media",
   "Ready",
   "Published",
   "Discarded",
@@ -160,14 +159,19 @@ export const VALID_CONTENT_TASK_STATUSES: readonly ContentTaskStatus[] = [
 ] as const;
 
 /**
- * Sub-estado visible en UI mientras `status === "Approved"` y la skill de
- * Escudero Content corre el pipeline. Permite renderizar un badge concreto
- * sin inflar el enum principal con estados de minutos/horas.
+ * Sub-estado visible en UI durante las fases en las que el sistema o el
+ * usuario tienen una acción pendiente sub-granular:
+ *  - `status === "Approved"`: `researching` → `clarify-needed` → `drafting`
+ *    (controlado por la skill writer).
+ *  - `status === "Pending Media"`: `generating-media` (sin media aún) →
+ *    `media-review` (media añadida, pendiente aprobación del usuario).
  */
 export type ContentTaskPipelineState =
   | "researching"
   | "clarify-needed"
-  | "drafting";
+  | "drafting"
+  | "generating-media"
+  | "media-review";
 
 /**
  * `ContentTask`: tarea anidada bajo una task `type: "content"` (la task del
@@ -183,7 +187,7 @@ export interface ContentTask {
   idea_id: string;                  // Linked idea in idea-queue.json
   name: string;
   status: ContentTaskStatus;
-  pipeline_state?: ContentTaskPipelineState;  // Visible only while status === "Approved"
+  pipeline_state?: ContentTaskPipelineState;  // Visible during status === "Approved" or "Pending Media"
   clarify_status?: "pending" | "answered" | "skipped";
   skill: string;                    // social-writer | seo-content | instagram-content | newsletter
   target_channels: string[];        // ["linkedin", "twitter"] — drafts produced for these
@@ -194,10 +198,17 @@ export interface ContentTask {
   created_at: string;               // ISO8601
   updated_at?: string;
   approved_at?: string;
+  pending_media_at?: string;        // Set when user approves draft text and CT enters Pending Media
   published_at?: string;
   discarded_at?: string;
   deferred_at?: string;
-  scheduled_for?: string;           // Set when status moves to Ready
+  /**
+   * @deprecated Use `draft.meta.publishing.scheduled_at` (per-channel) as the
+   * single source of truth for when a post is scheduled. This CT-level field
+   * was decorative — no publishing flow read it. Kept in the type so existing
+   * tasks.json files don't fail to parse; UI no longer surfaces it.
+   */
+  scheduled_for?: string;
   /**
    * Per-channel draft status. Computed server-side by reading the frontmatter
    * `status` of each `brand/{slug}/content/drafts/{idea_id}/{channel}.md`.

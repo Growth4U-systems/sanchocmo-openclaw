@@ -95,6 +95,144 @@ uv run .../generate_image.py \
 
 ---
 
+## Brand-as-Skill — catálogo completo de outputs
+
+Esta skill **es la marca de Growth4U como infraestructura**. No solo produce
+los 5 carruseles HTML; mantiene TODA la layer de producción visual del
+cliente. Las skills de contenido (newsletter, social-writer, seo-content,
+etc.) NUNCA llaman directamente a esta skill — leen los artefactos que esta
+skill ha dejado en `brand/growth4u/brand-book/visual-identity/` a través de
+`content-image` (ver `_system/content-engine-architecture.md`).
+
+Esta skill es el **productor**; `content-image` es el **consumidor**; los
+writers son los **autores**. La marca evoluciona en un solo sitio: este
+skill + la carpeta `visual-identity/`.
+
+### Catálogo de artefactos que produce
+
+| Categoría | Path | Consumidor MC | Frecuencia |
+|---|---|---|---|
+| Carousel templates (5) | `templates/{linkedin-quote, linkedin-9-slide, instagram-3-slide, blog-post, blog-title}/` | `render-carousel` | Cada vez que cambia paleta/voz visual |
+| Newsletter header | `templates/newsletter-header/` | `render-carousel` (single-slide) o `generate-image` con prompt parametrizado | Idem |
+| Ad creative templates | `templates/ad-{linkedin, meta, google}/` | `render-carousel` | Idem |
+| Web hero templates | `templates/web-hero/` | `render-carousel` o exportable HTML | Idem |
+| Style references | `style-references/*.{webp,png}` | `generate-image` (auto-inyectadas en el prompt) | Idem |
+| Manifest | `manifest.json` | `content-image` (lo lee para saber qué está disponible) | Cada cambio de la skill |
+
+`design-tokens.json` y `visual-identity.current.md` no están en esta tabla
+porque los escribe el meta-skill `visual-identity` (Foundation L5), no esta
+skill. Esta skill los **lee** como input.
+
+### Manifest format (`manifest.json`)
+
+Lo escribe esta skill al final de cada ejecución. Es el índice que
+`content-image` consulta antes de cualquier operación:
+
+```json
+{
+  "brand_slug": "growth4u",
+  "schema_version": "1",
+  "updated_at": "2026-05-06T12:00:00Z",
+  "design_tokens_path": "design-tokens.json",
+  "visual_identity_md_path": "visual-identity.current.md",
+  "templates": {
+    "linkedin-quote": {
+      "category": "carousel",
+      "channel": "linkedin",
+      "size": "1080x1350",
+      "slides": 1,
+      "files": ["template.html", "meta.json"],
+      "use_case": "Quote post con cita fuerte"
+    },
+    "linkedin-9-slide": {
+      "category": "carousel",
+      "channel": "linkedin",
+      "size": "1080x1350",
+      "slides": 9,
+      "files": ["slide-cover.html", "slide-body.html", "slide-cta.html", "meta.json"],
+      "use_case": "Carrusel cover + 7 body + CTA"
+    },
+    "instagram-3-slide": { "...": "..." },
+    "blog-post":         { "...": "..." },
+    "blog-title":        { "...": "..." },
+    "newsletter-header": {
+      "category": "header",
+      "channel": "newsletter",
+      "size": "1200x600",
+      "slides": 1,
+      "files": ["template.html", "meta.json"],
+      "use_case": "Hero image embebido al top del email"
+    }
+  },
+  "style_references": {
+    "prompt_prefix": "Editorial clean line art style, navy (#032149) outlines on white background with teal (#0faec1) and purple (#6351d5) accents, integrated illustration not pegote.",
+    "reference_files": [
+      "style-references/hero-editorial-1.webp",
+      "style-references/hero-editorial-2.webp",
+      "style-references/character-alfonso-presenting.webp",
+      "style-references/character-alfonso-laptop.webp",
+      "style-references/illustration-system-flywheel.webp"
+    ]
+  }
+}
+```
+
+`content-image`:
+- Lee `style_references.prompt_prefix` y lo prepende al prompt del usuario.
+- Pasa una de las `reference_files` (la más relevante por contexto) como `--input-image` a nano-banana-pro / equivalente.
+- Verifica `templates[<id>]` antes de invocar `render-carousel`.
+
+### Style references — qué imágenes incluir
+
+Selecciona 5-10 imágenes ya producidas para Growth4U que mejor representen
+el estilo aprobado. Mezcla:
+
+- 2-3 hero/headers ya validados por el cliente (los que más le gustan).
+- 2-3 personajes en poses canónicas (Alfonso presentando, Martín laptop, Philippe pensando).
+- 1-2 ilustraciones temáticas (sistemas/flywheels) para cuando el contenido pide diagrama.
+- 1 ejemplo "anti-pegote" mostrando integración personaje + fondo en una sola imagen.
+
+Cada una optimizada a WebP 1200px max (ver
+`_system/image-optimization.md`). NO subir PNGs originales sin comprimir —
+cada referencia se usa como `--input-image` y se pega al prompt completo
+en cada generación.
+
+### Newsletter-header (ejemplo de template no-carrusel)
+
+Estructura idéntica a un carrusel single-slide pero con tamaño 1200×600 (o
+ajustado al ancho de tu plataforma de email):
+
+```
+templates/newsletter-header/
+├── meta.json           # slots: kicker, title, accent_color override
+└── template.html       # 1200×600, gradient brand + headline
+```
+
+Slots típicos: `kicker` (eyebrow), `headline` (titular del número), opcional
+`hero_image_url` (un personaje a la derecha). Igual sintaxis `{{slot.x}}`,
+`{{brand.primary}}`, etc., que el resto. `render-carousel` con
+`templateId: "newsletter-header"` produce un PNG 1200×600 que aterriza en
+el `media[]` del draft de newsletter.
+
+### Cuándo extender el catálogo
+
+Añade una nueva categoría a `templates/` cuando un canal nuevo entra en el
+playbook del cliente (ej. el cliente arranca podcast → `templates/podcast-cover/`).
+Reglas:
+
+1. Decide tamaño nativo del canal y si es single o multi-slide.
+2. Crea `template.html` siguiendo el sistema visual SC-G4U documentado abajo.
+3. Crea `meta.json` con los slots esperados.
+4. Añade entrada al `manifest.json`.
+5. Reportar al usuario que el nuevo formato está disponible vía `content-image`.
+
+NO ANYADAS plantillas que no formen parte de la guía visual del cliente.
+Si una pieza necesita un tratamiento puntual one-off, eso es una imagen
+generada con `content-image` Modo 1 (generate-image) usando las
+style-references — no es una plantilla nueva.
+
+---
+
 ## 🎨 Mission Control — Carousel templates HTML
 
 Mission Control consume **plantillas HTML por canal** que viven SIEMPRE en
@@ -110,14 +248,27 @@ brand/{slug}/brand-book/visual-identity/templates/{template-id}/
 **Las plantillas son output obligatorio de esta skill.** No hay defaults
 del sistema ni fallbacks genéricos. Si esta skill no se ha ejecutado para
 una brand, la brand no tiene plantillas y Mission Control muestra un empty
-state pidiendo lanzar `visual-identity` para crearlas.
+state pidiendo lanzar la task T07 (`growth4u-visual-generator`) en
+P14-Content-Engine para crearlas.
 
-Las plantillas viven dentro del pillar `visual-identity` de Foundation, así
-que el cliente las edita desde MC → Foundation → Brand Book → Visual
-Identity → templates → click sobre el archivo HTML → vista 2-col (HTML
-editor a la izquierda + iframe preview en vivo a la derecha). El thread de
-chat del pillar visual-identity es el que recibe pedidos de cambios — esta
-skill NO crea threads ni tasks separados por plantilla.
+Las plantillas viven dentro del pillar `visual-identity` de Foundation
+como artefactos en disco, pero la **operación** sobre ellas (crear, editar,
+extender el catálogo, refrescar) ocurre en el **thread de esta skill** — la
+task T07 de P14-Content-Engine. El usuario las edita desde MC → Foundation
+→ Brand Book → Visual Identity → templates → click sobre el archivo HTML
+→ vista 2-col (HTML editor + iframe preview en vivo). Los pedidos de
+cambios por chat van al thread de T07 (`growth4u-visual-generator`), NO
+al thread del pillar visual-identity.
+
+Reparto explícito de threads:
+
+| Thread | Rol | Cuándo se usa |
+|---|---|---|
+| Foundation L5 → visual-identity (pillar thread) | Definir DNA visual + generar el child skill | Solo onboarding. Cierra cuando el child existe. |
+| P14-Content-Engine → T07 (`growth4u-visual-generator` thread) | Bootstrap + refrescos + extensiones del catálogo + ediciones de plantillas | Permanente |
+
+Esta skill NO crea threads ni tasks separados por plantilla. Todas las
+ediciones conviven en T07.
 
 Las 5 plantillas oficiales que esta skill mantiene:
 
@@ -299,10 +450,11 @@ demasiado pequeño el título"):
 1. Editar directamente desde MC UI → Foundation → Brand Book → Visual
    Identity → templates → click sobre el archivo HTML → vista 2-col (HTML
    editor a la izquierda + iframe preview en vivo a la derecha) → Guardar.
-2. Alternativa por chat: usar el thread del pillar visual-identity y pedir
-   el cambio. Esta skill (o `visual-identity` parent) edita el archivo
+2. Alternativa por chat: usar el thread de T07 (`growth4u-visual-generator`)
+   en P14-Content-Engine y pedir el cambio. Esta skill edita el archivo
    `brand/{slug}/brand-book/visual-identity/templates/{id}/template.html`
-   directamente.
+   directamente. **NO usar el thread del pillar visual-identity** para esto;
+   ese thread está reservado al meta-skill (DNA visual / onboarding).
 3. Cambios de diseño que aplican a TODAS las brands se propagan
    re-ejecutando esta skill (o el `[brand]-visual-generator` equivalente)
    por brand. No hay seed compartido — cada brand mantiene sus propios

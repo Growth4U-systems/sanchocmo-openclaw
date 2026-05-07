@@ -1,0 +1,5 @@
+# Dispatch Channel Config — Paymatico
+# Where editorial dispatch notifications are sent
+
+transport: discord
+channel_id: "1477995838092476477"  # Paymatico insights channel

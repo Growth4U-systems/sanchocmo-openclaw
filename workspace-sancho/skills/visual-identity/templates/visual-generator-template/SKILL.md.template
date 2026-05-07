@@ -12,7 +12,61 @@ metadata:
 
 # {{brand_name}} Visual Generator
 
-> Create on-brand images and illustrations using Nanobanana API
+> Brand-as-Skill: maintains the full visual production layer for {{brand_name}}.
+> NOT just image generation — produces the catalog of templates, style
+> references, and the manifest that `content-image` consumes downstream.
+
+## Brand-as-Skill — outputs catalog (obligatorio)
+
+This skill is the productor of {{brand_name}}'s visual artifacts. The
+`content-image` skill is the consumer; writer skills (newsletter,
+social-writer, seo-content, etc.) NEVER call this skill directly — they
+go through `content-image`. See
+`_system/content-engine-architecture.md` for the full flow.
+
+This skill writes to `brand/{{brand_slug}}/brand-book/visual-identity/`:
+
+| Path | Purpose |
+|---|---|
+| `templates/{linkedin-quote, linkedin-9-slide, instagram-3-slide, blog-post, blog-title}/` | 5 mandatory carousel templates |
+| `templates/newsletter-header/` | Email hero (when newsletter channel is active) |
+| `templates/{ad-*, web-hero, podcast-cover, ...}/` | Extended categories per client playbook |
+| `style-references/*.webp` | 5-10 reference images for image-gen prompts |
+| `manifest.json` | Index `content-image` consults before any operation |
+
+`design-tokens.json`, `visual-identity.current.md`, and the brand logo are
+written by the parent meta-skill `visual-identity` (Foundation L5), NOT by
+this skill. This skill READS them as input.
+
+`manifest.json` schema (write at the end of every run):
+
+```json
+{
+  "brand_slug": "{{brand_slug}}",
+  "schema_version": "1",
+  "updated_at": "ISO-8601",
+  "design_tokens_path": "design-tokens.json",
+  "visual_identity_md_path": "visual-identity.current.md",
+  "templates": {
+    "<id>": {
+      "category": "carousel|header|ad|hero|cover",
+      "channel": "linkedin|instagram|blog|newsletter|...",
+      "size": "WIDTHxHEIGHT",
+      "slides": 1,
+      "files": ["template.html", "meta.json", "..."],
+      "use_case": "human-readable"
+    }
+  },
+  "style_references": {
+    "prompt_prefix": "Brand-specific style description that gets prepended to every image-gen prompt.",
+    "reference_files": ["style-references/...webp", "..."]
+  }
+}
+```
+
+For a worked example see
+`workspace-sancho/skills/growth4u-visual-generator/SKILL.md` (section
+"Brand-as-Skill — catálogo completo de outputs").
 
 ## What This Skill Does
 

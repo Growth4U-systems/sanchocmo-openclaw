@@ -4,7 +4,15 @@
  *   GET    ?slug=X&parentTaskId=Y                                   → list
  *   GET    ?slug=X&parentTaskId=Y&id=Z                              → single
  *   PATCH  { slug, parentTaskId, id, status?, pipeline_state?, ... } → update status and/or fields
- *   POST   { slug, parentTaskId, id, action: "attach-document" | "detach-document", document?, path? }
+ *                                                                     (escape hatch — UI uses POST actions)
+ *   POST   { slug, parentTaskId, id, action, ... }
+ *     Actions:
+ *       "attach-document" / "detach-document"          → manage CT.documents[]
+ *       "approve-draft"                                → Draft → Pending Media
+ *       "approve-media"                                → Pending Media (media-review) → Ready
+ *       "publish"                                      → Ready → Published
+ *       "discard"                                      → any active state → Discarded
+ *       "defer"                                        → any active state → Deferred
  *
  * ContentTasks are nested under a parent Task with `type === "content"`.
  * Storage: parent's `content_tasks[]` field in `tasks.json`.
@@ -22,7 +30,7 @@ import {
   reconcileContentTaskState,
   ContentTaskUpdateInput,
 } from "@/lib/data/content-tasks";
-import { aggregateDraftStatus, getDraftStatuses } from "@/lib/data/drafts";
+import { aggregateDraftStatus, getDraftStatuses, listDrafts } from "@/lib/data/drafts";
 import { ContentTaskStatus, ContentTaskPipelineState, VALID_CONTENT_TASK_STATUSES, type ContentTask } from "@/types";
 
 /**
@@ -115,7 +123,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   }
 
   if (req.method === "POST") {
-    const { parentTaskId, id, action, document, path } = req.body || {};
+    const { parentTaskId, id, action, document, path: docPath } = req.body || {};
     if (!parentTaskId || !id || !action) {
       return res.status(400).json({ error: "Missing parentTaskId, id or action" });
     }
@@ -126,10 +134,76 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         return res.status(200).json({ ok: true, contentTask: updated });
       }
       if (action === "detach-document") {
-        if (!path) return res.status(400).json({ error: "Missing path" });
-        const updated = removeDocumentFromContentTask(slug, parentTaskId, id, path);
+        if (!docPath) return res.status(400).json({ error: "Missing path" });
+        const updated = removeDocumentFromContentTask(slug, parentTaskId, id, docPath);
         return res.status(200).json({ ok: true, contentTask: updated });
       }
+
+      // State machine actions — each validates the source state and walks the
+      // CT through the canonical transition. Returns 409 (Conflict) when the
+      // CT isn't in an allowed source state.
+      const ct = findContentTask(slug, parentTaskId, id);
+      if (!ct) return res.status(404).json({ error: "ContentTask not found" });
+
+      if (action === "approve-draft") {
+        if (ct.status !== "Draft") {
+          return res.status(409).json({
+            error: `approve-draft requires status="Draft" (current: "${ct.status}")`,
+          });
+        }
+        // Detect existing media so we land in the right pipeline_state. Media
+        // can be present already if the user attached an image while reviewing
+        // the text — no need to send them through generating-media in that case.
+        const drafts = listDrafts(slug, ct.idea_id).filter(
+          (d) => (d.meta.kind ?? "channel-draft") === "channel-draft",
+        );
+        const hasMedia = drafts.some((d) => (d.meta.media?.length ?? 0) > 0);
+        const pipelineState: ContentTaskPipelineState = hasMedia ? "media-review" : "generating-media";
+        const updated = setContentTaskStatus(slug, parentTaskId, id, "Pending Media", pipelineState);
+        return res.status(200).json({ ok: true, contentTask: updated });
+      }
+
+      if (action === "approve-media") {
+        if (ct.status !== "Pending Media") {
+          return res.status(409).json({
+            error: `approve-media requires status="Pending Media" (current: "${ct.status}")`,
+          });
+        }
+        // Don't let users skip media: require at least one asset on any draft.
+        const drafts = listDrafts(slug, ct.idea_id).filter(
+          (d) => (d.meta.kind ?? "channel-draft") === "channel-draft",
+        );
+        const hasMedia = drafts.some((d) => (d.meta.media?.length ?? 0) > 0);
+        if (!hasMedia) {
+          return res.status(409).json({
+            error: "approve-media requires at least one media asset attached to the draft(s)",
+          });
+        }
+        const updated = setContentTaskStatus(slug, parentTaskId, id, "Ready", null);
+        return res.status(200).json({ ok: true, contentTask: updated });
+      }
+
+      if (action === "publish") {
+        if (ct.status !== "Ready") {
+          return res.status(409).json({
+            error: `publish requires status="Ready" (current: "${ct.status}")`,
+          });
+        }
+        const updated = setContentTaskStatus(slug, parentTaskId, id, "Published", null);
+        return res.status(200).json({ ok: true, contentTask: updated });
+      }
+
+      if (action === "discard" || action === "defer") {
+        if (ct.status === "Published" || ct.status === "Discarded" || ct.status === "Deferred") {
+          return res.status(409).json({
+            error: `${action} not allowed from terminal status "${ct.status}"`,
+          });
+        }
+        const target: ContentTaskStatus = action === "discard" ? "Discarded" : "Deferred";
+        const updated = setContentTaskStatus(slug, parentTaskId, id, target, null);
+        return res.status(200).json({ ok: true, contentTask: updated });
+      }
+
       return res.status(400).json({ error: `Unknown action: ${action}` });
     } catch (e) {
       return res.status(400).json({ error: (e as Error).message });

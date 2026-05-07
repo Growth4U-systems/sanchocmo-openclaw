@@ -178,11 +178,12 @@ export function setContentTaskStatus(
   if (pipelineState === null) delete ct.pipeline_state;
   else if (pipelineState !== undefined) ct.pipeline_state = pipelineState;
 
-  // Terminal-state timestamps
+  // Phase-entry timestamps (terminal + landmark transitions)
   if (status === "Published" && !ct.published_at) ct.published_at = ct.updated_at;
   if (status === "Discarded" && !ct.discarded_at) ct.discarded_at = ct.updated_at;
   if (status === "Deferred" && !ct.deferred_at) ct.deferred_at = ct.updated_at;
   if (status === "Approved" && !ct.approved_at) ct.approved_at = ct.updated_at;
+  if (status === "Pending Media" && !ct.pending_media_at) ct.pending_media_at = ct.updated_at;
 
   saveProjectTasks(file);
   return ct;
@@ -202,12 +203,13 @@ export function setContentTaskStatus(
  *   clarify-needed   → Approved / clarify-needed
  *   drafting         → Approved / drafting
  *   draft            → Draft / null
- *   approved         → Review / null
+ *   approved         → Pending Media / generating-media (user has approved text)
  *   published        → Published / null
  *
- * Manual states (Media, Review, Ready, Discarded, Deferred) and the terminal
- * Published state are respected — once a human moves the CT past Draft, the
- * pipeline stops auto-managing it.
+ * Human-driven states (Pending Media past `generating-media`, Ready,
+ * Discarded, Deferred) and the terminal Published state are respected —
+ * once the user advances past the draft-text review, the pipeline stops
+ * auto-managing the CT.
  */
 export function inferContentTaskState(
   current: { status: ContentTaskStatus; pipeline_state?: ContentTaskPipelineState | null },
@@ -217,10 +219,14 @@ export function inferContentTaskState(
     current.status === "Discarded" ||
     current.status === "Deferred" ||
     current.status === "Published" ||
-    current.status === "Media" ||
-    current.status === "Review" ||
     current.status === "Ready"
   ) {
+    return null;
+  }
+  // Once the CT enters Pending Media with media-review (user has the media
+  // in front of them), don't let an out-of-band draft.status flip drag the
+  // CT back. The "approved" → Pending Media inference only seeds the lane.
+  if (current.status === "Pending Media" && current.pipeline_state === "media-review") {
     return null;
   }
   if (!aggregated) return null;
@@ -241,7 +247,7 @@ export function inferContentTaskState(
       target = { status: "Draft", pipeline_state: null };
       break;
     case "approved":
-      target = { status: "Review", pipeline_state: null };
+      target = { status: "Pending Media", pipeline_state: "generating-media" };
       break;
     case "published":
       target = { status: "Published", pipeline_state: null };
@@ -424,12 +430,14 @@ export function findContentTaskByIdAcrossProjects(
  *
  * Promotion rules (least-advanced channel wins):
  *   - all `published`           → CT.status = "Published"
- *   - all in [approved+]        → CT.status = "Ready"
- *   - all in [draft+]           → CT.status = "Review"
- *   - all in [drafting+]        → CT.status = "Draft"
+ *   - all in [approved+]        → CT.status = "Pending Media" (text approved by user)
+ *   - all in [draft+]           → CT.status = "Draft" (text drafted, awaiting review)
+ *   - all in [drafting+]        → leave CT in current Approved sub-state
  *   - else                      → leave CT.status untouched
  *
- * No-op if the CT is currently in a terminal state (Discarded/Deferred).
+ * Human-driven downstream states (Ready, Discarded, Deferred) are respected.
+ * For Pending Media we only auto-promote up to the generating-media sub-state;
+ * the user's explicit approve-media action moves it to Ready.
  */
 export function maybePromoteContentTaskFromDrafts(
   slug: string,
@@ -438,7 +446,14 @@ export function maybePromoteContentTaskFromDrafts(
   const found = findContentTaskByIdAcrossProjects(slug, contentTaskId);
   if (!found) return null;
   const { ct, parentTaskId } = found;
-  if (ct.status === "Discarded" || ct.status === "Deferred") return ct;
+  if (
+    ct.status === "Discarded" ||
+    ct.status === "Deferred" ||
+    ct.status === "Ready" ||
+    ct.status === "Published"
+  ) {
+    return ct;
+  }
 
   // Read every channel's frontmatter status. Lazy require to avoid a
   // circular import at module load (drafts.ts ↔ content-tasks.ts).
@@ -454,32 +469,42 @@ export function maybePromoteContentTaskFromDrafts(
   if (values.length === 0) return ct;
   const min = values.reduce((acc, s) => (RANK[s] ?? 0) < (RANK[acc] ?? 0) ? s : acc, values[0]);
 
-  let target: ContentTaskStatus | null = null;
-  if (min === "published") target = "Published";
-  else if (min === "approved") target = "Ready";
-  else if (min === "draft") target = "Review";
-  else if (min === "drafting") target = "Draft";
+  let target: { status: ContentTaskStatus; pipeline_state: ContentTaskPipelineState | null } | null = null;
+  if (min === "published") target = { status: "Published", pipeline_state: null };
+  else if (min === "approved") target = { status: "Pending Media", pipeline_state: "generating-media" };
+  else if (min === "draft") target = { status: "Draft", pipeline_state: null };
+  // For "drafting"/"researching"/"clarify-needed"/"pending" we leave the CT
+  // alone — `inferContentTaskState` already handles the Approved sub-states.
 
-  if (target && ct.status !== target) {
-    return setContentTaskStatus(slug, parentTaskId, contentTaskId, target);
+  if (target && (ct.status !== target.status || (ct.pipeline_state ?? null) !== target.pipeline_state)) {
+    // Don't drag the CT backwards: if user has already moved it to
+    // Pending Media/media-review, don't reset to generating-media.
+    if (
+      ct.status === "Pending Media" &&
+      ct.pipeline_state === "media-review" &&
+      target.status === "Pending Media"
+    ) {
+      return ct;
+    }
+    return setContentTaskStatus(slug, parentTaskId, contentTaskId, target.status, target.pipeline_state);
   }
   return ct;
 }
 
 /**
- * Promote a ContentTask into the `Media` lane the moment a draft picks up
- * its first media asset (image, carousel PDF, etc.). Mirrors
- * `maybePromoteContentTaskFromDrafts` but reacts to media[] changes instead
- * of draft.status changes.
+ * Move the `Pending Media` pipeline_state forward as media is added or
+ * removed. Reacts to `media[]` changes on the per-channel drafts. Does NOT
+ * change the top-level status — entry into `Pending Media` is driven by the
+ * user's explicit "approve draft text" action; exit (to `Ready`) is driven
+ * by the user's explicit "approve media" action.
  *
- * Behavior matrix:
- *   - CT in {Draft, Approved}    → has media on any channel → bump to "Media"
- *   - CT in {Media}              → no media anywhere → revert to whatever
- *                                   `maybePromoteContentTaskFromDrafts` would
- *                                   choose (typically "Draft" or "Review")
- *   - CT in {Review, Ready,
- *            Published, Discarded,
- *            Deferred, New}      → no auto change. Past Media is human-driven.
+ * Behavior:
+ *   - CT in `Pending Media/generating-media` + media added on any channel
+ *       → advance pipeline_state to `media-review`.
+ *   - CT in `Pending Media/media-review` + all media removed everywhere
+ *       → roll back pipeline_state to `generating-media`.
+ *   - CT in any other status → no change. Adding media on a `Draft` does
+ *     NOT auto-bump the CT to Pending Media (that's an explicit user action).
  *
  * Called from `attachMediaToDraft` and the DELETE media endpoint.
  */
@@ -491,10 +516,7 @@ export function maybePromoteContentTaskFromMedia(
   if (!found) return null;
   const { ct, parentTaskId } = found;
 
-  // Only auto-manage Draft, Approved, and Media. Everything else is human-driven.
-  if (ct.status !== "Draft" && ct.status !== "Approved" && ct.status !== "Media") {
-    return ct;
-  }
+  if (ct.status !== "Pending Media") return ct;
 
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { listDrafts } = require("./drafts") as typeof import("./drafts");
@@ -504,28 +526,11 @@ export function maybePromoteContentTaskFromMedia(
   );
   const hasMedia = channelDrafts.some((d) => (d.meta.media?.length ?? 0) > 0);
 
-  if (hasMedia && ct.status !== "Media") {
-    return setContentTaskStatus(slug, parentTaskId, contentTaskId, "Media");
+  if (hasMedia && ct.pipeline_state !== "media-review") {
+    return setContentTaskStatus(slug, parentTaskId, contentTaskId, "Pending Media", "media-review");
   }
-  if (!hasMedia && ct.status === "Media") {
-    // No media anywhere → revert based on the aggregate draft.status.
-    // We bypass `inferContentTaskState` (which treats Media as terminal) and
-    // map directly to the simplest sensible state.
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { getDraftStatuses } = require("./drafts") as typeof import("./drafts");
-    const statuses = getDraftStatuses(slug, ct.idea_id, ct.target_channels || []);
-    const RANK: Record<string, number> = {
-      pending: 0, researching: 1, "clarify-needed": 1,
-      drafting: 2, draft: 3, approved: 4, published: 5,
-    };
-    const values = Object.values(statuses);
-    if (values.length === 0) return ct;
-    const min = values.reduce((acc, s) => (RANK[s] ?? 0) < (RANK[acc] ?? 0) ? s : acc, values[0]);
-    let target: ContentTaskStatus = "Draft";
-    if (min === "approved") target = "Review";
-    else if (min === "draft") target = "Draft";
-    else if (min === "drafting") target = "Draft";
-    return setContentTaskStatus(slug, parentTaskId, contentTaskId, target);
+  if (!hasMedia && ct.pipeline_state !== "generating-media") {
+    return setContentTaskStatus(slug, parentTaskId, contentTaskId, "Pending Media", "generating-media");
   }
   return ct;
 }

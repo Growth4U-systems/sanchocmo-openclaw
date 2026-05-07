@@ -1,10 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/router";
 import Head from "next/head";
 import Link from "next/link";
 import dynamic from "next/dynamic";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { useSlugSync } from "@/hooks/useSlugSync";
 import { useDraft, useSaveDraft } from "@/hooks/useDraft";
@@ -13,21 +15,27 @@ import {
   useUpdateContentTask,
   useUpdateContentTaskStatus,
   useDetachDocumentFromContentTask,
+  useApproveDraft,
+  useApproveMedia,
+  usePublishContentTask,
+  useDiscardContentTask,
+  useDeferContentTask,
 } from "@/hooks/useContentTasks";
 import { useOpenChat } from "@/hooks/useChat";
-import { useChatStore } from "@/stores/chat";
 import { buildContentTaskThread } from "@/lib/chat-openers";
 import { ChannelPreview, isPlaceholderBody } from "@/components/content/channel-preview";
-import { MediaPanel } from "@/components/content/MediaPanel";
+import { MediaEditor } from "@/components/content/MediaEditor";
+import { MediaSummaryWidget } from "@/components/content/MediaSummaryWidget";
 import { PublishBar } from "@/components/content/PublishBar";
 import { SelfQAPanel } from "@/components/content/self-qa-panel";
-import { SkillPicker } from "@/components/shared/skill-picker";
-import { cn } from "@/lib/utils";
-import {
-  VALID_CONTENT_TASK_STATUSES,
-  type ContentTask,
-  type ContentTaskStatus,
-} from "@/types";
+import type { ContentTaskStatus } from "@/types";
+import { EditorHeader } from "@/components/content/editor-v2/EditorHeader";
+import { StatusStepper, STEPS } from "@/components/content/editor-v2/StatusStepper";
+import { DocRail, type RailDoc, type RailOutput } from "@/components/content/editor-v2/DocRail";
+import { QAInline } from "@/components/content/editor-v2/QAInline";
+import { DocHeader } from "@/components/content/editor-v2/DocHeader";
+import styles from "@/components/content/editor-v2/editor-v2.module.css";
+
 const MarkdownEditor = dynamic(
   () => import("@/components/foundation/markdown-editor").then((m) => m.MarkdownEditor),
   { ssr: false, loading: () => <p className="text-sm text-muted-foreground p-6">Cargando editor...</p> },
@@ -43,17 +51,75 @@ const TARGET_CHANNEL_OPTIONS = [
   "tiktok",
 ];
 
-const CT_STATUS_STYLES: Record<string, string> = {
-  New: "bg-[#F1F2F4] text-[#5C6470] border-[#D8DCE0]",
-  Approved: "bg-[#FEF3C7] text-[#92400E] border-[#FCD34D]",
-  Draft: "bg-[#DBEAFE] text-[#1E40AF] border-[#93C5FD]",
-  Media: "bg-[#FCE7F3] text-[#9D174D] border-[#F9A8D4]",
-  Review: "bg-[#EDE9FE] text-[#5B21B6] border-[#C4B5FD]",
-  Ready: "bg-[#D1FAE5] text-[#065F46] border-[#6EE7B7]",
-  Published: "bg-[#A7F3D0] text-[#064E3B] border-[#34D399]",
-  Discarded: "bg-[#E5E7EB] text-[#6B7280] border-[#D1D5DB]",
-  Deferred: "bg-[#FFEDD5] text-[#9A3412] border-[#FDBA74]",
-};
+const SPECIAL_DOCS: { key: string; label: string; alwaysOn?: boolean }[] = [
+  { key: "proposal", label: "Propuesta" },
+  { key: "research", label: "Research" },
+  { key: "clarify", label: "Clarify" },
+  // `media` is virtual — there's no markdown doc on disk. Always shown so the
+  // user can manage assets for any channel from a single place.
+  { key: "media", label: "Media", alwaysOn: true },
+];
+
+const RAIL_STORAGE_KEY = "mc.editor.railCollapsed";
+
+/**
+ * Pull score / sources / búsquedas from a QA report markdown body.
+ * Two formats coexist in the wild:
+ *   1. Leading HTML comment: `<!-- ... | fuentes: 19 | búsquedas: 12 | qa-score: 8.5 -->`
+ *   2. Inline markdown: `**QA Score:** 8.5/10`, `19 fuentes`, `12 queries`,
+ *      `**Búsquedas ejecutadas:** 12`.
+ * We try every pattern and take the first match per field.
+ */
+function parseQaReport(body: string | undefined | null) {
+  if (!body) return null;
+
+  const SCORE_RES = [
+    /\*\*\s*qa\s*score\s*:?\s*\*\*\s*(\d+(?:[.,]\d+)?)/i,   // `**QA Score:** 8.5`
+    /qa[-\s]?score\s*[:=]\s*(\d+(?:[.,]\d+)?)/i,            // `qa-score: 8.5` / `QA Score: 8.5`
+  ];
+  const SOURCE_RES = [
+    /\*\*\s*fuentes\s*:?\s*\*\*\s*(\d+)/i,                  // `**Fuentes:** 19`
+    /(\d+)\s+fuentes/i,                                     // `19 fuentes`
+    /fuentes?\s*[:=]\s*(\d+)/i,                             // `fuentes: 19`
+  ];
+  const SEARCH_RES = [
+    /\*\*\s*b[úu]squedas[^*]*\*\*\s*(\d+)/i,                // `**Búsquedas ejecutadas:** 12`
+    /(\d+)\s+(?:b[úu]squedas|queries)/i,                    // `12 búsquedas` / `12 queries`
+    /b[úu]squedas?\s*[:=]\s*(\d+)/i,                        // `búsquedas: 12`
+  ];
+
+  const firstMatch = (patterns: RegExp[]): string | undefined => {
+    for (const re of patterns) {
+      const m = body.match(re);
+      if (m) return m[1];
+    }
+    return undefined;
+  };
+
+  const scoreRaw = firstMatch(SCORE_RES);
+  const sourcesRaw = firstMatch(SOURCE_RES);
+  const searchesRaw = firstMatch(SEARCH_RES);
+
+  if (!scoreRaw && !sourcesRaw && !searchesRaw) return null;
+  return {
+    score: scoreRaw ? parseFloat(scoreRaw.replace(",", ".")) : undefined,
+    sources: sourcesRaw ? parseInt(sourcesRaw, 10) : undefined,
+    searches: searchesRaw ? parseInt(searchesRaw, 10) : undefined,
+  };
+}
+
+function ownerInitials(owner?: string | null): string | undefined {
+  if (!owner) return undefined;
+  const parts = owner.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return undefined;
+  return (parts[0][0] + (parts[1]?.[0] || "")).toUpperCase();
+}
+
+function previousStatus(s: ContentTaskStatus): ContentTaskStatus | null {
+  const idx = STEPS.findIndex((x) => x.id === s);
+  if (idx <= 0) return null;
+  return STEPS[idx - 1].id;
+}
 
 export default function DraftFullScreenPage() {
   const slug = useSlugSync() || "";
@@ -70,22 +136,44 @@ export default function DraftFullScreenPage() {
   );
   const ideaId = ct?.idea_id || null;
 
-  const { data: draft, isLoading, error } = useDraft(slug, ideaId, channel || null);
+  // The "media" tab is virtual — no markdown doc on disk. Skip the draft
+  // fetch so we don't generate a noisy 404.
+  const draftChannel = channel === "media" ? null : channel || null;
+  const { data: draft, isLoading, error } = useDraft(slug, ideaId, draftChannel);
+  const { data: qaReport } = useDraft(slug, ideaId, ideaId ? "QA-REPORT-research" : null);
   const saveDraft = useSaveDraft();
   const updateContentTask = useUpdateContentTask();
   const updateContentTaskStatus = useUpdateContentTaskStatus();
   const detachDoc = useDetachDocumentFromContentTask();
+  const approveDraft = useApproveDraft();
+  const approveMedia = useApproveMedia();
+  const publishContentTask = usePublishContentTask();
+  const discardContentTask = useDiscardContentTask();
+  const deferContentTask = useDeferContentTask();
   const openChat = useOpenChat();
-  const sidebarOpen = useChatStore((s) => s.sidebarOpen);
 
   const [editingBody, setEditingBody] = useState(false);
-  const [detailsOpen, setDetailsOpen] = useState(false);
-  const [editingMeta, setEditingMeta] = useState(false);
-  const [metaDraft, setMetaDraft] = useState<Partial<ContentTask>>({});
-  const [ctStatusOpen, setCtStatusOpen] = useState(false);
+  const [bodyMode, setBodyMode] = useState<"preview" | "md">("preview");
+  const [railCollapsed, setRailCollapsed] = useState(false);
+  const [channelEditorOpen, setChannelEditorOpen] = useState(false);
+  const [draftChannels, setDraftChannels] = useState<string[]>([]);
   const [toast, setToast] = useState<string | null>(null);
 
-  // Sync chat sidebar to the Content Task thread on mount and when CT changes.
+
+  // Restore rail collapsed state once.
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(RAIL_STORAGE_KEY);
+      if (saved === "1") setRailCollapsed(true);
+    } catch { /* ignore */ }
+  }, []);
+  useEffect(() => {
+    try {
+      localStorage.setItem(RAIL_STORAGE_KEY, railCollapsed ? "1" : "0");
+    } catch { /* ignore */ }
+  }, [railCollapsed]);
+
+  // Sync chat sidebar to the Content Task thread.
   useEffect(() => {
     if (!slug || !ct) return;
     const config = buildContentTaskThread(slug, taskId, ct.id, ct.name, projectId, {
@@ -97,22 +185,11 @@ export default function DraftFullScreenPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slug, ct?.id]);
 
-  function handleReopenChat() {
-    if (!slug || !ct) return;
-    const config = buildContentTaskThread(slug, taskId, ct.id, ct.name, projectId, {
-      skill: ct.skill,
-      status: ct.status,
-      docPath: draft?.relPath,
-    });
-    openChat(slug, config);
-  }
-
   function showToast(msg: string) {
     setToast(msg);
     setTimeout(() => setToast(null), 3500);
   }
 
-  // ── Body (markdown draft) handlers ───────────────────────────────────────
   async function handleSaveBody(body: string) {
     if (!ideaId || !channel) return;
     await saveDraft.mutateAsync({ slug, ideaId, channel, body });
@@ -120,114 +197,191 @@ export default function DraftFullScreenPage() {
     showToast("Draft guardado.");
   }
 
-  function handleSwitchChannel(nextChannel: string) {
+  function switchChannel(nextChannel: string) {
     if (nextChannel === channel) return;
     router.push(
       `/dashboard/${slug}/projects/${projectId}/tasks/${taskId}/content/${contentTaskId}/draft/${nextChannel}`,
     );
   }
 
-  // ── Metadata edit handlers ───────────────────────────────────────────────
-  function startEditMeta() {
+  // ── Stepper handlers ─────────────────────────────────────────────────────
+  const qaParsed = useMemo(() => parseQaReport(qaReport?.body), [qaReport?.body]);
+
+  const approveCurrent = useCallback(() => {
     if (!ct) return;
-    setMetaDraft({
-      name: ct.name,
-      skill: ct.skill,
-      target_channels: [...ct.target_channels],
-      owner: ct.owner,
-      scheduled_for: ct.scheduled_for,
-    });
-    setEditingMeta(true);
-    setDetailsOpen(true);
-  }
-
-  function toggleMetaChannel(ch: string) {
-    setMetaDraft((d) => {
-      const cur = new Set(d.target_channels || []);
-      if (cur.has(ch)) cur.delete(ch);
-      else cur.add(ch);
-      return { ...d, target_channels: Array.from(cur) };
-    });
-  }
-
-  function saveMeta() {
-    if (!ct || !slug) return;
-    const fields: Partial<ContentTask> = {};
-    if (metaDraft.name !== undefined && metaDraft.name !== ct.name) fields.name = metaDraft.name;
-    if (metaDraft.skill !== undefined && metaDraft.skill !== ct.skill) fields.skill = metaDraft.skill;
-    if (metaDraft.target_channels !== undefined) fields.target_channels = metaDraft.target_channels;
-    if (metaDraft.owner !== undefined && metaDraft.owner !== ct.owner) fields.owner = metaDraft.owner;
-    if (metaDraft.scheduled_for !== undefined && metaDraft.scheduled_for !== ct.scheduled_for) {
-      fields.scheduled_for = metaDraft.scheduled_for;
-    }
-    if (Object.keys(fields).length === 0) {
-      setEditingMeta(false);
-      return;
-    }
-    updateContentTask.mutate(
-      { slug, parentTaskId: taskId, id: contentTaskId, fields },
-      {
-        onSuccess: () => {
-          setEditingMeta(false);
-          showToast("Detalles guardados.");
-          // If the current channel was removed from target_channels, jump to
-          // the first remaining channel so the URL stays valid.
-          if (
-            fields.target_channels &&
-            !fields.target_channels.includes(channel) &&
-            fields.target_channels.length > 0
-          ) {
-            handleSwitchChannel(fields.target_channels[0]);
-          }
+    if (ct.status === "New") {
+      updateContentTaskStatus.mutate(
+        { slug, parentTaskId: taskId, id: contentTaskId, status: "Approved" },
+        {
+          onSuccess: () => showToast("Idea aprobada. Sancho arrancando…"),
+          onError: (e) => showToast(`Error: ${(e as Error).message}`),
         },
+      );
+    } else if (ct.status === "Draft") {
+      approveDraft.mutate(
+        { slug, parentTaskId: taskId, id: contentTaskId },
+        {
+          onSuccess: () => showToast("Texto aprobado. Adjunta o genera media."),
+          onError: (e) => showToast(`Error: ${(e as Error).message}`),
+        },
+      );
+    } else if (ct.status === "Pending Media") {
+      approveMedia.mutate(
+        { slug, parentTaskId: taskId, id: contentTaskId },
+        {
+          onSuccess: () => showToast("Media aprobada. Lista para publicar."),
+          onError: (e) => showToast(`Error: ${(e as Error).message}`),
+        },
+      );
+    } else if (ct.status === "Ready") {
+      publishContentTask.mutate(
+        { slug, parentTaskId: taskId, id: contentTaskId },
+        {
+          onSuccess: () => showToast("Publicado."),
+          onError: (e) => showToast(`Error: ${(e as Error).message}`),
+        },
+      );
+    }
+  }, [
+    ct,
+    slug,
+    taskId,
+    contentTaskId,
+    updateContentTaskStatus,
+    approveDraft,
+    approveMedia,
+    publishContentTask,
+  ]);
+
+  function revertCurrent() {
+    if (!ct) return;
+    const prev = previousStatus(ct.status);
+    if (!prev) return;
+    updateContentTaskStatus.mutate(
+      { slug, parentTaskId: taskId, id: contentTaskId, status: prev },
+      {
+        onSuccess: () => showToast(`Estado revertido a ${prev}.`),
+        onError: (e) => showToast(`Error: ${(e as Error).message}`),
       },
     );
   }
 
-  // ── Derived state ────────────────────────────────────────────────────────
-  const iteration = draft?.meta.iteration ?? 0;
-  const placeholderBody = draft ? isPlaceholderBody(draft.body) : false;
-  const channels = ct?.target_channels ?? [];
+  // Approve button config per current status
+  const approveConfig = useMemo(() => {
+    if (!ct) return null;
+    switch (ct.status) {
+      case "New":
+        return { fn: approveCurrent, label: "Aprobar", disabled: false } as const;
+      case "Approved":
+        // System-driven; no manual Aprobar.
+        return null;
+      case "Draft":
+        return { fn: approveCurrent, label: "Aprobar texto", disabled: false } as const;
+      case "Pending Media": {
+        const ready = ct.pipeline_state === "media-review";
+        return {
+          fn: approveCurrent,
+          label: "Aprobar media",
+          disabled: !ready,
+          reason: ready ? undefined : "Adjunta o genera media para aprobar",
+        } as const;
+      }
+      case "Ready":
+        return { fn: approveCurrent, label: "Publicar", disabled: false } as const;
+      default:
+        return null;
+    }
+  }, [ct, approveCurrent]);
 
-  // Special non-channel docs (proposal/research/clarify) shown as extra tabs
-  // before the per-channel drafts. We render them only when the file exists
-  // on disk (the API layer reflects this via ct.documents — entries with
-  // channel="proposal"/"research"/"clarify" are the markers).
-  const SPECIAL_TABS = useMemo(() => {
+  // Volver button: hide when previous is "New" (first step, meaningless to go back)
+  // and from terminal states.
+  const showRevert = useMemo(() => {
+    if (!ct) return false;
+    const prev = previousStatus(ct.status);
+    if (!prev || prev === "New") return false;
+    return true;
+  }, [ct]);
+
+  const isPending =
+    updateContentTaskStatus.isPending ||
+    approveDraft.isPending ||
+    approveMedia.isPending ||
+    publishContentTask.isPending;
+
+  // ── Rail data ────────────────────────────────────────────────────────────
+  const railDocs: RailDoc[] = useMemo(() => {
     const have = new Set(
       (ct?.documents || [])
-        .filter((d) => d.channel && ["proposal", "research", "clarify"].includes(d.channel))
+        .filter((d) => d.channel && SPECIAL_DOCS.some((s) => s.key === d.channel))
         .map((d) => d.channel as string),
     );
-    return [
-      { key: "proposal", label: "Propuesta", icon: "📋" },
-      { key: "research", label: "Research", icon: "🔍" },
-      { key: "clarify", label: "Clarify", icon: "❓" },
-    ].filter((t) => have.has(t.key));
-  }, [ct]);
-  const tabs = useMemo(
-    () => [
-      ...SPECIAL_TABS,
-      ...channels.map((ch) => ({ key: ch, label: ch, icon: "✍️" })),
-    ],
-    [SPECIAL_TABS, channels],
-  );
-  const isSpecialChannel = ["proposal", "research", "clarify"].includes(channel);
-  const ctStatusClass = useMemo(() => {
-    if (!ct) return "";
-    return CT_STATUS_STYLES[ct.status] || "bg-muted text-muted-foreground border-border";
+    return SPECIAL_DOCS.filter((d) => d.alwaysOn || have.has(d.key)).map((d) => ({
+      id: d.key,
+      label: d.label,
+      done: d.alwaysOn ? false : true,
+    }));
   }, [ct]);
 
-  // Documents: split between drafts (already shown via channel switcher) and
-  // attachments (research, sources, anything Escudero attached as subproducts).
+  const railOutputs: RailOutput[] = useMemo(() => {
+    const channels = ct?.target_channels ?? [];
+    return channels.map((c) => ({
+      id: c,
+      label: c,
+      active: c === channel,
+      live: ct?.draft_statuses?.[c] === "drafting",
+    }));
+  }, [ct, channel]);
+
+  // ── Derived ──────────────────────────────────────────────────────────────
+  const isSpecialChannel = SPECIAL_DOCS.some((s) => s.key === channel);
+  const docLabel = useMemo(() => {
+    const s = SPECIAL_DOCS.find((x) => x.key === channel);
+    if (s) return s.label;
+    return channel || "—";
+  }, [channel]);
+
+  const docPath =
+    channel === "media"
+      ? `content/drafts/${ideaId ?? "?"}/ (media assets)`
+      : draft?.relPath || `content/drafts/${ideaId ?? "?"}/${channel}.md`;
+  const placeholderBody = draft ? isPlaceholderBody(draft.body) : false;
+
   const attachments = useMemo(() => {
     if (!ct?.documents) return [];
     return ct.documents.filter((doc) => !doc.path.includes("content/drafts/"));
   }, [ct]);
 
-  const btnGhost =
-    "inline-flex items-center gap-1.5 px-2.5 py-1 text-[13px] bg-transparent border border-[#E5E2DC] rounded-md cursor-pointer text-[#7A7A7A] hover:bg-[#E5E2DC] hover:text-[#1A1A1A] transition-colors";
+  // ── Channel editor modal handlers ────────────────────────────────────────
+  function openChannelEditor() {
+    if (!ct) return;
+    setDraftChannels([...ct.target_channels]);
+    setChannelEditorOpen(true);
+  }
+  function toggleDraftChannel(c: string) {
+    setDraftChannels((arr) => (arr.includes(c) ? arr.filter((x) => x !== c) : [...arr, c]));
+  }
+  function saveChannels() {
+    if (!ct) return;
+    updateContentTask.mutate(
+      { slug, parentTaskId: taskId, id: contentTaskId, fields: { target_channels: draftChannels } },
+      {
+        onSuccess: () => {
+          setChannelEditorOpen(false);
+          showToast("Canales actualizados.");
+          if (
+            !draftChannels.includes(channel) &&
+            !isSpecialChannel &&
+            draftChannels.length > 0
+          ) {
+            switchChannel(draftChannels[0]);
+          }
+        },
+        onError: (e) => showToast(`Error: ${(e as Error).message}`),
+      },
+    );
+  }
 
+  // ── Loading / not-found ──────────────────────────────────────────────────
   if (ctLoading) {
     return (
       <DashboardLayout>
@@ -235,7 +389,6 @@ export default function DraftFullScreenPage() {
       </DashboardLayout>
     );
   }
-
   if (!ct) {
     return (
       <DashboardLayout>
@@ -252,138 +405,61 @@ export default function DraftFullScreenPage() {
     );
   }
 
+  // ── Banner for Discarded / Deferred ──────────────────────────────────────
+  let banner: React.ReactNode = null;
+  if (ct.status === "Discarded") {
+    banner = (
+      <div className={`${styles.terminalBanner} ${styles.terminalBannerDiscarded}`}>
+        🗑 ContentTask descartada
+      </div>
+    );
+  } else if (ct.status === "Deferred") {
+    banner = (
+      <div className={`${styles.terminalBanner} ${styles.terminalBannerDeferred}`}>
+        ⏸ ContentTask aplazada
+      </div>
+    );
+  }
+
+  const inTerminal =
+    ct.status === "Published" || ct.status === "Discarded" || ct.status === "Deferred";
+
   return (
     <DashboardLayout>
       <Head>
         <title>{`${ct.name} · ${channel}`}</title>
       </Head>
 
-      <div className="flex flex-col h-[calc(100vh-3rem)]">
-        {/* Top header: parent breadcrumb + ct.id + name + status + actions */}
-        <div className="flex items-center gap-3 px-4 py-2.5 border-b border-[#E5E2DC] bg-[#FAFAF8] shrink-0">
-          <Link
-            href={`/dashboard/${slug}/projects/${projectId}/tasks/${taskId}`}
-            className="text-sm text-rust hover:underline shrink-0"
-          >
-            ← Volver a la task
-          </Link>
-          <span className="text-[10px] font-mono bg-[#F1F2F4] text-[#5C6470] px-2 py-1 rounded shrink-0">
-            {ct.id}
-          </span>
-          <span className="text-[13px] font-bold text-[#1A1A1A] truncate">
-            {ct.name} · {channel}
-          </span>
+      <div className={styles.app}>
+        <EditorHeader
+          backHref={`/dashboard/${slug}/projects/${projectId}/tasks/${taskId}`}
+          taskId={ct.id}
+          skill={ct.skill}
+          title={ct.name}
+          ideaId={ct.idea_id}
+          owner={ct.owner}
+          ownerInitials={ownerInitials(ct.owner)}
+          scheduledFor={draft?.meta.publishing?.scheduled_at}
+          banner={banner}
+          stepper={
+            <StatusStepper
+              current={ct.status}
+              onApprove={approveConfig ? approveConfig.fn : null}
+              approveDisabled={approveConfig?.disabled}
+              approveDisabledReason={approveConfig?.reason}
+              approveLabel={approveConfig?.label}
+              onRevert={showRevert ? revertCurrent : null}
+              isPending={isPending}
+            />
+          }
+        />
 
-          <div className="ml-auto flex items-center gap-2">
-            {/* ContentTask status (Approved/Draft/Review/Ready/Published) */}
-            <div className="relative">
-              <button
-                type="button"
-                className="appearance-none bg-white border border-[#E8E2D9] rounded-lg cursor-pointer px-2.5 py-1 flex items-center gap-1.5 hover:border-[#2C3E50] transition-colors"
-                onClick={() => setCtStatusOpen(!ctStatusOpen)}
-              >
-                <span className={cn("text-[11px] font-medium border rounded-full px-2 py-0.5", ctStatusClass)}>
-                  {ct.status}
-                </span>
-                <span className="text-[10px] text-[#7F8C8D]">▾</span>
-              </button>
-              {ctStatusOpen && (
-                <>
-                  <div className="fixed inset-0 z-40" onClick={() => setCtStatusOpen(false)} />
-                  <div className="absolute top-full right-0 mt-1 bg-white border-2 border-[#2C3E50] rounded-lg shadow-lg z-50 min-w-[170px] py-1">
-                    {VALID_CONTENT_TASK_STATUSES.map((opt) => (
-                      <button
-                        key={opt}
-                        className={cn(
-                          "w-full text-left px-3 py-2 text-xs hover:bg-[#F0EDE8] transition-colors",
-                          ct.status === opt && "bg-[#F0EDE8] font-semibold",
-                        )}
-                        onClick={() => {
-                          setCtStatusOpen(false);
-                          if (ct.status === opt) return;
-                          updateContentTaskStatus.mutate({
-                            slug,
-                            parentTaskId: taskId,
-                            id: contentTaskId,
-                            status: opt as ContentTaskStatus,
-                          });
-                        }}
-                      >
-                        {opt}
-                      </button>
-                    ))}
-                  </div>
-                </>
-              )}
-            </div>
-            <button
-              type="button"
-              onClick={() => {
-                if (editingBody) setEditingBody(false);
-                else if (draft) setEditingBody(true);
-              }}
-              disabled={!draft}
-              className={btnGhost}
-            >
-              {editingBody ? "👁 Ver" : "✏️ Editar texto"}
-            </button>
-
-            {!sidebarOpen && (
-              <button
-                type="button"
-                onClick={handleReopenChat}
-                className={btnGhost}
-                title="Reabrir el chat con Sancho"
-              >
-                💬 Abrir chat
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* Tab switcher — special docs (Propuesta / Research / Clarify) first,
-            then per-channel drafts. Always rendered when there's at least 2
-            tabs total (otherwise it's noise). */}
-        {tabs.length > 1 && (
-          <div className="flex items-center gap-2 px-4 py-2 border-b border-[#E5E2DC] bg-white shrink-0 flex-wrap">
-            <span className="text-[10px] uppercase tracking-[0.5px] text-[#7F8C8D] mr-1">
-              Documentos
-            </span>
-            {tabs.map((tab, i) => {
-              const active = tab.key === channel;
-              const isLastSpecial = i === SPECIAL_TABS.length - 1 && SPECIAL_TABS.length > 0 && channels.length > 0;
-              return (
-                <span key={tab.key} className="contents">
-                  <button
-                    type="button"
-                    onClick={() => handleSwitchChannel(tab.key)}
-                    className={cn(
-                      "text-xs px-3 py-1 rounded-full border transition-colors flex items-center gap-1",
-                      active
-                        ? "bg-[#2C3E50] text-white border-[#2C3E50]"
-                        : "bg-white text-[#5C6470] border-[#E8E2D9] hover:border-[#2C3E50]",
-                    )}
-                  >
-                    <span>{tab.icon}</span>
-                    <span>{tab.label}</span>
-                  </button>
-                  {isLastSpecial && (
-                    <span className="text-[#D8DCE0] mx-1" aria-hidden>|</span>
-                  )}
-                </span>
-              );
-            })}
-            {iteration > 0 && !isSpecialChannel && (
-              <span className="ml-auto text-[10px] text-muted-foreground font-mono">
-                v{iteration}
-              </span>
-            )}
-          </div>
-        )}
-
-        {/* Body */}
+        {/* Body — rail + workspace OR full-screen markdown editor */}
         {editingBody && draft ? (
-          <div className="flex-1 min-h-0" key={`editor-${ideaId}-${channel}`}>
+          <div
+            className="flex-1 min-h-0"
+            key={`editor-${ideaId}-${channel}`}
+          >
             <MarkdownEditor
               initialContent={draft.body}
               onSave={handleSaveBody}
@@ -391,368 +467,306 @@ export default function DraftFullScreenPage() {
             />
           </div>
         ) : (
-          <div className="flex-1 overflow-y-auto px-6 py-6 space-y-5 max-w-3xl mx-auto w-full">
-            {/* Detalles colapsable — todos los campos editables del CT */}
-            <DetailsSection
-              ct={ct}
-              open={detailsOpen}
-              onToggle={() => setDetailsOpen((v) => !v)}
-              editing={editingMeta}
-              draft={metaDraft}
-              setDraft={setMetaDraft}
-              onStartEdit={startEditMeta}
-              onSave={saveMeta}
-              onCancel={() => setEditingMeta(false)}
-              onToggleChannel={toggleMetaChannel}
-              saving={updateContentTask.isPending}
+          <div className={`${styles.workspace} ${railCollapsed ? styles.workspaceCollapsed : ""}`}>
+            <DocRail
+              documents={railDocs}
+              outputs={railOutputs}
+              activeDocId={channel}
+              collapsed={railCollapsed}
+              onToggle={() => setRailCollapsed((v) => !v)}
+              onDocClick={switchChannel}
+              onOutputClick={switchChannel}
+              onAddOutput={openChannelEditor}
             />
 
-            {/* Banner placeholder + body preview */}
-            {isLoading && (
-              <p className="text-sm text-muted-foreground text-center py-20">Cargando draft...</p>
-            )}
-            {error && (
-              <p className="text-sm text-red-500 text-center py-20">Error al cargar el draft.</p>
-            )}
-            {!isLoading && !error && !draft && (
-              <p className="text-sm text-muted-foreground text-center py-20">
-                Draft no encontrado para el canal <code>{channel}</code>.
-              </p>
-            )}
-
-            {draft && placeholderBody && (
-              <div className="border border-[#FCD34D] bg-[#FFFBEB] rounded-lg px-4 py-3 text-sm text-[#92400E]">
-                <strong>Este draft aún no se ha redactado.</strong> Escudero Content todavía
-                no ha terminado. Puedes editarlo manualmente o pedirle a Sancho que lo
-                redacte por el chat lateral →
-              </div>
-            )}
-
-            {draft && (
-              <ChannelPreview
-                channel={channel}
-                body={draft.body}
-                brandSlug={slug}
-                media={draft.meta.media}
+            <div className={styles.workspaceDoc}>
+              <QAInline
+                ct={ct}
+                activeDoc={channel}
+                qaReport={qaParsed}
+                onSwitchDoc={switchChannel}
               />
-            )}
 
-            {draft?.meta.self_qa && (
-              <SelfQAPanel
-                verdict={draft.meta.self_qa}
-                notes={draft.meta.self_qa_notes}
+              <DocHeader
+                title={docLabel}
+                path={docPath}
+                onEdit={() => {
+                  if (draft) setEditingBody(true);
+                }}
+                editLabel="Editar texto"
+                onDefer={
+                  inTerminal
+                    ? undefined
+                    : () =>
+                        deferContentTask.mutate(
+                          { slug, parentTaskId: taskId, id: contentTaskId },
+                          {
+                            onSuccess: () => showToast("Aplazado."),
+                            onError: (e) => showToast(`Error: ${(e as Error).message}`),
+                          },
+                        )
+                }
+                onDiscard={
+                  inTerminal
+                    ? undefined
+                    : () =>
+                        discardContentTask.mutate(
+                          { slug, parentTaskId: taskId, id: contentTaskId },
+                          {
+                            onSuccess: () => showToast("Descartado."),
+                            onError: (e) => showToast(`Error: ${(e as Error).message}`),
+                          },
+                        )
+                }
               />
-            )}
 
-            {/* Media panel — only for channel drafts (not proposal/research/clarify). */}
-            {draft && !isSpecialChannel && ideaId && (
-              <MediaPanel
-                slug={slug}
-                ideaId={ideaId}
-                channel={channel}
-                media={draft.meta.media || []}
-              />
-            )}
 
-            {/* Publish bar — visible once the draft is approved (also kept
-                visible after publishing so the user can see status / link). */}
-            {draft && !isSpecialChannel && ideaId &&
-              (draft.meta.status === "approved" || draft.meta.status === "published") && (
-              <PublishBar
-                slug={slug}
-                ideaId={ideaId}
-                channel={channel}
-                draft={draft}
-                onPublishedToast={showToast}
-              />
-            )}
-
-            {/* Adjuntos (subproductos: research, fuentes, etc.) */}
-            {attachments.length > 0 && (
-              <section className="bg-white border border-[#E8E2D9] rounded-[10px] overflow-hidden">
-                <div className="px-4 py-2.5 border-b border-[#E8E2D9] flex items-center gap-2">
-                  <span className="text-base">📎</span>
-                  <span className="font-semibold text-sm text-[#2C3E50]">Adjuntos</span>
-                  <span className="text-[10px] text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
-                    {attachments.length}
-                  </span>
+              {/* Mode toggle (no aplica al tab Media) */}
+              {channel !== "media" && (
+                <div className={styles.editorToolbar}>
+                  <div className={styles.modeSwitch}>
+                    <button
+                      type="button"
+                      className={bodyMode === "md" ? styles.modeActive : ""}
+                      onClick={() => setBodyMode("md")}
+                    >
+                      Markdown
+                    </button>
+                    <button
+                      type="button"
+                      className={bodyMode === "preview" ? styles.modeActive : ""}
+                      onClick={() => setBodyMode("preview")}
+                    >
+                      Preview
+                    </button>
+                  </div>
                 </div>
-                <ul className="p-3 space-y-1.5">
-                  {attachments.map((doc) => {
-                    const docName = doc.name || doc.path.split("/").pop()?.replace(".md", "") || "doc";
-                    return (
-                      <li
-                        key={doc.path}
-                        className="flex items-center gap-2 border border-[#E8E2D9] rounded-lg px-3 py-2"
-                      >
-                        <span className="text-base">📄</span>
-                        <a
-                          href={`/docs/${doc.path}`}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="flex-1 min-w-0 text-sm font-medium text-[#2C3E50] hover:text-rust hover:underline truncate"
-                        >
-                          {docName}
-                        </a>
-                        {doc.channel && (
-                          <span className="text-[10px] bg-[#F1F2F4] text-[#5C6470] border border-[#D8DCE0] rounded px-1.5 py-0.5">
-                            {doc.channel}
-                          </span>
-                        )}
-                        <button
-                          type="button"
-                          onClick={() =>
-                            detachDoc.mutate({
-                              slug,
-                              parentTaskId: taskId,
-                              id: contentTaskId,
-                              path: doc.path,
-                            })
-                          }
-                          title="Quitar adjunto (no borra el archivo)"
-                          className="text-[12px] text-[#7A7A7A] hover:text-rust transition-colors"
-                        >
-                          ✕
-                        </button>
-                      </li>
-                    );
-                  })}
-                </ul>
-              </section>
-            )}
+              )}
+
+              {/* Body */}
+              <div className={styles.docInner}>
+                {channel === "media" && ideaId ? (
+                  <MediaEditor
+                    slug={slug}
+                    ideaId={ideaId}
+                    targetChannels={ct.target_channels}
+                    initialChannel={(router.query.from as string) || undefined}
+                  />
+                ) : (
+                  <>
+                {isLoading && (
+                  <p className="text-sm text-muted-foreground text-center py-20">Cargando draft...</p>
+                )}
+                {error && (
+                  <p className="text-sm text-red-500 text-center py-20">Error al cargar el draft.</p>
+                )}
+                {!isLoading && !error && !draft && (
+                  <p className="text-sm text-muted-foreground text-center py-20">
+                    Draft no encontrado para el canal <code>{channel}</code>.
+                  </p>
+                )}
+
+                {draft && placeholderBody && (
+                  <div className="border border-[#FCD34D] bg-[#FFFBEB] rounded-lg px-4 py-3 text-sm text-[#92400E]">
+                    <strong>Este draft aún no se ha redactado.</strong> Escudero Content
+                    todavía no ha terminado. Puedes editarlo manualmente o pedirle a Sancho
+                    que lo redacte por el chat lateral →
+                  </div>
+                )}
+
+                {draft && bodyMode === "md" && (
+                  <pre className={styles.mdRaw}>{draft.body}</pre>
+                )}
+
+                {draft && bodyMode === "preview" && (
+                  <ChannelPreview
+                    channel={channel}
+                    body={draft.body}
+                    brandSlug={slug}
+                    media={draft.meta.media}
+                  />
+                )}
+
+                {draft && !isSpecialChannel && ideaId && (
+                  <MediaSummaryWidget
+                    media={draft.meta.media || []}
+                    href={`/dashboard/${slug}/projects/${projectId}/tasks/${taskId}/content/${contentTaskId}/draft/media?from=${channel}`}
+                  />
+                )}
+
+                {draft?.meta.self_qa && (
+                  <SelfQAPanel
+                    verdict={draft.meta.self_qa}
+                    notes={draft.meta.self_qa_notes}
+                  />
+                )}
+
+                {channel === "research" && qaReport && (
+                  <details
+                    className="bg-white border border-[#E8E2D9] rounded-[10px] overflow-hidden"
+                    open
+                  >
+                    <summary className="px-4 py-2.5 border-b border-[#E8E2D9] flex items-center gap-2 cursor-pointer select-none">
+                      <span className="text-base">🧪</span>
+                      <span className="font-semibold text-sm text-[#2C3E50]">QA Report</span>
+                      <span className="text-[10px] text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+                        qa-bot
+                      </span>
+                      <span className="ml-auto text-[10px] text-muted-foreground font-mono truncate">
+                        {qaReport.relPath}
+                      </span>
+                    </summary>
+                    <div className="prose prose-sm max-w-none px-5 py-4">
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>{qaReport.body}</ReactMarkdown>
+                    </div>
+                  </details>
+                )}
+
+                {draft && !isSpecialChannel && ideaId &&
+                  (draft.meta.status === "approved" || draft.meta.status === "published") && (
+                  <PublishBar
+                    slug={slug}
+                    ideaId={ideaId}
+                    channel={channel}
+                    draft={draft}
+                    ctStatus={ct?.status}
+                    onPublishedToast={showToast}
+                  />
+                )}
+
+                {attachments.length > 0 && (
+                  <section className="bg-white border border-[#E8E2D9] rounded-[10px] overflow-hidden">
+                    <div className="px-4 py-2.5 border-b border-[#E8E2D9] flex items-center gap-2">
+                      <span className="text-base">📎</span>
+                      <span className="font-semibold text-sm text-[#2C3E50]">Adjuntos</span>
+                      <span className="text-[10px] text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+                        {attachments.length}
+                      </span>
+                    </div>
+                    <ul className="p-3 space-y-1.5">
+                      {attachments.map((doc) => {
+                        const docName =
+                          doc.name ||
+                          doc.path.split("/").pop()?.replace(".md", "") ||
+                          "doc";
+                        return (
+                          <li
+                            key={doc.path}
+                            className="flex items-center gap-2 border border-[#E8E2D9] rounded-lg px-3 py-2"
+                          >
+                            <span className="text-base">📄</span>
+                            <a
+                              href={`/docs/${doc.path}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="flex-1 min-w-0 text-sm font-medium text-[#2C3E50] hover:text-rust hover:underline truncate"
+                            >
+                              {docName}
+                            </a>
+                            {doc.channel && (
+                              <span className="text-[10px] bg-[#F1F2F4] text-[#5C6470] border border-[#D8DCE0] rounded px-1.5 py-0.5">
+                                {doc.channel}
+                              </span>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() =>
+                                detachDoc.mutate({
+                                  slug,
+                                  parentTaskId: taskId,
+                                  id: contentTaskId,
+                                  path: doc.path,
+                                })
+                              }
+                              title="Quitar adjunto (no borra el archivo)"
+                              className="text-[12px] text-[#7A7A7A] hover:text-rust transition-colors"
+                            >
+                              ✕
+                            </button>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </section>
+                )}
+                  </>
+                )}
+              </div>
+            </div>
           </div>
         )}
 
         {/* Footer */}
         {draft && !editingBody && (
-          <div className="flex items-center justify-between px-4 py-2 border-t border-[#E5E2DC] bg-[#FAFAF8] text-[10px] text-muted-foreground shrink-0">
-            <span className="truncate font-mono">{draft.relPath}</span>
-            <span className="flex-shrink-0 ml-3">
-              Editado:{" "}
-              {new Date(draft.meta.updated_at).toLocaleDateString("es-ES", {
-                day: "numeric",
-                month: "short",
-                year: "numeric",
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
-            </span>
+          <div className={styles.footer}>
+            <span className={styles.footerPath}>{draft.relPath}</span>
+            {(() => {
+              const raw = draft.meta.updated_at;
+              const d = raw ? new Date(raw) : null;
+              if (!d || Number.isNaN(d.getTime())) return null;
+              return (
+                <span>
+                  Editado:{" "}
+                  {d.toLocaleDateString("es-ES", {
+                    day: "numeric",
+                    month: "short",
+                    year: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </span>
+              );
+            })()}
           </div>
         )}
 
-        {toast && (
-          <div className="fixed bottom-12 left-1/2 -translate-x-1/2 z-[20] bg-[#2C3E50] text-white text-xs px-4 py-2 rounded-full shadow-lg">
-            {toast}
-          </div>
-        )}
-      </div>
-    </DashboardLayout>
-  );
-}
+        {toast && <div className={styles.toast}>{toast}</div>}
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Detalles section — collapsible CT metadata + edit mode.
-// ─────────────────────────────────────────────────────────────────────────────
-
-function DetailsSection({
-  ct,
-  open,
-  onToggle,
-  editing,
-  draft,
-  setDraft,
-  onStartEdit,
-  onSave,
-  onCancel,
-  onToggleChannel,
-  saving,
-}: {
-  ct: ContentTask;
-  open: boolean;
-  onToggle: () => void;
-  editing: boolean;
-  draft: Partial<ContentTask>;
-  setDraft: (
-    update: Partial<ContentTask> | ((prev: Partial<ContentTask>) => Partial<ContentTask>),
-  ) => void;
-  onStartEdit: () => void;
-  onSave: () => void;
-  onCancel: () => void;
-  onToggleChannel: (ch: string) => void;
-  saving: boolean;
-}) {
-  const summary = useMemo(() => {
-    const parts: string[] = [];
-    if (ct.idea_id) parts.push(`Idea: ${ct.idea_id}`);
-    if (ct.skill) parts.push(`Skill: ${ct.skill}`);
-    if (ct.owner) parts.push(`Owner: ${ct.owner}`);
-    if (ct.scheduled_for) {
-      parts.push(
-        `Scheduled: ${new Date(ct.scheduled_for).toLocaleDateString("es-ES", {
-          day: "numeric",
-          month: "short",
-        })}`,
-      );
-    }
-    return parts.join(" · ");
-  }, [ct]);
-
-  return (
-    <section className="bg-white border border-[#E8E2D9] rounded-[10px] overflow-hidden">
-      <button
-        type="button"
-        onClick={onToggle}
-        className="w-full flex items-center gap-2 px-4 py-2.5 text-left hover:bg-[#FAFAF8] transition-colors"
-      >
-        <span className="text-base">📋</span>
-        <span className="font-semibold text-sm text-[#2C3E50]">Detalles</span>
-        <span className="text-xs text-muted-foreground truncate flex-1">{summary}</span>
-        <span className="text-[10px] text-[#7F8C8D]">{open ? "▴" : "▾"}</span>
-      </button>
-
-      {open && (
-        <div className="border-t border-[#E8E2D9] p-4 space-y-3">
-          {/* Name */}
-          <Field label="Nombre">
-            {editing ? (
-              <input
-                value={draft.name || ""}
-                onChange={(e) => setDraft((d) => ({ ...d, name: e.target.value }))}
-                className="w-full border border-[#E8E2D9] rounded-lg px-3 py-1.5 text-sm bg-white focus:outline-none focus:border-[#2C3E50]"
-              />
-            ) : (
-              <div className="text-sm font-semibold text-[#2C3E50]">{ct.name}</div>
-            )}
-          </Field>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <Field label="Skill">
-              {editing ? (
-                <SkillPicker
-                  value={draft.skill ? [draft.skill] : []}
-                  onChange={(arr) => setDraft((d) => ({ ...d, skill: arr[0] || "" }))}
-                />
-              ) : (
-                <div className="text-sm font-semibold text-[#2C3E50]">
-                  {ct.skill || <span className="text-muted-foreground italic">Sin skill</span>}
-                </div>
-              )}
-            </Field>
-
-            <Field label="Owner">
-              {editing ? (
-                <input
-                  value={draft.owner || ""}
-                  onChange={(e) => setDraft((d) => ({ ...d, owner: e.target.value }))}
-                  className="w-full border border-[#E8E2D9] rounded-lg px-3 py-1.5 text-sm bg-white focus:outline-none focus:border-[#2C3E50]"
-                  placeholder="Escudero Content"
-                />
-              ) : (
-                <div className="text-sm font-semibold text-[#2C3E50]">
-                  {ct.owner || <span className="text-muted-foreground italic">—</span>}
-                </div>
-              )}
-            </Field>
-
-            <Field label="Idea fuente">
-              <div className="text-sm font-mono text-[#2C3E50]">{ct.idea_id || "—"}</div>
-            </Field>
-
-            <Field label="Scheduled for">
-              {editing ? (
-                <input
-                  type="date"
-                  value={draft.scheduled_for ? draft.scheduled_for.slice(0, 10) : ""}
-                  onChange={(e) =>
-                    setDraft((d) => ({
-                      ...d,
-                      scheduled_for: e.target.value ? new Date(e.target.value).toISOString() : undefined,
-                    }))
-                  }
-                  className="w-full border border-[#E8E2D9] rounded-lg px-3 py-1.5 text-sm bg-white focus:outline-none focus:border-[#2C3E50]"
-                />
-              ) : (
-                <div className="text-sm font-semibold text-[#2C3E50]">
-                  {ct.scheduled_for ? (
-                    new Date(ct.scheduled_for).toLocaleDateString("es-ES", {
-                      day: "numeric",
-                      month: "short",
-                      year: "numeric",
-                    })
-                  ) : (
-                    <span className="text-muted-foreground italic">Sin fecha</span>
-                  )}
-                </div>
-              )}
-            </Field>
-          </div>
-
-          <Field label="Target channels">
-            <div className="flex gap-2 flex-wrap">
-              {TARGET_CHANNEL_OPTIONS.map((ch) => {
-                const active = (editing ? draft.target_channels : ct.target_channels)?.includes(ch);
-                return (
-                  <button
-                    key={ch}
-                    type="button"
-                    disabled={!editing}
-                    onClick={() => editing && onToggleChannel(ch)}
-                    className={cn(
-                      "text-xs px-3 py-1 rounded-full border transition-colors",
-                      active
-                        ? "bg-[#2C3E50] text-white border-[#2C3E50]"
-                        : "bg-white text-[#5C6470] border-[#E8E2D9]",
-                      editing ? "cursor-pointer hover:border-[#2C3E50]" : "cursor-default",
-                    )}
-                  >
-                    {ch}
-                  </button>
-                );
-              })}
-            </div>
-          </Field>
-
-          <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#E8E2D9]">
-            {editing ? (
-              <>
+        {channelEditorOpen && (
+          <div
+            className={styles.modalBackdrop}
+            onClick={(e) => {
+              if (e.target === e.currentTarget) setChannelEditorOpen(false);
+            }}
+          >
+            <div className={styles.modalCard}>
+              <h3 className={styles.modalTitle}>Canales objetivo</h3>
+              <div className={styles.modalChips}>
+                {TARGET_CHANNEL_OPTIONS.map((c) => {
+                  const active = draftChannels.includes(c);
+                  return (
+                    <button
+                      key={c}
+                      type="button"
+                      className={`${styles.modalChip} ${active ? styles.modalChipActive : ""}`}
+                      onClick={() => toggleDraftChannel(c)}
+                    >
+                      {c}
+                    </button>
+                  );
+                })}
+              </div>
+              <div className={styles.modalActions}>
                 <button
                   type="button"
-                  onClick={onCancel}
-                  disabled={saving}
-                  className="text-xs px-3 py-1.5 bg-white border border-[#E8E2D9] rounded-lg hover:border-[#2C3E50] transition-colors"
+                  className={styles.actBtn}
+                  onClick={() => setChannelEditorOpen(false)}
                 >
                   Cancelar
                 </button>
                 <button
                   type="button"
-                  onClick={onSave}
-                  disabled={saving}
-                  className="text-xs px-3 py-1.5 bg-[#2C3E50] text-white rounded-lg hover:bg-[#1A252F] transition-colors disabled:opacity-50"
+                  className={styles.actBtn}
+                  onClick={saveChannels}
+                  disabled={updateContentTask.isPending}
                 >
-                  {saving ? "Guardando..." : "Guardar"}
+                  Guardar
                 </button>
-              </>
-            ) : (
-              <button
-                type="button"
-                onClick={onStartEdit}
-                className="text-xs px-3 py-1.5 bg-white border border-[#E8E2D9] rounded-lg hover:border-[#2C3E50] transition-colors"
-              >
-                ✏️ Editar detalles
-              </button>
-            )}
+              </div>
+            </div>
           </div>
-        </div>
-      )}
-    </section>
-  );
-}
-
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div>
-      <div className="text-[10px] text-[#7F8C8D] uppercase tracking-[0.5px] mb-1">{label}</div>
-      {children}
-    </div>
+        )}
+      </div>
+    </DashboardLayout>
   );
 }

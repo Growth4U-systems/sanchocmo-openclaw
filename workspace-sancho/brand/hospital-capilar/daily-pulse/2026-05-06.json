@@ -1,0 +1,29 @@
+{
+  "date": "2026-05-06",
+  "generated_at": "2026-05-06T07:00:00Z",
+  "client": "hospital-capilar",
+  "guild": "1475635138108063746",
+  "summary": "Sin actividad humana en las últimas 24h. Todos los canales inactivos o solo mensajes de bot.",
+  "channels_scanned": 9,
+  "channels_with_activity": 0,
+  "channels_skipped": 9,
+  "skip_reasons": {
+    "general": ">24h (37d, join event)",
+    "brand": ">24h (67d)",
+    "campaigns": ">24h + bot (43d)",
+    "content": ">24h + bot (~24h)",
+    "intelligence": "bot only (20min ago)",
+    "onboarding": ">24h + bot (29d)",
+    "soporte": ">24h + bot (8d)",
+    "research": ">24h (66d)",
+    "paid-ads": "channel error"
+  },
+  "insights": [],
+  "micro_briefs": [],
+  "observations": [
+    "El canal paid-ads no se pudo leer (Unknown Channel) — verificar si fue eliminado o renombrado.",
+    "Última actividad humana significativa: Alfonso en #brand (28 Feb), Martin en #research (1 Mar), Philippe en #onboarding (7 Abr).",
+    "Bot activity reciente en #intelligence y #content (ideas diarias y news monitor activos).",
+    "El servidor lleva >1 mes sin interacción humana regular — posible churn signal."
+  ]
+}
