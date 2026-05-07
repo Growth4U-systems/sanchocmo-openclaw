@@ -1,24 +1,24 @@
 {
   "url": "https://growth4u.io",
   "mobile": {
-    "performance": 69,
+    "performance": 73,
     "seo": 92,
     "accessibility": 91,
     "bestPractices": 100,
-    "lcp": 4.5,
+    "lcp": 4.4,
     "cls": 0.064,
-    "tbt": 180,
+    "tbt": 84,
     "opportunities": [
       {
         "id": "redirects",
         "title": "Avoid multiple page redirects",
-        "savings": 852,
+        "savings": 772,
         "description": "Redirects introduce additional delays before the page can be loaded. [Learn how to avoid page redirects](https://developer.chrome.com/docs/lighthouse/"
       },
       {
         "id": "unused-javascript",
         "title": "Reduce unused JavaScript",
-        "savings": 620,
+        "savings": 490,
         "description": "Reduce unused JavaScript and defer loading scripts until they are required to decrease bytes consumed by network activity. [Learn how to reduce unused"
       }
     ],
@@ -29,13 +29,8 @@
         "score": 0
       },
       {
-        "id": "robots-txt",
-        "title": "robots.txt is not valid",
-        "score": 0
-      },
-      {
-        "id": "cache-insight",
-        "title": "Use efficient cache lifetimes",
+        "id": "image-delivery-insight",
+        "title": "Improve image delivery",
         "score": 0
       },
       {
@@ -44,13 +39,18 @@
         "score": 0
       },
       {
-        "id": "image-delivery-insight",
-        "title": "Improve image delivery",
+        "id": "robots-txt",
+        "title": "robots.txt is not valid",
         "score": 0
       },
       {
         "id": "color-contrast",
         "title": "Background and foreground colors do not have a sufficient contrast ratio.",
+        "score": 0
+      },
+      {
+        "id": "cache-insight",
+        "title": "Use efficient cache lifetimes",
         "score": 0
       }
     ]
@@ -60,39 +60,30 @@
     "seo": 92,
     "accessibility": 91,
     "bestPractices": 100,
-    "lcp": 1.1,
+    "lcp": 1.2,
     "cls": 0.083,
-    "tbt": 118,
+    "tbt": 35,
     "opportunities": [
       {
         "id": "redirects",
         "title": "Avoid multiple page redirects",
-        "savings": 211,
+        "savings": 306,
         "description": "Redirects introduce additional delays before the page can be loaded. [Learn how to avoid page redirects](https://developer.chrome.com/docs/lighthouse/"
       },
       {
         "id": "unused-javascript",
         "title": "Reduce unused JavaScript",
-        "savings": 160,
+        "savings": 200,
         "description": "Reduce unused JavaScript and defer loading scripts until they are required to decrease bytes consumed by network activity. [Learn how to reduce unused"
+      },
+      {
+        "id": "server-response-time",
+        "title": "Initial server response time was short",
+        "savings": 181,
+        "description": "Keep the server response time for the main document short because all other requests depend on it. [Learn more about the Time to First Byte metric](ht"
       }
     ],
     "diagnostics": [
-      {
-        "id": "image-delivery-insight",
-        "title": "Improve image delivery",
-        "score": 0
-      },
-      {
-        "id": "heading-order",
-        "title": "Heading elements are not in a sequentially-descending order",
-        "score": 0
-      },
-      {
-        "id": "color-contrast",
-        "title": "Background and foreground colors do not have a sufficient contrast ratio.",
-        "score": 0
-      },
       {
         "id": "robots-txt",
         "title": "robots.txt is not valid",
@@ -102,8 +93,23 @@
         "id": "landmark-one-main",
         "title": "Document does not have a main landmark.",
         "score": 0
+      },
+      {
+        "id": "heading-order",
+        "title": "Heading elements are not in a sequentially-descending order",
+        "score": 0
+      },
+      {
+        "id": "image-delivery-insight",
+        "title": "Improve image delivery",
+        "score": 0
+      },
+      {
+        "id": "color-contrast",
+        "title": "Background and foreground colors do not have a sufficient contrast ratio.",
+        "score": 0
       }
     ]
   },
-  "fetchedAt": "2026-05-05T16:13:05.342Z"
+  "fetchedAt": "2026-05-06T17:58:19.960Z"
 }
