@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   DndContext,
   DragOverlay,
@@ -25,6 +25,13 @@ import {
 } from "@/hooks/usePublishing";
 import type { ProviderInfo } from "@/lib/publishing/types";
 import { ConnectPublishingButton } from "@/components/content/ConnectPublishingButton";
+import { ChannelPreview } from "@/components/content/channel-preview";
+import { PublishingAccountInfo } from "@/components/content/PublishingAccountInfo";
+import { PostMetricsBadge } from "@/components/content/PostMetricsBadge";
+
+type PreviewItem =
+  | { kind: "scheduled"; event: CalendarEvent }
+  | { kind: "ready"; draft: ReadyDraft };
 
 /**
  * Posting Calendar — operational hub for scheduling Ready drafts to platforms.
@@ -100,7 +107,7 @@ export function PostingCalendarTab({ slug, focusKey }: { slug: string; focusKey?
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
   const [draggedItem, setDraggedItem] = useState<{ kind: "ready"; draft: ReadyDraft } | { kind: "event"; event: CalendarEvent } | null>(null);
   const [scheduleTarget, setScheduleTarget] = useState<{ dayIso: string; draft: ReadyDraft; rescheduleFrom?: CalendarEvent } | null>(null);
-  const [previewEvent, setPreviewEvent] = useState<CalendarEvent | null>(null);
+  const [previewItem, setPreviewItem] = useState<PreviewItem | null>(null);
 
   const { scheduled, ready_queue } = calendar.data ?? { scheduled: [] as CalendarEvent[], ready_queue: [] as ReadyDraft[] };
 
@@ -117,16 +124,46 @@ export function PostingCalendarTab({ slug, focusKey }: { slug: string; focusKey?
     return map;
   }, [scheduled]);
 
-  // Auto-scroll to focused card when opening via ?focus={ideaId}:{channel}
+  // Auto-open the schedule modal when arriving from the editor with
+  // ?focus={ideaId}:{channel}. Defaults the day to today; the user picks
+  // hour + provider in the modal. Only fires once per focusKey value.
+  const consumedFocusRef = useRef<string | null>(null);
   useEffect(() => {
-    if (!focusKey) return;
-    const el = document.querySelector(`[data-focus="${focusKey}"]`);
-    if (el) {
-      el.scrollIntoView({ behavior: "smooth", block: "center" });
-      el.classList.add("ring-4", "ring-rust-500");
-      setTimeout(() => el.classList.remove("ring-4", "ring-rust-500"), 2000);
-    }
-  }, [focusKey, calendar.data]);
+    if (!focusKey || consumedFocusRef.current === focusKey) return;
+    if (!calendar.data) return;
+    const draft = ready_queue.find((d) => `${d.ideaId}:${d.channel}` === focusKey);
+    if (!draft) return;
+    consumedFocusRef.current = focusKey;
+    setScheduleTarget({ dayIso: isoDate(new Date()), draft });
+  }, [focusKey, calendar.data, ready_queue]);
+
+  function openScheduleFor(draft: ReadyDraft, dayIso?: string) {
+    setScheduleTarget({ dayIso: dayIso || isoDate(new Date()), draft });
+  }
+
+  /** Open the schedule modal in reschedule mode for an existing calendar
+   *  event. Defaults the day to the current scheduled day so the user only
+   *  has to tweak the hour. Passes rescheduleFrom so the modal knows whether
+   *  to call cancel before publish (only when status === "scheduled"). */
+  function openRescheduleFor(event: CalendarEvent) {
+    const synthetic: ReadyDraft = {
+      ideaId: event.ideaId,
+      contentTaskId: event.contentTaskId,
+      parentTaskId: event.parentTaskId,
+      channel: event.channel,
+      title: event.title,
+      ready_at: event.scheduled_at,
+      hero_media_url: event.hero_media_url,
+      has_media: !!event.hero_media_url || event.media.length > 0,
+      body: event.body,
+      media: event.media,
+    };
+    setScheduleTarget({
+      dayIso: event.scheduled_at.slice(0, 10),
+      draft: synthetic,
+      rescheduleFrom: event,
+    });
+  }
 
   function handleDragStart(e: DragStartEvent) {
     const data = e.active.data.current as { kind?: "ready" | "event"; draft?: ReadyDraft; event?: CalendarEvent } | undefined;
@@ -156,6 +193,8 @@ export function PostingCalendarTab({ slug, focusKey }: { slug: string; focusKey?
           ready_at: ev.scheduled_at,
           hero_media_url: ev.hero_media_url,
           has_media: !!ev.hero_media_url,
+          body: ev.body,
+          media: ev.media,
         },
         rescheduleFrom: ev,
       });
@@ -208,14 +247,23 @@ export function PostingCalendarTab({ slug, focusKey }: { slug: string; focusKey?
           {formatRange(weekStart)}
         </span>
         <span className="flex-1" />
+        <PublishingAccountInfo slug={slug} variant="compact" />
         <ConnectPublishingButton slug={slug} variant="ghost">
           🔌 Conectar herramienta de publishing
         </ConnectPublishingButton>
       </div>
 
       <div className="grid gap-3.5" style={{ gridTemplateColumns: "300px 1fr" }}>
-        <ReadyQueueSidebar slug={slug} drafts={ready_queue} />
-        <WeekGrid weekStart={weekStart} eventsByDay={eventsByDay} todayIso={todayIso} onSelectEvent={setPreviewEvent} />
+        <ReadyQueueSidebar
+          drafts={ready_queue}
+          onSelect={(draft) => setPreviewItem({ kind: "ready", draft })}
+        />
+        <WeekGrid
+          weekStart={weekStart}
+          eventsByDay={eventsByDay}
+          todayIso={todayIso}
+          onSelectEvent={(event) => setPreviewItem({ kind: "scheduled", event })}
+        />
       </div>
 
       <DragOverlay>
@@ -234,12 +282,14 @@ export function PostingCalendarTab({ slug, focusKey }: { slug: string; focusKey?
         />
       )}
 
-      {previewEvent && (
+      {previewItem && (
         <PostPreviewSlideOver
           slug={slug}
-          event={previewEvent}
-          onClose={() => setPreviewEvent(null)}
-          onCanceled={() => { setPreviewEvent(null); invalidate(); }}
+          item={previewItem}
+          onClose={() => setPreviewItem(null)}
+          onCanceled={() => { setPreviewItem(null); invalidate(); }}
+          onSchedule={(draft) => { setPreviewItem(null); openScheduleFor(draft); }}
+          onReschedule={(event) => { setPreviewItem(null); openRescheduleFor(event); }}
         />
       )}
     </DndContext>
@@ -248,7 +298,13 @@ export function PostingCalendarTab({ slug, focusKey }: { slug: string; focusKey?
 
 /* ---------- Ready Queue (sidebar) ---------- */
 
-function ReadyQueueSidebar({ slug, drafts }: { slug: string; drafts: ReadyDraft[] }) {
+function ReadyQueueSidebar({
+  drafts,
+  onSelect,
+}: {
+  drafts: ReadyDraft[];
+  onSelect: (draft: ReadyDraft) => void;
+}) {
   return (
     <div
       className="rounded-sc-lg border-[3px] flex flex-col overflow-hidden"
@@ -279,7 +335,11 @@ function ReadyQueueSidebar({ slug, drafts }: { slug: string; drafts: ReadyDraft[
           </div>
         ) : (
           drafts.map((d) => (
-            <ReadyDraftCard key={`${d.ideaId}:${d.channel}`} draft={d} slug={slug} />
+            <ReadyDraftCard
+              key={`${d.ideaId}:${d.channel}`}
+              draft={d}
+              onSelect={onSelect}
+            />
           ))
         )}
       </div>
@@ -287,16 +347,20 @@ function ReadyQueueSidebar({ slug, drafts }: { slug: string; drafts: ReadyDraft[
   );
 }
 
-function ReadyDraftCard({ draft, slug, dragging }: { draft: ReadyDraft; slug?: string; dragging?: boolean }) {
+function ReadyDraftCard({
+  draft,
+  dragging,
+  onSelect,
+}: {
+  draft: ReadyDraft;
+  dragging?: boolean;
+  onSelect?: (draft: ReadyDraft) => void;
+}) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: `ready-${draft.ideaId}-${draft.channel}`,
     data: { kind: "ready" as const, draft },
   });
   const cv = CHANNEL_VISUAL[draft.channel] || CHANNEL_VISUAL.blog;
-
-  const editorHref = slug
-    ? `/dashboard/${slug}/projects/${draft.parentTaskId.split("-T")[0] ? draft.parentTaskId.replace(/-T\d+$/, "") : ""}/tasks/${draft.parentTaskId}/content/${draft.contentTaskId}/draft/${draft.channel}`
-    : null;
 
   return (
     <div
@@ -305,11 +369,13 @@ function ReadyDraftCard({ draft, slug, dragging }: { draft: ReadyDraft; slug?: s
       className="px-2.5 py-2 border-b border-dashed transition-opacity"
       style={{ borderColor: "rgba(31,20,16,0.15)", opacity: isDragging || dragging ? 0.4 : 1, background: "var(--sc-paper-3)" }}
     >
-      <div
+      <button
+        type="button"
         {...attributes}
         {...listeners}
-        className="flex items-start gap-2 cursor-grab active:cursor-grabbing"
-        title="Arrastra a un día del calendario para programar"
+        onClick={() => { if (!dragging) onSelect?.(draft); }}
+        className="w-full text-left flex items-start gap-2 cursor-grab active:cursor-grabbing"
+        title="Click para previsualizar · arrastra a un día para programar"
       >
         <span
           className="grid place-items-center w-6 h-6 rounded text-xs border flex-shrink-0 mt-0.5"
@@ -332,16 +398,8 @@ function ReadyDraftCard({ draft, slug, dragging }: { draft: ReadyDraft; slug?: s
           <div className="text-[12px] leading-snug font-medium" style={{ color: "var(--sc-ink)" }}>
             {draft.title}
           </div>
-          {editorHref && !dragging && (
-            <a
-              href={editorHref}
-              className="text-[10px] underline mt-1 inline-block"
-              style={{ color: "var(--sc-navy-500)", textUnderlineOffset: 2 }}
-              onClick={(e) => e.stopPropagation()}
-            >Abrir editor ↗</a>
-          )}
         </div>
-      </div>
+      </button>
     </div>
   );
 }
@@ -518,8 +576,12 @@ function ScheduleConfirmModal({
     const isoLocal = new Date(publishAt).toISOString();
 
     try {
-      if (rescheduleFrom) {
-        // Cancel previous schedule first to avoid double-publish
+      // Only cancel when the previous schedule is actually live in Metricool
+      // (status === "scheduled"). For "failed" / "canceled" / "published"
+      // there's nothing to cancel; just publish fresh and overwrite the
+      // publishing block. Calling cancel on a failed draft returns 400
+      // "Draft is not currently scheduled".
+      if (rescheduleFrom && rescheduleFrom.status === "scheduled") {
         await cancel.mutateAsync({ slug, ideaId: draft.ideaId, channel: draft.channel });
       }
       await publish.mutateAsync({
@@ -598,6 +660,11 @@ function ScheduleConfirmModal({
                 ))}
               </select>
             )}
+            {!noProviders && providerId === "metricool" && (
+              <div className="mt-2">
+                <PublishingAccountInfo slug={slug} variant="full" />
+              </div>
+            )}
           </div>
         </div>
 
@@ -634,38 +701,53 @@ function ScheduleConfirmModal({
 
 function PostPreviewSlideOver({
   slug,
-  event,
+  item,
   onClose,
   onCanceled,
+  onSchedule,
+  onReschedule,
 }: {
   slug: string;
-  event: CalendarEvent;
+  item: PreviewItem;
   onClose: () => void;
   onCanceled: () => void;
+  onSchedule: (draft: ReadyDraft) => void;
+  onReschedule: (event: CalendarEvent) => void;
 }) {
   const cancel = useCancelPublishing();
   const [error, setError] = useState<string | null>(null);
 
+  // Normalize to a common shape — both kinds carry channel/title/body/media + ids
+  const channel = item.kind === "scheduled" ? item.event.channel : item.draft.channel;
+  const title = item.kind === "scheduled" ? item.event.title : item.draft.title;
+  const body = item.kind === "scheduled" ? item.event.body : item.draft.body;
+  const media = item.kind === "scheduled" ? item.event.media : item.draft.media;
+  const ideaId = item.kind === "scheduled" ? item.event.ideaId : item.draft.ideaId;
+  const contentTaskId = item.kind === "scheduled" ? item.event.contentTaskId : item.draft.contentTaskId;
+  const parentTaskId = item.kind === "scheduled" ? item.event.parentTaskId : item.draft.parentTaskId;
+
   async function doCancel() {
+    if (item.kind !== "scheduled") return;
     setError(null);
     try {
-      await cancel.mutateAsync({ slug, ideaId: event.ideaId, channel: event.channel });
+      await cancel.mutateAsync({ slug, ideaId, channel });
       onCanceled();
     } catch (e) {
       setError((e as Error).message || "Error cancelando");
     }
   }
 
-  const cv = CHANNEL_VISUAL[event.channel] || CHANNEL_VISUAL.blog;
-  const sv = STATUS_VISUAL[event.status] || STATUS_VISUAL.scheduled;
-  const projectId = event.parentTaskId.replace(/-T\d+$/, "");
-  const editorHref = `/dashboard/${slug}/projects/${projectId}/tasks/${event.parentTaskId}/content/${event.contentTaskId}/draft/${event.channel}`;
+  const cv = CHANNEL_VISUAL[channel] || CHANNEL_VISUAL.blog;
+  const projectId = parentTaskId.replace(/-T\d+$/, "");
+  const editorHref = `/dashboard/${slug}/projects/${projectId}/tasks/${parentTaskId}/content/${contentTaskId}/draft/${channel}`;
+
+  const sv = item.kind === "scheduled" ? STATUS_VISUAL[item.event.status] || STATUS_VISUAL.scheduled : null;
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end" onClick={onClose}>
       <div className="absolute inset-0 bg-black/30" />
       <div
-        className="relative w-full max-w-[520px] h-full bg-card flex flex-col border-l-[3px]"
+        className="relative w-full max-w-[560px] h-full bg-card flex flex-col border-l-[3px]"
         style={{ borderColor: "var(--sc-ink)" }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -678,7 +760,7 @@ function PostPreviewSlideOver({
               className="grid place-items-center w-7 h-7 rounded text-sm border"
               style={{ background: cv.bg, color: cv.fg, borderColor: "var(--sc-ink)" }}
             >{cv.emoji}</span>
-            <h3 className="font-heading text-sm text-navy truncate">{event.title}</h3>
+            <h3 className="font-heading text-sm text-navy truncate">{title}</h3>
           </div>
           <button onClick={onClose} className="text-muted-foreground hover:text-foreground text-lg px-1" aria-label="Cerrar">
             ✕
@@ -686,46 +768,55 @@ function PostPreviewSlideOver({
         </div>
 
         <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3">
+          <ChannelPreview channel={channel} body={body} brandSlug={slug} media={media} />
+
           <div className="flex flex-wrap gap-1.5">
-            <span
-              className="font-heading uppercase text-[10px] tracking-wider px-2 py-0.5 rounded-sc-pill border"
-              style={{ background: sv.bg, color: sv.fg, borderColor: "var(--sc-ink)" }}
-            >{sv.label}</span>
+            {sv && (
+              <span
+                className="font-heading uppercase text-[10px] tracking-wider px-2 py-0.5 rounded-sc-pill border"
+                style={{ background: sv.bg, color: sv.fg, borderColor: "var(--sc-ink)" }}
+              >{sv.label}</span>
+            )}
             <span
               className="font-mono text-[11px] px-2 py-0.5 rounded-sc-pill border"
               style={{ background: "var(--sc-paper-3)", borderColor: "var(--sc-ink)", color: "var(--sc-ink)" }}
             >{cv.label}</span>
-            <span
-              className="font-mono text-[11px] px-2 py-0.5 rounded-sc-pill border"
-              style={{ background: "var(--sc-paper-3)", borderColor: "var(--sc-ink)", color: "var(--sc-ink)" }}
-              title={event.scheduled_at}
-            >📅 {new Date(event.scheduled_at).toLocaleString("es-ES", { dateStyle: "medium", timeStyle: "short" })}</span>
-            <span
-              className="font-mono text-[11px] px-2 py-0.5 rounded-sc-pill border"
-              style={{ background: "var(--sc-paper-3)", borderColor: "var(--sc-ink)", color: "var(--sc-ink)" }}
-            >via {event.provider || "—"}</span>
+            {item.kind === "scheduled" && (
+              <>
+                <span
+                  className="font-mono text-[11px] px-2 py-0.5 rounded-sc-pill border"
+                  style={{ background: "var(--sc-paper-3)", borderColor: "var(--sc-ink)", color: "var(--sc-ink)" }}
+                  title={item.event.scheduled_at}
+                >📅 {new Date(item.event.scheduled_at).toLocaleString("es-ES", { dateStyle: "medium", timeStyle: "short" })}</span>
+                <span
+                  className="font-mono text-[11px] px-2 py-0.5 rounded-sc-pill border"
+                  style={{ background: "var(--sc-paper-3)", borderColor: "var(--sc-ink)", color: "var(--sc-ink)" }}
+                >via {item.event.provider || "—"}</span>
+              </>
+            )}
+            {item.kind === "ready" && (
+              <span
+                className="font-heading uppercase text-[10px] tracking-wider px-2 py-0.5 rounded-sc-pill border"
+                style={{ background: "var(--sc-sage-100)", color: "var(--sc-ink)", borderColor: "var(--sc-ink)" }}
+              >Ready · sin programar</span>
+            )}
           </div>
 
-          {event.hero_media_url && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={event.hero_media_url}
-              alt=""
-              className="w-full rounded-sc-md border-2"
-              style={{ borderColor: "var(--sc-ink)" }}
-            />
-          )}
-
-          {event.external_url && (
-            <a
-              href={event.external_url}
-              target="_blank"
-              rel="noreferrer"
-              className="font-heading uppercase text-[12px] tracking-wider px-3 py-1.5 rounded-sc-md border-2 sc-pop-hover inline-flex items-center justify-center gap-1.5 no-underline"
-              style={{ background: "var(--sc-sage-100)", color: "var(--sc-ink)", borderColor: "var(--sc-ink)", boxShadow: "var(--pop-xs)" }}
-            >
-              ✓ Ver post publicado ↗
-            </a>
+          {item.kind === "scheduled" && item.event.external_url && (
+            <>
+              <a
+                href={item.event.external_url}
+                target="_blank"
+                rel="noreferrer"
+                className="font-heading uppercase text-[12px] tracking-wider px-3 py-1.5 rounded-sc-md border-2 sc-pop-hover inline-flex items-center justify-center gap-1.5 no-underline"
+                style={{ background: "var(--sc-sage-100)", color: "var(--sc-ink)", borderColor: "var(--sc-ink)", boxShadow: "var(--pop-xs)" }}
+              >
+                ✓ Ver post publicado ↗
+              </a>
+              {item.event.status === "published" && (
+                <PostMetricsBadge slug={slug} externalUrl={item.event.external_url} verbose />
+              )}
+            </>
           )}
 
           <a
@@ -743,20 +834,49 @@ function PostPreviewSlideOver({
           )}
         </div>
 
-        {event.status === "scheduled" && (
+        {item.kind === "ready" && (
           <div
             className="border-t-2 px-4 py-3 flex justify-end"
             style={{ borderColor: "var(--sc-ink)", background: "var(--sc-paper-2)" }}
           >
             <button
               type="button"
-              onClick={doCancel}
-              disabled={cancel.isPending}
-              className="font-heading uppercase text-[12px] tracking-wider px-3 py-1.5 rounded-sc-md border-2 sc-pop-hover disabled:opacity-50"
-              style={{ background: "var(--sc-brick-bg)", color: "var(--sc-brick-500)", borderColor: "var(--sc-brick-500)", boxShadow: "var(--pop-xs)" }}
+              onClick={() => onSchedule(item.draft)}
+              className="font-heading uppercase text-[12px] tracking-wider px-3 py-1.5 rounded-sc-md border-2 sc-pop-hover"
+              style={{ background: "var(--sc-sun-300)", color: "var(--sc-ink)", borderColor: "var(--sc-ink)", boxShadow: "var(--pop-xs)" }}
             >
-              {cancel.isPending ? "Cancelando…" : "✗ Cancelar programación"}
+              📅 Programar
             </button>
+          </div>
+        )}
+
+        {item.kind === "scheduled" && (
+          <div
+            className="border-t-2 px-4 py-3 flex justify-end gap-2"
+            style={{ borderColor: "var(--sc-ink)", background: "var(--sc-paper-2)" }}
+          >
+            {/* Reprogramar: siempre disponible. Para "scheduled" cancela en
+                Metricool antes de re-publicar; para "failed"/"canceled"/
+                "published" simplemente publica con la nueva fecha. */}
+            <button
+              type="button"
+              onClick={() => onReschedule(item.event)}
+              className="font-heading uppercase text-[12px] tracking-wider px-3 py-1.5 rounded-sc-md border-2 sc-pop-hover"
+              style={{ background: "var(--sc-sun-300)", color: "var(--sc-ink)", borderColor: "var(--sc-ink)", boxShadow: "var(--pop-xs)" }}
+            >
+              📅 Editar fecha/hora
+            </button>
+            {item.event.status === "scheduled" && (
+              <button
+                type="button"
+                onClick={doCancel}
+                disabled={cancel.isPending}
+                className="font-heading uppercase text-[12px] tracking-wider px-3 py-1.5 rounded-sc-md border-2 sc-pop-hover disabled:opacity-50"
+                style={{ background: "var(--sc-brick-bg)", color: "var(--sc-brick-500)", borderColor: "var(--sc-brick-500)", boxShadow: "var(--pop-xs)" }}
+              >
+                {cancel.isPending ? "Cancelando…" : "✗ Cancelar programación"}
+              </button>
+            )}
           </div>
         )}
       </div>

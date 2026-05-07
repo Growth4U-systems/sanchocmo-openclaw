@@ -97,16 +97,22 @@
     "type": "foundation",
     "channel": "visual",
     "niche": null,
-    "status": "ready",
-    "completed": null,
+    "status": "completed",
+    "completed": "2026-05-07",
     "deliverable": "5 plantillas HTML (template.html o slide-*.html) + meta.json por plantilla",
-    "deliverable_file": "brand/growth4u/brand-book/visual-identity/templates/",
+    "deliverable_file": [
+      "brand/growth4u/brand-book/visual-identity/templates/linkedin-quote/template.html",
+      "brand/growth4u/brand-book/visual-identity/templates/linkedin-9-slide/slide-cover.html",
+      "brand/growth4u/brand-book/visual-identity/templates/instagram-3-slide/slide-cover.html",
+      "brand/growth4u/brand-book/visual-identity/templates/blog-post/template.html",
+      "brand/growth4u/brand-book/visual-identity/templates/blog-title/template.html"
+    ],
     "output_files": [
-      "templates/linkedin-quote/template.html",
-      "templates/linkedin-9-slide/slide-cover.html",
-      "templates/instagram-3-slide/slide-cover.html",
-      "templates/blog-post/template.html",
-      "templates/blog-title/template.html"
+      "brand-book/visual-identity/templates/linkedin-quote/template.html",
+      "brand-book/visual-identity/templates/linkedin-9-slide/slide-cover.html",
+      "brand-book/visual-identity/templates/instagram-3-slide/slide-cover.html",
+      "brand-book/visual-identity/templates/blog-post/template.html",
+      "brand-book/visual-identity/templates/blog-title/template.html"
     ],
     "depends_on": [
       "P14-T01",

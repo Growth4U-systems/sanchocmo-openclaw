@@ -1,3 +1,11 @@
+---
+kind: 'qa-report'
+target: 'research.md'
+verdict: 'NEEDS REVISION'
+score: 8.5
+sources: 15
+searches: 12
+---
 # QA Report — Research: Conversión Tráfico AI vs Google Orgánico
 
 **Document:** `brand/growth4u/content/drafts/idea-2026-05-06-2/research.md`

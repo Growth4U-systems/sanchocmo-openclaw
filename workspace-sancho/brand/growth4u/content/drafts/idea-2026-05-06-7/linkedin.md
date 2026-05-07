@@ -3,13 +3,25 @@ idea_id: idea-2026-05-06-7
 content_task_id: P-Content-Semana-19-T03-C01
 parent_task_id: P-Content-Semana-19-T03
 channel: linkedin
-kind: draft
+kind: channel-draft
 item_type: hot_take
 iteration: 1
 status: approved
 clarify_status: answered
 created_at: '2026-05-06T13:23:27.177Z'
-updated_at: '2026-05-06T17:50:00.000Z'
+updated_at: '2026-05-07T20:30:09.906Z'
+media:
+  - url: https://pub-2428f727ce5a4953995650d211486b12.r2.dev/brand/growth4u/content/drafts/idea-2026-05-06-7/linkedin-1778140891868.jpg
+    type: image/jpeg
+    source: uploaded
+    created_at: '2026-05-07T07:34:28.719Z'
+publishing:
+  status: scheduled
+  provider: metricool
+  scheduled_at: '2026-05-08T07:00:00.000Z'
+  published_at: null
+  external_url: null
+  error: null
 ---
 
 Max Schoening, Head of Product en Notion, lo dijo esta semana en Lenny's Podcast:

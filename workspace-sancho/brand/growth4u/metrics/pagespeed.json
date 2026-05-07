@@ -1,36 +1,41 @@
 {
   "url": "https://growth4u.io",
   "mobile": {
-    "performance": 76,
+    "performance": 74,
     "seo": 92,
     "accessibility": 92,
     "bestPractices": 100,
-    "lcp": 4.3,
+    "lcp": 4.4,
     "cls": 0.007,
-    "tbt": 67,
+    "tbt": 64,
     "opportunities": [
       {
         "id": "unused-javascript",
         "title": "Reduce unused JavaScript",
-        "savings": 400,
+        "savings": 450,
         "description": "Reduce unused JavaScript and defer loading scripts until they are required to decrease bytes consumed by network activity. [Learn how to reduce unused"
       },
       {
         "id": "server-response-time",
         "title": "Initial server response time was short",
-        "savings": 118,
+        "savings": 113,
         "description": "Keep the server response time for the main document short because all other requests depend on it. [Learn more about the Time to First Byte metric](ht"
       }
     ],
     "diagnostics": [
+      {
+        "id": "heading-order",
+        "title": "Heading elements are not in a sequentially-descending order",
+        "score": 0
+      },
       {
         "id": "image-delivery-insight",
         "title": "Improve image delivery",
         "score": 0
       },
       {
-        "id": "heading-order",
-        "title": "Heading elements are not in a sequentially-descending order",
+        "id": "robots-txt",
+        "title": "robots.txt is not valid",
         "score": 0
       },
       {
@@ -41,41 +46,35 @@
       {
         "id": "landmark-one-main",
         "title": "Document does not have a main landmark.",
-        "score": 0
-      },
-      {
-        "id": "robots-txt",
-        "title": "robots.txt is not valid",
         "score": 0
       }
     ]
   },
   "desktop": {
-    "performance": 97,
+    "performance": 98,
     "seo": 92,
     "accessibility": 92,
     "bestPractices": 100,
     "lcp": 1,
     "cls": 0.009,
-    "tbt": 81,
+    "tbt": 8,
     "opportunities": [
       {
         "id": "unused-javascript",
         "title": "Reduce unused JavaScript",
-        "savings": 120,
+        "savings": 100,
         "description": "Reduce unused JavaScript and defer loading scripts until they are required to decrease bytes consumed by network activity. [Learn how to reduce unused"
-      },
-      {
-        "id": "server-response-time",
-        "title": "Initial server response time was short",
-        "savings": 5,
-        "description": "Keep the server response time for the main document short because all other requests depend on it. [Learn more about the Time to First Byte metric](ht"
       }
     ],
     "diagnostics": [
       {
         "id": "image-delivery-insight",
         "title": "Improve image delivery",
+        "score": 0
+      },
+      {
+        "id": "color-contrast",
+        "title": "Background and foreground colors do not have a sufficient contrast ratio.",
         "score": 0
       },
       {
@@ -89,16 +88,11 @@
         "score": 0
       },
       {
-        "id": "color-contrast",
-        "title": "Background and foreground colors do not have a sufficient contrast ratio.",
-        "score": 0
-      },
-      {
         "id": "robots-txt",
         "title": "robots.txt is not valid",
         "score": 0
       }
     ]
   },
-  "fetchedAt": "2026-05-05T16:39:09.563Z"
+  "fetchedAt": "2026-05-07T07:20:49.034Z"
 }

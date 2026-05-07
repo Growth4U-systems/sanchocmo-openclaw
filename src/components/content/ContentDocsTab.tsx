@@ -83,9 +83,12 @@ export function ContentDocsTab({ slug }: Props) {
       const tasks = (ceProject?.tasks || []) as any[];
 
       for (const task of tasks) {
-        if (task.deliverable_file) {
+        if (!task.deliverable_file) continue;
+        const paths = Array.isArray(task.deliverable_file) ? task.deliverable_file : [task.deliverable_file];
+        for (const path of paths) {
+          if (typeof path !== "string" || path.length === 0) continue;
           items.push({
-            path: task.deliverable_file,
+            path,
             name: task.name,
             description: task.description?.slice(0, 120) || "",
             status: task.status || "todo",

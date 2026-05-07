@@ -51,8 +51,44 @@
       "text": "✅ Drafts aprobados — LinkedIn y Twitter marcados como `approved`.\n\nListos para publicar cuando quieras.",
       "agent": "sancho",
       "ts": "2026-05-06T17:53:48.539Z"
+    },
+    {
+      "role": "bot",
+      "text": "Voy a generar el media. El post va sobre la metáfora de los \"10 becarios motivados\" y agencia > skills. Genero una imagen editorial en line art para LinkedIn (1080×1350).",
+      "agent": "sancho",
+      "ts": "2026-05-07T07:34:45.651Z"
+    },
+    {
+      "role": "bot",
+      "text": "Imagen generada. Ahora la subo al draft de LinkedIn y genero la versión Twitter.",
+      "agent": "sancho",
+      "ts": "2026-05-07T07:34:45.665Z"
+    },
+    {
+      "role": "bot",
+      "text": "R2 no está configurado, así que uso el fallback de localPath. Copio las imágenes al draft y actualizo el frontmatter.",
+      "agent": "sancho",
+      "ts": "2026-05-07T07:34:45.676Z"
+    },
+    {
+      "role": "bot",
+      "text": "Aquí tienes las imágenes generadas para el post de **\"Agencia > Skills en la era IA\"**:\n**LinkedIn (1080×1350):**\n**Twitter (1200×675):**\nConcepto: line art editorial sobre fondo navy (#032149) con una figura central dirigiendo a múltiples figuras energéticas pero sin dirección — la metáfora de los \"10 becarios motivados\". Acentos en teal y purple según los design tokens de G4U.\n⚠️ **Nota**: R2 no está configurado, así que las imágenes están como `localPath` en el frontmatter. Cuando se configure R2 se pueden subir con el endpoint.\n¿Te molan o quieres que ajuste algo?",
+      "agent": "sancho",
+      "ts": "2026-05-07T07:34:45.686Z"
+    },
+    {
+      "role": "bot",
+      "text": "Perfecto 🤙 Actualizo el estado del task.",
+      "agent": "sancho",
+      "ts": "2026-05-07T08:06:15.684Z"
+    },
+    {
+      "role": "bot",
+      "text": "✅ Media aprobada. Task actualizado a **Ready to Publish**.\n\nCuando quieras publicar, avísame y lo despacho a Metricool (o lo que toque).",
+      "agent": "sancho",
+      "ts": "2026-05-07T08:06:15.742Z"
     }
   ],
   "createdAt": "2026-05-06T13:23:27.175Z",
-  "updatedAt": 1778090028539
+  "updatedAt": 1778141175742
 }

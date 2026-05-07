@@ -86,6 +86,26 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     ? aspectRatio
     : provider.capabilities.aspectRatios[0] || "1:1";
 
+  // Hard pre-flight: refuse to spend provider credits if R2 isn't configured
+  // — without storage we couldn't persist the result anyway, and falling back
+  // to localPath in the frontmatter is forbidden by media-persistence-protocol.
+  const missingR2 = [
+    "CLOUDFLARE_ACCOUNT_ID",
+    "R2_UPLOAD_IMAGE_ACCESS_KEY_ID",
+    "R2_UPLOAD_IMAGE_SECRET_ACCESS_KEY",
+    "R2_UPLOAD_IMAGE_BUCKET_NAME",
+    "R2_PUBLIC_URL",
+  ].filter((k) => !process.env[k]);
+  if (missingR2.length > 0) {
+    return res.status(503).json({
+      error:
+        `Storage unavailable: missing ${missingR2.join(", ")}. ` +
+        `Set them in ~/.openclaw/.env.local and restart 'next dev'. ` +
+        `Refusing to call the image provider since the result cannot be persisted.`,
+      storage: { ok: false, missing: missingR2 },
+    });
+  }
+
   const brandPrefix = readVisualIdentityPrefix(slug);
   const fullPrompt = brandPrefix
     ? `Brand visual style:\n${brandPrefix}\n\nGenerate:\n${prompt}`

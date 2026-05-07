@@ -100,6 +100,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
   return res.status(result.ok ? 200 : 502).json({
     ok: result.ok,
+    error: result.ok ? undefined : finalMeta.error || "Publish failed",
     publishing: finalMeta,
     draft: updated,
   });

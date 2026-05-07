@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { parseTemplateMeta } from "@/lib/carousel/parse-meta";
 
 /**
  * Live editor for a carousel template HTML. Two modes:
@@ -65,7 +66,11 @@ export function TemplateLiveEditor({
       .then((d) => {
         if (!d.ok) throw new Error(d.error || "no meta");
         try {
-          setMeta(JSON.parse(d.content));
+          // parseTemplateMeta normalizes both the canonical and the
+          // snake_case/object shape that some skill-emitted meta.json
+          // files use, so the rest of the component can assume the
+          // array form regardless of source.
+          setMeta(parseTemplateMeta(JSON.parse(d.content), templateId));
         } catch {
           setMetaError("meta.json no parseable");
         }

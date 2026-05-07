@@ -1,0 +1,22 @@
+{
+  "cronName": "Content: Editorial Dispatch — Hulahoop",
+  "slug": "hulahoop",
+  "date": "2026-05-07",
+  "runAtMs": 1746596520000,
+  "status": "ok",
+  "transport": "discord",
+  "channel_id": "1491032340208812042",
+  "candidates_selected": 5,
+  "candidates_sent": 5,
+  "idea_ids": [
+    "idea-2026-05-07-1",
+    "idea-2026-05-07-6",
+    "idea-2026-05-06-5",
+    "idea-2026-05-06-6",
+    "idea-2026-05-07-5"
+  ],
+  "task_id": "P-Content-Semana-19-T04",
+  "project_id": "P-Content-Semana-19",
+  "notes": "Server-side endpoint returned 501 (Discord transport not implemented). Dispatched via Discord message tool as fallback. 3 ideas excluded for pov_confidence < 0.7 (idea-2026-05-07-3: 0.65, idea-2026-05-07-4: 0.65, idea-2026-05-07-7: 0.68).",
+  "error": null
+}

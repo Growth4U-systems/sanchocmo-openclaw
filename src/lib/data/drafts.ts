@@ -237,6 +237,12 @@ export function createEmptyDraft(
 }
 
 const VALID_CLARIFY_STATUSES = ["pending", "answered", "skipped"] as const;
+const VALID_DRAFT_KINDS: ReadonlyArray<DraftKind> = [
+  "channel-draft",
+  "proposal",
+  "research",
+  "clarify",
+];
 const VALID_MEDIA_SOURCES: ReadonlyArray<MediaAsset["source"]> = [
   "uploaded",
   "ai-generated",
@@ -319,6 +325,12 @@ export function updateDraft(
     throw new Error(
       `Invalid item_type: "${patch.meta.item_type}". ` +
       `Allowed: ${VALID_CONTENT_ITEM_TYPES.join(", ")}.`,
+    );
+  }
+  if (patch.meta?.kind !== undefined && !VALID_DRAFT_KINDS.includes(patch.meta.kind)) {
+    throw new Error(
+      `Invalid kind: "${patch.meta.kind}". Allowed: ${VALID_DRAFT_KINDS.join(", ")}. ` +
+      `(Common mistake: "draft" instead of "channel-draft" — see _system/draft-file-format.md)`,
     );
   }
   if (patch.meta?.media !== undefined) {

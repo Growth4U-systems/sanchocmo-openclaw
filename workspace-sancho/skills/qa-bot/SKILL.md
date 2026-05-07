@@ -113,7 +113,27 @@ Ser específico sobre **POR QUÉ** algo está mal, no solo que lo está. Incluir
 
 ## Phase 4: QA Report
 
+**The report MUST start with a YAML frontmatter block.** The frontmatter is the
+machine-readable summary used by Mission Control (and any other tool that wants
+to surface "QA score 8.5 · 19 fuentes · 12 búsquedas" without scraping the
+report body). The body underneath is for humans.
+
+Required frontmatter fields: `kind`, `target`, `verdict`, `score`. Other fields
+are optional but include them when applicable. **Numbers must be numbers, not
+strings** — write `score: 8.5`, not `score: "8.5/10"`.
+
 ```markdown
+---
+kind: qa-report
+target: research.md           # the file this report verifies (basename, no path)
+mode: deep                    # deep | quick
+verdict: NEEDS REVISION       # PASS | NEEDS REVISION | MAJOR ISSUES
+score: 8.5                    # number 0-10
+sources: 19                   # unique sources reviewed (omit if N/A)
+searches: 12                  # web searches executed (omit if N/A)
+qa_at: '2026-05-07T10:00:00Z' # ISO8601 timestamp
+---
+
 # QA Report: [Nombre del documento/plan]
 
 **Mode**: Deep QA | Quick QA

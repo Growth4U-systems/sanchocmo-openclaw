@@ -30,5 +30,51 @@
       "Walk-the-talk Growth4U #1-2 en Gemini requiere verificación manual"
     ],
     "duration_seconds": 480
+  },
+  {
+    "date": "2026-05-07",
+    "idea_id": "idea-2026-05-07-5",
+    "content_task_id": "P-Content-Semana-19-T04-C01",
+    "document": "brand/growth4u/content/drafts/idea-2026-05-07-5/research.md",
+    "qa_report": "brand/growth4u/content/drafts/idea-2026-05-07-5/QA-REPORT-research.md",
+    "topic": "Enterprise AI Agent Platforms — Google, Infosys, Snowflake, OpenAI launch. Pilot ceiling breaks. Platform doesn't replace system.",
+    "sources_found": 18,
+    "searches_executed": 11,
+    "qa_score": 8.5,
+    "gaps_remaining": [
+      "McKinsey 86% dato via secondary source (unleash.ai) — plausible pero no verificado en fuente primaria directa",
+      "12-18 meses ventaja es inferencia del autor, no dato empírico"
+    ],
+    "duration_seconds": 540
+  },
+  {
+    "date": "2026-05-07",
+    "idea_id": "idea-2026-05-07-4",
+    "content_task_id": "P-Content-Semana-19-T04-C02",
+    "document": "brand/growth4u/content/drafts/idea-2026-05-07-4/research.md",
+    "qa_report": "brand/growth4u/content/drafts/idea-2026-05-07-4/QA-REPORT-research.md",
+    "topic": "IA rompió vínculo tiempo-valor en agencias — 47K puestos eliminados 2026, shift a judgment pricing",
+    "sources_found": 14,
+    "searches_executed": 12,
+    "qa_score": 9.1,
+    "gaps_remaining": [
+      "Margen 30% era dorada contestado por Ed Papazian — usar 10% actual como dato principal"
+    ],
+    "duration_seconds": 480
+  },
+  {
+    "date": "2026-05-07",
+    "idea_id": "idea-2026-05-07-1",
+    "content_task_id": "P-Content-Semana-19-T04-C03",
+    "document": "brand/growth4u/content/drafts/idea-2026-05-07-1/research.md",
+    "qa_report": "brand/growth4u/content/drafts/idea-2026-05-07-1/QA-REPORT-research.md",
+    "topic": "AI-native SaaS retiene solo 40% GRR — el turista de IA mata ARR. ChartMogul 3500 empresas, ERR vs ARR, smiling curve.",
+    "sources_found": 14,
+    "searches_executed": 13,
+    "qa_score": 9.0,
+    "gaps_remaining": [
+      "47% wrappers cerrados — fuente Medium (rating C), no cross-validated con fuente A"
+    ],
+    "duration_seconds": 420
   }
 ]

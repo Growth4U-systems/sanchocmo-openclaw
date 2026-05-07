@@ -1,3 +1,12 @@
+---
+kind: 'qa-report'
+target: 'research.md'
+verdict: 'NEEDS REVISION'
+score: 8.5
+sources: 19
+searches: 12
+qa_at: '2026-05-06T00:00:00Z'
+---
 # QA Report — Regulación Europea de Finfluencers: Compliance-as-Moat
 
 **Documento evaluado:** `research.md`

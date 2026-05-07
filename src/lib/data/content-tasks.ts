@@ -2,6 +2,7 @@ import fs from "fs";
 import path from "path";
 import { BASE } from "@/lib/data/paths";
 import type { DraftStatus } from "@/lib/data/drafts";
+import { getDraftStatuses, listDrafts } from "@/lib/data/drafts";
 import {
   ContentTask,
   ContentTaskStatus,
@@ -278,6 +279,10 @@ export function reconcileContentTaskState(
 ): ContentTask {
   const inferred = inferContentTaskState(ct, aggregated);
   if (!inferred) return ct;
+  // Orphan CT (status=New from a research cron, no parent yet) — nothing to
+  // reconcile via the nested API path; the flat-file layer handles its own
+  // updates.
+  if (!ct.parent_task_id) return ct;
   return setContentTaskStatus(
     slug,
     ct.parent_task_id,
@@ -455,10 +460,6 @@ export function maybePromoteContentTaskFromDrafts(
     return ct;
   }
 
-  // Read every channel's frontmatter status. Lazy require to avoid a
-  // circular import at module load (drafts.ts ↔ content-tasks.ts).
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { getDraftStatuses } = require("./drafts") as typeof import("./drafts");
   const statuses = getDraftStatuses(slug, ct.idea_id, ct.target_channels || []);
 
   const RANK: Record<string, number> = {
@@ -518,8 +519,6 @@ export function maybePromoteContentTaskFromMedia(
 
   if (ct.status !== "Pending Media") return ct;
 
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { listDrafts } = require("./drafts") as typeof import("./drafts");
   const drafts = listDrafts(slug, ct.idea_id);
   const channelDrafts = drafts.filter(
     (d) => (d.meta.kind ?? "channel-draft") === "channel-draft",

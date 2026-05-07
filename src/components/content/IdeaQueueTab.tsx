@@ -739,17 +739,6 @@ export function IdeaQueueTab({ slug, openChat }: Props) {
                               style={{ background: "var(--sc-sage-500)", color: "var(--sc-paper-3)", borderColor: "var(--sc-ink)", boxShadow: "var(--pop-xs)" }}
                             >✓ Aprobar</button>
                             <button
-                              onClick={() => {
-                                if (!openChat) return setExpandedIdea(expandedIdea === idea.id ? null : idea.id);
-                                if (idea.project_task_id && idea.project_id) {
-                                  const cfg = buildTaskThread(slug, idea.project_task_id, `${idea.content_type} · ${idea.pillar_id}`, idea.project_id, { taskSkill: writerSkillFor(idea.target_channel), taskChannel: idea.target_channel, taskType: "content" });
-                                  openChat(slug, cfg);
-                                }
-                              }}
-                              className="font-heading uppercase text-[11px] tracking-wider px-2.5 py-1.5 rounded border-2 sc-pop-hover inline-flex items-center justify-center gap-1.5"
-                              style={{ background: "var(--sc-rust-500)", color: "var(--sc-paper-3)", borderColor: "var(--sc-ink)", boxShadow: "var(--pop-xs)" }}
-                            >✍ Redactar</button>
-                            <button
                               onClick={() => updateIdea(idea.id, { status: "Deferred", deferred_at: new Date().toISOString(), deferred_by: "mc-ui" })}
                               className="font-heading uppercase text-[11px] tracking-wider px-2.5 py-1.5 rounded border-2 sc-pop-hover inline-flex items-center justify-center gap-1.5"
                               style={{ background: "var(--sc-sun-300)", color: "var(--sc-ink)", borderColor: "var(--sc-ink)", boxShadow: "var(--pop-xs)" }}

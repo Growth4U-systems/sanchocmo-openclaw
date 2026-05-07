@@ -2,6 +2,7 @@ import fs from "fs";
 import path from "path";
 import { brandDir } from "@/lib/data/paths";
 import { wrapHtmlDoc } from "@/lib/carousel/render";
+import { parseTemplateMeta } from "@/lib/carousel/parse-meta";
 import type { CarouselTemplate, RenderSlideInput } from "@/lib/carousel/types";
 
 /**
@@ -74,9 +75,10 @@ function readMeta(slug: string, id: string): FileTemplateMeta | null {
   const metaPath = path.join(templatesDir(slug), id, "meta.json");
   if (!fs.existsSync(metaPath)) return null;
   try {
-    const raw = JSON.parse(fs.readFileSync(metaPath, "utf-8")) as FileTemplateMeta;
-    if (!raw.id || raw.id !== id) raw.id = id;  // tolerate folder-name fallback
-    return raw;
+    // Brand visual-generator skills emit either the canonical shape (slots
+    // as array, camelCase) or a snake_case object form. parseTemplateMeta
+    // accepts both and returns the canonical shape.
+    return parseTemplateMeta(JSON.parse(fs.readFileSync(metaPath, "utf-8")), id);
   } catch {
     return null;
   }

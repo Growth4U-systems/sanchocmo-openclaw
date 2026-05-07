@@ -1,0 +1,74 @@
+{
+  "id": "linkedin-9-slide",
+  "name": "linkedin-9-slide",
+  "channel": "linkedin",
+  "description": "Carrusel educativo: cover + 7 body slides + CTA final",
+  "slideCount": 9,
+  "width": 1080,
+  "height": 1350,
+  "slots": [
+    {
+      "key": "cover_kicker",
+      "label": "Kicker portada",
+      "placeholder": "GROWTH · SISTEMA"
+    },
+    {
+      "key": "cover_title",
+      "label": "Título portada",
+      "placeholder": "7 señales de que tu modelo de growth está roto",
+      "maxLength": 120
+    },
+    {
+      "key": "cover_subtitle",
+      "label": "Subtítulo portada",
+      "placeholder": "Y qué hacer al respecto"
+    },
+    {
+      "key": "hero_image_url",
+      "label": "Personaje cover (URL)"
+    },
+    {
+      "key": "slide_title",
+      "label": "Título de la slide",
+      "perSlide": true,
+      "placeholder": "Tu CAC sube cada trimestre"
+    },
+    {
+      "key": "slide_text",
+      "label": "Texto de la slide",
+      "perSlide": true,
+      "placeholder": "Si tu coste de adquisición sube y tu solución es 'más presupuesto', el problema no es el dinero. Es el modelo.",
+      "maxLength": 300
+    },
+    {
+      "key": "slide_data_value",
+      "label": "Dato destacado (cifra)",
+      "perSlide": true
+    },
+    {
+      "key": "slide_data_label",
+      "label": "Etiqueta del dato",
+      "perSlide": true
+    },
+    {
+      "key": "cta_headline",
+      "label": "Titular CTA",
+      "placeholder": "¿Quieres un sistema que funcione sin ti?",
+      "maxLength": 100
+    },
+    {
+      "key": "cta_subtext",
+      "label": "Subtexto CTA",
+      "placeholder": "6 meses. Sistema instalado. Fecha de fin."
+    },
+    {
+      "key": "cta_button",
+      "label": "Texto del botón CTA",
+      "maxLength": 30
+    },
+    {
+      "key": "cta_image_url",
+      "label": "Personaje CTA (URL)"
+    }
+  ]
+}

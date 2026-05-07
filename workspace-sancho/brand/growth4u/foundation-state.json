@@ -1,7 +1,7 @@
 {
   "version": "3.0",
   "started_at": "2026-03-01T19:03:21Z",
-  "updated_at": "2026-04-14T01:29:00Z",
+  "updated_at": "2026-05-07T14:10:00Z",
   "sections": {
     "fast-foundation": {
       "status": "approved",
@@ -478,6 +478,19 @@
     "public": {
       "llms_txt": "llms.txt"
     },
+    "visual_templates": {
+      "manifest": "brand-book/visual-identity/manifest.json",
+      "templates_dir": "brand-book/visual-identity/templates/",
+      "linkedin_quote": "brand-book/visual-identity/templates/linkedin-quote/template.html",
+      "linkedin_9_slide_cover": "brand-book/visual-identity/templates/linkedin-9-slide/slide-cover.html",
+      "linkedin_9_slide_body": "brand-book/visual-identity/templates/linkedin-9-slide/slide-body.html",
+      "linkedin_9_slide_cta": "brand-book/visual-identity/templates/linkedin-9-slide/slide-cta.html",
+      "instagram_3_slide_cover": "brand-book/visual-identity/templates/instagram-3-slide/slide-cover.html",
+      "instagram_3_slide_body": "brand-book/visual-identity/templates/instagram-3-slide/slide-body.html",
+      "instagram_3_slide_cta": "brand-book/visual-identity/templates/instagram-3-slide/slide-cta.html",
+      "blog_post": "brand-book/visual-identity/templates/blog-post/template.html",
+      "blog_title": "brand-book/visual-identity/templates/blog-title/template.html"
+    },
     "discord": {
       "channels": "discord-channels.json",
       "client_config": "client-config.json"
@@ -517,14 +530,21 @@
     "leads/u7vMVe3Y1bHXBxxVLlYP.md": {
       "description": "Lead: Francisco Franco — Sector ropa, email personal",
       "ghl_id": "u7vMVe3Y1bHXBxxVLlYP",
-      "tags": ["llamada-agendada"],
+      "tags": [
+        "llamada-agendada"
+      ],
       "created": "2026-05-01T20:00:00Z"
     },
     "leads/lRXoZGlFAdJOGdSRMXIl.md": {
       "description": "Lead: Reyes Saiz — EADIC (EdTech formación ingeniería)",
       "ghl_id": "lRXoZGlFAdJOGdSRMXIl",
-      "tags": ["llamada-agendada"],
+      "tags": [
+        "llamada-agendada"
+      ],
       "created": "2026-05-01T20:00:00Z"
-    }
+    },
+    "leads": [
+      "leads/sOdW496mbY1hePpdSyXk.md"
+    ]
   }
 }

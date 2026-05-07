@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import type { ProviderInfo } from "@/lib/publishing/types";
 import { ConnectPublishingButton } from "@/components/content/ConnectPublishingButton";
+import { PublishingAccountInfo } from "@/components/content/PublishingAccountInfo";
 
 /**
  * Setup row inside `Engine > Configuración`. Mirrors the pattern of
@@ -32,36 +33,43 @@ export function PublishingSetupPanel({ slug }: { slug: string }) {
 
   return (
     <div
-      className="rounded-sc-md border-[2px] grid grid-cols-[36px_1fr_auto] gap-3 items-center px-4 py-3 mb-3"
+      className="rounded-sc-md border-[2px] px-4 py-3 mb-3"
       style={{
         background: "var(--sc-paper-3)",
         borderColor: "var(--sc-ink)",
         boxShadow: "var(--pop-xs)",
       }}
     >
-      <span
-        className="grid place-items-center w-9 h-9 rounded-md border-2 text-base"
-        style={{ background: "var(--sc-paper-2)", borderColor: "var(--sc-ink)" }}
-      >
-        📡
-      </span>
-      <div className="min-w-0">
-        <div className="font-semibold text-sm" style={{ color: "var(--sc-ink)" }}>
-          Herramienta de publishing · cómo se programan los posts
+      <div className="grid grid-cols-[36px_1fr_auto] gap-3 items-center">
+        <span
+          className="grid place-items-center w-9 h-9 rounded-md border-2 text-base"
+          style={{ background: "var(--sc-paper-2)", borderColor: "var(--sc-ink)" }}
+        >
+          📡
+        </span>
+        <div className="min-w-0">
+          <div className="font-semibold text-sm" style={{ color: "var(--sc-ink)" }}>
+            Herramienta de publishing · cómo se programan los posts
+          </div>
+          <div className="text-xs" style={{ color: "var(--sc-fg-muted)" }}>
+            <span style={{ color: configured.length > 0 ? "var(--sc-sage-700)" : "var(--sc-rust-700)" }}>
+              {summary}
+            </span>
+            <span> · usado por el calendario y el editor del draft</span>
+          </div>
         </div>
-        <div className="text-xs" style={{ color: "var(--sc-fg-muted)" }}>
-          <span style={{ color: configured.length > 0 ? "var(--sc-sage-700)" : "var(--sc-rust-700)" }}>
-            {summary}
-          </span>
-          <span> · usado por el calendario y el editor del draft</span>
-        </div>
+        <ConnectPublishingButton
+          slug={slug}
+          variant={configured.length > 0 ? "ghost" : "warning"}
+        >
+          {configured.length > 0 ? "Editar →" : "⚠️ Conectar"}
+        </ConnectPublishingButton>
       </div>
-      <ConnectPublishingButton
-        slug={slug}
-        variant={configured.length > 0 ? "ghost" : "warning"}
-      >
-        {configured.length > 0 ? "Editar →" : "⚠️ Conectar"}
-      </ConnectPublishingButton>
+      {configured.some((p) => p.id === "metricool") && (
+        <div className="mt-3 pl-12">
+          <PublishingAccountInfo slug={slug} variant="full" />
+        </div>
+      )}
     </div>
   );
 }

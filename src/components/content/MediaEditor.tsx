@@ -1,16 +1,13 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
-import Link from "next/link";
+import { useRef, useState } from "react";
 import { useDraft } from "@/hooks/useDraft";
 import {
   useRemoveMedia,
   useSetPrimaryMedia,
   useUploadMedia,
 } from "@/hooks/useMedia";
-import { useImageProviders } from "@/hooks/useContentConfig";
 import { CarouselComposer } from "@/components/content/CarouselComposer";
-import { GeneratePromptForm } from "@/components/content/GeneratePromptForm";
 import { MediaLightbox } from "@/components/content/MediaLightbox";
 import { MediaThumb } from "@/components/content/MediaThumb";
 import { cn } from "@/lib/utils";
@@ -48,7 +45,6 @@ export function MediaEditor({
       ? initialChannel
       : fallback,
   );
-  const [showPrompt, setShowPrompt] = useState(false);
   const [showCarousel, setShowCarousel] = useState(false);
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
 
@@ -60,12 +56,6 @@ export function MediaEditor({
   const upload = useUploadMedia();
   const setPrimary = useSetPrimaryMedia();
   const remove = useRemoveMedia();
-  const providersQ = useImageProviders(slug);
-
-  const configured = useMemo(
-    () => (providersQ.data?.providers || []).filter((p) => p.configured),
-    [providersQ.data],
-  );
 
   function handleFiles(files: FileList | null) {
     if (!files || files.length === 0) return;
@@ -107,7 +97,6 @@ export function MediaEditor({
                   type="button"
                   onClick={() => {
                     setActiveChannel(c);
-                    setShowPrompt(false);
                     setShowCarousel(false);
                   }}
                   className={cn(
@@ -191,41 +180,21 @@ export function MediaEditor({
             onClick={() => fileInput.current?.click()}
             disabled={busy}
             className="text-xs px-3 py-1.5 bg-white border border-[#E8E2D9] rounded-lg hover:border-[#2C3E50] transition-colors disabled:opacity-50"
+            title="Sube un archivo (PNG/JPG/WebP/GIF) que ya tengas hecho"
           >
-            📤 Subir imagen
+            📤 Subir asset
           </button>
           <button
             type="button"
-            onClick={() => {
-              setShowPrompt((v) => !v);
-              setShowCarousel(false);
-            }}
-            disabled={configured.length === 0}
-            className="text-xs px-3 py-1.5 bg-gradient-to-br from-[#6E4EF5] to-rust text-white rounded-lg font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
-            title={
-              configured.length === 0 ? "Conecta un provider de imagen primero" : undefined
-            }
-          >
-            ✨ Generar con IA
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setShowCarousel((v) => !v);
-              setShowPrompt(false);
-            }}
+            onClick={() => setShowCarousel((v) => !v)}
             className="text-xs px-3 py-1.5 bg-white border border-[#E8E2D9] rounded-lg hover:border-rust transition-colors"
+            title="Renderiza una plantilla brandeada (carrusel, header, etc.) rellenando los slots"
           >
-            🎨 Carrusel / Plantilla
+            🎨 Generar desde plantilla
           </button>
-          {configured.length === 0 && (
-            <Link
-              href={`/dashboard/${slug}/settings`}
-              className="text-xs text-rust hover:underline"
-            >
-              Conectar provider ↗
-            </Link>
-          )}
+          <span className="text-[11px] text-[#7F8C8D] ml-auto">
+            ¿Generar con IA libre? Pídeselo a Sancho en el chat →
+          </span>
         </div>
 
         {error && (
@@ -234,15 +203,6 @@ export function MediaEditor({
           </div>
         )}
       </section>
-
-      {showPrompt && (
-        <GeneratePromptForm
-          slug={slug}
-          ideaId={ideaId}
-          channel={activeChannel}
-          submitLabel="✨ Generar"
-        />
-      )}
 
       {showCarousel && (
         <CarouselComposer slug={slug} ideaId={ideaId} channel={activeChannel} />

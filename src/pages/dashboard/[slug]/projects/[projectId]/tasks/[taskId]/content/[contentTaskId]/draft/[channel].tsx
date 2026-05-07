@@ -17,7 +17,6 @@ import {
   useDetachDocumentFromContentTask,
   useApproveDraft,
   useApproveMedia,
-  usePublishContentTask,
   useDiscardContentTask,
   useDeferContentTask,
 } from "@/hooks/useContentTasks";
@@ -26,7 +25,6 @@ import { buildContentTaskThread } from "@/lib/chat-openers";
 import { ChannelPreview, isPlaceholderBody } from "@/components/content/channel-preview";
 import { MediaEditor } from "@/components/content/MediaEditor";
 import { MediaSummaryWidget } from "@/components/content/MediaSummaryWidget";
-import { PublishBar } from "@/components/content/PublishBar";
 import { SelfQAPanel } from "@/components/content/self-qa-panel";
 import type { ContentTaskStatus } from "@/types";
 import { EditorHeader } from "@/components/content/editor-v2/EditorHeader";
@@ -34,6 +32,7 @@ import { StatusStepper, STEPS } from "@/components/content/editor-v2/StatusStepp
 import { DocRail, type RailDoc, type RailOutput } from "@/components/content/editor-v2/DocRail";
 import { QAInline } from "@/components/content/editor-v2/QAInline";
 import { DocHeader } from "@/components/content/editor-v2/DocHeader";
+import { extractQaSummary } from "@/lib/data/qa-reports";
 import styles from "@/components/content/editor-v2/editor-v2.module.css";
 
 const MarkdownEditor = dynamic(
@@ -61,52 +60,6 @@ const SPECIAL_DOCS: { key: string; label: string; alwaysOn?: boolean }[] = [
 ];
 
 const RAIL_STORAGE_KEY = "mc.editor.railCollapsed";
-
-/**
- * Pull score / sources / búsquedas from a QA report markdown body.
- * Two formats coexist in the wild:
- *   1. Leading HTML comment: `<!-- ... | fuentes: 19 | búsquedas: 12 | qa-score: 8.5 -->`
- *   2. Inline markdown: `**QA Score:** 8.5/10`, `19 fuentes`, `12 queries`,
- *      `**Búsquedas ejecutadas:** 12`.
- * We try every pattern and take the first match per field.
- */
-function parseQaReport(body: string | undefined | null) {
-  if (!body) return null;
-
-  const SCORE_RES = [
-    /\*\*\s*qa\s*score\s*:?\s*\*\*\s*(\d+(?:[.,]\d+)?)/i,   // `**QA Score:** 8.5`
-    /qa[-\s]?score\s*[:=]\s*(\d+(?:[.,]\d+)?)/i,            // `qa-score: 8.5` / `QA Score: 8.5`
-  ];
-  const SOURCE_RES = [
-    /\*\*\s*fuentes\s*:?\s*\*\*\s*(\d+)/i,                  // `**Fuentes:** 19`
-    /(\d+)\s+fuentes/i,                                     // `19 fuentes`
-    /fuentes?\s*[:=]\s*(\d+)/i,                             // `fuentes: 19`
-  ];
-  const SEARCH_RES = [
-    /\*\*\s*b[úu]squedas[^*]*\*\*\s*(\d+)/i,                // `**Búsquedas ejecutadas:** 12`
-    /(\d+)\s+(?:b[úu]squedas|queries)/i,                    // `12 búsquedas` / `12 queries`
-    /b[úu]squedas?\s*[:=]\s*(\d+)/i,                        // `búsquedas: 12`
-  ];
-
-  const firstMatch = (patterns: RegExp[]): string | undefined => {
-    for (const re of patterns) {
-      const m = body.match(re);
-      if (m) return m[1];
-    }
-    return undefined;
-  };
-
-  const scoreRaw = firstMatch(SCORE_RES);
-  const sourcesRaw = firstMatch(SOURCE_RES);
-  const searchesRaw = firstMatch(SEARCH_RES);
-
-  if (!scoreRaw && !sourcesRaw && !searchesRaw) return null;
-  return {
-    score: scoreRaw ? parseFloat(scoreRaw.replace(",", ".")) : undefined,
-    sources: sourcesRaw ? parseInt(sourcesRaw, 10) : undefined,
-    searches: searchesRaw ? parseInt(searchesRaw, 10) : undefined,
-  };
-}
 
 function ownerInitials(owner?: string | null): string | undefined {
   if (!owner) return undefined;
@@ -147,7 +100,6 @@ export default function DraftFullScreenPage() {
   const detachDoc = useDetachDocumentFromContentTask();
   const approveDraft = useApproveDraft();
   const approveMedia = useApproveMedia();
-  const publishContentTask = usePublishContentTask();
   const discardContentTask = useDiscardContentTask();
   const deferContentTask = useDeferContentTask();
   const openChat = useOpenChat();
@@ -205,7 +157,10 @@ export default function DraftFullScreenPage() {
   }
 
   // ── Stepper handlers ─────────────────────────────────────────────────────
-  const qaParsed = useMemo(() => parseQaReport(qaReport?.body), [qaReport?.body]);
+  const qaParsed = useMemo(
+    () => extractQaSummary(qaReport?.meta, qaReport?.body),
+    [qaReport?.meta, qaReport?.body],
+  );
 
   const approveCurrent = useCallback(() => {
     if (!ct) return;
@@ -234,12 +189,12 @@ export default function DraftFullScreenPage() {
         },
       );
     } else if (ct.status === "Ready") {
-      publishContentTask.mutate(
-        { slug, parentTaskId: taskId, id: contentTaskId },
-        {
-          onSuccess: () => showToast("Publicado."),
-          onError: (e) => showToast(`Error: ${(e as Error).message}`),
-        },
+      // Programar = ir al calendario con foco en este draft. La operacion
+      // real (drag-drop al dia + modal con fecha+hora+provider) vive ahi.
+      // Antes este boton flipeaba el flag a Published sin despachar; era
+      // engañoso. Ahora el unico despacho real es a traves del calendario.
+      router.push(
+        `/dashboard/${slug}/content-creation?tab=calendar&focus=${encodeURIComponent(`${ct.idea_id}:${channel}`)}`,
       );
     }
   }, [
@@ -250,7 +205,8 @@ export default function DraftFullScreenPage() {
     updateContentTaskStatus,
     approveDraft,
     approveMedia,
-    publishContentTask,
+    router,
+    channel,
   ]);
 
   function revertCurrent() {
@@ -278,20 +234,29 @@ export default function DraftFullScreenPage() {
       case "Draft":
         return { fn: approveCurrent, label: "Aprobar texto", disabled: false } as const;
       case "Pending Media": {
-        const ready = ct.pipeline_state === "media-review";
+        // The backend approve-media endpoint requires `hasMedia` (any channel),
+        // not `pipeline_state === "media-review"`. We follow the same rule so
+        // the button is clickable as soon as there's at least one asset, even
+        // if the pipeline_state lagged (which used to happen silently when
+        // `maybePromoteContentTaskFromMedia` was no-op due to a webpack
+        // require bug — now fixed). The user-visible draft is the source of
+        // truth here; pipeline_state is just a hint.
+        const hasMedia =
+          ct.pipeline_state === "media-review" ||
+          (draft?.meta.media?.length ?? 0) > 0;
         return {
           fn: approveCurrent,
           label: "Aprobar media",
-          disabled: !ready,
-          reason: ready ? undefined : "Adjunta o genera media para aprobar",
+          disabled: !hasMedia,
+          reason: hasMedia ? undefined : "Adjunta o genera media para aprobar",
         } as const;
       }
       case "Ready":
-        return { fn: approveCurrent, label: "Publicar", disabled: false } as const;
+        return { fn: approveCurrent, label: "Programar", disabled: false } as const;
       default:
         return null;
     }
-  }, [ct, approveCurrent]);
+  }, [ct, approveCurrent, draft?.meta.media?.length]);
 
   // Volver button: hide when previous is "New" (first step, meaningless to go back)
   // and from terminal states.
@@ -305,8 +270,7 @@ export default function DraftFullScreenPage() {
   const isPending =
     updateContentTaskStatus.isPending ||
     approveDraft.isPending ||
-    approveMedia.isPending ||
-    publishContentTask.isPending;
+    approveMedia.isPending;
 
   // ── Rail data ────────────────────────────────────────────────────────────
   const railDocs: RailDoc[] = useMemo(() => {
@@ -622,17 +586,9 @@ export default function DraftFullScreenPage() {
                   </details>
                 )}
 
-                {draft && !isSpecialChannel && ideaId &&
-                  (draft.meta.status === "approved" || draft.meta.status === "published") && (
-                  <PublishBar
-                    slug={slug}
-                    ideaId={ideaId}
-                    channel={channel}
-                    draft={draft}
-                    ctStatus={ct?.status}
-                    onPublishedToast={showToast}
-                  />
-                )}
+                {/* PublishBar retirado: la programacion vive en la pestana
+                    Calendar (drag-drop + modal con fecha/hora/provider).
+                    El stepper "Programar" navega alli con foco al draft. */}
 
                 {attachments.length > 0 && (
                   <section className="bg-white border border-[#E8E2D9] rounded-[10px] overflow-hidden">

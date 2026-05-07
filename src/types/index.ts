@@ -182,14 +182,26 @@ export type ContentTaskPipelineState =
  * `type: "content"`. Validar en `setContentTaskStatus` y endpoints.
  */
 export interface ContentTask {
-  id: string;                       // "P-Content-Semana-18-T01-C01"
-  parent_task_id: string;           // "P-Content-Semana-18-T01" — must be type=content
-  idea_id: string;                  // Linked idea in idea-queue.json
+  id: string;                       // "P-Content-Semana-18-T01-C01" or "CT-{slug}-{YYYY-MM-DD}-{n}" for orphans
+  /**
+   * Parent task with `type=content`. Optional: when a ContentTask is created
+   * from a research signal it lives orphaned (`status=New`) until the user
+   * approves it and Editorial Dispatch attaches it to a weekly parent.
+   */
+  parent_task_id?: string;
+  /**
+   * Storage key for per-channel drafts: `brand/{slug}/content/drafts/{idea_id}/`.
+   * For legacy ContentTasks created from a separate idea, this points at the
+   * source `idea-{date}-{n}` ID. For unified ContentTasks (where the CT IS the
+   * idea), this equals `id`. Kept required so existing draft paths keep
+   * resolving.
+   */
+  idea_id: string;
   name: string;
   status: ContentTaskStatus;
   pipeline_state?: ContentTaskPipelineState;  // Visible during status === "Approved" or "Pending Media"
   clarify_status?: "pending" | "answered" | "skipped";
-  skill: string;                    // social-writer | seo-content | instagram-content | newsletter
+  skill?: string;                   // social-writer | seo-content | instagram-content | newsletter — assigned at Approved
   target_channels: string[];        // ["linkedin", "twitter"] — drafts produced for these
   documents: { path: string; name?: string; channel?: string }[];
   mc_chat_thread_id?: string;
@@ -202,6 +214,35 @@ export interface ContentTask {
   published_at?: string;
   discarded_at?: string;
   deferred_at?: string;
+  // ---- Discovery-phase fields (inherited from legacy Idea) ----
+  /** Scannable 40-90 char headline. UI falls back to first sentence of angle_draft if absent. */
+  title?: string;
+  /** Content pillar: P1, P2, ... */
+  pillar_id?: string;
+  /** Hot Take, Proof Post, Framework, Personal Story, ... */
+  content_type?: string;
+  /** Original target channel from the research cron. After approval expands into `target_channels`. */
+  target_channel?: string;
+  /** Research signal that triggered this CT. */
+  signal?: { summary: string; source: string; url?: string; date: string };
+  /** Brand POV paragraph (60-80 words). */
+  angle_draft?: string;
+  /** 0.0-1.0 confidence in the angle. */
+  pov_confidence?: number;
+  /** Tags for the kind of signal: contrarian, data-point, framework, ... */
+  signal_type?: string[];
+  /** References to research-signals/{date}-*.json entries. */
+  source_signals?: string[];
+  /** When Editorial Dispatch picked this CT for a slot. */
+  dispatch_date?: string;
+  dispatch_slot?: string;
+  archived_at?: string;
+  archived_via?: string;
+  archived_by?: string;
+  approved_via?: string;
+  approved_by?: string;
+  deferred_by?: string;
+  target_date?: string;
   /**
    * @deprecated Use `draft.meta.publishing.scheduled_at` (per-channel) as the
    * single source of truth for when a post is scheduled. This CT-level field

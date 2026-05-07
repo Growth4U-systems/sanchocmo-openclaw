@@ -72,7 +72,11 @@ Build a complete idea in one shot:
 
 ### 4. Schema (one idea per news result)
 
-Append to `content/idea-queue.json`:
+Append to `content/idea-queue.json`. **Before assigning `{n}`**, read the existing
+file and find the highest `{n}` already used for today's date prefix
+(`idea-{YYYY-MM-DD}-`). Start your numbering at `max + 1` so a second cron run on
+the same day does not collide with earlier ideas. If no idea for today exists yet,
+start at `1`.
 
 ```json
 {

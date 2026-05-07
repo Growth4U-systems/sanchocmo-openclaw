@@ -92,10 +92,29 @@ export function resolveTaskDocPaths(
   // 1) Explicit deliverable_file on the task (canonical when present)
   if (task.deliverable_file) {
     const arr = Array.isArray(task.deliverable_file) ? task.deliverable_file : [task.deliverable_file];
-    if (arr.length > 0) return arr.map(stripBrand);
+    const files = arr.filter((p) => !p.endsWith("/"));
+    const dirs = arr.filter((p) => p.endsWith("/"));
+
+    if (files.length > 0) return files.map(stripBrand);
+
+    // Directory deliverables (e.g. `brand/X/brand-book/visual-identity/templates/`):
+    // a single doc fetch would 404, so fall back to `output_files`. Skills emit
+    // those as paths relative to the deliverable directory's parent (e.g.
+    // `templates/blog-post/template.html` next to `brand-book/visual-identity/`),
+    // so we resolve them against that parent here.
+    if (dirs.length > 0 && task.output_files && task.output_files.length > 0) {
+      const baseDir = stripBrand(dirs[0]).replace(/\/$/, "");
+      const parent = baseDir.includes("/") ? baseDir.slice(0, baseDir.lastIndexOf("/")) : "";
+      return task.output_files.map((f) => {
+        const stripped = stripBrand(f);
+        if (stripped.startsWith(`${baseDir}/`)) return stripped;
+        return parent ? `${parent}/${stripped}` : stripped;
+      });
+    }
+    // Bare directory with no output_files — fall through to other resolution.
   }
 
-  // 2) Legacy output_files
+  // 2) Legacy output_files (no deliverable_file at all)
   if (task.output_files && task.output_files.length > 0) {
     return task.output_files.map(stripBrand);
   }

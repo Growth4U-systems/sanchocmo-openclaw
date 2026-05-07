@@ -473,6 +473,67 @@ Re-ejecutar esta skill (`growth4u-visual-generator`, o el equivalente para
 otra brand) para que las regenere desde cero leyendo design-tokens y
 visual-identity, con calidad real brand-specific.
 
+### Esquema de `meta.json` (CANÓNICO — no inventar variantes)
+
+Mission Control consume `meta.json` con esta forma exacta. Es la forma que
+espera el TS (`FileTemplateMeta` en `src/lib/carousel/file-templates.ts`) y
+la que renderiza el live-editor de Foundation. Si emites otra forma
+(snake_case, `slots` como objeto, `template_id` en vez de `id`) el cliente
+arrancará por la capa de tolerancia, pero la SKILL **debe** producir la
+forma canónica para que el sistema sea predecible.
+
+```json
+{
+  "id": "linkedin-9-slide",
+  "name": "LinkedIn · Carrusel 9 slides",
+  "channel": "linkedin",
+  "description": "Carrusel educativo: cover + 7 body slides + CTA final",
+  "slideCount": 9,
+  "width": 1080,
+  "height": 1350,
+  "slots": [
+    {
+      "key": "cover_title",
+      "label": "Título portada",
+      "placeholder": "7 señales de que tu modelo de growth está roto",
+      "maxLength": 120
+    },
+    {
+      "key": "slide_title",
+      "label": "Título de la slide",
+      "perSlide": true,
+      "placeholder": "Tu CAC sube cada trimestre",
+      "maxLength": 80
+    },
+    {
+      "key": "slide_text",
+      "label": "Texto de la slide",
+      "perSlide": true,
+      "multiline": true,
+      "placeholder": "Si tu CAC sube y tu solución es 'más presupuesto'…",
+      "maxLength": 300
+    }
+  ]
+}
+```
+
+Reglas estrictas:
+
+- **`id`** (string, obligatorio): igual al nombre de la carpeta del template.
+- **`slots`** es siempre un **array**, nunca un objeto. Cada entry incluye
+  `key` (id estable), `label` (lo ve el redactor), y opcionalmente
+  `placeholder`, `maxLength`, `multiline`, `perSlide`.
+- **`perSlide: true`** marca slots cuyo valor es un array — uno por slide.
+  Sin `perSlide`, el slot es global (mismo valor en todas las slides).
+- **`slideCount`**, **`width`**, **`height`** son números. NO uses
+  `slides` o `size: "1080x1350"` — esos son de la entrada del manifest, no
+  del meta.json del template.
+- Slots auto-rellenados (ej. `slide_number`) NO se declaran como slots —
+  los rellena el renderer vía `{{slide_number}}`. Si los declaras se
+  filtran en cliente y aparece ruido en el formulario.
+- Camel case en TODOS los campos (`slideCount`, `perSlide`, `maxLength`),
+  no snake_case (`slide_count`, `per_slide`, `max_length`).
+
 ### Slot conventions (para que el redactor pueda rellenarlas con AskUserQuestion)
 
 Single-slide:

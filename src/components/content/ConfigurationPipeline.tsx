@@ -116,14 +116,18 @@ export function ConfigurationPipeline({ slug, openChat, onRequestEditor, onOpenI
     const ce = projects.find((p: any) => p.id === "P14") || projects.find((p: any) => p.name === "Content Engine");
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const tasks = (ce?.tasks || []) as any[];
-    const docItems: DocItem[] = tasks
-      .filter((t) => t.deliverable_file)
-      .map((t) => ({
-        path: t.deliverable_file,
-        name: t.name,
-        status: t.status || "todo",
-        taskId: t.id,
-      }));
+    const docItems: DocItem[] = tasks.flatMap((t) => {
+      if (!t.deliverable_file) return [];
+      const paths = Array.isArray(t.deliverable_file) ? t.deliverable_file : [t.deliverable_file];
+      return paths
+        .filter((p: unknown): p is string => typeof p === "string" && p.length > 0)
+        .map((path: string) => ({
+          path,
+          name: t.name,
+          status: t.status || "todo",
+          taskId: t.id,
+        }));
+    });
     setDocs(docItems);
 
     // Configs summary

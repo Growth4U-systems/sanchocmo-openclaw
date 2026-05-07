@@ -1,0 +1,32 @@
+{
+  "id": "blog-title",
+  "name": "blog-title",
+  "channel": "blog",
+  "description": "Cover / OG image: título dominante + autor + tiempo de lectura. Sin personaje.",
+  "slideCount": 1,
+  "width": 1200,
+  "height": 630,
+  "slots": [
+    {
+      "key": "kicker",
+      "label": "Kicker (categoría)",
+      "placeholder": "GROWTH SYSTEMS"
+    },
+    {
+      "key": "title",
+      "label": "Título del artículo",
+      "placeholder": "Por qué el 73% de las startups tech no logra ventas recurrentes",
+      "maxLength": 120
+    },
+    {
+      "key": "author",
+      "label": "Nombre del autor"
+    },
+    {
+      "key": "read_time",
+      "label": "Tiempo de lectura",
+      "placeholder": "8 min",
+      "maxLength": 10
+    }
+  ]
+}

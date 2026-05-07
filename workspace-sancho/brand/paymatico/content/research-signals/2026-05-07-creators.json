@@ -1,0 +1,112 @@
+[
+  {
+    "id": "sig-2026-05-07-adyen-imm",
+    "source": "Adyen",
+    "source_type": "competitor",
+    "platform": "web",
+    "url": "https://www.adyen.com/press-and-media/adyen-launches-intelligent-money-movement",
+    "summary": "Adyen lanza 'Intelligent Money Movement' para unificar pagos, liquidez y payouts para enterprise global.",
+    "date": "2026-04",
+    "pillar_match": "competencia-fintech",
+    "captured_at": "2026-05-07T05:55:00.443148+00:00"
+  },
+  {
+    "id": "sig-2026-05-07-adyen-x402",
+    "source": "Adyen / Linux Foundation",
+    "source_type": "competitor",
+    "platform": "web",
+    "url": "https://www.adyen.com/knowledge-hub/adyen-joins-x402-foundation",
+    "summary": "Adyen cofunda x402 Foundation (Linux Foundation) para crear open standards de pagos HTTP para agentic commerce.",
+    "date": "2026-04",
+    "pillar_match": "tecnologia-pagos",
+    "captured_at": "2026-05-07T05:55:00.443148+00:00"
+  },
+  {
+    "id": "sig-2026-05-07-monei-banco",
+    "source": "MONEI / El Diario Joven",
+    "source_type": "competitor",
+    "platform": "web",
+    "url": "https://eldiariojoven.es/empresas/monei-avanza-banco-especializado-comercios-pymes",
+    "summary": "MONEI amplía licencia BdE para operar sin límites de volumen. EBITDA positivo, prevé 10M€ ingresos. Objetivo: banco especializado para pymes.",
+    "date": "2026-04",
+    "pillar_match": "competencia-fintech",
+    "captured_at": "2026-05-07T05:55:00.443148+00:00"
+  },
+  {
+    "id": "sig-2026-05-07-visa-agentic",
+    "source": "Visa / ConnectCX",
+    "source_type": "reference-creator",
+    "platform": "web",
+    "url": "https://connectcx.ai/visa-advances-fintech-innovation-through-agentic-commerce-enablement/",
+    "summary": "Visa lanza programas 'Agentic Commerce Enablement' y 'Agentic Ready' con frameworks y testing para agentic payments.",
+    "date": "2026-05",
+    "pillar_match": "tecnologia-pagos",
+    "captured_at": "2026-05-07T05:55:00.443148+00:00"
+  },
+  {
+    "id": "sig-2026-05-07-smes-embedded",
+    "source": "Consultancy.eu",
+    "source_type": "reference-creator",
+    "platform": "web",
+    "url": "https://www.consultancy.eu/news/13237/european-smes-trade-traditional-banking-for-embedded-finance-solutions",
+    "summary": "46% de pymes de Europa occidental ya usa finanzas embebidas en su infraestructura no financiera.",
+    "date": "2026",
+    "pillar_match": "franquicias-multisede",
+    "captured_at": "2026-05-07T05:55:00.443148+00:00"
+  },
+  {
+    "id": "sig-2026-05-07-stripe-mpp",
+    "source": "Stripe / Investing.com",
+    "source_type": "competitor",
+    "platform": "web",
+    "url": "https://www.investing.com/news/analyst-ratings/stripe-unveils-288-products-at-sessions-2026-focused-on-ai-commerce-93CH-4656455",
+    "summary": "Stripe presenta Machine Payments Protocol (MPP) para micropagos programáticos entre agentes IA en stablecoins/fiat. 288 productos en Sessions 2026.",
+    "date": "2026-05",
+    "pillar_match": "tecnologia-pagos",
+    "captured_at": "2026-05-07T05:55:00.443148+00:00"
+  },
+  {
+    "id": "sig-2026-05-07-embedded-shift",
+    "source": "FintechFutures / MarketDataForecast",
+    "source_type": "reference-creator",
+    "platform": "web",
+    "url": "https://www.fintechfutures.com/embedded-finance/the-rise-of-embedded-financial-infrastructure-why-2026-marks-a-structural-market-shift",
+    "summary": "2026 marca structural market shift en embedded finance: de innovación a arquitectura mainstream. Mercado europeo $57.59B, proyección $441.6B en 2034.",
+    "date": "2026-05",
+    "pillar_match": "tecnologia-pagos",
+    "captured_at": "2026-05-07T05:55:00.443148+00:00"
+  },
+  {
+    "id": "sig-2026-05-07-bizum-31m",
+    "source": "wwwhatsnew / El Diario / Xataka",
+    "source_type": "reference-creator",
+    "platform": "web",
+    "url": "https://wwwhatsnew.com/2026/05/05/bizum-pago-tiendas-fisicas-nfc-mayo-2026/",
+    "summary": "Bizum Pay con 31M usuarios lanza NFC en tiendas el 18 mayo. Transferencia banco-a-banco sin Visa/Mastercard. Sin PIN, solo biometría. CaixaBank, Sabadell, Bankinter primeros.",
+    "date": "2026-05-05",
+    "pillar_match": "tecnologia-pagos",
+    "captured_at": "2026-05-07T05:55:00.443148+00:00"
+  },
+  {
+    "id": "sig-2026-05-07-adyen-lavazza",
+    "source": "Adyen / Fintech Global",
+    "source_type": "competitor",
+    "platform": "web",
+    "url": "https://fintech.global/2026/05/05/adyen-partners-with-lavazza-to-unify-global-payments/",
+    "summary": "Adyen se asocia con Lavazza para unificar pagos digitales globales en B2B y B2C. Despliegue en mayo en US, UK y Australia, expandiéndose a 7 mercados.",
+    "date": "2026-05-05",
+    "pillar_match": "competencia-fintech",
+    "captured_at": "2026-05-07T05:55:00.443148+00:00"
+  },
+  {
+    "id": "sig-2026-05-07-monei-visa-vipe",
+    "source": "MONEI / Visa Innovation Program",
+    "source_type": "competitor",
+    "platform": "web",
+    "url": "https://visainnovationprogram.com/",
+    "summary": "MONEI seleccionada para la 5ª edición del Visa Innovation Program Europe (VIPE) en España y Portugal, abril 2026.",
+    "date": "2026-04",
+    "pillar_match": "competencia-fintech",
+    "captured_at": "2026-05-07T05:55:00.443148+00:00"
+  }
+]

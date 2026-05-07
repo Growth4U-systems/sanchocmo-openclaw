@@ -392,7 +392,11 @@ For each signal:
 - Assign `target_channel` (linkedin, twitter, blog, newsletter)
 - Calculate `pov_confidence` (0.0-1.0)
 
-Append to `brand/{slug}/content/idea-queue.json`:
+Append to `brand/{slug}/content/idea-queue.json`. **Before assigning `{seq}`**,
+read the existing file and find the highest `{seq}` already used for today's date
+prefix (`idea-{date}-`). Start at `max + 1` so a second run on the same day does
+not collide with earlier ideas. If no idea for today exists yet, start at `1`.
+
 ```json
 {
   "id": "idea-{date}-{seq}",

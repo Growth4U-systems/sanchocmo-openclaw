@@ -260,13 +260,21 @@ export default function TaskDetailPage() {
       foundationState as Parameters<typeof resolveTaskDocPaths>[1]
     );
     if (paths.length === 0) return null;
-    return paths.map((p) => ({
-      path: p,
-      name: task.name,
-      title: task.name,
-      status: "draft",
-      created_at: undefined,
-    }));
+    // When the task delivers multiple files (e.g. a directory of templates),
+    // distinguish each entry by its own filename so the user doesn't see N
+    // identical rows. Single-file tasks keep the human-readable task name.
+    const multi = paths.length > 1;
+    return paths.map((p) => {
+      const leaf = p.split("/").filter(Boolean).slice(-2).join("/");
+      const display = multi ? leaf : task.name;
+      return {
+        path: p,
+        name: display,
+        title: display,
+        status: "draft",
+        created_at: undefined,
+      };
+    });
   }, [task, foundationState, taskIsPendingOrNotStarted]);
 
   // Auto-open chat for foundation tasks on first load.

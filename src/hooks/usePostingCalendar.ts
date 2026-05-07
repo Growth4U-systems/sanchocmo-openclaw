@@ -1,4 +1,5 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import type { MediaAsset } from "@/lib/data/drafts";
 
 export interface CalendarEvent {
   ideaId: string;
@@ -12,6 +13,8 @@ export interface CalendarEvent {
   external_job_id?: string;
   title: string;
   hero_media_url?: string;
+  body: string;
+  media: MediaAsset[];
 }
 
 export interface ReadyDraft {
@@ -24,6 +27,8 @@ export interface ReadyDraft {
   ready_at: string;
   hero_media_url?: string;
   has_media: boolean;
+  body: string;
+  media: MediaAsset[];
 }
 
 export interface CalendarPayload {

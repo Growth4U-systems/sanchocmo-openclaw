@@ -158,6 +158,33 @@ el dispatcher, despues de un envio real con confirmacion. Si "no hay
 dispatcher" para el canal en cuestion, el status correcto es
 `approved` (la pieza queda lista, esperando publicacion manual).
 
+## Regla 5 — Si storage no esta disponible, NO escribas nada
+
+R2 (o equivalente) puede no estar configurado en una instalacion concreta
+(faltan `CLOUDFLARE_ACCOUNT_ID`, `R2_PUBLIC_URL`, etc.). Cuando eso
+ocurre, los endpoints `generate-image` y `upload-media` ahora devuelven
+**503** con `{ storage: { ok: false, missing: [...] } }`.
+
+PROHIBIDO en ese caso:
+
+- Generar la imagen localmente (con `nano-banana-pro` u otra herramienta)
+  y escribir `localPath:` al frontmatter como fallback. Eso es lo que
+  rompio el primer caso (2026-05-06) y los dos siguientes
+  (2026-05-06 idea-2026-05-06-7).
+- Decir al usuario que la imagen esta lista. No lo esta.
+
+OK en ese caso:
+
+- Comprobar storage al inicio con
+  `GET /api/content-engine/image-providers?slug=X` →
+  `response.storage.ok`. Si es `false`, abortar.
+- Decir explicitamente al usuario:
+  > "No puedo persistir la imagen: faltan {missing}. Configura R2 en
+  > `~/.openclaw/.env.local` y reinicia el dev server. Te dejo la
+  > propuesta del prompt para cuando este arriba:"
+
+`content-image/SKILL.md` Step 0a implementa este check.
+
 ## Regla 4 — Anti-hallucination general
 
 Si tras intentar la operacion (Regla 2 o Regla 3) no obtienes confirmacion

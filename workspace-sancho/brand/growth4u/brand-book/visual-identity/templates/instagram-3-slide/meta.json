@@ -1,0 +1,61 @@
+{
+  "id": "instagram-3-slide",
+  "name": "instagram-3-slide",
+  "channel": "instagram",
+  "description": "Carrusel cuadrado IG: cover + body + CTA",
+  "slideCount": 3,
+  "width": 1080,
+  "height": 1080,
+  "slots": [
+    {
+      "key": "cover_kicker",
+      "label": "Kicker portada",
+      "placeholder": "GROWTH TIP"
+    },
+    {
+      "key": "cover_title",
+      "label": "Título portada",
+      "placeholder": "¿Tu CAC sube cada trimestre?",
+      "maxLength": 80
+    },
+    {
+      "key": "hero_image_url",
+      "label": "Personaje cover (URL)"
+    },
+    {
+      "key": "slide_title",
+      "label": "Título de la slide",
+      "perSlide": true
+    },
+    {
+      "key": "slide_text",
+      "label": "Texto de la slide",
+      "perSlide": true,
+      "maxLength": 200
+    },
+    {
+      "key": "slide_data_value",
+      "label": "Dato destacado (cifra)",
+      "perSlide": true
+    },
+    {
+      "key": "cta_headline",
+      "label": "Titular CTA",
+      "placeholder": "¿Quieres un motor que funcione sin ti?",
+      "maxLength": 80
+    },
+    {
+      "key": "cta_subtext",
+      "label": "Subtexto CTA",
+      "placeholder": "Link en bio"
+    },
+    {
+      "key": "cta_button",
+      "label": "Texto botón CTA"
+    },
+    {
+      "key": "cta_image_url",
+      "label": "Personaje CTA (URL)"
+    }
+  ]
+}

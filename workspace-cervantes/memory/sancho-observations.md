@@ -677,3 +677,104 @@ _Generado por Cervantes — cron:cedfbd22-cbd0-4a19-87a0-29337c4f2b37 — 2026-0
 **Sistema operativo, sin fallos críticos.** Los crons ejecutan correctamente con workarounds para endpoints no implementados. El principal issue es eficiencia de costes — Sancho usa Opus para todo, incluyendo tareas que podrían ser T2.
 
 _Generado por Cervantes — cron:cedfbd22-cbd0-4a19-87a0-29337c4f2b37 — 2026-05-06 10:00 CEST_
+
+---
+
+# Sancho Observations — 2026-05-07
+
+## Resumen sesiones (últimas 24h)
+
+**30 sesiones** activas. 4 clientes: Growth4U, Hospital Capilar, Hulahoop, Paymatico + Criptan (MC-chat).
+
+| Tipo | Cantidad | Clientes |
+|------|----------|----------|
+| Cron: News Monitor | 4 | G4U, HC, Hulahoop, Paymatico |
+| Cron: Competitor Monitor | 4 | G4U, HC, Hulahoop, Paymatico |
+| Cron: Editorial Dispatch | 4 | G4U, HC, Hulahoop, Paymatico |
+| Cron: Daily Pulse | 2 | G4U, HC |
+| Cron: Morning Metrics | 2 | G4U, Hulahoop |
+| Cron: Call Prep | 1 | G4U |
+| Cron: Lead Sync | 1 | G4U |
+| Cron: Cost Tracker | 1 | Multi-client (ABORTED) |
+| Cron: update-skills | 1 | Sistema |
+| MC-Chat content | 5 | G4U (4), Criptan (1) |
+| Discord (publish) | 3 | G4U (2), HC (1) |
+| Heartbeat (Qwen) | 1 | Sistema |
+
+### Coste teórico estimado: ~$17.30
+
+- Crons: ~$12.80 (18 crons, todos en Opus excepto heartbeat)
+- MC-Chat content: ~$4.70 (5 sesiones interactivas)
+- Heartbeat Qwen: ~$0.01
+
+## Hallazgos
+
+### 1. ⚠️ Cost Tracker ABORTADO
+**Sesión**: `cron:b780c3f1` — stopReason: "aborted", errorMessage: "This operation was aborted"
+**Impacto**: No se generó el reporte de costes diario. No hay anomaly detection hoy.
+**Causa probable**: Timeout o conflicto de concurrencia con otros crons que arrancan a las 08:00.
+**Acción**: Verificar si el cron tiene suficiente timeout. Considerar escalonar horario.
+
+### 2. ⚠️ Todos los crons en Opus (~$12.80/día teórico)
+**Problema**: 17 cron jobs ejecutándose en `claude-opus-4-6` ($15/$75 MTok).
+**Matriz TOOLS.md dice**: Crons → Haiku (T3) o Sonnet (T2).
+**Impacto**: ~5-10x más caro de lo necesario. Los News/Competitor Monitors usan ~80-110K tokens cada uno.
+**Acción**: Migrar crons a Sonnet 4.5 (monitors, dispatches, daily pulse) o Haiku (morning metrics sin datos, cost tracker).
+
+### 3. ⚠️ send-dispatch endpoint devuelve 501 (3 clientes)
+**Afectados**: Paymatico, Hulahoop, Hospital Capilar — Editorial Dispatch
+**Mensaje**: "Discord transport not implemented"
+**Workaround**: Sancho usa fallback directo via message tool ✅
+**Impacto**: Los botones interactivos (Aprobar/Rechazar/Más tarde) NO funcionan. El equipo tiene que reaccionar con emojis.
+**Recurrencia**: Ya observado en sesiones anteriores. Sigue sin fix.
+
+### 4. ⚠️ xAI quota agotada — X/Twitter monitoring roto
+**Afectados**: Competitor Monitor de G4U y Paymatico
+**Mensaje**: "X/Twitter no disponible (quota xAI agotada)" / "créditos xAI agotados"
+**Impacto**: Se pierden señales de competitors en Twitter. Los monitors funcionan solo con web search.
+**Acción**: Verificar estado de créditos xAI, recargar si es necesario.
+
+### 5. 🟡 Hulahoop Morning Metrics corre sin APIs (~$0.06/día desperdiciado)
+**Sesión**: `cron:9416a8bc` — 26K tokens para descubrir que no hay APIs configuradas
+**Output**: "Sin APIs configuradas para Hulahoop"
+**Acción**: Desactivar el cron de Hulahoop Morning Metrics hasta que se configuren APIs.
+
+### 6. 🟡 HC paid-ads channel no resolvable
+**Observado en**: Daily Pulse HC
+**Mensaje**: "El canal paid-ads no se pudo resolver — posiblemente eliminado o renombrado"
+**Impacto**: Menor — Sancho lo skipea correctamente.
+
+### 7. 🟡 R2 no configurado — imágenes en localPath
+**Observado en**: Content T03-C01 (G4U)
+**Impacto**: Las imágenes generadas no son accesibles via URL. Solo localPath.
+
+## Reglas de canal — ✅ Respetadas
+- Daily Pulse: Publicado en #intelligence con hilo ✅
+- Morning Metrics: Canal correcto ✅  
+- Call Prep: Publicado en #intelligence ✅
+- Content sessions: Dentro de MC-Chat rooms ✅
+- HC Daily Pulse: Canal correcto, formato adecuado ✅
+- No se observó contenido largo directamente en canales (thread pattern ok) ✅
+
+## Calidad de output
+- **Daily Pulse G4U**: Excelente — incluye Meta Ads analysis, 4 calls del día, health score, señales.
+- **Call Prep**: Muy detallado — 4 briefings con contexto de calls previas, objetivos claros.
+- **News/Competitor Monitors**: Consistentes — 3-7 ideas por run con POV scores.
+- **Editorial Dispatches**: Funcionan — 3-5 ideas seleccionadas con pillar mix correcto.
+- **Content sessions**: Deep-research de calidad (QA 8.5-9.1/10). Preguntas clarify bien estructuradas.
+- **Criptan MC-Chat**: Buena orientación sobre Foundation chain, ::ask blocks bien usados.
+
+## Patrones de mejora
+
+1. **PRIORIDAD ALTA — Migrar crons a modelos tier-adecuados**: El mayor ahorro posible. Sonnet para monitors/dispatches/pulses, Haiku para métricas simples.
+2. **Implementar Discord transport en send-dispatch**: Lleva semanas en 501. Los botones interactivos son clave para el workflow de aprobación de contenido.
+3. **Recargar xAI o buscar alternativa**: Twitter monitoring es parte del competitor analysis.
+4. **Desactivar crons sin datos**: Hulahoop Morning Metrics quema tokens para nada.
+5. **Investigar abort del Cost Tracker**: Podría ser concurrencia con otros crons a las 08:00.
+6. **Lead Sync sigue pesado**: $1.29/sesión con 64K tokens. Evaluar si puede hacer diffs incrementales.
+
+## Veredicto general
+
+**Sistema funcional, costes excesivos.** Sancho ejecuta correctamente sus tareas, respeta canales, produce output de calidad, y maneja fallbacks bien. Pero el modelo tier de los crons no refleja la matriz definida — todos corren en Opus cuando deberían usar Sonnet/Haiku. El coste teórico diario de ~$17 podría reducirse a ~$5-7 con tier correcto.
+
+**Nada urgente para Alfonso.** Los problemas son de optimización, no de rotura. El Cost Tracker abortado es el único fallo real, y es un cron de monitoreo, no de producción.

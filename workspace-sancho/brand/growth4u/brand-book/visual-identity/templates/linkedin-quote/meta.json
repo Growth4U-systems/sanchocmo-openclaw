@@ -1,0 +1,47 @@
+{
+  "id": "linkedin-quote",
+  "name": "linkedin-quote",
+  "channel": "linkedin",
+  "description": "Quote post con cita fuerte — puede llevar personaje",
+  "slideCount": 1,
+  "width": 1080,
+  "height": 1350,
+  "slots": [
+    {
+      "key": "kicker",
+      "label": "Kicker (etiqueta superior)",
+      "placeholder": "GROWTH · SISTEMA",
+      "maxLength": 40
+    },
+    {
+      "key": "quote",
+      "label": "Cita principal",
+      "placeholder": "Tu CAC sube cada trimestre y no sabes por qué.",
+      "maxLength": 180
+    },
+    {
+      "key": "highlight_words",
+      "label": "Palabras a destacar en teal (separadas por |)",
+      "placeholder": "CAC|por qué"
+    },
+    {
+      "key": "attribution",
+      "label": "Autor / Firma",
+      "placeholder": "Alfonso — Growth4U"
+    },
+    {
+      "key": "hero_image_url",
+      "label": "Imagen del personaje (URL o vacío)"
+    },
+    {
+      "key": "data_value",
+      "label": "Dato destacado (cifra)",
+      "placeholder": "-70%"
+    },
+    {
+      "key": "data_label",
+      "label": "Etiqueta del dato",
+      "placeholder": "CAC reduction"
+    }
+  ]
+}

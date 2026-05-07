@@ -3,7 +3,7 @@ import path from "path";
 import type { NextApiRequest, NextApiResponse } from "next";
 import { withErrorHandler } from "@/lib/api-middleware";
 import { BASE } from "@/lib/data/paths";
-import { loadDraft } from "@/lib/data/drafts";
+import { loadDraft, type MediaAsset } from "@/lib/data/drafts";
 import { loadIdeas } from "@/lib/data/ideas";
 import type { ContentTask, Idea } from "@/types";
 
@@ -34,6 +34,8 @@ interface CalendarEvent {
   external_job_id?: string;
   title: string;
   hero_media_url?: string;
+  body: string;
+  media: MediaAsset[];
 }
 
 interface ReadyDraft {
@@ -46,6 +48,8 @@ interface ReadyDraft {
   ready_at: string;
   hero_media_url?: string;
   has_media: boolean;
+  body: string;
+  media: MediaAsset[];
 }
 
 interface CalendarResponse {
@@ -129,6 +133,8 @@ async function handler(req: NextApiRequest, res: NextApiResponse<CalendarRespons
     for (const task of tasks) {
       const cts = task.content_tasks;
       if (!Array.isArray(cts) || cts.length === 0) continue;
+      if (!task.id) continue;
+      const taskId: string = task.id;
 
       for (const ct of cts) {
         if (ct.status === "Discarded" || ct.status === "Deferred") continue;
@@ -140,6 +146,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse<CalendarRespons
           const idea = ideaById.get(ct.idea_id);
           const heroUrl = pickHeroMediaUrl(draft.meta.media);
           const baseTitle = pickTitle(idea, draft.body, ct.name || ct.id);
+          const mediaList: MediaAsset[] = Array.isArray(draft.meta.media) ? draft.meta.media : [];
 
           const pub = draft.meta.publishing;
           const scheduledAt = pub?.scheduled_at;
@@ -148,7 +155,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse<CalendarRespons
             scheduled.push({
               ideaId: ct.idea_id,
               contentTaskId: ct.id,
-              parentTaskId: ct.parent_task_id,
+              parentTaskId: ct.parent_task_id ?? taskId,
               channel,
               scheduled_at: scheduledAt,
               status: pub?.status ?? "scheduled",
@@ -157,6 +164,8 @@ async function handler(req: NextApiRequest, res: NextApiResponse<CalendarRespons
               external_job_id: pub?.external_job_id,
               title: baseTitle,
               hero_media_url: heroUrl,
+              body: draft.body,
+              media: mediaList,
             });
             continue;
           }
@@ -166,7 +175,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse<CalendarRespons
             ready_queue.push({
               ideaId: ct.idea_id,
               contentTaskId: ct.id,
-              parentTaskId: ct.parent_task_id,
+              parentTaskId: ct.parent_task_id ?? taskId,
               channel,
               title: baseTitle,
               pillar_id: idea?.source_data && typeof (idea.source_data as { pillar_id?: string }).pillar_id === "string"
@@ -174,7 +183,9 @@ async function handler(req: NextApiRequest, res: NextApiResponse<CalendarRespons
                 : undefined,
               ready_at: ct.updated_at || ct.approved_at || ct.created_at,
               hero_media_url: heroUrl,
-              has_media: Array.isArray(draft.meta.media) && draft.meta.media.length > 0,
+              has_media: mediaList.length > 0,
+              body: draft.body,
+              media: mediaList,
             });
           }
         }

@@ -51,7 +51,37 @@ esta skill, y esta skill lee del folder visual-identity. Ver
 `_system/content-engine-architecture.md` y
 `_system/media-persistence-protocol.md`.
 
-## Step 0 — Pre-flight: leer el manifest del brand
+## Step 0a — Pre-flight: storage health (R2)
+
+ANTES de generar nada, comprueba que el storage de imagenes esta
+configurado. Sin R2 (o equivalente) no se puede persistir la URL en
+`media[]`, y este protocolo PROHIBE escribir `localPath` como fallback
+(ver `_system/media-persistence-protocol.md` Regla 5).
+
+```bash
+MC_BASE="${MC_BASE:-http://localhost:3000}"
+SLUG="${SLUG:?slug requerido}"
+STORAGE=$(curl -fsS "$MC_BASE/api/content-engine/image-providers?slug=$SLUG" | jq -r '.storage')
+STORAGE_OK=$(jq -r '.ok' <<< "$STORAGE")
+
+if [ "$STORAGE_OK" != "true" ]; then
+  MISSING=$(jq -r '.missing | join(", ")' <<< "$STORAGE")
+  cat <<EOF
+⚠ No puedo generar la imagen ahora mismo: storage caido.
+Faltan estas variables: $MISSING
+Configuralas en ~/.openclaw/.env.local y reinicia 'next dev'.
+Te dejo la propuesta del prompt — lanzala cuando este arriba:
+{prompt-textual aqui}
+EOF
+  exit 1
+fi
+```
+
+**Si storage NO esta ok**: aborta limpiamente, NO llames a
+`provider.generate`, NO escribas nada en `frontmatter.media`. Devuelve
+al usuario el mensaje de arriba como **propuesta**, no como entrega.
+
+## Step 0b — Pre-flight: leer el manifest del brand
 
 ANTES de invocar cualquier endpoint, lee
 `brand/{slug}/brand-book/visual-identity/manifest.json`. Es el indice
@@ -256,16 +286,99 @@ contrato exacto de `templateId`/`slots`/`perSlide`.
 
 ## Flujo recomendado (post-approval)
 
-1. El usuario aprueba el draft (ContentTask pasa a status `Media`).
-2. Decides modo segun lo que tienes:
-   - Solo concepto en texto → **Modo 1** (genera con provider).
-   - Asset ya generado en disco → **Modo 2** (subir).
-   - Carrusel desde plantilla → **Modo 3** (render).
-3. Llamas el endpoint con `curl`.
-4. Si `200`: pegas la URL al chat ("Hero generada, aqui esta:
-   {url}") y opcionalmente preguntas si OK o regenerar.
-5. Si NO `200`: comunicas el error tal cual al usuario, NO digas
-   que se hizo. Sugiere reintentar / cambiar provider / subir asset.
+> Regla de oro: **NO decidas tu el modo ni el prompt**. Pregunta al
+> usuario, propone, espera confirmacion. Esta skill orquesta una
+> conversacion, no una generacion ciega.
+
+### Step 1 — Clarify intent (obligatorio)
+
+Tras pasar Step 0a/0b, **pregunta al usuario que quiere** antes de
+llamar a ningun endpoint. Pega esto en el chat:
+
+```
+Voy a generar media para este draft. ¿Como prefieres?
+
+  1) ✨ Generar con IA (libre)
+     Te propongo un prompt basado en el body, lo afinas si quieres
+     y la IA crea la imagen. Mas creativo, menos predecible.
+
+  2) 🎨 Generar desde plantilla brandeada
+     Eliges una plantilla del catalogo de la brand (carrusel,
+     header newsletter, ad creative…) y rellenamos los slots.
+     Mas predecible, fiel al estilo de marca.
+
+  3) 📤 Tengo el archivo, lo subo yo
+     Cuando lo tengas listo, lo subes desde el editor de Media.
+
+Dime el numero o describe lo que quieres.
+```
+
+Si el usuario eligio (1) → Step 2a. Si (2) → Step 2b. Si (3) → di
+"perfecto, sube desde Mission Control → tab Media → 📤 Subir asset" y
+termina.
+
+### Step 2a — Propose prompt y confirm (Modo 1)
+
+Antes de llamar a `generate-image`:
+
+1. Lee el body del draft (`GET /api/content-engine/drafts?...`). El
+   prompt debe estar inspirado en el contenido real del post, no en
+   un placeholder generico.
+2. Compone un prompt usando:
+   - El angulo del post (titulo, hot take, cifra clave).
+   - El `prompt_prefix` del manifest (estilo de marca).
+   - Ratio sugerido segun canal (LinkedIn 1.91:1, Instagram 1:1,
+     newsletter 1.91:1, X 16:9).
+3. Pega al usuario la propuesta:
+
+```
+Te propongo este prompt para la imagen:
+
+  > {prompt_completo_aqui}
+
+Provider: {provider} · ratio: {ratio} · modelo: {model}
+
+¿Lanzo asi, o lo ajusto? (responde "ok", "cambia X" o
+pega el prompt que prefieras)
+```
+
+4. Solo cuando el usuario confirme (`ok`, `dale`, `lanza`, o un
+   prompt editado), llamas a `generate-image`. NUNCA llames sin
+   confirmacion explicita.
+
+### Step 2b — Pick template y confirm (Modo 3)
+
+1. Lista las plantillas del manifest filtradas por canal del draft.
+2. Pega al usuario:
+
+```
+Plantillas disponibles para {channel}:
+
+  · {id1} — {name1} ({slideCount} slides)
+  · {id2} — {name2}
+  ...
+
+¿Cual? (id) Y luego dime los slots:
+  · {slot1.label}: ?
+  · {slot2.label}: ?
+  ...
+```
+
+3. Cuando tengas template + slots, llamas a `render-carousel`.
+
+Si el manifest no tiene plantillas → redirige al thread del
+`[brand]-visual-generator` (T07). NO improvises.
+
+### Step 3 — Persist y report
+
+Tras llamar al endpoint:
+
+- Si `200`: pega la URL al chat tal cual ("Lista, aqui esta:
+  {url}") + el thumbnail si el chat lo permite. Pregunta "¿OK o
+  regenero con otro prompt?".
+- Si NO `200`: comunica el error literal del response al usuario.
+  NO digas que se hizo. Sugiere accion (reintentar, cambiar
+  provider, ajustar prompt, subir asset manual).
 
 ## Errores frecuentes
 

@@ -123,8 +123,19 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     const { idea } = req.body;
     if (!idea) return res.status(400).json({ error: "Missing idea" });
     const ideas = loadIdeas(slug);
+    const existingIds = new Set(ideas.map((i) => i.id));
+    // Resolve a unique id: if caller-supplied or default-generated id collides,
+    // append `-b`, `-c`, ... so two batches on the same day can coexist.
+    let id = idea.id || `idea-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+    if (existingIds.has(id)) {
+      const base = id;
+      for (let n = 2; ; n++) {
+        const candidate = `${base}-${String.fromCharCode(96 + n)}`;
+        if (!existingIds.has(candidate)) { id = candidate; break; }
+      }
+    }
     const newIdea: Idea = {
-      id: idea.id || `idea-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      id,
       pillar_id: idea.pillar_id || "",
       content_type: idea.content_type || "",
       target_channel: idea.target_channel || "",

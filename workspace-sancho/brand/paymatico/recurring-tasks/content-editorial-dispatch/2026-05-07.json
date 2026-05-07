@@ -1,0 +1,22 @@
+{
+  "cronName": "Content: Editorial Dispatch — Paymatico",
+  "slug": "paymatico",
+  "date": "2026-05-07",
+  "runAtMs": 1746600360000,
+  "status": "ok",
+  "transport": "discord",
+  "channel_id": "1477995838092476477",
+  "candidates_selected": 5,
+  "candidates_sent": 5,
+  "idea_ids": [
+    "idea-2026-05-07-003",
+    "idea-2026-05-07-002",
+    "idea-2026-05-07-004",
+    "idea-2026-05-07-006",
+    "idea-2026-05-07-001"
+  ],
+  "task_id": "P-Content-Semana-19-T04",
+  "project_id": "P-Content-Semana-19",
+  "error": null,
+  "notes": "send-dispatch endpoint returned 501 for Discord transport. Sent via Discord message tool as fallback. Message ID: 1501838312225112146"
+}

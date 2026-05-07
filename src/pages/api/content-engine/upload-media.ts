@@ -49,6 +49,23 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     return res.status(404).json({ error: "Draft not found" });
   }
 
+  // Same hard pre-flight as generate-image: refuse early when R2 is missing.
+  const missingR2 = [
+    "CLOUDFLARE_ACCOUNT_ID",
+    "R2_UPLOAD_IMAGE_ACCESS_KEY_ID",
+    "R2_UPLOAD_IMAGE_SECRET_ACCESS_KEY",
+    "R2_UPLOAD_IMAGE_BUCKET_NAME",
+    "R2_PUBLIC_URL",
+  ].filter((k) => !process.env[k]);
+  if (missingR2.length > 0) {
+    return res.status(503).json({
+      error:
+        `Storage unavailable: missing ${missingR2.join(", ")}. ` +
+        `Set them in ~/.openclaw/.env.local and restart 'next dev'.`,
+      storage: { ok: false, missing: missingR2 },
+    });
+  }
+
   const file = parsed.files.file?.[0];
   if (!file) return res.status(400).json({ error: "No file provided" });
   if (!file.mimetype || !ALLOWED_MIME.has(file.mimetype)) {

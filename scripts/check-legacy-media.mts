@@ -37,25 +37,45 @@ function parseFrontmatter(text: string): Record<string, unknown> {
 
 interface Violation {
   file: string;
-  index: number;
+  field: string;
   reason: string;
 }
 
-function inspectMedia(media: unknown, file: string): Violation[] {
-  if (!Array.isArray(media)) return [];
+const VALID_KINDS = new Set(["channel-draft", "proposal", "research", "clarify"]);
+
+function inspectFrontmatter(data: Record<string, unknown>, file: string): Violation[] {
   const out: Violation[] = [];
-  media.forEach((entry, i) => {
-    if (!entry || typeof entry !== "object") return;
-    const m = entry as Record<string, unknown>;
-    const legacyFields = ["localPath", "role", "alt"].filter((f) => f in m);
-    if (legacyFields.length > 0) {
-      out.push({ file, index: i, reason: `legacy fields: ${legacyFields.join(", ")}` });
-      return;
-    }
-    if (typeof m.url !== "string" || !m.url) {
-      out.push({ file, index: i, reason: "missing url" });
-    }
-  });
+
+  // kind: must be one of VALID_KINDS (or absent → defaults to channel-draft).
+  const kind = data.kind;
+  if (kind !== undefined && !VALID_KINDS.has(String(kind))) {
+    out.push({
+      file,
+      field: "kind",
+      reason: `invalid value "${kind}" (allowed: ${[...VALID_KINDS].join(", ")})`,
+    });
+  }
+
+  // media[]: each entry must conform to MediaAsset.
+  const media = data.media;
+  if (Array.isArray(media)) {
+    media.forEach((entry, i) => {
+      if (!entry || typeof entry !== "object") return;
+      const m = entry as Record<string, unknown>;
+      const legacyFields = ["localPath", "role", "alt"].filter((f) => f in m);
+      if (legacyFields.length > 0) {
+        out.push({
+          file,
+          field: `media[${i}]`,
+          reason: `legacy fields: ${legacyFields.join(", ")}`,
+        });
+        return;
+      }
+      if (typeof m.url !== "string" || !m.url) {
+        out.push({ file, field: `media[${i}]`, reason: "missing url" });
+      }
+    });
+  }
   return out;
 }
 
@@ -80,7 +100,7 @@ function main() {
         scanned++;
         const text = fs.readFileSync(abs, "utf-8");
         const data = parseFrontmatter(text);
-        violations.push(...inspectMedia(data.media, abs));
+        violations.push(...inspectFrontmatter(data, abs));
       }
     }
   }
@@ -94,11 +114,12 @@ function main() {
   console.error(`✗ ${violations.length} violation(s) found:`);
   for (const v of violations) {
     const rel = v.file.replace(BASE + "/", "");
-    console.error(`  ${rel}  media[${v.index}]  ${v.reason}`);
+    console.error(`  ${rel}  ${v.field}  ${v.reason}`);
   }
   console.error(
-    "\nFix with:  pnpm migrate:media\n" +
-      "Or read:   _system/media-persistence-protocol.md",
+    "\nFix media with:  pnpm migrate:media\n" +
+      "For other fields you'll need to fix the frontmatter manually or via the API.\n" +
+      "Background: _system/media-persistence-protocol.md and _system/draft-file-format.md",
   );
   process.exit(1);
 }

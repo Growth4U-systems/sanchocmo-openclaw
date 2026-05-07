@@ -1,3 +1,10 @@
+---
+kind: 'qa-report'
+target: 'research.md'
+verdict: 'PASS'
+score: 8.5
+sources: 14
+---
 # QA Report — Research: Agency > Skills en la Era IA
 
 **Document:** `brand/growth4u/content/drafts/idea-2026-05-06-7/research.md`

@@ -3,14 +3,28 @@ import { withErrorHandler } from "@/lib/api-middleware";
 import { getAvailableImageProviders } from "@/lib/image-gen/registry";
 import { getContentConfig } from "@/lib/data/content-config";
 
+const REQUIRED_R2_VARS = [
+  "CLOUDFLARE_ACCOUNT_ID",
+  "R2_UPLOAD_IMAGE_ACCESS_KEY_ID",
+  "R2_UPLOAD_IMAGE_SECRET_ACCESS_KEY",
+  "R2_UPLOAD_IMAGE_BUCKET_NAME",
+  "R2_PUBLIC_URL",
+] as const;
+
+function checkStorage(): { ok: boolean; missing: string[] } {
+  const missing = REQUIRED_R2_VARS.filter((k) => !process.env[k]);
+  return { ok: missing.length === 0, missing };
+}
+
 /**
  * GET /api/content-engine/image-providers?slug=X
- *   → { providers: ImageProviderInfo[], config: ContentConfig.image_generation }
+ *   → { providers, config, storage }
  *
- * The UI uses `config.mode === "fixed"` to hide the provider dropdown and
- * `config.provider/model` to pre-select. `providers[]` always lists every
- * registered provider with a `configured: boolean` flag so the user knows
- * which ones to connect from the API panel.
+ * `storage.ok === false` means R2 isn't configured. Skills (notably
+ * `content-image`) MUST check this before generating or uploading: without
+ * R2 the persisted URL would be empty and the agent would be tempted to
+ * fall back to writing `localPath` into the frontmatter. See
+ * `_system/media-persistence-protocol.md`.
  */
 async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "GET") {
@@ -22,7 +36,10 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
   const providers = getAvailableImageProviders(slug);
   const config = getContentConfig(slug);
-  return res.status(200).json({ providers, config: config.image_generation });
+  const storage = checkStorage();
+  return res
+    .status(200)
+    .json({ providers, config: config.image_generation, storage });
 }
 
 export default withErrorHandler(handler);

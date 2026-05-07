@@ -39,7 +39,7 @@ const NETWORK_BY_CHANNEL: Record<string, string> = {
   youtube: "youtube",
 };
 
-const API_BASE = "https://app.metricool.com/api/v1";
+const API_BASE = "https://app.metricool.com/api/v2";
 
 interface MetricoolConfig {
   blogId: string;
@@ -73,9 +73,16 @@ async function metricoolFetch(
   endpoint: string,
   init: RequestInit = {},
 ): Promise<Response> {
-  // userId + blogId always go as query params; the token lives in the X-Mc-Auth header.
+  // v2 expects auth as query params (userToken + userId + blogId) AND the
+  // legacy X-Mc-Auth header (kept for compat with mixed-auth endpoints).
+  // Sending both is what the official metricool-cli does — safer than
+  // guessing which one any given path enforces.
   const sep = endpoint.includes("?") ? "&" : "?";
-  const url = `${API_BASE}${endpoint}${sep}userId=${encodeURIComponent(cfg.userId)}&blogId=${encodeURIComponent(cfg.blogId)}`;
+  const url =
+    `${API_BASE}${endpoint}${sep}` +
+    `userToken=${encodeURIComponent(cfg.apiToken)}` +
+    `&userId=${encodeURIComponent(cfg.userId)}` +
+    `&blogId=${encodeURIComponent(cfg.blogId)}`;
   return fetch(url, {
     ...init,
     headers: {
@@ -84,15 +91,6 @@ async function metricoolFetch(
       ...(init.headers || {}),
     },
   });
-}
-
-/** Download a URL into a base64 string. Used to attach images / PDFs to
- *  Metricool posts (their API expects raw base64 in `media[i].data`). */
-async function urlToBase64(url: string): Promise<string> {
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`Failed to download ${url}: HTTP ${res.status}`);
-  const buf = Buffer.from(await res.arrayBuffer());
-  return buf.toString("base64");
 }
 
 export const metricoolProvider: PublishProvider = {
@@ -116,26 +114,14 @@ export const metricoolProvider: PublishProvider = {
       return { ok: false, error: `Canal "${input.draft.channel}" no soportado por Metricool` };
     }
 
-    // Pick the carousel PDF if present (LinkedIn document post), otherwise
-    // fall back to the first image. We send a single media entry — Metricool
-    // multi-image posts use a list of images but LinkedIn renders that as a
-    // gallery, not a swipeable carousel.
+    // v2 takes media as an array of public URLs that Metricool fetches
+    // server-side. The legacy v1 base64 approach is gone. Pick the carousel
+    // PDF first (LinkedIn document post); otherwise fall back to the first
+    // image. We send a single media entry per post.
     const carouselPdf = input.media.find((m) => m.type === "application/pdf");
     const firstImage = input.media.find((m) => m.type.startsWith("image/"));
     const chosen = carouselPdf || firstImage || null;
-
-    let media: Array<{ name: string; data: string }> = [];
-    if (chosen) {
-      try {
-        const data = await urlToBase64(chosen.url);
-        const name = carouselPdf
-          ? "carousel.pdf"
-          : `image.${(chosen.type.split("/")[1] || "png").replace("jpeg", "jpg")}`;
-        media = [{ name, data }];
-      } catch (e) {
-        return { ok: false, error: `Failed to attach media: ${e instanceof Error ? e.message : String(e)}` };
-      }
-    }
+    const media: string[] = chosen ? [chosen.url] : [];
 
     const publishAt = input.schedule?.publishAt ?? new Date(Date.now() + 60_000).toISOString();
     // Metricool wants `YYYY-MM-DDTHH:mm:ss` (no Z, no millis) + a separate
@@ -156,14 +142,24 @@ export const metricoolProvider: PublishProvider = {
         method: "POST",
         body: JSON.stringify(body),
       });
-      const data = (await res.json().catch(() => ({}))) as {
-        id?: string | number;
-        url?: string;
-        error?: string;
-        message?: string;
-      };
+      // Read raw text first so we can surface the real Metricool error even
+      // when the response isn't valid JSON (some 4xx come back as HTML/plain).
+      const rawText = await res.text();
+      let data: { id?: string | number; url?: string; error?: string; message?: string } = {};
+      try { data = JSON.parse(rawText); } catch { /* non-JSON response */ }
       if (!res.ok) {
-        return { ok: false, error: data.message || data.error || `HTTP ${res.status}` };
+        // eslint-disable-next-line no-console
+        console.error(
+          `[metricool] POST /scheduler/posts failed: HTTP ${res.status}\n` +
+          `  URL: ${API_BASE}/scheduler/posts (userId/blogId in query)\n` +
+          `  Body sent: ${JSON.stringify(body).slice(0, 400)}\n` +
+          `  Response: ${rawText.slice(0, 600)}`,
+        );
+        const detail = data.message || data.error || rawText.slice(0, 200) || "";
+        return {
+          ok: false,
+          error: detail ? `HTTP ${res.status}: ${detail}` : `HTTP ${res.status}`,
+        };
       }
       const externalJobId = data.id != null ? String(data.id) : undefined;
       const isImmediate = !input.schedule;
@@ -224,6 +220,90 @@ export const metricoolProvider: PublishProvider = {
     }
   },
 };
+
+/**
+ * Pull connected networks + brand name from Metricool. Used by the
+ * `/api/publishing/account-info` endpoint to surface in MC "publishing on
+ * X account, networks Y/Z" so the user can verify before scheduling.
+ *
+ * Endpoint is `/admin/simpleProfiles` (no /v2 prefix — admin endpoints
+ * live under /api directly). Returns an array of brands that this user
+ * has access to; we filter to the one matching the configured blogId.
+ */
+export interface AccountInfo {
+  brand_name: string | null;
+  brand_id: string;
+  networks: Array<{ network: string; handle?: string | null; connected: boolean }>;
+}
+
+export async function fetchAccountInfo(slug: string): Promise<{ ok: true; info: AccountInfo } | { ok: false; error: string }> {
+  const result = loadConfig(slug);
+  if (!result.ok) return { ok: false, error: result.missing };
+  const cfg = result.cfg;
+
+  // Admin endpoints live at /api/admin/*, not /api/v2/admin/*.
+  const url =
+    `https://app.metricool.com/api/admin/simpleProfiles` +
+    `?userToken=${encodeURIComponent(cfg.apiToken)}` +
+    `&userId=${encodeURIComponent(cfg.userId)}` +
+    `&blogId=${encodeURIComponent(cfg.blogId)}`;
+
+  try {
+    const res = await fetch(url, {
+      headers: { "X-Mc-Auth": cfg.apiToken, "Content-Type": "application/json" },
+    });
+    const rawText = await res.text();
+    if (!res.ok) {
+      // eslint-disable-next-line no-console
+      console.error(`[metricool] simpleProfiles failed: HTTP ${res.status} — ${rawText.slice(0, 300)}`);
+      return { ok: false, error: `HTTP ${res.status}` };
+    }
+    let data: unknown;
+    try { data = JSON.parse(rawText); } catch { return { ok: false, error: "Invalid JSON from Metricool" }; }
+    if (!Array.isArray(data)) return { ok: false, error: "Unexpected response shape from simpleProfiles" };
+    const profiles = data as Array<Record<string, unknown>>;
+    const brand = profiles.find((p) => String(p.id) === String(cfg.blogId));
+    if (!brand) return { ok: false, error: `Blog ${cfg.blogId} not found in user profiles` };
+
+    // Extract a sensible name. Metricool exposes "title" (brand display name)
+    // and sometimes "url". Fall back to whichever non-empty string we find.
+    const brandName =
+      (typeof brand.title === "string" && brand.title) ||
+      (typeof brand.label === "string" && brand.label) ||
+      (typeof brand.name === "string" && brand.name) ||
+      null;
+
+    function pickHandle(value: unknown): string | null {
+      if (typeof value === "string" && value) return value;
+      if (value && typeof value === "object") {
+        const obj = value as Record<string, unknown>;
+        if (typeof obj.username === "string") return obj.username;
+        if (typeof obj.name === "string") return obj.name;
+      }
+      return null;
+    }
+
+    const networks: AccountInfo["networks"] = [
+      { network: "linkedin",  handle: pickHandle(brand.linkedinCompany), connected: !!brand.linkedinCompany },
+      { network: "instagram", handle: pickHandle(brand.instagram),       connected: !!brand.instagram },
+      { network: "facebook",  handle: pickHandle(brand.facebook),        connected: !!brand.facebook || !!brand.facebookPageId },
+      { network: "twitter",   handle: pickHandle(brand.twitter),         connected: !!brand.twitter },
+      { network: "tiktok",    handle: pickHandle(brand.tiktok),          connected: !!brand.tiktok },
+      { network: "youtube",   handle: pickHandle(brand.youtube),         connected: !!brand.youtube },
+    ];
+
+    return {
+      ok: true,
+      info: {
+        brand_name: brandName,
+        brand_id: cfg.blogId,
+        networks,
+      },
+    };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : String(e) };
+  }
+}
 
 export const _internals = { loadConfig, NETWORK_BY_CHANNEL } as const;
 export type { Channel };

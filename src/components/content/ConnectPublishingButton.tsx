@@ -3,6 +3,7 @@
 import { useState, ReactNode } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { ApiConnectPanel } from "@/components/settings/api-connect-panel";
+import { PublishingAccountInfo } from "@/components/content/PublishingAccountInfo";
 import { cn } from "@/lib/utils";
 
 /**
@@ -89,6 +90,11 @@ export function ConnectPublishingButton({
 
             <div className="flex-1 overflow-y-auto">
               <ApiConnectPanel slug={slug} apiId={apiId} onClose={close} />
+              {apiId === "metricool" && (
+                <div className="px-4 pb-4">
+                  <PublishingAccountInfo slug={slug} variant="full" />
+                </div>
+              )}
             </div>
           </div>
         </div>

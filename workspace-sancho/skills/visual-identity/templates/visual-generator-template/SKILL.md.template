@@ -68,6 +68,54 @@ For a worked example see
 `workspace-sancho/skills/growth4u-visual-generator/SKILL.md` (section
 "Brand-as-Skill — catálogo completo de outputs").
 
+### `meta.json` schema per template (CANONICAL — do not invent variants)
+
+Every template under `templates/<id>/` MUST emit a `meta.json` in this
+exact shape. This is the form Mission Control's `FileTemplateMeta`
+(`src/lib/carousel/file-templates.ts`) consumes — anything else only
+works through the tolerance shim and is brittle.
+
+```json
+{
+  "id": "<template-id, equal to folder name>",
+  "name": "Human-readable",
+  "channel": "linkedin|instagram|blog|newsletter|...",
+  "description": "One-line use case",
+  "slideCount": 1,
+  "width": 1080,
+  "height": 1350,
+  "slots": [
+    {
+      "key": "title",
+      "label": "Titular",
+      "placeholder": "Sample title",
+      "maxLength": 120
+    },
+    {
+      "key": "slide_text",
+      "label": "Cuerpo de la slide",
+      "perSlide": true,
+      "multiline": true,
+      "maxLength": 300
+    }
+  ]
+}
+```
+
+Strict rules:
+
+- `slots` is ALWAYS an array — never an object keyed by id.
+- Use `camelCase` everywhere: `slideCount`, `perSlide`, `maxLength`. Never
+  `slide_count` / `per_slide` / `max_length`.
+- `slideCount`, `width`, `height` are numbers — not `slides` or
+  `size: "1080x1350"`. Those belong in `manifest.json`, not `meta.json`.
+- Auto-populated fields (`slide_number`, `slide_index`) are NOT slots —
+  the renderer fills them from `{{slide_number}}` / `{{slide_index}}`.
+  Don't list them, otherwise they show up as form inputs the redactor
+  shouldn't fill.
+- `perSlide: true` slots receive an array of values (one per slide).
+  Without `perSlide`, the slot is global.
+
 ## What This Skill Does
 
 Generates images that maintain {{brand_name}}'s visual identity automatically using a 3-layer guideline system:
