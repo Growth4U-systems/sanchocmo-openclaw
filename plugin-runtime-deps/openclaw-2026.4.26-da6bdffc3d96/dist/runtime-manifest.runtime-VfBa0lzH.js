@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/runtime-manifest.runtime-VfBa0lzH.js

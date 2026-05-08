@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/bundled-plugin-metadata-DBCPq4zK.js

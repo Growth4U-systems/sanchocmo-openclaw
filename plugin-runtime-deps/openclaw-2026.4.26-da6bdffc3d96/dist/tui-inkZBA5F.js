@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/tui-inkZBA5F.js

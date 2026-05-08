@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/setup-helpers-CErkrrS9.js

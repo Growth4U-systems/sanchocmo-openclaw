@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/audit-tool-policy-DK6PqlZv.js

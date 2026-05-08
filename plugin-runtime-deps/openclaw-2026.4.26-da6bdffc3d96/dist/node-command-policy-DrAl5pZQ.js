@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/node-command-policy-DrAl5pZQ.js

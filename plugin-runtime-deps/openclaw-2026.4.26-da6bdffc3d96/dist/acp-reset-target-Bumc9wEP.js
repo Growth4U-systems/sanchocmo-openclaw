@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/acp-reset-target-Bumc9wEP.js

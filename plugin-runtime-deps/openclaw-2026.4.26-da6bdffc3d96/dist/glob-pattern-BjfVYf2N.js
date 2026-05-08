@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/glob-pattern-BjfVYf2N.js

@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/alias-name-D4Zsml3q.js

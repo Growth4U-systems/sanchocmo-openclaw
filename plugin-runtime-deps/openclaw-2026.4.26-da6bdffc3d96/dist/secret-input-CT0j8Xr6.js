@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/secret-input-CT0j8Xr6.js

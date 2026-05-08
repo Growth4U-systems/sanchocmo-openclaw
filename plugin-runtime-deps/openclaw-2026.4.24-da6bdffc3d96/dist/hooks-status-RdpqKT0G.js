@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/hooks-status-RdpqKT0G.js

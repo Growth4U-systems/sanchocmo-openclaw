@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/tool-policy-DXqfGJcq2.js

@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/github-copilot-token-B1S_RVH0.js

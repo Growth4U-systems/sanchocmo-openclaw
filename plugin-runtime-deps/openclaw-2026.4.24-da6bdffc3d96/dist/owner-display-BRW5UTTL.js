@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/owner-display-BRW5UTTL.js

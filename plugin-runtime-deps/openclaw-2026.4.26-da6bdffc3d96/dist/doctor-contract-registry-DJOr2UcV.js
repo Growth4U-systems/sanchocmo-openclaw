@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/doctor-contract-registry-DJOr2UcV.js

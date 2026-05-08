@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/plugin-approvals-D_mI2Q6z.js

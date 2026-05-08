@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/runtime-status-Catmb2b3.js

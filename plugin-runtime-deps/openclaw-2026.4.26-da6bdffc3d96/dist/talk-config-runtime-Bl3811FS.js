@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/talk-config-runtime-Bl3811FS.js

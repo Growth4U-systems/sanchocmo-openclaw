@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/setup-core-DbM8bUjm.js

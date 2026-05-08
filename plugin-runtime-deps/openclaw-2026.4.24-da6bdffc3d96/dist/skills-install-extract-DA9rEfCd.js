@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/skills-install-extract-DA9rEfCd.js

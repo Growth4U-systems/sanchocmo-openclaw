@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/command-gating-CAzf7x74.js

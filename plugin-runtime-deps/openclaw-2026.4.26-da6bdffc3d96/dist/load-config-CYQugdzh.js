@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/load-config-CYQugdzh.js

@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/boundary-path-6aPPz8oV.js

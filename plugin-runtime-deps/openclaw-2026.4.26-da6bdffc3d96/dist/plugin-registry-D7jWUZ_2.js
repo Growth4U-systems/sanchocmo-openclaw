@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/plugin-registry-D7jWUZ_2.js

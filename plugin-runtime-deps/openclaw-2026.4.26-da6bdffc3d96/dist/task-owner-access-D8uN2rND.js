@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/task-owner-access-D8uN2rND.js

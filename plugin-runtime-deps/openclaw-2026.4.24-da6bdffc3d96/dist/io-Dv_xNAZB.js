@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/io-Dv_xNAZB.js

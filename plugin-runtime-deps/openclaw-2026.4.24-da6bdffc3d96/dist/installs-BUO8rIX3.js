@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/installs-BUO8rIX3.js

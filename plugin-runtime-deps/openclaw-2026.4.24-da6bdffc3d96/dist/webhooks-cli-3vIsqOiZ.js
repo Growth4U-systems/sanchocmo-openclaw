@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/webhooks-cli-3vIsqOiZ.js

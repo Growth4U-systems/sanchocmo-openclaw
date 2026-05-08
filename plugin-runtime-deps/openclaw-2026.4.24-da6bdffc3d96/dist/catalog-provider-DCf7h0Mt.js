@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/catalog-provider-DCf7h0Mt.js

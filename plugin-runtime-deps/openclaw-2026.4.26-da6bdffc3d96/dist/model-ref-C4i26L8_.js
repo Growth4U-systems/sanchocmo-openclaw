@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/model-ref-C4i26L8_.js

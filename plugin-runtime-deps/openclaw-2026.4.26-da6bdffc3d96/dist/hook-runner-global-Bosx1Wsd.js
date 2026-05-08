@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/hook-runner-global-Bosx1Wsd.js

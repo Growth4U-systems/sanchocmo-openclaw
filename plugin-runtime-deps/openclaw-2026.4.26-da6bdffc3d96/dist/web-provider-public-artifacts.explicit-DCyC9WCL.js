@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/web-provider-public-artifacts.explicit-DCyC9WCL.js

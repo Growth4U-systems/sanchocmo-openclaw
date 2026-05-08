@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/control-service-y0fn2fZG.js

@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/bundled-plugin-load-paths-Bm8bR1HP.js

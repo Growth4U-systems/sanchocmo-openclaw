@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/plugins-registry-refresh-DK6dGO8S.js

@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/identity-Ddp4YVqj.js

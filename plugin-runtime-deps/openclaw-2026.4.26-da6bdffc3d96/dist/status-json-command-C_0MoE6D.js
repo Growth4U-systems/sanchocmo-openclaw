@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/status-json-command-C_0MoE6D.js

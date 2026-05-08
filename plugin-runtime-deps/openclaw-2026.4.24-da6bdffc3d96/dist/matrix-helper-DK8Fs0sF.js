@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/matrix-helper-DK8Fs0sF.js

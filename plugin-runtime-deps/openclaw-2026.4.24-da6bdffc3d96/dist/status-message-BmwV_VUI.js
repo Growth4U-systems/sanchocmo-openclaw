@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/status-message-BmwV_VUI.js

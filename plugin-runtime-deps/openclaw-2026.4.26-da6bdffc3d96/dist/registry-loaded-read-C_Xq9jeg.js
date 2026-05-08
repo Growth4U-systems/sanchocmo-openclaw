@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/registry-loaded-read-C_Xq9jeg.js

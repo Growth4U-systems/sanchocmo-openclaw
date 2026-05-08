@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/auth-install-policy-Bwz1b4dr.js

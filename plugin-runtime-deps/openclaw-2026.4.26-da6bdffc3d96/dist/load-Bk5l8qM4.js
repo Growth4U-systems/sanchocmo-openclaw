@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/load-Bk5l8qM4.js

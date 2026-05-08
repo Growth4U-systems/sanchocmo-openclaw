@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/system-prompt-C0kqz5AF.js

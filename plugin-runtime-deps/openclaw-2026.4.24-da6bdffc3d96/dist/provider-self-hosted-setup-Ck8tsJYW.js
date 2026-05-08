@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/provider-self-hosted-setup-Ck8tsJYW.js

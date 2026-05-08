@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/run-main-bbWXFk-0.js

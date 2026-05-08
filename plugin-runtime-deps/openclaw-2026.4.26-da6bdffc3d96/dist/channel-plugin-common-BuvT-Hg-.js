@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/channel-plugin-common-BuvT-Hg-.js

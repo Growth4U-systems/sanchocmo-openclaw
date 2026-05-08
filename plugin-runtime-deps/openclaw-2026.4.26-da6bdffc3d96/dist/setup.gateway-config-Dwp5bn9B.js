@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/setup.gateway-config-Dwp5bn9B.js

@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/logger-x0IvPL2B.js

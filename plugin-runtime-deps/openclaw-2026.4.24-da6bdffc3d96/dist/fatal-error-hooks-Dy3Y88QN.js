@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/fatal-error-hooks-Dy3Y88QN.js

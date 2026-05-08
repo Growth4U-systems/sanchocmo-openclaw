@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/plugins-allowlist-B77WZT3v.js

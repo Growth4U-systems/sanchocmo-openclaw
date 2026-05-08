@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/control-ui-DlR60sVA.js

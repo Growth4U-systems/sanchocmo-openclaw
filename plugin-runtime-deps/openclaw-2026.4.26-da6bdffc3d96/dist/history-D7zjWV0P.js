@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/history-D7zjWV0P.js

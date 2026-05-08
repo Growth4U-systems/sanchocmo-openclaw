@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/proxy-fetch-C6fA8jMX.js

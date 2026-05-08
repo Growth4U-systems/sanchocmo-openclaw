@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/group-access-N9qDc8PQ.js

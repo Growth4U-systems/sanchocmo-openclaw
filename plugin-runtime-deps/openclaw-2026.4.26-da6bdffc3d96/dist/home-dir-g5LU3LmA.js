@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/home-dir-g5LU3LmA.js

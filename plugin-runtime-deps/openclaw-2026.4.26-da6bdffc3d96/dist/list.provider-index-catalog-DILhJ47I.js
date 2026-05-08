@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/list.provider-index-catalog-DILhJ47I.js

@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/git-commit-Dp6P7NY7.js

@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/proxy-cli-BSOi48gW.js

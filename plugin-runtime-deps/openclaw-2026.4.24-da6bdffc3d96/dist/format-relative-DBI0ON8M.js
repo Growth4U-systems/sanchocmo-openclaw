@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/format-relative-DBI0ON8M.js

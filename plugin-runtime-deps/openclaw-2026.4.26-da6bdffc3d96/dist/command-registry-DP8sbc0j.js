@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/command-registry-DP8sbc0j.js

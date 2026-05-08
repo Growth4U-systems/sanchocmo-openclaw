@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/status.gateway-connection-Cv5m4--K.js

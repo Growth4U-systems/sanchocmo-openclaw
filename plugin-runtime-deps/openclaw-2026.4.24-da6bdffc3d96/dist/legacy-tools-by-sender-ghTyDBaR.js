@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/legacy-tools-by-sender-ghTyDBaR.js

@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/provider-catalog-1c5_xr2j.js

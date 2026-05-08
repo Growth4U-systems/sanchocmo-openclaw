@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/binaries-CXoF2G_J.js

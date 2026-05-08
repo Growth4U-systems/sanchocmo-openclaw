@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/channel-policy-D_qJHct1.js

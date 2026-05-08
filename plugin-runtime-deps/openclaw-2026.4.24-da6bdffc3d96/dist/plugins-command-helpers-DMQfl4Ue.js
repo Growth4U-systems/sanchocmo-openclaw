@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/plugins-command-helpers-DMQfl4Ue.js

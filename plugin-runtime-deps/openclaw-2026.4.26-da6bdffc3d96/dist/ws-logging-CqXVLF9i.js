@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/ws-logging-CqXVLF9i.js

@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/image-generation-provider-B0i9iBaC.js

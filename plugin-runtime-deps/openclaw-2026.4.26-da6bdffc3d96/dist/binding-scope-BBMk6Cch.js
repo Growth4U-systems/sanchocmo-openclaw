@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/binding-scope-BBMk6Cch.js

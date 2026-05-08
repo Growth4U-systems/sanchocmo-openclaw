@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/web-content-extractor-D5xABbbs.js

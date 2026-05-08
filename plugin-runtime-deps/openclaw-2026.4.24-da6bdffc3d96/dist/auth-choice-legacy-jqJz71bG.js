@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/auth-choice-legacy-jqJz71bG.js

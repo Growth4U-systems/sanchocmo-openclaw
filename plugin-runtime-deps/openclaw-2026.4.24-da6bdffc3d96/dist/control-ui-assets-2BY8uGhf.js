@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/control-ui-assets-2BY8uGhf.js

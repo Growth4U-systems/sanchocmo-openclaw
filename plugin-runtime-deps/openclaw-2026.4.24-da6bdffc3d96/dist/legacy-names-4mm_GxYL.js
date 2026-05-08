@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/legacy-names-4mm_GxYL.js

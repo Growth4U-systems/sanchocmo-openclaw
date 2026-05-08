@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/runtime-status-BH4H_ah8.js

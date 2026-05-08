@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/defaults-CRz26M83.js

@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/agent-scope-i10se9ty.js

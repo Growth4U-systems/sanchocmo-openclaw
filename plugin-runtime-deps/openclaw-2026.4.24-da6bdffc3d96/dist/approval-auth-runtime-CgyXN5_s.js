@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/approval-auth-runtime-CgyXN5_s.js

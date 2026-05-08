@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/loader--FR-1ZCZ.js

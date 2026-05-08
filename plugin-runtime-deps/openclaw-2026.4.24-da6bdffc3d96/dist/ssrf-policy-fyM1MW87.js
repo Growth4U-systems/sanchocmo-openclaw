@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/ssrf-policy-fyM1MW87.js

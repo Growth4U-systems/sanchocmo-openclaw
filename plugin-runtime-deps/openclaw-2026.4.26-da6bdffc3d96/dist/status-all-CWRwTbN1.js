@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/status-all-CWRwTbN1.js

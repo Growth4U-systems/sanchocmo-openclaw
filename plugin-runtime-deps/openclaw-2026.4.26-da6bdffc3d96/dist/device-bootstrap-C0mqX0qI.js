@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/device-bootstrap-C0mqX0qI.js

@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/command-gating-iPAl2C9q.js

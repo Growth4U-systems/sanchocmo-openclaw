@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/provider-wizard-oSOSTwY7.js

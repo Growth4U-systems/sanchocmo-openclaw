@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/install-B91BYa2x.js

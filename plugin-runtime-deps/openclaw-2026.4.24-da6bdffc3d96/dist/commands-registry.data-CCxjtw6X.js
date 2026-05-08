@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/commands-registry.data-CCxjtw6X.js

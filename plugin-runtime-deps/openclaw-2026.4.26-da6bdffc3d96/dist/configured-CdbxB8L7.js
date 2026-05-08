@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/configured-CdbxB8L7.js

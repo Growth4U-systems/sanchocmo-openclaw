@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/json-mode-EE8S0d-K.js

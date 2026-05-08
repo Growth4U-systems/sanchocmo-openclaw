@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/status-text-6KOM63ES.js

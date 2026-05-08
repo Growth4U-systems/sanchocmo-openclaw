@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/embedded-pi-mcp-CWmA9F4Z.js

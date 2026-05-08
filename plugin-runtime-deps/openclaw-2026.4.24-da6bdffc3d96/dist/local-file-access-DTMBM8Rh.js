@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/local-file-access-DTMBM8Rh.js

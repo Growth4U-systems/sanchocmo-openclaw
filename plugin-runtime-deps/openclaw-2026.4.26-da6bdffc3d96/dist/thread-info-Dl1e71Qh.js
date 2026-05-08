@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/thread-info-Dl1e71Qh.js

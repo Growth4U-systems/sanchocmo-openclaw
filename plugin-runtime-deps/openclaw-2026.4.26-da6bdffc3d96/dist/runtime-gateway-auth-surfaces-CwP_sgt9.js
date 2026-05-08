@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/runtime-gateway-auth-surfaces-CwP_sgt9.js

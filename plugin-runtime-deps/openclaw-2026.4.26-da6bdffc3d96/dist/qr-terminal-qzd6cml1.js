@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/qr-terminal-qzd6cml1.js

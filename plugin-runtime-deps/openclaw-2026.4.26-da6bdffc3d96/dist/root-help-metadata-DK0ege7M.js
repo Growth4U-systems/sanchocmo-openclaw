@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/root-help-metadata-DK0ege7M.js

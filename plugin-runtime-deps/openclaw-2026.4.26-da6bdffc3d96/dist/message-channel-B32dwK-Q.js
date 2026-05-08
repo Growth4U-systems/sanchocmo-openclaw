@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/message-channel-B32dwK-Q.js

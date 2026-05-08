@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/captured-registration-CGYbgBF2.js

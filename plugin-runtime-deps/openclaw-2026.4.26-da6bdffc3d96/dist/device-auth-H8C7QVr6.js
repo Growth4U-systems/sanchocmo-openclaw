@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/device-auth-H8C7QVr6.js

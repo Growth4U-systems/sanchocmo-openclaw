@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/run-external-content.runtime-2Iutn2zC.js

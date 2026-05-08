@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/runtime-web-tools-manifest.runtime-D09sb_yz.js

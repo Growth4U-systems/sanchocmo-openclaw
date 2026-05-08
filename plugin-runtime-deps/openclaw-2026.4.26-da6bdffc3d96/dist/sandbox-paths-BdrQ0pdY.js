@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/sandbox-paths-BdrQ0pdY.js

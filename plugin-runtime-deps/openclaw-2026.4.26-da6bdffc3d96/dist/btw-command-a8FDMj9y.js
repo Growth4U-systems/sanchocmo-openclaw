@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/btw-command-a8FDMj9y.js

@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/gateway-runtime-DqzqyQ2E.js

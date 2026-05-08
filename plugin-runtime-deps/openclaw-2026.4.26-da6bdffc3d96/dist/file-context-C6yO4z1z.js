@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/file-context-C6yO4z1z.js

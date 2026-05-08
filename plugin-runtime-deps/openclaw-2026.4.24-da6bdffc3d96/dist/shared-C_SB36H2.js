@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/shared-C_SB36H2.js

@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/doctor-pFl3H0UQ.js

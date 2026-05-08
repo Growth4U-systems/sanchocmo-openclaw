@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/register.maintenance--wweZ1Th.js

@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/set-image-_KzmZa86.js

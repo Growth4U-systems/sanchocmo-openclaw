@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/mcp-stdio-C9Gkoul1.js

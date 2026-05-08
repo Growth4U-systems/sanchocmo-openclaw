@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/temp-home-DwO2-wVS.js

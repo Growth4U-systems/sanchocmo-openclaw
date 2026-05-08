@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/anthropic-vertex-stream-CccVdx20.js

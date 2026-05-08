@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/channel-plugin-ids-F6yG4TDf.js

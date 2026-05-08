@@ -64,6 +64,8 @@ backups/
 delivery-queue/
 update-check.json
 subagents/
+tmp/
+plugin-runtime-deps/
 
 # === Workspace backups ===
 skills.bak.*

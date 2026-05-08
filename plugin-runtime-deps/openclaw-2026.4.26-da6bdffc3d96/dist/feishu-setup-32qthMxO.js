@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/feishu-setup-32qthMxO.js

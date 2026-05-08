@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/validate-sandbox-security-o2N7XlVA.js

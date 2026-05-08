@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/list.errors-CGI8gPmx.js

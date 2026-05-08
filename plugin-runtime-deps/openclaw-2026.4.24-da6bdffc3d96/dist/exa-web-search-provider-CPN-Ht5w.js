@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/exa-web-search-provider-CPN-Ht5w.js

@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/audit-channel.collect.runtime-DUZSIHk1.js

@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/capability-cli-Deiv2z4W.js

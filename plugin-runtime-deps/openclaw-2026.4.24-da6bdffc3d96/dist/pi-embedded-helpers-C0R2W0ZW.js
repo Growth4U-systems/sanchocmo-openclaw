@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/pi-embedded-helpers-C0R2W0ZW.js

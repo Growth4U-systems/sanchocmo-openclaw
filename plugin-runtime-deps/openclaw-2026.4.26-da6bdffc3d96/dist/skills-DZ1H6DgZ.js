@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/skills-DZ1H6DgZ.js

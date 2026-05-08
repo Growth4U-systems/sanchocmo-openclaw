@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/monitor-auth-BR617SW5.js

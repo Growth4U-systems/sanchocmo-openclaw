@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/tailnet-L4ESw-9_.js

@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/network-mode-BBME8S32.js

@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/pw-role-snapshot-B6qiUGJd.js

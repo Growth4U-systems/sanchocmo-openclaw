@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/schema-validator-CY2IX5dY.js

@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/speech-provider-DblB4P2a.js

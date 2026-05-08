@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/monitor-BtdR0MC7.js

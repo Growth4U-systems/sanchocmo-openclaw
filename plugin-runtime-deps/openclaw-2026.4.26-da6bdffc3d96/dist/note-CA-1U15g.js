@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/note-CA-1U15g.js

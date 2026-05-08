@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/secret-file-BEd6O4bq.js

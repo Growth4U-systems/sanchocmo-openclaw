@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/status-format-Box8s5_7.js

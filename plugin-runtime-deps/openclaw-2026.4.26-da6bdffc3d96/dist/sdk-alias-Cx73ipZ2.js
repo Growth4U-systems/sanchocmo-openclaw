@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/sdk-alias-Cx73ipZ2.js

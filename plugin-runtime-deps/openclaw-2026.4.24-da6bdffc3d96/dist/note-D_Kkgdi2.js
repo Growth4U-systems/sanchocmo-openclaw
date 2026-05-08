@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/note-D_Kkgdi2.js

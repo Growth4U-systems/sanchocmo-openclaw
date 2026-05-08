@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/usage-format-DFefy2-n.js

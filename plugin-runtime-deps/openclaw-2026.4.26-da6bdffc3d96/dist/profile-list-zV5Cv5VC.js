@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/profile-list-zV5Cv5VC.js

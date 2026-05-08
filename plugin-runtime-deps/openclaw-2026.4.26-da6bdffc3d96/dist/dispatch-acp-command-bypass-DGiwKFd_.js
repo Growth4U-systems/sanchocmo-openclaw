@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/dispatch-acp-command-bypass-DGiwKFd_.js

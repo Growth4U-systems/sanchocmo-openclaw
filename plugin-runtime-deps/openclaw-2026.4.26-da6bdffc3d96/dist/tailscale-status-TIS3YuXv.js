@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/tailscale-status-TIS3YuXv.js

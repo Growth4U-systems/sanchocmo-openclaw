@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/ssrf-policy-BMzLPvV8.js

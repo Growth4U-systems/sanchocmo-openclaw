@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/auth-mode-policy-CtgpZx67.js

@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/channel-tools-46H5gILp.js

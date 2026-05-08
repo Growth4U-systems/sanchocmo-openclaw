@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/audit-fs-reg9HOp8.js

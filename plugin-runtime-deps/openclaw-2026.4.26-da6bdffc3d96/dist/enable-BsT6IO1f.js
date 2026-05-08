@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/enable-BsT6IO1f.js

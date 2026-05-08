@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/zalo-setup-C_SDk1OY.js

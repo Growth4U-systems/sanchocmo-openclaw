@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/external-content-pawJlK6I.js

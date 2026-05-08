@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/dispatch-acp.runtime-D2vMSg3f.js

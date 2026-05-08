@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/configure-B1lL2DPM.js

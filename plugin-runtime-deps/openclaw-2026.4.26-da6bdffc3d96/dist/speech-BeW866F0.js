@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/speech-BeW866F0.js

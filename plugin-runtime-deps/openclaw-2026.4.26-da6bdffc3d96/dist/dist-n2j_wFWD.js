@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/dist-n2j_wFWD.js

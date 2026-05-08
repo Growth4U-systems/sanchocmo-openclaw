@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/telegram-command-config-D6dPiADx.js

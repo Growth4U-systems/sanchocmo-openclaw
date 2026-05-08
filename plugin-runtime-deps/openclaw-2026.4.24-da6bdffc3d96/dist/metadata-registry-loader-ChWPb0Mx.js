@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/metadata-registry-loader-ChWPb0Mx.js

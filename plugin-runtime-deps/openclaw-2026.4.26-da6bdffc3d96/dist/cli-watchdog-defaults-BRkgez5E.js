@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/cli-watchdog-defaults-BRkgez5E.js

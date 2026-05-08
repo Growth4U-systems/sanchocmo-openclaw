@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/installed-plugin-index-records-CEWYVWDw.js

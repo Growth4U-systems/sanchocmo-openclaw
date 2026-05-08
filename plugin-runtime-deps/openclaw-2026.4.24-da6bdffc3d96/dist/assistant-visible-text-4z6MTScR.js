@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/assistant-visible-text-4z6MTScR.js

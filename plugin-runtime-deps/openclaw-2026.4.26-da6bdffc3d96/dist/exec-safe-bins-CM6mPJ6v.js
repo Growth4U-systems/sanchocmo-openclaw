@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/exec-safe-bins-CM6mPJ6v.js

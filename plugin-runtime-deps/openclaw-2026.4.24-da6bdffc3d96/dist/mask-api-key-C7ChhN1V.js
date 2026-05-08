@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/mask-api-key-C7ChhN1V.js

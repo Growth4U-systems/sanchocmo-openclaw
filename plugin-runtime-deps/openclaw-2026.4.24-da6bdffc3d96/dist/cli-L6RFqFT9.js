@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/cli-L6RFqFT9.js

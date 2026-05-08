@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/direct-dm-access-CvGs_kA7.js

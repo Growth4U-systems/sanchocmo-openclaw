@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/setup-tools-D8G7pP_W.js

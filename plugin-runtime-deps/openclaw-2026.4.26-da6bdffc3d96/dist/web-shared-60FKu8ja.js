@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/web-shared-60FKu8ja.js

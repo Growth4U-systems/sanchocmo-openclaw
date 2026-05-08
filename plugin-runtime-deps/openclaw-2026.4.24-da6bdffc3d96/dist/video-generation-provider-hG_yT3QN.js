@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/video-generation-provider-hG_yT3QN.js

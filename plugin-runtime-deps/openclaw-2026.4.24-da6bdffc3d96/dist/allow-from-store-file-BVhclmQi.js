@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/allow-from-store-file-BVhclmQi.js

@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/status.command-21stvs5g.js

@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/speech-Dh8SAO7H.js

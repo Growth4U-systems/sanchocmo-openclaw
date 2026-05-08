@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/embedded-gateway-stub.runtime-Cz7_SdPn.js

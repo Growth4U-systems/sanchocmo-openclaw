@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/agent-paths-Df60yWjf.js

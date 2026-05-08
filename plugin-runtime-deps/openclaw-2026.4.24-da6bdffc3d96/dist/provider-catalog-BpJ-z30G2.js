@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/provider-catalog-BpJ-z30G2.js

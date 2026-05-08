@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/config-eval-BpYvBUD4.js

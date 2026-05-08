@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/temp-path-CsZoSEM6.js

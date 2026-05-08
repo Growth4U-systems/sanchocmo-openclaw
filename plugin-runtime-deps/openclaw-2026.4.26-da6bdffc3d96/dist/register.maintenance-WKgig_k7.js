@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/register.maintenance-WKgig_k7.js

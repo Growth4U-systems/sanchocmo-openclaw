@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/active-runtime-registry-C8lFqbl_.js

@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/clawbot-cli-DmEOksp_.js

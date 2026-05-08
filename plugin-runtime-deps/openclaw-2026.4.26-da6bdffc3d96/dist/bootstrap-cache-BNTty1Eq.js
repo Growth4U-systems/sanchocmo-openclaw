@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/bootstrap-cache-BNTty1Eq.js

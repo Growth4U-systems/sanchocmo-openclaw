@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/transcript.runtime-C0kOI5Vl.js

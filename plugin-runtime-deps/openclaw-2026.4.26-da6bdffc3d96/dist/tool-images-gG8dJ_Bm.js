@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/tool-images-gG8dJ_Bm.js

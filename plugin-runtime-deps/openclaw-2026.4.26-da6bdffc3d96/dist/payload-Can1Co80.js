@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/payload-Can1Co80.js

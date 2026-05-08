@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/shared-C7sl_Csi.js

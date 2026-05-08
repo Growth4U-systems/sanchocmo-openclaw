@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/redact-Cv5sPU4g.js

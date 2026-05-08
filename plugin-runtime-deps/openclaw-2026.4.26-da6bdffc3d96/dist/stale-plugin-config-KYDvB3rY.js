@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/stale-plugin-config-KYDvB3rY.js

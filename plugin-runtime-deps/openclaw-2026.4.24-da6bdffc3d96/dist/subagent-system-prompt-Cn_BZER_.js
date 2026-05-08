@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/subagent-system-prompt-Cn_BZER_.js

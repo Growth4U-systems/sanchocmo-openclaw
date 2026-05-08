@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/exec-policy-cli-J_ISoHjf.js

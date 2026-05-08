@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/remote-env-CdsZb06N.js

@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/status.scan-JI_06N2T.js

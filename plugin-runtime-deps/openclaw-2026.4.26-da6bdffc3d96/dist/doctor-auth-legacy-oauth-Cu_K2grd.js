@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/doctor-auth-legacy-oauth-Cu_K2grd.js

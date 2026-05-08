@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/pairing-token-Cv01Rz6k.js

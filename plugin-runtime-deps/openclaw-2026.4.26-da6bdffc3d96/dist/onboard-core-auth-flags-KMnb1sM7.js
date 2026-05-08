@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/onboard-core-auth-flags-KMnb1sM7.js

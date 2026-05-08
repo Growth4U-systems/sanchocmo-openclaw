@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/onboard-helpers-mX5Q_dhT.js

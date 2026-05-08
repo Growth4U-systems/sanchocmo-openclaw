@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/exec-defaults-B7H_PKCQ.js

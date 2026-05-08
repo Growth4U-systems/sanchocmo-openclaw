@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/register.subclis-core-CZJZD7lb.js

@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/install-package-dir-C9iUPr30.js

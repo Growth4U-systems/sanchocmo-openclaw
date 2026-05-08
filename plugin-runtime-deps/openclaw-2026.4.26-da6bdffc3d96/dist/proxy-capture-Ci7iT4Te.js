@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/proxy-capture-Ci7iT4Te.js

@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/skills-install-extract-DBkS0F16.js

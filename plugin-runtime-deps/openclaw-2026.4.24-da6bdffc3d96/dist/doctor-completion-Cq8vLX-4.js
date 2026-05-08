@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/doctor-completion-Cq8vLX-4.js

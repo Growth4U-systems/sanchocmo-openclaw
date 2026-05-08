@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/skill-commands-Dh4XF0y6.js

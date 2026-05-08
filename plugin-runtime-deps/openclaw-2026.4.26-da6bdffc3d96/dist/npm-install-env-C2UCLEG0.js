@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/npm-install-env-C2UCLEG0.js

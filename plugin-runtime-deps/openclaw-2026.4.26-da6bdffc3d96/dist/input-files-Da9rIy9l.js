@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/input-files-Da9rIy9l.js

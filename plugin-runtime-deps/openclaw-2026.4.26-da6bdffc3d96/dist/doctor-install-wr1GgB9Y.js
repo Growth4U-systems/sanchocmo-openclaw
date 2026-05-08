@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/doctor-install-wr1GgB9Y.js

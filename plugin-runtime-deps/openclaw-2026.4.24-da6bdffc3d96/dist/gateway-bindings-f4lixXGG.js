@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/gateway-bindings-f4lixXGG.js

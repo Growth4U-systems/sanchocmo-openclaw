@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/call-CP7A3sdw.js

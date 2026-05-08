@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/update-startup-Bpf_15q2.js

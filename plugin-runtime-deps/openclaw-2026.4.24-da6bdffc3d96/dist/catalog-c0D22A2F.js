@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/catalog-c0D22A2F.js

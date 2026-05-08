@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/bindings-C4DZxyB0.js

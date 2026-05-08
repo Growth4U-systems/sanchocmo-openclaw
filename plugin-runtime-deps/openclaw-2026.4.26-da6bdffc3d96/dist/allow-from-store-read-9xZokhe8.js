@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/allow-from-store-read-9xZokhe8.js

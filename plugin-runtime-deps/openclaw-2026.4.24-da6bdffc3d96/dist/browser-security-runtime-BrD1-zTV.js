@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/browser-security-runtime-BrD1-zTV.js

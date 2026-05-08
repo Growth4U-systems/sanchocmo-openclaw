@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/shell-argv-Z3tzJ95W.js

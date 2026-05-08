@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/browser-lifecycle-cleanup-C_IeNdCn.js

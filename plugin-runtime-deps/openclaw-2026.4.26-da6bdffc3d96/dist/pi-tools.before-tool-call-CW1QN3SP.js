@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/pi-tools.before-tool-call-CW1QN3SP.js

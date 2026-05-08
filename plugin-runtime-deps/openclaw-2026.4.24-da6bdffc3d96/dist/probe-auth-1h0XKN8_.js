@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/probe-auth-1h0XKN8_.js

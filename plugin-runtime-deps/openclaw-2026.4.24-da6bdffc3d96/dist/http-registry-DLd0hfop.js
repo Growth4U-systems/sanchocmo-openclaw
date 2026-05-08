@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/http-registry-DLd0hfop.js

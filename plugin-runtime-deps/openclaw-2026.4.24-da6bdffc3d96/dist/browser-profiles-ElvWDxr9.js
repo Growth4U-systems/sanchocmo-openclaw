@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/browser-profiles-ElvWDxr9.js

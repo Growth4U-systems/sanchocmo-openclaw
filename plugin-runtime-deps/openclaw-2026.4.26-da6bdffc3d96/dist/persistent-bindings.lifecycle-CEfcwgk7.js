@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/persistent-bindings.lifecycle-CEfcwgk7.js

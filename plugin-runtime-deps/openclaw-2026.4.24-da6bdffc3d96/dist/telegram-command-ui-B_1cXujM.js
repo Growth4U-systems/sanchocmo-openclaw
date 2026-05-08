@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/telegram-command-ui-B_1cXujM.js

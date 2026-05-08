@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/lifecycle-7P2XfFFr.js

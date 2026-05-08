@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/pi-bundle-mcp-runtime-HGvJp58Y.js

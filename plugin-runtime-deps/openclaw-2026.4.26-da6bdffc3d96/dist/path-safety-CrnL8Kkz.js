@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/path-safety-CrnL8Kkz.js

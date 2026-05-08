@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/git-commit-BIq23eH7.js

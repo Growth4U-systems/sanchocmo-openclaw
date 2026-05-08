@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/approval-display-paths-CZThp_yT.js

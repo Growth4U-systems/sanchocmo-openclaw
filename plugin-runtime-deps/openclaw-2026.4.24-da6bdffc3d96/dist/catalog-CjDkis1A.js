@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/catalog-CjDkis1A.js

@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/session-tab-registry-Dq2n4_Pr.js

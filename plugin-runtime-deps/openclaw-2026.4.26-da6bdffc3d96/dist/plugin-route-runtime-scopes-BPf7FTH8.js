@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/plugin-route-runtime-scopes-BPf7FTH8.js

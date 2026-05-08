@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/doctor-bundled-plugin-runtime-deps-CiQxW0ig.js

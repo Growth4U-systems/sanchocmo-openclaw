@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/simple-completion-runtime-d06YPgrf.js

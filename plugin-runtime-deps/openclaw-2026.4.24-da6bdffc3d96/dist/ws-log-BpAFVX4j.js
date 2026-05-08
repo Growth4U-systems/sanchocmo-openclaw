@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/ws-log-BpAFVX4j.js

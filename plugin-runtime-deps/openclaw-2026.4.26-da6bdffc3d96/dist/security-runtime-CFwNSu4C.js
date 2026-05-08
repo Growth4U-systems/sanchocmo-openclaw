@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/security-runtime-CFwNSu4C.js

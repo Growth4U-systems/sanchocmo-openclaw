@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/git-root-B-svWVMI.js

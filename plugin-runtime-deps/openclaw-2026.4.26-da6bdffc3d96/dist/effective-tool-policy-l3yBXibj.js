@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/effective-tool-policy-l3yBXibj.js

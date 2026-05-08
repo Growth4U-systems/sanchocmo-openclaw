@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/memory-embedding-provider-runtime-CGzU3_BQ.js

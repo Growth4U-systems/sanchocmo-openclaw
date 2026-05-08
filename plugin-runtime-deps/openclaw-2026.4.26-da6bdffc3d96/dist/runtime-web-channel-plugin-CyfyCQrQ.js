@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/runtime-web-channel-plugin-CyfyCQrQ.js

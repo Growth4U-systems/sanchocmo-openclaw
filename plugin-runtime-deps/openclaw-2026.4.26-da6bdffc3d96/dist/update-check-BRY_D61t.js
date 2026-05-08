@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/update-check-BRY_D61t.js

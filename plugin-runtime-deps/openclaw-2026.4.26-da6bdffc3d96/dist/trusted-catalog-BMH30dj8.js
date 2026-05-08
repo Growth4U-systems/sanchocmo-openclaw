@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/trusted-catalog-BMH30dj8.js

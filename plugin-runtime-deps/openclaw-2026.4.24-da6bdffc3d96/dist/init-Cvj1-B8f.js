@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/init-Cvj1-B8f.js

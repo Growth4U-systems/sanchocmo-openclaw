@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/system-prompt-params-DfI2R6fh.js

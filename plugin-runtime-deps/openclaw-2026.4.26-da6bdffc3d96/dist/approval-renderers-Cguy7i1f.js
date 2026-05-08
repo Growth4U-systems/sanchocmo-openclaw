@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/approval-renderers-Cguy7i1f.js

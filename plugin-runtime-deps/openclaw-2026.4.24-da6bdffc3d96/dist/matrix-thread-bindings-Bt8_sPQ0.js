@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/matrix-thread-bindings-Bt8_sPQ0.js

@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/refresh-CZ2n5WoB.js

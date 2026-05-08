@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/plugin-install-path-warnings-BSTk7XUz.js

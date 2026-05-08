@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/tool-send-7BzeSR9n.js

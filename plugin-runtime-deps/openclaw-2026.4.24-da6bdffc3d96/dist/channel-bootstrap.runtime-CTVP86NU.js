@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/channel-bootstrap.runtime-CTVP86NU.js

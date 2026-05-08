@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/model-overrides-DF4_v-G4.js

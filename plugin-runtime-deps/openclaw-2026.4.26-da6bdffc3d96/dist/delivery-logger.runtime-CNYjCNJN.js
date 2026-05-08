@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/delivery-logger.runtime-CNYjCNJN.js

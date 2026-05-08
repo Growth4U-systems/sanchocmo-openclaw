@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/server-plugin-bootstrap-fKTDDDB0.js

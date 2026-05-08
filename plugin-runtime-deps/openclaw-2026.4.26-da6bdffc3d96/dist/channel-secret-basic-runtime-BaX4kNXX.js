@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/channel-secret-basic-runtime-BaX4kNXX.js

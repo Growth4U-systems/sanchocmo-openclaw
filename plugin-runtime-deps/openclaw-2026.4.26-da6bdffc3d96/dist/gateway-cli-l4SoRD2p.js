@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/gateway-cli-l4SoRD2p.js

@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/chat-history-text-Di3xj5tF.js

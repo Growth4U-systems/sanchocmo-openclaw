@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/fast-mode-_3gtSJl4.js

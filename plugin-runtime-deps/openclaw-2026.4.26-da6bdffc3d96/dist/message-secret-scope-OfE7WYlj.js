@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/message-secret-scope-OfE7WYlj.js

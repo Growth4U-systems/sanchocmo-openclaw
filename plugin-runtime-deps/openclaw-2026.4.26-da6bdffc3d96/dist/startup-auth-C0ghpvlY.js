@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/startup-auth-C0ghpvlY.js

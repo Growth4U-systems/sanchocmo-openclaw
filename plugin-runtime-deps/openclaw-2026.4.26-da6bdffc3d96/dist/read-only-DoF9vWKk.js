@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/read-only-DoF9vWKk.js

@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/program-B7UMD7mC.js

@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/direct-dm-C8Osrz4E.js

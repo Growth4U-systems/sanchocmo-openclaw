@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/models-DTSU8g8c.js

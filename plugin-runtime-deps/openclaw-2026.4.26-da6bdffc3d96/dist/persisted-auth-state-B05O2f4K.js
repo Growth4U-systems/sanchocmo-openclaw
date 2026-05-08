@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/persisted-auth-state-B05O2f4K.js

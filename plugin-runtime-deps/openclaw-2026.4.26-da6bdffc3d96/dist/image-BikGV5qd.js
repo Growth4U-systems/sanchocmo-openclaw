@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/image-BikGV5qd.js

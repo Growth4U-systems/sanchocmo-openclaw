@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/overview-B3_zmq9x.js

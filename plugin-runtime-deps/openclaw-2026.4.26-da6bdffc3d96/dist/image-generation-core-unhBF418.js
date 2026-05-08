@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/image-generation-core-unhBF418.js

@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/exec-policy-cli-BU0lOglz.js

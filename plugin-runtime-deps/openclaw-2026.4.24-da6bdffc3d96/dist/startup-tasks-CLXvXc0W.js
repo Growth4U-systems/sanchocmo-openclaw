@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/startup-tasks-CLXvXc0W.js

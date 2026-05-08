@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/gateway-method-policy-BU7UGGRm.js

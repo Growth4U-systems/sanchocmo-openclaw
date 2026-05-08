@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/console-D6VW2Y3e.js

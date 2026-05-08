@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/approval-gateway-runtime-5QVwswJ_.js

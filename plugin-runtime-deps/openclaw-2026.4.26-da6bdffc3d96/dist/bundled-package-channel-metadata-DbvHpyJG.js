@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/bundled-package-channel-metadata-DbvHpyJG.js

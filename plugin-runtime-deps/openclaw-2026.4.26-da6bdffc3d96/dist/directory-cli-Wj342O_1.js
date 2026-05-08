@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/directory-cli-Wj342O_1.js

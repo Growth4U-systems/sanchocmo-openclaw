@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/monitor-CFEFi_m1.js

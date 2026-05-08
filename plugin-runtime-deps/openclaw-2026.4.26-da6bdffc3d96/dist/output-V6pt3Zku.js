@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/output-V6pt3Zku.js

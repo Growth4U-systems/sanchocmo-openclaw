@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/media-understanding-provider-w9xsI_Ew.js

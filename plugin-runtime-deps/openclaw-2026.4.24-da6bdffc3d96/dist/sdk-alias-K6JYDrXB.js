@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/sdk-alias-K6JYDrXB.js

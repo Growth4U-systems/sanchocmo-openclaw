@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/task-status-B_agTNy0.js

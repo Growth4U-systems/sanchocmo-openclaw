@@ -1,1 +1,0 @@
-/Users/ragi/.openclaw/plugin-runtime-deps/openclaw-2026.4.24-da6bdffc3d96/dist/searxng-search-provider-C0W-N8TI.js

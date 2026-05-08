@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/fetch-C2GNS98q.js

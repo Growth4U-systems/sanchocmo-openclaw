@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/restart-health-RsH_VjT1.js

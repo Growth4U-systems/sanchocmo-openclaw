@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/bash-tools-Db6p2FC5.js

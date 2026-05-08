@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/local-media-access-B_U8JJxq.js

@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/video-generation-runtime-D5r8_UWO.js

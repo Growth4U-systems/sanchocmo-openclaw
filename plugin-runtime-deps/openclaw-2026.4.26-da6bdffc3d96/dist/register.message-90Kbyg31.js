@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/register.message-90Kbyg31.js

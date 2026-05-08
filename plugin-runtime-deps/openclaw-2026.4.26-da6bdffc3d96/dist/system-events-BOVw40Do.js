@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/system-events-BOVw40Do.js

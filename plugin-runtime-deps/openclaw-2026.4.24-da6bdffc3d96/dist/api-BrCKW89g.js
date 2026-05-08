@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/api-BrCKW89g.js

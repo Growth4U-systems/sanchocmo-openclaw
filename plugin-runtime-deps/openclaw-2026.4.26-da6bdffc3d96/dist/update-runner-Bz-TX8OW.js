@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/update-runner-Bz-TX8OW.js

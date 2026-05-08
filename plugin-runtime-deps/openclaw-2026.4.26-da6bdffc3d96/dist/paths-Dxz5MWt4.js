@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/paths-Dxz5MWt4.js

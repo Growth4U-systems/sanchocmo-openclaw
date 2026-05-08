@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/onboarding-plugin-install-D9YkxL7v.js

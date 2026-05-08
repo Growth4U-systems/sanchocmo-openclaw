@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/model-allowlist-entry-Cnzy9sI7.js

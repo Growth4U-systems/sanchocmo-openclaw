@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/dangerous-name-matching-BixRCsA4.js

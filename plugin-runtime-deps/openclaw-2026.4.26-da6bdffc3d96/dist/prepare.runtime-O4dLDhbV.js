@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/prepare.runtime-O4dLDhbV.js

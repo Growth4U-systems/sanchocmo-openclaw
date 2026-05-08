@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/device-bootstrap-profile-BB7Yi_yP.js

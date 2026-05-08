@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/esm-BgJ6FoeP.js

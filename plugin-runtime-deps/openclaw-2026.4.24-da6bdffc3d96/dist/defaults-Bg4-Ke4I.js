@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/defaults-Bg4-Ke4I.js

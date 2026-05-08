@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/run-embedded.runtime-CP5Va3fE.js

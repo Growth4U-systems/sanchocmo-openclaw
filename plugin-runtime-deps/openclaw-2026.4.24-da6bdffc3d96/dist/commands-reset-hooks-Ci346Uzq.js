@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/commands-reset-hooks-Ci346Uzq.js

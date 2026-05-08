@@ -1,1 +1,0 @@
-/opt/homebrew/lib/node_modules/openclaw/dist/commands-registry.runtime-B4OibQQ6.js
