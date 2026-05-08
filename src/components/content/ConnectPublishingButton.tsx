@@ -4,18 +4,19 @@ import { useState, ReactNode } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { ApiConnectPanel } from "@/components/settings/api-connect-panel";
 import { PublishingAccountInfo } from "@/components/content/PublishingAccountInfo";
+import { ConfigSheet } from "@/components/content/config/ConfigSheet";
 import { cn } from "@/lib/utils";
 
 /**
  * Reusable button + slide-over for connecting a publishing tool (Metricool
- * by default). Wraps the standalone `ApiConnectPanel` so any view that needs
- * "Conecta tu publishing tool" can drop this in without re-implementing the
- * slider chrome or routing to admin.
+ * by default). Wraps the standalone `ApiConnectPanel`.
+ *
+ * The slide-over uses `ConfigSheet` so the close button (X), header, and
+ * width match the rest of the Engine > Configuración panels.
  *
  * Used in:
  *   - PublishBar.tsx (sticky footer of draft editor)
  *   - PostingCalendarTab.tsx (empty state when no provider configured)
- *   - EngineTab.tsx (Setup Configurations section)
  */
 export function ConnectPublishingButton({
   slug,
@@ -64,41 +65,14 @@ export function ConnectPublishingButton({
         {label}
       </button>
 
-      {open && (
-        <div
-          className="fixed inset-0 z-50 flex justify-end"
-          onClick={close}
-        >
-          <div className="absolute inset-0 bg-black/30" />
-          <div
-            className="relative w-full max-w-[640px] h-full bg-card shadow-2xl flex flex-col"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
-              <h3 className="font-heading text-base text-navy">
-                🔌 Conectar {providerLabel}
-              </h3>
-              <button
-                type="button"
-                onClick={close}
-                className="text-muted-foreground hover:text-foreground text-lg leading-none px-1"
-                aria-label="Cerrar"
-              >
-                ✕
-              </button>
-            </div>
-
-            <div className="flex-1 overflow-y-auto">
-              <ApiConnectPanel slug={slug} apiId={apiId} onClose={close} />
-              {apiId === "metricool" && (
-                <div className="px-4 pb-4">
-                  <PublishingAccountInfo slug={slug} variant="full" />
-                </div>
-              )}
-            </div>
+      <ConfigSheet open={open} onOpenChange={(o) => (o ? setOpen(true) : close())} icon="🔌" title={`Conectar ${providerLabel}`}>
+        <ApiConnectPanel slug={slug} apiId={apiId} onClose={close} />
+        {apiId === "metricool" && (
+          <div className="mt-4">
+            <PublishingAccountInfo slug={slug} variant="full" />
           </div>
-        </div>
-      )}
+        )}
+      </ConfigSheet>
     </>
   );
 }

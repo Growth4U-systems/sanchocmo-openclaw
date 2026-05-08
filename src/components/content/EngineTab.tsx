@@ -4,11 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/router";
 import { ConfigurationPipeline } from "./ConfigurationPipeline";
 import { EngineState } from "./EngineState";
-import { CarouselSetupPanel } from "./CarouselSetupPanel";
-import { ImageGenSetupPanel } from "./ImageGenSetupPanel";
-import { PublishingSetupPanel } from "./PublishingSetupPanel";
 import { InputsTab } from "./InputsTab";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { ConfigSheet } from "@/components/content/config/ConfigSheet";
 import type { ThreadConfig } from "@/lib/chat-openers";
 
 interface Props {
@@ -26,6 +23,15 @@ const SECTION_LABELS: Record<EditorSection, string> = {
   keywords: "Keywords SEO",
   paa: "People Also Ask",
   cadence: "Cadencia editorial",
+};
+
+const SECTION_ICONS: Record<EditorSection, string> = {
+  "dispatch-channel": "#",
+  news: "📰",
+  profiles: "🕵️",
+  keywords: "🔑",
+  paa: "❓",
+  cadence: "⏰",
 };
 
 export function EngineTab({ slug, openChat }: Props) {
@@ -99,7 +105,7 @@ function ConfigurationPanel({ slug, openChat }: Props) {
   };
 
   return (
-    <div className="space-y-6">
+    <div>
       <ConfigurationPipeline
         slug={slug}
         openChat={openChat}
@@ -107,27 +113,17 @@ function ConfigurationPanel({ slug, openChat }: Props) {
         onOpenIdeas={handleOpenIdeas}
       />
 
-      <ImageGenSetupPanel slug={slug} />
-      <CarouselSetupPanel slug={slug} />
-      <PublishingSetupPanel slug={slug} />
-
-      <Sheet open={editorSection !== null} onOpenChange={(open) => !open && setEditorSection(null)}>
-        <SheetContent
-          className="!w-[min(96vw,1100px)] !max-w-[96vw] overflow-y-auto overflow-x-hidden"
-          side="right"
-        >
-          <SheetHeader className="sticky top-0 z-10 bg-popover border-b">
-            <SheetTitle>
-              {editorSection ? SECTION_LABELS[editorSection] : ""}
-            </SheetTitle>
-          </SheetHeader>
-          <div className="px-4 pb-6">
-            {editorSection && (
-              <InputsTab slug={slug} openChat={openChat} embedded={{ section: editorSection }} />
-            )}
-          </div>
-        </SheetContent>
-      </Sheet>
+      <ConfigSheet
+        open={editorSection !== null}
+        onOpenChange={(open) => !open && setEditorSection(null)}
+        icon={editorSection ? SECTION_ICONS[editorSection] : undefined}
+        title={editorSection ? SECTION_LABELS[editorSection] : ""}
+        width="min(96vw, 1100px)"
+      >
+        {editorSection && (
+          <InputsTab slug={slug} openChat={openChat} embedded={{ section: editorSection }} />
+        )}
+      </ConfigSheet>
     </div>
   );
 }
