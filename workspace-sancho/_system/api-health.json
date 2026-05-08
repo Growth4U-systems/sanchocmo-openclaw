@@ -1,51 +1,51 @@
 {
-  "lastCheck": "2026-05-07T20:15:07Z",
+  "lastCheck": "2026-05-08T02:15:04Z",
   "services": {
     "anthropic": {
       "status": "ok",
-      "lastCheck": "2026-05-07T20:15:07.865Z",
+      "lastCheck": "2026-05-08T02:15:04.978Z",
       "details": {
         "httpCode": "200"
       }
     },
     "openrouter": {
       "status": "ok",
-      "lastCheck": "2026-05-07T20:15:08.273Z",
+      "lastCheck": "2026-05-08T02:15:05.226Z",
       "details": {
         "httpCode": "200"
       }
     },
     "openai": {
       "status": "ok",
-      "lastCheck": "2026-05-07T20:15:08.577Z",
+      "lastCheck": "2026-05-08T02:15:05.497Z",
       "details": {
         "httpCode": "200"
       }
     },
     "gemini": {
       "status": "ok",
-      "lastCheck": "2026-05-07T20:15:09.800Z",
+      "lastCheck": "2026-05-08T02:15:06.724Z",
       "details": {
         "httpCode": "200"
       }
     },
     "xai": {
       "status": "error",
-      "lastCheck": "2026-05-07T20:15:10.095Z",
+      "lastCheck": "2026-05-08T02:15:07.139Z",
       "details": {
         "httpCode": "429"
       }
     },
     "minimax": {
       "status": "ok",
-      "lastCheck": "2026-05-07T20:15:10.332Z",
+      "lastCheck": "2026-05-08T02:15:07.346Z",
       "details": {
         "note": "Key present, no lightweight verify endpoint"
       }
     },
     "apify": {
       "status": "ok",
-      "lastCheck": "2026-05-07T20:15:10.333Z",
+      "lastCheck": "2026-05-08T02:15:07.346Z",
       "details": {
         "username": "growth4u",
         "plan": ""
@@ -53,21 +53,21 @@
     },
     "firecrawl": {
       "status": "ok",
-      "lastCheck": "2026-05-07T20:15:11.189Z",
+      "lastCheck": "2026-05-08T02:15:08.019Z",
       "details": {
         "httpCode": "200"
       }
     },
     "serper": {
       "status": "ok",
-      "lastCheck": "2026-05-07T20:15:11.977Z",
+      "lastCheck": "2026-05-08T02:15:08.805Z",
       "details": {
         "httpCode": "200"
       }
     },
     "dataforseo": {
       "status": "ok",
-      "lastCheck": "2026-05-07T20:15:12.861Z",
+      "lastCheck": "2026-05-08T02:15:09.672Z",
       "details": {
         "httpCode": "200",
         "login": "accounts@growth4u.io"
@@ -75,14 +75,14 @@
     },
     "notion": {
       "status": "ok",
-      "lastCheck": "2026-05-07T20:15:13.555Z",
+      "lastCheck": "2026-05-08T02:15:10.367Z",
       "details": {
         "botName": "openclaw-Alfonso"
       }
     },
     "supabase": {
       "status": "error",
-      "lastCheck": "2026-05-07T20:15:14.297Z",
+      "lastCheck": "2026-05-08T02:15:11.007Z",
       "details": {
         "httpCode": "401",
         "project": "psapmujzxhaxraphddlv"
@@ -90,7 +90,7 @@
     },
     "gog": {
       "status": "ok",
-      "lastCheck": "2026-05-07T20:15:14.906Z",
+      "lastCheck": "2026-05-08T02:15:11.651Z",
       "details": {
         "account": "alfonso@growth4u.io",
         "test": "gmail inbox"
@@ -98,56 +98,56 @@
     },
     "openclaw": {
       "status": "error",
-      "lastCheck": "2026-05-07T20:15:16.103Z",
+      "lastCheck": "2026-05-08T02:15:12.981Z",
       "details": {
         "error": "Command failed: /opt/homebrew/bin/openclaw status 2>&1"
       }
     },
     "fal": {
       "status": "ok",
-      "lastCheck": "2026-05-07T20:15:14.889Z",
+      "lastCheck": "2026-05-08T02:15:11.633Z",
       "details": {
         "note": "Key present"
       }
     },
     "wavespeed": {
       "status": "ok",
-      "lastCheck": "2026-05-07T20:15:14.889Z",
+      "lastCheck": "2026-05-08T02:15:11.634Z",
       "details": {
         "note": "Key present"
       }
     },
     "dumpling": {
       "status": "ok",
-      "lastCheck": "2026-05-07T20:15:14.890Z",
+      "lastCheck": "2026-05-08T02:15:11.634Z",
       "details": {
         "note": "Key present"
       }
     },
     "brave": {
       "status": "not-configured",
-      "lastCheck": "2026-05-07T20:15:10.333Z",
+      "lastCheck": "2026-05-08T02:15:07.346Z",
       "details": {
         "error": "BRAVE_API_KEY not set"
       }
     },
     "instantly": {
       "status": "not-configured",
-      "lastCheck": "2026-05-07T20:15:14.890Z",
+      "lastCheck": "2026-05-08T02:15:11.634Z",
       "details": {
         "note": "Web login \u2014 no API key in .env"
       }
     },
     "metricool": {
       "status": "not-configured",
-      "lastCheck": "2026-05-07T20:15:14.890Z",
+      "lastCheck": "2026-05-08T02:15:11.634Z",
       "details": {
         "note": "Web login \u2014 no API key in .env"
       }
     },
     "nanobanana": {
       "status": "ok",
-      "lastCheck": "2026-05-07T20:15:14.890Z",
+      "lastCheck": "2026-05-08T02:15:11.634Z",
       "details": {
         "note": "Uses Gemini API key (shared)",
         "engine": "gemini-2.0-flash-exp"
@@ -162,21 +162,21 @@
     },
     "discord": {
       "status": "ok",
-      "lastCheck": "2026-05-07T20:15:16.122Z",
+      "lastCheck": "2026-05-08T02:15:13.002Z",
       "details": {
         "httpCode": "200"
       }
     },
     "tailscale": {
       "status": "ok",
-      "lastCheck": "2026-05-07T20:15:07Z",
+      "lastCheck": "2026-05-08T02:15:04Z",
       "details": {
         "note": "tailscale status OK"
       }
     },
     "remotion": {
       "status": "not-configured",
-      "lastCheck": "2026-05-07T20:15:14.890Z",
+      "lastCheck": "2026-05-08T02:15:11.635Z",
       "details": {
         "version": null,
         "note": "Local install"
@@ -184,7 +184,7 @@
     },
     "slack": {
       "status": "ok",
-      "lastCheck": "2026-05-07T20:15:14.509Z",
+      "lastCheck": "2026-05-08T02:15:11.245Z",
       "details": {
         "httpCode": "200"
       }

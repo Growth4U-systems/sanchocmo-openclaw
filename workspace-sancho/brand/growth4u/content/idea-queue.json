@@ -1566,5 +1566,373 @@
     ],
     "created_at": "2026-05-07T07:07:00+02:00",
     "status": "New"
+  },
+  {
+    "id": "idea-2026-05-08-1",
+    "title": "Ranking #1 ya no garantiza visibilidad IA — solo el 38% de citados en AI Overviews está en el top 10",
+    "pillar_id": "P2",
+    "content_type": "Hot Take",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Ahrefs analizó 863.000 keywords y 4 millones de URLs de AI Overviews. Solo el 38% de las páginas citadas también rankean en el top 10 para la misma query, una caída desde el 76% siete meses antes. BrightEdge lo sitúa incluso más bajo, en un 17%. YouTube es ahora el dominio más citado en AI Overviews con un 18.2% de todas las citaciones fuera del top 100. La actualización a Gemini 3 como modelo global el 27 de enero de 2026 es un factor contribuyente clave. El CTR orgánico en queries con AI Overviews ha caído hasta un 61%.",
+      "source": "ALM Corp / Ahrefs / BrightEdge",
+      "url": "https://almcorp.com/blog/google-ai-overview-citations-drop-top-ranking-pages-2026/",
+      "date": "2026-03-03"
+    },
+    "signal_type": [
+      "data-point",
+      "milestone",
+      "contrarian"
+    ],
+    "angle_draft": "Ahrefs acaba de demostrar que tu posición #1 en Google ya no te garantiza aparecer en AI Overviews. Solo el 38% de las páginas citadas por la IA de Google también rankean en el top 10 — hace 7 meses era el 76%. YouTube es ahora el dominio más citado. Si tu estrategia SEO sigue optimizando para rankings, estás jugando un juego que Google ya cambió. Nosotros construimos activos que los LLMs citan directamente: case studies con datos reales, no artículos genéricos. La distribución se ha bifurcado. Tu medición debería hacer lo mismo. Frame: \"ranking-is-not-citation\".",
+    "pov_confidence": 0.85,
+    "source_signals": [
+      "news-2026-05-08-001"
+    ],
+    "created_at": "2026-05-08T05:00:00Z",
+    "status": "New"
+  },
+  {
+    "id": "idea-2026-05-08-2",
+    "title": "Google acaba de hacer los links en AI Overviews más clicables — y premia a los suscriptores",
+    "pillar_id": "P2",
+    "content_type": "Proof Post",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Google anunció el 6 de mayo de 2026 cinco actualizaciones para links en AI Overviews y AI Mode. Los links ahora se colocan justo al lado del texto relevante generado. En desktop, al pasar el cursor se muestra el nombre del sitio web o título de la página. Los links de publicaciones a las que el usuario está suscrito se destacan, con testing inicial mostrando que los usuarios son significativamente más propensos a hacer click en links etiquetados como suscripciones. Se incluyen perspectivas de comunidades online con nombre del creador y handle.",
+      "source": "9to5Google / Abner Li",
+      "url": "https://9to5google.com/2026/05/06/google-ai-mode-overviews-direct-links/",
+      "date": "2026-05-06"
+    },
+    "signal_type": [
+      "milestone",
+      "aha-moment"
+    ],
+    "angle_draft": "Google acaba de hacer 5 cambios en AI Overviews que premian a las marcas con contenido de calidad. Links inline junto al texto, hover con nombre del sitio, y — lo importante — los links de publicaciones suscritas se destacan y los usuarios hacen click significativamente más. Esto refuerza lo que llevamos construyendo: activos de contenido que los LLMs no solo citan sino que ahora enlazan mejor. Las comunidades y foros también ganan peso como fuentes citadas. Si tu marca no tiene presencia en newsletters, foros y contenido original, estás invisible en AI search. Frame: \"google-rewards-trust-signals\".",
+    "pov_confidence": 0.78,
+    "source_signals": [
+      "news-2026-05-08-002"
+    ],
+    "created_at": "2026-05-08T05:00:00Z",
+    "status": "New"
+  },
+  {
+    "id": "idea-2026-05-08-3",
+    "title": "Añadir IA a un proceso roto no lo hace eficiente — lo hace caótico más rápido",
+    "pillar_id": "P1",
+    "content_type": "Hot Take",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Forbes reporta que los presupuestos de IA crecen y los pilotos se multiplican, pero los resultados son desiguales. Investigación de Wrike: el 82% de los knowledge workers usa IA en el trabajo, el 38% usa 3-5 herramientas de IA semanalmente, pero el 96% dice que sería valioso que sus herramientas de IA pudieran compartir contexto y trabajar juntas automáticamente. El problema no son las herramientas sino que las organizaciones intentan añadir IA a modelos operativos diseñados para handoffs secuenciales y silos funcionales.",
+      "source": "Forbes / Rhett Power / Wrike",
+      "url": "https://www.forbes.com/sites/rhettpower/2026/04/19/the-execution-gap-holding-back-ai-in-modern-marketing-teams/",
+      "date": "2026-04-19"
+    },
+    "signal_type": [
+      "contrarian",
+      "data-point",
+      "aha-moment"
+    ],
+    "angle_draft": "Forbes acaba de documentar lo que vemos todos los días: el 82% de los equipos usa IA, pero el 96% dice que sus herramientas no comparten contexto entre sí. Resultado: más velocidad, mismo caos. Añadir IA a un proceso roto no lo hace eficiente — lo hace caótico más rápido. El problema no es la herramienta. Es el sistema. Trust Engine funciona exactamente al revés: primero instalamos el sistema operativo de growth, después le metemos IA. Sin sistema, la IA amplifica tus gaps. Con sistema, los elimina. Frame: \"system-before-ai\".",
+    "pov_confidence": 0.85,
+    "source_signals": [
+      "news-2026-05-08-003"
+    ],
+    "created_at": "2026-05-08T05:00:00Z",
+    "status": "New"
+  },
+  {
+    "id": "idea-2026-05-08-4",
+    "title": "MiCA 2026: cada página de tu web crypto es ahora un documento regulado",
+    "pillar_id": "P3",
+    "content_type": "Hot Take",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "En 2026, los sitios web y comunicaciones de marketing de CASPs entraron oficialmente en el perímetro regulatorio de la UE. Las autoridades supervisoras europeas revisan cada página de los sitios web públicos, banners publicitarios y publicaciones en redes sociales. La publicidad crypto bajo MiCA es ahora una esfera estrictamente controlada de promoción financiera. Google solo permite anuncios crypto de CASPs autorizados bajo MiCA desde abril 2025. El marketing activo a residentes de la UE puede activar la obligación de licencia CASP. Los CASPs son responsables del marketing de sus socios terceros. Multas de hasta 5M EUR o 5% de facturación anual.",
+      "source": "Manimama.eu",
+      "url": "https://manimama.eu/crypto-advertising-under-mica-new-eu-compliance-reality/",
+      "date": "2025-11-13"
+    },
+    "signal_type": [
+      "system",
+      "cautionary-tale"
+    ],
+    "angle_draft": "Tu web crypto ya no es un activo de marketing. Es un documento regulado. Las autoridades europeas revisan cada página, cada banner, cada post en redes. Google solo permite ads crypto de CASPs con licencia MiCA desde abril 2025. Y el dato que nadie cuenta: si haces marketing activo a residentes de la UE sin autorización, eso puede activar la obligación de obtener licencia CASP. No es un matiz. Es un cambio de paradigma. Quien tiene el playbook compliance integrado en su proceso de marketing puede operar mientras la competencia se paraliza. Frame: \"every-page-is-regulated\".",
+    "pov_confidence": 0.9,
+    "source_signals": [
+      "news-2026-05-08-004"
+    ],
+    "created_at": "2026-05-08T05:00:00Z",
+    "status": "New"
+  },
+  {
+    "id": "idea-2026-05-08-5",
+    "title": "Solo el 11% cree que el modelo agencia actual sirve para el futuro — el colapso ya ocurrió",
+    "pillar_id": "P4",
+    "content_type": "Proof Post",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Tapp Network argumenta que el modelo de agencia colapsó entre 2013-2023 por tres olas tecnológicas: las plataformas sociales democratizaron la distribución, el trabajo remoto descentralizó las habilidades especializadas, y la IA commoditizó la producción y el trabajo estratégico. El 68% de las marcas ha movido servicios in-house (Marketing Scoop), el 82% ha construido agencias internas (ANA), y solo el 11% cree que el modelo actual de agencia cumple con las necesidades futuras. El 83% de líderes de marketing recortará gasto cuando la IA automatice la creación de contenido por completo (eMarketer).",
+      "source": "Tapp Network / ANA / eMarketer",
+      "url": "https://blog.tappnetwork.com/the-agency-model-collapsed-heres-the-integrated-growth-architecture-that-replaced-it",
+      "date": "2026-01-09"
+    },
+    "signal_type": [
+      "data-point",
+      "milestone",
+      "contrarian"
+    ],
+    "angle_draft": "No es que el modelo de agencia se esté muriendo. Ya murió. El 68% de las marcas movió servicios in-house. El 82% construyó agencias internas. Y el dato demoledor: solo el 11% cree que el modelo actual de agencia sirve para el futuro. Tres olas lo destruyeron: social democratizó distribución, remote descentralizó talento, IA commoditizó producción. Lo que lo reemplaza es arquitectura de growth integrada: marketing embebido en operaciones, conectado entre departamentos, accountable por revenue. Trust Engine es exactamente eso. Frame: \"the-collapse-already-happened\".",
+    "pov_confidence": 0.88,
+    "source_signals": [
+      "news-2026-05-08-005"
+    ],
+    "created_at": "2026-05-08T05:00:00Z",
+    "status": "New"
+  },
+  {
+    "id": "idea-2026-05-08-6",
+    "title": "La IA está ampliando silenciosamente tu gap de ejecución GTM",
+    "pillar_id": "P5",
+    "content_type": "Framework",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Heinz Marketing reporta que la IA mejora la productividad pero simultáneamente introduce nueva complejidad en workflows, alineamiento y ejecución de pipeline. Más actividad, más assets, más automatización — y sin embargo más confusión, más retrabajo y más fricción. Gartner reporta que los agentes de IA ofrecidos por vendors frecuentemente no cumplen las expectativas de rendimiento prometidas. Más del 40% de proyectos de agentic AI serán cancelados antes de finales de 2027 por coste, valor incierto o riesgo. Solo el 31% de los casos de uso de IA priorizados llegan a producción completa. El 72% de las inversiones en IA no generan retorno.",
+      "source": "Heinz Marketing / Maria Geokezas / Gartner",
+      "url": "https://www.heinzmarketing.com/blog/is-ai-quietly-widening-your-gtm-execution-gap/",
+      "date": "2026-04-03"
+    },
+    "signal_type": [
+      "contrarian",
+      "data-point",
+      "cautionary-tale"
+    ],
+    "angle_draft": "Heinz Marketing lo documenta: la IA mejora la productividad pero está ampliando silenciosamente el gap de ejecución GTM. Más assets, más automatización, más confusión. El 72% de las inversiones en IA no generan retorno. Solo el 31% de casos de uso llega a producción. El problema no es la tecnología — es que la mayoría añade IA a un modelo operativo que no fue diseñado para ella. SanchoCMO opera en producción real porque fue diseñado como sistema desde el principio, no como parche sobre un proceso roto. La diferencia entre tener IA y operar con IA es el sistema subyacente. Frame: \"ai-widens-gaps-without-systems\".",
+    "pov_confidence": 0.87,
+    "source_signals": [
+      "news-2026-05-08-006",
+      "news-2026-05-08-007"
+    ],
+    "created_at": "2026-05-08T05:00:00Z",
+    "status": "New"
+  },
+  {
+    "id": "idea-2026-05-08-7",
+    "title": "Tu producto tiene un nuevo usuario — y no es humano",
+    "pillar_id": "P5",
+    "content_type": "Hot Take",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Elena Verna argumenta que los agentes IA están empezando a interactuar con productos en nombre de los usuarios vía protocolos como MCP (Model Context Protocol). El 'usuario' puede que nunca toque el producto directamente. Esto cambia el ICP: ya no es solo humano. Los productos API-first tenían developers como ICP, pero ahora los LLMs participan en cada paso del proceso — descubrimiento, evaluación e integración. La pregunta que toda empresa debería hacerse: ¿tu producto está preparado para usuarios no humanos?",
+      "source": "Elena Verna",
+      "source_type": "reference-creator",
+      "platform": "newsletter",
+      "url": "https://www.elenaverna.com/p/your-product-has-a-new-user-its-not",
+      "engagement": {
+        "likes": 110,
+        "comments": 15,
+        "shares": 14
+      },
+      "date": "2026-04-22"
+    },
+    "signal_type": [
+      "contrarian",
+      "framework",
+      "aha-moment"
+    ],
+    "angle_draft": "Elena Verna plantea una pregunta que debería incomodar a todo founder: ¿tu producto está preparado para usuarios que no son humanos? Con MCP y agentes IA interactuando con productos en nombre de los usuarios, el ICP ya no es solo una persona. Es también una máquina. Esto cambia el funnel completo: el agente de tu buyer evalúa tu producto antes de que el humano lo vea. Si tu onboarding, tu documentación y tu API no están optimizados para agentes, estás invisible para el 50% de los decision-makers B2B que ya empiezan su búsqueda en IA. Frame: 'tu-ICP-ya-no-es-solo-humano'.",
+    "pov_confidence": 0.83,
+    "source_signals": [
+      "creators-2026-05-08-ev01"
+    ],
+    "created_at": "2026-05-08T05:10:00Z",
+    "status": "New"
+  },
+  {
+    "id": "idea-2026-05-08-8",
+    "title": "No todos los agentes IA son iguales — framework de 3 tipos para priorizar",
+    "pillar_id": "P5",
+    "content_type": "Framework",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Hamza Farooq y Jaya Rajwani publican en Lenny's Newsletter un framework para categorizar agentes IA en 3 tipos según complejidad y autonomía. La mayoría de equipos intentan priorizar iniciativas de agentes fundamentalmente diferentes como si fueran lo mismo — usando matrices impact-vs-effort que no funcionan porque un agente puede tomar 6 semanas y otro 6 meses. Un PM puede construir uno con n8n mientras otro requiere un equipo de ML dedicado. El artículo alcanzó 424 likes y 22 shares.",
+      "source": "Lenny Rachitsky / Hamza Farooq",
+      "source_type": "reference-creator",
+      "platform": "newsletter",
+      "url": "https://www.lennysnewsletter.com/p/not-all-ai-agents-are-created-equal",
+      "engagement": {
+        "likes": 424,
+        "comments": 5,
+        "shares": 22
+      },
+      "date": "2026-04-14"
+    },
+    "signal_type": [
+      "framework",
+      "aha-moment"
+    ],
+    "angle_draft": "Lenny's Newsletter acaba de publicar el framework que faltaba: no todos los agentes IA son iguales. Hay 3 tipos — y la mayoría de equipos los meten en la misma matriz de priorización como si fueran comparables. Un agente lo construye un PM con n8n en 6 semanas. Otro necesita un equipo ML dedicado durante 6 meses. Tratarlos igual es el error #1. Nosotros operamos SanchoCMO con agentes de distintos niveles: unos ejecutan tareas estructurales, otros orquestan workflows completos. La clave no es cuántos agentes tienes sino si sabes qué tipo necesitas para cada problema. Frame: 'categorize-before-you-build'.",
+    "pov_confidence": 0.82,
+    "source_signals": [
+      "creators-2026-05-08-lr01"
+    ],
+    "created_at": "2026-05-08T05:10:00Z",
+    "status": "New"
+  },
+  {
+    "id": "idea-2026-05-08-9",
+    "title": "Un CMO sin equipo de contenido construyó su content engine en Claude Code",
+    "pillar_id": "P5",
+    "content_type": "Proof Post",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Maja Voje publica cómo Benjamin Gibert, CMO de Base Operations (serie A, ~40 personas), construyó un sistema de contenido completo usando Claude Code sin equipo de contenido dedicado. El sistema toma conocimiento estructurado de la empresa, lo enriquece con conversaciones reales de clientes, y produce artículos SEO, posts LinkedIn y personalización ABM. Voje reconoce que ella misma dedica 20 horas/semana a contenido y sigue buscando cómo acelerar con IA sin comprometer calidad y brand voice.",
+      "source": "Maja Voje / Benjamin Gibert",
+      "source_type": "reference-creator",
+      "platform": "newsletter",
+      "url": "https://knowledge.gtmstrategist.com/p/content-engineering-how-to-build-content-system-in-claude-code",
+      "engagement": {
+        "likes": 37,
+        "comments": 1,
+        "shares": 3
+      },
+      "date": "2026-05-01"
+    },
+    "signal_type": [
+      "proof-point",
+      "framework",
+      "aha-moment"
+    ],
+    "angle_draft": "Un CMO de una startup serie A (40 personas) construyó su content engine completo en Claude Code. Sin equipo de contenido. El sistema toma conocimiento de la empresa, lo enriquece con conversaciones de clientes reales, y genera artículos SEO, posts LinkedIn y ABM personalizado. Maja Voje lo destaca porque incluso ella, con 20h/semana en contenido, sigue buscando cómo escalar con IA sin sacrificar calidad. Esto es exactamente lo que opera SanchoCMO: un sistema que ejecuta content pipeline end-to-end con agentes, no un ChatGPT con un prompt bonito. La diferencia entre tool y sistema se mide en output consistente. Frame: 'content-engine-not-content-tool'.",
+    "pov_confidence": 0.88,
+    "source_signals": [
+      "creators-2026-05-08-mv01"
+    ],
+    "created_at": "2026-05-08T05:10:00Z",
+    "status": "New"
+  },
+  {
+    "id": "idea-2026-05-08-10",
+    "title": "Zero Click Marketing ya es un libro — la era del tráfico orgánico tiene fecha de caducidad",
+    "pillar_id": "P2",
+    "content_type": "Hot Take",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Amanda Natividad y Rand Fishkin anuncian el libro 'Zero Click Marketing: How to Build Brands and Earn Customers on a Traffic-Starved Web'. Natividad acuñó el término 'zero-click content' en 2022. Datos clave: Google resuelve 2/3 de búsquedas on-page, small publishers perdieron ~60% de tráfico Google el año pasado, plataformas sociales penalizan activamente los links externos, ChatGPT resume tu blog antes de que nadie lo abra, AI referrals son menos del 1% del tráfico web abierto.",
+      "source": "Amanda Natividad",
+      "source_type": "reference-creator",
+      "platform": "newsletter",
+      "url": "https://amandanat.substack.com/p/pre-order-zero-click-marketing-the",
+      "engagement": {
+        "likes": 24,
+        "comments": 6,
+        "shares": 2
+      },
+      "date": "2026-05-05"
+    },
+    "signal_type": [
+      "milestone",
+      "framework"
+    ],
+    "angle_draft": "Amanda Natividad y Rand Fishkin acaban de convertir Zero Click Marketing en libro. El dato que más duele: los small publishers perdieron el 60% de su tráfico de Google el año pasado. Las plataformas sociales penalizan links. ChatGPT resume tu blog antes de que nadie lo abra. Y los AI referrals son menos del 1% del tráfico web. Si tu estrategia de marketing sigue dependiendo de enviar gente a tu web, estás optimizando para un modelo que se encoge cada trimestre. Nosotros lo vivimos: somos #1-2 en Gemini para queries fintech España, pero la mayoría de ese impacto es zero-click. La métrica no es CTR. Es VOI. Frame: 'zero-click-is-now-a-movement'.",
+    "pov_confidence": 0.84,
+    "source_signals": [
+      "creators-2026-05-08-an01"
+    ],
+    "created_at": "2026-05-08T05:10:00Z",
+    "status": "New"
+  },
+  {
+    "id": "idea-2026-05-08-11",
+    "title": "Tu marca tiene una versión en internet que tú no escribiste — y los LLMs la están leyendo",
+    "pillar_id": "P2",
+    "content_type": "Hot Take",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Amanda Natividad documenta cómo los LLMs construyen la percepción de tu marca sin tu intervención. Caso Seer Interactive: una sola reseña negativa antigua aparecía en una parte significativa de prompts de IA sobre la empresa. Cuando publicaron contenido actualizado, los outputs cambiaron rápidamente. Caso 2: Natividad compró Formspree porque Claude Code se lo recomendó — nunca vio su homepage, nunca entró en ningún funnel de marketing. Se convirtió en cliente sin experimentar la marca.",
+      "source": "Amanda Natividad",
+      "source_type": "reference-creator",
+      "platform": "newsletter",
+      "url": "https://amandanat.substack.com/p/your-public-record-is-being-written",
+      "engagement": {
+        "likes": 20,
+        "comments": 2,
+        "shares": 2
+      },
+      "date": "2026-04-14"
+    },
+    "signal_type": [
+      "aha-moment",
+      "cautionary-tale"
+    ],
+    "angle_draft": "Amanda Natividad documenta dos casos que deberían preocuparte. Caso 1: Seer Interactive descubrió que una sola reseña negativa antigua dominaba las respuestas de IA sobre su empresa. Publicaron contenido actualizado y los outputs cambiaron rápido. Caso 2: ella misma compró Formspree porque Claude Code se lo recomendó — nunca vio la homepage, nunca entró en un funnel. Tu 'public record' digital está siendo escrito por LLMs, con o sin ti. Si no alimentas ese registro con datos originales, case studies y contenido verificable, la IA rellena los huecos con lo que encuentre. Frame: 'your-brand-has-an-AI-version-you-didnt-write'.",
+    "pov_confidence": 0.81,
+    "source_signals": [
+      "creators-2026-05-08-an02"
+    ],
+    "created_at": "2026-05-08T05:10:00Z",
+    "status": "New"
+  },
+  {
+    "id": "idea-2026-05-08-12",
+    "title": "PMM a velocidad IA: en Lovable, product marketing se reinventó en meses",
+    "pillar_id": "P1",
+    "content_type": "Framework",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Elena Verna y Gemma Casey-Swift (Core PMM de Lovable) describen cómo product marketing se transformó radicalmente en meses. Los PMMs ya no son un cuello de botella — son la pieza que permite al equipo ir rápido. En Lovable, PMM construye las foundations que el resto del equipo necesita. De procesos elaborados que ralentizaban todo a frameworks que aceleran releases. Tesis: si eres Growth o Product, cuanto más puedas hacer tu propio product marketing, más rápido crece tu carrera y tu empresa.",
+      "source": "Elena Verna / Gemma Casey-Swift (Lovable)",
+      "source_type": "reference-creator",
+      "platform": "newsletter",
+      "url": "https://www.elenaverna.com/p/whos-got-time-for-product-marketing",
+      "engagement": {
+        "likes": 87,
+        "comments": 3,
+        "shares": 9
+      },
+      "date": "2026-04-28"
+    },
+    "signal_type": [
+      "framework",
+      "aha-moment"
+    ],
+    "angle_draft": "En Lovable, product marketing pasó de ser cuello de botella a acelerador en meses. Elena Verna y su PMM Gemma Casey-Swift lo cuentan: los PMMs construyen las foundations que todo el equipo necesita para ir rápido. No más procesos elaborados. Frameworks que aceleran. Esto conecta directamente con Trust Engine: la Foundation que instalamos no es un documento que se archiva. Es un sistema operativo que el equipo usa para tomar decisiones de growth sin depender de un consultor. Si tus foundations de positioning, messaging y ICP no aceleran la ejecución, no son foundations — son burocracia. Frame: 'foundations-that-accelerate-not-slow-down'.",
+    "pov_confidence": 0.8,
+    "source_signals": [
+      "creators-2026-05-08-ev02"
+    ],
+    "created_at": "2026-05-08T05:10:00Z",
+    "status": "New"
+  },
+  {
+    "id": "idea-2026-05-08-13",
+    "title": "Tu Couch-to-5K para IA: el gap de adopción no es tecnológico, es conductual",
+    "pillar_id": "P5",
+    "content_type": "Framework",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Hilary Gridley publica en Lenny's Newsletter una guía paso a paso para construir un hábito de IA — el 'Couch-to-5K for AI'. La mayoría de profesionales no han adoptado IA no por falta de herramientas sino por falta de hábito. Propone un programa incremental para pasar de uso cero a integración diaria. El artículo alcanzó 359 likes y 12 shares, demostrando que el gap de adopción IA no es tecnológico sino conductual.",
+      "source": "Lenny Rachitsky / Hilary Gridley",
+      "source_type": "reference-creator",
+      "platform": "newsletter",
+      "url": "https://www.lennysnewsletter.com/p/your-couch-to-5k-for-ai",
+      "engagement": {
+        "likes": 359,
+        "comments": 5,
+        "shares": 12
+      },
+      "date": "2026-04-28"
+    },
+    "signal_type": [
+      "framework",
+      "aha-moment"
+    ],
+    "angle_draft": "Lenny's Newsletter acaba de publicar el 'Couch-to-5K para IA' — y 359 personas le dieron like porque el problema real de la adopción IA no es tecnológico, es conductual. La mayoría de equipos tiene acceso a las mismas herramientas. La diferencia es quién ha construido el hábito de usarlas diariamente. Es exactamente lo que vemos con clientes: el 88% dice que usa IA, el 6% la tiene integrada en operaciones. La brecha no se cierra con una herramienta nueva. Se cierra con un sistema que obliga al equipo a operar con IA todos los días. SanchoCMO no es un tool que el equipo decide usar — es el sistema que opera growth. Frame: 'adoption-is-a-habit-not-a-tool'.",
+    "pov_confidence": 0.79,
+    "source_signals": [
+      "creators-2026-05-08-lr02"
+    ],
+    "created_at": "2026-05-08T05:10:00Z",
+    "status": "New"
   }
 ]

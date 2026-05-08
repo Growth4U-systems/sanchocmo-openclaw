@@ -24,7 +24,7 @@ import { FileTree } from "@/components/foundation/file-tree";
 import { EmptyState } from "@/components/shared/empty-state";
 import { TaskSlideOver } from "@/components/shared/task-slideover";
 import { DocSlideOver } from "@/components/shared/doc-slideover";
-import { TemplateLiveEditor } from "@/components/foundation/template-live-editor";
+import { TemplateViewer } from "@/components/foundation/TemplateViewer";
 import dynamic from "next/dynamic";
 import ReactMarkdown from "react-markdown";
 
@@ -490,7 +490,7 @@ export default function FoundationPage() {
             const tplMatch = selectedDoc.docPath.match(/^brand\/([^/]+)\/brand-book\/visual-identity\/templates\/([^/]+)\/(slide-cover|slide-body|slide-cta|template)\.html$/);
             if (tplMatch) {
               return (
-                <TemplateLiveEditor
+                <TemplateViewer
                   slug={tplMatch[1]}
                   templateId={tplMatch[2]}
                   fileKey={tplMatch[3] as "template" | "slide-cover" | "slide-body" | "slide-cta"}

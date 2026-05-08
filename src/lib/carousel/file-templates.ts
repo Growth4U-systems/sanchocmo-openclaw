@@ -7,7 +7,10 @@ import type { CarouselTemplate, RenderSlideInput } from "@/lib/carousel/types";
 
 /**
  * Loader for file-backed carousel templates living under
- * `brand/{slug}/content/carousel-templates/{id}/`.
+ * `brand/{slug}/brand-book/visual-identity/templates/{id}/`.
+ * (Same directory Foundation uses for the visual-identity pillar — they
+ * share the canonical storage. The legacy `content/carousel-templates/`
+ * path that older comments mention has not been used since the pivot.)
  *
  * Each template directory is one of two shapes:
  *
@@ -61,7 +64,7 @@ function templatesDir(slug: string): string {
   return path.join(brandDir(slug), TEMPLATES_REL);
 }
 
-/** List ids of every template directory under `brand/{slug}/content/carousel-templates/`. */
+/** List ids of every template directory under `brand/{slug}/brand-book/visual-identity/templates/`. */
 function listTemplateIds(slug: string): string[] {
   const root = templatesDir(slug);
   if (!fs.existsSync(root)) return [];

@@ -7,9 +7,13 @@
  *
  * Body: { slug, ideaIds: string[], projectId?, taskId? }
  *
- * Slack message structure (v2 — grouped by target_channel):
- * - One message per target_channel ("blog", "linkedin", "twitter", ...)
- * - Header: "📝 Blog — elige 1 de N" (or whatever the channel is)
+ * Slack message structure (v3 — root + threaded per-channel replies):
+ * - Root message: daily summary (date + totals + per-channel counts).
+ *   Captured ts is reused as thread_ts so the channel only sees one
+ *   top-level entry per day. If root post fails, falls back to v2
+ *   behaviour (top-level per-channel) so dispatch still goes out.
+ * - One reply per target_channel ("blog", "linkedin", "twitter", ...)
+ *   in the root's thread. Header: "📝 Blog — elige 1 de N".
  * - Per idea: signal section + POV section + actions row (3 buttons)
  *   with stable block_ids so the interactivity endpoint can replace the
  *   actions block in place when the user clicks a button.
@@ -171,13 +175,58 @@ function buildIdeaBlocks(idea: Idea, slug: string, mcUrl: string, pillarName: st
   ];
 }
 
-async function postToSlack(token: string, channelId: string, text: string, blocks: unknown[]): Promise<{ ok: boolean; error?: string; ts?: string }> {
+async function postToSlack(
+  token: string,
+  channelId: string,
+  text: string,
+  blocks: unknown[],
+  threadTs?: string,
+): Promise<{ ok: boolean; error?: string; ts?: string }> {
+  const body: Record<string, unknown> = { channel: channelId, text, blocks };
+  if (threadTs) body.thread_ts = threadTs;
   const res = await fetch("https://slack.com/api/chat.postMessage", {
     method: "POST",
     headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ channel: channelId, text, blocks }),
+    body: JSON.stringify(body),
   });
   return (await res.json()) as { ok: boolean; error?: string; ts?: string };
+}
+
+function buildRootMessage(
+  byChannel: Map<string, Idea[]>,
+  mcUrl: string,
+  slug: string,
+  projectId?: string,
+  taskId?: string,
+): { text: string; blocks: unknown[] } {
+  const totalIdeas = Array.from(byChannel.values()).reduce((acc, arr) => acc + arr.length, 0);
+  const dateLabel = new Date().toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" });
+  const channelSummary = Array.from(byChannel.entries())
+    .map(([key, arr]) => {
+      const cv = TARGET_CHANNEL_LABELS[key] || { emoji: "📄", label: key };
+      return `${cv.emoji} ${cv.label} (${arr.length})`;
+    })
+    .join(" · ");
+  const taskLink = projectId && taskId
+    ? ` · <${mcUrl}/dashboard/${slug}/projects/${projectId}/tasks/${taskId}|📋 Tarea>`
+    : "";
+  const text = `📬 Editorial Dispatch — ${dateLabel} · ${totalIdeas} idea${totalIdeas === 1 ? "" : "s"}`;
+  const blocks: unknown[] = [
+    {
+      type: "section",
+      block_id: "dispatch__root",
+      text: {
+        type: "mrkdwn",
+        text: `*📬 Editorial Dispatch — ${dateLabel}*\n${totalIdeas} idea${totalIdeas === 1 ? "" : "s"} en ${channelSummary}${taskLink}`,
+      },
+    },
+    {
+      type: "context",
+      block_id: "dispatch__root_hint",
+      elements: [{ type: "mrkdwn", text: "👇 _Detalle por canal en hilo_" }],
+    },
+  ];
+  return { text, blocks };
 }
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -231,6 +280,15 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
     const results: { channel: string; ok: boolean; error?: string; ts?: string; ideaCount: number }[] = [];
 
+    // Post root message first so per-channel messages can thread under it.
+    // If root post fails, fall back to top-level per-channel posts.
+    const root = buildRootMessage(byChannel, mcUrl, slug, projectId, taskId);
+    const rootRes = await postToSlack(token, dispatch.channel_id, root.text, root.blocks);
+    const rootTs = rootRes.ok ? rootRes.ts : undefined;
+    if (!rootRes.ok) {
+      console.error("[send-dispatch] root post failed, falling back to top-level per-channel:", rootRes.error);
+    }
+
     for (const [channelKey, channelIdeas] of byChannel.entries()) {
       const cv = TARGET_CHANNEL_LABELS[channelKey] || { emoji: "📄", label: channelKey };
       const blocks: unknown[] = [
@@ -248,7 +306,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         blocks.push(...buildIdeaBlocks(idea, slug, mcUrl, pn, projectId, taskId));
       }
       const text = `${cv.emoji} ${cv.label}: ${channelIdeas.length} candidata${channelIdeas.length === 1 ? "" : "s"}`;
-      const r = await postToSlack(token, dispatch.channel_id, text, blocks);
+      const r = await postToSlack(token, dispatch.channel_id, text, blocks, rootTs);
       results.push({ channel: channelKey, ok: r.ok, error: r.error, ts: r.ts, ideaCount: channelIdeas.length });
     }
 
@@ -263,7 +321,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
           type: "publish",
           text: `Editorial Dispatch enviado a Slack — <b>${ideas.length} ideas</b> en ${channelList}`,
           icon: "📤", accent: "navy",
-          meta: { ideaCount: ideas.length, channels: results.map((r) => r.channel), errors },
+          meta: { ideaCount: ideas.length, channels: results.map((r) => r.channel), errors, rootTs },
         });
       } catch (e) {
         console.error("[send-dispatch] activity log failed:", (e as Error).message);
@@ -274,6 +332,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       ok: errors.length === 0,
       transport: "slack",
       channel_id: dispatch.channel_id,
+      root_ts: rootTs,
       messages_sent: messagesSent,
       total_ideas: ideas.length,
       grouped_by_channel: Array.from(byChannel.keys()),

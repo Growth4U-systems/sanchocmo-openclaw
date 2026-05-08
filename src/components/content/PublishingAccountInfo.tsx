@@ -83,36 +83,44 @@ export function PublishingAccountInfo({
     );
   }
 
-  // Full variant — used inside slide-overs / setup row
+  // Full variant — used inside slide-overs / setup row hero zones
   return (
-    <div
-      className="rounded-sc-md border-2 px-3 py-2"
-      style={{ background: "var(--sc-paper-2)", borderColor: "var(--sc-ink)" }}
-    >
-      <div className="flex items-center gap-2 mb-1.5">
-        <span className="font-heading uppercase text-[10px] tracking-wider" style={{ color: "var(--sc-fg-muted)" }}>
+    <div className="flex flex-col gap-2">
+      <div className="flex items-baseline gap-2 flex-wrap">
+        <span
+          className="font-heading uppercase text-[12px] tracking-wider"
+          style={{ color: "var(--sc-fg-muted)" }}
+        >
           Cuenta Metricool conectada
         </span>
         <span
-          className="font-heading text-[12px] font-bold"
+          className="font-heading text-xl font-bold leading-tight"
           style={{ color: "var(--sc-ink)" }}
         >
           {info.brand_name || `Blog ${info.brand_id}`}
         </span>
       </div>
       {connected.length === 0 ? (
-        <p className="text-[11px]" style={{ color: "var(--sc-rust-700)" }}>
+        <p className="text-sm" style={{ color: "var(--sc-rust-700)" }}>
           ⚠ Ninguna red social conectada en esta cuenta. Vincúlalas desde Metricool antes de programar.
         </p>
       ) : (
-        <ul className="flex flex-col gap-0.5">
+        <ul className="flex flex-col gap-1">
           {connected.map((n) => {
             const v = NETWORK_VISUAL[n.network] || { emoji: "·", label: n.network };
             return (
-              <li key={n.network} className="text-[12px] flex items-center gap-1.5" style={{ color: "var(--sc-ink)" }}>
-                <span>{v.emoji}</span>
-                <span className="font-medium">{v.label}</span>
-                {n.handle && <span style={{ color: "var(--sc-fg-muted)" }}>· {n.handle}</span>}
+              <li
+                key={n.network}
+                className="text-sm flex items-center gap-2"
+                style={{ color: "var(--sc-ink)" }}
+              >
+                <span className="text-base">{v.emoji}</span>
+                <span className="font-semibold">{v.label}</span>
+                {n.handle && (
+                  <span className="text-xs" style={{ color: "var(--sc-fg-muted)" }}>
+                    · {n.handle}
+                  </span>
+                )}
               </li>
             );
           })}

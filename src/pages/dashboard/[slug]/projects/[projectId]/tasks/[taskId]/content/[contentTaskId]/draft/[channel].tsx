@@ -23,7 +23,7 @@ import {
 import { useOpenChat } from "@/hooks/useChat";
 import { buildContentTaskThread } from "@/lib/chat-openers";
 import { ChannelPreview, isPlaceholderBody } from "@/components/content/channel-preview";
-import { MediaEditor } from "@/components/content/MediaEditor";
+import { MediaGallery } from "@/components/content/MediaGallery";
 import { MediaSummaryWidget } from "@/components/content/MediaSummaryWidget";
 import { SelfQAPanel } from "@/components/content/self-qa-panel";
 import type { ContentTaskStatus } from "@/types";
@@ -510,7 +510,7 @@ export default function DraftFullScreenPage() {
               {/* Body */}
               <div className={styles.docInner}>
                 {channel === "media" && ideaId ? (
-                  <MediaEditor
+                  <MediaGallery
                     slug={slug}
                     ideaId={ideaId}
                     targetChannels={ct.target_channels}

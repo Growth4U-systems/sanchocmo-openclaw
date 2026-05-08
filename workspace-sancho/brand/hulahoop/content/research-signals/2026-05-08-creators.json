@@ -1,0 +1,113 @@
+{
+  "date": "2026-05-08",
+  "run_at": "2026-05-08T05:43:17.000Z",
+  "signals": [
+    {
+      "id": "creators-2026-05-08-urb-sgiic",
+      "source": "Urbanitae",
+      "source_type": "competitor",
+      "platform": "blog",
+      "url": "https://blog.urbanitae.com/2026/01/15/ampliamos-nuestro-modelo-de-coinversion-inmobiliaria-con-una-gestora-de-fondos/",
+      "date": "2026-01-15",
+      "summary": "Urbanitae obtiene autorización CNMV para crear Urbanitae Asset Management SGIIC (registro #299, 13 feb 2026). Evoluciona de PFP a gestora de fondos.",
+      "pillar_match": [
+        "pfp-regulacion"
+      ],
+      "captured_at": "2026-05-08T05:43:17.000Z"
+    },
+    {
+      "id": "creators-2026-05-08-urb-280m",
+      "source": "Urbanitae / Cinco Días",
+      "source_type": "competitor",
+      "platform": "web",
+      "url": "https://cincodias.elpais.com/companias/2026-02-06/urbanitae-capta-su-record-de-280-millones-en-crowdfunding-para-financiacion-inmobiliaria.html",
+      "date": "2026-02-06",
+      "summary": "Urbanitae cerró 2025 con récord de 280M€ en crowdfunding inmobiliario, +30% interanual. Anuncia expansión internacional y diversificación.",
+      "pillar_match": [
+        "pfp-regulacion"
+      ],
+      "captured_at": "2026-05-08T05:43:17.000Z"
+    },
+    {
+      "id": "creators-2026-05-08-egeda-malaga",
+      "source": "EGEDA / Audiovisual451",
+      "source_type": "competitor",
+      "platform": "web",
+      "url": "https://www.audiovisual451.com/egeda-presenta-en-malaga-nuevas-vias-de-financiacion-para-productores-y-pone-en-valor-platino-educa/",
+      "date": "2026-03",
+      "summary": "EGEDA + Crea SGR + SEGO Creative en Málaga Film Festival presentan nuevas vías de financiación para productores. Alineación de ecosistema.",
+      "pillar_match": [
+        "financiacion-entretenimiento",
+        "pfp-regulacion"
+      ],
+      "captured_at": "2026-05-08T05:43:17.000Z"
+    },
+    {
+      "id": "creators-2026-05-08-sego-vc",
+      "source": "SEGO Finance",
+      "source_type": "competitor",
+      "platform": "blog",
+      "url": "https://blog.segofinance.com/el-rincon-financiero/tendencias-del-venture-capital-en-europa-y-espana/",
+      "date": "2026-04-22",
+      "summary": "SEGO Finance publica análisis VC trends Europe & Spain. Content strategy: educación → autoridad → conversión.",
+      "pillar_match": [
+        "pfp-regulacion"
+      ],
+      "captured_at": "2026-05-08T05:43:17.000Z"
+    },
+    {
+      "id": "creators-2026-05-08-fimax",
+      "source": "Fimax Asesores",
+      "source_type": "competitor",
+      "platform": "web",
+      "url": "https://www.fimax.es/incentivos-audiovisuales-landing/",
+      "date": "2026-05",
+      "summary": "Fimax posiciona servicios de tax lease audiovisual en Canarias (54% deducción). Partnership con TaxLease. Gestión integral certificados.",
+      "pillar_match": [
+        "incentivos-fiscales"
+      ],
+      "captured_at": "2026-05-08T05:43:17.000Z"
+    },
+    {
+      "id": "creators-2026-05-08-sftl-rap",
+      "source": "Sympathy for the Lawyer",
+      "source_type": "reference-creator",
+      "platform": "blog",
+      "url": "https://sympathyforthelawyer.com/blog/letras-rap-prueba-judicial-james-broadnax/",
+      "date": "2026-05",
+      "summary": "SFTL publica sobre letras de rap como prueba judicial (caso Broadnax). Contenido legal/musical, no pillar match directo.",
+      "pillar_match": [],
+      "discarded": true,
+      "discard_reason": "No pillar match",
+      "captured_at": "2026-05-08T05:43:17.000Z"
+    },
+    {
+      "id": "creators-2026-05-08-sftl-tiktok",
+      "source": "Sympathy for the Lawyer",
+      "source_type": "reference-creator",
+      "platform": "blog",
+      "url": "https://sympathyforthelawyer.com/blog/fans-falsos-tiktok-payola-marketing-musical/",
+      "date": "2026-05",
+      "summary": "SFTL sobre fans falsos y viralidad en TikTok como nueva payola del marketing musical. Marketing/ética, no pillar match.",
+      "pillar_match": [],
+      "discarded": true,
+      "discard_reason": "No pillar match",
+      "captured_at": "2026-05-08T05:43:17.000Z"
+    },
+    {
+      "id": "creators-2026-05-08-urb-direct",
+      "source": "Urbanitae",
+      "source_type": "competitor",
+      "platform": "blog",
+      "url": "https://blog.urbanitae.com/en/2026/05/02/invest-in-barcelona-from-e205000-7-returns-with-passive-income/",
+      "date": "2026-05-02",
+      "summary": "Urbanitae lanza Kora Volta (Barcelona) en Direct Investments: 270 apartments flex living, desde 205k€, 7% yield. Evolución de producto.",
+      "pillar_match": [
+        "pfp-regulacion"
+      ],
+      "discarded": true,
+      "discard_reason": "Product launch, weak angle for Hulahoop content",
+      "captured_at": "2026-05-08T05:43:17.000Z"
+    }
+  ]
+}

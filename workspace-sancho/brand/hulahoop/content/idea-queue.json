@@ -696,5 +696,291 @@
     ],
     "created_at": "2026-05-07T05:38:00.000Z",
     "status": "New"
+  },
+  {
+    "id": "idea-2026-05-08-1",
+    "title": "167M€ para el cine español en 2026: el presupuesto público que cambia las reglas del juego",
+    "pillar_id": "financiacion-entretenimiento",
+    "content_type": "Hot Take",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Los Presupuestos Generales del Estado para 2026 destinan 167 millones de euros al cine español, un incremento del 72,1% respecto al año anterior. El Fondo de Protección a la Cinematografía del Ministerio de Cultura sube de 65 a 106 millones de euros en ayudas a producción. Adicionalmente, el ICAA convoca 62 millones de euros en ayudas generales a largometrajes, con un 35% reservado a proyectos dirigidos por mujeres y un 10% a animación.",
+      "source": "TaxDown / Ministerio de Cultura",
+      "url": "https://taxdown.es/blog/subvenciones-ayudas-cine-espanol",
+      "date": "2026-05"
+    },
+    "signal_type": [
+      "milestone",
+      "data-point"
+    ],
+    "angle_draft": "El Estado pone 167M€ sobre la mesa para cine español en 2026 — un 72% más. El Fondo de Protección sube de 65 a 106M€. Pero cada euro público necesita 3-4€ de capital privado para cerrar presupuestos. Estamos hablando de +500M€ en financiación privada que necesita estructurarse, trazarse y canalizarse. Los fondos están. Los proyectos están. Lo que falta es infraestructura financiera que conecte ambos lados. Frame: \"El presupuesto público es el catalizador — la infraestructura privada es el motor.\"",
+    "pov_confidence": 0.87,
+    "source_signals": [
+      "news-2026-05-08-23b50b13"
+    ],
+    "created_at": "2026-05-08T05:28:00.000Z",
+    "status": "Dispatched",
+    "dispatched_at": "2026-05-08T06:44:56.565230+00:00",
+    "dispatch_channel": "discord:#content"
+  },
+  {
+    "id": "idea-2026-05-08-2",
+    "title": "1,2M€ para llevar el cine español al mundo: el ICAA apuesta por la internacionalización",
+    "pillar_id": "financiacion-entretenimiento",
+    "content_type": "Framework",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "El ICAA ha convocado 700.000 euros en ayudas para la participación de películas españolas en festivales internacionales celebrados entre noviembre 2025 y septiembre 2026. Paralelamente, ha lanzado una línea de 500.000 euros (ampliable a 1M€) para agencias de ventas internacionales independientes que distribuyan cine español en el extranjero. En total, más de 1,2 millones de euros destinados a la promoción y distribución internacional del cine español en 2026.",
+      "source": "ICAA / Box-Office.es / Audiovisual451",
+      "url": "https://box-office.es/news/el-icaa-convoca-ayudas-de-700-000-euros-para-la-participacion-de-peliculas-espanolas-en-festivales/",
+      "date": "2026-05"
+    },
+    "signal_type": [
+      "data-point",
+      "framework"
+    ],
+    "angle_draft": "El ICAA dedica 1,2M€ a internacionalización: festivales + distribución. Producir es solo la mitad — sin distribución internacional no hay retorno. Pero 1,2M€ para todo el cine español es modesto. Las productoras que quieran escalar necesitan combinar ayudas públicas con financiación estructurada: preventa internacional, co-producción, distribución digital. No se puede depender solo de subvenciones para llegar al mundo. Frame: \"Producir bien ya no basta — hay que financiar la distribución como se financia la producción.\"",
+    "pov_confidence": 0.62,
+    "source_signals": [
+      "news-2026-05-08-bdbfd6e8"
+    ],
+    "created_at": "2026-05-08T05:28:00.000Z",
+    "status": "New"
+  },
+  {
+    "id": "idea-2026-05-08-3",
+    "title": "Los RWA tokenizados superan los .000M: BlackRock integra su fondo en DeFi",
+    "pillar_id": "tokenizacion-rwa",
+    "content_type": "Hot Take",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "El mercado de activos del mundo real tokenizados en blockchains públicas ha superado los 50.000 millones de dólares en mayo de 2026, con un crecimiento superior al 420% desde enero de 2025. BlackRock BUIDL, fondo tokenizado de bonos del Tesoro de EE.UU., gestiona 2.600 millones de dólares y se ha integrado con UniswapX para ofrecer trading on-chain 24/7 a inversores institucionales cualificados. Es la primera vez que un gestor de activos institucional conecta un fondo tokenizado regulado a un exchange descentralizado.",
+      "source": "Nonce Media / Uniswap / BlackRock",
+      "url": "https://www.noncemedia.com/defining-rwa-tokenization-and-why-the-2026-numbers-matter/",
+      "date": "2026-05"
+    },
+    "signal_type": [
+      "milestone",
+      "aha-moment",
+      "data-point"
+    ],
+    "angle_draft": "$50.000 millones en activos tokenizados. 420% de crecimiento en 16 meses. Y BlackRock — el mayor gestor del mundo — integra su fondo BUIDL de $2.600M en Uniswap. Ya no es cripto vs. finanzas tradicionales — es la misma infraestructura. Si BlackRock pone bonos del Tesoro en DeFi, la pregunta no es si los activos culturales se tokenizarán, sino cuándo. Derechos audiovisuales, flujos de recaudación, anticipos fiscales: RWAs perfectos. Frame: \"Si BlackRock ya está en DeFi, los derechos culturales tokenizados no son ciencia ficción.\"",
+    "pov_confidence": 0.87,
+    "source_signals": [
+      "news-2026-05-08-926dce0f"
+    ],
+    "created_at": "2026-05-08T05:28:00.000Z",
+    "status": "Dispatched",
+    "dispatched_at": "2026-05-08T06:44:56.565230+00:00",
+    "dispatch_channel": "discord:#content"
+  },
+  {
+    "id": "idea-2026-05-08-4",
+    "title": "Franklin Templeton + Ondo Finance lanzan ETFs tokenizados en Europa: los fondos ya son on-chain",
+    "pillar_id": "tokenizacion-rwa",
+    "content_type": "Proof Post",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "En marzo de 2026, Franklin Templeton se asoció con Ondo Finance para tokenizar cinco de sus ETFs (growth, large cap, oro, high yield y renta fija), disponibles on-chain en Europa, Asia-Pacífico, Oriente Medio y Latinoamérica. Ondo Finance obtuvo derechos de pasaporte UE para ofrecer productos tokenizados a inversores retail en 30 mercados del Espacio Económico Europeo. Los ETFs tokenizados permiten trading 24/7 sin necesidad de cuenta de brokerage tradicional.",
+      "source": "The Defiant / Ondo Finance / Franklin Templeton",
+      "url": "https://thedefiant.io/news/defi/ondo-tokenizes-five-franklin-templeton-etfs",
+      "date": "2026-03"
+    },
+    "signal_type": [
+      "milestone",
+      "proof-point"
+    ],
+    "angle_draft": "Franklin Templeton vende ETFs tokenizados en Europa. Ondo Finance tiene pasaporte UE para 30 mercados. Cualquier inversor retail puede comprar un fondo de oro o renta fija on-chain, 24/7, sin broker tradicional. Esta infraestructura llega primero a activos líquidos, pero inevitablemente alcanzará activos alternativos — incluidos los culturales. Cuando comprar participaciones en una producción audiovisual sea tan fácil como un ETF de oro, el mercado se multiplica. Frame: \"Si los ETFs ya son tokens, las participaciones audiovisuales son las siguientes.\"",
+    "pov_confidence": 0.72,
+    "source_signals": [
+      "news-2026-05-08-b3520f3b"
+    ],
+    "created_at": "2026-05-08T05:28:00.000Z",
+    "status": "New"
+  },
+  {
+    "id": "idea-2026-05-08-5",
+    "title": "España es el 3er mercado de crowdfunding de la UE: 450M€ captados y 25 plataformas autorizadas",
+    "pillar_id": "pfp-regulacion",
+    "content_type": "Proof Post",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "España se posiciona como el tercer mercado de crowdfunding de la Unión Europea por volumen. En 2024 se captaron aproximadamente 450 millones de euros a través de crowdfunding en España, con el 40% correspondiente a equity crowdfunding y el 60% a crowdlending. Operan 25 Proveedores de Servicios de Financiación Participativa (PSFP) autorizados bajo el reglamento ECSPR. Los inversores minoristas representan el 88% de los participantes con un ticket medio de 660 euros.",
+      "source": "CrowdInform / CrowdfundingEnEspaña",
+      "url": "https://crowdfundingenespana.es/reglamento-ecspr-y-el-crowdfunding-en-espana/",
+      "date": "2026-05"
+    },
+    "signal_type": [
+      "data-point",
+      "proof-point"
+    ],
+    "angle_draft": "España es el 3er mercado de crowdfunding de la UE. 450M€ captados en 2024. 25 plataformas autorizadas. El 40% es equity — inversores que quieren participar en el negocio, no solo prestar. El ticket medio de 660€ confirma la democratización real. Ahora imagina esa infraestructura aplicada a producción audiovisual: miles de inversores retail financiando cultura con tickets accesibles, protección ECSPR y trazabilidad completa. El mercado existe. Falta la vertical de entretenimiento. Frame: \"El crowdfunding español mueve 450M€/año — pero la cultura apenas tiene plataforma.\"",
+    "pov_confidence": 0.75,
+    "source_signals": [
+      "news-2026-05-08-fb1b633a"
+    ],
+    "created_at": "2026-05-08T05:28:00.000Z",
+    "status": "New"
+  },
+  {
+    "id": "idea-2026-05-08-6",
+    "title": "Urbanitae da el salto: de crowdfunding a gestora de fondos con autorización CNMV",
+    "pillar_id": "pfp-regulacion",
+    "content_type": "Hot Take",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Urbanitae obtiene autorización de la CNMV para crear Urbanitae Asset Management SGIIC (registro #299, 13 de febrero de 2026). Pasa de ser una plataforma de crowdfunding inmobiliario a gestora de fondos de inversión colectiva, manteniendo ambas líneas de negocio (PFP + SGIIC + Direct Investments). En 2025 analizó proyectos de inversión inmobiliaria por un volumen superior a 2.000 millones de euros. El objetivo es acceder a capital institucional y proyectos de mayor envergadura.",
+      "source": "Urbanitae",
+      "source_type": "competitor",
+      "platform": "blog",
+      "url": "https://blog.urbanitae.com/2026/01/15/ampliamos-nuestro-modelo-de-coinversion-inmobiliaria-con-una-gestora-de-fondos/",
+      "engagement": {
+        "likes": null,
+        "comments": null,
+        "shares": null
+      },
+      "date": "2026-01-15"
+    },
+    "signal_type": [
+      "milestone",
+      "aha-moment"
+    ],
+    "angle_draft": "Urbanitae ya no es solo crowdfunding. Con la autorización CNMV para su propia gestora de fondos (SGIIC), pasan de canalizar capital retail a gestionar fondos institucionales. Es la evolución natural: primero pruebas el modelo con crowdfunding, luego escalas con fondos profesionales. Para el audiovisual, la lección es clara: la PFP es el punto de entrada, no el destino final. Hulahoop construye la misma escalera — PFP regulada hoy, vehículos institucionales mañana. Frame: 'El crowdfunding no es el techo — es la base para construir infraestructura financiera completa.'",
+    "pov_confidence": 0.85,
+    "source_signals": [
+      "creators-2026-05-08-urb-sgiic"
+    ],
+    "created_at": "2026-05-08T05:43:17.000Z",
+    "status": "New"
+  },
+  {
+    "id": "idea-2026-05-08-7",
+    "title": "Urbanitae capta 280M€ en 2025: el crowdfunding inmobiliario español ya es infraestructura financiera",
+    "pillar_id": "pfp-regulacion",
+    "content_type": "Proof Post",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Urbanitae cerró 2025 con un récord de 280 millones de euros captados en crowdfunding inmobiliario, un 30% más que en 2024. La compañía anuncia expansión internacional en 2026 y diversificación hacia activos no residenciales, manteniendo el residencial como prioridad. Además, crea su propia gestora de fondos (SGIIC) para acceder a capital institucional.",
+      "source": "Urbanitae / Cinco Días",
+      "source_type": "competitor",
+      "platform": "web",
+      "url": "https://cincodias.elpais.com/companias/2026-02-06/urbanitae-capta-su-record-de-280-millones-en-crowdfunding-para-financiacion-inmobiliaria.html",
+      "engagement": {
+        "likes": null,
+        "comments": null,
+        "shares": null
+      },
+      "date": "2026-02-06"
+    },
+    "signal_type": [
+      "milestone",
+      "data-point",
+      "proof-point"
+    ],
+    "angle_draft": "280 millones de euros en un solo año. Urbanitae demuestra que el crowdfunding regulado en España no es un nicho — es un canal de financiación a escala industrial. Si el inmobiliario mueve 280M€/año con una sola plataforma, el audiovisual tiene un techo mucho más alto del que el mercado asume. El cine español necesita +500M€ anuales en capital privado complementario a las ayudas públicas. Una PFP especializada que capture solo el 5% de esa demanda ya estaría moviendo 25M€/año. Frame: 'Si el ladrillo mueve 280M€ en crowdfunding, ¿cuánto puede mover la cultura?'",
+    "pov_confidence": 0.82,
+    "source_signals": [
+      "creators-2026-05-08-urb-280m"
+    ],
+    "created_at": "2026-05-08T05:43:17.000Z",
+    "status": "Dispatched",
+    "dispatched_at": "2026-05-08T06:44:56.565230+00:00",
+    "dispatch_channel": "discord:#content"
+  },
+  {
+    "id": "idea-2026-05-08-8",
+    "title": "EGEDA, Crea SGR y SEGO Creative presentan nuevas vías de financiación en Málaga: el ecosistema se organiza",
+    "pillar_id": "financiacion-entretenimiento",
+    "content_type": "Framework",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "En el 29º Festival de Cine de Málaga (marzo 2026), EGEDA, Crea SGR y SEGO Creative organizaron una jornada conjunta para presentar nuevas vías de financiación para productores audiovisuales. Patricia López (directora de SEGO Creative) detalló cómo la plataforma conecta proyectos con inversión privada. Crea SGR ofrece financiación de 20.000 a 2.000.000€ con plazos de 12-60 meses. EGEDA impulsa la orientación a productores para acceder a estas herramientas.",
+      "source": "EGEDA / Audiovisual451",
+      "source_type": "competitor",
+      "platform": "web",
+      "url": "https://www.audiovisual451.com/egeda-presenta-en-malaga-nuevas-vias-de-financiacion-para-productores-y-pone-en-valor-platino-educa/",
+      "engagement": {
+        "likes": null,
+        "comments": null,
+        "shares": null
+      },
+      "date": "2026-03"
+    },
+    "signal_type": [
+      "framework",
+      "proof-point"
+    ],
+    "angle_draft": "EGEDA + Crea SGR + SEGO Creative presentan juntas en Málaga. Es la primera vez que una entidad de gestión de derechos, una sociedad de garantía recíproca y una plataforma de crowdfunding se alinean para resolver el mismo problema: la financiación del productor independiente. El ecosistema se está organizando. Pero falta la pieza que conecte todo: infraestructura digital que integre crowdfunding + garantías + incentivos fiscales + trazabilidad en un solo flujo. Hoy son tres stands en un festival. Mañana será una sola plataforma. Frame: 'El ecosistema de financiación audiovisual se organiza — quien integre las piezas, gana.'",
+    "pov_confidence": 0.78,
+    "source_signals": [
+      "creators-2026-05-08-egeda-malaga"
+    ],
+    "created_at": "2026-05-08T05:43:17.000Z",
+    "status": "Dispatched",
+    "dispatched_at": "2026-05-08T06:44:56.565230+00:00",
+    "dispatch_channel": "discord:#content"
+  },
+  {
+    "id": "idea-2026-05-08-9",
+    "title": "SEGO Finance educa sobre VC mientras posiciona Creative: la estrategia de content que funciona",
+    "pillar_id": "pfp-regulacion",
+    "content_type": "Framework",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "SEGO Finance publica artículo sobre tendencias del venture capital en Europa y España (22 abril 2026), analizando la madurez y selectividad creciente del ecosistema VC. Es el segundo artículo educativo en su blog en dos semanas (tras 'ESG en el Venture Capital'). La estrategia de contenido posiciona a SEGO como referente en inversión alternativa mientras SEGO Creative gana tracción como plataforma cultural.",
+      "source": "SEGO Finance",
+      "source_type": "competitor",
+      "platform": "blog",
+      "url": "https://blog.segofinance.com/el-rincon-financiero/tendencias-del-venture-capital-en-europa-y-espana/",
+      "engagement": {
+        "likes": null,
+        "comments": null,
+        "shares": null
+      },
+      "date": "2026-04-22"
+    },
+    "signal_type": [
+      "framework"
+    ],
+    "angle_draft": "SEGO Finance publica una pieza educativa sobre VC cada dos semanas. No hablan de SEGO Creative directamente — hablan de inversión alternativa, tendencias, ESG. Es marketing de contenidos puro: construir autoridad en 'inversión alternativa' para que cuando el lector busque dónde invertir, SEGO sea top-of-mind. Hulahoop puede aplicar el mismo playbook: educar sobre financiación audiovisual (incentivos fiscales, derechos, recaudación) crea demanda para la plataforma sin vender directamente. Frame: 'Educa primero, vende después — la estrategia de contenido que convierte lectores en inversores.'",
+    "pov_confidence": 0.72,
+    "source_signals": [
+      "creators-2026-05-08-sego-vc"
+    ],
+    "created_at": "2026-05-08T05:43:17.000Z",
+    "status": "New"
+  },
+  {
+    "id": "idea-2026-05-08-10",
+    "title": "Fimax se posiciona como hub de tax lease audiovisual en Canarias: la deducción del 54% atrae jugadores",
+    "pillar_id": "incentivos-fiscales",
+    "content_type": "Hot Take",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Fimax Asesores (consultora fiscal canaria) posiciona activamente sus servicios de tax lease audiovisual aprovechando las deducciones REF de Canarias: 50-54% sobre el primer millón de gastos elegibles y 45% sobre el resto, con un máximo de 36M€ por largometraje. Combinable con ZEC (4% IS), RIC e IGIC al 0% para producciones. La consultora ofrece gestión integral: certificados ICAA, gobierno canario y optimización fiscal. Partnership con TaxLease para canalizar inversores.",
+      "source": "Fimax Asesores",
+      "source_type": "competitor",
+      "platform": "web",
+      "url": "https://www.fimax.es/incentivos-audiovisuales-landing/",
+      "engagement": {
+        "likes": null,
+        "comments": null,
+        "shares": null
+      },
+      "date": "2026-05"
+    },
+    "signal_type": [
+      "framework",
+      "proof-point"
+    ],
+    "angle_draft": "Fimax se posiciona como hub de tax lease audiovisual en Canarias. La propuesta: 54% de deducción + ZEC al 4% IS + IGIC al 0%. Es la combinación fiscal más agresiva de Europa para producción audiovisual. Pero cada operación se gestiona como consultoría a medida — no escala. El gap entre la oportunidad fiscal y la infraestructura para ejecutarla es enorme. Quien digitalice y automatice el flujo de tax lease audiovisual (certificación → inversores → deducción → seguimiento) convierte un servicio artesanal en un producto escalable. Frame: 'Canarias tiene la mejor fiscalidad audiovisual de Europa — lo que le falta es infraestructura para escalar.'",
+    "pov_confidence": 0.75,
+    "source_signals": [
+      "creators-2026-05-08-fimax"
+    ],
+    "created_at": "2026-05-08T05:43:17.000Z",
+    "status": "Dispatched",
+    "dispatched_at": "2026-05-08T06:44:56.565230+00:00",
+    "dispatch_channel": "discord:#content"
   }
 ]

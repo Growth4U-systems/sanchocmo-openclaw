@@ -7,8 +7,8 @@ import {
   useSetPrimaryMedia,
   useUploadMedia,
 } from "@/hooks/useMedia";
-import { CarouselComposer } from "@/components/content/CarouselComposer";
-import { MediaLightbox } from "@/components/content/MediaLightbox";
+import { TemplateRenderer } from "@/components/content/TemplateRenderer";
+import { MediaEditor } from "@/components/media-editor/MediaEditor";
 import { MediaThumb } from "@/components/content/MediaThumb";
 import { cn } from "@/lib/utils";
 
@@ -26,19 +26,19 @@ function channelLabel(channel: string): string {
   return CHANNEL_LABELS[channel] ?? channel;
 }
 
-interface MediaEditorProps {
+interface MediaGalleryProps {
   slug: string;
   ideaId: string;
   targetChannels: string[];
   initialChannel?: string;
 }
 
-export function MediaEditor({
+export function MediaGallery({
   slug,
   ideaId,
   targetChannels,
   initialChannel,
-}: MediaEditorProps) {
+}: MediaGalleryProps) {
   const fallback = targetChannels[0] ?? "linkedin";
   const [activeChannel, setActiveChannel] = useState<string>(
     initialChannel && targetChannels.includes(initialChannel)
@@ -205,18 +205,32 @@ export function MediaEditor({
       </section>
 
       {showCarousel && (
-        <CarouselComposer slug={slug} ideaId={ideaId} channel={activeChannel} />
+        <TemplateRenderer slug={slug} ideaId={ideaId} channel={activeChannel} />
       )}
 
       {lightboxMedia && (
-        <MediaLightbox
-          slug={slug}
-          ideaId={ideaId}
-          channel={activeChannel}
-          media={lightboxMedia}
-          isPrimary={lightboxIsPrimary}
+        <MediaEditor
+          asset={
+            lightboxMedia.source === "ai-generated"
+              ? {
+                  kind: "ai-image",
+                  slug,
+                  ideaId,
+                  channel: activeChannel,
+                  media: lightboxMedia,
+                  isPrimary: lightboxIsPrimary,
+                  onAfterRegenerate: (newUrl) => setLightboxUrl(newUrl),
+                }
+              : {
+                  kind: "uploaded",
+                  slug,
+                  ideaId,
+                  channel: activeChannel,
+                  media: lightboxMedia,
+                  isPrimary: lightboxIsPrimary,
+                }
+          }
           onClose={() => setLightboxUrl(null)}
-          onAfterRegenerate={(newUrl) => setLightboxUrl(newUrl)}
         />
       )}
     </div>

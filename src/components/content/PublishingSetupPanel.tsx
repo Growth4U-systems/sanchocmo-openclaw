@@ -61,16 +61,18 @@ export function PublishingSetupPanel({ slug }: { slug: string }) {
         }
         footer={
           isConnected && configured.some((p) => p.id === "metricool") ? (
-            <PublishingAccountInfo slug={slug} variant="full" />
+            <PublishingAccountInfo slug={slug} variant="compact" />
           ) : undefined
         }
       />
 
       <ConfigSheet open={open} onOpenChange={(o) => (o ? setOpen(true) : close())} icon="🔌" title="Conectar Metricool">
-        <ApiConnectPanel slug={slug} apiId="metricool" onClose={close} />
-        <div className="mt-4">
-          <PublishingAccountInfo slug={slug} variant="full" />
-        </div>
+        <ApiConnectPanel
+          slug={slug}
+          apiId="metricool"
+          onClose={close}
+          topAccessory={<PublishingAccountInfo slug={slug} variant="full" />}
+        />
       </ConfigSheet>
     </>
   );

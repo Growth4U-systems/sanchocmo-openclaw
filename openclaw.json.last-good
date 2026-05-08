@@ -1,7 +1,7 @@
 {
   "meta": {
-    "lastTouchedVersion": "2026.4.26",
-    "lastTouchedAt": "2026-04-28T03:34:46.876Z"
+    "lastTouchedVersion": "2026.5.7",
+    "lastTouchedAt": "2026-05-08T11:13:32.314Z"
   },
   "env": {
     "GEMINI_API_KEY": "AIzaSyAehBHbdBleoL0vSkd5PTsrtVZ5lw_kRa0",
@@ -1233,6 +1233,9 @@
         "enabled": true
       },
       "slack": {
+        "enabled": true
+      },
+      "google": {
         "enabled": true
       }
     }

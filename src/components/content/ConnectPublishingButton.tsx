@@ -66,12 +66,12 @@ export function ConnectPublishingButton({
       </button>
 
       <ConfigSheet open={open} onOpenChange={(o) => (o ? setOpen(true) : close())} icon="🔌" title={`Conectar ${providerLabel}`}>
-        <ApiConnectPanel slug={slug} apiId={apiId} onClose={close} />
-        {apiId === "metricool" && (
-          <div className="mt-4">
-            <PublishingAccountInfo slug={slug} variant="full" />
-          </div>
-        )}
+        <ApiConnectPanel
+          slug={slug}
+          apiId={apiId}
+          onClose={close}
+          topAccessory={apiId === "metricool" ? <PublishingAccountInfo slug={slug} variant="full" /> : undefined}
+        />
       </ConfigSheet>
     </>
   );

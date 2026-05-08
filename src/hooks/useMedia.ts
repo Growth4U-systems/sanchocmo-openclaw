@@ -96,17 +96,21 @@ export interface CarouselTemplateInfo {
   } | null;
 }
 
-export function useCarouselTemplates(channel: string | null) {
+export function useCarouselTemplates(slug: string | null, channel: string | null) {
   return useQuery<CarouselTemplateInfo[]>({
-    queryKey: ["carousel-templates", channel],
+    queryKey: ["carousel-templates", slug, channel],
     queryFn: async () => {
-      const qs = channel ? `?channel=${channel}` : "";
-      const res = await fetch(`/api/content-engine/carousel-templates${qs}`);
+      const params = new URLSearchParams();
+      if (slug) params.set("slug", slug);
+      if (channel) params.set("channel", channel);
+      const res = await fetch(
+        `/api/content-engine/carousel-templates?${params.toString()}`,
+      );
       if (!res.ok) throw new Error("Failed to load templates");
       const data = (await res.json()) as { templates: CarouselTemplateInfo[] };
       return data.templates;
     },
-    enabled: !!channel,
+    enabled: !!slug && !!channel,
     staleTime: 60_000,
   });
 }

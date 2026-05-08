@@ -933,5 +933,219 @@
     ],
     "created_at": "2026-05-07T05:54:21Z",
     "status": "New"
+  },
+  {
+    "id": "idea-2026-05-08-001",
+    "title": "Franquicias en España facturan 38.591M€ (+15%) — y la gestión financiera sigue siendo manual",
+    "pillar_id": "franquicias-multisede",
+    "content_type": "Proof Post",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "El informe 2026 de Tormo Franquicias Consulting revela que el sector de franquicias en España alcanzó 38.591 millones de euros en facturación en 2025, un incremento del 15%. Se crearon 39.316 nuevos empleos (+10%) y 7.465 nuevas empresas franquiciadas (+9,3%). El sistema cuenta con 1.328 enseñas activas y más de 78.000 establecimientos operativos en España.",
+      "source": "Tormo Franquicias / ICEX / AEF",
+      "url": "https://empresaexterior.com/art/101146/la-madurez-del-sistema-de-franquicias-en-espana-balance-2025-y-perspectivas-para-2026",
+      "date": "2026-02"
+    },
+    "signal_type": [
+      "data-point",
+      "proof-point"
+    ],
+    "angle_draft": "El sector de franquicias en España factura 38.591M€ y opera más de 78.000 establecimientos — crecimiento del 15% en un año. Pero hay una paradoja: mientras la facturación escala, la infraestructura financiera de la mayoría de redes sigue en modo artesanal. Conciliación manual entre sedes, splits de regalías en Excel, reporting fragmentado. Un sector que mueve el 1,88% del PIB merece infraestructura financiera a la altura. Las cuentas programables automatizan lo que hoy requiere un equipo de administración: splits, regalías, conciliación — resuelto por software, no por personas. Frame: 'El sector crece al 15% — la gestión financiera debería crecer al mismo ritmo.'",
+    "pov_confidence": 0.85,
+    "source_signals": [
+      "news-2026-05-08-franq01"
+    ],
+    "created_at": "2026-05-08T05:45:00Z",
+    "status": "New"
+  },
+  {
+    "id": "idea-2026-05-08-002",
+    "title": "314 franquicias españolas operan en 139 países — gestionar pagos cross-border es el verdadero reto",
+    "pillar_id": "franquicias-multisede",
+    "content_type": "Hot Take",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "El informe La Franquicia Española en el Mundo 2025 (AEF/ICEX/Cajamar) muestra que 314 franquicias españolas operan en 139 países con 18.929 establecimientos. El 27,44% de las franquicias españolas tienen presencia exterior. Portugal lidera con 2.632 locales, Italia con 2.415. Europa concentra 10.610 establecimientos en 44 países.",
+      "source": "AEF / ICEX / Cajamar",
+      "url": "https://www.icex.es/es/sala-prensa/notas-de-prensa/2026/02/ICEX_Informe_Franquicias_2026",
+      "date": "2026-02"
+    },
+    "signal_type": [
+      "data-point",
+      "milestone"
+    ],
+    "angle_draft": "Casi 19.000 establecimientos de franquicias españolas fuera de España — en 139 países. La expansión es impresionante. Pero cada nuevo mercado añade complejidad financiera: divisas distintas, regulaciones locales, métodos de pago diferentes, conciliación cross-border. Para una red con 200 locales en Portugal, Italia y Francia, la pregunta clave no es cómo abrir más tiendas — es cómo gestionar la tesorería multi-país sin triplicar el equipo de administración. Cuentas programables con SEPA Instant resuelven Europa: splits automáticos, liquidación instantánea, un panel para todos los mercados. Frame: 'Internacionalizar la marca es fácil — internacionalizar la tesorería es el verdadero reto.'",
+    "pov_confidence": 0.78,
+    "source_signals": [
+      "news-2026-05-08-franq02"
+    ],
+    "created_at": "2026-05-08T05:45:00Z",
+    "status": "New"
+  },
+  {
+    "id": "idea-2026-05-08-003",
+    "title": "Primer reporting obligatorio de instant payments ya entregado — qué revela sobre tu proveedor",
+    "pillar_id": "regulacion-pagos",
+    "content_type": "Framework",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Según el Reglamento EU 2024/886, todos los PSPs debían presentar su primer informe anual estandarizado a reguladores nacionales antes del 9 de abril de 2026. Los informes desglosan comisiones cobradas en transferencias estándar vs instantáneas (nacional/cross-border, retail/corporate) y el número de pagos instantáneos rechazados por screening de sanciones. Las EMIs y PIs de la eurozona tienen hasta enero 2027 para recibir instant payments y abril 2027 para enviar.",
+      "source": "EU Regulation 2024/886 / Brite Payments",
+      "url": "https://britepayments.com/resources/article/payment-regulations-2026/",
+      "date": "2026-04"
+    },
+    "signal_type": [
+      "milestone",
+      "framework"
+    ],
+    "angle_draft": "Desde abril 2026, todos los PSPs europeos deben reportar a sus reguladores cuánto cobran por pagos instantáneos vs transferencias normales. El objetivo: que los instant payments no se vendan como producto premium. Para redes de franquicias, esto es una herramienta de negociación. Pregunta a tu proveedor: ¿cuánto cobras por envío instantáneo vs estándar? Si la diferencia es significativa, estás pagando por velocidad que debería ser el estándar. Framework: 1) Pide el desglose de comisiones instant vs estándar. 2) Compara con competidores regulados. 3) Evalúa si la liquidación instantánea ya está incluida o es un extra. Frame: 'El regulador obliga a la transparencia — úsala para negociar mejor.'",
+    "pov_confidence": 0.82,
+    "source_signals": [
+      "news-2026-05-08-separ01"
+    ],
+    "created_at": "2026-05-08T05:45:00Z",
+    "status": "New"
+  },
+  {
+    "id": "idea-2026-05-08-004",
+    "title": "Mastercard: 100% del e-commerce europeo tokenizado para 2030 — qué implica para franquicias omnicanal",
+    "pillar_id": "tecnologia-pagos",
+    "content_type": "Listicle",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Mastercard identifica 6 tendencias de pago para 2026: autenticación biométrica en tienda (huella dactilar) para finales 2026, tokenización del 100% del e-commerce europeo para 2030 (actualmente 30% de transacciones globales tokenizadas, más de 4.000 millones de transacciones tokenizadas al mes), agentic commerce con agentes IA gestionando transacciones, e integración de stablecoins en comercio convencional.",
+      "source": "Mastercard",
+      "url": "https://www.mastercard.com/news/europe/es-es/noticias/notas-de-prensa/es-es/2026/estas-son-las-seis-tendencias-de-pago-que-marcaran-el-2026/",
+      "date": "2026-01"
+    },
+    "signal_type": [
+      "data-point",
+      "framework"
+    ],
+    "angle_draft": "Mastercard quiere tokenizar el 100% del e-commerce europeo para 2030 y lanzar pagos biométricos en tienda antes de 2027. Para redes de franquicias omnicanal, la pregunta no es si adoptar estas tecnologías — es cómo gestionarlas a escala. Tokenización en 200 TPVs + biometría + Bizum NFC + tarjeta contactless = cinco métodos de pago distintos que necesitan conciliación unificada. La tendencia va hacia más opciones de cobro. La necesidad sigue siendo la misma: un panel que los unifique todos, reparta fondos automáticamente y reporte en tiempo real. Frame: 'Más métodos de pago = más complejidad operativa. Solo se resuelve con infraestructura, no con features.'",
+    "pov_confidence": 0.8,
+    "source_signals": [
+      "news-2026-05-08-mcard01"
+    ],
+    "created_at": "2026-05-08T05:45:00Z",
+    "status": "New"
+  },
+  {
+    "id": "idea-2026-05-08-005",
+    "title": "Adyen unifica pagos B2B+B2C de Lavazza en 7 mercados — el modelo correcto para el cliente equivocado",
+    "pillar_id": "competencia-fintech",
+    "content_type": "Proof Post",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Adyen y Lavazza anunciaron en mayo 2026 una alianza para unificar los pagos digitales globales de Lavazza en canales B2B y B2C. Ya operativo en EE.UU., con lanzamientos B2B en Q4 2026 en Australia, UK, Francia y Dinamarca, y Alemania en 2027. La plataforma consolida datos de retail, e-commerce y B2B en una vista unificada de transacciones.",
+      "source": "Adyen / Lavazza / Fintech Global",
+      "url": "https://fintech.global/2026/05/05/adyen-partners-with-lavazza-to-unify-global-payments/",
+      "date": "2026-05-05"
+    },
+    "signal_type": [
+      "milestone",
+      "proof-point"
+    ],
+    "angle_draft": "Adyen unifica los pagos B2B y B2C de Lavazza en 7 mercados. El concepto es exactamente lo que una red de franquicias necesita: una vista unificada de todas las transacciones, todos los canales, todos los mercados. Pero Adyen lo hace para multinacionales con miles de millones en volumen — Lavazza, no una cadena de 200 restaurantes en España. El modelo es correcto, el target no. Para franquicias mid-market, la unificación de pagos B2B (proveedores, regalías) y B2C (cobros en tienda) requiere cuentas programables con splits nativos y licencia local, no una plataforma enterprise con pricing enterprise. Frame: 'Adyen resuelve el problema correcto — para el cliente equivocado.'",
+    "pov_confidence": 0.82,
+    "source_signals": [
+      "news-2026-05-08-adlav01"
+    ],
+    "created_at": "2026-05-08T05:45:00Z",
+    "status": "New"
+  },
+  {
+    "id": "idea-2026-05-08-006",
+    "title": "AWS lanza AgentCore Payments con Stripe y Coinbase — agentes IA que pagan solos con stablecoins",
+    "pillar_id": "tecnologia-pagos",
+    "content_type": "Hot Take",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Amazon Web Services lanzó el 7 de mayo Amazon Bedrock AgentCore Payments, que permite a agentes IA realizar y recibir pagos autónomos por servicios digitales. Stripe (via su filial Privy) proporciona la infraestructura de wallets y rails de pago, y Coinbase aporta wallets y su protocolo x402 para micropagos instantáneos en USDC. Los desarrolladores pueden configurar límites de gasto por sesión y los usuarios deben autorizar explícitamente el acceso al wallet del agente.",
+      "source": "AWS / Stripe / Coinbase",
+      "source_type": "competitor",
+      "platform": "web",
+      "url": "https://aws.amazon.com/blogs/machine-learning/agents-that-transact-introducing-amazon-bedrock-agentcore-payments-built-with-coinbase-and-stripe/",
+      "engagement": {
+        "likes": 0,
+        "comments": 0,
+        "shares": 0
+      },
+      "date": "2026-05-07"
+    },
+    "signal_type": [
+      "milestone",
+      "aha-moment",
+      "framework"
+    ],
+    "angle_draft": "AWS, Stripe y Coinbase se unen para que agentes IA paguen solos — micropagos en stablecoins, sin intervención humana. Es la infraestructura para un mundo donde las máquinas son clientes. Impresionante para servicios digitales y APIs. Pero para una red de franquicias con 200 TPVs, el 'agente' que necesitas no paga por APIs — automatiza splits de regalías, ejecuta escrow y reconcilia cobros entre sedes. AgentCore resuelve pagos máquina-a-máquina. Las cuentas programables resuelven pagos negocio-a-negocio regulados. Frame: 'Los agentes IA ya pagan — pero tu franquicia necesita cuentas que se gestionan solas.'",
+    "pov_confidence": 0.82,
+    "source_signals": [
+      "creators-2026-05-08-aws01"
+    ],
+    "created_at": "2026-05-08T05:58:42Z",
+    "status": "New"
+  },
+  {
+    "id": "idea-2026-05-08-007",
+    "title": "Teya aterriza en España con datáfonos y cuenta de empresa — nuevo competidor en pagos para pymes",
+    "pillar_id": "competencia-fintech",
+    "content_type": "Hot Take",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Teya, fintech europea de pagos, ha lanzado oficialmente sus servicios en España el 5 de mayo de 2026 a través de Soluciones de Pago. Ofrece datáfonos, Tap to Pay en móvil, herramientas de pago online, cuentas de empresa integradas con liquidación D+1, 0.3% cashback mensual en compras con tarjeta, y financiación flexible que se devuelve vía ventas. Target principal: pymes de hostelería y e-commerce. Soporte 24/7 por WhatsApp.",
+      "source": "Teya / EuropaPress",
+      "source_type": "competitor",
+      "platform": "web",
+      "url": "https://www.europapress.es/comunicados/empresas-00908/noticia-comunicado-soluciones-pago-impulsa-llegada-teya-espana-soluciones-pymes-20260505095723.html",
+      "engagement": {
+        "likes": 0,
+        "comments": 0,
+        "shares": 0
+      },
+      "date": "2026-05-05"
+    },
+    "signal_type": [
+      "milestone",
+      "data-point"
+    ],
+    "angle_draft": "Teya aterriza en España con una propuesta agresiva para pymes: datáfonos, cuenta integrada, cashback del 0.3% y financiación vía ventas. Otro player europeo que entra en el mercado español de pagos, compitiendo directamente con SumUp, Zettle y la banca tradicional en el segmento de comercios individuales. Pero como todos los que apuntan a pymes sueltas, resuelven el cobro individual — no la complejidad de una red: splits entre franquiciador y franquiciado, regalías automáticas, conciliación multi-sede. Más competidores validan que el mercado español de pagos crece. La diferencia está en para quién. Frame: 'Un datáfono más en España no resuelve la gestión financiera de una cadena.'",
+    "pov_confidence": 0.75,
+    "source_signals": [
+      "creators-2026-05-08-teya01"
+    ],
+    "created_at": "2026-05-08T05:58:42Z",
+    "status": "New"
+  },
+  {
+    "id": "idea-2026-05-08-008",
+    "title": "Stripe se integra en Google AI Mode — comprar dentro de Gemini ya es posible",
+    "pillar_id": "tecnologia-pagos",
+    "content_type": "Hot Take",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Stripe anunció su partnership con Google para habilitar compras directas dentro de Google AI Mode y la app Gemini. Los negocios que usan Stripe Agentic Commerce Suite pueden hacer sus productos descubribles y comprables por agentes IA de Google vía el Universal Commerce Protocol (UCP), un estándar abierto para agentic commerce. Se suma a integraciones existentes con OpenAI, Microsoft y Meta. También lanzó Link wallets para agentes IA, con tarjetas de un solo uso por tarea.",
+      "source": "Stripe / PaymentsDive",
+      "source_type": "competitor",
+      "platform": "web",
+      "url": "https://www.paymentsdive.com/news/stripe-google-partner-on-agentic-commerce/818915/",
+      "engagement": {
+        "likes": 0,
+        "comments": 0,
+        "shares": 0
+      },
+      "date": "2026-04-29"
+    },
+    "signal_type": [
+      "milestone",
+      "framework"
+    ],
+    "angle_draft": "Stripe ya permite vender dentro de Google Gemini y AI Mode — el checkout desaparece y la compra ocurre en la conversación con la IA. Es la primera infraestructura real de 'agentic commerce' a escala masiva, con OpenAI, Microsoft, Meta y ahora Google conectados. Para el e-commerce B2C, es transformador. Pero para redes de franquicias, el reto no es dónde ocurre la venta — es qué pasa después: cómo se reparte ese cobro entre franquiciador y franquiciado, quién cobra la regalía, quién reconcilia. Stripe resuelve el front-end del futuro. Las cuentas programables resuelven el back-end del presente. Frame: 'Vender dentro de Gemini es el futuro del checkout — gestionar el dinero después sigue siendo el presente.'",
+    "pov_confidence": 0.8,
+    "source_signals": [
+      "creators-2026-05-08-stripe01"
+    ],
+    "created_at": "2026-05-08T05:58:42Z",
+    "status": "New"
   }
 ]
