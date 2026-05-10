@@ -12,12 +12,13 @@ metadata:
     - qa-bot
   optional_deps:
     - last30days
-  updated: '2026-05-01'
-  changes: 'v3 — Restored 7-phase workflow from v1 source of truth. Restructured per skill-creator (lean SKILL.md + references). v2 ''profundizador-only'' mode dropped (was a regression).'
+  updated: '2026-05-09'
+  changes: 'v3.1 — Output rewrite: final deliverable is a narrative analytical document (not a process/source dump). Added raw/ folder for all downloaded data. Phase 5 now produces prose-first analysis. Templates restructured for readability.'
 context_required:
   - Research question + stakeholder + scope (asked via AskUserQuestion if missing)
 context_writes:
   - 01-business/clients/{client}/research/{topic}-analysis.md
+  - 01-business/clients/{client}/research/{topic}-raw/  # All downloaded sources, extracts, notes
   - 01-business/clients/{client}/research/QA-REPORT-{topic}-analysis.md
   - brand/{slug}/intelligence/research-log.json
 ---
@@ -67,15 +68,28 @@ Each phase produces an artifact. **Never skip a phase.** Output of each feeds th
 5. **Estructura simétrica** — cada entidad recibe el mismo template (no asymmetric coverage).
 6. **Confidence model** — marcar cada dato como `verified` (oficial) / `reported` (secundario) / `inferred` (deducido).
 7. **Stopping criteria** — definido en Phase 1 (`SCOPE`). Sin él, la investigación nunca termina.
+8. **El output final es un DOCUMENTO ANALÍTICO, no un log de proceso** — El lector debe entender el tema leyendo el documento. Nada de listar pasos seguidos, búsquedas realizadas, ni inventario de fuentes como contenido principal. Las fuentes van al final como referencias. El cuerpo es PROSA ANALÍTICA: contexto, hallazgos, análisis, implicaciones, recomendaciones.
+9. **Carpeta raw/ obligatoria** — Cada research tiene una carpeta `{topic}-raw/` donde se guardan: extractos de fuentes, datos brutos, notas de extracción, social pulse output. El documento final se nutre de esta carpeta pero NO la expone al lector.
 
 ## Output Location
 
 | Caso | Ruta |
 |------|------|
-| Cliente / stakeholder | `01-business/clients/{client}/research/{topic}-analysis.md` |
+| Documento final | `01-business/clients/{client}/research/{topic}-analysis.md` |
+| **Carpeta raw data** | `01-business/clients/{client}/research/{topic}-raw/` |
 | Profundización Foundation | `brand/{slug}/{pilar}/current.md` (backup `current.md` → `v{N+1}.md`) |
 | QA report | mismo directorio, prefijo `QA-REPORT-` |
 | Research log | `brand/{slug}/intelligence/research-log.json` |
+
+### Contenido de `{topic}-raw/`
+
+| Archivo | Contenido |
+|---------|-----------|
+| `sources-inventory.md` | Inventario de fuentes con ratings A/B/C |
+| `extracts/` | Extractos literales de cada fuente (1 archivo por fuente) |
+| `social-pulse.md` | Output de last30days (si se ejecutó Phase 2b) |
+| `scope.md` | Brief de scope definido en Phase 1 |
+| `framework-notes.md` | Notas de taxonomía/framework (Phase 4 working notes) |
 
 ## Comunicación durante ejecución
 

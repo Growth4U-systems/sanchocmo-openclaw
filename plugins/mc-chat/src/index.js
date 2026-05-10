@@ -158,15 +158,44 @@ export default defineChannelPluginEntry({
 
         // Dispatch to agent asynchronously
         try {
-          const mcUrl = channelCfg?.mcServerUrl || "http://localhost:18790";
-          const callbackUrl = `${mcUrl}/webhook/mc-chat/response`;
+          // Default to Next.js (port 3000) — it owns chat thread writes since
+          // the strangler-fig migration. mc-server.js's /webhook/mc-chat/response
+          // is dead code but still proxied through Next's fallback rewrite.
+          const mcUrl = channelCfg?.mcServerUrl || "http://localhost:3000";
+          const callbackUrl = `${mcUrl}/api/chat/webhook`;
+          const threadLinkUrlBase = `${mcUrl}/api/chat/thread`;
+          const sendUrl = `${mcUrl}/api/chat/send`;
           const secret = channelCfg?.sharedSecret;
+          // Retry with exponential backoff for transient Next.js outages
+          // (dev server reloads, restarts). On permanent failure the message
+          // is logged loudly — Sancho's trajectory still has it for recovery.
+          const postWithRetry = async (url, body, label) => {
+            const headers = { "Content-Type": "application/json", ...(secret ? { "X-MC-Secret": secret } : {}) };
+            const delays = [0, 750, 2250]; // 3 attempts: immediate, +750ms, +2250ms
+            let lastErr;
+            for (let i = 0; i < delays.length; i++) {
+              if (delays[i]) await new Promise((r) => setTimeout(r, delays[i]));
+              try {
+                const res = await fetch(url, { method: "POST", headers, body: JSON.stringify(body) });
+                if (res.ok) return res;
+                lastErr = new Error(`HTTP ${res.status}`);
+                if (res.status >= 400 && res.status < 500) break; // don't retry 4xx
+              } catch (e) {
+                lastErr = e;
+              }
+            }
+            logger.error(`[mc-chat] ${label} failed after ${delays.length} attempts: ${lastErr?.message || lastErr}`);
+            return null;
+          };
 
           await dispatchInboundMessageWithBufferedDispatcher({
             ctx: msgCtx,
             cfg,
             dispatcherOptions: {
               deliver: async (replyPayload, _info) => {
+                // Diagnostic: log every deliver invocation so we can tell
+                // "deliver fired but text empty" from "deliver never fired".
+                logger.info(`[mc-chat] deliver called kind=${_info?.kind || '?'} thread=${threadId} hasText=${Boolean(replyPayload?.text)} hasParts=${Array.isArray(replyPayload?.parts) && replyPayload.parts.length > 0} textLen=${(replyPayload?.text || '').length}`);
                 // Support multi-message: replyPayload can have text, body, or parts
                 const texts = [];
                 const replyText = replyPayload?.text || replyPayload?.body || "";
@@ -186,49 +215,37 @@ export default defineChannelPluginEntry({
                 // Check if thread is linked to Discord
                 let discordLink = null;
                 try {
-                  const threadRes = await fetch(`${mcUrl}/api/mc-chat/thread/${encodeURIComponent(chatId)}`);
-                  const threadData = await threadRes.json();
-                  if (threadData.discordThreadId && threadData.discordChannelId) {
-                    discordLink = { threadId: threadData.discordThreadId, channelId: threadData.discordChannelId };
+                  const threadRes = await fetch(`${threadLinkUrlBase}/${encodeURIComponent(chatId)}`);
+                  if (threadRes.ok) {
+                    const threadData = await threadRes.json();
+                    if (threadData.discordThreadId && threadData.discordChannelId) {
+                      discordLink = { threadId: threadData.discordThreadId, channelId: threadData.discordChannelId };
+                    }
                   }
                 } catch {}
 
                 // Send each text as a separate message (MC + Discord if linked)
                 for (const msgText of texts) {
-                  try {
-                    const response = await fetch(callbackUrl, {
-                      method: "POST",
-                      headers: {
-                        "Content-Type": "application/json",
-                        ...(secret ? { "X-MC-Secret": secret } : {}),
-                      },
-                      body: JSON.stringify({
-                        slug,
-                        threadId,
-                        text: msgText,
-                        role: "bot",
-                        agent: respondingAgent,
-                        ts: new Date().toISOString(),
-                      }),
-                    });
-                    if (!response.ok) {
-                      logger.error(`[mc-chat] Callback failed: ${response.status}`);
+                  await postWithRetry(callbackUrl, {
+                    slug,
+                    threadId,
+                    text: msgText,
+                    role: "bot",
+                    agent: respondingAgent,
+                    ts: new Date().toISOString(),
+                  }, "Bot callback");
+                  // Also relay to Discord if linked (skip if message came from Discord)
+                  if (discordLink && _source !== "discord") {
+                    try {
+                      await tools.message.send({
+                        action: "send",
+                        target: `channel:${discordLink.threadId}`,
+                        message: msgText + "\n||[_mc_relay]||", // Hidden spoiler tag
+                      });
+                      logger.info(`[mc-chat] Relayed to Discord thread ${discordLink.threadId}`);
+                    } catch (discordErr) {
+                      logger.error(`[mc-chat] Discord relay error: ${discordErr?.message}`);
                     }
-                    // Also relay to Discord if linked (skip if message came from Discord)
-                    if (discordLink && _source !== "discord") {
-                      try {
-                        await tools.message.send({
-                          action: "send",
-                          target: `channel:${discordLink.threadId}`,
-                          message: msgText + "\n||[_mc_relay]||", // Hidden spoiler tag
-                        });
-                        logger.info(`[mc-chat] Relayed to Discord thread ${discordLink.threadId}`);
-                      } catch (discordErr) {
-                        logger.error(`[mc-chat] Discord relay error: ${discordErr?.message}`);
-                      }
-                    }
-                  } catch (err) {
-                    logger.error(`[mc-chat] Callback error: ${err?.message}`);
                   }
                 }
               },
@@ -236,38 +253,96 @@ export default defineChannelPluginEntry({
                 logger.error(`[mc-chat] Dispatch error (${info.kind}): ${err?.message || err}`);
               },
             },
-            // Status updates: send intermediate state to MC typing indicator
+            // Status updates: send intermediate state to MC typing indicator.
+            // Two flavors per event:
+            //   role: "status"   → ephemeral one-line indicator (legacy, pisa anterior)
+            //   role: "progress" → granular timeline event accumulated and sealed
+            //                      into the bot's final message (visible after reply)
             typingCallbacks: {
               onReplyStart: async () => {
+                const headers = { "Content-Type": "application/json", ...(secret ? { "X-MC-Secret": secret } : {}) };
+                const baseAgent = agentId || "sancho";
                 fetch(callbackUrl, {
                   method: "POST",
-                  headers: { "Content-Type": "application/json", ...(secret ? { "X-MC-Secret": secret } : {}) },
-                  body: JSON.stringify({ slug, threadId, role: "status", text: "🔄 Sancho está pensando...", agent: agentId || "sancho" }),
+                  headers,
+                  body: JSON.stringify({ slug, threadId, role: "status", text: "🔄 Sancho está pensando...", agent: baseAgent }),
+                }).catch(() => {});
+                fetch(callbackUrl, {
+                  method: "POST",
+                  headers,
+                  body: JSON.stringify({
+                    slug, threadId, role: "progress", agent: baseAgent,
+                    event: { kind: "thinking", label: "Pensando…" },
+                  }),
                 }).catch(() => {});
               },
             },
             getReplyOptions: {
               onToolStart: async (payload) => {
-                if (payload?.name) {
-                  const label = payload.name === "Read" ? "📄 Leyendo"
-                    : payload.name === "Write" ? "✍️ Escribiendo"
-                    : payload.name === "Bash" ? "⚡ Ejecutando"
-                    : payload.name === "Grep" || payload.name === "Glob" ? "🔍 Buscando"
-                    : payload.name === "WebFetch" || payload.name === "WebSearch" ? "🌐 Buscando en web"
-                    : payload.name === "Agent" ? "🤖 Delegando a subagente"
-                    : "🔧 " + payload.name;
-                  fetch(callbackUrl, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json", ...(secret ? { "X-MC-Secret": secret } : {}) },
-                    body: JSON.stringify({ slug, threadId, role: "status", text: label + "...", agent: agentId || "sancho" }),
-                  }).catch(() => {});
-                }
-              },
-              onCompactionStart: async () => {
+                if (!payload?.name) return;
+                const headers = { "Content-Type": "application/json", ...(secret ? { "X-MC-Secret": secret } : {}) };
+                const baseAgent = agentId || "sancho";
+                const toolName = payload.name;
+                const input = payload.input || {};
+
+                // Map tool name → label (legacy status text) + structured event
+                const label = toolName === "Read" ? "📄 Leyendo"
+                  : toolName === "Write" ? "✍️ Escribiendo"
+                  : toolName === "Edit" ? "✏️ Editando"
+                  : toolName === "Bash" ? "⚡ Ejecutando"
+                  : toolName === "Grep" || toolName === "Glob" ? "🔍 Buscando"
+                  : toolName === "WebFetch" || toolName === "WebSearch" ? "🌐 Buscando en web"
+                  : toolName === "Agent" ? "🤖 Delegando a subagente"
+                  : "🔧 " + toolName;
+
+                let kind = "tool_call";
+                if (toolName === "Read") kind = "read";
+                else if (toolName === "Write" || toolName === "Edit") kind = "file_write";
+                else if (toolName === "Grep" || toolName === "Glob") kind = "search";
+                else if (toolName === "WebFetch" || toolName === "WebSearch") kind = "search";
+                else if (toolName === "Agent") kind = "agent_handoff";
+
+                const target = input.file_path
+                  || input.path
+                  || input.url
+                  || input.pattern
+                  || input.query
+                  || input.subagent_type
+                  || (typeof input.command === "string" ? input.command.slice(0, 80) : undefined)
+                  || undefined;
+
+                // Legacy status (ephemeral)
                 fetch(callbackUrl, {
                   method: "POST",
-                  headers: { "Content-Type": "application/json", ...(secret ? { "X-MC-Secret": secret } : {}) },
-                  body: JSON.stringify({ slug, threadId, role: "status", text: "📦 Compactando contexto...", agent: agentId || "sancho" }),
+                  headers,
+                  body: JSON.stringify({ slug, threadId, role: "status", text: label + "...", agent: baseAgent }),
+                }).catch(() => {});
+
+                // Structured progress event (accumulated + sealed)
+                fetch(callbackUrl, {
+                  method: "POST",
+                  headers,
+                  body: JSON.stringify({
+                    slug, threadId, role: "progress", agent: baseAgent,
+                    event: { kind, label, target },
+                  }),
+                }).catch(() => {});
+              },
+              onCompactionStart: async () => {
+                const headers = { "Content-Type": "application/json", ...(secret ? { "X-MC-Secret": secret } : {}) };
+                const baseAgent = agentId || "sancho";
+                fetch(callbackUrl, {
+                  method: "POST",
+                  headers,
+                  body: JSON.stringify({ slug, threadId, role: "status", text: "📦 Compactando contexto...", agent: baseAgent }),
+                }).catch(() => {});
+                fetch(callbackUrl, {
+                  method: "POST",
+                  headers,
+                  body: JSON.stringify({
+                    slug, threadId, role: "progress", agent: baseAgent,
+                    event: { kind: "tool_call", label: "📦 Compactando contexto" },
+                  }),
                 }).catch(() => {});
               },
             },
@@ -351,15 +426,17 @@ export default defineChannelPluginEntry({
         // Only process messages from threads
         if (!msgCtx.ThreadId) return;
         const discordThreadId = msgCtx.ThreadId;
-        // Check if this Discord thread is linked to an MC thread
-        const mcUrl = channelCfg?.mcServerUrl || "http://localhost:18790";
+        // Check if this Discord thread is linked to an MC thread.
+        // Routes migrated to Next.js (/api/chat/*) — single writer for chats.
+        const mcUrl = channelCfg?.mcServerUrl || "http://localhost:3000";
         let mcThreadId = null;
         try {
-          // Search all MC threads for this discordThreadId
-          const searchRes = await fetch(`${mcUrl}/api/mc-chat/find-by-discord/${encodeURIComponent(discordThreadId)}`);
-          const searchData = await searchRes.json();
-          if (searchData.ok && searchData.threadId) {
-            mcThreadId = searchData.threadId;
+          const searchRes = await fetch(`${mcUrl}/api/chat/find-by-discord/${encodeURIComponent(discordThreadId)}`);
+          if (searchRes.ok) {
+            const searchData = await searchRes.json();
+            if (searchData.ok && searchData.threadId) {
+              mcThreadId = searchData.threadId;
+            }
           }
         } catch {}
         if (!mcThreadId) return; // Not linked, ignore
@@ -373,7 +450,7 @@ export default defineChannelPluginEntry({
         text = text.replace(/\|\|?\[_mc_relay\]\|\|?/g, "").trim(); // Remove marker
         if (!text.trim()) return;
         try {
-          await fetch(`${mcUrl}/api/mc-chat/send`, {
+          await fetch(`${mcUrl}/api/chat/send`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({

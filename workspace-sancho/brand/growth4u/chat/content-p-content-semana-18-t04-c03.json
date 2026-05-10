@@ -88,7 +88,23 @@
       "role": "user",
       "text": "Vale, sigo viendo esto y la verdad es que cada vez me gusta más. Me gusta todo lo que son cambios que hemos hecho, pero creo que la calidad sigue siendo mala. Entonces me gustaría volver a empezar un post como el que te estoy mostrando. Me gustaría que aplicaras ahora todos los pasos que tienes que hacer, ¿vale? Desde cero.",
       "ts": 1777640499647
+    },
+    {
+      "role": "user",
+      "text": "Vale, sigo viendo esto y la verdad es que cada vez me gusta más. Me gusta todo lo que son cambios que hemos hecho, pero creo que la calidad sigue siendo mala. Entonces me gustaría volver a empezar un post como el que te estoy mostrando. Me gustaría que aplicaras ahora todos los pasos que tienes que hacer, ¿vale? Desde cero.",
+      "ts": 1778324165685
+    },
+    {
+      "role": "user",
+      "text": "Hola",
+      "ts": 1778328032152
+    },
+    {
+      "role": "bot",
+      "text": "¡Hola! 👋\n\nEstás en el hilo de **\"MiCA julio 2026: el playbook de marketing que nadie te está enseñando\"** — la pieza SEO (blog + LinkedIn).\n\nEstado actual:\n- **Blog:** Draft completo (~3.047 palabras), iteración 3, Self-QA PASS ✅\n- **LinkedIn:** pendiente de revisar\n- **Status:** Draft (aprobada como idea, contenido generado)\n\nEl artículo está bastante sólido — cubre los 6 requisitos MiCA, el playbook operativo con experiencia Bnext/Bit2Me, FAQ con schema, y fuentes verificadas (ESMA, CNMV, Google policy, FinReg360).\n\n¿Qué necesitas? ¿Revisarlo, ajustar algo, o moverlo a publicación?",
+      "ts": 1778328164036,
+      "agent": "sancho"
     }
   ],
-  "updatedAt": 1777640499647
+  "updatedAt": 1778328164036
 }

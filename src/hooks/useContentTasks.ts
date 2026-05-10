@@ -1,5 +1,28 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import type { ContentTask, ContentTaskStatus, ContentTaskPipelineState } from "@/types";
+import type { ContentTask, ContentTaskStatus, ContentTaskPipelineState, ChannelPhase } from "@/types";
+
+/**
+ * Whether the CT is in a phase where the agent or system is actively working
+ * on it — used to decide whether to poll for state updates. The user-driven
+ * stable states (Draft awaiting human, media-review, Ready, terminal) don't
+ * need polling: nothing is going to change without user action.
+ */
+function isWorkingState(ct: ContentTask | null | undefined): boolean {
+  if (!ct) return false;
+  if (ct.status === "Published" || ct.status === "Discarded" || ct.status === "Deferred" || ct.status === "Ready") {
+    return false;
+  }
+  if (ct.pipeline_state === "researching" || ct.pipeline_state === "clarify-needed" || ct.pipeline_state === "drafting") {
+    return true;
+  }
+  if (ct.pipeline_state === "generating-media") return true;
+  if (ct.channel_phases) {
+    for (const p of Object.values(ct.channel_phases) as ChannelPhase[]) {
+      if (p === "researching" || p === "clarify-needed" || p === "drafting") return true;
+    }
+  }
+  return false;
+}
 
 interface ContentTaskListResponse {
   ok: boolean;
@@ -26,6 +49,13 @@ export function useContentTasks(slug: string | null, parentTaskId: string | null
     },
     enabled: !!slug && !!parentTaskId,
     staleTime: 30_000,
+    // Poll every 5s while any CT in the list is being worked on, so the
+    // kanban reflects channel_phases / pipeline_state moves the agent
+    // makes via PATCH without the user having to refresh.
+    refetchInterval: (q) => {
+      const list = q.state.data || [];
+      return list.some(isWorkingState) ? 5_000 : false;
+    },
   });
 }
 
@@ -47,6 +77,7 @@ export function useContentTask(
     },
     enabled: !!slug && !!parentTaskId && !!contentTaskId,
     staleTime: 30_000,
+    refetchInterval: (q) => (isWorkingState(q.state.data) ? 5_000 : false),
   });
 }
 

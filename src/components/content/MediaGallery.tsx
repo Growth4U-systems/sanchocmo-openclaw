@@ -7,9 +7,9 @@ import {
   useSetPrimaryMedia,
   useUploadMedia,
 } from "@/hooks/useMedia";
-import { TemplateRenderer } from "@/components/content/TemplateRenderer";
 import { MediaEditor } from "@/components/media-editor/MediaEditor";
 import { MediaThumb } from "@/components/content/MediaThumb";
+import { useSendMessage } from "@/hooks/useChat";
 import { cn } from "@/lib/utils";
 
 const CHANNEL_LABELS: Record<string, string> = {
@@ -29,6 +29,7 @@ function channelLabel(channel: string): string {
 interface MediaGalleryProps {
   slug: string;
   ideaId: string;
+  contentTaskId: string;
   targetChannels: string[];
   initialChannel?: string;
 }
@@ -36,6 +37,7 @@ interface MediaGalleryProps {
 export function MediaGallery({
   slug,
   ideaId,
+  contentTaskId,
   targetChannels,
   initialChannel,
 }: MediaGalleryProps) {
@@ -45,7 +47,6 @@ export function MediaGallery({
       ? initialChannel
       : fallback,
   );
-  const [showCarousel, setShowCarousel] = useState(false);
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
 
   const fileInput = useRef<HTMLInputElement>(null);
@@ -56,6 +57,16 @@ export function MediaGallery({
   const upload = useUploadMedia();
   const setPrimary = useSetPrimaryMedia();
   const remove = useRemoveMedia();
+  const sendMessage = useSendMessage();
+
+  const chatThreadId = `${slug}:content:${contentTaskId.toLowerCase()}`;
+
+  function askSancho() {
+    sendMessage.mutate({
+      threadId: chatThreadId,
+      text: `Genérame media para este draft (canal: ${activeChannel}). Pregúntame qué formato necesito (carrusel, imagen, header...) y proponme los textos antes de renderizar.`,
+    });
+  }
 
   function handleFiles(files: FileList | null) {
     if (!files || files.length === 0) return;
@@ -95,10 +106,7 @@ export function MediaGallery({
                 <button
                   key={c}
                   type="button"
-                  onClick={() => {
-                    setActiveChannel(c);
-                    setShowCarousel(false);
-                  }}
+                  onClick={() => setActiveChannel(c)}
                   className={cn(
                     "text-[11px] px-2.5 py-1 rounded-full border transition-colors",
                     activeChannel === c
@@ -174,28 +182,49 @@ export function MediaGallery({
         />
 
         {/* Action bar */}
-        <div className="px-4 py-3 border-t border-[#E8E2D9] bg-[#FCFAF7] flex items-center gap-2 flex-wrap">
+        <div className="px-4 py-4 border-t border-[#E8E2D9] bg-[#FCFAF7] flex items-stretch gap-3 flex-wrap">
+          <button
+            type="button"
+            onClick={askSancho}
+            disabled={sendMessage.isPending}
+            className="flex-1 min-w-[280px] flex items-center gap-3 px-4 py-3 bg-gradient-to-br from-[#6E4EF5] to-rust text-white rounded-lg font-medium hover:opacity-90 transition-opacity disabled:opacity-50 text-left"
+            title="Sancho elige la plantilla (carrusel, header, etc.) y propone los textos"
+          >
+            <span className="text-2xl">✨</span>
+            <span className="flex-1">
+              <span className="block text-sm font-semibold">
+                {sendMessage.isPending ? "Pidiéndoselo a Sancho..." : "Pedírselo a Sancho"}
+              </span>
+              <span className="block text-[11px] opacity-90 mt-0.5">
+                Te pregunta el formato (carrusel, imagen, header) y lo construye
+                con la plantilla de la marca.
+              </span>
+            </span>
+          </button>
           <button
             type="button"
             onClick={() => fileInput.current?.click()}
             disabled={busy}
-            className="text-xs px-3 py-1.5 bg-white border border-[#E8E2D9] rounded-lg hover:border-[#2C3E50] transition-colors disabled:opacity-50"
+            className="flex items-center gap-3 px-4 py-3 bg-white border border-[#E8E2D9] rounded-lg hover:border-[#2C3E50] transition-colors disabled:opacity-50 text-left min-w-[200px]"
             title="Sube un archivo (PNG/JPG/WebP/GIF) que ya tengas hecho"
           >
-            📤 Subir asset
+            <span className="text-2xl">📤</span>
+            <span className="flex-1">
+              <span className="block text-sm font-semibold text-[#2C3E50]">
+                Subir asset
+              </span>
+              <span className="block text-[11px] text-muted-foreground mt-0.5">
+                Tienes el archivo ya hecho.
+              </span>
+            </span>
           </button>
-          <button
-            type="button"
-            onClick={() => setShowCarousel((v) => !v)}
-            className="text-xs px-3 py-1.5 bg-white border border-[#E8E2D9] rounded-lg hover:border-rust transition-colors"
-            title="Renderiza una plantilla brandeada (carrusel, header, etc.) rellenando los slots"
-          >
-            🎨 Generar desde plantilla
-          </button>
-          <span className="text-[11px] text-[#7F8C8D] ml-auto">
-            ¿Generar con IA libre? Pídeselo a Sancho en el chat →
-          </span>
         </div>
+
+        {sendMessage.isError && (
+          <div className="mx-4 mb-4 text-xs text-red-600 bg-red-50 border border-red-200 rounded-md px-3 py-2">
+            No se pudo enviar el mensaje al chat: {sendMessage.error.message}
+          </div>
+        )}
 
         {error && (
           <div className="mx-4 mb-4 text-xs text-red-600 bg-red-50 border border-red-200 rounded-md px-3 py-2">
@@ -204,35 +233,51 @@ export function MediaGallery({
         )}
       </section>
 
-      {showCarousel && (
-        <TemplateRenderer slug={slug} ideaId={ideaId} channel={activeChannel} />
-      )}
-
-      {lightboxMedia && (
-        <MediaEditor
-          asset={
-            lightboxMedia.source === "ai-generated"
-              ? {
-                  kind: "ai-image",
-                  slug,
-                  ideaId,
-                  channel: activeChannel,
-                  media: lightboxMedia,
-                  isPrimary: lightboxIsPrimary,
-                  onAfterRegenerate: (newUrl) => setLightboxUrl(newUrl),
-                }
-              : {
-                  kind: "uploaded",
-                  slug,
-                  ideaId,
-                  channel: activeChannel,
-                  media: lightboxMedia,
-                  isPrimary: lightboxIsPrimary,
-                }
-          }
-          onClose={() => setLightboxUrl(null)}
-        />
-      )}
+      {lightboxMedia && (() => {
+        const idx = media.findIndex((m) => m.url === lightboxMedia.url);
+        const total = media.length;
+        const navigate = (delta: number) => {
+          if (idx < 0 || total < 2) return;
+          const next = (idx + delta + total) % total;
+          setLightboxUrl(media[next].url);
+        };
+        const nav =
+          total > 1
+            ? {
+                index: idx,
+                total,
+                onPrev: () => navigate(-1),
+                onNext: () => navigate(1),
+              }
+            : undefined;
+        return (
+          <MediaEditor
+            asset={
+              lightboxMedia.source === "ai-generated"
+                ? {
+                    kind: "ai-image",
+                    slug,
+                    ideaId,
+                    channel: activeChannel,
+                    media: lightboxMedia,
+                    isPrimary: lightboxIsPrimary,
+                    onAfterRegenerate: (newUrl) => setLightboxUrl(newUrl),
+                    nav,
+                  }
+                : {
+                    kind: "uploaded",
+                    slug,
+                    ideaId,
+                    channel: activeChannel,
+                    media: lightboxMedia,
+                    isPrimary: lightboxIsPrimary,
+                    nav,
+                  }
+            }
+            onClose={() => setLightboxUrl(null)}
+          />
+        );
+      })()}
     </div>
   );
 }

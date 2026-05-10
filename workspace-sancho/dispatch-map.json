@@ -58,16 +58,9 @@
     "comunicador": {
       "name": "El Comunicador",
       "persona_file": "./personas/comunicador.md",
-      "dispatch_for": ["content-atomizer", "newsletter", "social"],
-      "skills": ["content-atomizer", "newsletter", "direct-response-copy"],
+      "dispatch_for": ["content-atomizer", "newsletter", "social", "brand-voice"],
+      "skills": ["content-atomizer", "newsletter", "direct-response-copy", "brand-voice"],
       "brand_context": ["voice-profile.md", "positioning.md"]
-    },
-    "creativo": {
-      "name": "El Creativo",
-      "persona_file": "./personas/creativo.md",
-      "dispatch_for": ["nano-banana-pro", "visual-identity", "design"],
-      "skills": ["visual-identity", "brand-voice", "sancho-visual"],
-      "brand_context": ["visual-identity.md"]
     },
     "amplificador": {
       "name": "El Amplificador",

@@ -8,7 +8,6 @@ interface Draft {
     idea_id: string;
     channel: string;
     iteration: number;
-    status: "pending" | "researching" | "clarify-needed" | "drafting" | "draft" | "approved" | "published";
     content_task_id?: string;
     parent_task_id?: string;
     research_used?: boolean;
@@ -20,6 +19,14 @@ interface Draft {
   absPath: string;
 }
 
+type ChannelPhase =
+  | "researching"
+  | "clarify-needed"
+  | "drafting"
+  | "draft"
+  | "approved"
+  | "published";
+
 interface IdeaLite {
   id: string;
   target_channel: string;
@@ -28,7 +35,19 @@ interface IdeaLite {
 interface Props {
   idea: IdeaLite;
   slug: string;
-  onSaveDraft: (ideaId: string, channel: string, body: string, status?: string) => Promise<void>;
+  /**
+   * Per-channel phase from `ContentTask.channel_phases` — drives the status
+   * chip and the Aprobar button gating. Optional: when missing (orphan idea
+   * preview, no CT yet), the card just shows the draft body without phase chips.
+   */
+  channelPhases?: Partial<Record<string, ChannelPhase>>;
+  /**
+   * Approve the channel's text. Owner must PATCH
+   * `/api/content-engine/content-tasks` with
+   * `channel_phases: { [channel]: "approved" }`.
+   */
+  onApproveChannel?: (channel: string) => Promise<void>;
+  onSaveDraft: (ideaId: string, channel: string, body: string) => Promise<void>;
   onRequestIteration?: (ideaId: string, channel: string, instruction: string) => Promise<void>;
   onOpenDoc: (ideaId: string, channel: string) => void;
   onRefresh: () => void;
@@ -42,8 +61,7 @@ const CHANNEL_ICONS: Record<string, string> = {
   newsletter: "📧",
 };
 
-const DRAFT_STATUS: Record<string, { bg: string; text: string; label: string }> = {
-  pending: { bg: "bg-gray-50", text: "text-gray-700", label: "Pendiente" },
+const DRAFT_STATUS: Record<ChannelPhase, { bg: string; text: string; label: string }> = {
   researching: { bg: "bg-purple-50", text: "text-purple-700", label: "Researching" },
   "clarify-needed": { bg: "bg-amber-50", text: "text-amber-700", label: "Necesita aclaración" },
   drafting: { bg: "bg-blue-50", text: "text-blue-700", label: "Escribiendo" },
@@ -52,7 +70,7 @@ const DRAFT_STATUS: Record<string, { bg: string; text: string; label: string }> 
   published: { bg: "bg-emerald-50", text: "text-emerald-700", label: "Publicado" },
 };
 
-export function DraftCards({ idea, slug, onSaveDraft, onRequestIteration, onOpenDoc, hideIteration }: Props) {
+export function DraftCards({ idea, slug, channelPhases, onApproveChannel, onRequestIteration, onOpenDoc, hideIteration }: Props) {
   const [drafts, setDrafts] = useState<Draft[]>([]);
   const [loading, setLoading] = useState(false);
   const [iterationInput, setIterationInput] = useState("");
@@ -87,9 +105,9 @@ export function DraftCards({ idea, slug, onSaveDraft, onRequestIteration, onOpen
 
       {channels.map((channel) => {
         const draft = drafts.find((d) => d.meta.channel === channel);
-        const status = draft?.meta.status;
-        const st = status ? DRAFT_STATUS[status] : null;
-        const isTerminal = status === "approved" || status === "published";
+        const phase = channelPhases?.[channel];
+        const st = phase ? DRAFT_STATUS[phase] : null;
+        const isTerminal = phase === "approved" || phase === "published";
 
         return (
           <div key={channel} className="bg-[#FAFAF8] border border-[#E8E2D9] rounded-lg p-3">
@@ -114,15 +132,15 @@ export function DraftCards({ idea, slug, onSaveDraft, onRequestIteration, onOpen
                     📄 Abrir
                   </button>
                 )}
-                {draft && !isTerminal && (
+                {draft && !isTerminal && onApproveChannel && (
                   <button
-                    onClick={() => onSaveDraft(idea.id, channel, draft.body, "approved")}
+                    onClick={() => onApproveChannel(channel)}
                     className="text-[10px] px-2 py-0.5 rounded border border-green-200 text-green-700 bg-green-50 hover:bg-green-100 transition-colors"
                   >
                     ✅ Aprobar
                   </button>
                 )}
-                {status === "approved" && (
+                {phase === "approved" && (
                   <span className="text-[10px] text-green-600 font-medium">✓ Listo para publicar</span>
                 )}
               </div>

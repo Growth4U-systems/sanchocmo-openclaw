@@ -8,6 +8,11 @@
 export interface SkillResolution {
   skill: string;
   skills: string[];
+  /** When set, the task should be dispatched to this agent instead of the
+   *  default Sancho workspace. Currently used by tasks of `type=media` which
+   *  route to Maese Pedro (workspace-maese-pedro). Optional and additive — if
+   *  consumers ignore it, behavior is unchanged. */
+  agent?: string;
 }
 
 export interface SkillContext {
@@ -26,21 +31,21 @@ export interface SkillContext {
 // ---------------------------------------------------------------------------
 
 export interface ChatConfig {
-  pillars?: Record<string, { skill?: string; skills?: string[]; canonical?: string; docPath?: string }>;
+  pillars?: Record<string, { skill?: string; skills?: string[]; agent?: string; canonical?: string; docPath?: string }>;
   tasks?: {
-    _defaults?: { skill?: string; skills?: string[] };
-    _byType?: Record<string, { skill?: string; skills?: string[] }>;
-    _byChannel?: Record<string, { skill?: string; skills?: string[] }>;
-    _byTool?: Record<string, { skill?: string; skills?: string[] }>;
+    _defaults?: { skill?: string; skills?: string[]; agent?: string };
+    _byType?: Record<string, { skill?: string; skills?: string[]; agent?: string }>;
+    _byChannel?: Record<string, { skill?: string; skills?: string[]; agent?: string }>;
+    _byTool?: Record<string, { skill?: string; skills?: string[]; agent?: string }>;
   };
-  strategies?: { _defaults?: { skill?: string; skills?: string[] } };
+  strategies?: { _defaults?: { skill?: string; skills?: string[]; agent?: string } };
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [key: string]: any;
 }
 
-function toResolution(entry: { skill?: string; skills?: string[] } | undefined): SkillResolution | null {
+function toResolution(entry: { skill?: string; skills?: string[]; agent?: string } | undefined): SkillResolution | null {
   if (!entry?.skill) return null;
-  return { skill: entry.skill, skills: entry.skills ?? [entry.skill] };
+  return { skill: entry.skill, skills: entry.skills ?? [entry.skill], agent: entry.agent };
 }
 
 // ---------------------------------------------------------------------------

@@ -16,9 +16,8 @@ interface TemplatePreviewProps {
 /**
  * Iframe with debounced (~250ms) live preview of a template, driven by
  * /api/content-engine/template-preview-html. Reused by:
- *  - MediaEditor template-edit / template-render sidebars (full-size)
+ *  - TemplateEditBody in MediaEditor (Foundation authors editing slots/HTML)
  *  - TemplateViewer in Foundation (read-only, large)
- *  - TemplateThumbnail in the picker (scaled, pointer-events:none)
  */
 export function TemplatePreview({
   slug,

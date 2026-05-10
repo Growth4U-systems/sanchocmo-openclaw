@@ -88,10 +88,14 @@
         "mc_chat_thread_id": "content-p-content-semana-19-t03-c01",
         "owner": "Escudero Content",
         "created_at": "2026-05-06T13:23:27.175Z",
-        "updated_at": "2026-05-07T10:00:00.000Z",
+        "updated_at": "2026-05-09T22:22:38.270Z",
         "approved_at": "2026-05-06T17:46:53.856Z",
         "pending_media_at": "2026-05-06T17:56:49.785Z",
-        "media_completed_at": "2026-05-07T08:05:00.000Z"
+        "media_completed_at": "2026-05-07T08:05:00.000Z",
+        "channel_phases": {
+          "linkedin": "published",
+          "twitter": "approved"
+        }
       },
       {
         "id": "P-Content-Semana-19-T03-C02",
@@ -135,7 +139,11 @@
         "mc_chat_thread_id": "content-p-content-semana-19-t03-c02",
         "owner": "Escudero Content",
         "created_at": "2026-05-06T13:24:31.973Z",
-        "updated_at": "2026-05-06T13:24:31.975Z"
+        "updated_at": "2026-05-09T22:22:38.270Z",
+        "channel_phases": {
+          "linkedin": "clarify-needed",
+          "twitter": "clarify-needed"
+        }
       }
     ]
   },
@@ -199,7 +207,11 @@
         "mc_chat_thread_id": "content-p-content-semana-19-t04-c01",
         "owner": "Escudero Content",
         "created_at": "2026-05-07T07:27:27.665Z",
-        "updated_at": "2026-05-07T07:27:27.670Z"
+        "updated_at": "2026-05-09T22:22:38.270Z",
+        "channel_phases": {
+          "linkedin": "clarify-needed",
+          "twitter": "clarify-needed"
+        }
       },
       {
         "id": "P-Content-Semana-19-T04-C02",
@@ -243,7 +255,11 @@
         "mc_chat_thread_id": "content-p-content-semana-19-t04-c02",
         "owner": "Escudero Content",
         "created_at": "2026-05-07T07:28:06.577Z",
-        "updated_at": "2026-05-07T07:28:06.583Z"
+        "updated_at": "2026-05-09T22:22:38.271Z",
+        "channel_phases": {
+          "linkedin": "clarify-needed",
+          "twitter": "clarify-needed"
+        }
       },
       {
         "id": "P-Content-Semana-19-T04-C03",
@@ -287,7 +303,262 @@
         "mc_chat_thread_id": "content-p-content-semana-19-t04-c03",
         "owner": "Escudero Content",
         "created_at": "2026-05-07T17:47:39.380Z",
-        "updated_at": "2026-05-07T17:47:39.385Z"
+        "updated_at": "2026-05-09T22:22:38.271Z",
+        "channel_phases": {
+          "linkedin": "clarify-needed",
+          "twitter": "clarify-needed"
+        }
+      }
+    ]
+  },
+  {
+    "id": "P-Content-Semana-19-T05",
+    "name": "Contenido 2026-05-08",
+    "description": "Ideas de contenido aprobadas para 2026-05-08",
+    "type": "content",
+    "status": "in-progress",
+    "skill": "social-writer",
+    "deliverable_file": "brand/growth4u/content/published/2026-05-08.json",
+    "mc_chat_thread_id": "task-p-content-semana-19-t05",
+    "discord_thread_id": null,
+    "owner": "Escudero Content",
+    "created_at": "2026-05-08T13:00:06.175Z",
+    "idea_ids": [
+      "idea-2026-05-07-4-b"
+    ],
+    "content_tasks": [
+      {
+        "id": "P-Content-Semana-19-T05-C01",
+        "parent_task_id": "P-Content-Semana-19-T05",
+        "idea_id": "idea-2026-05-07-4-b",
+        "name": "Tu empresa no es una familia — es un equipo de campeonato",
+        "status": "Discarded",
+        "pipeline_state": "discarded",
+        "discarded_at": "2026-05-10T09:01:00.000Z",
+        "skill": "social-writer",
+        "target_channels": [
+          "linkedin",
+          "twitter"
+        ],
+        "documents": [
+          {
+            "path": "content/drafts/idea-2026-05-07-4-b/linkedin.md",
+            "name": "Linkedin",
+            "channel": "linkedin"
+          },
+          {
+            "path": "content/drafts/idea-2026-05-07-4-b/twitter.md",
+            "name": "Twitter",
+            "channel": "twitter"
+          },
+          {
+            "path": "content/drafts/idea-2026-05-07-4-b/proposal.md",
+            "name": "Proposal",
+            "channel": "proposal"
+          },
+          {
+            "path": "content/drafts/idea-2026-05-07-4-b/research.md",
+            "name": "Research",
+            "channel": "research"
+          },
+          {
+            "path": "content/drafts/idea-2026-05-07-4-b/clarify.md",
+            "name": "Clarify",
+            "channel": "clarify"
+          }
+        ],
+        "mc_chat_thread_id": "content-p-content-semana-19-t05-c01",
+        "owner": "Escudero Content",
+        "created_at": "2026-05-08T13:00:06.178Z",
+        "updated_at": "2026-05-09T22:22:38.271Z",
+        "approved_at": "2026-05-08T13:25:32.826Z",
+        "channel_phases": {
+          "linkedin": "clarify-needed",
+          "twitter": "clarify-needed"
+        }
+      }
+    ]
+  },
+  {
+    "id": "P-Content-Semana-19-T06",
+    "name": "Contenido 2026-05-08",
+    "description": "Ideas de contenido aprobadas para 2026-05-08",
+    "type": "content",
+    "status": "in-progress",
+    "skill": "social-writer",
+    "deliverable_file": "brand/growth4u/content/published/2026-05-08.json",
+    "mc_chat_thread_id": "task-p-content-semana-19-t06",
+    "discord_thread_id": null,
+    "owner": "Escudero Content",
+    "created_at": "2026-05-08T23:32:59.940Z",
+    "idea_ids": [
+      "idea-2026-04-26-7"
+    ],
+    "content_tasks": [
+      {
+        "id": "P-Content-Semana-19-T06-C01",
+        "parent_task_id": "P-Content-Semana-19-T06",
+        "idea_id": "idea-2026-04-26-7",
+        "name": "Idea idea-2026-04-26-7",
+        "status": "Approved",
+        "pipeline_state": "researching",
+        "skill": "social-writer",
+        "target_channels": [
+          "twitter",
+          "linkedin"
+        ],
+        "documents": [
+          {
+            "path": "content/drafts/idea-2026-04-26-7/twitter.md",
+            "name": "Twitter",
+            "channel": "twitter"
+          },
+          {
+            "path": "content/drafts/idea-2026-04-26-7/linkedin.md",
+            "name": "Linkedin",
+            "channel": "linkedin"
+          },
+          {
+            "path": "content/drafts/idea-2026-04-26-7/proposal.md",
+            "name": "Proposal",
+            "channel": "proposal"
+          },
+          {
+            "path": "content/drafts/idea-2026-04-26-7/research.md",
+            "name": "Research",
+            "channel": "research"
+          },
+          {
+            "path": "content/drafts/idea-2026-04-26-7/clarify.md",
+            "name": "Clarify",
+            "channel": "clarify"
+          }
+        ],
+        "mc_chat_thread_id": "content-p-content-semana-19-t06-c01",
+        "owner": "Escudero Content",
+        "created_at": "2026-05-08T23:32:59.942Z",
+        "updated_at": "2026-05-09T22:22:38.271Z",
+        "channel_phases": {
+          "twitter": "researching",
+          "linkedin": "researching"
+        }
+      }
+    ]
+  },
+  {
+    "id": "P-Content-Semana-19-T07",
+    "name": "Contenido 2026-05-10",
+    "description": "Ideas de contenido aprobadas para 2026-05-10",
+    "type": "content",
+    "status": "in-progress",
+    "skill": "social-writer",
+    "deliverable_file": "brand/growth4u/content/published/2026-05-10.json",
+    "mc_chat_thread_id": "task-p-content-semana-19-t07",
+    "discord_thread_id": null,
+    "owner": "Escudero Content",
+    "created_at": "2026-05-10T07:01:35.187Z",
+    "idea_ids": [
+      "idea-2026-05-08-2",
+      "idea-2026-05-07-2"
+    ],
+    "content_tasks": [
+      {
+        "id": "P-Content-Semana-19-T07-C01",
+        "parent_task_id": "P-Content-Semana-19-T07",
+        "idea_id": "idea-2026-05-08-2",
+        "name": "Google acaba de hacer los links en AI Overviews más clicables — y premia a los suscriptores",
+        "status": "Pending Media",
+        "channel_phases": {
+          "linkedin": "draft",
+          "twitter": "draft"
+        },
+        "skill": "social-writer",
+        "target_channels": [
+          "linkedin",
+          "twitter"
+        ],
+        "documents": [
+          {
+            "path": "content/drafts/idea-2026-05-08-2/linkedin.md",
+            "name": "Linkedin",
+            "channel": "linkedin"
+          },
+          {
+            "path": "content/drafts/idea-2026-05-08-2/twitter.md",
+            "name": "Twitter",
+            "channel": "twitter"
+          },
+          {
+            "path": "content/drafts/idea-2026-05-08-2/proposal.md",
+            "name": "Proposal",
+            "channel": "proposal"
+          },
+          {
+            "path": "content/drafts/idea-2026-05-08-2/research.md",
+            "name": "Research",
+            "channel": "research"
+          },
+          {
+            "path": "content/drafts/idea-2026-05-08-2/clarify.md",
+            "name": "Clarify",
+            "channel": "clarify"
+          }
+        ],
+        "mc_chat_thread_id": "content-p-content-semana-19-t07-c01",
+        "owner": "Escudero Content",
+        "created_at": "2026-05-10T07:01:35.189Z",
+        "updated_at": "2026-05-10T07:24:48.670Z",
+        "approved_at": "2026-05-10T07:09:45.526Z",
+        "pipeline_state": "generating-media",
+        "pending_media_at": "2026-05-10T07:24:48.670Z"
+      },
+      {
+        "id": "P-Content-Semana-19-T07-C02",
+        "parent_task_id": "P-Content-Semana-19-T07",
+        "idea_id": "idea-2026-05-07-2",
+        "name": "El 50% de buyers B2B ya empieza en un chatbot IA — un salto del 71% en 4 meses",
+        "status": "Approved",
+        "pipeline_state": "researching",
+        "channel_phases": {
+          "linkedin": "researching",
+          "twitter": "researching"
+        },
+        "skill": "social-writer",
+        "target_channels": [
+          "linkedin",
+          "twitter"
+        ],
+        "documents": [
+          {
+            "path": "content/drafts/idea-2026-05-07-2/linkedin.md",
+            "name": "Linkedin",
+            "channel": "linkedin"
+          },
+          {
+            "path": "content/drafts/idea-2026-05-07-2/twitter.md",
+            "name": "Twitter",
+            "channel": "twitter"
+          },
+          {
+            "path": "content/drafts/idea-2026-05-07-2/proposal.md",
+            "name": "Proposal",
+            "channel": "proposal"
+          },
+          {
+            "path": "content/drafts/idea-2026-05-07-2/research.md",
+            "name": "Research",
+            "channel": "research"
+          },
+          {
+            "path": "content/drafts/idea-2026-05-07-2/clarify.md",
+            "name": "Clarify",
+            "channel": "clarify"
+          }
+        ],
+        "mc_chat_thread_id": "content-p-content-semana-19-t07-c02",
+        "owner": "Escudero Content",
+        "created_at": "2026-05-10T07:02:06.303Z",
+        "updated_at": "2026-05-10T07:02:06.307Z"
       }
     ]
   }

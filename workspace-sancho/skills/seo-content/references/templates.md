@@ -16,7 +16,7 @@ Secondary: [keyword], [keyword], [keyword]
 [Pillar Guide / How-To / Comparison / Listicle / etc.]
 
 ## Target Word Count
-[Based on competitor analysis]
+[From "Beat the SERP" recommendations — beat competitor avg by 20-30%]
 
 ## Audience
 Who is searching this? What do they need?
@@ -37,8 +37,13 @@ What makes our take different?
 - [Question 3]
 
 ## Competitor Gaps to Fill
+[From Content Gap Matrix — mandatory subtopics where <50% of competitors cover them]
 - [Gap 1]
 - [Gap 2]
+- [Gap 3]
+
+## Competitive Content Audit Summary
+[Reference the "Beat the SERP" output: avg word count, depth score, dominant patterns, key weaknesses to exploit]
 
 ## Internal Links
 - Link to: [related content on site]

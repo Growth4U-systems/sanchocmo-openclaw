@@ -64,7 +64,7 @@ export const VALID_TASK_STATUSES: readonly TaskStatus[] = [
   "blocked",
   "cancelled",
 ] as const;
-export type TaskType = "content" | "outreach" | "foundation" | "research" | "analysis" | "execution" | "tool";
+export type TaskType = "content" | "outreach" | "foundation" | "research" | "analysis" | "execution" | "tool" | "media";
 
 export interface Task {
   id: string;               // "P01-T01"
@@ -174,6 +174,30 @@ export type ContentTaskPipelineState =
   | "media-review";
 
 /**
+ * Per-channel work phase tracked under `ContentTask.channel_phases`. Replaces
+ * the legacy per-draft `meta.status` frontmatter field — `tasks.json` is the
+ * single source of truth for "what phase is this channel in". Updated by the
+ * writer skill via `PATCH /api/content-engine/content-tasks` (curl from the
+ * agent prompt) and by the publishing endpoints on dispatch confirmation.
+ */
+export type ChannelPhase =
+  | "researching"
+  | "clarify-needed"
+  | "drafting"
+  | "draft"
+  | "approved"
+  | "published";
+
+export const VALID_CHANNEL_PHASES: readonly ChannelPhase[] = [
+  "researching",
+  "clarify-needed",
+  "drafting",
+  "draft",
+  "approved",
+  "published",
+] as const;
+
+/**
  * `ContentTask`: tarea anidada bajo una task `type: "content"` (la task del
  * día creada por Editorial Dispatch). Cada idea aprobada se convierte en una
  * ContentTask con su propio thread, skill y documentos (drafts).
@@ -200,6 +224,14 @@ export interface ContentTask {
   name: string;
   status: ContentTaskStatus;
   pipeline_state?: ContentTaskPipelineState;  // Visible during status === "Approved" or "Pending Media"
+  /**
+   * Per-channel work phase. Keys are channel ids from `target_channels`. The
+   * writer skill PATCHes this as it progresses (researching → clarify-needed
+   * → drafting → draft). Publishing flips entries to `approved`/`published`.
+   * Single source of truth for per-channel state — replaces the deprecated
+   * draft frontmatter `status` field.
+   */
+  channel_phases?: Record<string, ChannelPhase>;
   clarify_status?: "pending" | "answered" | "skipped";
   skill?: string;                   // social-writer | seo-content | instagram-content | newsletter — assigned at Approved
   target_channels: string[];        // ["linkedin", "twitter"] — drafts produced for these
@@ -407,7 +439,7 @@ export interface BrandSummary {
   positioning: string;
 }
 
-export interface FoundationState {
+export interface BrandBrainState {
   version: string;          // "3.0"
   started_at: string;
   updated_at: string;
@@ -415,6 +447,9 @@ export interface FoundationState {
   sections: Record<string, Section>;
   presentations: { name: string; file: string; type: string; section: string }[];
 }
+
+/** @deprecated Use BrandBrainState. Kept during rename transition. */
+export type FoundationState = BrandBrainState;
 
 // --- Client ---
 

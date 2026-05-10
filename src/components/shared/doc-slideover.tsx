@@ -5,14 +5,14 @@ import { useRouter } from "next/router";
 import dynamic from "next/dynamic";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { useFoundation } from "@/hooks/useFoundation";
+import { useBrandBrain } from "@/hooks/useBrandBrain";
 import { useProjects } from "@/hooks/useProjects";
 import { useOpenChat } from "@/hooks/useChat";
 import { findTaskThreadForDoc, buildPillarThread } from "@/lib/chat-openers";
 import { cn } from "@/lib/utils";
 
 const MarkdownEditor = dynamic(
-  () => import("@/components/foundation/markdown-editor").then((m) => m.MarkdownEditor),
+  () => import("@/components/brand-brain/markdown-editor").then((m) => m.MarkdownEditor),
   { ssr: false, loading: () => <p className="text-sm text-muted-foreground p-6">Cargando editor...</p> }
 );
 
@@ -80,7 +80,7 @@ export function DocSlideOver({ slug, docPath, onClose }: DocSlideOverProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
-  const { data: foundation, refetch: refetchFoundation } = useFoundation(slug);
+  const { data: foundation, refetch: refetchFoundation } = useBrandBrain(slug);
   const { data: projectsData } = useProjects(slug || null);
   const openChat = useOpenChat();
   const router = useRouter();
@@ -136,7 +136,7 @@ export function DocSlideOver({ slug, docPath, onClose }: DocSlideOverProps) {
   function handleOpenFull() {
     onClose();
     if (!docPath) {
-      router.push(`/dashboard/${slug}/foundation`);
+      router.push(`/dashboard/${slug}/brand-brain`);
       return;
     }
     // Convergence rule (2026-04-15): before opening the full doc viewer,
@@ -156,7 +156,7 @@ export function DocSlideOver({ slug, docPath, onClose }: DocSlideOverProps) {
         openChat(slug, config);
       }
     }
-    router.push(`/dashboard/${slug}/foundation?doc=${encodeURIComponent(docPath)}`);
+    router.push(`/dashboard/${slug}/brand-brain?doc=${encodeURIComponent(docPath)}`);
   }
 
   async function handleSave(newContent: string) {

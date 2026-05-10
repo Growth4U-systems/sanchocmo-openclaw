@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "lastGood": {
+    "anthropic": "anthropic:manual"
+  },
+  "usageStats": {
+    "anthropic:manual": {
+      "errorCount": 0,
+      "lastUsed": 1778341603205
+    }
+  }
+}

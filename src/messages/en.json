@@ -23,7 +23,6 @@
   },
   "nav": {
     "dashboard": "Dashboard",
-    "foundation": "Foundation",
     "projects": "Projects",
     "ideas": "Idea Bank",
     "recurringTasks": "Recurring Tasks",
@@ -38,7 +37,7 @@
     "settings": "Settings",
     "guide": "Guide",
     "changelog": "Changelog",
-    "documents": "Documents",
+    "brandBrain": "Brand Brain",
     "overview": "Overview",
     "work": "Work",
     "tools": "Tools",
@@ -79,9 +78,9 @@
     "metricas": "Metrics",
     "nextSteps": "Next Steps"
   },
-  "foundation": {
-    "title": "Foundation",
-    "subtitle": "Brand pillar status",
+  "brandBrain": {
+    "title": "Brand Brain",
+    "subtitle": "Your brand's strategic memory — pillars, ICPs, competitors, and all the context the system pulls from",
     "notStarted": "Not started",
     "inProgress": "In progress",
     "approved": "Approved",
@@ -99,8 +98,8 @@
     "requestRefresh": "Request refresh",
     "depth": "Depth",
     "viewDoc": "View document",
-    "depthLabel": "Foundation Depth",
-    "warningMessage": "Foundation {pct}% complete — {pending} pillars pending"
+    "depthLabel": "Brand Brain Depth",
+    "warningMessage": "Brand Brain {pct}% complete — {pending} pillars pending"
   },
   "projects": {
     "title": "Projects",

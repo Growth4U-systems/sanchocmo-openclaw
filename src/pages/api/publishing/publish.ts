@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { withErrorHandler } from "@/lib/api-middleware";
 import { loadDraft, updateDraft } from "@/lib/data/drafts";
+import { findContentTaskByIdAcrossProjects, setChannelPhase } from "@/lib/data/content-tasks";
 import { getProvider } from "@/lib/publishing/registry";
 import type { Channel } from "@/lib/publishing/types";
 import type { PublishingMeta } from "@/lib/data/drafts";
@@ -35,8 +36,21 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
   const draft = loadDraft(slug, ideaId, channel);
   if (!draft) return res.status(404).json({ error: "Draft not found" });
-  if (draft.meta.status !== "approved" && draft.meta.status !== "published") {
-    return res.status(400).json({ error: `Draft must be approved before publishing (current: ${draft.meta.status})` });
+
+  // Per-channel readiness gate: read from the CT's `channel_phases`
+  // (single source of truth). The .md frontmatter no longer carries a
+  // `status` field — `tasks.json` does.
+  const ctId = draft.meta.content_task_id;
+  let parentTaskId: string | null = null;
+  if (ctId) {
+    const found = findContentTaskByIdAcrossProjects(slug, ctId);
+    parentTaskId = found?.parentTaskId ?? null;
+    const phase = found?.ct.channel_phases?.[channel];
+    if (phase !== "approved" && phase !== "published") {
+      return res.status(400).json({
+        error: `Channel ${channel} must be in "approved" or "published" before publishing (current: ${phase ?? "unknown"})`,
+      });
+    }
   }
 
   const provider = getProvider(providerId);
@@ -91,12 +105,19 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         error: result.error || "Provider returned no error message",
       };
 
-  // Promote the top-level draft status to "published" only when the post is
-  // actually live — keeps "approved" semantics intact for scheduled posts.
-  const topStatus = finalMeta.status === "published" ? "published" : draft.meta.status;
   const updated = updateDraft(slug, ideaId, channel, {
-    meta: { publishing: finalMeta, status: topStatus },
+    meta: { publishing: finalMeta },
   });
+
+  // Promote the channel phase on the CT to "published" only when the post is
+  // actually live — keeps "approved" semantics intact for scheduled posts.
+  // setChannelPhase auto-promotes ct.status forward (to "Published" once all
+  // channels are published).
+  if (finalMeta.status === "published" && ctId && parentTaskId) {
+    try {
+      setChannelPhase(slug, parentTaskId, ctId, channel, "published");
+    } catch { /* non-fatal */ }
+  }
 
   return res.status(result.ok ? 200 : 502).json({
     ok: result.ok,

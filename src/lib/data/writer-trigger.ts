@@ -45,11 +45,39 @@ function buildThreadId(slug: string, contentTaskId: string): string {
   return `${slug}:content:${contentTaskId.toLowerCase()}`;
 }
 
+/**
+ * Build the curl one-liner the agent must run to PATCH a channel's phase on
+ * the parent ContentTask. The .md frontmatter no longer carries a `status`
+ * field — `tasks.json` (CT.channel_phases) is the single source of truth.
+ *
+ * The agent has `MC_BASE` available in env (same pattern as `content-image`).
+ * Phase values mirror `ChannelPhase` in src/types/index.ts:
+ *   researching | clarify-needed | drafting | draft | approved | published
+ */
+function curlPatchPhase(
+  input: TriggerWriterInput,
+  channels: string[],
+  phase: string,
+): string {
+  const phasesObj = channels.reduce<Record<string, string>>((acc, c) => {
+    acc[c] = phase;
+    return acc;
+  }, {});
+  const body = JSON.stringify({
+    slug: input.slug,
+    parentTaskId: input.parentTaskId,
+    id: input.contentTaskId,
+    channel_phases: phasesObj,
+  }).replace(/'/g, "'\\''");
+  return `curl -fsS -X PATCH "$MC_BASE/api/content-engine/content-tasks" -H "Content-Type: application/json" -d '${body}'`;
+}
+
 function buildMessage(input: TriggerWriterInput): string {
   const channelList = input.channelScope
     ? input.channelScope
     : input.channels.join(", ");
-  const draftPaths = (input.channelScope ? [input.channelScope] : input.channels)
+  const targetChannels = input.channelScope ? [input.channelScope] : input.channels;
+  const draftPaths = targetChannels
     .map((ch) => `  - brand/${input.slug}/content/drafts/${input.ideaId}/${ch}.md`)
     .join("\n");
   const ideaDir = `brand/${input.slug}/content/drafts/${input.ideaId}`;
@@ -81,11 +109,26 @@ function buildMessage(input: TriggerWriterInput): string {
       `   o cualquier path que no esté en la lista de arriba. Mission Control descarta`,
       `   silenciosamente cualquier write fuera de esta whitelist.`,
       ``,
-      `2. STATUS CANÓNICOS — usar EXACTAMENTE estos valores en el frontmatter:`,
-      `     status: pending | researching | clarify-needed | drafting | draft | approved | published`,
-      `     clarify_status: pending | answered | skipped`,
-      `   Cualquier otro valor (p.ej. "complete", "confirmed", "done") es RECHAZADO`,
-      `   por la API y la transición falla. Lee la lista, no inventes.`,
+      `2. PHASE REPORTING — el .md NO lleva campo \`status\`. Reportas la fase`,
+      `   por canal a tasks.json llamando a la API en cada transición:`,
+      ``,
+      `     # Al iniciar research:`,
+      `     ${curlPatchPhase(input, targetChannels, "researching")}`,
+      ``,
+      `     # Al postear las preguntas de clarify:`,
+      `     ${curlPatchPhase(input, targetChannels, "clarify-needed")}`,
+      ``,
+      `     # Al empezar a redactar (después de respuestas de clarify):`,
+      `     ${curlPatchPhase(input, targetChannels, "drafting")}`,
+      ``,
+      `     # Al terminar el draft de un canal (sustituye el canal):`,
+      `     ${curlPatchPhase(input, targetChannels.slice(0, 1), "draft")}`,
+      ``,
+      `   Phase values válidas: researching | clarify-needed | drafting | draft.`,
+      `   "approved" y "published" las pone MC, no tú. clarify_status (pending |`,
+      `   answered | skipped) sí va en el frontmatter del clarify.md.`,
+      `   Si curl falla, posteas el error en el thread y NO continúas — la fase`,
+      `   tiene que reflejarse en tasks.json antes de avanzar.`,
       ``,
       `3. FLUJO OBLIGATORIO — en este orden, sin saltos:`,
       `   a) DEEP-RESEARCH (ejecútalo tú mismo INLINE, NO spawnees subagent):`,
@@ -109,17 +152,27 @@ function buildMessage(input: TriggerWriterInput): string {
       `        (≥1 oficial), web_search 3-5x por sección EN ESPAÑOL E INGLÉS`,
       `        (no solo EN), confidence model por dato`,
       `        (\`verified\`/\`reported\`/\`inferred\`), qa-bot OBLIGATORIO en Phase 6.`,
+      `      - FORMATO del research.md = ENTREGABLE, no log de proceso. Usa la`,
+      `        "Full Document Structure" de \`skills/deep-research/references/templates.md\`:`,
+      `        Title + (Date/For/By/QA Score) → Scope Brief → Executive Summary →`,
+      `        Taxonomy/Framework → Detailed Analysis (per entity) → Key`,
+      `        Non-Obvious Finding → Recommendations → Sources Index. NUNCA uses`,
+      `        "## Phase 1: SCOPE" / "## Phase 2: SOURCE DISCOVERY" / etc. como`,
+      `        secciones — las 7 fases son tu workflow interno, NO el documento.`,
+      `        El humano lee un research, no la receta que seguiste.`,
       `      - VERIFICACIÓN antes de avanzar a (b). Los 3 archivos deben existir`,
       `        Y tener contenido válido:`,
-      `        ✓ ${ideaDir}/research.md             — con phase markers + sources`,
-      `                                                 + confidence ratings.`,
+      `        ✓ ${ideaDir}/research.md             — estructura entregable per`,
+      `                                                 templates.md, con sources`,
+      `                                                 + confidence ratings inline.`,
       `        ✓ ${ideaDir}/QA-REPORT-research.md   — con QA score numérico.`,
       `        ✓ brand/${input.slug}/intelligence/research-log.json — entrada nueva`,
       `                                                 para esta idea.`,
-      `        Si falta cualquiera, o el research.md no tiene phase markers /`,
-      `        confidence ratings, REPITE el deep-research. NO avances a Clarify`,
-      `        con un research a medias.`,
-      `      - Status de los drafts de canal mientras esta fase corre: status="researching".`,
+      `        Si falta cualquiera, o el research.md NO sigue el formato`,
+      `        entregable (Exec Summary / Taxonomy / Detailed Analysis / Sources`,
+      `        Index, con confidence ratings), REPITE el deep-research. NO`,
+      `        avances a Clarify con un research a medias o con secciones-fase.`,
+      `      - Antes de empezar deep-research, ejecuta el curl de §2 con phase="researching".`,
       `   b) Clarify → escribe ${ideaDir}/clarify.md siguiendo OBLIGATORIAMENTE`,
       `      las reglas en \`skills/_shared/clarify-by-type.md\` (lectura previa`,
       `      obligatoria). Pasos resumidos:`,
@@ -135,20 +188,26 @@ function buildMessage(input: TriggerWriterInput): string {
       `        - Antes de redactar las preguntas, lee proposal.md (angle_draft) y`,
       `          research.md. Las opciones deben empujar al humano a refinar el`,
       `          ángulo, no a aceptarlo.`,
-      `      Marca todos los drafts de canal con status="clarify-needed" y`,
-      `      clarify_status="pending". POSTEA las preguntas en este hilo y PARA.`,
+      `      Marca clarify_status="pending" en clarify.md y ejecuta el curl de §2`,
+      `      con phase="clarify-needed". POSTEA las preguntas en este hilo y PARA.`,
       `      NO empieces a redactar hasta que el humano responda y clarify_status`,
       `      pase a "answered" (o explícitamente "skipped" si no hay preguntas).`,
-      `   c) Writer → SOLO si clarify_status ∈ {answered, skipped}, sobrescribe`,
-      `      cada \`{channel}.md\` con el draft final. Frontmatter: mantén idea_id,`,
-      `      channel, content_task_id, parent_task_id; sube iteration a 1; pon`,
-      `      status="draft"; copia \`item_type\` desde clarify.md. El BODY del .md`,
-      `      es el contenido publicable completo (no resúmenes ni links a otros`,
-      `      archivos). Aplica reglas anti-AI-writing y \`[verifica cifra]\` markers`,
-      `      tal como define \`skills/_shared/clarify-by-type.md\` §6-§7. Si una`,
-      `      cifra no viene del humano (Q2 vaga) o de archivos de brand, NUNCA la`,
-      `      inventes — márcala \`[verifica cifra]\` y lístala en el resumen del`,
-      `      paso (d).`,
+      `   c) Writer → SOLO si clarify_status ∈ {answered, skipped}:`,
+      `      1) Ejecuta curl §2 con phase="drafting" para cada canal antes de empezar.`,
+      `      2) Sobrescribe cada \`{channel}.md\` con el draft final. Frontmatter:`,
+      `         mantén idea_id, channel, content_task_id, parent_task_id; sube`,
+      `         iteration a 1; copia \`item_type\` desde clarify.md. NO escribas`,
+      `         \`status:\` — ese campo ya no existe. El BODY del .md`,
+      `         es el contenido publicable completo (no resúmenes ni links a otros`,
+      `         archivos). Aplica reglas anti-AI-writing y \`[verifica cifra]\` markers`,
+      `         tal como define \`skills/_shared/clarify-by-type.md\` §6-§7. Si una`,
+      `         cifra no viene del humano (Q2 vaga) o de archivos de brand, NUNCA la`,
+      `         inventes — márcala \`[verifica cifra]\` y lístala en el resumen del`,
+      `         paso (d).`,
+      `      3) Tras escribir cada \`{channel}.md\`, ejecuta curl §2 con`,
+      `         phase="draft" para ESE canal (no para todos a la vez): el body`,
+      `         del curl debe ser channel_phases:{"<channel>":"draft"}. Así se`,
+      `         actualiza la fase por canal en tasks.json y la UI ve el progreso.`,
       `   d) Postea aquí un resumen breve (≤6 líneas) cuando termines.`,
       ``,
       `4. POV / VOICE — sigue el brand-voice del cliente si existe en foundation`,
@@ -169,15 +228,19 @@ function buildMessage(input: TriggerWriterInput): string {
     ``,
     `RESTRICCIONES:`,
     `- Solo puedes escribir en el path listado arriba.`,
-    `- Status canónicos: pending|researching|clarify-needed|drafting|draft|approved|published.`,
+    `- El .md NO lleva campo \`status\`. La fase se reporta vía PATCH a la API.`,
     `- Si necesitas más research: añade al ${ideaDir}/research.md (NO crees nuevos archivos).`,
-    `- Si necesitas más clarify: añade al ${ideaDir}/clarify.md y marca status="clarify-needed".`,
+    `- Si necesitas más clarify: añade al ${ideaDir}/clarify.md y ejecuta:`,
+    `    ${curlPatchPhase(input, targetChannels, "clarify-needed")}`,
     ``,
     `Pasos:`,
-    `1) Lee el draft actual y \`clarify_answers.iteration_request\` del frontmatter.`,
-    `2) Reescribe el body manteniendo el frontmatter y subiendo iteration en 1.`,
-    `   Pon status="draft" cuando termines.`,
-    `3) Postea aquí un breve resumen del cambio que has hecho.`,
+    `1) Antes de empezar, marca el canal como "drafting":`,
+    `   ${curlPatchPhase(input, targetChannels, "drafting")}`,
+    `2) Lee el draft actual y \`clarify_answers.iteration_request\` del frontmatter.`,
+    `3) Reescribe el body manteniendo el frontmatter (sin \`status\`) y subiendo iteration en 1.`,
+    `4) Cuando termines, marca el canal como "draft":`,
+    `   ${curlPatchPhase(input, targetChannels, "draft")}`,
+    `5) Postea aquí un breve resumen del cambio que has hecho.`,
   ].join("\n");
 }
 

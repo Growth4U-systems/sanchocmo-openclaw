@@ -1,6 +1,6 @@
 {
   "general": {
-    "lastReadTs": 1776355625837
+    "lastReadTs": 1778418636488
   },
   "task-p08-t01": {
     "lastReadTs": 1775645204992
@@ -195,7 +195,7 @@
     "lastReadTs": 1777587958779
   },
   "content-p-content-semana-18-t04-c03": {
-    "lastReadTs": 1777640857475
+    "lastReadTs": 1778328471690
   },
   "content-p-content-semana-18-t04-c05": {
     "lastReadTs": 1777528533289
@@ -231,9 +231,51 @@
     "lastReadTs": 1778138937376
   },
   "content-p-content-semana-19-t03-c01": {
-    "lastReadTs": 1778242121251
+    "lastReadTs": 1778245211142
   },
   "task-p14-t05": {
     "lastReadTs": 1778156160224
+  },
+  "content-p-content-semana-19-t05-c01": {
+    "lastReadTs": 1778397400790
+  },
+  "skill-seo-content": {
+    "lastReadTs": 1778330060767
+  },
+  "skill-deep-research": {
+    "lastReadTs": 1778398119713
+  },
+  "content-p-content-semana-19-t07-c01": {
+    "lastReadTs": 1778420665550
+  },
+  "asset-brand-book-visual-identity-visual-identity-current-md": {
+    "lastReadTs": 1778419831137
+  },
+  "asset-brand-book-visual-identity-design-tokens-json": {
+    "lastReadTs": 1778416500115
+  },
+  "asset-brand-book-visual-identity-visual-identity-guide-html": {
+    "lastReadTs": 1778416490516
+  },
+  "asset-brand-book-visual-identity-logo-light-webp": {
+    "lastReadTs": 1778416485059
+  },
+  "od-generate-8-bit-orbit-video-template-1778415902385": {
+    "lastReadTs": 1778416577262
+  },
+  "od-generate-8-bit-orbit-video-template-1778415913667": {
+    "lastReadTs": 1778416682404
+  },
+  "content-p-content-semana-19-t07-c02": {
+    "lastReadTs": 1778416606014
+  },
+  "brand-growth4u-content-drafts-idea-2026-05-08-2-linkedinmd": {
+    "lastReadTs": 1778418661174
+  },
+  "od-generate-3d-stone-staircase-evolution-infographic-1778419711746": {
+    "lastReadTs": 1778419712208
+  },
+  "asset-brand-book-visual-identity-templates-linkedin-9-slide": {
+    "lastReadTs": 1778420878260
   }
 }

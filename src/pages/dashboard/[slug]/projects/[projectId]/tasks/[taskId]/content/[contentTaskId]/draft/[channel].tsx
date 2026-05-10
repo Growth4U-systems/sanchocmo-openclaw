@@ -32,11 +32,11 @@ import { StatusStepper, STEPS } from "@/components/content/editor-v2/StatusStepp
 import { DocRail, type RailDoc, type RailOutput } from "@/components/content/editor-v2/DocRail";
 import { QAInline } from "@/components/content/editor-v2/QAInline";
 import { DocHeader } from "@/components/content/editor-v2/DocHeader";
-import { extractQaSummary } from "@/lib/data/qa-reports";
+import { extractQaSummary, parseQaReportBody } from "@/lib/data/qa-reports";
 import styles from "@/components/content/editor-v2/editor-v2.module.css";
 
 const MarkdownEditor = dynamic(
-  () => import("@/components/foundation/markdown-editor").then((m) => m.MarkdownEditor),
+  () => import("@/components/brand-brain/markdown-editor").then((m) => m.MarkdownEditor),
   { ssr: false, loading: () => <p className="text-sm text-muted-foreground p-6">Cargando editor...</p> },
 );
 
@@ -94,6 +94,12 @@ export default function DraftFullScreenPage() {
   const draftChannel = channel === "media" ? null : channel || null;
   const { data: draft, isLoading, error } = useDraft(slug, ideaId, draftChannel);
   const { data: qaReport } = useDraft(slug, ideaId, ideaId ? "QA-REPORT-research" : null);
+  // Always fetch research/clarify/proposal so QAInline can tell stub from
+  // real research, and DocRail can show the right done-state per doc —
+  // independent of which tab the user is on.
+  const { data: researchDoc } = useDraft(slug, ideaId, ideaId ? "research" : null);
+  const { data: clarifyDoc } = useDraft(slug, ideaId, ideaId ? "clarify" : null);
+  const { data: proposalDoc } = useDraft(slug, ideaId, ideaId ? "proposal" : null);
   const saveDraft = useSaveDraft();
   const updateContentTask = useUpdateContentTask();
   const updateContentTaskStatus = useUpdateContentTaskStatus();
@@ -105,7 +111,6 @@ export default function DraftFullScreenPage() {
   const openChat = useOpenChat();
 
   const [editingBody, setEditingBody] = useState(false);
-  const [bodyMode, setBodyMode] = useState<"preview" | "md">("preview");
   const [railCollapsed, setRailCollapsed] = useState(false);
   const [channelEditorOpen, setChannelEditorOpen] = useState(false);
   const [draftChannels, setDraftChannels] = useState<string[]>([]);
@@ -157,10 +162,21 @@ export default function DraftFullScreenPage() {
   }
 
   // ── Stepper handlers ─────────────────────────────────────────────────────
-  const qaParsed = useMemo(
-    () => extractQaSummary(qaReport?.meta, qaReport?.body),
-    [qaReport?.meta, qaReport?.body],
-  );
+  // Pull the QA summary from the QA-REPORT, then top up missing fields from
+  // research.md (its HTML marker `<!-- ... | fuentes: N | búsquedas: M -->`
+  // is the canonical source for those counts when qa-bot's frontmatter
+  // omits `sources:` / `searches:`).
+  const qaParsed = useMemo(() => {
+    const summary = extractQaSummary(qaReport?.meta, qaReport?.body);
+    if (!summary) return null;
+    if (summary.sources != null && summary.searches != null) return summary;
+    const fromResearch = parseQaReportBody(researchDoc?.body) || {};
+    return {
+      ...summary,
+      sources: summary.sources ?? fromResearch.sources,
+      searches: summary.searches ?? fromResearch.searches,
+    };
+  }, [qaReport?.meta, qaReport?.body, researchDoc?.body]);
 
   const approveCurrent = useCallback(() => {
     if (!ct) return;
@@ -273,18 +289,47 @@ export default function DraftFullScreenPage() {
     approveMedia.isPending;
 
   // ── Rail data ────────────────────────────────────────────────────────────
+  // The proposal/research/clarify docs are *all* attached to the ContentTask
+  // at approval time as stubs (`status: pending`), so existence alone is not
+  // a reliable "done" signal. Compute it per doc kind:
+  //   - proposal: generated complete from idea data → done as soon as it exists.
+  //   - research: done when frontmatter.status !== "pending" AND the body is
+  //     no longer the placeholder ("Pendiente. Escudero rellenará…").
+  //   - clarify:  done when clarify_status === "answered" / "skipped". The
+  //     stub shows the questions Sancho wrote, but the human still has to
+  //     answer them — that's what "done" means for clarify.
   const railDocs: RailDoc[] = useMemo(() => {
     const have = new Set(
       (ct?.documents || [])
         .filter((d) => d.channel && SPECIAL_DOCS.some((s) => s.key === d.channel))
         .map((d) => d.channel as string),
     );
+    const researchPlaceholderRe = /Pendiente\. Escudero rellenará/i;
+    // Research is "done" when the file exists with real body content. The
+    // legacy status check on the .md frontmatter is gone — phase tracking
+    // moved to ct.channel_phases (per-channel, in tasks.json) and special
+    // docs are binary "exists with real content or not".
+    const researchDone =
+      have.has("research") &&
+      typeof researchDoc?.body === "string" &&
+      researchDoc.body.trim().length >= 200 &&
+      !researchPlaceholderRe.test(researchDoc.body);
+    const clarifyStatus = clarifyDoc?.meta?.clarify_status;
+    const clarifyDone =
+      have.has("clarify") &&
+      (clarifyStatus === "answered" || clarifyStatus === "skipped");
+    const proposalDone = have.has("proposal") && !!proposalDoc;
+    const doneByKey: Record<string, boolean> = {
+      proposal: proposalDone,
+      research: !!researchDone,
+      clarify: !!clarifyDone,
+    };
     return SPECIAL_DOCS.filter((d) => d.alwaysOn || have.has(d.key)).map((d) => ({
       id: d.key,
       label: d.label,
-      done: d.alwaysOn ? false : true,
+      done: d.alwaysOn ? false : !!doneByKey[d.key],
     }));
-  }, [ct]);
+  }, [ct, researchDoc, clarifyDoc, proposalDoc]);
 
   const railOutputs: RailOutput[] = useMemo(() => {
     const channels = ct?.target_channels ?? [];
@@ -292,7 +337,7 @@ export default function DraftFullScreenPage() {
       id: c,
       label: c,
       active: c === channel,
-      live: ct?.draft_statuses?.[c] === "drafting",
+      live: ct?.channel_phases?.[c] === "drafting",
     }));
   }, [ct, channel]);
 
@@ -448,15 +493,20 @@ export default function DraftFullScreenPage() {
                 ct={ct}
                 activeDoc={channel}
                 qaReport={qaParsed}
+                researchBody={researchDoc?.body}
                 onSwitchDoc={switchChannel}
               />
 
               <DocHeader
                 title={docLabel}
                 path={docPath}
-                onEdit={() => {
-                  if (draft) setEditingBody(true);
-                }}
+                onEdit={
+                  channel === "media"
+                    ? undefined
+                    : () => {
+                        if (draft) setEditingBody(true);
+                      }
+                }
                 editLabel="Editar texto"
                 onDefer={
                   inTerminal
@@ -485,34 +535,13 @@ export default function DraftFullScreenPage() {
               />
 
 
-              {/* Mode toggle (no aplica al tab Media) */}
-              {channel !== "media" && (
-                <div className={styles.editorToolbar}>
-                  <div className={styles.modeSwitch}>
-                    <button
-                      type="button"
-                      className={bodyMode === "md" ? styles.modeActive : ""}
-                      onClick={() => setBodyMode("md")}
-                    >
-                      Markdown
-                    </button>
-                    <button
-                      type="button"
-                      className={bodyMode === "preview" ? styles.modeActive : ""}
-                      onClick={() => setBodyMode("preview")}
-                    >
-                      Preview
-                    </button>
-                  </div>
-                </div>
-              )}
-
               {/* Body */}
               <div className={styles.docInner}>
                 {channel === "media" && ideaId ? (
                   <MediaGallery
                     slug={slug}
                     ideaId={ideaId}
+                    contentTaskId={ct.id}
                     targetChannels={ct.target_channels}
                     initialChannel={(router.query.from as string) || undefined}
                   />
@@ -538,11 +567,11 @@ export default function DraftFullScreenPage() {
                   </div>
                 )}
 
-                {draft && bodyMode === "md" && (
-                  <pre className={styles.mdRaw}>{draft.body}</pre>
-                )}
-
-                {draft && bodyMode === "preview" && (
+                {/* Render the body only when there's real content. Placeholder
+                    drafts (the stub from generate-drafts.ts that just echoes
+                    the proposal/angle) are intentionally hidden — the banner
+                    above already says nothing has been written yet. */}
+                {draft && !placeholderBody && (
                   <ChannelPreview
                     channel={channel}
                     body={draft.body}

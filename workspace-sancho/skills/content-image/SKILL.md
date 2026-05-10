@@ -286,49 +286,91 @@ contrato exacto de `templateId`/`slots`/`perSlide`.
 
 ## Flujo recomendado (post-approval)
 
-> Regla de oro: **NO decidas tu el modo ni el prompt**. Pregunta al
-> usuario, propone, espera confirmacion. Esta skill orquesta una
-> conversacion, no una generacion ciega.
+> Reglas de oro:
+>
+> 1. **Las plantillas son tus herramientas, NO un menú para el usuario.**
+>    El redactor no elige `linkedin-quote` vs `linkedin-9-slide` por id.
+>    Pregunta el FORMATO (carrusel / imagen estática / header) y tú
+>    eliges la plantilla del catálogo que encaja.
+> 2. **NO decidas tu sólo el prompt o los slots.** Compón propuesta a
+>    partir del body del draft, péguela al usuario y espera "ok" antes
+>    de llamar al endpoint. Esta skill orquesta una conversación.
 
-### Step 1 — Clarify intent (obligatorio)
+### Step 1 — Clarify formato (obligatorio)
 
-Tras pasar Step 0a/0b, **pregunta al usuario que quiere** antes de
-llamar a ningun endpoint. Pega esto en el chat:
+Tras pasar Step 0a/0b, **pregunta al usuario qué FORMATO quiere**.
+Las opciones dependen del canal — propón el más habitual primero:
+
+- LinkedIn → carrusel multi-slide (default) | imagen única quote |
+  hero image
+- Instagram → carrusel | imagen | reel cover
+- Twitter/X → imagen única
+- Newsletter / Blog → header editorial (1.91:1) | hero
+- Email → header simple
+
+Pega al usuario:
 
 ```
-Voy a generar media para este draft. ¿Como prefieres?
+Voy a preparar la media para {channel}. ¿Qué formato?
 
-  1) ✨ Generar con IA (libre)
-     Te propongo un prompt basado en el body, lo afinas si quieres
-     y la IA crea la imagen. Mas creativo, menos predecible.
+  1) 🎞️ Carrusel multi-slide   ← suele funcionar mejor en {channel}
+  2) 🖼️ Imagen única (quote / hero / header)
+  3) ✨ Algo libre con IA       (sin plantilla, prompt creativo)
+  4) 📤 Lo subo yo
 
-  2) 🎨 Generar desde plantilla brandeada
-     Eliges una plantilla del catalogo de la brand (carrusel,
-     header newsletter, ad creative…) y rellenamos los slots.
-     Mas predecible, fiel al estilo de marca.
-
-  3) 📤 Tengo el archivo, lo subo yo
-     Cuando lo tengas listo, lo subes desde el editor de Media.
-
-Dime el numero o describe lo que quieres.
+Dime el número o explícame qué imaginas.
 ```
 
-Si el usuario eligio (1) → Step 2a. Si (2) → Step 2b. Si (3) → di
-"perfecto, sube desde Mission Control → tab Media → 📤 Subir asset" y
-termina.
+Mapeo formato → flujo:
+- (1) o (2) → **Step 2a** (template-driven, render-carousel).
+  Tú eliges la plantilla apropiada del catálogo. **NO** muestres ids
+  de plantillas al usuario; tú decides.
+- (3) → **Step 2b** (generate-image libre con prompt).
+- (4) → "perfecto, sube desde Mission Control → tab Media → 📤 Subir asset" y terminas.
 
-### Step 2a — Propose prompt y confirm (Modo 1)
+### Step 2a — Render desde plantilla (template-driven)
 
-Antes de llamar a `generate-image`:
+1. Lista las plantillas del manifest filtradas por canal:
+   `GET /api/content-engine/carousel-templates?slug={slug}&channel={channel}`.
+2. Si la lista está vacía → redirige al thread del
+   `[brand]-visual-generator` (T07) sin generar nada. NO improvises HTML.
+3. **Tú** eliges la plantilla que encaja con el formato pedido en
+   Step 1 (carrusel / imagen única / etc.). Ejemplo: para LinkedIn
+   carrusel, elige una con `slideCount > 1`; para "imagen quote" en
+   LinkedIn, `linkedin-quote` (1 slide).
+4. Lee el body del draft con
+   `GET /api/content-engine/drafts?slug={slug}&ideaId={ideaId}&channel={channel}`
+   y compón los slots:
+   - Mapear el ángulo principal del post → slot `title` / `quote` / `kicker`.
+   - Si el carrusel es multi-slide, distribuir el body en bloques: cover
+     (gancho), body slides (puntos clave del post), cta (cierre / link).
+   - Respetar `slot.maxLength` recortando con criterio editorial, no
+     truncando a la fuerza.
+5. **Antes de renderizar**, péguele al usuario la propuesta completa:
 
-1. Lee el body del draft (`GET /api/content-engine/drafts?...`). El
-   prompt debe estar inspirado en el contenido real del post, no en
-   un placeholder generico.
-2. Compone un prompt usando:
-   - El angulo del post (titulo, hot take, cifra clave).
-   - El `prompt_prefix` del manifest (estilo de marca).
-   - Ratio sugerido segun canal (LinkedIn 1.91:1, Instagram 1:1,
-     newsletter 1.91:1, X 16:9).
+```
+Voy a usar la plantilla **{nombre legible de la plantilla}** ({slideCount} slide{s}).
+Te propongo estos textos:
+
+  · {slot1.label}: "{valor}"
+  · {slot2.label}: "{valor}"
+  · …
+
+¿Lanzo el render, o ajusto algo? (responde "ok", "cambia el título
+por X", o reescribe los slots como prefieras).
+```
+
+6. Solo cuando confirme, llama `POST /api/content-engine/render-carousel`
+   con `{slug, ideaId, channel, templateId, slots, perSlide}`.
+
+### Step 2b — Generate libre con IA (sin plantilla)
+
+Para cuando el usuario explícitamente pide algo "libre", "fuera de
+plantilla", o el formato no encaja con ninguna del catálogo:
+
+1. Lee el body del draft (paso 4 de Step 2a).
+2. Compón un prompt usando el ángulo del post + `prompt_prefix` del
+   manifest + ratio del canal (LinkedIn 1.91:1, IG 1:1, etc.).
 3. Pega al usuario la propuesta:
 
 ```
@@ -338,47 +380,22 @@ Te propongo este prompt para la imagen:
 
 Provider: {provider} · ratio: {ratio} · modelo: {model}
 
-¿Lanzo asi, o lo ajusto? (responde "ok", "cambia X" o
+¿Lanzo así, o lo ajusto? (responde "ok", "cambia X" o
 pega el prompt que prefieras)
 ```
 
-4. Solo cuando el usuario confirme (`ok`, `dale`, `lanza`, o un
-   prompt editado), llamas a `generate-image`. NUNCA llames sin
-   confirmacion explicita.
-
-### Step 2b — Pick template y confirm (Modo 3)
-
-1. Lista las plantillas del manifest filtradas por canal del draft.
-2. Pega al usuario:
-
-```
-Plantillas disponibles para {channel}:
-
-  · {id1} — {name1} ({slideCount} slides)
-  · {id2} — {name2}
-  ...
-
-¿Cual? (id) Y luego dime los slots:
-  · {slot1.label}: ?
-  · {slot2.label}: ?
-  ...
-```
-
-3. Cuando tengas template + slots, llamas a `render-carousel`.
-
-Si el manifest no tiene plantillas → redirige al thread del
-`[brand]-visual-generator` (T07). NO improvises.
+4. Solo cuando confirme, llama `POST /api/content-engine/generate-image`.
 
 ### Step 3 — Persist y report
 
-Tras llamar al endpoint:
+Tras llamar al endpoint (`render-carousel` o `generate-image`):
 
-- Si `200`: pega la URL al chat tal cual ("Lista, aqui esta:
+- Si `200`: pega la URL al chat tal cual ("Lista, aquí está:
   {url}") + el thumbnail si el chat lo permite. Pregunta "¿OK o
-  regenero con otro prompt?".
-- Si NO `200`: comunica el error literal del response al usuario.
-  NO digas que se hizo. Sugiere accion (reintentar, cambiar
-  provider, ajustar prompt, subir asset manual).
+  ajusto algo?".
+- Si NO `200`: comunica el error literal del response. NO digas que
+  se hizo. Sugiere acción (reintentar, cambiar provider, ajustar
+  slots, subir asset manual).
 
 ## Errores frecuentes
 

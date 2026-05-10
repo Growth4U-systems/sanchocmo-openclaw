@@ -88,6 +88,13 @@ export interface ThreadConfig {
   threadState: "create" | "continue" | undefined;
   /** Optional message to send immediately when the thread opens. */
   initialMessage?: string;
+  /**
+   * When set, forces the gateway to dispatch this thread to a specific agent
+   * (e.g. `"maese-pedro"` for Media Creation skills) instead of falling back
+   * to the default agent (Sancho). The gateway's mc-chat plugin must honor
+   * this field — see send.ts where it's forwarded.
+   */
+  agent?: string;
 }
 
 /** Agent display config for message rendering */
@@ -96,6 +103,7 @@ export const MC_CHAT_AGENTS: Record<string, { emoji: string; label: string; colo
   escudero: { emoji: "⚔️", label: "Escudero", color: "#22A06B" },
   rocinante: { emoji: "🐴", label: "Rocinante", color: "#3B9EBF" },
   cervantes: { emoji: "✒️", label: "Cervantes", color: "#9B59B6" },
+  "maese-pedro": { emoji: "🎭", label: "Maese Pedro", color: "#D4548F" },
 };
 
 /**
@@ -632,7 +640,7 @@ export function buildPillarThread(
     threadName: pillarKey.replace(/-/g, " "),
     skill: resolved.skill,
     skills: resolved.skills,
-    linkedTo: `foundation/${pillarKey}`,
+    linkedTo: `brand-brain/${pillarKey}`,
     docPath: docPath || pillarCfg?.docPath || null,
     threadState: "continue",
   };
@@ -703,6 +711,81 @@ export function buildTrustEngineModuleThread(
     docPath: `brand/${slug}/trust-engine/${moduleFile}`,
     threadState: "continue",
     initialMessage: moduleContexts[moduleId] || `Estoy revisando ${moduleName} del Trust Engine para ${slug}. Analiza los datos y dime las conclusiones clave.`,
+  };
+}
+
+// ============================================================
+// Media Creation — chats con Maese Pedro
+// ============================================================
+
+/** Build thread config for Maese Pedro on a specific brand asset (file or directory). */
+export function buildMediaAssetThread(
+  slug: string,
+  assetRelativePath: string,
+  assetName: string,
+  kind: "template" | "mockup" | "logo" | "style-reference" | "export" | "design-md" | "tokens" | "preview" | "misc",
+): ThreadConfig {
+  // Sanitize for thread id
+  const safe = assetRelativePath.toLowerCase().replace(/[^a-z0-9-]+/g, "-").replace(/^-|-$/g, "");
+  const threadId = `${slug}:asset:${safe}`;
+  const skill = kind === "design-md" || kind === "tokens" ? "design-system" : "od-refine";
+  return {
+    threadId,
+    threadName: `🎨 ${assetName}`,
+    skill,
+    skills: [skill, "od-generate", "od-export"],
+    linkedTo: `media-creation/asset/${assetRelativePath}`,
+    docPath: `brand/${slug}/${assetRelativePath}`,
+    threadState: "continue",
+    agent: "maese-pedro",
+    initialMessage: `Estoy mirando el asset "${assetName}" (\`${assetRelativePath}\`, kind=${kind}). Dame un resumen y las opciones de refinamiento.`,
+  };
+}
+
+/** Build thread config for chatting with Maese Pedro about Visual Identity (whole brand DESIGN.md). */
+export function buildVisualIdentityChatThread(
+  slug: string,
+  block?: string,
+): ThreadConfig {
+  const blockSafe = block ? block.toLowerCase().replace(/[^a-z0-9-]+/g, "-") : "all";
+  const threadId = `${slug}:visual-identity:${blockSafe}`;
+  return {
+    threadId,
+    threadName: block ? `🎨 Visual Identity — ${block}` : "🎨 Visual Identity",
+    skill: "design-system",
+    skills: ["design-system", "od-generate"],
+    linkedTo: `media-creation/visual-identity/${blockSafe}`,
+    docPath: `brand/${slug}/brand-book/visual-identity/DESIGN.md`,
+    threadState: "continue",
+    agent: "maese-pedro",
+    initialMessage: block
+      ? `Quiero ajustar la sección "${block}" del Visual Identity. ¿Qué opciones tengo?`
+      : "Hablemos del Visual Identity del brand. ¿Por dónde empezamos?",
+  };
+}
+
+/** Build thread config for "use OD upstream skill on this brand" — generation request. */
+export function buildOdGenerateThread(
+  slug: string,
+  upstreamSkillId: string,
+  upstreamSkillName: string,
+  designSystemId?: string,
+): ThreadConfig {
+  const safe = upstreamSkillId.toLowerCase().replace(/[^a-z0-9-:]+/g, "-");
+  const dsTag = designSystemId ? `:ds-${designSystemId}` : "";
+  const threadId = `${slug}:od-generate:${safe}${dsTag}:${Date.now()}`;
+  return {
+    threadId,
+    threadName: `🎨 ${upstreamSkillName}${designSystemId ? ` × ${designSystemId}` : ""}`,
+    skill: "od-generate",
+    skills: ["od-generate", "od-refine", "od-export"],
+    linkedTo: `media-creation/od/${upstreamSkillId}`,
+    docPath: null,
+    threadState: "create",
+    agent: "maese-pedro",
+    initialMessage: `Genera un asset usando la skill upstream "${upstreamSkillId}"${
+      designSystemId ? ` aplicando el design system "${designSystemId}"` : " con el DESIGN.md del brand"
+    }. Pídeme los inputs que necesites antes de empezar.`,
   };
 }
 

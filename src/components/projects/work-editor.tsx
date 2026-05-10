@@ -56,6 +56,7 @@ const TASK_TYPE_OPTIONS = [
   { value: "execution", label: "⚙️ Execution" },
   { value: "content", label: "📝 Content" },
   { value: "outreach", label: "📤 Outreach" },
+  { value: "media", label: "🎨 Media" },
   { value: "foundation", label: "🏗️ Foundation" },
   { value: "research", label: "🔬 Research" },
   { value: "analysis", label: "📊 Analysis" },

@@ -147,7 +147,17 @@
       "news-2026-04-26-014"
     ],
     "created_at": "2026-04-26T07:30:00Z",
-    "status": "New"
+    "status": "Approved",
+    "approved_at": "2026-05-08T23:32:59.715Z",
+    "approved_via": "slack-button",
+    "approved_by": "alfonso",
+    "project_task_id": "P-Content-Semana-19-T06",
+    "project_id": "P-Content-Semana-19",
+    "content_task_id": "P-Content-Semana-19-T06-C01",
+    "content_task_channels": [
+      "twitter",
+      "linkedin"
+    ]
   },
   {
     "id": "idea-2026-04-28-1",
@@ -857,7 +867,11 @@
       "news-2026-05-06-001"
     ],
     "created_at": "2026-05-06T05:00:00Z",
-    "status": "New"
+    "status": "New",
+    "dispatch_date": "2026-05-06",
+    "dispatch_slot": "linkedin",
+    "project_task_id": "P-Content-Semana-19-T03",
+    "project_id": "P-Content-Semana-19"
   },
   {
     "id": "idea-2026-05-06-2",
@@ -891,7 +905,9 @@
     "content_task_channels": [
       "linkedin",
       "twitter"
-    ]
+    ],
+    "dispatch_date": "2026-05-06",
+    "dispatch_slot": "linkedin"
   },
   {
     "id": "idea-2026-05-06-3",
@@ -916,7 +932,11 @@
       "news-2026-05-06-003"
     ],
     "created_at": "2026-05-06T05:00:00Z",
-    "status": "New"
+    "status": "New",
+    "dispatch_date": "2026-05-06",
+    "dispatch_slot": "linkedin",
+    "project_task_id": "P-Content-Semana-19-T03",
+    "project_id": "P-Content-Semana-19"
   },
   {
     "id": "idea-2026-05-06-4",
@@ -965,7 +985,11 @@
       "news-2026-05-06-005"
     ],
     "created_at": "2026-05-06T05:00:00Z",
-    "status": "New"
+    "status": "New",
+    "dispatch_date": "2026-05-06",
+    "dispatch_slot": "linkedin",
+    "project_task_id": "P-Content-Semana-19-T03",
+    "project_id": "P-Content-Semana-19"
   },
   {
     "id": "idea-2026-05-06-6",
@@ -1038,7 +1062,9 @@
     "content_task_channels": [
       "linkedin",
       "twitter"
-    ]
+    ],
+    "dispatch_date": "2026-05-06",
+    "dispatch_slot": "linkedin"
   },
   {
     "id": "idea-2026-05-06-8",
@@ -1259,7 +1285,9 @@
     "content_task_channels": [
       "linkedin",
       "twitter"
-    ]
+    ],
+    "dispatch_date": "2026-05-07",
+    "dispatch_slot": "linkedin"
   },
   {
     "id": "idea-2026-05-07-2",
@@ -1284,7 +1312,18 @@
       "news-2026-05-07-002"
     ],
     "created_at": "2026-05-07T05:00:00Z",
-    "status": "New"
+    "status": "Approved",
+    "dispatch_date": "2026-05-07",
+    "dispatch_slot": "linkedin",
+    "project_task_id": "P-Content-Semana-19-T07",
+    "project_id": "P-Content-Semana-19",
+    "approved_at": "2026-05-10T07:02:06.268Z",
+    "approved_via": "mc-ui",
+    "content_task_id": "P-Content-Semana-19-T07-C02",
+    "content_task_channels": [
+      "linkedin",
+      "twitter"
+    ]
   },
   {
     "id": "idea-2026-05-07-3",
@@ -1309,7 +1348,11 @@
       "news-2026-05-07-003"
     ],
     "created_at": "2026-05-07T05:00:00Z",
-    "status": "New"
+    "status": "New",
+    "dispatch_date": "2026-05-07",
+    "dispatch_slot": "linkedin",
+    "project_task_id": "P-Content-Semana-19-T04",
+    "project_id": "P-Content-Semana-19"
   },
   {
     "id": "idea-2026-05-07-4",
@@ -1343,7 +1386,9 @@
     "content_task_channels": [
       "linkedin",
       "twitter"
-    ]
+    ],
+    "dispatch_date": "2026-05-07",
+    "dispatch_slot": "linkedin"
   },
   {
     "id": "idea-2026-05-07-5",
@@ -1502,7 +1547,16 @@
       "creators-2026-05-07-rs01"
     ],
     "created_at": "2026-05-07T07:07:00+02:00",
-    "status": "New"
+    "status": "Approved",
+    "approved_at": "2026-05-08T13:00:05.984Z",
+    "approved_via": "mc-ui",
+    "project_task_id": "P-Content-Semana-19-T05",
+    "project_id": "P-Content-Semana-19",
+    "content_task_id": "P-Content-Semana-19-T05-C01",
+    "content_task_channels": [
+      "linkedin",
+      "twitter"
+    ]
   },
   {
     "id": "idea-2026-05-07-5-b",
@@ -1590,7 +1644,11 @@
       "news-2026-05-08-001"
     ],
     "created_at": "2026-05-08T05:00:00Z",
-    "status": "New"
+    "status": "New",
+    "dispatch_date": "2026-05-08",
+    "dispatch_slot": "linkedin",
+    "project_task_id": "P-Content-Semana-19-T05",
+    "project_id": "P-Content-Semana-19"
   },
   {
     "id": "idea-2026-05-08-2",
@@ -1614,7 +1672,16 @@
       "news-2026-05-08-002"
     ],
     "created_at": "2026-05-08T05:00:00Z",
-    "status": "New"
+    "status": "Approved",
+    "approved_at": "2026-05-10T07:01:34.952Z",
+    "approved_via": "mc-ui",
+    "project_task_id": "P-Content-Semana-19-T07",
+    "project_id": "P-Content-Semana-19",
+    "content_task_id": "P-Content-Semana-19-T07-C01",
+    "content_task_channels": [
+      "linkedin",
+      "twitter"
+    ]
   },
   {
     "id": "idea-2026-05-08-3",
@@ -1639,7 +1706,11 @@
       "news-2026-05-08-003"
     ],
     "created_at": "2026-05-08T05:00:00Z",
-    "status": "New"
+    "status": "New",
+    "dispatch_date": "2026-05-08",
+    "dispatch_slot": "linkedin",
+    "project_task_id": "P-Content-Semana-19-T05",
+    "project_id": "P-Content-Semana-19"
   },
   {
     "id": "idea-2026-05-08-4",
@@ -1663,7 +1734,11 @@
       "news-2026-05-08-004"
     ],
     "created_at": "2026-05-08T05:00:00Z",
-    "status": "New"
+    "status": "New",
+    "dispatch_date": "2026-05-08",
+    "dispatch_slot": "linkedin",
+    "project_task_id": "P-Content-Semana-19-T05",
+    "project_id": "P-Content-Semana-19"
   },
   {
     "id": "idea-2026-05-08-5",
@@ -1688,7 +1763,11 @@
       "news-2026-05-08-005"
     ],
     "created_at": "2026-05-08T05:00:00Z",
-    "status": "New"
+    "status": "New",
+    "dispatch_date": "2026-05-08",
+    "dispatch_slot": "linkedin",
+    "project_task_id": "P-Content-Semana-19-T05",
+    "project_id": "P-Content-Semana-19"
   },
   {
     "id": "idea-2026-05-08-6",
@@ -1809,7 +1888,11 @@
       "creators-2026-05-08-mv01"
     ],
     "created_at": "2026-05-08T05:10:00Z",
-    "status": "New"
+    "status": "New",
+    "dispatch_date": "2026-05-08",
+    "dispatch_slot": "linkedin",
+    "project_task_id": "P-Content-Semana-19-T05",
+    "project_id": "P-Content-Semana-19"
   },
   {
     "id": "idea-2026-05-08-10",

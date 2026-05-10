@@ -224,7 +224,7 @@ export function CarouselSetupEditor({ slug }: { slug: string }) {
                 const isActive = enabledSet.has(t.id);
                 const entryFile = t.slideCount > 1 ? "slide-cover.html" : "template.html";
                 const docPath = `brand/${slug}/brand-book/visual-identity/templates/${t.id}/${entryFile}`;
-                const editorHref = `/dashboard/${slug}/foundation?doc=${encodeURIComponent(docPath)}`;
+                const editorHref = `/dashboard/${slug}/brand-brain?doc=${encodeURIComponent(docPath)}`;
                 return (
                   <div
                     key={t.id}

@@ -13,11 +13,16 @@ interface QAInlineProps {
   ct: ContentTask;
   /** Parsed QA report (only present when the QA-REPORT-research file exists). */
   qaReport: QAReportData | null;
+  /** research.md body — used to detect the placeholder text
+   *  ("Pendiente. Escudero rellenará...") and to gauge real content presence. */
+  researchBody?: string;
   /** Currently-open doc — only used to hide the "Ver reporte" link when already on research. */
   activeDoc?: string;
   /** Switch to the research tab when the user clicks "Ver reporte". */
   onSwitchDoc: (docId: string) => void;
 }
+
+const RESEARCH_PLACEHOLDER_RE = /Pendiente\. Escudero rellenará/i;
 
 /**
  * Always-visible quality strip. Reports the state of research + QA for *this*
@@ -28,8 +33,25 @@ interface QAInlineProps {
  *   running — status Approved + pipeline_state "researching" → spinner.
  *   empty   — no research at all → "Sin research aún".
  */
-export function QAInline({ ct, qaReport, activeDoc, onSwitchDoc }: QAInlineProps) {
-  const researchDone = (ct.documents || []).some((d) => d.channel === "research");
+export function QAInline({
+  ct,
+  qaReport,
+  researchBody,
+  activeDoc,
+  onSwitchDoc,
+}: QAInlineProps) {
+  // The research file is attached to the ContentTask the moment the idea is
+  // approved (see generate-drafts.ts → createSpecialDoc), so the existence of
+  // a `research` document is NOT a signal that Sancho has actually done any
+  // research. Signal now: body no longer contains the placeholder line and
+  // has substantive content.
+  const hasResearchDoc = (ct.documents || []).some((d) => d.channel === "research");
+  const isStub =
+    !researchBody ||
+    typeof researchBody !== "string" ||
+    researchBody.trim().length < 200 ||
+    RESEARCH_PLACEHOLDER_RE.test(researchBody);
+  const researchDone = hasResearchDoc && !isStub;
 
   // ── scored ───────────────────────────────────────────────────────────────
   if (researchDone && qaReport && typeof qaReport.score === "number") {

@@ -5,8 +5,16 @@ import type { MediaAsset } from "@/lib/data/drafts";
 import { ImagePreview } from "@/components/media-editor/ImagePreview";
 import { AiImageSidebar } from "@/components/media-editor/AiImageSidebar";
 import { UploadedSidebar } from "@/components/media-editor/UploadedSidebar";
-import { TemplateRenderBody } from "@/components/media-editor/TemplateRenderBody";
 import { TemplateEditBody } from "@/components/media-editor/TemplateEditBody";
+
+/** Navigation info for stepping through a sibling media[] array.
+ *  Only applies to image kinds; template-edit ignores it. */
+export interface MediaNav {
+  index: number;          // 0-based position of the current asset
+  total: number;          // siblings count (>= 2 for nav to make sense)
+  onPrev: () => void;     // wrap-around or disabled at boundaries — caller decides
+  onNext: () => void;
+}
 
 export type AssetDescriptor =
   | {
@@ -17,6 +25,7 @@ export type AssetDescriptor =
       media: MediaAsset;
       isPrimary: boolean;
       onAfterRegenerate?: (newUrl: string) => void;
+      nav?: MediaNav;
     }
   | {
       kind: "uploaded";
@@ -25,13 +34,7 @@ export type AssetDescriptor =
       channel: string;
       media: MediaAsset;
       isPrimary: boolean;
-    }
-  | {
-      kind: "template-render";
-      slug: string;
-      ideaId: string;
-      channel: string;
-      templateId: string;
+      nav?: MediaNav;
     }
   | {
       kind: "template-edit";
@@ -52,26 +55,51 @@ interface MediaEditorProps {
  *  - preview (flex-1, right) — depends on asset.kind
  *
  * Used from two places:
- *  - Foundation → click "Editar" on a template doc → kind: "template-edit"
- *  - Content Editor → tab Media:
- *      · click on existing image thumbnail → kind: "ai-image" | "uploaded"
- *      · "Generar desde plantilla" → picker → kind: "template-render"
+ *  - Foundation → click "Editar" on a template doc → kind: "template-edit".
+ *    For brand authors who maintain templates (slot test + HTML editor).
+ *  - Content Editor → tab Media → click image thumbnail
+ *    → kind: "ai-image" | "uploaded".
+ *
+ * Templates are NEVER exposed to redactors as a fillable form. When a
+ * redactor wants media, they ask Sancho in chat; Sancho picks the right
+ * template internally and renders via render-carousel.
  */
 export function MediaEditor({ asset, onClose }: MediaEditorProps) {
-  // ESC closes; click on the overlay (outside the card) closes.
+  const nav =
+    asset.kind === "ai-image" || asset.kind === "uploaded" ? asset.nav : undefined;
+
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") {
+        onClose();
+        return;
+      }
+      if (!nav) return;
+      // Don't intercept arrows while the user is typing in the sidebar
+      // (prompt textarea, slot inputs, code editor).
+      const tag = (e.target as HTMLElement | null)?.tagName?.toLowerCase();
+      if (tag === "input" || tag === "textarea") return;
+      if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        nav.onPrev();
+      } else if (e.key === "ArrowRight") {
+        e.preventDefault();
+        nav.onNext();
+      }
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
+  }, [onClose, nav]);
 
   const header = renderHeader(asset);
 
   return (
     <div
-      className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
+      // z-[1000] sits above DashboardLayout's sidebar/header (anything below
+      // 1000) and the chat sidebar (`z-50`). The portal-friendly fixed inset
+      // ensures we cover the whole viewport regardless of where the trigger
+      // was rendered.
+      className="fixed inset-0 z-[1000] bg-black/80 flex items-center justify-center p-4"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
@@ -114,16 +142,16 @@ export function MediaEditor({ asset, onClose }: MediaEditorProps) {
                 />
               )}
             </aside>
-            <ImagePreview media={asset.media} />
+            <div className="relative flex-1 flex flex-col min-h-0">
+              <ImagePreview media={asset.media} />
+              {nav && nav.total > 1 && (
+                <>
+                  <NavArrow direction="prev" onClick={nav.onPrev} />
+                  <NavArrow direction="next" onClick={nav.onNext} />
+                </>
+              )}
+            </div>
           </div>
-        ) : asset.kind === "template-render" ? (
-          <TemplateRenderBody
-            slug={asset.slug}
-            ideaId={asset.ideaId}
-            channel={asset.channel}
-            templateId={asset.templateId}
-            onClose={onClose}
-          />
         ) : (
           <TemplateEditBody
             slug={asset.slug}
@@ -154,19 +182,11 @@ function renderHeader(asset: AssetDescriptor) {
         <span className="text-[10px] text-muted-foreground font-mono ml-2">
           {asset.media.type}
         </span>
-      </div>
-    );
-  }
-  if (asset.kind === "template-render") {
-    return (
-      <div className="flex items-center gap-2 min-w-0">
-        <span className="text-base">🎨</span>
-        <span className="font-semibold text-sm text-[#2C3E50] truncate">
-          Plantilla · {asset.templateId}
-        </span>
-        <span className="text-[10px] text-muted-foreground ml-2">
-          aplicar al canal <code>{asset.channel}</code>
-        </span>
+        {asset.nav && asset.nav.total > 1 && (
+          <span className="text-[10px] text-muted-foreground font-mono ml-2">
+            {asset.nav.index + 1} / {asset.nav.total}
+          </span>
+        )}
       </div>
     );
   }
@@ -180,5 +200,28 @@ function renderHeader(asset: AssetDescriptor) {
         {asset.htmlDocPath.split("/").pop()}
       </span>
     </div>
+  );
+}
+
+function NavArrow({
+  direction,
+  onClick,
+}: {
+  direction: "prev" | "next";
+  onClick: () => void;
+}) {
+  const isPrev = direction === "prev";
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={isPrev ? "Anterior" : "Siguiente"}
+      title={`${isPrev ? "Anterior" : "Siguiente"} (${isPrev ? "←" : "→"})`}
+      className={`absolute top-1/2 -translate-y-1/2 ${
+        isPrev ? "left-3" : "right-3"
+      } w-10 h-10 rounded-full bg-black/50 hover:bg-black/70 text-white text-xl grid place-items-center transition-colors`}
+    >
+      {isPrev ? "‹" : "›"}
+    </button>
   );
 }

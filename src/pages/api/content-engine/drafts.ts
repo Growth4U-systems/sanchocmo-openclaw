@@ -15,10 +15,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { withErrorHandler } from "@/lib/api-middleware";
 import { loadDraft, listDrafts, updateDraft } from "@/lib/data/drafts";
-import {
-  maybePromoteContentTaskFromDrafts,
-  maybePromoteContentTaskFromMedia,
-} from "@/lib/data/content-tasks";
+import { maybePromoteContentTaskFromMedia } from "@/lib/data/content-tasks";
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
   const slug = (req.query.slug || req.body?.slug) as string;
@@ -44,18 +41,14 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     try {
       const updated = updateDraft(slug, ideaId, channel, { meta, body });
 
-      // Reactive promotion: if the saved draft is linked to a ContentTask,
-      // re-evaluate the CT's overall status against ALL its channels'
-      // frontmatter statuses and bump it (Draft → Review → Ready → Published).
-      // Also re-check the media pipeline_state so any drafts.PATCH that
-      // mutates `media[]` (uploads, deletes, migrations) flips
-      // `generating-media` ↔ `media-review` correctly without needing the
-      // dedicated upload-media / delete-media endpoints.
+      // Re-check the media pipeline_state so any drafts.PATCH that mutates
+      // `media[]` (uploads, deletes, migrations) flips `generating-media` ↔
+      // `media-review` correctly without needing the dedicated upload-media
+      // / delete-media endpoints. The CT.status / channel_phases are owned
+      // by the writer skill (PATCH content-tasks) — drafts.ts no longer
+      // promotes the CT from frontmatter inference.
       const ctId = updated.meta.content_task_id;
       if (ctId) {
-        try {
-          maybePromoteContentTaskFromDrafts(slug, ctId);
-        } catch { /* non-fatal */ }
         try {
           maybePromoteContentTaskFromMedia(slug, ctId);
         } catch { /* non-fatal */ }

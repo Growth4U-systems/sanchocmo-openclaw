@@ -23,7 +23,7 @@ import path from "path";
 import { withErrorHandler } from "@/lib/api-middleware";
 import { BASE } from "@/lib/data/paths";
 import { loadDraft, snapshotDraft, updateDraft } from "@/lib/data/drafts";
-import { maybePromoteContentTaskFromDrafts } from "@/lib/data/content-tasks";
+import { findContentTaskByIdAcrossProjects, setChannelPhase } from "@/lib/data/content-tasks";
 
 interface ChatMessage {
   role: "user" | "assistant" | "system";
@@ -74,15 +74,20 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         ...(draft.meta.clarify_answers || {}),
         iteration_request: instruction,
       },
-      status: "drafting",
     },
   });
 
-  // Reactive promotion: re-evaluate the CT's overall status now that one
-  // channel has gone back to drafting (this can demote Review → Draft).
+  // Move this channel back to "drafting" on the CT. setChannelPhase only
+  // ratchets forward, so if the CT was in "Draft" / "Pending Media" the
+  // channel_phases entry is updated but ct.status stays put — re-iterating
+  // a single channel must NOT silently demote the whole CT. Re-iteration
+  // is a per-channel concern; the human triggers status moves explicitly.
   if (updated.meta.content_task_id) {
     try {
-      maybePromoteContentTaskFromDrafts(slug, updated.meta.content_task_id);
+      const found = findContentTaskByIdAcrossProjects(slug, updated.meta.content_task_id);
+      if (found?.parentTaskId) {
+        setChannelPhase(slug, found.parentTaskId, updated.meta.content_task_id, channel, "drafting");
+      }
     } catch { /* non-fatal */ }
   }
 

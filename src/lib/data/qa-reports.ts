@@ -53,10 +53,14 @@ export function parseQaReportBody(body: string | null | undefined): QaSummary | 
   const SOURCE_RES = [
     /\*\*\s*fuentes\s*:?\s*\*\*\s*(\d+)/i,
     /→\s*(\d+)\s+fuentes/i,
+    /\((\d+)\s*\/\s*\d+\s+sourced\)/i,
     /(?<![≥≤<>=\d])(\d+)\s+fuentes/i,
     /fuentes?\s*[:=]\s*(\d+)/i,
-    // English fallbacks (legacy reports)
-    /total\s+unique\s+sources\s*\|\s*(\d+)/i,
+    // English fallbacks (legacy reports). The table form is
+    // `| Total unique sources | 5/5 | 14 (≥10 required) |` — the count we
+    // care about is in the *third* column (the "Nota"), not the second
+    // (which is a M/N rubric score). Skip the score column explicitly.
+    /total\s+unique\s+sources\s*\|[^|]+\|\s*(\d+)/i,
     /(?<![≥≤<>=\d])(\d+)\s+unique\s+sources/i,
     /(?<![≥≤<>=\d])(\d+)\s+sources/i,
   ];
@@ -88,22 +92,23 @@ export function parseQaReportBody(body: string | null | undefined): QaSummary | 
 }
 
 /**
- * Read a QA summary from a loaded report. Trusts the frontmatter when
- * present; falls back to body parsing otherwise. Returns null only when both
- * paths come up empty.
+ * Read a QA summary from a loaded report. Merges frontmatter (authoritative)
+ * with body parsing as a per-field fallback — qa-bot frontmatters in the wild
+ * sometimes carry `score` but omit `sources`/`searches`, even when the body
+ * has them ("**Fuentes:** N", "14/14 sourced", or the
+ * `<!-- ... | fuentes: N | búsquedas: M -->` HTML marker on research.md).
+ * Returns null only when nothing was found anywhere.
  */
 export function extractQaSummary(
   meta: unknown,
   body: string | null | undefined,
 ): QaSummary | null {
   const fm = (meta && typeof meta === "object" ? meta : {}) as QaReportFrontmatter;
-  if (typeof fm.score === "number") {
-    return {
-      score: fm.score,
-      sources: typeof fm.sources === "number" ? fm.sources : undefined,
-      searches: typeof fm.searches === "number" ? fm.searches : undefined,
-      verdict: fm.verdict,
-    };
-  }
-  return parseQaReportBody(body);
+  const fromBody = parseQaReportBody(body) || {};
+  const score = typeof fm.score === "number" ? fm.score : fromBody.score;
+  const sources = typeof fm.sources === "number" ? fm.sources : fromBody.sources;
+  const searches = typeof fm.searches === "number" ? fm.searches : fromBody.searches;
+  const verdict = fm.verdict;
+  if (score == null && sources == null && searches == null && !verdict) return null;
+  return { score, sources, searches, verdict };
 }

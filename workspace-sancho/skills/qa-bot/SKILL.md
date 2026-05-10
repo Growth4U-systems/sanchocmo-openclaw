@@ -118,9 +118,12 @@ machine-readable summary used by Mission Control (and any other tool that wants
 to surface "QA score 8.5 · 19 fuentes · 12 búsquedas" without scraping the
 report body). The body underneath is for humans.
 
-Required frontmatter fields: `kind`, `target`, `verdict`, `score`. Other fields
-are optional but include them when applicable. **Numbers must be numbers, not
-strings** — write `score: 8.5`, not `score: "8.5/10"`.
+Required frontmatter fields: `kind`, `target`, `verdict`, `score`. **`sources`
+and `searches` are required when verifying a research/report doc** (anything
+with cited material) — Mission Control's QA strip shows "8.5 · — fuentes" if
+they're missing, which makes it look like the QA was sloppy. Only omit them if
+genuinely N/A (e.g. QA'ing a strategy plan with no sources). **Numbers must be
+numbers, not strings** — write `score: 8.5`, not `score: "8.5/10"`.
 
 ```markdown
 ---

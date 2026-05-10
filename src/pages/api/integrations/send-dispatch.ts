@@ -182,7 +182,13 @@ async function postToSlack(
   blocks: unknown[],
   threadTs?: string,
 ): Promise<{ ok: boolean; error?: string; ts?: string }> {
-  const body: Record<string, unknown> = { channel: channelId, text, blocks };
+  const body: Record<string, unknown> = {
+    channel: channelId,
+    text,
+    blocks,
+    unfurl_links: false,
+    unfurl_media: false,
+  };
   if (threadTs) body.thread_ts = threadTs;
   const res = await fetch("https://slack.com/api/chat.postMessage", {
     method: "POST",
@@ -312,6 +318,39 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
     const errors = results.filter((r) => !r.ok).map((r) => `${r.channel}: ${r.error}`);
     const messagesSent = results.filter((r) => r.ok).length;
+
+    // Persist dispatch metadata back onto the dispatched ideas. Without this,
+    // dispatch_date stays null and the UI's "Solo HOY" filter / downstream
+    // analytics never know what was sent today. Only mark ideas in channels
+    // where the Slack post actually succeeded.
+    if (messagesSent > 0) {
+      const today = new Date().toISOString().slice(0, 10);
+      const dispatchedIds = new Set<string>();
+      for (const r of results) {
+        if (!r.ok) continue;
+        for (const idea of byChannel.get(r.channel) || []) {
+          dispatchedIds.add(idea.id);
+        }
+      }
+      if (dispatchedIds.size > 0) {
+        try {
+          const queuePath = path.join(BASE, "brand", slug, "content", "idea-queue.json");
+          const fullQueue = JSON.parse(fs.readFileSync(queuePath, "utf-8")) as Array<Record<string, unknown> & { id: string; target_channel?: string }>;
+          let mutated = false;
+          for (const idea of fullQueue) {
+            if (!dispatchedIds.has(idea.id)) continue;
+            idea.dispatch_date = today;
+            idea.dispatch_slot = idea.target_channel || null;
+            if (taskId) idea.project_task_id = taskId;
+            if (projectId) idea.project_id = projectId;
+            mutated = true;
+          }
+          if (mutated) fs.writeFileSync(queuePath, JSON.stringify(fullQueue, null, 2));
+        } catch (e) {
+          console.error("[send-dispatch] persisting dispatch metadata failed:", (e as Error).message);
+        }
+      }
+    }
 
     // Activity log — Editorial Dispatch enviado
     if (messagesSent > 0) {

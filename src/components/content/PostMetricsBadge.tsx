@@ -1,8 +1,9 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import type { PostMetricsSnapshot } from "@/lib/data/drafts";
 
-interface PostMetrics {
+interface PostMetricsLegacy {
   impressions: number;
   likes: number;
   clicks: number;
@@ -13,25 +14,34 @@ interface PostMetrics {
 }
 
 /**
- * Engagement snapshot for a published post. Reads from the daily Metricool
- * metrics files via `/api/publishing/post-metrics`. The metrics-collector
- * cron writes those files; this component is just a viewer.
+ * Engagement snapshot for a published post.
  *
- * Renders nothing if the post hasn't been measured yet (e.g. published
- * minutes ago and the cron hasn't run since). Surfaces "sin métricas
- * todavía — el cron diario las recoge" only when explicitly told to via
- * `verbose`.
+ * Source priority:
+ *   1. `metrics` prop — when the calendar event already carries the
+ *      `publishing.metrics` snapshot from the draft frontmatter (the new
+ *      flow). Fast: zero network calls.
+ *   2. `/api/publishing/post-metrics` lookup against the daily metrics
+ *      files (legacy fallback for drafts published before the cron started
+ *      writing snapshots into the frontmatter).
+ *
+ * Both paths render the same UI. Renders nothing if no metrics found
+ * unless `verbose` is set, in which case it shows the "still being
+ * measured" message.
  */
 export function PostMetricsBadge({
   slug,
   externalUrl,
+  metrics,
   verbose = false,
 }: {
   slug: string;
   externalUrl: string | null | undefined;
+  metrics?: PostMetricsSnapshot;
   verbose?: boolean;
 }) {
-  const { data, isLoading } = useQuery<{ ok: true; found: boolean; metrics?: PostMetrics }>({
+  const hasFrontmatter = !!metrics;
+
+  const { data, isLoading } = useQuery<{ ok: true; found: boolean; metrics?: PostMetricsLegacy }>({
     queryKey: ["publishing", "post-metrics", slug, externalUrl],
     queryFn: async () => {
       const qs = new URLSearchParams({ slug, externalUrl: externalUrl! });
@@ -39,14 +49,35 @@ export function PostMetricsBadge({
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       return res.json();
     },
-    enabled: !!externalUrl,
+    // Skip the API hit when we already have fresh metrics in the frontmatter.
+    enabled: !!externalUrl && !hasFrontmatter,
     staleTime: 5 * 60_000,
     retry: false,
   });
 
   if (!externalUrl) return null;
-  if (isLoading) return null;
-  if (!data?.found || !data.metrics) {
+
+  // Normalize the two shapes into a common viewmodel.
+  const view = metrics
+    ? {
+        impressions: metrics.impressions,
+        likes: metrics.likes,
+        clicks: metrics.clicks,
+        engagement: metrics.engagement_pct,
+        measured_at: metrics.measured_at,
+      }
+    : data?.found && data.metrics
+      ? {
+          impressions: data.metrics.impressions,
+          likes: data.metrics.likes,
+          clicks: data.metrics.clicks,
+          engagement: data.metrics.engagement,
+          measured_at: data.metrics.measured_at,
+        }
+      : null;
+
+  if (!view) {
+    if (isLoading) return null;
     if (!verbose) return null;
     return (
       <p className="text-[11px]" style={{ color: "var(--sc-fg-muted)" }}>
@@ -55,8 +86,7 @@ export function PostMetricsBadge({
     );
   }
 
-  const m = data.metrics;
-  const measuredDate = new Date(m.measured_at).toLocaleDateString("es-ES", {
+  const measuredDate = new Date(view.measured_at).toLocaleDateString("es-ES", {
     day: "numeric",
     month: "short",
   });
@@ -70,15 +100,15 @@ export function PostMetricsBadge({
         <span className="font-heading uppercase text-[10px] tracking-wider" style={{ color: "var(--sc-fg-muted)" }}>
           Engagement (Metricool)
         </span>
-        <span className="font-mono text-[10px]" style={{ color: "var(--sc-fg-muted)" }} title={m.measured_at}>
+        <span className="font-mono text-[10px]" style={{ color: "var(--sc-fg-muted)" }} title={view.measured_at}>
           medido {measuredDate}
         </span>
       </div>
       <div className="grid grid-cols-4 gap-2">
-        <Stat label="Impresiones" value={m.impressions} />
-        <Stat label="Likes" value={m.likes} />
-        <Stat label="Clicks" value={m.clicks} />
-        <Stat label="Eng %" value={m.engagement.toFixed(1)} />
+        <Stat label="Impresiones" value={view.impressions} />
+        <Stat label="Likes" value={view.likes} />
+        <Stat label="Clicks" value={view.clicks} />
+        <Stat label="Eng %" value={view.engagement.toFixed(1)} />
       </div>
     </div>
   );

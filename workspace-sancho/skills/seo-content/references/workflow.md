@@ -20,17 +20,12 @@ before beginning research:
 
 ### SERP Analysis
 
-Search the target keyword using web search tools and analyze the top 5 results.
+Search the target keyword using `web_search` and analyze the **top 10 results**.
 
 **For each result, capture:**
+- Position (1-10)
 - Title and URL
 - Content type (guide, listicle, tool page, etc.)
-- Approximate word count
-- Structure (headers, sections)
-- Unique angles or data
-- What they do well
-- What they miss or get wrong
-- How recent (publish/update date)
 - Domain type (major publication, niche site, personal blog)
 
 **Extract from SERP features:**
@@ -45,17 +40,11 @@ Search the target keyword using web search tools and analyze the top 5 results.
 
   SERP ANALYSIS: "{target keyword}"
 
-  Top 5 results:
+  Top 10 results:
   ├── 1. {Title} -- {domain}
-  │      {content type}, ~{N} words, {date}
-  │      Angle: {their angle}
-  │      Gap: {what they miss}
-  │
   ├── 2. {Title} -- {domain}
-  │      ...
-  │
-  └── 5. {Title} -- {domain}
-         ...
+  ├── ...
+  └── 10. {Title} -- {domain}
 
   ──────────────────────────────────────────────
 
@@ -66,6 +55,115 @@ Search the target keyword using web search tools and analyze the top 5 results.
   └── AI Overview         {present/absent, summary}
 
   ──────────────────────────────────────────────
+```
+
+After presenting the SERP results, proceed immediately to the Competitive Content Audit.
+
+---
+
+### Competitive Content Audit
+
+This is the core differentiator of Phase 1. After identifying the top 10 SERP results,
+download and deeply analyze each competitor's content to build an evidence-based
+brief for creating superior content.
+
+#### Step 1: Fetch Competitor Articles
+
+For each of the top 10 URLs from SERP Analysis:
+
+1. Use `web_fetch(url, extractMode="markdown")` to download the full article content
+2. If a URL fails (paywall, JS-only, 403), log it and skip — aim for at least 7/10
+3. Store each article's extracted content for analysis
+
+**Timeout/error handling:**
+- If `web_fetch` fails on a URL, retry once. If still fails, skip and note in the audit.
+- If fewer than 5 articles are successfully fetched, flag to the user and ask whether to proceed with partial data.
+
+#### Step 2: Per-Article Analysis
+
+For each successfully fetched article, evaluate:
+
+| Dimension | What to capture |
+|-----------|----------------|
+| **Structure** | H1, all H2s/H3s (list them), section flow, total sections |
+| **Word count** | Actual word count from fetched content |
+| **Depth** | Surface-level overview vs. deep tactical detail? Score 1-5 |
+| **Data & evidence** | Statistics cited, studies referenced, original data, named examples |
+| **Unique angle** | What perspective or approach makes this article different? |
+| **E-E-A-T signals** | Author bio, credentials, personal experience, case studies, expert quotes |
+| **Visual elements** | Images, tables, diagrams, videos, infographics (mention if present) |
+| **Internal/External links** | Count and quality of links |
+| **CTA & monetization** | What's the conversion goal? How aggressive? |
+| **Freshness** | Last updated date (if visible), recency of data cited |
+| **Weaknesses** | What's missing, outdated, generic, or poorly explained? |
+
+#### Step 3: Content Gap Matrix
+
+Build a matrix showing which subtopics/questions each competitor covers:
+
+```
+  CONTENT GAP MATRIX: "{target keyword}"
+
+  Subtopic / Question          | #1 | #2 | #3 | #4 | #5 | #6 | #7 | #8 | #9 | #10 | OURS
+  ─────────────────────────────┼────┼────┼────┼────┼────┼────┼────┼────┼────┼─────┼─────
+  {subtopic 1}                 | ✓  | ✓  | ✗  | ✓  | ✗  | ✓  | ✗  | ✓  | ✗  | ✓   | ✓
+  {subtopic 2}                 | ✗  | ✓  | ✓  | ✗  | ✓  | ✗  | ✓  | ✗  | ✓  | ✗   | ✓
+  {PAA question 1}             | ✗  | ✗  | ✓  | ✗  | ✗  | ✗  | ✗  | ✗  | ✗  | ✗   | ✓
+  {data/stats}                 | ✓  | ✗  | ✗  | ✗  | ✗  | ✗  | ✗  | ✗  | ✗  | ✗   | ✓
+  {case study / example}       | ✗  | ✗  | ✗  | ✗  | ✗  | ✗  | ✗  | ✗  | ✗  | ✗   | ✓
+
+  Legend: ✓ = covered  ✗ = missing  ○ = shallow mention
+
+  Key gaps (nobody covers well):
+  ├── {gap 1} — {why it matters}
+  ├── {gap 2} — {why it matters}
+  └── {gap 3} — {why it matters}
+```
+
+#### Step 4: "Beat the SERP" Recommendations
+
+Synthesize the audit into actionable recommendations for the draft:
+
+```
+  BEAT THE SERP: "{target keyword}"
+
+  ──────────────────────────────────────────────
+
+  COMPETITOR SUMMARY
+  ├── Articles analyzed:     {N}/10
+  ├── Avg word count:        {N} words
+  ├── Min/Max word count:    {min} — {max}
+  ├── Avg depth score:       {N}/5
+  └── Dominant content type: {type}
+
+  ──────────────────────────────────────────────
+
+  WHAT THE TOP ARTICLES DO WELL
+  (steal these patterns)
+  ├── {pattern 1} — seen in {N}/10 articles
+  ├── {pattern 2} — seen in {N}/10 articles
+  └── {pattern 3} — seen in {N}/10 articles
+
+  ──────────────────────────────────────────────
+
+  WHERE THEY ALL FAIL
+  (our opportunity)
+  ├── {weakness 1} — {how we exploit it}
+  ├── {weakness 2} — {how we exploit it}
+  └── {weakness 3} — {how we exploit it}
+
+  ──────────────────────────────────────────────
+
+  OUR CONTENT MUST INCLUDE
+  (non-negotiable based on audit)
+  ├── Target word count:    {N}+ words (beat avg by 20-30%)
+  ├── Mandatory subtopics:  {list from gap matrix where <50% cover it}
+  ├── Data advantage:       {specific stats/studies to include that competitors lack}
+  ├── Structure edge:       {format recommendation based on what's winning}
+  ├── E-E-A-T play:         {specific experience/expertise to showcase}
+  └── Unique angle:         {the perspective nobody is taking}
+
+  ──────────────────────────────────────────────
 
   OPPORTUNITY ASSESSMENT
 
@@ -74,6 +172,11 @@ Search the target keyword using web search tools and analyze the top 5 results.
 
   ──────────────────────────────────────────────
 ```
+
+The "Beat the SERP" recommendations feed directly into Phase 2 (Content Brief) and Phase 3 (Outline).
+The Content Brief MUST reference specific audit findings. The Outline MUST include all mandatory subtopics identified.
+
+---
 
 ### People Also Ask Integration
 
@@ -112,7 +215,10 @@ These become mandatory sections in your content.
 
 ### Gap Analysis
 
-After reviewing competitors and PAA, identify:
+This is now covered by the Competitive Content Audit (Step 3: Content Gap Matrix + Step 4: Beat the SERP).
+The audit produces a comprehensive, evidence-based gap analysis from real competitor content.
+
+If the Competitive Content Audit was skipped (e.g., no web access), fall back to conceptual gap analysis:
 
 1. **What is missing?** — Questions unanswered, angles unexplored
 2. **What is outdated?** — Old information, deprecated methods
@@ -351,7 +457,7 @@ Triggered when existing content file found, or user says "refresh"/"update".
 1. **Read existing article** — Load frontmatter and content
 2. **Re-run SERP analysis** — Search target keyword again
 3. **Compare SERP state** — Using `serp_snapshot_date` from frontmatter:
-   - New competitors in top 5?
+   - New competitors in top 10?
    - New PAA questions not covered?
    - Featured Snippet format changes?
    - New content angles appearing?

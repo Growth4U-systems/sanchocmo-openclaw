@@ -140,6 +140,7 @@ const TASK_TYPE_OPTIONS = [
   { value: "execution", label: "Execution" },
   { value: "content", label: "Content" },
   { value: "outreach", label: "Outreach" },
+  { value: "media", label: "Media" },
   { value: "foundation", label: "Foundation" },
   { value: "research", label: "Research" },
   { value: "analysis", label: "Analysis" },
@@ -883,12 +884,12 @@ function ContentTasksSection({
     for (const col of CONTENT_TASK_KANBAN_COLUMNS) map[col.key] = [];
     const archived: ContentTask[] = [];
     for (const ct of contentTasks) {
-      // Prefer draft_statuses (per-channel, source of truth for editorial
+      // Prefer channel_phases (per-channel, source of truth for editorial
       // workflow) when present; fall back to ct.status (legacy/empty CTs).
-      const aggDraft = aggregateDraftStatus(ct.draft_statuses);
+      const aggPhase = aggregateDraftStatus(ct.channel_phases as Record<string, string> | undefined);
       let colKey: string | undefined;
-      if (aggDraft) {
-        colKey = DRAFT_STATUS_TO_COLUMN[aggDraft];
+      if (aggPhase) {
+        colKey = DRAFT_STATUS_TO_COLUMN[aggPhase];
       } else {
         colKey = CONTENT_TASK_KANBAN_COLUMNS.find((c) => c.statuses.includes(ct.status))?.key;
       }
@@ -977,7 +978,7 @@ function ContentTasksSection({
                             {ct.target_channels?.length ? (
                               <div className="flex items-center gap-1 flex-wrap mt-1">
                                 {ct.target_channels.map((c) => {
-                                  const dstatus = ct.draft_statuses?.[c];
+                                  const dstatus = ct.channel_phases?.[c];
                                   const dstyle = dstatus
                                     ? DRAFT_STATUS_STYLES[dstatus] ||
                                       "bg-[#F1F2F4] text-[#5C6470] border-[#D8DCE0]"

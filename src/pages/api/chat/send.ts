@@ -22,6 +22,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     threadState,
     docPath,
     attachments,
+    agent,
   } = req.body;
 
   if (!slug || !text) {
@@ -55,6 +56,10 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     attachments: parsedAttachments,
     isAdmin,
     senderRole,
+    // Force routing: when the thread carries an `agent` field, the gateway
+    // dispatches to that agent (e.g. maese-pedro for Media Creation skills)
+    // instead of falling back to the default agent.
+    agent: typeof agent === "string" ? agent : undefined,
   };
 
   try {

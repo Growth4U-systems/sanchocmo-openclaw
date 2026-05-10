@@ -601,7 +601,7 @@ function ScheduleConfirmModal({
   const busy = publish.isPending || cancel.isPending;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center" onClick={onClose}>
+    <div className="fixed inset-0 z-[1000] flex items-center justify-center" onClick={onClose}>
       <div className="absolute inset-0 bg-black/40" />
       <div
         className="relative w-full max-w-md rounded-sc-lg border-[3px] p-5"
@@ -744,7 +744,7 @@ function PostPreviewSlideOver({
   const sv = item.kind === "scheduled" ? STATUS_VISUAL[item.event.status] || STATUS_VISUAL.scheduled : null;
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-end" onClick={onClose}>
+    <div className="fixed inset-0 z-[1000] flex justify-end" onClick={onClose}>
       <div className="absolute inset-0 bg-black/30" />
       <div
         className="relative w-full max-w-[560px] h-full bg-card flex flex-col border-l-[3px]"
@@ -814,7 +814,12 @@ function PostPreviewSlideOver({
                 ✓ Ver post publicado ↗
               </a>
               {item.event.status === "published" && (
-                <PostMetricsBadge slug={slug} externalUrl={item.event.external_url} verbose />
+                <PostMetricsBadge
+                  slug={slug}
+                  externalUrl={item.event.external_url}
+                  metrics={item.event.metrics}
+                  verbose
+                />
               )}
             </>
           )}

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { SlotsForm } from "@/components/media-editor/TemplateRenderBody";
+import { SlotsForm } from "@/components/media-editor/SlotsForm";
 import { TemplatePreview } from "@/components/media-editor/TemplatePreview";
 import { useTemplateMeta } from "@/components/media-editor/useTemplateMeta";
 

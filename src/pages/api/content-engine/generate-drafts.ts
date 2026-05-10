@@ -184,6 +184,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     target_channels: channels,
     status: "Approved",
     pipeline_state: "researching",
+    channel_phases: Object.fromEntries(channels.map((c) => [c, "researching" as const])),
   });
 
   // 3. Create one draft markdown file per channel and attach to ContentTask.
@@ -202,7 +203,6 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         kind: "channel-draft",
         content_task_id: contentTask.id,
         parent_task_id: taskId,
-        status: "pending",
         iteration: 0,
         clarify_status: "pending",
       },

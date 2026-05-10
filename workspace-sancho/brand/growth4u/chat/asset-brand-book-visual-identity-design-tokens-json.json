@@ -1,0 +1,16 @@
+{
+  "messages": [
+    {
+      "role": "user",
+      "text": "Estoy mirando el asset \"design-tokens\" (`brand-book/visual-identity/design-tokens.json`, kind=tokens). Dame un resumen y las opciones de refinamiento.",
+      "ts": 1778415724676
+    },
+    {
+      "role": "bot",
+      "text": "Aquí tienes el resumen:\n\n**🎨 Design Tokens — Growth4U v1.0** (aprobado 2026-03-08)\n\n**Colores** — 6 primarios (navy→royal→electric→sky→teal→purple) + 4 neutrales. 3 gradientes: brand (navy→royal→teal), logo (teal→electric→purple), accent-bar.\n\n**Tipografía** — Manrope (headings, 600-800) + Roboto (body, 400-500). 9 estilos definidos desde display (56px) hasta meta (14px). Mínimos: 24px en social, 16px desktop, 14px móvil.\n\n**Spacing** — Escala de 8 valores (8px→80px).\n\n**Radii** — 7 niveles (4px→pill→round).\n\n**Sombras** — 6 variantes: cards, elevated, text-on-dark, logo-on-dark, teal-glow, purple-glow.\n\n**Ilustración** — Clean Line Art Editorial, thin consistent line weight, acentos en teal/purple/sky. Reglas: nunca mezclar foto+ilustración, un personaje por imagen.\n\n**Logo** — Growth4U / G4U, con reglas de color por fondo (white, gradient, teal).\n\n**Social sizes** — LinkedIn (post 1080×1350, carousel 1200×628), Instagram (1080², story 1080×1920), Blog header (1200×630).\n\n---\n\n**Opciones de refinamiento:**\n\n:::ask\n{\"id\":\"q_refine\",\"prompt\":\"¿Qué quieres refinar de los design tokens?\",\"mode\":\"multi\",\"options\":[{\"id\":\"colors\",\"label\":\"🎨 Colores — ajustar paleta, añadir/quitar colores, cambiar usos\"},{\"id\":\"typography\",\"label\":\"🔤 Tipografía — cambiar fuentes, pesos, escala\"},{\"id\":\"spacing\",\"label\":\"📐 Spacing/Radii — ajustar escala de espaciado o bordes\"},{\"id\":\"shadows\",\"label\":\"💫 Sombras — modificar efectos de sombra/glow\"},{\"id\":\"illustration\",\"label\":\"✏️ Ilustración — cambiar estilo, reglas, acentos\"},{\"id\":\"logo\",\"label\":\"🏷️ Logo — actualizar reglas de color/tamaño\"},{\"id\":\"social\",\"label\":\"📱 Social sizes — cambiar dimensiones de formatos\"},{\"id\":\"dark_mode\",\"label\":\"🌙 Añadir modo oscuro completo (no solo ilustración)\"},{\"id\":\"motion\",\"label\":\"⚡ Añadir tokens de motion/animación\"},{\"id\":\"other\",\"label\":\"Otro (lo escribo)\"}]}\n:::",
+      "ts": 1778415758426,
+      "agent": "sancho"
+    }
+  ],
+  "updatedAt": 1778415758426
+}

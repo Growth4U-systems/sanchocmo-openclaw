@@ -1,4 +1,4 @@
-# Deep Research — The 7 Phases
+# Deep Research - The 7 Phases
 
 Each phase produces an artifact. Never skip a phase. The output of each feeds the next.
 
@@ -19,7 +19,7 @@ Define exactly what we're researching before touching any source.
 |-------|---------------------|
 | **Research question** | How do Spanish banks handle overdrafts? Opt-in vs tacit? |
 | **For whom** | Mauricio (Monzo Spain GTM) |
-| **Entities to cover** | All major retail banks in Spain (ING, BBVA, CaixaBank, N26…) |
+| **Entities to cover** | All major retail banks in Spain (ING, BBVA, CaixaBank, N26...) |
 | **Data points per entity** | Model type, activation, limits, costs, grace period, sources |
 | **"Complete" means** | Every bank with >1M customers in Spain covered |
 | **Output format** | Markdown report with executive summary + bank-by-bank breakdown |
@@ -29,7 +29,7 @@ Define exactly what we're researching before touching any source.
 
 - If user hasn't specified scope clearly, ask with `AskUserQuestion` before proceeding.
 - Write scope as a 3-5 line brief at the top of the working document.
-- **Scope defines the stopping criteria** — without it, research never ends.
+- **Scope defines the stopping criteria** - without it, research never ends.
 
 ---
 
@@ -40,9 +40,9 @@ Find ALL relevant sources before extracting any data. See [sources.md](sources.m
 ### Search Strategy
 
 Run **minimum 5 different search queries** per section, varying:
-- **Language** — Spanish + English for Spain topics
-- **Angle** — product name, regulatory term, comparison term, consumer forum
-- **Source type** — official sites, comparison platforms, regulators, news, forums
+- **Language** - Spanish + English for Spain topics
+- **Angle** - product name, regulatory term, comparison term, consumer forum
+- **Source type** - official sites, comparison platforms, regulators, news, forums
 
 ### Output
 
@@ -50,7 +50,7 @@ Run **minimum 5 different search queries** per section, varying:
 
 **Minimum 10 sources** before proceeding. If <10, run more search queries.
 
-### Phase 2b: SOCIAL PULSE (Conditional — `last30days`)
+### Phase 2b: SOCIAL PULSE (Conditional - `last30days`)
 
 **Activate when** the research topic has social/community dimension, recency matters, or user sentiment is relevant.
 
@@ -73,15 +73,19 @@ Run **minimum 5 different search queries** per section, varying:
 
 ## Phase 3: DATA EXTRACTION
 
-Extract structured data from each source.
+Extract structured data from each source. **Save everything to the raw/ folder.**
 
 ### Process
 
-1. Open each source (`WebFetch` or `WebSearch` for key claims)
-2. Extract data points matching the scope definition
-3. Use **consistent field structure** across all entities
-4. Note source URL for EVERY data point
-5. Mark confidence: `verified` (official source) / `reported` (secondary) / `inferred` (deduced)
+1. **Create `{topic}-raw/` folder** in the research directory
+2. Save scope brief to `{topic}-raw/scope.md`
+3. Save source inventory to `{topic}-raw/sources-inventory.md`
+4. Open each source (`WebFetch` or `WebSearch` for key claims)
+5. **Save each extract** to `{topic}-raw/extracts/{source-slug}.md` — include URL, date accessed, and raw extracted content
+6. Extract data points matching the scope definition
+7. Use **consistent field structure** across all entities
+8. Note source URL for EVERY data point
+9. Mark confidence: `verified` (official source) / `reported` (secondary) / `inferred` (deduced)
 
 ### Rules
 
@@ -89,6 +93,7 @@ Extract structured data from each source.
 - When sources conflict, note BOTH versions and flag for Phase 6 (QA).
 - Extract raw data first — don't synthesize yet.
 - For numerical data: always note the date/year.
+- **All raw data lives in `{topic}-raw/`.** The final document will synthesize this, not reproduce it.
 
 ---
 
@@ -106,9 +111,9 @@ Create the organizing structure that makes the data intelligible.
 ### Example (from Overdrafts research)
 
 The data revealed **3 models**, not the assumed 2:
-1. **Opt-In** (customer activates) — ING, N26, Openbank
-2. **Opt-Out** (bank activates, customer can disable) — BBVA
-3. **Pure Tacit** (no control) — Santander, Sabadell, etc.
+1. **Opt-In** (customer activates) - ING, N26, Openbank
+2. **Opt-Out** (bank activates, customer can disable) - BBVA
+3. **Pure Tacit** (no control) - Santander, Sabadell, etc.
 
 ### Output
 
@@ -122,15 +127,33 @@ The framework should **surprise the reader** with a non-obvious insight. If it j
 
 ---
 
-## Phase 5: DETAILED ANALYSIS
+## Phase 5: DETAILED ANALYSIS — WRITING THE DOCUMENT
 
-Entity-by-entity deep breakdown using the framework. See [templates.md](templates.md) for exact templates (per-entity + full document structure).
+This is where you write the **final analytical document**. See [templates.md](templates.md) for structure and examples.
+
+### Mindset Shift
+
+Phases 1-4 were about COLLECTING and ORGANIZING. Phase 5 is about WRITING FOR A READER.
+
+The output is a **document that explains the topic**, not a log of what you found. Think of it as writing an analyst report, a magazine deep-dive, or a consulting deliverable. The reader doesn't care about your process — they care about understanding the topic.
+
+### Process
+
+1. Save framework notes to `{topic}-raw/framework-notes.md`
+2. Write the document following the template in [templates.md](templates.md)
+3. Write in **analytical prose**: context → findings → analysis → implications
+4. Integrate data INTO the narrative (not as standalone tables/lists)
+5. Tables are tools within the prose, not the main content
+6. Every section answers "so what?" — not just "what did I find?"
 
 ### Rules
 
-- Every entity gets the **same template** structure (no entity gets less coverage than another).
+- **PROSE FIRST** — The document reads as a coherent narrative, not a data dump.
+- Every entity gets the **same depth** of analysis (symmetric coverage).
 - Executive summary must be standalone — readable without the detail sections.
 - Include a "Recommendations" section with actionable takeaways for the stakeholder.
+- **Sources go ONLY in the References section at the end** — cited inline as [N].
+- **NEVER include**: list of searches performed, process narration, source inventories as content, raw extracts, internal notes. All that lives in `{topic}-raw/`.
 
 ---
 
@@ -149,7 +172,7 @@ Entity-by-entity deep breakdown using the framework. See [templates.md](template
    - Compare against the document
    - Produce a QA Report with confidence score
 
-### After QA — Verdict thresholds
+### After QA - Verdict thresholds
 
 See [quality.md](quality.md) for detailed thresholds.
 
@@ -175,8 +198,11 @@ Save to `01-business/clients/[client]/research/` (or `brand/{slug}/{pilar}/curre
 
 | File | Content |
 |------|---------|
-| `[topic]-analysis.md` | The full detailed analysis |
+| `[topic]-analysis.md` | The final analytical document (prose, for the reader) |
+| `[topic]-raw/` | All raw data, extracts, source inventory, framework notes |
 | `QA-REPORT-[topic]-analysis.md` | The QA verification report |
+
+**Verificación final:** antes de entregar, relee el documento como si fueras el lector. Si ves listas de fuentes como contenido principal, narración de pasos, o "busqué X e Y" — reescribe esas secciones como prosa analítica.
 
 ### Versionado (caso Foundation)
 

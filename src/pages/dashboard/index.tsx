@@ -9,7 +9,7 @@ import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { useAppStore } from "@/stores/app";
 import { useGlobalStats } from "@/hooks/useDashboardStats";
 import { useClients } from "@/hooks/useClients";
-import { useFoundation } from "@/hooks/useFoundation";
+import { useBrandBrain } from "@/hooks/useBrandBrain";
 import { StatCard } from "@/components/shared/stat-card";
 import { ComicCard } from "@/components/shared/comic-card";
 import { ProgressBar } from "@/components/shared/progress-bar";
@@ -215,7 +215,7 @@ function ClientCard({
   phase: number;
   onClick: () => void;
 }) {
-  const { data: foundation } = useFoundation(slug);
+  const { data: foundation } = useBrandBrain(slug);
 
   // Mini foundation stats
   let fApproved = 0;
@@ -338,7 +338,7 @@ function ClientDashboardV2({ slug }: { slug: string }) {
           <div className="flex items-center justify-between px-5 py-3 border-b border-border bg-muted/20">
             <span className="text-xs font-bold">{"🏢"} {t("brandSnapshot")}</span>
             <Link
-              href={`/dashboard/${slug}/foundation`}
+              href={`/dashboard/${slug}/brand-brain`}
               className="text-[10px] font-semibold text-rust hover:underline"
             >
               {t("brandSnapshot")} {"→"}

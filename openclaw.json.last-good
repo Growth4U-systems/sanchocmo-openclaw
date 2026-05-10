@@ -1,7 +1,7 @@
 {
   "meta": {
     "lastTouchedVersion": "2026.5.7",
-    "lastTouchedAt": "2026-05-08T11:13:32.314Z"
+    "lastTouchedAt": "2026-05-10T07:14:12.930Z"
   },
   "env": {
     "GEMINI_API_KEY": "AIzaSyAehBHbdBleoL0vSkd5PTsrtVZ5lw_kRa0",
@@ -137,6 +137,17 @@
         "model": {
           "primary": "minimax/MiniMax-M2.7"
         }
+      },
+      {
+        "id": "maese-pedro",
+        "name": "maese-pedro",
+        "workspace": "/Users/ragi/.openclaw/workspace-maese-pedro",
+        "agentDir": "/Users/ragi/.openclaw/agents/maese-pedro/agent",
+        "model": "anthropic/claude-opus-4-6",
+        "identity": {
+          "name": "Maese Pedro",
+          "emoji": "🎭"
+        }
       }
     ]
   },
@@ -173,7 +184,11 @@
     }
   ],
   "messages": {
-    "ackReactionScope": "group-mentions"
+    "ackReactionScope": "group-mentions",
+    "visibleReplies": "automatic",
+    "groupChat": {
+      "visibleReplies": "automatic"
+    }
   },
   "commands": {
     "native": "auto",

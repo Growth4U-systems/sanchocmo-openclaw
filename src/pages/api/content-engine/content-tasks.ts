@@ -27,25 +27,18 @@ import {
   updateContentTask,
   attachDocumentToContentTask,
   removeDocumentFromContentTask,
-  reconcileContentTaskState,
+  setChannelPhases,
+  rollbackChannelPhasesToStatus,
   ContentTaskUpdateInput,
 } from "@/lib/data/content-tasks";
-import { aggregateDraftStatus, getDraftStatuses, listDrafts } from "@/lib/data/drafts";
-import { ContentTaskStatus, ContentTaskPipelineState, VALID_CONTENT_TASK_STATUSES, type ContentTask } from "@/types";
-
-/**
- * Hydrate a ContentTask with its per-channel draft statuses, and self-heal
- * its persisted (status, pipeline_state) by reconciling against the actual
- * draft frontmatters on disk. This is the only mechanism that closes the
- * loop between Escudero writing drafts and the UI reading tasks.json — skills
- * stay backend-agnostic; we converge on read.
- */
-function withDraftStatuses(slug: string, ct: ContentTask): ContentTask & { draft_statuses: Record<string, string> } {
-  const draft_statuses = getDraftStatuses(slug, ct.idea_id, ct.target_channels || []);
-  const aggregated = aggregateDraftStatus(draft_statuses);
-  const reconciled = reconcileContentTaskState(slug, ct, aggregated);
-  return { ...reconciled, draft_statuses };
-}
+import { listDrafts } from "@/lib/data/drafts";
+import {
+  ChannelPhase,
+  ContentTaskStatus,
+  ContentTaskPipelineState,
+  VALID_CHANNEL_PHASES,
+  VALID_CONTENT_TASK_STATUSES,
+} from "@/types";
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
   const slug = (req.query.slug || req.body?.slug) as string;
@@ -59,26 +52,36 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     if (id) {
       const ct = findContentTask(slug, parentTaskId, id);
       if (!ct) return res.status(404).json({ error: "ContentTask not found" });
-      return res.status(200).json({ ok: true, contentTask: withDraftStatuses(slug, ct) });
+      return res.status(200).json({ ok: true, contentTask: ct });
     }
-    const list = listContentTasks(slug, parentTaskId);
     return res.status(200).json({
       ok: true,
-      contentTasks: list.map((ct) => withDraftStatuses(slug, ct)),
+      contentTasks: listContentTasks(slug, parentTaskId),
     });
   }
 
   if (req.method === "PATCH") {
-    const { parentTaskId, id, status, pipeline_state, ...rest } = req.body || {};
+    const { parentTaskId, id, status, pipeline_state, channel_phases, ...rest } = req.body || {};
     if (!parentTaskId || !id) return res.status(400).json({ error: "Missing parentTaskId or id" });
 
     if (status !== undefined && !VALID_CONTENT_TASK_STATUSES.includes(status as ContentTaskStatus)) {
       return res.status(400).json({ error: `Invalid status: ${status}` });
     }
+    if (channel_phases !== undefined) {
+      if (typeof channel_phases !== "object" || channel_phases === null || Array.isArray(channel_phases)) {
+        return res.status(400).json({ error: "channel_phases must be an object" });
+      }
+      for (const [, p] of Object.entries(channel_phases as Record<string, unknown>)) {
+        if (typeof p !== "string" || !VALID_CHANNEL_PHASES.includes(p as ChannelPhase)) {
+          return res.status(400).json({ error: `Invalid channel_phases value: ${String(p)}` });
+        }
+      }
+    }
 
     try {
       let updated = findContentTask(slug, parentTaskId, id);
       if (!updated) return res.status(404).json({ error: "ContentTask not found" });
+      const previousStatus = updated.status;
 
       // Apply generic field updates first (skill, name, target_channels, documents, ...)
       const fieldKeys: (keyof ContentTaskUpdateInput)[] = [
@@ -96,7 +99,10 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         updated = updateContentTask(slug, parentTaskId, id, fields);
       }
 
-      // Then status/pipeline_state if provided
+      // Status / pipeline_state if provided. When status moves backward (revert),
+      // also roll back any channel_phases entries more advanced than the new
+      // status allows — keeps the per-channel detail coherent and prevents the
+      // forward-only auto-promote from immediately undoing the revert.
       if (status !== undefined) {
         updated = setContentTaskStatus(
           slug,
@@ -105,14 +111,29 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
           status as ContentTaskStatus,
           (pipeline_state ?? null) as ContentTaskPipelineState | null,
         );
+        const movedBackward =
+          (VALID_CONTENT_TASK_STATUSES.indexOf(updated.status) <
+            VALID_CONTENT_TASK_STATUSES.indexOf(previousStatus));
+        if (movedBackward) {
+          updated = rollbackChannelPhasesToStatus(slug, parentTaskId, id);
+        }
       } else if (pipeline_state !== undefined) {
-        // Pipeline-state-only update without changing status: re-apply current status
         updated = setContentTaskStatus(
           slug,
           parentTaskId,
           id,
           updated.status,
           pipeline_state as ContentTaskPipelineState | null,
+        );
+      }
+
+      // channel_phases (partial merge). Auto-promotes CT.status forward only.
+      if (channel_phases !== undefined) {
+        updated = setChannelPhases(
+          slug,
+          parentTaskId,
+          id,
+          channel_phases as Record<string, ChannelPhase>,
         );
       }
 

@@ -1829,7 +1829,14 @@
     ],
     "source_signals": [
       "news-2026-05-07-002"
-    ]
+    ],
+    "channel_phases": {
+      "linkedin": "clarify-needed",
+      "twitter": "clarify-needed"
+    },
+    "content_task_id": "P-Content-Semana-19-T07-C02",
+    "parent_task_id": "P-Content-Semana-19-T07",
+    "updated_at": "2026-05-10T07:09:30.011784Z"
   },
   {
     "id": "idea-2026-05-07-3",

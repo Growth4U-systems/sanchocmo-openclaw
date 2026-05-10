@@ -1,4 +1,4 @@
-import type { MediaAsset } from "@/lib/data/drafts";
+import type { MediaAsset, PostMetricsSnapshot } from "@/lib/data/drafts";
 
 /**
  * Uniform interface every publishing provider must implement. The UI never
@@ -65,6 +65,15 @@ export interface PublishStatus {
   error?: string | null;
 }
 
+export interface PostMetricsQuery {
+  /** Channel name as we use it (linkedin, twitter, x, instagram, ...). */
+  channel: string;
+  /** Public post URL captured at publish time. Primary match key. */
+  externalUrl: string;
+  /** When the post went live; helps narrow the analytics range. ISO 8601. */
+  publishedAt?: string | null;
+}
+
 export interface PublishProvider {
   id: string;
   name: string;
@@ -83,4 +92,12 @@ export interface PublishProvider {
 
   /** Optional: cancel a scheduled post. */
   cancel?(slug: string, externalJobId: string): Promise<{ ok: boolean; error?: string }>;
+
+  /** Optional: refresh engagement metrics for a batch of published posts.
+   *  Returns one snapshot per input matched by external URL. Providers
+   *  without analytics support can omit this. Called daily by the cron. */
+  fetchPostMetrics?(
+    slug: string,
+    inputs: PostMetricsQuery[],
+  ): Promise<Map<string, PostMetricsSnapshot>>;
 }

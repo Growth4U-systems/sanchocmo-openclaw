@@ -84,11 +84,11 @@ export function IdeaDetailSlideOver({ slug, idea, onClose, onUpdate }: Props) {
     }
   }, [idea, slug, onUpdate]);
 
-  const saveDraft = useCallback(async (ideaId: string, channel: string, body: string, status?: string) => {
+  const saveDraft = useCallback(async (ideaId: string, channel: string, body: string) => {
     await fetch("/api/content-engine/drafts", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ slug, ideaId, channel, body, meta: status ? { status } : undefined }),
+      body: JSON.stringify({ slug, ideaId, channel, body }),
     });
     onUpdate();
   }, [slug, onUpdate]);

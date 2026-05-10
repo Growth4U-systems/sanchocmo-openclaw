@@ -28,8 +28,18 @@ Esta skill cumple `_system/media-persistence-protocol.md`. Reglas duras:
   `/api/content-engine/render-carousel` (carruseles HTML→PNG/PDF) o
   `/api/content-engine/upload-media` (binario propio). **Nunca** editar
   `frontmatter.media` a mano con Edit/Write.
-- **Nunca** escribir `status: published` al frontmatter desde el agente.
-  Solo lo pone el dispatcher de Metricool tras envio real con confirmacion.
+- **Nunca** escribir `status:` (de ningún tipo) al frontmatter del draft.
+  Ese campo fue eliminado: la fase del trabajo (researching | drafting |
+  draft | approved | published) vive en `tasks.json` bajo
+  `ContentTask.channel_phases[<canal>]`. Para reportarla:
+  ```bash
+  curl -fsS -X PATCH "$MC_BASE/api/content-engine/content-tasks" \
+    -H "Content-Type: application/json" \
+    -d '{"slug":"<slug>","parentTaskId":"<pid>","id":"<ctid>","channel_phases":{"<channel>":"draft"}}'
+  ```
+  El writer-trigger te da los IDs y los curl ya construidos. Si lo invoca
+  el usuario manualmente, deduce parentTaskId/contentTaskId del frontmatter
+  del draft (`parent_task_id`, `content_task_id`).
 
 ## Input
 

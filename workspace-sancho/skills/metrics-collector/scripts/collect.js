@@ -208,6 +208,31 @@ async function runCollection() {
   const okCount = Object.values(result.sources).filter((s) => s.status === 'ok').length;
   const errCount = Object.values(result.sources).filter((s) => s.status === 'error').length;
   console.log(`\n🏁 Done: ${okCount} ok, ${errCount} errors, ${Object.keys(result.sources).length} total`);
+
+  // --- Reconcile published-but-not-acknowledged drafts ---
+  // After analytics are pulled, ping MC's reconcile endpoint so any draft
+  // whose Metricool schedule has fired since the last cron gets promoted
+  // from `scheduled` → `published` with the real URL. The endpoint is
+  // idempotent and bails fast when nothing's pending.
+  const mcBase = process.env.MC_BASE_URL || 'http://localhost:3000';
+  try {
+    const reconcileRes = await fetch(`${mcBase}/api/publishing/reconcile?slug=${encodeURIComponent(slug)}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    if (reconcileRes.ok) {
+      const data = await reconcileRes.json().catch(() => ({}));
+      const n = (data.reconciled || []).length;
+      console.log(`🔁 Reconcile: ${n} draft${n === 1 ? '' : 's'} promoted to published`);
+      for (const entry of data.reconciled || []) {
+        console.log(`   → ${entry.ideaId}/${entry.channel}: ${entry.url}`);
+      }
+    } else {
+      console.warn(`⚠ Reconcile endpoint returned HTTP ${reconcileRes.status}`);
+    }
+  } catch (e) {
+    console.warn(`⚠ Reconcile skipped (MC unreachable at ${mcBase}): ${e.message}`);
+  }
 }
 
 runCollection().catch((err) => {

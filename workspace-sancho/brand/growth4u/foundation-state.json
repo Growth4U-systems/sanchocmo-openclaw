@@ -478,6 +478,12 @@
     "public": {
       "llms_txt": "llms.txt"
     },
+    "brand_book": {
+      "html": "brand-book/visual-identity/brand-book.html",
+      "pages_dir": "brand-book/visual-identity/pages/",
+      "capture_script": "brand-book/visual-identity/capture-pages.js",
+      "description": "Brand Book completo — 17 páginas, HTML + PNGs generados con Playwright"
+    },
     "visual_templates": {
       "manifest": "brand-book/visual-identity/manifest.json",
       "templates_dir": "brand-book/visual-identity/templates/",
@@ -489,7 +495,8 @@
       "instagram_3_slide_body": "brand-book/visual-identity/templates/instagram-3-slide/slide-body.html",
       "instagram_3_slide_cta": "brand-book/visual-identity/templates/instagram-3-slide/slide-cta.html",
       "blog_post": "brand-book/visual-identity/templates/blog-post/template.html",
-      "blog_title": "brand-book/visual-identity/templates/blog-title/template.html"
+      "blog_title": "brand-book/visual-identity/templates/blog-title/template.html",
+      "8bit_orbit_video": "brand-book/visual-identity/templates/8bit-orbit-video/template.html"
     },
     "discord": {
       "channels": "discord-channels.json",

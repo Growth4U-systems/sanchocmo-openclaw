@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import type { MediaAsset } from "@/lib/data/drafts";
+import type { MediaAsset, PostMetricsSnapshot } from "@/lib/data/drafts";
 
 export interface CalendarEvent {
   ideaId: string;
@@ -15,6 +15,7 @@ export interface CalendarEvent {
   hero_media_url?: string;
   body: string;
   media: MediaAsset[];
+  metrics?: PostMetricsSnapshot;
 }
 
 export interface ReadyDraft {

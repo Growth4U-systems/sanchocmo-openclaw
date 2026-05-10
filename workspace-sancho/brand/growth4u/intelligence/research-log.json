@@ -76,5 +76,53 @@
       "47% wrappers cerrados — fuente Medium (rating C), no cross-validated con fuente A"
     ],
     "duration_seconds": 420
+  },
+  {
+    "date": "2026-05-08",
+    "idea_id": "idea-2026-05-07-4-b",
+    "content_task_id": "P-Content-Semana-19-T05-C01",
+    "document": "brand/growth4u/content/drafts/idea-2026-05-07-4-b/research.md",
+    "qa_report": "brand/growth4u/content/drafts/idea-2026-05-07-4-b/QA-REPORT-research.md",
+    "topic": "Familia vs equipo de campeonato — Ross Simmonds, Foundation offsite Málaga. Metáfora Netflix aplicada a relación cliente-agencia.",
+    "sources_found": 14,
+    "searches_executed": 12,
+    "qa_score": 8.5,
+    "gaps_remaining": [
+      "web_search/x_search unavailable (xAI 429) — compensado con web_fetch directo",
+      "Múltiplo case solo respaldado por company brief (sin fuente externa)",
+      "Forrester/6sense datos citados por Simmonds, no verificados independientemente"
+    ],
+    "duration_seconds": 360
+  },
+  {
+    "date": "2026-05-10",
+    "idea_id": "idea-2026-05-08-2",
+    "content_task_id": "P-Content-Semana-19-T07-C01",
+    "document": "content/drafts/idea-2026-05-08-2/research.md",
+    "topic": "Google AI Overviews link changes May 2026",
+    "sources_found": 10,
+    "searches_executed": 12,
+    "qa_score": 8.5,
+    "gaps_remaining": [
+      "Google Blog post original URL no localizado",
+      "Cifra exacta CTR suscripciones no publicada por Google",
+      "Fuentes en español no disponibles"
+    ],
+    "duration_seconds": 300
+  },
+  {
+    "date": "2026-05-10",
+    "idea_id": "idea-2026-05-07-2",
+    "content_task_id": "P-Content-Semana-19-T07-C02",
+    "topic": "B2B buyers shifting to AI chatbots - G2 survey analysis",
+    "document": "content/drafts/idea-2026-05-07-2/research.md",
+    "qa_report": "content/drafts/idea-2026-05-07-2/QA-REPORT-research.md",
+    "sources_found": 11,
+    "searches_executed": 12,
+    "qa_score": 8.5,
+    "gaps_remaining": [
+      "Web search API rate-limited — fewer Spanish-language sources than ideal"
+    ],
+    "duration_seconds": 420
   }
 ]

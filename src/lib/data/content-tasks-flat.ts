@@ -3,6 +3,20 @@ import path from "path";
 import { BASE } from "@/lib/data/paths";
 import type { ContentTask, ContentTaskStatus } from "@/types";
 
+/** Discovery-phase fields copied from a legacy idea record onto a unified CT. */
+const IDEA_DISCOVERY_FIELDS = [
+  "title", "pillar_id", "content_type", "target_channel",
+  "signal", "angle_draft", "pov_confidence", "signal_type", "source_signals",
+  "dispatch_date", "dispatch_slot",
+  "approved_via", "approved_by",
+  "archived_at", "archived_via", "archived_by",
+  "deferred_by", "target_date",
+  // Routing pointers used by the Idea Tab to deep-link into the draft editor.
+  // For nested CTs these often duplicate `id`/`parent_task_id`; for orphans
+  // they're typically absent until the CT graduates to Approved.
+  "content_task_id", "content_task_channels", "project_task_id", "project_id",
+] as const;
+
 /**
  * Flat-file storage for ContentTasks. Single source of truth at
  * `brand/{slug}/content/content-tasks.json`.
@@ -80,6 +94,110 @@ export function contentTaskCountsByStatus(slug: string): Record<ContentTaskStatu
   };
   for (const c of all) counts[c.status] = (counts[c.status] || 0) + 1;
   return { ...(counts as Record<ContentTaskStatus, number>), total: all.length };
+}
+
+/**
+ * Transitional helper used while the dispatch flow + skills still write to
+ * the legacy `idea-queue.json` and nested `tasks[].content_tasks[]` arrays.
+ * Merges those two sources in-memory each call so the Idea Tab always sees
+ * fresh data without requiring all writers to migrate first.
+ *
+ * Once Phase 5 lands (writers go directly to `content-tasks.json`), this
+ * function can be replaced by a plain `loadAllContentTasks(slug)` and removed.
+ */
+export function loadUnifiedContentTasks(slug: string): ContentTask[] {
+  const ideaPath = path.join(BASE, "brand", slug, "content", "idea-queue.json");
+  const rawIdeas: Record<string, unknown>[] = (() => {
+    if (!fs.existsSync(ideaPath)) return [];
+    try {
+      const data = JSON.parse(fs.readFileSync(ideaPath, "utf-8"));
+      return Array.isArray(data) ? data : [];
+    } catch {
+      return [];
+    }
+  })();
+
+  // Collect nested CTs from each project's tasks.json.
+  const nestedCTs: ContentTask[] = [];
+  const projectsRoot = path.join(BASE, "brand", slug, "projects");
+  if (fs.existsSync(projectsRoot)) {
+    for (const proj of fs.readdirSync(projectsRoot, { withFileTypes: true })) {
+      if (!proj.isDirectory()) continue;
+      const tasksPath = path.join(projectsRoot, proj.name, "tasks.json");
+      if (!fs.existsSync(tasksPath)) continue;
+      try {
+        const tasks = JSON.parse(fs.readFileSync(tasksPath, "utf-8"));
+        if (!Array.isArray(tasks)) continue;
+        for (const t of tasks) {
+          if (!Array.isArray(t.content_tasks)) continue;
+          for (const ct of t.content_tasks as ContentTask[]) {
+            nestedCTs.push({ ...ct, parent_task_id: ct.parent_task_id || t.id });
+          }
+        }
+      } catch { /* skip malformed */ }
+    }
+  }
+
+  const ctsByIdeaId = new Map<string, ContentTask>();
+  for (const ct of nestedCTs) {
+    if (ct.idea_id) ctsByIdeaId.set(ct.idea_id, ct);
+  }
+
+  const seen = new Set<string>();
+  const out: ContentTask[] = [];
+
+  for (const idea of rawIdeas) {
+    const ideaId = String(idea.id);
+    if (!ideaId) continue;
+    const matched = ctsByIdeaId.get(ideaId);
+    let ct: ContentTask;
+    if (matched) {
+      // CT is more authoritative (status, drafts, threads). Enrich with idea
+      // discovery fields where the CT has none.
+      ct = { ...matched } as ContentTask;
+      const ctRecord = ct as unknown as Record<string, unknown>;
+      for (const k of IDEA_DISCOVERY_FIELDS) {
+        if (ctRecord[k] === undefined && idea[k] !== undefined) ctRecord[k] = idea[k];
+      }
+      if (!ct.idea_id) ct.idea_id = ideaId;
+      if (!ct.documents) ct.documents = [];
+      if (!ct.target_channels?.length) {
+        ct.target_channels = idea.target_channel ? [String(idea.target_channel)] : [];
+      }
+      if (!ct.created_at) ct.created_at = String(idea.created_at || new Date().toISOString());
+      if (!ct.name) ct.name = String(idea.title || (idea.angle_draft as string || "").slice(0, 80) || ideaId);
+    } else {
+      // Orphan CT — never reached approval, lives only as an idea.
+      ct = {
+        id: ideaId,
+        idea_id: ideaId,
+        name: String(idea.title || (idea.angle_draft as string || "").slice(0, 80) || ideaId),
+        status: (idea.status as ContentTaskStatus) || "New",
+        target_channels: idea.target_channel ? [String(idea.target_channel)] : [],
+        documents: [],
+        created_at: String(idea.created_at || new Date().toISOString()),
+      };
+      const ctRecord = ct as unknown as Record<string, unknown>;
+      for (const k of IDEA_DISCOVERY_FIELDS) {
+        if (idea[k] !== undefined) ctRecord[k] = idea[k];
+      }
+      if (idea.approved_at) ct.approved_at = String(idea.approved_at);
+      if (idea.deferred_at) ct.deferred_at = String(idea.deferred_at);
+    }
+    if (seen.has(ct.id)) continue;
+    seen.add(ct.id);
+    out.push(ct);
+  }
+
+  // Pass 2: nested CTs not linked to any idea (defensive — should be rare).
+  for (const ct of nestedCTs) {
+    if (ct.idea_id && ctsByIdeaId.has(ct.idea_id)) continue;
+    if (seen.has(ct.id)) continue;
+    seen.add(ct.id);
+    out.push(ct);
+  }
+
+  return out;
 }
 
 /**

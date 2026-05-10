@@ -5295,9 +5295,12 @@ function notifyProjectChange(slug, change) {
 }
 // ========== END PROJECT NOTIFICATIONS ==========
 
-function mcChatAddMessage(threadId, role, text, agent) {
+function mcChatAddMessage(threadId, role, text, agent, progress) {
   const thread = mcChatLoadThread(threadId);
   const msg = { role, text, agent: agent || undefined, ts: new Date().toISOString() };
+  if (Array.isArray(progress) && progress.length) {
+    msg.progress = progress.slice(-50); // cap sealed progress
+  }
   thread.messages.push(msg);
   // Trim old messages
   if (thread.messages.length > MC_CHAT_MAX_MSGS) {
@@ -5306,6 +5309,38 @@ function mcChatAddMessage(threadId, role, text, agent) {
   thread.updatedAt = Date.now();
   mcChatSaveThread(threadId, thread);
   return msg;
+}
+
+// ─── Progress event helpers (mirror src/lib/data/mc-chat.ts) ───
+const PROGRESS_KINDS = new Set(['thinking','tool_call','file_write','agent_handoff','search','read']);
+const MAX_PENDING_PROGRESS = 200;
+
+function mcChatAppendProgress(threadId, event) {
+  const thread = mcChatLoadThread(threadId);
+  const list = thread.pendingProgress || [];
+  list.push(event);
+  if (list.length > MAX_PENDING_PROGRESS) {
+    list.splice(0, list.length - MAX_PENDING_PROGRESS);
+  }
+  thread.pendingProgress = list;
+  thread.updatedAt = Date.now();
+  mcChatSaveThread(threadId, thread);
+}
+
+function mcChatSealProgress(threadId) {
+  const thread = mcChatLoadThread(threadId);
+  const list = thread.pendingProgress || [];
+  if (!list.length) return [];
+  thread.pendingProgress = [];
+  mcChatSaveThread(threadId, thread);
+  return list;
+}
+
+function mcChatClearProgress(threadId) {
+  const thread = mcChatLoadThread(threadId);
+  if (!thread.pendingProgress || !thread.pendingProgress.length) return;
+  thread.pendingProgress = [];
+  mcChatSaveThread(threadId, thread);
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -5536,7 +5571,7 @@ const mcServer = http.createServer((req, res) => {
     req.on('data', chunk => { body += chunk; if (body.length > 500000) req.destroy(); });
     req.on('end', () => {
       try {
-        const { slug, threadId, text, agent, ts, role } = JSON.parse(body);
+        const { slug, threadId, text, agent, ts, role, event } = JSON.parse(body);
         const tid = threadId || `${slug || 'default'}:general`;
 
         // Status updates: cache for polling, don't store in messages
@@ -5547,19 +5582,43 @@ const mcServer = http.createServer((req, res) => {
           return;
         }
 
-        // Bot response: clear status + store message (unless cancelled)
+        // Progress events: append to thread's running timeline
+        if (role === 'progress') {
+          const raw = event && typeof event === 'object' ? event : null;
+          const kind = raw && raw.kind && PROGRESS_KINDS.has(raw.kind) ? raw.kind : null;
+          if (!kind) {
+            res.writeHead(400, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Invalid or missing event.kind' }));
+            return;
+          }
+          mcChatAppendProgress(tid, {
+            kind,
+            label: typeof raw.label === 'string' ? raw.label.slice(0, 200) : kind,
+            detail: typeof raw.detail === 'string' ? raw.detail.slice(0, 1000) : undefined,
+            target: typeof raw.target === 'string' ? raw.target.slice(0, 300) : undefined,
+            agent: typeof agent === 'string' ? agent : undefined,
+            ts: Date.now(),
+          });
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ ok: true }));
+          return;
+        }
+
+        // Bot response: clear status + seal progress into the message (unless cancelled)
         mcChatStatusCache.delete(tid);
         if (mcChatCancelledThreads.has(tid)) {
           mcChatCancelledThreads.delete(tid);
+          mcChatClearProgress(tid);
           console.log(`[mc-chat] Bot response discarded (cancelled): ${tid}`);
           res.writeHead(200, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ ok: true, cancelled: true }));
           return;
         }
-        mcChatAddMessage(tid, 'bot', text, agent);
-        console.log(`[mc-chat] Bot response → ${tid}: ${(text || '').slice(0, 60)}`);
+        const sealed = mcChatSealProgress(tid);
+        mcChatAddMessage(tid, 'bot', text, agent, sealed);
+        console.log(`[mc-chat] Bot response → ${tid}: ${(text || '').slice(0, 60)} (${sealed.length} progress events)`);
         res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ ok: true, messageId: `mc-${Date.now()}` }));
+        res.end(JSON.stringify({ ok: true, messageId: `mc-${Date.now()}`, progressCount: sealed.length }));
       } catch (e) {
         res.writeHead(400, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: e.message }));
@@ -5579,6 +5638,7 @@ const mcServer = http.createServer((req, res) => {
         const tid = threadId || slug;
         mcChatCancelledThreads.add(tid);
         mcChatStatusCache.delete(tid);
+        mcChatClearProgress(tid);
         console.log(`[mc-chat] Cancelling thread: ${tid}`);
         // Send /stop to gateway — OpenClaw recognizes it as abort phrase
         try {
@@ -5834,9 +5894,24 @@ const mcServer = http.createServer((req, res) => {
       return;
     }
     const thread = mcChatGetThread(threadId);
-    const statusEntry = mcChatStatusCache.get(threadId) || null;
+    let statusEntry = mcChatStatusCache.get(threadId) || null;
+    // Suppress superseded status (mirror src/pages/api/chat/thread/[threadId].ts)
+    if (statusEntry && thread?.messages?.length) {
+      let lastNonUserTs = 0;
+      for (let i = thread.messages.length - 1; i >= 0; i--) {
+        const m = thread.messages[i];
+        if (m.role !== 'user' && m.role !== 'system') {
+          const raw = m.ts;
+          const tsNum = typeof raw === 'number' ? raw : (raw ? new Date(raw).getTime() : 0);
+          lastNonUserTs = tsNum;
+          break;
+        }
+      }
+      if (lastNonUserTs >= statusEntry.ts) statusEntry = null;
+    }
+    const pendingProgress = thread?.pendingProgress || [];
     res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ ok: true, threadId, messages: thread?.messages || [], status: statusEntry }));
+    res.end(JSON.stringify({ ok: true, threadId, messages: thread?.messages || [], status: statusEntry, pendingProgress }));
     return;
   }
 

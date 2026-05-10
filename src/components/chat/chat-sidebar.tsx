@@ -26,8 +26,10 @@ import { useQuickActions } from "@/hooks/useChat";
 import { useRetriggerWriter } from "@/hooks/useContentTasks";
 import { ThreadListPanel } from "./thread-list-panel";
 import { AskQuestionGroup, parseMessageSegments } from "./ask-question";
+import { ProgressTimeline } from "./progress-timeline";
+import type { ProgressEvent } from "@/hooks/useChat";
 import { DocSlideOver } from "@/components/shared/doc-slideover";
-import { useFoundation } from "@/hooks/useFoundation";
+import { useBrandBrain } from "@/hooks/useBrandBrain";
 import { useProjects } from "@/hooks/useProjects";
 import { resolvePillarDocPath } from "@/lib/pillar-doc-paths";
 import { formatThreadDisplayName } from "@/lib/thread-display-name";
@@ -37,10 +39,11 @@ import { formatThreadDisplayName } from "@/lib/thread-display-name";
 // ---------------------------------------------------------------------------
 
 const AGENT_BADGES: Record<string, { emoji: string; label: string; color: string }> = {
-  sancho:    { emoji: "🤠", label: "Sancho",    color: "bg-rust" },
-  escudero:  { emoji: "⚔️",  label: "Escudero",  color: "bg-green-600" },
-  rocinante: { emoji: "🐴", label: "Rocinante", color: "bg-cyan-600" },
-  cervantes: { emoji: "✒️",  label: "Cervantes", color: "bg-purple-600" },
+  sancho:        { emoji: "🤠", label: "Sancho",      color: "bg-rust" },
+  escudero:      { emoji: "⚔️",  label: "Escudero",    color: "bg-green-600" },
+  rocinante:     { emoji: "🐴", label: "Rocinante",   color: "bg-cyan-600" },
+  cervantes:     { emoji: "✒️",  label: "Cervantes",   color: "bg-purple-600" },
+  "maese-pedro": { emoji: "🎭", label: "Maese Pedro", color: "bg-pink-600" },
 };
 
 function agentBadge(agent?: string) {
@@ -177,7 +180,7 @@ export function ChatSidebar() {
 
   // Foundation state + projects (for deriving ThreadConfig when the user
   // picks a thread from the panel). Both cached by React Query.
-  const { data: foundationState } = useFoundation(slug || null);
+  const { data: foundationState } = useBrandBrain(slug || null);
   const { data: projectsData } = useProjects(slug || null);
   const queryClient = useQueryClient();
 
@@ -578,6 +581,7 @@ export function ChatSidebar() {
   const messagesQuery = useThreadMessages(activeThreadId ?? null);
   const messages = messagesQuery.data?.messages ?? [];
   const statusData = messagesQuery.data?.status;
+  const pendingProgress: ProgressEvent[] = messagesQuery.data?.pendingProgress ?? [];
 
   // Send / cancel / mark-read
   const sendMutation = useSendMessage();
@@ -710,8 +714,37 @@ export function ChatSidebar() {
     return undefined;
   })();
   const waitingForReply = messages.length > 0 && lastSubstantiveMsg?.role === "user";
-  const isBotThinking = isPolling && waitingForReply;
-  const showTyping = isBotThinking || !!statusData?.text || (waitingForReply && sendMutation.isPending);
+
+  // Activity gate: a reply is "in progress" when a send is in flight, when the
+  // gateway has emitted a status update in the last minute, or when the user's
+  // message is recent enough that an agent could still be working on it. Using
+  // `isPolling` alone caused the typing indicator to disappear after the 30s
+  // polling window while the red stop button stayed on — they're now in sync.
+  const lastUserMsgTs = (() => {
+    for (let i = messages.length - 1; i >= 0; i--) {
+      if (messages[i].role === "user") return messages[i].ts ?? 0;
+    }
+    return 0;
+  })();
+  const STATUS_FRESH_MS = 60_000;
+  const REPLY_WINDOW_MS = 5 * 60_000;
+  const now = Date.now();
+  const hasFreshStatus = !!statusData?.text && now - (statusData?.ts ?? 0) < STATUS_FRESH_MS;
+  const recentUserMsg = waitingForReply && lastUserMsgTs > 0 && now - lastUserMsgTs < REPLY_WINDOW_MS;
+  const isAwaitingReply = sendMutation.isPending || hasFreshStatus || recentUserMsg;
+  const showTyping = isAwaitingReply;
+
+  // Live agent for the typing indicator: prefer the gateway's status (whoever
+  // is actually working right now) → last bot message agent → thread default.
+  const lastBotAgent = (() => {
+    for (let i = messages.length - 1; i >= 0; i--) {
+      const m = messages[i];
+      if (m.role !== "user" && m.role !== "system" && m.agent) return m.agent;
+    }
+    return undefined;
+  })();
+  const typingAgent = statusData?.agent || lastBotAgent || primarySkill;
+  const typingBadge = typingAgent ? agentBadge(typingAgent) : null;
 
   // Gateway-down detection: when a ContentTask thread's last system marker
   // ("Pidiendo a Escudero…") has been sitting for >60s without an agent
@@ -1010,7 +1043,7 @@ export function ChatSidebar() {
             if (isRealDoc) {
               icon = "📄";
               label = readableDocName(docPath!);
-              href = `/dashboard/${slug}/foundation?doc=${encodeURIComponent(docPath!)}`;
+              href = `/dashboard/${slug}/brand-brain?doc=${encodeURIComponent(docPath!)}`;
             } else if (isTaskLinked) {
               icon = "📝";
               label = prettify(meta?.threadName || "") || "Tarea";
@@ -1271,7 +1304,7 @@ export function ChatSidebar() {
           </div>
         )}
 
-        {messages.map((msg: { role: string; text: string; agent?: string; ts?: number }, i: number) => {
+        {messages.map((msg: { role: string; text: string; agent?: string; ts?: number; progress?: ProgressEvent[] }, i: number) => {
           if (msg.role === "system") {
             return (
               <div key={i} className="flex justify-center">
@@ -1349,21 +1382,32 @@ export function ChatSidebar() {
                     })}
                   </div>
                 )}
+                {!isUser && msg.progress && msg.progress.length > 0 && (
+                  <ProgressTimeline events={msg.progress} mode="sealed" />
+                )}
               </div>
             </div>
           );
         })}
 
-        {/* Typing indicator */}
+        {/* Typing indicator + live progress timeline */}
         {showTyping && (
           <div className="flex justify-start">
-            <div className="bg-[#313244] text-[#a6adc8] px-[14px] py-[10px] rounded-[14px] text-[15px] italic flex items-center gap-2">
-              {primarySkill && (
-                <span className="bg-rust/15 text-rust text-[10px] px-1.5 py-0.5 rounded-full font-semibold">
-                  {primarySkill}
-                </span>
+            <div className="bg-[#313244] text-[#a6adc8] px-[14px] py-[10px] rounded-[14px] text-[15px] italic max-w-[85%]">
+              <div className="flex items-center gap-2">
+                {typingBadge && (
+                  <span className={cn(
+                    "inline-flex items-center gap-1 text-[10px] font-semibold text-white px-1.5 py-0.5 rounded",
+                    typingBadge.color
+                  )}>
+                    {typingBadge.emoji} {typingBadge.label}
+                  </span>
+                )}
+                <span>· 🔄 {statusData?.text || t("thinking")}</span>
+              </div>
+              {pendingProgress.length > 0 && (
+                <ProgressTimeline events={pendingProgress} mode="live" />
               )}
-              <span>· 🔄 {t("thinking")}</span>
             </div>
           </div>
         )}
@@ -1446,7 +1490,7 @@ export function ChatSidebar() {
             className="chat-textarea flex-1 bg-[#313244] text-[#cdd6f4] placeholder-[#6c7086] text-base px-3 py-2 rounded-lg border border-[#45475a] focus:outline-none focus:border-rust disabled:opacity-50 resize-none overflow-y-auto leading-snug"
             style={{ maxHeight: 120 }}
           />
-          {waitingForReply || showTyping || sendMutation.isPending || cancelMutation.isPending || uploading ? (
+          {isAwaitingReply || cancelMutation.isPending || uploading ? (
             <button
               onClick={() => cancelMutation.mutate({ threadId: activeThreadId ?? undefined })}
               className="bg-red-600 hover:bg-red-700 text-white w-8 h-8 rounded-lg flex items-center justify-center text-sm shrink-0"

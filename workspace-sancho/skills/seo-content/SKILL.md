@@ -1,10 +1,11 @@
 ---
 name: seo-content
 description: >
-  Write publication-ready SEO long-form content. Performs live SERP analysis, captures People Also Ask questions,
-  analyzes competitor gaps, and produces articles with proper on-page optimization, schema markup (Article + FAQ +
-  HowTo JSON-LD), and YAML frontmatter. Supports content refresh mode for existing articles. Chains to
-  /content-atomizer for social distribution.
+  Write publication-ready SEO long-form content. Performs live SERP analysis of the top 10 results, downloads and
+  audits each competitor article (Competitive Content Audit), captures People Also Ask questions, builds a Content
+  Gap Matrix, and produces "Beat the SERP" recommendations before writing. Articles include proper on-page
+  optimization, schema markup (Article + FAQ + HowTo JSON-LD), and YAML frontmatter. Supports content refresh mode
+  for existing articles. Chains to /content-atomizer for social distribution.
 context_required:
 - brand/{slug}/brand-book/brand-voice/brand-voice.current.md
 - brand/{slug}/content/content-pillars.md
@@ -41,9 +42,17 @@ Esta skill cumple `_system/media-persistence-protocol.md`. Reglas duras:
 - Persistir media via `POST /api/content-engine/generate-image` o
   `/api/content-engine/upload-media`. **Nunca** editar
   `frontmatter.media` a mano con Edit/Write.
-- **Nunca** escribir `status: published` al frontmatter desde el agente.
-  Solo lo pone el dispatcher tras un envio real (CMS publish) con
-  confirmacion.
+- **Nunca** escribir `status:` al frontmatter del draft de canal. Ese campo
+  fue eliminado: la fase vive en `tasks.json` bajo
+  `ContentTask.channel_phases[<canal>]`. Reportarla via:
+  ```bash
+  curl -fsS -X PATCH "$MC_BASE/api/content-engine/content-tasks" \
+    -H "Content-Type: application/json" \
+    -d '{"slug":"<slug>","parentTaskId":"<pid>","id":"<ctid>","channel_phases":{"<channel>":"draft"}}'
+  ```
+  El writer-trigger te entrega los IDs y los curl ya construidos. Para los
+  archivos de SEO en `campaigns/content/`, el frontmatter sigue su propio
+  schema (CMS-side); este cambio aplica solo a `content/drafts/{idea}/{ch}.md`.
 
 ---
 
@@ -104,7 +113,13 @@ RESEARCH → BRIEF → OUTLINE → DRAFT → HUMANIZE → OPTIMIZE → SCHEMA �
 ```
 
 ### Phase 1: Research
-Live SERP analysis of top 5 results + PAA capture (all questions — they become mandatory sections) + gap analysis. Show RESEARCH MODE signal per `_system/brand-memory.md`. → `references/workflow.md` §Phase 1
+Live SERP analysis of top 10 results + PAA capture (all questions — they become mandatory sections) + gap analysis + **Competitive Content Audit**. Show RESEARCH MODE signal per `_system/brand-memory.md`. → `references/workflow.md` §Phase 1
+
+**1a. SERP Analysis (top 10):** Search the target keyword via `web_search`. Capture the top 10 organic results (URLs, titles, positions). → `references/workflow.md` §SERP Analysis
+
+**1b. Competitive Content Audit:** For each of the top 10 results, use `web_fetch` to download the full article content. Analyze structure, depth, data, angles, gaps, E-E-A-T signals, and weaknesses. Produce a Content Gap Matrix and "Beat the SERP" recommendations. → `references/workflow.md` §Competitive Content Audit
+
+**1c. PAA Capture:** Pull all People Also Ask questions for the target keyword + variations. These become mandatory sections. → `references/workflow.md` §People Also Ask Integration
 
 **Plus deep-research for the signal/angle (always)**: invoke the `deep-research` skill with `angle_draft` + `signal.url` + `signal.summary` to verify the data point and pull adjacent stats / quotes / named examples. Output a `research_pack` object that feeds the Clarify step and the draft. Skip ONLY for purely personal-story signals — record `research_pack: { skipped: true, reason: "personal-story" }`.
 
@@ -149,7 +164,7 @@ Follow the system spec at `_system/draft-file-format.md`. Specifically for blog:
 
 ## Key Rules
 
-1. **Never skip SERP analysis** when web search is available
+1. **Never skip SERP analysis + Competitive Content Audit** when web search is available. Fetch and analyze the top 10 competitor articles via `web_fetch` before writing.
 2. **Always check for existing content first** — enables refresh mode
 3. **Always generate schema markup** — Article + FAQ mandatory
 4. **Always save to disk** — the saved file IS the deliverable

@@ -20,8 +20,11 @@ interface SkillSummary {
   pillar?: string;
   layer?: string;
   phase?: string;
+  agent?: string;
   refCount: number;
   hasScripts: boolean;
+  workspace?: string;
+  file_path?: string;
 }
 
 interface SkillDetail {
@@ -35,6 +38,8 @@ interface SkillDetail {
   skillMd: string;
   references: { name: string; content: string }[];
   scripts: string[];
+  workspace?: string;
+  file_path?: string;
 }
 
 /* ------------------------------------------------------------------ */
@@ -85,10 +90,16 @@ export function SkillsPanel() {
   const [searchQuery, setSearchQuery] = useState("");
 
   // ── Detail query for selected skill ──
+  // Para resolver workspace al abrir detail/POST/DELETE: lo conocemos del summary.
+  const selectedSummary = selectedId ? skills.find((s) => s.id === selectedId) : null;
+  const selectedWorkspace = selectedSummary?.workspace;
+
   const { data: skillDetail } = useQuery<SkillDetail>({
-    queryKey: ["system", "skill", selectedId],
+    queryKey: ["system", "skill", selectedId, selectedWorkspace],
     queryFn: async () => {
-      const res = await fetch(`/api/system/skills?id=${selectedId}`);
+      const qs = new URLSearchParams({ id: selectedId as string });
+      if (selectedWorkspace) qs.set("workspace", selectedWorkspace);
+      const res = await fetch(`/api/system/skills?${qs}`);
       if (!res.ok) throw new Error("Failed");
       return res.json();
     },
@@ -97,7 +108,7 @@ export function SkillsPanel() {
 
   // ── Save mutation ──
   const saveMutation = useMutation({
-    mutationFn: async (body: { skillId: string; fileName: string; content: string }) => {
+    mutationFn: async (body: { skillId: string; fileName: string; content: string; workspace?: string }) => {
       const res = await fetch("/api/system/skills", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -116,11 +127,11 @@ export function SkillsPanel() {
 
   // ── Delete mutation ──
   const deleteMutation = useMutation({
-    mutationFn: async (skillId: string) => {
+    mutationFn: async (body: { skillId: string; workspace?: string }) => {
       const res = await fetch("/api/system/skills", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ skillId }),
+        body: JSON.stringify(body),
       });
       if (!res.ok) throw new Error("Failed");
       return res.json();
@@ -189,15 +200,15 @@ export function SkillsPanel() {
 
   const handleSave = useCallback(async (fileName: string, content: string) => {
     if (!selectedId) return;
-    await saveMutation.mutateAsync({ skillId: selectedId, fileName, content });
-  }, [selectedId, saveMutation]);
+    await saveMutation.mutateAsync({ skillId: selectedId, fileName, content, workspace: selectedWorkspace });
+  }, [selectedId, selectedWorkspace, saveMutation]);
 
   const handleDelete = useCallback(() => {
     if (!selectedId) return;
     if (confirm(`¿Eliminar la skill "${displayName(selectedId)}"? Esta acción no se puede deshacer.`)) {
-      deleteMutation.mutate(selectedId);
+      deleteMutation.mutate({ skillId: selectedId, workspace: selectedWorkspace });
     }
-  }, [selectedId, deleteMutation]);
+  }, [selectedId, selectedWorkspace, deleteMutation]);
 
   const handleCreateSkill = useCallback(() => {
     openChat(slug, buildSkillCreatorThread(slug));
@@ -281,7 +292,13 @@ export function SkillsPanel() {
         <div>
           <h2 className="font-heading text-xl text-navy">🧰 Skills</h2>
           <p className="text-sm text-muted-foreground">
-            {skills.length} skills en el workspace
+            {skills.length} skills total
+            {(() => {
+              const byWs = new Map<string, number>();
+              for (const s of skills) byWs.set(s.workspace ?? "?", (byWs.get(s.workspace ?? "?") ?? 0) + 1);
+              const parts = [...byWs.entries()].map(([ws, n]) => `${n} ${ws.replace("workspace-", "")}`);
+              return parts.length > 0 ? ` · ${parts.join(" · ")}` : "";
+            })()}
           </p>
         </div>
         <button
@@ -334,7 +351,12 @@ export function SkillsPanel() {
             )}
           >
             <div className="font-semibold text-sm">{displayName(skill.id)}</div>
-            <div className="flex items-center gap-2 mt-1">
+            <div className="flex items-center gap-2 mt-1 flex-wrap">
+              {skill.workspace && skill.workspace !== "workspace-sancho" && (
+                <span className="text-[9px] px-1.5 py-0.5 rounded bg-pink-500/10 text-pink-700 font-semibold">
+                  {skill.agent ?? skill.workspace.replace("workspace-", "")}
+                </span>
+              )}
               {skill.layer && (
                 <span className="text-[9px] px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-600 font-semibold">
                   L{skill.layer} {layerLabel(skill.layer)}
@@ -353,6 +375,16 @@ export function SkillsPanel() {
               <p className="text-[11px] text-muted-foreground mt-1.5 line-clamp-2 leading-snug">
                 {skill.description}
               </p>
+            )}
+            {skill.file_path && (
+              <a
+                href={`vscode://file${skill.file_path}`}
+                onClick={(e) => e.stopPropagation()}
+                className="text-[10px] text-rust hover:underline truncate block mt-1.5 font-mono"
+                title={skill.file_path}
+              >
+                {skill.file_path.replace(/^.*\.openclaw\//, "~/.openclaw/")}
+              </a>
             )}
           </div>
         ))}
@@ -378,7 +410,11 @@ export function SkillsPanel() {
           setSelectedId(null);
           router.push(`/dashboard/${slug}/skills/${id}`);
         }}
-        copyPathPrefix={selectedId ? `~/.openclaw/workspace-sancho/skills/${selectedId}` : undefined}
+        copyPathPrefix={
+          selectedId
+            ? `~/.openclaw/${selectedWorkspace ?? "workspace-sancho"}/skills/${selectedId}`
+            : undefined
+        }
         headerContent={slideHeaderContent}
       />
     </section>

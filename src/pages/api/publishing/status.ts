@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { withErrorHandler } from "@/lib/api-middleware";
 import { loadDraft, updateDraft } from "@/lib/data/drafts";
+import { findContentTaskByIdAcrossProjects, setChannelPhase } from "@/lib/data/content-tasks";
 import { getProvider } from "@/lib/publishing/registry";
 import type { PublishingMeta } from "@/lib/data/drafts";
 
@@ -49,8 +50,15 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     next.error !== pub.error;
 
   if (changed) {
-    const topStatus = next.status === "published" ? "published" : draft.meta.status;
-    updateDraft(slug, ideaId, channel, { meta: { publishing: next, status: topStatus } });
+    updateDraft(slug, ideaId, channel, { meta: { publishing: next } });
+    if (next.status === "published" && draft.meta.content_task_id) {
+      try {
+        const found = findContentTaskByIdAcrossProjects(slug, draft.meta.content_task_id);
+        if (found?.parentTaskId) {
+          setChannelPhase(slug, found.parentTaskId, draft.meta.content_task_id, channel, "published");
+        }
+      } catch { /* non-fatal */ }
+    }
   }
 
   return res.status(200).json({ publishing: next });

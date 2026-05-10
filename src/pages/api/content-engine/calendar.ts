@@ -3,8 +3,9 @@ import path from "path";
 import type { NextApiRequest, NextApiResponse } from "next";
 import { withErrorHandler } from "@/lib/api-middleware";
 import { BASE } from "@/lib/data/paths";
-import { loadDraft, type MediaAsset } from "@/lib/data/drafts";
+import { loadDraft, type MediaAsset, type PostMetricsSnapshot } from "@/lib/data/drafts";
 import { loadIdeas } from "@/lib/data/ideas";
+import { reconcileScheduledDrafts } from "@/lib/publishing/reconciliation";
 import type { ContentTask, Idea } from "@/types";
 
 /**
@@ -36,6 +37,9 @@ interface CalendarEvent {
   hero_media_url?: string;
   body: string;
   media: MediaAsset[];
+  /** Latest engagement snapshot from `publishing.metrics`, present when the
+   *  cron has refreshed metrics for this post. */
+  metrics?: PostMetricsSnapshot;
 }
 
 interface ReadyDraft {
@@ -106,6 +110,21 @@ async function handler(req: NextApiRequest, res: NextApiResponse<CalendarRespons
   const fromIso = (req.query.from as string | undefined) || undefined;
   const toIso = (req.query.to as string | undefined) || undefined;
 
+  // Reconcile drafts whose `scheduled_at` is in the past with the provider
+  // (Metricool) and metrics-collector output. This closes the gap where
+  // Metricool publishes a scheduled post but MC stays on `scheduled`
+  // because no one had the editor open. Cheap when nothing's pending —
+  // see reconciliation.ts. The authoritative trigger is the metrics
+  // cron via POST /api/publishing/reconcile; this is the on-demand
+  // safety net so users see the right state when they open the tab.
+  try {
+    await reconcileScheduledDrafts(slug);
+  } catch (e) {
+    // Non-fatal: log and keep going so the calendar still loads.
+    // eslint-disable-next-line no-console
+    console.warn(`[calendar] reconciliation skipped: ${(e as Error).message}`);
+  }
+
   // Build idea lookup once
   const ideas = loadIdeas(slug);
   const ideaById = new Map<string, Idea>(ideas.map((i) => [i.id, i]));
@@ -166,6 +185,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse<CalendarRespons
               hero_media_url: heroUrl,
               body: draft.body,
               media: mediaList,
+              metrics: pub?.metrics,
             });
             continue;
           }

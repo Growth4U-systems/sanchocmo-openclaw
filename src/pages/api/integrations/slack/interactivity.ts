@@ -222,12 +222,17 @@ async function updateSlackMessage(
         replace_original: "true",
         text: `${verb} por @${actor}`,
         blocks: [{ type: "section", text: { type: "mrkdwn", text: `${verb} \`${ideaId}\` por @${actor} · ${when}` } }],
+        unfurl_links: false,
+        unfurl_media: false,
       }),
     }).catch((e) => console.error("[slack-interactivity] fallback update failed:", e));
   }
 
   const targetBlockId = `idea__${ideaId}__actions`;
-  const mcLink = `${mcUrl}/dashboard/${slug}/content-creation?tab=ideas&idea=${encodeURIComponent(ideaId)}`;
+  // Goes through the redirect endpoint so the destination is resolved at
+  // click time (draft page if generate-drafts finished, parent task page
+  // while it's still running).
+  const mcLink = `${mcUrl}/api/content-engine/idea-redirect?slug=${encodeURIComponent(slug)}&ideaId=${encodeURIComponent(ideaId)}`;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const newBlocks = originalBlocks.map((b: any) => {
     if (b?.block_id === targetBlockId) {
@@ -252,7 +257,7 @@ async function updateSlackMessage(
     const res = await fetch(responseUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ replace_original: "true", blocks: newBlocks }),
+      body: JSON.stringify({ replace_original: "true", blocks: newBlocks, unfurl_links: false, unfurl_media: false }),
     });
     if (!res.ok) {
       console.error("[slack-interactivity] update HTTP", res.status, await res.text());

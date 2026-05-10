@@ -145,13 +145,13 @@ export function Sidebar() {
         {/* ── Client section ── */}
         {slug && (
           <>
-            {/* Documents — under client name */}
+            {/* Brand Brain — under client name */}
             <SectionLabel text={slug} visible={sidebarOpen} />
             <NavLink
-              href={clientHref("/foundation")}
-              icon="📂"
-              label={t("nav.documents")}
-              active={isActive(clientHref("/foundation"))}
+              href={clientHref("/brand-brain")}
+              icon="🧠"
+              label={t("nav.brandBrain")}
+              active={isActive(clientHref("/brand-brain")) || isActive(clientHref("/foundation"))}
               collapsed={!sidebarOpen}
             />
 
@@ -159,6 +159,7 @@ export function Sidebar() {
             <SectionLabel text={t("nav.work")} visible={sidebarOpen} />
             <NavLink href={clientHref("/projects")} icon="📋" label={t("nav.projects")} active={isActive(clientHref("/projects"))} collapsed={!sidebarOpen} />
             <NavLink href={clientHref("/content-creation")} icon="✏️" label="Content Creation" active={isActive(clientHref("/content-creation"))} collapsed={!sidebarOpen} />
+            <NavLink href={clientHref("/media-creation")} icon="🎨" label="Media Creation" active={isActive(clientHref("/media-creation"))} collapsed={!sidebarOpen} />
             <NavLink href={clientHref("/outreach")} icon="📤" label="Outreach" active={isActive(clientHref("/outreach"))} collapsed={!sidebarOpen} />
             <NavLink href={clientHref("/ideas")} icon="💡" label={t("nav.ideas")} active={isActive(clientHref("/ideas"))} collapsed={!sidebarOpen} />
             <NavLink href={clientHref("/metrics")} icon="📈" label={t("nav.metrics")} active={isActive(clientHref("/metrics"))} collapsed={!sidebarOpen} />

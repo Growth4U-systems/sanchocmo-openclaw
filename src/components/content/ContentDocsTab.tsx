@@ -57,7 +57,7 @@ export function ContentDocsTab({ slug }: Props) {
     // Open in foundation doc viewer with chat pre-opened
     handleOpenChat(doc);
     const docPath = doc.path.startsWith("brand/") ? doc.path : `brand/${slug}/${doc.path}`;
-    router.push(`/dashboard/${slug}/foundation?doc=${encodeURIComponent(docPath)}`);
+    router.push(`/dashboard/${slug}/brand-brain?doc=${encodeURIComponent(docPath)}`);
   }, [slug, router, handleOpenChat]);
 
   useEffect(() => {

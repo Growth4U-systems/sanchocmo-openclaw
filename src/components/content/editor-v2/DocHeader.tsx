@@ -5,7 +5,8 @@ import styles from "./editor-v2.module.css";
 interface DocHeaderProps {
   title: string;
   path: string;
-  onEdit: () => void;
+  /** Omit to hide the Edit button entirely (e.g. on the Media tab). */
+  onEdit?: () => void;
   editLabel?: string;
   onHistory?: () => void;
   /** Defer / Discard menu — only shown when not in a terminal state. */
@@ -37,9 +38,11 @@ export function DocHeader({
               <Icon name="history" size={14} /> Historial
             </button>
           )}
-          <button type="button" className={styles.actBtn} onClick={onEdit} title={editLabel}>
-            <Icon name="edit" size={14} /> {editLabel}
-          </button>
+          {onEdit && (
+            <button type="button" className={styles.actBtn} onClick={onEdit} title={editLabel}>
+              <Icon name="edit" size={14} /> {editLabel}
+            </button>
+          )}
           {(onDefer || onDiscard) && (
             <div className={styles.actMore}>
               <button

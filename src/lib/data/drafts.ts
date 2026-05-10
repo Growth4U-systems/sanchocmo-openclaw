@@ -60,6 +60,20 @@ export interface MediaAsset {
   created_at: string;
 }
 
+/** Snapshot of engagement metrics for a published post. Refreshed daily by
+ *  the metrics reconciliation pass. Lives next to publishing meta because
+ *  these numbers only mean something for posts that actually went live. */
+export interface PostMetricsSnapshot {
+  impressions: number;
+  likes: number;
+  clicks: number;
+  comments: number;
+  /** Engagement % as Metricool reports it (likes+comments+shares / impressions). */
+  engagement_pct: number;
+  /** When this snapshot was last refreshed by the cron. ISO 8601. */
+  measured_at: string;
+}
+
 /** Publishing lifecycle metadata. Complementary to `status`; only present
  *  once the user kicks off publishing (publish-now or schedule). */
 export interface PublishingMeta {
@@ -70,6 +84,10 @@ export interface PublishingMeta {
   external_job_id?: string;           // provider-side scheduled post id
   external_url?: string | null;       // canonical URL once published
   error?: string | null;
+  /** Latest engagement snapshot. Refreshed daily by the metrics-collector
+   *  cron via `/api/publishing/reconcile`. Older snapshots are not retained;
+   *  if you need history pull from `brand/{slug}/metrics/*.json`. */
+  metrics?: PostMetricsSnapshot;
 }
 
 export interface DraftFrontmatter {
@@ -80,7 +98,12 @@ export interface DraftFrontmatter {
   /** Document kind. Defaults to "channel-draft" when missing for back-compat. */
   kind?: DraftKind;
   iteration: number;
-  status: "pending" | "researching" | "clarify-needed" | "drafting" | "draft" | "approved" | "published";
+  /**
+   * @deprecated Removed. The canonical phase lives in `ContentTask.channel_phases`
+   * (see types/index.ts). The field is kept here as optional so legacy `.md`
+   * files don't trip the YAML reader; new writes never set it. Do not read.
+   */
+  status?: never;
   model?: string;
   research_used?: boolean;
   clarify_status?: "pending" | "answered" | "skipped";
@@ -188,7 +211,6 @@ export function createSpecialDoc(
     channel,
     kind,
     iteration: 0,
-    status: "pending",
     created_at: now,
     updated_at: now,
   };
@@ -224,7 +246,6 @@ export function createEmptyDraft(
     channel: meta.channel,
     kind: meta.kind ?? "channel-draft",
     iteration: meta.iteration ?? 0,
-    status: meta.status ?? "pending",
     model: meta.model,
     research_used: meta.research_used,
     clarify_status: meta.clarify_status,
@@ -292,8 +313,7 @@ export function validateMediaArray(input: unknown, where = "media"): void {
 }
 
 /** Update an existing draft. Pass `meta` partials to merge over current frontmatter.
- *  Throws if `meta.status` or `meta.clarify_status` are non-canonical values —
- *  callers (including the agent's writer skill) must use the enum strictly. */
+ *  Throws if `meta.clarify_status` / `meta.kind` / `meta.media` are non-canonical. */
 export function updateDraft(
   slug: string,
   ideaId: string,
@@ -303,12 +323,6 @@ export function updateDraft(
   const existing = loadDraft(slug, ideaId, channel);
   if (!existing) throw new Error(`Draft not found: ${ideaId}/${channel}`);
 
-  if (patch.meta?.status !== undefined && !VALID_DRAFT_STATUSES.includes(patch.meta.status)) {
-    throw new Error(
-      `Invalid draft status: "${patch.meta.status}". ` +
-      `Allowed: ${VALID_DRAFT_STATUSES.join(", ")}.`,
-    );
-  }
   if (
     patch.meta?.clarify_status !== undefined &&
     !VALID_CLARIFY_STATUSES.includes(patch.meta.clarify_status)
@@ -350,24 +364,9 @@ export function updateDraft(
     }
   }
 
-  // Hard gate: cannot transition into drafting/draft while clarify is still
-  // pending. The writer skill must wait for human answers (or explicit skip)
-  // before producing a draft. Only applies to channel-drafts — proposal /
-  // research / clarify docs are exempt.
-  const isChannelDraft = (patch.meta?.kind ?? existing.meta.kind ?? "channel-draft") === "channel-draft";
-  const newStatus = patch.meta?.status ?? existing.meta.status;
-  const newClarify = patch.meta?.clarify_status ?? existing.meta.clarify_status;
-  if (
-    isChannelDraft &&
-    (newStatus === "drafting" || newStatus === "draft") &&
-    newClarify === "pending"
-  ) {
-    throw new Error(
-      `Cannot move draft to "${newStatus}" while clarify_status is "pending". ` +
-      `The agent must post clarify questions, wait for answers, then set ` +
-      `clarify_status="answered" (or "skipped") before drafting.`,
-    );
-  }
+  // The clarify gate (no drafting/draft while clarify_status === "pending")
+  // moved to setChannelPhase, which is the new write path. updateDraft only
+  // mutates body + metadata; the phase lifecycle lives in tasks.json now.
 
   const meta: DraftFrontmatter = {
     ...existing.meta,
@@ -391,78 +390,6 @@ export function snapshotDraft(slug: string, ideaId: string, channel: string): st
   const snapshotAbs = path.join(draftsDir(slug, ideaId), snapshotName);
   fs.copyFileSync(existing.absPath, snapshotAbs);
   return `content/drafts/${ideaId}/${snapshotName}`;
-}
-
-export type DraftStatus = DraftFrontmatter["status"];
-
-/**
- * Read the `status` of every draft file in `target_channels[]` for the given
- * idea. Channels with no `.md` on disk yet map to `"pending"`. Used by the
- * kanban to show a per-channel status chip in each ContentTask card.
- */
-export const VALID_DRAFT_STATUSES: readonly DraftStatus[] = [
-  "pending",
-  "researching",
-  "clarify-needed",
-  "drafting",
-  "draft",
-  "approved",
-  "published",
-] as const;
-
-export function getDraftStatuses(
-  slug: string,
-  ideaId: string,
-  channels: string[],
-): Record<string, DraftStatus> {
-  const out: Record<string, DraftStatus> = {};
-  for (const ch of channels) {
-    const draft = loadDraft(slug, ideaId, ch);
-    const raw = draft?.meta.status;
-    // If the file on disk has been corrupted with a non-canonical status,
-    // surface it as `pending` so the kanban still places the card and the
-    // user can re-run the agent. The validation in `updateDraft` prevents
-    // this from being introduced going forward.
-    out[ch] = raw && VALID_DRAFT_STATUSES.includes(raw) ? raw : "pending";
-  }
-  return out;
-}
-
-/**
- * Aggregate per-channel statuses into a single phase the kanban can use to
- * place the card in a column. Strategy: take the *least-advanced* channel —
- * the card represents what's still pending. Returns one of:
- *   "pending" | "drafting" | "draft" | "approved" | "published"
- */
-// Numeric rank for ordering draft statuses by progress. Only the canonical
-// values from `DraftFrontmatter.status` are accepted — anything else is a
-// data error (the validation in `updateDraft` rejects writes with non-canonical
-// values, so this map is the single source of truth).
-const DRAFT_STATUS_RANK: Record<DraftStatus, number> = {
-  pending: 0,
-  researching: 1,
-  "clarify-needed": 1,
-  drafting: 2,
-  draft: 3,
-  approved: 4,
-  published: 5,
-};
-
-export function aggregateDraftStatus(
-  statuses: Record<string, DraftStatus>,
-): DraftStatus | null {
-  const entries = Object.values(statuses);
-  if (entries.length === 0) return null;
-  let minRank = Infinity;
-  let minStatus: DraftStatus = entries[0];
-  for (const s of entries) {
-    const r = DRAFT_STATUS_RANK[s];
-    if (r !== undefined && r < minRank) {
-      minRank = r;
-      minStatus = s;
-    }
-  }
-  return minStatus;
 }
 
 /** Re-export utilities used by API layer. */

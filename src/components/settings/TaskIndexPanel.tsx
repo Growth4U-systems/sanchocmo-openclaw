@@ -187,7 +187,7 @@ export function TaskIndexPanel({ slug }: Props) {
                             ✅
                           </Link>
                         ) : (
-                          <Link href={`/dashboard/${slug}/foundation?doc=${encodeURIComponent(task.deliverableFile)}`}
+                          <Link href={`/dashboard/${slug}/brand-brain?doc=${encodeURIComponent(task.deliverableFile)}`}
                             className="text-green-600 hover:text-green-800 no-underline" title={task.deliverableFile}>
                             ✅
                           </Link>

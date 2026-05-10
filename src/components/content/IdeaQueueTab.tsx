@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import Link from "next/link";
 import { useRouter } from "next/router";
 import { cn } from "@/lib/utils";
 import { buildTaskThread, type ThreadConfig } from "@/lib/chat-openers";
@@ -104,26 +103,33 @@ function formatLastRun(iso: string | undefined | null): string | null {
 
 interface IdeasCounts {
   total: number;
-  new: number;
-  approved: number;
-  deferred: number;
-  discarded: number;
-  published: number;
+  New: number;
+  Approved: number;
+  Draft: number;
+  "Pending Media": number;
+  Ready: number;
+  Published: number;
+  Discarded: number;
+  Deferred: number;
 }
+
+// Per-status display: Spanish label + comic palette tokens. Defined once so
+// the table badges and downstream UIs share the same mapping.
+const STATUS_VISUAL: Record<string, { label: string; bg: string; fg: string }> = {
+  New:             { label: "Nueva",      bg: "var(--sc-sage-100)",  fg: "var(--sc-ink)" },
+  Approved:        { label: "Aprobada",   bg: "var(--sc-navy-500)",  fg: "var(--sc-paper-3)" },
+  Draft:           { label: "Borrador",   bg: "var(--sc-sun-300)",   fg: "var(--sc-ink)" },
+  "Pending Media": { label: "Media",      bg: "var(--sc-sun-100)",   fg: "var(--sc-ink)" },
+  Ready:           { label: "Lista",      bg: "var(--sc-sage-500)",  fg: "var(--sc-paper-3)" },
+  Published:       { label: "Publicada",  bg: "var(--sc-sage-700)",  fg: "var(--sc-paper-3)" },
+  Deferred:        { label: "Diferida",   bg: "var(--sc-sun-100)",   fg: "var(--sc-ink)" },
+  Discarded:       { label: "Descartada", bg: "var(--sc-brick-bg)",  fg: "var(--sc-brick-500)" },
+};
 
 interface Props {
   slug: string;
   openChat?: (slug: string, config: ThreadConfig) => void;
 }
-
-// Comic UI palette — only rust/navy/sage/yellow/aged + ink
-const STATUS_VISUAL: Record<string, string> = {
-  New:       "bg-card    text-ink",
-  Approved:  "bg-sage    text-white",
-  Deferred:  "bg-aged    text-ink",
-  Discarded: "bg-rust    text-white",
-  Published: "bg-navy    text-white",
-};
 
 // Content type → comic color (rust = hot, sage = proof, navy = framework, yellow = personal, aged = listicle)
 const CONTENT_TYPE_VISUAL: Record<string, { label: string; bg: string; emoji: string }> = {
@@ -166,12 +172,12 @@ export function IdeaQueueTab({ slug, openChat }: Props) {
   const [todayOnly, setTodayOnly] = useState<boolean>(false);
 
   const fetchIdeas = useCallback(() => {
-    const statusParam = filter !== "all" ? `&status=${filter}` : "";
-    fetch(`/api/content-engine/ideas?slug=${slug}${statusParam}`)
+    const statusParam = filter !== "all" ? `&status=${encodeURIComponent(filter)}` : "";
+    fetch(`/api/content-engine/content-tasks-pool?slug=${slug}${statusParam}`)
       .then((r) => r.json())
       .then((data) => {
         if (data.ok) {
-          setIdeas(data.ideas || []);
+          setIdeas(data.contentTasks || []);
           setCounts(data.counts || null);
         }
       })
@@ -202,11 +208,11 @@ export function IdeaQueueTab({ slug, openChat }: Props) {
     fetchIdeas();
   }, [slug, fetchIdeas]);
 
-  const saveDraft = useCallback(async (ideaId: string, channel: string, body: string, status?: string) => {
+  const saveDraft = useCallback(async (ideaId: string, channel: string, body: string) => {
     await fetch("/api/content-engine/drafts", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ slug, ideaId, channel, body, meta: status ? { status } : undefined }),
+      body: JSON.stringify({ slug, ideaId, channel, body }),
     });
     fetchIdeas();
   }, [slug, fetchIdeas]);
@@ -287,11 +293,14 @@ export function IdeaQueueTab({ slug, openChat }: Props) {
 
   const FILTERS = [
     { key: "all", label: "Todas", count: counts?.total },
-    { key: "New", label: "Nuevas", count: counts?.new },
-    { key: "Approved", label: "Aprobadas", count: counts?.approved },
-    { key: "Deferred", label: "Diferidas", count: counts?.deferred },
-    { key: "Discarded", label: "Descartadas", count: counts?.discarded },
-    { key: "Published", label: "Publicadas", count: counts?.published },
+    { key: "New", label: "Nuevas", count: counts?.New },
+    { key: "Approved", label: "Aprobadas", count: counts?.Approved },
+    { key: "Draft", label: "Borrador", count: counts?.Draft },
+    { key: "Pending Media", label: "Media", count: counts?.["Pending Media"] },
+    { key: "Ready", label: "Listas", count: counts?.Ready },
+    { key: "Published", label: "Publicadas", count: counts?.Published },
+    { key: "Deferred", label: "Diferidas", count: counts?.Deferred },
+    { key: "Discarded", label: "Descartadas", count: counts?.Discarded },
   ];
 
   const today = todayKey();
@@ -630,21 +639,15 @@ export function IdeaQueueTab({ slug, openChat }: Props) {
                           >
                             <span>{tv.emoji}</span>{tv.label}
                           </span>
-                          <span
-                            className="font-heading uppercase text-[9.5px] tracking-wider px-1.5 py-0.5 rounded-sc-pill border inline-flex items-center"
-                            style={{
-                              background:
-                                idea.status === "New" ? "var(--sc-sage-100)"
-                                : idea.status === "Approved" ? "var(--sc-navy-500)"
-                                : idea.status === "Discarded" ? "var(--sc-brick-bg)"
-                                : "var(--sc-sun-100)",
-                              color:
-                                idea.status === "Approved" ? "var(--sc-paper-3)"
-                                : idea.status === "Discarded" ? "var(--sc-brick-500)"
-                                : "var(--sc-ink)",
-                              borderColor: "var(--sc-ink)",
-                            }}
-                          >{idea.status}</span>
+                          {(() => {
+                            const sv = STATUS_VISUAL[idea.status] || { label: idea.status, bg: "var(--sc-sun-100)", fg: "var(--sc-ink)" };
+                            return (
+                              <span
+                                className="font-heading uppercase text-[9.5px] tracking-wider px-1.5 py-0.5 rounded-sc-pill border inline-flex items-center"
+                                style={{ background: sv.bg, color: sv.fg, borderColor: "var(--sc-ink)" }}
+                              >{sv.label}</span>
+                            );
+                          })()}
                           <span className="inline-flex items-center gap-1.5" title={`Confianza ${conf}%`}>
                             <span
                               className="inline-block h-2 w-12 rounded-sc-pill border overflow-hidden"
@@ -726,9 +729,9 @@ export function IdeaQueueTab({ slug, openChat }: Props) {
 
                       {/* Acciones — vertical stack */}
                       <td style={{ ...cellBase, padding: "16px 12px" }}>
-                        {!isNew && !isApproved && (
+                        {idea.status === "Discarded" && (
                           <span className="text-xs italic" style={{ color: "var(--sc-fg-muted)" }}>
-                            {idea.status === "Discarded" ? "Descartada" : idea.status}
+                            Descartada
                           </span>
                         )}
                         {isNew && (
@@ -757,7 +760,7 @@ export function IdeaQueueTab({ slug, openChat }: Props) {
                             style={{ background: "var(--sc-sage-100)", color: "var(--sc-ink)", borderColor: "var(--sc-ink)", boxShadow: "var(--pop-xs)" }}
                           >↺ Volver a queue</button>
                         )}
-                        {isApproved && (
+                        {(isApproved || idea.status === "Draft" || idea.status === "Pending Media" || idea.status === "Ready" || idea.status === "Published") && (
                           <div className="flex flex-col gap-1.5">
                             <button
                               onClick={() => {
@@ -776,20 +779,6 @@ export function IdeaQueueTab({ slug, openChat }: Props) {
                               className="font-heading uppercase text-[12px] tracking-wider px-2.5 py-1.5 rounded border-2 sc-pop-hover inline-flex items-center justify-center gap-1.5"
                               style={{ background: "var(--sc-rust-500)", color: "var(--sc-paper-3)", borderColor: "var(--sc-ink)", boxShadow: "var(--pop-xs)" }}
                             >💬 Abrir draft</button>
-                            {idea.project_task_id && idea.project_id && (
-                              <Link
-                                href={
-                                  idea.content_task_id
-                                    ? `/dashboard/${slug}/projects/${idea.project_id}/tasks/${idea.project_task_id}/content/${idea.content_task_id}`
-                                    : `/dashboard/${slug}/projects/${idea.project_id}/tasks/${idea.project_task_id}`
-                                }
-                                className="font-heading uppercase text-[11px] tracking-wider px-2.5 py-1.5 rounded border-2 sc-pop-hover inline-flex items-center justify-center gap-1.5 no-underline"
-                                style={{ background: "var(--sc-paper-3)", color: "var(--sc-ink)", borderColor: "var(--sc-ink)", boxShadow: "var(--pop-xs)" }}
-                                title={idea.content_task_id || idea.project_task_id}
-                              >
-                                {idea.content_task_id ? "✍️ Content Task" : "📋 Tarea"}
-                              </Link>
-                            )}
                           </div>
                         )}
                       </td>

@@ -68,6 +68,50 @@ function loadConfig(slug: string): { ok: true; cfg: MetricoolConfig } | { ok: fa
   return { ok: true, cfg: { blogId, userId, apiToken } };
 }
 
+/** List scheduler posts within ±5 min of `dateTime` for the given network and
+ *  return the matching post's id. Used right after a successful schedule
+ *  POST when Metricool's response didn't include an `id` field, so we can
+ *  still capture the scheduler id for later reconciliation. */
+async function findSchedulerIdByMatch(
+  cfg: MetricoolConfig,
+  network: string,
+  dateTime: string,
+): Promise<string | undefined> {
+  const target = Date.parse(`${dateTime}Z`);
+  if (Number.isNaN(target)) return undefined;
+  // ±5 min window is enough — schedule POST is synchronous so the post
+  // exists immediately in Metricool's scheduler.
+  const fromIso = new Date(target - 5 * 60 * 1000).toISOString().replace(/\.\d{3}Z$/, "");
+  const toIso = new Date(target + 5 * 60 * 1000).toISOString().replace(/\.\d{3}Z$/, "");
+  const sep = "&";
+  const endpoint =
+    `/scheduler/posts?start=${encodeURIComponent(fromIso)}` +
+    `${sep}end=${encodeURIComponent(toIso)}` +
+    `${sep}timezone=UTC`;
+  const res = await metricoolFetch(cfg, endpoint);
+  if (!res.ok) return undefined;
+  const text = await res.text();
+  let posts: unknown;
+  try { posts = JSON.parse(text); } catch { return undefined; }
+  if (!Array.isArray(posts)) return undefined;
+  const list = posts as Array<Record<string, unknown>>;
+  // Match by network + closest scheduledTime to our target.
+  let best: { id: string; delta: number } | null = null;
+  for (const p of list) {
+    const pubDate = (p.publicationDate as { dateTime?: string } | undefined)?.dateTime;
+    const providers = (p.providers as Array<{ network?: string }> | undefined) ?? [];
+    if (!pubDate || providers.length === 0) continue;
+    if (!providers.some((pr) => pr.network === network)) continue;
+    const ts = Date.parse(`${pubDate}Z`);
+    if (Number.isNaN(ts)) continue;
+    const delta = Math.abs(ts - target);
+    const id = p.id != null ? String(p.id) : undefined;
+    if (!id) continue;
+    if (!best || delta < best.delta) best = { id, delta };
+  }
+  return best?.id;
+}
+
 async function metricoolFetch(
   cfg: MetricoolConfig,
   endpoint: string,
@@ -161,12 +205,46 @@ export const metricoolProvider: PublishProvider = {
           error: detail ? `HTTP ${res.status}: ${detail}` : `HTTP ${res.status}`,
         };
       }
-      const externalJobId = data.id != null ? String(data.id) : undefined;
+      // Metricool's v2 schedule POST sometimes responds with `id` and
+      // sometimes with the post nested under `post.id` / `data.id`. Capture
+      // any of those, and as a final fallback list scheduler posts in a
+      // narrow window around our publishAt to find ours by network +
+      // dateTime match. The id is critical for reconciliation later.
+      const dataAny = data as Record<string, unknown>;
+      const candidateId =
+        (typeof dataAny.id !== "undefined" && dataAny.id !== null && String(dataAny.id)) ||
+        (typeof dataAny.postId !== "undefined" && dataAny.postId !== null && String(dataAny.postId)) ||
+        (dataAny.post && typeof dataAny.post === "object" && (dataAny.post as { id?: unknown }).id != null
+          && String((dataAny.post as { id: unknown }).id)) ||
+        (dataAny.data && typeof dataAny.data === "object" && (dataAny.data as { id?: unknown }).id != null
+          && String((dataAny.data as { id: unknown }).id)) ||
+        undefined;
+      let externalJobId = candidateId || undefined;
+      if (!externalJobId) {
+        // Last-resort lookup: list scheduler posts in a 5-min window
+        // surrounding our publishAt and find ours by dateTime + network.
+        // Don't fail the publish if this lookup fails — the post is
+        // already scheduled in Metricool.
+        try {
+          externalJobId = await findSchedulerIdByMatch(cfg, network, dateTime);
+          if (!externalJobId) {
+            // eslint-disable-next-line no-console
+            console.warn(
+              `[metricool] Schedule succeeded but no id captured. ` +
+              `Response keys: ${Object.keys(dataAny).join(", ") || "(empty)"}. ` +
+              `Reconciliation will fall back to text matching.`,
+            );
+          }
+        } catch (e) {
+          // eslint-disable-next-line no-console
+          console.warn(`[metricool] post-schedule id lookup failed: ${(e as Error).message}`);
+        }
+      }
       const isImmediate = !input.schedule;
       return {
         ok: true,
         externalJobId,
-        externalUrl: data.url,
+        externalUrl: typeof dataAny.url === "string" ? dataAny.url : undefined,
         scheduledAt: isImmediate ? undefined : publishAt,
         publishedAt: isImmediate ? new Date().toISOString() : undefined,
       };
@@ -218,6 +296,90 @@ export const metricoolProvider: PublishProvider = {
     } catch (e) {
       return { ok: false, error: e instanceof Error ? e.message : String(e) };
     }
+  },
+
+  /**
+   * Pull current engagement for a batch of published posts. Groups by
+   * channel/network, makes one analytics call per network covering the
+   * full window from the earliest publish date to today, then matches
+   * each input to a post by URL. One Metricool call per network is much
+   * cheaper than one per post; this is run daily so amortized cost is fine.
+   *
+   * Returns a Map keyed by `externalUrl`. Inputs without a matching post
+   * (e.g. the post was deleted on the platform) are omitted from the map.
+   */
+  async fetchPostMetrics(slug, inputs) {
+    const out = new Map<string, import("@/lib/data/drafts").PostMetricsSnapshot>();
+    if (inputs.length === 0) return out;
+    const result = loadConfig(slug);
+    if (!result.ok) return out;
+    const cfg = result.cfg;
+
+    // Group requests by Metricool network.
+    const byNetwork = new Map<string, typeof inputs>();
+    for (const q of inputs) {
+      const net = NETWORK_BY_CHANNEL[q.channel];
+      if (!net) continue;
+      const list = byNetwork.get(net) || [];
+      list.push(q);
+      byNetwork.set(net, list);
+    }
+
+    // Earliest publishedAt across the batch, default to 90 days ago.
+    const ninetyDaysAgo = new Date(Date.now() - 90 * 86400_000);
+    const earliest = inputs
+      .map((q) => (q.publishedAt ? Date.parse(q.publishedAt) : NaN))
+      .filter((t) => !Number.isNaN(t))
+      .reduce((min, t) => (t < min ? t : min), Date.now());
+    const fromDate = new Date(Math.min(earliest, ninetyDaysAgo.getTime()));
+    const fromStr = `${fromDate.toISOString().slice(0, 10)}T00:00:00`;
+    const todayStr = new Date().toISOString().slice(0, 10) + "T23:59:59";
+
+    for (const [network, queries] of byNetwork) {
+      try {
+        const endpoint =
+          `/analytics/posts/${encodeURIComponent(network)}` +
+          `?from=${encodeURIComponent(fromStr)}` +
+          `&to=${encodeURIComponent(todayStr)}`;
+        const res = await metricoolFetch(cfg, endpoint);
+        if (!res.ok) {
+          // eslint-disable-next-line no-console
+          console.warn(`[metricool] analytics ${network} HTTP ${res.status}`);
+          continue;
+        }
+        const data = await res.json().catch(() => ({})) as { data?: unknown[] };
+        const posts = (Array.isArray(data) ? data : data.data) as Array<Record<string, unknown>> | undefined;
+        if (!Array.isArray(posts)) continue;
+
+        const byUrl = new Map<string, Record<string, unknown>>();
+        for (const post of posts) {
+          const url = typeof post.url === "string" ? post.url : "";
+          if (url) byUrl.set(url, post);
+        }
+
+        const measured_at = new Date().toISOString();
+        for (const q of queries) {
+          const post = byUrl.get(q.externalUrl);
+          if (!post) continue;
+          const num = (k: string) => {
+            const v = post[k];
+            return typeof v === "number" ? v : 0;
+          };
+          out.set(q.externalUrl, {
+            impressions: num("impressions"),
+            likes: num("likes") || num("likeCount"),
+            clicks: num("clicks"),
+            comments: num("comments") || num("commentCount"),
+            engagement_pct: Math.round((num("engagement") || 0) * 100) / 100,
+            measured_at,
+          });
+        }
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.warn(`[metricool] analytics ${network} failed: ${(e as Error).message}`);
+      }
+    }
+    return out;
   },
 };
 
