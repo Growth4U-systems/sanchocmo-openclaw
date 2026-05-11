@@ -130,5 +130,77 @@
     "date": "2026-05-06",
     "relevance_score": 0.88,
     "created_at": "2026-05-10T23:33:00.000Z"
+  },
+  {
+    "id": "news-2026-05-11-dm01",
+    "type": "data-point",
+    "pillar_id": "P1",
+    "title": "B2B SaaS Benchmarks 2026: CAC Median $1,200, Up 60% Over Five Years",
+    "summary": "Data-Mania annual report 2026 documenta CAC mediano B2B SaaS en $1,200 (+60% en 5 años). Google Ads +164%, LinkedIn Ads +89% desde 2019. Ciclos de venta: 107 días (2022) → 134 días (2026). Empresas gastan $2,00 para generar $1,00 de nuevo ARR. NRR industria: 106%; expansión = 40-50% nuevo ARR en top performers.",
+    "source": "Data-Mania Annual Report 2026",
+    "url": "https://www.data-mania.com/blog/b2b-saas-benchmarks-2026-annual-report/",
+    "date": "2026-01-01",
+    "relevance_score": 0.85,
+    "created_at": "2026-05-11T21:16:00.000Z"
+  },
+  {
+    "id": "news-2026-05-11-mx01",
+    "type": "data-point",
+    "pillar_id": "P1",
+    "title": "Unit Economics Benchmarks 2026: Bottom 20% SaaS at LTV:CAC 0.8:1",
+    "summary": "Mowsix benchmarks (939 empresas, Optifai Q2 2025-Q1 2026): LTV:CAC mediano 3.2:1; bottom 20% en 0.8:1 (perdiendo en cada cliente). Payback alargado de 14 meses (2023) a 18 meses (2024). Churn promedio 3.5%/mes; reducir 1pp incrementa LTV ~40%.",
+    "source": "Mowsix Unit Economics Benchmarks 2026",
+    "url": "https://mowsix.com/insights/unit-economics-benchmarks-2026/",
+    "date": "2026-03-01",
+    "relevance_score": 0.88,
+    "created_at": "2026-05-11T21:16:00.000Z"
+  },
+  {
+    "id": "news-2026-05-11-td01",
+    "type": "aha-moment",
+    "pillar_id": "P2",
+    "title": "From SEO to GEO: 60% Zero-Click Searches, LLM Traffic Converts Higher",
+    "summary": "Trendemon/Gravity Global: 60% de búsquedas resultan en zero clicks. Tráfico de LLMs muestra mayor engagement y conversión que orgánico. Sitios web funcionan ahora como fuentes de datos que los modelos rastrean para construir knowledge sets, influyendo en cómo los LLMs describirán la marca a futuros compradores.",
+    "source": "Trendemon / Gravity Global",
+    "url": "https://trendemon.com/blog/from-seo-to-geo-how-ai-is-reshaping-b2b-discovery-conversion/",
+    "date": "2026-05-01",
+    "relevance_score": 0.82,
+    "created_at": "2026-05-11T21:16:00.000Z"
+  },
+  {
+    "id": "news-2026-05-11-cg01",
+    "type": "milestone",
+    "pillar_id": "P3",
+    "title": "ESMA Statement April 17, 2026: MiCA Transitional Period Ends July 1 — 185+ Licensed",
+    "summary": "ESMA comunicado oficial 17 abril 2026: el 1 de julio de 2026 expira el período transitorio MiCA en toda la UE; entidades sin licencia deben cesar operaciones inmediatamente. Más de 185 operadores ya tienen licencia MiCA a abril 2026. Se exigen planes de wind-down para no licenciados.",
+    "source": "CoinGeek / ESMA",
+    "url": "https://coingeek.com/eu-regulator-clarifies-expectations-ahead-of-mica-deadline/",
+    "date": "2026-04-17",
+    "relevance_score": 0.92,
+    "created_at": "2026-05-11T21:16:00.000Z"
+  },
+  {
+    "id": "news-2026-05-11-ar01",
+    "type": "contrarian",
+    "pillar_id": "P4",
+    "title": "The Great Agency Resignation 2026: AI Automates the Core of Retainer Billing",
+    "summary": "Aragil analiza la convergencia de IA operacional, creator economy y consolidación de mercado que está automatizando media buying, análisis y generación de contenido — el núcleo del retainer. Las marcas exigen ownership de outcomes y skin in the game; el modelo del agente neutral está siendo eliminado por automatización.",
+    "source": "Aragil.com",
+    "url": "https://www.aragil.com/blog/the-great-agency-resignation-of-2026",
+    "date": "2026-01-15",
+    "relevance_score": 0.8,
+    "created_at": "2026-05-11T21:16:00.000Z"
+  },
+  {
+    "id": "news-2026-05-11-da01",
+    "type": "data-point",
+    "pillar_id": "P5",
+    "title": "AI Agent Scaling Gap March 2026: 78% Pilots, Only 14% Reach Production (650 Leaders Surveyed)",
+    "summary": "Digital Applied survey (650 enterprise tech leaders, feb-mar 2026): 78% tienen pilotos activos de agentes IA; solo 14% escalado a producción real. Finanzas lidera (21%); sanidad más bajo (8%). 89% de fallos son organizativos/operativos, no tecnológicos.",
+    "source": "Digital Applied — March 2026 Survey",
+    "url": "https://www.digitalapplied.com/blog/ai-agent-scaling-gap-march-2026-pilot-to-production",
+    "date": "2026-03-26",
+    "relevance_score": 0.9,
+    "created_at": "2026-05-11T21:16:00.000Z"
   }
 ]

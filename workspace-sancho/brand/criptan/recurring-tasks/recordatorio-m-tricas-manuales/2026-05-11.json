@@ -1,0 +1,11 @@
+{
+  "cronId": "1b104cd3-74b6-42df-9d4e-b4a764acef21",
+  "cronName": "Recordatorio Métricas Manuales — Criptan",
+  "slug": "criptan",
+  "date": "2026-05-11",
+  "runAtMs": 1778483324307,
+  "status": "error",
+  "durationMs": 12843,
+  "model": "claude-sonnet-4-6",
+  "content": "📊 **Recordatorio: Métricas manuales de la semana pasada**\n\nToca rellenar el Google Sheet con los datos de la semana anterior:\n\n👉 <https://docs.google.com/spreadsheets/d/1fb_uCEwmXiHGnmOjxcrUpUuqoe83ifXVHFoScbffqk4/edit>\n\nColumnas a completar: `signups` · `kyc_completed` · `first_deposit` · `amount_deposited` · `earn_activated` · `second_deposit` · `app_downloads` · `ad_spend`"
+}

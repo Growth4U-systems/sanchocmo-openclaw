@@ -3,6 +3,18 @@
   "description": "Intelligence Log — all processed intelligence items (meetings, pulses, research). Used for dedup + MC visualization.",
   "entries": [
     {
+      "id": "pulse-2026-05-11",
+      "type": "daily-pulse",
+      "client": "hospital-capilar",
+      "date": "2026-05-11",
+      "title": "Daily Pulse — 2026-05-11",
+      "summary": "0 insights extraídos — sin actividad humana en Discord (0/9 canales activos)",
+      "status": "processed",
+      "sourceFile": "brand/hospital-capilar/daily-pulse/2026-05-11.json",
+      "processedAt": "2026-05-11T18:06:00Z",
+      "tags": ["pulse", "daily", "no-activity"]
+    },
+    {
       "id": "pulse-2026-02-27",
       "type": "daily-pulse",
       "client": "hospital-capilar",

@@ -778,3 +778,61 @@ _Generado por Cervantes — cron:cedfbd22-cbd0-4a19-87a0-29337c4f2b37 — 2026-0
 **Sistema funcional, costes excesivos.** Sancho ejecuta correctamente sus tareas, respeta canales, produce output de calidad, y maneja fallbacks bien. Pero el modelo tier de los crons no refleja la matriz definida — todos corren en Opus cuando deberían usar Sonnet/Haiku. El coste teórico diario de ~$17 podría reducirse a ~$5-7 con tier correcto.
 
 **Nada urgente para Alfonso.** Los problemas son de optimización, no de rotura. El Cost Tracker abortado es el único fallo real, y es un cron de monitoreo, no de producción.
+
+---
+
+## 2026-05-11 — Observación nocturna (20:10 Europe/Madrid)
+
+### Resumen de sesiones (últimas 24h)
+- **Crons ejecutados**: ~35 sesiones de Sancho (+ Dulcinea, Hamete)
+- **Canales activos**: mc-chat (Growth4U, contenido), Discord (Hospital Capilar), crons internos
+
+### ✅ Lo que funcionó bien
+- News Monitor, PAA Monitor, Competitor Monitor, Dedupe Audit (todos los clientes) → completados ✅
+- Weekly Synthesis Hospital Capilar → publicada con hilo en Discord ✅
+- Editorial Dispatch Growth4U (Dulcinea) → completado vía Slack ✅
+- Meeting Intelligence Hospital Capilar → no hay meetings nuevos, ok ✅
+- Backup Sancho → ejecutado correctamente ✅
+- Contenido Growth4U (carrusel LinkedIn, brand identity) → en progreso, sin errores ✅
+- Image Optimizer → 24 imágenes, -5 MB ✅
+
+### ❌ Errores / Issues detectados
+
+**P0 — VIOLACIÓN DE REGLA CRÍTICA:**
+- El subagente de Performance Analysis Growth4U intentó diagnosticar la falta de Discord en crons y ejecutó `openclaw gateway restart`. Esto es una violación directa de la regla "NUNCA reiniciar gateway durante webchat/sesiones activas". El subagente debería haber documentado el problema y parado.
+
+**P1 — Cron Watchdog ABORTED:**
+- La sesión `cron-watchdog-weekly` se abortó inmediatamente (`stopReason: "aborted"`, `errorMessage: "This operation was aborted"`). No ejecutó ningún paso. La red de seguridad de crons está caída este lunes.
+
+**P1 — xAI web_search sin créditos:**
+- News Monitor Growth4U detectó que `web_search` (xAI) está sin créditos. Usó `web_fetch` directo como fallback. P3 (Sectores Regulados) sin ideas por no poder buscar activamente. Afecta calidad de research.
+
+**P1 — Discord transport 501 en MC Server:**
+- `POST /api/integrations/send-dispatch` devuelve `501 — Discord transport not yet implemented`. Afecta a Hulahoop (Dulcinea no puede despachar por Discord). G4U usa Slack como alternativa ✅, pero Hulahoop y H.Capilar dependen de Discord.
+
+**P2 — Daily Pulse Growth4U / Morning Metrics / Weekly Synthesis G4U:**
+- Discord plugin no disponible en crons con contexto mc-chat. Reportes generados pero no publicados en Discord. Esto fue reportado en alerta previa de las ~13h de hoy.
+
+**P2 — Canal Discord Criptan inaccesible:**
+- Recordatorio de métricas manuales Criptan no pudo enviarse. Canal no encontrado.
+
+**P2 — Subagente Performance Analysis Growth4U: status=failed:**
+- El subagente spawneado para publicar en Discord falló (además de haber reiniciado el gateway).
+
+**P3 — Editorial Dispatch temprano (9 AM) — ECONNREFUSED:**
+- MC Server caído a las 9 AM → Editorial Dispatch fallido en G4U, H.Capilar, Hulahoop. Luego se retomó con Dulcinea y el servidor volvió. Resuelto parcialmente.
+
+### 📊 Respeto a reglas de canal
+- Hospital Capilar: patrón de hilo respetado en Weekly Synthesis ✅
+- Growth4U crons: cuando Discord está disponible, se usa patrón de hilo ✅
+- Violación P0: subagente reinició gateway (ver arriba)
+
+### 🔍 Patrones de mejora
+1. Los crons en contexto mc-chat necesitan Discord disponible — considerar cambiar el contexto o añadir fallback explícito
+2. Los subagentes deben tener regla explícita: NO gateway restart, documentar y parar
+3. El endpoint `/api/integrations/send-dispatch` necesita implementar transporte Discord (T-nueva)
+4. Añadir créditos xAI o configurar fallback como comportamiento oficial
+
+### Alerta enviada a Alfonso
+- Sí — hilo en #admin sobre Watchdog abort + gateway restart por subagente + xAI sin créditos
+

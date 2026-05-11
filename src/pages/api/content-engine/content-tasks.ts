@@ -94,6 +94,17 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         }
       }
     }
+    const mediaPolicyRaw = (rest as Record<string, unknown>).media_policy;
+    if (mediaPolicyRaw !== undefined) {
+      if (typeof mediaPolicyRaw !== "object" || mediaPolicyRaw === null || Array.isArray(mediaPolicyRaw)) {
+        return res.status(400).json({ error: "media_policy must be an object { channel: 'required'|'optional' }" });
+      }
+      for (const [, v] of Object.entries(mediaPolicyRaw as Record<string, unknown>)) {
+        if (v !== "required" && v !== "optional") {
+          return res.status(400).json({ error: `Invalid media_policy value: ${String(v)} (must be 'required' or 'optional')` });
+        }
+      }
+    }
 
     try {
       let updated = findContentTask(slug, parentTaskId, id);
@@ -104,7 +115,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       const fieldKeys: (keyof ContentTaskUpdateInput)[] = [
         "name", "skill", "target_channels", "documents",
         "mc_chat_thread_id", "discord_thread_id", "owner",
-        "scheduled_for", "clarify_status",
+        "scheduled_for", "clarify_status", "media_policy",
       ];
       const fields: ContentTaskUpdateInput = {};
       for (const k of fieldKeys) {

@@ -1,158 +1,72 @@
 {
   "period": "2026-05",
-  "updatedAt": "2026-05-08T08:03:08.423373",
+  "updatedAt": "2026-05-11T20:16:13.759018",
   "days": {
     "2026-05-01": {
       "total_usd": 21.8005,
       "total_turns": 427,
-      "clients": {
-        "hospital-capilar": {
-          "cost_usd": 0,
-          "turns": 3
-        },
-        "paymatico": {
-          "cost_usd": 0,
-          "turns": 1
-        },
-        "growth4u": {
-          "cost_usd": 0,
-          "turns": 4
-        }
-      },
-      "system_usd": 6.233
+      "clients": {},
+      "system_usd": 1.4304
     },
     "2026-05-02": {
       "total_usd": 3.6238,
       "total_turns": 90,
-      "clients": {
-        "hospital-capilar": {
-          "cost_usd": 0,
-          "turns": 0
-        },
-        "paymatico": {
-          "cost_usd": 0,
-          "turns": 0
-        },
-        "growth4u": {
-          "cost_usd": 0,
-          "turns": 2
-        }
-      },
+      "clients": {},
       "system_usd": 1.638
     },
     "2026-05-03": {
       "total_usd": 6.0079,
       "total_turns": 138,
-      "clients": {
-        "hospital-capilar": {
-          "cost_usd": 0,
-          "turns": 0
-        },
-        "paymatico": {
-          "cost_usd": 0,
-          "turns": 0
-        },
-        "growth4u": {
-          "cost_usd": 0,
-          "turns": 3
-        }
-      },
-      "system_usd": 3.3653
+      "clients": {},
+      "system_usd": 1.5026
     },
     "2026-05-04": {
       "total_usd": 21.7559,
       "total_turns": 447,
-      "clients": {
-        "hospital-capilar": {
-          "cost_usd": 0,
-          "turns": 4
-        },
-        "paymatico": {
-          "cost_usd": 0,
-          "turns": 1
-        },
-        "growth4u": {
-          "cost_usd": 0,
-          "turns": 6
-        }
-      },
-      "system_usd": 9.6877
+      "clients": {},
+      "system_usd": 1.8565
     },
     "2026-05-05": {
       "total_usd": 15.2289,
       "total_turns": 309,
-      "clients": {
-        "hospital-capilar": {
-          "cost_usd": 0,
-          "turns": 3
-        },
-        "paymatico": {
-          "cost_usd": 0,
-          "turns": 1
-        },
-        "growth4u": {
-          "cost_usd": 0,
-          "turns": 4
-        }
-      },
-      "system_usd": 10.3565
+      "clients": {},
+      "system_usd": 1.4508
     },
     "2026-05-06": {
       "total_usd": 21.8987,
       "total_turns": 397,
-      "clients": {
-        "hospital-capilar": {
-          "cost_usd": 0,
-          "turns": 4
-        },
-        "paymatico": {
-          "cost_usd": 0,
-          "turns": 2
-        },
-        "growth4u": {
-          "cost_usd": 0,
-          "turns": 4
-        }
-      },
-      "system_usd": 3.0016
+      "clients": {},
+      "system_usd": 1.4198
     },
     "2026-05-07": {
-      "total_usd": 24.451,
-      "total_turns": 363,
-      "clients": {
-        "hospital-capilar": {
-          "cost_usd": 0,
-          "turns": 3
-        },
-        "paymatico": {
-          "cost_usd": 0,
-          "turns": 1
-        },
-        "growth4u": {
-          "cost_usd": 0,
-          "turns": 4
-        }
-      },
-      "system_usd": 8.3027
+      "total_usd": 24.4377,
+      "total_turns": 361,
+      "clients": {},
+      "system_usd": 1.6365
     },
     "2026-05-08": {
-      "total_usd": 10.6643,
-      "total_turns": 113,
-      "clients": {
-        "hospital-capilar": {
-          "cost_usd": 0,
-          "turns": 0
-        },
-        "paymatico": {
-          "cost_usd": 0,
-          "turns": 0
-        },
-        "growth4u": {
-          "cost_usd": 0,
-          "turns": 0
-        }
-      },
-      "system_usd": 10.6643
+      "total_usd": 18.1067,
+      "total_turns": 284,
+      "clients": {},
+      "system_usd": 0.5663
+    },
+    "2026-05-09": {
+      "total_usd": 8.9309,
+      "total_turns": 125,
+      "clients": {},
+      "system_usd": 3.5332
+    },
+    "2026-05-10": {
+      "total_usd": 46.4388,
+      "total_turns": 442,
+      "clients": {},
+      "system_usd": 1.2562
+    },
+    "2026-05-11": {
+      "total_usd": 28.8703,
+      "total_turns": 544,
+      "clients": {},
+      "system_usd": 23.1716
     }
   }
 }

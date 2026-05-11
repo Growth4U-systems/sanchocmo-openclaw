@@ -1,5 +1,25 @@
 # Learnings — Growth4U
 
+## 2026-05-11 — Weekly Performance Analysis W19
+
+### 🔴 Issues
+- **Appointments = 0 / 7 días**: Con 25 contactos en CRM y 0 reuniones, Lead→Meeting colapsó de 40% a 0%. El volumen de leads NO es el problema — la conversión está rota. Diagnosticar GHL booking link, follow-up automático y calidad de leads urgente.
+- **P01 deadline 11-May incumplido**: Pixel+CAPI llevan 8+ semanas sin completarse. Sin tracking, Meta sigue optimizando a ciegas.
+- **P03 6 semanas pending**: Con pipeline = 0 meetings, la dependencia 100% de Meta Ads es un riesgo sistémico confirmado.
+- **SEO position ~10.5**: Sin recuperación visible desde Marzo. P14 completado pero sin contenido publicado aún.
+
+### 🟢 Wins
+- **CTR recovery 3x**: Primera recuperación sostenida en 7 semanas. 0.52% → 1.57% en 4 días consecutivos. Causa no identificada — investigar y capitalizar.
+- **CPL mejoró -35%**: €69.96 → €45.22. Mejor semana desde Abril. Trend positivo si continúa.
+- **Contacts/semana +150%**: 25 contactos vs ~10 la semana anterior. El top-of-funnel está funcionando mejor.
+- **Health Score ↑+5**: 37 → 42. Primera mejora en 3 semanas, impulsada por paid.
+
+### 💡 Insights
+- **Paradoja W19**: Mejores métricas de paid (CTR, CPL, leads) pero peores de funnel (0 meetings). El problema no es generar leads — es convertirlos. Foco esta semana: arreglar el booking.
+- **CTR subió sin Pixel activo**: La mejora de CTR ocurrió sin tracking de conversiones instalado. Algo cambió en el lado de Meta (algoritmo, audiencia, o alguien hizo un cambio manual). Documentar.
+- **Contacts 24h errático**: May 10 tuvo 7 contactos, May 11 solo 1. Patrón irregular sugiere dependencia de día/hora específico o variación de presupuesto diario.
+- **Bottleneck del mes**: Lead→Meeting es la palanca de mayor impacto esta semana. Un fix de 30 minutos en GHL puede desbloquear 10 meetings/semana.
+
 ## 2026-05-04 — Weekly Performance Analysis W18
 
 ### 🔴 Issues

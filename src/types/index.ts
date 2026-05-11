@@ -240,6 +240,15 @@ export interface ContentTask {
    * draft frontmatter `status` field.
    */
   channel_phases?: Record<string, ChannelPhase>;
+  /**
+   * Per-channel media requirement. When `"required"`, the publish endpoint
+   * refuses to send the post to the provider with empty `media[]`, and the UI
+   * blocks the channel from advancing to `approved` until media is attached.
+   * Default per channel is `"optional"` (legacy behavior). Set by the writer
+   * skill when the plan calls for a carousel, thread with visuals, image post,
+   * etc.
+   */
+  media_policy?: Record<string, "required" | "optional">;
   clarify_status?: "pending" | "answered" | "skipped";
   skill?: string;                   // social-writer | seo-content | instagram-content | newsletter — assigned at Approved
   target_channels: string[];        // ["linkedin", "twitter"] — drafts produced for these

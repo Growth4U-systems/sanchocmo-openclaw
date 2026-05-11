@@ -1,21 +1,23 @@
 {
   "slug": "growth4u",
-  "date": "2026-05-04",
-  "overall": 37,
-  "trend": "declining",
-  "previous": 57,
+  "date": "2026-05-11",
+  "overall": 42,
+  "trend": "improving",
+  "previous": 37,
+  "delta": 5,
   "by_category": {
-    "funnel": 40,
-    "paid": 40,
-    "traffic": 35,
-    "seo": 45,
+    "funnel": 33,
+    "paid": 81,
+    "traffic": 25,
+    "seo": 35,
     "social": 15
   },
   "nsm": {
     "metric": "Appointments",
-    "current_week": 4,
-    "previous_week": 7,
-    "on_track": false
+    "current_week": 0,
+    "previous_week": 4,
+    "on_track": false,
+    "bottleneck": "Lead→Meeting (0%)"
   },
-  "updated_at": "2026-05-04T11:07:03+02:00"
+  "updated_at": "2026-05-11T20:24:00+02:00"
 }

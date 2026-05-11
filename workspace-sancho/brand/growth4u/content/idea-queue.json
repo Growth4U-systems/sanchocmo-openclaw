@@ -47,7 +47,9 @@
       "news-2026-04-26-009"
     ],
     "created_at": "2026-04-26T07:30:00Z",
-    "status": "New"
+    "status": "Deferred",
+    "deferred_at": "2026-05-11T19:40:13.000Z",
+    "deferred_reason": "auto-deferred: >14 days old"
   },
   {
     "id": "idea-2026-04-26-3",
@@ -68,7 +70,9 @@
       "news-2026-04-26-012"
     ],
     "created_at": "2026-04-26T07:30:00Z",
-    "status": "New"
+    "status": "Deferred",
+    "deferred_at": "2026-05-11T19:40:13.000Z",
+    "deferred_reason": "auto-deferred: >14 days old"
   },
   {
     "id": "idea-2026-04-26-4",
@@ -88,7 +92,9 @@
       "news-2026-04-26-015"
     ],
     "created_at": "2026-04-26T07:30:00Z",
-    "status": "New"
+    "status": "Deferred",
+    "deferred_at": "2026-05-11T19:40:13.000Z",
+    "deferred_reason": "auto-deferred: >14 days old"
   },
   {
     "id": "idea-2026-04-26-5",
@@ -108,7 +114,9 @@
       "news-2026-04-26-003"
     ],
     "created_at": "2026-04-26T07:30:00Z",
-    "status": "New"
+    "status": "Deferred",
+    "deferred_at": "2026-05-11T19:40:13.000Z",
+    "deferred_reason": "auto-deferred: >14 days old"
   },
   {
     "id": "idea-2026-04-26-6",
@@ -128,7 +136,9 @@
       "news-2026-04-26-006"
     ],
     "created_at": "2026-04-26T07:30:00Z",
-    "status": "New"
+    "status": "Deferred",
+    "deferred_at": "2026-05-11T19:40:13.000Z",
+    "deferred_reason": "auto-deferred: >14 days old"
   },
   {
     "id": "idea-2026-04-26-7",
@@ -2040,7 +2050,11 @@
       "news-2026-05-11-p2a"
     ],
     "created_at": "2026-05-11T01:10:00+02:00",
-    "status": "New"
+    "status": "New",
+    "dispatch_date": "2026-05-11",
+    "dispatch_slot": "linkedin",
+    "project_task_id": "P-Content-Semana-20-T01",
+    "project_id": "P-Content-Semana-20"
   },
   {
     "id": "idea-2026-05-11-2",
@@ -2112,7 +2126,16 @@
       "news-2026-05-11-p5a"
     ],
     "created_at": "2026-05-11T01:10:00+02:00",
-    "status": "New"
+    "status": "Approved",
+    "approved_at": "2026-05-11T19:29:36.317Z",
+    "approved_via": "mc-ui",
+    "project_task_id": "P-Content-Semana-19-T01",
+    "project_id": "P-Content-Semana-19",
+    "content_task_id": "P-Content-Semana-19-T01-C01",
+    "content_task_channels": [
+      "linkedin",
+      "twitter"
+    ]
   },
   {
     "id": "idea-2026-05-11-5",
@@ -2160,7 +2183,11 @@
       "news-2026-05-11-p3a"
     ],
     "created_at": "2026-05-11T01:10:00+02:00",
-    "status": "New"
+    "status": "New",
+    "dispatch_date": "2026-05-11",
+    "dispatch_slot": "linkedin",
+    "project_task_id": "P-Content-Semana-20-T01",
+    "project_id": "P-Content-Semana-20"
   },
   {
     "id": "idea-2026-05-11-7",
@@ -2184,7 +2211,11 @@
       "news-2026-05-11-p4a"
     ],
     "created_at": "2026-05-11T01:10:00+02:00",
-    "status": "New"
+    "status": "New",
+    "dispatch_date": "2026-05-11",
+    "dispatch_slot": "linkedin",
+    "project_task_id": "P-Content-Semana-20-T01",
+    "project_id": "P-Content-Semana-20"
   },
   {
     "id": "idea-2026-05-11-8",
@@ -2208,7 +2239,11 @@
       "news-2026-05-11-p1a"
     ],
     "created_at": "2026-05-11T01:10:00+02:00",
-    "status": "New"
+    "status": "New",
+    "dispatch_date": "2026-05-11",
+    "dispatch_slot": "linkedin",
+    "project_task_id": "P-Content-Semana-20-T01",
+    "project_id": "P-Content-Semana-20"
   },
   {
     "id": "idea-2026-05-11-9",
@@ -2282,6 +2317,478 @@
       "news-2026-05-11-f53a9e37"
     ],
     "created_at": "2026-05-10T23:27:00.000Z",
+    "status": "New"
+  },
+  {
+    "id": "idea-2026-05-11-12",
+    "title": "CAC B2B SaaS subió 60% en 5 años: por qué el problema no es el canal",
+    "pillar_id": "P1",
+    "content_type": "Hot Take",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Un informe anual de Data-Mania (2026) basado en datos de mercado documenta que el CAC mediano B2B SaaS ha llegado a $1,200 por cliente, un 60% de incremento en cinco años. Google Ads subió un 164% y LinkedIn Ads un 89% de coste desde 2019. Los ciclos de venta se han alargado de 107 días en 2022 a 134 días en 2026. Las empresas medianas gastan ahora $2,00 para generar $1,00 de nuevo ARR. El NRR industria está en 106% y la expansión de revenue representa ya el 40-50% del nuevo ARR en las compañías top.",
+      "source": "Data-Mania Annual Report 2026",
+      "url": "https://www.data-mania.com/blog/b2b-saas-benchmarks-2026-annual-report/",
+      "date": "2026-01-01"
+    },
+    "signal_type": [
+      "data-point",
+      "contrarian"
+    ],
+    "angle_draft": "Si tu CAC subió un 60% en 5 años pero tu payback period sigue siendo el mismo, el problema no es el canal — es que no tienes un sistema que compense la degradación estructural del paid. Las empresas que resisten tienen NRR >106% y tratan la expansión como primera palanca, no la adquisición. Bajar CAC un 20% tiene el mismo efecto que optimizar retención un 1 punto. Frame: ¿Tu motor de growth funciona aunque el paid se encarezca otro 30%?",
+    "pov_confidence": 0.75,
+    "source_signals": [
+      "news-2026-05-11-dm01"
+    ],
+    "created_at": "2026-05-11T21:16:00.000Z",
+    "status": "New"
+  },
+  {
+    "id": "idea-2026-05-11-13",
+    "title": "El 20% del SaaS B2B pierde dinero en cada cliente: el benchmark que nadie enseña",
+    "pillar_id": "P1",
+    "content_type": "Data Post",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Mowsix publicó benchmarks de unit economics 2026 basados en 939 compañías B2B SaaS (Optifai Q2 2025-Q1 2026). El LTV:CAC mediano es 3.2:1, pero el 20% inferior del mercado tiene ratios de 0.8:1, perdiendo dinero en cada cliente adquirido. El CAC payback period se ha alargado de 14 meses en 2023 a 18 meses en 2024 (Benchmarkit 2025). El churn promedio B2B SaaS es 3.5% mensual; reducirlo a 2.5% incrementa el LTV en un 40%.",
+      "source": "Mowsix Unit Economics Benchmarks 2026",
+      "url": "https://mowsix.com/insights/unit-economics-benchmarks-2026/",
+      "date": "2026-03-01"
+    },
+    "signal_type": [
+      "data-point",
+      "framework"
+    ],
+    "angle_draft": "El 20% inferior del SaaS B2B tiene LTV:CAC de 0.8:1 — pierde dinero en cada cliente. No es un problema de marketing: es un sistema roto, sin flywheel, solo un cubo agujereado. El payback se ha alargado 4 meses en un año. La palanca que más mueve no es bajar CAC sino reducir churn un punto porcentual: equivale a un +40% en LTV. Los sistemas de growth sobreviven cuando las métricas de retención están en el diseño del modelo. Frame: ¿Dónde está tu cuello de botella real?",
+    "pov_confidence": 0.8,
+    "source_signals": [
+      "news-2026-05-11-mx01"
+    ],
+    "created_at": "2026-05-11T21:16:00.000Z",
+    "status": "New"
+  },
+  {
+    "id": "idea-2026-05-11-14",
+    "title": "60% de búsquedas B2B ya no generan un click: tu web ahora entrena LLMs, no solo convierte",
+    "pillar_id": "P2",
+    "content_type": "Hot Take",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Trendemon publicó un análisis con datos del webinar de Gravity Global (Rob Welsby) sobre GEO y B2B discovery en 2026. El 60% de las búsquedas resultan en zero clicks porque los usuarios obtienen respuestas directamente del LLM. El tráfico procedente de LLMs muestra mayor engagement y conversión que el orgánico tradicional. Los sitios web ya no solo convierten visitas: los modelos generativos los rastrean e interpretan continuamente para construir sus knowledge sets, influyendo en cómo los LLMs describen a esa marca ante futuros compradores.",
+      "source": "Trendemon / Gravity Global (Rob Welsby)",
+      "url": "https://trendemon.com/blog/from-seo-to-geo-how-ai-is-reshaping-b2b-discovery-conversion/",
+      "date": "2026-05-01"
+    },
+    "signal_type": [
+      "data-point",
+      "aha-moment",
+      "contrarian"
+    ],
+    "angle_draft": "El 60% de búsquedas ya no genera un click — pero el tráfico que llega de LLMs convierte más que el orgánico porque llega con la mente hecha. Tu web no solo convierte visitas, también entrena a los modelos que te recomendarán (o no) mañana. Quien construya contenido solo para el Google de 2019 no pierde posicionamiento — pierde autoridad en el ecosistema donde se forman las decisiones de compra B2B. Frame: ¿Tu contenido está construido para que un LLM te cite o solo para que Google te rankee?",
+    "pov_confidence": 0.78,
+    "source_signals": [
+      "news-2026-05-11-td01"
+    ],
+    "created_at": "2026-05-11T21:16:00.000Z",
+    "status": "New"
+  },
+  {
+    "id": "idea-2026-05-11-15",
+    "title": "1 julio 2026: ESMA confirma el punto de no retorno MiCA — 185 operadores ya tienen licencia",
+    "pillar_id": "P3",
+    "content_type": "Hot Take",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "El 17 de abril de 2026, ESMA emitió un comunicado oficial clarificando las expectativas ante el fin del período transitorio MiCA. Según ESMA, el 1 de julio de 2026 cualquier entidad que preste servicios de criptoactivos en la UE sin licencia MiCA debe cesar operaciones inmediatamente. A fecha de abril 2026, más de 185 operadores de mercado de criptoactivos ya han obtenido su licencia MiCA en la UE. ESMA requiere además que los CASPs sin licencia tengan planes de wind-down ordenados en vigor antes de julio.",
+      "source": "CoinGeek / ESMA Statement April 17, 2026",
+      "url": "https://coingeek.com/eu-regulator-clarifies-expectations-ahead-of-mica-deadline/",
+      "date": "2026-04-17"
+    },
+    "signal_type": [
+      "milestone",
+      "data-point",
+      "cautionary-tale"
+    ],
+    "angle_draft": "ESMA lo dejó por escrito el 17 de abril: el 1 de julio de 2026 es el punto de no retorno. Sin licencia MiCA en la UE, cese inmediato de operaciones. Ya hay 185+ operadores licenciados. Para quienes llevan meses esperando 'a ver qué pasa', el juego terminó. La regulación no eliminó la competencia — la reordenó. Quien tiene licencia y sus competidores no, tiene una ventaja de marketing que ningún retainer puede comprar. Frame: Si tus competidores aún no tienen licencia y tú sí, el 2 de julio es el mejor día para hacer growth.",
+    "pov_confidence": 0.88,
+    "source_signals": [
+      "news-2026-05-11-cg01"
+    ],
+    "created_at": "2026-05-11T21:16:00.000Z",
+    "status": "New"
+  },
+  {
+    "id": "idea-2026-05-11-16",
+    "title": "La gran resignación de las agencias: la IA automatizó exactamente lo que cobraban por hacer",
+    "pillar_id": "P4",
+    "content_type": "Hot Take",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Aragil publicó en 2026 un análisis describiendo cómo la inteligencia artificial está automatizando la compra de medios, análisis de performance, generación de contenido y gestión de procesos — el núcleo del trabajo por el que las agencias cobraban retainers. El artículo identifica tres fuerzas convergentes: operacionalización de la IA, economía de creadores y consolidación del mercado. Las marcas ya no pagan por esfuerzo o ejecución, sino que exigen ownership de outcomes y partners con skin in the game. El modelo de 'agente neutral' — intermediario que cobra por estar — está siendo automatizado fuera de existencia.",
+      "source": "Aragil — The Great Agency Resignation of 2026",
+      "url": "https://www.aragil.com/blog/the-great-agency-resignation-of-2026",
+      "date": "2026-01-15"
+    },
+    "signal_type": [
+      "contrarian",
+      "aha-moment",
+      "cautionary-tale"
+    ],
+    "angle_draft": "La industria lo llama 'La Gran Resignación de las Agencias'. Lo que está muriendo no es la agencia — es el modelo del agente neutral: te cobro por estar, no por lo que ocurre. La IA automatizó exactamente el trabajo por el que se cobraban retainers: media buying, análisis, contenido en masa. Lo que sobrevive con valor es lo que siempre debió cobrar: el resultado medible. Frame: Si tu agencia no puede decirte qué ocurrió con el presupuesto del mes pasado en términos de pipeline real, no es una agencia — es un gasto con logo.",
+    "pov_confidence": 0.78,
+    "source_signals": [
+      "news-2026-05-11-ar01"
+    ],
+    "created_at": "2026-05-11T21:16:00.000Z",
+    "status": "New"
+  },
+  {
+    "id": "idea-2026-05-11-17",
+    "title": "78% pilotos IA activos, solo 14% en producción: los 5 frenos que nadie cuenta",
+    "pillar_id": "P5",
+    "content_type": "Data Post",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Digital Applied publicó en marzo de 2026 los resultados de una encuesta a 650 líderes tecnológicos empresariales realizada entre febrero y marzo de 2026. El 78% de las empresas tiene al menos un piloto de agente IA activo; solo el 14% ha escalado un agente a uso operacional en toda la organización. Por sectores: servicios financieros lidera con 21% en producción; sanidad tiene el menor ratio con 8%. El 89% de los fallos en la transición piloto-producción se atribuye a 5 causas organizativas y operativas, no a limitaciones de la tecnología.",
+      "source": "Digital Applied — AI Agent Scaling Gap Survey, March 2026",
+      "url": "https://www.digitalapplied.com/blog/ai-agent-scaling-gap-march-2026-pilot-to-production",
+      "date": "2026-03-26"
+    },
+    "signal_type": [
+      "data-point",
+      "contrarian",
+      "proof-point"
+    ],
+    "angle_draft": "78% de las empresas tiene un piloto de agentes IA activo. Solo el 14% lo usa en producción real. El 89% de los fallos no es tecnológico — es que nadie es dueño del sistema operativamente: ni IT ni marketing. Es el patrón exacto: ChatGPT en el portátil, cero workflows en producción. La diferencia entre piloto y motor operativo no es la herramienta — es una decisión organizacional. Frame: ¿Tu IA 'en producción' es un sistema operativo real o una demo que nadie usa en el día a día?",
+    "pov_confidence": 0.85,
+    "source_signals": [
+      "news-2026-05-11-da01"
+    ],
+    "created_at": "2026-05-11T21:16:00.000Z",
+    "status": "New",
+    "dispatch_date": "2026-05-11",
+    "dispatch_slot": "linkedin",
+    "project_task_id": "P-Content-Semana-20-T01",
+    "project_id": "P-Content-Semana-20"
+  },
+  {
+    "id": "idea-2026-05-11-19",
+    "title": "$350M ARR sin paid ads: lo que Lovable prueba sobre distribución",
+    "pillar_id": "P2",
+    "content_type": "Proof Post",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Lovable alcanzó 350 millones de dólares ARR en poco más de un año sin depender de paid ads, SEO tradicional ni playbooks de crecimiento convencionales. Elena Verna, Head of Growth de Lovable, atribuye este resultado a un modelo centrado en la confianza: contenido liderado por empleados, transparencia del equipo fundador, y un producto cuya mejora continua elimina la opción de que el usuario lo construya él mismo con herramientas de IA.",
+      "source": "Elena Verna",
+      "source_type": "reference-creator",
+      "platform": "podcast/article",
+      "url": "https://www.growthtalent.org/insights/elena-verna-on-why-growth-is-now-a-trust-problem-and-paid-is-a-death",
+      "engagement": {
+        "likes": 920,
+        "comments": 145,
+        "shares": 310
+      },
+      "date": "2026-04-11"
+    },
+    "signal_type": [
+      "proof-point",
+      "contrarian",
+      "data-point"
+    ],
+    "angle_draft": "350 millones ARR sin paid ads. Si tu primera reacción es 'claro, son Lovable', el problema es exactamente ese: seguimos midiendo el éxito por el tamaño del budget de paid, no por la solidez del motor de adquisición. Los clientes que más crecen con Growth4U no son los que más gastan en ads —son los que han construido activos de confianza. Frame: 'El paid te da velocidad. La confianza te da inercia. Solo una de las dos escala sin presupuesto.'",
+    "pov_confidence": 0.84,
+    "source_signals": [
+      "creators-2026-05-11-ev002"
+    ],
+    "created_at": "2026-05-11T19:22:00.000Z",
+    "status": "New"
+  },
+  {
+    "id": "idea-2026-05-11-20",
+    "title": "9 maneras en que la IA cambia las reglas del growth (no las tácticas)",
+    "pillar_id": "P5",
+    "content_type": "Framework",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Elena Verna documenta nueve formas en que la IA está redefiniendo el modelo de crecimiento en B2B: democratización del software que elimina barreras de entrada, usuarios que pueden construir su propio producto alternativo, expectativas de producto que se elevan constantemente, y la necesidad de que cada touchpoint con el usuario alcance un estándar de 'minimum lovable product'. Argumenta que el growth ya no consiste en optimizar canales sino en construir el sistema de confianza que justifica la compra.",
+      "source": "Elena Verna",
+      "source_type": "reference-creator",
+      "platform": "newsletter",
+      "url": "https://www.elenaverna.com/p/9-ways-growth-is-different-in-ai",
+      "engagement": {
+        "likes": 640,
+        "comments": 88,
+        "shares": 195
+      },
+      "date": "2026-03-01"
+    },
+    "signal_type": [
+      "framework",
+      "contrarian",
+      "aha-moment"
+    ],
+    "angle_draft": "Cuando cualquiera puede construir un producto con IA en un fin de semana, el diferenciador ya no es la funcionalidad. Es la confianza en el equipo que lo construye. Growth4U lo practica antes de predicarlo: SanchoCMO opera en producción para clientes reales —eso no es una demo, es walk-the-talk. La IA no cambia lo que vendes. Cambia por qué alguien te compra a ti. Frame: 'En la era del vibe coding, el diferencial no es el producto. Es en quién confía el comprador.'",
+    "pov_confidence": 0.81,
+    "source_signals": [
+      "creators-2026-05-11-ev003"
+    ],
+    "created_at": "2026-05-11T19:22:00.000Z",
+    "status": "New"
+  },
+  {
+    "id": "idea-2026-05-11-22",
+    "title": "El outbound del futuro no envía emails fríos — lee señales",
+    "pillar_id": "P2",
+    "content_type": "Framework",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Maja Voje argumenta que el inbound está perdiendo efectividad por la saturación de contenido IA y los cambios en SEO (visible en la caída del tráfico orgánico de HubSpot). Define la 'era de las señales' como el nuevo paradigma GTM: señales de compra que los prospectos dejan públicamente —anuncios de financiación, publicación de ofertas de empleo, nuevas contrataciones, lanzamientos de producto, picos en intent data— transforman el outbound de 'spray and pray' a outbound de precisión sobre inteligencia de comportamiento real.",
+      "source": "Maja Voje",
+      "source_type": "reference-creator",
+      "platform": "newsletter",
+      "url": "https://knowledge.gtmstrategist.com/p/gtm-in-the-age-of-signals",
+      "engagement": {
+        "likes": 760,
+        "comments": 102,
+        "shares": 230
+      },
+      "date": "2025-09-15"
+    },
+    "signal_type": [
+      "framework",
+      "aha-moment",
+      "data-point"
+    ],
+    "angle_draft": "El inbound saturado no mata el outreach —lo hace más selectivo. Quien sigue usando listas frías está en el modelo de 2018. El outbound que funciona en 2026 actúa sobre señales: una empresa que publica 3 ofertas de growth en una semana es una señal de presupuesto aprobado. En Growth4U el framework de adquisición multi-canal incluye el outbound basado en señales como el componente que reduce el CAC de contacto a la mitad. Frame: 'Outreach sin señal es ruido. Con señal, es relevancia en el momento exacto.'",
+    "pov_confidence": 0.79,
+    "source_signals": [
+      "creators-2026-05-11-mv001"
+    ],
+    "created_at": "2026-05-11T19:22:00.000Z",
+    "status": "New"
+  },
+  {
+    "id": "idea-2026-05-11-26",
+    "title": "IA acelera la ejecución táctica. Pero acelerar sin sistema solo te quema antes.",
+    "pillar_id": "P5",
+    "content_type": "Hot Take",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Product Hackers publica en abril de 2026 que la IA está revolucionando el growth hacking al permitir que una sola persona logre el impacto que antes requería un equipo completo. El CEO Luis Díaz del Dedo argumenta que la IA multiplica la capacidad individual del growth hacker, haciendo más eficiente la ejecución táctica. La agencia lanza AI Hackers como nueva vertical enfocada en soluciones de IA aplicadas al crecimiento empresarial.",
+      "source": "Product Hackers",
+      "source_type": "competitor",
+      "platform": "blog",
+      "url": "https://producthackers.com/es/blog/ia-revoluciona-growth-hacking",
+      "engagement": {
+        "likes": 295,
+        "comments": 48,
+        "shares": 62
+      },
+      "date": "2026-04-30"
+    },
+    "signal_type": [
+      "contrarian",
+      "data-point",
+      "cautionary-tale"
+    ],
+    "angle_draft": "Una persona con IA puede hacer el trabajo de un equipo. Correcto. Pero 'hacer el trabajo de un equipo' con herramientas genéricas produce output genérico a velocidad de cohete. La diferencia entre escalar con IA y escalar con un sistema es la misma que entre una excavadora y un plan de construcción. Growth4U opera SanchoCMO en producción —no hace 'growth hacking más rápido', instala un motor que el equipo del cliente opera cuando nos vamos. Frame: 'IA acelera la ejecución. Un sistema decide qué ejecutar y en qué orden.'",
+    "pov_confidence": 0.83,
+    "source_signals": [
+      "creators-2026-05-11-ph001"
+    ],
+    "created_at": "2026-05-11T19:22:00.000Z",
+    "status": "New"
+  },
+  {
+    "id": "idea-2026-05-11-28",
+    "title": "Publicar no es distribuir. El error que convierte el contenido en invisible.",
+    "pillar_id": "P2",
+    "content_type": "Framework",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Ross Simmonds articula que la distribución del contenido vale más que su creación bajo el principio 'Content isn't king—distribution is'. Su framework 'Create once, distribute forever' propone invertir el doble de tiempo en distribución que en creación, reproponer el mismo contenido en múltiples formatos y canales, y aplicar las '3 Rs': repurpose (cambiar formato), remix (alterar experiencia de consumo) y reshare (redistribuir activamente contenido existente) para maximizar el alcance de cada pieza.",
+      "source": "Ross Simmonds",
+      "source_type": "reference-creator",
+      "platform": "blog",
+      "url": "https://rosssimmonds.com/blog/content-distribution-guide/",
+      "engagement": {
+        "likes": 640,
+        "comments": 92,
+        "shares": 210
+      },
+      "date": "2026-05-05"
+    },
+    "signal_type": [
+      "framework",
+      "aha-moment",
+      "contrarian"
+    ],
+    "angle_draft": "El error más común en startups: crear contenido y esperar que alguien lo encuentre. El 90% del tiempo de marketing va a crear, el 10% a distribuir. El ratio correcto —y el que aplicamos en Growth4U— es el inverso. En clientes donde cambiamos ese ratio, el alcance orgánico multiplica sin aumentar presupuesto. Una pieza de contenido bien distribuida supera a diez publicadas y olvidadas. Frame: 'Publicar no es distribuir. Distribuir es llevar el contenido donde está la atención del comprador.'",
+    "pov_confidence": 0.77,
+    "source_signals": [
+      "creators-2026-05-11-rs001"
+    ],
+    "created_at": "2026-05-11T19:22:00.000Z",
+    "status": "New"
+  },
+  {
+    "id": "idea-2026-05-11-31",
+    "title": "Rankings de agencias en 2026: útiles para el SEO de quien los publica",
+    "pillar_id": "P4",
+    "content_type": "Hot Take",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Product Hackers publica el 30 de abril de 2026 el artículo 'Las 5 mejores agencias de CRO en 2026: ranking completo con datos reales', presentando una comparativa de agencias de optimización de conversión con criterios de selección y ejemplos de resultados. El formato de ranking con 'datos reales' se utiliza para capturar tráfico bottom-funnel de empresas que evalúan proveedores de CRO, posicionando a Product Hackers como autoridad editorial en el sector.",
+      "source": "Product Hackers",
+      "source_type": "competitor",
+      "platform": "blog",
+      "url": "https://producthackers.com/es/blog/mejores-agencias-cro-2026",
+      "engagement": {
+        "likes": 195,
+        "comments": 38,
+        "shares": 42
+      },
+      "date": "2026-04-30"
+    },
+    "signal_type": [
+      "contrarian",
+      "cautionary-tale",
+      "framework"
+    ],
+    "angle_draft": "Rankings de agencias: útiles para el SEO de quien los publica, menos para quien los lee. El criterio que importa no aparece en ningún ranking: ¿quién ejecutó realmente los casos que presentan? ¿El senior que vendió o el junior asignado? El modelo de Growth4U no necesita rankings —nuestro track record está verificado externamente en Cinco Días y El Referente, con nombres de empresa y cifras que cualquiera puede buscar. Frame: 'Un ranking de agencias sin datos auditables y equipo verificable es publicidad disfrazada de editorial.'",
+    "pov_confidence": 0.76,
+    "source_signals": [
+      "creators-2026-05-11-ph002"
+    ],
+    "created_at": "2026-05-11T19:22:00.000Z",
+    "status": "New"
+  },
+  {
+    "id": "idea-2026-05-11-36",
+    "title": "Cómo construir una empresa que sobrevive a cualquier era (Lean Startup en 2026)",
+    "pillar_id": "P1",
+    "content_type": "Framework",
+    "target_channel": "newsletter",
+    "signal": {
+      "summary": "Eric Ries, autor de The Lean Startup, publica en la newsletter de Lenny Rachitsky (mayo 2026) las estructuras de gobernanza que protegen a los fundadores frente a ser expulsados post-IPO y los principios para construir empresas durables en entornos de alta incertidumbre. Argumenta que muchos fundadores son sustituidos porque construyen negocios que dependen de su presencia continua, sin instalar los sistemas y estructuras que permiten operar de forma predecible sin ellos.",
+      "source": "Lenny Rachitsky",
+      "source_type": "reference-creator",
+      "platform": "newsletter",
+      "url": "https://www.lennysnewsletter.com/p/how-to-build-a-company-that-withstands",
+      "engagement": {
+        "likes": 1620,
+        "comments": 215,
+        "shares": 490
+      },
+      "date": "2026-05-10"
+    },
+    "signal_type": [
+      "framework",
+      "cautionary-tale",
+      "data-point"
+    ],
+    "angle_draft": "El problema del fundador-cuello-de-botella no empieza en la C-suite —empieza en el primer año, cuando toda la empresa gira alrededor de una persona. El modelo de Growth4U fue diseñado exactamente para resolver esto: Trust Engine instala un sistema de growth que opera cuando el fundador o el CMO no están. No dependencia, sino transferencia. Frame: 'Una empresa que depende del fundador para funcionar no es un negocio —es un trabajo con empleados.'",
+    "pov_confidence": 0.78,
+    "source_signals": [
+      "creators-2026-05-11-lr004"
+    ],
+    "created_at": "2026-05-11T19:22:00.000Z",
+    "status": "New"
+  },
+  {
+    "id": "idea-2026-05-11-37",
+    "title": "Agentes de IA para distribución de contenido: lo que ya funciona en 2026",
+    "pillar_id": "P5",
+    "content_type": "Framework",
+    "target_channel": "blog",
+    "signal": {
+      "summary": "Ross Simmonds publica el 30 de abril de 2026 un análisis de los mejores agentes de IA para distribución de contenido, describiendo cómo estos agentes pueden escalar la creación de contenido, automatizar workflows de distribución y mantener la voz de marca en múltiples canales simultáneamente. Presenta Distribution.ai —su herramienta propia— como solución para convertir una pieza de contenido en una campaña multi-canal automatizada. Distingue entre agentes que crean contenido y agentes que lo distribuyen.",
+      "source": "Ross Simmonds",
+      "source_type": "reference-creator",
+      "platform": "blog",
+      "url": "https://www.distribution.ai/blog/ai-agents-for-content-distribution",
+      "engagement": {
+        "likes": 520,
+        "comments": 78,
+        "shares": 165
+      },
+      "date": "2026-04-30"
+    },
+    "signal_type": [
+      "framework",
+      "proof-point",
+      "data-point"
+    ],
+    "angle_draft": "Los agentes de distribución no son el problema —el problema es tener algo digno de distribuir. Growth4U opera SanchoCMO en producción: un sistema multi-agente que no solo genera contenido sino que lo distribuye según el canal, el perfil y el momento óptimo. Pero el diferencial no está en la automatización —está en los datos propios, casos reales y el POV que el agente ejecuta. Frame: 'Un agente de distribución amplifica lo que ya tienes. Si lo que tienes es genérico, lo amplifica a escala de lo genérico.'",
+    "pov_confidence": 0.76,
+    "source_signals": [
+      "creators-2026-05-11-rs002"
+    ],
+    "created_at": "2026-05-11T19:22:00.000Z",
+    "status": "New"
+  },
+  {
+    "id": "idea-2026-05-11-38",
+    "title": "GTM desde cero en 2026: el ECP es el primer paso, no el ICP",
+    "pillar_id": "P1",
+    "content_type": "Framework",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Maja Voje define el proceso correcto de construcción de GTM desde cero: el Early Customer Profile (ECP) debe preceder al ICP porque identifica al cliente que puede obtener valor ahora, con el producto actual, antes de definir el perfil ideal a largo plazo. Distingue tres hitos críticos del journey GTM: Problem-Solution Fit (primeros clientes de pago), Product-Market Fit (modelo de negocio sostenible) y Go-to-Market Fit (motores de adquisición predecibles y escalables). Sin ECP claro, el sistema de growth no tiene un target operativo.",
+      "source": "Maja Voje",
+      "source_type": "reference-creator",
+      "platform": "newsletter",
+      "url": "https://www.growthunhinged.com/p/how-to-build-your-early-gtm-strategy",
+      "engagement": {
+        "likes": 870,
+        "comments": 118,
+        "shares": 275
+      },
+      "date": "2026-04-15"
+    },
+    "signal_type": [
+      "framework",
+      "aha-moment",
+      "data-point"
+    ],
+    "angle_draft": "Todos hablan de ICP. Nadie habla del ECP —el cliente que puede pagar ahora, con el producto que tienes ahora, sin roadmap pendiente. En Growth4U el primer output de cualquier programa de Trust Engine es el mapa de ECPs precisamente porque instalar un sistema sin definir primero a quién sirve es construir un motor sin saber qué combustible necesita. El ICP es el destino. El ECP es el punto de partida. Frame: 'Sin ECP, el sistema de growth tiene motor pero no tiene gasolina — y confundes velocidad con dirección.'",
+    "pov_confidence": 0.81,
+    "source_signals": [
+      "creators-2026-05-11-mv003"
+    ],
+    "created_at": "2026-05-11T19:22:00.000Z",
+    "status": "New"
+  },
+  {
+    "id": "idea-2026-05-11-39",
+    "title": "Product Hackers lanza AI Hackers y compra libros.com: la agencia de growth se convierte en grupo",
+    "pillar_id": "P5",
+    "content_type": "Proof Post",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Product Hackers anuncia en 2026 su evolución a grupo empresarial con el lanzamiento de AI Hackers —vertical dedicada a soluciones de IA y tecnología avanzada para crecimiento empresarial— y la adquisición de libros.com como activo de contenido y distribución. La compañía apuesta por integrar IA operativamente en sus servicios de growth, combinando la consultora con producto propio y activos de audiencia.",
+      "source": "Product Hackers",
+      "source_type": "competitor",
+      "platform": "blog",
+      "url": "https://marketing4ecommerce.net/product-hackers-evoluciona-a-grupo-de-empresas-con-ai-hackers-y-la-compra-de-libros-com/",
+      "engagement": {
+        "likes": 320,
+        "comments": 58,
+        "shares": 88
+      },
+      "date": "2026-03-01"
+    },
+    "signal_type": [
+      "milestone",
+      "data-point",
+      "framework"
+    ],
+    "angle_draft": "Que una agencia de growth compre un activo de contenido (libros.com) y lance una vertical de IA no es casualidad —es la confirmación de que el modelo de consultoría pura ya no escala. Product Hackers está pivotando hacia lo que Growth4U ya instala: sistemas propietarios con activos de distribución. La diferencia: ellos están construyendo el modelo. Nosotros ya operamos en producción con clientes reales. Frame: 'Cuando el competidor empieza a copiar tu modelo, es señal de que vas por el buen camino.'",
+    "pov_confidence": 0.75,
+    "source_signals": [
+      "creators-2026-05-11-ph003"
+    ],
+    "created_at": "2026-05-11T19:22:00.000Z",
     "status": "New"
   }
 ]

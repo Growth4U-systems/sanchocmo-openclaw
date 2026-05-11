@@ -1,5 +1,47 @@
 # Learnings — Growth4U
 
+## 2026-05-11 — Weekly Synthesis (semana 5–11 mayo / W19)
+
+### 🔴 HALLAZGO PRINCIPAL
+**Paradoja W19 confirmada: mejores métricas de captación en semanas pero 0 meetings. El booking está roto.** CTR se recuperó 3x, CPL bajó -35%, contacts +150% — pero con 0 appointments en 7 días, el funnel lead→cita está completamente bloqueado por 5ª semana consecutiva. Un fix de 30 minutos en GHL podría desbloquear 10 meetings/semana.
+
+### Patrones Confirmados Esta Semana
+
+1. **Gap lead→cita: semana 5 crónica (CRÍTICO)** — 33 leads con tag `llamada-agendada`, 460 contactos en CRM, pero 0 citas convertidas. La conversión lead→meeting cayó de 40% (W18) a 0% (W19). El volumen no es el problema — el proceso de booking sí.
+2. **Paradoja CTR/CPL vs pipeline** — CTR se recuperó 0.52% → 1.57% (+3x), CPL mejoró €69.96 → €45.22 (-35%), contacts/semana +150% (25 vs ~10). Pero 0 meetings. Captación mejora, conversión colapsada.
+3. **Health Score: recuperación lenta** — 22 (mínimo histórico, W17) → 37 (W18) → 42 (W19). Primera mejora sostenida en 3 semanas. Impulsada por paid, no por pipeline.
+4. **Meta Ads: alta volatilidad intraday** — CPC osciló €2.64 (mín, miércoles) → €4.04 (máx, jueves +35%) en 48h. Impresiones cayeron -73% el viernes 8 mayo (1.8K vs media 7K). Causa no identificada.
+5. **CTR subió sin Pixel activo** — La mejora de CTR ocurrió sin tracking de conversiones instalado. Algo cambió en Meta (algoritmo, audiencia, o cambio manual). Documentar y capitalizar.
+6. **P01 Pixel+CAPI: semana 8+ sin completar** — Deadline 11-May incumplido. Sin tracking, Meta sigue optimizando a ciegas. Causa raíz del deterioro de calidad de leads confirmada.
+7. **0 mensajes humanos en Discord: semana 10+** — El equipo no usa Discord activamente desde hace 10+ semanas. La operación ocurre por otro canal no monitorizado.
+
+### Leads Clave Semana
+
+- **Frank Nava (Rentakia, PropTech)** — Muy interesado en Trust Engine/Trust Fortress. Pain: 6K leads en 8 meses con retorno pobre. Objeción: pago único 9K€. Follow-up con socio Víctor pendiente de cierre. Alta probabilidad si se resuelve precio.
+- **Aarón Sanromán** — Plan LinkedIn 3 meses, meta 20K seguidores. Prospect para servicio de contenido.
+- **Jordi Teixido de Haro** — Developer PHP/Python + FB Ads paid. Call agendada 11/05.
+- **Eustacio Cabrera (MERGE Madrid, Web3)** — Seguimiento activo.
+- **Luis Ayuso (Infonite, Open Banking)** — Seguimiento-2 activo.
+
+### Señales de Mercado
+
+- **GEO / Zero-Click Marketing** — 25-50% B2B buyers ya usan AI para research. Oportunidad de contenido alta resonancia.
+- **MiCA deadline julio 2026** — Compliance-as-moat para clientes fintech/crypto.
+- **AI Agents en producción** — 88% dice usar AI, solo 6% operativo. Gap ejecutable.
+
+### Acciones Prioritarias
+
+| Prioridad | Acción | Owner |
+|-----------|--------|-------|
+| **P0** | Diagnosticar y fijar booking GHL (lead→cita) — 30 min que desbloquean todo | Alfonso/Philippe |
+| **P0** | Seguimiento Frank Nava con propuesta fraccionada | Alfonso/Martín |
+| **P0** | Instalar Pixel+CAPI (P01 — 8+ semanas pendiente) | Philippe |
+| **P1** | Investigar spike CPC + anomalía -73% impresiones | Philippe |
+| **P1** | Fix Slack bot scope `chat:write` (bloquea pipeline contenido) | Cervantes |
+| **P2** | Activar P03 cold email (dependencia 100% Meta Ads = riesgo sistémico) | equipo |
+
+---
+
 ## 2026-05-04 — Weekly Synthesis (semana 28 abr – 4 may)
 
 ### 🔴 HALLAZGO PRINCIPAL
