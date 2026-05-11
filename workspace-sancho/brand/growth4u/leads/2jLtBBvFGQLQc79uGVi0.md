@@ -4,7 +4,7 @@ contact_name: Aarón Sanromán
 email: aaronsanromanc@gmail.com
 phone: null
 created: 2026-04-30T20:00:00Z
-last_enriched: 2026-05-06T20:00:00Z
+last_enriched: 2026-05-11T20:00:00Z
 enrichment_pending: true
 enrichment_reason: "Email genérico (gmail). Sin datos de empresa. Llamada cancelada."
 source: "Growth4U | Reunión"

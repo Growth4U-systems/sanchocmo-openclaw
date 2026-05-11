@@ -3,7 +3,7 @@ ghl_id: Lvq2ntrbassUVkOBPBue
 contact_name: Albert Totil
 email: bandarramotorclassic@gmail.com
 phone: null
-last_enriched: 2026-05-06T20:00:00Z
+last_enriched: 2026-05-11T20:00:00Z
 enrichment_pending: false
 enrichment_reason: "Re-enriched during nightly sync — no new Drive transcripts, no pending enrichment work"
 ---

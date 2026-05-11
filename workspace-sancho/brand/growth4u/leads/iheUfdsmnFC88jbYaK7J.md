@@ -1,6 +1,6 @@
 ---
 ghl_id: iheUfdsmnFC88jbYaK7J
-last_enriched: 2026-05-06T20:00:00Z
+last_enriched: 2026-05-11T20:00:00Z
 enrichment_pending: false
 enrichment_reason: "Re-enriched during nightly sync — no new Drive transcripts, no pending enrichment work"
 ---

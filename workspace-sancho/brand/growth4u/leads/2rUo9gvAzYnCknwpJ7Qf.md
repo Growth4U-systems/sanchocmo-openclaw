@@ -3,7 +3,7 @@ ghl_id: 2rUo9gvAzYnCknwpJ7Qf
 contact_name: Sofia Clark
 email: sofia.clarkdl@gmail.com
 phone: "+34663170135"
-last_enriched: 2026-05-06T20:00:00Z
+last_enriched: 2026-05-11T20:00:00Z
 enrichment_pending: false
 ---
 

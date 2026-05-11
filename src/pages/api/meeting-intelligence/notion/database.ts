@@ -8,7 +8,14 @@ const NOTION_VERSION = "2022-06-28";
 
 type NotionDatabaseResponse = {
   message?: string;
-  properties?: Record<string, { id?: string; type?: string }>;
+  properties?: Record<string, {
+    id?: string;
+    type?: string;
+    relation?: {
+      database_id?: string;
+      type?: string;
+    };
+  }>;
 };
 
 function parseEnvFile(filePath: string): Record<string, string> {
@@ -60,10 +67,22 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   }
 
   const properties = Object.entries(data.properties || {}).map(([name, prop]) => ({
-    id: prop.id,
+    id: prop.id || name,
     name,
-    type: prop.type,
+    type: prop.type || "unknown",
+    relationDatabaseId: prop.relation?.database_id || null,
+    source: "notion",
   }));
+
+  if (!properties.some((prop) => prop.name.toLowerCase() === "clients")) {
+    properties.push({
+      id: "clients",
+      name: "clients",
+      type: "relation",
+      relationDatabaseId: null,
+      source: "fallback",
+    });
+  }
 
   return res.status(200).json({ ok: true, properties });
 }

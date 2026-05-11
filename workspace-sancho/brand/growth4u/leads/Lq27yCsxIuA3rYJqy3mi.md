@@ -1,6 +1,6 @@
 ---
 ghl_id: Lq27yCsxIuA3rYJqy3mi
-last_enriched: 2026-05-06T20:00:00Z
+last_enriched: 2026-05-11T20:00:00Z
 enrichment_pending: true
 enrichment_reason: "APOLLO_API_KEY no configurada — enrichment limitado. No new transcripts found. ⚠️ Tiene tag llamada-cancelada."
 ---
