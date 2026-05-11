@@ -81,8 +81,19 @@ const MAX_PENDING_PROGRESS = 200;
 const MAX_SEALED_PROGRESS = 50;
 
 // Thread persistence (disk-based, same as legacy)
+// role can be "user" | "bot" | "status" | "system" | "handoff". When role === "handoff",
+// `from_agent` and `to_agent` carry the source/target agent slugs and `text` is the reason.
 interface ThreadData {
-  messages: { role: string; text: string; ts: number; agent?: string; attachments?: ChatAttachment[]; progress?: ProgressEvent[] }[];
+  messages: {
+    role: string;
+    text: string;
+    ts: number;
+    agent?: string;
+    attachments?: ChatAttachment[];
+    progress?: ProgressEvent[];
+    from_agent?: string;
+    to_agent?: string;
+  }[];
   discordThreadId?: string;
   discordChannelId?: string;
   updatedAt?: number;
@@ -108,7 +119,19 @@ export function saveThread(threadId: string, data: ThreadData) {
   writeJSON(threadFile(threadId), data);
 }
 
-export function addMessage(threadId: string, role: string, text: string, agent?: string, attachments?: ChatAttachment[], progress?: ProgressEvent[]) {
+export function addMessage(
+  threadId: string,
+  role: string,
+  text: string,
+  agent?: string,
+  attachments?: ChatAttachment[],
+  progress?: ProgressEvent[],
+  fromAgent?: string,
+  toAgent?: string,
+) {
+  if (role === "handoff" && (!fromAgent || !toAgent)) {
+    throw new Error("addMessage: role 'handoff' requires both fromAgent and toAgent");
+  }
   const thread = getThread(threadId);
   const sealed = progress?.length ? progress.slice(-MAX_SEALED_PROGRESS) : undefined;
   thread.messages.push({
@@ -118,6 +141,8 @@ export function addMessage(threadId: string, role: string, text: string, agent?:
     agent,
     attachments: attachments?.length ? attachments : undefined,
     progress: sealed,
+    from_agent: fromAgent,
+    to_agent: toAgent,
   });
   // Cap messages at 200
   if (thread.messages.length > 200) {

@@ -135,7 +135,7 @@
           ]
         },
         "lastDiagnosticSummary": "cron payload.model 'anthropic/claude-sonnet-4-5' rejected by agents.defaults.models allowlist: anthropic/claude-sonnet-4-5",
-        "lastError": "cron payload.model 'anthropic/claude-sonnet-4-5' rejected by agents.defaults.models allowlist: anthropic/claude-sonnet-4-5"
+        "runningAtMs": 1778461200021
       }
     },
     "0c59e923-3267-4926-9a60-36bb81b6041f": {

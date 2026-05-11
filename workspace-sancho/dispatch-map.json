@@ -117,7 +117,7 @@
     "soporte": "1475638273501040681"
   },
   "qa_agent": {
-    "id": "rocinante",
+    "id": "sanson",
     "method": "sessions_send",
     "activate_for": ["brand-check", "qa-review", "devil-advocate", "foundation-verification"]
   }

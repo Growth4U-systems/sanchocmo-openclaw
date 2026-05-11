@@ -42,12 +42,21 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { slug, threadId, text, agent, ts: _ts, role, event } = req.body;
+  const { slug, threadId, text, agent, ts: _ts, role, event, from_agent, to_agent } = req.body;
   const tid = threadId || `${slug || "default"}:general`;
 
   // Status updates: cache for polling, don't store in messages
   if (role === "status") {
     setStatusEntry(tid, { text, agent, ts: Date.now() });
+    return res.status(200).json({ ok: true });
+  }
+
+  // Handoff messages: persisted as a formal message with both badges in the sidebar
+  if (role === "handoff") {
+    if (typeof from_agent !== "string" || typeof to_agent !== "string") {
+      return res.status(400).json({ error: "handoff requires from_agent and to_agent" });
+    }
+    addMessage(tid, "handoff", typeof text === "string" ? text : "", agent, undefined, undefined, from_agent, to_agent);
     return res.status(200).json({ ok: true });
   }
 

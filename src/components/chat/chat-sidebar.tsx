@@ -42,10 +42,15 @@ import { formatThreadDisplayName } from "@/lib/thread-display-name";
 
 const AGENT_BADGES: Record<string, { emoji: string; label: string; color: string }> = {
   sancho:        { emoji: "🤠", label: "Sancho",      color: "bg-rust" },
-  escudero:      { emoji: "⚔️",  label: "Escudero",    color: "bg-green-600" },
-  rocinante:     { emoji: "🐴", label: "Rocinante",   color: "bg-cyan-600" },
   cervantes:     { emoji: "✒️",  label: "Cervantes",   color: "bg-purple-600" },
+  hamete:        { emoji: "📜", label: "Hamete",      color: "bg-amber-700" },
+  dulcinea:      { emoji: "✍️",  label: "Dulcinea",    color: "bg-rose-500" },
+  rocinante:     { emoji: "🐴", label: "Rocinante",   color: "bg-cyan-600" },
   "maese-pedro": { emoji: "🎭", label: "Maese Pedro", color: "bg-pink-600" },
+  mambrino:      { emoji: "🪖", label: "Mambrino",    color: "bg-orange-700" },
+  merlin:        { emoji: "🔮", label: "Merlín",      color: "bg-indigo-600" },
+  sanson:        { emoji: "🛡️", label: "Sansón",      color: "bg-emerald-700" },
+  escudero:      { emoji: "⚔️",  label: "Escudero",    color: "bg-green-600" }, // legacy hasta Fase 2 (dispatch sigue invocándolo)
 };
 
 function agentBadge(agent?: string) {
@@ -1348,12 +1353,41 @@ export function ChatSidebar() {
           </div>
         )}
 
-        {messages.map((msg: { role: string; text: string; agent?: string; ts?: number; progress?: ProgressEvent[] }, i: number) => {
+        {messages.map((msg: { role: string; text: string; agent?: string; ts?: number; progress?: ProgressEvent[]; from_agent?: string; to_agent?: string }, i: number) => {
           if (msg.role === "system") {
             return (
               <div key={i} className="flex justify-center">
                 <div className="max-w-[90%] px-3 py-1.5 rounded-md text-[12px] leading-snug bg-amber-500/10 text-amber-200 border border-amber-500/30 italic">
                   <div dangerouslySetInnerHTML={{ __html: formatMessage(msg.text || "") }} />
+                </div>
+              </div>
+            );
+          }
+
+          if (msg.role === "handoff") {
+            const fromBadge = agentBadge(msg.from_agent);
+            const toBadge = agentBadge(msg.to_agent);
+            return (
+              <div key={i} className="flex justify-center">
+                <div className="max-w-[90%] w-full px-3 py-2 rounded-md text-[12px] leading-snug bg-[#1E1E2E]/60 border border-[#45475a]/60 italic">
+                  <div className="flex items-center justify-center gap-2 mb-1 not-italic">
+                    <span className={cn(
+                      "inline-flex items-center gap-1 text-[10px] font-semibold text-white px-1.5 py-0.5 rounded",
+                      fromBadge.color
+                    )}>
+                      {fromBadge.emoji} {fromBadge.label}
+                    </span>
+                    <span className="text-[#a6adc8] text-[14px]">→</span>
+                    <span className={cn(
+                      "inline-flex items-center gap-1 text-[10px] font-semibold text-white px-1.5 py-0.5 rounded",
+                      toBadge.color
+                    )}>
+                      {toBadge.emoji} {toBadge.label}
+                    </span>
+                  </div>
+                  {msg.text && (
+                    <div className="text-center text-[#a6adc8]" dangerouslySetInnerHTML={{ __html: formatMessage(msg.text || "") }} />
+                  )}
                 </div>
               </div>
             );

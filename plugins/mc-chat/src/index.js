@@ -284,6 +284,13 @@ export default defineChannelPluginEntry({
                 const baseAgent = agentId || "sancho";
                 const toolName = payload.name;
                 const input = payload.input || {};
+                // Slugs del equipo SanchoCMO — sólo emitimos el mensaje formal role=handoff
+                // cuando la delegación va a uno de estos agentes (no para Explore/Plan/general-purpose).
+                const TEAM_SLUGS = new Set([
+                  "sancho", "cervantes", "hamete", "dulcinea",
+                  "rocinante", "maese-pedro", "mambrino", "merlin",
+                  "sanson", "escudero",
+                ]);
 
                 // Map tool name → label (legacy status text) + structured event
                 const label = toolName === "Read" ? "📄 Leyendo"
@@ -327,6 +334,24 @@ export default defineChannelPluginEntry({
                     event: { kind, label, target },
                   }),
                 }).catch(() => {});
+
+                // Formal handoff message: solo cuando se delega a un agente del equipo SanchoCMO
+                // (no para subagentes genéricos de Claude SDK como Explore/Plan/general-purpose).
+                if (toolName === "Agent" && typeof input.subagent_type === "string" && TEAM_SLUGS.has(input.subagent_type)) {
+                  const reason = typeof input.description === "string" && input.description.length
+                    ? input.description
+                    : (typeof input.prompt === "string" ? input.prompt.slice(0, 200) : "");
+                  fetch(callbackUrl, {
+                    method: "POST",
+                    headers,
+                    body: JSON.stringify({
+                      slug, threadId, role: "handoff", agent: baseAgent,
+                      text: reason,
+                      from_agent: baseAgent,
+                      to_agent: input.subagent_type,
+                    }),
+                  }).catch(() => {});
+                }
               },
               onCompactionStart: async () => {
                 const headers = { "Content-Type": "application/json", ...(secret ? { "X-MC-Secret": secret } : {}) };

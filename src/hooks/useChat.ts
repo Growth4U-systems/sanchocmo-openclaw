@@ -32,12 +32,15 @@ export interface ProgressEvent {
 }
 
 interface ChatMessage {
-  role: "user" | "bot" | "status" | "system";
+  role: "user" | "bot" | "status" | "system" | "handoff";
   text: string;
   agent?: string;
   ts?: number;
   attachments?: ChatAttachment[];
   progress?: ProgressEvent[];
+  // Only set when role === "handoff": agente que delega y agente que recibe
+  from_agent?: string;
+  to_agent?: string;
 }
 
 interface ThreadListItem {
