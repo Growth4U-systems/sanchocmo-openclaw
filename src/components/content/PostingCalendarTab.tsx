@@ -61,6 +61,43 @@ const STATUS_VISUAL: Record<CalendarEvent["status"], { label: string; bg: string
   canceled:   { label: "Cancelado",     bg: "var(--sc-paper-2)",  fg: "var(--sc-fg-muted)" },
 };
 
+/** Watchdog visual used when a "scheduled" event has drifted past its
+ *  publish time without reconciliation confirming it. Same shape as the
+ *  STATUS_VISUAL entries so EventCard can use it interchangeably. */
+const UNCONFIRMED_VISUAL = {
+  label: "⚠️ Sin confirmar",
+  bg: "var(--sc-brick-bg)",
+  fg: "var(--sc-brick-500)",
+} as const;
+
+/** A Ready Queue draft is "media-blocked" when its channel requires media
+ *  (media_policy=required) and the attached media doesn't satisfy the
+ *  per-network contract. The Programar action is disabled until the right
+ *  artifact is uploaded — the publish endpoint enforces the same rule
+ *  server-side, this just gives immediate feedback.
+ *
+ *  Per-network rules (mirror of publish.ts):
+ *   - linkedin: needs at least one PDF (carousel = native document).
+ *   - twitter/x/instagram: needs at least one image.
+ *   - other: needs at least one media asset of any type. */
+function mediaBlockReason(draft: ReadyDraft): string | null {
+  if (draft.media_policy !== "required") return null;
+  const items = draft.media || [];
+  if (items.length === 0) return "Necesita media — sube imágenes / PDF antes de programar";
+  if (draft.channel === "linkedin") {
+    const hasPdf = items.some((m) => m.type === "application/pdf");
+    if (!hasPdf) return "Carrusel LinkedIn necesita un PDF multi-página — bundle los slides en un PDF y adjúntalo";
+  } else if (draft.channel === "twitter" || draft.channel === "x" || draft.channel === "instagram") {
+    const hasImage = items.some((m) => typeof m.type === "string" && m.type.startsWith("image/"));
+    if (!hasImage) return "Necesita al menos una imagen antes de programar";
+  }
+  return null;
+}
+
+function isMediaBlocked(draft: ReadyDraft): boolean {
+  return mediaBlockReason(draft) !== null;
+}
+
 const DAY_LABELS = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
 
 /** Local-timezone YYYY-MM-DD for a Date. We deliberately avoid
@@ -212,6 +249,10 @@ export function PostingCalendarTab({ slug, focusKey }: { slug: string; focusKey?
 
     const data = e.active.data.current as { kind?: "ready" | "event"; draft?: ReadyDraft; event?: CalendarEvent } | undefined;
     if (data?.kind === "ready" && data.draft) {
+      // Client-side Media Gate: refuse to open the schedule modal when the
+      // draft requires media and has none. The publish endpoint also enforces
+      // this — this is just to give immediate feedback in the UI.
+      if (isMediaBlocked(data.draft)) return;
       setScheduleTarget({ dayIso, draft: data.draft });
     } else if (data?.kind === "event" && data.event) {
       const ev = data.event;
@@ -389,11 +430,24 @@ function ReadyDraftCard({
   dragging?: boolean;
   onSelect?: (draft: ReadyDraft) => void;
 }) {
+  const blockReason = mediaBlockReason(draft);
+  const blocked = blockReason !== null;
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: `ready-${draft.ideaId}-${draft.channel}`,
     data: { kind: "ready" as const, draft },
+    disabled: blocked,
   });
   const cv = CHANNEL_VISUAL[draft.channel] || CHANNEL_VISUAL.blog;
+
+  // When media is required but missing: red badge, no-drag cursor, tooltip.
+  // The badge label depends on what specifically is missing — for LinkedIn
+  // we say "falta PDF" to make the carousel contract explicit.
+  const blockedLabel = draft.channel === "linkedin" ? "falta PDF" : "falta media";
+  const mediaBadge = blocked
+    ? { label: blockedLabel, bg: "var(--sc-brick-bg)", fg: "var(--sc-brick-500)", title: blockReason! }
+    : !draft.has_media
+      ? { label: "sin media", bg: "var(--sc-sun-100)", fg: "var(--sc-ink)", title: "Sin media adjunta" }
+      : null;
 
   return (
     <div
@@ -404,11 +458,11 @@ function ReadyDraftCard({
     >
       <button
         type="button"
-        {...attributes}
-        {...listeners}
+        {...(blocked ? {} : attributes)}
+        {...(blocked ? {} : listeners)}
         onClick={() => { if (!dragging) onSelect?.(draft); }}
-        className="w-full text-left flex items-start gap-2 cursor-grab active:cursor-grabbing"
-        title="Click para previsualizar · arrastra a un día para programar"
+        className={`w-full text-left flex items-start gap-2 ${blocked ? "cursor-not-allowed" : "cursor-grab active:cursor-grabbing"}`}
+        title={blockReason ?? "Click para previsualizar · arrastra a un día para programar"}
       >
         <span
           className="grid place-items-center w-6 h-6 rounded text-xs border flex-shrink-0 mt-0.5"
@@ -420,12 +474,12 @@ function ReadyDraftCard({
               className="font-heading uppercase text-[9px] tracking-wider px-1 py-0.5 rounded-sc-pill border"
               style={{ background: "var(--sc-paper-3)", borderColor: "var(--sc-ink)", color: "var(--sc-ink)" }}
             >{cv.label}</span>
-            {!draft.has_media && (
+            {mediaBadge && (
               <span
                 className="font-heading uppercase text-[9px] tracking-wider px-1 py-0.5 rounded-sc-pill border"
-                style={{ background: "var(--sc-sun-100)", borderColor: "var(--sc-ink)", color: "var(--sc-ink)" }}
-                title="Sin media adjunta"
-              >sin media</span>
+                style={{ background: mediaBadge.bg, borderColor: "var(--sc-ink)", color: mediaBadge.fg }}
+                title={mediaBadge.title}
+              >{mediaBadge.label}</span>
             )}
           </div>
           <div className="text-[12px] leading-snug font-medium" style={{ color: "var(--sc-ink)" }}>
@@ -528,7 +582,12 @@ function EventCard({ event, onClick, dragging }: { event: CalendarEvent; onClick
     data: { kind: "event" as const, event },
   });
   const cv = CHANNEL_VISUAL[event.channel] || CHANNEL_VISUAL.blog;
-  const sv = STATUS_VISUAL[event.status] || STATUS_VISUAL.scheduled;
+  // Drift watchdog: if the API flagged this scheduled event as past-due
+  // without reconciliation, render the alarm visual instead of the regular
+  // "Programado" badge. Same shape so the rest of the card doesn't change.
+  const sv = event.unconfirmed_drift
+    ? UNCONFIRMED_VISUAL
+    : STATUS_VISUAL[event.status] || STATUS_VISUAL.scheduled;
 
   // Only allow drag for cancellable / failed / scheduled — not while in-flight
   const isDraggable = event.status === "scheduled" || event.status === "failed";
