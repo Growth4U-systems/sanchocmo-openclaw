@@ -76,6 +76,12 @@
       },
       "status": "connected",
       "lastTestedAt": "2026-04-28T09:55:13.680Z"
+    },
+    "google_workspace": {
+      "config": {
+        "EMAIL": "alfonso@growth4u.io"
+      },
+      "status": "pending"
     }
   },
   "systemOverrides": {},

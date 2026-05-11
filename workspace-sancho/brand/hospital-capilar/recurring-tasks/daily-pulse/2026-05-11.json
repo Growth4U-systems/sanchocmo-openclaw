@@ -1,0 +1,11 @@
+{
+  "cronId": "2283eade-3d08-4f46-a508-eaa6d035a4d2",
+  "cronName": "Daily Pulse",
+  "slug": "hospital-capilar",
+  "date": "2026-05-11",
+  "runAtMs": 1778522787947,
+  "status": "ok",
+  "durationMs": 87748,
+  "model": "claude-sonnet-4-6",
+  "content": "## 📊 Daily Pulse — Hospital Capilar | 2026-05-11\n\n**Modo:** Discord Scan (9 canales)\n**Período:** Últimas 24h (desde 2026-05-10 18:06 UTC)\n\n---\n\n### 🔍 Pre-check de canales\n\n| Canal | Último mensaje | Resultado |\n|-------|---------------|-----------|\n| general | 2026-03-30 | ⏭️ Skip (>24h) |\n| brand | 2026-02-28 | ⏭️ Skip (>24h) |\n| campaigns | 2026-03-24 | ⏭️ Skip (>24h, bot) |\n| content | 2026-05-05 | ⏭️ Skip (>24h, bot) |\n| intelligence | 2026-05-08 | ⏭️ Skip (>24h, bot) |\n| onboarding | 2026-04-07 | ⏭️ Skip (>24h, bot) |\n| soporte | 2026-04-28 | ⏭️ Skip (>24h, bot) |\n| research | 2026-03-01 | ⏭️ Skip (>24h) |\n| paid-ads | — | ⏭️ Skip (canal no disponible) |\n\n---\n\n### 📊 Resumen\n\n- **Canales escaneados:** 9\n- **Canales con actividad humana reciente:** 0\n- **Insights extraídos:** 0\n- **Ideas de contenido generadas:** 0\n- **Patrones detectados:** 0\n\n---\n\n### 💡 Contexto\n\nSin actividad humana en Discord durante las últimas 24h. El equipo de Hospital Capilar no ha generado conversaciones nuevas en ningún canal.\n\nEsto es consistente con el pulso del 2026-05-08 (también 0 canales activos).\n\n---\n\n📁 **Archivo guardado:** brand/hospital-capilar/daily-pulse/2026-05-11.json\n\n⚡ **Eficiencia:** 9 canales pre-chequeados con 1 msg c/u → 0 reads completos necesarios (ahorro máximo de tokens)"
+}

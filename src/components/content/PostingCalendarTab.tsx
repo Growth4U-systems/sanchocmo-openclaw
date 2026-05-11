@@ -71,11 +71,31 @@ const UNCONFIRMED_VISUAL = {
 } as const;
 
 /** A Ready Queue draft is "media-blocked" when its channel requires media
- *  (media_policy=required) and no media is attached. The Programar action
- *  is disabled until media is uploaded — the publish endpoint enforces the
- *  same rule server-side. */
+ *  (media_policy=required) and the attached media doesn't satisfy the
+ *  per-network contract. The Programar action is disabled until the right
+ *  artifact is uploaded — the publish endpoint enforces the same rule
+ *  server-side, this just gives immediate feedback.
+ *
+ *  Per-network rules (mirror of publish.ts):
+ *   - linkedin: needs at least one PDF (carousel = native document).
+ *   - twitter/x/instagram: needs at least one image.
+ *   - other: needs at least one media asset of any type. */
+function mediaBlockReason(draft: ReadyDraft): string | null {
+  if (draft.media_policy !== "required") return null;
+  const items = draft.media || [];
+  if (items.length === 0) return "Necesita media — sube imágenes / PDF antes de programar";
+  if (draft.channel === "linkedin") {
+    const hasPdf = items.some((m) => m.type === "application/pdf");
+    if (!hasPdf) return "Carrusel LinkedIn necesita un PDF multi-página — bundle los slides en un PDF y adjúntalo";
+  } else if (draft.channel === "twitter" || draft.channel === "x" || draft.channel === "instagram") {
+    const hasImage = items.some((m) => typeof m.type === "string" && m.type.startsWith("image/"));
+    if (!hasImage) return "Necesita al menos una imagen antes de programar";
+  }
+  return null;
+}
+
 function isMediaBlocked(draft: ReadyDraft): boolean {
-  return draft.media_policy === "required" && !draft.has_media;
+  return mediaBlockReason(draft) !== null;
 }
 
 const DAY_LABELS = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
@@ -410,19 +430,21 @@ function ReadyDraftCard({
   dragging?: boolean;
   onSelect?: (draft: ReadyDraft) => void;
 }) {
+  const blockReason = mediaBlockReason(draft);
+  const blocked = blockReason !== null;
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: `ready-${draft.ideaId}-${draft.channel}`,
     data: { kind: "ready" as const, draft },
-    disabled: isMediaBlocked(draft),
+    disabled: blocked,
   });
   const cv = CHANNEL_VISUAL[draft.channel] || CHANNEL_VISUAL.blog;
-  const blocked = isMediaBlocked(draft);
 
   // When media is required but missing: red badge, no-drag cursor, tooltip.
-  // The badge color also flips from neutral (sun-100) to alarm (brick) so
-  // it reads at a glance.
+  // The badge label depends on what specifically is missing — for LinkedIn
+  // we say "falta PDF" to make the carousel contract explicit.
+  const blockedLabel = draft.channel === "linkedin" ? "falta PDF" : "falta media";
   const mediaBadge = blocked
-    ? { label: "falta carrusel", bg: "var(--sc-brick-bg)", fg: "var(--sc-brick-500)", title: "Sube las imágenes del carrusel antes de programar" }
+    ? { label: blockedLabel, bg: "var(--sc-brick-bg)", fg: "var(--sc-brick-500)", title: blockReason! }
     : !draft.has_media
       ? { label: "sin media", bg: "var(--sc-sun-100)", fg: "var(--sc-ink)", title: "Sin media adjunta" }
       : null;
@@ -440,11 +462,7 @@ function ReadyDraftCard({
         {...(blocked ? {} : listeners)}
         onClick={() => { if (!dragging) onSelect?.(draft); }}
         className={`w-full text-left flex items-start gap-2 ${blocked ? "cursor-not-allowed" : "cursor-grab active:cursor-grabbing"}`}
-        title={
-          blocked
-            ? "Necesita carrusel — sube imágenes antes de poder programar este post"
-            : "Click para previsualizar · arrastra a un día para programar"
-        }
+        title={blockReason ?? "Click para previsualizar · arrastra a un día para programar"}
       >
         <span
           className="grid place-items-center w-6 h-6 rounded text-xs border flex-shrink-0 mt-0.5"

@@ -99,30 +99,17 @@
       }
     },
     "618bc941-a980-4f0d-99c8-5e715060ce6b": {
-      "updatedAtMs": 1778374800041,
+      "updatedAtMs": 1778528456210,
       "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"0 3 * * *\"}}",
       "state": {
-        "nextRunAtMs": 1778461200000,
-        "lastRunAtMs": 1778374800027,
-        "lastRunStatus": "error",
-        "lastStatus": "error",
-        "lastDurationMs": 14,
+        "nextRunAtMs": 1778547600000,
+        "lastRunAtMs": 1778528442609,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 13601,
         "lastDeliveryStatus": "not-requested",
-        "consecutiveErrors": 2,
-        "consecutiveSkipped": 0,
-        "lastDiagnostics": {
-          "summary": "cron payload.model 'anthropic/claude-sonnet-4-5' rejected by agents.defaults.models allowlist: anthropic/claude-sonnet-4-5",
-          "entries": [
-            {
-              "ts": 1778374800041,
-              "source": "cron-preflight",
-              "severity": "error",
-              "message": "cron payload.model 'anthropic/claude-sonnet-4-5' rejected by agents.defaults.models allowlist: anthropic/claude-sonnet-4-5"
-            }
-          ]
-        },
-        "lastDiagnosticSummary": "cron payload.model 'anthropic/claude-sonnet-4-5' rejected by agents.defaults.models allowlist: anthropic/claude-sonnet-4-5",
-        "runningAtMs": 1778528442605
+        "consecutiveErrors": 0,
+        "consecutiveSkipped": 0
       }
     },
     "0c59e923-3267-4926-9a60-36bb81b6041f": {
@@ -372,57 +359,31 @@
       }
     },
     "a68143d8-1309-46eb-a5dc-4c3fb35ee3d2": {
-      "updatedAtMs": 1778443551436,
+      "updatedAtMs": 1778530231896,
       "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"0 22 * * *\",\"tz\":\"Europe/Madrid\"}}",
       "state": {
-        "nextRunAtMs": 1778529600000,
-        "lastRunAtMs": 1778443551418,
-        "lastRunStatus": "error",
-        "lastStatus": "error",
-        "lastDurationMs": 18,
+        "nextRunAtMs": 1778616000000,
+        "lastRunAtMs": 1778529600032,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 631864,
         "lastDeliveryStatus": "not-requested",
-        "consecutiveErrors": 3,
-        "consecutiveSkipped": 0,
-        "lastDiagnostics": {
-          "summary": "cron payload.model 'anthropic/claude-sonnet-4-5' rejected by agents.defaults.models allowlist: anthropic/claude-sonnet-4-5",
-          "entries": [
-            {
-              "ts": 1778443551436,
-              "source": "cron-preflight",
-              "severity": "error",
-              "message": "cron payload.model 'anthropic/claude-sonnet-4-5' rejected by agents.defaults.models allowlist: anthropic/claude-sonnet-4-5"
-            }
-          ]
-        },
-        "lastDiagnosticSummary": "cron payload.model 'anthropic/claude-sonnet-4-5' rejected by agents.defaults.models allowlist: anthropic/claude-sonnet-4-5",
-        "lastError": "cron payload.model 'anthropic/claude-sonnet-4-5' rejected by agents.defaults.models allowlist: anthropic/claude-sonnet-4-5"
+        "consecutiveErrors": 0,
+        "consecutiveSkipped": 0
       }
     },
     "36d0bff9-fea9-40d8-9bfd-bf1e5e58468b": {
-      "updatedAtMs": 1778445000075,
+      "updatedAtMs": 1778531824529,
       "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"30 22 * * 0-4\",\"tz\":\"Europe/Madrid\"}}",
       "state": {
-        "nextRunAtMs": 1778531400000,
-        "lastRunAtMs": 1778445000030,
-        "lastRunStatus": "error",
-        "lastStatus": "error",
-        "lastDurationMs": 45,
+        "nextRunAtMs": 1778617800000,
+        "lastRunAtMs": 1778531400028,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 424501,
         "lastDeliveryStatus": "not-requested",
-        "consecutiveErrors": 1,
-        "consecutiveSkipped": 0,
-        "lastError": "cron payload.model 'anthropic/claude-sonnet-4-5' rejected by agents.defaults.models allowlist: anthropic/claude-sonnet-4-5",
-        "lastDiagnostics": {
-          "summary": "cron payload.model 'anthropic/claude-sonnet-4-5' rejected by agents.defaults.models allowlist: anthropic/claude-sonnet-4-5",
-          "entries": [
-            {
-              "ts": 1778445000075,
-              "source": "cron-preflight",
-              "severity": "error",
-              "message": "cron payload.model 'anthropic/claude-sonnet-4-5' rejected by agents.defaults.models allowlist: anthropic/claude-sonnet-4-5"
-            }
-          ]
-        },
-        "lastDiagnosticSummary": "cron payload.model 'anthropic/claude-sonnet-4-5' rejected by agents.defaults.models allowlist: anthropic/claude-sonnet-4-5"
+        "consecutiveErrors": 0,
+        "consecutiveSkipped": 0
       }
     },
     "6f136183-673c-4a60-9aca-d923d3c00480": {

@@ -30,6 +30,8 @@ interface SourceScope {
   notes?: string;
   filter?: {
     property?: string;
+    propertyId?: string;
+    propertyType?: string;
     operator?: string;
     value?: string;
   };
@@ -86,6 +88,8 @@ interface NotionProperty {
   id: string;
   name: string;
   type: string;
+  relationDatabaseId?: string | null;
+  source?: "notion" | "fallback";
 }
 
 interface GooglePickerConfig {
@@ -1283,6 +1287,30 @@ function NotionDatabaseList({
     const next = rows.filter((_, i) => i !== index);
     onChange(next.length ? next : [emptyScope()]);
   };
+  const getConditionOptions = (type?: string) => {
+    if (type === "relation") return [
+      { value: "contains", label: "contains related page" },
+      { value: "does_not_contain", label: "does not contain" },
+      { value: "is_not_empty", label: "is not empty" },
+      { value: "is_empty", label: "is empty" },
+    ];
+    if (type === "checkbox") return [
+      { value: "equals", label: "equals" },
+      { value: "does_not_equal", label: "does not equal" },
+    ];
+    if (type === "created_time" || type === "date") return [
+      { value: "on_or_after", label: "date on/after" },
+      { value: "on_or_before", label: "date on/before" },
+      { value: "is_not_empty", label: "is not empty" },
+      { value: "is_empty", label: "is empty" },
+    ];
+    return [
+      { value: "equals", label: "equals" },
+      { value: "contains", label: "contains" },
+      { value: "is_not_empty", label: "is not empty" },
+    ];
+  };
+  const defaultOperatorForType = (type?: string) => type === "relation" ? "contains" : type === "created_time" || type === "date" ? "on_or_after" : "equals";
 
   return (
     <div className="mb-3">
@@ -1290,6 +1318,8 @@ function NotionDatabaseList({
       <div className="space-y-2">
         {rows.map((scope, index) => {
           const props = scope.id ? (properties[scope.id] || []) : [];
+          const selectedProp = props.find((prop) => prop.name === scope.filter?.property);
+          const conditionOptions = getConditionOptions(selectedProp?.type || scope.filter?.propertyType);
           return (
             <div key={index} className="rounded-lg border border-border bg-background p-3">
               <div className="grid gap-2 md:grid-cols-[1fr_1.15fr_auto]">
@@ -1323,14 +1353,33 @@ function NotionDatabaseList({
                   <select
                     value={scope.filter?.property || ""}
                     onFocus={() => { if (scope.id) void loadProperties(scope.id); }}
-                    onChange={(e) => updateRow(index, { filter: { ...(scope.filter || {}), property: e.target.value } })}
+                    onChange={(e) => {
+                      const prop = props.find((item) => item.name === e.target.value);
+                      updateRow(index, {
+                        filter: {
+                          ...(scope.filter || {}),
+                          property: e.target.value,
+                          propertyId: prop?.id || "",
+                          propertyType: prop?.type || "",
+                          operator: defaultOperatorForType(prop?.type),
+                          value: "",
+                        },
+                      });
+                    }}
                     className="w-full rounded-md border border-border bg-card px-2 py-1.5 text-[12px] outline-none focus:border-rust"
                   >
                     <option value="">No filter</option>
                     {props.map((prop) => (
-                      <option key={prop.id} value={prop.name}>{prop.name} ({prop.type})</option>
+                      <option key={prop.id} value={prop.name}>
+                        {prop.name} ({prop.type}{prop.source === "fallback" ? " · fallback" : ""})
+                      </option>
                     ))}
                   </select>
+                  {selectedProp?.source === "fallback" && (
+                    <p className="mt-1 text-[10px] leading-relaxed text-muted-foreground">
+                      Notion did not expose this property; keeping it available because clients is a canonical relation filter.
+                    </p>
+                  )}
                 </Field>
                 <Field label="Condition">
                   <select
@@ -1338,10 +1387,9 @@ function NotionDatabaseList({
                     onChange={(e) => updateRow(index, { filter: { ...(scope.filter || {}), operator: e.target.value } })}
                     className="w-full rounded-md border border-border bg-card px-2 py-1.5 text-[12px] outline-none focus:border-rust"
                   >
-                    <option value="equals">equals</option>
-                    <option value="contains">contains</option>
-                    <option value="is_not_empty">is not empty</option>
-                    <option value="on_or_after">date on/after</option>
+                    {conditionOptions.map((option) => (
+                      <option key={option.value} value={option.value}>{option.label}</option>
+                    ))}
                   </select>
                 </Field>
                 <Field label="Value">
@@ -1349,7 +1397,7 @@ function NotionDatabaseList({
                     value={scope.filter?.value || ""}
                     onChange={(e) => updateRow(index, { filter: { ...(scope.filter || {}), value: e.target.value } })}
                     className="w-full rounded-md border border-border bg-card px-2 py-1.5 text-[12px] outline-none focus:border-rust"
-                    placeholder="Meeting Notes / done / 2026-01-01"
+                    placeholder={selectedProp?.type === "relation" ? "Client page ID or Notion URL" : "Meeting Notes / done / 2026-01-01"}
                   />
                 </Field>
               </div>

@@ -86,9 +86,10 @@ function deriveFromLegacy(details: Record<string, unknown> | undefined): ApiAcco
  */
 export function ConnectedAccountsInfo({ apiId, slug }: { apiId: string; slug: string }) {
   const { data: health } = useQuery<HealthResponse>({
-    queryKey: ["api-health"],
+    queryKey: ["api-health", slug],
     queryFn: async () => {
-      const res = await fetch("/api/system/api-health");
+      const url = slug ? `/api/system/api-health?slug=${slug}` : "/api/system/api-health";
+      const res = await fetch(url);
       if (!res.ok) return { services: {} };
       return res.json();
     },

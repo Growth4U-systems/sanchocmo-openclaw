@@ -1,6 +1,6 @@
 ---
 ghl_id: MU4No55o99Lc4oSkzvxE
-last_enriched: 2026-05-06T20:00:00Z
+last_enriched: 2026-05-11T20:00:00Z
 enrichment_pending: false
 ---
 
@@ -33,3 +33,13 @@ enrichment_pending: false
 - **Next steps**: Reunión de seguimiento jueves 8 mayo ~17h para conocer al socio y ver metodología en detalle. Martin informará a socio sobre la objeción del pago. Fran analizará pasos propuestos con su equipo para determinar qué pueden ejecutar internamente.
 - **Key quotes**: "Llevo 8 meses donde hemos generado casi 6.000 leads. El retorno ha sido pobre, muy pobre." — "Invertir tanto dinero en Ads actualmente no merece la pena, necesitamos generar más confianza." — "Me ha gustado mucho la metodología y las herramientas de automatización que quedan para nosotros."
 - 🔗 [Transcript en Drive](https://docs.google.com/document/d/1jhcZc-d4AYgmnjKPTGN2kVw6UqfYgW-e1mB2nfm6bqY/edit)
+
+### 2026-05-07 — Llamada de Seguimiento Rentakia <> Growth4U
+- **Pain points**: Preocupación central: propuesta percibida como teórica sin ejecución incluida. Fran busca partners que hagan tanto el qué como el cómo. 6.000 leads en 7 meses, inversión >120K€ en marketing, solo 100 conversiones (~50 conocidos). CAC actual muy alto vs. competidores tipo Cryptan (~70€ CAC, inversión media 5K€).
+- **Situación**: Victor Ribes (equipo de Fran) ya trabaja LinkedIn. Equipo en reestructuración: quitando responsabilidades a agencia de ads. Redistribuyendo hacia orgánico + influencers. Fran alineado con la metodología Trust Engine.
+- **Objeciones resueltas**: Alfonso aclaró que G4U no es solo consultoría teórica — hace Foundation + proporciona paso a paso para ejecución. Ejecución operativa (subir contenido, negociar influencers) recae en equipo del cliente (1 persona junior/mid 4-6h/día). Full package = 7K€/mes (no ofrecido como opción principal).
+- **Objeción de pago**: Persiste el freno del pago único. Martin ofrece dos pagos: 50% al inicio, 50% a mitad del proyecto.
+- **Next steps**: Fran revisará propuesta con equipo la próxima semana. Enviará mensaje a Martin para adelantar información. Reunión tentativa lunes ~12:30 para decisión definitiva. Fran reconoce fuerte atractivo de experiencia G4U en Fintech.
+- **Key quotes**: "La percepción es similar a la reunión anterior — necesita período de maduración." | "Es para comprar conocimiento, experiencia y un método que se ejecuta autónomamente." | Fran: confirmó alineación estratégica al 90%.
+- **Deal status**: 🟡 Muy caliente — objeción única es modalidad de pago. Decisión definitiva esperada semana del 11 mayo.
+- 🔗 [Transcript en Drive](https://docs.google.com/document/d/17Q2jbsoH5ggTIr6bAdf30TBFmhsUcw0jWNyvutFRbH4/edit)

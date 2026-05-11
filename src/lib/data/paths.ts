@@ -65,6 +65,14 @@ export function atalayaDir(slug: string) {
   return path.join(BASE, "brand", slug, "atalaya");
 }
 
+export function meetingIntelligenceDir(slug: string) {
+  return path.join(BASE, "brand", slug, "intelligence");
+}
+
+export function meetingIntelligenceConfigFile(slug: string) {
+  return path.join(meetingIntelligenceDir(slug), "config.json");
+}
+
 export function integrationsFile(slug: string) {
   return path.join(BASE, "brand", slug, "integrations.json");
 }

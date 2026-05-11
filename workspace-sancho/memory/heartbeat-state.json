@@ -14,18 +14,28 @@
     "notes": "All 3 leads (Laura Donadio, Blas Nieto, Enric Majó Prats) already had Drive transcripts from sync of 2026-04-24. No new transcripts to add this run. Slack sync disabled (slack_enabled=false)."
   },
   "lead_sync": {
-    "last_run": "2026-05-07T22:00:00Z",
+    "last_run": "2026-05-11T20:00:00Z",
     "new_leads": 1,
-    "updated_leads": 0,
+    "updated_leads": 32,
+    "transcripts_added": 3,
     "slack_notes_synced": 0,
-    "skipped_test_contacts": 1,
-    "total_contacts_with_tag": 33,
-    "existing_lead_files": 31,
-    "errors": 1,
-    "error_details": [
-      "Google Drive search timeout — skipped transcript update for existing leads"
-    ],
-    "notes": "New lead: Jordi Teixido de Haro (sOdW496mbY1hePpdSyXk) — freelance developer, FB Ads, call May 11. Slack disabled in config. Drive timeout prevented transcript check."
+    "slack_enabled": false,
+    "errors": 0,
+    "details": {
+      "new_leads": [
+        "yBPUbfInbLJJORhnn9ro (María Carolina Páez-Pumar / Reddo Credit)"
+      ],
+      "transcripts_added": [
+        "MU4No55o99Lc4oSkzvxE (Frank Nava / Rentakia) — Llamada seguimiento 2026-05-07",
+        "jiA4RqaMm8oJlWTRrV3C (Eustacio Cabrera / MERGE Madrid) — Llamada estratégica 2026-05-07",
+        "ZbyI3priwsibR0k7pwaB (Luis Ayuso Elu / Infonite) — Segunda llamada 2026-05-07"
+      ],
+      "skipped": [
+        "V6VSIAMPu5ApIDK2dxAR (test@test.com — test lead)"
+      ],
+      "tag_filter": "llamada-agendada",
+      "total_ghl_contacts_with_tag": 34
+    }
   },
   "sales_call_prep": {
     "last_run": "2026-05-07T20:36:00Z",

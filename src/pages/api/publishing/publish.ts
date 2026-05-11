@@ -62,11 +62,40 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   // button in this case — this is the server-side enforcement.
   const requiresMedia =
     draft.meta.media_policy === "required" || ctMediaPolicy === "required";
-  const mediaCount = Array.isArray(draft.meta.media) ? draft.meta.media.length : 0;
-  if (requiresMedia && mediaCount === 0) {
-    return res.status(400).json({
-      error: `Channel ${channel} requires media (media_policy="required") but draft has no media attached. Upload the carousel / images and retry.`,
-    });
+  const mediaList = Array.isArray(draft.meta.media) ? draft.meta.media : [];
+  if (requiresMedia) {
+    // Per-network media contract — different platforms expect different
+    // artifacts for a carousel/visual post:
+    //   - LinkedIn: needs a multi-page PDF (native scheduler only supports
+    //     document-style carousels). N standalone images won't render as
+    //     a carousel — Metricool would only publish the first image.
+    //   - Twitter/X: needs at least 1 image (native carousels are arrays
+    //     of up to 4 images, no PDF support).
+    //   - Instagram: needs at least 1 image (native arrays up to 10).
+    //   - Other channels: at least 1 media asset of any type.
+    if (mediaList.length === 0) {
+      return res.status(400).json({
+        error: `Channel ${channel} requires media (media_policy="required") but draft has no media attached. Upload the carousel / images and retry.`,
+      });
+    }
+    if (channel === "linkedin") {
+      const hasPdf = mediaList.some((m) => m.type === "application/pdf");
+      if (!hasPdf) {
+        return res.status(400).json({
+          error:
+            `Channel linkedin requires a multi-page PDF for carousel posts (media_policy="required"). ` +
+            `Found ${mediaList.length} non-PDF asset(s) — bundle the slides into a PDF and attach it. ` +
+            `LinkedIn's API does not render arrays of images as native carousels.`,
+        });
+      }
+    } else if (channel === "twitter" || channel === "x" || channel === "instagram") {
+      const hasImage = mediaList.some((m) => typeof m.type === "string" && m.type.startsWith("image/"));
+      if (!hasImage) {
+        return res.status(400).json({
+          error: `Channel ${channel} requires at least one image (media_policy="required"). No image-type asset found in draft media.`,
+        });
+      }
+    }
   }
 
   const provider = getProvider(providerId);

@@ -97,9 +97,10 @@ export function ApisConnectorsPanel({ categories, showHeader = true }: ApisConne
   };
 
   const { data: health, isLoading: healthLoading } = useQuery<ApiHealth>({
-    queryKey: ["api-health"],
+    queryKey: ["api-health", slug],
     queryFn: async () => {
-      const res = await fetch("/api/system/api-health");
+      const url = slug ? `/api/system/api-health?slug=${slug}` : "/api/system/api-health";
+      const res = await fetch(url);
       if (!res.ok) return { lastCheck: null, services: {} };
       return res.json();
     },
