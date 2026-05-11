@@ -56,5 +56,23 @@
     "post quote"
   ],
   "od_kind": "template",
-  "use_case": "Quote post con cita fuerte (1080×1350) — puede llevar personaje. Ideal para frases punchy, hooks, statements."
+  "use_case": "Quote post con cita fuerte (1080×1350) — puede llevar personaje. Ideal para frases punchy, hooks, statements.",
+
+  "payload_example": {
+    "_comment": "Single-slide template — perSlide es {} porque no hay slots con perSlide:true.",
+    "slug": "growth4u",
+    "ideaId": "idea-YYYY-MM-DD-N",
+    "channel": "linkedin",
+    "templateId": "linkedin-quote",
+    "slots": {
+      "kicker": "GROWTH · SISTEMA",
+      "quote": "string aquí (≤180 chars)",
+      "highlight_words": "palabra1|palabra2",
+      "attribution": "Alfonso — Growth4U",
+      "hero_image_url": "",
+      "data_value": "-70%",
+      "data_label": "CAC reduction"
+    },
+    "perSlide": {}
+  }
 }

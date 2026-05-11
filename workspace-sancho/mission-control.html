@@ -2478,7 +2478,7 @@ function renderIntelMeetingDetail(slug, meeting, items, docs, proposals) {
   const sourcePath = meeting.file ? `brand/${slug}/intelligence/meetings/${meeting.file}` : '';
   let body = '';
   if (tab === 'summary') {
-    body = `<div class="intel-panel"><h3>Summary</h3><p>${intelEsc(meeting.title)} se procesa como meeting intelligence para revisar decisiones, acciones, insights y posibles impactos documentales.</p><div class="intel-chip-list"><span class="intel-chip">${Number(meeting.decisions)||0} decisions</span><span class="intel-chip">${Number(meeting.actions)||0} actions</span><span class="intel-chip">${intelEsc(meeting.type || 'meeting')}</span></div></div>`;
+    body = `<div class="intel-panel"><h3>Summary</h3><p>${intelEsc(meeting.title)} se procesa como meeting intelligence para revisar decisiones, acciones, insights y posibles impactos documentales.</p><div class="intel-chip-list"><span class="intel-chip">${Number(meeting.decisions)||0} decisions</span><span class="intel-chip">${Number(meeting.actions)||0} actions</span><span class="intel-chip">${intelEsc(meeting.type || 'meeting')}</span><span class="intel-chip">StrategyPlan contradiction check</span></div></div>`;
   } else if (tab === 'raw') {
     body = `<div class="intel-panel"><h3>Transcript / Raw</h3><div class="intel-review-box">Fuente: ${intelEsc(meeting.source || 'Unknown')}<br>ID: ${intelEsc(meeting.sourceId || 'TBD')}<br>${sourcePath ? `Documento: <code>${intelEsc(sourcePath)}</code>` : 'Documento: pendiente de normalizar'}</div><div class="intel-btn-row"><button class="intel-btn primary" onclick="intelAction('Open source meeting')">Open source meeting</button></div></div>`;
   } else if (tab === 'impact') {
@@ -2508,8 +2508,8 @@ function renderIntelDecisionLog(slug, meetings) {
     const n = Math.max(1, Math.min(2, Number(m.decisions)||1));
     return Array.from({length:n}).map((_, i) => ({meeting:m, idx:i, status:statuses[(mi+i)%statuses.length]}));
   });
-  el.innerHTML = `<div class="intel-panel"><h3>Decision Log</h3><div class="intel-timeline">
-    ${rows.map(r => `<div class="intel-timeline-row"><div class="intel-card" onclick="intelSelectMeeting('${intelEsc(r.meeting.id)}','meetings')"><div class="intel-card-title">${intelEsc(r.meeting.date)} · ${intelEsc(r.meeting.title)}</div><div class="intel-card-desc">Decision ${r.idx+1}: rationale pendiente de validar contra fuente. Owner: ${intelEsc((r.meeting.participants||[])[0] || 'TBD')}.</div><div class="intel-card-meta"><span>${intelEsc(intelSourceLabel(r.meeting.source))}</span><span>StrategyPlan / POV Bank</span><span class="intel-badge ${r.status==='Applied'?'applied':r.status==='Linked'?'linked':r.status==='Proposal pending'?'pending':'low'}">${intelEsc(r.status)}</span></div></div></div>`).join('')}
+  el.innerHTML = `<div class="intel-panel"><h3>Decision Log</h3><div class="intel-card-meta"><span>Timeline</span><span>Date</span><span>Decision</span><span>Rationale</span><span>Owner</span><span>Source</span><span>Affected documents</span><span>Status</span></div><div class="intel-timeline">
+    ${rows.map(r => `<div class="intel-timeline-row"><div class="intel-card" onclick="intelSelectMeeting('${intelEsc(r.meeting.id)}','meetings')"><div class="intel-card-title">${intelEsc(r.meeting.date)} · ${intelEsc(r.meeting.title)}</div><div class="intel-card-desc"><strong>Decision:</strong> ${r.idx+1} · <strong>Rationale:</strong> pendiente de validar contra fuente. <strong>Owner:</strong> ${intelEsc((r.meeting.participants||[])[0] || 'TBD')}.</div><div class="intel-card-meta"><span>Source: ${intelEsc(intelSourceLabel(r.meeting.source))}</span><span>Affected documents: StrategyPlan / POV Bank</span><span class="intel-badge ${r.status==='Applied'?'applied':r.status==='Linked'?'linked':r.status==='Proposal pending'?'pending':'low'}">${intelEsc(r.status)}</span></div></div></div>`).join('')}
   </div></div>`;
 }
 
@@ -2525,17 +2525,17 @@ function renderIntelPov(slug, meetings, selected) {
   el.innerHTML = `<div class="intel-pov-grid">${pillars.map(p => `<div class="intel-pov-card">
     <h3>${intelEsc(p.name)}</h3>
     <div class="intel-card-desc"><strong>Core belief:</strong> ${intelEsc(p.belief)}</div>
-    <div class="intel-chip-list"><span class="intel-chip">We say yes</span><span class="intel-chip">We say no</span><span class="intel-chip">Evidence</span><span class="intel-chip">Quotes</span></div>
+    <div class="intel-chip-list"><span class="intel-chip">We say yes / no</span><span class="intel-chip">Preferred angles</span><span class="intel-chip">Evidence</span><span class="intel-chip">Quotes from meetings</span><span class="intel-chip">Objections detected</span></div>
     <div style="margin-top:12px;font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;">Suggestions from meetings</div>
     ${p.suggestions.map((s, idx) => `<div class="intel-mini-row"><div class="intel-mini-icon">${idx===0?'◆':'+'}</div><div><div class="intel-mini-title">${intelEsc(s)}</div><div class="intel-mini-copy">Extraido de ${intelEsc(selected ? selected.title : 'meeting notes')} y listo para propuesta, no edicion directa.</div></div></div>`).join('')}
-    <div class="intel-btn-row"><button class="intel-btn primary" onclick="setIntelligenceView('proposals')">Create proposal</button><button class="intel-btn ghost" onclick="intelAction('Open POV source')">Open POV</button></div>
+    <div class="intel-btn-row"><button class="intel-btn primary" onclick="setIntelligenceView('proposals')">Send to proposal</button><button class="intel-btn ghost" onclick="intelAction('Open POV source')">Open POV</button></div>
   </div>`).join('')}</div>`;
 }
 
 function renderIntelImpact(slug, docs) {
   const el = document.getElementById('intel-view-impact');
   if (!el) return;
-  el.innerHTML = `<div class="intel-doc-grid">${docs.map(d => `<div class="intel-doc-card ${d.name==='StrategyPlan'?'critical':''}">
+  el.innerHTML = `<div class="intel-panel"><h3>Canonical Documents</h3><div class="intel-card-desc">StrategyPlan is Critical and Never auto-apply: every pending impact requires review before a document changes.</div></div><div class="intel-doc-grid" style="margin-top:12px;">${docs.map(d => `<div class="intel-doc-card ${d.name==='StrategyPlan'?'critical':''}">
     <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;"><h3>${intelEsc(d.name)}</h3><span class="intel-badge ${d.name==='StrategyPlan'?'critical':d.status==='no impact'?'processed':'proposal'}">${d.name==='StrategyPlan'?'Critical':intelEsc(d.status)}</span></div>
     <div class="intel-card-desc">${intelEsc(d.area)}</div>
     <div class="intel-progress-line"><span style="width:${d.name==='StrategyPlan'?'78':'46'}%"></span></div>

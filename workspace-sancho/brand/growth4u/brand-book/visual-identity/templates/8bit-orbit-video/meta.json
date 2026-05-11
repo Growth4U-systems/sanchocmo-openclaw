@@ -51,5 +51,21 @@
     "intro de video"
   ],
   "od_kind": "template",
-  "use_case": "Video corto 8-bit/pixel-art (1080×1080, 15s) — planeta orbitando con escenas animadas para Instagram Reels / hooks visuales."
+  "use_case": "Video corto 8-bit/pixel-art (1080×1080, 15s) — planeta orbitando con escenas animadas para Instagram Reels / hooks visuales.",
+
+  "payload_example": {
+    "_comment": "Single-slide template — perSlide es {} porque no hay slots con perSlide:true.",
+    "slug": "growth4u",
+    "ideaId": "idea-YYYY-MM-DD-N",
+    "channel": "instagram",
+    "templateId": "8bit-orbit-video",
+    "slots": {
+      "hook_title": "string aquí (mayúsculas, corto)",
+      "hook_subtitle": "string aquí",
+      "data_value": "-70%",
+      "data_label": "CAC REDUCTION",
+      "cta_text": "GROWTH SYSTEMS"
+    },
+    "perSlide": {}
+  }
 }

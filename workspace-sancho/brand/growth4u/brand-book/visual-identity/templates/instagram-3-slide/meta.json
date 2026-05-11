@@ -70,5 +70,28 @@
     "carrusel ig"
   ],
   "od_kind": "template",
-  "use_case": "Carrusel cuadrado Instagram (3 slides 1080×1080) — cover + body + CTA. Ideal para insights breves."
+  "use_case": "Carrusel cuadrado Instagram (3 slides 1080×1080) — cover + body + CTA. Ideal para insights breves.",
+
+  "payload_example": {
+    "_comment": "Multi-slide template (3 slides): [0]=cover, [1]=body, [2]=CTA. perSlide arrays DEBEN tener length=3.",
+    "slug": "growth4u",
+    "ideaId": "idea-YYYY-MM-DD-N",
+    "channel": "instagram",
+    "templateId": "instagram-3-slide",
+    "slots": {
+      "cover_kicker": "GROWTH TIP",
+      "cover_title": "string aquí (≤80 chars)",
+      "hero_image_url": "",
+      "cta_headline": "string aquí (≤80 chars)",
+      "cta_subtext": "Link en bio",
+      "cta_button": "string aquí",
+      "cta_image_url": ""
+    },
+    "perSlide": {
+      "_note": "length=3. [0]=cover, [1]=body, [2]=CTA. Pon \"\" en cover/CTA. NUNCA pongas slide_1_title, slide_2_title, etc. en 'slots' — anti-pattern, 400.",
+      "slide_title":      ["", "string aquí (body title)", ""],
+      "slide_text":       ["", "string aquí (≤200 chars)", ""],
+      "slide_data_value": ["", "+45%", ""]
+    }
+  }
 }

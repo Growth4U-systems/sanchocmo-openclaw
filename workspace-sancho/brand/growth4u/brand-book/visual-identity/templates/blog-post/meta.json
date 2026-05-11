@@ -51,5 +51,22 @@
     "imagen para blog"
   ],
   "od_kind": "template",
-  "use_case": "Imagen ilustrativa para incrustar dentro del cuerpo de un post de blog (1200×630)."
+  "use_case": "Imagen ilustrativa para incrustar dentro del cuerpo de un post de blog (1200×630).",
+
+  "payload_example": {
+    "_comment": "Single-slide template — perSlide es {} porque no hay slots con perSlide:true.",
+    "slug": "growth4u",
+    "ideaId": "idea-YYYY-MM-DD-N",
+    "channel": "blog",
+    "templateId": "blog-post",
+    "slots": {
+      "kicker": "GROWTH · SISTEMA",
+      "title": "string aquí (≤80 chars)",
+      "subtitle": "string aquí (≤150 chars)",
+      "data_value": "-75%",
+      "data_label": "reducción CAC",
+      "hero_image_url": ""
+    },
+    "perSlide": {}
+  }
 }
