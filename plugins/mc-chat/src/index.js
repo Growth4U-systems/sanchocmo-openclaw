@@ -126,6 +126,14 @@ export default defineChannelPluginEntry({
         const resolvedSenderId = isAdmin ? "mc-admin" : (userId || `mc-client-${slug}`);
         const resolvedSenderName = userName || (isAdmin ? "Admin" : `${slug} (client)`);
 
+        // When the payload carries an `agentId`, embed it in the SessionKey
+        // using OpenClaw's canonical agent-scoped format: "agent:<agentId>:<rest>".
+        // resolveSessionAgentIds() (agent-scope.js) parses this and routes the
+        // dispatch to workspace-<agentId> instead of the default agent.
+        // Without this prefix, mc-chat messages always land on the default
+        // agent (sancho) regardless of what `agentId` the frontend sent.
+        const sessionKey = agentId ? `agent:${agentId}:${chatId}` : chatId;
+
         // Build MsgContext for OpenClaw dispatch
         const msgCtx = finalizeInboundContext({
           Body: text,
@@ -134,7 +142,7 @@ export default defineChannelPluginEntry({
           CommandBody: text,
           From: chatId,
           To: chatId,
-          SessionKey: chatId,
+          SessionKey: sessionKey,
           AccountId: DEFAULT_ACCOUNT_ID,
           SenderName: resolvedSenderName,
           SenderId: resolvedSenderId,
