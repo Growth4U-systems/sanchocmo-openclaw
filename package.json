@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test:e2e": "playwright test",
+    "prepare": "husky"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1027.0",
@@ -41,6 +43,9 @@
     "zustand": "^5.0.12"
   },
   "devDependencies": {
+    "@commitlint/cli": "^20.5.3",
+    "@commitlint/config-conventional": "^20.5.3",
+    "@playwright/test": "^1.59.1",
     "@types/archiver": "^7.0.0",
     "@types/formidable": "^3.5.0",
     "@types/node": "^20",
@@ -49,6 +54,7 @@
     "drizzle-kit": "^0.31.10",
     "eslint": "^8",
     "eslint-config-next": "14.2.35",
+    "husky": "^9.1.7",
     "playwright": "^1.59.1",
     "postcss": "^8",
     "prettier": "^3.8.1",
