@@ -152,6 +152,13 @@ export function InputsTab({ slug, openChat, embedded }: Props) {
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
+  // Tick cada 30s para refrescar los "hace Xd/h/min" sin recargar la página.
+  const [, setNowTick] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setNowTick((n) => n + 1), 30_000);
+    return () => clearInterval(id);
+  }, []);
+
   const toggleCron = useCallback(async (jobId: string, enabled: boolean) => {
     await fetch("/api/content-engine/crons", {
       method: "PATCH",

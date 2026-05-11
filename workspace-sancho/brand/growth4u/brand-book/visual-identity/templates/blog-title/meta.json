@@ -3,6 +3,10 @@
   "name": "blog-title",
   "channel": "blog",
   "description": "Cover / OG image: título dominante + autor + tiempo de lectura. Sin personaje.",
+  "output_format": "html",
+  "generation_strategy": "html",
+  "model_hints": { "preferred_model": null, "prompt_prefix_from": null },
+  "pre_steps": [],
   "slideCount": 1,
   "width": 1200,
   "height": 630,
@@ -28,5 +32,15 @@
       "placeholder": "8 min",
       "maxLength": 10
     }
-  ]
+  ],
+  "triggers": [
+    "blog cover",
+    "blog title",
+    "og image",
+    "open graph image",
+    "portada blog",
+    "cover blog"
+  ],
+  "od_kind": "template",
+  "use_case": "Cover/OG image de post de blog (1200×630): título dominante + autor + tiempo de lectura."
 }

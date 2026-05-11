@@ -16,15 +16,18 @@ import { useSlugSync } from "@/hooks/useSlugSync";
 interface ResolveProjectResponse {
   projectId: string;
   baseDir: string;
+  scope: string;
   webUrl: string;
   daemonUrl: string;
 }
 
-function useOdProjectForBrand(slug: string | null) {
+function useOdProject(slug: string | null, scope: string) {
   return useQuery<ResolveProjectResponse>({
-    queryKey: ["od-resolve-project", slug],
+    queryKey: ["od-resolve-project", slug, scope],
     queryFn: async () => {
-      const res = await fetch(`/api/open-design/resolve-project?slug=${encodeURIComponent(slug as string)}`);
+      const params = new URLSearchParams({ slug: slug as string });
+      if (scope) params.set("scope", scope);
+      const res = await fetch(`/api/open-design/resolve-project?${params}`);
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         throw new Error(data.error ?? `HTTP ${res.status}`);
@@ -39,16 +42,24 @@ function useOdProjectForBrand(slug: string | null) {
 export default function MediaCreationEditorPage() {
   const router = useRouter();
   const slug = useSlugSync() || ((router.query.slug as string) ?? null);
-  const artifactQuery = router.query.artifact;
-  const artifactId = Array.isArray(artifactQuery) ? artifactQuery[0] : artifactQuery;
 
-  const { data, isLoading, error } = useOdProjectForBrand(slug);
+  // `scope`: subfolder relativo al brand que se registra como proyecto OD.
+  // `file`: archivo dentro del scope (deep-link OD `/files/<file>`).
+  const scopeQuery = router.query.scope;
+  const scope = (Array.isArray(scopeQuery) ? scopeQuery[0] : scopeQuery) ?? "";
+  const fileQuery = router.query.file;
+  const filePath = Array.isArray(fileQuery) ? fileQuery[0] : fileQuery;
 
-  const iframeUrl = data
-    ? artifactId
-      ? `${data.webUrl}?artifact=${encodeURIComponent(artifactId)}`
-      : data.webUrl
-    : null;
+  const { data, isLoading, error } = useOdProject(slug, scope);
+
+  const iframeUrl = (() => {
+    if (!data) return null;
+    if (filePath) {
+      const encoded = filePath.split("/").map(encodeURIComponent).join("/");
+      return `${data.webUrl}/files/${encoded}`;
+    }
+    return data.webUrl;
+  })();
 
   return (
     <>
@@ -58,7 +69,15 @@ export default function MediaCreationEditorPage() {
       <DashboardLayout>
         {/* Header */}
         <div className="flex items-center justify-between mb-1">
-          <h1 className="font-heading text-2xl text-navy">Editor agentic</h1>
+          <h1 className="font-heading text-2xl text-navy">
+            {filePath ? (
+              <>
+                Editor — <code className="font-mono text-base">{filePath.split("/").pop()}</code>
+              </>
+            ) : (
+              "Editor agentic"
+            )}
+          </h1>
           <Link
             href={`/dashboard/${slug}/media-creation?tab=assets`}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[12px] bg-transparent border border-[#E5E2DC] rounded-md text-[#7A7A7A] hover:bg-[#E5E2DC] hover:text-[#1A1A1A] transition-colors no-underline"
@@ -68,13 +87,25 @@ export default function MediaCreationEditorPage() {
         </div>
         <p className="text-sm text-muted-foreground mb-4">
           {slug}
+          {scope && (
+            <>
+              {" › "}
+              <span className="font-mono text-xs">{scope}</span>
+            </>
+          )}
+          {filePath && (
+            <>
+              {" › "}
+              <span className="font-mono text-xs">{filePath}</span>
+            </>
+          )}
           {data && (
             <>
               {" · "}
               <code className="text-[11px] bg-muted px-1.5 py-0.5 rounded">project {data.projectId.slice(0, 8)}</code>
               {" · "}
               <a
-                href={data.webUrl}
+                href={iframeUrl ?? data.webUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-rust hover:underline"

@@ -14,7 +14,9 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { SlideOver } from "@/components/shared/slide-over";
 import type { BrandAsset } from "@/hooks/useBrandAssets";
+import { buildEditorHrefWithScope } from "@/lib/open-design/asset-scope";
 import { cn } from "@/lib/utils";
+import { TemplateMultiSlidePreview } from "./TemplateMultiSlidePreview";
 
 // (Reutiliza el componente SlideOver compartido — mismo wrapper que DocSlideOver
 // y SettingsSlideover. No introducimos un slide-over propio.)
@@ -82,6 +84,17 @@ export function MediaAssetSlideover({ slug, asset, onClose, onRequestEdit }: Pro
     ? `/api/brand-files/brand/${encodeURIComponent(slug)}/${asset.entryFile}`
     : null;
 
+  // Multi-slide template: render every slide via the rendered preview endpoint
+  // (placeholders resolved). Falls back to single iframe when there's no
+  // slideCount in meta.json (e.g. legacy templates without meta).
+  const slideCountRaw = asset.meta?.slideCount ?? asset.meta?.slide_count;
+  const slideCount = typeof slideCountRaw === "number" ? slideCountRaw : 0;
+  const isMultiSlideTemplate = asset.kind === "template" && slideCount > 0;
+  const tplWidth = typeof asset.meta?.width === "number" ? asset.meta.width as number : 1080;
+  const tplHeight = typeof asset.meta?.height === "number" ? asset.meta.height as number : 1350;
+  // Deep-link al editor con scope (subfolder = proyecto OD) + file dentro del scope.
+  const editorHref = buildEditorHrefWithScope(slug, asset);
+
   return (
     <SlideOver
       open
@@ -97,6 +110,13 @@ export function MediaAssetSlideover({ slug, asset, onClose, onRequestEdit }: Pro
             title="Descargar"
           >
             {"⬇️"}
+          </a>
+          <a
+            href={editorHref}
+            className="text-sm hover:scale-110 transition-transform p-1.5 rounded-md hover:bg-muted/40 no-underline"
+            title="Editar en Open Design"
+          >
+            {"✏️"}
           </a>
           <button
             type="button"
@@ -139,8 +159,19 @@ export function MediaAssetSlideover({ slug, asset, onClose, onRequestEdit }: Pro
             />
           )}
 
-          {/* Directorio con entry HTML */}
-          {!loading && isDirectory && entryHref && (
+          {/* Plantilla multi-slide: renderiza todos los slides verticalmente */}
+          {!loading && isMultiSlideTemplate && (
+            <TemplateMultiSlidePreview
+              slug={slug}
+              templateId={asset.id}
+              slideCount={slideCount}
+              width={tplWidth}
+              height={tplHeight}
+            />
+          )}
+
+          {/* Directorio con entry HTML (mockups, plantillas legacy sin meta) */}
+          {!loading && !isMultiSlideTemplate && isDirectory && entryHref && (
             <iframe
               src={entryHref}
               sandbox="allow-scripts"
@@ -171,7 +202,7 @@ export function MediaAssetSlideover({ slug, asset, onClose, onRequestEdit }: Pro
           )}
 
           {/* Directorio sin entry HTML */}
-          {!loading && isDirectory && !entryHref && (
+          {!loading && isDirectory && !entryHref && !isMultiSlideTemplate && (
             <p className="p-6 text-sm text-muted-foreground">
               Carpeta sin HTML de preview. Lista de archivos abajo.
             </p>

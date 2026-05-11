@@ -29,6 +29,8 @@ import { AskQuestionGroup, parseMessageSegments } from "./ask-question";
 import { ProgressTimeline } from "./progress-timeline";
 import type { ProgressEvent } from "@/hooks/useChat";
 import { DocSlideOver } from "@/components/shared/doc-slideover";
+import { MediaAssetSlideover } from "@/components/media-creation/MediaAssetSlideover";
+import { useBrandAssets, type BrandAsset } from "@/hooks/useBrandAssets";
 import { useBrandBrain } from "@/hooks/useBrandBrain";
 import { useProjects } from "@/hooks/useProjects";
 import { resolvePillarDocPath } from "@/lib/pillar-doc-paths";
@@ -617,6 +619,20 @@ export function ChatSidebar() {
   // thread, task page, etc.) while they read or edit the doc.
   const [openDocSlidePath, setOpenDocSlidePath] = useState<string | null>(null);
 
+  // Media-asset slide-over — opened when the doc pill points at a template
+  // folder (kind="template"). The MediaAssetSlideover handles multi-slide
+  // preview and the file list. Looked up from useBrandAssets by relative
+  // path so the same data the Assets tab loads is reused.
+  const [openTemplateAsset, setOpenTemplateAsset] = useState<BrandAsset | null>(null);
+  const { data: brandAssetsData } = useBrandAssets(
+    meta?.docKind === "template" && slug ? slug : null,
+  );
+  const findAssetByRelativePath = useCallback(
+    (relPath: string): BrandAsset | null =>
+      brandAssetsData?.assets.find((a) => a.relativePath === relPath) ?? null,
+    [brandAssetsData],
+  );
+
   // Input state
   const [input, setInput] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -1019,10 +1035,15 @@ export function ChatSidebar() {
             // because they're config files the user wouldn't want to open
             // in the markdown viewer.
             const docPath = meta?.docPath || null;
-            const isRealDoc = !!docPath &&
-              /\.(md|html|txt)$/i.test(docPath) &&
-              !/tasks\.json$/i.test(docPath) &&
-              !/project\.json$/i.test(docPath);
+            const isTemplateDoc = !!docPath && meta?.docKind === "template";
+            const isRealDoc = !!docPath && (
+              isTemplateDoc ||
+              (
+                /\.(md|html|txt)$/i.test(docPath) &&
+                !/tasks\.json$/i.test(docPath) &&
+                !/project\.json$/i.test(docPath)
+              )
+            );
             const linkedTo = meta?.linkedTo || "";
             const isTaskLinked = /^projects\/[^/]+\/tasks\/[^/]+/i.test(linkedTo);
             const isProjectLinked = !isTaskLinked && /^projects\/[^/]+/i.test(linkedTo);
@@ -1040,7 +1061,11 @@ export function ChatSidebar() {
                 .replace(/-/g, " ")
                 .replace(/\b\w/g, (c) => c.toUpperCase());
 
-            if (isRealDoc) {
+            if (isTemplateDoc) {
+              icon = "🧩";
+              label = (docPath!.split("/").filter(Boolean).pop() || "Plantilla").replace(/-/g, " ");
+              href = null; // click handled inline below to open MediaAssetSlideover
+            } else if (isRealDoc) {
               icon = "📄";
               label = readableDocName(docPath!);
               href = `/dashboard/${slug}/brand-brain?doc=${encodeURIComponent(docPath!)}`;
@@ -1098,6 +1123,25 @@ export function ChatSidebar() {
               "w-full bg-[#313244] rounded-lg px-3 py-2 text-[13px] text-[#cdd6f4] flex items-center gap-2 border border-transparent transition-colors text-left",
               (href || isRealDoc) && "cursor-pointer hover:bg-[#45475a] hover:border-rust no-underline"
             );
+            // Template doc: open MediaAssetSlideover (multi-slide preview)
+            // instead of DocSlideOver — DocSlideOver fetches /api/docs which
+            // would 404 on a folder path.
+            if (isTemplateDoc && docPath) {
+              return (
+                <button
+                  type="button"
+                  className={pillClass}
+                  onClick={() => {
+                    const rel = docPath.replace(/^brand\/[^/]+\//, "");
+                    const found = findAssetByRelativePath(rel);
+                    if (found) setOpenTemplateAsset(found);
+                  }}
+                  title="Abrir plantilla"
+                >
+                  {pillContent}
+                </button>
+              );
+            }
             // For real docs (.md/.html/.txt), open in slide-over IN-PLACE
             // instead of navigating to /foundation?doc=... The slide-over
             // lets the user read/edit without losing their current context
@@ -1527,6 +1571,12 @@ export function ChatSidebar() {
             : null
         }
         onClose={() => setOpenDocSlidePath(null)}
+      />
+      <MediaAssetSlideover
+        slug={slug || ""}
+        asset={openTemplateAsset}
+        onClose={() => setOpenTemplateAsset(null)}
+        onRequestEdit={() => setOpenTemplateAsset(null)}
       />
     </div>
   );

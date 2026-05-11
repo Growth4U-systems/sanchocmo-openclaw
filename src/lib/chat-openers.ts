@@ -95,6 +95,14 @@ export interface ThreadConfig {
    * this field — see send.ts where it's forwarded.
    */
   agent?: string;
+  /**
+   * Shape of the doc the thread is associated with. Defaults to `"file"`
+   * (single .md / .html / .txt). For media templates the doc is a folder
+   * containing meta.json + slide-*.html — set to `"template"` so the chat
+   * sidebar renders a multi-slide preview instead of trying to fetch the
+   * folder as a markdown file.
+   */
+  docKind?: "file" | "template";
 }
 
 /** Agent display config for message rendering */
@@ -736,6 +744,7 @@ export function buildMediaAssetThread(
     skills: [skill, "od-generate", "od-export"],
     linkedTo: `media-creation/asset/${assetRelativePath}`,
     docPath: `brand/${slug}/${assetRelativePath}`,
+    docKind: kind === "template" ? "template" : "file",
     threadState: "continue",
     agent: "maese-pedro",
     initialMessage: `Estoy mirando el asset "${assetName}" (\`${assetRelativePath}\`, kind=${kind}). Dame un resumen y las opciones de refinamiento.`,

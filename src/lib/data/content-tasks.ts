@@ -8,6 +8,7 @@ import {
   ContentTaskPipelineState,
   ChannelPhase,
   VALID_CONTENT_TASK_STATUSES,
+  VALID_CONTENT_TASK_PIPELINE_STATES,
   VALID_CHANNEL_PHASES,
   Task,
 } from "@/types";
@@ -171,6 +172,17 @@ export function setContentTaskStatus(
 ): ContentTask {
   if (!VALID_CONTENT_TASK_STATUSES.includes(status)) {
     throw new Error(`Invalid ContentTaskStatus: ${status}`);
+  }
+  // Validate pipeline_state too. Without this, callers can leak ChannelPhase
+  // values (e.g. "approved", "draft", "published") into pipeline_state, which
+  // breaks the UI stepper because nothing matches PIPELINE_RANK and the CT
+  // gets stuck (you can't auto-promote forward without a known rank).
+  if (
+    pipelineState !== null &&
+    pipelineState !== undefined &&
+    !VALID_CONTENT_TASK_PIPELINE_STATES.includes(pipelineState)
+  ) {
+    throw new Error(`Invalid ContentTaskPipelineState: ${pipelineState}`);
   }
   const { file, parent } = requireContentParent(slug, parentTaskId);
   const list = (parent.content_tasks as ContentTask[] | undefined) || [];
@@ -578,10 +590,16 @@ export function maybePromoteContentTaskFromMedia(
 
   if (ct.status !== "Pending Media") return ct;
 
-  const drafts = listDrafts(slug, ct.idea_id);
-  const channelDrafts = drafts.filter(
-    (d) => (d.meta.kind ?? "channel-draft") === "channel-draft",
-  );
+  // Filter by filename → target_channels match (NOT by frontmatter `kind`).
+  // The agent rewrites `kind:` when finishing a draft and there's no contract
+  // forcing it back to "channel-draft" — file location is the single source of
+  // truth for whether a doc is a channel draft. (See same fix in
+  // /api/content-engine/content-tasks.ts approve-* handlers.)
+  const channelSet = new Set(ct.target_channels || []);
+  const channelDrafts = listDrafts(slug, ct.idea_id).filter((d) => {
+    const ch = d.meta.channel || d.relPath.split("/").pop()?.replace(".md", "") || "";
+    return channelSet.has(ch);
+  });
   const hasMedia = channelDrafts.some((d) => (d.meta.media?.length ?? 0) > 0);
 
   if (hasMedia && ct.pipeline_state !== "media-review") {

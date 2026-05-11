@@ -171,6 +171,13 @@ export function IdeaQueueTab({ slug, openChat }: Props) {
   const [sortBy, setSortBy] = useState<"dispatch" | "confidence" | "date" | "pillar">("dispatch");
   const [todayOnly, setTodayOnly] = useState<boolean>(false);
 
+  // Tick cada 30s para refrescar los "hace Xd/h/min" sin recargar la página.
+  const [, setNowTick] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setNowTick((n) => n + 1), 30_000);
+    return () => clearInterval(id);
+  }, []);
+
   const fetchIdeas = useCallback(() => {
     const statusParam = filter !== "all" ? `&status=${encodeURIComponent(filter)}` : "";
     fetch(`/api/content-engine/content-tasks-pool?slug=${slug}${statusParam}`)

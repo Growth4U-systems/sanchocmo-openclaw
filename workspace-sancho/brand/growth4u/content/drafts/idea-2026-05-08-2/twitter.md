@@ -7,7 +7,7 @@ kind: draft
 item_type: plataforma_cambia
 iteration: 1
 created_at: '2026-05-10T07:20:00Z'
-updated_at: '2026-05-10T07:20:00Z'
+updated_at: '2026-05-10T15:08:59.815Z'
 ---
 
 Google acaba de hacer algo que nadie está analizando bien.

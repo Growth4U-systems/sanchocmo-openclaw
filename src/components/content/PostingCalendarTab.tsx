@@ -63,8 +63,16 @@ const STATUS_VISUAL: Record<CalendarEvent["status"], { label: string; bg: string
 
 const DAY_LABELS = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
 
+/** Local-timezone YYYY-MM-DD for a Date. We deliberately avoid
+ *  `toISOString().slice(0,10)` because that returns the UTC date, which
+ *  is off-by-one in timezones ahead of UTC (e.g. Europe/Madrid in May).
+ *  Both day-column keys and event grouping must use the same local-date
+ *  convention or events land in the wrong column. */
 function isoDate(d: Date): string {
-  return d.toISOString().slice(0, 10);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${dd}`;
 }
 
 /** Monday of the week containing `d`, normalized to local 00:00. */
@@ -95,6 +103,26 @@ function timeOf(iso: string): string {
   return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
 }
 
+/** Reasonable default time for the schedule modal. If `dayIso` is today,
+ *  jump to (now + 30 min) rounded up to the next 5-min mark — picking
+ *  09:00 when it's already 15:00 just gives you Metricool's "datetime in
+ *  the past" error. For future days, 09:00 is a sensible default. */
+function defaultTimeFor(dayIso: string): string {
+  const todayIso = isoDate(new Date());
+  if (dayIso !== todayIso) return "09:00";
+  const future = new Date(Date.now() + 30 * 60_000);
+  // Round up to the nearest 5 min
+  const m = future.getMinutes();
+  const rounded = m % 5 === 0 ? m : m + (5 - (m % 5));
+  if (rounded >= 60) {
+    future.setHours(future.getHours() + 1);
+    future.setMinutes(0);
+  } else {
+    future.setMinutes(rounded);
+  }
+  return `${String(future.getHours()).padStart(2, "0")}:${String(future.getMinutes()).padStart(2, "0")}`;
+}
+
 export function PostingCalendarTab({ slug, focusKey }: { slug: string; focusKey?: string | null }) {
   const [weekStart, setWeekStart] = useState<Date>(() => startOfWeek(new Date()));
   const fromIso = isoDate(weekStart);
@@ -115,7 +143,11 @@ export function PostingCalendarTab({ slug, focusKey }: { slug: string; focusKey?
   const eventsByDay = useMemo(() => {
     const map: Record<string, CalendarEvent[]> = {};
     for (const ev of scheduled) {
-      const day = ev.scheduled_at.slice(0, 10);
+      // Convert the stored UTC scheduled_at to the local date so events
+      // land in the same column the day-column keys use. Slicing the ISO
+      // string is wrong: it gives UTC date, which is off-by-one in TZs
+      // ahead of UTC near midnight.
+      const day = isoDate(new Date(ev.scheduled_at));
       (map[day] ||= []).push(ev);
     }
     for (const day of Object.keys(map)) {
@@ -159,7 +191,8 @@ export function PostingCalendarTab({ slug, focusKey }: { slug: string; focusKey?
       media: event.media,
     };
     setScheduleTarget({
-      dayIso: event.scheduled_at.slice(0, 10),
+      // Local date — same convention as the day-column keys.
+      dayIso: isoDate(new Date(event.scheduled_at)),
       draft: synthetic,
       rescheduleFrom: event,
     });
@@ -559,12 +592,24 @@ function ScheduleConfirmModal({
 
   const configured = useMemo<ProviderInfo[]>(() => (providersQ.data || []).filter((p) => p.configured), [providersQ.data]);
   const [providerId, setProviderId] = useState<string>(rescheduleFrom?.provider || "");
-  const [time, setTime] = useState<string>("09:00");
+  // Both day and time are editable INSIDE the modal — initial values come
+  // from the prop (drag-drop target / current schedule) but the user can
+  // pick anything from here without re-opening.
+  const [localDay, setLocalDay] = useState<string>(dayIso);
+  const [time, setTime] = useState<string>(() => defaultTimeFor(dayIso));
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!providerId && configured.length > 0) setProviderId(configured[0].id);
   }, [configured, providerId]);
+
+  // Re-sync local day when the prop changes (e.g. user closed and re-opened
+  // the modal via a different drag). Also bumps the default time so
+  // "today" picks the next free slot instead of a past 09:00.
+  useEffect(() => {
+    setLocalDay(dayIso);
+    setTime(defaultTimeFor(dayIso));
+  }, [dayIso]);
 
   async function confirm() {
     setError(null);
@@ -572,8 +617,17 @@ function ScheduleConfirmModal({
       setError("Conecta una herramienta de publishing antes de programar.");
       return;
     }
-    const publishAt = `${dayIso}T${time}:00`;
+    const publishAt = `${localDay}T${time}:00`;
     const isoLocal = new Date(publishAt).toISOString();
+
+    // Metricool rejects past datetimes with "Given datetime cannot be in
+    // the past". Catch it client-side with a clear message + don't burn
+    // the API call. 60s buffer covers minor clock skew between
+    // browser/server/Metricool.
+    if (Date.parse(isoLocal) < Date.now() + 60_000) {
+      setError("La fecha/hora elegida ya pasó. Elige al menos 1 minuto en el futuro.");
+      return;
+    }
 
     try {
       // Only cancel when the previous schedule is actually live in Metricool
@@ -622,8 +676,9 @@ function ScheduleConfirmModal({
             </label>
             <input
               type="date"
-              value={dayIso}
-              readOnly
+              value={localDay}
+              min={isoDate(new Date())}
+              onChange={(e) => setLocalDay(e.target.value)}
               className="w-full px-2 py-1.5 text-sm rounded-sc-md border-2 bg-card"
               style={{ borderColor: "var(--sc-ink)" }}
             />

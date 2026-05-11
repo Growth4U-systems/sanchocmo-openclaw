@@ -7,36 +7,44 @@ kind: draft
 item_type: plataforma_cambia
 iteration: 1
 created_at: '2026-05-10T07:20:00Z'
-updated_at: '2026-05-10T13:53:40.300Z'
+updated_at: '2026-05-10T21:45:57.263Z'
+publishing:
+  status: scheduled
+  provider: metricool
+  scheduled_at: '2026-05-11T07:00:00.000Z'
+  published_at: null
+  external_job_id: '324222144'
+  external_url: null
+  error: null
 media:
-  - url: https://pub-2428f727ce5a4953995650d211486b12.r2.dev/brand/growth4u/content/drafts/idea-2026-05-08-2/linkedin-1778421218311.png
+  - url: https://pub-2428f727ce5a4953995650d211486b12.r2.dev/brand/growth4u/content/drafts/idea-2026-05-08-2/linkedin-1778449555166.png
     type: image/png
     source: uploaded
-    created_at: '2026-05-10T13:53:38.637Z'
-  - url: https://pub-2428f727ce5a4953995650d211486b12.r2.dev/brand/growth4u/content/drafts/idea-2026-05-08-2/linkedin-1778421218677.png
+    created_at: '2026-05-10T21:45:55.508Z'
+  - url: https://pub-2428f727ce5a4953995650d211486b12.r2.dev/brand/growth4u/content/drafts/idea-2026-05-08-2/linkedin-1778449555552.png
     type: image/png
     source: uploaded
-    created_at: '2026-05-10T13:53:38.967Z'
-  - url: https://pub-2428f727ce5a4953995650d211486b12.r2.dev/brand/growth4u/content/drafts/idea-2026-05-08-2/linkedin-1778421219025.png
+    created_at: '2026-05-10T21:45:55.882Z'
+  - url: https://pub-2428f727ce5a4953995650d211486b12.r2.dev/brand/growth4u/content/drafts/idea-2026-05-08-2/linkedin-1778449555919.png
     type: image/png
     source: uploaded
-    created_at: '2026-05-10T13:53:39.253Z'
-  - url: https://pub-2428f727ce5a4953995650d211486b12.r2.dev/brand/growth4u/content/drafts/idea-2026-05-08-2/linkedin-1778421219300.png
+    created_at: '2026-05-10T21:45:56.128Z'
+  - url: https://pub-2428f727ce5a4953995650d211486b12.r2.dev/brand/growth4u/content/drafts/idea-2026-05-08-2/linkedin-1778449556161.png
     type: image/png
     source: uploaded
-    created_at: '2026-05-10T13:53:39.507Z'
-  - url: https://pub-2428f727ce5a4953995650d211486b12.r2.dev/brand/growth4u/content/drafts/idea-2026-05-08-2/linkedin-1778421219537.png
+    created_at: '2026-05-10T21:45:56.390Z'
+  - url: https://pub-2428f727ce5a4953995650d211486b12.r2.dev/brand/growth4u/content/drafts/idea-2026-05-08-2/linkedin-1778449556424.png
     type: image/png
     source: uploaded
-    created_at: '2026-05-10T13:53:39.751Z'
-  - url: https://pub-2428f727ce5a4953995650d211486b12.r2.dev/brand/growth4u/content/drafts/idea-2026-05-08-2/linkedin-1778421219811.png
+    created_at: '2026-05-10T21:45:56.648Z'
+  - url: https://pub-2428f727ce5a4953995650d211486b12.r2.dev/brand/growth4u/content/drafts/idea-2026-05-08-2/linkedin-1778449556691.png
     type: image/png
     source: uploaded
-    created_at: '2026-05-10T13:53:40.026Z'
-  - url: https://pub-2428f727ce5a4953995650d211486b12.r2.dev/brand/growth4u/content/drafts/idea-2026-05-08-2/linkedin-1778421220057.png
+    created_at: '2026-05-10T21:45:56.911Z'
+  - url: https://pub-2428f727ce5a4953995650d211486b12.r2.dev/brand/growth4u/content/drafts/idea-2026-05-08-2/linkedin-1778449556963.png
     type: image/png
     source: uploaded
-    created_at: '2026-05-10T13:53:40.300Z'
+    created_at: '2026-05-10T21:45:57.261Z'
 ---
 
 Google acaba de cambiar las reglas de AI Search.

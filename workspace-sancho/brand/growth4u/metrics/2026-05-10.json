@@ -2754,6 +2754,46 @@
     "instantly": {
       "status": "error",
       "error": "(campaigns || []) is not iterable"
+    },
+    "pagespeed": {
+      "status": "ok",
+      "metrics": [
+        {
+          "name": "performance_mobile",
+          "value": 75,
+          "date": "2026-05-10"
+        },
+        {
+          "name": "seo_mobile",
+          "value": 92,
+          "date": "2026-05-10"
+        },
+        {
+          "name": "performance_desktop",
+          "value": 97,
+          "date": "2026-05-10"
+        },
+        {
+          "name": "seo_desktop",
+          "value": 92,
+          "date": "2026-05-10"
+        },
+        {
+          "name": "lcp_mobile",
+          "value": 4.4,
+          "date": "2026-05-10"
+        },
+        {
+          "name": "cls_mobile",
+          "value": 0.007,
+          "date": "2026-05-10"
+        },
+        {
+          "name": "tbt_mobile",
+          "value": 50,
+          "date": "2026-05-10"
+        }
+      ]
     }
   }
 }

@@ -21,6 +21,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     skills,
     threadState,
     docPath,
+    docKind,
     attachments,
     agent,
   } = req.body;
@@ -53,6 +54,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     skills: skills || undefined,
     threadState: threadState || undefined,
     docPath: docPath || undefined,
+    docKind: typeof docKind === "string" ? docKind : undefined,
     attachments: parsedAttachments,
     isAdmin,
     senderRole,

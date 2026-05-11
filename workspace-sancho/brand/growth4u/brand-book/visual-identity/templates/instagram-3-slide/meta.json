@@ -3,6 +3,10 @@
   "name": "instagram-3-slide",
   "channel": "instagram",
   "description": "Carrusel cuadrado IG: cover + body + CTA",
+  "output_format": "html",
+  "generation_strategy": "html",
+  "model_hints": { "preferred_model": null, "prompt_prefix_from": null },
+  "pre_steps": [],
   "slideCount": 3,
   "width": 1080,
   "height": 1080,
@@ -57,5 +61,14 @@
       "key": "cta_image_url",
       "label": "Personaje CTA (URL)"
     }
-  ]
+  ],
+  "triggers": [
+    "instagram carousel",
+    "ig carousel",
+    "carrusel instagram",
+    "instagram 3 slide",
+    "carrusel ig"
+  ],
+  "od_kind": "template",
+  "use_case": "Carrusel cuadrado Instagram (3 slides 1080×1080) — cover + body + CTA. Ideal para insights breves."
 }

@@ -274,7 +274,58 @@ export async function odChat(
   }).catch((err) => {
     throw new OdDaemonOfflineError(config.daemonUrl, err);
   });
-  return readOdSseEvents(response);
+  // El orquestador od-generate inyecta `context.template` con el contrato meta.json
+  // de la plantilla (generation_strategy, output_format). validateArtifact lo usa
+  // para enrutar a validación HTML vs binaria.
+  const hint = extractStrategyHint(body.context);
+  return wrapWithValidation(readOdSseEvents(response), body.projectId, config, hint);
+}
+
+function extractStrategyHint(context: Record<string, unknown> | undefined): ArtifactStrategyHint | undefined {
+  if (!context || typeof context !== "object") return undefined;
+  const tpl = (context as Record<string, unknown>).template;
+  if (!tpl || typeof tpl !== "object") return undefined;
+  const t = tpl as Record<string, unknown>;
+  const strategy = typeof t.generation_strategy === "string" ? t.generation_strategy : undefined;
+  const format = typeof t.output_format === "string" ? t.output_format : undefined;
+  if (!strategy && !format) return undefined;
+  return {
+    generation_strategy: strategy as ArtifactStrategyHint["generation_strategy"],
+    output_format: format as ArtifactStrategyHint["output_format"],
+  };
+}
+
+/**
+ * Envuelve el stream de eventos SSE para emitir un evento sintético `validation`
+ * tras el `done`. La validación corre `validateArtifact(projectId, config, hint)`
+ * que enruta a comprobaciones HTML o binarias según la strategy del template.
+ * NO bloquea: las warnings se reportan pero el flujo sigue.
+ */
+async function* wrapWithValidation(
+  source: AsyncGenerator<OdSseEvent>,
+  projectId: string,
+  config: OdClientConfig,
+  hint?: ArtifactStrategyHint,
+): AsyncGenerator<OdSseEvent> {
+  let sawDone = false;
+  for await (const event of source) {
+    yield event;
+    if (event.type === "done") sawDone = true;
+  }
+  if (sawDone) {
+    try {
+      const v = await validateArtifact(projectId, config, hint);
+      yield {
+        type: "validation",
+        ok: v.ok,
+        warnings: v.warnings,
+        htmlCount: v.htmlCount,
+        dataOdIdCount: v.dataOdIdCount,
+      };
+    } catch {
+      // Validación es best-effort; no bloquea
+    }
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -316,4 +367,235 @@ export async function odListArtifacts(
   }
   const payload = await response.json();
   return pickItems<OdArtifact>(payload, ["artifacts", "items"]);
+}
+
+// ---------------------------------------------------------------------------
+// Project files (used by validateArtifact post-generation)
+// ---------------------------------------------------------------------------
+
+export interface OdProjectFile {
+  name: string;
+  path: string;
+  type: "file" | "directory";
+  size?: number;
+  mtime?: number;
+  kind?: string;
+  mime?: string;
+}
+
+/** Lista los archivos de un proyecto OD (recursivo). */
+export async function odListProjectFiles(
+  projectId: string,
+  config?: OdClientConfig,
+): Promise<OdProjectFile[]> {
+  const response = await odFetch(
+    `/api/projects/${encodeURIComponent(projectId)}/files`,
+    undefined,
+    config,
+  );
+  if (!response.ok) {
+    return [];
+  }
+  const payload = await response.json();
+  return pickItems<OdProjectFile>(payload, ["files", "items"]);
+}
+
+/** Lee el contenido de un archivo concreto del proyecto OD (string). */
+export async function odReadProjectFile(
+  projectId: string,
+  filePath: string,
+  config: OdClientConfig = resolveOdConfig(),
+): Promise<string | null> {
+  const url = `${config.daemonUrl}/api/projects/${encodeURIComponent(projectId)}/files/${filePath
+    .split("/")
+    .map(encodeURIComponent)
+    .join("/")}`;
+  try {
+    const response = await fetch(url);
+    if (!response.ok) return null;
+    return await response.text();
+  } catch {
+    return null;
+  }
+}
+
+export interface ArtifactValidation {
+  ok: boolean;
+  warnings: string[];
+  htmlCount: number;
+  dataOdIdCount: number;
+  externalUrls: number;
+  binaryCount: number;
+}
+
+export type OdGenerationStrategy =
+  | "html"
+  | "html-to-image"
+  | "image-model"
+  | "html-to-video"
+  | "video-model"
+  | "audio-model";
+
+export type OdOutputFormat =
+  | "html"
+  | "png"
+  | "jpg"
+  | "jpeg"
+  | "svg"
+  | "mp4"
+  | "webm"
+  | "mp3"
+  | "wav";
+
+export interface ArtifactStrategyHint {
+  generation_strategy?: OdGenerationStrategy;
+  output_format?: OdOutputFormat;
+}
+
+const HTML_STRATEGIES: ReadonlySet<OdGenerationStrategy> = new Set([
+  "html",
+  "html-to-image",
+  "html-to-video",
+]);
+
+const BINARY_STRATEGIES: ReadonlySet<OdGenerationStrategy> = new Set([
+  "html-to-image",
+  "image-model",
+  "html-to-video",
+  "video-model",
+  "audio-model",
+]);
+
+const BINARY_EXT_BY_FORMAT: Record<string, string[]> = {
+  png: [".png"],
+  jpg: [".jpg", ".jpeg"],
+  jpeg: [".jpg", ".jpeg"],
+  svg: [".svg"],
+  mp4: [".mp4"],
+  webm: [".webm"],
+  mp3: [".mp3"],
+  wav: [".wav"],
+};
+
+/**
+ * Valida que el artifact generado en un proyecto OD sea OD-compliant.
+ *
+ * Strategy-aware:
+ *   - `html` / `html-to-image` / `html-to-video` validan el HTML fuente:
+ *     single index.html, data-od-id presente, sin URLs externas (excepto Google Fonts).
+ *   - `html-to-image` / `html-to-video` además validan que exista el binario
+ *     final con la extensión correcta y `size > 0`.
+ *   - `image-model` / `video-model` / `audio-model` validan SOLO el binario
+ *     (existe archivo con la extensión esperada, size > 0).
+ *
+ * Sin hint, asume HTML (compatible con flujos previos al schema multi-strategy).
+ *
+ * No bloquea el flujo; solo devuelve warnings que el caller puede reportar al
+ * thread del usuario.
+ */
+export async function validateArtifact(
+  projectId: string,
+  config?: OdClientConfig,
+  hint?: ArtifactStrategyHint,
+): Promise<ArtifactValidation> {
+  const warnings: string[] = [];
+  const files = await odListProjectFiles(projectId, config);
+  const htmls = files.filter((f) => f.type === "file" && f.path.endsWith(".html"));
+
+  const strategy = hint?.generation_strategy;
+  const format = hint?.output_format;
+
+  // Default (sin hint) = comportamiento histórico HTML.
+  const checkHtml = !strategy || HTML_STRATEGIES.has(strategy);
+  const checkBinary = !!strategy && BINARY_STRATEGIES.has(strategy);
+
+  let dataOdIdCount = 0;
+  let externalUrls = 0;
+  let binaryCount = 0;
+
+  if (checkHtml) {
+    if (htmls.length === 0) {
+      warnings.push("⚠ El artifact no contiene HTML — preview no funcionará");
+    } else {
+      if (htmls.length > 1) {
+        warnings.push(
+          `⚠ Múltiples HTML detectados (${htmls.length}) — preview puede fragmentarse. Mejor un único index.html`,
+        );
+      }
+      const entry = htmls.find((f) => f.path.endsWith("index.html")) ?? htmls[0];
+      const content = await odReadProjectFile(projectId, entry.path, config);
+      if (content) {
+        const ids = content.match(/data-od-id="[^"]+"/g) ?? [];
+        dataOdIdCount = ids.length;
+        if (dataOdIdCount === 0) {
+          warnings.push(
+            "⚠ Sin data-od-id en el HTML — comment overlay y surgical edits deshabilitados. Pídele al agente que añada `data-od-id=\"<slug>\"` a cada sección lógica.",
+          );
+        }
+        const externals = content.match(
+          /https?:\/\/(?!fonts\.googleapis\.com|fonts\.gstatic\.com)[^"'\s)]+/g,
+        ) ?? [];
+        externalUrls = externals.length;
+        if (externalUrls > 0) {
+          warnings.push(
+            `⚠ ${externalUrls} URLs externas detectadas — el preview puede fallar offline. Usa data: URIs, gradientes CSS o SVG inline.`,
+          );
+        }
+      }
+    }
+  }
+
+  if (checkBinary) {
+    const exts = format ? BINARY_EXT_BY_FORMAT[format] ?? [`.${format}`] : Object.values(BINARY_EXT_BY_FORMAT).flat();
+    const binaries = files.filter(
+      (f) => f.type === "file" && exts.some((ext) => f.path.toLowerCase().endsWith(ext)),
+    );
+    binaryCount = binaries.length;
+
+    if (binaries.length === 0) {
+      warnings.push(
+        `⚠ Sin archivo binario ${format ? `(${format})` : ""} en el artifact — strategy ${strategy} esperaba un output binario.`,
+      );
+    } else {
+      const empties = binaries.filter((b) => typeof b.size === "number" && b.size === 0);
+      if (empties.length > 0) {
+        warnings.push(
+          `⚠ ${empties.length} archivo(s) binario(s) con tamaño 0 — la generación falló o se cortó.`,
+        );
+      }
+    }
+  }
+
+  return {
+    ok: warnings.length === 0,
+    warnings,
+    htmlCount: htmls.length,
+    dataOdIdCount,
+    externalUrls,
+    binaryCount,
+  };
+}
+
+/** Patch a project (designSystemId, skillId, metadata, ...). */
+export async function odPatchProject(
+  projectId: string,
+  patch: Partial<{ designSystemId: string | null; skillId: string | null; name: string }>,
+  config?: OdClientConfig,
+): Promise<OdProject> {
+  const response = await odFetch(
+    `/api/projects/${encodeURIComponent(projectId)}`,
+    {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(patch),
+    },
+    config,
+  );
+  if (!response.ok) {
+    const text = await response.text().catch(() => "");
+    throw new Error(`odPatchProject failed: ${response.status} ${text}`);
+  }
+  const payload = await response.json();
+  // Daemon devuelve { project: {...} }
+  return (payload.project ?? payload) as OdProject;
 }

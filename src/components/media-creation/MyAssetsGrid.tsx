@@ -9,6 +9,7 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/router";
 import { useBrandAssets, type BrandAsset } from "@/hooks/useBrandAssets";
 import { MediaAssetSlideover } from "./MediaAssetSlideover";
+import { buildEditorHrefWithScope } from "@/lib/open-design/asset-scope";
 import { cn } from "@/lib/utils";
 
 const KIND_META: Record<BrandAsset["kind"], { label: string; icon: string; sortOrder: number }> = {
@@ -53,6 +54,12 @@ function DownloadBtn({ slug, relativePath }: { slug: string; relativePath: strin
     </a>
   );
 }
+
+// Helper compartido — ver `src/lib/open-design/asset-scope.ts`.
+// Alias local para mantener legibilidad en este archivo y mantener compat
+// con call-sites externos que puedan importar desde aquí.
+const buildEditorHref = buildEditorHrefWithScope;
+export { buildEditorHrefWithScope as buildEditorHrefForAsset };
 
 function AssetRow({
   slug,
@@ -101,6 +108,14 @@ function AssetRow({
         >
           {"📄"}
         </button>
+        <a
+          href={buildEditorHref(slug, asset)}
+          onClick={(e) => e.stopPropagation()}
+          className="text-sm hover:scale-110 transition-transform p-1 rounded-md hover:bg-muted/40 no-underline"
+          title="Editar en Open Design"
+        >
+          {"✏️"}
+        </a>
         <button
           type="button"
           onClick={(e) => {

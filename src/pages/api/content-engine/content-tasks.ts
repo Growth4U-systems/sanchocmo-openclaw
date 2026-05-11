@@ -32,8 +32,10 @@ import {
   ContentTaskUpdateInput,
 } from "@/lib/data/content-tasks";
 import { listDrafts } from "@/lib/data/drafts";
+import { publish as publishEvent } from "@/lib/data/events";
 import {
   ChannelPhase,
+  ContentTask,
   ContentTaskStatus,
   ContentTaskPipelineState,
   VALID_CHANNEL_PHASES,
@@ -43,6 +45,21 @@ import {
 async function handler(req: NextApiRequest, res: NextApiResponse) {
   const slug = (req.query.slug || req.body?.slug) as string;
   if (!slug) return res.status(400).json({ error: "Missing slug" });
+
+  // After every mutation, push a `content-task-updated` event so SSE clients
+  // can invalidate their cache immediately. Falls through to the normal JSON
+  // response — never observable by the caller.
+  const respondAndEmit = (ct: ContentTask) => {
+    if (ct.parent_task_id) {
+      publishEvent({
+        type: "content-task-updated",
+        slug,
+        parentTaskId: ct.parent_task_id,
+        contentTaskId: ct.id,
+      });
+    }
+    res.status(200).json({ ok: true, contentTask: ct });
+  };
 
   if (req.method === "GET") {
     const parentTaskId = req.query.parentTaskId as string;
@@ -137,7 +154,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         );
       }
 
-      return res.status(200).json({ ok: true, contentTask: updated });
+      return respondAndEmit(updated);
     } catch (e) {
       return res.status(400).json({ error: (e as Error).message });
     }
@@ -152,12 +169,12 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       if (action === "attach-document") {
         if (!document?.path) return res.status(400).json({ error: "Missing document.path" });
         const updated = attachDocumentToContentTask(slug, parentTaskId, id, document);
-        return res.status(200).json({ ok: true, contentTask: updated });
+        return respondAndEmit(updated);
       }
       if (action === "detach-document") {
         if (!docPath) return res.status(400).json({ error: "Missing path" });
         const updated = removeDocumentFromContentTask(slug, parentTaskId, id, docPath);
-        return res.status(200).json({ ok: true, contentTask: updated });
+        return respondAndEmit(updated);
       }
 
       // State machine actions — each validates the source state and walks the
@@ -175,13 +192,20 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         // Detect existing media so we land in the right pipeline_state. Media
         // can be present already if the user attached an image while reviewing
         // the text — no need to send them through generating-media in that case.
-        const drafts = listDrafts(slug, ct.idea_id).filter(
-          (d) => (d.meta.kind ?? "channel-draft") === "channel-draft",
-        );
+        // Channel drafts = files whose name matches a target_channel. Robust
+        // to the agent rewriting `kind:` in the frontmatter (Sancho writes
+        // `kind: draft` once a channel draft is finished — the previous
+        // `kind === "channel-draft"` filter rejected everything in that case
+        // and made approve-media falsely 409 with "no media attached").
+        const channelSet = new Set(ct.target_channels || []);
+        const drafts = listDrafts(slug, ct.idea_id).filter((d) => {
+          const ch = d.meta.channel || d.relPath.split("/").pop()?.replace(".md", "") || "";
+          return channelSet.has(ch);
+        });
         const hasMedia = drafts.some((d) => (d.meta.media?.length ?? 0) > 0);
         const pipelineState: ContentTaskPipelineState = hasMedia ? "media-review" : "generating-media";
         const updated = setContentTaskStatus(slug, parentTaskId, id, "Pending Media", pipelineState);
-        return res.status(200).json({ ok: true, contentTask: updated });
+        return respondAndEmit(updated);
       }
 
       if (action === "approve-media") {
@@ -191,9 +215,16 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
           });
         }
         // Don't let users skip media: require at least one asset on any draft.
-        const drafts = listDrafts(slug, ct.idea_id).filter(
-          (d) => (d.meta.kind ?? "channel-draft") === "channel-draft",
-        );
+        // Channel drafts = files whose name matches a target_channel. Robust
+        // to the agent rewriting `kind:` in the frontmatter (Sancho writes
+        // `kind: draft` once a channel draft is finished — the previous
+        // `kind === "channel-draft"` filter rejected everything in that case
+        // and made approve-media falsely 409 with "no media attached").
+        const channelSet = new Set(ct.target_channels || []);
+        const drafts = listDrafts(slug, ct.idea_id).filter((d) => {
+          const ch = d.meta.channel || d.relPath.split("/").pop()?.replace(".md", "") || "";
+          return channelSet.has(ch);
+        });
         const hasMedia = drafts.some((d) => (d.meta.media?.length ?? 0) > 0);
         if (!hasMedia) {
           return res.status(409).json({
@@ -201,7 +232,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
           });
         }
         const updated = setContentTaskStatus(slug, parentTaskId, id, "Ready", null);
-        return res.status(200).json({ ok: true, contentTask: updated });
+        return respondAndEmit(updated);
       }
 
       if (action === "publish") {
@@ -211,7 +242,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
           });
         }
         const updated = setContentTaskStatus(slug, parentTaskId, id, "Published", null);
-        return res.status(200).json({ ok: true, contentTask: updated });
+        return respondAndEmit(updated);
       }
 
       if (action === "discard" || action === "defer") {
@@ -222,7 +253,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         }
         const target: ContentTaskStatus = action === "discard" ? "Discarded" : "Deferred";
         const updated = setContentTaskStatus(slug, parentTaskId, id, target, null);
-        return res.status(200).json({ ok: true, contentTask: updated });
+        return respondAndEmit(updated);
       }
 
       return res.status(400).json({ error: `Unknown action: ${action}` });

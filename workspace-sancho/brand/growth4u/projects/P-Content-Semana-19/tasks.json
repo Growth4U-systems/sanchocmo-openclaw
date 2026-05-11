@@ -467,10 +467,10 @@
         "parent_task_id": "P-Content-Semana-19-T07",
         "idea_id": "idea-2026-05-08-2",
         "name": "Google acaba de hacer los links en AI Overviews más clicables — y premia a los suscriptores",
-        "status": "Pending Media",
+        "status": "Ready",
         "channel_phases": {
-          "linkedin": "draft",
-          "twitter": "draft"
+          "linkedin": "approved",
+          "twitter": "approved"
         },
         "skill": "social-writer",
         "target_channels": [
@@ -507,21 +507,19 @@
         "mc_chat_thread_id": "content-p-content-semana-19-t07-c01",
         "owner": "Escudero Content",
         "created_at": "2026-05-10T07:01:35.189Z",
-        "updated_at": "2026-05-10T07:24:48.670Z",
-        "approved_at": "2026-05-10T07:09:45.526Z",
-        "pipeline_state": "generating-media",
-        "pending_media_at": "2026-05-10T07:24:48.670Z"
+        "updated_at": "2026-05-10T15:28:50.392Z",
+        "approved_at": "2026-05-10T15:05:00Z",
+        "pending_media_at": "2026-05-10T15:18:35.491Z"
       },
       {
         "id": "P-Content-Semana-19-T07-C02",
         "parent_task_id": "P-Content-Semana-19-T07",
         "idea_id": "idea-2026-05-07-2",
         "name": "El 50% de buyers B2B ya empieza en un chatbot IA — un salto del 71% en 4 meses",
-        "status": "Approved",
-        "pipeline_state": "researching",
+        "status": "Pending Media",
         "channel_phases": {
-          "linkedin": "researching",
-          "twitter": "researching"
+          "linkedin": "approved",
+          "twitter": "approved"
         },
         "skill": "social-writer",
         "target_channels": [
@@ -558,7 +556,9 @@
         "mc_chat_thread_id": "content-p-content-semana-19-t07-c02",
         "owner": "Escudero Content",
         "created_at": "2026-05-10T07:02:06.303Z",
-        "updated_at": "2026-05-10T07:02:06.307Z"
+        "updated_at": "2026-05-10T23:58:57.668Z",
+        "pipeline_state": "media-review",
+        "pending_media_at": "2026-05-10T23:35:31.889Z"
       }
     ]
   }

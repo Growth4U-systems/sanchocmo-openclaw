@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { useRouter } from "next/router";
 import { cn } from "@/lib/utils";
 import { DocSlideOver } from "@/components/shared/doc-slideover";
@@ -104,6 +104,7 @@ export function ConfigurationPipeline({ slug, openChat, onRequestEditor, onOpenI
   const [cadenceChannels, setCadenceChannels] = useState<CadenceChannelLite[]>([]);
   const [openDocPath, setOpenDocPath] = useState<string | null>(null);
   const [runningJob, setRunningJob] = useState<string | null>(null);
+  const [pollingJob, setPollingJob] = useState<string | null>(null);
   const [runFlash, setRunFlash] = useState<{ jobId: string; status: "ok" | "error"; message: string } | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -174,6 +175,18 @@ export function ConfigurationPipeline({ slug, openChat, onRequestEditor, onOpenI
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
+  // Tick cada 30s para que los "hace 2d/1h/5min" se recalculen sin recargar la página.
+  const [, setNowTick] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setNowTick((n) => n + 1), 30_000);
+    return () => clearInterval(id);
+  }, []);
+
+  const fetchCronsOnly = useCallback(async () => {
+    const r = await fetch(`/api/content-engine/crons?slug=${slug}`).then((r) => r.json()).catch(() => ({ crons: [] }));
+    setCrons(r.crons || []);
+  }, [slug]);
+
   const getCron = useCallback((baseName: string) => crons.find((c) => c.baseName === baseName), [crons]);
 
   const runCron = useCallback(async (jobId: string) => {
@@ -187,18 +200,62 @@ export function ConfigurationPipeline({ slug, openChat, onRequestEditor, onOpenI
       });
       const data = await res.json();
       if (res.ok) {
-        setRunFlash({ jobId, status: "ok", message: "Lanzada — el resultado tarda unos minutos." });
-        setTimeout(() => fetchAll(), 5000);
+        setRunFlash({ jobId, status: "ok", message: "Lanzada — refrescando cada 60 s (tarda ~4–5 min)." });
+        setPollingJob(jobId);
       } else {
         setRunFlash({ jobId, status: "error", message: data.error || "No se pudo lanzar" });
+        setTimeout(() => setRunFlash((cur) => (cur?.jobId === jobId ? null : cur)), 8000);
       }
     } catch (err) {
       setRunFlash({ jobId, status: "error", message: err instanceof Error ? err.message : "Error de red" });
+      setTimeout(() => setRunFlash((cur) => (cur?.jobId === jobId ? null : cur)), 8000);
     } finally {
       setRunningJob(null);
-      setTimeout(() => setRunFlash((cur) => (cur?.jobId === jobId ? null : cur)), 6000);
     }
-  }, [fetchAll]);
+  }, []);
+
+  // Polling tras Ejecutar: refresca crons a 30s + cada 60s, hasta 5 min.
+  // El detector en el efecto siguiente para el polling cuando lastExecution cambia.
+  useEffect(() => {
+    if (!pollingJob) return;
+    const fast = setTimeout(fetchCronsOnly, 30_000);
+    const interval = setInterval(fetchCronsOnly, 60_000);
+    const expire = setTimeout(() => {
+      const expiredJob = pollingJob;
+      setPollingJob(null);
+      setRunFlash({ jobId: expiredJob, status: "ok", message: "Sigue corriendo en segundo plano. Revisa más tarde." });
+      setTimeout(() => setRunFlash((cur) => (cur?.jobId === expiredJob ? null : cur)), 6000);
+    }, 5 * 60 * 1000);
+    return () => {
+      clearTimeout(fast);
+      clearInterval(interval);
+      clearTimeout(expire);
+    };
+  }, [pollingJob, fetchCronsOnly]);
+
+  // Detector "terminó": cuando crons se refresca y lastExecution.date del pollingJob cambia
+  // respecto al baseline capturado al iniciar, paramos polling y mostramos flash de éxito.
+  const pollingBaselineRef = useRef<{ jobId: string | null; date: string | null }>({ jobId: null, date: null });
+  useEffect(() => {
+    if (!pollingJob) {
+      pollingBaselineRef.current = { jobId: null, date: null };
+      return;
+    }
+    if (pollingBaselineRef.current.jobId !== pollingJob) {
+      pollingBaselineRef.current = {
+        jobId: pollingJob,
+        date: crons.find((c) => c.id === pollingJob)?.lastExecution?.date || null,
+      };
+      return;
+    }
+    const current = crons.find((c) => c.id === pollingJob)?.lastExecution?.date || null;
+    if (current && current !== pollingBaselineRef.current.date) {
+      const finishedJob = pollingJob;
+      setPollingJob(null);
+      setRunFlash({ jobId: finishedJob, status: "ok", message: "✓ Terminó — última ejecución actualizada." });
+      setTimeout(() => setRunFlash((cur) => (cur?.jobId === finishedJob ? null : cur)), 8000);
+    }
+  }, [crons, pollingJob]);
 
   const toggleCron = useCallback(async (jobId: string, enabled: boolean) => {
     await fetch("/api/content-engine/crons", {
@@ -266,11 +323,12 @@ export function ConfigurationPipeline({ slug, openChat, onRequestEditor, onOpenI
         description={
           <>
             Estos documentos son <b>la fuente de la verdad</b> que todo lo demás lee. Cuando los actualizas,
-            cambias cómo Investiga, cómo Idea y cómo Publica el motor.
+            cambias cómo Investiga, cómo Idea y cómo Publica el motor. Aquí también vive el <b>branding visual</b>
+            (generación de imagen, plantillas de carrusel) que usa todo el pipeline.
           </>
         }
       >
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
           {definedDocs.map((d) => (
             <DocRow
               key={d.key}
@@ -285,6 +343,10 @@ export function ConfigurationPipeline({ slug, openChat, onRequestEditor, onOpenI
               onDownload={d.doc ? () => window.open(`/api/docs/${d.doc!.path}?download=1`, "_blank") : undefined}
             />
           ))}
+        </div>
+        <div className="space-y-2">
+          <ImageGenSetupPanel slug={slug} />
+          <CarouselSetupPanel slug={slug} />
         </div>
       </ConfigSection>
 
@@ -301,14 +363,14 @@ export function ConfigurationPipeline({ slug, openChat, onRequestEditor, onOpenI
           </>
         }
       >
-        <div className="space-y-2">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
           <CronRow
             icon="📰"
             title="News Prompts"
             sub={`${configSummary?.newsPrompts || 0} pillars · lee news-prompts/P*.yml`}
             onEdit={() => onRequestEditor("news")}
             cron={getCron("News Monitor")}
-            isRunning={runningJob === getCron("News Monitor")?.id}
+            isRunning={runningJob === getCron("News Monitor")?.id || pollingJob === getCron("News Monitor")?.id}
             flash={runFlash?.jobId === getCron("News Monitor")?.id ? runFlash : null}
             onRun={(id) => runCron(id)}
             onToggle={(id, on) => toggleCron(id, on)}
@@ -319,7 +381,7 @@ export function ConfigurationPipeline({ slug, openChat, onRequestEditor, onOpenI
             sub={`${configSummary?.monitoredProfiles || 0} perfiles · lee sources.json`}
             onEdit={() => onRequestEditor("profiles")}
             cron={getCron("Competitor Monitor")}
-            isRunning={runningJob === getCron("Competitor Monitor")?.id}
+            isRunning={runningJob === getCron("Competitor Monitor")?.id || pollingJob === getCron("Competitor Monitor")?.id}
             flash={runFlash?.jobId === getCron("Competitor Monitor")?.id ? runFlash : null}
             onRun={(id) => runCron(id)}
             onToggle={(id, on) => toggleCron(id, on)}
@@ -330,7 +392,7 @@ export function ConfigurationPipeline({ slug, openChat, onRequestEditor, onOpenI
             sub={`${configSummary?.keywordsSeed || 0} pillars · lee keywords-seed/P*.yml`}
             onEdit={() => onRequestEditor("keywords")}
             cron={getCron("Keyword Research")}
-            isRunning={runningJob === getCron("Keyword Research")?.id}
+            isRunning={runningJob === getCron("Keyword Research")?.id || pollingJob === getCron("Keyword Research")?.id}
             flash={runFlash?.jobId === getCron("Keyword Research")?.id ? runFlash : null}
             onRun={(id) => runCron(id)}
             onToggle={(id, on) => toggleCron(id, on)}
@@ -341,7 +403,7 @@ export function ConfigurationPipeline({ slug, openChat, onRequestEditor, onOpenI
             sub={`${configSummary?.paaQueries || 0} pillars · lee paa-queries/P*.yml`}
             onEdit={() => onRequestEditor("paa")}
             cron={getCron("PAA Monitor")}
-            isRunning={runningJob === getCron("PAA Monitor")?.id}
+            isRunning={runningJob === getCron("PAA Monitor")?.id || pollingJob === getCron("PAA Monitor")?.id}
             flash={runFlash?.jobId === getCron("PAA Monitor")?.id ? runFlash : null}
             onRun={(id) => runCron(id)}
             onToggle={(id, on) => toggleCron(id, on)}
@@ -354,39 +416,71 @@ export function ConfigurationPipeline({ slug, openChat, onRequestEditor, onOpenI
         num="3"
         status="rust"
         title="Idea · El resultado del pipeline"
-        meta="Classify + Ideas → vuelca a la cola"
+        meta="Classify · Cola · Canal · Dispatch"
         description={
           <>
             Una antena junta las señales de <b>Investiga</b> con tu <b>POV Bank</b> y crea ideas con angle_draft + pov_confidence.
-            Las ideas <b>ready</b> son las que se publican en el siguiente paso →
+            La antena <b>Editorial Dispatch</b> coge las ideas <b>ready</b> y las envía al <b>canal</b> que decidas.
           </>
         }
       >
-        <div
-          className="rounded-sc-md border-[2.5px] flex items-center gap-3 p-4"
-          style={{
-            background: "var(--sc-sun-50)",
-            borderColor: "var(--sc-ink)",
-            boxShadow: "var(--pop-sm)",
-          }}
-        >
-          <span
-            className="grid place-items-center w-10 h-10 rounded-md border-2 text-lg flex-shrink-0"
-            style={{ background: "var(--sc-sun-300)", borderColor: "var(--sc-ink)", boxShadow: "var(--pop-xs)" }}
-          >💡</span>
-          <div className="flex-1 min-w-0">
-            <div className="font-semibold text-[15px]" style={{ color: "var(--sc-ink)" }}>
-              Cola de ideas — <b style={{ color: "var(--sc-ink)" }}>{ideaCounts?.total || 0} en total</b>
+        <div className="space-y-2">
+          <div
+            className="rounded-sc-md border-[2.5px] flex items-center gap-3 p-4"
+            style={{
+              background: "var(--sc-sun-50)",
+              borderColor: "var(--sc-ink)",
+              boxShadow: "var(--pop-sm)",
+            }}
+          >
+            <span
+              className="grid place-items-center w-10 h-10 rounded-md border-2 text-lg flex-shrink-0"
+              style={{ background: "var(--sc-sun-300)", borderColor: "var(--sc-ink)", boxShadow: "var(--pop-xs)" }}
+            >💡</span>
+            <div className="flex-1 min-w-0">
+              <div className="font-semibold text-[15px]" style={{ color: "var(--sc-ink)" }}>
+                Cola de ideas — <b style={{ color: "var(--sc-ink)" }}>{ideaCounts?.total || 0} en total</b>
+              </div>
+              <div className="text-xs flex flex-wrap gap-x-2.5 gap-y-1 mt-1" style={{ color: "var(--sc-fg-muted)" }}>
+                {!!ideaCounts?.ready && <span><b style={{ color: "var(--sc-sage-500)" }}>{ideaCounts.ready}</b> ready</span>}
+                {!!ideaCounts?.approved && <span>· <b style={{ color: "var(--sc-navy-500)" }}>{ideaCounts.approved}</b> aprobadas</span>}
+                {!!ideaCounts?.pending && <span>· <b style={{ color: "var(--sc-rust-500)" }}>{ideaCounts.pending}</b> new</span>}
+                {!!ideaCounts?.published && <span>· <b>{ideaCounts.published}</b> publicadas</span>}
+                {!!ideaCounts?.archived && <span>· {ideaCounts.archived} archivadas</span>}
+              </div>
             </div>
-            <div className="text-xs flex flex-wrap gap-x-2.5 gap-y-1 mt-1" style={{ color: "var(--sc-fg-muted)" }}>
-              {!!ideaCounts?.ready && <span><b style={{ color: "var(--sc-sage-500)" }}>{ideaCounts.ready}</b> ready</span>}
-              {!!ideaCounts?.approved && <span>· <b style={{ color: "var(--sc-navy-500)" }}>{ideaCounts.approved}</b> aprobadas</span>}
-              {!!ideaCounts?.pending && <span>· <b style={{ color: "var(--sc-rust-500)" }}>{ideaCounts.pending}</b> new</span>}
-              {!!ideaCounts?.published && <span>· <b>{ideaCounts.published}</b> publicadas</span>}
-              {!!ideaCounts?.archived && <span>· {ideaCounts.archived} archivadas</span>}
-            </div>
+            <EditButton variant="primary" onClick={onOpenIdeas}>Abrir cola →</EditButton>
           </div>
-          <EditButton variant="primary" onClick={onOpenIdeas}>Abrir cola →</EditButton>
+
+          {/* Channel summary */}
+          <ConfigRow
+            icon="#"
+            title="Canal de envío · a dónde envía"
+            sub={
+              dispatchChannel ? (
+                <>
+                  <span className="font-mono" style={{ color: "var(--sc-navy-500)" }}>
+                    {dispatchChannel.transport === "slack" ? "#" : ""}
+                    {dispatchChannel.channel_name || dispatchChannel.channel_id}
+                  </span>
+                  <span> · transporte: {dispatchChannel.transport === "slack" ? "Slack" : "Discord"}</span>
+                </>
+              ) : "Sin configurar"
+            }
+            right={<EditButton onClick={() => onRequestEditor("dispatch-channel")} />}
+          />
+
+          {/* Editorial Dispatch antena */}
+          <CronRow
+            icon="📨"
+            title="Editorial Dispatch"
+            sub="lee Cadencia + Canal + Ideas ready · envía al canal"
+            cron={dispatchCron}
+            isRunning={runningJob === dispatchCron?.id}
+            flash={runFlash?.jobId === dispatchCron?.id ? runFlash : null}
+            onRun={(id) => runCron(id)}
+            onToggle={(id, on) => toggleCron(id, on)}
+          />
         </div>
       </ConfigSection>
 
@@ -395,61 +489,56 @@ export function ConfigurationPipeline({ slug, openChat, onRequestEditor, onOpenI
         num="4"
         status="ok"
         title="Publica · Cómo, dónde y cuándo sale"
-        meta="cadencia + canal + dispatch"
+        meta="cadencia + publishing tool"
         description={
           <>
-            La antena <b>Editorial Dispatch</b> mira tu cadencia y tu canal, coge ideas <b>ready</b> y publica.
-            Sin cadencia, sin canal, o sin ideas ready → no publica.
+            La <b>cadencia editorial</b> decide qué se publica cada día y a qué hora. La <b>publishing tool</b> conectada
+            es la que ejecuta el envío programado real (LinkedIn, X, etc.). Sin cadencia o sin publishing tool → no publica.
           </>
         }
       >
-        {/* Cadence summary */}
-        <div
-          className="rounded-sc-md border-[2px] mb-2 overflow-hidden"
-          style={{ borderColor: "var(--sc-ink)", boxShadow: "var(--pop-xs)" }}
-        >
+        <div className="space-y-2">
+          {/* Cadence summary — compact */}
           <div
-            className="flex items-center gap-2 px-4 py-2.5 border-b-2 border-dashed"
-            style={{ background: "var(--sc-paper-2)", borderColor: "var(--sc-ink)" }}
+            className="rounded-sc-md border-[2px] overflow-hidden"
+            style={{ borderColor: "var(--sc-ink)", boxShadow: "var(--pop-xs)" }}
           >
-            <span>⏰</span>
-            <span className="font-heading uppercase text-[12px] tracking-wider font-bold">Cadencia editorial</span>
-            <span className="text-xs" style={{ color: "var(--sc-fg-muted)" }}>
-              {cadenceChannels.filter((c) => c.active).length} canales activos
-            </span>
-            <div className="flex-1" />
-            <EditButton size="sm" onClick={() => onRequestEditor("cadence")} />
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2">
-            {cadenceChannels.length === 0 ? (
-              <div className="px-4 py-3 text-xs" style={{ color: "var(--sc-fg-muted)" }}>Sin cadencia configurada.</div>
-            ) : cadenceChannels.map((c, i) => (
-              <div
-                key={c.key}
-                className="flex flex-col gap-1.5 px-4 py-3"
-                style={{
-                  borderRight: i % 2 === 0 ? "2px dashed var(--sc-ink)" : undefined,
-                  borderTop: i >= 2 ? "2px dashed var(--sc-ink)" : undefined,
-                  opacity: c.active ? 1 : 0.55,
-                }}
-              >
-                <div className="flex items-center justify-between">
+            <div
+              className="flex items-center gap-2 px-3 py-1.5 border-b-2 border-dashed"
+              style={{ background: "var(--sc-paper-2)", borderColor: "var(--sc-ink)" }}
+            >
+              <span>⏰</span>
+              <span className="font-heading uppercase text-[12px] tracking-wider font-bold">Cadencia editorial</span>
+              <span className="text-xs" style={{ color: "var(--sc-fg-muted)" }}>
+                {cadenceChannels.filter((c) => c.active).length} activos
+              </span>
+              <div className="flex-1" />
+              <EditButton size="sm" onClick={() => onRequestEditor("cadence")} />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2">
+              {cadenceChannels.length === 0 ? (
+                <div className="px-3 py-2 text-xs" style={{ color: "var(--sc-fg-muted)" }}>Sin cadencia configurada.</div>
+              ) : cadenceChannels.map((c, i) => (
+                <div
+                  key={c.key}
+                  className="flex items-center justify-between gap-2 px-3 py-1.5"
+                  style={{
+                    borderRight: i % 2 === 0 ? "2px dashed var(--sc-ink)" : undefined,
+                    borderTop: i >= 2 ? "2px dashed var(--sc-ink)" : undefined,
+                    opacity: c.active ? 1 : 0.55,
+                  }}
+                >
                   <span
-                    className="font-heading uppercase text-[12px] tracking-wider font-bold"
+                    className="font-heading uppercase text-[11px] tracking-wider font-bold flex-shrink-0"
                     style={{ color: c.active ? "var(--sc-ink)" : "var(--sc-fg-subtle)" }}
                   >{c.key}</span>
-                  {!c.active && (
-                    <span className="font-heading uppercase text-[9px] tracking-wider" style={{ color: "var(--sc-fg-subtle)" }}>off</span>
-                  )}
-                </div>
-                <div className="flex items-center justify-between gap-2 flex-wrap">
-                  <div className="flex gap-1">
+                  <div className="flex gap-0.5 flex-shrink-0">
                     {DAY_LABELS.map((d, idx) => {
                       const active = isDayActive(c, idx);
                       return (
                         <span
                           key={idx}
-                          className="grid place-items-center w-5 h-5 rounded font-heading text-[10px] font-bold border"
+                          className="grid place-items-center w-[18px] h-[18px] rounded font-heading text-[9px] font-bold border"
                           style={{
                             background: active ? "var(--sc-rust-500)" : "var(--sc-paper-2)",
                             color: active ? "var(--sc-paper-3)" : "var(--sc-fg-subtle)",
@@ -460,62 +549,17 @@ export function ConfigurationPipeline({ slug, openChat, onRequestEditor, onOpenI
                       );
                     })}
                   </div>
-                  <span className="text-xs font-mono" style={{ color: "var(--sc-fg-muted)" }}>
-                    {c.bestTimes?.length ? c.bestTimes.join(" · ") : "horario libre"}
+                  <span className="text-[11px] font-mono truncate" style={{ color: "var(--sc-fg-muted)" }}>
+                    {c.bestTimes?.length ? c.bestTimes.join(" · ") : "libre"}
                   </span>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
+
+          {/* Publishing tool */}
+          <PublishingSetupPanel slug={slug} />
         </div>
-
-        {/* Channel summary */}
-        <ConfigRow
-          icon="#"
-          title="Canal de envío · a dónde envía"
-          sub={
-            dispatchChannel ? (
-              <>
-                <span className="font-mono" style={{ color: "var(--sc-navy-500)" }}>
-                  {dispatchChannel.transport === "slack" ? "#" : ""}
-                  {dispatchChannel.channel_name || dispatchChannel.channel_id}
-                </span>
-                <span> · transporte: {dispatchChannel.transport === "slack" ? "Slack" : "Discord"}</span>
-              </>
-            ) : "Sin configurar"
-          }
-          right={<EditButton onClick={() => onRequestEditor("dispatch-channel")} />}
-        />
-
-        {/* Editorial Dispatch antena */}
-        <CronRow
-          icon="📨"
-          title="Editorial Dispatch"
-          sub="lee Cadencia + Canal + Ideas ready · publica"
-          cron={dispatchCron}
-          isRunning={runningJob === dispatchCron?.id}
-          flash={runFlash?.jobId === dispatchCron?.id ? runFlash : null}
-          onRun={(id) => runCron(id)}
-          onToggle={(id, on) => toggleCron(id, on)}
-        />
-      </ConfigSection>
-
-      {/* ⑤ PRODUCCIÓN */}
-      <ConfigSection
-        num="5"
-        status="warn"
-        title="Producción · Cómo se fabrican y se publican los posts"
-        meta="imagen + carrusel + publishing tool"
-        description={
-          <>
-            Una vez una idea está lista, estas piezas controlan <b>cómo se fabrica el post</b> (imagen, carrusel)
-            y <b>la herramienta de publishing</b> que programa el envío real.
-          </>
-        }
-      >
-        <ImageGenSetupPanel slug={slug} />
-        <CarouselSetupPanel slug={slug} />
-        <PublishingSetupPanel slug={slug} />
       </ConfigSection>
 
       <div
@@ -523,8 +567,8 @@ export function ConfigurationPipeline({ slug, openChat, onRequestEditor, onOpenI
         style={{ background: "var(--sc-paper-2)", borderColor: "var(--sc-ink)", color: "var(--sc-fg-soft)" }}
       >
         <b>Cómo se conecta todo:</b> editar un doc en ① → cambia cómo lee una antena en ② → cambia las
-        señales que entran a ③ → cambia lo que publica ④. ⑤ controla cómo se fabrica el post antes de salir.
-        Cada paso depende del anterior, pero puedes ejecutarlos manualmente con ▶ Ejecutar mientras testeas.
+        señales que entran a ③ → cambia lo que publica ④. Cada paso depende del anterior, pero puedes
+        ejecutarlos manualmente con ▶ Ejecutar mientras testeas.
       </div>
 
       <DocSlideOver
@@ -564,15 +608,13 @@ function PipelineMap({
         >✓ Healthy</span>
       </div>
       <div className="flex items-stretch gap-0">
-        <Station num="1" label="Define" title="La base" sub={`${defineDone}/${defineTotal} docs`} status="ok" accent="var(--sc-sage-500)" active={defineDone === defineTotal} />
+        <Station num="1" label="Define" title="La base" sub={`${defineDone}/${defineTotal} docs · branding`} status="ok" accent="var(--sc-sage-500)" active={defineDone === defineTotal} />
         <Arrow />
         <Station num="2" label="Investiga" title="Antenas" sub={`${antenasCount} antenas`} status="ok" accent="var(--sc-navy-500)" />
         <Arrow />
-        <Station num="3" label="Idea" title="Cola" sub={`${ideasTotal} total · ${ideasReady} ready`} status="run" accent="var(--sc-sun-500)" />
+        <Station num="3" label="Idea" title="Cola + Dispatch" sub={`${ideasTotal} total · ${ideasReady} ready · ${dispatchOn ? "ON" : "OFF"}`} status={dispatchOn ? "run" : "warn"} accent="var(--sc-sun-500)" />
         <Arrow />
-        <Station num="4" label="Publica" title="Cadencia + Dispatch" sub={`${cadenceActive} canales · ${dispatchOn ? "ON" : "OFF"}`} status={dispatchOn ? "ok" : "warn"} accent="var(--sc-rust-500)" />
-        <Arrow />
-        <Station num="5" label="Producción" title="Imagen + Carrusel + Tool" sub="branding & publishing" status="run" accent="var(--sc-brick-500)" />
+        <Station num="4" label="Publica" title="Cadencia + Tool" sub={`${cadenceActive} canales activos`} status="ok" accent="var(--sc-rust-500)" />
       </div>
     </div>
   );

@@ -114,7 +114,13 @@ export type OdSseEvent =
   | { type: "artifact_created"; artifactId: string; primaryFile?: string }
   | { type: "error"; message: string }
   | { type: "done"; artifactId?: string }
-  | { type: "raw"; eventName?: string; data: unknown };
+  | { type: "raw"; eventName?: string; data: unknown }
+  /**
+   * Evento sintético emitido por nuestro wrapper tras `done`. Reporta el
+   * resultado de `validateArtifact` (data-od-id count, single HTML, no externals).
+   * Las warnings se muestran al usuario como mensaje system. NO bloquea.
+   */
+  | { type: "validation"; ok: boolean; warnings: string[]; htmlCount: number; dataOdIdCount: number };
 
 // ---------------------------------------------------------------------------
 // Request payloads

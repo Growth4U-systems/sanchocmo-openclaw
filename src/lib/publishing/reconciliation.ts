@@ -115,7 +115,9 @@ function findPendingDrafts(slug: string): PendingDraft[] {
   const out: PendingDraft[] = [];
   for (const ideaId of collectIdeaIds(slug)) {
     for (const draft of listDrafts(slug, ideaId)) {
-      if (draft.meta.kind && draft.meta.kind !== "channel-draft") continue;
+      // No `kind` filter: special docs (proposal/research/clarify) never get
+      // a `meta.publishing` block, so the next check naturally excludes them.
+      // Relying on `kind` was fragile — the agent rewrites it on draft finish.
       const pub = draft.meta.publishing;
       if (!pub || pub.status !== "scheduled") continue;
       const sched = pub.scheduled_at ? Date.parse(pub.scheduled_at) : NaN;
@@ -308,7 +310,9 @@ async function refreshMetricsForPublished(slug: string): Promise<number> {
   const published: PublishedDraft[] = [];
   for (const ideaId of collectIdeaIds(slug)) {
     for (const draft of listDrafts(slug, ideaId)) {
-      if (draft.meta.kind && draft.meta.kind !== "channel-draft") continue;
+      // No `kind` filter: special docs (proposal/research/clarify) never get
+      // a `meta.publishing` block, so the next check naturally excludes them.
+      // Relying on `kind` was fragile — the agent rewrites it on draft finish.
       const pub = draft.meta.publishing;
       if (!pub || pub.status !== "published") continue;
       if (!pub.external_url) continue;

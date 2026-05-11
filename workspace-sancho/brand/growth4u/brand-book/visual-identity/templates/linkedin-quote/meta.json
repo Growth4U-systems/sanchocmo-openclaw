@@ -3,6 +3,10 @@
   "name": "linkedin-quote",
   "channel": "linkedin",
   "description": "Quote post con cita fuerte — puede llevar personaje",
+  "output_format": "html",
+  "generation_strategy": "html",
+  "model_hints": { "preferred_model": null, "prompt_prefix_from": null },
+  "pre_steps": [],
   "slideCount": 1,
   "width": 1080,
   "height": 1350,
@@ -43,5 +47,14 @@
       "label": "Etiqueta del dato",
       "placeholder": "CAC reduction"
     }
-  ]
+  ],
+  "triggers": [
+    "linkedin quote",
+    "quote linkedin",
+    "post de cita",
+    "cita linkedin",
+    "post quote"
+  ],
+  "od_kind": "template",
+  "use_case": "Quote post con cita fuerte (1080×1350) — puede llevar personaje. Ideal para frases punchy, hooks, statements."
 }

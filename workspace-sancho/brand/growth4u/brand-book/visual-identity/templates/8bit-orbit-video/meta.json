@@ -1,0 +1,55 @@
+{
+  "id": "8bit-orbit-video",
+  "name": "8bit-orbit-video",
+  "channel": "instagram",
+  "description": "Video 8-bit retro: planeta orbitando con escenas animadas, 1080×1080, 15s.",
+  "output_format": "mp4",
+  "generation_strategy": "html-to-video",
+  "model_hints": { "preferred_model": null, "prompt_prefix_from": "motion-rules" },
+  "pre_steps": [],
+  "slideCount": 1,
+  "width": 1080,
+  "height": 1080,
+  "duration": 15,
+  "fps": 30,
+  "slots": [
+    {
+      "key": "hook_title",
+      "label": "Frase principal del hook",
+      "placeholder": "TU CAC SUBE",
+      "maxLength": 30
+    },
+    {
+      "key": "hook_subtitle",
+      "label": "Subtítulo del hook",
+      "placeholder": "Y NO SABES POR QUÉ",
+      "maxLength": 40
+    },
+    {
+      "key": "data_value",
+      "label": "Dato destacado (cifra grande)",
+      "placeholder": "-70%"
+    },
+    {
+      "key": "data_label",
+      "label": "Etiqueta del dato",
+      "placeholder": "CAC REDUCTION"
+    },
+    {
+      "key": "cta_text",
+      "label": "Texto del CTA final",
+      "placeholder": "GROWTH SYSTEMS",
+      "maxLength": 30
+    }
+  ],
+  "triggers": [
+    "8bit orbit",
+    "8-bit video",
+    "video pixel art",
+    "retro video",
+    "video instagram retro",
+    "intro de video"
+  ],
+  "od_kind": "template",
+  "use_case": "Video corto 8-bit/pixel-art (1080×1080, 15s) — planeta orbitando con escenas animadas para Instagram Reels / hooks visuales."
+}

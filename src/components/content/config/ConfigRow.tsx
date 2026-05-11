@@ -21,7 +21,7 @@ export function ConfigRow({ icon, title, sub, right, footer, inactive, className
   return (
     <div
       className={cn(
-        "rounded-sc-md border-[2px] mb-2 overflow-hidden",
+        "rounded-sc-md border-[2px] overflow-hidden",
         className,
       )}
       style={{

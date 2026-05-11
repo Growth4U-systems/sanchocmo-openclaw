@@ -338,30 +338,99 @@ Mapeo formato → flujo:
    Step 1 (carrusel / imagen única / etc.). Ejemplo: para LinkedIn
    carrusel, elige una con `slideCount > 1`; para "imagen quote" en
    LinkedIn, `linkedin-quote` (1 slide).
-4. Lee el body del draft con
+4. **Lee `meta.json` del template** (no solo el id):
+   ```bash
+   curl -fsS "$MC_BASE/api/docs/brand/$SLUG/brand-book/visual-identity/templates/$TEMPLATE_ID/meta.json"
+   ```
+   Mira **qué slots tienen `perSlide: true`** y cuál es `slideCount`.
+   Eso te dice exactamente qué arrays tienes que componer.
+
+   **Si el meta tiene `payload_example`** (la mayoría de templates lo
+   tienen), **ese es la fuente de verdad del shape** — copia esa
+   estructura literal y solo sustituye los valores. No inventes el
+   payload. Es importantísimo porque:
+
+   - Te dice qué keys van en `slots` (globales) vs `perSlide` (arrays).
+   - Te muestra los índices que cada slot ocupa en los arrays per-slide
+     (`""` en `[0]` cover y `[N-1]` CTA cuando solo aplica al body).
+   - Evita el anti-patrón clásico: poner `slide_1_title`,
+     `slide_2_title`, ... en `slots`. El endpoint detecta ese patrón y
+     devuelve **400** con un mensaje educativo explicando el fix.
+
+5. Lee el body del draft con
    `GET /api/content-engine/drafts?slug={slug}&ideaId={ideaId}&channel={channel}`
-   y compón los slots:
-   - Mapear el ángulo principal del post → slot `title` / `quote` / `kicker`.
-   - Si el carrusel es multi-slide, distribuir el body en bloques: cover
-     (gancho), body slides (puntos clave del post), cta (cierre / link).
-   - Respetar `slot.maxLength` recortando con criterio editorial, no
-     truncando a la fuerza.
-5. **Antes de renderizar**, péguele al usuario la propuesta completa:
+   y compón:
+   - **`slots`** (globales, sin perSlide): `cover_title`, `cta_headline`,
+     etc. → un valor por key.
+   - **`perSlide`** (slots con `perSlide:true` en el meta):
+     `Record<string, string[]>` donde **cada array tiene EXACTAMENTE
+     `slideCount` elementos**. Si una posición no aplica (ej. cover/CTA
+     en slot que solo usan los body slides), pon `""` — pero el array
+     debe tener todos los huecos.
+
+   Para `linkedin-9-slide` (slideCount=9, structure cover + 7 body + CTA),
+   el payload correcto es:
+   ```jsonc
+   {
+     "slug": "growth4u",
+     "ideaId": "idea-...",
+     "channel": "linkedin",
+     "templateId": "linkedin-9-slide",
+     "slots": {
+       "cover_kicker": "GROWTH · SISTEMA",
+       "cover_title":  "Tu CAC sube cada trimestre",
+       "cover_subtitle": "Y qué hacer al respecto",
+       "cta_headline": "Quita el heroísmo",
+       "cta_subtext":  "El sistema no se construye con esfuerzo",
+       "cta_button":   "Hablamos"
+     },
+     "perSlide": {
+       // 9 elementos cada uno. [0] = cover, [1..7] = body, [8] = CTA.
+       // "" en slots que no usa cover/CTA.
+       "slide_eyebrow":    ["", "01·DOLOR", "02·DOLOR", "03·SHIFT", "04·SHIFT", "05·SHIFT", "06·CAUSA", "07·CAUSA", ""],
+       "slide_title":      ["", "Tu CAC sube cada trimestre", "Tu LTV no compensa", "El playbook ya no aplica", "...", "...", "...", "...", ""],
+       "slide_text":       ["", "...", "...", "...", "...", "...", "...", "...", ""],
+       "slide_data_value": ["", "+45%", "−12%", "", "", "", "", "", ""],
+       "slide_data_label": ["", "CAC YoY", "Win rate", "", "", "", "", "", ""]
+     }
+   }
+   ```
+
+   **Regla dura**: cada slot con `perSlide:true` debe estar presente en
+   `perSlide` con `length === slideCount`. Si no, el endpoint devuelve
+   **400** con el listado de keys faltantes (validación añadida 2026-05-11
+   tras un fallo que produjo 7 PNGs en blanco — silently).
+
+6. **Antes de renderizar**, péguele al usuario la propuesta completa:
 
 ```
-Voy a usar la plantilla **{nombre legible de la plantilla}** ({slideCount} slide{s}).
-Te propongo estos textos:
+Voy a usar la plantilla **{nombre legible de la plantilla}** ({slideCount} slides).
 
-  · {slot1.label}: "{valor}"
-  · {slot2.label}: "{valor}"
-  · …
+Slide 1 (cover):
+  · Kicker: "{cover_kicker}"
+  · Título: "{cover_title}"
+Slide 2 (body 1):
+  · Eyebrow: "{slide_eyebrow[1]}"
+  · Título: "{slide_title[1]}"
+  · Texto: "{slide_text[1]}"
+…
+Slide 9 (CTA):
+  · Headline: "{cta_headline}"
 
 ¿Lanzo el render, o ajusto algo? (responde "ok", "cambia el título
-por X", o reescribe los slots como prefieras).
+del slide 3 por X", o reescribe los slots como prefieras).
 ```
 
-6. Solo cuando confirme, llama `POST /api/content-engine/render-carousel`
+7. Solo cuando confirme, llama `POST /api/content-engine/render-carousel`
    con `{slug, ideaId, channel, templateId, slots, perSlide}`.
+
+8. **Post-flight check obligatorio**: tras recibir `200 OK` con `urls`,
+   abre el PDF (`urls[0]`) o uno de los slides del medio (no la cover,
+   no el CTA — esos siempre se ven; los body son donde falla) y
+   confirma visualmente que tiene texto. Si los slides body están en
+   blanco (solo chrome, sin texto), **NO digas al usuario "listo"**.
+   Reporta: *"El render del carrusel ha producido slides en blanco para
+   los body. Reviso los `perSlide` y reintento."*
 
 ### Step 2b — Generate libre con IA (sin plantilla)
 

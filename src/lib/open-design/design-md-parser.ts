@@ -104,16 +104,27 @@ function findColorAfterLabel(text: string, labels: string[]): string | undefined
 
 function parseColors(md: string): ParsedDesignSystem["color"] {
   const section =
-    extractSection(md, /##\s+Color Palette[^\n]*/i) ??
-    extractSection(md, /##\s+Colors?[^\n]*/i) ??
+    extractSection(md, /##\s+\d*\.?\s*Color Palette[^\n]*/i) ??
+    extractSection(md, /##\s+\d*\.?\s*Colors?[^\n]*/i) ??
     md;
   const named: Record<string, string> = {};
-  // Matches: `- navy: #032149` or `**navy** #032149` or `navy = #032149`
-  const namedRe = /[\-*]\s*\*?\*?(\w[\w-]*)\*?\*?\s*[:=]?\s*(#[0-9a-fA-F]{3,8})/g;
-  let m;
-  while ((m = namedRe.exec(section)) !== null) {
-    const name = m[1].toLowerCase();
-    if (!named[name]) named[name] = m[2];
+  // Soporta varios formatos por línea (cada uno es una entrada de bullet):
+  //   - **Navy** (`#032149`) — descripción          ← OD-style
+  //   - navy: #032149                               ← simple
+  //   - navy = #032149                              ← legacy
+  //   - **Anthropic Near Black** (`#141413`): ...   ← claude-style
+  //   * navy #032149                                ← star list
+  // Recorremos línea a línea para evitar mezclar nombres entre líneas.
+  for (const rawLine of section.split("\n")) {
+    const line = rawLine.trim();
+    if (!line.startsWith("-") && !line.startsWith("*")) continue;
+    // Captura el nombre del color (primer **bold** o primera palabra antes de : ( = )
+    const nameMatch = line.match(/[\-*]\s*\*\*([^*]+)\*\*/) ?? line.match(/[\-*]\s*([A-Za-z][\w-]*)\s*[:=(]/);
+    // Captura el primer hex de la línea
+    const hexMatch = line.match(/#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})\b/);
+    if (!nameMatch || !hexMatch) continue;
+    const name = nameMatch[1].trim().toLowerCase().replace(/\s+/g, "-");
+    if (!named[name]) named[name] = hexMatch[0];
   }
   return {
     primary: findColorAfterLabel(section, ["primary", "background"]),
@@ -129,15 +140,33 @@ function parseColors(md: string): ParsedDesignSystem["color"] {
 
 function parseTypography(md: string): ParsedDesignSystem["typography"] {
   const section =
-    extractSection(md, /##\s+Typography[^\n]*/i) ??
-    extractSection(md, /##\s+Fonts?[^\n]*/i) ??
+    extractSection(md, /##\s+\d*\.?\s*Typography[^\n]*/i) ??
+    extractSection(md, /##\s+\d*\.?\s*Fonts?[^\n]*/i) ??
     "";
-  function parseLine(label: string): { family?: string; weight?: number | string; size?: string } | undefined {
-    const re = new RegExp(`\\b${label}\\b[^\\n]*`, "i");
-    const m = section.match(re);
-    if (!m) return undefined;
-    const line = m[0];
-    const familyMatch = line.match(/([A-Z][A-Za-z][A-Za-z0-9 _]+?)(?=,|\s+\d|$)/);
+
+  // Estrategia: buscar líneas tipo
+  //   - **Heading**: Manrope (Google Fonts) — pesos 600, 700, 800.
+  //   - **Body**: Roboto, fallback Arial.
+  //   - **Code**: monospace de sistema (`ui-monospace`, `Menlo`, `Consolas`).
+  //   | Display / Hero | Manrope | 56px | 800 | 1.10 | -2px |  ← tablas
+  // Para cada role, capturamos (family, weight?, size?).
+  function findRoleLine(roles: string[]): string | null {
+    for (const role of roles) {
+      const re = new RegExp(`(?:^|\\n)\\s*[\\-*]\\s*\\*?\\*?${role}\\*?\\*?[^\\n]*`, "i");
+      const m = section.match(re);
+      if (m) return m[0];
+    }
+    return null;
+  }
+
+  function parseRole(roles: string[]): { family?: string; weight?: number | string; size?: string } | undefined {
+    const line = findRoleLine(roles);
+    if (!line) return undefined;
+    // Family: primer Capitalized word/phrase tras los dos puntos o el bold del role
+    // Ej: "- **Heading**: Manrope (Google Fonts)" → family=Manrope
+    const afterColon = line.split(/[:—]/).slice(1).join(":").trim();
+    const haystack = afterColon || line;
+    const familyMatch = haystack.match(/([A-Z][A-Za-z][A-Za-z0-9_-]*(?:\s[A-Z][A-Za-z0-9_-]+)*)/);
     const weightMatch = line.match(/\b(\d{3})\b/);
     const sizeMatch = line.match(/\b(\d+(?:\.\d+)?(?:px|rem|em))\b/);
     return {
@@ -146,10 +175,13 @@ function parseTypography(md: string): ParsedDesignSystem["typography"] {
       size: sizeMatch?.[1],
     };
   }
+
+  // Para nuestro DESIGN.md de Sancho usamos "Heading" / "Body" / "Code".
+  // Para OD upstream se usan "Display" / "Headline" / "Body" / "Mono".
   return {
-    display: parseLine("display"),
-    body: parseLine("body"),
-    mono: parseLine("mono"),
+    display: parseRole(["display", "headline", "heading", "hero"]),
+    body: parseRole(["body", "ui"]),
+    mono: parseRole(["mono", "monospace", "code"]),
   };
 }
 

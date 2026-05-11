@@ -322,7 +322,12 @@ const ACCENT_FG: Record<NonNullable<ActivityEvent["accent"]>, string> = {
   brick: "var(--sc-brick-500)",
 };
 
+const ACTIVITY_PAGE_SIZE = 20;
+
 function ActivityCard({ events }: { events: ActivityEvent[] }) {
+  const [shown, setShown] = useState(ACTIVITY_PAGE_SIZE);
+  const visible = events.slice(0, shown);
+  const hasMore = events.length > shown;
   return (
     <div
       className="rounded-sc-lg border-[2.5px] overflow-hidden"
@@ -335,16 +340,34 @@ function ActivityCard({ events }: { events: ActivityEvent[] }) {
         <span style={{ color: "var(--sc-rust-500)" }}>⚡</span>
         <span className="font-heading uppercase text-[12.5px] tracking-wider font-bold">Actividad del motor</span>
         <div className="flex-1" />
-        <span className="text-xs" style={{ color: "var(--sc-fg-muted)" }}>últimas 24h</span>
+        <span className="text-xs" style={{ color: "var(--sc-fg-muted)" }}>
+          {events.length === 0 ? "—" : `${visible.length} de ${events.length}`}
+        </span>
       </div>
       <div>
         {events.length === 0 ? (
           <div className="p-4 text-xs italic" style={{ color: "var(--sc-fg-muted)" }}>
-            Sin actividad en las últimas 24h. (Las aprobaciones por Slack y los envíos del Editorial Dispatch aparecerán aquí.)
+            Sin actividad. (Las aprobaciones por Slack, los envíos del Editorial Dispatch y las ejecuciones de cron aparecerán aquí.)
           </div>
-        ) : events.slice(0, 12).map((e, i) => (
-          <ActivityItem key={i} event={e} />
-        ))}
+        ) : (
+          <>
+            {visible.map((e, i) => (
+              <ActivityItem key={i} event={e} />
+            ))}
+            {hasMore && (
+              <div className="p-3 flex justify-center" style={{ borderTop: "1px dashed rgba(31,20,16,0.15)" }}>
+                <button
+                  type="button"
+                  onClick={() => setShown((s) => s + ACTIVITY_PAGE_SIZE)}
+                  className="font-heading uppercase text-[11px] tracking-wider px-3 py-1.5 rounded-sc-pill border-2 sc-pop-hover"
+                  style={{ background: "var(--sc-paper-2)", borderColor: "var(--sc-ink)", color: "var(--sc-ink)", boxShadow: "var(--pop-xs)" }}
+                >
+                  Mostrar más ({events.length - shown})
+                </button>
+              </div>
+            )}
+          </>
+        )}
       </div>
     </div>
   );

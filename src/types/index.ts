@@ -173,6 +173,14 @@ export type ContentTaskPipelineState =
   | "generating-media"
   | "media-review";
 
+export const VALID_CONTENT_TASK_PIPELINE_STATES: readonly ContentTaskPipelineState[] = [
+  "researching",
+  "clarify-needed",
+  "drafting",
+  "generating-media",
+  "media-review",
+] as const;
+
 /**
  * Per-channel work phase tracked under `ContentTask.channel_phases`. Replaces
  * the legacy per-draft `meta.status` frontmatter field — `tasks.json` is the

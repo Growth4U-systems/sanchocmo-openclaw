@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import { useEffect, useState } from "react";
 import type { MediaAsset } from "@/lib/data/drafts";
 import { cn } from "@/lib/utils";
 
@@ -22,6 +22,12 @@ export function MediaThumb({
   size = "sm",
 }: MediaThumbProps) {
   const isPdf = media.type === "application/pdf";
+  const [errored, setErrored] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+  useEffect(() => {
+    setErrored(false);
+    setLoaded(false);
+  }, [media.url]);
   return (
     <div
       className={cn(
@@ -46,14 +52,42 @@ export function MediaThumb({
         </a>
       ) : (
         <>
-          <Image
-            src={media.url}
-            alt={media.prompt || "Media asset"}
-            fill
-            sizes={size === "lg" ? "300px" : "120px"}
-            className="object-cover"
-            unoptimized
-          />
+          {errored ? (
+            <div className="absolute inset-0 grid place-items-center bg-[#FEF2F2] text-center p-2">
+              <div>
+                <div className="text-2xl">⚠️</div>
+                <div className="text-[9px] font-bold text-red-700 mt-1 leading-tight">
+                  No carga
+                </div>
+                <div className="text-[8px] text-red-600 opacity-70 mt-0.5 break-all">
+                  {(() => {
+                    try {
+                      return new URL(media.url).pathname.split("/").pop();
+                    } catch {
+                      return "URL inválida";
+                    }
+                  })()}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <>
+              {!loaded && (
+                <div className="absolute inset-0 grid place-items-center text-[10px] text-muted-foreground">
+                  Cargando…
+                </div>
+              )}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={media.url}
+                alt={media.prompt || "Media asset"}
+                className="absolute inset-0 w-full h-full object-cover"
+                loading="lazy"
+                onLoad={() => setLoaded(true)}
+                onError={() => setErrored(true)}
+              />
+            </>
+          )}
           <div className="absolute top-1 left-1 flex gap-1">
             {isPrimary && (
               <span className="text-[9px] font-bold bg-rust text-white px-1.5 py-0.5 rounded">

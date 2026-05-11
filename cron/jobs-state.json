@@ -70,17 +70,30 @@
       }
     },
     "abc8abac-3097-4e27-8131-0a5d77717195": {
-      "updatedAtMs": 1777838666234,
+      "updatedAtMs": 1778443551418,
       "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"0 22 * * 0\",\"tz\":\"Europe/Madrid\"}}",
       "state": {
-        "nextRunAtMs": 1778443200000,
-        "lastRunAtMs": 1777838400034,
-        "lastRunStatus": "ok",
-        "lastStatus": "ok",
-        "lastDurationMs": 266200,
+        "nextRunAtMs": 1779048000000,
+        "lastRunAtMs": 1778443551391,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 27,
         "lastDeliveryStatus": "not-requested",
-        "consecutiveErrors": 0,
-        "consecutiveSkipped": 0
+        "consecutiveErrors": 1,
+        "consecutiveSkipped": 0,
+        "lastError": "cron payload.model 'anthropic/claude-sonnet-4-5' rejected by agents.defaults.models allowlist: anthropic/claude-sonnet-4-5",
+        "lastDiagnostics": {
+          "summary": "cron payload.model 'anthropic/claude-sonnet-4-5' rejected by agents.defaults.models allowlist: anthropic/claude-sonnet-4-5",
+          "entries": [
+            {
+              "ts": 1778443551418,
+              "source": "cron-preflight",
+              "severity": "error",
+              "message": "cron payload.model 'anthropic/claude-sonnet-4-5' rejected by agents.defaults.models allowlist: anthropic/claude-sonnet-4-5"
+            }
+          ]
+        },
+        "lastDiagnosticSummary": "cron payload.model 'anthropic/claude-sonnet-4-5' rejected by agents.defaults.models allowlist: anthropic/claude-sonnet-4-5"
       }
     },
     "0cd1e931-d374-4428-a452-e2394beac5b7": {
@@ -126,22 +139,22 @@
       }
     },
     "0c59e923-3267-4926-9a60-36bb81b6041f": {
-      "updatedAtMs": 1778410652342,
+      "updatedAtMs": 1778453877120,
       "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"every\",\"everyMs\":21600000,\"anchorMs\":1772069609685}}",
       "state": {
-        "nextRunAtMs": 1778432252330,
-        "lastRunAtMs": 1778410652330,
+        "nextRunAtMs": 1778475477087,
+        "lastRunAtMs": 1778453877087,
         "lastRunStatus": "error",
         "lastStatus": "error",
-        "lastDurationMs": 12,
+        "lastDurationMs": 33,
         "lastDeliveryStatus": "not-requested",
-        "consecutiveErrors": 9,
+        "consecutiveErrors": 11,
         "consecutiveSkipped": 0,
         "lastDiagnostics": {
           "summary": "cron payload.model 'anthropic/claude-sonnet-4-5' rejected by agents.defaults.models allowlist: anthropic/claude-sonnet-4-5",
           "entries": [
             {
-              "ts": 1778410652342,
+              "ts": 1778453877119,
               "source": "cron-preflight",
               "severity": "error",
               "message": "cron payload.model 'anthropic/claude-sonnet-4-5' rejected by agents.defaults.models allowlist: anthropic/claude-sonnet-4-5"
@@ -425,22 +438,22 @@
       }
     },
     "a68143d8-1309-46eb-a5dc-4c3fb35ee3d2": {
-      "updatedAtMs": 1778356800062,
+      "updatedAtMs": 1778443551436,
       "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"0 22 * * *\",\"tz\":\"Europe/Madrid\"}}",
       "state": {
-        "nextRunAtMs": 1778443200000,
-        "lastRunAtMs": 1778356800032,
+        "nextRunAtMs": 1778529600000,
+        "lastRunAtMs": 1778443551418,
         "lastRunStatus": "error",
         "lastStatus": "error",
-        "lastDurationMs": 30,
+        "lastDurationMs": 18,
         "lastDeliveryStatus": "not-requested",
-        "consecutiveErrors": 2,
+        "consecutiveErrors": 3,
         "consecutiveSkipped": 0,
         "lastDiagnostics": {
           "summary": "cron payload.model 'anthropic/claude-sonnet-4-5' rejected by agents.defaults.models allowlist: anthropic/claude-sonnet-4-5",
           "entries": [
             {
-              "ts": 1778356800061,
+              "ts": 1778443551436,
               "source": "cron-preflight",
               "severity": "error",
               "message": "cron payload.model 'anthropic/claude-sonnet-4-5' rejected by agents.defaults.models allowlist: anthropic/claude-sonnet-4-5"
@@ -452,17 +465,30 @@
       }
     },
     "36d0bff9-fea9-40d8-9bfd-bf1e5e58468b": {
-      "updatedAtMs": 1778186197623,
+      "updatedAtMs": 1778445000075,
       "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"30 22 * * 0-4\",\"tz\":\"Europe/Madrid\"}}",
       "state": {
-        "nextRunAtMs": 1778445000000,
-        "lastRunAtMs": 1778185800029,
-        "lastRunStatus": "ok",
-        "lastStatus": "ok",
-        "lastDurationMs": 397594,
+        "nextRunAtMs": 1778531400000,
+        "lastRunAtMs": 1778445000030,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 45,
         "lastDeliveryStatus": "not-requested",
-        "consecutiveErrors": 0,
-        "consecutiveSkipped": 0
+        "consecutiveErrors": 1,
+        "consecutiveSkipped": 0,
+        "lastError": "cron payload.model 'anthropic/claude-sonnet-4-5' rejected by agents.defaults.models allowlist: anthropic/claude-sonnet-4-5",
+        "lastDiagnostics": {
+          "summary": "cron payload.model 'anthropic/claude-sonnet-4-5' rejected by agents.defaults.models allowlist: anthropic/claude-sonnet-4-5",
+          "entries": [
+            {
+              "ts": 1778445000075,
+              "source": "cron-preflight",
+              "severity": "error",
+              "message": "cron payload.model 'anthropic/claude-sonnet-4-5' rejected by agents.defaults.models allowlist: anthropic/claude-sonnet-4-5"
+            }
+          ]
+        },
+        "lastDiagnosticSummary": "cron payload.model 'anthropic/claude-sonnet-4-5' rejected by agents.defaults.models allowlist: anthropic/claude-sonnet-4-5"
       }
     },
     "6f136183-673c-4a60-9aca-d923d3c00480": {
@@ -885,18 +911,30 @@
       }
     },
     "7352736a-f369-4559-8342-9157f7320d25": {
-      "updatedAtMs": 1778217037598,
+      "updatedAtMs": 1778456042434,
       "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"0 7 * * 1-5\",\"tz\":\"Europe/Madrid\"}}",
       "state": {
         "nextRunAtMs": 1778475600000,
-        "lastRunAtMs": 1778216400031,
+        "lastRunAtMs": 1778455430223,
         "lastRunStatus": "error",
         "lastStatus": "error",
-        "lastDurationMs": 637567,
+        "lastDurationMs": 612211,
         "lastDeliveryStatus": "unknown",
-        "consecutiveErrors": 3,
+        "consecutiveErrors": 8,
         "consecutiveSkipped": 0,
-        "lastError": "Channel is required when multiple channels are configured: discord, mc-chat Set delivery.channel explicitly or use a main session with a previous channel."
+        "lastDiagnostics": {
+          "summary": "Delivering to mc-chat requires target",
+          "entries": [
+            {
+              "ts": 1778456042428,
+              "source": "delivery",
+              "severity": "error",
+              "message": "Delivering to mc-chat requires target"
+            }
+          ]
+        },
+        "lastDiagnosticSummary": "Delivering to mc-chat requires target",
+        "lastError": "Delivering to mc-chat requires target"
       }
     },
     "945531aa-9e66-487b-92ab-aff060671424": {

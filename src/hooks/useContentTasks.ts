@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import type { ContentTask, ContentTaskStatus, ContentTaskPipelineState, ChannelPhase } from "@/types";
+import type { ContentTask, ContentTaskStatus, ContentTaskPipelineState } from "@/types";
 
 /**
  * Whether the CT is in a phase where the agent or system is actively working
@@ -9,19 +9,18 @@ import type { ContentTask, ContentTaskStatus, ContentTaskPipelineState, ChannelP
  */
 function isWorkingState(ct: ContentTask | null | undefined): boolean {
   if (!ct) return false;
-  if (ct.status === "Published" || ct.status === "Discarded" || ct.status === "Deferred" || ct.status === "Ready") {
+  // Terminal / already-final: nobody is going to advance them without user
+  // action that itself triggers an invalidation.
+  if (ct.status === "Published" || ct.status === "Discarded" || ct.status === "Deferred") {
     return false;
   }
-  if (ct.pipeline_state === "researching" || ct.pipeline_state === "clarify-needed" || ct.pipeline_state === "drafting") {
-    return true;
-  }
-  if (ct.pipeline_state === "generating-media") return true;
-  if (ct.channel_phases) {
-    for (const p of Object.values(ct.channel_phases) as ChannelPhase[]) {
-      if (p === "researching" || p === "clarify-needed" || p === "drafting") return true;
-    }
-  }
-  return false;
+  // Any non-terminal state: poll. Sancho can advance Draft → Pending Media
+  // (after media generation) or Pending Media → Pending Media/media-review
+  // (after attaching assets) without the user touching anything, so we have
+  // to keep refetching until the CT lands in a terminal state. Previously
+  // we stopped polling at Draft/Ready/Pending Media and the UI showed stale
+  // "Aprobar texto" buttons → 409 on click.
+  return true;
 }
 
 interface ContentTaskListResponse {
@@ -274,6 +273,14 @@ function makeActionHook(action: string, errorLabel: string) {
         qc.invalidateQueries({ queryKey: ["content-tasks", v.slug, v.parentTaskId] });
         qc.invalidateQueries({ queryKey: ["content-task", v.slug, v.parentTaskId, v.id] });
         qc.invalidateQueries({ queryKey: ["projects", v.slug] });
+      },
+      // On failure — typically a 409 because the local CT state is stale (the
+      // agent advanced the CT via PATCH before this click landed) — refresh
+      // the CT immediately so the next render shows the correct button for
+      // the actual current status, instead of an action that just 409'd.
+      onError: (_e, v) => {
+        qc.invalidateQueries({ queryKey: ["content-task", v.slug, v.parentTaskId, v.id] });
+        qc.invalidateQueries({ queryKey: ["content-tasks", v.slug, v.parentTaskId] });
       },
     });
   };

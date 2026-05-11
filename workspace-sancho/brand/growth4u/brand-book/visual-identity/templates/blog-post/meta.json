@@ -3,6 +3,10 @@
   "name": "blog-post",
   "channel": "blog",
   "description": "Imagen ilustrativa para incrustar dentro del post (inline)",
+  "output_format": "html",
+  "generation_strategy": "html",
+  "model_hints": { "preferred_model": null, "prompt_prefix_from": null },
+  "pre_steps": [],
   "slideCount": 1,
   "width": 1200,
   "height": 630,
@@ -38,5 +42,14 @@
       "key": "hero_image_url",
       "label": "Personaje o ilustración (URL)"
     }
-  ]
+  ],
+  "triggers": [
+    "blog post image",
+    "imagen blog",
+    "ilustración blog",
+    "blog illustration",
+    "imagen para blog"
+  ],
+  "od_kind": "template",
+  "use_case": "Imagen ilustrativa para incrustar dentro del cuerpo de un post de blog (1200×630)."
 }

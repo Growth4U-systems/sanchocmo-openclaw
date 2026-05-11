@@ -2017,5 +2017,271 @@
     ],
     "created_at": "2026-05-08T05:10:00Z",
     "status": "New"
+  },
+  {
+    "id": "idea-2026-05-11-1",
+    "title": "El fin del click: Google ya no te manda clientes, te los cobra",
+    "pillar_id": "P2",
+    "content_type": "Hot Take",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Marketing Week publica un análisis de columnistas señalando que el click como unidad de valor del marketing digital está desapareciendo. Gartner predijo en 2024 que el volumen de búsqueda tradicional caería un 25% para 2026, y un informe de Seer Interactive confirma que los CTRs orgánicos se han desplomado un 49% interanual. Varios CMOs confirmaron al medio que el tráfico de búsqueda está cayendo y que mantenerlo cuesta significativamente más que hace dos años.",
+      "source": "Marketing Week / Tom Roach",
+      "url": "https://www.marketingweek.com/marketers-prepare-end-click/",
+      "date": "2026-05-07"
+    },
+    "signal_type": [
+      "data-point",
+      "contrarian"
+    ],
+    "angle_draft": "Gartner predijo que el tráfico de búsqueda caería un 25% en 2026. Seer Interactive confirma CTRs colapsados un 49%. Los marketers que construyeron su motor de adquisición sobre Google pagan ahora la factura. El canal que alquilaste siempre fue frágil. Un motor de growth real no depende de que una plataforma te mande clientes — depende de que los clientes te busquen porque tu marca ya existe en el ecosistema donde los LLMs aprenden. Frame: 'GEO-before-the-cliff'.",
+    "pov_confidence": 0.9,
+    "source_signals": [
+      "news-2026-05-11-p2a"
+    ],
+    "created_at": "2026-05-11T01:10:00+02:00",
+    "status": "New"
+  },
+  {
+    "id": "idea-2026-05-11-2",
+    "title": "Tu marca en AI search la construyen Reddit, G2 y la prensa — no tu blog",
+    "pillar_id": "P2",
+    "content_type": "Framework",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Martech.org publica un análisis sobre cómo los LLMs y motores de AI search raramente citan los dominios propios de las marcas, sino que priorizan fuentes de terceros para construir sus respuestas. Identifica cinco categorías clave: plataformas de contenido generado por usuarios (Reddit), sites de reviews (G2, Trustpilot), medios editoriales, foros especializados y plataformas de influencers. Para aparecer en los resúmenes de AI, las marcas deben coordinar PR, SEO y afiliados para asegurar presencia consistente en el ecosistema externo que los LLMs consideran de confianza.",
+      "source": "Martech.org / Stephanie Trovato",
+      "url": "https://martech.org/the-third-party-sites-shaping-your-brand-in-ai-search/",
+      "date": "2026-05-05"
+    },
+    "signal_type": [
+      "framework",
+      "aha-moment"
+    ],
+    "angle_draft": "Los LLMs no citan tu blog — citan Reddit, G2, Trustpilot y las publicaciones donde otros hablan de ti. Publicar en tu propio dominio ya no es suficiente para existir en AI search. La estrategia que funciona hoy no es escribir más sino coordinar PR, SEO y afiliados para que el ecosistema externo hable de ti de forma consistente. Tu presencia en IA se construye fuera de tu web. Frame: 'ecosystem-before-owned-channel'.",
+    "pov_confidence": 0.8,
+    "source_signals": [
+      "news-2026-05-11-p2b"
+    ],
+    "created_at": "2026-05-11T01:10:00+02:00",
+    "status": "New"
+  },
+  {
+    "id": "idea-2026-05-11-3",
+    "title": "Gmail AI Inbox: Gemini decide qué emails merece ver tu cliente",
+    "pillar_id": "P2",
+    "content_type": "Hot Take",
+    "target_channel": "newsletter",
+    "signal": {
+      "summary": "Gmail anunció AI Inbox el 31 de marzo de 2026, una función que usa Gemini para organizar, priorizar y filtrar emails antes de que el usuario los vea. Gmail gestiona más del 25% de los inboxes del mundo. Seis email marketers y operadores consultados por Martech.org coinciden en que el paradigma cambia de 'deliverability' a 'discoverability': convencer a la IA de que tu email merece atención. El fundador de Stacked Marketer advierte que si Gemini se convierte en gatekeeper, las marcas podrían perder la conexión directa con sus suscriptores.",
+      "source": "Martech.org / Joe Cunningham",
+      "url": "https://martech.org/gmails-ai-inbox-may-redefine-deliverability/",
+      "date": "2026-05-08"
+    },
+    "signal_type": [
+      "milestone",
+      "cautionary-tale"
+    ],
+    "angle_draft": "Gmail AI Inbox pone a Gemini como filtro antes de que tu cliente vea tu email. Más del 25% de los inboxes del mundo mediados por IA. La era del asunto perfecto se acabó — ahora hay que convencer a un agente de que tu email merece atención. Es la misma lógica que reemplazó los clicks en Google: el canal que alquilabas tiene un gatekeeper algorítmico entre tú y tu audiencia. El único canal que no puede ser filtrado es el que la audiencia busca activamente. Frame: 'ai-gatekeeper-kills-rented-channels'.",
+    "pov_confidence": 0.8,
+    "source_signals": [
+      "news-2026-05-11-p2c"
+    ],
+    "created_at": "2026-05-11T01:10:00+02:00",
+    "status": "New"
+  },
+  {
+    "id": "idea-2026-05-11-4",
+    "title": "AI fatigue: 73% de adopción, entusiasmo -7% y 62% frustrado sin humano",
+    "pillar_id": "P5",
+    "content_type": "Hot Take",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "El '2026 AI-Powered Consumer Report' de Prophet revela que la adopción de IA generativa entre consumidores ha subido al 73%, frente al 45% en 2024. Sin embargo, el entusiasmo hacia la IA ha caído un 7%, y el número de consumidores que creen que la IA manejará la mayoría de sus decisiones cayó un 30%. El 71% de los consumidores manifiestan preocupación por la precisión e información falsa de los sistemas de IA, y el 62% se frustra cuando las empresas eliminan el soporte humano en favor de la automatización.",
+      "source": "Martech.org / Constantine von Hoffman (fuente: Prophet 2026 AI-Powered Consumer Report)",
+      "url": "https://martech.org/ai-use-and-fatigue-growing-among-consumers/",
+      "date": "2026-05-08"
+    },
+    "signal_type": [
+      "data-point",
+      "contrarian"
+    ],
+    "angle_draft": "73% de consumidores usan IA, pero el entusiasmo cayó un 7% y el 62% se frustra cuando eliminan el soporte humano. La fatiga del hype ha llegado. Es exactamente la brecha que llevamos señalando: el 88% dice que usa IA, solo el 6% la tiene integrada en operaciones reales. Los clientes ya no quieren que les cuentes que usas IA — quieren ver qué resuelves. La diferencia entre adopción y ejecución es el campo de batalla real. Frame: 'fatigue-hits-hype-not-systems'.",
+    "pov_confidence": 0.9,
+    "source_signals": [
+      "news-2026-05-11-p5a"
+    ],
+    "created_at": "2026-05-11T01:10:00+02:00",
+    "status": "New"
+  },
+  {
+    "id": "idea-2026-05-11-5",
+    "title": "El contenido que la IA no puede copiar viene de dentro de tu empresa",
+    "pillar_id": "P5",
+    "content_type": "Framework",
+    "target_channel": "blog",
+    "signal": {
+      "summary": "Martech.org publica un análisis presentado en SEO Week sobre cómo la proliferación de contenido generado por IA ha convertido el contenido 'bueno' en el nuevo mínimo exigible, no en el diferenciador. Los rankings se mueven más rápido para contenido mid-tier. El argumento central es que la única capa de conocimiento que la IA no puede replicar es el conocimiento interno de cada empresa: qué escucha el equipo de ventas en las llamadas, por qué los clientes eligen o no el producto, y cómo se usa realmente la solución en el día a día.",
+      "source": "Martech.org / Stephanie Trovato (referencia: SEO Week, Will Reynolds)",
+      "url": "https://martech.org/how-to-build-content-your-competitors-cannot-copy/",
+      "date": "2026-05-08"
+    },
+    "signal_type": [
+      "framework",
+      "aha-moment"
+    ],
+    "angle_draft": "La IA ha convertido el contenido 'bueno' en un commodity — rankings se mueven más rápido, el equipo de ventas ignora lo que no refleja conversaciones reales. La única capa que los competidores no pueden copiar es el conocimiento interno: qué oye el equipo en ventas, por qué los clientes eligen o descartan tu solución. Quien operacionalice ese conocimiento en contenido gana. El resto produce ruido en cantidad industrial. Frame: 'internal-insight-is-the-moat'.",
+    "pov_confidence": 0.8,
+    "source_signals": [
+      "news-2026-05-11-p5b"
+    ],
+    "created_at": "2026-05-11T01:10:00+02:00",
+    "status": "New"
+  },
+  {
+    "id": "idea-2026-05-11-6",
+    "title": "La regulación como 'permission slip': lo que MiCA puede hacer por tu growth",
+    "pillar_id": "P3",
+    "content_type": "Proof Post",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "En Consensus Miami 2026, ejecutivos de MoonPay, Ripple y Paxos describieron cómo la regulación GENIUS en EEUU aceleró la adopción institucional de stablecoins. Richard Harrison (VP banking de MoonPay) afirmó: 'Lo que GENIUS nos trajo fue claridad — fue como un permiso de entrada para las empresas'. Jack McDonald (Ripple) señaló que las instituciones solo escalan en crypto cuando hay productos regulados, contrapartes sólidas y custodia certificada. Tanto Ripple como Paxos crecieron volumen en stablecoins tras la regulación, no a pesar de ella.",
+      "source": "CoinDesk / Staff",
+      "url": "https://www.coindesk.com/policy/2026/05/08/stablecoins-have-their-permission-slip-now-comes-the-hard-part",
+      "date": "2026-05-08"
+    },
+    "signal_type": [
+      "milestone",
+      "proof-point"
+    ],
+    "angle_draft": "MoonPay, Ripple y Paxos en Consensus Miami: la regulación GENIUS aceleró la adopción stablecoin institucional. 'Fue como un permiso de entrada', dijo el VP de banking de MoonPay. Es lo mismo que vemos con MiCA en Europa. La regulación no frena el growth — filtra a los que no saben jugar con las reglas. Quien domina compliance bajo MiCA tiene una ventaja competitiva que los no-regulados no pueden copiar. Deadline en España: 1 julio 2026. Frame: 'regulation-as-competitive-moat'.",
+    "pov_confidence": 0.9,
+    "source_signals": [
+      "news-2026-05-11-p3a"
+    ],
+    "created_at": "2026-05-11T01:10:00+02:00",
+    "status": "New"
+  },
+  {
+    "id": "idea-2026-05-11-7",
+    "title": "El WSJ destapa: el boom de IA lo financia el consultor que te lo recomienda",
+    "pillar_id": "P4",
+    "content_type": "Hot Take",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Robert Pozen, ex-presidente de MFS Investment Management y Fidelity, publica en el Wall Street Journal que parte del crecimiento de OpenAI, Google y Anthropic está financiado artificialmente: OpenAI financia ventures de private equity cuyos portfolio companies se convierten luego en sus clientes, Google subsidia la adopción de Gemini a través de consultoras, y Anthropic sigue modelos similares. Pozen compara el patrón con la burbuja de las telecos, donde las empresas financiaban su propio crecimiento hasta que el sistema colapsó.",
+      "source": "Martech.org / Constantine von Hoffman (fuente: Wall Street Journal / Robert Pozen, ex-chairman MFS Investment Management)",
+      "url": "https://martech.org/the-latest-ai-powered-martech-news-and-releases/",
+      "date": "2026-05-07"
+    },
+    "signal_type": [
+      "contrarian",
+      "cautionary-tale"
+    ],
+    "angle_draft": "El WSJ alerta: parte del 'crecimiento' de OpenAI y Google viene de subsidiar la adopción vía PE y consultoras. Es el modelo bait-and-switch en versión IA — el consultor recomienda la plataforma que financia su engagement. Esto no es nuevo: es el retainer tradicional con logo de IA. La pregunta para cualquier equipo de marketing es siempre la misma: ¿quién tiene skin in the game real en lo que te venden? Dashboards bonitos, zero revenue. Frame: 'ai-subsidies-are-the-new-retainer'.",
+    "pov_confidence": 0.88,
+    "source_signals": [
+      "news-2026-05-11-p4a"
+    ],
+    "created_at": "2026-05-11T01:10:00+02:00",
+    "status": "New"
+  },
+  {
+    "id": "idea-2026-05-11-8",
+    "title": "15.505 herramientas de martech en 2026: el stack no es tu sistema de growth",
+    "pillar_id": "P1",
+    "content_type": "Framework",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "El State of Martech 2026 de Scott Brinker y Frans Riemersma documenta que el landscape creció solo un 0,7%, de 15.384 a 15.505 herramientas. Sin embargo, bajo esa cifra se esconde que casi 1.500 tools fueron añadidas y más de 1.300 desaparecieron. Los autores señalan que la era de acumular herramientas está siendo reemplazada por una era de sustitución: el SaaS se convierte en infraestructura, y la IA se convierte en la capa de valor por encima. Etiquetan este momento como 'Martech en su fase Darwin': se quedan los que crean valor real.",
+      "source": "Martech.org / Scott Brinker & Frans Riemersma (State of Martech 2026)",
+      "url": "https://martech.org/martech-2026-ai-drives-a-major-industry-reset/",
+      "date": "2026-05-05"
+    },
+    "signal_type": [
+      "data-point",
+      "aha-moment"
+    ],
+    "angle_draft": "15.505 herramientas de martech en 2026. 1.500 añadidas, 1.300 desaparecidas. Scott Brinker confirma: la IA se está convirtiendo en la capa de valor sobre el SaaS, no en el SaaS mismo. El equipo que acumula tools sin sistema de growth no crece más rápido — fragmenta más rápido. La herramienta no es el motor. El sistema que opera sobre las herramientas sí lo es. Y ese sistema lo construye quien entiende dónde está el cuello de botella. Frame: 'tools-are-infrastructure-not-system'.",
+    "pov_confidence": 0.85,
+    "source_signals": [
+      "news-2026-05-11-p1a"
+    ],
+    "created_at": "2026-05-11T01:10:00+02:00",
+    "status": "New"
+  },
+  {
+    "id": "idea-2026-05-11-9",
+    "title": "ROAS ya no basta: las métricas de growth que tu CFO sí puede leer",
+    "pillar_id": "P1",
+    "content_type": "Framework",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Un análisis en MarTech (mayo 2026) argumenta que el ROAS como métrica única crea sesgos estructurales en los equipos de marketing: sobreinversión en tácticas bottom-of-funnel, infravaloración de brand-building y ganancias a corto plazo a costa del crecimiento sostenido. El artículo propone expandir las métricas de performance a CAC, LTV, incrementalidad, retención y atribución multi-touch para medir el impacto real en el negocio. La pérdida de señal por regulaciones de privacidad y las limitaciones de plataformas están erosionando aún más la fiabilidad del ROAS, empujando a los equipos hacia datos propios y modelos predictivos.",
+      "source": "MarTech / Martech.org",
+      "url": "https://martech.org/why-performance-marketing-needs-more-than-roas/",
+      "date": "2026-05-06"
+    },
+    "signal_type": [
+      "framework",
+      "data-point"
+    ],
+    "angle_draft": "ROAS te dice si el último click rentó. No te dice si tu empresa crece. El 90% de los equipos optimiza eficiencia de canal mientras pierde cuota de mercado — nunca conectaron sus métricas con CAC real, LTV y payback. Si tu CFO no puede leer tu dashboard de marketing, no tienes un sistema de growth. Frame: El primer diagnóstico de cualquier empresa estancada empieza por reemplazar ROAS por las métricas que predicen si vas a crecer el próximo trimestre.",
+    "pov_confidence": 0.5,
+    "source_signals": [
+      "news-2026-05-11-d278196d"
+    ],
+    "created_at": "2026-05-10T23:27:00.000Z",
+    "status": "New"
+  },
+  {
+    "id": "idea-2026-05-11-10",
+    "title": "Código sin equipo: cuando compras la plataforma pero el talento ya se fue",
+    "pillar_id": "P4",
+    "content_type": "Hot Take",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Amplitude anunció en mayo 2026 una alianza con Statsig para asumir su marca y base de clientes, mientras el equipo original de Statsig continúa trabajando en OpenAI tras la adquisición por parte de esta de la compañía por 1.100 millones de dólares. Esto deja a Amplitude gestionando una plataforma cuyos creadores trabajan en otro lugar. El CEO de Optimizely, Alex Atzberger, lo describió públicamente como \"Amplitude gets Statsig's code without the talent — it's a race car without a driver.\" Statsig había ganado tracción por su arquitectura warehouse-native, construida por un equipo especializado que ya no estará disponible para los clientes.",
+      "source": "MarTech / Constantine von Hoffman",
+      "url": "https://martech.org/amplitude-and-statsig-deal-raises-questions-for-customers/",
+      "date": "2026-05-08"
+    },
+    "signal_type": [
+      "cautionary-tale",
+      "contrarian",
+      "proof-point"
+    ],
+    "angle_draft": "OpenAI compró Statsig por $1,1B y se quedó con el equipo. Amplitude compró la marca y el código. La analogía para contrataciones de growth es exacta: cuando la agencia sénior vende y el junior ejecuta, no estás comprando experiencia — estás comprando un coche de carreras sin piloto. El talento que construyó el sistema no se transfiere por contrato. Frame: La única garantía real es que quien diseñó tu sistema sea el que lo opera — con skin in the game desde el día uno.",
+    "pov_confidence": 0.55,
+    "source_signals": [
+      "news-2026-05-11-af7845ae"
+    ],
+    "created_at": "2026-05-10T23:27:00.000Z",
+    "status": "New"
+  },
+  {
+    "id": "idea-2026-05-11-11",
+    "title": "Sin gobernanza, los agentes de IA acumulan deuda oculta: Gartner ya pone cifras",
+    "pillar_id": "P5",
+    "content_type": "Hot Take",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Un análisis en MarTech (mayo 2026) revela que el 82% de los CIOs admite que no puede gobernar lo que hacen sus agentes de IA desplegados en producción — lo que el artículo llama el 'Shadow Ledger': un registro de riesgos, exposiciones de compliance y pérdidas de revenue que se acumula de forma invisible. Anthropic cruzó los 30.000 millones de dólares de revenue run rate construido sobre empresas que despliegan agentes en workflows críticos. El Stanford AI Index 2025 documentó 233 incidentes relacionados con IA en 2024, un incremento del 56% interanual. Gartner predice que más del 40% de los proyectos de IA agéntica serán cancelados antes de finales de 2027, citando la gobernanza deficiente como causa principal.",
+      "source": "MarTech / Allen Martinez",
+      "url": "https://martech.org/ai-risk-management/",
+      "date": "2026-05-06"
+    },
+    "signal_type": [
+      "data-point",
+      "cautionary-tale",
+      "contrarian"
+    ],
+    "angle_draft": "La mayoría de empresas ya desplegó agentes de IA. La mayoría no sabe qué están haciendo esos agentes. El 82% de CIOs admite que no puede gobernar sus decisiones — y Gartner ya predice que el 40% de proyectos agenticos se cancela antes de 2027. La diferencia entre los que acumulan riesgo oculto y los que escalan con IA: un sistema que define qué puede hacer cada agente antes de desplegarlo. Frame: La IA sin arquitectura de gobernanza no es ejecución — es apuesta.",
+    "pov_confidence": 0.65,
+    "source_signals": [
+      "news-2026-05-11-f53a9e37"
+    ],
+    "created_at": "2026-05-10T23:27:00.000Z",
+    "status": "New"
   }
 ]

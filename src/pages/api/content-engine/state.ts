@@ -169,6 +169,51 @@ function readLastFinding(slug: string, folder: string): { date: string | null; f
   }
 }
 
+// Engine activity is scoped to the 4 content antennas — Editorial Dispatch sends
+// and Slack approvals reach the feed via activity-log.jsonl instead.
+const ANTENA_ACTIVITY_FOLDERS = new Set([
+  "content-news-monitor",
+  "content-competitor-monitor",
+  "content-paa-monitor",
+  "content-keyword-research",
+]);
+
+/** Reads recurring-tasks/{folder}/*.json for the slug and builds cron-run activity events. */
+function loadCronActivity(slug: string): ActivityEvent[] {
+  const rtRoot = path.join(BASE, "brand", slug, "recurring-tasks");
+  if (!fs.existsSync(rtRoot)) return [];
+  const events: ActivityEvent[] = [];
+  for (const folder of fs.readdirSync(rtRoot)) {
+    if (!ANTENA_ACTIVITY_FOLDERS.has(folder)) continue;
+    const dir = path.join(rtRoot, folder);
+    if (!fs.statSync(dir).isDirectory()) continue;
+    // Take up to 60 most recent files per cron folder (≈2 months of daily runs).
+    const files = fs.readdirSync(dir).filter((f) => f.endsWith(".json")).sort().reverse().slice(0, 60);
+    for (const file of files) {
+      try {
+        const data = JSON.parse(fs.readFileSync(path.join(dir, file), "utf-8"));
+        const runAtMs = data.runAtMs || (data.date ? new Date(data.date).getTime() : null);
+        if (!runAtMs) continue;
+        const status = data.status || "ok";
+        const finding: string =
+          (typeof data.last_finding === "string" && data.last_finding.trim()) ||
+          (typeof data.summary === "string" && data.summary.trim()) ||
+          (typeof data.content === "string" && previewFromContent(data.content)) ||
+          `Cron ${folder} (${status})`;
+        events.push({
+          ts: new Date(runAtMs).toISOString(),
+          type: "cron-run",
+          text: `<b>${folder}:</b> ${finding}`,
+          icon: status === "error" ? "⚠️" : "⏰",
+          accent: status === "error" ? "brick" : "navy",
+          meta: { folder, status, file },
+        });
+      } catch { /* skip malformed */ }
+    }
+  }
+  return events;
+}
+
 function inWindow(iso: string | undefined, days: number): boolean {
   if (!iso) return false;
   const d = new Date(iso);
@@ -284,11 +329,18 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     };
   });
 
-  // ─── Activity (last 24h) ──────────────────────────────────
-  const activity24h = activity.filter((e) => {
-    try { return Date.now() - new Date(e.ts).getTime() <= 86400000; }
-    catch { return false; }
-  });
+  // ─── Activity (paginated, full history) ───────────────────
+  // Combine activity-log.jsonl (Slack approvals, dispatch sends) with cron-runs
+  // read live from recurring-tasks/. Sorted by ts desc, capped at 300 to bound
+  // payload size. UI handles pagination client-side.
+  const cronActivity = loadCronActivity(slug);
+  const allActivity = [...activity, ...cronActivity]
+    .filter((e) => {
+      try { return !isNaN(new Date(e.ts).getTime()); }
+      catch { return false; }
+    })
+    .sort((a, b) => b.ts.localeCompare(a.ts))
+    .slice(0, 300);
 
   return res.status(200).json({
     ok: true,
@@ -301,7 +353,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     },
     config,
     lastSignals,
-    activity: activity24h,
+    activity: allActivity,
     verifiedAt: new Date().toISOString(),
   });
 }

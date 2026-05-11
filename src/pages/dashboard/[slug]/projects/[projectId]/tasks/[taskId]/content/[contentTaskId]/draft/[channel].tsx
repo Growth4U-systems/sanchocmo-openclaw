@@ -21,6 +21,7 @@ import {
   useDeferContentTask,
 } from "@/hooks/useContentTasks";
 import { useOpenChat } from "@/hooks/useChat";
+import { useContentEngineEvents } from "@/hooks/useContentEngineEvents";
 import { buildContentTaskThread } from "@/lib/chat-openers";
 import { ChannelPreview, isPlaceholderBody } from "@/components/content/channel-preview";
 import { MediaGallery } from "@/components/content/MediaGallery";
@@ -109,6 +110,9 @@ export default function DraftFullScreenPage() {
   const discardContentTask = useDiscardContentTask();
   const deferContentTask = useDeferContentTask();
   const openChat = useOpenChat();
+  // Live updates: agent-driven status moves (e.g. Draft → Pending Media)
+  // arrive via SSE so the UI doesn't show stale "Aprobar texto" buttons.
+  useContentEngineEvents(slug || null);
 
   const [editingBody, setEditingBody] = useState(false);
   const [railCollapsed, setRailCollapsed] = useState(false);

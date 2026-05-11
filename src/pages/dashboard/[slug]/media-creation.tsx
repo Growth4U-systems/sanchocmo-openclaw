@@ -11,7 +11,6 @@
 
 import { useEffect, useState } from "react";
 import Head from "next/head";
-import Link from "next/link";
 import { useRouter } from "next/router";
 import { useSlugSync } from "@/hooks/useSlugSync";
 import { useOpenChat } from "@/hooks/useChat";
@@ -41,6 +40,29 @@ export default function MediaCreationPage() {
   const router = useRouter();
   const openChat = useOpenChat();
   const [activeTab, setActiveTab] = useState<TabKey>("design-system");
+  const [launching, setLaunching] = useState(false);
+
+  const handleLaunchEditor = async () => {
+    if (!slug || launching) return;
+    setLaunching(true);
+    try {
+      const res = await fetch(
+        `/api/open-design/launch-editor?slug=${encodeURIComponent(slug)}`,
+        { method: "POST" },
+      );
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        alert(data.error ?? `No se puede abrir el editor (HTTP ${res.status})`);
+        return;
+      }
+      const { webUrl } = (await res.json()) as { webUrl: string };
+      window.open(webUrl, "_blank", "noopener,noreferrer");
+    } catch (err) {
+      alert(String(err instanceof Error ? err.message : err));
+    } finally {
+      setLaunching(false);
+    }
+  };
 
   // Sync tab with URL query (?tab=...) so deep links + cross-tab nav work
   useEffect(() => {
@@ -62,21 +84,11 @@ export default function MediaCreationPage() {
       </Head>
 
       {/* Header */}
-      <div className="flex items-center justify-between mb-1">
-        <h1 className="font-heading text-2xl text-navy">Media Creation</h1>
-        {slug && (
-          <Link
-            href={`/dashboard/${slug}/media-creation/editor`}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[12px] bg-transparent border border-[#E5E2DC] rounded-md text-[#7A7A7A] hover:bg-[#E5E2DC] hover:text-[#1A1A1A] transition-colors no-underline"
-          >
-            🎨 Abrir editor agentic
-          </Link>
-        )}
-      </div>
+      <h1 className="font-heading text-2xl text-navy mb-1">Media Creation</h1>
       <p className="text-sm text-muted-foreground mb-6">{slug}</p>
 
-      {/* Tabs */}
-      <div className="flex gap-2 mb-6 overflow-x-auto">
+      {/* Tabs + acción launch-editor */}
+      <div className="flex gap-2 mb-6 overflow-x-auto items-center">
         {TABS.map((tab) => (
           <button
             key={tab.key}
@@ -92,6 +104,17 @@ export default function MediaCreationPage() {
             {tab.label}
           </button>
         ))}
+        {slug && (
+          <button
+            type="button"
+            onClick={handleLaunchEditor}
+            disabled={launching}
+            className="ml-auto inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold border-2 border-border bg-white text-foreground hover:border-rust transition-all whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <span>🎨</span>
+            {launching ? "Abriendo…" : "Abrir editor agentic"}
+          </button>
+        )}
       </div>
 
       {/* Content */}
