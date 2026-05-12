@@ -469,9 +469,9 @@ Both environments use the **same secret and variable names** — only the values
 
 | Name | Value | Where to get it |
 |---|---|---|
-| `VPS_HOST` | IP address or hostname of the VPS | The IP/domain you set up DNS for in step 2 (e.g. `staging.sanchocmo.ai`, `203.0.113.42`) |
-| `VPS_USER` | SSH user that owns `authorized_keys` | The user you ran `ssh-keygen` as in Step 1 (e.g. `deploy`, `root`) |
-| `VPS_SSH_KEY` | Full private key contents from Step 1 | The output of `cat ~/.ssh/github-actions-deploy` — entire block including BEGIN/END lines |
+| `VPS_HOST` | Bare hostname or IP — **no protocol, no slash, no spaces** | The IP or domain you set up DNS for in step 2. Examples that work: `staging.sanchocmo.ai`, `app.sanchocmo.ai`, `203.0.113.42`. Examples that break: `https://staging.sanchocmo.ai` (has protocol), `staging.sanchocmo.ai/` (has slash), `staging.sanchocmo.ai ` (trailing space). |
+| `VPS_USER` | SSH user that owns `authorized_keys` | The user you ran `ssh-keygen` as in Step 1 (e.g. `deploy`, `root`). Bare username, no `@host` suffix. |
+| `VPS_SSH_KEY` | Full private key contents from Step 1 | The output of `cat ~/.ssh/github-actions-deploy` — entire block including the `-----BEGIN OPENSSH PRIVATE KEY-----` and `-----END OPENSSH PRIVATE KEY-----` lines. |
 
 **Variables** (Settings → Environments → `<env>` → Add variable — visible in logs, editable):
 
@@ -496,12 +496,18 @@ git push origin staging
 1. Actions → "Deploy to Production"
 2. "Run workflow" → enter the tag (e.g. `v0.2.0`) → Run
 
-Watch the run at `https://github.com/<org>/<repo>/actions`. Expected step order:
+Watch the run at `https://github.com/<org>/<repo>/actions`. Expected step order and what each failure means:
 
-1. **Setup SSH agent** — fails if `VPS_SSH_KEY` is empty or malformed
-2. **Add VPS host to known_hosts** — fails if `VPS_HOST` doesn't resolve
-3. **Deploy via SSH** — fails if `git fetch` can't reach GitHub (revisit Step 2) or `cd "$DEPLOY_PATH"` finds nothing (revisit Step 3's `DEPLOY_PATH`)
-4. **Health check** — fails if the app didn't come up or `HEALTH_URL` doesn't point at it
+| Step | Failure symptom in logs | Likely cause |
+|---|---|---|
+| **Setup SSH agent** | `Error loading key`, agent fails to start | `VPS_SSH_KEY` is empty, missing BEGIN/END lines, or has Windows line endings |
+| **Add VPS host to known_hosts** | `getaddrinfo ***: Name or service not known` (many retries) | `VPS_HOST` has a typo, a leading `https://`, a trailing `/`, an extra space, or DNS hasn't propagated. Re-paste the value, then verify with `dig <host> +short` |
+| **Deploy via SSH** | `Permission denied (publickey)` | The Actions→VPS key (Step 1) wasn't added to `~/.ssh/authorized_keys` of `VPS_USER` on the VPS |
+| **Deploy via SSH** | `Permission denied (publickey)` **on `git fetch`** | The VPS→GitHub deploy key (Step 2) is missing or `~/.ssh/config` doesn't point at it |
+| **Deploy via SSH** | `cd: ...: No such file or directory` | `DEPLOY_PATH` doesn't match the repo location on the VPS |
+| **Deploy via SSH** | `docker: permission denied while trying to connect` | `VPS_USER` is not in the `docker` group on the VPS |
+| **Health check** | Curl returns HTML / 404 / 502 | The container started but the deployed code doesn't have `/api/health`, or nginx isn't routing to port 3000 |
+| **Health check** | Connection times out | The container didn't start — check `docker compose logs` on the VPS |
 
 End-to-end success looks like:
 
