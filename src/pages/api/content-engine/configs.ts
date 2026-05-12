@@ -461,7 +461,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       // Server-side hygiene: clean platforms, drop empty pillars/role/tier strings
       const cleaned: Profile[] = (data as Profile[]).map((p) => ({
         id: p.id || slugify(p.name || ""),
-        type: p.type === "company" ? "company" : "person",
+        type: (p.type === "company" ? "company" : "person") as ProfileType,
         name: (p.name || "").trim(),
         parent_company_id: p.parent_company_id || undefined,
         role: p.role?.trim() || undefined,

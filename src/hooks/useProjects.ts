@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Project, Task } from "@/types";
+import { useTasks } from "@/hooks/useTasks";
 
 interface ProjectWithTasks {
   project: Project;
@@ -7,22 +8,7 @@ interface ProjectWithTasks {
 }
 
 export function useProjects(slug: string | null) {
-  return useQuery<ProjectWithTasks[]>({
-    queryKey: ["projects", slug],
-    queryFn: async () => {
-      const res = await fetch(`/api/projects?slug=${slug}`);
-      if (!res.ok) throw new Error("Failed to fetch projects");
-      const data = await res.json();
-      // API returns flat objects { id, name, status, ..., tasks: [] }
-      // Normalize to { project, tasks } shape expected by components
-      return (data.projects || []).map((p: Record<string, unknown>) => {
-        const { tasks, ...project } = p;
-        return { project: project as unknown as Project, tasks: (tasks || []) as Task[] };
-      });
-    },
-    enabled: !!slug,
-    staleTime: 30_000,
-  });
+  return useTasks(slug, { type: "project", include: "children" }) as ReturnType<typeof useQuery<ProjectWithTasks[]>>;
 }
 
 export function useUpdateTaskStatus() {

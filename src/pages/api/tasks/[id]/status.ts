@@ -1,0 +1,20 @@
+import type { NextApiRequest, NextApiResponse } from "next";
+import { compose, withAuth, withErrorHandler } from "@/lib/api-middleware";
+import { setTaskStatus } from "@/lib/data/tasks";
+
+async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== "POST") {
+    res.setHeader("Allow", "POST");
+    return res.status(405).json({ error: `Method ${req.method} not allowed` });
+  }
+  const slug = (req.query.slug || req.body?.slug || req.ctx?.clientSlug) as string;
+  const id = req.query.id as string;
+  const status = req.body?.status as string;
+  if (!slug || !id || !status) return res.status(400).json({ error: "Missing slug, id or status" });
+  if (req.ctx?.clientSlug && req.ctx.clientSlug !== slug) return res.status(403).json({ error: "Forbidden" });
+  const result = setTaskStatus(slug, id, status);
+  if (!result.ok) return res.status(result.error?.includes("not found") ? 404 : 500).json({ error: result.error });
+  return res.status(200).json(result);
+}
+
+export default compose(withErrorHandler, withAuth)(handler);

@@ -64,7 +64,18 @@ export const VALID_TASK_STATUSES: readonly TaskStatus[] = [
   "blocked",
   "cancelled",
 ] as const;
-export type TaskType = "content" | "outreach" | "foundation" | "research" | "analysis" | "execution" | "tool" | "media";
+export type TaskType =
+  | "project"
+  | "content"
+  | "outreach"
+  | "foundation"
+  | "research"
+  | "analysis"
+  | "execution"
+  | "tool"
+  | "media"
+  | "Media"
+  | "content_subtask";
 
 export interface Task {
   id: string;               // "P01-T01"
@@ -115,6 +126,10 @@ export interface Task {
    */
   content_tasks?: ContentTask[];
 }
+
+export type ProjectTask = Project & { type: "project"; parent_id?: null };
+export type ChildTask = Task & { type: Exclude<TaskType, "project" | "content_subtask">; parent_id?: string };
+export type ContentSubtask = ContentTask & { type: "content_subtask"; parent_id?: string };
 
 /**
  * Status canónicos para una `ContentTask` (sub-task del Content Engine).

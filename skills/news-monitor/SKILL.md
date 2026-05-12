@@ -1,13 +1,13 @@
 ---
 name: news-monitor
-description: "Multi-tenant prompt-driven news monitor. Searches news per content pillar, builds ideas with brand-aligned angles in a single pass, and writes them directly to idea-queue.json. Runs daily via cron."
+description: "Multi-tenant prompt-driven news monitor. Searches news per content pillar, builds ContentTask candidates with brand-aligned angles in a single pass, and creates them through Mission Control. Runs daily via cron."
 context_required:
 - brand/{slug}/content/configs/news-prompts/*.yml
 - brand/{slug}/content/content-pillars.md
 - brand/{slug}/content/configs/cadence-config.yml
 - brand/{slug}/content/pov-bank.json
 context_writes:
-- brand/{slug}/content/idea-queue.json
+- POST /api/content-engine/content-tasks
 - brand/{slug}/content/research-signals/{date}-news.json
 ---
 
@@ -17,7 +17,7 @@ context_writes:
 > ideas with brand-aligned angles, in one pass. Runs daily 7am via cron.
 >
 > **Single-skill flow (no two-step):** the legacy split was
-> `news-monitor` → `research-signals` → `idea-builder` → `idea-queue.json`.
+> `news-monitor` → `research-signals` → `idea-builder` → `content-tasks.json`.
 > That intermediate layer was never visualized and added a failure point.
 > Now `news-monitor` does discover + analyze + write the idea, end-to-end.
 > `research-signals/{date}-news.json` is still written but **only as an
@@ -70,17 +70,21 @@ Build a complete idea in one shot:
    - Do NOT prefix with "Nuestro POV:" — the UI adds the header
 6. **Write `title`** — one-line scannable title, 40–90 chars, no "Nuestro POV:" prefix.
 
-### 4. Schema (one idea per news result)
+### 4. Create ContentTask candidate (one per news result)
 
-Append to `content/idea-queue.json`. **Before assigning `{n}`**, read the existing
-file and find the highest `{n}` already used for today's date prefix
-(`idea-{YYYY-MM-DD}-`). Start your numbering at `max + 1` so a second cron run on
-the same day does not collide with earlier ideas. If no idea for today exists yet,
-start at `1`.
+POST each candidate to Mission Control; do not write JSON directly:
+
+`POST {MC_BASE}/api/content-engine/content-tasks`
+
+Use `GET {MC_BASE}/api/content-engine/content-tasks?slug={slug}` first and
+dedupe/number from existing `CT-{slug}-{YYYY-MM-DD}-{n}` ids for today's date.
+If the API returns an id because you omitted one, use that id in the audit log.
 
 ```json
 {
-  "id": "idea-{YYYY-MM-DD}-{n}",
+  "slug": "{slug}",
+  "id": "CT-{slug}-{YYYY-MM-DD}-{n}",
+  "idea_id": "CT-{slug}-{YYYY-MM-DD}-{n}",
   "title": "<40-90 char scannable title>",
   "pillar_id": "P3",
   "content_type": "Hot Take",
@@ -135,5 +139,5 @@ traces back to the cron run.
 If Brave Search API fails:
 1. Try Perplexity as fallback
 2. If both fail, write empty `[]` to the audit log and skip the
-   `idea-queue.json` write for this run
+   ContentTask creation for this run
 3. Never block the pipeline — other crons continue regardless

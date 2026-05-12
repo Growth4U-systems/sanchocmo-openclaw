@@ -21,8 +21,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { withErrorHandler } from "@/lib/api-middleware";
 import {
-  listContentTasks,
-  findContentTask,
+  findContentTask as findNestedContentTask,
   setContentTaskStatus,
   updateContentTask,
   attachDocumentToContentTask,
@@ -31,6 +30,13 @@ import {
   rollbackChannelPhasesToStatus,
   ContentTaskUpdateInput,
 } from "@/lib/data/content-tasks";
+import {
+  contentTaskFromDiscovery,
+  findContentTaskById as findFlatContentTaskById,
+  listContentTasksByParent,
+  loadAllContentTasks,
+  upsertContentTask,
+} from "@/lib/data/content-tasks-flat";
 import { listDrafts } from "@/lib/data/drafts";
 import { publish as publishEvent } from "@/lib/data/events";
 import {
@@ -64,22 +70,29 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === "GET") {
     const parentTaskId = req.query.parentTaskId as string;
     const id = req.query.id as string | undefined;
-    if (!parentTaskId) return res.status(400).json({ error: "Missing parentTaskId" });
 
     if (id) {
-      const ct = findContentTask(slug, parentTaskId, id);
+      const ct = parentTaskId
+        ? findNestedContentTask(slug, parentTaskId, id)
+        : findFlatContentTaskById(slug, id);
       if (!ct) return res.status(404).json({ error: "ContentTask not found" });
       return res.status(200).json({ ok: true, contentTask: ct });
     }
+    if (!parentTaskId) {
+      return res.status(200).json({
+        ok: true,
+        contentTasks: loadAllContentTasks(slug),
+      });
+    }
     return res.status(200).json({
       ok: true,
-      contentTasks: listContentTasks(slug, parentTaskId),
+      contentTasks: listContentTasksByParent(slug, parentTaskId),
     });
   }
 
   if (req.method === "PATCH") {
     const { parentTaskId, id, status, pipeline_state, channel_phases, ...rest } = req.body || {};
-    if (!parentTaskId || !id) return res.status(400).json({ error: "Missing parentTaskId or id" });
+    if (!id) return res.status(400).json({ error: "Missing id" });
 
     if (status !== undefined && !VALID_CONTENT_TASK_STATUSES.includes(status as ContentTaskStatus)) {
       return res.status(400).json({ error: `Invalid status: ${status}` });
@@ -107,7 +120,36 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     }
 
     try {
-      let updated = findContentTask(slug, parentTaskId, id);
+      if (!parentTaskId) {
+        let updated = findFlatContentTaskById(slug, id);
+        if (!updated) return res.status(404).json({ error: "ContentTask not found" });
+        const previousStatus = updated.status;
+        updated = upsertContentTask(slug, {
+          ...updated,
+          ...rest,
+          ...(status !== undefined ? { status: status as ContentTaskStatus } : {}),
+          ...(pipeline_state !== undefined ? { pipeline_state: pipeline_state as ContentTaskPipelineState } : {}),
+          ...(channel_phases !== undefined ? {
+            channel_phases: {
+              ...(updated.channel_phases || {}),
+              ...(channel_phases as Record<string, ChannelPhase>),
+            },
+          } : {}),
+          updated_at: new Date().toISOString(),
+        } as ContentTask);
+
+        if (previousStatus !== "Approved" && updated.status === "Approved") {
+          const baseUrl = `http://localhost:${process.env.PORT || 3000}`;
+          fetch(`${baseUrl}/api/content-engine/generate-drafts`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ slug, ideaId: updated.idea_id, contentTaskId: updated.id }),
+          }).catch((e) => console.error("[content-tasks] generate-drafts failed:", (e as Error).message));
+        }
+        return respondAndEmit(updated);
+      }
+
+      let updated = findNestedContentTask(slug, parentTaskId, id);
       if (!updated) return res.status(404).json({ error: "ContentTask not found" });
       const previousStatus = updated.status;
 
@@ -173,6 +215,14 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
   if (req.method === "POST") {
     const { parentTaskId, id, action, document, path: docPath } = req.body || {};
+    if (!action) {
+      const candidate = contentTaskFromDiscovery(slug, req.body || {});
+      if (!VALID_CONTENT_TASK_STATUSES.includes(candidate.status)) {
+        return res.status(400).json({ error: `Invalid status: ${candidate.status}` });
+      }
+      const saved = upsertContentTask(slug, candidate);
+      return res.status(id ? 200 : 201).json({ ok: true, contentTask: saved });
+    }
     if (!parentTaskId || !id || !action) {
       return res.status(400).json({ error: "Missing parentTaskId, id or action" });
     }
@@ -191,7 +241,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       // State machine actions — each validates the source state and walks the
       // CT through the canonical transition. Returns 409 (Conflict) when the
       // CT isn't in an allowed source state.
-      const ct = findContentTask(slug, parentTaskId, id);
+      const ct = findNestedContentTask(slug, parentTaskId, id);
       if (!ct) return res.status(404).json({ error: "ContentTask not found" });
 
       if (action === "approve-draft") {

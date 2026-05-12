@@ -1,6 +1,6 @@
 ---
 name: thief-marketers
-description: "Monitor competitors AND reference creators for top-performing content. Builds ideas with brand-aligned angles in a single pass and writes them directly to idea-queue.json. Reads two configs: competitors (rivals) and reference-creators (inspirational voices). Runs daily via cron."
+description: "Monitor competitors AND reference creators for top-performing content. Builds ContentTask candidates with brand-aligned angles in a single pass and creates them through Mission Control. Reads two configs: competitors (rivals) and reference-creators (inspirational voices). Runs daily via cron."
 context_required:
 - brand/{slug}/content/configs/competitors/*.yml
 - brand/{slug}/content/configs/reference-creators/*.yml
@@ -9,7 +9,7 @@ context_required:
 - brand/{slug}/content/pov-bank.json
 - brand/{slug}/brand-book/brand-voice/brand-voice.current.md
 context_writes:
-- brand/{slug}/content/idea-queue.json
+- POST /api/content-engine/content-tasks
 - brand/{slug}/content/research-signals/{date}-creators.json
 ---
 
@@ -78,17 +78,21 @@ Build a complete idea in one shot:
    - Do NOT prefix with "Nuestro POV:"
 7. **Write `title`** — 40–90 chars scannable title.
 
-### 4. Schema (one idea per top piece)
+### 4. Create ContentTask candidate (one per top piece)
 
-Append to `content/idea-queue.json`. **Before assigning `{n}`**, read the existing
-file and find the highest `{n}` already used for today's date prefix
-(`idea-{YYYY-MM-DD}-`). Start your numbering at `max + 1` so a second cron run on
-the same day does not collide with earlier ideas. If no idea for today exists yet,
-start at `1`.
+POST each candidate to Mission Control; do not write JSON directly:
+
+`POST {MC_BASE}/api/content-engine/content-tasks`
+
+Use `GET {MC_BASE}/api/content-engine/content-tasks?slug={slug}` first and
+dedupe/number from existing `CT-{slug}-{YYYY-MM-DD}-{n}` ids for today's date.
+If the API returns an id because you omitted one, use that id in the audit log.
 
 ```json
 {
-  "id": "idea-{YYYY-MM-DD}-{n}",
+  "slug": "{slug}",
+  "id": "CT-{slug}-{YYYY-MM-DD}-{n}",
+  "idea_id": "CT-{slug}-{YYYY-MM-DD}-{n}",
   "title": "<40-90 char scannable title>",
   "pillar_id": "P1",
   "content_type": "Hot Take",
@@ -149,8 +153,8 @@ Never block the pipeline because a tool is unavailable. Partial data > no data.
 
 ## Frequency
 
-Daily 7am (same time as news-monitor — runs in parallel, both write to
-the same `idea-queue.json`).
+Daily 7am (same time as news-monitor — runs in parallel, both create
+candidate ContentTasks through the same API).
 
 ## Related skills
 
