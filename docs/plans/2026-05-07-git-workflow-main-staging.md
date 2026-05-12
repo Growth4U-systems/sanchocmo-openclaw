@@ -90,19 +90,21 @@ Corre en push a `main`:
   - `CHANGELOG.md` regenerado
 - Cuando alguien mergea el release PR → release-please crea el tag (`vX.Y.Z`) + GitHub Release
 
-### `.github/workflows/deploy.yml`
-Trigger: `release: published` (lo dispara el GitHub Release de release-please).
+### `.github/workflows/deploy-staging.yml` y `deploy-prod.yml`
 
-Ya que el deploy es a VPS (Hetzner + Docker Compose + nginx, según `docs/DEPLOY.md`), el workflow hace SSH al VPS:
+VPSes separados (uno para staging, otro para producción). Cada uno tiene su propio GitHub Environment con secrets/vars distintos pero con los **mismos nombres**, así los workflows no necesitan prefijos.
 
-- **Secrets requeridos** en GitHub repo:
-  - `VPS_HOST`, `VPS_USER`, `VPS_SSH_KEY` (private key con acceso al VPS)
-- **Steps:**
-  1. SSH al VPS
-  2. `cd ~/.openclaw && git fetch --tags && git checkout <tag>`
-  3. `docker compose build --pull && docker compose up -d`
-  4. Health check al endpoint público (`curl -f https://staging.sanchocmo.ai/api/health` o equivalente)
-- **Rollback:** si el health check falla, hacer `git checkout <tag-anterior> && docker compose up -d`
+| Workflow | Trigger | Environment | Approval |
+|---|---|---|---|
+| `deploy-staging.yml` | push a `staging` | `staging` | ninguno (auto) |
+| `deploy-prod.yml` | release published | `production` | required reviewers (manual) |
+
+- **Secrets** (por environment): `VPS_HOST`, `VPS_USER`, `VPS_SSH_KEY`
+- **Variables** (por environment): `DEPLOY_PATH` (default `~/.openclaw`), `HEALTH_URL`
+
+**Staging deploy:** SSH al VPS staging, `git fetch && git checkout <SHA-del-commit>`, `docker compose up -d`, health check.
+
+**Prod deploy:** SSH al VPS prod, `git fetch --tags && git checkout <tag>`, `docker compose up -d`, health check. **Rollback automático** al tag anterior si falla.
 
 **Configs de release-please:**
 - `release-please-config.json` (raíz del repo): tipo `node`, `package-name: openclaw`
@@ -172,7 +174,8 @@ feature/foo ──PR──▶ staging ──PR──▶ main ──release-pleas
 |---|---|---|
 | `.github/workflows/ci.yml` | Crear | Lint + typecheck + build + tests en PRs |
 | `.github/workflows/release-please.yml` | Crear | Auto-tag + release on-merge a main |
-| `.github/workflows/deploy.yml` | Crear | SSH al VPS + git checkout tag + docker compose up |
+| `.github/workflows/deploy-staging.yml` | Crear | Auto-deploy a VPS staging on push a staging branch |
+| `.github/workflows/deploy-prod.yml` | Crear | Deploy a VPS prod on release published, con manual approval |
 | `.github/pull_request_template.md` | Crear | Template estándar de PRs |
 | `release-please-config.json` | Crear | Config de release-please |
 | `.release-please-manifest.json` | Crear | Tracking de version actual |

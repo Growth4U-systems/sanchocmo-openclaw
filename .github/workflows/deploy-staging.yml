@@ -1,0 +1,67 @@
+name: Deploy to Staging
+
+on:
+  push:
+    branches: [staging]
+  workflow_dispatch: {}
+
+concurrency:
+  group: deploy-staging
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy ${{ github.sha }} to staging VPS
+    runs-on: ubuntu-latest
+    environment:
+      name: staging
+      url: ${{ vars.HEALTH_URL }}
+    steps:
+      - name: Setup SSH agent
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.VPS_SSH_KEY }}
+
+      - name: Add VPS host to known_hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H "${{ secrets.VPS_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Deploy via SSH
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          DEPLOY_PATH: ${{ vars.DEPLOY_PATH || '~/.openclaw' }}
+          SHA: ${{ github.sha }}
+        run: |
+          ssh "$VPS_USER@$VPS_HOST" bash -s <<EOF
+            set -euo pipefail
+            cd "$DEPLOY_PATH"
+            echo "▶ Fetching staging…"
+            git fetch origin staging --prune
+            echo "▶ Checking out $SHA…"
+            git checkout "$SHA"
+            echo "▶ Building and starting containers…"
+            docker compose build --pull
+            docker compose up -d
+            docker compose ps
+          EOF
+
+      - name: Health check
+        env:
+          HEALTH_URL: ${{ vars.HEALTH_URL }}
+        run: |
+          if [ -z "$HEALTH_URL" ]; then
+            echo "::warning::HEALTH_URL variable not set on staging environment; skipping health check"
+            exit 0
+          fi
+          echo "▶ Polling $HEALTH_URL (up to 60s)…"
+          for i in {1..30}; do
+            if curl -fsS --max-time 5 "$HEALTH_URL" > /dev/null; then
+              echo "✓ Health check passed"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "::error::Health check failed after 60s — check container logs on the staging VPS"
+          exit 1
