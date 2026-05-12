@@ -7,12 +7,13 @@ Workflow guide for sanchocmo-openclaw.
 ## Branch model
 
 ```
-feature/foo ──PR──▶ staging ──PR──▶ main ──release-please──▶ tag vX.Y.Z ──▶ deploy
-                       │                  │
-                       │              release PR
-                       │              (auto)
-                  preview QA
+feature/foo ──PR──▶ staging ──auto-deploy──▶ staging VPS
+                       │
+                       └──PR──▶ main ──release-please──▶ tag vX.Y.Z ──manual approval──▶ prod VPS
 ```
+
+- **`staging`** auto-deploys on every merge (no gate).
+- **`main`** only deploys on a published release, and requires a manual approval in the Actions UI before the prod VPS is touched.
 
 | Branch | Purpose | Protection |
 |---|---|---|
@@ -60,11 +61,15 @@ Informational (won't block merge for now):
 ### 5. Merge to staging
 After approval + green CI, merge. **Use "Squash and merge"** so the staging history stays linear and each PR maps to one Conventional Commit.
 
+Merging to `staging` automatically triggers `deploy-staging.yml`, which SSHes into the staging VPS and runs `docker compose up -d` with the new commit. Verify your change works in the staging preview before proceeding.
+
 ### 6. Release to production
 When staging is ready to go live, open a PR `staging → main`. Once merged, `release-please.yml` runs on `main`:
 - Reads new commits since the last tag
 - Opens a "release PR" with the version bump and CHANGELOG diff
-- When you merge that release PR → tag `vX.Y.Z` is created → GitHub Release published → `deploy.yml` ships it to the VPS.
+- When you merge that release PR → tag `vX.Y.Z` is created → GitHub Release published.
+
+Publishing the release triggers `deploy-prod.yml`, which **waits for a manual approval** (the `production` GitHub Environment has required reviewers). After approval, the prod VPS pulls the tag and restarts. Approve via the "Review deployments" prompt in the Actions tab.
 
 You don't manually create tags. release-please owns versioning.
 
@@ -117,6 +122,28 @@ The pre-push lifecycle is enforced in CI; running locally just saves a round tri
 - **Update docs** in the same PR when you change behavior visible to other devs or users.
 
 ---
+
+## GitHub Environments (deploy config)
+
+The deploy workflows resolve VPS credentials from two **GitHub Environments** (Settings → Environments):
+
+| Environment | Triggered by | Required reviewers | Used by |
+|---|---|---|---|
+| `staging` | merge / push to `staging` | none (auto) | `deploy-staging.yml` |
+| `production` | release published | yes (manual approval) | `deploy-prod.yml` |
+
+Each environment defines the same secret/variable names, with values for that VPS:
+
+**Secrets** (sensitive — masked in logs):
+- `VPS_HOST` — IP or hostname of the VPS
+- `VPS_USER` — SSH user (recommended: a dedicated `deploy` user, not `root`)
+- `VPS_SSH_KEY` — Private SSH key (the public counterpart lives in `~/.ssh/authorized_keys` on the VPS)
+
+**Variables** (not sensitive — visible in logs):
+- `DEPLOY_PATH` — absolute path of the repo clone on the VPS (default `~/.openclaw`)
+- `HEALTH_URL` — public URL the workflow polls after deploy. Recommended: point this at `https://<env-domain>/api/health`, which returns version, commit SHA, env label and uptime.
+
+If `HEALTH_URL` is unset, the health check step warns and continues. Missing required secrets will fail the deploy with a clear error.
 
 ## Questions / problems
 

@@ -15,9 +15,11 @@ concurrency:
 
 jobs:
   deploy:
-    name: Deploy ${{ github.event.release.tag_name || inputs.tag }} to VPS
+    name: Deploy ${{ github.event.release.tag_name || inputs.tag }} to prod VPS
     runs-on: ubuntu-latest
-    environment: production
+    environment:
+      name: production
+      url: ${{ vars.HEALTH_URL }}
     steps:
       - name: Resolve target tag
         id: tag
@@ -40,7 +42,7 @@ jobs:
         env:
           VPS_HOST: ${{ secrets.VPS_HOST }}
           VPS_USER: ${{ secrets.VPS_USER }}
-          DEPLOY_PATH: ${{ secrets.VPS_DEPLOY_PATH || '~/.openclaw' }}
+          DEPLOY_PATH: ${{ vars.DEPLOY_PATH || '~/.openclaw' }}
           TAG: ${{ steps.tag.outputs.tag }}
         run: |
           ssh "$VPS_USER@$VPS_HOST" bash -s <<EOF
@@ -50,7 +52,8 @@ jobs:
             git fetch --tags --prune
             echo "▶ Checking out $TAG…"
             git checkout "$TAG"
-            echo "▶ Building and starting containers…"
+            export GIT_COMMIT="\$(git rev-parse HEAD)"
+            echo "▶ Building and starting containers (GIT_COMMIT=\$GIT_COMMIT)…"
             docker compose build --pull
             docker compose up -d
             docker compose ps
@@ -58,10 +61,10 @@ jobs:
 
       - name: Health check
         env:
-          HEALTH_URL: ${{ secrets.PROD_HEALTH_URL }}
+          HEALTH_URL: ${{ vars.HEALTH_URL }}
         run: |
           if [ -z "$HEALTH_URL" ]; then
-            echo "::warning::PROD_HEALTH_URL secret not set; skipping health check"
+            echo "::warning::HEALTH_URL variable not set on production environment; skipping health check"
             exit 0
           fi
           echo "▶ Polling $HEALTH_URL (up to 60s)…"
@@ -80,7 +83,7 @@ jobs:
         env:
           VPS_HOST: ${{ secrets.VPS_HOST }}
           VPS_USER: ${{ secrets.VPS_USER }}
-          DEPLOY_PATH: ${{ secrets.VPS_DEPLOY_PATH || '~/.openclaw' }}
+          DEPLOY_PATH: ${{ vars.DEPLOY_PATH || '~/.openclaw' }}
         run: |
           echo "::warning::Deploy failed. Attempting rollback to previous tag…"
           ssh "$VPS_USER@$VPS_HOST" bash -s <<'EOF'
@@ -93,5 +96,6 @@ jobs:
             fi
             echo "▶ Rolling back to $PREV"
             git checkout "$PREV"
+            export GIT_COMMIT="$(git rev-parse HEAD)"
             docker compose up -d
           EOF
