@@ -321,6 +321,87 @@
         "consecutiveErrors": 2,
         "lastError": "cron announce delivery failed"
       }
+    },
+    {
+      "id": "a1b2c3d4-lead-sync-growth4u-0001",
+      "agentId": "sancho",
+      "name": "Lead Sync — Growth4U",
+      "description": "Nightly lead intelligence: sync Slack notes to GHL + enrich new leads + update existing",
+      "enabled": true,
+      "createdAtMs": 1742504400000,
+      "updatedAtMs": 1742504400000,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 22 * * *",
+        "tz": "Europe/Madrid"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Ejecuta la skill lead-intelligence-hub para Growth4U (slug: growth4u).\n\nPRINCIPIO CLAVE: GHL es la fuente de verdad para datos operativos (contacto, pipeline, notas). Los archivos leads/{id}.md solo guardan INTELIGENCIA que no cabe en GHL (company research, transcripts resumidos).\n\nCONFIG:\nLee brand/growth4u/lead-tracking-config.json para obtener:\n- ghl_location_id: BnXWP5dcLVMgUudLv10O\n- slack_channel_id: C097N5EJGTB\n- ghl_custom_field_ids (para slack_notes, last_slack_sync)\n- drive_recordings_folder: Supabase Recordings\n\nPASO 1 — SLACK NOTES → GHL:\n1. Lee mensajes recientes del canal de Slack usando mcp__slack: list_channel_messages(channel: C097N5EJGTB, limit: 100)\n2. Para cada mensaje que sea parent de un thread, lee los replies\n3. Extrae email/teléfono del mensaje parent para identificar el lead\n4. Busca el contacto en GHL: GET https://services.leadconnectorhq.com/contacts/?locationId=BnXWP5dcLVMgUudLv10O&query={email_o_telefono} (Headers: Authorization: Bearer $GROWTH4U_GHL_API_KEY, Version: 2021-07-28)\n5. Si encuentra match, formatea las notas como [YYYY-MM-DD] {texto} y actualiza el custom field slack_notes via PUT con body: {\"customFields\": [{\"id\": \"{slack_notes_id}\", \"field_value\": \"{notas_acumuladas}\"}]}\n6. Si NO encuentra match, loguea en el resumen como error\n\nPASO 2 — FETCH ALL GHL CONTACTS:\nGET https://services.leadconnectorhq.com/contacts/?locationId=BnXWP5dcLVMgUudLv10O&limit=100\nPaginar con startAfter si hay más de 100.\n\nPASO 3 — NEW LEADS (sin archivo en brand/growth4u/leads/):\nPara cada contacto SIN brand/growth4u/leads/{ghl_id}.md:\n1. Company research: usar @company-finder en modo targeted (buscar por nombre/dominio de empresa del contacto, NO por ICP)\n2. Contact enrichment: usar @contact-enrichment solo para datos que faltan (email no verificado, phone missing, LinkedIn missing). Si encuentra datos nuevos, escribirlos TAMBIÉN en GHL\n3. Transcript search: gog drive search \"{nombre}\" en carpeta \"Supabase Recordings\". Si encuentra, leer y resumir: pain points, next steps, key quotes\n4. Crear brand/growth4u/leads/{ghl_id}.md SOLO con inteligencia (Company Intelligence + Contact Enrichment extras + Call Transcripts). NO duplicar datos que ya están en GHL\n\nPASO 4 — EXISTING LEADS (ya tienen archivo):\n1. Buscar nuevos transcripts en Drive (comparar con last_enriched del frontmatter)\n2. Si hay nuevos → resumir y añadir a sección Call Transcripts\n3. Actualizar frontmatter: last_enriched\n4. NO copiar datos de GHL al archivo — se leen de GHL en tiempo real cuando se necesitan\n\nPASO 5 — SUMMARY:\nGuardar resumen en memory/heartbeat-state.json → lead_sync\nPublicar en Discord #intelligence (1477741644789842031):\nmessage(action=send, channel=discord, target=1477741644789842031, message='📊 Lead Sync — YYYY-MM-DD: X nuevos, Y actualizados, Z notas sincronizadas')\nCrear hilo con detalles.",
+        "model": "anthropic/claude-sonnet-4-5"
+      },
+      "delivery": {
+        "mode": "none",
+        "channel": "discord",
+        "to": "channel:1477741644789842031"
+      },
+      "state": {}
+    },
+    {
+      "id": "a1b2c3d4-call-prep-growth4u-0002",
+      "agentId": "sancho",
+      "name": "Call Prep Daily — Growth4U",
+      "description": "Nightly briefing: tomorrow's calls with lead summary and meeting objective",
+      "enabled": true,
+      "createdAtMs": 1742504400000,
+      "updatedAtMs": 1742504400000,
+      "schedule": {
+        "kind": "cron",
+        "expr": "30 22 * * 0-4",
+        "tz": "Europe/Madrid"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Ejecuta sales-call-prep en MODO DIARIO para Growth4U (slug: growth4u).\n\nPASO 1 — LISTA DE LEADS:\nObtén TODOS los contactos de GHL: GET https://services.leadconnectorhq.com/contacts/?locationId=BnXWP5dcLVMgUudLv10O&limit=100 (Headers: Authorization: Bearer $GROWTH4U_GHL_API_KEY, Version: 2021-07-28). Paginar si hay más. Extraer lista de nombres: firstName + lastName de cada contacto.\n\nPASO 2 — BUSCAR EN CALENDARIO:\nUsa gog calendar upcoming para ver eventos de MAÑANA. Para cada evento, comprobar si el título o algún attendee contiene alguno de los nombres de leads. Match fuzzy: ignorar acentos, case-insensitive, nombre parcial OK.\n\nPASO 3 — ENRIQUECER CADA MATCH:\nPara cada evento que matchea con un lead:\n1. Del contacto GHL: pipeline stage, notas Slack (custom field slack_notes), tags, empresa\n2. Si existe brand/growth4u/leads/{ghl_id}.md → leer Company Intelligence y Call Transcripts\n\nPASO 4 — GENERAR BRIEFING:\nPara cada llamada:\n- ⏰ Hora de la reunión\n- 📋 Resumen del lead: qué hablamos la última vez (de slack_notes + transcripts)\n- 🎯 Objetivo de la reunión: inferir del título del evento + pipeline stage + contexto de últimas notas\n\nFormato:\n📞 LLAMADAS DE MAÑANA — {date}\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n🔵 {time} — {name} ({company})\n   Estado: {pipeline_stage}\n   📋 Última vez: {qué se habló, 2-3 líneas}\n   🎯 Objetivo: {qué queremos lograr}\n   📄 Perfil: brand/growth4u/leads/{ghl_id}.md\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\nSi NO hay llamadas con leads mañana → '📞 No hay llamadas con leads programadas para mañana ({date}).'\n\nPASO 5 — PUBLICAR:\nDiscord #intelligence (1477741644789842031) con patrón de hilo:\n1. message(action=send, channel=discord, target=1477741644789842031, message='📞 Llamadas de mañana — {date}: {count} calls')\n2. Capturar messageId → thread-create → enviar briefing al hilo\n\nPASO 6 — LOG:\nmemory/heartbeat-state.json → sales_call_prep: last_run, mode: daily, calls_found.",
+        "model": "anthropic/claude-sonnet-4-5"
+      },
+      "delivery": {
+        "mode": "none",
+        "channel": "discord",
+        "to": "channel:1477741644789842031"
+      },
+      "state": {}
+    },
+    {
+      "id": "a1b2c3d4-call-prep-growth4u-0003",
+      "agentId": "sancho",
+      "name": "Call Prep Weekly — Growth4U",
+      "description": "Friday overview: all calls for next week at a glance",
+      "enabled": true,
+      "createdAtMs": 1742504400000,
+      "updatedAtMs": 1742504400000,
+      "schedule": {
+        "kind": "cron",
+        "expr": "30 22 * * 5",
+        "tz": "Europe/Madrid"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Ejecuta sales-call-prep en MODO SEMANAL para Growth4U (slug: growth4u).\n\nPASO 1 — LISTA DE LEADS:\nObtén TODOS los contactos de GHL: GET https://services.leadconnectorhq.com/contacts/?locationId=BnXWP5dcLVMgUudLv10O&limit=100 (Headers: Authorization: Bearer $GROWTH4U_GHL_API_KEY, Version: 2021-07-28). Paginar si hay más. Extraer lista de nombres.\n\nPASO 2 — CALENDARIO SEMANA SIGUIENTE:\nUsa Google Calendar API para obtener eventos de LUNES a VIERNES de la semana que viene. Para cada evento, comprobar si el título o algún attendee contiene alguno de los nombres de leads. Match fuzzy.\n\nPASO 3 — GENERAR RESUMEN SEMANAL:\nPara cada match, extraer nombre + empresa + pipeline stage de GHL.\n\nFormato:\n📅 LLAMADAS SEMANA {date_range}\n\nLunes:\n  10:00 — Juan Pérez (TechCorp) — Follow-up demo\n  16:00 — María López (StartupXYZ) — Primera call\n\nMartes:\n  (sin llamadas con leads)\n\n...\n\nTotal: {count} llamadas con leads programadas\n\nSi NO hay llamadas con leads → '📅 No hay llamadas con leads para la semana del {date_range}.'\n\nPASO 4 — PUBLICAR:\nDiscord #intelligence (1477741644789842031) con patrón de hilo:\n1. message(action=send, target=1477741644789842031, message='📅 Llamadas semana {date_range}: {count} calls')\n2. thread-create → enviar resumen al hilo\n\nPASO 5 — LOG:\nmemory/heartbeat-state.json → sales_call_prep: last_run, mode: weekly, calls_found.",
+        "model": "anthropic/claude-sonnet-4-5"
+      },
+      "delivery": {
+        "mode": "none",
+        "channel": "discord",
+        "to": "channel:1477741644789842031"
+      },
+      "state": {}
     }
   ]
 }
