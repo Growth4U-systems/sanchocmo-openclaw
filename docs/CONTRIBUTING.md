@@ -132,18 +132,12 @@ The deploy workflows resolve VPS credentials from two **GitHub Environments** (S
 | `staging` | merge / push to `staging` | none (auto) | `deploy-staging.yml` |
 | `production` | release published | yes (manual approval) | `deploy-prod.yml` |
 
-Each environment defines the same secret/variable names, with values for that VPS:
+Each environment exposes the same secret/variable names with different values:
 
-**Secrets** (sensitive — masked in logs):
-- `VPS_HOST` — IP or hostname of the VPS
-- `VPS_USER` — SSH user (recommended: a dedicated `deploy` user, not `root`)
-- `VPS_SSH_KEY` — Private SSH key (the public counterpart lives in `~/.ssh/authorized_keys` on the VPS)
+- **Secrets:** `VPS_HOST`, `VPS_USER`, `VPS_SSH_KEY`
+- **Variables:** `DEPLOY_PATH`, `HEALTH_URL`
 
-**Variables** (not sensitive — visible in logs):
-- `DEPLOY_PATH` — absolute path of the repo clone on the VPS (default `~/.openclaw`)
-- `HEALTH_URL` — public URL the workflow polls after deploy. Recommended: point this at `https://<env-domain>/api/health`, which returns version, commit SHA, env label and uptime.
-
-If `HEALTH_URL` is unset, the health check step warns and continues. Missing required secrets will fail the deploy with a clear error.
+> **Setting up a new VPS, rotating keys, or troubleshooting a failed deploy?** The full procedure — including how to generate the two SSH keys, exactly which value goes in each field, and how to verify — lives in [`docs/DEPLOY.md` → "Connect this VPS to the CI/CD pipeline"](DEPLOY.md#connect-this-vps-to-the-cicd-pipeline-github-actions). That section is the single source of truth for the operational setup.
 
 ## Questions / problems
 

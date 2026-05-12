@@ -382,6 +382,159 @@ docker compose restart
 
 ---
 
+## Connect this VPS to the CI/CD pipeline (GitHub Actions)
+
+Once the VPS is running manually (steps 1–10 above), the next step is to plug it into the pipeline so a push to `staging` (or a release to `main`) deploys to it automatically. The workflows (`.github/workflows/deploy-staging.yml`, `deploy-prod.yml`) read everything from a GitHub **Environment** — one per VPS.
+
+### The two SSH keys you need
+
+You will configure **two independent SSH keys** with opposite directions. Skipping or mixing them is the most common source of confusion:
+
+| Key | Private lives in… | Public goes to… | Purpose |
+|---|---|---|---|
+| **Actions → VPS** | GitHub Secret `VPS_SSH_KEY` (environment-scoped) | `~/.ssh/authorized_keys` of the VPS user | Lets GitHub Actions SSH **into** the VPS |
+| **VPS → GitHub** | `~/.ssh/github-deploy` on the VPS | GitHub repo → Settings → Deploy keys | Lets the VPS `git fetch` **from** GitHub |
+
+Without both, the deploy fails at different stages: the first key fails at SSH login, the second fails at `git fetch`.
+
+### Step 1 — Generate the "Actions → VPS" key
+
+SSH into the VPS as the user that should receive deploys (recommended: a non-root user, e.g. `deploy`, in the `docker` group).
+
+```bash
+ssh-keygen -t ed25519 -f ~/.ssh/github-actions-deploy -N "" -C "github-actions-<env>"
+cat ~/.ssh/github-actions-deploy.pub >> ~/.ssh/authorized_keys
+chmod 600 ~/.ssh/authorized_keys
+
+# Print the PRIVATE key — you'll paste it into GitHub:
+cat ~/.ssh/github-actions-deploy
+```
+
+Copy everything from `-----BEGIN OPENSSH PRIVATE KEY-----` to `-----END OPENSSH PRIVATE KEY-----` (inclusive).
+
+After uploading it to GitHub (Step 3), delete the private key from the VPS — it has no reason to stay there:
+
+```bash
+rm ~/.ssh/github-actions-deploy
+# Keep github-actions-deploy.pub if you want a record; authorized_keys is what matters
+```
+
+### Step 2 — Generate the "VPS → GitHub" deploy key
+
+Still on the VPS, same user:
+
+```bash
+ssh-keygen -t ed25519 -f ~/.ssh/github-deploy -N "" -C "vps-<env>-github-fetch"
+
+# Tell SSH to use this key when talking to github.com:
+cat >> ~/.ssh/config <<'EOF'
+
+Host github.com
+  HostName github.com
+  User git
+  IdentityFile ~/.ssh/github-deploy
+  IdentitiesOnly yes
+EOF
+chmod 600 ~/.ssh/config
+
+# Print the PUBLIC key — you'll paste it into GitHub:
+cat ~/.ssh/github-deploy.pub
+```
+
+In GitHub: repo → **Settings → Deploy keys → Add deploy key**:
+- Title: `VPS <env> — read-only fetch` (e.g. `VPS staging — read-only fetch`)
+- Key: paste the public key
+- **Allow write access: NO** (read-only is enough for `git fetch`)
+
+Verify from the VPS:
+
+```bash
+cd ~/.openclaw   # or wherever the repo is cloned
+git fetch origin --prune
+# No password prompt, no error → ready
+```
+
+### Step 3 — Configure the GitHub Environment
+
+In the repo: **Settings → Environments**. Two environments exist, one per VPS:
+
+| Environment | Triggered by | Required reviewers | Used by |
+|---|---|---|---|
+| `staging` | merge / push to `staging` | none (auto-deploy) | `deploy-staging.yml` |
+| `production` | release published | maintainers (manual approval) | `deploy-prod.yml` |
+
+Both environments use the **same secret and variable names** — only the values differ. Add for the environment matching this VPS:
+
+**Secrets** (Settings → Environments → `<env>` → Add secret — masked in logs, cannot be read back):
+
+| Name | Value | Where to get it |
+|---|---|---|
+| `VPS_HOST` | IP address or hostname of the VPS | The IP/domain you set up DNS for in step 2 (e.g. `staging.sanchocmo.ai`, `203.0.113.42`) |
+| `VPS_USER` | SSH user that owns `authorized_keys` | The user you ran `ssh-keygen` as in Step 1 (e.g. `deploy`, `root`) |
+| `VPS_SSH_KEY` | Full private key contents from Step 1 | The output of `cat ~/.ssh/github-actions-deploy` — entire block including BEGIN/END lines |
+
+**Variables** (Settings → Environments → `<env>` → Add variable — visible in logs, editable):
+
+| Name | Value | Where to get it |
+|---|---|---|
+| `DEPLOY_PATH` | Absolute path of the repo clone on the VPS | Output of `echo $HOME/.openclaw` on the VPS as the SSH user (e.g. `/home/deploy/.openclaw`, `/root/.openclaw`). Can be left unset to default to `~/.openclaw`. |
+| `HEALTH_URL` | Public URL the workflow polls after deploy | `https://<env-domain>/api/health` — e.g. `https://staging.sanchocmo.ai/api/health`, `https://app.sanchocmo.ai/api/health` |
+
+> **Secrets vs variables, why two?** Secrets are encrypted at rest and masked as `***` in workflow logs — use them for anything sensitive (private keys, tokens). Variables are stored in plain text and shown in logs — use them for non-sensitive config (paths, public URLs). GitHub does not let you put a secret in a `vars.` context or vice versa, so the names above are not interchangeable.
+
+### Step 4 — Trigger the first deploy and verify
+
+**For `staging`:** any push or merge to the `staging` branch triggers `deploy-staging.yml`. To force a run on a clean VPS without code changes:
+
+```bash
+git commit --allow-empty -m "chore: trigger first staging deploy"
+git push origin staging
+```
+
+**For `production`:** the deploy is triggered automatically when release-please publishes a new GitHub Release. To dispatch manually (useful for the first deploy or for redeploying a known tag), use the Actions UI:
+
+1. Actions → "Deploy to Production"
+2. "Run workflow" → enter the tag (e.g. `v0.2.0`) → Run
+
+Watch the run at `https://github.com/<org>/<repo>/actions`. Expected step order:
+
+1. **Setup SSH agent** — fails if `VPS_SSH_KEY` is empty or malformed
+2. **Add VPS host to known_hosts** — fails if `VPS_HOST` doesn't resolve
+3. **Deploy via SSH** — fails if `git fetch` can't reach GitHub (revisit Step 2) or `cd "$DEPLOY_PATH"` finds nothing (revisit Step 3's `DEPLOY_PATH`)
+4. **Health check** — fails if the app didn't come up or `HEALTH_URL` doesn't point at it
+
+End-to-end success looks like:
+
+```bash
+curl -s https://<env-domain>/api/health
+# {
+#   "ok": true,
+#   "version": "0.1.0",
+#   "commit": "<SHA of the deployed commit>",
+#   "env": "STAGING" | "PRODUCTION",
+#   "timestamp": "...",
+#   "uptimeSeconds": <small number after fresh deploy>
+# }
+```
+
+### Rotating or removing keys
+
+**Rotating `VPS_SSH_KEY` (e.g. after suspected compromise):**
+1. On the VPS, generate a new key (`ssh-keygen ...`), append the new public key to `~/.ssh/authorized_keys`
+2. Overwrite the GitHub Secret with the new private key
+3. Test with a `workflow_dispatch` run
+4. Remove the **old** public key line from `~/.ssh/authorized_keys`
+
+**Rotating the deploy key:**
+1. Generate a new one in the VPS, update `~/.ssh/config` to point at it
+2. Add the new public key in GitHub → repo Settings → Deploy keys
+3. Test `git fetch` on the VPS
+4. Delete the old deploy key from the GitHub list
+
+**Decommissioning a VPS:** remove `VPS_HOST`/`VPS_USER`/`VPS_SSH_KEY` from the environment (workflow fails fast and doesn't touch the VPS), then delete the deploy key from the repo to revoke its access.
+
+---
+
 ## Operations
 
 ### View logs
