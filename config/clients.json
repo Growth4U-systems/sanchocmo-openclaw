@@ -200,5 +200,8 @@
       "active": true
     }
   ],
-  "adminToken": "cc9b8067c18c5214358611d75f151f6d"
+  "adminToken": "cc9b8067c18c5214358611d75f151f6d",
+  "adminEmails": [
+    "diego.fernandez@nexus-solutions-lab.com"
+  ]
 }

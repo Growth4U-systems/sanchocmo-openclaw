@@ -159,6 +159,21 @@ Web dashboard (`mc-server.js`) on port 18790:
 
 Exposed via reverse proxy (nginx on VPS) or Tailscale Funnel (local dev).
 
+## Development workflow
+
+```
+feature/*  ──PR──▶  staging  ──PR──▶  main  ──release-please──▶  vX.Y.Z  ──▶  deploy
+```
+
+- **`main`** = production. Every merge auto-tags + deploys via GitHub Actions.
+- **`staging`** = QA / preview. Where features accumulate between releases. Default branch.
+- **`feature/*`, `fix/*`, `chore/*`** → PR to `staging`.
+- **`hotfix/*`** → PR direct to `main` (then back-merge to staging).
+- Commits must follow [Conventional Commits](https://www.conventionalcommits.org/) — enforced by commitlint.
+- Versioning is automatic via [release-please](https://github.com/googleapis/release-please).
+
+Full guide: [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md). Deploy details: [docs/DEPLOY.md](docs/DEPLOY.md).
+
 ## License
 
 [Sustainable Use License (SUL)](LICENSE.md)
