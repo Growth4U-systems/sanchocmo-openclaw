@@ -9,7 +9,7 @@ import { useProjects, useUpdateTask, useUpdateTaskStatus } from "@/hooks/useProj
 import { useIdeas, useUpdateIdeaStatus, useUpdatePipelineStatus, useUpdatePipelineStep } from "@/hooks/useIdeas";
 import { useOpenChat } from "@/hooks/useChat";
 import { buildTaskThread } from "@/lib/chat-openers";
-import { resolvePillarDocPath, resolveTaskDocPaths } from "@/lib/pillar-doc-paths";
+import { resolveTaskDocPaths } from "@/lib/pillar-doc-paths";
 import { PRJ_CHANNELS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import type { ContentTask, Idea, Task } from "@/types";
@@ -278,11 +278,12 @@ export default function TaskDetailPage() {
     });
   }, [task, foundationState, taskIsPendingOrNotStarted]);
 
-  // Auto-open chat for foundation tasks on first load.
+  // Auto-open chat for foundation pillar tasks and guided setup tasks on first load.
   // The doc is NOT auto-opened — the user can click on docs in the
   // Documents section if they want to view them.
   useEffect(() => {
-    if (!task?.pillar || !slug || !project || chatAutoOpened) return;
+    const shouldAutoOpen = !!task?.pillar || task?.skill === "meeting-intelligence";
+    if (!shouldAutoOpen || !task || !slug || !project || chatAutoOpened) return;
     const config = buildTaskThread(slug, task.id, task.name, project.id, {
       taskSkill: task.skill,
       taskChannel: task.channel,

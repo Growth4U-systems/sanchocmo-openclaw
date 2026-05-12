@@ -20,13 +20,13 @@ context_writes:
 
 > Sancho learns from meetings: decisions, insights, quotes extracted daily
 
-UNIVERSAL - works for any brand. No configuration needed.
+UNIVERSAL - works for any brand once the approved meeting sources are configured in Mission Control.
 
 ---
 
 ## What It Does
 
-Scans meetings/Slack → Extracts intelligence → Saves to Context Lake
+Scans approved meeting sources → Extracts intelligence → Saves to Context Lake
 
 **Sources**: Notion + Google Drive + Slack
 **Output**: `intelligence/YYYY-MM-DD.json`
@@ -34,15 +34,40 @@ Scans meetings/Slack → Extracts intelligence → Saves to Context Lake
 
 ---
 
+## Setup Protocol
+
+When the task is **Implementar/configurar Meeting Intelligence**, do setup before processing any meeting:
+
+1. Verify APIs in Mission Control settings / `/api/meeting-intelligence/status`.
+2. Google Drive:
+   - Use Google Workspace/GOG from the agent side to search/list folders and validate access.
+   - Ask the user for a folder URL or ID only as fallback when the intended folder is ambiguous.
+   - Save only approved folders in `brand/{slug}/intelligence/config.json`.
+3. Notion:
+   - Search/select the real database or page from the Intelligence page.
+   - Load database properties before asking for filters.
+   - Include relation properties such as `clients`; for client routing, prefer a `clients` relation filter.
+4. Routing:
+   - Confirm review owner, review channel and timezone.
+   - Routing means where Sancho reports findings and which client/document scope a source belongs to.
+5. First run:
+   - Execute a scan against the approved scopes.
+   - If no meetings are found, document "0 meetings found" as a valid first-run result.
+6. Write `brand/{slug}/intelligence/setup.md` with sources, filters, routing, first-run result and open issues.
+
+Never apply changes to StrategyPlan, POV Bank or any canonical document from setup. Only create proposals for human review.
+
+---
+
 ## Scan Protocol
 
 ### Notion Documents
-- Database: Documents (Type=Meeting)
-- Filter: Created yesterday (or date range)
+- Database: From `brand/{slug}/intelligence/config.json`
+- Filter: Use configured property/operator/value, including relation filters such as `clients`
 - Extract: Full content + transcript
 
 ### Google Drive
-- Folder: /Meet-Recordings
+- Folder: Approved folder IDs/URLs from `brand/{slug}/intelligence/config.json`
 - Filter: Modified yesterday
 - Types: Transcripts (.txt, .pdf), videos (.mp4, .mov), notes (.doc)
 

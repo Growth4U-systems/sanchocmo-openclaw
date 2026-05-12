@@ -444,8 +444,12 @@ export function buildTaskThread(
     skill: resolved.skill,
     skills: resolved.skills,
     linkedTo: `projects/${projectId}/tasks/${taskId}`,
-    docPath: `projects/${projectId}/tasks.json`,
+    docPath: opts.deliverableFile || `projects/${projectId}/tasks.json`,
     threadState: opts.taskStatus === "ready" || opts.taskStatus === "pending" ? "create" : "continue",
+    agent: resolved.agent,
+    initialMessage: opts.taskSkill === "meeting-intelligence" && taskName.toLowerCase().includes("configurar")
+      ? "Empieza la configuracion de Meeting Intelligence para este cliente. Verifica APIs/MCP, usa Google Workspace/GOG para buscar y validar carpetas de Drive, acepta URL/ID solo como fallback, selecciona Notion database/page, carga filtros como clients relation y deja preparado el primer run sin aplicar cambios a documentos canonicos."
+      : undefined,
   };
 }
 

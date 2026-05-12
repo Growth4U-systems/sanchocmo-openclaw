@@ -58,7 +58,8 @@ export function Sidebar() {
   }
 
   function isActive(href: string) {
-    return router.asPath === href || router.asPath.startsWith(href + "/");
+    const currentPath = router.asPath.split("#")[0].split("?")[0];
+    return currentPath === href || currentPath.startsWith(href + "/");
   }
 
   return (
@@ -168,6 +169,7 @@ export function Sidebar() {
             <SectionLabel text={t("nav.tools")} visible={sidebarOpen} />
             <NavLink href={clientHref("/trust-engine")} icon="🔍" label={t("nav.trustEngine")} active={isActive(clientHref("/trust-engine"))} collapsed={!sidebarOpen} />
             <NavLink href={clientHref("/atalaya")} icon="🏰" label={t("nav.atalaya")} active={isActive(clientHref("/atalaya"))} collapsed={!sidebarOpen} />
+            <NavLink href={clientHref("/intelligence")} icon="🧠" label="Intelligence" active={isActive(clientHref("/intelligence"))} collapsed={!sidebarOpen} />
           </>
         )}
 
