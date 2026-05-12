@@ -118,6 +118,8 @@ function ClientsPanel() {
   const t = useTranslations("settings");
   const tCommon = useTranslations("common");
   const qc = useQueryClient();
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
   const { data: clients, isLoading } = useQuery<ClientFull[]>({
     queryKey: ["clients"],
     queryFn: async () => {
@@ -154,6 +156,33 @@ function ClientsPanel() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["clients"] }),
   });
 
+  const createClient = useMutation({
+    mutationFn: async (payload: {
+      slug: string;
+      name: string;
+      emoji: string;
+      url: string;
+      guild: string;
+      language: string;
+      active: boolean;
+    }) => {
+      const res = await fetch("/api/clients/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok || !json.ok) throw new Error(json.error || "Failed");
+      return json;
+    },
+    onSuccess: () => {
+      setCreateError(null);
+      setShowCreateForm(false);
+      qc.invalidateQueries({ queryKey: ["clients"] });
+    },
+    onError: (e: Error) => setCreateError(e.message),
+  });
+
   const [editSlug, setEditSlug] = useState<string | null>(null);
 
   if (isLoading) return <p className="text-muted-foreground">{t("loadingClients")}</p>;
@@ -166,7 +195,29 @@ function ClientsPanel() {
         <p className="text-sm text-muted-foreground">
           {allClients.filter((c) => c.active).length} activos de {allClients.length} totales
         </p>
+        <button
+          onClick={() => {
+            setCreateError(null);
+            setShowCreateForm((value) => !value);
+          }}
+          className="px-4 py-1.5 bg-rust text-white border-2 border-ink rounded-md text-sm font-bold shadow-comic hover:shadow-comic-hover hover:-translate-x-px hover:-translate-y-px active:shadow-[1px_1px_0_var(--ink)] active:translate-x-px active:translate-y-px transition-all"
+        >
+          {showCreateForm ? "Cerrar" : "➕ Nuevo cliente"}
+        </button>
       </div>
+
+      {showCreateForm && (
+        <ClientCreateForm
+          existingSlugs={allClients.map((client) => client.slug)}
+          isSaving={createClient.isPending}
+          error={createError}
+          onSave={(payload) => createClient.mutate(payload)}
+          onCancel={() => {
+            setCreateError(null);
+            setShowCreateForm(false);
+          }}
+        />
+      )}
 
       {allClients.map((client) => (
         <ComicCard
@@ -229,6 +280,172 @@ function ClientsPanel() {
         </ComicCard>
       ))}
     </div>
+  );
+}
+
+function slugifyClientName(value: string): string {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 64);
+}
+
+function ClientCreateForm({
+  existingSlugs,
+  isSaving,
+  error,
+  onSave,
+  onCancel,
+}: {
+  existingSlugs: string[];
+  isSaving: boolean;
+  error: string | null;
+  onSave: (payload: {
+    slug: string;
+    name: string;
+    emoji: string;
+    url: string;
+    guild: string;
+    language: string;
+    active: boolean;
+  }) => void;
+  onCancel: () => void;
+}) {
+  const [name, setName] = useState("");
+  const [slug, setSlug] = useState("");
+  const [slugTouched, setSlugTouched] = useState(false);
+  const [emoji, setEmoji] = useState("🏢");
+  const [url, setUrl] = useState("");
+  const [guild, setGuild] = useState("");
+  const [language, setLanguage] = useState("es");
+  const [active, setActive] = useState(true);
+
+  useEffect(() => {
+    if (!slugTouched) setSlug(slugifyClientName(name));
+  }, [name, slugTouched]);
+
+  const normalizedSlug = slug.trim().toLowerCase();
+  const slugExists = existingSlugs.includes(normalizedSlug);
+  const canSave =
+    Boolean(name.trim()) &&
+    /^[a-z0-9][a-z0-9-]*$/.test(normalizedSlug) &&
+    /^\d{17,20}$/.test(guild.trim()) &&
+    !slugExists &&
+    !isSaving;
+
+  return (
+    <ComicCard className="border-dashed border-rust/70">
+      <div className="space-y-4">
+        <div>
+          <h3 className="font-heading text-base text-navy">➕ Nuevo cliente</h3>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Crea el cliente en Mission Control, genera token de portal y prepara la carpeta base en brand/.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="text-[10px] font-bold uppercase text-muted-foreground">Nombre</label>
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Acme"
+              className="w-full mt-1 px-3 py-1.5 border-2 border-ink rounded-lg text-sm bg-background"
+            />
+          </div>
+          <div>
+            <label className="text-[10px] font-bold uppercase text-muted-foreground">Slug</label>
+            <input
+              value={slug}
+              onChange={(e) => {
+                setSlugTouched(true);
+                setSlug(slugifyClientName(e.target.value));
+              }}
+              placeholder="acme"
+              className="w-full mt-1 px-3 py-1.5 border-2 border-ink rounded-lg text-sm bg-background"
+            />
+            {slugExists && <p className="text-[11px] text-red-500 mt-1">Ese slug ya existe.</p>}
+          </div>
+          <div>
+            <label className="text-[10px] font-bold uppercase text-muted-foreground">Discord Guild ID</label>
+            <input
+              value={guild}
+              onChange={(e) => setGuild(e.target.value.replace(/\D/g, "").slice(0, 20))}
+              placeholder="123456789012345678"
+              className="w-full mt-1 px-3 py-1.5 border-2 border-ink rounded-lg text-sm bg-background"
+            />
+          </div>
+          <div>
+            <label className="text-[10px] font-bold uppercase text-muted-foreground">Website</label>
+            <input
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              placeholder="https://..."
+              className="w-full mt-1 px-3 py-1.5 border-2 border-ink rounded-lg text-sm bg-background"
+            />
+          </div>
+          <div>
+            <label className="text-[10px] font-bold uppercase text-muted-foreground">Emoji</label>
+            <input
+              value={emoji}
+              onChange={(e) => setEmoji(e.target.value)}
+              className="w-full mt-1 px-3 py-1.5 border-2 border-ink rounded-lg text-sm bg-background"
+            />
+          </div>
+          <div>
+            <label className="text-[10px] font-bold uppercase text-muted-foreground">Idioma</label>
+            <select
+              value={language}
+              onChange={(e) => setLanguage(e.target.value)}
+              className="w-full mt-1 px-3 py-1.5 border-2 border-ink rounded-lg text-sm bg-background"
+            >
+              <option value="es">Español</option>
+              <option value="en">English</option>
+            </select>
+          </div>
+        </div>
+
+        <label className="inline-flex items-center gap-2 text-sm text-muted-foreground">
+          <input
+            type="checkbox"
+            checked={active}
+            onChange={(e) => setActive(e.target.checked)}
+            className="h-4 w-4 accent-rust"
+          />
+          Activar cliente al crearlo
+        </label>
+
+        {error && <p className="text-xs text-red-500">⚠️ {error}</p>}
+
+        <div className="flex gap-2">
+          <button
+            onClick={() => onSave({
+              slug: normalizedSlug,
+              name: name.trim(),
+              emoji: emoji.trim() || "🏢",
+              url: url.trim(),
+              guild: guild.trim(),
+              language,
+              active,
+            })}
+            disabled={!canSave}
+            className="px-4 py-1.5 bg-rust text-white rounded-lg text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isSaving ? "Creando..." : "Crear cliente"}
+          </button>
+          <button
+            onClick={onCancel}
+            disabled={isSaving}
+            className="px-4 py-1.5 border border-border rounded-lg text-sm text-muted-foreground disabled:opacity-50"
+          >
+            Cancelar
+          </button>
+        </div>
+      </div>
+    </ComicCard>
   );
 }
 
