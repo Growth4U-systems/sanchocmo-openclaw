@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/router";
 import Head from "next/head";
@@ -31,6 +31,7 @@ interface ClientFull {
 }
 
 const TAB_KEYS = ["apis", "agents", "dispatch", "strategies", "recurring", "clients", "admins", "preferences"] as const;
+type TabKey = typeof TAB_KEYS[number];
 const TAB_ICONS: Record<string, string> = {
   apis: "🔌", agents: "🤖", dispatch: "📡",
   strategies: "🎯", recurring: "🔄", clients: "👥", admins: "🔐", preferences: "⚙️",
@@ -65,12 +66,14 @@ export default function SettingsPage() {
     [t, visibleTabs]
   );
 
-  // Sync tab from URL query param (only when queryTab changes)
+  // Sync tab from URL query param while respecting role-gated tabs.
   useEffect(() => {
-    if (queryTab && TAB_KEYS.includes(queryTab as typeof TAB_KEYS[number])) {
+    if (queryTab && visibleTabs.includes(queryTab as TabKey)) {
       setActiveTab(queryTab);
+    } else if (!visibleTabs.includes(activeTab as TabKey)) {
+      setActiveTab("apis");
     }
-  }, [queryTab]);
+  }, [activeTab, queryTab, visibleTabs]);
 
   // Wait for session to load
   if (sessionStatus === "loading") {
@@ -408,13 +411,14 @@ function ApisPanel() {
     staleTime: 120_000,
   });
 
-  const services = health?.services || {};
+  const services = useMemo(() => health?.services || {}, [health]);
 
   // Count statuses from catalog
-  let connected = 0, pending = 0, errored = 0, notConfigured = 0;
+  let connected = 0, errored = 0, notConfigured = 0;
+  const pending = 0;
   if (catalog?.categories) {
     for (const catData of Object.values(catalog.categories)) {
-      for (const [apiId, apiMeta] of Object.entries(catData.apis || {})) {
+      for (const apiId of Object.keys(catData.apis || {})) {
         const svc = services[apiId];
         const st = svc?.status;
         if (st === "ok") connected++;
@@ -443,14 +447,14 @@ function ApisPanel() {
   }, [catalog]);
 
   // Resolve status for an API item
-  const getApiStatus = (apiId: string, ownership: string) => {
+  const getApiStatus = useCallback((apiId: string, ownership: string) => {
     const svc = services[apiId];
     const st = svc?.status;
     if (ownership === "system") return st === "error" ? "error" : "system";
     if (st === "ok") return "ok";
     if (st === "error") return "error";
     return "not-configured";
-  };
+  }, [services]);
 
   // Filtered APIs
   const filteredApis = useMemo(() => {
@@ -469,7 +473,7 @@ function ApisPanel() {
         item.catLabel.toLowerCase().includes(q)
       );
     });
-  }, [allApis, search, categoryFilter, statusFilter, services]);
+  }, [allApis, search, categoryFilter, statusFilter, getApiStatus]);
 
   const handleVerifyAll = async () => {
     setChecking(true);
