@@ -45,15 +45,15 @@ jobs:
           DEPLOY_PATH: ${{ vars.DEPLOY_PATH || '~/.openclaw' }}
           TAG: ${{ steps.tag.outputs.tag }}
         run: |
-          ssh "$VPS_USER@$VPS_HOST" bash -s <<EOF
+          ssh "$VPS_USER@$VPS_HOST" "DEPLOY_PATH=$DEPLOY_PATH TAG=$TAG bash -s" <<'EOF'
             set -euo pipefail
             cd "$DEPLOY_PATH"
             echo "▶ Fetching tags…"
             git fetch --tags --prune
             echo "▶ Checking out $TAG…"
             git checkout "$TAG"
-            export GIT_COMMIT="\$(git rev-parse HEAD)"
-            echo "▶ Building and starting containers (GIT_COMMIT=\$GIT_COMMIT)…"
+            export GIT_COMMIT="$(git rev-parse HEAD)"
+            echo "▶ Building and starting containers (GIT_COMMIT=$GIT_COMMIT)…"
             docker compose build --pull
             docker compose up -d
             docker compose ps
@@ -86,7 +86,7 @@ jobs:
           DEPLOY_PATH: ${{ vars.DEPLOY_PATH || '~/.openclaw' }}
         run: |
           echo "::warning::Deploy failed. Attempting rollback to previous tag…"
-          ssh "$VPS_USER@$VPS_HOST" bash -s <<'EOF'
+          ssh "$VPS_USER@$VPS_HOST" "DEPLOY_PATH=$DEPLOY_PATH bash -s" <<'EOF'
             set -euo pipefail
             cd "$DEPLOY_PATH"
             PREV=$(git tag --sort=-creatordate | sed -n '2p')
