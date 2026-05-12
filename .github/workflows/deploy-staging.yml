@@ -34,15 +34,15 @@ jobs:
           DEPLOY_PATH: ${{ vars.DEPLOY_PATH || '~/.openclaw' }}
           SHA: ${{ github.sha }}
         run: |
-          ssh "$VPS_USER@$VPS_HOST" bash -s <<EOF
+          ssh "$VPS_USER@$VPS_HOST" "DEPLOY_PATH=$DEPLOY_PATH SHA=$SHA bash -s" <<'EOF'
             set -euo pipefail
             cd "$DEPLOY_PATH"
             echo "▶ Fetching staging…"
             git fetch origin staging --prune
             echo "▶ Checking out $SHA…"
             git checkout "$SHA"
-            export GIT_COMMIT="\$(git rev-parse HEAD)"
-            echo "▶ Building and starting containers (GIT_COMMIT=\$GIT_COMMIT)…"
+            export GIT_COMMIT="$(git rev-parse HEAD)"
+            echo "▶ Building and starting containers (GIT_COMMIT=$GIT_COMMIT)…"
             docker compose build --pull
             docker compose up -d
             docker compose ps
