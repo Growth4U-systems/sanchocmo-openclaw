@@ -141,7 +141,7 @@ Each environment defines the same secret/variable names, with values for that VP
 
 **Variables** (not sensitive — visible in logs):
 - `DEPLOY_PATH` — absolute path of the repo clone on the VPS (default `~/.openclaw`)
-- `HEALTH_URL` — public URL the workflow polls after deploy to verify the app came up
+- `HEALTH_URL` — public URL the workflow polls after deploy. Recommended: point this at `https://<env-domain>/api/health`, which returns version, commit SHA, env label and uptime.
 
 If `HEALTH_URL` is unset, the health check step warns and continues. Missing required secrets will fail the deploy with a clear error.
 

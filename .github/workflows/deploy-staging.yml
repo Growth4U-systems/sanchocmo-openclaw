@@ -41,7 +41,8 @@ jobs:
             git fetch origin staging --prune
             echo "▶ Checking out $SHA…"
             git checkout "$SHA"
-            echo "▶ Building and starting containers…"
+            export GIT_COMMIT="\$(git rev-parse HEAD)"
+            echo "▶ Building and starting containers (GIT_COMMIT=\$GIT_COMMIT)…"
             docker compose build --pull
             docker compose up -d
             docker compose ps

@@ -172,7 +172,7 @@ feature/*  ──PR──▶  staging  ──PR──▶  main  ──release-pl
 - Commits must follow [Conventional Commits](https://www.conventionalcommits.org/) — enforced by commitlint.
 - Versioning is automatic via [release-please](https://github.com/googleapis/release-please).
 
-Full guide: [CONTRIBUTING.md](CONTRIBUTING.md). Deploy details: [docs/DEPLOY.md](docs/DEPLOY.md).
+Full guide: [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md). Deploy details: [docs/DEPLOY.md](docs/DEPLOY.md).
 
 ## License
 

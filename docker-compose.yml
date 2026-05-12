@@ -4,6 +4,7 @@ services:
       context: .
       args:
         NEXT_PUBLIC_ENV_LABEL: ${NEXT_PUBLIC_ENV_LABEL:-}
+        GIT_COMMIT: ${GIT_COMMIT:-}
     container_name: sanchocmo
     restart: unless-stopped
     ports:

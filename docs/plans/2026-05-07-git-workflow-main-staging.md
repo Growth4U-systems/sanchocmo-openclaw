@@ -127,9 +127,9 @@ Imprescindible porque release-please bumpea según el tipo de commit:
 - `husky init` + `.husky/commit-msg` corre `npx commitlint --edit $1`
 
 ### Documentación
-- **`CONTRIBUTING.md`** (nuevo): explica el workflow (feature → PR a staging → release PR → main → tag → deploy), Conventional Commits con ejemplos, cómo correr tests local
+- **`docs/CONTRIBUTING.md`** (nuevo): explica el workflow (feature → PR a staging → release PR → main → tag → deploy), Conventional Commits con ejemplos, cómo correr tests local
 - **`.github/pull_request_template.md`** (nuevo): template con secciones Summary, Why, Test plan, Screenshots
-- **`README.md`** (update): sección "Development workflow" con diagrama de ramas y link a CONTRIBUTING.md
+- **`README.md`** (update): sección "Development workflow" con diagrama de ramas y link a docs/CONTRIBUTING.md
 
 ---
 
@@ -183,7 +183,7 @@ feature/foo ──PR──▶ staging ──PR──▶ main ──release-pleas
 | `.husky/commit-msg` | Crear | Hook que llama commitlint |
 | `playwright.config.ts` | Crear | Config base de Playwright |
 | `tests/smoke.spec.ts` | Crear | Smoke test mínimo |
-| `CONTRIBUTING.md` | Crear | Documentar workflow |
+| `docs/CONTRIBUTING.md` | Crear | Documentar workflow |
 | `README.md` | Modificar | Agregar sección "Development workflow" |
 | `package.json` | Modificar | Agregar `test:e2e`, `prepare` (husky), devDependencies |
 

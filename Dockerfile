@@ -22,6 +22,9 @@ COPY public/ ./public/
 # NEXT_PUBLIC_* vars must be present at build time — they are inlined into the client bundle.
 ARG NEXT_PUBLIC_ENV_LABEL=""
 ENV NEXT_PUBLIC_ENV_LABEL=${NEXT_PUBLIC_ENV_LABEL}
+# Build-time commit SHA, surfaced by /api/health for deploy verification.
+ARG GIT_COMMIT=""
+ENV GIT_COMMIT=${GIT_COMMIT}
 RUN npm run build
 
 # --- OpenClaw workspace ---

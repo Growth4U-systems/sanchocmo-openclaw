@@ -52,7 +52,8 @@ jobs:
             git fetch --tags --prune
             echo "▶ Checking out $TAG…"
             git checkout "$TAG"
-            echo "▶ Building and starting containers…"
+            export GIT_COMMIT="\$(git rev-parse HEAD)"
+            echo "▶ Building and starting containers (GIT_COMMIT=\$GIT_COMMIT)…"
             docker compose build --pull
             docker compose up -d
             docker compose ps
@@ -95,5 +96,6 @@ jobs:
             fi
             echo "▶ Rolling back to $PREV"
             git checkout "$PREV"
+            export GIT_COMMIT="$(git rev-parse HEAD)"
             docker compose up -d
           EOF
