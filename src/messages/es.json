@@ -280,6 +280,7 @@
       "dispatch": "Dispatch",
       "strategies": "Estrategias",
       "recurring": "Recurrentes",
+      "task-index": "Indice de Tareas",
       "clients": "Clientes",
       "preferences": "Preferencias"
     },

@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useEffect, useState, useCallback, type KeyboardEvent, type DragEvent, type ClipboardEvent } from "react";
+import { useRef, useEffect, useState, useCallback, useMemo, type KeyboardEvent, type DragEvent, type ClipboardEvent } from "react";
 import { useTranslations } from "next-intl";
 import { useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
@@ -19,6 +19,8 @@ import {
   buildPillarThread,
   buildTaskThread,
   buildProjectThread,
+  resolveFullThreadConfig,
+  buildTaskIndex,
 } from "@/lib/chat-openers";
 import { useQuickActions } from "@/hooks/useChat";
 import { ThreadListPanel } from "./thread-list-panel";
@@ -228,7 +230,24 @@ export function ChatSidebar() {
    * through). For idea/recurring/general we fall back to a minimal config
    * that at least has the right threadName + a placeholder skill.
    */
+  // Task index: built ONCE from projectsData, enables O(1) thread lookups.
+  const taskIndex = useMemo(() => buildTaskIndex(projectsData), [projectsData]);
+
   const handleSelectFromPanel = useCallback(
+    (threadId: string) => {
+      if (!slug) return;
+      const config = resolveFullThreadConfig(
+        slug, threadId, taskIndex,
+        (pk) => resolvePillarDocPath(pk, foundationState as Parameters<typeof resolvePillarDocPath>[1]),
+      );
+      selectThread(config);
+    },
+    [slug, foundationState, taskIndex, selectThread]
+  );
+
+  // ── DEPRECATED: old handleSelectFromPanel body ──────────────
+  // Kept temporarily for reference. Will be deleted after validation.
+  const _oldHandleSelectFromPanel = useCallback(
     (threadId: string) => {
       if (!slug) return;
 
@@ -276,15 +295,26 @@ export function ChatSidebar() {
               taskStatus: foundTask.status,
               taskType: foundTask.type,
               pillar: foundTask.pillar,
+              deliverableFile: typeof foundTask.deliverable_file === "string" ? foundTask.deliverable_file : undefined,
             }
           );
           // Force the threadId to match the one the user clicked (the
           // builder would normalize to colon shape; we respect the legacy
           // dash shape so the chat history stays continuous).
           config.threadId = threadId;
-          if (foundTask.pillar && !config.docPath) {
-            const docPath = resolvePillarDocPath(foundTask.pillar, foundationLike);
-            if (docPath) config.docPath = docPath;
+          // Resolve the doc to show in the pill. Priority:
+          //   1. task.deliverable_file (ground truth from task anchors)
+          //   2. pillar output_file from foundation-state.json
+          //   3. null → "Sin documento asociado"
+          if (!config.docPath) {
+            const df = foundTask.deliverable_file;
+            const dfStr = typeof df === "string" ? df : Array.isArray(df) ? df[0] : null;
+            if (dfStr && dfStr.trim()) {
+              config.docPath = dfStr;
+            } else if (foundTask.pillar) {
+              const docPath = resolvePillarDocPath(foundTask.pillar, foundationLike);
+              if (docPath) config.docPath = docPath;
+            }
           }
           if (config.docPath && /tasks\.json$/i.test(config.docPath)) {
             config.docPath = null;
@@ -442,15 +472,23 @@ export function ChatSidebar() {
               taskStatus: bestMatch.task.status,
               taskType: bestMatch.task.type,
               pillar: bestMatch.task.pillar,
+              deliverableFile: typeof bestMatch.task.deliverable_file === "string" ? bestMatch.task.deliverable_file : undefined,
             }
           );
           // Preserve the user-clicked threadId (legacy compound form)
           // instead of normalizing to the pillar canonical id — the
           // history lives under the compound name.
           config.threadId = threadId;
-          if (bestMatch.task.pillar && !config.docPath) {
-            const docPath = resolvePillarDocPath(bestMatch.task.pillar, foundationLike);
-            if (docPath) config.docPath = docPath;
+          // Same priority as above: deliverable_file → pillar → null
+          if (!config.docPath) {
+            const df = bestMatch.task.deliverable_file;
+            const dfStr = typeof df === "string" ? df : Array.isArray(df) ? df[0] : null;
+            if (dfStr && dfStr.trim()) {
+              config.docPath = dfStr;
+            } else if (bestMatch.task.pillar) {
+              const docPath = resolvePillarDocPath(bestMatch.task.pillar, foundationLike);
+              if (docPath) config.docPath = docPath;
+            }
           }
           if (config.docPath && /tasks\.json$/i.test(config.docPath)) {
             config.docPath = null;
@@ -479,6 +517,52 @@ export function ChatSidebar() {
       }
 
       // --- Pillar thread (shortId is a pillar name or "general") -------
+      // Before falling back to a simple pillar thread, try to find the
+      // owning task so we get the full context (doc + task link + skill).
+      // This handles the case where shortId = "market-analysis" and the
+      // compound match above didn't fire (projectsData not loaded, or
+      // exact-match instead of suffix-match).
+      if (projectsData) {
+        for (const pw of projectsData) {
+          const matchingTask = pw.tasks.find(t =>
+            t.pillar && t.pillar.toLowerCase() === shortId.toLowerCase()
+          );
+          if (matchingTask) {
+            const config = buildTaskThread(
+              slug,
+              matchingTask.id,
+              matchingTask.name,
+              pw.project.id,
+              {
+                taskSkill: matchingTask.skill,
+                taskChannel: matchingTask.channel,
+                taskStatus: matchingTask.status,
+                taskType: matchingTask.type,
+                pillar: matchingTask.pillar,
+              deliverableFile: typeof matchingTask.deliverable_file === "string" ? matchingTask.deliverable_file : undefined,
+              }
+            );
+            config.threadId = threadId;
+            if (!config.docPath) {
+              const df = matchingTask.deliverable_file;
+              const dfStr = typeof df === "string" ? df : Array.isArray(df) ? df[0] : null;
+              if (dfStr && dfStr.trim()) {
+                config.docPath = dfStr;
+              } else {
+                const dp = resolvePillarDocPath(shortId, foundationLike);
+                if (dp) config.docPath = dp;
+              }
+            }
+            if (config.docPath && /tasks\.json$/i.test(config.docPath)) {
+              config.docPath = null;
+            }
+            selectThread(config);
+            return;
+          }
+        }
+      }
+
+      // Truly generic pillar fallback (no task found)
       const docPath = resolvePillarDocPath(shortId, foundationLike) || undefined;
       const config = buildPillarThread(slug, shortId, docPath);
       selectThread(config);
@@ -977,6 +1061,42 @@ export function ChatSidebar() {
             ) : (
               <div className={pillClass}>{pillContent}</div>
             );
+          })()}
+
+          {/* Task/Project link pill — shows the associated task/project */}
+          {activeThreadId && meta?.linkedTo && (() => {
+            const taskMatch = meta.linkedTo.match(/^projects\/([^/]+)\/tasks\/([^/]+)/i);
+            const projMatch = !taskMatch && meta.linkedTo.match(/^projects\/([^/]+)/i);
+            if (!taskMatch && !projMatch) return null;
+
+            if (taskMatch) {
+              const projId = taskMatch[1];
+              const taskId = taskMatch[2];
+              return (
+                <Link
+                  href={`/dashboard/${slug}/projects/${projId}/tasks/${taskId}`}
+                  className="w-full bg-[#313244] rounded-lg px-3 py-1.5 text-[12px] text-[#a6adc8] flex items-center gap-2 hover:bg-[#45475a] hover:text-[#cdd6f4] transition-colors no-underline"
+                >
+                  <span>📋</span>
+                  <span className="truncate flex-1">Tarea: {taskId}</span>
+                  <span className="text-[11px] text-[#6c7086]">↗</span>
+                </Link>
+              );
+            }
+            if (projMatch) {
+              const projId = projMatch[1];
+              return (
+                <Link
+                  href={`/dashboard/${slug}/projects/${projId}`}
+                  className="w-full bg-[#313244] rounded-lg px-3 py-1.5 text-[12px] text-[#a6adc8] flex items-center gap-2 hover:bg-[#45475a] hover:text-[#cdd6f4] transition-colors no-underline"
+                >
+                  <span>📁</span>
+                  <span className="truncate flex-1">Proyecto: {projId}</span>
+                  <span className="text-[11px] text-[#6c7086]">↗</span>
+                </Link>
+              );
+            }
+            return null;
           })()}
 
           {/* Task attachments — every file accumulated by the thread

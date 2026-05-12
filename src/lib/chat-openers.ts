@@ -167,6 +167,7 @@ export function findTaskThreadForDoc(
             taskStatus: task.status,
             taskType: task.type,
             pillar: task.pillar,
+            deliverableFile: typeof task.deliverable_file === "string" ? task.deliverable_file : undefined,
           }
         );
       }
@@ -186,6 +187,7 @@ export function findTaskThreadForDoc(
               taskStatus: task.status,
               taskType: task.type,
               pillar: task.pillar,
+            deliverableFile: typeof task.deliverable_file === "string" ? task.deliverable_file : undefined,
             }
           );
         }
@@ -193,6 +195,147 @@ export function findTaskThreadForDoc(
     }
   }
   return null;
+}
+
+/**
+ * buildTaskIndex — Create a lookup map from threadId patterns → task+project.
+ *
+ * Called ONCE when projectsData loads. After that, any thread resolution
+ * is O(1) — a map lookup, not a scan.
+ *
+ * Keys in the map:
+ *   - `task:{taskId.lower}` and `task-{taskId.lower}` — for task threads
+ *   - `{pillar.lower}` — for pillar threads (e.g. "market-analysis")
+ *   - `project:{projectId.lower}` and `project-{projectId.lower}` — for project threads
+ */
+export function buildTaskIndex(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  projectsData: any[] | undefined,
+): Map<string, { task: Record<string, unknown>; projectId: string }> {
+  const index = new Map<string, { task: Record<string, unknown>; projectId: string }>();
+  if (!projectsData) return index;
+
+  for (const pw of projectsData) {
+    const projectId = pw.project?.id || "";
+    for (const task of pw.tasks || []) {
+      const entry = { task, projectId };
+      // Index by task ID (both formats)
+      const id = (task.id || "").toLowerCase();
+      index.set(`task:${id}`, entry);
+      index.set(`task-${id}`, entry);
+      // Index by pillar (if present)
+      if (task.pillar) {
+        const pl = task.pillar.toLowerCase();
+        // Only set if not already taken (first task with this pillar wins)
+        if (!index.has(pl)) index.set(pl, entry);
+      }
+    }
+  }
+  return index;
+}
+
+/**
+ * resolveFullThreadConfig — SINGLE SOURCE OF TRUTH for thread resolution.
+ *
+ * Given a threadId, resolves the COMPLETE ThreadConfig by:
+ *   1. Looking up the task in the index (O(1) map lookup)
+ *   2. Reading doc, skill, linkedTo directly from task fields
+ *   3. NO scanning, NO path matching, NO heuristics
+ *
+ * If no task found, falls back to pillar/generic thread.
+ */
+export function resolveFullThreadConfig(
+  slug: string,
+  threadId: string,
+  taskIndex: Map<string, { task: Record<string, unknown>; projectId: string }>,
+  resolvePillarDoc?: (pillarKey: string) => string | null | undefined,
+): ThreadConfig {
+  const shortId = threadId.startsWith(slug + ":")
+    ? threadId.slice(slug.length + 1)
+    : threadId;
+
+  // ── O(1) lookup: find the task that owns this thread ─────────
+  const entry = taskIndex.get(shortId) ||
+    // Also try suffix match for compound pillars (e.g. "content-system-seekers-content-strategy")
+    (() => {
+      for (const [key, val] of taskIndex) {
+        if (shortId.endsWith(`-${key}`) || shortId.endsWith(`:${key}`)) return val;
+      }
+      return undefined;
+    })();
+
+  // ── Task found: read ALL data from task fields ───────────────
+  if (entry) {
+    const { task, projectId } = entry;
+    const df = task.deliverable_file;
+    const deliverableFile = typeof df === "string" ? df : Array.isArray(df) ? (df as string[])[0] : undefined;
+
+    const config = buildTaskThread(
+      slug,
+      task.id as string,
+      task.name as string || shortId,
+      projectId,
+      {
+        taskSkill: task.skill as string | undefined,
+        taskChannel: task.channel as string | undefined,
+        taskStatus: task.status as string | undefined,
+        taskType: task.type as string | undefined,
+        pillar: task.pillar as string | undefined,
+        deliverableFile,
+      }
+    );
+
+    // Preserve the original threadId (legacy format compatibility)
+    config.threadId = threadId;
+
+    // docPath should already be set via buildTaskThread → deliverableFile.
+    // Double-check and fallback to pillar doc if needed.
+    if (!config.docPath && deliverableFile) {
+      config.docPath = deliverableFile;
+    }
+    if (!config.docPath && task.pillar && resolvePillarDoc) {
+      const dp = resolvePillarDoc(task.pillar as string);
+      if (dp) config.docPath = dp;
+    }
+    if (config.docPath && /tasks\.json$/i.test(config.docPath)) {
+      config.docPath = null;
+    }
+
+    return config;
+  }
+
+  // ── No task: handle project threads ──────────────────────────
+  if (shortId.startsWith("project:") || shortId.startsWith("project-")) {
+    const rawId = shortId.replace(/^project[-:]/, "").toUpperCase();
+    return {
+      threadId, threadName: rawId, skill: "sancho-manager",
+      skills: ["sancho-manager"], linkedTo: `projects/${rawId}`,
+      docPath: null, threadState: "continue",
+    };
+  }
+
+  // ── No task: handle typed threads ────────────────────────────
+  if (/^(competitor-scan|meta-ads-scan|linkedin-scan)$/i.test(shortId)) {
+    return {
+      threadId, threadName: shortId.replace(/-/g, " "), skill: "atalaya",
+      skills: ["atalaya"], linkedTo: "tool/atalaya",
+      docPath: null, threadState: "continue",
+    };
+  }
+  if (/^(strategy|idea|recurring)[-:]/i.test(shortId)) {
+    const m = shortId.match(/^([a-z]+)[-:](.+)$/i);
+    if (m) {
+      return {
+        threadId, threadName: shortId.replace(/[-_:]/g, " "), skill: "sancho",
+        skills: ["sancho"], linkedTo: `${m[1]}/${m[2]}`,
+        docPath: null, threadState: "continue",
+      };
+    }
+  }
+
+  // ── No task, no type: pillar fallback ────────────────────────
+  const pillarDoc = resolvePillarDoc?.(shortId) || undefined;
+  return buildPillarThread(slug, shortId, pillarDoc);
 }
 
 /** Thread icon by type prefix */
@@ -211,13 +354,27 @@ export function buildTaskThread(
   taskId: string,
   taskName: string,
   projectId: string,
-  opts: { taskSkill?: string; taskChannel?: string; taskStatus?: string; taskType?: string; pillar?: string }
+  opts: {
+    taskSkill?: string; taskChannel?: string; taskStatus?: string;
+    taskType?: string; pillar?: string;
+    /** Pass the task's deliverable_file so the doc pill shows the right doc */
+    deliverableFile?: string;
+  }
 ): ThreadConfig {
   // If the task is linked to a foundation pillar, reuse the pillar thread
   // so all entry points (brand column, foundation page, project tasks, etc.)
   // converge to the same thread.
   if (opts.pillar) {
-    return buildPillarThread(slug, opts.pillar);
+    const config = buildPillarThread(slug, opts.pillar, opts.deliverableFile);
+    // Override skill if the task has an explicit one and the pillar
+    // resolution fell back to sancho-manager.
+    if (opts.taskSkill && config.skill === "sancho-manager") {
+      config.skill = opts.taskSkill;
+      config.skills = [opts.taskSkill];
+    }
+    // Ensure linkedTo points to the actual task for navigation
+    config.linkedTo = `projects/${projectId}/tasks/${taskId}`;
+    return config;
   }
 
   const threadId = `${slug}:task:${taskId.toLowerCase()}`;

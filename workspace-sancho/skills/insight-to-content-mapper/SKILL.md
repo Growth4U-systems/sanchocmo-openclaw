@@ -371,3 +371,49 @@ daily-pulse (insights) → insight-to-content-mapper (briefs) → seo-content (a
 ---
 
 *From signal to brief. From brief to content. From content to growth.*
+
+---
+
+## Content Engine Integration (added 2026-04-25)
+
+### Idea Generation Mode (daily cron)
+
+When called by the Content Engine cron (daily 8am), use a LIGHTER workflow
+than the full brief generation:
+
+1. Read classified signals from `brand/{slug}/content/research-signals/{today}-*.json`
+2. Read `brand/{slug}/content/content-pillars.md` for pillar matching
+3. Read `brand/{slug}/brand-book/brand-voice/brand-voice.current.md` for tone
+
+For each signal:
+- Match to a pillar_id (by topic relevance)
+- Generate `angle_draft` (1-2 paragraphs — the "your possible angle")
+- Assign `content_type` (Hot Take, Proof Post, Framework, Personal Story, etc.)
+- Assign `target_channel` (linkedin, twitter, blog, newsletter)
+- Calculate `pov_confidence` (0.0-1.0)
+
+Append to `brand/{slug}/content/idea-queue.json`:
+```json
+{
+  "id": "idea-{date}-{seq}",
+  "pillar_id": "P1",
+  "content_type": "Hot Take",
+  "target_channel": "linkedin",
+  "signal": {
+    "summary": "...",
+    "source": "...",
+    "url": "...",
+    "date": "..."
+  },
+  "angle_draft": "...",
+  "pov_confidence": 0.78,
+  "source_signals": ["news-2026-04-25-003"],
+  "created_at": "2026-04-25T08:00:00Z",
+  "status": "ready"
+}
+```
+
+**Skip full SERP analysis** in this mode — that happens later when the idea
+is approved and sent to `seo-content` for blog posts.
+
+**Max 5-8 ideas per day** — quality over quantity.

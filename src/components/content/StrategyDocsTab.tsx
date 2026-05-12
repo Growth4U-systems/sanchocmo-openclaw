@@ -3,7 +3,8 @@
 import { useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import type { ContentCreationState } from "@/hooks/useContentCreation";
-import { buildDocThread, type ThreadConfig } from "@/lib/chat-openers";
+import { useProjects } from "@/hooks/useProjects";
+import { buildDocThread, findTaskThreadForDoc, type ThreadConfig } from "@/lib/chat-openers";
 import { StrategyDocs } from "./strategy-docs";
 
 interface Props {
@@ -14,14 +15,20 @@ interface Props {
 
 export function StrategyDocsTab({ slug, data, openChat }: Props) {
   const queryClient = useQueryClient();
+  const { data: projectsData } = useProjects(slug || null);
 
   const handleOpenChat = useCallback(
     (docKey: string, docPath?: string) => {
-      // Look up the full doc and route through `buildDocThread`, which is
-      // the single source of truth for content-doc → thread id mapping.
-      // For docs with a `pillar` this delegates to `buildPillarThread` so
-      // the thread id matches the one opened from the Foundation task
-      // page (convergence invariant — see chat-openers.ts header).
+      // Convergence: check if this doc belongs to a task first
+      const resolvedPath = docPath || data.documents.find((d) => (d.key || d.id) === docKey)?.docPath;
+      if (resolvedPath) {
+        const taskThread = findTaskThreadForDoc(slug, resolvedPath, projectsData);
+        if (taskThread) { openChat(slug, taskThread); return; }
+      }
+
+      // Fallback: route through `buildDocThread` (single source of truth
+      // for content-doc → thread id mapping). For docs with a `pillar`
+      // this delegates to `buildPillarThread` so the thread id matches.
       const doc = data.documents.find((d) => (d.key || d.id) === docKey);
       const config = buildDocThread(
         slug,
@@ -41,7 +48,7 @@ export function StrategyDocsTab({ slug, data, openChat }: Props) {
       );
       openChat(slug, config);
     },
-    [slug, openChat, data.documents, data.projectId]
+    [slug, openChat, data.documents, data.projectId, projectsData]
   );
 
   const handleViewDoc = useCallback((docPath: string) => {

@@ -1,0 +1,72 @@
+{
+  "date": "2026-04-22",
+  "runAtMs": 1745276400000,
+  "period": "2026-04-21T00:20:00Z → 2026-04-22T00:20:00Z",
+  "channels_read": ["general", "brand", "projects", "content", "paid-ads", "web", "intelligence", "soporte"],
+  "messages_in_window": 1,
+  "crons_in_window": [
+    { "time": "2026-04-21T20:06:54Z", "type": "call-prep", "content": "2 llamadas confirmadas con leads GHL — briefing en hilo" }
+  ],
+  "older_crons_in_window": [
+    { "time": "2026-04-20T20:39:04Z", "type": "thread-archived", "content": "Call Prep — Martes 21/04 (archived)" },
+    { "time": "2026-04-20T09:13:58Z", "type": "performance-analysis", "content": "Health Score 57 (↑ from 48) | NSM: 5 meetings vs 9 prior week" },
+    { "time": "2026-04-20T07:28:20Z", "type": "daily-pulse", "content": "Actividad mínima — 0 msgs humanos en 24h, solo crons activos" }
+  ],
+  "insights": [
+    {
+      "category": "operations",
+      "type": "calls-scheduled",
+      "summary": "2 llamadas confirmadas con leads GHL para ayer 21/04",
+      "micro_brief": "Hay 2 leads en pipeline con llamada confirmada. Briefing en hilo. Follow-up: verificar si se ejecutaron y resultado."
+    },
+    {
+      "category": "metrics",
+      "type": "health-score",
+      "summary": "Health Score 57 en W16 (↑ from 48) — mejora notable",
+      "micro_brief": "El score subió 9 puntos. La NSM cayó a 5 meetings (vs 9 prior week) — parcialmente bloqueado, no completamente. La tendencia general es positiva pero la NSM necesita atención."
+    },
+    {
+      "category": "metrics",
+      "type": "leads",
+      "summary": "3 leads ayer 18/04 (↑ vs media 1.7/día). 1 nuevo: Blas Nieto — Synapsale (B2B SaaS, Sales Automation AI)",
+      "micro_brief": "Blas Nieto es un lead fresco de Synapsale en el sector de Sales Automation con AI. Investigar si encaja en ICP y priorizar follow-up."
+    },
+    {
+      "category": "metrics",
+      "type": "cpc-alert",
+      "summary": "CPC €4.28 ayer — alerta 🟡 (1.5x media €2.74)",
+      "micro_brief": "Gasto ineficiente en ads. Investigar qué campañas están disparando CPC. Posible problema de calidad de audiencia o competencia en grupos de anuncio."
+    },
+    {
+      "category": "operations",
+      "type": "no-meetings",
+      "summary": "0 reuniones ayer 18/04 — sin citas agendadas",
+      "micro_brief": "No hay registro de citas ayer. La NSM (meetings) está por debajo de la semana anterior. Rastrear por qué no se convirtieron los leads."
+    },
+    {
+      "category": "data",
+      "type": "lead-sync",
+      "summary": "0 transcripts nuevos en Drive — Apollo/GOG APIs no disponibles",
+      "micro_brief": "Las APIs de enrichment siguen caidas. 12 leads con `llamada-agendada` sin transcripts nuevos. Opportunity: activar manual enrichment o recuperar APIs."
+    }
+  ],
+  "metrics_summary": {
+    "leads_18": 3,
+    "leads_17": 1,
+    "cpc_avg": "€4.28 (alerta)",
+    "cpc_baseline": "€2.74",
+    "meetings_nsm": 5,
+    "meetings_prior_week": 9,
+    "health_score": 57,
+    "health_score_prior": 48,
+    "new_leads": ["Blas Nieto — Synapsale"],
+    "transcripts_new": 0
+  },
+  "action_items": [
+    { "priority": "high", "action": "Verificar resultado de las 2 llamadas confirmadas con leads GHL (21/04)" },
+    { "priority": "medium", "action": "Investigar CPC €4.28 — identificar campañas y corregir estrategia de puja" },
+    { "priority": "medium", "action": "Follow-up con Blas Nieto — Synapsale (B2B SaaS, Sales Automation AI)" },
+    { "priority": "low", "action": "Recuperar APIs de enrichment (Apollo/GOG) para resumes y transcripts" }
+  ],
+  "insight_top": "2 llamadas GHL confirmadas ayer — verificar resultados; CPC alerta 🟡 (€4.28 vs €2.74 baseline); Health Score 57 (↑9pts) pero NSM meetings caído (5 vs 9)"
+}

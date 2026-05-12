@@ -7,7 +7,6 @@
       "name": "Daily Pulse",
       "enabled": true,
       "createdAtMs": 1771950688301,
-      "updatedAtMs": 1775546039641,
       "schedule": {
         "kind": "cron",
         "expr": "0 9 * * 1-5",
@@ -25,24 +24,14 @@
         "channel": "discord",
         "to": "channel:1475638253154603170"
       },
-      "state": {
-        "nextRunAtMs": 1775631600000,
-        "lastRunAtMs": 1775545794211,
-        "lastRunStatus": "ok",
-        "lastStatus": "ok",
-        "lastDurationMs": 245430,
-        "lastDeliveryStatus": "not-delivered",
-        "consecutiveErrors": 0,
-        "lastDelivered": false
-      }
+      "state": {}
     },
     {
       "id": "33434fd7-8b66-4069-b7f7-983f66fc25c2",
       "agentId": "sancho",
-      "name": "Weekly Synthesis",
+      "name": "Weekly Synthesis — Hospital Capilar",
       "enabled": true,
       "createdAtMs": 1771950696201,
-      "updatedAtMs": 1775474601176,
       "schedule": {
         "kind": "cron",
         "expr": "0 10 * * 1",
@@ -52,7 +41,7 @@
       "wakeMode": "now",
       "payload": {
         "kind": "agentTurn",
-        "message": "Síntesis semanal: 1) Lee memory/20*.md (daily notes flat) de los últimos 7 días. 2) Lee brand/daily-pulse/*.json recientes. 3) Lee brand/learnings.md. 4) Lee memory/patterns.md (patrones detectados). 5) Identifica patrones, tendencias, y decisiones clave. 6) Actualiza brand/learnings.md con patrones confirmados. 7) Genera resumen ejecutivo con: qué aprendimos, qué cambió, qué hacer diferente.\n\nPUBLICAR EN DISCORD (PATRÓN OBLIGATORIO DE HILO):\n1. Envía un mensaje corto (1 línea) al canal #learning: message(action=send, channel=discord, target=1475638272523763834, message='📚 Síntesis Semanal — YYYY-MM-DD: [hallazgo principal en 1 línea]')\n2. Del resultado del send, captura el messageId devuelto.\n3. Crea un hilo DESDE ese mensaje: message(action=thread-create, channel=discord, target=1475638272523763834, messageId=<messageId>, threadName='📚 Síntesis Semanal — YYYY-MM-DD')\n4. Del resultado del thread-create, captura el threadId.\n5. Publica el resumen ejecutivo completo DENTRO del hilo: message(action=send, channel=discord, target=<threadId>, message=<resumen completo>)\n6. NUNCA publiques contenido directamente en el canal — SIEMPRE dentro del hilo.\n7. APLICA reglas de _system/client-context-isolation.md.",
+        "message": "Síntesis semanal para Hospital Capilar.\n\nPASO 0 — CARGAR CONFIG:\nLee brand/hospital-capilar/client-config.json. Usa los IDs de ahí para TODO.\n\nPASO 1 — LEER FUENTES:\n1) Lee brand/hospital-capilar/daily-pulse/*.json recientes (últimos 7 días).\n2) Lee brand/hospital-capilar/learnings.md si existe.\n3) Lee brand/hospital-capilar/operational/learnings.md si existe.\n4) Identifica patrones, tendencias, decisiones clave.\n\nPASO 2 — ACTUALIZAR:\nActualiza brand/hospital-capilar/learnings.md con patrones confirmados.\n\nPASO 2b — GUARDAR EN RECURRING TASKS:\nGuarda en brand/hospital-capilar/recurring-tasks/weekly-synthesis/YYYY-MM-DD.json:\n{\"cronName\": \"Weekly Synthesis — Hospital Capilar\", \"slug\": \"hospital-capilar\", \"date\": \"YYYY-MM-DD\", \"runAtMs\": <timestamp_ms>, \"status\": \"ok\", \"content\": \"<síntesis semanal completa>\"}\n\nPASO 3 — PUBLICAR EN DISCORD (PATRÓN OBLIGATORIO DE HILO):\nDel client-config.json, busca el channel ID de 'crons.weekly_synthesis.publish_channel'.\n1. message(action=send, channel=discord, target=<publish_channel_id>, message='📚 Síntesis Semanal — YYYY-MM-DD: [hallazgo principal en 1 línea]')\n2. Del resultado captura messageId.\n3. message(action=thread-create, channel=discord, target=<publish_channel_id>, messageId=<messageId>, threadName='📚 Síntesis Semanal — YYYY-MM-DD')\n4. Del resultado captura threadId.\n5. message(action=send, channel=discord, target=<threadId>, message=<resumen ejecutivo>)\n6. APLICA reglas de _system/client-context-isolation.md — solo info de Hospital Capilar.",
         "model": "anthropic/claude-sonnet-4-5"
       },
       "delivery": {
@@ -60,25 +49,14 @@
         "channel": "discord",
         "to": "channel:1475638272523763834"
       },
-      "state": {
-        "nextRunAtMs": 1776067200000,
-        "lastRunAtMs": 1775470941322,
-        "lastRunStatus": "error",
-        "lastStatus": "error",
-        "lastDurationMs": 3659854,
-        "lastDeliveryStatus": "not-requested",
-        "consecutiveErrors": 1,
-        "lastError": "cron: job execution timed out",
-        "lastErrorReason": "timeout"
-      }
+      "state": {}
     },
     {
       "id": "8a4c8f89-58f0-4827-a076-df3f83660b3f",
       "agentId": "sancho",
       "name": "Regenerar Dashboard",
-      "enabled": true,
+      "enabled": false,
       "createdAtMs": 1771950708148,
-      "updatedAtMs": 1775584942627,
       "schedule": {
         "kind": "cron",
         "expr": "0 8,12,16,20 * * *",
@@ -95,16 +73,7 @@
         "mode": "none",
         "channel": "last"
       },
-      "state": {
-        "nextRunAtMs": 1775628000000,
-        "lastRunAtMs": 1775584800012,
-        "lastRunStatus": "ok",
-        "lastStatus": "ok",
-        "lastDurationMs": 142615,
-        "lastDeliveryStatus": "not-delivered",
-        "consecutiveErrors": 0,
-        "lastDelivered": false
-      }
+      "state": {}
     },
     {
       "id": "6dac9a53-6736-490a-ae54-e028b8ebbbd1",
@@ -112,7 +81,6 @@
       "name": "Meeting Intelligence",
       "enabled": true,
       "createdAtMs": 1771950715725,
-      "updatedAtMs": 1775577818405,
       "schedule": {
         "kind": "cron",
         "expr": "0 18 * * 1-5",
@@ -130,24 +98,14 @@
         "channel": "discord",
         "to": "channel:1475638253154603170"
       },
-      "state": {
-        "nextRunAtMs": 1775664000000,
-        "lastRunAtMs": 1775577600009,
-        "lastRunStatus": "ok",
-        "lastStatus": "ok",
-        "lastDurationMs": 218396,
-        "lastDeliveryStatus": "not-delivered",
-        "consecutiveErrors": 0,
-        "lastDelivered": false
-      }
+      "state": {}
     },
     {
       "id": "abc8abac-3097-4e27-8131-0a5d77717195",
       "agentId": "sancho",
-      "name": "Memory Maintenance",
+      "name": "Memory Maintenance & Pattern Detection",
       "enabled": true,
       "createdAtMs": 1771950722307,
-      "updatedAtMs": 1775420306429,
       "schedule": {
         "kind": "cron",
         "expr": "0 22 * * 0",
@@ -157,32 +115,21 @@
       "wakeMode": "now",
       "payload": {
         "kind": "agentTurn",
-        "message": "Mantenimiento de memoria:\n1) Lee memory/20*.md (daily notes flat) de los últimos 7 días.\n2) Lee MEMORY.md actual.\n3) Lee brand/*/memory.md (client memories).\n4) Lee memory/patterns.md.\n5) Extrae eventos significativos, lecciones, decisiones, opiniones que vale la pena recordar.\n6) Actualiza MEMORY.md con lo nuevo (sin duplicar).\n7) Actualiza brand/{slug}/memory.md si hay info específica de cliente.\n8) Elimina info obsoleta de MEMORY.md.\n9) Ejecuta bash scripts/memory-decay.sh — si hay archivos stale, propón archivarlos.\n10) Ejecuta bash scripts/memory-index.sh — regenera INDEX.md.\n11) Reporta qué añadiste y qué eliminaste.",
+        "message": "Mantenimiento de memoria y detección de patrones (fusión semanal):\n\nPARTE A — MANTENIMIENTO:\n1) Lee memory/daily/*.md de los últimos 7 días.\n2) Lee MEMORY.md actual.\n3) Lee brand/*/memory.md (client memories).\n4) Extrae eventos significativos, lecciones, decisiones, opiniones que vale la pena recordar.\n5) Actualiza MEMORY.md con lo nuevo (sin duplicar).\n6) Actualiza brand/{slug}/memory.md si hay info específica de cliente.\n7) Elimina info obsoleta de MEMORY.md.\n\nPARTE B — DETECCIÓN DE PATRONES:\n8) Lee memory/patterns.md actual.\n9) Identifica patrones recurrentes, tendencias, insights, y riesgos en los dailys de la semana.\n10) Actualiza memory/patterns.md con hallazgos.\n11) Si un patrón es específico de cliente, actualiza brand/{slug}/memory.md.\n12) Si es un aprendizaje sistémico, actualiza MEMORY.md.\n\nPARTE C — LIMPIEZA:\n13) Ejecuta bash scripts/memory-decay.sh — si hay archivos stale, propón archivarlos.\n14) Ejecuta bash scripts/memory-index.sh — regenera INDEX.md.\n\nReporta qué añadiste, qué eliminaste, y qué patrones detectaste. Si nada relevante en patrones, indica HEARTBEAT_OK para esa parte.",
         "model": "anthropic/claude-sonnet-4-5"
       },
       "delivery": {
         "mode": "none",
         "channel": "last"
       },
-      "state": {
-        "nextRunAtMs": 1776024000000,
-        "lastRunAtMs": 1775419349022,
-        "lastRunStatus": "error",
-        "lastStatus": "error",
-        "lastDurationMs": 957407,
-        "lastDeliveryStatus": "not-requested",
-        "consecutiveErrors": 1,
-        "lastError": "FallbackSummaryError: All models failed (3): anthropic/claude-sonnet-4-5: LLM request rejected: Third-party apps now draw from your extra usage, not your plan limits. We've added a $200 credit to get you started. Claim it at claude.ai/settings/usage and keep going. (format) | minimax/MiniMax-M2.7: LLM request timed out. (unknown) | anthropic/claude-opus-4-6: LLM request rejected: Third-party apps now draw from your extra usage, not your plan limits. We've added a $200 credit to get you started. Claim it at claude.ai/settings/usage and keep going. (format)",
-        "lastErrorReason": "timeout"
-      }
+      "state": {}
     },
     {
       "id": "0cd1e931-d374-4428-a452-e2394beac5b7",
       "agentId": "sancho",
-      "name": "Thief Marketer",
-      "enabled": false,
+      "name": "Thief Marketer — Hospital Capilar",
+      "enabled": true,
       "createdAtMs": 1771950950205,
-      "updatedAtMs": 1771950950205,
       "schedule": {
         "kind": "cron",
         "expr": "0 8 * * 3",
@@ -192,7 +139,7 @@
       "wakeMode": "now",
       "payload": {
         "kind": "agentTurn",
-        "message": "Lee brand/sources.json → sección thief_marketer. Para cada competidor: 1) Web scrape homepage + blog (web_fetch) → detectar contenido nuevo, cambios de copy, pricing. 2) LinkedIn → buscar posts recientes (web_search). 3) Instagram/YouTube → últimas publicaciones (web_search). 4) Google Ads Library → anuncios activos. 5) Newsletter → si hay suscripción, revisar últimos emails. Compara con última ejecución en brand/thief-marketer/. Genera reporte: qué hicieron nuevo, qué podemos robar/adaptar, oportunidades que dejaron. Guarda en brand/thief-marketer/YYYY-MM-DD.json.",
+        "message": "Análisis competitivo semanal para Hospital Capilar.\n\nPASO 0 — CARGAR CONFIG:\nLee brand/hospital-capilar/client-config.json. Usa los IDs de ahí para TODO.\n\nPASO 1 — LEER FUENTES:\nLee brand/hospital-capilar/market-and-us/competitors/sources.json. Para cada competidor:\n1) Web scrape homepage + blog (web_fetch) → detectar contenido nuevo, cambios de copy, pricing.\n2) LinkedIn → buscar posts recientes (web_search).\n3) Instagram/YouTube → últimas publicaciones (web_search).\n4) Google Ads Library → anuncios activos.\n5) Newsletter → si hay suscripción, revisar últimos emails.\n\nPASO 2 — COMPARAR:\nCompara con última ejecución en brand/hospital-capilar/thief-marketer/.\n\nPASO 3 — GUARDAR:\nGuarda en brand/hospital-capilar/recurring-tasks/thief-marketer/YYYY-MM-DD.json:\n{\"cronName\": \"Thief Marketer — Hospital Capilar\", \"slug\": \"hospital-capilar\", \"date\": \"YYYY-MM-DD\", \"runAtMs\": <timestamp_ms>, \"status\": \"ok\", \"content\": \"<reporte completo>\"}\n\nPASO 4 — PUBLICAR EN DISCORD:\nDel client-config.json, busca el channel ID de 'crons.thief_marketer.publish_channel'.\n1. message(action=send, channel=discord, target=<publish_channel_id>, message='🕵️ Thief Marketer — YYYY-MM-DD: [hallazgo principal]')\n2. Captura messageId → crea hilo → publica reporte detallado en el hilo.\n3. APLICA reglas de _system/client-context-isolation.md — solo info de Hospital Capilar.",
         "model": "anthropic/claude-sonnet-4-5"
       },
       "delivery": {
@@ -203,13 +150,85 @@
       "state": {}
     },
     {
+      "id": "618bc941-a980-4f0d-99c8-5e715060ce6b",
+      "agentId": "cervantes",
+      "name": "backup-sancho",
+      "enabled": true,
+      "createdAtMs": 1772069600272,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 3 * * *"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Ejecuta: bash ~/.openclaw/workspace-sancho/scripts/backup.sh. Luego lee ~/.openclaw/workspace-sancho/memory/backup-state.json. Si lastBackup tiene más de 48h respecto a ahora, publica alerta en Discord #admin con PATRÓN DE HILO:\n1. Envía alerta corta (1 línea): message(action=send, channel=discord, target=1475638273501040681, message='⚠️ Backup Warning — YYYY-MM-DD: Backup de workspace-sancho lleva >48h sin ejecutarse')\n2. Del resultado del send, captura el messageId devuelto.\n3. Crea un hilo DESDE ese mensaje: message(action=thread-create, channel=discord, target=1475638273501040681, messageId=<messageId>, threadName='⚠️ Backup Alert — YYYY-MM-DD')\n4. Del resultado del thread-create, captura el threadId.\n5. Publica detalles (último backup, estado) DENTRO del hilo: message(action=send, channel=discord, target=<threadId>, message=<detalles>)\nSi todo OK, responde HEARTBEAT_OK.",
+        "model": "anthropic/claude-sonnet-4-5"
+      },
+      "delivery": {
+        "mode": "none",
+        "channel": "last"
+      },
+      "state": {}
+    },
+    {
+      "id": "0c59e923-3267-4926-9a60-36bb81b6041f",
+      "agentId": "cervantes",
+      "name": "healthcheck",
+      "enabled": true,
+      "createdAtMs": 1772069609685,
+      "schedule": {
+        "kind": "every",
+        "everyMs": 21600000,
+        "anchorMs": 1772069609685
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Ejecuta el health check: bash ~/.openclaw/workspace-cervantes/scripts/healthcheck.sh\n\nInterpreta el EXIT CODE:\n- Exit 0 = todo OK o fallos sin cambio (debounced). Responde HEARTBEAT_OK.\n- Exit 1 = NUEVO fallo detectado (servicio pasó de ok→fail). DEBES alertar en Discord #admin:\n  1. message(action=send, channel=discord, target=1475638273501040681, message='⚠️ Health Check — [fecha]: [servicios nuevos caídos]')\n  2. Del resultado captura messageId\n  3. message(action=thread-create, channel=discord, target=1475638273501040681, messageId=<messageId>, threadName='⚠️ Health Check — [fecha]')\n  4. Del resultado captura threadId\n  5. message(action=send, channel=discord, target=<threadId>, message=<detalles: qué servicios fallaron, errores, qué servicios siguen OK>)\n- Exit 2 = servicio RECUPERADO (fail→ok). Informa en #admin:\n  1. message(action=send, channel=discord, target=1475638273501040681, message='✅ Health Check — [fecha]: [servicios recuperados]')\n\nNO ejecutes regenerate.py — el cron 'Regenerar Dashboard' se encarga (4x/día).",
+        "thinking": "off",
+        "timeoutSeconds": 120,
+        "model": "anthropic/claude-sonnet-4-5"
+      },
+      "delivery": {
+        "mode": "none",
+        "channel": "last"
+      },
+      "state": {}
+    },
+    {
+      "id": "cedfbd22-cbd0-4a19-87a0-29337c4f2b37",
+      "agentId": "cervantes",
+      "name": "Cervantes observa a Sancho",
+      "enabled": true,
+      "createdAtMs": 1772115026027,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 10 * * *",
+        "tz": "Europe/Madrid"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Observa las sesiones recientes de Sancho (últimas 24h). Usa sessions_list y sessions_history para revisar: 1) Qué sesiones tuvo y en qué canales. 2) Errores o skills que fallaron. 3) Preguntas que Sancho no supo responder. 4) Si respetó las reglas de canal. 5) Patrones de mejora. Escribe resumen breve en memory/sancho-observations.md (append con fecha). Si hay algo urgente que requiera notificar a Alfonso en Discord #admin, usa PATRÓN DE HILO:\n1. Envía alerta corta (1 línea): message(action=send, channel=discord, target=1475638273501040681, message='🔍 Observación Sancho — YYYY-MM-DD: [problema detectado en 1 línea]')\n2. Del resultado del send, captura el messageId.\n3. Crea hilo DESDE ese mensaje: message(action=thread-create, channel=discord, target=1475638273501040681, messageId=<messageId>, threadName='🔍 Observación Sancho — YYYY-MM-DD')\n4. Del resultado del thread-create, captura el threadId.\n5. Publica detalles DENTRO del hilo: message(action=send, channel=discord, target=<threadId>, message=<detalles>)\nNUNCA publiques contenido largo directamente en el canal. Si todo bien, solo escribe en el archivo.",
+        "model": "anthropic/claude-sonnet-4-5"
+      },
+      "delivery": {
+        "mode": "none",
+        "channel": "last"
+      },
+      "state": {}
+    },
+    {
       "id": "bf4b712d-1ed4-49df-acac-1c7ce4d19097",
       "agentId": "sancho",
       "sessionKey": "agent:sancho:discord:channel:1478180470113046580",
       "name": "progress-update-steer",
       "enabled": false,
       "createdAtMs": 1772567385215,
-      "updatedAtMs": 1772567425141,
       "schedule": {
         "kind": "every",
         "everyMs": 300000,
@@ -247,33 +266,22 @@
       "wakeMode": "now",
       "payload": {
         "kind": "agentTurn",
-        "message": "Run the cost tracker: `python3 scripts/cost-tracker.py --alert-threshold 0`. Read the output files costs-global.json and costs-daily.json.\n\nIMPORTANT CONTEXT: We use Claude Max $200/month plan (flat rate). Dollar costs are THEORETICAL (API-equivalent), NOT actual spend.\n\nANALYZE for anomalies:\n1. Calculate average daily turns/tokens from costs-daily.json\n2. If today's usage is >2x the daily average → ANOMALY DETECTED\n3. If no anomaly → reply HEARTBEAT_OK (do NOT post anything)\n\nIF ANOMALY DETECTED, post to the Costes APIs thread (target='1481910083255406694') in Cervantes Brain guild:\nmessage(action=send, channel=discord, target='1481910083255406694', message='📊 **Usage Anomaly** — {date}\\n\\n**Today:** {turns} turns | {tokens} tokens (est. ${cost_theoretical})\\n**Daily avg:** {avg_turns} turns | {avg_tokens} tokens\\n**Ratio:** {ratio}x above average\\n\\nℹ️ Plan Max $200/mes — coste fijo. Valores en $ son estimación API.\\n\\n**By client:**\\n{breakdown by client: turns + tokens}\\n\\n**Possible cause:** {hypothesis}')\n\nNEVER post to #infra directly. ALL cost-related messages go to thread 1481910083255406694.",
+        "message": "Run the cost tracker: python3 scripts/cost-tracker.py --alert-threshold 0\nRead the output files: costs-global.json, costs-daily.json, and brand/*/costs.json (per-client).\n\nIMPORTANT CONTEXT: We use Claude Max $200/month plan (flat rate). Dollar costs are THEORETICAL (API-equivalent), NOT actual spend.\n\nANALYZE PER CLIENT:\n1. For each client in brand/*/costs.json:\n   - Calculate average daily turns/tokens\n   - If today's usage is >2x the daily average → ANOMALY for that client\n2. Also check global anomalies in costs-daily.json\n\nIF NO ANOMALIES → reply HEARTBEAT_OK (do NOT post anything)\n\nIF ANOMALY DETECTED for a specific client:\n1. Lee brand/{slug}/client-config.json para obtener el canal de Discord del cliente.\n2. Publica alerta en el canal intelligence del cliente afectado:\n   message(action=send, channel=discord, target=<intelligence_channel_id>, message='📊 Usage Anomaly — {date}\\n**Today:** {turns} turns | {tokens} tokens\\n**Daily avg:** {avg} turns\\nAnomaly: {description}')\n3. APLICA reglas de _system/client-context-isolation.md — no revelar datos de otros clientes.\n\nIF GLOBAL ANOMALY (no atribuible a un cliente):\nPost to Costes APIs thread (target='1481910083255406694') in Cervantes Brain guild.\n\nGuarda resumen en _system/recurring-tasks/cost-tracker-daily/YYYY-MM-DD.json.",
         "model": "anthropic/claude-sonnet-4-5",
         "timeoutSeconds": 120
       },
       "delivery": {
         "mode": "none"
       },
-      "state": {
-        "nextRunAtMs": 1775628000000,
-        "lastRunAtMs": 1775542070748,
-        "lastRunStatus": "error",
-        "lastStatus": "error",
-        "lastDurationMs": 152050,
-        "lastDeliveryStatus": "not-requested",
-        "consecutiveErrors": 1,
-        "lastError": "cron: job execution timed out",
-        "lastErrorReason": "timeout"
-      }
+      "state": {}
     },
     {
       "id": "4eda3a87-1b19-4932-8c7d-d4b1971d53e3",
       "agentId": "sancho",
       "sessionKey": "agent:sancho:discord:channel:1477997447845511228",
-      "name": "Meta Ads → Slack Daily Report",
+      "name": "Meta Ads → Slack Daily Report — Growth4U",
       "enabled": false,
       "createdAtMs": 1773153244084,
-      "updatedAtMs": 1773181893013,
       "schedule": {
         "kind": "cron",
         "expr": "0 9 * * *",
@@ -298,7 +306,6 @@
       "name": "image-optimizer",
       "enabled": true,
       "createdAtMs": 1773187213085,
-      "updatedAtMs": 1775483854658,
       "schedule": {
         "kind": "cron",
         "expr": "0 10 * * 1",
@@ -317,17 +324,7 @@
         "channel": "discord",
         "to": "1480154276205433035"
       },
-      "state": {
-        "nextRunAtMs": 1776067200000,
-        "lastRunAtMs": 1775482919437,
-        "lastRunStatus": "error",
-        "lastStatus": "error",
-        "lastDurationMs": 935221,
-        "lastDeliveryStatus": "unknown",
-        "consecutiveErrors": 1,
-        "lastError": "cron: job execution timed out",
-        "lastErrorReason": "timeout"
-      }
+      "state": {}
     },
     {
       "id": "1e64347a-7151-482d-ac27-8ad88cb62896",
@@ -336,7 +333,6 @@
       "name": "update-skills",
       "enabled": true,
       "createdAtMs": 1773235919019,
-      "updatedAtMs": 1775533505705,
       "schedule": {
         "kind": "cron",
         "expr": "30 5 * * *",
@@ -355,17 +351,7 @@
         "channel": "discord",
         "to": "1481220331845976125"
       },
-      "state": {
-        "nextRunAtMs": 1775619000000,
-        "lastRunAtMs": 1775532600018,
-        "lastRunStatus": "error",
-        "lastStatus": "error",
-        "lastDurationMs": 905687,
-        "lastDeliveryStatus": "unknown",
-        "consecutiveErrors": 2,
-        "lastErrorReason": "timeout",
-        "lastError": "cron: job execution timed out"
-      }
+      "state": {}
     },
     {
       "id": "f04c8094-eaf9-4995-bde8-9d5df88ef4d7",
@@ -374,7 +360,6 @@
       "name": "Weekly Changelog Update",
       "enabled": true,
       "createdAtMs": 1773249903776,
-      "updatedAtMs": 1775380535050,
       "schedule": {
         "kind": "cron",
         "expr": "0 10 * * 0",
@@ -390,17 +375,7 @@
       "delivery": {
         "mode": "none"
       },
-      "state": {
-        "nextRunAtMs": 1775980800000,
-        "lastRunAtMs": 1775380390371,
-        "lastRunStatus": "error",
-        "lastStatus": "error",
-        "lastDurationMs": 144679,
-        "lastDeliveryStatus": "not-requested",
-        "consecutiveErrors": 1,
-        "lastError": "FallbackSummaryError: All models failed (3): anthropic/claude-opus-4-6: LLM request rejected: Third-party apps now draw from your extra usage, not your plan limits. We've added a $200 credit to get you started. Claim it at claude.ai/settings/usage and keep going. (format) | anthropic/claude-sonnet-4-5: No available auth profile for anthropic (all in cooldown or unavailable). (format) | minimax/MiniMax-M2.7: LLM request timed out. (unknown)",
-        "lastErrorReason": "timeout"
-      }
+      "state": {}
     },
     {
       "id": "f10d84d4-0e6d-4db1-8e1d-824d34efbbc7",
@@ -409,7 +384,6 @@
       "name": "Weekly Activity Summary",
       "enabled": true,
       "createdAtMs": 1773249903895,
-      "updatedAtMs": 1775380713385,
       "schedule": {
         "kind": "cron",
         "expr": "0 10 * * 0",
@@ -425,16 +399,7 @@
       "delivery": {
         "mode": "none"
       },
-      "state": {
-        "nextRunAtMs": 1775980800000,
-        "lastRunAtMs": 1775380535050,
-        "lastRunStatus": "error",
-        "lastStatus": "error",
-        "lastDurationMs": 178335,
-        "lastDeliveryStatus": "not-requested",
-        "consecutiveErrors": 1,
-        "lastError": "FallbackSummaryError: All models failed (3): anthropic/claude-opus-4-6: LLM request rejected: Third-party apps now draw from your extra usage, not your plan limits. We've added a $200 credit to get you started. Claim it at claude.ai/settings/usage and keep going. (format) | anthropic/claude-sonnet-4-5: No available auth profile for anthropic (all in cooldown or unavailable). (format) | minimax/MiniMax-M2.7: LLM request rejected: Third-party apps now draw from your extra usage, not your plan limits. We've added a $200 credit to get you started. Claim it at claude.ai/settings/usage and keep going. (format)"
-      }
+      "state": {}
     },
     {
       "id": "953c7fcd-9358-4dd6-8092-6ddde9c775a0",
@@ -443,7 +408,6 @@
       "name": "mejora-continua-weekly",
       "enabled": true,
       "createdAtMs": 1773560184099,
-      "updatedAtMs": 1775381686200,
       "schedule": {
         "kind": "cron",
         "expr": "0 10 * * 0",
@@ -462,17 +426,7 @@
         "channel": "discord",
         "to": "1482638140240953396"
       },
-      "state": {
-        "nextRunAtMs": 1775980800000,
-        "lastRunAtMs": 1775380713385,
-        "lastRunStatus": "error",
-        "lastStatus": "error",
-        "lastDurationMs": 972815,
-        "lastDeliveryStatus": "unknown",
-        "consecutiveErrors": 1,
-        "lastError": "cron: job execution timed out",
-        "lastErrorReason": "timeout"
-      }
+      "state": {}
     },
     {
       "id": "3c0b79c9-01e5-499d-bd98-c88c963c9b82",
@@ -481,7 +435,6 @@
       "name": "skill-improvement-weekly",
       "enabled": true,
       "createdAtMs": 1773591436668,
-      "updatedAtMs": 1775381808437,
       "schedule": {
         "kind": "cron",
         "expr": "0 10 * * 0",
@@ -498,17 +451,32 @@
         "mode": "announce",
         "channel": "1482642972712505395"
       },
-      "state": {
-        "nextRunAtMs": 1775980800000,
-        "lastRunAtMs": 1775381686200,
-        "lastRunStatus": "error",
-        "lastStatus": "error",
-        "lastDurationMs": 122237,
-        "lastDeliveryStatus": "unknown",
-        "consecutiveErrors": 1,
-        "lastError": "FallbackSummaryError: All models failed (3): anthropic/claude-opus-4-6: LLM request rejected: Third-party apps now draw from your extra usage, not your plan limits. We've added a $200 credit to get you started. Claim it at claude.ai/settings/usage and keep going. (format) | anthropic/claude-sonnet-4-5: No available auth profile for anthropic (all in cooldown or unavailable). (format) | minimax/MiniMax-M2.7: LLM request timed out. (unknown)",
-        "lastErrorReason": "timeout"
-      }
+      "state": {}
+    },
+    {
+      "id": "476f5959-8aaf-4d2a-8f41-9b0187250e86",
+      "agentId": "cervantes",
+      "sessionKey": "agent:sancho:discord:channel:1482642745905512601",
+      "name": "Weekly Token Audit",
+      "enabled": true,
+      "createdAtMs": 1773650217981,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 9 * * 1",
+        "tz": "Europe/Madrid"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "## Auditoría Semanal de Tokens/Costes\n\nEjecuta una auditoría completa y publica en el hilo Costes APIs (thread 1481910083255406694) del guild Cervantes Brain.\n\n### Pasos:\n\n1. **Recopilar datos**: Ejecuta `python3 ~/.openclaw/workspace-sancho/scripts/cost-tracker.py --alert-threshold 0` y lee `costs-daily.json` + `costs-global.json`.\n\n2. **Análisis semanal** (últimos 7 días vs semana anterior):\n   - Total USD teórico + turns + tokens\n   - Tendencia: subiendo/bajando/estable\n   - Top 3 días más caros y por qué (qué cliente/agente consumió más)\n   - % de `system_usd` (no atribuido) vs total → si >50%, investigar\n   - Desglose por cliente: quién consume más y si es proporcional al trabajo realizado\n   - Desglose por agente (si disponible en costs-global.json)\n\n3. **Detectar sesiones pesadas**: Lista sesiones activas con sessions_list y busca las que tengan contextos grandes (>100K tokens). Si las hay, recomienda /compact o split.\n\n4. **Check de config de optimización**:\n   - ¿Está `cacheRetention: \"long\"` activo? (gateway config.get → buscar cacheRetention)\n   - ¿Thinking levels por agente están optimizados?\n   - ¿Bootstrap files han crecido? (contar tokens aprox de MEMORY.md + AGENTS.md + TOOLS.md + SOUL.md)\n\n5. **Recomendaciones**: Lista 1-3 acciones concretas para la próxima semana.\n\n6. **Publicar**: Envía el resumen al hilo:\n   message(action=send, channel=discord, target='1481910083255406694', message='📊 **Auditoría Semanal Tokens** — {fecha}\\n\\n**Resumen 7 días:**\\n- Total: ${total} teóricos | {turns} turns\\n- Tendencia: {tendencia} vs semana anterior\\n- Promedio diario: ${avg}/día\\n\\n**Por cliente:**\\n{desglose}\\n\\n**System (no atribuido):** {system_pct}%\\n\\n**Config check:**\\n- Cache: {status}\\n- Thinking: {status}\\n- Bootstrap size: ~{tokens}K tokens\\n\\n**Recomendaciones:**\\n{lista}\\n\\nℹ️ Plan Max $200/mes — coste fijo. Valores teóricos.')\n\n7. Si hay algo urgente (>3x promedio, config sin optimizar), menciona a <@1334604955687977042>.\n\nCONTEXTO: Plan Claude Max $200/mes (flat rate). Los $ son teóricos. Alertar por anomalías de volumen, no por umbral de $.",
+        "model": "anthropic/claude-sonnet-4-5",
+        "timeoutSeconds": 300
+      },
+      "delivery": {
+        "mode": "none"
+      },
+      "state": {}
     },
     {
       "id": "f78ba296-fe22-4ddc-a9a4-a6602465c13e",
@@ -517,7 +485,6 @@
       "name": "memory-compact-monthly",
       "enabled": true,
       "createdAtMs": 1773669805969,
-      "updatedAtMs": 1775013020281,
       "schedule": {
         "kind": "cron",
         "expr": "0 3 1 * *",
@@ -532,17 +499,7 @@
       "delivery": {
         "mode": "none"
       },
-      "state": {
-        "nextRunAtMs": 1777597200000,
-        "lastRunAtMs": 1775009210483,
-        "lastRunStatus": "error",
-        "lastStatus": "error",
-        "lastDurationMs": 3809798,
-        "lastError": "cron: job execution timed out",
-        "lastErrorReason": "timeout",
-        "lastDeliveryStatus": "not-requested",
-        "consecutiveErrors": 1
-      }
+      "state": {}
     },
     {
       "id": "2e1d6efd-5da7-4a5a-bcb0-e0892ff25b66",
@@ -551,7 +508,6 @@
       "name": "cron-watchdog-weekly",
       "enabled": true,
       "createdAtMs": 1773680314014,
-      "updatedAtMs": 1775484810335,
       "schedule": {
         "kind": "cron",
         "expr": "0 11 * * 1",
@@ -568,17 +524,7 @@
       "delivery": {
         "mode": "none"
       },
-      "state": {
-        "nextRunAtMs": 1776070800000,
-        "lastRunAtMs": 1775483854658,
-        "lastRunStatus": "error",
-        "lastStatus": "error",
-        "lastDurationMs": 955677,
-        "lastDeliveryStatus": "not-requested",
-        "consecutiveErrors": 1,
-        "lastError": "cron: job execution timed out",
-        "lastErrorReason": "timeout"
-      }
+      "state": {}
     },
     {
       "id": "a68143d8-1309-46eb-a5dc-4c3fb35ee3d2",
@@ -587,7 +533,6 @@
       "name": "Lead Sync — Growth4U",
       "enabled": true,
       "createdAtMs": 1774192173315,
-      "updatedAtMs": 1775592600809,
       "schedule": {
         "kind": "cron",
         "expr": "0 22 * * *",
@@ -603,16 +548,7 @@
       "delivery": {
         "mode": "none"
       },
-      "state": {
-        "nextRunAtMs": 1775678400000,
-        "lastRunAtMs": 1775592000011,
-        "lastRunStatus": "ok",
-        "lastStatus": "ok",
-        "lastDurationMs": 600798,
-        "lastDeliveryStatus": "not-delivered",
-        "consecutiveErrors": 0,
-        "lastDelivered": false
-      }
+      "state": {}
     },
     {
       "id": "36d0bff9-fea9-40d8-9bfd-bf1e5e58468b",
@@ -621,7 +557,6 @@
       "name": "Call Prep Daily — Growth4U",
       "enabled": true,
       "createdAtMs": 1774192180766,
-      "updatedAtMs": 1775594216690,
       "schedule": {
         "kind": "cron",
         "expr": "30 22 * * 0-4",
@@ -637,16 +572,7 @@
       "delivery": {
         "mode": "none"
       },
-      "state": {
-        "nextRunAtMs": 1775680200000,
-        "lastRunAtMs": 1775593800013,
-        "lastRunStatus": "ok",
-        "lastStatus": "ok",
-        "lastDurationMs": 416677,
-        "lastDeliveryStatus": "not-delivered",
-        "consecutiveErrors": 0,
-        "lastDelivered": false
-      }
+      "state": {}
     },
     {
       "id": "6f136183-673c-4a60-9aca-d923d3c00480",
@@ -655,7 +581,6 @@
       "name": "Call Prep Weekly — Growth4U",
       "enabled": true,
       "createdAtMs": 1774192186720,
-      "updatedAtMs": 1775248515774,
       "schedule": {
         "kind": "cron",
         "expr": "30 22 * * 5",
@@ -723,7 +648,6 @@
       "name": "SEO Weekly Review — Criptan",
       "enabled": true,
       "createdAtMs": 1774907384193,
-      "updatedAtMs": 1775461317401,
       "schedule": {
         "kind": "cron",
         "expr": "0 9 * * 1",
@@ -741,17 +665,7 @@
         "mode": "none",
         "channel": "last"
       },
-      "state": {
-        "nextRunAtMs": 1776063600000,
-        "lastRunAtMs": 1775460378458,
-        "lastRunStatus": "error",
-        "lastStatus": "error",
-        "lastDurationMs": 938943,
-        "lastError": "cron: job execution timed out",
-        "lastErrorReason": "timeout",
-        "lastDeliveryStatus": "not-requested",
-        "consecutiveErrors": 1
-      }
+      "state": {}
     },
     {
       "id": "53f6b4d3-51b4-4f78-8907-2f68a82efc7b",
@@ -759,7 +673,6 @@
       "name": "Competitor Watch — Criptan",
       "enabled": true,
       "createdAtMs": 1774907441307,
-      "updatedAtMs": 1774907441307,
       "schedule": {
         "kind": "cron",
         "expr": "0 10 * * 3",
@@ -777,9 +690,7 @@
         "mode": "none",
         "channel": "last"
       },
-      "state": {
-        "nextRunAtMs": 1775635200000
-      }
+      "state": {}
     },
     {
       "id": "df8aaf99-8b1b-4b5b-844b-5c53de641e5c",
@@ -787,7 +698,6 @@
       "name": "Social & Content Review — Criptan",
       "enabled": true,
       "createdAtMs": 1774907485233,
-      "updatedAtMs": 1775203483165,
       "schedule": {
         "kind": "cron",
         "expr": "0 10 * * 5",
@@ -805,16 +715,7 @@
         "mode": "none",
         "channel": "last"
       },
-      "state": {
-        "nextRunAtMs": 1775808000000,
-        "lastRunAtMs": 1775203385704,
-        "lastRunStatus": "ok",
-        "lastStatus": "ok",
-        "lastDurationMs": 97461,
-        "lastDelivered": false,
-        "lastDeliveryStatus": "not-delivered",
-        "consecutiveErrors": 0
-      }
+      "state": {}
     },
     {
       "id": "854d8902-eea8-45aa-bb26-6afeb3a6c949",
@@ -822,7 +723,6 @@
       "name": "B2B Pipeline Review — Criptan",
       "enabled": true,
       "createdAtMs": 1774907548780,
-      "updatedAtMs": 1775136685033,
       "schedule": {
         "kind": "cron",
         "expr": "0 11 * * 4",
@@ -840,17 +740,7 @@
         "mode": "none",
         "channel": "last"
       },
-      "state": {
-        "nextRunAtMs": 1775725200000,
-        "lastRunAtMs": 1775136024235,
-        "lastRunStatus": "error",
-        "lastStatus": "error",
-        "lastDurationMs": 660798,
-        "lastError": "cron: job execution timed out",
-        "lastErrorReason": "timeout",
-        "lastDeliveryStatus": "not-requested",
-        "consecutiveErrors": 1
-      }
+      "state": {}
     },
     {
       "id": "41d660cb-c18f-4268-aa95-6275f2435f90",
@@ -858,7 +748,6 @@
       "name": "Weekly Strategy Report — Criptan",
       "enabled": true,
       "createdAtMs": 1774907616596,
-      "updatedAtMs": 1775199918817,
       "schedule": {
         "kind": "cron",
         "expr": "0 9 * * 5",
@@ -876,17 +765,7 @@
         "mode": "none",
         "channel": "last"
       },
-      "state": {
-        "nextRunAtMs": 1775804400000,
-        "lastRunAtMs": 1775199797730,
-        "lastRunStatus": "error",
-        "lastStatus": "error",
-        "lastDurationMs": 121087,
-        "lastError": "cron: job execution timed out",
-        "lastErrorReason": "timeout",
-        "lastDeliveryStatus": "not-requested",
-        "consecutiveErrors": 1
-      }
+      "state": {}
     },
     {
       "id": "1b104cd3-74b6-42df-9d4e-b4a764acef21",
@@ -895,7 +774,6 @@
       "description": "Recordatorio semanal lunes 09:00 para rellenar métricas manuales de Criptan",
       "enabled": true,
       "createdAtMs": 1774972377248,
-      "updatedAtMs": 1775465544418,
       "schedule": {
         "kind": "cron",
         "expr": "0 9 * * 1",
@@ -912,17 +790,7 @@
         "mode": "announce",
         "channel": "last"
       },
-      "state": {
-        "nextRunAtMs": 1776063600000,
-        "lastRunAtMs": 1775461317401,
-        "lastRunStatus": "error",
-        "lastStatus": "error",
-        "lastDurationMs": 4227017,
-        "lastError": "cron: job execution timed out",
-        "lastErrorReason": "timeout",
-        "lastDeliveryStatus": "unknown",
-        "consecutiveErrors": 1
-      }
+      "state": {}
     },
     {
       "id": "00fa288d-d349-449e-85ff-1d3b2260f2d3",
@@ -930,7 +798,6 @@
       "name": "Daily Pulse — Growth4U",
       "enabled": true,
       "createdAtMs": 1775033081929,
-      "updatedAtMs": 1775547067255,
       "schedule": {
         "kind": "cron",
         "expr": "0 9 * * 1-5",
@@ -947,17 +814,7 @@
         "mode": "announce",
         "channel": "last"
       },
-      "state": {
-        "nextRunAtMs": 1775631600000,
-        "lastRunAtMs": 1775546039641,
-        "lastRunStatus": "error",
-        "lastStatus": "error",
-        "lastDurationMs": 1027614,
-        "lastDeliveryStatus": "unknown",
-        "consecutiveErrors": 4,
-        "lastErrorReason": "timeout",
-        "lastError": "FallbackSummaryError: All models failed (3): anthropic/claude-sonnet-4-5: LLM request rejected: Third-party apps now draw from your extra usage, not your plan limits. We've added a $200 credit to get you started. Claim it at claude.ai/settings/usage and keep going. (format) | minimax/MiniMax-M2.7: LLM request timed out. (unknown) | anthropic/claude-opus-4-6: LLM request rejected: Third-party apps now draw from your extra usage, not your plan limits. We've added a $200 credit to get you started. Claim it at claude.ai/settings/usage and keep going. (format)"
-      }
+      "state": {}
     },
     {
       "id": "eef29d29-0160-4708-8b9f-d5f0503b4964",
@@ -965,7 +822,6 @@
       "name": "Performance Analysis — Growth4U",
       "enabled": true,
       "createdAtMs": 1775033088949,
-      "updatedAtMs": 1775488729218,
       "schedule": {
         "kind": "cron",
         "expr": "0 11 * * 1",
@@ -982,17 +838,7 @@
         "mode": "announce",
         "channel": "last"
       },
-      "state": {
-        "nextRunAtMs": 1776070800000,
-        "lastRunAtMs": 1775484810335,
-        "lastRunStatus": "error",
-        "lastStatus": "error",
-        "lastDurationMs": 3918883,
-        "lastError": "cron: job execution timed out",
-        "lastErrorReason": "timeout",
-        "lastDeliveryStatus": "unknown",
-        "consecutiveErrors": 1
-      }
+      "state": {}
     },
     {
       "id": "a654ab5d-b65d-4718-bab6-906ee62601eb",
@@ -1000,7 +846,6 @@
       "name": "Weekly Synthesis — Growth4U",
       "enabled": true,
       "createdAtMs": 1775033092306,
-      "updatedAtMs": 1775489472554,
       "schedule": {
         "kind": "cron",
         "expr": "0 10 * * 1",
@@ -1017,17 +862,7 @@
         "mode": "announce",
         "channel": "last"
       },
-      "state": {
-        "nextRunAtMs": 1776067200000,
-        "lastRunAtMs": 1775488729218,
-        "lastRunStatus": "error",
-        "lastStatus": "error",
-        "lastDurationMs": 743336,
-        "lastError": "FallbackSummaryError: All models failed (3): anthropic/claude-sonnet-4-5: LLM request timed out. (unknown) | minimax/MiniMax-M2.7: LLM request timed out. (unknown) | anthropic/claude-opus-4-6: LLM request rejected: Third-party apps now draw from your extra usage, not your plan limits. We've added a $200 credit to get you started. Claim it at claude.ai/settings/usage and keep going. (format)",
-        "lastErrorReason": "timeout",
-        "lastDeliveryStatus": "unknown",
-        "consecutiveErrors": 1
-      }
+      "state": {}
     },
     {
       "id": "09b92860-663d-4fb1-8f27-352c55e8a507",
@@ -1035,7 +870,6 @@
       "name": "Morning Metrics — Growth4U",
       "enabled": true,
       "createdAtMs": 1775034097507,
-      "updatedAtMs": 1775544788615,
       "schedule": {
         "kind": "cron",
         "expr": "30 8 * * *",
@@ -1052,17 +886,7 @@
         "mode": "announce",
         "channel": "last"
       },
-      "state": {
-        "nextRunAtMs": 1775629800000,
-        "lastRunAtMs": 1775543812472,
-        "lastRunStatus": "error",
-        "lastStatus": "error",
-        "lastDurationMs": 976143,
-        "lastDeliveryStatus": "unknown",
-        "consecutiveErrors": 6,
-        "lastError": "FallbackSummaryError: All models failed (3): anthropic/claude-opus-4-6: LLM request rejected: Third-party apps now draw from your extra usage, not your plan limits. We've added a $200 credit to get you started. Claim it at claude.ai/settings/usage and keep going. (format) | anthropic/claude-sonnet-4-5: No available auth profile for anthropic (all in cooldown or unavailable). (format) | minimax/MiniMax-M2.7: LLM request timed out. (unknown)",
-        "lastErrorReason": "timeout"
-      }
+      "state": {}
     },
     {
       "id": "9416a8bc-14f5-4626-99d2-c8065c4ab002",
@@ -1070,7 +894,6 @@
       "name": "Morning Metrics — Hulahoop",
       "enabled": true,
       "createdAtMs": 1775563322560,
-      "updatedAtMs": 1775563322560,
       "schedule": {
         "kind": "cron",
         "expr": "30 8 * * *",
@@ -1087,9 +910,7 @@
         "mode": "announce",
         "channel": "last"
       },
-      "state": {
-        "nextRunAtMs": 1775629800000
-      }
+      "state": {}
     },
     {
       "id": "7d58dea0-fbeb-42f1-97e6-a33880cf6389",
@@ -1097,7 +918,6 @@
       "name": "Performance Analysis — Hulahoop",
       "enabled": true,
       "createdAtMs": 1775563338599,
-      "updatedAtMs": 1775563338599,
       "schedule": {
         "kind": "cron",
         "expr": "0 11 * * 1",
@@ -1114,9 +934,582 @@
         "mode": "announce",
         "channel": "last"
       },
-      "state": {
-        "nextRunAtMs": 1776070800000
-      }
+      "state": {}
+    },
+    {
+      "id": "68c55ca5-7655-4ab5-9d5d-26925d6cdae6",
+      "agentId": "sancho",
+      "name": "Thief Marketer — Growth4U",
+      "enabled": false,
+      "createdAtMs": 1775721152540,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 8 * * 3",
+        "tz": "Europe/Madrid"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Análisis competitivo semanal para Growth4U.\n\nPASO 0 — CARGAR CONFIG:\nLee brand/growth4u/client-config.json. Usa los IDs de ahí para TODO.\n\nPASO 1 — LEER FUENTES:\nLee brand/growth4u/market-and-us/competitors/sources.json. Para cada competidor:\n1) Web scrape homepage + blog (web_fetch) → detectar contenido nuevo, cambios de copy, pricing.\n2) LinkedIn → buscar posts recientes (web_search).\n3) Instagram/YouTube → últimas publicaciones (web_search).\n4) Google Ads Library → anuncios activos.\n5) Newsletter → si hay suscripción, revisar últimos emails.\n\nPASO 2 — COMPARAR:\nCompara con última ejecución en brand/growth4u/thief-marketer/.\n\nPASO 3 — GUARDAR:\nGuarda en brand/growth4u/recurring-tasks/thief-marketer/YYYY-MM-DD.json:\n{\"cronName\": \"Thief Marketer — Growth4U\", \"slug\": \"growth4u\", \"date\": \"YYYY-MM-DD\", \"runAtMs\": <timestamp_ms>, \"status\": \"ok\", \"content\": \"<reporte completo>\"}\n\nPASO 4 — PUBLICAR EN DISCORD:\nDel client-config.json, busca el channel ID de 'crons.thief_marketer.publish_channel'.\n1. message(action=send, channel=discord, target=<publish_channel_id>, message='🕵️ Thief Marketer — YYYY-MM-DD: [hallazgo principal]')\n2. Captura messageId → crea hilo → publica reporte detallado en el hilo.\n3. APLICA reglas de _system/client-context-isolation.md — solo info de Growth4U."
+      },
+      "delivery": {
+        "mode": "announce",
+        "channel": "last"
+      },
+      "state": {}
+    },
+    {
+      "id": "34f928f2-5534-47e9-85ce-0903fb9ab53e",
+      "agentId": "sancho",
+      "name": "Thief Marketer — Criptan",
+      "enabled": false,
+      "createdAtMs": 1775721162281,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 8 * * 3",
+        "tz": "Europe/Madrid"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Análisis competitivo semanal para Criptan.\n\nPASO 0 — CARGAR CONFIG:\nLee brand/criptan/client-config.json. Usa los IDs de ahí para TODO.\n\nPASO 1 — LEER FUENTES:\nLee brand/criptan/market-and-us/competitors/sources.json. Para cada competidor:\n1) Web scrape homepage + blog (web_fetch) → detectar contenido nuevo, cambios de copy, pricing.\n2) LinkedIn → buscar posts recientes (web_search).\n3) Instagram/YouTube → últimas publicaciones (web_search).\n4) Google Ads Library → anuncios activos.\n5) Newsletter → si hay suscripción, revisar últimos emails.\n\nPASO 2 — COMPARAR:\nCompara con última ejecución en brand/criptan/thief-marketer/.\n\nPASO 3 — GUARDAR:\nGuarda en brand/criptan/recurring-tasks/thief-marketer/YYYY-MM-DD.json:\n{\"cronName\": \"Thief Marketer — Criptan\", \"slug\": \"criptan\", \"date\": \"YYYY-MM-DD\", \"runAtMs\": <timestamp_ms>, \"status\": \"ok\", \"content\": \"<reporte completo>\"}\n\nPASO 4 — PUBLICAR EN DISCORD:\nDel client-config.json, busca el channel ID de 'crons.thief_marketer.publish_channel'.\n1. message(action=send, channel=discord, target=<publish_channel_id>, message='🕵️ Thief Marketer — YYYY-MM-DD: [hallazgo principal]')\n2. Captura messageId → crea hilo → publica reporte detallado en el hilo.\n3. APLICA reglas de _system/client-context-isolation.md — solo info de Criptan."
+      },
+      "delivery": {
+        "mode": "announce",
+        "channel": "last"
+      },
+      "state": {}
+    },
+    {
+      "id": "19e4cf8d-4587-4b60-a300-364a955d9023",
+      "agentId": "sancho",
+      "name": "Thief Marketer — Paymatico",
+      "enabled": true,
+      "createdAtMs": 1775721174902,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 8 * * 3",
+        "tz": "Europe/Madrid"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Análisis competitivo semanal para Paymatico.\n\nPASO 0 — CARGAR CONFIG:\nLee brand/paymatico/client-config.json. Usa los IDs de ahí para TODO.\n\nPASO 1 — LEER FUENTES:\nLee brand/paymatico/market-and-us/competitors/sources.json. Para cada competidor:\n1) Web scrape homepage + blog (web_fetch) → detectar contenido nuevo, cambios de copy, pricing.\n2) LinkedIn → buscar posts recientes (web_search).\n3) Instagram/YouTube → últimas publicaciones (web_search).\n4) Google Ads Library → anuncios activos.\n5) Newsletter → si hay suscripción, revisar últimos emails.\n\nPASO 2 — COMPARAR:\nCompara con última ejecución en brand/paymatico/thief-marketer/.\n\nPASO 3 — GUARDAR:\nGuarda en brand/paymatico/recurring-tasks/thief-marketer/YYYY-MM-DD.json:\n{\"cronName\": \"Thief Marketer — Paymatico\", \"slug\": \"paymatico\", \"date\": \"YYYY-MM-DD\", \"runAtMs\": <timestamp_ms>, \"status\": \"ok\", \"content\": \"<reporte completo>\"}\n\nPASO 4 — PUBLICAR EN DISCORD:\nDel client-config.json, busca el channel ID de 'crons.thief_marketer.publish_channel'.\n1. message(action=send, channel=discord, target=<publish_channel_id>, message='🕵️ Thief Marketer — YYYY-MM-DD: [hallazgo principal]')\n2. Captura messageId → crea hilo → publica reporte detallado en el hilo.\n3. APLICA reglas de _system/client-context-isolation.md — solo info de Paymatico."
+      },
+      "delivery": {
+        "mode": "announce",
+        "channel": "last"
+      },
+      "state": {}
+    },
+    {
+      "agentId": "sancho",
+      "name": "Content: News Monitor — Growth4U",
+      "enabled": true,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 7 * * 1-5",
+        "tz": "Europe/Madrid"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Ejecuta news-monitor para Growth4U.\n\nPASO 1 — LEER CONFIGS:\nLee brand/growth4u/content/configs/news-prompts/*.yml (un archivo por pillar).\nLee brand/growth4u/content/content-pillars.md para contexto.\n\nPASO 2 — BUSCAR POR PILLAR:\nPara cada pillar, ejecuta WebSearch con los prompts configurados.\nFiltra por sector_filters y language. Max 10 resultados relevantes por pillar.\nDeduplica por URL contra research-signals de ayer.\n\nPASO 3 — EXTRAER SIGNALS:\nPara cada resultado, extrae: id, type=news, pillar_id, title, summary (2-3 frases de POR QUE es relevante al pillar), source, url, date, relevance_score (0-1).\nSkip: press releases sin insight, listicles superficiales.\n\nPASO 4 — GUARDAR:\nEscribe en brand/growth4u/content/research-signals/{YYYY-MM-DD}-news.json.\nSi el archivo ya existe, merge y deduplica.\n\nPASO 5 — GUARDAR EN RECURRING TASKS:\nGuarda resumen en brand/growth4u/recurring-tasks/content-news-monitor/{YYYY-MM-DD}.json:\n{\"cronName\": \"Content: News Monitor — Growth4U\", \"slug\": \"growth4u\", \"date\": \"YYYY-MM-DD\", \"runAtMs\": <timestamp_ms>, \"status\": \"ok\", \"content\": \"<N signals encontrados por pillar>\"}",
+        "model": "anthropic/claude-sonnet-4-5"
+      },
+      "delivery": {
+        "mode": "none"
+      },
+      "id": "365caf56-5aaf-4109-8b3b-e3547d5a2b41",
+      "createdAtMs": 1777353600000,
+      "state": {}
+    },
+    {
+      "agentId": "sancho",
+      "name": "Content: Competitor Monitor — Growth4U",
+      "enabled": true,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 7 * * 1-5",
+        "tz": "Europe/Madrid"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Ejecuta thief-marketers para Growth4U.\n\nPASO 1 — LEER CONFIGS:\nLee brand/growth4u/content/configs/competitors/all-pillars.yml\nLee brand/growth4u/content/configs/reference-creators/all-pillars.yml\nLee brand/growth4u/content/content-pillars.md\n\nPASO 2 — MONITOREAR COMPETIDORES Y CREATORS:\nPara cada competidor y reference-creator, busca su contenido reciente:\n- LinkedIn: WebSearch \"site:linkedin.com/posts {nombre}\" o WebFetch de su perfil publico\n- Blog: WebFetch de su web/blog\n- X/Twitter: WebSearch \"site:x.com {handle}\"\nExtrae top 5 posts por engagement de los ultimos 7 dias.\n\nPASO 3 — EXTRAER SIGNALS:\nPara cada contenido top, extrae: id, type=creator, pillar_id, title, summary, source (nombre), source_type (competitor/reference-creator), platform, url, engagement, why_it_worked (2-3 frases), angle_for_us (como podemos usar esta signal).\nMax 15 signals totales.\n\nPASO 4 — GUARDAR:\nEscribe en brand/growth4u/content/research-signals/{YYYY-MM-DD}-creators.json.\n\nPASO 5 — GUARDAR EN RECURRING TASKS:\nGuarda resumen en brand/growth4u/recurring-tasks/content-competitor-monitor/{YYYY-MM-DD}.json.",
+        "model": "anthropic/claude-sonnet-4-5"
+      },
+      "delivery": {
+        "mode": "none"
+      },
+      "id": "35c584a0-5558-44f0-81a4-9bc56a963a1a",
+      "createdAtMs": 1777353600000,
+      "state": {}
+    },
+    {
+      "agentId": "sancho",
+      "name": "Content: Classify + Ideas — Growth4U",
+      "enabled": true,
+      "schedule": {
+        "kind": "cron",
+        "expr": "30 7 * * 1-5",
+        "tz": "Europe/Madrid"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Ejecuta insight-classifier + insight-to-content-mapper para Growth4U.\n\nPASO 1 — CLASIFICAR SIGNALS:\nLee brand/growth4u/content/research-signals/{HOY}-*.json (todos los archivos de hoy: news, creators, pulse, paa).\nPara cada signal sin campo signal_type, clasifica en 1+ de 7 tipos: aha-moment, conflict, contrarian, system, milestone, vulnerability, metric.\nEscribe el campo signal_type[] de vuelta al archivo.\n\nPASO 2 — GENERAR IDEAS:\nLee brand/growth4u/content/content-pillars.md\nLee brand/growth4u/brand-book/brand-voice/brand-voice.current.md\nPara cada signal clasificado, genera una idea con:\n- pillar_id (match por topic)\n- content_type (Hot Take, Proof Post, Framework, Personal Story, etc.)\n- target_channel (linkedin, twitter, blog, newsletter — segun cadence-config)\n- signal (summary, source, url, date del signal original)\n- angle_draft (1-2 parrafos: el angulo posible para nuestro contenido)\n- pov_confidence (0-1)\nMax 5-8 ideas por dia.\n\nPASO 3 — GUARDAR:\nAppend ideas a brand/growth4u/content/idea-queue.json con status=ready.\nNo duplicar ideas que ya esten en el queue (check por signal URL).\n\nPASO 4 — GUARDAR EN RECURRING TASKS:\nGuarda resumen en brand/growth4u/recurring-tasks/content-ideas/{YYYY-MM-DD}.json:\n{\"cronName\": \"Content: Classify + Ideas — Growth4U\", \"slug\": \"growth4u\", \"date\": \"YYYY-MM-DD\", \"runAtMs\": <timestamp_ms>, \"status\": \"ok\", \"content\": \"<N signals clasificados, M ideas generadas con pillars y channels>\"}",
+        "model": "anthropic/claude-sonnet-4-5"
+      },
+      "delivery": {
+        "mode": "none"
+      },
+      "id": "3087b273-f6c4-44e7-89d7-637cf3911e33",
+      "createdAtMs": 1777353600000,
+      "state": {}
+    },
+    {
+      "agentId": "sancho",
+      "name": "Content: Editorial Dispatch — Growth4U",
+      "enabled": true,
+      "schedule": {
+        "kind": "cron",
+        "expr": "30 8 * * 1-5",
+        "tz": "Europe/Madrid"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Ejecuta editorial dispatch para Growth4U.\n\nPASO 1 — LEER:\nLee brand/growth4u/content/idea-queue.json\nLee brand/growth4u/content/configs/cadence-config.yml\n\nPASO 2 — SELECCIONAR CANDIDATOS:\nFiltra ideas donde status=ready AND age<=14 dias.\nCalcula recency_score = exp(-age_days/5).\nOrdena por recency_score DESC, pov_confidence DESC.\nSelecciona 3-5 ideas para los slots del dia segun cadence-config.\nIdeas >14 dias → marca status=stale automaticamente.\n\nPASO 3 — ENVIAR A DISCORD:\nLee brand/growth4u/client-config.json para el channel ID de content.\nPara cada idea seleccionada, envia al canal de Discord:\n\n📰 Esto paso: {signal.summary}\n   📅 {signal.date} · 🔗 {signal.source}\n✍️ Tu posible angulo: {angle_draft}\n🎯 Pillar: {pillar_id} · Canal: {channel} · Tipo: {type}\n\nAl final del mensaje: '¿Cuales quieres que desarrolle hoy? Responde con los numeros (ej: 1, 3) o \"ninguno\"'\n\nPASO 4 — ESPERAR RESPUESTA:\nCuando el humano responda con los numeros:\n- Ideas seleccionadas → status=approved, target_date=hoy\n- Las demas → mantener status=ready\n\nPASO 5 — CREAR TAREA SEMANAL (si no existe):\nVerifica si existe proyecto P-Content-Semana-{NN} para esta semana.\nSi no, crea el proyecto + tarea del dia.\nSi si, crea solo la tarea del dia dentro del proyecto existente.\nResponde con link al thread de MC para que el humano continue alli.\n\nPASO 6 — GUARDAR EN RECURRING TASKS:\nGuarda en brand/growth4u/recurring-tasks/content-editorial-dispatch/{YYYY-MM-DD}.json.",
+        "model": "claude-opus-4-6"
+      },
+      "delivery": {
+        "mode": "none"
+      },
+      "id": "72fa033f-a19e-476c-83f9-2fc201374216",
+      "createdAtMs": 1777353600000,
+      "state": {}
+    },
+    {
+      "agentId": "sancho",
+      "name": "Content: PAA Monitor — Growth4U",
+      "enabled": true,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 6 * * 1",
+        "tz": "Europe/Madrid"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Ejecuta paa-monitor para Growth4U.\n\nPASO 1 — LEER CONFIGS:\nLee brand/growth4u/content/configs/paa-queries/*.yml\n\nPASO 2 — BUSCAR PAA:\nPara cada query seed, busca People Also Ask via WebSearch.\nExtrae las preguntas reales que aparecen.\nDeduplica contra semanas anteriores (lee research-signals/*-paa.json previos).\n\nPASO 3 — GUARDAR:\nEscribe preguntas nuevas en brand/growth4u/content/research-signals/{YYYY-MM-DD}-paa.json.\nMax 20 preguntas nuevas por pillar.\n\nPASO 4 — GUARDAR EN RECURRING TASKS:\nGuarda en brand/growth4u/recurring-tasks/content-paa-monitor/{YYYY-MM-DD}.json.",
+        "model": "anthropic/claude-sonnet-4-5"
+      },
+      "delivery": {
+        "mode": "none"
+      },
+      "id": "caae560f-344f-44a8-9ddb-4a4ce8c6e913",
+      "createdAtMs": 1777353600000,
+      "state": {}
+    },
+    {
+      "agentId": "sancho",
+      "name": "Content: News Monitor — Hospital Capilar",
+      "enabled": true,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 7 * * 1-5",
+        "tz": "Europe/Madrid"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Ejecuta news-monitor para Hospital Capilar.\n\nPASO 1 — LEER CONFIGS:\nLee brand/hospital-capilar/content/configs/news-prompts/*.yml (un archivo por pillar).\nLee brand/hospital-capilar/content/content-pillars.md para contexto.\n\nPASO 2 — BUSCAR POR PILLAR:\nPara cada pillar, ejecuta WebSearch con los prompts configurados.\nFiltra por sector_filters y language. Max 10 resultados relevantes por pillar.\nDeduplica por URL contra research-signals de ayer.\n\nPASO 3 — EXTRAER SIGNALS:\nPara cada resultado, extrae: id, type=news, pillar_id, title, summary (2-3 frases de POR QUE es relevante al pillar), source, url, date, relevance_score (0-1).\nSkip: press releases sin insight, listicles superficiales.\n\nPASO 4 — GUARDAR:\nEscribe en brand/hospital-capilar/content/research-signals/{YYYY-MM-DD}-news.json.\nSi el archivo ya existe, merge y deduplica.\n\nPASO 5 — GUARDAR EN RECURRING TASKS:\nGuarda resumen en brand/hospital-capilar/recurring-tasks/content-news-monitor/{YYYY-MM-DD}.json:\n{\"cronName\": \"Content: News Monitor — Hospital Capilar\", \"slug\": \"hospital-capilar\", \"date\": \"YYYY-MM-DD\", \"runAtMs\": <timestamp_ms>, \"status\": \"ok\", \"content\": \"<N signals encontrados por pillar>\"}",
+        "model": "anthropic/claude-sonnet-4-5"
+      },
+      "delivery": {
+        "mode": "none"
+      },
+      "id": "85b808b7-b427-46be-8f6f-b85b017d1700",
+      "createdAtMs": 1777157953992,
+      "state": {}
+    },
+    {
+      "agentId": "sancho",
+      "name": "Content: Competitor Monitor — Hospital Capilar",
+      "enabled": true,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 7 * * 1-5",
+        "tz": "Europe/Madrid"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Ejecuta thief-marketers para Hospital Capilar.\n\nPASO 1 — LEER CONFIGS:\nLee brand/hospital-capilar/content/configs/competitors/all-pillars.yml\nLee brand/hospital-capilar/content/configs/reference-creators/all-pillars.yml\nLee brand/hospital-capilar/content/content-pillars.md\n\nPASO 2 — MONITOREAR COMPETIDORES Y CREATORS:\nPara cada competidor y reference-creator, busca su contenido reciente:\n- LinkedIn: WebSearch \"site:linkedin.com/posts {nombre}\" o WebFetch de su perfil publico\n- Blog: WebFetch de su web/blog\n- X/Twitter: WebSearch \"site:x.com {handle}\"\nExtrae top 5 posts por engagement de los ultimos 7 dias.\n\nPASO 3 — EXTRAER SIGNALS:\nPara cada contenido top, extrae: id, type=creator, pillar_id, title, summary, source (nombre), source_type (competitor/reference-creator), platform, url, engagement, why_it_worked (2-3 frases), angle_for_us (como podemos usar esta signal).\nMax 15 signals totales.\n\nPASO 4 — GUARDAR:\nEscribe en brand/hospital-capilar/content/research-signals/{YYYY-MM-DD}-creators.json.\n\nPASO 5 — GUARDAR EN RECURRING TASKS:\nGuarda resumen en brand/hospital-capilar/recurring-tasks/content-competitor-monitor/{YYYY-MM-DD}.json.",
+        "model": "anthropic/claude-sonnet-4-5"
+      },
+      "delivery": {
+        "mode": "none"
+      },
+      "id": "61272e4c-e42e-4634-bd78-da8c7f266936",
+      "createdAtMs": 1777157953992,
+      "state": {}
+    },
+    {
+      "agentId": "sancho",
+      "name": "Content: Classify + Ideas — Hospital Capilar",
+      "enabled": true,
+      "schedule": {
+        "kind": "cron",
+        "expr": "30 7 * * 1-5",
+        "tz": "Europe/Madrid"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Ejecuta insight-classifier + insight-to-content-mapper para Hospital Capilar.\n\nPASO 1 — CLASIFICAR SIGNALS:\nLee brand/hospital-capilar/content/research-signals/{HOY}-*.json (todos los archivos de hoy: news, creators, pulse, paa).\nPara cada signal sin campo signal_type, clasifica en 1+ de 7 tipos: aha-moment, conflict, contrarian, system, milestone, vulnerability, metric.\nEscribe el campo signal_type[] de vuelta al archivo.\n\nPASO 2 — GENERAR IDEAS:\nLee brand/hospital-capilar/content/content-pillars.md\nLee brand/hospital-capilar/brand-book/brand-voice/brand-voice.current.md\nPara cada signal clasificado, genera una idea con:\n- pillar_id (match por topic)\n- content_type (Hot Take, Proof Post, Framework, Personal Story, etc.)\n- target_channel (linkedin, twitter, blog, newsletter — segun cadence-config)\n- signal (summary, source, url, date del signal original)\n- angle_draft (1-2 parrafos: el angulo posible para nuestro contenido)\n- pov_confidence (0-1)\nMax 5-8 ideas por dia.\n\nPASO 3 — GUARDAR:\nAppend ideas a brand/hospital-capilar/content/idea-queue.json con status=ready.\nNo duplicar ideas que ya esten en el queue (check por signal URL).\n\nPASO 4 — GUARDAR EN RECURRING TASKS:\nGuarda resumen en brand/hospital-capilar/recurring-tasks/content-ideas/{YYYY-MM-DD}.json:\n{\"cronName\": \"Content: Classify + Ideas — Hospital Capilar\", \"slug\": \"hospital-capilar\", \"date\": \"YYYY-MM-DD\", \"runAtMs\": <timestamp_ms>, \"status\": \"ok\", \"content\": \"<N signals clasificados, M ideas generadas con pillars y channels>\"}",
+        "model": "anthropic/claude-sonnet-4-5"
+      },
+      "delivery": {
+        "mode": "none"
+      },
+      "id": "515f8afb-d616-45ed-9bfc-2649fd9939bc",
+      "createdAtMs": 1777157953992,
+      "state": {}
+    },
+    {
+      "agentId": "sancho",
+      "name": "Content: Editorial Dispatch — Hospital Capilar",
+      "enabled": true,
+      "schedule": {
+        "kind": "cron",
+        "expr": "30 8 * * 1-5",
+        "tz": "Europe/Madrid"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Ejecuta editorial dispatch para Hospital Capilar.\n\nPASO 1 — LEER:\nLee brand/hospital-capilar/content/idea-queue.json\nLee brand/hospital-capilar/content/configs/cadence-config.yml\n\nPASO 2 — SELECCIONAR CANDIDATOS:\nFiltra ideas donde status=ready AND age<=14 dias.\nCalcula recency_score = exp(-age_days/5).\nOrdena por recency_score DESC, pov_confidence DESC.\nSelecciona 3-5 ideas para los slots del dia segun cadence-config.\nIdeas >14 dias → marca status=stale automaticamente.\n\nPASO 3 — ENVIAR A DISCORD:\nLee brand/hospital-capilar/client-config.json para el channel ID de content.\nPara cada idea seleccionada, envia al canal de Discord:\n\n📰 Esto paso: {signal.summary}\n   📅 {signal.date} · 🔗 {signal.source}\n✍️ Tu posible angulo: {angle_draft}\n🎯 Pillar: {pillar_id} · Canal: {channel} · Tipo: {type}\n\nAl final del mensaje: '¿Cuales quieres que desarrolle hoy? Responde con los numeros (ej: 1, 3) o \"ninguno\"'\n\nPASO 4 — ESPERAR RESPUESTA:\nCuando el humano responda con los numeros:\n- Ideas seleccionadas → status=approved, target_date=hoy\n- Las demas → mantener status=ready\n\nPASO 5 — CREAR TAREA SEMANAL (si no existe):\nVerifica si existe proyecto P-Content-Semana-{NN} para esta semana.\nSi no, crea el proyecto + tarea del dia.\nSi si, crea solo la tarea del dia dentro del proyecto existente.\nResponde con link al thread de MC para que el humano continue alli.\n\nPASO 6 — GUARDAR EN RECURRING TASKS:\nGuarda en brand/hospital-capilar/recurring-tasks/content-editorial-dispatch/{YYYY-MM-DD}.json.",
+        "model": "claude-opus-4-6"
+      },
+      "delivery": {
+        "mode": "none"
+      },
+      "id": "69d0d14d-e02c-437b-bc38-17d2606c3bdc",
+      "createdAtMs": 1777157953992,
+      "state": {}
+    },
+    {
+      "agentId": "sancho",
+      "name": "Content: PAA Monitor — Hospital Capilar",
+      "enabled": true,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 6 * * 1",
+        "tz": "Europe/Madrid"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Ejecuta paa-monitor para Hospital Capilar.\n\nPASO 1 — LEER CONFIGS:\nLee brand/hospital-capilar/content/configs/paa-queries/*.yml\n\nPASO 2 — BUSCAR PAA:\nPara cada query seed, busca People Also Ask via WebSearch.\nExtrae las preguntas reales que aparecen.\nDeduplica contra semanas anteriores (lee research-signals/*-paa.json previos).\n\nPASO 3 — GUARDAR:\nEscribe preguntas nuevas en brand/hospital-capilar/content/research-signals/{YYYY-MM-DD}-paa.json.\nMax 20 preguntas nuevas por pillar.\n\nPASO 4 — GUARDAR EN RECURRING TASKS:\nGuarda en brand/hospital-capilar/recurring-tasks/content-paa-monitor/{YYYY-MM-DD}.json.",
+        "model": "anthropic/claude-sonnet-4-5"
+      },
+      "delivery": {
+        "mode": "none"
+      },
+      "id": "7624d72f-c443-4f79-be22-b1b1479f8e69",
+      "createdAtMs": 1777157953992,
+      "state": {}
+    },
+    {
+      "agentId": "sancho",
+      "name": "Content: News Monitor — Hulahoop",
+      "enabled": true,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 7 * * 1-5",
+        "tz": "Europe/Madrid"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Ejecuta news-monitor para Hulahoop.\n\nPASO 1 — LEER CONFIGS:\nLee brand/hulahoop/content/configs/news-prompts/*.yml (un archivo por pillar).\nLee brand/hulahoop/content/content-pillars.md para contexto.\n\nPASO 2 — BUSCAR POR PILLAR:\nPara cada pillar, ejecuta WebSearch con los prompts configurados.\nFiltra por sector_filters y language. Max 10 resultados relevantes por pillar.\nDeduplica por URL contra research-signals de ayer.\n\nPASO 3 — EXTRAER SIGNALS:\nPara cada resultado, extrae: id, type=news, pillar_id, title, summary (2-3 frases de POR QUE es relevante al pillar), source, url, date, relevance_score (0-1).\nSkip: press releases sin insight, listicles superficiales.\n\nPASO 4 — GUARDAR:\nEscribe en brand/hulahoop/content/research-signals/{YYYY-MM-DD}-news.json.\nSi el archivo ya existe, merge y deduplica.\n\nPASO 5 — GUARDAR EN RECURRING TASKS:\nGuarda resumen en brand/hulahoop/recurring-tasks/content-news-monitor/{YYYY-MM-DD}.json:\n{\"cronName\": \"Content: News Monitor — Hulahoop\", \"slug\": \"hulahoop\", \"date\": \"YYYY-MM-DD\", \"runAtMs\": <timestamp_ms>, \"status\": \"ok\", \"content\": \"<N signals encontrados por pillar>\"}",
+        "model": "anthropic/claude-sonnet-4-5"
+      },
+      "delivery": {
+        "mode": "none"
+      },
+      "id": "bd8a9780-4b83-448c-9b0d-e7ff7485eba5",
+      "createdAtMs": 1777157953998,
+      "state": {}
+    },
+    {
+      "agentId": "sancho",
+      "name": "Content: Competitor Monitor — Hulahoop",
+      "enabled": true,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 7 * * 1-5",
+        "tz": "Europe/Madrid"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Ejecuta thief-marketers para Hulahoop.\n\nPASO 1 — LEER CONFIGS:\nLee brand/hulahoop/content/configs/competitors/all-pillars.yml\nLee brand/hulahoop/content/configs/reference-creators/all-pillars.yml\nLee brand/hulahoop/content/content-pillars.md\n\nPASO 2 — MONITOREAR COMPETIDORES Y CREATORS:\nPara cada competidor y reference-creator, busca su contenido reciente:\n- LinkedIn: WebSearch \"site:linkedin.com/posts {nombre}\" o WebFetch de su perfil publico\n- Blog: WebFetch de su web/blog\n- X/Twitter: WebSearch \"site:x.com {handle}\"\nExtrae top 5 posts por engagement de los ultimos 7 dias.\n\nPASO 3 — EXTRAER SIGNALS:\nPara cada contenido top, extrae: id, type=creator, pillar_id, title, summary, source (nombre), source_type (competitor/reference-creator), platform, url, engagement, why_it_worked (2-3 frases), angle_for_us (como podemos usar esta signal).\nMax 15 signals totales.\n\nPASO 4 — GUARDAR:\nEscribe en brand/hulahoop/content/research-signals/{YYYY-MM-DD}-creators.json.\n\nPASO 5 — GUARDAR EN RECURRING TASKS:\nGuarda resumen en brand/hulahoop/recurring-tasks/content-competitor-monitor/{YYYY-MM-DD}.json.",
+        "model": "anthropic/claude-sonnet-4-5"
+      },
+      "delivery": {
+        "mode": "none"
+      },
+      "id": "67259a6e-55df-45d5-a8d5-fc5d5bfd27ab",
+      "createdAtMs": 1777157953998,
+      "state": {}
+    },
+    {
+      "agentId": "sancho",
+      "name": "Content: Classify + Ideas — Hulahoop",
+      "enabled": true,
+      "schedule": {
+        "kind": "cron",
+        "expr": "30 7 * * 1-5",
+        "tz": "Europe/Madrid"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Ejecuta insight-classifier + insight-to-content-mapper para Hulahoop.\n\nPASO 1 — CLASIFICAR SIGNALS:\nLee brand/hulahoop/content/research-signals/{HOY}-*.json (todos los archivos de hoy: news, creators, pulse, paa).\nPara cada signal sin campo signal_type, clasifica en 1+ de 7 tipos: aha-moment, conflict, contrarian, system, milestone, vulnerability, metric.\nEscribe el campo signal_type[] de vuelta al archivo.\n\nPASO 2 — GENERAR IDEAS:\nLee brand/hulahoop/content/content-pillars.md\nLee brand/hulahoop/brand-book/brand-voice/brand-voice.current.md\nPara cada signal clasificado, genera una idea con:\n- pillar_id (match por topic)\n- content_type (Hot Take, Proof Post, Framework, Personal Story, etc.)\n- target_channel (linkedin, twitter, blog, newsletter — segun cadence-config)\n- signal (summary, source, url, date del signal original)\n- angle_draft (1-2 parrafos: el angulo posible para nuestro contenido)\n- pov_confidence (0-1)\nMax 5-8 ideas por dia.\n\nPASO 3 — GUARDAR:\nAppend ideas a brand/hulahoop/content/idea-queue.json con status=ready.\nNo duplicar ideas que ya esten en el queue (check por signal URL).\n\nPASO 4 — GUARDAR EN RECURRING TASKS:\nGuarda resumen en brand/hulahoop/recurring-tasks/content-ideas/{YYYY-MM-DD}.json:\n{\"cronName\": \"Content: Classify + Ideas — Hulahoop\", \"slug\": \"hulahoop\", \"date\": \"YYYY-MM-DD\", \"runAtMs\": <timestamp_ms>, \"status\": \"ok\", \"content\": \"<N signals clasificados, M ideas generadas con pillars y channels>\"}",
+        "model": "anthropic/claude-sonnet-4-5"
+      },
+      "delivery": {
+        "mode": "none"
+      },
+      "id": "dcd4e463-e3b2-44f4-a03b-42e1877215bc",
+      "createdAtMs": 1777157953998,
+      "state": {}
+    },
+    {
+      "agentId": "sancho",
+      "name": "Content: Editorial Dispatch — Hulahoop",
+      "enabled": true,
+      "schedule": {
+        "kind": "cron",
+        "expr": "30 8 * * 1-5",
+        "tz": "Europe/Madrid"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Ejecuta editorial dispatch para Hulahoop.\n\nPASO 1 — LEER:\nLee brand/hulahoop/content/idea-queue.json\nLee brand/hulahoop/content/configs/cadence-config.yml\n\nPASO 2 — SELECCIONAR CANDIDATOS:\nFiltra ideas donde status=ready AND age<=14 dias.\nCalcula recency_score = exp(-age_days/5).\nOrdena por recency_score DESC, pov_confidence DESC.\nSelecciona 3-5 ideas para los slots del dia segun cadence-config.\nIdeas >14 dias → marca status=stale automaticamente.\n\nPASO 3 — ENVIAR A DISCORD:\nLee brand/hulahoop/client-config.json para el channel ID de content.\nPara cada idea seleccionada, envia al canal de Discord:\n\n📰 Esto paso: {signal.summary}\n   📅 {signal.date} · 🔗 {signal.source}\n✍️ Tu posible angulo: {angle_draft}\n🎯 Pillar: {pillar_id} · Canal: {channel} · Tipo: {type}\n\nAl final del mensaje: '¿Cuales quieres que desarrolle hoy? Responde con los numeros (ej: 1, 3) o \"ninguno\"'\n\nPASO 4 — ESPERAR RESPUESTA:\nCuando el humano responda con los numeros:\n- Ideas seleccionadas → status=approved, target_date=hoy\n- Las demas → mantener status=ready\n\nPASO 5 — CREAR TAREA SEMANAL (si no existe):\nVerifica si existe proyecto P-Content-Semana-{NN} para esta semana.\nSi no, crea el proyecto + tarea del dia.\nSi si, crea solo la tarea del dia dentro del proyecto existente.\nResponde con link al thread de MC para que el humano continue alli.\n\nPASO 6 — GUARDAR EN RECURRING TASKS:\nGuarda en brand/hulahoop/recurring-tasks/content-editorial-dispatch/{YYYY-MM-DD}.json.",
+        "model": "claude-opus-4-6"
+      },
+      "delivery": {
+        "mode": "none"
+      },
+      "id": "6946f3e7-e8f4-4501-a824-c05b0e60e341",
+      "createdAtMs": 1777157953998,
+      "state": {}
+    },
+    {
+      "agentId": "sancho",
+      "name": "Content: PAA Monitor — Hulahoop",
+      "enabled": true,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 6 * * 1",
+        "tz": "Europe/Madrid"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Ejecuta paa-monitor para Hulahoop.\n\nPASO 1 — LEER CONFIGS:\nLee brand/hulahoop/content/configs/paa-queries/*.yml\n\nPASO 2 — BUSCAR PAA:\nPara cada query seed, busca People Also Ask via WebSearch.\nExtrae las preguntas reales que aparecen.\nDeduplica contra semanas anteriores (lee research-signals/*-paa.json previos).\n\nPASO 3 — GUARDAR:\nEscribe preguntas nuevas en brand/hulahoop/content/research-signals/{YYYY-MM-DD}-paa.json.\nMax 20 preguntas nuevas por pillar.\n\nPASO 4 — GUARDAR EN RECURRING TASKS:\nGuarda en brand/hulahoop/recurring-tasks/content-paa-monitor/{YYYY-MM-DD}.json.",
+        "model": "anthropic/claude-sonnet-4-5"
+      },
+      "delivery": {
+        "mode": "none"
+      },
+      "id": "369c003e-c170-4f6d-bf9d-5cf380028d45",
+      "createdAtMs": 1777157953998,
+      "state": {}
+    },
+    {
+      "agentId": "sancho",
+      "name": "Content: News Monitor — Paymatico",
+      "enabled": true,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 7 * * 1-5",
+        "tz": "Europe/Madrid"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Ejecuta news-monitor para Paymatico.\n\nPASO 1 — LEER CONFIGS:\nLee brand/paymatico/content/configs/news-prompts/*.yml (un archivo por pillar).\nLee brand/paymatico/content/content-pillars.md para contexto.\n\nPASO 2 — BUSCAR POR PILLAR:\nPara cada pillar, ejecuta WebSearch con los prompts configurados.\nFiltra por sector_filters y language. Max 10 resultados relevantes por pillar.\nDeduplica por URL contra research-signals de ayer.\n\nPASO 3 — EXTRAER SIGNALS:\nPara cada resultado, extrae: id, type=news, pillar_id, title, summary (2-3 frases de POR QUE es relevante al pillar), source, url, date, relevance_score (0-1).\nSkip: press releases sin insight, listicles superficiales.\n\nPASO 4 — GUARDAR:\nEscribe en brand/paymatico/content/research-signals/{YYYY-MM-DD}-news.json.\nSi el archivo ya existe, merge y deduplica.\n\nPASO 5 — GUARDAR EN RECURRING TASKS:\nGuarda resumen en brand/paymatico/recurring-tasks/content-news-monitor/{YYYY-MM-DD}.json:\n{\"cronName\": \"Content: News Monitor — Paymatico\", \"slug\": \"paymatico\", \"date\": \"YYYY-MM-DD\", \"runAtMs\": <timestamp_ms>, \"status\": \"ok\", \"content\": \"<N signals encontrados por pillar>\"}",
+        "model": "anthropic/claude-sonnet-4-5"
+      },
+      "delivery": {
+        "mode": "none"
+      },
+      "id": "3bd0764d-7cfe-4692-9a72-8043894129ba",
+      "createdAtMs": 1777157954012,
+      "state": {}
+    },
+    {
+      "agentId": "sancho",
+      "name": "Content: Competitor Monitor — Paymatico",
+      "enabled": true,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 7 * * 1-5",
+        "tz": "Europe/Madrid"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Ejecuta thief-marketers para Paymatico.\n\nPASO 1 — LEER CONFIGS:\nLee brand/paymatico/content/configs/competitors/all-pillars.yml\nLee brand/paymatico/content/configs/reference-creators/all-pillars.yml\nLee brand/paymatico/content/content-pillars.md\n\nPASO 2 — MONITOREAR COMPETIDORES Y CREATORS:\nPara cada competidor y reference-creator, busca su contenido reciente:\n- LinkedIn: WebSearch \"site:linkedin.com/posts {nombre}\" o WebFetch de su perfil publico\n- Blog: WebFetch de su web/blog\n- X/Twitter: WebSearch \"site:x.com {handle}\"\nExtrae top 5 posts por engagement de los ultimos 7 dias.\n\nPASO 3 — EXTRAER SIGNALS:\nPara cada contenido top, extrae: id, type=creator, pillar_id, title, summary, source (nombre), source_type (competitor/reference-creator), platform, url, engagement, why_it_worked (2-3 frases), angle_for_us (como podemos usar esta signal).\nMax 15 signals totales.\n\nPASO 4 — GUARDAR:\nEscribe en brand/paymatico/content/research-signals/{YYYY-MM-DD}-creators.json.\n\nPASO 5 — GUARDAR EN RECURRING TASKS:\nGuarda resumen en brand/paymatico/recurring-tasks/content-competitor-monitor/{YYYY-MM-DD}.json.",
+        "model": "anthropic/claude-sonnet-4-5"
+      },
+      "delivery": {
+        "mode": "none"
+      },
+      "id": "2d9b3847-5a0a-405f-b222-f76fdae9c854",
+      "createdAtMs": 1777157954012,
+      "state": {}
+    },
+    {
+      "agentId": "sancho",
+      "name": "Content: Classify + Ideas — Paymatico",
+      "enabled": true,
+      "schedule": {
+        "kind": "cron",
+        "expr": "30 7 * * 1-5",
+        "tz": "Europe/Madrid"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Ejecuta insight-classifier + insight-to-content-mapper para Paymatico.\n\nPASO 1 — CLASIFICAR SIGNALS:\nLee brand/paymatico/content/research-signals/{HOY}-*.json (todos los archivos de hoy: news, creators, pulse, paa).\nPara cada signal sin campo signal_type, clasifica en 1+ de 7 tipos: aha-moment, conflict, contrarian, system, milestone, vulnerability, metric.\nEscribe el campo signal_type[] de vuelta al archivo.\n\nPASO 2 — GENERAR IDEAS:\nLee brand/paymatico/content/content-pillars.md\nLee brand/paymatico/brand-book/brand-voice/brand-voice.current.md\nPara cada signal clasificado, genera una idea con:\n- pillar_id (match por topic)\n- content_type (Hot Take, Proof Post, Framework, Personal Story, etc.)\n- target_channel (linkedin, twitter, blog, newsletter — segun cadence-config)\n- signal (summary, source, url, date del signal original)\n- angle_draft (1-2 parrafos: el angulo posible para nuestro contenido)\n- pov_confidence (0-1)\nMax 5-8 ideas por dia.\n\nPASO 3 — GUARDAR:\nAppend ideas a brand/paymatico/content/idea-queue.json con status=ready.\nNo duplicar ideas que ya esten en el queue (check por signal URL).\n\nPASO 4 — GUARDAR EN RECURRING TASKS:\nGuarda resumen en brand/paymatico/recurring-tasks/content-ideas/{YYYY-MM-DD}.json:\n{\"cronName\": \"Content: Classify + Ideas — Paymatico\", \"slug\": \"paymatico\", \"date\": \"YYYY-MM-DD\", \"runAtMs\": <timestamp_ms>, \"status\": \"ok\", \"content\": \"<N signals clasificados, M ideas generadas con pillars y channels>\"}",
+        "model": "anthropic/claude-sonnet-4-5"
+      },
+      "delivery": {
+        "mode": "none"
+      },
+      "id": "8034bdec-0449-44a2-883c-147844b171f2",
+      "createdAtMs": 1777157954012,
+      "state": {}
+    },
+    {
+      "agentId": "sancho",
+      "name": "Content: Editorial Dispatch — Paymatico",
+      "enabled": true,
+      "schedule": {
+        "kind": "cron",
+        "expr": "30 8 * * 1-5",
+        "tz": "Europe/Madrid"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Ejecuta editorial dispatch para Paymatico.\n\nPASO 1 — LEER:\nLee brand/paymatico/content/idea-queue.json\nLee brand/paymatico/content/configs/cadence-config.yml\n\nPASO 2 — SELECCIONAR CANDIDATOS:\nFiltra ideas donde status=ready AND age<=14 dias.\nCalcula recency_score = exp(-age_days/5).\nOrdena por recency_score DESC, pov_confidence DESC.\nSelecciona 3-5 ideas para los slots del dia segun cadence-config.\nIdeas >14 dias → marca status=stale automaticamente.\n\nPASO 3 — ENVIAR A DISCORD:\nLee brand/paymatico/client-config.json para el channel ID de content.\nPara cada idea seleccionada, envia al canal de Discord:\n\n📰 Esto paso: {signal.summary}\n   📅 {signal.date} · 🔗 {signal.source}\n✍️ Tu posible angulo: {angle_draft}\n🎯 Pillar: {pillar_id} · Canal: {channel} · Tipo: {type}\n\nAl final del mensaje: '¿Cuales quieres que desarrolle hoy? Responde con los numeros (ej: 1, 3) o \"ninguno\"'\n\nPASO 4 — ESPERAR RESPUESTA:\nCuando el humano responda con los numeros:\n- Ideas seleccionadas → status=approved, target_date=hoy\n- Las demas → mantener status=ready\n\nPASO 5 — CREAR TAREA SEMANAL (si no existe):\nVerifica si existe proyecto P-Content-Semana-{NN} para esta semana.\nSi no, crea el proyecto + tarea del dia.\nSi si, crea solo la tarea del dia dentro del proyecto existente.\nResponde con link al thread de MC para que el humano continue alli.\n\nPASO 6 — GUARDAR EN RECURRING TASKS:\nGuarda en brand/paymatico/recurring-tasks/content-editorial-dispatch/{YYYY-MM-DD}.json.",
+        "model": "claude-opus-4-6"
+      },
+      "delivery": {
+        "mode": "none"
+      },
+      "id": "fda4363f-983f-4681-93b6-13f0521c9b7f",
+      "createdAtMs": 1777157954012,
+      "state": {}
+    },
+    {
+      "agentId": "sancho",
+      "name": "Content: PAA Monitor — Paymatico",
+      "enabled": true,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 6 * * 1",
+        "tz": "Europe/Madrid"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Ejecuta paa-monitor para Paymatico.\n\nPASO 1 — LEER CONFIGS:\nLee brand/paymatico/content/configs/paa-queries/*.yml\n\nPASO 2 — BUSCAR PAA:\nPara cada query seed, busca People Also Ask via WebSearch.\nExtrae las preguntas reales que aparecen.\nDeduplica contra semanas anteriores (lee research-signals/*-paa.json previos).\n\nPASO 3 — GUARDAR:\nEscribe preguntas nuevas en brand/paymatico/content/research-signals/{YYYY-MM-DD}-paa.json.\nMax 20 preguntas nuevas por pillar.\n\nPASO 4 — GUARDAR EN RECURRING TASKS:\nGuarda en brand/paymatico/recurring-tasks/content-paa-monitor/{YYYY-MM-DD}.json.",
+        "model": "anthropic/claude-sonnet-4-5"
+      },
+      "delivery": {
+        "mode": "none"
+      },
+      "id": "1846c8cf-3c46-4e4f-bdd5-37782fc0ff5b",
+      "createdAtMs": 1777157954012,
+      "state": {}
+    },
+    {
+      "id": "510489d9-51c7-4dba-9ba5-1502e2828066",
+      "agentId": "sancho",
+      "name": "Content: POV Bank Refresh",
+      "enabled": true,
+      "createdAtMs": 1777188277000,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 9 1 * *",
+        "tz": "Europe/Madrid"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "POV Bank Refresh mensual.\n\nPara CADA cliente activo con content engine (growth4u, hulahoop, hospital-capilar, paymatico):\n\n1. Lee brand/{SLUG}/content/clarify-history.json\n2. Si tiene >10 entries desde el ultimo refresh:\n   - Analiza patrones: que angulos elige el humano, que tono prefiere, que CTAs usa\n   - Lee brand/{SLUG}/brand-book/brand-voice/brand-voice.current.md\n   - Propone refinamientos a la Brand Voice basados en los patrones del Clarify\n   - Si hay cambios significativos, actualiza brand-voice con versionado\n3. Guarda resumen en brand/{SLUG}/recurring-tasks/content-pov-bank/{YYYY-MM-DD}.json\n4. Si <10 entries: skip, no hay suficiente data aun",
+        "model": "anthropic/claude-sonnet-4-5"
+      },
+      "delivery": {
+        "mode": "none"
+      },
+      "state": {}
+    },
+    {
+      "id": "c9156fd2-3839-4c9d-82ef-15747a3f1f5a",
+      "agentId": "sancho",
+      "name": "Content: Keyword Research — Growth4U",
+      "enabled": true,
+      "createdAtMs": 1777188327000,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 6 * * 1",
+        "tz": "Europe/Madrid"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Keyword Research semanal para Growth4U.\n\nPASO 1 — LEER:\nLee brand/growth4u/content/configs/keywords-seed/*.yml (5 archivos, uno por pillar)\nLee brand/growth4u/content/content-pillars.md\n\nPASO 2 — INVESTIGAR:\nPara cada pillar, usa WebSearch para:\n- Buscar cada keyword seed\n- Extraer volumen estimado, dificultad, intent\n- Identificar long-tail opportunities\n- Detectar keywords nuevos relacionados\nPrioridad BOFU-first.\n\nPASO 3 — GUARDAR:\nEscribe resultados en brand/growth4u/content/research-signals/{YYYY-MM-DD}-keywords.json\nCada item: {id, type: keyword, pillar_id, keyword, volume_estimate, difficulty, intent, buyer_stage, url_ranking}\n\nPASO 4 — GUARDAR EN RECURRING TASKS:\nGuarda resumen en brand/growth4u/recurring-tasks/content-keyword-research/{YYYY-MM-DD}.json",
+        "model": "anthropic/claude-sonnet-4-5"
+      },
+      "delivery": {
+        "mode": "none"
+      },
+      "state": {}
     }
   ]
 }

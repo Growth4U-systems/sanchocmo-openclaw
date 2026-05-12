@@ -1,0 +1,17 @@
+# PAA Queries — P2: Adquisicion Multi-Canal y Confianza
+# Dynamic prompt that discovers real questions people ask.
+# Tool: DataforSEO PAA API / WebSearch
+# Frequency: weekly (Monday 6am)
+
+pillar_id: P2
+pillar_name: "Adquisicion Multi-Canal y Confianza"
+
+prompt: >
+  What are the top 10 questions that startup founders, growth managers
+  and CMOs are asking RIGHT NOW about appearing in AI search engines (ChatGPT, Gemini, Perplexity), diversifying acquisition channels without multiplying headcount, building trust-based marketing systems, and multi-touch attribution?
+  Search Reddit (r/SaaS, r/startups, r/marketing), Quora, LinkedIn posts,
+  and Google People Also Ask. Give me the exact question as phrased by
+  real people, the source where you found it, and why it matters.
+  Prioritize questions that reveal pain points or buying intent.
+
+language: [es, en]

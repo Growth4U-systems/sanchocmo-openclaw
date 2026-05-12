@@ -1,0 +1,75 @@
+{
+  "$comment": "Content Engine cron jobs — ready to add to cron/jobs.json. Replace {SLUG}, {NAME}, {CHANNEL_ID} per client.",
+  "jobs": [
+    {
+      "agentId": "sancho",
+      "name": "Content: News Monitor — {NAME}",
+      "enabled": true,
+      "schedule": { "kind": "cron", "expr": "0 7 * * 1-5", "tz": "Europe/Madrid" },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Ejecuta news-monitor para {NAME}.\n\nPASO 1 — LEER CONFIGS:\nLee brand/{SLUG}/content/configs/news-prompts/*.yml (un archivo por pillar).\nLee brand/{SLUG}/content/content-pillars.md para contexto.\n\nPASO 2 — BUSCAR POR PILLAR:\nPara cada pillar, ejecuta WebSearch con los prompts configurados.\nFiltra por sector_filters y language. Max 10 resultados relevantes por pillar.\nDeduplica por URL contra research-signals de ayer.\n\nPASO 3 — EXTRAER SIGNALS:\nPara cada resultado, extrae: id, type=news, pillar_id, title, summary (2-3 frases de POR QUE es relevante al pillar), source, url, date, relevance_score (0-1).\nSkip: press releases sin insight, listicles superficiales.\n\nPASO 4 — GUARDAR:\nEscribe en brand/{SLUG}/content/research-signals/{YYYY-MM-DD}-news.json.\nSi el archivo ya existe, merge y deduplica.\n\nPASO 5 — GUARDAR EN RECURRING TASKS:\nGuarda resumen en brand/{SLUG}/recurring-tasks/content-news-monitor/{YYYY-MM-DD}.json:\n{\"cronName\": \"Content: News Monitor — {NAME}\", \"slug\": \"{SLUG}\", \"date\": \"YYYY-MM-DD\", \"runAtMs\": <timestamp_ms>, \"status\": \"ok\", \"content\": \"<N signals encontrados por pillar>\"}",
+        "model": "anthropic/claude-sonnet-4-5"
+      },
+      "delivery": { "mode": "none" }
+    },
+    {
+      "agentId": "sancho",
+      "name": "Content: Competitor Monitor — {NAME}",
+      "enabled": true,
+      "schedule": { "kind": "cron", "expr": "0 7 * * 1-5", "tz": "Europe/Madrid" },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Ejecuta thief-marketers para {NAME}.\n\nPASO 1 — LEER CONFIGS:\nLee brand/{SLUG}/content/configs/competitors/all-pillars.yml\nLee brand/{SLUG}/content/configs/reference-creators/all-pillars.yml\nLee brand/{SLUG}/content/content-pillars.md\n\nPASO 2 — MONITOREAR COMPETIDORES Y CREATORS:\nPara cada competidor y reference-creator, busca su contenido reciente:\n- LinkedIn: WebSearch \"site:linkedin.com/posts {nombre}\" o WebFetch de su perfil publico\n- Blog: WebFetch de su web/blog\n- X/Twitter: WebSearch \"site:x.com {handle}\"\nExtrae top 5 posts por engagement de los ultimos 7 dias.\n\nPASO 3 — EXTRAER SIGNALS:\nPara cada contenido top, extrae: id, type=creator, pillar_id, title, summary, source (nombre), source_type (competitor/reference-creator), platform, url, engagement, why_it_worked (2-3 frases), angle_for_us (como podemos usar esta signal).\nMax 15 signals totales.\n\nPASO 4 — GUARDAR:\nEscribe en brand/{SLUG}/content/research-signals/{YYYY-MM-DD}-creators.json.\n\nPASO 5 — GUARDAR EN RECURRING TASKS:\nGuarda resumen en brand/{SLUG}/recurring-tasks/content-competitor-monitor/{YYYY-MM-DD}.json.",
+        "model": "anthropic/claude-sonnet-4-5"
+      },
+      "delivery": { "mode": "none" }
+    },
+    {
+      "agentId": "sancho",
+      "name": "Content: Classify + Ideas — {NAME}",
+      "enabled": true,
+      "schedule": { "kind": "cron", "expr": "30 7 * * 1-5", "tz": "Europe/Madrid" },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Ejecuta insight-classifier + insight-to-content-mapper para {NAME}.\n\nPASO 1 — CLASIFICAR SIGNALS:\nLee brand/{SLUG}/content/research-signals/{HOY}-*.json (todos los archivos de hoy: news, creators, pulse, paa).\nPara cada signal sin campo signal_type, clasifica en 1+ de 7 tipos: aha-moment, conflict, contrarian, system, milestone, vulnerability, metric.\nEscribe el campo signal_type[] de vuelta al archivo.\n\nPASO 2 — GENERAR IDEAS:\nLee brand/{SLUG}/content/content-pillars.md\nLee brand/{SLUG}/brand-book/brand-voice/brand-voice.current.md\nPara cada signal clasificado, genera una idea con:\n- pillar_id (match por topic)\n- content_type (Hot Take, Proof Post, Framework, Personal Story, etc.)\n- target_channel (linkedin, twitter, blog, newsletter — segun cadence-config)\n- signal (summary, source, url, date del signal original)\n- angle_draft (1-2 parrafos: el angulo posible para nuestro contenido)\n- pov_confidence (0-1)\nMax 5-8 ideas por dia.\n\nPASO 3 — GUARDAR:\nAppend ideas a brand/{SLUG}/content/idea-queue.json con status=ready.\nNo duplicar ideas que ya esten en el queue (check por signal URL).\n\nPASO 4 — GUARDAR EN RECURRING TASKS:\nGuarda resumen en brand/{SLUG}/recurring-tasks/content-ideas/{YYYY-MM-DD}.json:\n{\"cronName\": \"Content: Classify + Ideas — {NAME}\", \"slug\": \"{SLUG}\", \"date\": \"YYYY-MM-DD\", \"runAtMs\": <timestamp_ms>, \"status\": \"ok\", \"content\": \"<N signals clasificados, M ideas generadas con pillars y channels>\"}",
+        "model": "anthropic/claude-sonnet-4-5"
+      },
+      "delivery": { "mode": "none" }
+    },
+    {
+      "agentId": "sancho",
+      "name": "Content: Editorial Dispatch — {NAME}",
+      "enabled": true,
+      "schedule": { "kind": "cron", "expr": "30 8 * * 1-5", "tz": "Europe/Madrid" },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Ejecuta editorial dispatch para {NAME}.\n\nPASO 1 — LEER:\nLee brand/{SLUG}/content/idea-queue.json\nLee brand/{SLUG}/content/configs/cadence-config.yml\n\nPASO 2 — SELECCIONAR CANDIDATOS:\nFiltra ideas donde status=ready AND age<=14 dias.\nCalcula recency_score = exp(-age_days/5).\nOrdena por recency_score DESC, pov_confidence DESC.\nSelecciona 3-5 ideas para los slots del dia segun cadence-config.\nIdeas >14 dias → marca status=stale automaticamente.\n\nPASO 3 — ENVIAR A DISCORD:\nLee brand/{SLUG}/client-config.json para el channel ID de content.\nPara cada idea seleccionada, envia al canal de Discord:\n\n📰 Esto paso: {signal.summary}\n   📅 {signal.date} · 🔗 {signal.source}\n✍️ Tu posible angulo: {angle_draft}\n🎯 Pillar: {pillar_id} · Canal: {channel} · Tipo: {type}\n\nAl final del mensaje: '¿Cuales quieres que desarrolle hoy? Responde con los numeros (ej: 1, 3) o \"ninguno\"'\n\nPASO 4 — ESPERAR RESPUESTA:\nCuando el humano responda con los numeros:\n- Ideas seleccionadas → status=approved, target_date=hoy\n- Las demas → mantener status=ready\n\nPASO 5 — CREAR TAREA SEMANAL (si no existe):\nVerifica si existe proyecto P-Content-Semana-{NN} para esta semana.\nSi no, crea el proyecto + tarea del dia.\nSi si, crea solo la tarea del dia dentro del proyecto existente.\nResponde con link al thread de MC para que el humano continue alli.\n\nPASO 6 — GUARDAR EN RECURRING TASKS:\nGuarda en brand/{SLUG}/recurring-tasks/content-editorial-dispatch/{YYYY-MM-DD}.json.",
+        "model": "claude-opus-4-6"
+      },
+      "delivery": { "mode": "none" }
+    },
+    {
+      "agentId": "sancho",
+      "name": "Content: PAA Monitor — {NAME}",
+      "enabled": true,
+      "schedule": { "kind": "cron", "expr": "0 6 * * 1", "tz": "Europe/Madrid" },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Ejecuta paa-monitor para {NAME}.\n\nPASO 1 — LEER CONFIGS:\nLee brand/{SLUG}/content/configs/paa-queries/*.yml\n\nPASO 2 — BUSCAR PAA:\nPara cada query seed, busca People Also Ask via WebSearch.\nExtrae las preguntas reales que aparecen.\nDeduplica contra semanas anteriores (lee research-signals/*-paa.json previos).\n\nPASO 3 — GUARDAR:\nEscribe preguntas nuevas en brand/{SLUG}/content/research-signals/{YYYY-MM-DD}-paa.json.\nMax 20 preguntas nuevas por pillar.\n\nPASO 4 — GUARDAR EN RECURRING TASKS:\nGuarda en brand/{SLUG}/recurring-tasks/content-paa-monitor/{YYYY-MM-DD}.json.",
+        "model": "anthropic/claude-sonnet-4-5"
+      },
+      "delivery": { "mode": "none" }
+    }
+  ]
+}

@@ -6,7 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useFoundation } from "@/hooks/useFoundation";
 import { useProjects } from "@/hooks/useProjects";
 import { useOpenChat } from "@/hooks/useChat";
-import { buildPillarThread, buildTaskThread, buildProjectThread } from "@/lib/chat-openers";
+import { buildPillarThread, buildTaskThread, buildProjectThread, findTaskThreadForDoc } from "@/lib/chat-openers";
 import { ProgressBar } from "@/components/shared/progress-bar";
 import { cn } from "@/lib/utils";
 import type { FoundationState, Section } from "@/types";
@@ -423,6 +423,11 @@ export function NextStepsColumn({ slug, onOpenDoc }: NextStepsColumnProps) {
           {decisions.map((d) => {
             const handleChat = () => {
               if (d.pillar) {
+                // Convergence: check if this doc belongs to a task first
+                if (d.docUrl) {
+                  const taskThread = findTaskThreadForDoc(slug, d.docUrl, projectsData);
+                  if (taskThread) { openChat(slug, taskThread); return; }
+                }
                 const config = buildPillarThread(slug, d.pillar, d.docUrl || undefined);
                 openChat(slug, config);
               }

@@ -483,30 +483,3 @@ Repeating one more time the core loop here for emphasis:
 Please add steps to your TodoList, if you have such a thing, to make sure you don't forget. If you're in Cowork, please specifically put "Create evals JSON and run `eval-viewer/generate_review.py` so human can review test cases" in your TodoList to make sure it happens.
 
 Good luck!
-
----
-
-## SanchoCMO Skill Conventions
-
-When creating skills for this workspace, apply these additional rules on top of the standard skill creation process:
-
-### Brand Context (YAML frontmatter)
-- Add `context_required` listing which brand files the skill needs to read
-- Add `context_writes` listing which files the skill creates/modifies
-- ALWAYS include `brand/{slug}/foundation-state.json` in `context_required` — it contains `brand_summary` (company info) and `file_index` (paths to all non-pillar files)
-
-### file_index Maintenance
-- If the skill creates NEW files in `brand/{slug}/`, it MUST update `file_index` in `foundation-state.json`
-- Pillar docs go in `sections.*.pillars.*.output_file`, NOT in `file_index`
-- Non-pillar files (integrations, presentations, assets, competitor sources, etc.) go in `file_index`
-- Resolve file paths from `file_index`, never with glob/find/ls
-- After modifying `foundation-state.json`, run `python3 scripts/regenerate.py`
-
-### brand_summary
-- If the skill discovers/updates company info (name, sector, ICPs, competitors, positioning), update `brand_summary` in `foundation-state.json`
-
-### Reference Docs
-- Full protocol: `_system/brand-memory.md`
-- Schema: `_system/schemas/foundation-state-v2.md`
-- Foundation protocol: `_system/foundation-protocol.md`
-- Reconciliation: `python3 scripts/verify-file-index.py [--fix]`

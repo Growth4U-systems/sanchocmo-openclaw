@@ -1,0 +1,17 @@
+[
+  {
+    "id": "P01-T01",
+    "name": "Ejecutar Trust Engine — Financiación Audiovisual",
+    "description": "Ejecutar trust-engine para el proyecto \"Trust Engine — Financiación Audiovisual\"",
+    "type": "tool",
+    "skill": "trust-engine",
+    "status": "todo",
+    "owner": "Sancho",
+    "channel": "intelligence",
+    "documents": [],
+    "created_at": "2026-04-13T20:41:44.529Z",
+    "deliverable_file": "brand/hulahoop/projects/P01-trust-engine-financiaci-n-audiovisual/tasks/P01-T01/deliverable.md",
+    "mc_chat_thread_id": "task-p01-t01",
+    "discord_thread_id": null
+  }
+]

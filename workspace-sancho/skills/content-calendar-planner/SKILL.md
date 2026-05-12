@@ -358,3 +358,45 @@ Log feedback to `./brand/{slug}/operational/learnings.md`:
 ```
 [date] content-calendar-planner: [feedback summary]
 ```
+
+---
+
+## Content Engine Integration (added 2026-04-25)
+
+### Editorial Dispatch Mode (daily cron 8:30am)
+
+When called by the Content Engine cron, use this specific workflow:
+
+1. Read `brand/{slug}/content/idea-queue.json`
+2. Read `brand/{slug}/content/configs/cadence-config.yml`
+
+**Selection criteria (recency-aware):**
+```
+WHERE status = 'ready'
+  AND age(created_at) <= 14 days
+  AND content_type matches slot for today's channel(s)
+ORDER BY recency_score DESC, pov_confidence DESC
+LIMIT 3-5
+```
+
+Where `recency_score = exp(-age_in_days / 5)` — rapid decay favoring fresh ideas.
+
+**Stale policy:** Ideas older than 14 days → `status = 'stale'`, auto-archived.
+Can be re-promoted manually if still relevant.
+
+**Dispatch to Discord (Idea Approval Loop):**
+
+For each selected idea, send to Discord following `_system/idea-approval-protocol.md`:
+```
+📰 Esto paso: {signal.summary}
+   📅 {signal.date} · 🔗 {signal.source}
+✍️ Tu posible angulo: {angle_draft}
+🎯 Pillar: {pillar_id} · Canal: {channel} · Tipo: {type}
+
+[✅ Si] [⏰ Mas tarde] [❌ No]
+```
+
+**After approval:**
+- ✅ → update `status = 'approved'` in idea-queue.json, respond with link to MC UI thread
+- ⏰ → keep `status = 'ready'`, add `revisit_after` flag
+- ❌ → update `status = 'archived'`

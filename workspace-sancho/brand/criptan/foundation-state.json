@@ -11,17 +11,17 @@
       "pillars": {
         "company-brief": {
           "status": "done",
-          "output_file": "brand/criptan/company-brief/current.md",
+          "output_file": "brand/criptan/company-brief/company-brief.current.md",
           "skill": "fast-foundation"
         },
         "self-l1": {
           "status": "done",
-          "output_file": "brand/criptan/market-and-us/self/current.md",
+          "output_file": "brand/criptan/market-and-us/self/self.current.md",
           "skill": "fast-foundation"
         },
         "market-l1": {
           "status": "approved",
-          "output_file": "brand/criptan/market-and-us/market/current.md",
+          "output_file": "brand/criptan/market-and-us/market/market.current.md",
           "skill": "fast-foundation",
           "updated_at": "2026-03-30T11:36:44.832Z",
           "approved_at": "2026-03-30T11:36:44.832Z"
@@ -46,7 +46,7 @@
         "company-brief": {
           "status": "not-started",
           "skill": "fast-foundation",
-          "output_file": "brand/criptan/company-brief/current.md"
+          "output_file": "brand/criptan/company-brief/company-brief.current.md"
         }
       }
     },
@@ -66,7 +66,7 @@
             "self-analysis"
           ],
           "skill": "market-intelligence",
-          "output_file": "brand/criptan/market-and-us/market/current.md",
+          "output_file": "brand/criptan/market-and-us/market/market.current.md",
           "completed_at": "2026-03-30T11:00:00Z",
           "updated_at": "2026-03-30T11:36:56.248Z",
           "approved_at": "2026-03-30T11:36:56.248Z"
@@ -85,7 +85,7 @@
           "completed_at": "2026-03-30T15:32:00Z",
           "updated_at": "2026-03-31T09:58:17.256Z",
           "approved_at": "2026-03-31T09:58:17.256Z",
-          "output_file": "brand/criptan/market-and-us/competitors/current.md"
+          "output_file": "brand/criptan/market-and-us/competitors/competitors.current.md"
         },
         "self-analysis": {
           "status": "not-started",
@@ -277,7 +277,7 @@
   "file_index": {
     "competitors": {
       "sources": "market-and-us/competitors/sources.json",
-      "summary": "market-and-us/competitors/current.md"
+      "summary": "market-and-us/competitors/competitors.current.md"
     },
     "integrations": "integrations.json",
     "metrics": {

@@ -1,0 +1,11 @@
+{
+  "cronId": "2283eade-3d08-4f46-a508-eaa6d035a4d2",
+  "cronName": "Daily Pulse",
+  "slug": "hospital-capilar",
+  "date": "2026-04-24",
+  "runAtMs": 1777014000017,
+  "status": "ok",
+  "durationMs": 236786,
+  "model": "MiniMax-M2.7",
+  "content": "**📊 Daily Pulse — Hospital Capilar | 24 abr 2026**\n\n---\n\n**🔍 ACTIVIDAD (24h)**\n\nTodo en silencio. Ningún canal con actividad humana reciente (<24h):\n\n• **general** → último msg de Nahuel hace 25 días\n• **brand** → último msg de Alfonso hace 56 días\n• **campaigns** → último msg de bot hace 31 días\n• **content** → último msg de Alfonso hace 55 días\n• **intelligence** → último msg de bot hace 2 días (SKIP: bot)\n• **onboarding** → último msg de bot hace 17 días\n• **soporte** → último msg de bot hace 2 días (SKIP: >24h)\n• **research** → último msg de Martin hace 54 días\n• **paid-ads** → canal no existe o no accesible\n\n---\n\n**📌 NOTA DE FONDO — Funnel Growth4U**\n\nSeguimiento: el flujo lead→cita lleva **15+ días roto**. La observación de Sancho del 22/04 sigue vigente:\n- 19 leads en pipeline\n- 0 calls agendadas el jueves\n\nEsto sigue pinchado y afecta directamente a la NSM (citas reservadas).\n\n---\n\n**📁 Archivo guardado:**\n<https://sancho-cmo.taild48df2.ts.net/mc/portal/730a6de7b765cdaf15131aa46a31a610/docs/brand/hospital-capilar/daily-pulse/2026-04-24.json>\n\n---\n\n**Canales activos: 0 | Canales saltados: 9 (todos inactivos o de bots)**"
+}
