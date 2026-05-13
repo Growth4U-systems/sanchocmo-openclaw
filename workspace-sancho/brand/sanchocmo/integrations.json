@@ -4,15 +4,18 @@
   "dataSources": {},
   "systemOverrides": {
     "alarife": {
-      "provider": "alarife",
-      "status": "pending",
+      "provider": "alarife-payload",
+      "status": "configured",
       "config": {
-        "BASE_URL": "alarife.growth4u.io"
+        "BASE_URL": "https://alarife-payload.growth4u.io",
+        "ADMIN_URL": "https://alarife-payload.growth4u.io/admin",
+        "API_REFERENCE": "skills/alarife-integration/SKILL.md"
       },
       "envVars": [
+        "SANCHOCMO_ALARIFE_PAYLOAD_API_KEY",
         "SANCHOCMO_ALARIFE_API_KEY"
       ]
     }
   },
-  "updatedAt": "2026-03-23T11:59:21.473Z"
+  "updatedAt": "2026-05-13T11:30:00.000Z"
 }
