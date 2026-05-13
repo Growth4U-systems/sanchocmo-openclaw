@@ -22,8 +22,10 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     skills,
     threadState,
     docPath,
+    docKind,
     attachments,
     _source,
+    agent,
   } = req.body;
 
   if (!slug || !text) {
@@ -59,10 +61,15 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     skills: skills || undefined,
     threadState: threadState || undefined,
     docPath: docPath || undefined,
+    docKind: typeof docKind === "string" ? docKind : undefined,
     attachments: parsedAttachments,
     isAdmin,
     senderRole,
     _source,
+    // Force routing: when the thread carries an `agent` field, the gateway
+    // dispatches to that agent (e.g. maese-pedro for Media Creation skills)
+    // instead of falling back to the default agent.
+    agent: typeof agent === "string" ? agent : undefined,
   };
 
   try {

@@ -398,6 +398,40 @@ const TESTERS = {
     }
   },
 
+  async perplexity(config, env, slug) {
+    const apiKey = env[`${slug}_PERPLEXITY_API_KEY`] || env.PERPLEXITY_API_KEY;
+    if (!apiKey) return { ok: false, error: `Env var ${slug}_PERPLEXITY_API_KEY (o PERPLEXITY_API_KEY) not set. Crea key en perplexity.ai/settings/api` };
+    const model = config.defaultModel || config.DEFAULT_MODEL || 'sonar';
+    try {
+      // Perplexity has no GET /models endpoint. Use minimal POST /chat/completions
+      // with max_tokens=1 to validate the key — costs ~1-3 tokens.
+      const res = await httpRequest(
+        'https://api.perplexity.ai/chat/completions',
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${apiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model,
+            messages: [{ role: 'user', content: 'ping' }],
+            max_tokens: 1,
+          }),
+        }
+      );
+      if (res.status === 200) return { ok: true, detail: `Perplexity OK · model=${model}` };
+      if (res.status === 401) return { ok: false, error: 'Invalid API key (HTTP 401). Verifica que la key empieza con pplx- y que tu cuenta tiene créditos.' };
+      if (res.status === 400) {
+        // Probably bad model name. Auth still validated by 400 (vs 401).
+        return { ok: false, error: `HTTP 400 — modelo "${model}" inválido. Prueba: sonar, sonar-pro, sonar-reasoning. ${res.body.slice(0, 150)}` };
+      }
+      return { ok: false, error: `HTTP ${res.status}: ${res.body.slice(0, 200)}` };
+    } catch (e) {
+      return { ok: false, error: e.message };
+    }
+  },
+
   // Google Ads requires complex OAuth — just check if creds exist
   async google_ads(config, env, slug) {
     const refreshToken = env[`${slug}_GOOGLE_ADS_REFRESH_TOKEN`];

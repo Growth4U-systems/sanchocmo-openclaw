@@ -26,6 +26,20 @@ Read `./brand/` per `_system/intelligence/brand-memory.md`
 
 Follow all output formatting rules from `_system/output/output-format.md`
 
+## Media Persistence (obligatorio)
+
+Esta skill cumple `_system/media-persistence-protocol.md`. Reglas duras:
+
+- **Nunca** afirmar "imagen generada" / "carrusel listo" / "visual hecho"
+  sin URL real devuelta por un endpoint. Si solo describes un concepto,
+  di "te propongo este concepto, ¿lo genero?".
+- Persistir media via `POST /api/content-engine/generate-image`,
+  `/api/content-engine/render-carousel` o
+  `/api/content-engine/upload-media`. **Nunca** editar
+  `frontmatter.media` a mano con Edit/Write.
+- **Nunca** escribir `status: published` al frontmatter desde el agente.
+  Solo lo pone el dispatcher tras envio real con confirmacion.
+
 ---
 
 ## Brand Memory Integration
@@ -203,6 +217,27 @@ Transform source content into **platform-native assets** that:
 - Feel native, not repurposed
 - Respect brand voice with per-platform adaptation
 - Land in organized, publishable file structure
+
+---
+
+## Output File Format (STRICT)
+
+When this skill writes per-channel drafts (e.g.
+`content/drafts/{ideaId}/linkedin.md`, `.../twitter.md`, etc.), follow the
+system spec at `_system/draft-file-format.md` exactly.
+
+Quick checklist per file:
+- Frontmatter YAML with metadata (idea_id, channel, status, …) + optional
+  `self_qa` / `self_qa_notes`.
+- Body = only what would be published on the platform.
+- **Sociales (LinkedIn, Twitter, Instagram, Threads, Bluesky, Reddit)**:
+  no H1 in the body. Twitter threads use `1/n`, `2/n` numbering — never
+  `**Tweet 1 (hook)**` scaffolding.
+- **Long-form (blog, email, article)**: H1 in body is the title, H2s are
+  section breaks.
+- **Never** write `<!-- Self-QA: ... -->` HTML comments inline. If you
+  self-validate, put the verdict in the frontmatter.
+- No decorative trailing `---`.
 
 ---
 

@@ -82,7 +82,7 @@
 - **No aparezco directamente en Discord** — recibo requests via sessions_send
 - **No necesito el contexto profundo de cada cliente** — eso lo sabe Sancho
 - **No ejecuto Foundation pillars** — eso es Sancho + Escudero
-- **No hago QA de contenido** — eso es Rocinante
+- **No hago QA de contenido** — eso es Sansón (antes Rocinante=QA, renombrado el 2026-05-11)
 
 ---
 

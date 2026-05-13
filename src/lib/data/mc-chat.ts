@@ -53,12 +53,51 @@ export interface ChatAttachment {
   size: number;
 }
 
+// ---------------------------------------------------------------------------
+// Progress events — granular updates emitted by the gateway during a turn
+// (tool calls, file writes, sub-agent handoffs, etc.). Accumulate in
+// `pendingProgress` while the agent is working, then get sealed into the
+// bot message's `progress` field when the final reply arrives.
+// ---------------------------------------------------------------------------
+
+export type ProgressKind =
+  | "thinking"
+  | "tool_call"
+  | "file_write"
+  | "agent_handoff"
+  | "search"
+  | "read";
+
+export interface ProgressEvent {
+  kind: ProgressKind;
+  label: string;
+  detail?: string;
+  target?: string;
+  agent?: string;
+  ts: number;
+}
+
+const MAX_PENDING_PROGRESS = 200;
+const MAX_SEALED_PROGRESS = 50;
+
 // Thread persistence (disk-based, same as legacy)
+// role can be "user" | "bot" | "status" | "system" | "handoff". When role === "handoff",
+// `from_agent` and `to_agent` carry the source/target agent slugs and `text` is the reason.
 interface ThreadData {
-  messages: { role: string; text: string; ts: number; agent?: string; attachments?: ChatAttachment[] }[];
+  messages: {
+    role: string;
+    text: string;
+    ts: number;
+    agent?: string;
+    attachments?: ChatAttachment[];
+    progress?: ProgressEvent[];
+    from_agent?: string;
+    to_agent?: string;
+  }[];
   discordThreadId?: string;
   discordChannelId?: string;
   updatedAt?: number;
+  pendingProgress?: ProgressEvent[];
 }
 
 function threadFile(threadId: string): string {
@@ -80,14 +119,74 @@ export function saveThread(threadId: string, data: ThreadData) {
   writeJSON(threadFile(threadId), data);
 }
 
-export function addMessage(threadId: string, role: string, text: string, agent?: string, attachments?: ChatAttachment[]) {
+export function addMessage(
+  threadId: string,
+  role: string,
+  text: string,
+  agent?: string,
+  attachments?: ChatAttachment[],
+  progress?: ProgressEvent[],
+  fromAgent?: string,
+  toAgent?: string,
+) {
+  if (role === "handoff" && (!fromAgent || !toAgent)) {
+    throw new Error("addMessage: role 'handoff' requires both fromAgent and toAgent");
+  }
   const thread = getThread(threadId);
-  thread.messages.push({ role, text, ts: Date.now(), agent, attachments: attachments?.length ? attachments : undefined });
+  const sealed = progress?.length ? progress.slice(-MAX_SEALED_PROGRESS) : undefined;
+  thread.messages.push({
+    role,
+    text,
+    ts: Date.now(),
+    agent,
+    attachments: attachments?.length ? attachments : undefined,
+    progress: sealed,
+    from_agent: fromAgent,
+    to_agent: toAgent,
+  });
   // Cap messages at 200
   if (thread.messages.length > 200) {
     thread.messages = thread.messages.slice(-200);
   }
   thread.updatedAt = Date.now();
+  saveThread(threadId, thread);
+}
+
+// ---------------------------------------------------------------------------
+// Progress accumulator — pendingProgress lives in the thread file so it
+// survives Next.js process restarts and is visible to all polling clients.
+// ---------------------------------------------------------------------------
+
+export function appendProgress(threadId: string, event: ProgressEvent) {
+  const thread = getThread(threadId);
+  const list = thread.pendingProgress ?? [];
+  list.push(event);
+  if (list.length > MAX_PENDING_PROGRESS) {
+    list.splice(0, list.length - MAX_PENDING_PROGRESS);
+  }
+  thread.pendingProgress = list;
+  thread.updatedAt = Date.now();
+  saveThread(threadId, thread);
+}
+
+export function getPendingProgress(threadId: string): ProgressEvent[] {
+  return getThread(threadId).pendingProgress ?? [];
+}
+
+/** Returns the accumulated events and clears them from disk. */
+export function sealProgress(threadId: string): ProgressEvent[] {
+  const thread = getThread(threadId);
+  const list = thread.pendingProgress ?? [];
+  if (list.length === 0) return [];
+  thread.pendingProgress = [];
+  saveThread(threadId, thread);
+  return list;
+}
+
+export function clearProgress(threadId: string) {
+  const thread = getThread(threadId);
+  if (!thread.pendingProgress?.length) return;
+  thread.pendingProgress = [];
   saveThread(threadId, thread);
 }
 

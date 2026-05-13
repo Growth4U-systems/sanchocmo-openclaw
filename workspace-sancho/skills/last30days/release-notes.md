@@ -58,7 +58,7 @@ OpenClaw:
 clawhub install last30days-official
 ```
 
-OpenAI Codex CLI: run `codex` from a checkout of this repo and v3's skill at `.agents/skills/last30days/SKILL.md` will be discovered automatically. Or copy `SKILL.md` to `~/.agents/skills/last30days/SKILL.md` for a global install.
+OpenAI Codex CLI: install the repo as a local Codex marketplace/plugin. The plugin manifest lives at `.codex-plugin/plugin.json`, and the canonical skill payload is `skills/last30days/SKILL.md`.
 
 Zero config. Reddit, Hacker News, Polymarket, and GitHub work immediately. Run it once and the setup wizard unlocks X, YouTube, TikTok, and more in 30 seconds.
 

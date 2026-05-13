@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { withErrorHandler } from "@/lib/api-middleware";
-import { markCancelled, clearStatus, getGatewayUrl, getChatSecret } from "@/lib/data/mc-chat";
+import { markCancelled, clearStatus, clearProgress, getGatewayUrl, getChatSecret } from "@/lib/data/mc-chat";
 
 /**
  * POST /api/chat/cancel
@@ -15,6 +15,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
   markCancelled(tid);
   clearStatus(tid);
+  clearProgress(tid);
   console.log(`[mc-chat] Cancelling thread: ${tid}`);
 
   // Send /stop to gateway
@@ -26,7 +27,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         "Content-Type": "application/json",
         ...(secret ? { "X-MC-Secret": secret } : {}),
       },
-      body: JSON.stringify({ slug, threadId, text: "/stop", userName: "Admin" }),
+      body: JSON.stringify({ slug, threadId, text: "/stop", userName: "Admin", isAdmin: true }),
     });
   } catch (err) {
     console.error(`[mc-chat] Gateway /stop failed: ${err instanceof Error ? err.message : err}`);

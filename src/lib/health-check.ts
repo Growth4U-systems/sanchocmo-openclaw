@@ -165,6 +165,20 @@ async function checkService(serviceId: string, envVars: Record<string, string>):
         if (!key) return notConfigured("MINIMAX_API_KEY");
         return keyFormatCheck(key);
       }
+      case "perplexity": {
+        const key = getKey(envVars, "PERPLEXITY_API_KEY");
+        if (!key) return notConfigured("PERPLEXITY_API_KEY");
+        // Perplexity has no GET /models. Cheapest auth check: POST /chat/completions
+        // with max_tokens=1 — costs ~1-3 tokens.
+        const r = await httpPost(
+          "https://api.perplexity.ai/chat/completions",
+          { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+          { model: "sonar", messages: [{ role: "user", content: "ping" }], max_tokens: 1 }
+        );
+        if (r.ok) return ok({ httpCode: r.httpCode });
+        if (r.httpCode === 401) return error("invalid_auth (HTTP 401)", { httpCode: r.httpCode });
+        return error(`HTTP ${r.httpCode}`, { httpCode: r.httpCode });
+      }
 
       // ── Search & Data ──
       case "brave": {
@@ -232,12 +246,21 @@ async function checkService(serviceId: string, envVars: Record<string, string>):
       case "slack": {
         const key = getKey(envVars, "SLACK_BOT_TOKEN");
         if (!key) return notConfigured("SLACK_BOT_TOKEN");
-        const r = await httpCheck("https://slack.com/api/auth.test", { Authorization: `Bearer ${key}` });
-        return r.ok ? ok({ httpCode: r.httpCode }) : error(`HTTP ${r.httpCode}`, { httpCode: r.httpCode });
+        // Slack returns HTTP 200 even on invalid_auth — must check body.ok
+        const r = await httpCheckJson<{ ok?: boolean; error?: string; team?: string; user?: string; team_id?: string }>(
+          "https://slack.com/api/auth.test",
+          { Authorization: `Bearer ${key}` }
+        );
+        if (!r.ok) return error(`HTTP ${r.httpCode}`, { httpCode: r.httpCode });
+        if (r.data?.ok !== true) {
+          return error(`Slack auth failed: ${r.data?.error || "unknown"}`, { httpCode: r.httpCode, slackError: r.data?.error });
+        }
+        return ok({ httpCode: r.httpCode, team: r.data.team || r.data.team_id, user: r.data.user });
       }
       case "discord": {
         const token = getKey(envVars, "DISCORD_BOT_TOKEN");
         if (!token) return notConfigured("DISCORD_BOT_TOKEN");
+        // Discord returns 401 on invalid token, so HTTP code is enough.
         const r = await httpCheck("https://discord.com/api/v10/users/@me", { Authorization: `Bot ${token}` });
         return r.ok ? ok({ httpCode: r.httpCode }) : error(`HTTP ${r.httpCode}`, { httpCode: r.httpCode });
       }

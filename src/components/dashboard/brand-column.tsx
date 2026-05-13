@@ -2,14 +2,14 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useFoundation } from "@/hooks/useFoundation";
+import { useBrandBrain } from "@/hooks/useBrandBrain";
 import { useProjects } from "@/hooks/useProjects";
 import { useOpenChat } from "@/hooks/useChat";
 import { buildPillarThread, findTaskThreadForDoc } from "@/lib/chat-openers";
 import { ProgressBar } from "@/components/shared/progress-bar";
 import { BrandSnapshot } from "@/components/shared/brand-snapshot";
 import { cn } from "@/lib/utils";
-import type { FoundationState, Section } from "@/types";
+import type { BrandBrainState, Section } from "@/types";
 
 // ============================================================
 // Brand Column — Faithful port of renderV2Foundation()
@@ -72,7 +72,7 @@ function ffDonePillars(sections: Record<string, Section>): Set<string> {
 }
 
 /** Calculate foundation stats: approved / total (excluding meta-sections) */
-function calcFoundationStats(foundation: FoundationState | undefined) {
+function calcFoundationStats(foundation: BrandBrainState | undefined) {
   let approved = 0;
   let total = 0;
   if (!foundation?.sections) return { approved, total, pct: 0 };
@@ -114,7 +114,7 @@ interface BrandColumnProps {
 }
 
 export function BrandColumn({ slug, onOpenDoc }: BrandColumnProps) {
-  const { data: foundation, isLoading } = useFoundation(slug);
+  const { data: foundation, isLoading } = useBrandBrain(slug);
   const { data: projectsData } = useProjects(slug || null);
   const openChat = useOpenChat();
   const [url, setUrl] = useState("");
@@ -157,7 +157,7 @@ export function BrandColumn({ slug, onOpenDoc }: BrandColumnProps) {
             Analizar
           </button>
         </div>
-        <Link href={`/dashboard/${slug}/foundation`} className="text-xs text-rust mt-3 inline-block">
+        <Link href={`/dashboard/${slug}/brand-brain`} className="text-xs text-rust mt-3 inline-block">
           Brand Documents {"\u2192"}
         </Link>
       </div>
@@ -229,7 +229,7 @@ export function BrandColumn({ slug, onOpenDoc }: BrandColumnProps) {
             return (
               <Link
                 key={sec.key}
-                href={`/dashboard/${slug}/foundation`}
+                href={`/dashboard/${slug}/brand-brain`}
                 className="flex items-center gap-1.5 py-1 text-xs hover:bg-muted/30 rounded px-1 transition-colors cursor-pointer"
               >
                 <span>{icon}</span>
@@ -405,7 +405,7 @@ export function BrandColumn({ slug, onOpenDoc }: BrandColumnProps) {
       {/* Pending approvals notice */}
       {pendingCount > 0 && (
         <Link
-          href={`/dashboard/${slug}/foundation`}
+          href={`/dashboard/${slug}/brand-brain`}
           className="block mt-2.5 px-3 py-2 bg-[#FFF7ED] border border-[#FFD699] rounded-lg text-[11px] text-[#8B6914] hover:bg-[#FFF0DB] transition-colors"
         >
           {"\uD83D\uDFE1"} {pendingCount}{" "}
@@ -416,7 +416,7 @@ export function BrandColumn({ slug, onOpenDoc }: BrandColumnProps) {
       {/* Links */}
       <div className="mt-3 pb-2">
         <Link
-          href={`/dashboard/${slug}/foundation`}
+          href={`/dashboard/${slug}/brand-brain`}
           className="text-xs text-muted-foreground hover:text-rust transition-colors"
         >
           {"\uD83D\uDCC2"} Documents

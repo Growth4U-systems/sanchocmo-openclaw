@@ -30,7 +30,7 @@ function resolveAccount(cfg, accountId) {
   if (!section) {
     return {
       accountId: accountId ?? DEFAULT_ACCOUNT_ID,
-      mcServerUrl: "http://localhost:3000",
+      mcServerUrl: "http://localhost:18790",
       sharedSecret: "",
       allowFrom: [],
       dmPolicy: "allowlist",
@@ -38,7 +38,7 @@ function resolveAccount(cfg, accountId) {
   }
   return {
     accountId: accountId ?? DEFAULT_ACCOUNT_ID,
-    mcServerUrl: section.mcServerUrl || "http://localhost:3000",
+    mcServerUrl: section.mcServerUrl || "http://localhost:18790",
     sharedSecret: section.sharedSecret || "",
     allowFrom: section.allowFrom || [],
     dmPolicy: section.dmSecurity || "allowlist",
@@ -56,15 +56,6 @@ function isConfigured(cfg) {
 export const mcChatPlugin = createChatChannelPlugin({
   base: createChannelPluginBase({
     id: CHANNEL_KEY,
-    meta: {
-      id: CHANNEL_KEY,
-      label: "Mission Control Chat",
-      selectionLabel: "Mission Control (Dashboard)",
-      detailLabel: "MC Chat",
-      docsPath: "/channels/mc-chat",
-      blurb: "Connect the Mission Control dashboard webchat to OpenClaw agents.",
-      aliases: ["mc", "mission-control"],
-    },
     capabilities: {
       chatTypes: ["dm"],
       reactions: false,
@@ -124,57 +115,66 @@ export const mcChatPlugin = createChatChannelPlugin({
   // Threading: replies go to the same thread context
   threading: { topLevelReplyToMode: "reply" },
 
-  // Outbound: send responses back to MC server via HTTP callback
+  // Outbound: send responses back to MC server via HTTP callback.
+  // Routes migrated to Next.js (/api/chat/*) — Next is the single writer for
+  // chat threads. Plugin's deliver hook in index.js doesn't fire on this SDK
+  // version (channel-plugin path takes precedence), so this is the real
+  // delivery point for bot responses.
   outbound: {
     attachedResults: {
       sendText: async (params) => {
         const { to, text, account } = params;
 
-        // Parse the target to extract slug and threadId
-        // chatId format: "channel:mc-chat:slug:threadId"
+        // Parse the target to extract slug and threadId.
+        // `to` shape is "channel:mc-chat:{slug}:{rest...}" — strip the 2-part prefix.
         const parts = (to || "").split(":");
-        const slug = parts[2] || "unknown";
-        const threadId = parts.slice(3).join(":") || "unknown";
+        const slug = parts[2] || parts[1] || "unknown";
+        const threadId = parts.slice(2).join(":") || "unknown";
 
         const mcUrl = account?.mcServerUrl || "http://localhost:3000";
         const callbackUrl = `${mcUrl}/api/chat/webhook`;
+        const headers = {
+          "Content-Type": "application/json",
+          ...(account?.sharedSecret ? { "X-MC-Secret": account.sharedSecret } : {}),
+        };
+        const body = JSON.stringify({
+          slug,
+          threadId,
+          text,
+          role: "bot",
+          agent: params.agentId || "sancho",
+          ts: new Date().toISOString(),
+        });
 
-        try {
-          const response = await fetch(callbackUrl, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              ...(account?.sharedSecret ? { "X-MC-Secret": account.sharedSecret } : {}),
-            },
-            body: JSON.stringify({
-              slug,
-              threadId,
-              text,
-              role: "bot",
-              agent: params.agentId || "sancho",
-              ts: new Date().toISOString(),
-            }),
-          });
+        console.error(`[mc-chat] sendText to=${to} slug=${slug} threadId=${threadId} url=${callbackUrl} textLen=${(text||"").length}`);
 
-          if (!response.ok) {
-            console.error(`[mc-chat] Callback failed: ${response.status} ${response.statusText}`);
+        // Retry with exponential backoff for transient Next.js outages.
+        const delays = [0, 750, 2250];
+        let lastErr;
+        for (let i = 0; i < delays.length; i++) {
+          if (delays[i]) await new Promise((r) => setTimeout(r, delays[i]));
+          try {
+            const response = await fetch(callbackUrl, { method: "POST", headers, body });
+            if (response.ok) {
+              const result = await response.json().catch(() => ({}));
+              return { messageId: result.messageId || `mc-${Date.now()}` };
+            }
+            lastErr = new Error(`HTTP ${response.status}`);
+            if (response.status >= 400 && response.status < 500) break; // don't retry 4xx
+          } catch (err) {
+            lastErr = err;
           }
-
-          const result = await response.json().catch(() => ({}));
-          return { messageId: result.messageId || `mc-${Date.now()}` };
-        } catch (err) {
-          console.error(`[mc-chat] Callback error:`, err?.message);
-          return { messageId: `mc-err-${Date.now()}` };
         }
+        console.error(`[mc-chat] sendText failed after ${delays.length} attempts: ${lastErr?.message || lastErr} (url=${callbackUrl})`);
+        return { messageId: `mc-err-${Date.now()}` };
       },
     },
     base: {
       sendMedia: async (params) => {
         const { to, filePath, account } = params;
-        // chatId format: "channel:mc-chat:slug:threadId"
         const parts = (to || "").split(":");
-        const slug = parts[2] || "unknown";
-        const threadId = parts.slice(3).join(":") || "unknown";
+        const slug = parts[2] || parts[1] || "unknown";
+        const threadId = parts.slice(2).join(":") || "unknown";
 
         const mcUrl = account?.mcServerUrl || "http://localhost:3000";
         const callbackUrl = `${mcUrl}/api/chat/webhook`;

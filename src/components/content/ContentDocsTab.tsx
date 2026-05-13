@@ -57,7 +57,7 @@ export function ContentDocsTab({ slug }: Props) {
     // Open in foundation doc viewer with chat pre-opened
     handleOpenChat(doc);
     const docPath = doc.path.startsWith("brand/") ? doc.path : `brand/${slug}/${doc.path}`;
-    router.push(`/dashboard/${slug}/foundation?doc=${encodeURIComponent(docPath)}`);
+    router.push(`/dashboard/${slug}/brand-brain?doc=${encodeURIComponent(docPath)}`);
   }, [slug, router, handleOpenChat]);
 
   useEffect(() => {
@@ -70,19 +70,25 @@ export function ContentDocsTab({ slug }: Props) {
     ]).then(([projData, pillarsData]) => {
       const items: DocItem[] = [];
 
-      // Find Content Engine project tasks
+      // Find the Content Engine SETUP project (P14) — strategy/pillars/setup/POV docs.
+      // Match by id === "P14" first (most specific). Falling back to a generic "Content Engine"
+      // .includes match would also catch weekly content projects like "Content Engine - Semana 18"
+      // which is NOT what this tab shows.
       const projects = projData.projects || [];
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const ceProject = projects.find((p: any) =>
-        p.name?.includes("Content Engine") || p.id === "P14"
-      );
+      const ceProject = projects.find((p: any) => p.id === "P14")
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        || projects.find((p: any) => p.name === "Content Engine");
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const tasks = (ceProject?.tasks || []) as any[];
 
       for (const task of tasks) {
-        if (task.deliverable_file) {
+        if (!task.deliverable_file) continue;
+        const paths = Array.isArray(task.deliverable_file) ? task.deliverable_file : [task.deliverable_file];
+        for (const path of paths) {
+          if (typeof path !== "string" || path.length === 0) continue;
           items.push({
-            path: task.deliverable_file,
+            path,
             name: task.name,
             description: task.description?.slice(0, 120) || "",
             status: task.status || "todo",

@@ -64,7 +64,7 @@ export const VALID_TASK_STATUSES: readonly TaskStatus[] = [
   "blocked",
   "cancelled",
 ] as const;
-export type TaskType = "content" | "outreach" | "foundation" | "research" | "analysis" | "execution" | "tool";
+export type TaskType = "content" | "outreach" | "foundation" | "research" | "analysis" | "execution" | "tool" | "media";
 
 export interface Task {
   id: string;               // "P01-T01"
@@ -107,6 +107,197 @@ export interface Task {
   discord_thread_id?: string;
   mc_chat_thread_id?: string;
   idea_ids?: string[];      // Linked ideas
+  /**
+   * Nested ContentTask children. Only meaningful when `type === "content"` —
+   * for any other task type this field is empty/absent and validators reject
+   * non-empty values. Each child represents one approved idea moving through
+   * the redacción pipeline (research → clarify → draft → review → ready → published).
+   */
+  content_tasks?: ContentTask[];
+}
+
+/**
+ * Status canónicos para una `ContentTask` (sub-task del Content Engine).
+ *
+ * Regla: cada estado describe **qué está pendiente / quién actúa próximo**.
+ * Los terminales son `Published` y `Discarded`; `Deferred` permite reactivar.
+ *
+ * - `New`: idea creada, pendiente que el usuario apruebe o descarte.
+ * - `Approved`: idea aprobada; sistema produciendo el draft. `pipeline_state`
+ *   refleja la fase: `researching` → `clarify-needed` → `drafting`. La
+ *   transición a `Draft` es automática al terminar el draft.
+ * - `Draft`: texto listo, pendiente review del usuario. La iteración del draft
+ *   ocurre dentro del thread del contenido (chat-driven), sin transición.
+ * - `Pending Media`: usuario aprobó el texto. Fase de media. `pipeline_state`:
+ *   `generating-media` (sin media aún) → `media-review` (media añadida,
+ *   pendiente OK del usuario).
+ * - `Ready`: usuario aprobó la pieza completa, queue de publicación.
+ * - `Published`: publicado (terminal).
+ * - `Discarded`: descartado (terminal, alcanzable desde cualquier estado).
+ * - `Deferred`: pospuesto, vuelve al pool sin publicar.
+ */
+export type ContentTaskStatus =
+  | "New"
+  | "Approved"
+  | "Draft"
+  | "Pending Media"
+  | "Ready"
+  | "Published"
+  | "Discarded"
+  | "Deferred";
+
+/** Runtime allowlist — mirror of ContentTaskStatus for validation. */
+export const VALID_CONTENT_TASK_STATUSES: readonly ContentTaskStatus[] = [
+  "New",
+  "Approved",
+  "Draft",
+  "Pending Media",
+  "Ready",
+  "Published",
+  "Discarded",
+  "Deferred",
+] as const;
+
+/**
+ * Sub-estado visible en UI durante las fases en las que el sistema o el
+ * usuario tienen una acción pendiente sub-granular:
+ *  - `status === "Approved"`: `researching` → `clarify-needed` → `drafting`
+ *    (controlado por la skill writer).
+ *  - `status === "Pending Media"`: `generating-media` (sin media aún) →
+ *    `media-review` (media añadida, pendiente aprobación del usuario).
+ */
+export type ContentTaskPipelineState =
+  | "researching"
+  | "clarify-needed"
+  | "drafting"
+  | "generating-media"
+  | "media-review";
+
+export const VALID_CONTENT_TASK_PIPELINE_STATES: readonly ContentTaskPipelineState[] = [
+  "researching",
+  "clarify-needed",
+  "drafting",
+  "generating-media",
+  "media-review",
+] as const;
+
+/**
+ * Per-channel work phase tracked under `ContentTask.channel_phases`. Replaces
+ * the legacy per-draft `meta.status` frontmatter field — `tasks.json` is the
+ * single source of truth for "what phase is this channel in". Updated by the
+ * writer skill via `PATCH /api/content-engine/content-tasks` (curl from the
+ * agent prompt) and by the publishing endpoints on dispatch confirmation.
+ */
+export type ChannelPhase =
+  | "researching"
+  | "clarify-needed"
+  | "drafting"
+  | "draft"
+  | "approved"
+  | "published";
+
+export const VALID_CHANNEL_PHASES: readonly ChannelPhase[] = [
+  "researching",
+  "clarify-needed",
+  "drafting",
+  "draft",
+  "approved",
+  "published",
+] as const;
+
+/**
+ * `ContentTask`: tarea anidada bajo una task `type: "content"` (la task del
+ * día creada por Editorial Dispatch). Cada idea aprobada se convierte en una
+ * ContentTask con su propio thread, skill y documentos (drafts).
+ *
+ * Constraint: `parent_task_id` SOLO puede apuntar a una `Task` con
+ * `type: "content"`. Validar en `setContentTaskStatus` y endpoints.
+ */
+export interface ContentTask {
+  id: string;                       // "P-Content-Semana-18-T01-C01" or "CT-{slug}-{YYYY-MM-DD}-{n}" for orphans
+  /**
+   * Parent task with `type=content`. Optional: when a ContentTask is created
+   * from a research signal it lives orphaned (`status=New`) until the user
+   * approves it and Editorial Dispatch attaches it to a weekly parent.
+   */
+  parent_task_id?: string;
+  /**
+   * Storage key for per-channel drafts: `brand/{slug}/content/drafts/{idea_id}/`.
+   * For legacy ContentTasks created from a separate idea, this points at the
+   * source `idea-{date}-{n}` ID. For unified ContentTasks (where the CT IS the
+   * idea), this equals `id`. Kept required so existing draft paths keep
+   * resolving.
+   */
+  idea_id: string;
+  name: string;
+  status: ContentTaskStatus;
+  pipeline_state?: ContentTaskPipelineState;  // Visible during status === "Approved" or "Pending Media"
+  /**
+   * Per-channel work phase. Keys are channel ids from `target_channels`. The
+   * writer skill PATCHes this as it progresses (researching → clarify-needed
+   * → drafting → draft). Publishing flips entries to `approved`/`published`.
+   * Single source of truth for per-channel state — replaces the deprecated
+   * draft frontmatter `status` field.
+   */
+  channel_phases?: Record<string, ChannelPhase>;
+  clarify_status?: "pending" | "answered" | "skipped";
+  skill?: string;                   // social-writer | seo-content | instagram-content | newsletter — assigned at Approved
+  target_channels: string[];        // ["linkedin", "twitter"] — drafts produced for these
+  documents: { path: string; name?: string; channel?: string }[];
+  mc_chat_thread_id?: string;
+  discord_thread_id?: string;
+  owner?: string;                   // "Escudero Content"
+  created_at: string;               // ISO8601
+  updated_at?: string;
+  approved_at?: string;
+  pending_media_at?: string;        // Set when user approves draft text and CT enters Pending Media
+  published_at?: string;
+  discarded_at?: string;
+  deferred_at?: string;
+  // ---- Discovery-phase fields (inherited from legacy Idea) ----
+  /** Scannable 40-90 char headline. UI falls back to first sentence of angle_draft if absent. */
+  title?: string;
+  /** Content pillar: P1, P2, ... */
+  pillar_id?: string;
+  /** Hot Take, Proof Post, Framework, Personal Story, ... */
+  content_type?: string;
+  /** Original target channel from the research cron. After approval expands into `target_channels`. */
+  target_channel?: string;
+  /** Research signal that triggered this CT. */
+  signal?: { summary: string; source: string; url?: string; date: string };
+  /** Brand POV paragraph (60-80 words). */
+  angle_draft?: string;
+  /** 0.0-1.0 confidence in the angle. */
+  pov_confidence?: number;
+  /** Tags for the kind of signal: contrarian, data-point, framework, ... */
+  signal_type?: string[];
+  /** References to research-signals/{date}-*.json entries. */
+  source_signals?: string[];
+  /** When Editorial Dispatch picked this CT for a slot. */
+  dispatch_date?: string;
+  dispatch_slot?: string;
+  archived_at?: string;
+  archived_via?: string;
+  archived_by?: string;
+  approved_via?: string;
+  approved_by?: string;
+  deferred_by?: string;
+  target_date?: string;
+  /**
+   * @deprecated Use `draft.meta.publishing.scheduled_at` (per-channel) as the
+   * single source of truth for when a post is scheduled. This CT-level field
+   * was decorative — no publishing flow read it. Kept in the type so existing
+   * tasks.json files don't fail to parse; UI no longer surfaces it.
+   */
+  scheduled_for?: string;
+  /**
+   * Per-channel draft status. Computed server-side by reading the frontmatter
+   * `status` of each `brand/{slug}/content/drafts/{idea_id}/{channel}.md`.
+   * Channels without a draft on disk default to `"pending"`. Used by the
+   * kanban card to render a chip per channel and decide which column the
+   * card lives in (status of the least-advanced channel wins).
+   */
+  draft_statuses?: Record<string, string>;
 }
 
 /** One artifact attached to a task — doc, image, csv, json, etc. */
@@ -256,7 +447,7 @@ export interface BrandSummary {
   positioning: string;
 }
 
-export interface FoundationState {
+export interface BrandBrainState {
   version: string;          // "3.0"
   started_at: string;
   updated_at: string;
@@ -264,6 +455,9 @@ export interface FoundationState {
   sections: Record<string, Section>;
   presentations: { name: string; file: string; type: string; section: string }[];
 }
+
+/** @deprecated Use BrandBrainState. Kept during rename transition. */
+export type FoundationState = BrandBrainState;
 
 // --- Client ---
 

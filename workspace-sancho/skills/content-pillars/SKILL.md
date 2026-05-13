@@ -19,6 +19,22 @@ context_writes:
 > differentiated, pain-anchored, conversion-oriented, SEO-structured,
 > and non-linearly tagged for complex buyer journeys.
 
+## ⚠️ Prerequisite check (ANTES de ejecutar)
+
+Esta skill SOLO debe ejecutarse si **content-strategy** ya se completó en este brand:
+
+1. Lee `brand/{slug}/projects/P14-Content-Engine/tasks.json`
+2. Busca la entry con `skill: "content-strategy"` (típicamente P14-T01)
+3. Si su `status !== "completed"`:
+   - **NO ejecutes la skill**
+   - Responde al humano:
+     > "❌ Pre-requisito no cumplido: la task **{taskId} ({taskName})** con skill `content-strategy` está en `status: {status}`. Tienes que completar la estrategia de contenido antes de definir pillars. Abre la task primero, aprueba el doc `strategy-decisions.md`, y vuelve a pedirme que defina pillars cuando esté en `completed`."
+   - Termina sin escribir nada
+4. Si está completed → continúa con el workflow normal abajo
+5. Si la task no existe → asume setup nuevo y pídele al humano que ejecute content-strategy primero
+
+Esto evita aprobar pillars sin estrategia base — escenario que produce pillars desconectados del posicionamiento.
+
 ## Before Starting
 
 Read ALL Foundation context listed in `context_required`. Do NOT skip any.

@@ -1,17 +1,15 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { useRouter } from "next/router";
 import { cn } from "@/lib/utils";
-
-interface Draft {
-  channel: string;
-  content: string;
-  status: "draft" | "edited" | "approved" | "published";
-  iterations: { role: string; text: string; ts: string }[];
-}
+import { buildTaskThread, type ThreadConfig } from "@/lib/chat-openers";
+import { DocSlideOver } from "@/components/shared/doc-slideover";
+import { DraftCards } from "@/components/content/DraftCards";
 
 interface Idea {
   id: string;
+  title?: string;
   pillar_id: string;
   content_type: string;
   target_channel: string;
@@ -21,52 +19,172 @@ interface Idea {
   created_at: string;
   status: string;
   approved_at?: string;
-  drafts?: Draft[];
+  /** @deprecated drafts now live as files under content/drafts/{idea-id}/{channel}.md */
+  drafts?: unknown;
   project_task_id?: string;
   project_id?: string;
+  content_task_id?: string;
+  content_task_channels?: string[];
+  dispatch_date?: string;
+  dispatch_slot?: string;
+  source_signals?: string[];
+}
+
+// Strip "Nuestro POV:" / "POV:" / etc prefix from angle text. The UI/Slack
+// already shows a "✍️ Nuestro ángulo" header, so the prefix is redundant.
+function stripPovPrefix(text: string): string {
+  return (text || "")
+    .replace(/^\s*(nuestro\s+pov|our\s+pov|pov)\s*:\s*/i, "")
+    .trim();
+}
+
+interface PillarLite { id: string; name: string }
+interface CronLite { id: string; baseName: string; lastExecution?: { date: string; status: string } | null }
+
+function todayKey(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function classifySignalSource(idea: Idea): string {
+  // Heuristic: derive what input cron produced this idea from source_signals ids.
+  const ids = idea.source_signals || [];
+  const joined = ids.join(",").toLowerCase();
+  if (joined.includes("news")) return "news";
+  if (joined.includes("paa")) return "paa";
+  if (joined.includes("kw") || joined.includes("keyword")) return "keywords";
+  if (joined.includes("creator") || joined.includes("competitor") || joined.includes("compet")) return "competitors";
+  return "other";
+}
+
+function signalRecencyDays(date: string | undefined): number | null {
+  if (!date) return null;
+  const d = new Date(date);
+  if (isNaN(d.getTime())) return null;
+  return Math.floor((Date.now() - d.getTime()) / 86400000);
+}
+
+// Pick the best title to render: prefer the dedicated `title` field set by
+// `idea-builder`, else derive from the angle (stripping the redundant
+// "Nuestro POV:" prefix), else fall back to the signal summary.
+function getIdeaTitle(idea: { title?: string; angle_draft?: string; signal?: { summary?: string }; id: string }): string {
+  if (idea.title && idea.title.trim()) return idea.title.trim();
+  const cleanAngle = stripPovPrefix(idea.angle_draft || "");
+  const candidate = cleanAngle || (idea.signal?.summary || "").trim();
+  if (!candidate) return idea.id;
+  // First sentence between 12-160 chars
+  const m = candidate.match(/^([^.!?\n]{12,160}[.!?])/);
+  const out = m ? m[1] : candidate.split("\n")[0];
+  return out.length > 140 ? out.slice(0, 137).trimEnd() + "…" : out;
+}
+
+// Comic UI palette for recency
+function recencyBadge(days: number | null): { color: string; label: string } | null {
+  if (days === null) return null;
+  if (days <= 3)  return { color: "bg-sage   text-white", label: `${days}d · reciente` };
+  if (days <= 14) return { color: "bg-yellow text-ink",   label: `${days}d · esta semana` };
+  if (days <= 45) return { color: "bg-aged   text-ink",   label: `${Math.round(days/7)} sem` };
+  return                { color: "bg-rust   text-white", label: `> ${Math.round(days/30)} mes` };
+}
+
+function formatLastRun(iso: string | undefined | null): string | null {
+  if (!iso) return null;
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return iso;
+  const diffMs = Date.now() - d.getTime();
+  const diffMin = Math.floor(diffMs / 60000);
+  if (diffMin < 1) return "ahora mismo";
+  if (diffMin < 60) return `hace ${diffMin} min`;
+  const diffHr = Math.floor(diffMin / 60);
+  if (diffHr < 24) return `hace ${diffHr}h`;
+  const diffDays = Math.floor(diffHr / 24);
+  if (diffDays < 7) return `hace ${diffDays}d`;
+  return d.toLocaleDateString("es-ES", { day: "numeric", month: "short" });
 }
 
 interface IdeasCounts {
   total: number;
-  ready: number;
-  approved: number;
-  stale: number;
-  archived: number;
-  published: number;
+  New: number;
+  Approved: number;
+  Draft: number;
+  "Pending Media": number;
+  Ready: number;
+  Published: number;
+  Discarded: number;
+  Deferred: number;
 }
+
+// Per-status display: Spanish label + comic palette tokens. Defined once so
+// the table badges and downstream UIs share the same mapping.
+const STATUS_VISUAL: Record<string, { label: string; bg: string; fg: string }> = {
+  New:             { label: "Nueva",      bg: "var(--sc-sage-100)",  fg: "var(--sc-ink)" },
+  Approved:        { label: "Aprobada",   bg: "var(--sc-navy-500)",  fg: "var(--sc-paper-3)" },
+  Draft:           { label: "Borrador",   bg: "var(--sc-sun-300)",   fg: "var(--sc-ink)" },
+  "Pending Media": { label: "Media",      bg: "var(--sc-sun-100)",   fg: "var(--sc-ink)" },
+  Ready:           { label: "Lista",      bg: "var(--sc-sage-500)",  fg: "var(--sc-paper-3)" },
+  Published:       { label: "Publicada",  bg: "var(--sc-sage-700)",  fg: "var(--sc-paper-3)" },
+  Deferred:        { label: "Diferida",   bg: "var(--sc-sun-100)",   fg: "var(--sc-ink)" },
+  Discarded:       { label: "Descartada", bg: "var(--sc-brick-bg)",  fg: "var(--sc-brick-500)" },
+};
 
 interface Props {
   slug: string;
+  openChat?: (slug: string, config: ThreadConfig) => void;
 }
 
-const STATUS_COLORS: Record<string, string> = {
-  ready: "bg-blue-50 text-blue-700 border-blue-200",
-  approved: "bg-green-50 text-green-700 border-green-200",
-  stale: "bg-gray-50 text-gray-500 border-gray-200",
-  archived: "bg-red-50 text-red-600 border-red-200",
-  published: "bg-emerald-50 text-emerald-700 border-emerald-200",
+// Content type → comic color (rust = hot, sage = proof, navy = framework, yellow = personal, aged = listicle)
+const CONTENT_TYPE_VISUAL: Record<string, { label: string; bg: string; emoji: string }> = {
+  "Hot Take":       { label: "HOT TAKE",  bg: "bg-rust    text-white", emoji: "🔥" },
+  "Proof Post":     { label: "PROOF",     bg: "bg-sage    text-white", emoji: "📚" },
+  Framework:        { label: "FRAMEWORK", bg: "bg-navy    text-white", emoji: "🧩" },
+  "Personal Story": { label: "PERSONAL",  bg: "bg-yellow  text-ink",   emoji: "💬" },
+  Listicle:         { label: "LISTICLE",  bg: "bg-aged    text-ink",   emoji: "📋" },
 };
 
-const CHANNEL_ICONS: Record<string, string> = {
-  linkedin: "💼",
-  twitter: "🐦",
-  blog: "📝",
-  newsletter: "📧",
+const CHANNEL_VISUAL: Record<string, { label: string; emoji: string }> = {
+  linkedin:   { label: "LinkedIn",    emoji: "💼" },
+  twitter:    { label: "X / Twitter", emoji: "🐦" },
+  blog:       { label: "Blog",        emoji: "📝" },
+  newsletter: { label: "Newsletter",  emoji: "📧" },
 };
 
-export function IdeaQueueTab({ slug }: Props) {
+// Pick a writer skill based on the idea's target_channel
+function writerSkillFor(channel: string): string {
+  if (channel === "blog") return "seo-content";
+  if (channel === "newsletter") return "newsletter";
+  return "social-writer"; // linkedin, twitter, default
+}
+
+export function IdeaQueueTab({ slug, openChat }: Props) {
+  const router = useRouter();
   const [ideas, setIdeas] = useState<Idea[]>([]);
   const [counts, setCounts] = useState<IdeasCounts | null>(null);
+  const [pillars, setPillars] = useState<PillarLite[]>([]);
+  const [dispatchCron, setDispatchCron] = useState<CronLite | null>(null);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<string>("all");
+  // New filters
+  const [filterChannel, setFilterChannel] = useState<string>("all");
+  const [filterPillar, setFilterPillar] = useState<string>("all");
+  const [filterDate, setFilterDate] = useState<"all" | "today" | "week" | "month">("all");
+  const [filterSource, setFilterSource] = useState<"all" | "news" | "paa" | "keywords" | "competitors" | "other">("all");
+  const [filterFramework, setFilterFramework] = useState<string>("all");
+  const [sortBy, setSortBy] = useState<"dispatch" | "confidence" | "date" | "pillar">("dispatch");
+  const [todayOnly, setTodayOnly] = useState<boolean>(false);
+
+  // Tick cada 30s para refrescar los "hace Xd/h/min" sin recargar la página.
+  const [, setNowTick] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setNowTick((n) => n + 1), 30_000);
+    return () => clearInterval(id);
+  }, []);
 
   const fetchIdeas = useCallback(() => {
-    const statusParam = filter !== "all" ? `&status=${filter}` : "";
-    fetch(`/api/content-engine/ideas?slug=${slug}${statusParam}`)
+    const statusParam = filter !== "all" ? `&status=${encodeURIComponent(filter)}` : "";
+    fetch(`/api/content-engine/content-tasks-pool?slug=${slug}${statusParam}`)
       .then((r) => r.json())
       .then((data) => {
         if (data.ok) {
-          setIdeas(data.ideas || []);
+          setIdeas(data.contentTasks || []);
           setCounts(data.counts || null);
         }
       })
@@ -74,7 +192,19 @@ export function IdeaQueueTab({ slug }: Props) {
       .finally(() => setLoading(false));
   }, [slug, filter]);
 
+  const fetchPillarsAndCrons = useCallback(async () => {
+    const [cfg, cr] = await Promise.all([
+      fetch(`/api/content-engine/configs?slug=${slug}`).then(r => r.json()).catch(() => ({})),
+      fetch(`/api/content-engine/crons?slug=${slug}`).then(r => r.json()).catch(() => ({ crons: [] })),
+    ]);
+    const newsPrompts = (cfg.configs?.newsPrompts || []) as { pillarId: string; pillarName: string }[];
+    setPillars(newsPrompts.map((p) => ({ id: p.pillarId, name: p.pillarName })));
+    const dispatch = (cr.crons || []).find((c: CronLite) => c.baseName === "Editorial Dispatch") || null;
+    setDispatchCron(dispatch);
+  }, [slug]);
+
   useEffect(() => { fetchIdeas(); }, [fetchIdeas]);
+  useEffect(() => { fetchPillarsAndCrons(); }, [fetchPillarsAndCrons]);
 
   const updateIdea = useCallback(async (ideaId: string, fields: Record<string, unknown>) => {
     await fetch("/api/content-engine/ideas", {
@@ -85,427 +215,616 @@ export function IdeaQueueTab({ slug }: Props) {
     fetchIdeas();
   }, [slug, fetchIdeas]);
 
-  const saveDraft = useCallback(async (ideaId: string, channel: string, content: string, status?: string) => {
+  const saveDraft = useCallback(async (ideaId: string, channel: string, body: string) => {
     await fetch("/api/content-engine/drafts", {
-      method: "PUT",
+      method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ slug, ideaId, channel, content, status }),
+      body: JSON.stringify({ slug, ideaId, channel, body }),
     });
     fetchIdeas();
   }, [slug, fetchIdeas]);
 
   const requestIteration = useCallback(async (ideaId: string, channel: string, instruction: string) => {
-    await fetch("/api/content-engine/drafts", {
-      method: "PUT",
+    // Iteration goes to a dedicated endpoint that re-runs the writer skill
+    // against the current draft + the user's feedback. Falls back to recording
+    // the request if the endpoint isn't ready yet.
+    await fetch("/api/content-engine/iterate-draft", {
+      method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ slug, ideaId, channel, iteration: { role: "user", text: instruction } }),
+      body: JSON.stringify({ slug, ideaId, channel, instruction }),
     });
     fetchIdeas();
   }, [slug, fetchIdeas]);
 
+  // DocSlideOver state — opened when the user clicks a draft card to view/edit
+  // the markdown file directly via /api/docs/.
+  const [openDocPath, setOpenDocPath] = useState<string | null>(null);
+  const openDraftDoc = useCallback((ideaId: string, channel: string) => {
+    if (!slug) return;
+    setOpenDocPath(`brand/${slug}/content/drafts/${ideaId}/${channel}.md`);
+  }, [slug]);
+
   // Expanded idea for draft editing
   const [expandedIdea, setExpandedIdea] = useState<string | null>(null);
 
-  // Dispatch state
-  const [dispatchSlots, setDispatchSlots] = useState<{ channel: string; candidates: Idea[] }[] | null>(null);
+  // Editorial Dispatch trigger (runs the same cron as 8:30am, sends to Discord)
   const [dispatching, setDispatching] = useState(false);
-  const [dispatchTaskId, setDispatchTaskId] = useState<string | null>(null);
+  const [dispatchFlash, setDispatchFlash] = useState<{ status: "ok" | "error"; message: string } | null>(null);
+  const [dispatchPolling, setDispatchPolling] = useState(false);
 
-  const runDispatch = useCallback(async () => {
+  const runDispatchCron = useCallback(async () => {
+    if (!dispatchCron) {
+      setDispatchFlash({ status: "error", message: "Antena Editorial Dispatch no encontrada" });
+      return;
+    }
     setDispatching(true);
+    setDispatchFlash(null);
     try {
-      const res = await fetch("/api/content-engine/editorial-dispatch", {
+      const res = await fetch("/api/content-engine/crons", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ slug }),
+        body: JSON.stringify({ jobId: dispatchCron.id, action: "run" }),
       });
       const data = await res.json();
-      if (data.ok && data.slots) {
-        // Map candidates back to full Idea objects
-        const allIdeas = ideas.length > 0 ? ideas : [];
-        const slots = data.slots.map((s: { channel: string; candidates: { id: string }[] }) => ({
-          channel: s.channel,
-          candidates: s.candidates.map((c: { id: string }) => allIdeas.find((i: Idea) => i.id === c.id) || c),
-        }));
-        setDispatchSlots(slots);
-        setDispatchTaskId(data.taskId);
-        fetchIdeas(); // Refresh to get updated dispatch_date etc
+      if (res.ok) {
+        setDispatchFlash({ status: "ok", message: "Dispatch lanzado — revisa Discord/Slack en ~1-2 min. Refresco automático." });
+        setDispatchPolling(true);
+      } else {
+        setDispatchFlash({ status: "error", message: data.error || "No se pudo lanzar" });
       }
-    } catch { /* ignore */ }
-    setDispatching(false);
-  }, [slug, ideas, fetchIdeas]);
+    } catch (err) {
+      setDispatchFlash({ status: "error", message: err instanceof Error ? err.message : "Error de red" });
+    } finally {
+      setDispatching(false);
+      setTimeout(() => setDispatchFlash(null), 8000);
+    }
+  }, [dispatchCron]);
+
+  // Polling: tras dispatch, refresca ideas + cron cada 60s durante 5 min
+  useEffect(() => {
+    if (!dispatchPolling) return;
+    const start = Date.now();
+    const interval = setInterval(() => {
+      fetchIdeas();
+      fetchPillarsAndCrons();
+      if (Date.now() - start > 5 * 60 * 1000) {
+        setDispatchPolling(false);
+      }
+    }, 60_000);
+    const fast = setTimeout(() => { fetchIdeas(); fetchPillarsAndCrons(); }, 30_000);
+    return () => { clearInterval(interval); clearTimeout(fast); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dispatchPolling]);
 
   if (loading) return <p className="text-muted-foreground text-sm py-8 text-center">Cargando ideas...</p>;
 
   const FILTERS = [
     { key: "all", label: "Todas", count: counts?.total },
-    { key: "ready", label: "Ready", count: counts?.ready },
-    { key: "approved", label: "Aprobadas", count: counts?.approved },
-    { key: "stale", label: "Stale", count: counts?.stale },
-    { key: "archived", label: "Archivadas", count: counts?.archived },
-    { key: "published", label: "Publicadas", count: counts?.published },
+    { key: "New", label: "Nuevas", count: counts?.New },
+    { key: "Approved", label: "Aprobadas", count: counts?.Approved },
+    { key: "Draft", label: "Borrador", count: counts?.Draft },
+    { key: "Pending Media", label: "Media", count: counts?.["Pending Media"] },
+    { key: "Ready", label: "Listas", count: counts?.Ready },
+    { key: "Published", label: "Publicadas", count: counts?.Published },
+    { key: "Deferred", label: "Diferidas", count: counts?.Deferred },
+    { key: "Discarded", label: "Descartadas", count: counts?.Discarded },
   ];
+
+  const today = todayKey();
+
+  // Apply secondary filters + sort: today's dispatch first, then most recent signal
+  const visibleIdeas = ideas
+    .filter((i) => filterChannel === "all" || i.target_channel === filterChannel)
+    .filter((i) => filterPillar === "all" || i.pillar_id === filterPillar)
+    .filter((i) => {
+      if (filterDate === "all") return true;
+      const days = signalRecencyDays(i.signal?.date);
+      if (days === null) return false;
+      if (filterDate === "today") return days === 0;
+      if (filterDate === "week") return days <= 7;
+      if (filterDate === "month") return days <= 30;
+      return true;
+    })
+    .filter((i) => filterSource === "all" || classifySignalSource(i) === filterSource)
+    .filter((i) => filterFramework === "all" || i.content_type === filterFramework)
+    .filter((i) => !todayOnly || i.dispatch_date === today)
+    .sort((a, b) => {
+      if (sortBy === "confidence") return (b.pov_confidence || 0) - (a.pov_confidence || 0);
+      if (sortBy === "pillar") return a.pillar_id.localeCompare(b.pillar_id);
+      if (sortBy === "date") {
+        const aD = new Date(a.signal?.date || a.created_at).getTime();
+        const bD = new Date(b.signal?.date || b.created_at).getTime();
+        return bD - aD;
+      }
+      // default: dispatch — today first, then by signal date desc
+      const aToday = a.dispatch_date === today ? 1 : 0;
+      const bToday = b.dispatch_date === today ? 1 : 0;
+      if (aToday !== bToday) return bToday - aToday;
+      const aDate = new Date(a.signal?.date || a.created_at).getTime();
+      const bDate = new Date(b.signal?.date || b.created_at).getTime();
+      return bDate - aDate;
+    });
+
+  const todayCount = ideas.filter((i) => i.dispatch_date === today).length;
 
   return (
     <div>
-      {/* Dispatch + Settings */}
-      <div className="flex items-center justify-between mb-3">
+      {/* DispatchBanner — Sancho Comic */}
+      <div
+        className="rounded-sc-lg border-[3px] grid grid-cols-[52px_1fr_auto_auto] gap-3.5 items-center p-3.5 mb-3.5"
+        style={{
+          background: "var(--sc-paper-2)",
+          borderColor: "var(--sc-ink)",
+          boxShadow: "var(--pop-md)",
+        }}
+      >
+        <span className="sc-burst grid place-items-center w-[52px] h-[52px] text-[10px] font-heading text-center leading-none">
+          SLACK<br />NEXT
+        </span>
+        <div className="flex flex-col gap-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="font-heading uppercase text-sm tracking-wider font-bold" style={{ color: "var(--sc-ink)" }}>
+              Editorial Dispatch
+            </span>
+            <span
+              className="font-heading uppercase text-[10px] tracking-wider px-2 py-0.5 rounded-sc-pill border inline-flex items-center gap-1"
+              style={{ background: "var(--sc-rust-100)", borderColor: "var(--sc-ink)", color: "var(--sc-ink)" }}
+            >⚡ AUTO</span>
+          </div>
+          <span className="text-xs" style={{ color: "var(--sc-fg-muted)" }}>
+            Selecciona candidatas según cadencia y las envía a Slack/Discord para que elijas allí.
+            {dispatchCron?.lastExecution && (
+              <> · Última: <b style={{ color: "var(--sc-ink)" }}>{formatLastRun(dispatchCron.lastExecution.date)}</b></>
+            )}
+            {!dispatchCron?.lastExecution && <> · Sin ejecuciones</>}
+            {dispatchCron && <> · Antena diaria 08:30</>}
+          </span>
+        </div>
         <button
           type="button"
-          onClick={runDispatch}
-          disabled={dispatching}
-          className="text-[11px] px-3 py-1.5 bg-rust text-white rounded-md hover:bg-rust/90 transition-colors font-medium disabled:opacity-50"
+          onClick={runDispatchCron}
+          disabled={dispatching || !dispatchCron}
+          className="font-heading uppercase text-[12px] tracking-wider px-3 py-2 rounded-sc-md border-2 sc-pop-hover disabled:opacity-50 disabled:cursor-not-allowed"
+          style={{
+            background: "var(--sc-rust-500)",
+            color: "var(--sc-paper-3)",
+            borderColor: "var(--sc-ink)",
+            boxShadow: "var(--pop-sm)",
+          }}
+          title={dispatchCron ? "Lanzar dispatch ahora" : "Antena no encontrada"}
         >
-          {dispatching ? "Seleccionando..." : "📬 Editorial Dispatch (seleccionar ideas de hoy)"}
+          {dispatching ? "⏳ Lanzando" : dispatchPolling ? "⏳ En curso" : "▶ Ejecutar ahora"}
         </button>
-        <a
-          href={`/dashboard/${slug}/settings`}
-          className="text-[11px] text-muted-foreground hover:text-rust transition-colors flex items-center gap-1"
-        >
-          ⚙️ Canal de aprobacion
-        </a>
-      </div>
-
-      {/* Dispatch slots — shows when dispatch has been run */}
-      {dispatchSlots && dispatchSlots.length > 0 && (
-        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-4">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-semibold text-amber-800">📬 Contenido de hoy — selecciona que publicar</h3>
-            {dispatchTaskId && (
-              <span className="text-[10px] text-amber-600 bg-amber-100 px-2 py-0.5 rounded">📋 {dispatchTaskId}</span>
-            )}
-          </div>
-          {dispatchSlots.map((slot) => (
-            <div key={slot.channel} className="mb-3 last:mb-0">
-              <h4 className="text-xs font-semibold text-amber-700 mb-1.5 flex items-center gap-1.5">
-                <span>{CHANNEL_ICONS[slot.channel] || "📄"}</span>
-                <span className="capitalize">{slot.channel}</span>
-                <span className="text-[10px] font-normal text-amber-600">— elige 1 de {slot.candidates.length}</span>
-              </h4>
-              <div className="space-y-1.5">
-                {slot.candidates.map((idea) => (
-                  <div key={idea.id} className="bg-white border border-amber-200 rounded px-3 py-2 flex items-start gap-2">
-                    <div className="flex-1 min-w-0">
-                      <div className="text-[11px] text-[#2C3E50] leading-relaxed">{idea.angle_draft?.slice(0, 150)}...</div>
-                      <div className="text-[10px] text-muted-foreground mt-0.5">
-                        {idea.pillar_id} · {idea.content_type} · Confianza: {Math.round((idea.pov_confidence || 0) * 100)}%
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => updateIdea(idea.id, { status: "approved", approved_at: new Date().toISOString(), approved_via: "mc-ui-dispatch" })}
-                      className="text-[11px] px-2.5 py-1 bg-green-50 text-green-700 border border-green-200 rounded hover:bg-green-100 transition-colors font-medium flex-shrink-0"
-                    >
-                      ✅ Esta
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ))}
+        {dispatchPolling && (
           <button
-            onClick={() => setDispatchSlots(null)}
-            className="text-[10px] text-amber-600 hover:underline mt-2"
-          >
-            Cerrar dispatch
-          </button>
+            type="button"
+            onClick={() => { fetchIdeas(); fetchPillarsAndCrons(); }}
+            className="font-heading uppercase text-[12px] tracking-wider px-2.5 py-2 rounded-sc-md border-2 sc-pop-hover"
+            style={{ background: "var(--sc-paper-3)", borderColor: "var(--sc-ink)", boxShadow: "var(--pop-xs)" }}
+            title="Refrescar"
+          >🔄</button>
+        )}
+      </div>
+      {dispatchFlash && (
+        <div
+          className="mb-3 text-xs font-heading font-bold px-3 py-2 rounded-sc-md border-2"
+          style={{
+            background: dispatchFlash.status === "ok" ? "var(--sc-sage-100)" : "var(--sc-brick-bg)",
+            borderColor: dispatchFlash.status === "ok" ? "var(--sc-sage-500)" : "var(--sc-brick-500)",
+            color: dispatchFlash.status === "ok" ? "var(--sc-ink)" : "var(--sc-brick-500)",
+          }}
+        >
+          {dispatchFlash.status === "ok" ? "✓" : "✗"} {dispatchFlash.message}
         </div>
       )}
 
-      {/* Filter tabs */}
-      <div className="flex gap-1.5 mb-4 overflow-x-auto">
-        {FILTERS.map((f) => (
-          <button
-            key={f.key}
-            onClick={() => setFilter(f.key)}
-            className={cn(
-              "text-[11px] px-3 py-1.5 rounded-md whitespace-nowrap transition-colors font-medium",
-              filter === f.key
-                ? "bg-rust text-white"
-                : "bg-muted/40 text-muted-foreground hover:bg-muted"
-            )}
-          >
-            {f.label}{f.count !== undefined ? ` (${f.count})` : ""}
-          </button>
-        ))}
+      {/* FilterBar — Sancho Comic */}
+      <div
+        className="rounded-sc-lg border-[2.5px] p-3 mb-3.5 flex gap-2 flex-wrap items-center"
+        style={{ background: "var(--sc-paper-3)", borderColor: "var(--sc-ink)", boxShadow: "var(--pop-sm)" }}
+      >
+        <div className="flex">
+          {FILTERS.map((f, i, arr) => {
+            const active = filter === f.key;
+            return (
+              <button
+                key={f.key}
+                onClick={() => setFilter(f.key)}
+                className="font-heading uppercase text-[12px] tracking-wider px-3 py-1.5 border-[2.5px] inline-flex items-center gap-1.5 transition-all"
+                style={{
+                  background: active ? "var(--sc-rust-500)" : "var(--sc-paper-3)",
+                  color: active ? "var(--sc-paper-3)" : "var(--sc-ink)",
+                  borderColor: "var(--sc-ink)",
+                  borderRadius: i === 0 ? "8px 0 0 8px" : i === arr.length - 1 ? "0 8px 8px 0" : "0",
+                  borderRightWidth: i === arr.length - 1 ? 2.5 : 0,
+                }}
+              >
+                {f.label}
+                {f.count !== undefined && (
+                  <span
+                    className="font-mono text-[10.5px] px-1.5 py-0.5 rounded-sc-pill border"
+                    style={{
+                      background: active ? "var(--sc-sun-300)" : "var(--sc-paper-3)",
+                      borderColor: "var(--sc-ink)",
+                      color: "var(--sc-ink)",
+                    }}
+                  >{f.count}</span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+        <div className="flex-1" />
+        <button
+          onClick={() => setTodayOnly((v) => !v)}
+          className="font-heading uppercase text-[11px] tracking-wider px-2.5 py-1.5 rounded-sc-md border-2 sc-pop-hover inline-flex items-center gap-1.5"
+          style={{
+            background: todayOnly ? "var(--sc-sun-300)" : "var(--sc-paper-3)",
+            borderColor: "var(--sc-ink)",
+            boxShadow: "var(--pop-xs)",
+          }}
+        >
+          {todayOnly ? "✓" : "📬"} Solo HOY ({todayCount})
+        </button>
+        <select
+          value={filterChannel}
+          onChange={(e) => setFilterChannel(e.target.value)}
+          className="font-heading uppercase text-[11px] tracking-wider px-2.5 py-1.5 rounded-sc-md border-2 focus:outline-none"
+          style={{ background: "var(--sc-paper-3)", borderColor: "var(--sc-ink)", boxShadow: "var(--pop-xs)" }}
+        >
+          <option value="all">Canal: Todos</option>
+          <option value="linkedin">💼 LinkedIn</option>
+          <option value="twitter">🐦 Twitter</option>
+          <option value="blog">📝 Blog</option>
+          <option value="newsletter">📧 Newsletter</option>
+        </select>
+        <select
+          value={filterPillar}
+          onChange={(e) => setFilterPillar(e.target.value)}
+          className="font-heading uppercase text-[11px] tracking-wider px-2.5 py-1.5 rounded-sc-md border-2 focus:outline-none"
+          style={{ background: "var(--sc-paper-3)", borderColor: "var(--sc-ink)", boxShadow: "var(--pop-xs)" }}
+        >
+          <option value="all">Pillar: Todos</option>
+          {pillars.map((p) => (
+            <option key={p.id} value={p.id}>{p.id} — {p.name.slice(0, 28)}{p.name.length > 28 ? "…" : ""}</option>
+          ))}
+        </select>
+        <select
+          value={filterDate}
+          onChange={(e) => setFilterDate(e.target.value as typeof filterDate)}
+          className="font-heading uppercase text-[11px] tracking-wider px-2.5 py-1.5 rounded-sc-md border-2 focus:outline-none"
+          style={{ background: "var(--sc-paper-3)", borderColor: "var(--sc-ink)", boxShadow: "var(--pop-xs)" }}
+        >
+          <option value="all">Fecha: Todas</option>
+          <option value="today">Hoy</option>
+          <option value="week">≤ 7 días</option>
+          <option value="month">≤ 30 días</option>
+        </select>
+        <select
+          value={filterSource}
+          onChange={(e) => setFilterSource(e.target.value as typeof filterSource)}
+          className="font-heading uppercase text-[11px] tracking-wider px-2.5 py-1.5 rounded-sc-md border-2 focus:outline-none"
+          style={{ background: "var(--sc-paper-3)", borderColor: "var(--sc-ink)", boxShadow: "var(--pop-xs)" }}
+        >
+          <option value="all">Fuente: Todas</option>
+          <option value="news">📰 News</option>
+          <option value="paa">❓ PAA</option>
+          <option value="keywords">🔑 Keywords</option>
+          <option value="competitors">🕵️ Competidores</option>
+          <option value="other">Otra</option>
+        </select>
+        <select
+          value={filterFramework}
+          onChange={(e) => setFilterFramework(e.target.value)}
+          className="font-heading uppercase text-[11px] tracking-wider px-2.5 py-1.5 rounded-sc-md border-2 focus:outline-none"
+          style={{ background: "var(--sc-paper-3)", borderColor: "var(--sc-ink)", boxShadow: "var(--pop-xs)" }}
+        >
+          <option value="all">Framework: Todos</option>
+          <option value="Hot Take">🔥 Hot Take</option>
+          <option value="Proof Post">📚 Proof</option>
+          <option value="Framework">🧩 Framework</option>
+          <option value="Personal Story">💬 Personal</option>
+          <option value="Listicle">📋 Listicle</option>
+        </select>
+        <select
+          value={sortBy}
+          onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+          className="font-heading uppercase text-[11px] tracking-wider px-2.5 py-1.5 rounded-sc-md border-2 focus:outline-none"
+          style={{ background: "var(--sc-paper-3)", borderColor: "var(--sc-ink)", boxShadow: "var(--pop-xs)" }}
+          title="Ordenar"
+        >
+          <option value="dispatch">↕ Dispatch primero</option>
+          <option value="confidence">↕ Confianza</option>
+          <option value="date">↕ Fecha</option>
+          <option value="pillar">↕ Pillar</option>
+        </select>
       </div>
 
-      {/* Ideas list */}
-      {ideas.length === 0 ? (
+      {/* Hint + count above table */}
+      <div className="flex gap-1.5 items-center text-xs mb-2.5" style={{ color: "var(--sc-fg-muted)" }}>
+        <span>ℹ</span>
+        <span>Mostrando <b style={{ color: "var(--sc-ink)" }}>{visibleIdeas.length} de {ideas.length}</b> ideas. La aprobación normalmente ocurre en Slack/Discord — esta vista es para auditar y aprobar en bulk.</span>
+      </div>
+
+      {/* Ideas WIDE TABLE */}
+      {visibleIdeas.length === 0 ? (
         <div className="text-center py-12">
           <span className="text-4xl mb-3 block">💡</span>
           <p className="text-sm text-muted-foreground mb-2">
-            {filter === "all" ? "Sin ideas todavia" : `Sin ideas con status "${filter}"`}
+            {ideas.length === 0
+              ? (filter === "all" ? "Sin ideas todavia" : `Sin ideas con status "${filter}"`)
+              : "Sin ideas que coincidan con los filtros"}
           </p>
           <p className="text-xs text-muted-foreground">
             Las ideas se generan automaticamente via los crons del Content Engine (7:30am L-V)
           </p>
         </div>
       ) : (
-        <div className="space-y-3">
-          {ideas.map((idea) => (
-            <div
-              key={idea.id}
-              className="bg-white border border-[#E8E2D9] rounded-lg p-4"
-              style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}
-            >
-              {/* Header */}
-              <div className="flex items-start gap-2 mb-2">
-                <span className="text-lg">{CHANNEL_ICONS[idea.target_channel] || "📄"}</span>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className={cn("text-[10px] font-semibold px-2 py-0.5 rounded-full border", STATUS_COLORS[idea.status] || "bg-muted")}>
-                      {idea.status}
-                    </span>
-                    <span className="text-[10px] text-muted-foreground">{idea.pillar_id}</span>
-                    <span className="text-[10px] text-muted-foreground">·</span>
-                    <span className="text-[10px] text-muted-foreground">{idea.content_type}</span>
-                    <span className="text-[10px] text-muted-foreground">·</span>
-                    <span className="text-[10px] text-muted-foreground">{idea.target_channel}</span>
-                  </div>
-                </div>
-                <span className="text-[10px] text-muted-foreground whitespace-nowrap">
-                  {new Date(idea.created_at).toLocaleDateString("es-ES", { day: "numeric", month: "short" })}
-                </span>
-              </div>
-
-              {/* Signal */}
-              <div className="bg-muted/20 rounded px-3 py-2 mb-2">
-                <p className="text-[11px] text-muted-foreground font-medium mb-0.5">📰 Signal:</p>
-                <p className="text-xs text-[#2C3E50]">{idea.signal.summary}</p>
-                <p className="text-[10px] text-muted-foreground mt-1">
-                  {idea.signal.source} · {idea.signal.date}
-                  {idea.signal.url && (
-                    <> · <a href={idea.signal.url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">🔗</a></>
-                  )}
-                </p>
-              </div>
-
-              {/* Angle draft */}
-              <div className="mb-3">
-                <p className="text-[11px] text-muted-foreground font-medium mb-0.5">✍️ Angulo:</p>
-                <p className="text-xs text-[#2C3E50] leading-relaxed">{idea.angle_draft}</p>
-              </div>
-
-              {/* Confidence + Actions */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="text-[10px] text-muted-foreground">Confianza:</span>
-                  <div className="w-16 h-1.5 bg-muted/40 rounded-full overflow-hidden">
-                    <div
-                      className="h-full rounded-full bg-rust"
-                      style={{ width: `${(idea.pov_confidence || 0) * 100}%` }}
-                    />
-                  </div>
-                  <span className="text-[10px] text-muted-foreground">{Math.round((idea.pov_confidence || 0) * 100)}%</span>
-                </div>
-
-                {idea.status === "ready" && (
-                  <div className="flex gap-1.5">
-                    <button
-                      onClick={() => updateIdea(idea.id, { status: "approved", approved_at: new Date().toISOString(), approved_via: "mc-ui" })}
-                      className="text-[11px] px-3 py-1 bg-green-50 text-green-700 border border-green-200 rounded-md hover:bg-green-100 transition-colors font-medium"
-                    >
-                      ✅ Aprobar
-                    </button>
-                    <button
-                      onClick={() => updateIdea(idea.id, { status: "archived" })}
-                      className="text-[11px] px-3 py-1 bg-red-50 text-red-600 border border-red-200 rounded-md hover:bg-red-100 transition-colors font-medium"
-                    >
-                      ❌ Descartar
-                    </button>
-                  </div>
-                )}
-
-                {idea.status === "approved" && (
-                  <div className="flex gap-1.5 items-center">
-                    {idea.project_task_id && (
-                      <span className="text-[10px] text-muted-foreground bg-muted/40 px-2 py-0.5 rounded">
-                        📋 {idea.project_task_id}
-                      </span>
-                    )}
-                    <button
-                      onClick={() => setExpandedIdea(expandedIdea === idea.id ? null : idea.id)}
-                      className="text-[11px] px-3 py-1 bg-rust/10 text-rust border border-rust/20 rounded-md hover:bg-rust/20 transition-colors font-medium"
-                    >
-                      {expandedIdea === idea.id ? "▾ Cerrar" : `✏️ Drafts${idea.drafts?.length ? ` (${idea.drafts.length})` : ""}`}
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              {/* Draft cards — shown when idea is approved and expanded */}
-              {idea.status === "approved" && expandedIdea === idea.id && (
-                <DraftCards
-                  idea={idea}
-                  slug={slug}
-                  onSaveDraft={saveDraft}
-                  onRequestIteration={requestIteration}
-                  onRefresh={fetchIdeas}
-                />
-              )}
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ── DRAFT CARDS COMPONENT ─────────────────────────────────────
-function DraftCards({
-  idea, slug, onSaveDraft, onRequestIteration, onRefresh,
-}: {
-  idea: Idea; slug: string;
-  onSaveDraft: (ideaId: string, channel: string, content: string, status?: string) => Promise<void>;
-  onRequestIteration: (ideaId: string, channel: string, instruction: string) => Promise<void>;
-  onRefresh: () => void;
-}) {
-  const drafts = idea.drafts || [];
-  const [editingChannel, setEditingChannel] = useState<string | null>(null);
-  const [editContent, setEditContent] = useState("");
-  const [iterationInput, setIterationInput] = useState("");
-  const [iteratingChannel, setIteratingChannel] = useState<string | null>(null);
-
-  // Channels this idea should have drafts for
-  const channels = idea.target_channel === "linkedin"
-    ? ["linkedin", "twitter"]
-    : idea.target_channel === "blog"
-    ? ["blog", "linkedin"]
-    : idea.target_channel === "newsletter"
-    ? ["newsletter"]
-    : [idea.target_channel, "linkedin"];
-
-  const DRAFT_STATUS: Record<string, { bg: string; text: string; label: string }> = {
-    draft: { bg: "bg-yellow-50", text: "text-yellow-700", label: "Borrador" },
-    edited: { bg: "bg-blue-50", text: "text-blue-700", label: "Editado" },
-    approved: { bg: "bg-green-50", text: "text-green-700", label: "Aprobado" },
-    published: { bg: "bg-emerald-50", text: "text-emerald-700", label: "Publicado" },
-  };
-
-  return (
-    <div className="mt-3 pt-3 border-t border-[#E8E2D9] space-y-3">
-      <div className="flex items-center justify-between">
-        <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Drafts por canal</span>
-        {drafts.length === 0 && (
-          <span className="text-[10px] text-muted-foreground italic">Escudero Content generara los drafts automaticamente tras el Clarify</span>
-        )}
-      </div>
-
-      {channels.map((channel) => {
-        const draft = drafts.find(d => d.channel === channel);
-        const st = draft ? (DRAFT_STATUS[draft.status] || DRAFT_STATUS.draft) : null;
-        const isEditing = editingChannel === channel;
-
-        return (
-          <div key={channel} className="bg-[#FAFAF8] border border-[#E8E2D9] rounded-lg p-3">
-            {/* Channel header */}
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-sm">{CHANNEL_ICONS[channel] || "📄"}</span>
-              <span className="text-xs font-semibold text-[#2C3E50] capitalize">{channel}</span>
-              {st && (
-                <span className={cn("text-[9px] font-semibold px-2 py-0.5 rounded-full", st.bg, st.text)}>
-                  {st.label}
-                </span>
-              )}
-              <div className="ml-auto flex gap-1.5">
-                {draft && draft.status !== "approved" && draft.status !== "published" && (
-                  <>
-                    <button
-                      onClick={() => {
-                        if (isEditing) {
-                          onSaveDraft(idea.id, channel, editContent, "edited");
-                          setEditingChannel(null);
-                        } else {
-                          setEditContent(draft.content);
-                          setEditingChannel(channel);
-                        }
+        <>
+        <div
+          className="rounded-sc-lg overflow-hidden border-[3px]"
+          style={{ background: "var(--sc-paper-3)", borderColor: "var(--sc-ink)", boxShadow: "var(--pop-md)" }}
+        >
+          <div className="overflow-x-auto relative">
+            <table style={{ borderCollapse: "collapse", fontSize: 13, tableLayout: "fixed", minWidth: "100%" }}>
+              <colgroup>
+                <col style={{ width: 70 }} />
+                <col style={{ width: 720 }} />
+                <col style={{ width: 520 }} />
+                <col style={{ width: 80 }} />
+                <col style={{ width: 140 }} />
+              </colgroup>
+              <thead>
+                <tr style={{ background: "var(--sc-paper-2)", borderBottom: "2.5px solid var(--sc-ink)" }}>
+                  {[
+                    { l: "Canal", w: 70 },
+                    { l: "Idea · meta · descripción · fuente", w: 720 },
+                    { l: "Ángulo editorial", w: 520 },
+                    { l: "Fecha", w: 80 },
+                    { l: "Acciones", w: 140 },
+                  ].map((h) => (
+                    <th
+                      key={h.l}
+                      style={{
+                        padding: "12px 14px",
+                        textAlign: "left",
+                        fontFamily: "var(--font-heading)",
+                        fontSize: 11,
+                        letterSpacing: "0.08em",
+                        textTransform: "uppercase",
+                        color: "var(--sc-ink)",
+                        fontWeight: 700,
+                        whiteSpace: "nowrap",
+                        background: "var(--sc-paper-2)",
                       }}
-                      className="text-[10px] px-2 py-0.5 rounded border border-[#E5E2DC] text-[#7A7A7A] hover:bg-[#E5E2DC] transition-colors"
-                    >
-                      {isEditing ? "💾 Guardar" : "✏️ Editar"}
-                    </button>
-                    <button
-                      onClick={() => onSaveDraft(idea.id, channel, draft.content, "approved")}
-                      className="text-[10px] px-2 py-0.5 rounded border border-green-200 text-green-700 bg-green-50 hover:bg-green-100 transition-colors"
-                    >
-                      ✅ Aprobar
-                    </button>
-                  </>
-                )}
-                {draft?.status === "approved" && (
-                  <span className="text-[10px] text-green-600 font-medium">✓ Listo para publicar</span>
-                )}
-              </div>
-            </div>
+                    >{h.l}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {visibleIdeas.map((idea, idx) => {
+                  const recDays = signalRecencyDays(idea.signal?.date);
+                  const isToday = idea.dispatch_date === today;
+                  const pillarName = pillars.find((p) => p.id === idea.pillar_id)?.name;
+                  const tv = CONTENT_TYPE_VISUAL[idea.content_type] || { label: idea.content_type.toUpperCase(), bg: "bg-aged text-ink", emoji: "📄" };
+                  const cv = CHANNEL_VISUAL[idea.target_channel] || { label: idea.target_channel, emoji: "📄" };
+                  const conf = Math.round((idea.pov_confidence || 0) * 100);
+                  const cellBase: React.CSSProperties = { padding: "16px 12px", verticalAlign: "top", background: isToday ? "var(--sc-sun-50)" : "var(--sc-paper-3)" };
+                  const last = idx === visibleIdeas.length - 1;
+                  const isNew = idea.status === "New";
+                  const isApproved = idea.status === "Approved";
+                  return (
+                    <tr key={idea.id} style={{ borderBottom: last ? "none" : "2.5px solid var(--sc-ink)" }}>
+                      {/* Canal */}
+                      <td style={cellBase}>
+                        <div className="flex flex-col items-start gap-1">
+                          <span className="text-xl">{cv.emoji}</span>
+                          <span className="font-heading uppercase text-[11px] tracking-wider font-bold" style={{ color: "var(--sc-ink)" }}>
+                            {cv.label}
+                          </span>
+                          {isToday && (
+                            <span
+                              className="font-heading uppercase text-[9px] tracking-wider px-1.5 py-0.5 rounded-sc-pill border"
+                              style={{ background: "var(--sc-sun-300)", borderColor: "var(--sc-ink)", color: "var(--sc-ink)" }}
+                            >📬 HOY</span>
+                          )}
+                        </div>
+                      </td>
 
-            {/* Draft content */}
-            {!draft ? (
-              <p className="text-[11px] text-muted-foreground italic py-2">
-                Sin draft todavia. Se generara automaticamente cuando Escudero Content ejecute el Clarify + Writer.
-              </p>
-            ) : isEditing ? (
-              <textarea
-                value={editContent}
-                onChange={(e) => setEditContent(e.target.value)}
-                className="w-full text-[12px] border border-[#E8E2D9] rounded p-2 min-h-[120px] resize-y focus:outline-none focus:border-rust leading-relaxed"
-                placeholder="Contenido del draft..."
-              />
-            ) : (
-              <div className="text-[12px] text-[#2C3E50] whitespace-pre-wrap leading-relaxed py-1">
-                {draft.content || "(vacio)"}
-              </div>
-            )}
+                      {/* Idea · meta · descripción · fuente */}
+                      <td style={{ ...cellBase, padding: "16px 16px 16px 12px" }}>
+                        {/* Meta strip — pillar · framework · status · confianza */}
+                        <div className="flex flex-wrap gap-1.5 items-center mb-2">
+                          <span
+                            className="font-mono text-[10.5px] font-bold inline-flex items-center px-1.5 py-0.5 rounded-sc-pill border"
+                            style={{ background: "var(--sc-rust-100)", color: "var(--sc-rust-700)", borderColor: "var(--sc-rust-500)" }}
+                            title={pillarName || idea.pillar_id}
+                          >{idea.pillar_id}{pillarName ? ` · ${pillarName.slice(0, 28)}${pillarName.length > 28 ? "…" : ""}` : ""}</span>
+                          <span
+                            className={cn("font-heading uppercase text-[9.5px] tracking-wider px-1.5 py-0.5 rounded-sc-pill border-[1.5px] inline-flex items-center gap-1", tv.bg)}
+                            style={{ borderColor: "var(--sc-ink)" }}
+                          >
+                            <span>{tv.emoji}</span>{tv.label}
+                          </span>
+                          {(() => {
+                            const sv = STATUS_VISUAL[idea.status] || { label: idea.status, bg: "var(--sc-sun-100)", fg: "var(--sc-ink)" };
+                            return (
+                              <span
+                                className="font-heading uppercase text-[9.5px] tracking-wider px-1.5 py-0.5 rounded-sc-pill border inline-flex items-center"
+                                style={{ background: sv.bg, color: sv.fg, borderColor: "var(--sc-ink)" }}
+                              >{sv.label}</span>
+                            );
+                          })()}
+                          <span className="inline-flex items-center gap-1.5" title={`Confianza ${conf}%`}>
+                            <span
+                              className="inline-block h-2 w-12 rounded-sc-pill border overflow-hidden"
+                              style={{ borderColor: "var(--sc-ink)", background: "var(--sc-paper-3)" }}
+                            >
+                              <span
+                                className="block h-full"
+                                style={{
+                                  width: `${conf}%`,
+                                  background: conf >= 80 ? "var(--sc-sage-500)" : conf >= 60 ? "var(--sc-sun-300)" : "var(--sc-brick-500)",
+                                }}
+                              />
+                            </span>
+                            <span className="font-mono text-[10.5px] font-bold">{conf}%</span>
+                          </span>
+                        </div>
 
-            {/* Iteration request */}
-            {draft && draft.status !== "approved" && draft.status !== "published" && (
-              <div className="mt-2">
-                {iteratingChannel === channel ? (
-                  <div className="flex gap-1.5">
-                    <input
-                      type="text"
-                      value={iterationInput}
-                      onChange={(e) => setIterationInput(e.target.value)}
-                      className="flex-1 text-[11px] border border-[#E8E2D9] rounded px-2 py-1 focus:outline-none focus:border-rust"
-                      placeholder='Ej: "hook mas fuerte", "mas corto", "cita datos de Bnext"'
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" && iterationInput.trim()) {
-                          onRequestIteration(idea.id, channel, iterationInput);
-                          setIterationInput("");
-                          setIteratingChannel(null);
-                        }
-                      }}
-                    />
-                    <button
-                      onClick={() => { setIteratingChannel(null); setIterationInput(""); }}
-                      className="text-[10px] text-muted-foreground hover:text-[#2C3E50]"
-                    >
-                      ✕
-                    </button>
-                  </div>
-                ) : (
-                  <button
-                    onClick={() => setIteratingChannel(channel)}
-                    className="text-[10px] text-rust hover:underline"
-                  >
-                    🔄 Pedir iteracion
-                  </button>
-                )}
+                        <div
+                          className="font-heading font-extrabold leading-tight mb-2"
+                          style={{ fontSize: 18, color: "var(--sc-ink)", textWrap: "balance" }}
+                        >
+                          {getIdeaTitle(idea)}
+                        </div>
+                        <div className="text-[13px] leading-relaxed mb-2" style={{ color: "var(--sc-fg-soft)" }}>
+                          {idea.signal?.summary}
+                        </div>
+                        <div className="flex flex-wrap gap-1.5 items-center text-xs" style={{ color: "var(--sc-fg-muted)" }}>
+                          <span>🌐</span>
+                          <span>Fuente:</span>
+                          {idea.signal?.source && (
+                            <b style={{ color: "var(--sc-fg-soft)" }}>{idea.signal.source}</b>
+                          )}
+                          {idea.signal?.url && (
+                            <a
+                              href={idea.signal.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="font-mono text-[11px] underline"
+                              style={{ color: "var(--sc-navy-500)", textUnderlineOffset: 3 }}
+                              title={idea.signal.url}
+                            >{idea.signal.url.replace(/^https?:\/\/(www\.)?/, "").slice(0, 38)}{idea.signal.url.length > 45 ? "…" : ""} ↗</a>
+                          )}
+                          {idea.signal?.date && (
+                            <>
+                              <span>·</span>
+                              <span>📅 {idea.signal.date}{recDays !== null && ` (${recDays}d)`}</span>
+                            </>
+                          )}
+                        </div>
+                      </td>
 
-                {/* Show iteration history */}
-                {draft.iterations.length > 0 && (
-                  <div className="mt-1.5 space-y-1">
-                    {draft.iterations.map((it, i) => (
-                      <div key={i} className="text-[10px] text-muted-foreground bg-white rounded px-2 py-1 border border-[#E8E2D9]">
-                        <span className="font-medium">{it.role === "user" ? "Tu" : "Escudero"}:</span> {it.text}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
+                      {/* Ángulo editorial */}
+                      <td style={cellBase}>
+                        <div className="flex gap-2 items-stretch">
+                          <span style={{ width: 3, alignSelf: "stretch", background: "var(--sc-rust-500)", borderRadius: 1.5, flexShrink: 0 }} />
+                          <span
+                            className="text-[13px] leading-relaxed italic"
+                            style={{ color: "var(--sc-ink)", textWrap: "pretty" }}
+                          >{stripPovPrefix(idea.angle_draft)}</span>
+                        </div>
+                      </td>
+
+                      {/* Fecha contenido */}
+                      <td style={cellBase}>
+                        <div className="flex flex-col gap-1">
+                          <span className="font-mono text-[13px] font-bold" style={{ color: "var(--sc-ink)" }}>
+                            {idea.signal?.date ? new Date(idea.signal.date).toLocaleDateString("es-ES", { day: "numeric", month: "short" }) : "—"}
+                          </span>
+                          <span className="text-[10px]" style={{ color: "var(--sc-fg-muted)" }}>
+                            {idea.signal?.date ? new Date(idea.signal.date).getFullYear() : ""}
+                          </span>
+                          {idea.dispatch_date && (
+                            <span className="text-[10px]" style={{ color: "var(--sc-rust-500)" }}>
+                              dispatch {idea.dispatch_date.slice(5)}
+                            </span>
+                          )}
+                        </div>
+                      </td>
+
+                      {/* Acciones — vertical stack */}
+                      <td style={{ ...cellBase, padding: "16px 12px" }}>
+                        {idea.status === "Discarded" && (
+                          <span className="text-xs italic" style={{ color: "var(--sc-fg-muted)" }}>
+                            Descartada
+                          </span>
+                        )}
+                        {isNew && (
+                          <div className="flex flex-col gap-1.5">
+                            <button
+                              onClick={() => updateIdea(idea.id, { status: "Approved", approved_at: new Date().toISOString(), approved_via: "mc-ui" })}
+                              className="font-heading uppercase text-[12px] tracking-wider px-2.5 py-1.5 rounded border-2 sc-pop-hover inline-flex items-center justify-center gap-1.5"
+                              style={{ background: "var(--sc-sage-500)", color: "var(--sc-paper-3)", borderColor: "var(--sc-ink)", boxShadow: "var(--pop-xs)" }}
+                            >✓ Aprobar</button>
+                            <button
+                              onClick={() => updateIdea(idea.id, { status: "Deferred", deferred_at: new Date().toISOString(), deferred_by: "mc-ui" })}
+                              className="font-heading uppercase text-[11px] tracking-wider px-2.5 py-1.5 rounded border-2 sc-pop-hover inline-flex items-center justify-center gap-1.5"
+                              style={{ background: "var(--sc-sun-300)", color: "var(--sc-ink)", borderColor: "var(--sc-ink)", boxShadow: "var(--pop-xs)" }}
+                            >🕒 Más tarde</button>
+                            <button
+                              onClick={() => updateIdea(idea.id, { status: "Discarded" })}
+                              className="font-heading uppercase text-[11px] tracking-wider px-2.5 py-1.5 rounded border-2 sc-pop-hover inline-flex items-center justify-center gap-1.5"
+                              style={{ background: "var(--sc-paper-3)", color: "var(--sc-ink)", borderColor: "var(--sc-ink)", boxShadow: "var(--pop-xs)" }}
+                            >✗ Descartar</button>
+                          </div>
+                        )}
+                        {idea.status === "Deferred" && (
+                          <button
+                            onClick={() => updateIdea(idea.id, { status: "New", deferred_at: null, deferred_by: null })}
+                            className="font-heading uppercase text-[11px] tracking-wider px-2.5 py-1.5 rounded border-2 sc-pop-hover inline-flex items-center justify-center gap-1.5"
+                            style={{ background: "var(--sc-sage-100)", color: "var(--sc-ink)", borderColor: "var(--sc-ink)", boxShadow: "var(--pop-xs)" }}
+                          >↺ Volver a queue</button>
+                        )}
+                        {(isApproved || idea.status === "Draft" || idea.status === "Pending Media" || idea.status === "Ready" || idea.status === "Published") && (
+                          <div className="flex flex-col gap-1.5">
+                            <button
+                              onClick={() => {
+                                if (idea.content_task_id && idea.project_id && idea.project_task_id) {
+                                  const channel = idea.content_task_channels?.[0] || idea.target_channel || "linkedin";
+                                  router.push(`/dashboard/${slug}/projects/${idea.project_id}/tasks/${idea.project_task_id}/content/${idea.content_task_id}/draft/${channel}`);
+                                  return;
+                                }
+                                if (!openChat || !idea.project_task_id || !idea.project_id) {
+                                  setExpandedIdea(expandedIdea === idea.id ? null : idea.id);
+                                  return;
+                                }
+                                const cfg = buildTaskThread(slug, idea.project_task_id, `${idea.content_type} · ${idea.pillar_id}`, idea.project_id, { taskSkill: writerSkillFor(idea.target_channel), taskChannel: idea.target_channel, taskType: "content" });
+                                openChat(slug, cfg);
+                              }}
+                              className="font-heading uppercase text-[12px] tracking-wider px-2.5 py-1.5 rounded border-2 sc-pop-hover inline-flex items-center justify-center gap-1.5"
+                              style={{ background: "var(--sc-rust-500)", color: "var(--sc-paper-3)", borderColor: "var(--sc-ink)", boxShadow: "var(--pop-xs)" }}
+                            >💬 Abrir draft</button>
+                          </div>
+                        )}
+                      </td>
+
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
-        );
-      })}
+        </div>
+
+        {/* Draft expansion (legacy fallback) */}
+        {expandedIdea && (() => {
+          const idea = visibleIdeas.find((i) => i.id === expandedIdea);
+          if (!idea || idea.status !== "Approved") return null;
+          return (
+            <div className="mt-4">
+              <DraftCards
+                idea={idea}
+                slug={slug}
+                onSaveDraft={saveDraft}
+                onRequestIteration={requestIteration}
+                onOpenDoc={openDraftDoc}
+                onRefresh={fetchIdeas}
+              />
+            </div>
+          );
+        })()}
+        </>
+      )}
+
+      {/* Draft viewer/editor — shared slideover used by all DraftCards */}
+      <DocSlideOver
+        slug={slug}
+        docPath={openDocPath}
+        onClose={() => setOpenDocPath(null)}
+      />
     </div>
   );
 }
+

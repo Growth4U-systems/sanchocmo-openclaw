@@ -64,6 +64,8 @@ backups/
 delivery-queue/
 update-check.json
 subagents/
+tmp/
+plugin-runtime-deps/
 
 # === Workspace backups ===
 skills.bak.*
@@ -195,3 +197,4 @@ screenshots/mc-inspect/
 # === Main workspace (from origin/main) ===
 workspace-main/
 workspace/
+workspace-maese-pedro/

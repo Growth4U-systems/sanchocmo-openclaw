@@ -7,13 +7,13 @@ import textwrap
 import unittest
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "skills" / "last30days" / "scripts"))
 
 from lib.bird_x import parse_bird_response
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-VENDORED_BIRD = REPO_ROOT / "scripts" / "lib" / "vendor" / "bird-search" / "bird-search.mjs"
+VENDORED_BIRD = REPO_ROOT / "skills" / "last30days" / "scripts" / "lib" / "vendor" / "bird-search" / "bird-search.mjs"
 
 
 class TestBirdXEngagementZero(unittest.TestCase):
@@ -77,6 +77,8 @@ class TestVendoredBirdRuntime(unittest.TestCase):
     def test_browser_cookie_helpers_lazy_load_sweet_cookie(self):
         sweet_cookie_dir = (
             REPO_ROOT
+            / "skills"
+            / "last30days"
             / "scripts"
             / "lib"
             / "vendor"
@@ -130,7 +132,7 @@ class TestVendoredBirdRuntime(unittest.TestCase):
                           extractCookiesFromSafari,
                           extractCookiesFromChrome,
                           extractCookiesFromFirefox,
-                        } from "./scripts/lib/vendor/bird-search/lib/cookies.js";
+                        } from "./skills/last30days/scripts/lib/vendor/bird-search/lib/cookies.js";
 
                         const payload = await Promise.all([
                           extractCookiesFromSafari(),

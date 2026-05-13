@@ -14,7 +14,7 @@ import { useAppStore } from "@/stores/app";
 import { cn } from "@/lib/utils";
 
 const MarkdownEditor = dynamic(
-  () => import("@/components/foundation/markdown-editor").then((m) => m.MarkdownEditor),
+  () => import("@/components/brand-brain/markdown-editor").then((m) => m.MarkdownEditor),
   { ssr: false, loading: () => <p className="text-sm text-muted-foreground p-6">Cargando editor...</p> }
 );
 

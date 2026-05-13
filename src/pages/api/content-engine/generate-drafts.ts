@@ -1,14 +1,31 @@
 /**
- * POST /api/content-engine/generate-drafts — Generate draft templates per channel
+ * POST /api/content-engine/generate-drafts
  *
- * Takes an approved idea and creates channel-specific draft templates
- * based on the angle_draft + platform formatting rules.
+ * Triggered automatically by `/api/content-engine/ideas` PATCH when an idea
+ * transitions to `approved` (from Slack/Discord interactivity, MC UI, etc).
  *
- * Body: { slug, ideaId }
+ * What this endpoint does (synchronously, fast):
+ *   1. Resolves the writer skill from `target_channel` (B1 mapping).
+ *   2. Ensures the weekly content project + daily content Task exist, and
+ *      adds the idea to the parent Task's `idea_ids[]`.
+ *   3. Creates a `ContentTask` nested under the daily Task with
+ *      `status: "Approved"` and `pipeline_state: "researching"`.
+ *   4. For each target channel, creates an empty draft markdown file with
+ *      YAML frontmatter at `brand/{slug}/content/drafts/{idea-id}/{channel}.md`.
+ *      The body is a placeholder that the writer skill will overwrite.
+ *   5. Attaches each draft path to the ContentTask's `documents[]`.
  *
- * For now: generates structured templates from the angle_draft.
- * Future: calls Escudero Content to run Clarify + social-writer for
- * AI-generated drafts with predictions.
+ * What it does NOT do (yet — TODO):
+ *   - Invoke Escudero Content end-to-end. The actual run of the writer skill
+ *     (deep-research → Clarify → writing) is expected to happen via either:
+ *       a) An Escudero cron/queue picking up ContentTasks in `Approved` +
+ *          `pipeline_state: "researching"` state.
+ *       b) A dedicated wrapper endpoint that wires this into the OpenClaw
+ *          gateway (`openclaw cron run-once` or equivalent).
+ *     Until that exists, drafts stay in `pending` until a human or future
+ *     automation flips them.
+ *
+ * Body: { slug: string, ideaId: string }
  */
 
 import type { NextApiRequest, NextApiResponse } from "next";
@@ -16,15 +33,9 @@ import fs from "fs";
 import path from "path";
 import { withErrorHandler } from "@/lib/api-middleware";
 import { BASE } from "@/lib/data/paths";
-
-interface Draft {
-  channel: string;
-  content: string;
-  status: "draft";
-  iterations: never[];
-  created_at: string;
-  updated_at: string;
-}
+import { createContentTask, attachDocumentToContentTask } from "@/lib/data/content-tasks";
+import { createEmptyDraft, createSpecialDoc, draftRelPath } from "@/lib/data/drafts";
+import { triggerWriter } from "@/lib/data/writer-trigger";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function loadIdeas(slug: string): any[] {
@@ -39,41 +50,30 @@ function saveIdeas(slug: string, ideas: any[]) {
   fs.writeFileSync(filePath, JSON.stringify(ideas, null, 2));
 }
 
-function generateLinkedInDraft(angle: string, signal: string, contentType: string): string {
-  // LinkedIn: 1,300-2,000 chars. Personal narrative. Hook in first line.
-  const hook = contentType === "Hot Take"
-    ? `Esto va a ser impopular, pero hay que decirlo.\n\n`
-    : contentType === "Proof Post"
-    ? `Los datos no mienten.\n\n`
-    : contentType === "Framework"
-    ? `Llevo anos usando este framework. Funciona.\n\n`
-    : contentType === "Case Study"
-    ? `Esto paso de verdad. Y cambio como vemos el growth.\n\n`
-    : `Hay algo que nadie esta hablando.\n\n`;
-
-  return `${hook}${angle}\n\n---\n\n📰 Contexto: ${signal}\n\n¿Que opinas? Dejame tu comentario 👇`;
+/** Resolve writer skill from target_channel. Mirrors social-writer/SKILL.md mapping. */
+function writerSkillFor(channel: string): string {
+  const c = (channel || "").toLowerCase();
+  if (c === "linkedin" || c === "x" || c === "twitter") return "social-writer";
+  if (c === "instagram" || c === "ig") return "instagram-content";
+  if (c === "blog" || c === "seo") return "seo-content";
+  if (c === "newsletter" || c === "email") return "newsletter";
+  return "social-writer";
 }
 
-function generateTwitterDraft(angle: string, signal: string, contentType: string): string {
-  // X/Twitter: 280 chars for tweet, or thread format
-  const firstLine = angle.split(".")[0] + ".";
-  if (contentType === "Framework") {
-    return `🧵 Thread:\n\n1/ ${firstLine}\n\n2/ [desarrolla el primer punto]\n\n3/ [segundo punto]\n\n4/ [tercer punto]\n\n5/ La leccion: [conclusion]\n\nGuarda este thread si te fue util 🔖`;
-  }
-  // Short take
-  return `${firstLine}\n\n${angle.length > 200 ? angle.slice(0, 200) + "..." : angle}`;
+/**
+ * Channels to produce drafts for. Mirrors the cadence-config-derived rules
+ * (single primary plus a sensible companion).
+ */
+function expandChannels(primary: string): string[] {
+  const channels = [primary];
+  if (primary === "linkedin" && !channels.includes("twitter")) channels.push("twitter");
+  if (primary === "twitter" && !channels.includes("linkedin")) channels.push("linkedin");
+  if (primary === "blog" && !channels.includes("linkedin")) channels.push("linkedin");
+  return channels;
 }
 
-function generateBlogDraft(angle: string, signal: string, contentType: string): string {
-  return `# [Titulo SEO — incluir keyword principal]\n\n## TL;DR\n\n${angle}\n\n## Contexto\n\n${signal}\n\n## Analisis\n\n[Desarrollar el argumento principal con datos y ejemplos]\n\n## Que significa esto para tu startup\n\n[Aplicacion practica]\n\n## Conclusion\n\n[Resumen + CTA]\n\n---\n\n*¿Quieres que analicemos tu caso? [Agenda una llamada diagnostica](link)*`;
-}
-
-function generateNewsletterDraft(angle: string, signal: string): string {
-  return `## Esta semana en Growth\n\n${signal}\n\n### Mi take\n\n${angle}\n\n### Que puedes hacer con esto\n\n1. [Accion concreta 1]\n2. [Accion concreta 2]\n3. [Accion concreta 3]\n\n---\n\n*Si alguien te reenvio esto, [suscribete aqui](link)*`;
-}
-
-/** Get or create the weekly content project + daily task */
-function ensureWeeklyProjectAndTask(slug: string): { projectId: string; taskId: string } {
+/** Get or create the weekly content project + daily task, attaching ideaId to the task. */
+function ensureWeeklyProjectAndTask(slug: string, ideaId: string): { projectId: string; taskId: string } {
   const now = new Date();
   const weekNum = Math.ceil(((now.getTime() - new Date(now.getFullYear(), 0, 1).getTime()) / 86400000 + 1) / 7);
   const projectId = `P-Content-Semana-${weekNum}`;
@@ -83,19 +83,15 @@ function ensureWeeklyProjectAndTask(slug: string): { projectId: string; taskId: 
   const taskId = `${projectId}-T${String(taskNum).padStart(2, "0")}`;
 
   const projectsDir = path.join(BASE, "brand", slug, "projects");
-  // Find or create project dir
   let projDir = "";
   try {
     const dirs = fs.readdirSync(projectsDir, { withFileTypes: true });
-    const match = dirs.find(d => d.isDirectory() && d.name.startsWith(projectId));
-    if (match) {
-      projDir = path.join(projectsDir, match.name);
-    }
+    const match = dirs.find((d) => d.isDirectory() && d.name.startsWith(projectId));
+    if (match) projDir = path.join(projectsDir, match.name);
   } catch { /* ignore */ }
 
   if (!projDir) {
-    const dirName = projectId;
-    projDir = path.join(projectsDir, dirName);
+    projDir = path.join(projectsDir, projectId);
     fs.mkdirSync(projDir, { recursive: true });
     fs.writeFileSync(path.join(projDir, "project.json"), JSON.stringify({
       id: projectId, name: `Content Semana ${weekNum}`,
@@ -106,12 +102,11 @@ function ensureWeeklyProjectAndTask(slug: string): { projectId: string; taskId: 
     fs.writeFileSync(path.join(projDir, "tasks.json"), "[]");
   }
 
-  // Find or create daily task
   const tasksPath = path.join(projDir, "tasks.json");
   let tasks: Record<string, unknown>[] = [];
   try { tasks = JSON.parse(fs.readFileSync(tasksPath, "utf-8")); } catch { /* ignore */ }
 
-  if (!tasks.find(t => t.id === taskId)) {
+  if (!tasks.find((t) => t.id === taskId)) {
     const chatThreadId = `task-${taskId.toLowerCase()}`;
     tasks.push({
       id: taskId,
@@ -129,7 +124,6 @@ function ensureWeeklyProjectAndTask(slug: string): { projectId: string; taskId: 
     });
     fs.writeFileSync(tasksPath, JSON.stringify(tasks, null, 2));
 
-    // Create chat thread file
     const chatDir = path.join(BASE, "brand", slug, "chat");
     fs.mkdirSync(chatDir, { recursive: true });
     const chatFile = path.join(chatDir, `${chatThreadId}.json`);
@@ -138,10 +132,22 @@ function ensureWeeklyProjectAndTask(slug: string): { projectId: string; taskId: 
     }
   }
 
-  // Add idea to the task's idea_ids
-  const task = tasks.find(t => t.id === taskId) as Record<string, unknown>;
+  // Add idea to the task's idea_ids (dedupe — generate-drafts can re-run on
+  // re-approval and we don't want duplicate ids piling up).
+  const task = tasks.find((t) => t.id === taskId) as Record<string, unknown> | undefined;
+  if (task) {
+    const ideaIds = Array.isArray(task.idea_ids) ? (task.idea_ids as string[]) : [];
+    if (!ideaIds.includes(ideaId)) {
+      task.idea_ids = [...ideaIds, ideaId];
+      fs.writeFileSync(tasksPath, JSON.stringify(tasks, null, 2));
+    }
+  }
 
   return { projectId, taskId };
+}
+
+function starterBody(channel: string, angleDraft: string, signal: string): string {
+  return `# ${channel} draft\n\n## Ángulo aprobado\n\n${angleDraft}\n\n## Signal\n\n${signal}\n\n---\n\n_Pendiente: Escudero Content ejecutará deep-research → Clarify → writer y reemplazará este placeholder con el draft real._\n`;
 }
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -155,73 +161,152 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   const ideas = loadIdeas(slug);
   const idea = ideas.find((i) => i.id === ideaId);
   if (!idea) return res.status(404).json({ error: "Idea not found" });
-  if (idea.status !== "approved") {
+  // Case-insensitive: the new Idea Bank UI persists PascalCase ("Approved")
+  // while older callers used lowercase. Both must trigger draft generation.
+  if (String(idea.status || "").toLowerCase() !== "approved") {
     return res.status(400).json({ error: "Idea must be approved before generating drafts" });
   }
 
-  const angle = idea.angle_draft || "";
-  const signal = idea.signal?.summary || "";
-  const contentType = idea.content_type || "Hot Take";
   const primaryChannel = idea.target_channel || "linkedin";
+  const channels = expandChannels(primaryChannel);
+  const skill = writerSkillFor(primaryChannel);
 
-  // Determine which channels to generate for
-  const channels: string[] = [];
-  channels.push(primaryChannel);
-  if (primaryChannel === "linkedin" && !channels.includes("twitter")) channels.push("twitter");
-  if (primaryChannel === "twitter" && !channels.includes("linkedin")) channels.push("linkedin");
-  if (primaryChannel === "blog") channels.push("linkedin");
+  // 1. Ensure weekly project + daily task (also adds ideaId to task.idea_ids).
+  const { projectId, taskId } = ensureWeeklyProjectAndTask(slug, ideaId);
 
-  const now = new Date().toISOString();
-  const drafts: Draft[] = [];
+  // 2. Create ContentTask under the daily task. Idempotent — returns existing
+  //    if this idea was already provisioned (e.g. on re-approval).
+  const contentTask = createContentTask(slug, {
+    parent_task_id: taskId,
+    idea_id: ideaId,
+    name: (idea.title as string) || `Idea ${ideaId}`,
+    skill,
+    target_channels: channels,
+    status: "Approved",
+    pipeline_state: "researching",
+    channel_phases: Object.fromEntries(channels.map((c) => [c, "researching" as const])),
+  });
+
+  // 3. Create one draft markdown file per channel and attach to ContentTask.
+  const angle = (idea.angle_draft as string) || "";
+  const signal = (idea.signal?.summary as string) || "";
+  const provisioned: string[] = [];
 
   for (const channel of channels) {
-    // Skip if draft already exists for this channel
-    if (idea.drafts?.some((d: { channel: string }) => d.channel === channel)) continue;
-
-    let content = "";
-    switch (channel) {
-      case "linkedin":
-        content = generateLinkedInDraft(angle, signal, contentType);
-        break;
-      case "twitter":
-        content = generateTwitterDraft(angle, signal, contentType);
-        break;
-      case "blog":
-        content = generateBlogDraft(angle, signal, contentType);
-        break;
-      case "newsletter":
-        content = generateNewsletterDraft(angle, signal);
-        break;
-      default:
-        content = `# ${channel}\n\n${angle}\n\nContexto: ${signal}`;
-    }
-
-    drafts.push({
+    createEmptyDraft(
+      slug,
+      ideaId,
       channel,
-      content,
-      status: "draft",
-      iterations: [],
-      created_at: now,
-      updated_at: now,
+      {
+        idea_id: ideaId,
+        channel,
+        kind: "channel-draft",
+        content_task_id: contentTask.id,
+        parent_task_id: taskId,
+        iteration: 0,
+        clarify_status: "pending",
+      },
+      starterBody(channel, angle, signal),
+    );
+    attachDocumentToContentTask(slug, taskId, contentTask.id, {
+      path: draftRelPath(ideaId, channel),
+      name: channel.charAt(0).toUpperCase() + channel.slice(1),
+      channel,
     });
+    provisioned.push(channel);
   }
 
-  // Create/find weekly project + daily task
-  const { projectId, taskId } = ensureWeeklyProjectAndTask(slug);
+  // 3b. Create proposal/research/clarify supporting docs and attach them.
+  // proposal.md = the brief the human will refer back to (idea + angle + signal).
+  // research.md, clarify.md = scaffolds the writer skill fills in.
+  const proposalBody = [
+    `# Propuesta — ${(idea.title as string) || ideaId}`,
+    ``,
+    `## Ángulo aprobado`,
+    angle || "_(sin ángulo registrado)_",
+    ``,
+    `## Signal`,
+    signal || "_(sin signal registrado)_",
+    ``,
+    `## Canales objetivo`,
+    channels.map((c) => `- ${c}`).join("\n"),
+    ``,
+    `## Skill principal`,
+    skill,
+  ].join("\n");
+
+  const researchBody = [
+    `# Research — ${(idea.title as string) || ideaId}`,
+    ``,
+    `_Pendiente. Escudero rellenará este documento con el deep-research:_`,
+    `_fuentes consultadas, queries usadas y key findings._`,
+    ``,
+    `## Sources`,
+    ``,
+    `## Queries`,
+    ``,
+    `## Key findings`,
+    ``,
+  ].join("\n");
+
+  const clarifyBody = [
+    `# Clarify — ${(idea.title as string) || ideaId}`,
+    ``,
+    `_Pendiente. Escudero postará aquí las preguntas necesarias antes de redactar._`,
+    `_Cada pregunta tendrá una sección "Respuesta humana:" para que la rellenes._`,
+    `_Cuando estén todas respondidas, el agente avanzará al draft._`,
+    ``,
+  ].join("\n");
+
+  for (const [kind, body] of [
+    ["proposal", proposalBody],
+    ["research", researchBody],
+    ["clarify", clarifyBody],
+  ] as const) {
+    const result = createSpecialDoc(slug, ideaId, kind, contentTask.id, taskId, body);
+    if (result.created) {
+      attachDocumentToContentTask(slug, taskId, contentTask.id, {
+        path: result.path,
+        name: kind.charAt(0).toUpperCase() + kind.slice(1),
+        channel: kind,
+      });
+    }
+  }
+
+  // 4. Mirror project_id / project_task_id / content_task_id back to the idea
+  //    so the Idea Bank can link directly to the Content Task and its drafts.
   idea.project_task_id = taskId;
   idea.project_id = projectId;
-
-  // Merge with existing drafts
-  idea.drafts = [...(idea.drafts || []), ...drafts];
+  idea.content_task_id = contentTask.id;
+  idea.content_task_channels = channels;
   saveIdeas(slug, ideas);
+
+  // 5. Lanzar la skill de escritura. Posteamos al thread del ContentTask vía
+  //    el gateway de OpenClaw para que Escudero Content corra deep-research →
+  //    Clarify → writer y sobreescriba los .md. Best-effort: si el gateway no
+  //    responde, los drafts quedan pendientes y se pueden disparar a mano
+  //    desde el chat del ContentTask.
+  const trigger = await triggerWriter({
+    slug,
+    contentTaskId: contentTask.id,
+    parentTaskId: taskId,
+    ideaId,
+    channels,
+    skill,
+    instruction: "",
+    kind: "initial",
+  });
 
   return res.status(200).json({
     ok: true,
     ideaId,
-    draftsGenerated: drafts.length,
-    channels: drafts.map(d => d.channel),
+    contentTaskId: contentTask.id,
     projectId,
     taskId,
+    channelsProvisioned: provisioned,
+    skill,
+    writerTriggered: trigger.forwardedToGateway,
+    writerError: trigger.error,
   });
 }
 

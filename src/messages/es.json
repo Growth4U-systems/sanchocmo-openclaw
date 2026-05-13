@@ -23,7 +23,6 @@
   },
   "nav": {
     "dashboard": "Dashboard",
-    "foundation": "Foundation",
     "projects": "Proyectos",
     "ideas": "Idea Bank",
     "recurringTasks": "Tareas Recurrentes",
@@ -38,7 +37,7 @@
     "settings": "Ajustes",
     "guide": "Guía",
     "changelog": "Changelog",
-    "documents": "Documentos",
+    "brandBrain": "Brand Brain",
     "overview": "Vista general",
     "work": "Trabajo",
     "tools": "Herramientas",
@@ -79,9 +78,9 @@
     "metricas": "Métricas",
     "nextSteps": "Próximos Pasos"
   },
-  "foundation": {
-    "title": "Foundation",
-    "subtitle": "Estado de los pilares de marca",
+  "brandBrain": {
+    "title": "Brand Brain",
+    "subtitle": "La memoria estratégica de tu marca — pilares, ICPs, competidores y todo el contexto del que tira el sistema",
     "notStarted": "No iniciado",
     "inProgress": "En progreso",
     "approved": "Aprobado",
@@ -99,8 +98,8 @@
     "requestRefresh": "Solicitar actualización",
     "depth": "Profundidad",
     "viewDoc": "Ver documento",
-    "depthLabel": "Foundation Depth",
-    "warningMessage": "Foundation {pct}% completa — {pending} pilares pendientes"
+    "depthLabel": "Brand Brain Depth",
+    "warningMessage": "Brand Brain {pct}% completo — {pending} pilares pendientes"
   },
   "projects": {
     "title": "Proyectos",

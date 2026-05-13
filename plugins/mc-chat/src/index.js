@@ -5,8 +5,6 @@
  * from Mission Control server.
  */
 
-import fs from "node:fs";
-import path from "node:path";
 import { defineChannelPluginEntry } from "openclaw/plugin-sdk/core";
 import {
   finalizeInboundContext,
@@ -17,94 +15,6 @@ import { mcChatPlugin } from "./channel.js";
 
 const CHANNEL_KEY = "mc-chat";
 const DEFAULT_ACCOUNT_ID = "default";
-
-// ─── Rehydration tuning ───
-// When the runtime session for a thread has gone idle beyond session.threadBindings.idleHours,
-// OpenClaw releases its in-memory context. The next inbound message arrives to a fresh
-// session with no history, so the agent ends up asking the user to re-supply information
-// that is already on disk in the thread JSON log.
-//
-// To recover, when we detect the session is likely cold (last assistant message older
-// than REHYDRATE_THRESHOLD_MS) we read the last REHYDRATE_MAX_MESSAGES from the thread JSON
-// and prepend them to the body passed to the agent, under a [PRIOR CONVERSATION] block.
-// Each message is truncated at REHYDRATE_MAX_CHARS.
-const REHYDRATE_THRESHOLD_MS = 24 * 60 * 60 * 1000; // match session.threadBindings.idleHours (openclaw.json)
-const REHYDRATE_MAX_MESSAGES = 30;
-const REHYDRATE_MAX_CHARS = 1500;
-
-function mcChatThreadFile(workspace, slug, threadId) {
-  // Must match src/lib/data/mc-chat.ts threadFile(): strip leading "{slug}:" if present,
-  // then replace ":" → "-" and strip anything outside [A-Za-z0-9_-].
-  const colonIdx = threadId.indexOf(":");
-  const shortId = colonIdx < 0 ? threadId : threadId.slice(colonIdx + 1);
-  const safeId = shortId.replace(/:/g, "-").replace(/[^a-zA-Z0-9\-_]/g, "");
-  return path.join(workspace, "brand", slug, "chat", `${safeId}.json`);
-}
-
-function loadThreadMessages(workspace, slug, threadId) {
-  try {
-    if (!workspace) return [];
-    const file = mcChatThreadFile(workspace, slug, threadId);
-    if (!fs.existsSync(file)) return [];
-    const data = JSON.parse(fs.readFileSync(file, "utf8"));
-    return Array.isArray(data?.messages) ? data.messages : [];
-  } catch {
-    return [];
-  }
-}
-
-function lastAssistantTs(messages) {
-  for (let i = messages.length - 1; i >= 0; i--) {
-    const m = messages[i];
-    if (!m || m.role === "user") continue;
-    const raw = m.ts;
-    if (raw == null) continue;
-    const ts = typeof raw === "number" ? raw : new Date(raw).getTime();
-    if (Number.isFinite(ts) && ts > 0) return ts;
-  }
-  return 0;
-}
-
-function formatPriorConversation(messages) {
-  // Exclude the last entry — the current inbound user message is already stored on disk
-  // before dispatch (see src/pages/api/chat/send.ts:36) and gets passed separately as `text`.
-  const history = messages.slice(Math.max(0, messages.length - 1 - REHYDRATE_MAX_MESSAGES), messages.length - 1);
-  if (history.length === 0) return "";
-  const lines = [];
-  for (const m of history) {
-    if (!m || !m.text || m.role === "status") continue;
-    const speaker = m.role === "user" ? "User" : (m.agent ? m.agent : "Assistant");
-    let body = String(m.text);
-    const truncated = body.length > REHYDRATE_MAX_CHARS;
-    if (truncated) body = body.slice(0, REHYDRATE_MAX_CHARS) + "… [truncated]";
-    lines.push(`[${speaker}]\n${body}`);
-  }
-  return lines.join("\n\n---\n\n");
-}
-
-function buildRehydrationBlock(cfg, slug, threadId) {
-  const workspace = cfg?.agents?.defaults?.workspace;
-  const messages = loadThreadMessages(workspace, slug, threadId);
-  if (messages.length <= 1) return "";
-  const lastTs = lastAssistantTs(messages);
-  if (!lastTs) return "";
-  if (Date.now() - lastTs < REHYDRATE_THRESHOLD_MS) return "";
-  const body = formatPriorConversation(messages);
-  if (!body) return "";
-  return [
-    `[PRIOR CONVERSATION — session was idle >${Math.round(REHYDRATE_THRESHOLD_MS / 3600000)}h, rehydrating from thread log]`,
-    `Treat this as ground truth already established with the user. Do NOT ask the user to repeat anything that is present here; instead reference it directly. If a deliverable was already produced (path mentioned below), read it before replying.`,
-    ``,
-    body,
-    ``,
-    `[/PRIOR CONVERSATION]`,
-  ].join("\n");
-}
-
-// Tracks Discord↔MC relay wiring so /mc-chat/health can report it.
-// See registerOutboundHook guard below — we can only relay if the SDK
-// exposes api.registerOutboundHook (added in openclaw 2026.3.22).
-const relayStatus = { enabled: false, reason: "not-registered" };
 
 export default defineChannelPluginEntry({
   id: "mc-chat",
@@ -170,6 +80,7 @@ export default defineChannelPluginEntry({
           skill,
           agentId,
           isAdmin,
+          senderRole,
           _source, // "discord" if relayed from Discord
         } = payload;
 
@@ -198,23 +109,15 @@ export default defineChannelPluginEntry({
         if (linkedTo) contextLines.push(`linked_to: ${linkedTo}`);
         if (skill) contextLines.push(`skill: ${skill}`);
         contextLines.push(`IMPORTANT: You are responding via MC Chat, NOT Discord. Do NOT use the message tool to reply. Just respond with text directly — your reply will be delivered to the user automatically via the MC Chat callback. Do NOT create Discord threads or send Discord messages for this conversation. Read files from disk (brand/${slug}/), never via HTTP/web_fetch to localhost.`);
-        contextLines.push(`Before replying, if a [PRIOR CONVERSATION] block is present below, treat it as authoritative prior context for this thread — do not ask the user for information that is already there.`);
         contextLines.push(`⚠️ EXECUTION GUARDRAIL: Aprobar un plan o crear proyectos NO es autorización para ejecutar tareas. Siempre preguntar "¿Ejecuto [tarea específica]?" y esperar confirmación explícita antes de generar deliverables. "Apruebo el plan" y "Ejecuta" son pasos DIFERENTES.`);
+        contextLines.push(`💬 INTERACTIVE QUESTIONS: Cuando necesites una decisión del usuario entre opciones FINITAS y CONOCIDAS (ej. elegir un nicho de una lista, un tono, un pilar, un ICP), emite un bloque ":::ask" en vez de preguntar en texto libre. Formato:`);
+        contextLines.push(`:::ask`);
+        contextLines.push(`{"id":"q_<short>","prompt":"<pregunta>","mode":"single"|"multi","options":[{"id":"<key>","label":"<texto>"}]}`);
+        contextLines.push(`:::`);
+        contextLines.push(`Usa "single" para radios (1 opción) y "multi" para checkboxes. OBLIGATORIO: la ÚLTIMA opción debe ser SIEMPRE {"id":"other","label":"Otro (lo escribo)"} — no es opcional, es un requisito del componente para que el usuario pueda dar respuesta libre. Si la omites, el usuario queda encajonado. NO uses ":::ask" para preguntas abiertas (ej. "cuéntame sobre tu negocio") — solo para decisiones discretas. Puedes incluir VARIOS bloques ":::ask" en un mismo mensaje (ej. preguntar tono + formato + audiencia a la vez); el componente espera a que el usuario responda TODAS antes de devolverte un único mensaje con todas las respuestas en líneas separadas: "[ask:q1] respuesta: …\\n[ask:q2] respuesta: …". NO ejecutes nada hasta recibir ese mensaje completo. Si el usuario eligió "Otro" verás su texto literal en lugar de la etiqueta.`);
         contextLines.push(`[/MC Chat Context]`);
 
-        let rehydrationBlock = "";
-        try {
-          rehydrationBlock = buildRehydrationBlock(cfg, slug, threadId);
-          if (rehydrationBlock) {
-            logger.info(`[mc-chat] Rehydrating cold session for ${slug}/${threadId} — injecting prior conversation`);
-          }
-        } catch (err) {
-          logger.warn(`[mc-chat] Rehydration failed for ${slug}/${threadId}: ${err?.message || err}`);
-        }
-
-        const bodyForAgent = contextLines.join('\n')
-          + (rehydrationBlock ? '\n\n' + rehydrationBlock : '')
-          + '\n\n' + text;
+        const bodyForAgent = contextLines.join('\n') + '\n\n' + text;
 
         // Resolve sender identity based on admin/client role
         // This maps to toolsBySender keys in openclaw.json:
@@ -255,15 +158,44 @@ export default defineChannelPluginEntry({
 
         // Dispatch to agent asynchronously
         try {
+          // Default to Next.js (port 3000) — it owns chat thread writes since
+          // the strangler-fig migration. mc-server.js's /webhook/mc-chat/response
+          // is dead code but still proxied through Next's fallback rewrite.
           const mcUrl = channelCfg?.mcServerUrl || "http://localhost:3000";
           const callbackUrl = `${mcUrl}/api/chat/webhook`;
+          const threadLinkUrlBase = `${mcUrl}/api/chat/thread`;
+          const sendUrl = `${mcUrl}/api/chat/send`;
           const secret = channelCfg?.sharedSecret;
+          // Retry with exponential backoff for transient Next.js outages
+          // (dev server reloads, restarts). On permanent failure the message
+          // is logged loudly — Sancho's trajectory still has it for recovery.
+          const postWithRetry = async (url, body, label) => {
+            const headers = { "Content-Type": "application/json", ...(secret ? { "X-MC-Secret": secret } : {}) };
+            const delays = [0, 750, 2250]; // 3 attempts: immediate, +750ms, +2250ms
+            let lastErr;
+            for (let i = 0; i < delays.length; i++) {
+              if (delays[i]) await new Promise((r) => setTimeout(r, delays[i]));
+              try {
+                const res = await fetch(url, { method: "POST", headers, body: JSON.stringify(body) });
+                if (res.ok) return res;
+                lastErr = new Error(`HTTP ${res.status}`);
+                if (res.status >= 400 && res.status < 500) break; // don't retry 4xx
+              } catch (e) {
+                lastErr = e;
+              }
+            }
+            logger.error(`[mc-chat] ${label} failed after ${delays.length} attempts: ${lastErr?.message || lastErr}`);
+            return null;
+          };
 
           await dispatchInboundMessageWithBufferedDispatcher({
             ctx: msgCtx,
             cfg,
             dispatcherOptions: {
               deliver: async (replyPayload, _info) => {
+                // Diagnostic: log every deliver invocation so we can tell
+                // "deliver fired but text empty" from "deliver never fired".
+                logger.info(`[mc-chat] deliver called kind=${_info?.kind || '?'} thread=${threadId} hasText=${Boolean(replyPayload?.text)} hasParts=${Array.isArray(replyPayload?.parts) && replyPayload.parts.length > 0} textLen=${(replyPayload?.text || '').length}`);
                 // Support multi-message: replyPayload can have text, body, or parts
                 const texts = [];
                 const replyText = replyPayload?.text || replyPayload?.body || "";
@@ -283,49 +215,37 @@ export default defineChannelPluginEntry({
                 // Check if thread is linked to Discord
                 let discordLink = null;
                 try {
-                  const threadRes = await fetch(`${mcUrl}/api/chat/thread/${encodeURIComponent(chatId)}`);
-                  const threadData = await threadRes.json();
-                  if (threadData.discordThreadId && threadData.discordChannelId) {
-                    discordLink = { threadId: threadData.discordThreadId, channelId: threadData.discordChannelId };
+                  const threadRes = await fetch(`${threadLinkUrlBase}/${encodeURIComponent(chatId)}`);
+                  if (threadRes.ok) {
+                    const threadData = await threadRes.json();
+                    if (threadData.discordThreadId && threadData.discordChannelId) {
+                      discordLink = { threadId: threadData.discordThreadId, channelId: threadData.discordChannelId };
+                    }
                   }
                 } catch {}
 
                 // Send each text as a separate message (MC + Discord if linked)
                 for (const msgText of texts) {
-                  try {
-                    const response = await fetch(callbackUrl, {
-                      method: "POST",
-                      headers: {
-                        "Content-Type": "application/json",
-                        ...(secret ? { "X-MC-Secret": secret } : {}),
-                      },
-                      body: JSON.stringify({
-                        slug,
-                        threadId,
-                        text: msgText,
-                        role: "bot",
-                        agent: respondingAgent,
-                        ts: new Date().toISOString(),
-                      }),
-                    });
-                    if (!response.ok) {
-                      logger.error(`[mc-chat] Callback failed: ${response.status}`);
+                  await postWithRetry(callbackUrl, {
+                    slug,
+                    threadId,
+                    text: msgText,
+                    role: "bot",
+                    agent: respondingAgent,
+                    ts: new Date().toISOString(),
+                  }, "Bot callback");
+                  // Also relay to Discord if linked (skip if message came from Discord)
+                  if (discordLink && _source !== "discord") {
+                    try {
+                      await tools.message.send({
+                        action: "send",
+                        target: `channel:${discordLink.threadId}`,
+                        message: msgText + "\n||[_mc_relay]||", // Hidden spoiler tag
+                      });
+                      logger.info(`[mc-chat] Relayed to Discord thread ${discordLink.threadId}`);
+                    } catch (discordErr) {
+                      logger.error(`[mc-chat] Discord relay error: ${discordErr?.message}`);
                     }
-                    // Also relay to Discord if linked (skip if message came from Discord)
-                    if (discordLink && _source !== "discord") {
-                      try {
-                        await tools.message.send({
-                          action: "send",
-                          target: `channel:${discordLink.threadId}`,
-                          message: msgText + "\n||[_mc_relay]||", // Hidden spoiler tag
-                        });
-                        logger.info(`[mc-chat] Relayed to Discord thread ${discordLink.threadId}`);
-                      } catch (discordErr) {
-                        logger.error(`[mc-chat] Discord relay error: ${discordErr?.message}`);
-                      }
-                    }
-                  } catch (err) {
-                    logger.error(`[mc-chat] Callback error: ${err?.message}`);
                   }
                 }
               },
@@ -333,38 +253,121 @@ export default defineChannelPluginEntry({
                 logger.error(`[mc-chat] Dispatch error (${info.kind}): ${err?.message || err}`);
               },
             },
-            // Status updates: send intermediate state to MC typing indicator
+            // Status updates: send intermediate state to MC typing indicator.
+            // Two flavors per event:
+            //   role: "status"   → ephemeral one-line indicator (legacy, pisa anterior)
+            //   role: "progress" → granular timeline event accumulated and sealed
+            //                      into the bot's final message (visible after reply)
             typingCallbacks: {
               onReplyStart: async () => {
+                const headers = { "Content-Type": "application/json", ...(secret ? { "X-MC-Secret": secret } : {}) };
+                const baseAgent = agentId || "sancho";
                 fetch(callbackUrl, {
                   method: "POST",
-                  headers: { "Content-Type": "application/json", ...(secret ? { "X-MC-Secret": secret } : {}) },
-                  body: JSON.stringify({ slug, threadId, role: "status", text: "🔄 Sancho está pensando...", agent: agentId || "sancho" }),
+                  headers,
+                  body: JSON.stringify({ slug, threadId, role: "status", text: "🔄 Sancho está pensando...", agent: baseAgent }),
+                }).catch(() => {});
+                fetch(callbackUrl, {
+                  method: "POST",
+                  headers,
+                  body: JSON.stringify({
+                    slug, threadId, role: "progress", agent: baseAgent,
+                    event: { kind: "thinking", label: "Pensando…" },
+                  }),
                 }).catch(() => {});
               },
             },
             getReplyOptions: {
               onToolStart: async (payload) => {
-                if (payload?.name) {
-                  const label = payload.name === "Read" ? "📄 Leyendo"
-                    : payload.name === "Write" ? "✍️ Escribiendo"
-                    : payload.name === "Bash" ? "⚡ Ejecutando"
-                    : payload.name === "Grep" || payload.name === "Glob" ? "🔍 Buscando"
-                    : payload.name === "WebFetch" || payload.name === "WebSearch" ? "🌐 Buscando en web"
-                    : payload.name === "Agent" ? "🤖 Delegando a subagente"
-                    : "🔧 " + payload.name;
+                if (!payload?.name) return;
+                const headers = { "Content-Type": "application/json", ...(secret ? { "X-MC-Secret": secret } : {}) };
+                const baseAgent = agentId || "sancho";
+                const toolName = payload.name;
+                const input = payload.input || {};
+                // Slugs del equipo SanchoCMO — sólo emitimos el mensaje formal role=handoff
+                // cuando la delegación va a uno de estos agentes (no para Explore/Plan/general-purpose).
+                const TEAM_SLUGS = new Set([
+                  "sancho", "cervantes", "hamete", "dulcinea",
+                  "rocinante", "maese-pedro", "mambrino", "merlin",
+                  "sanson", "escudero",
+                ]);
+
+                // Map tool name → label (legacy status text) + structured event
+                const label = toolName === "Read" ? "📄 Leyendo"
+                  : toolName === "Write" ? "✍️ Escribiendo"
+                  : toolName === "Edit" ? "✏️ Editando"
+                  : toolName === "Bash" ? "⚡ Ejecutando"
+                  : toolName === "Grep" || toolName === "Glob" ? "🔍 Buscando"
+                  : toolName === "WebFetch" || toolName === "WebSearch" ? "🌐 Buscando en web"
+                  : toolName === "Agent" ? "🤖 Delegando a subagente"
+                  : "🔧 " + toolName;
+
+                let kind = "tool_call";
+                if (toolName === "Read") kind = "read";
+                else if (toolName === "Write" || toolName === "Edit") kind = "file_write";
+                else if (toolName === "Grep" || toolName === "Glob") kind = "search";
+                else if (toolName === "WebFetch" || toolName === "WebSearch") kind = "search";
+                else if (toolName === "Agent") kind = "agent_handoff";
+
+                const target = input.file_path
+                  || input.path
+                  || input.url
+                  || input.pattern
+                  || input.query
+                  || input.subagent_type
+                  || (typeof input.command === "string" ? input.command.slice(0, 80) : undefined)
+                  || undefined;
+
+                // Legacy status (ephemeral)
+                fetch(callbackUrl, {
+                  method: "POST",
+                  headers,
+                  body: JSON.stringify({ slug, threadId, role: "status", text: label + "...", agent: baseAgent }),
+                }).catch(() => {});
+
+                // Structured progress event (accumulated + sealed)
+                fetch(callbackUrl, {
+                  method: "POST",
+                  headers,
+                  body: JSON.stringify({
+                    slug, threadId, role: "progress", agent: baseAgent,
+                    event: { kind, label, target },
+                  }),
+                }).catch(() => {});
+
+                // Formal handoff message: solo cuando se delega a un agente del equipo SanchoCMO
+                // (no para subagentes genéricos de Claude SDK como Explore/Plan/general-purpose).
+                if (toolName === "Agent" && typeof input.subagent_type === "string" && TEAM_SLUGS.has(input.subagent_type)) {
+                  const reason = typeof input.description === "string" && input.description.length
+                    ? input.description
+                    : (typeof input.prompt === "string" ? input.prompt.slice(0, 200) : "");
                   fetch(callbackUrl, {
                     method: "POST",
-                    headers: { "Content-Type": "application/json", ...(secret ? { "X-MC-Secret": secret } : {}) },
-                    body: JSON.stringify({ slug, threadId, role: "status", text: label + "...", agent: agentId || "sancho" }),
+                    headers,
+                    body: JSON.stringify({
+                      slug, threadId, role: "handoff", agent: baseAgent,
+                      text: reason,
+                      from_agent: baseAgent,
+                      to_agent: input.subagent_type,
+                    }),
                   }).catch(() => {});
                 }
               },
               onCompactionStart: async () => {
+                const headers = { "Content-Type": "application/json", ...(secret ? { "X-MC-Secret": secret } : {}) };
+                const baseAgent = agentId || "sancho";
                 fetch(callbackUrl, {
                   method: "POST",
-                  headers: { "Content-Type": "application/json", ...(secret ? { "X-MC-Secret": secret } : {}) },
-                  body: JSON.stringify({ slug, threadId, role: "status", text: "📦 Compactando contexto...", agent: agentId || "sancho" }),
+                  headers,
+                  body: JSON.stringify({ slug, threadId, role: "status", text: "📦 Compactando contexto...", agent: baseAgent }),
+                }).catch(() => {});
+                fetch(callbackUrl, {
+                  method: "POST",
+                  headers,
+                  body: JSON.stringify({
+                    slug, threadId, role: "progress", agent: baseAgent,
+                    event: { kind: "tool_call", label: "📦 Compactando contexto" },
+                  }),
                 }).catch(() => {});
               },
             },
@@ -388,7 +391,6 @@ export default defineChannelPluginEntry({
           channel: "mc-chat",
           version: "0.2.0",
           ts: new Date().toISOString(),
-          discordRelay: { ...relayStatus },
         }));
         return true;
       },
@@ -438,37 +440,28 @@ export default defineChannelPluginEntry({
       },
     });
 
-    // Outbound hook: watch Discord messages and relay to MC if thread is linked.
-    // Requires api.registerOutboundHook (openclaw >= 2026.3.22). Older runtimes
-    // silently lose Discord→MC traffic, so surface the failure loudly here and
-    // expose the status at GET /mc-chat/health (field: discordRelay).
+    // Outbound hook: watch Discord messages and relay to MC if thread is linked
+    // NOTE: registerOutboundHook may not exist in all SDK versions — guard it
     if (typeof api.registerOutboundHook !== "function") {
-      relayStatus.enabled = false;
-      relayStatus.reason = "sdk-missing-registerOutboundHook";
-      logger.error(
-        "[mc-chat] Discord↔MC relay DISABLED: api.registerOutboundHook missing " +
-        "(requires openclaw >= 2026.3.22). Messages from Discord threads linked to " +
-        "MC will not reach the dashboard. Upgrade the gateway or expect silent drops. " +
-        "Status exposed at /mc-chat/health (field: discordRelay)."
-      );
+      logger.warn("[mc-chat] api.registerOutboundHook not available in this SDK version — Discord↔MC relay disabled");
     } else {
-    relayStatus.enabled = true;
-    relayStatus.reason = "registered";
     api.registerOutboundHook({
       provider: "discord",
       handler: async (msgCtx) => {
         // Only process messages from threads
         if (!msgCtx.ThreadId) return;
         const discordThreadId = msgCtx.ThreadId;
-        // Check if this Discord thread is linked to an MC thread
+        // Check if this Discord thread is linked to an MC thread.
+        // Routes migrated to Next.js (/api/chat/*) — single writer for chats.
         const mcUrl = channelCfg?.mcServerUrl || "http://localhost:3000";
         let mcThreadId = null;
         try {
-          // Search all MC threads for this discordThreadId
           const searchRes = await fetch(`${mcUrl}/api/chat/find-by-discord/${encodeURIComponent(discordThreadId)}`);
-          const searchData = await searchRes.json();
-          if (searchData.ok && searchData.threadId) {
-            mcThreadId = searchData.threadId;
+          if (searchRes.ok) {
+            const searchData = await searchRes.json();
+            if (searchData.ok && searchData.threadId) {
+              mcThreadId = searchData.threadId;
+            }
           }
         } catch {}
         if (!mcThreadId) return; // Not linked, ignore

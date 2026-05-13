@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- Add `--emit=html` for shareable, print-friendly HTML research briefs.
+
+## [3.1.1] - 2026-04-24
+
+### Fixed
+
+- **Codex plugin layout.** Move the canonical runtime payload under `skills/last30days/` and update Codex/Claude plugin metadata and tests for the relocated engine path.
+- **Claude Code cache resolution.** Resolve Claude plugin installs to `skills/last30days/scripts/last30days.py` after the plugin-layout restructure.
+
 ## [3.1.0] - 2026-04-22
 
 Consolidates the 3.0.10 to 3.0.14 dev cycle (commenter handles, `--competitors`, per-entity Step 0.55, vs-mode N passes, comparison title attribution) and republishes the OpenClaw bundle, which had been frozen on ClawHub at `3.0.0-open` since April 8.
@@ -78,6 +91,7 @@ Individual changelog entries for 3.0.10 through 3.0.14 below document the increm
 ### Fixed
 
 - **TikTok author preference.** `_fetch_post_comments` in `scripts/lib/tiktok.py` preferred `user.nickname` over `user.unique_id`, so the engine captured display names ("Moosa Noormahomed") instead of @handles ("moosanoormahomed"). Flipped to prefer `unique_id`. Nickname still wins as a fallback when `unique_id` is missing. Display names can contain emoji, spaces, and non-Latin characters that do not round-trip to a profile URL; the @handle is the stable identifier.
+- **Single plugin payload layout.** The canonical runtime moved to `skills/last30days/` for both Claude Code and Codex plugin loading. Root-level `SKILL.md`, `scripts/`, `agents/`, and `assets/` are no longer maintained as duplicate copies.
 
 ### Behavior fallback
 

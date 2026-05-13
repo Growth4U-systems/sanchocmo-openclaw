@@ -5,7 +5,7 @@ import { loadAllProjects } from "@/lib/data/projects";
 import { loadIdeas } from "@/lib/data/ideas";
 import { readJSON } from "@/lib/data/json-io";
 import { foundationStateFile } from "@/lib/data/paths";
-import type { FoundationState } from "@/types";
+import type { BrandBrainState } from "@/types";
 
 /**
  * GET /api/dashboard/stats?slug=X
@@ -61,7 +61,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
 function getClientStats(slug: string) {
   // Foundation
-  const state = readJSON<FoundationState>(foundationStateFile(slug), {
+  const state = readJSON<BrandBrainState>(foundationStateFile(slug), {
     version: "3.0",
     started_at: "",
     updated_at: "",

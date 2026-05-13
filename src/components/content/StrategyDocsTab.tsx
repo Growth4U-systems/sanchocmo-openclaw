@@ -52,8 +52,8 @@ export function StrategyDocsTab({ slug, data, openChat }: Props) {
   );
 
   const handleViewDoc = useCallback((docPath: string) => {
-    // Use Foundation doc viewer which handles brand file rendering
-    window.location.href = `/dashboard/${slug}/foundation?doc=${encodeURIComponent(docPath)}`;
+    // Use Brand Brain doc viewer which handles brand file rendering
+    window.location.href = `/dashboard/${slug}/brand-brain?doc=${encodeURIComponent(docPath)}`;
   }, [slug]);
 
   const handleCreateProject = useCallback(

@@ -7,7 +7,7 @@ import Link from "next/link";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { useGlobalStats } from "@/hooks/useDashboardStats";
 import { useClients } from "@/hooks/useClients";
-import { useFoundation } from "@/hooks/useFoundation";
+import { useBrandBrain } from "@/hooks/useBrandBrain";
 import { StatCard } from "@/components/shared/stat-card";
 import { ComicCard } from "@/components/shared/comic-card";
 import { ProgressBar } from "@/components/shared/progress-bar";
@@ -197,7 +197,7 @@ function ClientCard({
   emoji: string;
   phase: number;
 }) {
-  const { data: foundation } = useFoundation(slug);
+  const { data: foundation } = useBrandBrain(slug);
 
   // Mini foundation stats
   let fApproved = 0;
@@ -266,6 +266,113 @@ function GlobalActivityFeed() {
   });
 
   return <ActivityFeed items={data || []} limit={10} />;
+}
+
+// ============================================================
+// Client Dashboard V2 — 3-column layout with activity bar
+// Faithful replica of legacy view-client with v2-grid
+// ============================================================
+
+function ClientDashboardV2({ slug }: { slug: string }) {
+  const t = useTranslations("dashboard");
+  const [activeTab, setActiveTab] = useState(0);
+  const [docPath, setDocPath] = useState<string | null>(null);
+
+  const tabs = [
+    { emoji: "🏢", label: t("brandSnapshot") },
+    { emoji: "📈", label: t("metricas") },
+    { emoji: "🎯", label: t("nextSteps") },
+  ];
+
+  return (
+    <div className="flex flex-col h-screen">
+      {/* Activity Bar (collapsible terminal) */}
+      <ActivityBar slug={slug} />
+
+      {/* Mobile tab bar — visible < lg */}
+      <div className="flex lg:hidden bg-card border-b-2 border-ink p-1">
+        {tabs.map((tab, i) => (
+          <button
+            key={tab.label}
+            type="button"
+            onClick={() => setActiveTab(i)}
+            className={cn(
+              "flex-1 px-3 py-2 rounded text-xs font-semibold transition-colors text-center",
+              activeTab === i ? "bg-rust text-white" : "hover:bg-muted"
+            )}
+          >
+            {tab.emoji} {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {/* 3-Column Grid — desktop: all visible, mobile: tab-switched */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 flex-1 min-h-0 overflow-hidden">
+        {/* Col 1: Brand + Foundation */}
+        <div
+          className={cn(
+            "lg:border-r border-border bg-white dark:bg-card flex flex-col min-h-0",
+            activeTab !== 0 && "hidden lg:flex"
+          )}
+        >
+          {/* Column header */}
+          <div className="flex items-center justify-between px-5 py-3 border-b border-border bg-muted/20">
+            <span className="text-xs font-bold">{"🏢"} {t("brandSnapshot")}</span>
+            <Link
+              href={`/dashboard/${slug}/brand-brain`}
+              className="text-[10px] font-semibold text-rust hover:underline"
+            >
+              {t("brandSnapshot")} {"→"}
+            </Link>
+          </div>
+          {/* Column body */}
+          <div className="px-5 py-3 overflow-y-auto flex-1">
+            <BrandColumn slug={slug} onOpenDoc={setDocPath} />
+          </div>
+        </div>
+
+        {/* Col 2: Metrics */}
+        <div
+          className={cn(
+            "lg:border-r border-border bg-white dark:bg-card flex flex-col min-h-0",
+            activeTab !== 1 && "hidden lg:flex"
+          )}
+        >
+          <div className="flex items-center justify-between px-5 py-3 border-b border-border bg-muted/20">
+            <span className="text-xs font-bold">{"📈"} {t("metricas")}</span>
+            <Link
+              href={`/dashboard/${slug}/metrics`}
+              className="text-[10px] font-semibold text-rust hover:underline"
+            >
+              {t("title")} {"→"}
+            </Link>
+          </div>
+          <div className="px-5 py-3 overflow-y-auto flex-1">
+            <MetricsColumn slug={slug} />
+          </div>
+        </div>
+
+        {/* Col 3: Next Steps */}
+        <div className={cn("bg-white dark:bg-card flex flex-col min-h-0", activeTab !== 2 && "hidden lg:flex")}>
+          <div className="flex items-center justify-between px-5 py-3 border-b border-border bg-muted/20">
+            <span className="text-xs font-bold">{"🎯"} {t("nextSteps")}</span>
+            <Link
+              href={`/dashboard/${slug}/projects`}
+              className="text-[10px] font-semibold text-rust hover:underline"
+            >
+              {t("nextSteps")} {"→"}
+            </Link>
+          </div>
+          <div className="px-5 py-3 overflow-y-auto flex-1">
+            <NextStepsColumn slug={slug} onOpenDoc={setDocPath} />
+          </div>
+        </div>
+      </div>
+
+      {/* Doc slide-over */}
+      <DocSlideOver slug={slug} docPath={docPath} onClose={() => setDocPath(null)} />
+    </div>
+  );
 }
 
 // ============================================================

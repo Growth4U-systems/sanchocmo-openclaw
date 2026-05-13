@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { withErrorHandler } from "@/lib/api-middleware";
-import { getThread, getStatusEntry } from "@/lib/data/mc-chat";
+import { getThread, getStatusEntry, getPendingProgress } from "@/lib/data/mc-chat";
 
 /**
  * GET /api/chat/thread/:threadId
@@ -16,11 +16,30 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   const thread = getThread(decodeURIComponent(threadId));
   const statusEntry = getStatusEntry(decodeURIComponent(threadId));
 
+  // Suppress status that's been superseded by a newer non-user message — protects
+  // against a race where the webhook receives the bot reply between client polls
+  // and clearStatus has fired but addMessage hasn't been read yet.
+  let liveStatus = statusEntry;
+  if (statusEntry && thread?.messages?.length) {
+    let lastNonUserTs = 0;
+    for (let i = thread.messages.length - 1; i >= 0; i--) {
+      const m = thread.messages[i];
+      if (m.role !== "user" && m.role !== "system" && typeof m.ts === "number") {
+        lastNonUserTs = m.ts;
+        break;
+      }
+    }
+    if (lastNonUserTs >= statusEntry.ts) liveStatus = null;
+  }
+
+  const pendingProgress = getPendingProgress(decodeURIComponent(threadId));
+
   res.status(200).json({
     ok: true,
     threadId,
     messages: thread?.messages || [],
-    status: statusEntry,
+    status: liveStatus,
+    pendingProgress,
   });
 }
 

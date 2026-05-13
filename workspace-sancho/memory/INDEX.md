@@ -15,17 +15,17 @@ memory/
 ```
 
 ## Daily Notes (memory/daily/)
-Active: 28 files
+Active: 10 files
 
-- 2026-04-04.md
-- 2026-04-03.md
-- 2026-04-01.md
-- 2026-03-31.md
-- 2026-03-30.md
-- ... and 23 more
+- 2026-04-27.md
+- 2026-04-26.md
+- 2026-04-25.md
+- 2026-04-23.md
+- 2026-04-22.md
+- ... and 5 more
 
 ## Topic Notes (memory/topics/)
-Total: 27 files
+Total: 18 files
 
 - alarife.md
 - 2026-03-22-recent-learnings.md
@@ -45,15 +45,6 @@ Total: 27 files
 - 2026-02-28-brand-voice.md
 - 2026-02-28-ad-emails.md
 - 2026-02-27-ope-canvas.md
-- 2026-02-25-session-intro.md
-- 2026-02-25-sancho-intro.md
-- 2026-02-25-new-session.md
-- 2026-02-25-identity-binding.md
-- 2026-02-25-cervantes-split.md
-- 2026-02-25-cervantes-setup.md
-- 2026-02-25-cervantes-binding.md
-- 2026-02-24-task-kanban.md
-- 2026-02-24-tailscale-debug.md
 
 ## Client Memory (memory/clients/)
 - growth4u.md
@@ -76,7 +67,7 @@ Total: 27 files
 - onboarding-state.json
 
 ## Archive (memory/archive/)
-Total: 7 files
+Total: 34 files
 
 
-*Last updated: 2026-04-05 22:03*
+*Last updated: 2026-05-03 22:04*

@@ -1,0 +1,39 @@
+{
+  "date": "2026-05-08",
+  "runAt": "2026-05-08T08:02:00+02:00",
+  "plan": "Claude Max $200/month (flat rate)",
+  "period": "2026-05",
+  "daysElapsed": 8,
+  "global": {
+    "totalTheoreticalUsd": 413.87,
+    "totalTheoreticalEur": 380.76,
+    "projectionMonthly": 1603.75,
+    "avgDailyUsd": 51.73,
+    "avgDailyTurns": 310,
+    "todayTurns": 113,
+    "todayUsd": 10.66,
+    "anomaly": false
+  },
+  "clients": {
+    "hospital-capilar": {
+      "totalTurns": 17,
+      "avgDailyTurns": 2.4,
+      "todayTurns": 0,
+      "anomaly": false
+    },
+    "paymatico": {
+      "totalTurns": 6,
+      "avgDailyTurns": 0.9,
+      "todayTurns": 0,
+      "anomaly": false
+    },
+    "growth4u": {
+      "totalTurns": 27,
+      "avgDailyTurns": 3.9,
+      "todayTurns": 0,
+      "anomaly": false
+    }
+  },
+  "notes": "Day 8 of May. All client usage within normal ranges. Most usage is system/unclassified (crons, heartbeats, internal). Theoretical costs irrelevant — flat rate plan.",
+  "result": "HEARTBEAT_OK"
+}

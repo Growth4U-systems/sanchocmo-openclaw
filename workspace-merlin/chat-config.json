@@ -1,0 +1,23 @@
+{
+  "agent": "merlin",
+  "version": 1,
+  "note": "Config del chat para Merlín. MC consulta esto cuando enruta tasks type=analysis o tareas con triggers de attribution, forecast, KPI, cohort, retention, funnel, CRM. Catálogo de skills aún en construcción.",
+  "tasks": {
+    "_defaults": {
+      "skill": "kpi-dashboard"
+    },
+    "_byType": {
+      "analysis": {
+        "skill": "kpi-dashboard",
+        "skills": ["attribution-analysis", "cohort-analysis", "kpi-dashboard", "forecast", "retention-analysis", "crm-pulse", "funnel-analysis"]
+      }
+    },
+    "_byChannel": {
+      "learning": { "skill": "crm-pulse" }
+    },
+    "_byTool": {
+      "drizzle": { "skill": "kpi-dashboard" },
+      "metabase": { "skill": "kpi-dashboard" }
+    }
+  }
+}

@@ -3,13 +3,13 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { useFoundation } from "@/hooks/useFoundation";
+import { useBrandBrain } from "@/hooks/useBrandBrain";
 import { useProjects } from "@/hooks/useProjects";
 import { useOpenChat } from "@/hooks/useChat";
 import { buildPillarThread, buildTaskThread, buildProjectThread, findTaskThreadForDoc } from "@/lib/chat-openers";
 import { ProgressBar } from "@/components/shared/progress-bar";
 import { cn } from "@/lib/utils";
-import type { FoundationState, Section } from "@/types";
+import type { BrandBrainState, Section } from "@/types";
 
 // ============================================================
 // Next Steps Column — Faithful port of renderV2NextSteps()
@@ -37,7 +37,7 @@ function ffDonePillars(sections: Record<string, Section>): Set<string> {
   return done;
 }
 
-function calcFoundationStats(foundation: FoundationState | undefined) {
+function calcFoundationStats(foundation: BrandBrainState | undefined) {
   let approved = 0;
   let total = 0;
   if (!foundation?.sections) return { approved, total, pct: 0 };
@@ -274,7 +274,7 @@ interface NextStepsColumnProps {
 }
 
 export function NextStepsColumn({ slug, onOpenDoc }: NextStepsColumnProps) {
-  const { data: foundation } = useFoundation(slug);
+  const { data: foundation } = useBrandBrain(slug);
   const { data: projectsData } = useProjects(slug);
   const openChat = useOpenChat();
 
@@ -401,7 +401,7 @@ export function NextStepsColumn({ slug, onOpenDoc }: NextStepsColumnProps) {
       {/* Foundation warning */}
       {foundation && fStats.pct < 100 && (
         <Link
-          href={`/dashboard/${slug}/foundation`}
+          href={`/dashboard/${slug}/brand-brain`}
           className={cn(
             "block mb-3 px-3 py-2 rounded-lg text-[11px] cursor-pointer transition-colors",
             fStats.pct >= 40

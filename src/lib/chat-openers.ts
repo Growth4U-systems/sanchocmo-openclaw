@@ -88,6 +88,21 @@ export interface ThreadConfig {
   threadState: "create" | "continue" | undefined;
   /** Optional message to send immediately when the thread opens. */
   initialMessage?: string;
+  /**
+   * When set, forces the gateway to dispatch this thread to a specific agent
+   * (e.g. `"maese-pedro"` for Media Creation skills) instead of falling back
+   * to the default agent (Sancho). The gateway's mc-chat plugin must honor
+   * this field — see send.ts where it's forwarded.
+   */
+  agent?: string;
+  /**
+   * Shape of the doc the thread is associated with. Defaults to `"file"`
+   * (single .md / .html / .txt). For media templates the doc is a folder
+   * containing meta.json + slide-*.html — set to `"template"` so the chat
+   * sidebar renders a multi-slide preview instead of trying to fetch the
+   * folder as a markdown file.
+   */
+  docKind?: "file" | "template";
 }
 
 /** Agent display config for message rendering */
@@ -96,6 +111,7 @@ export const MC_CHAT_AGENTS: Record<string, { emoji: string; label: string; colo
   escudero: { emoji: "⚔️", label: "Escudero", color: "#22A06B" },
   rocinante: { emoji: "🐴", label: "Rocinante", color: "#3B9EBF" },
   cervantes: { emoji: "✒️", label: "Cervantes", color: "#9B59B6" },
+  "maese-pedro": { emoji: "🎭", label: "Maese Pedro", color: "#D4548F" },
 };
 
 /**
@@ -197,6 +213,13 @@ export function findTaskThreadForDoc(
   return null;
 }
 
+export interface TaskIndexEntry {
+  task: Record<string, unknown>;
+  projectId: string;
+  /** When present, the entry is for a ContentTask nested under `task` (which is the parent type=content task). */
+  contentTask?: Record<string, unknown>;
+}
+
 /**
  * buildTaskIndex — Create a lookup map from threadId patterns → task+project.
  *
@@ -205,20 +228,21 @@ export function findTaskThreadForDoc(
  *
  * Keys in the map:
  *   - `task:{taskId.lower}` and `task-{taskId.lower}` — for task threads
+ *   - `content:{ctId.lower}` and `content-{ctId.lower}` — for ContentTask threads
  *   - `{pillar.lower}` — for pillar threads (e.g. "market-analysis")
  *   - `project:{projectId.lower}` and `project-{projectId.lower}` — for project threads
  */
 export function buildTaskIndex(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   projectsData: any[] | undefined,
-): Map<string, { task: Record<string, unknown>; projectId: string }> {
-  const index = new Map<string, { task: Record<string, unknown>; projectId: string }>();
+): Map<string, TaskIndexEntry> {
+  const index = new Map<string, TaskIndexEntry>();
   if (!projectsData) return index;
 
   for (const pw of projectsData) {
     const projectId = pw.project?.id || "";
     for (const task of pw.tasks || []) {
-      const entry = { task, projectId };
+      const entry: TaskIndexEntry = { task, projectId };
       // Index by task ID (both formats)
       const id = (task.id || "").toLowerCase();
       index.set(`task:${id}`, entry);
@@ -228,6 +252,15 @@ export function buildTaskIndex(
         const pl = task.pillar.toLowerCase();
         // Only set if not already taken (first task with this pillar wins)
         if (!index.has(pl)) index.set(pl, entry);
+      }
+      // Index nested ContentTasks (only for type=content parents)
+      const cts = (task.content_tasks as Record<string, unknown>[] | undefined) || [];
+      for (const ct of cts) {
+        const ctEntry: TaskIndexEntry = { task, projectId, contentTask: ct };
+        const ctId = ((ct.id as string) || "").toLowerCase();
+        if (!ctId) continue;
+        index.set(`content:${ctId}`, ctEntry);
+        index.set(`content-${ctId}`, ctEntry);
       }
     }
   }
@@ -247,7 +280,7 @@ export function buildTaskIndex(
 export function resolveFullThreadConfig(
   slug: string,
   threadId: string,
-  taskIndex: Map<string, { task: Record<string, unknown>; projectId: string }>,
+  taskIndex: Map<string, TaskIndexEntry>,
   resolvePillarDoc?: (pillarKey: string) => string | null | undefined,
 ): ThreadConfig {
   const shortId = threadId.startsWith(slug + ":")
@@ -263,6 +296,24 @@ export function resolveFullThreadConfig(
       }
       return undefined;
     })();
+
+  // ── ContentTask entry: build via buildContentTaskThread ──────
+  if (entry?.contentTask) {
+    const { task: parentTask, projectId, contentTask: ct } = entry;
+    const docs = (ct.documents as { path: string }[] | undefined) || [];
+    return buildContentTaskThread(
+      slug,
+      parentTask.id as string,
+      ct.id as string,
+      (ct.name as string) || (ct.id as string),
+      projectId,
+      {
+        skill: ct.skill as string | undefined,
+        status: ct.status as string | undefined,
+        docPath: docs[0]?.path,
+      },
+    );
+  }
 
   // ── Task found: read ALL data from task fields ───────────────
   if (entry) {
@@ -395,6 +446,34 @@ export function buildTaskThread(
     linkedTo: `projects/${projectId}/tasks/${taskId}`,
     docPath: `projects/${projectId}/tasks.json`,
     threadState: opts.taskStatus === "ready" || opts.taskStatus === "pending" ? "create" : "continue",
+  };
+}
+
+/** Build thread config for a ContentTask (sub-task under a parent type=content task). */
+export function buildContentTaskThread(
+  slug: string,
+  parentTaskId: string,
+  contentTaskId: string,
+  contentTaskName: string,
+  projectId: string,
+  opts: {
+    skill?: string;
+    status?: string;
+    /** First/primary document path for the doc pill */
+    docPath?: string;
+  }
+): ThreadConfig {
+  const threadId = `${slug}:content:${contentTaskId.toLowerCase()}`;
+  const skill = opts.skill || "escudero-content";
+
+  return {
+    threadId,
+    threadName: contentTaskName,
+    skill,
+    skills: [skill],
+    linkedTo: `projects/${projectId}/tasks/${parentTaskId}/content/${contentTaskId}`,
+    docPath: opts.docPath || `projects/${projectId}/tasks.json`,
+    threadState: opts.status === "Approved" || opts.status === "New" ? "create" : "continue",
   };
 }
 
@@ -569,7 +648,7 @@ export function buildPillarThread(
     threadName: pillarKey.replace(/-/g, " "),
     skill: resolved.skill,
     skills: resolved.skills,
-    linkedTo: `foundation/${pillarKey}`,
+    linkedTo: `brand-brain/${pillarKey}`,
     docPath: docPath || pillarCfg?.docPath || null,
     threadState: "continue",
   };
@@ -640,6 +719,82 @@ export function buildTrustEngineModuleThread(
     docPath: `brand/${slug}/trust-engine/${moduleFile}`,
     threadState: "continue",
     initialMessage: moduleContexts[moduleId] || `Estoy revisando ${moduleName} del Trust Engine para ${slug}. Analiza los datos y dime las conclusiones clave.`,
+  };
+}
+
+// ============================================================
+// Media Creation — chats con Maese Pedro
+// ============================================================
+
+/** Build thread config for Maese Pedro on a specific brand asset (file or directory). */
+export function buildMediaAssetThread(
+  slug: string,
+  assetRelativePath: string,
+  assetName: string,
+  kind: "template" | "mockup" | "logo" | "style-reference" | "export" | "design-md" | "tokens" | "preview" | "misc",
+): ThreadConfig {
+  // Sanitize for thread id
+  const safe = assetRelativePath.toLowerCase().replace(/[^a-z0-9-]+/g, "-").replace(/^-|-$/g, "");
+  const threadId = `${slug}:asset:${safe}`;
+  const skill = kind === "design-md" || kind === "tokens" ? "design-system" : "od-refine";
+  return {
+    threadId,
+    threadName: `🎨 ${assetName}`,
+    skill,
+    skills: [skill, "od-generate", "od-export"],
+    linkedTo: `media-creation/asset/${assetRelativePath}`,
+    docPath: `brand/${slug}/${assetRelativePath}`,
+    docKind: kind === "template" ? "template" : "file",
+    threadState: "continue",
+    agent: "maese-pedro",
+    initialMessage: `Estoy mirando el asset "${assetName}" (\`${assetRelativePath}\`, kind=${kind}). Dame un resumen y las opciones de refinamiento.`,
+  };
+}
+
+/** Build thread config for chatting with Maese Pedro about Visual Identity (whole brand DESIGN.md). */
+export function buildVisualIdentityChatThread(
+  slug: string,
+  block?: string,
+): ThreadConfig {
+  const blockSafe = block ? block.toLowerCase().replace(/[^a-z0-9-]+/g, "-") : "all";
+  const threadId = `${slug}:visual-identity:${blockSafe}`;
+  return {
+    threadId,
+    threadName: block ? `🎨 Visual Identity — ${block}` : "🎨 Visual Identity",
+    skill: "design-system",
+    skills: ["design-system", "od-generate"],
+    linkedTo: `media-creation/visual-identity/${blockSafe}`,
+    docPath: `brand/${slug}/brand-book/visual-identity/DESIGN.md`,
+    threadState: "continue",
+    agent: "maese-pedro",
+    initialMessage: block
+      ? `Quiero ajustar la sección "${block}" del Visual Identity. ¿Qué opciones tengo?`
+      : "Hablemos del Visual Identity del brand. ¿Por dónde empezamos?",
+  };
+}
+
+/** Build thread config for "use OD upstream skill on this brand" — generation request. */
+export function buildOdGenerateThread(
+  slug: string,
+  upstreamSkillId: string,
+  upstreamSkillName: string,
+  designSystemId?: string,
+): ThreadConfig {
+  const safe = upstreamSkillId.toLowerCase().replace(/[^a-z0-9-:]+/g, "-");
+  const dsTag = designSystemId ? `:ds-${designSystemId}` : "";
+  const threadId = `${slug}:od-generate:${safe}${dsTag}:${Date.now()}`;
+  return {
+    threadId,
+    threadName: `🎨 ${upstreamSkillName}${designSystemId ? ` × ${designSystemId}` : ""}`,
+    skill: "od-generate",
+    skills: ["od-generate", "od-refine", "od-export"],
+    linkedTo: `media-creation/od/${upstreamSkillId}`,
+    docPath: null,
+    threadState: "create",
+    agent: "maese-pedro",
+    initialMessage: `Genera un asset usando la skill upstream "${upstreamSkillId}"${
+      designSystemId ? ` aplicando el design system "${designSystemId}"` : " con el DESIGN.md del brand"
+    }. Pídeme los inputs que necesites antes de empezar.`,
   };
 }
 

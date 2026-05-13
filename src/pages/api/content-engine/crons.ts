@@ -1,16 +1,19 @@
 /**
- * GET/PATCH /api/content-engine/crons — Manage Content Engine cron jobs
+ * GET/PATCH/POST /api/content-engine/crons — Manage Content Engine cron jobs
  *
  * GET ?slug=X → returns all Content Engine crons for this client
  * PATCH { jobId, fields } → update job (enabled, schedule)
+ * POST  { jobId, action: "run" } → trigger one-shot manual execution (fire-and-forget)
  */
 
 import type { NextApiRequest, NextApiResponse } from "next";
 import fs from "fs";
 import path from "path";
+import { spawn } from "child_process";
 import { withErrorHandler } from "@/lib/api-middleware";
 
 const CRON_FILE = path.join(process.env.HOME || "", ".openclaw", "cron", "jobs.json");
+const EXEC_PATH = "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin";
 
 interface CronJob {
   id: string;
@@ -45,9 +48,26 @@ function humanizeCron(expr: string): string {
   return `${time} ${dayStr}`;
 }
 
-/** Get the last execution from recurring-tasks */
-function getLastExecution(slug: string, cronName: string): { date: string; status: string } | null {
-  // Map cron names to recurring-tasks folder names
+/** Read raw jobs-state.json once per request */
+let _jobsStateCache: { mtime: number; data: Record<string, { state?: { lastRunAtMs?: number; lastRunStatus?: string } }> } | null = null;
+function loadJobsState(): Record<string, { state?: { lastRunAtMs?: number; lastRunStatus?: string } }> {
+  const f = path.join(process.env.HOME || "", ".openclaw", "cron", "jobs-state.json");
+  if (!fs.existsSync(f)) return {};
+  try {
+    const stat = fs.statSync(f);
+    if (_jobsStateCache && _jobsStateCache.mtime === stat.mtimeMs) return _jobsStateCache.data;
+    const parsed = JSON.parse(fs.readFileSync(f, "utf-8"));
+    const data = parsed.jobs || {};
+    _jobsStateCache = { mtime: stat.mtimeMs, data };
+    return data;
+  } catch {
+    return {};
+  }
+}
+
+/** Get the last execution. Prefers per-day recurring-tasks JSON, falls back to jobs-state.json. */
+function getLastExecution(slug: string, cronName: string, jobId: string): { date: string; status: string } | null {
+  // 1) Try recurring-tasks (richer info: status from cron output)
   const BASE = path.join(process.env.HOME || "", ".openclaw", "workspace-sancho");
   const nameMap: Record<string, string> = {
     "News Monitor": "content-news-monitor",
@@ -58,27 +78,32 @@ function getLastExecution(slug: string, cronName: string): { date: string; statu
     "Keyword Research": "content-keyword-research",
     "POV Bank Refresh": "content-pov-bank",
   };
-
-  // Extract the base name (remove "Content: " prefix and " — {client}" suffix)
   const baseName = cronName.replace(/^Content:\s*/, "").replace(/\s*—\s*.*$/, "").trim();
   const folderName = nameMap[baseName];
-  if (!folderName) return null;
-
-  const dir = path.join(BASE, "brand", slug, "recurring-tasks", folderName);
-  if (!fs.existsSync(dir)) return null;
-
-  const files = fs.readdirSync(dir)
-    .filter((f) => f.endsWith(".json"))
-    .sort()
-    .reverse();
-  if (files.length === 0) return null;
-
-  try {
-    const data = JSON.parse(fs.readFileSync(path.join(dir, files[0]), "utf-8"));
-    return { date: data.date || files[0].replace(".json", ""), status: data.status || "ok" };
-  } catch {
-    return { date: files[0].replace(".json", ""), status: "unknown" };
+  if (folderName) {
+    const dir = path.join(BASE, "brand", slug, "recurring-tasks", folderName);
+    if (fs.existsSync(dir)) {
+      const files = fs.readdirSync(dir).filter((f) => f.endsWith(".json")).sort().reverse();
+      if (files.length > 0) {
+        try {
+          const data = JSON.parse(fs.readFileSync(path.join(dir, files[0]), "utf-8"));
+          return { date: data.date || files[0].replace(".json", ""), status: data.status || "ok" };
+        } catch {
+          return { date: files[0].replace(".json", ""), status: "unknown" };
+        }
+      }
+    }
   }
+
+  // 2) Fallback to runtime jobs-state.json (always written by the cron runner)
+  const state = loadJobsState()[jobId];
+  if (state?.state?.lastRunAtMs) {
+    return {
+      date: new Date(state.state.lastRunAtMs).toISOString(),
+      status: state.state.lastRunStatus || "unknown",
+    };
+  }
+  return null;
 }
 
 /** Short description for each cron type */
@@ -117,7 +142,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
           scheduleHuman: humanizeCron(j.schedule.expr),
           timezone: j.schedule.tz,
           model: j.payload?.model || "unknown",
-          lastExecution: getLastExecution(slug, j.name),
+          lastExecution: getLastExecution(slug, j.name, j.id),
           promptPreview: (j.payload?.message || "").slice(0, 200) + "...",
           promptFull: j.payload?.message || "",
         };
@@ -152,6 +177,38 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
     saveJobs(data);
     return res.status(200).json({ ok: true, job: { id: job.id, name: job.name, enabled: job.enabled, schedule: job.schedule.expr } });
+  }
+
+  if (req.method === "POST") {
+    const { jobId, action } = req.body || {};
+    if (action !== "run") return res.status(400).json({ error: "Unknown action: " + action });
+    if (!jobId) return res.status(400).json({ error: "Missing jobId" });
+
+    // Verify job exists
+    const data = loadJobs();
+    const job = data.jobs.find((j) => j.id === jobId);
+    if (!job) return res.status(404).json({ error: "Job not found" });
+
+    // Fire-and-forget: spawn `openclaw cron run <id>` detached.
+    // The job runs via the Gateway and writes results to cron/runs/<id>.jsonl.
+    try {
+      const child = spawn("openclaw", ["cron", "run", jobId], {
+        detached: true,
+        stdio: "ignore",
+        env: { ...process.env, PATH: EXEC_PATH },
+      });
+      child.unref();
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      return res.status(500).json({ error: "Failed to spawn cron run: " + msg });
+    }
+
+    return res.status(202).json({
+      ok: true,
+      message: "Triggered manual run",
+      jobId,
+      jobName: job.name,
+    });
   }
 
   res.status(405).json({ error: "Method not allowed" });
