@@ -76,6 +76,7 @@ function findPillarInfo(
 
 export function DocSlideOver({ slug, docPath, onClose }: DocSlideOverProps) {
   const [content, setContent] = useState<string | null>(null);
+  const [lastModified, setLastModified] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
@@ -95,7 +96,7 @@ export function DocSlideOver({ slug, docPath, onClose }: DocSlideOverProps) {
 
     fetch(`/api/docs/${docPath}`)
       .then((res) => { if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.json(); })
-      .then((data) => { if (data.ok && data.content) setContent(data.content); else setError(data.error || "Not found"); })
+      .then((data) => { if (data.ok && data.content) { setContent(data.content); setLastModified(data.lastModified || null); } else setError(data.error || "Not found"); })
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
   }, [docPath]);
@@ -266,15 +267,69 @@ export function DocSlideOver({ slug, docPath, onClose }: DocSlideOverProps) {
               {shareCopied ? "✓ Copiado" : "🔗 Compartir"}
             </button>
 
+            {/* Task link — find the task that owns this doc by searching projectsData directly */}
+            {(() => {
+              if (!docPath || !projectsData) return null;
+              const norm = docPath.replace(/^brand\/[^/]+\//, "");
+              const withBrand = docPath.startsWith("brand/") ? docPath : `brand/${slug}/${docPath}`;
+              for (const pw of projectsData) {
+                for (const task of pw.tasks) {
+                  const df = task.deliverable_file;
+                  const dfStr = typeof df === "string" ? df : Array.isArray(df) ? df[0] : null;
+                  if (!dfStr) continue;
+                  if (dfStr === docPath || dfStr === norm || dfStr === withBrand) {
+                    return (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          onClose();
+                          router.push(`/dashboard/${slug}/projects/${pw.project.id}/tasks/${task.id}`);
+                        }}
+                        className={btnClass}
+                        title={`Ir a tarea ${task.id}`}
+                      >
+                        📋 Tarea
+                      </button>
+                    );
+                  }
+                  // Check attachments too
+                  if (task.attachments) {
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    const hit = (task.attachments as any[]).some((a: {path?: string}) =>
+                      a?.path === docPath || a?.path === norm || a?.path === withBrand
+                    );
+                    if (hit) {
+                      return (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            onClose();
+                            router.push(`/dashboard/${slug}/projects/${pw.project.id}/tasks/${task.id}`);
+                          }}
+                          className={btnClass}
+                          title={`Ir a tarea ${task.id}`}
+                        >
+                          📋 Tarea
+                        </button>
+                      );
+                    }
+                  }
+                }
+              }
+              return null;
+            })()}
+
             <button type="button" onClick={handleOpenFull} className={btnClass} title="Abrir en Documents">
               ⤢ Abrir
             </button>
           </div>
         </div>
 
-        {/* Body — viewer or editor */}
+        {/* Body — viewer or editor.
+            Key forces clean remount when docPath changes, preventing
+            Toast UI editor DOM desync (removeChild crash). */}
         {editing && content !== null ? (
-          <div className="flex-1 min-h-0">
+          <div className="flex-1 min-h-0" key={`editor-${docPath}`}>
             <MarkdownEditor
               initialContent={content}
               onSave={handleSave}
@@ -312,8 +367,13 @@ export function DocSlideOver({ slug, docPath, onClose }: DocSlideOverProps) {
 
         {/* Footer */}
         {docPath && !editing && (
-          <div className="flex items-center px-4 py-2 border-t border-[#E5E2DC] dark:border-[#313244] bg-[#FAFAF8] dark:bg-[#181825] text-[10px] text-muted-foreground shrink-0">
+          <div className="flex items-center justify-between px-4 py-2 border-t border-[#E5E2DC] dark:border-[#313244] bg-[#FAFAF8] dark:bg-[#181825] text-[10px] text-muted-foreground shrink-0">
             <span className="truncate">{docPath}</span>
+            {lastModified && (
+              <span className="flex-shrink-0 ml-3">
+                Editado: {new Date(lastModified).toLocaleDateString("es-ES", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+              </span>
+            )}
           </div>
         )}
       </div>

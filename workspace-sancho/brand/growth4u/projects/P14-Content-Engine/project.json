@@ -1,0 +1,21 @@
+{
+  "id": "P14",
+  "name": "Content Engine",
+  "description": "Content Engine Setup — Proceso 1: Strategy + Pillars + Configs. Se ejecuta 1 vez. La produccion continua (Proceso 2) vive en proyectos semanales P-Content-Semana-NN.",
+  "approach": "4 procesos independientes: Setup (1 vez), Produccion (continuo semanal), Ad-hoc (bajo demanda), Performance (periodico). Ver _system/content-engine-architecture.md.",
+  "objective": {
+    "description": "Content Engine Setup completado: strategy + pillars + configs + crons activos",
+    "metric": "tasks_completed",
+    "baseline": 0,
+    "target": 3,
+    "unit": "tareas"
+  },
+  "origin": "strategic-plan-v2",
+  "phase": 0,
+  "strategy": "#26",
+  "category": "content",
+  "review_date": "2026-05-13",
+  "status": "active",
+  "mc_chat_thread_id": "project-p14",
+  "discord_thread_id": null
+}

@@ -7,17 +7,18 @@ import Head from "next/head";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { ComicCard } from "@/components/shared/comic-card";
-import { SlackIntegrationCard } from "@/components/admin/slack-integration-card";
 import { TabGroup } from "@/components/shared/tab-group";
 import { StatusPill } from "@/components/shared/status-pill";
 import { cn } from "@/lib/utils";
 import { useTranslations } from "next-intl";
 import { useAppStore } from "@/stores/app";
 import { AgentsPanel } from "@/components/settings/agents-panel";
+import { SkillsPanel } from "@/components/settings/skills-panel";
 import { DispatchPanel } from "@/components/settings/dispatch-panel";
 import { StrategiesPanel } from "@/components/settings/strategies-panel";
 import { RecurringPanel } from "@/components/settings/recurring-panel";
 import { ApiConnectPanel } from "@/components/settings/api-connect-panel";
+import { TaskIndexPanel } from "@/components/settings/TaskIndexPanel";
 
 interface ClientFull {
   slug: string;
@@ -30,11 +31,11 @@ interface ClientFull {
   enabledFeatures: string[];
 }
 
-const TAB_KEYS = ["apis", "agents", "dispatch", "strategies", "recurring", "clients", "admins", "preferences"] as const;
+const TAB_KEYS = ["apis", "agents", "skills", "dispatch", "strategies", "recurring", "task-index", "clients", "admins", "preferences"] as const;
 type TabKey = typeof TAB_KEYS[number];
 const TAB_ICONS: Record<string, string> = {
-  apis: "🔌", agents: "🤖", dispatch: "📡",
-  strategies: "🎯", recurring: "🔄", clients: "👥", admins: "🔐", preferences: "⚙️",
+  apis: "🔌", agents: "🤖", skills: "🧰", dispatch: "📡",
+  strategies: "🎯", recurring: "🔄", "task-index": "📋", clients: "👥", admins: "🔐", preferences: "⚙️",
 };
 
 export default function SettingsPage() {
@@ -100,9 +101,11 @@ export default function SettingsPage() {
 
       {activeTab === "apis" && <ApisPanel />}
       {activeTab === "agents" && <AgentsPanel />}
+      {activeTab === "skills" && <SkillsPanel />}
       {activeTab === "dispatch" && <DispatchPanel />}
       {activeTab === "strategies" && <StrategiesPanel />}
       {activeTab === "recurring" && <RecurringPanel />}
+      {activeTab === "task-index" && slug && <TaskIndexPanel slug={slug} />}
       {activeTab === "clients" && <ClientsPanel />}
       {activeTab === "admins" && isAdmin && <AdminsPanel currentEmail={session?.user?.email || ""} />}
       {activeTab === "preferences" && <PreferencesPanel />}
@@ -716,8 +719,6 @@ function ApisPanel() {
     <div>
       {/* Title + actions */}
       <h2 className="font-heading text-lg text-navy mb-3">🔌 APIs & Servicios</h2>
-
-      <SlackIntegrationCard slug={slug} />
 
       <div className="flex items-center gap-2 flex-wrap mb-4">
         <button

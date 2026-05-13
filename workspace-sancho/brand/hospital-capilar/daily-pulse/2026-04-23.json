@@ -1,0 +1,32 @@
+{
+  "date": "2026-04-23",
+  "generated_at": "2026-04-23T07:00:00Z",
+  "client": "hospital-capilar",
+  "guild_id": "1475635138108063746",
+  "channels_scanned": 9,
+  "channels_with_activity": 0,
+  "channels_skipped": 9,
+  "skip_details": {
+    "general": "último msg 30-mar (>24h)",
+    "brand": "último msg 28-feb (>24h)",
+    "campaigns": "último msg 24-mar (bot)",
+    "content": "último msg 28-feb (>24h)",
+    "intelligence": "último msg 22-abr (bot - meeting intel)",
+    "onboarding": "último msg 07-abr (bot)",
+    "soporte": "último msg 22-abr (bot - Cervantes obs.)",
+    "research": "último msg 01-mar (>24h)",
+    "paid-ads": "canal eliminado/inaccesible"
+  },
+  "insights": [],
+  "carry_over_alerts": [
+    {
+      "category": "infra",
+      "severity": "high",
+      "title": "Growth4U — Flujo lead→cita lleva 15+ días roto",
+      "detail": "19 leads con tag llamada-agendada en GHL pero 0 calls en calendario jueves 23. Detectado por Cron Cervantes el 22-abr. Sin resolver.",
+      "source": "soporte thread 1496421088803164263",
+      "requires_action": "Alfonso — verificar GHL manualmente"
+    }
+  ],
+  "summary": "Día sin actividad humana en ningún canal. Carry-over: alerta de Growth4U (flujo lead→cita) sigue abierta desde hace 16 días sin resolución."
+}

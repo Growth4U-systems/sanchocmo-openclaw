@@ -5,6 +5,49 @@ Scope: Features y cambios del producto SanchoCMO. Actividad operativa por client
 
 ---
 
+---
+
+## [3.1.0] — 2026-04-26
+
+### 🚀 Content Engine — Sistema de motor de contenido multi-tenant
+
+Motor de contenido completo construido sobre el sistema de tareas recurrentes de OpenClaw. 8 crons replicables por cliente, skills dedicados, y panel de control en Mission Control.
+
+#### Arquitectura y docs
+- **Content Engine system** — Motor de 8 crons (news-monitor, paa-monitor, thief-marketers, daily-pulse, insight-classifier, insight-to-content-mapper, editorial-dispatch, pov-bank-refresh). Todos multi-tenant, idénticos en estructura para cualquier cliente.
+- **content-engine-architecture.md** — Documento de arquitectura del motor completo.
+- **content-engine-cron-jobs.json** — Definiciones de los 8 cron jobs con skill, schedule, y variables por cliente.
+- **content-engine-crons.md** — Guía de replicación para nuevos clientes.
+- **content-engine-plan.md** — Plan de ejecución completo.
+
+#### Scripts y setup
+- **content-engine-setup.js** — Script reusable multi-tenant: `--list` (dashboard de readiness), `--slug X` (onboard un cliente), `--all` (todos), `--dry-run` (preview). Detecta Foundation completeness, crea estructura de carpetas (14 dirs + 2 JSON), añade 5 crons por cliente, skippa los que ya tienen CE o carecen de config. Tres clientes onboardados: hulahoop, hospital-capilar, paymatico. Growth4U ya tenía sus 5 crons activos. Total crons: 59 (era 39).
+
+#### UI — Mission Control
+- **Endpoints API nuevos**: GET/PUT `/api/content-engine/pillars`, GET/POST/PATCH `/api/content-engine/ideas` (CRUD con filtros por status), GET `/api/content-engine/signals` (research-signals con filtro por fecha).
+- **PillarsTab** — Muestra pilares con funnel_role badges (top/middle/bottom), expande pain_origin/expertise/subtopics. Empty state cuando no hay pilares definidos.
+- **IdeaQueueTab** — Cola de ideas completa con botones approve/discard inline, barra de confianza, filtro por status. Funciona sin Discord — approvals desde MC escriben al mismo idea-queue.json que usan los crons.
+- **Content Creation Page** — 5 tabs: Pillars | Strategy | Inputs | Ideas | Calendar. Tab por defecto: Pillars. Decisión de diseño: approval agnóstico de canal (MC, Discord, cualquier canal → mismo JSON).
+
+### Added
+- **5 skills nuevas**: `news-monitor` (Brave/Perplexity, búsqueda diaria por pilar), `paa-monitor` (DataForSEO, extracción semanal de People Also Ask), `thief-marketers` (monitorea competidores Y creadores de referencia, extrae el POR QUÉ del contenido top), `social-writer` (LinkedIn + X con Clarify embebido, ángulo diferente por plataforma — no reformateo), `video` (generación de prompts para video AI con references/ai-video-prompting.md).
+- **2 skills extendidas con addendums CE**: `daily-pulse` (escritura dual a legacy + nuevo path research-signals), `content-calendar-planner` (Editorial Dispatch Mode: recency-aware, stale policy 14 días, Discord dispatch con Idea Approval Loop).
+- **3 skills extendidas con addendums CE**: `insight-to-content-mapper` (Idea Generation Mode para cron: signal → angle_draft + confidence → idea-queue.json), `seo-content` + `newsletter` (Clarify Protocol addendums: preguntas por canal antes de generar).
+- **POV Bank monthly cron** (día 1, 9am) — Analiza patrones en clarify-history.json y propone refinamientos de Brand Voice.
+- **Keyword Research weekly cron** (Monday 6am, Growth4U) — BOFU-first keyword research por pilar usando keywords-seed configs. Separado del PAA Monitor (keywords = volumen/dificultad; PAA = preguntas para ideas).
+
+### Changed
+- **Insight-to-content-mapper** — Modo Idea Generation para cron (más ligero, sin full brief).
+- **Content-calendar-planner** — Editorial Dispatch Mode con recency-aware selection y stale policy.
+- **`clarify-protocol.md`** — Addendum para skills con lógica de preguntas por canal (keyword/structure/gating para blog; theme/tone/CTA para newsletter).
+- **Referencia `linkedin-formats.md`** y `x-formats.md` añadidas a social-writer.
+
+### Fixed
+- **Crons duplicados** — 2 crons que faltaban en content-engine-setup.js añadidos (POV Bank + Keyword Research). Total: 61 crons.
+- **Clarify en writers** — seo-content y newsletter ahora siguen clarify-protocol.md antes de generar.
+
+---
+
 ## [3.0.0] — 2026-04-10
 
 ### 🚀 MC Dashboard — Migración completa a Next.js

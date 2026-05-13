@@ -22,6 +22,8 @@ import { DepthBar } from "@/components/foundation/depth-bar";
 import { WarningsBanner } from "@/components/foundation/warnings-banner";
 import { FileTree } from "@/components/foundation/file-tree";
 import { EmptyState } from "@/components/shared/empty-state";
+import { TaskSlideOver } from "@/components/shared/task-slideover";
+import { DocSlideOver } from "@/components/shared/doc-slideover";
 import dynamic from "next/dynamic";
 import ReactMarkdown from "react-markdown";
 
@@ -137,8 +139,11 @@ export default function FoundationPage() {
   const { data: projectsData } = useProjects(slug || null);
   const openChat = useOpenChat();
 
+  const [taskSlideOver, setTaskSlideOver] = useState<{ projectId: string; taskId: string } | null>(null);
+  const [docSlideOverPath, setDocSlideOverPath] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
   const [docContent, setDocContent] = useState<string | null>(null);
+  const [docLastModified, setDocLastModified] = useState<string | null>(null);
   const [docLoading, setDocLoading] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
 
@@ -175,13 +180,19 @@ export default function FoundationPage() {
 
   // Fetch doc content whenever the selected doc path changes.
   useEffect(() => {
-    if (!selectedDoc?.docPath) { setDocContent(null); return; }
+    if (!selectedDoc?.docPath) { setDocContent(null); setDocLastModified(null); return; }
     setDocLoading(true);
     setDocContent(null);
+    setDocLastModified(null);
     setEditing(false);
     fetch(`/api/docs/${selectedDoc.docPath}`)
       .then((res) => res.json())
-      .then((data) => { if (data.ok && data.content) setDocContent(data.content); })
+      .then((data) => {
+        if (data.ok && data.content) {
+          setDocContent(data.content);
+          setDocLastModified(data.lastModified || null);
+        }
+      })
       .catch(() => {})
       .finally(() => setDocLoading(false));
   }, [selectedDoc?.docPath]);
@@ -252,16 +263,25 @@ export default function FoundationPage() {
     [slug, router],
   );
 
-  // Handle going back. If the doc lives under a project (docPath contains
-  // `projects/{projDir}/...`), navigate to the project or task page instead
-  // of clearing back to the Foundation folder view — the user expects the
-  // breadcrumb to take them to the parent container, not to Foundation.
+  // Handle going back. Navigate to the appropriate parent page based on
+  // where the doc lives:
+  //   - `content/...` → Content Creation page
+  //   - `projects/{projDir}/T{NN}/...` → task page
+  //   - `projects/{projDir}/...` → project page
+  //   - anything else → Foundation folder view
   const handleBack = useCallback(() => {
-    if (selectedDoc?.docPath) {
+    if (selectedDoc?.docPath && slug) {
+      // Content Engine docs → back to Content Creation
+      if (/(?:brand\/[^/]+\/)?content\//.test(selectedDoc.docPath)) {
+        router.push(`/dashboard/${slug}/content-creation`);
+        return;
+      }
+
+      // Project/task docs
       const m = selectedDoc.docPath.match(
         /(?:brand\/[^/]+\/)?projects\/([^/]+)(?:\/(?:T(\d+)|tasks\/([^/]+)))?/i
       );
-      if (m && slug) {
+      if (m) {
         const projDir = m[1];
         const projId = projDir.match(/^(P\d+)/)?.[1];
         const taskNum = m[2]; // e.g. "08" from T08
@@ -348,6 +368,11 @@ export default function FoundationPage() {
           <span className="text-sm font-bold text-foreground truncate">
             {pillarTitle}
           </span>
+          {docLastModified && (
+            <span className="text-[10px] text-muted-foreground flex-shrink-0">
+              Editado: {new Date(docLastModified).toLocaleDateString("es-ES", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+            </span>
+          )}
 
           <div className="ml-auto flex items-center gap-2">
             {/* Status dropdown */}
@@ -501,6 +526,71 @@ export default function FoundationPage() {
         onSelectDoc={handleSelectDoc}
         onSelectOtherDoc={handleSelectOtherDoc}
         onOpenChat={handleOpenChat}
+        onOpenTask={(docPath) => {
+          if (!slug || !projectsData) return;
+          const norm = docPath.replace(/^brand\/[^/]+\//, "");
+          const withBrand = docPath.startsWith("brand/") ? docPath : `brand/${slug}/${docPath}`;
+          for (const pw of projectsData) {
+            for (const task of pw.tasks) {
+              const df = task.deliverable_file;
+              if (!df) continue;
+              const dfStr = typeof df === "string" ? df : Array.isArray(df) ? df[0] : null;
+              if (!dfStr) continue;
+              if (dfStr === docPath || dfStr === norm || dfStr === withBrand) {
+                setTaskSlideOver({ projectId: pw.project.id, taskId: task.id });
+                return;
+              }
+              if (task.attachments) {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const hit = (task.attachments as any[]).some((a: {path?: string}) =>
+                  a?.path === docPath || a?.path === norm || a?.path === withBrand
+                );
+                if (hit) {
+                  setTaskSlideOver({ projectId: pw.project.id, taskId: task.id });
+                  return;
+                }
+              }
+            }
+          }
+        }}
+      />
+
+      {/* Task Slide-Over */}
+      <TaskSlideOver
+        slug={slug || ""}
+        projectId={taskSlideOver?.projectId || null}
+        taskId={taskSlideOver?.taskId || null}
+        onClose={() => setTaskSlideOver(null)}
+        onOpenDoc={(docPath) => {
+          setTaskSlideOver(null);
+          setDocSlideOverPath(docPath);
+        }}
+        onOpenChat={() => {
+          if (!taskSlideOver || !slug || !projectsData) return;
+          for (const pw of projectsData) {
+            const task = pw.tasks.find(t => t.id === taskSlideOver.taskId);
+            if (task) {
+              const df = task.deliverable_file;
+              const dfStr = typeof df === "string" ? df : undefined;
+              handleOpenChat(task.pillar || task.id, dfStr);
+              break;
+            }
+          }
+          setTaskSlideOver(null);
+        }}
+      />
+
+      {/* Doc Slide-Over (opened from Task Slide-Over) */}
+      <DocSlideOver
+        slug={slug || ""}
+        docPath={
+          docSlideOverPath
+            ? docSlideOverPath.startsWith("brand/")
+              ? docSlideOverPath
+              : `brand/${slug}/${docSlideOverPath}`
+            : null
+        }
+        onClose={() => setDocSlideOverPath(null)}
       />
     </DashboardLayout>
   );

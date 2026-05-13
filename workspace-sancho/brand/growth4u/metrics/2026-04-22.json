@@ -1,0 +1,2933 @@
+{
+  "slug": "growth4u",
+  "collectedAt": "2026-04-22T00:45:09.704Z",
+  "dateRange": {
+    "from": "2026-04-21",
+    "to": "2026-04-21"
+  },
+  "sources": {
+    "ga4": {
+      "status": "ok",
+      "collectedAt": "2026-04-22T00:45:12.361Z",
+      "metrics": [
+        {
+          "name": "sessions",
+          "value": 18,
+          "date": "2026-04-21"
+        },
+        {
+          "name": "totalUsers",
+          "value": 17,
+          "date": "2026-04-21"
+        },
+        {
+          "name": "newUsers",
+          "value": 10,
+          "date": "2026-04-21"
+        },
+        {
+          "name": "bounceRate",
+          "value": 1,
+          "date": "2026-04-21"
+        },
+        {
+          "name": "averageSessionDuration",
+          "value": 129.94990005555553,
+          "date": "2026-04-21"
+        },
+        {
+          "name": "conversions",
+          "value": 0,
+          "date": "2026-04-21"
+        },
+        {
+          "name": "screenPageViews",
+          "value": 22,
+          "date": "2026-04-21"
+        },
+        {
+          "name": "engagedSessions",
+          "value": 0,
+          "date": "2026-04-21"
+        },
+        {
+          "name": "engagementRate",
+          "value": 0,
+          "date": "2026-04-21"
+        },
+        {
+          "name": "sessions",
+          "value": 8,
+          "date": "2026-04-21",
+          "dimensions": {
+            "channel": "Direct"
+          }
+        },
+        {
+          "name": "totalUsers",
+          "value": 8,
+          "date": "2026-04-21",
+          "dimensions": {
+            "channel": "Direct"
+          }
+        },
+        {
+          "name": "newUsers",
+          "value": 6,
+          "date": "2026-04-21",
+          "dimensions": {
+            "channel": "Direct"
+          }
+        },
+        {
+          "name": "engagedSessions",
+          "value": 0,
+          "date": "2026-04-21",
+          "dimensions": {
+            "channel": "Direct"
+          }
+        },
+        {
+          "name": "screenPageViews",
+          "value": 8,
+          "date": "2026-04-21",
+          "dimensions": {
+            "channel": "Direct"
+          }
+        },
+        {
+          "name": "sessions",
+          "value": 8,
+          "date": "2026-04-21",
+          "dimensions": {
+            "channel": "Organic Social"
+          }
+        },
+        {
+          "name": "totalUsers",
+          "value": 7,
+          "date": "2026-04-21",
+          "dimensions": {
+            "channel": "Organic Social"
+          }
+        },
+        {
+          "name": "newUsers",
+          "value": 4,
+          "date": "2026-04-21",
+          "dimensions": {
+            "channel": "Organic Social"
+          }
+        },
+        {
+          "name": "engagedSessions",
+          "value": 0,
+          "date": "2026-04-21",
+          "dimensions": {
+            "channel": "Organic Social"
+          }
+        },
+        {
+          "name": "screenPageViews",
+          "value": 9,
+          "date": "2026-04-21",
+          "dimensions": {
+            "channel": "Organic Social"
+          }
+        },
+        {
+          "name": "sessions",
+          "value": 5,
+          "date": "2026-04-21",
+          "dimensions": {
+            "channel": "Unassigned"
+          }
+        },
+        {
+          "name": "totalUsers",
+          "value": 5,
+          "date": "2026-04-21",
+          "dimensions": {
+            "channel": "Unassigned"
+          }
+        },
+        {
+          "name": "newUsers",
+          "value": 0,
+          "date": "2026-04-21",
+          "dimensions": {
+            "channel": "Unassigned"
+          }
+        },
+        {
+          "name": "engagedSessions",
+          "value": 0,
+          "date": "2026-04-21",
+          "dimensions": {
+            "channel": "Unassigned"
+          }
+        },
+        {
+          "name": "screenPageViews",
+          "value": 1,
+          "date": "2026-04-21",
+          "dimensions": {
+            "channel": "Unassigned"
+          }
+        },
+        {
+          "name": "sessions",
+          "value": 1,
+          "date": "2026-04-21",
+          "dimensions": {
+            "channel": "Organic Search"
+          }
+        },
+        {
+          "name": "totalUsers",
+          "value": 1,
+          "date": "2026-04-21",
+          "dimensions": {
+            "channel": "Organic Search"
+          }
+        },
+        {
+          "name": "newUsers",
+          "value": 0,
+          "date": "2026-04-21",
+          "dimensions": {
+            "channel": "Organic Search"
+          }
+        },
+        {
+          "name": "engagedSessions",
+          "value": 0,
+          "date": "2026-04-21",
+          "dimensions": {
+            "channel": "Organic Search"
+          }
+        },
+        {
+          "name": "screenPageViews",
+          "value": 1,
+          "date": "2026-04-21",
+          "dimensions": {
+            "channel": "Organic Search"
+          }
+        },
+        {
+          "name": "sessions",
+          "value": 1,
+          "date": "2026-04-21",
+          "dimensions": {
+            "channel": "Referral"
+          }
+        },
+        {
+          "name": "totalUsers",
+          "value": 1,
+          "date": "2026-04-21",
+          "dimensions": {
+            "channel": "Referral"
+          }
+        },
+        {
+          "name": "newUsers",
+          "value": 0,
+          "date": "2026-04-21",
+          "dimensions": {
+            "channel": "Referral"
+          }
+        },
+        {
+          "name": "engagedSessions",
+          "value": 0,
+          "date": "2026-04-21",
+          "dimensions": {
+            "channel": "Referral"
+          }
+        },
+        {
+          "name": "screenPageViews",
+          "value": 3,
+          "date": "2026-04-21",
+          "dimensions": {
+            "channel": "Referral"
+          }
+        },
+        {
+          "name": "topPage",
+          "value": 7,
+          "date": "2026-04-21",
+          "dimensions": {
+            "page": "/",
+            "duration": 21,
+            "engagementRate": 0
+          }
+        },
+        {
+          "name": "topPage",
+          "value": 4,
+          "date": "2026-04-21",
+          "dimensions": {
+            "page": "/en/",
+            "duration": 92,
+            "engagementRate": 0
+          }
+        },
+        {
+          "name": "topPage",
+          "value": 3,
+          "date": "2026-04-21",
+          "dimensions": {
+            "page": "/blog/",
+            "duration": 3,
+            "engagementRate": 0
+          }
+        },
+        {
+          "name": "topPage",
+          "value": 3,
+          "date": "2026-04-21",
+          "dimensions": {
+            "page": "/recursos/sistema-captacion-escalable/",
+            "duration": 0,
+            "engagementRate": 0
+          }
+        },
+        {
+          "name": "topPage",
+          "value": 2,
+          "date": "2026-04-21",
+          "dimensions": {
+            "page": "/blog/como-elegir-agencia-growth-en-2026-y-cuando-no/",
+            "duration": 583,
+            "engagementRate": 0
+          }
+        },
+        {
+          "name": "topPage",
+          "value": 1,
+          "date": "2026-04-21",
+          "dimensions": {
+            "page": "/blog/como-elegir-agencia-growth-2026-agencia-vs-implant-vs-in-house/",
+            "duration": 0,
+            "engagementRate": 0
+          }
+        },
+        {
+          "name": "topPage",
+          "value": 1,
+          "date": "2026-04-21",
+          "dimensions": {
+            "page": "/recursos/",
+            "duration": 1228,
+            "engagementRate": 0
+          }
+        },
+        {
+          "name": "topPage",
+          "value": 1,
+          "date": "2026-04-21",
+          "dimensions": {
+            "page": "/recursos/framework-nichos-60-dias/",
+            "duration": 0,
+            "engagementRate": 0
+          }
+        },
+        {
+          "name": "sessions",
+          "value": 14,
+          "date": "2026-04-21",
+          "dimensions": {
+            "device": "desktop"
+          }
+        },
+        {
+          "name": "bounceRate",
+          "value": 1,
+          "date": "2026-04-21",
+          "dimensions": {
+            "device": "desktop"
+          }
+        },
+        {
+          "name": "engagementRate",
+          "value": 0,
+          "date": "2026-04-21",
+          "dimensions": {
+            "device": "desktop"
+          }
+        },
+        {
+          "name": "sessions",
+          "value": 4,
+          "date": "2026-04-21",
+          "dimensions": {
+            "device": "mobile"
+          }
+        },
+        {
+          "name": "bounceRate",
+          "value": 1,
+          "date": "2026-04-21",
+          "dimensions": {
+            "device": "mobile"
+          }
+        },
+        {
+          "name": "engagementRate",
+          "value": 0,
+          "date": "2026-04-21",
+          "dimensions": {
+            "device": "mobile"
+          }
+        }
+      ]
+    },
+    "gsc": {
+      "status": "ok",
+      "collectedAt": "2026-04-22T00:45:13.083Z",
+      "metrics": [
+        {
+          "name": "clicks",
+          "value": 3,
+          "date": "2026-04-18"
+        },
+        {
+          "name": "impressions",
+          "value": 207,
+          "date": "2026-04-18"
+        },
+        {
+          "name": "ctr",
+          "value": 1.45,
+          "date": "2026-04-18"
+        },
+        {
+          "name": "position",
+          "value": 10.6,
+          "date": "2026-04-18"
+        },
+        {
+          "name": "clicks",
+          "value": 1,
+          "date": "2026-04-18",
+          "dimensions": {
+            "query": "growth4u"
+          }
+        },
+        {
+          "name": "impressions",
+          "value": 4,
+          "date": "2026-04-18",
+          "dimensions": {
+            "query": "growth4u"
+          }
+        },
+        {
+          "name": "ctr",
+          "value": 25,
+          "date": "2026-04-18",
+          "dimensions": {
+            "query": "growth4u"
+          }
+        },
+        {
+          "name": "position",
+          "value": 1.25,
+          "date": "2026-04-18",
+          "dimensions": {
+            "query": "growth4u"
+          }
+        },
+        {
+          "name": "clicks",
+          "value": 0,
+          "date": "2026-04-18",
+          "dimensions": {
+            "query": "agencia comunicación fintech"
+          }
+        },
+        {
+          "name": "impressions",
+          "value": 1,
+          "date": "2026-04-18",
+          "dimensions": {
+            "query": "agencia comunicación fintech"
+          }
+        },
+        {
+          "name": "ctr",
+          "value": 0,
+          "date": "2026-04-18",
+          "dimensions": {
+            "query": "agencia comunicación fintech"
+          }
+        },
+        {
+          "name": "position",
+          "value": 9,
+          "date": "2026-04-18",
+          "dimensions": {
+            "query": "agencia comunicación fintech"
+          }
+        },
+        {
+          "name": "clicks",
+          "value": 0,
+          "date": "2026-04-18",
+          "dimensions": {
+            "query": "automatizacion marketing para startups tecnologia"
+          }
+        },
+        {
+          "name": "impressions",
+          "value": 1,
+          "date": "2026-04-18",
+          "dimensions": {
+            "query": "automatizacion marketing para startups tecnologia"
+          }
+        },
+        {
+          "name": "ctr",
+          "value": 0,
+          "date": "2026-04-18",
+          "dimensions": {
+            "query": "automatizacion marketing para startups tecnologia"
+          }
+        },
+        {
+          "name": "position",
+          "value": 72,
+          "date": "2026-04-18",
+          "dimensions": {
+            "query": "automatizacion marketing para startups tecnologia"
+          }
+        },
+        {
+          "name": "clicks",
+          "value": 0,
+          "date": "2026-04-18",
+          "dimensions": {
+            "query": "capitalontap españa"
+          }
+        },
+        {
+          "name": "impressions",
+          "value": 1,
+          "date": "2026-04-18",
+          "dimensions": {
+            "query": "capitalontap españa"
+          }
+        },
+        {
+          "name": "ctr",
+          "value": 0,
+          "date": "2026-04-18",
+          "dimensions": {
+            "query": "capitalontap españa"
+          }
+        },
+        {
+          "name": "position",
+          "value": 79,
+          "date": "2026-04-18",
+          "dimensions": {
+            "query": "capitalontap españa"
+          }
+        },
+        {
+          "name": "clicks",
+          "value": 0,
+          "date": "2026-04-18",
+          "dimensions": {
+            "query": "consultora de marketing para fintech"
+          }
+        },
+        {
+          "name": "impressions",
+          "value": 2,
+          "date": "2026-04-18",
+          "dimensions": {
+            "query": "consultora de marketing para fintech"
+          }
+        },
+        {
+          "name": "ctr",
+          "value": 0,
+          "date": "2026-04-18",
+          "dimensions": {
+            "query": "consultora de marketing para fintech"
+          }
+        },
+        {
+          "name": "position",
+          "value": 18,
+          "date": "2026-04-18",
+          "dimensions": {
+            "query": "consultora de marketing para fintech"
+          }
+        },
+        {
+          "name": "clicks",
+          "value": 0,
+          "date": "2026-04-18",
+          "dimensions": {
+            "query": "growth for you"
+          }
+        },
+        {
+          "name": "impressions",
+          "value": 2,
+          "date": "2026-04-18",
+          "dimensions": {
+            "query": "growth for you"
+          }
+        },
+        {
+          "name": "ctr",
+          "value": 0,
+          "date": "2026-04-18",
+          "dimensions": {
+            "query": "growth for you"
+          }
+        },
+        {
+          "name": "position",
+          "value": 8.5,
+          "date": "2026-04-18",
+          "dimensions": {
+            "query": "growth for you"
+          }
+        },
+        {
+          "name": "clicks",
+          "value": 0,
+          "date": "2026-04-18",
+          "dimensions": {
+            "query": "growth you"
+          }
+        },
+        {
+          "name": "impressions",
+          "value": 1,
+          "date": "2026-04-18",
+          "dimensions": {
+            "query": "growth you"
+          }
+        },
+        {
+          "name": "ctr",
+          "value": 0,
+          "date": "2026-04-18",
+          "dimensions": {
+            "query": "growth you"
+          }
+        },
+        {
+          "name": "position",
+          "value": 6,
+          "date": "2026-04-18",
+          "dimensions": {
+            "query": "growth you"
+          }
+        },
+        {
+          "name": "clicks",
+          "value": 0,
+          "date": "2026-04-18",
+          "dimensions": {
+            "query": "herramientas de marketing de atribución"
+          }
+        },
+        {
+          "name": "impressions",
+          "value": 10,
+          "date": "2026-04-18",
+          "dimensions": {
+            "query": "herramientas de marketing de atribución"
+          }
+        },
+        {
+          "name": "ctr",
+          "value": 0,
+          "date": "2026-04-18",
+          "dimensions": {
+            "query": "herramientas de marketing de atribución"
+          }
+        },
+        {
+          "name": "position",
+          "value": 33.6,
+          "date": "2026-04-18",
+          "dimensions": {
+            "query": "herramientas de marketing de atribución"
+          }
+        },
+        {
+          "name": "clicks",
+          "value": 0,
+          "date": "2026-04-18",
+          "dimensions": {
+            "query": "herramientas de prospección ia rondas financiación b2b"
+          }
+        },
+        {
+          "name": "impressions",
+          "value": 3,
+          "date": "2026-04-18",
+          "dimensions": {
+            "query": "herramientas de prospección ia rondas financiación b2b"
+          }
+        },
+        {
+          "name": "ctr",
+          "value": 0,
+          "date": "2026-04-18",
+          "dimensions": {
+            "query": "herramientas de prospección ia rondas financiación b2b"
+          }
+        },
+        {
+          "name": "position",
+          "value": 5.33,
+          "date": "2026-04-18",
+          "dimensions": {
+            "query": "herramientas de prospección ia rondas financiación b2b"
+          }
+        },
+        {
+          "name": "clicks",
+          "value": 0,
+          "date": "2026-04-18",
+          "dimensions": {
+            "query": "herramientas que proporcionan atribución multitáctil"
+          }
+        },
+        {
+          "name": "impressions",
+          "value": 2,
+          "date": "2026-04-18",
+          "dimensions": {
+            "query": "herramientas que proporcionan atribución multitáctil"
+          }
+        },
+        {
+          "name": "ctr",
+          "value": 0,
+          "date": "2026-04-18",
+          "dimensions": {
+            "query": "herramientas que proporcionan atribución multitáctil"
+          }
+        },
+        {
+          "name": "position",
+          "value": 16,
+          "date": "2026-04-18",
+          "dimensions": {
+            "query": "herramientas que proporcionan atribución multitáctil"
+          }
+        },
+        {
+          "name": "clicks",
+          "value": 0,
+          "date": "2026-04-18",
+          "dimensions": {
+            "query": "martech stack"
+          }
+        },
+        {
+          "name": "impressions",
+          "value": 1,
+          "date": "2026-04-18",
+          "dimensions": {
+            "query": "martech stack"
+          }
+        },
+        {
+          "name": "ctr",
+          "value": 0,
+          "date": "2026-04-18",
+          "dimensions": {
+            "query": "martech stack"
+          }
+        },
+        {
+          "name": "position",
+          "value": 13,
+          "date": "2026-04-18",
+          "dimensions": {
+            "query": "martech stack"
+          }
+        },
+        {
+          "name": "clicks",
+          "value": 0,
+          "date": "2026-04-18",
+          "dimensions": {
+            "query": "mejor herramienta de prospección con ia outreach hubspot salesloft apollo"
+          }
+        },
+        {
+          "name": "impressions",
+          "value": 17,
+          "date": "2026-04-18",
+          "dimensions": {
+            "query": "mejor herramienta de prospección con ia outreach hubspot salesloft apollo"
+          }
+        },
+        {
+          "name": "ctr",
+          "value": 0,
+          "date": "2026-04-18",
+          "dimensions": {
+            "query": "mejor herramienta de prospección con ia outreach hubspot salesloft apollo"
+          }
+        },
+        {
+          "name": "position",
+          "value": 8.29,
+          "date": "2026-04-18",
+          "dimensions": {
+            "query": "mejor herramienta de prospección con ia outreach hubspot salesloft apollo"
+          }
+        },
+        {
+          "name": "clicks",
+          "value": 0,
+          "date": "2026-04-18",
+          "dimensions": {
+            "query": "mejor herramienta prospección ia outreach hubspot salesloft apollo"
+          }
+        },
+        {
+          "name": "impressions",
+          "value": 27,
+          "date": "2026-04-18",
+          "dimensions": {
+            "query": "mejor herramienta prospección ia outreach hubspot salesloft apollo"
+          }
+        },
+        {
+          "name": "ctr",
+          "value": 0,
+          "date": "2026-04-18",
+          "dimensions": {
+            "query": "mejor herramienta prospección ia outreach hubspot salesloft apollo"
+          }
+        },
+        {
+          "name": "position",
+          "value": 7.48,
+          "date": "2026-04-18",
+          "dimensions": {
+            "query": "mejor herramienta prospección ia outreach hubspot salesloft apollo"
+          }
+        },
+        {
+          "name": "clicks",
+          "value": 0,
+          "date": "2026-04-18",
+          "dimensions": {
+            "query": "optimizacion embudos conversion startups"
+          }
+        },
+        {
+          "name": "impressions",
+          "value": 5,
+          "date": "2026-04-18",
+          "dimensions": {
+            "query": "optimizacion embudos conversion startups"
+          }
+        },
+        {
+          "name": "ctr",
+          "value": 0,
+          "date": "2026-04-18",
+          "dimensions": {
+            "query": "optimizacion embudos conversion startups"
+          }
+        },
+        {
+          "name": "position",
+          "value": 31.6,
+          "date": "2026-04-18",
+          "dimensions": {
+            "query": "optimizacion embudos conversion startups"
+          }
+        },
+        {
+          "name": "clicks",
+          "value": 0,
+          "date": "2026-04-18",
+          "dimensions": {
+            "query": "optimización de embudos de conversión b2b"
+          }
+        },
+        {
+          "name": "impressions",
+          "value": 1,
+          "date": "2026-04-18",
+          "dimensions": {
+            "query": "optimización de embudos de conversión b2b"
+          }
+        },
+        {
+          "name": "ctr",
+          "value": 0,
+          "date": "2026-04-18",
+          "dimensions": {
+            "query": "optimización de embudos de conversión b2b"
+          }
+        },
+        {
+          "name": "position",
+          "value": 3,
+          "date": "2026-04-18",
+          "dimensions": {
+            "query": "optimización de embudos de conversión b2b"
+          }
+        },
+        {
+          "name": "clicks",
+          "value": 0,
+          "date": "2026-04-18",
+          "dimensions": {
+            "query": "payback marketing"
+          }
+        },
+        {
+          "name": "impressions",
+          "value": 1,
+          "date": "2026-04-18",
+          "dimensions": {
+            "query": "payback marketing"
+          }
+        },
+        {
+          "name": "ctr",
+          "value": 0,
+          "date": "2026-04-18",
+          "dimensions": {
+            "query": "payback marketing"
+          }
+        },
+        {
+          "name": "position",
+          "value": 72,
+          "date": "2026-04-18",
+          "dimensions": {
+            "query": "payback marketing"
+          }
+        },
+        {
+          "name": "clicks",
+          "value": 0,
+          "date": "2026-04-18",
+          "dimensions": {
+            "query": "por qué las empresas pierden oportunidades al no automatizar marketing multicanal"
+          }
+        },
+        {
+          "name": "impressions",
+          "value": 1,
+          "date": "2026-04-18",
+          "dimensions": {
+            "query": "por qué las empresas pierden oportunidades al no automatizar marketing multicanal"
+          }
+        },
+        {
+          "name": "ctr",
+          "value": 0,
+          "date": "2026-04-18",
+          "dimensions": {
+            "query": "por qué las empresas pierden oportunidades al no automatizar marketing multicanal"
+          }
+        },
+        {
+          "name": "position",
+          "value": 20,
+          "date": "2026-04-18",
+          "dimensions": {
+            "query": "por qué las empresas pierden oportunidades al no automatizar marketing multicanal"
+          }
+        },
+        {
+          "name": "clicks",
+          "value": 0,
+          "date": "2026-04-18",
+          "dimensions": {
+            "query": "qué hacer cuando cac supera ltv"
+          }
+        },
+        {
+          "name": "impressions",
+          "value": 2,
+          "date": "2026-04-18",
+          "dimensions": {
+            "query": "qué hacer cuando cac supera ltv"
+          }
+        },
+        {
+          "name": "ctr",
+          "value": 0,
+          "date": "2026-04-18",
+          "dimensions": {
+            "query": "qué hacer cuando cac supera ltv"
+          }
+        },
+        {
+          "name": "position",
+          "value": 11,
+          "date": "2026-04-18",
+          "dimensions": {
+            "query": "qué hacer cuando cac supera ltv"
+          }
+        },
+        {
+          "name": "clicks",
+          "value": 0,
+          "date": "2026-04-18",
+          "dimensions": {
+            "query": "servicio de marketing para fintech"
+          }
+        },
+        {
+          "name": "impressions",
+          "value": 2,
+          "date": "2026-04-18",
+          "dimensions": {
+            "query": "servicio de marketing para fintech"
+          }
+        },
+        {
+          "name": "ctr",
+          "value": 0,
+          "date": "2026-04-18",
+          "dimensions": {
+            "query": "servicio de marketing para fintech"
+          }
+        },
+        {
+          "name": "position",
+          "value": 28,
+          "date": "2026-04-18",
+          "dimensions": {
+            "query": "servicio de marketing para fintech"
+          }
+        },
+        {
+          "name": "clicks",
+          "value": 0,
+          "date": "2026-04-18",
+          "dimensions": {
+            "query": "señales de alta intención hubspot 6sense bombora"
+          }
+        },
+        {
+          "name": "impressions",
+          "value": 8,
+          "date": "2026-04-18",
+          "dimensions": {
+            "query": "señales de alta intención hubspot 6sense bombora"
+          }
+        },
+        {
+          "name": "ctr",
+          "value": 0,
+          "date": "2026-04-18",
+          "dimensions": {
+            "query": "señales de alta intención hubspot 6sense bombora"
+          }
+        },
+        {
+          "name": "position",
+          "value": 7.63,
+          "date": "2026-04-18",
+          "dimensions": {
+            "query": "señales de alta intención hubspot 6sense bombora"
+          }
+        },
+        {
+          "name": "clicks",
+          "value": 3,
+          "date": "2026-04-18",
+          "dimensions": {
+            "page": "https://growth4u.io/"
+          }
+        },
+        {
+          "name": "impressions",
+          "value": 11,
+          "date": "2026-04-18",
+          "dimensions": {
+            "page": "https://growth4u.io/"
+          }
+        },
+        {
+          "name": "ctr",
+          "value": 27.27,
+          "date": "2026-04-18",
+          "dimensions": {
+            "page": "https://growth4u.io/"
+          }
+        },
+        {
+          "name": "position",
+          "value": 10.36,
+          "date": "2026-04-18",
+          "dimensions": {
+            "page": "https://growth4u.io/"
+          }
+        },
+        {
+          "name": "clicks",
+          "value": 0,
+          "date": "2026-04-18",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/"
+          }
+        },
+        {
+          "name": "impressions",
+          "value": 4,
+          "date": "2026-04-18",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/"
+          }
+        },
+        {
+          "name": "ctr",
+          "value": 0,
+          "date": "2026-04-18",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/"
+          }
+        },
+        {
+          "name": "position",
+          "value": 3.25,
+          "date": "2026-04-18",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/"
+          }
+        },
+        {
+          "name": "clicks",
+          "value": 0,
+          "date": "2026-04-18",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/agencia-estrategia-gtm-fintech-espana/"
+          }
+        },
+        {
+          "name": "impressions",
+          "value": 4,
+          "date": "2026-04-18",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/agencia-estrategia-gtm-fintech-espana/"
+          }
+        },
+        {
+          "name": "ctr",
+          "value": 0,
+          "date": "2026-04-18",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/agencia-estrategia-gtm-fintech-espana/"
+          }
+        },
+        {
+          "name": "position",
+          "value": 6,
+          "date": "2026-04-18",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/agencia-estrategia-gtm-fintech-espana/"
+          }
+        },
+        {
+          "name": "clicks",
+          "value": 0,
+          "date": "2026-04-18",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/agencia-outreach-b2b-fintech-espana/"
+          }
+        },
+        {
+          "name": "impressions",
+          "value": 1,
+          "date": "2026-04-18",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/agencia-outreach-b2b-fintech-espana/"
+          }
+        },
+        {
+          "name": "ctr",
+          "value": 0,
+          "date": "2026-04-18",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/agencia-outreach-b2b-fintech-espana/"
+          }
+        },
+        {
+          "name": "position",
+          "value": 9,
+          "date": "2026-04-18",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/agencia-outreach-b2b-fintech-espana/"
+          }
+        },
+        {
+          "name": "clicks",
+          "value": 0,
+          "date": "2026-04-18",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/automatizacion-marketing-growth-fintech/"
+          }
+        },
+        {
+          "name": "impressions",
+          "value": 13,
+          "date": "2026-04-18",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/automatizacion-marketing-growth-fintech/"
+          }
+        },
+        {
+          "name": "ctr",
+          "value": 0,
+          "date": "2026-04-18",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/automatizacion-marketing-growth-fintech/"
+          }
+        },
+        {
+          "name": "position",
+          "value": 13.92,
+          "date": "2026-04-18",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/automatizacion-marketing-growth-fintech/"
+          }
+        },
+        {
+          "name": "clicks",
+          "value": 0,
+          "date": "2026-04-18",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/ayuda-para-definir-el-plan-de-lanzamiento-al-mercado/"
+          }
+        },
+        {
+          "name": "impressions",
+          "value": 1,
+          "date": "2026-04-18",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/ayuda-para-definir-el-plan-de-lanzamiento-al-mercado/"
+          }
+        },
+        {
+          "name": "ctr",
+          "value": 0,
+          "date": "2026-04-18",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/ayuda-para-definir-el-plan-de-lanzamiento-al-mercado/"
+          }
+        },
+        {
+          "name": "position",
+          "value": 9,
+          "date": "2026-04-18",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/ayuda-para-definir-el-plan-de-lanzamiento-al-mercado/"
+          }
+        },
+        {
+          "name": "clicks",
+          "value": 0,
+          "date": "2026-04-18",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/escalar-un-negocio-cuando-el-fundador-es-el-motor-y-el-cuello-de-botella/"
+          }
+        },
+        {
+          "name": "impressions",
+          "value": 3,
+          "date": "2026-04-18",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/escalar-un-negocio-cuando-el-fundador-es-el-motor-y-el-cuello-de-botella/"
+          }
+        },
+        {
+          "name": "ctr",
+          "value": 0,
+          "date": "2026-04-18",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/escalar-un-negocio-cuando-el-fundador-es-el-motor-y-el-cuello-de-botella/"
+          }
+        },
+        {
+          "name": "position",
+          "value": 8,
+          "date": "2026-04-18",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/escalar-un-negocio-cuando-el-fundador-es-el-motor-y-el-cuello-de-botella/"
+          }
+        },
+        {
+          "name": "clicks",
+          "value": 0,
+          "date": "2026-04-18",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/estrategia-de-comisiones-para-influencer-marketing-reinvertir-la-diferencia-en-mas-perfiles/"
+          }
+        },
+        {
+          "name": "impressions",
+          "value": 2,
+          "date": "2026-04-18",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/estrategia-de-comisiones-para-influencer-marketing-reinvertir-la-diferencia-en-mas-perfiles/"
+          }
+        },
+        {
+          "name": "ctr",
+          "value": 0,
+          "date": "2026-04-18",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/estrategia-de-comisiones-para-influencer-marketing-reinvertir-la-diferencia-en-mas-perfiles/"
+          }
+        },
+        {
+          "name": "position",
+          "value": 8.5,
+          "date": "2026-04-18",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/estrategia-de-comisiones-para-influencer-marketing-reinvertir-la-diferencia-en-mas-perfiles/"
+          }
+        },
+        {
+          "name": "clicks",
+          "value": 0,
+          "date": "2026-04-18",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/geo-para-fintechs-guia-completa-ia-chatgpt-perplexity/"
+          }
+        },
+        {
+          "name": "impressions",
+          "value": 9,
+          "date": "2026-04-18",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/geo-para-fintechs-guia-completa-ia-chatgpt-perplexity/"
+          }
+        },
+        {
+          "name": "ctr",
+          "value": 0,
+          "date": "2026-04-18",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/geo-para-fintechs-guia-completa-ia-chatgpt-perplexity/"
+          }
+        },
+        {
+          "name": "position",
+          "value": 8.22,
+          "date": "2026-04-18",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/geo-para-fintechs-guia-completa-ia-chatgpt-perplexity/"
+          }
+        },
+        {
+          "name": "clicks",
+          "value": 0,
+          "date": "2026-04-18",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/herramientas-atribucion-marketing-fintech/"
+          }
+        },
+        {
+          "name": "impressions",
+          "value": 17,
+          "date": "2026-04-18",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/herramientas-atribucion-marketing-fintech/"
+          }
+        },
+        {
+          "name": "ctr",
+          "value": 0,
+          "date": "2026-04-18",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/herramientas-atribucion-marketing-fintech/"
+          }
+        },
+        {
+          "name": "position",
+          "value": 27.41,
+          "date": "2026-04-18",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/herramientas-atribucion-marketing-fintech/"
+          }
+        },
+        {
+          "name": "clicks",
+          "value": 0,
+          "date": "2026-04-18",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/herramientas-gestionar-influencers/"
+          }
+        },
+        {
+          "name": "impressions",
+          "value": 1,
+          "date": "2026-04-18",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/herramientas-gestionar-influencers/"
+          }
+        },
+        {
+          "name": "ctr",
+          "value": 0,
+          "date": "2026-04-18",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/herramientas-gestionar-influencers/"
+          }
+        },
+        {
+          "name": "position",
+          "value": 13,
+          "date": "2026-04-18",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/herramientas-gestionar-influencers/"
+          }
+        },
+        {
+          "name": "clicks",
+          "value": 0,
+          "date": "2026-04-18",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/herramientas-gtm-lanzamiento-producto-b2b/"
+          }
+        },
+        {
+          "name": "impressions",
+          "value": 11,
+          "date": "2026-04-18",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/herramientas-gtm-lanzamiento-producto-b2b/"
+          }
+        },
+        {
+          "name": "ctr",
+          "value": 0,
+          "date": "2026-04-18",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/herramientas-gtm-lanzamiento-producto-b2b/"
+          }
+        },
+        {
+          "name": "position",
+          "value": 8,
+          "date": "2026-04-18",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/herramientas-gtm-lanzamiento-producto-b2b/"
+          }
+        },
+        {
+          "name": "clicks",
+          "value": 0,
+          "date": "2026-04-18",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/herramientas-outreach-y-prospeccion-b2b/"
+          }
+        },
+        {
+          "name": "impressions",
+          "value": 18,
+          "date": "2026-04-18",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/herramientas-outreach-y-prospeccion-b2b/"
+          }
+        },
+        {
+          "name": "ctr",
+          "value": 0,
+          "date": "2026-04-18",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/herramientas-outreach-y-prospeccion-b2b/"
+          }
+        },
+        {
+          "name": "position",
+          "value": 8.11,
+          "date": "2026-04-18",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/herramientas-outreach-y-prospeccion-b2b/"
+          }
+        },
+        {
+          "name": "clicks",
+          "value": 0,
+          "date": "2026-04-18",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/herramientas-para-crear-contenido-digital/"
+          }
+        },
+        {
+          "name": "impressions",
+          "value": 2,
+          "date": "2026-04-18",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/herramientas-para-crear-contenido-digital/"
+          }
+        },
+        {
+          "name": "ctr",
+          "value": 0,
+          "date": "2026-04-18",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/herramientas-para-crear-contenido-digital/"
+          }
+        },
+        {
+          "name": "position",
+          "value": 9,
+          "date": "2026-04-18",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/herramientas-para-crear-contenido-digital/"
+          }
+        },
+        {
+          "name": "clicks",
+          "value": 0,
+          "date": "2026-04-18",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/mejores-opciones-para-optimizar-embudos-de-conversion-b2b/"
+          }
+        },
+        {
+          "name": "impressions",
+          "value": 6,
+          "date": "2026-04-18",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/mejores-opciones-para-optimizar-embudos-de-conversion-b2b/"
+          }
+        },
+        {
+          "name": "ctr",
+          "value": 0,
+          "date": "2026-04-18",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/mejores-opciones-para-optimizar-embudos-de-conversion-b2b/"
+          }
+        },
+        {
+          "name": "position",
+          "value": 26.83,
+          "date": "2026-04-18",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/mejores-opciones-para-optimizar-embudos-de-conversion-b2b/"
+          }
+        },
+        {
+          "name": "clicks",
+          "value": 0,
+          "date": "2026-04-18",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/que-herramientas-recomiendan-para-outreach-b2b-efectivo/"
+          }
+        },
+        {
+          "name": "impressions",
+          "value": 72,
+          "date": "2026-04-18",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/que-herramientas-recomiendan-para-outreach-b2b-efectivo/"
+          }
+        },
+        {
+          "name": "ctr",
+          "value": 0,
+          "date": "2026-04-18",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/que-herramientas-recomiendan-para-outreach-b2b-efectivo/"
+          }
+        },
+        {
+          "name": "position",
+          "value": 8.11,
+          "date": "2026-04-18",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/que-herramientas-recomiendan-para-outreach-b2b-efectivo/"
+          }
+        },
+        {
+          "name": "clicks",
+          "value": 0,
+          "date": "2026-04-18",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/que-plataformas-usan-para-lanzar-un-gtm-exitoso/"
+          }
+        },
+        {
+          "name": "impressions",
+          "value": 1,
+          "date": "2026-04-18",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/que-plataformas-usan-para-lanzar-un-gtm-exitoso/"
+          }
+        },
+        {
+          "name": "ctr",
+          "value": 0,
+          "date": "2026-04-18",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/que-plataformas-usan-para-lanzar-un-gtm-exitoso/"
+          }
+        },
+        {
+          "name": "position",
+          "value": 4,
+          "date": "2026-04-18",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/que-plataformas-usan-para-lanzar-un-gtm-exitoso/"
+          }
+        },
+        {
+          "name": "clicks",
+          "value": 0,
+          "date": "2026-04-18",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/stack-martech-fintech-espana-guia-completa/"
+          }
+        },
+        {
+          "name": "impressions",
+          "value": 7,
+          "date": "2026-04-18",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/stack-martech-fintech-espana-guia-completa/"
+          }
+        },
+        {
+          "name": "ctr",
+          "value": 0,
+          "date": "2026-04-18",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/stack-martech-fintech-espana-guia-completa/"
+          }
+        },
+        {
+          "name": "position",
+          "value": 8,
+          "date": "2026-04-18",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/stack-martech-fintech-espana-guia-completa/"
+          }
+        },
+        {
+          "name": "clicks",
+          "value": 0,
+          "date": "2026-04-18",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/unit-economics-fintech-cac-ltv-payback/"
+          }
+        },
+        {
+          "name": "impressions",
+          "value": 17,
+          "date": "2026-04-18",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/unit-economics-fintech-cac-ltv-payback/"
+          }
+        },
+        {
+          "name": "ctr",
+          "value": 0,
+          "date": "2026-04-18",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/unit-economics-fintech-cac-ltv-payback/"
+          }
+        },
+        {
+          "name": "position",
+          "value": 10.94,
+          "date": "2026-04-18",
+          "dimensions": {
+            "page": "https://growth4u.io/blog/unit-economics-fintech-cac-ltv-payback/"
+          }
+        },
+        {
+          "name": "clicks",
+          "value": 0,
+          "date": "2026-04-18",
+          "dimensions": {
+            "page": "https://growth4u.io/en/"
+          }
+        },
+        {
+          "name": "impressions",
+          "value": 7,
+          "date": "2026-04-18",
+          "dimensions": {
+            "page": "https://growth4u.io/en/"
+          }
+        },
+        {
+          "name": "ctr",
+          "value": 0,
+          "date": "2026-04-18",
+          "dimensions": {
+            "page": "https://growth4u.io/en/"
+          }
+        },
+        {
+          "name": "position",
+          "value": 5,
+          "date": "2026-04-18",
+          "dimensions": {
+            "page": "https://growth4u.io/en/"
+          }
+        }
+      ]
+    },
+    "metricool": {
+      "status": "ok",
+      "collectedAt": "2026-04-22T00:45:13.498Z",
+      "metrics": []
+    },
+    "meta-ads": {
+      "status": "ok",
+      "collectedAt": "2026-04-22T00:45:16.051Z",
+      "metrics": [
+        {
+          "name": "spend",
+          "value": 130.31,
+          "date": "2026-04-21"
+        },
+        {
+          "name": "impressions",
+          "value": 4860,
+          "date": "2026-04-21"
+        },
+        {
+          "name": "clicks",
+          "value": 43,
+          "date": "2026-04-21"
+        },
+        {
+          "name": "ctr",
+          "value": 0.884774,
+          "date": "2026-04-21"
+        },
+        {
+          "name": "cpc",
+          "value": 3.030465,
+          "date": "2026-04-21"
+        },
+        {
+          "name": "leads",
+          "value": 3,
+          "date": "2026-04-21"
+        },
+        {
+          "name": "spend",
+          "value": 130.31,
+          "date": "2026-04-21",
+          "dimensions": {
+            "campaign": "G4U - Testeo Creativos (Oier)"
+          }
+        },
+        {
+          "name": "impressions",
+          "value": 4860,
+          "date": "2026-04-21",
+          "dimensions": {
+            "campaign": "G4U - Testeo Creativos (Oier)"
+          }
+        },
+        {
+          "name": "clicks",
+          "value": 43,
+          "date": "2026-04-21",
+          "dimensions": {
+            "campaign": "G4U - Testeo Creativos (Oier)"
+          }
+        },
+        {
+          "name": "ctr",
+          "value": 0.884774,
+          "date": "2026-04-21",
+          "dimensions": {
+            "campaign": "G4U - Testeo Creativos (Oier)"
+          }
+        },
+        {
+          "name": "cpc",
+          "value": 3.030465,
+          "date": "2026-04-21",
+          "dimensions": {
+            "campaign": "G4U - Testeo Creativos (Oier)"
+          }
+        },
+        {
+          "name": "leads",
+          "value": 3,
+          "date": "2026-04-21",
+          "dimensions": {
+            "campaign": "G4U - Testeo Creativos (Oier)"
+          }
+        },
+        {
+          "name": "spend",
+          "value": 27.46,
+          "date": "2026-04-21",
+          "dimensions": {
+            "adset": "unknown",
+            "campaign": "G4U - Testeo Creativos (Oier)"
+          }
+        },
+        {
+          "name": "impressions",
+          "value": 545,
+          "date": "2026-04-21",
+          "dimensions": {
+            "adset": "unknown",
+            "campaign": "G4U - Testeo Creativos (Oier)"
+          }
+        },
+        {
+          "name": "clicks",
+          "value": 5,
+          "date": "2026-04-21",
+          "dimensions": {
+            "adset": "unknown",
+            "campaign": "G4U - Testeo Creativos (Oier)"
+          }
+        },
+        {
+          "name": "ctr",
+          "value": 0.917431,
+          "date": "2026-04-21",
+          "dimensions": {
+            "adset": "unknown",
+            "campaign": "G4U - Testeo Creativos (Oier)"
+          }
+        },
+        {
+          "name": "cpc",
+          "value": 5.492,
+          "date": "2026-04-21",
+          "dimensions": {
+            "adset": "unknown",
+            "campaign": "G4U - Testeo Creativos (Oier)"
+          }
+        },
+        {
+          "name": "spend",
+          "value": 23.51,
+          "date": "2026-04-21",
+          "dimensions": {
+            "adset": "unknown",
+            "campaign": "G4U - Testeo Creativos (Oier)"
+          }
+        },
+        {
+          "name": "impressions",
+          "value": 429,
+          "date": "2026-04-21",
+          "dimensions": {
+            "adset": "unknown",
+            "campaign": "G4U - Testeo Creativos (Oier)"
+          }
+        },
+        {
+          "name": "clicks",
+          "value": 8,
+          "date": "2026-04-21",
+          "dimensions": {
+            "adset": "unknown",
+            "campaign": "G4U - Testeo Creativos (Oier)"
+          }
+        },
+        {
+          "name": "ctr",
+          "value": 1.864802,
+          "date": "2026-04-21",
+          "dimensions": {
+            "adset": "unknown",
+            "campaign": "G4U - Testeo Creativos (Oier)"
+          }
+        },
+        {
+          "name": "cpc",
+          "value": 2.93875,
+          "date": "2026-04-21",
+          "dimensions": {
+            "adset": "unknown",
+            "campaign": "G4U - Testeo Creativos (Oier)"
+          }
+        },
+        {
+          "name": "spend",
+          "value": 49.59,
+          "date": "2026-04-21",
+          "dimensions": {
+            "adset": "unknown",
+            "campaign": "G4U - Testeo Creativos (Oier)"
+          }
+        },
+        {
+          "name": "impressions",
+          "value": 1238,
+          "date": "2026-04-21",
+          "dimensions": {
+            "adset": "unknown",
+            "campaign": "G4U - Testeo Creativos (Oier)"
+          }
+        },
+        {
+          "name": "clicks",
+          "value": 14,
+          "date": "2026-04-21",
+          "dimensions": {
+            "adset": "unknown",
+            "campaign": "G4U - Testeo Creativos (Oier)"
+          }
+        },
+        {
+          "name": "ctr",
+          "value": 1.130856,
+          "date": "2026-04-21",
+          "dimensions": {
+            "adset": "unknown",
+            "campaign": "G4U - Testeo Creativos (Oier)"
+          }
+        },
+        {
+          "name": "cpc",
+          "value": 3.542143,
+          "date": "2026-04-21",
+          "dimensions": {
+            "adset": "unknown",
+            "campaign": "G4U - Testeo Creativos (Oier)"
+          }
+        },
+        {
+          "name": "spend",
+          "value": 29.75,
+          "date": "2026-04-21",
+          "dimensions": {
+            "adset": "unknown",
+            "campaign": "G4U - Testeo Creativos (Oier)"
+          }
+        },
+        {
+          "name": "impressions",
+          "value": 2648,
+          "date": "2026-04-21",
+          "dimensions": {
+            "adset": "unknown",
+            "campaign": "G4U - Testeo Creativos (Oier)"
+          }
+        },
+        {
+          "name": "clicks",
+          "value": 16,
+          "date": "2026-04-21",
+          "dimensions": {
+            "adset": "unknown",
+            "campaign": "G4U - Testeo Creativos (Oier)"
+          }
+        },
+        {
+          "name": "ctr",
+          "value": 0.60423,
+          "date": "2026-04-21",
+          "dimensions": {
+            "adset": "unknown",
+            "campaign": "G4U - Testeo Creativos (Oier)"
+          }
+        },
+        {
+          "name": "cpc",
+          "value": 1.859375,
+          "date": "2026-04-21",
+          "dimensions": {
+            "adset": "unknown",
+            "campaign": "G4U - Testeo Creativos (Oier)"
+          }
+        },
+        {
+          "name": "spend",
+          "value": 17.24,
+          "date": "2026-04-21",
+          "dimensions": {
+            "ad": "Ángulo 5_V2",
+            "adset": "Ángulo 5",
+            "campaign": "G4U - Testeo Creativos (Oier)"
+          }
+        },
+        {
+          "name": "impressions",
+          "value": 354,
+          "date": "2026-04-21",
+          "dimensions": {
+            "ad": "Ángulo 5_V2",
+            "adset": "Ángulo 5",
+            "campaign": "G4U - Testeo Creativos (Oier)"
+          }
+        },
+        {
+          "name": "clicks",
+          "value": 6,
+          "date": "2026-04-21",
+          "dimensions": {
+            "ad": "Ángulo 5_V2",
+            "adset": "Ángulo 5",
+            "campaign": "G4U - Testeo Creativos (Oier)"
+          }
+        },
+        {
+          "name": "ctr",
+          "value": 1.694915,
+          "date": "2026-04-21",
+          "dimensions": {
+            "ad": "Ángulo 5_V2",
+            "adset": "Ángulo 5",
+            "campaign": "G4U - Testeo Creativos (Oier)"
+          }
+        },
+        {
+          "name": "cpc",
+          "value": 2.873333,
+          "date": "2026-04-21",
+          "dimensions": {
+            "ad": "Ángulo 5_V2",
+            "adset": "Ángulo 5",
+            "campaign": "G4U - Testeo Creativos (Oier)"
+          }
+        },
+        {
+          "name": "linkClicks",
+          "value": 6,
+          "date": "2026-04-21",
+          "dimensions": {
+            "ad": "Ángulo 5_V2",
+            "adset": "Ángulo 5",
+            "campaign": "G4U - Testeo Creativos (Oier)"
+          }
+        },
+        {
+          "name": "engagement",
+          "value": 105,
+          "date": "2026-04-21",
+          "dimensions": {
+            "ad": "Ángulo 5_V2",
+            "adset": "Ángulo 5",
+            "campaign": "G4U - Testeo Creativos (Oier)"
+          }
+        },
+        {
+          "name": "spend",
+          "value": 6.27,
+          "date": "2026-04-21",
+          "dimensions": {
+            "ad": "Ángulo 5_V3",
+            "adset": "Ángulo 5",
+            "campaign": "G4U - Testeo Creativos (Oier)"
+          }
+        },
+        {
+          "name": "impressions",
+          "value": 75,
+          "date": "2026-04-21",
+          "dimensions": {
+            "ad": "Ángulo 5_V3",
+            "adset": "Ángulo 5",
+            "campaign": "G4U - Testeo Creativos (Oier)"
+          }
+        },
+        {
+          "name": "clicks",
+          "value": 2,
+          "date": "2026-04-21",
+          "dimensions": {
+            "ad": "Ángulo 5_V3",
+            "adset": "Ángulo 5",
+            "campaign": "G4U - Testeo Creativos (Oier)"
+          }
+        },
+        {
+          "name": "ctr",
+          "value": 2.666667,
+          "date": "2026-04-21",
+          "dimensions": {
+            "ad": "Ángulo 5_V3",
+            "adset": "Ángulo 5",
+            "campaign": "G4U - Testeo Creativos (Oier)"
+          }
+        },
+        {
+          "name": "cpc",
+          "value": 3.135,
+          "date": "2026-04-21",
+          "dimensions": {
+            "ad": "Ángulo 5_V3",
+            "adset": "Ángulo 5",
+            "campaign": "G4U - Testeo Creativos (Oier)"
+          }
+        },
+        {
+          "name": "linkClicks",
+          "value": 1,
+          "date": "2026-04-21",
+          "dimensions": {
+            "ad": "Ángulo 5_V3",
+            "adset": "Ángulo 5",
+            "campaign": "G4U - Testeo Creativos (Oier)"
+          }
+        },
+        {
+          "name": "leads",
+          "value": 1,
+          "date": "2026-04-21",
+          "dimensions": {
+            "ad": "Ángulo 5_V3",
+            "adset": "Ángulo 5",
+            "campaign": "G4U - Testeo Creativos (Oier)"
+          }
+        },
+        {
+          "name": "engagement",
+          "value": 18,
+          "date": "2026-04-21",
+          "dimensions": {
+            "ad": "Ángulo 5_V3",
+            "adset": "Ángulo 5",
+            "campaign": "G4U - Testeo Creativos (Oier)"
+          }
+        },
+        {
+          "name": "spend",
+          "value": 21.66,
+          "date": "2026-04-21",
+          "dimensions": {
+            "ad": "Angulo 1_V1",
+            "adset": "Angulo 1",
+            "campaign": "G4U - Testeo Creativos (Oier)"
+          }
+        },
+        {
+          "name": "impressions",
+          "value": 469,
+          "date": "2026-04-21",
+          "dimensions": {
+            "ad": "Angulo 1_V1",
+            "adset": "Angulo 1",
+            "campaign": "G4U - Testeo Creativos (Oier)"
+          }
+        },
+        {
+          "name": "clicks",
+          "value": 4,
+          "date": "2026-04-21",
+          "dimensions": {
+            "ad": "Angulo 1_V1",
+            "adset": "Angulo 1",
+            "campaign": "G4U - Testeo Creativos (Oier)"
+          }
+        },
+        {
+          "name": "ctr",
+          "value": 0.852878,
+          "date": "2026-04-21",
+          "dimensions": {
+            "ad": "Angulo 1_V1",
+            "adset": "Angulo 1",
+            "campaign": "G4U - Testeo Creativos (Oier)"
+          }
+        },
+        {
+          "name": "cpc",
+          "value": 5.415,
+          "date": "2026-04-21",
+          "dimensions": {
+            "ad": "Angulo 1_V1",
+            "adset": "Angulo 1",
+            "campaign": "G4U - Testeo Creativos (Oier)"
+          }
+        },
+        {
+          "name": "linkClicks",
+          "value": 3,
+          "date": "2026-04-21",
+          "dimensions": {
+            "ad": "Angulo 1_V1",
+            "adset": "Angulo 1",
+            "campaign": "G4U - Testeo Creativos (Oier)"
+          }
+        },
+        {
+          "name": "engagement",
+          "value": 114,
+          "date": "2026-04-21",
+          "dimensions": {
+            "ad": "Angulo 1_V1",
+            "adset": "Angulo 1",
+            "campaign": "G4U - Testeo Creativos (Oier)"
+          }
+        },
+        {
+          "name": "spend",
+          "value": 4.03,
+          "date": "2026-04-21",
+          "dimensions": {
+            "ad": "Angulo 1_V2",
+            "adset": "Angulo 1",
+            "campaign": "G4U - Testeo Creativos (Oier)"
+          }
+        },
+        {
+          "name": "impressions",
+          "value": 27,
+          "date": "2026-04-21",
+          "dimensions": {
+            "ad": "Angulo 1_V2",
+            "adset": "Angulo 1",
+            "campaign": "G4U - Testeo Creativos (Oier)"
+          }
+        },
+        {
+          "name": "clicks",
+          "value": 1,
+          "date": "2026-04-21",
+          "dimensions": {
+            "ad": "Angulo 1_V2",
+            "adset": "Angulo 1",
+            "campaign": "G4U - Testeo Creativos (Oier)"
+          }
+        },
+        {
+          "name": "ctr",
+          "value": 3.703704,
+          "date": "2026-04-21",
+          "dimensions": {
+            "ad": "Angulo 1_V2",
+            "adset": "Angulo 1",
+            "campaign": "G4U - Testeo Creativos (Oier)"
+          }
+        },
+        {
+          "name": "cpc",
+          "value": 4.03,
+          "date": "2026-04-21",
+          "dimensions": {
+            "ad": "Angulo 1_V2",
+            "adset": "Angulo 1",
+            "campaign": "G4U - Testeo Creativos (Oier)"
+          }
+        },
+        {
+          "name": "linkClicks",
+          "value": 1,
+          "date": "2026-04-21",
+          "dimensions": {
+            "ad": "Angulo 1_V2",
+            "adset": "Angulo 1",
+            "campaign": "G4U - Testeo Creativos (Oier)"
+          }
+        },
+        {
+          "name": "engagement",
+          "value": 6,
+          "date": "2026-04-21",
+          "dimensions": {
+            "ad": "Angulo 1_V2",
+            "adset": "Angulo 1",
+            "campaign": "G4U - Testeo Creativos (Oier)"
+          }
+        },
+        {
+          "name": "spend",
+          "value": 1.77,
+          "date": "2026-04-21",
+          "dimensions": {
+            "ad": "Angulo 1_V3",
+            "adset": "Angulo 1",
+            "campaign": "G4U - Testeo Creativos (Oier)"
+          }
+        },
+        {
+          "name": "impressions",
+          "value": 49,
+          "date": "2026-04-21",
+          "dimensions": {
+            "ad": "Angulo 1_V3",
+            "adset": "Angulo 1",
+            "campaign": "G4U - Testeo Creativos (Oier)"
+          }
+        },
+        {
+          "name": "clicks",
+          "value": 0,
+          "date": "2026-04-21",
+          "dimensions": {
+            "ad": "Angulo 1_V3",
+            "adset": "Angulo 1",
+            "campaign": "G4U - Testeo Creativos (Oier)"
+          }
+        },
+        {
+          "name": "ctr",
+          "value": 0,
+          "date": "2026-04-21",
+          "dimensions": {
+            "ad": "Angulo 1_V3",
+            "adset": "Angulo 1",
+            "campaign": "G4U - Testeo Creativos (Oier)"
+          }
+        },
+        {
+          "name": "cpc",
+          "value": 0,
+          "date": "2026-04-21",
+          "dimensions": {
+            "ad": "Angulo 1_V3",
+            "adset": "Angulo 1",
+            "campaign": "G4U - Testeo Creativos (Oier)"
+          }
+        },
+        {
+          "name": "engagement",
+          "value": 5,
+          "date": "2026-04-21",
+          "dimensions": {
+            "ad": "Angulo 1_V3",
+            "adset": "Angulo 1",
+            "campaign": "G4U - Testeo Creativos (Oier)"
+          }
+        },
+        {
+          "name": "spend",
+          "value": 1.02,
+          "date": "2026-04-21",
+          "dimensions": {
+            "ad": "Ángulo 8_V1",
+            "adset": "Ángulo 8",
+            "campaign": "G4U - Testeo Creativos (Oier)"
+          }
+        },
+        {
+          "name": "impressions",
+          "value": 26,
+          "date": "2026-04-21",
+          "dimensions": {
+            "ad": "Ángulo 8_V1",
+            "adset": "Ángulo 8",
+            "campaign": "G4U - Testeo Creativos (Oier)"
+          }
+        },
+        {
+          "name": "clicks",
+          "value": 0,
+          "date": "2026-04-21",
+          "dimensions": {
+            "ad": "Ángulo 8_V1",
+            "adset": "Ángulo 8",
+            "campaign": "G4U - Testeo Creativos (Oier)"
+          }
+        },
+        {
+          "name": "ctr",
+          "value": 0,
+          "date": "2026-04-21",
+          "dimensions": {
+            "ad": "Ángulo 8_V1",
+            "adset": "Ángulo 8",
+            "campaign": "G4U - Testeo Creativos (Oier)"
+          }
+        },
+        {
+          "name": "cpc",
+          "value": 0,
+          "date": "2026-04-21",
+          "dimensions": {
+            "ad": "Ángulo 8_V1",
+            "adset": "Ángulo 8",
+            "campaign": "G4U - Testeo Creativos (Oier)"
+          }
+        },
+        {
+          "name": "engagement",
+          "value": 2,
+          "date": "2026-04-21",
+          "dimensions": {
+            "ad": "Ángulo 8_V1",
+            "adset": "Ángulo 8",
+            "campaign": "G4U - Testeo Creativos (Oier)"
+          }
+        },
+        {
+          "name": "spend",
+          "value": 48.57,
+          "date": "2026-04-21",
+          "dimensions": {
+            "ad": "Ángulo 8_V3",
+            "adset": "Ángulo 8",
+            "campaign": "G4U - Testeo Creativos (Oier)"
+          }
+        },
+        {
+          "name": "impressions",
+          "value": 1212,
+          "date": "2026-04-21",
+          "dimensions": {
+            "ad": "Ángulo 8_V3",
+            "adset": "Ángulo 8",
+            "campaign": "G4U - Testeo Creativos (Oier)"
+          }
+        },
+        {
+          "name": "clicks",
+          "value": 14,
+          "date": "2026-04-21",
+          "dimensions": {
+            "ad": "Ángulo 8_V3",
+            "adset": "Ángulo 8",
+            "campaign": "G4U - Testeo Creativos (Oier)"
+          }
+        },
+        {
+          "name": "ctr",
+          "value": 1.155116,
+          "date": "2026-04-21",
+          "dimensions": {
+            "ad": "Ángulo 8_V3",
+            "adset": "Ángulo 8",
+            "campaign": "G4U - Testeo Creativos (Oier)"
+          }
+        },
+        {
+          "name": "cpc",
+          "value": 3.469286,
+          "date": "2026-04-21",
+          "dimensions": {
+            "ad": "Ángulo 8_V3",
+            "adset": "Ángulo 8",
+            "campaign": "G4U - Testeo Creativos (Oier)"
+          }
+        },
+        {
+          "name": "linkClicks",
+          "value": 8,
+          "date": "2026-04-21",
+          "dimensions": {
+            "ad": "Ángulo 8_V3",
+            "adset": "Ángulo 8",
+            "campaign": "G4U - Testeo Creativos (Oier)"
+          }
+        },
+        {
+          "name": "leads",
+          "value": 1,
+          "date": "2026-04-21",
+          "dimensions": {
+            "ad": "Ángulo 8_V3",
+            "adset": "Ángulo 8",
+            "campaign": "G4U - Testeo Creativos (Oier)"
+          }
+        },
+        {
+          "name": "engagement",
+          "value": 332,
+          "date": "2026-04-21",
+          "dimensions": {
+            "ad": "Ángulo 8_V3",
+            "adset": "Ángulo 8",
+            "campaign": "G4U - Testeo Creativos (Oier)"
+          }
+        },
+        {
+          "name": "spend",
+          "value": 29.75,
+          "date": "2026-04-21",
+          "dimensions": {
+            "ad": "Ángulo 8_V2",
+            "adset": "Ángulo 8 - Copy",
+            "campaign": "G4U - Testeo Creativos (Oier)"
+          }
+        },
+        {
+          "name": "impressions",
+          "value": 2648,
+          "date": "2026-04-21",
+          "dimensions": {
+            "ad": "Ángulo 8_V2",
+            "adset": "Ángulo 8 - Copy",
+            "campaign": "G4U - Testeo Creativos (Oier)"
+          }
+        },
+        {
+          "name": "clicks",
+          "value": 16,
+          "date": "2026-04-21",
+          "dimensions": {
+            "ad": "Ángulo 8_V2",
+            "adset": "Ángulo 8 - Copy",
+            "campaign": "G4U - Testeo Creativos (Oier)"
+          }
+        },
+        {
+          "name": "ctr",
+          "value": 0.60423,
+          "date": "2026-04-21",
+          "dimensions": {
+            "ad": "Ángulo 8_V2",
+            "adset": "Ángulo 8 - Copy",
+            "campaign": "G4U - Testeo Creativos (Oier)"
+          }
+        },
+        {
+          "name": "cpc",
+          "value": 1.859375,
+          "date": "2026-04-21",
+          "dimensions": {
+            "ad": "Ángulo 8_V2",
+            "adset": "Ángulo 8 - Copy",
+            "campaign": "G4U - Testeo Creativos (Oier)"
+          }
+        },
+        {
+          "name": "linkClicks",
+          "value": 11,
+          "date": "2026-04-21",
+          "dimensions": {
+            "ad": "Ángulo 8_V2",
+            "adset": "Ángulo 8 - Copy",
+            "campaign": "G4U - Testeo Creativos (Oier)"
+          }
+        },
+        {
+          "name": "leads",
+          "value": 1,
+          "date": "2026-04-21",
+          "dimensions": {
+            "ad": "Ángulo 8_V2",
+            "adset": "Ángulo 8 - Copy",
+            "campaign": "G4U - Testeo Creativos (Oier)"
+          }
+        },
+        {
+          "name": "engagement",
+          "value": 517,
+          "date": "2026-04-21",
+          "dimensions": {
+            "ad": "Ángulo 8_V2",
+            "adset": "Ángulo 8 - Copy",
+            "campaign": "G4U - Testeo Creativos (Oier)"
+          }
+        }
+      ]
+    },
+    "ghl": {
+      "status": "ok",
+      "collectedAt": "2026-04-22T00:45:23.496Z",
+      "metrics": [
+        {
+          "name": "newContacts",
+          "value": 5,
+          "date": "2026-04-21"
+        },
+        {
+          "name": "totalContacts",
+          "value": 417,
+          "date": "2026-04-21"
+        },
+        {
+          "name": "newContacts",
+          "value": 3,
+          "date": "2026-04-21",
+          "dimensions": {
+            "channel": "Facebook"
+          }
+        },
+        {
+          "name": "newContacts",
+          "value": 1,
+          "date": "2026-04-21",
+          "dimensions": {
+            "channel": "GROWTH4U |  Llamada Estratégica"
+          }
+        },
+        {
+          "name": "newContacts",
+          "value": 1,
+          "date": "2026-04-21",
+          "dimensions": {
+            "channel": "Growth4U - Cómo Montar un Sistema de Atribución con Influencers usando Claude Code"
+          }
+        },
+        {
+          "name": "appointments",
+          "value": 3,
+          "date": "2026-04-21"
+        },
+        {
+          "name": "appointments",
+          "value": 1,
+          "date": "2026-04-21",
+          "dimensions": {
+            "status": "cancelled"
+          }
+        },
+        {
+          "name": "appointments",
+          "value": 2,
+          "date": "2026-04-21",
+          "dimensions": {
+            "status": "confirmed"
+          }
+        },
+        {
+          "name": "opportunities",
+          "value": 1,
+          "date": "2026-04-21"
+        },
+        {
+          "name": "pipelineValue",
+          "value": 0,
+          "date": "2026-04-21"
+        },
+        {
+          "name": "totalOpportunities",
+          "value": 49,
+          "date": "2026-04-21"
+        },
+        {
+          "name": "pipeline",
+          "value": 24,
+          "date": "2026-04-21",
+          "dimensions": {
+            "pipelineId": "OSBqHAuARcSvYct49emn",
+            "pipelineName": "Closer",
+            "stages": [
+              {
+                "id": "9c385e34-35a7-4477-9257-4a136cedd8e7",
+                "name": "Llamada Agendada",
+                "count": 15
+              },
+              {
+                "id": "749376a8-b3ee-439c-8515-d873608bbf30",
+                "name": "Llamada Confirmada",
+                "count": 0
+              },
+              {
+                "id": "6013462a-125f-4aa1-aba5-969fc383e3ab",
+                "name": "Llamada cancelada",
+                "count": 7
+              },
+              {
+                "id": "03885eeb-b792-4c08-a915-e1c30bc5f810",
+                "name": "No ha Asistido",
+                "count": 0
+              },
+              {
+                "id": "3b60296e-9a7a-48c8-a1d7-82c5df58a81d",
+                "name": "Llamada de Seguimiento",
+                "count": 1
+              },
+              {
+                "id": "734678bc-acb8-4a1f-b0e8-90d81137dd20",
+                "name": "Pendiente de Confirmación",
+                "count": 0
+              },
+              {
+                "id": "116a774a-7027-41e2-836e-650937d4e3a1",
+                "name": "No Asistió (Llamada de Seg.)",
+                "count": 0
+              },
+              {
+                "id": "6885f28c-0ada-4a0b-b0a5-4c66e35da55d",
+                "name": "No Cualificados",
+                "count": 0
+              },
+              {
+                "id": "d9833ab6-7cee-47ae-942d-9fd2730f7887",
+                "name": "No Interesados",
+                "count": 0
+              },
+              {
+                "id": "302e04b1-5f61-4c0f-8604-3d61a47a13f4",
+                "name": "Lead Nurturing",
+                "count": 1
+              },
+              {
+                "id": "0b8ea35a-7a6d-49f0-b3e3-8f959afe4918",
+                "name": "Cliente",
+                "count": 0
+              }
+            ]
+          }
+        },
+        {
+          "name": "pipeline",
+          "value": 25,
+          "date": "2026-04-21",
+          "dimensions": {
+            "pipelineId": "CeJQdqdQUR3Ure7DPbWu",
+            "pipelineName": "Guest Posting Outreach",
+            "stages": [
+              {
+                "id": "7b5537bd-fe67-43bd-96d5-224b4fe33221",
+                "name": "Prospecto",
+                "count": 3
+              },
+              {
+                "id": "a201c8bb-068d-4711-ab34-93945260714c",
+                "name": "Pitch Enviado",
+                "count": 22
+              },
+              {
+                "id": "5abc9162-f749-4e77-83b5-193c14976bb6",
+                "name": "Follow-up 1",
+                "count": 0
+              },
+              {
+                "id": "59dc2db0-a82f-48af-9695-957c9aee0711",
+                "name": "Follow-up 2",
+                "count": 0
+              },
+              {
+                "id": "2ffe8970-4ef6-4148-84b3-12d8cf61c4b1",
+                "name": "Respondió",
+                "count": 0
+              },
+              {
+                "id": "3e9fdc08-1471-4a97-aa38-8b160d0e6f2c",
+                "name": "Artículo Enviado",
+                "count": 0
+              },
+              {
+                "id": "28aa7001-5854-42bd-89bd-247e339cc50e",
+                "name": "Publicado",
+                "count": 0
+              },
+              {
+                "id": "eb1090e1-e12d-459f-98a9-cfe1fa87860f",
+                "name": "Descartado",
+                "count": 0
+              }
+            ]
+          }
+        },
+        {
+          "name": "pipeline",
+          "value": 0,
+          "date": "2026-04-21",
+          "dimensions": {
+            "pipelineId": "Kr69F4XA3YrI0ZmIjGYe",
+            "pipelineName": "Sales",
+            "stages": [
+              {
+                "id": "b1829829-ae5a-4970-b9f0-28980e7814b9",
+                "name": "Opt-in",
+                "count": 0
+              },
+              {
+                "id": "d288ddca-15cd-4fec-8620-66fc75c12af1",
+                "name": "Opt-in Bootcamp",
+                "count": 0
+              },
+              {
+                "id": "df7969f4-b77c-4d7e-80de-d0edf52bf52e",
+                "name": "Discovery agendado",
+                "count": 0
+              },
+              {
+                "id": "1ccb31b2-0029-4ffe-b285-c44c573d2daf",
+                "name": "AUT -> discovery no show",
+                "count": 0
+              },
+              {
+                "id": "f0433650-dc9b-4a15-bfa6-0c1d01172265",
+                "name": "Demo agendada",
+                "count": 0
+              },
+              {
+                "id": "1c23e185-db5d-4bbc-a440-90cee01ccf8b",
+                "name": "AUT -> demo no show",
+                "count": 0
+              },
+              {
+                "id": "dbe70712-f524-4727-9107-1ae66ca631ce",
+                "name": "AUT -> demo efectiva envío mail",
+                "count": 0
+              },
+              {
+                "id": "3a9ec576-0c28-417f-9597-050e97dc2666",
+                "name": "AUT -> cliente realiza deposito",
+                "count": 0
+              },
+              {
+                "id": "5507835c-5af1-4f30-ba56-2549031d7a67",
+                "name": "AUT -> no cerrado/newsletter",
+                "count": 0
+              }
+            ]
+          }
+        },
+        {
+          "name": "pipeline",
+          "value": 0,
+          "date": "2026-04-21",
+          "dimensions": {
+            "pipelineId": "SsvNx8ufQKMv5TmS6AHj",
+            "pipelineName": "Setter",
+            "stages": [
+              {
+                "id": "554b8bdb-1646-413b-8bd1-6184d0a3c9e6",
+                "name": "LeadMagnets",
+                "count": 0
+              },
+              {
+                "id": "3b3e2bdd-bd89-43f6-aaf4-c4c42764006f",
+                "name": "Typeforms Calificados",
+                "count": 0
+              },
+              {
+                "id": "04d0fec5-af5a-4e39-9a2f-9c6345fee781",
+                "name": "No Resp/ Lead Magnets",
+                "count": 0
+              },
+              {
+                "id": "47ebc5b4-0dda-4e1f-84b7-ddf089933523",
+                "name": "No Resp/ Typeforms",
+                "count": 0
+              },
+              {
+                "id": "d6e813ea-11a7-4681-aef8-1a099bc2ded6",
+                "name": "No Cualificados",
+                "count": 0
+              },
+              {
+                "id": "a8afce57-221b-41b5-843a-219328b33409",
+                "name": "Lead Nurturing",
+                "count": 0
+              },
+              {
+                "id": "a8779e80-8306-4eff-8adf-9277488ea233",
+                "name": "No Interesados",
+                "count": 0
+              }
+            ]
+          }
+        },
+        {
+          "name": "recentConversation",
+          "value": 1,
+          "date": "2026-04-21",
+          "dimensions": {
+            "contactId": "ucL8YXh9Gn8uGtQyP4Xr",
+            "type": "TYPE_PHONE",
+            "lastMessage": "De acuerdo, ya he agendado la llamada",
+            "lastMessageDate": "2026-04-21T10:19",
+            "unread": 1
+          }
+        },
+        {
+          "name": "recentConversation",
+          "value": 0,
+          "date": "2026-04-21",
+          "dimensions": {
+            "contactId": "n0nIQeYkFFVB1TulRIT5",
+            "type": "TYPE_PHONE",
+            "lastMessage": "Hola Laura Donadio!\n\nTu cita ha sido programada.\n\n\nFecha y hora Thursday, April 23, 2026 1:00 PM (CEST)\n\n\nAgrégala aquí ",
+            "lastMessageDate": "2026-04-21T08:09",
+            "unread": 0
+          }
+        },
+        {
+          "name": "recentConversation",
+          "value": 0,
+          "date": "2026-04-21",
+          "dimensions": {
+            "contactId": "Gwga8zrjoKxj7AcfoeYm",
+            "type": "TYPE_PHONE",
+            "lastMessage": "Hola Sergi Candel!\n\nTu cita ha sido programada.\n\n\nFecha y hora Thursday, April 23, 2026 5:00 PM (CEST)\n\n\nAgrégala aquí a",
+            "lastMessageDate": "2026-04-20T16:37",
+            "unread": 0
+          }
+        },
+        {
+          "name": "recentConversation",
+          "value": 0,
+          "date": "2026-04-21",
+          "dimensions": {
+            "contactId": "Lq27yCsxIuA3rYJqy3mi",
+            "type": "TYPE_PHONE",
+            "lastMessage": "Hola Enric Majó Prats!\n\nTu cita ha sido programada.\n\n\nFecha y hora Friday, April 24, 2026 11:30 AM (CEST)\n\n\nAgrégala aqu",
+            "lastMessageDate": "2026-04-20T08:02",
+            "unread": 0
+          }
+        },
+        {
+          "name": "recentConversation",
+          "value": 0,
+          "date": "2026-04-21",
+          "dimensions": {
+            "contactId": "dWNa5BY8sfps2shr0eNm",
+            "type": "TYPE_PHONE",
+            "lastMessage": "Hola Blas Nieto!\n\nTu cita ha sido programada.\n\n\nFecha y hora Wednesday, April 22, 2026 11:00 AM (CEST)\n\n\nAgrégala aquí a",
+            "lastMessageDate": "2026-04-18T04:45",
+            "unread": 0
+          }
+        }
+      ]
+    },
+    "instantly": {
+      "status": "error",
+      "error": "(campaigns || []) is not iterable"
+    },
+    "pagespeed": {
+      "status": "ok",
+      "metrics": [
+        {
+          "name": "performance_mobile",
+          "value": 81,
+          "date": "2026-04-22"
+        },
+        {
+          "name": "seo_mobile",
+          "value": 92,
+          "date": "2026-04-22"
+        },
+        {
+          "name": "performance_desktop",
+          "value": 97,
+          "date": "2026-04-22"
+        },
+        {
+          "name": "seo_desktop",
+          "value": 92,
+          "date": "2026-04-22"
+        },
+        {
+          "name": "lcp_mobile",
+          "value": 3.5,
+          "date": "2026-04-22"
+        },
+        {
+          "name": "cls_mobile",
+          "value": 0.007,
+          "date": "2026-04-22"
+        },
+        {
+          "name": "tbt_mobile",
+          "value": 68,
+          "date": "2026-04-22"
+        }
+      ]
+    }
+  }
+}

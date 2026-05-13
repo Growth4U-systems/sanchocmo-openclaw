@@ -1,0 +1,17 @@
+# PAA Queries — P5: Growth con IA Ejecucion No Hype
+# Dynamic prompt that discovers real questions people ask.
+# Tool: DataforSEO PAA API / WebSearch
+# Frequency: weekly (Monday 6am)
+
+pillar_id: P5
+pillar_name: "Growth con IA Ejecucion No Hype"
+
+prompt: >
+  What are the top 10 questions that startup founders, growth managers
+  and CMOs are asking RIGHT NOW about using AI agents for actual marketing execution (not demos), building a content engine with AI, the minimum viable AI marketing stack for a 1-person team, and AI for outreach automation?
+  Search Reddit (r/SaaS, r/startups, r/marketing), Quora, LinkedIn posts,
+  and Google People Also Ask. Give me the exact question as phrased by
+  real people, the source where you found it, and why it matters.
+  Prioritize questions that reveal pain points or buying intent.
+
+language: [es, en]

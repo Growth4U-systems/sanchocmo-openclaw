@@ -46,6 +46,12 @@ La prioridad estratégica de 2026 no es escalar visibilidad masiva todavía, sin
 - capturar el canal asesor antes que la competencia
 - convertir la base actual de confianza en crecimiento repetible
 
+Los 4 frentes comerciales que estructuran esa ejecución son:
+- **Arquetipo A (anticipo, liquidez joven)**
+- **Arquetipo B (anticipo, patrimonio establecido)**
+- **Empresa con IS alto (cliente final incentivo)**
+- **Asesor fiscal / despacho (gatekeeper + canal)**
+
 ---
 
 ## Priorización de Canales
