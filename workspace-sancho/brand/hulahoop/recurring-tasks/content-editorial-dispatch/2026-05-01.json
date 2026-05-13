@@ -1,0 +1,73 @@
+{
+  "date": "2026-05-01",
+  "triggered_at": "2026-05-01T06:57:00Z",
+  "status": "dispatched",
+  "discord_message_id": "1499666482580164619",
+  "discord_channel_id": "1491032340208812042",
+  "candidates_total": 7,
+  "candidates_presented": 5,
+  "cadence_config": "missing — used default (top 5 by confidence)",
+  "selections": [
+    {
+      "rank": 1,
+      "idea_id": "idea-2026-05-01-003",
+      "pillar": "incentivos-fiscales",
+      "type": "Hot Take",
+      "pov_confidence": 0.90,
+      "recency_score": 1.0,
+      "age_days": 0
+    },
+    {
+      "rank": 2,
+      "idea_id": "idea-2026-05-01-005",
+      "pillar": "financiacion-entretenimiento",
+      "type": "Hot Take",
+      "pov_confidence": 0.88,
+      "recency_score": 1.0,
+      "age_days": 0
+    },
+    {
+      "rank": 3,
+      "idea_id": "idea-2026-05-01-001",
+      "pillar": "pfp-regulacion",
+      "type": "Hot Take",
+      "pov_confidence": 0.85,
+      "recency_score": 1.0,
+      "age_days": 0
+    },
+    {
+      "rank": 4,
+      "idea_id": "idea-2026-05-01-004",
+      "pillar": "incentivos-fiscales",
+      "type": "Framework",
+      "pov_confidence": 0.82,
+      "recency_score": 1.0,
+      "age_days": 0
+    },
+    {
+      "rank": 5,
+      "idea_id": "idea-2026-05-01-002",
+      "pillar": "pfp-regulacion",
+      "type": "Proof Post",
+      "pov_confidence": 0.80,
+      "recency_score": 1.0,
+      "age_days": 0
+    }
+  ],
+  "not_presented": [
+    {
+      "idea_id": "idea-2026-05-01-006",
+      "pillar": "tokenizacion-rwa",
+      "pov_confidence": 0.78,
+      "reason": "below top-5 cutoff"
+    },
+    {
+      "idea_id": "idea-2026-05-01-007",
+      "pillar": "financiacion-entretenimiento",
+      "pov_confidence": 0.75,
+      "reason": "below top-5 cutoff"
+    }
+  ],
+  "awaiting_response": true,
+  "notes": "cadence-config.yml missing — created default. All ideas age=0 (same day), sorted by pov_confidence only."
+}

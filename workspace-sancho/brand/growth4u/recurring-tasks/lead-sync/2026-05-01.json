@@ -1,0 +1,11 @@
+{
+  "cronId": "a68143d8-1309-46eb-a5dc-4c3fb35ee3d2",
+  "cronName": "Lead Sync — Growth4U",
+  "slug": "growth4u",
+  "date": "2026-05-01",
+  "runAtMs": 1777665600288,
+  "status": "ok",
+  "durationMs": 340472,
+  "model": "claude-opus-4-6",
+  "content": "📊 **Lead Sync — 2026-05-01 (22:00)**\n\n**Resumen:**\n- 🏷️ Contactos con `llamada-agendada`: **28**\n- 🆕 Nuevos leads creados: **2**\n- 🔄 Leads actualizados: **0**\n- 📝 Notas Slack sincronizadas: **0** (Slack deshabilitado)\n- 🎙️ Transcripts Drive: **0** (gog no disponible)\n\n**Nuevos leads:**\n1. **Francisco Franco** — Sector ropa, presupuesto 10k-25k€, email personal (Hotmail). ⚠️ Fuera del ICP típico. `enrichment_pending: true`.\n2. **Reyes Saiz** — **EADIC** (EdTech, formación ingeniería online). Presupuesto +50k€. ✅ Alto potencial, encaja con ICP.\n\n**Warnings:**\n- ⚠️ Google Drive (`gog`) no respondió — búsqueda de transcripts omitida para los 28 contactos.\n- Slack sync deshabilitado en config."
+}

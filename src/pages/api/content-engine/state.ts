@@ -158,8 +158,17 @@ function readLastFinding(slug: string, folder: string): { date: string | null; f
       finding = previewFromContent(data.content);
     }
     const count: number | null = data.total_new_questions ?? data.candidates_sent ?? data.signals_count ?? null;
+    // `date` (YYYY-MM-DD, matches the filename) is the source of truth. Use `runAtMs` only when its
+    // day agrees with `date` — the cron writer agent has been known to hallucinate runAtMs values.
+    const dateStr = typeof data.date === "string" ? data.date : files[0].replace(".json", "");
+    let runDate: string | null = null;
+    if (data.runAtMs && new Date(data.runAtMs).toISOString().slice(0, 10) === dateStr) {
+      runDate = new Date(data.runAtMs).toISOString();
+    } else if (dateStr) {
+      runDate = new Date(dateStr + "T00:00:00Z").toISOString();
+    }
     return {
-      date: data.runAtMs ? new Date(data.runAtMs).toISOString() : (data.date ? new Date(data.date).toISOString() : null),
+      date: runDate,
       finding,
       count,
       status: data.status || null,

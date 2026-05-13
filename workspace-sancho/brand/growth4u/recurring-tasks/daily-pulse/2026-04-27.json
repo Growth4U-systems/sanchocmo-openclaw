@@ -1,0 +1,11 @@
+{
+  "cronId": "00fa288d-d349-449e-85ff-1d3b2260f2d3",
+  "cronName": "Daily Pulse — Growth4U",
+  "slug": "growth4u",
+  "date": "2026-04-27",
+  "runAtMs": 1777275713003,
+  "status": "error",
+  "durationMs": 215805,
+  "model": "MiniMax-M2.7",
+  "content": "**📊 Daily Pulse — Growth4U | Lunes 27 Abril 2026**\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n**RESUMEN EJECUTIVO**\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nMeta Ads recupera eficiencia: €178 spend → 1 lead, CTR 1.02%. GHL registra 2 contactos nuevos. Problema crítico abierto: **0 citas agendadas**.\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n**📈 MÉTRICAS (24h)**\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n| Canal | Indicador | Valor | Estado |\n|---|---|---|---|\n| Meta Ads | Spend | €178 | ✅ En rango |\n| Meta Ads | CTR | 1.02% | ✅ Recuperado |\n| Meta Ads | Leads ayer | 1 | ⚠️ Bajo media |\n| GHL | Contactos nuevos | 2 | 🆕 |\n| GHL | Citas agendadas | 0 | 🔴 Crítico |\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n**🚨 ALERTA ABIERTA**\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n• **Flujo lead→cita sigue roto.** Lleva días sin convertir contactos nuevos en citas. Revisar: ¿GHL no está haciendo follow-up o el booking está bloqueado?\n• **0 llamadas con leads en calendario** para mañana martes 27.\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n**💡 CONTENIDO ACTIVO**\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n5 candidatos en Editorial Dispatch. Priorizar:\n- **(4) Hot Take LinkedIn** — Gartner: 39% CMOs recortan en agencias, fractional CMO +245%\n- **(1) Hot Take LinkedIn** — \"Growth sin palanca = company sin motor\" (dato Bnext: de €50 CAC a €12.40 no fue suerte, fue sistema)\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n**🎯 MICRO-BRIEFS**\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n| # | Prioridad | Acción | Owner |\n|---|---|---|---|\n| MB-001 | 🚨 P0 | Auditar flujo lead→cita GHL. 2 contactos nuevos sin seguimiento. Identificar bottleneck. | Equipo |\n| MB-002 | ⚡ P1 | Ejecutar hot take del Editorial Dispatch (4 o 1). Alta señal. | Alfonso |\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n**📁 Docs**\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n• Daily Pulse: `brand/growth4u/daily-pulse/2026-04-27.json`\n• Regenerado: `mc-data.js` ✅"
+}

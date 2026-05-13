@@ -1,0 +1,18 @@
+{
+  "cronName": "content-competitor-monitor",
+  "slug": "hospital-capilar",
+  "date": "2026-05-08",
+  "runAtMs": 1778218105084,
+  "status": "completed",
+  "last_finding": "6 ideas nuevas (3 competitors, 3 reference-creators). Highlights: idea-2026-05-08-10 — Dr. Vañó publica sobre alopecia persistente post-quimioterapia (pov 0.80); idea-2026-05-08-11 — Insparya actualiza guía finasterida para SEO (pov 0.82); idea-2026-05-08-6 — Insparya publica sobre melanoma en cuero cabelludo por Mes del Melanoma.",
+  "content": "Monitored 5 competitors (Insparya, Svenson, Capilclinic, IMD, mediQuo) and 3 reference-creators (Dr. Vañó, Helena Rodero, Dr. De Felipe). Scanned blogs, LinkedIn, web search. X/Twitter unavailable (xAI credits exhausted).",
+  "ideas_created": 6,
+  "ideas_ids": [
+    "idea-2026-05-08-6",
+    "idea-2026-05-08-7",
+    "idea-2026-05-08-8",
+    "idea-2026-05-08-9",
+    "idea-2026-05-08-10",
+    "idea-2026-05-08-11"
+  ]
+}

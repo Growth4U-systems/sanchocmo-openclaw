@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 import { BASE } from "@/lib/data/paths";
-import { listDrafts } from "@/lib/data/drafts";
+import { listDrafts, loadDraft } from "@/lib/data/drafts";
 import {
   ContentTask,
   ContentTaskStatus,
@@ -332,6 +332,21 @@ export function setChannelPhase(
   const ct = list.find((c) => c.id === contentTaskId);
   if (!ct) throw new Error(`ContentTask ${contentTaskId} not found under ${parentTaskId}`);
 
+  // Media Gate (defense in depth): a channel marked `media_policy=required`
+  // cannot reach `approved` (publishing-ready) without media attached on the
+  // corresponding draft. The publish endpoint also enforces this — duplicating
+  // the check here means curl / agent paths that flip channel_phases directly
+  // can't bypass it.
+  if (phase === "approved" && ct.media_policy?.[channel] === "required") {
+    const draft = loadDraft(slug, ct.idea_id, channel);
+    const mediaCount = draft?.meta.media?.length ?? 0;
+    if (mediaCount === 0) {
+      throw new Error(
+        `Channel ${channel} requires media (media_policy="required") — cannot advance to "approved" without media attached.`,
+      );
+    }
+  }
+
   ct.channel_phases = { ...(ct.channel_phases || {}), [channel]: phase };
   ct.updated_at = new Date().toISOString();
   saveProjectTasks(file);
@@ -368,6 +383,20 @@ export function setChannelPhases(
   const list = (parent.content_tasks as ContentTask[] | undefined) || [];
   const ct = list.find((c) => c.id === contentTaskId);
   if (!ct) throw new Error(`ContentTask ${contentTaskId} not found under ${parentTaskId}`);
+
+  // Media Gate (defense in depth) — same rule as setChannelPhase, applied to
+  // every channel in the bulk patch that's being moved to "approved".
+  for (const [channel, p] of Object.entries(patch)) {
+    if (p !== "approved") continue;
+    if (ct.media_policy?.[channel] !== "required") continue;
+    const draft = loadDraft(slug, ct.idea_id, channel);
+    const mediaCount = draft?.meta.media?.length ?? 0;
+    if (mediaCount === 0) {
+      throw new Error(
+        `Channel ${channel} requires media (media_policy="required") — cannot advance to "approved" without media attached.`,
+      );
+    }
+  }
 
   ct.channel_phases = { ...(ct.channel_phases || {}), ...patch };
   ct.updated_at = new Date().toISOString();
@@ -484,6 +513,7 @@ export type ContentTaskUpdateInput = Partial<
     | "owner"
     | "scheduled_for"
     | "clarify_status"
+    | "media_policy"
   >
 >;
 
@@ -497,6 +527,7 @@ const UPDATABLE_FIELDS: readonly (keyof ContentTaskUpdateInput)[] = [
   "owner",
   "scheduled_for",
   "clarify_status",
+  "media_policy",
 ] as const;
 
 /**

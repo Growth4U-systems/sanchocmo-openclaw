@@ -1,0 +1,22 @@
+{
+  "cronName": "Content: Editorial Dispatch — Paymatico",
+  "slug": "paymatico",
+  "date": "2026-05-06",
+  "runAtMs": 1746513960000,
+  "status": "ok",
+  "transport": "discord",
+  "channel_id": "1477995838092476477",
+  "candidates_selected": 5,
+  "candidates_sent": 5,
+  "idea_ids": [
+    "idea-2026-05-06-003",
+    "idea-2026-05-06-013",
+    "idea-2026-05-06-017",
+    "idea-2026-05-06-002",
+    "idea-2026-05-06-004"
+  ],
+  "task_id": "P-Content-Semana-19-T03",
+  "project_id": "P-Content-Semana-19",
+  "notes": "send-dispatch endpoint returned 501 (Discord not implemented). Fallback to direct Discord message tool. All 17 New ideas age=0d, selected top 5 by pov_confidence. No ideas deferred (all <=14 days).",
+  "error": null
+}

@@ -1,0 +1,194 @@
+{
+  "slug": "growth4u",
+  "weekLabel": "2026-W19",
+  "weekStart": "2026-05-05",
+  "weekEnd": "2026-05-11",
+  "generatedAt": "2026-05-11T20:24:00+02:00",
+  "healthScore": {
+    "overall": 42,
+    "previous": 37,
+    "delta": 5,
+    "trend": "improving",
+    "byCategory": {
+      "funnel": 33,
+      "paid": 81,
+      "traffic": 25,
+      "seo": 35,
+      "social": 15
+    }
+  },
+  "nsm": {
+    "metric": "Meetings",
+    "thisWeek": 0,
+    "lastWeek": 4,
+    "monthlyTotal": 4,
+    "on_track": false,
+    "bottleneck": "Lead→Meeting: 0% (25 contacts, 0 citas)",
+    "note": "NSM completamente bloqueada. Segunda semana consecutiva con caída. Funnel roto entre leads y meetings."
+  },
+  "baselines": {
+    "source": "operational-snapshots + weekly-reports",
+    "meta_ads": {
+      "ctr_7d_w18": 0.58,
+      "ctr_30d": 0.85,
+      "cpc_7d_w18": 3.30,
+      "cpc_30d": 2.50,
+      "cpl_7d_w18": 69.96,
+      "cpl_30d": 54.0,
+      "leads_7d_w18": 13
+    },
+    "ghl": {
+      "appointments_7d_w18": 4,
+      "appointments_30d": 5,
+      "contacts_7d_w18": 10
+    }
+  },
+  "currentPeriod": {
+    "meta_ads": {
+      "ctr_7d": 1.57,
+      "cpc_7d": 2.94,
+      "leads_7d": 19,
+      "spend_7d": 859.23,
+      "cpl": 45.22,
+      "campaign": "G4U - Testeo Creativos - Copy"
+    },
+    "ghl": {
+      "contacts_week": 25,
+      "appointments_week": 0,
+      "lead_to_meeting_rate": 0
+    },
+    "seo": {
+      "avg_position": 10.5,
+      "note": "Sin datos frescos esta semana — estimado de W18"
+    },
+    "ga4": {
+      "engagementRate": 0,
+      "note": "Sin datos frescos — stagnación >50 días"
+    }
+  },
+  "ctrTrend": {
+    "values": [0.53, 0.53, 0.52, 0.67, 0.94, 1.24, 1.57],
+    "dates": ["2026-05-05", "2026-05-06", "2026-05-07", "2026-05-08", "2026-05-09", "2026-05-10", "2026-05-11"],
+    "consecutiveUpDays": 4,
+    "direction": "trending_up",
+    "note": "Primera recuperación sostenida de CTR en 7 semanas. Causa desconocida — investigar urgente."
+  },
+  "anomalies": [
+    {
+      "metric": "ghl.appointments",
+      "category": "funnel",
+      "type": "drop",
+      "severity": "red",
+      "current_value": 0,
+      "baseline_7d": 4,
+      "baseline_30d": 5,
+      "deviation_pct": -100,
+      "days_stagnant": 7,
+      "since": "2026-05-05",
+      "description": "0 appointments durante toda la semana (7 días consecutivos). 25 contactos entraron al CRM pero ninguno convirtió a reunión. Lead→Meeting = 0% vs histórico 40-72%. El funnel está completamente roto entre leads y meetings. NUEVO: Esto NO estaba así en W18 (4 meetings). Algo cambió."
+    },
+    {
+      "metric": "meta-ads.cpl",
+      "category": "efficiency",
+      "type": "high_inverted",
+      "severity": "yellow",
+      "current_value": 45.22,
+      "baseline_7d": 69.96,
+      "baseline_30d": 54.0,
+      "deviation_pct": -35,
+      "since": "2026-04-07",
+      "description": "CPL mejoró significativamente: €69.96 → €45.22 (-35%). Sigue siendo 2.5x el target de €18, pero es la mayor mejora semanal desde Abril. Trend positivo si continúa."
+    },
+    {
+      "metric": "meta-ads.ctr",
+      "category": "paid",
+      "type": "recovery",
+      "severity": "green",
+      "current_value": 1.57,
+      "baseline_7d": 0.58,
+      "baseline_30d": 0.85,
+      "deviation_pct": 171,
+      "direction": "opportunity",
+      "since": "2026-05-08",
+      "description": "CTR se recuperó de 0.52% a 1.57% en 4 días consecutivos. Primera recuperación sostenida en 7 semanas. Causa no identificada — puede ser cambio de creativos, refresh de audiencia, o factor algorítmico. OPORTUNIDAD: capitalizar con más presupuesto en el ángulo ganador."
+    },
+    {
+      "metric": "gsc.position",
+      "category": "seo",
+      "type": "degradation",
+      "severity": "yellow",
+      "current_value": 10.5,
+      "baseline_7d": 8.0,
+      "baseline_30d": 5.86,
+      "deviation_pct": 79,
+      "days_degraded": 25,
+      "since": "2026-04-15",
+      "description": "Avg position ~10.5 — sin recuperación visible. Las posiciones top-5 de Marzo siguen erosionadas. P14 (Content Engine) completado, pero sin contenido nuevo publicado aún."
+    },
+    {
+      "metric": "ga4.engagementRate",
+      "category": "traffic",
+      "type": "stagnation",
+      "severity": "yellow",
+      "current_value": 0,
+      "baseline_30d": 0,
+      "days_stagnant": 55,
+      "since": "2026-03-18",
+      "description": "Engagement 0% durante >55 días. Problema estructural de UX/landing que sigue sin resolverse. P01 (Fontanería Web) en in-progress pero sin completarse."
+    }
+  ],
+  "opportunities": [
+    {
+      "metric": "meta-ads.ctr",
+      "description": "CTR subió de 0.52% a 1.57% en 4 días. Identificar qué cambió (ángulo, audiencia, posicionamiento) y escalar presupuesto hacia ese elemento.",
+      "action": "Auditar Meta Ads Manager: ¿qué anuncio o ángulo tiene mejor CTR esta semana? Redirigir 50-60% del budget a ese adset.",
+      "potential_impact": "Si CTR sigue subiendo a 2-3%, CPL podría bajar a €25-30 sin cambiar spend."
+    },
+    {
+      "metric": "ghl.newContacts",
+      "description": "Contacts/semana saltó de ~10 (W18) a 25 (W19). Más leads que nunca entrando al CRM. Pero 0 conversiones a meetings.",
+      "action": "El volumen de leads NO es el problema esta semana. El problema es la conversión. Arreglar el funnel de booking URGENTE.",
+      "potential_impact": "Si Lead→Meeting vuelve al 40%, 25 leads → 10 meetings/semana. NSM 2.5x."
+    }
+  ],
+  "projectCorrelation": [
+    {
+      "projectId": "P01",
+      "projectName": "Fontanería Web (Pixel + GA4)",
+      "status": "in-progress",
+      "weeksActive": "8+",
+      "relatedMetrics": ["ga4.engagementRate", "meta-ads.cpl"],
+      "assessment": "Deadline 11-May pasado sin cumplirse. El engagement 0% y la imposibilidad de optimizar Meta por conversiones siguen siendo consecuencia directa de este bloqueo. Urgencia máxima.",
+      "confidence": "high"
+    },
+    {
+      "projectId": "P03",
+      "projectName": "Cold Email Pipeline",
+      "status": "pending",
+      "weeksActive": 0,
+      "relatedMetrics": ["ghl.appointments"],
+      "assessment": "Con appointments = 0 esta semana y dependencia 100% de Meta Ads, P03 es la única vía de diversificación rápida disponible. Cada semana que no se lanza = riesgo acumulado.",
+      "confidence": "high"
+    },
+    {
+      "projectId": "P04",
+      "projectName": "Meta Ads Reactivación",
+      "status": "pending",
+      "weeksActive": 0,
+      "relatedMetrics": ["meta-ads.ctr", "meta-ads.cpl"],
+      "assessment": "Paradójicamente, CTR está mejorando esta semana a pesar de que P04 sigue 'pending'. Puede ser un cambio externo o que se hicieron ajustes manuales no documentados. Investigar.",
+      "confidence": "medium"
+    },
+    {
+      "projectId": "P14",
+      "projectName": "Content Engine",
+      "status": "completed",
+      "weeksActive": 1,
+      "relatedMetrics": ["gsc.position", "ga4.sessions"],
+      "assessment": "P14 completado pero sin contenido publicado aún. La mejora SEO depende ahora de ejecutar la producción de artículos. Infraestructura lista — falta contenido.",
+      "confidence": "low"
+    }
+  ],
+  "executiveSummary": "Semana W19 con señales contradictorias. Lo bueno: CTR de Meta Ads se recuperó de 0.52% a 1.57% en 4 días consecutivos — primera señal positiva sostenida en 7 semanas. CPL mejoró -35% (€70 → €45). Contactos entrando al CRM: 25 en la semana (vs 10 semana anterior). Lo malo: CERO appointments durante los 7 días. Con 25 contactos y 0 reuniones, el funnel entre leads y meetings está completamente roto. Este es el problema #1 de la semana — urgente diagnosticar si es un fallo técnico del booking, una bajada de calidad de leads, o un problema de respuesta/follow-up. La NSM lleva 2 semanas cayendo (7→4→0). Health Score: 42/100 (↑+5 vs W18=37) gracias a la recuperación de paid, pero el funnel arrastra el score hacia abajo.",
+  "_selfQA": "PASS | 2026-05-11"
+}

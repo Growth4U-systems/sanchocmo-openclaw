@@ -1,0 +1,16 @@
+{
+  "messages": [
+    {
+      "role": "user",
+      "text": "Estoy mirando el asset \"visual-guide\" (`brand-book/visual-identity/visual-identity-guide.html`, kind=preview). Dame un resumen y las opciones de refinamiento.",
+      "ts": 1778415742892
+    },
+    {
+      "role": "bot",
+      "text": "Aquí va el resumen:\n\n**Visual Identity Guide v1.0 — Growth4U**\n\nUn HTML de 7 secciones que define el sistema visual completo:\n\n1. **Concepto** — \"The Growth Lab\": Alfonso como científico del growth. Estilo Clean Line Art con acentos brand. Tres pilares: directo, científico, cercano.\n2. **Paleta** — 6 colores (Navy #032149, Royal #1a3690, Electric #3f45fe, Sky #45b6f7, Teal #0faec1, Purple #6351d5) + gradiente brand Teal→Royal→Purple.\n3. **Tipografía** — Manrope (800/700/600) para títulos + Roboto 400 para cuerpo. Mínimo 24px en 1080px.\n4. **Personajes** — Alfonso (70%), Martín (15%), Philippe (15%). Variantes light/dark. Poses incluidas.\n5. **Elementos** — Iconos line art (funnel, cohete, target…) + escenas (consultoría, dashboard, workshop).\n6. **Templates** — LinkedIn quote (1080×1350), Blog header (1200×630), IG quote (1080×1080), Carousel cover (1200×628).\n7. **Reglas** — Light vs Dark por canal, do's/don'ts, regla anti-mezcla foto+ilustración.\n\nEstado: **v1.0, pendiente de aprobación.**\n\n---\n\n¿Qué quieres refinar?\n\n:::ask\n{\"id\":\"q_refine\",\"prompt\":\"¿Qué área quieres ajustar?\",\"mode\":\"multi\",\"options\":[{\"id\":\"colors\",\"label\":\"Paleta de colores (añadir, quitar o cambiar)\"},{\"id\":\"typography\",\"label\":\"Tipografía (fuentes, tamaños, pesos)\"},{\"id\":\"characters\",\"label\":\"Personajes (proporciones, poses, variantes)\"},{\"id\":\"templates\",\"label\":\"Templates (nuevos formatos, ajustar layouts)\"},{\"id\":\"rules\",\"label\":\"Reglas de uso (light/dark, do's & don'ts)\"},{\"id\":\"concept\",\"label\":\"Concepto visual (estilo, narrativa)\"},{\"id\":\"elements\",\"label\":\"Elementos (iconos, escenas)\"},{\"id\":\"approve\",\"label\":\"✅ Aprobarlo tal cual\"},{\"id\":\"other\",\"label\":\"Otro (lo escribo)\"}]}\n:::",
+      "ts": 1778415783991,
+      "agent": "sancho"
+    }
+  ],
+  "updatedAt": 1778415783991
+}

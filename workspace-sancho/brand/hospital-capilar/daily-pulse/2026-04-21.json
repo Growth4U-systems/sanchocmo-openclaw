@@ -1,0 +1,83 @@
+{
+  "date": "2026-04-21",
+  "source": "daily-pulse",
+  "run_id": "cron:2283eade-3d08-4f46-a508-eaa6d035a4d2",
+  "run_at_utc": "2026-04-21T23:52:25.155582",
+  "sources_scanned": {
+    "discord_channels": [
+      "general",
+      "brand",
+      "campaigns",
+      "content",
+      "intelligence",
+      "onboarding",
+      "soporte",
+      "research",
+      "paid-ads"
+    ],
+    "gmail": false,
+    "notion": false
+  },
+  "pre_check_results": {
+    "general": {
+      "status": "unable_to_check",
+      "reason": "message tool inaccessible from exec context"
+    },
+    "brand": {
+      "status": "unable_to_check",
+      "reason": "message tool inaccessible from exec context"
+    },
+    "campaigns": {
+      "status": "unable_to_check",
+      "reason": "message tool inaccessible from exec context"
+    },
+    "content": {
+      "status": "unable_to_check",
+      "reason": "message tool inaccessible from exec context"
+    },
+    "intelligence": {
+      "status": "unable_to_check",
+      "reason": "message tool inaccessible from exec context"
+    },
+    "onboarding": {
+      "status": "unable_to_check",
+      "reason": "message tool inaccessible from exec context"
+    },
+    "soporte": {
+      "status": "unable_to_check",
+      "reason": "message tool inaccessible from exec context"
+    },
+    "research": {
+      "status": "unable_to_check",
+      "reason": "message tool inaccessible from exec context"
+    },
+    "paid-ads": {
+      "status": "unable_to_check",
+      "reason": "message tool inaccessible from exec context"
+    }
+  },
+  "channels_active": 0,
+  "channels_skipped": 9,
+  "insights": [],
+  "content_ideas": [],
+  "patterns_detected": [],
+  "summary": "CRON BLOCKED: No se pudo ejecutar el pre-check de canales porque la herramienta message() no es accesible desde el contexto exec. Este cron necesita acceso al agente sancho para usar la herramienta message de Discord. Requiere intervención manual o fix del tool routing.",
+  "metadata": {
+    "mode": "BLOCKED",
+    "issue": "message tool not callable from exec",
+    "total_raw_inputs": 0,
+    "total_insights": 0,
+    "total_ideas": 0,
+    "total_patterns": 0,
+    "processing_time": "<1 min",
+    "processedAt": "2026-04-22T00:07:00.000+00:00",
+    "final_status": "BLOCKED_BOTH_CRON_AND_SUBAGENT"
+  },
+  "subagent_attempt": {
+    "session": "agent:sancho:subagent:252521ca-c596-4cea-9095-b33e85062013",
+    "status": "completed_but_discord_blocked",
+    "issue": "cross-context messaging denied — subagent cannot access Discord",
+    "publication_attempted": true,
+    "publication_result": "FAILED — Unknown channel / cross-context denied"
+  }
+}

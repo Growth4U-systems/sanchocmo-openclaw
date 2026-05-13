@@ -11,6 +11,35 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  async redirects() {
+    return [
+      {
+        source: "/dashboard/:slug/projects",
+        destination: "/dashboard/:slug/tasks",
+        permanent: true,
+      },
+      {
+        source: "/dashboard/:slug/projects/:projectId",
+        destination: "/dashboard/:slug/tasks/:projectId",
+        permanent: true,
+      },
+      {
+        source: "/dashboard/:slug/projects/:projectId/tasks/:taskId",
+        destination: "/dashboard/:slug/tasks/:taskId",
+        permanent: true,
+      },
+      {
+        source: "/dashboard/:slug/projects/:projectId/tasks/:taskId/content/:contentTaskId",
+        destination: "/dashboard/:slug/tasks/:projectId/sub/:taskId/content/:contentTaskId",
+        permanent: true,
+      },
+      {
+        source: "/dashboard/:slug/projects/:projectId/tasks/:taskId/content/:contentTaskId/:rest*",
+        destination: "/dashboard/:slug/tasks/:projectId/sub/:taskId/content/:contentTaskId/:rest*",
+        permanent: true,
+      },
+    ];
+  },
   async rewrites() {
     const legacyBase = `http://localhost:${process.env.LEGACY_PORT || 18790}`;
     return {

@@ -67,8 +67,14 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     senderRole,
     _source,
     // Force routing: when the thread carries an `agent` field, the gateway
-    // dispatches to that agent (e.g. maese-pedro for Media Creation skills)
-    // instead of falling back to the default agent.
+    // dispatches to that agent (e.g. dulcinea for content tasks, maese-pedro
+    // for Media Creation skills) instead of falling back to the default
+    // agent. The gateway's mc-chat plugin reads the field as `agentId` — we
+    // send both names so any consumer inspecting either key works without
+    // coordination. The plugin embeds the value in the SessionKey
+    // (`agent:<slug>:<chatId>`) so OpenClaw's `resolveSessionAgentIds()`
+    // routes to workspace-<slug>.
+    agentId: typeof agent === "string" ? agent : undefined,
     agent: typeof agent === "string" ? agent : undefined,
   };
 

@@ -1,0 +1,45 @@
+{
+  "date": "2026-05-04",
+  "task": "content-competitor-monitor",
+  "brand": "hulahoop",
+  "status": "completed",
+  "generated_at": "2026-05-04T05:36:00Z",
+  "summary": {
+    "total_signals": 15,
+    "by_pillar": {
+      "financiacion-entretenimiento": 5,
+      "pfp-regulacion": 4,
+      "incentivos-fiscales": 4,
+      "tokenizacion-rwa": 2
+    },
+    "by_source_type": {
+      "competitor": 8,
+      "reference-creator": 7
+    },
+    "sources_monitored": [
+      "SEGO Creative / SEGO Finance",
+      "Urbanitae",
+      "SFTL / Sympathy for the Lawyer",
+      "Carrillo Asesores",
+      "TaxMM / Pelícano Partners"
+    ],
+    "platforms_covered": ["blog", "web"],
+    "platforms_unavailable": ["twitter/x (API credits exhausted)", "linkedin (posts not publicly indexed)"]
+  },
+  "key_findings": [
+    "SEGO Creative prevé crecer 50% en 2026 y expande a videojuegos y shows en vivo — posicionándose como plataforma transversal",
+    "Urbanitae alcanza +42% crecimiento Q1 2026 (70M€) y se constituye como gestora de fondos — benchmark PFP clave",
+    "SFTL domina thought leadership musical con 5+ artículos de alto impacto en abril (IMS Report $15.1B, IA vs copyright, sampling TJUE, Madrid venues)",
+    "Carrillo Asesores compite en SEO educativo con guía de incentivos fiscales 2026 + análisis RDL 8/2025",
+    "TaxMM (partner) silencioso en contenido web pero su objetivo de 100M€ en música/artes señala ambición creciente"
+  ],
+  "content_opportunities": [
+    "Guía completa 'Financiación cultural 2026: anticipo + incentivo + PFP' para superar contenido de Carrillo",
+    "Análisis sectorial 'Entertainment en España 2025' al estilo de los informes de Urbanitae",
+    "POV sobre IA y valor de activos culturales (aprovechando caso Anthropic vs Universal)",
+    "Presencia en eventos sectoriales EGEDA/CREA SGR para igualar posicionamiento de SEGO"
+  ],
+  "last_finding": "SEGO Creative prevé +50% crecimiento 2026 expandiendo a videojuegos y live shows; Urbanitae +42% en Q1 con 70M€ y se constituye como gestora — ambos validan la tesis de crowdfunding vertical pero ninguno tiene anticipo ni SaaS. SFTL domina thought leadership musical con 5 artículos de alto impacto en abril.",
+  "output_file": "brand/hulahoop/content/research-signals/2026-05-04-creators.json",
+  "next_run": "2026-05-11"
+}

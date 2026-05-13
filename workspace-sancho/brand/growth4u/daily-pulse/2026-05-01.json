@@ -1,0 +1,96 @@
+{
+  "date": "2026-05-01",
+  "generated_at": "2026-05-01T07:14:00Z",
+  "channels_scanned": 8,
+  "messages_24h": {
+    "total": 1,
+    "human": 0,
+    "bot": 1,
+    "filtered_relevant": 0
+  },
+  "insights": [],
+  "metrics_snapshot": {
+    "meta_ads": {
+      "spend_yesterday": 84.68,
+      "spend_7d_avg": 144.77,
+      "cpc": 2.65,
+      "ctr": 0.005,
+      "leads_yesterday": 1,
+      "leads_7d_avg": 1.3,
+      "impressions": 6344
+    },
+    "ghl": {
+      "new_contacts_24h": 1,
+      "appointments_24h": 0,
+      "contact_name": "alvaro",
+      "contact_source": "LinkedIn lead magnet"
+    },
+    "instantly": {
+      "status": "error",
+      "note": "Collector API falló"
+    }
+  },
+  "signals": [
+    {
+      "type": "alert",
+      "category": "engagement",
+      "signal": "0 mensajes humanos en 24h — 10+ semanas sin actividad humana sostenida en Discord",
+      "severity": "high"
+    },
+    {
+      "type": "alert",
+      "category": "conversion",
+      "signal": "0 citas en las últimas 24h — gap lead→cita persiste",
+      "severity": "high"
+    },
+    {
+      "type": "trend",
+      "category": "paid_ads",
+      "signal": "Spend en mínimo semanal (€84.68 vs media €144.77) — posible agotamiento de presupuesto o pausa parcial",
+      "severity": "medium"
+    },
+    {
+      "type": "positive",
+      "category": "paid_ads",
+      "signal": "CPC €2.65 — mejor de la semana (vs peor €4.62)",
+      "severity": "low"
+    },
+    {
+      "type": "trend",
+      "category": "paid_ads",
+      "signal": "CTR descendente: de 1.01% a 0.50% en 7 días — fatiga de creativos (7+ días sin refresh)",
+      "severity": "medium"
+    },
+    {
+      "type": "positive",
+      "category": "organic",
+      "signal": "Lead magnet LinkedIn trae 1 contacto orgánico (alvaro) — captación escalable funciona",
+      "severity": "low"
+    },
+    {
+      "type": "context",
+      "category": "calendar",
+      "signal": "1 mayo festivo en España — comportamiento ads atípico esperado",
+      "severity": "info"
+    }
+  ],
+  "health_score": 22,
+  "health_note": "Score bajo por 0 citas (2+ semanas), engagement Discord 0, y gap lead→cita sin resolver",
+  "micro_briefs": [
+    {
+      "title": "Revisar embudo lead→cita",
+      "priority": "P0",
+      "description": "9 leads en 7 días pero 0 citas. El flujo de follow-up necesita intervención manual o automatización en GHL."
+    },
+    {
+      "title": "Refresh creativos Meta Ads",
+      "priority": "P1",
+      "description": "CTR cayendo de 1.01% a 0.50%. Creativos llevan 7+ días sin actualizar. Preparar nueva iteración."
+    },
+    {
+      "title": "Arreglar Instantly collector",
+      "priority": "P1",
+      "description": "API de cold email falló. Revisar configuración para reactivar canal outreach."
+    }
+  ]
+}

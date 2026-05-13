@@ -1,0 +1,10 @@
+{
+  "cronName": "Content: News Monitor — Paymatico",
+  "slug": "paymatico",
+  "date": "2026-05-07",
+  "runAtMs": 1778132916620,
+  "status": "ok",
+  "last_finding": "5 ideas nuevas hoy. Highlight: idea-2026-05-07-002 sobre Adyen Q1 €620.8M + primera adquisición Talon.One €750M (Adyen press), pov_confidence 0.88. También: Mollie+GoCardless €1.050M, PSD3 aprobada en ECON, Bizum Pay NFC el 18 mayo, mercado español $1.000M.",
+  "content": "5 ideas creadas: competencia-fintech (2), regulacion-pagos (1), tecnologia-pagos (1), franquicias-multisede (1)",
+  "ideas_created": 5
+}

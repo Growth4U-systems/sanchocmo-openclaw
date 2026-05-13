@@ -195,7 +195,11 @@ function findMatch(
 
 export interface ReconcileResult {
   scanned: number;
-  reconciled: Array<{ ideaId: string; channel: string; url: string }>;
+  /** Drafts that were promoted from `scheduled` to `published` this run.
+   *  `url` is null when the provider confirmed publication but didn't return
+   *  the canonical post URL — the draft is still considered live and gets
+   *  its channel_phase advanced, just without a deep-link in the UI. */
+  reconciled: Array<{ ideaId: string; channel: string; url: string | null }>;
   /** Drafts whose `publishing.metrics` got refreshed this run. */
   metrics_refreshed: number;
 }
@@ -224,6 +228,7 @@ export async function reconcileScheduledDrafts(slug: string): Promise<ReconcileR
     for (const p of pending) {
       let url: string | null = null;
       let publishedAt: string | null = null;
+      let confirmedPublished = false;
 
       // Path 1: provider getStatus by id (authoritative).
       const pub = p.draft.meta.publishing;
@@ -232,9 +237,16 @@ export async function reconcileScheduledDrafts(slug: string): Promise<ReconcileR
         if (provider?.getStatus) {
           try {
             const st = await provider.getStatus(slug, pub.external_job_id);
-            if (st.status === "published" && (st.publishedAt || st.externalUrl)) {
+            // Accept any positive signal: status, externalUrl, or publishedAt.
+            // Previously we required `status === "published" && (publishedAt || externalUrl)`.
+            // Metricool occasionally returns `status="published"` without a URL
+            // (or vice-versa) — refusing both kept the draft stuck on "scheduled".
+            // Fall back to `scheduled_at` for publishedAt so the timeline stays
+            // coherent even when the provider doesn't echo back the date.
+            if (st.status === "published" || st.externalUrl || st.publishedAt) {
               url = st.externalUrl ?? null;
               publishedAt = st.publishedAt ?? pub.scheduled_at ?? null;
+              confirmedPublished = true;
             }
           } catch (e) {
             // eslint-disable-next-line no-console
@@ -244,22 +256,28 @@ export async function reconcileScheduledDrafts(slug: string): Promise<ReconcileR
       }
 
       // Path 2: fallback to metrics text matching.
-      if (!url) {
+      if (!confirmedPublished) {
         const match = findMatch(p, posts);
         if (match) {
           url = match.url;
           publishedAt = match.publishedAt;
+          confirmedPublished = true;
         }
       }
 
-      if (!url) continue;
+      if (!confirmedPublished) continue;
 
       try {
+        // Strip the (now non-terminal-only) status field; published state
+        // is recorded by setChannelPhase below. Keep operational data
+        // (external_url, published_at, metrics) in frontmatter.
+        const prevPub = p.draft.meta.publishing || { provider: "metricool" };
+        const { status: _droppedStatus, ...rest } = prevPub;
+        void _droppedStatus;
         updateDraft(slug, p.ideaId, p.channel, {
           meta: {
             publishing: {
-              ...(p.draft.meta.publishing || { status: "published", provider: "metricool" }),
-              status: "published",
+              ...rest,
               published_at: publishedAt || pub?.scheduled_at || null,
               external_url: url,
               error: null,
@@ -298,7 +316,10 @@ export async function reconcileScheduledDrafts(slug: string): Promise<ReconcileR
  *  Groups by provider and asks the provider in one batched call. Returns
  *  the number of drafts whose metrics were updated. */
 async function refreshMetricsForPublished(slug: string): Promise<number> {
-  // Re-collect all drafts to pick up Pass 1's promotions.
+  // Re-collect all drafts to pick up Pass 1's promotions. Source of truth
+  // is CT.channel_phases — iterate every CT × channel pair where the phase
+  // is "published", then load the draft for operational data (external_url
+  // is required for the provider lookup).
   const root = projectsDir(slug);
   if (!fs.existsSync(root)) return 0;
 
@@ -308,15 +329,29 @@ async function refreshMetricsForPublished(slug: string): Promise<number> {
     draft: Draft;
   }
   const published: PublishedDraft[] = [];
-  for (const ideaId of collectIdeaIds(slug)) {
-    for (const draft of listDrafts(slug, ideaId)) {
-      // No `kind` filter: special docs (proposal/research/clarify) never get
-      // a `meta.publishing` block, so the next check naturally excludes them.
-      // Relying on `kind` was fragile — the agent rewrites it on draft finish.
-      const pub = draft.meta.publishing;
-      if (!pub || pub.status !== "published") continue;
-      if (!pub.external_url) continue;
-      published.push({ ideaId, channel: draft.meta.channel, draft });
+  for (const entry of fs.readdirSync(root, { withFileTypes: true })) {
+    if (!entry.isDirectory()) continue;
+    const tasksPath = path.join(root, entry.name, "tasks.json");
+    if (!fs.existsSync(tasksPath)) continue;
+    let tasks: Array<{ content_tasks?: Array<{ idea_id?: string; channel_phases?: Record<string, string> }> }>;
+    try {
+      tasks = JSON.parse(fs.readFileSync(tasksPath, "utf-8"));
+    } catch {
+      continue;
+    }
+    for (const task of tasks) {
+      for (const ct of task.content_tasks || []) {
+        if (!ct.idea_id) continue;
+        const phases = ct.channel_phases || {};
+        for (const [channel, phase] of Object.entries(phases)) {
+          if (phase !== "published") continue;
+          const draft = listDrafts(slug, ct.idea_id).find((d) => d.meta.channel === channel);
+          if (!draft) continue;
+          const pub = draft.meta.publishing;
+          if (!pub || !pub.external_url) continue;
+          published.push({ ideaId: ct.idea_id, channel, draft });
+        }
+      }
     }
   }
   if (published.length === 0) return 0;

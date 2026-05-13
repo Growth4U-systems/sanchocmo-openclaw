@@ -1,0 +1,46 @@
+{
+  "sources": {
+    "pagespeed": {
+      "status": "ok",
+      "metrics": [
+        {
+          "name": "performance_mobile",
+          "value": 80,
+          "date": "2026-04-29"
+        },
+        {
+          "name": "seo_mobile",
+          "value": 92,
+          "date": "2026-04-29"
+        },
+        {
+          "name": "performance_desktop",
+          "value": 49,
+          "date": "2026-04-29"
+        },
+        {
+          "name": "seo_desktop",
+          "value": 92,
+          "date": "2026-04-29"
+        },
+        {
+          "name": "lcp_mobile",
+          "value": 4.2,
+          "date": "2026-04-29"
+        },
+        {
+          "name": "cls_mobile",
+          "value": 0.007,
+          "date": "2026-04-29"
+        },
+        {
+          "name": "tbt_mobile",
+          "value": 56,
+          "date": "2026-04-29"
+        }
+      ]
+    }
+  },
+  "slug": "growth4u",
+  "collectedAt": "2026-04-29T01:00:49.440Z"
+}

@@ -1,0 +1,11 @@
+{
+  "cronName": "Content: Idea Dedupe Audit — Hulahoop",
+  "slug": "hulahoop",
+  "date": "2026-05-04",
+  "runAtMs": 1746342420000,
+  "status": "ok",
+  "last_finding": "Sin duplicados detectados esta semana. Las 7 ideas en cola tienen status 'ready' (ninguna 'New' ni 'Approved'), por lo que no entran en el filtro de auditoría.",
+  "content": "## Idea Dedupe Audit — 2026-05-04\n\n**Ideas en cola:** 7\n**Filtradas (status New/Approved, últimos 7 días):** 0\n**Pares duplicados:** 0\n\nNinguna idea cumple los criterios de filtrado (status New o Approved). Todas tienen status `ready`.\n\nNo se requiere acción.",
+  "pairs_count": 0,
+  "pairs": []
+}

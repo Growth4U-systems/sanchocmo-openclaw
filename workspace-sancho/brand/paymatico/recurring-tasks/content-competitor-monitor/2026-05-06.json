@@ -1,0 +1,21 @@
+{
+  "cronName": "Content: Competitor Monitor — Paymatico",
+  "slug": "paymatico",
+  "date": "2026-05-06",
+  "runAtMs": 1746510854000,
+  "status": "completed",
+  "last_finding": "10 ideas nuevas (3 reference-creators, 7 competitors). Highlight: idea-2026-05-06-017 — JP Morgan nombra franquicias como caso ideal de embedded payments, pov_confidence 0.88. Also: idea-2026-05-06-013 — MONEI publica sobre dinero programable sin tenerlo en producto (pov_confidence 0.88).",
+  "content": "Monitored: PaynoPain, Sipay, MONEI, Paycomet/Sabadell, Mollie, Adyen, Stripe. Reference creators: Alex Johnson (Fintech Takes), JP Morgan Payments. Sources: blogs, press, web search.",
+  "ideas_created": [
+    "idea-2026-05-06-008",
+    "idea-2026-05-06-009",
+    "idea-2026-05-06-010",
+    "idea-2026-05-06-011",
+    "idea-2026-05-06-012",
+    "idea-2026-05-06-013",
+    "idea-2026-05-06-014",
+    "idea-2026-05-06-015",
+    "idea-2026-05-06-016",
+    "idea-2026-05-06-017"
+  ]
+}

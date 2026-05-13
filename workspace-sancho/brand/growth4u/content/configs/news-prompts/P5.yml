@@ -1,0 +1,26 @@
+pillar_id: P5
+pillar_name: Growth con IA Ejecucion No Hype
+prompt: |
+  What are the 5 most interesting, innovative and relevant news stories from the last 48 hours covering AI marketing
+  agents in production, AI content engines that actually execute, marketing automation with LLMs, AI replacing marketing
+  agencies, and the gap between AI adoption and AI operational implementation?
+
+  For each story return:
+  - headline (exact, as published)
+  - source (publication name + author if available)
+  - date (publication date in YYYY-MM-DD format)
+  - url
+  - a detailed summary of 5-7 sentences covering, in this order:
+    (1) WHAT HAPPENED — the actual fact/event with named tools, models, companies, or operators involved
+    (2) KEY DATA — specific numbers, percentages, throughput metrics, accuracy/quality benchmarks, or direct quotes
+    (3) WHY IT MATTERS for a B2B growth consultant whose differentiator is AI-native execution (not hype) — be
+        specific (e.g. "validates our 'systems over tools' positioning because…")
+    (4) CONCRETE EXAMPLES mentioned (specific implementations, before/after metrics, failed adoptions, etc.)
+
+  Avoid: vague claims, generic "AI is changing everything" language, and recycled mainstream takes.
+  Prioritize underground/niche sources (operator newsletters, AI-builder blogs, hands-on practitioner
+  podcasts, Reddit/HackerNews threads with specifics) over big tech press.
+sector: B2B SaaS growth consulting
+language:
+  - es
+  - en

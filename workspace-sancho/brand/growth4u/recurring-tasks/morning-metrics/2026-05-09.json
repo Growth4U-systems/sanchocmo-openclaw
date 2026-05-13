@@ -1,0 +1,9 @@
+{
+  "cronName": "Morning Metrics — Growth4U",
+  "slug": "growth4u",
+  "date": "2026-05-09",
+  "runAtMs": 1746772200000,
+  "status": "ok",
+  "collectionErrors": ["instantly: (campaigns || []) is not iterable"],
+  "content": "📊 **Morning Metrics — Growth4U** | 2026-05-09\n\n━━━ **META ADS** (ayer) ━━━\n💰 Spend: **€139.28** (media 7d: €124.87 ✅)\n👁️ Impressions: **2,222** (media 7d: 6,471)\n🖱️ Clicks: **55** | CTR: **2.48%** | CPC: **€2.53**\n🎯 Leads: **2** (media 7d: 2.1/día)\n\n━━━ **GHL — CONTACTS** (últimas 24h) ━━━\n👤 Nuevos contactos: **2**\n- mila blanco — Facebook\n- maría carolina páez-pumar — Llamada Estratégica (llamada-agendada, secuencia-seguimiento)\n\n━━━ **GHL — APPOINTMENTS** (últimas 24h) ━━━\n📅 Citas: **0**\n\n━━━ ✅ Sin alertas ━━━\n\n**Análisis de tendencias:**\n- Impresiones cayeron a 2,222 (vs 6,471 media 7d) — posible saturación de audiencia o ajuste de presupuesto de Meta el viernes. Monitorizar hoy.\n- CTR saltó a 2.48% (vs 0.94% media) — señal positiva: menos impresiones pero más cualificadas.\n- CPC mejoró a €2.53 (vs €3.09 media) — eficiencia de coste mejorando.\n- Leads estables en 2/día, en línea con la media.\n- María Carolina agendó llamada estratégica — lead caliente en pipeline.\n- Instantly con error técnico (no afecta métricas core)."
+}

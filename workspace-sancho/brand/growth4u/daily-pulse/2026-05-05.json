@@ -1,0 +1,95 @@
+{
+  "date": "2026-05-05",
+  "generated_at": "2026-05-05T07:03:00Z",
+  "channels_scanned": ["general", "brand", "projects", "content", "paid-ads", "web", "intelligence", "soporte"],
+  "human_messages_24h": 0,
+  "bot_messages_24h": 8,
+  "insights": [
+    {
+      "category": "metrics",
+      "type": "positive_signal",
+      "summary": "Meta Ads: 4 leads ayer a €32/lead — coste por lead ↓50% vs media. Mejor día de la semana.",
+      "source": "morning-metrics",
+      "priority": "high"
+    },
+    {
+      "category": "pipeline",
+      "type": "positive_signal",
+      "summary": "6 nuevos contactos en CRM + 2 llamadas agendadas para hoy martes 5 mayo.",
+      "source": "lead-sync + call-prep",
+      "priority": "high"
+    },
+    {
+      "category": "pipeline",
+      "type": "concern",
+      "summary": "Health Score sube a 37 (desde 22 mínimo histórico) pero sigue por debajo del objetivo. NSM: 4 meetings esta semana (behind target).",
+      "source": "performance-analysis-w18",
+      "priority": "high"
+    },
+    {
+      "category": "pipeline",
+      "type": "recurring_issue",
+      "summary": "Gap lead→cita sigue siendo el cuello de botella crónico (4+ semanas detectado). 28 leads con 'llamada-agendada' pero conversión a citas reales sigue baja.",
+      "source": "weekly-synthesis",
+      "priority": "critical"
+    },
+    {
+      "category": "leads",
+      "type": "new_prospects",
+      "summary": "Nuevos leads: Sara Santana Ramos, Eustacio Cabrera (MERGE Madrid - Web3), Antonio (budget 10-25K€), Frank Nava (Rentakia - PropTech), Clara Melero (FleetChofer - LogTech), Jhon Esteban Yandi.",
+      "source": "lead-sync-05-04",
+      "priority": "medium"
+    },
+    {
+      "category": "engagement",
+      "type": "concern",
+      "summary": "0 mensajes humanos en últimas 24h en ningún canal. Sistema sin interacción humana activa.",
+      "source": "all-channels",
+      "priority": "low"
+    },
+    {
+      "category": "content",
+      "type": "blocker",
+      "summary": "Slack dispatch sigue bloqueado (missing_scope chat:write). Editorial Dispatch genera ideas pero no puede publicar automáticamente.",
+      "source": "content-channel",
+      "priority": "medium"
+    }
+  ],
+  "metrics_snapshot": {
+    "meta_ads": {
+      "leads_yesterday": 4,
+      "cpl": 32,
+      "cpl_vs_average": "-50%",
+      "trend": "improving"
+    },
+    "crm": {
+      "new_contacts": 6,
+      "calls_scheduled_today": 2,
+      "total_llamada_agendada": 28
+    },
+    "health_score": 37,
+    "health_score_trend": "recovering",
+    "nsm_meetings_week": 4,
+    "nsm_target": "behind"
+  },
+  "micro_briefs": [
+    {
+      "title": "CPL en mínimos — oportunidad de escalar",
+      "action": "Evaluar aumentar budget Meta Ads mientras CPL está en €32 (mitad de la media).",
+      "owner": "Philippe",
+      "urgency": "this_week"
+    },
+    {
+      "title": "2 calls hoy — preparar follow-up",
+      "action": "Asegurar que los 2 leads con llamada hoy tengan propuesta/next step claro post-call.",
+      "owner": "equipo",
+      "urgency": "today"
+    },
+    {
+      "title": "Gap lead→cita: fix urgente",
+      "action": "Revisar flujo de follow-up automático. 28 leads con 'llamada-agendada' sugiere que el tag se pone pero las citas no se concretan.",
+      "owner": "Alfonso/Philippe",
+      "urgency": "this_week"
+    }
+  ]
+}

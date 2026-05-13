@@ -1,0 +1,29 @@
+{
+  "id": "P-Content-Semana-18",
+  "name": "Content Semana 18",
+  "description": "Content editorial semanal Growth4U. Ideas aprobadas → desarrollo → publicación. Semana del 28 abril 2026.",
+  "approach": "Editorial dispatch martes: presentar 5 ideas candidatas ordenadas por freshness+confidence, Alfonso selecciona, Escudero desarrolla en paralelo.",
+  "objective": {
+    "description": "Contenido publicado según cadence semanal",
+    "metric": "pieces_published",
+    "baseline": 0,
+    "target": null
+  },
+  "origin": "editorial-dispatch-cron",
+  "phase": null,
+  "strategy": "Content Engine — Flywheel",
+  "week": 18,
+  "week_start": "2026-04-27",
+  "week_end": "2026-05-03",
+  "status": "in-progress",
+  "dispatch": {
+    "message_id": "1498574694708678786",
+    "channel_id": "1477741644789842024",
+    "date": "2026-04-28",
+    "candidates_count": 5,
+    "awaiting_selection": true
+  },
+  "mc_chat_thread_id": "project-p-content-semana-18",
+  "discord_thread_id": null,
+  "updated_at": "2026-04-28T06:34:00Z"
+}

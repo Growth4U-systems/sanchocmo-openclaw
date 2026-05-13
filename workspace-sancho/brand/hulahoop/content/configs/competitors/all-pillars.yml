@@ -1,0 +1,49 @@
+# Competitors to monitor — Hulahoop
+# Source: competitive-analysis.current.md
+# Updated: 2026-05-04
+
+competitors:
+  - name: "SFTL / Incentiva Music"
+    slug: sftl
+    tier: A
+    web: "https://www.sftl.es"
+    blog: "https://www.sftl.es/blog"
+    linkedin: "https://www.linkedin.com/company/sftl-es/"
+    twitter: null
+    pillars: [incentivos-fiscales, financiacion-entretenimiento]
+
+  - name: "SEGO Finance (Creative)"
+    slug: sego-creative
+    tier: A
+    web: "https://www.segofinance.com"
+    blog: "https://www.segofinance.com/blog"
+    linkedin: "https://www.linkedin.com/company/sego-finance/"
+    twitter: null
+    pillars: [pfp-regulacion, financiacion-entretenimiento]
+
+  - name: "TaxMM / Pelícano Partners"
+    slug: taxmm
+    tier: A
+    web: "https://www.taxmm.com"
+    blog: null
+    linkedin: "https://www.linkedin.com/company/taxmm/"
+    twitter: null
+    pillars: [incentivos-fiscales, financiacion-entretenimiento]
+
+  - name: "Urbanitae"
+    slug: urbanitae
+    tier: B
+    web: "https://urbanitae.com"
+    blog: "https://urbanitae.com/blog"
+    linkedin: "https://www.linkedin.com/company/urbanitae/"
+    twitter: "@urbanitae"
+    pillars: [pfp-regulacion]
+
+  - name: "Taxlease"
+    slug: taxlease
+    tier: B
+    web: "https://www.taxlease.es"
+    blog: null
+    linkedin: "https://www.linkedin.com/company/taxlease/"
+    twitter: null
+    pillars: [incentivos-fiscales]

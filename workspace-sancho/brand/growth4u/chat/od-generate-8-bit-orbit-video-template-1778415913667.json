@@ -1,0 +1,16 @@
+{
+  "messages": [
+    {
+      "role": "user",
+      "text": "Genera un asset usando la skill upstream \"8-bit-orbit-video-template\" con el DESIGN.md del brand. Pídeme los inputs que necesites antes de empezar.",
+      "ts": 1778415913746
+    },
+    {
+      "role": "bot",
+      "text": "Vamos al lío. He revisado todo lo necesario:\n\n✅ **Daemon OD** — online (v0.6.0)\n✅ **Skill upstream** — `8-bit-orbit-video-template` encontrada (Hyperframes video template, estilo retro pixel-art con transiciones avanzadas)\n⚠️ **DESIGN.md** — no existe para Growth4U, aunque sí hay `design-tokens.json` con toda la identidad visual (colores, tipografía, etc.). La skill upstream no requiere design system obligatorio (`designSystemRequired: false`), así que podemos avanzar.\n\nPara disparar la generación necesito estos inputs:\n\n:::ask\n{\"id\":\"q_kind\",\"prompt\":\"¿Qué tipo de asset es esto?\",\"mode\":\"single\",\"options\":[{\"id\":\"template\",\"label\":\"Template (plantilla reutilizable)\"},{\"id\":\"export\",\"label\":\"Export (pieza final lista para publicar)\"},{\"id\":\"mockup\",\"label\":\"Mockup (preview/presentación)\"},{\"id\":\"other\",\"label\":\"Otro (lo escribo)\"}]}\n:::\n\n:::ask\n{\"id\":\"q_scenes\",\"prompt\":\"¿Cuántas escenas/páginas quieres en el video?\",\"mode\":\"single\",\"options\":[{\"id\":\"3\",\"label\":\"3 escenas\"},{\"id\":\"5\",\"label\":\"5 escenas\"},{\"id\":\"7\",\"label\":\"7 escenas\"},{\"id\":\"other\",\"label\":\"Otro (lo escribo)\"}]}\n:::\n\nY una pregunta abierta: **¿Cuál es el contenido del video?** (ej: presentación de Growth4U, demo de servicios, caso de éxito, pitch deck, algo específico). Dame el brief o tema y yo armo el prompt para el daemon.",
+      "ts": 1778415998877,
+      "agent": "sancho"
+    }
+  ],
+  "updatedAt": 1778415998877
+}

@@ -3,6 +3,7 @@
 import { useState, useMemo, useCallback, type ReactNode } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
+import { ConnectedAccountsInfo } from "@/components/settings/ConnectedAccountsInfo";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -293,6 +294,7 @@ export function ApiConnectPanel({ slug, apiId, onClose, topAccessory }: ApiConne
           )}
         </div>
 
+        <ConnectedAccountsInfo apiId={apiId} slug={slug} />
         {topAccessory && (
           <div
             className="mt-3 pt-3 border-t-2 border-dashed"

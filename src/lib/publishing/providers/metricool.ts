@@ -159,13 +159,30 @@ export const metricoolProvider: PublishProvider = {
     }
 
     // v2 takes media as an array of public URLs that Metricool fetches
-    // server-side. The legacy v1 base64 approach is gone. Pick the carousel
-    // PDF first (LinkedIn document post); otherwise fall back to the first
-    // image. We send a single media entry per post.
+    // server-side. Per-network rules:
+    //   - LinkedIn: a multi-page PDF posts as a native document carousel; if
+    //     no PDF is present, fall back to a single image (LinkedIn doesn't
+    //     accept multi-image posts via the scheduler API).
+    //   - X/Twitter: native carousels allow up to 4 images per tweet —
+    //     send all of them.
+    //   - Instagram: native carousels allow up to 10 images — send all of them.
+    //   - Other networks: send the first image only (safe default).
+    // Previously this code sent ONLY the first image regardless of network,
+    // which silently turned a 5-image X carousel into a 1-image post.
+    const PER_NETWORK_IMAGE_CAP: Record<string, number> = {
+      twitter: 4,
+      instagram: 10,
+    };
     const carouselPdf = input.media.find((m) => m.type === "application/pdf");
-    const firstImage = input.media.find((m) => m.type.startsWith("image/"));
-    const chosen = carouselPdf || firstImage || null;
-    const media: string[] = chosen ? [chosen.url] : [];
+    const images = input.media.filter((m) => m.type.startsWith("image/"));
+    let media: string[];
+    if (network === "linkedin") {
+      const chosen = carouselPdf || images[0] || null;
+      media = chosen ? [chosen.url] : [];
+    } else {
+      const cap = PER_NETWORK_IMAGE_CAP[network] ?? 1;
+      media = images.slice(0, cap).map((m) => m.url);
+    }
 
     const publishAt = input.schedule?.publishAt ?? new Date(Date.now() + 60_000).toISOString();
     // Metricool wants `YYYY-MM-DDTHH:mm:ss` (no Z, no millis) + a separate
@@ -223,21 +240,28 @@ export const metricoolProvider: PublishProvider = {
       if (!externalJobId) {
         // Last-resort lookup: list scheduler posts in a 5-min window
         // surrounding our publishAt and find ours by dateTime + network.
-        // Don't fail the publish if this lookup fails — the post is
-        // already scheduled in Metricool.
-        try {
-          externalJobId = await findSchedulerIdByMatch(cfg, network, dateTime);
-          if (!externalJobId) {
+        // Metricool's scheduler API sometimes lags indexing by a second or
+        // two — retry twice with backoff before giving up. Capturing the id
+        // is critical: without it, reconciliation has to fall back to
+        // text-prefix matching against daily metrics dumps (lossy).
+        const backoffsMs = [0, 500, 1500];
+        for (const wait of backoffsMs) {
+          if (wait > 0) await new Promise((r) => setTimeout(r, wait));
+          try {
+            externalJobId = await findSchedulerIdByMatch(cfg, network, dateTime);
+          } catch (e) {
             // eslint-disable-next-line no-console
-            console.warn(
-              `[metricool] Schedule succeeded but no id captured. ` +
-              `Response keys: ${Object.keys(dataAny).join(", ") || "(empty)"}. ` +
-              `Reconciliation will fall back to text matching.`,
-            );
+            console.warn(`[metricool] post-schedule id lookup failed: ${(e as Error).message}`);
           }
-        } catch (e) {
+          if (externalJobId) break;
+        }
+        if (!externalJobId) {
           // eslint-disable-next-line no-console
-          console.warn(`[metricool] post-schedule id lookup failed: ${(e as Error).message}`);
+          console.warn(
+            `[metricool] Schedule succeeded but no id captured after retries. ` +
+            `Response keys: ${Object.keys(dataAny).join(", ") || "(empty)"}. ` +
+            `Reconciliation will fall back to text matching.`,
+          );
         }
       }
       const isImmediate = !input.schedule;
@@ -266,13 +290,24 @@ export const metricoolProvider: PublishProvider = {
         error?: string;
       };
       const raw = (data.status || "").toLowerCase();
-      const status: PublishStatus["status"] = raw.includes("publish") && data.publishedDate
-        ? "published"
-        : raw.includes("error") || raw.includes("fail")
+      // Treat the post as published if Metricool gives us ANY positive signal:
+      //   - status string contains "publish" (e.g. "PUBLISHED", "published"), or
+      //   - a publishedDate is set (definitive proof the post went live), or
+      //   - a canonical url is present and the status isn't "scheduled" (some
+      //     Metricool responses come back with status=null after publication).
+      // Previously we required `raw.includes("publish") && publishedDate` — when
+      // Metricool returned `status="PUBLISHED"` without `publishedDate` the post
+      // was treated as "scheduled" and the draft never reconciled.
+      const hasPublishedDate = typeof data.publishedDate === "string" && data.publishedDate.length > 0;
+      const hasUrl = typeof data.url === "string" && data.url.length > 0;
+      const status: PublishStatus["status"] =
+        raw.includes("error") || raw.includes("fail")
           ? "failed"
           : raw.includes("cancel")
             ? "canceled"
-            : "scheduled";
+            : raw.includes("publish") || hasPublishedDate || (hasUrl && !raw.includes("schedul"))
+              ? "published"
+              : "scheduled";
       return {
         status,
         externalUrl: data.url ?? null,

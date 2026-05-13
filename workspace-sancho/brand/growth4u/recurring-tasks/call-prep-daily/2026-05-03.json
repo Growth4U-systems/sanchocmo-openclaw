@@ -1,0 +1,11 @@
+{
+  "cronId": "36d0bff9-fea9-40d8-9bfd-bf1e5e58468b",
+  "cronName": "Call Prep Daily — Growth4U",
+  "slug": "growth4u",
+  "date": "2026-05-03",
+  "runAtMs": 1777840200036,
+  "status": "ok",
+  "durationMs": 228525,
+  "model": "claude-opus-4-6",
+  "content": "📞 Llamadas de mañana — Lunes 4 mayo · 1 lead detectado\n\n---\n\n📞 **LLAMADAS DE MAÑANA — Lunes 4 mayo 2026**\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n🔵 **13:00 — Francisco Franco** (Sector ropa/textil)\n   **Estado:** llamada-agendada · secuencia-seguimiento\n   **Fuente:** Facebook Ads · Presupuesto: 10k-25k€\n   **Organiza:** Martín · Google Meet\n\n   📋 **Contexto:**\n   → Primera llamada estratégica con este lead\n   → Contacto personal (email Hotmail, sin empresa identificada)\n   → Declaró tener negocio en sector \"ropa\" — fuera del ICP típico tech/SaaS\n   → Sin LinkedIn encontrado, sin historial previo de llamadas\n   → Entró el 1 mayo via Facebook Ads\n\n   🎯 **Objetivo: Discovery/Cualificación**\n   → Confirmar si tiene negocio real (marca propia, ecommerce, retail?)\n   → Entender su problema de growth actual y qué ha probado\n   → Evaluar fit con Growth4U: sector ropa ≠ tech, pero presupuesto OK (10-25k€)\n   → Si hay fit → explicar Trust Engine y siguiente paso\n   → Si no hay fit → ser honestos y cerrar con elegancia\n\n   ⚠️ **Flags:**\n   → Sector fuera de ICP (ropa vs tech) — cualificar antes de invertir\n   → Sin dominio corporativo — verificar legitimidad del negocio\n   → Presupuesto compatible pero necesita validación de expectativas\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n📅 **Otras reuniones mañana (no leads):**\n• 09:00 — Grabación Growit (Aarón, Growit School)\n• 11:00 — G4U Weekly (equipo interno)\n• 12:00 — Alfonso - María Callan (Monzo)\n• 17:00 — Q&A Oier (equipo interno)\n• 18:00 — Intro Ivan <> Growth4U (equipo)"
+}

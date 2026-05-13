@@ -1,0 +1,592 @@
+{
+  "date": "2026-05-04",
+  "source": "web_search_paa_extraction",
+  "language": "es",
+  "total_new_questions": 56,
+  "pillars": [
+    {
+      "pillar_id": "P1",
+      "pillar_name": "Pagos y TPVs para franquicias",
+      "new_questions": [
+        {
+          "id": "paa-20260504-p1-01",
+          "type": "paa",
+          "pillar_id": "P1",
+          "question": "¿Qué TPV es mejor para gestionar una red de franquicias en España?",
+          "seed_query": "gestión TPV franquicias España",
+          "search_volume_hint": null,
+          "language": "es",
+          "created_at": "2026-05-04T06:14:00Z"
+        },
+        {
+          "id": "paa-20260504-p1-02",
+          "type": "paa",
+          "pillar_id": "P1",
+          "question": "¿Cómo centralizar los pagos en una franquicia con varias sedes?",
+          "seed_query": "centralizar pagos franquicia",
+          "search_volume_hint": null,
+          "language": "es",
+          "created_at": "2026-05-04T06:14:00Z"
+        },
+        {
+          "id": "paa-20260504-p1-03",
+          "type": "paa",
+          "pillar_id": "P1",
+          "question": "¿Qué es un TPV de marca blanca y qué ventajas tiene para franquicias?",
+          "seed_query": "TPV marca blanca franquicia",
+          "search_volume_hint": null,
+          "language": "es",
+          "created_at": "2026-05-04T06:14:00Z"
+        },
+        {
+          "id": "paa-20260504-p1-04",
+          "type": "paa",
+          "pillar_id": "P1",
+          "question": "¿Cómo automatizar el cobro de cánones y royalties en una franquicia?",
+          "seed_query": "cobros multisede franquicia",
+          "search_volume_hint": null,
+          "language": "es",
+          "created_at": "2026-05-04T06:14:00Z"
+        },
+        {
+          "id": "paa-20260504-p1-05",
+          "type": "paa",
+          "pillar_id": "P1",
+          "question": "¿Qué es la dispersión automática de fondos entre franquiciador y franquiciados?",
+          "seed_query": "centralizar pagos franquicia",
+          "search_volume_hint": null,
+          "language": "es",
+          "created_at": "2026-05-04T06:14:00Z"
+        },
+        {
+          "id": "paa-20260504-p1-06",
+          "type": "paa",
+          "pillar_id": "P1",
+          "question": "¿Cómo controlar las ventas de todos los locales de una franquicia desde un solo panel?",
+          "seed_query": "gestión TPV franquicias España",
+          "search_volume_hint": null,
+          "language": "es",
+          "created_at": "2026-05-04T06:14:00Z"
+        },
+        {
+          "id": "paa-20260504-p1-07",
+          "type": "paa",
+          "pillar_id": "P1",
+          "question": "¿Qué es Veri*Factu y cómo afecta a los TPVs de franquicias en España?",
+          "seed_query": "gestión TPV franquicias España",
+          "search_volume_hint": null,
+          "language": "es",
+          "created_at": "2026-05-04T06:14:00Z"
+        },
+        {
+          "id": "paa-20260504-p1-08",
+          "type": "paa",
+          "pillar_id": "P1",
+          "question": "¿Qué software permite gestionar inventario centralizado en franquicias?",
+          "seed_query": "gestión TPV franquicias España",
+          "search_volume_hint": null,
+          "language": "es",
+          "created_at": "2026-05-04T06:14:00Z"
+        },
+        {
+          "id": "paa-20260504-p1-09",
+          "type": "paa",
+          "pillar_id": "P1",
+          "question": "¿Es obligatorio que todas las franquicias usen el mismo sistema de cobro?",
+          "seed_query": "cobros multisede franquicia",
+          "search_volume_hint": null,
+          "language": "es",
+          "created_at": "2026-05-04T06:14:00Z"
+        },
+        {
+          "id": "paa-20260504-p1-10",
+          "type": "paa",
+          "pillar_id": "P1",
+          "question": "¿Cómo unificar la experiencia de pago del cliente en todas las sedes de la franquicia?",
+          "seed_query": "cobros multisede franquicia",
+          "search_volume_hint": null,
+          "language": "es",
+          "created_at": "2026-05-04T06:14:00Z"
+        },
+        {
+          "id": "paa-20260504-p1-11",
+          "type": "paa",
+          "pillar_id": "P1",
+          "question": "¿Qué consecuencias tiene el impago de royalties en una franquicia?",
+          "seed_query": "cobros multisede franquicia",
+          "search_volume_hint": null,
+          "language": "es",
+          "created_at": "2026-05-04T06:14:00Z"
+        },
+        {
+          "id": "paa-20260504-p1-12",
+          "type": "paa",
+          "pillar_id": "P1",
+          "question": "¿Qué diferencia hay entre un TPV propio y un TPV de marca blanca para franquicias?",
+          "seed_query": "TPV marca blanca franquicia",
+          "search_volume_hint": null,
+          "language": "es",
+          "created_at": "2026-05-04T06:14:00Z"
+        },
+        {
+          "id": "paa-20260504-p1-13",
+          "type": "paa",
+          "pillar_id": "P1",
+          "question": "¿Cómo gestionar permisos de cobro por franquiciado desde la central?",
+          "seed_query": "cobros multisede franquicia",
+          "search_volume_hint": null,
+          "language": "es",
+          "created_at": "2026-05-04T06:14:00Z"
+        },
+        {
+          "id": "paa-20260504-p1-14",
+          "type": "paa",
+          "pillar_id": "P1",
+          "question": "¿Se puede personalizar un TPV con la imagen de marca de mi franquicia?",
+          "seed_query": "TPV marca blanca franquicia",
+          "search_volume_hint": null,
+          "language": "es",
+          "created_at": "2026-05-04T06:14:00Z"
+        }
+      ]
+    },
+    {
+      "pillar_id": "P2",
+      "pillar_name": "Cuentas programables y tesorería",
+      "new_questions": [
+        {
+          "id": "paa-20260504-p2-01",
+          "type": "paa",
+          "pillar_id": "P2",
+          "question": "¿Qué son las cuentas programables y cómo funcionan para empresas?",
+          "seed_query": "cuentas programables empresa",
+          "search_volume_hint": null,
+          "language": "es",
+          "created_at": "2026-05-04T06:14:00Z"
+        },
+        {
+          "id": "paa-20260504-p2-02",
+          "type": "paa",
+          "pillar_id": "P2",
+          "question": "¿Qué es el dinero programable y en qué se diferencia de una transferencia normal?",
+          "seed_query": "cuentas programables empresa",
+          "search_volume_hint": null,
+          "language": "es",
+          "created_at": "2026-05-04T06:14:00Z"
+        },
+        {
+          "id": "paa-20260504-p2-03",
+          "type": "paa",
+          "pillar_id": "P2",
+          "question": "¿Cómo automatizar los pagos a proveedores en mi empresa?",
+          "seed_query": "automatizar pagos empresa",
+          "search_volume_hint": null,
+          "language": "es",
+          "created_at": "2026-05-04T06:14:00Z"
+        },
+        {
+          "id": "paa-20260504-p2-04",
+          "type": "paa",
+          "pillar_id": "P2",
+          "question": "¿Cuánto se puede ahorrar automatizando la gestión de pagos?",
+          "seed_query": "automatizar pagos empresa",
+          "search_volume_hint": null,
+          "language": "es",
+          "created_at": "2026-05-04T06:14:00Z"
+        },
+        {
+          "id": "paa-20260504-p2-05",
+          "type": "paa",
+          "pillar_id": "P2",
+          "question": "¿Cuál es el mejor software de tesorería para pymes en España?",
+          "seed_query": "tesorería automatizada pyme",
+          "search_volume_hint": null,
+          "language": "es",
+          "created_at": "2026-05-04T06:14:00Z"
+        },
+        {
+          "id": "paa-20260504-p2-06",
+          "type": "paa",
+          "pillar_id": "P2",
+          "question": "¿Cómo hacer la conciliación bancaria de forma automática?",
+          "seed_query": "conciliación bancaria automática",
+          "search_volume_hint": null,
+          "language": "es",
+          "created_at": "2026-05-04T06:14:00Z"
+        },
+        {
+          "id": "paa-20260504-p2-07",
+          "type": "paa",
+          "pillar_id": "P2",
+          "question": "¿Qué es un bloqueo de fondos programable o escrow digital?",
+          "seed_query": "cuentas programables empresa",
+          "search_volume_hint": null,
+          "language": "es",
+          "created_at": "2026-05-04T06:14:00Z"
+        },
+        {
+          "id": "paa-20260504-p2-08",
+          "type": "paa",
+          "pillar_id": "P2",
+          "question": "¿Cómo ver el flujo de caja en tiempo real de mi empresa?",
+          "seed_query": "tesorería automatizada pyme",
+          "search_volume_hint": null,
+          "language": "es",
+          "created_at": "2026-05-04T06:14:00Z"
+        },
+        {
+          "id": "paa-20260504-p2-09",
+          "type": "paa",
+          "pillar_id": "P2",
+          "question": "¿Se puede usar inteligencia artificial para prever el flujo de caja?",
+          "seed_query": "tesorería automatizada pyme",
+          "search_volume_hint": null,
+          "language": "es",
+          "created_at": "2026-05-04T06:14:00Z"
+        },
+        {
+          "id": "paa-20260504-p2-10",
+          "type": "paa",
+          "pillar_id": "P2",
+          "question": "¿Qué formatos acepta un software de conciliación bancaria automática?",
+          "seed_query": "conciliación bancaria automática",
+          "search_volume_hint": null,
+          "language": "es",
+          "created_at": "2026-05-04T06:14:00Z"
+        },
+        {
+          "id": "paa-20260504-p2-11",
+          "type": "paa",
+          "pillar_id": "P2",
+          "question": "¿Cómo reducir el fraude en los pagos de mi empresa con automatización?",
+          "seed_query": "automatizar pagos empresa",
+          "search_volume_hint": null,
+          "language": "es",
+          "created_at": "2026-05-04T06:14:00Z"
+        },
+        {
+          "id": "paa-20260504-p2-12",
+          "type": "paa",
+          "pillar_id": "P2",
+          "question": "¿Qué son las aprobaciones multifirma en pagos empresariales?",
+          "seed_query": "cuentas programables empresa",
+          "search_volume_hint": null,
+          "language": "es",
+          "created_at": "2026-05-04T06:14:00Z"
+        },
+        {
+          "id": "paa-20260504-p2-13",
+          "type": "paa",
+          "pillar_id": "P2",
+          "question": "¿Cuánto tiempo se tarda en cerrar la contabilidad con conciliación automática?",
+          "seed_query": "conciliación bancaria automática",
+          "search_volume_hint": null,
+          "language": "es",
+          "created_at": "2026-05-04T06:14:00Z"
+        },
+        {
+          "id": "paa-20260504-p2-14",
+          "type": "paa",
+          "pillar_id": "P2",
+          "question": "¿Se pueden programar pagos condicionados a la entrega de un servicio?",
+          "seed_query": "cuentas programables empresa",
+          "search_volume_hint": null,
+          "language": "es",
+          "created_at": "2026-05-04T06:14:00Z"
+        }
+      ]
+    },
+    {
+      "pillar_id": "P3",
+      "pillar_name": "Regulación fintech y pagos",
+      "new_questions": [
+        {
+          "id": "paa-20260504-p3-01",
+          "type": "paa",
+          "pillar_id": "P3",
+          "question": "¿Qué es una entidad de pago regulada por el Banco de España?",
+          "seed_query": "entidad de pago regulada España",
+          "search_volume_hint": null,
+          "language": "es",
+          "created_at": "2026-05-04T06:14:00Z"
+        },
+        {
+          "id": "paa-20260504-p3-02",
+          "type": "paa",
+          "pillar_id": "P3",
+          "question": "¿Qué requisitos necesito para obtener licencia de entidad de pago en España?",
+          "seed_query": "entidad de pago regulada España",
+          "search_volume_hint": null,
+          "language": "es",
+          "created_at": "2026-05-04T06:14:00Z"
+        },
+        {
+          "id": "paa-20260504-p3-03",
+          "type": "paa",
+          "pillar_id": "P3",
+          "question": "¿Qué es PSD3 y cuándo entra en vigor en España?",
+          "seed_query": "regulación fintech España 2026",
+          "search_volume_hint": null,
+          "language": "es",
+          "created_at": "2026-05-04T06:14:00Z"
+        },
+        {
+          "id": "paa-20260504-p3-04",
+          "type": "paa",
+          "pillar_id": "P3",
+          "question": "¿Qué cambia con PSD2 para las empresas que procesan pagos?",
+          "seed_query": "PSD2 pagos empresa",
+          "search_volume_hint": null,
+          "language": "es",
+          "created_at": "2026-05-04T06:14:00Z"
+        },
+        {
+          "id": "paa-20260504-p3-05",
+          "type": "paa",
+          "pillar_id": "P3",
+          "question": "¿Qué es la autenticación reforzada SCA y cuándo es obligatoria?",
+          "seed_query": "PSD2 pagos empresa",
+          "search_volume_hint": null,
+          "language": "es",
+          "created_at": "2026-05-04T06:14:00Z"
+        },
+        {
+          "id": "paa-20260504-p3-06",
+          "type": "paa",
+          "pillar_id": "P3",
+          "question": "¿Qué es el reglamento MiCA y cómo afecta a las fintech en España?",
+          "seed_query": "regulación fintech España 2026",
+          "search_volume_hint": null,
+          "language": "es",
+          "created_at": "2026-05-04T06:14:00Z"
+        },
+        {
+          "id": "paa-20260504-p3-07",
+          "type": "paa",
+          "pillar_id": "P3",
+          "question": "¿Qué es DORA y cómo afecta la resiliencia operativa del sector financiero?",
+          "seed_query": "regulación fintech España 2026",
+          "search_volume_hint": null,
+          "language": "es",
+          "created_at": "2026-05-04T06:14:00Z"
+        },
+        {
+          "id": "paa-20260504-p3-08",
+          "type": "paa",
+          "pillar_id": "P3",
+          "question": "¿Qué ventajas tiene para una empresa trabajar con una entidad de pago regulada frente a una no regulada?",
+          "seed_query": "entidad de pago regulada España",
+          "search_volume_hint": null,
+          "language": "es",
+          "created_at": "2026-05-04T06:14:00Z"
+        },
+        {
+          "id": "paa-20260504-p3-09",
+          "type": "paa",
+          "pillar_id": "P3",
+          "question": "¿Qué es el open banking y cómo beneficia a las empresas españolas?",
+          "seed_query": "PSD2 pagos empresa",
+          "search_volume_hint": null,
+          "language": "es",
+          "created_at": "2026-05-04T06:14:00Z"
+        },
+        {
+          "id": "paa-20260504-p3-10",
+          "type": "paa",
+          "pillar_id": "P3",
+          "question": "¿Qué normativa regula los pagos digitales en España en 2026?",
+          "seed_query": "normativa pagos digitales España",
+          "search_volume_hint": null,
+          "language": "es",
+          "created_at": "2026-05-04T06:14:00Z"
+        },
+        {
+          "id": "paa-20260504-p3-11",
+          "type": "paa",
+          "pillar_id": "P3",
+          "question": "¿Qué obligaciones fiscales impone DAC8 sobre los pagos digitales?",
+          "seed_query": "regulación fintech España 2026",
+          "search_volume_hint": null,
+          "language": "es",
+          "created_at": "2026-05-04T06:14:00Z"
+        },
+        {
+          "id": "paa-20260504-p3-12",
+          "type": "paa",
+          "pillar_id": "P3",
+          "question": "¿Qué diferencia hay entre una entidad de pago y una entidad de dinero electrónico?",
+          "seed_query": "normativa pagos digitales España",
+          "search_volume_hint": null,
+          "language": "es",
+          "created_at": "2026-05-04T06:14:00Z"
+        },
+        {
+          "id": "paa-20260504-p3-13",
+          "type": "paa",
+          "pillar_id": "P3",
+          "question": "¿Qué sanciones hay por incumplir PSD2 en el procesamiento de pagos?",
+          "seed_query": "PSD2 pagos empresa",
+          "search_volume_hint": null,
+          "language": "es",
+          "created_at": "2026-05-04T06:14:00Z"
+        },
+        {
+          "id": "paa-20260504-p3-14",
+          "type": "paa",
+          "pillar_id": "P3",
+          "question": "¿Hacienda controla los pagos con Bizum y plataformas digitales?",
+          "seed_query": "normativa pagos digitales España",
+          "search_volume_hint": null,
+          "language": "es",
+          "created_at": "2026-05-04T06:14:00Z"
+        }
+      ]
+    },
+    {
+      "pillar_id": "P4",
+      "pillar_name": "Gestión unificada de pagos B2B",
+      "new_questions": [
+        {
+          "id": "paa-20260504-p4-01",
+          "type": "paa",
+          "pillar_id": "P4",
+          "question": "¿Cuál es la mejor pasarela de pago para empresas B2B en España?",
+          "seed_query": "pasarela de pago para empresas",
+          "search_volume_hint": null,
+          "language": "es",
+          "created_at": "2026-05-04T06:14:00Z"
+        },
+        {
+          "id": "paa-20260504-p4-02",
+          "type": "paa",
+          "pillar_id": "P4",
+          "question": "¿Cómo unificar todos los métodos de pago de mi empresa en una sola plataforma?",
+          "seed_query": "unificar métodos de pago empresa",
+          "search_volume_hint": null,
+          "language": "es",
+          "created_at": "2026-05-04T06:14:00Z"
+        },
+        {
+          "id": "paa-20260504-p4-03",
+          "type": "paa",
+          "pillar_id": "P4",
+          "question": "¿Qué es un orquestador de pagos y para qué sirve?",
+          "seed_query": "unificar métodos de pago empresa",
+          "search_volume_hint": null,
+          "language": "es",
+          "created_at": "2026-05-04T06:14:00Z"
+        },
+        {
+          "id": "paa-20260504-p4-04",
+          "type": "paa",
+          "pillar_id": "P4",
+          "question": "¿Qué es una transferencia SEPA B2B y en qué se diferencia de la SEPA Core?",
+          "seed_query": "SEPA transferencias empresa",
+          "search_volume_hint": null,
+          "language": "es",
+          "created_at": "2026-05-04T06:14:00Z"
+        },
+        {
+          "id": "paa-20260504-p4-05",
+          "type": "paa",
+          "pillar_id": "P4",
+          "question": "¿Cómo integrar los pagos con mi sistema ERP?",
+          "seed_query": "integrar pagos ERP",
+          "search_volume_hint": null,
+          "language": "es",
+          "created_at": "2026-05-04T06:14:00Z"
+        },
+        {
+          "id": "paa-20260504-p4-06",
+          "type": "paa",
+          "pillar_id": "P4",
+          "question": "¿Qué es SEPA Instant y cómo beneficia a las empresas?",
+          "seed_query": "SEPA transferencias empresa",
+          "search_volume_hint": null,
+          "language": "es",
+          "created_at": "2026-05-04T06:14:00Z"
+        },
+        {
+          "id": "paa-20260504-p4-07",
+          "type": "paa",
+          "pillar_id": "P4",
+          "question": "¿Qué es un mandato SEPA y cuánto tiempo debe conservarse?",
+          "seed_query": "SEPA transferencias empresa",
+          "search_volume_hint": null,
+          "language": "es",
+          "created_at": "2026-05-04T06:14:00Z"
+        },
+        {
+          "id": "paa-20260504-p4-08",
+          "type": "paa",
+          "pillar_id": "P4",
+          "question": "¿Cuánto cuestan las comisiones de las pasarelas de pago más usadas en España?",
+          "seed_query": "pasarela de pago para empresas",
+          "search_volume_hint": null,
+          "language": "es",
+          "created_at": "2026-05-04T06:14:00Z"
+        },
+        {
+          "id": "paa-20260504-p4-09",
+          "type": "paa",
+          "pillar_id": "P4",
+          "question": "¿Es necesario cumplir PCI DSS para aceptar pagos con tarjeta en mi empresa?",
+          "seed_query": "pasarela de pago para empresas",
+          "search_volume_hint": null,
+          "language": "es",
+          "created_at": "2026-05-04T06:14:00Z"
+        },
+        {
+          "id": "paa-20260504-p4-10",
+          "type": "paa",
+          "pillar_id": "P4",
+          "question": "¿Qué diferencias hay entre Stripe, Adyen, Monei y Paycomet para empresas B2B?",
+          "seed_query": "pasarela de pago para empresas",
+          "search_volume_hint": null,
+          "language": "es",
+          "created_at": "2026-05-04T06:14:00Z"
+        },
+        {
+          "id": "paa-20260504-p4-11",
+          "type": "paa",
+          "pillar_id": "P4",
+          "question": "¿Cómo automatizar la conciliación de pagos entre canales online y offline?",
+          "seed_query": "integrar pagos ERP",
+          "search_volume_hint": null,
+          "language": "es",
+          "created_at": "2026-05-04T06:14:00Z"
+        },
+        {
+          "id": "paa-20260504-p4-12",
+          "type": "paa",
+          "pillar_id": "P4",
+          "question": "¿Qué es un PISP y cómo puede iniciar pagos desde mi ERP?",
+          "seed_query": "integrar pagos ERP",
+          "search_volume_hint": null,
+          "language": "es",
+          "created_at": "2026-05-04T06:14:00Z"
+        },
+        {
+          "id": "paa-20260504-p4-13",
+          "type": "paa",
+          "pillar_id": "P4",
+          "question": "¿Cómo reducir el abandono de pago en transacciones B2B?",
+          "seed_query": "unificar métodos de pago empresa",
+          "search_volume_hint": null,
+          "language": "es",
+          "created_at": "2026-05-04T06:14:00Z"
+        },
+        {
+          "id": "paa-20260504-p4-14",
+          "type": "paa",
+          "pillar_id": "P4",
+          "question": "¿Cuántos países cubre la zona SEPA para transferencias empresariales?",
+          "seed_query": "SEPA transferencias empresa",
+          "search_volume_hint": null,
+          "language": "es",
+          "created_at": "2026-05-04T06:14:00Z"
+        }
+      ]
+    }
+  ]
+}

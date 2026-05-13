@@ -1,0 +1,270 @@
+{
+  "date": "2026-05-11",
+  "generated_at": "2026-05-11T04:12:00Z",
+  "source": "web_search_paa_extraction",
+  "previous_run_deduplicated_against": "2026-05-04-paa.json",
+  "pillars": [
+    {
+      "pillar_id": "financiacion-entretenimiento",
+      "pillar_name": "Financiación Industria Entretenimiento",
+      "questions_count": 5
+    },
+    {
+      "pillar_id": "incentivos-fiscales",
+      "pillar_name": "Incentivos Fiscales Culturales",
+      "questions_count": 5
+    },
+    {
+      "pillar_id": "pfp-regulacion",
+      "pillar_name": "PFP / Crowdfunding Regulado",
+      "questions_count": 5
+    },
+    {
+      "pillar_id": "tokenizacion-rwa",
+      "pillar_name": "Tokenización / RWA Activos Culturales",
+      "questions_count": 5
+    }
+  ],
+  "signals": [
+    {
+      "id": "paa-2026-05-11-a1b2c3d4",
+      "type": "paa",
+      "pillar_id": "financiacion-entretenimiento",
+      "pillar_name": "Financiación Industria Entretenimiento",
+      "question": "¿Cuántos millones destina la convocatoria ICAA 2026 a la producción de largometrajes y cuánto supone de incremento respecto al año anterior?",
+      "seed_query": "financiación producción audiovisual España",
+      "search_volume_hint": null,
+      "language": "es",
+      "created_at": "2026-05-11T04:12:00Z",
+      "signal_context": "Consejo de Ministros aprueba convocatoria ICAA 2026 de 62M€ (+13% vs 2025) para largometrajes sobre proyecto. Publicado hace 5-6 días."
+    },
+    {
+      "id": "paa-2026-05-11-b2c3d4e5",
+      "type": "paa",
+      "pillar_id": "financiacion-entretenimiento",
+      "pillar_name": "Financiación Industria Entretenimiento",
+      "question": "¿Qué diferencia hay entre las ayudas ICAA sobre proyecto y las ayudas sobre coste final de producción?",
+      "seed_query": "cómo financiar una película en España",
+      "search_volume_hint": null,
+      "language": "es",
+      "created_at": "2026-05-11T04:12:00Z",
+      "signal_context": "Convocatoria 2026 ICAA distingue explícitamente ayudas anticipadas (sobre proyecto) de ayudas sobre coste final — pregunta frecuente en la guía oficial."
+    },
+    {
+      "id": "paa-2026-05-11-c3d4e5f6",
+      "type": "paa",
+      "pillar_id": "financiacion-entretenimiento",
+      "pillar_name": "Financiación Industria Entretenimiento",
+      "question": "¿Cómo solicitar las ayudas ICAA 2026 para cortometrajes sobre proyecto y cuál es su dotación total?",
+      "seed_query": "anticipos producción cine España",
+      "search_volume_hint": null,
+      "language": "es",
+      "created_at": "2026-05-11T04:12:00Z",
+      "signal_context": "ICAA abre convocatoria 2026 para cortometrajes sobre proyecto con dotación de 2.200.000€. Coordinadora del Corto confirmó apertura."
+    },
+    {
+      "id": "paa-2026-05-11-d4e5f6a7",
+      "type": "paa",
+      "pillar_id": "financiacion-entretenimiento",
+      "pillar_name": "Financiación Industria Entretenimiento",
+      "question": "¿Cuánto invirtieron Netflix, HBO y otras plataformas de streaming en producción española en 2023 gracias a la ley de obligación?",
+      "seed_query": "financiación producción audiovisual España",
+      "search_volume_hint": null,
+      "language": "es",
+      "created_at": "2026-05-11T04:12:00Z",
+      "signal_context": "El País: la obligación de financiación a plataformas streaming elevó gasto en producciones nacionales y europeas a 544M€ en 2023."
+    },
+    {
+      "id": "paa-2026-05-11-e5f6a7b8",
+      "type": "paa",
+      "pillar_id": "financiacion-entretenimiento",
+      "pillar_name": "Financiación Industria Entretenimiento",
+      "question": "¿Qué es el Spain Audiovisual Hub y cómo sirve de portal centralizado para acceder a financiación audiovisual?",
+      "seed_query": "financiación producción audiovisual España",
+      "search_volume_hint": null,
+      "language": "es",
+      "created_at": "2026-05-11T04:12:00Z",
+      "signal_context": "Spain Audiovisual Hub (spainaudiovisualhub.digital.gob.es) aparece como portal de referencia de ayudas e incentivos del sector."
+    },
+    {
+      "id": "paa-2026-05-11-f6a7b8c9",
+      "type": "paa",
+      "pillar_id": "incentivos-fiscales",
+      "pillar_name": "Incentivos Fiscales Culturales",
+      "question": "¿Qué cambios concretos propone la reforma del artículo 36.3 LIS para artes escénicas y música en vivo?",
+      "seed_query": "artículo 36 ley impuesto sociedades cultura",
+      "search_volume_hint": null,
+      "language": "es",
+      "created_at": "2026-05-11T04:12:00Z",
+      "signal_context": "Reforma pendiente art. 36.3 LIS: propuesta de subida de deducción al 25%, ampliación de gastos deducibles y mejora del acceso. Debate activo en marzo 2026."
+    },
+    {
+      "id": "paa-2026-05-11-a7b8c9d0",
+      "type": "paa",
+      "pillar_id": "incentivos-fiscales",
+      "pillar_name": "Incentivos Fiscales Culturales",
+      "question": "¿Cuándo se aprobará definitivamente la reforma que sube al 25% la deducción para producciones de artes escénicas y musicales?",
+      "seed_query": "deducciones fiscales inversión cultural España",
+      "search_volume_hint": null,
+      "language": "es",
+      "created_at": "2026-05-11T04:12:00Z",
+      "signal_context": "Reforma del art. 36.3 sigue pendiente de aprobación parlamentaria a mayo 2026. Gap claro de contenido explicativo."
+    },
+    {
+      "id": "paa-2026-05-11-b8c9d0e1",
+      "type": "paa",
+      "pillar_id": "incentivos-fiscales",
+      "pillar_name": "Incentivos Fiscales Culturales",
+      "question": "¿Es compatible combinar la deducción del artículo 36.1 LIS con las ayudas públicas del ICAA para una misma producción?",
+      "seed_query": "artículo 36 ley impuesto sociedades cultura",
+      "search_volume_hint": null,
+      "language": "es",
+      "created_at": "2026-05-11T04:12:00Z",
+      "signal_context": "Duda frecuente al lanzarse convocatoria ICAA 2026 de 62M€: muchos productores quieren combinar subvención pública + deducción fiscal."
+    },
+    {
+      "id": "paa-2026-05-11-c9d0e1f2",
+      "type": "paa",
+      "pillar_id": "incentivos-fiscales",
+      "pillar_name": "Incentivos Fiscales Culturales",
+      "question": "¿Qué diferencia hay entre el productor financiador y el co-financiador a efectos de las deducciones del artículo 36 LIS?",
+      "seed_query": "deducción fiscal producción cinematográfica",
+      "search_volume_hint": null,
+      "language": "es",
+      "created_at": "2026-05-11T04:12:00Z",
+      "signal_context": "Camaleon Rental blog art. 36.1 LIS 2026 y guías fiscales detallan la distinción entre roles y quién puede aplicar la deducción."
+    },
+    {
+      "id": "paa-2026-05-11-d0e1f2a3",
+      "type": "paa",
+      "pillar_id": "incentivos-fiscales",
+      "pillar_name": "Incentivos Fiscales Culturales",
+      "question": "¿Qué gastos deducibles nuevos incluye la propuesta de mejora fiscal cultural para espectáculos en vivo?",
+      "seed_query": "mecenazgo cultural desgravación fiscal",
+      "search_volume_hint": null,
+      "language": "es",
+      "created_at": "2026-05-11T04:12:00Z",
+      "signal_context": "famcultura.com detalla ampliación de gastos deducibles para artes escénicas en la propuesta de reforma — contenido de oportunidad."
+    },
+    {
+      "id": "paa-2026-05-11-e1f2a3b4",
+      "type": "paa",
+      "pillar_id": "pfp-regulacion",
+      "pillar_name": "PFP / Crowdfunding Regulado",
+      "question": "¿Qué diferencia hay entre una PFP armonizada (PSFP europeo ECSPR) y una PFP no armonizada en España?",
+      "seed_query": "plataforma financiación participativa España",
+      "search_volume_hint": null,
+      "language": "es",
+      "created_at": "2026-05-11T04:12:00Z",
+      "signal_context": "CNMV distingue en su portal entre PSFP europeos armonizados y PFP no armonizadas — distinción crítica que pocos medios explican."
+    },
+    {
+      "id": "paa-2026-05-11-f2a3b4c5",
+      "type": "paa",
+      "pillar_id": "pfp-regulacion",
+      "pillar_name": "PFP / Crowdfunding Regulado",
+      "question": "¿Qué es un Proveedor de Servicios de Financiación Participativa (PSFP) europeo y qué obligaciones tiene bajo el reglamento ECSPR?",
+      "seed_query": "ECSPR regulación crowdfunding Europa",
+      "search_volume_hint": null,
+      "language": "es",
+      "created_at": "2026-05-11T04:12:00Z",
+      "signal_context": "Terminología PSFP (nueva etiqueta regulatoria post-ECSPR) con escasa cobertura en español — oportunidad de contenido definitorio."
+    },
+    {
+      "id": "paa-2026-05-11-a3b4c5d6",
+      "type": "paa",
+      "pillar_id": "pfp-regulacion",
+      "pillar_name": "PFP / Crowdfunding Regulado",
+      "question": "¿Cómo afecta la Ley Crea y Crece al régimen jurídico de las plataformas de crowdfunding en España?",
+      "seed_query": "plataforma financiación participativa España",
+      "search_volume_hint": null,
+      "language": "es",
+      "created_at": "2026-05-11T04:12:00Z",
+      "signal_context": "WTW analiza cómo la Ley Crea y Crece cambia el régimen de PFP en España al transponer el ECSPR — pregunta activa de inversores."
+    },
+    {
+      "id": "paa-2026-05-11-b4c5d6e7",
+      "type": "paa",
+      "pillar_id": "pfp-regulacion",
+      "pillar_name": "PFP / Crowdfunding Regulado",
+      "question": "¿Pueden las PFP no armonizadas captar financiación para proyectos audiovisuales o culturales en España después del ECSPR?",
+      "seed_query": "crowdfunding regulado CNMV",
+      "search_volume_hint": null,
+      "language": "es",
+      "created_at": "2026-05-11T04:12:00Z",
+      "signal_context": "Transición regulatoria ECSPR genera dudas operativas sobre qué plataformas pueden seguir operando — pregunta práctica sin respuesta clara."
+    },
+    {
+      "id": "paa-2026-05-11-c5d6e7f8",
+      "type": "paa",
+      "pillar_id": "pfp-regulacion",
+      "pillar_name": "PFP / Crowdfunding Regulado",
+      "question": "¿Qué plataformas de crowdfunding tienen pasaporte europeo ECSPR para operar en varios países de la UE sin autorización local?",
+      "seed_query": "ECSPR regulación crowdfunding Europa",
+      "search_volume_hint": null,
+      "language": "es",
+      "created_at": "2026-05-11T04:12:00Z",
+      "signal_context": "EvenFi (500+ campañas, CNMV) es ejemplo de PSFP con pasaporte europeo — oportunidad de contenido comparativo de plataformas."
+    },
+    {
+      "id": "paa-2026-05-11-d6e7f8a9",
+      "type": "paa",
+      "pillar_id": "tokenizacion-rwa",
+      "pillar_name": "Tokenización / RWA Activos Culturales",
+      "question": "¿Qué ocurre con los tokens culturales y de entretenimiento que no cumplan con MiCA antes del 1 de julio de 2026 en España?",
+      "seed_query": "tokenización activos reales España",
+      "search_volume_hint": null,
+      "language": "es",
+      "created_at": "2026-05-11T04:12:00Z",
+      "signal_context": "Período transitorio MiCA en España finaliza el 1 de julio de 2026 — urgencia regulatoria inminente para emisores de tokens culturales."
+    },
+    {
+      "id": "paa-2026-05-11-e7f8a9b0",
+      "type": "paa",
+      "pillar_id": "tokenizacion-rwa",
+      "pillar_name": "Tokenización / RWA Activos Culturales",
+      "question": "¿Qué es el DAC8 y cómo afecta a los inversores en tokens de activos culturales en España a partir de 2026?",
+      "seed_query": "blockchain industria cultural",
+      "search_volume_hint": null,
+      "language": "es",
+      "created_at": "2026-05-11T04:12:00Z",
+      "signal_context": "España implementa DAC8 (rastreo fiscal de crypto) desde enero 2026 — afecta directamente a inversores en tokens culturales y RWA."
+    },
+    {
+      "id": "paa-2026-05-11-f8a9b0c1",
+      "type": "paa",
+      "pillar_id": "tokenizacion-rwa",
+      "pillar_name": "Tokenización / RWA Activos Culturales",
+      "question": "¿Por qué bancos de inversión como Morgan Stanley están apostando por la tokenización de activos reales (RWA) en 2026?",
+      "seed_query": "RWA real world assets entretenimiento",
+      "search_volume_hint": null,
+      "language": "es",
+      "created_at": "2026-05-11T04:12:00Z",
+      "signal_context": "Morgan Stanley señala cambio importante en finanzas hacia RWA tokenizados — valida narrativa institucional del sector cultural."
+    },
+    {
+      "id": "paa-2026-05-11-a9b0c1d2",
+      "type": "paa",
+      "pillar_id": "tokenizacion-rwa",
+      "pillar_name": "Tokenización / RWA Activos Culturales",
+      "question": "¿Cuánto mueve el mercado global de tokens RWA y qué parte corresponde a activos culturales y de entretenimiento?",
+      "seed_query": "inversión tokenizada cultura",
+      "search_volume_hint": null,
+      "language": "es",
+      "created_at": "2026-05-11T04:12:00Z",
+      "signal_context": "Mercado RWA supera los 20.000M$ globalmente (yellow.com, hace 3 días) — dato de contexto potente para contenido de Hulahoop."
+    },
+    {
+      "id": "paa-2026-05-11-b0c1d2e3",
+      "type": "paa",
+      "pillar_id": "tokenizacion-rwa",
+      "pillar_name": "Tokenización / RWA Activos Culturales",
+      "question": "¿Qué diferencia hay entre ARTs y EMTs dentro del reglamento MiCA y cuál aplica a proyectos de entretenimiento tokenizados?",
+      "seed_query": "tokenización activos reales España",
+      "search_volume_hint": null,
+      "language": "es",
+      "created_at": "2026-05-11T04:12:00Z",
+      "signal_context": "AEAT explica en abril 2026 distinción ARTs/EMTs en MiCA — pregunta técnica clave para emisores de tokens culturales sin cobertura en español."
+    }
+  ]
+}

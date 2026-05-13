@@ -1,0 +1,16 @@
+{
+  "messages": [
+    {
+      "role": "user",
+      "text": "Estoy mirando el asset \"instagram-3-slide\" (`brand-book/visual-identity/templates/instagram-3-slide`, kind=template). Dame un resumen y las opciones de refinamiento.",
+      "ts": 1778421801395
+    },
+    {
+      "role": "bot",
+      "text": "Aquí va el resumen del template y las opciones de refinamiento:\n\n---\n\n## 📋 Resumen: `instagram-3-slide`\n\n**Tipo:** Template de carrusel IG (1080×1080px, 3 slides)\n**Descripción:** Carrusel cuadrado Instagram: cover + body + CTA\n\n**Estructura:**\n1. **Slide Cover** — Fondo gradiente oscuro (navy → cyan), kicker en turquesa, título grande, personaje opcional, logo Growth4U, \"Desliza →\"\n2. **Slide Body** — Fondo blanco, título + texto explicativo + dato destacado (callout con borde turquesa). Diseñado para repetirse con contenido variable (`perSlide`)\n3. **Slide CTA** — Fondo gradiente oscuro, headline centrado, subtexto, botón turquesa con bordes redondeados, personaje opcional\n\n**Design tokens actuales:** Manrope (headings) + Roboto (body). Colores: `#032149` navy, `#0faec1` cyan, `#6351d5` purple, `#3f45fe` blue. Efectos bokeh en slides oscuros, stripe lateral gradiente, barra inferior gradiente.\n\n**Slots editables:** 10 (kicker, título cover, imagen hero, título/texto/dato por slide, headline CTA, subtexto CTA, botón CTA, imagen CTA)\n\n---\n\n¿Qué quieres refinar? Estas son las opciones:\n\n:::ask\n{\"id\":\"q_refine_area\",\"prompt\":\"¿Qué área del template quieres ajustar?\",\"mode\":\"multi\",\"options\":[{\"id\":\"colors\",\"label\":\"🎨 Paleta de colores / gradientes\"},{\"id\":\"typography\",\"label\":\"🔤 Tipografía (fuentes, tamaños, pesos)\"},{\"id\":\"layout\",\"label\":\"📐 Layout / espaciado / estructura\"},{\"id\":\"cover\",\"label\":\"🖼️ Slide Cover (diseño portada)\"},{\"id\":\"body\",\"label\":\"📝 Slide Body (diseño contenido)\"},{\"id\":\"cta\",\"label\":\"🔘 Slide CTA (diseño cierre)\"},{\"id\":\"effects\",\"label\":\"✨ Efectos visuales (bokeh, sombras, bordes)\"},{\"id\":\"slots\",\"label\":\"🧩 Slots (añadir/quitar/modificar campos editables)\"},{\"id\":\"branding\",\"label\":\"🏷️ Branding (logo, footer, URL)\"},{\"id\":\"other\",\"label\":\"Otro (lo escribo)\"}]}\n:::",
+      "ts": 1778421840905,
+      "agent": "sancho"
+    }
+  ],
+  "updatedAt": 1778421840905
+}

@@ -1,0 +1,11 @@
+{
+  "cronId": "a68143d8-1309-46eb-a5dc-4c3fb35ee3d2",
+  "cronName": "Lead Sync — Growth4U",
+  "slug": "growth4u",
+  "date": "2026-05-07",
+  "runAtMs": 1778184000028,
+  "status": "ok",
+  "durationMs": 426436,
+  "model": "claude-opus-4-6",
+  "content": "📊 **Lead Sync — 2026-05-07**\n\n• **33** contactos con tag `llamada-agendada`\n• **1 nuevo**: Jordi Teixido de Haro — freelance developer PHP/Python, FB Ads paid, llamada agendada 11/05\n• **31 existentes**: sin cambios (Drive timeout impidió check de transcripts)\n• **1 skipped**: test@test.com\n• **Slack**: deshabilitado en config\n\n⚠️ Google Drive API timeout en búsqueda de transcripts — se reintentará en próximo sync.\n\n_Nuevo lead marcado `enrichment_pending: true` — pendiente verificación email y búsqueda LinkedIn._"
+}

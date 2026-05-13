@@ -1,0 +1,271 @@
+{
+  "generated_at": "2026-05-01T05:16:00Z",
+  "source_type": "competitor-monitor",
+  "period": "2026-04-24 to 2026-05-01",
+  "signals": [
+    {
+      "id": "sig-20260501-01",
+      "type": "creator",
+      "pillar_id": "brand-awareness",
+      "title": "Insparya celebra 7 años en España — PR masivo con narrativa de liderazgo europeo",
+      "summary": "Insparya lanza campaña PR por su 7º aniversario en España (abril 2026). Cobertura en esdiario, comunicae, cadena SER. Narrativa: de clínica pionera a 'gigante europeo de la salud capilar'. Cifras: +70.000 trasplantes, 400 profesionales, expansión a Italia y Oriente Medio. Inversión I+D: €2M/año.",
+      "source": "Insparya",
+      "source_type": "competitor",
+      "platform": "web/PR",
+      "url": "https://www.esdiario.com/economia/260427/186210/insparya-cumple-siete-anos-espana-clinica-pionera-gigante-europeo-salud-capilar.html",
+      "engagement": "high — cobertura multi-medio (esdiario, comunicae, SER, sevillabuenasnoticias)",
+      "why_it_worked": "Milestone corporativo convertido en storytelling aspiracional. Cifras concretas (70K trasplantes, €2M I+D) dan credibilidad. CR7 como cofundador sigue generando clicks.",
+      "angle_for_us": "HC puede contraatacar con su propia narrativa de trayectoria — enfocada en tratamientos y enfoque médico diferencial (lo que Insparya no destaca). Content piece: 'Por qué 2026 es el año de los tratamientos capilares (no solo del trasplante)'.",
+      "signal_type": [
+        "metric",
+        "milestone"
+      ],
+      "classified_at": "2026-05-01T08:49:00+02:00"
+    },
+    {
+      "id": "sig-20260501-02",
+      "type": "creator",
+      "pillar_id": "product-innovation",
+      "title": "Insparya posiciona BotHair UltraPlus® como tech diferenciador — robótica capilar",
+      "summary": "Insparya empuja narrativa tecnológica con BotHair UltraPlus®: extracción automática, aspiración optimizada, reducción de 2h en procedimientos. Cobertura en Men's Health y medios tech. Exploran brazos robotizados para extracción e implantación.",
+      "source": "Insparya",
+      "source_type": "competitor",
+      "platform": "web/blog",
+      "url": "https://www.menshealth.com/es/moda-cuidados-hombre/a70232458/insparya-reducir-estres-trasplante/",
+      "engagement": "medium-high — Men's Health = audiencia target hombre 25-45",
+      "why_it_worked": "Narrativa tech-forward que resuena con audiencia joven. Men's Health da credibilidad editorial, no es publicidad directa. Ángulo de 'reducir estrés' humaniza la tecnología.",
+      "angle_for_us": "HC puede posicionar su enfoque en tratamientos como 'la tecnología que evita que necesites cirugía'. Contraposición: ellos innovan en cirugía, nosotros innovamos en prevenirla. Content: 'Robótica vs Prevención: ¿Qué avance capilar te interesa más?'.",
+      "signal_type": [
+        "system"
+      ],
+      "classified_at": "2026-05-01T08:49:00+02:00"
+    },
+    {
+      "id": "sig-20260501-03",
+      "type": "creator",
+      "pillar_id": "brand-awareness",
+      "title": "Insparya pierde 13% facturación España 2024 — Georgina sale del accionariado",
+      "summary": "Medios como El Español, Sport y El Confidencial reportan caída del 13% en facturación de Insparya España (2024 vs 2023). Georgina Rodríguez deja de ser accionista (julio 2024). Insparya atribuye caída a 'ajuste de precios' e inversión en nuevas clínicas (Bilbao, Barcelona, Málaga).",
+      "source": "Insparya",
+      "source_type": "competitor",
+      "platform": "web/press",
+      "url": "https://www.elespanol.com/corazon/famosos/20260225/empresa-capilar-cristiano-ronaldo-resentida-salida-georgina-pierde-millones-presenta-deudas/1003744142962_0.html",
+      "engagement": "very-high — viral por componente celebrity (CR7/Georgina)",
+      "why_it_worked": "Componente celebrity + datos financieros negativos = clickbait irresistible. Transparencia involuntaria: los medios acceden a datos de Registro Mercantil y construyen narrativa de declive.",
+      "angle_for_us": "Oportunidad de capturar pacientes desencantados con Insparya. No atacar directamente pero posicionar HC como alternativa estable y centrada en calidad médica, no en celebrities. Posible contenido: testimonios de pacientes que eligieron enfoque médico sobre marca.",
+      "signal_type": [
+        "metric",
+        "conflict"
+      ],
+      "classified_at": "2026-05-01T08:49:00+02:00"
+    },
+    {
+      "id": "sig-20260501-04",
+      "type": "creator",
+      "pillar_id": "trust-authority",
+      "title": "Svenson gana Premio Cinco Estrellas 2026 — categoría Salud Capilar",
+      "summary": "Svenson obtiene el Premio Cinco Estrellas 2026 en 'Salud Capilar'. 79.9% satisfacción global entre 4.000+ consumidores encuestados. Se posicionan como 'marca mejor valorada por consumidores españoles'. Nota de prensa en enero 2026, sigue circulando.",
+      "source": "Svenson",
+      "source_type": "competitor",
+      "platform": "web/PR",
+      "url": "https://www.svenson.es/premio-cinco-estrellas-svenson-2026",
+      "engagement": "medium — circulación controlada (PR propio + cinco-estrellas.es)",
+      "why_it_worked": "Premios pagados funcionan como social proof. 79.9% suena contundente. Publicado en enero, les da todo el año para usarlo en marketing.",
+      "angle_for_us": "Contrastar con Trustpilot real: Svenson 1.5/5 vs HC 4.8/5. Los premios 'Cinco Estrellas' son de pago (lo sabe el sector). HC puede competir con reviews reales de pacientes — content: 'Lo que dicen los pacientes (de verdad) sobre las clínicas capilares'.",
+      "signal_type": [
+        "metric",
+        "milestone"
+      ],
+      "classified_at": "2026-05-01T08:49:00+02:00"
+    },
+    {
+      "id": "sig-20260501-05",
+      "type": "creator",
+      "pillar_id": "product-innovation",
+      "title": "Svenson lanza LUX Capilar con Polinucleótidos — medicina regenerativa",
+      "summary": "Svenson posiciona 'LUX Capilar con Polinucleótidos' como tratamiento estrella de bioestimulación avanzada. Polinucleótidos de alta pureza (derivados de ADN de salmón) que regeneran folículo a nivel celular. Protocolo personalizado con tricoscopia. Se apoya en premio Cinco Estrellas para credibilidad.",
+      "source": "Svenson",
+      "source_type": "competitor",
+      "platform": "blog",
+      "url": "https://www.svenson.es/blog/lux-capilar-polinucleotidos-tratamiento-regenerativo/",
+      "engagement": "medium — blog propio, amplificación orgánica limitada",
+      "why_it_worked": "Naming atractivo ('LUX Capilar'), ingrediente de moda (polinucleótidos están trending en estética). Se sube a la ola de medicina regenerativa sin ser clínica médica. Tricoscopia como parte del protocolo les da aire de seriedad.",
+      "angle_for_us": "HC tiene credibilidad MÉDICA real para hablar de regeneración capilar — Svenson son esteticistas. Content: 'Polinucleótidos capilares: qué dice la evidencia (y por qué importa quién te los pone)'. Posicionar HC como quien realmente puede prescribir y supervisar estos tratamientos.",
+      "signal_type": [
+        "system",
+        "milestone"
+      ],
+      "classified_at": "2026-05-01T08:49:00+02:00"
+    },
+    {
+      "id": "sig-20260501-06",
+      "type": "creator",
+      "pillar_id": "seo-content",
+      "title": "Capilclinic publica artículo SEO sobre biotecnología capilar 2026 — keyword dominante",
+      "summary": "Capilclinic publica 'La revolución de la biotecnología capilar 2026' (7 abril). Artículo largo que posiciona su técnica Micro Time FUE. Aparece en top resultados para queries de 'injerto capilar 2026' y 'biotecnología capilar'. También publican guía de precios injerto capilar 2026 (28 abril).",
+      "source": "Capilclinic",
+      "source_type": "competitor",
+      "platform": "blog/SEO",
+      "url": "https://www.capilclinic.es/blog/revolucion-biotecnologia-capilar-2026-fin-definitivo-alopecia/",
+      "engagement": "high-SEO — top positions en Google para keywords transaccionales",
+      "why_it_worked": "Timing perfecto: publicar artículo de tendencias Q2 2026 al inicio del trimestre. Estructura SEO sólida con headings claros. La guía de precios captura intent transaccional (gente buscando cuánto cuesta).",
+      "angle_for_us": "HC necesita contenido SEO sobre tratamientos capilares 2026 (no solo trasplante). Keyword gap: 'tratamientos capilares sin cirugía 2026', 'alternativas al trasplante capilar'. Capilclinic domina cirugía, HC puede dominar tratamientos.",
+      "signal_type": [
+        "system"
+      ],
+      "classified_at": "2026-05-01T08:49:00+02:00"
+    },
+    {
+      "id": "sig-20260501-07",
+      "type": "creator",
+      "pillar_id": "seo-content",
+      "title": "Capilclinic ataca keyword transaccional con guía de precios injerto 2026",
+      "summary": "Artículo del 28 abril: '¿Cuánto cuesta un injerto capilar en 2026?'. Precios transparentes: desde €2.190 (Estambul) y €2.990 (Madrid/Barcelona) vs media nacional €4.500-7.000. Packs hasta €5.990 con tratamientos incluidos. Strategy: transparencia de precios como gancho SEO + confianza.",
+      "source": "Capilclinic",
+      "source_type": "competitor",
+      "platform": "blog/SEO",
+      "url": "https://www.capilclinic.es/blog/que-cuesta-un-injerto-capilar/",
+      "engagement": "high-SEO — keyword intent transaccional muy valioso",
+      "why_it_worked": "La transparencia de precios online genera confianza masiva en un sector opaco. Posicionar precios competitivos vs 'media nacional' es inteligente. Packs con nombres claros (M/L/XL) simplifican la decisión.",
+      "angle_for_us": "HC puede hacer lo mismo para TRATAMIENTOS: '¿Cuánto cuesta un tratamiento capilar en 2026?'. Mostrar que tratamientos desde €820 + diagnóstico es mucho más accesible que cirugía. Keyword: 'precio tratamiento capilar España 2026'.",
+      "signal_type": [
+        "system"
+      ],
+      "classified_at": "2026-05-01T08:49:00+02:00"
+    },
+    {
+      "id": "sig-20260501-08",
+      "type": "creator",
+      "pillar_id": "thought-leadership",
+      "title": "IMD publica 'Propósitos capilares 2026' — posicionamiento preventivo",
+      "summary": "IMD publica artículo (enero 2026) posicionando propósitos capilares anuales. Narrativa: 'no buscar soluciones rápidas, adoptar actitud preventiva'. Enfoque en diagnóstico precoz y normalizar el cuidado capilar como parte de la salud general. Blog con exosomas (NexoHair) y Tricophorte como tratamientos exclusivos.",
+      "source": "IMD",
+      "source_type": "competitor",
+      "platform": "blog",
+      "url": "https://imdermatologico.com/blogimd/actualidad/propositos-salud-capilar-2026/",
+      "engagement": "medium — blog propio con SEO moderado",
+      "why_it_worked": "Narrativa de prevención resuena con audiencia informada. Timing de enero (propósitos) es inteligente. Posicionar la alopecia como 'señal de salud general' eleva el discurso más allá de lo estético.",
+      "angle_for_us": "HC comparte este posicionamiento preventivo PERO con credibilidad médica superior. IMD usa esteticistas, HC usa médicos. Content: fortalecer narrativa de 'tratamientos primero' con datos clínicos reales y tricoscopia como herramienta de diagnóstico precoz.",
+      "signal_type": [
+        "system"
+      ],
+      "classified_at": "2026-05-01T08:49:00+02:00"
+    },
+    {
+      "id": "sig-20260501-09",
+      "type": "creator",
+      "pillar_id": "industry-news",
+      "title": "Investigación española logra revertir alopecia en ratones — stem cells + ATP",
+      "summary": "Investigación publicada abril 2026 (cubierta por Infobae España): combinación de células madre de tejido adiposo + trifosfato de adenosina revierte alopecia androgénica en ratones con tasas cercanas al 100%. Investigación española que podría marcar punto de inflexión en terapias regenerativas.",
+      "source": "Infobae España / investigación académica",
+      "source_type": "reference-creator",
+      "platform": "web/press",
+      "url": "https://www.infobae.com/espana/2026/04/15/una-inyeccion-contra-la-calvicie-una-investigacion-logra-revertir-la-alopecia-en-ratones/",
+      "engagement": "very-high — cobertura Infobae + viralización en RRSS por titular clickable",
+      "why_it_worked": "Titular irresistible: 'inyección contra la calvicie'. Investigación española genera orgullo + relevancia local. Datos concretos (100% reversión en ratones) generan esperanza. Tema universalmente interesante.",
+      "angle_for_us": "HC puede hacer thought leadership comentando esta investigación: 'Lo que significa (y lo que NO) el avance español contra la alopecia'. Posicionar a los médicos de HC como expertos que contextualizan la ciencia. Format: artículo blog + post LinkedIn/IG.",
+      "signal_type": [
+        "metric",
+        "milestone",
+        "aha-moment"
+      ],
+      "classified_at": "2026-05-01T08:49:00+02:00"
+    },
+    {
+      "id": "sig-20260501-10",
+      "type": "creator",
+      "pillar_id": "thought-leadership",
+      "title": "XIII Curso Internacional Tricología en Ramón y Cajal (marzo 2026) — Dr. Sergio Vañó",
+      "summary": "Hospital Ramón y Cajal acoge el XIII Curso Internacional de Tricología (marzo 2026) con expertos mundiales. Dr. Sergio Vañó Galván como coordinador — tricólogo más influyente de España (Forbes top 5 médicos). Evento posiciona Madrid como hub de tricología europea.",
+      "source": "Dr. Sergio Vañó Galván / Hospital Ramón y Cajal",
+      "source_type": "reference-creator",
+      "platform": "web/institutional",
+      "url": "https://www.comunidad.madrid/noticias/2026/03/11/hospital-publico-ramon-cajal-sede-mundial-ultimas-novedades-tratamiento-alopecia",
+      "engagement": "medium-high — cobertura institucional + alcance médico profesional",
+      "why_it_worked": "Evento científico de referencia que posiciona España como líder en tricología. Dr. Vañó tiene autoridad y seguidores. Componente institucional (hospital público) da peso.",
+      "angle_for_us": "HC debería buscar colaboración o presencia en estos eventos. Content: cubrir hallazgos del congreso desde perspectiva de clínica que aplica estos avances. También: buscar relación con Dr. Vañó como referente de opinión del sector.",
+      "signal_type": [
+        "milestone"
+      ],
+      "classified_at": "2026-05-01T08:49:00+02:00"
+    },
+    {
+      "id": "sig-20260501-11",
+      "type": "creator",
+      "pillar_id": "thought-leadership",
+      "title": "Helena Rodero lidera 'skinificación capilar' — farmacéutica con ~2M seguidores",
+      "summary": "Helena Rodero, farmacéutica con ~2M seguidores en RRSS, lidera el movimiento de 'skinificación capilar' (aplicar principios skincare al pelo). Autora de 'Todo sobre tu pelo y tu piel'. Sigue siendo voz dominante en divulgación capilar consumer en España a principios de 2026.",
+      "source": "Helena Rodero",
+      "source_type": "reference-creator",
+      "platform": "social/multi",
+      "url": "https://www.youtube.com/watch?v=eZy23WyYlNQ",
+      "engagement": "very-high — ~2M followers, libro bestseller, presencia multi-plataforma",
+      "why_it_worked": "Hace accesible la tricología para público general. Concepto 'skinificación capilar' es pegadizo y compartible. Credencial de farmacéutica da autoridad sin ser intimidante. Contenido visual y directo.",
+      "angle_for_us": "HC puede explorar colaboración con Helena Rodero o crear contenido similar: médicos de HC explicando cuidado capilar con lenguaje accesible. También usar el concepto 'skinificación capilar' en content propio con ángulo médico.",
+      "signal_type": [
+        "aha-moment",
+        "system"
+      ],
+      "classified_at": "2026-05-01T08:49:00+02:00"
+    },
+    {
+      "id": "sig-20260501-12",
+      "type": "creator",
+      "pillar_id": "seo-content",
+      "title": "mediQuo posiciona consulta capilar online desde €29.99 — captura top-of-funnel",
+      "summary": "mediQuo mantiene activa su Clínica Salud Capilar 100% online: consulta desde €29.99, prescripciones de finasterida/dutasterida/minoxidil, seguimiento continuo. Tres niveles de consulta (4, 12, 24 semanas). Contenido blog sobre vitaminas capilares y soluciones pérdida de peso → caída pelo.",
+      "source": "mediQuo",
+      "source_type": "competitor",
+      "platform": "web/blog",
+      "url": "https://www.mediquo.com/clinica-salud-capilar",
+      "engagement": "medium — blog con SEO decente para keywords informacionales",
+      "why_it_worked": "Precio ultra-bajo (€29.99) elimina barrera de entrada. 100% online = conveniencia máxima. Tres niveles de consulta dan sensación de personalización. Content de blog educativo genera tráfico orgánico.",
+      "angle_for_us": "HC debe capturar pacientes que mediQuo no puede atender: quienes necesitan diagnóstico presencial (tricoscopia, analítica hormonal). Content: '¿Consulta online vs presencial? Cuándo necesitas un diagnóstico capilar completo'. Posicionar HC como step-up natural desde la teleconsulta.",
+      "signal_type": [
+        "metric",
+        "system"
+      ],
+      "classified_at": "2026-05-01T08:49:00+02:00"
+    },
+    {
+      "id": "sig-20260501-13",
+      "type": "creator",
+      "pillar_id": "industry-news",
+      "title": "Dr. De Felipe analiza tratamientos innovadores para alopecia 2026 — PP405, anticuerpos AI",
+      "summary": "Dr. De Felipe publica análisis de tratamientos emergentes: terapia tópica PP405 (reactivación de células madre foliculares), anticuerpos ABS-201 diseñados con IA, minoxidil liposomal, finasterida tópica. Contenido educativo para audiencia profesional/informada.",
+      "source": "Dr. De Felipe",
+      "source_type": "reference-creator",
+      "platform": "blog",
+      "url": "https://drdefelipe.com/alopecia-tratamientos-innovadores-que-llegan-en-2026/",
+      "engagement": "medium — blog especializado con buen SEO para queries informacionales",
+      "why_it_worked": "Contenido de experto que cubre lo que los pacientes googlearán. Cubre tanto tratamientos actuales mejorados como experimentales. Tono riguroso pero accesible. SEO fuerte para 'tratamientos alopecia 2026'.",
+      "angle_for_us": "HC puede crear contenido similar pero con su sello: médicos de HC comentando estos avances y contextualizando cuáles ya aplican en clínica. Format: serie 'Innovación capilar explicada por nuestros médicos'.",
+      "signal_type": [
+        "system"
+      ],
+      "classified_at": "2026-05-01T08:49:00+02:00"
+    }
+  ],
+  "summary": {
+    "total_signals": 13,
+    "by_source_type": {
+      "competitor": 9,
+      "reference-creator": 4
+    },
+    "by_platform": {
+      "web_pr": 3,
+      "blog_seo": 6,
+      "web_press": 2,
+      "social_multi": 1,
+      "web_institutional": 1
+    },
+    "top_themes": [
+      "Insparya en modo PR defensivo — celebra 7 años mientras pierde facturación",
+      "Svenson invierte en credibilidad (premio pagado + polinucleótidos) para compensar Trustpilot 1.5/5",
+      "Capilclinic domina SEO transaccional con guías de precios y tendencias",
+      "Investigación española abre narrativa de 'cura de la calvicie' — oportunidad de thought leadership",
+      "Medicina regenerativa (polinucleótidos, exosomas, stem cells) es el tema trending del sector"
+    ],
+    "key_opportunity": "Ningún competidor está posicionando TRATAMIENTOS capilares como core con credibilidad médica. El cuadrante vacío sigue abierto. HC puede dominar las conversaciones de 'alternativas al trasplante' y 'prevención capilar médica'."
+  }
+}

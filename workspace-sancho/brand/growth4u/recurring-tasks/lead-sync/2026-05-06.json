@@ -1,0 +1,11 @@
+{
+  "cronId": "a68143d8-1309-46eb-a5dc-4c3fb35ee3d2",
+  "cronName": "Lead Sync — Growth4U",
+  "slug": "growth4u",
+  "date": "2026-05-06",
+  "runAtMs": 1778097600042,
+  "status": "ok",
+  "durationMs": 505309,
+  "model": "claude-opus-4-6",
+  "content": "📊 **Lead Sync — 2026-05-06 22:00 CEST**\n\n• **460** contactos en GHL → **32** con tag `llamada-agendada`\n• **0** leads nuevos (1 test contact ignorado)\n• **31** leads existentes actualizados (`last_enriched`)\n• **2** transcripts nuevos añadidos:\n  — 🎙️ **Frank Nava** (Rentakia): Llamada Estratégica 05/05 — Interés alto en Trust Fortress, objección pago único 9K€, seguimiento jueves 08/05\n  — 🎙️ **Aarón Sanromán**: Reunión contenido LinkedIn 06/05 — Plan 3 meses, meta 20K seguidores, diferenciación perfiles Alfonso/Martin\n• **Slack notes**: deshabilitado (`slack_enabled: false`)\n• **Errores**: 0\n\n---\n\n📊 **Lead Sync — 2026-05-06 22:00 CEST**\n\n• **460** contactos en GHL → **32** con tag `llamada-agendada`\n• **0** leads nuevos (1 test contact ignorado)\n• **31** leads existentes actualizados (`last_enriched`)\n• **2** transcripts nuevos añadidos:\n  — 🎙️ **Frank Nava** (Rentakia): Llamada Estratégica 05/05 — Interés alto en Trust Fortress, objección pago único 9K€, seguimiento jueves 08/05\n  — 🎙️ **Aarón Sanromán**: Reunión contenido LinkedIn 06/05 — Plan 3 meses, meta 20K seguidores, diferenciación perfiles Alfonso/Martin\n• **Slack notes**: deshabilitado (`slack_enabled: false`)\n• **Errores**: 0"
+}

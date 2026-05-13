@@ -1,0 +1,30 @@
+{
+  "id": "linkedin-9-slide",
+  "name": "LinkedIn · Carrusel 9 slides",
+  "channel": "linkedin",
+  "description": "Carrusel vertical 1080×1350: cover con personaje + 7 slides body tipográficas + CTA con personaje.",
+  "slideCount": 9,
+  "width": 1080,
+  "height": 1350,
+  "preview": {
+    "variant": "gradient-navy",
+    "lines": [
+      { "kind": "badge", "width": 30 },
+      { "kind": "title", "width": 95 },
+      { "kind": "title", "width": 80 },
+      { "kind": "title", "width": 60 },
+      { "kind": "footer", "width": 100 }
+    ]
+  },
+  "slots": [
+    { "key": "cover_title", "label": "Título de portada", "multiline": true, "placeholder": "El creativo pesa más que el targeting", "maxLength": 120 },
+    { "key": "cover_subtitle", "label": "Subtítulo de portada", "placeholder": "Andromeda de Meta lo confirma · 2026", "maxLength": 100 },
+    { "key": "cover_kicker", "label": "Etiqueta superior cover", "placeholder": "Playbook · 2026", "maxLength": 60 },
+    { "key": "hero_image_url", "label": "URL del personaje (cover)", "placeholder": "https://r2.../personaje-cover.png", "maxLength": 500 },
+    { "key": "cta_image_url", "label": "URL del personaje (CTA)", "placeholder": "https://r2.../personaje-cta.png", "maxLength": 500 },
+    { "key": "cta_title", "label": "CTA · pregunta", "placeholder": "¿Tu agencia sigue cobrándote por gestión de audiencias?", "maxLength": 120 },
+    { "key": "cta_text", "label": "CTA · invitación", "multiline": true, "placeholder": "Comenta o DM con tu cifra. Renegocia.", "maxLength": 200 },
+    { "key": "slide_title", "label": "Headline de la slide", "perSlide": true, "placeholder": "Ej: 'El dato', 'Lo que pasa', 'Acción 1'", "maxLength": 50 },
+    { "key": "slide_text", "label": "Cuerpo de la slide", "perSlide": true, "multiline": true, "placeholder": "2-4 líneas, máx 25 palabras por línea.", "maxLength": 280 }
+  ]
+}

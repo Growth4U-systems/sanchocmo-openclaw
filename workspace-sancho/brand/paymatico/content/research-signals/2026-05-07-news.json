@@ -1,0 +1,62 @@
+[
+  {
+    "id": "news-2026-05-07-molli01",
+    "type": "news",
+    "pillar_id": "competencia-fintech",
+    "title": "Mollie compra GoCardless por €1.050M — consolidación que redefine el mapa de pagos europeo",
+    "summary": "Mollie ha firmado un acuerdo para adquirir GoCardless por €1.050 millones ($1.100M). El cierre se espera a mediados de 2026, pendiente de aprobaciones regulatorias. La entidad combinada servirá a más de 350.000 empresas, integrando pagos con tarjeta, métodos locales y pagos bancarios en una sola plataforma. GoCardless aporta especialización en pagos recurrentes por débito bancario y reducción de churn involuntario.",
+    "source": "Mollie / FintechFutures / Silicon.es",
+    "url": "https://www.mollie.com/news/mollie-to-acquire-gocardless",
+    "date": "2025-12-11",
+    "relevance_score": 0.82,
+    "created_at": "2026-05-07T05:48:36Z"
+  },
+  {
+    "id": "news-2026-05-07-adyen01",
+    "type": "news",
+    "pillar_id": "competencia-fintech",
+    "title": "Adyen factura €620.8M en Q1 y compra Talon.One por €750M — la primera adquisición de su historia",
+    "summary": "Adyen reportó ingresos netos de €620.8M en Q1 2026 (+16% YoY, +20% en moneda constante). Volumen procesado: €382.000M (+21% YoY). Unified Commerce creció 28%. Además, anunció la adquisición de Talon.One por €750M, una plataforma de loyalty y promociones con más de 300 merchants enterprise. Es la primera adquisición en la historia de Adyen, que siempre defendió el crecimiento orgánico.",
+    "source": "Adyen / BankingDive / FintechFutures",
+    "url": "https://www.adyen.com/press-and-media/adyen-publishes-q1-2026-business-update-4gyhh5",
+    "date": "2026-05-06",
+    "relevance_score": 0.88,
+    "created_at": "2026-05-07T05:48:36Z"
+  },
+  {
+    "id": "news-2026-05-07-psd302",
+    "type": "news",
+    "pillar_id": "regulacion-pagos",
+    "title": "PSD3 aprobada en comité ECON del Parlamento Europeo — el reloj corre para tu proveedor de pagos",
+    "summary": "El comité ECON del Parlamento Europeo votó PSD3/PSR el 5 de mayo de 2026. El voto plenario se espera en mayo. Publicación en OJEU prevista para junio-julio 2026, con aplicación 21 meses después (finales 2027). PSD3 fusiona licencias de e-money y pagos en un marco único. PSR introduce verificación obligatoria del beneficiario y responsabilidad del PSP por fraude de suplantación. Las entidades de pago podrán acceder directamente a sistemas de pago designados sin intermediación bancaria.",
+    "source": "Morrison Foerster / Freshfields / Matheson",
+    "url": "https://www.mofo.com/resources/insights/260430-psd3-and-the-payment-services-regulation-key-developments",
+    "date": "2026-04-30",
+    "relevance_score": 0.9,
+    "created_at": "2026-05-07T05:48:36Z"
+  },
+  {
+    "id": "news-2026-05-07-bizum01",
+    "type": "news",
+    "pillar_id": "tecnologia-pagos",
+    "title": "Bizum Pay lanza app NFC el 18 de mayo — transferencia directa banco-a-banco sin Visa ni Mastercard",
+    "summary": "Bizum lanza el 18 de mayo 2026 pagos NFC en tiendas físicas mediante la app 'Bizum Pay'. Los pagos son transferencias bancarias instantáneas directas, sin pasar por redes de tarjetas (Visa/Mastercard). Disponible inicialmente para clientes de CaixaBank, Sabadell y Bankinter. Los comercios solo necesitan actualización de software en sus datáfonos. Bizum tiene 28,8 millones de usuarios en España y representa más del 50% de las transferencias bancarias del país.",
+    "source": "El País / Xataka / El Diario / The Paypers",
+    "url": "https://elpais.com/expres/2026-05-04/bizum-da-el-salto-a-las-tiendas-fisicas-el-te-hago-un-bizum-llega-al-supermercado.html",
+    "date": "2026-05-04",
+    "relevance_score": 0.88,
+    "created_at": "2026-05-07T05:48:36Z"
+  },
+  {
+    "id": "news-2026-05-07-market01",
+    "type": "news",
+    "pillar_id": "franquicias-multisede",
+    "title": "El mercado de pasarelas de pago en España alcanza $1.000M en 2026 — las franquicias son el segmento más rápido",
+    "summary": "El mercado de pasarelas de pago en España alcanza los $1.000 millones en 2026, con un CAGR del 24,82% que lo proyecta a $3.030M en 2031 según Mordor Intelligence. Las PYMEs son el segmento de mayor crecimiento (CAGR 28,76%), impulsado por iniciativas como Kit Digital. España tiene un 53% de penetración de transferencias instantáneas, muy por encima del 15% de media europea. Los wallets digitales crecen al 27,14% CAGR.",
+    "source": "Mordor Intelligence",
+    "url": "https://www.mordorintelligence.com/industry-reports/spain-payment-gateway-market",
+    "date": "2026",
+    "relevance_score": 0.8,
+    "created_at": "2026-05-07T05:48:36Z"
+  }
+]

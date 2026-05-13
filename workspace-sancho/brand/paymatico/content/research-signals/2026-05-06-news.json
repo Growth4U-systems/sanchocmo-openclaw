@@ -1,0 +1,86 @@
+[
+  {
+    "id": "news-2026-05-06-adyen01",
+    "type": "news",
+    "pillar_id": "competencia-fintech",
+    "title": "Adyen nombrada líder por Forrester Wave Q1 2026",
+    "summary": "Adyen ha sido reconocida como Líder en The Forrester Wave: Merchant Payment Providers, Q1 2026, publicado el 5 de marzo de 2026. Recibió la puntuación máxima en 14 de 24 criterios, incluyendo Innovación, Roadmap, y Data/Analytics/Insights. Su CCO Roelant Prins destaca el enfoque de plataforma única sin adquisiciones ni dependencias de terceros.",
+    "source": "Forrester / Adyen",
+    "url": "https://www.adyen.com/press-and-media/adyen-recognized-as-leader-in-merchant-payment-providers-evaluation",
+    "date": "2026-03-05",
+    "relevance_score": 0.80,
+    "created_at": "2026-05-06T05:48:00Z"
+  },
+  {
+    "id": "news-2026-05-06-molli01",
+    "type": "news",
+    "pillar_id": "competencia-fintech",
+    "title": "Mollie lanza pagos para franquicias en España",
+    "summary": "Mollie lanzó oficialmente sus servicios en España en noviembre 2025, con una página específica de pagos para franquicias. Ofrece gestión centralizada de pedidos, unificación de pagos online/offline, más de 35 métodos de pago incluyendo Bizum, y conciliación/liquidación automatizada. Es miembro principal del European Payments Initiative (EPI).",
+    "source": "Mollie / Alimarket / InfoHoreca",
+    "url": "https://www.mollie.com/es/solutions/payments-for-franchises",
+    "date": "2025-11",
+    "relevance_score": 0.85,
+    "created_at": "2026-05-06T05:48:00Z"
+  },
+  {
+    "id": "news-2026-05-06-psd301",
+    "type": "news",
+    "pillar_id": "regulacion-pagos",
+    "title": "PSD3/PSR textos finales de compromiso publicados",
+    "summary": "Los textos finales de compromiso de PSD3/PSR fueron publicados el 23 de abril de 2026 tras el acuerdo político provisional de noviembre 2025. PSD3 fusiona el régimen de entidades de dinero electrónico con entidades de pago en una licencia única. PSR introduce verificación obligatoria del beneficiario (VoP) en todas las transferencias y nuevas reglas de responsabilidad del PSP por fraude de suplantación. Aplicación prevista: 21 meses tras publicación en OJEU.",
+    "source": "Arthur Cox / Freshfields / Morrison Foerster",
+    "url": "https://www.arthurcox.com/insights/psd3-and-psr-final-compromise-texts-published/",
+    "date": "2026-04-23",
+    "relevance_score": 0.90,
+    "created_at": "2026-05-06T05:48:00Z"
+  },
+  {
+    "id": "news-2026-05-06-sepa01",
+    "type": "news",
+    "pillar_id": "regulacion-pagos",
+    "title": "SEPA Instant Payments reporting obligatorio desde abril 2026",
+    "summary": "Desde abril 2026, los PSPs deben reportar obligatoriamente a reguladores sobre disponibilidad, adopción y cumplimiento de pagos instantáneos SEPA. Los bancos de la eurozona ya deben enviar y recibir transferencias instantáneas en 10 segundos, 24/7, sin coste adicional. La verificación del beneficiario (VoP) es obligatoria y gratuita.",
+    "source": "EU Regulation 2024/886 / Contextual Solutions / Brite Payments",
+    "url": "https://www.contextualsolutions.de/blog/eu-instant-payments-regulation-april-2026",
+    "date": "2026-04",
+    "relevance_score": 0.85,
+    "created_at": "2026-05-06T05:48:00Z"
+  },
+  {
+    "id": "news-2026-05-06-mica01",
+    "type": "news",
+    "pillar_id": "regulacion-pagos",
+    "title": "MiCA deadline absoluto 1 julio 2026 para CASPs",
+    "summary": "El 1 de julio de 2026 es la fecha límite absoluta para que CASPs existentes obtengan autorización MiCA en la UE. Después de esa fecha, cualquier CASP sin autorización debe cesar operaciones reguladas. A abril 2026 hay 38 emisores de EMT acreditados. La Comisión Europea debe adoptar un acto delegado antes del 30 de junio de 2026 para especificar elementos técnicos de las definiciones MiCA.",
+    "source": "Unit21 / Sumsub / Agencia Tributaria España",
+    "url": "https://www.unit21.ai/blog/mica-regulation-2026-faqs-what-crypto-compliance-teams-need-to-know",
+    "date": "2026-05",
+    "relevance_score": 0.70,
+    "created_at": "2026-05-06T05:48:00Z"
+  },
+  {
+    "id": "news-2026-05-06-embfi01",
+    "type": "news",
+    "pillar_id": "tecnologia-pagos",
+    "title": "Embedded finance B2B alcanza $4.1T en 2026",
+    "summary": "El mercado de embedded finance B2B se estima en $4.1 billones en 2026, con proyección de $15.6 billones en 2030 según Galileo Financial Technologies. Gartner prevé que más del 50% de las transacciones financieras de consumidor se iniciarán en plataformas digitales de terceros para 2026. Los volúmenes globales de embedded payments se acercan a $7 billones en 2026.",
+    "source": "Galileo FT / Gartner / FintechFutures",
+    "url": "https://www.galileo-ft.com/blog/embedded-b2b-finance-2026-next-frontier/",
+    "date": "2026",
+    "relevance_score": 0.75,
+    "created_at": "2026-05-06T05:48:00Z"
+  },
+  {
+    "id": "news-2026-05-06-wero01",
+    "type": "news",
+    "pillar_id": "tecnologia-pagos",
+    "title": "Wero avanza en Europa — España en fase Exploring",
+    "summary": "Wero, la iniciativa de pagos paneuropea (EPI), ya opera en e-commerce en Alemania desde noviembre 2025, y en Francia y Bélgica desde enero 2026. En 2026 planea lanzar pagos en punto de venta (POS). España está en fase 'Exploring' según el Wero Tracker de marzo 2026. Mollie es miembro principal de EPI y acelera su adopción.",
+    "source": "European Payments Council / Banking Vision / Clearing Post",
+    "url": "https://banking.vision/en/development-wero-2025-2026/",
+    "date": "2026-03",
+    "relevance_score": 0.72,
+    "created_at": "2026-05-06T05:48:00Z"
+  }
+]

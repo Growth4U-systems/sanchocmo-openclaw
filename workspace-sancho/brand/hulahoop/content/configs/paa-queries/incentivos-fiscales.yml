@@ -1,0 +1,10 @@
+pillar_id: incentivos-fiscales
+pillar_name: "Incentivos Fiscales Culturales"
+language: es
+location: Spain
+seed_queries:
+  - "deducciones fiscales inversión cultural España"
+  - "artículo 36 ley impuesto sociedades cultura"
+  - "incentivos fiscales cine España"
+  - "deducción fiscal producción cinematográfica"
+  - "mecenazgo cultural desgravación fiscal"

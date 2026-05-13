@@ -1,0 +1,11 @@
+{
+  "cronId": "33434fd7-8b66-4069-b7f7-983f66fc25c2",
+  "cronName": "Weekly Synthesis — Hospital Capilar",
+  "slug": "hospital-capilar",
+  "date": "2026-04-27",
+  "runAtMs": 1777276800033,
+  "status": "ok",
+  "durationMs": 287986,
+  "model": "MiniMax-M2.7",
+  "content": "## 📚 Síntesis Semanal — Hospital Capilar\n**Semana:** 21–27 abril 2026\n\n---\n\n### ⚠️ ALERTAS CRÍTICAS (requiere acción de Alfonso)\n\n**1. Meta Ads — €0 ROAS por 2° día**\n- €106 gastados el 26-abril con €0 retorno.\n- Canal #paid-ads inaccesible en Discord (Unknown Channel).\n- Alerta activa en Growth4U.\n- → Revisar campañas directamente en Growth4U.\n\n**2. Growth4U — Flujo lead→cita lleva 16+ días roto**\n- 19 leads con tag \"llamada-agendada\" en GHL.\n- 0 calls en calendario (detectado 22-abril).\n- NSM (citas/reservas agendadas) directamente impactada.\n- → Verificar GHL manualmente.\n\n---\n\n### 📉 Estado del servidor\n\n- **3 semanas consecutivas** sin actividad humana en Discord.\n- #brand y #content inactivos desde febrero.\n- #paid-ads y #research inaccesibles/archivados.\n- Solo bots activos en #intelligence, #soporte, #onboarding.\n\n---\n\n### 🟡 Infraestructura — estable\n\n- Supabase HTTP 401 y xAI HTTP 429 resolvidos.\n- Sin incidentes activos.\n\n---\n\n### 🟠 Foundation — sin avance\n\n- Positioning draft existe pero no formalizado en estado.\n- Pricing pillar no iniciado (0% completion).\n- 7 semanas sin reunión estratégica.\n- Opportunity gap: >4.000 búsquedas/mes sin captar (treatment keywords — 0/12 visibilidad).\n\n---\n\n### ✅ Acciones cerradas esta semana\n\n- Incidentes Supabase/xAI resueltos.\n\n---\n\n### 🎯 Prioridades para la semana que viene\n\n1. **Alfonso → verificar GHL** (flujo lead→cita)\n2. **Revisar Meta Ads** en Growth4U (causa €0 ROAS)\n3. **Reactivar Foundation** — formalizar positioning, iniciar pricing\n4. **Programar reunión** para desbloquear alertas"
+}
