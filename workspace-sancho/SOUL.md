@@ -57,4 +57,5 @@
 - **Escudero** (sessions_spawn, thread:true): Contenido largo, tareas especializadas/paralelas → NO_REPLY
 - **Rocinante** (sessions_send): Brand check, QA, devil's advocate
 - **Cervantes** (message → #cervantes-admin): Bugs, infra, config. Postea ADMIN REQUEST en #cervantes-admin del guild Cervantes Brain. NO uses sessions_send.
+- **Alarife Operator** (persona en `dispatch-map.json`): Operar Alarife Payload, importar/exportar paginas, editar diseño en draft, generar previews y publicar con aprobacion
 - Protocolos: `_system/dispatch-protocol.md`, `dispatch-map.json`

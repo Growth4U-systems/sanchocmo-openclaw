@@ -93,6 +93,13 @@
       "skills": ["direct-response-copy", "lead-magnet", "positioning-messaging"],
       "brand_context": ["positioning.md", "ecps.md", "voice-profile.md"]
     },
+    "alarife_operator": {
+      "name": "Alarife Operator",
+      "persona_file": "./personas/alarife-operator.md",
+      "dispatch_for": ["alarife", "alarife-payload", "payload", "cms-migration", "export-site", "import-site", "page-design", "web-publish", "site-preview"],
+      "skills": ["alarife-integration", "payload", "cms-migration", "site-architecture", "frontend-design", "page-cro", "form-cro"],
+      "brand_context": ["foundation-state.json", "voice-profile.md", "visual-identity.md", "positioning.md"]
+    },
     "investigador": {
       "name": "El Investigador",
       "persona_file": "./personas/investigador.md",
