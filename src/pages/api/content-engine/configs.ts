@@ -22,6 +22,7 @@ import yaml from "js-yaml";
 import { withErrorHandler } from "@/lib/api-middleware";
 import { BASE, competitorsSourcesFile } from "@/lib/data/paths";
 import { readJSON, writeJSON } from "@/lib/data/json-io";
+import { loadPovBankFromNeon, savePovBankToNeon } from "@/lib/data/pov-bank";
 
 // ── helpers ────────────────────────────────────────────────────
 function readYaml(filePath: string): unknown {
@@ -335,11 +336,16 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     }
     configs.setupTask = setupTask;
 
-    // POV Bank — opinions per pillar that idea-builder consults
-    const povBankPath = path.join(BASE, "brand", slug, "content", "pov-bank.json");
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const povBank = readJSON<any>(povBankPath, null);
-    configs.povBank = povBank;
+    // POV Bank — Neon is the source of truth. Normal config reads never
+    // consult legacy JSON; explicit imports go through /api/content-engine/pov-bank?bootstrap=true.
+    const povBankResult = await loadPovBankFromNeon(slug);
+    configs.povBank = povBankResult.povBank;
+    configs.povBankStorage = {
+      provider: "neon",
+      configured: povBankResult.configured,
+      seededFromLegacyJson: povBankResult.seededFromLegacyJson,
+      error: povBankResult.error || null,
+    };
 
     // Cadence
     const cadenceFile = path.join(configDir, "cadence-config.yml");
@@ -428,30 +434,13 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       fs.mkdirSync(path.dirname(cadencePath), { recursive: true });
       fs.writeFileSync(cadencePath, header + body);
     } else if (configId === "pov-bank") {
-      // data: full pov-bank.json shape
-      const povBankPath = path.join(BASE, "brand", slug, "content", "pov-bank.json");
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const existing = readJSON<any>(povBankPath, null);
-      // Append a version_history entry if version bumps or substantive change.
+      // data: full POV Bank shape. Persist to Neon only.
       const incoming = data || {};
-      const newVersion = (incoming.version || existing?.version || 1);
-      const history = Array.isArray(existing?.version_history) ? [...existing.version_history] : [];
-      history.push({
-        version: newVersion,
-        date: new Date().toISOString().slice(0, 10),
-        trigger: "manual-ui-edit",
-        changes: incoming._change_note || "Edición manual desde MC UI",
-      });
-      // Keep last 10
-      while (history.length > 10) history.shift();
-      // Strip helper field
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { _change_note, ...rest } = incoming;
-      writeJSON(povBankPath, {
-        ...rest,
-        version: newVersion,
-        updated_at: new Date().toISOString(),
-        version_history: history,
+      await savePovBankToNeon(slug, rest, {
+        trigger: "manual-ui-edit",
+        changeNote: _change_note || "Edición manual desde MC UI",
       });
     } else if (configId === "monitored-profiles") {
       // data: Profile[] — full replacement of the profiles array
@@ -459,7 +448,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         return res.status(400).json({ error: "monitored-profiles data must be an array" });
       }
       // Server-side hygiene: clean platforms, drop empty pillars/role/tier strings
-      const cleaned: Profile[] = (data as Profile[]).map((p) => ({
+      const cleaned: Profile[] = (data as Profile[]).map((p): Profile => ({
         id: p.id || slugify(p.name || ""),
         type: p.type === "company" ? "company" : "person",
         name: (p.name || "").trim(),

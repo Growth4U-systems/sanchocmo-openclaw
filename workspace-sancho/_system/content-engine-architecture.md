@@ -115,6 +115,19 @@ PROHIBIDO al agente:
 
 Detalle completo y rationale: `_system/media-persistence-protocol.md`.
 
+### POV Bank en Neon (extraccion automatica)
+
+El POV Bank no vive en `pov-bank.json`. La fuente de verdad esta en Neon:
+`pov_banks`, `pov_pillars`, `pov_evidence_items`,
+`pov_clarify_patterns` y `pov_update_proposals`.
+
+Dos flujos alimentan el banco automaticamente:
+- **Clarify**: al guardar `clarify.md` via `PATCH /api/content-engine/drafts`, las respuestas humanas pasan a `pov_evidence_items` y `pov_clarify_patterns` con `source_type=clarify`.
+- **Meetings**: al terminar `runMeetingIntelligenceSync`, los impactos `documentName=POV Bank` se convierten en evidence candidates y proposals revisables.
+
+Endpoint operativo:
+`POST /api/content-engine/pov-bank` con `{ "slug": "{slug}", "sources": ["clarify", "meetings"] }`.
+
 ### Skill puente: `content-image`
 
 Para que el agente del chat pueda invocar estos endpoints sin recordar
@@ -230,7 +243,7 @@ brand/{slug}/content/
 │   ├── weekly-{fecha}.md
 │   ├── monthly-{mes}.md
 │   └── hooks-performance.json
-└── clarify-history.json                     # POV Bank
+└── clarify-history.json                     # legacy export only; POV Bank source of truth is Neon
 ```
 
 ---

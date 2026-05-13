@@ -20,6 +20,7 @@ import {
   ensureMeetingIntelligenceStorage,
   getMeetingIntelligenceConfig,
 } from "@/lib/data/meeting-intelligence-db";
+import { reconcileMeetingsToPovBank } from "@/lib/data/pov-bank";
 
 const GOG_BIN = "/opt/homebrew/bin/gog";
 const NOTION_VERSION = "2022-06-28";
@@ -207,8 +208,8 @@ function inferInsights(rawText: string) {
     ...lines.filter((line) => /\b(riesgo|problema|bloqueo|conflicto|inconsistencia|no funciona|error|limitacion|limitación)\b/i.test(line)),
   ], 6);
   const insights = uniqueItems([
-    ...extractBulletsFromSection(rawText, ["Insights", "Aprendizajes", "Problemas identificados", "Sugerencias", "Oportunidades"]),
-    ...lines.filter((line) => /\b(insight|oportunidad|sugerencia|mejora|aprendizaje|objecion|objeción|posicionamiento|pov)\b/i.test(line)),
+    ...extractBulletsFromSection(rawText, ["Insights", "Aprendizajes", "Realizaciones", "Aha moments", "Problemas identificados", "Sugerencias", "Oportunidades", "Content mining"]),
+    ...lines.filter((line) => /\b(insight|oportunidad|sugerencia|mejora|aprendizaje|objecion|objeción|posicionamiento|pov|nos dimos cuenta|realizamos que|problema resuelto|framework|proceso|sistema|contrario|mito|best practice|pasamos de|fuimos de)\b/i.test(line)),
   ], 8);
   return { decisions, actions, risks, insights };
 }
@@ -219,8 +220,17 @@ function documentsForText(text: string) {
   if (/\b(strategyplan|strategy plan|estrategia|prioridad|roadmap|go[- ]?to[- ]?market|gtm)\b/i.test(lower)) {
     docs.push({ name: "StrategyPlan", severity: "high", reason: "Afecta estrategia, prioridades o roadmap." });
   }
-  if (/\b(pov|proof point|creencia|belief|objecion|objeción|argumento|customer language|lenguaje de cliente)\b/i.test(lower)) {
-    docs.push({ name: "POV Bank", severity: "medium", reason: "Afecta POV, proof points u objeciones." });
+  const directPovSignal = /\b(pov|proof point|creencia|belief|objecion|objeción|argumento|customer language|lenguaje de cliente)\b/i.test(lower);
+  const mineablePovSignal = /\b(aha|insight|nos dimos cuenta|realizamos que|problema resuelto|solucionamos|framework|proceso|sistema|ritual|contrario|mito|best practice|pasamos de|fuimos de|mrr|cac|ltv|payback|conversion|conversión|frustracion|frustración|fallo|duda)\b/i.test(lower)
+    || /\b\d+\s*(%|x|€|\$)\b/.test(lower);
+  if (directPovSignal || mineablePovSignal) {
+    docs.push({
+      name: "POV Bank",
+      severity: directPovSignal ? "medium" : "low",
+      reason: directPovSignal
+        ? "Afecta POV, proof points u objeciones."
+        : "Contiene una señal mineable para POV: insight, proceso, métrica, conflicto o lenguaje de cliente.",
+    });
   }
   if (/\b(posicionamiento|positioning|diferenciacion|diferenciación|competidor|competencia)\b/i.test(lower)) {
     docs.push({ name: "Positioning", severity: "medium", reason: "Afecta posicionamiento o diferenciación." });
@@ -638,7 +648,7 @@ export async function runMeetingIntelligenceSync(input: {
       skipped: true,
       storage: { configured: true, provider: "neon" },
       run: null,
-      metrics: { sources: 0, fetched: 0, rawAvailable: 0, insights: 0, recommendations: 0 },
+      metrics: { sources: 0, fetched: 0, rawAvailable: 0, insights: 0, recommendations: 0, povEvidence: 0, povProposals: 0 },
       errors: ["Meeting Intelligence automatic sync is disabled."],
     };
   }
@@ -659,6 +669,8 @@ export async function runMeetingIntelligenceSync(input: {
     rawAvailable: 0,
     insights: 0,
     recommendations: 0,
+    povEvidence: 0,
+    povProposals: 0,
   };
 
   try {
@@ -685,6 +697,14 @@ export async function runMeetingIntelligenceSync(input: {
       const analysis = await writeAnalysis(input.slug, run.id, meetingId, item);
       metrics.insights += analysis.insights;
       metrics.recommendations += analysis.recommendations;
+    }
+
+    try {
+      const povReconcile = await reconcileMeetingsToPovBank(input.slug);
+      metrics.povEvidence = povReconcile.evidenceUpserted;
+      metrics.povProposals = povReconcile.proposalsUpserted || 0;
+    } catch (error) {
+      errors.push(`POV Bank reconcile: ${error instanceof Error ? error.message : "failed"}`);
     }
 
     const finishedAt = new Date();

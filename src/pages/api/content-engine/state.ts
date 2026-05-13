@@ -14,6 +14,7 @@ import fs from "fs";
 import path from "path";
 import { withErrorHandler } from "@/lib/api-middleware";
 import { BASE } from "@/lib/data/paths";
+import { loadPovBankFromNeon } from "@/lib/data/pov-bank";
 
 interface Idea {
   id: string;
@@ -97,8 +98,9 @@ function loadPillars(slug: string): Pillar[] {
   return matches.map((m) => ({ id: m[1] }));
 }
 
-function loadPovBank(slug: string): PovBank | null {
-  return readJSON<PovBank | null>(path.join(BASE, "brand", slug, "content", "pov-bank.json"), null);
+async function loadPovBank(slug: string): Promise<PovBank | null> {
+  const result = await loadPovBankFromNeon(slug);
+  return result.povBank as PovBank | null;
 }
 
 function loadJobs(): CronJob[] {
@@ -248,7 +250,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
   const ideas = loadIdeas(slug);
   const pillars = loadPillars(slug);
-  const povBank = loadPovBank(slug);
+  const povBank = await loadPovBank(slug);
   const jobs = loadJobs();
   const jobsState = loadJobsState();
   const activity = loadActivity(slug);

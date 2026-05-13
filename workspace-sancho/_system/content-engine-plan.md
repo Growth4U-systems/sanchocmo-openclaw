@@ -205,11 +205,11 @@ Adapta según `business_model`:
 └──────────────────────────┬───────────────────────────────────┘
                            ↓
 ┌──────────────────────────────────────────────────────────────┐
-│  CAPA 2 — HUB CENTRAL (file-based)                            │
+│  CAPA 2 — HUB CENTRAL                                         │
 │  • ./brand/content-pillars.md                                 │
 │  • ./content/research-signals/YYYY-MM-DD-{type}.json          │
 │  • ./content/idea-queue.json (ideas con signal+angle)         │
-│  • ./brand/clarify-history.json (POV Bank)                    │
+│  • Neon pov_* tables (POV Bank + Clarify patterns)            │
 │  insight-to-content-mapper [extend] → angle_draft             │
 └──────────────────────────┬───────────────────────────────────┘
                            ↓
@@ -420,7 +420,7 @@ Cuando el cliente tenga transcripts. Output: quotes etiquetados por pillar → `
 🎯 Pillar: [P#] · Canal: [channel] · Tipo: [type]
 ```
 
-**Otros archivos del Hub** (sin cambio relevante respecto versión anterior): `clarify-history.json`, `quotes-by-pillar.json`, `voice-profile.md`, `cadence-config.yml`.
+**Otros archivos del Hub** (sin cambio relevante respecto versión anterior): `quotes-by-pillar.json`, `voice-profile.md`, `cadence-config.yml`. `clarify-history.json` queda solo como legacy/export; Neon es source of truth.
 
 ---
 
@@ -538,7 +538,7 @@ Output: `./content/published/YYYY-MM-DD.json` (channel, type, pillar, idea_id, p
 **Fase 2 — LinkedIn-only MVP (semanas 3-4)**
 - Crear: `news-monitor`, `paa-monitor`, `social-writer` (canal=linkedin first).
 - Extender: `insight-to-content-mapper` (angle_draft con signal embedded), `content-calendar-planner` (recency-aware + dispatch a Idea Approval Loop).
-- Crear archivos: `idea-queue.json`, `clarify-history.json`.
+- Crear `idea-queue.json` y las tablas Neon `pov_*` para POV/Clarify.
 - Slack/Discord integration para Idea Approval Loop.
 - UI Sancho: implementar hilo del día con cards de drafts (mínimo viable — si UI no lista, fallback temporal a archivos editables manualmente).
 - Metricool API integrada.
@@ -591,7 +591,7 @@ Output: `./content/published/YYYY-MM-DD.json` (channel, type, pillar, idea_id, p
 
 **Configs (workspace cliente, file-based):**
 - `./brand/content-pillars.md`
-- `./brand/clarify-history.json`
+- Neon `pov_*` tables (legacy export opcional: `./brand/clarify-history.json`)
 - `./brand/quotes-by-pillar.json`
 - `./content/configs/news-prompts/<pillar_id>.yml`
 - `./content/configs/paa-queries/<pillar_id>.yml`

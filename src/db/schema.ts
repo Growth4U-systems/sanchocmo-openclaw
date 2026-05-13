@@ -258,3 +258,106 @@ export const miRecommendations = pgTable("mi_recommendations", {
   meetingIdx: index("mi_recommendations_meeting_idx").on(table.meetingId),
   slugStatusIdx: index("mi_recommendations_slug_status_idx").on(table.slug, table.status),
 }));
+
+// ============================================================
+// POV Bank — Neon-backed source of truth
+// ============================================================
+
+export const povBanks = pgTable("pov_banks", {
+  id: text("id").primaryKey(),
+  slug: text("slug").notNull(),
+  version: integer("version").notNull().default(3),
+  global: jsonb("global").$type<Record<string, unknown>>().notNull().default({}),
+  versionHistory: jsonb("version_history").$type<Array<Record<string, unknown>>>().notNull().default([]),
+  status: text("status").notNull().default("active"),
+  source: text("source").notNull().default("neon"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+}, (table) => ({
+  slugIdx: index("pov_banks_slug_idx").on(table.slug),
+  statusIdx: index("pov_banks_status_idx").on(table.status),
+}));
+
+export const povPillars = pgTable("pov_pillars", {
+  id: text("id").primaryKey(),
+  slug: text("slug").notNull(),
+  bankId: text("bank_id").references(() => povBanks.id, { onDelete: "cascade" }),
+  pillarId: text("pillar_id").notNull(),
+  pillarName: text("pillar_name"),
+  coreBelief: text("core_belief"),
+  weSayYesTo: jsonb("we_say_yes_to").$type<string[]>().notNull().default([]),
+  weSayNoTo: jsonb("we_say_no_to").$type<string[]>().notNull().default([]),
+  preferredAngles: jsonb("preferred_angles").$type<string[]>().notNull().default([]),
+  evidenceWeCite: jsonb("evidence_we_cite").$type<string[]>().notNull().default([]),
+  status: text("status").notNull().default("active"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+}, (table) => ({
+  slugIdx: index("pov_pillars_slug_idx").on(table.slug),
+  slugPillarIdx: index("pov_pillars_slug_pillar_idx").on(table.slug, table.pillarId),
+  bankIdx: index("pov_pillars_bank_idx").on(table.bankId),
+}));
+
+export const povEvidenceItems = pgTable("pov_evidence_items", {
+  id: text("id").primaryKey(),
+  slug: text("slug").notNull(),
+  bankId: text("bank_id").references(() => povBanks.id, { onDelete: "cascade" }),
+  pillarId: text("pillar_id").notNull(),
+  sourceType: text("source_type").notNull(),
+  signalType: text("signal_type").notNull(),
+  statement: text("statement").notNull(),
+  exactQuote: text("exact_quote"),
+  speaker: text("speaker"),
+  context: text("context"),
+  sourceRef: jsonb("source_ref").$type<Record<string, unknown> | null>(),
+  privacy: text("privacy").notNull().default("internal_exact_public_anonymous"),
+  status: text("status").notNull().default("candidate"),
+  usedIn: jsonb("used_in").$type<string[]>().notNull().default([]),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+}, (table) => ({
+  slugIdx: index("pov_evidence_slug_idx").on(table.slug),
+  slugPillarIdx: index("pov_evidence_slug_pillar_idx").on(table.slug, table.pillarId),
+  sourceIdx: index("pov_evidence_source_idx").on(table.slug, table.sourceType),
+  statusIdx: index("pov_evidence_status_idx").on(table.slug, table.status),
+}));
+
+export const povClarifyPatterns = pgTable("pov_clarify_patterns", {
+  id: text("id").primaryKey(),
+  slug: text("slug").notNull(),
+  bankId: text("bank_id").references(() => povBanks.id, { onDelete: "cascade" }),
+  pillarId: text("pillar_id").notNull(),
+  patternType: text("pattern_type").notNull(),
+  pattern: text("pattern").notNull(),
+  evidenceCount: integer("evidence_count").notNull().default(1),
+  confidence: real("confidence"),
+  sourceRefs: jsonb("source_refs").$type<Array<Record<string, unknown>>>().notNull().default([]),
+  status: text("status").notNull().default("active"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+}, (table) => ({
+  slugIdx: index("pov_clarify_patterns_slug_idx").on(table.slug),
+  slugPillarIdx: index("pov_clarify_patterns_slug_pillar_idx").on(table.slug, table.pillarId),
+  statusIdx: index("pov_clarify_patterns_status_idx").on(table.slug, table.status),
+}));
+
+export const povUpdateProposals = pgTable("pov_update_proposals", {
+  id: text("id").primaryKey(),
+  slug: text("slug").notNull(),
+  bankId: text("bank_id").references(() => povBanks.id, { onDelete: "cascade" }),
+  pillarId: text("pillar_id"),
+  targetField: text("target_field").notNull(),
+  currentValue: jsonb("current_value").$type<unknown>(),
+  proposedValue: jsonb("proposed_value").$type<unknown>(),
+  rationale: text("rationale"),
+  evidenceItemIds: jsonb("evidence_item_ids").$type<string[]>().notNull().default([]),
+  status: text("status").notNull().default("recommended"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  approvedAt: timestamp("approved_at"),
+  rejectedAt: timestamp("rejected_at"),
+}, (table) => ({
+  slugIdx: index("pov_update_proposals_slug_idx").on(table.slug),
+  statusIdx: index("pov_update_proposals_status_idx").on(table.slug, table.status),
+  targetIdx: index("pov_update_proposals_target_idx").on(table.slug, table.pillarId, table.targetField),
+}));
