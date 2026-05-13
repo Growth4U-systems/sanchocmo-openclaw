@@ -6,6 +6,20 @@ cd /root/.openclaw
 OPENCLAW_CONFIG="/root/.openclaw/.openclaw/openclaw.json"
 
 # ===========================================================
+# 0. ENSURE CONFIG SYMLINKS (runs every startup)
+# ===========================================================
+# These files live in config/ (instance-specific, untracked) but the app
+# reads them from workspace-sancho/. `git checkout` during deploy deletes
+# tracked->untracked symlinks, so we re-create them on every container start.
+# Without this, the client list appears empty after every deploy.
+for f in clients.json clients.js dispatch-map.json; do
+  if [ -f "config/$f" ] && [ ! -e "workspace-sancho/$f" ]; then
+    ln -sf "../config/$f" "workspace-sancho/$f"
+    echo "[entrypoint] Linked workspace-sancho/$f -> ../config/$f"
+  fi
+done
+
+# ===========================================================
 # 1-4. SETUP (runs if openclaw.json is missing)
 # ===========================================================
 if [ ! -f "$OPENCLAW_CONFIG" ]; then
