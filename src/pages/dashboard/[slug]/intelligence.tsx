@@ -435,6 +435,7 @@ function IntelligencePageClient() {
   const openChat = useOpenChat();
   const [view, setView] = useState<View>("overview");
   const [selectedMeeting, setSelectedMeeting] = useState<Meeting | null>(null);
+  const [selectedProposalId, setSelectedProposalId] = useState<string | null>(null);
   const [sourceFilter, setSourceFilter] = useState("all");
   const [sourceConfig, setSourceConfig] = useState<MeetingIntelligenceConfig>(() => localDefaultConfig(""));
   const [meetingState, setMeetingState] = useState<MeetingIntelligenceState | null>(null);
@@ -475,6 +476,17 @@ function IntelligencePageClient() {
   const filteredMeetings = sourceFilter === "all"
     ? activeMeetings
     : activeMeetings.filter((meeting) => meeting.source === sourceFilter || meeting.source.includes(sourceFilter));
+
+  const openView = (nextView: View) => {
+    setSelectedProposalId(null);
+    setView(nextView);
+  };
+
+  const openProposalReview = (proposal: ProposalEntry, meeting?: Meeting | null) => {
+    setSelectedProposalId(proposal.id);
+    if (meeting) setSelectedMeeting(meeting);
+    setView("proposals");
+  };
 
   useEffect(() => {
     const syncHash = () => {
@@ -708,7 +720,7 @@ function IntelligencePageClient() {
               key={tab.key}
               type="button"
               onClick={() => {
-                setView(tab.key);
+                openView(tab.key);
                 window.history.replaceState(null, "", `#${viewToHash(tab.key)}`);
               }}
               className={cn(
@@ -734,9 +746,11 @@ function IntelligencePageClient() {
             onFilter={setSourceFilter}
             onSelect={(meeting) => {
               setSelectedMeeting(meeting);
+              setSelectedProposalId(null);
               setView("meetings");
             }}
-            onView={setView}
+            onView={openView}
+            onProposalSelect={(proposal, meetingForProposal) => openProposalReview(proposal, meetingForProposal || selectedMeeting)}
           />
         )}
         {view === "sources" && (
@@ -755,11 +769,11 @@ function IntelligencePageClient() {
             syncCron={syncCron}
           />
         )}
-        {view === "meetings" && <MeetingDetail meeting={selectedMeeting} documents={activeDocuments} proposals={activeProposals} onView={setView} />}
-        {view === "decisions" && <DecisionLog decisions={activeDecisions} meetings={activeMeetings} onSelect={(meeting) => { setSelectedMeeting(meeting); setView("meetings"); }} />}
-        {view === "pov" && <PovDatabase meetingTitle={selectedMeeting?.title || "Meeting Intelligence"} onView={setView} />}
-        {view === "impact" && <DocumentImpact documents={activeDocuments} onView={setView} />}
-        {view === "proposals" && <ProposalReview slug={slug} meeting={selectedMeeting} proposals={activeProposals} onChanged={() => setStateVersion((version) => version + 1)} />}
+        {view === "meetings" && <MeetingDetail meeting={selectedMeeting} documents={activeDocuments} proposals={activeProposals} onProposalSelect={(proposal, meetingForProposal) => openProposalReview(proposal, meetingForProposal)} />}
+        {view === "decisions" && <DecisionLog decisions={activeDecisions} meetings={activeMeetings} onSelect={(meeting) => { setSelectedMeeting(meeting); setSelectedProposalId(null); setView("meetings"); }} />}
+        {view === "pov" && <PovDatabase meetingTitle={selectedMeeting?.title || "Meeting Intelligence"} onView={openView} />}
+        {view === "impact" && <DocumentImpact documents={activeDocuments} onView={openView} />}
+        {view === "proposals" && <ProposalReview slug={slug} meeting={selectedMeeting} proposals={activeProposals} selectedProposalId={selectedProposalId} onChanged={() => setStateVersion((version) => version + 1)} />}
       </div>
     </DashboardLayout>
   );
@@ -775,6 +789,7 @@ function Overview({
   onFilter,
   onSelect,
   onView,
+  onProposalSelect,
 }: {
   meetings: Meeting[];
   intelligence: IntelligenceItem[];
@@ -785,6 +800,7 @@ function Overview({
   onFilter: (source: string) => void;
   onSelect: (meeting: Meeting) => void;
   onView: (view: View) => void;
+  onProposalSelect: (proposal: ProposalEntry, meeting?: Meeting | null) => void;
 }) {
   return (
     <div className="grid min-h-[620px] grid-cols-1 overflow-hidden rounded-lg border border-border bg-card lg:grid-cols-[1.05fr_1.15fr_.95fr_1.05fr]">
@@ -859,20 +875,23 @@ function Overview({
           <div className="rounded-lg border border-dashed border-border bg-background p-4 text-[12px] leading-relaxed text-muted-foreground">
             No pending proposals. Sancho creates proposals only after a reviewed scan finds document impact.
           </div>
-        ) : proposals.map((proposal) => (
-          <div key={proposal.id} className={cn("mb-2 rounded-lg border border-border bg-background p-3", proposal.priority === "high" && "border-rust")}>
-            <div className="flex items-start justify-between gap-2">
-              <strong className="text-[13px] text-foreground">{proposal.title}</strong>
-              <Badge tone={proposal.priority === "high" ? "critical" : "proposal"}>{proposal.priority}</Badge>
+        ) : proposals.map((proposal) => {
+          const proposalMeeting = meetings.find((meeting) => meeting.id === proposal.meetingId) || null;
+          return (
+            <div key={proposal.id} className={cn("mb-2 rounded-lg border border-border bg-background p-3", proposal.priority === "high" && "border-rust")}>
+              <div className="flex items-start justify-between gap-2">
+                <strong className="text-[13px] text-foreground">{proposal.title}</strong>
+                <Badge tone={proposal.priority === "high" ? "critical" : "proposal"}>{proposal.priority}</Badge>
+              </div>
+              <p className="mt-1 text-[11px] text-muted-foreground">{proposal.doc} · {proposal.source}</p>
+              <div className="mt-3 flex flex-wrap gap-1.5">
+                <ActionButton onClick={() => onProposalSelect(proposal, proposalMeeting)}>Review</ActionButton>
+                <ActionButton primary>Approve</ActionButton>
+                <ActionButton>Reject</ActionButton>
+              </div>
             </div>
-            <p className="mt-1 text-[11px] text-muted-foreground">{proposal.doc} · {proposal.source}</p>
-            <div className="mt-3 flex flex-wrap gap-1.5">
-              <ActionButton onClick={() => onView("proposals")}>Review</ActionButton>
-              <ActionButton primary>Approve</ActionButton>
-              <ActionButton>Reject</ActionButton>
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </Column>
     </div>
   );
@@ -1418,12 +1437,12 @@ function MeetingDetail({
   meeting,
   documents,
   proposals,
-  onView,
+  onProposalSelect,
 }: {
   meeting: Meeting | null;
   documents: DocumentRecord[];
   proposals: ProposalEntry[];
-  onView: (view: View) => void;
+  onProposalSelect: (proposal: ProposalEntry, meeting?: Meeting | null) => void;
 }) {
   const [tab, setTab] = useState("Summary");
   const [detail, setDetail] = useState<MeetingDetailPayload | null>(null);
@@ -1490,7 +1509,8 @@ function MeetingDetail({
   const detailDecisions = activeDetail?.decisions || [];
   const detailActions = detailInsights.filter((item) => item.type === "Action");
   const generalInsights = detailInsights.filter((item) => item.type !== "Action" && item.type !== "Decision");
-  const detailRecommendations = activeDetail?.recommendations.length ? activeDetail.recommendations : proposals.filter((proposal) => !proposal.meetingId || proposal.meetingId === meeting.id);
+  const detailRecommendations = activeDetail?.recommendations.length ? activeDetail.recommendations : proposals.filter((proposal) => proposal.meetingId === meeting.id);
+  const detailTaskDrafts = detailRecommendations.filter((proposal) => proposal.status === "recommended" || proposal.taskStatus === "recommended");
   const detailDocuments = activeDetail?.impacts.length
     ? activeDetail.impacts.map((impact) => ({
       name: impact.documentName,
@@ -1536,10 +1556,26 @@ function MeetingDetail({
       ) : <ReviewBox>No decisions extracted from raw evidence for this meeting.</ReviewBox>;
     }
     if (tab === "Actions") {
-      return detailActions.length ? (
+      return detailActions.length || detailTaskDrafts.length ? (
         <div className="space-y-2">
           {detailActions.map((item) => (
             <MiniRow key={item.id || item.title} title={item.title} eyebrow={item.status || "draft"} meta={`${item.source} · ${item.date || "no date"} · ${item.evidenceRaw ? item.confidence : "raw missing"}`} tone={item.evidenceRaw ? "warn" : "proposal"} />
+          ))}
+          {detailTaskDrafts.map((proposal) => (
+            <button
+              key={proposal.id}
+              type="button"
+              onClick={() => onProposalSelect(proposal, meeting)}
+              className="w-full rounded-lg border border-border bg-background p-3 text-left transition-colors hover:border-rust"
+            >
+              <div className="flex items-start justify-between gap-2">
+                <strong className="text-[13px] leading-snug text-foreground">{proposal.title}</strong>
+                <Badge tone={proposal.priority === "high" ? "critical" : "proposal"}>{proposal.priority}</Badge>
+              </div>
+              <div className="mt-2 text-[10px] text-muted-foreground">
+                Task draft · {proposal.doc} · {proposal.status || "recommended"}
+              </div>
+            </button>
           ))}
         </div>
       ) : <ReviewBox>No action items extracted from raw evidence for this meeting.</ReviewBox>;
@@ -1588,7 +1624,7 @@ function MeetingDetail({
             No proposals generated for the current reviewed intelligence yet.
           </div>
         ) : detailRecommendations.map((proposal) => (
-          <button key={proposal.id} type="button" onClick={() => onView("proposals")} className="mb-2 w-full rounded-lg border border-border bg-background p-3 text-left hover:border-rust">
+          <button key={proposal.id} type="button" onClick={() => onProposalSelect(proposal, meeting)} className="mb-2 w-full rounded-lg border border-border bg-background p-3 text-left hover:border-rust">
             <strong className="text-[13px] text-foreground">{proposal.title}</strong>
             <div className="mt-2 flex flex-wrap gap-2 text-[10px] text-muted-foreground">
               <Badge tone={proposal.priority === "high" ? "critical" : "proposal"}>{proposal.priority}</Badge>
@@ -1689,14 +1725,21 @@ function ProposalReview({
   slug,
   meeting,
   proposals,
+  selectedProposalId,
   onChanged,
 }: {
   slug: string;
   meeting: Meeting | null;
   proposals: ProposalEntry[];
+  selectedProposalId: string | null;
   onChanged: () => void;
 }) {
-  const proposal = proposals[0];
+  const selectedProposal = selectedProposalId ? proposals.find((item) => item.id === selectedProposalId) || null : null;
+  const meetingProposals = meeting ? proposals.filter((item) => item.meetingId === meeting.id) : [];
+  const proposal = selectedProposal || meetingProposals[0] || proposals[0] || null;
+  const rawAffectedDocument = proposal?.doc || "No document selected";
+  const affectedDocument = rawAffectedDocument.toLowerCase() === "task" ? "Task draft" : rawAffectedDocument;
+  const criticalDocument = affectedDocument === "StrategyPlan";
   const [busyAction, setBusyAction] = useState<string | null>(null);
   async function act(action: "approve" | "reject" | "convert") {
     if (!proposal) return;
@@ -1732,7 +1775,7 @@ function ProposalReview({
               <Badge tone={proposal.priority === "high" ? "critical" : "proposal"}>{proposal.priority}</Badge>
               <ReviewBox>
                 <strong>{proposal.title}</strong><br /><br />
-                Documento afectado: {proposal.doc}. Fuente: {proposal.source}. Estado: {proposal.status || "recommended"}. Task draft: {proposal.taskStatus || "recommended"}.
+                Documento afectado: {affectedDocument}. Fuente: {proposal.source}. Estado: {proposal.status || "recommended"}. Task draft: {proposal.taskStatus || "recommended"}.
               </ReviewBox>
             </>
           ) : (
@@ -1741,12 +1784,21 @@ function ProposalReview({
           <ReviewBox>Para POV Bank: Anadir proof point / Actualizar core belief / Mover evidence / Marcar contradiccion.<br /><br />Para StrategyPlan: Seccion afectada, texto actual, cambio propuesto, razon y fuente.</ReviewBox>
         </ReviewColumn>
         <ReviewColumn title="Affected document">
-          <div className="rounded-lg border border-rust bg-background p-3 shadow-[inset_3px_0_0_var(--rust)]">
-            <div className="font-bold text-foreground">StrategyPlan</div>
-            <p className="mt-1 text-[12px] text-muted-foreground">Documento critico. No hay aplicacion directa sin aprobacion explicita.</p>
-            <div className="mt-2 flex flex-wrap gap-1.5"><Badge tone="critical">Critical</Badge><Badge tone="low">backup required</Badge><Badge tone="low">change-log required</Badge></div>
+          <div className={cn("rounded-lg border bg-background p-3", criticalDocument ? "border-rust shadow-[inset_3px_0_0_var(--rust)]" : "border-border")}>
+            <div className="font-bold text-foreground">{affectedDocument}</div>
+            <p className="mt-1 text-[12px] text-muted-foreground">{criticalDocument ? "Documento critico. No hay aplicacion directa sin aprobacion explicita." : "Cambio recomendado como tarea draft. No se aplica hasta aprobarlo."}</p>
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              <Badge tone={criticalDocument ? "critical" : "proposal"}>{criticalDocument ? "Critical" : "Review"}</Badge>
+              <Badge tone="low">backup required</Badge>
+              <Badge tone="low">change-log required</Badge>
+            </div>
           </div>
-          <ReviewBox><strong>Current text</strong><br />Resumen estrategico actual pendiente de review.<br /><br /><strong>Proposed text</strong><br />Actualizar criterio segun decision aprobada en meeting.</ReviewBox>
+          <ReviewBox>
+            <strong>Current state</strong><br />
+            Pendiente de revisión humana contra el documento canónico.<br /><br />
+            <strong>Proposed change</strong><br />
+            {proposal ? proposal.title : "Selecciona una propuesta para revisar el cambio."}
+          </ReviewBox>
         </ReviewColumn>
       </div>
       <footer className="sticky bottom-0 mt-3 flex flex-wrap justify-end gap-2 border-t border-border bg-background py-3">
