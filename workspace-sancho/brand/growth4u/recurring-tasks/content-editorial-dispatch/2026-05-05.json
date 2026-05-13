@@ -1,0 +1,20 @@
+{
+  "date": "2026-05-05",
+  "transport": "slack",
+  "channel_id": "C09P1E99A79",
+  "channel_name": "linkedin-content-generation",
+  "candidates_selected": 5,
+  "candidates_sent": 0,
+  "task_id": "P-Content-Semana-19-T02",
+  "project_id": "P-Content-Semana-19",
+  "idea_ids": [
+    "idea-2026-05-01-4",
+    "idea-2026-05-01-1",
+    "idea-2026-05-01-3",
+    "idea-2026-05-01-6",
+    "idea-2026-05-01-7"
+  ],
+  "status": "error",
+  "error": "Slack bot token (xoxb-...) only has scopes: channels:history,channels:read,users:read. Missing required scope: chat:write. Also: /api/integrations/send-dispatch endpoint not implemented in mc-server.js.",
+  "action_required": "Add chat:write scope to Slack bot token in Growth4U workspace (https://api.slack.com/apps) OR implement send-dispatch endpoint in mc-server.js"
+}

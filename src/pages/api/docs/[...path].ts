@@ -62,6 +62,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       return res.status(400).json({ error: "Missing content" });
     }
     try {
+      fs.mkdirSync(path.dirname(fullPath), { recursive: true });
       fs.writeFileSync(fullPath, content, "utf-8");
       res.status(200).json({ ok: true });
     } catch (e) {

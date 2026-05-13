@@ -11,6 +11,7 @@ import fs from "fs";
 import path from "path";
 import { withErrorHandler } from "@/lib/api-middleware";
 import { BASE } from "@/lib/data/paths";
+import { contentTaskFromDiscovery, upsertContentTask } from "@/lib/data/content-tasks-flat";
 
 /**
  * Status pipeline for content-engine ideas in `brand/{slug}/content/idea-queue.json`.
@@ -91,6 +92,17 @@ function saveIdeas(slug: string, ideas: Idea[]) {
   fs.writeFileSync(filePath, JSON.stringify(ideas, null, 2));
 }
 
+function mirrorIdeaToFlatContentTask(slug: string, idea: Idea): void {
+  const ct = contentTaskFromDiscovery(slug, {
+    ...idea,
+    id: idea.id,
+    idea_id: idea.id,
+    name: idea.angle_draft || idea.signal?.summary || idea.id,
+    target_channels: idea.target_channel ? [idea.target_channel] : [],
+  });
+  upsertContentTask(slug, ct);
+}
+
 async function handler(req: NextApiRequest, res: NextApiResponse) {
   const slug = (req.query.slug || req.body?.slug) as string;
   if (!slug) return res.status(400).json({ error: "Missing slug" });
@@ -148,6 +160,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     };
     ideas.push(newIdea);
     saveIdeas(slug, ideas);
+    mirrorIdeaToFlatContentTask(slug, newIdea);
     return res.status(201).json({ ok: true, idea: newIdea });
   }
 
@@ -177,6 +190,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       }
     }
     saveIdeas(slug, ideas);
+    mirrorIdeaToFlatContentTask(slug, idea);
 
     // Auto-trigger: when status transitions to Approved (any casing), generate
     // drafts + create the ContentTask. Older callers used lowercase, the new

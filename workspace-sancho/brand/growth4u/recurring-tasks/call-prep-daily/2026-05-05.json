@@ -1,0 +1,11 @@
+{
+  "cronId": "36d0bff9-fea9-40d8-9bfd-bf1e5e58468b",
+  "cronName": "Call Prep Daily — Growth4U",
+  "slug": "growth4u",
+  "date": "2026-05-05",
+  "runAtMs": 1778013000027,
+  "status": "ok",
+  "durationMs": 302566,
+  "model": "claude-opus-4-6",
+  "content": "📞 **Call Prep — Miércoles 6 mayo 2026**\n\nNo hay llamadas programadas para mañana."
+}

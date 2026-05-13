@@ -1,0 +1,97 @@
+{
+  "id": "instagram-3-slide",
+  "name": "instagram-3-slide",
+  "channel": "instagram",
+  "description": "Carrusel cuadrado IG: cover + body + CTA",
+  "output_format": "html",
+  "generation_strategy": "html",
+  "model_hints": { "preferred_model": null, "prompt_prefix_from": null },
+  "pre_steps": [],
+  "slideCount": 3,
+  "width": 1080,
+  "height": 1080,
+  "slots": [
+    {
+      "key": "cover_kicker",
+      "label": "Kicker portada",
+      "placeholder": "GROWTH TIP"
+    },
+    {
+      "key": "cover_title",
+      "label": "Título portada",
+      "placeholder": "¿Tu CAC sube cada trimestre?",
+      "maxLength": 80
+    },
+    {
+      "key": "hero_image_url",
+      "label": "Personaje cover (URL)"
+    },
+    {
+      "key": "slide_title",
+      "label": "Título de la slide",
+      "perSlide": true
+    },
+    {
+      "key": "slide_text",
+      "label": "Texto de la slide",
+      "perSlide": true,
+      "maxLength": 200
+    },
+    {
+      "key": "slide_data_value",
+      "label": "Dato destacado (cifra)",
+      "perSlide": true
+    },
+    {
+      "key": "cta_headline",
+      "label": "Titular CTA",
+      "placeholder": "¿Quieres un motor que funcione sin ti?",
+      "maxLength": 80
+    },
+    {
+      "key": "cta_subtext",
+      "label": "Subtexto CTA",
+      "placeholder": "Link en bio"
+    },
+    {
+      "key": "cta_button",
+      "label": "Texto botón CTA"
+    },
+    {
+      "key": "cta_image_url",
+      "label": "Personaje CTA (URL)"
+    }
+  ],
+  "triggers": [
+    "instagram carousel",
+    "ig carousel",
+    "carrusel instagram",
+    "instagram 3 slide",
+    "carrusel ig"
+  ],
+  "od_kind": "template",
+  "use_case": "Carrusel cuadrado Instagram (3 slides 1080×1080) — cover + body + CTA. Ideal para insights breves.",
+
+  "payload_example": {
+    "_comment": "Multi-slide template (3 slides): [0]=cover, [1]=body, [2]=CTA. perSlide arrays DEBEN tener length=3.",
+    "slug": "growth4u",
+    "ideaId": "idea-YYYY-MM-DD-N",
+    "channel": "instagram",
+    "templateId": "instagram-3-slide",
+    "slots": {
+      "cover_kicker": "GROWTH TIP",
+      "cover_title": "string aquí (≤80 chars)",
+      "hero_image_url": "",
+      "cta_headline": "string aquí (≤80 chars)",
+      "cta_subtext": "Link en bio",
+      "cta_button": "string aquí",
+      "cta_image_url": ""
+    },
+    "perSlide": {
+      "_note": "length=3. [0]=cover, [1]=body, [2]=CTA. Pon \"\" en cover/CTA. NUNCA pongas slide_1_title, slide_2_title, etc. en 'slots' — anti-pattern, 400.",
+      "slide_title":      ["", "string aquí (body title)", ""],
+      "slide_text":       ["", "string aquí (≤200 chars)", ""],
+      "slide_data_value": ["", "+45%", ""]
+    }
+  }
+}

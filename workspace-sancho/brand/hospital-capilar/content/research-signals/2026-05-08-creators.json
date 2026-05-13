@@ -1,0 +1,122 @@
+{
+  "date": "2026-05-08",
+  "source": "thief-marketers",
+  "signals_count": 6,
+  "signals": [
+    {
+      "summary": "Insparya publicó el 6 de mayo un artículo del Dr. Javier Pedraz sobre melanoma en el cuero cabelludo, aprovechando el Mes del Melanoma (mayo). El contenido detalla la regla ABCDE para señales de alerta, explica por qué el cuero cabelludo es una zona olvidada en las revisiones dermatológicas, y conecta la protección solar con la salud capilar. Incluye consejos de protección diaria y hábitos a evitar.",
+      "source": "Insparya",
+      "source_type": "competitor",
+      "platform": "blog",
+      "url": "https://insparya.es/melanoma-en-el-cuero-cabelludo-senales-de-alerta/",
+      "engagement": {
+        "likes": 0,
+        "comments": 0,
+        "shares": 0
+      },
+      "date": "2026-05-06",
+      "idea_id": "idea-2026-05-08-6",
+      "signal_type": [
+        "framework",
+        "aha-moment"
+      ],
+      "pillar_id": "P4-bienestar"
+    },
+    {
+      "summary": "Helena Rodero publicó el 6 de mayo de 2026 un artículo sobre errores comunes al teñirse el pelo que causan daño capilar. En marzo también explicó en elEconomista los tres errores más frecuentes al teñir en casa: no saturar bien la raíz, usar el mismo tinte para canas y resto del cabello, y no repetir cada mes. Destaca que la forma de aplicar el tinte importa más que el producto, y que muchos sustitutos del amoniaco pueden tener más efectos secundarios.",
+      "source": "Helena Rodero",
+      "source_type": "reference-creator",
+      "platform": "blog",
+      "url": "https://helenarodero.com/category/cosmetica-capilar/",
+      "engagement": {
+        "likes": 0,
+        "comments": 0,
+        "shares": 0
+      },
+      "date": "2026-05-06",
+      "idea_id": "idea-2026-05-08-7",
+      "signal_type": [
+        "framework",
+        "aha-moment"
+      ],
+      "pillar_id": "P4-bienestar"
+    },
+    {
+      "summary": "mediQuo publicó un artículo comparando Finasterida, Minoxidil y PP405, posicionando su clínica capilar online como alternativa accesible (consultas desde 29.99€). Ofrecen diagnóstico 100% online, prescripción de fórmulas magistrales y seguimiento digital. Su blog cubre casos de pacientes reales (Marcos con Finasteride+Minoxidil, Javier con Dutasteride+Minoxidil) como social proof de resultados sin clínica física.",
+      "source": "mediQuo",
+      "source_type": "competitor",
+      "platform": "blog",
+      "url": "https://mediquo.com/blog/clinica-salud-capilar/finasterida-vs-minoxidil-vs-pp405/",
+      "engagement": {
+        "likes": 0,
+        "comments": 0,
+        "shares": 0
+      },
+      "date": "2026-05-01",
+      "idea_id": "idea-2026-05-08-8",
+      "signal_type": [
+        "contrarian",
+        "framework"
+      ],
+      "pillar_id": "P3-mercado"
+    },
+    {
+      "summary": "El Dr. Sergio Vañó Galván publicó en abril 2026 'Characterization and Management of Androgenetic Alopecia in Transgender and Gender-Diverse Individuals: A Narrative Review'. Es la primera revisión narrativa que aborda específicamente cómo la alopecia androgenética se manifiesta y debe tratarse en personas transgénero y de género diverso, teniendo en cuenta la terapia hormonal de afirmación de género y sus efectos sobre el folículo piloso.",
+      "source": "Dr. Sergio Vañó Galván",
+      "source_type": "reference-creator",
+      "platform": "publicación científica",
+      "url": "https://read.qxmd.com/read/41920277/characterization-and-management-of-androgenetic-alopecia-in-transgender-and-gender-diverse-individuals-a-narrative-review",
+      "engagement": {
+        "likes": 0,
+        "comments": 0,
+        "shares": 0
+      },
+      "date": "2026-04-01",
+      "idea_id": "idea-2026-05-08-9",
+      "signal_type": [
+        "milestone",
+        "framework"
+      ],
+      "pillar_id": "P1-investigacion"
+    },
+    {
+      "summary": "El Dr. Sergio Vañó Galván publicó en abril 2026 una actualización sobre alopecia persistente inducida por quimioterapia (pCIA). El artículo aborda el diagnóstico diferencial, los mecanismos de daño folicular persistente y las opciones terapéuticas actuales para pacientes que no recuperan su cabello meses o años después de finalizar la quimioterapia. Es un problema infradiagnosticado que afecta significativamente a la calidad de vida de supervivientes de cáncer.",
+      "source": "Dr. Sergio Vañó Galván",
+      "source_type": "reference-creator",
+      "platform": "publicación científica",
+      "url": "https://portalcientifico.uah.es/investigadores/151364/publicaciones",
+      "engagement": {
+        "likes": 0,
+        "comments": 0,
+        "shares": 0
+      },
+      "date": "2026-04-15",
+      "idea_id": "idea-2026-05-08-10",
+      "signal_type": [
+        "data-point",
+        "proof-point",
+        "framework"
+      ],
+      "pillar_id": "P2-tratamientos"
+    },
+    {
+      "summary": "Insparya tiene en portada de su blog la guía 'Finasterida: para qué sirve, cómo actúa y qué resultados esperar para tu pelo', posicionándose para la keyword 'finasteride pelo'. El artículo incluye aviso legal médico, está verificado por doctor y tiene 5 likes (alto para su blog). Es parte de una estrategia SEO de contenido evergreen actualizado regularmente para capturar tráfico transaccional de pacientes que investigan opciones de tratamiento.",
+      "source": "Insparya",
+      "source_type": "competitor",
+      "platform": "blog",
+      "url": "https://insparya.es/finasteride-que-es-y-para-que-sirve/",
+      "engagement": {
+        "likes": 5,
+        "comments": 0,
+        "shares": 0
+      },
+      "date": "2026-05-04",
+      "idea_id": "idea-2026-05-08-11",
+      "signal_type": [
+        "framework",
+        "proof-point"
+      ],
+      "pillar_id": "P2-tratamientos"
+    }
+  ]
+}

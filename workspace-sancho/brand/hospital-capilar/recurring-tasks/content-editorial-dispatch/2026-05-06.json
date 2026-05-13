@@ -1,0 +1,21 @@
+{
+  "cronName": "Content: Editorial Dispatch — Hospital Capilar",
+  "slug": "hospital-capilar",
+  "date": "2026-05-06",
+  "runAtMs": 1746509820000,
+  "status": "ok",
+  "transport": "discord",
+  "channel_id": "1475638253154603170",
+  "candidates_selected": 4,
+  "candidates_sent": 4,
+  "idea_ids": [
+    "idea-2026-05-06-1",
+    "idea-2026-05-06-10",
+    "idea-2026-05-06-5",
+    "idea-2026-05-06-8"
+  ],
+  "task_id": "P-Content-Semana-19-T06",
+  "project_id": "P-Content-Semana-19",
+  "notes": "send-dispatch endpoint returned 501 (Discord transport not implemented). Sent directly via Discord message tool. cadence-config.yml and dispatch-channel.yml created with defaults (were missing).",
+  "error": null
+}

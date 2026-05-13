@@ -1,0 +1,37 @@
+{
+  "project_id": "P03",
+  "tasks": [
+    {
+      "id": "T01",
+      "name": "Verificar/instalar GA4 en dealcar.io",
+      "description": "Comprobar si dealcar.io tiene GA4 instalado. Si sí → verificar que trackea correctamente (pageviews, eventos). Si no → instalar. Definir eventos de conversión: click CTA 'Probar ahora', envío formulario contacto, click WhatsApp, click pricing.",
+      "status": "todo",
+      "owner": "Equipo",
+      "channel": "web",
+      "discord_thread_id": "1486634272797233182",
+      "skill": "analytics-tracking",
+      "created": "2026-03-26",
+      "completed": null,
+      "output_files": [],
+      "notes": "Requiere acceso a Framer + Google Analytics del equipo Dealcar",
+      "deliverable_file": "brand/dealcar/projects/P03-analytics-setup/tasks/T01/deliverable.md",
+      "mc_chat_thread_id": "task-t01"
+    },
+    {
+      "id": "T02",
+      "name": "Conectar Google Search Console",
+      "description": "Verificar propiedad dealcar.io en GSC. Comprobar que el sitemap está enviado. Extraer datos baseline: queries actuales, impressions, CTR, posición media. Compartir acceso con Sancho para monitoreo.",
+      "status": "todo",
+      "owner": "Equipo",
+      "channel": "web",
+      "discord_thread_id": "1486634403038888062",
+      "skill": "google-search-console",
+      "created": "2026-03-26",
+      "completed": null,
+      "output_files": [],
+      "notes": "Requiere acceso a GSC del equipo Dealcar",
+      "deliverable_file": "brand/dealcar/projects/P03-analytics-setup/tasks/T02/deliverable.md",
+      "mc_chat_thread_id": "task-t02"
+    }
+  ]
+}

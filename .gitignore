@@ -136,8 +136,8 @@ workspace-sancho/memory/
 workspace-cervantes/memory/
 
 # === Cron state (instance-specific) ===
-cron/jobs.json.bak
-cron/jobs.json.pre-migration
+cron/jobs.json.bak*
+cron/jobs.json.pre-*
 
 # === Workspace backups (large, may contain secrets) ===
 workspace-sancho/_backups/
@@ -198,3 +198,44 @@ screenshots/mc-inspect/
 workspace-main/
 workspace/
 workspace-maese-pedro/
+
+# === Refactor-side additions (instance-specific runtime) ===
+
+# Agent runtime state (per-deploy)
+agents/*/agent/models.json
+agents/*/agent/auth-state.json
+
+# Cron state and backups
+cron/jobs.json
+cron/jobs.json.pre-*
+cron/jobs-state.json
+
+# Discord runtime cache
+discord/command-deploy-cache.json
+
+# Plugins runtime
+plugins/installs.json
+
+# Tailscale device certs (secrets — NEVER commit)
+*.taild*.ts.net.crt
+*.taild*.ts.net.key
+
+# Refactor-side ephemeral / deploy markers
+OD_VERSION.txt
+PLAN-chat-progress-streaming.md
+openclaw.json.last-good
+
+# ACP / Codex local config (per-machine)
+acpx/codex-home/
+
+# Workspace framework runtime (instance-specific)
+workspace-sancho/.clawhub/lock.json
+workspace-sancho/costs-daily.json
+workspace-sancho/costs-global.json
+workspace-sancho/cron/jobs.json
+workspace-sancho/cron/jobs.json.pre-*
+workspace-sancho/cron/jobs.json.bak
+
+# Generated env backups (timestamped)
+.env.bak-*
+.env.local.bak-*

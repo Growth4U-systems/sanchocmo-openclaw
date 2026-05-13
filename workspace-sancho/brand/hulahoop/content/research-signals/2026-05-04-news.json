@@ -1,0 +1,172 @@
+{
+  "date": "2026-05-04",
+  "generated_at": "2026-05-04T05:22:00Z",
+  "pillars": [
+    {
+      "pillar_id": "pfp-regulacion",
+      "pillar_name": "PFP / Crowdfunding Regulado",
+      "signals_count": 3
+    },
+    {
+      "pillar_id": "incentivos-fiscales",
+      "pillar_name": "Incentivos Fiscales Culturales (Art. 36/39 LIS)",
+      "signals_count": 3
+    },
+    {
+      "pillar_id": "financiacion-entretenimiento",
+      "pillar_name": "Financiación Industria Entretenimiento",
+      "signals_count": 3
+    },
+    {
+      "pillar_id": "tokenizacion-rwa",
+      "pillar_name": "Tokenización / RWA Activos Culturales",
+      "signals_count": 3
+    }
+  ],
+  "signals": [
+    {
+      "id": "hh-news-20260504-001",
+      "type": "news",
+      "pillar_id": "pfp-regulacion",
+      "title": "ESMA publica nuevas Q&As sobre ECSPR y plan para simplificar inversión minorista (feb-mar 2026)",
+      "summary": "ESMA actualizó Q&As sobre el ECSPR el 27 feb 2026 y publicó informe el 12 mar 2026 detallando acciones para simplificar la inversión minorista. Los inversores retail representan el 88% de todos los inversores en crowdfunding UE en 2024. Relevante para Hulahoop PFP: la tendencia regulatoria favorece el acceso retail, alineado con el marketplace PFP de entretenimiento previsto para Q1 2027.",
+      "source": "ESMA / EuroCrowd",
+      "url": "https://www.esma.europa.eu/esmas-activities/investors-and-issuers/investment-services-and-crowdfunding",
+      "date": "2026-03",
+      "relevance_score": 0.85,
+      "signal_type": ["system", "aha-moment"]
+    },
+    {
+      "id": "hh-news-20260504-002",
+      "type": "news",
+      "pillar_id": "pfp-regulacion",
+      "title": "Menos del 30% de plataformas ECSPR operan transfronterizamente — fragmentación persiste",
+      "summary": "A principios de 2025, menos del 30% de las plataformas con licencia ECSPR operaban transfronterizamente. Muchas han tenido dificultades de cumplimiento y algunas han devuelto licencias. Señal de oportunidad competitiva: Hulahoop PFP como entrante especializado en vertical de entretenimiento podría diferenciarse en un mercado aún fragmentado.",
+      "source": "EuroCrowd / LenderKit",
+      "url": "https://eurocrowd.org/ecspr-licensing-a-patchwork-slowing-eu-crowdfunding-progress/",
+      "date": "2026-04",
+      "relevance_score": 0.82,
+      "signal_type": ["vulnerability", "conflict"]
+    },
+    {
+      "id": "hh-news-20260504-003",
+      "type": "news",
+      "pillar_id": "pfp-regulacion",
+      "title": "Nuevo marco AML de la UE (julio 2027) designará plataformas crowdfunding como entidades obligadas",
+      "summary": "El nuevo framework antilavado de la UE, aplicable desde julio 2027, incluirá a todas las plataformas de crowdfunding licenciadas como entidades obligadas con KYC exhaustivo y monitorización de transacciones. Impacto directo para Hulahoop PFP: necesario preparar procesos compliance AML con anticipación al lanzamiento del marketplace regulado.",
+      "source": "RapidLEI / TheGECA",
+      "url": "https://rapidlei.com/ecspr-is-in-effect-is-your-crowdfunding-platform-compliant/",
+      "date": "2026-04",
+      "relevance_score": 0.78,
+      "signal_type": ["system"]
+    },
+    {
+      "id": "hh-news-20260504-004",
+      "type": "news",
+      "pillar_id": "incentivos-fiscales",
+      "title": "ICAA dota hasta 37M€ para ayudas selectivas a largometrajes 2026 — récord histórico",
+      "summary": "El ICAA ha convocado ayudas selectivas para producción de largometrajes 2026 con dotación inicial de 20M€ ampliable hasta 37M€, récord histórico. Plazo cerrado en marzo 2026. Señal de mercado en expansión: más proyectos financiados = más demanda de estructuración fiscal Art.36/39 que Hulahoop Services ofrece.",
+      "source": "Box-Office.es / Spain Audiovisual Hub",
+      "url": "https://box-office.es/news/el-icaa-podria-repartir-37-millones-de-euros-en-sus-ayudas-ayudas-selectivas-para-la-produccion-de-largometrajes-de-2026/",
+      "date": "2026-03",
+      "relevance_score": 0.88,
+      "signal_type": ["metric", "milestone"]
+    },
+    {
+      "id": "hh-news-20260504-005",
+      "type": "news",
+      "pillar_id": "incentivos-fiscales",
+      "title": "Ministerio de Cultura lanza nueva línea de 1M€ para salas de música en vivo (24 abril 2026)",
+      "summary": "Nueva línea de ayudas de 1M€ para salas de música en directo anunciada el 24 abril 2026, con ayudas de 8.000 a 50.000€ por sala para equipamiento, digitalización y nuevos modelos de negocio. Suma a los 4,5M€ del INAEM en ayudas a música/lírica 2026. Señal: el ecosistema musical se profesionaliza — más producción organizada = más clientes potenciales para incentivo fiscal Art.36.3.",
+      "source": "La Moncloa / Salas de Conciertos",
+      "url": "https://salasdeconciertos.com/el-ministerio-de-cultura-lanza-una-nueva-linea-de-ayudas-para-salas-de-musica-en-vivo/",
+      "date": "2026-04-24",
+      "relevance_score": 0.80,
+      "signal_type": ["system", "milestone"]
+    },
+    {
+      "id": "hh-news-20260504-006",
+      "type": "news",
+      "pillar_id": "incentivos-fiscales",
+      "title": "INAEM convoca ayudas a música y lírica 2026 con +4,5M€ — 6 modalidades incluyendo giras e internacionalización",
+      "summary": "El INAEM ha convocado 4.507.250€ en ayudas para música y lírica 2026 en 6 modalidades: giras España, entidades sin ánimo de lucro, festivales, temporadas líricas, composición e internacionalización. Plazo cerrado 20 abril 2026. Más producción musical subvencionada = más proyectos candidatos a estructuración fiscal vía Hulahoop.",
+      "source": "Sympathy for the Lawyer / esmusica.org",
+      "url": "https://sympathyforthelawyer.com/blog/ayudas-inaem-2026-guia-solicitar-musica-lirica/",
+      "date": "2026-04",
+      "relevance_score": 0.77,
+      "signal_type": ["system", "metric"]
+    },
+    {
+      "id": "hh-news-20260504-007",
+      "type": "news",
+      "pillar_id": "financiacion-entretenimiento",
+      "title": "Empresas audiovisuales disparan inversión en cine español gracias a la nueva Ley Audiovisual",
+      "summary": "El País reporta (marzo 2026) que las empresas audiovisuales han disparado la inversión en producción española tras la entrada en vigor de la Ley General Audiovisual y la obligación de plataformas streaming de invertir el 5-6% de ingresos. El mercado de producción se expande — oportunidad directa para los servicios de financiación estructurada de Hulahoop.",
+      "source": "El País",
+      "url": "https://elpais.com/economia/2026-03-18/las-empresas-audiovisuales-disparan-la-inversion-en-cine-espanol-con-la-nueva-ley.html",
+      "date": "2026-03-18",
+      "relevance_score": 0.90,
+      "signal_type": ["metric", "aha-moment"]
+    },
+    {
+      "id": "hh-news-20260504-008",
+      "type": "news",
+      "pillar_id": "financiacion-entretenimiento",
+      "title": "ICAA lanza ayudas distribución películas 2026: 4M€ para distribución en salas",
+      "summary": "El ICAA ha convocado ayudas a la distribución de películas 2026 con 4M€ (ampliables a 4,5M€), hasta 150.000€ por ayuda, cubriendo 50% de costes de distribución. Señal de dinamismo en toda la cadena de valor audiovisual, desde producción hasta distribución. Oportunidad de contenido sobre financiación integral del ciclo audiovisual.",
+      "source": "Spain Audiovisual Hub / ICAA",
+      "url": "https://spainaudiovisualhub.digital.gob.es/es/actualidad/ayudas-a-la-distribucion-de-peliculas--icaa----convocatoria-2026",
+      "date": "2026-03",
+      "relevance_score": 0.75,
+      "signal_type": ["system"]
+    },
+    {
+      "id": "hh-news-20260504-009",
+      "type": "news",
+      "pillar_id": "financiacion-entretenimiento",
+      "title": "PwC: industria entretenimiento y medios España crecerá 5,1% hasta 2026 — 34.092M€",
+      "summary": "El informe PwC Entertainment & Media Outlook proyecta que el sector en España crecerá un 5,1% alcanzando 34.092M€ en 2026, superando la media global. Motores: publicidad digital, OTT, videojuegos. Música en directo representará casi la mitad de ingresos musicales 2026-2029. Dato macro clave para posicionar a Hulahoop como infraestructura financiera de un sector en expansión.",
+      "source": "PwC España",
+      "url": "https://www.pwc.es/es/sala-prensa/notas-prensa/2026/industria-entretenimiento-medios-espana-crecimiento-2029.html",
+      "date": "2026-04",
+      "relevance_score": 0.83,
+      "signal_type": ["metric", "aha-moment"]
+    },
+    {
+      "id": "hh-news-20260504-010",
+      "type": "news",
+      "pillar_id": "tokenizacion-rwa",
+      "title": "Tokenización RWA se dispara +420% hasta $30.200M desde 2025 — proyección superar $100.000M a finales 2026",
+      "summary": "El mercado global de RWA tokenizados se disparó de ~$5.500M a $30.200M (+420% desde 2025), con proyecciones de superar $100.000M a finales de 2026. Crecimiento impulsado por interés institucional (BlackRock, JPMorgan, Commerzbank). Contexto macro que valida la visión a largo plazo de Hulahoop de tokenizar activos culturales.",
+      "source": "DiarioBitcoin / KuCoin Research",
+      "url": "https://www.diariobitcoin.com/noticias/tokenizacion-de-rwa-se-dispara-420-y-supera-usd-30-200-millones-desde-2025/",
+      "date": "2026-04",
+      "relevance_score": 0.84,
+      "signal_type": ["metric", "milestone"]
+    },
+    {
+      "id": "hh-news-20260504-011",
+      "type": "news",
+      "pillar_id": "tokenizacion-rwa",
+      "title": "MiCA transitorio España extendido a 30 junio 2026 — CASPs deben licenciarse antes del 1 julio",
+      "summary": "España ha extendido el periodo transitorio MiCA hasta el 30 junio 2026 (originalmente dic 2025) por bajo número de proveedores registrados en CNMV. A partir del 1 julio solo podrán operar CASPs licenciados bajo MiCA. Deadline inminente relevante para cualquier plan de Hulahoop de integrar tokens/activos digitales en su PFP.",
+      "source": "Agencia Tributaria / EuroCoinPay / DiarioBitcoin",
+      "url": "https://www.diariobitcoin.com/criptomonedas/espana-publica-criterios-para-la-transicion-de-exchanges-cripto-a-mica-antes-de-julio-2026/",
+      "date": "2026-04",
+      "relevance_score": 0.82,
+      "signal_type": ["system", "milestone"]
+    },
+    {
+      "id": "hh-news-20260504-012",
+      "type": "news",
+      "pillar_id": "tokenizacion-rwa",
+      "title": "Europa rechaza vía rápida para tokenización amplia — plena claridad regulatoria podría retrasarse a 2030",
+      "summary": "La Comisión Europea ha rechazado una vía rápida para ampliar la tokenización de valores, lo que podría retrasar la plena claridad regulatoria hasta 2030. Esto contrasta con la extensión del DLT Pilot Regime y el piloto BCE Pontes (Q3 2026). Implicación para Hulahoop: la tokenización de activos culturales en PFP requiere horizonte medio-largo; el enfoque actual en instrumentos financieros clásicos (SPV, participaciones) sigue siendo el más viable.",
+      "source": "El Economista / RWA.io",
+      "url": "https://www.eleconomista.es/cripto/noticias/13898547/04/26/europa-no-levantara-el-veto-a-la-tokenizacion-y-algunas-empresas-se-pueden-quedar-sin-capital-antes-de-2030.html",
+      "date": "2026-04",
+      "relevance_score": 0.80,
+      "signal_type": ["conflict", "system"]
+    }
+  ]
+}

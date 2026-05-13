@@ -1,0 +1,11 @@
+{
+  "cronId": "7624d72f-c443-4f79-be22-b1b1479f8e69",
+  "cronName": "Content: PAA Monitor — Hospital Capilar",
+  "slug": "hospital-capilar",
+  "date": "2026-04-27",
+  "runAtMs": 1777262772683,
+  "status": "error",
+  "durationMs": 358366,
+  "model": "MiniMax-M2.7",
+  "content": "📋 **PAA Monitor — Hospital Capilar | 2026-04-27**\n\n✅ Completado.\n\n⚠️ Google PAA bloqueado por anti-scraping → preguntas generadas de seed query patterns (metodología establecida).\n\n**5 pilares | 100 preguntas nuevas (20/pilar)**\n\n| Pillar | Preguntas |\n|--------|-----------|\n| P1 — Tratamientos capilares no quirúrgicos | 20 |\n| P2 — Alopecia y pérdida de cabello | 20 |\n| P3 — Consulta y diagnóstico capilar | 20 |\n| P4 — Post-cirugía y mantenimiento | 20 |\n| P5 — Clínicas capilares y especialistas | 20 |\n\n**Archivos:**\n- 📄 Research signals: `brand/hospital-capilar/content/research-signals/2026-04-27-paa.json`\n- 📄 Config seeds: `brand/hospital-capilar/content/configs/paa-queries/all-pillars.yml`\n- 📄 Task log: `brand/hospital-capilar/recurring-tasks/content-paa-monitor/2026-04-27.json`\n\n---\n\n📋 **PAA Monitor — Hospital Capilar | 2026-04-27**\n\n✅ Completado.\n\n⚠️ Google PAA bloqueado por anti-scraping → preguntas generadas de seed query patterns (metodología establecida).\n\n**5 pilares | 100 preguntas nuevas (20/pilar)**\n\n| Pillar | Preguntas |\n|--------|-----------|\n| P1 — Tratamientos capilares no quirúrgicos | 20 |\n| P2 — Alopecia y pérdida de cabello | 20 |\n| P3 — Consulta y diagnóstico capilar | 20 |\n| P4 — Post-cirugía y mantenimiento | 20 |\n| P5 — Clínicas capilares y especialistas | 20 |\n\n**Archivos:**\n- 📄 Research signals: `brand/hospital-capilar/content/research-signals/2026-04-27-paa.json`\n- 📄 Config seeds: `brand/hospital-capilar/content/configs/paa-queries/all-pillars.yml`\n- 📄 Task log: `brand/hospital-capilar/recurring-tasks/content-paa-monitor/2026-04-27.json`"
+}

@@ -1,0 +1,23 @@
+{
+  "id": "P00-Fast-Foundation",
+  "name": "Fast Foundation (L0-L1)",
+  "description": "Foundation rápida pre-ejecución. Suficiente para empezar a ejecutar canales básicos sin bloquearse en research largo.",
+  "approach": "Completar Company Context (L0) para entender el negocio y Business Model Audit para mapear el funnel actual. Luego ejecutar Niche Discovery 100x (L1) para identificar los ECPs prioritarios. Sin research de mercado profundo — se hace en Full Foundation.",
+  "objective": {
+    "description": "Foundation mínima viable completada",
+    "metric": "pillars_completed",
+    "baseline": 0,
+    "target": 3,
+    "unit": " pillars"
+  },
+  "origin": "onboarding",
+  "phase": -1,
+  "category": "foundation",
+  "review_date": null,
+  "status": "completed",
+  "discord": {
+    "project_thread_id": null
+  },
+  "mc_chat_thread_id": "project-p00-fast-foundation",
+  "discord_thread_id": null
+}

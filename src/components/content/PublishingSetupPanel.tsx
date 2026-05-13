@@ -3,15 +3,17 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ProviderInfo } from "@/lib/publishing/types";
-import { ApiConnectPanel } from "@/components/settings/api-connect-panel";
+import { ApisConnectorsPanel } from "@/components/settings/ApisConnectorsPanel";
 import { PublishingAccountInfo } from "@/components/content/PublishingAccountInfo";
 import { ConfigRow } from "@/components/content/config/ConfigRow";
 import { ConfigSheet } from "@/components/content/config/ConfigSheet";
 import { EditButton } from "@/components/content/config/EditButton";
 
 /**
- * "Herramienta de publishing" row en `Engine > Configuración § Producción`.
- * Resumen + Editar → ConfigSheet con ApiConnectPanel + PublishingAccountInfo.
+ * "Herramienta de publishing" row in `Engine > Configuración § Producción`.
+ * Opens a sheet with the connectors table filtered to publishing-to-network
+ * tools so future scheduling tools (Buffer, Hootsuite, …) appear alongside
+ * Metricool with the same UX as Settings → APIs.
  */
 export function PublishingSetupPanel({ slug }: { slug: string }) {
   const [open, setOpen] = useState(false);
@@ -66,13 +68,16 @@ export function PublishingSetupPanel({ slug }: { slug: string }) {
         }
       />
 
-      <ConfigSheet open={open} onOpenChange={(o) => (o ? setOpen(true) : close())} icon="🔌" title="Conectar Metricool">
-        <ApiConnectPanel
-          slug={slug}
-          apiId="metricool"
-          onClose={close}
-          topAccessory={<PublishingAccountInfo slug={slug} variant="full" />}
-        />
+      <ConfigSheet
+        open={open}
+        onOpenChange={(o) => (o ? setOpen(true) : close())}
+        icon="🔌"
+        title="Conectar herramienta de publishing"
+        width="min(96vw, 1100px)"
+      >
+        <div className="pt-4">
+          <ApisConnectorsPanel categories={["social"]} showHeader={false} />
+        </div>
       </ConfigSheet>
     </>
   );

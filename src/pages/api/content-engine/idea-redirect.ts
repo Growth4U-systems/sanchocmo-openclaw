@@ -15,6 +15,7 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import fs from "fs";
 import path from "path";
 import { BASE } from "@/lib/data/paths";
+import { findContentTaskById, loadAllContentTasks } from "@/lib/data/content-tasks-flat";
 
 interface QueueEntry {
   id: string;
@@ -47,11 +48,16 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
   const queuePath = path.join(BASE, "brand", slug, "content", "idea-queue.json");
 
   let idea: QueueEntry | undefined;
+  const ct = findContentTaskById(slug, ideaId) || loadAllContentTasks(slug).find((c) => c.idea_id === ideaId);
+  if (ct) {
+    idea = ct as unknown as QueueEntry;
+  }
+
   try {
     const queue = JSON.parse(fs.readFileSync(queuePath, "utf-8")) as QueueEntry[];
-    idea = queue.find((i) => i.id === ideaId);
+    idea = idea || queue.find((i) => i.id === ideaId);
   } catch {
-    return res.redirect(302, ideasFallback);
+    if (!idea) return res.redirect(302, ideasFallback);
   }
 
   if (!idea || !idea.project_id || !idea.project_task_id) {

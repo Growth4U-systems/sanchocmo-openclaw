@@ -2,57 +2,70 @@
   {
     "id": "rec-20260413-001",
     "created": "2026-04-13",
+    "updated": "2026-05-11",
     "type": "launch",
     "priority": "high",
     "metric": "all",
-    "description": "Ejecutar metrics-setup para definir KPIs, conectar GA4, GSC, Meta Ads y GHL. Sin esto no hay medición posible.",
-    "linked_project": "P00-Metrics-Metrics-Setup",
+    "description": "Ejecutar metrics-setup skill: definir KPIs, conectar GA4, GSC, Meta Ads y GHL. Sin esto no hay medición de negocio. 4 semanas de delay.",
+    "linked_project": "P00-Metrics",
     "status": "active",
-    "auto_resolved_reason": null,
-    "weeks_active": 2,
-    "updated": "2026-04-20"
+    "weeks_active": 4
   },
   {
     "id": "rec-20260413-002",
     "created": "2026-04-13",
+    "updated": "2026-05-11",
     "type": "launch",
     "priority": "high",
     "metric": "all",
-    "description": "Completar strategic-plan para definir NSM (AUM target 22,5M€ 2026) y prioridades de revenue. Foundation avanzando (Layer 2 approved), pero strategic plan sigue not-started.",
+    "description": "Completar Foundation: (1) aprobar niche-discovery (pending-review desde Apr 16), (2) ejecutar strategic-plan para NSM + prioridades.",
     "linked_project": null,
     "status": "active",
-    "auto_resolved_reason": null,
-    "weeks_active": 2,
-    "updated": "2026-04-20"
+    "weeks_active": 4
   },
   {
-    "id": "rec-20260420-001",
-    "created": "2026-04-20",
+    "id": "rec-20260511-001",
+    "created": "2026-05-11",
     "type": "investigate",
-    "priority": "medium",
-    "metric": "pagespeed.tbt_mobile",
-    "description": "TBT móvil elevado 51% vs baseline (81.5ms vs 54ms). Spike puntual 801ms el 13-abril resuelto pero elevación persiste. Investigar: JS/CSS nuevo, third-party scripts, ad network tags.",
+    "priority": "high",
+    "metric": "pagespeed.collection",
+    "description": "Colección PageSpeed interrumpida 17 días (último: Apr 24). Verificar cron morning-metrics para hulahoop. Ejecutar manualmente si necesario.",
     "linked_project": null,
-    "status": "active"
+    "status": "new"
+  },
+  {
+    "id": "rec-20260511-002",
+    "created": "2026-05-11",
+    "type": "investigate",
+    "priority": "high",
+    "metric": "pagespeed.tbt_mobile",
+    "description": "Patrón TBT crítico — 2 spikes mayores en 3 semanas (Apr 13: 801ms, Apr 22: 1728ms = 34x baseline). TBT elevado sostenido entre spikes. Auditar third-party scripts (GTM, Meta Pixel, chat), Long Tasks con Chrome DevTools.",
+    "linked_project": null,
+    "status": "new",
+    "weeks_underperforming": 4
   },
   {
     "id": "rec-20260420-002",
     "created": "2026-04-20",
+    "updated": "2026-05-11",
     "type": "investigate",
     "priority": "high",
     "metric": "pagespeed.lcp_mobile",
-    "description": "LCP móvil ~16s — 6x objetivo Google (<2.5s). Factor limitante de Core Web Vitals. Impacto directo en SEO. Investigar: TTFB, render-blocking resources, image optimization (WebP/AVIF), CDN.",
+    "description": "LCP móvil 16.3s — 6.5x objetivo Google (<2.5s). 25+ días estancado. Causas identificadas: redirects (752ms), unused JS (750ms). Fix: eliminar redirect chains, code-splitting JS, hero image a WebP/AVIF + preload, CDN.",
     "linked_project": null,
-    "status": "active"
+    "status": "active",
+    "weeks_active": 3
   },
   {
     "id": "rec-20260420-003",
     "created": "2026-04-20",
+    "updated": "2026-05-11",
     "type": "investigate",
-    "priority": "low",
+    "priority": "medium",
     "metric": "pagespeed.performance_mobile",
-    "description": "Performance móvil degradado 7.7% WoW (62.2→57.4). Probablemente correlated con TBT elevation. Investigar same root cause.",
+    "description": "Performance móvil -10.9% desde baseline (64→57). Correlacionado con TBT elevation. Corrección TBT debería resolver.",
     "linked_project": null,
-    "status": "active"
+    "status": "active",
+    "weeks_active": 3
   }
 ]

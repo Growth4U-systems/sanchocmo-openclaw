@@ -1,0 +1,16 @@
+{
+  "task": "content-competitor-monitor",
+  "ran_at": "2026-05-01T06:32:00Z",
+  "status": "completed",
+  "signals_file": "brand/paymatico/content/research-signals/2026-05-01-creators.json",
+  "signals_count": 12,
+  "sources_checked": ["Paynopain", "MONEI", "Sipay", "Mollie", "Paycomet"],
+  "x_unavailable": true,
+  "last_finding": "Euronet adquiere Paynopain (cierre Q3 2026) — competidor directo deja de ser independiente. Sipay adquiere Sipos y lanza Bizum Pay en tiendas físicas. MONEI completa pruebas Euro Digital con BCE. PSD3/PSR textos finales llegan H1 2026. Oportunidad clara: posicionar Paymático como la única fintech española independiente con dinero programable real, regulada BdE desde 2013.",
+  "top_actions": [
+    "Crear contenido POV sobre adquisición Euronet/Paynopain: '¿Qué pasa cuando tu proveedor de pagos es comprado?'",
+    "Publicar guía PSD3 para franquicias y corporates",
+    "Contrastar dinero programable Paymático (real, hoy) vs Euro Digital de MONEI (piloto, 2029)"
+  ],
+  "next_run": "2026-05-08T06:30:00Z"
+}

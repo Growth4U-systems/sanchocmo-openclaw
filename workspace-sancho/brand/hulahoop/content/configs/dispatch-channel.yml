@@ -1,0 +1,9 @@
+# Dispatch Channel Config — Hulahoop
+# Where editorial dispatch messages are sent
+
+transport: discord
+channel_id: "1491032340208812042"  # #content channel
+guild_id: "1491032339243864225"
+
+format: block_kit  # rich embed with action buttons
+notify_role: null   # no role mention by default

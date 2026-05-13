@@ -1,0 +1,1003 @@
+[
+  {
+    "id": "idea-2026-05-01-001",
+    "idea_id": "idea-2026-05-01-001",
+    "name": "Si el umbral ECSP sube de 5M€ a 12M€, el crowdfunding regulado deja de ser 'fina",
+    "status": "ready",
+    "target_channels": [
+      "linkedin"
+    ],
+    "documents": [],
+    "created_at": "2026-05-01T06:56:59.123828Z",
+    "pillar_id": "pfp-regulacion",
+    "content_type": "Hot Take",
+    "target_channel": "linkedin",
+    "signal": {
+      "id": "hh-news-20260501-001",
+      "summary": "Propuesta de elevar umbral ECSP de 5M€ a 12M€ en la UE",
+      "source": "European Digital Finance Association / EuroCrowd",
+      "url": "https://europeandigitalfinance.eu/letter-raising-ecsp-threshold/",
+      "date": "2026-04"
+    },
+    "angle_draft": "Si el umbral ECSP sube de 5M€ a 12M€, el crowdfunding regulado deja de ser 'financiación alternativa' para convertirse en una vía real de capitalización para la industria del entretenimiento. Para producciones que hoy necesitan fragmentar rondas o buscar co-inversores institucionales, esto cambia las reglas del juego. Hulahoop, como única PFP exclusiva de entretenimiento bajo CNMV, está posicionada para canalizar rondas más grandes en un mercado que mueve +500M€/año solo en España.",
+    "pov_confidence": 0.85
+  },
+  {
+    "id": "idea-2026-05-01-002",
+    "idea_id": "idea-2026-05-01-002",
+    "name": "Sego Finance acaba de pasar 200M€ y 40k inversores. Prueba de que el crowdfundin",
+    "status": "ready",
+    "target_channels": [
+      "linkedin"
+    ],
+    "documents": [],
+    "created_at": "2026-05-01T06:56:59.124396Z",
+    "pillar_id": "pfp-regulacion",
+    "content_type": "Proof Post",
+    "target_channel": "linkedin",
+    "signal": {
+      "id": "hh-news-20260501-003",
+      "summary": "Sego Finance supera 200M€ canalizados y 40.000 inversores",
+      "source": "Autónomos y Emprendedor / FundsSociety",
+      "url": "https://www.autonomosyemprendedor.es/articulo/tu-historia/javier-villaseca-sego-finance-como-invertir-startups-que-buscan-realmente-inversores/20260409140000052936.html",
+      "date": "2026-04-09"
+    },
+    "angle_draft": "Sego Finance acaba de pasar 200M€ y 40k inversores. Prueba de que el crowdfunding regulado en España ya no es un experimento — es infraestructura financiera real. Lo que falta es una plataforma que haga lo mismo exclusivamente para entretenimiento: con la lógica de derechos, anticipos fiscales y flujos de recaudación que solo este sector tiene. Ese es exactamente el hueco que Hulahoop llena. Análisis comparativo de métricas PFP vertical vs generalista.",
+    "pov_confidence": 0.8
+  },
+  {
+    "id": "idea-2026-05-01-003",
+    "idea_id": "idea-2026-05-01-003",
+    "name": "Llevamos más de 2 años esperando que el Congreso suba la deducción del 20% al 25",
+    "status": "ready",
+    "target_channels": [
+      "linkedin"
+    ],
+    "documents": [],
+    "created_at": "2026-05-01T06:56:59.124397Z",
+    "pillar_id": "incentivos-fiscales",
+    "content_type": "Hot Take",
+    "target_channel": "linkedin",
+    "signal": {
+      "id": "hh-news-20260501-004",
+      "summary": "Reforma Art. 36.3 LIS para artes escénicas y música sigue bloqueada — más de 2 años",
+      "source": "Sympathy for the Lawyer / Demócrata",
+      "url": "https://sympathyforthelawyer.com/blog/reforma-articulo-36-3-lis-deducciones-fiscales-culturales-espana/",
+      "date": "2026-03"
+    },
+    "angle_draft": "Llevamos más de 2 años esperando que el Congreso suba la deducción del 20% al 25% y el tope de 500k€ a 1M€ para artes escénicas y música. Mientras tanto, el cine ya disfruta del 30% y tope 10M€. ¿La lección? No puedes depender de la legislación para financiar cultura. Necesitas infraestructura que funcione con las reglas actuales y se adapte cuando cambien. Eso es exactamente lo que construimos con Pro Tax: una plataforma que optimiza lo que HAY, no lo que debería haber.",
+    "pov_confidence": 0.9
+  },
+  {
+    "id": "idea-2026-05-01-004",
+    "idea_id": "idea-2026-05-01-004",
+    "name": "Los despachos fiscales publican guías de incentivos culturales (nosotros también",
+    "status": "ready",
+    "target_channels": [
+      "linkedin"
+    ],
+    "documents": [],
+    "created_at": "2026-05-01T06:56:59.124399Z",
+    "pillar_id": "incentivos-fiscales",
+    "content_type": "Framework",
+    "target_channel": "linkedin",
+    "signal": {
+      "id": "hh-news-20260501-006",
+      "summary": "Carrillo Asesores publica guía de incentivos fiscales culturales — competidor directo",
+      "source": "Carrillo Asesores",
+      "url": "https://carrilloasesores.com/post/incentivos-fiscales-en-cultura-empresas/",
+      "date": "2026-04"
+    },
+    "angle_draft": "Los despachos fiscales publican guías de incentivos culturales (nosotros también lo hacíamos). Pero hay un problema con el modelo 'asesoría manual': no escala, depende de personas, y cada expediente empieza de cero. Framework: Asesoría Artesanal vs. Infraestructura Automatizada — por qué Pro Tax no compite con despachos sino que los convierte en aliados. Mostrar el modelo de caballo de Troya: despachos que adoptan Pro Tax dejan de ser competencia.",
+    "pov_confidence": 0.82
+  },
+  {
+    "id": "idea-2026-05-01-005",
+    "idea_id": "idea-2026-05-01-005",
+    "name": "544 millones de euros. Eso es lo que las plataformas de streaming están obligada",
+    "status": "ready",
+    "target_channels": [
+      "linkedin"
+    ],
+    "documents": [],
+    "created_at": "2026-05-01T06:56:59.124400Z",
+    "pillar_id": "financiacion-entretenimiento",
+    "content_type": "Hot Take",
+    "target_channel": "linkedin",
+    "signal": {
+      "id": "hh-news-20260501-008",
+      "summary": "Ley General Audiovisual genera 544M€ inversión obligatoria de plataformas streaming",
+      "source": "Hollywood Reporter ES / El País",
+      "url": "https://es.hollywoodreporter.com/ley-general-audiovisual-genera-inversion-de-544-millones-de-euros-en-producciones-espanolas/",
+      "date": "2026-03"
+    },
+    "angle_draft": "544 millones de euros. Eso es lo que las plataformas de streaming están obligadas a invertir en producción española por la Ley General Audiovisual. 71% va a series, 22% a cine. Ese dinero necesita vehículos de estructuración, trazabilidad y co-inversión. Hoy se gestiona con Excel y contratos bilaterales. Mañana — con infraestructura financiera digital. El mercado no tiene un problema de dinero. Tiene un problema de fontanería financiera.",
+    "pov_confidence": 0.88
+  },
+  {
+    "id": "idea-2026-05-01-006",
+    "idea_id": "idea-2026-05-01-006",
+    "name": "De 5.500M$ a 18.000M$ en 12 meses. La tokenización de activos reales ya no es un",
+    "status": "ready",
+    "target_channels": [
+      "linkedin"
+    ],
+    "documents": [],
+    "created_at": "2026-05-01T06:56:59.124401Z",
+    "pillar_id": "tokenizacion-rwa",
+    "content_type": "Proof Post",
+    "target_channel": "linkedin",
+    "signal": {
+      "id": "hh-news-20260501-009",
+      "summary": "Tokenización RWA se triplica a 18.000M$ — BCE piloto 'Pontes' Q3 2026",
+      "source": "Ecosistema Startup / Bolsamanía",
+      "url": "https://ecosistemastartup.com/tokenizacion-2026-18b-en-activos-y-oportunidad-para-tu-fintech/",
+      "date": "2026-04"
+    },
+    "angle_draft": "De 5.500M$ a 18.000M$ en 12 meses. La tokenización de activos reales ya no es una promesa — es un mercado que se triplicó. Inmobiliario, crédito, commodities ya están tokenizados. ¿Qué falta? Activos culturales: derechos de distribución, recaudación de taquilla, anticipos fiscales. El BCE prepara el piloto 'Pontes' para Q3 2026. Cuando la liquidación mayorista con dinero de banco central esté lista, los activos culturales tokenizados serán la siguiente frontera. Hulahoop ya está construyendo esa infraestructura.",
+    "pov_confidence": 0.78
+  },
+  {
+    "id": "idea-2026-05-01-007",
+    "idea_id": "idea-2026-05-01-007",
+    "name": "RTVE acaba de aprobar 14M€ para 30 largometrajes en su primera mesa de 2026. Cad",
+    "status": "ready",
+    "target_channels": [
+      "linkedin"
+    ],
+    "documents": [],
+    "created_at": "2026-05-01T06:56:59.124402Z",
+    "pillar_id": "financiacion-entretenimiento",
+    "content_type": "Personal Story",
+    "target_channel": "linkedin",
+    "signal": {
+      "id": "hh-news-20260501-007",
+      "summary": "RTVE invierte 14M€ en 30 largometrajes — primera mesa cine 2026",
+      "source": "Box-Office.es",
+      "url": "https://box-office.es/news/mesa-de-cine-rtve-2026-la-corporacion-invertira-casi-14-millones-en-30-largometrajes/",
+      "date": "2026-04"
+    },
+    "angle_draft": "RTVE acaba de aprobar 14M€ para 30 largometrajes en su primera mesa de 2026. Cada uno de esos proyectos necesita cerrar el resto de la financiación: coproducción, preventa, anticipo fiscal, inversor privado. La mesa de RTVE es el 'sí' que desbloquea todo lo demás. ¿Cuántos productores tienen la infraestructura para estructurar 4-5 fuentes de financiación distintas para un solo proyecto? Ahí es donde entra Hulahoop Services.",
+    "pov_confidence": 0.75
+  },
+  {
+    "id": "idea-2026-05-06-1",
+    "idea_id": "idea-2026-05-06-1",
+    "name": "El ICAA sube las ayudas al cine a 62M€: qué significa para la financiación audiovisual",
+    "status": "New",
+    "target_channels": [
+      "linkedin"
+    ],
+    "documents": [],
+    "created_at": "2026-05-06T05:37:22.243Z",
+    "title": "El ICAA sube las ayudas al cine a 62M€: qué significa para la financiación audiovisual",
+    "pillar_id": "financiacion-entretenimiento",
+    "content_type": "Hot Take",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "El Consejo de Ministros aprobó el 5 de mayo de 2026 la convocatoria de ayudas generales del ICAA para producción de largometrajes por 62 millones de euros, un incremento del 13% (+7M€) respecto a la convocatoria anterior. Se reserva el 35% del presupuesto para proyectos dirigidos por mujeres y el 10% para animación. Se gestionará en concurrencia competitiva con criterios de viabilidad económica e impacto socioeconómico.",
+      "source": "Infobae / ICAA",
+      "url": "https://www.infobae.com/america/agencias/2026/05/05/el-gobierno-incrementa-en-7-millones-las-ayudas-al-cine-hasta-alcanzar-los-62-millones-para-produccion-de-largometrajes/",
+      "date": "2026-05-05"
+    },
+    "angle_draft": "62 millones de euros. El ICAA acaba de subir un 13% las ayudas a producción de largometrajes. Pero aquí viene lo interesante: cada euro de ayuda pública necesita 3-4€ de financiación privada complementaria para cerrar un presupuesto. Eso son +180M€ en capital privado que necesita canalizarse. ¿Quién estructura esas rondas? ¿Con qué herramientas? El dinero público es el catalizador, pero la infraestructura financiera es lo que convierte ayudas en películas terminadas. Frame: 'Las ayudas no financian películas — desbloquean la financiación que sí lo hace.'",
+    "pov_confidence": 0.9,
+    "signal_type": [
+      "milestone",
+      "data-point"
+    ],
+    "source_signals": [
+      "news-2026-05-06-c83f050f"
+    ]
+  },
+  {
+    "id": "idea-2026-05-06-2",
+    "idea_id": "idea-2026-05-06-2",
+    "name": "DTCC tokenizará las acciones del Russell 1000: la infraestructura financiera ya es digital",
+    "status": "New",
+    "target_channels": [
+      "linkedin"
+    ],
+    "documents": [],
+    "created_at": "2026-05-06T05:37:22.243Z",
+    "title": "DTCC tokenizará las acciones del Russell 1000: la infraestructura financiera ya es digital",
+    "pillar_id": "tokenizacion-rwa",
+    "content_type": "Hot Take",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "DTCC anunció el 4 de mayo de 2026 el lanzamiento de su servicio de tokenización de valores, cubriendo acciones del Russell 1000, ETFs y bonos del Tesoro de EE.UU. El piloto arranca en julio 2026 con lanzamiento completo en octubre 2026. Más de 50 empresas financieras participan. La SEC otorgó una no-action letter en diciembre 2025 autorizando un programa piloto de tres años.",
+      "source": "DTCC / Bitcoin Magazine / CrowdFund Insider",
+      "url": "https://www.dtcc.com/news/2026/may/04/dtcc-advances-development-of-new-tokenization-service",
+      "date": "2026-05-04"
+    },
+    "angle_draft": "DTCC — la infraestructura que liquida el 95% de las transacciones de valores en EE.UU. — acaba de anunciar que tokenizará acciones del Russell 1000, ETFs y bonos del Tesoro. Piloto en julio, lanzamiento en octubre. Esto no es un experimento cripto. Es Wall Street adoptando blockchain como capa de liquidación. Si los activos más líquidos del mundo migran a tokens, los activos culturales son la siguiente frontera natural. Frame: 'Si DTCC tokeniza acciones, ¿por qué seguimos gestionando derechos audiovisuales con PDFs?'",
+    "pov_confidence": 0.85,
+    "signal_type": [
+      "milestone",
+      "aha-moment"
+    ],
+    "source_signals": [
+      "news-2026-05-06-d0abbb1f"
+    ]
+  },
+  {
+    "id": "idea-2026-05-06-3",
+    "idea_id": "idea-2026-05-06-3",
+    "name": "1.500M€ del Hub Audiovisual caducan en agosto: la ventana que pocos ven",
+    "status": "New",
+    "target_channels": [
+      "linkedin"
+    ],
+    "documents": [],
+    "created_at": "2026-05-06T05:37:22.243Z",
+    "title": "1.500M€ del Hub Audiovisual caducan en agosto: la ventana que pocos ven",
+    "pillar_id": "financiacion-entretenimiento",
+    "content_type": "Framework",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "El fondo Spain Audiovisual Hub, gestionado por SETT, dispone de 1.500 millones de euros en instrumentos financieros (capital hasta 49%, préstamos hasta 70%) para la industria audiovisual. La fecha límite para operaciones comprometidas ante notario es el 31 de agosto de 2026. Cubre cine, series, documentales, videojuegos, e-sports, OTT y digitalización de contenidos.",
+      "source": "Audiovisual451 / Plan de Recuperación",
+      "url": "https://www.audiovisual451.com/la-industria-audiovisual-tiene-hasta-el-31-de-agosto-de-2026-para-aprovechar-la-adenda-del-plan-espana-hub-audiovisual-de-europa/",
+      "date": "2026-05"
+    },
+    "angle_draft": "1.500 millones de euros. Ese es el fondo del Spain Audiovisual Hub que caduca el 31 de agosto de 2026. Quedan menos de 4 meses. ¿Cuántas productoras saben que existe? ¿Cuántas tienen la estructura financiera para acceder a instrumentos de capital (hasta 49%) o deuda (hasta 70%)? Framework: 3 pasos para evaluar si tu proyecto audiovisual puede acceder al fondo SETT antes del deadline — y qué infraestructura financiera necesitas tener lista. Frame: 'El dinero está ahí. Lo que falta es la fontanería para canalizarlo.'",
+    "pov_confidence": 0.88,
+    "signal_type": [
+      "milestone",
+      "cautionary-tale",
+      "data-point"
+    ],
+    "source_signals": [
+      "news-2026-05-06-ad1505e1"
+    ]
+  },
+  {
+    "id": "idea-2026-05-06-4",
+    "idea_id": "idea-2026-05-06-4",
+    "name": "El 88% de inversores en crowdfunding son minoristas con ticket de 660€",
+    "status": "New",
+    "target_channels": [
+      "linkedin"
+    ],
+    "documents": [],
+    "created_at": "2026-05-06T05:37:22.243Z",
+    "title": "El 88% de inversores en crowdfunding son minoristas con ticket de 660€",
+    "pillar_id": "pfp-regulacion",
+    "content_type": "Proof Post",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Según un estudio de 2025 publicado por CrowdInform, el 88% de los inversores en crowdfunding en España son minoristas no sofisticados, con un ticket medio de 660 euros. El ECSPR ha mejorado la transparencia con herramientas como la Ficha de Datos Fundamentales (KIIS), test de idoneidad y período de reflexión. España cuenta con aproximadamente 27 plataformas de crowdfunding autorizadas por la CNMV.",
+      "source": "CrowdInform",
+      "url": "https://crowdinform.com/es/articles/informe-del-mercado-espanol-de-crowdfunding-2026-tendencias-plataformas-y-oportunidades-para-el-inversor",
+      "date": "2026-04"
+    },
+    "angle_draft": "88% minoristas. Ticket medio: 660€. Esos son los números reales del crowdfunding regulado en España. El inversor tipo no es un family office — es alguien que invierte lo que le cuesta una escapada de fin de semana. Esto valida la tesis de democratización de la inversión en entretenimiento: no necesitas tickets de 50.000€ para participar en una producción audiovisual. Necesitas una plataforma que haga accesible lo que antes solo estaba al alcance de productores ejecutivos. Frame: 'El futuro de la financiación cultural cabe en 660 euros.'",
+    "pov_confidence": 0.82,
+    "signal_type": [
+      "data-point",
+      "proof-point"
+    ],
+    "source_signals": [
+      "news-2026-05-06-67479c64"
+    ]
+  },
+  {
+    "id": "idea-2026-05-06-5",
+    "idea_id": "idea-2026-05-06-5",
+    "name": "De 5.500M$ a 26.400M$ en 12 meses: la tokenización RWA ya no es promesa",
+    "status": "Dispatched",
+    "target_channels": [
+      "linkedin"
+    ],
+    "documents": [],
+    "created_at": "2026-05-06T05:37:22.243Z",
+    "title": "De 5.500M$ a 26.400M$ en 12 meses: la tokenización RWA ya no es promesa",
+    "pillar_id": "tokenizacion-rwa",
+    "content_type": "Proof Post",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "El mercado de RWA (Real World Assets) on-chain superó los 26.400 millones de dólares en marzo de 2026, con un crecimiento interanual del 300%. Los bonos del Tesoro tokenizados pasaron de 380 millones de dólares en Q1 2023 a 14.000 millones de dólares en Q1 2026. BlackRock, JPMorgan, Franklin Templeton y Nasdaq participan activamente en tokenización de activos.",
+      "source": "Merca2 / ExMon Pro / Digital Atelier Solutions",
+      "url": "https://www.merca2.es/2026/05/05/dtcc-tokenizacion-russell-1000-treasuries-2376382/",
+      "date": "2026-05-05"
+    },
+    "angle_draft": "26.400 millones de dólares en activos tokenizados on-chain. Crecimiento del 300% interanual. Los bonos del Tesoro tokenizados pasaron de 380M$ a 14.000M$ en tres años. Inmobiliario, crédito privado y commodities ya están tokenizados. ¿Qué falta? Los activos culturales: derechos de distribución, flujos de recaudación, anticipos fiscales certificados. España ya tiene la figura de ERIR (Ursus-3 Capital, primera autorizada) y MiCA entra en vigor pleno para valores tokenizados a mediados de 2026. Frame: 'Los activos culturales son los próximos RWA — y la regulación ya está lista.'",
+    "pov_confidence": 0.87,
+    "signal_type": [
+      "data-point",
+      "milestone",
+      "proof-point"
+    ],
+    "source_signals": [
+      "news-2026-05-06-df25509c"
+    ]
+  },
+  {
+    "id": "idea-2026-05-06-6",
+    "idea_id": "idea-2026-05-06-6",
+    "name": "Deducción del 54% para inversores en cine español: el incentivo que las empresas desconocen",
+    "status": "Dispatched",
+    "target_channels": [
+      "linkedin"
+    ],
+    "documents": [],
+    "created_at": "2026-05-06T05:37:22.243Z",
+    "title": "Deducción del 54% para inversores en cine español: el incentivo que las empresas desconocen",
+    "pillar_id": "incentivos-fiscales",
+    "content_type": "Framework",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Según la guía actualizada de Camaleon Rental sobre el Art. 36.1 LIS para 2026, los inversores que financian producciones audiovisuales españolas pueden aplicar una deducción de hasta el 54% sobre el primer millón de euros y el 45% sobre el exceso, con un límite máximo de 36 millones de euros por obra. Los financiadores acceden al beneficio fiscal a través del Art. 39.7 LIS mediante contratos de financiación, con un tope del 120% de lo aportado.",
+      "source": "Camaleon Rental",
+      "url": "https://www.camaleonrental.com/es/blog/deduccion-fiscal-art-36-1-lis-cine-espanol-2026.html",
+      "date": "2026-05"
+    },
+    "angle_draft": "54% de deducción fiscal. Hasta 36 millones por obra. Y el inversor puede deducir hasta el 120% de lo aportado. Esos son los números reales del Art. 36.1 + 39.7 LIS para quien financia cine español en 2026. Pero aquí está la paradoja: la mayoría de empresas con IS alto no saben que pueden invertir en una producción audiovisual y recuperar más de la mitad vía fiscal. Framework: Cómo funciona el mecanismo productor-contrato 39.7-inversor-deducción, paso a paso. Frame: 'El mejor incentivo fiscal de España está escondido en una ley que nadie lee.'",
+    "pov_confidence": 0.85,
+    "signal_type": [
+      "framework",
+      "data-point"
+    ],
+    "source_signals": [
+      "news-2026-05-06-fae62228"
+    ]
+  },
+  {
+    "id": "idea-2026-05-06-7",
+    "idea_id": "idea-2026-05-06-7",
+    "name": "5.812M€ de impacto económico: la música en vivo ya genera más que el cine en taquilla",
+    "status": "Dispatched",
+    "target_channels": [
+      "linkedin"
+    ],
+    "documents": [],
+    "created_at": "2026-05-06T05:46:40.000Z",
+    "title": "5.812M€ de impacto económico: la música en vivo ya genera más que el cine en taquilla",
+    "pillar_id": "financiacion-entretenimiento",
+    "content_type": "Hot Take",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "SFTL e Incentiva Music publican la Edición 2026 de su estudio de impacto económico de la música en vivo en España. Los conciertos y festivales movilizaron 5.812 millones de euros de actividad económica en 2025. La facturación por venta de entradas alcanzó 807,2 millones de euros (+11%), superando en un 78% la taquilla del cine (453M€). Por cada euro gastado en una entrada, se generan más de 7 euros de actividad económica.",
+      "source": "SFTL / Incentiva Music",
+      "source_type": "competitor",
+      "platform": "blog",
+      "url": "https://sympathyforthelawyer.com/blog/impacto-economico-musica-en-vivo-espana-2026/",
+      "engagement": {
+        "likes": null,
+        "comments": null,
+        "shares": null
+      },
+      "date": "2026-04-16"
+    },
+    "angle_draft": "SFTL publica que la música en vivo mueve 5.812M€ en España — un 78% más que el cine en taquilla. ¿Y dónde está la infraestructura financiera para capitalizar ese mercado? El cine tiene AIEs, tax lease, crowdfunding regulado. La música en vivo sigue dependiendo de promotores, patrocinios y taquilla. Si 807M€ en entradas generan 5.800M€ de impacto, hay un gap enorme de financiación estructurada. Frame: 'La música en vivo ya es más grande que el cine — pero se financia como si fuera 1995.'",
+    "pov_confidence": 0.88,
+    "signal_type": [
+      "data-point",
+      "milestone",
+      "proof-point"
+    ],
+    "source_signals": [
+      "creators-2026-05-06-sftl01"
+    ]
+  },
+  {
+    "id": "idea-2026-05-06-8",
+    "idea_id": "idea-2026-05-06-8",
+    "name": "Urbanitae crece 42% en Q1 2026: lo que demuestra sobre el crowdfunding regulado en España",
+    "status": "Dispatched",
+    "target_channels": [
+      "linkedin"
+    ],
+    "documents": [],
+    "created_at": "2026-05-06T05:46:40.000Z",
+    "title": "Urbanitae crece 42% en Q1 2026: lo que demuestra sobre el crowdfunding regulado en España",
+    "pillar_id": "pfp-regulacion",
+    "content_type": "Proof Post",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Urbanitae cierra Q1 2026 con más de 70 millones de euros transaccionados, un crecimiento del 42% interanual. El core (deuda + equity) creció un 30% hasta 64M€. Direct Investments generó 6M€ con 35 unidades vendidas. Acumulado total: 266 proyectos financiados, 610M€ invertidos, 200M€ retornados, IRR medio del 12,1%.",
+      "source": "Urbanitae",
+      "source_type": "competitor",
+      "platform": "blog",
+      "url": "https://blog.urbanitae.com/2026/04/22/cerramos-el-primer-trimestre-de-2026-con-un-crecimiento-del-42-mas-de-70-millones-de-euros-transaccionados/",
+      "engagement": {
+        "likes": null,
+        "comments": null,
+        "shares": null
+      },
+      "date": "2026-04-22"
+    },
+    "angle_draft": "Urbanitae transacciona 70M€ en un trimestre con crowdfunding inmobiliario. 266 proyectos. 12,1% IRR medio. Esto demuestra que el modelo de PFP vertical funciona — cuando la plataforma entiende el activo subyacente. Inmobiliario tiene Urbanitae. Startups tienen SEGO Venture. ¿Qué vertical falta? Entretenimiento. Los mismos inversores retail que ponen 500€ en un proyecto inmobiliario pondrían 500€ en una producción audiovisual — si existiera la plataforma. Frame: 'Lo que Urbanitae hizo con el ladrillo, Hulahoop lo hace con la cultura.'",
+    "pov_confidence": 0.85,
+    "signal_type": [
+      "milestone",
+      "data-point",
+      "proof-point"
+    ],
+    "source_signals": [
+      "creators-2026-05-06-urb01"
+    ]
+  },
+  {
+    "id": "idea-2026-05-06-9",
+    "idea_id": "idea-2026-05-06-9",
+    "name": "Fondos indexados + crowdfunding: el portfolio del inversor retail en 2026",
+    "status": "New",
+    "target_channels": [
+      "linkedin"
+    ],
+    "documents": [],
+    "created_at": "2026-05-06T05:46:40.000Z",
+    "title": "Fondos indexados + crowdfunding: el portfolio del inversor retail en 2026",
+    "pillar_id": "pfp-regulacion",
+    "content_type": "Framework",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Urbanitae publica artículo sobre cómo combinar fondos indexados con crowdfunding inmobiliario para construir carteras diversificadas. Argumenta que no son alternativas excluyentes: los fondos indexados aportan liquidez y exposición global, mientras el crowdfunding inmobiliario aporta rentabilidad descorrelacionada y acceso a activos reales.",
+      "source": "Urbanitae",
+      "source_type": "competitor",
+      "platform": "blog",
+      "url": "https://blog.urbanitae.com/2026/05/05/fondos-indexados-y-crowdfunding-inmobiliario-como-combinarlos-para-construir-una-cartera-mas-solida/",
+      "engagement": {
+        "likes": null,
+        "comments": null,
+        "shares": null
+      },
+      "date": "2026-05-05"
+    },
+    "angle_draft": "Urbanitae enseña a sus inversores a combinar fondos indexados con crowdfunding inmobiliario. Inteligente: están educando al inversor retail para ver el crowdfunding como un bloque más de su cartera, no como una apuesta. Hulahoop debería hacer lo mismo: posicionar la inversión en entretenimiento como el tercer bloque — acciones globales (indexados) + inmobiliario (crowdfunding) + cultura (Hulahoop). Descorrelación real, impacto cultural y ventaja fiscal. Frame: 'Tu cartera necesita un tercer pilar: cultura.'",
+    "pov_confidence": 0.82,
+    "signal_type": [
+      "framework"
+    ],
+    "source_signals": [
+      "creators-2026-05-06-urb02"
+    ]
+  },
+  {
+    "id": "idea-2026-05-06-10",
+    "idea_id": "idea-2026-05-06-10",
+    "name": "ESG en venture capital: ¿y la inversión cultural dónde queda?",
+    "status": "New",
+    "target_channels": [
+      "linkedin"
+    ],
+    "documents": [],
+    "created_at": "2026-05-06T05:46:40.000Z",
+    "title": "ESG en venture capital: ¿y la inversión cultural dónde queda?",
+    "pillar_id": "pfp-regulacion",
+    "content_type": "Hot Take",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "SEGO Finance publica análisis sobre ESG en venture capital. Señala que fondos de VC integran criterios medioambientales, sociales y de gobernanza, impulsados por regulación europea. Identifica transición energética, economía circular y salud como sectores clave. No menciona cultura ni entretenimiento como vertical ESG.",
+      "source": "SEGO Finance",
+      "source_type": "competitor",
+      "platform": "blog",
+      "url": "https://blog.segofinance.com/el-rincon-financiero/impacto-y-esg-en-el-venture-capital-moda-o-futuro/",
+      "engagement": {
+        "likes": null,
+        "comments": null,
+        "shares": null
+      },
+      "date": "2026-05-05"
+    },
+    "angle_draft": "SEGO habla de ESG en venture capital — transición energética, economía circular, salud. ¿Y la cultura? La 'S' de ESG debería incluir el impacto cultural: las producciones audiovisuales generan empleo local, preservan patrimonio cultural, y democratizan el acceso a la narrativa. Invertir en una película española genera más impacto social medible que muchos fondos con etiqueta ESG. El problema es que nadie ha construido el framework de medición. Frame: 'La cultura es la gran olvidada del ESG — y tiene los mejores datos de impacto social.'",
+    "pov_confidence": 0.75,
+    "signal_type": [
+      "framework",
+      "contrarian"
+    ],
+    "source_signals": [
+      "creators-2026-05-06-sego01"
+    ]
+  },
+  {
+    "id": "idea-2026-05-06-11",
+    "idea_id": "idea-2026-05-06-11",
+    "name": "SEGO Creative lleva 2M€ en 14 proyectos culturales: el crowdfunding audiovisual despega",
+    "status": "Dispatched",
+    "target_channels": [
+      "linkedin"
+    ],
+    "documents": [],
+    "created_at": "2026-05-06T05:46:40.000Z",
+    "title": "SEGO Creative lleva 2M€ en 14 proyectos culturales: el crowdfunding audiovisual despega",
+    "pillar_id": "pfp-regulacion",
+    "content_type": "Proof Post",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "SEGO Creative, la división cultural de SegoFinance, ha captado más de 2 millones de euros en 14 proyectos culturales en su primer año. Proyectos incluyen 'La Deuda' de Daniel Guzmán, 'El enigma Inés', 'Cuántica Rave' y documental 'Paco Rabal'. Opera como PFP supervisada por CNMV y registrada en ESMA. Partnership con EGEDA para captar socios productores.",
+      "source": "SEGO Creative / SegoFinance",
+      "source_type": "competitor",
+      "platform": "web",
+      "url": "https://www.segofinance.com/creative/",
+      "engagement": {
+        "likes": null,
+        "comments": null,
+        "shares": null
+      },
+      "date": "2026-04"
+    },
+    "angle_draft": "SEGO Creative lleva 2M€ en 14 proyectos culturales. Buena señal para el mercado: hay demanda real de inversores retail por contenido cultural. Pero 2M€ en 14 proyectos es un ticket medio de 143k€ — insuficiente para una producción audiovisual seria. El modelo generalista (cine + teatro + documentales + videojuegos) diluye la especialización. Hulahoop se diferencia con infraestructura financiera completa: PFP + tax lease + tokenización, no solo captación. Frame: 'El crowdfunding cultural ya existe. Lo que falta es la infraestructura financiera completa.'",
+    "pov_confidence": 0.87,
+    "signal_type": [
+      "milestone",
+      "proof-point"
+    ],
+    "source_signals": [
+      "creators-2026-05-06-sego02"
+    ]
+  },
+  {
+    "id": "idea-2026-05-06-12",
+    "idea_id": "idea-2026-05-06-12",
+    "name": "El tax lease audiovisual se populariza: 3 consultoras lo ofrecen ya como producto estrella",
+    "status": "Dispatched",
+    "target_channels": [
+      "linkedin"
+    ],
+    "documents": [],
+    "created_at": "2026-05-06T05:46:40.000Z",
+    "title": "El tax lease audiovisual se populariza: 3 consultoras lo ofrecen ya como producto estrella",
+    "pillar_id": "incentivos-fiscales",
+    "content_type": "Listicle",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Fimax Asesores anuncia partnership con TaxLease para ofrecer servicios de tax lease cultural/audiovisual, con foco en Canarias (deducción hasta 54%). Leyton Impulse promueve tax lease como vehículo financiero para proyectos culturales (hasta 30% financiación). Mecides publica guía de tax lease cinematográfico. Expansión cubre el auge de consultoras ofreciendo tax lease.",
+      "source": "Fimax / Leyton / Mecides",
+      "source_type": "competitor",
+      "platform": "web",
+      "url": "https://www.expansion.com/uestudio/2026/04/15/69df4973468aeb120b8b4572.html",
+      "engagement": {
+        "likes": null,
+        "comments": null,
+        "shares": null
+      },
+      "date": "2026-04-15"
+    },
+    "angle_draft": "Fimax, Leyton, Mecides... cada vez más consultoras ofrecen tax lease audiovisual como producto estrella. El mercado de incentivos fiscales culturales está madurando. Pero cada consultora lo ofrece como servicio manual, proyecto a proyecto. No escala. Lo que falta es infraestructura digital que conecte productores con inversores fiscales de forma automatizada y trazable. Frame: 'El tax lease cultural tiene demanda. Lo que no tiene es infraestructura.'",
+    "pov_confidence": 0.8,
+    "signal_type": [
+      "proof-point",
+      "framework"
+    ],
+    "source_signals": [
+      "creators-2026-05-06-tax01"
+    ]
+  },
+  {
+    "id": "idea-2026-05-06-13",
+    "idea_id": "idea-2026-05-06-13",
+    "name": "La música electrónica cierra 2025 con 15.100M$ y el Sur Global gana peso",
+    "status": "Dispatched",
+    "target_channels": [
+      "linkedin"
+    ],
+    "documents": [],
+    "created_at": "2026-05-06T05:46:40.000Z",
+    "title": "La música electrónica cierra 2025 con 15.100M$ y el Sur Global gana peso",
+    "pillar_id": "financiacion-entretenimiento",
+    "content_type": "Hot Take",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Sympathy for the Lawyer analiza el IMS Business Report 2025: la industria de la música electrónica cerró 2025 con 15.100 millones de dólares de facturación global. Destaca el crecimiento del Sur Global como mercado cultural emergente, con festivales ganando peso frente a mercados tradicionales europeos y norteamericanos.",
+      "source": "Sympathy for the Lawyer",
+      "source_type": "reference-creator",
+      "platform": "blog",
+      "url": "https://sympathyforthelawyer.com/blog/ims-electronic-music-business-report-2025/",
+      "engagement": {
+        "likes": null,
+        "comments": null,
+        "shares": null
+      },
+      "date": "2026-04"
+    },
+    "angle_draft": "15.100 millones de dólares. Eso factura la música electrónica global. Y el Sur Global está ganando cuota frente a Europa y Norteamérica. España, con su posición geográfica y cultural como puente, puede convertirse en hub financiero para festivales y eventos internacionales. Los festivales necesitan estructuración financiera: preventa, patrocinio, co-inversión, incentivos fiscales. Exactamente lo que Hulahoop sabe hacer. Frame: 'La música electrónica mueve 15.000M$ — y busca infraestructura financiera profesional.'",
+    "pov_confidence": 0.72,
+    "signal_type": [
+      "data-point",
+      "milestone"
+    ],
+    "source_signals": [
+      "creators-2026-05-06-sftl02"
+    ]
+  },
+  {
+    "id": "idea-2026-05-07-1",
+    "idea_id": "idea-2026-05-07-1",
+    "name": "Mira Anta lanza el primer FCR de 80M€ para audiovisual: el capital riesgo ya apuesta por la infraestructura",
+    "status": "Dispatched",
+    "target_channels": [
+      "linkedin"
+    ],
+    "documents": [],
+    "created_at": "2026-05-07T05:27:00.000Z",
+    "title": "Mira Anta lanza el primer FCR de 80M€ para audiovisual: el capital riesgo ya apuesta por la infraestructura",
+    "pillar_id": "financiacion-entretenimiento",
+    "content_type": "Hot Take",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Anta Asset Management y Mira Entertainment Capital lanzan Mira Anta Media Capital Fund I, FCR de 80 millones de euros especializado en pymes audiovisuales españolas e iberoamericanas. Target: 12-14% IRR anualizado, horizonte 6 años extensible a 8. Foco en ficción vertical, producción virtual, XR, IA audiovisual. Forma parte de un vehículo mayor de 252M€ de Mira/Womack que combina 150M€ inversión directa, 72M€ tax-based y 30M€ financiación alternativa.",
+      "source": "Audiovisual451 / FundsSociety",
+      "url": "https://www.audiovisual451.com/anta-asset-management-y-mira-entertainment-capital-lanzan-el-fondo-de-capital-riesgo-mira-anta-con-80-millones-de-euros/",
+      "date": "2026-05"
+    },
+    "angle_draft": "80 millones de euros. Eso es lo que el nuevo fondo Mira Anta Media Capital va a desplegar en pymes audiovisuales españolas. Y forma parte de un vehículo mayor de 252M€ que combina equity, tax lease y financiación alternativa. Lo interesante no es el tamaño — es la estructura. Por primera vez, un vehículo de capital riesgo audiovisual en España usa los tres instrumentos que la industria necesita: capital directo para crecer, fiscalidad para co-financiar y deuda estructurada para producir. Frame: 'El capital riesgo audiovisual ya no invierte solo en contenido — invierte en infraestructura financiera.'",
+    "pov_confidence": 0.9,
+    "signal_type": [
+      "milestone",
+      "data-point"
+    ],
+    "source_signals": [
+      "news-2026-05-07-9bbb0efe"
+    ]
+  },
+  {
+    "id": "idea-2026-05-07-2",
+    "idea_id": "idea-2026-05-07-2",
+    "name": "Culture CAP7 compra Onza Entertainment: la consolidación del audiovisual español ya empezó",
+    "status": "New",
+    "target_channels": [
+      "linkedin"
+    ],
+    "documents": [],
+    "created_at": "2026-05-07T05:27:00.000Z",
+    "title": "Culture CAP7 compra Onza Entertainment: la consolidación del audiovisual español ya empezó",
+    "pillar_id": "financiacion-entretenimiento",
+    "content_type": "Proof Post",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Culture CAP7, fondo audiovisual gestionado por Blackpearl Capital Management con 44M€ de inversión de la SETT y respaldo del Fondo Europeo de Inversiones, realizó su primera operación corporativa con la adquisición de la productora Onza Entertainment en diciembre 2025. El fondo está orientado a pymes audiovisuales españolas con potencial de crecimiento y forma parte de la segunda fase del Plan Spain Audiovisual Hub (1.712M€ en instrumentos financieros).",
+      "source": "SETT / España Digital",
+      "url": "https://sett.gob.es/la-sett-formaliza-la-inversion-de-44-millones-de-euros-en-el-fondo-audiovisual-espanol-culture-cap7/",
+      "date": "2026-05"
+    },
+    "angle_draft": "Culture CAP7 acaba de ejecutar su primera operación: la adquisición de Onza Entertainment. Detrás hay 44M€ de la SETT y el respaldo del Fondo Europeo de Inversiones. Es la primera vez que un fondo público-privado español compra una productora para consolidar el sector. Esto confirma que el audiovisual español está madurando de 'proyectos sueltos' a 'empresas con estructura financiera'. Los fondos ya no financian películas — financian compañías audiovisuales. Frame: 'La consolidación del audiovisual español ya empezó — y necesita infraestructura financiera para escalar.'",
+    "pov_confidence": 0.72,
+    "signal_type": [
+      "proof-point",
+      "milestone"
+    ],
+    "source_signals": [
+      "news-2026-05-07-618a6ccc"
+    ]
+  },
+  {
+    "id": "idea-2026-05-07-3",
+    "idea_id": "idea-2026-05-07-3",
+    "name": "50.000€ para desarrollar tu proyecto audiovisual — y el gap de 2M€ que nadie cierra",
+    "status": "New",
+    "target_channels": [
+      "linkedin"
+    ],
+    "documents": [],
+    "created_at": "2026-05-07T05:27:00.000Z",
+    "title": "50.000€ para desarrollar tu proyecto audiovisual — y el gap de 2M€ que nadie cierra",
+    "pillar_id": "financiacion-entretenimiento",
+    "content_type": "Framework",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "La Comunidad de Madrid destina 1 millón de euros a ayudas para desarrollo de proyectos audiovisuales en 2026, con subvenciones de entre 15.000 y 50.000 euros por proyecto. El plazo de solicitud cierra el 21 de mayo de 2026. Cubre guion, localizaciones, diseño visual, casting, planes de financiación y distribución. Requisito: productora con sede en Madrid y mínimo 2 años de actividad en el sector.",
+      "source": "Comunidad de Madrid",
+      "url": "https://www.comunidad.madrid/noticias/2026/04/11/comunidad-madrid-destina-millon-euros-desarrollo-proyectos-audiovisuales-2026",
+      "date": "2026-04-11"
+    },
+    "angle_draft": "50.000 euros es lo máximo que una productora puede recibir de Madrid para desarrollar su proyecto. Suficiente para un buen guion y un teaser. Pero el gap entre 50.000€ de desarrollo y los 1,5-3M€ que cuesta producir es donde muere el 80% de los proyectos. El desarrollo está subvencionado. La producción no. Framework: qué necesita una productora tener listo antes, durante y después de la ayuda al desarrollo para cerrar la financiación completa — ICAA, tax lease, co-producción, inversores privados, PFP. Frame: 'Las ayudas al desarrollo son el starter — la infraestructura financiera es el motor.'",
+    "pov_confidence": 0.65,
+    "signal_type": [
+      "data-point"
+    ],
+    "source_signals": [
+      "news-2026-05-07-27fc903f"
+    ]
+  },
+  {
+    "id": "idea-2026-05-07-4",
+    "idea_id": "idea-2026-05-07-4",
+    "name": "MiCA 2 viene con foco en RWA: la regulación que definirá la tokenización de activos culturales",
+    "status": "New",
+    "target_channels": [
+      "linkedin"
+    ],
+    "documents": [],
+    "created_at": "2026-05-07T05:27:00.000Z",
+    "title": "MiCA 2 viene con foco en RWA: la regulación que definirá la tokenización de activos culturales",
+    "pillar_id": "tokenizacion-rwa",
+    "content_type": "Hot Take",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Peter Kerstens, asesor de la Comisión Europea, confirmó en abril de 2026 que una segunda versión de MiCA está en preparación. La CE lanzará una consulta pública para evaluar si el marco actual es adecuado para el mercado. MiCA 2 abordará tokenización de RWA, DeFi y NFTs complejos. La cláusula de revisión obligatoria requiere informe de la CE antes del 30 de junio de 2027. En paralelo, el período transitorio MiCA para CASPs en España vence el 1 de julio de 2026.",
+      "source": "CryptoverseLawyers",
+      "url": "https://www.cryptoverselawyers.io/mica-rwa-tokenization-eu-2026/",
+      "date": "2026-04"
+    },
+    "angle_draft": "MiCA 2 ya tiene nombre. La Comisión Europea confirma que el siguiente reglamento abordará específicamente la tokenización de activos reales. Hoy MiCA regula criptoactivos pero excluye security tokens — que se rigen por MiFID II. Para activos culturales tokenizados — derechos de distribución, flujos de recaudación — la claridad regulatoria llega en el momento justo: cuando el mercado ya está construyendo sin ella. Quien monte la infraestructura ahora tendrá ventaja cuando MiCA 2 defina las reglas. Frame: 'MiCA 2 no va a crear la tokenización de activos culturales — va a regular lo que ya existe.'",
+    "pov_confidence": 0.65,
+    "signal_type": [
+      "milestone",
+      "framework"
+    ],
+    "source_signals": [
+      "news-2026-05-07-eedbc476"
+    ]
+  },
+  {
+    "id": "idea-2026-05-07-5",
+    "idea_id": "idea-2026-05-07-5",
+    "name": "SEGO Finance cumple 15 años con 300M€ canalizados: el benchmark de la inversión alternativa en España",
+    "status": "Dispatched",
+    "target_channels": [
+      "linkedin"
+    ],
+    "documents": [],
+    "created_at": "2026-05-07T05:38:00.000Z",
+    "title": "SEGO Finance cumple 15 años con 300M€ canalizados: el benchmark de la inversión alternativa en España",
+    "pillar_id": "pfp-regulacion",
+    "content_type": "Proof Post",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "SEGO Finance celebra 15 años con más de 300 millones de euros canalizados en más de 15.000 operaciones de inversión alternativa. Solo en 2025 retornó más de 100 millones de euros a sus inversores. El grupo opera 5 plataformas verticales bajo supervisión CNMV y registro ESMA: SEGO Venture, SEGO Real Estate, SEGO Creative (cultura/audiovisual), SEGO Factoring y SEGO Funds.",
+      "source": "SEGO Finance / Capital Riesgo",
+      "source_type": "competitor",
+      "platform": "web",
+      "url": "https://capital-riesgo.es/en/articles/segofinance-celebrates-15-years-transforming-alternative-investment-in-spain-from-pioneers-to-an-established-benchmark/",
+      "engagement": {
+        "likes": null,
+        "comments": null,
+        "shares": null
+      },
+      "date": "2026-01"
+    },
+    "angle_draft": "SEGO Finance lleva 15 años y 300M€ en inversión alternativa. Su modelo: diversificar creando plataformas verticales — inmobiliario, venture, factoring, y ahora cultura con SEGO Creative. Pero la verticalización cultural es su última apuesta, no su core. Para el inversor que quiere invertir en entretenimiento, ¿prefiere una plataforma que lleva 15 años haciendo de todo, o una que nació exclusivamente para estructurar la financiación del audiovisual? Frame: 'Experiencia generalista ≠ expertise vertical.'",
+    "pov_confidence": 0.8,
+    "signal_type": [
+      "milestone",
+      "data-point"
+    ],
+    "source_signals": [
+      "creators-2026-05-07-sego15"
+    ]
+  },
+  {
+    "id": "idea-2026-05-07-6",
+    "idea_id": "idea-2026-05-07-6",
+    "name": "SEGO Creative proyecta crecer un 50% en 2026 y expandirse a videojuegos y espectáculos en vivo",
+    "status": "Dispatched",
+    "target_channels": [
+      "linkedin"
+    ],
+    "documents": [],
+    "created_at": "2026-05-07T05:38:00.000Z",
+    "title": "SEGO Creative proyecta crecer un 50% en 2026 y expandirse a videojuegos y espectáculos en vivo",
+    "pillar_id": "pfp-regulacion",
+    "content_type": "Hot Take",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "SEGO Creative, la división cultural de SegoFinance con colaboración de EGEDA, proyecta un crecimiento del 50% para 2026. La plataforma planea expandirse más allá de cine y documentales hacia videojuegos, espectáculos en vivo y nuevos formatos culturales. En su primer año captó 2M€ para 14 proyectos con 40.000 inversores registrados, operando en modelo de préstamo participativo bajo supervisión CNMV.",
+      "source": "SEGO Creative / Box-Office.es",
+      "source_type": "competitor",
+      "platform": "web",
+      "url": "https://box-office.es/news/sego-creative-consolida-su-papel-como-actor-clave-en-la-financiacion-audiovisual-de-cara-a-2026/",
+      "engagement": {
+        "likes": null,
+        "comments": null,
+        "shares": null
+      },
+      "date": "2026-01"
+    },
+    "angle_draft": "SEGO Creative quiere crecer un 50% en 2026 y expandirse a videojuegos y espectáculos en vivo. Buena validación del mercado: confirma que hay demanda de financiación alternativa para entretenimiento. Pero expandirse a tantos formatos a la vez diluye la propuesta. El crowdfunding cultural funciona cuando entiendes el activo subyacente — derechos, recaudación, fiscalidad. Pasar de cine a videojuegos es como pasar de inmobiliario residencial a industrial: parece cercano, pero la lógica financiera es distinta. Frame: 'Crecer en amplitud o en profundidad — la decisión que define a una plataforma.'",
+    "pov_confidence": 0.82,
+    "signal_type": [
+      "milestone",
+      "framework"
+    ],
+    "source_signals": [
+      "creators-2026-05-07-segocr"
+    ]
+  },
+  {
+    "id": "idea-2026-05-07-7",
+    "idea_id": "idea-2026-05-07-7",
+    "name": "Urbanitae posiciona hospitality como asset class: 4.200M€ invertidos en hoteles en España",
+    "status": "New",
+    "target_channels": [
+      "linkedin"
+    ],
+    "documents": [],
+    "created_at": "2026-05-07T05:38:00.000Z",
+    "title": "Urbanitae posiciona hospitality como asset class: 4.200M€ invertidos en hoteles en España",
+    "pillar_id": "pfp-regulacion",
+    "content_type": "Framework",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Urbanitae publica análisis detallado del mercado hospitality en España: 4.200 millones de euros invertidos en hoteles en 2025, el nivel más alto desde 2019. ADR (tarifa media diaria) de 127,7€ (+5,1% interanual), RevPAR de 89,7€ (+6,3%), ocupación del 70,3%. España se consolida como el segundo mercado hotelero más activo de Europa. La plataforma usa este contenido educativo para posicionar el crowdfunding inmobiliario como vía de acceso a asset classes premium.",
+      "source": "Urbanitae",
+      "source_type": "competitor",
+      "platform": "blog",
+      "url": "https://blog.urbanitae.com/2026/05/03/hospitality-en-espana-2025-inversion-solida-hoteles-prime-y-mas-foco-en-reposicionamiento/",
+      "engagement": {
+        "likes": null,
+        "comments": null,
+        "shares": null
+      },
+      "date": "2026-05-03"
+    },
+    "angle_draft": "Urbanitae dedica un post entero a explicar por qué la hostelería es un buen activo alternativo: 4.200M€ invertidos, tarifas al alza, España como 2º mercado europeo. El patrón es claro: educar al inversor sobre la asset class antes de venderle el producto. Hulahoop debería aplicar la misma estrategia con el entretenimiento: explicar por qué los derechos audiovisuales, los anticipos fiscales y la recaudación de taquilla son activos reales con flujos predecibles. Frame: 'Antes de invertir, la gente necesita entender el activo.'",
+    "pov_confidence": 0.68,
+    "signal_type": [
+      "data-point",
+      "framework"
+    ],
+    "source_signals": [
+      "creators-2026-05-07-urb01"
+    ]
+  },
+  {
+    "id": "idea-2026-05-08-2",
+    "idea_id": "idea-2026-05-08-2",
+    "name": "1,2M€ para llevar el cine español al mundo: el ICAA apuesta por la internacionalización",
+    "status": "New",
+    "target_channels": [
+      "linkedin"
+    ],
+    "documents": [],
+    "created_at": "2026-05-08T05:28:00.000Z",
+    "updated_at": "2026-05-12T17:53:01.865Z",
+    "title": "1,2M€ para llevar el cine español al mundo: el ICAA apuesta por la internacionalización",
+    "pillar_id": "financiacion-entretenimiento",
+    "content_type": "Framework",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "El ICAA ha convocado 700.000 euros en ayudas para la participación de películas españolas en festivales internacionales celebrados entre noviembre 2025 y septiembre 2026. Paralelamente, ha lanzado una línea de 500.000 euros (ampliable a 1M€) para agencias de ventas internacionales independientes que distribuyan cine español en el extranjero. En total, más de 1,2 millones de euros destinados a la promoción y distribución internacional del cine español en 2026.",
+      "source": "ICAA / Box-Office.es / Audiovisual451",
+      "url": "https://box-office.es/news/el-icaa-convoca-ayudas-de-700-000-euros-para-la-participacion-de-peliculas-espanolas-en-festivales/",
+      "date": "2026-05"
+    },
+    "angle_draft": "El ICAA dedica 1,2M€ a internacionalización: festivales + distribución. Producir es solo la mitad — sin distribución internacional no hay retorno. Pero 1,2M€ para todo el cine español es modesto. Las productoras que quieran escalar necesitan combinar ayudas públicas con financiación estructurada: preventa internacional, co-producción, distribución digital. No se puede depender solo de subvenciones para llegar al mundo. Frame: \"Producir bien ya no basta — hay que financiar la distribución como se financia la producción.\"",
+    "pov_confidence": 0.62,
+    "signal_type": [
+      "data-point",
+      "framework"
+    ],
+    "source_signals": [
+      "news-2026-05-08-bdbfd6e8"
+    ]
+  },
+  {
+    "id": "idea-2026-05-08-4",
+    "idea_id": "idea-2026-05-08-4",
+    "name": "Franklin Templeton + Ondo Finance lanzan ETFs tokenizados en Europa: los fondos ya son on-chain",
+    "status": "New",
+    "target_channels": [
+      "linkedin"
+    ],
+    "documents": [],
+    "created_at": "2026-05-08T05:28:00.000Z",
+    "updated_at": "2026-05-12T17:53:01.865Z",
+    "title": "Franklin Templeton + Ondo Finance lanzan ETFs tokenizados en Europa: los fondos ya son on-chain",
+    "pillar_id": "tokenizacion-rwa",
+    "content_type": "Proof Post",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "En marzo de 2026, Franklin Templeton se asoció con Ondo Finance para tokenizar cinco de sus ETFs (growth, large cap, oro, high yield y renta fija), disponibles on-chain en Europa, Asia-Pacífico, Oriente Medio y Latinoamérica. Ondo Finance obtuvo derechos de pasaporte UE para ofrecer productos tokenizados a inversores retail en 30 mercados del Espacio Económico Europeo. Los ETFs tokenizados permiten trading 24/7 sin necesidad de cuenta de brokerage tradicional.",
+      "source": "The Defiant / Ondo Finance / Franklin Templeton",
+      "url": "https://thedefiant.io/news/defi/ondo-tokenizes-five-franklin-templeton-etfs",
+      "date": "2026-03"
+    },
+    "angle_draft": "Franklin Templeton vende ETFs tokenizados en Europa. Ondo Finance tiene pasaporte UE para 30 mercados. Cualquier inversor retail puede comprar un fondo de oro o renta fija on-chain, 24/7, sin broker tradicional. Esta infraestructura llega primero a activos líquidos, pero inevitablemente alcanzará activos alternativos — incluidos los culturales. Cuando comprar participaciones en una producción audiovisual sea tan fácil como un ETF de oro, el mercado se multiplica. Frame: \"Si los ETFs ya son tokens, las participaciones audiovisuales son las siguientes.\"",
+    "pov_confidence": 0.72,
+    "signal_type": [
+      "milestone",
+      "proof-point"
+    ],
+    "source_signals": [
+      "news-2026-05-08-b3520f3b"
+    ]
+  },
+  {
+    "id": "idea-2026-05-08-5",
+    "idea_id": "idea-2026-05-08-5",
+    "name": "España es el 3er mercado de crowdfunding de la UE: 450M€ captados y 25 plataformas autorizadas",
+    "status": "New",
+    "target_channels": [
+      "linkedin"
+    ],
+    "documents": [],
+    "created_at": "2026-05-08T05:28:00.000Z",
+    "updated_at": "2026-05-12T17:53:01.865Z",
+    "title": "España es el 3er mercado de crowdfunding de la UE: 450M€ captados y 25 plataformas autorizadas",
+    "pillar_id": "pfp-regulacion",
+    "content_type": "Proof Post",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "España se posiciona como el tercer mercado de crowdfunding de la Unión Europea por volumen. En 2024 se captaron aproximadamente 450 millones de euros a través de crowdfunding en España, con el 40% correspondiente a equity crowdfunding y el 60% a crowdlending. Operan 25 Proveedores de Servicios de Financiación Participativa (PSFP) autorizados bajo el reglamento ECSPR. Los inversores minoristas representan el 88% de los participantes con un ticket medio de 660 euros.",
+      "source": "CrowdInform / CrowdfundingEnEspaña",
+      "url": "https://crowdfundingenespana.es/reglamento-ecspr-y-el-crowdfunding-en-espana/",
+      "date": "2026-05"
+    },
+    "angle_draft": "España es el 3er mercado de crowdfunding de la UE. 450M€ captados en 2024. 25 plataformas autorizadas. El 40% es equity — inversores que quieren participar en el negocio, no solo prestar. El ticket medio de 660€ confirma la democratización real. Ahora imagina esa infraestructura aplicada a producción audiovisual: miles de inversores retail financiando cultura con tickets accesibles, protección ECSPR y trazabilidad completa. El mercado existe. Falta la vertical de entretenimiento. Frame: \"El crowdfunding español mueve 450M€/año — pero la cultura apenas tiene plataforma.\"",
+    "pov_confidence": 0.75,
+    "signal_type": [
+      "data-point",
+      "proof-point"
+    ],
+    "source_signals": [
+      "news-2026-05-08-fb1b633a"
+    ]
+  },
+  {
+    "id": "idea-2026-05-08-6",
+    "idea_id": "idea-2026-05-08-6",
+    "name": "Urbanitae da el salto: de crowdfunding a gestora de fondos con autorización CNMV",
+    "status": "New",
+    "target_channels": [
+      "linkedin"
+    ],
+    "documents": [],
+    "created_at": "2026-05-08T05:43:17.000Z",
+    "updated_at": "2026-05-12T17:53:01.865Z",
+    "title": "Urbanitae da el salto: de crowdfunding a gestora de fondos con autorización CNMV",
+    "pillar_id": "pfp-regulacion",
+    "content_type": "Hot Take",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Urbanitae obtiene autorización de la CNMV para crear Urbanitae Asset Management SGIIC (registro #299, 13 de febrero de 2026). Pasa de ser una plataforma de crowdfunding inmobiliario a gestora de fondos de inversión colectiva, manteniendo ambas líneas de negocio (PFP + SGIIC + Direct Investments). En 2025 analizó proyectos de inversión inmobiliaria por un volumen superior a 2.000 millones de euros. El objetivo es acceder a capital institucional y proyectos de mayor envergadura.",
+      "source": "Urbanitae",
+      "source_type": "competitor",
+      "platform": "blog",
+      "url": "https://blog.urbanitae.com/2026/01/15/ampliamos-nuestro-modelo-de-coinversion-inmobiliaria-con-una-gestora-de-fondos/",
+      "engagement": {
+        "likes": null,
+        "comments": null,
+        "shares": null
+      },
+      "date": "2026-01-15"
+    },
+    "angle_draft": "Urbanitae ya no es solo crowdfunding. Con la autorización CNMV para su propia gestora de fondos (SGIIC), pasan de canalizar capital retail a gestionar fondos institucionales. Es la evolución natural: primero pruebas el modelo con crowdfunding, luego escalas con fondos profesionales. Para el audiovisual, la lección es clara: la PFP es el punto de entrada, no el destino final. Hulahoop construye la misma escalera — PFP regulada hoy, vehículos institucionales mañana. Frame: 'El crowdfunding no es el techo — es la base para construir infraestructura financiera completa.'",
+    "pov_confidence": 0.85,
+    "signal_type": [
+      "milestone",
+      "aha-moment"
+    ],
+    "source_signals": [
+      "creators-2026-05-08-urb-sgiic"
+    ]
+  },
+  {
+    "id": "idea-2026-05-08-9",
+    "idea_id": "idea-2026-05-08-9",
+    "name": "SEGO Finance educa sobre VC mientras posiciona Creative: la estrategia de content que funciona",
+    "status": "New",
+    "target_channels": [
+      "linkedin"
+    ],
+    "documents": [],
+    "created_at": "2026-05-08T05:43:17.000Z",
+    "updated_at": "2026-05-12T17:53:01.865Z",
+    "title": "SEGO Finance educa sobre VC mientras posiciona Creative: la estrategia de content que funciona",
+    "pillar_id": "pfp-regulacion",
+    "content_type": "Framework",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "SEGO Finance publica artículo sobre tendencias del venture capital en Europa y España (22 abril 2026), analizando la madurez y selectividad creciente del ecosistema VC. Es el segundo artículo educativo en su blog en dos semanas (tras 'ESG en el Venture Capital'). La estrategia de contenido posiciona a SEGO como referente en inversión alternativa mientras SEGO Creative gana tracción como plataforma cultural.",
+      "source": "SEGO Finance",
+      "source_type": "competitor",
+      "platform": "blog",
+      "url": "https://blog.segofinance.com/el-rincon-financiero/tendencias-del-venture-capital-en-europa-y-espana/",
+      "engagement": {
+        "likes": null,
+        "comments": null,
+        "shares": null
+      },
+      "date": "2026-04-22"
+    },
+    "angle_draft": "SEGO Finance publica una pieza educativa sobre VC cada dos semanas. No hablan de SEGO Creative directamente — hablan de inversión alternativa, tendencias, ESG. Es marketing de contenidos puro: construir autoridad en 'inversión alternativa' para que cuando el lector busque dónde invertir, SEGO sea top-of-mind. Hulahoop puede aplicar el mismo playbook: educar sobre financiación audiovisual (incentivos fiscales, derechos, recaudación) crea demanda para la plataforma sin vender directamente. Frame: 'Educa primero, vende después — la estrategia de contenido que convierte lectores en inversores.'",
+    "pov_confidence": 0.72,
+    "signal_type": [
+      "framework"
+    ],
+    "source_signals": [
+      "creators-2026-05-08-sego-vc"
+    ]
+  }
+]

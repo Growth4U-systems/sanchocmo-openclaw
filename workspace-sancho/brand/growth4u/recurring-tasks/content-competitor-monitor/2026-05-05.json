@@ -1,0 +1,29 @@
+{
+  "task": "content-competitor-monitor",
+  "brand": "growth4u",
+  "date": "2026-05-05",
+  "status": "completed",
+  "last_finding": "Elena Verna 'growth = trust problem' + dato 60-70% tácticas tradicionales obsoletas. Product Hackers gana award internacional GTM+IA y expande equipo. Hormozi y Walling convergen: IA como herramienta operativa, no identidad. Amanda Natividad lanza ZCM Ladder (5 niveles). Maja Voje: 74% productos fracasan por GTM, no producto.",
+  "signals_file": "content/research-signals/2026-05-05-creators.json",
+  "signals_count": 13,
+  "sources_monitored": {
+    "competitors": ["Snowball (Pau Gallinat)", "Product Hackers (Cortizo)", "TheGrowtHacker (Dani Ruiz)"],
+    "reference_creators": ["Elena Verna", "Lenny Rachitsky", "Maja Voje", "Ross Simmonds", "Amanda Natividad", "Rob Walling", "Alex Hormozi", "Joe Pulizzi", "Katelyn Bourgoin"]
+  },
+  "platforms_checked": ["linkedin", "blog", "newsletter", "youtube", "podcast"],
+  "pillar_coverage": {
+    "P1": 5,
+    "P2": 2,
+    "P3": 0,
+    "P4": 1,
+    "P5": 5
+  },
+  "top_themes": [
+    "Trust as growth moat — Verna thesis gaining wide adoption",
+    "AI agents replacing functional layer of SaaS — Walling/Hormozi convergence",
+    "Zero-click content maturing into ZCM Ladder framework — Natividad",
+    "Product Hackers expanding internationally — direct competitor signal",
+    "74% product failure from GTM, not product quality — Voje data point"
+  ],
+  "notes": "X/Twitter search unavailable (xAI credits exhausted). No recent blog posts found from Snowball or TheGrowtHacker. P3 (regulados) had zero external signals — niche too narrow for general creators, which validates Growth4U's differentiation."
+}

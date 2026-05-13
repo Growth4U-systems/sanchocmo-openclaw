@@ -1,0 +1,9 @@
+{
+  "cronName": "Content: News Monitor — Hulahoop",
+  "slug": "hulahoop",
+  "date": "2026-05-04",
+  "runAtMs": 1746333720000,
+  "status": "ok",
+  "last_finding": "ICAA dota récord de 37M€ en ayudas selectivas a largometrajes 2026 y El País confirma que la Ley Audiovisual ha disparado la inversión en producción española. En paralelo, tokenización RWA se dispara +420% hasta $30.200M y el deadline MiCA en España se acerca (1 julio 2026).",
+  "content": "12 signals: pfp-regulacion (3), incentivos-fiscales (3), financiacion-entretenimiento (3), tokenizacion-rwa (3). 0 duplicados vs 2026-05-01."
+}

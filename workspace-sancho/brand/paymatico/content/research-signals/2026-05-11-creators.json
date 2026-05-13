@@ -1,0 +1,178 @@
+{
+  "date": "2026-05-11",
+  "run_at": "2026-05-11T05:52:00Z",
+  "source": "thief-marketers",
+  "language": "es/en",
+  "sources_checked": {
+    "competitors": [
+      "Adyen",
+      "Stripe",
+      "MONEI",
+      "Mollie",
+      "PaynoPain",
+      "Sipay",
+      "Paycomet",
+      "Pecunpay",
+      "Teya"
+    ],
+    "reference_creators": [
+      "Geoffrey Barraclough / Business of Payments",
+      "Philippe Gelis / Kantox",
+      "Salvador Más / AEFI",
+      "Fintech Takes"
+    ]
+  },
+  "platforms": [
+    "web",
+    "blog",
+    "linkedin",
+    "x"
+  ],
+  "window": "2026-05-04 to 2026-05-11",
+  "signals": [
+    {
+      "id": "creators-2026-05-11-adyen01",
+      "source": "Adyen / Finovate",
+      "source_type": "competitor",
+      "platform": "web",
+      "url": "https://finovate.com/adyen-to-acquire-loyalty-platform-talon-one/",
+      "date": "2026-04-24",
+      "summary": "Adyen adquiere Talon.One por €750M ($879M). Primera adquisición en 20 años. Talon.One: loyalty/incentivos enterprise para 300 marcas (Adidas, Ikea, Kingfisher). Permite precios dinámicos, descuentos y promociones en el flujo de pago en tiempo real. Anunciado en Q1 2026 Business Update (May 6).",
+      "engagement": {
+        "likes": 0,
+        "comments": 0,
+        "shares": 0
+      },
+      "matched_pillar": "competencia-fintech",
+      "idea_generated": "idea-2026-05-11-008"
+    },
+    {
+      "id": "creators-2026-05-11-barraclough01",
+      "source": "Geoffrey Barraclough / Business of Payments",
+      "source_type": "reference-creator",
+      "platform": "web",
+      "url": "https://businessofpayments.com/2026/05/05/business-of-payments-may-2026/",
+      "date": "2026-05-05",
+      "summary": "Newsletter mensual Business of Payments (4.8K suscriptores). Temas: adquisición Adyen-Talon.One (loyalty difícil de ejecutar, precedente fallido de Mastercard), soberanía en pagos, agentes IA en commerce, consolidación del sector. Barraclough advierte que loyalty integrado con pagos históricamente falla por complejidad de integración y soporte intensivo.",
+      "engagement": {
+        "likes": 0,
+        "comments": 61,
+        "shares": 0
+      },
+      "matched_pillar": "competencia-fintech",
+      "idea_generated": "idea-2026-05-11-009"
+    },
+    {
+      "id": "creators-2026-05-11-adyen02",
+      "source": "Adyen / AlphaSpread Q1 2026 Earnings",
+      "source_type": "competitor",
+      "platform": "web",
+      "url": "https://www.alphaspread.com/security/aex/adyen/investor-relations/earnings-call/q1-2026",
+      "date": "2026-05-08",
+      "summary": "Q1 2026: Platforms segmento +35% YoY (€75M netos), mayor crecimiento vs Digital (+9%) y Unified Commerce (+24%). Volumen total €382B. Net revenue €620.8M +16% YoY. Plataformas es el segmento menor pero más dinámico de Adyen, creciendo gracias a clientes con modelos complejos de pago.",
+      "engagement": {
+        "likes": 0,
+        "comments": 0,
+        "shares": 0
+      },
+      "matched_pillar": "tecnologia-pagos",
+      "idea_generated": "idea-2026-05-11-010"
+    },
+    {
+      "id": "creators-2026-05-11-monei01",
+      "source": "MONEI / El Diario Joven",
+      "source_type": "competitor",
+      "platform": "web",
+      "url": "https://eldiariojoven.es/empresas/monei-avanza-banco-especializado-comercios-pymes",
+      "date": "2026-05-05",
+      "summary": "MONEI acelera transformación hacia banco especializado en pymes y comercios con planes para 2026.",
+      "engagement": {
+        "likes": 0,
+        "comments": 0,
+        "shares": 0
+      },
+      "matched_pillar": "competencia-fintech",
+      "idea_generated": null,
+      "skip_reason": "URL already in idea-queue from previous run"
+    },
+    {
+      "id": "creators-2026-05-11-mollie01",
+      "source": "Mollie / GoCardless / FinTech Magazine",
+      "source_type": "competitor",
+      "platform": "web",
+      "url": "https://fintechmagazine.com/news/why-acquiring-gocardless-is-mollies-biggest-win",
+      "date": "2026-04-13",
+      "summary": "GoCardless primer trimestre rentable antes de cierre fusión con Mollie (mid-2026). Ingresos +22%, pérdidas mínimas. VRP rollout en UK como catalizador.",
+      "engagement": {
+        "likes": 0,
+        "comments": 0,
+        "shares": 0
+      },
+      "matched_pillar": "competencia-fintech",
+      "idea_generated": null,
+      "skip_reason": "Outside 7-day window (Apr 13 vs May 4-11)"
+    },
+    {
+      "id": "creators-2026-05-11-paynopain01",
+      "source": "PaynoPain",
+      "source_type": "competitor",
+      "platform": "blog",
+      "url": "https://paynopain.com/blog/",
+      "date": null,
+      "summary": "No nuevo contenido en blog en la semana del 4-11 mayo 2026. Última actividad relevante: artículo de tendencias 2026 publicado previamente.",
+      "engagement": {
+        "likes": 0,
+        "comments": 0,
+        "shares": 0
+      },
+      "matched_pillar": null,
+      "idea_generated": null,
+      "skip_reason": "No fresh content this week"
+    },
+    {
+      "id": "creators-2026-05-11-sipay01",
+      "source": "Sipay",
+      "source_type": "competitor",
+      "platform": "linkedin",
+      "url": "https://es.linkedin.com/company/sipay-es",
+      "date": null,
+      "summary": "Post de Semana Santa (Apr 9) sobre datos de pago en España. Sin contenido fresco semana May 4-11.",
+      "engagement": {
+        "likes": 0,
+        "comments": 0,
+        "shares": 0
+      },
+      "matched_pillar": null,
+      "idea_generated": null,
+      "skip_reason": "Outside 7-day window"
+    },
+    {
+      "id": "creators-2026-05-11-stripe01",
+      "source": "Stripe",
+      "source_type": "competitor",
+      "platform": "blog",
+      "url": "https://stripe.com/blog/",
+      "date": null,
+      "summary": "No nuevo contenido de Stripe fresco esta semana (May 4-11). Lo más reciente: Sessions 2026 (Apr 29) ya capturado en ejecuciones anteriores.",
+      "engagement": {
+        "likes": 0,
+        "comments": 0,
+        "shares": 0
+      },
+      "matched_pillar": null,
+      "idea_generated": null,
+      "skip_reason": "All fresh Stripe content (Apr 29 Sessions) already in idea-queue"
+    }
+  ],
+  "summary": {
+    "sources_with_fresh_content": 3,
+    "signals_raw": 7,
+    "ideas_generated": 3,
+    "ideas_discarded": 4,
+    "discard_reasons": [
+      "outside_7d_window",
+      "already_in_queue",
+      "no_fresh_content"
+    ]
+  }
+}

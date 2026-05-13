@@ -1,0 +1,99 @@
+{
+  "slug": "growth4u",
+  "updatedAt": "2026-05-11T20:24:00+02:00",
+  "recommendations": [
+    {
+      "id": "rec-20260511-001",
+      "type": "escalate",
+      "priority": "high",
+      "metric": "ghl.appointments",
+      "title": "🚨 0 appointments 7 días seguidos — diagnosticar funnel de booking URGENTE",
+      "description": "25 contactos entraron al CRM esta semana pero CERO convirtieron a reunión. Lead→Meeting = 0% vs histórico 40-72%. No es un problema de volumen de leads (subieron +150%). El funnel de conversión lead→meeting está roto. Puede ser: (a) fallo técnico del booking/calendario en GHL, (b) cambio en la calidad de leads de Meta (CTR subió pero audiencia distinta), (c) secuencia de follow-up inactiva, (d) filtro de cualificación demasiado agresivo.",
+      "suggested_action": "HOJA DE RUTa en orden: (1) Verificar que el link de booking en GHL funciona — haz una prueba manual ahora mismo. (2) Revisar los 25 contactos de esta semana: ¿tienen número de teléfono? ¿empresa? ¿están marcados como 'no cualificados'? (3) Confirmar que la secuencia automatizada de follow-up está activa y enviando. (4) Si el booking funciona, bajar el umbral de cualificación temporalmente.",
+      "linked_project": "P01",
+      "estimated_impact": "Si Lead→Meeting vuelve al 40%, 25 leads → 10 meetings/semana. NSM recuperada en 1 semana.",
+      "status": "pending",
+      "created_at": "2026-05-11T20:24:00+02:00",
+      "evolves_from": "rec-20260504-005"
+    },
+    {
+      "id": "rec-20260511-002",
+      "type": "investigate",
+      "priority": "high",
+      "metric": "meta-ads.ctr",
+      "title": "CTR subió 3x en 4 días — ¿qué cambió? Capitalizar ahora",
+      "description": "CTR pasó de 0.52% (May 7) a 1.57% (May 11) en 4 días consecutivos al alza. Primera recuperación sostenida en 7 semanas. Causa desconocida. Si fue un cambio manual en campañas (nuevo creativo, nueva audiencia, nuevo ángulo), hay que escalar ese elemento. Si fue algorítmico, hay que consolidarlo antes de que se revierta.",
+      "suggested_action": "(1) Abrir Meta Ads Manager y verificar qué ángulo/adset tiene mejor CTR esta semana vs la anterior. (2) Si hay un creativo específico traccionando, aumentar su presupuesto al 50-60% del total. (3) Documentar el cambio para reproducirlo. (4) No tocar lo que está funcionando en las próximas 72h.",
+      "linked_project": "P04",
+      "estimated_impact": "Si CTR sigue subiendo a 2-3%, CPL podría bajar de €45 a €25-30. Con Pixel activo sería €15-20.",
+      "status": "pending",
+      "created_at": "2026-05-11T20:24:00+02:00"
+    },
+    {
+      "id": "rec-20260511-003",
+      "type": "escalate",
+      "priority": "high",
+      "metric": "meta-ads.cpc",
+      "title": "P01 Pixel — deadline 11-May PASADO. Decisión irreversible esta semana",
+      "description": "La recomendación rec-20260504-001 puso deadline 11-May para Pixel+CAPI. Hoy es 11-May. P01 sigue 'in-progress' con 8+ semanas de bloqueo. Sin Pixel: Meta no puede optimizar por conversiones reales, CPL sigue a €45+ vs target €18, y no hay datos de qué pasa después del click. El CTR mejorando esta semana hace más urgente tener el Pixel — estamos generando tráfico pero sin medir qué convierte.",
+      "suggested_action": "Decisión binaria esta semana: (A) INSTALAR Pixel esta semana — asignar 3h de foco, es la tarea técnica más importante del quarter. O (B) REDUCIR Meta budget a €30/día (€210/semana vs €860 actual) hasta tener Pixel. No existe opción C (seguir igual).",
+      "linked_project": "P01",
+      "estimated_impact": "Con Pixel activo, optimización por conversiones puede bajar CPL de €45 a €20-25 en 2-3 semanas. Sin él, quemamos ~€3,600/mes sin ROI medible.",
+      "status": "pending",
+      "created_at": "2026-05-11T20:24:00+02:00",
+      "evolves_from": "rec-20260504-001"
+    },
+    {
+      "id": "rec-20260511-004",
+      "type": "launch",
+      "priority": "high",
+      "metric": "ghl.appointments",
+      "title": "P03 Cold Email — 6 semanas pending. Con appointments=0, ya no hay excusa",
+      "description": "Growth4U lleva 6 semanas con P03 (Cold Email) en estado 'pending'. Esta semana el pipeline NSM llegó a 0 meetings. La dependencia del 100% en Meta Ads demostró esta semana que un solo fallo en el funnel de conversión deja el pipeline completamente vacío. Instantly ya está conectado. No hay bloqueante técnico conocido.",
+      "suggested_action": "Ejecutar P03 esta semana: (1) Compilar lista de 100 startups tech + 50 fintechs españolas con decisor identificado. (2) Adaptar las 3 secuencias de email al contexto Growth4U (4 emails cada una, tono consultivo). (3) Lanzar desde buzones calentados a 30-50 emails/día. Target: primera reply en <10 días.",
+      "linked_project": "P03",
+      "estimated_impact": "Con 3-5% reply rate sobre 150 empresas = 5-8 replies → 2-4 meetings adicionales/mes. Con pipeline actual = 0, cualquier meeting adicional es +infinito% sobre el baseline.",
+      "status": "pending",
+      "created_at": "2026-05-11T20:24:00+02:00",
+      "evolves_from": "rec-20260504-003"
+    },
+    {
+      "id": "rec-20260504-004",
+      "type": "optimize",
+      "priority": "medium",
+      "metric": "gsc.position",
+      "title": "SEO position 10.5 — publicar 2 artículos con P14 ya completado",
+      "description": "Avg position sigue ~10.5 vs 5.86 del peak de Marzo. P14 (Content Engine) está completado pero sin contenido publicado todavía. La infraestructura existe, falta activarla con artículos targetizando las queries donde ya tenemos impresiones (agencia fintech, GTM España, herramientas marketing B2B).",
+      "suggested_action": "Publicar 2 artículos esta semana usando el Content Engine de P14. Targets prioritarios: (1) 'agencia fintech España' (10.5 avg position — pushable to top 5) y (2) 'herramientas marketing atribución' (26 avg position — oportunidad de mejora). 800-1200 palabras, interno linking.",
+      "linked_project": "P06",
+      "estimated_impact": "Recuperar position 5-7 en queries clave puede doblar clicks orgánicos (0→3-5/día). Coste: 0€.",
+      "status": "pending",
+      "created_at": "2026-05-04T11:07:03+02:00",
+      "updated_at": "2026-05-11T20:24:00+02:00"
+    },
+    {
+      "id": "rec-20260420-004",
+      "type": "investigate",
+      "priority": "medium",
+      "metric": "ga4.engagementRate",
+      "title": "Engagement 0% — UX roto (55+ días)",
+      "description": "Engagement rate en 0% durante >55 días sin resolución. Relacionado con P01 (Fontanería Web) que sigue in-progress.",
+      "status": "pending",
+      "created_at": "2026-04-20T00:00:00+02:00"
+    },
+    {
+      "id": "rec-20260504-002",
+      "status": "auto_resolved",
+      "reason": "CTR se recuperó de 0.58% a 1.57% esta semana (+171%). Necesita investigación de causa (rec-20260511-002) pero la anomalía de CTR mínimo absoluto está superada.",
+      "resolved_at": "2026-05-11T20:24:00+02:00",
+      "metric": "meta-ads.ctr"
+    },
+    {
+      "id": "rec-20260504-005",
+      "status": "auto_resolved",
+      "reason": "Evolucionado a rec-20260511-001 con mayor urgencia — Lead→Meeting pasó de 40% a 0%.",
+      "resolved_at": "2026-05-11T20:24:00+02:00",
+      "metric": "ghl.appointments"
+    }
+  ]
+}

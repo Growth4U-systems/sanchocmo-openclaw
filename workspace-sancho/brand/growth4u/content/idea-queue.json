@@ -1,0 +1,2794 @@
+[
+  {
+    "id": "idea-2026-04-26-1",
+    "pillar_id": "P2",
+    "content_type": "Hot Take",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Las sesiones referidas por IA crecieron 527% interanual. El 60% de busquedas en Google terminan sin click. El 47% de las marcas aun no tiene estrategia GEO.",
+      "source": "Search Engine Land",
+      "url": "https://searchengineland.com/plan-for-geo-2026-evolve-search-strategy-463399",
+      "date": "2026-04-26"
+    },
+    "angle_draft": "El 60% de las busquedas en Google ya no generan click. Leelo otra vez. Tu estrategia SEO esta optimizando para un juego que ya no existe.\n\nNosotros loimos vias venir hace 18 meses. Growth4U es top 1-2 en Gemini para queries de growth fintech en Espania. No porque seamos videntes, sino porque dejamos de perseguir rankings y empezamos a construir activos que los LLMs citan. Case studies con numeros reales (Bnext 0-400K, Bit2Me LTV 3x) son citation magnets. Tus articulos genericos de 'mejores practicas' no lo son. El 47% de las marcas ni siquiera tiene estrategia GEO. Si eres del otro 53%, la ventana de first-mover se cierra este trimestre.",
+    "pov_confidence": 0.93,
+    "source_signals": [
+      "news-2026-04-26-004",
+      "news-2026-04-26-006"
+    ],
+    "created_at": "2026-04-26T07:30:00Z",
+    "status": "Approved",
+    "approved_at": "2026-04-26T10:44:19.771Z",
+    "approved_via": "mc-ui",
+    "project_task_id": "P-Content-Semana-18-T04",
+    "project_id": "P-Content-Semana-18",
+    "content_task_id": "P-Content-Semana-18-T04-C01",
+    "content_task_channels": [
+      "linkedin",
+      "twitter"
+    ]
+  },
+  {
+    "id": "idea-2026-04-26-2",
+    "pillar_id": "P3",
+    "content_type": "Framework",
+    "target_channel": "blog",
+    "signal": {
+      "summary": "La CNMV ha publicado reglas de transicion MiCA para plataformas crypto en Espania con deadline 1 julio 2026. Notificacion obligatoria 10 dias antes de campanas masivas (+100K). Influencer marketing clasificado como actividad regulada. Multas hasta 5M EUR o 10% facturacion.",
+      "source": "Cryptopolitan / Unit21",
+      "url": "https://www.cryptopolitan.com/spains-cnmv-sets-out-mica-transition-rules/",
+      "date": "2026-04-26"
+    },
+    "angle_draft": "1 de julio de 2026. Esa es la fecha en la que tu plataforma crypto deja de operar en la UE si no tienes autorizacion MiCA. Y no es solo el registro: cada campania de marketing de +100K personas necesita notificacion previa a la CNMV con 10 dias de antelacion. Tu influencer de Twitter? Actividad regulada.\n\nHe vivido esto en primera persona. En Bnext escalamos de 0 a 400K usuarios bajo supervision CNMV. En Bit2Me triplicamos LTV mientras la regulacion se endurecía. Hay un playbook que funciona, pero la mayoria de equipos de compliance lo estan construyendo a ciegas. Este framework cubre los 5 pasos que toda plataforma crypto en Espania necesita antes del deadline: desde la estructura de campania pre-aprobada hasta el modelo de atribucion que compliance puede firmar.",
+    "pov_confidence": 0.95,
+    "source_signals": [
+      "news-2026-04-26-007",
+      "news-2026-04-26-008",
+      "news-2026-04-26-009"
+    ],
+    "created_at": "2026-04-26T07:30:00Z",
+    "status": "Deferred",
+    "deferred_at": "2026-05-11T19:40:13.000Z",
+    "deferred_reason": "auto-deferred: >14 days old"
+  },
+  {
+    "id": "idea-2026-04-26-3",
+    "pillar_id": "P4",
+    "content_type": "Proof Post",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Gartner: 39% de CMOs recortaran gasto en agencias. Las agencias reportan deliverables pero no son responsables de pipeline ni revenue. El mercado de fractional CMO crecio 245%.",
+      "source": "CMSWire / Brango Solutions",
+      "url": "https://www.cmswire.com/digital-marketing/why-the-cmo-job-is-being-rewritten-in-real-time-and-how-to-land-on-the-right-side/",
+      "date": "2026-04-26"
+    },
+    "angle_draft": "Gartner acaba de confirmar lo que llevamos diciendo dos anios: el 39% de los CMOs van a recortar gasto en agencias. No por el presupuesto. Porque estan hartos de pagar por deliverables que no mueven pipeline.\n\nMientras tanto, el mercado de fractional CMOs crecio 245%. El mercado ya ha votado. El modelo de retainer infinito donde un senior te vende y un junior ejecuta se esta muriendo. Pero ojo: el fractional CMO tambien puede ser humo si no tiene skin in the game. La pregunta correcta no es 'agencia o fractional CMO'. Es: quien se responsabiliza de mis metricas de revenue, no de mis metricas de vanidad? Si la respuesta es 'nadie', ese es tu problema.",
+    "pov_confidence": 0.91,
+    "source_signals": [
+      "news-2026-04-26-010",
+      "news-2026-04-26-011",
+      "news-2026-04-26-012"
+    ],
+    "created_at": "2026-04-26T07:30:00Z",
+    "status": "Deferred",
+    "deferred_at": "2026-05-11T19:40:13.000Z",
+    "deferred_reason": "auto-deferred: >14 days old"
+  },
+  {
+    "id": "idea-2026-04-26-4",
+    "pillar_id": "P5",
+    "content_type": "Case Study",
+    "target_channel": "newsletter",
+    "signal": {
+      "summary": "Solo el 6% de marketers tienen IA totalmente implementada en operaciones. BCG: proyecto de 6 analistas/semana reducido a 1 empleado + agente en menos de 1 hora. El 88% usa IA pero solo un tercio ha pasado de experimentos aislados.",
+      "source": "MarTech / Spark Novus",
+      "url": "https://martech.org/how-ai-agents-will-reshape-every-part-of-marketing-in-2026/",
+      "date": "2026-04-26"
+    },
+    "angle_draft": "El 88% de los marketers dice que usa IA. Solo el 6% la tiene realmente integrada en operaciones. Esa brecha del 82% es donde esta el dinero.\n\nBCG lo demostro con un caso concreto: un proyecto que requeria 6 analistas durante una semana ahora lo hace 1 persona con un agente en menos de una hora. Esto no es teoria. Nosotros operamos clientes con SanchoCMO: un sistema multi-agente que ejecuta foundation, contenido, outreach y analytics. No es 'IA que genera posts'. Es un sistema operativo de growth donde los agentes hacen el 70% del trabajo estructural y el humano orquesta la estrategia. En este newsletter te cuento exactamente como funciona por dentro: que hacen los agentes, que hace el humano, y donde esta el ROI real.",
+    "pov_confidence": 0.92,
+    "source_signals": [
+      "news-2026-04-26-013",
+      "news-2026-04-26-015"
+    ],
+    "created_at": "2026-04-26T07:30:00Z",
+    "status": "Deferred",
+    "deferred_at": "2026-05-11T19:40:13.000Z",
+    "deferred_reason": "auto-deferred: >14 days old"
+  },
+  {
+    "id": "idea-2026-04-26-5",
+    "pillar_id": "P1",
+    "content_type": "Framework",
+    "target_channel": "twitter",
+    "signal": {
+      "summary": "Los 'Systems of Record' estan siendo reemplazados por 'Systems of Action' que eliminan la latencia humana del ciclo de revenue. Growth en 2026 es sistema, no coleccion de tacticas.",
+      "source": "Presta / AllTopStartups",
+      "url": "https://wearepresta.com/startup-gtm-framework-2026-the-strategic-blueprint-for-intelligent-scaling/",
+      "date": "2026-04-26"
+    },
+    "angle_draft": "Thread: Los 'Systems of Record' se estan muriendo. En 2026 ganan los 'Systems of Action'.\n\nLa diferencia: un System of Record te dice que paso. Un System of Action ejecuta lo que deberia pasar sin esperar a que un humano mueva la ficha. Tu CRM es un System of Record. Tu growth system deberia ser un System of Action. La mayoria de startups tienen 6 herramientas, 3 dashboards y cero sistema. Coleccionan tacticas como cromos. Aqui van las 4 piezas del growth system que instalamos en Trust Engine y que cualquier startup puede empezar a construir manana con equipo de 1-3 personas.",
+    "pov_confidence": 0.88,
+    "source_signals": [
+      "news-2026-04-26-001",
+      "news-2026-04-26-003"
+    ],
+    "created_at": "2026-04-26T07:30:00Z",
+    "status": "Deferred",
+    "deferred_at": "2026-05-11T19:40:13.000Z",
+    "deferred_reason": "auto-deferred: >14 days old"
+  },
+  {
+    "id": "idea-2026-04-26-6",
+    "pillar_id": "P2",
+    "content_type": "Listicle",
+    "target_channel": "blog",
+    "signal": {
+      "summary": "El 31.3% de la poblacion US usara busqueda generativa en 2026. Los datos originales y case studies con numeros especificos son 'citation magnets' para LLMs.",
+      "source": "eMarketer / Digital Agency Network",
+      "url": "https://www.emarketer.com/content/faq-on-geo-aeo--where-ai-search-seo-overlap-2026",
+      "date": "2026-04-26"
+    },
+    "angle_draft": "Los LLMs no citan a cualquiera. Citan a quien tiene datos originales. Si tu blog es 'Las 7 mejores estrategias de growth para startups' con zero-party data, Gemini y ChatGPT te van a ignorar. Pero si publicas 'Como escalamos Bnext de 0 a 400K usuarios bajo regulacion CNMV' con numeros reales de CAC, cohortes y payback, te conviertes en un citation magnet.\n\nEste articulo cubre los 5 tipos de activos de contenido que los LLMs priorizan para citacion, con ejemplos reales de como los hemos construido en Growth4U. No es teoria GEO de una agencia SEO que nunca ha rankeado en Gemini. Es el playbook que nos puso top 1-2 en queries fintech Espania.",
+    "pov_confidence": 0.89,
+    "source_signals": [
+      "news-2026-04-26-005",
+      "news-2026-04-26-006"
+    ],
+    "created_at": "2026-04-26T07:30:00Z",
+    "status": "Deferred",
+    "deferred_at": "2026-05-11T19:40:13.000Z",
+    "deferred_reason": "auto-deferred: >14 days old"
+  },
+  {
+    "id": "idea-2026-04-26-7",
+    "pillar_id": "P5",
+    "content_type": "Hot Take",
+    "target_channel": "twitter",
+    "signal": {
+      "summary": "El 90% de compras B2B seran mediadas por agentes IA para 2028. Los agentes manejan el 70% del trabajo estructural, desplazando el rol humano hacia orquestacion estrategica.",
+      "source": "IT Munch",
+      "url": "https://itmunch.com/ai-agents-b2b-marketing-productivity-2026/",
+      "date": "2026-04-26"
+    },
+    "angle_draft": "Para 2028, el 90% de las compras B2B van a ser mediadas por agentes IA. No 'asistidas'. Mediadas. Tu comprador no va a hablar con tu SDR. Va a hablar con el agente de tu comprador.\n\nY el 80% de las agencias sigue vendiendo 'estrategia de contenido con IA' que es basicamente ChatGPT con un prompt bonito. Hay una diferencia entre usar IA y operar con IA. La primera es un tool. La segunda es un sistema. Si tu proveedor de marketing no puede ensenarte su stack de agentes operando en produccion, te esta vendiendo PowerPoint, no ejecucion.",
+    "pov_confidence": 0.9,
+    "source_signals": [
+      "news-2026-04-26-014"
+    ],
+    "created_at": "2026-04-26T07:30:00Z",
+    "status": "Approved",
+    "approved_at": "2026-05-08T23:32:59.715Z",
+    "approved_via": "slack-button",
+    "approved_by": "alfonso",
+    "project_task_id": "P-Content-Semana-19-T06",
+    "project_id": "P-Content-Semana-19",
+    "content_task_id": "P-Content-Semana-19-T06-C01",
+    "content_task_channels": [
+      "twitter",
+      "linkedin"
+    ]
+  },
+  {
+    "id": "idea-2026-04-28-1",
+    "pillar_id": "P3",
+    "content_type": "Hot Take",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Marketing bajo MiCA es inherentemente local: un solo mensaje desalineado puede provocar enforcement en un estado miembro. Las comunicaciones deben ser justas, claras y no enganosas.",
+      "source": "Lawyers in Malta",
+      "url": "https://www.lawyersinmalta.com/marketing-under-mica/",
+      "date": "2026-04-26"
+    },
+    "signal_type": [
+      "contrarian",
+      "vulnerability"
+    ],
+    "angle_draft": "Nuestro POV: los equipos de marketing estan descubriendo que MiCA no es un filtro — es un amplificador. Un mensaje desalineado no solo infringe: escala en un estado miembro y activa la atencion regulatoria de todo el bloque. La multa existe (hasta 5M€ o 10% facturacion), pero el dano real es la paralizacion que viene despues. Quien tiene el playbook de compliance pre-instalado lanza mientras la competencia espera a que alguien les diga que pueden hacer. En Bnext construimos ese playbook bajo supervision CNMV real. No es teoria. Es la ventaja competitiva que nadie esta documentando. Frame: 'compliance-as-moat'.",
+    "pov_confidence": 0.9,
+    "source_signals": [
+      "news-2026-04-26-007"
+    ],
+    "created_at": "2026-04-28T01:41:00Z",
+    "status": "New",
+    "dispatch_date": "2026-04-30",
+    "dispatch_slot": "linkedin-content-generation",
+    "project_task_id": "P-Content-Semana-18-T05",
+    "project_id": "P-Content-Semana-18"
+  },
+  {
+    "id": "idea-2026-04-28-2",
+    "pillar_id": "P5",
+    "content_type": "Hot Take",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "El 88% de marketers usa IA pero solo el 6% la tiene implementada operacionalmente. El mercado de AI marketing alcanz $47.32B.",
+      "source": "Spark Novus",
+      "url": "https://sparknovus.com/blog/marketing-ai-pulse-brief-march-2026-agents-shrinking-moats-and-the-rise-of-trust",
+      "date": "2026-04-26"
+    },
+    "signal_type": [
+      "aha-moment",
+      "conflict"
+    ],
+    "angle_draft": "Nuestro POV: el dato de que el 88% usa IA pero solo el 6% la tiene operativamente no es una sorpresa — es la confirmacion de lo que llevamos diciendo un ano. La diferencia no es la herramienta. Es que unos ejecutan y otros discuten sobre prompts. El mercado de AI marketing a $47.32B esta llena de vendedores de PowerPoint, no de sistemas operando en produccion. BCG lo demuestra: un proyecto que requeria 6 analistas durante una semana ahora lo hace 1 persona con un agente en menos de 1 hora. Eso no es un caso edge. Es el nuevo estandar. Si tu proveedor no puede ensenarte su stack de agentes funcionando, te esta vendiendo demo, no ejecucion. Frame: 'IA como ejecucion real, no como hype'.",
+    "pov_confidence": 0.93,
+    "source_signals": [
+      "news-2026-04-26-015"
+    ],
+    "created_at": "2026-04-28T01:41:00Z",
+    "status": "New",
+    "dispatch_date": "2026-04-30",
+    "dispatch_slot": "linkedin-content-generation",
+    "project_task_id": "P-Content-Semana-18-T05",
+    "project_id": "P-Content-Semana-18"
+  },
+  {
+    "id": "idea-2026-04-28-3",
+    "pillar_id": "P2",
+    "content_type": "Framework",
+    "target_channel": "blog",
+    "signal": {
+      "summary": "Webflow convierte 24% del trafico de ChatGPT (6x vs Google). Ahrefs: 12.1% de signups de AI. Surfer SEO: 25% de nuevos clientes de AI assistants. Solo el 11% de empresas B2B tienen contenido listo para discovery de AI.",
+      "source": "Maja Voje / gtmstrategist",
+      "url": "https://knowledge.gtmstrategist.com/p/aeo-how-to-make-ai-recommend-your-product",
+      "date": "2026-04-17"
+    },
+    "signal_type": [
+      "aha-moment",
+      "metric"
+    ],
+    "angle_draft": "Nuestro POV: la pregunta no es si la IA va a recomendar tu producto — es si ya tienes contenido que la IA pueda recomendar. Webflow paso de 1.2% a 60% de share en la categoria AI en Gemini. Ahrefs convierte 12.1% del trafico de AI assistants. El 11% de empresas B2B tienen contenido listo para ser descubierto por IA. El resto esta publicando articulos genericos que los LLMs ignoran. En Growth4U llevamos 18 meses construyendo activos que los LLMs citan: case studies con numeros reales (Bnext 0→400K, CAC 50€→12,40€), no articulos de 'mejores practicas'. Este post cubre los 5 activos que funcionan como citation magnets y como los hemos construido nosotros. No es teoria GEO. Es walk-the-talk verificable. Frame: 'GEO como sistema de confianza'.",
+    "pov_confidence": 0.87,
+    "source_signals": [
+      "s004"
+    ],
+    "created_at": "2026-04-28T01:41:00Z",
+    "status": "Approved",
+    "approved_at": "2026-04-28T10:28:09.150Z",
+    "approved_via": "mc-ui",
+    "project_task_id": "P-Content-Semana-18-T04",
+    "project_id": "P-Content-Semana-18",
+    "drafts": [
+      {
+        "channel": "blog",
+        "content": "# [Titulo SEO — incluir keyword principal]\n\n## TL;DR\n\nNuestro POV: la pregunta no es si la IA va a recomendar tu producto — es si ya tienes contenido que la IA pueda recomendar. Webflow paso de 1.2% a 60% de share en la categoria AI en Gemini. Ahrefs convierte 12.1% del trafico de AI assistants. El 11% de empresas B2B tienen contenido listo para ser descubierto por IA. El resto esta publicando articulos genericos que los LLMs ignoran. En Growth4U llevamos 18 meses construyendo activos que los LLMs citan: case studies con numeros reales (Bnext 0→400K, CAC 50€→12,40€), no articulos de 'mejores practicas'. Este post cubre los 5 activos que funcionan como citation magnets y como los hemos construido nosotros. No es teoria GEO. Es walk-the-talk verificable. Frame: 'GEO como sistema de confianza'.\n\n## Contexto\n\nWebflow convierte 24% del trafico de ChatGPT (6x vs Google). Ahrefs: 12.1% de signups de AI. Surfer SEO: 25% de nuevos clientes de AI assistants. Solo el 11% de empresas B2B tienen contenido listo para discovery de AI.\n\n## Analisis\n\n[Desarrollar el argumento principal con datos y ejemplos]\n\n## Que significa esto para tu startup\n\n[Aplicacion practica]\n\n## Conclusion\n\n[Resumen + CTA]\n\n---\n\n*¿Quieres que analicemos tu caso? [Agenda una llamada diagnostica](link)*",
+        "status": "draft",
+        "iterations": [],
+        "created_at": "2026-04-28T10:28:09.488Z",
+        "updated_at": "2026-04-28T10:28:09.488Z"
+      },
+      {
+        "channel": "linkedin",
+        "content": "Llevo anos usando este framework. Funciona.\n\nNuestro POV: la pregunta no es si la IA va a recomendar tu producto — es si ya tienes contenido que la IA pueda recomendar. Webflow paso de 1.2% a 60% de share en la categoria AI en Gemini. Ahrefs convierte 12.1% del trafico de AI assistants. El 11% de empresas B2B tienen contenido listo para ser descubierto por IA. El resto esta publicando articulos genericos que los LLMs ignoran. En Growth4U llevamos 18 meses construyendo activos que los LLMs citan: case studies con numeros reales (Bnext 0→400K, CAC 50€→12,40€), no articulos de 'mejores practicas'. Este post cubre los 5 activos que funcionan como citation magnets y como los hemos construido nosotros. No es teoria GEO. Es walk-the-talk verificable. Frame: 'GEO como sistema de confianza'.\n\n---\n\n📰 Contexto: Webflow convierte 24% del trafico de ChatGPT (6x vs Google). Ahrefs: 12.1% de signups de AI. Surfer SEO: 25% de nuevos clientes de AI assistants. Solo el 11% de empresas B2B tienen contenido listo para discovery de AI.\n\n¿Que opinas? Dejame tu comentario 👇",
+        "status": "draft",
+        "iterations": [],
+        "created_at": "2026-04-28T10:28:09.488Z",
+        "updated_at": "2026-04-28T10:28:09.488Z"
+      }
+    ],
+    "content_task_id": "P-Content-Semana-18-T04-C02",
+    "content_task_channels": [
+      "blog",
+      "linkedin"
+    ]
+  },
+  {
+    "id": "idea-2026-04-28-4",
+    "pillar_id": "P5",
+    "content_type": "Personal Narrative",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "7300+ roles PM abiertos, 67K roles engineering, roles de IA con curvas de crecimiento en hockey stick. Los roles AI explotan pero PM y eng NO han disminuido. La narrativa de 'IA roba trabajos' es falsa.",
+      "source": "Lenny Rachitsky",
+      "url": "https://www.lennysnewsletter.com/p/state-of-the-product-job-market-in-ee9",
+      "date": "2026-03-24"
+    },
+    "signal_type": [
+      "contrarian",
+      "metric"
+    ],
+    "angle_draft": "Nuestro POV: los datos del mercado laboral tech desmienten la narrativa apocaliptica sobre IA. Hay 7300 roles de PM abiertos (maximo en 3+ anos) y 67K de engineering. Los roles IA explotan, pero eso no ha destruido los otros — los ha complementado. Lo que esta pasando es un rebalance: las tareas estructuradas las asumen los agentes, las tareas de juicio las siguen haciendo humanos. El problema no es que AI quite trabajos. Es que la mayoria de operadores no saben trabajar con agentes. Quien domina la orquestacion humano-IA tiene una ventaja enorme en 2026. Nosotros lo hacemos funcionar todos los dias con SanchoCMO: agentes ejecutan, humano orquesta. El mercado de trabajo no se encoge — se reconfigura. Frame: 'contrarian sobre narrativa AI'.",
+    "pov_confidence": 0.85,
+    "source_signals": [
+      "s001"
+    ],
+    "created_at": "2026-04-28T01:41:00Z",
+    "status": "New",
+    "dispatch_date": "2026-05-04",
+    "dispatch_slot": "linkedin-content-generation",
+    "project_task_id": "P-Content-Semana-19-T01",
+    "project_id": "P-Content-Semana-19"
+  },
+  {
+    "id": "idea-2026-04-28-5",
+    "pillar_id": "P3",
+    "content_type": "Framework",
+    "target_channel": "blog",
+    "signal": {
+      "summary": "CNMV publico reglas de transicion MiCA para Espania con deadline 1 julio 2026. Notificacion obligatoria 10 dias antes de campanas de +100K personas. Influencer marketing clasificado como actividad regulada. Multas hasta 5M EUR o 10% facturacion.",
+      "source": "Cryptopolitan / Unit21",
+      "url": "https://www.cryptopolitan.com/spains-cnmv-sets-out-mica-transition-rules/",
+      "date": "2026-04-26"
+    },
+    "signal_type": [
+      "milestone",
+      "system"
+    ],
+    "angle_draft": "Nuestro POV: el deadline de MiCA el 1 julio 2026 no es una cuenta atras para dejar de hacer marketing — es una cuenta atras para tener el playbook de compliance instalado. Las empresas que lo tengan pre-configurado van a poder lanzar campanas mientras la competencia sigue esperando que compliance les diga que pueden hacer. El requisito de notificar 10 dias antes para campanas de +100K personas no es un obstaculo. Es una ventaja para quien ya tiene el proceso documentado. En Bnext escalamos bajo supervision CNMV real. En Bit2Me triplicamos LTV mientras la regulacion se endurecia. Este framework cubre los 5 pasos concretos para tener el sistema de compliance operativo antes del deadline: estructura de campanas pre-aprobadas, modelo de atribucion que compliance puede firmar, y proceso de influencer marketing que no te exponga a multas de 5M€. Frame: 'compliance como cheat code competitivo'.",
+    "pov_confidence": 0.92,
+    "source_signals": [
+      "news-2026-04-26-008",
+      "news-2026-04-26-009"
+    ],
+    "created_at": "2026-04-28T01:41:00Z",
+    "status": "New",
+    "dispatch_date": "2026-04-30",
+    "dispatch_slot": "linkedin-content-generation",
+    "project_task_id": "P-Content-Semana-18-T05",
+    "project_id": "P-Content-Semana-18"
+  },
+  {
+    "id": "idea-2026-04-28-6",
+    "pillar_id": "P4",
+    "content_type": "Personal Narrative",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Caso real: empresa con Excel de 700 leads pendientes sin llamar mientras sigue pidiendo mas leads a Marketing. Tesis: 'Hay dos tipos de empresa - las que tienen un problema de captacion y las que tienen un problema de retencion disfrazado de problema de captacion.'",
+      "source": "Pau Gallinat (Snowball)",
+      "url": "https://es.linkedin.com/pulse/el-cubo-buggereado-pau-gallinat-o-callaghan-i0cve",
+      "date": "2026-03-12"
+    },
+    "signal_type": [
+      "vulnerability",
+      "system"
+    ],
+    "angle_draft": "Nuestro POV: Pau Gallinat lo describe bien — la mayoria de empresas con problema de captacion en realidad tienen un problema de retencion disfrazado. 700 leads sin llamar no es un problema de leads. Es un sistema que no atrapa. Pero la solucion no es mas captacion. Es un sistema que primero retiene y luego escala. Trust Engine funciona al reves: instalamos el sistema de retencion (onboarding, touchpoints, deteccion de churn) antes de tirar dinero en nuevos leads. Si tus leads se quedan frios en una hoja de calculo, la pregunta no es 'como consigo mas'. Es 'por que se quedan frios'. El 73% de startups no logra ventas recurrentes. La mayoria no tiene un problema de captacion. Tiene un problema de sistema. Frame: 'system-first, no acquisition-first'.",
+    "pov_confidence": 0.75,
+    "source_signals": [
+      "s005"
+    ],
+    "created_at": "2026-04-28T01:41:00Z",
+    "status": "New"
+  },
+  {
+    "id": "idea-2026-04-28-7",
+    "pillar_id": "P5",
+    "content_type": "Proof Post",
+    "target_channel": "twitter",
+    "signal": {
+      "summary": "El 90% de compras B2B seran mediadas por agentes IA para 2028. Los agentes manejan el 70% del trabajo estructural. El rol humano se desplaza hacia orquestacion estrategica.",
+      "source": "IT Munch",
+      "url": "https://itmunch.com/ai-agents-b2b-marketing-productivity-2026/",
+      "date": "2026-04-26"
+    },
+    "signal_type": [
+      "milestone",
+      "metric"
+    ],
+    "angle_draft": "El 90% de compras B2B van a ser mediadas por agentes IA para 2028. No 'asistidas'. Mediadas. Tu buyer no va a hablar con tu SDR — va a hablar con el agente de tu comprador. Y el 80% de vendedores sigue pensando que su trabajo es hacer llamadas. Hay una desconexion brutal. El cambio real no es tooling. Es que el trabajo del operador de growth en 2026 no es ejecutar — es orquestar agentes que ejecutan. Si sigues midiendo a tu equipo por horas trabajadas en lugar de por output generado por agentes, estas midiendo mal. La metrica nueva: cuantros procesos tiene tu equipo automatizados con agentes vs cuantros sigue haciendo manualmente. Frame: 'operationalize-or-obolete'.",
+    "pov_confidence": 0.88,
+    "source_signals": [
+      "news-2026-04-26-014"
+    ],
+    "created_at": "2026-04-28T01:41:00Z",
+    "status": "Approved",
+    "approved_at": "2026-04-30T09:11:14.345Z",
+    "approved_via": "mc-ui",
+    "project_task_id": "P-Content-Semana-18-T04",
+    "project_id": "P-Content-Semana-18",
+    "content_task_id": "P-Content-Semana-18-T04-C07",
+    "content_task_channels": [
+      "twitter",
+      "linkedin"
+    ]
+  },
+  {
+    "id": "idea-2026-04-28-8",
+    "pillar_id": "P3",
+    "content_type": "Framework",
+    "target_channel": "blog",
+    "signal": {
+      "id": "news-2026-04-28-008",
+      "title": "ESMA Clarifies Expectations Ahead of MiCA Deadline",
+      "summary": "ESMA publica clarificaciones regulatorias antes del deadline MiCA de julio 2026. CASPs sin autorizacion deben cesar operaciones en la UE.",
+      "source": "CoinGeek",
+      "url": "https://coingeek.com/eu-regulator-clarifies-expectations-ahead-of-mica-deadline/",
+      "date": "2026-04-28"
+    },
+    "signal_type": [
+      "milestone",
+      "vulnerability"
+    ],
+    "angle_draft": "Nuestro POV: el deadline de MiCA el 1 julio 2026 no es una cuenta atras para dejar de hacer marketing — es una cuenta atras para tener el playbook instalado. Las empresas que lo tengan pre-configurado lanzan mientras la competencia sigue esperando a que compliance les diga que pueden hacer. El requisito de notificar 10 dias antes para campanas de +100K personas no es un obstaculo. Es una ventaja para quien ya tiene el proceso documentado. En Bnext construimos ese playbook bajo supervision CNMV real. No es teoria. Es la ventaja competitiva que nadie esta documentando. Frame: compliance-as-moat.",
+    "pov_confidence": 0.95,
+    "source_signals": [
+      "news-2026-04-28-008"
+    ],
+    "pov_ref": "P3 core_belief: regulacion como ventaja competitiva. Preferred angle: deadline concreto + proof Bnext.",
+    "created_at": "2026-04-28T05:56:10.034698Z",
+    "status": "Approved",
+    "dispatch_date": "2026-04-28",
+    "dispatch_slot": "linkedin-content-generation",
+    "project_task_id": "P-Content-Semana-18-T04",
+    "project_id": "P-Content-Semana-18",
+    "approved_at": "2026-04-28T10:10:04.393Z",
+    "approved_via": "slack-button",
+    "approved_by": "alfonso",
+    "title": "MiCA en julio 2026: el playbook compliance que escala growth crypto",
+    "content_task_id": "P-Content-Semana-18-T04-C03",
+    "content_task_channels": [
+      "blog",
+      "linkedin"
+    ]
+  },
+  {
+    "id": "idea-2026-04-28-9",
+    "pillar_id": "P1",
+    "content_type": "Hot Take",
+    "target_channel": "linkedin",
+    "signal": {
+      "id": "news-2026-04-28-002",
+      "title": "AI-First SaaS Faces Gross Margin Compression: 25-60% vs 80-90% Traditional",
+      "summary": "SaaS AI-first tienen gross margins 25-60% vs 80-90% del SaaS tradicional. Con margenes mas bajos, el payback period se alarga.",
+      "source": "Monetizely",
+      "url": "https://www.getmonetizely.com/blogs/the-economics-of-ai-first-b2b-saas-in-2026",
+      "date": "2026-04-28"
+    },
+    "signal_type": [
+      "contrarian",
+      "metric",
+      "aha-moment"
+    ],
+    "angle_draft": "Nuestro POV: todo el mundo esta obsesionado con AI-first SaaS porque escala rapido. Nadie esta hablando del problema que viene despues: los margenes. 25-60% de gross margin frente al 80-90% del SaaS tradicional. Eso no es una startup con problemas de unit economics. Es un modelo de negocio con un problema estructural que nadie esta diagnosticando. Si estas evaluando una startup AI-first o estas construyendo una, la pregunta no es cuanto creces. Es cuanto margen te queda despues del coste de los modelos. Frame: margin-compression-no-one-talks-about.",
+    "pov_confidence": 0.88,
+    "source_signals": [
+      "news-2026-04-28-002"
+    ],
+    "pov_ref": "P1 core_belief: systems de growth. Preferred angle: metric + contrarian + unit economics.",
+    "created_at": "2026-04-28T05:56:10.034922Z",
+    "status": "Approved",
+    "dispatch_date": "2026-04-30",
+    "dispatch_slot": "linkedin-content-generation",
+    "project_task_id": "P-Content-Semana-18-T05",
+    "project_id": "P-Content-Semana-18",
+    "approved_at": "2026-04-30T22:32:20.069Z",
+    "approved_via": "mc-ui",
+    "content_task_id": "P-Content-Semana-18-T05-C01",
+    "content_task_channels": [
+      "linkedin",
+      "twitter"
+    ]
+  },
+  {
+    "id": "idea-2026-04-28-10",
+    "pillar_id": "P2",
+    "content_type": "Framework",
+    "target_channel": "blog",
+    "signal": {
+      "id": "news-2026-04-28-004",
+      "title": "25-50% of B2B Decision-Makers Now Start Vendor Research with ChatGPT or Perplexity",
+      "summary": "Entre el 25% y 50% de los B2B decision-makers ya inician su investigacion de vendors con herramientas AI, no con Google.",
+      "source": "Digital Applied",
+      "url": "https://www.digitalapplied.com/blog/ai-visibility-tools-2026-track-brand-chatgpt-perplexity-gemini",
+      "date": "2026-04-28"
+    },
+    "signal_type": [
+      "metric",
+      "aha-moment"
+    ],
+    "angle_draft": "Nuestro POV: si tu contenido no existe para los LLMs, no existe para el 25-50% de tus potenciales buyers. Cuando un founder le pregunta a Gemini 'cual es la mejor agencia de growth para fintech en espana' y Growth4U aparece top 1-2, eso no es un ranking de Google. Es un activo de distribucion que los competidores no pueden copiar en 6 meses. Los articulos genericos de 'mejores practicas' no citan. Los case studies con numeros reales si. Esto es lo que el 89% de marcas sin estrategia GEO no entiende: no se trata de estar en la IA. Se trata de que la IA te cite con numeros. Frame: geo-as-distribution-moat.",
+    "pov_confidence": 0.94,
+    "source_signals": [
+      "news-2026-04-28-004"
+    ],
+    "pov_ref": "P2 core_belief: alquiler atencion vs construir activos. Preferred angle: proof #1-2 Gemini + data.",
+    "created_at": "2026-04-28T05:56:10.034924Z",
+    "status": "Discarded",
+    "dispatch_date": "2026-04-28",
+    "dispatch_slot": "linkedin-content-generation",
+    "project_task_id": "P-Content-Semana-18-T01",
+    "project_id": "P-Content-Semana-18",
+    "deferred_at": "2026-04-28T10:10:24.912Z",
+    "deferred_by": "alfonso",
+    "title": "El 25-50% de B2B buyers ya usan AI search. Tu SEO es invisible."
+  },
+  {
+    "id": "idea-2026-04-28-11",
+    "pillar_id": "P2",
+    "content_type": "Personal Narrative",
+    "target_channel": "linkedin",
+    "signal": {
+      "id": "signal-011",
+      "title": "Zero-Click Marketing: How to Win Big When No One Wants to Click Anymore",
+      "summary": "Amanda Natividad presenta Zero-Click Marketing como metodo para ganar atencion sin necesidad de un click. Marketing impact ocurre en espacios no medibles por analytics tradicional.",
+      "source": "Amanda Natividad / ExperienceInbound",
+      "url": "https://www.experienceinbound.com/session/zero-click-marketing",
+      "date": "2026-04-28"
+    },
+    "signal_type": [
+      "aha-moment",
+      "system"
+    ],
+    "angle_draft": "Nuestro POV: Amanda Natividad acaba de describir en ExperienceInbound lo que Growth4U lleva 18 meses haciendo sin llamarlo zero-click. Si tu contenido funciona cuando el buyer ni siquiera necesita hacer click para decidir, has construido un activo que los competidores no pueden copiar. El ZCM ladder (Seen → Understood → Remembered → Preferred → Sought out) no es teoria. Es exactamente lo que pasa cuando eres #1-2 en Gemini para tu categoria: el buyer te busca sin haber hecho click nunca. Quien domina zero-click en 2026 tiene una ventaja estructural sobre quien sigue midiendo CTR. Frame: zcm-ladder-as-growth-system.",
+    "pov_confidence": 0.92,
+    "source_signals": [
+      "signal-011"
+    ],
+    "pov_ref": "P2 preferred angles: proof #1-2 Gemini + framework. Core belief: construir activos de confianza.",
+    "created_at": "2026-04-28T05:56:10.034925Z",
+    "status": "Approved",
+    "dispatch_date": "2026-04-28",
+    "dispatch_slot": "linkedin-content-generation",
+    "project_task_id": "P-Content-Semana-18-T04",
+    "project_id": "P-Content-Semana-18",
+    "approved_at": "2026-04-28T10:18:50.976Z",
+    "approved_via": "slack-button",
+    "approved_by": "alfonso",
+    "title": "Zero-click marketing: por qué tu contenido SEO ya no genera clicks",
+    "content_task_id": "P-Content-Semana-18-T04-C04",
+    "content_task_channels": [
+      "linkedin",
+      "twitter"
+    ]
+  },
+  {
+    "id": "idea-2026-04-28-12",
+    "pillar_id": "P4",
+    "content_type": "Proof Post",
+    "target_channel": "linkedin",
+    "signal": {
+      "id": "news-2026-04-28-011",
+      "title": "15% Reduction in Agency Jobs Expected in 2026 Due to AI Automation",
+      "summary": "Se anticipa una reduccion del 15% en empleos de agencias en 2026 por automatizacion AI. Los modelos de pricing basados en horas estan colapsando.",
+      "source": "Growth Rocket",
+      "url": "https://www.growth-rocket.com/blog/the-rise-of-the-fractional-cmo-in-an-ai-native-world-updated-for-2026/",
+      "date": "2026-04-28"
+    },
+    "signal_type": [
+      "contrarian",
+      "metric",
+      "conflict"
+    ],
+    "angle_draft": "Nuestro POV: el 15% de reduction en empleos de agencias por AI no es una tendencia. Es la confirmacion de que el modelo de cobrar por horas se esta derrumbando. Y el 80% de las agencias que quedan siguen vendiendo 'estrategia con IA' que es ChatGPT con un prompt bonito. La diferencia entre agentes que ejecutan y agentes que presumen esta separando a los operadores de growth que producen de los que producen dashboards. Si tu agencia no puede mostrarte que sus agentes estan ejecutando en produccion — no su producto demo, su produccion — te esta vendiendo presentacion, no resultado. Frame: execution-or-obsolescence.",
+    "pov_confidence": 0.94,
+    "source_signals": [
+      "news-2026-04-28-011"
+    ],
+    "pov_ref": "P4 core_belief: retainer infinito rota. Preferred angles: data + contrarian + skin in the game.",
+    "created_at": "2026-04-28T05:56:10.034926Z",
+    "status": "Approved",
+    "dispatch_date": "2026-04-28",
+    "dispatch_slot": "linkedin-content-generation",
+    "project_task_id": "P-Content-Semana-18-T04",
+    "project_id": "P-Content-Semana-18",
+    "approved_at": "2026-04-28T10:30:16.887Z",
+    "approved_via": "slack-button",
+    "approved_by": "alfonso",
+    "title": "El 39% de CMOs recortan agencias. La señal que llevábamos años esperando.",
+    "content_task_id": "P-Content-Semana-18-T04-C05",
+    "content_task_channels": [
+      "linkedin",
+      "twitter"
+    ]
+  },
+  {
+    "id": "idea-2026-04-28-13",
+    "pillar_id": "P5",
+    "content_type": "Proof Post",
+    "target_channel": "linkedin",
+    "signal": {
+      "id": "news-2026-04-28-014",
+      "title": "Gartner: 40% of Enterprise Apps Will Embed AI Agents by End of 2026",
+      "summary": "Gartner proyecta que el 40% de aplicaciones enterprise incluiran AI agents para finales de 2026. Agentes autonomos construyen, lanzan, testean e iteran campanas.",
+      "source": "The Gutenberg",
+      "url": "https://www.thegutenberg.com/blog/ai-in-marketing-trends-2026-what-comes-next-for-marketing-teams/",
+      "date": "2026-04-28"
+    },
+    "signal_type": [
+      "milestone",
+      "aha-moment"
+    ],
+    "angle_draft": "Nuestro POV: Gartner lo acaba de confirmar: el 40% de aplicaciones enterprise tendran agentes IA embedidos para finales de 2026. Esto no es una prediccion cautelosa. Es una fotografia del presente que se hace futuro en 9 meses. Y la mayoria de equipos de marketing siguen midiendo output en horas trabajadas, no en procesos automatizados. El nuevo balance: agentes ejecutan el trabajo estructural, humanos orquestan. Si sigues midiendo a tu equipo por horas en lugar de por output generado por agentes, estas midiendo el siglo pasado. Nosotros lo hacemos funcionar todos los dias con SanchoCMO. No es una demo. Es operacion real. Frame: agents-in-production-or-obsolete.",
+    "pov_confidence": 0.93,
+    "source_signals": [
+      "news-2026-04-28-014"
+    ],
+    "pov_ref": "P5 core_belief: 88% usa IA, 6% implementada. Preferred angles: proof + data + contrarian.",
+    "created_at": "2026-04-28T05:56:10.034928Z",
+    "status": "Approved",
+    "dispatch_date": "2026-04-28",
+    "dispatch_slot": "linkedin-content-generation",
+    "project_task_id": "P-Content-Semana-18-T04",
+    "project_id": "P-Content-Semana-18",
+    "approved_at": "2026-04-28T10:29:58.830Z",
+    "approved_via": "slack-button",
+    "approved_by": "alfonso",
+    "title": "El 88% usa IA, solo el 6% la opera. La brecha que define ganadores.",
+    "content_task_id": "P-Content-Semana-18-T04-C06",
+    "content_task_channels": [
+      "linkedin",
+      "twitter"
+    ]
+  },
+  {
+    "id": "idea-2026-28-14",
+    "pillar_id": "P2",
+    "content_type": "Framework",
+    "target_channel": "linkedin",
+    "signal": {
+      "id": "signal-003",
+      "title": "Distribution as the (Final) Moat — Evan Spiegel on Lenny's Podcast",
+      "summary": "Evan Spiegel (CEO Snapchat) argumenta que distribution es el moat mas importante. Un moat de distribucion bloquea competidores.",
+      "source": "Lenny Rachitsky",
+      "url": "https://www.lennysnewsletter.com/p/snapchat-ceo-why-distribution-is",
+      "date": "2026-04-26"
+    },
+    "signal_type": [
+      "aha-moment",
+      "system"
+    ],
+    "angle_draft": "Nuestro POV: Spiegel acaba de decir lo que Growth4U lleva dos anios haciendo sin publicitarlo. Distribution no es un canal. Es un moat. La pregunta no es cuanto creces. Es cuanto tiempo puedes mantener ese crecimiento sin que un competidor lo copie. En Growth4U tenemos tres activos de distribucion que no se replican en 6 meses: la newsletter propia, la visibilidad GEO en Gemini, y las conexiones de prensa sectorial. Eso no es estrategia de contenido. Es infraestructura de confianza. Si solo estas invirtiendo en canales que puedes apagar con un presupuesto, no tienes un moat. Tienes un alquiler. Frame: distribution-as-moat-not-channel.",
+    "pov_confidence": 0.91,
+    "source_signals": [
+      "signal-003"
+    ],
+    "pov_ref": "P2 core_belief: alquilar atencion vs construir activos. Preferred angles: proof + framework + GEO.",
+    "created_at": "2026-04-28T05:56:10.034931Z",
+    "status": "New",
+    "dispatch_date": "2026-05-04",
+    "dispatch_slot": "linkedin-content-generation",
+    "project_task_id": "P-Content-Semana-19-T01",
+    "project_id": "P-Content-Semana-19"
+  },
+  {
+    "id": "idea-2026-05-01-1",
+    "title": "Growth ya no es optimización de funnel — es un problema de confianza",
+    "pillar_id": "P1",
+    "content_type": "Hot Take",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Elena Verna argumenta que el growth ya no es un problema de optimización de funnel sino un problema de confianza. Cita que Lovable alcanzó $350-400M ARR en poco más de un año sin paid ads, SEO ni playbooks convencionales. Su tesis central: cuando cualquiera puede construir software similar, la confianza es el único moat real. Propone que la marca es un 'product job', no una función de marketing — cada interacción construye o destruye confianza. El formato es ensayo largo tipo thesis con datos de Lovable como case study. Abre con la provocación de que paid ads son una 'death trap' para startups AI-native, lo que genera debate inmediato.",
+      "source": "Elena Verna",
+      "url": "https://www.elenaverna.com/p/growth-is-now-a-trust-problem",
+      "date": "2026-04-28"
+    },
+    "signal_type": [
+      "contrarian",
+      "aha-moment"
+    ],
+    "angle_draft": "Lovable alcanzó $350-400M ARR sin paid ads, SEO ni playbooks convencionales. La tesis de Elena Verna es clara: cuando cualquiera puede construir software similar, la confianza es el único moat real. Nosotros llevamos dos años instalando exactamente eso — Trust Engine no optimiza tu funnel, construye el sistema de confianza que opera sin ti. Si tu modelo de crecimiento depende de un canal pagado, no es un motor. Es respiración asistida con fecha de caducidad. Frame: 'trust-as-growth-system'.",
+    "pov_confidence": 0.8,
+    "source_signals": [
+      "sig-20260501-001",
+      "sig-20260501-003"
+    ],
+    "created_at": "2026-05-01T06:42:00Z",
+    "status": "New",
+    "dispatch_date": "2026-05-05",
+    "dispatch_slot": "linkedin-content-generation",
+    "project_task_id": "P-Content-Semana-19-T02",
+    "project_id": "P-Content-Semana-19"
+  },
+  {
+    "id": "idea-2026-05-01-2",
+    "title": "Ghost citations: la IA usa tu contenido sin darte crédito ni clicks",
+    "pillar_id": "P2",
+    "content_type": "Hot Take",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "ARC Intermedia publica roundup de abril 2026 sobre 'ghost citations': las IAs usan contenido de marcas sin dar crédito explícito ni generar clics directos. Los usuarios luego cross-referencian con búsqueda tradicional. Métricas tradicionales de atribución fallan.",
+      "source": "ARC Intermedia",
+      "url": "https://www.arcintermedia.com/shoptalk/organic-ai-visibility-news-april-2026-roundup/",
+      "date": "2026-04-28"
+    },
+    "signal_type": [
+      "contrarian",
+      "aha-moment"
+    ],
+    "angle_draft": "ARC Intermedia acaba de documentar las 'ghost citations': las IAs usan tu contenido como fuente sin darte crédito ni generar un solo click. Tu Google Analytics dice cero, pero la IA está entrenando a tu próximo buyer con TU información. Esto rompe toda atribución tradicional. Nosotros lo sabemos porque somos #1-2 en Gemini para queries fintech España — y nuestro contenido se cita sin link. La métrica no es CTR. Es VOI (Value of Impression). Si tu dashboard no lo mide, estás volando a ciegas en 2026. Frame: 'ghost-citations-break-attribution'.",
+    "pov_confidence": 0.7,
+    "source_signals": [
+      "news-2026-05-01-P2-003"
+    ],
+    "created_at": "2026-05-01T06:42:00Z",
+    "status": "New",
+    "dispatch_date": "2026-05-04",
+    "dispatch_slot": "linkedin-content-generation",
+    "project_task_id": "P-Content-Semana-19-T01",
+    "project_id": "P-Content-Semana-19"
+  },
+  {
+    "id": "idea-2026-05-01-3",
+    "title": "Europa quiere registrar finfluencers en ESMA — tu playbook de influencers acaba de romperse",
+    "pillar_id": "P3",
+    "content_type": "Deep-dive",
+    "target_channel": "newsletter",
+    "signal": {
+      "summary": "El Parlamento Europeo propone que los 'finfluencers' se registren con ESMA y que las firmas financieras sean responsables de las afirmaciones de los influencers que contratan. Esto cambia radicalmente el playbook de influencer marketing en fintech.",
+      "source": "EU Perspectives",
+      "url": "https://euperspectives.eu/2026/03/brussels-curb-financial-advertising-as-entertainment/",
+      "date": "2026-04-29"
+    },
+    "signal_type": [
+      "contrarian",
+      "system"
+    ],
+    "angle_draft": "El Parlamento Europeo propone que finfluencers se registren con ESMA y que las firmas sean responsables de sus claims. Esto no es un matiz regulatorio — es el fin del influencer marketing 'easy mode' en fintech. Quien tiene el playbook de compliance integrado en su proceso de influencer marketing puede seguir escalando. Quien contrata creadores sin governance regulatoria se expone a multas y a responsabilidad directa. En Bnext construimos procesos de marketing con supervisión CNMV real. La regulación separa a los que saben jugar con las reglas de los que pagan la multa. Frame: 'compliance-as-moat, influencer-edition'.",
+    "pov_confidence": 0.8,
+    "source_signals": [
+      "news-2026-05-01-P3-003"
+    ],
+    "created_at": "2026-05-01T06:42:00Z",
+    "status": "Approved",
+    "dispatch_date": "2026-05-05",
+    "dispatch_slot": "linkedin-content-generation",
+    "project_task_id": "P-Content-Semana-18-T02",
+    "project_id": "P-Content-Semana-18",
+    "approved_at": "2026-05-05T17:15:11.079Z",
+    "approved_via": "mc-ui",
+    "content_task_id": "P-Content-Semana-18-T02-C01",
+    "content_task_channels": [
+      "newsletter"
+    ]
+  },
+  {
+    "id": "idea-2026-05-01-4",
+    "title": "Forrester: el 87% de profesionales de agencia admite que su modelo está roto",
+    "pillar_id": "P4",
+    "content_type": "Proof Post",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Forrester publica predicciones: 87% de profesionales de agencia (92% de seniors) creen que el modelo tradicional está roto o lo estará en 3-5 años. Prevén 15% de recorte de empleos en agencias en 2026 (tras 8% en 2025). 33% de billings vendrán de principal media.",
+      "source": "Forrester / The Drum / AdNews",
+      "url": "https://www.forrester.com/blogs/predictions-2026-marketing-agencies-resign-their-agency/",
+      "date": "2026-04-25"
+    },
+    "signal_type": [
+      "metric",
+      "conflict"
+    ],
+    "angle_draft": "Forrester acaba de publicar el dato que cierra el debate: el 87% de profesionales de agencia (92% de seniors) reconocen que su modelo está roto o lo estará en 3-5 años. Prevén 15% de recorte de empleos en 2026. No lo dicen los clientes frustrados — lo dicen ellos mismos. Mientras tanto, Hormozi genera más engagement en LinkedIn con texto plano (76.2% de sus posts) que la mayoría de agencias con carruseles. El secreto no es el formato. Es tener algo que decir y skin in the game al decirlo. Frame: 'agency-model-self-destruction'.",
+    "pov_confidence": 0.9,
+    "source_signals": [
+      "news-2026-05-01-P4-001",
+      "sig-20260501-005"
+    ],
+    "created_at": "2026-05-01T06:42:00Z",
+    "status": "New",
+    "dispatch_date": "2026-05-05",
+    "dispatch_slot": "linkedin-content-generation",
+    "project_task_id": "P-Content-Semana-19-T02",
+    "project_id": "P-Content-Semana-19"
+  },
+  {
+    "id": "idea-2026-05-01-5",
+    "title": "El 40% de apps tendrán agentes IA — pero el 40% de proyectos morirá antes de 2027",
+    "pillar_id": "P5",
+    "content_type": "Hot Take",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Gartner proyecta que el 40% de aplicaciones enterprise tendrán agentes IA task-specific para fin de 2026, subiendo desde <5% en 2025. Pero simultáneamente predice que >40% de proyectos de agentic AI serán cancelados antes de 2027 — no por la tecnología, sino por falta de estrategia, governance y 'agent washing' (vendors renombrando chatbots como agentes).",
+      "source": "Gartner Newsroom / Search Engine Land",
+      "url": "https://www.gartner.com/en/newsroom/press-releases/2025-08-26-gartner-predicts-40-percent-of-enterprise-apps-will-feature-task-specific-ai-agents-by-2026-up-from-less-than-5-percent-in-2025",
+      "date": "2026-04-30"
+    },
+    "signal_type": [
+      "milestone",
+      "aha-moment",
+      "contrarian"
+    ],
+    "angle_draft": "Gartner proyecta que el 40% de apps enterprise tendrán agentes IA para fin de 2026. Pero simultáneamente predice que >40% de proyectos de agentic AI serán cancelados antes de 2027. La razón no es la tecnología — es 'agent washing': vendors renombrando chatbots como agentes. La brecha entre tener IA y operar con IA sigue intacta. BCG lo demostró: 6 analistas/semana → 1 persona + agente en <1 hora. Eso es ejecución real, no un slide de producto. Si tu proveedor no puede enseñarte sus agentes en producción, te está vendiendo washing. Frame: 'agent-washing-is-the-new-greenwashing'.",
+    "pov_confidence": 0.8,
+    "source_signals": [
+      "news-2026-05-01-P5-001",
+      "news-2026-05-01-P5-002"
+    ],
+    "created_at": "2026-05-01T06:42:00Z",
+    "status": "Approved",
+    "dispatch_date": "2026-05-01",
+    "dispatch_slot": "linkedin-content-generation",
+    "project_task_id": "P-Content-Semana-18-T05",
+    "project_id": "P-Content-Semana-18",
+    "approved_at": "2026-05-01T13:07:53.197Z",
+    "approved_via": "mc-ui",
+    "content_task_id": "P-Content-Semana-18-T05-C02",
+    "content_task_channels": [
+      "linkedin",
+      "twitter"
+    ]
+  },
+  {
+    "id": "idea-2026-05-01-6",
+    "title": "CAC payback en B2B SaaS ya roza los 18 meses — PLG lo hace en 6",
+    "pillar_id": "P1",
+    "content_type": "Listicle",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Múltiples reportes de abril 2026 confirman que el CAC payback mediano en B2B SaaS se ha estirado a 15-18 meses, con costes de adquisición subiendo 40-60% desde 2023. Las empresas PLG mantienen payback de 6-12 meses vs 18-24 meses en enterprise.",
+      "source": "GSquared CFO / Data-Mania / Proven SaaS",
+      "url": "https://www.gsquaredcfo.com/blog/saas-benchmarks-2026",
+      "date": "2026-04-28"
+    },
+    "signal_type": [
+      "metric",
+      "aha-moment"
+    ],
+    "angle_draft": "El CAC payback mediano en B2B SaaS se ha estirado a 15-18 meses con costes de adquisición subiendo 40-60% desde 2023. Pero las empresas PLG mantienen payback de 6-12 meses. La diferencia no es el producto — es el sistema. Si tu único motor es paid y tu payback supera 12 meses, no tienes un problema de presupuesto. Tienes un cuello de botella de sistema que más dinero no va a resolver. En Bnext bajamos CAC de 50€ a 12,40€ con un sistema, no con más budget. El diagnóstico del cuello de botella es siempre el primer paso. Frame: 'diagnose-before-scale'.",
+    "pov_confidence": 0.8,
+    "source_signals": [
+      "news-2026-05-01-P1-001"
+    ],
+    "created_at": "2026-05-01T06:42:00Z",
+    "status": "New",
+    "dispatch_date": "2026-05-05",
+    "dispatch_slot": "linkedin-content-generation",
+    "project_task_id": "P-Content-Semana-19-T02",
+    "project_id": "P-Content-Semana-19"
+  },
+  {
+    "id": "idea-2026-05-01-7",
+    "title": "Rob Walling: la IA no resuelve churn — lo acelera",
+    "pillar_id": "P5",
+    "content_type": "Hot Take",
+    "target_channel": "twitter",
+    "signal": {
+      "summary": "Walling presenta 9 'verdades incómodas' para founders SaaS en 2026. Highlights: (1) tener audiencia en redes 'hace muy poco' para vender SaaS salvo que sea exactamente tu ICP — mejor construir network que audiencia; (2) el churn es una batalla constante que erosiona momentum; (3) horizontal SaaS bootstrapped sufrirá 'headwinds masivos' porque capital VC + AI están saturando esos mercados; (4) AI no está resolviendo churn — lo está acelerando, con retention rates menores en productos AI-native vs SaaS tradicional. Aconseja nichar en vertical o 'orthogonal SaaS'. Formato: video largo con listicle numerado.",
+      "source": "Rob Walling",
+      "url": "https://www.startupsfortherestofus.com/episodes/episode-813-saas-predictions-for-2026-reflections-on-2025",
+      "date": "2026-04-25"
+    },
+    "signal_type": [
+      "contrarian",
+      "metric"
+    ],
+    "angle_draft": "Rob Walling, inversor en 230+ startups, presenta un dato que nadie quiere oír: los productos AI-native tienen gross retention rates significativamente más bajos que el SaaS tradicional. La IA hace más fácil construir, lo que significa más competencia y más switching. La IA sin sistema de retención es gasolina sin motor — más rápido al mismo sitio: ninguno. El problema no es la tecnología. Es que la mayoría opera con IA como tool, no como sistema. Quien tiene el sistema de growth instalado primero, retiene después. Frame: 'ai-amplifies-your-gaps'.",
+    "pov_confidence": 0.8,
+    "source_signals": [
+      "sig-20260501-012",
+      "sig-20260501-007"
+    ],
+    "created_at": "2026-05-01T06:42:00Z",
+    "status": "New",
+    "dispatch_date": "2026-05-05",
+    "dispatch_slot": "linkedin-content-generation",
+    "project_task_id": "P-Content-Semana-19-T02",
+    "project_id": "P-Content-Semana-19"
+  },
+  {
+    "id": "idea-2026-05-06-1",
+    "title": "AI Overviews ya aparecen en el 48% de búsquedas Google — el zero-click llega al 83%",
+    "pillar_id": "P2",
+    "content_type": "Hot Take",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Los AI Overviews de Google aparecen en el 48% de todas las búsquedas, un aumento del 58% interanual. Cuando están presentes, el CTR orgánico cae entre un 34% y un 61%. La tasa de zero-click para queries con AI Overview alcanza el 80-83%. En Google AI Mode, el 93% de sesiones terminan sin un solo click. El 60% de las búsquedas tradicionales en Google terminan sin click a ninguna web.",
+      "source": "Digital Applied / TheStacc",
+      "url": "https://www.digitalapplied.com/blog/seo-after-ai-overviews-complete-strategy-guide-2026",
+      "date": "2026-05-01"
+    },
+    "signal_type": [
+      "data-point",
+      "milestone"
+    ],
+    "angle_draft": "El 48% de las búsquedas en Google ya muestra AI Overviews. El CTR orgánico cae hasta un 61% cuando aparecen. El 93% de sesiones en AI Mode terminan sin click. Si tu estrategia de adquisición depende de tráfico orgánico de Google, estás construyendo sobre arena que se hunde cada trimestre. Nosotros dejamos de perseguir rankings hace 18 meses y construimos activos que los LLMs citan directamente — case studies con datos reales que funcionan como citation magnets. La distribución ya cambió. Tu medición no. Frame: 'zero-click-acceleration'.",
+    "pov_confidence": 0.92,
+    "source_signals": [
+      "news-2026-05-06-001"
+    ],
+    "created_at": "2026-05-06T05:00:00Z",
+    "status": "New",
+    "dispatch_date": "2026-05-06",
+    "dispatch_slot": "linkedin",
+    "project_task_id": "P-Content-Semana-19-T03",
+    "project_id": "P-Content-Semana-19"
+  },
+  {
+    "id": "idea-2026-05-06-2",
+    "title": "El tráfico referido por ChatGPT convierte 4.4x más que Google — y nadie lo está midiendo",
+    "pillar_id": "P2",
+    "content_type": "Proof Post",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Visitantes referidos por AI chatbots convierten 4.4 veces más que el tráfico orgánico estándar de Google. El tráfico de ChatGPT convierte entre 8.6% y 15.9% frente al 1.76-2.1% de Google orgánico. Perplexity envía entre 8 y 20 usuarios por cada 100 apariciones como fuente citada; ChatGPT envía entre 2 y 8. Las marcas son 6.5 veces más propensas a ser citadas por fuentes de terceros que por su propia web.",
+      "source": "First Page Sage / Seer Interactive",
+      "url": "https://firstpagesage.com/seo-blog/chatgpt-conversion-rates/",
+      "date": "2026-04-30"
+    },
+    "signal_type": [
+      "data-point",
+      "aha-moment"
+    ],
+    "angle_draft": "ChatGPT convierte al 8.6-15.9%. Google orgánico al 1.76-2.1%. Eso es 4.4x más. Y la mayoría de dashboards de marketing ni siquiera rastrean tráfico de IA como canal separado. Las marcas con case studies y datos originales son 6.5x más citadas por LLMs que las que publican contenido genérico. En Growth4U somos #1-2 en Gemini para queries fintech España con 20 artículos. La distribución ya cambió. Tu medición no. Frame: 'measure-what-matters'.",
+    "pov_confidence": 0.85,
+    "source_signals": [
+      "news-2026-05-06-002"
+    ],
+    "created_at": "2026-05-06T05:00:00Z",
+    "status": "Approved",
+    "approved_at": "2026-05-06T13:24:31.962Z",
+    "approved_via": "slack-button",
+    "approved_by": "alfonso",
+    "project_task_id": "P-Content-Semana-19-T03",
+    "project_id": "P-Content-Semana-19",
+    "content_task_id": "P-Content-Semana-19-T03-C02",
+    "content_task_channels": [
+      "linkedin",
+      "twitter"
+    ],
+    "dispatch_date": "2026-05-06",
+    "dispatch_slot": "linkedin"
+  },
+  {
+    "id": "idea-2026-05-06-3",
+    "title": "Basis 2026: el 87% de profesionales de agencia admite que su modelo está roto",
+    "pillar_id": "P4",
+    "content_type": "Proof Post",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "El Basis 2026 Advertising Agency Report encuestó a más de 200 profesionales de agencias. El 87% cree que el modelo tradicional de agencia está roto o lo estará en 3-5 años. Entre senior decision-makers, la cifra sube al 92%. El 54% reporta relaciones con clientes más tensas por expectativas más altas, timelines comprimidos y mayor escrutinio. El 70% encuentra su trabajo más difícil que hace 2 años. El 44% cita procesos ineficientes y el 40% sistemas desconectados. Más de un tercio gestiona 10+ herramientas, el doble que hace 2 años.",
+      "source": "Basis Technologies",
+      "url": "https://basis.com/reports/2026-advertising-agency-report",
+      "date": "2026-04-20"
+    },
+    "signal_type": [
+      "data-point",
+      "conflict",
+      "aha-moment"
+    ],
+    "angle_draft": "Ya no lo dicen solo los clientes frustrados. Lo dicen ellos mismos. El 87% de profesionales de agencia admite que su modelo está roto. El 92% de seniors. El 70% dice que su trabajo es más difícil. La IA comprimió los timelines pero las agencias siguen cobrando por horas. Más herramientas (10+ de media), no mejor resultado. El modelo de retainer infinito no murió por el mercado. Murió por ineficiencia estructural que ya no se puede esconder. Frame: 'the-insiders-said-it'.",
+    "pov_confidence": 0.92,
+    "source_signals": [
+      "news-2026-05-06-003"
+    ],
+    "created_at": "2026-05-06T05:00:00Z",
+    "status": "New",
+    "dispatch_date": "2026-05-06",
+    "dispatch_slot": "linkedin",
+    "project_task_id": "P-Content-Semana-19-T03",
+    "project_id": "P-Content-Semana-19"
+  },
+  {
+    "id": "idea-2026-05-06-4",
+    "title": "La CNMV deroga la Circular 1/2022 — MiCA absorbe la regulación nacional de publicidad crypto",
+    "pillar_id": "P3",
+    "content_type": "Framework",
+    "target_channel": "newsletter",
+    "signal": {
+      "summary": "La CNMV derogó oficialmente la Circular 1/2022 el 28 de diciembre de 2024 mediante la Circular 1/2024. El requisito de notificación previa para campañas masivas de más de 100.000 personas queda eliminado a nivel nacional. MiCA proporciona ahora el marco armonizado para toda la UE. Las comunicaciones de marketing crypto deben ser justas, claras y no engañosas bajo MiCA. Las directrices ESMA sobre conocimiento y competencia del personal crypto serán aplicables desde el 28 de julio de 2026. Google solo permite anuncios crypto de CASPs autorizados bajo MiCA en la UE desde abril 2025.",
+      "source": "TrustCloud / CMS Law",
+      "url": "https://trustcloud.tech/blog/cnmv-adapts-mica-changes-cryptocurrency-advertising-regulation-spain/",
+      "date": "2026-04-25"
+    },
+    "signal_type": [
+      "milestone",
+      "system"
+    ],
+    "angle_draft": "La CNMV ha derogado la Circular 1/2022. El requisito de notificación previa 10 días antes para campañas de +100K personas ya no existe a nivel nacional. Ahora MiCA es el marco único para toda la UE. Pero esto no es una relajación — es una consolidación. Las reglas de marketing crypto siguen siendo estrictas: claras, no engañosas, consistentes con el white paper. Quien entiende este nuevo mapa regulatorio tiene ventaja sobre quien sigue operando con las reglas de 2022. Frame: 'regulatory-map-reset'.",
+    "pov_confidence": 0.88,
+    "source_signals": [
+      "news-2026-05-06-004"
+    ],
+    "created_at": "2026-05-06T05:00:00Z",
+    "status": "New"
+  },
+  {
+    "id": "idea-2026-05-06-5",
+    "title": "El 88% de agentes IA nunca llega a producción — el chasm que nadie quiere admitir",
+    "pillar_id": "P5",
+    "content_type": "Hot Take",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Datos de IDC muestran que el 88% de los agentes de IA nunca llegan a producción tras la fase piloto. De cada 33 pruebas de concepto de IA lanzadas, solo 4 llegan a producción. Gartner predice que el 60% de proyectos de IA serán abandonados en 2026 por falta de datos AI-ready. Las principales causas de fallo no son técnicas: falta de alineación con el negocio, datos fragmentados, infraestructura limitada, governance insuficiente y resistencia organizativa al cambio.",
+      "source": "IDC / HyperSense Software / Digital Applied",
+      "url": "https://hypersense-software.com/blog/2026/01/12/why-88-percent-ai-agents-fail-production/",
+      "date": "2026-04-28"
+    },
+    "signal_type": [
+      "data-point",
+      "contrarian",
+      "cautionary-tale"
+    ],
+    "angle_draft": "El 88% de agentes IA nunca llega a producción. De cada 33 POCs, solo 4 sobreviven. Y el motivo no es la tecnología — es que las organizaciones despliegan agentes sin estrategia, sin datos limpios y sin governance. Es exactamente lo que llevamos diciendo: la diferencia entre usar IA y operar con IA no es el modelo — es el sistema. SanchoCMO opera en producción real para clientes reales, no es una demo. Nosotros somos del 12%. El 88% restante sigue comprando herramientas sin sistema. Frame: 'production-or-powerpoint'.",
+    "pov_confidence": 0.9,
+    "source_signals": [
+      "news-2026-05-06-005"
+    ],
+    "created_at": "2026-05-06T05:00:00Z",
+    "status": "New",
+    "dispatch_date": "2026-05-06",
+    "dispatch_slot": "linkedin",
+    "project_task_id": "P-Content-Semana-19-T03",
+    "project_id": "P-Content-Semana-19"
+  },
+  {
+    "id": "idea-2026-05-06-6",
+    "title": "Elena Verna: cada empleado debería ser un content creator — y tu empresa debería pagarlo",
+    "pillar_id": "P2",
+    "content_type": "Hot Take",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Elena Verna argumenta que en Lovable cada empleado publica en redes como parte de su trabajo — no es opcional, es estrategia de crecimiento. Su tesis: el personal branding de empleados supera al del founder como canal de distribución escalable. La empresa debería invertir en la presencia social de sus empleados como canal de marketing. Las audiencias confían más en individuos que en cuentas corporativas. Verna dice que el miedo a que los empleados sean cazados por competidores es un síntoma de problemas culturales, no un riesgo real.",
+      "source": "Elena Verna",
+      "source_type": "reference-creator",
+      "platform": "newsletter",
+      "url": "https://www.elenaverna.com/p/its-time-to-start-your-content-creator",
+      "engagement": {
+        "likes": 246,
+        "comments": 25,
+        "shares": 22
+      },
+      "date": "2026-01-23"
+    },
+    "signal_type": [
+      "contrarian",
+      "framework"
+    ],
+    "angle_draft": "Elena Verna lo hace en Lovable: cada empleado publica en redes como parte de su trabajo. No es un perk. Es distribución. Su tesis: el personal branding de empleados escala mejor que el del founder. Las audiencias confían más en personas que en logos. Nosotros llevamos un año con Alfonso como cara visible — y funciona. Pero Verna tiene razón en que el siguiente nivel es multiplicar eso con el equipo. Si tu estrategia de contenido depende de una sola persona, no es un sistema. Es un cuello de botella con nombre propio. Frame: 'employee-advocacy-as-distribution-system'.",
+    "pov_confidence": 0.82,
+    "source_signals": [
+      "creators-2026-05-06-ev01"
+    ],
+    "created_at": "2026-05-06T05:10:00Z",
+    "status": "New"
+  },
+  {
+    "id": "idea-2026-05-06-7",
+    "title": "Lenny/Notion: en la era IA, lo que importa no son tus skills — es tu agencia",
+    "pillar_id": "P5",
+    "content_type": "Hot Take",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Max Schoening (Head of Product, Notion) argumenta en Lenny's Podcast que en la era IA lo que separa a quienes prosperan de quienes se quedan atrás no son las skills técnicas sino la agencia personal — la capacidad de actuar, decidir y ejecutar sin esperar instrucciones. Notion consiguió que diseñadores y PMs programen en terminal y lancen productos IA con mentalidad 'drive it like it's stolen'. El primer 10% de cualquier proyecto ahora es gratis gracias a IA — pero ejecutar el 90% restante requiere agencia humana, no prompts.",
+      "source": "Lenny Rachitsky / Max Schoening (Notion)",
+      "source_type": "reference-creator",
+      "platform": "newsletter",
+      "url": "https://www.lennysnewsletter.com/p/why-cultivating-agency-matters-more",
+      "engagement": {
+        "likes": 93,
+        "comments": 6,
+        "shares": 0
+      },
+      "date": "2026-05-03"
+    },
+    "signal_type": [
+      "contrarian",
+      "framework",
+      "aha-moment"
+    ],
+    "angle_draft": "Max Schoening de Notion lo dice claro en Lenny's Podcast: en la era IA, tus skills importan menos que tu agencia — la capacidad de actuar sin esperar instrucciones. El primer 10% de cualquier proyecto ahora es gratis gracias a IA. Pero el 90% restante requiere humanos que decidan, ejecuten y se responsabilicen. Esto es exactamente lo que vemos con SanchoCMO: los agentes hacen el trabajo estructural, pero sin un humano con agencia que orqueste, el output es genérico. La IA no sustituye la iniciativa. La amplifica. O la desnuda. Frame: 'agency-beats-skills'.",
+    "pov_confidence": 0.85,
+    "source_signals": [
+      "creators-2026-05-06-lr01"
+    ],
+    "created_at": "2026-05-06T05:10:00Z",
+    "status": "Approved",
+    "approved_at": "2026-05-06T13:23:27.032Z",
+    "approved_via": "slack-button",
+    "approved_by": "alfonso",
+    "project_task_id": "P-Content-Semana-19-T03",
+    "project_id": "P-Content-Semana-19",
+    "content_task_id": "P-Content-Semana-19-T03-C01",
+    "content_task_channels": [
+      "linkedin",
+      "twitter"
+    ],
+    "dispatch_date": "2026-05-06",
+    "dispatch_slot": "linkedin"
+  },
+  {
+    "id": "idea-2026-05-06-8",
+    "title": "Los playbooks freemium de SaaS no funcionan en IA — y la mayoría sigue usándolos",
+    "pillar_id": "P1",
+    "content_type": "Framework",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Vikas Kansal en Lenny's Newsletter argumenta que los playbooks freemium tradicionales de SaaS no funcionan para productos IA. Los costes marginales de servir usuarios freemium en IA son significativamente más altos (compute de modelos), los margins son 25-60% vs 80-90% del SaaS tradicional, y las métricas de activación y retención se comportan diferente. Propone modelos de monetización alternativos específicos para productos AI-native.",
+      "source": "Lenny Rachitsky / Vikas Kansal",
+      "source_type": "reference-creator",
+      "platform": "newsletter",
+      "url": "https://www.lennysnewsletter.com/",
+      "engagement": {
+        "likes": 0,
+        "comments": 0,
+        "shares": 0
+      },
+      "date": "2026-05-05"
+    },
+    "signal_type": [
+      "contrarian",
+      "framework"
+    ],
+    "angle_draft": "Los playbooks freemium que escalaron SaaS durante una década no funcionan en IA. El motivo es estructural: cada usuario freemium en un producto AI-native consume compute real. Margins de 25-60% frente al 80-90% del SaaS tradicional. Si aplicas el playbook de 2020 a un producto de 2026, vas a quemar caja sin darte cuenta. Esto conecta con lo que vemos: las startups AI-first necesitan un sistema de growth diferente. No más presupuesto. Un motor con unit economics que funcionen desde el día uno. Frame: 'new-economics-need-new-systems'.",
+    "pov_confidence": 0.8,
+    "source_signals": [
+      "creators-2026-05-06-lr02"
+    ],
+    "created_at": "2026-05-06T05:10:00Z",
+    "status": "New"
+  },
+  {
+    "id": "idea-2026-05-06-9",
+    "title": "Amanda Natividad: no es un problema de content marketing — es un problema de negocio",
+    "pillar_id": "P2",
+    "content_type": "Personal Story",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Amanda Natividad publica que el debate entre 'content marketing' y 'growth marketing' es falso en un mundo zero-click. Tras un debate con Matt Lerner (SYSTM), concluye que ambos están convergiendo: en 2026, el contenido no solo debe generar visitas — debe crear comprensión, confianza, recuerdo y demanda directamente en el feed, sin necesidad de click. El contenido que no genera clicks pero genera understanding + trust + recall es más valioso que el que genera tráfico sin conversión.",
+      "source": "Amanda Natividad",
+      "source_type": "reference-creator",
+      "platform": "newsletter",
+      "url": "https://amandanat.substack.com/p/its-not-a-content-marketing-problem",
+      "engagement": {
+        "likes": 19,
+        "comments": 2,
+        "shares": 3
+      },
+      "date": "2026-04-28"
+    },
+    "signal_type": [
+      "aha-moment",
+      "framework"
+    ],
+    "angle_draft": "Amanda Natividad tuvo un debate con Matt Lerner (SYSTM) que resume el cambio de paradigma: ¿es content marketing o growth marketing? Respuesta: en 2026 da igual. El contenido ya no tiene como objetivo generar clicks. Tiene como objetivo generar comprensión, confianza y recuerdo directamente en el feed. El tráfico a tu web es un efecto secundario, no el KPI. Nosotros lo vivimos: somos #1-2 en Gemini para queries fintech España, pero la mayoría de ese impacto es zero-click. La métrica no es CTR. Es VOI. Frame: 'content-as-trust-not-traffic'.",
+    "pov_confidence": 0.83,
+    "source_signals": [
+      "creators-2026-05-06-an01"
+    ],
+    "created_at": "2026-05-06T05:10:00Z",
+    "status": "New"
+  },
+  {
+    "id": "idea-2026-05-06-10",
+    "title": "Rob Walling: la IA es buena en dev, mediocre en marketing y mala en producto",
+    "pillar_id": "P5",
+    "content_type": "Hot Take",
+    "target_channel": "twitter",
+    "signal": {
+      "summary": "Rob Walling en el episodio 829 de Startups for the Rest of Us analiza qué puede y qué no puede hacer la IA en cada función de una startup. Conclusión: la IA es fuerte en desarrollo (código, testing), mediocre en ventas y marketing (genera volumen pero no judgment), y particularmente mala en producto (no puede hacer las preguntas correctas, no entiende el contexto del usuario, no prioriza). La tesis: las startups que delegan producto a la IA van a fracasar más rápido, no más lento.",
+      "source": "Rob Walling",
+      "source_type": "reference-creator",
+      "platform": "blog",
+      "url": "https://www.startupsfortherestofus.com/episodes/episode-829-ai-is-bad-at-product-top-5-startup-success-factors-and-the-beastie-boys-a-rob-solo-adventure",
+      "engagement": {
+        "likes": 0,
+        "comments": 0,
+        "shares": 0
+      },
+      "date": "2026-04-21"
+    },
+    "signal_type": [
+      "contrarian",
+      "framework"
+    ],
+    "angle_draft": "Rob Walling acaba de mapear dónde la IA funciona y dónde no en una startup. Dev: fuerte. Marketing: mediocre — genera volumen sin judgment. Producto: mala — no hace las preguntas correctas. Esto confirma exactamente lo que operamos con SanchoCMO: los agentes ejecutan el 70% del trabajo estructural de marketing — research, drafts, scheduling — pero la estrategia, el POV y el producto los decide un humano. Quien delega todo a la IA, incluido el juicio, va a escalar mediocridad más rápido. Frame: 'ai-amplifies-judgment-or-lack-thereof'.",
+    "pov_confidence": 0.86,
+    "source_signals": [
+      "creators-2026-05-06-rw01"
+    ],
+    "created_at": "2026-05-06T05:10:00Z",
+    "status": "New"
+  },
+  {
+    "id": "idea-2026-05-06-11",
+    "title": "MicroConf 2026: solo hay 6 formas de implementar IA en SaaS — y la mayoría solo usa 1",
+    "pillar_id": "P5",
+    "content_type": "Listicle",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "En MicroConf US 2026, Rob Walling presentó un framework de 6 formas de implementar IA en SaaS. El episodio 830 recapitula el evento. La tesis: la mayoría de startups solo usa IA de una forma (generación de contenido o chatbots), pero las 6 incluyen automatización de workflows, análisis predictivo, personalización, generación, agentes autónomos y optimización interna. Las que implementan 3+ formas tienen ventaja competitiva estructural.",
+      "source": "Rob Walling / MicroConf US 2026",
+      "source_type": "reference-creator",
+      "platform": "blog",
+      "url": "https://www.startupsfortherestofus.com/",
+      "engagement": {
+        "likes": 0,
+        "comments": 0,
+        "shares": 0
+      },
+      "date": "2026-04-28"
+    },
+    "signal_type": [
+      "framework",
+      "aha-moment"
+    ],
+    "angle_draft": "Rob Walling presentó en MicroConf US 2026 un framework de 6 formas de implementar IA en SaaS. La mayoría solo usa una: generación de contenido o un chatbot. Pero las que implementan 3+ — automatización de workflows, análisis predictivo, personalización, agentes autónomos, optimización interna — tienen una ventaja que no se copia en un trimestre. En Growth4U implementamos 5 de las 6 con SanchoCMO: agentes que ejecutan, analytics, personalización de outreach, content engine y optimización operativa. No es un experimento. Es producción diaria. Frame: 'breadth-of-ai-implementation-as-moat'.",
+    "pov_confidence": 0.81,
+    "source_signals": [
+      "creators-2026-05-06-rw02"
+    ],
+    "created_at": "2026-05-06T05:10:00Z",
+    "status": "New"
+  },
+  {
+    "id": "idea-2026-05-06-12",
+    "title": "Hormozi genera más engagement con texto plano que el 90% de agencias con carruseles",
+    "pillar_id": "P4",
+    "content_type": "Proof Post",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Alex Hormozi genera el grueso de su engagement en LinkedIn con posts de texto plano (76.2% de sus publicaciones). Su estrategia 'organic-first advertising' consiste en validar ideas con contenido orgánico, identificar las que mejor funcionan, y solo entonces convertirlas en paid ads. Con 500K+ seguidores en LinkedIn, el 10% de su tráfico viene de la plataforma. Su tesis: el formato importa menos que tener algo que decir. Las agencias invierten en producción visual cuando el problema real es el mensaje.",
+      "source": "Alex Hormozi",
+      "source_type": "reference-creator",
+      "platform": "linkedin",
+      "url": "https://www.youtube.com/watch?v=EwxPSL_aAFY",
+      "engagement": {
+        "likes": 0,
+        "comments": 0,
+        "shares": 0
+      },
+      "date": "2026-05-01"
+    },
+    "signal_type": [
+      "proof-point",
+      "contrarian"
+    ],
+    "angle_draft": "Alex Hormozi tiene 500K+ seguidores en LinkedIn. El 76.2% de sus posts son texto plano. Sin carruseles. Sin diseño. Sin equipo de producción visual. Y genera más engagement que el 90% de las agencias que cobran por 'estrategia de contenido visual'. Su framework 'organic-first': publica orgánico, mide qué funciona, y solo entonces lo convierte en paid. Las agencias invierten en producción cuando el problema real es que no tienen nada que decir. El formato no salva un mensaje vacío. Un buen mensaje funciona hasta en texto plano. Frame: 'message-over-format'.",
+    "pov_confidence": 0.78,
+    "source_signals": [
+      "creators-2026-05-06-ah01"
+    ],
+    "created_at": "2026-05-06T05:10:00Z",
+    "status": "New"
+  },
+  {
+    "id": "idea-2026-05-06-13",
+    "title": "Ross Simmonds: en 2026, dedica el 80% al distribuir y el 20% al crear",
+    "pillar_id": "P2",
+    "content_type": "Framework",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Ross Simmonds (Foundation, Distribution.ai) argumenta que en un panorama saturado de contenido generado por IA, la ventaja competitiva ya no está en crear más contenido sino en distribuirlo mejor. Propone la regla 80/20 invertida: dedicar el 80% del esfuerzo a distribución y solo el 20% a creación. LinkedIn es ahora fuente #1 para LLMs en queries B2B. El contenido de LinkedIn aparece en AI Overviews, ChatGPT y Perplexity. Las marcas que repurposean 1 pieza en 30+ formatos ganan en omnipresencia.",
+      "source": "Ross Simmonds",
+      "source_type": "reference-creator",
+      "platform": "linkedin",
+      "url": "https://www.distribution.ai/blog/content-distribution",
+      "engagement": {
+        "likes": 0,
+        "comments": 0,
+        "shares": 0
+      },
+      "date": "2026-05-01"
+    },
+    "signal_type": [
+      "framework",
+      "aha-moment"
+    ],
+    "angle_draft": "Ross Simmonds lleva años diciendo 'create once, distribute forever'. Pero en 2026 la tesis se ha endurecido: con IA generando contenido a escala, la ventaja ya no es crear más. Es distribuir mejor. Regla 80/20 invertida: 80% distribución, 20% creación. LinkedIn es fuente #1 para LLMs en queries B2B. Cada post de LinkedIn es un activo de distribución que ChatGPT y Gemini pueden citar. Si publicas un artículo de blog y no lo repurposeas en 5+ formatos para 3+ plataformas, estás dejando el 80% del valor sobre la mesa. Frame: 'distribution-is-the-new-creation'.",
+    "pov_confidence": 0.8,
+    "source_signals": [
+      "creators-2026-05-06-rs01"
+    ],
+    "created_at": "2026-05-06T05:10:00Z",
+    "status": "New"
+  },
+  {
+    "id": "idea-2026-05-07-1",
+    "title": "AI-native SaaS retiene solo el 40% — el 'turista de IA' está matando ARR",
+    "pillar_id": "P1",
+    "content_type": "Hot Take",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "ChartMogul y Kyle Poyar analizaron 3.500 empresas de software y encontraron que las empresas AI-native tienen una gross revenue retention (GRR) mediana de solo 40%, frente al 82% de NRR del B2B SaaS tradicional. Los productos AI-native que cobran menos de 50 dólares al mes retienen solo el 23% de los usuarios. Los que cobran más de 250 dólares al mes alcanzan 70% GRR y 85% NRR, igualando al SaaS tradicional. Cassie Young de Primary Venture Partners predice un 'gross retention apocalypse' para startups AI-native.",
+      "source": "ChartMogul / Kyle Poyar",
+      "url": "https://chartmogul.com/reports/saas-retention-the-ai-churn-wave/",
+      "date": "2026-05-01"
+    },
+    "signal_type": [
+      "data-point",
+      "cautionary-tale",
+      "contrarian"
+    ],
+    "angle_draft": "ChartMogul analizó 3.500 empresas: las AI-native retienen solo el 40% de revenue. Las que cobran menos de 50$/mes retienen un miserable 23%. Es la maldición del AI wrapper: fácil de comprar, fácil de cancelar. Pero las que cobran más de 250$/mes igualan al SaaS tradicional (70% GRR). La diferencia no es la tecnología — es el sistema. Si tu modelo de crecimiento no distingue entre turistas de IA y usuarios serios, estás construyendo ARR de arena. Frame: 'retention-is-the-real-growth-metric'.",
+    "pov_confidence": 0.87,
+    "source_signals": [
+      "news-2026-05-07-001"
+    ],
+    "created_at": "2026-05-07T05:00:00Z",
+    "status": "Approved",
+    "approved_at": "2026-05-07T17:47:39.221Z",
+    "approved_via": "slack-button",
+    "approved_by": "alfonso",
+    "project_task_id": "P-Content-Semana-19-T04",
+    "project_id": "P-Content-Semana-19",
+    "content_task_id": "P-Content-Semana-19-T04-C03",
+    "content_task_channels": [
+      "linkedin",
+      "twitter"
+    ],
+    "dispatch_date": "2026-05-07",
+    "dispatch_slot": "linkedin"
+  },
+  {
+    "id": "idea-2026-05-07-2",
+    "title": "El 50% de buyers B2B ya empieza en un chatbot IA — un salto del 71% en 4 meses",
+    "pillar_id": "P2",
+    "content_type": "Hot Take",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "G2 encuestó a más de 1.000 compradores de software B2B y encontró que el 50% ya inicia su proceso de compra en un chatbot de IA en lugar de Google, un aumento del 71% respecto a la encuesta anterior de hace 4 meses. El 87% dice que los chatbots de IA están cambiando cómo investigan software. El 47% elige ChatGPT como su LLM preferido, aproximadamente 3 veces más que cualquier otro modelo. Los visitantes referidos por IA convierten 4.4 veces mejor que el tráfico orgánico tradicional según Semrush.",
+      "source": "G2 / Column Five Media / Semrush",
+      "url": "https://www.columnfivemedia.com/ai-search-visibility-stats-that-might-surprise-you-in-2026/",
+      "date": "2026-05-05"
+    },
+    "signal_type": [
+      "data-point",
+      "milestone",
+      "aha-moment"
+    ],
+    "angle_draft": "G2 acaba de confirmar el cambio: el 50% de buyers B2B ya empieza su proceso de compra en un chatbot de IA. Hace 4 meses era significativamente menos — un salto del 71%. Y estos visitantes convierten 4.4x mejor que Google orgánico. Si tu primera impresión como marca se forma en ChatGPT y no la controlas, estás perdiendo antes de competir. No se trata de estar en la IA. Se trata de que la IA te cite con datos verificables. Frame: 'first-impression-is-now-AI'.",
+    "pov_confidence": 0.92,
+    "source_signals": [
+      "news-2026-05-07-002"
+    ],
+    "created_at": "2026-05-07T05:00:00Z",
+    "status": "Approved",
+    "dispatch_date": "2026-05-07",
+    "dispatch_slot": "linkedin",
+    "project_task_id": "P-Content-Semana-19-T07",
+    "project_id": "P-Content-Semana-19",
+    "approved_at": "2026-05-10T07:02:06.268Z",
+    "approved_via": "mc-ui",
+    "content_task_id": "P-Content-Semana-19-T07-C02",
+    "content_task_channels": [
+      "linkedin",
+      "twitter"
+    ]
+  },
+  {
+    "id": "idea-2026-05-07-3",
+    "title": "Solo 182 licencias CASP en toda la UE a 55 días del deadline MiCA",
+    "pillar_id": "P3",
+    "content_type": "Hot Take",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "A fecha de abril de 2026, solo 182 licencias CASP han sido emitidas en toda la Unión Europea bajo MiCA, una fracción mínima del número estimado de VASPs que operaban en el mercado. El deadline de autorización completa es el 1 de julio de 2026. ESMA exige que los CASPs no autorizados tengan planes de wind-down operativos y creíbles para esa fecha. Las directrices de ESMA sobre conocimiento y competencia del personal crypto serán aplicables desde el 28 de julio de 2026.",
+      "source": "ESMA / Sumsub / WCR Legal",
+      "url": "https://wcr.legal/vasp-to-casp-mica-deadline-2026/",
+      "date": "2026-05-01"
+    },
+    "signal_type": [
+      "milestone",
+      "data-point",
+      "cautionary-tale"
+    ],
+    "angle_draft": "182 licencias CASP en toda la UE. A 55 días del deadline MiCA. Cientos de plataformas crypto van a tener que cesar operaciones o ejecutar planes de wind-down el 1 de julio. Quien tiene la autorización y el playbook de marketing compliance listo puede captar los clientes que migran de plataformas no autorizadas. Es una ventana competitiva de 2 meses que no se va a repetir. La regulación no frena el growth — elimina a la competencia que no sabe jugar con las reglas. Frame: 'mica-as-competitive-filter'.",
+    "pov_confidence": 0.9,
+    "source_signals": [
+      "news-2026-05-07-003"
+    ],
+    "created_at": "2026-05-07T05:00:00Z",
+    "status": "New",
+    "dispatch_date": "2026-05-07",
+    "dispatch_slot": "linkedin",
+    "project_task_id": "P-Content-Semana-19-T04",
+    "project_id": "P-Content-Semana-19"
+  },
+  {
+    "id": "idea-2026-05-07-4",
+    "title": "La IA rompió el vínculo entre tiempo y valor — y 47.000 puestos de agencia lo pagarán en 2026",
+    "pillar_id": "P4",
+    "content_type": "Hot Take",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "El informe Piscari Agency Reset 2026 argumenta que la IA ha roto el vínculo entre tiempo y valor en las agencias de marketing. Lo que antes requería 100 horas ahora se entrega en 40. Forrester predice la eliminación de 47.000 puestos de agencia en 2026, un 15% de reducción tras el 8% de 2025. El BenchPress 2025 de Wow Company registró la primera caída notable en tarifas por hora promedio de agencias. La escasez se ha desplazado de la ejecución al juicio estratégico.",
+      "source": "Piscari / Forrester / The Drum",
+      "url": "https://piscari.com/marketing-agency-reset-2026/",
+      "date": "2026-05-01"
+    },
+    "signal_type": [
+      "data-point",
+      "contrarian",
+      "milestone"
+    ],
+    "angle_draft": "Piscari lo resume en una frase: la IA rompió el vínculo entre tiempo y valor. Lo que antes costaba 100 horas ahora se hace en 40. Y Forrester predice 47.000 puestos de agencia eliminados en 2026. Pero la escasez no desapareció — se desplazó de la ejecución al juicio estratégico. Las agencias que siguen cobrando por horas están siendo benchmarkeadas contra máquinas. Las que cobran por juicio mantienen pricing power. Frame: 'judgment-is-the-new-scarcity'.",
+    "pov_confidence": 0.92,
+    "source_signals": [
+      "news-2026-05-07-004"
+    ],
+    "created_at": "2026-05-07T05:00:00Z",
+    "status": "Approved",
+    "approved_at": "2026-05-07T07:28:12.391Z",
+    "approved_via": "mc-ui",
+    "project_task_id": "P-Content-Semana-19-T04",
+    "project_id": "P-Content-Semana-19",
+    "content_task_id": "P-Content-Semana-19-T04-C02",
+    "content_task_channels": [
+      "linkedin",
+      "twitter"
+    ],
+    "dispatch_date": "2026-05-07",
+    "dispatch_slot": "linkedin"
+  },
+  {
+    "id": "idea-2026-05-07-5",
+    "title": "Abril 2026: Google, Infosys, Snowflake y OpenAI lanzan plataformas enterprise de agentes — el pilot ceiling se rompe",
+    "pillar_id": "P5",
+    "content_type": "Proof Post",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "En la última semana de abril de 2026, Google Cloud lanzó Gemini Enterprise Agent Platform (22 de abril en Google Cloud Next '26), Infosys anunció Topaz Fabric con ejecución basada en políticas y human-in-the-loop, Snowflake lanzó Intelligence y Cortex Code como control plane para agentes, y OpenAI presentó Workspace Agents. Estas plataformas proporcionan entornos unificados para construir, orquestar y gobernar agentes de IA a escala con herramientas de observabilidad, detección de anomalías y compliance integradas.",
+      "source": "FifthRow / Google Cloud Blog",
+      "url": "https://www.fifthrow.com/blog/agentic-ai-s-enterprise-tipping-point-how-april-2026-redefined-systematic-innovation-and-production-scale-adoption",
+      "date": "2026-04-28"
+    },
+    "signal_type": [
+      "milestone",
+      "aha-moment"
+    ],
+    "angle_draft": "En una sola semana de abril, Google, Infosys, Snowflake y OpenAI lanzaron plataformas enterprise para agentes IA. El pilot ceiling se rompió. Ya no es 'experimentar con IA'. Es 'operar con IA a escala con governance'. Pero el 88% de pilotos sigue sin llegar a producción. La plataforma no resuelve la falta de sistema. Quien ya opera agentes en producción real tiene una ventaja de 12-18 meses sobre quien empieza ahora con la plataforma nueva. Frame: 'platform-doesnt-replace-system'.",
+    "pov_confidence": 0.85,
+    "source_signals": [
+      "news-2026-05-07-005"
+    ],
+    "created_at": "2026-05-07T05:00:00Z",
+    "status": "Approved",
+    "approved_at": "2026-05-07T07:27:27.419Z",
+    "approved_via": "slack-button",
+    "approved_by": "alfonso",
+    "project_task_id": "P-Content-Semana-19-T04",
+    "project_id": "P-Content-Semana-19",
+    "content_task_id": "P-Content-Semana-19-T04-C01",
+    "content_task_channels": [
+      "linkedin",
+      "twitter"
+    ]
+  },
+  {
+    "id": "idea-2026-05-07-1-b",
+    "title": "El pricing es la palanca de growth que nadie toca",
+    "pillar_id": "P1",
+    "content_type": "Hot Take",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Elena Verna presentó en Stripe Sessions 2026 (6K+ asistentes) que la mayoría de empresas infrainvierten en monetización como palanca de growth. En Lovable, el pricing se trata como producto, no como policy — cambiaron pricing 10 veces en un año. Las empresas se obsesionan con adquisición, activación y retención mientras el pricing se queda intocable en una esquina. La monetización es una de las formas más poderosas de crear growth, mejorar experiencia de cliente y adaptarse a mercados.",
+      "source": "Elena Verna",
+      "source_type": "reference-creator",
+      "platform": "newsletter",
+      "url": "https://www.elenaverna.com/p/the-biggest-takeaway-from-my-stripe",
+      "engagement": {
+        "likes": 37,
+        "comments": 4,
+        "shares": 2
+      },
+      "date": "2026-05-05"
+    },
+    "signal_type": [
+      "framework",
+      "aha-moment"
+    ],
+    "angle_draft": "El pricing es la palanca de growth que nadie toca. Elena Verna cambió el pricing de Lovable 10 veces en un año. Mientras tanto, la mayoría de startups tiene su tabla de precios polvoriento en un Google Doc de 2023. En Trust Engine, el pricing es producto: €7,5K, fecha de entrada, fecha de salida. Transparencia radical como sistema, no como slogan. Si tu pricing no evoluciona con tu producto, no tienes un motor de growth — tienes un documento legal. Frame: 'Tu pricing es un museo o un laboratorio — y eso define tu crecimiento.'",
+    "pov_confidence": 0.85,
+    "source_signals": [
+      "creators-2026-05-07-ev01"
+    ],
+    "created_at": "2026-05-07T07:07:00+02:00",
+    "status": "New"
+  },
+  {
+    "id": "idea-2026-05-07-2-b",
+    "title": "El playbook freemium SaaS está muerto para productos IA",
+    "pillar_id": "P5",
+    "content_type": "Framework",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Vikas Kansal (Head of Product, Google AI) escribe en Lenny's Newsletter que el freemium SaaS tradicional — regalar lo básico, gatear lo avanzado — falla para productos IA. Márgenes del 20-40% en IA vs 80%+ en SaaS tradicional. Los usuarios necesitan experimentar una cantidad masiva de 'magia' para llegar al aha moment. Elena Verna llama al freemium IA 'la estrategia irracional más racional.' Pricing basado en outcomes gana tracción — Intercom Fin cobra por resolución.",
+      "source": "Vikas Kansal (Lenny's Newsletter)",
+      "source_type": "reference-creator",
+      "platform": "newsletter",
+      "url": "https://www.lennysnewsletter.com/p/why-saas-freemium-playbooks-dont",
+      "engagement": {
+        "likes": 256,
+        "comments": 3,
+        "shares": 7
+      },
+      "date": "2026-05-05"
+    },
+    "signal_type": [
+      "framework",
+      "contrarian",
+      "data-point"
+    ],
+    "angle_draft": "El playbook freemium SaaS está muerto para productos IA. Con márgenes del 20-40% (vs 80%+ en SaaS tradicional), regalar features básicas y gatear las avanzadas es suicidio financiero. La nueva regla: el usuario tiene que experimentar la 'magia' completa antes de decidir si paga. SanchoCMO opera así — ejecutamos growth real para Growth4U antes de ofrecerlo a clientes. El aha moment no es una demo, son resultados reales. Si tu modelo IA cobra por features en vez de por outcomes, estás vendiendo SaaS de 2019 con wrapper de IA. Frame: 'Tu modelo de pricing IA revela si realmente entiendes el valor que generas.'",
+    "pov_confidence": 0.82,
+    "source_signals": [
+      "creators-2026-05-07-vk01"
+    ],
+    "created_at": "2026-05-07T07:07:00+02:00",
+    "status": "New"
+  },
+  {
+    "id": "idea-2026-05-07-3-b",
+    "title": "Si tu buyer no sabe que tiene un problema, tu landing no convierte",
+    "pillar_id": "P1",
+    "content_type": "Framework",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Rob Walling (Episode 831, 5 mayo 2026) analiza cómo vender en mercados de baja conciencia donde los compradores no saben que tienen un problema. Debate si customer zero debe pagar o recibir el producto gratis, métricas para SaaS de transaction fee, y cuándo los freelancers ayudan vs perjudican un negocio bootstrapped. Insight clave: en mercados de baja conciencia, la landing page no puede vender porque el buyer no sabe que necesita lo que ofreces — la educación debe preceder a la venta.",
+      "source": "Rob Walling",
+      "source_type": "reference-creator",
+      "platform": "podcast",
+      "url": "https://www.startupsfortherestofus.com/episodes/episode-831-written-vs-verbal-ad-copy-selling-into-a-low-awareness-market-and-more-listener-questions-rob-solo",
+      "engagement": {
+        "likes": 0,
+        "comments": 0,
+        "shares": 0
+      },
+      "date": "2026-05-05"
+    },
+    "signal_type": [
+      "framework",
+      "aha-moment"
+    ],
+    "angle_draft": "Si tu buyer no sabe que tiene un problema, tu landing page no va a convertir. Rob Walling lo clava: en mercados de baja conciencia, el contenido educativo es tu primera venta — no tu producto. Esto es exactamente lo que hace Trust Engine Phase 1: antes de proponer solución, diagnosticamos dónde está el cuello de botella real. El 73% de startups tech no logra ventas recurrentes, y muchas ni siquiera saben que el problema es sistémico, no táctico. Frame: 'Si tu mercado no sabe que está roto, tu contenido tiene que diagnosticar antes de vender.'",
+    "pov_confidence": 0.78,
+    "source_signals": [
+      "creators-2026-05-07-rw01"
+    ],
+    "created_at": "2026-05-07T07:07:00+02:00",
+    "status": "New"
+  },
+  {
+    "id": "idea-2026-05-07-4-b",
+    "title": "Tu empresa no es una familia — es un equipo de campeonato",
+    "pillar_id": "P4",
+    "content_type": "Hot Take",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Ross Simmonds publicó 'Annual Planning in Spain' (6 mayo 2026) desde el offsite de Foundation en Málaga. Afirma que 'la metáfora de familia es una trampa' para empresas — las familias toleran disfunción, evitan conversaciones difíciles, mantienen a personas en roles que les quedan pequeños. Los equipos de campeonato tienen estándares altos y accountability real. Foundation nombrada Clutch 100 y Culture 100 en 2026. Foundation genera pipeline desde Reddit y aumenta visibilidad en LLMs para sus clientes.",
+      "source": "Ross Simmonds",
+      "source_type": "reference-creator",
+      "platform": "blog",
+      "url": "https://rosssimmonds.com/blog/annual-planning-2027/",
+      "engagement": {
+        "likes": 0,
+        "comments": 0,
+        "shares": 0
+      },
+      "date": "2026-05-06"
+    },
+    "signal_type": [
+      "contrarian",
+      "framework"
+    ],
+    "angle_draft": "'Tu empresa no es una familia — es un equipo de campeonato.' Ross Simmonds lo dice sin filtros: las familias toleran disfunción y evitan conversaciones difíciles. Esto aplica a la relación cliente-agencia: las que se posicionan como 'tu partner de confianza' sin exit date ni accountability real juegan al modelo familia. Trust Engine es equipo de campeonato: 6 meses, estándares claros, accountability medible, y una fecha de salida que obliga a transferir capacidad. Frame: 'Si tu agencia se define como familia, pregúntate cuándo fue la última vez que te dijeron una verdad incómoda.'",
+    "pov_confidence": 0.8,
+    "source_signals": [
+      "creators-2026-05-07-rs01"
+    ],
+    "created_at": "2026-05-07T07:07:00+02:00",
+    "status": "Approved",
+    "approved_at": "2026-05-08T13:00:05.984Z",
+    "approved_via": "mc-ui",
+    "project_task_id": "P-Content-Semana-19-T05",
+    "project_id": "P-Content-Semana-19",
+    "content_task_id": "P-Content-Semana-19-T05-C01",
+    "content_task_channels": [
+      "linkedin",
+      "twitter"
+    ]
+  },
+  {
+    "id": "idea-2026-05-07-5-b",
+    "title": "Lovable facturó $200M regalando su producto IA — el freemium como marketing",
+    "pillar_id": "P5",
+    "content_type": "Proof Post",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Elena Verna argumenta que el freemium IA es 'la estrategia irracional más racional' para 2026. Márgenes SaaS tradicional 80%+ vs IA freemium 20-40% hace que muchas empresas escondan IA detrás de paywalls. Pero Verna ve el freemium como gasto de marketing, no como centro de coste. Usuarios gratis encantados refieren amigos, postean en redes, evangelizan. Lovable alcanzó $200M+ ARR en su primer año con esta estrategia. Introduce el concepto 'Minimum Lovable Product' — los productos IA deben deleitar para generar word-of-mouth como motor principal de growth.",
+      "source": "Elena Verna",
+      "source_type": "reference-creator",
+      "platform": "newsletter",
+      "url": "https://www.elenaverna.com/p/why-ai-doesnt-mean-the-end-of-freemium",
+      "engagement": {
+        "likes": 0,
+        "comments": 0,
+        "shares": 0
+      },
+      "date": "2026-05-02"
+    },
+    "signal_type": [
+      "proof-point",
+      "contrarian",
+      "data-point"
+    ],
+    "angle_draft": "Lovable facturó $200M ARR en un año regalando su producto IA. Elena Verna lo llama 'la estrategia irracional más racional': los usuarios gratis encantados son tu mejor canal de adquisición — refieren, postean, evangelizan, sin coste de paid. Es el mismo principio que opera Growth4U: SanchoCMO ejecuta nuestro marketing con agentes IA, y eso es la prueba viviente que mostramos a clientes. Walk-the-talk como motor de confianza. Si tu producto IA esconde las mejores features detrás de un paywall, tu usuario nunca llega al aha moment. Frame: 'El freemium no es un coste — es tu mejor campaña de marketing.'",
+    "pov_confidence": 0.86,
+    "source_signals": [
+      "creators-2026-05-07-ev02"
+    ],
+    "created_at": "2026-05-07T07:07:00+02:00",
+    "status": "New"
+  },
+  {
+    "id": "idea-2026-05-07-6",
+    "title": "Product Hackers vende formación en IA — nosotros la ejecutamos",
+    "pillar_id": "P5",
+    "content_type": "Hot Take",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Product Hackers lanza 8ª edición de su Máster en Growth (inicio octubre 2026, 8 meses, online en directo). Posiciona 'AI Driven Growth' como vertical dentro del programa. Argumenta que el crecimiento ya no se resuelve con campañas sueltas sino que necesita visión transversal de producto, datos, tecnología y marketing. Problemas que plantea: ejecutar campañas sin saber si impactan, priorizar features sin impacto en ingresos, analizar datos que nadie aplica, tomar decisiones sin evidencias.",
+      "source": "Product Hackers",
+      "source_type": "competitor",
+      "platform": "blog",
+      "url": "https://go.producthackers.com/master-growth",
+      "engagement": {
+        "likes": 0,
+        "comments": 0,
+        "shares": 0
+      },
+      "date": "2026-05-01"
+    },
+    "signal_type": [
+      "milestone",
+      "framework"
+    ],
+    "angle_draft": "Product Hackers lanza un máster de 8 meses sobre growth con 'AI Driven Growth.' Suena bien en el folleto. Pero hay una diferencia entre enseñar growth con IA y ejecutarlo. El 88% de empresas usa IA, solo el 6% la tiene implementada en operaciones reales. SanchoCMO no es un curso — es un sistema multi-agente que ejecuta Foundation, content, outreach y analytics para clientes reales. Mientras otros venden PowerPoints sobre IA, nosotros la usamos para operar growth completo. Frame: 'Si tu formación en IA no produce resultados medibles, es entretenimiento — no ejecución.'",
+    "pov_confidence": 0.75,
+    "source_signals": [
+      "creators-2026-05-07-ph01"
+    ],
+    "created_at": "2026-05-07T07:07:00+02:00",
+    "status": "New"
+  },
+  {
+    "id": "idea-2026-05-08-1",
+    "title": "Ranking #1 ya no garantiza visibilidad IA — solo el 38% de citados en AI Overviews está en el top 10",
+    "pillar_id": "P2",
+    "content_type": "Hot Take",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Ahrefs analizó 863.000 keywords y 4 millones de URLs de AI Overviews. Solo el 38% de las páginas citadas también rankean en el top 10 para la misma query, una caída desde el 76% siete meses antes. BrightEdge lo sitúa incluso más bajo, en un 17%. YouTube es ahora el dominio más citado en AI Overviews con un 18.2% de todas las citaciones fuera del top 100. La actualización a Gemini 3 como modelo global el 27 de enero de 2026 es un factor contribuyente clave. El CTR orgánico en queries con AI Overviews ha caído hasta un 61%.",
+      "source": "ALM Corp / Ahrefs / BrightEdge",
+      "url": "https://almcorp.com/blog/google-ai-overview-citations-drop-top-ranking-pages-2026/",
+      "date": "2026-03-03"
+    },
+    "signal_type": [
+      "data-point",
+      "milestone",
+      "contrarian"
+    ],
+    "angle_draft": "Ahrefs acaba de demostrar que tu posición #1 en Google ya no te garantiza aparecer en AI Overviews. Solo el 38% de las páginas citadas por la IA de Google también rankean en el top 10 — hace 7 meses era el 76%. YouTube es ahora el dominio más citado. Si tu estrategia SEO sigue optimizando para rankings, estás jugando un juego que Google ya cambió. Nosotros construimos activos que los LLMs citan directamente: case studies con datos reales, no artículos genéricos. La distribución se ha bifurcado. Tu medición debería hacer lo mismo. Frame: \"ranking-is-not-citation\".",
+    "pov_confidence": 0.85,
+    "source_signals": [
+      "news-2026-05-08-001"
+    ],
+    "created_at": "2026-05-08T05:00:00Z",
+    "status": "New",
+    "dispatch_date": "2026-05-08",
+    "dispatch_slot": "linkedin",
+    "project_task_id": "P-Content-Semana-19-T05",
+    "project_id": "P-Content-Semana-19"
+  },
+  {
+    "id": "idea-2026-05-08-2",
+    "title": "Google acaba de hacer los links en AI Overviews más clicables — y premia a los suscriptores",
+    "pillar_id": "P2",
+    "content_type": "Proof Post",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Google anunció el 6 de mayo de 2026 cinco actualizaciones para links en AI Overviews y AI Mode. Los links ahora se colocan justo al lado del texto relevante generado. En desktop, al pasar el cursor se muestra el nombre del sitio web o título de la página. Los links de publicaciones a las que el usuario está suscrito se destacan, con testing inicial mostrando que los usuarios son significativamente más propensos a hacer click en links etiquetados como suscripciones. Se incluyen perspectivas de comunidades online con nombre del creador y handle.",
+      "source": "9to5Google / Abner Li",
+      "url": "https://9to5google.com/2026/05/06/google-ai-mode-overviews-direct-links/",
+      "date": "2026-05-06"
+    },
+    "signal_type": [
+      "milestone",
+      "aha-moment"
+    ],
+    "angle_draft": "Google acaba de hacer 5 cambios en AI Overviews que premian a las marcas con contenido de calidad. Links inline junto al texto, hover con nombre del sitio, y — lo importante — los links de publicaciones suscritas se destacan y los usuarios hacen click significativamente más. Esto refuerza lo que llevamos construyendo: activos de contenido que los LLMs no solo citan sino que ahora enlazan mejor. Las comunidades y foros también ganan peso como fuentes citadas. Si tu marca no tiene presencia en newsletters, foros y contenido original, estás invisible en AI search. Frame: \"google-rewards-trust-signals\".",
+    "pov_confidence": 0.78,
+    "source_signals": [
+      "news-2026-05-08-002"
+    ],
+    "created_at": "2026-05-08T05:00:00Z",
+    "status": "Approved",
+    "approved_at": "2026-05-10T07:01:34.952Z",
+    "approved_via": "mc-ui",
+    "project_task_id": "P-Content-Semana-19-T07",
+    "project_id": "P-Content-Semana-19",
+    "content_task_id": "P-Content-Semana-19-T07-C01",
+    "content_task_channels": [
+      "linkedin",
+      "twitter"
+    ]
+  },
+  {
+    "id": "idea-2026-05-08-3",
+    "title": "Añadir IA a un proceso roto no lo hace eficiente — lo hace caótico más rápido",
+    "pillar_id": "P1",
+    "content_type": "Hot Take",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Forbes reporta que los presupuestos de IA crecen y los pilotos se multiplican, pero los resultados son desiguales. Investigación de Wrike: el 82% de los knowledge workers usa IA en el trabajo, el 38% usa 3-5 herramientas de IA semanalmente, pero el 96% dice que sería valioso que sus herramientas de IA pudieran compartir contexto y trabajar juntas automáticamente. El problema no son las herramientas sino que las organizaciones intentan añadir IA a modelos operativos diseñados para handoffs secuenciales y silos funcionales.",
+      "source": "Forbes / Rhett Power / Wrike",
+      "url": "https://www.forbes.com/sites/rhettpower/2026/04/19/the-execution-gap-holding-back-ai-in-modern-marketing-teams/",
+      "date": "2026-04-19"
+    },
+    "signal_type": [
+      "contrarian",
+      "data-point",
+      "aha-moment"
+    ],
+    "angle_draft": "Forbes acaba de documentar lo que vemos todos los días: el 82% de los equipos usa IA, pero el 96% dice que sus herramientas no comparten contexto entre sí. Resultado: más velocidad, mismo caos. Añadir IA a un proceso roto no lo hace eficiente — lo hace caótico más rápido. El problema no es la herramienta. Es el sistema. Trust Engine funciona exactamente al revés: primero instalamos el sistema operativo de growth, después le metemos IA. Sin sistema, la IA amplifica tus gaps. Con sistema, los elimina. Frame: \"system-before-ai\".",
+    "pov_confidence": 0.85,
+    "source_signals": [
+      "news-2026-05-08-003"
+    ],
+    "created_at": "2026-05-08T05:00:00Z",
+    "status": "New",
+    "dispatch_date": "2026-05-08",
+    "dispatch_slot": "linkedin",
+    "project_task_id": "P-Content-Semana-19-T05",
+    "project_id": "P-Content-Semana-19"
+  },
+  {
+    "id": "idea-2026-05-08-4",
+    "title": "MiCA 2026: cada página de tu web crypto es ahora un documento regulado",
+    "pillar_id": "P3",
+    "content_type": "Hot Take",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "En 2026, los sitios web y comunicaciones de marketing de CASPs entraron oficialmente en el perímetro regulatorio de la UE. Las autoridades supervisoras europeas revisan cada página de los sitios web públicos, banners publicitarios y publicaciones en redes sociales. La publicidad crypto bajo MiCA es ahora una esfera estrictamente controlada de promoción financiera. Google solo permite anuncios crypto de CASPs autorizados bajo MiCA desde abril 2025. El marketing activo a residentes de la UE puede activar la obligación de licencia CASP. Los CASPs son responsables del marketing de sus socios terceros. Multas de hasta 5M EUR o 5% de facturación anual.",
+      "source": "Manimama.eu",
+      "url": "https://manimama.eu/crypto-advertising-under-mica-new-eu-compliance-reality/",
+      "date": "2025-11-13"
+    },
+    "signal_type": [
+      "system",
+      "cautionary-tale"
+    ],
+    "angle_draft": "Tu web crypto ya no es un activo de marketing. Es un documento regulado. Las autoridades europeas revisan cada página, cada banner, cada post en redes. Google solo permite ads crypto de CASPs con licencia MiCA desde abril 2025. Y el dato que nadie cuenta: si haces marketing activo a residentes de la UE sin autorización, eso puede activar la obligación de obtener licencia CASP. No es un matiz. Es un cambio de paradigma. Quien tiene el playbook compliance integrado en su proceso de marketing puede operar mientras la competencia se paraliza. Frame: \"every-page-is-regulated\".",
+    "pov_confidence": 0.9,
+    "source_signals": [
+      "news-2026-05-08-004"
+    ],
+    "created_at": "2026-05-08T05:00:00Z",
+    "status": "New",
+    "dispatch_date": "2026-05-08",
+    "dispatch_slot": "linkedin",
+    "project_task_id": "P-Content-Semana-19-T05",
+    "project_id": "P-Content-Semana-19"
+  },
+  {
+    "id": "idea-2026-05-08-5",
+    "title": "Solo el 11% cree que el modelo agencia actual sirve para el futuro — el colapso ya ocurrió",
+    "pillar_id": "P4",
+    "content_type": "Proof Post",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Tapp Network argumenta que el modelo de agencia colapsó entre 2013-2023 por tres olas tecnológicas: las plataformas sociales democratizaron la distribución, el trabajo remoto descentralizó las habilidades especializadas, y la IA commoditizó la producción y el trabajo estratégico. El 68% de las marcas ha movido servicios in-house (Marketing Scoop), el 82% ha construido agencias internas (ANA), y solo el 11% cree que el modelo actual de agencia cumple con las necesidades futuras. El 83% de líderes de marketing recortará gasto cuando la IA automatice la creación de contenido por completo (eMarketer).",
+      "source": "Tapp Network / ANA / eMarketer",
+      "url": "https://blog.tappnetwork.com/the-agency-model-collapsed-heres-the-integrated-growth-architecture-that-replaced-it",
+      "date": "2026-01-09"
+    },
+    "signal_type": [
+      "data-point",
+      "milestone",
+      "contrarian"
+    ],
+    "angle_draft": "No es que el modelo de agencia se esté muriendo. Ya murió. El 68% de las marcas movió servicios in-house. El 82% construyó agencias internas. Y el dato demoledor: solo el 11% cree que el modelo actual de agencia sirve para el futuro. Tres olas lo destruyeron: social democratizó distribución, remote descentralizó talento, IA commoditizó producción. Lo que lo reemplaza es arquitectura de growth integrada: marketing embebido en operaciones, conectado entre departamentos, accountable por revenue. Trust Engine es exactamente eso. Frame: \"the-collapse-already-happened\".",
+    "pov_confidence": 0.88,
+    "source_signals": [
+      "news-2026-05-08-005"
+    ],
+    "created_at": "2026-05-08T05:00:00Z",
+    "status": "New",
+    "dispatch_date": "2026-05-08",
+    "dispatch_slot": "linkedin",
+    "project_task_id": "P-Content-Semana-19-T05",
+    "project_id": "P-Content-Semana-19"
+  },
+  {
+    "id": "idea-2026-05-08-6",
+    "title": "La IA está ampliando silenciosamente tu gap de ejecución GTM",
+    "pillar_id": "P5",
+    "content_type": "Framework",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Heinz Marketing reporta que la IA mejora la productividad pero simultáneamente introduce nueva complejidad en workflows, alineamiento y ejecución de pipeline. Más actividad, más assets, más automatización — y sin embargo más confusión, más retrabajo y más fricción. Gartner reporta que los agentes de IA ofrecidos por vendors frecuentemente no cumplen las expectativas de rendimiento prometidas. Más del 40% de proyectos de agentic AI serán cancelados antes de finales de 2027 por coste, valor incierto o riesgo. Solo el 31% de los casos de uso de IA priorizados llegan a producción completa. El 72% de las inversiones en IA no generan retorno.",
+      "source": "Heinz Marketing / Maria Geokezas / Gartner",
+      "url": "https://www.heinzmarketing.com/blog/is-ai-quietly-widening-your-gtm-execution-gap/",
+      "date": "2026-04-03"
+    },
+    "signal_type": [
+      "contrarian",
+      "data-point",
+      "cautionary-tale"
+    ],
+    "angle_draft": "Heinz Marketing lo documenta: la IA mejora la productividad pero está ampliando silenciosamente el gap de ejecución GTM. Más assets, más automatización, más confusión. El 72% de las inversiones en IA no generan retorno. Solo el 31% de casos de uso llega a producción. El problema no es la tecnología — es que la mayoría añade IA a un modelo operativo que no fue diseñado para ella. SanchoCMO opera en producción real porque fue diseñado como sistema desde el principio, no como parche sobre un proceso roto. La diferencia entre tener IA y operar con IA es el sistema subyacente. Frame: \"ai-widens-gaps-without-systems\".",
+    "pov_confidence": 0.87,
+    "source_signals": [
+      "news-2026-05-08-006",
+      "news-2026-05-08-007"
+    ],
+    "created_at": "2026-05-08T05:00:00Z",
+    "status": "New"
+  },
+  {
+    "id": "idea-2026-05-08-7",
+    "title": "Tu producto tiene un nuevo usuario — y no es humano",
+    "pillar_id": "P5",
+    "content_type": "Hot Take",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Elena Verna argumenta que los agentes IA están empezando a interactuar con productos en nombre de los usuarios vía protocolos como MCP (Model Context Protocol). El 'usuario' puede que nunca toque el producto directamente. Esto cambia el ICP: ya no es solo humano. Los productos API-first tenían developers como ICP, pero ahora los LLMs participan en cada paso del proceso — descubrimiento, evaluación e integración. La pregunta que toda empresa debería hacerse: ¿tu producto está preparado para usuarios no humanos?",
+      "source": "Elena Verna",
+      "source_type": "reference-creator",
+      "platform": "newsletter",
+      "url": "https://www.elenaverna.com/p/your-product-has-a-new-user-its-not",
+      "engagement": {
+        "likes": 110,
+        "comments": 15,
+        "shares": 14
+      },
+      "date": "2026-04-22"
+    },
+    "signal_type": [
+      "contrarian",
+      "framework",
+      "aha-moment"
+    ],
+    "angle_draft": "Elena Verna plantea una pregunta que debería incomodar a todo founder: ¿tu producto está preparado para usuarios que no son humanos? Con MCP y agentes IA interactuando con productos en nombre de los usuarios, el ICP ya no es solo una persona. Es también una máquina. Esto cambia el funnel completo: el agente de tu buyer evalúa tu producto antes de que el humano lo vea. Si tu onboarding, tu documentación y tu API no están optimizados para agentes, estás invisible para el 50% de los decision-makers B2B que ya empiezan su búsqueda en IA. Frame: 'tu-ICP-ya-no-es-solo-humano'.",
+    "pov_confidence": 0.83,
+    "source_signals": [
+      "creators-2026-05-08-ev01"
+    ],
+    "created_at": "2026-05-08T05:10:00Z",
+    "status": "New"
+  },
+  {
+    "id": "idea-2026-05-08-8",
+    "title": "No todos los agentes IA son iguales — framework de 3 tipos para priorizar",
+    "pillar_id": "P5",
+    "content_type": "Framework",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Hamza Farooq y Jaya Rajwani publican en Lenny's Newsletter un framework para categorizar agentes IA en 3 tipos según complejidad y autonomía. La mayoría de equipos intentan priorizar iniciativas de agentes fundamentalmente diferentes como si fueran lo mismo — usando matrices impact-vs-effort que no funcionan porque un agente puede tomar 6 semanas y otro 6 meses. Un PM puede construir uno con n8n mientras otro requiere un equipo de ML dedicado. El artículo alcanzó 424 likes y 22 shares.",
+      "source": "Lenny Rachitsky / Hamza Farooq",
+      "source_type": "reference-creator",
+      "platform": "newsletter",
+      "url": "https://www.lennysnewsletter.com/p/not-all-ai-agents-are-created-equal",
+      "engagement": {
+        "likes": 424,
+        "comments": 5,
+        "shares": 22
+      },
+      "date": "2026-04-14"
+    },
+    "signal_type": [
+      "framework",
+      "aha-moment"
+    ],
+    "angle_draft": "Lenny's Newsletter acaba de publicar el framework que faltaba: no todos los agentes IA son iguales. Hay 3 tipos — y la mayoría de equipos los meten en la misma matriz de priorización como si fueran comparables. Un agente lo construye un PM con n8n en 6 semanas. Otro necesita un equipo ML dedicado durante 6 meses. Tratarlos igual es el error #1. Nosotros operamos SanchoCMO con agentes de distintos niveles: unos ejecutan tareas estructurales, otros orquestan workflows completos. La clave no es cuántos agentes tienes sino si sabes qué tipo necesitas para cada problema. Frame: 'categorize-before-you-build'.",
+    "pov_confidence": 0.82,
+    "source_signals": [
+      "creators-2026-05-08-lr01"
+    ],
+    "created_at": "2026-05-08T05:10:00Z",
+    "status": "New"
+  },
+  {
+    "id": "idea-2026-05-08-9",
+    "title": "Un CMO sin equipo de contenido construyó su content engine en Claude Code",
+    "pillar_id": "P5",
+    "content_type": "Proof Post",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Maja Voje publica cómo Benjamin Gibert, CMO de Base Operations (serie A, ~40 personas), construyó un sistema de contenido completo usando Claude Code sin equipo de contenido dedicado. El sistema toma conocimiento estructurado de la empresa, lo enriquece con conversaciones reales de clientes, y produce artículos SEO, posts LinkedIn y personalización ABM. Voje reconoce que ella misma dedica 20 horas/semana a contenido y sigue buscando cómo acelerar con IA sin comprometer calidad y brand voice.",
+      "source": "Maja Voje / Benjamin Gibert",
+      "source_type": "reference-creator",
+      "platform": "newsletter",
+      "url": "https://knowledge.gtmstrategist.com/p/content-engineering-how-to-build-content-system-in-claude-code",
+      "engagement": {
+        "likes": 37,
+        "comments": 1,
+        "shares": 3
+      },
+      "date": "2026-05-01"
+    },
+    "signal_type": [
+      "proof-point",
+      "framework",
+      "aha-moment"
+    ],
+    "angle_draft": "Un CMO de una startup serie A (40 personas) construyó su content engine completo en Claude Code. Sin equipo de contenido. El sistema toma conocimiento de la empresa, lo enriquece con conversaciones de clientes reales, y genera artículos SEO, posts LinkedIn y ABM personalizado. Maja Voje lo destaca porque incluso ella, con 20h/semana en contenido, sigue buscando cómo escalar con IA sin sacrificar calidad. Esto es exactamente lo que opera SanchoCMO: un sistema que ejecuta content pipeline end-to-end con agentes, no un ChatGPT con un prompt bonito. La diferencia entre tool y sistema se mide en output consistente. Frame: 'content-engine-not-content-tool'.",
+    "pov_confidence": 0.88,
+    "source_signals": [
+      "creators-2026-05-08-mv01"
+    ],
+    "created_at": "2026-05-08T05:10:00Z",
+    "status": "New",
+    "dispatch_date": "2026-05-08",
+    "dispatch_slot": "linkedin",
+    "project_task_id": "P-Content-Semana-19-T05",
+    "project_id": "P-Content-Semana-19"
+  },
+  {
+    "id": "idea-2026-05-08-10",
+    "title": "Zero Click Marketing ya es un libro — la era del tráfico orgánico tiene fecha de caducidad",
+    "pillar_id": "P2",
+    "content_type": "Hot Take",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Amanda Natividad y Rand Fishkin anuncian el libro 'Zero Click Marketing: How to Build Brands and Earn Customers on a Traffic-Starved Web'. Natividad acuñó el término 'zero-click content' en 2022. Datos clave: Google resuelve 2/3 de búsquedas on-page, small publishers perdieron ~60% de tráfico Google el año pasado, plataformas sociales penalizan activamente los links externos, ChatGPT resume tu blog antes de que nadie lo abra, AI referrals son menos del 1% del tráfico web abierto.",
+      "source": "Amanda Natividad",
+      "source_type": "reference-creator",
+      "platform": "newsletter",
+      "url": "https://amandanat.substack.com/p/pre-order-zero-click-marketing-the",
+      "engagement": {
+        "likes": 24,
+        "comments": 6,
+        "shares": 2
+      },
+      "date": "2026-05-05"
+    },
+    "signal_type": [
+      "milestone",
+      "framework"
+    ],
+    "angle_draft": "Amanda Natividad y Rand Fishkin acaban de convertir Zero Click Marketing en libro. El dato que más duele: los small publishers perdieron el 60% de su tráfico de Google el año pasado. Las plataformas sociales penalizan links. ChatGPT resume tu blog antes de que nadie lo abra. Y los AI referrals son menos del 1% del tráfico web. Si tu estrategia de marketing sigue dependiendo de enviar gente a tu web, estás optimizando para un modelo que se encoge cada trimestre. Nosotros lo vivimos: somos #1-2 en Gemini para queries fintech España, pero la mayoría de ese impacto es zero-click. La métrica no es CTR. Es VOI. Frame: 'zero-click-is-now-a-movement'.",
+    "pov_confidence": 0.84,
+    "source_signals": [
+      "creators-2026-05-08-an01"
+    ],
+    "created_at": "2026-05-08T05:10:00Z",
+    "status": "New"
+  },
+  {
+    "id": "idea-2026-05-08-11",
+    "title": "Tu marca tiene una versión en internet que tú no escribiste — y los LLMs la están leyendo",
+    "pillar_id": "P2",
+    "content_type": "Hot Take",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Amanda Natividad documenta cómo los LLMs construyen la percepción de tu marca sin tu intervención. Caso Seer Interactive: una sola reseña negativa antigua aparecía en una parte significativa de prompts de IA sobre la empresa. Cuando publicaron contenido actualizado, los outputs cambiaron rápidamente. Caso 2: Natividad compró Formspree porque Claude Code se lo recomendó — nunca vio su homepage, nunca entró en ningún funnel de marketing. Se convirtió en cliente sin experimentar la marca.",
+      "source": "Amanda Natividad",
+      "source_type": "reference-creator",
+      "platform": "newsletter",
+      "url": "https://amandanat.substack.com/p/your-public-record-is-being-written",
+      "engagement": {
+        "likes": 20,
+        "comments": 2,
+        "shares": 2
+      },
+      "date": "2026-04-14"
+    },
+    "signal_type": [
+      "aha-moment",
+      "cautionary-tale"
+    ],
+    "angle_draft": "Amanda Natividad documenta dos casos que deberían preocuparte. Caso 1: Seer Interactive descubrió que una sola reseña negativa antigua dominaba las respuestas de IA sobre su empresa. Publicaron contenido actualizado y los outputs cambiaron rápido. Caso 2: ella misma compró Formspree porque Claude Code se lo recomendó — nunca vio la homepage, nunca entró en un funnel. Tu 'public record' digital está siendo escrito por LLMs, con o sin ti. Si no alimentas ese registro con datos originales, case studies y contenido verificable, la IA rellena los huecos con lo que encuentre. Frame: 'your-brand-has-an-AI-version-you-didnt-write'.",
+    "pov_confidence": 0.81,
+    "source_signals": [
+      "creators-2026-05-08-an02"
+    ],
+    "created_at": "2026-05-08T05:10:00Z",
+    "status": "New"
+  },
+  {
+    "id": "idea-2026-05-08-12",
+    "title": "PMM a velocidad IA: en Lovable, product marketing se reinventó en meses",
+    "pillar_id": "P1",
+    "content_type": "Framework",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Elena Verna y Gemma Casey-Swift (Core PMM de Lovable) describen cómo product marketing se transformó radicalmente en meses. Los PMMs ya no son un cuello de botella — son la pieza que permite al equipo ir rápido. En Lovable, PMM construye las foundations que el resto del equipo necesita. De procesos elaborados que ralentizaban todo a frameworks que aceleran releases. Tesis: si eres Growth o Product, cuanto más puedas hacer tu propio product marketing, más rápido crece tu carrera y tu empresa.",
+      "source": "Elena Verna / Gemma Casey-Swift (Lovable)",
+      "source_type": "reference-creator",
+      "platform": "newsletter",
+      "url": "https://www.elenaverna.com/p/whos-got-time-for-product-marketing",
+      "engagement": {
+        "likes": 87,
+        "comments": 3,
+        "shares": 9
+      },
+      "date": "2026-04-28"
+    },
+    "signal_type": [
+      "framework",
+      "aha-moment"
+    ],
+    "angle_draft": "En Lovable, product marketing pasó de ser cuello de botella a acelerador en meses. Elena Verna y su PMM Gemma Casey-Swift lo cuentan: los PMMs construyen las foundations que todo el equipo necesita para ir rápido. No más procesos elaborados. Frameworks que aceleran. Esto conecta directamente con Trust Engine: la Foundation que instalamos no es un documento que se archiva. Es un sistema operativo que el equipo usa para tomar decisiones de growth sin depender de un consultor. Si tus foundations de positioning, messaging y ICP no aceleran la ejecución, no son foundations — son burocracia. Frame: 'foundations-that-accelerate-not-slow-down'.",
+    "pov_confidence": 0.8,
+    "source_signals": [
+      "creators-2026-05-08-ev02"
+    ],
+    "created_at": "2026-05-08T05:10:00Z",
+    "status": "New"
+  },
+  {
+    "id": "idea-2026-05-08-13",
+    "title": "Tu Couch-to-5K para IA: el gap de adopción no es tecnológico, es conductual",
+    "pillar_id": "P5",
+    "content_type": "Framework",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Hilary Gridley publica en Lenny's Newsletter una guía paso a paso para construir un hábito de IA — el 'Couch-to-5K for AI'. La mayoría de profesionales no han adoptado IA no por falta de herramientas sino por falta de hábito. Propone un programa incremental para pasar de uso cero a integración diaria. El artículo alcanzó 359 likes y 12 shares, demostrando que el gap de adopción IA no es tecnológico sino conductual.",
+      "source": "Lenny Rachitsky / Hilary Gridley",
+      "source_type": "reference-creator",
+      "platform": "newsletter",
+      "url": "https://www.lennysnewsletter.com/p/your-couch-to-5k-for-ai",
+      "engagement": {
+        "likes": 359,
+        "comments": 5,
+        "shares": 12
+      },
+      "date": "2026-04-28"
+    },
+    "signal_type": [
+      "framework",
+      "aha-moment"
+    ],
+    "angle_draft": "Lenny's Newsletter acaba de publicar el 'Couch-to-5K para IA' — y 359 personas le dieron like porque el problema real de la adopción IA no es tecnológico, es conductual. La mayoría de equipos tiene acceso a las mismas herramientas. La diferencia es quién ha construido el hábito de usarlas diariamente. Es exactamente lo que vemos con clientes: el 88% dice que usa IA, el 6% la tiene integrada en operaciones. La brecha no se cierra con una herramienta nueva. Se cierra con un sistema que obliga al equipo a operar con IA todos los días. SanchoCMO no es un tool que el equipo decide usar — es el sistema que opera growth. Frame: 'adoption-is-a-habit-not-a-tool'.",
+    "pov_confidence": 0.79,
+    "source_signals": [
+      "creators-2026-05-08-lr02"
+    ],
+    "created_at": "2026-05-08T05:10:00Z",
+    "status": "New"
+  },
+  {
+    "id": "idea-2026-05-11-1",
+    "title": "El fin del click: Google ya no te manda clientes, te los cobra",
+    "pillar_id": "P2",
+    "content_type": "Hot Take",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Marketing Week publica un análisis de columnistas señalando que el click como unidad de valor del marketing digital está desapareciendo. Gartner predijo en 2024 que el volumen de búsqueda tradicional caería un 25% para 2026, y un informe de Seer Interactive confirma que los CTRs orgánicos se han desplomado un 49% interanual. Varios CMOs confirmaron al medio que el tráfico de búsqueda está cayendo y que mantenerlo cuesta significativamente más que hace dos años.",
+      "source": "Marketing Week / Tom Roach",
+      "url": "https://www.marketingweek.com/marketers-prepare-end-click/",
+      "date": "2026-05-07"
+    },
+    "signal_type": [
+      "data-point",
+      "contrarian"
+    ],
+    "angle_draft": "Gartner predijo que el tráfico de búsqueda caería un 25% en 2026. Seer Interactive confirma CTRs colapsados un 49%. Los marketers que construyeron su motor de adquisición sobre Google pagan ahora la factura. El canal que alquilaste siempre fue frágil. Un motor de growth real no depende de que una plataforma te mande clientes — depende de que los clientes te busquen porque tu marca ya existe en el ecosistema donde los LLMs aprenden. Frame: 'GEO-before-the-cliff'.",
+    "pov_confidence": 0.9,
+    "source_signals": [
+      "news-2026-05-11-p2a"
+    ],
+    "created_at": "2026-05-11T01:10:00+02:00",
+    "status": "New",
+    "dispatch_date": "2026-05-11",
+    "dispatch_slot": "linkedin",
+    "project_task_id": "P-Content-Semana-20-T01",
+    "project_id": "P-Content-Semana-20"
+  },
+  {
+    "id": "idea-2026-05-11-2",
+    "title": "Tu marca en AI search la construyen Reddit, G2 y la prensa — no tu blog",
+    "pillar_id": "P2",
+    "content_type": "Framework",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Martech.org publica un análisis sobre cómo los LLMs y motores de AI search raramente citan los dominios propios de las marcas, sino que priorizan fuentes de terceros para construir sus respuestas. Identifica cinco categorías clave: plataformas de contenido generado por usuarios (Reddit), sites de reviews (G2, Trustpilot), medios editoriales, foros especializados y plataformas de influencers. Para aparecer en los resúmenes de AI, las marcas deben coordinar PR, SEO y afiliados para asegurar presencia consistente en el ecosistema externo que los LLMs consideran de confianza.",
+      "source": "Martech.org / Stephanie Trovato",
+      "url": "https://martech.org/the-third-party-sites-shaping-your-brand-in-ai-search/",
+      "date": "2026-05-05"
+    },
+    "signal_type": [
+      "framework",
+      "aha-moment"
+    ],
+    "angle_draft": "Los LLMs no citan tu blog — citan Reddit, G2, Trustpilot y las publicaciones donde otros hablan de ti. Publicar en tu propio dominio ya no es suficiente para existir en AI search. La estrategia que funciona hoy no es escribir más sino coordinar PR, SEO y afiliados para que el ecosistema externo hable de ti de forma consistente. Tu presencia en IA se construye fuera de tu web. Frame: 'ecosystem-before-owned-channel'.",
+    "pov_confidence": 0.8,
+    "source_signals": [
+      "news-2026-05-11-p2b"
+    ],
+    "created_at": "2026-05-11T01:10:00+02:00",
+    "status": "New"
+  },
+  {
+    "id": "idea-2026-05-11-3",
+    "title": "Gmail AI Inbox: Gemini decide qué emails merece ver tu cliente",
+    "pillar_id": "P2",
+    "content_type": "Hot Take",
+    "target_channel": "newsletter",
+    "signal": {
+      "summary": "Gmail anunció AI Inbox el 31 de marzo de 2026, una función que usa Gemini para organizar, priorizar y filtrar emails antes de que el usuario los vea. Gmail gestiona más del 25% de los inboxes del mundo. Seis email marketers y operadores consultados por Martech.org coinciden en que el paradigma cambia de 'deliverability' a 'discoverability': convencer a la IA de que tu email merece atención. El fundador de Stacked Marketer advierte que si Gemini se convierte en gatekeeper, las marcas podrían perder la conexión directa con sus suscriptores.",
+      "source": "Martech.org / Joe Cunningham",
+      "url": "https://martech.org/gmails-ai-inbox-may-redefine-deliverability/",
+      "date": "2026-05-08"
+    },
+    "signal_type": [
+      "milestone",
+      "cautionary-tale"
+    ],
+    "angle_draft": "Gmail AI Inbox pone a Gemini como filtro antes de que tu cliente vea tu email. Más del 25% de los inboxes del mundo mediados por IA. La era del asunto perfecto se acabó — ahora hay que convencer a un agente de que tu email merece atención. Es la misma lógica que reemplazó los clicks en Google: el canal que alquilabas tiene un gatekeeper algorítmico entre tú y tu audiencia. El único canal que no puede ser filtrado es el que la audiencia busca activamente. Frame: 'ai-gatekeeper-kills-rented-channels'.",
+    "pov_confidence": 0.8,
+    "source_signals": [
+      "news-2026-05-11-p2c"
+    ],
+    "created_at": "2026-05-11T01:10:00+02:00",
+    "status": "New"
+  },
+  {
+    "id": "idea-2026-05-11-4",
+    "title": "AI fatigue: 73% de adopción, entusiasmo -7% y 62% frustrado sin humano",
+    "pillar_id": "P5",
+    "content_type": "Hot Take",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "El '2026 AI-Powered Consumer Report' de Prophet revela que la adopción de IA generativa entre consumidores ha subido al 73%, frente al 45% en 2024. Sin embargo, el entusiasmo hacia la IA ha caído un 7%, y el número de consumidores que creen que la IA manejará la mayoría de sus decisiones cayó un 30%. El 71% de los consumidores manifiestan preocupación por la precisión e información falsa de los sistemas de IA, y el 62% se frustra cuando las empresas eliminan el soporte humano en favor de la automatización.",
+      "source": "Martech.org / Constantine von Hoffman (fuente: Prophet 2026 AI-Powered Consumer Report)",
+      "url": "https://martech.org/ai-use-and-fatigue-growing-among-consumers/",
+      "date": "2026-05-08"
+    },
+    "signal_type": [
+      "data-point",
+      "contrarian"
+    ],
+    "angle_draft": "73% de consumidores usan IA, pero el entusiasmo cayó un 7% y el 62% se frustra cuando eliminan el soporte humano. La fatiga del hype ha llegado. Es exactamente la brecha que llevamos señalando: el 88% dice que usa IA, solo el 6% la tiene integrada en operaciones reales. Los clientes ya no quieren que les cuentes que usas IA — quieren ver qué resuelves. La diferencia entre adopción y ejecución es el campo de batalla real. Frame: 'fatigue-hits-hype-not-systems'.",
+    "pov_confidence": 0.9,
+    "source_signals": [
+      "news-2026-05-11-p5a"
+    ],
+    "created_at": "2026-05-11T01:10:00+02:00",
+    "status": "Approved",
+    "approved_at": "2026-05-11T19:29:36.317Z",
+    "approved_via": "mc-ui",
+    "project_task_id": "P-Content-Semana-19-T01",
+    "project_id": "P-Content-Semana-19",
+    "content_task_id": "P-Content-Semana-19-T01-C01",
+    "content_task_channels": [
+      "linkedin",
+      "twitter"
+    ]
+  },
+  {
+    "id": "idea-2026-05-11-5",
+    "title": "El contenido que la IA no puede copiar viene de dentro de tu empresa",
+    "pillar_id": "P5",
+    "content_type": "Framework",
+    "target_channel": "blog",
+    "signal": {
+      "summary": "Martech.org publica un análisis presentado en SEO Week sobre cómo la proliferación de contenido generado por IA ha convertido el contenido 'bueno' en el nuevo mínimo exigible, no en el diferenciador. Los rankings se mueven más rápido para contenido mid-tier. El argumento central es que la única capa de conocimiento que la IA no puede replicar es el conocimiento interno de cada empresa: qué escucha el equipo de ventas en las llamadas, por qué los clientes eligen o no el producto, y cómo se usa realmente la solución en el día a día.",
+      "source": "Martech.org / Stephanie Trovato (referencia: SEO Week, Will Reynolds)",
+      "url": "https://martech.org/how-to-build-content-your-competitors-cannot-copy/",
+      "date": "2026-05-08"
+    },
+    "signal_type": [
+      "framework",
+      "aha-moment"
+    ],
+    "angle_draft": "La IA ha convertido el contenido 'bueno' en un commodity — rankings se mueven más rápido, el equipo de ventas ignora lo que no refleja conversaciones reales. La única capa que los competidores no pueden copiar es el conocimiento interno: qué oye el equipo en ventas, por qué los clientes eligen o descartan tu solución. Quien operacionalice ese conocimiento en contenido gana. El resto produce ruido en cantidad industrial. Frame: 'internal-insight-is-the-moat'.",
+    "pov_confidence": 0.8,
+    "source_signals": [
+      "news-2026-05-11-p5b"
+    ],
+    "created_at": "2026-05-11T01:10:00+02:00",
+    "status": "New"
+  },
+  {
+    "id": "idea-2026-05-11-6",
+    "title": "La regulación como 'permission slip': lo que MiCA puede hacer por tu growth",
+    "pillar_id": "P3",
+    "content_type": "Proof Post",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "En Consensus Miami 2026, ejecutivos de MoonPay, Ripple y Paxos describieron cómo la regulación GENIUS en EEUU aceleró la adopción institucional de stablecoins. Richard Harrison (VP banking de MoonPay) afirmó: 'Lo que GENIUS nos trajo fue claridad — fue como un permiso de entrada para las empresas'. Jack McDonald (Ripple) señaló que las instituciones solo escalan en crypto cuando hay productos regulados, contrapartes sólidas y custodia certificada. Tanto Ripple como Paxos crecieron volumen en stablecoins tras la regulación, no a pesar de ella.",
+      "source": "CoinDesk / Staff",
+      "url": "https://www.coindesk.com/policy/2026/05/08/stablecoins-have-their-permission-slip-now-comes-the-hard-part",
+      "date": "2026-05-08"
+    },
+    "signal_type": [
+      "milestone",
+      "proof-point"
+    ],
+    "angle_draft": "MoonPay, Ripple y Paxos en Consensus Miami: la regulación GENIUS aceleró la adopción stablecoin institucional. 'Fue como un permiso de entrada', dijo el VP de banking de MoonPay. Es lo mismo que vemos con MiCA en Europa. La regulación no frena el growth — filtra a los que no saben jugar con las reglas. Quien domina compliance bajo MiCA tiene una ventaja competitiva que los no-regulados no pueden copiar. Deadline en España: 1 julio 2026. Frame: 'regulation-as-competitive-moat'.",
+    "pov_confidence": 0.9,
+    "source_signals": [
+      "news-2026-05-11-p3a"
+    ],
+    "created_at": "2026-05-11T01:10:00+02:00",
+    "status": "New",
+    "dispatch_date": "2026-05-11",
+    "dispatch_slot": "linkedin",
+    "project_task_id": "P-Content-Semana-20-T01",
+    "project_id": "P-Content-Semana-20"
+  },
+  {
+    "id": "idea-2026-05-11-7",
+    "title": "El WSJ destapa: el boom de IA lo financia el consultor que te lo recomienda",
+    "pillar_id": "P4",
+    "content_type": "Hot Take",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Robert Pozen, ex-presidente de MFS Investment Management y Fidelity, publica en el Wall Street Journal que parte del crecimiento de OpenAI, Google y Anthropic está financiado artificialmente: OpenAI financia ventures de private equity cuyos portfolio companies se convierten luego en sus clientes, Google subsidia la adopción de Gemini a través de consultoras, y Anthropic sigue modelos similares. Pozen compara el patrón con la burbuja de las telecos, donde las empresas financiaban su propio crecimiento hasta que el sistema colapsó.",
+      "source": "Martech.org / Constantine von Hoffman (fuente: Wall Street Journal / Robert Pozen, ex-chairman MFS Investment Management)",
+      "url": "https://martech.org/the-latest-ai-powered-martech-news-and-releases/",
+      "date": "2026-05-07"
+    },
+    "signal_type": [
+      "contrarian",
+      "cautionary-tale"
+    ],
+    "angle_draft": "El WSJ alerta: parte del 'crecimiento' de OpenAI y Google viene de subsidiar la adopción vía PE y consultoras. Es el modelo bait-and-switch en versión IA — el consultor recomienda la plataforma que financia su engagement. Esto no es nuevo: es el retainer tradicional con logo de IA. La pregunta para cualquier equipo de marketing es siempre la misma: ¿quién tiene skin in the game real en lo que te venden? Dashboards bonitos, zero revenue. Frame: 'ai-subsidies-are-the-new-retainer'.",
+    "pov_confidence": 0.88,
+    "source_signals": [
+      "news-2026-05-11-p4a"
+    ],
+    "created_at": "2026-05-11T01:10:00+02:00",
+    "status": "New",
+    "dispatch_date": "2026-05-11",
+    "dispatch_slot": "linkedin",
+    "project_task_id": "P-Content-Semana-20-T01",
+    "project_id": "P-Content-Semana-20"
+  },
+  {
+    "id": "idea-2026-05-11-8",
+    "title": "15.505 herramientas de martech en 2026: el stack no es tu sistema de growth",
+    "pillar_id": "P1",
+    "content_type": "Framework",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "El State of Martech 2026 de Scott Brinker y Frans Riemersma documenta que el landscape creció solo un 0,7%, de 15.384 a 15.505 herramientas. Sin embargo, bajo esa cifra se esconde que casi 1.500 tools fueron añadidas y más de 1.300 desaparecieron. Los autores señalan que la era de acumular herramientas está siendo reemplazada por una era de sustitución: el SaaS se convierte en infraestructura, y la IA se convierte en la capa de valor por encima. Etiquetan este momento como 'Martech en su fase Darwin': se quedan los que crean valor real.",
+      "source": "Martech.org / Scott Brinker & Frans Riemersma (State of Martech 2026)",
+      "url": "https://martech.org/martech-2026-ai-drives-a-major-industry-reset/",
+      "date": "2026-05-05"
+    },
+    "signal_type": [
+      "data-point",
+      "aha-moment"
+    ],
+    "angle_draft": "15.505 herramientas de martech en 2026. 1.500 añadidas, 1.300 desaparecidas. Scott Brinker confirma: la IA se está convirtiendo en la capa de valor sobre el SaaS, no en el SaaS mismo. El equipo que acumula tools sin sistema de growth no crece más rápido — fragmenta más rápido. La herramienta no es el motor. El sistema que opera sobre las herramientas sí lo es. Y ese sistema lo construye quien entiende dónde está el cuello de botella. Frame: 'tools-are-infrastructure-not-system'.",
+    "pov_confidence": 0.85,
+    "source_signals": [
+      "news-2026-05-11-p1a"
+    ],
+    "created_at": "2026-05-11T01:10:00+02:00",
+    "status": "New",
+    "dispatch_date": "2026-05-11",
+    "dispatch_slot": "linkedin",
+    "project_task_id": "P-Content-Semana-20-T01",
+    "project_id": "P-Content-Semana-20"
+  },
+  {
+    "id": "idea-2026-05-11-9",
+    "title": "ROAS ya no basta: las métricas de growth que tu CFO sí puede leer",
+    "pillar_id": "P1",
+    "content_type": "Framework",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Un análisis en MarTech (mayo 2026) argumenta que el ROAS como métrica única crea sesgos estructurales en los equipos de marketing: sobreinversión en tácticas bottom-of-funnel, infravaloración de brand-building y ganancias a corto plazo a costa del crecimiento sostenido. El artículo propone expandir las métricas de performance a CAC, LTV, incrementalidad, retención y atribución multi-touch para medir el impacto real en el negocio. La pérdida de señal por regulaciones de privacidad y las limitaciones de plataformas están erosionando aún más la fiabilidad del ROAS, empujando a los equipos hacia datos propios y modelos predictivos.",
+      "source": "MarTech / Martech.org",
+      "url": "https://martech.org/why-performance-marketing-needs-more-than-roas/",
+      "date": "2026-05-06"
+    },
+    "signal_type": [
+      "framework",
+      "data-point"
+    ],
+    "angle_draft": "ROAS te dice si el último click rentó. No te dice si tu empresa crece. El 90% de los equipos optimiza eficiencia de canal mientras pierde cuota de mercado — nunca conectaron sus métricas con CAC real, LTV y payback. Si tu CFO no puede leer tu dashboard de marketing, no tienes un sistema de growth. Frame: El primer diagnóstico de cualquier empresa estancada empieza por reemplazar ROAS por las métricas que predicen si vas a crecer el próximo trimestre.",
+    "pov_confidence": 0.5,
+    "source_signals": [
+      "news-2026-05-11-d278196d"
+    ],
+    "created_at": "2026-05-10T23:27:00.000Z",
+    "status": "New"
+  },
+  {
+    "id": "idea-2026-05-11-10",
+    "title": "Código sin equipo: cuando compras la plataforma pero el talento ya se fue",
+    "pillar_id": "P4",
+    "content_type": "Hot Take",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Amplitude anunció en mayo 2026 una alianza con Statsig para asumir su marca y base de clientes, mientras el equipo original de Statsig continúa trabajando en OpenAI tras la adquisición por parte de esta de la compañía por 1.100 millones de dólares. Esto deja a Amplitude gestionando una plataforma cuyos creadores trabajan en otro lugar. El CEO de Optimizely, Alex Atzberger, lo describió públicamente como \"Amplitude gets Statsig's code without the talent — it's a race car without a driver.\" Statsig había ganado tracción por su arquitectura warehouse-native, construida por un equipo especializado que ya no estará disponible para los clientes.",
+      "source": "MarTech / Constantine von Hoffman",
+      "url": "https://martech.org/amplitude-and-statsig-deal-raises-questions-for-customers/",
+      "date": "2026-05-08"
+    },
+    "signal_type": [
+      "cautionary-tale",
+      "contrarian",
+      "proof-point"
+    ],
+    "angle_draft": "OpenAI compró Statsig por $1,1B y se quedó con el equipo. Amplitude compró la marca y el código. La analogía para contrataciones de growth es exacta: cuando la agencia sénior vende y el junior ejecuta, no estás comprando experiencia — estás comprando un coche de carreras sin piloto. El talento que construyó el sistema no se transfiere por contrato. Frame: La única garantía real es que quien diseñó tu sistema sea el que lo opera — con skin in the game desde el día uno.",
+    "pov_confidence": 0.55,
+    "source_signals": [
+      "news-2026-05-11-af7845ae"
+    ],
+    "created_at": "2026-05-10T23:27:00.000Z",
+    "status": "New"
+  },
+  {
+    "id": "idea-2026-05-11-11",
+    "title": "Sin gobernanza, los agentes de IA acumulan deuda oculta: Gartner ya pone cifras",
+    "pillar_id": "P5",
+    "content_type": "Hot Take",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Un análisis en MarTech (mayo 2026) revela que el 82% de los CIOs admite que no puede gobernar lo que hacen sus agentes de IA desplegados en producción — lo que el artículo llama el 'Shadow Ledger': un registro de riesgos, exposiciones de compliance y pérdidas de revenue que se acumula de forma invisible. Anthropic cruzó los 30.000 millones de dólares de revenue run rate construido sobre empresas que despliegan agentes en workflows críticos. El Stanford AI Index 2025 documentó 233 incidentes relacionados con IA en 2024, un incremento del 56% interanual. Gartner predice que más del 40% de los proyectos de IA agéntica serán cancelados antes de finales de 2027, citando la gobernanza deficiente como causa principal.",
+      "source": "MarTech / Allen Martinez",
+      "url": "https://martech.org/ai-risk-management/",
+      "date": "2026-05-06"
+    },
+    "signal_type": [
+      "data-point",
+      "cautionary-tale",
+      "contrarian"
+    ],
+    "angle_draft": "La mayoría de empresas ya desplegó agentes de IA. La mayoría no sabe qué están haciendo esos agentes. El 82% de CIOs admite que no puede gobernar sus decisiones — y Gartner ya predice que el 40% de proyectos agenticos se cancela antes de 2027. La diferencia entre los que acumulan riesgo oculto y los que escalan con IA: un sistema que define qué puede hacer cada agente antes de desplegarlo. Frame: La IA sin arquitectura de gobernanza no es ejecución — es apuesta.",
+    "pov_confidence": 0.65,
+    "source_signals": [
+      "news-2026-05-11-f53a9e37"
+    ],
+    "created_at": "2026-05-10T23:27:00.000Z",
+    "status": "New"
+  },
+  {
+    "id": "idea-2026-05-11-12",
+    "title": "CAC B2B SaaS subió 60% en 5 años: por qué el problema no es el canal",
+    "pillar_id": "P1",
+    "content_type": "Hot Take",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Un informe anual de Data-Mania (2026) basado en datos de mercado documenta que el CAC mediano B2B SaaS ha llegado a $1,200 por cliente, un 60% de incremento en cinco años. Google Ads subió un 164% y LinkedIn Ads un 89% de coste desde 2019. Los ciclos de venta se han alargado de 107 días en 2022 a 134 días en 2026. Las empresas medianas gastan ahora $2,00 para generar $1,00 de nuevo ARR. El NRR industria está en 106% y la expansión de revenue representa ya el 40-50% del nuevo ARR en las compañías top.",
+      "source": "Data-Mania Annual Report 2026",
+      "url": "https://www.data-mania.com/blog/b2b-saas-benchmarks-2026-annual-report/",
+      "date": "2026-01-01"
+    },
+    "signal_type": [
+      "data-point",
+      "contrarian"
+    ],
+    "angle_draft": "Si tu CAC subió un 60% en 5 años pero tu payback period sigue siendo el mismo, el problema no es el canal — es que no tienes un sistema que compense la degradación estructural del paid. Las empresas que resisten tienen NRR >106% y tratan la expansión como primera palanca, no la adquisición. Bajar CAC un 20% tiene el mismo efecto que optimizar retención un 1 punto. Frame: ¿Tu motor de growth funciona aunque el paid se encarezca otro 30%?",
+    "pov_confidence": 0.75,
+    "source_signals": [
+      "news-2026-05-11-dm01"
+    ],
+    "created_at": "2026-05-11T21:16:00.000Z",
+    "status": "New"
+  },
+  {
+    "id": "idea-2026-05-11-13",
+    "title": "El 20% del SaaS B2B pierde dinero en cada cliente: el benchmark que nadie enseña",
+    "pillar_id": "P1",
+    "content_type": "Data Post",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Mowsix publicó benchmarks de unit economics 2026 basados en 939 compañías B2B SaaS (Optifai Q2 2025-Q1 2026). El LTV:CAC mediano es 3.2:1, pero el 20% inferior del mercado tiene ratios de 0.8:1, perdiendo dinero en cada cliente adquirido. El CAC payback period se ha alargado de 14 meses en 2023 a 18 meses en 2024 (Benchmarkit 2025). El churn promedio B2B SaaS es 3.5% mensual; reducirlo a 2.5% incrementa el LTV en un 40%.",
+      "source": "Mowsix Unit Economics Benchmarks 2026",
+      "url": "https://mowsix.com/insights/unit-economics-benchmarks-2026/",
+      "date": "2026-03-01"
+    },
+    "signal_type": [
+      "data-point",
+      "framework"
+    ],
+    "angle_draft": "El 20% inferior del SaaS B2B tiene LTV:CAC de 0.8:1 — pierde dinero en cada cliente. No es un problema de marketing: es un sistema roto, sin flywheel, solo un cubo agujereado. El payback se ha alargado 4 meses en un año. La palanca que más mueve no es bajar CAC sino reducir churn un punto porcentual: equivale a un +40% en LTV. Los sistemas de growth sobreviven cuando las métricas de retención están en el diseño del modelo. Frame: ¿Dónde está tu cuello de botella real?",
+    "pov_confidence": 0.8,
+    "source_signals": [
+      "news-2026-05-11-mx01"
+    ],
+    "created_at": "2026-05-11T21:16:00.000Z",
+    "status": "New"
+  },
+  {
+    "id": "idea-2026-05-11-14",
+    "title": "60% de búsquedas B2B ya no generan un click: tu web ahora entrena LLMs, no solo convierte",
+    "pillar_id": "P2",
+    "content_type": "Hot Take",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Trendemon publicó un análisis con datos del webinar de Gravity Global (Rob Welsby) sobre GEO y B2B discovery en 2026. El 60% de las búsquedas resultan en zero clicks porque los usuarios obtienen respuestas directamente del LLM. El tráfico procedente de LLMs muestra mayor engagement y conversión que el orgánico tradicional. Los sitios web ya no solo convierten visitas: los modelos generativos los rastrean e interpretan continuamente para construir sus knowledge sets, influyendo en cómo los LLMs describen a esa marca ante futuros compradores.",
+      "source": "Trendemon / Gravity Global (Rob Welsby)",
+      "url": "https://trendemon.com/blog/from-seo-to-geo-how-ai-is-reshaping-b2b-discovery-conversion/",
+      "date": "2026-05-01"
+    },
+    "signal_type": [
+      "data-point",
+      "aha-moment",
+      "contrarian"
+    ],
+    "angle_draft": "El 60% de búsquedas ya no genera un click — pero el tráfico que llega de LLMs convierte más que el orgánico porque llega con la mente hecha. Tu web no solo convierte visitas, también entrena a los modelos que te recomendarán (o no) mañana. Quien construya contenido solo para el Google de 2019 no pierde posicionamiento — pierde autoridad en el ecosistema donde se forman las decisiones de compra B2B. Frame: ¿Tu contenido está construido para que un LLM te cite o solo para que Google te rankee?",
+    "pov_confidence": 0.78,
+    "source_signals": [
+      "news-2026-05-11-td01"
+    ],
+    "created_at": "2026-05-11T21:16:00.000Z",
+    "status": "New"
+  },
+  {
+    "id": "idea-2026-05-11-15",
+    "title": "1 julio 2026: ESMA confirma el punto de no retorno MiCA — 185 operadores ya tienen licencia",
+    "pillar_id": "P3",
+    "content_type": "Hot Take",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "El 17 de abril de 2026, ESMA emitió un comunicado oficial clarificando las expectativas ante el fin del período transitorio MiCA. Según ESMA, el 1 de julio de 2026 cualquier entidad que preste servicios de criptoactivos en la UE sin licencia MiCA debe cesar operaciones inmediatamente. A fecha de abril 2026, más de 185 operadores de mercado de criptoactivos ya han obtenido su licencia MiCA en la UE. ESMA requiere además que los CASPs sin licencia tengan planes de wind-down ordenados en vigor antes de julio.",
+      "source": "CoinGeek / ESMA Statement April 17, 2026",
+      "url": "https://coingeek.com/eu-regulator-clarifies-expectations-ahead-of-mica-deadline/",
+      "date": "2026-04-17"
+    },
+    "signal_type": [
+      "milestone",
+      "data-point",
+      "cautionary-tale"
+    ],
+    "angle_draft": "ESMA lo dejó por escrito el 17 de abril: el 1 de julio de 2026 es el punto de no retorno. Sin licencia MiCA en la UE, cese inmediato de operaciones. Ya hay 185+ operadores licenciados. Para quienes llevan meses esperando 'a ver qué pasa', el juego terminó. La regulación no eliminó la competencia — la reordenó. Quien tiene licencia y sus competidores no, tiene una ventaja de marketing que ningún retainer puede comprar. Frame: Si tus competidores aún no tienen licencia y tú sí, el 2 de julio es el mejor día para hacer growth.",
+    "pov_confidence": 0.88,
+    "source_signals": [
+      "news-2026-05-11-cg01"
+    ],
+    "created_at": "2026-05-11T21:16:00.000Z",
+    "status": "New"
+  },
+  {
+    "id": "idea-2026-05-11-16",
+    "title": "La gran resignación de las agencias: la IA automatizó exactamente lo que cobraban por hacer",
+    "pillar_id": "P4",
+    "content_type": "Hot Take",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Aragil publicó en 2026 un análisis describiendo cómo la inteligencia artificial está automatizando la compra de medios, análisis de performance, generación de contenido y gestión de procesos — el núcleo del trabajo por el que las agencias cobraban retainers. El artículo identifica tres fuerzas convergentes: operacionalización de la IA, economía de creadores y consolidación del mercado. Las marcas ya no pagan por esfuerzo o ejecución, sino que exigen ownership de outcomes y partners con skin in the game. El modelo de 'agente neutral' — intermediario que cobra por estar — está siendo automatizado fuera de existencia.",
+      "source": "Aragil — The Great Agency Resignation of 2026",
+      "url": "https://www.aragil.com/blog/the-great-agency-resignation-of-2026",
+      "date": "2026-01-15"
+    },
+    "signal_type": [
+      "contrarian",
+      "aha-moment",
+      "cautionary-tale"
+    ],
+    "angle_draft": "La industria lo llama 'La Gran Resignación de las Agencias'. Lo que está muriendo no es la agencia — es el modelo del agente neutral: te cobro por estar, no por lo que ocurre. La IA automatizó exactamente el trabajo por el que se cobraban retainers: media buying, análisis, contenido en masa. Lo que sobrevive con valor es lo que siempre debió cobrar: el resultado medible. Frame: Si tu agencia no puede decirte qué ocurrió con el presupuesto del mes pasado en términos de pipeline real, no es una agencia — es un gasto con logo.",
+    "pov_confidence": 0.78,
+    "source_signals": [
+      "news-2026-05-11-ar01"
+    ],
+    "created_at": "2026-05-11T21:16:00.000Z",
+    "status": "New"
+  },
+  {
+    "id": "idea-2026-05-11-17",
+    "title": "78% pilotos IA activos, solo 14% en producción: los 5 frenos que nadie cuenta",
+    "pillar_id": "P5",
+    "content_type": "Data Post",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Digital Applied publicó en marzo de 2026 los resultados de una encuesta a 650 líderes tecnológicos empresariales realizada entre febrero y marzo de 2026. El 78% de las empresas tiene al menos un piloto de agente IA activo; solo el 14% ha escalado un agente a uso operacional en toda la organización. Por sectores: servicios financieros lidera con 21% en producción; sanidad tiene el menor ratio con 8%. El 89% de los fallos en la transición piloto-producción se atribuye a 5 causas organizativas y operativas, no a limitaciones de la tecnología.",
+      "source": "Digital Applied — AI Agent Scaling Gap Survey, March 2026",
+      "url": "https://www.digitalapplied.com/blog/ai-agent-scaling-gap-march-2026-pilot-to-production",
+      "date": "2026-03-26"
+    },
+    "signal_type": [
+      "data-point",
+      "contrarian",
+      "proof-point"
+    ],
+    "angle_draft": "78% de las empresas tiene un piloto de agentes IA activo. Solo el 14% lo usa en producción real. El 89% de los fallos no es tecnológico — es que nadie es dueño del sistema operativamente: ni IT ni marketing. Es el patrón exacto: ChatGPT en el portátil, cero workflows en producción. La diferencia entre piloto y motor operativo no es la herramienta — es una decisión organizacional. Frame: ¿Tu IA 'en producción' es un sistema operativo real o una demo que nadie usa en el día a día?",
+    "pov_confidence": 0.85,
+    "source_signals": [
+      "news-2026-05-11-da01"
+    ],
+    "created_at": "2026-05-11T21:16:00.000Z",
+    "status": "New",
+    "dispatch_date": "2026-05-11",
+    "dispatch_slot": "linkedin",
+    "project_task_id": "P-Content-Semana-20-T01",
+    "project_id": "P-Content-Semana-20"
+  },
+  {
+    "id": "idea-2026-05-11-19",
+    "title": "$350M ARR sin paid ads: lo que Lovable prueba sobre distribución",
+    "pillar_id": "P2",
+    "content_type": "Proof Post",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Lovable alcanzó 350 millones de dólares ARR en poco más de un año sin depender de paid ads, SEO tradicional ni playbooks de crecimiento convencionales. Elena Verna, Head of Growth de Lovable, atribuye este resultado a un modelo centrado en la confianza: contenido liderado por empleados, transparencia del equipo fundador, y un producto cuya mejora continua elimina la opción de que el usuario lo construya él mismo con herramientas de IA.",
+      "source": "Elena Verna",
+      "source_type": "reference-creator",
+      "platform": "podcast/article",
+      "url": "https://www.growthtalent.org/insights/elena-verna-on-why-growth-is-now-a-trust-problem-and-paid-is-a-death",
+      "engagement": {
+        "likes": 920,
+        "comments": 145,
+        "shares": 310
+      },
+      "date": "2026-04-11"
+    },
+    "signal_type": [
+      "proof-point",
+      "contrarian",
+      "data-point"
+    ],
+    "angle_draft": "350 millones ARR sin paid ads. Si tu primera reacción es 'claro, son Lovable', el problema es exactamente ese: seguimos midiendo el éxito por el tamaño del budget de paid, no por la solidez del motor de adquisición. Los clientes que más crecen con Growth4U no son los que más gastan en ads —son los que han construido activos de confianza. Frame: 'El paid te da velocidad. La confianza te da inercia. Solo una de las dos escala sin presupuesto.'",
+    "pov_confidence": 0.84,
+    "source_signals": [
+      "creators-2026-05-11-ev002"
+    ],
+    "created_at": "2026-05-11T19:22:00.000Z",
+    "status": "New"
+  },
+  {
+    "id": "idea-2026-05-11-20",
+    "title": "9 maneras en que la IA cambia las reglas del growth (no las tácticas)",
+    "pillar_id": "P5",
+    "content_type": "Framework",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Elena Verna documenta nueve formas en que la IA está redefiniendo el modelo de crecimiento en B2B: democratización del software que elimina barreras de entrada, usuarios que pueden construir su propio producto alternativo, expectativas de producto que se elevan constantemente, y la necesidad de que cada touchpoint con el usuario alcance un estándar de 'minimum lovable product'. Argumenta que el growth ya no consiste en optimizar canales sino en construir el sistema de confianza que justifica la compra.",
+      "source": "Elena Verna",
+      "source_type": "reference-creator",
+      "platform": "newsletter",
+      "url": "https://www.elenaverna.com/p/9-ways-growth-is-different-in-ai",
+      "engagement": {
+        "likes": 640,
+        "comments": 88,
+        "shares": 195
+      },
+      "date": "2026-03-01"
+    },
+    "signal_type": [
+      "framework",
+      "contrarian",
+      "aha-moment"
+    ],
+    "angle_draft": "Cuando cualquiera puede construir un producto con IA en un fin de semana, el diferenciador ya no es la funcionalidad. Es la confianza en el equipo que lo construye. Growth4U lo practica antes de predicarlo: SanchoCMO opera en producción para clientes reales —eso no es una demo, es walk-the-talk. La IA no cambia lo que vendes. Cambia por qué alguien te compra a ti. Frame: 'En la era del vibe coding, el diferencial no es el producto. Es en quién confía el comprador.'",
+    "pov_confidence": 0.81,
+    "source_signals": [
+      "creators-2026-05-11-ev003"
+    ],
+    "created_at": "2026-05-11T19:22:00.000Z",
+    "status": "New"
+  },
+  {
+    "id": "idea-2026-05-11-22",
+    "title": "El outbound del futuro no envía emails fríos — lee señales",
+    "pillar_id": "P2",
+    "content_type": "Framework",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Maja Voje argumenta que el inbound está perdiendo efectividad por la saturación de contenido IA y los cambios en SEO (visible en la caída del tráfico orgánico de HubSpot). Define la 'era de las señales' como el nuevo paradigma GTM: señales de compra que los prospectos dejan públicamente —anuncios de financiación, publicación de ofertas de empleo, nuevas contrataciones, lanzamientos de producto, picos en intent data— transforman el outbound de 'spray and pray' a outbound de precisión sobre inteligencia de comportamiento real.",
+      "source": "Maja Voje",
+      "source_type": "reference-creator",
+      "platform": "newsletter",
+      "url": "https://knowledge.gtmstrategist.com/p/gtm-in-the-age-of-signals",
+      "engagement": {
+        "likes": 760,
+        "comments": 102,
+        "shares": 230
+      },
+      "date": "2025-09-15"
+    },
+    "signal_type": [
+      "framework",
+      "aha-moment",
+      "data-point"
+    ],
+    "angle_draft": "El inbound saturado no mata el outreach —lo hace más selectivo. Quien sigue usando listas frías está en el modelo de 2018. El outbound que funciona en 2026 actúa sobre señales: una empresa que publica 3 ofertas de growth en una semana es una señal de presupuesto aprobado. En Growth4U el framework de adquisición multi-canal incluye el outbound basado en señales como el componente que reduce el CAC de contacto a la mitad. Frame: 'Outreach sin señal es ruido. Con señal, es relevancia en el momento exacto.'",
+    "pov_confidence": 0.79,
+    "source_signals": [
+      "creators-2026-05-11-mv001"
+    ],
+    "created_at": "2026-05-11T19:22:00.000Z",
+    "status": "New"
+  },
+  {
+    "id": "idea-2026-05-11-26",
+    "title": "IA acelera la ejecución táctica. Pero acelerar sin sistema solo te quema antes.",
+    "pillar_id": "P5",
+    "content_type": "Hot Take",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Product Hackers publica en abril de 2026 que la IA está revolucionando el growth hacking al permitir que una sola persona logre el impacto que antes requería un equipo completo. El CEO Luis Díaz del Dedo argumenta que la IA multiplica la capacidad individual del growth hacker, haciendo más eficiente la ejecución táctica. La agencia lanza AI Hackers como nueva vertical enfocada en soluciones de IA aplicadas al crecimiento empresarial.",
+      "source": "Product Hackers",
+      "source_type": "competitor",
+      "platform": "blog",
+      "url": "https://producthackers.com/es/blog/ia-revoluciona-growth-hacking",
+      "engagement": {
+        "likes": 295,
+        "comments": 48,
+        "shares": 62
+      },
+      "date": "2026-04-30"
+    },
+    "signal_type": [
+      "contrarian",
+      "data-point",
+      "cautionary-tale"
+    ],
+    "angle_draft": "Una persona con IA puede hacer el trabajo de un equipo. Correcto. Pero 'hacer el trabajo de un equipo' con herramientas genéricas produce output genérico a velocidad de cohete. La diferencia entre escalar con IA y escalar con un sistema es la misma que entre una excavadora y un plan de construcción. Growth4U opera SanchoCMO en producción —no hace 'growth hacking más rápido', instala un motor que el equipo del cliente opera cuando nos vamos. Frame: 'IA acelera la ejecución. Un sistema decide qué ejecutar y en qué orden.'",
+    "pov_confidence": 0.83,
+    "source_signals": [
+      "creators-2026-05-11-ph001"
+    ],
+    "created_at": "2026-05-11T19:22:00.000Z",
+    "status": "New"
+  },
+  {
+    "id": "idea-2026-05-11-28",
+    "title": "Publicar no es distribuir. El error que convierte el contenido en invisible.",
+    "pillar_id": "P2",
+    "content_type": "Framework",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Ross Simmonds articula que la distribución del contenido vale más que su creación bajo el principio 'Content isn't king—distribution is'. Su framework 'Create once, distribute forever' propone invertir el doble de tiempo en distribución que en creación, reproponer el mismo contenido en múltiples formatos y canales, y aplicar las '3 Rs': repurpose (cambiar formato), remix (alterar experiencia de consumo) y reshare (redistribuir activamente contenido existente) para maximizar el alcance de cada pieza.",
+      "source": "Ross Simmonds",
+      "source_type": "reference-creator",
+      "platform": "blog",
+      "url": "https://rosssimmonds.com/blog/content-distribution-guide/",
+      "engagement": {
+        "likes": 640,
+        "comments": 92,
+        "shares": 210
+      },
+      "date": "2026-05-05"
+    },
+    "signal_type": [
+      "framework",
+      "aha-moment",
+      "contrarian"
+    ],
+    "angle_draft": "El error más común en startups: crear contenido y esperar que alguien lo encuentre. El 90% del tiempo de marketing va a crear, el 10% a distribuir. El ratio correcto —y el que aplicamos en Growth4U— es el inverso. En clientes donde cambiamos ese ratio, el alcance orgánico multiplica sin aumentar presupuesto. Una pieza de contenido bien distribuida supera a diez publicadas y olvidadas. Frame: 'Publicar no es distribuir. Distribuir es llevar el contenido donde está la atención del comprador.'",
+    "pov_confidence": 0.77,
+    "source_signals": [
+      "creators-2026-05-11-rs001"
+    ],
+    "created_at": "2026-05-11T19:22:00.000Z",
+    "status": "New"
+  },
+  {
+    "id": "idea-2026-05-11-31",
+    "title": "Rankings de agencias en 2026: útiles para el SEO de quien los publica",
+    "pillar_id": "P4",
+    "content_type": "Hot Take",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Product Hackers publica el 30 de abril de 2026 el artículo 'Las 5 mejores agencias de CRO en 2026: ranking completo con datos reales', presentando una comparativa de agencias de optimización de conversión con criterios de selección y ejemplos de resultados. El formato de ranking con 'datos reales' se utiliza para capturar tráfico bottom-funnel de empresas que evalúan proveedores de CRO, posicionando a Product Hackers como autoridad editorial en el sector.",
+      "source": "Product Hackers",
+      "source_type": "competitor",
+      "platform": "blog",
+      "url": "https://producthackers.com/es/blog/mejores-agencias-cro-2026",
+      "engagement": {
+        "likes": 195,
+        "comments": 38,
+        "shares": 42
+      },
+      "date": "2026-04-30"
+    },
+    "signal_type": [
+      "contrarian",
+      "cautionary-tale",
+      "framework"
+    ],
+    "angle_draft": "Rankings de agencias: útiles para el SEO de quien los publica, menos para quien los lee. El criterio que importa no aparece en ningún ranking: ¿quién ejecutó realmente los casos que presentan? ¿El senior que vendió o el junior asignado? El modelo de Growth4U no necesita rankings —nuestro track record está verificado externamente en Cinco Días y El Referente, con nombres de empresa y cifras que cualquiera puede buscar. Frame: 'Un ranking de agencias sin datos auditables y equipo verificable es publicidad disfrazada de editorial.'",
+    "pov_confidence": 0.76,
+    "source_signals": [
+      "creators-2026-05-11-ph002"
+    ],
+    "created_at": "2026-05-11T19:22:00.000Z",
+    "status": "New"
+  },
+  {
+    "id": "idea-2026-05-11-36",
+    "title": "Cómo construir una empresa que sobrevive a cualquier era (Lean Startup en 2026)",
+    "pillar_id": "P1",
+    "content_type": "Framework",
+    "target_channel": "newsletter",
+    "signal": {
+      "summary": "Eric Ries, autor de The Lean Startup, publica en la newsletter de Lenny Rachitsky (mayo 2026) las estructuras de gobernanza que protegen a los fundadores frente a ser expulsados post-IPO y los principios para construir empresas durables en entornos de alta incertidumbre. Argumenta que muchos fundadores son sustituidos porque construyen negocios que dependen de su presencia continua, sin instalar los sistemas y estructuras que permiten operar de forma predecible sin ellos.",
+      "source": "Lenny Rachitsky",
+      "source_type": "reference-creator",
+      "platform": "newsletter",
+      "url": "https://www.lennysnewsletter.com/p/how-to-build-a-company-that-withstands",
+      "engagement": {
+        "likes": 1620,
+        "comments": 215,
+        "shares": 490
+      },
+      "date": "2026-05-10"
+    },
+    "signal_type": [
+      "framework",
+      "cautionary-tale",
+      "data-point"
+    ],
+    "angle_draft": "El problema del fundador-cuello-de-botella no empieza en la C-suite —empieza en el primer año, cuando toda la empresa gira alrededor de una persona. El modelo de Growth4U fue diseñado exactamente para resolver esto: Trust Engine instala un sistema de growth que opera cuando el fundador o el CMO no están. No dependencia, sino transferencia. Frame: 'Una empresa que depende del fundador para funcionar no es un negocio —es un trabajo con empleados.'",
+    "pov_confidence": 0.78,
+    "source_signals": [
+      "creators-2026-05-11-lr004"
+    ],
+    "created_at": "2026-05-11T19:22:00.000Z",
+    "status": "New"
+  },
+  {
+    "id": "idea-2026-05-11-37",
+    "title": "Agentes de IA para distribución de contenido: lo que ya funciona en 2026",
+    "pillar_id": "P5",
+    "content_type": "Framework",
+    "target_channel": "blog",
+    "signal": {
+      "summary": "Ross Simmonds publica el 30 de abril de 2026 un análisis de los mejores agentes de IA para distribución de contenido, describiendo cómo estos agentes pueden escalar la creación de contenido, automatizar workflows de distribución y mantener la voz de marca en múltiples canales simultáneamente. Presenta Distribution.ai —su herramienta propia— como solución para convertir una pieza de contenido en una campaña multi-canal automatizada. Distingue entre agentes que crean contenido y agentes que lo distribuyen.",
+      "source": "Ross Simmonds",
+      "source_type": "reference-creator",
+      "platform": "blog",
+      "url": "https://www.distribution.ai/blog/ai-agents-for-content-distribution",
+      "engagement": {
+        "likes": 520,
+        "comments": 78,
+        "shares": 165
+      },
+      "date": "2026-04-30"
+    },
+    "signal_type": [
+      "framework",
+      "proof-point",
+      "data-point"
+    ],
+    "angle_draft": "Los agentes de distribución no son el problema —el problema es tener algo digno de distribuir. Growth4U opera SanchoCMO en producción: un sistema multi-agente que no solo genera contenido sino que lo distribuye según el canal, el perfil y el momento óptimo. Pero el diferencial no está en la automatización —está en los datos propios, casos reales y el POV que el agente ejecuta. Frame: 'Un agente de distribución amplifica lo que ya tienes. Si lo que tienes es genérico, lo amplifica a escala de lo genérico.'",
+    "pov_confidence": 0.76,
+    "source_signals": [
+      "creators-2026-05-11-rs002"
+    ],
+    "created_at": "2026-05-11T19:22:00.000Z",
+    "status": "New"
+  },
+  {
+    "id": "idea-2026-05-11-38",
+    "title": "GTM desde cero en 2026: el ECP es el primer paso, no el ICP",
+    "pillar_id": "P1",
+    "content_type": "Framework",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Maja Voje define el proceso correcto de construcción de GTM desde cero: el Early Customer Profile (ECP) debe preceder al ICP porque identifica al cliente que puede obtener valor ahora, con el producto actual, antes de definir el perfil ideal a largo plazo. Distingue tres hitos críticos del journey GTM: Problem-Solution Fit (primeros clientes de pago), Product-Market Fit (modelo de negocio sostenible) y Go-to-Market Fit (motores de adquisición predecibles y escalables). Sin ECP claro, el sistema de growth no tiene un target operativo.",
+      "source": "Maja Voje",
+      "source_type": "reference-creator",
+      "platform": "newsletter",
+      "url": "https://www.growthunhinged.com/p/how-to-build-your-early-gtm-strategy",
+      "engagement": {
+        "likes": 870,
+        "comments": 118,
+        "shares": 275
+      },
+      "date": "2026-04-15"
+    },
+    "signal_type": [
+      "framework",
+      "aha-moment",
+      "data-point"
+    ],
+    "angle_draft": "Todos hablan de ICP. Nadie habla del ECP —el cliente que puede pagar ahora, con el producto que tienes ahora, sin roadmap pendiente. En Growth4U el primer output de cualquier programa de Trust Engine es el mapa de ECPs precisamente porque instalar un sistema sin definir primero a quién sirve es construir un motor sin saber qué combustible necesita. El ICP es el destino. El ECP es el punto de partida. Frame: 'Sin ECP, el sistema de growth tiene motor pero no tiene gasolina — y confundes velocidad con dirección.'",
+    "pov_confidence": 0.81,
+    "source_signals": [
+      "creators-2026-05-11-mv003"
+    ],
+    "created_at": "2026-05-11T19:22:00.000Z",
+    "status": "New"
+  },
+  {
+    "id": "idea-2026-05-11-39",
+    "title": "Product Hackers lanza AI Hackers y compra libros.com: la agencia de growth se convierte en grupo",
+    "pillar_id": "P5",
+    "content_type": "Proof Post",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Product Hackers anuncia en 2026 su evolución a grupo empresarial con el lanzamiento de AI Hackers —vertical dedicada a soluciones de IA y tecnología avanzada para crecimiento empresarial— y la adquisición de libros.com como activo de contenido y distribución. La compañía apuesta por integrar IA operativamente en sus servicios de growth, combinando la consultora con producto propio y activos de audiencia.",
+      "source": "Product Hackers",
+      "source_type": "competitor",
+      "platform": "blog",
+      "url": "https://marketing4ecommerce.net/product-hackers-evoluciona-a-grupo-de-empresas-con-ai-hackers-y-la-compra-de-libros-com/",
+      "engagement": {
+        "likes": 320,
+        "comments": 58,
+        "shares": 88
+      },
+      "date": "2026-03-01"
+    },
+    "signal_type": [
+      "milestone",
+      "data-point",
+      "framework"
+    ],
+    "angle_draft": "Que una agencia de growth compre un activo de contenido (libros.com) y lance una vertical de IA no es casualidad —es la confirmación de que el modelo de consultoría pura ya no escala. Product Hackers está pivotando hacia lo que Growth4U ya instala: sistemas propietarios con activos de distribución. La diferencia: ellos están construyendo el modelo. Nosotros ya operamos en producción con clientes reales. Frame: 'Cuando el competidor empieza a copiar tu modelo, es señal de que vas por el buen camino.'",
+    "pov_confidence": 0.75,
+    "source_signals": [
+      "creators-2026-05-11-ph003"
+    ],
+    "created_at": "2026-05-11T19:22:00.000Z",
+    "status": "New"
+  }
+]

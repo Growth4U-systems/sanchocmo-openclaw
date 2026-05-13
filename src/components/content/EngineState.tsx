@@ -57,14 +57,19 @@ function formatLastRun(iso: string | null): string {
   if (!iso) return "nunca";
   const d = new Date(iso);
   if (isNaN(d.getTime())) return iso;
-  const min = Math.floor((Date.now() - d.getTime()) / 60000);
+  const diffMs = Date.now() - d.getTime();
+  if (diffMs < 0) return "—";
+  const min = Math.floor(diffMs / 60000);
   if (min < 1) return "ahora";
   if (min < 60) return `hace ${min} min`;
   const hr = Math.floor(min / 60);
   if (hr < 24) return `hace ${hr}h`;
   const dys = Math.floor(hr / 24);
   if (dys < 7) return `hace ${dys}d`;
-  return d.toLocaleDateString("es-ES", { day: "numeric", month: "short" });
+  const sameYear = d.getFullYear() === new Date().getFullYear();
+  return sameYear
+    ? d.toLocaleDateString("es-ES", { day: "numeric", month: "short" })
+    : d.toLocaleDateString("es-ES", { day: "numeric", month: "short", year: "numeric" });
 }
 
 function relTime(iso: string): string {

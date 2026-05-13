@@ -3,7 +3,6 @@
 import { useState, ReactNode } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { ApiConnectPanel } from "@/components/settings/api-connect-panel";
-import { PublishingAccountInfo } from "@/components/content/PublishingAccountInfo";
 import { ConfigSheet } from "@/components/content/config/ConfigSheet";
 import { cn } from "@/lib/utils";
 
@@ -70,7 +69,6 @@ export function ConnectPublishingButton({
           slug={slug}
           apiId={apiId}
           onClose={close}
-          topAccessory={apiId === "metricool" ? <PublishingAccountInfo slug={slug} variant="full" /> : undefined}
         />
       </ConfigSheet>
     </>

@@ -1,0 +1,5 @@
+# Dispatch Channel Config — Hospital Capilar
+# Where editorial dispatch notifications are sent for approval
+
+transport: discord
+channel_id: "1475638253154603170"

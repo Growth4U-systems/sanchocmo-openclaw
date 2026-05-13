@@ -32,6 +32,7 @@ import yaml from "js-yaml";
 import { compose, withErrorHandler, withAuth } from "@/lib/api-middleware";
 import { BASE } from "@/lib/data/paths";
 import { logActivity } from "@/lib/data/activity-log";
+import { loadAllContentTasks, upsertContentTask } from "@/lib/data/content-tasks-flat";
 
 interface DispatchChannelConfig {
   transport: "slack" | "discord";
@@ -259,9 +260,12 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     return res.status(400).json({ error: `Failed to parse dispatch-channel.yml: ${(e as Error).message}` });
   }
 
-  // Load ideas
-  const queue = JSON.parse(fs.readFileSync(path.join(BASE, "brand", slug, "content", "idea-queue.json"), "utf-8")) as Idea[];
-  const ideas = ideaIds.map((id: string) => queue.find((i) => i.id === id)).filter(Boolean) as Idea[];
+  // Load candidate ContentTasks. During Fase 0.5, dispatch IDs are CT ids;
+  // matching by idea_id keeps old callers working while they migrate.
+  const queue = loadAllContentTasks(slug) as unknown as Idea[];
+  const ideas = ideaIds
+    .map((id: string) => queue.find((i) => i.id === id || (i as unknown as Record<string, unknown>).idea_id === id))
+    .filter(Boolean) as Idea[];
   if (ideas.length === 0) {
     return res.status(400).json({ error: "No matching ideas found in queue" });
   }
@@ -335,8 +339,20 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       if (dispatchedIds.size > 0) {
         try {
           const queuePath = path.join(BASE, "brand", slug, "content", "idea-queue.json");
-          const fullQueue = JSON.parse(fs.readFileSync(queuePath, "utf-8")) as Array<Record<string, unknown> & { id: string; target_channel?: string }>;
+          const fullQueue = fs.existsSync(queuePath)
+            ? JSON.parse(fs.readFileSync(queuePath, "utf-8")) as Array<Record<string, unknown> & { id: string; target_channel?: string }>
+            : [];
           let mutated = false;
+          for (const ct of loadAllContentTasks(slug)) {
+            if (!dispatchedIds.has(ct.id) && !dispatchedIds.has(ct.idea_id)) continue;
+            upsertContentTask(slug, {
+              ...ct,
+              dispatch_date: today,
+              dispatch_slot: ct.target_channel || ct.target_channels?.[0] || undefined,
+              ...(taskId ? { project_task_id: taskId } : {}),
+              ...(projectId ? { project_id: projectId } : {}),
+            });
+          }
           for (const idea of fullQueue) {
             if (!dispatchedIds.has(idea.id)) continue;
             idea.dispatch_date = today;

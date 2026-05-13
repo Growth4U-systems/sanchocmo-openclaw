@@ -1,0 +1,14 @@
+pillar_id: competencia-fintech
+pillar_name: "Competencia fintech B2B en pagos"
+description: "Movimientos de Stripe, Adyen, Monei, Mollie y otros competidores en el mercado español y europeo"
+search_queries:
+  - "Stripe Adyen Spain payments 2026"
+  - "Monei Mollie España fintech pagos"
+  - "fintech B2B payments Europe funding 2026"
+  - "payment processor market share Europe Spain"
+sector_filters:
+  - fintech competition
+  - payment processors
+  - B2B payments
+language: "es,en"
+max_results: 10

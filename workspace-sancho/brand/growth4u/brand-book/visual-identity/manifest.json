@@ -1,0 +1,59 @@
+{
+  "brand_slug": "growth4u",
+  "schema_version": "1",
+  "updated_at": "2026-05-07T14:10:00Z",
+  "design_tokens_path": "design-tokens.json",
+  "visual_identity_md_path": "visual-identity.current.md",
+  "templates": {
+    "linkedin-quote": {
+      "category": "carousel",
+      "channel": "linkedin",
+      "size": "1080x1350",
+      "slides": 1,
+      "files": ["template.html", "meta.json"],
+      "use_case": "Quote post con cita fuerte — puede llevar personaje"
+    },
+    "linkedin-9-slide": {
+      "category": "carousel",
+      "channel": "linkedin",
+      "size": "1080x1350",
+      "slides": 9,
+      "files": ["slide-cover.html", "slide-body.html", "slide-cta.html", "meta.json"],
+      "use_case": "Carrusel educativo: cover + 7 body slides + CTA final"
+    },
+    "instagram-3-slide": {
+      "category": "carousel",
+      "channel": "instagram",
+      "size": "1080x1080",
+      "slides": 3,
+      "files": ["slide-cover.html", "slide-body.html", "slide-cta.html", "meta.json"],
+      "use_case": "Carrusel cuadrado IG: cover + body + CTA"
+    },
+    "blog-post": {
+      "category": "carousel",
+      "channel": "blog",
+      "size": "1200x630",
+      "slides": 1,
+      "files": ["template.html", "meta.json"],
+      "use_case": "Imagen ilustrativa para incrustar dentro del post"
+    },
+    "blog-title": {
+      "category": "carousel",
+      "channel": "blog",
+      "size": "1200x630",
+      "slides": 1,
+      "files": ["template.html", "meta.json"],
+      "use_case": "Cover / OG image: título dominante + autor + tiempo de lectura"
+    }
+  },
+  "style_references": {
+    "prompt_prefix": "Editorial clean line art style, navy (#032149) outlines on white background with teal (#0faec1) and purple (#6351d5) accents, integrated illustration not pegote. Manrope ExtraBold headings, Roboto body text. Brand gradient: linear-gradient(160deg, #032149, #1a3690 35%, #0faec1). Growth4U brand.",
+    "reference_files": [
+      "style-references/alfonso-gradient-integrated.webp",
+      "style-references/alfonso-v2-corrected.webp",
+      "style-references/alfonso-v2-poses.webp",
+      "style-references/martin-ref-v4.webp",
+      "style-references/icon-library.webp"
+    ]
+  }
+}
