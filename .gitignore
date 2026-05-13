@@ -118,6 +118,12 @@ workspace-sancho/agents/
 config/instance.json
 config/clients.json
 config/clients.js
+workspace-*/clients.json
+workspace-*/clients.json.bak.*
+
+# === Env backups (contain secrets — should never be tracked) ===
+.env.bak.*
+.env.bak-*
 
 # === Client brand data (private) ===
 workspace-sancho/brand/*/
