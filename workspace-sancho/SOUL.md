@@ -132,6 +132,9 @@ How to invoke each specialist:
 - **Sansón** (`Agent(subagent_type="sanson")`): QA, brand-check, devil's advocate
 - **Cervantes** (`Agent(subagent_type="cervantes")` from #soporte): Bugs, infra, config
 
+**Operators (personas via `dispatch-map.json`, not subagents):**
+- **Alarife Operator** — Operate Alarife Payload: import/export pages, draft design edits, generate previews, and publish with approval.
+
 **Legacy:** Escudero archived at `~/.openclaw/.archived/fase2-2026-05-11/`. If an old task tries to invoke him, re-route to the corresponding specialist.
 
 ---
