@@ -224,6 +224,24 @@ export function Sidebar() {
             active={isActive(slug ? clientHref("/settings") : "/dashboard/admin/settings")}
             collapsed={!sidebarOpen}
           />
+          {isAdmin && slug && (
+            <>
+              <NavLink
+                href="/dashboard/admin/settings?tab=clients"
+                icon="👥"
+                label="Clientes"
+                active={router.asPath.startsWith("/dashboard/admin/settings") && router.asPath.includes("tab=clients")}
+                collapsed={!sidebarOpen}
+              />
+              <NavLink
+                href="/dashboard/admin/settings?tab=admins"
+                icon="🔐"
+                label="Usuarios admin"
+                active={router.asPath.startsWith("/dashboard/admin/settings") && router.asPath.includes("tab=admins")}
+                collapsed={!sidebarOpen}
+              />
+            </>
+          )}
         </nav>
 
         {/* ─── Fixed footer: user menu ─── */}

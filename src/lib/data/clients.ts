@@ -5,6 +5,7 @@ import type { Client } from "@/types";
 interface ClientsData {
   clients: Client[];
   adminToken: string | null;
+  adminEmails?: string[];
 }
 
 /**

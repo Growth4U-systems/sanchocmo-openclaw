@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/router";
 import Head from "next/head";
@@ -31,35 +31,50 @@ interface ClientFull {
   enabledFeatures: string[];
 }
 
-const TAB_KEYS = ["apis", "agents", "skills", "dispatch", "strategies", "recurring", "task-index", "clients", "preferences"] as const;
+const TAB_KEYS = ["apis", "agents", "skills", "dispatch", "strategies", "recurring", "task-index", "clients", "admins", "preferences"] as const;
+type TabKey = typeof TAB_KEYS[number];
 const TAB_ICONS: Record<string, string> = {
   apis: "🔌", agents: "🤖", skills: "🧰", dispatch: "📡",
-  strategies: "🎯", recurring: "🔄", "task-index": "📋", clients: "👥", preferences: "⚙️",
+  strategies: "🎯", recurring: "🔄", "task-index": "📋", clients: "👥", admins: "🔐", preferences: "⚙️",
 };
 
 export default function SettingsPage() {
   const t = useTranslations("settings");
   const tCommon = useTranslations("common");
-  const { status: sessionStatus } = useSession();
+  const { data: session, status: sessionStatus } = useSession();
   const router = useRouter();
   const slug = useAppStore((s) => s.selectedClient) || "";
   const queryTab = typeof router.query.tab === "string" ? router.query.tab : null;
   const [activeTab, setActiveTab] = useState("apis");
 
-  const TABS = useMemo(
-    () => TAB_KEYS.map((key) => ({
-      key,
-      label: `${TAB_ICONS[key]} ${t(`tabs.${key}` as Parameters<typeof t>[0])}`,
-    })),
-    [t]
+  const role = (session?.user as { role?: string } | undefined)?.role;
+  const isAdmin = role === "admin";
+
+  // Tabs filtered by role — the "admins" tab only renders for admins.
+  // The API also enforces this server-side, so a hand-crafted URL can't
+  // bypass the gate.
+  const visibleTabs = useMemo(
+    () => TAB_KEYS.filter((key) => (key === "admins" ? isAdmin : true)),
+    [isAdmin]
   );
 
-  // Sync tab from URL query param (only when queryTab changes)
+  const TABS = useMemo(
+    () => visibleTabs.map((key) => {
+      // "admins" not in translation files; hardcode label for it.
+      const label = key === "admins" ? "Admins" : t(`tabs.${key}` as Parameters<typeof t>[0]);
+      return { key, label: `${TAB_ICONS[key]} ${label}` };
+    }),
+    [t, visibleTabs]
+  );
+
+  // Sync tab from URL query param while respecting role-gated tabs.
   useEffect(() => {
-    if (queryTab && TAB_KEYS.includes(queryTab as typeof TAB_KEYS[number])) {
+    if (queryTab && visibleTabs.includes(queryTab as TabKey)) {
       setActiveTab(queryTab);
+    } else if (!visibleTabs.includes(activeTab as TabKey)) {
+      setActiveTab("apis");
     }
-  }, [queryTab]);
+  }, [activeTab, queryTab, visibleTabs]);
 
   // Wait for session to load
   if (sessionStatus === "loading") {
@@ -92,6 +107,7 @@ export default function SettingsPage() {
       {activeTab === "recurring" && <RecurringPanel />}
       {activeTab === "task-index" && slug && <TaskIndexPanel slug={slug} />}
       {activeTab === "clients" && <ClientsPanel />}
+      {activeTab === "admins" && isAdmin && <AdminsPanel currentEmail={session?.user?.email || ""} />}
       {activeTab === "preferences" && <PreferencesPanel />}
     </DashboardLayout>
   );
@@ -105,6 +121,8 @@ function ClientsPanel() {
   const t = useTranslations("settings");
   const tCommon = useTranslations("common");
   const qc = useQueryClient();
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
   const { data: clients, isLoading } = useQuery<ClientFull[]>({
     queryKey: ["clients"],
     queryFn: async () => {
@@ -141,6 +159,33 @@ function ClientsPanel() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["clients"] }),
   });
 
+  const createClient = useMutation({
+    mutationFn: async (payload: {
+      slug: string;
+      name: string;
+      emoji: string;
+      url: string;
+      guild: string;
+      language: string;
+      active: boolean;
+    }) => {
+      const res = await fetch("/api/clients/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok || !json.ok) throw new Error(json.error || "Failed");
+      return json;
+    },
+    onSuccess: () => {
+      setCreateError(null);
+      setShowCreateForm(false);
+      qc.invalidateQueries({ queryKey: ["clients"] });
+    },
+    onError: (e: Error) => setCreateError(e.message),
+  });
+
   const [editSlug, setEditSlug] = useState<string | null>(null);
 
   if (isLoading) return <p className="text-muted-foreground">{t("loadingClients")}</p>;
@@ -153,7 +198,29 @@ function ClientsPanel() {
         <p className="text-sm text-muted-foreground">
           {allClients.filter((c) => c.active).length} activos de {allClients.length} totales
         </p>
+        <button
+          onClick={() => {
+            setCreateError(null);
+            setShowCreateForm((value) => !value);
+          }}
+          className="px-4 py-1.5 bg-rust text-white border-2 border-ink rounded-md text-sm font-bold shadow-comic hover:shadow-comic-hover hover:-translate-x-px hover:-translate-y-px active:shadow-[1px_1px_0_var(--ink)] active:translate-x-px active:translate-y-px transition-all"
+        >
+          {showCreateForm ? "Cerrar" : "➕ Nuevo cliente"}
+        </button>
       </div>
+
+      {showCreateForm && (
+        <ClientCreateForm
+          existingSlugs={allClients.map((client) => client.slug)}
+          isSaving={createClient.isPending}
+          error={createError}
+          onSave={(payload) => createClient.mutate(payload)}
+          onCancel={() => {
+            setCreateError(null);
+            setShowCreateForm(false);
+          }}
+        />
+      )}
 
       {allClients.map((client) => (
         <ComicCard
@@ -216,6 +283,172 @@ function ClientsPanel() {
         </ComicCard>
       ))}
     </div>
+  );
+}
+
+function slugifyClientName(value: string): string {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 64);
+}
+
+function ClientCreateForm({
+  existingSlugs,
+  isSaving,
+  error,
+  onSave,
+  onCancel,
+}: {
+  existingSlugs: string[];
+  isSaving: boolean;
+  error: string | null;
+  onSave: (payload: {
+    slug: string;
+    name: string;
+    emoji: string;
+    url: string;
+    guild: string;
+    language: string;
+    active: boolean;
+  }) => void;
+  onCancel: () => void;
+}) {
+  const [name, setName] = useState("");
+  const [slug, setSlug] = useState("");
+  const [slugTouched, setSlugTouched] = useState(false);
+  const [emoji, setEmoji] = useState("🏢");
+  const [url, setUrl] = useState("");
+  const [guild, setGuild] = useState("");
+  const [language, setLanguage] = useState("es");
+  const [active, setActive] = useState(true);
+
+  useEffect(() => {
+    if (!slugTouched) setSlug(slugifyClientName(name));
+  }, [name, slugTouched]);
+
+  const normalizedSlug = slug.trim().toLowerCase();
+  const slugExists = existingSlugs.includes(normalizedSlug);
+  const canSave =
+    Boolean(name.trim()) &&
+    /^[a-z0-9][a-z0-9-]*$/.test(normalizedSlug) &&
+    /^\d{17,20}$/.test(guild.trim()) &&
+    !slugExists &&
+    !isSaving;
+
+  return (
+    <ComicCard className="border-dashed border-rust/70">
+      <div className="space-y-4">
+        <div>
+          <h3 className="font-heading text-base text-navy">➕ Nuevo cliente</h3>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Crea el cliente en Mission Control, genera token de portal y prepara la carpeta base en brand/.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="text-[10px] font-bold uppercase text-muted-foreground">Nombre</label>
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Acme"
+              className="w-full mt-1 px-3 py-1.5 border-2 border-ink rounded-lg text-sm bg-background"
+            />
+          </div>
+          <div>
+            <label className="text-[10px] font-bold uppercase text-muted-foreground">Slug</label>
+            <input
+              value={slug}
+              onChange={(e) => {
+                setSlugTouched(true);
+                setSlug(slugifyClientName(e.target.value));
+              }}
+              placeholder="acme"
+              className="w-full mt-1 px-3 py-1.5 border-2 border-ink rounded-lg text-sm bg-background"
+            />
+            {slugExists && <p className="text-[11px] text-red-500 mt-1">Ese slug ya existe.</p>}
+          </div>
+          <div>
+            <label className="text-[10px] font-bold uppercase text-muted-foreground">Discord Guild ID</label>
+            <input
+              value={guild}
+              onChange={(e) => setGuild(e.target.value.replace(/\D/g, "").slice(0, 20))}
+              placeholder="123456789012345678"
+              className="w-full mt-1 px-3 py-1.5 border-2 border-ink rounded-lg text-sm bg-background"
+            />
+          </div>
+          <div>
+            <label className="text-[10px] font-bold uppercase text-muted-foreground">Website</label>
+            <input
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              placeholder="https://..."
+              className="w-full mt-1 px-3 py-1.5 border-2 border-ink rounded-lg text-sm bg-background"
+            />
+          </div>
+          <div>
+            <label className="text-[10px] font-bold uppercase text-muted-foreground">Emoji</label>
+            <input
+              value={emoji}
+              onChange={(e) => setEmoji(e.target.value)}
+              className="w-full mt-1 px-3 py-1.5 border-2 border-ink rounded-lg text-sm bg-background"
+            />
+          </div>
+          <div>
+            <label className="text-[10px] font-bold uppercase text-muted-foreground">Idioma</label>
+            <select
+              value={language}
+              onChange={(e) => setLanguage(e.target.value)}
+              className="w-full mt-1 px-3 py-1.5 border-2 border-ink rounded-lg text-sm bg-background"
+            >
+              <option value="es">Español</option>
+              <option value="en">English</option>
+            </select>
+          </div>
+        </div>
+
+        <label className="inline-flex items-center gap-2 text-sm text-muted-foreground">
+          <input
+            type="checkbox"
+            checked={active}
+            onChange={(e) => setActive(e.target.checked)}
+            className="h-4 w-4 accent-rust"
+          />
+          Activar cliente al crearlo
+        </label>
+
+        {error && <p className="text-xs text-red-500">⚠️ {error}</p>}
+
+        <div className="flex gap-2">
+          <button
+            onClick={() => onSave({
+              slug: normalizedSlug,
+              name: name.trim(),
+              emoji: emoji.trim() || "🏢",
+              url: url.trim(),
+              guild: guild.trim(),
+              language,
+              active,
+            })}
+            disabled={!canSave}
+            className="px-4 py-1.5 bg-rust text-white rounded-lg text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isSaving ? "Creando..." : "Crear cliente"}
+          </button>
+          <button
+            onClick={onCancel}
+            disabled={isSaving}
+            className="px-4 py-1.5 border border-border rounded-lg text-sm text-muted-foreground disabled:opacity-50"
+          >
+            Cancelar
+          </button>
+        </div>
+      </div>
+    </ComicCard>
   );
 }
 
@@ -398,13 +631,14 @@ function ApisPanel() {
     staleTime: 120_000,
   });
 
-  const services = health?.services || {};
+  const services = useMemo(() => health?.services || {}, [health]);
 
   // Count statuses from catalog
-  let connected = 0, pending = 0, errored = 0, notConfigured = 0;
+  let connected = 0, errored = 0, notConfigured = 0;
+  const pending = 0;
   if (catalog?.categories) {
     for (const catData of Object.values(catalog.categories)) {
-      for (const [apiId, apiMeta] of Object.entries(catData.apis || {})) {
+      for (const apiId of Object.keys(catData.apis || {})) {
         const svc = services[apiId];
         const st = svc?.status;
         if (st === "ok") connected++;
@@ -433,14 +667,14 @@ function ApisPanel() {
   }, [catalog]);
 
   // Resolve status for an API item
-  const getApiStatus = (apiId: string, ownership: string) => {
+  const getApiStatus = useCallback((apiId: string, ownership: string) => {
     const svc = services[apiId];
     const st = svc?.status;
     if (ownership === "system") return st === "error" ? "error" : "system";
     if (st === "ok") return "ok";
     if (st === "error") return "error";
     return "not-configured";
-  };
+  }, [services]);
 
   // Filtered APIs
   const filteredApis = useMemo(() => {
@@ -459,7 +693,7 @@ function ApisPanel() {
         item.catLabel.toLowerCase().includes(q)
       );
     });
-  }, [allApis, search, categoryFilter, statusFilter, services]);
+  }, [allApis, search, categoryFilter, statusFilter, getApiStatus]);
 
   const handleVerifyAll = async () => {
     setChecking(true);
@@ -740,6 +974,157 @@ function ApisPanel() {
               />
             </div>
           </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ============================================================
+// Admins Panel — manage external admin allowlist (adminEmails)
+// ============================================================
+
+function AdminsPanel({ currentEmail }: { currentEmail: string }) {
+  const qc = useQueryClient();
+  const [newEmail, setNewEmail] = useState("");
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  const { data, isLoading } = useQuery<{ emails: string[] }>({
+    queryKey: ["admin-emails"],
+    queryFn: async () => {
+      const res = await fetch("/api/admin/admins");
+      if (!res.ok) throw new Error("Failed to load admins");
+      return res.json();
+    },
+  });
+
+  const addMutation = useMutation({
+    mutationFn: async (email: string) => {
+      const res = await fetch("/api/admin/admins", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.ok) throw new Error(json.error || "Failed");
+      return json;
+    },
+    onSuccess: () => {
+      setNewEmail("");
+      setErrorMsg(null);
+      qc.invalidateQueries({ queryKey: ["admin-emails"] });
+    },
+    onError: (e: Error) => setErrorMsg(e.message),
+  });
+
+  const removeMutation = useMutation({
+    mutationFn: async (email: string) => {
+      const res = await fetch("/api/admin/admins", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.ok) throw new Error(json.error || "Failed");
+      return json;
+    },
+    onSuccess: () => {
+      setErrorMsg(null);
+      qc.invalidateQueries({ queryKey: ["admin-emails"] });
+    },
+    onError: (e: Error) => setErrorMsg(e.message),
+  });
+
+  const emails = data?.emails || [];
+
+  function handleAdd() {
+    const e = newEmail.trim();
+    if (!e) return;
+    addMutation.mutate(e);
+  }
+
+  function handleRemove(email: string) {
+    // Guard: don't let user remove themselves
+    if (email.toLowerCase() === currentEmail.toLowerCase()) {
+      setErrorMsg("No puedes quitarte a ti mismo de la lista de admins.");
+      return;
+    }
+    if (!confirm(`¿Quitar ${email} de la lista de admins?`)) return;
+    removeMutation.mutate(email);
+  }
+
+  return (
+    <div>
+      <h2 className="font-heading text-lg text-navy mb-1">🔐 Administradores</h2>
+      <p className="text-xs text-muted-foreground mb-5">
+        Personas externas con acceso de administrador. Las cuentas <code className="text-rust">@growth4u.io</code> son admin automáticamente y no necesitan estar en esta lista.
+      </p>
+
+      {/* Add form */}
+      <ComicCard className="mb-4">
+        <div>
+          <label className="block text-[10px] font-bold uppercase text-muted-foreground mb-1">
+            Agregar admin externo
+          </label>
+          <div className="flex gap-2">
+            <input
+              type="email"
+              value={newEmail}
+              onChange={(e) => { setNewEmail(e.target.value); setErrorMsg(null); }}
+              onKeyDown={(e) => { if (e.key === "Enter") handleAdd(); }}
+              placeholder="email@dominio.com"
+              className="flex-1 px-3 py-1.5 border-2 border-ink rounded-lg text-sm bg-background"
+              disabled={addMutation.isPending}
+            />
+            <button
+              onClick={handleAdd}
+              disabled={addMutation.isPending || !newEmail.trim()}
+              className="px-4 py-1.5 bg-rust text-white border-2 border-ink rounded-md text-sm font-bold shadow-comic hover:shadow-comic-hover hover:-translate-x-px hover:-translate-y-px active:shadow-[1px_1px_0_var(--ink)] active:translate-x-px active:translate-y-px transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-comic disabled:translate-x-0 disabled:translate-y-0"
+            >
+              {addMutation.isPending ? "⏳..." : "➕ Agregar"}
+            </button>
+          </div>
+          {errorMsg && (
+            <p className="text-xs text-red-500 mt-2">⚠️ {errorMsg}</p>
+          )}
+        </div>
+      </ComicCard>
+
+      {/* List */}
+      {isLoading ? (
+        <p className="text-sm text-muted-foreground">Cargando...</p>
+      ) : emails.length === 0 ? (
+        <ComicCard>
+          <p className="text-sm text-muted-foreground text-center py-3">
+            No hay admins externos. Solo los <code>@growth4u.io</code> tienen acceso de admin.
+          </p>
+        </ComicCard>
+      ) : (
+        <div className="space-y-2">
+          {emails.map((email) => {
+            const isSelf = email.toLowerCase() === currentEmail.toLowerCase();
+            return (
+              <ComicCard key={email}>
+                <div className="flex items-center gap-3">
+                  <span className="text-base">🔐</span>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-mono text-sm truncate">{email}</div>
+                    {isSelf && (
+                      <div className="text-[10px] text-muted-foreground mt-0.5">(tú mismo)</div>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => handleRemove(email)}
+                    disabled={isSelf || removeMutation.isPending}
+                    className="text-xs px-3 py-1 rounded border border-border hover:border-red-500 hover:text-red-500 text-muted-foreground disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:border-border disabled:hover:text-muted-foreground"
+                    title={isSelf ? "No puedes quitarte a ti mismo" : "Quitar admin"}
+                  >
+                    🗑 Quitar
+                  </button>
+                </div>
+              </ComicCard>
+            );
+          })}
         </div>
       )}
     </div>
