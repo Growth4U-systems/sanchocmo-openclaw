@@ -1,0 +1,37 @@
+{
+  "id": "P06",
+  "name": "Contenido AI — Instagram + TikTok (Educación Crypto)",
+  "description": "Publicar contenido educativo generado por IA en Instagram y TikTok enseñando conceptos crypto de forma simple y visual. El target (Ahorrador Desencantado y Crypto-Curioso) cada vez busca más en TikTok e Instagram directamente. Los contenidos optimizados para búsqueda dentro de estas plataformas (Social SEO) capturan tráfico de alta intención que no pasa por Google.",
+  "approach": "Crear contenido educativo en formatos nativos: Reels/TikToks cortos (30-60s) explicando conceptos crypto, comparativas rápidas, tips de inversión segura, novedades regulatorias (MiCA). Todo generado por AI, con estética Criptan. Optimizado para búsqueda interna de IG/TikTok (Social SEO). Cadencia: 4-5 posts/semana por plataforma.",
+  "status": "active",
+  "created": "2026-03-30",
+  "review_date": "2026-04-30",
+  "origin": {
+    "type": "strategic-plan",
+    "version": 1,
+    "detail": "Decisión del cliente: contenido AI en IG + TikTok para educar sobre crypto"
+  },
+  "objective": {
+    "description": "Crecer audiencia y visibilidad en IG + TikTok con contenido educativo",
+    "metric": "views_from_search_percent",
+    "baseline": 0,
+    "target": 30,
+    "unit": "%"
+  },
+  "strategy": {
+    "catalog_id": "21",
+    "description": "Social SEO (Search Everywhere Optimization)"
+  },
+  "channels": [
+    "content"
+  ],
+  "discord": {
+    "project_thread_id": null,
+    "project_channel": "projects"
+  },
+  "tasks_total": 4,
+  "tasks_completed": 0,
+  "value_review": null,
+  "mc_chat_thread_id": "project-p06",
+  "discord_thread_id": null
+}

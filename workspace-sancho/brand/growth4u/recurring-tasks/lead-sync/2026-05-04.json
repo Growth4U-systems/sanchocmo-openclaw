@@ -1,0 +1,11 @@
+{
+  "cronId": "a68143d8-1309-46eb-a5dc-4c3fb35ee3d2",
+  "cronName": "Lead Sync — Growth4U",
+  "slug": "growth4u",
+  "date": "2026-05-04",
+  "runAtMs": 1777924800026,
+  "status": "ok",
+  "durationMs": 419057,
+  "model": "claude-opus-4-6",
+  "content": "📊 **Lead Sync — 2026-05-04 22:00**\n\n**6** nuevos leads creados | **28** existentes (sin cambios) | **0** notas Slack (disabled)\n\n🆕 **Nuevos leads:**\n• Sara Santana Ramos — personal email, sin empresa identificada\n• Eustacio Cabrera — **MERGE Madrid** (mmerge.io) — eventos Web3, 1-10 empleados\n• Antonio — Facebook Lead Ads, budget 10-25K€, sin empresa\n• Jhon Esteban Yandi Aguirre — datos mínimos, enrichment pendiente\n• Frank Nava — **Rentakia** (rentakia.com) — PropTech/tokenización inmobiliaria, +34608730732\n• Clara Melero — **FleetChofer by Clara** — startup LogTech pre-launch, budget 0-10K€\n\n⚠️ **Warnings:**\n• Drive (gog) no disponible — transcripts no buscados\n• Slack sync desactivado en config\n• 3 leads con solo email personal (Gmail) — enrichment limitado"
+}

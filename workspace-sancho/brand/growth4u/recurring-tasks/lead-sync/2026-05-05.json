@@ -1,0 +1,11 @@
+{
+  "cronId": "a68143d8-1309-46eb-a5dc-4c3fb35ee3d2",
+  "cronName": "Lead Sync — Growth4U",
+  "slug": "growth4u",
+  "date": "2026-05-05",
+  "runAtMs": 1778011200026,
+  "status": "ok",
+  "durationMs": 474640,
+  "model": "claude-opus-4-6",
+  "content": "📊 **Lead Sync — 2026-05-05 22:00 CEST**\n\n• **457** contactos en GHL → **32** con tag `llamada-agendada`\n• **0** nuevos leads | **31** actualizados (last_enriched) | 1 test skip\n• **1 transcript nuevo** procesado:\n  — 🔥 **Frank Nava** (Fintech/inversión) — Llamada Estratégica hoy. Muy interesado en Trust Engine. Pain: 6k leads en 8 meses con retorno pobre. Objeción: pago único 9k€. Follow-up jueves 8 mayo 17:00h con su socio Víctor.\n• Slack sync: ⏸️ disabled\n• Errores: 0\n\n---\n\n📊 **Lead Sync — 2026-05-05 22:00 CEST**\n\n• **457** contactos en GHL → **32** con tag `llamada-agendada`\n• **0** nuevos leads | **31** actualizados (last_enriched) | 1 test skip\n• **1 transcript nuevo** procesado:\n  — 🔥 **Frank Nava** (Fintech/inversión) — Llamada Estratégica hoy. Muy interesado en Trust Engine. Pain: 6k leads en 8 meses con retorno pobre. Objeción: pago único 9k€. Follow-up jueves 8 mayo 17:00h con su socio Víctor.\n• Slack sync: ⏸️ disabled\n• Errores: 0"
+}

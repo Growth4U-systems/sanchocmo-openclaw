@@ -18,7 +18,19 @@ export interface Project {
   created_at: string;       // ISO8601
   review_date: string | null;
   blocked_by?: string;      // Project ID
+  /** Canonical compact task brief. Legacy fields below remain during migration. */
+  brief?: string;
+  /** Canonical completion/evidence contract. Replaces most deliverable + done criteria usage. */
+  completion?: string;
+  /** Optional notes that override or constrain the selected skill. */
+  execution_notes?: string;
   description?: string;
+  agent?: string;
+  skill?: string;
+  skills?: string[];
+  input_documents?: { path: string; name?: string; title?: string; source?: string }[];
+  required_inputs?: { id: string; label: string; kind?: string; optional?: boolean; source?: string }[];
+  output_documents?: { path: string; name?: string; title?: string; source?: string }[];
   objective?: string | { description?: string; metric?: string; baseline?: number; target?: number; unit?: string };
   approach?: string;
   archive_reason?: string;
@@ -64,11 +76,30 @@ export const VALID_TASK_STATUSES: readonly TaskStatus[] = [
   "blocked",
   "cancelled",
 ] as const;
-export type TaskType = "content" | "outreach" | "foundation" | "research" | "analysis" | "execution" | "tool" | "media";
+export type TaskType =
+  | "project"
+  | "content"
+  | "outreach"
+  | "foundation"
+  | "research"
+  | "analysis"
+  | "execution"
+  | "tool"
+  | "media"
+  | "Media"
+  | "content_task"
+  /** @deprecated ContentTask is the canonical name; kept only for legacy rows. */
+  | "content_subtask";
 
 export interface Task {
   id: string;               // "P01-T01"
   name: string;
+  /** Canonical compact task brief. Legacy fields below remain during migration. */
+  brief?: string;
+  /** Canonical completion/evidence contract. Replaces most deliverable + done criteria usage. */
+  completion?: string;
+  /** Optional notes that override or constrain the selected skill. */
+  execution_notes?: string;
   description: string;
   deliverable: string;       // Human-readable description ("market-and-us/competitors/ con fichas...")
   /**
@@ -85,11 +116,16 @@ export interface Task {
   done_criteria: string;
   depends_on: string | null;
   owner: string;            // "Sancho" | "Equipo"
+  agent?: string;           // Canonical executing agent slug
   status: TaskStatus;
   channel: string;          // "web", "content", "intelligence"...
   type: TaskType;
   batch_type?: string;      // Legacy fallback for type
   skill: string;
+  skills?: string[];        // Canonical skill contract. `skill` remains primary.
+  input_documents?: { path: string; name?: string; title?: string; source?: string }[];
+  required_inputs?: { id: string; label: string; kind?: string; optional?: boolean; source?: string }[];
+  output_documents?: { path: string; name?: string; title?: string; source?: string }[];
   pillar?: string;          // Foundation only
   section?: string;         // Foundation only
   completed?: string;       // ISO8601
@@ -115,6 +151,13 @@ export interface Task {
    */
   content_tasks?: ContentTask[];
 }
+
+export type ProjectTask = Project & { type: "project"; parent_id?: null };
+export type ChildTask = Task & { type: Exclude<TaskType, "project" | "content_task" | "content_subtask">; parent_id?: string };
+export type ContentTaskRow = ContentTask & { type: "content_task"; parent_id?: string | null };
+/** @deprecated Use ContentTaskRow. ContentTask is the product/domain name. */
+export type ContentSubtask = ContentTask & { type: "content_subtask"; parent_id?: string | null };
+
 
 /**
  * Status canónicos para una `ContentTask` (sub-task del Content Engine).
@@ -231,6 +274,9 @@ export interface ContentTask {
   idea_id: string;
   name: string;
   status: ContentTaskStatus;
+  brief?: string;
+  completion?: string;
+  execution_notes?: string;
   pipeline_state?: ContentTaskPipelineState;  // Visible during status === "Approved" or "Pending Media"
   /**
    * Per-channel work phase. Keys are channel ids from `target_channels`. The
@@ -240,10 +286,22 @@ export interface ContentTask {
    * draft frontmatter `status` field.
    */
   channel_phases?: Record<string, ChannelPhase>;
-  /** Per-channel media requirement. `"required"` enforces media before publishing. */
+  /**
+   * Per-channel media requirement. When `"required"`, the publish endpoint
+   * refuses to send the post to the provider with empty `media[]`, and the UI
+   * blocks the channel from advancing to `approved` until media is attached.
+   * Default per channel is `"optional"` (legacy behavior). Set by the writer
+   * skill when the plan calls for a carousel, thread with visuals, image post,
+   * etc.
+   */
   media_policy?: Record<string, "required" | "optional">;
   clarify_status?: "pending" | "answered" | "skipped";
   skill?: string;                   // social-writer | seo-content | instagram-content | newsletter — assigned at Approved
+  agent?: string;                   // Canonical executing agent slug
+  skills?: string[];
+  input_documents?: { path: string; name?: string; title?: string; source?: string }[];
+  required_inputs?: { id: string; label: string; kind?: string; optional?: boolean; source?: string }[];
+  output_documents?: { path: string; name?: string; title?: string; source?: string }[];
   target_channels: string[];        // ["linkedin", "twitter"] — drafts produced for these
   documents: { path: string; name?: string; channel?: string }[];
   mc_chat_thread_id?: string;

@@ -1,0 +1,32 @@
+{
+  "id": "P02",
+  "name": "Google Ads MiCA",
+  "description": "CANCELADO — El cliente prefiere no activar paid ads (Google ni Meta) en esta fase. Foco en orgánico + outbound.",
+  "status": "pending",
+  "created": "2026-03-30",
+  "cancelled_at": "2026-03-30",
+  "review_date": null,
+  "origin": {
+    "type": "strategic-plan",
+    "version": 1,
+    "detail": "Cancelado por decisión del cliente — prioriza LinkedIn B2B + Social content"
+  },
+  "objective": null,
+  "strategy": {
+    "catalog_id": "16",
+    "description": "Paid Ads — Google Ads (CANCELADO)"
+  },
+  "channels": [
+    "paid-ads"
+  ],
+  "discord": {
+    "project_thread_id": null,
+    "project_channel": "projects"
+  },
+  "tasks_total": 3,
+  "tasks_completed": 0,
+  "value_review": null,
+  "updated_at": "2026-04-15T15:37:46.387Z",
+  "mc_chat_thread_id": "project-p02",
+  "discord_thread_id": null
+}

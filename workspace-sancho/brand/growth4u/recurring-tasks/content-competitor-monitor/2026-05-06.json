@@ -1,0 +1,20 @@
+{
+  "cronName": "content-competitor-monitor",
+  "slug": "growth4u",
+  "date": "2026-05-06",
+  "runAtMs": 1746504600000,
+  "status": "completed",
+  "last_finding": "8 ideas nuevas (8 reference-creators, 0 competitors). Highlights: idea-2026-05-06-7 — Lenny/Notion sobre agencia > skills en era IA (May 3, 93 likes), pov_confidence 0.85. idea-2026-05-06-6 — Elena Verna sobre employee advocacy como distribución (246 likes), pov_confidence 0.82.",
+  "content": "Scanned 7 competitors + 9 reference creators across LinkedIn, newsletter, blog, Twitter. Competitors (Snowball, Product Hackers, TheGrowtHacker) had no notable high-engagement content this week. Reference creators dominated: Elena Verna (employee advocacy), Lenny Rachitsky (agency>skills + freemium broken in AI), Amanda Natividad (business problem not content problem), Rob Walling (AI bad at product + 6 AI implementations), Hormozi (text plain > carousels), Ross Simmonds (80/20 distribution). X/Twitter search unavailable (credits exhausted).",
+  "ideas_created": 8,
+  "ideas_by_pillar": {
+    "P1": 1,
+    "P2": 3,
+    "P4": 1,
+    "P5": 3
+  },
+  "ideas_by_source_type": {
+    "reference-creator": 8,
+    "competitor": 0
+  }
+}

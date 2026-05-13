@@ -16,6 +16,8 @@ import path from "path";
 import yaml from "js-yaml";
 import { withErrorHandler } from "@/lib/api-middleware";
 import { BASE } from "@/lib/data/paths";
+import { loadAllContentTasks, upsertContentTask } from "@/lib/data/content-tasks-flat";
+import type { ContentTask } from "@/types";
 
 const CANDIDATES_PER_SLOT = 3;
 
@@ -123,9 +125,12 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   // 2. Create project + task
   const { projectId, taskId } = ensureWeeklyProjectAndTask(slug);
 
-  // 3. Select candidate ideas per slot
+  // 3. Select candidate ContentTasks per slot. Flat ContentTasks are now the
+  // canonical dispatch pool; idea-queue.json is kept in sync as a transition
+  // safety net.
   const ideas = loadIdeas(slug);
-  const readyIdeas = ideas.filter(i => i.status === "New");
+  const flatTasks = loadAllContentTasks(slug);
+  const readyIdeas = flatTasks.filter((i) => i.status === "New" && !i.parent_task_id);
 
   // Calculate recency score
   const scored = readyIdeas.map(idea => {
@@ -138,8 +143,9 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     // Find ideas that match this channel (or are adaptable)
     const channelMatch = scored.filter(i =>
       i.target_channel === slot.channel ||
-      (slot.channel === "linkedin" && i.target_channel === "twitter") ||
-      (slot.channel === "twitter" && i.target_channel === "linkedin")
+      i.target_channels?.includes(slot.channel) ||
+      (slot.channel === "linkedin" && (i.target_channel === "twitter" || i.target_channels?.includes("twitter"))) ||
+      (slot.channel === "twitter" && (i.target_channel === "linkedin" || i.target_channels?.includes("linkedin")))
     );
     // Sort by recency + confidence
     channelMatch.sort((a, b) => {
@@ -151,9 +157,16 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     return { channel: slot.channel, candidates };
   });
 
-  // 4. Mark dispatched ideas
+  // 4. Mark dispatched ContentTasks and mirror the metadata to legacy ideas.
   for (const slot of slots) {
     for (const candidate of slot.candidates) {
+      upsertContentTask(slug, {
+        ...(candidate as ContentTask),
+        dispatch_date: now.toISOString().slice(0, 10),
+        dispatch_slot: slot.channel,
+        project_task_id: taskId,
+        project_id: projectId,
+      } as ContentTask);
       const idea = ideas.find(i => i.id === candidate.id);
       if (idea) {
         idea.dispatch_date = now.toISOString().slice(0, 10);
@@ -164,7 +177,13 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     }
   }
 
-  // 5. Defer old ideas (stale → Deferred in canonical pipeline)
+  // 5. Defer old candidates (stale → Deferred in canonical pipeline)
+  for (const ct of flatTasks) {
+    if (ct.status === "New" && !ct.parent_task_id) {
+      const ageDays = (now.getTime() - new Date(ct.created_at).getTime()) / 86400000;
+      if (ageDays > 14) upsertContentTask(slug, { ...ct, status: "Deferred" });
+    }
+  }
   for (const idea of ideas) {
     if (idea.status === "New") {
       const ageDays = (now.getTime() - new Date(idea.created_at).getTime()) / 86400000;

@@ -1,0 +1,9 @@
+{
+  "cronName": "Morning Metrics — Growth4U",
+  "slug": "growth4u",
+  "date": "2026-05-03",
+  "runAtMs": 1746253800000,
+  "status": "ok",
+  "collectionErrors": ["instantly: (campaigns || []) is not iterable"],
+  "content": "📊 **Morning Metrics — Growth4U** | 2026-05-03\n\n━━━ **META ADS** (ayer) ━━━\n💰 Spend: **€91.56** (media 7d: €134.22 ⬇️)\n👁️ Impressions: **6,599** (media 7d: 6,108)\n🖱️ Clicks: **29** | CTR: **0.44%** | CPC: **€3.16**\n🎯 Leads: **1** (media 7d: 1.7/día)\n\n━━━ **GHL — CONTACTS** (últimas 24h) ━━━\n👤 Nuevos contactos: **3**\n- gorka — Facebook — 2026-05-02 23:11\n- alex — Trust Score Analyzer — 2026-05-02 16:19\n- abby martínez — Facebook — 2026-05-02 12:46\n\n━━━ **GHL — APPOINTMENTS** (últimas 24h) ━━━\n📅 Citas: **0**\n\n━━━ **ANÁLISIS** ━━━\n📉 Tendencia semanal: Spend reduciéndose (de €179-193 a €85-101). CTR bajando (1.01% → 0.44%). Viernes fue el día más débil de la semana.\n🔍 Señal positiva: Trust Score Analyzer generó 1 contacto orgánico (alex). El lead magnet está funcionando.\n⚠️ Cero citas agendadas en 24h — pipeline frío.\n📌 Domingo = bajo rendimiento esperado en ads B2B/servicios."
+}

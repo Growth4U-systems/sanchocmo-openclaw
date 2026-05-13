@@ -1,0 +1,56 @@
+{
+  "dispatch_date": "2026-05-04",
+  "dispatched_at": "2026-05-04T06:38:00Z",
+  "discord_message_id": "1500748995025309767",
+  "discord_channel_id": "1491032340208812042",
+  "candidates_scored": 7,
+  "stale_marked": 0,
+  "selected": [
+    {
+      "rank": 1,
+      "idea_id": "idea-2026-05-01-003",
+      "pillar": "incentivos-fiscales",
+      "type": "Hot Take",
+      "channel": "linkedin",
+      "pov_confidence": 0.90,
+      "recency_score": 0.5503,
+      "age_days": 3.0
+    },
+    {
+      "rank": 2,
+      "idea_id": "idea-2026-05-01-005",
+      "pillar": "financiacion-entretenimiento",
+      "type": "Hot Take",
+      "channel": "linkedin",
+      "pov_confidence": 0.88,
+      "recency_score": 0.5503,
+      "age_days": 3.0
+    },
+    {
+      "rank": 3,
+      "idea_id": "idea-2026-05-01-001",
+      "pillar": "pfp-regulacion",
+      "type": "Hot Take",
+      "channel": "linkedin",
+      "pov_confidence": 0.85,
+      "recency_score": 0.5503,
+      "age_days": 3.0
+    },
+    {
+      "rank": 4,
+      "idea_id": "idea-2026-05-01-004",
+      "pillar": "incentivos-fiscales",
+      "type": "Framework",
+      "channel": "linkedin",
+      "pov_confidence": 0.82,
+      "recency_score": 0.5503,
+      "age_days": 3.0
+    }
+  ],
+  "not_selected": [
+    "idea-2026-05-01-002",
+    "idea-2026-05-01-006",
+    "idea-2026-05-01-007"
+  ],
+  "status": "awaiting_response"
+}

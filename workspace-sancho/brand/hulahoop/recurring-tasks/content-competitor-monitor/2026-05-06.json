@@ -1,0 +1,11 @@
+{
+  "cronName": "content-competitor-monitor",
+  "slug": "hulahoop",
+  "date": "2026-05-06",
+  "runAtMs": 1746506220000,
+  "status": "completed",
+  "last_finding": "7 ideas nuevas (5 competitors, 1 reference-creator, 1 deduped). Highlight: idea-2026-05-06-7 — SFTL publica que la música en vivo mueve 5.812M€ en España (78% más que el cine en taquilla), pov_confidence 0.88. También destaca idea-2026-05-06-11 — SEGO Creative lleva 2M€ en 14 proyectos culturales, competidor directo en crowdfunding cultural (pov_confidence 0.87).",
+  "content": "Monitorizados 5 competitors + 5 reference-creators. Blogs activos: SEGO Finance (ESG en VC, May 5), Urbanitae (fondos indexados, May 5; Q1 results +42%, Apr 22), SFTL/Incentiva Music (impacto económico música 5.812M€, Apr 16), Sympathy for the Lawyer (IMS electronic music 15.1B$, Apr; rap/TikTok posts descartados). SEGO Creative: 2M€ en 14 proyectos culturales con EGEDA. Taxlease/Fimax/Leyton promueven tax lease audiovisual. TaxMM/Pelícano sin contenido reciente. Crowdfunding.es offline. Diego Bañuelos y Profilm sin posts recientes.",
+  "ideas_created": ["idea-2026-05-06-7", "idea-2026-05-06-8", "idea-2026-05-06-9", "idea-2026-05-06-10", "idea-2026-05-06-11", "idea-2026-05-06-12", "idea-2026-05-06-13"],
+  "ideas_deduped": ["idea-2026-05-06-14"]
+}

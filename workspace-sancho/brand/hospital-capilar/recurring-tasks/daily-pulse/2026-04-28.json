@@ -1,0 +1,11 @@
+{
+  "cronId": "2283eade-3d08-4f46-a508-eaa6d035a4d2",
+  "cronName": "Daily Pulse",
+  "slug": "hospital-capilar",
+  "date": "2026-04-28",
+  "runAtMs": 1777396855221,
+  "status": "ok",
+  "durationMs": 246418,
+  "model": "MiniMax-M2.7",
+  "content": "## 📊 Daily Pulse — Hospital Capilar — 2026-04-28\n\n**Canales checked:** 9\n**Canales activos (humanos, <24h):** 0\n**Canales saltados:** 9\n\n---\n\n### 🔍 Pre-Check Results\n\n| Canal | Último mensaje | Status |\n|---|---|---|\n| general | 2026-03-30 (bot) | ⏭️ SKIP |\n| brand | 2026-02-28 (bot) | ⏭️ SKIP |\n| campaigns | 2026-03-24 (bot) | ⏭️ SKIP |\n| content | 2026-04-28 06:51 (bot) | ⏭️ SKIP |\n| intelligence | 2026-04-28 16:04 (bot) | ⏭️ SKIP |\n| onboarding | 2026-04-07 (bot) | ⏭️ SKIP |\n| soporte | 2026-04-28 09:51 (bot) | ⏭️ SKIP |\n| research | 2026-03-01 (humano, >24h) | ⏭️ SKIP |\n| paid-ads | Unknown Channel | ⏭️ SKIP |\n\n---\n\n### 💡 Insight del día\n\n**Día silencioso.** No hay actividad humana en ningún canal del servidor en las últimas 24h. Todo lo publicado son mensajes programméd de bots (SanchoCMO, Health Check). \n\nEl canal `#content` tenía un mensaje scheduled de contenido (Svenson / Capilárea) a las 06:51, pero es bot-generated, no interacción real.\n\n**Hipótesis:** El equipo está en modo operación lenta o el tráfico de usuarios viene por canales externos (web, email, GHL) más que por Discord.\n\n---\n\n### 📁 Archivo guardado\n`brand/hospital-capilar/daily-pulse/2026-04-28.json`"
+}

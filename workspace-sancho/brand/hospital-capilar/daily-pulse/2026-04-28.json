@@ -1,0 +1,20 @@
+{
+  "date": "2026-04-28",
+  "guild": "1475635138108063746",
+  "client": "hospital-capilar",
+  "insights": [],
+  "channels_checked": [
+    {"channel": "general", "status": "skip", "reason": "Último msg 2026-03-30 (bot)"},
+    {"channel": "brand", "status": "skip", "reason": "Último msg 2026-02-28 (bot)"},
+    {"channel": "campaigns", "status": "skip", "reason": "Último msg 2026-03-24 (bot)"},
+    {"channel": "content", "status": "skip", "reason": "Último msg 2026-04-28 06:51 (bot)"},
+    {"channel": "intelligence", "status": "skip", "reason": "Último msg 2026-04-28 16:04 (bot)"},
+    {"channel": "onboarding", "status": "skip", "reason": "Último msg 2026-04-07 (bot)"},
+    {"channel": "soporte", "status": "skip", "reason": "Último msg 2026-04-28 09:51 (bot)"},
+    {"channel": "research", "status": "skip", "reason": "Último msg 2026-03-01 (humano, >24h)"},
+    {"channel": "paid-ads", "status": "skip", "reason": "Unknown Channel"}
+  ],
+  "active_channels": 0,
+  "skipped_channels": 9,
+  "summary": "Día silencioso en Discord. Ningún canal con actividad humana en las últimas 24h. Los bots (SanchoCMO, Health Check) publicaron contenido scheduled pero sin interacción de usuarios."
+}

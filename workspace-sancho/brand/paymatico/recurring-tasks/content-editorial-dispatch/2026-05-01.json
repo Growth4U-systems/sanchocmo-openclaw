@@ -1,0 +1,78 @@
+{
+  "date": "2026-05-01",
+  "day": "friday",
+  "status": "dispatched_awaiting_selection",
+  "ideas_in_queue": 7,
+  "ideas_eligible": 7,
+  "ideas_stale": 0,
+  "candidates_presented": 5,
+  "candidates": [
+    {
+      "position": 1,
+      "id": "idea-2026-05-01-002",
+      "title": "Dinero programable: MONEI lo experimenta, Paymático ya lo tiene en producción",
+      "pov_confidence": 0.90,
+      "recency_score": 1.0,
+      "channel": "linkedin",
+      "type": "Contrarian Take",
+      "pillar": "tecnologia-pagos"
+    },
+    {
+      "position": 2,
+      "id": "idea-2026-05-01-004",
+      "title": "Bizum llega a TPVs físicos el 18 mayo — lo que importa para cadenas con 200 puntos de venta",
+      "pov_confidence": 0.88,
+      "recency_score": 1.0,
+      "channel": "linkedin",
+      "type": "Proof Post",
+      "pillar": "tecnologia-pagos"
+    },
+    {
+      "position": 3,
+      "id": "idea-2026-05-01-001",
+      "title": "Cuando tu proveedor de pagos es adquirido: qué cambia para tu franquicia",
+      "pov_confidence": 0.85,
+      "recency_score": 1.0,
+      "channel": "linkedin",
+      "type": "Hot Take",
+      "pillar": "competencia-fintech"
+    },
+    {
+      "position": 4,
+      "id": "idea-2026-05-01-006",
+      "title": "Pagos para hostelería vs pagos para CADENAS de hostelería — la diferencia que importa",
+      "pov_confidence": 0.85,
+      "recency_score": 1.0,
+      "channel": "linkedin",
+      "type": "Contrarian Take",
+      "pillar": "franquicias-multisede"
+    },
+    {
+      "position": 5,
+      "id": "idea-2026-05-01-005",
+      "title": "Hacienda sin mínimos en cobros digitales: oportunidad o dolor de cabeza para franquicias",
+      "pov_confidence": 0.82,
+      "recency_score": 1.0,
+      "channel": "linkedin",
+      "type": "Hot Take",
+      "pillar": "franquicias-multisede"
+    }
+  ],
+  "not_selected": [
+    {
+      "id": "idea-2026-05-01-003",
+      "title": "PSD3 y tu red de franquicias: 3 cosas que debes saber antes de 2028",
+      "pov_confidence": 0.80,
+      "reason": "Below top 5 cutoff"
+    },
+    {
+      "id": "idea-2026-05-01-007",
+      "title": "Nueva Ley de Franquicias: cómo afecta a la gestión financiera de tu red",
+      "pov_confidence": 0.72,
+      "reason": "Below top 5 cutoff"
+    }
+  ],
+  "discord_message_id": "1499669335751262258",
+  "discord_channel_id": "1477995838092476470",
+  "notes": "cadence-config.yml not found — used default: top 5 by pov_confidence. All ideas age=0 days (created today)."
+}

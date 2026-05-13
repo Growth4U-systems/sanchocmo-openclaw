@@ -1,0 +1,11 @@
+{
+  "cronId": "1b104cd3-74b6-42df-9d4e-b4a764acef21",
+  "cronName": "Recordatorio Métricas Manuales — Criptan",
+  "slug": "criptan",
+  "date": "2026-04-27",
+  "runAtMs": 1777273991555,
+  "status": "error",
+  "durationMs": 1721448,
+  "model": "MiniMax-M2.7",
+  "content": "⚠️ **CRON FALLANDO — Criptan Metrics Reminder**\n\nEl cron de recordatorio de métricas manuales de Criptan lleva 3 semanas sin enviarse. El error: \"Channel is required when multiple channels configured: discord, mc-chat\".\n\n**Estado actual:**\n- delivery.mode: announce + discord + channel:1486844082520195132 ✅ (corregido)\n- Pero el message tool en sesiones aisladas no puede resolver canales del guild de Criptan (no hay client-config.json con los canales mapeados)\n\n**El mensaje que debería ir:**\n> 📊 [RECORDATORIO] Métricas manuales — semana del 14 al 20 abril\n> Google Sheet: https://docs.google.com/spreadsheets/d/1fb_uCEwmXiHGnmOjxcrUpUuqoe83ifXVHFoScbffqk4/edit\n> Columnas: signups | kyc_completed | first_deposit | amount_deposited | earn_activated | second_deposit | app_downloads | ad_spend\n\n**Qué necesito para arreglarlo:**\n1. Acceso al Discord de Criptan para crear/verificar el canal `#intelligence` con su channel ID real\n2. O crear un `brand/criptan/client-config.json` con los canales mapeados\n3. O cambiar el cron para que use una sesión con contexto de Discord en vez de `isolated`\n\nAlfonso — ¿puedes crear/verificar el canal `#intelligence` en el Discord de Criptan y confirmarme el channel ID? Mientras tanto lo intento directamente desde aquí."
+}

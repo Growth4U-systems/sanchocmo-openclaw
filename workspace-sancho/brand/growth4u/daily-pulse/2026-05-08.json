@@ -1,0 +1,73 @@
+{
+  "date": "2026-05-08",
+  "generated_at": "2026-05-08T07:06:00Z",
+  "channels_scanned": ["general", "brand", "projects", "content", "paid-ads", "web", "intelligence", "soporte"],
+  "human_messages_24h": 0,
+  "bot_messages_24h": 5,
+  "total_messages_24h": 5,
+  "active_threads_24h": ["Metrics 2026-05-08", "Call Prep — Viernes 8 mayo 2026", "Lead Sync 2026-05-07"],
+  "insights": [
+    {
+      "category": "alert",
+      "type": "metric_anomaly",
+      "title": "Impresiones Meta Ads caen -73% vs media",
+      "detail": "Morning Metrics 08/05: 1.8K impresiones vs 7K media. Spend €113, 2 leads. CPC mejora vs ayer (€4.04) pero volumen muy bajo. Monitorizar hoy.",
+      "source": "intelligence",
+      "priority": "high"
+    },
+    {
+      "category": "pipeline",
+      "type": "lead_update",
+      "title": "1 lead nuevo + 2 transcripts procesados",
+      "detail": "Lead Sync 07/05: Jordi Teixido de Haro (freelance developer PHP/Python, FB Ads paid, llamada agendada 11/05). Transcripts: Frank Nava (Rentakia, interés alto Trust Fortress, objección 9K€, follow-up 08/05 con socio Víctor) + Aarón Sanromán (plan LinkedIn 3 meses, meta 20K seguidores).",
+      "source": "intelligence",
+      "priority": "high"
+    },
+    {
+      "category": "pipeline",
+      "type": "call_prep",
+      "title": "1 llamada con lead programada hoy viernes 8 mayo",
+      "detail": "Frank Nava follow-up a las 17:00 con su socio Víctor — call caliente, interés alto en Trust Fortress.",
+      "source": "intelligence",
+      "priority": "high"
+    },
+    {
+      "category": "trend",
+      "type": "cpc_volatility",
+      "title": "CPC oscilando: €4.04 ayer → normalización hoy",
+      "detail": "CPC ayer fue máximo semanal (+35%). Hoy con menos impresiones pero 2 leads, eficiencia podría mejorar si se estabiliza volumen.",
+      "source": "intelligence",
+      "priority": "medium"
+    },
+    {
+      "category": "risk",
+      "type": "engagement_gap",
+      "title": "0 mensajes humanos en 24h — 10+ semanas sin actividad",
+      "detail": "Ningún mensaje humano en los 8 canales monitorizados. El equipo no interactúa con Discord. Riesgo de desconexión.",
+      "source": "all_channels",
+      "priority": "medium"
+    }
+  ],
+  "micro_briefs": [
+    {
+      "action": "Monitorizar impresiones Meta Ads hoy — si <2K al cierre, revisar audiencias/budget",
+      "owner": "Philippe",
+      "deadline": "2026-05-08 EOD"
+    },
+    {
+      "action": "Preparar call Frank Nava 17:00 — tener propuesta flexible vs pago único 9K€",
+      "owner": "Alfonso/Martin",
+      "deadline": "2026-05-08 16:30"
+    },
+    {
+      "action": "Confirmar llamada Jordi Teixido 11/05 y preparar briefing",
+      "owner": "equipo",
+      "deadline": "2026-05-10"
+    }
+  ],
+  "health_score_context": {
+    "last_known": 37,
+    "trend": "recovering",
+    "note": "Health Score subió de 22 a 37 esta semana. Gap lead→cita sigue como blocker #1."
+  }
+}

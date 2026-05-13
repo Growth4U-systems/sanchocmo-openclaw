@@ -1,0 +1,11 @@
+{
+  "cronName": "Content: Idea Dedupe Audit — Hospital Capilar",
+  "slug": "hospital-capilar",
+  "date": "2026-05-04",
+  "runAtMs": 1746342900000,
+  "status": "ok",
+  "last_finding": "Sin duplicados detectados esta semana. 7 ideas revisadas (todas del 2026-05-01), cada una cubre un tema distinto incluso dentro del mismo pillar.",
+  "content": "## Idea Dedupe Audit — 2026-05-04\n\n**Ideas analizadas:** 7 (todas con status `ready`, created 2026-05-01)\n\n**Nota:** Ninguna idea tiene status \"New\" o \"Approved\" — todas son \"ready\". Se analizaron igualmente.\n\n### Criterios aplicados\n\n| Criterio | Resultado |\n|----------|----------|\n| (a) Mismo pillar + ≥4 keywords overlap | 0 pares |\n| (b) Misma URL | 0 pares |\n| (c) Mismo signal_type + misma fuente/empresa | 0 pares (campo no presente) |\n\n### Detalle por pillar con múltiples ideas\n\n**P2-tratamientos (4 ideas):**\n- idea-2026-05-01-002: GLP-1/Ozempic → caída capilar\n- idea-2026-05-01-005: Guía precios tratamientos (SEO transaccional)\n- idea-2026-05-01-006: Svenson polinucleótidos (competidor)\n- idea-2026-05-01-007: PRP eficacia clínica\n\nTemas suficientemente diferenciados: fármacos, precios, competidor, evidencia clínica.\n\n### Resultado\n\n✅ **0 pares duplicados.** Todas las ideas cubren ángulos distintos.",
+  "pairs_count": 0,
+  "pairs": []
+}

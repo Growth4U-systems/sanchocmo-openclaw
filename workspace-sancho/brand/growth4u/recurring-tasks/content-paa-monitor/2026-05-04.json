@@ -1,0 +1,15 @@
+{
+  "status": "failed",
+  "error": "DataforSEO MCP server not configured. No MCP servers found in openclaw.json. Cannot fetch PAA data without DataforSEO — no fallback allowed per cron instructions.",
+  "total_seeds": 0,
+  "total_new_questions": 0,
+  "by_pillar": {
+    "P1": 0,
+    "P2": 0,
+    "P3": 0,
+    "P4": 0,
+    "P5": 0
+  },
+  "last_finding": "Ejecución fallida: DataforSEO no está configurado como MCP server. Se necesita configurar el servidor MCP de DataforSEO para poder extraer preguntas PAA.",
+  "ran_at": "2026-05-04T06:00:00+02:00"
+}

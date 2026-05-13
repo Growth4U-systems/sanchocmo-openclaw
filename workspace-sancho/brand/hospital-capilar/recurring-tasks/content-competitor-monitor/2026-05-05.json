@@ -1,0 +1,23 @@
+{
+  "task": "content-competitor-monitor",
+  "ran_at": "2026-05-05T07:23:00+02:00",
+  "status": "completed",
+  "period": "2026-04-28 to 2026-05-05",
+  "signals_file": "brand/hospital-capilar/content/research-signals/2026-05-05-creators.json",
+  "total_signals": 13,
+  "sources_monitored": {
+    "competitors": ["Insparya", "Svenson", "Capilclinic", "IMD Dermatologico", "mediQuo"],
+    "reference_creators": ["Dr. Sergio Vañó Galván", "Helena Rodero", "Dr. De Felipe"]
+  },
+  "platforms_checked": ["blog", "youtube", "web", "linkedin"],
+  "notes": "X/Twitter no disponible (xAI credits agotados). mediQuo sin contenido nuevo reciente (último: nov 2025 — PP405). LinkedIn posts no indexados con suficiente detalle.",
+  "last_finding": "Capilclinic publica artículo pilar sobre biotecnología capilar 2026 (clonación folicular, IA para diseño). Svenson refuerza con premio Cinco Estrellas + nuevo tratamiento LUX Capilar con polinucleótidos. Helena Rodero lanza Hair HR/Skin HR con cobertura mediática masiva — oportunidad de collab o contenido sobre skinificación capilar.",
+  "top_opportunities": [
+    "Artículo myth-busting 'Remedios caseros vs. ciencia' (keyword alto volumen, Insparya tiene 64 likes)",
+    "Contenido sobre skinificación capilar / tendencia polinucleótidos 2026",
+    "Campaña estacional 'Verano sin gorra' + diagnóstico pre-verano",
+    "Serie video-testimoniales 'Por qué elegí Hospital Capilar'",
+    "Contenido sobre alopecia juvenil / Gen Z (ángulo Dr. De Felipe en Hola.com)"
+  ],
+  "summary": "13 señales extraídas de 5 competidores y 3 reference creators. Tendencias clave: medicina regenerativa (polinucleótidos), skinificación capilar, contenido emocional/psicológico, y expansión hacia público joven. Gaps detectados: HC necesita presencia en premios/certificaciones (como Svenson), transparencia de precios (como Capilclinic), y thought leadership en medios generalistas (como Dr. De Felipe en Hola.com)."
+}

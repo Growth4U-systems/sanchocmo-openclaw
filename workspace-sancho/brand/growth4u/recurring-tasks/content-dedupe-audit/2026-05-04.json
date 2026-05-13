@@ -1,0 +1,30 @@
+{
+  "cronName": "Content: Idea Dedupe Audit — Growth4U",
+  "slug": "growth4u",
+  "date": "2026-05-04",
+  "runAtMs": 1777878909901,
+  "status": "ok",
+  "last_finding": "3 pares duplicados detectados. idea-2026-04-28-5 ≈ idea-2026-04-28-8 (ambas Framework blog sobre MiCA compliance-as-moat con angle casi idéntico).",
+  "content": "# Idea Dedupe Audit — Growth4U (2026-05-04)\n\n## Resumen\n- Ideas analizadas (New/Approved, últimos 7 días): 19\n- Pares duplicados detectados: 3\n\n## Pares detectados\n\n| # | Idea A | Idea B | Razón | Recomendación |\n|---|--------|--------|-------|---------------|\n| 1 | idea-2026-04-28-5 | idea-2026-04-28-8 | Mismo P3 Framework blog, ambas sobre MiCA deadline julio 2026 con frame 'compliance-as-moat' y angle draft casi idéntico (mismo playbook Bnext, misma estructura argumentativa) | merge |\n| 2 | idea-2026-04-28-2 | idea-2026-04-28-13 | Mismo P5, ambas construyen sobre el dato '88% usa IA / 6% implementada operacionalmente' + caso BCG 6 analistas→1 persona con agente. Framing idéntico: 'ejecución real vs demo' | merge |\n| 3 | idea-2026-04-28-13 | idea-2026-05-01-5 | Mismo P5, ambas citan Gartner 40% apps con AI agents para fin 2026 y argumentan 'agentes en producción vs washing/demo'. idea-2026-05-01-5 es más fuerte por incluir el dato de >40% proyectos cancelados | merge |\n\n## Notas\n- El cluster P3 MiCA tiene 3 ideas relacionadas (04-28-1, 04-28-5, 04-28-8). Solo 04-28-5 y 04-28-8 son verdaderos duplicados (mismo formato+canal+angle). 04-28-1 es Hot Take LinkedIn con angle diferenciado → no duplicado.\n- El cluster P5 agentes forma una cadena: 04-28-2 → 04-28-13 → 05-01-5. Considerar consolidar los 3 en la versión más fuerte (05-01-5 con agent-washing angle).\n- P4 (04-28-12 vs 05-01-4): comparten el dato de 15% recorte empleos agencias pero con angles suficientemente distintos (execution-or-obsolescence vs self-admission Forrester). No marcado como duplicado.",
+  "pairs_count": 3,
+  "pairs": [
+    {
+      "a": "idea-2026-04-28-5",
+      "b": "idea-2026-04-28-8",
+      "reason": "Mismo P3 Framework blog sobre MiCA deadline julio 2026 con frame compliance-as-moat y angle draft casi word-for-word idéntico",
+      "recommendation": "merge"
+    },
+    {
+      "a": "idea-2026-04-28-2",
+      "b": "idea-2026-04-28-13",
+      "reason": "Mismo P5 con framing idéntico: 88% usa IA / 6% implementada + caso BCG + conclusión agentes-en-producción-vs-demo",
+      "recommendation": "merge"
+    },
+    {
+      "a": "idea-2026-04-28-13",
+      "b": "idea-2026-05-01-5",
+      "reason": "Ambas P5 citan Gartner 40% apps con AI agents 2026 y argumentan agents-in-production framing. 05-01-5 más completa con dato de cancelaciones",
+      "recommendation": "merge"
+    }
+  ]
+}

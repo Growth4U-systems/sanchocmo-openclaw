@@ -1,0 +1,129 @@
+{
+  "run_date": "2026-05-08",
+  "run_at": "2026-05-08T05:59:20Z",
+  "sources_checked": {
+    "competitors": [
+      "Adyen",
+      "Stripe",
+      "Mollie",
+      "MONEI",
+      "PaynoPain",
+      "Sipay",
+      "Teya"
+    ],
+    "reference_creators": [
+      "Fintech Takes",
+      "FintechFutures",
+      "JP Morgan Payments",
+      "Toqio"
+    ]
+  },
+  "platforms": [
+    "web",
+    "blog",
+    "linkedin"
+  ],
+  "signals": [
+    {
+      "id": "signal-2026-05-08-aws01",
+      "source": "AWS / Stripe / Coinbase",
+      "source_type": "competitor",
+      "platform": "web",
+      "url": "https://aws.amazon.com/blogs/machine-learning/agents-that-transact-introducing-amazon-bedrock-agentcore-payments-built-with-coinbase-and-stripe/",
+      "date": "2026-05-07",
+      "summary": "AWS lanza Amazon Bedrock AgentCore Payments. Stripe/Privy proporciona wallets y payment rails. Coinbase aporta x402 protocol para micropagos en USDC. Agentes IA pueden pagar autónomamente por servicios digitales con stablecoins.",
+      "engagement": {
+        "likes": 0,
+        "comments": 0,
+        "shares": 0
+      },
+      "matched_pillar": "tecnologia-pagos",
+      "idea_generated": "idea-2026-05-08-006"
+    },
+    {
+      "id": "signal-2026-05-08-teya01",
+      "source": "Teya / EuropaPress",
+      "source_type": "competitor",
+      "platform": "web",
+      "url": "https://www.europapress.es/comunicados/empresas-00908/noticia-comunicado-soluciones-pago-impulsa-llegada-teya-espana-soluciones-pymes-20260505095723.html",
+      "date": "2026-05-05",
+      "summary": "Teya lanza servicios en España via Soluciones de Pago. Datáfonos, Tap to Pay, cuentas de empresa integradas, cashback 0.3%, financiación flexible. Target: pymes hostelería y e-commerce.",
+      "engagement": {
+        "likes": 0,
+        "comments": 0,
+        "shares": 0
+      },
+      "matched_pillar": "competencia-fintech",
+      "idea_generated": "idea-2026-05-08-007"
+    },
+    {
+      "id": "signal-2026-05-08-stripe01",
+      "source": "Stripe / PaymentsDive",
+      "source_type": "competitor",
+      "platform": "web",
+      "url": "https://www.paymentsdive.com/news/stripe-google-partner-on-agentic-commerce/818915/",
+      "date": "2026-04-29",
+      "summary": "Stripe partnership con Google para compras directas en AI Mode y Gemini via Universal Commerce Protocol (UCP). Link wallets para agentes IA con tarjetas de un solo uso. Se suma a OpenAI, Microsoft, Meta.",
+      "engagement": {
+        "likes": 0,
+        "comments": 0,
+        "shares": 0
+      },
+      "matched_pillar": "tecnologia-pagos",
+      "idea_generated": "idea-2026-05-08-008"
+    },
+    {
+      "id": "signal-2026-05-08-monei01",
+      "source": "MONEI",
+      "source_type": "competitor",
+      "platform": "web",
+      "url": "https://monei.com/es/blog/monei-in-the-visa-innovation-program-europe/",
+      "date": "2026-04-09",
+      "summary": "MONEI seleccionada para la 5a edición del Visa Innovation Program Europe (VIPE) en España y Portugal.",
+      "engagement": {
+        "likes": 0,
+        "comments": 0,
+        "shares": 0
+      },
+      "matched_pillar": null,
+      "idea_generated": null,
+      "skip_reason": "Outside 7-day window and low pov_confidence for franchise angle"
+    },
+    {
+      "id": "signal-2026-05-08-paynopain01",
+      "source": "PaynoPain",
+      "source_type": "competitor",
+      "platform": "blog",
+      "url": "https://paynopain.com/blog/",
+      "date": null,
+      "summary": "No new blog content since October 2025. Last posts: system outage prevention, payment links, Gen Z vs Millennials habits.",
+      "engagement": {
+        "likes": 0,
+        "comments": 0,
+        "shares": 0
+      },
+      "matched_pillar": null,
+      "idea_generated": null,
+      "skip_reason": "No new content in monitoring window"
+    },
+    {
+      "id": "signal-2026-05-08-sipay01",
+      "source": "Sipay",
+      "source_type": "competitor",
+      "platform": "web",
+      "url": "https://sipay.es/noticias/",
+      "date": null,
+      "summary": "Sipay consolidated as first Spanish fintech with full Bizum integration (Feb 2026). Acquired 100% of Sipos/Pikotea for Horeca POS (Mar 2026). No new blog content this week.",
+      "engagement": {
+        "likes": 0,
+        "comments": 0,
+        "shares": 0
+      },
+      "matched_pillar": null,
+      "idea_generated": null,
+      "skip_reason": "Prior signals already captured in earlier runs. No new content this week."
+    }
+  ],
+  "total_signals": 6,
+  "ideas_generated": 3
+}

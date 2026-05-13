@@ -1,0 +1,57 @@
+{
+  "task": "content-paa-monitor",
+  "client": "hospital-capilar",
+  "date": "2026-05-11",
+  "run_at": "2026-05-11T06:09:00+02:00",
+  "status": "success",
+  "method": "web_search_paa_extraction",
+  "deduplication_against": ["2026-05-04-paa.json"],
+  "pillars_processed": ["P1-alopecia-temprana", "P2-tratamientos-capilares", "P3-diagnostico-capilar", "P4-trasplante-capilar", "P5-confianza-clinicas"],
+  "seeds_searched": [
+    "alopecia androgenética tratamiento 2026",
+    "minoxidil no funciona alternativas tratamiento capilar",
+    "trasplante capilar España 2026 precio resultados preguntas",
+    "tricólogo dermatólogo alopecia diagnóstico capilar 2026",
+    "clínica capilar confianza médicos especialistas trasplante España",
+    "calvicie ensayos clínicos 2026 bicalutamida clascoterona nuevo tratamiento",
+    "alopecia mujer menopausia caída pelo tratamiento 2026"
+  ],
+  "output_file": "brand/hospital-capilar/content/research-signals/2026-05-11-paa.json",
+  "total_new_questions": 100,
+  "questions_per_pillar": 20,
+  "last_finding": "La clascoterona (Breezula) domina las nuevas búsquedas en P1 y P2: 539% más eficaz que placebo y Hospital Capilar ya tiene artículo propio — ventaja de autoridad a explotar. Además, el segmento mujer perimenopausia emerge con fuerza en P3 y las búsquedas directas 'Hospital Capilar vs Capilclinic' indican necesidad urgente de contenido de diferenciación en P5.",
+  "top_signals": [
+    {
+      "signal": "Clascoterona/Breezula",
+      "pillars": ["P1", "P2"],
+      "urgency": "alta",
+      "detail": "539% más eficaz que placebo. Hospital Capilar tiene artículo propio — explotar autoridad. Búsquedas de precio y compra = intención alta."
+    },
+    {
+      "signal": "Mujer perimenopausia",
+      "pillars": ["P3"],
+      "urgency": "media-alta",
+      "detail": "Audiencia femenina 40-55 subatendida. Señal fuerte en Instagram abril 2026."
+    },
+    {
+      "signal": "Hospital Capilar vs Capilclinic",
+      "pillars": ["P5"],
+      "urgency": "alta",
+      "detail": "Búsqueda competitiva directa ya activa. Necesario contenido de diferenciación técnica y de precio."
+    },
+    {
+      "signal": "Calculadora de folículos",
+      "pillars": ["P4"],
+      "urgency": "media",
+      "detail": "Related search recurrente. Herramienta interactiva con alto potencial SEO y captación de leads."
+    },
+    {
+      "signal": "Trasplante viral (Instagram)",
+      "pillars": ["P4"],
+      "urgency": "media",
+      "detail": "Formato '¿Adivina si tiene trasplante?' viral en abril 2026. Alta interacción."
+    }
+  ],
+  "errors": [],
+  "next_run": "2026-05-18T06:09:00+02:00"
+}

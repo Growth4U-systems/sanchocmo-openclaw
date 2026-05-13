@@ -1,0 +1,173 @@
+{
+  "date": "2026-05-11",
+  "source": "web_search_paa_extraction",
+  "method": "Google Search via web_search — PAA-style questions extracted from search results and related searches",
+  "deduplication_against": ["2026-05-04-paa.json"],
+  "pillars": {
+    "P1-alopecia-temprana": {
+      "name": "Alopecia temprana y pérdida de cabello joven",
+      "new_questions": [
+        "¿Qué es la clascoterona (Breezula) y puede sustituir al finasteride?",
+        "¿Cuándo estará disponible la clascoterona en España?",
+        "¿Los nuevos ensayos clínicos de 2026 van a curar la calvicie?",
+        "¿El dutasteride tiene mejor perfil que el finasteride según los estudios de 2026?",
+        "¿La bicalutamida es una alternativa segura para hombres con alopecia?",
+        "¿Qué novedades presentó el Hospital Ramón y Cajal sobre alopecia en 2026?",
+        "¿La cetirizina tópica funciona para frenar la alopecia androgenética?",
+        "¿Qué significa que el pelo se cae más en primavera y otoño?",
+        "¿Existe una cura definitiva para la alopecia androgenética en 2026?",
+        "¿La alopecia androgenética femenina premenopáusica tiene tratamiento?",
+        "¿Cuánto tarda en manifestarse la alopecia androgenética tras los primeros signos?",
+        "¿Se puede tener alopecia androgenética sin antecedentes familiares?",
+        "¿El efluvio telógeno crónico se convierte en alopecia androgenética?",
+        "¿Qué pasa si no trato la alopecia androgenética desde joven?",
+        "¿La raya del pelo que se ensancha es siempre alopecia?",
+        "¿Qué diferencia hay entre la alopecia androgénica masculina y femenina?",
+        "¿Influye el tipo de agua (dura o blanda) en la caída del pelo?",
+        "¿El minoxidil oral a dosis bajas funciona mejor que el tópico en jóvenes?",
+        "¿La caída del pelo por COVID persiste a largo plazo?",
+        "¿Hay tratamientos nuevos para la alopecia que no requieran tomar pastillas?"
+      ],
+      "deduplicated_count": 20,
+      "signals": [
+        "Clascoterona/Breezula: gran señal de búsqueda en Q1-Q2 2026 — 539% más eficaz que placebo según ensayo tópico al 5%",
+        "Hospital Capilar ya tiene contenido sobre Breezula — posición establecida",
+        "Búsquedas relacionadas: 'clascoterona precio', 'clascoterona comprar', 'clascoterona crema' — intención de acción alta"
+      ]
+    },
+    "P2-tratamientos-capilares": {
+      "name": "Tratamientos capilares médicos (más allá del OTC)",
+      "new_questions": [
+        "¿Cuál es la diferencia entre minoxidil oral y tópico: cuándo elegir cada uno?",
+        "¿El minoxidil inyectable (mesoterapia con minoxidil) funciona mejor que el tópico?",
+        "¿La bicalutamida tópica es efectiva para mujeres con alopecia androgenética?",
+        "¿La espironolactona oral ayuda con la caída del pelo en mujeres?",
+        "¿Qué es la cetirizina tópica y cómo actúa contra la alopecia?",
+        "¿La clascoterona al 5% tiene efectos secundarios sistémicos?",
+        "¿El dutasteride oral a dosis bajas es seguro para mujeres?",
+        "¿Se puede combinar clascoterona con minoxidil?",
+        "¿Cuánto cuesta la clascoterona y dónde se puede conseguir en España?",
+        "¿Los tratamientos capilares con factores de crecimiento son mejores que el PRP?",
+        "¿Qué es la terapia hormonal sustitutiva y cómo afecta al pelo en la menopausia?",
+        "¿El minoxidil oral tiene más efectos secundarios que el tópico?",
+        "¿Cuánto tarda el minoxidil oral en dar resultados visibles?",
+        "¿El finasteride tópico evita los efectos secundarios del oral?",
+        "¿Se puede dejar de tomar finasteride sin perder el pelo ganado?",
+        "¿La mesoterapia capilar con vitaminas es igual de efectiva que con minoxidil?",
+        "¿Qué tratamientos capilares funcionan en mujeres con alopecia androgénica?",
+        "¿El pelo recuperado con tratamiento médico es permanente?",
+        "¿Cuándo es mejor optar por tratamiento médico antes que por trasplante?",
+        "¿Qué tratamientos nuevos para la calvicie aprobó la FDA o EMA en 2025-2026?"
+      ],
+      "deduplicated_count": 20,
+      "signals": [
+        "Minoxidil oral vs tópico: contenido publicado ene 2026 en competidores — gap de contenido own para Hospital Capilar",
+        "Bicalutamida y espironolactona: citadas en El País (feb 2026) como los más usados — alta autoridad",
+        "Clascoterona: búsquedas de precio y dónde comprar — intención transaccional alta sin respuesta clara en mercado español"
+      ]
+    },
+    "P3-diagnostico-capilar": {
+      "name": "Diagnóstico capilar y consulta médica",
+      "new_questions": [
+        "¿Qué es la dermatoscopía capilar y cómo se usa para diagnosticar alopecia?",
+        "¿Cómo empieza la alopecia en mujeres y en qué se diferencia de la masculina?",
+        "¿Qué le pasa al pelo en la perimenopausia?",
+        "¿La terapia hormonal sustitutiva (TRH) mejora la caída del pelo en la menopausia?",
+        "¿Qué especialista trata la caída del pelo en mujeres: ginecólogo o dermatólogo?",
+        "¿La alopecia androgénica femenina tiene cura o solo control?",
+        "¿Cómo saber si tengo alopecia androgenética o efluvio telógeno crónico?",
+        "¿Qué analítica pedir para estudiar la caída del pelo en mujeres?",
+        "¿El diagnóstico online de alopecia es fiable?",
+        "¿Qué es la fototricograma y para qué sirve?",
+        "¿La caída del pelo después de COVID es permanente o temporal?",
+        "¿Los suplementos de biotina realmente ayudan a frenar la caída del pelo?",
+        "¿Qué vitaminas son esenciales para la salud del folículo piloso?",
+        "¿La alopecia frontal fibrosante se puede frenar?",
+        "¿Hay diferencias entre el diagnóstico capilar en hombre y en mujer?",
+        "¿Cuándo hay que repetir el diagnóstico capilar para ver si el tratamiento funciona?",
+        "¿La alopecia areata es autoinmune y se puede curar?",
+        "¿Los fármacos anti-JAK para alopecia areata son seguros?",
+        "¿Cuándo está indicada la biopsia del cuero cabelludo para diagnosticar alopecia?",
+        "¿El agua con mucho calcio puede causar caída del pelo permanente?"
+      ],
+      "deduplicated_count": 20,
+      "signals": [
+        "Dermatoscopía capilar: mencionada en Instagram/clínicas (feb-abr 2026) como gold standard — escaso contenido educativo propio",
+        "Perimenopausia y pelo: señal fuerte de Instagram (abr 2026) — 'la raya se ensancha, el cuero cabelludo se ve' — audiencia femenina creciente",
+        "Anti-JAK para alopecia areata: presentado en AEDV y Ramón y Cajal — nuevo tratamiento con mucho volumen de búsqueda"
+      ]
+    },
+    "P4-trasplante-capilar": {
+      "name": "Trasplante capilar y post-cirugía",
+      "new_questions": [
+        "¿Se puede detectar a simple vista si alguien tiene trasplante capilar?",
+        "¿Qué es la técnica Long Hair FUE y cuándo se usa?",
+        "¿Existe una calculadora para saber cuántos folículos necesito para mi trasplante?",
+        "¿Cuánto cuesta un injerto capilar en Hospital Capilar específicamente en 2026?",
+        "¿Es más caro el injerto capilar en Madrid que en otras ciudades de España?",
+        "¿Qué técnica de injerto capilar deja menos cicatriz en la zona donante?",
+        "¿Cuántos injertos capilares puede hacer un cirujano en un día?",
+        "¿El trasplante capilar funciona igual en mujeres que en hombres?",
+        "¿Se puede hacer trasplante capilar con pelo de otras partes del cuerpo?",
+        "¿La zona donante se recupera completamente después de un trasplante?",
+        "¿Hay límite de edad para hacerse un trasplante capilar?",
+        "¿Qué pasa con el pelo trasplantado cuando avanza la alopecia?",
+        "¿Es necesario seguir tratamiento médico (finasteride/minoxidil) después del trasplante?",
+        "¿El trasplante capilar afecta la sensibilidad del cuero cabelludo?",
+        "¿Cuántas sesiones de PRP se recomiendan antes de un trasplante capilar?",
+        "¿Se puede combinar trasplante capilar con tratamiento médico para mejores resultados?",
+        "¿Qué porcentaje de folículos trasplantados sobreviven en condiciones normales?",
+        "¿Por qué algunos trasplantes capilares no dan resultados naturales?",
+        "¿El injerto capilar funciona en zonas con alopecia cicatricial?",
+        "¿Qué revisiones postoperatorias incluye el precio de un trasplante capilar en España?"
+      ],
+      "deduplicated_count": 20,
+      "signals": [
+        "'¿Se puede detectar si tiene trasplante?' — viral en Instagram (abr 2026, dr.cruz_) — formato de content de alta interacción",
+        "Calculadora de folículos: aparece como related search con alta frecuencia — herramienta interactiva con potencial SEO",
+        "Hospital Capilar precio desde 2900€ — aparece en resultado directo de búsqueda 'precio injerto capilar España 2026'"
+      ]
+    },
+    "P5-confianza-clinicas": {
+      "name": "Confianza en clínicas capilares",
+      "new_questions": [
+        "¿Qué diferencia hay entre Hospital Capilar y Capilclinic?",
+        "¿Qué es la técnica Min Time FUE y quién la usa en España?",
+        "¿Los resultados publicados en Instagram por clínicas capilares son reales?",
+        "¿Cuánta experiencia debe tener un cirujano capilar para ser de confianza?",
+        "¿Hay registros oficiales de cirujanos capilares certificados en España?",
+        "¿Una clínica capilar con muchos seguidores en redes es garantía de calidad?",
+        "¿Qué pasa si me opero en Turquía y tengo complicaciones al volver a España?",
+        "¿Las clínicas capilares en España están auditadas por algún organismo?",
+        "¿Qué certificación tiene Hospital Capilar como garantía de calidad?",
+        "¿Se puede pagar un trasplante capilar a plazos en España?",
+        "¿Las clínicas capilares dan garantías por escrito de los resultados?",
+        "¿Cómo se puede verificar la experiencia real de una clínica capilar?",
+        "¿Qué es la acreditación JCI en clínicas y la tienen en España?",
+        "¿Cuántos médicos debe tener una clínica capilar seria para operar con seguridad?",
+        "¿Los precios de trasplante capilar incluyen seguimiento postoperatorio?",
+        "¿Es normal que una clínica capilar no muestre los médicos en su web?",
+        "¿Dónde se pueden leer opiniones verificadas de clínicas capilares?",
+        "¿Qué papel tiene la Sociedad Española de Cirugía Plástica (SECPRE) en la regulación de clínicas capilares?",
+        "¿Las clínicas capilares low cost usan técnicas iguales que las premium?",
+        "¿Por qué Hospital Capilar cobra más que clínicas low cost y qué justifica el precio?"
+      ],
+      "deduplicated_count": 20,
+      "signals": [
+        "Capilclinic Madrid/Barcelona vs Hospital Capilar — búsquedas competitivas directas; contenido comparativo tiene alta oportunidad",
+        "Min Time FUE (marca Capilclinic) aparece en related searches — Hospital Capilar necesita contenido de diferenciación técnica",
+        "Pago a plazos: no aparece en PAA anterior — nueva pregunta emergente en contexto de precios 2026"
+      ]
+    }
+  },
+  "total_new_questions": 100,
+  "new_questions_per_pillar": 20,
+  "notable_signals": [
+    "CLASCOTERONA 🔥 — El gran tema nuevo: Breezula (clascoterona al 5%) con 539% más eficacia que placebo. Hospital Capilar ya tiene artículo. Búsquedas de precio y dónde comprar — muy alta intención. Gap: contenido comparativo clascoterona vs minoxidil vs finasteride.",
+    "MUJERES + PERIMENOPAUSIA — Señal creciente en Instagram (abr 2026): 'raya que se ensancha, cuero cabelludo visible'. Audiencia femenina subatendida en contenido. Oportunidad clara de contenido P3 dirigido a mujeres 40-55.",
+    "TRASPLANTE VIRAL — Instagram dr.cruz_: 'Adivina si tiene trasplante capilar y gana 50€'. Formato de alta interacción. Hospital Capilar puede replicar este formato con contenido educativo sobre resultados naturales.",
+    "CALCULADORA FOLÍCULOS — Búsqueda relacionada recurrente. Herramienta interactiva con alto potencial SEO y captación de leads pre-consulta.",
+    "COMPETENCIA DIRECTA — 'Hospital Capilar vs Capilclinic' ya es búsqueda activa. Necesario contenido de diferenciación explícito (precio, técnica, seguimiento)."
+  ],
+  "last_finding": "La clascoterona (Breezula) domina las nuevas búsquedas en P1 y P2: 539% más eficaz que placebo y Hospital Capilar ya tiene artículo propio — ventaja de autoridad a explotar. Además, el segmento mujer perimenopausia emerge con fuerza en P3 y las búsquedas directas 'Hospital Capilar vs Capilclinic' indican necesidad urgente de contenido de diferenciación en P5."
+}

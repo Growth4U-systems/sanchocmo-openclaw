@@ -1,0 +1,25 @@
+{
+  "id": "blog-post",
+  "name": "Blog · Imagen del post",
+  "channel": "blog",
+  "description": "Imagen ilustrativa 1200×630 para incrustar dentro de un post: personaje + dato/concepto destacado + leyenda. No reemplaza al hero/título.",
+  "slideCount": 1,
+  "width": 1200,
+  "height": 630,
+  "preview": {
+    "variant": "split-cover",
+    "lines": [
+      { "kind": "badge", "width": 30 },
+      { "kind": "title", "width": 70 },
+      { "kind": "text", "width": 50 },
+      { "kind": "footer", "width": 100 }
+    ]
+  },
+  "slots": [
+    { "key": "kicker", "label": "Etiqueta superior", "placeholder": "Growth Insight · 2026", "maxLength": 50 },
+    { "key": "concept", "label": "Concepto / titular visual", "multiline": true, "placeholder": "El creativo es el nuevo targeting.", "maxLength": 120 },
+    { "key": "data_value", "label": "Dato destacado (opcional)", "placeholder": "−40% CPA", "maxLength": 30 },
+    { "key": "data_label", "label": "Leyenda del dato (opcional)", "placeholder": "mismo bid, mismo público, distinto creativo", "maxLength": 80 },
+    { "key": "hero_image_url", "label": "URL del personaje (opcional)", "placeholder": "https://r2.../alfonso-presentando.png", "maxLength": 500 }
+  ]
+}

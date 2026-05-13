@@ -1,0 +1,175 @@
+{
+  "date": "2026-05-01",
+  "generated_at": "2026-05-01T05:22:00Z",
+  "pillars": [
+    {
+      "pillar_id": "pfp-regulacion",
+      "pillar_name": "PFP / Crowdfunding Regulado",
+      "signals_count": 3
+    },
+    {
+      "pillar_id": "incentivos-fiscales",
+      "pillar_name": "Incentivos Fiscales Culturales (Art. 36/39 LIS)",
+      "signals_count": 3
+    },
+    {
+      "pillar_id": "financiacion-entretenimiento",
+      "pillar_name": "Financiación Industria Entretenimiento",
+      "signals_count": 2
+    },
+    {
+      "pillar_id": "tokenizacion-rwa",
+      "pillar_name": "Tokenización / RWA Activos Culturales",
+      "signals_count": 2
+    }
+  ],
+  "signals": [
+    {
+      "id": "hh-news-20260501-001",
+      "type": "news",
+      "pillar_id": "pfp-regulacion",
+      "title": "Propuesta de elevar umbral ECSP de 5M€ a 12M€ en la UE",
+      "summary": "Coalición de plataformas de crowdfunding europeas impulsa subir el límite de financiación del ECSPR de 5M€ a 12M€, alineándolo con el EU Listing Act. Esto permitiría rondas más grandes para SMEs y scale-ups. Directamente relevante para Hulahoop PFP: mayor capacidad de captación por proyecto en marketplace regulado.",
+      "source": "European Digital Finance Association / EuroCrowd",
+      "url": "https://europeandigitalfinance.eu/letter-raising-ecsp-threshold/",
+      "date": "2026-04",
+      "relevance_score": 0.92,
+      "signal_type": [
+        "system",
+        "aha-moment"
+      ]
+    },
+    {
+      "id": "hh-news-20260501-002",
+      "type": "news",
+      "pillar_id": "pfp-regulacion",
+      "title": "25 proveedores PSFP operan en España bajo ECSPR — pasaporte europeo plenamente operativo",
+      "summary": "La CNMV confirma 25 proveedores autorizados bajo el régimen ECSPR en España en 2026. El pasaporte europeo está plenamente operativo. Contexto competitivo clave para el posicionamiento de Hulahoop como única PFP exclusiva de entretenimiento.",
+      "source": "CNMV / CrowdInform",
+      "url": "https://crowdinform.com/es/articles/informe-del-mercado-espanol-de-crowdfunding-2026-tendencias-plataformas-y-oportunidades-para-el-inversor",
+      "date": "2026-04",
+      "relevance_score": 0.88,
+      "signal_type": [
+        "system",
+        "milestone"
+      ]
+    },
+    {
+      "id": "hh-news-20260501-003",
+      "type": "news",
+      "pillar_id": "pfp-regulacion",
+      "title": "Sego Finance supera 200M€ canalizados y 40.000 inversores — lanza producto deuda alternativa",
+      "summary": "Sego Finance (benchmark competitivo directo: SEGO Creative) ha superado 200M€ canalizados, 40k inversores y 3.000 operaciones. Lanzó en jun-2025 producto de deuda alternativa con respaldo de activos reales desde 2.000€. Referencia directa para el posicionamiento del marketplace PFP de Hulahoop.",
+      "source": "Autónomos y Emprendedor / FundsSociety",
+      "url": "https://www.autonomosyemprendedor.es/articulo/tu-historia/javier-villaseca-sego-finance-como-invertir-startups-que-buscan-realmente-inversores/20260409140000052936.html",
+      "date": "2026-04-09",
+      "relevance_score": 0.9,
+      "signal_type": [
+        "milestone",
+        "metric"
+      ]
+    },
+    {
+      "id": "hh-news-20260501-004",
+      "type": "news",
+      "pillar_id": "incentivos-fiscales",
+      "title": "Reforma Art. 36.3 LIS para artes escénicas y música sigue bloqueada en Congreso — más de 2 años paralizada",
+      "summary": "La reforma que subiría la deducción del 20% al 25% y el límite de 500k€ a 1M€ por espectáculo lleva +2 años bloqueada. Impacto directo: los clientes de Hulahoop Services que estructuran incentivo fiscal en música/artes escénicas operan con límites más bajos. Oportunidad de POV sobre el bloqueo legislativo.",
+      "source": "Sympathy for the Lawyer / Demócrata",
+      "url": "https://sympathyforthelawyer.com/blog/reforma-articulo-36-3-lis-deducciones-fiscales-culturales-espana/",
+      "date": "2026-03",
+      "relevance_score": 0.95,
+      "signal_type": [
+        "conflict",
+        "vulnerability"
+      ]
+    },
+    {
+      "id": "hh-news-20260501-005",
+      "type": "news",
+      "pillar_id": "incentivos-fiscales",
+      "title": "Tax Rebate España Art. 36.2: hasta 50% en Canarias, límite 20M€ por proyecto — guía actualizada 2026",
+      "summary": "Guía actualizada confirma los parámetros del tax rebate para rodajes internacionales en España: 30-50% de gastos en territorio español, mínimo 1M€ gasto, tope 20M€. Relevante como contexto de mercado para la línea de negocio de anticipo fiscal SPV de Hulahoop.",
+      "source": "Camaleon Rental / Spain Audiovisual Hub",
+      "url": "https://www.camaleonrental.com/es/blog/tax-rebate-espana-articulo-36-2-lis-rodajes-internacionales.html",
+      "date": "2026-04",
+      "relevance_score": 0.78,
+      "signal_type": [
+        "system"
+      ]
+    },
+    {
+      "id": "hh-news-20260501-006",
+      "type": "news",
+      "pillar_id": "incentivos-fiscales",
+      "title": "Carrillo Asesores publica guía de incentivos fiscales culturales para empresas — competidor directo",
+      "summary": "Carrillo Asesores (competidor directo de Hulahoop en despacho fiscal cultural) publica guía actualizada sobre Art. 36 LIS. Señal de actividad de contenido del competidor — oportunidad de responder con POV diferenciado de Hulahoop (infraestructura vs. asesoría).",
+      "source": "Carrillo Asesores",
+      "url": "https://carrilloasesores.com/post/incentivos-fiscales-en-cultura-empresas/",
+      "date": "2026-04",
+      "relevance_score": 0.85,
+      "signal_type": [
+        "conflict"
+      ]
+    },
+    {
+      "id": "hh-news-20260501-007",
+      "type": "news",
+      "pillar_id": "financiacion-entretenimiento",
+      "title": "RTVE invierte 14M€ en 30 largometrajes — primera mesa cine 2026",
+      "summary": "RTVE resuelve su primera mesa de valoración de cine 2026 con la adquisición de 30 largometrajes por ~14M€. Señal de dinamismo del mercado de producción audiovisual español — clientes potenciales de Hulahoop Services/SPV para estructurar financiación de estos proyectos.",
+      "source": "Box-Office.es",
+      "url": "https://box-office.es/news/mesa-de-cine-rtve-2026-la-corporacion-invertira-casi-14-millones-en-30-largometrajes/",
+      "date": "2026-04",
+      "relevance_score": 0.8,
+      "signal_type": [
+        "metric",
+        "milestone"
+      ]
+    },
+    {
+      "id": "hh-news-20260501-008",
+      "type": "news",
+      "pillar_id": "financiacion-entretenimiento",
+      "title": "Ley General Audiovisual genera 544M€ inversión obligatoria de plataformas streaming en producción española",
+      "summary": "La obligación de plataformas streaming (5% ingresos, 6% RTVE) generó 544M€ en inversión anticipada en obra audiovisual europea/nacional. 71.3% va a series, 21.82% a cine. Mercado masivo que necesita estructuración financiera — oportunidad de Hulahoop como infraestructura.",
+      "source": "Hollywood Reporter ES / El País",
+      "url": "https://es.hollywoodreporter.com/ley-general-audiovisual-genera-inversion-de-544-millones-de-euros-en-producciones-espanolas/",
+      "date": "2026-03",
+      "relevance_score": 0.82,
+      "signal_type": [
+        "system",
+        "metric"
+      ]
+    },
+    {
+      "id": "hh-news-20260501-009",
+      "type": "news",
+      "pillar_id": "tokenizacion-rwa",
+      "title": "Tokenización RWA se triplica a 18.000M$ — BCE piloto 'Pontes' para liquidación mayorista previsto Q3 2026",
+      "summary": "El mercado de activos tokenizados se triplicó de 5.500M$ a 18.000M$ en 12 meses. El BCE prepara el piloto 'Pontes' de liquidación mayorista con dinero de banco central para Q3 2026. Directamente relevante para la visión de Hulahoop como 'Sistema Operativo' del entretenimiento con activos culturales tokenizados.",
+      "source": "Ecosistema Startup / Bolsamanía / El Periódico",
+      "url": "https://ecosistemastartup.com/tokenizacion-2026-18b-en-activos-y-oportunidad-para-tu-fintech/",
+      "date": "2026-04",
+      "relevance_score": 0.85,
+      "signal_type": [
+        "aha-moment",
+        "metric"
+      ]
+    },
+    {
+      "id": "hh-news-20260501-010",
+      "type": "news",
+      "pillar_id": "tokenizacion-rwa",
+      "title": "MiCA plena implementación para valores tokenizados prevista mediados 2026 — DLT Pilot Regime extendido",
+      "summary": "La plena implementación de MiCA para valores tokenizados se espera para mediados de 2026. El régimen piloto DLT, extendido hasta 2026, permite probar infraestructuras blockchain para liquidación de valores. Marco regulatorio que podría habilitar la tokenización de activos culturales en la PFP de Hulahoop a medio plazo.",
+      "source": "BlockchainX / Cryptoverse Lawyers / Freshfields",
+      "url": "https://www.cryptoverselawyers.io/mica-rwa-tokenization-eu-2026/",
+      "date": "2026-04",
+      "relevance_score": 0.8,
+      "signal_type": [
+        "system"
+      ]
+    }
+  ]
+}

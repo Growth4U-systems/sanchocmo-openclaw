@@ -1,0 +1,22 @@
+{
+  "date": "2026-05-04",
+  "generated_at": "2026-05-04T07:00:00Z",
+  "client": "hospital-capilar",
+  "summary": "Sin actividad humana en las últimas 24h en ningún canal del guild.",
+  "channels_checked": 9,
+  "channels_with_activity": 0,
+  "channels_skipped": 9,
+  "skip_reasons": {
+    "general": ">24h (last: 2026-03-30)",
+    "brand": ">24h (last: 2026-02-28)",
+    "campaigns": ">24h + bot (last: 2026-03-24)",
+    "content": "bot message (last: 2026-05-04, SanchoCMO)",
+    "intelligence": ">24h + bot (last: 2026-05-01)",
+    "onboarding": ">24h + bot (last: 2026-04-07)",
+    "soporte": ">24h + bot (last: 2026-04-28)",
+    "research": ">24h (last: 2026-03-01)",
+    "paid-ads": "channel not found"
+  },
+  "insights": [],
+  "actions": []
+}

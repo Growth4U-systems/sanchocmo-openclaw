@@ -1,0 +1,28 @@
+{
+  "task": "content-competitor-monitor",
+  "client": "hospital-capilar",
+  "ran_at": "2026-05-04T05:16:00Z",
+  "status": "completed",
+  "period": "2026-04-27 to 2026-05-04",
+  "signals_file": "brand/hospital-capilar/content/research-signals/2026-05-04-creators.json",
+  "signals_count": 13,
+  "by_source_type": {
+    "competitor": 9,
+    "reference-creator": 4
+  },
+  "sources_monitored": [
+    "Insparya",
+    "Svenson",
+    "Capilclinic",
+    "IMD Dermatologico",
+    "mediQuo",
+    "Dr. Sergio Vañó Galván",
+    "Helena Rodero"
+  ],
+  "last_finding": "GLP-1/Ozempic → caída capilar es el nicho trending: Insparya (PR en InfoSalus) y mediQuo (artículo SEO) ya capturan tráfico. HC aparece en SERPs pero sin contenido dedicado. Svenson entra en cirugía FUE y Helena Rodero lanza suplemento capilar Hair HR. Hacienda reclama 6M€ a Insparya — vulnerabilidad activa.",
+  "configs_created": [
+    "brand/hospital-capilar/content/configs/competitors/all-pillars.yml",
+    "brand/hospital-capilar/content/configs/reference-creators/all-pillars.yml"
+  ],
+  "next_run": "2026-05-11T05:16:00Z"
+}

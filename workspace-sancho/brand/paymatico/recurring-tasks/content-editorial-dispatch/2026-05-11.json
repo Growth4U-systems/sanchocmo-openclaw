@@ -1,0 +1,16 @@
+{
+  "cronName": "Content: Editorial Dispatch — Paymatico",
+  "slug": "paymatico",
+  "date": "2026-05-11",
+  "runAtMs": 1747031000000,
+  "status": "ok",
+  "transport": "discord",
+  "channel_id": "1477995838092476477",
+  "candidates_selected": 0,
+  "candidates_sent": 0,
+  "idea_ids": [],
+  "task_id": null,
+  "project_id": null,
+  "error": null,
+  "note": "Monday has 0 editorial slots per cadence-config. No dispatch needed. 30 New ideas in queue (ages 0-5 days), none deferred."
+}

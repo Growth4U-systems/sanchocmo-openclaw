@@ -1,0 +1,41 @@
+{
+  "project_id": "P02",
+  "tasks": [
+    {
+      "id": "T01",
+      "name": "Crear calendario de contenido LinkedIn Carlos Horno (Mes 1)",
+      "description": "Planificar 12-20 posts para el primer mes. Mix: 40% dolores ICP (gestión manual, Excel, publicar en 5 portales), 20% frameworks accionables, 20% building in public (métricas Dealcar, decisiones), 20% mini case studies. Cada post con hook, cuerpo, CTA suave. Incluir distribución de artículos del blog.",
+      "status": "completed",
+      "owner": "Sancho",
+      "channel": "content",
+      "discord_thread_id": "1486635396220715059",
+      "skill": "content-calendar-planner",
+      "created": "2026-03-26",
+      "completed": "2026-03-26",
+      "output_files": [
+        "brand/dealcar/go-to-market/linkedin-calendar-carlos-horno-mes1.md"
+      ],
+      "notes": "Requiere aprobación de Carlos/equipo antes de publicar",
+      "deliverable_file": "brand/dealcar/projects/P02-linkedin-founder-led/tasks/T01/deliverable.md",
+      "mc_chat_thread_id": "task-t01"
+    },
+    {
+      "id": "T02",
+      "name": "Crear playbook de DMs warm LinkedIn",
+      "description": "Definir proceso de DM warm: quién interactúa con posts de Carlos → filtrar por perfil ICP (dueños/gerentes concesionario) → DM personalizado referenciando interacción → CTA suave a demo/call. Templates de DM por escenario (comentó, dio like, nuevo seguidor). Empezar en Mes 2.",
+      "status": "completed",
+      "owner": "Sancho",
+      "channel": "content",
+      "discord_thread_id": "1486635531797401751",
+      "skill": "outreach-sequence-builder",
+      "created": "2026-03-26",
+      "completed": "2026-03-26",
+      "output_files": [
+        "brand/dealcar/campaigns/linkedin/playbook-dms-warm.md"
+      ],
+      "notes": "Activar después de 4 semanas de contenido consistente",
+      "deliverable_file": "brand/dealcar/projects/P02-linkedin-founder-led/tasks/T02/deliverable.md",
+      "mc_chat_thread_id": "task-t02"
+    }
+  ]
+}

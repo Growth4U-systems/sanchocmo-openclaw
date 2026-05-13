@@ -1,0 +1,61 @@
+{
+  "id": "blog-title",
+  "name": "blog-title",
+  "channel": "blog",
+  "description": "Cover / OG image: título dominante + autor + tiempo de lectura. Sin personaje.",
+  "output_format": "html",
+  "generation_strategy": "html",
+  "model_hints": { "preferred_model": null, "prompt_prefix_from": null },
+  "pre_steps": [],
+  "slideCount": 1,
+  "width": 1200,
+  "height": 630,
+  "slots": [
+    {
+      "key": "kicker",
+      "label": "Kicker (categoría)",
+      "placeholder": "GROWTH SYSTEMS"
+    },
+    {
+      "key": "title",
+      "label": "Título del artículo",
+      "placeholder": "Por qué el 73% de las startups tech no logra ventas recurrentes",
+      "maxLength": 120
+    },
+    {
+      "key": "author",
+      "label": "Nombre del autor"
+    },
+    {
+      "key": "read_time",
+      "label": "Tiempo de lectura",
+      "placeholder": "8 min",
+      "maxLength": 10
+    }
+  ],
+  "triggers": [
+    "blog cover",
+    "blog title",
+    "og image",
+    "open graph image",
+    "portada blog",
+    "cover blog"
+  ],
+  "od_kind": "template",
+  "use_case": "Cover/OG image de post de blog (1200×630): título dominante + autor + tiempo de lectura.",
+
+  "payload_example": {
+    "_comment": "Single-slide template — perSlide es {} porque no hay slots con perSlide:true.",
+    "slug": "growth4u",
+    "ideaId": "idea-YYYY-MM-DD-N",
+    "channel": "blog",
+    "templateId": "blog-title",
+    "slots": {
+      "kicker": "GROWTH SYSTEMS",
+      "title": "string aquí (≤120 chars)",
+      "author": "Nombre Apellido",
+      "read_time": "8 min"
+    },
+    "perSlide": {}
+  }
+}

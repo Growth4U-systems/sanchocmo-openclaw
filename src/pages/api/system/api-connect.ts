@@ -80,9 +80,11 @@ function handleGet(req: NextApiRequest, res: NextApiResponse) {
     }
   }
 
-  // Read setup guide
+  // Read setup guide. The shared skills tree lives one level above BASE
+  // (BASE = ~/.openclaw/workspace-sancho → ~/.openclaw/skills/...).
   const guidesPath = path.join(
     BASE,
+    "..",
     "skills",
     "acquisition-metrics-plan",
     "schemas",
@@ -170,8 +172,8 @@ function handlePost(req: NextApiRequest, res: NextApiResponse) {
     }
   }
 
-  // Run test script
-  const scriptDir = path.join(BASE, "skills", "acquisition-metrics-plan", "scripts");
+  // Run test script. Same shared-skills tree as setup-guides above.
+  const scriptDir = path.join(BASE, "..", "skills", "acquisition-metrics-plan", "scripts");
   const testScript = path.join(scriptDir, "test-connection.js");
 
   let testResult: { status: string; output?: string; error?: string };

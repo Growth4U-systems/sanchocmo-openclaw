@@ -1,0 +1,44 @@
+{
+  "cronName": "content-competitor-monitor",
+  "slug": "growth4u",
+  "date": "2026-05-11",
+  "runAtMs": 1747000920000,
+  "status": "completed",
+  "last_finding": "10 ideas nuevas (7 reference-creators, 3 competitors). Highlight: idea-2026-05-11-19 — Elena Verna sobre '$350M ARR sin paid ads: lo que Lovable prueba sobre distribu' (podcast/article, engagement ~920 likes), pov_confidence 0.84.",
+  "content": {
+    "sources_monitored": {
+      "reference_creators": [
+        "Elena Verna",
+        "Lenny Rachitsky",
+        "Maja Voje",
+        "Ross Simmonds",
+        "Amanda Natividad"
+      ],
+      "competitors": [
+        "Snowball (Pau Gallinat)",
+        "Product Hackers",
+        "Forrester Research"
+      ]
+    },
+    "platforms_checked": [
+      "linkedin",
+      "newsletter",
+      "blog"
+    ],
+    "urls_deduped": 8,
+    "total_signals_captured": 18,
+    "ideas_added": 10
+  },
+  "ideas_created": [
+    "idea-2026-05-11-19",
+    "idea-2026-05-11-20",
+    "idea-2026-05-11-22",
+    "idea-2026-05-11-26",
+    "idea-2026-05-11-28",
+    "idea-2026-05-11-31",
+    "idea-2026-05-11-36",
+    "idea-2026-05-11-37",
+    "idea-2026-05-11-38",
+    "idea-2026-05-11-39"
+  ]
+}

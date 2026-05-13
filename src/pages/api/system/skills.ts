@@ -3,38 +3,28 @@ import fs from "fs";
 import path from "path";
 import os from "os";
 import { compose, withErrorHandler, withAuth } from "@/lib/api-middleware";
-import { BASE } from "@/lib/data/paths";
+import { resolveAgentForSkill } from "@/lib/skill-resolver";
 
-// El panel Skills escanea múltiples workspaces. workspace-sancho es el default
-// (legacy + skills generales). workspace-maese-pedro contiene las skills del
-// agente visual Maese Pedro (od-*, design-system, sancho-visual, etc.).
+// Fase 7 (2026-05-11/12): skills live in `~/.openclaw/skills/` (OpenClaw's
+// built-in managed-skills root, read natively by all agents). The Settings →
+// Skills panel reads from this single central catalog and enriches each entry
+// with its owner agent via SKILL_OWNER_MAP in skill-resolver.ts.
+const SKILLS_ROOT = path.join(
+  process.env.OPENCLAW_HOME ?? path.join(os.homedir(), ".openclaw"),
+  "skills",
+);
+
 const SKILL_WORKSPACES: Array<{ id: string; label: string; dir: string }> = [
   {
-    id: "workspace-sancho",
-    label: "Sancho",
-    dir: path.join(BASE, "skills"),
-  },
-  {
-    id: "workspace-maese-pedro",
-    label: "Maese Pedro",
-    dir: path.join(
-      process.env.OPENCLAW_HOME ?? path.join(os.homedir(), ".openclaw"),
-      "workspace-maese-pedro",
-      "skills",
-    ),
+    id: "central",
+    label: "Skills (catálogo central)",
+    dir: SKILLS_ROOT,
   },
 ];
 
-function skillDirFor(skillId: string, workspace?: string): { dir: string; workspaceId: string } | null {
-  if (workspace) {
-    const ws = SKILL_WORKSPACES.find((w) => w.id === workspace);
-    if (ws) return { dir: path.join(ws.dir, skillId), workspaceId: ws.id };
-  }
-  // Buscar en cualquier workspace
-  for (const ws of SKILL_WORKSPACES) {
-    const candidate = path.join(ws.dir, skillId);
-    if (fs.existsSync(candidate)) return { dir: candidate, workspaceId: ws.id };
-  }
+function skillDirFor(skillId: string): { dir: string; workspaceId: string } | null {
+  const candidate = path.join(SKILLS_ROOT, skillId);
+  if (fs.existsSync(candidate)) return { dir: candidate, workspaceId: "central" };
   return null;
 }
 
@@ -54,7 +44,6 @@ function parseYamlFrontmatter(content: string): { meta: SkillMeta; body: string 
   const body = match[2];
   const meta: Record<string, unknown> = {};
 
-  // Simple YAML parser for flat + simple nested fields
   let currentKey = "";
   for (const line of yamlStr.split("\n")) {
     const kvMatch = line.match(/^(\w[\w_]*)\s*:\s*(.*)$/);
@@ -90,7 +79,6 @@ function readSkill(skillDir: string, skillId: string, workspaceId: string) {
   const skillMd = fs.readFileSync(skillMdPath, "utf-8");
   const { meta, body } = parseYamlFrontmatter(skillMd);
 
-  // Read reference files
   const refsDir = path.join(skillDir, "references");
   const references: { name: string; content: string }[] = [];
   if (fs.existsSync(refsDir)) {
@@ -102,7 +90,6 @@ function readSkill(skillDir: string, skillId: string, workspaceId: string) {
     }
   }
 
-  // Check for scripts
   const scriptsDir = path.join(skillDir, "scripts");
   const scripts: string[] = [];
   if (fs.existsSync(scriptsDir)) {
@@ -110,6 +97,12 @@ function readSkill(skillDir: string, skillId: string, workspaceId: string) {
       scripts.push(f);
     }
   }
+
+  // Owner agent: SKILL_OWNER_MAP first, then frontmatter, then sancho default
+  const ownerAgent =
+    resolveAgentForSkill(skillId) ??
+    (typeof meta.metadata?.agent === "string" ? meta.metadata.agent : undefined) ??
+    "sancho";
 
   return {
     id: skillId,
@@ -123,6 +116,7 @@ function readSkill(skillDir: string, skillId: string, workspaceId: string) {
     references,
     scripts,
     workspace: workspaceId,
+    agent: ownerAgent,
     file_path: skillMdPath,
     skill_dir: skillDir,
   };
@@ -130,12 +124,11 @@ function readSkill(skillDir: string, skillId: string, workspaceId: string) {
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === "GET") {
-    const { id, workspace } = req.query;
-    const workspaceParam = typeof workspace === "string" ? workspace : undefined;
+    const { id } = req.query;
 
     // Single skill detail
     if (id && typeof id === "string") {
-      const located = skillDirFor(id, workspaceParam);
+      const located = skillDirFor(id);
       if (!located) {
         return res.status(404).json({ error: "Skill not found" });
       }
@@ -143,7 +136,8 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       return res.status(200).json(skill);
     }
 
-    // List all skills (lightweight — no file contents). Escanea TODOS los workspaces.
+    // List all skills (lightweight — no file contents). Scans the central
+    // skills directory at ~/.openclaw/skills/.
     const skills: Array<{
       id: string;
       name: string;
@@ -172,6 +166,11 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         const refsDir = path.join(skillDir, "references");
         const scriptsDir = path.join(skillDir, "scripts");
 
+        const ownerAgent =
+          resolveAgentForSkill(entry.name) ??
+          (typeof meta.metadata?.agent === "string" ? meta.metadata.agent : undefined) ??
+          "sancho";
+
         skills.push({
           id: entry.name,
           name: meta.name || entry.name,
@@ -179,7 +178,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
           pillar: meta.metadata?.pillar,
           layer: meta.metadata?.layer,
           phase: meta.metadata?.phase,
-          agent: meta.metadata?.agent,
+          agent: ownerAgent,
           refCount: fs.existsSync(refsDir)
             ? fs.readdirSync(refsDir).filter((f) => f.endsWith(".md")).length
             : 0,
@@ -190,8 +189,11 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       }
     }
 
-    // Sort by layer then name
+    // Sort by agent then layer then name (UI groups naturally).
     skills.sort((a, b) => {
+      const aa = a.agent ?? "zzz";
+      const ba = b.agent ?? "zzz";
+      if (aa !== ba) return aa.localeCompare(ba);
       const la = Number(a.layer ?? 99);
       const lb = Number(b.layer ?? 99);
       if (la !== lb) return la - lb;
@@ -202,23 +204,17 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   }
 
   if (req.method === "POST") {
-    // Save a file within a skill
-    const { skillId, fileName, content, workspace } = req.body;
+    const { skillId, fileName, content } = req.body;
     if (!skillId || !fileName || content === undefined) {
       return res.status(400).json({ error: "Missing skillId, fileName, or content" });
     }
-
-    // Security: only allow known paths
     if (fileName.includes("..") || fileName.includes("~")) {
       return res.status(400).json({ error: "Invalid fileName" });
     }
 
-    // Resolver workspace: si ya existe la skill en algún workspace, usar ese; si no,
-    // usar el workspace explícito del body, default workspace-sancho.
-    let located = skillDirFor(skillId, workspace);
+    let located = skillDirFor(skillId);
     if (!located) {
-      const targetWs = SKILL_WORKSPACES.find((w) => w.id === workspace) ?? SKILL_WORKSPACES[0];
-      located = { dir: path.join(targetWs.dir, skillId), workspaceId: targetWs.id };
+      located = { dir: path.join(SKILLS_ROOT, skillId), workspaceId: "central" };
     }
     if (!fs.existsSync(located.dir)) {
       fs.mkdirSync(located.dir, { recursive: true });
@@ -235,14 +231,14 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   }
 
   if (req.method === "DELETE") {
-    const { skillId, workspace } = req.body;
+    const { skillId } = req.body;
     if (!skillId) {
       return res.status(400).json({ error: "Missing skillId" });
     }
     if (skillId.includes("..") || skillId.includes("/") || skillId.includes("~")) {
       return res.status(400).json({ error: "Invalid skillId" });
     }
-    const located = skillDirFor(skillId, workspace);
+    const located = skillDirFor(skillId);
     if (!located || !fs.existsSync(located.dir)) {
       return res.status(404).json({ error: "Skill not found" });
     }

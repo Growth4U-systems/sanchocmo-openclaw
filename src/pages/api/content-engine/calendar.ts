@@ -40,6 +40,10 @@ interface CalendarEvent {
   /** Latest engagement snapshot from `publishing.metrics`, present when the
    *  cron has refreshed metrics for this post. */
   metrics?: PostMetricsSnapshot;
+  /** True when status is still "scheduled" but `scheduled_at` is more than
+   *  2 h in the past — Metricool likely published and reconciliation hasn't
+   *  caught up. UI shows this as "⚠️ Sin confirmar" so the human investigates. */
+  unconfirmed_drift?: boolean;
 }
 
 interface ReadyDraft {
@@ -54,6 +58,10 @@ interface ReadyDraft {
   has_media: boolean;
   body: string;
   media: MediaAsset[];
+  /** Per-channel media requirement, mirrored from `ContentTask.media_policy`.
+   *  When `"required"`, the Ready Queue card disables the "Programar" action
+   *  until media is attached. */
+  media_policy?: "required" | "optional";
 }
 
 interface CalendarResponse {
@@ -171,13 +179,26 @@ async function handler(req: NextApiRequest, res: NextApiResponse<CalendarRespons
           const scheduledAt = pub?.scheduled_at;
 
           if (scheduledAt && inRange(scheduledAt, fromIso, toIso)) {
+            // Source of truth for the terminal "published" state is the CT's
+            // channel_phases entry — frontmatter only carries non-terminal
+            // states (scheduled / publishing / failed / canceled).
+            const isPublished = ct.channel_phases?.[channel] === "published";
+            const effectiveStatus: CalendarEvent["status"] = isPublished
+              ? "published"
+              : pub?.status ?? "scheduled";
+            // Watchdog: if we're still "scheduled" >2h past scheduled_at,
+            // reconciliation hasn't caught up — surface it as a red badge
+            // so the human knows to investigate Metricool directly.
+            const driftMs = Date.now() - Date.parse(scheduledAt);
+            const unconfirmed_drift =
+              effectiveStatus === "scheduled" && !Number.isNaN(driftMs) && driftMs > 2 * 60 * 60 * 1000;
             scheduled.push({
               ideaId: ct.idea_id,
               contentTaskId: ct.id,
               parentTaskId: ct.parent_task_id ?? taskId,
               channel,
               scheduled_at: scheduledAt,
-              status: pub?.status ?? "scheduled",
+              status: effectiveStatus,
               provider: pub?.provider ?? "",
               external_url: pub?.external_url ?? null,
               external_job_id: pub?.external_job_id,
@@ -186,6 +207,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse<CalendarRespons
               body: draft.body,
               media: mediaList,
               metrics: pub?.metrics,
+              unconfirmed_drift,
             });
             continue;
           }
@@ -206,6 +228,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse<CalendarRespons
               has_media: mediaList.length > 0,
               body: draft.body,
               media: mediaList,
+              media_policy: ct.media_policy?.[channel] ?? draft.meta.media_policy,
             });
           }
         }
