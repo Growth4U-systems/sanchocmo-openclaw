@@ -64,6 +64,14 @@ interface MeetingIntelligenceConfig {
   slug: string;
   enabled: boolean;
   updatedAt: string | null;
+  sync: {
+    enabled: boolean;
+    time: string;
+    timezone: string;
+    cronExpr: string;
+    limit: number;
+    cronJobId: string | null;
+  };
   sources: {
     googleDrive: { enabled: boolean; includeSubfolders: boolean; folders: SourceScope[] };
     notion: { enabled: boolean; databases: SourceScope[]; pages: SourceScope[] };
@@ -91,6 +99,21 @@ interface ConnectionStatus {
   notion?: ServiceConnection;
   slack?: ServiceConnection;
   discord?: ServiceConnection;
+}
+
+interface SyncCronStatus {
+  configured: boolean;
+  job: {
+    id: string;
+    name: string;
+    enabled: boolean;
+    schedule: { kind: string; expr: string; tz?: string };
+    nextRunAt: string | null;
+    lastRunAt: string | null;
+    lastStatus: string | null;
+    consecutiveErrors: number;
+  } | null;
+  error?: string;
 }
 
 interface SetupTaskInfo {
@@ -213,6 +236,14 @@ function localDefaultConfig(slug: string): MeetingIntelligenceConfig {
     slug,
     enabled: true,
     updatedAt: null,
+    sync: {
+      enabled: false,
+      time: "18:00",
+      timezone: "Europe/Madrid",
+      cronExpr: "0 18 * * *",
+      limit: 60,
+      cronJobId: null,
+    },
     sources: {
       googleDrive: { enabled: false, includeSubfolders: true, folders: [emptyScope()] },
       notion: { enabled: false, databases: [emptyScope()], pages: [] },
@@ -226,6 +257,20 @@ function localDefaultConfig(slug: string): MeetingIntelligenceConfig {
       defaultTimezone: "Europe/Madrid",
     },
   };
+}
+
+function normalizeSyncTime(value: unknown, fallback = "18:00") {
+  const raw = typeof value === "string" ? value : fallback;
+  const match = raw.match(/^(\d{1,2}):(\d{2})$/);
+  if (!match) return fallback;
+  const hour = Math.max(0, Math.min(23, Number(match[1])));
+  const minute = Math.max(0, Math.min(59, Number(match[2])));
+  return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+}
+
+function cronExprFromTime(time: string) {
+  const [hour = "18", minute = "0"] = time.split(":");
+  return `${Number(minute)} ${Number(hour)} * * *`;
 }
 
 function normalizeClientScope(input: unknown): SourceScope {
@@ -260,6 +305,8 @@ function normalizeClientConfig(slug: string, input: Partial<MeetingIntelligenceC
   const rawSlack = (rawSources.slack && typeof rawSources.slack === "object" ? rawSources.slack : {}) as Partial<MeetingIntelligenceConfig["sources"]["slack"]>;
   const rawDiscord = (rawSources.discord && typeof rawSources.discord === "object" ? rawSources.discord : {}) as Partial<MeetingIntelligenceConfig["sources"]["discord"]>;
   const rawManualUpload = (rawSources.manualUpload && typeof rawSources.manualUpload === "object" ? rawSources.manualUpload : {}) as Partial<MeetingIntelligenceConfig["sources"]["manualUpload"]>;
+  const rawSync = (input.sync && typeof input.sync === "object" ? input.sync : {}) as Partial<MeetingIntelligenceConfig["sync"]>;
+  const syncTime = normalizeSyncTime(rawSync.time, base.sync.time);
 
   return {
     ...base,
@@ -267,6 +314,14 @@ function normalizeClientConfig(slug: string, input: Partial<MeetingIntelligenceC
     slug,
     enabled: Boolean(input.enabled ?? base.enabled),
     updatedAt: typeof input.updatedAt === "string" ? input.updatedAt : base.updatedAt,
+    sync: {
+      enabled: Boolean(rawSync.enabled ?? base.sync.enabled),
+      time: syncTime,
+      timezone: typeof rawSync.timezone === "string" ? rawSync.timezone : base.sync.timezone,
+      cronExpr: typeof rawSync.cronExpr === "string" ? rawSync.cronExpr : cronExprFromTime(syncTime),
+      limit: typeof rawSync.limit === "number" ? rawSync.limit : base.sync.limit,
+      cronJobId: typeof rawSync.cronJobId === "string" ? rawSync.cronJobId : null,
+    },
     sources: {
       googleDrive: {
         ...base.sources.googleDrive,
@@ -389,6 +444,7 @@ function IntelligencePageClient() {
   const [sourcesSavedAt, setSourcesSavedAt] = useState<string | null>(null);
   const [sourcesError, setSourcesError] = useState<string | null>(null);
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>({});
+  const [syncCron, setSyncCron] = useState<SyncCronStatus | null>(null);
   const [setupTask, setSetupTask] = useState<SetupTaskInfo | null>(null);
   const [setupTaskLoading, setSetupTaskLoading] = useState(false);
   const [setupTaskSaving, setSetupTaskSaving] = useState(false);
@@ -443,6 +499,7 @@ function IntelligencePageClient() {
     ])
       .then(([data, status, setup, state]) => {
         if (!cancelled) setSourceConfig(normalizeClientConfig(slug, data.config || localDefaultConfig(slug)));
+        if (!cancelled) setSyncCron(data.cron || null);
         if (!cancelled) setConnectionStatus(status.services || {});
         if (!cancelled) setSetupTask(setup.setupTask || null);
         if (!cancelled) {
@@ -464,6 +521,7 @@ function IntelligencePageClient() {
       })
       .catch(() => {
         if (!cancelled) setSourceConfig(localDefaultConfig(slug));
+        if (!cancelled) setSyncCron(null);
         if (!cancelled) setMeetingState(null);
       })
       .finally(() => {
@@ -497,6 +555,7 @@ function IntelligencePageClient() {
       if (!res.ok) throw new Error(data.error || "No se pudo guardar la configuracion.");
       if (!data.config) throw new Error("La API no devolvio la configuracion guardada.");
       setSourceConfig(normalizeClientConfig(slug, data.config));
+      setSyncCron(data.cron || null);
       setSourcesSavedAt(new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }));
       setStateVersion((version) => version + 1);
     } catch (error) {
@@ -693,6 +752,7 @@ function IntelligencePageClient() {
             onOpenSetupChat={() => void openSetupTaskChat()}
             onRunRawSync={() => void startRawSyncRun()}
             rawSyncStarting={rawSyncStarting}
+            syncCron={syncCron}
           />
         )}
         {view === "meetings" && <MeetingDetail meeting={selectedMeeting} documents={activeDocuments} proposals={activeProposals} onView={setView} />}
@@ -897,7 +957,7 @@ function SetupTaskCard({
                 <MessageSquareText className="h-3 w-3" /> Open setup chat
               </ActionButton>
               <ActionButton disabled={rawSyncStarting} onClick={onRunRawSync}>
-                <RefreshCw className="h-3 w-3" /> {rawSyncStarting ? "Running..." : "Run cron now"}
+                <RefreshCw className="h-3 w-3" /> {rawSyncStarting ? "Running..." : "Run sync now"}
               </ActionButton>
             </>
           ) : (
@@ -923,6 +983,7 @@ function SourcesSetup({
   onOpenSetupChat,
   onRunRawSync,
   rawSyncStarting,
+  syncCron,
 }: {
   config: MeetingIntelligenceConfig;
   connectionStatus: ConnectionStatus;
@@ -935,8 +996,20 @@ function SourcesSetup({
   onOpenSetupChat: () => void;
   onRunRawSync: () => void;
   rawSyncStarting: boolean;
+  syncCron: SyncCronStatus | null;
 }) {
-  const update = (next: Partial<MeetingIntelligenceConfig>) => setConfig({ ...config, ...next });
+  const updateSync = (sync: Partial<MeetingIntelligenceConfig["sync"]>) => {
+    const nextTime = sync.time ? normalizeSyncTime(sync.time, config.sync.time) : config.sync.time;
+    setConfig({
+      ...config,
+      sync: {
+        ...config.sync,
+        ...sync,
+        time: nextTime,
+        cronExpr: cronExprFromTime(nextTime),
+      },
+    });
+  };
   const updateSources = (sources: Partial<MeetingIntelligenceConfig["sources"]>) => setConfig({
     ...config,
     sources: { ...config.sources, ...sources },
@@ -946,6 +1019,15 @@ function SourcesSetup({
     () => config.sources.notion.databases.filter((database) => database.id || database.url),
     [config.sources.notion.databases]
   );
+  const configuredSourceCount = (
+    (config.sources.googleDrive.enabled ? config.sources.googleDrive.folders.filter((scope) => scope.id || scope.url).length : 0) +
+    (config.sources.notion.enabled ? [...config.sources.notion.databases, ...config.sources.notion.pages].filter((scope) => scope.id || scope.url).length : 0) +
+    (config.sources.slack.enabled ? config.sources.slack.channels.length : 0) +
+    (config.sources.discord.enabled ? config.sources.discord.channels.length : 0)
+  );
+  const automaticSyncEnabled = config.enabled && config.sync.enabled;
+  const cronJob = syncCron?.job || null;
+  const formatDate = (value?: string | null) => value ? new Date(value).toLocaleString([], { dateStyle: "short", timeStyle: "short" }) : "not scheduled yet";
 
   return (
     <div className="space-y-4">
@@ -964,19 +1046,74 @@ function SourcesSetup({
             <label className="flex items-center gap-2 rounded-lg border-2 border-border bg-background px-3 py-2 text-[12px] font-bold">
               <input
                 type="checkbox"
-                checked={config.enabled}
-                onChange={(e) => update({ enabled: e.target.checked })}
+                checked={automaticSyncEnabled}
+                onChange={(e) => {
+                  const enabled = e.target.checked;
+                  setConfig({
+                    ...config,
+                    enabled,
+                    sync: { ...config.sync, enabled },
+                  });
+                }}
               />
-              Meeting Intelligence active
+              Automatic sync active
             </label>
             <ActionButton primary onClick={onOpenSetupChat}>
               <MessageSquareText className="h-3 w-3" /> Change with Sancho
             </ActionButton>
             <ActionButton disabled={rawSyncStarting} onClick={onRunRawSync}>
-              <RefreshCw className="h-3 w-3" /> {rawSyncStarting ? "Running automatic sync..." : "Run cron now"}
+              <RefreshCw className="h-3 w-3" /> {rawSyncStarting ? "Running raw sync..." : "Run raw sync now"}
             </ActionButton>
           </div>
         </div>
+      </section>
+
+      <section
+        className="rounded-sc-md border-[2px] p-4"
+        style={{ background: "var(--sc-paper-3)", borderColor: "var(--sc-ink)", boxShadow: "var(--pop-xs)" }}
+      >
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <h3 className="font-heading text-base text-navy">Automatic raw sync</h3>
+            <p className="mt-1 max-w-3xl text-[12px] leading-relaxed text-muted-foreground">
+              Funciona como Editorial Dispatch: una vez al dia baja raw, genera summaries, insights, impactos y recommendations. Si esta apagado, las fuentes quedan guardadas pero el cron no corre.
+            </p>
+          </div>
+          <Badge tone={automaticSyncEnabled && configuredSourceCount > 0 ? "ok" : "proposal"}>
+            {automaticSyncEnabled && configuredSourceCount > 0 ? "cron active" : "cron paused"}
+          </Badge>
+        </div>
+        <div className="mt-4 grid gap-3 md:grid-cols-[180px_220px_1fr]">
+          <label className="text-[11px] font-extrabold uppercase tracking-wide text-muted-foreground">
+            Daily time
+            <input
+              type="time"
+              value={config.sync.time}
+              onChange={(e) => updateSync({ time: e.target.value })}
+              className="mt-1 w-full rounded-lg border-2 border-border bg-background px-3 py-2 text-[13px] font-bold text-foreground"
+            />
+          </label>
+          <label className="text-[11px] font-extrabold uppercase tracking-wide text-muted-foreground">
+            Timezone
+            <input
+              type="text"
+              value={config.sync.timezone}
+              onChange={(e) => updateSync({ timezone: e.target.value })}
+              className="mt-1 w-full rounded-lg border-2 border-border bg-background px-3 py-2 text-[13px] font-bold text-foreground"
+            />
+          </label>
+          <div className="rounded-lg border border-border bg-background p-3 text-[12px] leading-relaxed text-muted-foreground">
+            <div><strong className="text-foreground">Cron:</strong> {config.sync.cronExpr}</div>
+            <div><strong className="text-foreground">Job:</strong> {cronJob ? cronJob.name : "will be created after saving sources"}</div>
+            <div><strong className="text-foreground">Next:</strong> {formatDate(cronJob?.nextRunAt)}</div>
+            <div><strong className="text-foreground">Last:</strong> {formatDate(cronJob?.lastRunAt)} {cronJob?.lastStatus ? `(${cronJob.lastStatus})` : ""}</div>
+          </div>
+        </div>
+        {configuredSourceCount === 0 && (
+          <p className="mt-3 rounded-lg border border-yellow-400/40 bg-yellow-50 p-3 text-[12px] text-muted-foreground">
+            El cron se activara cuando haya al menos una fuente aprobada de Drive, Notion, Slack o Discord y guardes la configuracion.
+          </p>
+        )}
       </section>
 
       <SourceCard

@@ -272,7 +272,7 @@ export default function BrandBrainPage() {
     return (
       <DashboardLayout>
         <Head>
-          <title>Brand Brain &mdash; {slug} &mdash; Mission Control</title>
+          <title>{`Brand Brain - ${slug} - Mission Control`}</title>
         </Head>
         <EmptyState
           icon={"🧠"}
@@ -299,7 +299,7 @@ export default function BrandBrainPage() {
     return (
       <DashboardLayout>
         <Head>
-          <title>{pillarTitle} &mdash; {slug} &mdash; Mission Control</title>
+          <title>{`${pillarTitle} - ${slug} - Mission Control`}</title>
         </Head>
 
         <div className="flex items-center gap-2.5 mb-4 flex-wrap">
@@ -448,7 +448,7 @@ export default function BrandBrainPage() {
   return (
     <DashboardLayout>
       <Head>
-        <title>Brand Brain &mdash; {slug} &mdash; Mission Control</title>
+        <title>{`Brand Brain - ${slug} - Mission Control`}</title>
       </Head>
 
       <div className="flex items-center gap-3 mb-2 flex-wrap">

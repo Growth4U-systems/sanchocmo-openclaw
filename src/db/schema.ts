@@ -115,6 +115,23 @@ export const miSources = pgTable("mi_sources", {
   slugKindIdx: index("mi_sources_slug_kind_idx").on(table.slug, table.kind),
 }));
 
+export const miSettings = pgTable("mi_settings", {
+  id: text("id").primaryKey(),
+  slug: text("slug").notNull(),
+  enabled: boolean("enabled").notNull().default(true),
+  syncEnabled: boolean("sync_enabled").notNull().default(false),
+  syncTime: text("sync_time").notNull().default("18:00"),
+  syncTimezone: text("sync_timezone").notNull().default("Europe/Madrid"),
+  syncCronExpr: text("sync_cron_expr").notNull().default("0 18 * * *"),
+  syncLimit: integer("sync_limit").notNull().default(60),
+  cronJobId: text("cron_job_id"),
+  routing: jsonb("routing").$type<Record<string, unknown> | null>(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+}, (table) => ({
+  slugIdx: index("mi_settings_slug_idx").on(table.slug),
+}));
+
 export const miRuns = pgTable("mi_runs", {
   id: text("id").primaryKey(),
   slug: text("slug").notNull(),

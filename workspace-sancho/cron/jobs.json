@@ -101,13 +101,13 @@
     {
       "id": "6dac9a53-6736-490a-ae54-e028b8ebbbd1",
       "agentId": "sancho",
-      "name": "Meeting Intelligence — Neon Raw Sync",
+      "name": "Meeting Intelligence — hospital-capilar",
       "enabled": true,
       "createdAtMs": 1771950715725,
-      "updatedAtMs": 1778633027739,
+      "updatedAtMs": 1778635164168,
       "schedule": {
         "kind": "cron",
-        "expr": "0 18 * * 1-5",
+        "expr": "0 18 * * *",
         "tz": "Europe/Madrid"
       },
       "sessionTarget": "isolated",

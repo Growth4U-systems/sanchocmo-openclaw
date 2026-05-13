@@ -629,12 +629,24 @@ export async function runMeetingIntelligenceSync(input: {
     };
   }
   await ensureMeetingIntelligenceStorage();
-  await getMeetingIntelligenceConfig(input.slug);
+  const configResult = await getMeetingIntelligenceConfig(input.slug);
+  const trigger = input.trigger || "manual_ui";
+  const isAutomatic = trigger.includes("cron") || trigger.includes("automatic");
+  if (isAutomatic && configResult.config && (!configResult.config.enabled || !configResult.config.sync.enabled)) {
+    return {
+      ok: true,
+      skipped: true,
+      storage: { configured: true, provider: "neon" },
+      run: null,
+      metrics: { sources: 0, fetched: 0, rawAvailable: 0, insights: 0, recommendations: 0 },
+      errors: ["Meeting Intelligence automatic sync is disabled."],
+    };
+  }
   const created = await createMeetingIntelligenceRun({
     slug: input.slug,
     status: "running",
-    trigger: input.trigger || "manual_ui",
-    metrics: { requestedFrom: input.trigger || "manual_ui" },
+    trigger,
+    metrics: { requestedFrom: trigger },
   });
   const run = created.run;
   if (!run) return created;

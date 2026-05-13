@@ -10,6 +10,7 @@ import {
   miMeetings,
   miRecommendations,
   miRuns,
+  miSettings,
   miSources,
 } from "@/db/schema";
 import { BASE, brandDir, meetingIntelligenceConfigFile, meetingIntelligenceDir } from "@/lib/data/paths";
@@ -40,6 +41,14 @@ export interface MeetingIntelligenceConfig {
   slug: string;
   enabled: boolean;
   updatedAt: string | null;
+  sync: {
+    enabled: boolean;
+    time: string;
+    timezone: string;
+    cronExpr: string;
+    limit: number;
+    cronJobId: string | null;
+  };
   sources: {
     googleDrive: { enabled: boolean; includeSubfolders: boolean; folders: SourceScope[] };
     notion: { enabled: boolean; databases: SourceScope[]; pages: SourceScope[] };
@@ -319,6 +328,14 @@ function emptyConfig(slug: string): MeetingIntelligenceConfig {
     slug,
     enabled: true,
     updatedAt: null,
+    sync: {
+      enabled: false,
+      time: "18:00",
+      timezone: "Europe/Madrid",
+      cronExpr: "0 18 * * *",
+      limit: 60,
+      cronJobId: null,
+    },
     sources: {
       googleDrive: { enabled: false, includeSubfolders: true, folders: [emptyScope()] },
       notion: { enabled: false, databases: [emptyScope()], pages: [] },
@@ -343,6 +360,11 @@ function legacySeedConfig(slug: string): MeetingIntelligenceConfig {
   return {
     ...base,
     enabled: Boolean(meetingCron.enabled ?? true),
+    sync: {
+      ...base.sync,
+      enabled: Boolean(meetingCron.enabled ?? true),
+      timezone: meetingCron.tz || clientConfig.crons?.daily_pulse?.tz || base.sync.timezone,
+    },
     sources: {
       ...base.sources,
       googleDrive: {
@@ -365,6 +387,35 @@ function legacySeedConfig(slug: string): MeetingIntelligenceConfig {
       reviewOwner: "Alfonso",
       defaultTimezone: meetingCron.tz || clientConfig.crons?.daily_pulse?.tz || "Europe/Madrid",
     },
+  };
+}
+
+function normalizeSyncTime(value: unknown, fallback = "18:00") {
+  const raw = asString(value, fallback).trim();
+  const match = raw.match(/^(\d{1,2}):(\d{2})$/);
+  if (!match) return fallback;
+  const hour = Math.max(0, Math.min(23, Number(match[1])));
+  const minute = Math.max(0, Math.min(59, Number(match[2])));
+  return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+}
+
+function cronExprFromTime(time: string) {
+  const [hour = "18", minute = "0"] = time.split(":");
+  return `${Number(minute)} ${Number(hour)} * * *`;
+}
+
+function normalizeSyncConfig(input: unknown, base: MeetingIntelligenceConfig["sync"]) {
+  const raw = asRecord(input);
+  const time = normalizeSyncTime(raw.time, base.time);
+  const timezone = asString(raw.timezone) || asString(raw.tz) || base.timezone;
+  const limit = Math.max(1, Math.min(Number(raw.limit || base.limit) || base.limit, 60));
+  return {
+    enabled: asBoolean(raw.enabled, base.enabled),
+    time,
+    timezone,
+    cronExpr: asString(raw.cronExpr) || asString(raw.cron_expr) || cronExprFromTime(time),
+    limit,
+    cronJobId: asString(raw.cronJobId) || asString(raw.cron_job_id) || base.cronJobId,
   };
 }
 
@@ -405,6 +456,7 @@ export function normalizeMeetingIntelligenceConfig(slug: string, input: Partial<
     slug,
     enabled: asBoolean(input.enabled, base.enabled),
     updatedAt: asString(input.updatedAt) || base.updatedAt,
+    sync: normalizeSyncConfig(input.sync, base.sync),
     sources: {
       googleDrive: {
         enabled: asBoolean(rawGoogleDrive.enabled ?? legacyDrive.enabled, base.sources.googleDrive.enabled),
@@ -445,6 +497,7 @@ export async function ensureMeetingIntelligenceStorage() {
       const database = getDb();
       const statements = [
         `CREATE TABLE IF NOT EXISTS "mi_sources" ("id" text PRIMARY KEY NOT NULL, "slug" text NOT NULL, "kind" text NOT NULL, "name" text NOT NULL, "source_id" text, "url" text, "enabled" boolean DEFAULT true NOT NULL, "scope" jsonb, "filter" jsonb, "status" text DEFAULT 'active' NOT NULL, "created_at" timestamp DEFAULT now() NOT NULL, "updated_at" timestamp DEFAULT now() NOT NULL)`,
+        `CREATE TABLE IF NOT EXISTS "mi_settings" ("id" text PRIMARY KEY NOT NULL, "slug" text NOT NULL, "enabled" boolean DEFAULT true NOT NULL, "sync_enabled" boolean DEFAULT false NOT NULL, "sync_time" text DEFAULT '18:00' NOT NULL, "sync_timezone" text DEFAULT 'Europe/Madrid' NOT NULL, "sync_cron_expr" text DEFAULT '0 18 * * *' NOT NULL, "sync_limit" integer DEFAULT 60 NOT NULL, "cron_job_id" text, "routing" jsonb, "created_at" timestamp DEFAULT now() NOT NULL, "updated_at" timestamp DEFAULT now() NOT NULL)`,
         `CREATE TABLE IF NOT EXISTS "mi_runs" ("id" text PRIMARY KEY NOT NULL, "slug" text NOT NULL, "status" text DEFAULT 'queued' NOT NULL, "trigger" text DEFAULT 'agent' NOT NULL, "sources_scanned" jsonb, "metrics" jsonb, "errors" jsonb, "started_at" timestamp DEFAULT now() NOT NULL, "finished_at" timestamp, "created_at" timestamp DEFAULT now() NOT NULL)`,
         `CREATE TABLE IF NOT EXISTS "mi_meetings" ("id" text PRIMARY KEY NOT NULL, "slug" text NOT NULL, "source_id" text, "run_id" text REFERENCES "mi_runs"("id") ON DELETE SET NULL, "external_id" text, "title" text NOT NULL, "meeting_date" text NOT NULL, "meeting_time" text, "source_label" text DEFAULT 'Manual' NOT NULL, "status" text DEFAULT 'needs_raw_sync' NOT NULL, "raw_status" text DEFAULT 'missing' NOT NULL, "meeting_type" text DEFAULT 'meeting' NOT NULL, "participants" jsonb, "source_url" text, "created_at" timestamp DEFAULT now() NOT NULL, "updated_at" timestamp DEFAULT now() NOT NULL)`,
         `CREATE TABLE IF NOT EXISTS "mi_meeting_artifacts" ("id" text PRIMARY KEY NOT NULL, "slug" text NOT NULL, "meeting_id" text NOT NULL REFERENCES "mi_meetings"("id") ON DELETE CASCADE, "raw_text" text, "summary_text" text, "source_payload" jsonb, "checksum" text, "fetched_at" timestamp, "created_at" timestamp DEFAULT now() NOT NULL, "updated_at" timestamp DEFAULT now() NOT NULL)`,
@@ -453,6 +506,7 @@ export async function ensureMeetingIntelligenceStorage() {
         `CREATE TABLE IF NOT EXISTS "mi_recommendations" ("id" text PRIMARY KEY NOT NULL, "slug" text NOT NULL, "meeting_id" text REFERENCES "mi_meetings"("id") ON DELETE CASCADE, "insight_id" text REFERENCES "mi_insights"("id") ON DELETE SET NULL, "impact_id" text REFERENCES "mi_document_impacts"("id") ON DELETE SET NULL, "title" text NOT NULL, "description" text, "priority" text DEFAULT 'medium' NOT NULL, "target_type" text DEFAULT 'task' NOT NULL, "target_id" text, "document_name" text, "status" text DEFAULT 'recommended' NOT NULL, "task_id" text, "task_status" text DEFAULT 'recommended' NOT NULL, "created_at" timestamp DEFAULT now() NOT NULL, "updated_at" timestamp DEFAULT now() NOT NULL, "approved_at" timestamp, "rejected_at" timestamp, "converted_at" timestamp)`,
         `CREATE INDEX IF NOT EXISTS "mi_sources_slug_idx" ON "mi_sources" ("slug")`,
         `CREATE INDEX IF NOT EXISTS "mi_sources_slug_kind_idx" ON "mi_sources" ("slug", "kind")`,
+        `CREATE INDEX IF NOT EXISTS "mi_settings_slug_idx" ON "mi_settings" ("slug")`,
         `CREATE INDEX IF NOT EXISTS "mi_runs_slug_idx" ON "mi_runs" ("slug")`,
         `CREATE INDEX IF NOT EXISTS "mi_runs_slug_status_idx" ON "mi_runs" ("slug", "status")`,
         `CREATE INDEX IF NOT EXISTS "mi_meetings_slug_idx" ON "mi_meetings" ("slug")`,
@@ -479,9 +533,30 @@ export async function ensureMeetingIntelligenceStorage() {
   await ensurePromise;
 }
 
-function rowsToConfig(slug: string, rows: Array<typeof miSources.$inferSelect>): MeetingIntelligenceConfig {
+function applySettingsToConfig(config: MeetingIntelligenceConfig, settings: typeof miSettings.$inferSelect | null) {
+  if (!settings) return config;
+  return {
+    ...config,
+    enabled: settings.enabled,
+    updatedAt: iso(settings.updatedAt) || config.updatedAt,
+    sync: {
+      enabled: settings.syncEnabled,
+      time: settings.syncTime || config.sync.time,
+      timezone: settings.syncTimezone || config.sync.timezone,
+      cronExpr: settings.syncCronExpr || config.sync.cronExpr,
+      limit: settings.syncLimit || config.sync.limit,
+      cronJobId: settings.cronJobId || null,
+    },
+    routing: {
+      ...config.routing,
+      ...asRecord(settings.routing),
+    },
+  };
+}
+
+function rowsToConfig(slug: string, rows: Array<typeof miSources.$inferSelect>, settings: typeof miSettings.$inferSelect | null = null): MeetingIntelligenceConfig {
   const config = emptyConfig(slug);
-  if (rows.length === 0) return config;
+  if (rows.length === 0) return applySettingsToConfig(config, settings);
   const updatedAt = rows.map((row) => iso(row.updatedAt)).filter(Boolean).sort().pop() || null;
   config.updatedAt = updatedAt;
   config.sources.googleDrive.folders = [];
@@ -523,7 +598,7 @@ function rowsToConfig(slug: string, rows: Array<typeof miSources.$inferSelect>):
 
   if (config.sources.googleDrive.folders.length === 0) config.sources.googleDrive.folders = [emptyScope()];
   if (config.sources.notion.databases.length === 0) config.sources.notion.databases = [emptyScope()];
-  return config;
+  return applySettingsToConfig(config, settings);
 }
 
 function sourceRowsFromConfig(config: MeetingIntelligenceConfig) {
@@ -571,6 +646,18 @@ function sourceRowsFromConfig(config: MeetingIntelligenceConfig) {
   return rows;
 }
 
+function configuredSourceCount(config: MeetingIntelligenceConfig) {
+  const drive = config.sources.googleDrive.enabled
+    ? config.sources.googleDrive.folders.filter((scope) => scope.id || scope.url).length
+    : 0;
+  const notion = config.sources.notion.enabled
+    ? [...config.sources.notion.databases, ...config.sources.notion.pages].filter((scope) => scope.id || scope.url).length
+    : 0;
+  const slack = config.sources.slack.enabled ? config.sources.slack.channels.length : 0;
+  const discord = config.sources.discord.enabled ? config.sources.discord.channels.length : 0;
+  return drive + notion + slack + discord;
+}
+
 async function seedSourcesIfEmpty(slug: string) {
   const database = getDb();
   const rows = await database.select().from(miSources).where(eq(miSources.slug, slug)).limit(1);
@@ -583,6 +670,31 @@ async function seedSourcesIfEmpty(slug: string) {
   if (sourceRows.length) {
     await database.insert(miSources).values(sourceRows).onConflictDoNothing();
   }
+}
+
+async function seedSettingsIfEmpty(slug: string) {
+  const database = getDb();
+  const rows = await database.select().from(miSettings).where(eq(miSettings.slug, slug)).limit(1);
+  if (rows.length) return;
+  const legacyFileConfig = normalizeMeetingIntelligenceConfig(
+    slug,
+    readJSON<Partial<MeetingIntelligenceConfig> & RawRecord>(meetingIntelligenceConfigFile(slug), legacySeedConfig(slug) as Partial<MeetingIntelligenceConfig> & RawRecord)
+  );
+  const now = new Date();
+  await database.insert(miSettings).values({
+    id: `mist_${stableId(slug, "settings")}`,
+    slug,
+    enabled: legacyFileConfig.enabled,
+    syncEnabled: legacyFileConfig.sync.enabled && configuredSourceCount(legacyFileConfig) > 0,
+    syncTime: legacyFileConfig.sync.time,
+    syncTimezone: legacyFileConfig.sync.timezone,
+    syncCronExpr: legacyFileConfig.sync.cronExpr,
+    syncLimit: legacyFileConfig.sync.limit,
+    cronJobId: legacyFileConfig.sync.cronJobId,
+    routing: legacyFileConfig.routing,
+    createdAt: now,
+    updatedAt: now,
+  }).onConflictDoNothing();
 }
 
 function latestJsonFromDir(dir: string) {
@@ -959,8 +1071,13 @@ export async function getMeetingIntelligenceConfig(slug: string) {
   }
   await ensureMeetingIntelligenceStorage();
   await seedSourcesIfEmpty(slug);
-  const rows = await getDb().select().from(miSources).where(eq(miSources.slug, slug));
-  return { ok: true, storage: { configured: true, provider: "neon" }, config: rowsToConfig(slug, rows) };
+  await seedSettingsIfEmpty(slug);
+  const database = getDb();
+  const [rows, settingsRows] = await Promise.all([
+    database.select().from(miSources).where(eq(miSources.slug, slug)),
+    database.select().from(miSettings).where(eq(miSettings.slug, slug)).limit(1),
+  ]);
+  return { ok: true, storage: { configured: true, provider: "neon" }, config: rowsToConfig(slug, rows, settingsRows[0] || null) };
 }
 
 export async function saveMeetingIntelligenceConfig(slug: string, input: Partial<MeetingIntelligenceConfig> & RawRecord) {
@@ -968,13 +1085,47 @@ export async function saveMeetingIntelligenceConfig(slug: string, input: Partial
     return { ok: false, storage: STORAGE_NOT_CONFIGURED, config: emptyConfig(slug) };
   }
   await ensureMeetingIntelligenceStorage();
-  const config = normalizeMeetingIntelligenceConfig(slug, input);
+  const normalized = normalizeMeetingIntelligenceConfig(slug, input);
+  const config = {
+    ...normalized,
+    sync: input.sync && typeof input.sync === "object"
+      ? normalized.sync
+      : { ...normalized.sync, enabled: normalized.enabled && configuredSourceCount(normalized) > 0 },
+  };
   const database = getDb();
+  const now = new Date();
   await database.delete(miSources).where(eq(miSources.slug, slug));
-  const rows = sourceRowsFromConfig({ ...config, updatedAt: new Date().toISOString() });
+  const rows = sourceRowsFromConfig({ ...config, updatedAt: now.toISOString() });
   if (rows.length) {
     await database.insert(miSources).values(rows);
   }
+  await database.insert(miSettings).values({
+    id: `mist_${stableId(slug, "settings")}`,
+    slug,
+    enabled: config.enabled,
+    syncEnabled: config.sync.enabled,
+    syncTime: config.sync.time,
+    syncTimezone: config.sync.timezone,
+    syncCronExpr: cronExprFromTime(config.sync.time),
+    syncLimit: config.sync.limit,
+    cronJobId: config.sync.cronJobId,
+    routing: config.routing,
+    createdAt: now,
+    updatedAt: now,
+  }).onConflictDoUpdate({
+    target: miSettings.id,
+    set: {
+      enabled: config.enabled,
+      syncEnabled: config.sync.enabled,
+      syncTime: config.sync.time,
+      syncTimezone: config.sync.timezone,
+      syncCronExpr: cronExprFromTime(config.sync.time),
+      syncLimit: config.sync.limit,
+      cronJobId: config.sync.cronJobId,
+      routing: config.routing,
+      updatedAt: now,
+    },
+  });
   return getMeetingIntelligenceConfig(slug);
 }
 
@@ -1042,7 +1193,7 @@ export async function getMeetingIntelligenceState(slug: string) {
       decisions: insightRows.filter((insight) => insight.kind === "decision").length,
       actions: insightRows.filter((insight) => insight.kind === "action").length,
       proposals: recommendationRows.length,
-      sources: sourceRows.filter((source) => source.enabled).length,
+      sources: sourceRows.filter((source) => source.enabled && source.kind !== "manual_upload").length,
     },
     intelligence,
     decisions,

@@ -268,9 +268,7 @@ export default function ProjectDetailPage() {
   return (
     <DashboardLayout>
       <Head>
-        <title>
-          {project.id} — {project.name} — Mission Control
-        </title>
+        <title>{`${project.id} - ${project.name} - Mission Control`}</title>
       </Head>
 
       {/* Back link */}

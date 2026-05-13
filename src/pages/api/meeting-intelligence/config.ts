@@ -4,6 +4,10 @@ import {
   getMeetingIntelligenceConfig,
   saveMeetingIntelligenceConfig,
 } from "@/lib/data/meeting-intelligence-db";
+import {
+  getMeetingIntelligenceCronStatus,
+  syncMeetingIntelligenceCron,
+} from "@/lib/data/meeting-intelligence-cron";
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
   const slug = (req.query.slug as string) || req.body?.slug;
@@ -11,12 +15,14 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
   if (req.method === "GET") {
     const result = await getMeetingIntelligenceConfig(slug);
-    return res.status(200).json(result);
+    const cron = result.config ? getMeetingIntelligenceCronStatus(slug, result.config.sync?.cronJobId) : null;
+    return res.status(200).json({ ...result, cron });
   }
 
   if (req.method === "PUT" || req.method === "POST") {
     const result = await saveMeetingIntelligenceConfig(slug, req.body?.config || req.body || {});
-    return res.status(result.ok ? 200 : 503).json(result);
+    const cronResult = result.config ? syncMeetingIntelligenceCron(result.config) : null;
+    return res.status(result.ok && cronResult?.ok !== false ? 200 : 503).json({ ...result, cron: cronResult?.cron || null });
   }
 
   res.setHeader("Allow", "GET, PUT, POST");

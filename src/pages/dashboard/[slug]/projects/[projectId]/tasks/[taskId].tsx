@@ -437,9 +437,7 @@ export default function TaskDetailPage() {
   return (
     <DashboardLayout>
       <Head>
-        <title>
-          {task.id} — {task.name} — Mission Control
-        </title>
+        <title>{`${task.id} - ${task.name} - Mission Control`}</title>
       </Head>
 
       {/* Back link */}

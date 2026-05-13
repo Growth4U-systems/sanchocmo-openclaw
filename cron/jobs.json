@@ -78,19 +78,19 @@
     {
       "id": "6dac9a53-6736-490a-ae54-e028b8ebbbd1",
       "agentId": "sancho",
-      "name": "Meeting Intelligence",
+      "name": "Meeting Intelligence — hospital-capilar",
       "enabled": true,
       "createdAtMs": 1771950715725,
       "schedule": {
         "kind": "cron",
-        "expr": "0 18 * * 1-5",
+        "expr": "0 18 * * *",
         "tz": "Europe/Madrid"
       },
       "sessionTarget": "isolated",
       "wakeMode": "now",
       "payload": {
         "kind": "agentTurn",
-        "message": "Ejecuta Meeting Intelligence para Hospital Capilar. Carpeta de Google Drive: ID 17FpwSgL-XLAqaaH5-UccpADHkCFRcCHY. Usa 'gog docs cat <docId>' para leer las notas. Busca documentos nuevos o modificados desde la última ejecución. Para cada reunión, extrae: decisiones, acciones, insights, participantes. Guarda en brand/hospital-capilar/intelligence/meetings/ como .md y actualiza meetings.json.\n\nNO ejecutes regenerate.py — el cron 'Regenerar Dashboard' se encarga (4x/día).\n\nPUBLICAR EN DISCORD (PATRÓN OBLIGATORIO DE HILO):\n1. Envía un mensaje corto (1 línea) al canal #intelligence: message(action=send, channel=discord, target=1475638253154603170, message='🧠 Meeting Intelligence — YYYY-MM-DD: [resumen principal en 1 línea]')\n2. Del resultado del send, captura el messageId devuelto.\n3. Crea un hilo DESDE ese mensaje: message(action=thread-create, channel=discord, target=1475638253154603170, messageId=<messageId>, threadName='🧠 Meeting Intelligence — YYYY-MM-DD')\n4. Del resultado del thread-create, captura el threadId.\n5. Publica el contenido completo DENTRO del hilo: message(action=send, channel=discord, target=<threadId>, message=<resumen completo de meetings>)\n6. NUNCA publiques contenido directamente en el canal — SIEMPRE dentro del hilo.\n7. APLICA reglas de _system/client-context-isolation.md — solo info relevante al cliente, CERO info interna.\n8. Si no hay meetings nuevos, envía igualmente el mensaje corto al canal informando que no hay novedades (sin crear hilo en ese caso).",
+        "message": "Ejecuta el cron backend de Meeting Intelligence para hospital-capilar usando Neon como source of truth.\n\nComando unico:\ncurl -sS -X POST http://127.0.0.1:3000/api/meeting-intelligence/run-cron -H 'Content-Type: application/json' --data '{\"slug\":\"hospital-capilar\",\"trigger\":\"cron\",\"limit\":60}'\n\nReglas:\n- No guardes meetings, transcripts, summaries, insights ni recommendations en JSON legacy.\n- Si Meeting Intelligence o su automatic sync estan desactivados en Neon, el backend respondera skipped=true y no debes forzar nada.\n- El backend debe leer mi_sources, bajar raw_text desde Drive/Notion, guardar mi_meetings y mi_meeting_artifacts en Neon, analizar decisions/actions/insights/impact y crear mi_recommendations como task drafts en estado recommended.\n- StrategyPlan, Foundation docs y POV siguen review-first: no apliques cambios directos.\n- Si el endpoint devuelve ok=true, reporta solo metricas: rawAvailable, insights, recommendations y errores.\n- Si devuelve error, reporta el error sin intentar escribir datos legacy.",
         "model": "sonnet"
       },
       "delivery": {
