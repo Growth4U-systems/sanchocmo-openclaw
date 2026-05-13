@@ -40,14 +40,17 @@ import urllib.error
 import tempfile
 import copy
 
-OPENCLAW_JSON = os.path.expanduser("~/.openclaw/openclaw.json")
+OPENCLAW_HOME = os.environ.get("OPENCLAW_HOME", os.path.expanduser("~/.openclaw"))
+OPENCLAW_JSON = os.path.join(OPENCLAW_HOME, ".openclaw", "openclaw.json")
 
-# Allowed user IDs (from allowFrom)
-ALLOWED_USERS = [
-    "1334604955687977042",
-    "1402171221747040369",
-    "1478058457419616349",
-]
+# Allowed user IDs — loaded from instance config
+_INSTANCE_JSON = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "_system", "instance.json")
+try:
+    with open(_INSTANCE_JSON) as _f:
+        _instance = json.load(_f)
+    ALLOWED_USERS = _instance.get("discord", {}).get("admin_users", [])
+except FileNotFoundError:
+    ALLOWED_USERS = []
 
 # Channel name → systemPrompt template
 # {name} = client name, {slug} = client slug, {prefix} = task ID prefix
@@ -171,8 +174,9 @@ CHANNEL_TEMPLATES = {
             "- Formato: | {prefix}-XXX | Descripción | P1/P2/P3 | Fecha | Notas |\n"
             "- Usa IDs con prefijo {prefix}- ({name})\n"
             "- Después ejecuta: python3 scripts/regenerate.py\n\n"
-            "PARA TAREAS DE SISTEMA (infra, bugs de OpenClaw, config):\n"
-            "- Escálalas a Cervantes via sessions_send con formato ADMIN REQUEST\n"
+            "PARA TAREAS DE SISTEMA (infra, bugs, config):\n"
+            "- Escálalas a Cervantes via message a #cervantes-admin en Discord con formato ADMIN REQUEST\n"
+            "- NO uses sessions_send para Cervantes\n"
             "- Si es una pregunta de marketing, responde tú directamente."
         ),
     },

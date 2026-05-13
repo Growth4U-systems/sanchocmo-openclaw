@@ -15,7 +15,7 @@ context_required:
 - brand/{slug}/company-brief/current.md
 - brand/{slug}/market-and-us/competitors/current.md
 context_writes:
-- brand/{slug}/company-brief/current.md (section: Business Model)
+- brand/{slug}/business-model/current.md
 - brand/{slug}/operational/learnings.md
 ---
 
@@ -24,7 +24,7 @@ context_writes:
 > Entiende CÓMO la empresa adquiere y monetiza clientes. El modelo de negocio determina qué growth levers existen.
 
 **Input**: company-context (necesita elevator_pitch, product_type, b2b_b2c mínimo)
-**Output**: Business Model Profile → `brand/{slug}/business-model/current.md`
+**Output**: Business Model Profile → `brand/{slug}/business-model/current.md` (standalone — la única fuente de verdad que esta skill escribe).
 
 ## References
 
@@ -41,7 +41,7 @@ context_writes:
 ## Flujo de Ejecución
 
 ### 0. Context Hydration (OBLIGATORIO — antes de cualquier pregunta)
-- Lee `_system/context-hydration-protocol.md` para el patrón genérico
+- Lee `_system/skills/context-hydration-protocol.md` para el patrón genérico
 - Lee `references/hydration.md` para el mapeo específico de esta skill
 - Lee TODOS los docs en `context_required` (company-context, competitors si existe)
 - Pre-rellena campos según hydration_map
@@ -74,7 +74,10 @@ context_writes:
 - Metadata QA en documento
 
 ### 6. Guardar con versionado
-- Ruta: `brand/{slug}/business-model/current.md`
+- Ruta: `brand/{slug}/business-model/current.md` (standalone, único archivo que esta skill escribe)
+- Si ya existe → backup como `v{N+1}.md`, sobreescribe `current.md`, actualiza `history.json`
+
+> **Merge view `company-brief/current.md`**: lo regenera únicamente `fast-foundation` (no esta skill). Si esta skill se corre standalone, el merge view queda desfasado hasta la próxima corrida completa — aceptado por ahora.
 
 ---
 
@@ -117,4 +120,4 @@ brand/{{slug}}/business-model/
 1. Identifica slug desde systemPrompt (`[CLIENTE: ... | slug: ...]`)
 2. Si existe `current.md` → backup como `v{N+1}.md`, pide confirmación
 3. Si no existe → crea carpeta + `current.md` + `v1.md` + `history.json`
-4. Link: `https://sancho-cmo.taild48df2.ts.net/mc/docs/brand/{slug}/business-model/current.md`
+4. Link: `{MC_BASE_URL}/docs/brand/{slug}/business-model/current.md`

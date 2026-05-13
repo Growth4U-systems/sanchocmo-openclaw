@@ -1,0 +1,32 @@
+{
+  "$schema": "../../_system/schemas/sources.schema.json",
+  "slug": "example",
+  "name": "Example Client",
+  "guild_id": "your-discord-guild-id",
+  "language": "es",
+  "channels": {
+    "general": "channel-id",
+    "brand": "channel-id",
+    "campaigns": "channel-id",
+    "content": "channel-id",
+    "intelligence": "channel-id",
+    "onboarding": "channel-id",
+    "soporte": "channel-id",
+    "research": "channel-id",
+    "paid-ads": "channel-id",
+    "learning": "channel-id"
+  },
+  "crons": {
+    "daily_pulse": {
+      "read_channels": ["general", "brand", "campaigns", "content", "intelligence"],
+      "publish_channel": "intelligence"
+    },
+    "meeting_intelligence": {
+      "google_drive_folder_id": "your-google-drive-folder-id",
+      "publish_channel": "intelligence"
+    },
+    "weekly_synthesis": {
+      "publish_channel": "intelligence"
+    }
+  }
+}

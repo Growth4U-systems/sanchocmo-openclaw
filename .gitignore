@@ -74,6 +74,10 @@ skills.bak.*
 # === Generated/large data files ===
 agents/*-data.js
 gateway-data.js
+workspace-sancho/*-data.js
+workspace-sancho/mc-data/
+workspace-sancho/mc/
+workspace-sancho/clients.js
 
 # === Media (binary) ===
 media/
@@ -87,8 +91,17 @@ canvas/
 # === Device state ===
 devices/
 
-# === OpenClaw internal workspace state ===
-.openclaw/workspace-state.json
+# === OpenClaw internal runtime state ===
+.openclaw/
+workspace-*/.openclaw/
+
+# === Instance-specific workspace files (OpenClaw auto-creates, unique per deploy) ===
+workspace-*/TOOLS.md
+workspace-*/USER.md
+workspace-*/MEMORY.md
+workspace-*/TASKS.md
+workspace-*/CHANGELOG.md
+workspace-*/VERSION.md
 
 # === Identity ===
 identity/
@@ -100,6 +113,129 @@ workspace-sancho/agents/
 
 # === SQLite memory indexes ===
 *.sqlite
+*.sqlite-shm
+*.sqlite-wal
+
+# === Instance-specific config (private) ===
+config/instance.json
+config/clients.json
+config/clients.js
+workspace-*/clients.json
+workspace-*/clients.json.bak.*
+
+# === Env backups (contain secrets — should never be tracked) ===
+.env.bak.*
+.env.bak-*
+
+# === Client brand data (private) ===
+workspace-sancho/brand/*/
+!workspace-sancho/brand/example/
+
+# === Agent memory (instance-specific) ===
+workspace-sancho/memory/
+workspace-cervantes/memory/
+
+# === Cron state (instance-specific) ===
+cron/jobs.json.bak*
+cron/jobs.json.pre-*
+
+# === Workspace backups (large, may contain secrets) ===
+workspace-sancho/_backups/
+workspace-sancho/tmp/
+
+# === Skill repos (fetched at runtime) ===
+skill-repos/
+
+# === MC proxy device keys ===
+.mc-proxy-device.json
+
+# === Docker runtime ===
+docker/nginx.conf
+
+# === Workspace runtime state ===
+workspace-sancho/_system/api-health.json
+workspace-sancho/_system/intelligence-log.json
+workspace-sancho/_system/intelligence-tracker.json
+workspace-sancho/_system/skill-improvement-metrics.json
+workspace-sancho/_system/improvement-plans/
+workspace-sancho/_system/skill-improvement-proposals/
+
+# === Workspace PRDs & proposals (instance-specific planning artifacts) ===
+workspace-*/_system/prds/
+workspace-*/_proposals/
+
+# === Workspace scripts cache/secrets ===
+workspace-sancho/scripts/.channel-guild-cache.json
+workspace-sancho/scripts/.meta-ads-env
+
+# === Workspace campaigns (client content) ===
+workspace-sancho/campaigns/
+
+# === Workspace brand learnings ===
+workspace-sancho/brand/learnings.md
+
+# === Temp verification scripts ===
+workspace-sancho/scripts/verify-*.sh
+
+# === Workspace one-off artifacts ===
+workspace-sancho/sidebar-mockups.html
+workspace-sancho/mission-control-nextjs
+
+# === Migration markers ===
+MIGRATION-PENDING.md
+
+# === Root-level memory (pre-workspace legacy, instance-specific) ===
+memory/
+
+# === Development plans ===
+docs/superpowers
+.claude/plans
+
+# === mc-inspect script output ===
+screenshots/mc-inspect/
+
+# === Main workspace (from origin/main) ===
 workspace-main/
 workspace/
 workspace-maese-pedro/
+
+# === Refactor-side additions (instance-specific runtime) ===
+
+# Agent runtime state (per-deploy)
+agents/*/agent/models.json
+agents/*/agent/auth-state.json
+
+# Cron state and backups
+cron/jobs.json
+cron/jobs.json.pre-*
+cron/jobs-state.json
+
+# Discord runtime cache
+discord/command-deploy-cache.json
+
+# Plugins runtime
+plugins/installs.json
+
+# Tailscale device certs (secrets — NEVER commit)
+*.taild*.ts.net.crt
+*.taild*.ts.net.key
+
+# Refactor-side ephemeral / deploy markers
+OD_VERSION.txt
+PLAN-chat-progress-streaming.md
+openclaw.json.last-good
+
+# ACP / Codex local config (per-machine)
+acpx/codex-home/
+
+# Workspace framework runtime (instance-specific)
+workspace-sancho/.clawhub/lock.json
+workspace-sancho/costs-daily.json
+workspace-sancho/costs-global.json
+workspace-sancho/cron/jobs.json
+workspace-sancho/cron/jobs.json.pre-*
+workspace-sancho/cron/jobs.json.bak
+
+# Generated env backups (timestamped)
+.env.bak-*
+.env.local.bak-*

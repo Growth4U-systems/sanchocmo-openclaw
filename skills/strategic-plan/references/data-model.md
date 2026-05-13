@@ -10,7 +10,7 @@ brand/{slug}/
     v1.md                   ← archivo: plan de marzo 2026
     history.json            ← log de versiones
   projects/
-    P01-optimizar-web/
+    P01/
       project.json          ← metadata del proyecto
       tasks.json            ← tareas del proyecto
       playbook.md           ← resumen del proyecto + links a tareas
@@ -20,7 +20,7 @@ brand/{slug}/
       T02/
         playbook.md
       ...
-    P02-cold-outreach-ecp1/
+    P02/
       project.json
       tasks.json
       playbook.md
@@ -32,7 +32,7 @@ brand/{slug}/
 > ⚠️ **Cada tarea tiene su propia carpeta y playbook.** NUNCA meter todo el detalle en un solo fichero del proyecto.
 > El playbook del proyecto es solo un resumen con links a los playbooks de tareas.
 > En Discord, el hilo de cada tarea linka a su playbook individual en MC:
-> `{MC_BASE}/docs/brand/{slug}/projects/P{XX}-{slug}/T{YY}/playbook.md`
+> `{MC_BASE}/docs/brand/{slug}/projects/P{XX}/T{YY}/playbook.md`
 
 ---
 
@@ -84,7 +84,7 @@ Documento vivo. Se versiona cuando cambian los objetivos o se completa un ciclo.
 
 ## Registro de proyectos
 
-> **No existe `registry.json`.** El filesystem es el registro. Cada carpeta `projects/P{XX}-{slug}/` con su `project.json` define un proyecto. Para obtener el siguiente ID, escanear directorios `P*/` y usar max+1.
+> **No existe `registry.json`.** El filesystem es el registro. Cada carpeta `projects/P{XX}/` con su `project.json` define un proyecto. Para obtener el siguiente ID, escanear directorios `P*/` y usar max+1.
 
 ---
 
@@ -279,7 +279,7 @@ Canal Discord donde se ejecuta la tarea. Mapea a canales reales del guild del cl
 
 ### Campo task `discord_thread_id`
 
-ID del hilo de Discord creado para esta tarea. Se rellena al ejecutar `_system/project-threads-protocol.md`.
+ID del hilo de Discord creado para esta tarea. Se rellena al ejecutar `_system/output/project-threads-protocol.md`.
 MC usa este ID para generar links 💬 directos a Discord.
 
 ### Campo project `discord.project_thread_id`
@@ -335,7 +335,7 @@ Aumentar conversion rate de 0.5% a 2.0%
 Los archivos en `brand/{slug}/strategic-plan/` y `brand/{slug}/projects/` son accesibles vía MC con token del cliente:
 
 ```
-https://sancho-cmo.taild48df2.ts.net/mc/portal/{mcToken}/docs/strategic-plan/current.md
-https://sancho-cmo.taild48df2.ts.net/mc/portal/{mcToken}/docs/projects/registry.json
-https://sancho-cmo.taild48df2.ts.net/mc/portal/{mcToken}/docs/projects/P01-optimizar-web/project.json
+{MC_BASE_URL}/portal/{mcToken}/docs/strategic-plan/current.md
+{MC_BASE_URL}/portal/{mcToken}/docs/projects/registry.json
+{MC_BASE_URL}/portal/{mcToken}/docs/projects/P01/project.json
 ```

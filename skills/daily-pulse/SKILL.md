@@ -30,9 +30,9 @@ Este skill escanea comunicaciones del equipo (Slack, Notion, transcripts, input 
 - **thief-marketers**: Roba ideas de COMPETIDORES (externo)
 - **daily-pulse**: Extrae ideas de TUS CONVERSACIONES (interno)
 
-Read ./brand/ per _system/brand-memory.md (if using SanchoCMO framework)
+Read ./brand/ per _system/intelligence/brand-memory.md (if using SanchoCMO framework)
 
-Follow _system/output-format.md (if using SanchoCMO framework)
+Follow _system/output/output-format.md (if using SanchoCMO framework)
 
 ---
 

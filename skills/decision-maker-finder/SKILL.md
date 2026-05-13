@@ -29,9 +29,9 @@ Este skill convierte una lista de **empresas target** en una lista de **personas
 - **decision-maker-finder**: Encuentra personas dentro de esas empresas (PEOPLE)
 - **contact-enrichment**: Encuentra emails y datos de contacto (CHANNELS)
 
-Read ./brand/ per _system/brand-memory.md (if using SanchoCMO framework)
+Read ./brand/ per _system/intelligence/brand-memory.md (if using SanchoCMO framework)
 
-Follow _system/output-format.md (if using SanchoCMO framework)
+Follow _system/output/output-format.md (if using SanchoCMO framework)
 
 ---
 

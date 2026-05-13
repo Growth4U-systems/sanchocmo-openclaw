@@ -303,6 +303,13 @@
   "sidebar": {
     "allClients": "Todos los clientes",
     "admin": "Admin",
-    "client": "Cliente"
+    "client": "Cliente",
+    "collapse": "Colapsar menú",
+    "expand": "Expandir menú"
+  },
+  "notFound": {
+    "title": "Página no encontrada",
+    "description": "La página que buscás no existe o fue movida.",
+    "backToDashboard": "Volver al dashboard"
   }
 }

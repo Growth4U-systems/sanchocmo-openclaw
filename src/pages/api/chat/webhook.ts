@@ -43,7 +43,18 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { slug, threadId, text, agent, ts: _ts, role, event, from_agent, to_agent } = req.body;
-  const tid = threadId || `${slug || "default"}:general`;
+  // Compose canonical "<slug>:<shortId>" thread key.
+  // Outbound callers may post threadId as either the full "<slug>:<shortId>"
+  // (e.g. from src/pages/api/chat/send.ts and plugin index.js deliver) or just
+  // the shortId (e.g. from plugin channel.js attachedResults.sendText, which
+  // parses chatId "channel:mc-chat:<slug>:<shortId>" and forwards slug + shortId
+  // separately). Without this normalization, threadFile() in lib/data/mc-chat.ts
+  // splits on ":" and writes to brand/<shortId>/chat/general.json — i.e. the
+  // wrong client. Always re-attach the slug when missing.
+  const slugPrefix = slug ? `${slug}:` : "";
+  const tid = threadId
+    ? (slug && !threadId.startsWith(slugPrefix) ? `${slugPrefix}${threadId}` : threadId)
+    : `${slug || "default"}:general`;
 
   // Status updates: cache for polling, don't store in messages
   if (role === "status") {

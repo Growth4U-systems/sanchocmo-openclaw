@@ -27,9 +27,9 @@ Este skill convierte una lista de decision makers en **contactos listos para out
 - **decision-maker-finder**: Quienes son los decision makers (IDENTIDAD)
 - **contact-enrichment**: Como contactarlos (DATOS DE CONTACTO)
 
-Read ./brand/ per _system/brand-memory.md (if using SanchoCMO framework)
+Read ./brand/ per _system/intelligence/brand-memory.md (if using SanchoCMO framework)
 
-Follow _system/output-format.md (if using SanchoCMO framework)
+Follow _system/output/output-format.md (if using SanchoCMO framework)
 
 ---
 

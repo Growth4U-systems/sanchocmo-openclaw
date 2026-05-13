@@ -40,7 +40,7 @@ context_writes:
 ## Flujo de Ejecución
 
 ### 0. Context Hydration (OBLIGATORIO — antes de cualquier pregunta)
-- Lee `_system/context-hydration-protocol.md` para el patrón genérico
+- Lee `_system/skills/context-hydration-protocol.md` para el patrón genérico
 - Lee `references/hydration.md` para el mapeo específico de esta skill
 - Lee TODOS los docs en `context_required`
 - Pre-rellena campos según hydration_map
@@ -74,7 +74,7 @@ context_writes:
 ### Guardar con versionado
 - Ruta: `brand/{slug}/brand-voice/current.md`
 - Backup + versionado + history.json
-- Link: `https://sancho-cmo.taild48df2.ts.net/mc/docs/brand/{slug}/brand-voice/current.md`
+- Link: `{MC_BASE_URL}/docs/brand/{slug}/brand-voice/current.md`
 
 ---
 
@@ -116,4 +116,4 @@ brand/{{slug}}/brand-voice/
 1. Identifica slug desde systemPrompt
 2. Si existe `current.md` → backup como `v{N+1}.md`
 3. Si no existe → crea carpeta + `current.md` + `v1.md` + `history.json`
-4. Link: `https://sancho-cmo.taild48df2.ts.net/mc/docs/brand/{slug}/brand-voice/current.md`
+4. Link: `{MC_BASE_URL}/docs/brand/{slug}/brand-voice/current.md`

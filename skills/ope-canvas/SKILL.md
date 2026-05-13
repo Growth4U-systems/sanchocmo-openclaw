@@ -10,17 +10,16 @@ metadata:
   depends_on: company-context, business-model, budget, self-intelligence
   updated: '2026-02-27'
 context_required:
-- brand/{slug}/company-brief/current.md
-- brand/{slug}/company-brief/current.md
-- brand/{slug}/company-brief/current.md
+- brand/{slug}/company-context/current.md
+- brand/{slug}/business-model/current.md
+- brand/{slug}/budget/current.md
 - brand/{slug}/market-and-us/self/current.md
 - brand/{slug}/market-and-us/market/current.md
 - brand/{slug}/market-and-us/competitors/current.md
-- brand/{slug}/go-to-market/positioning/*/current.md
-- brand/{slug}/market-and-us/ope-canvas.md
-- brand/intelligence/meetings/*.md
+- brand/{slug}/go-to-market/positioning/shared/messaging-summary.md
+- brand/{slug}/intelligence/meetings/*.md
 context_writes:
-- brand/ope-canvas.md
+- brand/{slug}/market-and-us/ope-canvas/current.md
 ---
 
 # OPE Canvas (One-Page Endgame)
@@ -28,7 +27,7 @@ context_writes:
 > Síntesis estratégica en 1 página: visión, ICP, propuesta de valor, moats, canales y endgame. Puente entre "entender la empresa" y "analizar el mercado".
 
 **Input**: Los 4 pilares de La Empresa (company-context, business-model, budget, self-intelligence) + documentación del cliente
-**Output**: OPE Canvas completo → `brand/{slug}/ope-canvas/current.md`
+**Output**: OPE Canvas completo → `brand/{slug}/market-and-us/ope-canvas/current.md`
 
 ## References
 
@@ -44,7 +43,7 @@ context_writes:
 ## Flujo de Ejecución
 
 ### 0. Context Hydration (OBLIGATORIO — antes de cualquier pregunta)
-- Lee `_system/context-hydration-protocol.md` para el patrón genérico
+- Lee `_system/skills/context-hydration-protocol.md` para el patrón genérico
 - Lee `references/hydration.md` para el mapeo específico de esta skill
 - Lee TODOS los docs en `context_required`
 - Pre-rellena campos según hydration_map
@@ -58,14 +57,14 @@ context_writes:
 ### 1. Recopilar TODA la Información Disponible
 **Lee TODOS los documentos existentes del cliente, no solo los 4 de La Empresa:**
 ```
-brand/{slug}/company-context/current.md
-brand/{slug}/business-model/current.md
-brand/{slug}/budget/current.md
-brand/{slug}/self-intelligence/current.md
-brand/{slug}/market/current.md          ← si existe
-brand/{slug}/competitors/current.md     ← si existe
-brand/{slug}/positioning/current.md     ← si existe
-brand/{slug}/ope-canvas/briefing.md     ← si existe (datos pre-validados)
+brand/{slug}/company-context/current.md            ← standalone: identidad
+brand/{slug}/business-model/current.md             ← standalone: modelo
+brand/{slug}/budget/current.md                     ← standalone: budget
+brand/{slug}/market-and-us/self/current.md
+brand/{slug}/market-and-us/market/current.md       ← si existe
+brand/{slug}/market-and-us/competitors/current.md     ← si existe
+brand/{slug}/go-to-market/positioning/shared/messaging-summary.md ← si existe
+brand/{slug}/market-and-us/ope-canvas/briefing.md ← si existe (datos pre-validados)
 brand/{slug}/intelligence/meetings/*.md ← notas de reuniones
 ```
 - **REGLA CRÍTICA**: Si un dato está en CUALQUIERA de estos docs, NO lo pongas como DUDA. Extráelo y úsalo.
@@ -110,7 +109,7 @@ OUTPUTS (alimenta El Mercado):
 ## 📁 Almacenamiento (OBLIGATORIO)
 
 ```
-brand/{slug}/ope-canvas/
+brand/{slug}/market-and-us/ope-canvas/
 ├── current.md      ← Versión activa
 ├── v1.md           ← Primera versión
 ├── history.json    ← Log de versiones

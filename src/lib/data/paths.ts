@@ -12,6 +12,11 @@ export const BASE = process.env.MC_WORKSPACE || path.join(
 
 export const CLIENTS_FILE = path.join(BASE, "clients.json");
 
+/**
+ * System PATH for child process execution (node, openclaw, gog, etc.)
+ */
+export const EXEC_PATH = process.env.PATH || "/usr/local/bin:/usr/bin:/bin";
+
 // Per-client paths
 export function brandDir(slug: string) {
   return path.join(BASE, "brand", slug);
@@ -90,7 +95,15 @@ export function strategiesCatalogFile() {
 }
 
 export function apiHealthFile() {
-  return path.join(BASE, "_system", "api-health.json");
+  return path.join(BASE, "memory", "state", "api-health.json");
+}
+
+export function mcDataFile() {
+  return path.join(BASE, "memory", "mc", "mc-data.js");
+}
+
+export function changelogFile() {
+  return path.join(BASE, "memory", "CHANGELOG.md");
 }
 
 export function sourcesFile(slug: string) {

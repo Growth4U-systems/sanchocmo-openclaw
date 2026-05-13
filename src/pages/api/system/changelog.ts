@@ -1,8 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import fs from "fs";
-import path from "path";
 import { withAuth, withErrorHandler, compose } from "@/lib/api-middleware";
-import { BASE } from "@/lib/data/paths";
+import { changelogFile } from "@/lib/data/paths";
 
 /**
  * GET /api/system/changelog
@@ -11,7 +10,7 @@ import { BASE } from "@/lib/data/paths";
 async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "GET") return res.status(405).json({ error: "Method not allowed" });
 
-  const filePath = path.join(BASE, "CHANGELOG.md");
+  const filePath = changelogFile();
   try {
     const content = fs.readFileSync(filePath, "utf-8");
     res.status(200).json({ content });

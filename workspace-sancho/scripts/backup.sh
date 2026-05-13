@@ -4,13 +4,38 @@
 
 set -euo pipefail
 
-OPENCLAW_ROOT="$HOME/.openclaw"
+OPENCLAW_ROOT="${OPENCLAW_HOME:-$HOME/.openclaw}"
+
+# Source env vars for webhook
+[ -f "$OPENCLAW_ROOT/.env" ] && source "$OPENCLAW_ROOT/.env" 2>/dev/null || true
+
 STATE_FILE="$OPENCLAW_ROOT/workspace-sancho/memory/backup-state.json"
 LOG_FILE="$OPENCLAW_ROOT/workspace-sancho/memory/backup.log"
 TIMESTAMP=$(date '+%Y-%m-%d %H:%M')
 START_SEC=$(date +%s)
 
 cd "$OPENCLAW_ROOT"
+
+# --- Pre-flight: check if previous backup is stale (>48h) ---
+ALERT_SCRIPT="$OPENCLAW_ROOT/workspace-cervantes/scripts/discord-alert.sh"
+if [ -f "$ALERT_SCRIPT" ] && [ -n "${DISCORD_WEBHOOK_CERVANTES:-}" ] && [ -f "$STATE_FILE" ]; then
+  LAST_TS=$(python3 -c "
+import json, datetime
+with open('$STATE_FILE') as f:
+    state = json.load(f)
+last = state.get('lastBackup', '')
+if last:
+    dt = datetime.datetime.fromisoformat(last.replace('Z', '+00:00'))
+    print(int(dt.timestamp()))
+else:
+    print(0)
+" 2>/dev/null || echo 0)
+  NOW_TS=$(date +%s)
+  DIFF=$(( NOW_TS - LAST_TS ))
+  if [ "$DIFF" -gt 172800 ]; then
+    "$ALERT_SCRIPT" "⚠️" "Backup Warning — $(date +%Y-%m-%d)" "Last backup was more than 48h ago."
+  fi
+fi
 
 # --- 1. Ensure git repo + remote ---
 if [ ! -d .git ]; then
@@ -34,7 +59,8 @@ fi
 
 # --- 4. Push to remote ---
 if git remote get-url origin &>/dev/null; then
-  git push origin main --quiet 2>/dev/null && echo "☁️ Pushed to GitHub" || echo "⚠️ Push failed (will retry next backup)"
+  BRANCH=$(git symbolic-ref --short HEAD 2>/dev/null || echo "main")
+  git push origin "$BRANCH" --quiet 2>/dev/null && echo "☁️ Pushed to GitHub ($BRANCH)" || echo "⚠️ Push failed (will retry next backup)"
 fi
 
 # --- 5. Update state ---

@@ -7,9 +7,15 @@ set -euo pipefail
 #
 # Uso: new-client.sh --slug "slug" --name "Nombre" --guild "GUILD_ID"
 
-WORKSPACE="$HOME/.openclaw/workspace-sancho"
-SUPABASE_URL="https://psapmujzxhaxraphddlv.supabase.co"
-SKEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBzYXBtdWp6eGhheHJhcGhkZGx2Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MTg5MDE1MSwiZXhwIjoyMDg3NDY2MTUxfQ.uDPfDOg23MfjtORZBXitIUpLNpTRR8ahMqjvJkmg6wE"
+WORKSPACE="${OPENCLAW_WORKSPACE:-$HOME/.openclaw/workspace-sancho}"
+SUPABASE_URL=$(python3 -c "import json; print(json.load(open('${OPENCLAW_WORKSPACE:-$HOME/.openclaw/workspace-sancho}/_system/instance.json')).get('supabase',{}).get('url',''))" 2>/dev/null)
+SKEY=$(python3 -c "import json; print(json.load(open('${OPENCLAW_WORKSPACE:-$HOME/.openclaw/workspace-sancho}/_system/instance.json')).get('supabase',{}).get('service_key',''))" 2>/dev/null)
+if [[ -z "$SKEY" ]]; then
+  SKEY="${SUPABASE_SERVICE_KEY:-}"
+fi
+if [[ -z "$SUPABASE_URL" || -z "$SKEY" ]]; then
+  echo "⚠️ Supabase URL or service key not found in instance.json or env. Supabase insert will be skipped."
+fi
 
 # --- Parse args ---
 SLUG="" NAME="" GUILD=""
@@ -22,7 +28,8 @@ while [[ $# -gt 0 ]]; do
       echo "Uso: new-client.sh --slug <slug> --name <nombre> --guild <guild_id>"
       echo ""
       echo "Prerequisito: cliente creó servidor desde https://discord.new/9nbefJmU7YKy"
-      echo "              y añadió bot desde https://discord.com/oauth2/authorize?client_id=1475635406610628769&permissions=8&integration_type=0&scope=bot"
+      BOT_ID=$(python3 -c "import json; print(json.load(open('$WORKSPACE/_system/instance.json'))['discord']['bot_client_id'])" 2>/dev/null || echo "BOT_CLIENT_ID")
+      echo "              y añadió bot desde https://discord.com/oauth2/authorize?client_id=${BOT_ID}&permissions=8&integration_type=0&scope=bot"
       exit 0 ;;
     *) echo "❌ Argumento desconocido: $1"; exit 1 ;;
   esac
@@ -46,34 +53,74 @@ if [[ -d "$BRAND_DIR" ]]; then
   exit 1
 fi
 
+# --- Read bot_client_id from instance.json ---
+INSTANCE_JSON="$WORKSPACE/_system/instance.json"
+BOT_CLIENT_ID=$(python3 -c "import json; print(json.load(open('$INSTANCE_JSON'))['discord']['bot_client_id'])" 2>/dev/null || echo "UNKNOWN")
+OAUTH_URL="https://discord.com/oauth2/authorize?client_id=${BOT_CLIENT_ID}&permissions=8&integration_type=0&scope=bot"
+
 echo "🔨 Onboarding: $NAME (slug: $SLUG, guild: $GUILD)"
 
 # --- 1. Crear estructura de archivos ---
 echo "📁 Creando estructura..."
-mkdir -p "$BRAND_DIR"/{company-brief,market-and-us/{market,competitors,self,market-synthesis,sources},go-to-market/{ecps,positioning/shared,pricing,existing-customer-data,ecp-validation},brand-book/{brand-voice,visual-identity},strategic-plan,operational,_archive,projects,monitoring/weekly}
+mkdir -p "$BRAND_DIR"/{company-context,business-model,budget,company-brief,market-and-us/{market,competitors,self,swot,summary,ope-canvas,sources},go-to-market/{ecps,positioning/shared,pricing,existing-customer-data,ecp-validation},brand-book/{brand-voice,visual-identity},presentations,strategic-plan,operational,_archive,projects,monitoring/weekly}
 
 # --- 1b. Crear placeholders de documentos ---
 echo "📄 Creando placeholders..."
 
-cat > "$BRAND_DIR/company-brief/current.md" << 'PLACEHOLDER'
+cat > "$BRAND_DIR/company-context/current.md" << 'PLACEHOLDER'
 <!-- mode: placeholder | status: not-started -->
-# Company Brief — {NOMBRE}
+# Company Context — {NOMBRE}
 
-> Documento único: identidad, modelo de negocio, equipo, diferenciadores y recursos.
+> STANDALONE (fuente de verdad). Lo escribe la skill `company-context`.
 
 ## Identidad
 <!-- Nombre, tipo de empresa, sector, año fundación, equipo -->
 
-## Modelo de Negocio
-<!-- Qué vende, a quién, cómo cobra, ticket medio, unit economics -->
-
-## Recursos y Budget
-<!-- Equipo actual, herramientas, presupuesto marketing, restricciones -->
-
 ## Diferenciadores
 <!-- Qué hace diferente a esta empresa, assets únicos -->
 PLACEHOLDER
-sed -i '' "s/{NOMBRE}/$NAME/g" "$BRAND_DIR/company-brief/current.md"
+sed -i "s/{NOMBRE}/$NAME/g" "$BRAND_DIR/company-context/current.md"
+
+cat > "$BRAND_DIR/business-model/current.md" << 'PLACEHOLDER'
+<!-- mode: placeholder | status: not-started -->
+# Business Model — {NOMBRE}
+
+> STANDALONE (fuente de verdad). Lo escribe la skill `business-model-audit`.
+
+## Modelo de Negocio
+<!-- Qué vende, a quién, cómo cobra, ticket medio, unit economics -->
+PLACEHOLDER
+sed -i "s/{NOMBRE}/$NAME/g" "$BRAND_DIR/business-model/current.md"
+
+cat > "$BRAND_DIR/budget/current.md" << 'PLACEHOLDER'
+<!-- mode: placeholder | status: not-started -->
+# Budget & Resources — {NOMBRE}
+
+> STANDALONE (fuente de verdad). Lo escribe la skill `budget-constraints`.
+
+## Recursos y Budget
+<!-- Equipo actual, herramientas, presupuesto marketing, restricciones -->
+PLACEHOLDER
+sed -i "s/{NOMBRE}/$NAME/g" "$BRAND_DIR/budget/current.md"
+
+cat > "$BRAND_DIR/company-brief/current.md" << 'PLACEHOLDER'
+<!-- auto-generated from: company-context/, business-model/, budget/ -->
+<!-- DO NOT EDIT HERE — edits will be overwritten on next regeneration -->
+<!-- mode: placeholder | status: not-started -->
+# Company Brief — {NOMBRE}
+
+> MERGE VIEW consolidado de los 3 standalones. No editar aquí.
+
+## Company Identity
+_pendiente — correr company-context_
+
+## Business Model
+_pendiente — correr business-model-audit_
+
+## Budget & Resources
+_pendiente — correr budget-constraints_
+PLACEHOLDER
+sed -i "s/{NOMBRE}/$NAME/g" "$BRAND_DIR/company-brief/current.md"
 
 cat > "$BRAND_DIR/market-and-us/market/current.md" << 'PLACEHOLDER'
 <!-- mode: placeholder | status: not-started -->
@@ -94,7 +141,7 @@ cat > "$BRAND_DIR/market-and-us/market/current.md" << 'PLACEHOLDER'
 ## Segmentación
 <!-- Segmentos de mercado y oportunidades -->
 PLACEHOLDER
-sed -i '' "s/{NOMBRE}/$NAME/g" "$BRAND_DIR/market-and-us/market/current.md"
+sed -i "s/{NOMBRE}/$NAME/g" "$BRAND_DIR/market-and-us/market/current.md"
 
 cat > "$BRAND_DIR/market-and-us/self/current.md" << 'PLACEHOLDER'
 <!-- mode: placeholder | status: not-started -->
@@ -115,9 +162,9 @@ cat > "$BRAND_DIR/market-and-us/self/current.md" << 'PLACEHOLDER'
 ## Gaps
 <!-- Debilidades y áreas de mejora -->
 PLACEHOLDER
-sed -i '' "s/{NOMBRE}/$NAME/g" "$BRAND_DIR/market-and-us/self/current.md"
+sed -i "s/{NOMBRE}/$NAME/g" "$BRAND_DIR/market-and-us/self/current.md"
 
-cat > "$BRAND_DIR/market-and-us/market-synthesis/swot.md" << 'PLACEHOLDER'
+cat > "$BRAND_DIR/market-and-us/swot/current.md" << 'PLACEHOLDER'
 <!-- mode: placeholder | status: not-started -->
 # SWOT Analysis — {NOMBRE}
 
@@ -136,9 +183,9 @@ cat > "$BRAND_DIR/market-and-us/market-synthesis/swot.md" << 'PLACEHOLDER'
 ## TOWS Matrix
 <!-- Estrategias cruzadas SO, WO, ST, WT -->
 PLACEHOLDER
-sed -i '' "s/{NOMBRE}/$NAME/g" "$BRAND_DIR/market-and-us/market-synthesis/swot.md"
+sed -i "s/{NOMBRE}/$NAME/g" "$BRAND_DIR/market-and-us/swot/current.md"
 
-cat > "$BRAND_DIR/market-and-us/market-synthesis/summary.md" << 'PLACEHOLDER'
+cat > "$BRAND_DIR/market-and-us/summary/current.md" << 'PLACEHOLDER'
 <!-- mode: placeholder | status: not-started -->
 # Market Summary — {NOMBRE}
 
@@ -148,9 +195,9 @@ cat > "$BRAND_DIR/market-and-us/market-synthesis/summary.md" << 'PLACEHOLDER'
 ## Conclusiones Clave
 <!-- Top insights para la estrategia -->
 PLACEHOLDER
-sed -i '' "s/{NOMBRE}/$NAME/g" "$BRAND_DIR/market-and-us/market-synthesis/summary.md"
+sed -i "s/{NOMBRE}/$NAME/g" "$BRAND_DIR/market-and-us/summary/current.md"
 
-cat > "$BRAND_DIR/market-and-us/market-synthesis/ope-canvas.md" << 'PLACEHOLDER'
+cat > "$BRAND_DIR/market-and-us/ope-canvas/current.md" << 'PLACEHOLDER'
 <!-- mode: placeholder | status: not-started -->
 # OPE Canvas — {NOMBRE}
 
@@ -163,7 +210,7 @@ cat > "$BRAND_DIR/market-and-us/market-synthesis/ope-canvas.md" << 'PLACEHOLDER'
 ## Ejecución
 <!-- Cómo se ejecuta la solución -->
 PLACEHOLDER
-sed -i '' "s/{NOMBRE}/$NAME/g" "$BRAND_DIR/market-and-us/market-synthesis/ope-canvas.md"
+sed -i "s/{NOMBRE}/$NAME/g" "$BRAND_DIR/market-and-us/ope-canvas/current.md"
 
 cat > "$BRAND_DIR/go-to-market/ecps/current.md" << 'PLACEHOLDER'
 <!-- mode: placeholder | status: not-started -->
@@ -175,7 +222,7 @@ cat > "$BRAND_DIR/go-to-market/ecps/current.md" << 'PLACEHOLDER'
 ## ECPs (Exceptional Client Profiles)
 <!-- Perfiles de cliente ideal con pain clusters -->
 PLACEHOLDER
-sed -i '' "s/{NOMBRE}/$NAME/g" "$BRAND_DIR/go-to-market/ecps/current.md"
+sed -i "s/{NOMBRE}/$NAME/g" "$BRAND_DIR/go-to-market/ecps/current.md"
 
 cat > "$BRAND_DIR/go-to-market/positioning/shared/messaging-summary.md" << 'PLACEHOLDER'
 <!-- mode: placeholder | status: not-started -->
@@ -190,7 +237,7 @@ cat > "$BRAND_DIR/go-to-market/positioning/shared/messaging-summary.md" << 'PLAC
 ## Mensajes Clave
 <!-- Key messages diferenciadores -->
 PLACEHOLDER
-sed -i '' "s/{NOMBRE}/$NAME/g" "$BRAND_DIR/go-to-market/positioning/shared/messaging-summary.md"
+sed -i "s/{NOMBRE}/$NAME/g" "$BRAND_DIR/go-to-market/positioning/shared/messaging-summary.md"
 
 cat > "$BRAND_DIR/go-to-market/pricing/current.md" << 'PLACEHOLDER'
 <!-- mode: placeholder | status: not-started -->
@@ -205,7 +252,7 @@ cat > "$BRAND_DIR/go-to-market/pricing/current.md" << 'PLACEHOLDER'
 ## Value Metrics
 <!-- Métricas de valor para el cliente -->
 PLACEHOLDER
-sed -i '' "s/{NOMBRE}/$NAME/g" "$BRAND_DIR/go-to-market/pricing/current.md"
+sed -i "s/{NOMBRE}/$NAME/g" "$BRAND_DIR/go-to-market/pricing/current.md"
 
 cat > "$BRAND_DIR/brand-book/brand-voice/current.md" << 'PLACEHOLDER'
 <!-- mode: placeholder | status: not-started -->
@@ -223,7 +270,7 @@ cat > "$BRAND_DIR/brand-book/brand-voice/current.md" << 'PLACEHOLDER'
 ## Ejemplos
 <!-- Antes/después por canal -->
 PLACEHOLDER
-sed -i '' "s/{NOMBRE}/$NAME/g" "$BRAND_DIR/brand-book/brand-voice/current.md"
+sed -i "s/{NOMBRE}/$NAME/g" "$BRAND_DIR/brand-book/brand-voice/current.md"
 
 cat > "$BRAND_DIR/brand-book/visual-identity/current.md" << 'PLACEHOLDER'
 <!-- mode: placeholder | status: not-started -->
@@ -241,7 +288,7 @@ cat > "$BRAND_DIR/brand-book/visual-identity/current.md" << 'PLACEHOLDER'
 ## Templates
 <!-- Plantillas de diseño -->
 PLACEHOLDER
-sed -i '' "s/{NOMBRE}/$NAME/g" "$BRAND_DIR/brand-book/visual-identity/current.md"
+sed -i "s/{NOMBRE}/$NAME/g" "$BRAND_DIR/brand-book/visual-identity/current.md"
 
 cat > "$BRAND_DIR/strategic-plan/current.md" << 'PLACEHOLDER'
 <!-- mode: placeholder | status: not-started -->
@@ -259,7 +306,7 @@ cat > "$BRAND_DIR/strategic-plan/current.md" << 'PLACEHOLDER'
 ## KPIs
 <!-- Métricas de éxito del plan -->
 PLACEHOLDER
-sed -i '' "s/{NOMBRE}/$NAME/g" "$BRAND_DIR/strategic-plan/current.md"
+sed -i "s/{NOMBRE}/$NAME/g" "$BRAND_DIR/strategic-plan/current.md"
 
 echo "   ✅ Placeholders creados (12 documentos)"
 
@@ -296,7 +343,10 @@ cat > "$BRAND_DIR/foundation-state.json" << FJSON
       "layer": 0,
       "output_dir": "brand/$SLUG/company-brief/",
       "pillars": {
-        "company-brief": {"status": "not-started", "skill": "fast-foundation", "output_file": "brand/$SLUG/company-brief/current.md"}
+        "company-context": {"status": "not-started", "skill": "company-context", "output_file": "brand/$SLUG/company-context/current.md"},
+        "business-model": {"status": "not-started", "skill": "business-model-audit", "output_file": "brand/$SLUG/business-model/current.md"},
+        "budget": {"status": "not-started", "skill": "budget-constraints", "output_file": "brand/$SLUG/budget/current.md"},
+        "company-brief": {"status": "not-started", "skill": "fast-foundation", "output_file": "brand/$SLUG/company-brief/current.md", "note": "merge view auto-generated"}
       }
     },
     "market-and-us": {
@@ -308,7 +358,7 @@ cat > "$BRAND_DIR/foundation-state.json" << FJSON
         "competitor-analysis": {"status": "not-started", "layer": 1, "skill": "competitor-intelligence"},
         "self-analysis": {"status": "not-started", "layer": 1, "skill": "self-intelligence", "output_file": "brand/$SLUG/market-and-us/self/current.md"},
         "market-synthesis": {"status": "not-started", "layer": 2, "skill": "market-synthesis"},
-        "foundation-presentation": {"status": "not-started", "layer": 2, "skill": "market-synthesis", "output_file": "brand/$SLUG/market-and-us/market-synthesis/foundation-report.html"}
+        "foundation-presentation": {"status": "not-started", "layer": 2, "skill": "market-synthesis", "output_file": "brand/$SLUG/presentations/foundation-report.html"}
       }
     },
     "go-to-market": {
@@ -378,8 +428,8 @@ IJSON
 echo "📋 Creando proyectos core..."
 
 # P00-Fast-Foundation
-mkdir -p "$BRAND_DIR/projects/P00-Fast-Foundation-Fast-Foundation"
-cat > "$BRAND_DIR/projects/P00-Fast-Foundation-Fast-Foundation/project.json" << PROJJSON
+mkdir -p "$BRAND_DIR/projects/P00-Fast-Foundation"
+cat > "$BRAND_DIR/projects/P00-Fast-Foundation/project.json" << PROJJSON
 {
   "id": "P00-Fast-Foundation",
   "name": "Fast Foundation",
@@ -400,7 +450,7 @@ cat > "$BRAND_DIR/projects/P00-Fast-Foundation-Fast-Foundation/project.json" << 
 }
 PROJJSON
 
-cat > "$BRAND_DIR/projects/P00-Fast-Foundation-Fast-Foundation/tasks.json" << TASKSJSON
+cat > "$BRAND_DIR/projects/P00-Fast-Foundation/tasks.json" << TASKSJSON
 [
   {
     "id": "P00-FF-T01",
@@ -421,8 +471,8 @@ cat > "$BRAND_DIR/projects/P00-Fast-Foundation-Fast-Foundation/tasks.json" << TA
 TASKSJSON
 
 # P00-Full-Foundation
-mkdir -p "$BRAND_DIR/projects/P00-Full-Foundation-Full-Foundation"
-cat > "$BRAND_DIR/projects/P00-Full-Foundation-Full-Foundation/project.json" << PROJJSON2
+mkdir -p "$BRAND_DIR/projects/P00-Full-Foundation"
+cat > "$BRAND_DIR/projects/P00-Full-Foundation/project.json" << PROJJSON2
 {
   "id": "P00-Full-Foundation",
   "name": "Full Foundation",
@@ -443,7 +493,7 @@ cat > "$BRAND_DIR/projects/P00-Full-Foundation-Full-Foundation/project.json" << 
 }
 PROJJSON2
 
-cat > "$BRAND_DIR/projects/P00-Full-Foundation-Full-Foundation/tasks.json" << TASKSJSON2
+cat > "$BRAND_DIR/projects/P00-Full-Foundation/tasks.json" << TASKSJSON2
 [
   {
     "id": "P00-FUL-T01",
@@ -584,8 +634,8 @@ cat > "$BRAND_DIR/projects/P00-Full-Foundation-Full-Foundation/tasks.json" << TA
 TASKSJSON2
 
 # P00-Metrics-Setup
-mkdir -p "$BRAND_DIR/projects/P00-Metrics-Metrics-Setup"
-cat > "$BRAND_DIR/projects/P00-Metrics-Metrics-Setup/project.json" << PROJJSON_MS
+mkdir -p "$BRAND_DIR/projects/P00-Metrics"
+cat > "$BRAND_DIR/projects/P00-Metrics/project.json" << PROJJSON_MS
 {
   "id": "P00-Metrics",
   "name": "Métricas y Conexiones",
@@ -606,7 +656,7 @@ cat > "$BRAND_DIR/projects/P00-Metrics-Metrics-Setup/project.json" << PROJJSON_M
 }
 PROJJSON_MS
 
-cat > "$BRAND_DIR/projects/P00-Metrics-Metrics-Setup/tasks.json" << TASKSJSON_MS
+cat > "$BRAND_DIR/projects/P00-Metrics/tasks.json" << TASKSJSON_MS
 {
   "project_id": "P00-Metrics",
   "tasks": [
@@ -681,8 +731,8 @@ cat > "$BRAND_DIR/projects/P00-Metrics-Metrics-Setup/tasks.json" << TASKSJSON_MS
 TASKSJSON_MS
 
 # P00-Strategic-Plan
-mkdir -p "$BRAND_DIR/projects/P00-Strategic-Plan-Strategic-Plan"
-cat > "$BRAND_DIR/projects/P00-Strategic-Plan-Strategic-Plan/project.json" << PROJJSON3
+mkdir -p "$BRAND_DIR/projects/P00-Strategic-Plan"
+cat > "$BRAND_DIR/projects/P00-Strategic-Plan/project.json" << PROJJSON3
 {
   "id": "P00-Strategic-Plan",
   "name": "Strategic Plan",
@@ -703,7 +753,7 @@ cat > "$BRAND_DIR/projects/P00-Strategic-Plan-Strategic-Plan/project.json" << PR
 }
 PROJJSON3
 
-cat > "$BRAND_DIR/projects/P00-Strategic-Plan-Strategic-Plan/tasks.json" << TASKSJSON3
+cat > "$BRAND_DIR/projects/P00-Strategic-Plan/tasks.json" << TASKSJSON3
 [
   {
     "id": "P00-SP-T01",
@@ -798,7 +848,9 @@ if "$SLUG" not in slugs:
     data.setdefault("clients", []).append({
         "slug": "$SLUG",
         "name": "$NAME",
-        "discord_guild_id": "$GUILD",
+        "guild": "$GUILD",
+        "active": True,
+        "language": "es",
         "phase": 0,
         "paths": {"brand": "brand/"},
         "supabase": {
@@ -813,22 +865,7 @@ else:
     print("   ⏭️ Ya existe en clients.json")
 PYJSON
 
-# --- 4. Actualizar clients.js (Mission Control) ---
-echo "🖥️ Actualizando clients.js..."
-CLIENTS_JS="$WORKSPACE/clients.js"
-if grep -q "\"$SLUG\"" "$CLIENTS_JS"; then
-  echo "   ⏭️ Ya existe en clients.js"
-else
-  # Insert new client entry before TEMPLATE comment
-  NEW_ENTRY="  \"$SLUG\": {\n    name: \"$NAME\",\n    emoji: \"🏢\",\n    url: \"\",\n    discord_guild: \"$GUILD\",\n    supabase: {\n      url: \"https://psapmujzxhaxraphddlv.supabase.co\",\n      anon_key: \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBzYXBtdWp6eGhheHJhcGhkZGx2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4OTAxNTEsImV4cCI6MjA4NzQ2NjE1MX0.RxanIQCJtjGfCUL_X0MqPi2IdGkXOkmfaEAJZvQJblI\",\n    },\n    workspace: \"~/.openclaw/workspace-sancho\",\n    phase: 0,\n  },"
-  # Use python for safe text insertion
-  python3 -c "
-c = open('$CLIENTS_JS').read()
-c = c.replace('  // === TEMPLATE:', '$NEW_ENTRY\n\n  // === TEMPLATE:')
-open('$CLIENTS_JS','w').write(c)
-"
-  echo "   ✅ clients.js actualizado"
-fi
+# --- 4. (Removido: clients.js ya no existe, MC usa clients.json directamente) ---
 
 # --- 5. Regenerar MC ---
 echo "🔄 Regenerando Mission Control..."
@@ -863,14 +900,16 @@ fi
 
 # --- 7. Aplicar restricciones de seguridad al guild ---
 echo "🔒 Aplicando restricciones de seguridad..."
-ALFONSO="1334604955687977042"
-MARTIN="1402171221747040369"
-PHILIPPE="1475772310614048858"
+INSTANCE_JSON="$WORKSPACE/_system/instance.json"
+ADMIN_USERS=$(python3 -c "import json; d=json.load(open('$INSTANCE_JSON')); print(' '.join(d['discord']['admin_users']))" 2>/dev/null)
+ALFONSO=$(echo "$ADMIN_USERS" | cut -d' ' -f1)
+MARTIN=$(echo "$ADMIN_USERS" | cut -d' ' -f2)
+PHILIPPE=$(echo "$ADMIN_USERS" | cut -d' ' -f3)
 
 python3 -c "
 import json
 
-config_path = '$HOME/.openclaw/openclaw.json'
+config_path = '${OPENCLAW_HOME:-$HOME/.openclaw}/.openclaw/openclaw.json'
 with open(config_path, 'r') as f:
     config = json.load(f)
 
@@ -891,10 +930,10 @@ else:
 
 # --- 8. Gateway restart ---
 echo "🔄 Restarting gateway..."
-if command -v openclaw &>/dev/null; then
-  openclaw gateway restart 2>/dev/null && echo "   ✅ Gateway reiniciado" || echo "   ⚠️ Gateway restart falló — reiniciar manualmente"
+if openclaw gateway restart 2>/dev/null; then
+  echo "   ✅ Gateway reiniciado"
 else
-  echo "   ⚠️ openclaw CLI no encontrado — reiniciar gateway manualmente"
+  echo "   ⚠️ Gateway restart falló — ejecutar manualmente"
 fi
 
 # --- 8b. Crear crons recurrentes desde templates ---
@@ -914,5 +953,9 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 echo ""
 echo "📁 Brand dir:  $BRAND_DIR"
 echo "🔗 Guild ID:   $GUILD"
+echo "🤖 Bot ID:     $BOT_CLIENT_ID"
+echo ""
+echo "📌 Si el bot aún no está en el servidor, invítalo:"
+echo "   $OAUTH_URL"
 echo ""
 echo "🎯 El cliente puede empezar Foundation en #onboarding"

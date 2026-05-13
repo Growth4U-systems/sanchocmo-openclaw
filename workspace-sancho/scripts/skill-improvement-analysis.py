@@ -14,7 +14,7 @@ from pathlib import Path
 WORKSPACE = Path(__file__).parent.parent
 LOG_FILE = WORKSPACE / "_system" / "skill-execution-log.jsonl"
 PROPOSALS_DIR = WORKSPACE / "_system" / "skill-improvement-proposals"
-METRICS_FILE = WORKSPACE / "_system" / "skill-improvement-metrics.json"
+METRICS_FILE = WORKSPACE / "memory" / "state" / "skill-improvement-metrics.json"
 
 
 def load_log(days: int = 7) -> list[dict]:

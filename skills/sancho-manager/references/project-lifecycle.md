@@ -117,7 +117,7 @@ Cada cambio de estado actualiza SIEMPRE:
 ## Archivos por proyecto
 
 ```
-projects/P{XX}-{slug}/
+projects/P{XX}/
   project.json          ← metadata del proyecto
   tasks.json            ← todas las tareas
   playbook.md           ← resumen + links a playbooks de tareas

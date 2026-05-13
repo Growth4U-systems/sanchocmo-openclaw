@@ -29,7 +29,7 @@ for f in "$TOPICS_DIR"/*.md; do
     
     if [ "$FMTIME" -lt "$CUTOFF_EPOCH" ]; then
         # Check if referenced in recent daily notes (last 30 days)
-        RECENT_REFS=$(grep -rl "$fname" "$WORKSPACE/memory/daily/" 2>/dev/null | wc -l | tr -d ' ')
+        RECENT_REFS=$(grep -rl "$fname" "$WORKSPACE/memory/" --include="20*.md" 2>/dev/null | wc -l | tr -d ' ')
         BRAND_REFS=$(grep -rl "$fname" "$WORKSPACE/brand/" 2>/dev/null | wc -l | tr -d ' ')
         
         TOTAL_REFS=$((RECENT_REFS + BRAND_REFS))

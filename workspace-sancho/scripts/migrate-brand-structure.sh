@@ -14,7 +14,7 @@ set -euo pipefail
 #   --dry-run: solo muestra qué haría, no ejecuta
 #   --slug: migrar solo un cliente específico
 
-WORKSPACE="$HOME/.openclaw/workspace-sancho"
+WORKSPACE="${OPENCLAW_WORKSPACE:-$HOME/.openclaw/workspace-sancho}"
 DRY_RUN=false
 TARGET_SLUG=""
 

@@ -316,7 +316,7 @@ async function checkService(serviceId: string, envVars: Record<string, string>):
       // ── Local tools ──
       case "gog": {
         try {
-          const raw = execSync("/opt/homebrew/bin/gog gmail list \"is:unread\" 2>&1", { timeout: 20000, encoding: "utf-8" });
+          const raw = execSync("gog gmail list \"is:unread\" 2>&1", { timeout: 20000, encoding: "utf-8" });
           const hasError = /error|unauthorized|invalid/i.test(raw) && !/subject/i.test(raw);
           return hasError
             ? error(raw.slice(0, 150))
@@ -327,7 +327,7 @@ async function checkService(serviceId: string, envVars: Record<string, string>):
       }
       case "openclaw": {
         try {
-          const raw = execSync("/opt/homebrew/bin/openclaw status 2>&1", { timeout: TIMEOUT_MS, encoding: "utf-8" });
+          const raw = execSync("openclaw status 2>&1", { timeout: TIMEOUT_MS, encoding: "utf-8" });
           const running = /running/i.test(raw);
           const version = raw.match(/app\s+([\d.]+)/)?.[1] || "";
           const latest = raw.match(/npm latest\s+([\d.]+)/)?.[1] || "";

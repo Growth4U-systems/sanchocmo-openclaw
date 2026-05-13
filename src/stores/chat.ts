@@ -140,7 +140,10 @@ export const useChatStore = create<ChatState>()((set, get) => ({
         threadName: config.threadName,
         threadState: config.threadState,
         initialMessage: config.initialMessage,
+<<<<<<< HEAD
         agent: config.agent,
+=======
+>>>>>>> origin/staging
         docKind: config.docKind,
       });
       // Register thread locally

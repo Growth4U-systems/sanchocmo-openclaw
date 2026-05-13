@@ -1,0 +1,32 @@
+{
+  "$comment": "Copy to instance.json and fill in your values.",
+  "mc_base_url": "https://your-domain.com/mc",
+  "mc_server_port": 18790,
+  "gateway_port": 18789,
+  "discord": {
+    "bot_client_id": "your-bot-client-id",
+    "admin_users": [
+      "discord-user-id-1",
+      "discord-user-id-2"
+    ],
+    "infra_guild": "your-infra-guild-id",
+    "infra_channels": {
+      "admin": "channel-id (maps to your #infra or #admin channel)",
+      "infra_thread": "channel-id (maps to your #infra channel)",
+      "costs_thread": "channel-id (maps to your #infra channel for cost reports)",
+      "tasks": "channel-id (maps to your #tasks channel)",
+      "changelog": "channel-id (maps to your #skills or a dedicated changelog channel)",
+      "update_skills_thread": "channel-id (maps to your #skills channel)",
+      "mejora_continua_thread": "channel-id (maps to your #ideas channel)"
+    }
+  },
+  "supabase": {
+    "url": "https://your-project.supabase.co",
+    "service_key": "your-supabase-service-role-key",
+    "anon_key": "your-supabase-anon-key"
+  },
+  "accounts": {
+    "google_workspace": "admin@yourdomain.com",
+    "dataforseo": "api@yourdomain.com"
+  }
+}

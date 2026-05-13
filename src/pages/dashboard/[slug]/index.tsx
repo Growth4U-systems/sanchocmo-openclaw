@@ -1,21 +1,27 @@
+import Head from "next/head";
 import { useRouter } from "next/router";
-import { useEffect } from "react";
-import { useAppStore } from "@/stores/app";
+import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { ClientDashboardV2 } from "@/components/dashboard/client-dashboard";
 
 /**
- * /dashboard/[slug] — auto-selects the client and redirects to dashboard
+ * /dashboard/[slug] — client-scoped dashboard.
+ * The URL slug is the single source of truth; no state-based redirect.
  */
-export default function ClientDashboardRedirect() {
+export default function ClientDashboardPage() {
   const router = useRouter();
-  const slug = router.query.slug as string;
-  const { setSelectedClient } = useAppStore();
+  const slug = router.query.slug as string | undefined;
 
-  useEffect(() => {
-    if (slug) {
-      setSelectedClient(slug);
-      router.replace("/dashboard");
-    }
-  }, [slug, setSelectedClient, router]);
+  if (!slug) {
+    // First render before router hydrates.
+    return <DashboardLayout fullBleed>{null}</DashboardLayout>;
+  }
 
-  return null;
+  return (
+    <DashboardLayout fullBleed>
+      <Head>
+        <title>{slug} — Mission Control</title>
+      </Head>
+      <ClientDashboardV2 slug={slug} />
+    </DashboardLayout>
+  );
 }

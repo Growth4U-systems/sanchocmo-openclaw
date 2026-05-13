@@ -12,11 +12,7 @@
       "status": "processed",
       "sourceFile": "brand/hospital-capilar/daily-pulse/2026-05-11.json",
       "processedAt": "2026-05-11T18:06:00Z",
-      "tags": [
-        "pulse",
-        "daily",
-        "no-activity"
-      ]
+      "tags": ["pulse", "daily", "no-activity"]
     },
     {
       "id": "pulse-2026-02-27",
@@ -243,96 +239,6 @@
         "meeting"
       ],
       "transcriptFile": "brand/hospital-capilar/intelligence/meetings/2026-01-29-kickoff-hospital-capilar/transcript.md"
-    },
-    {
-      "id": "pulse-2026-05-12",
-      "type": "daily-pulse",
-      "client": "hospital-capilar",
-      "date": "2026-05-12",
-      "title": "Daily Pulse — 2026-05-12",
-      "summary": "7 insights extraídos (Discord UNAVAILABLE, research signals only). 3 patrones detectados: diagnóstico como diferencial, momento cultural anti-calvicie, KOLs capilares.",
-      "status": "processed",
-      "sourceFile": "brand/hospital-capilar/daily-pulse/2026-05-12.json",
-      "processedAt": "2026-05-12T00:19:00+02:00",
-      "tags": [
-        "pulse",
-        "daily"
-      ]
-    },
-    {
-      "id": "mtg-growth4u-sabrina-nittel-20260512",
-      "type": "meeting",
-      "client": "growth4u",
-      "date": "2026-05-12",
-      "title": "Sabrina Nittel / Alfonso — General Growth4U (Decra prospect)",
-      "summary": "Presentación metodología G4U y pricing a Decra (SAMYA). Follow-up primera semana junio. Sin compromiso aún.",
-      "status": "processed",
-      "sourceFile": "brand/growth4u/intelligence/meetings/sabrina-nittel-2026-05-12/transcript.md",
-      "transcriptFile": "brand/growth4u/intelligence/meetings/sabrina-nittel-2026-05-12/transcript.md",
-      "processedAt": "2026-05-12T16:35:00+02:00",
-      "tags": [
-        "meeting",
-        "prospect",
-        "decra",
-        "drive"
-      ]
-    },
-    {
-      "id": "mtg-growth4u-onboarding-gutendurance-20260428",
-      "type": "meeting",
-      "client": "growth4u",
-      "date": "2026-04-28",
-      "title": "Onboarding Gutendurance × Growth4U",
-      "summary": "Onboarding operativo pre-kickoff. Nicho deportistas, ICP definido, compromisos cliente: datos + pago 1700€. Kickoff 15/5.",
-      "status": "processed",
-      "sourceFile": "brand/growth4u/intelligence/meetings/onboarding-gutendurance-2026-04-28/transcript.md",
-      "transcriptFile": "brand/growth4u/intelligence/meetings/onboarding-gutendurance-2026-04-28/transcript.md",
-      "processedAt": "2026-05-12T16:35:00+02:00",
-      "tags": [
-        "meeting",
-        "client",
-        "gutendurance",
-        "onboarding",
-        "notion"
-      ]
-    },
-    {
-      "id": "mtg-growth4u-cierre-xhype-20260423",
-      "type": "meeting",
-      "client": "growth4u",
-      "date": "2026-04-23",
-      "title": "Llamada Cierre Sergi Candel (Xhype) × Martin",
-      "summary": "Sergi confirma entrada al programa. Pago 50/50. Plazos comprimidos a 30/6. 3 peticiones: entendimiento negocio, comprimir plazos, pago dividido.",
-      "status": "processed",
-      "sourceFile": "brand/growth4u/intelligence/meetings/cierre-xhype-2026-04-23/transcript.md",
-      "transcriptFile": "brand/growth4u/intelligence/meetings/cierre-xhype-2026-04-23/transcript.md",
-      "processedAt": "2026-05-12T16:35:00+02:00",
-      "tags": [
-        "meeting",
-        "client",
-        "xhype",
-        "cierre",
-        "notion"
-      ]
-    },
-    {
-      "id": "mtg-growth4u-estrategica-xhype-20260420",
-      "type": "meeting",
-      "client": "growth4u",
-      "date": "2026-04-20",
-      "title": "Llamada Estratégica Sergi Candel (Xhype) × Alfonso — 1ª llamada",
-      "summary": "Primer contacto Alfonso-Sergi. Modelo Xhype explicado (SuperWallet, ronda 26-29M€, lanzamiento KYC junio). Metodología G4U presentada. Depósito 2000€ acordado.",
-      "status": "processed",
-      "sourceFile": "brand/growth4u/intelligence/meetings/estrategica-xhype-2026-04-20/transcript.md",
-      "transcriptFile": "brand/growth4u/intelligence/meetings/estrategica-xhype-2026-04-20/transcript.md",
-      "processedAt": "2026-05-12T16:35:00+02:00",
-      "tags": [
-        "meeting",
-        "prospect",
-        "xhype",
-        "estrategica",
-        "notion"
-      ]
     }
   ]
 }

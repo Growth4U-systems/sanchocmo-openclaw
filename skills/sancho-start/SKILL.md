@@ -21,8 +21,8 @@ context_writes:
 
 Este skill es el **punto de entrada** para clientes nuevos. Guía al usuario por 6 preguntas estratégicas, una a una, con follow-ups inteligentes si las respuestas son vagas.
 
-Read Context Lake per _system/brand-memory.md
-Follow output formatting per _system/output-format.md
+Read Context Lake per _system/intelligence/brand-memory.md
+Follow output formatting per _system/output/output-format.md
 
 ---
 

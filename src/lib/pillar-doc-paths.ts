@@ -12,6 +12,9 @@
 export const PILLAR_DOC_PATHS: Record<string, string[]> = {
   "fast-foundation": ["company-brief/current.md"],
   "company-brief": ["company-brief/current.md"],
+  "company-context": ["company-context/current.md"],
+  "business-model": ["business-model/current.md"],
+  "budget": ["budget/current.md"],
   "seo-audit": ["site-audit/seo-audit/current.md", "trust-engine/seo-audit.json"],
   "own-media-audit": ["site-audit/own-media-audit/current.md", "trust-engine/own-media-audit.json"],
   "market-analysis": ["market-and-us/market/current.md"],

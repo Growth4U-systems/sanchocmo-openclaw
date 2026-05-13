@@ -3,7 +3,10 @@
 import { cn } from "@/lib/utils";
 
 const TYPE_MAP: Record<string, { icon: string; bg: string; text: string }> = {
+  project: { icon: "📋", bg: "bg-rust/15", text: "text-rust" },
   content: { icon: "📝", bg: "bg-sage/15", text: "text-sage" },
+  content_task: { icon: "✍️", bg: "bg-amber-500/15", text: "text-amber-700" },
+  content_subtask: { icon: "✍️", bg: "bg-amber-500/15", text: "text-amber-700" },
   outreach: { icon: "📧", bg: "bg-navy/15", text: "text-navy" },
   foundation: { icon: "🏛️", bg: "bg-rust/15", text: "text-rust" },
   research: { icon: "🔬", bg: "bg-cyan-500/15", text: "text-cyan-600" },
@@ -18,11 +21,13 @@ interface TaskTypeBadgeProps {
 }
 
 export function TaskTypeBadge({ type }: TaskTypeBadgeProps) {
-  const meta = TYPE_MAP[type.toLowerCase()] ?? {
+  const normalized = type.toLowerCase();
+  const meta = TYPE_MAP[normalized] ?? {
     icon: "📋",
     bg: "bg-muted",
     text: "text-muted-foreground",
   };
+  const label = normalized === "content_task" || normalized === "content_subtask" ? "ContentTask" : type;
 
   return (
     <span
@@ -33,7 +38,7 @@ export function TaskTypeBadge({ type }: TaskTypeBadgeProps) {
       )}
     >
       <span>{meta.icon}</span>
-      {type}
+      {label}
     </span>
   );
 }

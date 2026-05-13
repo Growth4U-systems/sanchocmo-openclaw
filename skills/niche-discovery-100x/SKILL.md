@@ -5,7 +5,8 @@ metadata:
   context_required:
     - brand/{slug}/company-brief/current.md
     - brand/{slug}/market-and-us/self/current.md
-    - brand/{slug}/market-and-us/competitor-*/current.md
+    - brand/{slug}/market-and-us/competitors/current.md
+    - brand/{slug}/market-and-us/competitors/*/current.md
     - brand/{slug}/market-and-us/swot/current.md
     - brand/{slug}/market-and-us/market/current.md
     - brand/{slug}/market-and-us/summary/current.md
@@ -68,7 +69,7 @@ Modo B2B Enterprise usa herramientas del agente (web_search, web_fetch) — no n
 Auto-leer de Foundation — NO preguntar lo que ya tenemos.
 
 1. Identificar slug del cliente desde systemPrompt
-2. Leer: `brand/{slug}/company-context/current.md`, `self-intelligence/current.md`, `competitor-intelligence/current.md`, `swot-analysis/current.md`, `existing-customer-data/current.md` (si existe)
+2. Leer: `brand/{slug}/company-brief/current.md`, `brand/{slug}/market-and-us/self/current.md`, `brand/{slug}/market-and-us/competitors/current.md`, `brand/{slug}/market-and-us/swot/current.md`, `brand/{slug}/go-to-market/existing-customer-data/current.md` (si existe)
 3. Extraer: company_name, product, industry, target, country, context_type (B2B/B2C/Both)
 4. Si falta pilar crítico → informar al usuario, sugerir completar Foundation primero
 

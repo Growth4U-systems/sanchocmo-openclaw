@@ -6,7 +6,6 @@ import { useTranslations } from "next-intl";
 import Head from "next/head";
 import Link from "next/link";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import { useAppStore } from "@/stores/app";
 import { useGlobalStats } from "@/hooks/useDashboardStats";
 import { useClients } from "@/hooks/useClients";
 import { useBrandBrain } from "@/hooks/useBrandBrain";
@@ -22,28 +21,21 @@ import { useQuery } from "@tanstack/react-query";
 import { DocSlideOver } from "@/components/shared/doc-slideover";
 import { cn } from "@/lib/utils";
 
-// ============================================================
-// Dashboard Page — Faithful replica of legacy Mission Control
-// Two modes: global (no client) and client V2 (selected client)
-// ============================================================
-
+/**
+ * /dashboard — global overview across all clients.
+ * The per-client variant lives at /dashboard/[slug].
+ */
 export default function DashboardPage() {
   const t = useTranslations();
   const { data: session } = useSession();
-  const { selectedClient } = useAppStore();
   const isAdmin = (session?.user as { role?: string })?.role === "admin";
 
   return (
-    <DashboardLayout fullBleed={!!selectedClient}>
+    <DashboardLayout>
       <Head>
         <title>{t("dashboard.title")} — Mission Control</title>
       </Head>
-
-      {!selectedClient ? (
-        <GlobalDashboard isAdmin={isAdmin} />
-      ) : (
-        <ClientDashboardV2 slug={selectedClient} />
-      )}
+      <GlobalDashboard isAdmin={isAdmin} />
     </DashboardLayout>
   );
 }
@@ -56,7 +48,6 @@ function GlobalDashboard({ isAdmin }: { isAdmin: boolean }) {
   const t = useTranslations();
   const { data: stats, isLoading } = useGlobalStats();
   const { data: clients } = useClients();
-  const { setSelectedClient } = useAppStore();
   const { data: costs } = useCosts();
   const { data: integrations } = useIntegrationsSummary();
 
@@ -143,7 +134,6 @@ function GlobalDashboard({ isAdmin }: { isAdmin: boolean }) {
                   name={client.name}
                   emoji={client.emoji || "🏢"}
                   phase={client.phase}
-                  onClick={() => setSelectedClient(client.slug)}
                 />
               ))}
           </div>
@@ -207,13 +197,11 @@ function ClientCard({
   name,
   emoji,
   phase,
-  onClick,
 }: {
   slug: string;
   name: string;
   emoji: string;
   phase: number;
-  onClick: () => void;
 }) {
   const { data: foundation } = useBrandBrain(slug);
 
@@ -236,10 +224,9 @@ function ClientCard({
   const t = useTranslations("common");
 
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="rounded-lg border-[3px] border-ink bg-card p-4 shadow-comic-sm hover:shadow-comic transition-shadow text-left w-full"
+    <Link
+      href={`/dashboard/${slug}`}
+      className="block rounded-lg border-[3px] border-ink bg-card p-4 shadow-comic-sm hover:shadow-comic transition-shadow text-left w-full"
     >
       <div className="flex items-center gap-2 mb-2">
         <span className="text-xl">{emoji}</span>
@@ -261,7 +248,7 @@ function ClientCard({
           </p>
         </div>
       )}
-    </button>
+    </Link>
   );
 }
 

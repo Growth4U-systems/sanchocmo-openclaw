@@ -40,6 +40,7 @@ export function Sidebar() {
   const router = useRouter();
   const { data: session } = useSession();
   const { selectedClient, sidebarOpen } = useAppStore();
+  const { data: clients } = useClients();
   const [mobileOpen, setMobileOpen] = useState(false);
 
   // Close mobile sidebar on route change
@@ -50,7 +51,9 @@ export function Sidebar() {
   }, [router]);
 
   const isAdmin = (session?.user as { role?: string })?.role === "admin";
-  const slug = selectedClient;
+  const routeSlug = typeof router.query.slug === "string" ? router.query.slug : null;
+  const fallbackClient = clients?.find((client) => client.active)?.slug || null;
+  const slug = selectedClient || routeSlug || fallbackClient;
   const unreadCount = useUnreadCount(slug);
 
   function clientHref(path: string) {
@@ -158,7 +161,7 @@ export function Sidebar() {
 
             {/* ── Trabajo ── */}
             <SectionLabel text={t("nav.work")} visible={sidebarOpen} />
-            <NavLink href={clientHref("/projects")} icon="📋" label={t("nav.projects")} active={isActive(clientHref("/projects"))} collapsed={!sidebarOpen} />
+            <NavLink href={clientHref("/tasks")} icon="📋" label={t("nav.tasks")} active={isActive(clientHref("/tasks")) || isActive(clientHref("/projects"))} collapsed={!sidebarOpen} />
             <NavLink href={clientHref("/content-creation")} icon="✏️" label="Content Creation" active={isActive(clientHref("/content-creation"))} collapsed={!sidebarOpen} />
             <NavLink href={clientHref("/media-creation")} icon="🎨" label="Media Creation" active={isActive(clientHref("/media-creation"))} collapsed={!sidebarOpen} />
             <NavLink href={clientHref("/outreach")} icon="📤" label="Outreach" active={isActive(clientHref("/outreach"))} collapsed={!sidebarOpen} />
@@ -189,6 +192,24 @@ export function Sidebar() {
           active={isActive("/dashboard/admin/settings")}
           collapsed={!sidebarOpen}
         />
+        {isAdmin && (
+          <>
+            <NavLink
+              href="/dashboard/admin/settings?tab=clients"
+              icon="👥"
+              label="Clientes"
+              active={router.asPath.startsWith("/dashboard/admin/settings") && router.asPath.includes("tab=clients")}
+              collapsed={!sidebarOpen}
+            />
+            <NavLink
+              href="/dashboard/admin/settings?tab=admins"
+              icon="🔐"
+              label="Usuarios admin"
+              active={router.asPath.startsWith("/dashboard/admin/settings") && router.asPath.includes("tab=admins")}
+              collapsed={!sidebarOpen}
+            />
+          </>
+        )}
 
         {/* Spacer */}
         <div className="flex-1" />
@@ -226,9 +247,25 @@ function NavLink({
   active: boolean;
   collapsed: boolean;
 }) {
+  const router = useRouter();
+
   return (
     <Link
       href={href}
+      onClick={(event) => {
+        if (
+          event.defaultPrevented ||
+          event.button !== 0 ||
+          event.metaKey ||
+          event.ctrlKey ||
+          event.shiftKey ||
+          event.altKey
+        ) {
+          return;
+        }
+        event.preventDefault();
+        router.push(href);
+      }}
       className={cn(
         "flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all mb-px",
         active

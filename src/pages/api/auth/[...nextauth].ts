@@ -60,11 +60,13 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         // On first sign-in, determine role
         if (account?.provider === "google") {
-          const email = user.email || "";
-          token.role = email.endsWith("@growth4u.io") ? "admin" : "client";
-          // For non-admin Google users, try to match to a client
+          const email = (user.email || "").toLowerCase();
+          const data = loadClientsData();
+          const adminEmails = (data.adminEmails || []).map((e) => e.toLowerCase());
+          const isAdmin =
+            email.endsWith("@growth4u.io") || adminEmails.includes(email);
+          token.role = isAdmin ? "admin" : "client";
           if (token.role === "client") {
-            const data = loadClientsData();
             const client = (data.clients || []).find(
               (c: { url?: string; email?: string }) =>
                 c.email === email || c.url?.includes(email.split("@")[0])

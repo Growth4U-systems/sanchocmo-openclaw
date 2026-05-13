@@ -1,0 +1,41 @@
+services:
+  sanchocmo:
+    build:
+      context: .
+      args:
+        NEXT_PUBLIC_ENV_LABEL: ${NEXT_PUBLIC_ENV_LABEL:-}
+        GIT_COMMIT: ${GIT_COMMIT:-}
+    container_name: sanchocmo
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:18789:18789"
+      - "127.0.0.1:18790:18790"
+      - "127.0.0.1:3000:3000"
+    volumes:
+      - ${OPENCLAW_HOME:-~/.openclaw}:/root/.openclaw
+      - ~/.ssh:/root/.ssh:ro
+      - ${SNAPSHOT_DATA_DIR:-/mnt/data/snapshots}:/mnt/data/snapshots
+    env_file:
+      - .env
+    environment:
+      - OPENCLAW_HOME=/root/.openclaw
+      - MC_BIND_ADDRESS=0.0.0.0
+      - MC_WORKSPACE=/root/.openclaw/workspace-sancho
+      - LEGACY_PORT=18790
+      # Tasks backend: "json" (default), "db-shadow" or "db".
+      # When "db" or "db-shadow", DATABASE_URL must point at a Neon DB
+      # with the migrations in src/db/migrations applied.
+      - MC_TASKS_BACKEND=${MC_TASKS_BACKEND:-json}
+      - MC_TASKS_WORKSPACE=${MC_TASKS_WORKSPACE:-workspace-sancho}
+      - DATABASE_URL=${DATABASE_URL:-}
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:18789/healthz"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"

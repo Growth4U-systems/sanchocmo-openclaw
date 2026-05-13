@@ -6,7 +6,7 @@
 set -euo pipefail
 
 WORKSPACE="${OPENCLAW_WORKSPACE:-$HOME/.openclaw/workspace-sancho}"
-DAILY_DIR="$WORKSPACE/memory/daily"
+DAILY_DIR="$WORKSPACE/memory"
 ARCHIVE_DIR="$WORKSPACE/memory/archive"
 INDEX_FILE="$WORKSPACE/memory/INDEX.md"
 

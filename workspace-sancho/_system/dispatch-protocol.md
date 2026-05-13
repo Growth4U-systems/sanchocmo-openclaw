@@ -6,7 +6,7 @@
 
 ## Principio
 
-Sancho orquesta. Ejecuta estrategia directamente. Delega ejecución a Escudero (sessions_spawn) y verificación a Rocinante (sessions_send). Admin requests van a Cervantes (sessions_send).
+Sancho orquesta. Ejecuta estrategia directamente. Delega ejecución a Escudero (sessions_spawn) y verificación a Rocinante (sessions_send). Admin requests van a Cervantes (message a #cervantes-admin en Discord).
 
 ---
 
@@ -48,11 +48,14 @@ Escudero tiene 2 modelos disponibles. Elige según la necesidad de contexto:
 - Devil's advocate para propuestas estratégicas
 - Verificación de coherencia post-Foundation
 
-**Envía a Cervantes** (via `sessions_send` desde #soporte):
+**Envía a Cervantes** (via message a #cervantes-admin en Discord):
 - Quejas, bugs, problemas del sistema
 - Solicitudes de cambio (nuevos skills, config, mejoras)
 - Feedback sobre el propio Sancho (qué mejorar)
 - Tareas de infraestructura o configuración
+
+IMPORTANTE: NO uses sessions_send para Cervantes. Cervantes ya no está en OpenClaw.
+Usa message(action=send, channel=discord, target=<CERVANTES_ADMIN_CHANNEL_ID>) con formato ADMIN REQUEST.
 
 ---
 
@@ -72,7 +75,7 @@ Para mapping completo de personas a tareas, ver `dispatch-map.json`.
 | Landing pages, CRO | Escudero | spawn | `personas/arquitecto.md` | direct-response-copy, lead-magnet |
 | Research simple | Escudero | spawn | `personas/investigador.md` | daily-pulse, thief-marketers, signal-monitor |
 | Brand check, QA | Rocinante | send | — | Brand verification, devil's advocate |
-| Admin, bugs, infra | Cervantes | send | — | System tasks |
+| Admin, bugs, infra | Cervantes | message (Discord) | — | System tasks |
 
 ---
 
@@ -138,25 +141,27 @@ QA REQUEST
 
 ---
 
-## Escalado a Cervantes (sessions_send desde #soporte)
+## Escalado a Cervantes (message a #cervantes-admin en Discord)
 
-Cuando recibes un mensaje en **#soporte**:
+Cuando recibes un mensaje en **#soporte** que requiere intervención de infraestructura:
 
 1. Clasifica: queja, bug, solicitud de cambio, feedback, o tarea de infra
-2. Formatea y envía:
+2. Formatea y envía A DISCORD (NO sessions_send):
 
-```
+message(action=send, channel=discord, target=<CERVANTES_ADMIN_CHANNEL_ID>, message="""
 ADMIN REQUEST
 
 **Tipo**: [bug / queja / cambio / feedback / infra]
 **De**: [usuario]
 **Canal**: #soporte
+**Guild**: [nombre del guild / slug del cliente]
 **Mensaje original**: [contenido]
 **Contexto**: [lo que sepas relevante]
 **Prioridad sugerida**: [P0-P3]
-```
+""")
 
-3. Cuando Cervantes responda, publica su respuesta en #soporte
+3. Responde al usuario: "Lo derivé al equipo de infraestructura. Te avisan por acá cuando haya novedades."
+4. NO_REPLY — no esperes respuesta de Cervantes.
 
 **Cuando NO escalar** (responde directamente):
 - Preguntas sobre marketing o estrategia → eso es tuyo
@@ -173,7 +178,7 @@ Formato: `{ campaign_id, insight_type, insight_text, confidence, source }`
 
 ## Referencia de marca
 
-- Lee contexto según `_system/brand-memory.md`
+- Lee contexto según `_system/intelligence/brand-memory.md`
 - Carga SOLO los archivos relevantes de `./brand/` (Context Matrix)
 - Si falta un archivo de Foundation, nota que falta y sugiere completarlo
 

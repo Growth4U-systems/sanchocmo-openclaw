@@ -5,7 +5,8 @@ import os
 import re
 import yaml
 
-SKILLS_DIR = os.path.expanduser("~/.openclaw/workspace-sancho/skills")
+OPENCLAW_HOME = os.environ.get("OPENCLAW_HOME", os.path.expanduser("~/.openclaw"))
+SKILLS_DIR = os.path.join(OPENCLAW_HOME, "workspace-sancho", "skills")
 
 # Context matrix based on brand-memory.md + skill body analysis
 CONTEXT_MATRIX = {

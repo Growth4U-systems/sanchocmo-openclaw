@@ -4,7 +4,7 @@
 
 ## Instructions
 
-1. Read `memory/daily/*.md` from the last 7 days
+1. Read `memory/YYYY-MM-DD.md` (flat daily notes) from the last 7 days
 2. Read `MEMORY.md` (current core memory)
 3. Read `brand/*/memory.md` (all client memories)
 

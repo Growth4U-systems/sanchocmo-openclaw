@@ -41,7 +41,7 @@ context_writes:
 ## Flujo de Ejecución
 
 ### 0. Context Hydration (OBLIGATORIO — antes de cualquier pregunta)
-- Lee `_system/context-hydration-protocol.md` para el patrón genérico
+- Lee `_system/skills/context-hydration-protocol.md` para el patrón genérico
 - Lee `references/hydration.md` para el mapeo específico de esta skill
 - Lee TODOS los docs en `context_required`
 - Pre-rellena campos según hydration_map
@@ -49,7 +49,7 @@ context_writes:
 - Solo pregunta campos listados en "Campos genuinamente nuevos"
 
 ### 1. Verificar prerequisites
-- Carga `brand/{slug}/product-analysis/current.md`, `brand/{slug}/competitors/current.md`, `brand/{slug}/market/current.md`
+- Carga `brand/{slug}/product-analysis/current.md`, `brand/{slug}/market-and-us/competitors/current.md`, `brand/{slug}/market-and-us/market/current.md`
 - Si falta algún upstream: "No puedo construir un SWOT robusto sin [pillar]. ¿Procedo con baja confianza o completamos primero?"
 
 ### 2. Ejecutar el prompt
@@ -70,7 +70,7 @@ context_writes:
 ### 4. Guardar con versionado
 - Ruta: `brand/{slug}/swot/current.md`
 - Si ya existe → backup como `v{N+1}.md`, sobreescribe `current.md`, actualiza `history.json`
-- Link: `https://sancho-cmo.taild48df2.ts.net/mc/docs/brand/{slug}/swot/current.md`
+- Link: `{MC_BASE_URL}/docs/brand/{slug}/swot/current.md`
 
 ---
 
@@ -106,7 +106,7 @@ Si el usuario dice "profundizar": invoca `deep-research` con la ruta del documen
 ## 📁 Almacenamiento (OBLIGATORIO)
 
 ```
-brand/{{slug}}/swot/
+brand/{{slug}}/market-and-us/swot/
 ├── current.md      ← versión activa
 ├── v1.md, v2.md... ← versiones anteriores
 ├── history.json    ← log de versiones
@@ -116,4 +116,4 @@ brand/{{slug}}/swot/
 1. Identifica slug desde systemPrompt (`[CLIENTE: ... | slug: ...]`)
 2. Si existe `current.md` → backup como `v{N+1}.md` antes de sobreescribir
 3. Si no existe → crea carpeta + `current.md` + `v1.md` + `history.json`
-4. Link: `https://sancho-cmo.taild48df2.ts.net/mc/docs/brand/{slug}/swot/current.md`
+4. Link: `{MC_BASE_URL}/docs/brand/{slug}/swot/current.md`

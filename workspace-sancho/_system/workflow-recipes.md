@@ -1,6 +1,6 @@
 # Workflow Recipes — SanchoCMO
 
-> Flujos pre-construidos. Para detalle de phases, ver `_system/phase-playbooks.md`.
+> Flujos pre-construidos. Para detalle de phases, ver `_system/foundation/phase-playbooks.md`.
 
 ---
 
@@ -19,7 +19,7 @@
 | 6 | Phase Decision (presentar recomendacion) | 5 min |
 | 7 | Route to Phase orchestrator | auto |
 
-**Detalle completo:** `_system/onboarding-playbook.md`
+**Detalle completo:** `_system/onboarding/onboarding-playbook.md`
 
 ---
 

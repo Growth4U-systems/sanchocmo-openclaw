@@ -6,7 +6,8 @@ const { execSync, exec: execCb, spawn } = require('child_process');
 
 const PORT = 18790;
 const BASE = path.join(__dirname, '..');
-const API_HEALTH_FILE = path.join(BASE, '_system', 'api-health.json');
+const MC_DATA_DIR = path.join(BASE, 'memory', 'mc');
+const API_HEALTH_FILE = path.join(BASE, 'memory', 'state', 'api-health.json');
 const CLIENTS_FILE = path.join(BASE, 'clients.json');
 let _clientCreationInProgress = false;
 
@@ -1187,9 +1188,25 @@ function resolveProjectDir(projectsDir, projectId) {
 
 // Filesystem-only project loading. No registry.json needed.
 // Scans brand/{slug}/projects/ for P* directories and reads project.json + tasks.json.
+// Syncs task statuses with foundation pillar statuses from foundation-state.json.
 function loadProjectsData(slug) {
   const projectsDir = path.join(BASE, 'brand', slug, 'projects');
   const results = [];
+
+  // Load foundation pillar statuses for sync
+  const pillarStatuses = {};
+  try {
+    const stateFile = path.join(BASE, 'brand', slug, 'foundation-state.json');
+    const state = JSON.parse(fs.readFileSync(stateFile, 'utf-8'));
+    const sections = state.sections || {};
+    for (const secKey of Object.keys(sections)) {
+      const pillars = sections[secKey].pillars || sections[secKey].skills || {};
+      for (const [pName, pData] of Object.entries(pillars)) {
+        pillarStatuses[pName] = (pData && pData.status) || 'not-started';
+      }
+    }
+  } catch {}
+
   try {
     const dirs = fs.readdirSync(projectsDir, { withFileTypes: true });
     for (const d of dirs) {
@@ -1202,6 +1219,35 @@ function loadProjectsData(slug) {
         const td = JSON.parse(fs.readFileSync(path.join(dirPath, 'tasks.json'), 'utf-8'));
         tasks = Array.isArray(td) ? td : (td.tasks || []);
       } catch {}
+
+      // Sync task statuses with foundation pillars
+      for (const task of tasks) {
+        const pillarKey = task.pillar;
+        const pillarKeys = task.pillars || [];
+        if (pillarKey && pillarStatuses[pillarKey]) {
+          const pst = pillarStatuses[pillarKey];
+          if ((pst === 'approved' || pst === 'skipped') && !['done','approved','completed'].includes(task.status)) {
+            task.status = 'done';
+          } else if (pst === 'in-progress' && task.status === 'pending') {
+            task.status = 'in-progress';
+          }
+        } else if (pillarKeys.length > 0) {
+          const resolved = pillarKeys.filter(pk => pillarStatuses[pk]).map(pk => pillarStatuses[pk]);
+          if (resolved.length > 0 && resolved.every(s => s === 'approved' || s === 'skipped')) {
+            if (!['done','approved','completed'].includes(task.status)) task.status = 'done';
+          } else if (resolved.some(s => ['approved','skipped','in-progress'].includes(s))) {
+            if (task.status === 'pending') task.status = 'in-progress';
+          }
+        }
+      }
+
+      // Recalculate project status
+      if (tasks.length > 0) {
+        const doneCount = tasks.filter(t => ['done','approved','completed','skipped'].includes(t.status)).length;
+        if (doneCount === tasks.length) project.status = 'done';
+        else if (doneCount > 0 || tasks.some(t => t.status === 'in-progress')) project.status = 'active';
+      }
+
       results.push({ ...project, tasks });
     }
   } catch {}
@@ -3904,7 +3950,7 @@ p{color:#5D5348;font-size:16px;margin:0;}
 
 const MC_CHAT_SECRET = (() => {
   try {
-    const cfg = JSON.parse(fs.readFileSync(path.join(BASE, '..', 'openclaw.json'), 'utf-8'));
+    const cfg = JSON.parse(fs.readFileSync(path.join(BASE, '..', '.openclaw', 'openclaw.json'), 'utf-8'));
     return cfg.channels?.['mc-chat']?.sharedSecret || '';
   } catch { return ''; }
 })();
@@ -4726,6 +4772,38 @@ const mcServer = http.createServer((req, res) => {
     };
   }
 
+  // Admin: serve static data files directly after URL rewrite
+  // (avoids them being caught by intermediate handlers before reaching the static file handler)
+  if (req._adminToken && !url.startsWith('/api/') && !url.startsWith('/webhook/')) {
+    const adminFilename = path.basename(url);
+    const adminDataFiles = ['mc-data.js', 'mc-work.js', 'clients.js', 'skills-data.js', 'agents-data.js'];
+    const adminStaticFiles = [...adminDataFiles, 'mission-control.html', 'mc-work.css'];
+    if (adminStaticFiles.includes(adminFilename) && url === '/' + adminFilename) {
+      const fileDir = adminDataFiles.includes(adminFilename) ? MC_DATA_DIR : BASE;
+      const filePath = path.join(fileDir, adminFilename);
+      try {
+        let data = fs.readFileSync(filePath);
+        const ext = path.extname(adminFilename);
+        const ct = MIME[ext] || 'application/octet-stream';
+        if (req._adminBase && ext === '.js') {
+          let text = data.toString('utf-8');
+          text = text.replace(/\/mc\/(?!admin\/|portal\/)/g, req._adminBase + '/');
+          data = Buffer.from(text, 'utf-8');
+        }
+        const headers = { 'Content-Type': ct };
+        if (adminFilename === 'mc-data.js') {
+          headers['Cache-Control'] = 'no-store, no-cache, must-revalidate';
+          headers['Pragma'] = 'no-cache';
+        }
+        res.writeHead(200, headers);
+        res.end(data);
+      } catch {
+        res.writeHead(404); res.end('Not found');
+      }
+      return;
+    }
+  }
+
   // Block unauthenticated access to admin assets and APIs
   // Allow: /portal/*, /admin/* (handled above), / (landing)
   // Block everything else (mission-control.html, /docs/*, /api/*, /connect/*, /brand/*)
@@ -4813,7 +4891,7 @@ nav .nav-footer { display:none !important; }
     // Portal: Serve filtered clients.js (only this client)
     if (portalPath === '/clients.js') {
       try {
-        const allClients = fs.readFileSync(path.join(BASE, 'clients.js'), 'utf-8');
+        const allClients = fs.readFileSync(path.join(MC_DATA_DIR, 'clients.js'), 'utf-8');
         // Parse the CLIENTS object, extract only this client
         const clientsData = loadClients();
         const thisClient = clientsData.find(c => c.slug === slug);
@@ -4841,7 +4919,7 @@ nav .nav-footer { display:none !important; }
     // Portal: Serve mc-data.js filtered for this client only
     if (portalPath === '/mc-data.js') {
       try {
-        let js = fs.readFileSync(path.join(BASE, 'mc-data.js'), 'utf-8');
+        let js = fs.readFileSync(path.join(MC_DATA_DIR, 'mc-data.js'), 'utf-8');
         // Parse MC_DATA, filter to only this client's data
         // mc-data.js is: const MC_DATA = { ... };
         const match = js.match(/const MC_DATA\s*=\s*(\{[\s\S]*\})\s*;/);
@@ -4872,7 +4950,7 @@ nav .nav-footer { display:none !important; }
 
     // Portal: Serve other allowed static JS files
     if (portalPath === '/skills-data.js' || portalPath === '/agents-data.js') {
-      const filePath = path.join(BASE, portalPath.slice(1));
+      const filePath = path.join(MC_DATA_DIR, portalPath.slice(1));
       try {
         const data = fs.readFileSync(filePath);
         res.writeHead(200, { 'Content-Type': 'application/javascript; charset=utf-8' });
@@ -7533,7 +7611,7 @@ async function doTest() {
   if (url === '/api/restart-gateway') {
     res.setHeader('Access-Control-Allow-Origin', '*');
     try {
-      execSync('/opt/homebrew/bin/openclaw gateway restart 2>&1', { timeout: 30000, encoding: 'utf-8' });
+      execSync('openclaw gateway restart 2>&1', { timeout: 30000, encoding: 'utf-8' });
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ ok: true }));
     } catch (e) {
@@ -8480,7 +8558,9 @@ async function doTest() {
     res.writeHead(404); res.end('Not found'); return;
   }
 
-  const filePath = path.join(BASE, filename);
+  const dataFiles = ['mc-data.js', 'mc-work.js', 'clients.js', 'skills-data.js', 'agents-data.js'];
+  const fileDir = dataFiles.includes(filename) ? MC_DATA_DIR : BASE;
+  const filePath = path.join(fileDir, filename);
   try {
     let data = fs.readFileSync(filePath);
     const ext = path.extname(filename);
@@ -8512,7 +8592,7 @@ const { WebSocketServer, WebSocket: WsClient } = require('ws');
 const GATEWAY_URL = 'ws://127.0.0.1:18789';
 const GATEWAY_AUTH = (() => {
   try {
-    const cfg = JSON.parse(fs.readFileSync(path.join(path.dirname(__dirname), '..', 'openclaw.json'), 'utf-8'));
+    const cfg = JSON.parse(fs.readFileSync(path.join(path.dirname(__dirname), '..', '.openclaw', 'openclaw.json'), 'utf-8'));
     return cfg.gateway?.auth || {};
   } catch { return {}; }
 })();
@@ -8764,8 +8844,9 @@ mcServer.on('upgrade', (req, socket, head) => {
 });
 
 // Start server
-mcServer.listen(PORT, '127.0.0.1', () => {
-  console.log(`Mission Control server on http://127.0.0.1:${PORT}`);
+const BIND_ADDR = process.env.MC_BIND_ADDRESS || '127.0.0.1';
+mcServer.listen(PORT, BIND_ADDR, () => {
+  console.log(`Mission Control server on http://${BIND_ADDR}:${PORT}`);
   console.log(`WS proxy at ws://127.0.0.1:${PORT}/ws/chat`);
   // WS proxy disabled — using mc-chat channel plugin instead
   // setTimeout(() => gwConnect(), 1000);

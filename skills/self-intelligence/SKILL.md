@@ -23,7 +23,7 @@ context_writes:
 > Analiza la percepción de tu propia marca a través de 3 lentes: cómo TE ves, cómo TE ven terceros, cómo TE ven clientes.
 
 **Input**: company-context + URLs de la propia empresa
-**Output**: Self-Intelligence Profile + Triangulation → `brand/{slug}/self-intelligence/current.md`
+**Output**: Self-Intelligence Profile + Triangulation → `brand/{slug}/market-and-us/self/current.md`
 
 ## References
 
@@ -40,7 +40,7 @@ context_writes:
 ## Flujo de Ejecución
 
 ### 0. Context Hydration (OBLIGATORIO — antes de cualquier pregunta)
-- Lee `_system/context-hydration-protocol.md` para el patrón genérico
+- Lee `_system/skills/context-hydration-protocol.md` para el patrón genérico
 - Lee `references/hydration.md` para el mapeo específico de esta skill
 - Lee TODOS los docs en `context_required`
 - Pre-rellena campos según hydration_map
@@ -81,7 +81,7 @@ context_writes:
 - Si no → PASS, continuar a dependent pillars
 
 ### 5. Self-QA + Guardar
-- Checklist, versionado, `brand/{slug}/self-intelligence/current.md`
+- Checklist, versionado, `brand/{slug}/market-and-us/self/current.md`
 
 ---
 
@@ -129,7 +129,7 @@ Si el usuario dice "profundizar": relee el documento, haz 10-20 búsquedas adici
 ## 📁 Almacenamiento (OBLIGATORIO)
 
 ```
-brand/{{slug}}/self-intelligence/
+brand/{{slug}}/market-and-us/self/
 ├── current.md      ← versión activa
 ├── v1.md, v2.md... ← versiones anteriores
 ├── history.json    ← log de versiones
@@ -139,4 +139,4 @@ brand/{{slug}}/self-intelligence/
 1. Identifica slug desde systemPrompt (`[CLIENTE: ... | slug: ...]`)
 2. Si existe `current.md` → backup como `v{N+1}.md`, pide confirmación
 3. Si no existe → crea carpeta + `current.md` + `v1.md` + `history.json`
-4. Link: `https://sancho-cmo.taild48df2.ts.net/mc/docs/brand/{slug}/self-intelligence/current.md`
+4. Link: `{MC_BASE_URL}/docs/brand/{slug}/market-and-us/self/current.md`

@@ -1,7 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import path from "path";
 import { withAuth, withErrorHandler, compose } from "@/lib/api-middleware";
-import { BASE } from "@/lib/data/paths";
+import { mcDataFile } from "@/lib/data/paths";
 
 interface McData {
   activity?: { date: string; time?: string; text: string; raw?: string; client?: string }[];
@@ -17,7 +16,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   const slugParam = (req.query.slug as string) || null;
 
   // mc-data.js exports MC_DATA — read it as JSON (it's actually "const MC_DATA = {...}")
-  const mcDataPath = path.join(BASE, "mc-data.js");
+  const mcDataPath = mcDataFile();
   let activity: McData["activity"] = [];
 
   try {

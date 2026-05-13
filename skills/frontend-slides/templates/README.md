@@ -11,11 +11,11 @@ Each template is a self-contained HTML generator that:
 
 | Template | Slides | Data Source |
 |----------|--------|-------------|
-| `competitor-deep-dive` | 1 per competitor | `competitor-intelligence/current.md` |
+| `competitor-deep-dive` | 1 per competitor | `market-and-us/competitors/current.md` |
 | `swot-analysis` | 1 | `swot-analysis/current.md` |
 | `ope-canvas` | 1 | `ope-canvas/current.md` |
-| `gap-analysis` | 1-2 | `competitor-intelligence/current.md` |
-| `competitor-landscape` | 1 | `competitor-intelligence/current.md` |
+| `gap-analysis` | 1-2 | `market-and-us/competitors/current.md` |
+| `competitor-landscape` | 1 | `market-and-us/competitors/current.md` |
 | `niche-value-engine` | 1 per ECP | `positioning-messaging/current.md` |
 | `cross-niche-authorities` | 1 | `niche-discovery-100x/current.md` |
 | `platform-assets` | 1 | `positioning-messaging/current.md` |

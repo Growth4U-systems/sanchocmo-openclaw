@@ -8,7 +8,9 @@ Usage: python3 generate-foundation-report.py <slug>
 import sys, os, re, json, urllib.request, base64
 from pathlib import Path
 
-BRAND_DIR = Path(os.path.expanduser("~/.openclaw/workspace-sancho/brand"))
+OPENCLAW_HOME = os.environ.get("OPENCLAW_HOME", os.path.expanduser("~/.openclaw"))
+BRAND_DIR = Path(os.path.join(OPENCLAW_HOME, "workspace-sancho", "brand"))
+MC_BASE_URL = os.environ.get("MC_BASE_URL", "https://sancho-cmo.taild48df2.ts.net/mc")
 
 def read_file(path):
     try:
@@ -69,7 +71,7 @@ def parse_visual_identity(md):
     return colors
 
 def parse_competitors(md):
-    """Extract competitor battle cards from competitor-intelligence/current.md"""
+    """Extract competitor battle cards from market-and-us/competitors/current.md"""
     competitors = []
     
     # Split by Battle Card sections
@@ -1612,7 +1614,7 @@ def main():
     print(f"   Size: {len(html):,} bytes")
     slide_count = html.count('class="slide ')
     print(f"   Slides: {slide_count}")
-    print(f"   URL: https://sancho-cmo.taild48df2.ts.net/mc/brand/{slug}/presentations/foundation-report.html")
+    print(f"   URL: {MC_BASE_URL}/brand/{slug}/presentations/foundation-report.html")
 
 if __name__ == '__main__':
     main()

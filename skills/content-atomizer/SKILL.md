@@ -22,9 +22,37 @@ This skill transforms any source content into platform-optimized assets. Not gen
 
 **The math:** A single blog post can become 1 LinkedIn carousel + 2 LinkedIn text posts + 1 Twitter thread + 3 single tweets + 2 Instagram carousels + 1 Reel script + 2 TikTok scripts + 1 YouTube Short script + 1 Threads mini-thread + 1 Bluesky post + 1 Reddit value post = 16 pieces of content from one source.
 
-Read `./brand/` per `_system/brand-memory.md`
+Read `./brand/` per `_system/intelligence/brand-memory.md`
 
-Follow all output formatting rules from `_system/output-format.md`
+Follow all output formatting rules from `_system/output/output-format.md`
+
+## Media Persistence (obligatorio)
+
+Esta skill cumple `_system/media-persistence-protocol.md`. Reglas duras:
+
+- **Nunca** afirmar "imagen generada" / "carrusel listo" / "visual hecho"
+  sin URL real devuelta por un endpoint. Si solo describes un concepto,
+  di "te propongo este concepto, ¿lo genero?".
+- Persistir media via `POST /api/content-engine/generate-image`,
+  `/api/content-engine/render-carousel` o
+  `/api/content-engine/upload-media`. **Nunca** editar
+  `frontmatter.media` a mano con Edit/Write.
+- **Nunca** escribir `status: published` al frontmatter desde el agente.
+  Solo lo pone el dispatcher tras envio real con confirmacion.
+
+## Media Persistence (obligatorio)
+
+Esta skill cumple `_system/media-persistence-protocol.md`. Reglas duras:
+
+- **Nunca** afirmar "imagen generada" / "carrusel listo" / "visual hecho"
+  sin URL real devuelta por un endpoint. Si solo describes un concepto,
+  di "te propongo este concepto, ¿lo genero?".
+- Persistir media via `POST /api/content-engine/generate-image`,
+  `/api/content-engine/render-carousel` o
+  `/api/content-engine/upload-media`. **Nunca** editar
+  `frontmatter.media` a mano con Edit/Write.
+- **Nunca** escribir `status: published` al frontmatter desde el agente.
+  Solo lo pone el dispatcher tras envio real con confirmacion.
 
 ## Media Persistence (obligatorio)
 

@@ -1,6 +1,7 @@
 import { type ReactNode } from "react";
 import { useAppStore } from "@/stores/app";
 import { useChatStore } from "@/stores/chat";
+import { useClientUrlSync } from "@/hooks/useClientUrlSync";
 import { Sidebar } from "./Sidebar";
 import { ChatSidebar } from "@/components/chat/chat-sidebar";
 import { cn } from "@/lib/utils";
@@ -12,6 +13,10 @@ interface DashboardLayoutProps {
 }
 
 export function DashboardLayout({ children, fullBleed }: DashboardLayoutProps) {
+  // Centralised URL → store sync for the active client. Runs here so every
+  // dashboard page inherits it without each page having to opt in.
+  useClientUrlSync();
+
   const { sidebarOpen } = useAppStore();
   const { sidebarOpen: chatOpen, isFullscreen: chatFullscreen } = useChatStore();
 

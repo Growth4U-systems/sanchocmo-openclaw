@@ -80,6 +80,7 @@ export function DocSlideOver({ slug, docPath, onClose }: DocSlideOverProps) {
   const [lastModified, setLastModified] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [missingDoc, setMissingDoc] = useState(false);
   const [editing, setEditing] = useState(false);
   const { data: foundation, refetch: refetchFoundation } = useBrandBrain(slug);
   const { data: projectsData } = useProjects(slug || null);
@@ -102,19 +103,28 @@ export function DocSlideOver({ slug, docPath, onClose }: DocSlideOverProps) {
     if (!normalizedDocPath) return;
     setLoading(true);
     setError(null);
+    setMissingDoc(false);
     setContent(null);
     setEditing(false);
     setCanonicalDocPath(null);
 
     fetch(`/api/docs/${normalizedDocPath}`)
-      .then((res) => { if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.json(); })
+      .then((res) => {
+        if (res.status === 404) {
+          setMissingDoc(true);
+          return null;
+        }
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+      })
       .then((data) => {
+        if (!data) return;
         if (data.ok && data.content) {
           setContent(data.content);
           setLastModified(data.lastModified || null);
           setCanonicalDocPath(data.canonicalPath || data.path || normalizedDocPath);
         } else {
-          setError(data.error || "Not found");
+          setError(data.error || "No se pudo cargar el documento");
         }
       })
       .catch((e) => setError(e.message))
@@ -189,7 +199,20 @@ export function DocSlideOver({ slug, docPath, onClose }: DocSlideOverProps) {
     if (!res.ok) throw new Error("Save failed");
     // Refresh content
     setContent(newContent);
+    setMissingDoc(false);
+    setLastModified(new Date().toISOString());
     setEditing(false);
+  }
+
+  async function handleCreateDraft() {
+    if (!docPath) return;
+    const ext = docPath.split(".").pop()?.toLowerCase();
+    if (ext !== "md" && ext !== "html") return;
+    const draft = ext === "html"
+      ? `<!doctype html>\n<html lang="es">\n<head>\n  <meta charset="utf-8" />\n  <title>${displayTitle}</title>\n</head>\n<body>\n  <h1>${displayTitle}</h1>\n</body>\n</html>\n`
+      : `# ${displayTitle}\n\n> Documento esperado declarado por la task. Completa este borrador con el output final.\n\n`;
+    await handleSave(draft);
+    if (ext === "md") setEditing(true);
   }
 
   // ── Public share link ────────────────────────────────────────────────
@@ -222,6 +245,7 @@ export function DocSlideOver({ slug, docPath, onClose }: DocSlideOverProps) {
   }
 
   const isJson = activeDocPath?.endsWith(".json") || false;
+  const canCreateDraft = !!activeDocPath && (activeDocPath.endsWith(".md") || activeDocPath.endsWith(".html"));
   const parsedJson = useMemo(() => {
     if (!isJson || !content) return null;
     try { return JSON.parse(content); } catch { return null; }
@@ -336,7 +360,8 @@ export function DocSlideOver({ slug, docPath, onClose }: DocSlideOverProps) {
             <button
               type="button"
               onClick={handleCopyShareLink}
-              className={btnClass}
+              disabled={missingDoc}
+              className={cn(btnClass, missingDoc && "opacity-50 cursor-not-allowed hover:bg-transparent")}
               title="Copia un link público para compartir con terceros"
             >
               {shareCopied ? "✓ Copiado" : "🔗 Compartir"}
@@ -394,7 +419,13 @@ export function DocSlideOver({ slug, docPath, onClose }: DocSlideOverProps) {
               return null;
             })()}
 
-            <button type="button" onClick={handleOpenFull} className={btnClass} title="Abrir en Documents">
+            <button
+              type="button"
+              onClick={handleOpenFull}
+              disabled={missingDoc}
+              className={cn(btnClass, missingDoc && "opacity-50 cursor-not-allowed hover:bg-transparent")}
+              title="Abrir en Documents"
+            >
               ⤢ Abrir
             </button>
           </div>
@@ -452,7 +483,28 @@ export function DocSlideOver({ slug, docPath, onClose }: DocSlideOverProps) {
         ) : (
           <div className="flex-1 overflow-y-auto p-6">
             {loading && <p className="text-sm text-muted-foreground text-center py-20">Cargando documento...</p>}
-            {error && <p className="text-sm text-red-500 text-center py-20">{error}</p>}
+            {missingDoc && (
+              <div className="mx-auto max-w-xl rounded-xl border border-dashed border-[#D8CDBA] bg-[#FAF4E3] p-6 text-center">
+                <div className="text-3xl mb-3">▣</div>
+                <h3 className="font-heading text-lg font-bold text-[#1D1A17]">Documento esperado pendiente</h3>
+                <p className="mt-2 text-sm text-[#6D6257]">
+                  La task declara este output, pero el archivo todavía no existe. Esto es normal si el agente aún no lo ha producido.
+                </p>
+                <div className="mt-4 rounded-md bg-white/70 px-3 py-2 text-left font-mono text-[11px] text-[#6D6257] break-all">
+                  {activeDocPath}
+                </div>
+                {canCreateDraft && (
+                  <button
+                    type="button"
+                    onClick={handleCreateDraft}
+                    className="mt-5 inline-flex items-center justify-center rounded-md border-2 border-[#1B1720] bg-[#F7C948] px-4 py-2 text-sm font-bold text-[#1B1720] shadow-[3px_3px_0_#1B1720] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_#1B1720]"
+                  >
+                    Crear borrador
+                  </button>
+                )}
+              </div>
+            )}
+            {error && !missingDoc && <p className="text-sm text-red-500 text-center py-20">{error}</p>}
             {content && (
               isJson && parsedJson ? (
                 <JsonViewer data={parsedJson} />

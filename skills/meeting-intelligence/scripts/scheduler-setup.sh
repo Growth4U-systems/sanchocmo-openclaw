@@ -28,10 +28,10 @@ cat > "$PLIST_PATH" << 'EOF'
     </dict>
 
     <key>StandardOutPath</key>
-    <string>/Users/alfonsosb/.claude/logs/meeting-intelligence-stdout.log</string>
+    <string>$HOME/.claude/logs/meeting-intelligence-stdout.log</string>
 
     <key>StandardErrorPath</key>
-    <string>/Users/alfonsosb/.claude/logs/meeting-intelligence-stderr.log</string>
+    <string>$HOME/.claude/logs/meeting-intelligence-stderr.log</string>
 
     <key>RunAtLoad</key>
     <false/>

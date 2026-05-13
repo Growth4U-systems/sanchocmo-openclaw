@@ -11,7 +11,8 @@ from pathlib import Path
 
 WORKSPACE = Path.home() / ".openclaw" / "workspace-sancho"
 CERVANTES_WORKSPACE = Path.home() / ".openclaw" / "workspace-cervantes"
-OUT = WORKSPACE  # output JS files next to mission-control.html
+OUT = WORKSPACE / "memory" / "mc"  # output JS data files to memory/mc/ (instance data)
+OUT.mkdir(parents=True, exist_ok=True)
 
 def parse_tasks_from_file(tasks_file, source="sancho"):
     """Parse a TASKS.md file into structured data."""
@@ -170,10 +171,8 @@ def parse_activity():
         return fallback
 
     # Get files from last 14 days — ONLY daily logs (YYYY-MM-DD.md), not session transcripts
-    # Check both memory/daily/ (new structure) and memory/ (legacy fallback)
-    daily_dir = memory_dir / "daily"
-    daily_source = daily_dir if daily_dir.exists() else memory_dir
-    for md_file in sorted(daily_source.glob("*.md"), reverse=True)[:30]:
+    # Daily notes live flat in memory/ per openClaw convention
+    for md_file in sorted(memory_dir.glob("*.md"), reverse=True)[:30]:
         # Only parse daily log files (exact format: YYYY-MM-DD.md)
         if not re.match(r'^\d{4}-\d{2}-\d{2}\.md$', md_file.name):
             continue
@@ -436,6 +435,15 @@ def parse_foundation():
                             sentry["output_file"] = syn_data["output_file"]
                         sec_data["syntheses"][syn_name] = sentry
 
+                    # Compute section status from required pillars (fix: don't trust stale section status)
+                    required_pillars = [p for p in sec_data["pillars"].values() if not p.get("optional")]
+                    if required_pillars:
+                        statuses = [p["status"] for p in required_pillars]
+                        if all(s in ("approved", "skipped") for s in statuses):
+                            sec_data["status"] = "approved"
+                        elif any(s in ("approved", "skipped", "pending-review", "in-progress") for s in statuses):
+                            sec_data["status"] = "in-progress"
+
                     client_data["sections"][sec_key] = sec_data
             else:
                 # v1.x fallback: flat pillars (legacy clients)
@@ -523,6 +531,40 @@ def parse_foundation():
                     else:
                         proj["tasks"] = []
                     projects_list.append(proj)
+
+            # Sync project task statuses with foundation pillar statuses
+            all_pillars = {}
+            for sec_key, sec_data in client_data.get("sections", {}).items():
+                for pname, pdata in sec_data.get("pillars", {}).items():
+                    all_pillars[pname] = pdata.get("status", "not-started")
+            for proj in projects_list:
+                for task in proj.get("tasks", []):
+                    pillar_key = task.get("pillar")
+                    pillar_keys = task.get("pillars", [])
+                    if pillar_key and pillar_key in all_pillars:
+                        pst = all_pillars[pillar_key]
+                        if pst in ("approved", "skipped") and task.get("status") not in ("done", "approved", "completed"):
+                            task["status"] = "done"
+                        elif pst == "in-progress" and task.get("status") == "pending":
+                            task["status"] = "in-progress"
+                    elif pillar_keys:
+                        # Multi-pillar tasks (e.g. fast-foundation): done if ALL mapped pillars are approved/skipped
+                        resolved = [all_pillars.get(pk) for pk in pillar_keys if pk in all_pillars]
+                        if resolved and all(s in ("approved", "skipped") for s in resolved):
+                            if task.get("status") not in ("done", "approved", "completed"):
+                                task["status"] = "done"
+                        elif any(s in ("approved", "skipped", "in-progress") for s in resolved):
+                            if task.get("status") == "pending":
+                                task["status"] = "in-progress"
+                # Update project status
+                tasks = proj.get("tasks", [])
+                if tasks:
+                    done_count = sum(1 for t in tasks if t.get("status") in ("done", "approved", "completed", "skipped"))
+                    if done_count == len(tasks):
+                        proj["status"] = "done"
+                    elif done_count > 0 or any(t.get("status") == "in-progress" for t in tasks):
+                        proj["status"] = "active"
+
             client_data["projects"] = projects_list
 
             # Metrics
@@ -622,7 +664,7 @@ def get_system_status():
 
 def get_changelog():
     """Parse CHANGELOG.md."""
-    cl_file = WORKSPACE / "CHANGELOG.md"
+    cl_file = WORKSPACE / "memory" / "CHANGELOG.md"
     if not cl_file.exists():
         return []
 
@@ -689,7 +731,7 @@ def parse_client_tasks():
 
 def parse_global_costs():
     """Parse costs-global.json for the global dashboard."""
-    cost_file = WORKSPACE / "costs-global.json"
+    cost_file = WORKSPACE / "memory" / "costs" / "global.json"
     if cost_file.exists():
         try:
             return json.loads(cost_file.read_text(encoding="utf-8"))
@@ -700,7 +742,7 @@ def parse_global_costs():
 
 def parse_intelligence_log():
     """Parse _system/intelligence-log.json for MC Intelligence section."""
-    log_file = WORKSPACE / "_system" / "intelligence-log.json"
+    log_file = WORKSPACE / "memory" / "state" / "intelligence-log.json"
     if not log_file.exists():
         return {"entries": [], "stats": {}}
     try:
@@ -774,7 +816,7 @@ def parse_integrations():
 
 def parse_api_health():
     """Load API health check data from _system/api-health.json."""
-    health_file = WORKSPACE / "_system" / "api-health.json"
+    health_file = WORKSPACE / "memory" / "state" / "api-health.json"
     if not health_file.exists():
         return {"lastCheck": None, "services": {}}
     try:
@@ -859,6 +901,34 @@ def main():
     print(f"   Foundation: {data['foundation']['done']}/{data['foundation']['total']} pillars ({data['foundation'].get('pending',0)} pending)")
     print(f"   Campaigns: {len(data['campaigns'])}")
     print(f"   System: gateway={data['system']['gateway']}")
+
+    # Write clients.js from clients.json (so mc-server can serve it)
+    clients_js_file = OUT / "clients.js"
+    try:
+        cfile = WORKSPACE / "clients.json"
+        if cfile.exists():
+            cdata = json.loads(cfile.read_text(encoding="utf-8"))
+            clients_obj = {}
+            for c in cdata.get("clients", []):
+                slug = c.get("slug", "")
+                if not slug:
+                    continue
+                clients_obj[slug] = {
+                    "name": c.get("name", slug),
+                    "emoji": c.get("emoji", "🏢"),
+                    "url": c.get("url", ""),
+                    "discord_guild": c.get("discord_guild_id", c.get("guild", "")),
+                    "supabase": c.get("supabase", {}),
+                    "workspace": c.get("workspace", ""),
+                    "phase": c.get("phase", 0),
+                }
+            with open(clients_js_file, "w", encoding="utf-8") as f:
+                f.write("const CLIENTS = ")
+                json.dump(clients_obj, f, ensure_ascii=False, indent=2)
+                f.write(";\n")
+            print(f"✅ clients.js: {len(clients_obj)} clients")
+    except Exception as e:
+        print(f"⚠️ clients.js generation failed: {e}")
 
 
 if __name__ == "__main__":

@@ -239,7 +239,7 @@ Tras generar el Metrics Plan y el dashboard, crear tareas individuales en el pro
 1. Leer `brand/{slug}/integrations.json` para ver qué APIs ya están conectadas
 2. Leer `skills/acquisition-metrics-plan/schemas/api-catalog.json` para info del catálogo
 3. Del Metrics Plan generado, identificar las conexiones necesarias para este cliente
-4. Leer `brand/{slug}/projects/P00-Metrics-*/tasks.json`
+4. Leer `brand/{slug}/projects/P00-Metrics/tasks.json`
 5. Por cada conexión necesaria, añadir tarea:
 
 ```json

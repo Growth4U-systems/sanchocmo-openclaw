@@ -1,0 +1,31 @@
+# Cervantes operational scripts (no LLM required)
+# Install on VPS host with: crontab docker/crontab-cervantes
+
+SHELL=/bin/bash
+OPENCLAW_HOME=/root/.openclaw
+PATH=/usr/local/bin:/usr/bin:/bin
+
+# --- Dumb scripts (bash/python, no LLM) ---
+
+# Healthcheck — every 6 hours
+0 */6 * * * bash $OPENCLAW_HOME/workspace-cervantes/scripts/healthcheck.sh >> /var/log/cervantes-healthcheck.log 2>&1
+
+# Backup — daily 3 AM
+0 3 * * * bash $OPENCLAW_HOME/workspace-sancho/scripts/backup.sh >> /var/log/cervantes-backup.log 2>&1
+
+# Snapshots — every 3 hours
+0 */3 * * * bash $OPENCLAW_HOME/workspace-cervantes/scripts/snapshot-data.sh >> /var/log/cervantes-snapshot.log 2>&1
+
+# Regenerate MC dashboard — 4x daily
+0 8,12,16,20 * * * cd $OPENCLAW_HOME/workspace-sancho && python3 scripts/regenerate.py >> /var/log/cervantes-regenerate.log 2>&1
+
+# Cost tracker — daily 11 PM
+0 23 * * * cd $OPENCLAW_HOME/workspace-sancho && python3 scripts/cost-tracker.py >> /var/log/cervantes-cost-tracker.log 2>&1
+
+# --- Intelligent tasks (claude -p, uses membership) ---
+
+# Observe Sancho — daily 10 AM Madrid (UTC+1 winter / UTC+2 summer, using 8 UTC)
+0 8 * * * bash $OPENCLAW_HOME/workspace-cervantes/scripts/cron-observe-sancho.sh >> /var/log/cervantes-observe.log 2>&1
+
+# Weekly Token Audit — Mondays 9 AM Madrid (7 UTC)
+0 7 * * 1 bash $OPENCLAW_HOME/workspace-cervantes/scripts/cron-token-audit.sh >> /var/log/cervantes-audit.log 2>&1

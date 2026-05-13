@@ -170,7 +170,7 @@ Los competidores se descubren en múltiples momentos:
 2. **Market Analysis** (L1): descubiertos durante research
 3. **Niche Discovery** (L3): competidores por nicho
 
-Cada competidor → `market-and-us/competitors/{slug}/current.md`.
+Cada competidor → `market-and-us/competitors/{nombre}/current.md` (deep-dive). El roll-up consolidado vive en `market-and-us/competitors/current.md` y se regenera desde los subdirs.
 Actualizar `competitor-analysis.output_files[]` en state.
 
 El orchestrator puede preguntar proactivamente: "¿Hay otros competidores que deberíamos analizar?"

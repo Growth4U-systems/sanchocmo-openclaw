@@ -8,9 +8,13 @@
 # Exit 2 = servicio recuperado (fail→ok — informational)
 set -uo pipefail
 
-export SANCHO_STATE="$HOME/.openclaw/workspace-sancho/memory/healthcheck-state.json"
-export CERVANTES_STATE="$HOME/.openclaw/workspace-cervantes/memory/healthcheck-state.json"
-export API_HEALTH_FILE="$HOME/.openclaw/workspace-sancho/_system/api-health.json"
+# Source env vars for webhook
+[ -f "${OPENCLAW_HOME:-$HOME/.openclaw}/.env" ] && source "${OPENCLAW_HOME:-$HOME/.openclaw}/.env" 2>/dev/null || true
+
+OPENCLAW_HOME="${OPENCLAW_HOME:-$HOME/.openclaw}"
+export SANCHO_STATE="$OPENCLAW_HOME/workspace-sancho/memory/healthcheck-state.json"
+export CERVANTES_STATE="$OPENCLAW_HOME/workspace-cervantes/memory/healthcheck-state.json"
+export API_HEALTH_FILE="$OPENCLAW_HOME/workspace-sancho/_system/api-health.json"
 export NOW=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
 mkdir -p "$(dirname "$SANCHO_STATE")" "$(dirname "$CERVANTES_STATE")"
@@ -30,37 +34,71 @@ if [ $MC_EXIT -ne 0 ] || echo "$MC_RESULT" | python3 -c "import sys,json; json.l
   fi
 fi
 
-# Step 1b: Funnel watchdog (moved from dedicated cron — was burning Opus every 15min)
-FUNNEL_STATUS=$(tailscale funnel status 2>&1)
-if echo "$FUNNEL_STATUS" | grep -q "tailnet only"; then
-  echo "$(date): Funnel down — re-enabling..."
-  tailscale serve reset 2>/dev/null
-  tailscale funnel --bg --set-path / http://127.0.0.1:18789 2>/dev/null
-  tailscale funnel --bg --set-path /mc http://127.0.0.1:18790 2>/dev/null
-  echo "$(date): Funnel re-enabled"
-  FUNNEL_RESTORED=1
+# Step 1b: Infrastructure checks (nginx + Docker on VPS, Tailscale on local dev)
+# Detect environment: if tailscale is available, we're on local dev
+if command -v tailscale &> /dev/null; then
+  # --- Local dev: Tailscale Funnel watchdog ---
+  FUNNEL_STATUS=$(tailscale funnel status 2>&1)
+  if echo "$FUNNEL_STATUS" | grep -q "tailnet only"; then
+    echo "$(date): Funnel down — re-enabling..."
+    tailscale serve reset 2>/dev/null
+    tailscale funnel --bg --set-path / http://127.0.0.1:18789 2>/dev/null
+    tailscale funnel --bg --set-path /mc http://127.0.0.1:18790 2>/dev/null
+    echo "$(date): Funnel re-enabled"
+  else
+    echo "$(date): Funnel OK"
+  fi
+
+  # Tailscale service check
+  if tailscale status &> /dev/null; then
+    INFRA_STATUS="ok"
+    INFRA_DETAIL="tailscale status OK"
+  else
+    INFRA_STATUS="error"
+    INFRA_DETAIL="tailscale status failed"
+  fi
 else
-  echo "$(date): Funnel OK"
-  FUNNEL_RESTORED=0
+  # --- VPS: checks from inside the container ---
+  # Note: systemctl and docker CLI are NOT available inside the container.
+  # We verify the gateway is responsive (curl) and nginx is reachable
+  # via the proxied endpoint (if MC_BASE_URL is set in instance.json).
+  INFRA_STATUS="ok"
+  INFRA_DETAIL=""
+  INFRA_ERRORS=""
+
+  # Check gateway is responsive
+  if curl -sf http://localhost:18789/healthz > /dev/null 2>&1; then
+    INFRA_DETAIL="gateway: responsive"
+  else
+    INFRA_STATUS="error"
+    INFRA_ERRORS="gateway not responding on :18789"
+  fi
+
+  # Check MC server is responsive
+  if curl -sf http://localhost:18790/mc/api/health-check > /dev/null 2>&1; then
+    INFRA_DETAIL="$INFRA_DETAIL, mc-server: responsive"
+  else
+    INFRA_STATUS="error"
+    INFRA_ERRORS="${INFRA_ERRORS:+$INFRA_ERRORS, }mc-server not responding on :18790"
+  fi
+
+  if [ "$INFRA_STATUS" = "error" ]; then
+    INFRA_DETAIL="$INFRA_ERRORS"
+  fi
 fi
 
 # Step 2: Run extra checks that MC doesn't cover
-EXTRA_CHECKS="{}"
-
-# Tailscale
-if tailscale status 2>&1 | head -5 | grep -qi ""; then
-  EXTRA_CHECKS=$(echo "$EXTRA_CHECKS" | python3 -c "
-import json,sys
-d=json.load(sys.stdin)
-d['tailscale']={'status':'ok','lastCheck':'$NOW','details':{'note':'tailscale status OK'}}
-print(json.dumps(d))")
-else
-  EXTRA_CHECKS=$(echo "$EXTRA_CHECKS" | python3 -c "
-import json,sys
-d=json.load(sys.stdin)
-d['tailscale']={'status':'error','lastCheck':'$NOW','details':{'error':'tailscale status failed'}}
-print(json.dumps(d))")
-fi
+export INFRA_STATUS INFRA_DETAIL
+EXTRA_CHECKS=$(python3 -c "
+import json, os
+d = {}
+d['infrastructure'] = {
+    'status': os.environ.get('INFRA_STATUS', 'unknown'),
+    'lastCheck': os.environ['NOW'],
+    'details': {'note': os.environ.get('INFRA_DETAIL', '')}
+}
+print(json.dumps(d))
+")
 
 # Step 3: Merge MC results + extras, apply debounce, write state
 python3 -c "
@@ -195,4 +233,23 @@ else:
 "
 
 EXIT_CODE=$?
+
+# --- Trigger smart analysis on new failures ---
+if [ "$EXIT_CODE" -eq 1 ]; then
+  SMART_SCRIPT="$(dirname "$0")/cron-healthcheck-smart.sh"
+  if [ -f "$SMART_SCRIPT" ] && command -v claude &>/dev/null; then
+    nohup "$SMART_SCRIPT" &>/dev/null &
+  fi
+fi
+
+# --- Discord webhook fallback (runs without LLM) ---
+ALERT_SCRIPT="$(dirname "$0")/discord-alert.sh"
+if [ -f "$ALERT_SCRIPT" ] && [ -n "${DISCORD_WEBHOOK_CERVANTES:-}" ]; then
+  if [ "$EXIT_CODE" -eq 1 ]; then
+    "$ALERT_SCRIPT" "⚠️" "Health Check — $(date +%Y-%m-%d)" "New failures detected. Check healthcheck-state.json for details."
+  elif [ "$EXIT_CODE" -eq 2 ]; then
+    "$ALERT_SCRIPT" "✅" "Health Check Recovery — $(date +%Y-%m-%d)" "Services recovered."
+  fi
+fi
+
 exit $EXIT_CODE

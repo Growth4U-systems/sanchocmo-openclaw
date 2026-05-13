@@ -17,8 +17,8 @@ metadata:
 
 > Define pricing that captures value, drives growth, and aligns with customer willingness to pay. Includes psychological hooks for conversion.
 
-Read ./brand/ per `_system/brand-memory.md`
-Follow output formatting from `_system/output-format.md`
+Read ./brand/ per `_system/intelligence/brand-memory.md`
+Follow output formatting from `_system/output/output-format.md`
 
 ---
 

@@ -25,7 +25,7 @@ context_writes:
 > Entiende el campo de juego antes de jugar. TAM, segmentos, competidores, clientes, regulación, tendencias.
 
 **Input**: company-context (industria, vertical, producto)
-**Output**: Informe 5 partes → `brand/{slug}/market/current.md`
+**Output**: Informe 5 partes → `brand/{slug}/market-and-us/market/current.md`
 
 ## References
 
@@ -42,7 +42,7 @@ context_writes:
 ## Flujo de Ejecución
 
 ### 0. Context Hydration (OBLIGATORIO — antes de cualquier pregunta)
-- Lee `_system/context-hydration-protocol.md` para el patrón genérico
+- Lee `_system/skills/context-hydration-protocol.md` para el patrón genérico
 - Lee `references/hydration.md` para el mapeo específico de esta skill
 - Lee TODOS los docs en `context_required`
 - Pre-rellena campos según hydration_map
@@ -50,7 +50,7 @@ context_writes:
 - Solo pregunta campos listados en "Campos genuinamente nuevos"
 
 ### 1. Preparar contexto
-- Lee `brand/{slug}/company-context/current.md` y `brand/{slug}/competitors/current.md`
+- Lee `brand/{slug}/company-context/current.md` y `brand/{slug}/market-and-us/competitors/current.md`
 - Identifica: industria, vertical, producto, geografía, equipo
 
 ### 1.5. Primary Source Verification (OBLIGATORIO)
@@ -111,9 +111,9 @@ Después del Self-QA, genera el bloque `## Slide Summary` al final del informe (
 - Debe ser autosuficiente: con solo este bloque se genera la slide sin leer el resto
 
 ### 5. Guardar con versionado
-- Ruta: `brand/{slug}/market/current.md`
+- Ruta: `brand/{slug}/market-and-us/market/current.md`
 - Si ya existe → backup como `v{N+1}.md`, sobreescribe `current.md`, actualiza `history.json`
-- Link al usuario: `https://sancho-cmo.taild48df2.ts.net/mc/docs/brand/{slug}/market/current.md`
+- Link al usuario: `{MC_BASE_URL}/docs/brand/{slug}/market-and-us/market/current.md`
 
 ---
 
@@ -153,7 +153,7 @@ Toda cifra con URL inline + sección `## Fuentes` al final con lista numerada co
 ## 📁 Almacenamiento (OBLIGATORIO)
 
 ```
-brand/{{slug}}/market/
+brand/{{slug}}/market-and-us/market/
 ├── current.md      ← versión activa
 ├── v1.md, v2.md... ← versiones anteriores
 ├── history.json    ← log de versiones
@@ -163,4 +163,4 @@ brand/{{slug}}/market/
 1. Identifica slug desde systemPrompt (`[CLIENTE: ... | slug: ...]`)
 2. Si existe `current.md` → backup como `v{N+1}.md`, pide confirmación
 3. Si no existe → crea carpeta + `current.md` + `v1.md` + `history.json`
-4. Link: `https://sancho-cmo.taild48df2.ts.net/mc/docs/brand/{slug}/market/current.md`
+4. Link: `{MC_BASE_URL}/docs/brand/{slug}/market-and-us/market/current.md`

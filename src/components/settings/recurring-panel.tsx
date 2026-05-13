@@ -42,13 +42,15 @@ interface AvailableTemplate {
 type CategoryKey = "intelligence" | "metrics" | "outreach" | "content" | "system" | "other";
 
 const CATEGORY_META: Record<CategoryKey, { icon: string; label: string }> = {
-  intelligence: { icon: "🧠", label: "Intelligence" },
   metrics: { icon: "📊", label: "Metrics" },
+  intelligence: { icon: "🧠", label: "Intelligence" },
   outreach: { icon: "📨", label: "Outreach" },
   content: { icon: "✍️", label: "Content" },
   system: { icon: "⚙️", label: "System" },
   other: { icon: "📋", label: "Otros" },
 };
+
+const CATEGORY_ORDER: CategoryKey[] = ["metrics", "intelligence", "outreach", "content", "system", "other"];
 
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                            */
@@ -261,9 +263,15 @@ function PromptModal({
 /*  Main component                                                     */
 /* ------------------------------------------------------------------ */
 
-export function RecurringPanel() {
+interface RecurringPanelProps {
+  /** Client slug — falls back to the active client from the store. */
+  slug?: string;
+}
+
+export function RecurringPanel({ slug: slugProp }: RecurringPanelProps = {}) {
   const queryClient = useQueryClient();
-  const slug = useAppStore((s) => s.selectedClient) || "";
+  const storeSlug = useAppStore((s) => s.selectedClient) || "";
+  const slug = slugProp ?? storeSlug;
 
   /* --- Data fetch: tasks + templates from OpenClaw via API --- */
   const { data, isLoading } = useQuery<{ tasks: CronTask[]; templates: AvailableTemplate[] }>({
@@ -400,8 +408,9 @@ export function RecurringPanel() {
       )}
 
       {/* Category groups */}
-      {Object.entries(grouped).map(([cat, catTasks]) => {
-        const meta = CATEGORY_META[cat as CategoryKey] || CATEGORY_META.other;
+      {CATEGORY_ORDER.filter((cat) => grouped[cat]?.length).map((cat) => {
+        const catTasks = grouped[cat];
+        const meta = CATEGORY_META[cat] || CATEGORY_META.other;
         return (
           <ComicCard key={cat} className="p-3">
             <CollapsibleSection

@@ -69,11 +69,17 @@ function layerLabel(layer: string | undefined): string | null {
 /*  Skills Panel                                                       */
 /* ------------------------------------------------------------------ */
 
-export function SkillsPanel() {
+interface SkillsPanelProps {
+  /** Client slug — falls back to the active client from the store. */
+  slug?: string;
+}
+
+export function SkillsPanel({ slug: slugProp }: SkillsPanelProps = {}) {
   const qc = useQueryClient();
   const router = useRouter();
   const openChat = useOpenChat();
-  const slug = useAppStore((s) => s.selectedClient) || "";
+  const storeSlug = useAppStore((s) => s.selectedClient) || "";
+  const slug = slugProp ?? storeSlug;
 
   const { data, isLoading } = useQuery<{ skills: SkillSummary[] }>({
     queryKey: ["system", "skills"],

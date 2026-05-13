@@ -48,7 +48,7 @@ context_writes:
 ## Flujo de Ejecución (7 Steps, POR CADA ECP)
 
 ### 0. Context Hydration (OBLIGATORIO — antes de cualquier pregunta)
-- Lee `_system/context-hydration-protocol.md` para el patrón genérico
+- Lee `_system/skills/context-hydration-protocol.md` para el patrón genérico
 - Lee `references/hydration.md` para el mapeo específico de esta skill
 - Lee TODOS los docs en `context_required`
 - Pre-rellena campos según hydration_map
@@ -136,7 +136,7 @@ context_writes:
 ### 10. Guardar con versionado
 - Ruta: `brand/{slug}/go-to-market/positioning/current.md`
 - Backup + versionado + history.json
-- Link: `https://sancho-cmo.taild48df2.ts.net/mc/docs/brand/{slug}/go-to-market/positioning/current.md`
+- Link: `{MC_BASE_URL}/docs/brand/{slug}/go-to-market/positioning/current.md`
 
 ---
 
@@ -202,4 +202,4 @@ brand/{{slug}}/positioning/
 1. Identifica slug desde systemPrompt
 2. Si existe `current.md` → backup como `v{N+1}.md`
 3. Si no existe → crea carpeta + archivos
-4. Links: `https://sancho-cmo.taild48df2.ts.net/mc/docs/brand/{slug}/go-to-market/positioning/shared/value-criteria.md`
+4. Links: `{MC_BASE_URL}/docs/brand/{slug}/go-to-market/positioning/shared/value-criteria.md`

@@ -16,6 +16,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     threadName,
     text,
     userName,
+    userId,
     linkedTo,
     skill,
     skills,
@@ -23,6 +24,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     docPath,
     docKind,
     attachments,
+    _source,
     agent,
   } = req.body;
 
@@ -37,8 +39,13 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   // Store user message locally
   addMessage(tid, "user", text, undefined, parsedAttachments);
 
-  const isAdmin = true; // TODO: check auth context in Phase 2
+  // Dashboard UI doesn't send _source → treated as admin (unchanged behavior).
+  // mc-chat plugin relays Discord messages with _source: "discord" → client role
+  // so the gateway doesn't re-relay the reply back to Discord (see plugin
+  // index.js outbound callback, which skips relay when _source === "discord").
+  const isAdmin = _source !== "discord";
   const senderRole = isAdmin ? "admin" : "client";
+  const resolvedUserId = userId || (isAdmin ? "mc-admin" : `mc-client-${slug}`);
 
   // Forward to Gateway mc-chat plugin
   const secret = getChatSecret();
@@ -47,7 +54,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     threadId: tid,
     threadName: threadName || tid,
     text,
-    userId: isAdmin ? "mc-admin" : `mc-client-${slug}`,
+    userId: resolvedUserId,
     userName: userName || (isAdmin ? "Admin" : slug),
     linkedTo: linkedTo || undefined,
     skill: skill || undefined,
@@ -58,13 +65,15 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     attachments: parsedAttachments,
     isAdmin,
     senderRole,
+    _source,
     // Force routing: when the thread carries an `agent` field, the gateway
-    // dispatches to that agent (e.g. dulcinea for content tasks) instead of
-    // falling back to the default agent. The gateway's mc-chat plugin reads
-    // the field as `agentId` — we send both names so any consumer inspecting
-    // either key works without coordination. The plugin embeds the value in
-    // the SessionKey (`agent:<slug>:<chatId>`) so OpenClaw's
-    // `resolveSessionAgentIds()` routes to workspace-<slug>.
+    // dispatches to that agent (e.g. dulcinea for content tasks, maese-pedro
+    // for Media Creation skills) instead of falling back to the default
+    // agent. The gateway's mc-chat plugin reads the field as `agentId` — we
+    // send both names so any consumer inspecting either key works without
+    // coordination. The plugin embeds the value in the SessionKey
+    // (`agent:<slug>:<chatId>`) so OpenClaw's `resolveSessionAgentIds()`
+    // routes to workspace-<slug>.
     agentId: typeof agent === "string" ? agent : undefined,
     agent: typeof agent === "string" ? agent : undefined,
   };

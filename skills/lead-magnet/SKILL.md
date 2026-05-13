@@ -16,8 +16,8 @@ metadata:
 
 > Create lead magnets that people actually want. From idea to fully built asset.
 
-Read ./brand/ per `_system/brand-memory.md`
-Follow output formatting from `_system/output-format.md`
+Read ./brand/ per `_system/intelligence/brand-memory.md`
+Follow output formatting from `_system/output/output-format.md`
 
 ---
 

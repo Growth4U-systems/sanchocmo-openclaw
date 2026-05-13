@@ -180,7 +180,7 @@ Plan temporal con 3 fases + revisión:
 
 Cada estrategia aprobada genera un proyecto:
 ```
-projects/P{XX}-{strategy-slug}/
+projects/P{XX}/
   project.json | tasks.json
 ```
 
@@ -325,9 +325,9 @@ Ver [references/data-model.md](references/data-model.md) para schemas de `projec
 **Fase 1: Escribir archivos**
 
 1. Escribir `brand/{slug}/strategic-plan/current.md` (documento vivo, versionable)
-2. **No existe `registry.json`** — el filesystem es el registro. Cada carpeta `P{XX}-{slug}/` con su `project.json` define un proyecto. Para obtener el siguiente P{XX}, escanear directorios `P*/` existentes y usar max+1.
+2. **No existe `registry.json`** — el filesystem es el registro. Cada carpeta `P{XX}/` con su `project.json` define un proyecto. Para obtener el siguiente P{XX}, escanear directorios `P*/` existentes y usar max+1.
 3. Por cada estrategia aprobada → crear proyecto:
-   - Carpeta `brand/{slug}/projects/P{XX}-{slug}/`
+   - Carpeta `brand/{slug}/projects/P{XX}/`
    - `project.json` con objetivo, métricas baseline/target, origin, review_date
    - `tasks.json` con tareas iniciales, canal temático asignado, descripción, owner, **skill** (ver [data-model.md](references/data-model.md))
    - ⚠️ **SIEMPRE asignar `"skill"` a cada tarea** — es el skill de Escudero que ejecutará la tarea. Consultar `strategies-catalog.json` campo `skills` de la estrategia. Si no hay match claro, usar `doc-coauthoring`. Flujo: Escudero ejecuta con el skill → Rocinante verifica contra Foundation + Brand Voice + Brand Visual.
@@ -344,7 +344,7 @@ Ver [references/data-model.md](references/data-model.md) para schemas de `projec
 5. **Resolver datos del cliente:**
    - Leer `brand/{slug}/discord-channels.json` para channel IDs
    - Si no existe → `message(action=channel-list, guildId={guild})` → crear el fichero
-   - Obtener `mcToken` de `clients.json` → MC URL: `https://sancho-cmo.taild48df2.ts.net/mc/portal/{mcToken}/projects/`
+   - Obtener `mcToken` de `clients.json` → MC URL: `{MC_BASE_URL}/portal/{mcToken}/projects/`
 6. **Por cada proyecto** (ir uno a uno):
 
    a. **Crear hilo de proyecto en #projects:**
@@ -485,7 +485,7 @@ Al completar un proyecto → generar `value-review.md`:
 |--------|---------------|
 | **Llama** | `channel-prioritization` (si no existe channel-plan.md) |
 | **Lee** | Foundation completa, phase-0-diagnostic (si existe), `references/strategies-catalog.json` |
-| **Produce** | `strategic-plan/current.md`, `current-state.md`, `projects/P{XX}-{slug}/project.json`, `projects/P{XX}-{slug}/tasks.json` |
+| **Produce** | `strategic-plan/current.md`, `current-state.md`, `projects/P{XX}/project.json`, `projects/P{XX}/tasks.json` |
 | **Encadena** | Execution skills por tarea. Value reviews al completar proyecto |
 | **Valida** | Nuevos proyectos propuestos vs plan activo |
 

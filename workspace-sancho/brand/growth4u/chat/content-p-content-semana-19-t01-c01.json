@@ -85,30 +85,8 @@
       "text": "Research y clarify ya están completados. Esperando respuestas del humano a las 4 preguntas de clarify antes de redactar.\n\nResumen del estado actual:\n- ✅ **Research** (QA 8/10) — 6 fuentes tier-1 (McKinsey, Deloitte, Accenture, Salesforce, Prophet)\n- ✅ **Clarify** — 4 preguntas posteadas, `clarify_status: pending`\n- ⏳ **Draft** — bloqueado hasta recibir respuestas\n\nLas preguntas siguen vigentes:\n\n:::ask\n{\"id\":\"q_provocacion\",\"prompt\":\"Q1 — La provocación: ¿cuál es tu tesis sobre la 'AI fatigue'?\",\"mode\":\"single\",\"options\":[{\"id\":\"A\",\"label\":\"Confirmo full — en G4U vemos esto a diario: 80%+ prospects dicen 'usamos IA' pero nadie mide impacto. La fatiga es nuestra ventaja.\"},{\"id\":\"B\",\"label\":\"Contradigo parcial — el problema no es hype vs ejecución, es que la tecnología aún no está madura para workflows complejos.\"},{\"id\":\"C\",\"label\":\"Segmento — distinguir SMBs (shadow AI) vs enterprise (C-suite sin ROI). Dos audiencias, dos mensajes.\"},{\"id\":\"D\",\"label\":\"Sesgo del estudio — la adopción SUBIÓ del 45% al 73%. La caída de entusiasmo es normalización, no fatiga.\"},{\"id\":\"other\",\"label\":\"Otro (lo escribo)\"}]}\n:::\n\n:::ask\n{\"id\":\"q_evidencia\",\"prompt\":\"Q2 — ¿Con qué dato propio de Growth4U anclas la tesis?\",\"mode\":\"single\",\"options\":[{\"id\":\"A\",\"label\":\"90% de prospects dicen usar IA — solo 2 de cada 10 tienen dashboard midiendo qué les aporta\"},{\"id\":\"B\",\"label\":\"Nuestro propio caso: G4U tiene IA en 8+ workflows operativos con métricas. Somos el 6%.\"},{\"id\":\"C\",\"label\":\"Cliente concreto: llegó con 'usamos ChatGPT para todo', en la auditoría solo reescribían emails. Zero pipeline.\"},{\"id\":\"D\",\"label\":\"Agregado: tiempo medio de 'piloto IA' a 'workflow integrado' es 4-6 meses — 60% abandona antes [verifica]\"},{\"id\":\"other\",\"label\":\"Otro (lo escribo)\"}]}\n:::\n\n:::ask\n{\"id\":\"q_insight\",\"prompt\":\"Q3 — ¿Qué de la AI fatigue NADIE en LinkedIn está contando?\",\"mode\":\"single\",\"options\":[{\"id\":\"A\",\"label\":\"Escribe tu insight propio en 'Otro' — esta pregunta es para tu perspectiva única (recomendado)\"},{\"id\":\"B\",\"label\":\"AI washing matará la credibilidad de marca antes de que la IA madure. Es un problema de branding, no de tech.\"},{\"id\":\"C\",\"label\":\"La fatiga interna mata la voluntad de los equipos de adoptar IA bien. 3 pilotos fallidos = 'otra moda' = resistencia.\"},{\"id\":\"D\",\"label\":\"La fatiga es BUENA para ejecutores especializados. Menos hype = más demanda de 'enséñame a hacerlo bien'.\"},{\"id\":\"other\",\"label\":\"Otro (lo escribo)\"}]}\n:::\n\n:::ask\n{\"id\":\"q_audiencia\",\"prompt\":\"Q4 — ¿Para quién escribes y cómo cierras?\",\"mode\":\"single\",\"options\":[{\"id\":\"A\",\"label\":\"Founder/CEO B2B SaaS — cierre: '¿Tu equipo usa IA o dice que usa IA? Hay 82 puntos de diferencia.'\"},{\"id\":\"B\",\"label\":\"CMO/Head Marketing bajo presión de 'meter IA' — cierre: '88% dice usar IA. 39% puede demostrar impacto. ¿Dónde estás?'\"},{\"id\":\"C\",\"label\":\"COO/Ops que justifica inversión ante board — cierre: 'Antes de comprar la siguiente herramienta, mide lo que ya tienes.'\"},{\"id\":\"D\",\"label\":\"Mixto B2B leadership — pregunta abierta: '¿Cuántos workflows con IA podrías describir con métricas ahora mismo?'\"},{\"id\":\"other\",\"label\":\"Otro (lo escribo)\"}]}\n:::",
       "ts": 1778527976303,
       "agent": "sancho"
-    },
-    {
-      "role": "user",
-      "text": "[ask:q_provocacion] respuesta: Confirmo full — en G4U vemos esto a diario: 80%+ prospects dicen 'usamos IA' pero nadie mide impacto. La fatiga es nuestra ventaja.\n[ask:q_evidencia] respuesta: 90% de prospects dicen usar IA — solo 2 de cada 10 tienen dashboard midiendo qué les aporta\n[ask:q_insight] respuesta: La fatiga interna mata la voluntad de los equipos de adoptar IA bien. 3 pilotos fallidos = 'otra moda' = resistencia.\n[ask:q_audiencia] respuesta: Founder/CEO B2B SaaS — cierre: '¿Tu equipo usa IA o dice que usa IA? Hay 82 puntos de diferencia.'",
-      "ts": 1778571082134
-    },
-    {
-      "role": "bot",
-      "text": "⚠️ API provider returned a billing error — your API key has run out of credits or has an insufficient balance. Check your provider's billing dashboard and top up or switch to a different API key.",
-      "ts": 1778571088103,
-      "agent": "sancho"
-    },
-    {
-      "role": "user",
-      "text": "continua",
-      "ts": 1778574512870
-    },
-    {
-      "role": "bot",
-      "text": "The model did not produce a response before the model idle timeout. Please try again, or increase `models.providers.<id>.timeoutSeconds` for slow local or self-hosted providers.",
-      "ts": 1778574696196,
-      "agent": "sancho"
     }
   ],
   "createdAt": "2026-05-11T14:50:25.959Z",
-  "updatedAt": 1778574696196
+  "updatedAt": 1778527976303
 }
