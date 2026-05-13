@@ -1,421 +1,184 @@
 ---
 name: alarife-integration
-description: Integrate SanchoCMO with Alarife LP Factory. Use when creating/managing client websites, landing pages, blog posts, funnels, or syncing Foundation data to Alarife. Triggers on "crear web", "crear landing", "publicar en Alarife", "sync a Alarife", "push to Alarife", "generar página", "landing page", "homepage", "funnel", "blog post en Alarife", or any mention of Alarife in the context of web/content creation.
+description: Operate Alarife Payload from Sancho. Use when creating, importing, exporting, editing, previewing, publishing, or auditing sites/pages in Alarife Payload; when user says "exporta a Alarife", "Alarife Payload", "Payload", "cambia el diseño", "importa un sitio", "crea una landing", "publica", or "preview".
 ---
 
-# Alarife Integration Skill
+# Alarife Payload Integration
 
-## Overview
-Alarife is Growth4U's LP Factory — a multi-tenant platform for pages (homepages, landings, product pages), blog posts, funnels, A/B tests, and legal pages. This skill connects Sancho's Foundation data with Alarife's content API.
+Alarife Payload is the production CMS/site builder for Growth4U. Sancho operates it through a narrow API and, when changing the Alarife codebase itself, through the official Payload skills installed in this workspace.
 
-## Architecture
-```
-Sancho (Foundation)           Alarife (Production)
-─────────────────            ───────────────────
-ECPs, Brand Voice    ──API──►  Client Settings (voice, audience, brand)
-Copy, Headlines      ──API──►  Pages (homepage, landing, product, etc.)
-Blog topics + text   ──API──►  Blog posts (draft → publish)
-CRO suggestions      ──API──►  A/B Experiments
-HTML from skills     ──API──►  Import & Publish
-```
+## Official Payload Skills
 
-## ⚠️ CAPABILITY STATUS (updated 2026-03-25 from official API reference)
+These skills are installed in `skills/` from `payloadcms/skills`:
 
-### ✅ Working
-- **Clients**: List, Create
-- **Pages** (unified): CRUD + Publish + Preview (categories: homepage, landing, producto, servicio, pricing, about, equipo, contacto, otra)
-- **Import**: Quick save, Crawl (SSE), Classify/decompose
-- **Blog Posts**: CRUD + Publish
-- **Partner LPs**: CRUD + Publish
-- **Legal Pages**: CRUD (privacy_policy, terms_of_service, cookie_policy, legal_notice)
-- **Funnels**: CRUD + Steps + Publish
-- **Experiments**: CRUD + Variants + Start/Stop/Promote
-- **Domains**: CRUD (primary, alias, module)
-- **Upload Image**: multipart/form-data
-- **Auth**: Bearer token `ak_...`
+- `payload` — use for Payload CMS code work: collections, fields, hooks, access control, REST/GraphQL, Local API, plugins, transactions, jobs, MCP.
+- `cms-migration` — use when designing Payload collections from source CMS exports or planning migrations from Webflow, WordPress, Contentful, Strapi, Sanity, CSV, or JSON.
 
-### ❌ NOT Working
-- **Public Serving**: Routes `/s/{slug}/{page}` return 404 — frontend serving NOT IMPLEMENTED yet
+Use `alarife-integration` for live Alarife operations. Use `payload`/`cms-migration` when the task requires changing Payload implementation or designing schemas.
 
-### ⚠️ CRITICAL: Never Promise Public URLs
-Do NOT generate or share URLs like `https://alarife.growth4u.io/s/{slug}/{page}` — they don't work.
-Use the **preview endpoint** or direct users to the **admin dashboard**: `https://alarife.growth4u.io/dashboard`
+## Production Connection
 
-## Configuration
+- Base URL: `https://alarife-payload.growth4u.io`
+- Admin: `https://alarife-payload.growth4u.io/admin`
+- Auth env var: `SANCHOCMO_ALARIFE_PAYLOAD_API_KEY`
+- Fallback env vars: `ALARIFE_PAYLOAD_API_KEY`, `SANCHOCMO_ALARIFE_API_KEY`
+- Config source: `brand/sanchocmo/integrations.json`
 
-### API Key
-- Stored in: `brand/sanchocmo/.env` → `SANCHOCMO_ALARIFE_API_KEY`
-- Format: `ak_...` (Bearer token)
+Never ask users for API keys in chat. If the key is missing, tell them to configure it in Mission Control or the local Sancho env.
 
-### Base URL
-- Production: `https://alarife.growth4u.io`
+## Capabilities Available Now
 
-### Read credentials
+Alarife Payload API supports:
+
+- Sites/clients: list/create.
+- Pages: list/create/read/update/delete.
+- Page status: draft or published.
+- Import generated HTML: `POST /api/clients/{clientId}/import/save`.
+- Import one URL: `POST /api/clients/{clientId}/import`.
+- Crawl/discover URLs from sitemap: `POST /api/clients/{clientId}/import/crawl`.
+- Preview rendered HTML: `GET /api/clients/{clientId}/pages/{pageId}/preview`.
+- Legacy Paymatico alias: `7SRxn8rDeE3PWEi-oQjle` resolves to `paymatico`.
+
+Not available yet:
+
+- Visual drag-and-drop editing.
+- Batch ZIP/folder upload.
+- Legacy separate endpoints for domains, blog-posts, partner-lps, funnels, experiments.
+- Automatic link-management UI.
+
+If a user asks for unsupported features, use the closest supported workflow and say what remains manual or pending.
+
+## Helper Script
+
+Use the bundled helper instead of hand-writing curl when possible:
+
 ```bash
-KEY=$(grep SANCHOCMO_ALARIFE_API_KEY brand/sanchocmo/.env | cut -d= -f2)
-BASE="https://alarife.growth4u.io"
+python3 skills/alarife-integration/scripts/alarife_payload_api.py clients
+python3 skills/alarife-integration/scripts/alarife_payload_api.py pages paymatico
+python3 skills/alarife-integration/scripts/alarife_payload_api.py create-page paymatico --json /tmp/page.json
+python3 skills/alarife-integration/scripts/alarife_payload_api.py update-page paymatico <pageId> --json /tmp/patch.json
+python3 skills/alarife-integration/scripts/alarife_payload_api.py preview paymatico <pageId> --out /tmp/preview.html
+python3 skills/alarife-integration/scripts/alarife_payload_api.py import-url paymatico https://example.com/page --target-path /page
+python3 skills/alarife-integration/scripts/alarife_payload_api.py import-save paymatico --json /tmp/import-save.json
+python3 skills/alarife-integration/scripts/alarife_payload_api.py delete-page paymatico <pageId>
 ```
 
-## API Reference
+The script reads `.env` from the current shell and `brand/sanchocmo/.env`.
 
-> Source of truth: https://github.com/Growth4U-systems/alarife/blob/main/docs/api-reference-sancho.md
+## Workflow: Export a Sancho Site to Alarife Payload
 
-### Authentication
-```
-Authorization: Bearer ak_...
-Content-Type: application/json
-```
+1. Identify the target client/site slug. Use an existing slug when possible (`paymatico`, `growth4u`, etc.).
+2. If the site does not exist, create it with `POST /api/clients`.
+3. Convert each page to one `raw_html` section:
+   - `title`
+   - `path` or `slug`
+   - `category`
+   - `status: "draft"`
+   - `sections[0].type: "raw_html"`
+   - `sections[0].config.html`
+   - optional `sections[0].config.css`
+4. Save each page with `/import/save` or `/pages`.
+5. Request preview for every changed page.
+6. Share previews for human review.
+7. Publish only after explicit approval.
 
----
+For a whole static site, export page by page. There is no single folder upload endpoint yet.
 
-### Clients
+## Workflow: Import an Existing Site
 
-#### List clients
-```
-GET /api/clients
-→ [{ id, name, slug, domain, ... }]
-```
+1. Run `crawl` against the source URL to discover sitemap URLs.
+2. Confirm scope if many URLs are found.
+3. Import pages one by one with `import-url`.
+4. Keep pages in draft unless the user explicitly asked to publish.
+5. Preview the most important pages: `/`, pricing/product pages, contact, legal, conversion pages.
+6. Report imported count, failures, and preview links.
 
-#### Create client
-```
-POST /api/clients
-Body: { "name": "Acme Corp", "slug": "acme-corp" }
-```
+## Workflow: Design Changes on a Payload Page
 
----
+1. List pages for the client and find the page by path/title.
+2. Read the page.
+3. Detect page structure:
+   - `raw_html` block: edit `config.html` and/or `config.css`.
+   - structured block: edit the specific fields only.
+4. Preserve imported assets and runtime fields:
+   - `headLinks`
+   - `bodyScripts`
+   - `navbarHtml`
+   - `sourceOrigin`
+   - image/font URLs
+5. Save as draft.
+6. Render preview and inspect the HTML or screenshot when possible.
+7. Publish only after explicit approval.
 
-### Pages (UNIFIED endpoint — replaces old /homepages)
+Do not rewrite the entire page for a small design request. Make targeted changes.
 
-⚠️ **IMPORTANT**: All page types use `/api/clients/{clientId}/pages` with a `category` field.
-The old `/homepages` endpoint may still work but `/pages` is the canonical API.
+## Safety Rules
 
-#### List pages
-```
-GET /api/clients/{clientId}/pages
-→ [{ id, title, slug, category, status, sections, ... }]
-```
+- Draft-first always.
+- No publish without explicit approval.
+- No delete unless the user explicitly says delete/remove.
+- Never paste API keys or secrets into chat.
+- Preserve source fonts, images, scripts, tracking tags, and legal links.
+- For imported Webflow/raw HTML pages, avoid "cleanup" refactors unless requested.
+- If editing production content, state what page/path changed and provide preview.
+- If the requested change is a platform feature, update Alarife code using the `payload` skill, then deploy Alarife normally.
 
-#### Create page
-```
-POST /api/clients/{clientId}/pages
-```
+## API Shapes
+
+Create/update page:
+
 ```json
 {
-  "title": "Mi Página",
-  "slug": "mi-pagina",
-  "category": "homepage",
-  "template": "freeform",
+  "title": "Landing",
+  "path": "/landing",
+  "category": "landing",
+  "status": "draft",
+  "metaTitle": "SEO title",
+  "metaDescription": "SEO description",
   "sections": [
     {
       "type": "raw_html",
-      "name": "Contenido principal",
+      "name": "Page",
       "config": {
-        "html": "<div>...HTML...</div>",
-        "css": ".mi-clase { color: red; }",
-        "scopeClass": "mi-scope"
+        "html": "<main>...</main>",
+        "css": ".hero { ... }",
+        "scopeClass": ""
       }
     }
-  ],
-  "status": "draft",
-  "metaTitle": "SEO Title",
-  "metaDescription": "SEO Description",
-  "position": 0
+  ]
 }
 ```
 
-**Categories**: `homepage`, `landing`, `producto`, `servicio`, `pricing`, `about`, `equipo`, `contacto`, `otra`
+Import generated HTML:
 
-**Templates**: `freeform` (HTML libre), `default` (structured sections)
-
-#### Get page
-```
-GET /api/clients/{clientId}/pages/{pageId}
-```
-
-#### Update page (PATCH, not PUT!)
-```
-PATCH /api/clients/{clientId}/pages/{pageId}
-```
-All fields optional:
-```json
-{
-  "title": "Nuevo título",
-  "slug": "nuevo-slug",
-  "category": "landing",
-  "sections": [...],
-  "status": "published",
-  "metaTitle": "...",
-  "metaDescription": "..."
-}
-```
-
-#### Publish page
-```
-PATCH /api/clients/{clientId}/pages/{pageId}
-Body: { "status": "published" }
-```
-
-#### Unpublish page
-```
-PATCH /api/clients/{clientId}/pages/{pageId}
-Body: { "status": "draft" }
-```
-
-#### Delete page
-```
-DELETE /api/clients/{clientId}/pages/{pageId}
-```
-
-#### Preview page (rendered HTML)
-```
-GET /api/clients/{clientId}/pages/{pageId}/preview
-→ Content-Type: text/html (full rendered page)
-```
-
----
-
-### Import (Quick HTML Import)
-
-#### Import HTML as page
-```
-POST /api/clients/{clientId}/import/save
-```
 ```json
 {
   "detectedType": "page",
   "data": {
-    "title": "LP Fitness",
-    "slug": "lp-fitness",
+    "title": "Landing",
+    "slug": "landing",
     "category": "landing",
-    "template": "freeform",
+    "status": "draft",
     "sections": [
       {
         "type": "raw_html",
-        "name": "Página completa",
         "config": {
-          "html": "<!DOCTYPE html>...HTML completo..."
+          "html": "<main>...</main>"
         }
       }
     ]
   }
 }
 ```
-**detectedType values**: `page`, `homepage`, `partner_lp`, `blog_post`, `legal_page`
 
-#### Crawl a site
-```
-POST /api/clients/{clientId}/import/crawl
-Body: { "url": "https://example.com" }
-→ SSE stream with discovered pages
-```
+## Response Pattern
 
-#### Classify/decompose HTML
-```
-POST /api/clients/{clientId}/import
-Body: { "url": "https://example.com/about", "pageType": "auto" }
-```
+When done, report:
 
----
+- Client/site slug.
+- Pages changed/imported.
+- Draft/published status.
+- Preview URL or preview endpoint.
+- Any unsupported part or manual review needed.
 
-### Domains
-
-```
-GET    /api/clients/{clientId}/domains
-POST   /api/clients/{clientId}/domains       → { "domain": "example.com", "type": "primary" }
-PUT    /api/clients/{clientId}/domains/{id}
-DELETE /api/clients/{clientId}/domains/{id}
-```
-Types: `primary` (one only), `alias` (redirects to primary), `module` (subdomain for specific module)
-
----
-
-### Blog Posts
-
-```
-GET    /api/clients/{clientId}/blog-posts
-POST   /api/clients/{clientId}/blog-posts
-PATCH  /api/clients/{clientId}/blog-posts/{id}
-POST   /api/clients/{clientId}/blog-posts/{id}/publish
-DELETE /api/clients/{clientId}/blog-posts/{id}
-```
-
-#### Create blog post
-```json
-{
-  "title": "Mi Post",
-  "slug": "mi-post",
-  "content": "# Markdown o HTML",
-  "excerpt": "Resumen",
-  "category": "marketing",
-  "tags": ["seo", "growth"],
-  "featuredImage": "https://..."
-}
-```
-
----
-
-### Partner Landing Pages
-
-```
-GET    /api/clients/{clientId}/partner-lps
-POST   /api/clients/{clientId}/partner-lps
-PATCH  /api/clients/{clientId}/partner-lps/{id}
-DELETE /api/clients/{clientId}/partner-lps/{id}
-POST   /api/clients/{clientId}/partner-lps/{id}/publish
-```
-
----
-
-### Legal Pages
-
-```
-GET    /api/clients/{clientId}/legal-pages
-POST   /api/clients/{clientId}/legal-pages
-PATCH  /api/clients/{clientId}/legal-pages/{id}
-DELETE /api/clients/{clientId}/legal-pages/{id}
-```
-Types: `privacy_policy`, `terms_of_service`, `cookie_policy`, `legal_notice`
-
----
-
-### Funnels
-
-```
-GET    /api/clients/{clientId}/funnels
-POST   /api/clients/{clientId}/funnels
-PATCH  /api/clients/{clientId}/funnels/{id}
-DELETE /api/clients/{clientId}/funnels/{id}
-POST   /api/clients/{clientId}/funnels/{id}/publish
-```
-
-#### Steps
-```
-GET    /api/clients/{clientId}/funnels/{id}/steps
-POST   /api/clients/{clientId}/funnels/{id}/steps
-PATCH  /api/clients/{clientId}/funnels/{id}/steps/{stepId}
-DELETE /api/clients/{clientId}/funnels/{id}/steps/{stepId}
-POST   /api/clients/{clientId}/funnels/{id}/steps/reorder
-```
-
----
-
-### Experiments (A/B Testing)
-
-```
-GET    /api/clients/{clientId}/experiments
-POST   /api/clients/{clientId}/experiments
-PATCH  /api/clients/{clientId}/experiments/{id}
-POST   /api/clients/{clientId}/experiments/{id}/start
-POST   /api/clients/{clientId}/experiments/{id}/stop
-POST   /api/clients/{clientId}/experiments/{id}/promote
-```
-
-#### Variants
-```
-GET    /api/clients/{clientId}/experiments/{id}/variants
-POST   /api/clients/{clientId}/experiments/{id}/variants
-PATCH  /api/clients/{clientId}/experiments/{id}/variants/{variantId}
-DELETE /api/clients/{clientId}/experiments/{id}/variants/{variantId}
-```
-
----
-
-### Utility
-
-#### Health check
-```
-GET /api/health
-```
-
-#### Upload image
-```
-POST /api/upload-image
-Content-Type: multipart/form-data
-```
-
----
-
-## Workflows
-
-### 1. Import HTML Page (most common flow)
-
-**When**: User sends HTML/CSS and wants it in Alarife.
-
-**Steps:**
-1. Read the HTML content
-2. **Fix broken references** before importing:
-   - Local file paths (`file:///C:/...`) → replace with real URLs
-   - Broken image paths → replace with Unsplash or client's real images
-   - Local font references → replace with CDN/Google Fonts URLs
-   - `href="#"` or broken CTAs → replace with client's real URLs
-3. Use the **import/save** endpoint (simplest) or create via `/pages`:
-   ```
-   POST /api/clients/{clientId}/import/save
-   {
-     "detectedType": "page",
-     "data": {
-       "title": "Page Title",
-       "slug": "page-slug",
-       "category": "landing",
-       "template": "freeform",
-       "sections": [{
-         "type": "raw_html",
-         "name": "Contenido completo",
-         "config": {
-           "html": "<extracted body content>",
-           "css": "<extracted styles>",
-           "scopeClass": "fp-Ab12Cd34"
-         }
-       }]
-     }
-   }
-   ```
-4. Publish: `PATCH /api/clients/{clientId}/pages/{id}` with `{"status": "published"}`
-5. Preview: `GET /api/clients/{clientId}/pages/{id}/preview`
-6. Confirm to user with **preview link** or **dashboard link**:
-   - Preview: `https://alarife.growth4u.io/api/clients/{clientId}/pages/{id}/preview`
-   - Dashboard: `https://alarife.growth4u.io/dashboard`
-
-**⚠️ Max 2 messages**: One "working on it" + one "done with result". No narration.
-
-### 2. Sync Foundation → Alarife Client Profile
-When Foundation is complete for a client:
-1. Read `brand/{slug}/foundation/` files
-2. Map to client settings (voice, audience, brand, products)
-3. Create or update client
-
-### 3. Create Page from Foundation
-1. Read ECPs + brand voice from Foundation
-2. Generate copy (headlines, CTAs, body) using copywriting skill
-3. Use `template: "freeform"` with `sections: [{type: "raw_html", ...}]`
-4. `POST /api/clients/{clientId}/pages` with `category: "landing"` (or appropriate)
-5. Publish via PATCH
-
-### 4. Import existing website
-1. Use crawl endpoint: `POST /api/clients/{clientId}/import/crawl` with site URL
-2. Process SSE stream of discovered pages
-3. Save selected pages via `/import/save`
-
-## Error Handling
-- `401` → API key invalid or expired
-- `403` → Missing scope
-- `400` → Validation error (check required fields)
-- `404` → Client or resource not found
-- `409` → Duplicate (e.g., slug already exists)
-- `500` → Server error. Report to Cervantes/Martin.
-
-## Known Clients (verified 2026-03-25)
-| Name | ID | Slug |
-|---|---|---|
-| Paymatico | 7SRxn8rDeE3PWEi-oQjle | paymatico |
-| Growth4U | qx52hhSmnqLWi0UC_9cLc | growth4u |
-| Test API | QEJ7clelBh0CjIFuc4G40 | test-api-sancho |
-
-## Notes
-- **API Reference source of truth**: https://github.com/Growth4U-systems/alarife/blob/main/docs/api-reference-sancho.md
-- Alarife URL: https://alarife.growth4u.io
-- Admin dashboard: https://alarife.growth4u.io/dashboard
-- Repo: github.com/Growth4U-systems/alarife (private)
-- Hosting: Hetzner CX23, Helsinki, IP 37.27.22.139
-- DB: Neon PostgreSQL
-- Public serving NOT IMPLEMENTED — use preview endpoint or dashboard
+Keep internal API details and secrets out of client channels.
