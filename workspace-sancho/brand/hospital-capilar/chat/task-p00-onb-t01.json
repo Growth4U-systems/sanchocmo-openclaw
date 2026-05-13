@@ -1,0 +1,135 @@
+{
+  "messages": [
+    {
+      "role": "user",
+      "text": "Empieza la configuracion de Meeting Intelligence para este cliente. Verifica APIs/MCP, guia Drive Picker o fallback por URL/ID, selecciona Notion database/page, carga filtros como clients relation, confirma routing de review y deja preparado el primer run sin aplicar cambios a documentos canonicos.",
+      "ts": 1778596048996
+    },
+    {
+      "role": "bot",
+      "text": "Tengo todo lo que necesito. Déjame crear el `setup.md` y mostrarte el estado completo.",
+      "ts": 1778596319670,
+      "agent": "hamete"
+    },
+    {
+      "role": "user",
+      "text": "Empieza la configuracion de Meeting Intelligence para este cliente. Verifica APIs/MCP, usa Google Workspace/GOG para buscar y validar carpetas de Drive, acepta URL/ID solo como fallback, selecciona Notion database/page, carga filtros como clients relation y deja preparado el primer run sin aplicar cambios a documentos canonicos.",
+      "ts": 1778608135162
+    },
+    {
+      "role": "bot",
+      "text": "Verificación completada. Aquí el estado:\n\n**✅ Google Drive (gog)**\n- Cuenta: `alfonso@growth4u.io` · Auth: OAuth ✅\n- Carpeta confirmada: `17FpwSgL-XLAqaaH5-UccpADHkCFRcCHY` — \"Meeting notes folder\"\n- 14 archivos encontrados · 11 reuniones ya procesadas (todas hasta 2026-03-18)\n- 2 vídeos MP4 (ignorados, no docs) · 1 doc pendiente de clasificar (Sales Presentation 2026-02-06)\n\n**✅ Routing configurado**\n- Publish: `#intelligence` (Discord)\n- Review owner: Alfonso · Timezone: Europe/Madrid\n- Cron: L-V 18:00\n\n**❌ Notion** — sin configurar (disabled en config.json)\n\n**First run:** 0 reuniones nuevas — todo está al día.\n\nEl `setup.md` ya está escrito en `brand/hospital-capilar/intelligence/setup.md`.\n\nDos decisiones pendientes:\n\n:::ask\n{\"id\":\"q_notion\",\"prompt\":\"¿Usáis Notion para notas de reunión de Hospital Capilar?\",\"mode\":\"single\",\"options\":[{\"id\":\"yes_have_db\",\"label\":\"Sí — tengo la URL/ID de la base de datos\"},{\"id\":\"yes_need_help\",\"label\":\"Sí — pero necesito ayuda para encontrarla\"},{\"id\":\"no\",\"label\":\"No, solo Google Drive\"},{\"id\":\"other\",\"label\":\"Otro (lo escribo)\"}]}\n:::\n\n:::ask\n{\"id\":\"q_sales_pres\",\"prompt\":\"El doc 'HC Growth4U Sales Presentation 2026-02-06' está en la carpeta pero no indexado como reunión. ¿Qué hago con él?\",\"mode\":\"single\",\"options\":[{\"id\":\"add\",\"label\":\"Añadirlo al índice de reuniones\"},{\"id\":\"ignore\",\"label\":\"Ignorarlo (no es una reunión)\"},{\"id\":\"other\",\"label\":\"Otro (lo escribo)\"}]}\n:::",
+      "ts": 1778608155068,
+      "agent": "hamete"
+    },
+    {
+      "role": "user",
+      "text": "Ejecuta el raw sync de Meeting Intelligence para Hospital Capilar (hospital-capilar).\n\nRun ID en Neon: mir_631c23538dc0a1026ec6c6f5\n\nObjetivo:\n1. Lee las fuentes aprobadas desde Neon en mi_sources para este slug. No uses JSON como storage nuevo.\n2. Verifica Google Workspace/GOG y Notion en Ajustes/APIs antes de leer.\n3. Para cada fuente aprobada, busca reuniones reales y descarga el contenido raw completo: transcript, doc exportado, notas originales o payload textual equivalente.\n4. Guarda el raw real en Neon:\n   - mi_meetings.status = raw_available cuando haya raw_text real.\n   - mi_meeting_artifacts.raw_text = contenido completo.\n   - mi_meeting_artifacts.summary_text = resumen generado despues de leer raw.\n   - mi_meeting_artifacts.source_payload = ids, URLs, timestamps y metadata de la fuente.\n   - checksum y fetched_at actualizados.\n5. Si no puedes descargar raw, deja la meeting en needs_raw_sync y registra el motivo en mi_runs.errors. No marques nada como processed.\n6. Con raw_text disponible, genera mi_insights para decisions/actions/insights/quotes/risks con evidence trazable y status reviewable.\n7. Genera mi_document_impacts solo cuando haya evidencia raw; StrategyPlan y POV son review-first.\n8. Genera mi_recommendations como task drafts con status recommended. No conviertas a todo ni modifiques documentos sin aprobacion humana.\n9. Actualiza mi_runs con status, metrics y errores al terminar.\n\nImportante: las decisiones de X-Hype u otras reuniones no son importantes hasta que tengan raw_text + evidencia trazable + recomendacion aprobable.",
+      "ts": 1778630153096
+    },
+    {
+      "role": "user",
+      "text": "Empieza la configuracion de Meeting Intelligence para este cliente. Verifica APIs/MCP, usa Google Workspace/GOG para buscar y validar carpetas de Drive, acepta URL/ID solo como fallback, selecciona Notion database/page, carga filtros como clients relation y deja preparado el primer run sin aplicar cambios a documentos canonicos.",
+      "ts": 1778630153098
+    },
+    {
+      "role": "user",
+      "text": "Empieza la configuracion de Meeting Intelligence para este cliente. Verifica APIs/MCP, usa Google Workspace/GOG para buscar y validar carpetas de Drive, acepta URL/ID solo como fallback, selecciona Notion database/page, carga filtros como clients relation y deja preparado el primer run sin aplicar cambios a documentos canonicos.",
+      "ts": 1778630463737
+    },
+    {
+      "role": "user",
+      "text": "Ejecuta el raw sync de Meeting Intelligence para Hospital Capilar (hospital-capilar).\n\nRun ID en Neon: mir_4e8601a1329758ef1016b880\n\nObjetivo:\n1. Lee las fuentes aprobadas desde Neon en mi_sources para este slug. No uses JSON como storage nuevo.\n2. Verifica Google Workspace/GOG y Notion en Ajustes/APIs antes de leer.\n3. Para cada fuente aprobada, busca reuniones reales y descarga el contenido raw completo: transcript, doc exportado, notas originales o payload textual equivalente.\n4. Guarda el raw real en Neon:\n   - mi_meetings.status = raw_available cuando haya raw_text real.\n   - mi_meeting_artifacts.raw_text = contenido completo.\n   - mi_meeting_artifacts.summary_text = resumen generado despues de leer raw.\n   - mi_meeting_artifacts.source_payload = ids, URLs, timestamps y metadata de la fuente.\n   - checksum y fetched_at actualizados.\n5. Si no puedes descargar raw, deja la meeting en needs_raw_sync y registra el motivo en mi_runs.errors. No marques nada como processed.\n6. Con raw_text disponible, genera mi_insights para decisions/actions/insights/quotes/risks con evidence trazable y status reviewable.\n7. Genera mi_document_impacts solo cuando haya evidencia raw; StrategyPlan y POV son review-first.\n8. Genera mi_recommendations como task drafts con status recommended. No conviertas a todo ni modifiques documentos sin aprobacion humana.\n9. Actualiza mi_runs con status, metrics y errores al terminar.\n\nImportante: las decisiones de X-Hype u otras reuniones no son importantes hasta que tengan raw_text + evidencia trazable + recomendacion aprobable.",
+      "ts": 1778630463739
+    },
+    {
+      "role": "bot",
+      "text": "The model did not produce a response before the model idle timeout. Please try again, or increase `models.providers.<id>.timeoutSeconds` for slow local or self-hosted providers.",
+      "ts": 1778630548610,
+      "agent": "hamete"
+    },
+    {
+      "role": "user",
+      "text": "Empieza la configuracion de Meeting Intelligence para este cliente. Verifica APIs/MCP, usa Google Workspace/GOG para buscar y validar carpetas de Drive, acepta URL/ID solo como fallback, selecciona Notion database/page, carga filtros como clients relation y deja preparado el primer run sin aplicar cambios a documentos canonicos.",
+      "ts": 1778631382318
+    },
+    {
+      "role": "bot",
+      "text": "Verificación completa. Aquí el estado real:\n\n---\n\n**✅ Google Drive — OK**\n`gog` autenticado como `alfonso@growth4u.io`\nCarpeta confirmada: `17FpwSgL-XLAqaaH5-UccpADHkCFRcCHY` — 14 archivos accesibles, última reunión el 2026-03-18. Los 11 docs ya están procesados en el índice local.\n\n**✅ Notion API — OK**\nClave activa. Encontré 1 database y varios pages relacionados con HC:\n- **Database:** `TLDV Meetings Follow-up` — 50 entradas, todas internas de G4U (Cobee, Sync Daily, Migración). Ninguna tiene relación `Clients Growth4U` → HC.\n- **Pages encontradas:** \"Hospital Capilar\", reportes semanales, planes POC, reuniones CEO.\n\n**✅ Routing — Confirmado**\nPublish: `#intelligence` · Review owner: Alfonso · Cron: L-V 18:00 Europe/Madrid\n\n---\n\nDos decisiones para cerrar la configuración:\n\n:::ask\n{\"id\":\"q_notion\",\"prompt\":\"El TLDV DB existe pero no tiene reuniones de HC. ¿Cómo quieres usar Notion para este cliente?\",\"mode\":\"single\",\"options\":[{\"id\":\"tldv_db\",\"label\":\"Activar TLDV DB con filtro clients=HC (cuando haya entradas futuras)\"},{\"id\":\"pages_only\",\"label\":\"Monitorizar los pages de HC en Notion (reportes, planes, notas CEO)\"},{\"id\":\"both\",\"label\":\"Ambos: TLDV DB + pages de HC\"},{\"id\":\"no\",\"label\":\"No, solo Google Drive por ahora\"},{\"id\":\"other\",\"label\":\"Otro (lo escribo)\"}]}\n:::\n\n:::ask\n{\"id\":\"q_sales\",\"prompt\":\"El doc 'HC Growth4U Sales Presentation 2026-02-06' está en Drive pero no está indexado como reunión. ¿Qué hago?\",\"mode\":\"single\",\"options\":[{\"id\":\"add\",\"label\":\"Añadirlo al índice (procesarlo como reunión)\"},{\"id\":\"ignore\",\"label\":\"Ignorarlo — no es una reunión operativa\"},{\"id\":\"other\",\"label\":\"Otro (lo escribo)\"}]}\n:::",
+      "ts": 1778631479315,
+      "agent": "hamete"
+    },
+    {
+      "role": "user",
+      "text": "Ejecuta el raw sync de Meeting Intelligence para Hospital Capilar (hospital-capilar).\n\nRun ID en Neon: mir_bb6fe98d41ebe5cd50b7c087\n\nObjetivo:\n1. Lee las fuentes aprobadas desde Neon en mi_sources para este slug. No uses JSON como storage nuevo.\n2. Verifica Google Workspace/GOG y Notion en Ajustes/APIs antes de leer.\n3. Para cada fuente aprobada, busca reuniones reales y descarga el contenido raw completo: transcript, doc exportado, notas originales o payload textual equivalente.\n4. Guarda el raw real en Neon:\n   - mi_meetings.status = raw_available cuando haya raw_text real.\n   - mi_meeting_artifacts.raw_text = contenido completo.\n   - mi_meeting_artifacts.summary_text = resumen generado despues de leer raw.\n   - mi_meeting_artifacts.source_payload = ids, URLs, timestamps y metadata de la fuente.\n   - checksum y fetched_at actualizados.\n5. Si no puedes descargar raw, deja la meeting en needs_raw_sync y registra el motivo en mi_runs.errors. No marques nada como processed.\n6. Con raw_text disponible, genera mi_insights para decisions/actions/insights/quotes/risks con evidence trazable y status reviewable.\n7. Genera mi_document_impacts solo cuando haya evidencia raw; StrategyPlan y POV son review-first.\n8. Genera mi_recommendations como task drafts con status recommended. No conviertas a todo ni modifiques documentos sin aprobacion humana.\n9. Actualiza mi_runs con status, metrics y errores al terminar.\n\nImportante: las decisiones de X-Hype u otras reuniones no son importantes hasta que tengan raw_text + evidencia trazable + recomendacion aprobable.",
+      "ts": 1778631836239
+    },
+    {
+      "role": "user",
+      "text": "Empieza la configuracion de Meeting Intelligence para este cliente. Verifica APIs/MCP, usa Google Workspace/GOG para buscar y validar carpetas de Drive, acepta URL/ID solo como fallback, selecciona Notion database/page, carga filtros como clients relation y deja preparado el primer run sin aplicar cambios a documentos canonicos.",
+      "ts": 1778631836441
+    },
+    {
+      "role": "bot",
+      "text": "La verificación ya la tengo completa desde hace unos minutos. Resultado:\n\n---\n\n**✅ Google Drive (gog)** — `alfonso@growth4u.io`\nCarpeta `17FpwSgL-XLAqaaH5-UccpADHkCFRcCHY` accesible · 14 archivos · última reunión 2026-03-18 · 11 docs ya indexados\n\n**✅ Notion API** — activa\n- DB `TLDV Meetings Follow-up` encontrada, 50 entradas pero todas de G4U interno (sin relación HC)\n- Pages de HC encontrados: \"Hospital Capilar\", reportes semanales, Plan POC, reunión CEO\n\n**✅ Routing** — `#intelligence` · Alfonso · L-V 18:00 Europe/Madrid\n\n---\n\nNecesito dos decisiones tuyas para cerrar la config y dejar el primer run listo:\n\n:::ask\n{\"id\":\"q_notion\",\"prompt\":\"Notion API está activa pero el TLDV DB no tiene entradas de HC. ¿Cómo configuro Notion para este cliente?\",\"mode\":\"single\",\"options\":[{\"id\":\"tldv_future\",\"label\":\"Activar TLDV DB con filtro clients=HC (captura reuniones futuras cuando las haya)\"},{\"id\":\"pages_hc\",\"label\":\"Monitorizar los pages de HC en Notion (reportes, planes, notas CEO)\"},{\"id\":\"both\",\"label\":\"Ambos: TLDV DB + pages HC\"},{\"id\":\"no\",\"label\":\"No activar Notion — solo Google Drive\"},{\"id\":\"other\",\"label\":\"Otro (lo escribo)\"}]}\n:::\n\n:::ask\n{\"id\":\"q_sales\",\"prompt\":\"El doc 'HC Growth4U Sales Presentation 2026-02-06' está en Drive pero no está en el índice de reuniones. ¿Qué hago con él?\",\"mode\":\"single\",\"options\":[{\"id\":\"add\",\"label\":\"Indexarlo como reunión/sesión\"},{\"id\":\"ignore\",\"label\":\"Ignorarlo — no es una reunión operativa\"},{\"id\":\"other\",\"label\":\"Otro (lo escribo)\"}]}\n:::",
+      "ts": 1778631855644,
+      "agent": "hamete"
+    },
+    {
+      "role": "bot",
+      "text": "Encontré la DB Neon. Ahora levanto el run completo.",
+      "ts": 1778632357378,
+      "agent": "sancho"
+    },
+    {
+      "role": "bot",
+      "text": "DB Neon conectada. 21 reuniones en `needs_raw_sync`. Fuente aprobada: Drive `17FpwSgL-XLAqaaH5-UccpADHkCFRcCHY`. Actualizo run a `running` y proceso.",
+      "ts": 1778632357441,
+      "agent": "sancho"
+    },
+    {
+      "role": "bot",
+      "text": "Run en marcha. Voy a procesar en paralelo: raw download de 12 Drive docs + write a Neon. Delego el pipeline completo a un subagente para no bloquear la UI.",
+      "ts": 1778632357512,
+      "agent": "sancho"
+    },
+    {
+      "role": "bot",
+      "text": "Subagente en marcha. Mientras procesa los 12 docs y genera insights, aquí está lo que está ejecutando:\n\n**Raw sync iniciado — Run `mir_bb6fe98d41ebe5cd50b7c087`**\n\nLo que el subagente está haciendo:\n- `gog docs cat` sobre los 12 Google Docs de Drive\n- INSERT en `mi_meeting_artifacts` con raw_text completo + checksum\n- UPDATE `mi_meetings` → `raw_available` para las 12 con fuente\n- 9 reuniones sin fuente Drive → `needs_raw_sync` (duplicados, internas G4U, o post-marzo sin doc)\n- Extracción de decisions / action_items / insights / quotes / risks → `mi_insights`\n- `mi_document_impacts` (review-first, sin tocar docs canónicos)\n- `mi_recommendations` en status `recommended` (nada se aplica sin aprobación)\n- `mi_runs` → `completed` al terminar\n\nTe aviso cuando llegue el resultado. ~5-8 min.",
+      "ts": 1778632357577,
+      "agent": "sancho"
+    },
+    {
+      "role": "bot",
+      "text": "Voy a ejecutar el raw sync completo. Empiezo descargando los 12 docs de Drive en paralelo.",
+      "ts": 1778633365795,
+      "agent": "sancho"
+    },
+    {
+      "role": "bot",
+      "text": "El subagente agotó el tiempo. Lo ejecuto directamente aquí.",
+      "ts": 1778633478518,
+      "agent": "sancho"
+    },
+    {
+      "role": "bot",
+      "text": "Dos bugs — el CONFLICT clause y el JSON parse. Corrijo y relanzo.",
+      "ts": 1778633478548,
+      "agent": "sancho"
+    },
+    {
+      "role": "bot",
+      "text": "Run completado. Escribo el resultado y cierro.",
+      "ts": 1778633478565,
+      "agent": "sancho"
+    },
+    {
+      "role": "bot",
+      "text": "**Run `mir_bb6fe98d41ebe5cd50b7c087` — ✅ completed**\n\n---\n\n**Raw sync completado en Neon:**\n\n| | |\n|---|---|\n| **Meetings `raw_available`** | 12 (todos los docs de Drive descargados) |\n| **Meetings `needs_raw_sync`** | 9 (duplicados, internos G4U, o post-marzo sin fichero en Drive) |\n| **Artifacts escritos** | 12 raw_text completos en `mi_meeting_artifacts` |\n| **Insights generados** | 82 total — 15 decisions · 25 action_items · 20 insights · 12 quotes · 10 risks |\n| **Document impacts** | 10 (status `review`, sin tocar docs canónicos) |\n| **Recommendations** | 50 (status `recommended`, ninguna auto-aplicada) |\n\n**Aviso:** 6 docs muy largos (>12k chars) tuvieron fallo de JSON parse en la extracción de insights — el raw_text está guardado correctamente, pero esas reuniones no generaron insights en este run. Se pueden re-procesar con ventana reducida o manualmente.\n\n**Meetings post-marzo** (abril) sin doc Drive: cuando lleguen las notas a la carpeta, el cron de 18:00 L-V las recogerá automáticamente.",
+      "ts": 1778633478575,
+      "agent": "sancho"
+    }
+  ],
+  "createdAt": "2026-05-12T07:44:44.500Z",
+  "updatedAt": 1778633478575
+}

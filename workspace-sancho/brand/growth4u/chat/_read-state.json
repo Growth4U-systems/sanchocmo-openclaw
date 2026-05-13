@@ -93,7 +93,7 @@
     "lastReadTs": 1775746609562
   },
   "project-p00-strategic-plan": {
-    "lastReadTs": 1775776174715
+    "lastReadTs": 1778571040645
   },
   "task-p04-t01": {
     "lastReadTs": 1776259794524
@@ -216,7 +216,7 @@
     "lastReadTs": 1777589171619
   },
   "content-p-content-semana-18-t05-c01": {
-    "lastReadTs": 1778182189089
+    "lastReadTs": 1778584046306
   },
   "task-p-content-semana-18-t06": {
     "lastReadTs": 1777641080862
@@ -288,6 +288,12 @@
     "lastReadTs": 1778449687370
   },
   "content-p-content-semana-19-t01-c01": {
-    "lastReadTs": 1778531477059
+    "lastReadTs": 1778579979900
+  },
+  "task-p00-ff-t02": {
+    "lastReadTs": 1778626525657
+  },
+  "task-p03-t02": {
+    "lastReadTs": 1778632727459
   }
 }

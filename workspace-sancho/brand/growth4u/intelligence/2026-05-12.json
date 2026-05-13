@@ -1,0 +1,230 @@
+{
+  "date": "2026-05-12",
+  "sources_scanned": {
+    "google_drive": 1,
+    "notion": 3,
+    "slack": 0
+  },
+  "meetings_processed": [
+    "mtg-growth4u-sabrina-nittel-20260512",
+    "mtg-growth4u-onboarding-gutendurance-20260428",
+    "mtg-growth4u-cierre-xhype-20260423",
+    "mtg-growth4u-estrategica-xhype-20260420"
+  ],
+  "intelligence": {
+    "decisions": [
+      {
+        "decision": "Sergi Candel (Xhype) entra al programa Trust Engine Done With You de Growth4U",
+        "rationale": "Confianza en la metodología tras aclaración de Martin. Necesita que el equipo demuestre entendimiento real del negocio.",
+        "owner": "Sergi Candel + Martin Fila",
+        "alternatives": ["No entrar", "Retrasar decisión"],
+        "source": "Notion: Llamada Cierre Xhype — 23 abr 2026",
+        "date": "2026-04-23"
+      },
+      {
+        "decision": "Pago dividido 50/50 para Xhype: mitad al inicio, mitad a 30 días",
+        "rationale": "Sergi tiene gastos de lanzamiento físico en mayo (tarjetas + licencia Visa). Situación financiera sana pero con picos de tesorería.",
+        "owner": "Martin Fila (confirmado)",
+        "alternatives": ["Pago único"],
+        "source": "Notion: Llamada Cierre Xhype — 23 abr 2026",
+        "date": "2026-04-23"
+      },
+      {
+        "decision": "Xhype: comprimir plazos — estrategia lista antes del 30 de junio",
+        "rationale": "Lanzamiento físico xKard + KYC en junio 2026. Necesitan todo listo antes del verano.",
+        "owner": "Martin Fila + Sergi Candel",
+        "alternatives": ["Plazo estándar 6 meses"],
+        "source": "Notion: Llamada Cierre Xhype — 23 abr 2026",
+        "date": "2026-04-23"
+      },
+      {
+        "decision": "Gutendurance: nicho inicial = deportistas (MVP microbiota / salud intestinal)",
+        "rationale": "Perfil ICP con capacidad adquisitiva + problema claro. Expertos recomiendan especialización inicial antes de escalar.",
+        "owner": "Lola Mares (founder) — alineado con Martin Fila",
+        "alternatives": ["Salud femenina", "Dolor crónico", "Apertura general"],
+        "source": "Notion: Onboarding Gutendurance — 28 abr 2026",
+        "date": "2026-04-28"
+      },
+      {
+        "decision": "Decra (Sabrina Nittel): alineación interna previa a propuesta — seguimiento en primera semana de junio",
+        "rationale": "Organización compleja multi-regional (SAMYA). Sabrina necesita alinear stakeholders internos y definir prioridades por país antes de comprometerse.",
+        "owner": "Sabrina Nittel + Alfonso Sainz de Baranda",
+        "alternatives": ["Propuesta inmediata sin alineación interna"],
+        "source": "Drive: Sabrina Nittel / Alfonso — 12 mayo 2026",
+        "date": "2026-05-12"
+      }
+    ],
+    "action_items": [
+      {
+        "task": "Confirmar entrada de Xhype por WhatsApp a Sergi Candel",
+        "owner": "Martin Fila",
+        "deadline": "2026-04-24",
+        "context": "Sergi pidió confirmación el día 23/4 o 24/4 para tirar para adelante",
+        "source": "Notion: Llamada Cierre Xhype — 23 abr 2026"
+      },
+      {
+        "task": "Programar onboarding de Xhype tras confirmación",
+        "owner": "Martin Fila",
+        "deadline": "TBD (post-confirmación)",
+        "context": "Arranque mayo para tener estrategia lista antes del 30/6",
+        "source": "Notion: Llamada Cierre Xhype — 23 abr 2026"
+      },
+      {
+        "task": "Conseguir cupón de descuento del curso de IA de Alfonso (Growit) para Sergi + hermano",
+        "owner": "Martin Fila → Alfonso Sainz de Baranda",
+        "deadline": "TBD",
+        "context": "Petición personal de Sergi Candel",
+        "source": "Notion: Llamada Cierre Xhype — 23 abr 2026"
+      },
+      {
+        "task": "Preparar contenido del kick-off de Gutendurance (15/5): estructura programa + formulario inicial + esquema seguimiento semanal",
+        "owner": "Growth4U (Martin Fila)",
+        "deadline": "2026-05-15",
+        "context": "Kick-off oficial de Gutendurance/Innatica",
+        "source": "Notion: Onboarding Gutendurance — 28 abr 2026"
+      },
+      {
+        "task": "Aterrizar primera versión de Foundations (Sancho) para Gutendurance — primeros 30 días",
+        "owner": "Growth4U",
+        "deadline": "2026-05-15",
+        "context": "Base estratégica para el programa de Innatica",
+        "source": "Notion: Onboarding Gutendurance — 28 abr 2026"
+      },
+      {
+        "task": "Identificar necesidades específicas de Decra y analizar objetivos comerciales",
+        "owner": "Alfonso Sainz de Baranda",
+        "deadline": "TBD (antes del follow-up de junio)",
+        "context": "Prospect multi-regional SAMYA. Objetivos: B2C battery tests + B2B used vehicle inspection",
+        "source": "Drive: Sabrina Nittel / Alfonso — 12 mayo 2026"
+      },
+      {
+        "task": "Follow-up con Sabrina Nittel (Decra) — primera semana de junio",
+        "owner": "Alfonso Sainz de Baranda",
+        "deadline": "2026-06-07",
+        "context": "Sabrina necesita tiempo para alineación interna de stakeholders SAMYA",
+        "source": "Drive: Sabrina Nittel / Alfonso — 12 mayo 2026"
+      }
+    ],
+    "insights": [
+      {
+        "type": "pain_point",
+        "insight": "Decra tiene equipos de marketing con baja visibilidad, poco tráfico y generación de leads insuficiente. Los presupuestos de paid media son caros e insostenibles a largo plazo.",
+        "context": "Región SAMYA: Portugal, Italia, Francia, España, Marruecos. Cada país requiere estrategia diferente.",
+        "mentioned_by": "Sabrina Nittel (cliente prospect Decra)",
+        "source": "Drive: Sabrina Nittel — 12 mayo 2026"
+      },
+      {
+        "type": "feature",
+        "insight": "La metodología 'Trust Fortress' de G4U — bajar CAC 10–20% vía SEO + AAO — resonó con la problemática de Decra sobre dependencia de paid media.",
+        "context": "Alfonso la explicó en respuesta al pain point de paid media insostenible",
+        "mentioned_by": "Alfonso Sainz de Baranda",
+        "source": "Drive: Sabrina Nittel — 12 mayo 2026"
+      },
+      {
+        "type": "process",
+        "insight": "Decra no puede abordar todos los países SAMYA a la vez. Alfonso recomienda pilot en 1 mercado primero para demostrar resultados y aprender operativa del cliente.",
+        "context": "Cada país tiene websites, redes y estrategias diferentes",
+        "mentioned_by": "Alfonso Sainz de Baranda / Sabrina Nittel",
+        "source": "Drive: Sabrina Nittel — 12 mayo 2026"
+      },
+      {
+        "type": "pain_point",
+        "insight": "Sergi Candel (Xhype) no consume contenido formativo — paga por velocidad y dirección. No quiere vídeos ni academia.",
+        "context": "Relevante para el diseño del programa Done With You de Xhype",
+        "mentioned_by": "Sergi Candel",
+        "source": "Notion: Estratégica Xhype — 20 abr 2026"
+      },
+      {
+        "type": "trend",
+        "insight": "Xhype usa creadores pequeños (800–900 views) con revenue share + 2 niveles de referidos, sin pago directo en el 90% de casos. Regla: nunca trabajan con creador que no haya probado el producto.",
+        "context": "Metodología propia de Sergi probada con xKard. Creadores pequeños convierten mejor que los grandes.",
+        "mentioned_by": "Sergi Candel",
+        "source": "Notion: Estratégica Xhype — 20 abr 2026"
+      },
+      {
+        "type": "pain_point",
+        "insight": "Gutendurance: stack de laboratorio aún sin decidir (replicar protocolo vs. personalizar). Lola enfatiza que los protocolos rigurosos son críticos — muestras mal tratadas generan resultados erróneos y respuestas terapéuticas incorrectas.",
+        "context": "En discusión con partners de laboratorio",
+        "mentioned_by": "Lola Mares (co-founder Innatica)",
+        "source": "Notion: Onboarding Gutendurance — 28 abr 2026"
+      },
+      {
+        "type": "success",
+        "insight": "Xhype cerró ronda casi completa: valoración ~26–29M€, dilución 5–7%, levantar 1,3–1,8M€. Due diligence terminado. Ronda casi interna, sin anuncio público previsto.",
+        "context": "Lanzamiento físico xKard + KYC en junio 2026 como hito crítico",
+        "mentioned_by": "Sergi Candel",
+        "source": "Notion: Estratégica Xhype — 20 abr 2026"
+      }
+    ],
+    "quotes": [
+      {
+        "quote": "No nos gusta lo convencional. Somos disruptivos.",
+        "speaker": "Lola Mares (Innatica/Gutendurance)",
+        "context": "Presentando la dinámica de los founders y su filosofía de empresa",
+        "source": "Notion: Onboarding Gutendurance — 28 abr 2026"
+      },
+      {
+        "quote": "No es lo mismo hacer y replicar que hacer y personalizar.",
+        "speaker": "Lola Mares (Innatica/Gutendurance)",
+        "context": "Hablando sobre el stack de laboratorio y la importancia de los protocolos rigurosos",
+        "source": "Notion: Onboarding Gutendurance — 28 abr 2026"
+      },
+      {
+        "quote": "Las plataformas que están funcionando son las que se especializan al principio.",
+        "speaker": "Lola Mares (Innatica/Gutendurance)",
+        "context": "Justificando la decisión de empezar con nicho de deportistas",
+        "source": "Notion: Onboarding Gutendurance — 28 abr 2026"
+      },
+      {
+        "quote": "Nos interesa, nos interesa y te voy a decir de entrar, de hacerlo.",
+        "speaker": "Sergi Candel (Xhype)",
+        "context": "Confirmando la entrada al programa Trust Engine de Growth4U",
+        "source": "Notion: Llamada Cierre Xhype — 23 abr 2026"
+      },
+      {
+        "quote": "No te digo fastidiando en 6 meses ni nada por el estilo. Mitad ahora, mitad en 30 días.",
+        "speaker": "Sergi Candel (Xhype)",
+        "context": "Pidiendo el pago dividido 50/50",
+        "source": "Notion: Llamada Cierre Xhype — 23 abr 2026"
+      }
+    ],
+    "risks": [
+      {
+        "type": "dependency",
+        "description": "Gutendurance: kick-off el 15/5 requiere que Lola entregue datos de competidores, análisis de mercado y resultados de encuestas de 150 usuarios ANTES del kick-off. Riesgo si no llega a tiempo.",
+        "impact": "high",
+        "source": "Notion: Onboarding Gutendurance — 28 abr 2026"
+      },
+      {
+        "type": "dependency",
+        "description": "Gutendurance: pago de 1.700€ + IVA pendiente para iniciar el trabajo. Sin pago no hay inicio.",
+        "impact": "high",
+        "source": "Notion: Onboarding Gutendurance — 28 abr 2026"
+      },
+      {
+        "type": "open_question",
+        "description": "Decra (Sabrina Nittel): alineación interna compleja con múltiples stakeholders SAMYA. Riesgo de que el proceso se alargue más allá de junio o no llegue a propuesta.",
+        "impact": "medium",
+        "source": "Drive: Sabrina Nittel — 12 mayo 2026"
+      },
+      {
+        "type": "risk",
+        "description": "Xhype: Sergi no se sintió 100% escuchado en la 1ª llamada (Alfonso en situación personal). Requiere demostración explícita de comprensión del negocio en el onboarding.",
+        "impact": "medium",
+        "source": "Notion: Llamada Cierre Xhype — 23 abr 2026"
+      },
+      {
+        "type": "risk",
+        "description": "Xhype tiene Meta Ads pausada (desde 23/4) sin tracking ni analítica web. Riesgo de que arranquen el programa sin datos base suficientes.",
+        "impact": "medium",
+        "source": "Notion: Llamada Cierre Xhype — 23 abr 2026"
+      }
+    ]
+  },
+  "metadata": {
+    "extracted_at": "2026-05-12T16:35:00+02:00",
+    "scope": "hybrid",
+    "clients_tracked": ["Xhype (Sergi Candel)", "Gutendurance/Innatica (Lola Mares)", "Decra (Sabrina Nittel)"],
+    "last_verified": "2026-05-12"
+  }
+}

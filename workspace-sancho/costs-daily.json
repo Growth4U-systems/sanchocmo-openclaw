@@ -1,6 +1,6 @@
 {
   "period": "2026-05",
-  "updatedAt": "2026-05-11T20:16:13.759018",
+  "updatedAt": "2026-05-12T00:33:08.910773",
   "days": {
     "2026-05-01": {
       "total_usd": 21.8005,
@@ -54,7 +54,7 @@
       "total_usd": 8.9309,
       "total_turns": 125,
       "clients": {},
-      "system_usd": 3.5332
+      "system_usd": 2.4412
     },
     "2026-05-10": {
       "total_usd": 46.4388,
@@ -63,10 +63,10 @@
       "system_usd": 1.2562
     },
     "2026-05-11": {
-      "total_usd": 28.8703,
-      "total_turns": 544,
+      "total_usd": 45.1906,
+      "total_turns": 888,
       "clients": {},
-      "system_usd": 23.1716
+      "system_usd": 28.9587
     }
   }
 }

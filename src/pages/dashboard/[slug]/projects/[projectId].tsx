@@ -695,7 +695,11 @@ export default function ProjectDetailPage() {
       )}
 
       {/* Document SlideOver */}
-      <DocSlideOver slug={slug} docPath={openDocPath ? `brand/${slug}/${openDocPath}` : null} onClose={() => setOpenDocPath(null)} />
+      <DocSlideOver
+        slug={slug}
+        docPath={openDocPath}
+        onClose={() => setOpenDocPath(null)}
+      />
     </DashboardLayout>
   );
 }

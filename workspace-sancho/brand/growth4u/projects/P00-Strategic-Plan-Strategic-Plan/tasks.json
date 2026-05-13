@@ -13,12 +13,12 @@
     "completed": "2026-03-22",
     "discord_thread_id": null,
     "output_files": [
-      "brand/growth4u/strategic-plan/current.md"
+      "brand/growth4u/strategic-plan/strategic-plan.current.md"
     ],
     "documents": [
       {
         "name": "Strategic Plan Q2 2026",
-        "path": "brand/growth4u/strategic-plan/current.md",
+        "path": "brand/growth4u/strategic-plan/strategic-plan.current.md",
         "type": "primary"
       }
     ],

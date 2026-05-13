@@ -1,8 +1,8 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import fs from "fs";
-import path from "path";
 import { withErrorHandler } from "@/lib/api-middleware";
 import { BASE } from "@/lib/data/paths";
+import { resolveWorkspaceDocPath } from "@/lib/server/doc-paths";
 
 /**
  * GET /api/chat/doc/:path
@@ -16,16 +16,30 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   const docPath = Array.isArray(pathParts) ? pathParts.join("/") : pathParts;
   if (!docPath) return res.status(400).json({ error: "Missing path" });
 
-  // Only allow reading from brand/ directory
-  const fullPath = path.join(BASE, "brand", docPath);
-  const resolved = path.resolve(fullPath);
-  if (!resolved.startsWith(path.resolve(path.join(BASE, "brand")))) {
+  const parts = docPath.replace(/^\/+/, "").split("/").filter(Boolean);
+  const slug = parts[0] === "brand" ? parts[1] : parts[0];
+  const brandPath = parts[0] === "brand" ? docPath : `brand/${docPath}`;
+
+  let resolved;
+  try {
+    resolved = resolveWorkspaceDocPath(BASE, brandPath, { slug, requireBrand: true });
+  } catch {
     return res.status(403).json({ error: "Forbidden" });
   }
 
   try {
-    const content = fs.readFileSync(resolved, "utf-8");
-    res.status(200).json({ ok: true, path: docPath, content });
+    if (!resolved.exists) {
+      return res.status(404).json({ ok: false, error: "Not found", path: resolved.canonicalPath });
+    }
+    const content = fs.readFileSync(resolved.absPath, "utf-8");
+    res.status(200).json({
+      ok: true,
+      path: resolved.canonicalPath.replace(/^brand\//, ""),
+      canonicalPath: resolved.canonicalPath,
+      requestedPath: docPath,
+      usedFallback: resolved.usedFallback,
+      content,
+    });
   } catch {
     res.status(404).json({ ok: false, error: "Not found" });
   }

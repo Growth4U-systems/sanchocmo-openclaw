@@ -1,7 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import Head from "next/head";
 import Link from "next/link";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import {
   Check,
   ChevronRight,
@@ -15,12 +17,12 @@ import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { useSlugSync } from "@/hooks/useSlugSync";
 import { useClients } from "@/hooks/useClients";
 import { useOpenChat } from "@/hooks/useChat";
-import { buildTaskThread } from "@/lib/chat-openers";
+import { buildTaskThread, type ThreadConfig } from "@/lib/chat-openers";
 import { cn } from "@/lib/utils";
 import type { Project, Task } from "@/types";
 
 type View = "overview" | "sources" | "meetings" | "decisions" | "pov" | "impact" | "proposals";
-type Status = "processed" | "needs review" | "duplicate" | "low confidence";
+type Status = "needs_raw_sync" | "raw_available" | "processed" | "needs_review" | "failed";
 type ImpactStatus = "no impact" | "possible update" | "conflict" | "proposal ready";
 type Priority = "high" | "medium" | "low";
 
@@ -31,12 +33,17 @@ interface Meeting {
   time: string;
   source: string;
   status: Status;
+  rawStatus?: string;
+  hasRaw?: boolean;
+  hasSummary?: boolean;
   type: string;
   participants: string[];
   decisions: number;
   actions: number;
   file?: string;
   sourceId?: string;
+  sourceUrl?: string;
+  fetchedAt?: string | null;
 }
 
 interface SourceScope {
@@ -95,15 +102,20 @@ interface SetupTaskInfo {
 }
 
 interface IntelligenceItem {
+  id?: string;
   type: "Decision" | "Action" | "Insight" | "Quote" | "Risk" | "Run";
   title: string;
   source: string;
   date: string;
   confidence: string;
+  status?: "draft" | "reviewable" | "accepted" | "rejected" | "converted";
+  evidenceRaw?: boolean;
+  meetingId?: string | null;
   tone: "ok" | "warn" | "critical" | "proposal";
 }
 
 interface DecisionEntry {
+  id?: string;
   date: string;
   decision: string;
   rationale: string;
@@ -111,14 +123,21 @@ interface DecisionEntry {
   source: string;
   documents: string[];
   status: "Logged" | "Linked" | "Proposal pending" | "Applied" | "Rejected";
+  evidenceRaw?: boolean;
+  meetingId?: string | null;
 }
 
 interface ProposalEntry {
   id: string;
   title: string;
+  description?: string | null;
   priority: Priority;
   doc: string;
   source: string;
+  status?: "recommended" | "approved" | "rejected" | "converted";
+  taskStatus?: string;
+  meetingId?: string | null;
+  insightId?: string | null;
 }
 
 interface DocumentRecord {
@@ -137,10 +156,18 @@ interface MeetingIntelligenceState {
     meetings: number;
     decisions: number;
     actions: number;
+    proposals?: number;
+    sources?: number;
   };
   intelligence: IntelligenceItem[];
   decisions: DecisionEntry[];
+  documents: DocumentRecord[];
   proposals: ProposalEntry[];
+  storage?: {
+    configured: boolean;
+    provider: string;
+    message?: string;
+  };
   lastSync: string | null;
   lastCheckStatus: string | null;
   lastRun: {
@@ -151,56 +178,27 @@ interface MeetingIntelligenceState {
   } | null;
 }
 
-const fallbackMeetings: Meeting[] = [
-  {
-    id: "m-001",
-    title: "Lead-Nurturing Madrid",
-    date: "2026-03-18",
-    time: "10:30",
-    source: "Drive",
-    status: "processed" as Status,
-    type: "technical-operational",
-    participants: ["Ramiro", "Alfonso", "Heiver"],
-    decisions: 5,
-    actions: 6,
-  },
-  {
-    id: "m-002",
-    title: "Analisis de Mercado y Competidores",
-    date: "2026-03-10",
-    time: "16:00",
-    source: "Notion",
-    status: "needs review" as Status,
-    type: "strategic-market-analysis",
-    participants: ["Ramiro", "Growth4U"],
-    decisions: 7,
-    actions: 20,
-  },
-  {
-    id: "m-003",
-    title: "Status arquitectura Hospital Capilar",
-    date: "2026-03-04",
-    time: "09:15",
-    source: "Slack",
-    status: "low confidence" as Status,
-    type: "strategic-planning",
-    participants: ["Tech", "Growth"],
-    decisions: 6,
-    actions: 11,
-  },
-  {
-    id: "m-004",
-    title: "GTM Hospital Capilar",
-    date: "2026-02-27",
-    time: "12:00",
-    source: "Manual",
-    status: "duplicate" as Status,
-    type: "internal-growth4u",
-    participants: ["Alfonso"],
-    decisions: 5,
-    actions: 8,
-  },
-];
+interface MeetingDetailPayload {
+  meeting: Meeting;
+  artifact: {
+    rawText: string | null;
+    summaryText: string | null;
+    sourcePayload: Record<string, unknown> | null;
+    checksum: string | null;
+    fetchedAt: string | null;
+  } | null;
+  insights: IntelligenceItem[];
+  decisions: DecisionEntry[];
+  impacts: Array<{
+    id: string;
+    documentName: string;
+    status: string;
+    severity: string;
+    reason: string | null;
+    proposedChange: string | null;
+  }>;
+  recommendations: ProposalEntry[];
+}
 
 function meetingDateTime(meeting: Meeting) {
   return meeting.time ? `${meeting.date} · ${meeting.time}` : meeting.date;
@@ -308,30 +306,6 @@ function normalizeClientConfig(slug: string, input: Partial<MeetingIntelligenceC
   };
 }
 
-const fallbackIntelligence: IntelligenceItem[] = [
-  { type: "Decision", title: "Actualizar criterio operativo desde la reunion", source: "Drive", date: "2026-03-18", confidence: "92%", tone: "ok" },
-  { type: "Decision", title: "Revisar implicaciones para StrategyPlan", source: "Drive", date: "2026-03-18", confidence: "86%", tone: "critical" },
-  { type: "Insight", title: "Convertir insight en propuesta para POV", source: "Notion", date: "2026-03-10", confidence: "81%", tone: "proposal" },
-  { type: "Action", title: "Asignar owner y deadline", source: "Slack", date: "2026-03-04", confidence: "78%", tone: "warn" },
-  { type: "Quote", title: "Nuevo lenguaje de cliente para objeciones", source: "Manual", date: "2026-02-27", confidence: "73%", tone: "ok" },
-  { type: "Risk", title: "Posible contradiccion con posicionamiento", source: "Notion", date: "2026-03-10", confidence: "69%", tone: "critical" },
-];
-
-const documents: DocumentRecord[] = [
-  { name: "StrategyPlan", area: "Prioridades, horizonte y apuestas activas", health: "Needs review", status: "conflict" as ImpactStatus, proposals: 2, conflicts: 1, critical: true },
-  { name: "Company Brief", area: "Contexto canonico de compania", health: "Stable", status: "possible update" as ImpactStatus, proposals: 1, conflicts: 0 },
-  { name: "Positioning", area: "Diferenciacion y tesis comercial", health: "Watch", status: "possible update" as ImpactStatus, proposals: 2, conflicts: 1 },
-  { name: "Brand Voice", area: "Lenguaje, tono y reglas editoriales", health: "Stable", status: "no impact" as ImpactStatus, proposals: 0, conflicts: 0 },
-  { name: "Content Pillars", area: "Temas, angulos y prioridades", health: "Proposal ready", status: "proposal ready" as ImpactStatus, proposals: 3, conflicts: 0 },
-  { name: "POV Bank", area: "Creencias, pruebas, objeciones y quotes", health: "Needs review", status: "proposal ready" as ImpactStatus, proposals: 4, conflicts: 1 },
-];
-
-const fallbackProposals: ProposalEntry[] = [
-  { id: "PROP-001", title: "Revisar StrategyPlan por decision reciente", priority: "high" as Priority, doc: "StrategyPlan", source: "Lead-Nurturing Madrid" },
-  { id: "PROP-002", title: "Anadir proof point a POV Bank", priority: "medium" as Priority, doc: "POV Bank", source: "Analisis de Mercado" },
-  { id: "PROP-003", title: "Actualizar customer language", priority: "low" as Priority, doc: "Brand Voice", source: "GTM Hospital Capilar" },
-];
-
 const povPillars = [
   { name: "Systems over tactics", belief: "Growth es un sistema repetible, no una coleccion de hacks.", suggestions: ["New proof point", "New customer language", "Stronger angle"] },
   { name: "Trust-based acquisition", belief: "La adquisicion duradera crea activos de confianza.", suggestions: ["New proof point", "Objections detected"] },
@@ -348,6 +322,12 @@ const viewLabels: { key: View; label: string }[] = [
   { key: "impact", label: "Document Impact" },
   { key: "proposals", label: "Proposal Review" },
 ];
+
+const EMPTY_MEETINGS: Meeting[] = [];
+const EMPTY_INTELLIGENCE: IntelligenceItem[] = [];
+const EMPTY_DECISIONS: DecisionEntry[] = [];
+const EMPTY_DOCUMENTS: DocumentRecord[] = [];
+const EMPTY_PROPOSALS: ProposalEntry[] = [];
 
 const hashToView: Record<string, View> = {
   overview: "overview",
@@ -372,21 +352,48 @@ function viewToHash(view: View) {
 }
 
 export default function IntelligencePage() {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  return (
+    <>
+      <Head>
+        <title>Meeting Intelligence - Mission Control</title>
+      </Head>
+      {mounted ? (
+        <IntelligencePageClient />
+      ) : (
+        <div className="min-h-screen bg-background p-6 text-sm text-muted-foreground">
+          Loading Meeting Intelligence...
+        </div>
+      )}
+    </>
+  );
+}
+
+function IntelligencePageClient() {
   const slug = useSlugSync();
   const { data: clients } = useClients();
   const openChat = useOpenChat();
   const [view, setView] = useState<View>("overview");
-  const [selectedMeeting, setSelectedMeeting] = useState<Meeting>(fallbackMeetings[0]);
+  const [selectedMeeting, setSelectedMeeting] = useState<Meeting | null>(null);
   const [sourceFilter, setSourceFilter] = useState("all");
   const [sourceConfig, setSourceConfig] = useState<MeetingIntelligenceConfig>(() => localDefaultConfig(""));
   const [meetingState, setMeetingState] = useState<MeetingIntelligenceState | null>(null);
+  const [stateVersion, setStateVersion] = useState(0);
   const [sourcesLoading, setSourcesLoading] = useState(false);
   const [sourcesSaving, setSourcesSaving] = useState(false);
   const [sourcesSavedAt, setSourcesSavedAt] = useState<string | null>(null);
+  const [sourcesError, setSourcesError] = useState<string | null>(null);
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>({});
   const [setupTask, setSetupTask] = useState<SetupTaskInfo | null>(null);
   const [setupTaskLoading, setSetupTaskLoading] = useState(false);
   const [setupTaskSaving, setSetupTaskSaving] = useState(false);
+  const [rawSyncStarting, setRawSyncStarting] = useState(false);
+  const [rawSyncMessage, setRawSyncMessage] = useState<string | null>(null);
 
   const clientName = useMemo(() => {
     const client = clients?.find((c) => c.slug === slug);
@@ -396,24 +403,17 @@ export default function IntelligencePage() {
     () => normalizeClientConfig(slug, sourceConfig as Partial<MeetingIntelligenceConfig> & Record<string, unknown>),
     [slug, sourceConfig]
   );
-  const activeMeetings = meetingState ? meetingState.meetings : fallbackMeetings;
-  const activeIntelligence = meetingState ? meetingState.intelligence : fallbackIntelligence;
-  const activeProposals = meetingState ? meetingState.proposals : fallbackProposals;
-  const activeDecisions = meetingState ? meetingState.decisions : [];
-  const activeDocuments = useMemo(() => documents.map((doc) => {
-    const proposalCount = activeProposals.filter((proposal) => proposal.doc === doc.name).length;
-    return {
-      ...doc,
-      proposals: proposalCount,
-      conflicts: 0,
-      health: proposalCount > 0 ? "Proposal pending" : doc.critical ? "Critical, no pending impact" : "Stable",
-      status: proposalCount > 0 ? "proposal ready" as ImpactStatus : "no impact" as ImpactStatus,
-    };
-  }), [activeProposals]);
+  const activeMeetings = meetingState?.meetings ?? EMPTY_MEETINGS;
+  const activeIntelligence = meetingState?.intelligence ?? EMPTY_INTELLIGENCE;
+  const activeProposals = meetingState?.proposals ?? EMPTY_PROPOSALS;
+  const activeDecisions = meetingState?.decisions ?? EMPTY_DECISIONS;
+  const activeDocuments = meetingState?.documents ?? EMPTY_DOCUMENTS;
   const activeTotals = {
     meetings: meetingState?.totals.meetings ?? activeMeetings.length,
     decisions: meetingState?.totals.decisions ?? activeMeetings.reduce((sum, meeting) => sum + meeting.decisions, 0),
     actions: meetingState?.totals.actions ?? activeMeetings.reduce((sum, meeting) => sum + meeting.actions, 0),
+    proposals: meetingState?.totals.proposals ?? activeProposals.length,
+    sources: meetingState?.totals.sources ?? 0,
   };
 
   const filteredMeetings = sourceFilter === "all"
@@ -439,7 +439,7 @@ export default function IntelligencePage() {
       fetch(`/api/meeting-intelligence/config?slug=${slug}`).then((res) => res.json()),
       fetch(`/api/meeting-intelligence/status?slug=${slug}`).then((res) => res.json()).catch(() => ({ services: {} })),
       fetch(`/api/meeting-intelligence/setup-task?slug=${slug}`).then((res) => res.json()).catch(() => ({ setupTask: null })),
-      fetch(`/api/meeting-intelligence/state?slug=${slug}&v=${Date.now()}`).then((res) => res.json()).catch(() => ({ meetings: [], intelligence: [], decisions: [], proposals: [], totals: null })),
+      fetch(`/api/meeting-intelligence/state?slug=${slug}&v=${Date.now()}`).then((res) => res.json()).catch(() => ({ meetings: [], intelligence: [], decisions: [], documents: [], proposals: [], totals: null })),
     ])
       .then(([data, status, setup, state]) => {
         if (!cancelled) setSourceConfig(normalizeClientConfig(slug, data.config || localDefaultConfig(slug)));
@@ -451,7 +451,9 @@ export default function IntelligencePage() {
             totals: state.totals || { meetings: 0, decisions: 0, actions: 0 },
             intelligence: Array.isArray(state.intelligence) ? state.intelligence : [],
             decisions: Array.isArray(state.decisions) ? state.decisions : [],
+            documents: Array.isArray(state.documents) ? state.documents : [],
             proposals: Array.isArray(state.proposals) ? state.proposals : [],
+            storage: state.storage,
             lastSync: state.lastSync || null,
             lastCheckStatus: state.lastCheckStatus || null,
             lastRun: state.lastRun || null,
@@ -469,22 +471,43 @@ export default function IntelligencePage() {
         if (!cancelled) setSetupTaskLoading(false);
       });
     return () => { cancelled = true; };
-  }, [slug]);
+  }, [slug, stateVersion]);
+
+  useEffect(() => {
+    if (!activeMeetings.length) {
+      setSelectedMeeting(null);
+      return;
+    }
+    if (!selectedMeeting || !activeMeetings.some((meeting) => meeting.id === selectedMeeting.id)) {
+      setSelectedMeeting(activeMeetings[0]);
+    }
+  }, [activeMeetings, selectedMeeting]);
 
   async function saveSourceConfig() {
-    if (!slug) return;
+    if (!slug || sourcesSaving) return;
     setSourcesSaving(true);
-    const res = await fetch(`/api/meeting-intelligence/config?slug=${slug}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ config: effectiveSourceConfig }),
-    });
-    const data = await res.json();
-    if (data.config) {
+    setSourcesError(null);
+    try {
+      const res = await fetch(`/api/meeting-intelligence/config?slug=${encodeURIComponent(slug)}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ config: effectiveSourceConfig }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "No se pudo guardar la configuracion.");
+      if (!data.config) throw new Error("La API no devolvio la configuracion guardada.");
       setSourceConfig(normalizeClientConfig(slug, data.config));
       setSourcesSavedAt(new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }));
+      setStateVersion((version) => version + 1);
+    } catch (error) {
+      setSourcesError(error instanceof TypeError
+        ? "No se pudo conectar con Mission Control. Recarga la pagina y vuelve a guardar."
+        : error instanceof Error
+          ? error.message
+          : "No se pudo guardar la configuracion.");
+    } finally {
+      setSourcesSaving(false);
     }
-    setSourcesSaving(false);
   }
 
   async function ensureSetupTask() {
@@ -502,18 +525,50 @@ export default function IntelligencePage() {
     return next as SetupTaskInfo | null;
   }
 
-  async function openSetupTaskChat() {
-    if (!slug) return;
-    const info = setupTask || await ensureSetupTask();
-    if (!info) return;
-    openChat(slug, buildTaskThread(slug, info.task.id, info.task.name, info.project.id, {
+  function buildSetupTaskChatConfig(info: SetupTaskInfo): ThreadConfig {
+    return buildTaskThread(slug, info.task.id, info.task.name, info.project.id, {
       taskSkill: info.task.skill,
       taskChannel: info.task.channel,
       taskStatus: info.task.status,
       taskType: info.task.type,
       pillar: info.task.pillar,
       deliverableFile: typeof info.task.deliverable_file === "string" ? info.task.deliverable_file : undefined,
-    }));
+    });
+  }
+
+  async function openSetupTaskChat() {
+    if (!slug) return;
+    const info = setupTask || await ensureSetupTask();
+    if (!info) return;
+    openChat(slug, buildSetupTaskChatConfig(info));
+  }
+
+  async function startRawSyncRun() {
+    if (!slug || rawSyncStarting) return;
+    setRawSyncStarting(true);
+    setRawSyncMessage(null);
+    try {
+      const runRes = await fetch("/api/meeting-intelligence/run", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          slug,
+          trigger: "manual_ui",
+          limit: 30,
+        }),
+      });
+      const runData = await runRes.json();
+      if (!runRes.ok || !runData.ok) {
+        throw new Error(runData?.storage?.message || runData?.error || "Could not create Neon run");
+      }
+      const metrics = runData.metrics || {};
+      setRawSyncMessage(`Run automático completado: ${metrics.rawAvailable || 0} meetings con raw, ${metrics.insights || 0} insights, ${metrics.recommendations || 0} recommendations.`);
+      setStateVersion((version) => version + 1);
+    } catch (error) {
+      setRawSyncMessage(error instanceof Error ? error.message : "No se pudo lanzar el raw sync.");
+    } finally {
+      setRawSyncStarting(false);
+    }
   }
 
   const configuredDriveCount = effectiveSourceConfig.sources.googleDrive.enabled
@@ -531,7 +586,7 @@ export default function IntelligencePage() {
   return (
     <DashboardLayout>
       <Head>
-        <title>Intelligence — {clientName} — Mission Control</title>
+        <title>{`Intelligence — ${clientName} — Mission Control`}</title>
       </Head>
       <div className="space-y-5">
         <header className="border-b-2 border-border pb-5">
@@ -556,11 +611,17 @@ export default function IntelligencePage() {
               { value: activeTotals.meetings, label: "Meetings" },
               { value: activeTotals.decisions, label: "Decisions" },
               { value: activeTotals.actions, label: "Actions" },
-              { value: activeProposals.length, label: "Proposals" },
-              { value: configuredSourceCount, label: "Sources" },
+              { value: activeTotals.proposals, label: "Proposals" },
+              { value: activeTotals.sources, label: "Sources" },
             ]}
           />
         </header>
+
+        {meetingState?.storage?.configured === false && (
+          <section className="rounded-sc-md border-[2px] border-yellow-400/60 bg-yellow-50 p-3 text-[12px] leading-relaxed text-muted-foreground">
+            <strong className="text-foreground">Neon pendiente:</strong> {meetingState.storage.message}
+          </section>
+        )}
 
         <SetupTaskCard
           slug={slug}
@@ -572,7 +633,15 @@ export default function IntelligencePage() {
           googleStatus={connectionStatus.googleWorkspace?.status || "unknown"}
           notionStatus={connectionStatus.notion?.status || "unknown"}
           onOpenChat={() => void openSetupTaskChat()}
+          onRunRawSync={() => void startRawSyncRun()}
+          rawSyncStarting={rawSyncStarting}
         />
+
+        {rawSyncMessage && (
+          <section className="rounded-sc-md border-[2px] border-border bg-card p-3 text-[12px] leading-relaxed text-muted-foreground">
+            {rawSyncMessage}
+          </section>
+        )}
 
         <nav className="flex gap-2 overflow-x-auto">
           {viewLabels.map((tab) => (
@@ -601,7 +670,7 @@ export default function IntelligencePage() {
             intelligence={activeIntelligence}
             documents={activeDocuments}
             proposals={activeProposals}
-            selectedMeetingId={selectedMeeting.id}
+            selectedMeetingId={selectedMeeting?.id || null}
             sourceFilter={sourceFilter}
             onFilter={setSourceFilter}
             onSelect={(meeting) => {
@@ -618,16 +687,19 @@ export default function IntelligencePage() {
             loading={sourcesLoading}
             saving={sourcesSaving}
             savedAt={sourcesSavedAt}
+            saveError={sourcesError}
             setConfig={setSourceConfig}
             onSave={saveSourceConfig}
             onOpenSetupChat={() => void openSetupTaskChat()}
+            onRunRawSync={() => void startRawSyncRun()}
+            rawSyncStarting={rawSyncStarting}
           />
         )}
         {view === "meetings" && <MeetingDetail meeting={selectedMeeting} documents={activeDocuments} proposals={activeProposals} onView={setView} />}
         {view === "decisions" && <DecisionLog decisions={activeDecisions} meetings={activeMeetings} onSelect={(meeting) => { setSelectedMeeting(meeting); setView("meetings"); }} />}
-        {view === "pov" && <PovDatabase meetingTitle={selectedMeeting.title} onView={setView} />}
+        {view === "pov" && <PovDatabase meetingTitle={selectedMeeting?.title || "Meeting Intelligence"} onView={setView} />}
         {view === "impact" && <DocumentImpact documents={activeDocuments} onView={setView} />}
-        {view === "proposals" && <ProposalReview meeting={selectedMeeting} proposals={activeProposals} />}
+        {view === "proposals" && <ProposalReview slug={slug} meeting={selectedMeeting} proposals={activeProposals} onChanged={() => setStateVersion((version) => version + 1)} />}
       </div>
     </DashboardLayout>
   );
@@ -648,7 +720,7 @@ function Overview({
   intelligence: IntelligenceItem[];
   documents: DocumentRecord[];
   proposals: ProposalEntry[];
-  selectedMeetingId: string;
+  selectedMeetingId: string | null;
   sourceFilter: string;
   onFilter: (source: string) => void;
   onSelect: (meeting: Meeting) => void;
@@ -686,11 +758,21 @@ function Overview({
             No extracted intelligence yet. Run the setup task scan to populate decisions, actions, insights, quotes and risks.
           </div>
         ) : intelligence.map((item) => (
-          <MiniRow key={`${item.type}-${item.title}`} title={item.title} eyebrow={item.type} meta={`${item.source} · ${item.date} · ${item.confidence}`} tone={item.tone} />
+          <MiniRow
+            key={item.id || `${item.type}-${item.title}`}
+            title={item.title}
+            eyebrow={`${item.type}${item.status ? ` · ${item.status}` : ""}`}
+            meta={`${item.source} · ${item.date || "no date"} · ${item.evidenceRaw ? item.confidence : "raw missing"}`}
+            tone={item.tone}
+          />
         ))}
       </Column>
       <Column title="Document Impact" meta="StrategyPlan">
-        {documents.slice(0, 5).map((doc) => (
+        {documents.length === 0 ? (
+          <div className="rounded-lg border border-dashed border-border bg-background p-4 text-[12px] leading-relaxed text-muted-foreground">
+            No document impacts in Neon yet. Impacts only appear after raw evidence is fetched and reviewed.
+          </div>
+        ) : documents.slice(0, 5).map((doc) => (
           <button
             key={doc.name}
             type="button"
@@ -746,6 +828,8 @@ function SetupTaskCard({
   googleStatus,
   notionStatus,
   onOpenChat,
+  onRunRawSync,
+  rawSyncStarting,
 }: {
   slug: string;
   setupTask: SetupTaskInfo | null;
@@ -756,16 +840,26 @@ function SetupTaskCard({
   googleStatus: string;
   notionStatus: string;
   onOpenChat: () => void;
+  onRunRawSync: () => void;
+  rawSyncStarting: boolean;
 }) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const taskHref = setupTask
     ? `/dashboard/${slug}/projects/${setupTask.project.id}/tasks/${setupTask.task.id}`
     : "";
   const sourceTone = configuredSourceCount > 1 ? "ok" : "proposal";
   const sourceLabel = configuredSourceCount > 1 ? `${configuredSourceCount} sources configured` : "sources pending";
 
-  const description = compact
-    ? "Disponible para reabrir el setup desde el chat de la tarea cuando haya que cambiar fuentes o filtros."
-    : "El setup vive como tarea normal de Foundation/Onboarding. Desde su chat, Sancho verifica APIs, busca carpetas con Google Workspace, selecciona Notion, guarda filtros y ejecuta el primer run.";
+  const description = mounted
+    ? compact
+      ? "El cron automatico baja raw, genera insights y crea recommendations. El chat solo se usa para cambiar fuentes o filtros."
+      : "El setup vive como tarea normal de Foundation/Onboarding. Desde su chat, Sancho verifica APIs, busca carpetas con Google Workspace, selecciona Notion y guarda filtros; el procesamiento lo hace el cron automatico."
+    : "";
 
   return (
     <section
@@ -779,7 +873,7 @@ function SetupTaskCard({
             <Badge tone={setupTask ? "ok" : "proposal"}>{setupTask ? setupTask.task.status : "not created"}</Badge>
             <Badge tone={sourceTone}>{sourceLabel}</Badge>
           </div>
-          <p className="mt-1 text-[12px] leading-relaxed text-muted-foreground">
+          <p suppressHydrationWarning className="mt-1 text-[12px] leading-relaxed text-muted-foreground">
             {description}
           </p>
           <div className={cn("flex flex-wrap gap-1.5 text-[10px] text-muted-foreground", compact ? "mt-1" : "mt-2")}>
@@ -802,6 +896,9 @@ function SetupTaskCard({
               <ActionButton primary onClick={onOpenChat}>
                 <MessageSquareText className="h-3 w-3" /> Open setup chat
               </ActionButton>
+              <ActionButton disabled={rawSyncStarting} onClick={onRunRawSync}>
+                <RefreshCw className="h-3 w-3" /> {rawSyncStarting ? "Running..." : "Run cron now"}
+              </ActionButton>
             </>
           ) : (
             <ActionButton primary disabled={loading || saving} onClick={onOpenChat}>
@@ -820,18 +917,24 @@ function SourcesSetup({
   loading,
   saving,
   savedAt,
+  saveError,
   setConfig,
   onSave,
   onOpenSetupChat,
+  onRunRawSync,
+  rawSyncStarting,
 }: {
   config: MeetingIntelligenceConfig;
   connectionStatus: ConnectionStatus;
   loading: boolean;
   saving: boolean;
   savedAt: string | null;
+  saveError: string | null;
   setConfig: (config: MeetingIntelligenceConfig) => void;
   onSave: () => void;
   onOpenSetupChat: () => void;
+  onRunRawSync: () => void;
+  rawSyncStarting: boolean;
 }) {
   const update = (next: Partial<MeetingIntelligenceConfig>) => setConfig({ ...config, ...next });
   const updateSources = (sources: Partial<MeetingIntelligenceConfig["sources"]>) => setConfig({
@@ -868,6 +971,9 @@ function SourcesSetup({
             </label>
             <ActionButton primary onClick={onOpenSetupChat}>
               <MessageSquareText className="h-3 w-3" /> Change with Sancho
+            </ActionButton>
+            <ActionButton disabled={rawSyncStarting} onClick={onRunRawSync}>
+              <RefreshCw className="h-3 w-3" /> {rawSyncStarting ? "Running automatic sync..." : "Run cron now"}
             </ActionButton>
           </div>
         </div>
@@ -1009,6 +1115,7 @@ function SourcesSetup({
           </button>
         </div>
         {savedAt && <p className="mt-2 text-right text-[11px] text-muted-foreground">Saved at {savedAt}</p>}
+        {saveError && <p className="mt-2 text-right text-[11px] font-bold text-rust">{saveError}</p>}
         {config.updatedAt && !savedAt && <p className="mt-2 text-right text-[11px] text-muted-foreground">Last saved {new Date(config.updatedAt).toLocaleString()}</p>}
       </div>
     </div>
@@ -1176,13 +1283,148 @@ function MeetingDetail({
   proposals,
   onView,
 }: {
-  meeting: Meeting;
+  meeting: Meeting | null;
   documents: DocumentRecord[];
   proposals: ProposalEntry[];
   onView: (view: View) => void;
 }) {
   const [tab, setTab] = useState("Summary");
+  const [detail, setDetail] = useState<MeetingDetailPayload | null>(null);
+  const [detailError, setDetailError] = useState<string | null>(null);
+  const detailRequestRef = useRef(0);
   const tabs = ["Summary", "Transcript / Raw", "Decisions", "Actions", "Insights", "Impact"];
+  const slug = useSlugSync();
+
+  useEffect(() => {
+    const requestId = detailRequestRef.current + 1;
+    detailRequestRef.current = requestId;
+
+    if (!slug || !meeting?.id) {
+      setDetail(null);
+      setDetailError(null);
+      return;
+    }
+
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(() => controller.abort(), 12000);
+    setDetailError(null);
+
+    fetch(`/api/meeting-intelligence/meeting?slug=${slug}&meetingId=${encodeURIComponent(meeting.id)}`, {
+      signal: controller.signal,
+    })
+      .then(async (res) => {
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || "Meeting detail unavailable");
+        return data;
+      })
+      .then((data) => {
+        if (detailRequestRef.current === requestId) setDetail(data.detail || null);
+      })
+      .catch((error) => {
+        if (detailRequestRef.current !== requestId) return;
+        setDetail(null);
+        const isAbort = error instanceof Error && error.name === "AbortError";
+        setDetailError(isAbort
+          ? "Neon tardó demasiado en devolver este detalle. Cambia de meeting o vuelve a intentarlo."
+          : error instanceof Error
+            ? error.message
+            : "No se pudo cargar el detalle de la meeting desde Neon.");
+      })
+      .finally(() => {
+        window.clearTimeout(timeoutId);
+      });
+
+    return () => {
+      window.clearTimeout(timeoutId);
+      controller.abort();
+    };
+  }, [slug, meeting?.id]);
+
+  if (!meeting) {
+    return (
+      <section className="rounded-lg border border-border bg-card p-6">
+        <EmptyState />
+      </section>
+    );
+  }
+
+  const activeDetail = detail;
+  const detailInsights = activeDetail?.insights || [];
+  const detailDecisions = activeDetail?.decisions || [];
+  const detailActions = detailInsights.filter((item) => item.type === "Action");
+  const generalInsights = detailInsights.filter((item) => item.type !== "Action" && item.type !== "Decision");
+  const detailRecommendations = activeDetail?.recommendations.length ? activeDetail.recommendations : proposals.filter((proposal) => !proposal.meetingId || proposal.meetingId === meeting.id);
+  const detailDocuments = activeDetail?.impacts.length
+    ? activeDetail.impacts.map((impact) => ({
+      name: impact.documentName,
+      area: impact.reason || "Impact from meeting evidence.",
+      health: impact.status === "conflict" ? "Needs review" : "Possible update",
+      status: (impact.status === "conflict" ? "conflict" : "possible update") as ImpactStatus,
+      proposals: detailRecommendations.filter((proposal) => proposal.doc === impact.documentName).length,
+      conflicts: impact.status === "conflict" ? 1 : 0,
+      critical: impact.documentName === "StrategyPlan",
+    }))
+    : documents.filter((doc) => detailRecommendations.some((proposal) => proposal.doc === doc.name));
+
+  function renderTab() {
+    if (detailError && !activeDetail) {
+      return <ReviewBox>{detailError}</ReviewBox>;
+    }
+    if (tab === "Summary") {
+      return activeDetail?.artifact?.summaryText ? (
+        <MarkdownPanel content={activeDetail.artifact.summaryText} />
+      ) : (
+        <ReviewBox>No summary generated in Neon yet. Run the agentic scan after raw is fetched.</ReviewBox>
+      );
+    }
+    if (tab === "Transcript / Raw") {
+      return activeDetail?.artifact?.rawText ? (
+        <pre className="max-h-[560px] overflow-auto whitespace-pre-wrap break-words rounded-lg border border-border bg-background p-4 font-mono text-[12px] leading-relaxed text-muted-foreground">
+          {activeDetail.artifact.rawText}
+        </pre>
+      ) : (
+        <div className="rounded-lg border border-dashed border-yellow-400/60 bg-yellow-50 p-4 text-[13px] leading-relaxed text-muted-foreground">
+          <strong className="text-foreground">Raw not downloaded yet.</strong>
+          <p className="mt-2">This meeting stays as <strong>needs_raw_sync</strong>. Summary notes may exist, but Sancho should not treat decisions or X-Hype-style findings as important until the connector/agent stores `raw_text` in Neon.</p>
+        </div>
+      );
+    }
+    if (tab === "Decisions") {
+      return detailDecisions.length ? (
+        <div className="space-y-2">
+          {detailDecisions.map((decision) => (
+            <MiniRow key={decision.id || decision.decision} title={decision.decision} eyebrow={decision.evidenceRaw ? decision.status : `${decision.status} · raw missing`} meta={`${decision.source} · ${decision.date || "no date"} · ${decision.owner}`} tone={decision.evidenceRaw ? "ok" : "proposal"} />
+          ))}
+        </div>
+      ) : <ReviewBox>No decisions extracted from raw evidence for this meeting.</ReviewBox>;
+    }
+    if (tab === "Actions") {
+      return detailActions.length ? (
+        <div className="space-y-2">
+          {detailActions.map((item) => (
+            <MiniRow key={item.id || item.title} title={item.title} eyebrow={item.status || "draft"} meta={`${item.source} · ${item.date || "no date"} · ${item.evidenceRaw ? item.confidence : "raw missing"}`} tone={item.evidenceRaw ? "warn" : "proposal"} />
+          ))}
+        </div>
+      ) : <ReviewBox>No action items extracted from raw evidence for this meeting.</ReviewBox>;
+    }
+    if (tab === "Insights") {
+      return generalInsights.length ? (
+        <div className="space-y-2">
+          {generalInsights.map((item) => (
+            <MiniRow key={item.id || item.title} title={item.title} eyebrow={`${item.type} · ${item.status || "draft"}`} meta={`${item.source} · ${item.date || "no date"} · ${item.evidenceRaw ? item.confidence : "raw missing"}`} tone={item.tone} />
+          ))}
+        </div>
+      ) : <ReviewBox>No insights, quotes or risks extracted from raw evidence for this meeting.</ReviewBox>;
+    }
+    return detailDocuments.length ? (
+      <div className="grid gap-3 md:grid-cols-2">
+        {detailDocuments.map((doc) => <DocumentTile key={doc.name} doc={doc} />)}
+      </div>
+    ) : (
+      <ReviewBox>No document impacts in Neon for this meeting. StrategyPlan and POV remain untouched.</ReviewBox>
+    );
+  }
+
   return (
     <div className="grid gap-4 xl:grid-cols-[1.15fr_.85fr]">
       <section className="rounded-lg border border-border bg-card p-4">
@@ -1193,39 +1435,29 @@ function MeetingDetail({
               <span>{meetingDateTime(meeting)}</span><span>{meeting.source}</span><span>{meeting.participants.join(", ")}</span><span>{meeting.type}</span>
             </div>
           </div>
-          <Badge tone={meeting.status === "processed" ? "ok" : "proposal"}>{meeting.status}</Badge>
+          <Badge tone={meetingStatusTone(meeting)}>{meetingStatusLabel(meeting)}</Badge>
         </div>
         <div className="mb-4 flex flex-wrap gap-1.5">
           {tabs.map((item) => (
             <button key={item} type="button" onClick={() => setTab(item)} className={cn("rounded-md border border-border bg-background px-2.5 py-1.5 text-[11px] font-bold text-muted-foreground", tab === item && "border-navy bg-navy text-white")}>{item}</button>
           ))}
         </div>
-        {tab === "Impact" ? (
-          <div className="grid gap-3 md:grid-cols-2">
-            {documents.slice(0, 4).map((doc) => <DocumentTile key={doc.name} doc={doc} />)}
-          </div>
-        ) : (
-          <div className="rounded-lg border border-border bg-background p-4 text-[13px] leading-relaxed text-muted-foreground">
-            <strong className="text-foreground">{tab}</strong>
-            <p className="mt-2">Vista visual de {tab.toLowerCase()} para revisar fuente, decisiones, acciones, insights, quotes y riesgos antes de generar propuestas.</p>
-            <div className="mt-3 flex flex-wrap gap-1.5">
-              <Badge tone="proposal">StrategyPlan contradiction check</Badge>
-              <Badge tone="ok">POV impact</Badge>
-              <Badge tone="proposal">proposals generated</Badge>
-            </div>
-          </div>
-        )}
+        {renderTab()}
       </section>
       <section className="rounded-lg border border-border bg-card p-4">
         <h3 className="mb-3 font-heading text-base text-navy">Generated Proposals</h3>
-        {proposals.length === 0 ? (
+        {detailRecommendations.length === 0 ? (
           <div className="rounded-lg border border-dashed border-border bg-background p-4 text-[12px] leading-relaxed text-muted-foreground">
             No proposals generated for the current reviewed intelligence yet.
           </div>
-        ) : proposals.map((proposal) => (
+        ) : detailRecommendations.map((proposal) => (
           <button key={proposal.id} type="button" onClick={() => onView("proposals")} className="mb-2 w-full rounded-lg border border-border bg-background p-3 text-left hover:border-rust">
             <strong className="text-[13px] text-foreground">{proposal.title}</strong>
-            <div className="mt-2 flex gap-2 text-[10px] text-muted-foreground"><Badge tone={proposal.priority === "high" ? "critical" : "proposal"}>{proposal.priority}</Badge><span>{proposal.doc}</span></div>
+            <div className="mt-2 flex flex-wrap gap-2 text-[10px] text-muted-foreground">
+              <Badge tone={proposal.priority === "high" ? "critical" : "proposal"}>{proposal.priority}</Badge>
+              <span>{proposal.doc}</span>
+              <span>{proposal.status || "recommended"}</span>
+            </div>
           </button>
         ))}
       </section>
@@ -1298,7 +1530,11 @@ function DocumentImpact({ documents, onView }: { documents: DocumentRecord[]; on
         <p className="mt-1 text-[13px] text-muted-foreground">StrategyPlan is Critical and never auto-apply: every pending impact requires review before a document changes.</p>
       </section>
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-        {documents.map((doc) => (
+        {documents.length === 0 ? (
+          <div className="rounded-lg border border-dashed border-border bg-card p-6 text-[13px] leading-relaxed text-muted-foreground">
+            No document impacts in Neon yet. Sancho will only create impacts after raw evidence exists and the extraction is traceable.
+          </div>
+        ) : documents.map((doc) => (
           <section key={doc.name} className={cn("rounded-lg border border-border bg-card p-4", doc.critical && "border-rust shadow-[inset_3px_0_0_var(--rust)]")}>
             <div className="flex items-start justify-between gap-2"><h3 className="font-heading text-base text-navy">{doc.name}</h3><Badge tone={doc.critical ? "critical" : doc.status === "no impact" ? "ok" : "proposal"}>{doc.critical ? "Critical" : doc.status}</Badge></div>
             <p className="mt-2 text-[12px] text-muted-foreground">{doc.area}</p>
@@ -1312,22 +1548,55 @@ function DocumentImpact({ documents, onView }: { documents: DocumentRecord[]; on
   );
 }
 
-function ProposalReview({ meeting, proposals }: { meeting: Meeting; proposals: ProposalEntry[] }) {
+function ProposalReview({
+  slug,
+  meeting,
+  proposals,
+  onChanged,
+}: {
+  slug: string;
+  meeting: Meeting | null;
+  proposals: ProposalEntry[];
+  onChanged: () => void;
+}) {
   const proposal = proposals[0];
+  const [busyAction, setBusyAction] = useState<string | null>(null);
+  async function act(action: "approve" | "reject" | "convert") {
+    if (!proposal) return;
+    setBusyAction(action);
+    await fetch("/api/meeting-intelligence/recommendations/action", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ slug, recommendationId: proposal.id, action }),
+    }).catch(() => null);
+    setBusyAction(null);
+    onChanged();
+  }
   return (
     <>
       <div className="grid min-h-[520px] gap-3 xl:grid-cols-[1fr_1.1fr_1fr]">
         <ReviewColumn title="Evidence from meeting">
-          <div className="font-bold text-foreground">{meeting.title}</div>
-          <div className="mt-2 flex flex-wrap gap-2 text-[10px] text-muted-foreground"><span>{meetingDateTime(meeting)}</span><span>{meeting.source}</span><span>confidence 92%</span></div>
-          <ReviewBox>Decision detected: actualizar documento canonico solo despues de review humana. La evidencia queda enlazada a meeting notes y fuente original.</ReviewBox>
+          <div className="font-bold text-foreground">{meeting?.title || proposal?.source || "No meeting selected"}</div>
+          {meeting ? (
+            <div className="mt-2 flex flex-wrap gap-2 text-[10px] text-muted-foreground">
+              <span>{meetingDateTime(meeting)}</span>
+              <span>{meeting.source}</span>
+              <Badge tone={meeting.hasRaw ? "ok" : "proposal"}>{meeting.hasRaw ? "raw available" : "raw missing"}</Badge>
+            </div>
+          ) : null}
+          <ReviewBox>
+            {proposal?.description || "A recommendation only becomes actionable after Sancho links it to raw meeting evidence. StrategyPlan, Foundation and POV remain review-first."}
+          </ReviewBox>
           <ActionButton><ExternalLink className="h-3 w-3" /> Open source meeting</ActionButton>
         </ReviewColumn>
         <ReviewColumn title="Proposed change">
           {proposal ? (
             <>
               <Badge tone={proposal.priority === "high" ? "critical" : "proposal"}>{proposal.priority}</Badge>
-              <ReviewBox><strong>{proposal.title}</strong><br /><br />Documento afectado: {proposal.doc}. Fuente: {proposal.source}.</ReviewBox>
+              <ReviewBox>
+                <strong>{proposal.title}</strong><br /><br />
+                Documento afectado: {proposal.doc}. Fuente: {proposal.source}. Estado: {proposal.status || "recommended"}. Task draft: {proposal.taskStatus || "recommended"}.
+              </ReviewBox>
             </>
           ) : (
             <ReviewBox><strong>No pending proposal</strong><br /><br />Cuando un scan detecte impacto documental, Sancho lo convertira aqui en una propuesta revisable antes de tocar StrategyPlan, POV Bank u otro documento canonico.</ReviewBox>
@@ -1345,8 +1614,9 @@ function ProposalReview({ meeting, proposals }: { meeting: Meeting; proposals: P
       </div>
       <footer className="sticky bottom-0 mt-3 flex flex-wrap justify-end gap-2 border-t border-border bg-background py-3">
         <ActionButton><RefreshCw className="h-3 w-3" /> Ask Sancho to revise</ActionButton>
-        <ActionButton><X className="h-3 w-3" /> Reject</ActionButton>
-        <ActionButton primary><Check className="h-3 w-3" /> Approve</ActionButton>
+        <ActionButton disabled={!proposal || Boolean(busyAction)} onClick={() => void act("reject")}><X className="h-3 w-3" /> {busyAction === "reject" ? "Rejecting..." : "Reject"}</ActionButton>
+        <ActionButton disabled={!proposal || Boolean(busyAction)} onClick={() => void act("convert")}><FileText className="h-3 w-3" /> {busyAction === "convert" ? "Converting..." : "Convert to task"}</ActionButton>
+        <ActionButton primary disabled={!proposal || Boolean(busyAction)} onClick={() => void act("approve")}><Check className="h-3 w-3" /> {busyAction === "approve" ? "Approving..." : "Approve"}</ActionButton>
       </footer>
     </>
   );
@@ -1365,10 +1635,17 @@ function Column({ title, meta, children }: { title: string; meta: string; childr
 
 function MeetingCard({ meeting, active, onClick }: { meeting: Meeting; active: boolean; onClick: () => void }) {
   return (
-    <button type="button" onClick={onClick} className={cn("mb-2 w-full rounded-lg border border-border bg-background p-3 text-left transition-colors hover:border-rust", active && "border-rust bg-card shadow-[inset_3px_0_0_var(--rust)]", meeting.status === "needs review" && "bg-[#FFF8E5]")}>
+    <button type="button" onClick={onClick} className={cn("mb-2 w-full rounded-lg border border-border bg-background p-3 text-left transition-colors hover:border-rust", active && "border-rust bg-card shadow-[inset_3px_0_0_var(--rust)]", meeting.status === "needs_review" && "bg-[#FFF8E5]", meeting.status === "needs_raw_sync" && "border-dashed")}>
       <div className="font-bold text-foreground">{meeting.title}</div>
-      <div className="mt-2 flex flex-wrap gap-2 text-[10px] text-muted-foreground"><span>{meetingDateTime(meeting)}</span><span>{meeting.source}</span><Badge tone={meeting.status === "processed" ? "ok" : meeting.status === "needs review" ? "proposal" : "low"}>{meeting.status}</Badge></div>
-      <div className="mt-2 text-[12px] text-muted-foreground">{meeting.type} · {meeting.decisions} decisions · {meeting.actions} actions</div>
+      <div className="mt-2 flex flex-wrap gap-2 text-[10px] text-muted-foreground">
+        <span>{meetingDateTime(meeting)}</span>
+        <span>{meeting.source}</span>
+        <Badge tone={meetingStatusTone(meeting)}>{meetingStatusLabel(meeting)}</Badge>
+      </div>
+      <div className="mt-2 text-[12px] text-muted-foreground">
+        {meeting.type} · {meeting.decisions} decisions · {meeting.actions} actions
+        {!meeting.hasRaw ? " · raw missing" : ""}
+      </div>
     </button>
   );
 }
@@ -1394,6 +1671,18 @@ function DocumentTile({ doc }: { doc: DocumentRecord }) {
       <div className="mt-2 text-[10px] text-muted-foreground">POV affected · contradiction check · proposals generated</div>
     </div>
   );
+}
+
+function meetingStatusTone(meeting: Meeting): "ok" | "proposal" | "critical" | "low" {
+  if (meeting.status === "processed" || meeting.status === "raw_available") return "ok";
+  if (meeting.status === "failed") return "critical";
+  if (meeting.status === "needs_review") return "proposal";
+  return "low";
+}
+
+function meetingStatusLabel(meeting: Meeting) {
+  if (!meeting.hasRaw && meeting.status !== "failed") return "needs raw sync";
+  return meeting.status.replace(/_/g, " ");
 }
 
 function MetricStrip({ stats }: { stats: { value: number | string; label: string }[] }) {
@@ -1448,6 +1737,26 @@ function ReviewColumn({ title, children }: { title: string; children: ReactNode 
 
 function ReviewBox({ children }: { children: ReactNode }) {
   return <div className="mt-3 rounded-lg border border-border bg-background p-3 text-[12px] leading-relaxed text-muted-foreground">{children}</div>;
+}
+
+function MarkdownPanel({ content }: { content: string }) {
+  return (
+    <div className="max-h-[560px] overflow-auto rounded-lg border border-border bg-background p-4">
+      <article
+        className={cn(
+          "prose prose-sm max-w-none dark:prose-invert",
+          "prose-headings:font-heading prose-headings:text-navy prose-headings:mt-4 prose-headings:mb-2",
+          "prose-p:my-2 prose-p:text-muted-foreground prose-p:leading-relaxed",
+          "prose-strong:text-foreground prose-li:my-1 prose-ul:my-2 prose-ol:my-2",
+          "prose-code:rounded prose-code:bg-muted prose-code:px-1 prose-code:py-0.5 prose-code:text-[11px]",
+          "prose-pre:max-h-[320px] prose-pre:overflow-auto prose-pre:rounded-lg prose-pre:border prose-pre:border-border prose-pre:bg-card",
+          "text-[13px]"
+        )}
+      >
+        <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
+      </article>
+    </div>
+  );
 }
 
 function EmptyState() {

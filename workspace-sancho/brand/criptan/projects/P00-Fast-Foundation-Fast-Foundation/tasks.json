@@ -16,5 +16,25 @@
     "deliverable_file": "brand/criptan/projects/P00-Fast-Foundation-Fast-Foundation/tasks/P00-FF-T01/deliverable.md",
     "mc_chat_thread_id": "task-p00-ff-t01",
     "discord_thread_id": null
+  },
+  {
+    "id": "P00-FF-T02",
+    "name": "Implementar/configurar Meeting Intelligence",
+    "description": "Configurar Meeting Intelligence desde el chat sidebar: verificar MCP/APIs, seleccionar Google Drive con Picker o fallback por ID/URL, seleccionar Notion database/page, cargar filtros como clients relation, definir routing de revisión y ejecutar un primer run.\n\nNo aplicar cambios sobre StrategyPlan, POV Bank ni documentos canónicos sin revisión humana explícita.",
+    "deliverable": "Meeting Intelligence configurado con fuentes aprobadas, filtros guardados, routing revisado y primer run documentado.",
+    "done_criteria": "Google Drive o Notion configurado; filtros/routing guardados; primer scan ejecutado con reuniones encontradas o reporte explícito de cero reuniones; setup.md actualizado.",
+    "depends_on": null,
+    "owner": "Sancho",
+    "status": "todo",
+    "channel": "intelligence",
+    "type": "foundation",
+    "skill": "meeting-intelligence",
+    "deliverable_file": "brand/criptan/intelligence/setup.md",
+    "output_files": [
+      "brand/criptan/intelligence/config.json",
+      "brand/criptan/intelligence/setup.md"
+    ],
+    "mc_chat_thread_id": "task-p00-ff-t02",
+    "discord_thread_id": null
   }
 ]

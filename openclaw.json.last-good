@@ -1,7 +1,7 @@
 {
   "meta": {
     "lastTouchedVersion": "2026.5.7",
-    "lastTouchedAt": "2026-05-10T07:14:12.930Z"
+    "lastTouchedAt": "2026-05-11T09:11:16.347Z"
   },
   "env": {
     "GEMINI_API_KEY": "AIzaSyAehBHbdBleoL0vSkd5PTsrtVZ5lw_kRa0",
@@ -99,6 +99,9 @@
           "every": "3h",
           "model": "minimax/MiniMax-M2.7",
           "session": "agent:cervantes:heartbeat"
+        },
+        "identity": {
+          "theme": "arquitecto sistema"
         }
       },
       {
@@ -116,26 +119,32 @@
         },
         "subagents": {
           "allowAgents": [
-            "escudero",
+            "cervantes",
+            "hamete",
+            "dulcinea",
             "rocinante",
-            "cervantes"
+            "maese-pedro",
+            "mambrino",
+            "merlin",
+            "sanson"
           ]
+        },
+        "identity": {
+          "theme": "CMO / orchestrator"
         }
       },
       {
         "id": "rocinante",
         "name": "Rocinante",
         "workspace": "/Users/ragi/.openclaw/workspace-rocinante",
+        "agentDir": "/Users/ragi/.openclaw/agents/rocinante/agent",
         "model": {
-          "primary": "minimax/MiniMax-M2.7"
-        }
-      },
-      {
-        "id": "escudero",
-        "name": "Escudero",
-        "workspace": "/Users/ragi/.openclaw/workspace-escudero",
-        "model": {
-          "primary": "minimax/MiniMax-M2.7"
+          "primary": "anthropic/claude-sonnet-4-6"
+        },
+        "identity": {
+          "name": "Rocinante",
+          "emoji": "🐴",
+          "theme": "outreach"
         }
       },
       {
@@ -146,7 +155,78 @@
         "model": "anthropic/claude-opus-4-6",
         "identity": {
           "name": "Maese Pedro",
-          "emoji": "🎭"
+          "emoji": "🎭",
+          "theme": "visual"
+        }
+      },
+      {
+        "id": "hamete",
+        "name": "Hamete",
+        "workspace": "/Users/ragi/.openclaw/workspace-hamete",
+        "agentDir": "/Users/ragi/.openclaw/agents/hamete/agent",
+        "model": {
+          "primary": "anthropic/claude-sonnet-4-6"
+        },
+        "identity": {
+          "name": "Hamete",
+          "emoji": "📜",
+          "theme": "research"
+        }
+      },
+      {
+        "id": "dulcinea",
+        "name": "Dulcinea",
+        "workspace": "/Users/ragi/.openclaw/workspace-dulcinea",
+        "agentDir": "/Users/ragi/.openclaw/agents/dulcinea/agent",
+        "model": {
+          "primary": "anthropic/claude-sonnet-4-6"
+        },
+        "identity": {
+          "name": "Dulcinea",
+          "emoji": "✍️",
+          "theme": "content"
+        }
+      },
+      {
+        "id": "mambrino",
+        "name": "Mambrino",
+        "workspace": "/Users/ragi/.openclaw/workspace-mambrino",
+        "agentDir": "/Users/ragi/.openclaw/agents/mambrino/agent",
+        "model": {
+          "primary": "anthropic/claude-sonnet-4-6"
+        },
+        "identity": {
+          "name": "Mambrino",
+          "emoji": "🪖",
+          "theme": "paid ads"
+        }
+      },
+      {
+        "id": "merlin",
+        "name": "Merlín",
+        "workspace": "/Users/ragi/.openclaw/workspace-merlin",
+        "agentDir": "/Users/ragi/.openclaw/agents/merlin/agent",
+        "model": {
+          "primary": "anthropic/claude-sonnet-4-6"
+        },
+        "identity": {
+          "name": "Merlín",
+          "emoji": "🔮",
+          "theme": "data"
+        }
+      },
+      {
+        "id": "sanson",
+        "name": "Sansón",
+        "workspace": "/Users/ragi/.openclaw/workspace-sanson",
+        "agentDir": "/Users/ragi/.openclaw/agents/sanson/agent",
+        "model": {
+          "primary": "anthropic/claude-sonnet-4-6"
+        },
+        "identity": {
+          "name": "Sansón",
+          "emoji": "🛡️",
+          "theme": "QA"
         }
       }
     ]
@@ -159,9 +239,14 @@
       "enabled": true,
       "allow": [
         "sancho",
-        "escudero",
+        "cervantes",
+        "hamete",
+        "dulcinea",
         "rocinante",
-        "cervantes"
+        "maese-pedro",
+        "mambrino",
+        "merlin",
+        "sanson"
       ]
     },
     "exec": {

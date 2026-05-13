@@ -9,7 +9,10 @@
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "migrate:media": "tsx scripts/migrate-legacy-media.mts",
-    "check:drafts": "tsx scripts/check-legacy-media.mts"
+    "check:drafts": "tsx scripts/check-legacy-media.mts",
+    "audit:docs": "tsx scripts/audit-doc-paths.mts --check",
+    "fix:docs": "tsx scripts/audit-doc-paths.mts --fix",
+    "test:doc-paths": "tsx scripts/test-doc-paths.mts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1027.0",

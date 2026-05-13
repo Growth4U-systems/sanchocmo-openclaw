@@ -1,7 +1,10 @@
 import {
   boolean,
+  index,
   integer,
+  jsonb,
   pgTable,
+  real,
   text,
   timestamp,
 } from "drizzle-orm/pg-core";
@@ -89,3 +92,152 @@ export const subscription = pgTable("subscription", {
   customFieldData: text("customFieldData"),
   userId: text("userId").references(() => user.id),
 });
+
+// ============================================================
+// Meeting Intelligence — Neon-backed source of truth
+// ============================================================
+
+export const miSources = pgTable("mi_sources", {
+  id: text("id").primaryKey(),
+  slug: text("slug").notNull(),
+  kind: text("kind").notNull(),
+  name: text("name").notNull(),
+  sourceId: text("source_id"),
+  url: text("url"),
+  enabled: boolean("enabled").notNull().default(true),
+  scope: jsonb("scope").$type<Record<string, unknown> | null>(),
+  filter: jsonb("filter").$type<Record<string, unknown> | null>(),
+  status: text("status").notNull().default("active"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+}, (table) => ({
+  slugIdx: index("mi_sources_slug_idx").on(table.slug),
+  slugKindIdx: index("mi_sources_slug_kind_idx").on(table.slug, table.kind),
+}));
+
+export const miRuns = pgTable("mi_runs", {
+  id: text("id").primaryKey(),
+  slug: text("slug").notNull(),
+  status: text("status").notNull().default("queued"),
+  trigger: text("trigger").notNull().default("agent"),
+  sourcesScanned: jsonb("sources_scanned").$type<Record<string, unknown> | null>(),
+  metrics: jsonb("metrics").$type<Record<string, unknown> | null>(),
+  errors: jsonb("errors").$type<unknown[] | Record<string, unknown> | null>(),
+  startedAt: timestamp("started_at").notNull().defaultNow(),
+  finishedAt: timestamp("finished_at"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+}, (table) => ({
+  slugIdx: index("mi_runs_slug_idx").on(table.slug),
+  slugStatusIdx: index("mi_runs_slug_status_idx").on(table.slug, table.status),
+}));
+
+export const miMeetings = pgTable("mi_meetings", {
+  id: text("id").primaryKey(),
+  slug: text("slug").notNull(),
+  sourceId: text("source_id"),
+  runId: text("run_id").references(() => miRuns.id, { onDelete: "set null" }),
+  externalId: text("external_id"),
+  title: text("title").notNull(),
+  meetingDate: text("meeting_date").notNull(),
+  meetingTime: text("meeting_time"),
+  sourceLabel: text("source_label").notNull().default("Manual"),
+  status: text("status").notNull().default("needs_raw_sync"),
+  rawStatus: text("raw_status").notNull().default("missing"),
+  meetingType: text("meeting_type").notNull().default("meeting"),
+  participants: jsonb("participants").$type<string[] | null>(),
+  sourceUrl: text("source_url"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+}, (table) => ({
+  slugIdx: index("mi_meetings_slug_idx").on(table.slug),
+  slugDateIdx: index("mi_meetings_slug_date_idx").on(table.slug, table.meetingDate),
+  sourceIdx: index("mi_meetings_source_idx").on(table.sourceId),
+}));
+
+export const miMeetingArtifacts = pgTable("mi_meeting_artifacts", {
+  id: text("id").primaryKey(),
+  slug: text("slug").notNull(),
+  meetingId: text("meeting_id")
+    .notNull()
+    .references(() => miMeetings.id, { onDelete: "cascade" }),
+  rawText: text("raw_text"),
+  summaryText: text("summary_text"),
+  sourcePayload: jsonb("source_payload").$type<Record<string, unknown> | null>(),
+  checksum: text("checksum"),
+  fetchedAt: timestamp("fetched_at"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+}, (table) => ({
+  slugIdx: index("mi_artifacts_slug_idx").on(table.slug),
+  meetingIdx: index("mi_artifacts_meeting_idx").on(table.meetingId),
+}));
+
+export const miInsights = pgTable("mi_insights", {
+  id: text("id").primaryKey(),
+  slug: text("slug").notNull(),
+  meetingId: text("meeting_id").references(() => miMeetings.id, { onDelete: "cascade" }),
+  runId: text("run_id").references(() => miRuns.id, { onDelete: "set null" }),
+  kind: text("kind").notNull(),
+  title: text("title").notNull(),
+  body: text("body"),
+  rationale: text("rationale"),
+  owner: text("owner"),
+  confidence: real("confidence"),
+  evidence: jsonb("evidence").$type<Record<string, unknown> | null>(),
+  status: text("status").notNull().default("draft"),
+  sourceLabel: text("source_label"),
+  eventDate: text("event_date"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+}, (table) => ({
+  slugIdx: index("mi_insights_slug_idx").on(table.slug),
+  meetingIdx: index("mi_insights_meeting_idx").on(table.meetingId),
+  slugKindIdx: index("mi_insights_slug_kind_idx").on(table.slug, table.kind),
+  slugStatusIdx: index("mi_insights_slug_status_idx").on(table.slug, table.status),
+}));
+
+export const miDocumentImpacts = pgTable("mi_document_impacts", {
+  id: text("id").primaryKey(),
+  slug: text("slug").notNull(),
+  meetingId: text("meeting_id").references(() => miMeetings.id, { onDelete: "cascade" }),
+  insightId: text("insight_id").references(() => miInsights.id, { onDelete: "set null" }),
+  documentName: text("document_name").notNull(),
+  documentPath: text("document_path"),
+  impactType: text("impact_type").notNull().default("possible_update"),
+  status: text("status").notNull().default("possible_update"),
+  severity: text("severity").notNull().default("medium"),
+  reason: text("reason"),
+  proposedChange: text("proposed_change"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+}, (table) => ({
+  slugIdx: index("mi_impacts_slug_idx").on(table.slug),
+  meetingIdx: index("mi_impacts_meeting_idx").on(table.meetingId),
+  documentIdx: index("mi_impacts_document_idx").on(table.slug, table.documentName),
+}));
+
+export const miRecommendations = pgTable("mi_recommendations", {
+  id: text("id").primaryKey(),
+  slug: text("slug").notNull(),
+  meetingId: text("meeting_id").references(() => miMeetings.id, { onDelete: "cascade" }),
+  insightId: text("insight_id").references(() => miInsights.id, { onDelete: "set null" }),
+  impactId: text("impact_id").references(() => miDocumentImpacts.id, { onDelete: "set null" }),
+  title: text("title").notNull(),
+  description: text("description"),
+  priority: text("priority").notNull().default("medium"),
+  targetType: text("target_type").notNull().default("task"),
+  targetId: text("target_id"),
+  documentName: text("document_name"),
+  status: text("status").notNull().default("recommended"),
+  taskId: text("task_id"),
+  taskStatus: text("task_status").notNull().default("recommended"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  approvedAt: timestamp("approved_at"),
+  rejectedAt: timestamp("rejected_at"),
+  convertedAt: timestamp("converted_at"),
+}, (table) => ({
+  slugIdx: index("mi_recommendations_slug_idx").on(table.slug),
+  meetingIdx: index("mi_recommendations_meeting_idx").on(table.meetingId),
+  slugStatusIdx: index("mi_recommendations_slug_status_idx").on(table.slug, table.status),
+}));

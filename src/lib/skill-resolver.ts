@@ -136,6 +136,7 @@ const SKILL_OWNER_MAP: Record<string, string> = {
   "instagram-content": "dulcinea",
   "internal-comms": "dulcinea",
   "keyword-research": "dulcinea",
+  "landing-pages": "dulcinea",
   "larry": "dulcinea",
   "last30days": "hamete",
   "lead-intelligence-hub": "rocinante",

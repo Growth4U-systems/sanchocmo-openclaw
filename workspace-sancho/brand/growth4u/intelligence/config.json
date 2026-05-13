@@ -1,0 +1,59 @@
+{
+  "client": "growth4u",
+  "version": "1.0",
+  "createdAt": "2026-05-12",
+  "sources": {
+    "google_drive": {
+      "enabled": true,
+      "folders": [
+        {
+          "id": "17iBf6P5n4hpqWUg4V9QKcqHwt2NYUFho",
+          "name": "Meet Recordings",
+          "description": "Google Meet recordings + Gemini notes (EN/ES)",
+          "fileTypes": ["txt", "pdf", "doc", "gdoc"],
+          "filter": "modified_yesterday",
+          "notes": "Contains Notes by Gemini files (.gdoc) — prefer ES version when both EN/ES exist"
+        }
+      ]
+    },
+    "notion": {
+      "enabled": true,
+      "status": "connected",
+      "integration": "openclaw-Alfonso",
+      "api_version": "2022-06-28",
+      "databases": [
+        {
+          "id": "14b5dacf4f1480f2b4d4c0792b8a51ff",
+          "id_dashed": "14b5dacf-4f14-80f2-b4d4-c0792b8a51ff",
+          "name": "Documents",
+          "url": "https://www.notion.so/14b5dacf4f1480f2b4d4c0792b8a51ff",
+          "filter": {
+            "property": "Type",
+            "operator": "equals",
+            "value": "Meeting"
+          },
+          "available_types": ["Document", "Meeting", "Note", "Proposal", "Report"],
+          "relation_properties": {
+            "clients": "Clients",
+            "tasks_projects": "Tasks & Projects",
+            "g4u_systems": "🤖 G4U Systems"
+          },
+          "notes": "Use api_version 2022-06-28 for queries — 2025-09-03 returns 400 on POST"
+        }
+      ]
+    },
+    "slack": {
+      "enabled": false,
+      "notes": "Optional — can be enabled later for keyword-based signal capture"
+    }
+  },
+  "routing": {
+    "review_owner": "Alfonso",
+    "channel": "slack",
+    "target": "slackbot",
+    "timezone": "Europe/Madrid",
+    "schedule": "daily_7am"
+  },
+  "scope": "hybrid",
+  "outputPath": "brand/growth4u/intelligence/"
+}

@@ -101,10 +101,10 @@
     {
       "id": "6dac9a53-6736-490a-ae54-e028b8ebbbd1",
       "agentId": "sancho",
-      "name": "Meeting Intelligence",
+      "name": "Meeting Intelligence — Neon Raw Sync",
       "enabled": true,
       "createdAtMs": 1771950715725,
-      "updatedAtMs": 1772211857688,
+      "updatedAtMs": 1778633027739,
       "schedule": {
         "kind": "cron",
         "expr": "0 18 * * 1-5",
@@ -114,13 +114,11 @@
       "wakeMode": "now",
       "payload": {
         "kind": "agentTurn",
-        "message": "Ejecuta Meeting Intelligence para Hospital Capilar. Carpeta de Google Drive: ID 17FpwSgL-XLAqaaH5-UccpADHkCFRcCHY. Usa 'gog docs cat <docId>' para leer las notas. Busca documentos nuevos o modificados desde la última ejecución. Para cada reunión, extrae: decisiones, acciones, insights, participantes. Guarda en brand/hospital-capilar/intelligence/meetings/ como .md y actualiza meetings.json. Después ejecuta: python3 ~/.openclaw/workspace-sancho/scripts/regenerate.py\n\nPUBLICAR EN DISCORD:\n1. Crea un hilo: message(action=thread-create, channel=discord, target=1475638253154603170, threadName='🧠 Meeting Intelligence — YYYY-MM-DD')\n2. El resultado del thread-create te dará un threadId. Usa ESE threadId como target para enviar el resumen: message(action=send, channel=discord, to='channel:<threadId>')\n3. NUNCA uses thread-reply — usa send con el threadId como target.\n4. APLICA reglas de _system/client-context-isolation.md — solo info relevante al cliente, CERO info interna.\n5. Si no hay meetings nuevos, crea el hilo igualmente informando que no hay novedades.",
+        "message": "Ejecuta el cron backend de Meeting Intelligence para Hospital Capilar usando Neon como source of truth.\n\nComando unico:\ncurl -sS -X POST http://127.0.0.1:3000/api/meeting-intelligence/run-cron -H 'Content-Type: application/json' --data '{\"slug\":\"hospital-capilar\",\"trigger\":\"cron\",\"limit\":60}'\n\nReglas:\n- No guardes meetings, transcripts, summaries, insights ni recommendations en JSON legacy.\n- El backend debe leer mi_sources, bajar raw_text desde Drive/Notion, guardar mi_meetings y mi_meeting_artifacts en Neon, analizar decisions/actions/insights/impact y crear mi_recommendations como task drafts en estado recommended.\n- StrategyPlan, Foundation docs y POV siguen review-first: no apliques cambios directos.\n- Si el endpoint devuelve ok=true, reporta solo metricas: rawAvailable, insights, recommendations y errores.\n- Si devuelve error, reporta el error sin intentar escribir datos legacy.",
         "model": "anthropic/claude-sonnet-4-5"
       },
       "delivery": {
-        "mode": "none",
-        "channel": "discord",
-        "to": "channel:1475638253154603170"
+        "mode": "none"
       },
       "state": {
         "nextRunAtMs": 1772470800000,

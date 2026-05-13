@@ -579,20 +579,6 @@ cat > "$BRAND_DIR/projects/P00-Full-Foundation-Full-Foundation/tasks.json" << TA
     "skill": "visual-identity",
     "pillar": "visual-identity",
     "section": "brand-identity"
-  },
-  {
-    "id": "P00-FUL-T10",
-    "name": "Configurar Atalaya (Inteligencia Competitiva)",
-    "description": "Una vez identificados tus competidores, Atalaya los monitoriza automáticamente: sus ads, blog, redes sociales. Genera ideas de contenido inspiradas en lo que funciona en tu mercado.",
-    "deliverable": "atalaya/config.json + primer informe de Atalaya.",
-    "done_criteria": "atalaya/config.json creado y Atalaya ejecutado con al menos 1 competidor.",
-    "depends_on": "P00-FUL-T02",
-    "owner": "Usuario",
-    "status": "todo",
-    "channel": "intelligence",
-    "type": "integration",
-    "skill": "atalaya",
-    "notes": "Se configura después de completar Competitor Intelligence. Requiere Apify MCP para scraping de contenido."
   }
 ]
 TASKSJSON2

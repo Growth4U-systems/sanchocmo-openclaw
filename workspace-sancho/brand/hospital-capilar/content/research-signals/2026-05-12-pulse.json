@@ -1,0 +1,171 @@
+{
+  "date": "2026-05-12",
+  "source": "daily-pulse",
+  "sources_scanned": {
+    "discord_channels": "UNAVAILABLE — plugin offline",
+    "research_signals": ["2026-05-11-news.json", "2026-05-11-creators.json"],
+    "notion_pages": 0,
+    "transcripts": 0,
+    "manual_inputs": 0
+  },
+  "insights": [
+    {
+      "id": "insight-001",
+      "category": "Competitive Intel",
+      "raw_text": "Santé Clinics publica guía médica comparando PRP, exosomas y mesoterapia capilar, subrayando que ningún tratamiento serio comienza con la jeringa sino con un diagnóstico tricológico completo.",
+      "source": "news-2026-05-11-001 / Santé Clinics",
+      "extracted_insight": "Los competidores están posicionando el diagnóstico previo como diferencial de calidad frente a tratamientos sin evaluación.",
+      "confidence": "high",
+      "timestamp": "2026-05-03T00:00:00Z"
+    },
+    {
+      "id": "insight-002",
+      "category": "Competitive Intel",
+      "raw_text": "Capilclinic participa en Professional Beauty Salon International 2026 posicionando medicina capilar dentro del ecosistema beauty profesional como oportunidad estratégica.",
+      "source": "news-2026-05-11-002 / Capilclinic",
+      "extracted_insight": "Competidores están abriendo canal B2B con peluquerías y profesionales beauty como fuente de derivación de pacientes.",
+      "confidence": "medium",
+      "timestamp": "2026-05-06T00:00:00Z"
+    },
+    {
+      "id": "insight-003",
+      "category": "Industry Trend",
+      "raw_text": "The New York Times documenta el fenómeno cultural de la finasterida: una generación de hombres jóvenes redefine su relación con envejecer y la calvicie, rechazando activamente la alopecia como destino inevitable.",
+      "source": "news-2026-05-11-003 / NYT en español",
+      "extracted_insight": "Existe un momento cultural de alto impacto: hombres jóvenes (25-40) están normalizando la prevención activa de la calvicie — ventana de contenido con máxima resonancia emocional.",
+      "confidence": "high",
+      "timestamp": "2026-04-10T00:00:00Z"
+    },
+    {
+      "id": "insight-004",
+      "category": "Industry Trend",
+      "raw_text": "Capilárea sintetiza PP405 (fase 3 ensayo clínico), clascoterona (antiandrógeno tópico sin efectos sistémicos, primero en 3 décadas), desoxirribosa y terapias celulares. Tesis central: llegar a tiempo con folículos vivos antes de que la miniaturización sea irreversible.",
+      "source": "news-2026-05-11-004 / Capilárea",
+      "extracted_insight": "El mercado de innovación capilar 2026 ofrece ángulos de contenido de autoridad científica: nuevos fármacos en pipeline, urgencia del diagnóstico temprano.",
+      "confidence": "high",
+      "timestamp": "2026-04-30T00:00:00Z"
+    },
+    {
+      "id": "insight-005",
+      "category": "Competitive Intel",
+      "raw_text": "Insparya publica guía con 5 primeros signos de alopecia cerrando con CTA a diagnóstico gratuito. Posiciona el diagnóstico temprano como diferencial en resultados.",
+      "source": "creators-2026-05-11-in01 / Insparya blog",
+      "extracted_insight": "Insparya está atacando el top-funnel con contenido educativo sobre señales tempranas + CTA de captación directa — Hospital Capilar puede responder con contenido más profundo y clínicamente respaldado.",
+      "confidence": "high",
+      "timestamp": "2026-04-21T00:00:00Z"
+    },
+    {
+      "id": "insight-006",
+      "category": "Competitive Intel",
+      "raw_text": "Insparya lanza Genetic Hair Test como diferencial de innovación diagnóstica: análisis genético para evaluar predisposición a alopecia, campaña activa en Instagram y web global.",
+      "source": "creators-2026-05-11-in02 / Insparya web/instagram",
+      "extracted_insight": "Insparya se diferencia con tecnología diagnóstica de vanguardia. Hospital Capilar debe auditar su propuesta de diagnóstico y comunicar sus diferenciales tecnológicos.",
+      "confidence": "high",
+      "timestamp": "2026-04-25T00:00:00Z"
+    },
+    {
+      "id": "insight-007",
+      "category": "Industry Trend",
+      "raw_text": "Helena Rodero (farmacéutica, 2M seguidores) publica en Lecturas: 'el error más importante es pensar que el pelo necesita lavarse'. Hay que lavar el cuero cabelludo, no la fibra capilar.",
+      "source": "creators-2026-05-11-hr01 / Lecturas",
+      "extracted_insight": "Los KOLs de salud capilar están viralizando errores comunes de higiene capilar — oportunidad de contenido educativo de alto engagement desde perspectiva médica.",
+      "confidence": "medium",
+      "timestamp": "2026-05-06T00:00:00Z"
+    }
+  ],
+  "content_ideas": [
+    {
+      "id": "idea-001",
+      "from_insight": "insight-001",
+      "title_hook": "PRP, exosomas o mesoterapia: cuál es el tratamiento capilar que te conviene (y por qué empezar siempre por el diagnóstico)",
+      "core_insight": "Sin diagnóstico tricológico previo, cualquier tratamiento capilar es un disparo al aire — la secuencia correcta importa más que el tratamiento elegido.",
+      "angle": "Hospital Capilar como clínica que diagnostica antes de prescribir: autoridad médica vs. centros que venden tratamientos estándar.",
+      "content_type": "blog",
+      "channels": ["blog", "LinkedIn", "Instagram"],
+      "priority": "high"
+    },
+    {
+      "id": "idea-002",
+      "from_insight": "insight-003",
+      "title_hook": "La generación que dijo no a la calvicie: por qué los hombres de 25 a 40 están tomando el control de su pelo",
+      "core_insight": "No es vanidad — es que esta generación tiene más herramientas, más información y menos resignación. La prevención activa es la nueva masculinidad.",
+      "angle": "Hospital Capilar como aliado de esta generación: validar la decisión de actuar temprano en vez de esperar.",
+      "content_type": "blog",
+      "channels": ["blog", "LinkedIn", "Instagram Reels"],
+      "priority": "high"
+    },
+    {
+      "id": "idea-003",
+      "from_insight": "insight-005",
+      "title_hook": "Los 5 primeros signos de alopecia que casi nadie reconoce a tiempo (con evidencia clínica)",
+      "core_insight": "La mayoría consulta cuando ya hay pérdida visible — pero los signos previos son detectables meses antes si sabes qué buscar.",
+      "angle": "Respuesta de autoridad médica al contenido educativo de competidores, con mayor profundidad clínica y CTA a valoración.",
+      "content_type": "blog",
+      "channels": ["blog", "Instagram", "TikTok"],
+      "priority": "high"
+    },
+    {
+      "id": "idea-004",
+      "from_insight": "insight-004",
+      "title_hook": "PP405, clascoterona y el futuro del tratamiento capilar: lo que está en el pipeline para 2026-2027",
+      "core_insight": "Llegar a tiempo no es un cliché — es que los folículos que pierdes hoy quizás no puedas recuperarlos con los tratamientos que llegan mañana.",
+      "angle": "Hospital Capilar como clínica al día en ciencia capilar: contenido de thought leadership que atrae pacientes sofisticados.",
+      "content_type": "blog",
+      "channels": ["blog", "LinkedIn", "newsletter"],
+      "priority": "medium"
+    },
+    {
+      "id": "idea-005",
+      "from_insight": "insight-007",
+      "title_hook": "La farmacéutica con 2 millones de seguidores tiene razón: el error más común al lavarse el pelo",
+      "core_insight": "Lavar el pelo y lavar el cuero cabelludo son dos cosas distintas — y confundirlas puede agravar la caída.",
+      "angle": "Hospital Capilar valida y amplifica con perspectiva médica una verdad que ya está viralizing — posicionamiento como referencia de salud capilar.",
+      "content_type": "social",
+      "channels": ["Instagram Reels", "TikTok", "Stories"],
+      "priority": "medium"
+    },
+    {
+      "id": "idea-006",
+      "from_insight": "insight-006",
+      "title_hook": "¿Qué diferencia a una clínica capilar de otra? Empieza por cómo diagnostica",
+      "core_insight": "En un mercado donde todos ofrecen los mismos tratamientos, el diagnóstico es el verdadero diferencial — lo que hacemos antes de la primera sesión define el resultado.",
+      "angle": "Respuesta estratégica al posicionamiento de Insparya (Genetic Test): Hospital Capilar comunica sus propios diferenciales diagnósticos.",
+      "content_type": "blog",
+      "channels": ["blog", "LinkedIn", "Instagram"],
+      "priority": "medium"
+    }
+  ],
+  "patterns_detected": [
+    {
+      "theme": "Diagnóstico como diferencial de mercado",
+      "occurrences": 3,
+      "sources": ["Santé Clinics (news)", "Insparya blog", "Insparya Genetic Test"],
+      "significance": "Los tres competidores principales están comunicando el diagnóstico previo como su diferencial de calidad. Hospital Capilar debe auditar y comunicar activamente su protocolo diagnóstico — o perderá ese posicionamiento frente al mercado."
+    },
+    {
+      "theme": "Momento cultural anti-calvicie (hombres 25-40)",
+      "occurrences": 2,
+      "sources": ["NYT en español (finasterida)", "Insparya (diagnóstico temprano CTA)"],
+      "significance": "Existe un momentum cultural favorable: hombres jóvenes están activamente buscando soluciones. Ventana de captación top-funnel de alto valor si Hospital Capilar tiene contenido y CTAs dirigidos a este segmento."
+    },
+    {
+      "theme": "Contenido educativo de KOLs capilares (salud + higiene)",
+      "occurrences": 1,
+      "sources": ["Helena Rodero / Lecturas"],
+      "significance": "Los KOLs de salud están generando engagement masivo con contenido de corrección de mitos capilares. Oportunidad de co-crear o amplificar con perspectiva clínica desde Hospital Capilar."
+    }
+  ],
+  "metadata": {
+    "mode": "PARTIAL — Discord UNAVAILABLE, research signals only",
+    "discord_status": "error: channel plugin offline",
+    "channels_checked": 9,
+    "channels_with_activity": 0,
+    "channels_skipped": 9,
+    "research_signals_processed": 7,
+    "total_raw_inputs": 7,
+    "total_insights": 7,
+    "total_ideas": 6,
+    "total_patterns": 3,
+    "processing_time": "~3 min"
+  }
+}

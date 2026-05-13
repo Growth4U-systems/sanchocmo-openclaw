@@ -1013,11 +1013,9 @@
 
   <div class="ns nav-client-only">Trabajo</div>
   <a href="#" class="nav-client-only" onclick="showPage('projects',this);">📋 Proyectos</a>
-  <a href="#" class="nav-client-only" onclick="showPage('idea-bank',this)">💡 Idea Bank</a>
   <a href="#" class="nav-client-only" onclick="showPage('metrics',this)">📈 Métricas</a>
   <div class="ns nav-client-only">Herramientas</div>
   <a href="#" class="nav-client-only" onclick="showPage('trust-engine',this)">🔍 Trust Engine</a>
-  <a href="#" class="nav-client-only" onclick="showPage('atalaya',this)">🏰 Atalaya <span id="atalaya-badge" style="background:#C45D35;color:#fff;font-size:10px;padding:1px 6px;border-radius:8px;margin-left:4px;display:none;"></span></a>
   <a href="#" class="nav-client-only" onclick="window._intelligenceView='overview';showPage('intelligence',this)">🧠 Intelligence</a>
   <a href="#" class="nav-client-only" onclick="window._intelligenceView='meetings';showPage('intelligence',this)" style="font-size:12px;padding-left:26px;">Meetings</a>
   <a href="#" class="nav-client-only" onclick="window._intelligenceView='decisions';showPage('intelligence',this)" style="font-size:12px;padding-left:26px;">Decisions</a>
@@ -1206,10 +1204,6 @@
   </div>
 </div>
 
-<!-- ==================== ATALAYA ==================== -->
-<div id="page-atalaya" class="page">
-  <iframe id="atalaya-iframe" style="width:100%;height:calc(100vh - 56px);border:none;display:block;"></iframe>
-</div>
 
 <!-- ==================== INTELLIGENCE CENTER ==================== -->
 <div id="page-intelligence" class="page">
@@ -1328,10 +1322,6 @@
   </div>
 </div>
 
-<!-- ==================== IDEA BANK ==================== -->
-<div id="page-idea-bank" class="page">
-  <iframe id="idea-bank-iframe" style="width:100%;height:calc(100vh - 56px);border:none;display:block;"></iframe>
-</div>
 
 <!-- ==================== SETTINGS (iframe) ==================== -->
 <div id="page-settings" class="page">
@@ -1530,7 +1520,7 @@
       <!-- Step 3: Competidores (opcional) -->
       <div class="wiz-content" id="wiz-3">
         <div class="wiz-title">Competidores</div>
-        <div class="wiz-desc">Si conoces los competidores principales, añádelos aquí. Atalaya los monitorizará automáticamente. <em>(Opcional — puedes añadirlos después)</em></div>
+        <div class="wiz-desc">Si conoces los competidores principales, añádelos aquí para documentarlos en la Foundation. <em>(Opcional — puedes añadirlos después)</em></div>
 
         <div style="margin-top:16px;">
           <div id="wiz-competitors">
@@ -4530,54 +4520,6 @@ function goToSettings() {
     window.location.href = '/mc/settings/' + slug + '/';
   }
 }
-function loadIdeaBankIframe() {
-  const iframe = document.getElementById('idea-bank-iframe');
-  if (!iframe) return;
-  const sel = document.getElementById('clientSelector');
-  const slug = sel ? sel.value : '';
-  if (!slug || slug === 'global') return;
-  let ibUrl;
-  if (window.location.pathname.includes('/admin/')) {
-    const base = window.location.pathname.match(/\/mc\/admin\/[^/]+/);
-    ibUrl = base ? base[0] + '/idea-bank/' + slug + '/?embed=1' : null;
-  } else {
-    ibUrl = '/mc/idea-bank/' + slug + '/?embed=1';
-  }
-  if (!ibUrl) return;
-  if (iframe.src !== ibUrl) iframe.src = ibUrl;
-}
-
-function loadAtalayaIframe() {
-  const iframe = document.getElementById('atalaya-iframe');
-  if (!iframe) return;
-  const sel = document.getElementById('clientSelector');
-  const slug = sel ? sel.value : '';
-  if (!slug || slug === 'global') return;
-  let atalayaUrl;
-  if (window.location.pathname.includes('/admin/')) {
-    const base = window.location.pathname.match(/\/mc\/admin\/[^/]+/);
-    atalayaUrl = base ? base[0] + '/atalaya/' + slug + '/?embed=1' : null;
-  } else {
-    atalayaUrl = '/mc/atalaya/' + slug + '/?embed=1';
-  }
-  if (!atalayaUrl) return;
-  if (iframe.src !== atalayaUrl) iframe.src = atalayaUrl;
-}
-async function updateAtalayaBadge() {
-  const sel = document.getElementById('clientSelector');
-  const slug = sel ? sel.value : '';
-  const badge = document.getElementById('atalaya-badge');
-  if (!badge || !slug || slug === 'global') { if (badge) badge.style.display = 'none'; return; }
-  try {
-    const base = window.location.pathname.includes('/admin/') ? (window.location.pathname.match(/\/mc\/admin\/[^/]+/) || [''])[0] : '/mc';
-    const res = await fetch(base + '/api/atalaya-overview?slug=' + slug);
-    if (res.ok) {
-      const data = await res.json();
-      if (data.pendingCount > 0) { badge.textContent = data.pendingCount; badge.style.display = ''; } else { badge.style.display = 'none'; }
-    }
-  } catch { if (badge) badge.style.display = 'none'; }
-}
-
 function loadSettingsIframe(tab) {
   const iframe = document.getElementById('settings-iframe');
   if (!iframe) return;
@@ -4612,14 +4554,6 @@ window.addEventListener('message', function(e) {
     const input = document.getElementById('sidebar-chat-input');
     if (input) { input.value = e.data.text; }
     try { mcChatSidebarSend(); } catch(err) { console.error('Chat send error:', err); }
-    return;
-  }
-  if (e.data.type === 'atalaya-navigate') {
-    if (e.data.page === 'foundation' && e.data.docPath) {
-      docBrowserPath = e.data.docPath;
-      try { localStorage.setItem('sancho-docpath', docBrowserPath); } catch(ex) {}
-      showPage('foundation');
-    }
     return;
   }
   if (e.data.type !== 'settings-open-chat') return;
@@ -4668,10 +4602,8 @@ function showPage(name, el) {
     'activity':         () => { window._activityPageInit = false; _activityCronsFetched = false; _activityCronSlug = null; renderActivityPage(); },
     'metrics':          () => { loadMetrics(); },
     'projects':         () => { loadProjects(); },
-    'idea-bank':        () => { loadIdeaBankIframe(); },
     'intelligence':     () => { renderIntelligenceCenter(); },
     'trust-engine':     () => { loadTrustEngine(); const _s = document.getElementById('clientSelector')?.value; if (_s && _s !== 'global') { mcChatSidebar.init({ anchorId: 'mc-global-chat-anchor', toggleBtnId: 'global-chat-toggle', threadId: 'trust-engine-' + _s, threadName: 'Trust Engine — ' + _s }); if (!mcChatSidebar.isOpen) mcChatSidebar.toggle(); } },
-    'atalaya':          () => { loadAtalayaIframe(); },
     'settings':         () => { loadSettingsIframe(window._pendingSettingsTab); window._pendingSettingsTab = null; },
   };
   if (PAGE_INIT[name]) PAGE_INIT[name]();
@@ -4711,7 +4643,7 @@ function switchClient(val) {
     clientItems.forEach(el => el.style.display = 'none');
     globalItems.forEach(el => el.style.display = '');
     const active = document.querySelector('.page.active');
-    if (active && ['page-foundation','page-tasks','page-trust-engine','page-projects','page-atalaya','page-intelligence'].includes(active.id)) showPage('dashboard');
+    if (active && ['page-foundation','page-tasks','page-trust-engine','page-projects','page-intelligence'].includes(active.id)) showPage('dashboard');
   } else {
     document.getElementById('view-global').style.display = 'none';
     document.getElementById('view-client').style.display = ''; // defer to CSS (flex layout)
@@ -4735,11 +4667,9 @@ function switchClient(val) {
   renderApis(); // Re-render APIs page (context-aware: global vs client)
   renderIntelligence(); // Re-render meetings for selected client
   renderFoundation(); // Re-render foundation for selected client
-  updateAtalayaBadge(); // Update Atalaya badge for selected client
   // Re-render metrics if on that page
   const activePage = document.querySelector('.page.active');
   if (activePage && activePage.id === 'page-metrics') loadMetrics();
-  if (activePage && activePage.id === 'page-idea-bank') loadIdeaBankIframe();
   if (activePage && activePage.id === 'page-recurring-tasks') loadRecurringTasksData();
   if (activePage && activePage.id === 'page-intelligence') renderIntelligenceCenter();
 }
@@ -6781,39 +6711,6 @@ async function renderV2NextSteps(slug) {
   }
 
   // ===== 🏰 ATALAYA RECOMMENDATIONS (Section 1c — from all sources except performance) =====
-  try {
-    const atalayaRes = await fetch(`${MC_BASE}/api/recommendations?slug=${slug}&status=pending`);
-    if (atalayaRes.ok) {
-      const atalayaData = await atalayaRes.json();
-      const atalayaRecs = (atalayaData.recommendations || []).filter(r => !r.source?.startsWith('performance'));
-      const topAtalaya = atalayaRecs.filter(r => r.priority === 'high' || r.priority === 'medium').slice(0, 4);
-      if (topAtalaya.length > 0) {
-        const srcIcons = {'atalaya-profiles':'👤','atalaya-competitors':'🎯','atalaya-ads':'📢','trust-engine':'🔍'};
-        html += '<div class="v2-sub"><div class="v2-sub-t">🏰 Ideas de Atalaya</div>';
-        for (const rec of topAtalaya) {
-          const prioColor = rec.priority === 'high' ? '#C45D35' : '#B8860B';
-          const srcIcon = srcIcons[rec.source] || '💡';
-          html += `<div style="margin:2px 0;padding:8px 10px;background:var(--card-bg);border:1px solid var(--border);border-left:3px solid ${prioColor};border-radius:6px;font-size:11px;">
-            <div style="display:flex;align-items:flex-start;gap:6px;">
-              <span style="font-size:13px;flex-shrink:0;">${srcIcon}</span>
-              <div style="flex:1;">
-                <div style="font-weight:600;margin-bottom:2px;">${(rec.title||'').replace(/</g,'&lt;')}</div>
-                <div style="display:flex;align-items:center;gap:5px;">
-                  <span style="font-size:9px;padding:1px 5px;background:#F0EDE8;border-radius:3px;">${(rec.source||'').replace(/</g,'&lt;')}</span>
-                  <span style="flex:1;"></span>
-                  <span style="font-size:8px;font-weight:700;color:${prioColor};text-transform:uppercase;">${rec.priority}</span>
-                </div>
-              </div>
-            </div>
-          </div>`;
-        }
-        if (atalayaRecs.length > topAtalaya.length) {
-          html += `<div style="text-align:center;margin-top:4px;"><a href="#" onclick="showPage('idea-bank');return false;" style="font-size:10px;color:var(--rust);text-decoration:none;">Ver las ${atalayaRecs.length} recomendaciones en Idea Bank →</a></div>`;
-        }
-        html += '</div>';
-      }
-    }
-  } catch(e) { console.warn('[NextSteps] Atalaya recs fetch error:', e.message); }
 
   // ===== 📋 PROYECTOS (Section 2 — always) =====
   let allProjects = [];
