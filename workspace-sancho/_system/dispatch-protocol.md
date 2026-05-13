@@ -6,7 +6,7 @@
 
 ## Principio
 
-Sancho orquesta. Ejecuta estrategia directamente. Delega ejecución a Escudero (sessions_spawn), operaciones GTM-OS a YALC (yalc-operator) y verificación a Sansón (sessions_send). Admin requests van a Cervantes (message a #cervantes-admin en Discord).
+Sancho orquesta. Ejecuta estrategia directamente. Delega ejecución a Escudero (sessions_spawn), operaciones GTM-OS a Yalc Agent (yalc-operator) y verificación a Sansón (sessions_send). Admin requests van a Cervantes (message a #cervantes-admin en Discord).
 
 ---
 
@@ -24,7 +24,7 @@ Sancho orquesta. Ejecuta estrategia directamente. Delega ejecución a Escudero (
 - Tareas paralelas (lanzar 3 Escuderos a la vez para diferentes piezas)
 - Tareas donde MiniMax/Qwen es suficiente y quieres ahorrar coste
 
-**Usa YALC** (via `yalc-operator`):
+**Usa Yalc Agent** (via `yalc-operator`):
 - Health checks y troubleshooting de GTM-OS/YALC
 - Lead qualification cuando el usuario pide usar YALC
 - Dry-runs de cold email y campaign setup via YALC/Instantly
@@ -81,7 +81,7 @@ Para mapping completo de personas a tareas, ver `dispatch-map.json`.
 | Propuestas, battlecards | Escudero | spawn | `personas/comercial.md` | positioning-messaging, pricing-strategy |
 | Landing pages, CRO | Escudero | spawn | `personas/arquitecto.md` | direct-response-copy, lead-magnet |
 | Research simple | Escudero | spawn | `personas/investigador.md` | daily-pulse, thief-marketers, signal-monitor |
-| YALC/GTM-OS execution | YALC | yalc-operator | — | yalc-operator |
+| YALC/GTM-OS execution | Yalc Agent | yalc-operator | — | yalc-operator |
 | Brand check, QA | Sansón | send | — | Brand verification, devil's advocate |
 | Admin, bugs, infra | Cervantes | message (Discord) | — | System tasks |
 

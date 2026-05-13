@@ -21,9 +21,9 @@ context_writes:
   - brand/{slug}/operational/learnings.md
 ---
 
-# YALC Operator
+# Yalc Agent Operator
 
-Operate YALC as Sancho's outbound execution engine.
+Operate YALC through Yalc Agent as Sancho's outbound execution engine.
 
 YALC is the source of truth for the GTM operating workflow: lead import, qualification, campaign creation, Instantly send, campaign tracking, and learning from outcomes. Sancho remains the CMO/orchestrator: it decides what should happen, asks for approvals, and reports results back to the user.
 

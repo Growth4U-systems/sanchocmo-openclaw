@@ -20,7 +20,7 @@ SanchoCMO operates as an AI-powered Chief Marketing Officer: it onboards clients
             │                               ▲
             ├── sessions_spawn ─► Escudero   │
             ├── sessions_send ──► Sanson ────┘
-            ├── yalc-operator ──► YALC / GTM-OS
+            ├── yalc-operator ──► Yalc Agent / GTM-OS
             └── sessions_send ──► Cervantes
                                   (System Architect)
                                    Opus 4.6
@@ -33,7 +33,7 @@ SanchoCMO operates as an AI-powered Chief Marketing Officer: it onboards clients
 | **Sancho** | CMO Strategist & Orchestrator | Discord messages (client guilds) + cron jobs |
 | **Escudero** | Execution worker (adopts personas) | `sessions_spawn` from Sancho |
 | **Sansón** | Brand Guardian / QA | `sessions_send` from Sancho |
-| **YALC** | GTM-OS operator for lead qualification, cold email dry-runs/live confirmed launches, campaign status and reporting | `yalc-operator` skill from Sancho |
+| **Yalc Agent** | GTM-OS operator for lead qualification, cold email dry-runs/live confirmed launches, campaign status and reporting | `yalc-operator` skill from Sancho |
 | **Cervantes** | System Architect & Infra | Own cron jobs + `sessions_send` from Sancho. Operates in Cervantes Brain guild (#admin, #infra, #tasks, #changelog). Can edit Sancho's skills, SOUL.md, and cron jobs. Runs daily backups (git commit + push). |
 
 ### Personas (Escudero)
