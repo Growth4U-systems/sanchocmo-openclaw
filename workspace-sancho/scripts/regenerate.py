@@ -9,15 +9,8 @@ import os, json, re, glob, subprocess
 from datetime import datetime, timedelta
 from pathlib import Path
 
-WORKSPACE = Path(
-    os.environ.get(
-        "SANCHO_WORKSPACE",
-        os.environ.get("MC_WORKSPACE", Path.home() / ".openclaw" / "workspace-sancho"),
-    )
-)
-CERVANTES_WORKSPACE = Path(
-    os.environ.get("CERVANTES_WORKSPACE", Path.home() / ".openclaw" / "workspace-cervantes")
-)
+WORKSPACE = Path.home() / ".openclaw" / "workspace-sancho"
+CERVANTES_WORKSPACE = Path.home() / ".openclaw" / "workspace-cervantes"
 OUT = WORKSPACE / "memory" / "mc"  # output JS data files to memory/mc/ (instance data)
 OUT.mkdir(parents=True, exist_ok=True)
 

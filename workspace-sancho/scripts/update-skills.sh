@@ -7,9 +7,8 @@
 set -euo pipefail
 
 OPENCLAW_HOME="${OPENCLAW_HOME:-$HOME/.openclaw}"
-WORKSPACE="${SANCHO_WORKSPACE:-$(cd "$(dirname "$0")/.." && pwd)}"
-SKILL_REPOS="${SKILL_REPOS:-$OPENCLAW_HOME/skill-repos}"
-SKILLS_DIR="${SKILLS_DIR:-$WORKSPACE/skills}"
+SKILL_REPOS="$OPENCLAW_HOME/skill-repos"
+SKILLS_DIR="$OPENCLAW_HOME/workspace-sancho/skills"
 LOG=""
 
 log() { LOG+="$1\n"; }
@@ -36,10 +35,7 @@ log ""
 log "## 3. Corey Haines Skills"
 cd "$SKILL_REPOS/marketingskills"
 OLD_SHA=$(git rev-parse HEAD)
-git pull --ff-only 2>&1 || {
-  git fetch origin main
-  git reset --hard origin/main
-}
+git pull --ff-only 2>&1 || git fetch origin main && git reset --hard origin/main
 NEW_SHA=$(git rev-parse HEAD)
 
 if [ "$OLD_SHA" != "$NEW_SHA" ]; then
@@ -63,10 +59,7 @@ log ""
 log "## 4. Anthropic Skills"
 cd "$SKILL_REPOS/anthropic-skills"
 OLD_SHA=$(git rev-parse HEAD)
-git pull --ff-only 2>&1 || {
-  git fetch origin main
-  git reset --hard origin/main
-}
+git pull --ff-only 2>&1 || git fetch origin main && git reset --hard origin/main
 NEW_SHA=$(git rev-parse HEAD)
 
 if [ "$OLD_SHA" != "$NEW_SHA" ]; then
@@ -89,10 +82,7 @@ log ""
 log "## 5. last30days"
 cd "$SKILL_REPOS/last30days-skill"
 OLD_SHA=$(git rev-parse HEAD)
-git pull --ff-only 2>&1 || {
-  git fetch origin main
-  git reset --hard origin/main
-}
+git pull --ff-only 2>&1 || git fetch origin main && git reset --hard origin/main
 NEW_SHA=$(git rev-parse HEAD)
 
 if [ "$OLD_SHA" != "$NEW_SHA" ]; then
@@ -108,10 +98,7 @@ log ""
 log "## 6. frontend-slides"
 cd "$SKILL_REPOS/frontend-slides"
 OLD_SHA=$(git rev-parse HEAD)
-git pull --ff-only 2>&1 || {
-  git fetch origin main
-  git reset --hard origin/main
-}
+git pull --ff-only 2>&1 || git fetch origin main && git reset --hard origin/main
 NEW_SHA=$(git rev-parse HEAD)
 
 if [ "$OLD_SHA" != "$NEW_SHA" ]; then
@@ -124,37 +111,6 @@ if [ "$OLD_SHA" != "$NEW_SHA" ]; then
   log "✅ Updated (${OLD_SHA:0:7} → ${NEW_SHA:0:7})"
 else
   log "— No changes"
-fi
-
-# 7. Payload official skills (payloadcms/skills)
-log ""
-log "## 7. Payload Skills"
-PAYLOAD_REPO="$SKILL_REPOS/payloadcms-skills"
-if [ ! -d "$PAYLOAD_REPO/.git" ]; then
-  git clone --depth=1 https://github.com/payloadcms/skills "$PAYLOAD_REPO" 2>&1
-fi
-
-cd "$PAYLOAD_REPO"
-OLD_SHA=$(git rev-parse HEAD)
-git pull --ff-only 2>&1 || {
-  git fetch origin main
-  git reset --hard origin/main
-}
-NEW_SHA=$(git rev-parse HEAD)
-
-CHANGED=0
-for skill_dir in skills/*/; do
-  skill_name=$(basename "$skill_dir")
-  rm -rf "$SKILLS_DIR/$skill_name"
-  cp -r "$skill_dir" "$SKILLS_DIR/$skill_name/"
-  echo '{"source":"github","repo":"payloadcms/skills","skill":"'"$skill_name"'"}' > "$SKILLS_DIR/$skill_name/.skill-source.json"
-  CHANGED=$((CHANGED + 1))
-done
-
-if [ "$OLD_SHA" != "$NEW_SHA" ]; then
-  log "✅ Updated $CHANGED skills (${OLD_SHA:0:7} → ${NEW_SHA:0:7})"
-else
-  log "✅ Synced $CHANGED skills (no upstream changes)"
 fi
 
 # Summary
