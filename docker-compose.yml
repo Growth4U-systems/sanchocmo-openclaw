@@ -22,6 +22,12 @@ services:
       - MC_BIND_ADDRESS=0.0.0.0
       - MC_WORKSPACE=/root/.openclaw/workspace-sancho
       - LEGACY_PORT=18790
+      # Tasks backend: "json" (default), "db-shadow" or "db".
+      # When "db" or "db-shadow", DATABASE_URL must point at a Neon DB
+      # with the migrations in src/db/migrations applied.
+      - MC_TASKS_BACKEND=${MC_TASKS_BACKEND:-json}
+      - MC_TASKS_WORKSPACE=${MC_TASKS_WORKSPACE:-workspace-sancho}
+      - DATABASE_URL=${DATABASE_URL:-}
     healthcheck:
       test: ["CMD", "curl", "-sf", "http://localhost:18789/healthz"]
       interval: 60s
