@@ -7,27 +7,59 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const workspaceRoot = path.resolve(__dirname, '..', '..', '..')
 
 const SIDE_EFFECT_SKILLS = new Set([
+  'answer-comments',
+  'multi-channel-campaign',
   'send-email-sequence',
 ])
 
 const ALLOWED_SKILLS = new Set([
+  'answer-comments',
+  'competitive-intel',
+  'email-sequence',
+  'enrich-leads',
+  'export-data',
   'find-companies',
   'find-people',
-  'enrich-leads',
-  'qualify-leads',
-  'email-sequence',
-  'send-email-sequence',
-  'personalize',
-  'competitive-intel',
   'monthly-campaign-report',
-  'visualize-campaigns',
+  'multi-channel-campaign',
+  'personalize',
+  'qualify-leads',
   'research',
+  'scrape-linkedin',
+  'send-email-sequence',
+  'visualize-campaigns',
 ])
+
+const KNOWN_NOT_API_GUARANTEED = [
+  'find-linkedin',
+  'track-campaign',
+  'reply-to-comments',
+  'icp-company-search',
+  'people-enrich',
+  'email-campaign-create',
+  'linkedin-campaign-create',
+  'score-lead',
+  'qualify-engagers',
+  'verify-campaign-launch',
+  'fetch-inbox-replies',
+  'classify-replies',
+  'classify-mentions',
+  'monitor-competitor-content',
+  'research-company',
+  'propose-campaigns',
+  'import-leads',
+  'launch-linkedin-campaign',
+  'track-campaigns',
+  'scrape-post-engagers',
+  'send-cold-email',
+  'prospect-discovery-pipeline',
+]
 
 function usage() {
   console.error(`Usage:
   yalc-client health --slug <slug>
   yalc-client skills --slug <slug>
+  yalc-client catalog --slug <slug>
   yalc-client campaigns --slug <slug>
   yalc-client brain --slug <slug>
   yalc-client run-skill --slug <slug> --skill <id> --input <json-file> [--confirm-side-effect]
@@ -184,6 +216,19 @@ async function main() {
     return
   }
 
+  if (command === 'catalog') {
+    const out = {
+      ok: true,
+      apiAllowlisted: [...ALLOWED_SKILLS].sort(),
+      sideEffectSkills: [...SIDE_EFFECT_SKILLS].sort(),
+      knownNotApiGuaranteed: KNOWN_NOT_API_GUARANTEED.sort(),
+      note: 'Run `skills` against live YALC before invoking any capability. `knownNotApiGuaranteed` requires runtime confirmation or a future CLI/MCP bridge.',
+    }
+    out.savedTo = saveRun(config.slug, 'catalog', out)
+    console.log(JSON.stringify(out, null, 2))
+    return
+  }
+
   if (command === 'campaigns') {
     const data = await request(config, 'GET', '/api/campaigns')
     const out = { ok: true, data }
@@ -219,9 +264,9 @@ async function main() {
       ok: true,
       data,
       request: {
-      skill,
-      dryRunForced: sideEffecting && !args.confirmSideEffect,
-      sideEffecting,
+        skill,
+        dryRunForced: sideEffecting && !args.confirmSideEffect,
+        sideEffecting,
       },
     }
     out.savedTo = saveRun(config.slug, `run-${skill}`, out)

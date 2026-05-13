@@ -34,6 +34,7 @@ YALC is the source of truth for the GTM operating workflow: lead import, qualifi
 3. Use the wrapper script instead of direct `curl` so auth, allowlisting, and dry-run behavior stay consistent.
 4. Do not ask users for YALC tokens in chat. If YALC is not configured, send them to Mission Control API setup.
 5. Keep client isolation: pass `--slug {slug}` and only write outputs under `brand/{slug}/yalc/`.
+6. Read `references/yalc-capability-map.md` before deciding which YALC skill to invoke.
 
 ## Configuration
 
@@ -60,6 +61,7 @@ Use these from `workspace-sancho/`:
 ```bash
 node skills/yalc-operator/scripts/yalc-client.mjs health --slug growth4u
 node skills/yalc-operator/scripts/yalc-client.mjs skills --slug growth4u
+node skills/yalc-operator/scripts/yalc-client.mjs catalog --slug growth4u
 node skills/yalc-operator/scripts/yalc-client.mjs campaigns --slug growth4u
 node skills/yalc-operator/scripts/yalc-client.mjs brain --slug growth4u
 ```
@@ -87,15 +89,19 @@ node skills/yalc-operator/scripts/yalc-client.mjs run-skill \
 
 Use YALC for:
 
+- sourcing companies and people when the user wants YALC/GTM-OS execution
+- waterfall enrichment and reproducible qualification
 - lead qualification against Growth4U/YALC rules
-- cold outbound campaign execution via Instantly
+- cold outbound dry-runs and campaign execution via Instantly
+- LinkedIn/comment operations only when available in the live YALC skills list
 - campaign status and performance reporting
+- campaign dashboards and cross-campaign learnings
 - YALC health checks and troubleshooting
 
 Use existing Sancho skills for:
 
 - strategy and ICP decisions
-- copywriting drafts before handoff to YALC
+- strategic copy direction and brand/ICP decisions before handoff to YALC
 - QA and brand review
 - client-facing summaries
 
@@ -103,12 +109,14 @@ Use existing Sancho skills for:
 
 1. Clarify the user's requested outcome: qualify leads, prepare campaign, launch, track, or report.
 2. Run `health` before the first YALC operation in a thread.
-3. If launching/sending, prepare a dry-run payload and run YALC with `dryRun: true`.
-4. Present the YALC dry-run result, lead count, sequence count, and any warnings.
-5. Ask for explicit confirmation: "Confirmas que lance esta campana en YALC/Instantly?"
-6. Only after confirmation, rerun with `--confirm-side-effect`.
-7. Save the returned JSON in `brand/{slug}/yalc/runs/YYYY-MM-DDTHH-mm-ss-*.json`.
-8. Report back with the YALC campaign ID and next tracking command.
+3. Run `skills` and compare the requested action against `references/yalc-capability-map.md`.
+4. Decompose multi-step requests into explicit YALC skill calls instead of calling generic autonomous orchestration.
+5. If launching/sending, prepare a dry-run payload and run YALC with `dryRun: true`.
+6. Present the YALC dry-run result, lead count, sequence count, and any warnings.
+7. Ask for explicit confirmation: "Confirmas que lance esta campana en YALC/Instantly?"
+8. Only after confirmation, rerun with `--confirm-side-effect`.
+9. Save the returned JSON in `brand/{slug}/yalc/runs/YYYY-MM-DDTHH-mm-ss-*.json`.
+10. Report back with the YALC campaign ID and next tracking command.
 
 ## Current Limitation
 
