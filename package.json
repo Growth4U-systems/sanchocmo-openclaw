@@ -11,6 +11,10 @@
     "test:e2e": "playwright test",
     "migrate:media": "tsx scripts/migrate-legacy-media.mts",
     "check:drafts": "tsx scripts/check-legacy-media.mts",
+    "db:migrate": "drizzle-kit migrate",
+    "db:verify": "tsx scripts/verify-migration.ts",
+    "db:sync-tasks": "tsx scripts/migrate-projects-to-db.ts --apply",
+    "db:sync-tasks:dry": "tsx scripts/migrate-projects-to-db.ts --dry-run",
     "prepare": "husky"
   },
   "dependencies": {
