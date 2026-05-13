@@ -129,6 +129,7 @@ const STATUS_VISUAL: Record<string, { label: string; bg: string; fg: string }> =
 interface Props {
   slug: string;
   openChat?: (slug: string, config: ThreadConfig) => void;
+  focusId?: string | null;
 }
 
 // Content type → comic color (rust = hot, sage = proof, navy = framework, yellow = personal, aged = listicle)
@@ -154,7 +155,7 @@ function writerSkillFor(channel: string): string {
   return "social-writer"; // linkedin, twitter, default
 }
 
-export function IdeaQueueTab({ slug, openChat }: Props) {
+export function IdeaQueueTab({ slug, openChat, focusId }: Props) {
   const router = useRouter();
   const [ideas, setIdeas] = useState<Idea[]>([]);
   const [counts, setCounts] = useState<IdeasCounts | null>(null);
@@ -205,6 +206,13 @@ export function IdeaQueueTab({ slug, openChat }: Props) {
 
   useEffect(() => { fetchIdeas(); }, [fetchIdeas]);
   useEffect(() => { fetchPillarsAndCrons(); }, [fetchPillarsAndCrons]);
+  useEffect(() => {
+    if (!focusId || loading) return;
+    const handle = window.setTimeout(() => {
+      document.getElementById(`idea-row-${CSS.escape(focusId)}`)?.scrollIntoView({ block: "center", behavior: "smooth" });
+    }, 100);
+    return () => window.clearTimeout(handle);
+  }, [focusId, loading, ideas]);
 
   const updateIdea = useCallback(async (ideaId: string, fields: Record<string, unknown>) => {
     await fetch("/api/content-engine/ideas", {
@@ -613,8 +621,17 @@ export function IdeaQueueTab({ slug, openChat }: Props) {
                   const last = idx === visibleIdeas.length - 1;
                   const isNew = idea.status === "New";
                   const isApproved = idea.status === "Approved";
+                  const isFocused = focusId === idea.id || focusId === idea.content_task_id;
                   return (
-                    <tr key={idea.id} style={{ borderBottom: last ? "none" : "2.5px solid var(--sc-ink)" }}>
+                    <tr
+                      key={idea.id}
+                      id={`idea-row-${idea.id}`}
+                      style={{
+                        borderBottom: last ? "none" : "2.5px solid var(--sc-ink)",
+                        outline: isFocused ? "3px solid var(--sc-rust-500)" : undefined,
+                        outlineOffset: isFocused ? "-3px" : undefined,
+                      }}
+                    >
                       {/* Canal */}
                       <td style={cellBase}>
                         <div className="flex flex-col items-start gap-1">
@@ -773,7 +790,7 @@ export function IdeaQueueTab({ slug, openChat }: Props) {
                               onClick={() => {
                                 if (idea.content_task_id && idea.project_id && idea.project_task_id) {
                                   const channel = idea.content_task_channels?.[0] || idea.target_channel || "linkedin";
-                                  router.push(`/dashboard/${slug}/projects/${idea.project_id}/tasks/${idea.project_task_id}/content/${idea.content_task_id}/draft/${channel}`);
+                                  router.push(`/dashboard/${slug}/tasks/${idea.project_id}/sub/${idea.project_task_id}/content/${idea.content_task_id}/draft/${channel}`);
                                   return;
                                 }
                                 if (!openChat || !idea.project_task_id || !idea.project_id) {
@@ -827,4 +844,3 @@ export function IdeaQueueTab({ slug, openChat }: Props) {
     </div>
   );
 }
-

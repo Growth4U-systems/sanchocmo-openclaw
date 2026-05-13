@@ -1,10 +1,27 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { Project, Task } from "@/types";
+import type { ContentTask, Project, Task } from "@/types";
 
 export interface ProjectWithTasks {
   project: Project;
   tasks: Task[];
 }
+
+export type TaskRow =
+  Omit<Partial<Project>, "id" | "name" | "status" | "type"> &
+  Omit<Partial<Task>, "id" | "name" | "status" | "type"> &
+  Omit<Partial<ContentTask>, "id" | "name" | "status"> & {
+  id: string;
+  name: string;
+  type: string;
+  status: string;
+  parent_id: string | null;
+  parent_task_id?: string;
+  project_id?: string | null;
+  parent_name?: string;
+  depth?: 0 | 1 | 2;
+  children_count?: number;
+  content_task_count?: number;
+};
 
 export function useTasks(slug: string | null, opts: { type?: string; include?: string } = {}) {
   return useQuery<ProjectWithTasks[]>({
@@ -17,6 +34,23 @@ export function useTasks(slug: string | null, opts: { type?: string; include?: s
       if (!res.ok) throw new Error("Failed to fetch tasks");
       const data = await res.json();
       return data.projects || [];
+    },
+    enabled: !!slug,
+    staleTime: 30_000,
+  });
+}
+
+export function useTaskRows(slug: string | null, opts: { type?: string; status?: string } = {}) {
+  return useQuery<TaskRow[]>({
+    queryKey: ["task-rows", slug, opts],
+    queryFn: async () => {
+      const params = new URLSearchParams({ slug: slug || "" });
+      if (opts.type) params.set("type", opts.type);
+      const res = await fetch(`/api/tasks?${params.toString()}`);
+      if (!res.ok) throw new Error("Failed to fetch task rows");
+      const data = await res.json();
+      const rows = (data.tasks || []) as TaskRow[];
+      return opts.status ? rows.filter((task) => task.status === opts.status) : rows;
     },
     enabled: !!slug,
     staleTime: 30_000,
@@ -49,6 +83,7 @@ export function useUpdateTask() {
     },
     onSuccess: (_d, v) => {
       qc.invalidateQueries({ queryKey: ["tasks", v.slug] });
+      qc.invalidateQueries({ queryKey: ["task-rows", v.slug] });
       qc.invalidateQueries({ queryKey: ["projects", v.slug] });
     },
   });
@@ -68,6 +103,7 @@ export function useUpdateTaskStatus() {
     },
     onSuccess: (_d, v) => {
       qc.invalidateQueries({ queryKey: ["tasks", v.slug] });
+      qc.invalidateQueries({ queryKey: ["task-rows", v.slug] });
       qc.invalidateQueries({ queryKey: ["projects", v.slug] });
     },
   });
@@ -88,7 +124,10 @@ export function useCreateTask() {
     onSuccess: (_d, v) => {
       const task = v?.task as { brand_slug?: string; brandSlug?: string } | undefined;
       const slug = task?.brand_slug || task?.brandSlug;
-      if (slug) qc.invalidateQueries({ queryKey: ["tasks", slug] });
+      if (slug) {
+        qc.invalidateQueries({ queryKey: ["tasks", slug] });
+        qc.invalidateQueries({ queryKey: ["task-rows", slug] });
+      }
     },
   });
 }
@@ -109,6 +148,7 @@ export function useArchiveTask() {
       const slug = v?.slug;
       if (slug) {
         qc.invalidateQueries({ queryKey: ["tasks", slug] });
+        qc.invalidateQueries({ queryKey: ["task-rows", slug] });
         qc.invalidateQueries({ queryKey: ["projects", slug] });
       }
     },

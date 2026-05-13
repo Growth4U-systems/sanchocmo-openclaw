@@ -19,7 +19,12 @@ const nextConfig = {
       },
       {
         source: "/dashboard/:slug/projects/:projectId/tasks/:taskId",
-        destination: "/dashboard/:slug/tasks/:projectId/sub/:taskId",
+        destination: "/dashboard/:slug/tasks/:taskId",
+        permanent: true,
+      },
+      {
+        source: "/dashboard/:slug/projects/:projectId/tasks/:taskId/content/:contentTaskId",
+        destination: "/dashboard/:slug/tasks/:projectId/sub/:taskId/content/:contentTaskId",
         permanent: true,
       },
       {

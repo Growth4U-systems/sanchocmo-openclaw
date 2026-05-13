@@ -9,13 +9,13 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.ctx?.clientSlug && req.ctx.clientSlug !== slug) return res.status(403).json({ error: "Forbidden" });
 
   if (req.method === "GET") {
-    const task = getTask(slug, id);
+    const task = await getTask(slug, id);
     if (!task) return res.status(404).json({ error: "Task not found" });
     return res.status(200).json({ ok: true, task });
   }
 
   if (req.method === "PATCH") {
-    const task = updateTask(slug, id, req.body?.fields || req.body || {});
+    const task = await updateTask(slug, id, req.body?.fields || req.body || {});
     return res.status(200).json({ ok: true, task });
   }
 

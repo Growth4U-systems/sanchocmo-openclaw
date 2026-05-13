@@ -1032,5 +1032,391 @@
     "source_signals": [
       "creators-2026-05-07-in01"
     ]
+  },
+  {
+    "id": "idea-2026-05-08-1",
+    "idea_id": "idea-2026-05-08-1",
+    "name": "Investigadores de Córdoba diagnostican alopecia areata con una tira adhesiva — sin biopsia ni dolor",
+    "status": "New",
+    "target_channels": [
+      "linkedin"
+    ],
+    "documents": [],
+    "created_at": "2026-05-08T07:21:00+02:00",
+    "updated_at": "2026-05-12T17:53:01.864Z",
+    "title": "Investigadores de Córdoba diagnostican alopecia areata con una tira adhesiva — sin biopsia ni dolor",
+    "pillar_id": "P1-investigacion",
+    "content_type": "Hot Take",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "El IMIBIC de Córdoba, en colaboración con el Hospital Mount Sinai de Nueva York, publicó en la revista Allergy un método no invasivo para diagnosticar alopecia areata mediante 'tape stripping': tiras adhesivas que recogen material biológico del cuero cabelludo para secuenciación de ARN. Los resultados muestran alta concordancia con biopsias convencionales y permiten diferenciar respondedores de no respondedores al tratamiento antes de que los signos clínicos sean evidentes. La técnica es especialmente relevante para pacientes pediátricos.",
+      "source": "IMIBIC / Revista Allergy",
+      "url": "https://www.andaluciainformacion.es/articulo/cordoba/imibic-desarrolla-metodo-invasivo-estudio-tipo-alopecia-autoinmune-biopsia/202605061645133255034.html",
+      "date": "2026-05-06"
+    },
+    "angle_draft": "Diagnosticar alopecia areata sin biopsia ya es posible. Investigadores del IMIBIC en Córdoba han validado una técnica con tiras adhesivas que analiza la actividad génica del cuero cabelludo con la misma precisión que una biopsia — pero sin dolor ni cicatriz. Lo más potente: puede predecir si un paciente responderá al tratamiento antes de que los síntomas clínicos cambien. Esto confirma lo que defendemos: el diagnóstico de precisión es el primer paso de cualquier tratamiento capilar serio. Y cada vez tenemos más herramientas para hacerlo mejor y menos invasivo. Frame: 'El futuro del diagnóstico capilar es preciso, indoloro y español'.",
+    "pov_confidence": 0.88,
+    "signal_type": [
+      "milestone",
+      "aha-moment",
+      "data-point"
+    ],
+    "source_signals": [
+      "news-2026-05-08-001"
+    ]
+  },
+  {
+    "id": "idea-2026-05-08-2",
+    "idea_id": "idea-2026-05-08-2",
+    "name": "Rezpegaldesleukin: el primer estimulador de células T reguladoras muestra regeneración sostenida en alopecia areata severa",
+    "status": "New",
+    "target_channels": [
+      "linkedin"
+    ],
+    "documents": [],
+    "created_at": "2026-05-08T07:21:00+02:00",
+    "updated_at": "2026-05-12T17:53:01.864Z",
+    "title": "Rezpegaldesleukin: el primer estimulador de células T reguladoras muestra regeneración sostenida en alopecia areata severa",
+    "pillar_id": "P1-investigacion",
+    "content_type": "Proof Post",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Nektar Therapeutics publicó el 20 de abril de 2026 los resultados a 52 semanas del ensayo fase 2b REZOLVE-AA de rezpegaldesleukin en alopecia areata severa. El 29-31% de pacientes alcanzó SALT≤20 (más del 80% de cobertura capilar) a semana 52, frente al 0% con placebo. El 37-39% logró SALT50 (mejora ≥50%) vs 13.6% placebo. El perfil de seguridad fue favorable, con 94% de pacientes completando las 52 semanas sin discontinuaciones por efectos adversos. La FDA concedió Fast Track designation en julio 2025.",
+      "source": "Nektar Therapeutics / Dermatology Times",
+      "url": "https://www.prnewswire.com/news-releases/52-week-topline-results-from-16-week-blinded-treatment-extension-of-rezolve-aa-demonstrate-deepening-of-responses-in-severe-to-very-severe-alopecia-areata-with-rezpegaldesleukin-302746837.html",
+      "date": "2026-04-20"
+    },
+    "angle_draft": "Hasta ahora, todos los fármacos para alopecia areata severa bloquean la respuesta inmune (inhibidores JAK). Rezpegaldesleukin hace lo contrario: estimula las células T reguladoras para restaurar la tolerancia inmunológica. Los datos a 52 semanas son llamativos — 31% con más del 80% de cobertura capilar vs 0% con placebo, y las respuestas se profundizan con el tiempo. Es un cambio de paradigma: en lugar de suprimir el sistema inmune, enseñarle a dejar de atacar al folículo. Aún falta fase 3, pero la dirección marca un antes y un después en cómo pensamos el tratamiento autoinmune capilar. Frame: 'No suprimir el sistema inmune, sino reeducarlo'.",
+    "pov_confidence": 0.78,
+    "signal_type": [
+      "milestone",
+      "data-point",
+      "proof-point"
+    ],
+    "source_signals": [
+      "news-2026-05-08-002"
+    ]
+  },
+  {
+    "id": "idea-2026-05-08-3",
+    "idea_id": "idea-2026-05-08-3",
+    "name": "Pirilutamida supera fase 3 en China: otro antiandrógeno tópico sin efectos sexuales se acerca a la aprobación",
+    "status": "New",
+    "target_channels": [
+      "blog"
+    ],
+    "documents": [],
+    "created_at": "2026-05-08T07:21:00+02:00",
+    "updated_at": "2026-05-12T17:53:01.864Z",
+    "title": "Pirilutamida supera fase 3 en China: otro antiandrógeno tópico sin efectos sexuales se acerca a la aprobación",
+    "pillar_id": "P1-investigacion",
+    "content_type": "Framework",
+    "target_channel": "blog",
+    "signal": {
+      "summary": "Kintor Pharma anunció en marzo 2026 resultados positivos de fase 3 con pirilutamida (KX-826) tópica al 1% para alopecia androgenética masculina en un ensayo con 666 pacientes en China. El grupo de tratamiento logró +15.33 pelos/cm² vs +4.68 con placebo a 24 semanas. No se reportaron eventos adversos graves ni disfunción sexual. Kintor planea presentar solicitud de aprobación (NDA) en China para la formulación al 1%. Paralelamente, GT20029 (tecnología PROTAC) avanza a fase 3.",
+      "source": "Kintor Pharma / BioWorld",
+      "url": "https://www.bioworld.com/articles/729749-kintors-kx-826-meets-phase-iii-endpoints-in-alopecia?v=preview",
+      "date": "2026-03-15"
+    },
+    "angle_draft": "Después de Breezula (clascoterone), pirilutamida se convierte en el segundo antiandrógeno tópico en superar fase 3 para calvicie masculina. La carrera global por tratamientos tópicos sin efectos sistémicos se acelera. Los datos de 666 pacientes son sólidos: +15 pelos/cm² sobre placebo y cero disfunción sexual. Esto confirma una tendencia clara: el futuro del tratamiento de la alopecia androgenética es tópico, dirigido y sin efectos hormonales. En pocos años tendremos múltiples opciones donde antes solo había dos fármacos. La clave seguirá siendo el diagnóstico previo — porque no todos los pacientes responden igual. Artículo blog: 'La nueva generación de tratamientos tópicos para calvicie: qué sabemos en 2026'. Frame: 'Más opciones tópicas, misma regla: primero diagnosticar'.",
+    "pov_confidence": 0.82,
+    "signal_type": [
+      "milestone",
+      "data-point"
+    ],
+    "source_signals": [
+      "news-2026-05-08-003"
+    ]
+  },
+  {
+    "id": "idea-2026-05-08-4",
+    "idea_id": "idea-2026-05-08-4",
+    "name": "Minoxidil oral de liberación extendida (VDPHL01) muestra resultados superiores en fase 2: acción más rápida y mejor adherencia",
+    "status": "New",
+    "target_channels": [
+      "linkedin"
+    ],
+    "documents": [],
+    "created_at": "2026-05-08T07:21:00+02:00",
+    "updated_at": "2026-05-12T17:53:01.864Z",
+    "title": "Minoxidil oral de liberación extendida (VDPHL01) muestra resultados superiores en fase 2: acción más rápida y mejor adherencia",
+    "pillar_id": "P2-tratamientos",
+    "content_type": "Proof Post",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "VDPHL01, una formulación oral no hormonal de liberación extendida para alopecia androgenética, completó fase 2 en Estados Unidos con resultados de crecimiento capilar en solo dos meses. La formulación demostró eficacia superior y un inicio de acción más rápido que las formulaciones orales existentes de minoxidil. Los datos de fase 3 se esperan para el primer semestre de 2026. El tratamiento busca resolver el principal problema del minoxidil tópico: la baja adherencia a largo plazo.",
+      "source": "Healthline / Clinical Trials",
+      "url": "https://www.healthline.com/health-news/best-hair-loss-treatments-2026-experts",
+      "date": "2026-04-30"
+    },
+    "angle_draft": "El minoxidil oral ya se usa off-label con buenos resultados — el Dr. Vañó lo ha documentado con 69 pacientes. Ahora, VDPHL01 es la primera formulación de liberación extendida diseñada específicamente para alopecia, con resultados visibles en 2 meses. La adherencia es el gran enemigo de los tratamientos capilares: el 50% de pacientes abandona el minoxidil tópico antes de un año. Un oral con mejor perfil y acción más rápida puede cambiar esa ecuación. En HC, ya prescribimos minoxidil oral a dosis baja dentro de protocolos personalizados. Lo que viene no sustituye al médico — lo potencia. Frame: 'Mejor adherencia = mejores resultados, pero siempre con supervisión'.",
+    "pov_confidence": 0.72,
+    "signal_type": [
+      "data-point",
+      "milestone"
+    ],
+    "source_signals": [
+      "news-2026-05-08-004"
+    ]
+  },
+  {
+    "id": "idea-2026-05-08-5",
+    "idea_id": "idea-2026-05-08-5",
+    "name": "El mercado global de trasplante capilar alcanza $8.440M en 2026 — y el paciente español ya audita antes de elegir",
+    "status": "New",
+    "target_channels": [
+      "linkedin"
+    ],
+    "documents": [],
+    "created_at": "2026-05-08T07:21:00+02:00",
+    "updated_at": "2026-05-12T17:53:01.864Z",
+    "title": "El mercado global de trasplante capilar alcanza $8.440M en 2026 — y el paciente español ya audita antes de elegir",
+    "pillar_id": "P3-mercado",
+    "content_type": "Hot Take",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Según Research Nester, el mercado global de trasplante capilar alcanzó los 8.440 millones de dólares en 2026, con Europa proyectando una cuota del 34% para 2035. En España, el sector se ha profesionalizado significativamente: los pacientes ahora auditan la seguridad hospitalaria, la trazabilidad del equipo médico y las valoraciones verificadas antes de decidir. La técnica DHI se consolida como gold standard por precisión y resultados naturales, mientras la FUE sigue evolucionando con refinamientos como el zafiro y la asistencia robótica.",
+      "source": "Research Nester / Dr. Merlos Capilar",
+      "url": "https://drmerloscapilar.es/blog/tendencias-del-implante-capilar-en-2026/",
+      "date": "2026-05-01"
+    },
+    "angle_draft": "El mercado capilar vale $8.440M globalmente y el paciente español ya no se deja llevar solo por el precio. Ahora audita: ¿quién me opera? ¿Qué dicen los pacientes reales? ¿Tiene quirófano propio? Esta profesionalización del paciente es una oportunidad enorme para clínicas que ya hacen las cosas bien. En HC, la transparencia es parte del modelo: Trustpilot 4.8/5, equipo médico con nombre y apellidos, y seguimiento documentado. El paciente informado no busca lo más barato — busca lo más fiable. Y eso favorece a quien tiene resultados publicados, no promesas de marketing. Frame: 'El paciente capilar de 2026 investiga más que nunca — y eso nos favorece'.",
+    "pov_confidence": 0.75,
+    "signal_type": [
+      "data-point",
+      "milestone"
+    ],
+    "source_signals": [
+      "news-2026-05-08-005"
+    ]
+  },
+  {
+    "id": "idea-2026-05-08-6",
+    "idea_id": "idea-2026-05-08-6",
+    "name": "Insparya publica sobre melanoma en cuero cabelludo por el Mes del Melanoma — HC puede liderar la prevención integral",
+    "status": "New",
+    "target_channels": [
+      "linkedin"
+    ],
+    "documents": [],
+    "created_at": "2026-05-08T07:23:00+02:00",
+    "updated_at": "2026-05-12T17:53:01.864Z",
+    "title": "Insparya publica sobre melanoma en cuero cabelludo por el Mes del Melanoma — HC puede liderar la prevención integral",
+    "pillar_id": "P4-bienestar",
+    "content_type": "Framework",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Insparya publicó el 6 de mayo un artículo del Dr. Javier Pedraz sobre melanoma en el cuero cabelludo, aprovechando el Mes del Melanoma (mayo). El contenido detalla la regla ABCDE para señales de alerta, explica por qué el cuero cabelludo es una zona olvidada en las revisiones dermatológicas, y conecta la protección solar con la salud capilar. Incluye consejos de protección diaria y hábitos a evitar.",
+      "source": "Insparya",
+      "source_type": "competitor",
+      "platform": "blog",
+      "url": "https://insparya.es/melanoma-en-el-cuero-cabelludo-senales-de-alerta/",
+      "engagement": {
+        "likes": 0,
+        "comments": 0,
+        "shares": 0
+      },
+      "date": "2026-05-06"
+    },
+    "angle_draft": "Insparya conecta melanoma y cuero cabelludo por el Mes del Melanoma — contenido estacional inteligente. Pero se quedan en lo dermatológico sin vincular con salud capilar integral. HC puede crear un contenido superior: 'Lo que el sol hace a tu pelo y tu cuero cabelludo — guía completa de protección'. Vincular exposición UV con daño folicular, envejecimiento capilar acelerado y alopecia fotoinducida (concepto del consenso Delphi del Dr. Vañó). Posicionar la consulta capilar como parte de la prevención integral, no solo estética. Frame: 'Proteger tu cuero cabelludo es proteger tu pelo — y tu salud'.",
+    "pov_confidence": 0.78,
+    "signal_type": [
+      "framework",
+      "aha-moment"
+    ],
+    "source_signals": [
+      "creators-2026-05-08-in01"
+    ]
+  },
+  {
+    "id": "idea-2026-05-08-7",
+    "idea_id": "idea-2026-05-08-7",
+    "name": "Helena Rodero explica los errores con tintes que dañan el cabello — oportunidad para distinguir daño cosmético de alopecia real",
+    "status": "New",
+    "target_channels": [
+      "linkedin"
+    ],
+    "documents": [],
+    "created_at": "2026-05-08T07:23:00+02:00",
+    "updated_at": "2026-05-12T17:53:01.864Z",
+    "title": "Helena Rodero explica los errores con tintes que dañan el cabello — oportunidad para distinguir daño cosmético de alopecia real",
+    "pillar_id": "P4-bienestar",
+    "content_type": "Hot Take",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Helena Rodero publicó el 6 de mayo de 2026 un artículo sobre errores comunes al teñirse el pelo que causan daño capilar. En marzo también explicó en elEconomista los tres errores más frecuentes al teñir en casa: no saturar bien la raíz, usar el mismo tinte para canas y resto del cabello, y no repetir cada mes. Destaca que la forma de aplicar el tinte importa más que el producto, y que muchos sustitutos del amoniaco pueden tener más efectos secundarios.",
+      "source": "Helena Rodero",
+      "source_type": "reference-creator",
+      "platform": "blog",
+      "url": "https://helenarodero.com/category/cosmetica-capilar/",
+      "engagement": {
+        "likes": 0,
+        "comments": 0,
+        "shares": 0
+      },
+      "date": "2026-05-06"
+    },
+    "angle_draft": "Helena Rodero acierta: los tintes mal aplicados dañan el pelo. Pero hay una distinción que 2M de seguidores necesitan entender: daño cosmético y alopecia médica son problemas diferentes con soluciones diferentes. Un pelo dañado por tinte se repara con cosmética (eso lo cubre Helena muy bien). Pero si además de daño notas pérdida de densidad, puede haber una alopecia de fondo que el tinte enmascara. El contenido ideal para HC: '¿Tu pelo está dañado o se te cae? Cómo saber la diferencia'. Captura la audiencia de Helena con un mensaje complementario, no competitivo. Frame: 'Cuando el daño cosmético esconde un problema médico que necesita diagnóstico'.",
+    "pov_confidence": 0.72,
+    "signal_type": [
+      "framework",
+      "aha-moment"
+    ],
+    "source_signals": [
+      "creators-2026-05-08-hr01"
+    ]
+  },
+  {
+    "id": "idea-2026-05-08-8",
+    "idea_id": "idea-2026-05-08-8",
+    "name": "mediQuo compara Finasterida vs Minoxidil vs PP405 — la teledermatología commoditiza el tratamiento capilar",
+    "status": "New",
+    "target_channels": [
+      "linkedin"
+    ],
+    "documents": [],
+    "created_at": "2026-05-08T07:23:00+02:00",
+    "updated_at": "2026-05-12T17:53:01.864Z",
+    "title": "mediQuo compara Finasterida vs Minoxidil vs PP405 — la teledermatología commoditiza el tratamiento capilar",
+    "pillar_id": "P3-mercado",
+    "content_type": "Contrarian",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "mediQuo publicó un artículo comparando Finasterida, Minoxidil y PP405, posicionando su clínica capilar online como alternativa accesible (consultas desde 29.99€). Ofrecen diagnóstico 100% online, prescripción de fórmulas magistrales y seguimiento digital. Su blog cubre casos de pacientes reales (Marcos con Finasteride+Minoxidil, Javier con Dutasteride+Minoxidil) como social proof de resultados sin clínica física.",
+      "source": "mediQuo",
+      "source_type": "competitor",
+      "platform": "blog",
+      "url": "https://mediquo.com/blog/clinica-salud-capilar/finasterida-vs-minoxidil-vs-pp405/",
+      "engagement": {
+        "likes": 0,
+        "comments": 0,
+        "shares": 0
+      },
+      "date": "2026-05-01"
+    },
+    "angle_draft": "mediQuo ofrece consulta capilar online desde 29.99€ con prescripción directa. Es cómodo, accesible y para muchos casos leves puede funcionar. Pero hay un riesgo que nadie menciona: tratar la alopecia sin diagnóstico presencial (tricoscopia, analítica, exploración del cuero cabelludo) es como recetar gafas sin graduar la vista. Puedes acertar, o puedes perder meses con un tratamiento inadecuado. La teledermatología capilar tiene su sitio — pero no sustituye al diagnóstico diferencial que necesitan los +100 tipos de alopecia. HC puede posicionar: 'Cuándo basta con una consulta online y cuándo necesitas un especialista presencial'. Frame: 'Accesible no siempre es suficiente — cuándo necesitas más que una videollamada'.",
+    "pov_confidence": 0.76,
+    "signal_type": [
+      "contrarian",
+      "framework"
+    ],
+    "source_signals": [
+      "creators-2026-05-08-mq01"
+    ]
+  },
+  {
+    "id": "idea-2026-05-08-9",
+    "idea_id": "idea-2026-05-08-9",
+    "name": "Dr. Vañó publica la primera revisión sobre alopecia androgenética en personas trans — la tricología inclusiva ya tiene ciencia",
+    "status": "New",
+    "target_channels": [
+      "linkedin"
+    ],
+    "documents": [],
+    "created_at": "2026-05-08T07:23:00+02:00",
+    "updated_at": "2026-05-12T17:53:01.864Z",
+    "title": "Dr. Vañó publica la primera revisión sobre alopecia androgenética en personas trans — la tricología inclusiva ya tiene ciencia",
+    "pillar_id": "P1-investigacion",
+    "content_type": "Hot Take",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "El Dr. Sergio Vañó Galván publicó en abril 2026 'Characterization and Management of Androgenetic Alopecia in Transgender and Gender-Diverse Individuals: A Narrative Review'. Es la primera revisión narrativa que aborda específicamente cómo la alopecia androgenética se manifiesta y debe tratarse en personas transgénero y de género diverso, teniendo en cuenta la terapia hormonal de afirmación de género y sus efectos sobre el folículo piloso.",
+      "source": "Dr. Sergio Vañó Galván",
+      "source_type": "reference-creator",
+      "platform": "publicación científica",
+      "url": "https://read.qxmd.com/read/41920277/characterization-and-management-of-androgenetic-alopecia-in-transgender-and-gender-diverse-individuals-a-narrative-review",
+      "engagement": {
+        "likes": 0,
+        "comments": 0,
+        "shares": 0
+      },
+      "date": "2026-04-01"
+    },
+    "angle_draft": "La alopecia en personas trans es un tema del que casi nadie habla — pero que afecta a miles de pacientes que reciben terapia hormonal. El Dr. Vañó acaba de publicar la primera revisión específica sobre cómo diagnosticar y tratar la alopecia androgenética en personas transgénero. Es un paso enorme hacia una tricología más inclusiva. La terapia de afirmación de género cambia completamente el perfil hormonal, y eso impacta directamente en el folículo. No se puede aplicar el mismo protocolo que a un paciente cis. En HC, cada tratamiento empieza por entender el contexto completo del paciente — incluido su perfil hormonal. Frame: 'Tricología inclusiva: cada paciente merece un tratamiento que entienda su realidad'.",
+    "pov_confidence": 0.68,
+    "signal_type": [
+      "milestone",
+      "framework"
+    ],
+    "source_signals": [
+      "creators-2026-05-08-sv01"
+    ]
+  },
+  {
+    "id": "idea-2026-05-08-10",
+    "idea_id": "idea-2026-05-08-10",
+    "name": "La alopecia persistente post-quimioterapia ya tiene protocolo: el Dr. Vañó publica actualización diagnóstica y terapéutica",
+    "status": "New",
+    "target_channels": [
+      "linkedin"
+    ],
+    "documents": [],
+    "created_at": "2026-05-08T07:23:00+02:00",
+    "updated_at": "2026-05-12T17:53:01.864Z",
+    "title": "La alopecia persistente post-quimioterapia ya tiene protocolo: el Dr. Vañó publica actualización diagnóstica y terapéutica",
+    "pillar_id": "P2-tratamientos",
+    "content_type": "Proof Post",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "El Dr. Sergio Vañó Galván publicó en abril 2026 una actualización sobre alopecia persistente inducida por quimioterapia (pCIA). El artículo aborda el diagnóstico diferencial, los mecanismos de daño folicular persistente y las opciones terapéuticas actuales para pacientes que no recuperan su cabello meses o años después de finalizar la quimioterapia. Es un problema infradiagnosticado que afecta significativamente a la calidad de vida de supervivientes de cáncer.",
+      "source": "Dr. Sergio Vañó Galván",
+      "source_type": "reference-creator",
+      "platform": "publicación científica",
+      "url": "https://portalcientifico.uah.es/investigadores/151364/publicaciones",
+      "engagement": {
+        "likes": 0,
+        "comments": 0,
+        "shares": 0
+      },
+      "date": "2026-04-15"
+    },
+    "angle_draft": "Hay pacientes que superan un cáncer pero no recuperan su pelo. La alopecia persistente post-quimioterapia es un problema real, infradiagnosticado y que impacta enormemente en la calidad de vida de supervivientes. El Dr. Vañó acaba de publicar una actualización con diagnóstico y opciones terapéuticas. Es un recordatorio potente: la alopecia no es solo estética. Para un superviviente de cáncer, recuperar su pelo es parte de recuperar su identidad. HC puede posicionar su expertise en casos complejos — no solo alopecia androgenética, sino también alopecia post-oncológica. Contenido de alto impacto emocional y diferenciación real. Frame: 'Superar el cáncer y recuperar tu pelo: la alopecia que nadie ve después del tratamiento'.",
+    "pov_confidence": 0.8,
+    "signal_type": [
+      "data-point",
+      "proof-point",
+      "framework"
+    ],
+    "source_signals": [
+      "creators-2026-05-08-sv02"
+    ]
+  },
+  {
+    "id": "idea-2026-05-08-11",
+    "idea_id": "idea-2026-05-08-11",
+    "name": "Insparya actualiza su guía de finasterida para SEO — HC necesita su propio contenido definitivo sobre tratamientos farmacológicos",
+    "status": "New",
+    "target_channels": [
+      "blog"
+    ],
+    "documents": [],
+    "created_at": "2026-05-08T07:23:00+02:00",
+    "updated_at": "2026-05-12T17:53:01.864Z",
+    "title": "Insparya actualiza su guía de finasterida para SEO — HC necesita su propio contenido definitivo sobre tratamientos farmacológicos",
+    "pillar_id": "P2-tratamientos",
+    "content_type": "Listicle",
+    "target_channel": "blog",
+    "signal": {
+      "summary": "Insparya tiene en portada de su blog la guía 'Finasterida: para qué sirve, cómo actúa y qué resultados esperar para tu pelo', posicionándose para la keyword 'finasteride pelo'. El artículo incluye aviso legal médico, está verificado por doctor y tiene 5 likes (alto para su blog). Es parte de una estrategia SEO de contenido evergreen actualizado regularmente para capturar tráfico transaccional de pacientes que investigan opciones de tratamiento.",
+      "source": "Insparya",
+      "source_type": "competitor",
+      "platform": "blog",
+      "url": "https://insparya.es/finasteride-que-es-y-para-que-sirve/",
+      "engagement": {
+        "likes": 5,
+        "comments": 0,
+        "shares": 0
+      },
+      "date": "2026-05-04"
+    },
+    "angle_draft": "Insparya domina el SEO para 'finasteride pelo' con una guía evergreen actualizada. HC tiene un hueco: crear LA guía comparativa definitiva de tratamientos farmacológicos capilares en 2026 — finasteride oral vs tópico, minoxidil oral vs tópico, dutasteride, y los nuevos (clascoterone, pirilutamida). Con datos del Dr. Vañó (66% mejora con dutasteride dosis baja, efecto nocebo de finasteride) y la perspectiva de protocolos personalizados de HC. No competir guía vs guía, sino crear el recurso más completo y actualizado que posicione a HC como la referencia. Frame: 'Todos los tratamientos capilares de 2026 explicados por médicos — la guía que necesitas antes de decidir'.",
+    "pov_confidence": 0.82,
+    "signal_type": [
+      "framework",
+      "proof-point"
+    ],
+    "source_signals": [
+      "creators-2026-05-08-in02"
+    ]
   }
 ]

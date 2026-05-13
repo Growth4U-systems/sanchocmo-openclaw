@@ -12,27 +12,37 @@ function readJSON(file: string, fallback: any) {
 }
 
 function countJson() {
-  const counts: Record<string, { projects: number; tasks: number; contentSubtasks: number }> = {};
+  const counts: Record<string, { projects: number; tasks: number; contentTasks: number }> = {};
   for (const workspace of workspaces) {
     const brandRoot = path.join(root, workspace, "brand");
     if (!fs.existsSync(brandRoot)) continue;
     for (const brandSlug of fs.readdirSync(brandRoot)) {
-      const projectsRoot = path.join(brandRoot, brandSlug, "projects");
-      if (!fs.existsSync(projectsRoot)) continue;
-      counts[brandSlug] ||= { projects: 0, tasks: 0, contentSubtasks: 0 };
+    const projectsRoot = path.join(brandRoot, brandSlug, "projects");
+    if (!fs.existsSync(projectsRoot)) continue;
+      const key = `${workspace}/${brandSlug}`;
+      counts[key] ||= { projects: 0, tasks: 0, contentTasks: 0 };
+      const contentTaskIds = new Set<string>();
       for (const projectDirName of fs.readdirSync(projectsRoot)) {
         const projectDir = path.join(projectsRoot, projectDirName);
         if (!fs.statSync(projectDir).isDirectory()) continue;
         if (!fs.existsSync(path.join(projectDir, "project.json"))) continue;
-        counts[brandSlug].projects++;
+        counts[key].projects++;
         const raw = readJSON(path.join(projectDir, "tasks.json"), []);
         const projectTasks = Array.isArray(raw) ? raw : raw.tasks || [];
-        counts[brandSlug].tasks += projectTasks.length;
-        counts[brandSlug].contentSubtasks += projectTasks.reduce(
-          (sum: number, task: any) => sum + (Array.isArray(task.content_tasks) ? task.content_tasks.length : 0),
-          0,
-        );
+        counts[key].tasks += projectTasks.length;
+        for (const task of projectTasks) {
+          for (const ct of Array.isArray(task.content_tasks) ? task.content_tasks : []) {
+            if (ct?.id) contentTaskIds.add(String(ct.id));
+          }
+        }
       }
+      const flat = readJSON(path.join(brandRoot, brandSlug, "content", "content-tasks.json"), []);
+      if (Array.isArray(flat)) {
+        for (const ct of flat) {
+          if (ct?.id) contentTaskIds.add(String(ct.id));
+        }
+      }
+      counts[key].contentTasks = contentTaskIds.size;
     }
   }
   return counts;
@@ -42,30 +52,32 @@ async function main() {
   const jsonCounts = countJson();
   const rows = await db
     .select({
+      workspaceSlug: tasks.workspaceSlug,
       brandSlug: tasks.brandSlug,
       type: tasks.type,
       count: sql<number>`count(*)::int`,
     })
     .from(tasks)
-    .groupBy(tasks.brandSlug, tasks.type);
+    .groupBy(tasks.workspaceSlug, tasks.brandSlug, tasks.type);
 
-  const dbCounts: Record<string, { projects: number; tasks: number; contentSubtasks: number }> = {};
+  const dbCounts: Record<string, { projects: number; tasks: number; contentTasks: number }> = {};
   for (const row of rows) {
-    dbCounts[row.brandSlug] ||= { projects: 0, tasks: 0, contentSubtasks: 0 };
-    if (row.type === "project") dbCounts[row.brandSlug].projects += Number(row.count);
-    else if (row.type === "content_subtask") dbCounts[row.brandSlug].contentSubtasks += Number(row.count);
-    else dbCounts[row.brandSlug].tasks += Number(row.count);
+    const key = `${row.workspaceSlug}/${row.brandSlug}`;
+    dbCounts[key] ||= { projects: 0, tasks: 0, contentTasks: 0 };
+    if (row.type === "project") dbCounts[key].projects += Number(row.count);
+    else if (row.type === "content_task" || row.type === "content_subtask") dbCounts[key].contentTasks += Number(row.count);
+    else dbCounts[key].tasks += Number(row.count);
   }
 
   const mismatches = [];
-  for (const [brandSlug, expected] of Object.entries(jsonCounts)) {
-    const actual = dbCounts[brandSlug] || { projects: 0, tasks: 0, contentSubtasks: 0 };
+  for (const [scope, expected] of Object.entries(jsonCounts)) {
+    const actual = dbCounts[scope] || { projects: 0, tasks: 0, contentTasks: 0 };
     if (
       expected.projects !== actual.projects ||
       expected.tasks !== actual.tasks ||
-      expected.contentSubtasks !== actual.contentSubtasks
+      expected.contentTasks !== actual.contentTasks
     ) {
-      mismatches.push({ brandSlug, expected, actual });
+      mismatches.push({ scope, expected, actual });
     }
   }
 

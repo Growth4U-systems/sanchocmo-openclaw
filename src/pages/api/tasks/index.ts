@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { compose, withAuth, withErrorHandler } from "@/lib/api-middleware";
-import { createTask, listProjectsWithTasks } from "@/lib/data/tasks";
+import { createTask, listProjectsWithTasks, listUnifiedTaskRowsAsync } from "@/lib/data/tasks";
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
   const slug = (req.query.slug || req.body?.slug || req.ctx?.clientSlug) as string;
@@ -10,22 +10,28 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === "GET") {
     const include = req.query.include as string | undefined;
     const type = req.query.type as string | undefined;
-    const projects = listProjectsWithTasks(slug);
+    const projects = await listProjectsWithTasks(slug);
     if (type === "project" || include === "children") {
       return res.status(200).json({ ok: true, slug, projects });
+    }
+    const rows = await listUnifiedTaskRowsAsync(slug);
+    if (type) {
+      const normalizedType = type === "content_subtask" ? "content_task" : type;
+      return res.status(200).json({
+        ok: true,
+        slug,
+        tasks: rows.filter((task) => task.type === normalizedType),
+      });
     }
     return res.status(200).json({
       ok: true,
       slug,
-      tasks: projects.flatMap((entry) => [
-        { ...entry.project, type: "project", parent_id: null },
-        ...entry.tasks.map((task) => ({ ...task, parent_id: entry.project.id })),
-      ]),
+      tasks: rows,
     });
   }
 
   if (req.method === "POST") {
-    const task = createTask(slug, req.body || {});
+    const task = await createTask(slug, req.body || {});
     return res.status(201).json({ ok: true, task });
   }
 

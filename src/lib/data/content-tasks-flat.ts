@@ -244,7 +244,6 @@ export function loadUnifiedContentTasks(slug: string): ContentTask[] {
 
   // Pass 2: flat/nested CTs not linked to any idea (defensive — should be rare).
   for (const ct of [...flatCTs, ...nestedCTs]) {
-    if (ct.idea_id && ctsByIdeaId.has(ct.idea_id)) continue;
     if (seen.has(ct.id)) continue;
     seen.add(ct.id);
     out.push(ct);

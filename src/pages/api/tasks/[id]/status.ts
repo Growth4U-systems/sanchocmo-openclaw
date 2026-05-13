@@ -12,8 +12,11 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   const status = req.body?.status as string;
   if (!slug || !id || !status) return res.status(400).json({ error: "Missing slug, id or status" });
   if (req.ctx?.clientSlug && req.ctx.clientSlug !== slug) return res.status(403).json({ error: "Forbidden" });
-  const result = setTaskStatus(slug, id, status);
-  if (!result.ok) return res.status(result.error?.includes("not found") ? 404 : 500).json({ error: result.error });
+  const result = await setTaskStatus(slug, id, status);
+  if (!result.ok) {
+    const error = "error" in result ? result.error : "Failed to update task status";
+    return res.status(error?.includes("not found") ? 404 : 500).json({ error });
+  }
   return res.status(200).json(result);
 }
 

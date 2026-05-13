@@ -19,6 +19,12 @@ const DEFAULT_COLOR_MAP: Record<string, string> = {
   archived: "bg-muted/50 text-muted-foreground",
   cancelled: "bg-muted/50 text-muted-foreground",
   discarded: "bg-muted/50 text-muted-foreground",
+  new: "bg-purple-500/15 text-purple-700",
+  draft: "bg-blue-500/15 text-blue-700",
+  "pending media": "bg-pink-500/15 text-pink-700",
+  review: "bg-indigo-500/15 text-indigo-700",
+  published: "bg-sage/20 text-sage",
+  deferred: "bg-amber-500/15 text-amber-700",
 };
 
 interface StatusPillProps {

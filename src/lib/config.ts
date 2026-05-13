@@ -5,3 +5,5 @@ export const MC_TASKS_BACKEND: MissionControlTasksBackend = (() => {
   if (raw === "json" || raw === "db-shadow" || raw === "db") return raw;
   return "json";
 })();
+
+export const MC_TASKS_WORKSPACE = process.env.MC_TASKS_WORKSPACE || "workspace-sancho";

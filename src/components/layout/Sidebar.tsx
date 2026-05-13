@@ -40,6 +40,7 @@ export function Sidebar() {
   const router = useRouter();
   const { data: session } = useSession();
   const { selectedClient, sidebarOpen } = useAppStore();
+  const { data: clients } = useClients();
   const [mobileOpen, setMobileOpen] = useState(false);
 
   // Close mobile sidebar on route change
@@ -50,7 +51,9 @@ export function Sidebar() {
   }, [router]);
 
   const isAdmin = (session?.user as { role?: string })?.role === "admin";
-  const slug = selectedClient;
+  const routeSlug = typeof router.query.slug === "string" ? router.query.slug : null;
+  const fallbackClient = clients?.find((client) => client.active)?.slug || null;
+  const slug = selectedClient || routeSlug || fallbackClient;
   const unreadCount = useUnreadCount(slug);
 
   function clientHref(path: string) {
@@ -224,9 +227,25 @@ function NavLink({
   active: boolean;
   collapsed: boolean;
 }) {
+  const router = useRouter();
+
   return (
     <Link
       href={href}
+      onClick={(event) => {
+        if (
+          event.defaultPrevented ||
+          event.button !== 0 ||
+          event.metaKey ||
+          event.ctrlKey ||
+          event.shiftKey ||
+          event.altKey
+        ) {
+          return;
+        }
+        event.preventDefault();
+        router.push(href);
+      }}
       className={cn(
         "flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all mb-px",
         active

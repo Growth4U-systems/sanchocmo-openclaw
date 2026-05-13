@@ -1,12 +1,12 @@
 import {
   boolean,
+  foreignKey,
   index,
   integer,
   jsonb,
   pgTable,
   text,
   timestamp,
-  type AnyPgColumn,
 } from "drizzle-orm/pg-core";
 
 // ============================================================
@@ -98,23 +98,34 @@ export const subscription = pgTable("subscription", {
 // ============================================================
 
 export const tasks = pgTable("tasks", {
-  id: text("id").primaryKey(),
+  sourceKey: text("source_key").primaryKey(),
+  id: text("id").notNull(),
+  workspaceSlug: text("workspace_slug").notNull(),
   brandSlug: text("brand_slug").notNull(),
-  parentId: text("parent_id").references((): AnyPgColumn => tasks.id, { onDelete: "cascade" }),
+  parentId: text("parent_id"),
+  parentKey: text("parent_key"),
 
   type: text("type").notNull(),
   status: text("status").notNull(),
 
   name: text("name").notNull(),
+  brief: text("brief"),
+  completion: text("completion"),
+  executionNotes: text("execution_notes"),
   description: text("description"),
   slug: text("slug"),
   owner: text("owner"),
+  agent: text("agent"),
   skill: text("skill"),
+  skills: jsonb("skills"),
   channel: text("channel"),
   deliverable: text("deliverable"),
   deliverableFile: jsonb("deliverable_file"),
   doneCriteria: text("done_criteria"),
   dependsOn: text("depends_on"),
+  inputDocuments: jsonb("input_documents"),
+  requiredInputs: jsonb("required_inputs"),
+  outputDocuments: jsonb("output_documents"),
 
   pillar: text("pillar"),
   section: text("section"),
@@ -132,6 +143,8 @@ export const tasks = pgTable("tasks", {
   pipelineState: text("pipeline_state"),
   clarifyStatus: text("clarify_status"),
   targetChannels: jsonb("target_channels"),
+  channelPhases: jsonb("channel_phases"),
+  mediaPolicy: jsonb("media_policy"),
   scheduledFor: timestamp("scheduled_for"),
   draftStatuses: jsonb("draft_statuses"),
 
@@ -148,15 +161,25 @@ export const tasks = pgTable("tasks", {
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
   completedAt: timestamp("completed_at"),
   approvedAt: timestamp("approved_at"),
+  pendingMediaAt: timestamp("pending_media_at"),
   publishedAt: timestamp("published_at"),
   discardedAt: timestamp("discarded_at"),
   deferredAt: timestamp("deferred_at"),
   reviewDate: timestamp("review_date"),
 }, (table) => [
+  foreignKey({
+    name: "tasks_parent_key_fk",
+    columns: [table.parentKey],
+    foreignColumns: [table.sourceKey],
+  }).onDelete("cascade"),
+  index("tasks_workspace_slug_idx").on(table.workspaceSlug),
   index("tasks_brand_slug_idx").on(table.brandSlug),
+  index("tasks_workspace_brand_id_idx").on(table.workspaceSlug, table.brandSlug, table.id),
   index("tasks_parent_id_idx").on(table.parentId),
+  index("tasks_parent_key_idx").on(table.parentKey),
   index("tasks_brand_type_idx").on(table.brandSlug, table.type),
   index("tasks_brand_status_idx").on(table.brandSlug, table.status),
+  index("tasks_brand_agent_idx").on(table.brandSlug, table.agent),
   index("tasks_brand_pillar_idx").on(table.brandSlug, table.pillar),
   index("tasks_idea_id_idx").on(table.ideaId),
 ]);

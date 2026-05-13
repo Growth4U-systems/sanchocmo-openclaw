@@ -831,5 +831,173 @@
     "source_signals": [
       "creators-2026-05-07-urb01"
     ]
+  },
+  {
+    "id": "idea-2026-05-08-2",
+    "idea_id": "idea-2026-05-08-2",
+    "name": "1,2M€ para llevar el cine español al mundo: el ICAA apuesta por la internacionalización",
+    "status": "New",
+    "target_channels": [
+      "linkedin"
+    ],
+    "documents": [],
+    "created_at": "2026-05-08T05:28:00.000Z",
+    "updated_at": "2026-05-12T17:53:01.865Z",
+    "title": "1,2M€ para llevar el cine español al mundo: el ICAA apuesta por la internacionalización",
+    "pillar_id": "financiacion-entretenimiento",
+    "content_type": "Framework",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "El ICAA ha convocado 700.000 euros en ayudas para la participación de películas españolas en festivales internacionales celebrados entre noviembre 2025 y septiembre 2026. Paralelamente, ha lanzado una línea de 500.000 euros (ampliable a 1M€) para agencias de ventas internacionales independientes que distribuyan cine español en el extranjero. En total, más de 1,2 millones de euros destinados a la promoción y distribución internacional del cine español en 2026.",
+      "source": "ICAA / Box-Office.es / Audiovisual451",
+      "url": "https://box-office.es/news/el-icaa-convoca-ayudas-de-700-000-euros-para-la-participacion-de-peliculas-espanolas-en-festivales/",
+      "date": "2026-05"
+    },
+    "angle_draft": "El ICAA dedica 1,2M€ a internacionalización: festivales + distribución. Producir es solo la mitad — sin distribución internacional no hay retorno. Pero 1,2M€ para todo el cine español es modesto. Las productoras que quieran escalar necesitan combinar ayudas públicas con financiación estructurada: preventa internacional, co-producción, distribución digital. No se puede depender solo de subvenciones para llegar al mundo. Frame: \"Producir bien ya no basta — hay que financiar la distribución como se financia la producción.\"",
+    "pov_confidence": 0.62,
+    "signal_type": [
+      "data-point",
+      "framework"
+    ],
+    "source_signals": [
+      "news-2026-05-08-bdbfd6e8"
+    ]
+  },
+  {
+    "id": "idea-2026-05-08-4",
+    "idea_id": "idea-2026-05-08-4",
+    "name": "Franklin Templeton + Ondo Finance lanzan ETFs tokenizados en Europa: los fondos ya son on-chain",
+    "status": "New",
+    "target_channels": [
+      "linkedin"
+    ],
+    "documents": [],
+    "created_at": "2026-05-08T05:28:00.000Z",
+    "updated_at": "2026-05-12T17:53:01.865Z",
+    "title": "Franklin Templeton + Ondo Finance lanzan ETFs tokenizados en Europa: los fondos ya son on-chain",
+    "pillar_id": "tokenizacion-rwa",
+    "content_type": "Proof Post",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "En marzo de 2026, Franklin Templeton se asoció con Ondo Finance para tokenizar cinco de sus ETFs (growth, large cap, oro, high yield y renta fija), disponibles on-chain en Europa, Asia-Pacífico, Oriente Medio y Latinoamérica. Ondo Finance obtuvo derechos de pasaporte UE para ofrecer productos tokenizados a inversores retail en 30 mercados del Espacio Económico Europeo. Los ETFs tokenizados permiten trading 24/7 sin necesidad de cuenta de brokerage tradicional.",
+      "source": "The Defiant / Ondo Finance / Franklin Templeton",
+      "url": "https://thedefiant.io/news/defi/ondo-tokenizes-five-franklin-templeton-etfs",
+      "date": "2026-03"
+    },
+    "angle_draft": "Franklin Templeton vende ETFs tokenizados en Europa. Ondo Finance tiene pasaporte UE para 30 mercados. Cualquier inversor retail puede comprar un fondo de oro o renta fija on-chain, 24/7, sin broker tradicional. Esta infraestructura llega primero a activos líquidos, pero inevitablemente alcanzará activos alternativos — incluidos los culturales. Cuando comprar participaciones en una producción audiovisual sea tan fácil como un ETF de oro, el mercado se multiplica. Frame: \"Si los ETFs ya son tokens, las participaciones audiovisuales son las siguientes.\"",
+    "pov_confidence": 0.72,
+    "signal_type": [
+      "milestone",
+      "proof-point"
+    ],
+    "source_signals": [
+      "news-2026-05-08-b3520f3b"
+    ]
+  },
+  {
+    "id": "idea-2026-05-08-5",
+    "idea_id": "idea-2026-05-08-5",
+    "name": "España es el 3er mercado de crowdfunding de la UE: 450M€ captados y 25 plataformas autorizadas",
+    "status": "New",
+    "target_channels": [
+      "linkedin"
+    ],
+    "documents": [],
+    "created_at": "2026-05-08T05:28:00.000Z",
+    "updated_at": "2026-05-12T17:53:01.865Z",
+    "title": "España es el 3er mercado de crowdfunding de la UE: 450M€ captados y 25 plataformas autorizadas",
+    "pillar_id": "pfp-regulacion",
+    "content_type": "Proof Post",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "España se posiciona como el tercer mercado de crowdfunding de la Unión Europea por volumen. En 2024 se captaron aproximadamente 450 millones de euros a través de crowdfunding en España, con el 40% correspondiente a equity crowdfunding y el 60% a crowdlending. Operan 25 Proveedores de Servicios de Financiación Participativa (PSFP) autorizados bajo el reglamento ECSPR. Los inversores minoristas representan el 88% de los participantes con un ticket medio de 660 euros.",
+      "source": "CrowdInform / CrowdfundingEnEspaña",
+      "url": "https://crowdfundingenespana.es/reglamento-ecspr-y-el-crowdfunding-en-espana/",
+      "date": "2026-05"
+    },
+    "angle_draft": "España es el 3er mercado de crowdfunding de la UE. 450M€ captados en 2024. 25 plataformas autorizadas. El 40% es equity — inversores que quieren participar en el negocio, no solo prestar. El ticket medio de 660€ confirma la democratización real. Ahora imagina esa infraestructura aplicada a producción audiovisual: miles de inversores retail financiando cultura con tickets accesibles, protección ECSPR y trazabilidad completa. El mercado existe. Falta la vertical de entretenimiento. Frame: \"El crowdfunding español mueve 450M€/año — pero la cultura apenas tiene plataforma.\"",
+    "pov_confidence": 0.75,
+    "signal_type": [
+      "data-point",
+      "proof-point"
+    ],
+    "source_signals": [
+      "news-2026-05-08-fb1b633a"
+    ]
+  },
+  {
+    "id": "idea-2026-05-08-6",
+    "idea_id": "idea-2026-05-08-6",
+    "name": "Urbanitae da el salto: de crowdfunding a gestora de fondos con autorización CNMV",
+    "status": "New",
+    "target_channels": [
+      "linkedin"
+    ],
+    "documents": [],
+    "created_at": "2026-05-08T05:43:17.000Z",
+    "updated_at": "2026-05-12T17:53:01.865Z",
+    "title": "Urbanitae da el salto: de crowdfunding a gestora de fondos con autorización CNMV",
+    "pillar_id": "pfp-regulacion",
+    "content_type": "Hot Take",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "Urbanitae obtiene autorización de la CNMV para crear Urbanitae Asset Management SGIIC (registro #299, 13 de febrero de 2026). Pasa de ser una plataforma de crowdfunding inmobiliario a gestora de fondos de inversión colectiva, manteniendo ambas líneas de negocio (PFP + SGIIC + Direct Investments). En 2025 analizó proyectos de inversión inmobiliaria por un volumen superior a 2.000 millones de euros. El objetivo es acceder a capital institucional y proyectos de mayor envergadura.",
+      "source": "Urbanitae",
+      "source_type": "competitor",
+      "platform": "blog",
+      "url": "https://blog.urbanitae.com/2026/01/15/ampliamos-nuestro-modelo-de-coinversion-inmobiliaria-con-una-gestora-de-fondos/",
+      "engagement": {
+        "likes": null,
+        "comments": null,
+        "shares": null
+      },
+      "date": "2026-01-15"
+    },
+    "angle_draft": "Urbanitae ya no es solo crowdfunding. Con la autorización CNMV para su propia gestora de fondos (SGIIC), pasan de canalizar capital retail a gestionar fondos institucionales. Es la evolución natural: primero pruebas el modelo con crowdfunding, luego escalas con fondos profesionales. Para el audiovisual, la lección es clara: la PFP es el punto de entrada, no el destino final. Hulahoop construye la misma escalera — PFP regulada hoy, vehículos institucionales mañana. Frame: 'El crowdfunding no es el techo — es la base para construir infraestructura financiera completa.'",
+    "pov_confidence": 0.85,
+    "signal_type": [
+      "milestone",
+      "aha-moment"
+    ],
+    "source_signals": [
+      "creators-2026-05-08-urb-sgiic"
+    ]
+  },
+  {
+    "id": "idea-2026-05-08-9",
+    "idea_id": "idea-2026-05-08-9",
+    "name": "SEGO Finance educa sobre VC mientras posiciona Creative: la estrategia de content que funciona",
+    "status": "New",
+    "target_channels": [
+      "linkedin"
+    ],
+    "documents": [],
+    "created_at": "2026-05-08T05:43:17.000Z",
+    "updated_at": "2026-05-12T17:53:01.865Z",
+    "title": "SEGO Finance educa sobre VC mientras posiciona Creative: la estrategia de content que funciona",
+    "pillar_id": "pfp-regulacion",
+    "content_type": "Framework",
+    "target_channel": "linkedin",
+    "signal": {
+      "summary": "SEGO Finance publica artículo sobre tendencias del venture capital en Europa y España (22 abril 2026), analizando la madurez y selectividad creciente del ecosistema VC. Es el segundo artículo educativo en su blog en dos semanas (tras 'ESG en el Venture Capital'). La estrategia de contenido posiciona a SEGO como referente en inversión alternativa mientras SEGO Creative gana tracción como plataforma cultural.",
+      "source": "SEGO Finance",
+      "source_type": "competitor",
+      "platform": "blog",
+      "url": "https://blog.segofinance.com/el-rincon-financiero/tendencias-del-venture-capital-en-europa-y-espana/",
+      "engagement": {
+        "likes": null,
+        "comments": null,
+        "shares": null
+      },
+      "date": "2026-04-22"
+    },
+    "angle_draft": "SEGO Finance publica una pieza educativa sobre VC cada dos semanas. No hablan de SEGO Creative directamente — hablan de inversión alternativa, tendencias, ESG. Es marketing de contenidos puro: construir autoridad en 'inversión alternativa' para que cuando el lector busque dónde invertir, SEGO sea top-of-mind. Hulahoop puede aplicar el mismo playbook: educar sobre financiación audiovisual (incentivos fiscales, derechos, recaudación) crea demanda para la plataforma sin vender directamente. Frame: 'Educa primero, vende después — la estrategia de contenido que convierte lectores en inversores.'",
+    "pov_confidence": 0.72,
+    "signal_type": [
+      "framework"
+    ],
+    "source_signals": [
+      "creators-2026-05-08-sego-vc"
+    ]
   }
 ]
