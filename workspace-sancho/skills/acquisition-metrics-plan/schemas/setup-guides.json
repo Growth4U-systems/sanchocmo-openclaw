@@ -297,6 +297,27 @@
     ],
     "warning": "⚠️ Requiere plan <strong>Hypergrowth</strong> o superior."
   },
+  "yalc": {
+    "title": "YALC / GTM-OS",
+    "difficulty": "media",
+    "time": "5 min",
+    "steps": [
+      {
+        "title": "Arranca YALC",
+        "instructions": "En el repo YALC ejecuta <code>pnpm server</code>. El backend debe responder en <code>http://localhost:3847</code> o en la URL privada configurada.",
+        "alwaysShow": true
+      },
+      {
+        "title": "Configura la URL",
+        "instructions": "Introduce <strong>BASE_URL</strong>. Para local usa <code>http://localhost:3847</code>. Si YALC tiene auth activa, introduce tambien <strong>API_TOKEN</strong> con el mismo valor que <code>GTM_OS_API_TOKEN</code>."
+      },
+      {
+        "title": "Verifica desde Sancho",
+        "instructions": "Ejecuta <code>node skills/yalc-operator/scripts/yalc-client.mjs health --slug growth4u</code>. Debe devolver checks OK para skills, today y campaigns."
+      }
+    ],
+    "warning": "⚠️ YALC puede crear campanas y enviar leads a Instantly. Sancho fuerza dry-run por defecto y requiere confirmacion explicita para acciones reales."
+  },
   "slack": {
     "title": "Slack",
     "difficulty": "media",

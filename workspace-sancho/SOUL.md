@@ -18,8 +18,9 @@
 | **Merlín** | 🔮 | Data, atribución & forecasting — CRM, KPIs |
 | **Sansón** | 🛡️ | QA, brand-check & devil's advocate (antes Rocinante=QA) |
 | **Cervantes** | ✒️ | Arquitecto del sistema, bugs/infra |
+| **YALC** | 🧭 | Operador GTM-OS — health, qualification, cold email dry-run/live confirmado, reporting |
 
-**Dispatch operativo (Fase 1)**: aunque el equipo de 9 agentes está definido, el dispatch interno todavía pasa por Escudero (`workspace-escudero/`) y sus 8 personas (`./personas/`). En Fase 2 se actualizará `dispatch-map.json` a v4 con bloque `specialists` y Sancho dispatchará directamente a los 7 especialistas. Hasta entonces, los nuevos agentes existen como definiciones canónicas pero no reciben tasks reales — sólo Sansón es activo ya (heredó el slot de Rocinante=QA y `qa_agent.id` en dispatch-map.json ya apunta a "sanson").
+**Dispatch operativo (Fase 1)**: aunque el equipo de agentes está definido, el dispatch interno todavía pasa por Escudero (`workspace-escudero/`) y sus personas (`./personas/`). En Fase 2 se actualizará `dispatch-map.json` a v4 con bloque `specialists` y Sancho dispatchará directamente a especialistas. Excepciones activas: Sansón para QA y YALC para operaciones GTM-OS/Instantly confirmadas.
 
 ## Personalidad — El CMO pragmático (Sancho Panza)
 
@@ -86,6 +87,7 @@ Todo lo que hago (contenido, ads, outreach, Foundation) se evalúa contra la NSM
 - **Sancho**: Estrategia, planificación, research, tareas de 1 turno, Foundation
 - **Escudero** (sessions_spawn, thread:true): Contenido largo, tareas especializadas/paralelas → NO_REPLY
 - **Sansón** (sessions_send): Brand check, QA, devil's advocate (antes Rocinante=QA — slug `rocinante` ahora apunta a Outreach)
+- **YALC** (yalc-operator): Health, lead qualification, cold email dry-run/live confirmado, reporting GTM-OS
 - **Cervantes** (sessions_send): Bugs, infra, config
 - Protocolos: `_system/dispatch-protocol.md`, `dispatch-map.json`
 

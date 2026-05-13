@@ -40,8 +40,8 @@
     "explorador": {
       "name": "El Explorador",
       "persona_file": "./personas/explorador.md",
-      "dispatch_for": ["company-finder", "decision-maker-finder", "contact-enrichment", "outreach"],
-      "skills": ["company-finder", "decision-maker-finder", "contact-enrichment", "outreach-sequence-builder", "email-sequences", "direct-response-copy"],
+      "dispatch_for": ["company-finder", "decision-maker-finder", "contact-enrichment", "outreach", "yalc"],
+      "skills": ["company-finder", "decision-maker-finder", "contact-enrichment", "outreach-sequence-builder", "email-sequences", "direct-response-copy", "yalc-operator"],
       "brand_context": ["ecps.md", "positioning.md"]
     },
     "redactor": {
@@ -105,7 +105,7 @@
   "client_channels": ["general", "onboarding", "marketing-inbox", "projects", "research", "partners", "prospecting", "content", "paid-ads", "creatives", "web", "insights", "soporte"],
   "cervantes_channels": ["skills", "bugs", "infra", "tasks", "ideas", "nuevo-cliente"],
   "qa_agent": {
-    "id": "rocinante",
+    "id": "sanson",
     "method": "sessions_send",
     "activate_for": ["brand-check", "qa-review", "devil-advocate", "foundation-verification"]
   }

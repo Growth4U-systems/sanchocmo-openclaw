@@ -14,12 +14,13 @@ SanchoCMO operates as an AI-powered Chief Marketing Officer: it onboards clients
                             │
             ┌───────────────┼───────────────┐
             │               │               │
-        Sancho          Escudero        Rocinante
+        Sancho          Escudero        Sanson
       (Strategist)      (Worker)      (QA Guardian)
        Opus 4.6        Sonnet 4.5      Opus 4.6
             │                               ▲
             ├── sessions_spawn ─► Escudero   │
-            ├── sessions_send ──► Rocinante ─┘
+            ├── sessions_send ──► Sanson ────┘
+            ├── yalc-operator ──► YALC / GTM-OS
             └── sessions_send ──► Cervantes
                                   (System Architect)
                                    Opus 4.6
@@ -31,7 +32,8 @@ SanchoCMO operates as an AI-powered Chief Marketing Officer: it onboards clients
 |-------|------|------------------|
 | **Sancho** | CMO Strategist & Orchestrator | Discord messages (client guilds) + cron jobs |
 | **Escudero** | Execution worker (adopts personas) | `sessions_spawn` from Sancho |
-| **Rocinante** | Brand Guardian / QA | `sessions_send` from Sancho |
+| **Sansón** | Brand Guardian / QA | `sessions_send` from Sancho |
+| **YALC** | GTM-OS operator for lead qualification, cold email dry-runs/live confirmed launches, campaign status and reporting | `yalc-operator` skill from Sancho |
 | **Cervantes** | System Architect & Infra | Own cron jobs + `sessions_send` from Sancho. Operates in Cervantes Brain guild (#admin, #infra, #tasks, #changelog). Can edit Sancho's skills, SOUL.md, and cron jobs. Runs daily backups (git commit + push). |
 
 ### Personas (Escudero)
@@ -42,7 +44,7 @@ Explorador (prospecting), Redactor (SEO/content), Comunicador (social/newsletter
 
 ### Skills
 
-120+ marketing skills with a Context Matrix system — each skill declares which brand files it needs (`context_required`) and where it writes (`context_writes`), preventing unnecessary context loading.
+120+ marketing skills with a Context Matrix system — each skill declares which brand files it needs (`context_required`) and where it writes (`context_writes`), preventing unnecessary context loading. The `yalc-operator` skill bridges Sancho to YALC/GTM-OS through an allowlisted wrapper with dry-run defaults for side-effecting outbound operations.
 
 ### Multi-Client
 

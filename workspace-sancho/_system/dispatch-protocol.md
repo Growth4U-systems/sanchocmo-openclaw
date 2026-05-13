@@ -6,7 +6,7 @@
 
 ## Principio
 
-Sancho orquesta. Ejecuta estrategia directamente. Delega ejecución a Escudero (sessions_spawn) y verificación a Rocinante (sessions_send). Admin requests van a Cervantes (message a #cervantes-admin en Discord).
+Sancho orquesta. Ejecuta estrategia directamente. Delega ejecución a Escudero (sessions_spawn), operaciones GTM-OS a YALC (yalc-operator) y verificación a Sansón (sessions_send). Admin requests van a Cervantes (message a #cervantes-admin en Discord).
 
 ---
 
@@ -23,6 +23,13 @@ Sancho orquesta. Ejecuta estrategia directamente. Delega ejecución a Escudero (
 - Tareas de ejecución que necesitan especialización (prospecting pipeline, ad copy, landing pages)
 - Tareas paralelas (lanzar 3 Escuderos a la vez para diferentes piezas)
 - Tareas donde MiniMax/Qwen es suficiente y quieres ahorrar coste
+
+**Usa YALC** (via `yalc-operator`):
+- Health checks y troubleshooting de GTM-OS/YALC
+- Lead qualification cuando el usuario pide usar YALC
+- Dry-runs de cold email y campaign setup via YALC/Instantly
+- Lanzamientos live solo tras confirmación explícita del usuario
+- Campaign status, reporting y guardado de resultados en `brand/{slug}/yalc/runs/`
 
 ### Selección de modelo para spawn (IMPORTANTE)
 
@@ -43,7 +50,7 @@ Escudero tiene 2 modelos disponibles. Elige según la necesidad de contexto:
 
 **PRIVACIDAD**: Qwen (Alibaba) recopila datos de prompts/completions. NUNCA enviar datos sensibles de clientes (nombres reales, emails, datos financieros, credenciales) por Qwen. Solo research genérico, análisis de mercado público, y datos anonimizados.
 
-**Envía a Rocinante** (via `sessions_send`):
+**Envía a Sansón** (via `sessions_send`):
 - Verificación de marca antes de publicar contenido importante
 - Devil's advocate para propuestas estratégicas
 - Verificación de coherencia post-Foundation
@@ -74,7 +81,8 @@ Para mapping completo de personas a tareas, ver `dispatch-map.json`.
 | Propuestas, battlecards | Escudero | spawn | `personas/comercial.md` | positioning-messaging, pricing-strategy |
 | Landing pages, CRO | Escudero | spawn | `personas/arquitecto.md` | direct-response-copy, lead-magnet |
 | Research simple | Escudero | spawn | `personas/investigador.md` | daily-pulse, thief-marketers, signal-monitor |
-| Brand check, QA | Rocinante | send | — | Brand verification, devil's advocate |
+| YALC/GTM-OS execution | YALC | yalc-operator | — | yalc-operator |
+| Brand check, QA | Sansón | send | — | Brand verification, devil's advocate |
 | Admin, bugs, infra | Cervantes | message (Discord) | — | System tasks |
 
 ---
@@ -116,7 +124,7 @@ Cada skill declara `context_required` y `context_writes` en su frontmatter YAML.
 
 ---
 
-## QA con Rocinante (sessions_send)
+## QA con Sansón (sessions_send)
 
 Formato:
 
@@ -129,7 +137,7 @@ QA REQUEST
 **Brand files**: [archivos de ./brand/ a contrastar]
 ```
 
-**Cuándo activar Rocinante:**
+**Cuándo activar Sansón:**
 - Antes de publicar contenido importante (posts, artículos, landing pages)
 - Después de Foundation Blitz para verificar coherencia entre pilares
 - Cuando hay duda sobre alineación con la marca
